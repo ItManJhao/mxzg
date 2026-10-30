@@ -1,0 +1,277 @@
+{
+  "scope": "Current P0-P9 first playable/release roadmap. No speculative advanced systems.",
+  "groups": [
+    {
+      "directory": "prefabs/ui/account",
+      "phases": [
+        "P1"
+      ],
+      "reason": "New login MVC",
+      "names": [
+        "AccountLogin"
+      ]
+    },
+    {
+      "directory": "bundles/remake-home",
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "reason": "Lazy home composition",
+      "names": [
+        "RemakeHome"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/login",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ],
+      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
+      "names": [
+        "ChooseServerCell",
+        "ChooseServerLayer",
+        "ChooseServerRoleCell",
+        "CreateRolePanel",
+        "ErrorLayer",
+        "LoadingLayer",
+        "NoticeLayer",
+        "UpdateLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/city",
+      "phases": [
+        "P1"
+      ],
+      "reason": "Canonical city map and HUD",
+      "names": [
+        "CityChrome",
+        "CityHub"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/common",
+      "phases": [
+        "P1",
+        "P6"
+      ],
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "names": [
+        "CommonBtnPrimary",
+        "CommonBtnSecondary",
+        "CommonListRow",
+        "CommonPanel",
+        "CommonRedDot",
+        "DimSheet",
+        "InfoCard",
+        "ListBackdrop",
+        "NpcTalkLayer",
+        "PagePrefabShell",
+        "TextChip"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/hero",
+      "phases": [
+        "P4"
+      ],
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "names": [
+        "HeroIconCell",
+        "HeroInfoLayer",
+        "HeroInfoAttrLayer",
+        "HeroInfoTipsLayer",
+        "HeroInfoUpgradeLayer",
+        "HeroInfoUpLevelLayer",
+        "HeroInfoUpStarLayer",
+        "HeroListLayer",
+        "HeroListHeroLayer",
+        "HeroListItemCell",
+        "HeroSelectLayer",
+        "HeroSkillInfoLayer",
+        "HeroSkillOpenInfoLayer",
+        "HeroUpStarSelectLayer",
+        "HeroUpStarSelectItemCell",
+        "HeroXSelectLayer",
+        "HeroXSelectItemCell",
+        "HeroSuggestLayer",
+        "HeroSuggestCell",
+        "HeroStrongInfoCell",
+        "HeroStrongResourceMainCell",
+        "HeroStrongResourceSubCell"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/backpack",
+      "phases": [
+        "P4"
+      ],
+      "reason": "Inventory list, tabs, cell and detail",
+      "names": [
+        "BackpackInfoLayer",
+        "BackpackItemCell",
+        "BackpackLayer",
+        "BackpackTabButton"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/ability",
+      "phases": [
+        "P4",
+        "P5"
+      ],
+      "reason": "Skill detail",
+      "names": [
+        "AbilityInfoLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/battle",
+      "phases": [
+        "P4",
+        "P5"
+      ],
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "names": [
+        "BattleDetailCell",
+        "BattleDetailLayer",
+        "BattleEditLayer",
+        "BattleEndLayer",
+        "BattleInfoLayer",
+        "BattlePage",
+        "BattlePanelLayer",
+        "BattleReportLayer",
+        "HangMissionChip"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/chapter",
+      "phases": [
+        "P5"
+      ],
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "names": [
+        "ChapterEndLayer",
+        "ChapterEndLoseCell",
+        "ChapterExtraRewardCell",
+        "ChapterMapLayer",
+        "ChapterPreviewLayer",
+        "ChapterRewardCell",
+        "ChapterRewardLayer",
+        "ChapterStageChip"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/quick-battle",
+      "phases": [
+        "P5"
+      ],
+      "reason": "Idle claim and quick battle",
+      "names": [
+        "QuickBattleEndLayer",
+        "QuickBattleLayer",
+        "QuickBattleTipLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/idle-hero",
+      "phases": [
+        "P4",
+        "P5"
+      ],
+      "reason": "Reusable idle hero selection",
+      "names": [
+        "IdleHeroSelectLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/summon",
+      "phases": [
+        "P4"
+      ],
+      "reason": "Basic summon, excluding shops and prayer modes",
+      "names": [
+        "SummonCell",
+        "SummonLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/mail",
+      "phases": [
+        "P6",
+        "P8"
+      ],
+      "reason": "Basic mail and rewards",
+      "names": [
+        "MailCell",
+        "MailInfoLayer",
+        "MailLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/role",
+      "phases": [
+        "P6"
+      ],
+      "reason": "Basic profile, rename and role level feedback",
+      "names": [
+        "ChangeNickLayer",
+        "RoleInfoLayer",
+        "RoleUpgradeLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/setting",
+      "phases": [
+        "P6"
+      ],
+      "reason": "Basic settings only",
+      "names": [
+        "SettingLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/item",
+      "phases": [
+        "P4",
+        "P5"
+      ],
+      "reason": "Item quantity/selection and rewards",
+      "names": [
+        "ItemExhibitionLayer",
+        "ItemRewardLayer",
+        "ItemScelectNumLayer",
+        "ItemSelectLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/reward",
+      "phases": [
+        "P4",
+        "P5"
+      ],
+      "reason": "Basic reward preview and growth result",
+      "names": [
+        "RewardCell",
+        "RewardPreviewLayer",
+        "UpgradeSuccessLayer",
+        "UpStarSuccessLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/legacy-login",
+      "phases": [
+        "P1",
+        "P9"
+      ],
+      "reason": "Old Boot login compatibility and original artwork reference; never used by RemakeApp",
+      "names": [
+        "LoginPanel",
+        "UserLoginLayer"
+      ]
+    }
+  ]
+}

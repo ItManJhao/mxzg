@@ -1,0 +1,1 @@
+{"table":"clanwarallreward","note":"exported from config/gameconfig/clanwarallreward.xlsx sheet clanwarreward. flag 1/2/3 columns only.","rows":[{"idx":1,"kind":1,"reward":"[{\"item_type\":901301,\"item_num\":666},{\"item_type\":900001,\"item_num\":50000}]"},{"idx":2,"kind":2,"reward":"[{\"item_type\":901301,\"item_num\":400},{\"item_type\":900001,\"item_num\":30000}]"}]}

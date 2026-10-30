@@ -1,0 +1,11 @@
+SHOT login
+SHOT servers
+SHOT home
+SHOT bag-opened
+SHOT bag-detail
+REQUEST FAILED http://127.0.0.1:18080/api/v1/inventory net::ERR_ABORTED
+SHOT before-claim
+SHOT reward-in-bag
+SHOT new-world-bag
+PASS Bag MVC real backend: closed-window query/reward, atomic wallet+inventory, stale GET rejected, duplicate claim idempotent, immediate open, repeated lifecycle, real details, logout/new user/new world
+PASS bag-mvc preview; runtime errors: 0

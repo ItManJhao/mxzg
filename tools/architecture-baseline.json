@@ -1,0 +1,7 @@
+{
+  "description": "Existing dependency debt only. Remove exceptions when resolved; do not add entries merely to pass checks.",
+  "exceptions": [
+    {"from": "framework/ui/UIManager.ts", "to": "ui/prefabLoad.ts", "reason": "Legacy Prefab loader contains business UUID fallbacks; split generic loading from the catalog before moving it."},
+    {"from": "module/mainline/battleFromStore.ts", "to": "ui/idleHangRoster.ts", "reason": "Spine selection must move to the battle presentation model separately from hang layout."}
+  ]
+}

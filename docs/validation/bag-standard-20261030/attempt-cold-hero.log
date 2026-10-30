@@ -1,0 +1,10 @@
+SHOT login
+SHOT servers
+SHOT home
+FAILED STATE [
+  { view: 'RemakeHomeView', phase: undefined, stage: undefined },
+  { view: 'CityHubView', phase: undefined, stage: undefined },
+  { view: 'CityChromeView', phase: undefined, stage: undefined }
+]
+Error: hero absent
+    at F:\project\mxzg\client\tools\check-remake-preview.cjs:195:19

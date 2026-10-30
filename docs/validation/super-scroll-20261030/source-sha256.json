@@ -1,0 +1,16 @@
+{
+  "recordedAtUtc": "2026-10-30T10:58:09.1706329+00:00",
+  "sourceCommit": "9c7732ae466de3517454b772e4af998b1e5d0a29",
+  "sourceDirty": true,
+  "runtime": "Creator 3.8.8 local preview, port 7456",
+  "packageBuilds": "not run, per user instruction",
+  "sha256": {
+    "client/assets/scripts/framework/ui/SuperScroll.ts": "7633b6c8c759bba4779ed4cfd59159590f4133448a384bc9337e8db9410bc348",
+    "client/assets/scripts/framework/ui/SuperContent.ts": "e0d54e26e3d93560cb187634afad67afef590b3b200db16ce57c244636a953c6",
+    "client/assets/prefabs/ui/backpack/BackpackLayer.prefab": "7731c99e7688ee0fe33b5eaac65c1979499221f21a3cfa7258e6e0ee629b45ff",
+    "client/assets/prefabs/ui/backpack/BackpackItemCell.prefab": "31628e838c1a1435a34c063cdc15c66d6467403697457aac4bebf398ca9c4ee5",
+    "client/assets/scripts/features/backpack/ui/BackpackView.ts": "f5d342dcc43eb6d82623af326bc323d4e038f8fcc6f0cbceb64629c09a1ba42a",
+    "client/assets/scripts/features/backpack/ui/BackpackItemCellView.ts": "d1f82fce0c01b806f68ae8ecd868f53a19672ad6850f6aec7cd85482da754787",
+    "client/assets/scripts/features/backpack/InventoryController.ts": "72f5e6577a0d853a2b4287b9351efcb8fb22dde360644e543b96a4263b303484"
+  }
+}

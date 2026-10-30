@@ -1,0 +1,15 @@
+atom,idx,zorder,x,y,reddot,checkreddot
+main_dungeon,1,2,971,431,1001800,
+main_hero_make,2,2,1311,553,1001000,creatHeroRed
+main_summon,3,1,914,415,1070000,createSummonRed
+main_blessingpool,4,1,400,463,,
+main_shop,5,1,1427,385,,
+main_smith_shop,6,2,377,324,1002000,creatSmithShopRed
+main_pub_task,7,2,724,358,1000700,
+main_altar,8,1,737,558,,
+main_prophet_tree,9,2,1283,324,,
+main_fantasy_land,10,1,147,383,,
+main_pvp,11,2,599,499,1000800,
+main_proving_lang,12,2,1599,417,1000900,
+main_fantasy_tower,13,3,304,282,1000100,
+main_black_market,14,1,1315,590,,

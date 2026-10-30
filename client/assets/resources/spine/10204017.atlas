@@ -1,0 +1,27 @@
+
+10204017.png
+size: 136,136
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+s1
+  rotate: false
+  xy: 2, 2
+  size: 25, 25
+  orig: 25, 25
+  offset: 0, 0
+  index: -1
+s2
+  rotate: false
+  xy: 29, 10
+  size: 17, 17
+  orig: 17, 17
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 2, 29
+  size: 127, 105
+  orig: 127, 105
+  offset: 0, 0
+  index: -1

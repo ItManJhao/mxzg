@@ -1,0 +1,9 @@
+SHOT login
+SHOT servers
+SHOT home
+SHOT hero
+SHOT bag
+SHOT bag-detail
+SHOT bag-reopened
+PASS SuperScroll real engine: V/H/grid axes, 0/1/3/18 items, shrink/clamp, drag suppression, preserved refresh, one detail click, four categories, compatible Cell and reopen
+PASS backpack-list preview; runtime errors: 0

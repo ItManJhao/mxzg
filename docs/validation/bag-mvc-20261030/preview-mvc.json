@@ -1,0 +1,347 @@
+{
+  "beforeOpen": {
+    "bag": {
+      "roleKey": "local-2/048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "revision": 6
+    },
+    "role": {
+      "id": "048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "nickname": "night_ui_1793362407963",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "subscribers": 1
+  },
+  "closedQuery": {
+    "bag": {
+      "roleKey": "local-2/048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "revision": 8
+    },
+    "role": {
+      "id": "048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "nickname": "night_ui_1793362407963",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "subscribers": 1
+  },
+  "opened": {
+    "bag": {
+      "roleKey": "local-2/048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "revision": 8
+    },
+    "role": {
+      "id": "048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "nickname": "night_ui_1793362407963",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 1,
+    "subscribers": 2
+  },
+  "claimedClosed": {
+    "bag": {
+      "roleKey": "local-2/048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 550
+        },
+        {
+          "itemId": 900102,
+          "quantity": 4
+        },
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        },
+        {
+          "itemId": 20204004,
+          "quantity": 30
+        }
+      ],
+      "error": "",
+      "revision": 13
+    },
+    "role": {
+      "id": "048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "nickname": "night_ui_1793362407963",
+      "level": 1,
+      "gold": 4000,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "subscribers": 1
+  },
+  "settlement": {
+    "id": "5bb40dd2-c8f7-409a-990a-84ac40bdfa89",
+    "inventory": [
+      {
+        "itemId": 900101,
+        "quantity": 550
+      },
+      {
+        "itemId": 900102,
+        "quantity": 4
+      },
+      {
+        "itemId": 900401,
+        "quantity": 100
+      },
+      {
+        "itemId": 1004001,
+        "quantity": 1
+      },
+      {
+        "itemId": 20204004,
+        "quantity": 30
+      }
+    ],
+    "gold": 4000
+  },
+  "operationEvents": [
+    {
+      "event": {
+        "roleKey": "local-2/048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+        "status": "ready",
+        "revision": 13,
+        "source": "operation"
+      },
+      "bag": {
+        "roleKey": "local-2/048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+        "status": "ready",
+        "synced": true,
+        "items": [
+          {
+            "itemId": 900101,
+            "quantity": 550
+          },
+          {
+            "itemId": 900102,
+            "quantity": 4
+          },
+          {
+            "itemId": 900401,
+            "quantity": 100
+          },
+          {
+            "itemId": 1004001,
+            "quantity": 1
+          },
+          {
+            "itemId": 20204004,
+            "quantity": 30
+          }
+        ],
+        "error": "",
+        "revision": 13
+      },
+      "role": {
+        "id": "048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+        "nickname": "night_ui_1793362407963",
+        "level": 1,
+        "gold": 4000,
+        "diamonds": 0,
+        "serverId": "local-2"
+      }
+    }
+  ],
+  "duplicate": {
+    "bag": {
+      "roleKey": "local-2/048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 550
+        },
+        {
+          "itemId": 900102,
+          "quantity": 4
+        },
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        },
+        {
+          "itemId": 20204004,
+          "quantity": 30
+        }
+      ],
+      "error": "",
+      "revision": 13
+    },
+    "role": {
+      "id": "048f9a00-f6be-4195-ae00-db0bb35fb2c3",
+      "nickname": "night_ui_1793362407963",
+      "level": 1,
+      "gold": 4000,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "subscribers": 1
+  },
+  "displayed": {
+    "rows": [
+      {
+        "itemId": 900101,
+        "quantity": 550
+      },
+      {
+        "itemId": 900102,
+        "quantity": 4
+      },
+      {
+        "itemId": 900401,
+        "quantity": 100
+      },
+      {
+        "itemId": 1004001,
+        "quantity": 1
+      },
+      {
+        "itemId": 20204004,
+        "quantity": 30
+      }
+    ],
+    "cells": [
+      "550",
+      "4",
+      "100",
+      "1",
+      "30"
+    ]
+  },
+  "cleared": {
+    "bag": {
+      "roleKey": null,
+      "status": "idle",
+      "synced": false,
+      "items": [],
+      "error": "",
+      "revision": 14
+    },
+    "role": null,
+    "bagViews": 0,
+    "subscribers": 1
+  },
+  "another": {
+    "bag": {
+      "roleKey": "local-1/437073b3-e4d2-4dfc-8673-1d4019263389",
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "revision": 19
+    },
+    "role": {
+      "id": "437073b3-e4d2-4dfc-8673-1d4019263389",
+      "nickname": "mvc_next_1793362444270",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-1"
+    },
+    "bagViews": 0,
+    "subscribers": 1
+  },
+  "anotherWorld": {
+    "bag": {
+      "roleKey": "local-2/b931af82-b217-475c-984a-e8d0c25b599a",
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "revision": 25
+    },
+    "role": {
+      "id": "b931af82-b217-475c-984a-e8d0c25b599a",
+      "nickname": "mvc_next_1793362444270",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "subscribers": 1
+  },
+  "inventoryReads": 6
+}

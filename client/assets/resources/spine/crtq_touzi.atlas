@@ -1,0 +1,41 @@
+
+crtq_touzi.png
+size: 1024,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+z1
+  rotate: true
+  xy: 434, 433
+  size: 203, 204
+  orig: 203, 204
+  offset: 0, 0
+  index: -1
+z2
+  rotate: false
+  xy: 2, 424
+  size: 215, 212
+  orig: 215, 212
+  offset: 0, 0
+  index: -1
+z3
+  rotate: false
+  xy: 2, 10
+  size: 211, 204
+  orig: 211, 204
+  offset: 0, 0
+  index: -1
+z4
+  rotate: false
+  xy: 219, 433
+  size: 213, 203
+  orig: 213, 203
+  offset: 0, 0
+  index: -1
+z5
+  rotate: false
+  xy: 2, 216
+  size: 212, 206
+  orig: 212, 206
+  offset: 0, 0
+  index: -1

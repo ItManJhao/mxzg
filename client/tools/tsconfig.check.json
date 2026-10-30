@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": false,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": [],
+    "lib": ["ES2017", "DOM"],
+    "baseUrl": ".",
+    "paths": {
+      "cc": ["./cc-runtime.ts"],
+      "cc/env": ["./cc-env.ts"]
+    }
+  },
+  "include": ["cc-shim.d.ts", "../assets/scripts/**/*.ts"]
+}

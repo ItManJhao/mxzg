@@ -1,0 +1,1 @@
+{"table":"forbidchat","note":"exported from config/gameconfig/forbidchat.xlsx sheet Sheet1. flag 1/2/3 columns only.","rows":[{"idx":1,"forbid_time":2},{"idx":2,"forbid_time":12},{"idx":3,"forbid_time":99999}]}

@@ -1,0 +1,13 @@
+
+zhihuanfazhen.png
+size: 201,200
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+fazhen
+  rotate: false
+  xy: 2, 2
+  size: 197, 196
+  orig: 197, 197
+  offset: 0, 0
+  index: -1

@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "0effa549-eeb6-4440-9943-d791065afcc8",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "0effa549-eeb6-4440-9943-d791065afcc8@6c48a",
+      "displayName": "clan-boss-effect_1-16",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "0effa549-eeb6-4440-9943-d791065afcc8",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "0effa549-eeb6-4440-9943-d791065afcc8@f9941",
+      "displayName": "clan-boss-effect_1-16",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": -2.5,
+        "trimX": 9,
+        "trimY": 22,
+        "width": 285,
+        "height": 258,
+        "rawWidth": 303,
+        "rawHeight": 297,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -142.5,
+            -129,
+            0,
+            142.5,
+            -129,
+            0,
+            -142.5,
+            129,
+            0,
+            142.5,
+            129,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            9,
+            275,
+            294,
+            275,
+            9,
+            17,
+            294,
+            17
+          ],
+          "nuv": [
+            0.0297029702970297,
+            0.05723905723905724,
+            0.9702970297029703,
+            0.05723905723905724,
+            0.0297029702970297,
+            0.9259259259259259,
+            0.9702970297029703,
+            0.9259259259259259
+          ],
+          "minPos": [
+            -142.5,
+            -129,
+            0
+          ],
+          "maxPos": [
+            142.5,
+            129,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "0effa549-eeb6-4440-9943-d791065afcc8@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "0effa549-eeb6-4440-9943-d791065afcc8@6c48a"
+  }
+}

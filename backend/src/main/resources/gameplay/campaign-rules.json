@@ -1,0 +1,1193 @@
+{
+  "version": "basic-attacks-v1",
+  "starters": [
+    10101001,
+    10201001,
+    10301001
+  ],
+  "heroes": [
+    {
+      "templateId": 10101001,
+      "star": 1,
+      "name": "独眼梦魇",
+      "hp": 238,
+      "atk": 56,
+      "def": 24,
+      "spd": 45
+    },
+    {
+      "templateId": 10102002,
+      "star": 2,
+      "name": "玛蒙",
+      "hp": 275,
+      "atk": 55,
+      "def": 22,
+      "spd": 57
+    },
+    {
+      "templateId": 10103003,
+      "star": 3,
+      "name": "灰烬使者",
+      "hp": 373,
+      "atk": 62,
+      "def": 31,
+      "spd": 71
+    },
+    {
+      "templateId": 10104004,
+      "star": 4,
+      "name": "赛西莉",
+      "hp": 384,
+      "atk": 85,
+      "def": 38,
+      "spd": 78
+    },
+    {
+      "templateId": 10104005,
+      "star": 4,
+      "name": "荆棘之炎",
+      "hp": 370,
+      "atk": 83,
+      "def": 34,
+      "spd": 77
+    },
+    {
+      "templateId": 10104016,
+      "star": 4,
+      "name": "肥啾",
+      "hp": 454,
+      "atk": 70,
+      "def": 36,
+      "spd": 83
+    },
+    {
+      "templateId": 10105008,
+      "star": 5,
+      "name": "毁灭之烬",
+      "hp": 574,
+      "atk": 117,
+      "def": 45,
+      "spd": 114
+    },
+    {
+      "templateId": 10201001,
+      "star": 1,
+      "name": "布鲁",
+      "hp": 192,
+      "atk": 50,
+      "def": 24,
+      "spd": 41
+    },
+    {
+      "templateId": 10202002,
+      "star": 2,
+      "name": "冰霜元素",
+      "hp": 261,
+      "atk": 59,
+      "def": 25,
+      "spd": 52
+    },
+    {
+      "templateId": 10203003,
+      "star": 3,
+      "name": "冰晶女巫",
+      "hp": 364,
+      "atk": 61,
+      "def": 35,
+      "spd": 69
+    },
+    {
+      "templateId": 10204005,
+      "star": 4,
+      "name": "寒冬之怒",
+      "hp": 381,
+      "atk": 78,
+      "def": 38,
+      "spd": 77
+    },
+    {
+      "templateId": 10205014,
+      "star": 5,
+      "name": "乃音",
+      "hp": 553,
+      "atk": 97,
+      "def": 47,
+      "spd": 108
+    },
+    {
+      "templateId": 10301001,
+      "star": 1,
+      "name": "树精",
+      "hp": 205,
+      "atk": 45,
+      "def": 20,
+      "spd": 44
+    },
+    {
+      "templateId": 10302002,
+      "star": 2,
+      "name": "追猎者",
+      "hp": 261,
+      "atk": 50,
+      "def": 23,
+      "spd": 53
+    },
+    {
+      "templateId": 10303003,
+      "star": 3,
+      "name": "狩猎者",
+      "hp": 354,
+      "atk": 74,
+      "def": 30,
+      "spd": 68
+    },
+    {
+      "templateId": 10304005,
+      "star": 4,
+      "name": "诺亚",
+      "hp": 374,
+      "atk": 87,
+      "def": 34,
+      "spd": 76
+    },
+    {
+      "templateId": 10403001,
+      "star": 3,
+      "name": "蕾雅",
+      "hp": 551,
+      "atk": 119,
+      "def": 43,
+      "spd": 117
+    },
+    {
+      "templateId": 10404003,
+      "star": 4,
+      "name": "赛拉",
+      "hp": 433,
+      "atk": 87,
+      "def": 40,
+      "spd": 86
+    },
+    {
+      "templateId": 10503001,
+      "star": 3,
+      "name": "恶魔之眼",
+      "hp": 375,
+      "atk": 68,
+      "def": 35,
+      "spd": 67
+    },
+    {
+      "templateId": 10503001,
+      "star": 4,
+      "name": "恶魔之眼",
+      "hp": 375,
+      "atk": 68,
+      "def": 35,
+      "spd": 67
+    },
+    {
+      "templateId": 10505005,
+      "star": 5,
+      "name": "黑暗切割者",
+      "hp": 610,
+      "atk": 123,
+      "def": 50,
+      "spd": 115
+    }
+  ],
+  "stages": [
+    {
+      "id": 1,
+      "enemies": [
+        {
+          "templateId": 10101001,
+          "star": 1,
+          "level": 1,
+          "position": 2
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 20204004,
+          "quantity": 30
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "enemies": [
+        {
+          "templateId": 10505005,
+          "star": 5,
+          "level": 2,
+          "position": 2
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900002,
+          "quantity": 151
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "enemies": [
+        {
+          "templateId": 10101001,
+          "star": 1,
+          "level": 2,
+          "position": 2
+        },
+        {
+          "templateId": 10104004,
+          "star": 4,
+          "level": 2,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4200
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 700
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1003001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "enemies": [
+        {
+          "templateId": 10302002,
+          "star": 2,
+          "level": 2,
+          "position": 2
+        },
+        {
+          "templateId": 10304005,
+          "star": 4,
+          "level": 2,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4200
+        },
+        {
+          "itemId": 900003,
+          "quantity": 600
+        },
+        {
+          "itemId": 900101,
+          "quantity": 700
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1003001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "enemies": [
+        {
+          "templateId": 10102002,
+          "star": 2,
+          "level": 3,
+          "position": 1
+        },
+        {
+          "templateId": 10202002,
+          "star": 2,
+          "level": 3,
+          "position": 2
+        },
+        {
+          "templateId": 10204005,
+          "star": 4,
+          "level": 3,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 14700
+        },
+        {
+          "itemId": 900003,
+          "quantity": 1700
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2450
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1001001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "enemies": [
+        {
+          "templateId": 10102002,
+          "star": 2,
+          "level": 3,
+          "position": 1
+        },
+        {
+          "templateId": 10202002,
+          "star": 2,
+          "level": 3,
+          "position": 2
+        },
+        {
+          "templateId": 10302002,
+          "star": 2,
+          "level": 3,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4300
+        },
+        {
+          "itemId": 900002,
+          "quantity": 1
+        },
+        {
+          "itemId": 900003,
+          "quantity": 800
+        },
+        {
+          "itemId": 900101,
+          "quantity": 900
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1001001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "enemies": [
+        {
+          "templateId": 10202002,
+          "star": 2,
+          "level": 4,
+          "position": 1
+        },
+        {
+          "templateId": 10302002,
+          "star": 2,
+          "level": 4,
+          "position": 2
+        },
+        {
+          "templateId": 10404003,
+          "star": 4,
+          "level": 5,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4300
+        },
+        {
+          "itemId": 900002,
+          "quantity": 1
+        },
+        {
+          "itemId": 900003,
+          "quantity": 800
+        },
+        {
+          "itemId": 900101,
+          "quantity": 900
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "enemies": [
+        {
+          "templateId": 10102002,
+          "star": 2,
+          "level": 4,
+          "position": 1
+        },
+        {
+          "templateId": 10202002,
+          "star": 2,
+          "level": 4,
+          "position": 2
+        },
+        {
+          "templateId": 10302002,
+          "star": 2,
+          "level": 4,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4300
+        },
+        {
+          "itemId": 900002,
+          "quantity": 1
+        },
+        {
+          "itemId": 900003,
+          "quantity": 800
+        },
+        {
+          "itemId": 900101,
+          "quantity": 900
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1002001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "enemies": [
+        {
+          "templateId": 10102002,
+          "star": 2,
+          "level": 5,
+          "position": 1
+        },
+        {
+          "templateId": 10202002,
+          "star": 2,
+          "level": 5,
+          "position": 2
+        },
+        {
+          "templateId": 10104005,
+          "star": 4,
+          "level": 5,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4400
+        },
+        {
+          "itemId": 900003,
+          "quantity": 800
+        },
+        {
+          "itemId": 900101,
+          "quantity": 1100
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1002001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "enemies": [
+        {
+          "templateId": 10103003,
+          "star": 3,
+          "level": 5,
+          "position": 1
+        },
+        {
+          "templateId": 10203003,
+          "star": 3,
+          "level": 5,
+          "position": 2
+        },
+        {
+          "templateId": 10303003,
+          "star": 3,
+          "level": 5,
+          "position": 3
+        },
+        {
+          "templateId": 10403001,
+          "star": 3,
+          "level": 5,
+          "position": 6
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 15400
+        },
+        {
+          "itemId": 900003,
+          "quantity": 2800
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3850
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "enemies": [
+        {
+          "templateId": 10102002,
+          "star": 2,
+          "level": 6,
+          "position": 1
+        },
+        {
+          "templateId": 10102002,
+          "star": 2,
+          "level": 6,
+          "position": 2
+        },
+        {
+          "templateId": 10503001,
+          "star": 4,
+          "level": 6,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4400
+        },
+        {
+          "itemId": 900003,
+          "quantity": 800
+        },
+        {
+          "itemId": 900101,
+          "quantity": 1100
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1001001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "enemies": [
+        {
+          "templateId": 10103003,
+          "star": 3,
+          "level": 6,
+          "position": 1
+        },
+        {
+          "templateId": 10203003,
+          "star": 3,
+          "level": 6,
+          "position": 2
+        },
+        {
+          "templateId": 10303003,
+          "star": 3,
+          "level": 6,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4500
+        },
+        {
+          "itemId": 900003,
+          "quantity": 800
+        },
+        {
+          "itemId": 900101,
+          "quantity": 1300
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "enemies": [
+        {
+          "templateId": 10403001,
+          "star": 3,
+          "level": 7,
+          "position": 1
+        },
+        {
+          "templateId": 10503001,
+          "star": 3,
+          "level": 7,
+          "position": 2
+        },
+        {
+          "templateId": 10105008,
+          "star": 5,
+          "level": 7,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4500
+        },
+        {
+          "itemId": 900003,
+          "quantity": 1000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 1300
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "enemies": [
+        {
+          "templateId": 10103003,
+          "star": 3,
+          "level": 7,
+          "position": 1
+        },
+        {
+          "templateId": 10103003,
+          "star": 3,
+          "level": 7,
+          "position": 2
+        },
+        {
+          "templateId": 10103003,
+          "star": 3,
+          "level": 7,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4500
+        },
+        {
+          "itemId": 900003,
+          "quantity": 1000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 1300
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "enemies": [
+        {
+          "templateId": 10203003,
+          "star": 3,
+          "level": 8,
+          "position": 1
+        },
+        {
+          "templateId": 10203003,
+          "star": 3,
+          "level": 8,
+          "position": 2
+        },
+        {
+          "templateId": 10203003,
+          "star": 3,
+          "level": 8,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 16100
+        },
+        {
+          "itemId": 900003,
+          "quantity": 3500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 5250
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1003001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "enemies": [
+        {
+          "templateId": 10303003,
+          "star": 3,
+          "level": 8,
+          "position": 1
+        },
+        {
+          "templateId": 10303003,
+          "star": 3,
+          "level": 8,
+          "position": 2
+        },
+        {
+          "templateId": 10303003,
+          "star": 3,
+          "level": 8,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4600
+        },
+        {
+          "itemId": 900003,
+          "quantity": 1200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 1500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1003001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "enemies": [
+        {
+          "templateId": 10201001,
+          "star": 1,
+          "level": 9,
+          "position": 1
+        },
+        {
+          "templateId": 10201001,
+          "star": 1,
+          "level": 9,
+          "position": 2
+        },
+        {
+          "templateId": 10205014,
+          "star": 5,
+          "level": 9,
+          "position": 3
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4600
+        },
+        {
+          "itemId": 900003,
+          "quantity": 1200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 1500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1003001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "enemies": [
+        {
+          "templateId": 10403001,
+          "star": 3,
+          "level": 9,
+          "position": 1
+        },
+        {
+          "templateId": 10503001,
+          "star": 3,
+          "level": 9,
+          "position": 2
+        },
+        {
+          "templateId": 10303003,
+          "star": 3,
+          "level": 9,
+          "position": 3
+        },
+        {
+          "templateId": 10104004,
+          "star": 4,
+          "level": 9,
+          "position": 4
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4700
+        },
+        {
+          "itemId": 900003,
+          "quantity": 1200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 1700
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "enemies": [
+        {
+          "templateId": 10203003,
+          "star": 3,
+          "level": 10,
+          "position": 1
+        },
+        {
+          "templateId": 10203003,
+          "star": 3,
+          "level": 10,
+          "position": 2
+        },
+        {
+          "templateId": 10203003,
+          "star": 3,
+          "level": 10,
+          "position": 3
+        },
+        {
+          "templateId": 10104005,
+          "star": 4,
+          "level": 10,
+          "position": 4
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4700
+        },
+        {
+          "itemId": 900003,
+          "quantity": 1400
+        },
+        {
+          "itemId": 900101,
+          "quantity": 1700
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1003001,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "enemies": [
+        {
+          "templateId": 10103003,
+          "star": 3,
+          "level": 10,
+          "position": 1
+        },
+        {
+          "templateId": 10103003,
+          "star": 3,
+          "level": 10,
+          "position": 2
+        },
+        {
+          "templateId": 10103003,
+          "star": 3,
+          "level": 10,
+          "position": 3
+        },
+        {
+          "templateId": 10104016,
+          "star": 4,
+          "level": 10,
+          "position": 4
+        }
+      ],
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 16450
+        },
+        {
+          "itemId": 900003,
+          "quantity": 4900
+        },
+        {
+          "itemId": 900101,
+          "quantity": 5950
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1001001,
+          "quantity": 1
+        },
+        {
+          "itemId": 1002001,
+          "quantity": 1
+        }
+      ]
+    }
+  ]
+}

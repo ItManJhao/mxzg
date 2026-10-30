@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: mxzg-remake
+  jackson:
+    deserialization:
+      accept-float-as-int: false
+    mapper:
+      allow-coercion-of-scalars: false
+  datasource:
+    url: ${MXZG_DATABASE_URL}
+    username: ${MXZG_DATABASE_USER}
+    password: ${MXZG_DATABASE_PASSWORD}
+  mvc:
+    problemdetails:
+      enabled: true
+server:
+  port: ${MXZG_PORT:18080}

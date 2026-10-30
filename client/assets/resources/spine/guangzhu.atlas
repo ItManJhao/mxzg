@@ -1,0 +1,20 @@
+
+guangzhu.png
+size: 93,93
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+lizi
+  rotate: false
+  xy: 47, 62
+  size: 29, 29
+  orig: 35, 35
+  offset: 3, 3
+  index: -1
+zhuzi
+  rotate: false
+  xy: 2, 2
+  size: 43, 89
+  orig: 43, 89
+  offset: 0, 0
+  index: -1

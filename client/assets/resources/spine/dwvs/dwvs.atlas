@@ -1,0 +1,34 @@
+
+dwvs.png
+size: 367,367
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+D
+  rotate: true
+  xy: 199, 2
+  size: 363, 41
+  orig: 363, 41
+  offset: 0, 0
+  index: -1
+S
+  rotate: false
+  xy: 2, 46
+  size: 128, 106
+  orig: 128, 106
+  offset: 0, 0
+  index: -1
+V
+  rotate: false
+  xy: 242, 253
+  size: 89, 112
+  orig: 89, 112
+  offset: 0, 0
+  index: -1
+lizi
+  rotate: false
+  xy: 2, 154
+  size: 195, 211
+  orig: 195, 211
+  offset: 0, 0
+  index: -1

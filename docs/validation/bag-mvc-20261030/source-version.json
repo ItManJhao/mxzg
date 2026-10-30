@@ -1,0 +1,41 @@
+{
+  "recordedAt": "2026-10-30T12:16:19.550231+00:00",
+  "sourceCommit": "d7ea90a0aefd98723ff08b611225a3a71726a583",
+  "sourceDirty": true,
+  "engine": "Creator 3.8.8",
+  "preview": "http://localhost:7456/",
+  "backend": "http://127.0.0.1:18080",
+  "packageBuildsThisBatch": false,
+  "humanAcceptance": "pending",
+  "checks": {
+    "project": "26/26 passed",
+    "creatorStrict": "passed, command exit 0",
+    "previewMvc": "passed, browser errors 0",
+    "previewList": "passed, browser errors 0"
+  },
+  "sourceSha256": {
+    "client/assets/scripts/features/backpack/BagC.ts": "0f394bcf55b45e63963fd413d46e8a0a0c3cecc45a2d94c7bf74468b31bebc42",
+    "client/assets/scripts/features/backpack/BagM.ts": "debec02ad0806116f8d442088b621299c2d0a458a7b8dce7527c94897840d361",
+    "client/assets/scripts/features/backpack/BagEvent.ts": "c2d8dff08f781f483d2d4ce37a20f78aadfa023916261f0c945d12a04d3185de",
+    "client/assets/scripts/features/backpack/ui/BagV.ts": "5d24408ffd201ce6bdeae7ab43bd7297623fe0c658edca80335c1d933589244b",
+    "client/assets/scripts/features/backpack/ui/BagV.ts.meta": "f47103264108b5bdf4f9e520a8d9a44399370ec2f327217232cff6a79dfec1bf",
+    "client/assets/scripts/features/backpack/ui/BackpackItemCellView.ts": "983705c09027ae83cf16126bc5c412191bf04a487b398c2b2e221e8eeb288bdb",
+    "client/assets/scripts/features/account/AccountModel.ts": "f85a377a2c24e7570edde3b46890092ccf695404442dba2fc1fc0d6c74cb1e18",
+    "client/assets/scripts/features/account/AccountService.ts": "0ed54e9e338d250dc92c555d80e2874ea1175f8bad9f8c512c59892d86b8f36a",
+    "client/assets/scripts/features/battle/CampaignController.ts": "ba80976ce554c0d0dab6d7500c7d5ed85ae5e0907959ee2254c5b71f94298dd7",
+    "client/assets/scripts/framework/TypedEvents.ts": "cde872ad95c865186f57d650d215995ad1edb6f1535a831ddc620d3ac02eff19",
+    "client/assets/scripts/framework/ui/BaseView.ts": "df1d80956c7c9e494a86969ac53d59723dd56c0ecaaf042b031bd3c3a29b97f4",
+    "client/assets/scripts/app/remake/RemakeApp.ts": "8bf888a37475872d8bad17f13ca91f1ad7e455ea34153fc50ed93c649744e44f",
+    "client/assets/scripts/ui/MainApp.ts": "669f88e8495f1f747151124efae8fdf5feadfa397334635406c3f1d944ab92ce",
+    "client/assets/scripts/ui/screenFill.ts": "4c2584e6af5dc2752159178d0fb29bdeee9fbe938dfec02f05f33e8bbd2a4027",
+    "client/assets/scripts/module/bag/bagBoard.ts": "732ff6ee3accba2982aacf891a8fe8e9ca86225e4c7a3a6f71f2c16025e11e49",
+    "client/assets/prefabs/ui/backpack/BackpackLayer.prefab": "294b660fbdc1406a6ac5b9407a4698e7b6534a6a7e431bafe8a7895726aab18f",
+    "client/assets/prefabs/ui/backpack/BackpackItemCell.prefab": "31628e838c1a1435a34c063cdc15c66d6467403697457aac4bebf398ca9c4ee5",
+    "client/assets/scripts/framework/ui/SuperScroll.ts": "7633b6c8c759bba4779ed4cfd59159590f4133448a384bc9337e8db9410bc348",
+    "client/assets/scripts/framework/ui/SuperContent.ts": "e0d54e26e3d93560cb187634afad67afef590b3b200db16ce57c244636a953c6",
+    "client/tools/bag-mvc-check.ts": "3b080b858bb12b8cf2adc5fe4ccbb2024fa47cac8232eb3dc4e12a0a941e7db6",
+    "client/tools/bag-mvc-preview.cjs": "286ad0335f5df942afc378335851491f2433a13e5bd25080e9bde84ffa5485fc",
+    "client/tools/check-remake-preview.cjs": "cb9a37e2b47ae7b1b958c90f189baff9bfaedfe600ec9d422502cd9041a7dc32",
+    "client/tools/super-scroll-preview.cjs": "470704df5e6080e06c73273063af4b517afcb026f56279ffbffe7a9ae65b59b8"
+  }
+}

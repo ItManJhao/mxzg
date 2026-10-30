@@ -1,0 +1,41 @@
+
+10104016.png
+size: 227,225
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+m
+  rotate: false
+  xy: 175, 147
+  size: 15, 19
+  orig: 15, 19
+  offset: 0, 0
+  index: -1
+s
+  rotate: false
+  xy: 2, 116
+  size: 171, 107
+  orig: 171, 107
+  offset: 0, 0
+  index: -1
+t
+  rotate: false
+  xy: 2, 2
+  size: 122, 112
+  orig: 122, 112
+  offset: 0, 0
+  index: -1
+ys
+  rotate: false
+  xy: 126, 60
+  size: 25, 54
+  orig: 25, 54
+  offset: 0, 0
+  index: -1
+zs
+  rotate: false
+  xy: 175, 168
+  size: 50, 55
+  orig: 50, 55
+  offset: 0, 0
+  index: -1

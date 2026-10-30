@@ -1,0 +1,20 @@
+
+windmill.png
+size: 256,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+fengche
+  rotate: false
+  xy: 2, 41
+  size: 157, 157
+  orig: 157, 157
+  offset: 0, 0
+  index: -1
+zhuzi
+  rotate: false
+  xy: 2, 2
+  size: 51, 37
+  orig: 51, 37
+  offset: 0, 0
+  index: -1

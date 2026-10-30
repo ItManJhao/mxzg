@@ -1,0 +1,20 @@
+
+yjyx.png
+size: 110,110
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+xing
+  rotate: false
+  xy: 2, 40
+  size: 69, 68
+  orig: 69, 68
+  offset: 0, 0
+  index: -1
+zi
+  rotate: false
+  xy: 2, 2
+  size: 101, 36
+  orig: 101, 36
+  offset: 0, 0
+  index: -1

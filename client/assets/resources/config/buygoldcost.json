@@ -1,0 +1,1 @@
+{"table":"buygoldcost","note":"exported from config/gameconfig/buygoldcost.xlsx sheet buygoldcost. flag 1/2/3 columns only.","rows":[{"type":1,"prize":0,"limit":3,"promotion_limit":3},{"type":2,"prize":20,"limit":10,"promotion_limit":10},{"type":3,"prize":50,"limit":10,"promotion_limit":10}]}

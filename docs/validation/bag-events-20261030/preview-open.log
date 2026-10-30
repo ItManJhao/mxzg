@@ -1,0 +1,11 @@
+SHOT login
+SHOT servers
+SHOT home
+SHOT bag-opened
+SHOT bag-detail
+SHOT before-claim
+SHOT reward-in-bag
+SHOT reward-detail
+SHOT new-world-bag
+PASS Bag MVC real backend (open-window reward): closed-window query, atomic wallet+inventory, stale GET rejected, duplicate claim idempotent, immediate open, repeated lifecycle, real details, logout/new user/new world
+PASS bag-mvc preview; runtime errors: 0

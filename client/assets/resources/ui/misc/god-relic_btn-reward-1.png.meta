@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "15ae7b26-f491-4373-8df2-a1ccfa385afa",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "15ae7b26-f491-4373-8df2-a1ccfa385afa@6c48a",
+      "displayName": "god-relic_btn-reward-1",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "15ae7b26-f491-4373-8df2-a1ccfa385afa",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "15ae7b26-f491-4373-8df2-a1ccfa385afa@f9941",
+      "displayName": "god-relic_btn-reward-1",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": -1,
+        "offsetY": 0,
+        "trimX": 0,
+        "trimY": 0,
+        "width": 56,
+        "height": 58,
+        "rawWidth": 58,
+        "rawHeight": 58,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -28,
+            -29,
+            0,
+            28,
+            -29,
+            0,
+            -28,
+            29,
+            0,
+            28,
+            29,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            0,
+            58,
+            56,
+            58,
+            0,
+            0,
+            56,
+            0
+          ],
+          "nuv": [
+            0.0,
+            0.0,
+            0.9655172413793104,
+            0.0,
+            0.0,
+            1.0,
+            0.9655172413793104,
+            1.0
+          ],
+          "minPos": [
+            -28,
+            -29,
+            0
+          ],
+          "maxPos": [
+            28,
+            29,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "15ae7b26-f491-4373-8df2-a1ccfa385afa@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "15ae7b26-f491-4373-8df2-a1ccfa385afa@6c48a",
+    "type": "sprite-frame"
+  }
+}

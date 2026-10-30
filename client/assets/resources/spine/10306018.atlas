@@ -1,0 +1,146 @@
+
+10306018.png
+size: 502,500
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+st1
+  rotate: false
+  xy: 450, 58
+  size: 31, 31
+  orig: 31, 31
+  offset: 0, 0
+  index: -1
+st2
+  rotate: false
+  xy: 445, 175
+  size: 36, 29
+  orig: 36, 29
+  offset: 0, 0
+  index: -1
+st5
+  rotate: false
+  xy: 270, 85
+  size: 102, 72
+  orig: 102, 72
+  offset: 0, 0
+  index: -1
+t1
+  rotate: true
+  xy: 268, 9
+  size: 74, 114
+  orig: 74, 114
+  offset: 0, 0
+  index: -1
+t2
+  rotate: false
+  xy: 171, 15
+  size: 95, 89
+  orig: 95, 89
+  offset: 0, 0
+  index: -1
+t3
+  rotate: true
+  xy: 2, 17
+  size: 45, 108
+  orig: 45, 108
+  offset: 0, 0
+  index: -1
+ts1
+  rotate: true
+  xy: 366, 214
+  size: 73, 86
+  orig: 73, 86
+  offset: 0, 0
+  index: -1
+ts2
+  rotate: false
+  xy: 384, 15
+  size: 64, 74
+  orig: 64, 74
+  offset: 0, 0
+  index: -1
+ts3
+  rotate: true
+  xy: 374, 91
+  size: 71, 85
+  orig: 71, 85
+  offset: 0, 0
+  index: -1
+ts4
+  rotate: false
+  xy: 364, 164
+  size: 79, 48
+  orig: 79, 48
+  offset: 0, 0
+  index: -1
+ts5
+  rotate: true
+  xy: 454, 206
+  size: 81, 40
+  orig: 81, 40
+  offset: 0, 0
+  index: -1
+wb0-1
+  rotate: false
+  xy: 171, 106
+  size: 97, 151
+  orig: 97, 151
+  offset: 0, 0
+  index: -1
+wb0-2
+  rotate: false
+  xy: 224, 386
+  size: 154, 112
+  orig: 154, 112
+  offset: 0, 0
+  index: -1
+wb1-1
+  rotate: false
+  xy: 380, 399
+  size: 113, 99
+  orig: 113, 99
+  offset: 0, 0
+  index: -1
+wb1-2
+  rotate: true
+  xy: 270, 159
+  size: 115, 92
+  orig: 115, 92
+  offset: 0, 0
+  index: -1
+wb1-3
+  rotate: false
+  xy: 366, 289
+  size: 134, 95
+  orig: 134, 95
+  offset: 0, 0
+  index: -1
+wb3
+  rotate: false
+  xy: 224, 276
+  size: 140, 108
+  orig: 140, 108
+  offset: 0, 0
+  index: -1
+xl
+  rotate: false
+  xy: 112, 19
+  size: 49, 43
+  orig: 49, 43
+  offset: 0, 0
+  index: -1
+ycb
+  rotate: false
+  xy: 2, 259
+  size: 220, 239
+  orig: 220, 239
+  offset: 0, 0
+  index: -1
+zcb
+  rotate: false
+  xy: 2, 64
+  size: 167, 193
+  orig: 167, 193
+  offset: 0, 0
+  index: -1

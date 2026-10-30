@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "dd9c57e3-5d4c-4f75-a37b-ea627f749d1e",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "dd9c57e3-5d4c-4f75-a37b-ea627f749d1e@6c48a",
+      "displayName": "dungeon-anim_dungeon-stage-end-title-anim-9",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "dd9c57e3-5d4c-4f75-a37b-ea627f749d1e",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "dd9c57e3-5d4c-4f75-a37b-ea627f749d1e@f9941",
+      "displayName": "dungeon-anim_dungeon-stage-end-title-anim-9",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 2,
+        "offsetY": -5,
+        "trimX": 7,
+        "trimY": 15,
+        "width": 396,
+        "height": 104,
+        "rawWidth": 406,
+        "rawHeight": 124,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -198,
+            -52,
+            0,
+            198,
+            -52,
+            0,
+            -198,
+            52,
+            0,
+            198,
+            52,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            7,
+            109,
+            403,
+            109,
+            7,
+            5,
+            403,
+            5
+          ],
+          "nuv": [
+            0.017241379310344827,
+            0.04032258064516129,
+            0.9926108374384236,
+            0.04032258064516129,
+            0.017241379310344827,
+            0.8790322580645161,
+            0.9926108374384236,
+            0.8790322580645161
+          ],
+          "minPos": [
+            -198,
+            -52,
+            0
+          ],
+          "maxPos": [
+            198,
+            52,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "dd9c57e3-5d4c-4f75-a37b-ea627f749d1e@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "dd9c57e3-5d4c-4f75-a37b-ea627f749d1e@6c48a",
+    "type": "sprite-frame"
+  }
+}

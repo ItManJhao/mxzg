@@ -1,0 +1,13 @@
+
+liushui.png
+size: 128,128
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+glow006
+  rotate: false
+  xy: 2, 2
+  size: 123, 121
+  orig: 128, 128
+  offset: 3, 4
+  index: -1

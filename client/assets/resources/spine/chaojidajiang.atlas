@@ -1,0 +1,104 @@
+
+chaojidajiang.png
+size: 650,650
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+B1 (1)
+  rotate: false
+  xy: 2, 488
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (10)
+  rotate: false
+  xy: 326, 326
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (11)
+  rotate: false
+  xy: 488, 488
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (12)
+  rotate: false
+  xy: 164, 2
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (2)
+  rotate: false
+  xy: 2, 326
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (3)
+  rotate: false
+  xy: 164, 488
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (4)
+  rotate: false
+  xy: 2, 164
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (5)
+  rotate: false
+  xy: 164, 326
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (6)
+  rotate: false
+  xy: 326, 488
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (7)
+  rotate: false
+  xy: 326, 178
+  size: 140, 146
+  orig: 160, 160
+  offset: 10, 6
+  index: -1
+B1 (8)
+  rotate: false
+  xy: 2, 2
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+B1 (9)
+  rotate: false
+  xy: 164, 164
+  size: 160, 160
+  orig: 160, 160
+  offset: 0, 0
+  index: -1
+btn_cjdj_a
+  rotate: false
+  xy: 488, 366
+  size: 107, 120
+  orig: 138, 142
+  offset: 14, 17
+  index: -1
+btn_cjdj_b
+  rotate: false
+  xy: 326, 65
+  size: 113, 111
+  orig: 138, 142
+  offset: 11, 8
+  index: -1

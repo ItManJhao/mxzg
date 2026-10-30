@@ -1,0 +1,14 @@
+SHOT login
+H5 login asset transfer { requests: 79, bytes: 39351949 }
+SHOT servers
+SHOT home
+SHOT idle-march
+SHOT battle
+SHOT formation
+SHOT fight
+SHOT result
+SHOT claimed
+SHOT item-detail
+SHOT restored-login
+SHOT restored-battle
+PASS preview: server picker, explicit Start, heroes, inventory detail, idle march, formation cancel/save, battle/skip/claim, stage 2 and restore gate; runtime errors: 0

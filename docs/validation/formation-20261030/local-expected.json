@@ -1,0 +1,11 @@
+{
+  "titleFontSize": 56,
+  "confirmX": 320,
+  "confirmY": 84,
+  "columns": 5,
+  "stepX": 112,
+  "stepY": 130,
+  "prefabSha256": "34664b3b50ef98f132b69bd2fbd54f24dace72a5bebc9256d4b1c83b1590bffe",
+  "cellSha256": "fdd521299121470466391f0e40e0ec39c787d47be9a370c7ae45135474e2bbea",
+  "requireVisibleStars": true
+}

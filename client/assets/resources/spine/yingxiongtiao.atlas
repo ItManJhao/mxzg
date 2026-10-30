@@ -1,0 +1,97 @@
+
+yingxiongtiao.png
+size: 217,217
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+A1
+  rotate: true
+  xy: 178, 20
+  size: 18, 35
+  orig: 38, 154
+  offset: 7, 5
+  index: -1
+A2
+  rotate: false
+  xy: 178, 80
+  size: 26, 55
+  orig: 38, 154
+  offset: 3, 3
+  index: -1
+A3
+  rotate: false
+  xy: 173, 137
+  size: 30, 78
+  orig: 38, 154
+  offset: 2, 2
+  index: -1
+A4
+  rotate: false
+  xy: 143, 16
+  size: 33, 97
+  orig: 38, 154
+  offset: 2, 11
+  index: -1
+A5
+  rotate: false
+  xy: 109, 9
+  size: 32, 104
+  orig: 38, 154
+  offset: 2, 26
+  index: -1
+A6
+  rotate: false
+  xy: 37, 7
+  size: 34, 106
+  orig: 38, 154
+  offset: 2, 32
+  index: -1
+A7
+  rotate: false
+  xy: 73, 10
+  size: 34, 103
+  orig: 38, 154
+  offset: 2, 47
+  index: -1
+A8
+  rotate: false
+  xy: 2, 2
+  size: 33, 111
+  orig: 38, 154
+  offset: 3, 41
+  index: -1
+hongguang
+  rotate: false
+  xy: 2, 128
+  size: 154, 11
+  orig: 154, 11
+  offset: 0, 0
+  index: -1
+hongtiao
+  rotate: false
+  xy: 2, 179
+  size: 169, 36
+  orig: 169, 36
+  offset: 0, 0
+  index: -1
+languang
+  rotate: false
+  xy: 2, 115
+  size: 154, 11
+  orig: 154, 11
+  offset: 0, 0
+  index: -1
+lantiao
+  rotate: false
+  xy: 2, 141
+  size: 169, 36
+  orig: 169, 36
+  offset: 0, 0
+  index: -1
+lizi
+  rotate: false
+  xy: 178, 40
+  size: 37, 38
+  orig: 38, 38
+  offset: 0, 0
+  index: -1

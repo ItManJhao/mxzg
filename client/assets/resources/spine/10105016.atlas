@@ -1,0 +1,83 @@
+
+10105016.png
+size: 282,282
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+dm1
+  rotate: false
+  xy: 54, 11
+  size: 26, 20
+  orig: 26, 20
+  offset: 0, 0
+  index: -1
+m
+  rotate: true
+  xy: 209, 37
+  size: 15, 19
+  orig: 15, 19
+  offset: 0, 0
+  index: -1
+mz1
+  rotate: true
+  xy: 126, 48
+  size: 123, 81
+  orig: 123, 81
+  offset: 0, 0
+  index: -1
+mz2
+  rotate: true
+  xy: 209, 81
+  size: 100, 60
+  orig: 100, 60
+  offset: 0, 0
+  index: -1
+s
+  rotate: false
+  xy: 2, 173
+  size: 171, 107
+  orig: 171, 107
+  offset: 0, 0
+  index: -1
+s1
+  rotate: false
+  xy: 84, 39
+  size: 26, 18
+  orig: 26, 18
+  offset: 0, 0
+  index: -1
+s4
+  rotate: false
+  xy: 54, 33
+  size: 28, 24
+  orig: 28, 24
+  offset: 0, 0
+  index: -1
+st2
+  rotate: false
+  xy: 175, 183
+  size: 91, 97
+  orig: 91, 97
+  offset: 0, 0
+  index: -1
+t
+  rotate: false
+  xy: 2, 59
+  size: 122, 112
+  orig: 122, 112
+  offset: 0, 0
+  index: -1
+ys
+  rotate: true
+  xy: 209, 54
+  size: 25, 54
+  orig: 25, 54
+  offset: 0, 0
+  index: -1
+zs
+  rotate: false
+  xy: 2, 2
+  size: 50, 55
+  orig: 50, 55
+  offset: 0, 0
+  index: -1

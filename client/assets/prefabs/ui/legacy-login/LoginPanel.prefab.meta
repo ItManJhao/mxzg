@@ -1,0 +1,14 @@
+{
+  "ver": "1.1.50",
+  "importer": "prefab",
+  "imported": true,
+  "uuid": "196fd024-dd83-4ee7-9783-1617ce3279a8",
+  "files": [
+    ".json"
+  ],
+  "subMetas": {
+  },
+  "userData": {
+    "syncNodeName": "LoginPanel"
+  }
+}

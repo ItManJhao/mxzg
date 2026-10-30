@@ -1,0 +1,175 @@
+{
+ "main": [
+  {
+   "idx": 1,
+   "atom": "main_ancient",
+   "zorder": 2,
+   "x": 1257,
+   "y": 373,
+   "reddot": 1012700,
+   "checkreddot": ""
+  },
+  {
+   "idx": 2,
+   "atom": "main_hero_make",
+   "zorder": 2,
+   "x": 976,
+   "y": 409,
+   "reddot": 1001000,
+   "checkreddot": "creatHeroRed"
+  },
+  {
+   "idx": 3,
+   "atom": "main_summon",
+   "zorder": 2,
+   "x": 763,
+   "y": 344,
+   "reddot": 1070000,
+   "checkreddot": "createSummonRed"
+  },
+  {
+   "idx": 4,
+   "atom": "main_blessingpool",
+   "zorder": 2,
+   "x": 356,
+   "y": 651,
+   "reddot": 1003900,
+   "checkreddot": "checkBlessingPoolRedDot"
+  },
+  {
+   "idx": 5,
+   "atom": "main_shop",
+   "zorder": 2,
+   "x": 503,
+   "y": 469,
+   "reddot": "",
+   "checkreddot": ""
+  },
+  {
+   "idx": 6,
+   "atom": "main_smith_shop",
+   "zorder": 1,
+   "x": 350,
+   "y": 344,
+   "reddot": 1002000,
+   "checkreddot": "creatSmithShopRed"
+  },
+  {
+   "idx": 7,
+   "atom": "main_pub_task",
+   "zorder": 2,
+   "x": 617,
+   "y": 578,
+   "reddot": 1000700,
+   "checkreddot": ""
+  },
+  {
+   "idx": 8,
+   "atom": "main_altar",
+   "zorder": 2,
+   "x": 192,
+   "y": 793,
+   "reddot": "",
+   "checkreddot": ""
+  },
+  {
+   "idx": 9,
+   "atom": "main_prophet_tree",
+   "zorder": 3,
+   "x": 920,
+   "y": 220,
+   "reddot": "",
+   "checkreddot": ""
+  },
+  {
+   "idx": 10,
+   "atom": "main_fantasy_land",
+   "zorder": 2,
+   "x": 1268,
+   "y": 694,
+   "reddot": 1009800,
+   "checkreddot": ""
+  },
+  {
+   "idx": 11,
+   "atom": "main_pvp",
+   "zorder": 3,
+   "x": 724,
+   "y": 269,
+   "reddot": 1000800,
+   "checkreddot": ""
+  },
+  {
+   "idx": 12,
+   "atom": "main_fantasy_tower",
+   "zorder": 3,
+   "x": 986,
+   "y": 490,
+   "reddot": 1000100,
+   "checkreddot": ""
+  },
+  {
+   "idx": 13,
+   "atom": "main_black_market",
+   "zorder": 2,
+   "x": 262,
+   "y": 504,
+   "reddot": "",
+   "checkreddot": ""
+  },
+  {
+   "idx": 14,
+   "atom": "main_hero_pernute",
+   "zorder": 3,
+   "x": 518,
+   "y": 444,
+   "reddot": "",
+   "checkreddot": ""
+  },
+  {
+   "idx": 15,
+   "atom": "main_hero_palace",
+   "zorder": 3,
+   "x": 347,
+   "y": 509,
+   "reddot": 1011900,
+   "checkreddot": ""
+  },
+  {
+   "idx": 16,
+   "atom": "main_exotic_adventure",
+   "zorder": 3,
+   "x": 800,
+   "y": 400,
+   "reddot": 1018700,
+   "checkreddot": ""
+  },
+  {
+   "idx": 17,
+   "atom": "main_magic_cube",
+   "zorder": 2,
+   "x": 1220,
+   "y": 540,
+   "reddot": "",
+   "checkreddot": ""
+  },
+  {
+   "idx": 18,
+   "atom": "main_crusade_group",
+   "zorder": 3,
+   "x": 900,
+   "y": 350,
+   "reddot": "",
+   "checkreddot": ""
+  },
+  {
+   "idx": 19,
+   "atom": "main_country_war",
+   "zorder": 3,
+   "x": 680,
+   "y": 500,
+   "reddot": 1026400,
+   "checkreddot": ""
+  }
+ ]
+}

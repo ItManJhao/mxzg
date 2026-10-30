@@ -1,0 +1,69 @@
+
+hytx.png
+size: 1024,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+A1
+  rotate: true
+  xy: 774, 599
+  size: 362, 175
+  orig: 362, 175
+  offset: 0, 0
+  index: -1
+A1_L
+  rotate: false
+  xy: 2, 702
+  size: 384, 259
+  orig: 384, 259
+  offset: 0, 0
+  index: -1
+A2
+  rotate: false
+  xy: 2, 2
+  size: 288, 176
+  orig: 288, 176
+  offset: 0, 0
+  index: -1
+A2_L
+  rotate: false
+  xy: 2, 441
+  size: 384, 259
+  orig: 384, 259
+  offset: 0, 0
+  index: -1
+A3
+  rotate: false
+  xy: 388, 266
+  size: 282, 173
+  orig: 282, 173
+  offset: 0, 0
+  index: -1
+A3_L
+  rotate: false
+  xy: 388, 702
+  size: 384, 259
+  orig: 384, 259
+  offset: 0, 0
+  index: -1
+A4
+  rotate: false
+  xy: 388, 95
+  size: 286, 169
+  orig: 286, 169
+  offset: 0, 0
+  index: -1
+A4_L
+  rotate: false
+  xy: 2, 180
+  size: 384, 259
+  orig: 384, 259
+  offset: 0, 0
+  index: -1
+A5_L
+  rotate: false
+  xy: 388, 441
+  size: 384, 259
+  orig: 384, 259
+  offset: 0, 0
+  index: -1

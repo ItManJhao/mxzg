@@ -1,0 +1,15 @@
+SHOT login
+SHOT servers
+SHOT home
+SHOT hero
+SHOT bag
+SHOT idle-march
+SHOT battle
+SHOT formation
+SHOT fight
+SHOT result
+SHOT claimed
+SHOT item-detail
+SHOT restored-login
+SHOT restored-battle
+PASS preview: server picker, explicit Start, heroes, inventory detail, idle march, formation cancel/save, battle/skip/claim, stage 2 and restore gate; runtime errors: 0

@@ -1,0 +1,41 @@
+
+jldj.png
+size: 277,277
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+b
+  rotate: false
+  xy: 118, 83
+  size: 29, 27
+  orig: 29, 27
+  offset: 0, 0
+  index: -1
+lizi
+  rotate: false
+  xy: 167, 214
+  size: 25, 31
+  orig: 31, 35
+  offset: 3, 0
+  index: -1
+q
+  rotate: false
+  xy: 2, 112
+  size: 163, 163
+  orig: 251, 252
+  offset: 44, 44
+  index: -1
+shangren
+  rotate: false
+  xy: 2, 2
+  size: 114, 108
+  orig: 122, 108
+  offset: 8, 0
+  index: -1
+zi
+  rotate: false
+  xy: 167, 247
+  size: 96, 28
+  orig: 97, 31
+  offset: 0, 1
+  index: -1

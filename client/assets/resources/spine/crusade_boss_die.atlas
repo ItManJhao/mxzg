@@ -1,0 +1,118 @@
+
+crusade_boss_die.png
+size: 468,466
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+A1
+  rotate: true
+  xy: 357, 106
+  size: 84, 86
+  orig: 84, 86
+  offset: 0, 0
+  index: -1
+A10
+  rotate: true
+  xy: 230, 192
+  size: 102, 192
+  orig: 102, 193
+  offset: 0, 1
+  index: -1
+A11
+  rotate: false
+  xy: 357, 17
+  size: 71, 87
+  orig: 71, 87
+  offset: 0, 0
+  index: -1
+A12
+  rotate: true
+  xy: 227, 130
+  size: 60, 128
+  orig: 61, 128
+  offset: 0, 0
+  index: -1
+A13
+  rotate: true
+  xy: 425, 297
+  size: 44, 37
+  orig: 46, 39
+  offset: 1, 1
+  index: -1
+A14
+  rotate: false
+  xy: 425, 253
+  size: 36, 42
+  orig: 37, 42
+  offset: 0, 0
+  index: -1
+A15
+  rotate: true
+  xy: 2, 32
+  size: 111, 141
+  orig: 113, 143
+  offset: 1, 1
+  index: -1
+A16
+  rotate: false
+  xy: 2, 282
+  size: 226, 182
+  orig: 226, 182
+  offset: 0, 0
+  index: -1
+A17
+  rotate: false
+  xy: 230, 296
+  size: 193, 168
+  orig: 224, 180
+  offset: 0, 12
+  index: -1
+A18
+  rotate: false
+  xy: 145, 20
+  size: 140, 83
+  orig: 141, 83
+  offset: 0, 0
+  index: -1
+A2
+  rotate: false
+  xy: 145, 105
+  size: 80, 175
+  orig: 81, 175
+  offset: 0, 0
+  index: -1
+A3
+  rotate: true
+  xy: 425, 396
+  size: 68, 37
+  orig: 70, 39
+  offset: 1, 1
+  index: -1
+A4
+  rotate: true
+  xy: 2, 145
+  size: 135, 141
+  orig: 137, 143
+  offset: 1, 1
+  index: -1
+A7
+  rotate: true
+  xy: 287, 25
+  size: 103, 68
+  orig: 105, 70
+  offset: 1, 1
+  index: -1
+A8
+  rotate: false
+  xy: 425, 343
+  size: 39, 51
+  orig: 39, 51
+  offset: 0, 0
+  index: -1
+A9
+  rotate: true
+  xy: 424, 221
+  size: 30, 42
+  orig: 32, 44
+  offset: 1, 1
+  index: -1

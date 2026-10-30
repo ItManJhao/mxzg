@@ -1,0 +1,146 @@
+
+10306007.png
+size: 522,522
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+cb1
+  rotate: false
+  xy: 2, 65
+  size: 181, 164
+  orig: 181, 164
+  offset: 0, 0
+  index: -1
+cb2
+  rotate: false
+  xy: 274, 57
+  size: 106, 102
+  orig: 106, 102
+  offset: 0, 0
+  index: -1
+pf
+  rotate: false
+  xy: 190, 20
+  size: 72, 50
+  orig: 72, 50
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 274, 161
+  size: 85, 90
+  orig: 85, 90
+  offset: 0, 0
+  index: -1
+t1
+  rotate: true
+  xy: 361, 171
+  size: 45, 105
+  orig: 45, 105
+  offset: 0, 0
+  index: -1
+t2
+  rotate: false
+  xy: 363, 218
+  size: 148, 150
+  orig: 148, 150
+  offset: 0, 0
+  index: -1
+t3
+  rotate: false
+  xy: 363, 370
+  size: 148, 150
+  orig: 148, 150
+  offset: 0, 0
+  index: -1
+tf0
+  rotate: false
+  xy: 136, 2
+  size: 52, 61
+  orig: 52, 61
+  offset: 0, 0
+  index: -1
+tf1
+  rotate: false
+  xy: 185, 72
+  size: 87, 157
+  orig: 87, 157
+  offset: 0, 0
+  index: -1
+tf2
+  rotate: true
+  xy: 264, 8
+  size: 47, 72
+  orig: 47, 72
+  offset: 0, 0
+  index: -1
+tf3
+  rotate: true
+  xy: 2, 6
+  size: 57, 132
+  orig: 57, 132
+  offset: 0, 0
+  index: -1
+tf4
+  rotate: true
+  xy: 382, 44
+  size: 35, 104
+  orig: 35, 104
+  offset: 0, 0
+  index: -1
+wq
+  rotate: false
+  xy: 212, 253
+  size: 149, 267
+  orig: 149, 267
+  offset: 0, 0
+  index: -1
+yj
+  rotate: true
+  xy: 190, 4
+  size: 14, 48
+  orig: 14, 48
+  offset: 0, 0
+  index: -1
+ys
+  rotate: false
+  xy: 468, 172
+  size: 30, 44
+  orig: 30, 44
+  offset: 0, 0
+  index: -1
+ys1
+  rotate: false
+  xy: 382, 32
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+zcb
+  rotate: false
+  xy: 2, 231
+  size: 208, 289
+  orig: 208, 289
+  offset: 0, 0
+  index: -1
+zhd
+  rotate: false
+  xy: 382, 81
+  size: 88, 88
+  orig: 88, 88
+  offset: 0, 0
+  index: -1
+zj
+  rotate: true
+  xy: 212, 233
+  size: 18, 46
+  orig: 18, 46
+  offset: 0, 0
+  index: -1
+zs
+  rotate: false
+  xy: 338, 10
+  size: 42, 45
+  orig: 42, 45
+  offset: 0, 0
+  index: -1

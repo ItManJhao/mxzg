@@ -1,0 +1,146 @@
+
+10105010.png
+size: 512,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+mz1
+  rotate: false
+  xy: 2, 384
+  size: 271, 118
+  orig: 271, 118
+  offset: 0, 0
+  index: -1
+mz2
+  rotate: false
+  xy: 2, 43
+  size: 112, 47
+  orig: 112, 47
+  offset: 0, 0
+  index: -1
+pf
+  rotate: false
+  xy: 275, 434
+  size: 149, 68
+  orig: 149, 68
+  offset: 0, 0
+  index: -1
+shu1
+  rotate: false
+  xy: 275, 343
+  size: 63, 55
+  orig: 63, 55
+  offset: 0, 0
+  index: -1
+shu2
+  rotate: false
+  xy: 340, 368
+  size: 39, 30
+  orig: 39, 30
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 116, 48
+  size: 34, 42
+  orig: 34, 42
+  offset: 0, 0
+  index: -1
+st2
+  rotate: false
+  xy: 389, 401
+  size: 28, 31
+  orig: 28, 31
+  offset: 0, 0
+  index: -1
+tou
+  rotate: false
+  xy: 2, 232
+  size: 185, 150
+  orig: 185, 150
+  offset: 0, 0
+  index: -1
+toufa1
+  rotate: false
+  xy: 189, 263
+  size: 48, 119
+  orig: 48, 119
+  offset: 0, 0
+  index: -1
+toufa2
+  rotate: true
+  xy: 275, 400
+  size: 32, 112
+  orig: 32, 112
+  offset: 0, 0
+  index: -1
+toufa3
+  rotate: true
+  xy: 426, 460
+  size: 42, 78
+  orig: 42, 78
+  offset: 0, 0
+  index: -1
+toufa4
+  rotate: true
+  xy: 2, 3
+  size: 38, 89
+  orig: 38, 89
+  offset: 0, 0
+  index: -1
+toufa5
+  rotate: false
+  xy: 2, 92
+  size: 174, 138
+  orig: 174, 138
+  offset: 0, 0
+  index: -1
+yanjing
+  rotate: true
+  xy: 239, 303
+  size: 79, 34
+  orig: 79, 34
+  offset: 0, 0
+  index: -1
+yanjing2
+  rotate: false
+  xy: 426, 446
+  size: 74, 12
+  orig: 74, 12
+  offset: 0, 0
+  index: -1
+yj
+  rotate: true
+  xy: 275, 322
+  size: 19, 52
+  orig: 19, 52
+  offset: 0, 0
+  index: -1
+ys
+  rotate: false
+  xy: 239, 263
+  size: 33, 38
+  orig: 33, 38
+  offset: 0, 0
+  index: -1
+zj
+  rotate: true
+  xy: 189, 246
+  size: 15, 50
+  orig: 15, 50
+  offset: 0, 0
+  index: -1
+zs
+  rotate: true
+  xy: 93, 7
+  size: 34, 15
+  orig: 34, 15
+  offset: 0, 0
+  index: -1
+zuiba
+  rotate: false
+  xy: 152, 77
+  size: 16, 13
+  orig: 16, 13
+  offset: 0, 0
+  index: -1

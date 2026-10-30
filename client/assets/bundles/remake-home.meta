@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "641302df-7daf-516c-b9ac-47e625b0daab",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "remake-home",
+    "priority": 1,
+    "bundleConfigID": "default"
+  }
+}

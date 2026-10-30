@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "ES2017", "module": "ESNext", "moduleResolution": "node",
+    "strict": true, "experimentalDecorators": true, "useDefineForClassFields": false,
+    "skipLibCheck": true, "noEmit": true, "types": [], "lib": ["ES2017", "DOM"]
+  },
+  "include": ["../temp/declarations/*.d.ts", "../assets/scripts/features/account/**/*.ts", "../assets/scripts/features/home/**/*.ts", "../assets/scripts/features/hero/Hero*.ts", "../assets/scripts/features/Bag/**/*.ts", "../assets/scripts/framework/assets/**/*.ts", "../assets/scripts/platform/http/**/*.ts", "../assets/scripts/app/remake/**/*.ts", "bag-module-types-check.ts"]
+}

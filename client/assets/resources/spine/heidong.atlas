@@ -1,0 +1,27 @@
+
+heidong.png
+size: 1024,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+glow014
+  rotate: false
+  xy: 494, 241
+  size: 246, 245
+  orig: 256, 256
+  offset: 5, 6
+  index: -1
+glow015
+  rotate: false
+  xy: 2, 32
+  size: 490, 454
+  orig: 512, 512
+  offset: 10, 26
+  index: -1
+lizi-01
+  rotate: false
+  xy: 2, 2
+  size: 28, 28
+  orig: 30, 30
+  offset: 1, 1
+  index: -1

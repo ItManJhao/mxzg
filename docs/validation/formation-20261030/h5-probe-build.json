@@ -1,0 +1,18 @@
+{
+  "application": "mxzg-remake-preview",
+  "build": {
+    "application": "mxzg-remake-h5",
+    "creator": "3.8.8",
+    "builtAt": "2026-10-30T10:06:04.1582328Z",
+    "entryScene": "db://assets/scenes/Remake.scene",
+    "sourceCommit": "9c7732ae466de3517454b772e4af998b1e5d0a29",
+    "sourceDirty": true,
+    "sourceSha256": {
+      "assets/prefabs/ui/hero/HeroSelectLayer.prefab": "b7ab530dc24d9e03b863ba542ead479f3676d65e95afda3d393de4dd1237ec2e",
+      "assets/prefabs/ui/hero/HeroIconCell.prefab": "b7f8b642235573e1bc69bfd7c2bbd768676cfbff6b250f633914ac631c5fe2cb",
+      "assets/scripts/features/hero/ui/FormationView.ts": "c79ee07b2ffc01430628ff4abdfc268b1a6d1380bf4605a6c423e2d4dbe0f762",
+      "assets/scripts/features/hero/ui/FormationSlotView.ts": "26ad7e4d14d5ffad26a2c8af0973d78e94feefb5b39eb6ead311747fbd0faa7e"
+    }
+  },
+  "captureMode": "engine profiler hidden for screenshots"
+}

@@ -1,0 +1,139 @@
+
+mofang.png
+size: 506,504
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+A1
+  rotate: false
+  xy: 392, 125
+  size: 73, 71
+  orig: 73, 71
+  offset: 0, 0
+  index: -1
+A2
+  rotate: false
+  xy: 244, 310
+  size: 111, 110
+  orig: 111, 110
+  offset: 0, 0
+  index: -1
+B1
+  rotate: true
+  xy: 2, 2
+  size: 48, 71
+  orig: 48, 71
+  offset: 0, 0
+  index: -1
+B2
+  rotate: true
+  xy: 166, 149
+  size: 111, 110
+  orig: 111, 110
+  offset: 0, 0
+  index: -1
+C1
+  rotate: false
+  xy: 279, 14
+  size: 74, 70
+  orig: 74, 70
+  offset: 0, 0
+  index: -1
+C2
+  rotate: false
+  xy: 357, 310
+  size: 111, 110
+  orig: 111, 110
+  offset: 0, 0
+  index: -1
+D1
+  rotate: false
+  xy: 467, 165
+  size: 24, 31
+  orig: 24, 31
+  offset: 0, 0
+  index: -1
+D2
+  rotate: false
+  xy: 278, 198
+  size: 111, 110
+  orig: 111, 110
+  offset: 0, 0
+  index: -1
+E1
+  rotate: false
+  xy: 430, 431
+  size: 74, 71
+  orig: 74, 71
+  offset: 0, 0
+  index: -1
+E2
+  rotate: false
+  xy: 391, 198
+  size: 111, 110
+  orig: 111, 110
+  offset: 0, 0
+  index: -1
+F1
+  rotate: false
+  xy: 244, 283
+  size: 32, 25
+  orig: 32, 25
+  offset: 0, 0
+  index: -1
+F2
+  rotate: false
+  xy: 166, 37
+  size: 111, 110
+  orig: 111, 110
+  offset: 0, 0
+  index: -1
+G1
+  rotate: false
+  xy: 84, 19
+  size: 73, 71
+  orig: 73, 71
+  offset: 0, 0
+  index: -1
+G2
+  rotate: false
+  xy: 279, 86
+  size: 111, 110
+  orig: 111, 110
+  offset: 0, 0
+  index: -1
+LZ
+  rotate: false
+  xy: 392, 89
+  size: 34, 34
+  orig: 34, 34
+  offset: 0, 0
+  index: -1
+T1
+  rotate: false
+  xy: 2, 262
+  size: 240, 240
+  orig: 240, 240
+  offset: 0, 0
+  index: -1
+T2
+  rotate: true
+  xy: 84, 92
+  size: 168, 80
+  orig: 168, 80
+  offset: 0, 0
+  index: -1
+T3
+  rotate: false
+  xy: 2, 52
+  size: 80, 208
+  orig: 80, 208
+  offset: 0, 0
+  index: -1
+XT
+  rotate: false
+  xy: 244, 422
+  size: 184, 80
+  orig: 184, 80
+  offset: 0, 0
+  index: -1

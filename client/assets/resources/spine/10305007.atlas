@@ -1,0 +1,146 @@
+
+10305007.png
+size: 486,484
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+cb1
+  rotate: false
+  xy: 134, 318
+  size: 181, 164
+  orig: 181, 164
+  offset: 0, 0
+  index: -1
+cb2
+  rotate: false
+  xy: 317, 228
+  size: 106, 102
+  orig: 106, 102
+  offset: 0, 0
+  index: -1
+pf
+  rotate: false
+  xy: 391, 173
+  size: 72, 50
+  orig: 72, 50
+  offset: 0, 0
+  index: -1
+st
+  rotate: true
+  xy: 301, 51
+  size: 85, 90
+  orig: 85, 90
+  offset: 0, 0
+  index: -1
+t1
+  rotate: false
+  xy: 425, 225
+  size: 45, 105
+  orig: 45, 105
+  offset: 0, 0
+  index: -1
+t2
+  rotate: false
+  xy: 151, 77
+  size: 148, 150
+  orig: 148, 150
+  offset: 0, 0
+  index: -1
+t3
+  rotate: false
+  xy: 317, 332
+  size: 148, 150
+  orig: 148, 150
+  offset: 0, 0
+  index: -1
+tf0
+  rotate: false
+  xy: 393, 36
+  size: 52, 61
+  orig: 52, 61
+  offset: 0, 0
+  index: -1
+tf1
+  rotate: true
+  xy: 134, 229
+  size: 87, 157
+  orig: 87, 157
+  offset: 0, 0
+  index: -1
+tf2
+  rotate: false
+  xy: 393, 99
+  size: 47, 72
+  orig: 47, 72
+  offset: 0, 0
+  index: -1
+tf3
+  rotate: true
+  xy: 151, 18
+  size: 57, 132
+  orig: 57, 132
+  offset: 0, 0
+  index: -1
+tf4
+  rotate: true
+  xy: 285, 14
+  size: 35, 104
+  orig: 35, 104
+  offset: 0, 0
+  index: -1
+wq
+  rotate: false
+  xy: 2, 215
+  size: 130, 267
+  orig: 130, 267
+  offset: 0, 0
+  index: -1
+yj
+  rotate: false
+  xy: 293, 268
+  size: 14, 48
+  orig: 14, 48
+  offset: 0, 0
+  index: -1
+ys
+  rotate: true
+  xy: 391, 4
+  size: 30, 44
+  orig: 30, 44
+  offset: 0, 0
+  index: -1
+ys1
+  rotate: false
+  xy: 134, 217
+  size: 10, 10
+  orig: 10, 10
+  offset: 0, 0
+  index: -1
+zcb
+  rotate: false
+  xy: 2, 24
+  size: 147, 189
+  orig: 147, 189
+  offset: 0, 0
+  index: -1
+zhd
+  rotate: false
+  xy: 301, 138
+  size: 88, 88
+  orig: 88, 88
+  offset: 0, 0
+  index: -1
+zj
+  rotate: true
+  xy: 2, 4
+  size: 18, 46
+  orig: 18, 46
+  offset: 0, 0
+  index: -1
+zs
+  rotate: false
+  xy: 442, 126
+  size: 42, 45
+  orig: 42, 45
+  offset: 0, 0
+  index: -1

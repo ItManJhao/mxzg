@@ -1,0 +1,27 @@
+# 英雄 / 背包 / 挂机 / 出阵 / 战斗
+
+> 这是历史 1:1 迁移基线。2026-10-29 起项目定位为现代化重做版，新页面、交互与协议按新需求设计；本页坐标、壳层与“不发新协议”等限制只描述旧实现，不约束新架构。
+
+对照旧工程：主城点英雄、背包、底栏战斗进挂机，战斗在挂机舞台上打，不另开一块黑底森林，也不打开真服探针页。中文文案。不发新协议，不打开 P5 活动壳。探针只在 `?dev=wire`，或挂机左侧空地长按。
+
+贴图都在 `client/assets/resources/`。格子不在 ccbi 壳里，运行时用这些图拼。
+
+| 屏幕 | Prefab | 数据 | 贴图 |
+|------|--------|------|------|
+| 英雄列表 | `prefabs/ui/hero/HeroListLayer` | `GameStore.heroes()` 全部进滚动格，不再停在 16 格。名字和元素用 `herotype`。头像是 `herotype.item_id`，类型号对上 `item.icon` 的 `hero-icon/` 时用那张（雷顿等四只是 `20701001` 这一档）。出战标用 MAIN 或本局出阵。空间字是 `n/` + s2c 4001 的 `hero_capacity`；这包没带才用 `system.hero_space_initial`（300）。图鉴是整张 `herotype`，没有的灰掉加锁。名册未同步或是空数组时，英雄页改画这张图鉴。圣龙是 `dragonlevel` 四个名字加 `dragonrelic`。四只龙共用 `dragon_btn-illustration`，不把鉴定光效当成立绘 | `ui/common/button_btn-tab-23` / `button_btn-tab-24`，`ui/hero/hero-icon_elem-0`…`5`，`hero-icon_icon-bg-2`，`hero-icon_icon-frame-1`，`hero-info_spr-star-1`，`hero-icon_spr-battle`，没有的头像 `hero-icon_spr-default`，锁 `hero-icon_spr-lock`。圣龙标 `ui/dragon/dragon_btn-illustration`，锁 `dragon_spr-lock` |
+| 英雄详情 | `prefabs/ui/hero/HeroInfoLayer` | 同一名册。育成页攻击 / HP / 防御 / 速度用 `herobase`。没有表就写「—」，不写 0。`btn_attr_detail` 打开 `HeroInfoAttrLayer`，滚动里是这四项，有战力再加一行，点暗处收起。职业用 `herotype.occupation` 对 language 111001–111005，对不上写「职业: 未知」。点技能图标打开 `HeroSkillInfoLayer`，名字和说明用 `heroskill`。星级表有等级时，图标上画 `hero-info_spr-skill-level-bg`。星UP 读 `herostar`（等级上限、攻击 / 生命展示、技能槽等级、`upstar_cost`、`need_item`）和 `herotype.to_N_star`，只展示，不发协议。升级、升星、穿上留着日服按钮图，不发写协议。宝石按 `jeweltype.place`（攻击 / 生命 / 速度）。神装按 `godequipment.place`（戒指 / 耳环 / 披风 / 腰带）。持有数来自背包，没有就上锁。返回关掉这层，左右在名册里换人。装备圈空着，只提示，不发穿戴 | 详情壳自带装备圈。立绘挂在 `node_equip` 圆心，座位 Y 是 0，缩放 0.58。页签 育成 / 星UP / 宝石 / 神装 用同一套 tab 图。职业标 `hero-info_icon-occup-1`…`5`。稀有 2/3/4 用 `backpack_spr-rare-*`，其余 `backpack_item-frame-1`。技能标 `ui/hero/skill-icon_<技能号>`，等级底 `hero-info_spr-skill-level-bg` |
+| 背包 | `prefabs/ui/backpack/BackpackLayer` | `GameStore.bag()` 全部进滚动格，不再停在 16 格。`item.type`：装备 14/17/22/26，碎片 7/9，精灵 8，其余道具。金币钻石不进格子。点格子弹出说明，不发使用 | 空格 `ui/common/other_spr-null`，框 `ui/bag/backpack_item-frame-1` 或 `backpack_spr-rare-2|3|4`，图标 `ui/bag/backpack_<idx>`，缺图用 `backpack_spr-default`。说明卡底 `ui/common/win-bg_block-bg-24`，关 `button_btn-close-1` |
+| 挂机 | `prefabs/ui/battle/BattlePanelLayer` 盖在当前关 `chapterreward.map` 的 `ui/chapter/hang/mapXX_B` + `mapXX_F` 上，对不上仍是 map01 | 底栏三格和 Mock 领取都读 `chapterreward.reward_base`：当前关每分钟的 900001 金币、900101 英雄经验、900003 角色经验。当前关 = 已通关 + 1。关号用 Mock 的 `stageId`，否则 3007 的 `nowIdx`，再否则 `maxIdx`，都没有就是 1。表没绑上时真服写「—/m」，Mock 才退回每分钟 6 金、每关 +4。计时读到 `system.idle_max_time` 时封顶（21600 秒）。满 1 小时泡上和宝箱条都是 `hh:mm`（`06:00`），不满 1 小时是 `mm:ss`。有 `reward_base` 或 `drop_group` 时用已有金币、月牙、角色经验、钻石、宝箱和掉落图标叠一堆，计时泡在堆上。没有这些数据时场地留空。不给站位写「待命」。站好之后客户端演武：在场的我方一直留在地砖格上。行军播 run，天和大理石只在这一段水平循环；遇到怪时我方改站立，背景停，怪从右侧滑进右侧格子、朝左，我方朝右，看见之后才攻击，看不见不出刀。计时泡不留 Prefab 占位「999」。金环心垫奶油色，不透底板黑圆。面板在时不另铺扁平蓝钮。受击只打在被打的怪上。怪收掉后接着行军，不把我方当成新刷出来的人。奇数刀再播 attack2。皮肤套名对得上技能帧时（套名、套名补 0，或 herotype / skin / herofashion 对上的技能号），在怪身上同时播主套、其余层和箭矢；对不上仍是 hero-skill。381 套能攻击的皮肤里 226 套对得上。挂机技能名用 font/FZCSJW-GB1-0，字库没挂上才是系统字。受击帧和 yanwu 仍在，黄色数字（font/yellow-73）在怪头顶，没有 die 就收掉。左英雄头顶按 herotalk 换一句对白，进真战报先藏。真战报的分套和箭矢也挂在这块大理石的技能锚点上。不发协议。点「战斗」暂停演武并仍进真战报。没有角色 VIP 等级时战斗钮下不写字，不乘进三格。宝箱领取走 Mock `idle.claim`，真服只发已有的空 3005。强化石仍按旧间隔。顶栏战力用名册 `fighting` 之和，没有就留空。头像用出阵或第一名英雄的 `hero-icon`，没有就关掉空褐圈 | 关掉 `spr_world`、「地图」和「999」。金环水晶 `main-scene_spr-map-frame-1` 留着，盖住奶油空板。不挂 `main-scene_spr-drop-1`（那是空蓝金匾）。进度填充 `main-scene_progress-AFK` / `progress-hangs` / `progress-exp` / `progress-role-exp`，宽 158，高度跟原图 28 / 24 / 24 / 4。掉落堆和计时泡在金环上沿，不盖住环。中间「战斗」循环 `main-scene-effect_btn-battle-0`…`9`。三格旁边已是 `backpack_900001` / `backpack_900101` / `backpack_900003`。日服场地中间的战斗测试条没有对应挂机 Prefab，不新画 |
+| 出阵 | `prefabs/ui/hero/HeroSelectLayer` | 真服确认发 c2s 3100（阵法 1，站位 2/3/5/6/7/8/9），空的 s2c 3100 后再等 3101，然后才进战。`?dev=mock` 才把选择记在本局 `localLineup`。MAIN 已经有英雄就跳过这一层。`scroll_view_backpack` 里放筛选后的全部英雄。前排 4–1 写「前」，后排 8–5 写「后」，第 9 格锁着。脸在合法站位的格子上：2、3、5、6、7、8、9。格子 1 和 4 留空。第 7 人在格子 9，锁图压到格子后面。打开时按站位把脸放回原格。战力是已选英雄 `fighting` 之和，一个都没有就写「—」。确认是「出阵」 | 筛选 `hero-icon_elem-*`，格子 `hero-icon_icon-bg-2`，锁 `hero-select_spr-lock`，头像同样走 `item_id`。空位写「前」或「后」。槽位原来是 0×0，脸上的按钮才能点掉 |
+| 战斗 | 仍挂 `BattlePage` 播战报。`LayerField` 和 `LayerVfx` 抬到挂机壳上，大理石留着，不把森林底盖上来 | 点「战斗」后壳不藏。回合牌读战报「回合 N」，写成 `n/15`（`battletype.round_max` 有值时用那个分母），底图是 `battle-end_spr-round-bg`。加速换 `battle-scene_btn-speed-1/2/3`。跳过用 `battle-scene_btn-speed-11`，停在最后一拍。开战播一次 `spine/ZDKS` 的 `stand`，旁边仍写「战斗开始」，左右再各播一遍 `battle-appear` 0–14，播完或第一下受击就藏；套或帧没挂上只打日志。战报格子、血条和飘字跟演武同一组地砖点，不沿用森林左右排。血条在站位上方：我方绿、敌方红，宽 78。蓝条是怒气位置，按这个回合号填充，战报没有怒气字段。命中 `hurt` 是伤害大小，掉血是 yellow-73，治疗是 green-73，暴击是更大的 red-73；字库没挂上才退回红字、绿字和金字。技能名写在条上，没有名字、这一拍在攻击时写「攻击」。演武英雄在回放时藏起，回挂机再出现 | 挂机舞台留下。Prefab 加载失败时代码 UI 留在壳下，日志写明，挂机条仍显示回合和飘字。`map-bg-mission-1` 不拿来当挂机底 |
+| 结算 | `prefabs/ui/battle/BattleEndLayer` 盖在挂机壳上 | 胜利把 `spr_result` 换成 `battle-end-lang_lbl-result-1`，画 3 颗星，奖励用这一关 `first_reward`，图标在 `show_rich` 上。「回挂机」回挂机，不发 3002。胜利才把 `btn_report` 改成「下一关」，字缩进 66×74。占位「1111111111111」「总伤害量」「9999」藏起来。等级没同步不留「Lv 1」 | 表上没有星级列。失败仍是 `result-0`，不画星，也不显示下一关。胜负对不上藏横幅并写「胜负未带」。不把胜负写进 `lbl_hero_name` |
+
+页签上的字原来是 48 号，按钮只有约 111×43，三颗页签会叠成一串。现在把字缩进按钮里。
+
+空名册改画 `herotype` 图鉴（灰、锁），至少铺满一屏（4 行）。空背包仍只画空格，标题写「空背包」或「真服未同步」。格子多了就在这一屏里滚。不补假英雄、不补假道具。图鉴、宝石、神装、圣物没有服数据时按表画，没有的上锁。收到后续 s2c 会重画。
+
+英雄列表和背包的 ccbi 壳上没有滚动节点，滚动是运行时加的。出阵用壳上已有的 `scroll_view_backpack`。
+
+和旧版仍不一样的地方写在 `docs/prefab-1to1-deviations.md` 末尾「功能偏差」。
+
+「我要变强」打开 `HeroSuggestLayer`，页签只切换已有节点，不发协议。「快速战斗」打开 `QuickBattleLayer`，按两小时 `reward_base` 预览，并读 3012，不发 3013，也不发奖励。

@@ -1,0 +1,25 @@
+{
+  "name": "mxzg-remake",
+  "platform": "web-mobile",
+  "buildPath": "project://build",
+  "outputName": "remake-h5",
+  "taskName": "remake-h5",
+  "__version__": "1.3.9",
+  "debug": true,
+  "sourceMaps": false,
+  "md5Cache": true,
+  "mainBundleCompressionType": "merge_dep",
+  "skipCompressTexture": true,
+  "packAutoAtlas": false,
+  "useBuiltinServer": false,
+  "startScene": "9fb72e33-d89f-5156-93fb-f8de2a47f16e",
+  "scenes": [
+    {
+      "url": "db://assets/scenes/Remake.scene",
+      "uuid": "9fb72e33-d89f-5156-93fb-f8de2a47f16e"
+    }
+  ],
+  "packages": {
+    "web-mobile": { "orientation": "portrait", "useWebGPU": false, "embedWebDebugger": false, "__version__": "1.0.1" }
+  }
+}

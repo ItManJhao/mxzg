@@ -1,0 +1,35 @@
+SHOT login
+SHOT servers
+SHOT home
+SHOT hero
+FAILED STATE [
+  { view: 'RemakeHomeView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'ScrollView', phase: undefined, stage: undefined },
+  { view: 'BackpackTabButtonView', phase: undefined, stage: undefined },
+  { view: 'BackpackTabButtonView', phase: undefined, stage: undefined },
+  { view: 'BackpackTabButtonView', phase: undefined, stage: undefined },
+  { view: 'BackpackTabButtonView', phase: undefined, stage: undefined },
+  { view: 'CityChromeView', phase: undefined, stage: undefined }
+]
+Error: bag absent
+    at F:\project\mxzg\client\tools\check-remake-preview.cjs:200:19

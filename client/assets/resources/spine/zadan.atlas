@@ -1,0 +1,160 @@
+
+zadan.png
+size: 727,727
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+0
+  rotate: true
+  xy: 622, 180
+  size: 159, 102
+  orig: 180, 120
+  offset: 10, 0
+  index: -1
+10
+  rotate: true
+  xy: 282, 306
+  size: 171, 108
+  orig: 180, 120
+  offset: 4, 0
+  index: -1
+12
+  rotate: false
+  xy: 464, 615
+  size: 174, 110
+  orig: 180, 120
+  offset: 2, 0
+  index: -1
+14
+  rotate: true
+  xy: 264, 11
+  size: 176, 111
+  orig: 180, 120
+  offset: 1, 0
+  index: -1
+15
+  rotate: true
+  xy: 150, 10
+  size: 177, 112
+  orig: 180, 120
+  offset: 1, 0
+  index: -1
+17
+  rotate: true
+  xy: 351, 550
+  size: 175, 111
+  orig: 180, 120
+  offset: 2, 0
+  index: -1
+19
+  rotate: false
+  xy: 464, 504
+  size: 172, 109
+  orig: 180, 120
+  offset: 3, 0
+  index: -1
+2
+  rotate: true
+  xy: 622, 341
+  size: 161, 103
+  orig: 180, 120
+  offset: 9, 0
+  index: -1
+21
+  rotate: false
+  xy: 282, 196
+  size: 170, 108
+  orig: 180, 120
+  offset: 4, 0
+  index: -1
+23
+  rotate: true
+  xy: 392, 335
+  size: 167, 106
+  orig: 180, 120
+  offset: 6, 0
+  index: -1
+25
+  rotate: true
+  xy: 500, 337
+  size: 165, 105
+  orig: 180, 120
+  offset: 7, 0
+  index: -1
+27
+  rotate: true
+  xy: 592, 15
+  size: 163, 104
+  orig: 180, 120
+  offset: 8, 0
+  index: -1
+4
+  rotate: true
+  xy: 486, 14
+  size: 164, 104
+  orig: 180, 120
+  offset: 7, 0
+  index: -1
+6
+  rotate: false
+  xy: 454, 227
+  size: 166, 106
+  orig: 180, 120
+  offset: 6, 0
+  index: -1
+8
+  rotate: true
+  xy: 377, 25
+  size: 169, 107
+  orig: 180, 120
+  offset: 5, 0
+  index: -1
+A1
+  rotate: false
+  xy: 273, 479
+  size: 102, 27
+  orig: 104, 29
+  offset: 1, 1
+  index: -1
+A2
+  rotate: true
+  xy: 239, 429
+  size: 77, 32
+  orig: 79, 34
+  offset: 1, 1
+  index: -1
+A3
+  rotate: false
+  xy: 239, 508
+  size: 110, 217
+  orig: 114, 219
+  offset: 3, 1
+  index: -1
+A4
+  rotate: false
+  xy: 2, 179
+  size: 115, 236
+  orig: 117, 238
+  offset: 1, 1
+  index: -1
+A5
+  rotate: true
+  xy: 119, 189
+  size: 226, 161
+  orig: 228, 163
+  offset: 1, 1
+  index: -1
+zd_cui
+  rotate: false
+  xy: 2, 2
+  size: 146, 175
+  orig: 146, 175
+  offset: 0, 0
+  index: -1
+zd_dan1
+  rotate: false
+  xy: 2, 417
+  size: 235, 308
+  orig: 235, 308
+  offset: 0, 0
+  index: -1

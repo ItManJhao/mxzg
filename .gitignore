@@ -1,0 +1,42 @@
+﻿# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+.env.*
+*.jks
+*.keystore
+*.pem
+
+# Local junctions / deferred trees.
+# Game tables live in the repo at config/gameconfig. Other config/ files stay local.
+/config/*
+!/config/README.md
+!/config/gameconfig/
+!/config/gameconfig/**
+/server/
+CONFIG_LINK.txt
+SERVER_LINK.txt
+
+# IP geolocation DB is large and stays on the machine, not in git.
+ip2region.db
+
+# Remake backend local tools, build output and development database.
+/backend/.tools/
+/backend/.local/
+/backend/target/
+
+# Cocos Creator
+client/library/
+client/temp/
+client/local/
+client/build/
+client/profiles/
+client/native/
+client/node_modules/

@@ -1,0 +1,20 @@
+
+tiejiangguang.png
+size: 512,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+g
+  rotate: false
+  xy: 2, 132
+  size: 269, 256
+  orig: 300, 300
+  offset: 18, 21
+  index: -1
+lizi-02
+  rotate: false
+  xy: 2, 2
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1

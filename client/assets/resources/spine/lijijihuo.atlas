@@ -1,0 +1,27 @@
+
+lijijihuo.png
+size: 136,136
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+DG
+  rotate: false
+  xy: 2, 40
+  size: 122, 94
+  orig: 189, 134
+  offset: 36, 14
+  index: -1
+lijijihuo
+  rotate: false
+  xy: 2, 2
+  size: 104, 36
+  orig: 104, 36
+  offset: 0, 0
+  index: -1
+lizi
+  rotate: false
+  xy: 108, 20
+  size: 18, 18
+  orig: 22, 22
+  offset: 2, 2
+  index: -1

@@ -1,0 +1,1065 @@
+{
+  "first": {
+    "tab": "item",
+    "columns": 3,
+    "rows": 2,
+    "layoutType": 2,
+    "gridAxis": 0,
+    "spacingX": 30,
+    "spacingY": 18,
+    "paddingLeft": 24,
+    "paddingRight": 24,
+    "paddingTop": 18,
+    "paddingBottom": 26,
+    "viewport": {
+      "width": 520,
+      "height": 555,
+      "mask": true
+    },
+    "content": {
+      "width": 520,
+      "height": 824
+    },
+    "position": {
+      "x": 0,
+      "y": 0
+    },
+    "length": 20,
+    "ids": [
+      "Node.1265",
+      "Node.1270",
+      "Node.1275",
+      "Node.1280",
+      "Node.1285",
+      "Node.1290",
+      "Node.1295",
+      "Node.1300",
+      "Node.1305",
+      "Node.1310",
+      "Node.1315",
+      "Node.1320",
+      "Node.1325",
+      "Node.1330",
+      "Node.1335",
+      "Node.1340",
+      "Node.1345",
+      "Node.1350",
+      "Node.1355",
+      "Node.1360"
+    ],
+    "cells": [
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -750,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -750,
+        "width": 96,
+        "scale": 1
+      }
+    ],
+    "owned": 2,
+    "actualRows": 2,
+    "details": 0
+  },
+  "dragged": {
+    "tab": "item",
+    "columns": 3,
+    "rows": 2,
+    "layoutType": 2,
+    "gridAxis": 0,
+    "spacingX": 30,
+    "spacingY": 18,
+    "paddingLeft": 24,
+    "paddingRight": 24,
+    "paddingTop": 18,
+    "paddingBottom": 26,
+    "viewport": {
+      "width": 520,
+      "height": 555,
+      "mask": true
+    },
+    "content": {
+      "width": 520,
+      "height": 824
+    },
+    "position": {
+      "x": 0,
+      "y": 269.0005
+    },
+    "length": 20,
+    "ids": [
+      "Node.1265",
+      "Node.1270",
+      "Node.1275",
+      "Node.1280",
+      "Node.1285",
+      "Node.1290",
+      "Node.1295",
+      "Node.1300",
+      "Node.1305",
+      "Node.1310",
+      "Node.1315",
+      "Node.1320",
+      "Node.1325",
+      "Node.1330",
+      "Node.1335",
+      "Node.1340",
+      "Node.1345",
+      "Node.1350",
+      "Node.1355",
+      "Node.1360"
+    ],
+    "cells": [
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -750,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -750,
+        "width": 96,
+        "scale": 1
+      }
+    ],
+    "owned": 2,
+    "actualRows": 2,
+    "details": 0
+  },
+  "refreshed": {
+    "tab": "item",
+    "columns": 3,
+    "rows": 2,
+    "layoutType": 2,
+    "gridAxis": 0,
+    "spacingX": 30,
+    "spacingY": 18,
+    "paddingLeft": 24,
+    "paddingRight": 24,
+    "paddingTop": 18,
+    "paddingBottom": 26,
+    "viewport": {
+      "width": 520,
+      "height": 555,
+      "mask": true
+    },
+    "content": {
+      "width": 520,
+      "height": 824
+    },
+    "position": {
+      "x": 0,
+      "y": 269
+    },
+    "length": 20,
+    "ids": [
+      "Node.1265",
+      "Node.1270",
+      "Node.1275",
+      "Node.1280",
+      "Node.1285",
+      "Node.1290",
+      "Node.1295",
+      "Node.1300",
+      "Node.1305",
+      "Node.1310",
+      "Node.1315",
+      "Node.1320",
+      "Node.1325",
+      "Node.1330",
+      "Node.1335",
+      "Node.1340",
+      "Node.1345",
+      "Node.1350",
+      "Node.1355",
+      "Node.1360"
+    ],
+    "cells": [
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -750,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -750,
+        "width": 96,
+        "scale": 1
+      }
+    ],
+    "owned": 2,
+    "actualRows": 2,
+    "details": 0
+  },
+  "compatible": {
+    "widths": [
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104,
+      104
+    ],
+    "owned": 2
+  },
+  "matrix": [
+    {
+      "mode": 0,
+      "axis": 0,
+      "count": 0,
+      "width": 240,
+      "height": 120,
+      "vertical": true,
+      "horizontal": false,
+      "first": null
+    },
+    {
+      "mode": 0,
+      "axis": 0,
+      "count": 1,
+      "width": 240,
+      "height": 120,
+      "vertical": true,
+      "horizontal": false,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 0,
+      "axis": 0,
+      "count": 3,
+      "width": 240,
+      "height": 128,
+      "vertical": true,
+      "horizontal": false,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 0,
+      "axis": 0,
+      "count": 18,
+      "width": 240,
+      "height": 668,
+      "vertical": true,
+      "horizontal": false,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 0,
+      "axis": 0,
+      "before": {
+        "x": 0,
+        "y": 90
+      },
+      "after": {
+        "x": 0,
+        "y": 90
+      },
+      "shorter": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "mode": 1,
+      "axis": 1,
+      "count": 0,
+      "width": 240,
+      "height": 120,
+      "vertical": false,
+      "horizontal": true,
+      "first": null
+    },
+    {
+      "mode": 1,
+      "axis": 1,
+      "count": 1,
+      "width": 240,
+      "height": 120,
+      "vertical": false,
+      "horizontal": true,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 1,
+      "axis": 1,
+      "count": 3,
+      "width": 240,
+      "height": 120,
+      "vertical": false,
+      "horizontal": true,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 1,
+      "axis": 1,
+      "count": 18,
+      "width": 882,
+      "height": 120,
+      "vertical": false,
+      "horizontal": true,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 1,
+      "axis": 1,
+      "before": {
+        "x": 100,
+        "y": 0
+      },
+      "after": {
+        "x": 100,
+        "y": 0
+      },
+      "shorter": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "mode": 2,
+      "axis": 0,
+      "count": 0,
+      "width": 240,
+      "height": 120,
+      "vertical": true,
+      "horizontal": false,
+      "first": null
+    },
+    {
+      "mode": 2,
+      "axis": 0,
+      "count": 1,
+      "width": 240,
+      "height": 120,
+      "vertical": true,
+      "horizontal": false,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 2,
+      "axis": 0,
+      "count": 3,
+      "width": 240,
+      "height": 120,
+      "vertical": true,
+      "horizontal": false,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 2,
+      "axis": 0,
+      "count": 18,
+      "width": 240,
+      "height": 236,
+      "vertical": true,
+      "horizontal": false,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 2,
+      "axis": 0,
+      "before": {
+        "x": 0,
+        "y": 90
+      },
+      "after": {
+        "x": 0,
+        "y": 90
+      },
+      "shorter": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "mode": 2,
+      "axis": 1,
+      "count": 0,
+      "width": 240,
+      "height": 120,
+      "vertical": false,
+      "horizontal": true,
+      "first": null
+    },
+    {
+      "mode": 2,
+      "axis": 1,
+      "count": 1,
+      "width": 240,
+      "height": 120,
+      "vertical": false,
+      "horizontal": true,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 2,
+      "axis": 1,
+      "count": 3,
+      "width": 240,
+      "height": 120,
+      "vertical": false,
+      "horizontal": true,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 2,
+      "axis": 1,
+      "count": 18,
+      "width": 450,
+      "height": 120,
+      "vertical": false,
+      "horizontal": true,
+      "first": {
+        "x": 32,
+        "y": -25
+      }
+    },
+    {
+      "mode": 2,
+      "axis": 1,
+      "before": {
+        "x": 100,
+        "y": 0
+      },
+      "after": {
+        "x": 100,
+        "y": 0
+      },
+      "shorter": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "reopened": {
+    "tab": "item",
+    "columns": 3,
+    "rows": 2,
+    "layoutType": 2,
+    "gridAxis": 0,
+    "spacingX": 30,
+    "spacingY": 18,
+    "paddingLeft": 24,
+    "paddingRight": 24,
+    "paddingTop": 18,
+    "paddingBottom": 26,
+    "viewport": {
+      "width": 520,
+      "height": 555,
+      "mask": true
+    },
+    "content": {
+      "width": 520,
+      "height": 824
+    },
+    "position": {
+      "x": 0,
+      "y": 0
+    },
+    "length": 20,
+    "ids": [
+      "Node.1810",
+      "Node.1815",
+      "Node.1820",
+      "Node.1825",
+      "Node.1830",
+      "Node.1835",
+      "Node.1840",
+      "Node.1845",
+      "Node.1850",
+      "Node.1855",
+      "Node.1860",
+      "Node.1865",
+      "Node.1870",
+      "Node.1875",
+      "Node.1880",
+      "Node.1885",
+      "Node.1890",
+      "Node.1895",
+      "Node.1900",
+      "Node.1905"
+    ],
+    "cells": [
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -66,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -180,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -294,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -408,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -522,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 324,
+        "y": -636,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 72,
+        "y": -750,
+        "width": 96,
+        "scale": 1
+      },
+      {
+        "name": "BackpackItemCell",
+        "x": 198,
+        "y": -750,
+        "width": 96,
+        "scale": 1
+      }
+    ],
+    "owned": 2,
+    "actualRows": 2,
+    "details": 0
+  }
+}

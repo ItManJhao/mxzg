@@ -1,0 +1,14 @@
+{
+  "name": "mxzg",
+  "uuid": "0428fce1-f85f-4e4a-a11c-0f8d2aee1e5d",
+  "creator": {
+    "version": "3.8.8"
+  },
+  "scripts": {
+    "check": "node tools/check-project.mjs",
+    "check:architecture": "node tools/check-project.mjs --suite architecture"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

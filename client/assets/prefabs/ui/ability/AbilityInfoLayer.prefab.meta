@@ -1,0 +1,14 @@
+{
+  "ver": "1.1.50",
+  "importer": "prefab",
+  "imported": true,
+  "uuid": "3a767955-166a-4395-a9cf-28428a581864",
+  "files": [
+    ".json"
+  ],
+  "subMetas": {
+  },
+  "userData": {
+    "syncNodeName": "AbilityInfoLayer"
+  }
+}

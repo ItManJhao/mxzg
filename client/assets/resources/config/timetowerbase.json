@@ -1,0 +1,1 @@
+{"table":"timetowerbase","note":"exported from config/gameconfig/timetowerbase.xlsx sheet timetowerbase. flag 1/2/3 columns only.","rows":[{"idx":1,"key":"opentime","value":"1_0_0_0","remark":"每周开启时间"},{"idx":2,"key":"endtime","value":"7_23_30_0","remark":"每周结算时间"},{"idx":3,"key":"heart","value":3,"remark":"每天心数"}]}

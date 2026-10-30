@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "e2414d6f-6777-4cee-a9fa-572647587dd9",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "e2414d6f-6777-4cee-a9fa-572647587dd9@6c48a",
+      "displayName": "hero-select_contract-rider-7",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "e2414d6f-6777-4cee-a9fa-572647587dd9",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "e2414d6f-6777-4cee-a9fa-572647587dd9@f9941",
+      "displayName": "hero-select_contract-rider-7",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": -0.5,
+        "offsetY": 0,
+        "trimX": 14,
+        "trimY": 12,
+        "width": 41,
+        "height": 46,
+        "rawWidth": 70,
+        "rawHeight": 70,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -20.5,
+            -23,
+            0,
+            20.5,
+            -23,
+            0,
+            -20.5,
+            23,
+            0,
+            20.5,
+            23,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            14,
+            58,
+            55,
+            58,
+            14,
+            12,
+            55,
+            12
+          ],
+          "nuv": [
+            0.2,
+            0.17142857142857143,
+            0.7857142857142857,
+            0.17142857142857143,
+            0.2,
+            0.8285714285714286,
+            0.7857142857142857,
+            0.8285714285714286
+          ],
+          "minPos": [
+            -20.5,
+            -23,
+            0
+          ],
+          "maxPos": [
+            20.5,
+            23,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "e2414d6f-6777-4cee-a9fa-572647587dd9@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "e2414d6f-6777-4cee-a9fa-572647587dd9@6c48a",
+    "type": "sprite-frame"
+  }
+}

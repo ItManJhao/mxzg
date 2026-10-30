@@ -1,0 +1,13 @@
+
+t4.png
+size: 128,128
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+4
+  rotate: false
+  xy: 2, 2
+  size: 63, 123
+  orig: 63, 123
+  offset: 0, 0
+  index: -1

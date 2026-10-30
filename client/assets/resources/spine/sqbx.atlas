@@ -1,0 +1,41 @@
+
+sqbx.png
+size: 233,233
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Glow
+  rotate: false
+  xy: 2, 38
+  size: 174, 193
+  orig: 174, 196
+  offset: 0, 2
+  index: -1
+L1
+  rotate: false
+  xy: 178, 152
+  size: 35, 38
+  orig: 39, 39
+  offset: 3, 1
+  index: -1
+L5
+  rotate: false
+  xy: 178, 192
+  size: 41, 39
+  orig: 48, 48
+  offset: 4, 4
+  index: -1
+L6
+  rotate: true
+  xy: 33, 3
+  size: 33, 36
+  orig: 35, 38
+  offset: 1, 1
+  index: -1
+L8
+  rotate: true
+  xy: 2, 2
+  size: 34, 29
+  orig: 36, 31
+  offset: 1, 1
+  index: -1

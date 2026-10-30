@@ -1,0 +1,174 @@
+
+bisha.png
+size: 1262,1262
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+A1
+  rotate: false
+  xy: 404, 742
+  size: 320, 251
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+A1_L
+  rotate: false
+  xy: 404, 995
+  size: 320, 265
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+A2
+  rotate: false
+  xy: 393, 478
+  size: 320, 262
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+A2_L
+  rotate: false
+  xy: 715, 480
+  size: 320, 250
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+A3
+  rotate: false
+  xy: 2, 199
+  size: 320, 265
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+A3_L
+  rotate: false
+  xy: 726, 732
+  size: 320, 261
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+A4
+  rotate: false
+  xy: 726, 995
+  size: 320, 265
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+A4_L
+  rotate: true
+  xy: 324, 144
+  size: 320, 250
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+A5
+  rotate: true
+  xy: 576, 156
+  size: 320, 250
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+A5_L
+  rotate: true
+  xy: 828, 158
+  size: 320, 250
+  orig: 320, 265
+  offset: 0, 0
+  index: -1
+F_1
+  rotate: false
+  xy: 2, 861
+  size: 400, 399
+  orig: 402, 401
+  offset: 1, 1
+  index: -1
+F_1_L
+  rotate: false
+  xy: 2, 466
+  size: 389, 393
+  orig: 402, 401
+  offset: 5, 0
+  index: -1
+F_2
+  rotate: true
+  xy: 1048, 779
+  size: 183, 182
+  orig: 185, 184
+  offset: 1, 1
+  index: -1
+F_2_L
+  rotate: false
+  xy: 1048, 595
+  size: 183, 182
+  orig: 185, 184
+  offset: 1, 1
+  index: -1
+baise
+  rotate: false
+  xy: 1134, 1146
+  size: 116, 114
+  orig: 128, 128
+  offset: 6, 8
+  index: -1
+bi
+  rotate: false
+  xy: 741, 13
+  size: 176, 141
+  orig: 176, 142
+  offset: 0, 1
+  index: -1
+bi_1_L
+  rotate: false
+  xy: 919, 18
+  size: 172, 138
+  orig: 176, 142
+  offset: 2, 3
+  index: -1
+bi_L
+  rotate: true
+  xy: 1093, 82
+  size: 163, 132
+  orig: 176, 142
+  offset: 5, 6
+  index: -1
+sha
+  rotate: true
+  xy: 1080, 415
+  size: 178, 166
+  orig: 178, 166
+  offset: 0, 0
+  index: -1
+sha_1_L
+  rotate: false
+  xy: 1080, 247
+  size: 164, 166
+  orig: 178, 166
+  offset: 1, 0
+  index: -1
+sha_L
+  rotate: false
+  xy: 576, 2
+  size: 163, 152
+  orig: 178, 166
+  offset: 5, 6
+  index: -1
+zimu
+  rotate: false
+  xy: 2, 113
+  size: 298, 84
+  orig: 298, 84
+  offset: 0, 0
+  index: -1
+zimu_1_L
+  rotate: true
+  xy: 1048, 964
+  size: 296, 84
+  orig: 298, 84
+  offset: 2, 0
+  index: -1
+zimu_L
+  rotate: false
+  xy: 2, 29
+  size: 295, 82
+  orig: 298, 84
+  offset: 2, 1
+  index: -1

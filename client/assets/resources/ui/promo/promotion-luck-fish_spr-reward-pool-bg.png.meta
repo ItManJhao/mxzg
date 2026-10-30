@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "b336fd2b-fc14-4a1c-ad68-7e9cf06265a9",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "b336fd2b-fc14-4a1c-ad68-7e9cf06265a9@6c48a",
+      "displayName": "promotion-luck-fish_spr-reward-pool-bg",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "b336fd2b-fc14-4a1c-ad68-7e9cf06265a9",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "b336fd2b-fc14-4a1c-ad68-7e9cf06265a9@f9941",
+      "displayName": "promotion-luck-fish_spr-reward-pool-bg",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": -0.5,
+        "offsetY": 1,
+        "trimX": 1,
+        "trimY": 1,
+        "width": 522,
+        "height": 519,
+        "rawWidth": 525,
+        "rawHeight": 523,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -261,
+            -259.5,
+            0,
+            261,
+            -259.5,
+            0,
+            -261,
+            259.5,
+            0,
+            261,
+            259.5,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            1,
+            522,
+            523,
+            522,
+            1,
+            3,
+            523,
+            3
+          ],
+          "nuv": [
+            0.0019047619047619048,
+            0.0057361376673040155,
+            0.9961904761904762,
+            0.0057361376673040155,
+            0.0019047619047619048,
+            0.9980879541108987,
+            0.9961904761904762,
+            0.9980879541108987
+          ],
+          "minPos": [
+            -261,
+            -259.5,
+            0
+          ],
+          "maxPos": [
+            261,
+            259.5,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "b336fd2b-fc14-4a1c-ad68-7e9cf06265a9@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "b336fd2b-fc14-4a1c-ad68-7e9cf06265a9@6c48a",
+    "type": "sprite-frame"
+  }
+}

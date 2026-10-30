@@ -1,0 +1,48 @@
+
+10503001.png
+size: 393,393
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+ed1
+  rotate: false
+  xy: 197, 22
+  size: 72, 93
+  orig: 72, 93
+  offset: 0, 0
+  index: -1
+ed2
+  rotate: false
+  xy: 271, 4
+  size: 53, 111
+  orig: 53, 111
+  offset: 0, 0
+  index: -1
+sy
+  rotate: false
+  xy: 2, 189
+  size: 212, 202
+  orig: 212, 202
+  offset: 0, 0
+  index: -1
+sz
+  rotate: false
+  xy: 216, 214
+  size: 146, 177
+  orig: 146, 177
+  offset: 0, 0
+  index: -1
+t
+  rotate: false
+  xy: 2, 2
+  size: 193, 185
+  orig: 193, 185
+  offset: 0, 0
+  index: -1
+wb
+  rotate: true
+  xy: 216, 117
+  size: 95, 116
+  orig: 95, 116
+  offset: 0, 0
+  index: -1

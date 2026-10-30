@@ -1,0 +1,1 @@
+{"table":"clanbossbuy","note":"exported from config/gameconfig/clanbossbuy.xlsx sheet clanbossbuy. flag 1/2/3 columns only.","rows":[{"times":1,"cost":"[{\"item_type\":900002,\"item_num\":20}]"},{"times":2,"cost":"[{\"item_type\":900002,\"item_num\":30}]"},{"times":3,"cost":"[{\"item_type\":900002,\"item_num\":40}]"},{"times":4,"cost":"[{\"item_type\":900002,\"item_num\":60}]"}]}

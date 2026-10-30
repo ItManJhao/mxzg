@@ -1,0 +1,62 @@
+
+10404012.png
+size: 256,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+ed1
+  rotate: false
+  xy: 104, 113
+  size: 21, 40
+  orig: 21, 40
+  offset: 0, 0
+  index: -1
+ed2
+  rotate: false
+  xy: 2, 2
+  size: 35, 26
+  orig: 35, 26
+  offset: 0, 0
+  index: -1
+gaizi
+  rotate: false
+  xy: 2, 30
+  size: 65, 55
+  orig: 65, 55
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 2, 87
+  size: 100, 66
+  orig: 100, 66
+  offset: 0, 0
+  index: -1
+wb
+  rotate: true
+  xy: 150, 177
+  size: 69, 92
+  orig: 69, 92
+  offset: 0, 0
+  index: -1
+wq
+  rotate: false
+  xy: 2, 155
+  size: 146, 91
+  orig: 146, 91
+  offset: 0, 0
+  index: -1
+yj
+  rotate: false
+  xy: 69, 67
+  size: 11, 18
+  orig: 11, 18
+  offset: 0, 0
+  index: -1
+zj
+  rotate: true
+  xy: 150, 164
+  size: 11, 23
+  orig: 11, 23
+  offset: 0, 0
+  index: -1

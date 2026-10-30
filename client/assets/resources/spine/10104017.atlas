@@ -1,0 +1,55 @@
+
+10104017.png
+size: 205,205
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+cb1
+  rotate: false
+  xy: 174, 66
+  size: 27, 62
+  orig: 27, 62
+  offset: 0, 0
+  index: -1
+cb2
+  rotate: true
+  xy: 90, 10
+  size: 95, 82
+  orig: 95, 82
+  offset: 0, 0
+  index: -1
+j1
+  rotate: false
+  xy: 165, 159
+  size: 38, 44
+  orig: 38, 44
+  offset: 0, 0
+  index: -1
+j2
+  rotate: true
+  xy: 165, 130
+  size: 27, 38
+  orig: 27, 38
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 2, 93
+  size: 68, 110
+  orig: 68, 110
+  offset: 0, 0
+  index: -1
+t
+  rotate: false
+  xy: 72, 107
+  size: 91, 96
+  orig: 91, 96
+  offset: 0, 0
+  index: -1
+wb
+  rotate: true
+  xy: 2, 2
+  size: 89, 86
+  orig: 89, 86
+  offset: 0, 0
+  index: -1

@@ -1,0 +1,62 @@
+
+10504011.png
+size: 1024,128
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+mz
+  rotate: false
+  xy: 2, 47
+  size: 165, 64
+  orig: 165, 64
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 169, 7
+  size: 123, 104
+  orig: 123, 104
+  offset: 0, 0
+  index: -1
+tf1
+  rotate: false
+  xy: 407, 26
+  size: 102, 85
+  orig: 102, 85
+  offset: 0, 0
+  index: -1
+tf2
+  rotate: true
+  xy: 511, 25
+  size: 86, 100
+  orig: 86, 100
+  offset: 0, 0
+  index: -1
+ts1
+  rotate: false
+  xy: 294, 23
+  size: 111, 88
+  orig: 111, 88
+  offset: 0, 0
+  index: -1
+ts2
+  rotate: false
+  xy: 613, 26
+  size: 86, 85
+  orig: 86, 85
+  offset: 0, 0
+  index: -1
+ys
+  rotate: false
+  xy: 2, 2
+  size: 39, 43
+  orig: 39, 43
+  offset: 0, 0
+  index: -1
+zs
+  rotate: false
+  xy: 701, 69
+  size: 40, 42
+  orig: 40, 42
+  offset: 0, 0
+  index: -1

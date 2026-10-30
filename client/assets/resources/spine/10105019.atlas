@@ -1,0 +1,76 @@
+
+10105019.png
+size: 337,337
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+cb1
+  rotate: false
+  xy: 223, 10
+  size: 104, 42
+  orig: 104, 42
+  offset: 0, 0
+  index: -1
+cb2
+  rotate: true
+  xy: 270, 176
+  size: 93, 40
+  orig: 93, 40
+  offset: 0, 0
+  index: -1
+h4
+  rotate: false
+  xy: 170, 54
+  size: 113, 89
+  orig: 113, 89
+  offset: 0, 0
+  index: -1
+h5
+  rotate: true
+  xy: 270, 271
+  size: 64, 58
+  orig: 64, 58
+  offset: 0, 0
+  index: -1
+st1
+  rotate: false
+  xy: 170, 2
+  size: 51, 50
+  orig: 51, 50
+  offset: 0, 0
+  index: -1
+st2
+  rotate: true
+  xy: 285, 106
+  size: 38, 32
+  orig: 38, 32
+  offset: 0, 0
+  index: -1
+st3
+  rotate: false
+  xy: 270, 146
+  size: 34, 28
+  orig: 34, 28
+  offset: 0, 0
+  index: -1
+st4
+  rotate: true
+  xy: 285, 80
+  size: 24, 34
+  orig: 24, 34
+  offset: 0, 0
+  index: -1
+t
+  rotate: false
+  xy: 2, 5
+  size: 166, 138
+  orig: 166, 138
+  offset: 0, 0
+  index: -1
+wq2
+  rotate: false
+  xy: 2, 145
+  size: 266, 190
+  orig: 266, 190
+  offset: 0, 0
+  index: -1

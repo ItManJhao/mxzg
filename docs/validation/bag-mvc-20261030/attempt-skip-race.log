@@ -1,0 +1,18 @@
+SHOT login
+SHOT servers
+SHOT home
+SHOT bag-opened
+SHOT bag-detail
+FAILED STATE [
+  { view: 'RemakeHomeView', phase: undefined, stage: undefined },
+  { view: 'BattleHangView', phase: undefined, stage: undefined },
+  { view: 'CampaignView', phase: 'result', stage: 1 },
+  { view: 'CityChromeView', phase: undefined, stage: undefined }
+]
+page.waitForFunction: Timeout 30000ms exceeded.
+    at clickTarget (F:\project\mxzg\client\tools\check-remake-preview.cjs:68:24)
+    at verifyBagMvc (F:\project\mxzg\client\tools\bag-mvc-preview.cjs:69:135)
+    at async F:\project\mxzg\client\tools\check-remake-preview.cjs:186:13 {
+  log: [],
+  name: 'TimeoutError'
+}

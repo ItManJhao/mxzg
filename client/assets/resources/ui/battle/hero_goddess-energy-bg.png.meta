@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "4a67bed5-9e69-41a5-96e4-3cc3f5841ab6",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "4a67bed5-9e69-41a5-96e4-3cc3f5841ab6@6c48a",
+      "displayName": "hero_goddess-energy-bg",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "4a67bed5-9e69-41a5-96e4-3cc3f5841ab6",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "4a67bed5-9e69-41a5-96e4-3cc3f5841ab6@f9941",
+      "displayName": "hero_goddess-energy-bg",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 3.5,
+        "offsetY": -1.5,
+        "trimX": 13,
+        "trimY": 6,
+        "width": 185,
+        "height": 90,
+        "rawWidth": 204,
+        "rawHeight": 99,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -92.5,
+            -45,
+            0,
+            92.5,
+            -45,
+            0,
+            -92.5,
+            45,
+            0,
+            92.5,
+            45,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            13,
+            93,
+            198,
+            93,
+            13,
+            3,
+            198,
+            3
+          ],
+          "nuv": [
+            0.06372549019607843,
+            0.030303030303030304,
+            0.9705882352941176,
+            0.030303030303030304,
+            0.06372549019607843,
+            0.9393939393939394,
+            0.9705882352941176,
+            0.9393939393939394
+          ],
+          "minPos": [
+            -92.5,
+            -45,
+            0
+          ],
+          "maxPos": [
+            92.5,
+            45,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "4a67bed5-9e69-41a5-96e4-3cc3f5841ab6@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "4a67bed5-9e69-41a5-96e4-3cc3f5841ab6@6c48a",
+    "type": "sprite-frame"
+  }
+}

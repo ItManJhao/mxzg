@@ -1,0 +1,48 @@
+
+10304016.png
+size: 256,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+j1
+  rotate: true
+  xy: 2, 2
+  size: 25, 39
+  orig: 25, 39
+  offset: 0, 0
+  index: -1
+j2
+  rotate: true
+  xy: 77, 32
+  size: 19, 38
+  orig: 19, 38
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 2, 29
+  size: 73, 70
+  orig: 73, 70
+  offset: 0, 0
+  index: -1
+t
+  rotate: false
+  xy: 2, 101
+  size: 210, 150
+  orig: 210, 150
+  offset: 0, 0
+  index: -1
+ys
+  rotate: true
+  xy: 214, 185
+  size: 66, 36
+  orig: 66, 36
+  offset: 0, 0
+  index: -1
+zs
+  rotate: false
+  xy: 77, 53
+  size: 69, 46
+  orig: 69, 46
+  offset: 0, 0
+  index: -1

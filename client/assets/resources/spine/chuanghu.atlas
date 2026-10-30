@@ -1,0 +1,13 @@
+
+chuanghu.png
+size: 44,44
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+chuanghu
+  rotate: false
+  xy: 2, 2
+  size: 27, 40
+  orig: 27, 40
+  offset: 0, 0
+  index: -1

@@ -1,0 +1,27 @@
+
+znz.png
+size: 287,287
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+A1
+  rotate: true
+  xy: 2, 2
+  size: 72, 93
+  orig: 76, 97
+  offset: 2, 2
+  index: -1
+A2
+  rotate: false
+  xy: 2, 76
+  size: 223, 209
+  orig: 227, 213
+  offset: 2, 2
+  index: -1
+A3
+  rotate: false
+  xy: 227, 183
+  size: 55, 102
+  orig: 59, 106
+  offset: 2, 2
+  index: -1

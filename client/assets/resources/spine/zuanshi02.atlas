@@ -1,0 +1,69 @@
+
+zuanshi02.png
+size: 672,672
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+1
+  rotate: true
+  xy: 167, 48
+  size: 454, 114
+  orig: 454, 114
+  offset: 0, 0
+  index: -1
+2
+  rotate: true
+  xy: 545, 99
+  size: 571, 115
+  orig: 571, 115
+  offset: 0, 0
+  index: -1
+3
+  rotate: true
+  xy: 2, 2
+  size: 500, 163
+  orig: 500, 163
+  offset: 0, 0
+  index: -1
+4
+  rotate: false
+  xy: 2, 504
+  size: 541, 166
+  orig: 541, 166
+  offset: 0, 0
+  index: -1
+Moon
+  rotate: false
+  xy: 454, 443
+  size: 61, 59
+  orig: 61, 59
+  offset: 0, 0
+  index: -1
+Sun
+  rotate: false
+  xy: 167, 3
+  size: 43, 43
+  orig: 43, 43
+  offset: 0, 0
+  index: -1
+glow
+  rotate: false
+  xy: 283, 72
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+glow5
+  rotate: true
+  xy: 283, 202
+  size: 300, 169
+  orig: 300, 169
+  offset: 0, 0
+  index: -1
+zs
+  rotate: true
+  xy: 454, 376
+  size: 65, 46
+  orig: 65, 46
+  offset: 0, 0
+  index: -1

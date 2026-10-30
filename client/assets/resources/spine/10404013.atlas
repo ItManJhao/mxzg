@@ -1,0 +1,48 @@
+
+10404013.png
+size: 187,187
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+by
+  rotate: false
+  xy: 2, 2
+  size: 64, 33
+  orig: 64, 33
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 92, 60
+  size: 65, 58
+  orig: 66, 58
+  offset: 0, 0
+  index: -1
+t
+  rotate: false
+  xy: 2, 92
+  size: 88, 93
+  orig: 88, 94
+  offset: 0, 1
+  index: -1
+wb1
+  rotate: false
+  xy: 2, 37
+  size: 87, 53
+  orig: 87, 54
+  offset: 0, 1
+  index: -1
+wb2
+  rotate: false
+  xy: 92, 120
+  size: 59, 65
+  orig: 59, 66
+  offset: 0, 1
+  index: -1
+wb3
+  rotate: false
+  xy: 153, 132
+  size: 28, 53
+  orig: 28, 54
+  offset: 0, 1
+  index: -1

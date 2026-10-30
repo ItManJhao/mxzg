@@ -1,0 +1,214 @@
+{
+  "root": {
+    "name": "HeroSelectLayer",
+    "parent": "PageHost",
+    "position": {
+      "x": -277.4985915492957,
+      "y": -448.3336619718309
+    },
+    "scale": {
+      "x": 0.8671830985915492,
+      "y": 0.8671830985915492
+    },
+    "size": {
+      "width": 640,
+      "height": 1034
+    },
+    "anchor": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  "title": {
+    "name": "lbl_title",
+    "parent": "node_title",
+    "position": {
+      "x": 0,
+      "y": -40
+    },
+    "scale": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "size": {
+      "width": 400,
+      "height": 80
+    },
+    "anchor": {
+      "x": 0.5,
+      "y": 0.5
+    },
+    "text": "英雄出阵",
+    "fontSize": 56
+  },
+  "confirm": {
+    "name": "btn_confirm",
+    "parent": "UIMenu_2",
+    "position": {
+      "x": 320,
+      "y": 84
+    },
+    "scale": {
+      "x": 1,
+      "y": 1
+    },
+    "size": {
+      "width": 197,
+      "height": 60
+    },
+    "anchor": {
+      "x": 0.5,
+      "y": 0.5
+    }
+  },
+  "content": {
+    "name": "content",
+    "parent": "view",
+    "position": {
+      "x": -290,
+      "y": 250
+    },
+    "scale": {
+      "x": 1,
+      "y": 1
+    },
+    "size": {
+      "width": 580,
+      "height": 250
+    },
+    "anchor": {
+      "x": 0,
+      "y": 1
+    }
+  },
+  "port": {
+    "name": "view",
+    "parent": "scroll_view_backpack",
+    "position": {
+      "x": 0,
+      "y": 0
+    },
+    "scale": {
+      "x": 1,
+      "y": 1
+    },
+    "size": {
+      "width": 580,
+      "height": 250
+    },
+    "anchor": {
+      "x": 0.5,
+      "y": 0
+    }
+  },
+  "grid": {
+    "name": "FormGrid",
+    "parent": "content",
+    "position": {
+      "x": 0,
+      "y": 0
+    },
+    "scale": {
+      "x": 1,
+      "y": 1
+    },
+    "size": {
+      "width": 580,
+      "height": 250
+    },
+    "anchor": {
+      "x": 0,
+      "y": 1
+    }
+  },
+  "cells": [
+    {
+      "name": "HeroIconCell",
+      "parent": "FormGrid",
+      "position": {
+        "x": 60,
+        "y": -65
+      },
+      "scale": {
+        "x": 0.85,
+        "y": 0.85
+      },
+      "size": {
+        "width": 96,
+        "height": 104
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "HeroIconCell",
+      "parent": "FormGrid",
+      "position": {
+        "x": 172,
+        "y": -65
+      },
+      "scale": {
+        "x": 0.85,
+        "y": 0.85
+      },
+      "size": {
+        "width": 96,
+        "height": 104
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "HeroIconCell",
+      "parent": "FormGrid",
+      "position": {
+        "x": 284,
+        "y": -65
+      },
+      "scale": {
+        "x": 0.85,
+        "y": 0.85
+      },
+      "size": {
+        "width": 96,
+        "height": 104
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  ],
+  "visibleStarCount": 1,
+  "columns": 5,
+  "cellStep": {
+    "x": 112,
+    "y": 130
+  },
+  "firstCellPosition": {
+    "x": 60,
+    "y": -65
+  },
+  "cellScale": 0.85,
+  "lineup": {
+    "version": 1,
+    "slots": [
+      {
+        "position": 2,
+        "heroId": "1b5f6871-8ad8-4e03-82fa-873b5d6a18b4"
+      },
+      {
+        "position": 5,
+        "heroId": "839a3db7-eca4-49a9-bcf4-c8d88e5f7aef"
+      },
+      {
+        "position": 8,
+        "heroId": "19e72c46-2b18-492d-94e8-86b83713b03e"
+      }
+    ]
+  }
+}

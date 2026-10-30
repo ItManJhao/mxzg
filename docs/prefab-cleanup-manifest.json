@@ -1,0 +1,3851 @@
+{
+  "plan": "tools/prefab-plan.json",
+  "kept_count": 90,
+  "removed_count": 517,
+  "backup": "client\\temp\\prefab-cleanup\\removed-330ebc693a804d3780f2347b49db93c0.zip",
+  "kept": [
+    {
+      "path": "bundles/remake-home/RemakeHome.prefab",
+      "reason": "Lazy home composition",
+      "phases": [
+        "P1",
+        "P2"
+      ]
+    },
+    {
+      "path": "prefabs/ui/ability/AbilityInfoLayer.prefab",
+      "reason": "Skill detail",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/account/AccountLogin.prefab",
+      "reason": "New login MVC",
+      "phases": [
+        "P1"
+      ]
+    },
+    {
+      "path": "prefabs/ui/backpack/BackpackInfoLayer.prefab",
+      "reason": "Inventory list, tabs, cell and detail",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/backpack/BackpackItemCell.prefab",
+      "reason": "Inventory list, tabs, cell and detail",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/backpack/BackpackLayer.prefab",
+      "reason": "Inventory list, tabs, cell and detail",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/backpack/BackpackTabButton.prefab",
+      "reason": "Inventory list, tabs, cell and detail",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/BattleDetailCell.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/BattleDetailLayer.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/BattleEditLayer.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/BattleEndLayer.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/BattleInfoLayer.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/BattlePage.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/BattlePanelLayer.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/BattleReportLayer.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/HangMissionChip.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterEndLayer.prefab",
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterEndLoseCell.prefab",
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterExtraRewardCell.prefab",
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterMapLayer.prefab",
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterPreviewLayer.prefab",
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterRewardCell.prefab",
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterRewardLayer.prefab",
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterStageChip.prefab",
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/city/CityChrome.prefab",
+      "reason": "Canonical city map and HUD",
+      "phases": [
+        "P1"
+      ]
+    },
+    {
+      "path": "prefabs/ui/city/CityHub.prefab",
+      "reason": "Canonical city map and HUD",
+      "phases": [
+        "P1"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/CommonBtnPrimary.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/CommonBtnSecondary.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/CommonListRow.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/CommonPanel.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/CommonRedDot.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/DimSheet.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/InfoCard.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/ListBackdrop.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/NpcTalkLayer.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/PagePrefabShell.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/common/TextChip.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroIconCell.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoAttrLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoTipsLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoUpLevelLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoUpStarLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoUpgradeLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroListHeroLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroListItemCell.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroListLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSelectLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSkillInfoLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSkillOpenInfoLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroStrongInfoCell.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroStrongResourceMainCell.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroStrongResourceSubCell.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSuggestCell.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSuggestLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroUpStarSelectItemCell.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroUpStarSelectLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroXSelectItemCell.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroXSelectLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/idle-hero/IdleHeroSelectLayer.prefab",
+      "reason": "Reusable idle hero selection",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/item/ItemExhibitionLayer.prefab",
+      "reason": "Item quantity/selection and rewards",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/item/ItemRewardLayer.prefab",
+      "reason": "Item quantity/selection and rewards",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/item/ItemScelectNumLayer.prefab",
+      "reason": "Item quantity/selection and rewards",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/item/ItemSelectLayer.prefab",
+      "reason": "Item quantity/selection and rewards",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/ChooseServerCell.prefab",
+      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/ChooseServerLayer.prefab",
+      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/ChooseServerRoleCell.prefab",
+      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/CreateRolePanel.prefab",
+      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/ErrorLayer.prefab",
+      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/LoadingLayer.prefab",
+      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/legacy-login/LoginPanel.prefab",
+      "reason": "Old Boot login compatibility and original artwork reference; never used by RemakeApp",
+      "phases": [
+        "P1",
+        "P9"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/NoticeLayer.prefab",
+      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/UpdateLayer.prefab",
+      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/legacy-login/UserLoginLayer.prefab",
+      "reason": "Old Boot login compatibility and original artwork reference; never used by RemakeApp",
+      "phases": [
+        "P1",
+        "P9"
+      ]
+    },
+    {
+      "path": "prefabs/ui/mail/MailCell.prefab",
+      "reason": "Basic mail and rewards",
+      "phases": [
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/mail/MailInfoLayer.prefab",
+      "reason": "Basic mail and rewards",
+      "phases": [
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/mail/MailLayer.prefab",
+      "reason": "Basic mail and rewards",
+      "phases": [
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/quick-battle/QuickBattleEndLayer.prefab",
+      "reason": "Idle claim and quick battle",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/quick-battle/QuickBattleLayer.prefab",
+      "reason": "Idle claim and quick battle",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/quick-battle/QuickBattleTipLayer.prefab",
+      "reason": "Idle claim and quick battle",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/reward/RewardCell.prefab",
+      "reason": "Basic reward preview and growth result",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/reward/RewardPreviewLayer.prefab",
+      "reason": "Basic reward preview and growth result",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/reward/UpStarSuccessLayer.prefab",
+      "reason": "Basic reward preview and growth result",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/reward/UpgradeSuccessLayer.prefab",
+      "reason": "Basic reward preview and growth result",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/role/ChangeNickLayer.prefab",
+      "reason": "Basic profile, rename and role level feedback",
+      "phases": [
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/role/RoleInfoLayer.prefab",
+      "reason": "Basic profile, rename and role level feedback",
+      "phases": [
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/role/RoleUpgradeLayer.prefab",
+      "reason": "Basic profile, rename and role level feedback",
+      "phases": [
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/setting/SettingLayer.prefab",
+      "reason": "Basic settings only",
+      "phases": [
+        "P6"
+      ]
+    },
+    {
+      "path": "prefabs/ui/summon/SummonCell.prefab",
+      "reason": "Basic summon, excluding shops and prayer modes",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/summon/SummonLayer.prefab",
+      "reason": "Basic summon, excluding shops and prayer modes",
+      "phases": [
+        "P4"
+      ]
+    }
+  ],
+  "removed": [
+    {
+      "path": "prefabs/ui/achievement/AchievementCell.prefab",
+      "uuid": "3492105e-427a-4bd0-b449-0c82ea99d2b5",
+      "source_bytes": 22027,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/achievement/AchievementGetLayer.prefab",
+      "uuid": "42bdb5ad-f447-49e6-b1cf-a9757b549a28",
+      "source_bytes": 19564,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/achievement/AchievementLayer.prefab",
+      "uuid": "95f86f81-7fdd-41ae-8060-894905f206eb",
+      "source_bytes": 28282,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:74",
+        "scripts\\ui\\prefabShellMap.ts:41"
+      ]
+    },
+    {
+      "path": "prefabs/ui/active/ActiveFetterLayer.prefab",
+      "uuid": "4fc580d3-2b11-4a52-a647-5017eaafd0a5",
+      "source_bytes": 36829,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/adven/AdvenNoteCell.prefab",
+      "uuid": "810c2da4-7100-4b9a-a638-f32b77194a7f",
+      "source_bytes": 35615,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/adven/AdvenNoteLayer.prefab",
+      "uuid": "e7a213d5-c289-4036-b8f3-d9bdc3ea2b0d",
+      "source_bytes": 57594,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/alice/AliceAssistHeroShareInfoLayer.prefab",
+      "uuid": "7f5f84d8-f364-4245-ae10-040199a23b8f",
+      "source_bytes": 93182,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/alice/AliceChangeLineupCell.prefab",
+      "uuid": "32b9f0ed-c837-4d91-a3fa-7092a27b1225",
+      "source_bytes": 191531,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/alice/AliceChangeLineupLayer.prefab",
+      "uuid": "91ea0879-608d-4932-b23e-da9192f7d949",
+      "source_bytes": 514986,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/altar/AltarConfirmLayer.prefab",
+      "uuid": "2a903b15-ef97-4219-a3b9-bfbc4281f922",
+      "source_bytes": 22722,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/altar/AltarLayer.prefab",
+      "uuid": "36f1b5b0-7c62-49b3-bbba-a4ba845718ea",
+      "source_bytes": 26583,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:80",
+        "scripts\\ui\\prefabShellMap.ts:48"
+      ]
+    },
+    {
+      "path": "prefabs/ui/altar/AltarPanelLayer.prefab",
+      "uuid": "1dee10df-8158-488b-94db-32072081c425",
+      "source_bytes": 63137,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/altar/AltarReirthLayer.prefab",
+      "uuid": "3f9d8df1-2810-4293-8667-c24b51cb7579",
+      "source_bytes": 57719,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ancient/AncientCell.prefab",
+      "uuid": "11c7ed7a-d8e5-4359-8644-b87ee6e5c214",
+      "source_bytes": 13523,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ancient/AncientLayer.prefab",
+      "uuid": "29abbd37-1006-4af2-a47d-6f27adcc6edb",
+      "source_bytes": 26903,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:78",
+        "scripts\\ui\\prefabShellMap.ts:45"
+      ]
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactActiveLayer.prefab",
+      "uuid": "56520e16-3709-4afb-b1c6-f91f8bc16364",
+      "source_bytes": 32875,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactIllustrationCell.prefab",
+      "uuid": "1f66dc27-0c6c-4189-9442-dfd61460cede",
+      "source_bytes": 26116,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactIllustrationLayer.prefab",
+      "uuid": "74e47882-8f00-4c40-a07a-4b5beb4f8db0",
+      "source_bytes": 34416,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactItemSelectLayer.prefab",
+      "uuid": "4f712ae4-ad1f-45ca-8e3c-87b88cad6e85",
+      "source_bytes": 31950,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactRingLayer.prefab",
+      "uuid": "1df77026-37e8-4557-a7a7-2979fa1b0f9c",
+      "source_bytes": 11505,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactSelectCell.prefab",
+      "uuid": "738ef64c-a2f3-47ee-8563-e729bac34335",
+      "source_bytes": 23500,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactSelectLayer.prefab",
+      "uuid": "cb6262d7-bac5-407b-8446-446c12f4506f",
+      "source_bytes": 18151,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactSkillPanel.prefab",
+      "uuid": "565ff014-73c1-443c-bcef-d862c1533d5b",
+      "source_bytes": 9768,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactSummonHistoryLayer.prefab",
+      "uuid": "349e0213-e662-43e9-aae2-897f0c92176f",
+      "source_bytes": 38532,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactSummonLayer.prefab",
+      "uuid": "89c4f4fb-d54b-45e1-ab6e-f74210577677",
+      "source_bytes": 122862,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactTipsCell.prefab",
+      "uuid": "5083823e-d75b-472f-add3-2e736888a1ff",
+      "source_bytes": 17049,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactTipsLayer.prefab",
+      "uuid": "97efebd0-cb95-4c41-9611-bc5616930cbb",
+      "source_bytes": 29367,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactTransformItem.prefab",
+      "uuid": "fc849375-56db-4148-a569-65aeba4c770a",
+      "source_bytes": 10395,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactTransformLayer.prefab",
+      "uuid": "26b88eb0-a1fa-4c21-bdd8-01e2d7bc89b0",
+      "source_bytes": 61401,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/artifact/ArtifactTransformSkill.prefab",
+      "uuid": "9751a5f6-3035-4a1d-87e8-5f13e4647c2a",
+      "source_bytes": 16435,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/bet/BetLayer.prefab",
+      "uuid": "b9bddc59-7358-4e6b-a100-a6b1c808e159",
+      "source_bytes": 80611,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/bet/BetListCell.prefab",
+      "uuid": "33358075-c874-4422-85fa-5f76b33ffe5e",
+      "source_bytes": 56344,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/bet/BetListLayer.prefab",
+      "uuid": "8ee835d3-4f7c-40e2-89d8-22a048f9a372",
+      "source_bytes": 25789,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/bet/BetTipLayer.prefab",
+      "uuid": "f200f6cc-4e1e-4a7a-999c-5655bf60c629",
+      "source_bytes": 42397,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/biu/BiuEditLayer.prefab",
+      "uuid": "31b32026-8fd1-4632-8325-27eff242f2b4",
+      "source_bytes": 38792,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionBattleInfoCell.prefab",
+      "uuid": "a24d79e2-b411-4ffc-b4eb-ae9b1fe49cad",
+      "source_bytes": 158210,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionBetLayer.prefab",
+      "uuid": "e64740aa-a39e-4e86-8803-2cac2753738e",
+      "source_bytes": 80813,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossBattleInfoCell.prefab",
+      "uuid": "c7db174e-00f4-4243-9838-827100db3c00",
+      "source_bytes": 158220,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossBetLayer.prefab",
+      "uuid": "3252eb9c-a7eb-4e5e-8715-5b01ed7f8c8d",
+      "source_bytes": 80823,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossEditBiuLayer.prefab",
+      "uuid": "6bf7c444-0d33-437f-b8ab-238ba998c071",
+      "source_bytes": 38945,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossGuessLayer.prefab",
+      "uuid": "ff7b2168-6cab-42d3-a3ef-0b27f0dcb41b",
+      "source_bytes": 57967,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossGuessTipLayer.prefab",
+      "uuid": "3772bb37-dc02-47df-aa69-0336cc50f7dc",
+      "source_bytes": 42627,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossLayer.prefab",
+      "uuid": "36572b50-c7a2-4a9c-ae34-c16763018f4c",
+      "source_bytes": 91342,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossListLayer.prefab",
+      "uuid": "da15f77d-982c-4679-aee3-058a21d372ea",
+      "source_bytes": 25866,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossMyCompeteLayer.prefab",
+      "uuid": "8b567332-e656-4ec8-a74c-693ea3f3b556",
+      "source_bytes": 18739,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossMyGuessCell.prefab",
+      "uuid": "1b9381c2-3348-40e5-a114-067eff578ec2",
+      "source_bytes": 56370,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossMyHistoryCell.prefab",
+      "uuid": "d9420beb-579a-4e5e-9e66-ae292a64246f",
+      "source_bytes": 47499,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossPreRewardLayer.prefab",
+      "uuid": "55f09cb4-4663-4b55-87c8-3a63a6a97c64",
+      "source_bytes": 32725,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossRankCell.prefab",
+      "uuid": "bcf4383e-aa5c-4e60-9655-70cf382c9ab0",
+      "source_bytes": 48507,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossRankLayer.prefab",
+      "uuid": "40cb3e33-1ab4-42d0-ba42-5712c557ab86",
+      "source_bytes": 18804,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossRewardLayer.prefab",
+      "uuid": "9de6bd11-43bb-4829-ab27-97a9eb9715b5",
+      "source_bytes": 12649,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossShowLayer.prefab",
+      "uuid": "3afc6b3c-9677-4af9-9b7e-fed1ade9fe7a",
+      "source_bytes": 169823,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossTop32Layer.prefab",
+      "uuid": "d506b5fd-51ab-4e54-84a0-72fa691e9a04",
+      "source_bytes": 46544,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossTop3Layer.prefab",
+      "uuid": "e6edf330-90fe-4249-80c1-9740e6e07e90",
+      "source_bytes": 45248,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossTop4Cell.prefab",
+      "uuid": "35904e76-9934-4b5c-9843-a28c3da825eb",
+      "source_bytes": 133505,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossTop8Cell.prefab",
+      "uuid": "be60bcb0-3102-43c8-bf0c-54a7b01d72c3",
+      "source_bytes": 288282,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionCrossTop8FinalsCell.prefab",
+      "uuid": "2426b312-67d0-4464-8ab6-6d02d5c54096",
+      "source_bytes": 298641,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionEditBiuLayer.prefab",
+      "uuid": "6fbd6335-9335-43dc-8a67-b11a68c1fc06",
+      "source_bytes": 38937,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionGuessLayer.prefab",
+      "uuid": "760e92f2-5306-4ae2-af60-2666b44a410f",
+      "source_bytes": 57963,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionGuessTipLayer.prefab",
+      "uuid": "1b9568cb-cb12-4255-95f2-cda9f9356c74",
+      "source_bytes": 42624,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionLayer.prefab",
+      "uuid": "1ffc6bd5-b5a4-4ac0-a47c-c7ae4a34db6a",
+      "source_bytes": 91332,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionListLayer.prefab",
+      "uuid": "95d0a8d1-b71a-4b40-83ef-851a646c7111",
+      "source_bytes": 25863,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionMyCompeteLayer.prefab",
+      "uuid": "f209195d-b2b4-476e-9b99-6a89c0198291",
+      "source_bytes": 18729,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionMyGuessCell.prefab",
+      "uuid": "31564d6c-d942-47e0-a0d9-e46040964370",
+      "source_bytes": 56360,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionMyHistoryCell.prefab",
+      "uuid": "39763259-38f5-4966-829d-dbd860d1c5e5",
+      "source_bytes": 47489,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionPreRewardLayer.prefab",
+      "uuid": "2c7da4b9-f0b4-4be2-9fe7-bba1974b45e1",
+      "source_bytes": 32713,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionRankCell.prefab",
+      "uuid": "a44fc9fa-303e-4f78-a906-4a688186a5d3",
+      "source_bytes": 48497,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionRankLayer.prefab",
+      "uuid": "309674f7-e9d1-48e6-af3f-dc2b0fdd762e",
+      "source_bytes": 18799,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionRewardLayer.prefab",
+      "uuid": "5c084095-3576-4157-b510-660cf158eafc",
+      "source_bytes": 12639,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionShopLayer.prefab",
+      "uuid": "8c249ec7-d425-46b0-b163-89ce283161d3",
+      "source_bytes": 30332,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionShowLayer.prefab",
+      "uuid": "781f091b-df8c-47ca-8872-e2b74ff9684a",
+      "source_bytes": 173703,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionTop32Layer.prefab",
+      "uuid": "ad9ab7c4-d97e-4bc4-a880-13686c50d9d5",
+      "source_bytes": 40255,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionTop3Layer.prefab",
+      "uuid": "0f1eb9d6-99a6-43c6-9e1d-f5d8101aeed5",
+      "source_bytes": 45238,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionTop4Cell.prefab",
+      "uuid": "844c83c8-0a2e-47b4-898d-2ab67395dc91",
+      "source_bytes": 133495,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/champion/ChampionTop8Cell.prefab",
+      "uuid": "d2cd6167-c2d5-4d33-a862-86f1f50bf89b",
+      "source_bytes": 288272,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterEndTowerCell1.prefab",
+      "uuid": "9b9583ba-0b12-498f-aed0-23935a2bca1f",
+      "source_bytes": 21300,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterEndTowerCell2.prefab",
+      "uuid": "4d18a856-320b-40db-a304-ca3d24dc7817",
+      "source_bytes": 24987,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterEndTowerLoseCell.prefab",
+      "uuid": "06ae5a5a-1bfc-45e6-b6a1-38f831668c8c",
+      "source_bytes": 21513,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterEndTowerWinCell.prefab",
+      "uuid": "fa5b3739-1897-4550-8ea4-4947b57f201d",
+      "source_bytes": 24991,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatCityLayer.prefab",
+      "uuid": "72b09b08-03c6-461b-b04c-84bebeda29eb",
+      "source_bytes": 13007,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatClanLayer.prefab",
+      "uuid": "799d8769-9e66-47f7-9e7f-9a1e60d3ca58",
+      "source_bytes": 4365,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatCountryWarLayer.prefab",
+      "uuid": "601bc303-e892-4504-ba53-77a52b5480ba",
+      "source_bytes": 4387,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatCrusadeLayer.prefab",
+      "uuid": "acbb9804-ac07-4d01-bbda-60f87a20a54a",
+      "source_bytes": 4381,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatFriendCell.prefab",
+      "uuid": "4debe727-68ee-4964-9e92-17bba51d797b",
+      "source_bytes": 28995,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatFriendLayer.prefab",
+      "uuid": "2d4c48f4-c558-4684-9a6e-073dca960fee",
+      "source_bytes": 7529,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatLayer.prefab",
+      "uuid": "f6198284-21e7-4fff-ba2d-9512688200a9",
+      "source_bytes": 38386,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatLeftCell.prefab",
+      "uuid": "bfd552dc-f48d-4320-ad6c-8f3463fedcf3",
+      "source_bytes": 27861,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatRightCell.prefab",
+      "uuid": "585b2d35-4779-4651-a6bd-384c4f566ab3",
+      "source_bytes": 27870,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatServerLayer.prefab",
+      "uuid": "974e0dd5-560e-4795-af6c-13f6bde540e4",
+      "source_bytes": 4379,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatSystemCell.prefab",
+      "uuid": "2dd5452f-3815-4f99-ab9f-3ed17d6957fa",
+      "source_bytes": 6927,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatSystemLayer.prefab",
+      "uuid": "a343a6cc-6d2a-4f12-8b45-113cce0baa3a",
+      "source_bytes": 7496,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/chat/ChatWorldLayer.prefab",
+      "uuid": "94bd1d75-bf94-4664-b6ae-4ec528163d7d",
+      "source_bytes": 4367,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/common/CConfirmLayer.prefab",
+      "uuid": "6b0268fc-e38b-5b92-b10f-0161ae6111b2",
+      "source_bytes": 26444,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/common/CPopupMenuLayer.prefab",
+      "uuid": "a7b0fade-6ee6-5d46-b571-7d873325223a",
+      "source_bytes": 12667,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/common/ConfirmLayer.prefab",
+      "uuid": "f6ee1117-a6eb-50c0-b2d5-dd057692657a",
+      "source_bytes": 30053,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/common/ListLayer.prefab",
+      "uuid": "c724d271-251d-55d3-a30b-fdb28f23b866",
+      "source_bytes": 25863,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/common/PopupMenuLayer.prefab",
+      "uuid": "964bffac-d8a4-53e6-9644-383410978fba",
+      "source_bytes": 12665,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/common/SubtitleLayer.prefab",
+      "uuid": "15917509-57c8-518d-afa9-02a6e440cc86",
+      "source_bytes": 11574,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/contract-summon/ContractSummonCell.prefab",
+      "uuid": "e166171a-f10d-4d02-b849-e804d0ecb8da",
+      "source_bytes": 7301,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/contract-summon/ContractSummonLayer.prefab",
+      "uuid": "e947a132-00cd-4cde-9bfd-077c209ca5dd",
+      "source_bytes": 11560,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/contract-summon/ContractSummonTip.prefab",
+      "uuid": "c9360427-2d6d-4c60-aadd-2737a05c6a30",
+      "source_bytes": 22047,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/daily/DailyCell.prefab",
+      "uuid": "c047dd1f-a899-436f-a83c-086a53f66ee7",
+      "source_bytes": 24588,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/daily/DailyPanel.prefab",
+      "uuid": "6b1a6280-ebe7-4c1d-8b21-1554844c0d8a",
+      "source_bytes": 100012,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/decompose/DecomposeSelectLayer.prefab",
+      "uuid": "8a130644-9a47-4fa5-91ef-defc94114753",
+      "source_bytes": 64132,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dragon/DragonPrivilegeLayer.prefab",
+      "uuid": "41df55e7-d3bb-479e-8383-96bd41cc709c",
+      "source_bytes": 36799,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dragon/DragonRoomLevelUpLayer.prefab",
+      "uuid": "dd029f97-94d1-4de9-8e04-d98798db94f0",
+      "source_bytes": 59103,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dragon/DragonSkillLayer.prefab",
+      "uuid": "ea3219fb-1171-4e94-bf92-82fefcfa7af0",
+      "source_bytes": 60015,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamFirstLayer.prefab",
+      "uuid": "7b766048-add8-4e87-b42a-cbdef7e42cb3",
+      "source_bytes": 31543,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamFriendCell.prefab",
+      "uuid": "17777eda-5e91-4eb4-859d-c21ee8723e6f",
+      "source_bytes": 30725,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamFriendLayer.prefab",
+      "uuid": "48f7b22d-12d5-445c-b037-561e4870148e",
+      "source_bytes": 123569,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamLayer.prefab",
+      "uuid": "a37f41a6-8714-4e31-9a87-3f4d1a089a16",
+      "source_bytes": 137125,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamMainRankCell.prefab",
+      "uuid": "d3ab68fa-7929-408d-8288-74b08ccc1ce5",
+      "source_bytes": 10644,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamRankCell.prefab",
+      "uuid": "30e392f9-1c94-4b2d-a426-e829d79a95ed",
+      "source_bytes": 32716,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamRankLayer.prefab",
+      "uuid": "49cda829-50ba-4f6f-97cd-43dd09f0192b",
+      "source_bytes": 83653,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamRewardCell.prefab",
+      "uuid": "1dd924f6-2939-4d3e-8594-ec83c87520e6",
+      "source_bytes": 17993,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamRewardLayer.prefab",
+      "uuid": "a548e154-5cdf-4e19-8f27-8ac11546d687",
+      "source_bytes": 19783,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamSelectCell.prefab",
+      "uuid": "7ec9812f-76f3-4491-a322-57998155d6e0",
+      "source_bytes": 20265,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamSelectLayer.prefab",
+      "uuid": "eccd12ab-6502-4912-a8dd-33cf498e0634",
+      "source_bytes": 26382,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dream/DreamShowRewardCell.prefab",
+      "uuid": "0510bc74-db47-4e1c-bc53-467080646a01",
+      "source_bytes": 9162,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonBoxUseLayer.prefab",
+      "uuid": "4dc05eb8-9d64-463e-8f2b-9a72cd46d20c",
+      "source_bytes": 43540,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonBuffListLayer.prefab",
+      "uuid": "2319f9e1-b503-41d2-9f18-5d2fa3cba68a",
+      "source_bytes": 44471,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonHeroAttackLayer.prefab",
+      "uuid": "49115ea1-ab9e-48c0-bed2-285cb550d082",
+      "source_bytes": 60871,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonHeroSelectLayer.prefab",
+      "uuid": "96bce44e-7568-4828-a197-ad5ca61ecabf",
+      "source_bytes": 88795,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonKillRewardCell.prefab",
+      "uuid": "14069085-e76a-4a66-94c1-bf36a79f0c57",
+      "source_bytes": 19374,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonKillRewardLayer.prefab",
+      "uuid": "f3cb3c2b-c43b-4c6a-98b4-6d856f077e6e",
+      "source_bytes": 19855,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonLayer.prefab",
+      "uuid": "6699433a-fd44-462c-a422-a320f6c4e732",
+      "source_bytes": 45358,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonPotionUseLayer.prefab",
+      "uuid": "7c79f15d-9fe6-4ea4-aef1-d7921345c221",
+      "source_bytes": 34793,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonShopLayer.prefab",
+      "uuid": "b1ae806a-e628-4b58-aaa2-94f4459eb85a",
+      "source_bytes": 28259,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonShopListLayer.prefab",
+      "uuid": "b846b4e0-a377-4a69-8711-522ee2aef33f",
+      "source_bytes": 19851,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonStageEndCell.prefab",
+      "uuid": "a2d31575-8d5a-4239-b381-cfaa796956d0",
+      "source_bytes": 13247,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/dungeon/DungeonStageEndLayer.prefab",
+      "uuid": "fb08f027-ce00-454f-ba85-4e3591b51787",
+      "source_bytes": 9520,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/equip/EquipCell.prefab",
+      "uuid": "dc4e2001-8fc1-4b9f-8c6d-87107a420735",
+      "source_bytes": 23551,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/equip/EquipChangeLayer.prefab",
+      "uuid": "7bdda3f4-15dc-4bf0-992f-03fe03f8a06f",
+      "source_bytes": 18213,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/evolution/EvolutionAttrCell.prefab",
+      "uuid": "2e7f0eb0-8ba4-4ae4-9cee-ef79555377c4",
+      "source_bytes": 16403,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/evolution/EvolutionInfoLayer.prefab",
+      "uuid": "2ab346b9-ec10-473b-919a-00df02d4ebf4",
+      "source_bytes": 65833,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/evolution/EvolutionLayer.prefab",
+      "uuid": "a432c776-33be-4080-8aab-2799bac97176",
+      "source_bytes": 107195,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/evolution/EvolutionSeat.prefab",
+      "uuid": "2a9be928-b825-42ce-92f3-9d7728b8b3fa",
+      "source_bytes": 16110,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/evolution/EvolutionSuccessLayer.prefab",
+      "uuid": "f94240d8-9493-443c-9e03-a3e09658e0cf",
+      "source_bytes": 32093,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/evolution/EvolutionTreeLayer.prefab",
+      "uuid": "d21d9377-9a35-4cfa-b97e-485378d06684",
+      "source_bytes": 71778,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureBackpackInfoLayer.prefab",
+      "uuid": "e8a6c27a-b69b-4325-8b53-252dc0588f15",
+      "source_bytes": 13367,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureBackpackLayer.prefab",
+      "uuid": "30f9b99d-3af3-4a48-8e4d-e9b707298d2f",
+      "source_bytes": 27532,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureBattleEndLayer.prefab",
+      "uuid": "3c2c1cbb-f04a-40fb-b9f3-dc25f7579d4b",
+      "source_bytes": 29529,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureChangeNickLayer.prefab",
+      "uuid": "0f8bd1f6-01ac-4fdc-9f3e-31f0f82ca6f9",
+      "source_bytes": 30155,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureCheckpointLayer.prefab",
+      "uuid": "ecb5c91b-5adc-4728-b6e6-1f97ca62d785",
+      "source_bytes": 100652,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureGetItemsLayer.prefab",
+      "uuid": "dfedbc08-9768-4df1-b06e-3f742dd1cb4e",
+      "source_bytes": 37789,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureGiftPageLayer.prefab",
+      "uuid": "088d6489-d2f6-4908-a7c6-dd4efa562c4c",
+      "source_bytes": 31174,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureIllustratedBooksCell.prefab",
+      "uuid": "9c8b913a-f8c6-414c-a041-80ef1f1fba5e",
+      "source_bytes": 13384,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureIllustratedBooksLayer.prefab",
+      "uuid": "ea14217b-59a1-4f61-82e0-1f5ced97d527",
+      "source_bytes": 27540,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureLayer.prefab",
+      "uuid": "a6d7e1a6-3090-4e03-9cc3-7b669e9b4f18",
+      "source_bytes": 118624,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:82",
+        "scripts\\ui\\prefabShellMap.ts:51"
+      ]
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventurePlunderLayer.prefab",
+      "uuid": "f2296152-cd94-4c3f-97de-593298407943",
+      "source_bytes": 67563,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureRandomEventsLayer.prefab",
+      "uuid": "ab9cdde9-241e-4821-a421-89370718f3e3",
+      "source_bytes": 51625,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureReportLayer.prefab",
+      "uuid": "09571db7-6f2b-44fa-87d6-df93d6da54f3",
+      "source_bytes": 74620,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureSailingLayer.prefab",
+      "uuid": "c1e75d7f-76e8-4fba-83ba-74ea1d63420d",
+      "source_bytes": 93120,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureSearchLayer.prefab",
+      "uuid": "f28fca76-afbe-4962-bce6-7ac6b8064b4e",
+      "source_bytes": 6608,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureShioInfoCtr.prefab",
+      "uuid": "d7406002-e287-4457-ba70-a44367110c85",
+      "source_bytes": 82912,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureShioInfoLayer.prefab",
+      "uuid": "cd6d4808-ae46-4939-97b4-1a52c3327848",
+      "source_bytes": 86080,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureShopCell.prefab",
+      "uuid": "d568949b-7007-47ca-8071-998cbc09483c",
+      "source_bytes": 84934,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureShopLayer.prefab",
+      "uuid": "88401e2b-4068-4cb0-a806-3b2c74097ac3",
+      "source_bytes": 20174,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureSummaryLayer.prefab",
+      "uuid": "0f7baa82-439e-4040-aad8-61616cc0b097",
+      "source_bytes": 35329,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureTeamLayer.prefab",
+      "uuid": "a33505bf-a6c8-4b7f-9f3a-07f2ba13aac9",
+      "source_bytes": 143313,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/exotic-adventure/ExoticAdventureUpgradeLayer.prefab",
+      "uuid": "099fd971-37f1-4264-872b-7e848096e3ba",
+      "source_bytes": 46008,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fantasy-land/FantasyLandMainLayer.prefab",
+      "uuid": "226aa99c-7912-4df2-a0e9-45b54eac7afb",
+      "source_bytes": 88469,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:81",
+        "scripts\\ui\\prefabShellMap.ts:49"
+      ]
+    },
+    {
+      "path": "prefabs/ui/fantasy-land/FantasyLandSeat.prefab",
+      "uuid": "e2b8a884-4ab3-4c52-a1e0-eb9c307e7966",
+      "source_bytes": 17403,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fantasy-tower/FantasyTowerBuyLayer.prefab",
+      "uuid": "f9230730-507e-459c-87ab-b4941c2a33c2",
+      "source_bytes": 89057,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fantasy-tower/FantasyTowerCell.prefab",
+      "uuid": "aed78938-cd4b-4a9b-bffe-948b55befa05",
+      "source_bytes": 44764,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fantasy-tower/FantasyTowerLayer.prefab",
+      "uuid": "8fd8261a-b435-492c-8fce-2e5dcad41158",
+      "source_bytes": 112433,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:72",
+        "scripts\\ui\\prefabShellMap.ts:39"
+      ]
+    },
+    {
+      "path": "prefabs/ui/fantasy-tower/FantasyTowerLogCell.prefab",
+      "uuid": "248fa026-39a8-4cbf-962c-8c232971d649",
+      "source_bytes": 37225,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fantasy-tower/FantasyTowerLogLayer.prefab",
+      "uuid": "88942e74-519e-42ad-b738-ac82ac4b2c18",
+      "source_bytes": 25894,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fantasy-tower/FantasyTowerPreviewLayer.prefab",
+      "uuid": "c8fa2274-be22-444b-80df-37976306fcde",
+      "source_bytes": 77450,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fantasy-tower/FantasyTowerRankCell.prefab",
+      "uuid": "be66eaa6-47ff-41a1-999e-d135c2c24a02",
+      "source_bytes": 22084,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fantasy-tower/FantasyTowerRewardCell.prefab",
+      "uuid": "d2113682-c734-4a51-a16a-0285a5052354",
+      "source_bytes": 16244,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fantasy-tower/FantasyTowerTipRewardCell.prefab",
+      "uuid": "66557cce-7d30-4e3b-a484-3d0b7b66fa32",
+      "source_bytes": 27126,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetter/FetterDescLayer.prefab",
+      "uuid": "e7da0523-8604-493e-8d1e-282f6d4aa0fa",
+      "source_bytes": 13195,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetter/FetterMainViewLayer.prefab",
+      "uuid": "9e161b11-30b7-46f2-9f33-45c0d04cf9a4",
+      "source_bytes": 133624,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetter/FetterPreviewLayer.prefab",
+      "uuid": "084abc60-da17-4c46-8582-3bb84235f179",
+      "source_bytes": 45609,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetter/FetterTaskItem.prefab",
+      "uuid": "59fbb0cd-b651-4705-b2d2-9989103c3d3a",
+      "source_bytes": 17908,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetter/FetterUnlockLayer.prefab",
+      "uuid": "420c4e2d-0a2f-4cf3-a117-14b90199b0a9",
+      "source_bytes": 26354,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetter/FetterVipInfo.prefab",
+      "uuid": "ba1e97ea-0c5e-4eea-9c84-2664c2b5c651",
+      "source_bytes": 36860,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetter/FetterVipInfoLayer.prefab",
+      "uuid": "387858ae-b701-414c-b33f-cf6a8fcca1b2",
+      "source_bytes": 12443,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersCastSoulLayer.prefab",
+      "uuid": "e25c02e3-626a-4147-948f-8258ec5091e7",
+      "source_bytes": 82354,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersIllusionLayer.prefab",
+      "uuid": "5c25e247-6c50-4329-8784-40bdb30ef452",
+      "source_bytes": 154685,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersIllusionSmeltingLayer.prefab",
+      "uuid": "90c4712f-c99e-4f83-88fb-498854f284b0",
+      "source_bytes": 68742,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersInfoBaptismCell.prefab",
+      "uuid": "16657685-3006-4170-ac24-e605594392a4",
+      "source_bytes": 98992,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersInfoLayer.prefab",
+      "uuid": "f7900286-fa48-4023-be2f-3bebfc9e3917",
+      "source_bytes": 244643,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersInfoLevelCell.prefab",
+      "uuid": "8ccfa84d-fe18-4f59-bcce-30075b318d35",
+      "source_bytes": 90970,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersInfoRefineCell.prefab",
+      "uuid": "a002e51f-5611-4dac-93a8-8018b8f651ab",
+      "source_bytes": 111125,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersInfoSkillCell.prefab",
+      "uuid": "46b6855d-54b3-41e1-8e87-2ca59c815036",
+      "source_bytes": 66701,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersInfoUplimitCell.prefab",
+      "uuid": "7ee66a4e-be54-4961-8385-3aa1a00f9432",
+      "source_bytes": 101530,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersResultLayer.prefab",
+      "uuid": "b96c5dfd-fc9c-45d3-89f2-33488479386e",
+      "source_bytes": 54595,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersSelectCell.prefab",
+      "uuid": "571eab8b-732f-4549-a1ff-a95aab6eb585",
+      "source_bytes": 45643,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/fetters/FettersSelectLayer.prefab",
+      "uuid": "7a0f6b9d-794e-438a-ab92-86d1ab5803ac",
+      "source_bytes": 27539,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/floating-islands/FloatingIslandsBossLayer.prefab",
+      "uuid": "5c69d17c-3e00-46b4-ae9a-5f47c9777be6",
+      "source_bytes": 177343,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/floating-islands/FloatingIslandsDamageCell.prefab",
+      "uuid": "5709ff5a-b145-481f-b948-3d580d5bd188",
+      "source_bytes": 16096,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/floating-islands/FloatingIslandsDamageLayer.prefab",
+      "uuid": "75582cb7-4155-4f06-94a0-81a717cfbd16",
+      "source_bytes": 31588,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/floating-islands/FloatingIslandsEndCell.prefab",
+      "uuid": "d8001859-de77-426f-abac-93f044aa51de",
+      "source_bytes": 16675,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/floating-islands/FloatingIslandsRewardCell.prefab",
+      "uuid": "cabaf1ad-427c-41d7-99bb-cf9a789a0b7f",
+      "source_bytes": 24012,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/floating-islands/FloatingIslandsRewardLayer.prefab",
+      "uuid": "ce97d168-3436-4b38-82ab-05733246ea2e",
+      "source_bytes": 37049,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendBlackListCell.prefab",
+      "uuid": "11d801ec-68e0-46f7-885a-4cf177a9ef1b",
+      "source_bytes": 36449,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendBlackListLayer.prefab",
+      "uuid": "b504613c-1d56-4813-a4c4-656f4adddf39",
+      "source_bytes": 7530,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendCell.prefab",
+      "uuid": "c2a8536e-dc5f-4a79-97f2-e16a74ed3120",
+      "source_bytes": 55708,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendGivedCell.prefab",
+      "uuid": "4fa139e6-7fc3-42c1-a87f-29e90f899df3",
+      "source_bytes": 40263,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendGivedLayer.prefab",
+      "uuid": "66fddbc4-9a38-4cc0-b262-378f165a35ec",
+      "source_bytes": 26994,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendLayer.prefab",
+      "uuid": "66331db1-240e-4d4f-801c-0781e6002457",
+      "source_bytes": 38090,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendListLayer.prefab",
+      "uuid": "190e9406-d6d0-413b-98de-f539615048df",
+      "source_bytes": 41023,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendRequestCell.prefab",
+      "uuid": "23b56cc1-66bf-449e-b29a-ef2c0d82ddf8",
+      "source_bytes": 40280,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendRequestLayer.prefab",
+      "uuid": "91a4183d-6b5f-4c69-a4f5-d97ef90c6a8f",
+      "source_bytes": 10092,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendRequestLayer_old.prefab",
+      "uuid": "0414ac98-a0fd-4271-acb0-1ff6ca48ee15",
+      "source_bytes": 19788,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendSearchCell.prefab",
+      "uuid": "0766436a-a827-4394-ad2d-ee1fb437df61",
+      "source_bytes": 36555,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/friend/FriendSearchLayer.prefab",
+      "uuid": "2fc11bde-481d-44ee-9a6d-caed09aebb7c",
+      "source_bytes": 36034,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-arms/GodArmsAttrLayer.prefab",
+      "uuid": "0e1106cf-a942-4e8e-b9e2-67d84ace1f3a",
+      "source_bytes": 4380,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-arms/GodArmsBackpackLayer.prefab",
+      "uuid": "c8e5973b-5481-4ff8-aeb5-2a3e65f0f89f",
+      "source_bytes": 21410,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-arms/GodArmsCompose.prefab",
+      "uuid": "b620c922-c9a3-47f0-be5f-bb79f6e0acff",
+      "source_bytes": 56967,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-arms/GodArmsComposeLayer.prefab",
+      "uuid": "465eb821-b519-4a06-ad5b-8095a550faf3",
+      "source_bytes": 83423,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-arms/GodArmsEquipTipsLayer.prefab",
+      "uuid": "2e175b64-68df-4a2e-b323-902b1d365b71",
+      "source_bytes": 38977,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-arms/GodArmsFightingLayer.prefab",
+      "uuid": "3ee92461-adb1-41b5-915f-a44e3ccf7995",
+      "source_bytes": 24875,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-arms/GodArmsLayer.prefab",
+      "uuid": "6fbe5bbc-e55b-44d0-8724-0a7bed3a0227",
+      "source_bytes": 311854,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-arms/GodArmsOneKeyComposeLayer.prefab",
+      "uuid": "bf554cf9-4813-4efd-a671-abe1a27eec1d",
+      "source_bytes": 121319,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-arms/GodArmsOneKeyComposeTipsLayer.prefab",
+      "uuid": "31939291-7bb8-47c5-b1b9-8bcfa87b4290",
+      "source_bytes": 44679,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-equip/GodEquipPromotionLayer.prefab",
+      "uuid": "882f7da4-48f1-41bc-af8c-8b2183143c44",
+      "source_bytes": 43578,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-equip/GodEquipRareLayer.prefab",
+      "uuid": "91c7e782-6616-458c-954f-da9229c19090",
+      "source_bytes": 209997,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-equip/GodEquipSaleLayer.prefab",
+      "uuid": "6be6b7de-63bd-4df3-a32e-2725c1a07979",
+      "source_bytes": 39263,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-equip/GodEquipSelectLayer.prefab",
+      "uuid": "634a073c-1be6-40ae-a1d8-76779903c2ad",
+      "source_bytes": 35969,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-equip/GodEquipSelectSaleLayer.prefab",
+      "uuid": "35faee9d-2ac4-46c3-a43f-50287f781ec9",
+      "source_bytes": 70537,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/god-equip/GodEquipShopLayer.prefab",
+      "uuid": "326096ac-9ab1-4670-8d79-3187a861b970",
+      "source_bytes": 53387,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRConditionCell.prefab",
+      "uuid": "300421f0-e635-4525-a664-91a82d35a757",
+      "source_bytes": 21573,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRConditionLayer.prefab",
+      "uuid": "59e40eca-c644-4cfa-9353-606627f04bf6",
+      "source_bytes": 21575,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GREndCell.prefab",
+      "uuid": "3519c754-1348-4f00-931b-ce4123e6b384",
+      "source_bytes": 29866,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRMissionCastleCell.prefab",
+      "uuid": "bdd86cca-daba-4936-b322-908fb5809ccd",
+      "source_bytes": 23602,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRMissionGiftLayer.prefab",
+      "uuid": "6e43b068-2037-4bb0-ac51-b6e3c1219091",
+      "source_bytes": 12791,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRMissionGiftPageLayer.prefab",
+      "uuid": "8507eb3f-ad8f-44ea-9066-5390e1b65a17",
+      "source_bytes": 37891,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRMissionLayer.prefab",
+      "uuid": "573832ce-3ca8-4ed0-8bf5-e689dcb0938b",
+      "source_bytes": 194439,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRMissionListCell.prefab",
+      "uuid": "28a8b30a-97ba-44df-9620-e7873983a390",
+      "source_bytes": 23892,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRMissionListLayer.prefab",
+      "uuid": "3eb53f20-612b-4e9a-8ce5-34df395c7d9b",
+      "source_bytes": 70308,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRMissionStarRewardCell.prefab",
+      "uuid": "f6c29ca5-b36c-4540-970c-55ffc8f32a76",
+      "source_bytes": 31811,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/gr/GRMissionStarRewardLayer.prefab",
+      "uuid": "b0958f08-6e08-4e74-8bb2-7854e2d59164",
+      "source_bytes": 24182,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hallows/HallowsIdentifyLayer.prefab",
+      "uuid": "12b92790-bd33-4c7c-8960-35e931a7939e",
+      "source_bytes": 18748,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hallows/HallowsIdentifyResultLayer.prefab",
+      "uuid": "8f9b6d7b-11e7-4c7d-8265-d3f3a6a52908",
+      "source_bytes": 40970,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hallows/HallowsIllustrationLayer.prefab",
+      "uuid": "68b292d5-1349-48b0-9098-4f1449f159e3",
+      "source_bytes": 34990,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hallows/HallowsInfoCell.prefab",
+      "uuid": "5c58c02a-b058-4d78-a184-28d9b4a6793d",
+      "source_bytes": 13904,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hallows/HallowsInfoLayer.prefab",
+      "uuid": "1a086b90-2c73-43ce-bc47-8ef98bd61277",
+      "source_bytes": 19785,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hallows/HallowsResolveLayer.prefab",
+      "uuid": "02dcbcd8-e7b5-427b-855f-f4c3631ccd90",
+      "source_bytes": 48312,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hallows/HallowsSelectLayer.prefab",
+      "uuid": "9585ba00-51ac-4b27-bb20-6752aacd2c36",
+      "source_bytes": 63345,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hallows/HallowsUpStarLayer.prefab",
+      "uuid": "e6969e06-f0e4-4dba-b40f-c2f21eaaa27a",
+      "source_bytes": 169836,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/halo/HaloCell.prefab",
+      "uuid": "aca28508-64da-42e1-8ba2-16c821c620bf",
+      "source_bytes": 12651,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/halo/HaloLayer.prefab",
+      "uuid": "0c5f20a1-be0c-49d9-831e-3ae2b50a3e9c",
+      "source_bytes": 72024,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hard-select/HardSelectCell.prefab",
+      "uuid": "4fd111a2-5a25-4309-b78c-e68a073499f7",
+      "source_bytes": 27820,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hard-select/HardSelectLayer.prefab",
+      "uuid": "9a004b84-9b96-49b4-85bf-872c124e17fe",
+      "source_bytes": 26454,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero-creat/HeroCreatCell.prefab",
+      "uuid": "12951189-835f-4fd0-9b04-f6b669e3698d",
+      "source_bytes": 34829,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero-creat/HeroCreatLayer.prefab",
+      "uuid": "71c1f16b-6910-41c5-b8d7-2d9a8ebf4215",
+      "source_bytes": 125378,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:79",
+        "scripts\\ui\\prefabShellMap.ts:46"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/CatalogIconCell.prefab",
+      "uuid": "f8d2b5c1-7e39-4064-ad22-3b9c8f7e6d51",
+      "source_bytes": 13792,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:60",
+        "scripts\\ui\\screenFill.ts:63"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/DragonCard.prefab",
+      "uuid": "09e3c6d2-8f4a-4175-be33-4cad908f7e62",
+      "source_bytes": 14351,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:61",
+        "scripts\\ui\\screenFill.ts:64"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroArriveItem.prefab",
+      "uuid": "5a106885-fe6e-5fcd-97ed-de5ddb828ccb",
+      "source_bytes": 19585,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroArriveLayer.prefab",
+      "uuid": "707a8adf-07a4-53e4-80eb-983ff7321cf2",
+      "source_bytes": 40959,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroAstrolabeActiveLayer.prefab",
+      "uuid": "46fd993a-32fc-5296-b04e-85960e27d213",
+      "source_bytes": 50833,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroAstrolabeLayer.prefab",
+      "uuid": "ababf0d8-508f-5000-aee3-ebbb20b5aba1",
+      "source_bytes": 263453,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroAstrolabeSelectSkillLayer.prefab",
+      "uuid": "6268c6a3-e651-52dc-a9b8-42cde6feca75",
+      "source_bytes": 105105,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroAstrolabeUnlockLayer.prefab",
+      "uuid": "58a1c3f2-b2e9-5115-8ed7-c2dd88fd80e7",
+      "source_bytes": 83021,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroCommentCell.prefab",
+      "uuid": "6df1a1be-69cf-5e67-86cf-757f26cf2cac",
+      "source_bytes": 38812,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroCommentLayer.prefab",
+      "uuid": "caab833c-38cb-5849-b108-e2b9e1d32be5",
+      "source_bytes": 62634,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroContractSelectCell.prefab",
+      "uuid": "41127b38-6f74-5684-a02e-af1415dcd06e",
+      "source_bytes": 28930,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroContractSelectLayer.prefab",
+      "uuid": "b57e3d7e-582c-53d7-b1f5-74981e2c98ef",
+      "source_bytes": 90553,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroEvolutionAttrCell.prefab",
+      "uuid": "4a732e01-d21e-58d0-b40b-28817e820ab1",
+      "source_bytes": 13251,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroEvolutionInfoLayer.prefab",
+      "uuid": "2d113309-43d5-5301-956e-fe6c0065e673",
+      "source_bytes": 59494,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroEvolutionLayer.prefab",
+      "uuid": "5c5d5783-7bef-59dc-b4d5-5fa838e955c7",
+      "source_bytes": 97451,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroEvolutionPreviewLayer.prefab",
+      "uuid": "0fe159f4-498a-5c87-81a5-8678beb786c5",
+      "source_bytes": 123575,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroEvolutionSeat.prefab",
+      "uuid": "a9865c71-5500-5a61-9dd9-68ee414285ba",
+      "source_bytes": 20459,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroEvolutionSelectLayer.prefab",
+      "uuid": "2bb0029c-e961-583f-ae71-eb7a1754b296",
+      "source_bytes": 31952,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroEvolutionSuccessLayer.prefab",
+      "uuid": "3cea9534-1c38-5f26-b18b-25543f5d8bca",
+      "source_bytes": 28955,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroEvolutionTreeLayer.prefab",
+      "uuid": "492504cb-5ccd-5435-96e3-a6ef4729b4ce",
+      "source_bytes": 100944,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroEvolveIllustratLayer.prefab",
+      "uuid": "e4d28bf9-f7d0-516e-90f3-9b590703e1ce",
+      "source_bytes": 46816,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroGodEquipAttrLayer.prefab",
+      "uuid": "4366f91f-95cf-50ad-9c76-b3cc60e86cae",
+      "source_bytes": 32456,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroGodEquipOrderAttrLayer.prefab",
+      "uuid": "2eacb233-1e82-5f38-8e03-a2767605037b",
+      "source_bytes": 10796,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroGodEquipStateLayer.prefab",
+      "uuid": "65120e7e-1c77-54bd-9327-1aa62af1d448",
+      "source_bytes": 25832,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroIllustratInfoLayer.prefab",
+      "uuid": "bb55670b-674d-41b5-9aeb-681208d5301b",
+      "source_bytes": 111247,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoAwakenCell.prefab",
+      "uuid": "feae7a02-795f-4d81-ad49-87b08c9e9a16",
+      "source_bytes": 20904,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoAwakenLayer.prefab",
+      "uuid": "34736dfd-dc5d-498c-8f60-2967533a5db5",
+      "source_bytes": 57865,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoGodEquipLayer.prefab",
+      "uuid": "5f6e467e-cf73-4d9b-86db-de38f461b0f9",
+      "source_bytes": 60211,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoTalentLayer.prefab",
+      "uuid": "d12962fe-3607-4583-8ee7-1a1ad0d87e45",
+      "source_bytes": 49932,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoUpStoneAttrCell.prefab",
+      "uuid": "b2295964-6c55-4fbb-bf1a-dc0d532f8925",
+      "source_bytes": 8573,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroInfoUpStoneLayer.prefab",
+      "uuid": "696c651c-d7b2-4fbf-bfec-a511378f464b",
+      "source_bytes": 91304,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroListDragonLayer.prefab",
+      "uuid": "915e2d97-7751-4df7-b438-ac5a83d0ce17",
+      "source_bytes": 26017,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroListDragonRoomLayer.prefab",
+      "uuid": "4b4921bf-cba5-42b8-be8a-143c96b4325a",
+      "source_bytes": 110060,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroListDragonWearLayer.prefab",
+      "uuid": "3d66b38c-38ef-4421-ad11-7f4cdcba1ede",
+      "source_bytes": 125487,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroMatrixCell.prefab",
+      "uuid": "ae64187d-902c-5c2c-8df1-7c463b6ccae6",
+      "source_bytes": 28184,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroMatrixLayer.prefab",
+      "uuid": "793a3619-58f9-524f-96e9-1472d3b6f4dc",
+      "source_bytes": 149108,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroMaxSkinLayer.prefab",
+      "uuid": "2c966898-d351-5fea-818e-09e99ede1647",
+      "source_bytes": 67591,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroPalaceLayer.prefab",
+      "uuid": "f585a6a0-f33b-5bcf-8d0c-0ffb96a65397",
+      "source_bytes": 141844,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:52",
+        "scripts\\ui\\prefabShellMap.ts:33"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroPalaceRewardCell.prefab",
+      "uuid": "5feee13c-3e66-5ab2-bef4-063076446a97",
+      "source_bytes": 19478,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroPalaceRewardLayer.prefab",
+      "uuid": "c3ec64a6-0d99-58ed-b111-01903393feac",
+      "source_bytes": 25803,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroPernuteCell.prefab",
+      "uuid": "59211197-68a4-5b59-bdf4-44884560bacb",
+      "source_bytes": 76301,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroPernuteLayer.prefab",
+      "uuid": "a329e2f3-32d1-58bf-b777-044a6fbb4f8e",
+      "source_bytes": 21451,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:53",
+        "scripts\\ui\\prefabShellMap.ts:50"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroPernuteSelectLayer.prefab",
+      "uuid": "471be1d8-3705-5a9f-819b-af8417fba48e",
+      "source_bytes": 25455,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroRecommendItem.prefab",
+      "uuid": "85527777-4541-448a-ad7d-15cc44013669",
+      "source_bytes": 31023,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroRecommendItemCell.prefab",
+      "uuid": "6cb6fe7c-f70c-4d22-b40f-9043f2075515",
+      "source_bytes": 8573,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroRollBackLayer.prefab",
+      "uuid": "e572e801-69d8-5d6c-bb7b-11799e8a8d14",
+      "source_bytes": 73157,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroShareInfoContentLayer.prefab",
+      "uuid": "ea30bdf5-20aa-5b94-9ef3-71bb65ce6e96",
+      "source_bytes": 110817,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroShareInfoLayer.prefab",
+      "uuid": "44672b1b-e170-524e-9f41-1aa225b2e233",
+      "source_bytes": 87792,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroShareMenu.prefab",
+      "uuid": "4f8d3b24-2324-55ee-ac9e-e6ce614fbdfe",
+      "source_bytes": 28606,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSkinSettingLayer.prefab",
+      "uuid": "20e48c0b-ec5c-570c-a3cc-2610bf3c17fa",
+      "source_bytes": 174343,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSoulLayer.prefab",
+      "uuid": "7fbcdcad-1fd1-5bf9-980a-75b91340d8ae",
+      "source_bytes": 133278,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSoulResultLayer.prefab",
+      "uuid": "27ca2325-c952-58ba-a793-3f75ce86de4b",
+      "source_bytes": 43152,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSoulShowCell.prefab",
+      "uuid": "d681a793-a632-56f5-8592-6a6bff6703c0",
+      "source_bytes": 23507,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSoulShowLayer.prefab",
+      "uuid": "bbe7aa23-6c14-5574-a460-9b103caa959d",
+      "source_bytes": 25792,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroStoneStateCell.prefab",
+      "uuid": "7b915c07-f445-443e-9330-8759f2b51a75",
+      "source_bytes": 34961,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroStoneStateLayer.prefab",
+      "uuid": "bdecb719-3924-4503-bf04-5a0c9f3d1f21",
+      "source_bytes": 19789,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroTalentLearnLayer.prefab",
+      "uuid": "67117bcc-a862-4b9b-9b7f-d8568972a6ff",
+      "source_bytes": 51543,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroTalentShopLayer.prefab",
+      "uuid": "34faf2ae-761b-4bfa-8e7b-25c0e01be109",
+      "source_bytes": 40567,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroTalentUpLevelLayer.prefab",
+      "uuid": "55a4eaeb-295e-49a6-8d7c-8e27aa5d8aa1",
+      "source_bytes": 111392,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroTalkTipsLayer.prefab",
+      "uuid": "e9ecf535-5668-508c-80dc-3709d3f949b9",
+      "source_bytes": 5934,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/hero/HeroUseSkinLayer.prefab",
+      "uuid": "4c1fc612-0ba5-5363-bab1-ff21d5192789",
+      "source_bytes": 90510,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/item/ItemBuyLayer.prefab",
+      "uuid": "9f575565-6678-4498-8dbd-6f476c35640b",
+      "source_bytes": 45171,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder-war/LadderWarMainLayer.prefab",
+      "uuid": "78e9d9f5-aa3d-49c6-a832-5d2e598d2c64",
+      "source_bytes": 101079,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder-war/LadderWarSeat.prefab",
+      "uuid": "a2ab15db-dcca-4ac9-b208-5c1545e0e65f",
+      "source_bytes": 21955,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder/LadderBattleEndLayer.prefab",
+      "uuid": "2cb4b9d4-36b8-430b-9656-7449d89b3945",
+      "source_bytes": 58935,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder/LadderChallengeLayer.prefab",
+      "uuid": "76beb68d-307b-4db6-8e87-f27269139641",
+      "source_bytes": 78051,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder/LadderHeroTempleLayer.prefab",
+      "uuid": "47fa14a3-ba14-4f30-ad11-1fbc3862e945",
+      "source_bytes": 96592,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder/LadderHistoryHighCell.prefab",
+      "uuid": "138f8077-fb8d-4166-ab7d-ad0ee189097c",
+      "source_bytes": 63560,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder/LadderHistoryLayer.prefab",
+      "uuid": "113d2a5c-7ebf-4c17-8b93-d061809412d4",
+      "source_bytes": 52075,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder/LadderHistoryMyCell.prefab",
+      "uuid": "0e0f0c34-a7c5-46cb-a161-2b1611ff66e6",
+      "source_bytes": 51711,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder/LadderRewardCell.prefab",
+      "uuid": "d144388a-7dc9-43ce-b30b-f8b32353f666",
+      "source_bytes": 17991,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/ladder/LadderRewardLayer.prefab",
+      "uuid": "39183cd2-9cb1-4250-8343-acde4fc7189f",
+      "source_bytes": 24918,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/league-portal/LeaguePortalMainCell.prefab",
+      "uuid": "7b1d3cc3-8c8b-4174-9835-531448b8868a",
+      "source_bytes": 7302,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/league-portal/LeaguePortalMainLayer.prefab",
+      "uuid": "314d38bb-ac33-4fe7-8378-64944ecaa3b3",
+      "source_bytes": 20512,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/login/CreateNickRewardLayer.prefab",
+      "uuid": "b426d636-083f-58c1-b9ed-c4aa1986cf02",
+      "source_bytes": 17538,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:35"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/LanguageSelectLayer.prefab",
+      "uuid": "407e882e-679d-56c4-ab3c-ef62fae4f686",
+      "source_bytes": 45305,
+      "legacy_code_sites": [
+        "scripts\\ui\\p1Login.ts:19",
+        "scripts\\ui\\prefabLoad.ts:33"
+      ]
+    },
+    {
+      "path": "prefabs/ui/magic-cube/MagicCubeDisboardLayer.prefab",
+      "uuid": "de97e5a0-6f98-4a9c-8c54-fd4fc112548b",
+      "source_bytes": 49353,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/magic-cube/MagicCubeLayer.prefab",
+      "uuid": "f99b58f3-39fc-4096-bad0-ecd9dbeb8b9b",
+      "source_bytes": 27271,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:83",
+        "scripts\\ui\\prefabShellMap.ts:52"
+      ]
+    },
+    {
+      "path": "prefabs/ui/magic-cube/MagicCubeSelectHeroLayer.prefab",
+      "uuid": "39f45041-84aa-4e97-ab2e-f43fd2f65571",
+      "source_bytes": 68532,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/main-task/MainTaskCell.prefab",
+      "uuid": "2a1c0f5e-b01c-41bf-bade-b7ceac6ce07b",
+      "source_bytes": 49773,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/main-task/MainTaskChooseHeroLayer.prefab",
+      "uuid": "bb861e01-83d6-45c0-bfcc-5201c0c092ef",
+      "source_bytes": 96112,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/main-task/MainTaskLayer.prefab",
+      "uuid": "ddaf9e44-1224-45b3-ba15-b20b7a86c4a1",
+      "source_bytes": 57314,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:77",
+        "scripts\\ui\\prefabShellMap.ts:44",
+        "scripts\\ui\\prefabShellMap.ts:47"
+      ]
+    },
+    {
+      "path": "prefabs/ui/main-task/MainTaskPowerLayer.prefab",
+      "uuid": "16b325e7-f6a6-48c0-af27-208b1a7c01fd",
+      "source_bytes": 16937,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/make-equip/MakeEquipCell.prefab",
+      "uuid": "40e1f290-1ba6-4286-9ac9-119d19e3eafb",
+      "source_bytes": 36350,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/make-equip/MakeEquipOneKeyTipsLayer.prefab",
+      "uuid": "e7b11926-1ac7-48be-a6da-0bf998e07f4a",
+      "source_bytes": 18824,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/make-gem/MakeGemOneKeyTipsLayer.prefab",
+      "uuid": "47c25dad-148f-4835-ae1a-1163b9014f83",
+      "source_bytes": 18812,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/mission/MissionCell.prefab",
+      "uuid": "701711d5-61fb-469d-b183-39c66846292f",
+      "source_bytes": 30133,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/mission/MissionLayer.prefab",
+      "uuid": "5d43d0ac-bd27-4bed-aef3-17a46b71a0f1",
+      "source_bytes": 62923,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/mission/MissionRewardInfoCell.prefab",
+      "uuid": "729a1755-afa8-4141-a31d-12d572a7cb2d",
+      "source_bytes": 10102,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/mission/MissionRewardInfoLayer.prefab",
+      "uuid": "cdc48c8d-eb7f-476c-b6e0-a74284171138",
+      "source_bytes": 41668,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/mission/MissionRewardLayer.prefab",
+      "uuid": "3e91ed60-57fd-468c-a0b5-351583c7afb2",
+      "source_bytes": 19849,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pass-chapter/PassChapterTipsLayer.prefab",
+      "uuid": "1d41dab7-d131-467d-baec-c6f84b38c974",
+      "source_bytes": 51039,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pet/PetIllustratLayer.prefab",
+      "uuid": "dedcffa7-f013-4415-936f-0dd0db862ae0",
+      "source_bytes": 47210,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pet/PetInfoIllustratLayer.prefab",
+      "uuid": "710cbf5f-dba5-4846-9f78-cca573cb1e36",
+      "source_bytes": 82696,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pet/PetInfoLayer.prefab",
+      "uuid": "b4734b1c-9cc9-476b-9159-f305f3b5a210",
+      "source_bytes": 159779,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:76",
+        "scripts\\ui\\prefabShellMap.ts:43"
+      ]
+    },
+    {
+      "path": "prefabs/ui/pet/PetInfoTipsLayer.prefab",
+      "uuid": "e3284b60-9758-4369-8641-14c7da3f5149",
+      "source_bytes": 92226,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pet/PetSelectLayer.prefab",
+      "uuid": "0e626bf3-b4d1-4c83-8f31-9a3ce187a5e0",
+      "source_bytes": 36006,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/plane-war/PlaneWarInstance.prefab",
+      "uuid": "45492594-1e40-4dd8-8fb8-6bb60165c053",
+      "source_bytes": 21445,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/plane-war/PlaneWarMainLayer.prefab",
+      "uuid": "45a260c5-2213-4c1e-943d-158185573fd1",
+      "source_bytes": 77440,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/plane-war/PlaneWarMissionCell.prefab",
+      "uuid": "37480bec-77d8-4bf8-b1ad-e05feee23d39",
+      "source_bytes": 29001,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/plane-war/PlaneWarMissionLayer.prefab",
+      "uuid": "021dde00-fd1e-46b8-8a05-d658f825ba03",
+      "source_bytes": 79022,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/plane-war/PlaneWarRankCell.prefab",
+      "uuid": "7b59058f-f95e-4734-901e-fc596d4c91dc",
+      "source_bytes": 32722,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/plane-war/PlaneWarRankLayer.prefab",
+      "uuid": "3c38f003-27f6-41a4-9e13-54f22edcfd11",
+      "source_bytes": 86876,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/plane-war/PlaneWarRewardCell.prefab",
+      "uuid": "dda978ec-b42f-4c71-be2a-173afd7d10ed",
+      "source_bytes": 17999,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pvp/PvpEndLayer.prefab",
+      "uuid": "82e3329c-2e0f-49c0-8554-918e3cfc4524",
+      "source_bytes": 79613,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pvp/PvpHistoryCell.prefab",
+      "uuid": "1b06b470-ace7-494e-b23d-0c52ac824d32",
+      "source_bytes": 53086,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pvp/PvpHistoryLayer.prefab",
+      "uuid": "724d9824-1141-4da6-81a7-cb2fe6ad8bee",
+      "source_bytes": 25775,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pvp/PvpLayer.prefab",
+      "uuid": "f7e674a7-9365-432d-834c-641d10fb5db4",
+      "source_bytes": 163601,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:71",
+        "scripts\\ui\\prefabShellMap.ts:38"
+      ]
+    },
+    {
+      "path": "prefabs/ui/pvp/PvpPlayerCell.prefab",
+      "uuid": "33973752-38be-4ac0-a630-3c426aa2b47e",
+      "source_bytes": 39913,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pvp/PvpRankCell.prefab",
+      "uuid": "78f4f803-2f7f-488e-ac77-8cca2193a854",
+      "source_bytes": 54047,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/pvp/PvpRewardCell.prefab",
+      "uuid": "5587ae5b-e93a-4949-88e6-0641e8cc158f",
+      "source_bytes": 23717,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rainbow/RainbowBattleEndLayer.prefab",
+      "uuid": "5e77b606-3de5-458c-ac26-87c2948ff98d",
+      "source_bytes": 42767,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rainbow/RainbowChallengeLayer.prefab",
+      "uuid": "40328406-69c8-4ce2-b2ab-f6c7690557d1",
+      "source_bytes": 164454,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rainbow/RainbowHistoryCell.prefab",
+      "uuid": "90e52cf6-4e28-4fa5-993a-7a95d0499557",
+      "source_bytes": 29273,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rainbow/RainbowHistoryLayer.prefab",
+      "uuid": "fb1ee857-b5a0-432b-a254-c896187e4a54",
+      "source_bytes": 27468,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rainbow/RainbowMainLayer.prefab",
+      "uuid": "d9f37936-4ed8-4c6c-b7bc-b2a65ded29ec",
+      "source_bytes": 55557,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rainbow/RainbowSeat.prefab",
+      "uuid": "0225071d-890f-4d1b-9f90-f199e17bcc50",
+      "source_bytes": 18810,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rank/RankLayer.prefab",
+      "uuid": "aa64ee9c-7272-4467-abe5-d1226d490599",
+      "source_bytes": 34400,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rank/RankListCell.prefab",
+      "uuid": "72229fec-3942-4f63-8684-26f040d9feaa",
+      "source_bytes": 27015,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rank/RankListLayer.prefab",
+      "uuid": "35d89276-c0e1-493f-9546-aecd771054da",
+      "source_bytes": 41635,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rank/RankSingleLayer.prefab",
+      "uuid": "03ac3d11-2b2c-494f-80f7-2391c917eacc",
+      "source_bytes": 29015,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rank/RankTopThreeCell.prefab",
+      "uuid": "6f1179f3-b632-439b-903a-b4d3ac777198",
+      "source_bytes": 41944,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rank/RankTopThreeLayer.prefab",
+      "uuid": "71a2f95f-c86e-491b-8f87-c9474d1134e8",
+      "source_bytes": 89986,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/remains/RemainsSelectLayer.prefab",
+      "uuid": "6028b4af-f5c0-40d4-a143-233217f9ca07",
+      "source_bytes": 35769,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/resonate/ResonateLayer.prefab",
+      "uuid": "4fdb8c5f-838e-48b4-8a3a-a792fdd05f5f",
+      "source_bytes": 115683,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/reward/LuckRewardLayer.prefab",
+      "uuid": "aa0c74e2-332c-4a61-b134-696c9b7d0a06",
+      "source_bytes": 19511,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/reward/OnlineRewardIcon.prefab",
+      "uuid": "a1d83bf7-e640-48c3-9a08-af5d89db6b6b",
+      "source_bytes": 13153,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/reward/OnlineRewardLayer.prefab",
+      "uuid": "9c32ba46-a2c8-4c3c-8c94-48002f07a034",
+      "source_bytes": 27302,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/reward/UnlockCubeLayer.prefab",
+      "uuid": "4b474b91-56b0-4e4b-af4c-b0ac415f3a20",
+      "source_bytes": 51832,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rg/RGMissionLayer.prefab",
+      "uuid": "eba26e3f-630b-418a-8e73-7ccd7e8f6cc2",
+      "source_bytes": 18143,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/rg/RGMissionListLayer.prefab",
+      "uuid": "82df7cbb-0abb-454a-9f27-7f77ac3429a4",
+      "source_bytes": 18151,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/role/BorderIcon.prefab",
+      "uuid": "a2de53f2-0bbd-58cf-b367-abeefb06c90a",
+      "source_bytes": 17848,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/role/InfoLayer.prefab",
+      "uuid": "c3f55705-88e9-5980-89cf-427b87a3ee2a",
+      "source_bytes": 15624,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/role/PowerLayer.prefab",
+      "uuid": "a88f0a8b-c6b1-5cc4-b2ff-5471d473e48c",
+      "source_bytes": 6919,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/role/RenameLayer.prefab",
+      "uuid": "b4e7da80-80a5-5e13-831e-dd667b304a18",
+      "source_bytes": 22709,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/role/WorldLevelLayer.prefab",
+      "uuid": "3312d311-bdfc-5447-a2ce-bd40f2db35ba",
+      "source_bytes": 14278,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:75",
+        "scripts\\ui\\prefabShellMap.ts:42"
+      ]
+    },
+    {
+      "path": "prefabs/ui/runes/RunesRecastItem.prefab",
+      "uuid": "6a7c16f1-c8ec-4ea2-a80f-f7ed53837660",
+      "source_bytes": 48556,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/runes/RunesRecastLayer.prefab",
+      "uuid": "443fbb33-1175-4988-808d-1f805af27845",
+      "source_bytes": 81664,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/runes/RunesSelect2Cell.prefab",
+      "uuid": "af5a4169-8c2c-4402-9817-dd0871fd2cd3",
+      "source_bytes": 3426,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/runes/RunesSelect2Layer.prefab",
+      "uuid": "10302594-c33b-49bb-a4eb-f87ae0de4370",
+      "source_bytes": 29952,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/runes/RunesSelectCell.prefab",
+      "uuid": "55585b23-d6d7-45c8-b5e1-86c00e4c8a02",
+      "source_bytes": 25427,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/runes/RunesSelectLayer.prefab",
+      "uuid": "e4e5523d-baf0-44fa-8828-26dbacedcaa7",
+      "source_bytes": 22988,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/runes/RunesSkillLayer.prefab",
+      "uuid": "1e14d336-7f42-41a8-be97-09cc08516121",
+      "source_bytes": 48096,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/runes/RunesTipsCell.prefab",
+      "uuid": "8abd662c-e1e5-4ec3-a0d3-bedd53d58bb5",
+      "source_bytes": 12364,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/runes/RunesTipsLayer.prefab",
+      "uuid": "7f8e19e8-a244-4511-b492-148342984869",
+      "source_bytes": 26214,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/setting/GMLayer.prefab",
+      "uuid": "906c1d4c-fbd0-55bc-879f-003c3c4cf723",
+      "source_bytes": 148202,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/setting/InputCodeLayer.prefab",
+      "uuid": "f564083c-e903-53e6-8801-a455616454f1",
+      "source_bytes": 32682,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/setting/SettingChooseLayer.prefab",
+      "uuid": "f53c0921-fd97-508a-971a-c0827c4586b9",
+      "source_bytes": 48497,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/setting/SettingIdentificationCell.prefab",
+      "uuid": "1f5ba636-ac74-57cc-a6a8-0f39d29458ee",
+      "source_bytes": 28720,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/setting/SettingIdentificationRewardCell.prefab",
+      "uuid": "e51387fe-3dfa-58fa-9c40-0c642d19418e",
+      "source_bytes": 31345,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/setting/SettingImageLayer.prefab",
+      "uuid": "224bcb42-0583-5180-bdae-001e8e800ca0",
+      "source_bytes": 57268,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/setting/SettingSuperLayer.prefab",
+      "uuid": "ef0755a9-2e75-5652-ada5-046edc02668a",
+      "source_bytes": 92650,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/setting/SettingTitleCell.prefab",
+      "uuid": "11101401-b026-5242-880c-e1b8a5d04dee",
+      "source_bytes": 41760,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/show-contract/ShowContractImageLayer.prefab",
+      "uuid": "623f00b6-57f6-4897-89f6-b10449260118",
+      "source_bytes": 5997,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/skin/SkinSelectGiftLayer.prefab",
+      "uuid": "a16b14cd-cbab-4416-84bd-5e29365be97b",
+      "source_bytes": 30045,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/smith/SmithArtifactLayer.prefab",
+      "uuid": "f1ae5e3f-e974-40fc-bad8-00772c6102fb",
+      "source_bytes": 111247,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/smith/SmithEquipLayer.prefab",
+      "uuid": "6b481ecb-6f4e-41bf-b875-bc1fc44bea33",
+      "source_bytes": 47742,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/smith/SmithGemLayer.prefab",
+      "uuid": "09f5d243-0ae6-4eb2-aca0-9378c8dab773",
+      "source_bytes": 136574,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/smith/SmithGodEquipLayer.prefab",
+      "uuid": "737e42a4-5172-438d-a2bc-9004e0bbe95a",
+      "source_bytes": 157535,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/smith/SmithLayer.prefab",
+      "uuid": "d3530a27-d51a-478c-870a-21203cd26e70",
+      "source_bytes": 54703,
+      "legacy_code_sites": [
+        "scripts\\ui\\prefabLoad.ts:55",
+        "scripts\\ui\\prefabShellMap.ts:35"
+      ]
+    },
+    {
+      "path": "prefabs/ui/smith/SmithRingLayer.prefab",
+      "uuid": "045a7815-6425-46a4-828b-21b02db4005a",
+      "source_bytes": 113846,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/smith/SmithRunesLayer.prefab",
+      "uuid": "c367ebdd-88c3-466c-a545-d3ff45c41560",
+      "source_bytes": 53541,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerBattleEndLayer.prefab",
+      "uuid": "2be38c79-4d0d-4a1e-9b9b-b0d90792e0d6",
+      "source_bytes": 30747,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerEndLoseCell.prefab",
+      "uuid": "d30746a3-1a21-4216-80da-c713edb3f168",
+      "source_bytes": 4390,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerJumpLayer.prefab",
+      "uuid": "10795113-d013-49e8-8453-ef56c2a1000a",
+      "source_bytes": 15238,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerMainLayer.prefab",
+      "uuid": "ad47b507-2075-46ef-80c0-0e483bec4d3c",
+      "source_bytes": 84001,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerMissionRewardCell.prefab",
+      "uuid": "fe6076f4-00d8-43ef-b90e-873fa78bc676",
+      "source_bytes": 9175,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerMissionRewardLayer.prefab",
+      "uuid": "156de393-d84b-4abe-bd78-5221deb31a01",
+      "source_bytes": 20330,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerRankCell.prefab",
+      "uuid": "b22fa4e8-1256-4c23-aae7-efeb1d5cffd4",
+      "source_bytes": 29929,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerRankLayer.prefab",
+      "uuid": "cf2a2145-6d52-4707-beb2-4d1b114bed87",
+      "source_bytes": 39595,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerRankRewardCell.prefab",
+      "uuid": "1356f236-33d1-4f68-89b5-78a737b047a6",
+      "source_bytes": 14284,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerRankRewardLayer.prefab",
+      "uuid": "86b386d1-6bb5-4f0b-8357-2f0b1e57010a",
+      "source_bytes": 38679,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/st/STMagicTowerSeat.prefab",
+      "uuid": "487a7cdc-fe72-4d8a-9921-899276e2d939",
+      "source_bytes": 25967,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/strategy/StrategyLayer.prefab",
+      "uuid": "d79d579f-d17e-486e-b689-079e15894a51",
+      "source_bytes": 12942,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/summon/SummonHeroPrayerLayer.prefab",
+      "uuid": "85db8e16-6116-4693-9b2c-b6ebfa6afda2",
+      "source_bytes": 67469,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/summon/SummonJFCell.prefab",
+      "uuid": "d062a8ba-4c14-4876-b560-851663be5077",
+      "source_bytes": 41953,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/summon/SummonShopLayer.prefab",
+      "uuid": "ebadea3c-90a4-453e-9145-627c4650ed08",
+      "source_bytes": 124374,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageAccountLayer.prefab",
+      "uuid": "37701124-e456-43a6-8684-3a748a29d461",
+      "source_bytes": 160638,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageBattleEndLayer.prefab",
+      "uuid": "fc5c69e4-402d-4557-8456-496eb249a94a",
+      "source_bytes": 91485,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageBattleInfoCell.prefab",
+      "uuid": "ec9230d1-e30a-402b-8f9f-bff438a2208e",
+      "source_bytes": 133208,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageHistoryCell.prefab",
+      "uuid": "370f171a-e4d5-4b51-96c7-9dc8bf86a711",
+      "source_bytes": 104513,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageHistoryLayer.prefab",
+      "uuid": "86ab2a59-e722-45f9-9eeb-8321779f9a6b",
+      "source_bytes": 48943,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageHistoryVideoLayer.prefab",
+      "uuid": "5830c402-3dd4-4a03-8e2f-82ea97952a7b",
+      "source_bytes": 25898,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageLegendLayer.prefab",
+      "uuid": "680b07a6-c017-402c-a865-89108d1ca25e",
+      "source_bytes": 30053,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageLegendSeat.prefab",
+      "uuid": "072b396d-bc2b-4822-8486-82e37939a270",
+      "source_bytes": 24213,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageMainLadderLayer.prefab",
+      "uuid": "7ce6f3b4-dbe2-4bfc-b09b-cba5769e4d6f",
+      "source_bytes": 119611,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageMainLadderSeat.prefab",
+      "uuid": "13d458f4-17fb-424c-8d22-7da351e5698d",
+      "source_bytes": 24331,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageMainLayer.prefab",
+      "uuid": "5ccf7e2f-7ee8-4520-952b-5702287b1afa",
+      "source_bytes": 30587,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageMainRegularLayer.prefab",
+      "uuid": "fbce82ed-a56a-41fc-9b06-ba67b3075034",
+      "source_bytes": 172639,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageMainTopLayer.prefab",
+      "uuid": "51dc4576-b662-43c9-9cb5-bf73e38e1a6f",
+      "source_bytes": 159931,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageMatchLayer.prefab",
+      "uuid": "611f4603-33df-49cd-849d-d59ad5aec12a",
+      "source_bytes": 329095,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageRankCell.prefab",
+      "uuid": "10c0da46-6fc0-4508-a73e-3560dc06b90f",
+      "source_bytes": 50729,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageRankLayer.prefab",
+      "uuid": "16604a0b-daab-48d6-9357-304075431feb",
+      "source_bytes": 109380,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageRewardCell.prefab",
+      "uuid": "cdbfe1a2-8399-4f00-a0e0-920f46cb8295",
+      "source_bytes": 12685,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageRewardLayer.prefab",
+      "uuid": "7cf44993-7b18-422f-9f86-9bcecbd310e9",
+      "source_bytes": 66845,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTokenBuyLayer.prefab",
+      "uuid": "c60a517d-aeee-46b0-aabd-bed756656c23",
+      "source_bytes": 16288,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTokenCell.prefab",
+      "uuid": "b1f8e249-5cb4-4587-ae23-e0c402c3adba",
+      "source_bytes": 34887,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTokenLayer.prefab",
+      "uuid": "9d13a72c-7626-42d1-a1da-3c1b80b01c0a",
+      "source_bytes": 57933,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTop2HistoryCell.prefab",
+      "uuid": "249271c7-6f4f-4999-b263-868122f1d9fe",
+      "source_bytes": 47497,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTop2HistoryLayer.prefab",
+      "uuid": "e169f03b-d03c-4360-bfc1-726c8f234f97",
+      "source_bytes": 25897,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTop2Layer.prefab",
+      "uuid": "db5d1c55-7c53-4d92-b556-66d8171997db",
+      "source_bytes": 50986,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTop32Layer.prefab",
+      "uuid": "47f25a67-f274-431e-80d3-2b427268a9a7",
+      "source_bytes": 46588,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTop3Layer.prefab",
+      "uuid": "74436594-ea15-4953-a6bc-6cf8fa201e5a",
+      "source_bytes": 45251,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTop8Cell.prefab",
+      "uuid": "9e5d5dc0-c935-46e9-961d-f1287a97f53c",
+      "source_bytes": 288304,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopBattleEndLayer.prefab",
+      "uuid": "11853fa9-397a-48e0-a365-cec5bd4f4fee",
+      "source_bytes": 58949,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopChallengeLayer.prefab",
+      "uuid": "1e53b981-48c1-4565-8e32-e33b83326407",
+      "source_bytes": 78133,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopGuessCell.prefab",
+      "uuid": "fc330f15-4d26-4b29-8440-c81b6e8daa79",
+      "source_bytes": 56366,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopGuessLayer.prefab",
+      "uuid": "5d096dbe-c2c0-4b22-9f06-59a25ed736f7",
+      "source_bytes": 57995,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopHistoryHighCell.prefab",
+      "uuid": "79ff82f7-c41d-49cd-892c-8f6c63e5f9af",
+      "source_bytes": 63574,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopHistoryLayer.prefab",
+      "uuid": "e53fbbee-6caa-41f7-acf7-704b0bcbeee8",
+      "source_bytes": 48951,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopHistoryMyCell.prefab",
+      "uuid": "efbef915-ec05-48da-9ead-8aa3998d980d",
+      "source_bytes": 51725,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopLayer.prefab",
+      "uuid": "323a2998-1400-4fb4-9e63-e0e34dc50185",
+      "source_bytes": 100846,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopLegendLayer.prefab",
+      "uuid": "64fbff0e-ad34-4e5b-a4a8-2aefbdc76777",
+      "source_bytes": 96650,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopPreRewardLayer.prefab",
+      "uuid": "035e6f99-a661-41df-a6fe-642263b7467e",
+      "source_bytes": 35302,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopRankCell.prefab",
+      "uuid": "ac7f70b6-8229-4b10-9594-3b0a8be3edd6",
+      "source_bytes": 57867,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopRankLayer.prefab",
+      "uuid": "19ba6bd5-4163-406b-a3e7-6239b275e4cb",
+      "source_bytes": 140490,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/super-stage/SuperStageTopRewardLayer.prefab",
+      "uuid": "a298562b-0a2e-4b20-b6f0-815a2cff62c0",
+      "source_bytes": 12651,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaBattleCell.prefab",
+      "uuid": "7461d39d-057d-4ee1-b12d-7fae606528cf",
+      "source_bytes": 102410,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaBattleLayer.prefab",
+      "uuid": "03e1c7b7-762a-4104-9d97-947ff1d3a7e4",
+      "source_bytes": 28547,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaBattleLogCell.prefab",
+      "uuid": "e141819d-5059-43f1-9ec3-f901e82fb098",
+      "source_bytes": 243286,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaBattleLogLayer.prefab",
+      "uuid": "23b63f5d-913f-4a9b-9ef0-a964bdf79a9b",
+      "source_bytes": 29026,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaConditionLayer.prefab",
+      "uuid": "2d741e6b-cf16-463a-ac1a-a4945cb0eaef",
+      "source_bytes": 54790,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaEndLayer.prefab",
+      "uuid": "c0400278-e41a-4f01-99dd-75d67476d57d",
+      "source_bytes": 201168,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaLayer.prefab",
+      "uuid": "855c84b1-dd38-40aa-92e7-305a8342f5d8",
+      "source_bytes": 117713,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaLineupCell.prefab",
+      "uuid": "10080dc9-500b-4013-a191-8e360a35af97",
+      "source_bytes": 119279,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaLineupLayer.prefab",
+      "uuid": "b9872657-fd74-43e9-bee0-a5e2c708adb9",
+      "source_bytes": 44764,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaMyTeamAddCell.prefab",
+      "uuid": "166b2e22-fd92-4547-8218-3fd218f65348",
+      "source_bytes": 13083,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaMyTeamCell.prefab",
+      "uuid": "5c8fe3e4-50a7-400c-a836-63e011577c09",
+      "source_bytes": 86777,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaMyTeamLayer.prefab",
+      "uuid": "8c377519-511e-4c0f-ae10-4060a0cbd451",
+      "source_bytes": 71631,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaNewTeam.prefab",
+      "uuid": "a1ace077-6a88-4567-b335-71376013008c",
+      "source_bytes": 36227,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaNewTeamLayer.prefab",
+      "uuid": "0f211733-5711-4ae2-8040-dc21a2af0375",
+      "source_bytes": 62165,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaRankCell.prefab",
+      "uuid": "afb88017-0eb1-41f4-9ef6-2b1a8ee0bd70",
+      "source_bytes": 103503,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaRecvInviteCell.prefab",
+      "uuid": "6f1baf9b-aabc-4f66-a047-98677a9b7f99",
+      "source_bytes": 101160,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaRecvInviteLayer.prefab",
+      "uuid": "d4958dd8-76f6-408f-8a1f-50bd0b5f1c5b",
+      "source_bytes": 23671,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaRewardCell.prefab",
+      "uuid": "6aa653ec-b3b4-46a2-a892-7fb81506d199",
+      "source_bytes": 26361,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaRewardLayer.prefab",
+      "uuid": "65ec8c9c-ae3c-4c4b-90dd-8df98cf8f4d9",
+      "source_bytes": 22417,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaTeamAddInviteCell.prefab",
+      "uuid": "3dbcafc5-48c4-49f8-9969-68d8c4d6ef0f",
+      "source_bytes": 89933,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaTeamAddInviteLayer.prefab",
+      "uuid": "319c3aaa-3f1f-4710-ad30-1232bcece524",
+      "source_bytes": 44809,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaTeamAddMainLayer.prefab",
+      "uuid": "d919bd97-fed9-4363-b9fb-687a82c1558e",
+      "source_bytes": 33119,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaTeamAddReqCell.prefab",
+      "uuid": "07b3bd76-cf06-470e-8bce-e4b5ee20c0c3",
+      "source_bytes": 89935,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaTeamAddReqLayer.prefab",
+      "uuid": "cda6e3af-c38f-4195-8932-0bdae28ab432",
+      "source_bytes": 52757,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaTeamCell.prefab",
+      "uuid": "e9a7d1b3-229c-4833-8582-5b32803e0c9c",
+      "source_bytes": 108181,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaTeamLayer.prefab",
+      "uuid": "dd5cab51-b79e-4141-8db8-57f3bc564dcf",
+      "source_bytes": 51825,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaTeamMainLayer.prefab",
+      "uuid": "73bc3104-8ad4-47ee-8519-27e8a1fc7a97",
+      "source_bytes": 40183,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaVideoCell.prefab",
+      "uuid": "af5598c9-d22c-4045-8396-27bcad684437",
+      "source_bytes": 84154,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/team-arena/TeamArenaVideoLayer.prefab",
+      "uuid": "2b81ac0f-2d70-4457-ba60-a72c439d87b5",
+      "source_bytes": 35574,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/totem/TotemActiveCell.prefab",
+      "uuid": "58b1f94a-6ba5-4269-a811-5ca9ba728ff6",
+      "source_bytes": 24149,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/totem/TotemInfoLayer.prefab",
+      "uuid": "4bfe279e-3120-4f7f-8b0c-5091132fb2df",
+      "source_bytes": 209314,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/totem/TotemListLayer.prefab",
+      "uuid": "03354ba3-d019-4a9b-ae93-365d1840174a",
+      "source_bytes": 39493,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/totem/TotemNotActiveCell.prefab",
+      "uuid": "6520b992-fca9-42f6-addd-6c4e480c3535",
+      "source_bytes": 15408,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/totem/TotemResetReViewLayer.prefab",
+      "uuid": "dd88693d-fcba-4ec5-bf92-469e1851c8e4",
+      "source_bytes": 39956,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/totem/TotemSkillInfo.prefab",
+      "uuid": "c300c8b8-142f-422d-bce1-d33d6ece5bce",
+      "source_bytes": 7650,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/totem/TotemTipsLayer.prefab",
+      "uuid": "f1f21bcd-b768-4a82-bf7c-b455f8450b41",
+      "source_bytes": 85911,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/trial/TrialBoxInfoLayer.prefab",
+      "uuid": "e37d705c-9a52-485f-b840-0c147a915361",
+      "source_bytes": 22691,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/trial/TrialHelpCell.prefab",
+      "uuid": "2f008776-ada0-4648-b6b1-7862103f7f42",
+      "source_bytes": 27717,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/trial/TrialHelpLayer.prefab",
+      "uuid": "c41eb170-98f4-42a7-99b3-80d087eefb2b",
+      "source_bytes": 30860,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/trial/TrialInfoLayer.prefab",
+      "uuid": "6e09859d-9f3d-490d-a40d-47e165dc0a63",
+      "source_bytes": 142016,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/trial/TrialLayer.prefab",
+      "uuid": "ae02180e-f42b-4ae8-8b29-e095203c9e7e",
+      "source_bytes": 53682,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/trial/TrialMapLayer.prefab",
+      "uuid": "fd15b009-7b45-47b7-abff-7bb6e47adf5a",
+      "source_bytes": 4364,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/underworld-pagoda/UnderworldPagodaBattleEndLayer.prefab",
+      "uuid": "b898454e-c300-40ec-9440-2a00dad3d986",
+      "source_bytes": 33856,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/underworld-pagoda/UnderworldPagodaBossLayer.prefab",
+      "uuid": "dd5e7a41-42af-4300-91f2-2cccc005e374",
+      "source_bytes": 183331,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/underworld-pagoda/UnderworldPagodaLayer.prefab",
+      "uuid": "2835ea72-e8e9-4a0a-a738-0a3dce743d8e",
+      "source_bytes": 55612,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/underworld-pagoda/UnderworldPagodaRankCell.prefab",
+      "uuid": "0375efb1-ab80-4e12-90c3-08c0cb269b1e",
+      "source_bytes": 47606,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/underworld-pagoda/UnderworldPagodaRankLayer.prefab",
+      "uuid": "47905579-4cc9-47d9-a256-9e719f9b4efb",
+      "source_bytes": 119661,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/video-studio/VideoStudioCell.prefab",
+      "uuid": "dd61c9b2-9215-40d6-a7cf-eba8188a0044",
+      "source_bytes": 108844,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/video-studio/VideoStudioLayer.prefab",
+      "uuid": "579b008a-aa13-43ca-90d6-785c1d729f3c",
+      "source_bytes": 38456,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/video-studio/VideoStudioRecordLayer.prefab",
+      "uuid": "2ac6d399-87df-499a-b91c-61ff52a44c58",
+      "source_bytes": 22948,
+      "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/video-studio/VideoStudioSaveLayer.prefab",
+      "uuid": "4c4f3f37-fd35-4bc6-8c83-33717510d736",
+      "source_bytes": 22945,
+      "legacy_code_sites": []
+    }
+  ]
+}

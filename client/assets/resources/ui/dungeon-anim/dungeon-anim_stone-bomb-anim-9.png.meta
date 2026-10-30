@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "e3674123-3a18-4244-beb6-b91631d50107",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "e3674123-3a18-4244-beb6-b91631d50107@6c48a",
+      "displayName": "dungeon-anim_stone-bomb-anim-9",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "e3674123-3a18-4244-beb6-b91631d50107",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "e3674123-3a18-4244-beb6-b91631d50107@f9941",
+      "displayName": "dungeon-anim_stone-bomb-anim-9",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 6,
+        "offsetY": -2,
+        "trimX": 45,
+        "trimY": 35,
+        "width": 76,
+        "height": 94,
+        "rawWidth": 154,
+        "rawHeight": 160,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -38,
+            -47,
+            0,
+            38,
+            -47,
+            0,
+            -38,
+            47,
+            0,
+            38,
+            47,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            45,
+            125,
+            121,
+            125,
+            45,
+            31,
+            121,
+            31
+          ],
+          "nuv": [
+            0.2922077922077922,
+            0.19375,
+            0.7857142857142857,
+            0.19375,
+            0.2922077922077922,
+            0.78125,
+            0.7857142857142857,
+            0.78125
+          ],
+          "minPos": [
+            -38,
+            -47,
+            0
+          ],
+          "maxPos": [
+            38,
+            47,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "e3674123-3a18-4244-beb6-b91631d50107@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "e3674123-3a18-4244-beb6-b91631d50107@6c48a",
+    "type": "sprite-frame"
+  }
+}

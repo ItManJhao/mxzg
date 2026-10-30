@@ -1,0 +1,1 @@
+{"table":"shopday","note":"exported from config/gameconfig/shopday.xlsx sheet shopclan. flag 1/2/3 columns only.","rows":[{"idx":1,"chance":1000,"item_type":"[{\"item_type\":902021,\"item_num\":1}]","need_item":"[{\"item_type\":900001,\"item_num\":1800000}]","buy_limit":12}]}

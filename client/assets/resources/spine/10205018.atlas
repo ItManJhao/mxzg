@@ -1,0 +1,146 @@
+
+10205018.png
+size: 413,413
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+A1
+  rotate: true
+  xy: 240, 3
+  size: 109, 46
+  orig: 109, 46
+  offset: 0, 0
+  index: -1
+A2
+  rotate: false
+  xy: 189, 114
+  size: 92, 74
+  orig: 92, 74
+  offset: 0, 0
+  index: -1
+A3
+  rotate: false
+  xy: 288, 45
+  size: 67, 70
+  orig: 67, 70
+  offset: 0, 0
+  index: -1
+A4
+  rotate: false
+  xy: 168, 17
+  size: 70, 95
+  orig: 70, 95
+  offset: 0, 0
+  index: -1
+A5
+  rotate: false
+  xy: 155, 118
+  size: 32, 143
+  orig: 32, 143
+  offset: 0, 0
+  index: -1
+A6
+  rotate: false
+  xy: 186, 286
+  size: 135, 125
+  orig: 135, 125
+  offset: 0, 0
+  index: -1
+bs1
+  rotate: false
+  xy: 352, 229
+  size: 51, 74
+  orig: 51, 74
+  offset: 0, 0
+  index: -1
+bs2
+  rotate: false
+  xy: 352, 162
+  size: 49, 65
+  orig: 49, 65
+  offset: 0, 0
+  index: -1
+j1
+  rotate: false
+  xy: 277, 198
+  size: 73, 86
+  orig: 73, 86
+  offset: 0, 0
+  index: -1
+j2
+  rotate: true
+  xy: 288, 13
+  size: 30, 75
+  orig: 30, 75
+  offset: 0, 0
+  index: -1
+st2
+  rotate: false
+  xy: 283, 117
+  size: 67, 79
+  orig: 67, 79
+  offset: 0, 0
+  index: -1
+st4
+  rotate: false
+  xy: 2, 263
+  size: 182, 148
+  orig: 182, 148
+  offset: 0, 0
+  index: -1
+st5
+  rotate: false
+  xy: 2, 126
+  size: 151, 135
+  orig: 151, 135
+  offset: 0, 0
+  index: -1
+t1
+  rotate: true
+  xy: 365, 98
+  size: 62, 46
+  orig: 62, 46
+  offset: 0, 0
+  index: -1
+t3
+  rotate: false
+  xy: 189, 190
+  size: 86, 94
+  orig: 86, 94
+  offset: 0, 0
+  index: -1
+t4
+  rotate: false
+  xy: 2, 22
+  size: 98, 102
+  orig: 98, 102
+  offset: 0, 0
+  index: -1
+t5
+  rotate: true
+  xy: 102, 2
+  size: 110, 64
+  orig: 110, 64
+  offset: 0, 0
+  index: -1
+ts
+  rotate: true
+  xy: 323, 305
+  size: 106, 85
+  orig: 106, 85
+  offset: 0, 0
+  index: -1
+ys
+  rotate: false
+  xy: 2, 2
+  size: 30, 18
+  orig: 30, 18
+  offset: 0, 0
+  index: -1
+zs
+  rotate: false
+  xy: 357, 67
+  size: 24, 29
+  orig: 24, 29
+  offset: 0, 0
+  index: -1

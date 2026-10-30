@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "27269d76-b852-4d80-ad83-664b3a1205da",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "27269d76-b852-4d80-ad83-664b3a1205da@6c48a",
+      "displayName": "summon-hero-prayer-effect_1",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "27269d76-b852-4d80-ad83-664b3a1205da",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "27269d76-b852-4d80-ad83-664b3a1205da@f9941",
+      "displayName": "summon-hero-prayer-effect_1",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": -1,
+        "offsetY": 4,
+        "trimX": 1,
+        "trimY": 8,
+        "width": 83,
+        "height": 81,
+        "rawWidth": 87,
+        "rawHeight": 105,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -41.5,
+            -40.5,
+            0,
+            41.5,
+            -40.5,
+            0,
+            -41.5,
+            40.5,
+            0,
+            41.5,
+            40.5,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            1,
+            97,
+            84,
+            97,
+            1,
+            16,
+            84,
+            16
+          ],
+          "nuv": [
+            0.011494252873563218,
+            0.1523809523809524,
+            0.9655172413793104,
+            0.1523809523809524,
+            0.011494252873563218,
+            0.9238095238095239,
+            0.9655172413793104,
+            0.9238095238095239
+          ],
+          "minPos": [
+            -41.5,
+            -40.5,
+            0
+          ],
+          "maxPos": [
+            41.5,
+            40.5,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "27269d76-b852-4d80-ad83-664b3a1205da@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "27269d76-b852-4d80-ad83-664b3a1205da@6c48a"
+  }
+}

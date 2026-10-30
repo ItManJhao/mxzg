@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "a16156b9-0ae5-4835-b624-883f214c77f8",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "a16156b9-0ae5-4835-b624-883f214c77f8@6c48a",
+      "displayName": "clan-boss-effect_1-0",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "a16156b9-0ae5-4835-b624-883f214c77f8",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "a16156b9-0ae5-4835-b624-883f214c77f8@f9941",
+      "displayName": "clan-boss-effect_1-0",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": -7,
+        "offsetY": -3,
+        "trimX": 10,
+        "trimY": 19,
+        "width": 269,
+        "height": 265,
+        "rawWidth": 303,
+        "rawHeight": 297,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -134.5,
+            -132.5,
+            0,
+            134.5,
+            -132.5,
+            0,
+            -134.5,
+            132.5,
+            0,
+            134.5,
+            132.5,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            10,
+            278,
+            279,
+            278,
+            10,
+            13,
+            279,
+            13
+          ],
+          "nuv": [
+            0.033003300330033,
+            0.04377104377104377,
+            0.9207920792079208,
+            0.04377104377104377,
+            0.033003300330033,
+            0.936026936026936,
+            0.9207920792079208,
+            0.936026936026936
+          ],
+          "minPos": [
+            -134.5,
+            -132.5,
+            0
+          ],
+          "maxPos": [
+            134.5,
+            132.5,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "a16156b9-0ae5-4835-b624-883f214c77f8@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "a16156b9-0ae5-4835-b624-883f214c77f8@6c48a"
+  }
+}

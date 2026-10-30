@@ -1,0 +1,76 @@
+
+10205012.png
+size: 598,598
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+st1
+  rotate: false
+  xy: 2, 2
+  size: 244, 229
+  orig: 244, 229
+  offset: 0, 0
+  index: -1
+st2
+  rotate: false
+  xy: 248, 13
+  size: 175, 191
+  orig: 175, 191
+  offset: 0, 0
+  index: -1
+t
+  rotate: true
+  xy: 280, 206
+  size: 146, 197
+  orig: 146, 197
+  offset: 0, 0
+  index: -1
+wb1
+  rotate: false
+  xy: 425, 90
+  size: 85, 114
+  orig: 85, 114
+  offset: 0, 0
+  index: -1
+wb2
+  rotate: false
+  xy: 479, 208
+  size: 62, 144
+  orig: 62, 144
+  offset: 0, 0
+  index: -1
+wb3
+  rotate: true
+  xy: 512, 108
+  size: 98, 53
+  orig: 98, 53
+  offset: 0, 0
+  index: -1
+yc
+  rotate: false
+  xy: 280, 354
+  size: 271, 242
+  orig: 271, 242
+  offset: 0, 0
+  index: -1
+yz
+  rotate: false
+  xy: 506, 10
+  size: 78, 78
+  orig: 78, 78
+  offset: 0, 0
+  index: -1
+zc
+  rotate: false
+  xy: 2, 233
+  size: 276, 363
+  orig: 276, 363
+  offset: 0, 0
+  index: -1
+zz
+  rotate: false
+  xy: 425, 10
+  size: 79, 78
+  orig: 79, 78
+  offset: 0, 0
+  index: -1

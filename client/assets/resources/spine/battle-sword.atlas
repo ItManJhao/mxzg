@@ -1,0 +1,27 @@
+
+battle-sword.png
+size: 256,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+glow007
+  rotate: false
+  xy: 2, 121
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+jian1
+  rotate: true
+  xy: 2, 58
+  size: 61, 149
+  orig: 66, 152
+  offset: 3, 1
+  index: -1
+lizi-03
+  rotate: false
+  xy: 2, 2
+  size: 52, 54
+  orig: 64, 64
+  offset: 6, 4
+  index: -1

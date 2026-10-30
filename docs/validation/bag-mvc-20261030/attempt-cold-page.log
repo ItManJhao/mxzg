@@ -1,0 +1,47 @@
+SHOT login
+SHOT servers
+SHOT home
+SHOT bag-opened
+SHOT bag-detail
+FAILED STATE [
+  { view: 'RemakeHomeView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'BackpackItemCellView', phase: undefined, stage: undefined },
+  { view: 'ScrollView', phase: undefined, stage: undefined },
+  { view: 'BackpackTabButtonView', phase: undefined, stage: undefined },
+  { view: 'BackpackTabButtonView', phase: undefined, stage: undefined },
+  { view: 'BackpackTabButtonView', phase: undefined, stage: undefined },
+  { view: 'BackpackTabButtonView', phase: undefined, stage: undefined },
+  { view: 'CityChromeView', phase: undefined, stage: undefined }
+]
+AssertionError [ERR_ASSERTION]: closing only removes the View subscription
+
+2 !== 1
+
+    at verifyBagMvc (F:\project\mxzg\client\tools\bag-mvc-preview.cjs:49:16)
+    at async F:\project\mxzg\client\tools\check-remake-preview.cjs:186:13 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 2,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

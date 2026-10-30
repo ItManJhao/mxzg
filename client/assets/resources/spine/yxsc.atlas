@@ -1,0 +1,55 @@
+
+yxsc.png
+size: 277,277
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+03
+  rotate: true
+  xy: 126, 2
+  size: 46, 33
+  orig: 126, 44
+  offset: 9, 5
+  index: -1
+04
+  rotate: true
+  xy: 167, 149
+  size: 126, 44
+  orig: 126, 44
+  offset: 0, 0
+  index: -1
+05
+  rotate: true
+  xy: 126, 50
+  size: 60, 33
+  orig: 126, 44
+  offset: 60, 5
+  index: -1
+lizi
+  rotate: false
+  xy: 167, 116
+  size: 25, 31
+  orig: 31, 35
+  offset: 3, 0
+  index: -1
+q
+  rotate: false
+  xy: 2, 112
+  size: 163, 163
+  orig: 251, 252
+  offset: 44, 44
+  index: -1
+shangren
+  rotate: false
+  xy: 2, 3
+  size: 122, 107
+  orig: 122, 108
+  offset: 0, 1
+  index: -1
+zi
+  rotate: true
+  xy: 213, 157
+  size: 118, 40
+  orig: 118, 40
+  offset: 0, 0
+  index: -1

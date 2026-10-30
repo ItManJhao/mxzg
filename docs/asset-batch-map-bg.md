@@ -1,0 +1,117 @@
+# Asset batch: map-bg / promotion-bg (ccbi-res to resources)
+
+Source root: idle/res/hd/ccbi-res (old mxzg/mj).
+Target root: client/assets/resources/.
+
+Skipped (already in repo / P0): map-bg-loading.jpg, chuangzaobg.jpg, map-bg-role-1.jpg, map-bg-guide-1.jpg, map-bg-main-scene.jpg.
+
+Deferred: battle-scene.* / battle-scene-kor.* (.pvr.ccz + plist; needs pvr unpack before usable in Cocos Creator resources).
+
+| old path (relative to ccbi-res) | new path under client/assets/resources/ | module note |
+| --- | --- | --- |
+| map-bg-team-arena-bg.jpg | client/assets/resources/ui/arena/map-bg-team-arena-bg.jpg | ui/arena |
+| map-bg-backpack-1.jpg | client/assets/resources/ui/bag/map-bg-backpack-1.jpg | ui/bag |
+| map-bg-hero-palace-1.jpg | client/assets/resources/ui/hero/map-bg-hero-palace-1.jpg | ui/hero |
+| map-bg-hero-palace-2.jpg | client/assets/resources/ui/hero/map-bg-hero-palace-2.jpg | ui/hero |
+| map-bg-hero-palace-3.jpg | client/assets/resources/ui/hero/map-bg-hero-palace-3.jpg | ui/hero |
+| map-bg-hero-palace-4.jpg | client/assets/resources/ui/hero/map-bg-hero-palace-4.jpg | ui/hero |
+| map-bg-hero-palace-5.jpg | client/assets/resources/ui/hero/map-bg-hero-palace-5.jpg | ui/hero |
+| map-bg-hero-palace-6.jpg | client/assets/resources/ui/hero/map-bg-hero-palace-6.jpg | ui/hero |
+| map-bg-adven-note.png | client/assets/resources/ui/idle/map-bg-adven-note.png | ui/idle |
+| map-bg-dungeon-1.jpg | client/assets/resources/ui/idle/map-bg-dungeon-1.jpg | ui/idle |
+| map-bg-trial-1.jpg | client/assets/resources/ui/idle/map-bg-trial-1.jpg | ui/idle |
+| map-bg-mission-1.jpg | client/assets/resources/ui/mainline/map-bg-mission-1.jpg | ui/mainline |
+| map-bg-super-stage.jpg | client/assets/resources/ui/mainline/map-bg-super-stage.jpg | ui/mainline |
+| map-bg-super-stage-2.png | client/assets/resources/ui/mainline/map-bg-super-stage-2.png | ui/mainline |
+| alice-bg-1.png | client/assets/resources/ui/maps/alice-bg-1.png | ui/maps |
+| alice-bg-2.png | client/assets/resources/ui/maps/alice-bg-2.png | ui/maps |
+| alice-bg-3.png | client/assets/resources/ui/maps/alice-bg-3.png | ui/maps |
+| map-bg-1.jpg | client/assets/resources/ui/maps/map-bg-1.jpg | ui/maps |
+| map-bg-alter-1.jpg | client/assets/resources/ui/maps/map-bg-alter-1.jpg | ui/maps |
+| map-bg-ancient-1.png | client/assets/resources/ui/maps/map-bg-ancient-1.png | ui/maps |
+| map-bg-champion-show.jpg | client/assets/resources/ui/maps/map-bg-champion-show.jpg | ui/maps |
+| map-bg-city-1-1-1.png | client/assets/resources/ui/maps/map-bg-city-1-1-1.png | ui/maps |
+| map-bg-city-1-1-2.png | client/assets/resources/ui/maps/map-bg-city-1-1-2.png | ui/maps |
+| map-bg-city-1-2-1.png | client/assets/resources/ui/maps/map-bg-city-1-2-1.png | ui/maps |
+| map-bg-city-1-2-2.png | client/assets/resources/ui/maps/map-bg-city-1-2-2.png | ui/maps |
+| map-bg-city-2-1-1.png | client/assets/resources/ui/maps/map-bg-city-2-1-1.png | ui/maps |
+| map-bg-city-2-1-2.png | client/assets/resources/ui/maps/map-bg-city-2-1-2.png | ui/maps |
+| map-bg-city-2-2-1.png | client/assets/resources/ui/maps/map-bg-city-2-2-1.png | ui/maps |
+| map-bg-city-2-2-2.png | client/assets/resources/ui/maps/map-bg-city-2-2-2.png | ui/maps |
+| map-bg-city-3-1-1.png | client/assets/resources/ui/maps/map-bg-city-3-1-1.png | ui/maps |
+| map-bg-city-3-1-2.png | client/assets/resources/ui/maps/map-bg-city-3-1-2.png | ui/maps |
+| map-bg-city-4-1-1.jpg | client/assets/resources/ui/maps/map-bg-city-4-1-1.jpg | ui/maps |
+| map-bg-city-4-1-2.jpg | client/assets/resources/ui/maps/map-bg-city-4-1-2.jpg | ui/maps |
+| map-bg-clan-1.jpg | client/assets/resources/ui/maps/map-bg-clan-1.jpg | ui/maps |
+| map-bg-clan-boss-1.jpg | client/assets/resources/ui/maps/map-bg-clan-boss-1.jpg | ui/maps |
+| map-bg-clan-gvg-1.jpg | client/assets/resources/ui/maps/map-bg-clan-gvg-1.jpg | ui/maps |
+| map-bg-crusade-group-boss.png | client/assets/resources/ui/maps/map-bg-crusade-group-boss.png | ui/maps |
+| map-bg-evolution.jpg | client/assets/resources/ui/maps/map-bg-evolution.jpg | ui/maps |
+| map-bg-fetters-mainview-1.jpg | client/assets/resources/ui/maps/map-bg-fetters-mainview-1.jpg | ui/maps |
+| map-bg-fetters-unlock-1.jpg | client/assets/resources/ui/maps/map-bg-fetters-unlock-1.jpg | ui/maps |
+| map-bg-god-relic-1.png | client/assets/resources/ui/maps/map-bg-god-relic-1.png | ui/maps |
+| map-bg-god-relic-2.jpg | client/assets/resources/ui/maps/map-bg-god-relic-2.jpg | ui/maps |
+| map-bg-magic-tower.jpg | client/assets/resources/ui/maps/map-bg-magic-tower.jpg | ui/maps |
+| map-bg-mystery-box.png | client/assets/resources/ui/maps/map-bg-mystery-box.png | ui/maps |
+| map-bg-rename-1.png | client/assets/resources/ui/maps/map-bg-rename-1.png | ui/maps |
+| map-bg-result-1.png | client/assets/resources/ui/maps/map-bg-result-1.png | ui/maps |
+| map-bg-result-2.png | client/assets/resources/ui/maps/map-bg-result-2.png | ui/maps |
+| map-bg-runes-1.jpg | client/assets/resources/ui/maps/map-bg-runes-1.jpg | ui/maps |
+| map-bg-strategy-1.png | client/assets/resources/ui/maps/map-bg-strategy-1.png | ui/maps |
+| rainbow-bg-2.png | client/assets/resources/ui/maps/rainbow-bg-2.png | ui/maps |
+| time-tower-bg-1.jpg | client/assets/resources/ui/maps/time-tower-bg-1.jpg | ui/maps |
+| time-tower-bg-2.jpg | client/assets/resources/ui/maps/time-tower-bg-2.jpg | ui/maps |
+| promotion-bg-1.jpg | client/assets/resources/ui/promo/promotion-bg-1.jpg | ui/promo |
+| promotion-bg-12.jpg | client/assets/resources/ui/promo/promotion-bg-12.jpg | ui/promo |
+| promotion-bg-14.png | client/assets/resources/ui/promo/promotion-bg-14.png | ui/promo |
+| promotion-bg-4.jpg | client/assets/resources/ui/promo/promotion-bg-4.jpg | ui/promo |
+| promotion-bg-5.jpg | client/assets/resources/ui/promo/promotion-bg-5.jpg | ui/promo |
+| promotion-bg-6.jpg | client/assets/resources/ui/promo/promotion-bg-6.jpg | ui/promo |
+| promotion-bg-8.png | client/assets/resources/ui/promo/promotion-bg-8.png | ui/promo |
+| promotion-bg-81.png | client/assets/resources/ui/promo/promotion-bg-81.png | ui/promo |
+| promotion-bg-84.png | client/assets/resources/ui/promo/promotion-bg-84.png | ui/promo |
+| promotion-bg-9.jpg | client/assets/resources/ui/promo/promotion-bg-9.jpg | ui/promo |
+| promotion-bg-92.png | client/assets/resources/ui/promo/promotion-bg-92.png | ui/promo |
+| promotion-bg-94.png | client/assets/resources/ui/promo/promotion-bg-94.png | ui/promo |
+| promotion-bg-95.png | client/assets/resources/ui/promo/promotion-bg-95.png | ui/promo |
+| promotion-bg-96.png | client/assets/resources/ui/promo/promotion-bg-96.png | ui/promo |
+| promotion-bg-altar-1.jpg | client/assets/resources/ui/promo/promotion-bg-altar-1.jpg | ui/promo |
+| promotion-bg-altar-2.png | client/assets/resources/ui/promo/promotion-bg-altar-2.png | ui/promo |
+| promotion-bg-christmas-1.png | client/assets/resources/ui/promo/promotion-bg-christmas-1.png | ui/promo |
+| promotion-bg-christmas-2.png | client/assets/resources/ui/promo/promotion-bg-christmas-2.png | ui/promo |
+| promotion-bg-christmas-3.png | client/assets/resources/ui/promo/promotion-bg-christmas-3.png | ui/promo |
+| promotion-bg-christmas-4.png | client/assets/resources/ui/promo/promotion-bg-christmas-4.png | ui/promo |
+| promotion-bg-christmas-5.png | client/assets/resources/ui/promo/promotion-bg-christmas-5.png | ui/promo |
+| promotion-bg-christmas-6.png | client/assets/resources/ui/promo/promotion-bg-christmas-6.png | ui/promo |
+| promotion-bg-christmas-6-1.png | client/assets/resources/ui/promo/promotion-bg-christmas-6-1.png | ui/promo |
+| promotion-bg-christmas-7.png | client/assets/resources/ui/promo/promotion-bg-christmas-7.png | ui/promo |
+| promotion-bg-god-relic-gift.png | client/assets/resources/ui/promo/promotion-bg-god-relic-gift.png | ui/promo |
+| promotion-bg-invitation-1.jpg | client/assets/resources/ui/promo/promotion-bg-invitation-1.jpg | ui/promo |
+| promotion-bg-limit-gift-1.png | client/assets/resources/ui/promo/promotion-bg-limit-gift-1.png | ui/promo |
+| promotion-bg-magic.jpg | client/assets/resources/ui/promo/promotion-bg-magic.jpg | ui/promo |
+| promotion-bg-new-server.png | client/assets/resources/ui/promo/promotion-bg-new-server.png | ui/promo |
+| promotion-bg-raretreasures.jpg | client/assets/resources/ui/promo/promotion-bg-raretreasures.jpg | ui/promo |
+| promotion-bg-recharge-first-1.png | client/assets/resources/ui/promo/promotion-bg-recharge-first-1.png | ui/promo |
+| promotion-bg-recharge-first-2.png | client/assets/resources/ui/promo/promotion-bg-recharge-first-2.png | ui/promo |
+| promotion-bg-recruit-1.png | client/assets/resources/ui/promo/promotion-bg-recruit-1.png | ui/promo |
+| promotion-bg-skin-30101001.png | client/assets/resources/ui/promo/promotion-bg-skin-30101001.png | ui/promo |
+| promotion-bg-skin-30101002.png | client/assets/resources/ui/promo/promotion-bg-skin-30101002.png | ui/promo |
+| promotion-bg-skin-30201211.png | client/assets/resources/ui/promo/promotion-bg-skin-30201211.png | ui/promo |
+| promotion-bg-skin-30205111.png | client/assets/resources/ui/promo/promotion-bg-skin-30205111.png | ui/promo |
+| promotion-bg-skin-30305001.png | client/assets/resources/ui/promo/promotion-bg-skin-30305001.png | ui/promo |
+| promotion-bg-skin-30405151.png | client/assets/resources/ui/promo/promotion-bg-skin-30405151.png | ui/promo |
+| promotion-bg-skin-30501001.png | client/assets/resources/ui/promo/promotion-bg-skin-30501001.png | ui/promo |
+| promotion-bg-skin-30505151.png | client/assets/resources/ui/promo/promotion-bg-skin-30505151.png | ui/promo |
+| promotion-bg-skin-30505171.png | client/assets/resources/ui/promo/promotion-bg-skin-30505171.png | ui/promo |
+| promotion-bg-spring-dice.png | client/assets/resources/ui/promo/promotion-bg-spring-dice.png | ui/promo |
+| promotion-bg-three-day.png | client/assets/resources/ui/promo/promotion-bg-three-day.png | ui/promo |
+| promotion-bg-title.jpg | client/assets/resources/ui/promo/promotion-bg-title.jpg | ui/promo |
+| map-bg-seven-day-gift-1.jpg | client/assets/resources/ui/sevenday/map-bg-seven-day-gift-1.jpg | ui/sevenday |
+| map-bg-seven-day-gift-2.png | client/assets/resources/ui/sevenday/map-bg-seven-day-gift-2.png | ui/sevenday |
+| map-bg-seven-day-target-1.jpg | client/assets/resources/ui/sevenday/map-bg-seven-day-target-1.jpg | ui/sevenday |
+| map-bg-magic-tower-shop.jpg | client/assets/resources/ui/shop/map-bg-magic-tower-shop.jpg | ui/shop |
+| map-bg-pub-1.jpg | client/assets/resources/ui/shop/map-bg-pub-1.jpg | ui/shop |
+| map-bg-smith-1.jpg | client/assets/resources/ui/smith/map-bg-smith-1.jpg | ui/smith |
+| map-bg-summon-1.jpg | client/assets/resources/ui/summon/map-bg-summon-1.jpg | ui/summon |
+| map-bg-summon-2.jpg | client/assets/resources/ui/summon/map-bg-summon-2.jpg | ui/summon |
+| map-bg-blessing-pool-2.jpg | client/assets/resources/ui/wish/map-bg-blessing-pool-2.jpg | ui/wish |

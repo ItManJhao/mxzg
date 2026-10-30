@@ -1,0 +1,13 @@
+
+zhaohuanlibao.png
+size: 56,56
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+xiaolihe
+  rotate: false
+  xy: 2, 2
+  size: 52, 52
+  orig: 52, 52
+  offset: 0, 0
+  index: -1

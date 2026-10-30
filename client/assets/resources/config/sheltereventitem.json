@@ -1,0 +1,1 @@
+{"table":"sheltereventitem","note":"exported from config/gameconfig/sheltereventitem.xlsx sheet sheltereventitem. flag 1/2/3 columns only.","rows":[{"idx":100100,"event_id":107,"reward":"[{\"item_type\":901602,\"item_num\":1}]","chance":1000},{"idx":100200,"event_id":115,"reward":"[{\"item_type\":901603,\"item_num\":1}]","chance":1000}]}

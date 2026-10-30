@@ -1,0 +1,18 @@
+SHOT login
+SHOT servers
+SHOT home
+FAILED STATE [
+  { view: 'RemakeHomeView', phase: undefined, stage: undefined },
+  { view: 'CityHubView', phase: undefined, stage: undefined },
+  { view: 'CityChromeView', phase: undefined, stage: undefined }
+]
+AssertionError [ERR_ASSERTION]: preview must run the new inventory event contract
+    at verifyBagMvc (F:\project\mxzg\client\tools\bag-mvc-preview.cjs:34:60)
+    at async F:\project\mxzg\client\tools\check-remake-preview.cjs:198:13 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

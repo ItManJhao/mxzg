@@ -1,0 +1,78 @@
+<html>
+    <head>
+        <link rel="icon" href="./favicon.ico" />
+        <meta charset="utf-8" />
+        <title><%=title%></title>
+        <meta
+            name="viewport"
+            content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,minimal-ui=true"
+        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="full-screen" content="yes" />
+        <meta name="screen-orientation" content="portrait" />
+        <meta name="x5-fullscreen" content="true" />
+        <meta name="360-fullscreen" content="true" />
+        <meta name="renderer" content="webkit" />
+        <meta name="force-rendering" content="webkit" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+        <link rel="stylesheet" type="text/css" href="./index.css" />
+        <link rel="stylesheet" href="./devtools/assets/style.css" />
+        <!-- Debug Mode "Info For Web Page" injects #logInfoDiv over the canvas. -->
+        <style>
+            #logInfoDiv {
+                display: none !important;
+            }
+        </style>
+        <script>
+            (function () {
+                function hideLogOverlay(node) {
+                    if (!node || node.nodeType !== 1) return;
+                    if (node.id === "logInfoDiv") {
+                        node.style.setProperty("display", "none", "important");
+                        return;
+                    }
+                    if (!node.querySelectorAll) return;
+                    var found = node.querySelectorAll("#logInfoDiv");
+                    for (var i = 0; i < found.length; i++) {
+                        found[i].style.setProperty("display", "none", "important");
+                    }
+                }
+                hideLogOverlay(document.documentElement);
+                new MutationObserver(function (records) {
+                    for (var i = 0; i < records.length; i++) {
+                        var added = records[i].addedNodes;
+                        for (var j = 0; j < added.length; j++) hideLogOverlay(added[j]);
+                    }
+                }).observe(document.documentElement, { childList: true, subtree: true });
+            })();
+        </script>
+    </head>
+    <body style="overflow: hidden;">
+        <%- include(cocosToolBar, {config: config}) %>
+        <div id="content" class="content" style="overflow: hidden;">
+            <div class="contentWrap">
+                <div id="GameDiv" class="wrapper">
+                    <div id="Cocos3dGameContainer">
+                        <canvas id="GameCanvas" tabindex="-1" style="background-color: '';"></canvas>
+                    </div>
+                    <div id="splash" style="display: none !important;">
+                        <div class="progress-bar stripes"><span></span></div>
+                    </div>
+                    <div id="bulletin">
+                        <div id="sceneIsEmpty" class="inner"><%=tip_sceneIsEmpty%></div>
+                    </div>
+                    <div class="error" id="error">
+                        <div class="title">Error <i>(Please open the console to see detailed errors)</i></div>
+                        <div class="error-main"></div>
+                        <div class="error-stack"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="cc-devtools-root"></div>
+        <%- include(cocosTemplate, {}) %>
+        <script src="./devtools/assets/index.js"></script>
+    </body>
+</html>

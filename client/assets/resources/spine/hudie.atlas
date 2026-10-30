@@ -1,0 +1,118 @@
+
+hudie.png
+size: 1024,64
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+花蝶/10000
+  rotate: false
+  xy: 754, 7
+  size: 54, 43
+  orig: 70, 70
+  offset: 9, 6
+  index: -1
+花蝶/10001
+  rotate: false
+  xy: 810, 7
+  size: 53, 43
+  orig: 70, 70
+  offset: 10, 6
+  index: -1
+花蝶/10002
+  rotate: false
+  xy: 644, 4
+  size: 52, 46
+  orig: 70, 70
+  offset: 10, 5
+  index: -1
+花蝶/10003
+  rotate: false
+  xy: 698, 6
+  size: 54, 44
+  orig: 70, 70
+  offset: 9, 6
+  index: -1
+花蝶/10004
+  rotate: false
+  xy: 364, 5
+  size: 56, 45
+  orig: 70, 70
+  offset: 7, 6
+  index: -1
+花蝶/10005
+  rotate: false
+  xy: 244, 4
+  size: 58, 46
+  orig: 70, 70
+  offset: 6, 8
+  index: -1
+花蝶/10006
+  rotate: false
+  xy: 2, 2
+  size: 59, 48
+  orig: 70, 70
+  offset: 5, 10
+  index: -1
+花蝶/10007
+  rotate: false
+  xy: 63, 2
+  size: 58, 48
+  orig: 70, 70
+  offset: 6, 12
+  index: -1
+花蝶/10008
+  rotate: false
+  xy: 479, 3
+  size: 54, 47
+  orig: 70, 70
+  offset: 8, 15
+  index: -1
+花蝶/10009
+  rotate: false
+  xy: 865, 4
+  size: 52, 46
+  orig: 70, 70
+  offset: 9, 16
+  index: -1
+花蝶/10010
+  rotate: false
+  xy: 590, 3
+  size: 52, 47
+  orig: 70, 70
+  offset: 9, 16
+  index: -1
+花蝶/10011
+  rotate: false
+  xy: 535, 3
+  size: 53, 47
+  orig: 70, 70
+  offset: 8, 16
+  index: -1
+花蝶/10012
+  rotate: false
+  xy: 422, 2
+  size: 55, 48
+  orig: 70, 70
+  offset: 7, 15
+  index: -1
+花蝶/10013
+  rotate: false
+  xy: 123, 2
+  size: 58, 48
+  orig: 70, 70
+  offset: 6, 13
+  index: -1
+花蝶/10014
+  rotate: false
+  xy: 183, 3
+  size: 59, 47
+  orig: 70, 70
+  offset: 5, 10
+  index: -1
+花蝶/10015
+  rotate: false
+  xy: 304, 5
+  size: 58, 45
+  orig: 70, 70
+  offset: 6, 8
+  index: -1

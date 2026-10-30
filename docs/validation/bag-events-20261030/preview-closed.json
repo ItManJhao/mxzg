@@ -1,0 +1,510 @@
+{
+  "rewardWhileOpen": false,
+  "order": [
+    "bag.add",
+    "bag.quantity-changed",
+    "bag.update"
+  ],
+  "beforeOpen": {
+    "bag": {
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "revision": 6
+    },
+    "role": {
+      "id": "c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "nickname": "night_ui_1793367472527",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "statusSubscribers": 0,
+    "subscribers": 1
+  },
+  "closedQuery": {
+    "bag": {
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "revision": 8
+    },
+    "role": {
+      "id": "c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "nickname": "night_ui_1793367472527",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "statusSubscribers": 0,
+    "subscribers": 1
+  },
+  "opened": {
+    "bag": {
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "revision": 8
+    },
+    "role": {
+      "id": "c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "nickname": "night_ui_1793367472527",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 1,
+    "statusSubscribers": 1,
+    "subscribers": 2
+  },
+  "claimedClosed": {
+    "bag": {
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 550
+        },
+        {
+          "itemId": 900102,
+          "quantity": 4
+        },
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        },
+        {
+          "itemId": 20204004,
+          "quantity": 30
+        }
+      ],
+      "error": "",
+      "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "revision": 13
+    },
+    "role": {
+      "id": "c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "nickname": "night_ui_1793367472527",
+      "level": 1,
+      "gold": 4000,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "statusSubscribers": 0,
+    "subscribers": 1
+  },
+  "settlement": {
+    "id": "de28ca12-d180-4fcc-9110-0ff84bed8906",
+    "inventory": [
+      {
+        "itemId": 900101,
+        "quantity": 550
+      },
+      {
+        "itemId": 900102,
+        "quantity": 4
+      },
+      {
+        "itemId": 900401,
+        "quantity": 100
+      },
+      {
+        "itemId": 1004001,
+        "quantity": 1
+      },
+      {
+        "itemId": 20204004,
+        "quantity": 30
+      }
+    ],
+    "gold": 4000
+  },
+  "operationEvents": [
+    {
+      "event": {
+        "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+        "revision": 13,
+        "initialSync": false,
+        "added": [
+          {
+            "itemId": 900401,
+            "quantity": 100
+          },
+          {
+            "itemId": 1004001,
+            "quantity": 1
+          },
+          {
+            "itemId": 20204004,
+            "quantity": 30
+          }
+        ],
+        "quantityChanged": [
+          {
+            "itemId": 900101,
+            "oldQuantity": 50,
+            "newQuantity": 550,
+            "delta": 500
+          },
+          {
+            "itemId": 900102,
+            "oldQuantity": 2,
+            "newQuantity": 4,
+            "delta": 2
+          }
+        ],
+        "removed": [],
+        "reason": "reward"
+      },
+      "bag": {
+        "status": "ready",
+        "synced": true,
+        "items": [
+          {
+            "itemId": 900101,
+            "quantity": 550
+          },
+          {
+            "itemId": 900102,
+            "quantity": 4
+          },
+          {
+            "itemId": 900401,
+            "quantity": 100
+          },
+          {
+            "itemId": 1004001,
+            "quantity": 1
+          },
+          {
+            "itemId": 20204004,
+            "quantity": 30
+          }
+        ],
+        "error": "",
+        "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+        "revision": 13
+      },
+      "role": {
+        "id": "c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+        "nickname": "night_ui_1793367472527",
+        "level": 1,
+        "gold": 4000,
+        "diamonds": 0,
+        "serverId": "local-2"
+      }
+    }
+  ],
+  "details": [
+    {
+      "name": "bag.add",
+      "event": {
+        "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+        "revision": 13,
+        "reason": "reward",
+        "added": [
+          {
+            "itemId": 900401,
+            "quantity": 100
+          },
+          {
+            "itemId": 1004001,
+            "quantity": 1
+          },
+          {
+            "itemId": 20204004,
+            "quantity": 30
+          }
+        ]
+      },
+      "bag": {
+        "status": "ready",
+        "synced": true,
+        "items": [
+          {
+            "itemId": 900101,
+            "quantity": 550
+          },
+          {
+            "itemId": 900102,
+            "quantity": 4
+          },
+          {
+            "itemId": 900401,
+            "quantity": 100
+          },
+          {
+            "itemId": 1004001,
+            "quantity": 1
+          },
+          {
+            "itemId": 20204004,
+            "quantity": 30
+          }
+        ],
+        "error": "",
+        "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+        "revision": 13
+      },
+      "role": {
+        "id": "c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+        "nickname": "night_ui_1793367472527",
+        "level": 1,
+        "gold": 4000,
+        "diamonds": 0,
+        "serverId": "local-2"
+      }
+    },
+    {
+      "name": "bag.quantity-changed",
+      "event": {
+        "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+        "revision": 13,
+        "reason": "reward",
+        "quantityChanged": [
+          {
+            "itemId": 900101,
+            "oldQuantity": 50,
+            "newQuantity": 550,
+            "delta": 500
+          },
+          {
+            "itemId": 900102,
+            "oldQuantity": 2,
+            "newQuantity": 4,
+            "delta": 2
+          }
+        ]
+      },
+      "bag": {
+        "status": "ready",
+        "synced": true,
+        "items": [
+          {
+            "itemId": 900101,
+            "quantity": 550
+          },
+          {
+            "itemId": 900102,
+            "quantity": 4
+          },
+          {
+            "itemId": 900401,
+            "quantity": 100
+          },
+          {
+            "itemId": 1004001,
+            "quantity": 1
+          },
+          {
+            "itemId": 20204004,
+            "quantity": 30
+          }
+        ],
+        "error": "",
+        "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+        "revision": 13
+      },
+      "role": {
+        "id": "c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+        "nickname": "night_ui_1793367472527",
+        "level": 1,
+        "gold": 4000,
+        "diamonds": 0,
+        "serverId": "local-2"
+      }
+    }
+  ],
+  "duplicate": {
+    "bag": {
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 550
+        },
+        {
+          "itemId": 900102,
+          "quantity": 4
+        },
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        },
+        {
+          "itemId": 20204004,
+          "quantity": 30
+        }
+      ],
+      "error": "",
+      "roleKey": "local-2/c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "revision": 13
+    },
+    "role": {
+      "id": "c8ed65a0-1457-4ed3-85b5-6fa55ec88730",
+      "nickname": "night_ui_1793367472527",
+      "level": 1,
+      "gold": 4000,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "statusSubscribers": 0,
+    "subscribers": 1
+  },
+  "displayed": {
+    "rows": [
+      {
+        "itemId": 900101,
+        "quantity": 550
+      },
+      {
+        "itemId": 900102,
+        "quantity": 4
+      },
+      {
+        "itemId": 900401,
+        "quantity": 100
+      },
+      {
+        "itemId": 1004001,
+        "quantity": 1
+      },
+      {
+        "itemId": 20204004,
+        "quantity": 30
+      }
+    ],
+    "cells": [
+      "550",
+      "4",
+      "100",
+      "1",
+      "30"
+    ]
+  },
+  "cleared": {
+    "bag": {
+      "status": "idle",
+      "synced": false,
+      "items": [],
+      "error": "",
+      "roleKey": null,
+      "revision": 14
+    },
+    "role": null,
+    "bagViews": 0,
+    "statusSubscribers": 0,
+    "subscribers": 1
+  },
+  "another": {
+    "bag": {
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "roleKey": "local-1/77bbb4a5-6b9f-4f03-8e8c-e50fc8e8f267",
+      "revision": 19
+    },
+    "role": {
+      "id": "77bbb4a5-6b9f-4f03-8e8c-e50fc8e8f267",
+      "nickname": "mvc_next_1793367504929",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-1"
+    },
+    "bagViews": 0,
+    "statusSubscribers": 0,
+    "subscribers": 1
+  },
+  "anotherWorld": {
+    "bag": {
+      "status": "ready",
+      "synced": true,
+      "items": [
+        {
+          "itemId": 900101,
+          "quantity": 50
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        }
+      ],
+      "error": "",
+      "roleKey": "local-2/453047f1-b6a1-4d16-92d2-83e99d651b4d",
+      "revision": 25
+    },
+    "role": {
+      "id": "453047f1-b6a1-4d16-92d2-83e99d651b4d",
+      "nickname": "mvc_next_1793367504929",
+      "level": 1,
+      "gold": 0,
+      "diamonds": 0,
+      "serverId": "local-2"
+    },
+    "bagViews": 0,
+    "statusSubscribers": 0,
+    "subscribers": 1
+  },
+  "inventoryReads": 6
+}

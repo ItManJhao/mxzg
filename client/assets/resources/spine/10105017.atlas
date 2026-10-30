@@ -1,0 +1,48 @@
+
+10105017.png
+size: 253,253
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+F
+  rotate: false
+  xy: 2, 93
+  size: 147, 158
+  orig: 147, 158
+  offset: 0, 0
+  index: -1
+j1
+  rotate: false
+  xy: 90, 47
+  size: 38, 44
+  orig: 38, 44
+  offset: 0, 0
+  index: -1
+j2
+  rotate: false
+  xy: 90, 7
+  size: 27, 38
+  orig: 27, 38
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 151, 43
+  size: 68, 110
+  orig: 68, 110
+  offset: 0, 0
+  index: -1
+t
+  rotate: false
+  xy: 151, 155
+  size: 91, 96
+  orig: 91, 96
+  offset: 0, 0
+  index: -1
+wb
+  rotate: true
+  xy: 2, 2
+  size: 89, 86
+  orig: 89, 86
+  offset: 0, 0
+  index: -1

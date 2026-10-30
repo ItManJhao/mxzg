@@ -1,0 +1,1 @@
+{"table":"reikiequipactive","note":"exported from config/gameconfig/reikiequipactive.xlsx sheet reikiequipactive. flag 1/2/3 columns only.","rows":[{"place":1,"start":8,"level":190,"cost_item":"[{\"item_type\":900002,\"item_num\":1000}]","reiki_equip_id":908101},{"place":2,"start":8,"level":200,"cost_item":"[{\"item_type\":900002,\"item_num\":1000}]","reiki_equip_id":908102}]}

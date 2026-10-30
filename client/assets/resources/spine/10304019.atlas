@@ -1,0 +1,83 @@
+
+10304019.png
+size: 512,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+cw1
+  rotate: false
+  xy: 194, 39
+  size: 76, 82
+  orig: 76, 82
+  offset: 0, 0
+  index: -1
+hdj1
+  rotate: false
+  xy: 272, 54
+  size: 58, 67
+  orig: 58, 67
+  offset: 0, 0
+  index: -1
+hdj2
+  rotate: false
+  xy: 337, 2
+  size: 103, 127
+  orig: 103, 127
+  offset: 0, 0
+  index: -1
+hdj4
+  rotate: false
+  xy: 2, 2
+  size: 62, 113
+  orig: 62, 113
+  offset: 0, 0
+  index: -1
+j1
+  rotate: true
+  xy: 471, 214
+  size: 40, 38
+  orig: 40, 38
+  offset: 0, 0
+  index: -1
+j2
+  rotate: true
+  xy: 194, 2
+  size: 35, 47
+  orig: 35, 47
+  offset: 0, 0
+  index: -1
+j3
+  rotate: false
+  xy: 243, 2
+  size: 34, 35
+  orig: 34, 35
+  offset: 0, 0
+  index: -1
+st
+  rotate: false
+  xy: 2, 117
+  size: 171, 137
+  orig: 171, 137
+  offset: 0, 0
+  index: -1
+t
+  rotate: false
+  xy: 175, 123
+  size: 160, 131
+  orig: 160, 131
+  offset: 0, 0
+  index: -1
+wb2
+  rotate: true
+  xy: 337, 131
+  size: 123, 132
+  orig: 123, 132
+  offset: 0, 0
+  index: -1
+wb4
+  rotate: true
+  xy: 66, 23
+  size: 92, 126
+  orig: 92, 126
+  offset: 0, 0
+  index: -1

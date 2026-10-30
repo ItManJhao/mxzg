@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "8dab2f94-006f-4d5d-b462-875b063ac299",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "8dab2f94-006f-4d5d-b462-875b063ac299@6c48a",
+      "displayName": "countrywar_city-map-23",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "8dab2f94-006f-4d5d-b462-875b063ac299",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "8dab2f94-006f-4d5d-b462-875b063ac299@f9941",
+      "displayName": "countrywar_city-map-23",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": 0,
+        "trimX": 1,
+        "trimY": 1,
+        "width": 103,
+        "height": 88,
+        "rawWidth": 105,
+        "rawHeight": 90,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -51.5,
+            -44,
+            0,
+            51.5,
+            -44,
+            0,
+            -51.5,
+            44,
+            0,
+            51.5,
+            44,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            1,
+            89,
+            104,
+            89,
+            1,
+            1,
+            104,
+            1
+          ],
+          "nuv": [
+            0.009523809523809525,
+            0.011111111111111112,
+            0.9904761904761905,
+            0.011111111111111112,
+            0.009523809523809525,
+            0.9888888888888889,
+            0.9904761904761905,
+            0.9888888888888889
+          ],
+          "minPos": [
+            -51.5,
+            -44,
+            0
+          ],
+          "maxPos": [
+            51.5,
+            44,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "8dab2f94-006f-4d5d-b462-875b063ac299@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "8dab2f94-006f-4d5d-b462-875b063ac299@6c48a"
+  }
+}

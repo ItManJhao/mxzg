@@ -1,0 +1,39 @@
+{
+  "recordedAt": "2026-10-30T13:41:10.139090+00:00",
+  "sourceCommit": "2022a566c336bb09e47e99bc28a81331e469c2c8",
+  "sourceDirty": true,
+  "engine": "Creator 3.8.8",
+  "preview": "http://localhost:7456/",
+  "backend": "http://127.0.0.1:18080",
+  "packageBuildsThisBatch": false,
+  "checks": {
+    "project": "27/27 passed",
+    "creatorStrict": "passed, exit 0",
+    "closedRewardPreview": "passed, browser errors 0",
+    "openRewardPreview": "passed, browser errors 0"
+  },
+  "sourceSha256": {
+    "client/assets/scripts/features/Bag/BagController.ts": "de85dd6665ac1881c313719551bef6e7bc3bcc9557df0e793c0a7325b7eb611f",
+    "client/assets/scripts/features/Bag/BagModel.ts": "456269d8dd4c71a72de371b6b57e3954efa16a68383b44e09bf352b7d87322f2",
+    "client/assets/scripts/features/Bag/BagEvent.ts": "38b0b7151c9916c50baadddc70752bada2be1d7fc7789e10d1b6e3744176f6da",
+    "client/assets/scripts/features/Bag/data/BagChangeSet.ts": "92e27dc8b00a9285795e2b8c63dcb3264653b6bbd2bbaffbeb84f00a6a4802f7",
+    "client/assets/scripts/features/Bag/data/BagChangeSet.ts.meta": "7c116262b89a8466d7ac697f40e7cfa585ba5af125b491fdc17ac12e7d0a9dd3",
+    "client/assets/scripts/features/Bag/data/BagEventData.ts": "d959acaadf52d8839a71f34c46fdaded19a676fe857d62ff696a99b3ea253c5c",
+    "client/assets/scripts/features/Bag/ui/BagView.ts": "0ef9573a8133d001f8b074cb33050fc2cfefeced75137ad0ed9cd59128d910db",
+    "client/assets/scripts/features/battle/CampaignController.ts": "b845b9a89fd902d622a9e41136437ca38bb064cad31dcc71e911c482d10cb6ba",
+    "client/assets/scripts/framework/EventDispatcher.ts": "2d227e8ff33546f6729d01f75d99c46cd8d6d1173488cd136a896303d7800ec6",
+    "client/assets/scripts/framework/BaseModel.ts": "7b15079472a3b56e2b4debe54fc327b3130cd4bd1709f901e6da30811e005d4b",
+    "client/assets/scripts/framework/BaseController.ts": "a5766c6dc06546096d2341c45e5f405fcdc5b398955c477894345bba40fe4bc0",
+    "client/assets/scripts/framework/ui/BaseView.ts": "de6ea5ccb9e4bf8a9eb5408f274c696461354931de52f3dfdffe5419698ad38c",
+    "client/tools/bag-mvc-check.ts": "1953c1a50342546b0851323392b6832fc7bd2c6e5e68f248be777b80b46ab091",
+    "client/tools/bag-events-check.ts": "811c692201720070c605f9a0c3ebff91f330a3cf2614a8453099ac24abe5bd6e",
+    "client/tools/bag-module-types-check.ts": "674f19feff4de3e30b9ee845b5d3a4d5c1adeec03af6451b763157609fa4b865",
+    "client/tools/backpack-view-check.ts": "02dbf55740f03e1767777a6302f29efa5e17c681665adbd932e207cb048f76ef",
+    "client/tools/bag-mvc-preview.cjs": "8e06b0e3d8dc283cf7caf8b252a5843c2515e6a5fd155dd154291abfddd4e87a",
+    "client/tools/check-project.mjs": "1b0bd28abaa97af0eb63a0b24294e904bd0907bc728a68af6cc913de31e3fa67",
+    "client/assets/prefabs/ui/backpack/BackpackInfoLayer.prefab": "484f91fd0db682182d1e3e04526583d0af98857f16133ffcc1aa6ffc099e34a1",
+    "client/assets/prefabs/ui/backpack/BackpackItemCell.prefab": "31628e838c1a1435a34c063cdc15c66d6467403697457aac4bebf398ca9c4ee5",
+    "client/assets/prefabs/ui/backpack/BackpackLayer.prefab": "294b660fbdc1406a6ac5b9407a4698e7b6534a6a7e431bafe8a7895726aab18f",
+    "client/assets/prefabs/ui/backpack/BackpackTabButton.prefab": "115edbb7aa814f86c665b24f1f229ca1d48c0e1fb0e06add054683f9e4bd0407"
+  }
+}
