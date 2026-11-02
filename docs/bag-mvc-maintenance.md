@@ -2,11 +2,11 @@
 
 # 背包标准模块：维护与验收入口
 
-2026-10-30，沿用完整命名、目录、基类与全局事件规则。2026-10-31 已完成旧业务链清理与目标作用域事件改造，背包继续保持库存规则及必要调用方，保留真实业务和 Prefab/SuperScroll 配置；不构建包、不清库、不提交推送或发布。**技术验证完成，人工阅读与编辑体验待用户验收，真实界面回归因浏览器权限待验收；目录清理与代码检查见 architecture.md。**
+背包沿用完整命名、目录、基类与全局事件规则，保留真实业务和 Prefab/SuperScroll 配置。2026-11-02 已完成长连接查询试点、隔离联调和登录/背包/详情/顶号重登页面复验；人工阅读与编辑体验、正式服 1:1 对照仍待验收。当前结果统一见开发进度，以下调用链说明现有职责。
 
 ## 固定目录与文件职责
 
-2026-11-02 通信迁移顺序已确认：优先登录与背包，背包作为其他模块模板。当前 BagApi 仍走 HTTP；服务端仅新增默认关闭的 `inventory.list` 长连接试点。下一批替换通信入口时保留 BagController 的读写队列、会话代次和事件归属，恢复快照不能绕过 Controller 直接覆盖 Model；详情和列表仍由 Prefab/SuperScroll 承载。实际进度统一见 [当前进度](development-progress.md)。
+2026-11-02 通信迁移顺序：优先登录与背包，背包作为其他模块模板。BagApi 在应用显式注入 GameSocketClient 时查询 `inventory.list`，关闭试点仍走原 HTTP，失败不暗中回退。BagController 的读写队列、会话代次和事件归属保持；恢复快照不直接覆盖 Model。详情和列表仍由 Prefab/SuperScroll 承载。实际进度见 [当前进度](development-progress.md)。
 
 仓库根目录 `G:\work\FsGame\Project\mxzg`，运行脚本根目录 `client/assets/scripts`。
 
@@ -26,7 +26,7 @@ features/Bag/
   BagController.ts
   BagModel.ts
   BagEvent.ts
-  BagApi.ts              # 必要的现有手写 HTTP 适配
+  BagApi.ts              # 应用选择 HTTP 或长连接的无状态查询适配
   BagItemCatalog.ts      # 必要的现有配置查询
 ```
 
@@ -36,7 +36,7 @@ features/Bag/
 - [BagEvent](../client/assets/scripts/features/Bag/BagEvent.ts)：集中声明 BagUpdate/BagAdd/BagRemove/BagQuantityChanged 和独立 BagSyncStateChanged，不持有派发器或历史数据。
 - [BagView](../client/assets/scripts/features/Bag/ui/BagView.ts)：页面绑定、分类、选中、详情与输入；继承 BaseView。onOpen 先监听再读 Model，refreshFromModel/paint 展示，visibleItems 分类，showInfo 打开详情。
 - [BagItemView](../client/assets/scripts/features/Bag/ui/BagItemView.ts)、[BagInfoView](../client/assets/scripts/features/Bag/ui/BagInfoView.ts)、[BagTabView](../client/assets/scripts/features/Bag/ui/BagTabView.ts)：实际 Cell、详情和页签，无空类。
-- [BagApi](../client/assets/scripts/features/Bag/BagApi.ts)：现有手写 GET /api/v1/inventory，调用统一 platform/http 的 JsonClient；没有状态。生成协议/底层 HTTP 没有搬进 Model，也没新增转发层。[BagItemCatalog](../client/assets/scripts/features/Bag/BagItemCatalog.ts) 只查询名称、图标、分类等配置，不保存角色数量。
+- [BagApi](../client/assets/scripts/features/Bag/BagApi.ts)：GET /api/v1/inventory 或试点 inventory.list，统一校验 readBagItems，没有状态。传输状态留在 platform，不能搬进 Model。[BagItemCatalog](../client/assets/scripts/features/Bag/BagItemCatalog.ts) 只查询名称、图标、分类等配置，不保存角色数量。
 - [RemakeApp](../client/assets/scripts/app/remake/RemakeApp.ts)：显式提供依赖、初始化模块、注册 BagView；应用销毁才 dispose 模块。背包注册没有 createController。
 
 ## 基类、全局事件与监听归属
@@ -55,7 +55,7 @@ UIRegistry 的 createController/show/close 只暂留给未迁移页面适配器�
 
 ## 一次“查询背包”如何执行
 
-1. RemakeApp 调用 `BagController.instance.initialize({account, authorization, api: new BagApi(http)})`。BagController.onInitialize 通过自身 EventScope 订阅 AccountModel；有效角色变化时 syncSession → resetSession(serverId/roleId) → refresh，背包页面无需存在。
+1. RemakeApp 调用 `BagController.instance.initialize({account, authorization, api: new BagApi(http, socket)})`，socket 仅试点注入。BagController.onInitialize 通过自身 EventScope 订阅 AccountModel；有效角色变化时 syncSession → resetSession(serverId/roleId) → refresh，背包页面无需存在。
 2. `BagController.refresh` 捕获基类会话代次和本模块 readEpoch，登记 pendingRead，再 `BagModel.beginSync` 并独立通知同步状态。同步回调再请求时复用 pendingRead，不递归创建另一条查询。
 3. `BagController.read` → `AccountService.authenticated` → `BagApi.list` → 纯校验 readBagItems。原鉴权、有效期、旧账号 401 保护保持。
 4. 回包先检查 isCurrent(session) 和 readEpoch；有效结果 `BagModel.replaceAll` 返回 BagChangeSet，`BagController.notify` 聚合派发细分事件，最后 `EventDispatcher.instance.emit(BagEvent.BagUpdate, payload)`。首次仅汇总，相同库存仅状态。旧结果返回 false，不覆盖新快照。

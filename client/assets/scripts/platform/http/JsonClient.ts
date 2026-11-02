@@ -19,6 +19,9 @@ export class JsonClient {
     if (!/^https?:\/\/[^\s?#]+$/.test(baseUrl)) throw new Error("Invalid API address");
   }
 
+  /** 返回实际连接地址，长连接沿用隔离预览选定的实例，不能误连默认玩家后端。 */
+  get baseAddress(): string { return this.baseUrl; }
+
   /** 发出一次明确请求；错误正文仅提取全大写业务码，其他错误保留原有通用说明。 */
   async request(path: string, body?: unknown, token?: string, method?: JsonRequest["method"]): Promise<unknown> {
     const headers: Record<string, string> = { Accept: "application/json" };

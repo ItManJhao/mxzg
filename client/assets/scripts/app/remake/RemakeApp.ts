@@ -8,7 +8,9 @@ import { GConfig } from "../../config/GConfig";
 
 import { _decorator, Asset, Component, director, Director, Node, Prefab, sys } from "cc";
 import { AccountModel } from "../../features/account/AccountModel";
-import { AccountApi, readSession } from "../../features/account/AccountApi";
+import { AccountApi, readSession, readRole } from "../../features/account/AccountApi";
+import { GameSocketClient } from "../../platform/GameSocketClient";
+import { readBagItems } from "../../features/Bag/data/BagItemData";
 import { AccountService } from "../../features/account/AccountService";
 import { AccountController } from "../../features/account/AccountController";
 import { AccountLoginView } from "../../features/account/ui/AccountLoginView";
@@ -35,7 +37,7 @@ import { HeroLevelController } from "../../features/hero/HeroLevelController";
 import { HeroInfoUpLevelLayer } from "../../features/hero/ui/HeroInfoUpLevelLayer";
 import { HeroListView } from "../../features/hero/ui/HeroListView";
 import { mountHeroListPage } from "../../features/hero/ui/heroMount";
-import { HeroApi } from "../../features/hero/HeroApi";
+import { HeroApi, readOwnedHeroes } from "../../features/hero/HeroApi";
 import { HeroCatalog } from "../../features/hero/HeroCatalog";
 import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
 import { HeroRosterController } from "../../features/hero/HeroRosterController";
@@ -70,6 +72,8 @@ export class RemakeApp extends Component {
   @property(Node) pageHost: Node | null = null;
   @property(Node) startupHost: Node | null = null;
   @property apiBaseUrl = "http://127.0.0.1:18080";
+  @property useGameSocket = false;
+  private gameSocket: GameSocketClient | null = null;
   private navigation: RemakeNavigation | null = null;
   private offAccount: (() => void) | null = null;
   private bagModule: BagController | null = null;
@@ -98,7 +102,16 @@ export class RemakeApp extends Component {
     const connection=await isolatedPreview(this.apiBaseUrl,createXhrAdapter(),sys.localStorage);
     if(!this.isValid)return;
     const http=connection.http;
-    const api = new AccountApi(http);
+    const socket = this.useGameSocket || connection.gameSocket ? new GameSocketClient(http.baseAddress.replace(/^http/, "ws").replace(/\/$/, "") + "/api/v1/game/socket", {
+      create: url => new WebSocket(url),
+      validateSnapshot: value => {
+        if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("恢复数据无效");
+        const snapshot = value as Record<string, unknown>;
+        readRole(snapshot.role); readOwnedHeroes(snapshot.heroes); readBagItems(snapshot.inventory);
+      },
+    }) : undefined;
+    this.gameSocket = socket || null;
+    const api = new AccountApi(http, socket);
     const storage = connection.storage;
     let savedServer: string | null = null;
     try { savedServer = storage.getItem("mxzg.remake.selectedServer"); } catch { }
@@ -109,8 +122,18 @@ export class RemakeApp extends Component {
       write: session => storage.setItem(SESSION_KEY, JSON.stringify(session)),
       clear: () => storage.removeItem(SESSION_KEY),
     });
-    BagController.instance.initialize({ account: model, authorization: service, api: new BagApi(http) });
+    BagController.instance.initialize({ account: model, authorization: service, api: new BagApi(http, socket) });
     this.bagModule = BagController.instance;
+    if (socket) {
+      socket.onRejected = (token, message) => service.rejectSession(token, message);
+      // 恢复不直接应用握手快照：读请求须等背包已有写任务结束，避免旧库存覆盖新消费。
+      socket.onReady = () => {
+        if (!model.snapshot.role || model.snapshot.busy) return;
+        void BagController.instance.refresh(true);
+        void service.refreshRole().catch(() => {});
+      };
+      socket.onDisconnected = () => { if (model.snapshot.role && !model.snapshot.busy) void BagController.instance.refresh(true); };
+    }
     const idle=this.idleController=new IdleController(model,service,new IdleApi(http));
     // 名册状态属于应用会话，关闭英雄页面只解除 View 观察，不销毁角色数据。
     const roster = HeroRosterModel.instance;
@@ -349,6 +372,10 @@ export class RemakeApp extends Component {
   onDestroy(): void {
     this.alive = false;
     this.started = false;
+    if (this.gameSocket) {
+      this.gameSocket.onReady = this.gameSocket.onDisconnected = this.gameSocket.onRejected = null;
+      this.gameSocket.disconnect(); this.gameSocket = null;
+    }
     this.routeEpoch++;
     for (const done of this.paintWaiters) done();
     this.logo?.stop(); this.logo?.stopMusic(); this.logo = null;

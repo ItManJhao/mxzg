@@ -5,17 +5,19 @@ import type { HttpAdapter } from "../../platform/http/JsonClient";
 interface Storage {getItem(key:string):string|null;setItem(key:string,value:string):void;removeItem(key:string):void;}
 
 /** 无显式参数保持原行为；有任一测试参数则必须全部通过，失败绝不回退到玩家后端。 */
-export async function isolatedPreview(defaultUrl:string,adapter:HttpAdapter,storage:Storage):Promise<{http:JsonClient;storage:Storage}> {
+export async function isolatedPreview(defaultUrl:string,adapter:HttpAdapter,storage:Storage):Promise<{http:JsonClient;storage:Storage;gameSocket?:boolean}> {
     const query=typeof location!=="undefined"?new URLSearchParams(location.search):new URLSearchParams();
-    const url=query.get("mxzgTestApi"),run=query.get("mxzgTestRun");
-    if(url===null && run===null)return {http:new JsonClient(defaultUrl,adapter),storage};
+    const url=query.get("mxzgTestApi"),run=query.get("mxzgTestRun"),socket=query.get("mxzgSocket");
+    if(url===null && run===null && socket===null)return {http:new JsonClient(defaultUrl,adapter),storage};
     if(!PREVIEW || typeof location==="undefined" || !["localhost","127.0.0.1"].includes(location.hostname) ||
-        !url || !/^http:\/\/127\.0\.0\.1:\d{4,5}$/.test(url) || !run || !/^[a-f0-9]{32}$/.test(run))throw new Error("隔离预览参数无效，已停止连接");
+        !url || !/^http:\/\/127\.0\.0\.1:\d{4,5}$/.test(url) || !run || !/^[a-f0-9]{32}$/.test(run) ||
+        (socket!==null && socket!=="1"))throw new Error("隔离预览参数无效，已停止连接");
     const port=Number(url.substring(url.lastIndexOf(":")+1));
     if(port<1024 || port>65535 || port===18080 || port===3306)throw new Error("隔离预览拒绝保留端口");
     const http=new JsonClient(url,adapter);
     const identity=await http.request("/api/v1/test-identity") as {kind?:unknown;run?:unknown};
-    if(identity?.kind!=="mxzg-owned-mysql-it" || identity.run!==run)throw new Error("隔离预览实例身份不匹配，已停止连接");
+    if(!["mxzg-owned-mysql-it","mxzg-owned-socket-it"].includes(String(identity?.kind)) || identity.run!==run ||
+        (socket==="1" && identity.kind!=="mxzg-owned-socket-it"))throw new Error("隔离预览实例身份不匹配，已停止连接");
     const prefix="mxzg.it."+run+".";
-    return {http,storage:{getItem:key=>storage.getItem(prefix+key),setItem:(key,value)=>storage.setItem(prefix+key,value),removeItem:key=>storage.removeItem(prefix+key)}};
+    return {http,gameSocket:socket==="1",storage:{getItem:key=>storage.getItem(prefix+key),setItem:(key,value)=>storage.setItem(prefix+key,value),removeItem:key=>storage.removeItem(prefix+key)}};
 }

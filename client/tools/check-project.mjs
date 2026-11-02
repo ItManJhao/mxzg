@@ -15,6 +15,7 @@ const suites = [
   ["prefab-review", "python", "tools/audit_prefabs.py"],
   ["event-target", "ts", "client/tools/event-target-check.ts"],
   ["account", "ts", "client/tools/account-check.ts"],
+  ["game-socket", "ts", "client/tools/game-socket-check.ts"],
   ["hero-roster", "ts", "client/tools/hero-roster-check.ts"],
   ["hero-level", "ts", "client/tools/hero-level-check.ts"],
   ["formation", "ts", "client/tools/formation-check.ts"],

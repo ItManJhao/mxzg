@@ -14,6 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.context.annotation.Import;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,7 +24,18 @@ import static org.junit.jupiter.api.Assertions.*;
     "mxzg.websocket.enabled=true", "spring.datasource.url=jdbc:h2:mem:socket_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
     "spring.datasource.username=sa", "spring.datasource.password="})
 @ActiveProfiles("local")
+@Import(GameSocketTest.IdentityProbe.class)
 class GameSocketTest {
+    private static final String RUN_ID = UUID.randomUUID().toString();
+
+    /** 仅测试上下文提供随机实例身份，客户端核对后才允许创建合成账号。 */
+    @RestController
+    @org.springframework.boot.test.context.TestComponent
+    static class IdentityProbe {
+        /** 返回本轮随机身份，不暴露数据库位置或任何玩家信息。 */
+        @GetMapping("/api/v1/socket-test-identity")
+        public Map<String, String> identity() { return Map.of("kind", "mxzg-owned-socket-it", "run", RUN_ID); }
+    }
     @LocalServerPort int port;
     @Autowired DevelopmentLoginService login;
     @Autowired SessionService sessions;
@@ -228,5 +241,17 @@ class GameSocketTest {
             assertInstanceOf(WebSocketHandshakeException.class, failure.getCause());
             assertEquals(403, ((WebSocketHandshakeException) failure.getCause()).getResponse().statusCode());
         }
+    }
+
+    /** 用真实 TypeScript 账号/背包模块连接本测试服务器，覆盖两端协议字段和恢复流程。 */
+    @Test void typescriptLoginAndBagRoundTrip() throws Exception {
+        var script = java.nio.file.Path.of("..", "client", "tools", "run-game-socket-live.cjs").toAbsolutePath().normalize();
+        var process = new ProcessBuilder("node", script.toString(), Integer.toString(port), RUN_ID).redirectErrorStream(true).start();
+        try {
+            assertTrue(process.waitFor(40, TimeUnit.SECONDS), "客户端联调进程超时");
+            String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            assertEquals(0, process.exitValue(), output);
+            assertTrue(output.contains("PASS real TS client"), output);
+        } finally { if (process.isAlive()) process.destroyForcibly(); }
     }
 }
