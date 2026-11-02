@@ -1,4 +1,4 @@
-/** 自动生成：会话试点 DTO；修改 protocol/session-contract.json 后重新生成。尚未接入网络。 */
+/** 自动生成：会话试点 DTO；修改 protocol/session-contract.json 后重新生成。英雄升级请求暂为预留。 */
 package com.funsgamex.mxzg.protocol;
 
 /** 首批请求与会话数据类型；字段取值仍需接入层校验。 */

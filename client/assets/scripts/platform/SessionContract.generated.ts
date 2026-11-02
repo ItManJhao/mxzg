@@ -1,4 +1,4 @@
-/** 自动生成：会话试点 DTO；修改 protocol/session-contract.json 后重新生成。尚未接入网络。 */
+/** 自动生成：会话试点 DTO；修改 protocol/session-contract.json 后重新生成。英雄升级请求暂为预留。 */
 
 /** 连接建立后的首个请求；令牌仅通过加密连接消息体传递。 */
 export interface SessionAuthenticate {

@@ -6,6 +6,8 @@
 
 ## 固定目录与文件职责
 
+2026-11-02 通信迁移顺序已确认：优先登录与背包，背包作为其他模块模板。当前 BagApi 仍走 HTTP；服务端仅新增默认关闭的 `inventory.list` 长连接试点。下一批替换通信入口时保留 BagController 的读写队列、会话代次和事件归属，恢复快照不能绕过 Controller 直接覆盖 Model；详情和列表仍由 Prefab/SuperScroll 承载。实际进度统一见 [当前进度](development-progress.md)。
+
 仓库根目录 `G:\work\FsGame\Project\mxzg`，运行脚本根目录 `client/assets/scripts`。
 
 ```text

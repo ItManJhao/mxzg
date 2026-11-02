@@ -1,14 +1,16 @@
 # 首批长连接契约与接入顺序
 
-更新：2026-11-02。状态：设计草案，只有首批 DTO 和生成检查已落地，WebSocket 服务端、客户端和运行时校验均未接入。现有 HTTP 闭环继续工作。原项目通信证据见 [架构核查](architecture.md#原项目架构核查2026-11-02)。本文定义新版技术契约，不改变旧游戏规则。
+更新：2026-11-02。状态：本机服务端会话与背包只读试点已实现，默认关闭；客户端尚未接入，仍运行现有 HTTP 闭环。下文区分已实现服务端和待接入客户端，不代表完整迁移完成。原项目通信证据见 [架构核查](architecture.md#原项目架构核查2026-11-02)。本文定义新版技术契约，不改变旧游戏规则。
 
 ## 首批范围
 
-采用 JSON 文本消息验证 WSS 会话、同步和一级英雄升级；不兼容旧 TCP/Protobuf 客户端。正式渠道身份认证另行接入，本机仍用开发登录换取访问令牌。HTTP 保留选服、身份交换与非游戏业务，其他已有接口在逐项验收后迁移，不一次删除。
+用户已调整优先级：长连接基础 → 登录与重连 → 背包作为标准模块 → 英雄等其他模块。采用 JSON 文本消息；首批只接会话与背包查询，不接英雄升级写操作，不兼容旧 TCP/Protobuf 客户端。正式渠道身份认证另行接入，本机仍用开发登录换取访问令牌。HTTP 保留选服、身份交换与非游戏业务，其他已有接口在逐项验收后迁移，不一次删除。
+
+试点入口 `/api/v1/game/socket`，仅 `local & !production` 且 `mxzg.websocket.enabled=true` 时注册；默认没有该端点。当前验证使用随机端口和独立内存 H2。不要直接在日常玩家实例开启试点做顶号测试：接管会撤销同角色其他令牌，影响 HTTP 和 WS 两条链路。正式 WSS/TLS、正式来源与三端适配尚未验收。
 
 DTO 唯一字段定义在 [session-contract.json](../protocol/session-contract.json)，生成命令为 `node tools/generate_session_contract.cjs`；`--check` 检查生成漂移。当前覆盖鉴权请求、鉴权确认、心跳响应、英雄升级请求，尚未覆盖统一信封、升级结果、快照和推送。生成类型不等于入站校验；接入前必须验证字符串长度、UUID、整数范围、必填字段及方向。
 
-## 消息信封（待实现）
+## 消息信封（服务端试点已实现）
 
 统一字段：`version: 1`、`kind: request | response | event`、`name`、`body`。请求和响应额外有 `id`（一次传输的 UUID）；响应必须回显请求 id 和 name，并带 `ok`。失败响应 `ok:false`、`body:null`、`error:{code,message,retryable}`；成功响应无 error。鉴权前不接受业务消息。
 
@@ -21,16 +23,17 @@ DTO 唯一字段定义在 [session-contract.json](../protocol/session-contract.j
 | session.authenticate | 请求/响应 | 建连后唯一允许的首个业务请求；令牌在 body，禁止放 URL 或日志 |
 | session.sync | 请求/响应 | 鉴权后恢复角色、英雄、背包；返回一致快照，完成前禁用资产写入 |
 | session.heartbeat | 请求/响应 | 已鉴权连接保活，响应含服务端毫秒时间 |
-| session.kicked | 服务端事件 | 同角色新会话替换或管理员踢出；清理本地会话，不自动抢回登录 |
-| hero.level.preview | 请求/响应 | ready 状态读取英雄升级预览，规则仍由服务端判定 |
-| hero.level.upgrade | 请求/响应 | ready 状态提交一级升级；复用原事务服务 |
+| session.kicked | 服务端事件 | 同角色连接替换已实现；客户端处理及管理员入口待实现 |
+| inventory.list | 请求/响应 | 服务端已实现；sync 完成后查询当前角色完整背包，body 为 `{}` |
+| hero.level.preview | 请求/响应 | 预留，当前会返回 UNKNOWN_MESSAGE；背包模板验收后再接入 |
+| hero.level.upgrade | 请求/响应 | 预留，当前会返回 UNKNOWN_MESSAGE；后续复用原事务服务 |
 
 错误码须区分 `UNAUTHENTICATED`、`SESSION_REPLACED`、`NOT_READY`、`INVALID_MESSAGE`、`UNSUPPORTED_VERSION`、`RATE_LIMITED`、`INTERNAL_ERROR` 和现有业务失败原因。不能把所有 HTTP 409 都翻译成同一个失败；网络超时也不能伪装成业务拒绝。`retryable` 仅表示允许恢复后重试，不授权客户端生成新的扣费请求。
 
 ## 登录与重连时序
 
 1. HTTP 身份交换取得令牌 → 建立 WSS → 发送 authenticate。正式环境使用加密连接；仅本机开发允许 ws。
-2. 服务端验证令牌有效期和角色归属，原子登记当前连接。返回 connectionId 后进入 syncing。顶号同时使旧会话失效，旧令牌不能自动重连顶掉新登录；这一能力当前 SessionService 尚未实现。
+2. 服务端验证令牌有效期和角色归属，原子登记当前连接。返回 connectionId 后进入 syncing。已实现：角色锁内再次校验并删除其他令牌，旧令牌不能自动重连顶掉新登录；同一个有效令牌允许普通重连替换残留连接。clientInstanceId 只做格式校验，暂不作为设备身份或防令牌复制机制。
 3. 客户端请求 sync，服务端在一致读边界中返回角色、英雄、背包完整快照。客户端通过现有模块入口批量提交成功后进入 ready，再允许升级。后续扩展阵容/战斗/挂机时需扩展同步范围，不以这三个模块冒充全量恢复。
 4. 断线立即禁用写按钮，保留当前业务未决请求。带随机抖动退避重连（初始建议 1/2/4/8 秒，最高 15 秒），重新鉴权、同步。未过期令牌可复用；过期回登录。登出、切服、顶号立即取消重连。
 5. 对未决升级，使用同一业务键查询结果（首批可重发原升级命令，现有幂等收据提供结果），确认后更新快照。读请求可以重新发起；其他写请求不能通用自动重放。即使最新等级高于原收据的 toLevel，也不能据此判失败或再扣费。
@@ -42,19 +45,21 @@ DTO 唯一字段定义在 [session-contract.json](../protocol/session-contract.j
 - 首批不引入资产增量推送；完整快照与升级响应通过角色级串行调度保持提交/发送顺序，同一连接发送也必须串行。后续加入多来源推送时先实现持久版本/事件游标，不能把 connectionId 当资产版本。
 - 原数据库事务、角色锁、持久幂等收据保留。网络层不得提前派发成功；仅在提交成功后响应。不能创建另一套升级业务或同时用 HTTP/WSS 发起同一次写操作。
 - 客户端保持 Bag 更新协调器、英雄名册读失效、Account 登录代次与模块事件。关闭页面不丢失在途资产操作；同一请求迟到/重复结果不能重复提示或覆盖较新状态。
-- 起步参数建议：首帧鉴权 5 秒、请求超时 15 秒、心跳 20 秒、60 秒无有效心跳断开；单帧上限 64 KiB、单连接待发送上限 256 KiB、未完成请求上限 16。它们是试点保护值，不是旧玩法规则或容量结论。后续全量快照超过限制时应分页/分片，不静默丢数据。
+- 服务端已实现：首帧鉴权 5 秒、60 秒无有效请求断开；单帧上限 64 KiB、发送缓冲上限 256 KiB、总连接 128、每连接每秒最多 32 次请求；每连接即时串行处理，不建立请求任务队列；角色调度繁忙返回 BUSY。客户端请求超时 15 秒、心跳 20 秒及最多 16 个未完成请求仍待实现。这些是试点保护值，不是旧玩法规则或容量结论。后续全量快照超过限制时应分页/分片，不静默丢数据。
 - 超限明确拒绝或关闭慢连接；禁止无限队列。鉴权前更严格限流，限制来源与连接数；令牌、聊天正文和玩家私密数据不写原始包日志。
 - JSON 整数限制在 JavaScript 安全整数范围；Java long 不代表前端可接受任意 64 位数。接入层按业务约束验证正整数、时间和金额，禁止 NaN/无穷/小数等级。
+
+入站校验已拒绝重复 JSON 字段、过深嵌套、超长字符串、未知字段和非法标识。发送使用 Spring 并发会话包装器，依据 [Spring WebSocket API](https://docs.spring.io/spring-framework/reference/web/websocket/server.html) 的发送串行要求；单次底层阻塞写、慢连接持续压力、来源级限流与多实例协调仍需专项验证，当前只能作为本机试点。暂未实现管理端踢出、可靠事件游标和客户端自动重连。
 
 ## 现有 HTTP 操作迁移表
 
 | 当前操作 | 计划消息/去向 | 批次 |
 |---|---|---|
 | GET servers；POST development/login | HTTP 保留；开发登录日后换正式身份适配 | 基础 |
-| GET roles/me；GET heroes；GET inventory | session.sync 首批三模块；独立刷新按需保留 | 会话试点 |
+| GET roles/me；GET heroes；GET inventory | session.sync 首批三模块；背包另有 inventory.list | 优先登录/背包试点 |
 | GET heroes/{heroId} | hero.detail | 后续 |
-| GET heroes/{heroId}/level-up | hero.level.preview | 首个业务试点 |
-| POST heroes/{heroId}/level-up | hero.level.upgrade | 首个业务试点 |
+| GET heroes/{heroId}/level-up | hero.level.preview | 背包之后 |
+| POST heroes/{heroId}/level-up | hero.level.upgrade | 背包之后 |
 | GET/PUT lineups/main | lineup.read / lineup.save | 后续 |
 | GET campaign；POST campaign/initialize | campaign.read / campaign.initialize；初始化规则另对照原版 | 后续 |
 | POST campaign/battles；POST campaign/battles/{id}/claim | campaign.challenge / campaign.claim | 后续 |
@@ -72,4 +77,4 @@ DTO 唯一字段定义在 [session-contract.json](../protocol/session-contract.j
 4. 关闭/重开升级页、升级中换号/切服、旧连接迟到回包，不污染新角色状态。
 5. 默认独立内存 H2 测试；MySQL 并发补验使用独立测试库。现有账号仅在真实界面验收需要时正常操作，不用改库制造通过结果。
 
-本批未通过这些长连接门槛，不能宣称已完成迁移。下一批先实现服务端会话与隔离测试，再接入客户端升级；不同时展开其他窗口巡检。
+服务端登录/背包测试通过不代表上述写操作门槛已通过。下一批接入客户端登录与背包：鉴权→同步→进入主城→背包查询→断线恢复→顶号回登录；背包页关闭只清监听，模块继续持有状态。重连恢复必须经过 BagController 的读写协调，不能直接把旧快照写入 Model 覆盖在途 HTTP 消费结果。模板验收后再迁移英雄升级，不同时展开其他窗口巡检。

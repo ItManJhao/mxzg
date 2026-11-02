@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "status": "draft-not-connected",
+  "status": "local-server-login-inventory-pilot",
   "description": "独立新版首批会话及英雄升级请求 DTO；不等于完整协议或运行时校验器。",
   "records": {
     "SessionAuthenticate": {

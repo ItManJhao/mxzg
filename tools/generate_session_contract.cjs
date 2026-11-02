@@ -27,7 +27,7 @@ function validate() {
 
 /** 根据同一份字段定义输出 TypeScript 接口和 Java 不可变记录。 */
 function generate() {
-  const header = "/** 自动生成：会话试点 DTO；修改 protocol/session-contract.json 后重新生成。尚未接入网络。 */\n";
+  const header = "/** 自动生成：会话试点 DTO；修改 protocol/session-contract.json 后重新生成。英雄升级请求暂为预留。 */\n";
   let ts = header;
   let java = header + "package com.funsgamex.mxzg.protocol;\n\n/** 首批请求与会话数据类型；字段取值仍需接入层校验。 */\npublic final class SessionContract {\n    /** 禁止实例化类型容器。 */\n    private SessionContract() {}\n";
   for (const [name, record] of Object.entries(schema.records)) {
