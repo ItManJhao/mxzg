@@ -1,6 +1,6 @@
 # mxzg
 
-当前客户端为 Cocos Creator 3.8.8 / TypeScript，后端为 Java 21 / Spring Boot。开发约束见 [AGENTS.md](AGENTS.md)。
+旧项目因技术版本老、代码难以人工维护而重做：现代化技术和内部结构，旧玩法、内容、规则与效果以 **1:1 还原**为目标。当前客户端为 Cocos Creator 3.8.8 / TypeScript，后端为 Java 21 / Spring Boot。开发约束见 [AGENTS.md](AGENTS.md)。
 
 ## 启动
 
@@ -12,12 +12,22 @@
 
 ## 文档入口
 
+最终目标：完整重做旧游戏，分批恢复玩法与社交；独立新版，暂不要求旧客户端兼容或旧玩家迁移。当前重点为原项目架构核查与通信基础设计，网络迁移尚未实施。
+
+阅读顺序：产品需求（要做什么）→ 开发进度（现在做到哪）→ 实施计划（接下来做什么）→ 架构（怎样做及证据）。同一事实只在对应主文档维护，不让历史批次覆盖当前结论。
+
+
 - [产品需求](docs/product-requirements.md)：有效需求与首测范围。
 - [架构与职责](docs/architecture.md)：MVC、状态、事件、生命周期及后端边界。
+- [开发写法与阅读约定](docs/development-conventions.md)：游爱写法的借鉴范围、方法/注释、明确调用链和还原流程。
 - [运行维护](docs/local-remake-workflow.md)：本机启停、日志和排错。
 - [配置与资源](docs/config-pipeline.md)：生成、分组查询、资源目录与作用域。
 - [Prefab 编辑](docs/prefab-layout.md)：命名、坐标、逐项审查及视觉待验收。
 - [当前计划](docs/restructuring-plan.md) / [实际进度](docs/development-progress.md)。
+
+历史记录：[截至 2026-11-02 的开发过程](docs/validation/development-history-20261102.md)。[开服规则参考](docs/day60-open-server.md)只用于核对配置，不再作为另一套删减玩法/排期方案。
+
+文档目录的 JSON 是资源来源、Prefab 保留清单和审查数据，供工具/追溯使用；validation 保存历史证据。它们不作为当前计划，也不因文件多而删除。
 
 功能维护：[背包](docs/bag-mvc-maintenance.md)、[库存事件](docs/bag-inventory-events.md)、[列表](docs/super-scroll-authoring.md)、[出阵](docs/formation-ui-authoring.md)、[英雄/阵容接口](docs/hero-lineup-contract.md)。
 

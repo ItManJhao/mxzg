@@ -1,0 +1,205 @@
+{
+  "date": "2026-11-02",
+  "scope": "只读源码架构核查；不是线上部署、完整玩法或负载验收",
+  "oldRoot": "G:/work/FsGame/Demo/mj/program/",
+  "sources": [
+    {
+      "repo": "client/cocos_mxzg.git",
+      "commit": "6276cbe47b939ce161aaefaa93bb6f83a0a253af"
+    },
+    {
+      "repo": "server/mxzg-server.git",
+      "commit": "672293145b4da0f87b87bad9826432e04d6402c0"
+    },
+    {
+      "repo": "server/mxzg-common.git",
+      "commit": "8cc02a32cea66df6296eb89b4d2d1b1715e507e7"
+    },
+    {
+      "repo": "mxzg-protofiles.git",
+      "commit": "cb410068f579dad2d97e08b45ac008387f946bed"
+    }
+  ],
+  "gameServerModules": [
+    "achievement",
+    "adven",
+    "astrolabe",
+    "backpack",
+    "battle",
+    "blessingPool",
+    "border",
+    "buygold",
+    "champion",
+    "chat",
+    "clan",
+    "clanwar",
+    "clanworldboss",
+    "clergy",
+    "click",
+    "countryWar",
+    "crusadegroup",
+    "dailydungeon",
+    "dragon",
+    "dreamland",
+    "dungeon",
+    "fetter",
+    "firstRecharge",
+    "floatingIslands",
+    "friend",
+    "global",
+    "godRelic",
+    "godequip",
+    "growthGiftBag",
+    "hades",
+    "headPortrait",
+    "hero",
+    "heroArrive",
+    "heroComment",
+    "heroShare",
+    "heropalace",
+    "inviteGift",
+    "ladder",
+    "limitBuy",
+    "magicTower",
+    "mail",
+    "marquee",
+    "monsterCheck",
+    "monthCard",
+    "onlineReward",
+    "operatorValue",
+    "pet",
+    "planewar",
+    "promotionNew",
+    "prophetSummon",
+    "push",
+    "pvp",
+    "rainbow",
+    "rank",
+    "recharge",
+    "reikiEquip",
+    "role",
+    "rune",
+    "runeStone",
+    "sensitive",
+    "server",
+    "shop",
+    "skinshop",
+    "spaceTimeAdventure",
+    "stagematch",
+    "statistic",
+    "targetCounter",
+    "task",
+    "teamArena",
+    "timeLimitItem",
+    "title",
+    "totems",
+    "tower",
+    "towercross",
+    "tweakCube",
+    "util",
+    "video",
+    "weekendGift",
+    "welfare",
+    "worldLevel"
+  ],
+  "currentBaseCommit": "9fee1492",
+  "currentHttpOperations": [
+    {
+      "source": "com/funsgamex/mxzg/auth/DevelopmentLoginController.java",
+      "line": 17,
+      "method": "POST",
+      "path": "/api/v1/development/login"
+    },
+    {
+      "source": "com/funsgamex/mxzg/campaign/CampaignController.java",
+      "line": 11,
+      "method": "GET",
+      "path": "/api/v1/campaign"
+    },
+    {
+      "source": "com/funsgamex/mxzg/campaign/CampaignController.java",
+      "line": 12,
+      "method": "POST",
+      "path": "/api/v1/campaign/initialize"
+    },
+    {
+      "source": "com/funsgamex/mxzg/campaign/CampaignController.java",
+      "line": 13,
+      "method": "POST",
+      "path": "/api/v1/campaign/battles"
+    },
+    {
+      "source": "com/funsgamex/mxzg/campaign/CampaignController.java",
+      "line": 16,
+      "method": "POST",
+      "path": "/api/v1/campaign/battles/{id}/claim"
+    },
+    {
+      "source": "com/funsgamex/mxzg/campaign/IdleController.java",
+      "line": 12,
+      "method": "GET",
+      "path": "/api/v1/idle"
+    },
+    {
+      "source": "com/funsgamex/mxzg/campaign/IdleController.java",
+      "line": 14,
+      "method": "POST",
+      "path": "/api/v1/idle/claim"
+    },
+    {
+      "source": "com/funsgamex/mxzg/hero/HeroController.java",
+      "line": 21,
+      "method": "GET",
+      "path": "/api/v1/heroes"
+    },
+    {
+      "source": "com/funsgamex/mxzg/hero/HeroController.java",
+      "line": 25,
+      "method": "GET",
+      "path": "/api/v1/heroes/{heroId}"
+    },
+    {
+      "source": "com/funsgamex/mxzg/hero/HeroLevelController.java",
+      "line": 14,
+      "method": "GET",
+      "path": "/api/v1/heroes/{heroId}/level-up"
+    },
+    {
+      "source": "com/funsgamex/mxzg/hero/HeroLevelController.java",
+      "line": 18,
+      "method": "POST",
+      "path": "/api/v1/heroes/{heroId}/level-up"
+    },
+    {
+      "source": "com/funsgamex/mxzg/inventory/InventoryController.java",
+      "line": 13,
+      "method": "GET",
+      "path": "/api/v1/inventory"
+    },
+    {
+      "source": "com/funsgamex/mxzg/lineup/LineupController.java",
+      "line": 15,
+      "method": "GET",
+      "path": "/api/v1/lineups/main"
+    },
+    {
+      "source": "com/funsgamex/mxzg/lineup/LineupController.java",
+      "line": 19,
+      "method": "PUT",
+      "path": "/api/v1/lineups/main"
+    },
+    {
+      "source": "com/funsgamex/mxzg/role/RoleController.java",
+      "line": 14,
+      "method": "GET",
+      "path": "/api/v1/roles/me"
+    },
+    {
+      "source": "com/funsgamex/mxzg/server/ServerCatalog.java",
+      "line": 35,
+      "method": "GET",
+      "path": "/api/v1/servers"
+    }
+  ],
+  "confirmedGoal": "完整重做旧游戏，分批恢复玩法与社交；独立新版，暂不要求旧客户端兼容或旧玩家迁移"
+}

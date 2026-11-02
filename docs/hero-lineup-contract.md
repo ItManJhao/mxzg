@@ -43,10 +43,10 @@
 - Start 后的一次性服务器初始化会为无英雄角色发放三名初始英雄并保存默认阵容；开发登录本身不发英雄。已存在英雄/阵容保留，初始化可并发重试。
 - 客户端已通过独立 LineupApi / FormationController / FormationView 接通出阵读取、元素筛选、上阵/撤下及 PUT 版本保存；复用 FormationView 与 HeroIconCellView，不写旧 GameStore/WireSession。
 - 挂机页点击战斗必须先打开出阵；空阵容不可确认，确认保存成功后才创建服务器主线战报。取消不保存；保存期间拦截连点/取消；409 或不确定的保存结果必须重新读取，不覆盖其他操作。
-- 基础主线结果领取后返回挂机，挂机人数与当前服务器阵容一致。完整解锁/阵法/助阵、技能与养成尚未完成；MySQL 与三端仍待独立验收。
+- 基础主线结果领取后返回挂机，挂机人数与当前服务器阵容一致。完整解锁/阵法/助阵、技能与养成尚未完成；独立 MySQL 已有历史验证，三端仍待验收。
 - Formation 检查覆盖 PUT 契约、草稿不提前写、空阵容、防重复提交、保存中取消与版本冲突；实际 H5 点击已验证取消/保存、主线和返回。下方“出阵未接入”描述为 10 月 29 日历史批次状态。
 
-客户端分层以 [2026-10-30 模块级 MVC 基线](architecture.md) 为准。本文后续关于 Service/Controller 注入的叙述是英雄现有过渡实现，英雄与阵容尚未按背包样板迁移；协议、409 和保存规则继续有效。
+客户端分层以 [模块级 MVC 基线](architecture.md) 为准。英雄名册已迁移 HeroRosterController/HeroRosterModel，列表已使用 SuperScroll；阵容仍待迁移。下列 HTTP 接口是当前实现契约，WebSocket 迁移前继续有效，不能先删接口破坏可运行基线。
 
 ## 原英雄/阵容接口（继续有效）
 
@@ -98,30 +98,19 @@ HeroProfile 字段为 id（英雄实例 UUID 字符串）、templateId（配置�
 - local CORS 增加 PUT，继续只允许已有两个 Creator 本地来源。
 - 测试 HeroLineupTest：新角色空数据、拥有权、非法输入不修改已有阵容、重登、版本冲突、并发、真实 HTTP、PUT 预检及 V1→V2 迁移保留数据。
 
-H2 验证不能替代 MySQL 8.4 的迁移和并发验证。重登一致性已有测试，完整进程重启与真实渠道身份仍需后续证据。
+H2 验证不能替代 MySQL。独立 MySQL 已覆盖阵容并发、升级/领奖回滚和进程重启，证据见 [开发进度](development-progress.md)；正式身份和生产容量仍待验收。
 
-## 客户端数据层与待接界面
+## 当前客户端数据与界面
 
-客户端列表数据层已装配到 RemakeApp，由主城底栏英雄进入：
+- HeroApi：校验英雄列表/详情响应，区分实例 UUID 和模板 ID。
+- HeroRosterModel：模块唯一不可变名册及同步状态，不持有 token 或派发事件。
+- HeroRosterController：应用 initialize/dispose，负责鉴权读取、请求去重、会话/查询代次与名册事件；页面关闭不销毁模块。原 HeroRosterService 已删除。
+- AccountService.authenticated：统一会话校验，旧角色 401 不清除新角色。
+- HeroListView：开页监听 HeroRosterEvent.Updated，关页解除本页监听；SuperScroll/SuperContent 维护列表布局和 Cell，固定参数在 HeroListBoardView.prefab。
+- HeroLevelController：会话级升级请求与不确定结果确认，通过 BagController 提交关联钱包/库存/英雄快照。
+- HeroInfoUpLevelLayer：当前点击英雄打开的普通升级窗口；HeroInfoView 是未接入旧详情，列表上的无效 infoPrefab 绑定已清理，二者 UUID 不重复。
+- FormationController/FormationView：已有草稿/版本保存行为，尚待模块职责和 SuperScroll 迁移。取消不保存、冲突重读的规则保留。
 
-- HeroApi：GET /api/v1/heroes 的运行时校验，UUID 实例 ID 与整数模板 ID 分离；拒绝坏结构、重复实例和小数/字符串数值。
-- HeroRosterModel：只存 idle/loading/ready/error 与不可变英雄快照，不含 token。ready + [] 是有效空名册，不回退旧 Mock/图鉴。
-- HeroRosterService：鉴权读取、并发请求去重、失败后重试；退出、换号、关闭和销毁均作废迟到结果。普通网络错误保留会话，当前会话 401 清理身份与名册。
-- AccountService.authenticated：各功能共用的会话能力；请求前和返回后检查有效期，旧账号的 401 不清除新账号，不允许各页面自行读本地 token。
-- HeroCatalog：独立投影 herotype/item 的名称、元素与图标，不写旧 GameStore、WireSession 或全局 gameCatalog。英雄实际等级/星级以服务器为准。
+主城通过 RemakeNavigation/HomeFeatureNavigation 管理页面意图和关闭取消；不恢复旧 Boot/GameStore/WireSession。HeroResources 按需加载列表资源，普通升级资源在实际开窗时加载。服务器 Start 初始化会为无英雄角色发放三名初始英雄；开发登录本身不发放。
 
-HeroRosterController 在开页前为已有 HeroListView 注入展示数据源，再由 UIManager 驱动 show/close。这个分支不读取旧 GameStore、不订阅 WireSession，也不把新 UUID 转成 StoreHero 数值 ID；旧 Boot 未注入时保留原行为。已复用 HeroListView、HeroListBoardView、HeroIconCellView 和原页面背景，不新造列表美术。
-
-只读列表支持加载、真实空名册、元素筛选、筛选空态、错误和点击上方“英雄”重试。显示已拥有数量，不猜测旧服容量。实际等级与星级来自实例；未知模板保留明确名称和默认头像，不伪造完整配置。图鉴、圣龙、永久皮肤和进化按钮在重做路径隐藏，点击格子仅提示详情尚未开放，不打开旧 HeroInfoView。
-
-列表接口 404 会显示“英雄接口不存在，请更新并重启新后端”，保留 HTTP 状态，不当成空名册。用户截图中已确认旧 Java 进程可登录但缺少后来加入的英雄/阵容接口；启动脚本增加端口与接口检查。空态 Label 调整为 24 号字、32 行高、480×112 文本框，容纳错误原因与操作提示，避免多行被压进原 28 高度后自动缩小。
-
-RemakeNavigation 保留主城根及顶底栏，把英雄页挂在主城内容宿主；底栏主城或 UIManager.back 只关闭英雄页并恢复地图，退出登录则清理英雄页和主城。HomeFeatureNavigation 单独记录功能打开意图；加载中点主城会取消，快速“英雄→主城→英雄”会在旧任务取消后重开最新意图。它不替代登录页的显式 Start 校验。
-
-最小 hero 配置组已登记 herotype/item，按需准备，登录和主城不提前请求。HeroResources 为五项原有 Prefab 提供作用域持有。详情所需品质、技能、职业等依赖、动态图标释放和页面实际运行仍待继续。初始英雄发放方案未完成，新账号应显示“尚未获得英雄”。
-
-检查入口：`node client/tools/check-project.mjs --suite hero-roster`。可用 MXZG_REMAKE_API 指向隔离测试后端，实连执行开发登录、读取空名册、无效 token 401 与恢复会话再读。此模式会创建测试账号，应使用隔离库；本轮以随机端口和 H2 内存库执行，不连接用户文件库。
-
-当前只开放底栏英雄的只读列表。详情、出阵和养成尚未接入；不要用旧详情的写操作替代新后端用例。hero 检查覆盖新数据源绘制、空态、失败重试、筛选、隐藏按钮、迟到回包与旧状态污染隔离；remake-navigation / feature-navigation / home-presentation 覆盖返回、退出、取消重进与共享顶底栏。它们不能代替实际渲染验收。
-
-OpenAPI/客户端代码生成与接口漂移检查仍待 P3-02 后续实施，本 Markdown 不能替代机器可读契约。
+现有 hero、hero-roster、hero-level、formation、formation-view 检查分别覆盖列表、名册、升级及阵容边界，历史结果不等于本次运行。真实长名册、更多尺寸和完整英雄详情仍待验收。契约生成/漂移检查尚未完成，新通信契约须同时解决该缺口。

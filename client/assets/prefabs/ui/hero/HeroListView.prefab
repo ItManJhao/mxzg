@@ -4104,10 +4104,6 @@
     },
     "titleRoot": {
       "__id__": 11
-    },
-    "infoPrefab": {
-      "__uuid__": "fa5d3f0c-1441-479b-a182-48d374c7dc6c",
-      "__expectedType__": "cc.Prefab"
     }
   }
 ]

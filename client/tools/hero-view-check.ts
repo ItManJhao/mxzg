@@ -131,8 +131,7 @@ function checkPrefab(): void {
   assertNode(layer, view.comp, "sprBg", 5, "spr_bg");
   assertNode(layer, view.comp, "parchment", 155, "ParchmentPlate");
   assertNode(layer, view.comp, "titleRoot", 11, "node_title");
-  const infoPrefab = view.comp.infoPrefab as { __uuid__?: string };
-  assert(infoPrefab.__uuid__ === "fa5d3f0c-1441-479b-a182-48d374c7dc6c", "infoPrefab 是 HeroInfoLayer");
+  assert(!("infoPrefab" in view.comp), "英雄列表不得保留未使用的旧详情资源绑定");
   assert(uiHeight(layer, idOf(layer[44].node)) === 32, "英雄页签字有高度");
   assert(uiHeight(layer, idOf(layer[58].node)) === 32, "图鉴页签字有高度");
   assert(uiHeight(layer, idOf(layer[72].node)) === 32, "圣龙页签字有高度");

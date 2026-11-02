@@ -34,7 +34,7 @@ const BOARD_PREFAB = ResourceCatalog.prefab_hero.HeroListBoardView.assetPath;
 /**
  * 英雄列表。页签、羊皮纸和筛选都绑在 HeroListLayer / HeroListHeroLayer 上。
  * 格子数据只来自当前角色的 HeroRosterSource。
- * 详情在 infoPrefab 绑上时打开。没绑时仍只提示格子文案。圣龙钮只提示仍走旧页。
+ * 点击英雄由应用注入的 openHero 打开普通升级弹窗；未接入的详情和圣龙功能只给出提示。
  */
 @view({
   id: "hero",
@@ -90,9 +90,6 @@ export class HeroListView extends BaseView implements HeroRosterView {
 
   @property(Node)
   titleRoot: Node | null = null;
-
-  @property(Prefab)
-  infoPrefab: Prefab | null = null;
 
   private tab: HeroListTab = "hero";
   private elem = 0;

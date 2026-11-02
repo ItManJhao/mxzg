@@ -8,7 +8,7 @@
 
 - 滚动组件：[SuperScroll.ts](../client/assets/scripts/framework/ui/SuperScroll.ts)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\scripts\framework\ui\SuperScroll.ts`。
 - 内容组件：[SuperContent.ts](../client/assets/scripts/framework/ui/SuperContent.ts)，同目录。两个组件分别继承原生 ScrollView、Layout，没有另建拖动/惯性/回弹或列表框架。
-- 页面：[BagView.prefab](../client/assets/prefabs/ui/Bag/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\backpack\BagView.prefab`。
+- 页面：[BagView.prefab](../client/assets/prefabs/ui/Bag/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\Bag\BagView.prefab`。
 - Cell：[BagItemView.prefab](../client/assets/prefabs/ui/Bag/BagItemView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\backpack\BagItemView.prefab`。
 - 背包业务展示：[BagView.ts](../client/assets/scripts/features/Bag/ui/BagView.ts)；格子展示：[BagItemView.ts](../client/assets/scripts/features/Bag/ui/BagItemView.ts)；真实库存及请求：[BagController.ts](../client/assets/scripts/features/Bag/BagController.ts)、[BagModel.ts](../client/assets/scripts/features/Bag/BagModel.ts)、[BagApi.ts](../client/assets/scripts/features/Bag/BagApi.ts)。本批没有改后端协议。
 

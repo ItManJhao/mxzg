@@ -2,6 +2,10 @@
 
 决定日期：2026-10-29；客户端架构基线于 2026-10-30 按用户要求替换。首要标准是人能阅读、在编辑器中修改界面、追踪一次操作并独立排查错误。采用按功能组织的轻量 MVC 客户端和模块化单体后端，职责清晰优先于抽象数量。本文记录统一标准；当前实现与未完成边界以开发进度为准。
 
+## 不随技术重构改变的目标
+
+旧项目版本老、难以人工维护是技术重做原因；玩法、内容、规则、数值、界面和表现均以 1:1 还原为目标。mxzg 原项目/配置是内容来源，正式服是效果基准；游爱只参考代码阅读方式，见 [开发约定](development-conventions.md)。技术结构、传输和存储可以变化，但不得擅自改变玩家可观察行为。当前基础普攻、一级升级和简化入口只表示分期实现，不能作为最终设计。
+
 ## 客户端统一采用模块级 MVC
 
 2026-11-02 补充：用户要求所有模块以背包为样板，业务滚动列表统一采用 SuperScroll + SuperContent；固定布局与 Cell 资源在 Prefab 维护，View 仅 setData/绑定展示。此前文中的“其余模块保留适配器”是迁移现状，不是长期豁免。按实际职责分批改造，保留服务端权威、幂等和换号隔离；不为复制结构新增无用层级。
@@ -55,7 +59,7 @@ BagModel 区分 idle、loading、ready（允许空）和 error；失败保留上
 
 唯一启动入口为 Remake.scene / app/remake/RemakeApp。module、旧 net、Boot/Main、GameStore/WireSession 和旧 Mock 业务均已删除。共享显示代码已按职责提取到 framework 和功能 UI，没有整体搬迁旧目录。历史清理证据见 validation；当前边界由统一检查中的 architecture/retirement 验证。
 
-应用持有唯一账号、英雄名册和背包模块服务。HeroRosterController 仅是当前页面的适配器，关闭不销毁名册服务；BagController/BagModel 独立于窗口。FormationController 管理出阵编辑草稿与服务端 expectedVersion，CampaignController 处理当前挑战/领奖工作流，不新增平行资产状态。
+应用持有唯一账号、英雄名册和背包模块。HeroRosterController/HeroRosterModel 与 BagController/BagModel 均独立于窗口，应用显式初始化和销毁；页面只清理自己的监听。FormationController 管理出阵编辑草稿与服务端 expectedVersion，CampaignController 处理当前挑战/领奖工作流，不新增平行资产状态。
 
 普通挂机由应用持有 IdleController，保留本会话未确认的领取请求；CampaignController 只保存页面计时快照和显示流程。IdleApi 校验服务器时间和收据，资产通过同一个 BagController.runInventoryUpdate 提交。页面关闭不取消已经提交的领取，切换账号清理旧请求；本地计时只驱动显示，不决定奖励。后端 IdleService 在角色锁内事务保存资产、计时、保底和随机收据，查询不抽奖。
 
@@ -63,7 +67,7 @@ BagModel 区分 idle、loading、ready（允许空）和 error；失败保留上
 
 ## 后端决定
 
-采用新的 Java/Spring Boot 模块化单体工程，按验证结果提取旧规则。新工程计划位于仓库 `backend/`；本工程不再使用旧 `server/` 目录联接，旧项目在仓库外独立参考。
+采用新的 Java/Spring Boot 模块化单体工程，按验证结果提取旧规则。新工程已位于仓库 `backend/`；本工程不再使用旧 `server/` 目录联接，旧项目在仓库外独立参考。
 
 首期一个游戏应用加 MySQL，由功能模块划分账号、角色、英雄、物品、战斗、主线/挂机、邮件和订单。定时任务先在应用内执行，并具备持久状态与幂等。跨服、独立战斗进程和消息中间件等在功能、容量与隔离需求明确后再拆。
 
@@ -86,7 +90,7 @@ BagModel 区分 idle、loading、ready（允许空）和 error；失败保留上
 
 ## 接口与数据
 
-新业务优先 HTTPS JSON `/api/v1` 接口，维护 OpenAPI 契约并生成客户端类型；服务端主动推送确有需要时使用 WSS。战报若测得体积与解析成本构成瓶颈，再选择二进制编码，不把旧 opcode 和字段号作为新接口。
+当前实现是 HTTP JSON `/api/v1`，并非完整通信目标；OpenAPI 与客户端类型生成也尚未完成。2026-11-02 核查后，长连接、主动推送、在线会话与恢复同步被列为必须补齐的基础能力。建议新游戏业务逐批迁入统一 WSS 通道，平台登录/公告/资源与运维保留适当的 HTTPS 接口；具体迁移契约须先完成下方核查出口，不把建议当成已实现。独立新版不要求旧 opcode/字段号兼容；先采用可生成类型和校验的明确消息契约，首个验证链建议 JSON，二进制选型独立依据战报/聊天负载与三端测量。
 
 返回数据明确区分未同步、空集合、零和错误。请求具有可追踪标识；关键写操作有业务幂等键，重复请求返回同一操作结果。超过 JavaScript 安全整数范围的 id 用字符串跨端传输，货币采用整数最小单位，服务端统一定义时间口径。
 
@@ -122,9 +126,9 @@ BagModel 区分 idle、loading、ready（允许空）和 error；失败保留上
 
 当前退出作用域只撤销自身 addRef，并以 decRef(false) 保留引擎缓存；旧页面尚未全部迁移，不主动释放共享纹理/Spine。Bundle 归属、配置按需加载、主动淘汰及内存预算对应主计划 P2-04–P2-09，不能因 ResourcePool 存在就视为全部完成。后续进度以 restructuring-plan.md 与 development-progress.md 顶部快照为准。
 
-当前已移除 module 和旧启动/网络/业务入口。英雄列表必须注入当前角色名册，不存在未注入时的旧路径；名册由应用会话持有，页面适配器只负责展示观察。背包、主城与战斗保持既有 Prefab 和新接口，模块生命周期与窗口生命周期分开。
+当前已移除 module 和旧启动/网络/业务入口。英雄列表必须注入当前角色名册，不存在未注入时的旧路径；名册由应用会话持有，HeroListView 只负责展示观察。背包、主城与战斗保持既有 Prefab 和新接口，模块生命周期与窗口生命周期分开。
 
-当前综合检查 33/33 与有效源码 strict 已在本机重新运行通过；Creator 核心流程已用隔离测试账号实际回归，完整视觉矩阵与人工 Inspector 编辑体验仍待验收。MySQL 真实环境、正式渠道、完整挂机收益等既有产品/工程缺口保持显式，不能据本次清理宣称全部游戏功能完成。准确证据和限制见 development-progress.md。
+检查结果仅在开发进度和历史证据中记录，不在架构文档滚动复制测试次数。独立 MySQL 与普通挂机已具备历史验证，正式身份、三端、完整养成/战斗/社交和生产能力仍有缺口；具体完成边界见 [开发进度](development-progress.md)。
 
 ## 配置、资源与静态布局
 
@@ -133,4 +137,92 @@ BagModel 区分 idle、loading、ready（允许空）和 error；失败保留上
 
 ## 普通升级状态归属（2026-11-02）
 
-HeroLevelController 由 RemakeApp 会话持有，只保存待确认逻辑请求和在途状态；HeroRosterService/Model 仍是唯一英雄名册，AccountModel 是钱包，BagModel 是库存。升级经原 Bag 串行资产协调提交关联快照，全部状态就绪后统一通知，页面关闭不取消资产结果，换号拒绝迟到回包。HeroInfoUpLevelLayer 只保存当前页的条件预览，不增加一套持久英雄/库存缓存。服务端 HeroGrowthRules 统一预览与战斗四属性，V4 保存幂等收据；详细规则和接口见英雄契约。
+HeroLevelController 由 RemakeApp 会话持有，只保存待确认逻辑请求和在途状态；HeroRosterController/HeroRosterModel 维护唯一英雄名册，AccountModel 是钱包，BagModel 是库存。升级经原 Bag 串行资产协调提交关联快照，全部状态就绪后统一通知，页面关闭不取消资产结果，换号拒绝迟到回包。HeroInfoUpLevelLayer 只保存当前页的条件预览，不增加一套持久英雄/库存缓存。服务端 HeroGrowthRules 统一预览与战斗四属性，V4 保存幂等收据；详细规则和接口见英雄契约。
+
+## 原项目架构核查（2026-11-02）
+
+### 结论与适用范围
+
+用户确认完整重做原游戏，分批恢复玩法与社交；独立新版，不要求旧客户端连接或迁移旧玩家。因此保留玩法/规则/交互语义，允许重新定义协议和数据结构。现有 HTTP 闭环可以作为迁移基线，不能作为完整游戏通信验收。此前把社交/推送当作将来可选项、未明确在线会话/重连/公会共享状态，是前期架构覆盖不足。
+
+本次只读源码，未运行旧服务、抓取正式服业务流量或操作任何数据库。旧服支持哪些入口与正式服当前部署哪条入口是不同事实；下面证明源码能力，不推断 mxzg-test.funsgamex.com 的网关部署。G:/游爱/trunk 是另一个参考项目，其 Sproto 不能作为 mxzg 的协议结论。
+
+### 可复核的原项目证据
+
+版本、80 个旧服一级模块和当前 16 个 HTTP 操作的完整枚举见 [源码核查索引](validation/architecture-source-index-20261102.json)。它是此次只读快照，不是已完成的逐玩法规则清单。
+
+原仓库根：`G:/work/FsGame/Demo/mj/program`。目录是 Git 裸仓库，不能按普通工作树打开文件。固定版本：
+
+| 代号 | 裸仓库相对路径 | 本次读取提交 |
+|---|---|---|
+| C | client/cocos_mxzg.git | 6276cbe47b939ce161aaefaa93bb6f83a0a253af |
+| S | server/mxzg-server.git | 672293145b4da0f87b87bad9826432e04d6402c0 |
+| N | server/mxzg-common.git | 8cc02a32cea66df6296eb89b4d2d1b1715e507e7 |
+| P | mxzg-protofiles.git | cb410068f579dad2d97e08b45ac008387f946bed |
+
+S 下 `mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/` 简写为 `GS/`；N 下 `src/main/java/com/ayjs/mxzg/common/` 简写为 `COMMON/`。以下行号属于上述提交，不是生成文件或在线站点：
+
+| 证据 | 路径/入口 | 核实内容 |
+|---|---|---|
+| 原生网络 | C: client/idle/frameworks/runtime-src/Classes/Net/SocketClient.cpp，connect（76 行起） | SOCK_STREAM、connect/send/recv；原生业务是 TCP |
+| 原生消息 | C: client/idle/src/autorun/NetManager.lua:91 | sendMessage 写协议编号、序列化消息，交 C++ sendByteArray |
+| 平台接口 | C: client/idle/src/net/PlatformApi.lua:47 | luaSendGet/luaSendPost 走平台 HTTP，不等于全部游戏业务走 HTTP |
+| 服务启动 | S: GS/infrastructure/netty/SocketServerLifecycle.java:45 | 启动 TCP；配置 WebSocket 端口时额外启用 WS，可配置 TLS，共用 NettyHandler |
+| 实际 WS 管线 | N: COMMON/netty/websocket/WebSocketServerInitializer.java:34 | HTTP Upgrade、空闲检测、WebSocketCodec、下游业务 Handler；不是仅凭 WebSocketHttpHandler 文件名推断 |
+| 消息编码 | N: COMMON/netty/websocket/WebSocketCodec.java:21 | BinaryWebSocketFrame：4 字节长度 + 4 字节协议号 + Protobuf 包体 |
+| 收包分发 | S: GS/infrastructure/netty/PlayerActor.java:38 | 协议号查 HandlerExecutor、登录/开放条件校验、Protobuf parseFrom，再执行处理器 |
+| 在线上下文 | S: GS/infrastructure/netty/PlayerContext.java / ContextManager.java | 上下文创建 Akka typed actor 串行处理；在线角色查找、定向/群体广播、离线处理 |
+| 登录 | S: GS/module/role/handler/LoginHandler.java:81 | 1001 登录、旧连接下线通知、注册在线角色；1004 心跳/时间同步 |
+| 英雄升级 | S: GS/module/hero/handler/HeroHandler.java:365 | 4018 校验拥有权、升级级数与上限，消耗资源并返回等级；支持配置范围内多级，新版当前只做一级 |
+| 聊天 | S: GS/module/chat/handler/ChatHandler.java:73 | 6001 发送；频道、等级、禁言和频率条件；6003/6007 历史、6009 未读 |
+| 公会聊天 | S: GS/module/chat/executor/ClanSendExecutor.java:71 | 服务端确定公会，按成员/黑名单向在线上下文发送 6001；内存维护最多 100 条记录，不代表可靠离线消息存储 |
+| 公会状态 | S: GS/module/clan/service/ClanService.java:569 | 成员集合 writeSome 广播；申请列表向有管理权限成员推送；ClanHandler 有创建/申请/审批/退出/职务/捐献 |
+| 主线 | S: GS/module/battle/handler/BattleHandler.java:253 | 3001 校验关卡和条件、服务端 invokePVEBattle、返回 report；3002 领奖、3005 普通挂机领取 |
+| 客户端更新 | C: client/idle/src/net/ChatResponse.lua、ClanResponse.lua | 更新聊天/未读/公会数据，再发事件或重新拉取公会快照 |
+| 协议源 | P: protofiles/game/{Login,Hero,Chat,Clan,Battle,BackPack}.proto | 旧协议源可作为规则和字段核对材料，不直接假设与每一份生成文件完全一致 |
+
+复核示例（PowerShell，只读）：
+
+```powershell
+git --git-dir='G:/work/FsGame/Demo/mj/program/server/mxzg-server.git' show '672293145b4da0f87b87bad9826432e04d6402c0:mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/infrastructure/netty/SocketServerLifecycle.java'
+```
+
+旧服 POM 的 Spring Boot 2.1.9 / Protobuf 2.6.1、gameserver/center/cross/large-cross 模块和 common 的 Akka 是源码构建事实，不代表本次已验证线上依赖、吞吐或安全状态。HeroDao 继承旧 BaseRepository；单线程 actor 不等于已证明跨实体资产事务和宕机恢复，不能照搬其一致性假设。
+
+### 当前实现的差距与保留判断
+
+| 能力 | 当前新项目 | 处理结论 |
+|---|---|---|
+| 请求入口 | JsonClient/XhrAdapter，后端 9 组路由、16 个 GET/POST/PUT 操作 | 暂保留可运行基线；建议逐批迁入统一游戏消息入口 |
+| 会话 | SessionService 签发一小时令牌、保存哈希、每次请求鉴权 | 可复用身份验证基础；缺在线连接绑定、撤销/顶号、重连认证和会话恢复 |
+| 状态 | Bag 和英雄名册已有唯一 Model、全局通知、旧响应隔离 | 保留；新增推送必须进入同一个 Controller/Model |
+| 资产 | 升级/挂机/领奖有事务、锁及持久操作记录；阵容有版本校验 | 保留并重验；业务 requestId 与传输请求序号分离，不能迁移后丢掉重复保护 |
+| 业务与传输耦合 | Service 接受 Bearer 字符串，抛 ResponseStatusException | 并非完全独立于 HTTP；迁移时统一身份上下文/业务错误映射，避免 WS 分发再复制一套规则 |
+| 主动消息 | 无游戏推送通道，无聊天/公会服务 | 必须补齐，不再作为可选技术增强 |
+| 并发 | 单角色写操作使用数据库行锁/版本 | 不能直接推导公会多成员操作安全；需共享实体版本/锁、固定锁顺序和事务后通知 |
+| 战斗 | 基础普攻、前 20 关；服务器生成战报 | 结算模式可保留；完整技能、状态、成长与开放条件恢复是独立任务，不能靠换传输解决 |
+| 调度/跨服 | 当前没有完整活动调度、跨服服务和社交路由 | 建立可恢复调度、区服/公会域、广播边界；先模块化，不因旧仓库多进程就立即拆服务 |
+| 类型契约 | 当前 DTO/运行时校验手写 | 在新消息契约中落实生成和漂移检查；不能继续写成已完成的 OpenAPI 能力 |
+| 平台与容量 | Creator 本机验证为主；无完整三端长连接/负载证据 | H5、App、小游戏适配分别验收；单体容量、编码成本和网关部署均不得凭框架名称承诺 |
+
+Java 21 / Spring Boot / JDBC / Flyway 不因需要 WebSocket 就必须推倒。Spring 本身支持 WebSocket Handler；原始 WebSocket 会话并发发送需要序列化与限界处理，不能多线程随意 write。参考 [Spring 官方 API 说明](https://docs.spring.io/spring-framework/reference/web/websocket/server.html)。本次建议保留技术底座，是基于已有业务可复用和可渐进验证，不是已完成生产选型压测。
+
+### 推荐调整方案（待实施，不是完成状态）
+
+- 游戏会话内的请求、回包、推送走同一 WSS 通道；平台身份交换、公告/资源下载、支付回调及管理接口按职责保留 HTTPS。不恢复开发 PowerShell 桥，不为长连接立即引入第二个框架或独立网关集群。
+- 首个验证链使用明确的 JSON 消息模型与可生成的类型/校验；操作名、协议版本、传输 requestId、业务 operationId、错误码、会话代次、状态 revision 分开定义。命名/字段以契约阶段最终落定为准。Protobuf 可后续单独评估，不能把编码选型和传输迁移混成一次大重写。
+- 连接状态明确为未连接、连接中、鉴权中、同步中、可操作、重连等待、退出/被踢。鉴权完成前不接收游戏写操作；重连只有恢复快照后才重新允许操作。顶号或令牌撤销不能触发无限自动重连争抢。
+- 浏览器连接鉴权不能假设可设置任意 Authorization 握手头；选择短期一次性票据或连接建立后的限时鉴权消息，并限制未鉴权连接数量/时间，禁止把长期令牌放 URL/日志。具体方式在三端适配小样确定。
+- 读取可以重新查询；提交结果不明的写操作沿用原业务幂等键确认，不自动补发新的操作。原阵容 expectedVersion、升级收据、挂机随机结果和战报领奖身份必须保持。
+- 区分可补拉的状态通知与需要历史记录的消息。重连先取权威快照/游标，按 revision 丢弃重复/迟到更新；聊天使用有界历史和消息标识。需要保证投递的关键业务采用事务内持久事件/可查询状态与事务后发送，禁止在数据库未提交时对外宣布成功；不承诺仅靠内存队列零丢失。
+- 有界输入/输出队列、消息大小/频率、待回包数量、发送超时、心跳和重连退避必须定义。慢连接不拖住所有玩家；长计算与数据库访问不能无限占用收包线程。指标包含连接数、队列、错误、操作耗时和恢复失败，不记录敏感令牌。
+
+### 实施顺序与出口
+
+1. **契约与身份设计**：盘点当前 16 个操作，定义请求/响应/推送和错误、幂等、状态版本；确定生成方式及平台适配。补登录、踢线、重连、权限变更时序，明确消息恢复策略。此阶段不删除 HTTP 入口。
+2. **英雄升级小链路**：新通道调用现有升级事务与 Bag 状态入口；覆盖正常升级、提交前/后断线、重复请求/响应、回包迟到、换号/换服、服务器重启、两端顶号。确认金币/经验/等级/收据一致，不仅测试能收到一条消息。
+3. **其他核心业务迁移**：名册/背包/阵容/主线/挂机逐项迁移。短期双入口只能共用同一用例与幂等记录，客户端每项写操作只能选一个入口；通过对应恢复测试后删除被替代的业务入口和兼容配置。
+4. **社交闭环**：两名测试玩家验证世界/私聊/公会消息、申请审批与权限变更、退会后的订阅隔离、断线历史补拉和未读；其他玩家不需要刷新页面就看到有效变化。
+5. **三端与生产验收**：实际 H5/App/小游戏网络切换、后台恢复、协议/资源版本切换、连接压力/慢客户端、维护停服和恢复。构建仍按用户届时授权执行；没有设备/部署证据的项目保持未完成。
+
+协议不兼容和旧玩家迁移已由用户明确排除为当前要求，不再反复询问。仍待相应阶段确认：首发平台顺序/渠道、预期同时在线与广播规模、聊天保留期与跨服分组。此前不据未知规模承诺单体容量，也不为等待这些数字停止可独立完成的契约和小链路设计。
