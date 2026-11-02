@@ -123,3 +123,8 @@ BagModel 区分 idle、loading、ready（允许空）和 error；失败保留上
 ## 配置、资源与静态布局
 
 配置唯一仓库为 GameConfig，GConfig/运行时校验来自显式规范，禁止恢复 ConfigDb 或全量首屏加载。资源入口由 meta 生成 ResourceCatalog/独立 IconCatalog，加载复用 ResourcePool。Prefab 与实际界面类同名，布局源文件优先，通用适配不再运行时修复静态锚点或文字位置。使用方法见 [配置与资源](config-pipeline.md)、[Prefab 维护](prefab-layout.md)。
+
+
+## 普通升级状态归属（2026-11-02）
+
+HeroLevelController 由 RemakeApp 会话持有，只保存待确认逻辑请求和在途状态；HeroRosterService/Model 仍是唯一英雄名册，AccountModel 是钱包，BagModel 是库存。升级经原 Bag 串行资产协调提交关联快照，全部状态就绪后统一通知，页面关闭不取消资产结果，换号拒绝迟到回包。HeroInfoUpLevelLayer 只保存当前页的条件预览，不增加一套持久英雄/库存缓存。服务端 HeroGrowthRules 统一预览与战斗四属性，V4 保存幂等收据；详细规则和接口见英雄契约。

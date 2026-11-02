@@ -1,5 +1,41 @@
 # 英雄与主阵容：第一批接口与复用边界
 
+## 2026-11-02 普通升级（当前契约）
+
+本节优先于后文历史“仅只读英雄/养成未接入”。只开放实例单次普通升级，不含突破、升星、装备或技能。客户端英雄列表点击自己的英雄进入已有 HeroInfoUpLevelLayer；HeroInfoUpgradeLayer 是突破窗口，本批不接入。英雄和资产仍归原名册、AccountModel、BagModel 所有。
+
+### 规则与来源
+
+只读旧服 server/mxzg-server.git HEAD 672293145b4da0f87b87bad9826432e04d6402c0、旧端 client/cocos_mxzg.git HEAD 6276cbe47b939ce161aaefaa93bb6f83a0a253af。路径均相对旧仓库；未引入旧业务框架。
+
+| 项目 | 采用规则 | 精确来源 |
+| --- | --- | --- |
+| 实例/次数 | 会话角色自己的英雄 UUID；固定 +1，不接收模板替代实例或客户端成本 | 旧服 module/hero/handler/HeroHandler.heroUpLevel（gameserver 模块）；旧端 layer/heroinfo/HeroInfoUpLevelLayer.lua 的 GReqHeroUpLevel；本批限制为一次一级 |
+| 消耗 | 当前等级行 herolevel.exp_need/gold_need；英雄经验库存 900101、金币钱包 900001；不是角色经验 900003 | HeroHandler.heroUpLevel 的 level+i 循环与 thingService.cost；旧端同窗口成本展示；当前 herolevel.xlsx 字段 |
+| 等级限制 | 当前等级 < heroupgrade 最后等级阈值 140 时用自身 stage 的 level；否则用 herostar.level_limit | HeroHandler.heroUpLevel；heroupgrade.xlsx、herostar.xlsx。新英雄 stage=0、level=1；0 阶最多 30，不能因 1 星上限 40 而越过突破 |
+| 初始阶 | 持久 stage=0；旧已存英雄迁移补 0，本批只在专用测试库验证，不迁移玩家库 | HeroService.createHero(rid,type) 调用 (rid,type,0,0,0)；V4 |
+| 角色等级等 | 普通升级 handler 没有角色/world 等级或品质附加条件；herostar 的角色条件属于其他成长，不套用到普通升级 | HeroHandler.heroUpLevel 与独立 heroUpgrade 分支对照；当前仅初始英雄，特殊魔方英雄未开放 |
+| 基础/成长 | herobase 按 type+star；heroupgraderate 按 hero_id+grade；差值 d=level-heroupgrade.begin_level | template 模块 module/battle/BattleTemplate.convertFrom；旧端 data/HeroData.getHeroAttribute；当前三张同名 xlsx |
+| 取整 | hp/atk=截断(base×rate/10000 + base×d×grow/10000)；def/spd 先截断基础倍率项再加成长并截断；倍率不是加上 10000 | BattleTemplate.convertFrom、battle 模块 util/AttributeUtil.addPercent/calPercent；旧端中间浮点展示不代替服务器取整 |
+| 战斗 | 玩家使用持久阶、等级和星级的同一四属性；NPC 取 begin_level≤等级的最高阶。基础攻击战斗仍不包含技能/装备加成 | BattleTemplate.convertFrom、HeroUpGradeSysCache；当前 HeroGrowthRules 与 CampaignService.unit 共用 |
+
+2026-11-02 五张源表与全部导出行逐项一致：herolevel 400、heroupgrade 7、heroupgraderate/Sheet1 791、herobase 1582、herostar 14。当前最小普通升级无需要另定的实质规则冲突。初始 10101001 从 1→2：金币 53、英雄经验 12，hp/atk/def/spd 从 238/56/24/45 到 253/59/25/46。未接入突破，30 级明确提示上限，不能静默跳过。
+
+### 请求、并发与重试
+
+- GET /api/v1/heroes/{heroId}/level-up：Bearer 鉴权，返回 hero、stage、levelLimit、current/next 四属性、cost(gold/experience)、持有 gold/experience、status、configVersion。满级 next/cost=null。
+- POST 同路径：`{"requestId":"UUID","expectedLevel":1}`；固定 +1，不接受可信消耗或属性。
+- 成功返回 operation 原操作收据（requestId、heroId、fromLevel、toLevel、configVersion），以及 preview、heroes、role、inventory **当前事务内最新完整快照**。重复标识返回原收据及最新状态，而不是旧资产快照。
+- 角色行锁串行化升级与其他资产写；expectedLevel 过期返回 409 HERO_LEVEL_CHANGED。同一角色/请求键跨重启只执行一次；同键不同英雄/原等级 409 IDEMPOTENCY_CONFLICT。V4 的 game_hero_level_request 存收据，扣金币、扣 900101、等级及收据同事务，失败全部回滚。
+- 401 无效/过期会话；404 HERO_NOT_FOUND 统一隐藏他人实例；400 INVALID_UPGRADE_REQUEST；409 LEVEL_LIMIT、INSUFFICIENT_GOLD、INSUFFICIENT_HERO_EXP；503 HERO_CONFIG_UNAVAILABLE。缺配置不按零消耗继续。客户端不显示原始异常正文，仅映射稳定错误码。
+- HeroLevelController 使用 BagController.runInventoryUpdate 串行资产入口，提交前后作废旧英雄查询；完整库存/钱包/英雄提交后才通知 UI。关闭页面不取消会话操作；换号作废旧回包。超时保留原 requestId，按钮“确认上次升级”允许在最新余额不足/满级时确认原操作，不误发新升级。
+- 当前仍沿用现有手写 DTO + 运行时校验；没有宣称 OpenAPI 自动生成已完成。维护入口：HeroGrowthRules、HeroLevelService/Controller、HeroLevelApi/Controller、HeroInfoUpLevelLayer.ts 与同名 Prefab。
+
+### 验证范围
+
+正常首胜奖励足够升级：金币 4000、900101=550；升一级后 3947/538，无须改奖励或合成充值。H2 与独立 MySQL HTTP 已覆盖奖励→升级→第二次战斗→独立 JVM 重启/重登；第二关真实战败保留，不要求制造胜利。客户端页面验收与后端链分开，最终实际状态见 development-progress.md。
+
+
 更新：2026-10-29。对应 P3-02、P4-01/P4-02/P4-03，当前为实现中的最小契约。客户端只读英雄列表已接入现有 Prefab，视觉与三端运行待验收；接口类型生成尚未完成。
 
 ## 2026-10-30 更新（优先于下方历史状态）
@@ -12,7 +48,7 @@
 
 客户端分层以 [2026-10-30 模块级 MVC 基线](architecture.md) 为准。本文后续关于 Service/Controller 注入的叙述是英雄现有过渡实现，英雄与阵容尚未按背包样板迁移；协议、409 和保存规则继续有效。
 
-## 当前已实现的接口
+## 原英雄/阵容接口（继续有效）
 
 四个接口都需要 `Authorization: Bearer <accessToken>`。角色从服务端会话确定，不接受客户端指定别人的 roleId。
 
@@ -52,7 +88,7 @@ HeroProfile 字段为 id（英雄实例 UUID 字符串）、templateId（配置�
 
 日服 LineupData.lua 将返回英雄按 position 索引并补齐空槽，支持“实例和站位分离”的数据结构。此次没有宣称已验证其他阵法、助阵、站位解锁、所有模式限制或旧服战斗数值；这些仍需规则样本与配置对照。battleformation 的 idx 是模式相关配置，不能未经核对当作格子编号。
 
-新手赠送、召唤、养成和配置模板绑定还没有业务入口。测试种入的英雄仅存在于隔离 H2 测试库，不写入用户 local 数据库，不开放客户端任意发英雄接口。
+以下为 2026-10-29 历史范围，已由初始化及普通升级新节部分替代：新手赠送、召唤、养成和配置模板绑定当时还没有业务入口。测试种入的英雄仅存在于隔离 H2 测试库，不写入用户 local 数据库，不开放客户端任意发英雄接口。
 
 ## 持久化与维护入口
 

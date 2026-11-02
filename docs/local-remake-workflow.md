@@ -72,3 +72,8 @@ node C:/ProgramData/cocos/editors/Creator/3.8.8/resources/app.asar.unpacked/node
 - `client/tools/check-remake-preview.cjs` 可设 `MXZG_PREVIEW_URL=http://127.0.0.1:18081/`、`MXZG_SCREENSHOT_PREFIX=h5`，验证独立构建。此模式使用手机尺寸并阻断 7456，避免退回 Creator 预览。
 
 实际验收结果、日志与仍未完成的事项见 [开发进度](development-progress.md)。
+
+
+## 普通升级的专用测试连接
+
+普通升级验证不能使用上文日常开发后端。使用 [后端说明](../backend/README.md) 的 `test-mysql.ps1 -Preview` 创建全新实例、受限账号和独立 HTTP 进程；把其显示的 run/端口填入 Creator 新测试页的显式参数。日常 scene 地址、默认配置和会话不覆盖。先确认身份握手成功，再以本批新账号登录。普通升级 Prefab 修改后等待 Creator 导入；页面连点、关闭和换号用真实返回复验，不能把 H2 或引擎替身当作视觉验收。

@@ -10,7 +10,7 @@
 2. [client-schema.json](../config/client-schema.json) 维护明确字段、主键、必需性与结构规范。
 3. python tools/generate_config.py 生成 GConfig.ts；--check 只核验，不写入。
 
-当前覆盖 10 张有效或保留能力表，现有九张按组加载，HeroTalk 仅提供保留详情的描述，未提前加载。不是对全部历史 536 张表猜类型。新增表先声明规范再加入分组。数组必须声明 items，对象必须声明 fields，空对象禁止额外字段；原 JSON 中数组文本仍为 string，不擅自改变格式。字段注释优先来自本项目表头，派生及 JSON-only 字段在规范维护。生成顺序稳定，不写本机绝对路径。
+当前覆盖 11 张有效或保留能力表，原九张按组加载，HeroTalk 仅提供保留详情的描述；新增 HeroLevel 在打开普通升级窗口时单独按组加载，不随英雄列表预载。不是对全部历史 536 张表猜类型。新增表先声明规范再加入分组。数组必须声明 items，对象必须声明 fields，空对象禁止额外字段；原 JSON 中数组文本仍为 string，不擅自改变格式。字段注释优先来自本项目表头，派生及 JSON-only 字段在规范维护。生成顺序稳定，不写本机绝对路径。
 
 语言表 key=# 为注释行，规范显式排除；数字文本语言键可用数字查询。所有有效配置主键均必须唯一；生成器和 GameConfig 同时拒绝重复键，失败不提交整组。
 
@@ -24,6 +24,10 @@
 仅源表 B138 改名，两个功能分别按自身条件查询，不互相覆盖、不取较低等级。两行 open=5、condition_type=1、world_level=1、导出 open_server_day=0 均保持不变；表格样式与其他单元格也保持不变。此处只确定功能标识与原有开放条件，不定义充值金额、累计天数、活动周期、领奖重置等未提供规则，不开放支付或新玩法。
 
 背包标签使用 item.xlsx 的 place：0 不在背包显示、1 装备、2 道具、3 碎片、4 特殊（当前页签美术为精灵）。type 是效用类型，不代表背包标签；隐藏显示不删除 Model 中库存，也不影响结算发奖。
+
+## 普通升级最小投影
+
+herolevel.xlsx → 导出 herolevel.json → client-schema 的 HeroLevel（level、exp_need、gold_need）→ generate_config.py。服务端由 `python tools/export_hero_growth.py --write` 从现有五张导出表生成 gameplay/hero-growth.json，只保留消耗、阶/星上限和四属性所需字段；默认调用只检查稳定性，统一检查已接入。版本为内容哈希，收据和新战报记录实际成长版本；历史已保存战报不重算。客户端不重复计算属性，展示服务端 current/next，并校验成本与 GameConfig 一致。配置缺失拒绝操作，不免费升级。规则出处见 [英雄契约](hero-lineup-contract.md)。
 
 ## 加载与查询
 

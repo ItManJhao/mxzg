@@ -3510,7 +3510,9 @@
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroInfoUpLevelLayer.prefab",
-    "classes": [],
+    "classes": [
+      "HeroInfoUpLevelLayer"
+    ],
     "root": {
       "position": {
         "__type__": "cc.Vec3",
@@ -3521,18 +3523,18 @@
       "scale": {
         "__type__": "cc.Vec3",
         "z": 1,
-        "y": 1,
-        "x": 1
+        "y": 0.85,
+        "x": 0.85
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 640,
-        "height": 1280
+        "width": 2048,
+        "height": 2048
       },
       "anchor": {
         "__type__": "cc.Vec2",
-        "y": 0,
-        "x": 0
+        "y": 0.5,
+        "x": 0.5
       }
     },
     "components": {
@@ -3544,13 +3546,6 @@
       "PrefabInstance": 0
     },
     "specialAnchors": [
-      {
-        "node": "HeroInfoUpLevelLayer",
-        "anchor": [
-          0,
-          0
-        ]
-      },
       {
         "node": "node_all",
         "anchor": [
@@ -3664,20 +3659,6 @@
         ]
       },
       {
-        "node": "lbl_level",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "lbl_profession",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
         "node": "icon_occupat",
         "anchor": [
           1,
@@ -3702,15 +3683,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-    "sha256": "8c58b0872d7da774c64a5dbb614e171d7388353f8d6b0890fed762856cab9579",
+    "reviewStatus": "实际预览通过",
+    "visual": "普通升级真实业务：640×1280、360×800、960×1280，引擎 FrameSize 与 canvas 实际尺寸核对，各三轮关闭重开。正确四属性/成本/余额、底板、返回和单次按钮、底层点击拦截；正常奖励后升级、双击仅一请求、关闭后真实响应提交、换号迟到隔离、重登恢复。只覆盖普通升级，不代表突破/升星。截图 client/temp/hero-level-20261102。",
+    "sha256": "7e7593b755546090887c9cff1cb8d62a435f88a5bafc569c600c93cad48cb8a5",
     "acceptance": {
-      "sha256": "8c58b0872d7da774c64a5dbb614e171d7388353f8d6b0890fed762856cab9579",
+      "sha256": "7e7593b755546090887c9cff1cb8d62a435f88a5bafc569c600c93cad48cb8a5",
       "date": "2026-11-02",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-      "inspector": "待负责人逐项确认"
+      "status": "实际预览通过",
+      "scope": "普通升级真实业务：640×1280、360×800、960×1280，引擎 FrameSize 与 canvas 实际尺寸核对，各三轮关闭重开。正确四属性/成本/余额、底板、返回和单次按钮、底层点击拦截；正常奖励后升级、双击仅一请求、关闭后真实响应提交、换号迟到隔离、重登恢复。只覆盖普通升级，不代表突破/升星。截图 client/temp/hero-level-20261102。",
+      "inspector": "待负责人明确确认。已提供 panel_background X 临时 0→1→0 保存重开步骤；负责人只回复“已刷新”，不能当作编辑体验认可。最终文件已核对 X=0、Y=150、640×540。"
     }
   },
   {

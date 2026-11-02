@@ -1,5 +1,14 @@
 # Prefab 编辑与审查
 
+## 2026-11-02 普通升级窗口（本批新增验收）
+
+仅 HeroInfoUpLevelLayer 接入正常升级，不重做历史三个布局问题，也不扩展窗口巡检。保留 Prefab UUID 723c0b26-52e0-47a6-ad0f-30d22af54f92。真实首验发现原资源只是嵌入式内容块，底板仅覆盖消耗、状态节点原本隐藏；现静态复用已有 win-bg-12 底板覆盖标题/四属性/消耗/按钮，并启用 lbl_max_tips。根 Scale=0.85；根 UITransform 2048×2048 与 BlockInputEvents 只负责拦截底层点击；node_all=(0,-180)，panel_background=(0,150)、640×540。不新增运行时自动排版或另一升级窗口。
+
+本轮已用隔离 MySQL/测试服务实际通过 640×1280、360×800、960×1280，各三轮开关；引擎和画布实际尺寸均核对（不是只看预览下拉文字）。默认尺寸验证正常奖励后的升级、再战斗及重登；首胜奖励取得时原画布为 640×870，未混作本窗口三尺寸证据。窄/宽检查本窗口。截图在 client/temp/hero-level-20261102，准确指纹和范围见 config/prefab-acceptance.json。无新脚本/缺资源告警；调试期间两次检查表达式报错不属于应用异常。
+
+Inspector：待负责人明确认可。已给出底板 X 0→1 保存→0 保存重开步骤，目前收到的仅“已刷新”；不代签。最终文件已核对恢复值。HeroInfoUpgradeLayer 仍是突破展示，不因本次普通升级而开放。
+
+
 保留 90 份 Prefab，含 remake-home Bundle。保留策略见 [prefab-plan.json](../tools/prefab-plan.json)，逐项结构、特殊锚点、ScrollView 和视觉状态见 [prefab-review.json](prefab-review.json)。保留资源不等于开放相应玩法。
 
 ## 本批收尾范围（2026-11-02）
