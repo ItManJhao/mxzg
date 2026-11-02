@@ -1,3 +1,6 @@
+/** 英雄模块回归：核对显式初始化、唯一状态、事件清理和异步会话隔离。 */
+import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
+import { HeroRosterEvent } from "../assets/scripts/features/hero/HeroRosterEvent";
 /** 普通升级协调验证：使用隔离内存夹具覆盖重复点击、超时重放、旧查询和换号；不连接任何业务服务。 */
 import { strict as assert } from "node:assert";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
@@ -5,7 +8,7 @@ import { AccountService } from "../assets/scripts/features/account/AccountServic
 import { BagController } from "../assets/scripts/features/Bag/BagController";
 import { BagModel } from "../assets/scripts/features/Bag/BagModel";
 import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
-import { HeroRosterService } from "../assets/scripts/features/hero/HeroRosterService";
+import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
 import { HeroLevelController } from "../assets/scripts/features/hero/HeroLevelController";
 import { HeroLevelApi, readHeroLevelPreview } from "../assets/scripts/features/hero/HeroLevelApi";
 import { JsonClient } from "../assets/scripts/platform/http/JsonClient";
@@ -25,7 +28,8 @@ async function coordination(){
  const auth=new AccountService(account,{developmentLogin:async name=>({role:role(name),session:{accessToken:name[0].repeat(43),expiresAt:"2099-01-01T00:00:00Z"}}),currentRole:async()=>account.snapshot.role!},{read:()=>null,write:()=>{},clear:()=>{}});
  bag.initialize({account,authorization:auth,api:{list:async()=>[{itemId:900101,quantity:1000}]}});
  const queries:ReturnType<typeof deferred>[]=[];
- const roster=new HeroRosterService(rosterModel,account,auth,{list:()=>{const d=deferred();queries.push(d);return d.promise;}});
+ const roster=new HeroRosterController(rosterModel);
+ roster.initialize({account,authorization:auth,api:{list:()=>{const d=deferred();queries.push(d);return d.promise;}}});
  const calls:{id:string;level:number;d:ReturnType<typeof deferred>}[]=[];
  const api={preview:async()=>result().preview,upgrade:(_token:string,_hero:string,id:string,level:number)=>{const d=deferred();calls.push({id,level,d});return d.promise;}} as unknown as HeroLevelApi;
  const controller=new HeroLevelController(account,auth,roster,api,bag);
@@ -33,7 +37,7 @@ async function coordination(){
   await auth.login("test_one","one");await bag.refresh();roster.accept([hero()]);
   const oldQuery=roster.refresh();await tick();
   const first=controller.upgrade("11111111-1111-4111-8111-111111111111",1),duplicate=controller.upgrade("11111111-1111-4111-8111-111111111111",1);assert.equal(first,duplicate);await tick();assert.equal(calls.length,1);
-  const stop=rosterModel.subscribe(state=>{if(state.heroes[0]?.level===2){assert.equal(account.snapshot.role?.gold,947);assert.equal(bagModel.quantity(900101),988);}});
+  const stop=EventDispatcher.instance.on(HeroRosterEvent.Updated,()=>{const state=rosterModel.snapshot;if(state.heroes[0]?.level===2){assert.equal(account.snapshot.role?.gold,947);assert.equal(bagModel.quantity(900101),988);}});
   calls[0].d.resolve(result());await first;stop();queries[0].resolve([hero()]);assert.equal(await oldQuery,false);assert.equal(rosterModel.snapshot.heroes[0].level,2);
   const uncertain=controller.upgrade("11111111-1111-4111-8111-111111111111",2);await tick();calls[1].d.reject(new Error("timeout"));await assert.rejects(uncertain,/timeout/);assert(controller.needsConfirmation);
   const replay=controller.upgrade("11111111-1111-4111-8111-111111111111",3);await tick();assert.equal(calls[2].id,calls[1].id);assert.equal(calls[2].level,2);calls[2].d.resolve(result(3,887,973));await replay;assert(!controller.needsConfirmation);

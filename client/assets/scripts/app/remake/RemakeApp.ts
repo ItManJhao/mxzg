@@ -38,7 +38,6 @@ import { mountHeroListPage } from "../../features/hero/ui/heroMount";
 import { HeroApi } from "../../features/hero/HeroApi";
 import { HeroCatalog } from "../../features/hero/HeroCatalog";
 import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
-import { HeroRosterService } from "../../features/hero/HeroRosterService";
 import { HeroRosterController } from "../../features/hero/HeroRosterController";
 import { HomeFeatureNavigation, REMAKE_FEATURE_ROUTES } from "./HomeFeatureNavigation";
 import { ServerSelection } from "../../features/account/ServerSelection";
@@ -74,7 +73,7 @@ export class RemakeApp extends Component {
   private navigation: RemakeNavigation | null = null;
   private offAccount: (() => void) | null = null;
   private bagModule: BagController | null = null;
-  private heroRosterService: HeroRosterService | null = null;
+  private heroRosterController: HeroRosterController | null = null;
   private heroLevelController:HeroLevelController|null=null;
   private idleController:IdleController|null=null;
   private unregisterViews: Array<() => void> = [];
@@ -114,9 +113,10 @@ export class RemakeApp extends Component {
     this.bagModule = BagController.instance;
     const idle=this.idleController=new IdleController(model,service,new IdleApi(http));
     // 名册状态属于应用会话，关闭英雄页面只解除 View 观察，不销毁角色数据。
-    const roster = new HeroRosterModel();
-    const rosterService = this.heroRosterService = new HeroRosterService(roster, model, service, new HeroApi(http));
-    const levels=this.heroLevelController=new HeroLevelController(model,service,rosterService,new HeroLevelApi(http));
+    const roster = HeroRosterModel.instance;
+    const rosterController = this.heroRosterController = HeroRosterController.instance;
+    rosterController.initialize({account:model,authorization:service,api:new HeroApi(http)});
+    const levels=this.heroLevelController=new HeroLevelController(model,service,rosterController,new HeroLevelApi(http));
     const ui = UIManager.instance;
     const entry = new LoginEntry();
     let homeView: RemakeHomeView | null = null;
@@ -177,19 +177,22 @@ export class RemakeApp extends Component {
     }));
     this.unregisterViews.push(registerView(HeroListView, {
       id: "hero", prefab: ResourceCatalog.prefab_hero.HeroListView.assetPath, layer: UILayer.Page,
-      cache: false, allowMultiple: false, mount: mountHeroListPage,
+      cache: false, allowMultiple: false,
       load: async () => {
         if (!this.heroResources) this.heroResources = createHeroResourceScope();
         return loadHeroPage(this.heroResources);
       },
-      createController: view => {
+      mount: async (host,prefab) => {
+        const root=await mountHeroListPage(host,prefab);
+        const page=root.getComponent(HeroListView)!;
         const catalog = new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
-        return new HeroRosterController(roster, rosterService, catalog, view as HeroListView, text => homeView?.showNotice(text),heroId=>{
+        page.configureRoster(roster, rosterController, catalog, text => homeView?.showNotice(text),heroId=>{
           const hero=roster.snapshot.heroes.find(row=>row.id===heroId);
           if(!hero)return;
           void ui.open(HeroInfoUpLevelLayer,{heroId,name:catalog.find(hero.templateId)?.name || "英雄",controller:levels})
             .catch(error=>{if(!isOpenCancelled(error))homeView?.showNotice(error instanceof Error?error.message:"升级详情打开失败");});
         });
+        return root;
       },
     }));
     const itemCatalog = () => new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
@@ -357,7 +360,7 @@ export class RemakeApp extends Component {
     UIManager.instance.closeById("remake-formation");
     this.navigation?.dispose(); this.navigation = null;
     this.bagModule?.dispose(); this.bagModule = null;
-    this.heroRosterService?.dispose(); this.heroRosterService = null;
+    this.heroRosterController?.dispose(); this.heroRosterController = null;
     this.heroLevelController?.dispose();this.heroLevelController=null;
     this.idleController?.dispose();this.idleController=null;
     this.homeResources?.dispose(); this.homeResources = null;

@@ -1,25 +1,23 @@
-/** 应用会话唯一英雄名册；关联资产事务提交后统一发布观察通知，窗口不持有另一份英雄状态。 */
+/** 英雄名册唯一状态：保存只读英雄与同步状态，由模块 Controller 提交，不持有网络或监听。 */
 import type { OwnedHero } from "./HeroApi";
-import { publishNotification } from "../../framework/EventDispatcher";
-
+import { BaseModel } from "../../framework/BaseModel";
 export interface HeroRosterState {
-  readonly status: "idle" | "loading" | "ready" | "error";
-  readonly heroes: readonly OwnedHero[];
-  readonly error: string;
+ readonly status: "idle" | "loading" | "ready" | "error";
+ readonly heroes: readonly OwnedHero[];
+ readonly error: string;
 }
-
-/** Empty ready roster is valid. Loading/error never falls back to the legacy mock roster. */
-export class HeroRosterModel {
-  private state: HeroRosterState = Object.freeze({ status: "idle", heroes: Object.freeze([]), error: "" });
-  private readonly listeners = new Set<(state: HeroRosterState) => void>();
-  get snapshot(): HeroRosterState { return this.state; }
-  subscribe(listener: (state: HeroRosterState) => void): () => void {
-    this.listeners.add(listener);
-    return () => { this.listeners.delete(listener); };
-  }
-  /** 替换权威名册，通知遵循全局批次，避免升级时英雄已变而库存尚未提交。 */
-  replace(state: HeroRosterState): void {
-    this.state = Object.freeze({ ...state, heroes: Object.freeze(state.heroes.map(hero => Object.freeze({ ...hero }))) });
-    publishNotification(() => { for (const listener of this.listeners) listener(this.state); });
-  }
+export class HeroRosterModel extends BaseModel {
+ static readonly instance = new HeroRosterModel();
+ private state: HeroRosterState = Object.freeze({status:"idle",heroes:Object.freeze([]),error:""});
+ /** 返回当前角色只读状态与基类版本，不另存版本计数。 */
+ get snapshot(): HeroRosterState & {readonly roleKey:string|null;readonly revision:number} {
+  return Object.freeze({...this.state,roleKey:this.roleKey,revision:this.version});
+ }
+ /** 提交整批状态；输入由 Controller 校验，复制英雄避免外部后续修改。 */
+ replace(state:HeroRosterState):void {
+  this.state=Object.freeze({...state,heroes:Object.freeze(state.heroes.map(hero=>Object.freeze({...hero})))});
+  this.incrementVersion();
+ }
+ /** 会话重置时清空名册；通知由 Controller 统一发布。 */
+ protected onReset():void {this.state=Object.freeze({status:"idle",heroes:Object.freeze([]),error:""});}
 }

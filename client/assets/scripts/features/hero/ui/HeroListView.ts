@@ -1,6 +1,12 @@
 /**
  * 英雄列表页面：只展示注入的当前角色名册并转交筛选、重试与选择，不回退旧网络或图鉴。
  */
+import { EventDispatcher } from "../../../framework/EventDispatcher";
+import { HeroRosterEvent } from "../HeroRosterEvent";
+import { HeroRosterModel } from "../HeroRosterModel";
+import { HeroRosterController } from "../HeroRosterController";
+import { presentHeroRoster } from "../HeroRosterPresentation";
+import type { HeroCatalog } from "../HeroCatalog";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Button, director, Director, HorizontalTextAlignment, Label, Layers, Node, Overflow, Prefab, UITransform, VerticalTextAlignment } from "cc";
 import { messageOf } from "../../../core/errors";
@@ -104,7 +110,15 @@ export class HeroListView extends BaseView implements HeroRosterView {
   private shownWatch: (() => void) | null = null;
   private roster: HeroRosterSource | null = null;
   private closed = false;
+  private rosterModule:HeroRosterController|null=null;
 
+  /** 应用挂载时注入模块与配置；页面只绑定显示和输入，不拥有模块生命周期。 */
+  configureRoster(model:HeroRosterModel, controller:HeroRosterController, catalog:HeroCatalog, notice:(text:string)=>void, openHero?:(id:string)=>void):void {
+    this.rosterModule=controller;
+    this.useRoster({read:elem=>presentHeroRoster(model.snapshot,catalog,elem),
+      retry:()=>{if(!this.closed){notice("");void controller.refresh();}},
+      select:cell=>{if(this.closed)return;if(openHero && cell.instanceId)openHero(cell.instanceId);else notice(cell.name+" Lv"+cell.level+"，详情暂未开放");}});
+  }
   /** Called by application composition before opening. A current role source is required. */
   useRoster(source: HeroRosterSource): void {
     if (this.opened) throw new Error("英雄数据源必须在开页前注入");
@@ -122,6 +136,7 @@ export class HeroListView extends BaseView implements HeroRosterView {
   onOpen(): void {
     if (!this.roster) throw new Error("HeroListView requires the current role roster source");
     this.closed = false;
+    if(this.rosterModule){EventDispatcher.instance.on(HeroRosterEvent.Updated,this,this.refreshRoster);void this.rosterModule.refresh();}
     GameLog.shared.info("Hero", "打开实现 新 HeroListView");
     if (this.opened) {
       this.refresh();
@@ -135,6 +150,7 @@ export class HeroListView extends BaseView implements HeroRosterView {
   /** 停止本页尺寸观察并结束未完成的开页等待，不销毁模块名册。 */
   onClose(): void {
     this.closed = true;
+    EventDispatcher.instance.offTarget(this);
     this.failOpen(new Error("页面已关"));
     this.clearShownWatch();
   }

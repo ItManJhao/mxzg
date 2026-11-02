@@ -2,7 +2,7 @@
 import { AccountModel } from "../account/AccountModel";
 import { AccountService, SessionChanged } from "../account/AccountService";
 import { BagController } from "../Bag/BagController";
-import { HeroRosterService } from "./HeroRosterService";
+import { HeroRosterController } from "./HeroRosterController";
 import { HeroLevelApi } from "./HeroLevelApi";
 import type { HeroLevelPreview } from "./HeroLevelApi";
 import { HttpFailure } from "../../platform/http/JsonClient";
@@ -13,7 +13,8 @@ export class HeroLevelController {
     private attempt:{heroId:string;requestId:string;level:number}|null=null;
     private readonly off:()=>void;
     /** 只持有升级操作状态；角色身份、名册及库存仍由原模块管理。 */
-    constructor(private readonly account:AccountModel,private readonly auth:AccountService,private readonly roster:HeroRosterService,
+    /** 注入会话服务、唯一名册模块和升级接口；页面不持有或销毁名册。 */
+    constructor(private readonly account:AccountModel,private readonly auth:AccountService,private readonly roster:HeroRosterController,
         private readonly api:HeroLevelApi,private readonly bag:BagController=BagController.instance) {
         let role=account.snapshot.role?.id;
         this.off=account.subscribe(state=>{

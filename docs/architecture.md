@@ -6,6 +6,8 @@
 
 2026-11-02 补充：用户要求所有模块以背包为样板，业务滚动列表统一采用 SuperScroll + SuperContent；固定布局与 Cell 资源在 Prefab 维护，View 仅 setData/绑定展示。此前文中的“其余模块保留适配器”是迁移现状，不是长期豁免。按实际职责分批改造，保留服务端权威、幂等和换号隔离；不为复制结构新增无用层级。
 
+英雄名册迁移：HeroRosterModel.instance 继承 BaseModel，保存唯一只读名册和同步状态，不派发通知；HeroRosterController.instance 继承 BaseController，由 RemakeApp 显式 initialize，持有查询去重、角色/区服会话隔离和升级快照提交，应用销毁才 dispose。原 HeroRosterService 与页面 Controller 链已合并，不保留转发别名。HeroListView 挂载时 configureRoster，开页监听 HeroRosterEvent.Updated 并读取 Model，关页只清理本页监听；注册不再传 createController。普通升级继续经过 BagController 的资产事务，名册事件随全局事务通知延后。现有英雄列表的布局/滚动组件仍需下一步按 SuperScroll 规范专项迁移，本次不将模块职责整改当作列表组件迁移完成。
+
 2026-10-30 最新用户基线：模块使用完整名称和固定目录，不再使用 BagC/BagM/BagV 缩写，也不再让业务 Controller 按页面开关生命周期工作。本文旧的强制 Service/Presenter 分层以及上一轮模块私有 TypedEvents 方案已被替代。Bag 是模块级 MVC 样板；其他功能保留必要服务与页面适配器，不强行增加同构层级。
 
 `features/Bag/` 包含 `BagController.ts`、`BagModel.ts`、`BagEvent.ts`；`ui/` 是 BagView、BagItemView、BagInfoView、BagTabView，`data/` 是 BagItemData、BagState、BagChangeSet、BagEventData。已有必要手写请求适配保留为 BagApi，配置查询保留为 BagItemCatalog，页面挂载辅助为 ui/BagMount；这些有实际用途，不是额外业务层或状态副本。底层 HTTP 仍在 platform/http，既有生成协议不搬入 Model。

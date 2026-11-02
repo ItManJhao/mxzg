@@ -1,5 +1,14 @@
 # 当前进度与未完成项
 
+## 当前：英雄名册模块职责迁移
+
+- 合并 HeroRosterService 与原页面 HeroRosterController：当前 HeroRosterController 继承 BaseController，显式 initialize、会话级持有查询/升级结果，页面不持有或销毁它。HeroRosterModel 继承 BaseModel，单例保存只读名册；通知移到 Controller 的全局 HeroRosterEvent.Updated。角色归属包含区服与角色 ID，换号/退出废弃在途回包。
+- HeroListView 自己监听名册更新、读取状态与转交操作；RemakeApp 挂载阶段注入配置和模块，英雄注册删除 createController。普通升级依赖改为同一个模块 Controller，原 Service 源码和 meta 删除，不留兼容别名；现有 HeroListView/Model/Controller 的 UUID 保持原值。
+- 新增检查重复 initialize、loading 通知重入复用同一请求、反复开页监听只有一份、关页清理及关闭后有效查询仍提交。hero-roster、hero-level、hero、startup、remake-navigation 与 Creator strict 通过。首轮检查发现夹具仍调用旧 Model.subscribe，已改用全局事件；查询改为先登记 Promise 再发起后，旧 401 用例补了发出请求的等待，不吞掉未被实际消费的拒绝。
+- 真实 Creator 预览正在复验，尚未提交。英雄列表原有排版和滚动尚未迁移 SuperScroll，不宣称整个英雄模块整改完成；下一步在本批职责验证保存后专项调整列表 Prefab/Cell。
+
+刷新后续验：已核对编译脚本包含最新事件绑定和模块入口，393×852 实际列表加载三名英雄、开关重开正常；树精最初 12 级，经验 58/所需 212，升级按钮禁用。正常挂机领取 27 分钟收益后金币 12543、经验 733，普通升级 12→13 消耗金币 672、经验 212，余额 11871/521，列表立即显示 13，窗口显示成功和下一等级条件；捕获 warn/error 为空。证据 client/temp/hero-mvc-20261102/upgrade-12-to-13.png。没有直接写数据库或补库存。类型检查及 hero-roster/hero-level/hero 最终重跑通过，startup/remake-navigation 和 20 份文档链接检查亦通过。本批只保存模块职责迁移；长列表组件、更多尺寸与完整正式服效果继续按下一批验收，不扩展突破/升星。
+
 ## 当前续批：挂机敌人进场时序
 
 - 排查 foe late：旧进场必须逐次执行八个 setTimeout，后台节流/主线程停顿后，一次超时回调可能早于后续七个进场回调执行，已 ready 但 entered=false 的敌人被误清理。新增针对性回归复现该调度顺序；不将所有资源迟到都归因为此。

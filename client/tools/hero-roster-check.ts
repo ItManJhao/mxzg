@@ -1,3 +1,4 @@
+/** 英雄模块回归：核对显式初始化、唯一状态、事件清理和异步会话隔离。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
@@ -5,7 +6,9 @@ import { AccountApi } from "../assets/scripts/features/account/AccountApi";
 import { AccountService, SessionChanged } from "../assets/scripts/features/account/AccountService";
 import { HeroApi, readOwnedHero, readOwnedHeroes } from "../assets/scripts/features/hero/HeroApi";
 import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
-import { HeroRosterService } from "../assets/scripts/features/hero/HeroRosterService";
+import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
+import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
+import { HeroRosterEvent } from "../assets/scripts/features/hero/HeroRosterEvent";
 import { HeroCatalog } from "../assets/scripts/features/hero/HeroCatalog";
 import { HttpFailure, JsonClient } from "../assets/scripts/platform/http/JsonClient";
 
@@ -64,11 +67,16 @@ async function main() {
   const model = new HeroRosterModel();
   let calls = 0;
   let fetch = async () => [hero];
-  const roster = new HeroRosterService(model, owner.account, owner.service, { list: () => { calls++; return fetch(); } });
+  const roster = new HeroRosterController(model);
+  roster.initialize({account:owner.account,authorization:owner.service,api:{list:()=>{calls++;return fetch();}}});
+  roster.initialize();
   const initial = deferred<typeof hero[]>(); fetch = () => initial.promise;
+  let reentrant:Promise<boolean>|null=null;
+  const offReentrant=EventDispatcher.instance.on(HeroRosterEvent.Updated,()=>{if(model.snapshot.status==="loading")reentrant=roster.refresh();});
   const first = roster.refresh();
+  assert.equal(reentrant,first,"loading事件重入复用已登记请求");offReentrant();
   assert.equal(roster.refresh(), first, "concurrent refreshes share one request");
-  assert.equal(calls, 1); assert.equal(model.snapshot.status, "loading");
+  await Promise.resolve(); assert.equal(calls, 1); assert.equal(model.snapshot.status, "loading");
   initial.resolve([hero]); assert.equal(await first, true);
   assert.equal(model.snapshot.heroes[0].id, hero.id);
   assert(Object.isFrozen(model.snapshot) && Object.isFrozen(model.snapshot.heroes[0]));
@@ -88,7 +96,7 @@ async function main() {
   late.resolve([hero]); assert.equal(await old, false); assert.deepEqual(model.snapshot.heroes, []);
   await owner.service.login("first");
   const unauthorized = deferred<typeof hero[]>(); fetch = () => unauthorized.promise;
-  const oldError = roster.refresh();
+  const oldError = roster.refresh(); await Promise.resolve();
   await owner.service.login("second");
   fetch = async () => [hero]; assert.equal(await roster.refresh(), true);
   unauthorized.reject(new HttpFailure(401, "expired")); assert.equal(await oldError, false);
@@ -145,7 +153,8 @@ async function main() {
     assert.equal(await liveService.login("hero_read_" + Date.now()), true, liveAccount.snapshot.error);
     const roleId = liveAccount.snapshot.role!.id;
     const liveModel = new HeroRosterModel();
-    const liveRoster = new HeroRosterService(liveModel, liveAccount, liveService, new HeroApi(http));
+    const liveRoster = new HeroRosterController(liveModel);
+    liveRoster.initialize({account:liveAccount,authorization:liveService,api:new HeroApi(http)});
     assert.equal(await liveRoster.refresh(), true, liveModel.snapshot.error);
     assert.equal(liveModel.snapshot.status, "ready");
     assert.deepEqual(liveModel.snapshot.heroes, [], "new server role owns no fabricated heroes");

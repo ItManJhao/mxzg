@@ -1,3 +1,7 @@
+import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
+import { HeroRosterEvent } from "../assets/scripts/features/hero/HeroRosterEvent";
+/** 英雄模块回归：核对显式初始化、唯一状态、事件清理和异步会话隔离。 */
+import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
 /** Display-only helpers retained for the Remake flow. */
 /**
  * 英雄列表竖切的检查。不启动 Creator。
@@ -27,9 +31,7 @@ import { HeroCatalog } from "../assets/scripts/features/hero/HeroCatalog";
 
 import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
 
-import { HeroRosterService } from "../assets/scripts/features/hero/HeroRosterService";
 
-import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
 
 import type { OwnedHero } from "../assets/scripts/features/hero/HeroApi";
 
@@ -375,16 +377,20 @@ async function checkRemakeRoster(): Promise<void> {
   const model = new HeroRosterModel();
   let resolve!: (heroes: OwnedHero[]) => void;
   let response = new Promise<OwnedHero[]>(done => { resolve = done; });
-  const service = new HeroRosterService(model, account, accountService, { list: () => response });
+  const service = new HeroRosterController(model);
+  service.initialize({account,authorization:accountService,api:{list:()=>response}});
   const catalog = new HeroCatalog(JSON.parse(read("client/assets/resources/config/herotype.json")), JSON.parse(read("client/assets/resources/config/item.json")));
   const view = makeView();
   let notice = "";
-  const controller = new HeroRosterController(model, service, catalog, view, text => { notice = text; });
-  view.attachController(controller);
+  view.configureRoster(model,service,catalog,text=>{notice=text;});
+  const baseline=EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
   try {
     // Deliberately contaminate the legacy store; the injected source must ignore it.
     assert(!read("client/assets/scripts/features/hero/ui/HeroListView.ts").includes("WireSession"), "no retired network source");
     view.runOpen(); await view.whenReady(); pump(2);
+    assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===baseline+1,"开页只增加一个名册监听");
+    view.runOpen();
+    assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===baseline+1,"重复开页不叠加监听");
     const board = boardOf(view);
 
     assert(cellsOf(view).length === 0, "加载时不读旧名册或图鉴");
@@ -414,7 +420,9 @@ async function checkRemakeRoster(): Promise<void> {
     view.runDispose(); resolve([{ id: "f45747b7-f032-4d00-9546-3504b9a967e5", templateId: 10101001, level: 7, star: 4 }]);
     assert(await pending === true && model.snapshot.status === "ready", "关闭页面不销毁模块，有效查询仍提交到当前角色名册");
   } finally {
-    view.runDispose(); service.dispose(); view.node.destroy();
+    view.runDispose();
+    assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===baseline,"关页只清理本页名册监听");
+    service.dispose(); view.node.destroy();
 
   }
 }
