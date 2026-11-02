@@ -687,10 +687,6 @@ export const CONFIG_SCHEMA = {
   },
   "OpenCondition": {
     "container": "rows",
-    "duplicateKeys": [
-      "act_recharge_day_reward"
-    ],
-    "duplicateNote": "源表该原子两行，导航原先 findOpen 取首行；保留顺序和首行查询，不静默改变开放等级。后续策划确认后消除重复。",
     "fields": {
       "alias_of": {
         "note": "客户端导航别名对应的原功能标识",

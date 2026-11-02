@@ -26,8 +26,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": -384,
-      "x": -320
+      "y": -326.4,
+      "x": -272
     },
     "_objFlags": 0,
     "_children": [
@@ -49,8 +49,8 @@
     "_lscale": {
       "__type__": "cc.Vec3",
       "z": 1,
-      "y": 1,
-      "x": 1
+      "y": 0.85,
+      "x": 0.85
     },
     "_components": [
       {
@@ -634,8 +634,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": -847.008,
-      "x": 42.075
+      "y": -663.5,
+      "x": -80.5
     },
     "_objFlags": 0,
     "_children": [
@@ -999,8 +999,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": -847.008,
-      "x": 258.075
+      "y": -663.5,
+      "x": 135.5
     },
     "_objFlags": 0,
     "_children": [
@@ -1364,8 +1364,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": -829.238,
-      "x": -296.02
+      "y": -358,
+      "x": 0
     },
     "_objFlags": 0,
     "_children": [],
@@ -1409,7 +1409,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 600,
-      "height": 700
+      "height": 600
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",

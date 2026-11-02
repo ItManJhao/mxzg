@@ -3653,7 +3653,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 145,
-      "y": 285,
+      "y": 300,
       "z": 0
     },
     "_objFlags": 0,
@@ -3885,8 +3885,8 @@
     "_id": "",
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 15,
-      "y": 15,
+      "x": -55,
+      "y": 0,
       "z": 0
     },
     "_objFlags": 0,
@@ -4020,8 +4020,8 @@
     "_id": "",
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 30,
-      "y": 15,
+      "x": -30,
+      "y": 0,
       "z": 0
     },
     "_objFlags": 0,
@@ -4065,8 +4065,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 0,
-      "height": 0
+      "width": 200,
+      "height": 48
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -4100,8 +4100,8 @@
       "b": 255,
       "a": 255
     },
-    "_overflow": 0,
-    "_horizontalAlign": 1,
+    "_overflow": 2,
+    "_horizontalAlign": 0,
     "_outlineWidth": 2,
     "_isBold": false,
     "_shadowOffset": {
@@ -4138,7 +4138,7 @@
     "_fontFamily": "Arial",
     "_id": "",
     "_objFlags": 0,
-    "_verticalAlign": 0,
+    "_verticalAlign": 1,
     "_enableWrapText": false,
     "_cacheMode": 0,
     "__prefab": {

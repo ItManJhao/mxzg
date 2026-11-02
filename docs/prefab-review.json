@@ -133,9 +133,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "d416b6926aff3efa94962b86f4d7f68db21cdb6d7fba81d5d4d6b89523a6460a"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+    "sha256": "d416b6926aff3efa94962b86f4d7f68db21cdb6d7fba81d5d4d6b89523a6460a",
+    "acceptance": {
+      "sha256": "d416b6926aff3efa94962b86f4d7f68db21cdb6d7fba81d5d4d6b89523a6460a",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/account/AccountLoginView.prefab",
@@ -606,14 +613,14 @@
       "position": {
         "__type__": "cc.Vec3",
         "z": 0,
-        "y": -375,
-        "x": -300
+        "y": -337.5,
+        "x": -270.0
       },
       "scale": {
         "__type__": "cc.Vec3",
         "z": 1,
-        "y": 1,
-        "x": 1
+        "y": 0.9,
+        "x": 0.9
       },
       "size": {
         "__type__": "cc.Size",
@@ -799,9 +806,16 @@
     ],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "23e7721873d846e54c35c01065a28090bf3a7a7639715900049dfdc9cf384806"
+    "reviewStatus": "实际预览通过",
+    "visual": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+    "sha256": "c8e81f981195caea258fc230ee53aa0fb12d59f5de84c740b74b92b5ebdf4993",
+    "acceptance": {
+      "sha256": "c8e81f981195caea258fc230ee53aa0fb12d59f5de84c740b74b92b5ebdf4993",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/battle/BattleEditLayer.prefab",
@@ -810,14 +824,14 @@
       "position": {
         "__type__": "cc.Vec3",
         "z": 0,
-        "y": -384,
-        "x": -320
+        "y": -326.4,
+        "x": -272
       },
       "scale": {
         "__type__": "cc.Vec3",
         "z": 1,
-        "y": 1,
-        "x": 1
+        "y": 0.85,
+        "x": 0.85
       },
       "size": {
         "__type__": "cc.Size",
@@ -871,9 +885,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "5586a155804d47f320fa21e5f7e9e69fa2df099b46c8d01c96f7eaf8e03ae267"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态布局修复已通过 640×1280、360×800、960×1280 真实预览，各三轮按钮命中与开关。BattleEditLayer 点击关闭，两个升级窗口点击原有主按钮，临时验收回调仅移除节点，不执行发送、升级或发奖。保留原始序列化文字，未注入玩家数据。",
+    "sha256": "c57943d8fda201601f003d9a193ae9f981f81a30ebb0566c81e08b958c912bd1",
+    "acceptance": {
+      "sha256": "c57943d8fda201601f003d9a193ae9f981f81a30ebb0566c81e08b958c912bd1",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态布局修复已通过 640×1280、360×800、960×1280 真实预览，各三轮按钮命中与开关。BattleEditLayer 点击关闭，两个升级窗口点击原有主按钮，临时验收回调仅移除节点，不执行发送、升级或发奖。保留原始序列化文字，未注入玩家数据。",
+      "inspector": "负责人回复三份均已实际操作并认可：定位修改节点、临时改值保存、恢复保存并重开，无 Missing Script；文件已核对恢复值。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/battle/BattleEndLayer.prefab",
@@ -965,8 +986,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "b230b4a3153bc7c82a8bb9b8849584c736a27407e3d2b20c4142538a63eefacd"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "b230b4a3153bc7c82a8bb9b8849584c736a27407e3d2b20c4142538a63eefacd",
+    "acceptance": {
+      "sha256": "b230b4a3153bc7c82a8bb9b8849584c736a27407e3d2b20c4142538a63eefacd",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/battle/BattleInfoLayer.prefab",
@@ -1043,9 +1071,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "97da390718f2a4b29a8c8463e79aea4bcc43e14c6a592e8542a8185151715716"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "97da390718f2a4b29a8c8463e79aea4bcc43e14c6a592e8542a8185151715716",
+    "acceptance": {
+      "sha256": "97da390718f2a4b29a8c8463e79aea4bcc43e14c6a592e8542a8185151715716",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/battle/BattlePage.prefab",
@@ -1087,8 +1122,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "945f7d3317000514fb62186aaa2a8a17de3b2fe7b1d2187323474c1d1b0edb4d"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "945f7d3317000514fb62186aaa2a8a17de3b2fe7b1d2187323474c1d1b0edb4d",
+    "acceptance": {
+      "sha256": "945f7d3317000514fb62186aaa2a8a17de3b2fe7b1d2187323474c1d1b0edb4d",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/battle/BattleReportLayer.prefab",
@@ -1138,8 +1180,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "5e7e5eb31b23254d650e4de499d3bae43a3be6269f1a7199197bf7b411fbcbfb"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "5e7e5eb31b23254d650e4de499d3bae43a3be6269f1a7199197bf7b411fbcbfb",
+    "acceptance": {
+      "sha256": "5e7e5eb31b23254d650e4de499d3bae43a3be6269f1a7199197bf7b411fbcbfb",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/battle/CampaignView.prefab",
@@ -1371,8 +1420,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "2698a8d19c886a51de00eb204e188a0ce61c5df09fcf26968db9675472760de2"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "2698a8d19c886a51de00eb204e188a0ce61c5df09fcf26968db9675472760de2",
+    "acceptance": {
+      "sha256": "2698a8d19c886a51de00eb204e188a0ce61c5df09fcf26968db9675472760de2",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/chapter/ChapterEndLoseCell.prefab",
@@ -1573,8 +1629,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "bbb0345d76319d884807e0e72ce042e3b9ffd75d86623a9ee69659a576948eaa"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "bbb0345d76319d884807e0e72ce042e3b9ffd75d86623a9ee69659a576948eaa",
+    "acceptance": {
+      "sha256": "bbb0345d76319d884807e0e72ce042e3b9ffd75d86623a9ee69659a576948eaa",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/chapter/ChapterPreviewLayer.prefab",
@@ -1583,14 +1646,14 @@
       "position": {
         "__type__": "cc.Vec3",
         "z": 0,
-        "y": -300,
-        "x": -320
+        "y": -255,
+        "x": -272
       },
       "scale": {
         "__type__": "cc.Vec3",
         "z": 1,
-        "y": 1,
-        "x": 1
+        "y": 0.85,
+        "x": 0.85
       },
       "size": {
         "__type__": "cc.Size",
@@ -1672,9 +1735,16 @@
     ],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "46546110d1f1fc5081ad9162f3bed81e159ecd92033def0ec6ced2cbb7e9ac14"
+    "reviewStatus": "实际预览通过",
+    "visual": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+    "sha256": "a0a46cf9d992bbe54267aa1ceeb120ea1e3c502c44678bb5e28118595929e084",
+    "acceptance": {
+      "sha256": "a0a46cf9d992bbe54267aa1ceeb120ea1e3c502c44678bb5e28118595929e084",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/chapter/ChapterRewardCell.prefab",
@@ -1850,9 +1920,16 @@
     ],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "c60f0256dda50dd85a3e1f18ed1e5c791c6ae0851d5333b813f5564a1442059c"
+    "reviewStatus": "实际预览通过",
+    "visual": "静态空壳：640×1280、360×800、960×1280 均显示完整，各实际点击关闭三轮。关闭临时回调只销毁节点；不含领奖业务及有内容滚动验收。",
+    "sha256": "c60f0256dda50dd85a3e1f18ed1e5c791c6ae0851d5333b813f5564a1442059c",
+    "acceptance": {
+      "sha256": "c60f0256dda50dd85a3e1f18ed1e5c791c6ae0851d5333b813f5564a1442059c",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "静态空壳：640×1280、360×800、960×1280 均显示完整，各实际点击关闭三轮。关闭临时回调只销毁节点；不含领奖业务及有内容滚动验收。",
+      "inspector": "负责人明确回复已完成改值、保存、恢复 X=-272、重开检查并认可编辑体验；源码最终位置(-272,-442)、缩放0.85。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/chapter/ChapterStageChip.prefab",
@@ -2310,9 +2387,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f4e33a41afcfb7533098cae0983dab363157015c58d2c157bb4c459154821487"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "f4e33a41afcfb7533098cae0983dab363157015c58d2c157bb4c459154821487",
+    "acceptance": {
+      "sha256": "f4e33a41afcfb7533098cae0983dab363157015c58d2c157bb4c459154821487",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/common/InfoCard.prefab",
@@ -2353,9 +2437,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "4a729f6077f94f075e6d8094e78e97a3e6f99ae7818149f64d1a587e06ba3515"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "4a729f6077f94f075e6d8094e78e97a3e6f99ae7818149f64d1a587e06ba3515",
+    "acceptance": {
+      "sha256": "4a729f6077f94f075e6d8094e78e97a3e6f99ae7818149f64d1a587e06ba3515",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/common/ListBackdrop.prefab",
@@ -2396,9 +2487,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "7beb386249fafde37e642ea825cce80118575a257bed361293435bef8361c647"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "7beb386249fafde37e642ea825cce80118575a257bed361293435bef8361c647",
+    "acceptance": {
+      "sha256": "7beb386249fafde37e642ea825cce80118575a257bed361293435bef8361c647",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/common/NpcTalkLayer.prefab",
@@ -2476,8 +2574,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "4c9dec1b56a6486a8056e683c9023ee6ddef05991c13348567c772ce853f5d36"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "4c9dec1b56a6486a8056e683c9023ee6ddef05991c13348567c772ce853f5d36",
+    "acceptance": {
+      "sha256": "4c9dec1b56a6486a8056e683c9023ee6ddef05991c13348567c772ce853f5d36",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/common/PagePrefabShell.prefab",
@@ -2797,7 +2902,7 @@
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "8c33c14687e2458f0a8fc933050607e70d595247835dcc7a4e1d591d9b5bfa91"
+    "sha256": "fcbc24c9fa3b3cd3314ddaebb94c4e2eef68497cddfd84139a585b17896b5bb5"
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroIconCellView.prefab",
@@ -2919,9 +3024,16 @@
     ],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "ca99bc6f9106a57bd6b6f18d8865b16a52362b9ef28b18724a4956b882694d5a"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "ca99bc6f9106a57bd6b6f18d8865b16a52362b9ef28b18724a4956b882694d5a",
+    "acceptance": {
+      "sha256": "ca99bc6f9106a57bd6b6f18d8865b16a52362b9ef28b18724a4956b882694d5a",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroInfoTipsLayer.prefab",
@@ -3096,9 +3208,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f04297db66f99f69c3e2ab6f325eb47409c260fa23b3eb8dbaf2e0116e47e56f"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+    "sha256": "f04297db66f99f69c3e2ab6f325eb47409c260fa23b3eb8dbaf2e0116e47e56f",
+    "acceptance": {
+      "sha256": "f04297db66f99f69c3e2ab6f325eb47409c260fa23b3eb8dbaf2e0116e47e56f",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroInfoUpgradeLayer.prefab",
@@ -3378,9 +3497,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "89c5292dd103a2a83e3ec20a4dae2588a6b88c2c480d1281dd576194992894f9"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态布局修复已通过 640×1280、360×800、960×1280 真实预览，各三轮按钮命中与开关。BattleEditLayer 点击关闭，两个升级窗口点击原有主按钮，临时验收回调仅移除节点，不执行发送、升级或发奖。保留原始序列化文字，未注入玩家数据。",
+    "sha256": "60c09418227c633b2a1eba8ea2159afdd265412ca20b6a275a4b897c448ff4dc",
+    "acceptance": {
+      "sha256": "60c09418227c633b2a1eba8ea2159afdd265412ca20b6a275a4b897c448ff4dc",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态布局修复已通过 640×1280、360×800、960×1280 真实预览，各三轮按钮命中与开关。BattleEditLayer 点击关闭，两个升级窗口点击原有主按钮，临时验收回调仅移除节点，不执行发送、升级或发奖。保留原始序列化文字，未注入玩家数据。",
+      "inspector": "负责人回复三份均已实际操作并认可：定位修改节点、临时改值保存、恢复保存并重开，无 Missing Script；文件已核对恢复值。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroInfoUpLevelLayer.prefab",
@@ -3576,9 +3702,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "8c58b0872d7da774c64a5dbb614e171d7388353f8d6b0890fed762856cab9579"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "8c58b0872d7da774c64a5dbb614e171d7388353f8d6b0890fed762856cab9579",
+    "acceptance": {
+      "sha256": "8c58b0872d7da774c64a5dbb614e171d7388353f8d6b0890fed762856cab9579",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroInfoUpStarLayer.prefab",
@@ -3795,9 +3928,16 @@
     ],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "5ff93430a812c804651dff8ffb17a68cb45d34ee1062f30d108b25354e960e1f"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "5ff93430a812c804651dff8ffb17a68cb45d34ee1062f30d108b25354e960e1f",
+    "acceptance": {
+      "sha256": "5ff93430a812c804651dff8ffb17a68cb45d34ee1062f30d108b25354e960e1f",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroInfoView.prefab",
@@ -4009,8 +4149,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f038964c298a744bf73d2ba55c36b8a4b166134925db9777dff431ee42efdc3d"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "f038964c298a744bf73d2ba55c36b8a4b166134925db9777dff431ee42efdc3d",
+    "acceptance": {
+      "sha256": "f038964c298a744bf73d2ba55c36b8a4b166134925db9777dff431ee42efdc3d",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroListBoardView.prefab",
@@ -4433,9 +4580,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "05cc56c52035d46c2d42a83ae480daaa75b82bbe3ad2a8dfefcda185676afe5a"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+    "sha256": "05cc56c52035d46c2d42a83ae480daaa75b82bbe3ad2a8dfefcda185676afe5a",
+    "acceptance": {
+      "sha256": "05cc56c52035d46c2d42a83ae480daaa75b82bbe3ad2a8dfefcda185676afe5a",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroSkillOpenInfoLayer.prefab",
@@ -4520,8 +4674,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "7ccf1191f2e4f72035d4ec19a11ac9cae885a89e3ad498491a93ee80012dab46"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "7ccf1191f2e4f72035d4ec19a11ac9cae885a89e3ad498491a93ee80012dab46",
+    "acceptance": {
+      "sha256": "7ccf1191f2e4f72035d4ec19a11ac9cae885a89e3ad498491a93ee80012dab46",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroStrongInfoCell.prefab",
@@ -4839,14 +5000,14 @@
       "position": {
         "__type__": "cc.Vec3",
         "z": 0,
-        "y": -512,
-        "x": -310
+        "y": -460.8,
+        "x": -279.0
       },
       "scale": {
         "__type__": "cc.Vec3",
         "z": 1,
-        "y": 1,
-        "x": 1
+        "y": 0.9,
+        "x": 0.9
       },
       "size": {
         "__type__": "cc.Size",
@@ -5096,9 +5257,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "69171db87360334589268b5a67963d091c0fc62da2df88fceee9cf83f6f3ecdc"
+    "reviewStatus": "实际预览通过",
+    "visual": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+    "sha256": "788151f0f89cd54d63503793e380afe397348dd10e0c36de066fcb00145dca52",
+    "acceptance": {
+      "sha256": "788151f0f89cd54d63503793e380afe397348dd10e0c36de066fcb00145dca52",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroUpStarSelectItemCell.prefab",
@@ -5255,8 +5423,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "785e3a472480c5bfe1c34d34cb432b74652fd090f84bb425f0a07b5729d3e451"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "785e3a472480c5bfe1c34d34cb432b74652fd090f84bb425f0a07b5729d3e451",
+    "acceptance": {
+      "sha256": "785e3a472480c5bfe1c34d34cb432b74652fd090f84bb425f0a07b5729d3e451",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroXSelectItemCell.prefab",
@@ -5399,8 +5574,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "db1dffbfb2fdcc7d409e2d6cdf6cbac6837a5eb35358e82ad038880b2691bd09"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "db1dffbfb2fdcc7d409e2d6cdf6cbac6837a5eb35358e82ad038880b2691bd09",
+    "acceptance": {
+      "sha256": "db1dffbfb2fdcc7d409e2d6cdf6cbac6837a5eb35358e82ad038880b2691bd09",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/idle-hero/IdleHeroSelectLayer.prefab",
@@ -5554,8 +5736,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "9e907c0e70e7e69798ec228714782f70ed0fba5e2eaebd21084ac79a2a3bd596"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "9e907c0e70e7e69798ec228714782f70ed0fba5e2eaebd21084ac79a2a3bd596",
+    "acceptance": {
+      "sha256": "9e907c0e70e7e69798ec228714782f70ed0fba5e2eaebd21084ac79a2a3bd596",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/item/ItemExhibitionLayer.prefab",
@@ -5632,9 +5821,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "c19dedc595bf48b52f32ee8a19f586f4aa81b21e69c21a2b4ff2607471a608ff"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+    "sha256": "c19dedc595bf48b52f32ee8a19f586f4aa81b21e69c21a2b4ff2607471a608ff",
+    "acceptance": {
+      "sha256": "c19dedc595bf48b52f32ee8a19f586f4aa81b21e69c21a2b4ff2607471a608ff",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/item/ItemRewardLayer.prefab",
@@ -5712,8 +5908,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "de979fb4a70317c8a1029b977847871b4855ceb0ee0d82dcdfa2e526147a7ece"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "de979fb4a70317c8a1029b977847871b4855ceb0ee0d82dcdfa2e526147a7ece",
+    "acceptance": {
+      "sha256": "de979fb4a70317c8a1029b977847871b4855ceb0ee0d82dcdfa2e526147a7ece",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/item/ItemScelectNumLayer.prefab",
@@ -5783,9 +5986,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "0179789b6a81ef3a5c1e58b138e4f3824fd2937464e920c38cb19f9508234f02"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "0179789b6a81ef3a5c1e58b138e4f3824fd2937464e920c38cb19f9508234f02",
+    "acceptance": {
+      "sha256": "0179789b6a81ef3a5c1e58b138e4f3824fd2937464e920c38cb19f9508234f02",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/item/ItemSelectLayer.prefab",
@@ -5918,9 +6128,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "6a081748cc9582cd5afb083294b25ff72ea3850debc5427e2233a7332d26078c"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+    "sha256": "e4aa9a04f4888e930f5d58ac0798124c3bdf4f631b785b83eec968b5d1ca8657",
+    "acceptance": {
+      "sha256": "e4aa9a04f4888e930f5d58ac0798124c3bdf4f631b785b83eec968b5d1ca8657",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+      "inspector": "2026-11-02 收尾批负责人明确回复两份均已实际操作并认可：临时微调、保存、恢复原值、保存并重开，无 Missing Script 或意外布局变化；最终文件指纹一致。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/legacy-login/LoginPanel.prefab",
@@ -5991,8 +6208,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "14a5d5458a7746a751da0f0d85c1c379250f73544bc81beb9d5a6b2b5486f938"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "14a5d5458a7746a751da0f0d85c1c379250f73544bc81beb9d5a6b2b5486f938",
+    "acceptance": {
+      "sha256": "14a5d5458a7746a751da0f0d85c1c379250f73544bc81beb9d5a6b2b5486f938",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/legacy-login/UserLoginLayer.prefab",
@@ -6182,8 +6406,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "743c115040c2875da4a8893a74c5ed719d3c35b453b41432e4a63fce4412528c"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "743c115040c2875da4a8893a74c5ed719d3c35b453b41432e4a63fce4412528c",
+    "acceptance": {
+      "sha256": "743c115040c2875da4a8893a74c5ed719d3c35b453b41432e4a63fce4412528c",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/login/ChooseServerRoleCell.prefab",
@@ -6305,8 +6536,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "4158603db77f0ab32138053a2364406c97b9fc5c9e274c83cac2386c473fccec"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "4158603db77f0ab32138053a2364406c97b9fc5c9e274c83cac2386c473fccec",
+    "acceptance": {
+      "sha256": "4158603db77f0ab32138053a2364406c97b9fc5c9e274c83cac2386c473fccec",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/login/ErrorLayer.prefab",
@@ -6397,9 +6635,16 @@
     ],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "0f90e8e71b78f29d2b376f7d40fff556cfeb13f071594e9d8c2b733c79b3c2cf"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "0f90e8e71b78f29d2b376f7d40fff556cfeb13f071594e9d8c2b733c79b3c2cf",
+    "acceptance": {
+      "sha256": "0f90e8e71b78f29d2b376f7d40fff556cfeb13f071594e9d8c2b733c79b3c2cf",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/login/LoadingLayer.prefab",
@@ -6449,8 +6694,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "aa7e7d4d239c76cec2df2c7bf9836b671f0387c131c97889d4e1beb2c4bc9096"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "aa7e7d4d239c76cec2df2c7bf9836b671f0387c131c97889d4e1beb2c4bc9096",
+    "acceptance": {
+      "sha256": "aa7e7d4d239c76cec2df2c7bf9836b671f0387c131c97889d4e1beb2c4bc9096",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/login/NoticeLayer.prefab",
@@ -6542,8 +6794,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f3f07b4646cbdb71449a458c326dbabd411d467e04b83c899f5b03f090efd777"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "f3f07b4646cbdb71449a458c326dbabd411d467e04b83c899f5b03f090efd777",
+    "acceptance": {
+      "sha256": "f3f07b4646cbdb71449a458c326dbabd411d467e04b83c899f5b03f090efd777",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/login/ServerCellView.prefab",
@@ -6790,8 +7049,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "add1a68a395546d8f0c224c16753c4e2b8491e6061d4de941c19e0da850fed70"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "add1a68a395546d8f0c224c16753c4e2b8491e6061d4de941c19e0da850fed70",
+    "acceptance": {
+      "sha256": "add1a68a395546d8f0c224c16753c4e2b8491e6061d4de941c19e0da850fed70",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/mail/MailCell.prefab",
@@ -6872,14 +7138,14 @@
       "position": {
         "__type__": "cc.Vec3",
         "z": 0,
-        "y": -365,
-        "x": -280
+        "y": -346.75,
+        "x": -266
       },
       "scale": {
         "__type__": "cc.Vec3",
         "z": 1,
-        "y": 1,
-        "x": 1
+        "y": 0.95,
+        "x": 0.95
       },
       "size": {
         "__type__": "cc.Size",
@@ -6995,9 +7261,16 @@
     ],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f7408e699e8bc1d5b244cd660daf2a887b11401cc4d940f72d3fefa168a90979"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+    "sha256": "ac370e51aee07daa1486d6134b52f22d8ed321e5db9da650afe966bd952b00dc",
+    "acceptance": {
+      "sha256": "ac370e51aee07daa1486d6134b52f22d8ed321e5db9da650afe966bd952b00dc",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+      "inspector": "2026-11-02 收尾批负责人明确回复两份均已实际操作并认可：临时微调、保存、恢复原值、保存并重开，无 Missing Script 或意外布局变化；最终文件指纹一致。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/mail/MailLayer.prefab",
@@ -7006,14 +7279,14 @@
       "position": {
         "__type__": "cc.Vec3",
         "z": 0,
-        "y": -430,
-        "x": -310
+        "y": -387.0,
+        "x": -279.0
       },
       "scale": {
         "__type__": "cc.Vec3",
         "z": 1,
-        "y": 1,
-        "x": 1
+        "y": 0.9,
+        "x": 0.9
       },
       "size": {
         "__type__": "cc.Size",
@@ -7102,9 +7375,16 @@
     ],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f18563c9aa92ce620ac48ce9c9431e483f051debdbc4842416f2eedbc9257810"
+    "reviewStatus": "实际预览通过",
+    "visual": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+    "sha256": "a2f61c92bd7573b9fc84ac3a262791237277f9cb7dd584000c20b7f8ca73d3cc",
+    "acceptance": {
+      "sha256": "a2f61c92bd7573b9fc84ac3a262791237277f9cb7dd584000c20b7f8ca73d3cc",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/quick-battle/QuickBattleEndLayer.prefab",
@@ -7329,8 +7609,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "ff4328b88ca567f4ed5da8dcb369287ae764841a330f6b44324f2326ecc01ca5"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "ff4328b88ca567f4ed5da8dcb369287ae764841a330f6b44324f2326ecc01ca5",
+    "acceptance": {
+      "sha256": "ff4328b88ca567f4ed5da8dcb369287ae764841a330f6b44324f2326ecc01ca5",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/quick-battle/QuickBattleLayer.prefab",
@@ -7339,14 +7626,14 @@
       "position": {
         "__type__": "cc.Vec3",
         "z": 0,
-        "y": -320,
-        "x": -310
+        "y": -288.0,
+        "x": -279.0
       },
       "scale": {
         "__type__": "cc.Vec3",
         "z": 1,
-        "y": 1,
-        "x": 1
+        "y": 0.9,
+        "x": 0.9
       },
       "size": {
         "__type__": "cc.Size",
@@ -7436,8 +7723,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "2a586158cc42950b03bb4934447970be76c3ef7e2537b7a56e5369bea500c9db"
+    "visual": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。 窄屏关闭按钮已完整，左侧装饰光效贴边；完整视觉仍待确认。",
+    "sha256": "3583aed57a505a7723aa67b6a36e70707f6c61e1a6161a873cec95a0aa4ec7fe",
+    "acceptance": {
+      "sha256": "3583aed57a505a7723aa67b6a36e70707f6c61e1a6161a873cec95a0aa4ec7fe",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。 窄屏关闭按钮已完整，左侧装饰光效贴边；完整视觉仍待确认。",
+      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/quick-battle/QuickBattleTipLayer.prefab",
@@ -7535,9 +7829,16 @@
     ],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "c1c9cfa180f1ddb03b5e0484af9f9aaed85e32fc0013586fae39cc7ee6b4060c"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+    "sha256": "c1c9cfa180f1ddb03b5e0484af9f9aaed85e32fc0013586fae39cc7ee6b4060c",
+    "acceptance": {
+      "sha256": "c1c9cfa180f1ddb03b5e0484af9f9aaed85e32fc0013586fae39cc7ee6b4060c",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/reward/RewardCell.prefab",
@@ -7721,9 +8022,16 @@
     ],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "c716a99bc5c7825d5ca1f08053971790511e64a0bb82ec5688e9603b86076493"
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+    "sha256": "c716a99bc5c7825d5ca1f08053971790511e64a0bb82ec5688e9603b86076493",
+    "acceptance": {
+      "sha256": "c716a99bc5c7825d5ca1f08053971790511e64a0bb82ec5688e9603b86076493",
+      "date": "2026-11-02",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/reward/UpgradeSuccessLayer.prefab",
@@ -7989,9 +8297,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "5e454e1b6f41c31d4b493d469ee2478a97445d1112395e8b7842b3be5ec04ce6"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态布局修复已通过 640×1280、360×800、960×1280 真实预览，各三轮按钮命中与开关。BattleEditLayer 点击关闭，两个升级窗口点击原有主按钮，临时验收回调仅移除节点，不执行发送、升级或发奖。保留原始序列化文字，未注入玩家数据。",
+    "sha256": "b63c4fb17a302760eadc59b1e23333c813b4289bf1609d77f385ddafc901eb7b",
+    "acceptance": {
+      "sha256": "b63c4fb17a302760eadc59b1e23333c813b4289bf1609d77f385ddafc901eb7b",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态布局修复已通过 640×1280、360×800、960×1280 真实预览，各三轮按钮命中与开关。BattleEditLayer 点击关闭，两个升级窗口点击原有主按钮，临时验收回调仅移除节点，不执行发送、升级或发奖。保留原始序列化文字，未注入玩家数据。",
+      "inspector": "负责人回复三份均已实际操作并认可：定位修改节点、临时改值保存、恢复保存并重开，无 Missing Script；文件已核对恢复值。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/reward/UpStarSuccessLayer.prefab",
@@ -8216,8 +8531,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "c9582cc96b39e708df38126a87edd214771c3fe91f93b099192e6c78c967a45b"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "c9582cc96b39e708df38126a87edd214771c3fe91f93b099192e6c78c967a45b",
+    "acceptance": {
+      "sha256": "c9582cc96b39e708df38126a87edd214771c3fe91f93b099192e6c78c967a45b",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/role/ChangeNickLayer.prefab",
@@ -8280,9 +8602,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "7e3f1e46fe73106b22cbc4cb6f188413eb7b8215840ca1b273738dd05011186f"
+    "reviewStatus": "实际预览通过",
+    "visual": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+    "sha256": "7e3f1e46fe73106b22cbc4cb6f188413eb7b8215840ca1b273738dd05011186f",
+    "acceptance": {
+      "sha256": "7e3f1e46fe73106b22cbc4cb6f188413eb7b8215840ca1b273738dd05011186f",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/role/RoleInfoLayer.prefab",
@@ -8535,8 +8864,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "b6b2ed7c910e3619f16a832b4c6533722be96504113292c2a5d7f3926d4fcb22"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "b6b2ed7c910e3619f16a832b4c6533722be96504113292c2a5d7f3926d4fcb22",
+    "acceptance": {
+      "sha256": "b6b2ed7c910e3619f16a832b4c6533722be96504113292c2a5d7f3926d4fcb22",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/role/RoleUpgradeLayer.prefab",
@@ -8621,8 +8957,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "df69415b976c483604beae832a3c02c1e96251e25b2c3d66e0210c1578fc48d8"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "df69415b976c483604beae832a3c02c1e96251e25b2c3d66e0210c1578fc48d8",
+    "acceptance": {
+      "sha256": "df69415b976c483604beae832a3c02c1e96251e25b2c3d66e0210c1578fc48d8",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/setting/SettingLayer.prefab",
@@ -8631,14 +8974,14 @@
       "position": {
         "__type__": "cc.Vec3",
         "z": 0,
-        "y": -390,
-        "x": -305
+        "y": -351.0,
+        "x": -274.5
       },
       "scale": {
         "__type__": "cc.Vec3",
         "z": 1,
-        "y": 1,
-        "x": 1
+        "y": 0.9,
+        "x": 0.9
       },
       "size": {
         "__type__": "cc.Size",
@@ -8712,10 +9055,17 @@
     ],
     "scrolls": [],
     "warnings": [],
-    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "3a6a369188cb4d949a7aeb4e563261e78e1e562f4ec4cc5ffdf5ac34c10187ae"
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "实际预览通过",
+    "visual": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+    "sha256": "bf6759cf4e048ff28dcb0e798603f8a95410f028cdd2672dc619c75124236758",
+    "acceptance": {
+      "sha256": "bf6759cf4e048ff28dcb0e798603f8a95410f028cdd2672dc619c75124236758",
+      "date": "2026-11-02",
+      "status": "实际预览通过",
+      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/summon/SummonCell.prefab",
@@ -8879,7 +9229,14 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "be4ac8b42193feefb7b5af331933fcf4914595888d9c2620a981d7c181af1ce8"
+    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+    "sha256": "be4ac8b42193feefb7b5af331933fcf4914595888d9c2620a981d7c181af1ce8",
+    "acceptance": {
+      "sha256": "be4ac8b42193feefb7b5af331933fcf4914595888d9c2620a981d7c181af1ce8",
+      "date": "2026-11-02",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "inspector": "待负责人逐项确认"
+    }
   }
 ]

@@ -5,7 +5,7 @@
 import { CONFIG_SCHEMA, ConfigFileMap, ConfigKeyMap, ConfigName, ConfigRowMap } from "./GConfig";
 
 interface FieldRule { readonly type: string; readonly required?: boolean; readonly fields?: Readonly<Record<string, FieldRule>>; readonly items?: FieldRule; }
-interface TableRule { readonly path: string; readonly container: string; readonly key: string; readonly fields: Readonly<Record<string, FieldRule>>; readonly ignoreKeys?: readonly string[]; readonly duplicateKeys?: readonly string[]; }
+interface TableRule { readonly path: string; readonly container: string; readonly key: string; readonly fields: Readonly<Record<string, FieldRule>>; readonly ignoreKeys?: readonly string[]; }
 interface TableData { readonly file: unknown; readonly rows: readonly unknown[]; readonly index: Readonly<Record<string, unknown>>; }
 export class ConfigUnavailable extends Error {}
 export class ConfigRowMissing extends Error {}
@@ -40,7 +40,7 @@ function freeze(value: unknown): unknown {
     return value;
 }
 
-/** 校验表容器、每行和主键后建立稳定只读索引；注释行和已确认的重复策略来自规范。 */
+/** 校验表容器、每行和主键后建立稳定只读索引；仅跳过规范声明的注释行，所有重复主键均拒绝。 */
 function parse(name: ConfigName, input: unknown): TableData {
     const rule: TableRule = CONFIG_SCHEMA[name];
     if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error(name + "：配置格式错误");
@@ -57,7 +57,7 @@ function parse(name: ConfigName, input: unknown): TableData {
         if (rule.ignoreKeys?.includes(key)) return;
         validate(row, { type: "object", fields: rule.fields }, name + ".rows[" + i + "]");
         if (Object.prototype.hasOwnProperty.call(index, key)) {
-            if (!rule.duplicateKeys?.includes(key)) throw new Error(name + ".rows[" + i + "]：重复主键 " + key);
+            throw new Error(name + ".rows[" + i + "]：重复主键 " + key);
         } else index[key] = row;
         rows.push(row);
     });

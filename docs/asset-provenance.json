@@ -21343,6 +21343,48 @@
         "3",
         "spine/dwvs/dwvs.{png,atlas,json}"
       ]
+    },
+    {
+      "sourceRecord": "2026-11-02 收尾准确子图补齐",
+      "columns": [
+        "client/assets/resources/ui/bag/backpack_906411.png",
+        "bucket/TW/日本",
+        "1d0ea5dc5b28201963cfb007305d5e80fb16faeb",
+        "client/idle/res/jpn/ccbi-res/backpack.plist + .pvr.ccz",
+        "backpack/906411.png; frame=296,78,96,92; sourceSize=102x102; RGBA8888 无损还原",
+        "SHA256 969d30eb92693310223d11ca27dec690fab89b50261b884d6bacbd0a70268e7f"
+      ]
+    },
+    {
+      "sourceRecord": "2026-11-02 收尾准确子图补齐",
+      "columns": [
+        "client/assets/resources/ui/bag/backpack_906431.png",
+        "bucket/TW/日本",
+        "1d0ea5dc5b28201963cfb007305d5e80fb16faeb",
+        "client/idle/res/jpn/ccbi-res/backpack.plist + .pvr.ccz",
+        "backpack/906431.png; frame=100,92,96,92; sourceSize=102x102; RGBA8888 无损还原",
+        "SHA256 e1b3e44fb24054efaae223c1c79b70989747a9dc6d154934bb278254fd51be0d"
+      ]
+    },
+    {
+      "sourceRecord": "2026-11-02 收尾准确子图补齐",
+      "columns": [
+        "client/assets/resources/ui/bag/backpack_3010001.png",
+        "bucket/TW/魔兽梦境",
+        "71902442d3e832417892f2ac607ee930de3b2f37",
+        "client/idle/res/hd/ccbi-res/backpack-5.plist + .pvr.ccz",
+        "backpack/3010001.png; frame=250,382,90,94; sourceSize=102x102; RGBA8888 无损还原",
+        "SHA256 d119e95fb24306a9d57ac9dd1c005fdb37efabf43d22888bb1d9c8d5c403d5e1"
+      ]
+    },
+    {
+      "sourceRecord": "2026-11-02 收尾配置映射修正",
+      "columns": [
+        "item.xlsx / item!J1493 / 1300004 异空间碎片",
+        "backpack/1100507 → backpack/1300004",
+        "bucket/TW/日本 @ 1d0ea5dc5b28201963cfb007305d5e80fb16faeb: client/idle/src/config/item.lua 与 hd/ccbi-res/backpack-5.plist",
+        "名称键 710404、说明键 870004、用途一致；现有 PNG 同物品美术但像素版本不同，保留当前图片与 UUID；仅改源表并重新导出"
+      ]
     }
   ],
   "retainedPrefabArtDeviations": [

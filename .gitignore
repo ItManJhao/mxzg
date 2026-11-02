@@ -23,6 +23,7 @@ __pycache__/
 !/config/resource-missing.json
 !/config/prefab-renames.json
 !/config/prefab-layout-changes.json
+!/config/prefab-acceptance.json
 !/config/gameconfig/
 !/config/gameconfig/**
 /server/

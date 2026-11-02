@@ -61,6 +61,12 @@ async function main(): Promise<void> {
   assert((await loadBootCopy()).tips.length > 0); assert.equal(requested.length, 2);
   assert.equal(readCityGates(), null);
   await prepareCityConfig(); assert.equal(requested.length, 7); assert(readCityGates()!.opencondition.length > 0);
+  const welfare = GameConfig.instance.requireConfig(GConfig.OpenCondition, "act_recharge_day_reward");
+  const accumulated = GameConfig.instance.requireConfig(GConfig.OpenCondition, "act_recharge_accumulated_days");
+  assert.equal(welfare.level, 6); assert.equal(accumulated.level, 13);
+  const duplicate = new GameConfig(async () => ({ rows: [welfare, welfare] }));
+  await assert.rejects(duplicate.prepare([GConfig.OpenCondition]), /重复主键/);
+  assert.throws(() => duplicate.getConfig(GConfig.OpenCondition), ConfigUnavailable, "重复键整组不能提交");
   await Promise.all([prepareHeroConfig(), prepareHeroConfig()]); assert.equal(requested.length, 9);
   assert(GameConfig.instance.getConfig(GConfig.HeroType).length > 0);
   assert.equal(GameConfig.instance.requireConfig(GConfig.Language, 11).value, "确 定", "数字文本主键统一索引");

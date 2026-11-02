@@ -82,7 +82,10 @@ function icon(map, id, relative) {
     map[id] = registered;
 }
 for (const row of json(path.join(assets, 'resources/config/item.json')).rows) {
-    const relative = typeof row.icon === 'string' && row.icon.startsWith('hero-icon/') ? 'ui/hero/hero-icon_' + row.icon.slice(10) : 'ui/bag/backpack_' + row.idx;
+    // 配置允许多种道具共用一张图，不能用物品 ID 代替显式 icon 而制造缺图或显示错误图片。
+    const relative = typeof row.icon === 'string' && row.icon.startsWith('hero-icon/') ? 'ui/hero/hero-icon_' + row.icon.slice(10)
+        : typeof row.icon === 'string' && row.icon.startsWith('backpack/') ? 'ui/bag/backpack_' + row.icon.slice(9)
+        : 'ui/bag/backpack_' + row.idx;
     icon(itemIcons, row.idx, relative);
 }
 for (const row of json(path.join(assets, 'resources/config/herotype.json')).rows) if (row.item_id) icon(heroIcons, row.type, 'ui/hero/hero-icon_' + row.item_id);

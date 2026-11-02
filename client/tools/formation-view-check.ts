@@ -1,3 +1,4 @@
+/** 出阵 Prefab 绑定与编辑参数回归；同时拒绝头像空按钮截获阵位点击。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { Button, Color, Label, Mask, Node, Prefab, ScrollView, Sprite, UITransform } from "cc";
@@ -51,8 +52,16 @@ function instantiateData(data: any[]): Node {
     return objects.get(1);
 }
 
+/** 核对真实序列化绑定、阵位点击归属及现有编辑参数行为。 */
 function main(): void {
     const data = read(PAGE), authored = data.find((row: any) => row.__type__ === viewType);
+    for (const slot of data.filter((row: any) => row.__type__ === slotType)) {
+        const portrait = data[slot.portrait.__id__];
+        for (const ref of portrait._components) {
+            const component = data[ref.__id__];
+            assert.ok(component.__type__ !== "cc.Button" || component._enabled === false, "阵位头像不得启用空按钮截获父节点撤下点击");
+        }
+    }
     // Simulate ordinary Inspector edits in serialized authoring data.
     const title = data[authored.titleLabel.__id__]; title._fontSize=44; title._string="人工修改标题";
     const button = data[data[authored.confirmButton.__id__].node.__id__]; button._lpos.x=344; button._lpos.y=96;

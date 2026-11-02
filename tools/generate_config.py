@@ -73,7 +73,7 @@ def generate(check):
             if key in spec.get('ignoreKeys', []):
                 continue
             validate(row, {'type': 'object', 'fields': spec['fields']}, f'{name}.rows[{i}]')
-            assert key not in seen or key in spec.get('duplicateKeys', []), f'{name}.rows[{i}]: 主键重复 {key}'
+            assert key not in seen, f'{name}.rows[{i}]: 主键重复 {key}'
             seen.add(key)
         out.append(f'export interface {name}Row {{')
         for field, rule in sorted(spec['fields'].items()):

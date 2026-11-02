@@ -4,9 +4,20 @@ import { resources } from "cc";
 import { createAssetScope } from "../assets/scripts/framework/assets/ResourceAssets";
 import { ResourceCatalog } from "../assets/scripts/framework/assets/ResourceCatalog";
 import { ResourceScopeClosed } from "../assets/scripts/framework/assets/ResourcePool";
+import { ItemIconById } from "../assets/scripts/framework/assets/IconCatalog";
+
+/** 核对源配置明确复用的图标，防止生成器再次按物品 ID 错报缺图或选错图。 */
+function checkSharedItemIcons(): void {
+    assert.equal(ItemIconById[900508]?.path, "ui/bag/backpack_900505");
+    assert.equal(ItemIconById[901825]?.path, "ui/bag/backpack_905311");
+    assert.equal(ItemIconById[904002]?.uuid, ItemIconById[904001]?.uuid);
+    assert(ItemIconById[904002], "复用图标必须实际登记，不能两个 undefined 相等");
+    assert.equal(ItemIconById[900006], undefined, "真实缺图不得以其他道具图片冒充");
+}
 
 /** 使用可控资源回调验证作用域边界，不把引擎替身视为真实渲染。 */
 async function main(): Promise<void> {
+    checkSharedItemIcons();
     let requests = 0, retained = 0, released = 0;
     const callbacks: Array<(error: Error | null, asset?: unknown) => void> = [];
     resources.load = (path: string, _type: unknown, callback: (error: Error | null, asset?: unknown) => void) => {

@@ -29,7 +29,30 @@
       "x": -300,
       "y": -375
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "narrowScreenReview": {
+      "before": {
+        "position": [
+          -300,
+          -375
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "after": {
+        "position": [
+          -270.0,
+          -337.5
+        ],
+        "scale": [
+          0.9,
+          0.9
+        ]
+      },
+      "reason": "360×800 独立壳层实测关闭按钮裁切；根仅 UITransform，无动画，静态等比缩小并保持居中，子节点及 meta 不变。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/battle/BattleEditLayer.prefab",
@@ -45,7 +68,66 @@
       "x": -320,
       "y": -384
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "contentReview": {
+      "reason": "正文与底部按钮原来带有错误父坐标偏移；恢复底板内的独立区域。",
+      "root": {
+        "scale": [
+          1,
+          0.85
+        ],
+        "position": [
+          [
+            -320,
+            -384
+          ],
+          [
+            -272,
+            -326.4
+          ]
+        ]
+      },
+      "spr_send1": {
+        "position": [
+          [
+            -296.02,
+            -829.238
+          ],
+          [
+            0,
+            -358
+          ]
+        ],
+        "height": [
+          700,
+          600
+        ]
+      },
+      "btn_send": {
+        "position": [
+          [
+            42.075,
+            -847.008
+          ],
+          [
+            -80.5,
+            -663.5
+          ]
+        ]
+      },
+      "UIMenuItemLabel_1": {
+        "position": [
+          [
+            258.075,
+            -847.008
+          ],
+          [
+            135.5,
+            -663.5
+          ]
+        ]
+      }
+    }
   },
   {
     "path": "client/assets/prefabs/ui/battle/BattleReportLayer.prefab",
@@ -77,7 +159,30 @@
       "x": -320,
       "y": -300
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "narrowScreenReview": {
+      "before": {
+        "position": [
+          -320,
+          -300
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "after": {
+        "position": [
+          -272,
+          -255
+        ],
+        "scale": [
+          0.85,
+          0.85
+        ]
+      },
+      "reason": "360×800 真实独立预览发现右上关闭按钮裁切；根无 Widget/Layout/Animation，保留全部子坐标和 UUID。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/chapter/ChapterRewardLayer.prefab",
@@ -145,7 +250,70 @@
       "x": -281,
       "y": -351
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "contentReview": {
+      "reason": "保留左侧六行属性与右侧技能；限制文字列宽，防止自动扩宽覆盖。",
+      "attributeRows": {
+        "count": 6,
+        "centerX": [
+          281,
+          231
+        ],
+        "backgroundWidth": [
+          480,
+          330
+        ]
+      },
+      "labels": {
+        "names": [
+          "lbl_attr_*",
+          "lbl_level",
+          "lbl_pre_*",
+          "lbl_cur_*"
+        ],
+        "x": [
+          -155,
+          -155,
+          -65,
+          55
+        ],
+        "width": [
+          80,
+          80,
+          80,
+          100
+        ],
+        "height": 28,
+        "anchor": [
+          0,
+          0.5
+        ],
+        "overflow": "SHRINK",
+        "fontSize": 20,
+        "lineHeight": 24,
+        "wrap": false
+      },
+      "arrows": {
+        "x": 30,
+        "size": [
+          26,
+          18
+        ]
+      },
+      "preserved": "所有节点/组件索引、父子关系、文本值和 meta UUID",
+      "spr_up": {
+        "position": [
+          [
+            237,
+            4
+          ],
+          [
+            269,
+            75
+          ]
+        ]
+      }
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroInfoUpStarLayer.prefab",
@@ -225,7 +393,30 @@
       "x": -310,
       "y": -512
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "narrowScreenReview": {
+      "before": {
+        "position": [
+          -310,
+          -512
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "after": {
+        "position": [
+          -279.0,
+          -460.8
+        ],
+        "scale": [
+          0.9,
+          0.9
+        ]
+      },
+      "reason": "360×800 独立壳层实测关闭按钮裁切；根仅 UITransform，无动画，静态等比缩小并保持居中，子节点及 meta 不变。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroUpStarSelectLayer.prefab",
@@ -305,7 +496,43 @@
       "x": -260,
       "y": -230
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "contentReview": {
+      "reason": "货币图标、八位价格与底条错位；保留原数值，分别占据固定区域。",
+      "node_price.y": [
+        285,
+        300
+      ],
+      "spr_res_need.position": [
+        [
+          15,
+          15
+        ],
+        [
+          -55,
+          0
+        ]
+      ],
+      "lbl_res_need": {
+        "position": [
+          [
+            30,
+            15
+          ],
+          [
+            -30,
+            0
+          ]
+        ],
+        "size": [
+          200,
+          48
+        ],
+        "overflow": "SHRINK",
+        "horizontalAlign": "LEFT",
+        "verticalAlign": "CENTER"
+      }
+    }
   },
   {
     "path": "client/assets/prefabs/ui/login/ServerPickerView.prefab",
@@ -353,7 +580,26 @@
       "x": -280,
       "y": -365
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "contentReview": {
+      "reason": "底板实际宽 580，不能以根宽 560 判断窄屏安全；缩放后宽 551。",
+      "root": {
+        "scale": [
+          1,
+          0.95
+        ],
+        "position": [
+          [
+            -280,
+            -365
+          ],
+          [
+            -266,
+            -346.75
+          ]
+        ]
+      }
+    }
   },
   {
     "path": "client/assets/prefabs/ui/mail/MailLayer.prefab",
@@ -369,7 +615,30 @@
       "x": -310,
       "y": -430
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "narrowScreenReview": {
+      "before": {
+        "position": [
+          -310,
+          -430
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "after": {
+        "position": [
+          -279.0,
+          -387.0
+        ],
+        "scale": [
+          0.9,
+          0.9
+        ]
+      },
+      "reason": "360×800 独立壳层实测关闭按钮裁切；根仅 UITransform，无动画，静态等比缩小并保持居中，子节点及 meta 不变。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/quick-battle/QuickBattleEndLayer.prefab",
@@ -401,7 +670,30 @@
       "x": -310,
       "y": -320
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "narrowScreenReview": {
+      "before": {
+        "position": [
+          -310,
+          -320
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "after": {
+        "position": [
+          -279.0,
+          -288.0
+        ],
+        "scale": [
+          0.9,
+          0.9
+        ]
+      },
+      "reason": "360×800 独立壳层实测关闭按钮裁切；根仅 UITransform，无动画，静态等比缩小并保持居中，子节点及 meta 不变。"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/quick-battle/QuickBattleTipLayer.prefab",
@@ -433,7 +725,58 @@
       "x": -281,
       "y": -353
     },
-    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标",
+    "contentReview": {
+      "reason": "保留左侧六行属性与右侧技能；限制文字列宽，防止自动扩宽覆盖。",
+      "attributeRows": {
+        "count": 6,
+        "centerX": [
+          281,
+          231
+        ],
+        "backgroundWidth": [
+          480,
+          330
+        ]
+      },
+      "labels": {
+        "names": [
+          "lbl_attr_*",
+          "lbl_level",
+          "lbl_pre_*",
+          "lbl_cur_*"
+        ],
+        "x": [
+          -155,
+          -155,
+          -65,
+          55
+        ],
+        "width": [
+          80,
+          80,
+          80,
+          100
+        ],
+        "height": 28,
+        "anchor": [
+          0,
+          0.5
+        ],
+        "overflow": "SHRINK",
+        "fontSize": 20,
+        "lineHeight": 24,
+        "wrap": false
+      },
+      "arrows": {
+        "x": 30,
+        "size": [
+          26,
+          18
+        ]
+      },
+      "preserved": "所有节点/组件索引、父子关系、文本值和 meta UUID"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/reward/UpStarSuccessLayer.prefab",
@@ -536,5 +879,38 @@
       "UIMenu_1.UITransform._contentSize"
     ],
     "reason": "将原 runtime 的遮罩搬移、content 重挂和全屏菜单命中禁用固定到 Prefab；视口原有 540×388 和内容坐标不变"
+  },
+  {
+    "path": "client/assets/prefabs/ui/setting/SettingLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y",
+      "root._lscale.x",
+      "root._lscale.y"
+    ],
+    "reason": "真实窄屏复验修正",
+    "narrowScreenReview": {
+      "before": {
+        "position": [
+          -305,
+          -390
+        ],
+        "scale": [
+          1,
+          1
+        ]
+      },
+      "after": {
+        "position": [
+          -274.5,
+          -351.0
+        ],
+        "scale": [
+          0.9,
+          0.9
+        ]
+      },
+      "reason": "360×800 独立壳层实测关闭按钮裁切；根仅 UITransform，无动画，静态等比缩小并保持居中，子节点及 meta 不变。"
+    }
   }
 ]
