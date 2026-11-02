@@ -33,7 +33,7 @@ function fixture(base: string) {
     }, retryDelay: () => 20,
   });
   const service = new AccountService(account, new AccountApi(http, socket), { read: () => null, write: () => {}, clear: () => {} });
-  bag.initialize({ account, authorization: service, api: new BagApi(http, socket) });
+  bag.initialize({ account, authorization: service, api: new BagApi(socket) });
   socket.onRejected = (token, message) => service.rejectSession(token, message);
   socket.onReady = () => { if (account.snapshot.role && !account.snapshot.busy) void bag.refresh(true); };
   socket.onDisconnected = () => { if (account.snapshot.role && !account.snapshot.busy) void bag.refresh(true); };

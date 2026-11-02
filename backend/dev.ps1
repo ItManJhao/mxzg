@@ -1,3 +1,4 @@
+<# 本机后端启动和检查入口；复用进程前核实新长连接可握手，避免误复用旧 HTTP 后端。 #>
 param([ValidateSet('run', 'test', 'package')][string]$Action = 'run')
 $ErrorActionPreference = 'Stop'
 $previousJavaHome = $env:JAVA_HOME
@@ -42,7 +43,7 @@ try {
                 }
                 if ($catalogValid) {
                     $featuresReady = $true
-                    foreach ($endpoint in @('inventory', 'campaign')) {
+                    foreach ($endpoint in @('campaign')) {
                         $featureStatus = $null
                         try {
                             $null = Invoke-WebRequest -Uri "http://127.0.0.1:$backendPort/api/v1/$endpoint" -UseBasicParsing -TimeoutSec 3
@@ -55,6 +56,15 @@ try {
                         if ($featureStatus -ne 401) { $featuresReady = $false }
                     }
                     if ($featuresReady) {
+                        $gameSocketProbe = [System.Net.WebSockets.ClientWebSocket]::new()
+                        $gameSocketTimeout = [System.Threading.CancellationTokenSource]::new(3000)
+                        try {
+                            $gameSocketProbe.ConnectAsync([Uri]"ws://127.0.0.1:$backendPort/api/v1/game/socket", $gameSocketTimeout.Token).GetAwaiter().GetResult()
+                        } catch {
+                            throw "Port $backendPort is running a backend without the required WebSocket endpoint. Stop that backend and restart this launcher."
+                        } finally {
+                            $gameSocketProbe.Abort(); $gameSocketProbe.Dispose(); $gameSocketTimeout.Dispose()
+                        }
                         Write-Host "[READY] Remake backend is already running at http://127.0.0.1:$backendPort. Reusing the existing server."
                         Write-Host 'No second process was started. Closing this launcher will not stop the existing server.'
                         return

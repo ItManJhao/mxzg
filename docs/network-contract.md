@@ -1,14 +1,14 @@
 # 首批长连接契约与接入顺序
 
-更新：2026-11-02。状态：服务端会话及客户端登录/背包查询试点已接通，默认关闭；其他玩法仍走 HTTP。隔离联调及登录/背包/顶号真实页面已复验，不代表全量迁移、三端或正式服 1:1 验收完成。原项目通信证据见 [架构核查](architecture.md#原项目架构核查2026-11-02)。本文定义新版技术契约，不改变旧游戏规则。
+更新：2026-11-02。状态：登录会话与背包默认使用 WebSocket，客户端开关及背包 HTTP 分支已删除；后端 GET `/api/v1/inventory` 已退役为 404。其他玩法仍走 HTTP。已完成隔离联调及部分日常真实页面复验；三端和正式服 1:1 验收继续按清单推进。原项目通信证据见 [架构核查](architecture.md#原项目架构核查2026-11-02)。本文定义新版技术契约，不改变旧游戏规则。
 
 ## 首批范围
 
 用户已调整优先级：长连接基础 → 登录与重连 → 背包作为标准模块 → 英雄等其他模块。采用 JSON 文本消息；首批只接会话与背包查询，不接英雄升级写操作，不兼容旧 TCP/Protobuf 客户端。正式渠道身份认证另行接入，本机仍用开发登录换取访问令牌。HTTP 保留选服、身份交换与非游戏业务，其他已有接口在逐项验收后迁移，不一次删除。
 
-试点入口 `/api/v1/game/socket`，仅 `local & !production` 且 `mxzg.websocket.enabled=true` 时注册；默认没有该端点。当前验证使用随机端口和独立内存 H2。不要直接在日常玩家实例开启试点做顶号测试：接管会撤销同角色其他令牌，影响 HTTP 和 WS 两条链路。正式 WSS/TLS、正式来源与三端适配尚未验收。
+入口 `/api/v1/game/socket`，local 配置默认 `mxzg.websocket.enabled=true`；只在 Servlet 应用注册，不影响数据库层的非 Web 集成测试。production 来源、TLS 和多实例在线协调仍待配置与验收。启动器复用旧进程前会检查 WebSocket 握手能力；只提供旧 HTTP 接口的进程须先重启。顶号会撤销同角色其他令牌，跨模块保持相同身份边界。
 
-独立预览运行 [start-socket-preview.ps1](../scripts/start-socket-preview.ps1)：先跑真实 TS 客户端联调，再启动强制内存 H2 的测试宿主，输出带随机端口和实例标识的 Creator 地址。Creator 需已导入最新脚本；访问输出的完整地址才启用 `mxzgSocket=1`，核对实例身份并隔离浏览器存储。仅传开关、身份不匹配或指向保留端口均停止连接，不回退日常后端。场景中的 `useGameSocket` 默认 false，此批没有改场景默认值。关闭测试进程后测试数据消失；测试宿主不进入后端正式包。
+日常预览直接打开 Creator 地址即可，无须开关。独立预览运行 [start-socket-preview.ps1](../scripts/start-socket-preview.ps1)：先跑真实 TS 客户端联调，再启动强制内存 H2 的测试宿主，输出带随机端口和实例标识的 Creator 地址；参数只选择隔离实例和存储，不决定传输方式。旧 `mxzgSocket` 参数会明确报错，应移除。关闭测试进程后测试数据消失；测试宿主不进入后端正式包。
 
 DTO 唯一字段定义在 [session-contract.json](../protocol/session-contract.json)，生成命令为 `node tools/generate_session_contract.cjs`；`--check` 检查生成漂移。当前覆盖鉴权请求、鉴权确认、心跳响应、英雄升级请求，尚未覆盖统一信封、升级结果、快照和推送。生成类型不等于入站校验；接入前必须验证字符串长度、UUID、整数范围、必填字段及方向。
 
@@ -58,7 +58,8 @@ DTO 唯一字段定义在 [session-contract.json](../protocol/session-contract.j
 | 当前操作 | 计划消息/去向 | 批次 |
 |---|---|---|
 | GET servers；POST development/login | HTTP 保留；开发登录日后换正式身份适配 | 基础 |
-| GET roles/me；GET heroes；GET inventory | session.sync 首批三模块；背包另有 inventory.list | 优先登录/背包试点 |
+| GET roles/me；GET heroes | session.sync 首批三模块；名册单独查询后续迁移 | 登录会话已接入 |
+| 原 GET inventory（已删除） | inventory.list，客户端只允许 WS 查询 | 已迁移 |
 | GET heroes/{heroId} | hero.detail | 后续 |
 | GET heroes/{heroId}/level-up | hero.level.preview | 背包之后 |
 | POST heroes/{heroId}/level-up | hero.level.upgrade | 背包之后 |
@@ -67,7 +68,7 @@ DTO 唯一字段定义在 [session-contract.json](../protocol/session-contract.j
 | POST campaign/battles；POST campaign/battles/{id}/claim | campaign.challenge / campaign.claim | 后续 |
 | GET idle；POST idle/claim | idle.read / idle.claim | 后续 |
 
-上述对应当前 16 个操作。完整聊天、公会与其他玩法尚未定义在本契约中，必须依原协议补充，不能视作已覆盖。
+旧清单共 16 个 HTTP 操作，移除库存查询后剩 15 个。完整聊天、公会与其他玩法尚未定义在本契约中，必须依原协议补充，不能视作已覆盖。
 
 ## 接入验收门槛
 

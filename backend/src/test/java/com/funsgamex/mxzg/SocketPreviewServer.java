@@ -24,7 +24,7 @@ public class SocketPreviewServer {
         Files.writeString(manifest, "{\"port\":" + port + ",\"run\":\"" + RUN + "\",\"pid\":" + ProcessHandle.current().pid() + "}");
         System.out.println("[SOCKET-PREVIEW] isolated instance ready at port " + port);
         System.out.println("http://localhost:7456/?mxzgTestApi=http%3A%2F%2F127.0.0.1%3A" + port
-            + "&mxzgTestRun=" + RUN + "&mxzgSocket=1");
+            + "&mxzgTestRun=" + RUN);
     }
 
     /** 只在显式导入的预览上下文提供身份接口，不进入普通测试或产品包组件扫描。 */

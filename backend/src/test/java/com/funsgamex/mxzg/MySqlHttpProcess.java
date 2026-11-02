@@ -94,6 +94,43 @@ final class MySqlHttpProcess implements AutoCloseable {
         return json.readTree(response.body());
     }
 
+    /** 库存只通过真实 WS 鉴权/同步/读取；失效令牌检查协议错误，不模拟 HTTP 返回。 */
+    JsonNode inventory(String token, int expected) throws Exception {
+        assertTrue(process != null && process.isAlive(), "拒绝请求未知后端");
+        var messages = new java.util.concurrent.LinkedBlockingQueue<JsonNode>();
+        var socket = client.newWebSocketBuilder().connectTimeout(Duration.ofSeconds(5))
+            .buildAsync(URI.create("ws://127.0.0.1:" + port + "/api/v1/game/socket"), new java.net.http.WebSocket.Listener() {
+                final StringBuilder buffer = new StringBuilder();
+                @Override public void onOpen(java.net.http.WebSocket webSocket) { webSocket.request(1); }
+                @Override public java.util.concurrent.CompletionStage<?> onText(java.net.http.WebSocket webSocket, CharSequence data, boolean last) {
+                    buffer.append(data);
+                    if (last) { messages.add(json.readTree(buffer.toString())); buffer.setLength(0); }
+                    webSocket.request(1); return null;
+                }
+            }).get(5, TimeUnit.SECONDS);
+        try {
+            String connection = null;
+            JsonNode result = null;
+            for (String name : List.of("session.authenticate", "session.sync", "inventory.list")) {
+                String id = UUID.randomUUID().toString();
+                var frame = new LinkedHashMap<String, Object>();
+                frame.put("version", 1); frame.put("kind", "request"); frame.put("name", name); frame.put("id", id);
+                frame.put("body", name.equals("session.authenticate") ? Map.of("accessToken", token, "clientInstanceId", UUID.randomUUID().toString()) : Map.of());
+                if (connection != null) frame.put("connectionId", connection);
+                socket.sendText(json.writeValueAsString(frame), true).get(5, TimeUnit.SECONDS);
+                var response = messages.poll(5, TimeUnit.SECONDS);
+                assertNotNull(response, "库存 WS 未响应"); assertEquals(id, response.path("id").asString());
+                if (expected == 401) {
+                    assertFalse(response.path("ok").asBoolean());
+                    assertEquals("UNAUTHENTICATED", response.path("error").path("code").asString()); return response;
+                }
+                assertEquals(200, expected); assertTrue(response.path("ok").asBoolean(), "库存 WS 请求失败");
+                connection = response.path("connectionId").asString(); result = response.path("body");
+            }
+            return result;
+        } finally { socket.abort(); }
+    }
+
     /** 停止旧进程后重新执行 java，断言 PID 改变，不能以同 JVM 的上下文刷新替代。 */
     void restart() throws Exception {
         long previous = process.pid(); close(); start(); assertNotEquals(previous, process.pid());

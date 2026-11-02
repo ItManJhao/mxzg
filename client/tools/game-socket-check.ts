@@ -86,7 +86,7 @@ function setup(timeout = 150) {
   });
   const api = new AccountApi(http, socket);
   const service = new AccountService(account, api, { read: () => null, write: () => {}, clear: () => {} });
-  bag.initialize({ account, authorization: service, api: new BagApi(http, socket) });
+  bag.initialize({ account, authorization: service, api: new BagApi(socket) });
   socket.onRejected = (token, message) => service.rejectSession(token, message);
   socket.onReady = () => { if (account.snapshot.role && !account.snapshot.busy) void bag.refresh(true); };
   socket.onDisconnected = () => { if (account.snapshot.role && !account.snapshot.busy) void bag.refresh(true); };
@@ -105,10 +105,10 @@ async function main(): Promise<void> {
   try {
     Object.defineProperty(globalThis, "location", { configurable: true, value: { hostname: "localhost", search: "?mxzgSocket=1" } });
     await assert.rejects(isolatedPreview("http://127.0.0.1:18080", async () => assert.fail("孤立开关不能访问日常实例"), storage));
-    (globalThis as any).location.search = "?mxzgTestApi=http://127.0.0.1:45678&mxzgTestRun=" + run + "&mxzgSocket=1";
-    await assert.rejects(isolatedPreview("http://127.0.0.1:18080", async () => ({ status: 200, data: { kind: "mxzg-owned-mysql-it", run } }), storage));
+    (globalThis as any).location.search = "?mxzgTestApi=http://127.0.0.1:45678&mxzgTestRun=" + run;
+    await assert.rejects(isolatedPreview("http://127.0.0.1:18080", async () => ({ status: 200, data: { kind: "unknown", run } }), storage));
     const isolated = await isolatedPreview("http://127.0.0.1:18080", async () => ({ status: 200, data: { kind: "mxzg-owned-socket-it", run } }), storage);
-    assert.equal(isolated.gameSocket, true); assert.equal(isolated.http.baseAddress, "http://127.0.0.1:45678");
+    assert.equal(isolated.http.baseAddress, "http://127.0.0.1:45678");
     isolated.storage.setItem("session", "isolated"); assert.equal(store.get("session"), undefined);
   } finally {
     if (locationBefore) Object.defineProperty(globalThis, "location", locationBefore);

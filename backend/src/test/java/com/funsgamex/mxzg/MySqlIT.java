@@ -8,7 +8,7 @@ import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.campaign.CampaignService;
 import com.funsgamex.mxzg.campaign.CampaignBattle;
 import com.funsgamex.mxzg.hero.HeroController;
-import com.funsgamex.mxzg.inventory.InventoryController;
+import com.funsgamex.mxzg.network.SessionSnapshotService;
 import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.lineup.LineupService;
 import com.funsgamex.mxzg.role.RoleService;
@@ -40,7 +40,9 @@ class MySqlIT {
     private LineupService lineups;
     private RoleService roles;
     private HeroController heroes;
-    private InventoryController inventory;
+    private SessionSnapshotService snapshots;
+    /** 在原事务快照入口验证库存，不重新暴露已退役的 HTTP 查询。 */
+    private java.util.List<com.funsgamex.mxzg.inventory.InventoryService.Item> inventory(String token) { return snapshots.snapshot(token).inventory(); }
     private boolean previewEligible;
     private record Player(String account, String id, String token) {}
 
@@ -71,7 +73,7 @@ class MySqlIT {
         lineups = app.getBean(LineupService.class);
         roles = app.getBean(RoleService.class);
         heroes = app.getBean(HeroController.class);
-        inventory = app.getBean(InventoryController.class);
+        snapshots = app.getBean(SessionSnapshotService.class);
     }
 
     /** 父测试与独立 JVM 共用真实应用启动配置，排除外部环境并固定专用数据源；HTTP 仅绑定随机回环端口。 */
@@ -198,7 +200,7 @@ class MySqlIT {
         var second = login.login(account, "local-2");
         assertNotEquals(ids.getFirst(), second.role().id());
         assertNotEquals(ids.getFirst(), player().id());
-        assertTrue(inventory.list("Bearer " + second.session().accessToken()).isEmpty());
+        assertTrue(inventory("Bearer " + second.session().accessToken()).isEmpty());
         rejected(401, () -> roles.current(null));
         rejected(401, () -> roles.current("Bearer " + "a".repeat(43)));
     }
@@ -246,9 +248,9 @@ class MySqlIT {
     @Test @Order(5) void midAwardFailureRollsBackEveryWrite() {
         var p = player(); campaign.initialize(p.token()); var report = campaign.challenge(p.token(), UUID.randomUUID().toString());
         jdbc.update("UPDATE game_inventory SET quantity=? WHERE role_id=? AND item_id=900101", Long.MAX_VALUE, p.id());
-        var before = inventory.list(p.token());
+        var before = inventory(p.token());
         assertThrows(RuntimeException.class, () -> campaign.claim(p.token(), report.id()));
-        assertEquals(before, inventory.list(p.token())); assertEquals(0, roles.current(p.token()).gold());
+        assertEquals(before, inventory(p.token())); assertEquals(0, roles.current(p.token()).gold());
         assertEquals(0, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
         assertEquals(1, campaign.current(p.token()).stageId()); assertFalse(campaign.current(p.token()).pending().claimed());
         assertEquals(0, number("SELECT COUNT(*) FROM game_inventory WHERE role_id=? AND item_id=900401", p.id()));
@@ -263,7 +265,7 @@ class MySqlIT {
         var expires = jdbc.queryForObject("SELECT expires_at FROM game_session WHERE role_id=?", Timestamp.class, p.id()).toInstant();
         assertTrue(Math.abs(Duration.between(Instant.now().plusSeconds(3600), expires).toSeconds()) <= 2);
         jdbc.update("UPDATE game_session SET expires_at=? WHERE role_id=?", Timestamp.from(Instant.now().minusSeconds(10)), p.id());
-        rejected(401, () -> inventory.list(p.token())); rejected(401, () -> roles.current(p.token()));
+        rejected(401, () -> inventory(p.token())); rejected(401, () -> roles.current(p.token()));
         System.out.println("[MYSQL-IT] timezone JVM=UTC JDBC=UTC MySQL=+00:00; expired session rejected");
     }
 
@@ -277,7 +279,7 @@ class MySqlIT {
         app.close(); app = null; mysql.restart(); boot();
         var again = login.login(p.account(), "local-1"); String token = "Bearer " + again.session().accessToken();
         assertEquals(p.id(), again.role().id()); assertEquals(settled.role(), again.role());
-        assertEquals(settled.inventory(), inventory.list(token)); assertEquals(lineup, lineups.current(token));
+        assertEquals(settled.inventory(), inventory(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
         assertEquals(5, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
@@ -307,7 +309,7 @@ class MySqlIT {
             var heroRows = http.request("GET", "/heroes", token, null, 200);
             assertEquals(3, heroRows.size());
             http.request("GET", "/heroes/" + heroRows.get(0).get("id").asText(), token, null, 200);
-            var initialInventory = http.request("GET", "/inventory", token, null, 200);
+            var initialInventory = http.inventory(token, 200);
             assertTrue(initialInventory.size() >= 2);
             var lineup = http.request("GET", "/lineups/main", token, null, 200);
             var save = Map.of("expectedVersion", lineup.get("version").asLong(), "slots", lineup.get("slots"));
@@ -324,7 +326,7 @@ class MySqlIT {
             var otherWorld = http.request("POST", "/development/login", null, Map.of("account", account, "serverId", "local-2"), 200);
             String otherToken = otherWorld.get("session").get("accessToken").asText();
             assertNotEquals(role, otherWorld.get("role").get("id").asText());
-            assertEquals(0, http.request("GET", "/inventory", otherToken, null, 200).size());
+            assertEquals(0, http.inventory(otherToken, 200).size());
             var challenge = Map.of("requestId", UUID.randomUUID().toString());
             Callable<tools.jackson.databind.JsonNode> fight = () -> http.request("POST", "/campaign/battles", token, challenge, 200);
             var reports = overlap("http-challenge", List.of(fight, fight));
@@ -340,9 +342,11 @@ class MySqlIT {
             assertEquals(report, http.request("GET", "/campaign", claimToken, null, 200).get("pending"));
             assertEquals(saved, http.request("GET", "/lineups/main", claimToken, null, 200));
             assertEquals(heroRows, http.request("GET", "/heroes", claimToken, null, 200));
-            assertEquals(initialInventory, http.request("GET", "/inventory", claimToken, null, 200));
             // 重启前颁发的有效会话也必须可从专用数据库恢复。
             http.request("GET", "/roles/me", token, null, 200);
+            assertEquals(initialInventory, http.inventory(claimToken, 200));
+            // 新令牌通过 WS 接管后旧令牌必须持久失效，不能再沿 HTTP 访问同一角色。
+            http.request("GET", "/roles/me", token, null, 401);
             Callable<tools.jackson.databind.JsonNode> claim = () -> http.request("POST", claimPath, claimToken, null, 200);
             var settlements = overlap("http-claim", List.of(claim, claim));
             assertEquals(settlements.getFirst(), settlements.getLast());
@@ -355,7 +359,7 @@ class MySqlIT {
             var lastLogin = http.request("POST", "/development/login", null, credentials, 200);
             String lastToken = lastLogin.get("session").get("accessToken").asText();
             assertEquals(settled.get("role"), lastLogin.get("role"));
-            assertEquals(settled.get("inventory"), http.request("GET", "/inventory", lastToken, null, 200));
+            assertEquals(settled.get("inventory"), http.inventory(lastToken, 200));
             assertEquals(saved, http.request("GET", "/lineups/main", lastToken, null, 200));
             assertEquals(heroRows, http.request("GET", "/heroes", lastToken, null, 200));
             var state = http.request("GET", "/campaign", lastToken, null, 200);
@@ -364,7 +368,7 @@ class MySqlIT {
             assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", role));
             assertEquals(5, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
             jdbc.update("UPDATE game_session SET expires_at=? WHERE role_id=?", Timestamp.from(Instant.now().minusSeconds(10)), role);
-            http.request("GET", "/inventory", lastToken, null, 401);
+            http.inventory(lastToken, 401);
             http.request("GET", "/roles/me", lastToken, null, 401);
             System.out.println("[MYSQL-IT] HTTP chain passed; independent JVM restarts=2; pending/settled snapshots restored; expired session=401");
         }

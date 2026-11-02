@@ -1,6 +1,8 @@
 """Black-box checks: an occupied port never starts a second Maven/backend process."""
 import os
 import json
+import base64
+import hashlib
 from pathlib import Path
 import subprocess
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -12,19 +14,33 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @unittest.skipUnless(os.name == "nt", "Windows PowerShell launcher")
 class BackendLauncherTest(unittest.TestCase):
-    def probe_occupied_port(self, status, catalog=None, feature_status=401, expected_exit=1):
+    def probe_occupied_port(self, status, catalog=None, feature_status=401, expected_exit=1, websocket=True):
+        """验证复用前的 HTTP 能力与 WS 握手；全程只操作合成的回环服务。"""
         requests = []
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self):
                 requests.append(self.path)
+                if self.path == "/api/v1/game/socket" and websocket:
+                    key = self.headers.get("Sec-WebSocket-Key", "")
+                    accept = base64.b64encode(hashlib.sha1((key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest()).decode()
+                    self.protocol_version = "HTTP/1.1"
+                    self.send_response(101)
+                    self.send_header("Upgrade", "websocket")
+                    self.send_header("Connection", "Upgrade")
+                    self.send_header("Sec-WebSocket-Accept", accept)
+                    self.end_headers()
+                    self.close_connection = True
+                    return
                 response_status = status
                 body = b""
                 if self.path == "/api/v1/servers" and catalog is not None:
                     response_status = 200
                     body = json.dumps(catalog).encode()
-                elif self.path in ("/api/v1/inventory", "/api/v1/campaign"):
+                elif self.path == "/api/v1/campaign":
                     response_status = feature_status
+                elif self.path == "/api/v1/game/socket":
+                    response_status = 404
                 self.send_response(response_status)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))
@@ -55,9 +71,9 @@ class BackendLauncherTest(unittest.TestCase):
         if status == 401:
             expected_requests.append("/api/v1/servers")
             if catalog:
-                expected_requests.append("/api/v1/inventory")
-                if feature_status != 404:
-                    expected_requests.append("/api/v1/campaign")
+                expected_requests.append("/api/v1/campaign")
+                if feature_status == 401:
+                    expected_requests.append("/api/v1/game/socket")
         self.assertEqual(requests, expected_requests)
         output = result.stdout + result.stderr
         self.assertNotIn("Scanning for projects", output)
@@ -89,7 +105,13 @@ class BackendLauncherTest(unittest.TestCase):
                     "name": "Development", "enabled": True}]
         output = self.probe_occupied_port(401, catalog=catalog, feature_status=404)
         self.assertIn("OLD backend", output)
-        self.assertIn("/api/v1/inventory", output)
+        self.assertIn("/api/v1/campaign", output)
+
+    def test_http_only_backend_requires_restart(self):
+        """旧 HTTP 后端即使角色接口可用，也不能被误判为支持新版背包。"""
+        catalog = [{"id": "local-1", "regionId": "local", "regionName": "Local", "name": "Development", "enabled": True}]
+        output = self.probe_occupied_port(401, catalog=catalog, websocket=False)
+        self.assertIn("required WebSocket endpoint", output)
 
     def test_other_server_is_not_stopped(self):
         output = self.probe_occupied_port(200)

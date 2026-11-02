@@ -6,3 +6,6 @@ spring:
     password: ""
 server:
   address: 127.0.0.1
+mxzg:
+  websocket:
+    enabled: true

@@ -1,4 +1,4 @@
-/** 本机长连接试点开关；默认关闭，仅 local 非生产配置可显式启用，不改变现有客户端。 */
+/** 登录和背包的本机长连接入口；local 默认启用，生产部署仍须配置来源与会话协调。 */
 package com.funsgamex.mxzg.network;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
+@org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication(type = org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type.SERVLET)
 @Profile("local & !production")
 @ConditionalOnProperty(name = "mxzg.websocket.enabled", havingValue = "true")
 @EnableWebSocket

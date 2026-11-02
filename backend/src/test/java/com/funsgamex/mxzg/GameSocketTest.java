@@ -21,7 +21,7 @@ import tools.jackson.databind.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "mxzg.websocket.enabled=true", "spring.datasource.url=jdbc:h2:mem:socket_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+    "spring.datasource.url=jdbc:h2:mem:socket_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
     "spring.datasource.username=sa", "spring.datasource.password="})
 @ActiveProfiles("local")
 @Import(GameSocketTest.IdentityProbe.class)
@@ -253,5 +253,13 @@ class GameSocketTest {
             assertEquals(0, process.exitValue(), output);
             assertTrue(output.contains("PASS real TS client"), output);
         } finally { if (process.isAlive()) process.destroyForcibly(); }
+    }
+
+    /** 原库存 HTTP 路由已退役，默认客户端不能再通过它回退读取。 */
+    @Test void inventoryHttpEndpointIsRetired() throws Exception {
+        try (var client = HttpClient.newHttpClient()) {
+            var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/v1/inventory")).GET().build(), HttpResponse.BodyHandlers.discarding());
+            assertEquals(404, response.statusCode());
+        }
     }
 }

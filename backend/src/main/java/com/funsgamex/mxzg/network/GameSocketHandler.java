@@ -20,6 +20,7 @@ import org.springframework.web.socket.handler.*;
 import tools.jackson.databind.*;
 
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication(type = org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type.SERVLET)
 @Profile("local & !production")
 @ConditionalOnProperty(name = "mxzg.websocket.enabled", havingValue = "true")
 public class GameSocketHandler extends TextWebSocketHandler {

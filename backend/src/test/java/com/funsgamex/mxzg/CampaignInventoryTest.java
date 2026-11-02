@@ -1,8 +1,9 @@
+/** 主线发奖与库存事务回归；库存读取通过统一会话快照，不依赖已退役的 HTTP Controller。 */
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.campaign.*;
-import com.funsgamex.mxzg.inventory.InventoryController;
+import com.funsgamex.mxzg.network.SessionSnapshotService;
 import com.funsgamex.mxzg.role.RoleService;
 import java.net.URI;
 import java.net.http.*;
@@ -25,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CampaignInventoryTest {
     @Autowired DevelopmentLoginService login;
     @Autowired CampaignService campaign;
-    @Autowired InventoryController inventory;
+    @Autowired SessionSnapshotService snapshots;
     @Autowired RoleService roles;
     @Autowired JdbcTemplate jdbc;
     @LocalServerPort int port;
@@ -37,11 +38,12 @@ class CampaignInventoryTest {
     }
     String request() { return UUID.randomUUID().toString(); }
     long count(String table,String role) { return jdbc.queryForObject("SELECT COUNT(*) FROM "+table+" WHERE role_id=?",Long.class,role); }
+    /** 切服角色和库存各自归属，初始化不污染其他服。 */
     @Test void worldsKeepIndependentRolesAndInventory() {
         var first=player();var second=login.login(first.account(),"local-2");String token="Bearer "+second.session().accessToken();
         assertNotEquals(first.role(),second.role().id());assertEquals("local-2",second.role().serverId());
         campaign.initialize(first.token());
-        assertEquals(2,inventory.list(first.token()).size());assertTrue(inventory.list(token).isEmpty());
+        assertEquals(2,snapshots.snapshot(first.token()).inventory().size());assertTrue(snapshots.snapshot(token).inventory().isEmpty());
         assertEquals(first.role(),login.login(first.account(),"local-1").role().id());
         assertEquals(400,assertThrows(ResponseStatusException.class,()->login.login(first.account(),"not-a-server")).getStatusCode().value());
     }
@@ -63,6 +65,7 @@ class CampaignInventoryTest {
         assertTrue(battle.won());assertFalse(battle.hits().isEmpty());
         for(var hit:battle.hits()) { assertTrue(hit.damage()>0);assertTrue(hit.remainingHp()>=0); }
     }
+    /** 发奖权威、持久且幂等，重登后的库存快照与结算一致。 */
     @Test void claimIsOwnedDurableAndIdempotent() {
         var p=player();var other=player();campaign.initialize(p.token());
         var battle=campaign.challenge(p.token(),request());
@@ -72,7 +75,7 @@ class CampaignInventoryTest {
         assertEquals(result,campaign.claim(p.token(),battle.id()));
         var relogin=login.login(p.account());String token="Bearer "+relogin.session().accessToken();
         assertEquals(4000,relogin.role().gold());assertEquals(2,campaign.current(token).stageId());
-        assertEquals(result.inventory(),inventory.list(token));assertNull(campaign.current(token).pending());
+        assertEquals(result.inventory(),snapshots.snapshot(token).inventory());assertNull(campaign.current(token).pending());
     }
     @Test void concurrentClaimAwardsOnlyOnce() throws Exception {
         var p=player();campaign.initialize(p.token());var battle=campaign.challenge(p.token(),request());
@@ -105,6 +108,7 @@ class CampaignInventoryTest {
         var result=CampaignBattle.resolve(request(),"test",1,List.of(ally,enemy),List.of(new CampaignRules.Reward(900001,100)));
         assertFalse(result.won());assertTrue(result.rewards().isEmpty());
     }
+    /** 尚未迁移的选服和主线保留 HTTP，主线仍拒绝未鉴权访问。 */
     @Test void publicServerCatalogAndAuthenticatedCampaignWorkOverHttp() throws Exception {
         var http=HttpClient.newHttpClient();
         var servers=http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/servers")).GET().build(),HttpResponse.BodyHandlers.ofString());
@@ -113,7 +117,7 @@ class CampaignInventoryTest {
         var init=http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/campaign/initialize"))
             .header("Authorization",p.token()).POST(HttpRequest.BodyPublishers.noBody()).build(),HttpResponse.BodyHandlers.ofString());
         assertEquals(200,init.statusCode());assertTrue(init.body().contains("\"initialized\":true"));
-        var denied=http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/inventory")).GET().build(),HttpResponse.BodyHandlers.ofString());
+        var denied=http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/campaign")).GET().build(),HttpResponse.BodyHandlers.ofString());
         assertEquals(401,denied.statusCode());
     }
 }
