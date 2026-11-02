@@ -17,12 +17,28 @@ import tools.jackson.databind.ObjectMapper;
 import static org.junit.jupiter.api.Assertions.*;
 
 final class MySqlHttpProcess implements AutoCloseable {
+    private static String identityRun;
     private final Properties input = new Properties();
     private final Path root;
     private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
     private final ObjectMapper json = new ObjectMapper();
     private Process process;
     private int generation, port;
+
+    /** 输出仅包含本批运行标识和监听端口，供显式 Creator 测试连接使用。 */
+    void writePreviewManifest() throws Exception {
+        Files.writeString(root.resolve("preview.properties"),"run="+input.getProperty("run")+"\nport="+port+"\npid="+process.pid()+"\n");
+        System.out.println("[MYSQL-IT] Creator preview http://127.0.0.1:"+port+" run="+input.getProperty("run")+" manifest="+root.resolve("preview.properties"));
+    }
+
+    /** 仅测试 classpath/profile 暴露归属凭证，不包含玩家数据、密码、令牌或管理能力。 */
+    @org.springframework.web.bind.annotation.RestController
+    @org.springframework.context.annotation.Profile("mysql-it")
+    static class IdentityController {
+        /** 客户端必须匹配显式运行标识才允许启用测试会话存储和登录。 */
+        @org.springframework.web.bind.annotation.GetMapping("/api/v1/test-identity")
+        public Map<String,String> identity() { return Map.of("kind","mxzg-owned-mysql-it","run",identityRun==null?"":identityRun); }
+    }
 
     /** 接收本批实例已验证的身份；不接受默认业务配置或共享实例凭据。 */
     MySqlHttpProcess(String url, String user, String password, String database, String uuid, int mysqlPort, String run, Path root) {
@@ -123,6 +139,7 @@ final class MySqlHttpProcess implements AutoCloseable {
                 assertEquals(1, schemaGrants);
             }
         }
+        identityRun=run;
         var app = MySqlIT.openApplication(url, user, input.getProperty("password"), database, true);
         int httpPort = ((WebServerApplicationContext) app).getWebServer().getPort();
         Path ready = Path.of(input.getProperty("ready")), temporary = ready.resolveSibling(ready.getFileName() + ".tmp");

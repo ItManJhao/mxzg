@@ -41,12 +41,23 @@ class MySqlIT {
     private RoleService roles;
     private HeroController heroes;
     private InventoryController inventory;
+    private boolean previewEligible;
     private record Player(String account, String id, String token) {}
 
     /** 在任何迁移前创建独占实例并校验版本、身份、库名、权限和服务器 UUID。 */
     @BeforeAll void start() throws Exception {
         mysql = new OwnedMysql();
-        try { mysql.initialize(); boot(); }
+        try {
+            mysql.initialize();
+            // 本批全新库先到 V3，写入明确合成夹具，再由真实应用迁移 V4，验证已有数据保留。
+            org.flywaydb.core.Flyway.configure().dataSource(mysql.url(),mysql.user,mysql.password).cleanDisabled(true).target("3").load().migrate();
+            try(var connection=mysql.connect();var statement=connection.createStatement()) {
+                statement.executeUpdate("INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id) VALUES ('00000000-0000-4000-8000-000000000001','it_v3_migration','it_v3_migration',1,500,0,'it_v3_migration','local-1')");
+                statement.executeUpdate("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES ('00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001',10101001,2,1)");
+                statement.executeUpdate("INSERT INTO game_inventory(role_id,item_id,quantity) VALUES ('00000000-0000-4000-8000-000000000001',900101,100)");
+            }
+            boot();
+        }
         catch (Exception | AssertionError failure) { close(); throw failure; }
     }
 
@@ -96,7 +107,17 @@ class MySqlIT {
     /** 关闭本批上下文和持有的原生进程句柄；不删除库或猜测其他进程的归属。 */
     @AfterAll void close() throws Exception {
         if (app != null) { app.close(); app = null; }
-        if (mysql != null) mysql.close();
+        try {
+            if(previewEligible && Boolean.getBoolean("mxzg.mysql.preview")) {
+                mysql.guard();Path root=Files.createDirectory(mysql.root.resolve("creator-preview"));
+                try(var http=new MySqlHttpProcess(mysql.url(),mysql.user,mysql.password,mysql.database,mysql.uuid,mysql.port,mysql.run,root)) {
+                    http.start();http.writePreviewManifest();
+                    System.out.println("[MYSQL-IT] Preview retained for at most 45 minutes; create exact stop file: "+root.resolve("stop-preview"));
+                    long deadline=System.nanoTime()+TimeUnit.MINUTES.toNanos(45);
+                    while(!Files.exists(root.resolve("stop-preview")) && System.nanoTime()<deadline)Thread.sleep(250);
+                }
+            }
+        } finally { if (mysql != null) mysql.close(); }
     }
 
     /** 创建只存在于本批专用库的随机合成测试账号。 */
@@ -114,9 +135,14 @@ class MySqlIT {
         assertEquals(code, assertThrows(ResponseStatusException.class, action::run).getStatusCode().value());
     }
 
-    /** 空库必须执行现行三份迁移，真实 MySQL 列类型、索引和约束须可查询。 */
+    /** 空库必须执行现行四份迁移，真实 MySQL 列类型、索引和约束须可查询。 */
     @Test @Order(1) void emptySchemaMigratesWithRealMysqlTypesAndConstraints() {
-        assertEquals(3, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(500,number("SELECT gold FROM game_role WHERE login_account='it_v3_migration'"));
+        assertEquals(2,number("SELECT hero_level FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
+        assertEquals(0,number("SELECT stage FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
+        assertEquals(100,number("SELECT quantity FROM game_inventory WHERE role_id='00000000-0000-4000-8000-000000000001' AND item_id=900101"));
+        System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V4; stage=0");
+        assertEquals(4, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals("bigint", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_inventory' AND COLUMN_NAME='quantity'", String.class));
         assertEquals("timestamp", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_session' AND COLUMN_NAME='expires_at'", String.class));
         assertEquals(1, number("SELECT COUNT(DISTINCT INDEX_NAME) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND INDEX_NAME='uq_role_account_server' AND NON_UNIQUE=0"));
@@ -254,9 +280,9 @@ class MySqlIT {
         assertEquals(settled.inventory(), inventory.list(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
-        assertEquals(3, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(4, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals(settled, campaign.claim(token, report.id()));
-        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=3");
+        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=4");
     }
 
     /** 通过独立 JVM 的真实 HTTP 完成业务链，在未领奖和已领奖两个阶段分别终止进程再登录核验恢复。 */
@@ -336,11 +362,71 @@ class MySqlIT {
             assertEquals(2, state.get("stageId").asInt()); assertTrue(state.get("pending").isNull());
             assertEquals(settled, http.request("POST", claimPath, lastToken, null, 200));
             assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", role));
-            assertEquals(3, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+            assertEquals(4, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
             jdbc.update("UPDATE game_session SET expires_at=? WHERE role_id=?", Timestamp.from(Instant.now().minusSeconds(10)), role);
             http.request("GET", "/inventory", lastToken, null, 401);
             http.request("GET", "/roles/me", lastToken, null, 401);
             System.out.println("[MYSQL-IT] HTTP chain passed; independent JVM restarts=2; pending/settled snapshots restored; expired session=401");
+        }
+    }
+
+    /** 真 MySQL 锁等待证明升级重复请求和不同请求真正重叠；收据失败必须回滚全部资产/等级。 */
+    @Test @Order(9) void heroUpgradeConcurrencyAndRollback() throws Exception {
+        boot(); var levels=app.getBean(com.funsgamex.mxzg.hero.HeroLevelService.class);
+        var p=player();campaign.initialize(p.token());var battle=campaign.challenge(p.token(),UUID.randomUUID().toString());
+        assertTrue(battle.won());campaign.claim(p.token(),battle.id());String hero=heroes.list(p.token()).getFirst().id();
+        var request=new com.funsgamex.mxzg.hero.HeroLevelService.Request(UUID.randomUUID().toString(),1);
+        Callable<com.funsgamex.mxzg.hero.HeroLevelService.Result> upgrade=()->levels.upgrade(p.token(),hero,request);
+        var repeated=overlap("hero-upgrade-same-request",List.of(upgrade,upgrade));
+        assertEquals(repeated.getFirst(),repeated.getLast());assertEquals(3947,roles.current(p.token()).gold());
+        var jobs=new ArrayList<Callable<Integer>>();
+        for(int i=0;i<2;i++)jobs.add(()->{
+            try {levels.upgrade(p.token(),hero,new com.funsgamex.mxzg.hero.HeroLevelService.Request(UUID.randomUUID().toString(),2));return 200;}
+            catch(ResponseStatusException failure){assertEquals("HERO_LEVEL_CHANGED",failure.getReason());return failure.getStatusCode().value();}
+        });
+        var outcomes=overlap("hero-upgrade-different-request",jobs);Collections.sort(outcomes);assertEquals(List.of(200,409),outcomes);
+        assertEquals(3,levels.preview(p.token(),hero).hero().level());assertEquals(2,number("SELECT COUNT(*) FROM game_hero_level_request WHERE role_id=?",p.id()));
+        var before=levels.preview(p.token(),hero);
+        // 已有收据也包含该英雄，故故障约束仅针对下一等级，避免给有效历史数据制造冲突。
+        jdbc.execute("ALTER TABLE game_hero_level_request ADD CONSTRAINT it_upgrade_failure CHECK (hero_id <> '"+hero+"' OR from_level <> 3)");
+        try {assertThrows(RuntimeException.class,()->levels.upgrade(p.token(),hero,new com.funsgamex.mxzg.hero.HeroLevelService.Request(UUID.randomUUID().toString(),3)));}
+        finally {jdbc.execute("ALTER TABLE game_hero_level_request DROP CHECK it_upgrade_failure");}
+        assertEquals(before,levels.preview(p.token(),hero));assertEquals(2,number("SELECT COUNT(*) FROM game_hero_level_request WHERE role_id=?",p.id()));
+        System.out.println("[MYSQL-IT] hero upgrade concurrency=2 observed groups; receipt failure rolls back gold/experience/level");
+    }
+
+    /** 正常 HTTP 首胜奖励足够升级；第二场使用新属性，独立 JVM 重启后重登/重放不再扣费。 */
+    @Test @Order(10) void heroUpgradeHttpRewardBattleAndRestart() throws Exception {
+        app.close();app=null;jdbc=new JdbcTemplate(new org.springframework.jdbc.datasource.DriverManagerDataSource(mysql.url(),mysql.user,mysql.password));
+        try(var http=new MySqlHttpProcess(mysql.url(),mysql.user,mysql.password,mysql.database,mysql.uuid,mysql.port,mysql.run,Files.createDirectory(mysql.root.resolve("hero-http")))) {
+            http.start();var credentials=Map.of("account","hero_http_"+mysql.run.substring(0,10),"serverId","local-1");
+            var login=http.request("POST","/development/login",null,credentials,200);
+            String token=login.get("session").get("accessToken").asText();
+            http.request("POST","/campaign/initialize",token,null,200);
+            var roster=http.request("GET","/heroes",token,null,200);String hero=roster.get(0).get("id").asText();
+            String path="/heroes/"+hero+"/level-up";
+            assertEquals("INSUFFICIENT_GOLD",http.request("GET",path,token,null,200).get("status").asText());
+            var report=http.request("POST","/campaign/battles",token,Map.of("requestId",UUID.randomUUID().toString()),200);
+            assertTrue(report.get("won").asBoolean());
+            http.request("POST","/campaign/battles/"+report.get("id").asText()+"/claim",token,null,200);
+            var preview=http.request("GET",path,token,null,200);assertEquals(53,preview.get("cost").get("gold").asInt());
+            var request=Map.of("requestId",UUID.randomUUID().toString(),"expectedLevel",1);
+            var result=http.request("POST",path,token,request,200);
+            assertEquals(2,result.get("preview").get("hero").get("level").asInt());assertEquals(3947,result.get("role").get("gold").asLong());
+            assertEquals(538,result.get("preview").get("experience").asLong());
+            var second=http.request("POST","/campaign/battles",token,Map.of("requestId",UUID.randomUUID().toString()),200);
+            boolean found=false;
+            for(var unit:second.get("units"))if(hero.equals(unit.get("id").asText())) {
+                found=true;assertEquals(2,unit.get("level").asInt());assertEquals(result.get("preview").get("current").get("hp").asInt(),unit.get("maxHp").asInt());
+                assertEquals(result.get("preview").get("current").get("atk").asInt(),unit.get("attack").asInt());
+            }
+            assertTrue(found);http.restart();
+            var restored=http.request("POST","/development/login",null,credentials,200);String restoredToken=restored.get("session").get("accessToken").asText();
+            assertEquals(result.get("role"),restored.get("role"));assertEquals(result,http.request("POST",path,restoredToken,request,200));
+            assertEquals(second,http.request("GET","/campaign",restoredToken,null,200).get("pending"));
+            assertEquals(1,number("SELECT COUNT(*) FROM game_hero_level_request WHERE role_id=?",restored.get("role").get("id").asText()));
+            System.out.println("[MYSQL-IT] normal reward -> level 2 (53 gold/12 hero exp) -> real second battle won="+second.get("won").asBoolean()+" -> new JVM/relogin/receipt replay preserved");
+            previewEligible=true;
         }
     }
 

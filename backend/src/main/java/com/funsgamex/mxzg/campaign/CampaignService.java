@@ -1,3 +1,4 @@
+/** 主线使用真实库存与战报事务；玩家/NPC 属性通过统一英雄成长规则构建，历史战报不重算。 */
 package com.funsgamex.mxzg.campaign;
 
 import com.funsgamex.mxzg.auth.SessionService;
@@ -28,10 +29,12 @@ public class CampaignService {
     private final InventoryService inventory;
     private final CampaignRules rules;
     private final ObjectMapper json;
+    private final com.funsgamex.mxzg.hero.HeroGrowthRules growth;
+    /** 注入主线规则与统一成长计算，正常业务仍使用原有角色锁和事务。 */
     public CampaignService(JdbcTemplate jdbc, SessionService sessions, RoleRepository roles,
-        HeroRepository heroes, InventoryService inventory, CampaignRules rules, ObjectMapper json) {
+        HeroRepository heroes, InventoryService inventory, CampaignRules rules, ObjectMapper json, com.funsgamex.mxzg.hero.HeroGrowthRules growth) {
         this.jdbc=jdbc;this.sessions=sessions;this.roles=roles;this.heroes=heroes;
-        this.inventory=inventory;this.rules=rules;this.json=json;
+        this.inventory=inventory;this.rules=rules;this.json=json;this.growth=growth;
     }
     private void lock(String role) { jdbc.queryForObject("SELECT id FROM game_role WHERE id=? FOR UPDATE",String.class,role); }
     public State current(String token) { return state(sessions.requireRole(token)); }
@@ -66,6 +69,7 @@ public class CampaignService {
         jdbc.update("UPDATE game_campaign SET initialized=TRUE WHERE role_id=?",role);
         return state(role);
     }
+    /** 保存含成长配置版本的权威战报；重复挑战复用既有战报，不重算历史属性。 */
     @Transactional(isolation=Isolation.READ_COMMITTED)
     public CampaignBattle.Report challenge(String token,String requestId) {
         String role=sessions.requireRole(token);
@@ -80,25 +84,28 @@ public class CampaignService {
         if(current.pending()!=null) return current.pending();
         var stage=rules.stage(current.stageId());
         if(stage==null) throw new ResponseStatusException(HttpStatus.CONFLICT,"Current content completed");
-        var battle=CampaignBattle.resolve(UUID.randomUUID().toString(),rules.version(),stage.id(),current.units(),stage.rewards());
+        var battle=CampaignBattle.resolve(UUID.randomUUID().toString(),rules.version()+"+"+growth.version(),stage.id(),current.units(),stage.rewards());
         if(battle.units().stream().noneMatch(CampaignBattle.Unit::ally)) throw new ResponseStatusException(HttpStatus.CONFLICT,"Lineup is empty");
         jdbc.update("INSERT INTO game_battle(id,role_id,request_id,stage_id,claimed,snapshot_json) VALUES (?,?,?,?,FALSE,?)",
             battle.id(),role,requestId,stage.id(),json.writeValueAsString(battle));
         return battle;
     }
+    /** 玩家取持久化等阶，NPC 由配置等级定位等阶，双方读取同一基础成长公式。 */
     private List<CampaignBattle.Unit> units(String role,CampaignRules.Stage stage) {
         var units=new ArrayList<CampaignBattle.Unit>();
         jdbc.query("SELECT h.*,s.position FROM game_lineup_slot s JOIN game_hero h ON h.id=s.hero_id AND h.role_id=s.role_id WHERE s.role_id=? ORDER BY s.position",
             (org.springframework.jdbc.core.RowCallbackHandler)row->{
                 var hero=rules.hero(row.getInt("template_id"),row.getInt("star"));
-                units.add(unit(row.getString("id"),true,row.getInt("position"),row.getInt("hero_level"),hero));
+                units.add(unit(row.getString("id"),true,row.getInt("position"),row.getInt("hero_level"),row.getInt("stage"),hero));
             },role);
         int index=0;
-        if(stage!=null) for(var enemy:stage.enemies()) units.add(unit("enemy-"+index++,false,enemy.position(),enemy.level(),rules.hero(enemy.templateId(),enemy.star())));
+        if(stage!=null) for(var enemy:stage.enemies()) units.add(unit("enemy-"+index++,false,enemy.position(),enemy.level(),growth.npcStage(enemy.level()),rules.hero(enemy.templateId(),enemy.star())));
         return List.copyOf(units);
     }
-    private CampaignBattle.Unit unit(String id,boolean ally,int position,int level,CampaignRules.Hero hero) {
-        return new CampaignBattle.Unit(id,ally,position,hero.templateId(),hero.name(),level,hero.hp(),hero.atk(),hero.def(),hero.spd());
+    /** 计算权威四属性；等级与属性一起进入战报快照，客户端不自行套公式。 */
+    private CampaignBattle.Unit unit(String id,boolean ally,int position,int level,int stage,CampaignRules.Hero hero) {
+        var stats = growth.stats(hero.templateId(),hero.star(),level,stage);
+        return new CampaignBattle.Unit(id,ally,position,hero.templateId(),hero.name(),level,stats.hp(),stats.atk(),stats.def(),stats.spd());
     }
     @Transactional(isolation=Isolation.READ_COMMITTED)
     public Settlement claim(String token,String battleId) {
