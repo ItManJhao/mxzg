@@ -11,13 +11,16 @@ import type { HeroRosterView } from "./HeroRosterPresentation";
 export class HeroRosterController {
   private off: (() => void) | null = null;
   private closed = false;
-  /** 在页面打开前注入只读展示源，不建立第二份角色名册。 */
+  /** 注入唯一名册展示源，点击拥有的实例交给应用打开普通升级，不复制英雄状态。 */
   constructor(private readonly model: HeroRosterModel, private readonly service: HeroRosterService,
-    catalog: HeroCatalog, private readonly view: HeroRosterView, notice: (text: string) => void) {
+    catalog: HeroCatalog, private readonly view: HeroRosterView, notice: (text: string) => void, openHero?: (heroId:string)=>void) {
     view.useRoster({
       read: elem => presentHeroRoster(model.snapshot, catalog, elem),
       retry: () => { if (this.off && !this.closed) { notice(""); void service.refresh(); } },
-      select: cell => { if (this.off && !this.closed) notice(cell.name + " Lv" + cell.level + "，详情暂未开放"); },
+      select: cell => { if (this.off && !this.closed) {
+        if(openHero && cell.instanceId)openHero(cell.instanceId);
+        else notice(cell.name + " Lv" + cell.level + "，详情暂未开放");
+      } },
     });
   }
   /** 订阅当前页面刷新并查询角色名册；重复显示不叠加观察者。 */

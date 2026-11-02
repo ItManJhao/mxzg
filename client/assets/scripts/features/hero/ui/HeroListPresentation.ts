@@ -15,6 +15,7 @@ export type HeroListTab = "hero" | "book";
 export type HeroCellKind = "empty" | "owned" | "locked";
 
 export interface HeroCellModel {
+  readonly instanceId?: string;
   kind: HeroCellKind;
   name: string;
   showName: boolean;

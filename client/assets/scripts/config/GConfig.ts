@@ -51,6 +51,14 @@ export interface CityPositionRow {
   /** 所处场景层级 */
   readonly zorder: number;
 }
+export interface HeroLevelRow {
+  /** 升级所需英雄经验 */
+  readonly exp_need: number;
+  /** 升级所需金币 */
+  readonly gold_need: number;
+  /** 英雄登记 */
+  readonly level: number;
+}
 export interface HeroTalkRow {
   /** 编号 */
   readonly idx: number;
@@ -205,6 +213,7 @@ export const GConfig = {
   CityButton: "CityButton",
   CityEffect: "CityEffect",
   CityPosition: "CityPosition",
+  HeroLevel: "HeroLevel",
   HeroTalk: "HeroTalk",
   HeroType: "HeroType",
   Item: "Item",
@@ -217,6 +226,7 @@ export interface ConfigRowMap {
   CityButton: CityButtonRow;
   CityEffect: CityEffectRow;
   CityPosition: CityPositionRow;
+  HeroLevel: HeroLevelRow;
   HeroTalk: HeroTalkRow;
   HeroType: HeroTypeRow;
   Item: ItemRow;
@@ -229,6 +239,7 @@ export interface ConfigKeyMap {
   CityButton: string;
   CityEffect: number;
   CityPosition: number;
+  HeroLevel: number;
   HeroTalk: number;
   HeroType: number;
   Item: number;
@@ -241,6 +252,7 @@ export interface ConfigFileMap {
   CityButton: { readonly act: Readonly<Record<string, CityButtonRow>> };
   CityEffect: { readonly maincityeffect: readonly CityEffectRow[] };
   CityPosition: { readonly main: readonly CityPositionRow[] };
+  HeroLevel: { readonly rows: readonly HeroLevelRow[] };
   HeroTalk: { readonly rows: readonly HeroTalkRow[] };
   HeroType: { readonly rows: readonly HeroTypeRow[] };
   Item: { readonly rows: readonly ItemRow[] };
@@ -386,6 +398,28 @@ export const CONFIG_SCHEMA = {
     },
     "key": "idx",
     "path": "config/maincity/maincitypos"
+  },
+  "HeroLevel": {
+    "container": "rows",
+    "fields": {
+      "exp_need": {
+        "note": "升一级所需英雄经验（900101）",
+        "required": true,
+        "type": "number"
+      },
+      "gold_need": {
+        "note": "升一级所需金币（900001）",
+        "required": true,
+        "type": "number"
+      },
+      "level": {
+        "note": "英雄当前等级",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "level",
+    "path": "config/herolevel"
   },
   "HeroTalk": {
     "container": "rows",

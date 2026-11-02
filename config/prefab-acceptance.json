@@ -122,11 +122,11 @@
       "inspector": "负责人回复三份均已实际操作并认可：定位修改节点、临时改值保存、恢复保存并重开，无 Missing Script；文件已核对恢复值。"
     },
     "client/assets/prefabs/ui/hero/HeroInfoUpLevelLayer.prefab": {
-      "sha256": "8c58b0872d7da774c64a5dbb614e171d7388353f8d6b0890fed762856cab9579",
+      "sha256": "7e7593b755546090887c9cff1cb8d62a435f88a5bafc569c600c93cad48cb8a5",
       "date": "2026-11-02",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-      "inspector": "待负责人逐项确认"
+      "status": "实际预览通过",
+      "scope": "普通升级真实业务：640×1280、360×800、960×1280，引擎 FrameSize 与 canvas 实际尺寸核对，各三轮关闭重开。正确四属性/成本/余额、底板、返回和单次按钮、底层点击拦截；正常奖励后升级、双击仅一请求、关闭后真实响应提交、换号迟到隔离、重登恢复。只覆盖普通升级，不代表突破/升星。截图 client/temp/hero-level-20261102。",
+      "inspector": "待负责人明确确认。已提供 panel_background X 临时 0→1→0 保存重开步骤；负责人只回复“已刷新”，不能当作编辑体验认可。最终文件已核对 X=0、Y=150、640×540。"
     },
     "client/assets/prefabs/ui/hero/HeroInfoUpStarLayer.prefab": {
       "sha256": "5ff93430a812c804651dff8ffb17a68cb45d34ee1062f30d108b25354e960e1f",

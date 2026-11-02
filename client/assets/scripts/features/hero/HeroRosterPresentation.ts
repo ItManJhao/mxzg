@@ -16,13 +16,14 @@ export interface HeroRosterView {
   refreshRoster(): void;
 }
 
+/** 按元素投影只读名册，并保留真实实例 UUID 供普通升级定位，模板只负责显示。 */
 export function presentHeroRoster(state: HeroRosterState, catalog: HeroCatalog, elem: number): HeroListModel {
   const cells: HeroCellModel[] = [];
   if (state.status === "ready") {
     for (const hero of state.heroes) {
       const template = catalog.find(hero.templateId);
       if (elem && template?.elem !== elem) continue;
-      cells.push({ kind: "owned",
+      cells.push({ kind: "owned", instanceId:hero.id,
         name: template?.name || "未知英雄（模板 " + hero.templateId + "）", showName: true,
         face: template?.icon || null, elem: template?.elem || null,
         level: hero.level, stars: hero.star, locked: false, deployed: false });

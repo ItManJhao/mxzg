@@ -5,15 +5,23 @@ import { AccountModel } from "../account/AccountModel";
 import type { AccountAuthorization } from "../account/AccountService";
 import { SessionChanged } from "../account/AccountService";
 import { readOwnedHeroes } from "./HeroApi";
-import type { HeroGateway } from "./HeroApi";
+import type { HeroGateway, OwnedHero } from "./HeroApi";
 import { HeroRosterModel } from "./HeroRosterModel";
 
-/** Owns only roster read state. No starter grant, growth, lineup or wire-store writes. */
+/** 持有唯一名册，接受已鉴权升级事务的权威快照；不自行发奖、计算成长或修改阵容。 */
 export class HeroRosterService {
   private epoch = 0;
   private pending: Promise<boolean> | null = null;
   private disposed = false;
   private readonly offAccount: () => void;
+
+  /** 升级开始或提交时作废旧列表查询，避免迟到读取覆盖更高等级。 */
+  invalidateQueries():void { this.epoch++;this.pending=null; }
+
+  /** 由已通过 Bag 会话检查的写事务提交权威名册，不另存英雄缓存。 */
+  accept(heroes:readonly OwnedHero[]):void {
+    this.invalidateQueries();this.model.replace({status:"ready",heroes:readOwnedHeroes(heroes),error:""});
+  }
 
   constructor(private readonly model: HeroRosterModel, private readonly account: AccountModel,
     private readonly authorization: AccountAuthorization, private readonly api: HeroGateway) {

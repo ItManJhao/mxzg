@@ -17,6 +17,7 @@ export const REMAKE_CONFIG_GROUPS = {
     startup: [GConfig.Language, GConfig.LoadingTips],
     city: [GConfig.OpenCondition, GConfig.SystemGate, GConfig.CityPosition, GConfig.CityButton, GConfig.CityEffect],
     hero: [GConfig.HeroType, GConfig.Item],
+    heroLevel: [GConfig.HeroLevel],
     inventory: [GConfig.Item, GConfig.Language],
 } as const;
 /** 首屏只加载文字与提示，不提前加载主城、英雄和库存配置。 */
@@ -25,6 +26,8 @@ export const prepareStartupConfig = (progress?: (done: number, total: number) =>
 export const prepareCityConfig = () => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.city);
 /** 英雄与出阵打开前准备展示配置，共享已加载请求。 */
 export const prepareHeroConfig = () => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.hero);
+/** 普通升级详情打开时才加载当前等级消耗表，不扩大登录/列表预载。 */
+export const prepareHeroLevelConfig = () => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.heroLevel);
 /** 背包打开前准备库存显示配置。 */
 export const prepareInventoryConfig = () => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.inventory);
 /** 未准备主城组时返回 null；就绪后直接引用只读配置，不再维护门槛副本。 */

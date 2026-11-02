@@ -529,6 +529,28 @@
           "note": "策划台词"
         }
       }
+    },
+    "HeroLevel": {
+      "path": "config/herolevel",
+      "container": "rows",
+      "key": "level",
+      "fields": {
+        "level": {
+          "type": "number",
+          "required": true,
+          "note": "英雄当前等级"
+        },
+        "exp_need": {
+          "type": "number",
+          "required": true,
+          "note": "升一级所需英雄经验（900101）"
+        },
+        "gold_need": {
+          "type": "number",
+          "required": true,
+          "note": "升一级所需金币（900001）"
+        }
+      }
     }
   }
 }

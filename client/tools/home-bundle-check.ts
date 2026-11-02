@@ -1,9 +1,11 @@
+/** 验证主页和英雄资源按需加载、失败重试与作用域释放；升级页不得随列表提前加载。 */
 import { strict as assert } from "node:assert";
 import { assetManager, JsonAsset, Prefab, resources as engineResources } from "cc";
 import { readFileSync } from "node:fs";
 import { createHomeResourceScope, HOME_BUNDLE, HOME_PREFAB } from "../assets/scripts/app/remake/HomeResources";
 import { createHeroResourceScope, loadHeroPage, HERO_PAGE_RESOURCES } from "../assets/scripts/app/remake/HeroResources";
 
+/** 执行资源边界断言，不连接业务服务器。 */
 async function main() {
   let failCityConfig = true;
   engineResources.load = (path: string, _type: unknown, done: Function) => {
@@ -70,7 +72,7 @@ async function main() {
   const otherHeroScope = createHeroResourceScope();
   const [heroOne, heroTwo] = await Promise.all([loadHeroPage(heroScope), loadHeroPage(otherHeroScope)]);
   assert.equal(heroOne, heroTwo);
-  assert.deepEqual(heroLoads.sort(), Object.values(HERO_PAGE_RESOURCES).map(path => path.replace(/^prefabs\//, "")).sort());
+  assert.deepEqual(heroLoads.sort(), Object.entries(HERO_PAGE_RESOURCES).filter(([key]) => key !== "level").map(([,path]) => path.replace(/^prefabs\//, "")).sort());
   assert.equal(heroPins, 5, "list/board/cell/shell/backdrop share one retained asset each");
   heroScope.dispose(); assert.equal(heroDrops, 0);
   otherHeroScope.dispose(); assert.equal(heroDrops, 5);

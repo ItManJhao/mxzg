@@ -12,7 +12,7 @@ import { AccountApi, readSession } from "../../features/account/AccountApi";
 import { AccountService } from "../../features/account/AccountService";
 import { AccountController } from "../../features/account/AccountController";
 import { AccountLoginView } from "../../features/account/ui/AccountLoginView";
-import { JsonClient } from "../../platform/http/JsonClient";
+import { isolatedPreview } from "./IsolatedPreview";
 import { createXhrAdapter } from "../../platform/http/XhrAdapter";
 import { HomeController } from "../../features/home/HomeController";
 import { RemakeHomeView } from "../../features/home/ui/RemakeHomeView";
@@ -29,7 +29,10 @@ import { LoginEntry } from "./LoginEntry";
 import { createStartupResourceScope, STARTUP_RESOURCE_KEYS } from "./StartupResources";
 import type { ResourceScope } from "../../framework/assets/ResourcePool";
 import { createHomeResourceScope } from "./HomeResources";
-import { createHeroResourceScope, loadHeroPage } from "./HeroResources";
+import { createHeroResourceScope, loadHeroPage, loadHeroLevelPage } from "./HeroResources";
+import { HeroLevelApi } from "../../features/hero/HeroLevelApi";
+import { HeroLevelController } from "../../features/hero/HeroLevelController";
+import { HeroInfoUpLevelLayer } from "../../features/hero/ui/HeroInfoUpLevelLayer";
 import { HeroListView } from "../../features/hero/ui/HeroListView";
 import { mountHeroListPage } from "../../features/hero/ui/heroMount";
 import { HeroApi } from "../../features/hero/HeroApi";
@@ -70,6 +73,7 @@ export class RemakeApp extends Component {
   private offAccount: (() => void) | null = null;
   private bagModule: BagController | null = null;
   private heroRosterService: HeroRosterService | null = null;
+  private heroLevelController:HeroLevelController|null=null;
   private unregisterViews: Array<() => void> = [];
   private requestedRoute = "";
   private alive = false;
@@ -86,12 +90,14 @@ export class RemakeApp extends Component {
   private featureResources: ResourceScope<Prefab> | null = null;
 
   /** 编辑器启动应用时装配唯一会话服务和页面注册，并执行新链路启动流程。 */
-  start(): void {
+  async start(): Promise<void> {
     if (!this.loginPrefab || !this.loadingPrefab || !this.pageHost || !this.startupHost) throw new Error("Remake 场景未绑定页面/加载 Prefab 或启动宿主，请重新打开已更新的 Remake.scene");
     const model = new AccountModel();
-    const http = new JsonClient(this.apiBaseUrl, createXhrAdapter());
+    const connection=await isolatedPreview(this.apiBaseUrl,createXhrAdapter(),sys.localStorage);
+    if(!this.isValid)return;
+    const http=connection.http;
     const api = new AccountApi(http);
-    const storage = sys.localStorage;
+    const storage = connection.storage;
     let savedServer: string | null = null;
     try { savedServer = storage.getItem("mxzg.remake.selectedServer"); } catch { }
     const servers = new ServerSelection(http, id => storage.setItem("mxzg.remake.selectedServer", id), savedServer);
@@ -106,6 +112,7 @@ export class RemakeApp extends Component {
     // 名册状态属于应用会话，关闭英雄页面只解除 View 观察，不销毁角色数据。
     const roster = new HeroRosterModel();
     const rosterService = this.heroRosterService = new HeroRosterService(roster, model, service, new HeroApi(http));
+    const levels=this.heroLevelController=new HeroLevelController(model,service,rosterService,new HeroLevelApi(http));
     const ui = UIManager.instance;
     const entry = new LoginEntry();
     let homeView: RemakeHomeView | null = null;
@@ -122,6 +129,11 @@ export class RemakeApp extends Component {
     });
     ui.install(this.navigation, { showToast: text => console.warn("[RemakeUI] " + text) });
     this.unregisterViews.push(ui.setResidentHost("remake-modal", () => this.pageHost));
+    this.unregisterViews.push(registerView(HeroInfoUpLevelLayer,{
+      id:"hero-level",prefab:ResourceCatalog.prefab_hero.HeroInfoUpLevelLayer.assetPath,layer:UILayer.Popup,
+      cache:false,allowMultiple:false,hostId:"remake-modal",
+      load:()=>{if(!this.heroResources)this.heroResources=createHeroResourceScope();return loadHeroLevelPage(this.heroResources);},
+    }));
     this.unregisterViews.push(registerView(ServerPickerView, {
       id: "server-picker", prefab: ResourceCatalog.prefab_login.ServerPickerView.assetPath, layer: UILayer.Popup,
       cache: false, allowMultiple: false, hostId: "remake-modal",
@@ -168,7 +180,12 @@ export class RemakeApp extends Component {
       },
       createController: view => {
         const catalog = new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
-        return new HeroRosterController(roster, rosterService, catalog, view as HeroListView, text => homeView?.showNotice(text));
+        return new HeroRosterController(roster, rosterService, catalog, view as HeroListView, text => homeView?.showNotice(text),heroId=>{
+          const hero=roster.snapshot.heroes.find(row=>row.id===heroId);
+          if(!hero)return;
+          void ui.open(HeroInfoUpLevelLayer,{heroId,name:catalog.find(hero.templateId)?.name || "英雄",controller:levels})
+            .catch(error=>{if(!isOpenCancelled(error))homeView?.showNotice(error instanceof Error?error.message:"升级详情打开失败");});
+        });
       },
     }));
     const itemCatalog = () => new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
@@ -202,6 +219,7 @@ export class RemakeApp extends Component {
     this.startupResources = createStartupResourceScope();
     syncRoute = () => {
       if (!this.alive || !this.started) return;
+      if(model.snapshot.busy || !model.snapshot.role)ui.closeById("hero-level");
       if (model.snapshot.busy) {
         this.chrome?.show();
         this.chrome?.setStage("同步角色资料");
@@ -336,6 +354,7 @@ export class RemakeApp extends Component {
     this.navigation?.dispose(); this.navigation = null;
     this.bagModule?.dispose(); this.bagModule = null;
     this.heroRosterService?.dispose(); this.heroRosterService = null;
+    this.heroLevelController?.dispose();this.heroLevelController=null;
     this.homeResources?.dispose(); this.homeResources = null;
     this.heroResources?.dispose(); this.heroResources = null;
     this.featureResources?.dispose(); this.featureResources = null;
