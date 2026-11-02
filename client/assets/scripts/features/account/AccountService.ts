@@ -1,3 +1,4 @@
+/** 账号会话服务：统一登录、恢复和失效处理；失效后仅保留本次应用内的账号提示，不保留授权。 */
 import { AccountModel } from "./AccountModel";
 import type { RoleProfile } from "./AccountModel";
 import { readSession } from "./AccountApi";
@@ -23,10 +24,12 @@ export class AccountService implements AccountAuthorization {
   private operation = 0;
   private session: AccountSession | null = null;
   private profileRevision = 0;
+  private expiredAccount = "";
   constructor(private readonly model: AccountModel, private readonly api: AccountGateway,
     private readonly store: SessionStore, private readonly now: () => number = Date.now) {}
 
-  get accountName(): string { return this.session?.account || this.model.snapshot.role?.nickname || ""; }
+  /** 返回当前身份或失效前的账号，供重建的登录页面预填；该提示不授予访问权限。 */
+  get accountName(): string { return this.session?.account || this.model.snapshot.role?.nickname || this.expiredAccount; }
   get hasSession(): boolean { return !!this.session; }
 
   async login(account: string, serverId?: string): Promise<boolean> {
@@ -48,12 +51,15 @@ export class AccountService implements AccountAuthorization {
     } catch (error) { return this.fail(operation, error); }
   }
 
+  /** 恢复持久会话；过期时撤销授权并保留账号提示，临时网络失败仍允许重试。 */
   async restore(): Promise<boolean> {
     const operation = ++this.operation;
     let session = this.session;
     try { session = session || this.store.read(); if (session) session = readSession(session); }
     catch { this.safely(() => this.store.clear()); session = null; }
-    if (!session || Date.parse(session.expiresAt) <= this.now()) { this.logout(); return false; }
+    if (!session) { this.logout(); return false; }
+    this.expiredAccount = session.account || "";
+    if (Date.parse(session.expiresAt) <= this.now()) { this.expire(); return false; }
     this.model.replace({ busy: true, role: null, error: "" });
     try {
       const role = await this.api.currentRole(session.accessToken);
@@ -70,7 +76,9 @@ export class AccountService implements AccountAuthorization {
     }
   }
 
+  /** 主动退出时清除账号提示，允许用户明确选择其他身份。 */
   logout(): void {
+    this.expiredAccount = "";
     this.invalidate("");
   }
 
@@ -124,7 +132,9 @@ export class AccountService implements AccountAuthorization {
     }
   }
 
+  /** 清除令牌之前记住账号，避免登录页面重建后误用 Prefab 的默认账号。 */
   private expire(): void {
+    this.expiredAccount = this.accountName;
     this.invalidate("登录已失效，请重新登录");
   }
 

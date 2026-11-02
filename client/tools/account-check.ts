@@ -1,3 +1,4 @@
+/** 账号回归：验证会话恢复、失效后重新进入、页面生命周期及身份隔离，不连接玩家库。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -21,6 +22,7 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+/** 运行账号行为检查，包括领奖遇到 401 后新建登录页面仍使用原账号。 */
 async function main() {
   const assets = join(process.cwd(), "client/assets");
   const prefab = JSON.parse(readFileSync(join(assets, "prefabs/ui/account/AccountLoginView.prefab"), "utf8"));
@@ -139,6 +141,50 @@ async function main() {
   entryController.close();
   await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(entry.route(!!entryModel.snapshot.role), "remake-login", "a closed controller cannot enter after its request completes");
+  await checkExpiredIdentity();
   console.log("account-check passed: validation, persistence boundary, races, logout, offline/401, explicit Start gate, controller lifecycle and HTTP contract");
+}
+
+/** 重现运行中 401、启动时过期和恢复时 401，确保重建页面不会把原账号换成默认账号。 */
+async function checkExpiredIdentity() {
+  for (const reason of ["request-401", "saved-expired", "restore-401"]) {
+    const model = new AccountModel();
+    const store = memoryStore();
+    const logins: string[] = [];
+    const api = {
+      developmentLogin: async (account: string) => {
+        logins.push(account);
+        return { session, role: { ...role, nickname: account } };
+      },
+      currentRole: async () => { throw new HttpFailure(401, "expired"); },
+    };
+    const service = new AccountService(model, api, store);
+    if (reason === "request-401") {
+      await service.login("player_3");
+      await assert.rejects(service.authenticated(async () => { throw new HttpFailure(401, "expired"); }));
+    } else {
+      store.write({ ...session, account: "player_3", ...(reason === "saved-expired" ? { expiresAt: "2000-01-01T00:00:00Z" } : {}) });
+      assert.equal(await service.restore(), false);
+    }
+    assert.equal(service.hasSession, false);
+    assert.equal(store.read(), null);
+    let input = "player_1";
+    let actions!: AccountActions;
+    const controller = new AccountController(model, service, {
+      bind: value => { actions = value; return () => {}; }, render: () => {},
+      prepareAccount: account => { input = account; },
+    });
+    controller.show();
+    assert.equal(input, "player_3", reason);
+    actions.login(input);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    assert.equal(logins[logins.length - 1], "player_3", reason);
+    actions.logout();
+    input = "player_other";
+    actions.login(input);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    assert.equal(logins[logins.length - 1], "player_other", "explicit account switch remains possible");
+    controller.close();
+  }
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

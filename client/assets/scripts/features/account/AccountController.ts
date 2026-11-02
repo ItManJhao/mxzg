@@ -1,3 +1,4 @@
+/** 登录页面协调器：绑定输入、选服与进入游戏；页面重建时恢复失效前账号，不自动登录。 */
 import { AccountModel } from "./AccountModel";
 import type { AccountState } from "./AccountModel";
 import { AccountService, SessionChanged } from "./AccountService";
@@ -21,8 +22,10 @@ export class AccountController {
     private readonly worlds?: { selection: ServerSelection; openPicker(): void },
     private readonly initialize: () => Promise<void> = async () => {}) {}
 
+  /** 打开时预填已知账号一次；之后无会话时保留用户编辑，避免状态刷新覆盖新输入。 */
   show(): void {
     if (this.open) return;
+    if (this.service.accountName) this.view.prepareAccount?.(this.service.accountName);
     const unbind = this.view.bind({
       login: account => {
         if (this.model.snapshot.busy || this.entering) return;
