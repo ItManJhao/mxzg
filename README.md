@@ -20,6 +20,8 @@
 - [产品需求](docs/product-requirements.md)：有效需求与首测范围。
 - [架构与职责](docs/architecture.md)：MVC、状态、事件、生命周期及后端边界。
 - [开发写法与阅读约定](docs/development-conventions.md)：游爱写法的借鉴范围、方法/注释、明确调用链和还原流程。
+- [六流程还原验收](docs/restoration-checklist.md)：原版依据、当前缺口与逐项验收动作。
+- [首批通信契约](docs/network-contract.md)：登录、重连、幂等、迁移顺序与试点门槛；尚未接入长连接。
 - [运行维护](docs/local-remake-workflow.md)：本机启停、日志和排错。
 - [配置与资源](docs/config-pipeline.md)：生成、分组查询、资源目录与作用域。
 - [Prefab 编辑](docs/prefab-layout.md)：命名、坐标、逐项审查及视觉待验收。
