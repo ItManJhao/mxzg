@@ -18,6 +18,16 @@ export const HANG_LAYER_W = 640;
 export const HANG_LAYER_H = 1280;
 
 /**
+ * 战场单位、血条和命中特效共用等比缩放，避免 Fit Height 窄屏裁掉最外侧站位。
+ * 最远脚点约 239，等级/血条左伸约 87，按 660 宽包围范围预留边距；宽屏不放大单位。
+ * 背景、顶部栏和操作面板不参与此缩放，不能只缩英雄而留下血条或特效错位。
+ */
+export function hangStageScale(visibleWidth: number): number {
+  const width = Number.isFinite(visibleWidth) && visibleWidth > 0 ? visibleWidth : HANG_LAYER_W;
+  return Math.min(1, width / 660);
+}
+
+/**
  * 没有阵位时先占的三格，也是战报只有顺序下标时的三格。
  * 1 在前排最上，4 在前排最下，5 在后排最上。三格分开，不叠在画面中间。
  */

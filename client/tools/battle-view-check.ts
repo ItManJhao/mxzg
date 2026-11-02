@@ -7,6 +7,19 @@ import { CampaignField } from "../assets/scripts/features/battle/ui/CampaignFiel
 import type { CampaignState } from "../assets/scripts/features/battle/CampaignApi";
 import { floatHurtText, visibleFloats, beatShowsCrit, overheadLevelText } from "../assets/scripts/features/battle/ui/battlePresentation";
 import { readFileSync } from "node:fs";
+import { hangFormationPoint, hangStageScale } from "../assets/scripts/features/battle/ui/idleHangSkirmishPlan";
+
+/** 八个站位两侧都必须给等级/血条留足边距，宽屏不放大；非法尺寸不能产生 NaN。 */
+function checkCombatBounds(): void {
+ for(const width of [360,576,640,960]) {
+  const scale=hangStageScale(width);
+  for(let position=1;position<=8;position++)for(const ally of [true,false]) {
+   const point=hangFormationPoint(position,ally);
+   assert((Math.abs(point.x)+90)*scale<=width/2,"最外侧血条超出视口");
+  }
+ }
+ assert.equal(hangStageScale(960),1);assert(Number.isFinite(hangStageScale(NaN)));
+}
 /** 使用实际资源动作表验证可选动作查询及销毁边界，不伪造资源具备的动作。 */
 function checkOptionalClips(): void {
  const originalLoad=resources.load, originalFind=sp.Skeleton.prototype.findAnimation;
@@ -24,6 +37,7 @@ function checkOptionalClips(): void {
 }
 /** 执行视图交互、关闭清理和资源迟到回归，失败时由调用方返回非零状态。 */
 async function main() {
+ checkCombatBounds();
  checkOptionalClips();
  const root = new Node("scene"), node = new Node("CampaignView"); node.parent=root;
  const view=node.addComponent(CampaignView);

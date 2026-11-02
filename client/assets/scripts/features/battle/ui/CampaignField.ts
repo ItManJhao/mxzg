@@ -7,11 +7,11 @@ import { mountBattlePrefab } from "./BattlePage";
 import type { BattlePrefabShell } from "./BattlePage";
 import { mountBattleSpine, mountNamedSpine } from "./battleSpine";
 import type { SpineActor } from "./battleSpine";
-import { fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
 import { setText } from "../../../framework/ui/UiKit";
 import { paintBattleFloats, paintBattleSkillName, clearBattleOverhead } from "./battlePresentView";
-import { hangFormationPoint } from "./idleHangSkirmishPlan";
+import { hangFormationPoint, hangStageScale } from "./idleHangSkirmishPlan";
 import { hpFillLayout, HP_FILL_HEIGHT } from "./battlePrefabLayout";
 import { mountIdleSkirmish } from "./idleHangSkirmish";
 import type { IdleSkirmish } from "./idleHangSkirmish";
@@ -78,7 +78,16 @@ export class CampaignField {
         shell.bindSkip(() => field.skip());
         shell.clearSkillLabels();
         field.clearPresent();
+        bindVisibleRefresh(shell.root, () => field.fitCombatLayers());
         return field;
+    }
+
+    /** 同步缩放共用坐标空间的单位、血条和特效；不重建演出，不改变战报状态与背景布局。 */
+    private fitCombatLayers(): void {
+        if (this.closed || !this.shell.root.isValid) return;
+        const scale = hangStageScale(view.getVisibleSize().width);
+        for (const path of ["LayerField", "LayerHud/HpBars", "LayerVfx", "LayerFloat", "IdleFoes", "IdleSkirmishFx"])
+            this.shell.root.getChildByPath(path)?.setScale(scale, scale, 1);
     }
     show(units: CampaignUnit[]): void {
         this.stopIdle();
@@ -123,6 +132,7 @@ export class CampaignField {
         setText(this.shell.logLabel, "");
         this.clearPresent();
     }
+    /** 恢复服务端单位的挂机演出，并使动态生成的敌人/特效与已有英雄采用相同视口缩放。 */
     startIdle(units: CampaignUnit[]): void {
         const key = JSON.stringify(units.map(unit => [unit.id,unit.templateId,unit.position,unit.maxHp]));
         if (this.idle && key === this.idleKey) return;
@@ -136,6 +146,7 @@ export class CampaignField {
             stem:String(unit.templateId),spot:index,face:-1 as const,maxHp:unit.maxHp,
         })) });
         this.idle.retarget(Array.from(this.actors.values()).map(entry => entry.actor));
+        this.fitCombatLayers();
     }
     pauseIdle(): void { this.idle?.pause(); }
     resumeIdle(): void { this.idle?.resume(); }
