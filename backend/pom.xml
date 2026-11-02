@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 后端依赖和构建入口；默认运行 H2 测试，mysql-it 显式启用独立 MySQL 验证。 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -21,4 +22,18 @@
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
   </dependencies>
   <build><plugins><plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin></plugins></build>
+  <profiles>
+    <!-- 显式入口：默认 test 仍只运行原有 H2 快速测试。 -->
+    <profile>
+      <id>mysql-it</id>
+      <build><plugins><plugin>
+        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes><include>**/MySqlIT.java</include></includes>
+          <failIfNoTests>true</failIfNoTests>
+          <argLine>-Duser.timezone=UTC</argLine>
+        </configuration>
+      </plugin></plugins></build>
+    </profile>
+  </profiles>
 </project>

@@ -1,0 +1,10 @@
+# 只存在于测试 classpath。缺少测试启动器显式参数时拒绝启动，不回落到开发数据库。
+spring:
+  datasource:
+    url: ${MXZG_IT_REQUIRED_URL}
+    username: ${MXZG_IT_REQUIRED_USER}
+    password: ${MXZG_IT_REQUIRED_PASSWORD}
+  flyway:
+    clean-disabled: true
+server:
+  port: 0
