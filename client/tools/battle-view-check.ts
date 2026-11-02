@@ -3,11 +3,12 @@ import { strict as assert } from "node:assert";
 import { Button, Label, Node, resources, sp } from "cc";
 import { mountBattleSpine } from "../assets/scripts/features/battle/ui/battleSpine";
 import { CampaignView } from "../assets/scripts/features/battle/ui/CampaignView";
+import { mountIdleSkirmish } from "../assets/scripts/features/battle/ui/idleHangSkirmish";
 import { CampaignField } from "../assets/scripts/features/battle/ui/CampaignField";
 import type { CampaignState } from "../assets/scripts/features/battle/CampaignApi";
 import { floatHurtText, visibleFloats, beatShowsCrit, overheadLevelText } from "../assets/scripts/features/battle/ui/battlePresentation";
 import { readFileSync } from "node:fs";
-import { hangFormationPoint, hangStageScale } from "../assets/scripts/features/battle/ui/idleHangSkirmishPlan";
+import { hangFormationPoint, hangStageScale, IDLE_SKIRMISH_SPOTS } from "../assets/scripts/features/battle/ui/idleHangSkirmishPlan";
 
 /** 八个站位两侧都必须给等级/血条留足边距，宽屏不放大；非法尺寸不能产生 NaN。 */
 function checkCombatBounds(): void {
@@ -35,8 +36,35 @@ function checkOptionalClips(): void {
   }
  } finally {resources.load=originalLoad;sp.Skeleton.prototype.findAnimation=originalFind;}
 }
+
+/** 模拟后台节流：超时先于八段进场回调执行，已加载敌人仍应到位；真未加载仍清理。 */
+function checkThrottledEntry():void {
+ const nativeTimer=globalThis.setTimeout,nativeNow=Date.now,nativeLoad=resources.load;
+ try {
+  for(const ready of [true,false]) {
+   let now=0;const queue:Array<{at:number;delay:number;run:()=>void}>=[];
+   globalThis.setTimeout=((run:()=>void,delay=0)=>{queue.push({at:now+delay,delay,run});return {unref(){}};}) as any;
+   Date.now=()=>now;
+   resources.load=((path:any,type:any,done:any)=>{if(ready && path==="spine/test-idle-entry")done(null,new sp.SkeletonData());}) as any;
+   const parent=new Node("test"),hang=new Node("hang");hang.parent=parent;
+   const home=new Node("home"),actor=new Node("actor");home.parent=hang;actor.parent=home;
+   const idle=mountIdleSkirmish(hang,{plans:()=>[{stem:"test-idle-entry",spot:0,face:1,maxHp:100}]});
+   idle.retarget([{node:actor,stem:"test-ally",play(){},burst(){},gesture:()=>true,hasGesture:()=>true}]);
+   for(let i=0;i<20 && !hang.getChildByName("IdleFoes")!.children.length;i++) {
+    queue.sort((a,b)=>a.at-b.at);const task=queue.shift()!;now=task.at;task.run();
+   }
+   const foe=hang.getChildByName("IdleFoes")!.children[0];assert(foe,"本波应已创建");
+   const timeout=queue.find(task=>task.delay===2600)!;assert(timeout);now=timeout.at;timeout.run();
+   assert.equal(foe.isValid,ready,"已加载敌人不能因进场回调节流被超时删除；真正未加载应清理");
+   if(ready){assert.equal(foe.position.x,IDLE_SKIRMISH_SPOTS[0].x);assert.equal(foe.position.y,IDLE_SKIRMISH_SPOTS[0].y);}
+   idle.stop();parent.destroy();
+  }
+ }finally {globalThis.setTimeout=nativeTimer;Date.now=nativeNow;resources.load=nativeLoad;}
+}
+
 /** 执行视图交互、关闭清理和资源迟到回归，失败时由调用方返回非零状态。 */
 async function main() {
+ checkThrottledEntry();
  checkCombatBounds();
  checkOptionalClips();
  const root = new Node("scene"), node = new Node("CampaignView"); node.parent=root;

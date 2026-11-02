@@ -100,6 +100,7 @@ export function mountIdleSkirmish(hang: Node, source: IdleSkirmishSource): IdleS
   let stopped = false;
   let waveGen = 0;
   let fightStarted = false;
+  let entryStartedAt = 0;
   let waveFoes: WaveFoe[] = [];
   let puffNode: Node | null = null;
   let puffActor: SpineActor | null = null;
@@ -302,6 +303,7 @@ export function mountIdleSkirmish(hang: Node, source: IdleSkirmishSource): IdleS
     return !foe.dead && foe.entered && foe.ready && !!foe.actor && foe.node.isValid && foe.node.active;
   }
 
+  /** 创建本波敌人并记录进场时间；进度不依赖浏览器实际执行了多少次定时回调。 */
   function openWave(): void {
     if (blocked()) {
       clearFoes();
@@ -317,6 +319,7 @@ export function mountIdleSkirmish(hang: Node, source: IdleSkirmishSource): IdleS
     if (!plans.length) { arm(IDLE_SKIRMISH_GAP_MS, beginCycle); return; }
     const gen = waveGen;
     fightStarted = false;
+    entryStartedAt = Date.now();
     waveFoes = [];
     for (let i = 0; i < plans.length; i++) {
       const plan = plans[i];
@@ -354,21 +357,22 @@ export function mountIdleSkirmish(hang: Node, source: IdleSkirmishSource): IdleS
       waveFoes.push(foe);
     }
     raiseFx();
-    slideFoes(0, gen);
+    slideFoes(gen);
     arm(FOE_LATE_MS, () => lateFoes(gen));
   }
 
-  function slideFoes(step: number, gen: number): void {
-    if (gen !== waveGen) return;
-    const t = step / ENTER_STEPS;
+  /** 按实际经过时间追赶入场，后台节流后恢复时直接到达应有位置，不延长八个回调周期。 */
+  function slideFoes(gen: number): void {
+    if (gen !== waveGen || fightStarted) return;
+    const t = Math.min(1, Math.max(0, (Date.now() - entryStartedAt) / IDLE_FOE_ENTER_MS));
     for (let i = 0; i < waveFoes.length; i++) {
       const foe = waveFoes[i];
       if (foe.dead || !foe.node.isValid) continue;
       const spot = IDLE_SKIRMISH_SPOTS[foe.plan.spot];
       foe.node.setPosition(idleFoeEnterX(spot.x, t), spot.y, 0);
     }
-    if (step < ENTER_STEPS) {
-      arm(Math.round(IDLE_FOE_ENTER_MS / ENTER_STEPS), () => slideFoes(step + 1, gen));
+    if (t < 1) {
+      arm(Math.round(IDLE_FOE_ENTER_MS / ENTER_STEPS), () => slideFoes(gen));
       return;
     }
     for (let i = 0; i < waveFoes.length; i++) {
@@ -394,8 +398,11 @@ export function mountIdleSkirmish(hang: Node, source: IdleSkirmishSource): IdleS
     startFight(gen);
   }
 
+  /** 超时前先追赶进场，避免后台恢复时超时回调抢先将已加载敌人误判为资源迟到。 */
   function lateFoes(gen: number): void {
     if (gen !== waveGen || fightStarted) return;
+    slideFoes(gen);
+    if (fightStarted) return;
     const shown: WaveFoe[] = [];
     for (let i = 0; i < waveFoes.length; i++) {
       if (foeCanFight(waveFoes[i])) shown.push(waveFoes[i]);
