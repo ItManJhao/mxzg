@@ -30,11 +30,12 @@ public class CampaignService {
     private final CampaignRules rules;
     private final ObjectMapper json;
     private final com.funsgamex.mxzg.hero.HeroGrowthRules growth;
+    private final IdleService idle;
     /** 注入主线规则与统一成长计算，正常业务仍使用原有角色锁和事务。 */
     public CampaignService(JdbcTemplate jdbc, SessionService sessions, RoleRepository roles,
-        HeroRepository heroes, InventoryService inventory, CampaignRules rules, ObjectMapper json, com.funsgamex.mxzg.hero.HeroGrowthRules growth) {
+        HeroRepository heroes, InventoryService inventory, CampaignRules rules, ObjectMapper json, com.funsgamex.mxzg.hero.HeroGrowthRules growth, IdleService idle) {
         this.jdbc=jdbc;this.sessions=sessions;this.roles=roles;this.heroes=heroes;
-        this.inventory=inventory;this.rules=rules;this.json=json;this.growth=growth;
+        this.inventory=inventory;this.rules=rules;this.json=json;this.growth=growth;this.idle=idle;
     }
     private void lock(String role) { jdbc.queryForObject("SELECT id FROM game_role WHERE id=? FOR UPDATE",String.class,role); }
     public State current(String token) { return state(sessions.requireRole(token)); }
@@ -48,10 +49,11 @@ public class CampaignService {
         return new State(current.stageId(),current.initialized(),pending.isEmpty()?null:pending.getFirst(),
             stage==null?List.of():stage.rewards(), current.initialized()?units(role,stage):List.of(),stage!=null && current.initialized());
     }
-    /** Explicit once-only starter grant, after Start. Existing heroes/lineups are retained. */
+    /** 开始游戏后初始化一次资源与挂机计时；旧角色保留现有英雄、阵容及已开始的计时。 */
     @Transactional(isolation=Isolation.READ_COMMITTED)
     public State initialize(String token) {
         String role=sessions.requireRole(token);lock(role);
+        idle.initialize(role);
         var current=state(role);
         if(current.initialized()) return current;
         if(jdbc.queryForObject("SELECT COUNT(*) FROM game_campaign WHERE role_id=?",Integer.class,role)==0)

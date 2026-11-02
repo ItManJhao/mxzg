@@ -44,6 +44,8 @@ import { HomeFeatureNavigation, REMAKE_FEATURE_ROUTES } from "./HomeFeatureNavig
 import { ServerSelection } from "../../features/account/ServerSelection";
 import { ServerPickerView } from "../../features/account/ui/ServerPickerView";
 import { CampaignApi } from "../../features/battle/CampaignApi";
+import { IdleApi } from "../../features/battle/IdleApi";
+import { IdleController } from "../../features/battle/IdleController";
 import { slideFeaturePage } from "./PageTransition";
 import { createFeatureResourceScope, loadFeaturePage } from "./FeatureResources";
 import { BagView } from "../../features/Bag/ui/BagView";
@@ -74,6 +76,7 @@ export class RemakeApp extends Component {
   private bagModule: BagController | null = null;
   private heroRosterService: HeroRosterService | null = null;
   private heroLevelController:HeroLevelController|null=null;
+  private idleController:IdleController|null=null;
   private unregisterViews: Array<() => void> = [];
   private requestedRoute = "";
   private alive = false;
@@ -109,6 +112,7 @@ export class RemakeApp extends Component {
     });
     BagController.instance.initialize({ account: model, authorization: service, api: new BagApi(http) });
     this.bagModule = BagController.instance;
+    const idle=this.idleController=new IdleController(model,service,new IdleApi(http));
     // 名册状态属于应用会话，关闭英雄页面只解除 View 观察，不销毁角色数据。
     const roster = new HeroRosterModel();
     const rosterService = this.heroRosterService = new HeroRosterService(roster, model, service, new HeroApi(http));
@@ -212,7 +216,7 @@ export class RemakeApp extends Component {
       mount:mountCampaignPage,load:() => loadFeature("campaign"),
       createController:view => {
         (view as CampaignView).configure(itemCatalog(),() => model.snapshot.role?.level || 1,chooseFormation,()=>{ui.closeById("remake-formation");});
-        return new CampaignController(model,service,campaignApi,view as CampaignView,text => homeView?.showNotice(text));
+        return new CampaignController(model,service,campaignApi,view as CampaignView,text => homeView?.showNotice(text),BagController.instance,idle);
       },
     }));
     this.alive = true;
@@ -355,6 +359,7 @@ export class RemakeApp extends Component {
     this.bagModule?.dispose(); this.bagModule = null;
     this.heroRosterService?.dispose(); this.heroRosterService = null;
     this.heroLevelController?.dispose();this.heroLevelController=null;
+    this.idleController?.dispose();this.idleController=null;
     this.homeResources?.dispose(); this.homeResources = null;
     this.heroResources?.dispose(); this.heroResources = null;
     this.featureResources?.dispose(); this.featureResources = null;

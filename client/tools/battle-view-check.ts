@@ -27,14 +27,17 @@ async function main() {
  checkOptionalClips();
  const root = new Node("scene"), node = new Node("CampaignView"); node.parent=root;
  const view=node.addComponent(CampaignView);
- for(const key of ["fightButton","speedButton","growButton"] as const) view[key]=new Node(key).addComponent(Button);
+ for(const key of ["fightButton","speedButton","growButton","idleClaimButton"] as const) view[key]=new Node(key).addComponent(Button);
  for(const key of ["stageLabel","statusLabel","goldLabel","heroExpLabel","roleExpLabel"] as const) view[key]=new Node(key).addComponent(Label);
  let fights=0,speeds=0;
  const stop=view.bind({fight:()=>{fights++;},speed:()=>{speeds++;},skip:()=>{}});
  view.fightButton!.node.emit(Button.EventType.CLICK);view.speedButton!.node.emit(Button.EventType.CLICK);
  assert.equal(fights,1);assert.equal(speeds,1);assert.equal(view.growButton!.node.active,false);
  const state:CampaignState={stageId:4,initialized:true,pending:null,rewards:[{itemId:900001,quantity:17}],units:[],available:true};
- view.render(state,"idle","");assert.equal(view.stageLabel!.string,"第 4 关");assert.equal(view.goldLabel!.string,"17");assert.equal(view.fightButton!.interactable,true);
+ view.render(state,"idle","");assert.equal(view.stageLabel!.string,"第 4 关");assert.equal(view.goldLabel!.string,"—");assert.equal(view.fightButton!.interactable,true);
+ view.renderIdle({serverTime:1000,startedAt:940,revision:0,elapsedSeconds:60,maxSeconds:21600,frequency:60,rewardStage:3,rates:[{itemId:900001,quantity:200}],claimable:true,configVersion:"idle-0123456789abcdef"},false,"",false);
+ assert.equal(view.goldLabel!.string,"200/分");assert.equal(view.idleClaimButton!.interactable,true);
+ view.renderIdle(null,false,"读取失败",false);
  for(const phase of ["loading","formation","challenging","replaying","result","claiming"] as const){view.render(state,phase,"");assert.equal(view.fightButton!.interactable,false);}
  view.render(null,"error","网络失败");assert.equal(view.statusLabel!.string,"网络失败");assert.equal(view.fightButton!.interactable,true);assert.equal(view.goldLabel!.string,"—");
  stop();view.fightButton!.node.emit(Button.EventType.CLICK);assert.equal(fights,1);

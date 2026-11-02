@@ -8,9 +8,16 @@ import { BagItemCatalog } from "../../Bag/BagItemCatalog";
 import type { CampaignActions, CampaignPhase, CampaignScreen } from "../CampaignController";
 import type { CampaignState, CampaignReport } from "../CampaignApi";
 import { CampaignField } from "./CampaignField";
+import type { IdleState, IdleReward } from "../IdleApi";
 const { ccclass, property } = _decorator;
 @ccclass("CampaignView")
 export class CampaignView extends BaseView implements CampaignScreen {
+    @property(Button) idleClaimButton:Button|null=null;
+    private idleState:IdleState|null=null;
+    private idleReceivedAt=0;
+    private idleBusy=false;
+    private idleError="";
+    private idleRetry=false;
     @property(Button)
     fightButton: Button | null = null;
     @property(Button)
@@ -63,19 +70,25 @@ export class CampaignView extends BaseView implements CampaignScreen {
         }).catch(error => { if (!this.closed)
             this.failOpen(error instanceof Error ? error : new Error(String(error))); });
     }
+    /** 绑定静态 Prefab 的挂机领取按钮；快速战斗尚未开放，不将其误用为普通领取。 */
     bind(actions: CampaignActions): () => void {
         this.actions = actions;
         const fight = () => actions.fight(), speed = () => actions.speed();
         this.fightButton?.node.on(Button.EventType.CLICK, fight);
         this.speedButton?.node.on(Button.EventType.CLICK, speed);
+        const claimIdle=()=>actions.claimIdle?.();
+        this.idleClaimButton?.node.on(Button.EventType.CLICK,claimIdle);
+        if(this.speedButton)this.speedButton.interactable=false;
         if (this.growButton)
             this.growButton.node.active = false;
         return () => {
             this.actions = null;
             this.fightButton?.node.off(Button.EventType.CLICK, fight);
             this.speedButton?.node.off(Button.EventType.CLICK, speed);
+            this.idleClaimButton?.node.off(Button.EventType.CLICK,claimIdle);
         };
     }
+    /** 更新战斗状态；待机时显示独立挂机计时与每分钟收益，不再混用首通奖励。 */
     render(state: CampaignState | null, phase: CampaignPhase, error: string): void {
         if (this.closed)
             return;
@@ -87,11 +100,35 @@ export class CampaignView extends BaseView implements CampaignScreen {
                 formation: "正在准备出阵…", challenging: "正在生成战报…", replaying: "战斗进行中", result: "等待结算", claiming: "正在保存奖励…", error: "读取失败，请点击战斗重试" })[phase];
         if (this.fightButton)
             this.fightButton.interactable = phase === "error" || (phase === "idle" && !!state?.available);
-        for (const [label, id] of [[this.goldLabel, 900001], [this.heroExpLabel, 900101], [this.roleExpLabel, 900003]] as const)
-            if (label)
-                label.string = state ? String(state.rewards.find(reward => reward.itemId === id)?.quantity || 0) : "—";
+        this.paintIdle();
         if (phase === "idle" && state)
             this.field?.startIdle(state.units);
+    }
+    /** 只保存当前页时间基准用于显示，计时推算不能授予奖励。 */
+    renderIdle(state:IdleState|null,busy:boolean,error:string,retry:boolean):void {
+        this.idleState=state;this.idleReceivedAt=Date.now();this.idleBusy=busy;this.idleError=error;this.idleRetry=retry;this.paintIdle();
+    }
+    /** 帧更新仅刷新显示倒计时；服务器在实际领取时重新校验时间与版本。 */
+    update():void {if(!this.closed)this.paintIdle();}
+    /** 利用现有时间格作为领取入口，错误及不确定结果始终保留重试能力。 */
+    private paintIdle():void {
+        const d=this.idleState,seconds=d?Math.min(d.maxSeconds,d.elapsedSeconds+Math.max(0,Math.floor((Date.now()-this.idleReceivedAt)/1000))):0;
+        const available=this.last?.phase==="idle" || this.last?.phase==="error";
+        if(this.idleClaimButton)this.idleClaimButton.interactable=!!available && !this.idleBusy && (!d || seconds>=d.frequency || this.idleRetry || !!this.idleError);
+        if(available && this.statusLabel)this.statusLabel.string=this.last?.error || (this.idleBusy?"领取中…":this.idleError?"点击重试":!d?"读取挂机…":this.idleRetry?"确认上次领取":
+            Math.floor(seconds/3600)+":"+String(Math.floor(seconds/60)%60).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0")+(seconds>=d.frequency?" 领取":""));
+        for(const [label,id] of [[this.goldLabel,900001],[this.heroExpLabel,900101],[this.roleExpLabel,900003]] as const)
+            if(label)label.string=d?String((d.rates.find(r=>r.itemId===id)?.quantity || 0)*60/d.frequency)+"/分":"—";
+    }
+    /** 已到账奖励按六格分页展示，复用已有结算壳，按钮只翻页或关闭，不再次请求发奖。 */
+    async showIdleRewards(rewards:readonly IdleReward[],page=0):Promise<void> {
+        this.dismissResult();if(this.closed)return;
+        const pages=Math.max(1,Math.ceil(rewards.length/6)),last=page+1>=pages;
+        const result=await mountBattleEnd(this.node.parent!,null,()=>{if(last)this.dismissResult();else void this.showIdleRewards(rewards,page+1);},{
+            receiptTitle:"挂机收益（"+(page+1)+"/"+pages+"）",confirmText:last?"确定":"下一页",
+            rewards:rewards.slice(page*6,page*6+6).map(r=>({itemType:r.itemId,num:r.quantity,icon:this.catalog!.face(r.itemId,r.quantity).icon})),
+        });
+        if(this.closed){result?.destroy();return;}this.result=result;
     }
     async prepareFight(): Promise<boolean> {
         this.field?.pauseIdle();

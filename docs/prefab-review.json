@@ -968,13 +968,6 @@
         ]
       },
       {
-        "node": "lbl_role_lv",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
         "node": "menu",
         "anchor": [
           0,
@@ -986,13 +979,13 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-    "sha256": "b230b4a3153bc7c82a8bb9b8849584c736a27407e3d2b20c4142538a63eefacd",
+    "visual": "2026-11-02 普通挂机真实领取局部复验：640×1280、360×800、960×1280 实际绘制/CSS 尺寸一致；标题锚点修复后居中，最多五类奖励及确认按钮可见，宽屏关闭成功。超过六类翻页、完整美术对照和 Inspector 未验收；证据 client/temp/idle-20261102。",
+    "sha256": "93003f765e12e555bcf3373ca657ea42d54ee4b369dad48aeede6ac0e63ae924",
     "acceptance": {
-      "sha256": "b230b4a3153bc7c82a8bb9b8849584c736a27407e3d2b20c4142538a63eefacd",
+      "sha256": "93003f765e12e555bcf3373ca657ea42d54ee4b369dad48aeede6ac0e63ae924",
       "date": "2026-11-02",
       "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+      "scope": "2026-11-02 普通挂机真实领取局部复验：640×1280、360×800、960×1280 实际绘制/CSS 尺寸一致；标题锚点修复后居中，最多五类奖励及确认按钮可见，宽屏关闭成功。超过六类翻页、完整美术对照和 Inspector 未验收；证据 client/temp/idle-20261102。",
       "inspector": "待负责人逐项确认"
     }
   },
@@ -1283,7 +1276,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "323f54a531d035603a5161ad1f422e593a4da15dc7e11255335b0325f7d38bf7"
+    "sha256": "302b00821da1f77cc230d79581d2a2ec1365ddac755c5e2abf3ff35a6c03214d"
   },
   {
     "path": "client/assets/prefabs/ui/battle/HangMissionChipView.prefab",

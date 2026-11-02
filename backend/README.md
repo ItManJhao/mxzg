@@ -65,7 +65,7 @@ dev.ps1 run 现在会先检查端口是否已有服务：识别到英雄接口 4
 
 引导文件只创建该库/账号并锁定该实例的 root；应用、迁移和测试只使用专用库账号。授权中的下划线转义，权限仅涵盖准确库名，没有全局管理或授权转授权限。引导文件完成后立即删除，日志与归属记录不包含密码/令牌。每次启动迁移前核对实际 8.4 版本、地址端口、库、用户、服务器 UUID 与授权范围；身份不符即中止。Spring 测试环境排除终端业务配置和外部配置位置，独立固定数据源及 Flyway 连接，禁止 clean。没有连接共享实例的模式。
 
-11 项测试使用真实 V1–V4 迁移与业务：空库列类型/索引/约束；启动身份拒绝；并发创角及区服隔离；阵容版本冲突、非法阵位/跨角色英雄；挑战与领奖幂等；奖励中途失败整笔回滚；会话过期及 UTC 时间；应用上下文和数据库进程重启持久化；独立 JVM 的真实 HTTP 全链路。并发先锁住专用库 game_role，再观察两个真实 SQL 同时等待锁后释放，断言冲突或幂等结果。回滚通过专用测试库存溢出制造，不新增生产故障入口。
+12 项测试使用真实 V1–V5 迁移与业务：空库列类型/索引/约束；启动身份拒绝；并发创角及区服隔离；阵容版本冲突、非法阵位/跨角色英雄；挑战与领奖幂等；奖励中途失败整笔回滚；会话过期及 UTC 时间；应用上下文和数据库进程重启持久化；独立 JVM 的真实 HTTP 全链路；挂机并发领取及重启后的计时和随机收据恢复。并发先锁住专用库 game_role，再观察两个真实 SQL 同时等待锁后释放，断言冲突或幂等结果。回滚通过专用测试库存溢出或收据约束制造，不新增生产故障入口。
 
 HTTP 用例先关闭父测试的应用上下文，再通过 MySqlHttpProcess 启动独立 Java 进程，执行真实 GameApplication 和现有 Controller/业务。启动配置沿用隔离保护，子进程再次核对数据库 UUID/身份/权限；凭据仅由标准输入管道传递，不进入命令行、配置文件或日志。HTTP 使用 server.port=0 的随机回环端口，就绪文件原子记录运行标识、PID 和端口，父进程确认归属后才发送请求。逐代 http-process-N.properties 和 http-jvm-N.log 保留在该测试目录，停止只使用创建时持有的进程句柄。
 
@@ -87,3 +87,14 @@ HTTP 链覆盖选服列表、开发登录、角色、主线初始化、英雄列
 Creator 刷新并完成导入后，新开预览页，在原预览地址附加 `?mxzgTestApi=http%3A%2F%2F127.0.0.1%3A<本批HTTP端口>&mxzgTestRun=<本批run>`。测试代码中的 `/api/v1/test-identity` 必须匹配本批 run 才允许进入登录；只在 Creator PREVIEW 和回环来源接受参数，18080/3306 被拒绝，失败不回退到日常服务。会话存储使用独立 run 前缀。身份接口仅编译于 test 源，不打入应用。使用新建合成账号，不复制日常角色或资产。测试页关闭后再停止该批进程。
 
 本批普通升级最终结果：2026-11-02 MySQL 11/11、H2 29/29；Creator 真实奖励→升级→再战斗→重登完成，三尺寸及迟到响应范围见开发进度。所有本批实例及 HTTP 子进程已停止，玩家库和日常后端未操作。
+
+## 普通挂机接口（2026-11-02）
+
+V5 新增 game_idle 与 game_idle_receipt。主线初始化或首次挂机查询在角色锁内创建计时；已有角色不追补迁移前离线时长。规则由 tools/export_idle_rules.py 从现有四类配置导出，当前覆盖普通角色前 20 关，不含 VIP、活动、特权和付费快速战斗。
+
+- GET /api/v1/idle：返回 serverTime/startedAt（Unix 秒）、revision、elapsedSeconds、maxSeconds、frequency、rewardStage、rates、claimable、configVersion。rates 为每个 frequency 的基础收益；查询不随机抽奖。
+- POST /api/v1/idle/claim：仅接收 requestId（小写 UUID）与 expectedRevision。返回原操作 receipt、当前 state、role、inventory、roleExperience。客户端不提交奖励、时间或随机数。
+- 同角色同 requestId 与 revision 重放原随机收据，附带最新资产；同键不同参数为 409 IDEMPOTENCY_CONFLICT。新键旧版本为 409 IDLE_STATE_CHANGED，不足一个周期为 409 IDLE_NOT_READY；未初始化为 409 ROLE_NOT_INITIALIZED，非法参数为 400 INVALID_IDLE_REQUEST，无效会话为 401。
+- 角色锁覆盖资产、计时、掉落保底和收据的单笔事务；失败全部回滚。领取后重置起点，超上限时间与不足完整周期的基础收益尾数不结转；随机次数沿用旧服四舍五入。掉落计数按累计 12 小时窗口重置。
+
+本批自动回归：H2 35/35、独立 MySQL 12/12。MySQL 运行 65889279e26748cd805faa0131f0de39，端口 58003，结束 state=stopped。验证并发领取、独立 JVM/数据库重启及重登重放。日常本地 H2 在停止旧进程后备份到 .local/backups/idle-20261102-193035，升级 V4→V5；无清库操作。实际页面验收范围以开发进度为准。

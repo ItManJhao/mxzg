@@ -53,6 +53,8 @@ BagModel 区分 idle、loading、ready（允许空）和 error；失败保留上
 
 应用持有唯一账号、英雄名册和背包模块服务。HeroRosterController 仅是当前页面的适配器，关闭不销毁名册服务；BagController/BagModel 独立于窗口。FormationController 管理出阵编辑草稿与服务端 expectedVersion，CampaignController 处理当前挑战/领奖工作流，不新增平行资产状态。
 
+普通挂机由应用持有 IdleController，保留本会话未确认的领取请求；CampaignController 只保存页面计时快照和显示流程。IdleApi 校验服务器时间和收据，资产通过同一个 BagController.runInventoryUpdate 提交。页面关闭不取消已经提交的领取，切换账号清理旧请求；本地计时只驱动显示，不决定奖励。后端 IdleService 在角色锁内事务保存资产、计时、保底和随机收据，查询不抽奖。
+
 通用 PrefabLoader 只加载资源，资源 UUID 登记在 config/PrefabCatalog；PrefabLayout 和 ParchmentLayout 只适配现有界面。战斗显示只消费新接口战报和单位，不回退本地 Mock 或旧协议。
 
 ## 后端决定

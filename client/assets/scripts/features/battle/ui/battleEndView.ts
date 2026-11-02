@@ -1,6 +1,6 @@
 /**
  * 战斗结算展示：由 CampaignView 挂载已有 BattleEndLayer，展示服务端战报和完整奖励列表。
- * 确认操作交回调用方领取奖励；本文件不发放资产，也不从旧配置推算掉落。
+ * 确认交回调用方：战斗触发领取，挂机已到账收据仅翻页或关闭；本文件不发奖或推算掉落。
  * 弹层随页面关闭销毁；无评分规则的服务端结算不显示星级评价。
  */
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
@@ -26,11 +26,12 @@ export interface BattleEndOptions {
   roleLevel?: number;
   rewards?: { itemType: number; num: number; icon: string }[];
   confirmText?: string;
+  receiptTitle?: string;
 }
 
 /**
  * 盖在战斗页上。胜负换 spr_result 的横幅，不写进最佳萌神的名字格。
- * 「5秒后关闭」藏起来，不自动关。确定回挂机，下一关走 btn_report。
+ * 「5秒后关闭」藏起来，不自动关。战斗确定回挂机，下一关走 btn_report；收据使用调用方标题与回调。
  * 挂机壳在页面最上层时，结算改挂到壳里面，避免被壳挡住。
  */
 export async function mountBattleEnd(
@@ -49,7 +50,7 @@ export async function mountBattleEnd(
     place(createRect("dim", 720, 1280, new Color(8, 16, 32, 160)), hold, 0, 0);
     const view = spawnPrefab(prefab, hold);
     mountCcbiView(view);
-    const headline = win === true ? "胜利" : win === false ? "失败" : "胜负未带";
+    const headline = options?.receiptTitle || (win === true ? "胜利" : win === false ? "失败" : "胜负未带");
     paintResultBanner(view, win);
     hideShellText(view, "lbl_hero_name");
     hideShellText(view, "UILabelTTF_1");
@@ -62,7 +63,7 @@ export async function mountBattleEnd(
         fail.active = true;
       } else if (win === null) {
         fail.active = true;
-        setText(fail, "胜负未带");
+        setText(fail, options?.receiptTitle ? "" : "胜负未带");
       } else {
         fail.active = false;
       }
@@ -70,7 +71,11 @@ export async function mountBattleEnd(
     const timer = findDescendant(view, "lbl_time");
     if (timer) timer.active = false;
     paintStars(view, win === true && options?.rewards === undefined);
-    paintClearRewards(view, win === true ? options && options.stageId : undefined, options?.rewards);
+    paintClearRewards(view, win === true ? options && options.stageId : undefined, options?.rewards,!!options?.receiptTitle);
+    if(options?.receiptTitle){
+      hideShellText(view,"spr_wing");
+      const title=findDescendant(view,"lbl_role_lv");if(title){title.active=true;setText(title,options.receiptTitle);}
+    }
     const confirm = findDescendant(view, "btn_confirm");
     if (confirm) {
       caption(confirm, options?.confirmText || "回挂机");
@@ -197,8 +202,8 @@ function hideShellText(view: Node, name: string): void {
   if (node) node.active = false;
 }
 
-/** 绘制调用方传入的全部真实奖励；当前首通最多七项，不能沿用旧六格上限漏掉装备。 */
-function paintClearRewards(view: Node, stageId: number | undefined, supplied?: { itemType: number; num: number; icon: string }[]): void {
+/** 绘制调用方传入的真实奖励；首通全部横排，挂机由调用方分页后以三列两行展示。 */
+function paintClearRewards(view: Node, stageId: number | undefined, supplied?: { itemType: number; num: number; icon: string }[], grid=false): void {
   const stacks = supplied;
   const host = findDescendant(view, "show_rich") || view;
   const old = host.getChildByName("EndRewards");
@@ -215,7 +220,7 @@ function paintClearRewards(view: Node, stageId: number | undefined, supplied?: {
     ui.setContentSize(64, 64);
     const sprite = cell.addComponent(Sprite);
     sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-    place(cell, row, (i - (shown - 1) / 2) * 72, 0);
+    place(cell, row, grid?(i%3-1)*120:(i - (shown - 1) / 2) * 72, grid?80-Math.floor(i/3)*120:0);
     paintFrame(cell, icon);
     const count = createLabel(String(stack.num), supplied ? 20 : 14, { color: new Color(255, 248, 220, 255), width: 64, height: supplied ? 28 : 18 });
     const countLabel = count.getComponent(Label);

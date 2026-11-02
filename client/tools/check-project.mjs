@@ -21,6 +21,8 @@ const suites = [
   ["formation-view", "ts", "client/tools/formation-view-check.ts"],
   ["remake-playable", "ts", "client/tools/remake-playable-check.ts"],
   ["hero-growth-generated", "python", "tools/export_hero_growth.py"],
+  ["idle-generated", "python", "tools/export_idle_rules.py"],
+  ["idle", "ts", "client/tools/idle-check.ts"],
   ["campaign-rules", "python", "tools/export_campaign_rules.py"],
   ["remake-navigation", "ts", "client/tools/remake-navigation-check.ts"],
   ["feature-navigation", "ts", "client/tools/feature-navigation-check.ts"],

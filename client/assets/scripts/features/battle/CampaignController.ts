@@ -1,4 +1,7 @@
+/** 主线页面协调：管理战报生命周期并转交挂机查询/领取，资产写入交由会话级协调器处理。 */
 import { AccountModel } from "../account/AccountModel";
+import type { IdleState, IdleReward } from "./IdleApi";
+import type { IdleController } from "./IdleController";
 import { AccountService, SessionChanged } from "../account/AccountService";
 import { CampaignApi } from "./CampaignApi";
 import { BagController } from "../Bag/BagController";
@@ -8,6 +11,7 @@ export interface CampaignActions {
     fight(): void;
     speed(): void;
     skip(): void;
+    claimIdle?(): void;
 }
 export interface CampaignScreen {
     bind(actions: CampaignActions): () => void;
@@ -18,6 +22,8 @@ export interface CampaignScreen {
     nextSpeed(): void;
     skipReplay(): void;
     prepareFight?(): Promise<boolean>;
+    renderIdle?(state:IdleState|null,busy:boolean,error:string,retry:boolean):void;
+    showIdleRewards?(rewards:readonly IdleReward[]):Promise<void>;
 }
 function requestId(): string {
     // Idempotency identifier, not a credential. WeChat runtimes may not provide Web Crypto.
@@ -34,14 +40,18 @@ export class CampaignController {
     private epoch = 0;
     private report: CampaignReport | null = null;
     private request: string | null = null;
+    private idleState:IdleState|null=null;
+    private idleBusy=false;
     private disposers: Array<() => void> = [];
+    /** 页面持有显示状态，挂机领取由应用提供的会话级协调器持有。 */
     constructor(private readonly account: AccountModel, private readonly service: AccountService, private readonly api: CampaignApi, private readonly view: CampaignScreen, private readonly notice: (text: string) => void,
-        private readonly bag: BagController = BagController.instance) { }
+        private readonly bag: BagController = BagController.instance, private readonly idle?:IdleController) { }
+    /** 绑定本页操作和会话观察，关闭后由对应解除函数清理。 */
     show(): void {
         if (this.closed || this.disposers.length)
             return;
         const role = this.account.snapshot.role?.id;
-        this.disposers = [this.view.bind({ fight: () => { void this.fight(); }, speed: () => this.view.nextSpeed(), skip: () => this.view.skipReplay() }),
+        this.disposers = [this.view.bind({ fight: () => { void this.fight(); }, speed: () => this.view.nextSpeed(), skip: () => this.view.skipReplay(), claimIdle:()=>{void this.claimIdle();} }),
             this.account.subscribe(state => { if (!state.role || state.role.id !== role || state.busy) {
                 this.epoch++;
                 this.view.skipReplay();
@@ -50,6 +60,7 @@ export class CampaignController {
     }
     private paint(phase: CampaignPhase, error = ""): void { this.phase = phase; this.view.render(this.state, phase, error); }
     private accepts(epoch: number): boolean { return !this.closed && epoch === this.epoch; }
+    /** 读取主线与挂机可信状态；待领奖战报仍按原流程恢复。 */
     private async load(): Promise<void> {
         const epoch = ++this.epoch;
         this.paint("loading");
@@ -58,6 +69,8 @@ export class CampaignController {
             if (!this.accepts(epoch))
                 return;
             this.state = state;
+            await this.loadIdle(epoch);
+            if (!this.accepts(epoch)) return;
             if (state.pending)
                 await this.play(state.pending, epoch);
             else
@@ -67,8 +80,32 @@ export class CampaignController {
             this.fail(epoch, error);
         }
     }
+    /** 挂机读取失败不阻断主线；领取区域提供独立重试。 */
+    private async loadIdle(epoch:number):Promise<void> {
+        if(!this.idle)return;
+        try {const state=await this.idle.current();if(this.accepts(epoch)){this.idleState=state;this.view.renderIdle?.(state,false,"",this.idle.needsConfirmation);}}
+        catch(error){if(this.accepts(epoch)){this.idleState=null;this.view.renderIdle?.(null,false,error instanceof Error?error.message:"挂机读取失败",false);}}
+    }
+    /** 查询缺失时点击重试；领奖完成才展示服务端物品，关页不丢弃已发奖状态。 */
+    private async claimIdle():Promise<void> {
+        if(!this.idle || this.closed || this.idleBusy || !["idle","error"].includes(this.phase))return;
+        const epoch=this.epoch;
+        if(!this.idleState){await this.loadIdle(epoch);return;}
+        this.idleBusy=true;this.view.renderIdle?.(this.idleState,true,"",false);
+        try {
+            const result=await this.idle.claim(this.idleState.revision);
+            if(!this.accepts(epoch))return;
+            this.idleState=result.state;this.view.renderIdle?.(result.state,false,"",false);
+            await this.view.showIdleRewards?.(result.receipt.rewards);
+        } catch(error){
+            if(!this.accepts(epoch))return;
+            await this.loadIdle(epoch);
+            if(this.accepts(epoch))this.view.renderIdle?.(this.idleState,false,"领取未完成，点击重试",this.idle.needsConfirmation);
+        } finally {this.idleBusy=false;}
+    }
+    /** 挂机领奖期间阻止交叉操作，其余情况恢复待领奖战报或发起主线挑战。 */
     private async fight(): Promise<void> {
-        if (this.closed || ["loading", "formation", "challenging", "replaying", "result", "claiming"].includes(this.phase))
+        if (this.closed || this.idleBusy || ["loading", "formation", "challenging", "replaying", "result", "claiming"].includes(this.phase))
             return;
         if (!this.state) {
             await this.load();
