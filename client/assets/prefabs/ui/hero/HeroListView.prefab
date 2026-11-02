@@ -4096,10 +4096,6 @@
       "__uuid__": "d3a470c0-fa13-47fa-811e-f38c7317e9d8",
       "__expectedType__": "cc.Prefab"
     },
-    "cellPrefab": {
-      "__uuid__": "e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40",
-      "__expectedType__": "cc.Prefab"
-    },
     "sprBg": {
       "__id__": 5
     },

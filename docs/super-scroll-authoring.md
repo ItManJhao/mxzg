@@ -4,6 +4,8 @@
 
 ## 文件与节点
 
+英雄列表也采用同一规范：`HeroListBoardView/spr_box/HeroScroll` 的 SuperScroll 绑定 `view/content`，view 保存 Mask，content 保存 SuperContent 与 HeroIconCellView Prefab。默认四列、Cell 自然尺寸 96×104、间距 12/8、左右边距 60、上下边距 0；保留原四列的中心坐标与纵向步长。HeroListView 只 setData 并绑定格子显示，普通刷新保留滚动位置，切换元素筛选回到起点；Cell 资源不再在页面重复配置。格子按索引复用，头像/元素图标加载带显示版本保护，销毁会解除点击。当前真实角色仅三名英雄，二十格末行、刷新保位与缩短归位由隔离回归验证，不等同于真实长名册拖动或 Inspector 人工签收。
+
 - 滚动组件：[SuperScroll.ts](../client/assets/scripts/framework/ui/SuperScroll.ts)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\scripts\framework\ui\SuperScroll.ts`。
 - 内容组件：[SuperContent.ts](../client/assets/scripts/framework/ui/SuperContent.ts)，同目录。两个组件分别继承原生 ScrollView、Layout，没有另建拖动/惯性/回弹或列表框架。
 - 页面：[BagView.prefab](../client/assets/prefabs/ui/Bag/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\backpack\BagView.prefab`。

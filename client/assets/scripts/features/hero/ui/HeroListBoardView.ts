@@ -1,8 +1,9 @@
 /**
  * 英雄列表板：管理筛选按钮和滚动容器显示，名册数据由外部注入，不维护角色状态。
  */
+import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { _decorator, Button, Component, Label, Mask, Node, ScrollView, UITransform } from "cc";
+import { _decorator, Button, Component, Label, Mask, Node, UITransform } from "cc";
 import { GameLog } from "../../../core/GameLog";
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
 
@@ -57,6 +58,12 @@ export class HeroListBoardView extends Component {
 
   private elemBound = false;
 
+  /** 由 Prefab 绑定的统一滚动组件；布局和 Cell 资源归 SuperContent。 */
+  get scroll(): SuperScroll {
+    const scroll=this.heroScroll?.getComponent(SuperScroll);
+    if(!scroll)throw new Error("HeroListBoardView 缺少 SuperScroll");
+    return scroll;
+  }
   get content(): Node | null {
     return this.heroContent;
   }
@@ -66,8 +73,9 @@ export class HeroListBoardView extends Component {
     if (!this.heroScroll || !this.heroPort || !this.heroContent) throw new Error("HeroListBoardView 缺少滚动绑定");
     if (this.heroContent.parent !== this.heroPort || this.heroScroll.getComponent(Mask) || !this.heroPort.getComponent(Mask))
       throw new Error("HeroListBoardView 需要 view/Mask/content 的静态布局");
-    const scroller = this.heroScroll.getComponent(ScrollView);
-    if (!scroller || scroller.content !== this.heroContent) throw new Error("HeroListBoardView ScrollView.content 绑定错误");
+    const scroller = this.scroll;
+    if (scroller.content !== this.heroContent) throw new Error("HeroListBoardView SuperScroll.content 绑定错误");
+    scroller.validateBindings();
     return this.node.activeInHierarchy;
   }
 

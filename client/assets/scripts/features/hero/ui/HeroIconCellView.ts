@@ -38,6 +38,7 @@ export class HeroIconCellView extends Component {
   @property(Node)
   battle: Node | null = null;
 
+  private revision=0;
   private tap: (() => void) | null = null;
 
   validateBindings(): void {
@@ -52,12 +53,14 @@ export class HeroIconCellView extends Component {
       throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab / HeroIconCellView: face 缺少 Sprite");
   }
 
+  /** 复用格子时替换显示和点击，并使旧图标加载结果失效。 */
   show(cell: HeroCellModel, onTap: (() => void) | null): void {
     this.validateBindings();
+    const revision=++this.revision;
     const empty = cell.kind === "empty";
-    this.paintFace(cell, empty);
+    this.paintFace(cell, empty, revision);
     this.paintName(cell, empty);
-    this.paintElem(cell, empty);
+    this.paintElem(cell, empty, revision);
     this.paintStars(empty ? 0 : cell.stars);
     this.paintLevel(empty ? null : cell.level);
     if (this.lock) this.lock.active = !empty && cell.locked;
@@ -82,7 +85,8 @@ export class HeroIconCellView extends Component {
     this.node.on(Button.EventType.CLICK, run);
   }
 
-  private paintFace(cell: HeroCellModel, empty: boolean): void {
+  /** 头像仅接受本轮显示请求，空格或后续英雄不能被旧回包覆盖。 */
+  private paintFace(cell: HeroCellModel, empty: boolean, revision:number): void {
     if (!this.face) return;
     const image = this.face.getComponent(Sprite);
     if (image) image.grayscale = !empty && cell.locked;
@@ -91,7 +95,8 @@ export class HeroIconCellView extends Component {
       return;
     }
     this.face.active = true;
-    paintSpritePaths(this.face, [cell.face, HERO_FACE_FALLBACK]);
+    if(image)image.spriteFrame=null;
+    paintSpritePaths(this.face, [cell.face, HERO_FACE_FALLBACK],()=>this.isValid && revision===this.revision);
   }
 
   private paintName(cell: HeroCellModel, empty: boolean): void {
@@ -102,11 +107,11 @@ export class HeroIconCellView extends Component {
   }
 
   /** 显示合法元素对应的静态图标；未知元素隐藏，禁止拼接不存在的路径。 */
-  private paintElem(cell: HeroCellModel, empty: boolean): void {
+  private paintElem(cell: HeroCellModel, empty: boolean, revision:number): void {
     if (!this.elem) return;
     const show = !empty && cell.elem !== null && !!ELEMENT_FRAMES[cell.elem];
     this.elem.active = show;
-    if (show && cell.elem !== null) paintSpritePaths(this.elem, [ELEMENT_FRAMES[cell.elem].path]);
+    if (show && cell.elem !== null) paintSpritePaths(this.elem, [ELEMENT_FRAMES[cell.elem].path],()=>this.isValid && revision===this.revision);
   }
 
   private paintStars(count: number): void {
@@ -117,6 +122,9 @@ export class HeroIconCellView extends Component {
       star.active = i < n;
     }
   }
+
+  /** 销毁时废弃异步图标并清理本格点击。 */
+  onDestroy():void {this.revision++;if(this.tap)this.node.off(Button.EventType.CLICK,this.tap);this.tap=null;}
 
   private paintLevel(level: number | null): void {
     if (!this.levelLabel) return;

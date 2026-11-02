@@ -8,7 +8,7 @@ import { HeroRosterController } from "../HeroRosterController";
 import { presentHeroRoster } from "../HeroRosterPresentation";
 import type { HeroCatalog } from "../HeroCatalog";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { _decorator, Button, director, Director, HorizontalTextAlignment, Label, Layers, Node, Overflow, Prefab, UITransform, VerticalTextAlignment } from "cc";
+import { _decorator, Button, director, Director, HorizontalTextAlignment, Label, Node, Overflow, Prefab, UITransform, VerticalTextAlignment } from "cc";
 import { messageOf } from "../../../core/errors";
 import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
@@ -16,7 +16,7 @@ import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { view } from "../../../framework/ui/UIRegistry";
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
-import { heroCellLine, heroCellSeat, heroContentHeight, HeroListTab } from "./HeroListPresentation";
+import { heroCellLine, HeroListTab } from "./HeroListPresentation";
 import { loadPrefab, spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { assignContentSize, positiveUiSize } from "../../../framework/ui/visibleFit";
 import { HeroIconCellView } from "./HeroIconCellView";
@@ -30,7 +30,6 @@ const { ccclass, property } = _decorator;
 const TAB_ON = ResourceCatalog.common.button_btn_tab_24.path;
 const TAB_OFF = ResourceCatalog.common.button_btn_tab_23.path;
 const BOARD_PREFAB = ResourceCatalog.prefab_hero.HeroListBoardView.assetPath;
-const CELL_PREFAB = ResourceCatalog.prefab_hero.HeroIconCellView.assetPath;
 
 /**
  * 英雄列表。页签、羊皮纸和筛选都绑在 HeroListLayer / HeroListHeroLayer 上。
@@ -83,10 +82,7 @@ export class HeroListView extends BaseView implements HeroRosterView {
   @property(Prefab)
   boardPrefab: Prefab | null = null;
 
-  @property(Prefab)
-  cellPrefab: Prefab | null = null;
-
-  @property(Node)
+@property(Node)
   sprBg: Node | null = null;
 
   @property(Node)
@@ -157,7 +153,7 @@ export class HeroListView extends BaseView implements HeroRosterView {
 
   /** 页真正露出时再铺格子。打开过程里节点还不在场景上，不能在那时把格子挂出去。 */
   onEnable(): void {
-    if (!this.board || !this.cellPrefab) return;
+    if (!this.board) return;
     this.refresh();
   }
 
@@ -196,15 +192,13 @@ export class HeroListView extends BaseView implements HeroRosterView {
     }
   }
 
+  /** 页面只保证板子资源；Cell 及列表参数由板子内的 SuperContent 配置。 */
   private async ensurePrefabs(): Promise<void> {
     if (!this.boardPrefab) {
       GameLog.shared.warn("Hero", "boardPrefab 未绑定，改走路径加载");
       this.boardPrefab = await loadPrefab(BOARD_PREFAB);
     }
-    if (!this.cellPrefab) {
-      GameLog.shared.warn("Hero", "cellPrefab 未绑定，改走路径加载");
-      this.cellPrefab = await loadPrefab(CELL_PREFAB);
-    }
+
   }
 
   /**
@@ -305,8 +299,9 @@ export class HeroListView extends BaseView implements HeroRosterView {
     if (!model.synced) board.setEmpty(model.emptyText);
   }
 
+  /** 等待页面可见后验证统一列表绑定，再用当前名册更新显示。 */
   private refresh(): void {
-    if (this.closed || !this.node || !this.node.isValid || !this.board || !this.cellPrefab) return;
+    if (this.closed || !this.node || !this.node.isValid || !this.board) return;
     if (!this.node.activeInHierarchy) {
       this.watchShown();
       return;
@@ -345,10 +340,11 @@ export class HeroListView extends BaseView implements HeroRosterView {
     this.shownWatch = null;
   }
 
+  /** 只提交当前筛选展示条目；格子复用、排版、内容尺寸和滚动位置交给统一列表。 */
   private paint(): void {
     const board = this.board;
     const content = board ? board.content : null;
-    if (!board || !content || !content.isValid || !this.cellPrefab) return;
+    if (!board || !content || !content.isValid) return;
     this.paintTabs();
     board.setCorner(this.tab);
     if (this.roster) {
@@ -359,33 +355,19 @@ export class HeroListView extends BaseView implements HeroRosterView {
     const model = this.readModel();
     board.setCapacity(model.capacityLine);
     board.setEmpty(model.emptyText);
-    this.clear(content);
-    const layer = content.layer || Layers.Enum.UI_2D;
-    for (let i = 0; i < model.cells.length; i++) {
-      const face = model.cells[i];
-      const node = spawnPrefab(this.cellPrefab, content);
-      const cell = node.getComponent(HeroIconCellView);
-      if (!cell) {
-        GameLog.shared.warn("Hero", "HeroIconCell 上没有 HeroIconCellView");
-        continue;
-      }
-      this.adoptLayer(node, layer);
-      const line = heroCellLine(face);
-      cell.show(face, line ? () => this.roster?.select(face) : null);
-      const seat = heroCellSeat(i);
-      node.setPosition(seat.x, seat.y, 0);
-    }
-    const ui = content.getComponent(UITransform);
-    const size = positiveUiSize(ui);
-    const width = size && size.width > 0 ? size.width : 540;
-    assignContentSize(ui, width, heroContentHeight(model.cells.length, model.contentFloor));
-    content.setPosition(0, 0, 0);
+    board.scroll.list.setData(model.cells,(node,face)=>{
+      const cell=node.getComponent(HeroIconCellView);
+      if(!cell)throw new Error("HeroIconCellView Prefab 缺少格子组件");
+      cell.show(face,heroCellLine(face)?()=>this.roster?.select(face):null);
+    });
   }
 
+  /** 切换筛选后回到列表起点；普通数据刷新保留滚动位置。 */
   private pickElem(id: number): void {
     if (id === this.elem) return;
     this.elem = id;
     this.refresh();
+    this.board?.scroll.toStart();
   }
 
 
@@ -478,14 +460,4 @@ export class HeroListView extends BaseView implements HeroRosterView {
     UIManager.instance.toast(text);
   }
 
-  private clear(node: Node): void {
-    const old = node.children.slice();
-    for (let i = 0; i < old.length; i++) old[i].destroy();
-  }
-
-  private adoptLayer(node: Node, layer: number): void {
-    node.layer = layer;
-    const kids = node.children;
-    for (let i = 0; i < kids.length; i++) this.adoptLayer(kids[i], layer);
-  }
 }

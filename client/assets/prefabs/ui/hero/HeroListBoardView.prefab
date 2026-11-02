@@ -3138,6 +3138,9 @@
     "_components": [
       {
         "__id__": 128
+      },
+      {
+        "__id__": 143
       }
     ],
     "_prefab": {
@@ -3236,7 +3239,7 @@
     "fileId": "nKpwxCWfC1NqWaFNd8hNeQ"
   },
   {
-    "__type__": "cc.ScrollView",
+    "__type__": "eed84/fAPdIqoL8eDBpgRdQ",
     "_name": "",
     "_objFlags": 0,
     "_enabled": true,
@@ -3497,5 +3500,58 @@
     "pattern": {
       "__id__": 11
     }
+  },
+  {
+    "__type__": "27b5aSIleBEMqaxNSfTT/yT",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 127
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 144
+    },
+    "_resizeMode": 0,
+    "_layoutType": 3,
+    "_cellSize": {
+      "__type__": "cc.Size",
+      "width": 96,
+      "height": 96
+    },
+    "_startAxis": 0,
+    "_paddingLeft": 60,
+    "_paddingRight": 60,
+    "_paddingTop": 0,
+    "_paddingBottom": 0,
+    "_spacingX": 12,
+    "_spacingY": 8,
+    "_verticalDirection": 1,
+    "_horizontalDirection": 0,
+    "_constraint": 2,
+    "_constraintNum": 4,
+    "_affectedByScale": true,
+    "_isAlign": false,
+    "layoutType": 2,
+    "gridAxis": 0,
+    "columns": 4,
+    "rows": 2,
+    "cellPrefab": {
+      "__uuid__": "e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40",
+      "__expectedType__": "cc.Prefab"
+    },
+    "overrideCellSize": false,
+    "explicitCellSize": {
+      "__type__": "cc.Size",
+      "width": 96,
+      "height": 96
+    },
+    "previewCount": 0,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "hero-list-super-content"
   }
 ]

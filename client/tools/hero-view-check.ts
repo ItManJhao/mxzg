@@ -1,3 +1,5 @@
+import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
+import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { HeroRosterEvent } from "../assets/scripts/features/hero/HeroRosterEvent";
 /** 英雄模块回归：核对显式初始化、唯一状态、事件清理和异步会话隔离。 */
@@ -13,7 +15,7 @@ import { readFileSync } from "fs";
 
 import { join } from "path";
 
-import { Button, director, Director, Label, Mask, Node, Prefab, ScrollView, Sprite, UITransform } from "cc";
+import { Button, director, Director, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UITransform } from "cc";
 
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
 
@@ -124,9 +126,8 @@ function checkPrefab(): void {
   assertNode(layer, view.comp, "bubble", 121, "node_bubble");
   assertNode(layer, view.comp, "layerCapacity", 105, "node_capacity");
   const boardPrefab = view.comp.boardPrefab as { __uuid__?: string };
-  const cellPrefab = view.comp.cellPrefab as { __uuid__?: string };
   assert(boardPrefab.__uuid__ === "d3a470c0-fa13-47fa-811e-f38c7317e9d8", "boardPrefab 是 HeroListHeroLayer");
-  assert(cellPrefab.__uuid__ === "e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40", "cellPrefab 是 HeroIconCell");
+  assert(!("cellPrefab" in view.comp),"Cell 资源只在 SuperContent 维护");
   assertNode(layer, view.comp, "sprBg", 5, "spr_bg");
   assertNode(layer, view.comp, "parchment", 155, "ParchmentPlate");
   assertNode(layer, view.comp, "titleRoot", 11, "node_title");
@@ -137,6 +138,8 @@ function checkPrefab(): void {
   assert(uiHeight(layer, idOf(layer[72].node)) === 32, "圣龙页签字有高度");
 
   const boardData = loadPrefab("client/assets/prefabs/ui/hero/HeroListBoardView.prefab");
+  const listConfig=boardData.find((row:any)=>row.columns!==undefined) as any;
+  assert(listConfig.columns===4 && listConfig.cellPrefab.__uuid__==="e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40","SuperContent 四列及格子资源绑定");
   const rootPos = boardData[1]._lpos as { x?: number; y?: number };
   assert(rootPos.x === 0 && rootPos.y === 0, "HeroListHeroLayer 根在底左，不再写居中偏移");
   const board = component(boardData, boardType);
@@ -228,11 +231,13 @@ function fakePrefab(build: (node: Node) => void): Prefab {
     build(node);
     return node;
   };
+  (prefab as any).data=prefab._instantiate();
   return prefab;
 }
 
 function makeCell(node: Node): void {
   node.name = "HeroIconCellView";
+  node.addComponent(UITransform).setContentSize(96,104);
   const cell = node.addComponent(HeroIconCellView);
   cell.button = node.addComponent(Button);
   cell.face = new Node("spr_face");
@@ -269,13 +274,17 @@ function makeBoard(node: Node): HeroListBoardView {
   board.heroScroll = sized("HeroScroll", 540, HERO_PORT_H);
   board.heroScroll.parent = board.sprBox;
 
-  board.heroScroll.addComponent(ScrollView);
+  board.heroScroll.addComponent(SuperScroll);
   board.heroPort = sized("view", 540, HERO_PORT_H);
   board.heroPort.parent = board.heroScroll;
   board.heroContent = sized("content", 540, 320);
   board.heroContent.parent = board.heroPort;
   board.heroPort.addComponent(Mask);
-  board.heroScroll.getComponent(ScrollView)!.content = board.heroContent;
+  board.heroScroll.getComponent(SuperScroll)!.content = board.heroContent;
+  board.heroContent.getComponent(UITransform)!.setAnchorPoint(0.5,1);
+  const list=board.heroContent.addComponent(SuperContent);
+  list.cellPrefab=fakePrefab(makeCell);list.columns=4;list.spacingX=12;list.spacingY=8;list.paddingLeft=60;list.paddingRight=60;
+  board.heroScroll.getComponent(SuperScroll)!.onEnable();
   const empty = new Node("lbl_empty");
   board.emptyLabel = labelOn(empty, "");
   empty.parent = board.heroScroll;
@@ -336,9 +345,7 @@ function makeView(): HeroListView {
   view.boardPrefab = fakePrefab((node) => {
     makeBoard(node);
   });
-  view.cellPrefab = fakePrefab((node) => {
-    makeCell(node);
-  });
+
   return view;
 }
 
@@ -426,4 +433,34 @@ async function checkRemakeRoster(): Promise<void> {
 
   }
 }
-async function main() { checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/error/retry/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });
+
+/** 英雄格子复用后旧头像不能覆盖新英雄，点击只触发最新回调，销毁后迟到结果失效。 */
+function checkHeroCellReuse():void {
+ const root=new Node("reuse");makeCell(root);const cell=root.getComponent(HeroIconCellView)!;
+ const original=resources.load;const pending:Array<{path:string;done:(err:any,asset:any)=>void}>=[];
+ resources.load=((path:any,type:any,done:any)=>{pending.push({path,done});}) as any;
+ try {
+  const face=(path:string)=>({kind:"owned" as const,name:path,showName:true,face:path,elem:null,stars:1,level:1,locked:false,deployed:false});
+  let old=0,current=0;cell.show(face("A"),()=>old++);cell.show(face("B"),()=>current++);cell.show(face("B"),()=>current++);
+  root.emit(Button.EventType.CLICK);assert(old===0 && current===1,"只保留最新点击");
+  const a=new SpriteFrame(),b=new SpriteFrame();pending.filter(x=>x.path==="B/spriteFrame").forEach(x=>x.done(null,b));
+  pending.filter(x=>x.path==="A/spriteFrame").forEach(x=>x.done(null,a));
+  assert(cell.face!.getComponent(Sprite)!.spriteFrame===b,"迟到旧头像不能覆盖新英雄");
+  cell.show(face("C"),null);cell.onDestroy();pending.filter(x=>x.path==="C/spriteFrame").forEach(x=>x.done(null,a));
+  assert(cell.face!.getComponent(Sprite)!.spriteFrame===null,"销毁后不写回头像");
+ }finally{resources.load=original;root.destroy();}
+}
+/** 使用真实英雄列表布局配置验证长列表末行可达、刷新保位以及过滤缩短后归位。 */
+function checkHeroScrollBounds():void {
+ const root=new Node("long-list"),board=makeBoard(root),scroll=board.scroll,list=scroll.list;
+ const source=JSON.parse(read("client/assets/prefabs/ui/hero/HeroListBoardView.prefab"));const config=source.find((row:any)=>row.columns!==undefined);
+ for(const key of ["columns","rows","layoutType","gridAxis"] as const)list[key]=config[key];
+ for(const key of ["spacingX","spacingY","paddingLeft","paddingRight","paddingTop","paddingBottom"] as const)list[key]=config["_"+key];
+ list.setData(Array.from({length:20},(_,i)=>i),()=>{});
+ assert(board.heroContent!.getComponent(UITransform)!.height===552,"真实格子和间距计算长列表高度");
+ scroll.restorePosition({x:0,y:164} as any);assert(scroll.readPosition().y===164,"末行可达");
+ list.refresh();assert(scroll.readPosition().y===164,"普通刷新保留位置");
+ list.setData([1,2,3],()=>{});assert(scroll.readPosition().y===0,"筛选缩短不留下空白滚动区域");root.destroy();
+}
+
+async function main() { checkHeroCellReuse();checkHeroScrollBounds();checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/error/retry/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });

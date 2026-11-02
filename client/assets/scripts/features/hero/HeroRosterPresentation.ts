@@ -34,6 +34,6 @@ export function presentHeroRoster(state: HeroRosterState, catalog: HeroCatalog, 
   else if (state.status === "error") emptyText = state.error + "\n点击上方“英雄”重试";
   else if (!state.heroes.length) emptyText = "尚未获得英雄";
   else if (!cells.length) emptyText = "没有符合筛选条件的英雄";
-  return { synced: state.status === "ready", mode: "roster", cells, emptyText, contentFloor: 400,
+  return { synced: state.status === "ready", mode: "roster", cells, emptyText,
     capacityLine: state.status === "ready" ? "英雄：" + state.heroes.length : "英雄：—" };
 }

@@ -1,5 +1,15 @@
 # 当前进度与未完成项
 
+## 当前：英雄列表 SuperScroll 迁移
+
+- HeroListBoardView 的原生 ScrollView 替换为 SuperScroll，现有 view/Mask/content 层级和 UUID 保留；SuperContent 绑定 HeroIconCellView，自然尺寸 96×104、四列、间距 12/8、左右边距 60、上下 0。页面移除重复 Cell Prefab 字段及序列化引用、格子循环实例化、坐标和高度公式；只提交条目，普通刷新保位、切换筛选回起点。
+- 删除不再使用的 heroCellSeat/heroContentHeight 与 contentFloor。格子复用补头像和元素异步版本保护、点击替换与销毁清理，避免旧英雄头像迟到覆盖新英雄。
+- strict、hero、hero-roster、hero-level、super-scroll、resources 通过；英雄专项新增二十格真实布局配置回归（内容高 552、末行偏移 164）、刷新保位、缩短归位、格子头像迟到/点击去重/销毁后拒绝图标回包。真实 Creator 预览正在复验，暂不提交；未操作数据库增加英雄，长名册检查是隔离夹具。
+
+实际续验：Creator 自动重导入后，393×852 显示树精 13/独眼 7/布鲁 12，水元素筛选仅显示布鲁，复用格子点击打开布鲁而非原首格树精。正常升级布鲁 12→13，消耗金币 672、经验 212，余额 11199/309，列表与详情立即刷新；拖动未误开详情，切回全部恢复三名英雄。捕获 warn/error 为空，证据 client/temp/hero-scroll-20261102/filtered-upgrade.png。真实长名册拖动、更多尺寸及 Inspector 人工编辑体验仍待补齐。本批不提交同期出现的 HeroLevelApi、HeroLevelController、HeroRosterController/Event/Model 格式调整；这些改动保留在工作区。
+
+关闭回主城再打开，列表保留树精 13/独眼 7/布鲁 13，证据 all-heroes-reopened.png。下一批按既定顺序整理阵容模块的服务端状态、页面草稿和保存生命周期；英雄长列表/更多尺寸的未验项保留，未开放窗口不扩展。
+
 ## 当前：英雄名册模块职责迁移
 
 - 合并 HeroRosterService 与原页面 HeroRosterController：当前 HeroRosterController 继承 BaseController，显式 initialize、会话级持有查询/升级结果，页面不持有或销毁它。HeroRosterModel 继承 BaseModel，单例保存只读名册；通知移到 Controller 的全局 HeroRosterEvent.Updated。角色归属包含区服与角色 ID，换号/退出废弃在途回包。
