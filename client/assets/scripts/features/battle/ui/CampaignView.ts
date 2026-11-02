@@ -3,6 +3,7 @@
  */
 import { _decorator, Button, Label, Node } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { mountIdleRewards } from "./idleRewardView";
 import { mountBattleEnd } from "./battleEndView";
 import { BagItemCatalog } from "../../Bag/BagItemCatalog";
 import type { CampaignActions, CampaignPhase, CampaignScreen } from "../CampaignController";
@@ -36,6 +37,7 @@ export class CampaignView extends BaseView implements CampaignScreen {
     roleExpLabel: Label | null = null;
     private field: CampaignField | null = null;
     private result: Node | null = null;
+    private resultVersion = 0;
     private catalog: BagItemCatalog | null = null;
     private closed = false;
     private actions: CampaignActions | null = null;
@@ -120,15 +122,13 @@ export class CampaignView extends BaseView implements CampaignScreen {
         for(const [label,id] of [[this.goldLabel,900001],[this.heroExpLabel,900101],[this.roleExpLabel,900003]] as const)
             if(label)label.string=d?String((d.rates.find(r=>r.itemId===id)?.quantity || 0)*60/d.frequency)+"/分":"—";
     }
-    /** 已到账奖励按六格分页展示，复用已有结算壳，按钮只翻页或关闭，不再次请求发奖。 */
-    async showIdleRewards(rewards:readonly IdleReward[],page=0):Promise<void> {
+    /** 展示全部已到账挂机奖励；关闭、换页或较新的弹层请求使迟到加载结果失效。 */
+    async showIdleRewards(rewards:readonly IdleReward[]):Promise<void> {
         this.dismissResult();if(this.closed)return;
-        const pages=Math.max(1,Math.ceil(rewards.length/6)),last=page+1>=pages;
-        const result=await mountBattleEnd(this.node.parent!,null,()=>{if(last)this.dismissResult();else void this.showIdleRewards(rewards,page+1);},{
-            receiptTitle:"挂机收益（"+(page+1)+"/"+pages+"）",confirmText:last?"确定":"下一页",
-            rewards:rewards.slice(page*6,page*6+6).map(r=>({itemType:r.itemId,num:r.quantity,icon:this.catalog!.face(r.itemId,r.quantity).icon})),
-        });
-        if(this.closed){result?.destroy();return;}this.result=result;
+        const version=this.resultVersion;
+        const result=await mountIdleRewards(this.node.parent!,rewards,this.catalog!,()=>this.dismissResult(),()=>!this.closed && version===this.resultVersion);
+        if(this.closed || version!==this.resultVersion){result?.destroy();return;}
+        this.result=result;
     }
     async prepareFight(): Promise<boolean> {
         this.field?.pauseIdle();
@@ -156,7 +156,8 @@ export class CampaignView extends BaseView implements CampaignScreen {
             throw new Error("结算界面加载失败，请重试");
         this.result = result;
     }
-    dismissResult(): void { if (this.result?.isValid)
+    /** 销毁当前结算并废弃尚未完成的挂机弹层加载。 */
+    dismissResult(): void { this.resultVersion++; if (this.result?.isValid)
         this.result.destroy(); this.result = null; }
     nextSpeed(): void { const speed = this.field?.nextSpeed(); if (this.statusLabel && speed)
         this.statusLabel.string = "战斗速度 ×" + speed; }

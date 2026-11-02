@@ -539,9 +539,6 @@
     "_children": [
       {
         "__id__": 31
-      },
-      {
-        "__id__": 35
       }
     ],
     "_name": "scroll_view",
@@ -555,9 +552,6 @@
     "_components": [
       {
         "__id__": 24
-      },
-      {
-        "__id__": 26
       },
       {
         "__id__": 28
@@ -618,7 +612,7 @@
       "__id__": 27
     },
     "node": {
-      "__id__": 23
+      "__id__": 31
     }
   },
   {
@@ -626,7 +620,7 @@
     "__type__": "cc.CompPrefabInfo"
   },
   {
-    "__type__": "cc.ScrollView",
+    "__type__": "eed84/fAPdIqoL8eDBpgRdQ",
     "_name": "",
     "_objFlags": 0,
     "_enabled": true,
@@ -690,7 +684,11 @@
       "z": 0
     },
     "_objFlags": 0,
-    "_children": [],
+    "_children": [
+      {
+        "__id__": 35
+      }
+    ],
     "_name": "view",
     "_mobility": 0,
     "_lscale": {
@@ -702,6 +700,9 @@
     "_components": [
       {
         "__id__": 32
+      },
+      {
+        "__id__": 26
       }
     ],
     "_prefab": {
@@ -762,7 +763,7 @@
     "_active": true,
     "_layer": 33554432,
     "_parent": {
-      "__id__": 23
+      "__id__": 31
     },
     "_euler": {
       "__type__": "cc.Vec3",
@@ -790,6 +791,9 @@
     "_components": [
       {
         "__id__": 36
+      },
+      {
+        "__id__": 39
       }
     ],
     "_prefab": {
@@ -844,5 +848,58 @@
       "__id__": 0
     },
     "fileId": "9bBOOWaAqwx4wCQfzRa3tA"
+  },
+  {
+    "__type__": "27b5aSIleBEMqaxNSfTT/yT",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 35
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 40
+    },
+    "_resizeMode": 0,
+    "_layoutType": 3,
+    "_cellSize": {
+      "__type__": "cc.Size",
+      "width": 96,
+      "height": 96
+    },
+    "_startAxis": 0,
+    "_paddingLeft": 32,
+    "_paddingRight": 32,
+    "_paddingTop": 12,
+    "_paddingBottom": 12,
+    "_spacingX": 44,
+    "_spacingY": 24,
+    "_verticalDirection": 1,
+    "_horizontalDirection": 0,
+    "_constraint": 2,
+    "_constraintNum": 4,
+    "_affectedByScale": true,
+    "_isAlign": false,
+    "layoutType": 2,
+    "gridAxis": 0,
+    "columns": 4,
+    "rows": 2,
+    "cellPrefab": {
+      "__uuid__": "c4e8a1b2-7d33-4f61-9a20-6b5e0d4c8f11",
+      "__expectedType__": "cc.Prefab"
+    },
+    "overrideCellSize": false,
+    "explicitCellSize": {
+      "__type__": "cc.Size",
+      "width": 96,
+      "height": 96
+    },
+    "previewCount": 0,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "idle-reward-super-content"
   }
 ]

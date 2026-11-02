@@ -73,6 +73,8 @@ TypeScript 优先使用 JSDoc，Java 使用 Javadoc，Python 使用 docstring，
 - 按功能归属组织代码，使用完整、有业务含义的名称，避免无意义缩写。
 - 遵循当前轻量 MVC：Model 保存状态，Controller 组织业务，View 负责绑定、展示和交互转交。
 - 静态界面结构、布局和样式优先保存在 Prefab，禁止用运行时代码另造一套替代界面。
+- 所有业务模块以背包模块为样板，遵循模块级 Model/Controller 与页面 View 的职责和生命周期；按实际职责设置类，不机械复制背包特有规则。既有模块分批迁移，不将旧实现描述为已达标。
+- 业务滚动列表统一使用 SuperScroll + SuperContent。Prefab 保存 Scroll → view/Mask → content 层级、Cell Prefab、方向、行列、间距和边距；View 通过 list.setData 绑定数据，不手算 Cell 坐标或 content 高度。存量原生 ScrollView 在接入或专项迁移时整改，不能仅替换组件名而保留旧布局代码。
 - 通用层不得反向依赖具体业务 UI；同一业务数据应有明确的唯一所有者。
 - 不为简单逻辑增加无用 Manager、基类、转发层、兼容别名或重复状态。
 - 清理旧链时检查脚本、资源 UUID、动态路径、配置和工具引用，不只检查 import。

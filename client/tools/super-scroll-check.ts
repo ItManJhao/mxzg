@@ -1,3 +1,4 @@
+/** 通用列表回归：验证布局、滚动边界、格子复用和编辑器预览隔离；包含真实奖励 Prefab 配置。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { Button, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UITransform, Vec2 } from "cc";
@@ -118,5 +119,27 @@ function checkEditorPreview(): void {
         assert(!source.some((row:any)=>row._name?.startsWith("__SuperContentPreview__")));
     } finally {setEditorContext(false,true);}
 }
-checkLayouts();checkCellReuse();checkEditorPreview();
+
+/** 使用奖励窗口的实际序列化布局，验证二十格末行可达、刷新保位与缩短后归位。 */
+function checkRewardLayout(): void {
+    const source=JSON.parse(readFileSync("client/assets/prefabs/ui/item/ItemRewardLayer.prefab","utf8"));
+    const config=source.find((row:any)=>row.columns!==undefined);
+    const {list,scroll}=fixture();
+    list.node.parent!.getComponent(UITransform)!.setContentSize(580,250);
+    list.cellPrefab=prefab(96,96);
+    for(const field of ["columns","rows","layoutType","gridAxis"] as const)list[field]=config[field];
+    for(const field of ["paddingLeft","paddingRight","paddingTop","paddingBottom","spacingX","spacingY"] as const)list[field]=config["_"+field];
+    list.setData(data(20),(cell,item)=>{cell.name=item;});
+    assert.equal(list.node.getComponent(UITransform)!.height,600);
+    scroll.restorePosition(new Vec2(0,350));
+    assert.equal(scroll.readPosition().y,350,"末行必须可达");
+    list.refresh();assert.equal(scroll.readPosition().y,350,"刷新保留滚动位置");
+    list.setData(data(7),()=>{});assert.equal(scroll.readPosition().y,0,"缩短后不能停留空白区域");
+    const scrollNode=source.find((row:any)=>row._name==="scroll_view"&&row.__type__==="cc.Node");
+    const port=source[scrollNode._children[0].__id__];
+    assert.equal(port._name,"view");assert(port._components.some((ref:any)=>source[ref.__id__].__type__==="cc.Mask"));
+    assert.equal(source[port._children[0].__id__]._name,"content");
+}
+
+checkLayouts();checkCellReuse();checkEditorPreview();checkRewardLayout();
 console.log("super-scroll-check passed: layout boundaries, reuse, offset preservation/clamp, compatible Prefab, explicit bindings, async icon races and editor-only samples");

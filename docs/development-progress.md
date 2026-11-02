@@ -2,6 +2,27 @@
 
 ## 当前：2026-11-02 战场窄屏裁切修补
 
+### SuperScroll 与模块规范续批
+
+收尾续验：新增奖励源 Prefab 二十格隔离回归，内容高度 600、最大滚动距离 350，末行可达、刷新保位、缩短七格后归位均通过；这是隔离组件检查，不冒充真实长收据。加载结束先检查页面/弹层版本，失效时不再实例化和挂载窗口。重新运行 strict、super-scroll、battle、idle、backpack 均通过。真实 640×1280 收据五类、960×1280 收据四类，画布绘制与 CSS 尺寸分别一致，四列/标题/品质框/数量及宽屏关闭正常；截图 rewards-super-scroll-640x1280.png、rewards-super-scroll-960x1280.png 保留在 client/temp/field-20261102。切换尺寸曾绘制 640×870 而 CSS 为 640×1280，重载后才取最终证据；未使用拉伸截图。浏览器临时 viewport 已恢复。宽屏复验捕获 IdleHang foe late 警告，敌人演出资源迟到作为待修项，不声称控制台全空。真实长列表、迟到加载交互、碎片标识及掉落反馈仍未整体验收；本批可作为列表规范迁移独立保存，英雄模块尚未修改。
+
+- 用户已要求所有业务模块参考背包、滚动列表统一 SuperScroll/SuperContent，规范已写入 AGENTS.md、architecture.md 和列表维护指南。
+- ItemRewardLayer 源 Prefab 已改为 SuperScroll → view/Mask → content/SuperContent；保留资源 UUID，Mask 移到 view，四列、间距 44/24、边距 32/32/12/12、BagItemView 资源引用均保存到 Prefab。idleRewardView 只调用 list.setData 和 toStart，删除手算 Cell 坐标/内容高度与独立 Cell 加载。strict、super-scroll、battle 回归及层级/组件归属/Cell 绑定检查通过。真实引擎复验结果见后续记录，暂不使用上一轮原生 ScrollView 截图作通过证据。
+- Creator 自动重导入后，360×800 真实领取显示七类奖励、四列两行，配置品质框与数量正常；底部关闭返回挂机，捕获 warn/error 为空。截图 rewards-super-scroll-360x800.png 位于 client/temp/field-20261102。领取前金币 8554/钻石 8，领取后 10154/10；未直接改库或伪造收据。此次只有两行，长列表、标准/宽屏及迟到加载交互仍待验收，未宣称整批通过。本批暂未提交。
+
+已接入模块初核与后续迁移顺序（不是全仓审计完成）：
+
+| 顺序 | 模块现状 | 迁移重点与验收 |
+| --- | --- | --- |
+| 1 | HeroRoster 已有独立 Model/应用持有 Service，Controller 仍是页面适配器 | 将请求协调归入模块 Controller，统一 BaseModel/BaseController 和事件；保留英雄列表、普通升级及换号隔离 |
+| 2 | FormationController 持有页面草稿、请求和保存状态，直接持有 View | 区分服务端阵容状态与页面编辑草稿；业务请求归模块，取消不保存、版本冲突与关闭期间保存须回归 |
+| 3 | CampaignController 持有战报/阶段与 View；IdleController 已会话级持有重试键但未用统一基类 | 提取唯一业务状态与模块协调，View 仅展示/播放；保留待领奖恢复、幂等、关页后资产提交和换号拒绝迟到 |
+| 4 | Account 已有 Model/Service，Controller 仍是页面适配器 | 统一模块入口和生命周期，保留鉴权、账号提示、401 与退出语义；作为基础依赖最后集中迁移，避免多模块同时失稳 |
+
+主城协调及已开放列表的完整清单仍待专项核查；未开放资源不扩展玩法。每次只迁移一个模块，完成相关回归与真实预览后再保存提交。奖励标准/宽屏、长列表滚动、碎片标识和掉落反馈仍在当前收尾范围。
+
+续批（未提交）：挂机收据已改用 ItemRewardLayer + BagItemView，全部奖励按四列进入现有 ScrollView，复用配置品质框、图标及右下角数量；不再切六格页。增加弹层加载版本保护，关闭页面/新弹层会销毁迟到结果。Creator 已自动导入，360×800 真实领取获得八类奖励，金币增加 3200、钻石增加 3；八格完整显示，拖动未误关，底部关闭正常，页面 warn/error 为空。证据 client/temp/field-20261102/rewards-four-column-360x800.png。battle、idle、backpack 三组回归与 strict 通过。此收据仅两行，不能作为超过视口内容的完整滚动验收；标准/宽屏、迟到加载真实交互、碎片标识、掉落堆/反馈仍待补齐，本批暂不提交或标记正式服一致。RewardCell 经核对是英雄大面板，不作为物品格使用。
+
 - 普通挂机领取已保存到本机提交 2de41539。本批仅修战场显示：单位、血条、命中特效和飘字使用共同的视口缩放，按最外侧阵位及血条边界保留空间；宽屏不放大。窗口尺寸变化与动态挂机敌人创建后同步应用，不修改战报、奖励或数据库规则。
 - Creator 刷新后实际验证 393×852、360×800，逐项确认 canvas 绘制尺寸与 CSS 尺寸一致。外侧英雄和等级/血条均可见；360×800 真实出阵、第二关失败、返回挂机正常，伤害显示与单位对齐。页面捕获 warn/error 为空；本批 battle 检查和 Creator strict 类型检查通过。未重跑后端或 MySQL，未将历史三尺寸证据当成本批宽屏复验。
 - 证据保留在 client/temp/field-20261102：local-field-393x852.png、local-field-360x800.png、local-battle-360x800.png（战斗结算）、local-return-idle-360x800.png。当前账号 idle_ui_20261102/local-2；本批 UI 复验未直接写数据库、改时钟或补库存。
