@@ -1,22 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Bag chrome that BackpackLayer.ccbi did not ship as children.
-
-Writes:
-  prefabs/ui/backpack/BackpackItemCell.prefab
-  prefabs/ui/backpack/BackpackTabButton.prefab
-and patches BackpackLayer with node_portrait, lbl_talk, and spr_box/BagScroll.
-
-Cells and tabs are templates. screenFill instantiates them into BagScroll/content
-and only writes icon, count, and the language line. It does not build the slot
-chrome or a second scroll host.
-"""
+"""背包静态组合资源的历史生成工具；已有 SuperContent 手工布局时拒绝覆写，当前编辑入口为 BagView.prefab。"""
 import hashlib
 import json
 import os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "backpack")
+OUT = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "Bag")
 FONT = "4ff55f31-773f-4ef9-99b6-466b5deeecb9"
 LAYER = 33554432
 
@@ -280,8 +270,8 @@ def write_prefab(name, objs, meta_uuid):
 
 
 def build_cell(frames):
-    b = Builder("BackpackItemCell")
-    root = b.node("BackpackItemCell", None, 0, 0, 96, 96)
+    b = Builder("BagItemView")
+    root = b.node("BagItemView", None, 0, 0, 96, 96)
     frame = b.node("spr_frame", root, 0, 0, 96, 96)
     b.sprite(frame, frames["frame"])
     select = b.node("spr_select", root, 0, 0, 96, 96, active=False)
@@ -294,8 +284,8 @@ def build_cell(frames):
 
 
 def build_tab(frames):
-    b = Builder("BackpackTabButton")
-    root = b.node("BackpackTabButton", None, 0, 0, 108, 40)
+    b = Builder("BagTabView")
+    root = b.node("BagTabView", None, 0, 0, 108, 40)
     b.sprite(root, frames["tab"])
     b.button(root, frames["tab"])
     title = b.node("lbl_title", root, 0, 0, 96, 28)
@@ -365,7 +355,7 @@ def ensure_bag_scroll(objs):
             box = i
             break
     if box is None:
-        raise SystemExit("BackpackLayer missing spr_box")
+        raise SystemExit("BagView missing spr_box")
 
     def add(obj):
         objs.append(obj)
@@ -420,13 +410,13 @@ def ensure_bag_scroll(objs):
 
 
 def patch_layer():
-    path = os.path.join(OUT, "BackpackLayer.prefab")
+    path = os.path.join(OUT, "BagView.prefab")
     with open(path, encoding="utf-8") as handle:
         objs = json.load(handle)
     names = [obj.get("_name") for obj in objs if isinstance(obj, dict)]
     changed = False
     if "node_portrait" in names and "lbl_talk" in names:
-        print("BackpackLayer already has portrait and talk")
+        print("BagView already has portrait and talk")
     else:
         changed = True
 
@@ -492,7 +482,7 @@ def patch_layer():
             host = i
             break
     if host is None:
-        raise SystemExit("BackpackLayer missing CCNode_1")
+        raise SystemExit("BagView missing CCNode_1")
     if "lbl_talk" not in [obj.get("_name") for obj in objs if isinstance(obj, dict)]:
         talk = blank_node("lbl_talk", host, 150, 109, 220, 56, 0.5, 0.5)
         comp = add({
@@ -541,7 +531,7 @@ def patch_layer():
         print("added BagScroll under spr_box")
         changed = True
     if not changed:
-        print("BackpackLayer already has portrait, talk, and BagScroll")
+        print("BagView already has portrait, talk, and BagScroll")
         return
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(objs, handle, ensure_ascii=False, indent=2)
@@ -549,14 +539,14 @@ def patch_layer():
 
 
 def main():
-    layer_path = os.path.join(OUT, "BackpackLayer.prefab")
+    layer_path = os.path.join(OUT, "BagView.prefab")
     if os.path.exists(layer_path):
         with open(layer_path, encoding="utf-8") as source:
             if any("overrideCellSize" in row for row in json.load(source)):
-                raise SystemExit("BackpackLayer is manually authored with SuperContent. Edit its Prefabs in Creator; this legacy generator must not overwrite them.")
+                raise SystemExit("BagView is manually authored with SuperContent. Edit its Prefabs in Creator; this legacy generator must not overwrite them.")
     frames = {key: sprite_uuid(rel) for key, rel in SPRITES.items()}
-    cell_uuid = write_prefab("BackpackItemCell", build_cell(frames), CELL_UUID)
-    tab_uuid = write_prefab("BackpackTabButton", build_tab(frames), TAB_UUID)
+    cell_uuid = write_prefab("BagItemView", build_cell(frames), CELL_UUID)
+    tab_uuid = write_prefab("BagTabView", build_tab(frames), TAB_UUID)
     patch_layer()
     print("cell", cell_uuid)
     print("tab", tab_uuid)

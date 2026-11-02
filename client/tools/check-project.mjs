@@ -1,4 +1,4 @@
-/** Single local check entry point. Does not launch Creator or connect to a game server. */
+/** 本机统一检查入口：执行配置、资源、功能边界和文档检查；不启动 Creator、不连接玩家服务器。 */
 import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -8,6 +8,12 @@ import { spawnSync } from "node:child_process";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const output = resolve(root, "client/temp/project-checks");
 const suites = [
+  ["docs", "python", "tools/check_docs.py"],
+  ["resource-catalog", "ts", "client/tools/resource-catalog-check.ts"],
+  ["resource-generated", "node", "tools/generate_resources.cjs"],
+  ["config-generated", "python", "tools/generate_config.py"],
+  ["prefab-review", "python", "tools/audit_prefabs.py"],
+  ["event-target", "ts", "client/tools/event-target-check.ts"],
   ["account", "ts", "client/tools/account-check.ts"],
   ["hero-roster", "ts", "client/tools/hero-roster-check.ts"],
   ["formation", "ts", "client/tools/formation-check.ts"],
@@ -34,7 +40,7 @@ const suites = [
   ["hero", "ts", "client/tools/hero-view-check.ts"],
   ["city", "ts", "client/tools/city-view-check.ts"],
   ["battle", "ts", "client/tools/battle-view-check.ts"],
-  ["legacy", "ts", "client/tools/skeleton-check.ts"],
+  ["retirement", "python", "tools/check_retirement.py"],
 ];
 const args = process.argv.slice(2);
 if (args.includes("--help")) {
@@ -78,6 +84,7 @@ for (const [id, kind, source] of selected) {
       command = process.env.MXZG_PYTHON || "python";
       commandArgs = [source];
     }
+    if (["resource-generated", "config-generated", "prefab-review"].includes(id)) commandArgs.push("--check");
     const run = spawnSync(command, commandArgs, { cwd: root, encoding: "utf8", timeout: 120000, maxBuffer: 16 * 1024 * 1024 });
     result = { id, passed: run.status === 0 && !run.error, output: (run.stdout || "") + (run.stderr || "") + (run.error ? String(run.error) : "") };
   } catch (error) {

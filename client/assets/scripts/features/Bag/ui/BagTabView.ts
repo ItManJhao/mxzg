@@ -1,9 +1,11 @@
+/** 背包分类页签：由 BagView 传入选中状态与点击回调，Prefab 保存外观。 */
+import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Button, Component, Label } from "cc";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { paintSpriteResources } from "../../../framework/kit/SpritePaint";
 
 const { ccclass, property } = _decorator;
 
-/** BackpackTabButton。标题和按钮在预制上，选中只换图。 */
+/** BagTabButton。标题和按钮在预制上，选中只换图。 */
 @ccclass("BagTabView")
 export class BagTabView extends Component {
   @property(Label)
@@ -27,10 +29,11 @@ export class BagTabView extends Component {
     this.setSelected(on);
   }
 
+  /** 切换已登记的页签贴图；资源作用域随节点销毁释放。 */
   setSelected(on: boolean): void {
     this.selected = on;
     if (this.button) this.button.transition = Button.Transition.NONE;
-    paintSpritePaths(this.node, [on ? "ui/common/button_btn-tab-24" : "ui/common/button_btn-tab-23"]);
+    paintSpriteResources(this.node, [on ? ResourceCatalog.common.button_btn_tab_24 : ResourceCatalog.common.button_btn_tab_23]);
   }
 
   isSelected(): boolean {

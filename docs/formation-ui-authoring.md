@@ -1,10 +1,10 @@
 # 出阵页：人工维护入口与验收
 
-本批范围仅为 HeroSelectLayer、必要 Cell/阵位组件和稳定 H5 验收。代码检查、实际运行与用户亲手修改体验分开记录；**人工体验待用户验收**。本批不扩展养成、召唤、活动和完整技能。
+本批范围仅为 FormationView、必要 Cell/阵位组件和稳定 H5 验收。代码检查、实际运行与用户亲手修改体验分开记录；**人工体验待用户验收**。本批不扩展养成、召唤、活动和完整技能。
 
 ## 从哪里打开与修改
 
-1. 在 Creator 资源面板双击 `assets/prefabs/ui/hero/HeroSelectLayer.prefab`，进入 Prefab 编辑模式。准确磁盘路径是 `F:\project\mxzg\client\assets\prefabs\ui\hero\HeroSelectLayer.prefab`。
+1. 在 Creator 资源面板双击 `assets/prefabs/ui/hero/FormationView.prefab`，进入 Prefab 编辑模式。准确磁盘路径是 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\hero\FormationView.prefab`。
 2. 编辑源 Prefab，Ctrl+S 保存并等待导入完成；退出 Prefab 编辑模式，打开 `assets/scenes/Remake.scene` 预览。不要把运行时节点或临时 Scene 的修改误当成已保存的源资源。
 3. 启动新后端，登录后点底栏“战斗”进入挂机，再点页面内“战斗”打开出阵。有上次未领取结算时先领取。可用独立开发账号 `ui_review_1` 验收，不需要清库或修改其他角色。
 4. 独立 H5 使用 `scripts/build-remake-h5.bat` 重建后，打开 `scripts/start-remake-h5.bat` 或 `http://127.0.0.1:18081/`。仅刷新旧 H5 不会编译源 Prefab；运行已构建的 H5 不需要 Creator 窗口。
@@ -15,7 +15,7 @@ Creator 外部修改的脚本要等编辑器导入/编译完成再刷新预览�
 
 ## 节点与资源定位
 
-以下节点路径均相对 `HeroSelectLayer` 根节点：
+以下节点路径均相对 `FormationView` 根节点：
 
 - 标题：`node_title/lbl_title`，编辑 Label 字体资源、字号、颜色、行高和 UITransform。`FormationView.titleLabel` 指向它，运行时不再改标题文字或样式。
 - 确认按钮：`UIMenu_2/btn_confirm`。按钮本身的 Position/Scale/UITransform/Sprite/Button 在这里改；文字在其子节点 `Label`，当前为“出阵”。`FormationView.confirmButton` 只控制可点击状态。
@@ -25,7 +25,7 @@ Creator 外部修改的脚本要等编辑器导入/编译完成再刷新预览�
 - 提示：根下 `UILabelTTF_1`，绑定 `tipLabel`。字号/尺寸/颜色在 Prefab，文字由 Controller 的加载、草稿和错误状态更新。
 - 阵容数量：`node_pannel_2/lbl_battle_count`，绑定 `countLabel`。样式在 Prefab，文字动态显示已上阵人数。
 - 九个阵位：`node_pannel_2/node_icon_1` 到 `node_icon_9`。各有 `FormationSlotView`，Inspector 的 `position` 为服务端站位编号，`button/portrait/lock/caption` 显式绑定。调整节点位置不会改变站位身份；不要为换外观而修改编号或制造重复编号。
-- 列表 Cell：[HeroIconCell.prefab](../client/assets/prefabs/ui/hero/HeroIconCell.prefab)，磁盘路径 `F:\project\mxzg\client\assets\prefabs\ui\hero\HeroIconCell.prefab`。脸为 `spr_face`，名字为 `lbl_name`，元素为 `spr_elem`；`Stars/star0..4` 的横排由标准 Layout 控制，间距在该 Layout.spacingX 改。等级、锁与出战标分别绑定 `levelLabel/lock/battle`。
+- 列表 Cell：[HeroIconCellView.prefab](../client/assets/prefabs/ui/hero/HeroIconCellView.prefab)，磁盘路径 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\hero\HeroIconCellView.prefab`。脸为 `spr_face`，名字为 `lbl_name`，元素为 `spr_elem`；`Stars/star0..4` 的横排由标准 Layout 控制，间距在该 Layout.spacingX 改。等级、锁与出战标分别绑定 `levelLabel/lock/battle`。
 - 遮罩：根下 `Backdrop`。颜色、Sprite 和 Button 已保存；位置/尺寸由屏幕适配控制。背景 `spr_bg` 上的 BlockInputEvents 防止点面板空白穿透到底下页面。
 
 英雄头像仍由 `HeroCatalog` 根据 `herotype/item` 数据映射到 `resources/ui/hero/hero-icon_*` 并按需加载；没有把全部英雄图片改成直接引用。Cell 及本页自身仍通过功能资源作用域加载。共享 Cell 的现有 UUID 保留，其他英雄页也有回归检查。
@@ -74,7 +74,7 @@ Creator 外部修改的脚本要等编辑器导入/编译完成再刷新预览�
 
 ## 正式服对照与截图
 
-依据为用户提供的 `F:\效果\夢境 - Google Chrome 2026-10-30 14-15-35.mp4`，出阵在约 34.3 秒；不声称本批重新完整游玩了正式服。
+依据为用户提供的 历史视频 `夢境 - Google Chrome 2026-10-30 14-15-35.mp4`（原机器路径不再作为操作入口），出阵在约 34.3 秒；不声称本批重新完整游玩了正式服。
 
 交付截图是本机 Creator 预览的实际游戏 Canvas（393×852），通过引擎公开 API 关闭性能统计后直接截取。画面是在新开发账号撤下一名英雄后的未保存草稿，因此显示“已上阵 2 / 7”；并非修改截图或伪造服务端英雄。正式服视频画面为 444×965，两者账号、语言、视口不同。
 

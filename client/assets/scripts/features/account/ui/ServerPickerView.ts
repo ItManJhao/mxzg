@@ -1,7 +1,10 @@
-import { _decorator, Button, Mask, Node, Prefab, UITransform, view } from "cc";
+/**
+ * 选服弹层：展示 ServerSelection 的真实服务器列表并转交选择，关闭时解除界面回调。
+ */
+import { _decorator, Button, Node, Prefab, UITransform, view } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
-import { spawnPrefab } from "../../../ui/prefabLoad";
-import { ancestorScale } from "../../../ui/visibleFit";
+import { spawnPrefab } from "../../../framework/assets/PrefabLoader";
+import { ancestorScale } from "../../../framework/ui/visibleFit";
 import type { ServerSelection, GameServer } from "../ServerSelection";
 import { ServerCellView } from "./ServerCellView";
 const { ccclass, property } = _decorator;
@@ -25,6 +28,7 @@ export class ServerPickerView extends BaseView<ServerSelection> {
     private region = "";
     private dim: Node | null = null;
     private dismiss = () => this.close();
+    /** 打开已静态绑定遮罩的选服预制体，登记会话观察与窗口适配。 */
     onOpen(selection?: ServerSelection): void {
         if (!selection || !this.cellPrefab || !this.dimPrefab || !this.serverContent || !this.regionContent)
             throw new Error("选服 Prefab 或数据未绑定");
@@ -34,11 +38,6 @@ export class ServerPickerView extends BaseView<ServerSelection> {
         this.dim = spawnPrefab(this.dimPrefab, this.node);
         this.dim.setSiblingIndex(0);
         this.dim.getChildByName("dim")?.on(Button.EventType.CLICK, this.dismiss);
-        const mask = this.scrollHost?.getComponent(Mask);
-        if (mask)
-            this.scrollHost?.removeComponent(mask);
-        if (this.scrollPort)
-            (this.scrollPort.getComponent(Mask) || this.scrollPort.addComponent(Mask)).type = Mask.Type.GRAPHICS_RECT;
         view.on("canvas-resize", this.fit, this);
         this.off = selection.subscribe(() => this.paint());
         this.fit();

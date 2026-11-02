@@ -23,7 +23,7 @@ function deferred<T>() {
 
 async function main() {
   const assets = join(process.cwd(), "client/assets");
-  const prefab = JSON.parse(readFileSync(join(assets, "prefabs/ui/account/AccountLogin.prefab"), "utf8"));
+  const prefab = JSON.parse(readFileSync(join(assets, "prefabs/ui/account/AccountLoginView.prefab"), "utf8"));
   const view = prefab.find((row: Record<string, unknown>) => row.accountInput && row.profileLabel);
   assert(view, "AccountLogin has its bound View component");
   for (const [field, type] of Object.entries({ accountInput: "cc.EditBox", loginButton: "cc.Button", restoreButton: "cc.Button", logoutButton: "cc.Button", statusLabel: "cc.Label", profileLabel: "cc.Label" })) {

@@ -1,3 +1,6 @@
+/**
+ * 界面打开耗时记录：按 UIManager 的完成时机记录 Prefab 就绪和页面显示，不驱动业务流程。
+ */
 import { Node } from "cc";
 import { GameLog, monoNow } from "../../core/GameLog";
 
@@ -23,7 +26,7 @@ const ENGINE_COMPONENTS = [
 
 /**
  * 打开界面耗时。
- * 旧页面起点是 MainApp.presentPage；新 View 由 UIManager 在 whenReady 后记时。
+ * 页面统一由 UIManager 在 whenReady 完成后记录打开耗时。
  * 终点（ready）：
  * - 有预制：预制已经 instantiate，并且壳节点挂到页面上（attachPagePrefabShell 在 root.parent 之后；
  *   挂机是 BattlePanelLayer 挂进已经显示的壳）。页面节点会更早 setVisible(true)，那一次不打日志。
@@ -70,7 +73,7 @@ export function componentClassName(node: Node | null | undefined): string {
 }
 
 /** 开始量打开耗时。同一个页面 id 再打开会换掉上一次还没打完的表。 */
-export function beginPageOpen(id: string, expectsPrefab: boolean, tag = "MainApp"): void {
+export function beginPageOpen(id: string, expectsPrefab: boolean, tag = "Page"): void {
   watchSeq += 1;
   watches.set(id, {
     id,

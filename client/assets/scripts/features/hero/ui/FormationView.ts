@@ -1,7 +1,10 @@
+/**
+ * 出阵弹层：展示真实英雄和阵位，转交选择与保存；版本冲突和请求由 FormationController 处理。
+ */
 import { _decorator, Button, Label, Mask, Node, Prefab, ScrollView, UITransform, Vec2, view } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
-import { ancestorScale } from "../../../ui/visibleFit";
-import { spawnPrefab } from "../../../ui/prefabLoad";
+import { ancestorScale } from "../../../framework/ui/visibleFit";
+import { spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { HeroIconCellView } from "./HeroIconCellView";
 import { FormationSlotView } from "./FormationSlotView";
 import { HeroCatalog } from "../HeroCatalog";
@@ -9,10 +12,10 @@ import { MAIN_POSITIONS } from "../LineupApi";
 import type { FormationState, FormationScreen, FormationActions } from "../FormationController";
 
 const { ccclass, property } = _decorator;
-const PREFAB = "assets/prefabs/ui/hero/HeroSelectLayer.prefab";
+const PREFAB = "assets/prefabs/ui/hero/FormationView.prefab";
 export interface FormationRequest { complete(confirmed: boolean): void; }
 
-/** Static authoring belongs to HeroSelectLayer; this View renders data and fits the popup. */
+/** FormationView.prefab 保存静态布局；本界面绑定阵容数据与视口适配，不维护独立阵容状态。 */
 @ccclass("FormationView")
 export class FormationView extends BaseView<FormationRequest> implements FormationScreen {
     @property(Button) closeButton: Button | null = null;
@@ -83,7 +86,7 @@ export class FormationView extends BaseView<FormationRequest> implements Formati
         const cellData = this.cellPrefab!.data as Node | null;
         const cellView = cellData?.getComponent(HeroIconCellView);
         if (!cellView || !cellData?.getComponent(UITransform))
-            throw new Error("assets/prefabs/ui/hero/HeroIconCell.prefab: 缺少 HeroIconCellView 或 UITransform");
+            throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab: 缺少 HeroIconCellView 或 UITransform");
         cellView.validateBindings();
         if (new Set(this.slots.map(slot => slot.position)).size !== 9)
             throw new Error(PREFAB + " / FormationView: slots 的 position 必须为不重复的 1–9");
@@ -157,9 +160,9 @@ export class FormationView extends BaseView<FormationRequest> implements Formati
             cell.setScale(cell.scale.x * this.cellScale, cell.scale.y * this.cellScale, cell.scale.z);
             const component = cell.getComponent(HeroIconCellView);
             const bounds = cell.getComponent(UITransform);
-            if (!component || !bounds) throw new Error("assets/prefabs/ui/hero/HeroIconCell.prefab: 缺少 HeroIconCellView 或 UITransform");
+            if (!component || !bounds) throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab: 缺少 HeroIconCellView 或 UITransform");
             cellHeight = Math.max(cellHeight, bounds.height * Math.abs(cell.scale.y));
-            component.show({ kind: "owned", hero: null, name: face?.name || String(hero.templateId), showName: true,
+            component.show({ kind: "owned", name: face?.name || String(hero.templateId), showName: true,
                 face: face?.icon || null, elem: face?.elem || null, level: hero.level, stars: hero.star, locked: false,
                 deployed: state.lineup.slots.some(slot => slot.heroId === hero.id) }, state.busy ? null : () => this.actions?.toggle(hero.id));
         });

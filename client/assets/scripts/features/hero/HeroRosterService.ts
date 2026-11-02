@@ -1,3 +1,6 @@
+/**
+ * 应用会话持有的英雄名册查询服务：管理并发查询、鉴权和迟到响应，换号时清理唯一名册。
+ */
 import { AccountModel } from "../account/AccountModel";
 import type { AccountAuthorization } from "../account/AccountService";
 import { SessionChanged } from "../account/AccountService";
@@ -33,7 +36,7 @@ export class HeroRosterService {
     return request;
   }
 
-  /** Page close and account changes invalidate outstanding results without retaining old heroes. */
+  /** 换号、退出及应用释放时作废在途响应并清空名册；页面关闭不调用此方法。 */
   clear(): void {
     this.epoch++;
     this.pending = null;

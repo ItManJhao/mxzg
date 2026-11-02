@@ -5,7 +5,7 @@
 ## 2026-10-30 更新（优先于下方历史状态）
 
 - Start 后的一次性服务器初始化会为无英雄角色发放三名初始英雄并保存默认阵容；开发登录本身不发英雄。已存在英雄/阵容保留，初始化可并发重试。
-- 客户端已通过独立 LineupApi / FormationController / FormationView 接通出阵读取、元素筛选、上阵/撤下及 PUT 版本保存；复用 HeroSelectLayer 与 HeroIconCell，不写旧 GameStore/WireSession。
+- 客户端已通过独立 LineupApi / FormationController / FormationView 接通出阵读取、元素筛选、上阵/撤下及 PUT 版本保存；复用 FormationView 与 HeroIconCellView，不写旧 GameStore/WireSession。
 - 挂机页点击战斗必须先打开出阵；空阵容不可确认，确认保存成功后才创建服务器主线战报。取消不保存；保存期间拦截连点/取消；409 或不确定的保存结果必须重新读取，不覆盖其他操作。
 - 基础主线结果领取后返回挂机，挂机人数与当前服务器阵容一致。完整解锁/阵法/助阵、技能与养成尚未完成；MySQL 与三端仍待独立验收。
 - Formation 检查覆盖 PUT 契约、草稿不提前写、空阵容、防重复提交、保存中取消与版本冲突；实际 H5 点击已验证取消/保存、主线和返回。下方“出阵未接入”描述为 10 月 29 日历史批次状态。
@@ -74,7 +74,7 @@ H2 验证不能替代 MySQL 8.4 的迁移和并发验证。重登一致性已有
 - AccountService.authenticated：各功能共用的会话能力；请求前和返回后检查有效期，旧账号的 401 不清除新账号，不允许各页面自行读本地 token。
 - HeroCatalog：独立投影 herotype/item 的名称、元素与图标，不写旧 GameStore、WireSession 或全局 gameCatalog。英雄实际等级/星级以服务器为准。
 
-HeroRosterController 在开页前为已有 HeroListView 注入展示数据源，再由 UIManager 驱动 show/close。这个分支不读取旧 GameStore、不订阅 WireSession，也不把新 UUID 转成 StoreHero 数值 ID；旧 Boot 未注入时保留原行为。已复用 HeroListLayer、HeroListHeroLayer、HeroIconCell 和原页面背景，不新造列表美术。
+HeroRosterController 在开页前为已有 HeroListView 注入展示数据源，再由 UIManager 驱动 show/close。这个分支不读取旧 GameStore、不订阅 WireSession，也不把新 UUID 转成 StoreHero 数值 ID；旧 Boot 未注入时保留原行为。已复用 HeroListView、HeroListBoardView、HeroIconCellView 和原页面背景，不新造列表美术。
 
 只读列表支持加载、真实空名册、元素筛选、筛选空态、错误和点击上方“英雄”重试。显示已拥有数量，不猜测旧服容量。实际等级与星级来自实例；未知模板保留明确名称和默认头像，不伪造完整配置。图鉴、圣龙、永久皮肤和进化按钮在重做路径隐藏，点击格子仅提示详情尚未开放，不打开旧 HeroInfoView。
 

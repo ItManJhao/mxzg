@@ -1,4 +1,7 @@
-import type { HeroCellModel, HeroListModel } from "../../module/hero/heroList";
+/**
+ * 把当前角色名册投影为列表展示数据；只读 Model 和配置，不回退旧名册或生成账号英雄。
+ */
+import type { HeroCellModel, HeroListModel } from "./ui/HeroListPresentation";
 import type { HeroCatalog } from "./HeroCatalog";
 import type { HeroRosterState } from "./HeroRosterModel";
 
@@ -19,7 +22,7 @@ export function presentHeroRoster(state: HeroRosterState, catalog: HeroCatalog, 
     for (const hero of state.heroes) {
       const template = catalog.find(hero.templateId);
       if (elem && template?.elem !== elem) continue;
-      cells.push({ kind: "owned", hero: null,
+      cells.push({ kind: "owned",
         name: template?.name || "未知英雄（模板 " + hero.templateId + "）", showName: true,
         face: template?.icon || null, elem: template?.elem || null,
         level: hero.level, stars: hero.star, locked: false, deployed: false });

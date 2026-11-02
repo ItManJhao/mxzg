@@ -13,7 +13,7 @@
 .\dev.ps1 run
 ```
 
-Windows 最方便的启动方式：双击 `scripts/start-remake-backend.bat`。若直接运行 ps1 提示“系统禁止运行脚本”，可用 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "F:\project\mxzg\backend\dev.ps1" run`；仅对本次子进程生效，不修改系统执行策略。首次启动会保持窗口运行，看到应用 Started 与 18080 监听后可进入游戏；已有可用后端时显示 `[READY]` 并复用，不再启动第二份。bat 成功返回或报错后都会等待按键，避免双击后窗口立即关闭；复用时关闭此提示窗口不会停止原后端。在 Remake.scene 预览中输入 player_1 进行开发登录。
+Windows 最方便的启动方式：双击 `scripts/start-remake-backend.bat`。若直接运行 ps1 提示“系统禁止运行脚本”，可用 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "G:\work\FsGame\Project\mxzg\backend\dev.ps1" run`；仅对本次子进程生效，不修改系统执行策略。首次启动会保持窗口运行，看到应用 Started 与 18080 监听后可进入游戏；已有可用后端时显示 `[READY]` 并复用，不再启动第二份。bat 成功返回或报错后都会等待按键，避免双击后窗口立即关闭；复用时关闭此提示窗口不会停止原后端。在 Remake.scene 预览中输入 player_1 进行开发登录。
 
 修改后端后双击 `scripts/restart-remake-backend.bat`，会核对并停止当前仓库的 local Java 服务，再重新编译和启动。另有 stop/status 入口；详细说明及独立 H5 的构建、预览入口见 [本机工作流](../docs/local-remake-workflow.md)。Windows 开发停止采用终止已核对 JVM 的方式，不作为生产优雅停服工具。
 

@@ -24,7 +24,7 @@
 
 ## 重跑方式
 
-工作目录 `F:\project\mxzg`，Creator 导入完成并预览 Remake.scene，后端 18080 可用。下面的 Node 检查编译的是测试夹具，不构建游戏包。
+工作目录 `G:\work\FsGame\Project\mxzg`，Creator 导入完成并预览 Remake.scene，后端 18080 可用。下面的 Node 检查编译的是测试夹具，不构建游戏包。
 
 ```powershell
 node client/tools/check-project.mjs

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Regenerate CityChrome.prefab and install the city-chrome PNG pack.
+"""历史主城资源生成器：用于原始素材重建，不作为当前人工 Prefab 的日常修改入口。
+
+当前 CityChromeView 已经人工维护；本脚本仅保留迁入算法供追溯，直接执行会拒绝覆盖。
 
 Design canvas is 720×1280, origin at the center, matching CityHub and the
 previous CityChrome. Source frames are about 640 wide and are stretched to
@@ -30,7 +32,7 @@ from check_citychrome_shell_id import class_id
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RES = os.path.join(ROOT, "client", "assets", "resources")
 OUT_DIR = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "city")
-PREFAB_PATH = os.path.join(OUT_DIR, "CityChrome.prefab")
+PREFAB_PATH = os.path.join(OUT_DIR, "CityChromeView.prefab")
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 FONT_FILE = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf")
 SHELL_TS = os.path.join(ROOT, "client", "assets", "scripts", "ui", "CityChromeShell.ts")
@@ -747,8 +749,8 @@ class Builder(object):
 
 
 def build(shell, sprites):
-    b = Builder("CityChrome")
-    root = b.make_node("CityChrome", None, 0, 0, 720, 1280)
+    b = Builder("CityChromeView")
+    root = b.make_node("CityChromeView", None, 0, 0, 720, 1280)
     if root != 1:
         raise SystemExit("root id drifted")
 
@@ -853,7 +855,7 @@ def build(shell, sprites):
 
 
 def check(b):
-    root_box = b.transform("CityChrome")["_contentSize"]
+    root_box = b.transform("CityChromeView")["_contentSize"]
     if root_box["width"] != 720 or root_box["height"] != 1280:
         raise SystemExit("root is not 720x1280")
     for prop, path in SHELL_NODES.items():
@@ -992,7 +994,7 @@ def render_preview(b, sprites):
             child = b.objs[cref["__id__"]]
             paint(path + "/" + child["_name"])
 
-    paint("CityChrome")
+    paint("CityChromeView")
     canvas.save(PREVIEW)
 
 
@@ -1089,8 +1091,8 @@ def main():
     with open(meta_path, encoding="utf-8") as handle:
         meta = json.load(handle)
     if meta.get("uuid") != "c97efb56-db67-4c93-84d5-e29436794e86":
-        raise SystemExit("CityChrome.prefab.meta uuid drifted")
-    if meta.get("userData", {}).get("syncNodeName") != "CityChrome":
+        raise SystemExit("CityChromeView.prefab.meta uuid drifted")
+    if meta.get("userData", {}).get("syncNodeName") != "CityChromeView":
         raise SystemExit("prefab meta syncNodeName drifted")
     assert_protected_unchanged(before)
     render_preview(builder, sprites)
@@ -1099,4 +1101,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit("历史 CityChrome 生成器已停用：请在 Creator 编辑 CityChromeView.prefab；绑定检查使用 check_citychrome_shell_id.py。")

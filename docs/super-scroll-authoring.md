@@ -4,13 +4,13 @@
 
 ## 文件与节点
 
-- 滚动组件：[SuperScroll.ts](../client/assets/scripts/framework/ui/SuperScroll.ts)，磁盘位置 `F:\project\mxzg\client\assets\scripts\framework\ui\SuperScroll.ts`。
+- 滚动组件：[SuperScroll.ts](../client/assets/scripts/framework/ui/SuperScroll.ts)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\scripts\framework\ui\SuperScroll.ts`。
 - 内容组件：[SuperContent.ts](../client/assets/scripts/framework/ui/SuperContent.ts)，同目录。两个组件分别继承原生 ScrollView、Layout，没有另建拖动/惯性/回弹或列表框架。
-- 页面：[BackpackLayer.prefab](../client/assets/prefabs/ui/backpack/BackpackLayer.prefab)，磁盘位置 `F:\project\mxzg\client\assets\prefabs\ui\backpack\BackpackLayer.prefab`。
-- Cell：[BackpackItemCell.prefab](../client/assets/prefabs/ui/backpack/BackpackItemCell.prefab)，磁盘位置 `F:\project\mxzg\client\assets\prefabs\ui\backpack\BackpackItemCell.prefab`。
+- 页面：[BagView.prefab](../client/assets/prefabs/ui/Bag/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\backpack\BagView.prefab`。
+- Cell：[BagItemView.prefab](../client/assets/prefabs/ui/Bag/BagItemView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\backpack\BagItemView.prefab`。
 - 背包业务展示：[BagView.ts](../client/assets/scripts/features/Bag/ui/BagView.ts)；格子展示：[BagItemView.ts](../client/assets/scripts/features/Bag/ui/BagItemView.ts)；真实库存及请求：[BagController.ts](../client/assets/scripts/features/Bag/BagController.ts)、[BagModel.ts](../client/assets/scripts/features/Bag/BagModel.ts)、[BagApi.ts](../client/assets/scripts/features/Bag/BagApi.ts)。本批没有改后端协议。
 
-以下均相对 BackpackLayer 根节点：
+以下均相对 BagView 根节点：
 
 1. `spr_box/BagScroll`：SuperScroll，**Content 只需拖一次**，指向下面的 content。BagView.bagScroll 已绑定这个组件，不再重复填写 content、viewport 或 Cell Prefab。
 2. `spr_box/BagScroll/view`：UITransform 与矩形 Mask，决定裁剪范围，配置保存在 Prefab。
@@ -47,7 +47,7 @@ content 不要挂启用的 Widget，也不要另挂 Layout；Cell 根 Widget 或
 
 ## 不启动游戏也能看排列
 
-1. 在 Creator 中打开 BackpackLayer.prefab，选中 content。
+1. 在 Creator 中打开 BagView.prefab，选中 content。
 2. 展开 SuperContent 的 **编辑器预览**，将 `编辑器预览数量 / previewCount` 改为 8，查看 Cell 静态外观及间距；改成 24，或缩小 view 高度，查看裁剪。
 3. 改列数、方向、间距、边距或 Cell Prefab，预览会按新配置重排。预览不请求服务器，不调用 BagItemView.show，不生成物品 ID、数量或奖励。
 4. 将数量改回 **0** 清理，并恢复空内容的最小范围。禁用/离开组件时也会清理生成节点；正式运行需要组件启用。
@@ -79,7 +79,7 @@ this.bagScroll.restorePosition(position);
 
 `setData<T>(readonly T[], render)` 保存数组的浅拷贝；`refresh` 使用上次数据和回调，替换数据请再次 setData。滚动位置为距左上起点的正数设计单位，不是百分比；横向符号已适配原生 getScrollOffset 与 scrollToOffset 的差别。普通刷新默认保留位置，内容缩短后自动限制到合法范围，不要求业务手动保存/恢复坐标。
 
-背包最少 20 个槽、超出后每 4 个补齐，是 [bagBoard.ts](../client/assets/scripts/module/bag/bagBoard.ts) 的展示条目规则，与列数独立。修改为三列后，20 个槽可以留下不满的一行，不会为凑行数修改玩家库存。SuperContent 不知道这些空槽规则、物品 ID、分类、协议或奖励。
+背包最少 20 个槽、超出后每 4 个补齐，是 [BagPresentation.ts](../client/assets/scripts/features/Bag/ui/BagPresentation.ts) 的展示条目规则，与列数独立。修改为三列后，20 个槽可以留下不满的一行，不会为凑行数修改玩家库存。SuperContent 不知道这些空槽规则、物品 ID、分类、协议或奖励。
 
 背包分类切换回到起点，同分类刷新保留位置。库存请求期间保留上次已接受的真实数据；失败时明确提示显示上次库存，换号/退出/关闭立即清空，迟到回包不会恢复前一角色的数据。
 

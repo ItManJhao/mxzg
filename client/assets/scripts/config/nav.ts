@@ -100,8 +100,8 @@ const BOTTOM_IDS: { [id: string]: boolean } = {};
 for (let i = 0; i < BOTTOM_TABS.length; i++) BOTTOM_IDS[BOTTOM_TABS[i].id] = true;
 
 export interface GateSnapshot {
-  opencondition: OpenConditionRow[];
-  systemGate: SystemGateRow[];
+  opencondition: readonly OpenConditionRow[];
+  systemGate: readonly SystemGateRow[];
 }
 
 export interface EntryAccess {
@@ -224,14 +224,14 @@ export class NavHistory {
   }
 }
 
-function findOpen(rows: OpenConditionRow[], id: string): OpenConditionRow | null {
+function findOpen(rows: readonly OpenConditionRow[], id: string): OpenConditionRow | null {
   for (let i = 0; i < rows.length; i++) {
     if (rows[i].id === id) return rows[i];
   }
   return null;
 }
 
-function findGate(rows: SystemGateRow[], key: string): SystemGateRow | null {
+function findGate(rows: readonly SystemGateRow[], key: string): SystemGateRow | null {
   for (let i = 0; i < rows.length; i++) {
     if (rows[i].key === key) return rows[i];
   }

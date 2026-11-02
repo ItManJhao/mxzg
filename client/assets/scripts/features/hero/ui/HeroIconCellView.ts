@@ -1,10 +1,14 @@
+/**
+ * 英雄头像格子：按传入展示数据更新图片、等级和星级，保持 Prefab 结构和绑定可编辑。
+ */
+import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
-import { HERO_FACE_FALLBACK, HeroCellModel } from "../../../module/hero/heroList";
+import { HERO_FACE_FALLBACK, HeroCellModel } from "./HeroListPresentation";
 
 const { ccclass, property } = _decorator;
 
-const ELEM_SPRITE = "ui/hero/hero-icon_elem-";
+const ELEMENT_FRAMES = [ResourceCatalog.hero.hero_icon_elem_0, ResourceCatalog.hero.hero_icon_elem_1, ResourceCatalog.hero.hero_icon_elem_2, ResourceCatalog.hero.hero_icon_elem_3, ResourceCatalog.hero.hero_icon_elem_4, ResourceCatalog.hero.hero_icon_elem_5] as const;
 
 /**
  * HeroIconCell 上的一格。脸、名字、元素、星、等级、锁和出战标都绑在预制上。
@@ -40,12 +44,12 @@ export class HeroIconCellView extends Component {
     const fields = { button: this.button, face: this.face, nameLabel: this.nameLabel, elem: this.elem,
       levelLabel: this.levelLabel, lock: this.lock, battle: this.battle };
     for (const [field, value] of Object.entries(fields)) {
-      if (!value) throw new Error("assets/prefabs/ui/hero/HeroIconCell.prefab / HeroIconCellView: 缺失绑定 " + field);
+      if (!value) throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab / HeroIconCellView: 缺失绑定 " + field);
     }
     if (this.stars.length !== 5 || this.stars.some(star => !star))
-      throw new Error("assets/prefabs/ui/hero/HeroIconCell.prefab / HeroIconCellView: stars 必须绑定五颗星");
+      throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab / HeroIconCellView: stars 必须绑定五颗星");
     if (!this.face!.getComponent(Sprite))
-      throw new Error("assets/prefabs/ui/hero/HeroIconCell.prefab / HeroIconCellView: face 缺少 Sprite");
+      throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab / HeroIconCellView: face 缺少 Sprite");
   }
 
   show(cell: HeroCellModel, onTap: (() => void) | null): void {
@@ -97,11 +101,12 @@ export class HeroIconCellView extends Component {
     this.nameLabel.string = show ? cell.name : "";
   }
 
+  /** 显示合法元素对应的静态图标；未知元素隐藏，禁止拼接不存在的路径。 */
   private paintElem(cell: HeroCellModel, empty: boolean): void {
     if (!this.elem) return;
-    const show = !empty && cell.elem !== null;
+    const show = !empty && cell.elem !== null && !!ELEMENT_FRAMES[cell.elem];
     this.elem.active = show;
-    if (show && cell.elem !== null) paintSpritePaths(this.elem, [ELEM_SPRITE + cell.elem]);
+    if (show && cell.elem !== null) paintSpritePaths(this.elem, [ELEMENT_FRAMES[cell.elem].path]);
   }
 
   private paintStars(count: number): void {

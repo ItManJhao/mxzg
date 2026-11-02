@@ -2,13 +2,13 @@ import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { upgradeSpine37Json, SPINE_RUNTIME_VERSION } from "../assets/scripts/framework/assets/SpineJson";
-import { upgradeSpine37Json as legacyUpgrade } from "../assets/scripts/ui/spineUpgrade";
+import { upgradeSpine37Json as legacyUpgrade } from "../assets/scripts/framework/ui/spineUpgrade";
 import { CompatibleSpine } from "../assets/scripts/framework/assets/CompatibleSpine";
 import { Node, sp } from "cc";
 
 const assets = join(process.cwd(), "client/assets");
 const read = (path: string): any => JSON.parse(readFileSync(join(assets, path), "utf8"));
-const prefab = read("prefabs/ui/account/AccountLogin.prefab") as any[];
+const prefab = read("prefabs/ui/account/AccountLoginView.prefab") as any[];
 const original = read("prefabs/ui/legacy-login/LoginPanel.prefab") as any[];
 const node = (rows: any[], name: string) => {
   const found = rows.find(row => row.__type__ === "cc.Node" && row._name === name);

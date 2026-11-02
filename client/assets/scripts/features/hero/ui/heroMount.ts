@@ -1,21 +1,28 @@
-import { Node, Prefab, Sprite, UITransform } from "cc";
-import { messageOf } from "../../../core/errors";
-import { GameLog } from "../../../core/GameLog";
-import { StoreHero } from "../../../core/GameStore";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
-import { loadPrefab, spawnPrefab } from "../../../ui/prefabLoad";
-import { mountCcbiView } from "../../../ui/pagePrefabShell";
-import { assignContentSize, bindVisibleRefresh, fitVisibleRoot } from "../../../ui/visibleFit";
-import { HeroInfoView } from "./HeroInfoView";
-
-const PAGE_SHELL = "prefabs/ui/common/PagePrefabShell";
-const LIST_BACKDROP = "prefabs/ui/common/ListBackdrop";
-const HERO_BACKDROP = ["ui/maps/map-bg-role-1"];
-
 /**
- * 把英雄列表 Prefab 盖进页面宿主。岩洞底和羊皮纸跟原来的壳一样。
- * 这里只认已知预制的直接子节点，不在 HeroListView 里搜整棵树。
+ * 英雄列表的页面容器、背景及窗口挂载。
+ * 由 Remake 注册入口调用，只装配现有 Prefab，不创建旧详情或旧业务入口。
  */
+import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
+import { Node, Prefab, Sprite, UITransform } from "cc";
+
+import { messageOf } from "../../../core/errors";
+
+import { GameLog } from "../../../core/GameLog";
+
+import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+
+import { loadPrefab, spawnPrefab } from "../../../framework/assets/PrefabLoader";
+
+import { mountCcbiView } from "../../../framework/ui/PrefabLayout";
+
+import { assignContentSize, bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
+
+const PAGE_SHELL = ResourceCatalog.prefab_common.PagePrefabShell.assetPath;
+
+const LIST_BACKDROP = ResourceCatalog.prefab_common.ListBackdrop.assetPath;
+
+const HERO_BACKDROP = [ResourceCatalog.maps.map_bg_role_1.path];
+
 export async function mountHeroListPage(host: Node, layer: Prefab): Promise<Node> {
   let shell: Node | null = null;
   try {
@@ -45,27 +52,6 @@ export async function mountHeroListPage(host: Node, layer: Prefab): Promise<Node
   const view = spawnPrefab(layer, parent);
   mountCcbiView(view);
   return view;
-}
-
-/**
- * 详情盖在页面壳上，不挂进已经缩放的列表，避免立绘跟着羊皮纸缩小。
- * 调用方已经备好 HeroInfoLayer。这里同步挂上，不等立绘资源。
- */
-export function openHeroDetail(host: Node | null, infoPrefab: Prefab | null, hero: StoreHero): Node | null {
-  if (!host || !host.isValid || !infoPrefab) return null;
-  const old = host.getChildByName("HeroDetailSheet");
-  if (old) old.destroy();
-  const sheet = new Node("HeroDetailSheet");
-  sheet.parent = host;
-  sheet.setSiblingIndex(Math.max(0, host.children.length - 1));
-  const card = spawnPrefab(infoPrefab, sheet);
-  const info = card.getComponent(HeroInfoView);
-  if (!info) {
-    GameLog.shared.warn("Hero", "HeroInfoLayer 上没有 HeroInfoView");
-    return sheet;
-  }
-  info.show(hero);
-  return sheet;
 }
 
 function paintBackdrop(pack: Node): void {

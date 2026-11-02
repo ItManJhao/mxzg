@@ -1,3 +1,7 @@
+/**
+ * 主城顶底栏 View：绑定导航与资产显示，由主城页面提供数据和操作，不读取网络或全局角色仓库。
+ */
+import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Color, Label, Node, Overflow, resources, Sprite, SpriteFrame, UITransform } from "cc";
 import { CITY_BAR } from "../../../config/nav";
 import { messageOf } from "../../../core/errors";
@@ -5,11 +9,12 @@ import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { view } from "../../../framework/ui/UIRegistry";
-import { CityChrome, CityChromeActions, isCityTab, layoutCityTab, layoutCityHeader, prepareCityTab, setCityTabSelected, TabState } from "../../../ui/CityChrome";
-import { tabPaintState } from "../../../ui/cityTabScale";
-import { CITY_CHROME_PREFAB_PATH, bindClick, tintSprite } from "../../../ui/prefabLoad";
-import { createLabel, setText, uiNode } from "../../../ui/UiKit";
-import { assignContentSize, bindVisibleRefresh, fitVisibleRoot, squeezeWideNode, stretchBar, uiSize } from "../../../ui/visibleFit";
+import { CityChrome, CityChromeActions, isCityTab, layoutCityTab, layoutCityHeader, prepareCityTab, setCityTabSelected, TabState } from "./CityChrome";
+import { tabPaintState } from "./cityTabScale";
+import { bindClick, tintSprite } from "../../../framework/assets/PrefabLoader";
+import { CITY_CHROME_PREFAB_PATH } from "../../../config/PrefabCatalog";
+import { createLabel, setText, uiNode } from "../../../framework/ui/UiKit";
+import { assignContentSize, bindVisibleRefresh, fitVisibleRoot, squeezeWideNode, stretchBar, uiSize } from "../../../framework/ui/visibleFit";
 import { CITY_CHROME_HOST, CITY_CHROME_VIEW_ID } from "../config/cityIds";
 import { mountCityChromeView } from "./cityMount";
 
@@ -25,17 +30,17 @@ const BOTTOM_BG_WIDTH = 724;
  * 最右一格用日服 VIP 字，不用国服「羁绊」。
  */
 const TAB_CAPTION: { [id: string]: string } = {
-  city: "ui/city/main-scene-lang_lbl-city",
-  hero: "ui/city/main-scene-lang_lbl-hero",
-  bag: "ui/city/main-scene-lang_lbl-backpack",
-  battle: "ui/city/main-scene-lang_lbl-battle",
-  dungeon: "ui/city/main-scene-lang_lbl-skin",
-  clan: "ui/city/main-scene-lang_lbl-clan",
-  fetter: "ui/city/main-scene-lang_lbl-fetters-unlock",
+  city: ResourceCatalog.city.main_scene_lang_lbl_city.path,
+  hero: ResourceCatalog.city.main_scene_lang_lbl_hero.path,
+  bag: ResourceCatalog.city.main_scene_lang_lbl_backpack.path,
+  battle: ResourceCatalog.city.main_scene_lang_lbl_battle.path,
+  dungeon: ResourceCatalog.city.main_scene_lang_lbl_skin.path,
+  clan: ResourceCatalog.city.main_scene_lang_lbl_clan.path,
+  fetter: ResourceCatalog.city.main_scene_lang_lbl_fetters_unlock.path,
 };
 
 const TAB_ICON: { [id: string]: string } = {
-  fetter: "ui/city/main-scene_spr-fetters-unlock",
+  fetter: ResourceCatalog.city.main_scene_spr_fetters_unlock.path,
 };
 
 const ACTIVITY_NAMES = [
@@ -164,7 +169,7 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
       this.finishOpen();
     } catch (err) {
       const error = err instanceof Error ? err : new Error(messageOf(err));
-      GameLog.shared.warn("CityChrome", "没有挂上 " + error.message);
+      GameLog.shared.warn("CityChromeView", "没有挂上 " + error.message);
       this.failOpen(error);
     }
   }
@@ -264,7 +269,7 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
       const box = fitVisibleRoot(this.node);
       this.fitChildren(box.width);
     });
-    GameLog.shared.info("CityChrome", "view " + CITY_CHROME_PREFAB_PATH);
+    GameLog.shared.info("CityChromeView", "view " + CITY_CHROME_PREFAB_PATH);
   }
 
   private bindActivity(): void {
@@ -275,7 +280,7 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
       if (!button) throw new Error("缺少节点 " + ACTIVITY_NAMES[i]);
       bindClick(button, () => {
         if (this.actions) this.actions.openActivity();
-        else GameLog.shared.warn("CityChrome", "活动按钮没有回调");
+        else GameLog.shared.warn("CityChromeView", "活动按钮没有回调");
       });
     }
   }
@@ -288,13 +293,13 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
       if (!button) throw new Error("缺少节点 " + names[i]);
       bindClick(button, () => {
         if (this.actions) this.actions.openMore();
-        else GameLog.shared.warn("CityChrome", "更多按钮没有回调");
+        else GameLog.shared.warn("CityChromeView", "更多按钮没有回调");
       });
     }
     const mail = this.requireNode(this.btnMail, "BtnMail");
     bindClick(mail, () => {
       if (this.actions) this.actions.openMail();
-      else GameLog.shared.warn("CityChrome", "邮件按钮没有回调");
+      else GameLog.shared.warn("CityChromeView", "邮件按钮没有回调");
     });
   }
 

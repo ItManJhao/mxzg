@@ -10,11 +10,11 @@ retired={row['uuid'] for row in report['removed']}
 for path in [*ASSETS.rglob('*.prefab'),*ASSETS.rglob('*.scene')]:
     for token in tokens(read(path)):
         if token.split('@')[0] in retired:raise SystemExit('Dangling deleted Prefab reference: '+str(path))
-loader=(ASSETS/'scripts/ui/prefabLoad.ts').read_text(encoding='utf-8-sig')
-shell=(ASSETS/'scripts/ui/prefabShellMap.ts').read_text(encoding='utf-8-sig')
+loader=(ASSETS/'scripts/config/PrefabCatalog.ts').read_text(encoding='utf-8-sig')
+shell=(ASSETS/'scripts/app/remake/RemakeApp.ts').read_text(encoding='utf-8-sig')
 for row in report['removed']:
     path=row['path'][:-7]
-    if '"'+path+'":' in loader or 'shell("'+path+'"' in shell:
+    if '"'+path+'":' in loader or json.dumps(path) in shell:
         raise SystemExit('Retired prefab still registered: '+path)
 runtime=(ASSETS/'scripts/config/PrefabPlan.ts').read_text(encoding='utf-8-sig')
 for path in keep:

@@ -26,8 +26,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 0,
-      "x": 0
+      "y": -250,
+      "x": -200
     },
     "_objFlags": 0,
     "_children": [

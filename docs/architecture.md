@@ -1,10 +1,10 @@
 # mxzg 重做版架构与维护指南
 
-决定日期：2026-10-29；客户端架构基线于 2026-10-30 按用户要求替换。首要标准是人能阅读、在编辑器中修改界面、追踪一次操作并独立排查错误。采用按功能组织的轻量 MVC 客户端和模块化单体后端，职责清晰优先于抽象数量。本文记录统一标准及实际边界：背包已按本批切换，其他模块尚未完成。
+决定日期：2026-10-29；客户端架构基线于 2026-10-30 按用户要求替换。首要标准是人能阅读、在编辑器中修改界面、追踪一次操作并独立排查错误。采用按功能组织的轻量 MVC 客户端和模块化单体后端，职责清晰优先于抽象数量。本文记录统一标准；当前实现与未完成边界以开发进度为准。
 
 ## 客户端统一采用模块级 MVC
 
-2026-10-30 最新用户基线：模块使用完整名称和固定目录，不再使用 BagC/BagM/BagV 缩写，也不再让业务 Controller 按页面开关生命周期工作。本文旧的强制 Service/Presenter 分层以及上一轮模块私有 TypedEvents 方案已被替代。当前只落实背包样板，不代表全项目完成。
+2026-10-30 最新用户基线：模块使用完整名称和固定目录，不再使用 BagC/BagM/BagV 缩写，也不再让业务 Controller 按页面开关生命周期工作。本文旧的强制 Service/Presenter 分层以及上一轮模块私有 TypedEvents 方案已被替代。Bag 是模块级 MVC 样板；其他功能保留必要服务与页面适配器，不强行增加同构层级。
 
 `features/Bag/` 包含 `BagController.ts`、`BagModel.ts`、`BagEvent.ts`；`ui/` 是 BagView、BagItemView、BagInfoView、BagTabView，`data/` 是 BagItemData、BagState、BagChangeSet、BagEventData。已有必要手写请求适配保留为 BagApi，配置查询保留为 BagItemCatalog，页面挂载辅助为 ui/BagMount；这些有实际用途，不是额外业务层或状态副本。底层 HTTP 仍在 platform/http，既有生成协议不搬入 Model。
 
@@ -21,13 +21,13 @@
 
 `framework/BaseController.ts` 提供显式 initialize、重复初始化保护、resetSession、会话代次与 isCurrent、重复安全 dispose、自有 EventScope 和统一 emit。没有节点/页面引用、业务协议字段、自动联网或统一奖励队列。应用在 RemakeApp 明确提供 BagController.initialize({account, authorization, api})，注册账号观察者后才随有效角色同步数据；构造函数和第一次访问单例不联网。
 
-`framework/EventScope.ts` 只收集解除函数并清理，清理异常记录拥有者并继续处理其余函数。BaseController 持有模块生命周期的 Scope，BaseView 持有当前开页期间的 Scope；runClose 的 finally 保证清理，不要求业务调用 super.onClose。清理某页或某模块不影响其他拥有者。
+`framework/EventScope.ts` 只收集解除函数并清理，清理异常记录拥有者并继续处理其余函数。BaseController 持有模块生命周期的 Scope，BaseView 持有当前开页期间的 Scope；runClose、打开失败与销毁的 finally 保证按目标解除全局事件并清理其他订阅，不要求业务调用 super.onClose。清理某页或某模块不影响其他拥有者。
 
-UIRegistry.createController 和 BaseView.attachController 的 show/close 契约仅留给尚未迁移模块的页面适配器；BagView 没有 createController，BagController 没有 show/close，不可作为窗口 Controller。类型检查与运行时入口都防止误绑定。UIManager/BaseView 继续统一页面加载、开关、返回、缓存、取消和释放，不建立第二套窗口框架。
+UIRegistry.createController 和 BaseView.attachController 的 show/close 契约用于应用提供的页面适配器，不代表模块生命周期；BagView 没有 createController，BagController 没有 show/close，不可作为窗口 Controller。类型检查与运行时入口都防止误绑定。UIManager/BaseView 继续统一页面加载、开关、返回、缓存、取消和释放，不建立第二套窗口框架。
 
 ## 单一全局事件与数据顺序
 
-`framework/EventDispatcher.ts` 由原 TypedEvents 改造，整个背包只用 EventDispatcher.instance。提供 on/once/emit，订阅返回可重复安全调用的解除函数；once 在回调前退订，支持提前取消。没有模块私有派发器或全局 clear。事件名在 BagEvent，类型在 data/BagEventData，通过 TypeScript interface augmentation 接入 EventPayloads，框架无需反向导入业务。其他功能直接监听 BagEvent.BagUpdate，不访问 Controller 内部事件对象。
+`framework/EventDispatcher.ts` 由原 TypedEvents 改造，整个背包只用 EventDispatcher.instance。提供 on/once/emit、off 和 offTarget。业务界面采用 `(事件, 目标, 原函数)`，按三元组去重、自动绑定 this；订阅仍可返回重复安全的解除函数供独立观察者使用；once 在回调前退订，支持提前取消。没有模块私有派发器或全局 clear。事件名在 BagEvent，类型在 data/BagEventData，通过 TypeScript interface augmentation 接入 EventPayloads，框架无需反向导入业务。其他功能直接监听 BagEvent.BagUpdate，不访问 Controller 内部事件对象。
 
 背包一次有效库存提交：Controller 校验会话/响应和顺序 → Model 校验整批数据、计算差异并一次性提交 → 返回只读 BagChangeSet → Controller 按 Add、Remove、QuantityChanged 聚合派发（只发有变化的类型）→ 最后一次 BagUpdate。加载/失败/恢复另用 BagSyncStateChanged；普通 BagView 只监听汇总事件刷新列表，状态事件只更新提示，不同时订阅全部细分事件。
 
@@ -43,19 +43,21 @@ BagModel 区分 idle、loading、ready（允许空）和 error；失败保留上
 
 ## Prefab 与通用列表
 
-本批保留 BackpackLayer/Cell 及移动脚本的 UUID、现有资源路径和按需加载，不把全部图标改成直接引用。SuperScroll/SuperContent 继续负责通用滚动/布局，不认识协议或奖励。SuperContent 计算范围与 Cell 根尺寸，原生 Layout 维护 Cell 位置，ScrollView 维护滚动位置；背包只提供条目和渲染回调。
+本批保留 BagView/Cell 及移动脚本的 UUID、现有资源路径和按需加载，不把全部图标改成直接引用。SuperScroll/SuperContent 继续负责通用滚动/布局，不认识协议或奖励。SuperContent 计算范围与 Cell 根尺寸，原生 Layout 维护 Cell 位置，ScrollView 维护滚动位置；背包只提供条目和渲染回调。
 
-缺少必要绑定必须指出 Prefab/节点/字段，不静默生成替代页面。本批未改人工 Prefab 配置。共享根/背景适配、动态页签排列及详情居中仍沿用旧辅助代码，具体控制范围见 [背包维护指南](bag-mvc-maintenance.md)，不宣称整页静态布局全部整改。列表 Inspector 步骤见 [SuperScroll 指南](super-scroll-authoring.md)，出阵指南仍见 [出阵页维护入口](formation-ui-authoring.md)。人工阅读和编辑体验由用户确认，自动化不代签。
+缺少必要绑定必须指出 Prefab/节点/字段，不静默生成替代页面。本批只同步背包 Prefab 的资源名与根节点名，保留人工布局与绑定。共享根/背景适配、动态页签排列及详情居中仍沿用旧辅助代码，具体控制范围见 [背包维护指南](bag-mvc-maintenance.md)，不宣称整页静态布局全部整改。列表 Inspector 步骤见 [SuperScroll 指南](super-scroll-authoring.md)，出阵指南仍见 [出阵页维护入口](formation-ui-authoring.md)。人工阅读和编辑体验由用户确认，自动化不代签。
 
-## 当前入口与未迁移边界
+## 当前入口与职责
 
-当前开发入口为 Remake.scene。旧 Main/screenFill 的背包入口已退役并提示使用 Remake，不再条件切换 GameStore/WireSession 或接收新库存。旧 InventoryController、背包开关、BagC/BagM/BagV 缩写脚本及 TypedEvents 文件均已被替代，未留转发别名。
+唯一启动入口为 Remake.scene / app/remake/RemakeApp。module、旧 net、Boot/Main、GameStore/WireSession 和旧 Mock 业务均已删除。共享显示代码已按职责提取到 framework 和功能 UI，没有整体搬迁旧目录。历史清理证据见 validation；当前边界由统一检查中的 architecture/retirement 验证。
 
-账号仍为 AccountModel/AccountService，英雄仍有 HeroRoster 的 Model/Controller/Service/Presentation，阵容仍为 FormationController，主线与挂机仍为 CampaignController/既有页面状态。本批只修改必要的账号通知和战斗领奖边界。Boot → Main 仍依赖旧登录、WireSession、GameStore、英雄和战斗等，隔离为历史对照入口；不把背包完成称为全项目统一完成。用户确认样板后再逐批迁移、验证、查引用清理，不保留两套长期标准。
+应用持有唯一账号、英雄名册和背包模块服务。HeroRosterController 仅是当前页面的适配器，关闭不销毁名册服务；BagController/BagModel 独立于窗口。FormationController 管理出阵编辑草稿与服务端 expectedVersion，CampaignController 处理当前挑战/领奖工作流，不新增平行资产状态。
+
+通用 PrefabLoader 只加载资源，资源 UUID 登记在 config/PrefabCatalog；PrefabLayout 和 ParchmentLayout 只适配现有界面。战斗显示只消费新接口战报和单位，不回退本地 Mock 或旧协议。
 
 ## 后端决定
 
-采用新的 Java/Spring Boot 模块化单体工程，按验证结果提取旧规则。新工程计划位于仓库 `backend/`；现有 `server/` 是外部目录联接，继续仅作对照，不在其中直接重建新后端。
+采用新的 Java/Spring Boot 模块化单体工程，按验证结果提取旧规则。新工程计划位于仓库 `backend/`；本工程不再使用旧 `server/` 目录联接，旧项目在仓库外独立参考。
 
 首期一个游戏应用加 MySQL，由功能模块划分账号、角色、英雄、物品、战斗、主线/挂机、邮件和订单。定时任务先在应用内执行，并具备持久状态与幂等。跨服、独立战斗进程和消息中间件等在功能、容量与隔离需求明确后再拆。
 
@@ -114,10 +116,10 @@ BagModel 区分 idle、loading、ready（允许空）和 error；失败保留上
 
 当前退出作用域只撤销自身 addRef，并以 decRef(false) 保留引擎缓存；旧页面尚未全部迁移，不主动释放共享纹理/Spine。Bundle 归属、配置按需加载、主动淘汰及内存预算对应主计划 P2-04–P2-09，不能因 ResourcePool 存在就视为全部完成。后续进度以 restructuring-plan.md 与 development-progress.md 顶部快照为准。
 
-本批先交付背包标准模块样板，等待用户检查代码阅读方式与 Prefab 修改体验，再扩大模块迁移。已有登录、主城和基础战斗保留；不在没有具体功能时增加基类、Manager 和空目录。
+当前已移除 module 和旧启动/网络/业务入口。英雄列表必须注入当前角色名册，不存在未注入时的旧路径；名册由应用会话持有，页面适配器只负责展示观察。背包、主城与战斗保持既有 Prefab 和新接口，模块生命周期与窗口生命周期分开。
 
-以下是尚未迁移的英雄历史实现，不是新架构标准：英雄列表采用已有 View 的数据源注入作为兼容接缝：HeroRosterController 在 UIManager 开页前注入 HeroRosterPresentation，展示读取独立 Model，Service 通过 AccountService 的会话能力访问新 API。旧 Boot 不注入时仍使用原路径；新增功能不继续写 GameStore/WireSession。列表和格子 Prefab 保持原 UUID，重做分支隐藏未接入的详情/养成入口。
+当前综合检查 33/33 与有效源码 strict 已在本机重新运行通过；Creator 核心流程已用隔离测试账号实际回归，完整视觉矩阵与人工 Inspector 编辑体验仍待验收。MySQL 真实环境、正式渠道、完整挂机收益等既有产品/工程缺口保持显式，不能据本次清理宣称全部游戏功能完成。准确证据和限制见 development-progress.md。
 
-会话根与玩法页分开管理：RemakeNavigation 保留主城根和共享顶底栏，玩法内容由统一 UIManager 创建、关闭和退订；退出会话时关闭玩法和根。HomeFeatureNavigation 只处理功能打开/取消/返回意图，LoginEntry 继续负责“资源就绪后停登录，点击开始才进主城”。
+## 配置、资源与静态布局
 
-新后端已在 backend 建立首个开发登录与角色资料切片，包含 JDBC 持久化、Flyway 迁移和独立测试。开发及当前集成测试使用隔离 H2，MySQL 8.4、正式渠道身份与新客户端 MVC 接入尚待验证；旧服与原数据库未切换。实际运行方法见 backend/README.md。旧工程检查结果保留为现状记录，与新后端测试分开报告。
+配置唯一仓库为 GameConfig，GConfig/运行时校验来自显式规范，禁止恢复 ConfigDb 或全量首屏加载。资源入口由 meta 生成 ResourceCatalog/独立 IconCatalog，加载复用 ResourcePool。Prefab 与实际界面类同名，布局源文件优先，通用适配不再运行时修复静态锚点或文字位置。使用方法见 [配置与资源](config-pipeline.md)、[Prefab 维护](prefab-layout.md)。

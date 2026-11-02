@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Prefab shells that screenFill and the hang sheets used to build at runtime.
-
-Writes cell and modal prefabs, and patches the live layers so the node tree
-already has the scroll, tab, parchment, and empty-state hosts. TypeScript only
-looks those nodes up.
-"""
+"""维护静态 Cell 与组合界面的生成工具；已有手工页面不重建滚动结构，资源布局以当前 Prefab 为准。"""
 import hashlib
 import json
 import os
@@ -293,7 +288,7 @@ class Builder(object):
     def scroll(self, parent, name, x, y, w, h, ax, ay, vertical, content_ax, content_ay, content_x, content_y):
         host = self.node(name, parent, x, y, w, h, ax, ay)
         self.node("view", host, 0, 0, w, h, ax, ay)
-        content = self.node("content", host, content_x, content_y, w, h, content_ax, content_ay)
+        content = self.node("content", port, content_x, content_y, w, h, content_ax, content_ay)
         mask = self.add({
             "__type__": "cc.Mask",
             "_name": "",
@@ -568,27 +563,30 @@ class Patch(object):
         self.objs[node_id]["_components"].append({"__id__": comp})
 
     def vscroll(self, parent, name, x, y, w, h):
+        """生成纵向 view/Mask/content 结构；已有手工节点保持原样。"""
         if child_named(self.objs, parent, name) is not None:
             return child_named(self.objs, parent, name)
         host = self.node(name, parent, x, y, w, h, 0.5, 1)
-        self.node("view", host, 0, 0, w, h, 0.5, 1)
-        content = self.node("content", host, 0, 0, w, h, 0.5, 1)
-        self._mask_scroll(host, content, True)
+        port = self.node("view", host, 0, 0, w, h, 0.5, 1)
+        content = self.node("content", port, 0, 0, w, h, 0.5, 1)
+        self._mask_scroll(host, port, content, True)
         empty = self.node("lbl_empty", host, 0, -h / 2, 360, 36, active=False)
         self.label(empty, "", 18, 122, 71, 45, 360)
         return host
 
     def hscroll(self, parent, name, x, y, w, h, content_anchor_x=0):
+        """生成横向视口及内容，保留内容起始边缘锚点。"""
         if child_named(self.objs, parent, name) is not None:
             return child_named(self.objs, parent, name)
         host = self.node(name, parent, x, y, w, h, 0.5, 0.5)
-        self.node("view", host, 0, 0, w, h, 0.5, 0.5)
+        port = self.node("view", host, 0, 0, w, h, 0.5, 0.5)
         content_x = -w / 2 if content_anchor_x == 0 else 0
-        content = self.node("content", host, content_x, 0, w, h, content_anchor_x, 0.5)
-        self._mask_scroll(host, content, False)
+        content = self.node("content", port, content_x, 0, w, h, content_anchor_x, 0.5)
+        self._mask_scroll(host, port, content, False)
         return host
 
-    def _mask_scroll(self, host, content, vertical):
+    def _mask_scroll(self, host, port, content, vertical):
+        """Mask 属于静态视口，ScrollView 属于外层宿主并绑定视口内 content。"""
         mask = self.add({
             "__type__": "cc.Mask",
             "_name": "",
@@ -601,11 +599,11 @@ class Patch(object):
             "_alphaThreshold": 0.1,
             "_id": "",
             "__prefab": None,
-            "node": {"__id__": host},
+            "node": {"__id__": port},
         })
         mask_info = self.add({"__type__": "cc.CompPrefabInfo", "fileId": fid(self.seed + str(host) + "mask")})
         self.objs[mask]["__prefab"] = {"__id__": mask_info}
-        self.objs[host]["_components"].append({"__id__": mask})
+        self.objs[port]["_components"].append({"__id__": mask})
         view = self.add({
             "__type__": "cc.ScrollView",
             "_name": "",
@@ -659,8 +657,8 @@ frames = {}
 
 def build_cells():
     folder = os.path.join(UI, "hero")
-    hero = Builder("HeroIconCell")
-    root = hero.node("HeroIconCell", None, 0, 0, 96, 104)
+    hero = Builder("HeroIconCellView")
+    root = hero.node("HeroIconCellView", None, 0, 0, 96, 104)
     hero.button(root, None)
     bg = hero.node("spr_bg", root, 0, 6, 84, 84)
     hero.sprite(bg, frames["hero_bg"])
@@ -683,7 +681,7 @@ def build_cells():
     hero.sprite(battle, frames["hero_battle"])
     mark = hero.node("lbl_mark", root, 30, 36, 28, 28, active=False)
     hero.label(mark, "✓", 22, 70, 210, 90, 28)
-    write_prefab(folder, "HeroIconCell", hero.dump(), "e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40")
+    write_prefab(folder, "HeroIconCellView", hero.dump(), "e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40")
 
     cat = Builder("CatalogIconCell")
     root = cat.node("CatalogIconCell", None, 0, 0, 96, 96)
@@ -766,14 +764,14 @@ def build_cells():
     back.sprite(art, None)
     write_prefab(common, "ListBackdrop", back.dump(), "5e381b27-d49f-46ca-a388-91f245d4c3b7")
 
-    chip = Builder("HangMissionChip")
-    root = chip.node("HangMissionChip", None, 0, 0, 196, 64)
+    chip = Builder("HangMissionChipView")
+    root = chip.node("HangMissionChipView", None, 0, 0, 196, 64)
     chip.button(root, None)
     icon = chip.node("icon", root, -64, 0, 56, 56)
     chip.sprite(icon, frames["mission"])
     label = chip.node("HangMissionLabel", root, 24, 0, 120, 40)
     chip.label(label, "", 16, 255, 236, 190, 120)
-    write_prefab(os.path.join(UI, "battle"), "HangMissionChip", chip.dump(), "4d270a16-c38e-45b9-f277-80e134c3b2a6")
+    write_prefab(os.path.join(UI, "battle"), "HangMissionChipView", chip.dump(), "4d270a16-c38e-45b9-f277-80e134c3b2a6")
 
     stage = Builder("ChapterStageChip")
     root = stage.node("ChapterStageChip", None, 0, 0, 80, 40)
@@ -830,19 +828,19 @@ def ensure_parchment(rel, before_name):
 
 
 def patch_layers():
-    path, objs = load_prefab("hero/HeroListHeroLayer.prefab")
+    path, objs = load_prefab("hero/HeroListBoardView.prefab")
     boxes = find_ids(objs, "spr_box")
     if not boxes:
-        raise SystemExit("HeroListHeroLayer missing spr_box")
+        raise SystemExit("HeroListBoardView missing spr_box")
     patch = Patch(objs, "heroScroll")
     patch.vscroll(boxes[0], "HeroScroll", 0, -108, 540, 320)
     save_prefab(path, objs)
-    print("HeroListHeroLayer HeroScroll")
+    print("HeroListBoardView HeroScroll")
 
-    path, objs = load_prefab("hero/HeroInfoLayer.prefab")
+    path, objs = load_prefab("hero/HeroInfoView.prefab")
     panels = find_ids(objs, "node_panel")
     if not panels:
-        raise SystemExit("HeroInfoLayer missing node_panel")
+        raise SystemExit("HeroInfoView missing node_panel")
     patch = Patch(objs, "detailBody")
     body = child_named(objs, panels[0], "DetailBody")
     if body is None:
@@ -856,7 +854,7 @@ def patch_layers():
         patch.tab(body, name, title, x, 64, 72, 32, active=False)
     scrolls = find_ids(objs, "scroll_view_tab")
     if not scrolls:
-        raise SystemExit("HeroInfoLayer missing scroll_view_tab")
+        raise SystemExit("HeroInfoView missing scroll_view_tab")
     names = [("btn_tab_grow", "育成", -165), ("btn_tab_star", "星UP", -55), ("btn_tab_gem", "宝石", 55), ("btn_tab_gear", "神装", 165)]
     for name, title, x in names:
         patch.tab(scrolls[0], name, title, x, 36, 100, 36)
@@ -868,7 +866,7 @@ def patch_layers():
         label = patch.node("FightValue", bats[0], 40, 0, 160, 28)
         patch.label(label, "—", 22, 255, 236, 190, 160)
     save_prefab(path, objs)
-    print("HeroInfoLayer DetailBody")
+    print("HeroInfoView DetailBody")
 
     path, objs = load_prefab("hero/HeroInfoUpLevelLayer.prefab")
     menus = find_ids(objs, "skill_menu")
@@ -935,13 +933,13 @@ def patch_layers():
     save_prefab(path, objs)
     print("HeroInfoAttrLayer lines")
 
-    path, objs = load_prefab("hero/HeroSelectLayer.prefab")
+    path, objs = load_prefab("hero/FormationView.prefab")
     scrolls = find_ids(objs, "scroll_view_backpack")
     if not scrolls:
-        raise SystemExit("HeroSelectLayer missing scroll_view_backpack")
+        raise SystemExit("FormationView missing scroll_view_backpack")
     content = child_named(objs, scrolls[0], "content")
     if content is None:
-        raise SystemExit("HeroSelectLayer scroll has no content")
+        raise SystemExit("FormationView scroll has no content")
     patch = Patch(objs, "formGrid")
     if child_named(objs, content, "FormGrid") is None:
         patch.node("FormGrid", content, 0, 0, 520, 40)
@@ -953,7 +951,7 @@ def patch_layers():
             patch.sprite(face, frames["hero_face"])
             patch.button(face, None)
     save_prefab(path, objs)
-    print("HeroSelectLayer FormGrid")
+    print("FormationView FormGrid")
 
     path, objs = load_prefab("chapter/ChapterPreviewLayer.prefab")
     scrolls = find_ids(objs, "scroll_view")
@@ -991,10 +989,10 @@ def patch_layers():
     save_prefab(path, objs)
     print("ChapterRewardLayer RewardBoard")
 
-    path, objs = load_prefab("backpack/BackpackInfoLayer.prefab")
+    path, objs = load_prefab("Bag/BagInfoView.prefab")
     icons = find_ids(objs, "spr_icon")
     if not icons:
-        raise SystemExit("BackpackInfoLayer missing spr_icon")
+        raise SystemExit("BagInfoView missing spr_icon")
     icon = icons[0]
     parent = objs[icon]["_parent"]["__id__"]
     if child_named(objs, parent, "spr_rare") is None:
@@ -1003,7 +1001,7 @@ def patch_layers():
         rare = patch.node("spr_rare", parent, pos["x"], pos["y"], 108, 108, before="spr_icon")
         patch.sprite(rare, frames["bag_frame"])
     save_prefab(path, objs)
-    print("BackpackInfoLayer spr_rare")
+    print("BagInfoView spr_rare")
 
     path, objs = load_prefab("chapter/ChapterExtraRewardCell.prefab")
     slots = find_ids(objs, "spr_reward_bg")
@@ -1022,8 +1020,8 @@ def main():
     global frames
     frames = {key: sprite_uuid(rel) for key, rel in SPRITES.items()}
     build_cells()
-    ensure_parchment("hero/HeroListLayer.prefab", "spr_bg")
-    ensure_parchment("backpack/BackpackLayer.prefab", "spr_bg")
+    ensure_parchment("hero/HeroListView.prefab", "spr_bg")
+    ensure_parchment("Bag/BagView.prefab", "spr_bg")
     patch_layers()
 
 

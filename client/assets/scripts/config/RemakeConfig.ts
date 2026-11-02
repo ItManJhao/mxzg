@@ -1,35 +1,34 @@
-import { ConfigLoader } from "./ConfigLoader";
-import { GroupedConfig } from "./GroupedConfig";
-import type { ConfigTableFile, OpenConditionRow, SystemGateRow } from "./types";
+/** 应用配置分组与 Creator 读取装配；数据仅存于 GameConfig，不建立第二份配置仓库。 */
+import { JsonAsset, resources } from "cc";
+import { GameConfig } from "./GameConfig";
+import { GConfig } from "./GConfig";
 import type { GateSnapshot } from "./nav";
 
-/** Only current consumers belong here; future gameplay groups need explicit dependencies. */
-export const REMAKE_CONFIG_GROUPS = {
-  startup: ["config/language", "config/loadingtips"],
-  city: ["config/opencondition", "config/system_gate", "config/maincity/maincitypos",
-    "config/maincity/createmaincitybtn", "config/maincity/maincityeffect"],
-  hero: ["config/herotype", "config/item"],
-  inventory: ["config/item", "config/language"],
-} as const;
-
-export function validateRemakeConfig(path: string, value: unknown): void {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("配置格式错误：" + path);
-  const row = value as Record<string, unknown>;
-  const field = path.endsWith("/maincitypos") ? "main" : path.endsWith("/maincityeffect") ? "maincityeffect" : "rows";
-  if (path.endsWith("/createmaincitybtn")) {
-    if (!row.act || typeof row.act !== "object" || Array.isArray(row.act)) throw new Error("配置缺少 act：" + path);
-  } else if (!Array.isArray(row[field])) throw new Error("配置缺少 " + field + "：" + path);
+/** Creator 读取 JSON；版本标识由发布资源选择器处理，当前仅支持本机同版本资源。 */
+function loadConfigJson(path: string, version: string): Promise<unknown> {
+    if (version !== "initial") return Promise.reject(new Error("本机配置未提供资源版本：" + version));
+    return new Promise((resolve, reject) => resources.load(path, JsonAsset, (error, asset) => {
+        if (error || !asset || asset.json == null) reject(error || new Error("配置资源缺失：" + path));
+        else resolve(asset.json);
+    }));
 }
-
-export const remakeConfig = new GroupedConfig(path => ConfigLoader.loadJson(path), validateRemakeConfig);
-export const prepareStartupConfig = (progress?: (done: number, total: number) => void) =>
-  remakeConfig.prepare(REMAKE_CONFIG_GROUPS.startup, progress);
-export const prepareCityConfig = () => remakeConfig.prepare(REMAKE_CONFIG_GROUPS.city);
-export const prepareHeroConfig = () => remakeConfig.prepare(REMAKE_CONFIG_GROUPS.hero);
-export const prepareInventoryConfig = () => remakeConfig.prepare(REMAKE_CONFIG_GROUPS.inventory);
-
+GameConfig.instance.initialize(loadConfigJson);
+export const REMAKE_CONFIG_GROUPS = {
+    startup: [GConfig.Language, GConfig.LoadingTips],
+    city: [GConfig.OpenCondition, GConfig.SystemGate, GConfig.CityPosition, GConfig.CityButton, GConfig.CityEffect],
+    hero: [GConfig.HeroType, GConfig.Item],
+    inventory: [GConfig.Item, GConfig.Language],
+} as const;
+/** 首屏只加载文字与提示，不提前加载主城、英雄和库存配置。 */
+export const prepareStartupConfig = (progress?: (done: number, total: number) => void) => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.startup, progress);
+/** 主城打开前原子准备其配置组。 */
+export const prepareCityConfig = () => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.city);
+/** 英雄与出阵打开前准备展示配置，共享已加载请求。 */
+export const prepareHeroConfig = () => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.hero);
+/** 背包打开前准备库存显示配置。 */
+export const prepareInventoryConfig = () => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.inventory);
+/** 未准备主城组时返回 null；就绪后直接引用只读配置，不再维护门槛副本。 */
 export function readCityGates(): GateSnapshot | null {
-  const open = remakeConfig.get<ConfigTableFile<OpenConditionRow>>("config/opencondition");
-  const system = remakeConfig.get<ConfigTableFile<SystemGateRow>>("config/system_gate");
-  return open && system ? { opencondition: open.rows, systemGate: system.rows } : null;
+    if (GameConfig.instance.status(GConfig.OpenCondition).state !== "ready" || GameConfig.instance.status(GConfig.SystemGate).state !== "ready") return null;
+    return { opencondition: GameConfig.instance.getConfig(GConfig.OpenCondition), systemGate: GameConfig.instance.getConfig(GConfig.SystemGate) };
 }

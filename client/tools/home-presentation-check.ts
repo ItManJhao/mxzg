@@ -29,8 +29,8 @@ class ChromeFixture extends CityChromeView {
 }
 function fixture() {
   const home = new Node("Home").addComponent(RemakeHomeView);
-  const cityNode = new Node("CityHub"); const city = cityNode.addComponent(CityFixture);
-  const chromeNode = new Node("CityChrome"); const chrome = chromeNode.addComponent(ChromeFixture);
+  const cityNode = new Node("CityHubView"); const city = cityNode.addComponent(CityFixture);
+  const chromeNode = new Node("CityChromeView"); const chrome = chromeNode.addComponent(ChromeFixture);
   home.cityPrefab = { _instantiate: () => cityNode } as unknown as Prefab;
   home.chromePrefab = { _instantiate: () => chromeNode } as unknown as Prefab;
   home.cityHost = new Node("CityMapHost"); home.chromeHost = new Node("CityChromeHost");
@@ -84,10 +84,10 @@ async function main() {
   assert.equal(slow.city.disposedCount, 0, "closing during config loading prevents child instantiation entirely");
   assert.equal(slow.home.cityHost!.children.length, 0);
 
-  const prefab = JSON.parse(readFileSync("client/assets/bundles/remake-home/RemakeHome.prefab", "utf8"));
+  const prefab = JSON.parse(readFileSync("client/assets/bundles/remake-home/RemakeHomeView.prefab", "utf8"));
   const binding = prefab.find((row: any) => row.cityPrefab && row.chromePrefab);
   assert(binding, "existing city Prefabs are serialized references, not copied layouts");
-  for (const [key, name] of [["cityPrefab", "CityHub"], ["chromePrefab", "CityChrome"]]) {
+  for (const [key, name] of [["cityPrefab", "CityHubView"], ["chromePrefab", "CityChromeView"]]) {
     const meta = JSON.parse(readFileSync(`client/assets/prefabs/ui/city/${name}.prefab.meta`, "utf8"));
     assert.equal(binding[key].__uuid__, meta.uuid);
   }

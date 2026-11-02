@@ -1,0 +1,538 @@
+{
+  "version": 1,
+  "note": "当前有效客户端配置规范。字段类型显式声明；空单元格导出时省略，非必需字段可选。JSON 文本列保持字符串，不推断数组/对象结构。新增结构字段必须显式定义递归 schema。",
+  "tables": {
+    "Item": {
+      "path": "config/item",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "配置查询主键"
+        },
+        "type": {
+          "type": "number",
+          "required": false,
+          "note": "type"
+        },
+        "mode": {
+          "type": "number",
+          "required": false,
+          "note": "mode"
+        },
+        "place": {
+          "type": "number",
+          "required": false,
+          "note": "place"
+        },
+        "rare_mark": {
+          "type": "number",
+          "required": false,
+          "note": "rare_mark"
+        },
+        "effect_mark": {
+          "type": "number",
+          "required": false,
+          "note": "effect_mark"
+        },
+        "star": {
+          "type": "number",
+          "required": false,
+          "note": "star"
+        },
+        "decomposition": {
+          "type": "number",
+          "required": false,
+          "note": "decomposition"
+        },
+        "level_require": {
+          "type": "number",
+          "required": false,
+          "note": "level_require"
+        },
+        "use_type": {
+          "type": "number",
+          "required": false,
+          "note": "use_type"
+        },
+        "use_value": {
+          "type": "number",
+          "required": false,
+          "note": "use_value"
+        },
+        "use_jump": {
+          "type": "number",
+          "required": false,
+          "note": "use_jump"
+        },
+        "sort": {
+          "type": "number",
+          "required": false,
+          "note": "sort"
+        },
+        "gain": {
+          "type": "number",
+          "required": false,
+          "note": "gain"
+        },
+        "icon": {
+          "type": "string",
+          "required": false,
+          "note": "icon"
+        },
+        "source": {
+          "type": "string",
+          "required": false,
+          "note": "source"
+        },
+        "name": {
+          "type": "number|string",
+          "required": false,
+          "note": "name"
+        },
+        "content": {
+          "type": "number|string",
+          "required": false,
+          "note": "content"
+        }
+      }
+    },
+    "Language": {
+      "path": "config/language",
+      "container": "rows",
+      "key": "key",
+      "fields": {
+        "value": {
+          "type": "string",
+          "required": false,
+          "note": "value"
+        },
+        "key": {
+          "type": "number|string",
+          "required": true,
+          "note": "配置查询主键"
+        }
+      },
+      "ignoreKeys": [
+        "#"
+      ]
+    },
+    "LoadingTips": {
+      "path": "config/loadingtips",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "配置查询主键"
+        },
+        "tips": {
+          "type": "number",
+          "required": false,
+          "note": "tips"
+        }
+      }
+    },
+    "HeroType": {
+      "path": "config/herotype",
+      "container": "rows",
+      "key": "type",
+      "fields": {
+        "type": {
+          "type": "number",
+          "required": true,
+          "note": "配置查询主键"
+        },
+        "occupation": {
+          "type": "number",
+          "required": false,
+          "note": "occupation"
+        },
+        "elem": {
+          "type": "number",
+          "required": false,
+          "note": "elem"
+        },
+        "star": {
+          "type": "number",
+          "required": false,
+          "note": "star"
+        },
+        "damage_type": {
+          "type": "number",
+          "required": false,
+          "note": "damage_type"
+        },
+        "skill_1": {
+          "type": "number",
+          "required": false,
+          "note": "skill_1"
+        },
+        "skill_2": {
+          "type": "number",
+          "required": false,
+          "note": "skill_2"
+        },
+        "skill_3": {
+          "type": "number",
+          "required": false,
+          "note": "skill_3"
+        },
+        "skill_4": {
+          "type": "number",
+          "required": false,
+          "note": "skill_4"
+        },
+        "skill_5": {
+          "type": "number",
+          "required": false,
+          "note": "skill_5"
+        },
+        "item_id": {
+          "type": "number",
+          "required": false,
+          "note": "item_id"
+        },
+        "describe": {
+          "type": "number",
+          "required": false,
+          "note": "describe"
+        },
+        "kind": {
+          "type": "number",
+          "required": false,
+          "note": "kind"
+        },
+        "note": {
+          "type": "string",
+          "required": false,
+          "note": "note"
+        },
+        "to_5_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_5_star"
+        },
+        "to_6_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_6_star"
+        },
+        "to_7_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_7_star"
+        },
+        "to_8_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_8_star"
+        },
+        "to_9_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_9_star"
+        },
+        "to_10_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_10_star"
+        },
+        "to_11_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_11_star"
+        },
+        "to_12_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_12_star"
+        },
+        "to_13_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_13_star"
+        },
+        "to_14_star": {
+          "type": "string",
+          "required": false,
+          "note": "to_14_star"
+        },
+        "talent_recommend": {
+          "type": "string",
+          "required": false,
+          "note": "talent_recommend"
+        }
+      }
+    },
+    "OpenCondition": {
+      "path": "config/opencondition",
+      "container": "rows",
+      "key": "id",
+      "fields": {
+        "open": {
+          "type": "number",
+          "required": false,
+          "note": "open"
+        },
+        "condition_type": {
+          "type": "number",
+          "required": true,
+          "note": "condition_type"
+        },
+        "condition_value": {
+          "type": "number",
+          "required": false,
+          "note": "condition_value"
+        },
+        "world_level": {
+          "type": "number",
+          "required": false,
+          "note": "world_level"
+        },
+        "desc": {
+          "type": "number",
+          "required": false,
+          "note": "desc"
+        },
+        "level": {
+          "type": "number",
+          "required": true,
+          "note": "入口所需主线等级"
+        },
+        "open_server_day": {
+          "type": "number",
+          "required": true,
+          "note": "开放所需开服自然日，0 表示不限制"
+        },
+        "atom": {
+          "type": "string",
+          "required": false,
+          "note": "功能入口原子标识"
+        },
+        "note": {
+          "type": "string",
+          "required": false,
+          "note": "策划业务说明"
+        },
+        "id": {
+          "type": "string",
+          "required": true,
+          "note": "导航门槛查询标识"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "note": "功能显示名称"
+        },
+        "parent": {
+          "type": "string",
+          "required": false,
+          "note": "特效挂载父节点名称"
+        },
+        "alias_of": {
+          "type": "string",
+          "required": false,
+          "note": "客户端导航别名对应的原功能标识"
+        }
+      },
+      "duplicateKeys": [
+        "act_recharge_day_reward"
+      ],
+      "duplicateNote": "源表该原子两行，导航原先 findOpen 取首行；保留顺序和首行查询，不静默改变开放等级。后续策划确认后消除重复。"
+    },
+    "SystemGate": {
+      "path": "config/system_gate",
+      "container": "rows",
+      "key": "key",
+      "fields": {
+        "open_server_day": {
+          "type": "number",
+          "required": true,
+          "note": "开放所需开服自然日，0 表示不限制"
+        },
+        "key": {
+          "type": "string",
+          "required": true,
+          "note": "配置查询键"
+        },
+        "note": {
+          "type": "string",
+          "required": false,
+          "note": "策划业务说明"
+        }
+      }
+    },
+    "CityPosition": {
+      "path": "config/maincity/maincitypos",
+      "container": "main",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "配置条目编号"
+        },
+        "zorder": {
+          "type": "number",
+          "required": true,
+          "note": "地图绘制层级"
+        },
+        "x": {
+          "type": "number",
+          "required": true,
+          "note": "父节点左下空间的横坐标"
+        },
+        "y": {
+          "type": "number",
+          "required": true,
+          "note": "父节点左下空间的纵坐标"
+        },
+        "atom": {
+          "type": "string",
+          "required": true,
+          "note": "功能入口原子标识"
+        },
+        "checkreddot": {
+          "type": "string",
+          "required": false,
+          "note": "原配置红点检查标识，仅保留数据"
+        },
+        "reddot": {
+          "type": "number|string",
+          "required": false,
+          "note": "红点条件编号，空字符串表示未配置"
+        }
+      }
+    },
+    "CityButton": {
+      "path": "config/maincity/createmaincitybtn",
+      "container": "act",
+      "key": "atom",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "配置条目编号"
+        },
+        "type": {
+          "type": "number",
+          "required": false,
+          "note": "入口或特效类型"
+        },
+        "row": {
+          "type": "number",
+          "required": false,
+          "note": "入口行号"
+        },
+        "col": {
+          "type": "number",
+          "required": false,
+          "note": "入口列号"
+        },
+        "atom": {
+          "type": "string",
+          "required": true,
+          "note": "功能入口原子标识"
+        },
+        "checkreddot": {
+          "type": "string",
+          "required": false,
+          "note": "原配置红点检查标识，仅保留数据"
+        },
+        "path": {
+          "type": "string",
+          "required": false,
+          "note": "主城图标源路径"
+        },
+        "reddot": {
+          "type": "number|string",
+          "required": false,
+          "note": "红点条件编号，空字符串表示未配置"
+        },
+        "effId": {
+          "type": "number|string",
+          "required": false,
+          "note": "特效标识，空字符串表示未配置"
+        }
+      }
+    },
+    "CityEffect": {
+      "path": "config/maincity/maincityeffect",
+      "container": "maincityeffect",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "配置条目编号"
+        },
+        "x": {
+          "type": "number",
+          "required": true,
+          "note": "父节点左下空间的横坐标"
+        },
+        "y": {
+          "type": "number",
+          "required": true,
+          "note": "父节点左下空间的纵坐标"
+        },
+        "z": {
+          "type": "number",
+          "required": false,
+          "note": "特效显示层级"
+        },
+        "type": {
+          "type": "string",
+          "required": false,
+          "note": "入口或特效类型"
+        },
+        "para": {
+          "type": "string",
+          "required": false,
+          "note": "动画或骨骼资源标识"
+        },
+        "parent": {
+          "type": "string",
+          "required": false,
+          "note": "特效挂载父节点名称"
+        }
+      }
+    },
+    "HeroTalk": {
+      "path": "config/herotalk",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "台词编号"
+        },
+        "level_min": {
+          "type": "number",
+          "required": true,
+          "note": "最低等级"
+        },
+        "level_max": {
+          "type": "number",
+          "required": true,
+          "note": "最高等级"
+        },
+        "lan": {
+          "type": "number",
+          "required": true,
+          "note": "语言编号"
+        },
+        "note": {
+          "type": "string",
+          "required": false,
+          "note": "策划台词"
+        }
+      }
+    }
+  }
+}

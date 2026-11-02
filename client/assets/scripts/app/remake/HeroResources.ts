@@ -1,15 +1,19 @@
+/**
+ * 英雄页资源作用域：准备名册配置和列表 Prefab，不在登录前预载，也不持有角色状态。
+ */
+import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { Prefab } from "cc";
 import { ResourcePool } from "../../framework/assets/ResourcePool";
 import type { ResourceScope } from "../../framework/assets/ResourcePool";
 import { prepareHeroConfig } from "../../config/RemakeConfig";
-import { loadPrefab } from "../../ui/prefabLoad";
+import { loadPrefab } from "../../framework/assets/PrefabLoader";
 
 export const HERO_PAGE_RESOURCES = {
-  list: "prefabs/ui/hero/HeroListLayer",
-  board: "prefabs/ui/hero/HeroListHeroLayer",
-  cell: "prefabs/ui/hero/HeroIconCell",
-  shell: "prefabs/ui/common/PagePrefabShell",
-  backdrop: "prefabs/ui/common/ListBackdrop",
+  list: ResourceCatalog.prefab_hero.HeroListView.assetPath,
+  board: ResourceCatalog.prefab_hero.HeroListBoardView.assetPath,
+  cell: ResourceCatalog.prefab_hero.HeroIconCellView.assetPath,
+  shell: ResourceCatalog.prefab_common.PagePrefabShell.assetPath,
+  backdrop: ResourceCatalog.prefab_common.ListBackdrop.assetPath,
 } as const;
 const pool = new ResourcePool<Prefab>({
   load: key => {

@@ -79,7 +79,7 @@ function checkLayouts(): void {
 }
 
 function checkCellReuse(): void {
-    const root=node("BackpackItemCell",96,96), cell=root.addComponent(BagItemView) as BagItemView;
+    const root=node("BagItemView",96,96), cell=root.addComponent(BagItemView) as BagItemView;
     cell.button=root.addComponent(Button);cell.frame=node("frame",96,96,root);cell.frame.addComponent(Sprite);
     cell.icon=node("icon",64,64,root);cell.icon.addComponent(Sprite);cell.count=node("count",96,24,root).addComponent(Label);
     cell.selectMark=node("selected",96,96,root);
@@ -113,7 +113,7 @@ function checkEditorPreview(): void {
         assert.equal(list.length,0,"editor samples are not runtime data");
         list.previewCount=0;(list as any).update();assert.equal(list.node.children.length,0);
         setEditorContext(false,true);list.previewCount=6;(list as any).update();assert.equal(list.node.children.length,0,"preview samples cannot become player inventory");
-        const source=JSON.parse(readFileSync("client/assets/prefabs/ui/backpack/BackpackLayer.prefab","utf8"));
+        const source=JSON.parse(readFileSync("client/assets/prefabs/ui/Bag/BagView.prefab","utf8"));
         assert.equal(source.find((row:any)=>"previewCount"in row).previewCount,0);
         assert(!source.some((row:any)=>row._name?.startsWith("__SuperContentPreview__")));
     } finally {setEditorContext(false,true);}

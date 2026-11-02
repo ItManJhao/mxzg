@@ -100,12 +100,9 @@ def apply(files,keep,removed):
             meta=Path(str(folder)+'.meta')
             if meta.exists(): meta.unlink()
     # Remove retired entries from UUID fallback and shell registration, not game data.
-    loader=ASSETS/'scripts/ui/prefabLoad.ts'
+    loader=ASSETS/'scripts/config/PrefabCatalog.ts'
     loader.write_text('\n'.join(line for line in loader.read_text(encoding='utf-8-sig').splitlines()
         if not any('"'+item['path'][:-7]+'":' in line for item in removed))+'\n',encoding='utf-8')
-    shell=ASSETS/'scripts/ui/prefabShellMap.ts'
-    shell.write_text('\n'.join(line for line in shell.read_text(encoding='utf-8-sig').splitlines()
-        if not any('shell("'+item['path'][:-7]+'"' in line for item in removed))+'\n',encoding='utf-8')
     write_runtime(keep)
     for path,digest in fingerprints.items():
         if hashlib.sha256(Path(path).read_bytes()).hexdigest()!=digest:raise ValueError('Retained asset changed: '+path)

@@ -1,0 +1,156 @@
+[
+  {
+    "from": "client/assets/bundles/remake-home/RemakeHome.prefab",
+    "to": "client/assets/bundles/remake-home/RemakeHomeView.prefab",
+    "oldName": "RemakeHome",
+    "name": "RemakeHomeView",
+    "uuid": "bd1203e8-e72a-5d44-bc5c-ab68a868898a"
+  },
+  {
+    "from": "client/assets/prefabs/ui/account/AccountLogin.prefab",
+    "to": "client/assets/prefabs/ui/account/AccountLoginView.prefab",
+    "oldName": "AccountLogin",
+    "name": "AccountLoginView",
+    "uuid": "61d32fd8-b35a-5ddc-bf5f-ea5026c8c23b"
+  },
+  {
+    "from": "client/assets/prefabs/ui/Bag/BagInfoLayer.prefab",
+    "to": "client/assets/prefabs/ui/Bag/BagInfoView.prefab",
+    "oldName": "BagInfoLayer",
+    "name": "BagInfoView",
+    "uuid": "f151a2c1-a24a-4e5d-9d67-2096089cde82"
+  },
+  {
+    "from": "client/assets/prefabs/ui/Bag/BagItemCell.prefab",
+    "to": "client/assets/prefabs/ui/Bag/BagItemView.prefab",
+    "oldName": "BagItemCell",
+    "name": "BagItemView",
+    "uuid": "c4e8a1b2-7d33-4f61-9a20-6b5e0d4c8f11"
+  },
+  {
+    "from": "client/assets/prefabs/ui/Bag/BagLayer.prefab",
+    "to": "client/assets/prefabs/ui/Bag/BagView.prefab",
+    "oldName": "BagLayer",
+    "name": "BagView",
+    "uuid": "6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb"
+  },
+  {
+    "from": "client/assets/prefabs/ui/Bag/BagTabButton.prefab",
+    "to": "client/assets/prefabs/ui/Bag/BagTabView.prefab",
+    "oldName": "BagTabButton",
+    "name": "BagTabView",
+    "uuid": "d5f9b2c3-8e44-4072-ab31-7c6f1e5d9022"
+  },
+  {
+    "from": "client/assets/prefabs/ui/battle/BattlePanelLayer.prefab",
+    "to": "client/assets/prefabs/ui/battle/CampaignView.prefab",
+    "oldName": "BattlePanelLayer",
+    "name": "CampaignView",
+    "uuid": "ac146bb3-359f-4506-8fcf-32f8c56ef4d3"
+  },
+  {
+    "from": "client/assets/prefabs/ui/battle/HangMissionChip.prefab",
+    "to": "client/assets/prefabs/ui/battle/HangMissionChipView.prefab",
+    "oldName": "HangMissionChip",
+    "name": "HangMissionChipView",
+    "uuid": "4d270a16-c38e-45b9-f277-80e134c3b2a6"
+  },
+  {
+    "from": "client/assets/prefabs/ui/city/CityChrome.prefab",
+    "to": "client/assets/prefabs/ui/city/CityChromeView.prefab",
+    "oldName": "CityChrome",
+    "name": "CityChromeView",
+    "uuid": "c97efb56-db67-4c93-84d5-e29436794e86"
+  },
+  {
+    "from": "client/assets/prefabs/ui/city/CityHub.prefab",
+    "to": "client/assets/prefabs/ui/city/CityHubView.prefab",
+    "oldName": "CityHub",
+    "name": "CityHubView",
+    "uuid": "118c08f7-43eb-477d-ab62-50f3ec65294f"
+  },
+  {
+    "from": "client/assets/prefabs/ui/common/CommonBtnPrimary.prefab",
+    "to": "client/assets/prefabs/ui/common/CommonBtnPrimaryShell.prefab",
+    "oldName": "CommonBtnPrimary",
+    "name": "CommonBtnPrimaryShell",
+    "uuid": "0cfeebba-f0fc-4027-8db5-d76c7fc999e2"
+  },
+  {
+    "from": "client/assets/prefabs/ui/common/CommonBtnSecondary.prefab",
+    "to": "client/assets/prefabs/ui/common/CommonBtnSecondaryShell.prefab",
+    "oldName": "CommonBtnSecondary",
+    "name": "CommonBtnSecondaryShell",
+    "uuid": "a09db064-547d-4821-b6cc-239926d54c4a"
+  },
+  {
+    "from": "client/assets/prefabs/ui/common/CommonListRow.prefab",
+    "to": "client/assets/prefabs/ui/common/CommonListRowShell.prefab",
+    "oldName": "CommonListRow",
+    "name": "CommonListRowShell",
+    "uuid": "074ae72e-69c8-4bc1-8ea5-f9311210b849"
+  },
+  {
+    "from": "client/assets/prefabs/ui/common/CommonPanel.prefab",
+    "to": "client/assets/prefabs/ui/common/CommonPanelShell.prefab",
+    "oldName": "CommonPanel",
+    "name": "CommonPanelShell",
+    "uuid": "03989589-fea0-441f-a57e-1abd51df09ff"
+  },
+  {
+    "from": "client/assets/prefabs/ui/common/CommonRedDot.prefab",
+    "to": "client/assets/prefabs/ui/common/CommonRedDotShell.prefab",
+    "oldName": "CommonRedDot",
+    "name": "CommonRedDotShell",
+    "uuid": "9f129813-104d-4842-a449-710156b5a743"
+  },
+  {
+    "from": "client/assets/prefabs/ui/hero/HeroIconCell.prefab",
+    "to": "client/assets/prefabs/ui/hero/HeroIconCellView.prefab",
+    "oldName": "HeroIconCell",
+    "name": "HeroIconCellView",
+    "uuid": "e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40"
+  },
+  {
+    "from": "client/assets/prefabs/ui/hero/HeroInfoLayer.prefab",
+    "to": "client/assets/prefabs/ui/hero/HeroInfoView.prefab",
+    "oldName": "HeroInfoLayer",
+    "name": "HeroInfoView",
+    "uuid": "fa5d3f0c-1441-479b-a182-48d374c7dc6c"
+  },
+  {
+    "from": "client/assets/prefabs/ui/hero/HeroListHeroLayer.prefab",
+    "to": "client/assets/prefabs/ui/hero/HeroListBoardView.prefab",
+    "oldName": "HeroListHeroLayer",
+    "name": "HeroListBoardView",
+    "uuid": "d3a470c0-fa13-47fa-811e-f38c7317e9d8"
+  },
+  {
+    "from": "client/assets/prefabs/ui/hero/HeroListLayer.prefab",
+    "to": "client/assets/prefabs/ui/hero/HeroListView.prefab",
+    "oldName": "HeroListLayer",
+    "name": "HeroListView",
+    "uuid": "95a097b8-9964-4ac3-8b3d-b4f568b1eb53"
+  },
+  {
+    "from": "client/assets/prefabs/ui/hero/HeroSelectLayer.prefab",
+    "to": "client/assets/prefabs/ui/hero/FormationView.prefab",
+    "oldName": "HeroSelectLayer",
+    "name": "FormationView",
+    "uuid": "c75bff2b-0944-4809-9b5f-1eb8c09107f8"
+  },
+  {
+    "from": "client/assets/prefabs/ui/login/ChooseServerCell.prefab",
+    "to": "client/assets/prefabs/ui/login/ServerCellView.prefab",
+    "oldName": "ChooseServerCell",
+    "name": "ServerCellView",
+    "uuid": "da7f5fcb-b7ea-5f0d-9d9e-bf5186dbfa68"
+  },
+  {
+    "from": "client/assets/prefabs/ui/login/ChooseServerLayer.prefab",
+    "to": "client/assets/prefabs/ui/login/ServerPickerView.prefab",
+    "oldName": "ChooseServerLayer",
+    "name": "ServerPickerView",
+    "uuid": "46c73fed-68c2-5589-8720-d11645528009"
+  }
+]

@@ -1,0 +1,8885 @@
+[
+  {
+    "path": "client/assets/bundles/remake-home/RemakeHomeView.prefab",
+    "classes": [
+      "RemakeHomeView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "fde0839f5414838407a0757ac95f35433860f7943caea4b7930b4321bd8c385b"
+  },
+  {
+    "path": "client/assets/prefabs/ui/ability/AbilityInfoLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": -195,
+        "y": -186,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 390,
+        "height": 372
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "AbilityInfoLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_name",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_type",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_score_text",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_score",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "d416b6926aff3efa94962b86f4d7f68db21cdb6d7fba81d5d4d6b89523a6460a"
+  },
+  {
+    "path": "client/assets/prefabs/ui/account/AccountLoginView.prefab",
+    "classes": [
+      "AccountLoginView",
+      "LoginArtwork"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "TEXT_LABEL",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "PLACEHOLDER_LABEL",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "8fa3c1490930aff67b2ef11427ca778dd93468d37e78a572f12fd1deba95b8f2"
+  },
+  {
+    "path": "client/assets/prefabs/ui/Bag/BagInfoView.prefab",
+    "classes": [
+      "BagInfoView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 390,
+        "height": 300
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BagInfoView",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_prop_name",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_prop_type",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_desc",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "lbl_content_node",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_close",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "3475c239390618257e022b10146df04e36fc41e0f20fbd087887c484eb319e59"
+  },
+  {
+    "path": "client/assets/prefabs/ui/Bag/BagItemView.prefab",
+    "classes": [
+      "BagItemView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 96,
+        "height": 96
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "fa48910607941087b2ec4e8ed42ecc1dd2457eef00bc069b29e50577a2f1adb2"
+  },
+  {
+    "path": "client/assets/prefabs/ui/Bag/BagTabView.prefab",
+    "classes": [
+      "BagTabView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 108,
+        "height": 40
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "2ac3f332acf6cc6ea156a28e62edad629908964df26cfbc6bfa113e7f9412d98"
+  },
+  {
+    "path": "client/assets/prefabs/ui/Bag/BagView.prefab",
+    "classes": [
+      "BagView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": -320,
+        "y": -480,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 960
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "node_portrait",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "BagScroll",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "spr_box",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "btn_scroll_view",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bubble_bg",
+        "anchor": [
+          1,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "BagView",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "btn_scroll_view",
+        "content": {
+          "__id__": 59
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "26d3dfc358f2dba13779d1c8af1db26e6fb416579eba4b7fdfca7e773be90304"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattleDetailCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 90,
+        "height": 160
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BattleDetailCell",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "d10190ec20540af447bbf13aa9597522d0faa6e98a7f272ea10028085b05a422"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattleDetailLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -375,
+        "x": -300
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 600,
+        "height": 750
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 2,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BattleDetailLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_tip_1",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_tip_2",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_tip_3",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "node_role_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCSprite_1",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "spr_result_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "scroll_view_1",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "node_role_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCSprite_1",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "spr_result_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "scroll_view_2",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "alice_report_menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view_1",
+        "content": {
+          "__id__": 105
+        }
+      },
+      {
+        "node": "scroll_view_2",
+        "content": {
+          "__id__": 143
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "23e7721873d846e54c35c01065a28090bf3a7a7639715900049dfdc9cf384806"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattleEditLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -384,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 768
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BattleEditLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "5586a155804d47f320fa21e5f7e9e69fa2df099b46c8d01c96f7eaf8e03ae267"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattleEndLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -365,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 730
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BattleEndLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "show_hero",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "show_rich",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_role_lv",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b230b4a3153bc7c82a8bb9b8849584c736a27407e3d2b20c4142538a63eefacd"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattleInfoLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640.0,
+        "height": 108
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BattleInfoLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_name_bg2",
+        "anchor": [
+          1,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_2",
+        "anchor": [
+          0.5,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "97da390718f2a4b29a8c8463e79aea4bcc43e14c6a592e8542a8185151715716"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattlePage.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 720,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "945f7d3317000514fb62186aaa2a8a17de3b2fe7b1d2187323474c1d1b0edb4d"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattleReportLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -480,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 960
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BattleReportLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "5e7e5eb31b23254d650e4de499d3bae43a3be6269f1a7199197bf7b411fbcbfb"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/CampaignView.prefab",
+    "classes": [
+      "CampaignView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -640,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "CampaignView",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_progress_time",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_gold",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_souls",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_exp",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "node_bubble",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "323f54a531d035603a5161ad1f422e593a4da15dc7e11255335b0325f7d38bf7"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/HangMissionChipView.prefab",
+    "classes": [
+      "HangMissionChipView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 196,
+        "height": 64
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b9dbcd9c9c497e87ee8896b0c76c3c758062d9721045c1a1c7d673b2720800d5"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterEndLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -200,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 400
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChapterEndLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "menu_main",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 51
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "2698a8d19c886a51de00eb204e188a0ce61c5df09fcf26968db9675472760de2"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterEndLoseCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 400
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChapterEndLoseCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_main",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_close_time",
+        "anchor": [
+          1,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0fca42fcbde7088df6cd6982abd35b836638490ee423e3fb1e03a6c6f1cc01ad"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterExtraRewardCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 150,
+        "height": 180
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChapterExtraRewardCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_prog",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_content_bg",
+        "anchor": [
+          1,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "97db2d50c3922ad1584fdc0663802963eb5e4aeb653a4518d9d0903872d379b2"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterMapLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "StageStrip",
+        "content": {
+          "__id__": 37
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "bbb0345d76319d884807e0e72ce042e3b9ffd75d86623a9ee69659a576948eaa"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterPreviewLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -300,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 600
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChapterPreviewLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 43
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "46546110d1f1fc5081ad9162f3bed81e159ecd92033def0ec6ced2cbb7e9ac14"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterRewardCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 570,
+        "height": 160
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChapterRewardCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_title",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "694db908f030ce4df0ef6b40c11e03f291402aaf8a43865d6180e5aaaa65208e"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterRewardLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -442,
+        "x": -272
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 0.85,
+        "x": 0.85
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1040
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 2,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChapterRewardLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "RewardList",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "ExtraRow",
+        "content": {
+          "__id__": 63
+        }
+      },
+      {
+        "node": "RewardList",
+        "content": {
+          "__id__": 79
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "c60f0256dda50dd85a3e1f18ed1e5c791c6ae0851d5333b813f5564a1442059c"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterStageChip.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 80,
+        "height": 40
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "670cbdab6ae4b5cf48f06ca5f5cc47911e7f961190a26c183b40b7c7ca3acac0"
+  },
+  {
+    "path": "client/assets/prefabs/ui/city/CityChromeView.prefab",
+    "classes": [
+      "CityChromeShell",
+      "CityChromeView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 720,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b1b080df66eea3d6cc0e2a84c3657becff9424e08409ebbf387fd77f5c571cef"
+  },
+  {
+    "path": "client/assets/prefabs/ui/city/CityHubView.prefab",
+    "classes": [
+      "CityHubView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 720,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "CityParallax",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_map_bg4",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "spr_map_bg3",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "spr_map_bg2",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "spr_map_bg1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_map_bg1_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_map_bg1_2",
+        "anchor": [
+          1,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "fa2c0418082308fe9ee906b762621a1633d2d7c8b2fa0af4fa1bc180c17a80d1"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/CommonBtnPrimaryShell.prefab",
+    "classes": [
+      "CommonBtnPrimaryShell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 240,
+        "height": 64
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "29d691dbbf45ccbf5ae1664df815d0f4c7e9a4c2e1c952f3b83f20008da4ac91"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/CommonBtnSecondaryShell.prefab",
+    "classes": [
+      "CommonBtnSecondaryShell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 240,
+        "height": 64
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "adca6fb1f45f441844ef03b898c186342f3f2af5307f226fa82d986a8c6e98cf"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/CommonListRowShell.prefab",
+    "classes": [
+      "CommonListRowShell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 104
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "a1c9dddb3cdae07361b07b0722bcd5874071e970132bae5ca9798e4a9c9c2e74"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/CommonPanelShell.prefab",
+    "classes": [
+      "CommonPanelShell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 880
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "1066778b366ac7162f3471f779558e48a973fa98aa75efc80e6cb0c972cc52ea"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/CommonRedDotShell.prefab",
+    "classes": [
+      "CommonRedDotShell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 18,
+        "height": 18
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 1,
+        "y": 1
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "CommonRedDotShell",
+        "anchor": [
+          1,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "e0e95c8896d5f0655b148fd00923da80c4d1e5c1402cbbf015989cdefebee826"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/DimSheet.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 720,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f4e33a41afcfb7533098cae0983dab363157015c58d2c157bb4c459154821487"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/InfoCard.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 960
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4a729f6077f94f075e6d8094e78e97a3e6f99ae7818149f64d1a587e06ba3515"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/ListBackdrop.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 720,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "7beb386249fafde37e642ea825cce80118575a257bed361293435bef8361c647"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/NpcTalkLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -280,
+        "x": -490
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 980,
+        "height": 560
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "NpcTalkLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_text_bg",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "lbl_npc_name",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_auto_content",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cv_tip",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4c9dec1b56a6486a8056e683c9023ee6ddef05991c13348567c772ce853f5d36"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/PagePrefabShell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 720,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "3adb9aee37abd025a0755120553320958d96ccd925b225bec2e32e7bfbc223fb"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/TextChip.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 200,
+        "height": 28
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f9a84b448f1c6e82d1db450242ddb1f59d939de4e43fc619afef937da0c52f84"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/FormationView.prefab",
+    "classes": [
+      "FormationView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -517,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1034
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 2,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "FormationView",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "spr_bg_backpack",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "btn_elem3",
+        "anchor": [
+          0.499,
+          0.5
+        ]
+      },
+      {
+        "node": "scroll_view_backpack",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "node_pannel_2",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "CCScale9Sprite_1",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "menu_assist",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_change_road",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_change_road_bg",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "menu_change_road",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "UIMenu_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "btn_close",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "node_dragon_skill",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "scroll_view_team_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "FormGrid",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view_backpack",
+        "content": {
+          "__id__": 113
+        }
+      },
+      {
+        "node": "scroll_view_team_title",
+        "content": {
+          "__id__": 661
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "8c33c14687e2458f0a8fc933050607e70d595247835dcc7a4e1d591d9b5bfa91"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroIconCellView.prefab",
+    "classes": [
+      "HeroIconCellView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 96,
+        "height": 104
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 1,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4bb22dd70fc20ea84e3427ec4bf268a616ce192ddb70ce74579f9b53d821bd26"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroInfoAttrLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 380,
+        "height": 480
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroInfoAttrLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 23
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "ca99bc6f9106a57bd6b6f18d8865b16a52362b9ef28b18724a4956b882694d5a"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroInfoTipsLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -175,
+        "x": -249
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 498,
+        "height": 350
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroInfoTipsLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCScale9Sprite_2",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "lbl_name",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_bat",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_stage",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_profession",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "UILabelTTF_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_attack",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_hp",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_defense",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_speed",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_hero",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f04297db66f99f69c3e2ab6f325eb47409c260fa23b3eb8dbaf2e0116e47e56f"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroInfoUpgradeLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -351,
+        "x": -281
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 562,
+        "height": 702
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroInfoUpgradeLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_need",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_gold_need",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_soul_need",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_3",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_4",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_5",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_level",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_level",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_level",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_6",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_pre_star",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_cur_star",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "skill_node",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "skill_menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "89c5292dd103a2a83e3ec20a4dae2588a6b88c2c480d1281dd576194992894f9"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroInfoUpLevelLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroInfoUpLevelLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_all",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCSprite_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_need",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCSprite_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCSprite_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_attack",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCSprite_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_hp",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCSprite_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_defense",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCSprite_6",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_speed",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_level_title",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_level",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_profession",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "icon_occupat",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "skill_menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_nil_skill",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "8c58b0872d7da774c64a5dbb614e171d7388353f8d6b0890fed762856cab9579"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroInfoUpStarLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -480,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 960
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroInfoUpStarLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_upgrade_star",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_cur_star",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_next_star",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_upgrade_level",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "UILabelTTF_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_upgrade_attack",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "UILabelTTF_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_upgrade_attack",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_upgrade_speed",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_upgrade_speed",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_upgrade_skill_all",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_upgrade_skill_all_title",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_upgrade_skill",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_upgrade_tip",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCScale9Sprite_1",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "node_need",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_gold_need",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 255
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "5ff93430a812c804651dff8ffb17a68cb45d34ee1062f30d108b25354e960e1f"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroInfoView.prefab",
+    "classes": [
+      "HeroInfoView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -480,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 960
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 2,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroInfoView",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_name",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_star",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_equip",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_hero",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_equip",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_pet",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_totem",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "bat_node",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_panel",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_pannel_bg",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "scroll_view_tab",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "node_btn",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_btn",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_back",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_evolve",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_evolution_lv",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "DetailScroll",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view_tab",
+        "content": {
+          "__id__": 173
+        }
+      },
+      {
+        "node": "DetailScroll",
+        "content": {
+          "__id__": 325
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f038964c298a744bf73d2ba55c36b8a4b166134925db9777dff431ee42efdc3d"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroListBoardView.prefab",
+    "classes": [
+      "HeroListBoardView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 960
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroListBoardView",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_box",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "node_elem",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "elem_menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "btn_elem2",
+        "anchor": [
+          0.499,
+          0.5
+        ]
+      },
+      {
+        "node": "node_capacity",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "bottom_menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "HeroScroll",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "HeroScroll",
+        "content": {
+          "__id__": 127
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "3d5602ac009908f224133cfeeac325eb8d23c4dd29105a1a6b015d4b9a5318a5"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroListItemCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 570,
+        "height": 110
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroListItemCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "item",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "71441387678c0b082294b0560e44dcb7e145c36b721b0ff4c880200057d4ed1c"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroListView.prefab",
+    "classes": [
+      "HeroListView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -480,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 960
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroListView",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "btn_hero",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "btn_illustrat",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "btn_dragon",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "UIMenu_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_capacity",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_bubble",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bubble_bg",
+        "anchor": [
+          1,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "42fb84d8cf1786168ab9643ee98c4a8775147d0affe51fa438b6bd88d2dca734"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroSkillInfoLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -250,
+        "x": -200
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 400,
+        "height": 500
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroSkillInfoLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_skill_info",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_name",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_active_type",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_info_1",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "node_buff",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_level_tip",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_next_level_des",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "05cc56c52035d46c2d42a83ae480daaa75b82bbe3ad2a8dfefcda185676afe5a"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroSkillOpenInfoLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -230,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 460
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroSkillOpenInfoLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "bg_node",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_result_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "node",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_tips",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "7ccf1191f2e4f72035d4ec19a11ac9cae885a89e3ad498491a93ee80012dab46"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroStrongInfoCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 562,
+        "height": 150
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroStrongInfoCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_iconPointer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_titleText",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "_descText",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "45f793215d5e1a0e6af1278578a7d73e93a009c27eb94db85aa96236f45b4aa3"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroStrongResourceMainCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 562,
+        "height": 150
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroStrongResourceMainCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_subContainer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_iconPointer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_titleText",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "_descText",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b725c3426b1c0c66d96b30379123da9cab471c497edd715b6e1c9b4abc9ab12d"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroStrongResourceSubCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 550,
+        "height": 150
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroStrongResourceSubCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_iconPointer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_titleText",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "_descText",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "9b7de5d85e021a8b26ef2764466fe75b00ec1b0b43844caf8906dc4074a8a14c"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroSuggestCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 562,
+        "height": 224
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroSuggestCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "04f8279c032ea0031288add86e3204ab561f97d40e22c8cd0209cf167b2c0c22"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroSuggestLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -512,
+        "x": -310
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 620,
+        "height": 1024
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroSuggestLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_strong",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroStrongName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroStrongMenu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItem1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItemBg1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItem2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItemBg2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItem3",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItemBg3",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItem4",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItemBg4",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItem5",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItemBg5",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItem6",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "_heroItemBg6",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_resource",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_lineup",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_hero",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_elem",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "btn_strong",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "btn_resource",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "btn_hero",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "btn_lineup",
+        "anchor": [
+          0.5,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "69171db87360334589268b5a67963d091c0fc62da2df88fceee9cf83f6f3ecdc"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroUpStarSelectItemCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 77,
+        "height": 77
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroUpStarSelectItemCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "95741622798227f9212beac95157b5866029a282c456454a556f88f29de979b8"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroUpStarSelectLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -160,
+        "x": -290
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 580,
+        "height": 320
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroUpStarSelectLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg_backpack",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_select",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_bubble",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "785e3a472480c5bfe1c34d34cb432b74652fd090f84bb425f0a07b5729d3e451"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroXSelectItemCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 77,
+        "height": 77
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroXSelectItemCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0c125a57a00ac3da2b9fabbbda60451adf9ec3641346b31e2aa04cc89a0f461b"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroXSelectLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -160,
+        "x": -290
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 580,
+        "height": 320
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroXSelectLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg_backpack",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_select",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "db1dffbfb2fdcc7d409e2d6cdf6cbac6837a5eb35358e82ad038880b2691bd09"
+  },
+  {
+    "path": "client/assets/prefabs/ui/idle-hero/IdleHeroSelectLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -355,
+        "x": -290
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 580,
+        "height": 710
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 2,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "IdleHeroSelectLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg_backpack",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg_battle",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "UIMenu_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "btn_elem2",
+        "anchor": [
+          0.499,
+          0.5
+        ]
+      },
+      {
+        "node": "scroll_view_selected",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "scroll_view_backpack",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view_selected",
+        "content": {
+          "__id__": 151
+        }
+      },
+      {
+        "node": "scroll_view_backpack",
+        "content": {
+          "__id__": 167
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "9e907c0e70e7e69798ec228714782f70ed0fba5e2eaebd21084ac79a2a3bd596"
+  },
+  {
+    "path": "client/assets/prefabs/ui/item/ItemExhibitionLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": -244,
+        "y": -161,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 488,
+        "height": 322
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ItemExhibitionLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCSprite_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_item",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "c19dedc595bf48b52f32ee8a19f586f4aa81b21e69c21a2b4ff2607471a608ff"
+  },
+  {
+    "path": "client/assets/prefabs/ui/item/ItemRewardLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": -320,
+        "y": -200,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 400
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ItemRewardLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 35
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "de979fb4a70317c8a1029b977847871b4855ceb0ee0d82dcdfa2e526147a7ece"
+  },
+  {
+    "path": "client/assets/prefabs/ui/item/ItemScelectNumLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 370,
+        "height": 70
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ItemScelectNumLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_total_num_tip",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_total_num",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0179789b6a81ef3a5c1e58b138e4f3824fd2937464e920c38cb19f9508234f02"
+  },
+  {
+    "path": "client/assets/prefabs/ui/item/ItemSelectLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": -260,
+        "y": -230,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 520,
+        "height": 460
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ItemSelectLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "lbl_item_name",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_select_num_tip",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_select_num",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_total_num_tip",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_total_num",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_item",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_limit",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_price",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_res_need",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "6a081748cc9582cd5afb083294b25ff72ea3850debc5427e2233a7332d26078c"
+  },
+  {
+    "path": "client/assets/prefabs/ui/legacy-login/LoginPanel.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 2000,
+        "height": 2000
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0.5,
+        "x": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "TEXT_LABEL",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "PLACEHOLDER_LABEL",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "TEXT_LABEL",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "PLACEHOLDER_LABEL",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "14a5d5458a7746a751da0f0d85c1c379250f73544bc81beb9d5a6b2b5486f938"
+  },
+  {
+    "path": "client/assets/prefabs/ui/legacy-login/UserLoginLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -288,
+        "x": -288
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 576.0,
+        "height": 576.0
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "UserLoginLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "node",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "UILabelTTF_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "UILabelTTF_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_user_bg",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "spr_platform_bg",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "spr_channel_bg",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "spr_pf_bg",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "spr_server_bg",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UILabelTTF_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 45
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "743c115040c2875da4a8893a74c5ed719d3c35b453b41432e4a63fce4412528c"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/ChooseServerRoleCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 360,
+        "height": 80
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChooseServerRoleCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_name",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_level",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "677ad2d1b44fe61464e20a06f3b672d1b344da5a423bac5380a76dbcb3ad7ddb"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/CreateRolePanel.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 2000,
+        "height": 2000
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "TEXT_LABEL",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "PLACEHOLDER_LABEL",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4158603db77f0ab32138053a2364406c97b9fc5c9e274c83cac2386c473fccec"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/ErrorLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -480,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640.0,
+        "height": 960.0
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ErrorLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 39
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0f90e8e71b78f29d2b376f7d40fff556cfeb13f071594e9d8c2b733c79b3c2cf"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/LoadingLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 720,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BarMask",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "aa7e7d4d239c76cec2df2c7bf9836b671f0387c131c97889d4e1beb2c4bc9096"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/NoticeLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -430,
+        "x": -300
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 600,
+        "height": 860
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "NoticeLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "scroll_view_text",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "lbl_pre",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view_text",
+        "content": {
+          "__id__": 75
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f3f07b4646cbdb71449a458c326dbabd411d467e04b83c899f5b03f090efd777"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/ServerCellView.prefab",
+    "classes": [
+      "ServerCellView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 360,
+        "height": 80
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ServerCellView",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_best",
+        "anchor": [
+          1,
+          1
+        ]
+      },
+      {
+        "node": "lbl_server_name",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "8eb4616e810cf0ae2cd128b18e32398c413cb3473f368c4c68e085675c9f1938"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/ServerPickerView.prefab",
+    "classes": [
+      "ServerPickerView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -399,
+        "x": -307
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 614,
+        "height": 798
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ServerPickerView",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_full",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_normal",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_disabled",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "RegionContent",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 99
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "dadfc109711ec873bb73864432c735f6485c1b3849abac3784475474e098487b"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/UpdateLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 720,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BarMask",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "add1a68a395546d8f0c224c16753c4e2b8491e6061d4de941c19e0da850fed70"
+  },
+  {
+    "path": "client/assets/prefabs/ui/mail/MailCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 540,
+        "height": 90
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "MailCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_time",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_title",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_reward",
+        "anchor": [
+          1,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "99cc3bb12dbf17f1d5fa160ff500b91123efa6dde226ac29cbc75162c17ed5b0"
+  },
+  {
+    "path": "client/assets/prefabs/ui/mail/MailInfoLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -365,
+        "x": -280
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 560,
+        "height": 730
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 2,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "MailInfoLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "lbl_title",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_mail_title",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "btn_close",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "scroll_view_text",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 83
+        }
+      },
+      {
+        "node": "scroll_view_text",
+        "content": {
+          "__id__": 99
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f7408e699e8bc1d5b244cd660daf2a887b11401cc4d940f72d3fefa168a90979"
+  },
+  {
+    "path": "client/assets/prefabs/ui/mail/MailLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -430,
+        "x": -310
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 620,
+        "height": 860
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "MailLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "btn_close",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 85
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f18563c9aa92ce620ac48ce9c9431e483f051debdbc4842416f2eedbc9257810"
+  },
+  {
+    "path": "client/assets/prefabs/ui/quick-battle/QuickBattleEndLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -300,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 600
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "QuickBattleEndLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_role",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_level",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_time",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_time_tip",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_time",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_get_reward_tip",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCSprite_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCSprite_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_res_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_res_name_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_res_num_1",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "node_res_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_res_name_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_res_num_2",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "node_res_3",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_res_name_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_res_num_3",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "node_tip",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_tip_line_right",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "spr_tip_line_left",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 195
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "ff4328b88ca567f4ed5da8dcb369287ae764841a330f6b44324f2326ecc01ca5"
+  },
+  {
+    "path": "client/assets/prefabs/ui/quick-battle/QuickBattleLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -320,
+        "x": -310
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 620,
+        "height": 640
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "QuickBattleLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "scrollView",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_tip_1",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_tip_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "spr_suggest",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scrollView",
+        "content": {
+          "__id__": 57
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "2a586158cc42950b03bb4934447970be76c3ef7e2537b7a56e5369bea500c9db"
+  },
+  {
+    "path": "client/assets/prefabs/ui/quick-battle/QuickBattleTipLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -160,
+        "x": -210
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 420,
+        "height": 320
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "QuickBattleTipLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_title_bg",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 43
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "c1c9cfa180f1ddb03b5e0484af9f9aaed85e32fc0013586fae39cc7ee6b4060c"
+  },
+  {
+    "path": "client/assets/prefabs/ui/reward/RewardCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 400
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "RewardCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "test_scale",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_light_left",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "node_star",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "hero_skill",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "hero",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "383acd6a0ae51f894ee5908b2d4a7dab67085567d45892587d071c79605a2614"
+  },
+  {
+    "path": "client/assets/prefabs/ui/reward/RewardPreviewLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 300,
+        "height": 108
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 1,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "RewardPreviewLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bg",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "scroll_view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [
+      {
+        "node": "scroll_view",
+        "content": {
+          "__id__": 23
+        }
+      }
+    ],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "c716a99bc5c7825d5ca1f08053971790511e64a0bb82ec5688e9603b86076493"
+  },
+  {
+    "path": "client/assets/prefabs/ui/reward/UpgradeSuccessLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": -281,
+        "y": -353,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 562,
+        "height": 706
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "UpgradeSuccessLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_effect",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_3",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_4",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_5",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_level",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_level",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_level",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_6",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_pre_star",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_cur_star",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "skill_node",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "skill_menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "5e454e1b6f41c31d4b493d469ee2478a97445d1112395e8b7842b3be5ec04ce6"
+  },
+  {
+    "path": "client/assets/prefabs/ui/reward/UpStarSuccessLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": -281,
+        "y": -353,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 562,
+        "height": 706
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "UpStarSuccessLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_effect",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCNode_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_3",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_4",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_5",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_attr_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_pre_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_cur_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "CCNode_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "c9582cc96b39e708df38126a87edd214771c3fe91f93b099192e6c78c967a45b"
+  },
+  {
+    "path": "client/assets/prefabs/ui/role/ChangeNickLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -150,
+        "x": -218
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 436,
+        "height": 300
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ChangeNickLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_res",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "7e3f1e46fe73106b22cbc4cb6f188413eb7b8215840ca1b273738dd05011186f"
+  },
+  {
+    "path": "client/assets/prefabs/ui/role/RoleInfoLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -270,
+        "x": -270
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 540,
+        "height": 540
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "RoleInfoLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_title",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCSprite_1",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "CCSprite_2",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "node_photo",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_info",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_name",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "lbl_rank",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "UILabelTTF_1",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "lbl_clan",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "btn_compare",
+        "anchor": [
+          0.4993,
+          0.5
+        ]
+      },
+      {
+        "node": "btn_add_friend",
+        "anchor": [
+          0.4993,
+          0.5
+        ]
+      },
+      {
+        "node": "btn_chat",
+        "anchor": [
+          0.4993,
+          0.5
+        ]
+      },
+      {
+        "node": "btn_black_list",
+        "anchor": [
+          0.4993,
+          0.5
+        ]
+      },
+      {
+        "node": "node_pannel",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "spr_pannel_bg",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "UILabelTTF_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "menu_hero",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_attack",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_icon_4",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_icon_3",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_icon_2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_icon_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_icon_8",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_icon_7",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_icon_6",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_icon_5",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_icon_9",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_assist_tip_9",
+        "anchor": [
+          1,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b6b2ed7c910e3619f16a832b4c6533722be96504113292c2a5d7f3926d4fcb22"
+  },
+  {
+    "path": "client/assets/prefabs/ui/role/RoleUpgradeLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -275,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 550
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "RoleUpgradeLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_level1",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_level2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_atom",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_desc",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_open",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "df69415b976c483604beae832a3c02c1e96251e25b2c3d66e0210c1578fc48d8"
+  },
+  {
+    "path": "client/assets/prefabs/ui/setting/SettingLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -390,
+        "x": -305
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 610,
+        "height": 780
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "SettingLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_role_level_title",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_clan_name_title",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_province",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_city",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_hero",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "3a6a369188cb4d949a7aeb4e563261e78e1e562f4ec4cc5ffdf5ac34c10187ae"
+  },
+  {
+    "path": "client/assets/prefabs/ui/summon/SummonCell.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": 0,
+        "x": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 586,
+        "height": 188
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "SummonCell",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "CCSprite_1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_num",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "UIMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "iszhe",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "1e6279ab4b7d9bfb80a69de4b519061b8efef356cd2a02149c8395ba7c70d9ad"
+  },
+  {
+    "path": "client/assets/prefabs/ui/summon/SummonLayer.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "z": 0,
+        "y": -480,
+        "x": -320
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 960
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "y": 0,
+        "x": 0
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "SummonLayer",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "menu_main",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_tip2",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "lbl_time_tips",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "lbl_time",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "node_red",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "be4ac8b42193feefb7b5af331933fcf4914595888d9c2620a981d7c181af1ce8"
+  }
+]

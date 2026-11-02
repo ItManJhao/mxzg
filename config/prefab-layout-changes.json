@@ -1,0 +1,540 @@
+[
+  {
+    "path": "client/assets/prefabs/ui/ability/AbilityInfoLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -195,
+      "y": -186
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattleDetailLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -300,
+      "y": -375
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattleEditLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -320,
+      "y": -384
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/BattleReportLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -320,
+      "y": -480
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterPreviewLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -320,
+      "y": -300
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterRewardLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y",
+      "root._lscale.x",
+      "root._lscale.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -272,
+      "y": -442,
+      "scaleX": 0.85,
+      "scaleY": 0.85
+    },
+    "reason": "独立预览发现 360×800 的逻辑宽度 576 下原宽 640 裁切；根等比缩为 544 宽并按缩放后的尺寸居中，保留子节点、Mask 和 UUID。原点首次修正为 (-320,-520)，本轮再同步缩放与位置"
+  },
+  {
+    "path": "client/assets/prefabs/ui/common/NpcTalkLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -490,
+      "y": -280
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroInfoTipsLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -249,
+      "y": -175
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroInfoUpgradeLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -281,
+      "y": -351
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroInfoUpStarLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -320,
+      "y": -480
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroListView.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -320,
+      "y": -480
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/FormationView.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -320,
+      "y": -517
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroSkillInfoLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -200,
+      "y": -250
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroSuggestLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -310,
+      "y": -512
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroUpStarSelectLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -290,
+      "y": -160
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroXSelectLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -290,
+      "y": -160
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/idle-hero/IdleHeroSelectLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -290,
+      "y": -355
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/item/ItemExhibitionLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -244,
+      "y": -161
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/item/ItemSelectLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -260,
+      "y": -230
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/ServerPickerView.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -307,
+      "y": -399
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/NoticeLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -300,
+      "y": -430
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/mail/MailInfoLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -280,
+      "y": -365
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/mail/MailLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -310,
+      "y": -430
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/quick-battle/QuickBattleEndLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -320,
+      "y": -300
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/quick-battle/QuickBattleLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -310,
+      "y": -320
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/quick-battle/QuickBattleTipLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -210,
+      "y": -160
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/reward/UpgradeSuccessLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -281,
+      "y": -353
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/reward/UpStarSuccessLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -281,
+      "y": -353
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/role/ChangeNickLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -218,
+      "y": -150
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/role/RoleInfoLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -270,
+      "y": -270
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/role/RoleUpgradeLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -320,
+      "y": -275
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/summon/SummonLayer.prefab",
+    "fields": [
+      "root._lpos.x",
+      "root._lpos.y"
+    ],
+    "before": {
+      "x": 0,
+      "y": 0
+    },
+    "after": {
+      "x": -320,
+      "y": -480
+    },
+    "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
+  },
+  {
+    "path": "client/assets/prefabs/ui/login/ServerPickerView.prefab",
+    "fields": [
+      "scrollHost._components",
+      "scrollPort._components",
+      "Mask.node"
+    ],
+    "reason": "把原运行时移动的 Mask 固定绑定到 ScrollView 视口，避免裁剪宿主位置错误"
+  },
+  {
+    "path": "client/assets/prefabs/ui/hero/HeroListBoardView.prefab",
+    "fields": [
+      "HeroScroll._components",
+      "view._components",
+      "Mask.node",
+      "HeroScroll._children",
+      "view._children",
+      "content._parent",
+      "UIMenu_1.UITransform._contentSize"
+    ],
+    "reason": "将原 runtime 的遮罩搬移、content 重挂和全屏菜单命中禁用固定到 Prefab；视口原有 540×388 和内容坐标不变"
+  }
+]

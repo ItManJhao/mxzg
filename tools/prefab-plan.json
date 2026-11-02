@@ -8,7 +8,7 @@
       ],
       "reason": "New login MVC",
       "names": [
-        "AccountLogin"
+        "AccountLoginView"
       ]
     },
     {
@@ -19,7 +19,7 @@
       ],
       "reason": "Lazy home composition",
       "names": [
-        "RemakeHome"
+        "RemakeHomeView"
       ]
     },
     {
@@ -31,8 +31,8 @@
       ],
       "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
       "names": [
-        "ChooseServerCell",
-        "ChooseServerLayer",
+        "ServerCellView",
+        "ServerPickerView",
         "ChooseServerRoleCell",
         "CreateRolePanel",
         "ErrorLayer",
@@ -48,8 +48,8 @@
       ],
       "reason": "Canonical city map and HUD",
       "names": [
-        "CityChrome",
-        "CityHub"
+        "CityChromeView",
+        "CityHubView"
       ]
     },
     {
@@ -60,11 +60,11 @@
       ],
       "reason": "Canonical framework controls, page mounting and guide dialogue",
       "names": [
-        "CommonBtnPrimary",
-        "CommonBtnSecondary",
-        "CommonListRow",
-        "CommonPanel",
-        "CommonRedDot",
+        "CommonBtnPrimaryShell",
+        "CommonBtnSecondaryShell",
+        "CommonListRowShell",
+        "CommonPanelShell",
+        "CommonRedDotShell",
         "DimSheet",
         "InfoCard",
         "ListBackdrop",
@@ -80,17 +80,17 @@
       ],
       "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
       "names": [
-        "HeroIconCell",
-        "HeroInfoLayer",
+        "HeroIconCellView",
+        "HeroInfoView",
         "HeroInfoAttrLayer",
         "HeroInfoTipsLayer",
         "HeroInfoUpgradeLayer",
         "HeroInfoUpLevelLayer",
         "HeroInfoUpStarLayer",
-        "HeroListLayer",
-        "HeroListHeroLayer",
+        "HeroListView",
+        "HeroListBoardView",
         "HeroListItemCell",
-        "HeroSelectLayer",
+        "FormationView",
         "HeroSkillInfoLayer",
         "HeroSkillOpenInfoLayer",
         "HeroUpStarSelectLayer",
@@ -105,16 +105,16 @@
       ]
     },
     {
-      "directory": "prefabs/ui/backpack",
+      "directory": "prefabs/ui/Bag",
       "phases": [
         "P4"
       ],
       "reason": "Inventory list, tabs, cell and detail",
       "names": [
-        "BackpackInfoLayer",
-        "BackpackItemCell",
-        "BackpackLayer",
-        "BackpackTabButton"
+        "BagInfoView",
+        "BagItemView",
+        "BagView",
+        "BagTabView"
       ]
     },
     {
@@ -142,9 +142,9 @@
         "BattleEndLayer",
         "BattleInfoLayer",
         "BattlePage",
-        "BattlePanelLayer",
+        "CampaignView",
         "BattleReportLayer",
-        "HangMissionChip"
+        "HangMissionChipView"
       ]
     },
     {

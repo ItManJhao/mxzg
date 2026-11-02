@@ -1,11 +1,14 @@
+/**
+ * 英雄立绘详情显示组件：只接受显式模板及等级数据，不读取旧角色仓库或触发养成写操作。
+ */
+import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Component, Label, Node, Overflow, UITransform } from "cc";
 import { GameLog } from "../../../core/GameLog";
-import { StoreHero } from "../../../core/GameStore";
+interface HeroPortraitData { templateId: number; name: string; level: number; }
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
-import { mountBattleSpine } from "../../../ui/battleSpine";
-import { HERO_DETAIL_SPINE_SEAT_Y } from "../../../ui/heroDetailPlan";
-import { hangSpineStem } from "../../../ui/idleHangRoster";
-import { assignContentSize, positiveUiSize } from "../../../ui/visibleFit";
+import { mountBattleSpine } from "../../battle/ui/battleSpine";
+import { HERO_DETAIL_SPINE_SEAT_Y } from "./HeroDetailLayout";
+import { assignContentSize, positiveUiSize } from "../../../framework/ui/visibleFit";
 import {
   HERO_DETAIL_BOOK,
   HERO_DETAIL_GRADE,
@@ -18,7 +21,7 @@ import {
 
 const { ccclass, property } = _decorator;
 
-const TALK_BUBBLE = "ui/common/other_spr-bubble-5";
+const TALK_BUBBLE = ResourceCatalog.common.other_spr_bubble_5.path;
 
 /**
  * HeroInfoLayer。立绘挂在 node_equip 圆心，台词在 lbl_talk。
@@ -62,7 +65,8 @@ export class HeroInfoView extends Component {
   private spineNode: Node | null = null;
   private heroId = 0;
 
-  show(hero: StoreHero): void {
+/** 显示显式传入的英雄资料，不读取其他角色仓库。 */
+  show(hero: HeroPortraitData): void {
     this.silenceHits();
     this.writeName(hero);
     this.writeActions();
@@ -70,7 +74,8 @@ export class HeroInfoView extends Component {
     this.mountPortrait(hero);
   }
 
-  private writeName(hero: StoreHero): void {
+/** 把传入名称写入既有标题控件，缺名时显示通用标题。 */
+  private writeName(hero: HeroPortraitData): void {
     if (!this.nameLabel) return;
     const name = hero.name && hero.name.length > 0 ? hero.name : "英雄";
     this.nameLabel.string = name;
@@ -86,7 +91,8 @@ export class HeroInfoView extends Component {
     this.fitAction(this.bookTitle, HERO_DETAIL_BOOK, 16);
   }
 
-  private writeTalk(hero: StoreHero): void {
+/** 按传入等级选择展示文案，不推断角色养成状态。 */
+  private writeTalk(hero: HeroPortraitData): void {
     const line = heroDetailTalk(hero.level);
     if (this.talkBubble) {
       this.talkBubble.active = true;
@@ -108,20 +114,20 @@ export class HeroInfoView extends Component {
   }
 
   /** 动态立绘。加载失败只打日志，节点留着，不退回头像贴图。 */
-  private mountPortrait(hero: StoreHero): void {
+  private mountPortrait(hero: HeroPortraitData): void {
     const host = this.portrait;
     if (!host) {
       GameLog.shared.warn("Hero", "HeroInfoLayer 没有 node_equip");
       return;
     }
     host.active = true;
-    const id = hero.heroId && hero.heroId > 0 ? hero.heroId : hero.heroType || 0;
+    const id = hero.templateId;
     if (this.spineNode && this.spineNode.isValid && this.heroId === id) return;
     if (this.spineNode && this.spineNode.isValid) this.spineNode.destroy();
     this.spineNode = null;
     this.heroId = id;
     if (!id) return;
-    const actor = mountBattleSpine(host, hangSpineStem(id, hero.heroType), () => {
+    const actor = mountBattleSpine(host, String(id), () => {
       GameLog.shared.warn("Hero", "详情立绘没有挂上");
     }, { seatY: HERO_DETAIL_SPINE_SEAT_Y });
     this.spineNode = actor.node;

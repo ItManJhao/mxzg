@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Lock CityChromeShell's class id to the 23-char packer form.
+"""检查当前 CityChromeShell 的脚本与 CityChromeView Prefab 绑定，保留移动前的 UUID；只读资源。
 
 Creator 3.8.8 always _RF.push-es compressUuid(uuid, false): reserved head 5,
 23 characters. Prefab __type__ must be that same string. The old 22-char
@@ -11,9 +11,9 @@ import os
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-SHELL_META = os.path.join(ROOT, "client", "assets", "scripts", "ui", "CityChromeShell.ts.meta")
-SHELL_TS = os.path.join(ROOT, "client", "assets", "scripts", "ui", "CityChromeShell.ts")
-PREFAB = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "city", "CityChrome.prefab")
+SHELL_META = os.path.join(ROOT, "client", "assets", "scripts", "features", "city", "ui", "CityChromeShell.ts.meta")
+SHELL_TS = os.path.join(ROOT, "client", "assets", "scripts", "features", "city", "ui", "CityChromeShell.ts")
+PREFAB = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "city", "CityChromeView.prefab")
 ASSETS = os.path.join(ROOT, "client", "assets")
 
 BASE64_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
@@ -96,11 +96,11 @@ def main():
     old_needle = '"__type__": "%s"' % OLD_PREFAB_TYPE
     if prefab.count(type_needle) != 1 or prefab.count(EXPECTED_CLASS_ID) != 1:
         raise SystemExit(
-            "CityChrome.prefab __type__ must be class id %s once" % EXPECTED_CLASS_ID
+            "CityChromeView.prefab __type__ must be class id %s once" % EXPECTED_CLASS_ID
         )
     if old_needle in prefab or OLD_PREFAB_TYPE in prefab:
         raise SystemExit(
-            "CityChrome.prefab still uses 22-char type %s" % OLD_PREFAB_TYPE
+            "CityChromeView.prefab still uses 22-char type %s" % OLD_PREFAB_TYPE
         )
 
     hits = []

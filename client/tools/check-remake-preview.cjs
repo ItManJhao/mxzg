@@ -25,8 +25,8 @@ const formationExpected = process.env.MXZG_FORMATION_EXPECT ? JSON.parse(readFil
             const identity = await response.json();
             identity.captureMode = process.env.MXZG_CAPTURE_CLEAN === '1' ? 'engine profiler hidden for screenshots' : 'default debug HUD';
             writeFileSync('client/temp/project-checks/' + shotPrefix + '-build.json', JSON.stringify(identity,null,2));
-            if (formationExpected?.prefabSha256) assert.equal(identity.build.sourceSha256?.['assets/prefabs/ui/hero/HeroSelectLayer.prefab'], formationExpected.prefabSha256, 'wrong formation source in H5 build');
-            if (formationExpected?.cellSha256) assert.equal(identity.build.sourceSha256?.['assets/prefabs/ui/hero/HeroIconCell.prefab'], formationExpected.cellSha256, 'wrong Cell source in H5 build');
+            if (formationExpected?.prefabSha256) assert.equal(identity.build.sourceSha256?.['assets/prefabs/ui/hero/FormationView.prefab'], formationExpected.prefabSha256, 'wrong formation source in H5 build');
+            if (formationExpected?.cellSha256) assert.equal(identity.build.sourceSha256?.['assets/prefabs/ui/hero/HeroIconCellView.prefab'], formationExpected.cellSha256, 'wrong Cell source in H5 build');
         }
         page = await browser.newPage({ viewport: standalone ? { width: 393, height: 852 } : { width: 1280, height: 1024 } });
         if (standalone) {

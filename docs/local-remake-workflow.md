@@ -1,12 +1,12 @@
 # 重做版本机启动、重启与独立 H5
 
-本页只对应新后端与 `Remake.scene`，旧 Java 8 / WebSocket 链路仍使用原有脚本。H5 是本地开发构建；MySQL、App、微信小游戏和生产部署另行验收。
+本页只对应新后端与 `Remake.scene`，旧 Java 8 / WebSocket 链路与启停脚本已删除。H5 是本地开发构建；MySQL、App、微信小游戏和生产部署另行验收。
 
 **最新约定（2026-10-30）：后续不自动构建 H5 或其他任何包，等用户需要时再说。** 当前开发优先用 Creator 本机预览。以下构建/静态服务脚本是保留的操作说明，不是要求本批执行；旧 18081 产物不代表当前源码（含 Bag MVC）已通过独立 H5 验收。
 
 ## 日常入口
 
-脚本均在 `F:\project\mxzg\scripts`，双击后不要求先切换目录：
+脚本均在 `G:\work\FsGame\Project\mxzg\scripts`，双击后不要求先切换目录：
 
 - `start-remake-backend.bat`：启动开发后端；已有兼容服务时显示 READY 并复用。复用提示窗口可以关闭；实际持续输出日志的服务窗口应保持打开。
 - `status-remake-backend.bat`：检查本项目后端的进程归属和服务状态。
@@ -44,6 +44,19 @@ Creator 官方命令行成功退出码是 36（见 [官方命令行发布文档]
 当前 Windows 停止方式是终止已核对的 JVM，不是生产环境的优雅停服机制；已用隔离文件库验证会话、角色和主线跨停止/重启保留。生产启停与在线玩家事务处理仍属于后续部署任务。
 
 ## 验证入口
+
+2026-10-31 本机复跑方式（只设置当前 PowerShell 进程，不修改全局 PATH）：
+
+```powershell
+$env:MXZG_PYTHON = 'D:\新建文件夹\sd-webui-aki-v4.2\python\python.exe'
+# 本机发现的 Python 3.10.11；其他机器先自行确认解释器，不照搬此路径。
+& $env:MXZG_PYTHON -m pip install --target client/temp/check-python-deps -r tools/requirements.txt
+$env:PYTHONPATH = (Resolve-Path client/temp/check-python-deps).Path
+node client/tools/check-project.mjs
+node C:/ProgramData/cocos/editors/Creator/3.8.8/resources/app.asar.unpacked/node_modules/typescript/lib/tsc.js -p client/tools/tsconfig.remake.json
+```
+
+依赖在忽略的 temp 中，固定 openpyxl 版本来自 tools/requirements.txt。已安装时不必重复 pip。仅发现 WindowsApps 的 python.exe 不能证明 Python 可用；启动失败与业务断言失败须分别记录。历史 gen_citychrome_prefab.py 已禁止直接执行，避免用旧生成模型覆盖人工布局；现行只读绑定检查为 client/tools/check_citychrome_shell_id.py。
 
 - `python tools/test_remake_local_tools.py`：构建入口身份、禁止越界/目录列表、缓存与七种进程归属案例。
 - `python tools/test_remake_backend_control.py`：先 package 后执行；随机端口与隔离 H2 库验证拒绝其他程序、状态、停止、Maven 重启及数据保留。

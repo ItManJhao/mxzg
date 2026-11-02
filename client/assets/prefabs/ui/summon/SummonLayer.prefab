@@ -26,8 +26,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 0,
-      "x": 0
+      "y": -480,
+      "x": -320
     },
     "_objFlags": 0,
     "_children": [
@@ -460,8 +460,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 640.0,
-      "height": 960.0
+      "width": 640,
+      "height": 960
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -507,8 +507,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 940.0,
-      "x": 50.0
+      "y": 940,
+      "x": 50
     },
     "_objFlags": 0,
     "_children": [],
@@ -709,8 +709,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 870.0,
-      "x": 570.0
+      "y": 870,
+      "x": 570
     },
     "_objFlags": 0,
     "_children": [],
@@ -909,8 +909,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 817.0,
-      "x": 500.0
+      "y": 817,
+      "x": 500
     },
     "_objFlags": 0,
     "_children": [],
@@ -1109,8 +1109,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 756.0,
-      "x": 604.0
+      "y": 756,
+      "x": 604
     },
     "_objFlags": 0,
     "_children": [],
@@ -1311,8 +1311,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 756.0,
-      "x": 604.0
+      "y": 756,
+      "x": 604
     },
     "_objFlags": 0,
     "_children": [],
@@ -1702,7 +1702,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 640.0,
+      "width": 640,
       "height": 130
     },
     "_objFlags": 0,
@@ -1749,8 +1749,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 92.0,
-      "x": 385.0
+      "y": 92,
+      "x": 385
     },
     "_objFlags": 0,
     "_children": [],
@@ -1884,8 +1884,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 31.0,
-      "x": 500.0
+      "y": 31,
+      "x": 500
     },
     "_objFlags": 0,
     "_children": [],
@@ -2019,8 +2019,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 31.0,
-      "x": 425.0
+      "y": 31,
+      "x": 425
     },
     "_objFlags": 0,
     "_children": [],
@@ -2180,8 +2180,8 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": 31.0,
-      "x": 503.0
+      "y": 31,
+      "x": 503
     },
     "_objFlags": 0,
     "_children": [],

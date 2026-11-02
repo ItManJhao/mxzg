@@ -1,12 +1,16 @@
+/**
+ * 主城地图 View：加载地图和建筑显示，按注入的等级及配置处理开放状态，并转交入口点击。
+ */
 import { _decorator, Button, Color, EventTouch, Node, Sprite, UITransform } from "cc";
-import { ConfigLoader } from "../../../config/ConfigLoader";
+import { GameConfig } from "../../../config/GameConfig";
+import { ConfigName, ConfigFileMap } from "../../../config/GConfig";
 import { messageOf } from "../../../core/errors";
 import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { view } from "../../../framework/ui/UIRegistry";
-import { CityMapQuery, dropCitySpriteLoad, paintCitySpriteWhenReady } from "../../../ui/CityMap";
-import { CityEffectHandle, startCityEffects } from "../../../ui/cityEffectPlay";
+import { CityMapQuery, dropCitySpriteLoad, paintCitySpriteWhenReady } from "./CityMap";
+import { CityEffectHandle, startCityEffects } from "./cityEffectPlay";
 import {
   CITY_CFG_BTN,
   CITY_CFG_EFFECT,
@@ -19,9 +23,10 @@ import {
   cityAtomLocked,
   layerCoverX,
   mapFramePath,
-} from "../../../ui/cityMapLayout";
-import { CITY_HUB_PREFAB_PATH, bindClick } from "../../../ui/prefabLoad";
-import { assignContentSize, bindVisibleRefresh, fitCityViewport, squeezeWideNode, uiSize } from "../../../ui/visibleFit";
+} from "./cityMapLayout";
+import { bindClick } from "../../../framework/assets/PrefabLoader";
+import { CITY_HUB_PREFAB_PATH } from "../../../config/PrefabCatalog";
+import { assignContentSize, bindVisibleRefresh, fitCityViewport, squeezeWideNode, uiSize } from "../../../framework/ui/visibleFit";
 import { CITY_MAP_HOST, CITY_VIEW_ID } from "../config/cityIds";
 import { mountCityHubView } from "./cityMount";
 
@@ -55,7 +60,7 @@ const CITY_PLATES: { name: string; layer: number; piece: number }[] = [
 const plateMisses = new Set<string>();
 
 export interface CityHubOpenArgs {
-  loadConfig?: <T>(path: string) => Promise<T>;
+  loadConfig?: <N extends ConfigName>(name: N) => Promise<ConfigFileMap[N]>;
   onAtom: (atom: string) => void;
   onMainline: () => void;
   query: CityMapQuery;
@@ -139,7 +144,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
   refreshLocks(): void {
     const query = this.args ? this.args.query : null;
     if (!query) {
-      GameLog.shared.warn("CityHub", "没有等级数据，不改建筑锁");
+      GameLog.shared.warn("CityHubView", "没有等级数据，不改建筑锁");
       return;
     }
     this.spotViews.forEach((spot, atom) => {
@@ -159,9 +164,9 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
       bindVisibleRefresh(this.node, () => this.applyVisible());
       this.ensurePlates();
       const loaded = await Promise.all([
-        this.loadCfg<MainCityPosFile>(CITY_CFG_POS),
-        this.loadCfg<MainCityBtnFile>(CITY_CFG_BTN),
-        this.loadCfg<MainCityEffectFile>(CITY_CFG_EFFECT),
+        this.loadCfg(CITY_CFG_POS),
+        this.loadCfg(CITY_CFG_BTN),
+        this.loadCfg(CITY_CFG_EFFECT),
       ]);
       if (this.cleaned || !this.node || !this.node.isValid) {
         this.failOpen(new Error("页面已关"));
@@ -177,11 +182,11 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
       this.bindMainline();
       this.bindDrag();
       this.refreshLocks();
-      GameLog.shared.info("CityHub", "view buildings=" + this.spotViews.size + " scroll=" + this.scroll + " " + CITY_HUB_PREFAB_PATH);
+      GameLog.shared.info("CityHubView", "view buildings=" + this.spotViews.size + " scroll=" + this.scroll + " " + CITY_HUB_PREFAB_PATH);
       this.finishOpen();
     } catch (err) {
       const error = err instanceof Error ? err : new Error(messageOf(err));
-      GameLog.shared.warn("CityHub", "没有挂上 " + error.message);
+      GameLog.shared.warn("CityHubView", "没有挂上 " + error.message);
       this.failOpen(error);
     }
   }
@@ -368,15 +373,16 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
       }
       if (plateMisses.has(path)) return;
       plateMisses.add(path);
-      GameLog.shared.warn("CityHub", "plate miss " + path);
+      GameLog.shared.warn("CityHubView", "plate miss " + path);
     });
   }
 
-  private async loadCfg<T>(path: string): Promise<T | null> {
+  /** 读取已提交的类型化主城表；失败记录表名并让页面报错，禁止绕过统一加载器。 */
+  private async loadCfg<N extends ConfigName>(path: N): Promise<ConfigFileMap[N] | null> {
     try {
-      return await (this.args?.loadConfig || ConfigLoader.loadJson)<T>(path);
+      return this.args?.loadConfig ? await this.args.loadConfig(path) : GameConfig.instance.getFile(path);
     } catch (err) {
-      GameLog.shared.error("CityHub", path + " " + (err instanceof Error ? err.message : "load failed"));
+      GameLog.shared.error("CityHubView", path + " " + (err instanceof Error ? err.message : "load failed"));
       return null;
     }
   }

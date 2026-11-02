@@ -1,5 +1,8 @@
+/**
+ * 登录页美术适配组件：按可见尺寸适配已有控件，静态样式和结构仍由 Prefab 保存。
+ */
 import { _decorator, Component, Node, UITransform, view } from "cc";
-import { fitVisibleRoot } from "../../../ui/visibleFit";
+import { fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { loginLayout } from "./LoginLayout";
 
 const { ccclass, property } = _decorator;

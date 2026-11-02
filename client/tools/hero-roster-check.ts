@@ -128,7 +128,7 @@ async function main() {
   assert(Object.isFrozen(catalog.find(10101001)));
   const fallback = new HeroCatalog({ rows: [{ type: 1, item_id: 0, elem: 99, note: " A " }, { type: "#" }] },
     { rows: [{ idx: 1, icon: "hero-icon/abcdef" }] });
-  assert.equal(fallback.find(1)!.icon, "ui/hero/hero-icon_abcdef");
+  assert.equal(fallback.find(1)!.icon, null, "未登记的图标不得通过任意字符串拼接生成地址");
   assert.equal(fallback.find(1)!.elem, null);
   assert.equal(fallback.find(1)!.name, "A");
   assert.throws(() => new HeroCatalog({ rows: [{ type: 1 }, { type: 1 }] }, { rows: [] }), /重复/);

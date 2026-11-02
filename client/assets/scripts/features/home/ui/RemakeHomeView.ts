@@ -1,9 +1,12 @@
+/**
+ * 主城组合页面：实例化已有地图和导航栏，使用新账号资料显示资产，并管理子 View 生命周期。
+ */
 import { _decorator, Button, instantiate, Label, Node, Prefab, view } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { CityChromeView } from "../../city/ui/CityChromeView";
 import { CityHubView } from "../../city/ui/CityHubView";
-import { CityChromeShell } from "../../../ui/CityChromeShell";
-import { prepareCityConfig, readCityGates, remakeConfig } from "../../../config/RemakeConfig";
+import { CityChromeShell } from "../../city/ui/CityChromeShell";
+import { prepareCityConfig, readCityGates } from "../../../config/RemakeConfig";
 import type { AccountState } from "../../account/AccountModel";
 import type { HomeActions, HomeView } from "../HomeController";
 
@@ -69,7 +72,6 @@ export class RemakeHomeView extends BaseView implements HomeView {
         onAtom: id => this.actions?.openFeature(id),
         onMainline: () => this.actions?.openFeature("mainline"),
         query: { level: () => this.role?.level || 1, openDay: () => 0, db: readCityGates },
-        loadConfig: <T>(path: string) => remakeConfig.read<T>(path),
       });
       this.chrome.runOpen({
         onTab: id => this.actions?.openFeature(id),
@@ -167,7 +169,9 @@ export class RemakeHomeView extends BaseView implements HomeView {
     this.chrome = null;
   }
 
+  /** 直接销毁主城节点时，先释放子界面，再交给基类清理目标监听和页面适配器。 */
   onDestroy(): void {
-    this.onClose();
+    try { this.onClose(); }
+    finally { super.onDestroy(); }
   }
 }

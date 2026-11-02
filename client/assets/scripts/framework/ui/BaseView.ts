@@ -1,7 +1,12 @@
+/**
+ * 页面生命周期基类：由 UIManager 调用创建、绑定、打开、关闭和释放钩子。
+ * 关闭及异常退出时清理本页监听；业务 Model 和模块请求不随窗口释放。
+ */
 import { _decorator, Component } from "cc";
 import { requestViewClose } from "./ViewClose";
 import type { ViewController } from "./UIRegistry";
 import { EventScope } from "../EventScope";
+import { EventDispatcher } from "../EventDispatcher";
 
 const { ccclass } = _decorator;
 
@@ -109,22 +114,36 @@ export class BaseView<TArgs = unknown> extends Component {
     this.onBind();
   }
 
+  /** 完成绑定后打开页面；绑定或开页失败时解除本页监听，再向调用方报告原始错误。 */
   runOpen(args?: TArgs): void {
     if (this.disposed || this.unbound) return;
-    this.runBind();
-    this.args = args;
-    this.shown = true;
-    this.onOpen(args);
-    this.controller?.show();
+    try {
+      this.runBind();
+      this.args = args;
+      this.shown = true;
+      this.onOpen(args);
+      this.controller?.show();
+    } catch (error) {
+      try { this.runClose(); }
+      finally {
+        EventDispatcher.instance.offTarget(this);
+        this.eventScope.clear();
+        throw error;
+      }
+    }
   }
 
+  /** 关闭一次当前页面；业务关闭钩子失败时仍清理全局目标事件和其他订阅。 */
   runClose(): void {
     if (!this.shown) return;
     this.shown = false;
     try { this.controller?.close(); }
     finally {
       try { this.onClose(); }
-      finally { this.eventScope.clear(); }
+      finally {
+        EventDispatcher.instance.offTarget(this);
+        this.eventScope.clear();
+      }
     }
   }
 
@@ -135,12 +154,25 @@ export class BaseView<TArgs = unknown> extends Component {
     this.onUnbind();
   }
 
+  /** 释放界面；任一关闭钩子失败时仍执行后续解绑、销毁和监听清理。 */
   runDispose(): void {
     if (this.disposed) return;
-    this.runClose();
-    this.runUnbind();
-    this.disposed = true;
-    this.dispose();
-    this.controller = null;
+    try {
+      try { this.runClose(); }
+      finally {
+        try { this.runUnbind(); }
+        finally {
+          this.disposed = true;
+          this.dispose();
+        }
+      }
+    } finally {
+      this.controller = null;
+      EventDispatcher.instance.offTarget(this);
+      this.eventScope.clear();
+    }
   }
+
+  /** 节点被引擎直接销毁时，同样释放本界面的业务回调与目标监听。 */
+  onDestroy(): void { this.runDispose(); }
 }

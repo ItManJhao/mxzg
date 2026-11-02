@@ -1,13 +1,17 @@
+/** Display-only helpers retained for the Remake flow. */
 /**
  * 主城竖切的静态检查。不启动 Creator。
  * 核对开关、预制上的节点引用，以及框架没有写死主城。
  */
 import { readFileSync } from "fs";
+
 import { join } from "path";
-import { cityViewFromSearch, setUseCityView, useCityView } from "../assets/scripts/features/city/config/CityFeatureFlag";
-import { buildCityMapLayout, CITY_EDGE_BLEED, findCityNode, layerAnchorX, layerCoverX } from "../assets/scripts/ui/cityMapLayout";
-import { BAR_SLIDE_MS, barIndex, barPageId, barSlideDir, expoOut, pageContentReady, selectedBarId, slideOffset, slideTravel, SlideCapture } from "../assets/scripts/ui/barSlide";
-import { TAB_SELECTED_SCALE, tabPaintState, tabVisualScale } from "../assets/scripts/ui/cityTabScale";
+
+import { buildCityMapLayout, CITY_EDGE_BLEED, findCityNode, layerAnchorX, layerCoverX } from "../assets/scripts/features/city/ui/cityMapLayout";
+
+import { BAR_SLIDE_MS, barIndex, barPageId, barSlideDir, expoOut, pageContentReady, selectedBarId, slideOffset, slideTravel, SlideCapture } from "../assets/scripts/framework/ui/barSlide";
+
+import { TAB_SELECTED_SCALE, tabPaintState, tabVisualScale, cityTabLayout } from "../assets/scripts/features/city/ui/cityTabScale";
 
 const root = process.cwd();
 
@@ -77,20 +81,6 @@ function parentName(data: PrefabObj[], ref: { __id__?: number } | null | undefin
   return parent && parent._name ? parent._name : "";
 }
 
-function checkFlag(): void {
-  assert(cityViewFromSearch("") === true, "empty search uses the new city view");
-  assert(cityViewFromSearch("?city=old") === false, "city=old keeps the old city");
-  assert(cityViewFromSearch("?city=0") === false, "city=0 keeps the old city");
-  assert(cityViewFromSearch("?city=false") === false, "city=false keeps the old city");
-  assert(cityViewFromSearch("?city=new") === true, "other city values stay on the new view");
-  assert(cityViewFromSearch("?bag=old") === true, "bag flag does not turn the city off");
-  assert(cityViewFromSearch("?foo=1&city=old") === false, "city=old is found among other params");
-  setUseCityView(false);
-  assert(useCityView() === false, "setUseCityView(false) sticks");
-  setUseCityView(true);
-  assert(useCityView() === true, "setUseCityView(true) sticks");
-}
-
 function checkFramework(): void {
   const files = [
     "client/assets/scripts/framework/ui/UIManager.ts",
@@ -99,7 +89,7 @@ function checkFramework(): void {
     "client/assets/scripts/framework/ui/BaseView.ts",
     "client/assets/scripts/framework/ui/ViewClose.ts",
   ];
-  const banned = ["CityHub", "CityChrome", "features/city", "BackpackView"];
+  const banned = ["CityHubView", "CityChromeView", "features/city", "BackpackView"];
   for (let i = 0; i < files.length; i++) {
     const text = read(files[i]);
     for (let j = 0; j < banned.length; j++) {
@@ -116,7 +106,6 @@ function checkFramework(): void {
 
 const NARROW_VIEWS = [576, 590, 640, 720, 996];
 
-/** 拖到最右时，树/柱右缘比视口右缘多出的像素。 */
 function rightTreeOverhang(viewW: number): number {
   const layout = buildCityMapLayout(null, null, null, { viewW, viewH: 1280 });
   const plate = findCityNode(layout, "spr_map_bg1_2");
@@ -141,7 +130,7 @@ function checkSources(): void {
   assert(chrome.indexOf("setCityExtras") >= 0, "chrome still hides the activity row");
   assert(chrome.indexOf('createRect("BgPad"') < 0, "new chrome does not paint a BgPad");
   assert(chrome.indexOf('getChildByName("BgPad")') >= 0, "new chrome turns an existing BgPad off");
-  const oldChrome = read("client/assets/scripts/ui/CityChrome.ts");
+  const oldChrome = read("client/assets/scripts/features/city/ui/CityChrome.ts");
   assert(oldChrome.indexOf('createRect("BgPad"') < 0, "old chrome does not paint a BgPad");
   assert(oldChrome.indexOf('setCityTabSelected(button, state === "selected")') >= 0, "old chrome scales the selected tab");
   assert(oldChrome.indexOf("tabPaintState") >= 0, "old chrome keeps a single selected tab");
@@ -166,37 +155,17 @@ function checkSources(): void {
   }
   const leftPlate = findCityNode(buildCityMapLayout(null, null, null, { viewW: 590, viewH: 1280 }), "spr_map_bg1_1");
   assert(leftPlate !== null && leftPlate.x === 0 && leftPlate.ax === 0, "left foreground plate stays on the content left");
-  assert(chrome.indexOf("main-scene-lang_lbl-fetters-unlock") >= 0, "chrome keeps the VIP caption");
+  assert(chrome.indexOf("ResourceCatalog.city.main_scene_lang_lbl_fetters_unlock") >= 0, "chrome keeps the VIP caption");
   assert(Math.abs(TAB_SELECTED_SCALE - 1.5) < 1e-6, "selected tab matches MainSceneCtr 1.5x checked size");
   assert(tabVisualScale(true) > tabVisualScale(false) * 1.2 && tabVisualScale(false) === 1, "only the selected tab grows");
   assert(chrome.indexOf('setCityTabSelected(button, state === "selected")') >= 0, "new chrome scales the selected tab");
   assert(chrome.indexOf("tabPaintState") >= 0, "new chrome keeps a single selected tab");
   assert(chrome.indexOf("layoutCityTab") >= 0, "new chrome keeps the selected scale after fit");
-  const oldHub = read("client/assets/scripts/ui/CityHub.ts");
-  assert(oldHub.indexOf("export async function mountCityHubPrefab") >= 0, "old hub mount stays");
-  assert(oldHub.indexOf("export function primeCityHub") >= 0, "primeCityHub stays");
-  const main = read("client/assets/scripts/ui/MainApp.ts");
-  const start = main.indexOf("private buildCity()");
-  const end = main.indexOf("private async mountCityHub(");
-  const body = start >= 0 && end > start ? main.slice(start, end) : "";
-  assert(body.indexOf("mountCityHub") >= 0, "buildCity still mentions the old hub mount");
-  assert(body.indexOf("openMainline()") < 0, "buildCity does not place the mainline call");
-  assert(main.indexOf("mountCityHubPrefab") >= 0, "old hub prefab mount stays in MainApp");
-  assert(main.indexOf("mountCityChromePrefab") >= 0, "old chrome prefab mount stays in MainApp");
-  assert(main.indexOf("mountCityChrome(") < 0, "MainApp does not call the thrown chrome builder");
-  assert(main.indexOf("useCityView()") >= 0, "MainApp switches on the city flag");
-  assert(main.indexOf("export const USE_CITY_HUB_PREFAB = true") >= 0, "hub prefab default stays");
-  const buildAt = main.indexOf("private async build()");
-  const buildFnEnd = main.indexOf("private onTab(");
-  const buildFn = buildAt >= 0 && buildFnEnd > buildAt ? main.slice(buildAt, buildFnEnd) : "";
-  const cityPos = buildFn.indexOf("this.panels.start(this.buildCity())");
-  const chromePos = buildFn.indexOf("mountCityChromePrefab");
-  assert(cityPos >= 0 && chromePos > cityPos, "city page still starts before the chrome mount string");
 }
 
 function checkHubPrefab(): void {
   const uuid = metaUuid("client/assets/scripts/features/city/ui/CityHubView.ts.meta");
-  const data = loadPrefab("client/assets/prefabs/ui/city/CityHub.prefab");
+  const data = loadPrefab("client/assets/prefabs/ui/city/CityHubView.prefab");
   const comp = component(data, classId(uuid)) as {
     parallax?: { __id__?: number };
     mapNodes?: { __id__?: number }[];
@@ -217,7 +186,7 @@ function checkHubPrefab(): void {
 
 function checkChromePrefab(): void {
   const uuid = metaUuid("client/assets/scripts/features/city/ui/CityChromeView.ts.meta");
-  const data = loadPrefab("client/assets/prefabs/ui/city/CityChrome.prefab");
+  const data = loadPrefab("client/assets/prefabs/ui/city/CityChromeView.prefab");
   const comp = component(data, classId(uuid)) as { [key: string]: { __id__?: number } | { __id__?: number }[] };
   const one = (key: string, name: string) => {
     const ref = comp[key];
@@ -252,7 +221,7 @@ function checkChromePrefab(): void {
   const names = activity.map((ref) => nodeName(data, ref));
   assert(names.indexOf("ActRecommend") >= 0 && names.indexOf("BtnActExpand") >= 0, "activity row is bound");
   const shell = "c4e8aHSe2NOkI8Vai2cC0fj";
-  const text = read("client/assets/prefabs/ui/city/CityChrome.prefab");
+  const text = read("client/assets/prefabs/ui/city/CityChromeView.prefab");
   assert(text.split(shell).length === 2, "CityChromeShell class id stays once");
 }
 
@@ -305,30 +274,12 @@ function checkBarSlide(): void {
   assert(stacked.immediateDrops().indexOf("old-hero") >= 0, "covered pages are dropped without a slide");
   assert(stacked.nodesToHide("hero").indexOf("city") >= 0, "city stays hidden when a new tab covers it");
 
-  const main = read("client/assets/scripts/ui/MainApp.ts");
-  const onTab = main.slice(main.indexOf("private onTab("), main.indexOf("private beginBarSlide("));
-  assert(onTab.indexOf("fromBar") >= 0 && onTab.indexOf("barSlideBusy") >= 0 && onTab.indexOf("beginBarSlide") >= 0 && onTab.indexOf("sealBarSlide") >= 0, "bottom bar arms the slide and ignores taps while it plays");
-  assert(main.indexOf("this.onTab(id, true)") >= 0, "chrome callback is the bar path");
-  const atom = main.slice(main.indexOf("private onCityAtom("), main.indexOf("private barSelected("));
-  assert(atom.indexOf("this.onTab(route.panel)") >= 0 && atom.indexOf("onTab(route.panel, true)") < 0, "building clicks stay instant");
-  const openMail = main.slice(main.indexOf("private openMail("), main.indexOf("private openIdle("));
-  const openBag = main.slice(main.indexOf("private openBag("), main.indexOf("private openMail("));
-  assert(openMail.indexOf("armBarSlide") < 0 && openBag.indexOf("armBarSlide") < 0, "mail and the bag button do not arm a bar slide");
-  const backFn = main.slice(main.indexOf("private back("), main.indexOf("private allow("));
-  assert(backFn.indexOf("this.panels?.back()") >= 0 && backFn.indexOf("UIManager") < 0, "back stays on the page stack");
-  assert(backFn.indexOf("cancelBarSlide") >= 0, "back cancels a bar slide instead of animating");
-  const shell = read("client/assets/scripts/ui/UIShell.ts");
-  assert(shell.indexOf("markPageShown(") >= 0 && shell.indexOf("console.log") < 0, "page show still goes through GameLog");
-  assert(shell.indexOf("armBarSlide") >= 0 && shell.indexOf("pageContentReady") >= 0 && shell.indexOf("scheduleReady") >= 0, "the shell waits until the next page is ready");
-  const manager = read("client/assets/scripts/framework/ui/UIManager.ts");
-  const nav = read("client/assets/scripts/ui/PanelNav.ts");
-  assert(manager.indexOf("armBarSlide") < 0 && nav.indexOf("armBarSlide") < 0, "bar slide does not rewrite UIManager or PanelNav");
 }
-
-checkFlag();
-checkFramework();
-checkSources();
-checkHubPrefab();
-checkChromePrefab();
-checkBarSlide();
-console.log("city-view-check ok");
+/** 宽屏只增加导航间距，选中图标不能越长越高而挡住主线挑战按钮。 */
+function checkWideTabSize(): void {
+  const base = cityTabLayout(640, 3, true), wide = cityTabLayout(960, 3, true);
+  assert(wide.scale === base.scale && wide.y === base.y, "宽屏选中图标保持默认大小和高度");
+  assert(cityTabLayout(360, 3, true).scale < base.scale, "窄屏仍按可用宽度缩小");
+  assert(cityTabLayout(960, 6, false).x > cityTabLayout(640, 6, false).x, "宽屏按钮间距仍展开");
+}
+checkFramework(); checkHubPrefab(); checkChromePrefab(); checkSources(); checkBarSlide(); checkWideTabSize(); console.log("city-view passed: bindings, framework isolation, narrow viewport coverage, tab scaling and transitions");

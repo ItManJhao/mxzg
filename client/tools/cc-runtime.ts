@@ -1,5 +1,5 @@
 /**
- * 只给 skeleton-check 的 esbuild 解析 "cc"。
+ * 仅为 check-project 中的行为测试提供 cc 引擎替身，不代表真实渲染验收。
  * Creator 工程不引用这个文件。isBrowser 保持 false，用来覆盖预览里 sys.isBrowser 不准的情况。
  */
 export const sys = {
@@ -139,6 +139,14 @@ export class Node {
       cur = cur.parentNode;
     }
     return true;
+  }
+
+  getChildByPath(path: string): Node | null {
+    let node: Node | null = this;
+    for (const name of path.split("/")) {
+      if (name) node = node?.getChildByName(name) || null;
+    }
+    return node;
   }
 
   getChildByName(name: string): Node | null {
@@ -285,6 +293,9 @@ export class Label extends Component {
 export class SpriteFrame {
   originalSize = { width: 0, height: 0 };
 }
+
+/** 资源加载类型检查使用的图集占位；不模拟图集解析或视觉表现。 */
+export class SpriteAtlas {}
 
 export class Sprite extends Component {
   static SizeMode = { CUSTOM: 0, TRIMMED: 1, RAW: 2 };

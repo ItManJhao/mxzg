@@ -1,0 +1,170 @@
+[
+  {
+    "id": "event-target",
+    "passed": true,
+    "elapsedMs": 96,
+    "log": "client/temp/project-checks/event-target.log"
+  },
+  {
+    "id": "account",
+    "passed": true,
+    "elapsedMs": 138,
+    "log": "client/temp/project-checks/account.log"
+  },
+  {
+    "id": "hero-roster",
+    "passed": true,
+    "elapsedMs": 76,
+    "log": "client/temp/project-checks/hero-roster.log"
+  },
+  {
+    "id": "formation",
+    "passed": true,
+    "elapsedMs": 141,
+    "log": "client/temp/project-checks/formation.log"
+  },
+  {
+    "id": "formation-view",
+    "passed": true,
+    "elapsedMs": 119,
+    "log": "client/temp/project-checks/formation-view.log"
+  },
+  {
+    "id": "remake-playable",
+    "passed": true,
+    "elapsedMs": 209,
+    "log": "client/temp/project-checks/remake-playable.log"
+  },
+  {
+    "id": "campaign-rules",
+    "passed": true,
+    "elapsedMs": 130,
+    "log": "client/temp/project-checks/campaign-rules.log"
+  },
+  {
+    "id": "remake-navigation",
+    "passed": true,
+    "elapsedMs": 78,
+    "log": "client/temp/project-checks/remake-navigation.log"
+  },
+  {
+    "id": "feature-navigation",
+    "passed": true,
+    "elapsedMs": 112,
+    "log": "client/temp/project-checks/feature-navigation.log"
+  },
+  {
+    "id": "login-presentation",
+    "passed": true,
+    "elapsedMs": 93,
+    "log": "client/temp/project-checks/login-presentation.log"
+  },
+  {
+    "id": "home-presentation",
+    "passed": true,
+    "elapsedMs": 95,
+    "log": "client/temp/project-checks/home-presentation.log"
+  },
+  {
+    "id": "startup",
+    "passed": true,
+    "elapsedMs": 136,
+    "log": "client/temp/project-checks/startup.log"
+  },
+  {
+    "id": "resources",
+    "passed": true,
+    "elapsedMs": 74,
+    "log": "client/temp/project-checks/resources.log"
+  },
+  {
+    "id": "home-bundle",
+    "passed": true,
+    "elapsedMs": 94,
+    "log": "client/temp/project-checks/home-bundle.log"
+  },
+  {
+    "id": "resource-audit",
+    "passed": true,
+    "elapsedMs": 210,
+    "log": "client/temp/project-checks/resource-audit.log"
+  },
+  {
+    "id": "config-groups",
+    "passed": true,
+    "elapsedMs": 169,
+    "log": "client/temp/project-checks/config-groups.log"
+  },
+  {
+    "id": "creator-compat",
+    "passed": true,
+    "elapsedMs": 835,
+    "log": "client/temp/project-checks/creator-compat.log"
+  },
+  {
+    "id": "prefab-plan",
+    "passed": true,
+    "elapsedMs": 1215,
+    "log": "client/temp/project-checks/prefab-plan.log"
+  },
+  {
+    "id": "architecture",
+    "passed": true,
+    "elapsedMs": 4537,
+    "log": "client/temp/project-checks/architecture.log"
+  },
+  {
+    "id": "bindings",
+    "passed": true,
+    "elapsedMs": 482,
+    "log": "client/temp/project-checks/bindings.log"
+  },
+  {
+    "id": "backpack",
+    "passed": true,
+    "elapsedMs": 116,
+    "log": "client/temp/project-checks/backpack.log"
+  },
+  {
+    "id": "bag-mvc",
+    "passed": true,
+    "elapsedMs": 266,
+    "log": "client/temp/project-checks/bag-mvc.log"
+  },
+  {
+    "id": "bag-events",
+    "passed": true,
+    "elapsedMs": 92,
+    "log": "client/temp/project-checks/bag-events.log"
+  },
+  {
+    "id": "super-scroll",
+    "passed": true,
+    "elapsedMs": 68,
+    "log": "client/temp/project-checks/super-scroll.log"
+  },
+  {
+    "id": "hero",
+    "passed": true,
+    "elapsedMs": 99,
+    "log": "client/temp/project-checks/hero.log"
+  },
+  {
+    "id": "city",
+    "passed": true,
+    "elapsedMs": 75,
+    "log": "client/temp/project-checks/city.log"
+  },
+  {
+    "id": "battle",
+    "passed": true,
+    "elapsedMs": 88,
+    "log": "client/temp/project-checks/battle.log"
+  },
+  {
+    "id": "retirement",
+    "passed": true,
+    "elapsedMs": 571,
+    "log": "client/temp/project-checks/retirement.log"
+  }
+]

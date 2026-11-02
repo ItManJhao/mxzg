@@ -1,5 +1,8 @@
+/**
+ * 功能页面切换动画：由新页面导航调用，按当前可见宽度移动页面，不参与业务状态切换。
+ */
 import { director, Director, Node, view } from "cc";
-import { barSlideDir, expoOut } from "../../ui/barSlide";
+import { barSlideDir, expoOut } from "../../framework/ui/barSlide";
 export type PageTransition = (outgoing: Node | null, incoming: Node, from: string, to: string, done: () => void) => () => void;
 const pageIndex: Record<string, number> = { "remake-home": 0, hero: 1, bag: 2, mainline: 3, "remake-campaign": 3 };
 export const PAGE_TRANSITION_MS = 280;

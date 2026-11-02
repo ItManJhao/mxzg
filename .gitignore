@@ -15,9 +15,14 @@ __pycache__/
 *.pem
 
 # Local junctions / deferred trees.
-# Game tables live in the repo at config/gameconfig. Other config/ files stay local.
+# Game tables and reproducible generation inputs are versioned; other config files stay local.
 /config/*
 !/config/README.md
+!/config/client-schema.json
+!/config/resource-catalog.json
+!/config/resource-missing.json
+!/config/prefab-renames.json
+!/config/prefab-layout-changes.json
 !/config/gameconfig/
 !/config/gameconfig/**
 /server/

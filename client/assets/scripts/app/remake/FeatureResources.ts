@@ -1,14 +1,18 @@
+/**
+ * 功能页面资源作用域：按需加载背包、出阵、选服与主线 Prefab，由 RemakeApp 持有并释放。
+ */
+import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { Prefab } from "cc";
 import { ResourcePool } from "../../framework/assets/ResourcePool";
 import type { ResourceScope } from "../../framework/assets/ResourcePool";
 import { prepareInventoryConfig,prepareHeroConfig } from "../../config/RemakeConfig";
-import { loadPrefab } from "../../ui/prefabLoad";
+import { loadPrefab } from "../../framework/assets/PrefabLoader";
 const groups = {
-    bag: ["prefabs/ui/backpack/BackpackLayer", "prefabs/ui/backpack/BackpackItemCell", "prefabs/ui/backpack/BackpackTabButton",
-        "prefabs/ui/backpack/BackpackInfoLayer", "prefabs/ui/common/DimSheet", "prefabs/ui/common/PagePrefabShell", "prefabs/ui/common/ListBackdrop"],
-    campaign: ["prefabs/ui/battle/BattlePanelLayer", "prefabs/ui/battle/BattlePage", "prefabs/ui/battle/BattleEndLayer", "prefabs/ui/common/PagePrefabShell"],
-    servers: ["prefabs/ui/login/ChooseServerLayer"],
-    formation: ["prefabs/ui/hero/HeroSelectLayer","prefabs/ui/hero/HeroIconCell"],
+    bag: [ResourceCatalog.prefab_Bag.BagView.assetPath, ResourceCatalog.prefab_Bag.BagItemView.assetPath, ResourceCatalog.prefab_Bag.BagTabView.assetPath,
+        ResourceCatalog.prefab_Bag.BagInfoView.assetPath, ResourceCatalog.prefab_common.DimSheet.assetPath, ResourceCatalog.prefab_common.PagePrefabShell.assetPath, ResourceCatalog.prefab_common.ListBackdrop.assetPath],
+    campaign: [ResourceCatalog.prefab_battle.CampaignView.assetPath, ResourceCatalog.prefab_battle.BattlePage.assetPath, ResourceCatalog.prefab_battle.BattleEndLayer.assetPath, ResourceCatalog.prefab_common.PagePrefabShell.assetPath],
+    servers: [ResourceCatalog.prefab_login.ServerPickerView.assetPath],
+    formation: [ResourceCatalog.prefab_hero.FormationView.assetPath,ResourceCatalog.prefab_hero.HeroIconCellView.assetPath],
 } as const;
 const allowed = new Set<string>([...groups.bag, ...groups.campaign, ...groups.servers, ...groups.formation]);
 const pool = new ResourcePool<Prefab>({

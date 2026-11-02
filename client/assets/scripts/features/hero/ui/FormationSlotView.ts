@@ -13,7 +13,7 @@ export class FormationSlotView extends Component {
     @property(Label) caption: Label | null = null;
 
     validateBindings(): void {
-        const prefix = "assets/prefabs/ui/hero/HeroSelectLayer.prefab / " + this.node.name + " / FormationSlotView: ";
+        const prefix = "assets/prefabs/ui/hero/FormationView.prefab / " + this.node.name + " / FormationSlotView: ";
         for (const [field, value] of Object.entries({ button: this.button, portrait: this.portrait, lock: this.lock, caption: this.caption })) {
             if (!value) throw new Error(prefix + "缺失绑定 " + field);
         }

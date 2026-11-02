@@ -1,9 +1,10 @@
 /**
  * 英雄列表和详情相对日服的窗口、页签和台词。
- * 格子数据仍在 module/hero。这里只放界面上要对齐的数。
+ * 名册数据由 HeroRosterModel 持有；这里只放布局常量和台词展示。
  */
-import { ConfigDb } from "../../../config/ConfigLoader";
-import { plainTalk, pickHeroTalkLan, readHeroTalkRows } from "../../../ui/idleHangTalkPlan";
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
+import { plainTalk } from "../../battle/ui/idleHangTalkPlan";
 
 /** ccbi 页签原文。按钮只有约 111×43，运行时把字收进按钮，不改这句。 */
 export const HERO_TAB_HERO = "英  雄";
@@ -64,39 +65,11 @@ export function seatHeroParchment(
   };
 }
 
-/** 详情台词。herotalk 按等级取第一句，language 对上就用那句，否则用表里的 note。 */
+/** 从统一配置选择当前等级首条台词，未准备的详情配置不触发隐式加载。 */
 export function heroDetailTalk(level: number | null): string {
-  const db = ConfigDb.current;
-  const talkFile = db ? db.tables.get("herotalk") : null;
-  const rows = readHeroTalkRows(talkFile || null);
-  if (rows.length === 0) return "";
-  const lan = pickHeroTalkLan(rows, level, 0);
-  const fromLan = lan === null ? "" : languageLine(lan);
-  if (fromLan) return fromLan;
-  return noteOf(talkFile, lan);
-}
-
-function languageLine(lan: number): string {
-  const db = ConfigDb.current;
-  const file = db ? db.tables.get("language") : null;
-  const list = file && Array.isArray(file.rows) ? file.rows : [];
-  const key = String(lan);
-  for (let i = 0; i < list.length; i++) {
-    const row = list[i] as { key?: unknown; value?: unknown } | null;
-    if (!row || row.key === undefined || row.key === null) continue;
-    if (String(row.key) !== key) continue;
-    return plainTalk(typeof row.value === "string" ? row.value : "");
-  }
-  return "";
-}
-
-function noteOf(file: { rows?: unknown } | null | undefined, lan: number | null): string {
-  const list = file && Array.isArray(file.rows) ? file.rows : [];
-  for (let i = 0; i < list.length; i++) {
-    const row = list[i] as { lan?: unknown; note?: unknown } | null;
-    if (!row) continue;
-    if (lan !== null && String(row.lan) !== String(lan)) continue;
-    if (typeof row.note === "string" && row.note.trim()) return row.note.trim();
-  }
-  return "";
+  if (GameConfig.instance.status(GConfig.HeroTalk).state !== "ready") return "";
+  const row = GameConfig.instance.getConfig(GConfig.HeroTalk).find(row => (level || 1) >= row.level_min && (level || 1) <= row.level_max);
+  if (!row) return "";
+  const word = GameConfig.instance.status(GConfig.Language).state === "ready" ? GameConfig.instance.getConfig(GConfig.Language, row.lan)?.value : undefined;
+  return plainTalk(word || row.note || "");
 }

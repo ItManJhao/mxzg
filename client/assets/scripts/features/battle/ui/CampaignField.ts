@@ -1,16 +1,20 @@
+/**
+ * 主线战报显示：消费服务端单位与命中事件，管理骨骼、动画及演武的显示生命周期，不计算奖励。
+ */
+import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { instantiate, Label, Node, UITransform, view } from "cc";
-import { mountBattlePrefab } from "../../../ui/BattlePage";
-import type { BattlePrefabShell } from "../../../ui/BattlePage";
-import { mountBattleSpine, mountNamedSpine } from "../../../ui/battleSpine";
-import type { SpineActor } from "../../../ui/battleSpine";
-import { fitVisibleRoot } from "../../../ui/visibleFit";
+import { mountBattlePrefab } from "./BattlePage";
+import type { BattlePrefabShell } from "./BattlePage";
+import { mountBattleSpine, mountNamedSpine } from "./battleSpine";
+import type { SpineActor } from "./battleSpine";
+import { fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
-import { setText } from "../../../ui/UiKit";
-import { paintBattleFloats, paintBattleSkillName, clearBattleOverhead } from "../../../ui/battlePresentView";
-import { hangFormationPoint } from "../../../ui/idleHangSkirmishPlan";
-import { hpFillLayout, HP_FILL_HEIGHT } from "../../../ui/battlePrefabLayout";
-import { mountIdleSkirmish } from "../../../ui/idleHangSkirmish";
-import type { IdleSkirmish } from "../../../ui/idleHangSkirmish";
+import { setText } from "../../../framework/ui/UiKit";
+import { paintBattleFloats, paintBattleSkillName, clearBattleOverhead } from "./battlePresentView";
+import { hangFormationPoint } from "./idleHangSkirmishPlan";
+import { hpFillLayout, HP_FILL_HEIGHT } from "./battlePrefabLayout";
+import { mountIdleSkirmish } from "./idleHangSkirmish";
+import type { IdleSkirmish } from "./idleHangSkirmish";
 import type { CampaignReport, CampaignUnit, CampaignHit } from "../CampaignApi";
 /** Rendering only: animations consume immutable server events and never calculate damage. */
 export class CampaignField {
@@ -29,6 +33,7 @@ export class CampaignField {
     private idleKey = "";
     private poseTimers = new Set<ReturnType<typeof setTimeout>>();
     private constructor(private readonly shell: BattlePrefabShell) { }
+/** 按真实战报装配战斗显示资源，页面关闭后拒绝迟到显示结果。 */
     static async open(parent: Node): Promise<CampaignField> {
         const shell = await mountBattlePrefab(parent);
         const field = new CampaignField(shell);
@@ -46,7 +51,7 @@ export class CampaignField {
             node.getComponent(UITransform)?.setContentSize(640 * cover, 1280 * cover);
         }
         if (bg)
-            paintSpritePaths(bg, ["ui/chapter/hang/map01_B"]);
+            paintSpritePaths(bg, [ResourceCatalog.chapter.map01_B.path]);
         // Match the retained idle hall: the sky is a short distant layer, while
         // the transparent foreground/floor covers the entire portrait viewport.
         if (bg) { bg.name = "IdleSky"; bg.setPosition(0,430,0); bg.getComponent(UITransform)?.setContentSize(Math.max(640,view.getVisibleSize().width),420); }
@@ -240,6 +245,7 @@ export class CampaignField {
             timer = setTimeout(() => { if (intro?.isValid) intro.active=false; step(); },700);
         });
     }
+    /** 应用服务端命中与血量；死亡动作允许资源回退，延迟隐藏单位，跳播时直接隐藏。 */
     private hit(hit: CampaignHit, animate: boolean): void {
         const attacker = this.actors.get(hit.attackerId), target = this.actors.get(hit.targetId);
         if (!attacker || !target)
@@ -260,8 +266,6 @@ export class CampaignField {
             paintBattleFloats(this.shell.present, [{ anchor: target.index, hurt: -hit.damage, crit: false }], [{ x: point.x, y: point.y }]);
             paintBattleSkillName(this.shell.present, "普通攻击");
         }
-        if (!hit.remainingHp)
-            target.actor.gesture("die");
         if (!animate && !hit.remainingHp) target.actor.node.active = false;
     }
     private afterPose(run: () => void): void {

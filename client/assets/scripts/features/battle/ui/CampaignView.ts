@@ -1,6 +1,9 @@
+/**
+ * 主线界面：展示当前阶段、服务端奖励和战报，转交挑战操作；关闭时释放战场和结算显示。
+ */
 import { _decorator, Button, Label, Node } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
-import { mountBattleEnd } from "../../../ui/battleEndView";
+import { mountBattleEnd } from "./battleEndView";
 import { BagItemCatalog } from "../../Bag/BagItemCatalog";
 import type { CampaignActions, CampaignPhase, CampaignScreen } from "../CampaignController";
 import type { CampaignState, CampaignReport } from "../CampaignApi";

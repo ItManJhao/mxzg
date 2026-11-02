@@ -156,7 +156,7 @@ async function main() {
   enabled.close();
 
   const assets = join(process.cwd(), "client/assets");
-  const prefab = JSON.parse(readFileSync(join(assets, "bundles/remake-home/RemakeHome.prefab"), "utf8"));
+  const prefab = JSON.parse(readFileSync(join(assets, "bundles/remake-home/RemakeHomeView.prefab"), "utf8"));
   const view = prefab.find((row: Record<string, unknown>) => row.logoutButton && row.profileLabel);
   assert.equal(prefab[view.profileLabel.__id__].__type__, "cc.Label");
   assert.equal(prefab[view.logoutButton.__id__].__type__, "cc.Button");

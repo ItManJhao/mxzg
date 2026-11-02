@@ -4,7 +4,7 @@
 const { readFileSync, writeFileSync, mkdirSync, existsSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { createHash } = require('node:crypto');
-const source = resolve(__dirname, '../assets/prefabs/ui/hero/HeroSelectLayer.prefab');
+const source = resolve(__dirname, '../assets/prefabs/ui/hero/FormationView.prefab');
 const output = resolve(__dirname, '../temp/project-checks');
 const recordPath = resolve(output, 'formation-authoring-probe.json');
 const backup = resolve(output, 'formation-authoring-original.prefab');
@@ -20,7 +20,7 @@ function fields(data) {
 function values(data) { return Object.fromEntries(Object.entries(fields(data)).map(([key,[object,property]]) => [key,object[property]])); }
 function expected(name, bytes) {
     writeFileSync(resolve(output,name), JSON.stringify({...values(parse(bytes)),prefabSha256:hash(bytes),
-        cellSha256:hash(readFileSync(resolve(__dirname,'../assets/prefabs/ui/hero/HeroIconCell.prefab'))),
+        cellSha256:hash(readFileSync(resolve(__dirname,'../assets/prefabs/ui/hero/HeroIconCellView.prefab'))),
         requireVisibleStars:name.includes('final')},null,2)+'\n');
 }
 mkdirSync(output,{recursive:true});

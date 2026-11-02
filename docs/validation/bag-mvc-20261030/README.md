@@ -13,7 +13,7 @@
 
 ## 可重跑入口
 
-工作目录 `F:\project\mxzg`，Creator 完成导入并预览 Remake.scene，18080 后端可用。
+工作目录 `G:\work\FsGame\Project\mxzg`，Creator 完成导入并预览 Remake.scene，18080 后端可用。
 
 ```powershell
 node client/tools/check-project.mjs

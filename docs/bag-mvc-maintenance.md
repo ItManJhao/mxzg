@@ -1,10 +1,12 @@
+> 2026-10-31 Bag 命名收紧：四个专属预制体统一位于 `client/assets/prefabs/ui/Bag/`，分别为 BagView、BagItemView、BagInfoView、BagTabView；目录和资源 meta UUID 保留。共享 PagePrefabShell、ListBackdrop、DimSheet 保持通用归属，美术资源路径不改。详情只读，确认关闭；已删除旧使用协议分支，来源暂未开放。当前验证见进度文档顶部，以下旧日期的预览记录仅作历史证据。
+
 # 背包标准模块：维护与验收入口
 
-2026-10-30，沿用完整命名、目录、基类与全局事件规则。本批仅完善背包库存事件及必要调用方，保留真实业务和 Prefab/SuperScroll 配置；不构建包、不清库、不提交推送或发布。**技术验证完成，人工阅读与编辑体验待用户验收，暂不扩大到其他模块。**
+2026-10-30，沿用完整命名、目录、基类与全局事件规则。2026-10-31 已完成旧业务链清理与目标作用域事件改造，背包继续保持库存规则及必要调用方，保留真实业务和 Prefab/SuperScroll 配置；不构建包、不清库、不提交推送或发布。**技术验证完成，人工阅读与编辑体验待用户验收，真实界面回归因浏览器权限待验收；目录清理与代码检查见 architecture.md。**
 
 ## 固定目录与文件职责
 
-仓库根目录 `F:\project\mxzg`，运行脚本根目录 `client/assets/scripts`。
+仓库根目录 `G:\work\FsGame\Project\mxzg`，运行脚本根目录 `client/assets/scripts`。
 
 ```text
 features/Bag/
@@ -41,11 +43,11 @@ features/Bag/
 
 [BaseController](../client/assets/scripts/framework/BaseController.ts) 提供 initialize、resetSession、captureSession/isCurrent、dispose、ownListener 和 emit；重复初始化不增加监听，重复销毁安全，支持销毁后显式重新初始化。空角色不算有效会话。背包队列、协议字段和奖励去重保留在 BagController，不放到基类；基类不保存 View/节点、不自动扫描模块。
 
-[EventDispatcher](../client/assets/scripts/framework/EventDispatcher.ts) 是唯一全局通知入口，原 TypedEvents 已迁名改造，没有并行模块事件实例。直接使用 `EventDispatcher.instance.on(BagEvent.BagUpdate, handler)`；`on/once` 返回解除方法，`once` 可提前取消，并在执行回调前退订。每次 emit 均交付，批处理不把 first-once 改成末次参数；事件不是状态仓库，回调应读 Model 当前快照。背包通过通知保护使每批回调都读取本批已完整提交的 Model；回调触发的新库存操作排队到当前汇总回调结束后。详见 [库存事件参数与规则](bag-inventory-events.md)。
+[EventDispatcher](../client/assets/scripts/framework/EventDispatcher.ts) 是唯一全局通知入口，原 TypedEvents 已迁名改造，没有并行模块事件实例。直接使用 `EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refreshFromModel)`；`on/once` 返回解除方法，`once` 可提前取消，并在执行回调前退订。每次 emit 均交付，批处理不把 first-once 改成末次参数；事件不是状态仓库，回调应读 Model 当前快照。背包通过通知保护使每批回调都读取本批已完整提交的 Model；回调触发的新库存操作排队到当前汇总回调结束后。详见 [库存事件参数与规则](bag-inventory-events.md)。
 
 [EventScope](../client/assets/scripts/framework/EventScope.ts) 只收集解除函数和 clear，清理失败会记录拥有者且继续清理。BaseController 持有模块 Scope，[BaseView](../client/assets/scripts/framework/ui/BaseView.ts) 持有本次开页 Scope，runClose 的 finally 自动清理，不依赖业务调用 super.onClose。关页、换号或模块销毁都不会清空全局派发器。一个订阅抛异常会记录事件名与堆栈，不影响其他订阅。
 
-BagView 的开页逻辑是先把全局 BagUpdate 的退订函数交给 ownListener，再读取 BagModel.snapshot 刷新；另监听 BagSyncStateChanged 仅更新提示文字，不订阅增删改细分事件。关闭只移除本页监听及按钮回调；其他模块的订阅仍有效，模块请求继续完成。
+BagView 开页先登记目标式 BagUpdate 监听，再读取 BagModel.snapshot 刷新；BaseView 关闭、打开失败或销毁时统一 offTarget(this)，无需保存全局事件的 stop；另监听 BagSyncStateChanged 仅更新提示文字，不订阅增删改细分事件。关闭只移除本页监听及按钮回调；其他模块的订阅仍有效，模块请求继续完成。
 
 UIRegistry 的 createController/show/close 只暂留给未迁移页面适配器。BagController 没有 show/close，类型不兼容页面 Controller，BaseView.attachController 也有运行时检查；**不能把 BagController 注入窗口并在关闭窗口时 dispose。**
 
@@ -69,35 +71,24 @@ batchNotifications 只延后同步通知，不是可回滚事务，内部不执�
 
 ## 在 Creator 修改 UI
 
-页面：[client/assets/prefabs/ui/backpack/BackpackLayer.prefab](../client/assets/prefabs/ui/backpack/BackpackLayer.prefab)。列表节点路径不变：
+页面：[client/assets/prefabs/ui/Bag/BagView.prefab](../client/assets/prefabs/ui/Bag/BagView.prefab)。列表节点路径不变：
 
-- `BackpackLayer/spr_box/BagScroll`：SuperScroll，Content 只绑定一次。
-- `BackpackLayer/spr_box/BagScroll/view`：UITransform/Mask，手动调整裁剪范围。
-- `BackpackLayer/spr_box/BagScroll/view/content`：SuperContent，修改布局、列/行、方向、间距、四边距、Cell Prefab 与明确的尺寸覆盖开关。
-- Cell：[BackpackItemCell.prefab](../client/assets/prefabs/ui/backpack/BackpackItemCell.prefab)，组件现名 BagItemView；外观/数量字/选中图片在 Cell 内编辑。
-- 详情：[BackpackInfoLayer.prefab](../client/assets/prefabs/ui/backpack/BackpackInfoLayer.prefab)，组件 BagInfoView；页签：[BackpackTabButton.prefab](../client/assets/prefabs/ui/backpack/BackpackTabButton.prefab)，组件 BagTabView。
+- `BagView/spr_box/BagScroll`：SuperScroll，Content 只绑定一次。
+- `BagView/spr_box/BagScroll/view`：UITransform/Mask，手动调整裁剪范围。
+- `BagView/spr_box/BagScroll/view/content`：SuperContent，修改布局、列/行、方向、间距、四边距、Cell Prefab 与明确的尺寸覆盖开关。
+- Cell：[BagItemView.prefab](../client/assets/prefabs/ui/Bag/BagItemView.prefab)，组件现名 BagItemView；外观/数量字/选中图片在 Cell 内编辑。
+- 详情：[BagInfoView.prefab](../client/assets/prefabs/ui/Bag/BagInfoView.prefab)，组件 BagInfoView；页签：[BagTabView.prefab](../client/assets/prefabs/ui/Bag/BagTabView.prefab)，组件 BagTabView。
 
 [SuperScroll Inspector 指南](super-scroll-authoring.md) 的布局规则和无业务编辑器预览继续有效。本批没改源 Prefab、SuperScroll、SuperContent、资源路径与加载边界；10 个移动脚本 UUID 均逐一核对保留，BagView 仍是 `7b14e0a2-3c58-4d1f-8e6a-9f0b2c4d5e61`。Prefab 内稳定的 CompPrefabInfo.fileId 不是脚本路径，不因改名替换。目录实际名及导入统一为 `features/Bag`，旧 backpack 脚本目录已移除。
 
-尺寸/位置仍由以下入口控制，不宣称整页静态 UI 已全部整改：SuperContent 算 content/Cell 根尺寸，原生 Layout 排动态 Cell，ScrollView 管滚动；BagView 仅提供条目/渲染回调，保留同分类滚动、分类回起点和缩短限制。空槽至少 20/按四补齐是背包规则。`BagMount.mountBackpackPage`、`pagePrefabShell.mountCcbiView` 控制根/背景适配与旧 CCBI 兼容；`BagView.buildTabs` 仍有动态页签位置公式；`BagMount.openBagInfo/seatCenter` 控制详情居中，切页动画沿用原导航。
+尺寸/位置仍由以下入口控制，不宣称整页静态 UI 已全部整改：SuperContent 算 content/Cell 根尺寸，原生 Layout 排动态 Cell，ScrollView 管滚动；BagView 仅提供条目/渲染回调，保留同分类滚动、分类回起点和缩短限制。空槽至少 20/按四补齐是背包规则。`BagMount.mountBagPage` 只装配共享壳与可见区域；PrefabLayout 不再补偿静态文字/九宫格位置。BagView 保留动态分类排列，BagMount.openBagInfo/seatCenter 只按宿主尺寸居中详情。
 
 ## 删除、退役和剩余模块
 
-原 BagC/BagM/BagV、BackpackItemCellView/BackpackInfoView/BackpackTabButtonView、InventoryApi/ItemCatalog/BackpackMount 脚本已移动为新完整名称并保留 meta，无转发别名。旧 InventoryController、BackpackFeatureFlag 和背包 GameStore/WireSession 条件分支此前已删除，本批保持退役；TypedEvents 已被唯一 EventDispatcher 替代。旧 Main/screenFill 背包只提示使用 Remake，不接收新库存；不删除共享图片、Prefab 或其他人的修改。
+原 BagC/BagM/BagV、BagItemCellView/BackpackInfoView/BagTabButtonView、InventoryApi/ItemCatalog/BackpackMount 脚本已移动为新完整名称并保留 meta，无转发别名。旧 InventoryController、BackpackFeatureFlag 和背包 GameStore/WireSession 条件分支此前已删除，本批保持退役；TypedEvents 已被唯一 EventDispatcher 替代。旧 Main/screenFill 业务入口及 module 已删除；不删除共享图片、Prefab 或其他人的修改。
 
-尚未迁移：AccountModel/AccountService、HeroRoster 多层实现、FormationController、CampaignController/挂机状态，以及 Boot/Main 的其他 WireSession/GameStore 引用。这里只改必要账号通知/战斗领奖调用，不把背包样板完成当作全项目完成。用户验收样板后再逐个模块切换、验证和清理。本批不扩展养成、召唤、活动、技能或道具使用。
+当前 Account、HeroRoster、Formation 和 Campaign 继续使用已有新接口实现；英雄名册改为应用会话持有，旧 Boot/Main/WireSession/GameStore 链已删除。本轮整理代码职责，不把目录清理当作全部产品功能完成。旧目录清理已完成，未将尚未开放玩法接回旧实现。本批不扩展养成、召唤、活动、技能或道具使用。
 
 ## 验证与人工验收
 
-最新事件证据见 [bag-events-20261030](validation/bag-events-20261030/README.md)。上一批标准模块与列表证据保留为历史；本批基线 2022a566 + dirty，证据附源文件哈希。
-
-- 完整检查 27/27、Creator 3.8.8 strict 通过，新增事件批次/参数/顺序检查。类型检查包含错误事件名/参数不可编译、模块 Controller 不可作页面 Controller 的负向断言。
-- 检查覆盖 Model 不可变/状态/全量/增量/校验，基类初始化/销毁/会话代次，once/提前取消/监听异常隔离/EventScope 清理，旧会话 401/旧读写/同角色乱序、串行更新、重复/同步回调请求去重、相关 Model 先提交再通知。
-- 真实 7456 + 18080 流程通过：开页前查询、打开立即读 Model、全局订阅自动刷新、三轮开关不累积、不删除外部订阅、关闭页面期间领奖、交付迟到 GET 不回滚、重复实际领取、退出清理、换号和同账号换服。浏览器错误 0。
-- 上一批真实通用列表回归通过（本批未重复执行全部中性矩阵）：分类、详情、拖动不误触、刷新一次点击/滚动保留、兼容 104×104 Cell、切页重开；中性夹具覆盖横/竖/两种网格、0/1/3/18、缩短限制、非中心锚点。夹具不写玩家库存。
-
-独立 H5/App/微信包按用户要求未构建，未验收当前源码；历史 H5 通过结果不替代本批。后端代码/数据库没改动，没有清库。现阶段大库存性能、其他模块、全部 UI 的静态整改未完成。人工验收请检查目录/方法是否好找，亲手改 Inspector 参数并保存预览、切页重开，确认易读易改后再决定下一模块。
-
-领奖后的真实背包（当前本机开发预览，未声称正式服视觉 1:1）：
-
-![背包标准模块领奖结果](images/backpack-standard-reward.png)
+当前检查结果统一见 [开发进度](development-progress.md)，不得把历史截图与旧预览当作本轮通过。编辑 BagView / BagItemView / BagInfoView / BagTabView Prefab 后保存并等待 Creator 导入，按默认、窄屏、较宽屏验收分类、滚动、详情、奖励更新与反复开关。布局只在 Prefab 维护，资源地址见 [统一入口](config-pipeline.md)。

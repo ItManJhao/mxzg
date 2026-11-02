@@ -16,7 +16,7 @@ import base64
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT_PREFAB = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "city", "CityHub.prefab")
+OUT_PREFAB = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "city", "CityHubView.prefab")
 OUT_META = OUT_PREFAB + ".meta"
 PREFAB_UUID = "118c08f7-43eb-477d-ab62-50f3ec65294f"
 
@@ -126,7 +126,7 @@ def remember(u):
 
 add({
     "__type__": "cc.Prefab",
-    "_name": "CityHub",
+    "_name": "CityHubView",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -355,7 +355,7 @@ b21 = FRAME_SIZE["2-1-1"]
 b31 = FRAME_SIZE["3-1-1"]
 b41 = FRAME_SIZE["4-1-1"]
 
-root = make_node("CityHub", None, 0, 0, CITY_VIEW_W, CITY_VIEW_H)
+root = make_node("CityHubView", None, 0, 0, CITY_VIEW_W, CITY_VIEW_H)
 assert root == 1
 
 parallax_x, parallax_y = place_bl(root, SCROLL, 0)
@@ -495,7 +495,7 @@ meta = {
     "uuid": PREFAB_UUID,
     "files": [".json"],
     "subMetas": {},
-    "userData": {"syncNodeName": "CityHub"},
+    "userData": {"syncNodeName": "CityHubView"},
 }
 with open(OUT_META, "w", encoding="utf-8", newline="\n") as f:
     json.dump(meta, f, ensure_ascii=False, indent=2)
@@ -503,7 +503,7 @@ with open(OUT_META, "w", encoding="utf-8", newline="\n") as f:
 
 names = [o["_name"] for o in objs if o.get("__type__") == "cc.Node"]
 for required in (
-    "CityHub",
+    "CityHubView",
     "CityParallax",
     "spr_map_bg1",
     "spr_map_bg2",

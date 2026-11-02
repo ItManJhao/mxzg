@@ -1,38 +1,39 @@
+/**
+ * 英雄列表页面：只展示注入的当前角色名册并转交筛选、重试与选择，不回退旧网络或图鉴。
+ */
+import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Button, director, Director, HorizontalTextAlignment, Label, Layers, Node, Overflow, Prefab, UITransform, VerticalTextAlignment } from "cc";
 import { messageOf } from "../../../core/errors";
 import { GameLog } from "../../../core/GameLog";
-import { StoreHero } from "../../../core/GameStore";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { view } from "../../../framework/ui/UIRegistry";
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
-import { buildHeroList, heroCellLine, heroCellSeat, heroContentHeight, HeroListTab } from "../../../module/hero/heroList";
-import { WireSession } from "../../../net/WireSession";
-import { loadPrefab, spawnPrefab } from "../../../ui/prefabLoad";
-import { assignContentSize, positiveUiSize } from "../../../ui/visibleFit";
+import { heroCellLine, heroCellSeat, heroContentHeight, HeroListTab } from "./HeroListPresentation";
+import { loadPrefab, spawnPrefab } from "../../../framework/assets/PrefabLoader";
+import { assignContentSize, positiveUiSize } from "../../../framework/ui/visibleFit";
 import { HeroIconCellView } from "./HeroIconCellView";
 import { HeroListBoardView } from "./HeroListBoardView";
 import { HERO_TAB_BOOK, HERO_TAB_DRAGON, HERO_TAB_HERO, seatHeroParchment } from "./heroChrome";
-import { mountHeroListPage, openHeroDetail } from "./heroMount";
+import { mountHeroListPage } from "./heroMount";
 import type { HeroRosterSource, HeroRosterView } from "../HeroRosterPresentation";
 
 const { ccclass, property } = _decorator;
 
-const TAB_ON = "ui/common/button_btn-tab-24";
-const TAB_OFF = "ui/common/button_btn-tab-23";
-const BOARD_PREFAB = "prefabs/ui/hero/HeroListHeroLayer";
-const CELL_PREFAB = "prefabs/ui/hero/HeroIconCell";
-const DRAGON_LATER = "圣龙仍走旧英雄页";
+const TAB_ON = ResourceCatalog.common.button_btn_tab_24.path;
+const TAB_OFF = ResourceCatalog.common.button_btn_tab_23.path;
+const BOARD_PREFAB = ResourceCatalog.prefab_hero.HeroListBoardView.assetPath;
+const CELL_PREFAB = ResourceCatalog.prefab_hero.HeroIconCellView.assetPath;
 
 /**
  * 英雄列表。页签、羊皮纸和筛选都绑在 HeroListLayer / HeroListHeroLayer 上。
- * 格子数据来自 GameStore 和 herotype。这里不解协议。
+ * 格子数据只来自当前角色的 HeroRosterSource。
  * 详情在 infoPrefab 绑上时打开。没绑时仍只提示格子文案。圣龙钮只提示仍走旧页。
  */
 @view({
   id: "hero",
-  prefab: "prefabs/ui/hero/HeroListLayer",
+  prefab: ResourceCatalog.prefab_hero.HeroListView.assetPath,
   layer: UILayer.Page,
   cache: false,
   allowMultiple: false,
@@ -100,21 +101,26 @@ export class HeroListView extends BaseView implements HeroRosterView {
   private scrollReady = false;
   private tabsBound = false;
   private cityFit = false;
-  private offSync: (() => void) | null = null;
   private shownWatch: (() => void) | null = null;
   private roster: HeroRosterSource | null = null;
   private closed = false;
 
-  /** Called by application composition before opening. Old Boot keeps its default source. */
+  /** Called by application composition before opening. A current role source is required. */
   useRoster(source: HeroRosterSource): void {
     if (this.opened) throw new Error("英雄数据源必须在开页前注入");
     this.roster = source;
   }
   refreshRoster(): void { if (!this.closed) this.refresh(); }
 
-  private readModel() { return this.roster ? this.roster.read(this.elem) : buildHeroList(this.tab, this.elem); }
+  /** 读取应用注入的当前名册；缺少数据源时明确报错，禁止回退旧名册。 */
+  private readModel() {
+    if (!this.roster) throw new Error("HeroListView requires the current role roster source");
+    return this.roster.read(this.elem);
+  }
 
+  /** 确认当前名册源后开始挂载已有列表，重复打开沿用已绑定板子。 */
   onOpen(): void {
+    if (!this.roster) throw new Error("HeroListView requires the current role roster source");
     this.closed = false;
     GameLog.shared.info("Hero", "打开实现 新 HeroListView");
     if (this.opened) {
@@ -126,14 +132,11 @@ export class HeroListView extends BaseView implements HeroRosterView {
     void this.openBoard();
   }
 
+  /** 停止本页尺寸观察并结束未完成的开页等待，不销毁模块名册。 */
   onClose(): void {
     this.closed = true;
     this.failOpen(new Error("页面已关"));
     this.clearShownWatch();
-    if (this.offSync) {
-      this.offSync();
-      this.offSync = null;
-    }
   }
 
   /** 页真正露出时再铺格子。打开过程里节点还不在场景上，不能在那时把格子挂出去。 */
@@ -164,7 +167,6 @@ export class HeroListView extends BaseView implements HeroRosterView {
       this.board.bindElem((id) => this.pickElem(id));
       this.fitCityMiddle();
       this.primeCapacity();
-      if (!this.roster) this.offSync = WireSession.onSync(() => this.refresh());
       this.refresh();
       if (!this.scrollReady && this.node.activeInHierarchy) {
         this.failOpen(new Error("HeroListHeroLayer 的 spr_box 下没有 HeroScroll"));
@@ -208,7 +210,6 @@ export class HeroListView extends BaseView implements HeroRosterView {
       board.node.setSiblingIndex(this.tabMenu.getSiblingIndex());
     }
     if (this.layerCapacity) this.layerCapacity.active = false;
-    board.dropHostMask();
     return board;
   }
 
@@ -354,7 +355,7 @@ export class HeroListView extends BaseView implements HeroRosterView {
       }
       this.adoptLayer(node, layer);
       const line = heroCellLine(face);
-      cell.show(face, line ? () => this.roster ? this.roster.select(face) : this.onCell(face.hero, line) : null);
+      cell.show(face, line ? () => this.roster?.select(face) : null);
       const seat = heroCellSeat(i);
       node.setPosition(seat.x, seat.y, 0);
     }
@@ -371,11 +372,8 @@ export class HeroListView extends BaseView implements HeroRosterView {
     this.refresh();
   }
 
-  private showTab(next: HeroListTab): void {
-    this.tab = next;
-    this.refresh();
-  }
 
+  /** 绑定当前英雄页查询重试入口，隐藏尚未接入的图鉴和圣龙页签。 */
   private bindTabs(): void {
     if (this.tabsBound) return;
     this.tabsBound = true;
@@ -391,9 +389,6 @@ export class HeroListView extends BaseView implements HeroRosterView {
       if (this.btnDragon) this.btnDragon.node.active = false;
       return;
     }
-    this.listenTab(this.btnHero, () => this.showTab("hero"));
-    this.listenTab(this.btnBook, () => this.showTab("book"));
-    this.listenTab(this.btnDragon, () => this.toast(DRAGON_LATER));
   }
 
   private listenTab(button: Button | null, pick: () => void): void {
@@ -444,14 +439,6 @@ export class HeroListView extends BaseView implements HeroRosterView {
   }
 
   /** 绑了详情预制才打开。否则仍提示格子上的名字和等级。 */
-  private onCell(hero: StoreHero | null, line: string): void {
-    if (hero && this.infoPrefab) {
-      const sheet = openHeroDetail(this.node.parent, this.infoPrefab, hero);
-      if (sheet) return;
-    }
-    this.toast(line);
-  }
-
   private hideBubble(): void {
     if (this.bubble) this.bubble.active = false;
   }

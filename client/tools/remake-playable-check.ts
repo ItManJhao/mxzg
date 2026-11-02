@@ -18,9 +18,9 @@ import type { CampaignReport, CampaignState } from "../assets/scripts/features/b
 import { CampaignController } from "../assets/scripts/features/battle/CampaignController";
 import type { CampaignActions, CampaignScreen, CampaignPhase } from "../assets/scripts/features/battle/CampaignController";
 import { loginLayout } from "../assets/scripts/features/account/ui/LoginLayout";
-import { cityTabLayout } from "../assets/scripts/ui/cityTabScale";
+import { cityTabLayout } from "../assets/scripts/features/city/ui/cityTabScale";
 import { slideFeaturePage, PAGE_TRANSITION_MS } from "../assets/scripts/app/remake/PageTransition";
-import { hangFormationPoint } from "../assets/scripts/ui/idleHangSkirmishPlan";
+import { hangFormationPoint } from "../assets/scripts/features/battle/ui/idleHangSkirmishPlan";
 
 const settle = () => new Promise(resolve => setTimeout(resolve,0));
 function deferred<T>() {
@@ -140,9 +140,9 @@ function checkVisualGeometry() {
     stop();stop();assert.equal(completed,1);assert.equal(incoming.position.x,0);assert.equal(outgoing.position.x,0);
     assert.equal((incoming as any).mxzgPageAnimating,false);
   } finally { Date.now = previous; }
-  const prefab = JSON.parse(readFileSync("client/assets/prefabs/ui/login/ChooseServerLayer.prefab","utf8"));
+  const prefab = JSON.parse(readFileSync("client/assets/prefabs/ui/login/ServerPickerView.prefab","utf8"));
   assert(prefab.some((row:any) => row.serverContent && row.regionContent && row.cellPrefab && row.dimPrefab));
-  const cell = JSON.parse(readFileSync("client/assets/prefabs/ui/login/ChooseServerCell.prefab","utf8"));
+  const cell = JSON.parse(readFileSync("client/assets/prefabs/ui/login/ServerCellView.prefab","utf8"));
   assert(cell.some((row:any) => row.button && row.caption && row.backgrounds));
 }
 async function main() {

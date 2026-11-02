@@ -1,42 +1,28 @@
-﻿# mxzg
+# mxzg
 
-面向中国大陆的简体中文 H5、App 和微信小游戏重做版。当前工程使用 Cocos Creator 3.8.8/TypeScript，后续技术以三端验证和维护成本选择。日服用于玩法、美术与已有服务能力参考，新架构和交互按重做版需求设计；资源或界面存在不代表功能已完整接入。
+当前客户端为 Cocos Creator 3.8.8 / TypeScript，后端为 Java 21 / Spring Boot。开发约束见 [AGENTS.md](AGENTS.md)。
 
-## 当前开发基线
+## 启动
 
-- [从 0 到 1 实施路线与验收清单](docs/restructuring-plan.md)：P0–P9 的细化任务、依赖、状态与阶段出口，作为主计划。
-- [核心产品需求](docs/product-requirements.md)：三端范围、真实玩法闭环与完成标准。
-- [架构与维护指南](docs/architecture.md)：轻量 MVC、UIManager 职责、后端取舍与人工修改入口。
-- [资源加载与依赖审计](docs/resource-loading.md)：资源登记、作用域、主城按需 Bundle、检查命令与实测边界。
-- [配置分组加载](docs/config-loading.md)：登录前 2 张表、主城另 5 份配置、原子提交及旧全量路径隔离。
-- [英雄与阵容接口](docs/hero-lineup-contract.md)：新后端查询/保存契约、版本冲突、站位依据与客户端接入边界。
-- [Prefab 清理结果](docs/prefab-cleanup.md)：90 项保留范围、517 项删除清单、备份和防回流检查。
-- [登录入口职责](docs/login-entries.md)：account 当前入口、login 共用组件和 legacy-login 旧版对照。
-- [实际开发进度](docs/development-progress.md)：新样板运行方式、已验证内容与下一批工作。
-- [当前工程问题](docs/project-audit.md)：源码证据、平台缺口和保留/删除边界。
+1. 运行 scripts/start-remake-backend.bat，新后端监听 http://127.0.0.1:18080。
+2. Creator 打开 client，打开 assets/scenes/Remake.scene，预览当前场景。
+3. 登录/选服 → 主城 → 英雄/背包 → 出阵 → 主线战斗 → 结算 → 返回。
 
-后续开发先读上述基线，优先保证人能阅读、修改和排错；其他批次与迁移文档保留历史参考，运行说明以当前代码核对。当前检查仍有背包布局失败，详见问题清单。
+本机预览优先；未明确要求时不构建 H5/App/小游戏包。旧 module、Boot/Main、WebSocket 桥与旧网络链已删除。
 
-统一工程根目录：`F:\project\mxzg`
+## 文档入口
 
-| 目录 | 说明 |
-|------|------|
-| `client/` | Cocos Creator 3.8.8 新前端（用 Creator 打开此目录） |
-| `backend/` | 重做版 Java 21 后端，独立构建与数据库，见 [启动和维护说明](backend/README.md) |
-| `config/gameconfig/` | 策划表 xlsx。源路径 `F:\project\mxzg\config\gameconfig`。客户端运行时读导出的 JSON |
-| `server/` | 服务端。本机当前为目录联接 → `F:\源码\mj\program\server`（暂不进 Git） |
+- [产品需求](docs/product-requirements.md)：有效需求与首测范围。
+- [架构与职责](docs/architecture.md)：MVC、状态、事件、生命周期及后端边界。
+- [运行维护](docs/local-remake-workflow.md)：本机启停、日志和排错。
+- [配置与资源](docs/config-pipeline.md)：生成、分组查询、资源目录与作用域。
+- [Prefab 编辑](docs/prefab-layout.md)：命名、坐标、逐项审查及视觉待验收。
+- [当前计划](docs/restructuring-plan.md) / [实际进度](docs/development-progress.md)。
 
-## 本地联接说明
+功能维护：[背包](docs/bag-mvc-maintenance.md)、[库存事件](docs/bag-inventory-events.md)、[列表](docs/super-scroll-authoring.md)、[出阵](docs/formation-ui-authoring.md)、[英雄/阵容接口](docs/hero-lineup-contract.md)。
 
-`server/` 仍用 junction 复用服代码。策划表在仓库 `config/gameconfig`。`ip2region.db` 留在本机。  
-导出与服的 `config.path` 见 [`docs/config-pipeline.md`](docs/config-pipeline.md)。
+## 常见代码入口
 
-当前启动始终连本机真服桥 `ws://127.0.0.1:13111/game`，`?dev=mock` 也不会切换离线；Mock 仍由无引擎检查使用。日常启动见 `scripts/start-local-all.bat`。此桥属于开发工具，正式网关与渠道配置尚需建立。
+app 负责启动装配；features 负责功能数据、业务、接口和 UI；framework 负责事件、资源及页面生命周期；platform 负责 HTTP/平台；config 负责生成配置与统一查询。Prefab 保存静态结构与样式。
 
-## 打开方式
-
-重做版样板：双击 `scripts/start-remake-backend.bat`，再在 Creator 打开 `client/assets/scenes/Remake.scene` 预览。开发账号如 player_1；成功后进入基础主城，退出返回登录。新服务当前提供 API，尚无网页管理后台。以下 Boot 说明属于仍保留的旧链路。
-
-Cocos Creator 3.8.8 → 打开 `F:\project\mxzg\client`
-
-预览登录 → 主城 → 主线（新 Prefab 壳、开关和缺口）见 [`docs/prefab-demo-path.md`](docs/prefab-demo-path.md)。
+在 client 执行 npm run check。若 Python 为商店占位入口，将当前进程 MXZG_PYTHON 指向实际 Python。配置与资源生成检查、脚本/Prefab 绑定、业务和生命周期均在综合入口中；检查不读取玩家文件数据库。Creator strict 保持 ES2017。

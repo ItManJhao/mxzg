@@ -37,7 +37,7 @@
 
 ## 重跑
 
-工作目录 `F:\project\mxzg`，18080 后端和 Creator Remake.scene 预览就绪：
+工作目录 `G:\work\FsGame\Project\mxzg`，18080 后端和 Creator Remake.scene 预览就绪：
 
 ```powershell
 node client/tools/check-project.mjs

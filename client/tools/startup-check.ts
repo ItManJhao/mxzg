@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { director, Director, Node, UIOpacity } from "cc";
 import { runStartup, StartupCancelled } from "../assets/scripts/app/remake/StartupFlow";
 import { RemakeApp } from "../assets/scripts/app/remake/RemakeApp";
-import { BootChrome } from "../assets/scripts/ui/bootChrome";
+import { BootChrome } from "../assets/scripts/app/remake/bootChrome";
 
 const deferred = () => {
   let resolve!: () => void;
@@ -70,7 +70,7 @@ async function main() {
   const scene = JSON.parse(readFileSync("client/assets/scenes/Remake.scene", "utf8"));
   const binding = scene.find((row: any) => row.loginPrefab && row.apiBaseUrl);
   assert(binding.pageHost && binding.startupHost && binding.loadingPrefab);
-  const accountMeta = JSON.parse(readFileSync("client/assets/prefabs/ui/account/AccountLogin.prefab.meta", "utf8"));
+  const accountMeta = JSON.parse(readFileSync("client/assets/prefabs/ui/account/AccountLoginView.prefab.meta", "utf8"));
   const legacyMeta = JSON.parse(readFileSync("client/assets/prefabs/ui/legacy-login/LoginPanel.prefab.meta", "utf8"));
   assert.equal(binding.loginPrefab.__uuid__, accountMeta.uuid, "Remake uses only the account login page");
   assert.notEqual(accountMeta.uuid, legacyMeta.uuid, "old login is a separate compatibility reference");

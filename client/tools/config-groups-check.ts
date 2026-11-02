@@ -1,63 +1,69 @@
+/** 配置生成契约与运行时验证：原子分组、失败恢复、版本隔离、只读与实际显示。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { JsonAsset, resources } from "cc";
-import { GroupedConfig } from "../assets/scripts/config/GroupedConfig";
-import { ConfigDb } from "../assets/scripts/config/ConfigLoader";
-import { prepareStartupConfig, prepareCityConfig, prepareHeroConfig, remakeConfig, readCityGates, validateRemakeConfig } from "../assets/scripts/config/RemakeConfig";
-import { loadBootCopy } from "../assets/scripts/ui/bootChrome";
+import { GameConfig, ConfigUnavailable, ConfigRowMissing, ConfigVersionSuperseded } from "../assets/scripts/config/GameConfig";
+import { GConfig } from "../assets/scripts/config/GConfig";
+import { prepareStartupConfig, prepareCityConfig, prepareHeroConfig, readCityGates } from "../assets/scripts/config/RemakeConfig";
+import { loadBootCopy } from "../assets/scripts/app/remake/bootChrome";
 
-async function main() {
+/** 验证所有异常与成功边界，不借助旧配置仓库或放宽实际数据校验。 */
+async function main(): Promise<void> {
   const calls: string[] = []; let fail = true;
-  const isolated = new GroupedConfig(async path => {
-    calls.push(path); if (path === "b" && fail) throw new Error("broken config"); return { rows: [] };
-  }, (_path, value) => { assert(Array.isArray((value as any).rows)); });
-  await assert.rejects(isolated.prepare(["a", "b"]), /broken config/);
-  assert.equal(isolated.get("a"), undefined, "do not publish a partial group");
-  await assert.rejects(isolated.read("a"), /尚未准备/);
+  const isolated = new GameConfig(async path => {
+    calls.push(path); if (path === "config/loadingtips" && fail) throw new Error("broken config"); return { rows: [] };
+  });
+  assert.equal(isolated.status(GConfig.Language).state, "unloaded");
+  assert.throws(() => isolated.getConfig(GConfig.Language), ConfigUnavailable);
+  await assert.rejects(isolated.prepare([GConfig.Language, GConfig.LoadingTips]), /broken config/);
+  assert.throws(() => isolated.getConfig(GConfig.Language), ConfigUnavailable, "失败组不能部分提交");
+  assert.equal(isolated.status(GConfig.LoadingTips).state, "failed");
   fail = false;
-  await Promise.all([isolated.prepare(["a", "b"]), isolated.prepare(["a"])]);
-  assert.deepEqual(calls.sort(), ["a", "b", "b"], "reuse successful/in-flight reads, retry failure");
-  assert.deepEqual(await isolated.read("b"), { rows: [] });
-  let valid = false;
-  const malformed = new GroupedConfig(async () => valid ? { rows: [] } : {}, validateRemakeConfig);
-  await assert.rejects(malformed.prepare(["config/language"]), /配置缺少/);
-  assert.equal(malformed.get("config/language"), undefined);
-  valid = true; await malformed.prepare(["config/language"]);
-
+  await Promise.all([isolated.prepare([GConfig.Language, GConfig.LoadingTips]), isolated.prepare([GConfig.Language])]);
+  assert.deepEqual(calls.sort(), ["config/language", "config/loadingtips", "config/loadingtips"], "成功请求复用，失败请求重试");
+  assert.equal(isolated.status(GConfig.Language).state, "ready");
+  assert.equal(isolated.getConfig(GConfig.Language).length, 0, "空表明确为已加载");
+  assert.equal(isolated.getConfig(GConfig.Language, 1), undefined);
+  assert.throws(() => isolated.requireConfig(GConfig.Language, 1), ConfigRowMissing);
+  assert.equal(isolated.getConfig(GConfig.Language), isolated.getConfig(GConfig.Language), "整表不重复复制");
+  let bad = true;
+  const checked = new GameConfig(async () => ({ rows: [{ idx: 1, tips: bad ? {} : 3701 }] }));
+  await assert.rejects(checked.prepare([GConfig.LoadingTips]), /LoadingTips.rows\[0\].tips/);
+  bad = false; await checked.prepare([GConfig.LoadingTips]);
+  const old = checked.getConfig(GConfig.LoadingTips);
+  assert(Object.isFrozen(old) && Object.isFrozen(old[0]));
+  bad = true; await assert.rejects(checked.prepare([GConfig.LoadingTips], undefined, "v2"));
+  assert.equal(checked.getConfig(GConfig.LoadingTips), old, "版本加载失败保留原有效配置");
+  bad = false; await checked.prepare([GConfig.LoadingTips], undefined, "v2");
+  assert.equal(checked.status(GConfig.LoadingTips).version, "v2");
   let resolveLate!: (value: unknown) => void;
   const late = new Promise<unknown>(resolve => { resolveLate = resolve; });
-  const racing = new GroupedConfig(path => path === "fail" ? Promise.reject(new Error("fail")) : late, () => {});
-  let reports = 0;
-  await assert.rejects(racing.prepare(["fail", "late"], () => { reports++; }), /fail/);
-  const stopped = reports; resolveLate({ rows: [] });
-  await new Promise(resolve => setTimeout(resolve, 0));
-  assert.equal(reports, stopped, "failed groups ignore late progress callbacks");
-
+  const racing = new GameConfig((_path, version) => version === "old" ? late : Promise.resolve({ rows: [{ idx: 2, tips: 2 }] }));
+  const oldRequest = racing.prepare([GConfig.LoadingTips], undefined, "old");
+  const rejected = assert.rejects(oldRequest, ConfigVersionSuperseded);
+  await racing.prepare([GConfig.LoadingTips], undefined, "new");
+  resolveLate({ rows: [{ idx: 1, tips: 1 }] }); await rejected;
+  assert.equal(racing.getConfig(GConfig.LoadingTips, 1), undefined);
+  assert.equal(racing.requireConfig(GConfig.LoadingTips, 2).tips, 2);
+  let reports = 0, finish!: (value: unknown) => void;
+  const pending = new Promise<unknown>(resolve => { finish = resolve; });
+  const failedGroup = new GameConfig(path => path.endsWith("language") ? Promise.reject(new Error("fail")) : pending);
+  await assert.rejects(failedGroup.prepare([GConfig.Language, GConfig.LoadingTips], () => reports++));
+  const stopped = reports; finish({ rows: [] }); await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(reports, stopped, "失败后迟到进度停止");
   const requested: string[] = [];
   resources.load = (path: string, _type: unknown, done: Function) => {
-    requested.push(path);
-    const asset = new JsonAsset();
-    asset.json = JSON.parse(readFileSync(`client/assets/resources/${path}.json`, "utf8"));
-    done(null, asset);
+    requested.push(path); const asset = new JsonAsset();
+    asset.json = JSON.parse(readFileSync("client/assets/resources/" + path + ".json", "utf8")); done(null, asset);
   };
-  const old = ConfigDb.current = new ConfigDb(); old.tableCount = 536;
   await prepareStartupConfig();
   assert.deepEqual(requested.sort(), ["config/language", "config/loadingtips"]);
-  const copy = await loadBootCopy(<T>(path: string) => remakeConfig.read<T>(path));
-  assert(copy.tips.length > 0); assert.equal(requested.length, 2, "loading copy reuses prepared values");
-  assert.equal(readCityGates(), null, "city config is not eagerly loaded");
-  await prepareCityConfig();
-  assert.equal(requested.length, 7);
-  assert(readCityGates()!.opencondition.length > 0);
-  assert(!requested.includes("config/herotype"), "hero config is not a login/city requirement");
-  await Promise.all([prepareHeroConfig(), prepareHeroConfig()]);
-  assert.equal(requested.length, 9, "hero read group adds only herotype and item, with concurrent dedup");
-  assert((await remakeConfig.read<any>("config/herotype")).rows.length > 0);
-  assert.equal(ConfigDb.current, old); assert.equal(old.tableCount, 536, "legacy DB is never replaced by partial data");
-  assert.throws(() => validateRemakeConfig("config/language", {}), /配置缺少/);
-  assert.throws(() => validateRemakeConfig("config/maincity/createmaincitybtn", { act: [] }), /配置缺少/);
-  const app = readFileSync("client/assets/scripts/app/remake/RemakeApp.ts", "utf8");
-  assert(!app.includes("ConfigLoader.loadAll"));
-  console.log("config-groups-check passed: atomic groups, failure retry, concurrent dedup, real 2+5+2 configs, copy reuse and legacy DB isolation");
+  assert((await loadBootCopy()).tips.length > 0); assert.equal(requested.length, 2);
+  assert.equal(readCityGates(), null);
+  await prepareCityConfig(); assert.equal(requested.length, 7); assert(readCityGates()!.opencondition.length > 0);
+  await Promise.all([prepareHeroConfig(), prepareHeroConfig()]); assert.equal(requested.length, 9);
+  assert(GameConfig.instance.getConfig(GConfig.HeroType).length > 0);
+  assert.equal(GameConfig.instance.requireConfig(GConfig.Language, 11).value, "确 定", "数字文本主键统一索引");
+  console.log("config-groups-check passed");
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

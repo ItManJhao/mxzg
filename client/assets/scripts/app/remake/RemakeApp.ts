@@ -1,3 +1,11 @@
+/**
+ * 重做版应用装配入口，连接账号、主城、英雄、背包、阵容和主线流程。
+ * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
+ */
+import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
+import { GameConfig } from "../../config/GameConfig";
+import { GConfig } from "../../config/GConfig";
+
 import { _decorator, Asset, Component, director, Director, Node, Prefab, sys } from "cc";
 import { AccountModel } from "../../features/account/AccountModel";
 import { AccountApi, readSession } from "../../features/account/AccountApi";
@@ -12,10 +20,10 @@ import { UIManager, isOpenCancelled } from "../../framework/ui/UIManager";
 import { registerView } from "../../framework/ui/UIRegistry";
 import { UILayer } from "../../framework/ui/UILayer";
 import { RemakeNavigation } from "./RemakeNavigation";
-import { prepareStartupConfig, remakeConfig } from "../../config/RemakeConfig";
-import { BootChrome, loadBootCopy } from "../../ui/bootChrome";
-import { playLogoSplash } from "../../ui/logoSplash";
-import type { LogoSplashHandle } from "../../ui/logoSplash";
+import { prepareStartupConfig } from "../../config/RemakeConfig";
+import { BootChrome, loadBootCopy } from "./bootChrome";
+import { playLogoSplash } from "./logoSplash";
+import type { LogoSplashHandle } from "./logoSplash";
 import { runStartup, StartupCancelled } from "./StartupFlow";
 import { LoginEntry } from "./LoginEntry";
 import { createStartupResourceScope, STARTUP_RESOURCE_KEYS } from "./StartupResources";
@@ -37,7 +45,7 @@ import { slideFeaturePage } from "./PageTransition";
 import { createFeatureResourceScope, loadFeaturePage } from "./FeatureResources";
 import { BagView } from "../../features/Bag/ui/BagView";
 import { BagController } from "../../features/Bag/BagController";
-import { mountBackpackPage } from "../../features/Bag/ui/BagMount";
+import { mountBagPage } from "../../features/Bag/ui/BagMount";
 import { BagApi } from "../../features/Bag/BagApi";
 import { BagItemCatalog } from "../../features/Bag/BagItemCatalog";
 import { CampaignController } from "../../features/battle/CampaignController";
@@ -61,6 +69,7 @@ export class RemakeApp extends Component {
   private navigation: RemakeNavigation | null = null;
   private offAccount: (() => void) | null = null;
   private bagModule: BagController | null = null;
+  private heroRosterService: HeroRosterService | null = null;
   private unregisterViews: Array<() => void> = [];
   private requestedRoute = "";
   private alive = false;
@@ -76,6 +85,7 @@ export class RemakeApp extends Component {
   private features: HomeFeatureNavigation | null = null;
   private featureResources: ResourceScope<Prefab> | null = null;
 
+  /** 编辑器启动应用时装配唯一会话服务和页面注册，并执行新链路启动流程。 */
   start(): void {
     if (!this.loginPrefab || !this.loadingPrefab || !this.pageHost || !this.startupHost) throw new Error("Remake 场景未绑定页面/加载 Prefab 或启动宿主，请重新打开已更新的 Remake.scene");
     const model = new AccountModel();
@@ -93,6 +103,9 @@ export class RemakeApp extends Component {
     });
     BagController.instance.initialize({ account: model, authorization: service, api: new BagApi(http) });
     this.bagModule = BagController.instance;
+    // 名册状态属于应用会话，关闭英雄页面只解除 View 观察，不销毁角色数据。
+    const roster = new HeroRosterModel();
+    const rosterService = this.heroRosterService = new HeroRosterService(roster, model, service, new HeroApi(http));
     const ui = UIManager.instance;
     const entry = new LoginEntry();
     let homeView: RemakeHomeView | null = null;
@@ -110,7 +123,7 @@ export class RemakeApp extends Component {
     ui.install(this.navigation, { showToast: text => console.warn("[RemakeUI] " + text) });
     this.unregisterViews.push(ui.setResidentHost("remake-modal", () => this.pageHost));
     this.unregisterViews.push(registerView(ServerPickerView, {
-      id: "server-picker", prefab: "prefabs/ui/login/ChooseServerLayer", layer: UILayer.Popup,
+      id: "server-picker", prefab: ResourceCatalog.prefab_login.ServerPickerView.assetPath, layer: UILayer.Popup,
       cache: false, allowMultiple: false, hostId: "remake-modal",
       load: () => {
         if (!this.featureResources) this.featureResources = createFeatureResourceScope();
@@ -119,7 +132,7 @@ export class RemakeApp extends Component {
     }));
     // All business composition lives here. The UI framework imports no account/home classes.
     this.unregisterViews.push(registerView(AccountLoginView, {
-      id: "remake-login", prefab: "prefabs/ui/account/AccountLogin", layer: UILayer.Page,
+      id: "remake-login", prefab: ResourceCatalog.prefab_account.AccountLoginView.assetPath, layer: UILayer.Page,
       cache: false, allowMultiple: false, load: async () => this.loginPrefab!,
       createController: view => new AccountController(model, service, view as AccountLoginView, () => {
         ui.closeById("server-picker");
@@ -136,7 +149,7 @@ export class RemakeApp extends Component {
       }),
     }));
     this.unregisterViews.push(registerView(RemakeHomeView, {
-      id: "remake-home", prefab: "bundles/remake-home/RemakeHome", layer: UILayer.Page,
+      id: "remake-home", prefab: ResourceCatalog.prefab_remake_home.RemakeHomeView.assetPath, layer: UILayer.Page,
       cache: false, allowMultiple: false, load: async () => {
         if (!this.homeResources) this.homeResources = createHomeResourceScope();
         return this.homeResources.load("home");
@@ -147,42 +160,38 @@ export class RemakeApp extends Component {
       },
     }));
     this.unregisterViews.push(registerView(HeroListView, {
-      id: "hero", prefab: "prefabs/ui/hero/HeroListLayer", layer: UILayer.Page,
+      id: "hero", prefab: ResourceCatalog.prefab_hero.HeroListView.assetPath, layer: UILayer.Page,
       cache: false, allowMultiple: false, mount: mountHeroListPage,
       load: async () => {
         if (!this.heroResources) this.heroResources = createHeroResourceScope();
         return loadHeroPage(this.heroResources);
       },
       createController: view => {
-        const catalog = new HeroCatalog(remakeConfig.get("config/herotype"), remakeConfig.get("config/item"));
-        const roster = new HeroRosterModel();
-        const rosterService = new HeroRosterService(roster, model, service, new HeroApi(http));
-        try {
-          return new HeroRosterController(roster, rosterService, catalog, view as HeroListView, text => homeView?.showNotice(text));
-        } catch (error) { rosterService.dispose(); throw error; }
+        const catalog = new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
+        return new HeroRosterController(roster, rosterService, catalog, view as HeroListView, text => homeView?.showNotice(text));
       },
     }));
-    const itemCatalog = () => new BagItemCatalog(remakeConfig.get<{rows:Record<string,unknown>[]}>("config/item")!,
-      remakeConfig.get<{rows:Record<string,unknown>[]}>("config/language")!);
+    const itemCatalog = () => new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
+      GameConfig.instance.getFile(GConfig.Language));
     const loadFeature = (group: "bag" | "campaign" | "formation") => {
       if (!this.featureResources) this.featureResources = createFeatureResourceScope();
       return loadFeaturePage(this.featureResources,group);
     };
     this.unregisterViews.push(registerView(FormationView, {
-      id:"remake-formation",prefab:"prefabs/ui/hero/HeroSelectLayer",layer:UILayer.Popup,hostId:"remake-modal",cache:false,allowMultiple:false,
+      id:"remake-formation",prefab:ResourceCatalog.prefab_hero.FormationView.assetPath,layer:UILayer.Popup,hostId:"remake-modal",cache:false,allowMultiple:false,
       load:()=>loadFeature("formation"),
       createController:view=>new FormationController(model,service,new HeroApi(http),new LineupApi(http),
-        new HeroCatalog(remakeConfig.get("config/herotype"),remakeConfig.get("config/item")),view as FormationView),
+        new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType),GameConfig.instance.getFile(GConfig.Item)),view as FormationView),
     }));
     const chooseFormation = () => new Promise<boolean>((resolve,reject)=>{
       void ui.openById("remake-formation",{complete:resolve}).catch(reject);
     });
     this.unregisterViews.push(registerView(BagView, {
-      id:"bag",prefab:"prefabs/ui/backpack/BackpackLayer",layer:UILayer.Page,cache:false,allowMultiple:false,
-      mount:mountBackpackPage,load:() => loadFeature("bag"),
+      id:"bag",prefab:ResourceCatalog.prefab_Bag.BagView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
+      mount:mountBagPage,load:() => loadFeature("bag"),
     }));
     this.unregisterViews.push(registerView(CampaignView, {
-      id:"remake-campaign",prefab:"prefabs/ui/battle/BattlePanelLayer",layer:UILayer.Page,cache:false,allowMultiple:false,
+      id:"remake-campaign",prefab:ResourceCatalog.prefab_battle.CampaignView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
       mount:mountCampaignPage,load:() => loadFeature("campaign"),
       createController:view => {
         (view as CampaignView).configure(itemCatalog(),() => model.snapshot.role?.level || 1,chooseFormation,()=>{ui.closeById("remake-formation");});
@@ -266,7 +275,7 @@ export class RemakeApp extends Component {
         await runStartup([
           { label: "加载游戏配置", weight: 50, run: async progress => {
             await prepareStartupConfig(progress);
-            const copy = await loadBootCopy(<T>(path: string) => remakeConfig.read<T>(path));
+            const copy = await loadBootCopy();
             if (this.alive) chrome.setTips(copy.tips);
           } },
           { label: "加载界面资源", weight: 20, run: async progress => {
@@ -311,6 +320,7 @@ export class RemakeApp extends Component {
       director.once(Director.EVENT_AFTER_DRAW, done);
     });
   }
+  /** 应用销毁时先关闭页面，再释放模块、会话观察和资源作用域。 */
   onDestroy(): void {
     this.alive = false;
     this.started = false;
@@ -325,6 +335,7 @@ export class RemakeApp extends Component {
     UIManager.instance.closeById("remake-formation");
     this.navigation?.dispose(); this.navigation = null;
     this.bagModule?.dispose(); this.bagModule = null;
+    this.heroRosterService?.dispose(); this.heroRosterService = null;
     this.homeResources?.dispose(); this.homeResources = null;
     this.heroResources?.dispose(); this.heroResources = null;
     this.featureResources?.dispose(); this.featureResources = null;

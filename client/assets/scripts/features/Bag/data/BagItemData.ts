@@ -1,4 +1,5 @@
-import type { BagTabKind } from "../../../config/gameCatalog";
+/** 背包协议条目与显示投影类型；API 和 Model 共用整批校验，显示可见性不改变服务器库存。 */
+import type { BagTabKind } from "./BagTabKind";
 
 /** Absolute quantities from the inventory protocol, independent of any network adapter. */
 export interface BagItemData {
@@ -37,5 +38,6 @@ export interface BagFace {
 
 export interface BagItemDisplayData extends BagFace {
     readonly category: BagTabKind;
-    readonly wallet: boolean;
+    /** 源配置 place=0 时仅隐藏背包格子，不丢弃库存条目或结算奖励。 */
+    readonly hiddenInBag: boolean;
 }

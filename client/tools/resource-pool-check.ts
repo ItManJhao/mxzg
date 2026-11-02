@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { ResourcePool, ResourceScopeClosed } from "../assets/scripts/framework/assets/ResourcePool";
 import { assetManager, Prefab } from "cc";
-import { loadPrefab } from "../assets/scripts/ui/prefabLoad";
+import { loadPrefab } from "../assets/scripts/framework/assets/PrefabLoader";
 import { readFileSync } from "node:fs";
 
 function deferred<T>() {

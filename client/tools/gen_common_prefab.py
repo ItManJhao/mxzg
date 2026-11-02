@@ -12,7 +12,7 @@ and their .meta files, plus ui/common.meta if it is missing.
 SpriteFrame uuids are read from client/assets/resources/**/*.meta (@f9941).
 No PNG is copied into prefabs/. The five #66 nine-slice metas are read-only.
 
-Shell scripts under client/assets/scripts/ui/common/ are not generated here.
+Shell scripts under client/assets/scripts/framework/ui/common/ are not generated here.
 This script only binds the @property node refs already declared on those shells.
 It does not touch Boot, prefabLoad, USE_* flags, or protocol scripts.
 
@@ -96,7 +96,7 @@ PROTECTED = {
 }
 
 SHELLS = {
-    "CommonPanel": {
+    "CommonPanelShell": {
         "script": "CommonPanelShell.ts",
         "props": ("frame", "titleBar", "title", "btnClose", "content"),
         "nodes": {
@@ -107,17 +107,17 @@ SHELLS = {
             "content": "CommonPanel/Content",
         },
     },
-    "CommonBtnPrimary": {
+    "CommonBtnPrimaryShell": {
         "script": "CommonBtnPrimaryShell.ts",
         "props": ("label",),
         "nodes": {"label": "CommonBtnPrimary/Label"},
     },
-    "CommonBtnSecondary": {
+    "CommonBtnSecondaryShell": {
         "script": "CommonBtnSecondaryShell.ts",
         "props": ("label",),
         "nodes": {"label": "CommonBtnSecondary/Label"},
     },
-    "CommonListRow": {
+    "CommonListRowShell": {
         "script": "CommonListRowShell.ts",
         "props": ("icon", "title", "subtitle", "action"),
         "nodes": {
@@ -127,7 +127,7 @@ SHELLS = {
             "action": "CommonListRow/Action",
         },
     },
-    "CommonRedDot": {
+    "CommonRedDotShell": {
         "script": "CommonRedDotShell.ts",
         "props": ("dot",),
         "nodes": {"dot": "CommonRedDot/Dot"},
@@ -627,8 +627,8 @@ def sprite_type(sprite):
 
 
 def build_panel(shell):
-    b = Builder("CommonPanel")
-    root = b.make_node("CommonPanel", None, 0, 0, PANEL_W, PANEL_H)
+    b = Builder("CommonPanelShell")
+    root = b.make_node("CommonPanelShell", None, 0, 0, PANEL_W, PANEL_H)
     if root != 1:
         raise SystemExit("root id drifted")
     b.add_block(root)
@@ -663,8 +663,8 @@ def build_button(name, shell, normal_key, pressed_key, text):
 
 
 def build_row(shell):
-    b = Builder("CommonListRow")
-    root = b.make_node("CommonListRow", None, 0, 0, ROW_W, ROW_H)
+    b = Builder("CommonListRowShell")
+    root = b.make_node("CommonListRowShell", None, 0, 0, ROW_W, ROW_H)
     if root != 1:
         raise SystemExit("root id drifted")
     b.make_sprite_node("Bg", root, 0, 0, ROW_W, ROW_H, SF["frame"], sprite_type(SF["frame"]))
@@ -682,8 +682,8 @@ def build_row(shell):
 
 
 def build_dot(shell):
-    b = Builder("CommonRedDot")
-    root = b.make_node("CommonRedDot", None, 0, 0, DOT_ROOT, DOT_ROOT, ax=1, ay=1)
+    b = Builder("CommonRedDotShell")
+    root = b.make_node("CommonRedDotShell", None, 0, 0, DOT_ROOT, DOT_ROOT, ax=1, ay=1)
     if root != 1:
         raise SystemExit("root id drifted")
     dot = b.make_node("Dot", root, DOT_POS, DOT_POS, DOT_SIZE, DOT_SIZE)
@@ -694,7 +694,7 @@ def build_dot(shell):
 
 
 def check_panel(b, shell):
-    root = "CommonPanel"
+    root = "CommonPanelShell"
     b.expect(root, 0, 0, PANEL_W, PANEL_H)
     if b.comp(root, "cc.BlockInputEvents") is None:
         raise SystemExit("panel missing BlockInputEvents")
@@ -744,7 +744,7 @@ def check_button(b, shell, normal_key, pressed_key, text):
 
 
 def check_row(b, shell):
-    root = "CommonListRow"
+    root = "CommonListRowShell"
     b.expect(root, 0, 0, ROW_W, ROW_H)
     b.expect(root + "/Bg", 0, 0, ROW_W, ROW_H)
     b.expect_sprite(root + "/Bg", SF["frame"], SLICED, WHITE)
@@ -765,7 +765,7 @@ def check_row(b, shell):
 
 
 def check_dot(b, shell):
-    root = "CommonRedDot"
+    root = "CommonRedDotShell"
     b.expect(root, 0, 0, DOT_ROOT, DOT_ROOT, ax=1, ay=1)
     if len(b.node(root)["_components"]) != 2:
         raise SystemExit("red-dot root should only be the mount plus the shell")
@@ -911,11 +911,11 @@ def main():
     write_dir_meta()
     shells = {name: load_shell(name) for name in SHELLS}
     pages = [
-        build_panel(shells["CommonPanel"]),
-        build_button("CommonBtnPrimary", shells["CommonBtnPrimary"], "btn_primary", "btn_primary_p", "确定"),
-        build_button("CommonBtnSecondary", shells["CommonBtnSecondary"], "btn_secondary", "btn_secondary_p", "取消"),
-        build_row(shells["CommonListRow"]),
-        build_dot(shells["CommonRedDot"]),
+        build_panel(shells["CommonPanelShell"]),
+        build_button("CommonBtnPrimaryShell", shells["CommonBtnPrimaryShell"], "btn_primary", "btn_primary_p", "确定"),
+        build_button("CommonBtnSecondaryShell", shells["CommonBtnSecondaryShell"], "btn_secondary", "btn_secondary_p", "取消"),
+        build_row(shells["CommonListRowShell"]),
+        build_dot(shells["CommonRedDotShell"]),
     ]
     for page in pages:
         write_prefab(page, shells[page.prefab_name])

@@ -1,29 +1,23 @@
-import { Asset, AudioClip, resources, sp, SpriteFrame } from "cc";
-import { ResourcePool } from "../../framework/assets/ResourcePool";
-
-/** Startup dependencies have readable IDs; feature catalogs will be added after auditing. */
+/** 启动资源键对应生成目录描述；复用统一 ResourcePool 作用域，不拥有第二份资源缓存。 */
+import { Asset } from "cc";
+import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
+import { createAssetScope } from "../../framework/assets/ResourceAssets";
+import type { ResourceScope } from "../../framework/assets/ResourcePool";
 export const STARTUP_RESOURCES = {
-  loginCast: { path: "spine/jiemian", type: sp.SkeletonData },
-  loadingBar: { path: "spine/jindutiao", type: sp.SkeletonData },
-  loginBackdrop: { path: "ui/maps/map-bg-loading/spriteFrame", type: SpriteFrame },
-  loginMusic: { path: "audio/bgm-logo", type: AudioClip },
+  loginCast: ResourceCatalog.spine.jiemian,
+  loadingBar: ResourceCatalog.spine.jindutiao,
+  loginBackdrop: ResourceCatalog.maps.map_bg_loading,
+  loginMusic: ResourceCatalog.audio.bgm_logo,
 };
 export const STARTUP_RESOURCE_KEYS = Object.keys(STARTUP_RESOURCES) as Array<keyof typeof STARTUP_RESOURCES>;
-
-const pool = new ResourcePool<Asset>({
-  load: key => {
-    const spec = STARTUP_RESOURCES[key as keyof typeof STARTUP_RESOURCES];
-    if (!spec) return Promise.reject(new Error("未登记的启动资源：" + key));
-    return new Promise((resolve, reject) => {
-      resources.load(spec.path, spec.type as typeof Asset, (error, asset) => {
-        if (error || !asset) reject(error || new Error("缺少资源：" + key));
-        else resolve(asset);
-      });
-    });
-  },
-  retain: asset => { asset.addRef(); },
-  // Legacy pages still load these shared assets without scopes. Drop our pin,
-  // but preserve engine cache until their ownership is migrated and verified.
-  release: asset => { asset.decRef(false); },
-});
-export const createStartupResourceScope = () => pool.createScope();
+/** 兼顾启动进度使用的语义键，将实际加载与释放交给共享资源作用域。 */
+export function createStartupResourceScope(): ResourceScope<Asset> {
+  const scope = createAssetScope();
+  return {
+    load: key => {
+      const descriptor = STARTUP_RESOURCES[key as keyof typeof STARTUP_RESOURCES];
+      return descriptor ? scope.load(descriptor) : Promise.reject(new Error("未登记的启动资源：" + key));
+    },
+    dispose: () => scope.dispose(),
+  };
+}

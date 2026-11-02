@@ -1,15 +1,19 @@
-import { _decorator, Button, Component, director, Director, Graphics, Label, Mask, Node, ScrollView, UITransform } from "cc";
+/**
+ * 英雄列表板：管理筛选按钮和滚动容器显示，名册数据由外部注入，不维护角色状态。
+ */
+import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
+import { _decorator, Button, Component, Label, Mask, Node, ScrollView, UITransform } from "cc";
 import { GameLog } from "../../../core/GameLog";
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
-import { assignContentSize, positiveUiSize } from "../../../ui/visibleFit";
-import { HERO_PORT_H } from "./heroChrome";
+
+
 
 const { ccclass, property } = _decorator;
 
-const ELEM_SPRITE = "ui/hero/hero-icon_elem-";
+const ELEMENT_FRAMES = [ResourceCatalog.hero.hero_icon_elem_0, ResourceCatalog.hero.hero_icon_elem_1, ResourceCatalog.hero.hero_icon_elem_2, ResourceCatalog.hero.hero_icon_elem_3, ResourceCatalog.hero.hero_icon_elem_4, ResourceCatalog.hero.hero_icon_elem_5] as const;
 
 /**
- * HeroListHeroLayer。羊皮纸、滚动、元素筛选和空间字绑在这一层上。
+ * HeroListBoardView。羊皮纸、滚动、元素筛选和空间字绑在这一层上。
  * 不从根往下搜。格子由 HeroListView 填进 content。
  */
 @ccclass("HeroListBoardView")
@@ -57,46 +61,17 @@ export class HeroListBoardView extends Component {
     return this.heroContent;
   }
 
-  /**
-   * 进场景前卸掉宿主遮罩。onLoad 会装一块空模板，格子会被裁到看不见。
-   * content 仍等进了场景再收进 view。
-   */
-  dropHostMask(): void {
-    const scroll = this.heroScroll;
-    if (!scroll) return;
-    const hostMask = scroll.getComponent(Mask);
-    if (hostMask) scroll.removeComponent(hostMask);
-  }
-
+  /** 校验静态视口、遮罩和内容归属；不再运行时重挂节点、改尺寸或禁用遮罩。 */
   prepare(): boolean {
-    const scroll = this.heroScroll;
-    const port = this.heroPort;
-    const content = this.heroContent;
-    if (!scroll || !port || !content) {
-      GameLog.shared.warn("Hero", "HeroListHeroLayer 的 spr_box 下没有 HeroScroll");
-      return false;
-    }
-    if (!this.node.activeInHierarchy) return false;
-    this.dropHostMask();
-    this.fitPort();
-    if (content.parent !== port) content.parent = port;
-    content.setPosition(0, 0, 0);
-    const scrollUi = scroll.getComponent(UITransform);
-    const scrollSize = positiveUiSize(scrollUi);
-    const width = scrollSize && scrollSize.width > 0 ? scrollSize.width : 540;
-    const height = scrollSize && scrollSize.height > 0 ? scrollSize.height : 320;
-    assignContentSize(scrollUi, width, height);
-    const viewUi = port.getComponent(UITransform);
-    const viewSize = positiveUiSize(viewUi);
-    assignContentSize(viewUi, viewSize && viewSize.width > 0 ? viewSize.width : width, height);
-    this.armMask(port);
-    const scroller = scroll.getComponent(ScrollView);
-    if (!scroller) GameLog.shared.warn("Hero", "HeroScroll 没有 ScrollView");
-    else if (scroller.content !== content) scroller.content = content;
-    this.silenceHit();
-    return true;
+    if (!this.heroScroll || !this.heroPort || !this.heroContent) throw new Error("HeroListBoardView 缺少滚动绑定");
+    if (this.heroContent.parent !== this.heroPort || this.heroScroll.getComponent(Mask) || !this.heroPort.getComponent(Mask))
+      throw new Error("HeroListBoardView 需要 view/Mask/content 的静态布局");
+    const scroller = this.heroScroll.getComponent(ScrollView);
+    if (!scroller || scroller.content !== this.heroContent) throw new Error("HeroListBoardView ScrollView.content 绑定错误");
+    return this.node.activeInHierarchy;
   }
 
+  /** 绑定一次元素筛选交互，并使用目录中明确登记的元素图标。 */
   bindElem(pick: (id: number) => void): void {
     if (this.elemBound) return;
     this.elemBound = true;
@@ -104,19 +79,19 @@ export class HeroListBoardView extends Component {
       this.elemRow.active = true;
       this.elemRow.setSiblingIndex(this.elemRow.parent.children.length - 1);
     } else {
-      GameLog.shared.warn("Hero", "HeroListHeroLayer 没有 node_elem");
+      GameLog.shared.warn("Hero", "HeroListBoardView 没有 node_elem");
     }
     if (this.elemButtons.length < 6) {
-      GameLog.shared.warn("Hero", "HeroListHeroLayer 的元素钮没有绑全");
+      GameLog.shared.warn("Hero", "HeroListBoardView 的元素钮没有绑全");
     }
     for (let i = 0; i < this.elemButtons.length; i++) {
       const button = this.elemButtons[i];
-      if (!button || !button.node) continue;
+      if (!button || !button.node || !ELEMENT_FRAMES[i]) continue;
       const id = i;
       button.node.active = true;
       button.transition = Button.Transition.NONE;
       button.interactable = true;
-      paintSpritePaths(button.node, [ELEM_SPRITE + id]);
+      paintSpritePaths(button.node, [ELEMENT_FRAMES[id].path]);
       button.node.on(Button.EventType.CLICK, () => pick(id));
     }
   }
@@ -152,20 +127,6 @@ export class HeroListBoardView extends Component {
   }
 
   /**
-   * 日服大约露出 3 行半。格子中心从 -52 起，行距 112，第 4 行中心在 388。
-   * 视口顶锚点切在这里。
-   */
-  private fitPort(): void {
-    const scroll = this.heroScroll;
-    const scrollUi = scroll ? scroll.getComponent(UITransform) : null;
-    const scrollSize = positiveUiSize(scrollUi);
-    const width = scrollSize && scrollSize.width > 0 ? scrollSize.width : 540;
-    assignContentSize(scrollUi, width, HERO_PORT_H);
-    const portUi = this.heroPort ? this.heroPort.getComponent(UITransform) : null;
-    assignContentSize(portUi, width, HERO_PORT_H);
-  }
-
-  /**
    * 外层羊皮纸拉高之后，花边、空间字和进化钮贴住新的纸底。
    * paperBottom 是列表根上的 y。检查里这几样直接挂在板子上时不动，避免把假节点拽走。
    */
@@ -182,52 +143,4 @@ export class HeroListBoardView extends Component {
     node.setPosition(node.position.x, listY - this.node.position.y, node.position.z);
   }
 
-  private silenceHit(): void {
-    const menu = this.hitMenu;
-    if (!menu) return;
-    const ui = menu.getComponent(UITransform);
-    const size = positiveUiSize(ui);
-    if (!ui || !size || size.width < 500 || size.height < 500) return;
-    ui.setContentSize(0, 0);
-  }
-
-  private armMask(node: Node): void {
-    const draw = () => {
-      if (!node.isValid) return false;
-      let mask = node.getComponent(Mask);
-      if (!mask) mask = node.addComponent(Mask);
-      if (!node.activeInHierarchy) return false;
-      const ui = node.getComponent(UITransform);
-      const size = positiveUiSize(ui);
-      if (!ui || !size) {
-        mask.enabled = false;
-        return false;
-      }
-      mask.enabled = true;
-      if (mask.type !== Mask.Type.GRAPHICS_RECT) mask.type = Mask.Type.GRAPHICS_RECT;
-      assignContentSize(ui, size.width, size.height);
-      return !!node.getComponent(Graphics);
-    };
-    if (draw()) return;
-    let frames = 0;
-    const retry = () => {
-      if (!node.isValid) {
-        director.off(Director.EVENT_AFTER_UPDATE, retry);
-        return;
-      }
-      frames += 1;
-      const drawn = draw();
-      if (drawn || frames > 45) {
-        if (!drawn && node.isValid && !node.getComponent(Graphics)) {
-          const mask = node.getComponent(Mask);
-          if (mask) mask.enabled = false;
-        }
-        director.off(Director.EVENT_AFTER_UPDATE, retry);
-      }
-    };
-    director.on(Director.EVENT_AFTER_UPDATE, retry);
-    node.once(Node.EventType.NODE_DESTROYED, () => {
-      director.off(Director.EVENT_AFTER_UPDATE, retry);
-    });
-  }
 }

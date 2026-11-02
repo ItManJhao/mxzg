@@ -1,9 +1,11 @@
+/** 主城 Bundle 资源装配：登记页面依赖并由应用作用域加载释放，不持有业务状态。 */
+import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { assetManager, AssetManager, Prefab } from "cc";
 import { ResourcePool } from "../../framework/assets/ResourcePool";
 import { prepareCityConfig } from "../../config/RemakeConfig";
 
 export const HOME_BUNDLE = "remake-home";
-export const HOME_PREFAB = "RemakeHome";
+export const HOME_PREFAB = ResourceCatalog.prefab_remake_home.RemakeHomeView.loadPath;
 
 function bundle(name: string): Promise<AssetManager.Bundle> {
   const ready = assetManager.getBundle(name);

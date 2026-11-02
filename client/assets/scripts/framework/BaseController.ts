@@ -1,3 +1,7 @@
+/**
+ * 模块生命周期基类：管理会话代次、显式初始化和模块自有监听。
+ * 不持有界面或协议状态，页面关闭不释放模块。
+ */
 import { EventDispatcher } from "./EventDispatcher";
 import type { EventPayloads } from "./EventDispatcher";
 import { EventScope } from "./EventScope";
@@ -41,6 +45,7 @@ export abstract class BaseController {
     dispose(): void {
         if (!this.initialized) return;
         this.initialized = false;
+        EventDispatcher.instance.offTarget(this);
         this.eventScope.clear();
         this.resetSession(null);
         this.onDispose();

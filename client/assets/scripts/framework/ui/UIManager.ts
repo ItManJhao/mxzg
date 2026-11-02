@@ -1,7 +1,10 @@
+/**
+ * 统一界面管理：协调异步加载、打开取消、返回、缓存和释放，具体业务由应用注册的页面适配器提供。
+ */
 import { Node, Prefab } from "cc";
 import { messageOf } from "../../core/errors";
 import { GameLog, monoNow } from "../../core/GameLog";
-import { loadPrefab, spawnPrefab } from "../../ui/prefabLoad";
+import { loadPrefab, spawnPrefab } from "../assets/PrefabLoader";
 import { logViewReady } from "./UIOpenLog";
 import { BaseView } from "./BaseView";
 import { UILayer } from "./UILayer";
