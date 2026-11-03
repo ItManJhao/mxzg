@@ -9,14 +9,6 @@ export interface BagItemData {
     readonly quantity: number;
 }
 
-/** 预留的本地增量计算类型，当前服务端同步采用完整快照，不从此入口发奖。 */
-export interface BagItemDelta {
-    /** 当前协议的物品配置 ID，尚非旧版独立装备实例 ID。 */
-    readonly itemId: number;
-    /** 数量差值，正数增加、负数扣除。 */
-    readonly delta: number;
-}
-
 /** 校验并复制完整库存，拒绝重复 ID、非正数和不安全整数；全部成功才返回冻结列表，空数组有效，错误时抛出异常。 */
 export function readBagItems(value: unknown): readonly BagItemData[] {
     if (!Array.isArray(value)) throw new Error("背包数据无效");

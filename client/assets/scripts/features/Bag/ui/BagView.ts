@@ -14,7 +14,6 @@ import {
     BAG_TABS,
     bagSlotCount,
 } from "./BagPresentation";
-import {BagController} from "../BagController";
 import {BagModel} from "../BagModel";
 import type {BagItemData} from "../data/BagItemData";
 import {BagEvent} from "../BagEvent";
@@ -265,9 +264,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.talk.node.active = true;
         const state = BagModel.instance.snapshot;
         this.talk.string = state.status === "idle" ? "背包尚未同步"
-            : state.status === "loading" ? "正在同步背包…"
-                : state.status === "error" ? state.error + (state.synced ? "，显示上次库存" : "")
-                    : state.items.length ? this.catalog!.greeting : "背包为空";
+            : state.items.length ? this.catalog!.greeting : "背包为空";
     }
 
     /** 根据现有分类生成页签，点击只切换显示分类，不查询库存。 */

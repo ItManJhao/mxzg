@@ -23,7 +23,7 @@ BagApi、BagUpdateCoordinator、bindBagSession 已删除；不再保留背包查
 - 服务端 Snapshot.revision 是持久资产版本；BagState.revision 是本地提交序号；BagItemView.revision 是异步贴图代次，三者不得混用。
 - BagAdd 表示“新增库存种类”，不能代替旧 5002 的获得弹窗/文字提示；首次同步不播放奖励。
 - 当前 itemId 是配置 ID，尚未完成旧版实例 ID、到期字段和全部物品操作的还原。
-- BagModel.beginSync/fail/applyDelta 与事件 reason 的历史枚举仍有预留代码，当前统一首包和完整状态同步不调用；禁止把它们接成第二条查询或客户端发奖链。
+- 已删除无人调用的 BagModel.beginSync/fail/applyDelta 和 BagItemDelta，以及无人使用的 query 原因、loading/error 状态与错误字段、BagView 未使用的 Controller 导入。断线提示继续归应用层。库存唯一更新入口为 replaceAll。事件 reason 的 reward/consume 仍被暂停模块签名引用，暂不跨模块删除。
 - 详情当前只读，“确定”是关闭，来源/分解/使用尚未恢复；注释不能写成已实现操作。
 
 ## 游爱式背包流程与接入前提
@@ -94,3 +94,11 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 | mxzg-protofiles/protofiles/game/Role.proto，GResRoleInfo 2001 | 当前仅基础身份、等级、金币与宝石；经验/英雄经验、精力、头像/形象/边框、VIP、创号及服务器时间、军团/引导、虹石/神权等仍有缺口。逐字段核对持久来源，不以固定默认值伪装已还原 |
 
 下一步先补身份字段映射与期限物品存储设计，再选择无英雄依赖的背包操作核对完整事务规则。此清单只记录已见源码和缺口，不表示全部旧背包功能已审完。
+
+## 清理边界与类型检查
+
+保留 Controller 协议登记、Model 全量校验/差异、BagEvent 与 View 监听；它们形成实际更新链，不因 IDE 看不到直接调用就删除。保留 Prefab 序列化属性及 meta，不能只按 TypeScript 引用删除。当前只读详情、配置投影、挂载适配和 SuperScroll 都在使用。
+
+client/tsconfig.json 显式声明 ES2017、DOM，并仅纳入 assets 游戏源码；tools 测试按独立检查入口运行。保留 Creator 生成的 ES2015 target，不编辑 temp/tsconfig.cocos.json。skipLibCheck 仅跳过依赖声明文件内部检查，游戏源码仍检查；独立 strict 检查继续执行。
+
+Object.entries 属于 ES2017 API；lib 只声明可用 API，不注入 polyfill，也不决定 Creator 最终构建。若发布目标缺该 API，应改用 Object.keys 加索引读取或按实测补兼容层，不能只提高 lib 掩盖运行时报错。低端机性能与 JS 引擎版本不是同一概念，发布前需目标平台验证。

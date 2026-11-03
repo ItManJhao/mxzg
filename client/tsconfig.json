@@ -1,9 +1,22 @@
 {
-  /* Base configuration. Do not edit this field. */
   "extends": "./temp/tsconfig.cocos.json",
-
-  /* Add your custom configuration here. */
   "compilerOptions": {
-    "strict": false
-  }
+    "strict": false,
+    "lib": [
+      "ES2017",
+      "DOM"
+    ],
+    "skipLibCheck": true
+  },
+  "include": [
+    "assets/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "tools",
+    "temp",
+    "library",
+    "build",
+    "native"
+  ]
 }

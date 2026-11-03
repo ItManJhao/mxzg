@@ -1,7 +1,7 @@
 /** 背包唯一库存状态：由 Controller 提交服务端快照，View 只读；本地版本仅用于界面通知。 */
 import {BaseModel} from "../../framework/BaseModel";
 import {readBagItems} from "./data/BagItemData";
-import type {BagItemData, BagItemDelta} from "./data/BagItemData";
+import type {BagItemData} from "./data/BagItemData";
 import type {BagChangeSet, BagQuantityChange} from "./data/BagChangeSet";
 import type {BagState} from "./data/BagState";
 
@@ -52,18 +52,6 @@ export class BagModel extends BaseModel {
         return this.changeSet(false, [], [], []);
     }
 
-    /** 标为等待同步并清空错误，保留库存；当前统一首包链不调用此预留入口。 */
-    beginSync(): void {
-        this.requireRole();
-        this.commit({...this.data, status: "loading", error: ""});
-    }
-
-    /** 记录错误并保留上次库存；当前统一首包链由应用处理失败，不调用此预留入口。 */
-    fail(error: string): void {
-        this.requireRole();
-        this.commit({...this.data, status: "error", error});
-    }
-
     /** 整批校验后替换绝对数量并计算增删改；首次同步不生成获得条目，空数组为合法空背包。校验失败不修改状态。 */
     replaceAll(items: readonly BagItemData[]): BagChangeSet {
         this.requireRole();
@@ -83,27 +71,8 @@ export class BagModel extends BaseModel {
             }
             removed.push(...Array.from(previous.values()));
         }
-        this.commit({status: "ready", synced: true, items: rows, error: ""});
+        this.commit({status: "ready", synced: true, items: rows});
         return this.changeSet(initialSync, added, quantityChanged, removed);
-    }
-
-    /** 预留的有符号增量入口，整批校验后提交，要求已完成首次同步。当前完整快照链不调用，不能用作客户端发奖入口。 */
-    applyDelta(changes: readonly BagItemDelta[]): BagChangeSet {
-        this.requireRole();
-        if (!this.data.synced) throw new Error("背包尚未同步，不能应用增量");
-        const next = new Map(this.items.map(item => [item.itemId, item.quantity] as [number, number]));
-        const seen = new Set<number>();
-        for (const change of changes) {
-            if (!Number.isSafeInteger(change.itemId) || change.itemId <= 0 || !Number.isSafeInteger(change.delta) || seen.has(change.itemId)) {
-                throw new Error("背包增量无效");
-            }
-            seen.add(change.itemId);
-            const quantity = (next.get(change.itemId) || 0) + change.delta;
-            if (!Number.isSafeInteger(quantity) || quantity < 0) throw new Error("背包增量数量无效");
-            if (quantity) next.set(change.itemId, quantity);
-            else next.delete(change.itemId);
-        }
-        return this.replaceAll(Array.from(next, ([itemId, quantity]) => ({itemId, quantity})));
     }
 
     /** 响应基类重置，清空库存、同步状态和快照缓存。 */
@@ -126,7 +95,7 @@ export class BagModel extends BaseModel {
 
     /** 创建未同步的空状态；idle 与已同步空背包 ready 含义不同。 */
     private emptyData(): BagContents {
-        return Object.freeze({status: "idle", synced: false, items: Object.freeze([]), error: ""});
+        return Object.freeze({status: "idle", synced: false, items: Object.freeze([])});
     }
 
     /** 检查应用是否设置角色归属，缺失时抛错，拒绝接收无所属库存。 */

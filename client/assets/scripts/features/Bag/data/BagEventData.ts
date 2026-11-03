@@ -3,8 +3,8 @@ import { BagEvent } from "../BagEvent";
 import type { BagChangeSet } from "./BagChangeSet";
 import type { BagState } from "./BagState";
 
-/** 当前使用 initial-sync、session-reset、unknown；query/reward/consume 为历史预留，不能冒充真实协议原因。 */
-export type BagChangeReason = "initial-sync" | "query" | "reward" | "consume" | "session-reset" | "unknown";
+/** 当前使用 initial-sync、session-reset、unknown；reward/consume 为历史预留，不能冒充真实协议原因。 */
+export type BagChangeReason = "initial-sync" | "reward" | "consume" | "session-reset" | "unknown";
 /** 汇总差异附带本地刷新原因。 */
 export interface BagUpdateData extends BagChangeSet {
     /** 刷新原因；当前快照无法推断奖励或消耗，使用 unknown。 */
@@ -17,7 +17,7 @@ export type BagRemoveData = Pick<BagUpdateData, "roleKey" | "revision" | "reason
 /** 已有条目数量变化的事件载荷。 */
 export type BagQuantityChangedData = Pick<BagUpdateData, "roleKey" | "revision" | "reason" | "quantityChanged">;
 /** 不携带库存列表的同步状态通知。 */
-export type BagSyncStateChangedData = Pick<BagState, "roleKey" | "revision" | "status" | "synced" | "error">;
+export type BagSyncStateChangedData = Pick<BagState, "roleKey" | "revision" | "status" | "synced">;
 
 declare module "../../../framework/EventDispatcher" {
     interface EventPayloads {
