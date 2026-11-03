@@ -12,21 +12,28 @@ const {ccclass, property} = _decorator;
  */
 @ccclass("BagItemView")
 export class BagItemView extends Component {
+    /** Prefab 绑定的点击按钮，未绑定时为 null。 */
     @property(Button)
     button: Button | null = null;
+    /** 稀有度底框或空槽节点，由 Prefab 绑定。 */
     @property(Node)
     frame: Node | null = null;
 
+    /** Prefab 绑定的图标节点，未绑定时为 null。 */
     @property(Node)
     icon: Node | null = null;
 
+    /** 库存数量标签，空槽时隐藏并清空。 */
     @property(Label)
     count: Label | null = null;
 
+    /** 格子选中标记，由页面传入选中态。 */
     @property(Node)
     selectMark: Node | null = null;
 
+    /** 当前点击回调；复用时解绑旧回调，销毁时清空。 */
     private tap: (() => void) | null = null;
+    /** 格子绘制代次，show 和销毁时递增，使异步旧图片失效；与库存版本无关。 */
     private revision = 0;
 
     /** 检查物品格子必需绑定，缺失时报告具体字段。 */
@@ -44,6 +51,7 @@ export class BagItemView extends Component {
             throw new Error("BagItemView.prefab [" + this.node.name + "]: frame/icon 缺少 Sprite");
     }
 
+    /** 绘制物品或空槽，替换点击回调并保护异步贴图；有物品必须提供 face，否则抛错。 */
     show(item: Readonly<BagItemData> | null, selected: boolean, onTap: (() => void) | null, face?: BagFace): void {
         this.validateBindings();
         if (item && !face) throw new Error("BagItemView: 有物品时必须提供配置展示数据 face");
@@ -79,6 +87,7 @@ export class BagItemView extends Component {
         }
     }
 
+    /** 使未完成贴图失效，解除点击监听并释放页面回调。 */
     onDestroy(): void {
         this.revision++;
         if (this.tap) this.node.off(Button.EventType.CLICK, this.tap);

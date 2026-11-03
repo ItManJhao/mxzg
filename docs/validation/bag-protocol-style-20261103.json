@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-03",
+  "scope": "Readable server response logs and Youai-style BagController",
+  "flow": [
+    "backend inventory snapshot",
+    "Protobuf frame",
+    "GameSocketClient requestId/name/connectionId association",
+    "BagApi + application authorization",
+    "BagUpdateCoordinator query/session guards",
+    "BagController.onNotify",
+    "onInventoryList",
+    "BagModel.replaceAll",
+    "BagUpdate",
+    "BagView.refreshFromModel"
+  ],
+  "serverChangesRequiredForCurrentQuery": false,
+  "notImplemented": [
+    "inventory.changed active asset push",
+    "persistent inventory revision/event cursor",
+    "reconnect gap recovery for future pushes"
+  ],
+  "logs": {
+    "tag": "WS接收",
+    "enabledBy": "Creator PREVIEW",
+    "productionDefault": false,
+    "redactsCredentials": true,
+    "diagnosticExceptionsIsolated": true
+  },
+  "actualInventory": [
+    {
+      "itemId": 900101,
+      "quantity": 550
+    },
+    {
+      "itemId": 900102,
+      "quantity": 4
+    },
+    {
+      "itemId": 900401,
+      "quantity": 100
+    },
+    {
+      "itemId": 1004001,
+      "quantity": 1
+    },
+    {
+      "itemId": 20204004,
+      "quantity": 30
+    }
+  ],
+  "previewChecks": [
+    "restored player_1",
+    "entered main city",
+    "item tab quantity 4",
+    "fragment tab and detail quantity 30 matches server message"
+  ],
+  "checks": {
+    "frontendSuites": 12,
+    "strict": true,
+    "backendTests": 51,
+    "realTsJava": true,
+    "docs": true,
+    "newDatabaseTestThisBatch": false
+  },
+  "screenshot": "bag-controller-protocol-20261103.png"
+}

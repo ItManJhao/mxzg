@@ -1,4 +1,5 @@
-import { JsonClient } from "../../platform/http/JsonClient";
+/** 此模块等待按原项目重做；旧业务通信已停用，保留 DTO 校验供后续恢复。 */
+import { featureUnavailable } from "../PausedFeatures";
 import { readRole } from "../account/AccountApi";
 import type { RoleProfile } from "../account/AccountModel";
 import { readBagItems } from "../Bag/data/BagItemData";
@@ -104,12 +105,13 @@ function readState(value: unknown): CampaignState {
         rewards: array(row.rewards).map(readReward), units: array(row.units).map(readUnit), available: boolean(row.available) };
 }
 export class CampaignApi {
-    constructor(private readonly http: JsonClient) { }
-    async initialize(token: string): Promise<CampaignState> { return readState(await this.http.request("/api/v1/campaign/initialize", {}, token)); }
-    async current(token: string): Promise<CampaignState> { return readState(await this.http.request("/api/v1/campaign", undefined, token)); }
-    async challenge(token: string, requestId: string): Promise<CampaignReport> { return readCampaignReport(await this.http.request("/api/v1/campaign/battles", { requestId }, token)); }
+    /** 暂停模块不再依赖网络客户端。 */
+    constructor() {}
+    async initialize(token: string): Promise<CampaignState> { return readState(await featureUnavailable()); }
+    async current(token: string): Promise<CampaignState> { return readState(await featureUnavailable()); }
+    async challenge(token: string, requestId: string): Promise<CampaignReport> { return readCampaignReport(await featureUnavailable()); }
     async claim(token: string, id: string): Promise<CampaignSettlement> {
-        const row = object(await this.http.request("/api/v1/campaign/battles/" + encodeURIComponent(id) + "/claim", {}, token));
+        const row = object(await featureUnavailable());
         return { battle: readCampaignReport(row.battle), role: readRole(row.role), inventory: readBagItems(row.inventory), stageId: integer(row.stageId, 1) };
     }
 }

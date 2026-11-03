@@ -1,8 +1,9 @@
 /** 会话级挂机领取协调：跨页面保留未确认请求，复用唯一库存/钱包事务通道，换号后拒绝迟到回包。 */
 import { AccountModel } from "../account/AccountModel";
-import { AccountService, SessionChanged } from "../account/AccountService";
-import { BagController } from "../Bag/BagController";
-import { HttpFailure } from "../../platform/http/JsonClient";
+import { AccountService } from "../account/AccountService";
+import { SessionChanged } from "../../framework/SessionChanged";
+import { PausedInventoryUpdates, pausedInventoryUpdates } from "../PausedFeatures";
+import { SocketFailure } from "../../platform/GameSocketClient";
 import { IdleApi } from "./IdleApi";
 import type { IdleResult, IdleState } from "./IdleApi";
 export class IdleController {
@@ -11,7 +12,7 @@ export class IdleController {
     private pending:Promise<IdleResult>|null=null;
     private readonly off:()=>void;
     /** 应用持有本协调器，页面关闭只停止显示，不取消已提交的领奖。 */
-    constructor(account:AccountModel,private readonly auth:AccountService,private readonly api:IdleApi,private readonly bag:BagController=BagController.instance) {
+    constructor(account:AccountModel,private readonly auth:AccountService,private readonly api:IdleApi,private readonly bag:PausedInventoryUpdates=pausedInventoryUpdates) {
         let role=account.snapshot.role?.id;
         this.off=account.subscribe(state=>{if(state.busy || !state.role || state.role.id!==role){this.epoch++;this.pending=null;this.attempt=null;}role=state.role?.id;});
     }
@@ -30,7 +31,7 @@ export class IdleController {
             ()=>this.auth.authenticated(token=>this.api.claim(token,attempt.requestId,attempt.revision)),
             result=>result.inventory,result=>this.auth.acceptRole(result.role),"reward")
             .then(result=>{if(epoch===this.epoch)this.attempt=null;return result;})
-            .catch(error=>{if(epoch===this.epoch && error instanceof HttpFailure && error.status>=400 && error.status<500)this.attempt=null;throw error;});
+            .catch(error=>{if(epoch===this.epoch && error instanceof SocketFailure && !error.unauthorized && error.code!=="DISCONNECTED" && error.code!=="TIMEOUT")this.attempt=null;throw error;});
         this.pending=promise;const finish=()=>{if(this.pending===promise)this.pending=null;};void promise.then(finish,finish);return promise;
     }
     /** 未确认结果时即使新查询暂不可领，也应允许重放旧请求。 */

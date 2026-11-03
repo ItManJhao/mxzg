@@ -294,7 +294,7 @@
       "__uuid__": "61d32fd8-b35a-5ddc-bf5f-ea5026c8c23b",
       "__expectedType__": "cc.Prefab"
     },
-    "apiBaseUrl": "http://127.0.0.1:18080",
+    "socketUrl": "ws://127.0.0.1:18080/api/v1/game/socket",
     "pageHost": {
       "__id__": 18
     },

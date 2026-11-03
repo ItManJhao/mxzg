@@ -2,7 +2,12 @@
  * 登录与背包试点的会话传输：鉴权、恢复同步、心跳、退避重连和请求关联。
  * 应用持有此实例；不保存玩家资产，不自动重放业务请求，旧连接回包由连接代次隔离。
  */
-export type SocketPort = Pick<WebSocket, "onopen" | "onmessage" | "onerror" | "onclose" | "send" | "close" | "readyState">;
+import type { ReadProtocol } from "./Protocol";
+import { Protocol } from "./Protocol";
+import type { GameFrame } from "./GameProtocolCodec";
+import { decodeGameFrame, encodeGameFrame, GAME_SOCKET_PROTOCOL } from "./GameProtocolCodec";
+
+export type SocketPort = Pick<WebSocket, "onopen" | "onmessage" | "onerror" | "onclose" | "send" | "close" | "readyState" | "binaryType" | "protocol">;
 export class SocketFailure extends Error {
   /** 保存稳定原因；身份失败由账号层清理，网络中断不伪装成业务拒绝。 */
   constructor(readonly code: string, message = "网络连接中断，请稍后重试") { super(message); this.name = "SocketFailure"; }
@@ -11,13 +16,15 @@ export class SocketFailure extends Error {
 }
 interface Pending {
   name: string;
-  resolve(value: unknown): void;
+  resolve(value: GameFrame): void;
   reject(error: Error): void;
   timer: ReturnType<typeof setTimeout>;
 }
 export interface SocketOptions {
   create(url: string): SocketPort;
   validateSnapshot(value: unknown): void;
+  /** 可选开发观察口：仅交付当前连接、已关联的服务端帧，观察异常不影响业务。 */
+  onReceive?: (frame: Readonly<GameFrame>) => void;
   timeoutMs?: number;
   heartbeatMs?: number;
   retryDelay?: (attempt: number) => number;
@@ -25,7 +32,12 @@ export interface SocketOptions {
 
 /** 仅使用原生 WebSocket 能力；平台适配器由应用注入，测试可注入受控连接。 */
 export class GameSocketClient {
+  /** 自动重连完成后应用提交登录快照。 */
   onReady: (() => void) | null = null;
+  /** 资产事件交给应用统一校验并提交。 */
+  onState: ((frame: GameFrame) => void) | null = null;
+  /** 当前连接最近的完整帧，供本次登录交付，不另建资产 Model。 */
+  latestState: GameFrame | null = null;
   onDisconnected: ((message: string) => void) | null = null;
   onRejected: ((token: string, message: string) => void) | null = null;
   private socket: SocketPort | null = null;
@@ -34,6 +46,8 @@ export class GameSocketClient {
   private roleId = "";
   private generation = 0;
   private ready = false;
+  /** 当前连接已接收的持久状态版本；旧版本不能覆盖最新初始化帧。 */
+  private stateRevision = -1;
   private blocked: SocketFailure | null = null;
   private maintain = false;
   private retries = 0;
@@ -67,27 +81,57 @@ export class GameSocketClient {
     return task;
   }
 
+  /** 本地身份交换也走二进制连接；先结束旧会话，失败不会恢复旧账号。 */
+  async login(account: string, serverId: string): Promise<GameFrame> {
+    this.disconnect(); const generation=++this.generation;
+    await this.establish("",generation,{account,serverId});
+    if(generation!==this.generation || !this.latestState) throw new SocketFailure("SESSION_CHANGED");
+    return this.latestState;
+  }
+  /** 匿名选服使用短生命周期连接；返回后关闭，不接管玩家会话。 */
+  catalog(): Promise<unknown> {
+    const socket=this.options.create(this.url); socket.binaryType="arraybuffer"; const id=this.identifier();
+    return new Promise((resolve,reject)=>{
+      let done=false;
+      const finish=(error: Error|null,value?:unknown):void=>{
+        if(done)return;done=true;clearTimeout(timer);socket.onopen=socket.onmessage=socket.onerror=socket.onclose=null;
+        try {socket.close();} catch {}
+        if(error)reject(error);else resolve(value);
+      };
+      const timer=setTimeout(()=>finish(new SocketFailure("TIMEOUT")),this.options.timeoutMs||15000);
+      socket.onopen=()=>{
+        if(socket.protocol!==GAME_SOCKET_PROTOCOL){finish(new SocketFailure("INVALID_MESSAGE","服务端协议版本不匹配，请重启后端"));return;}
+        try {socket.send(encodeGameFrame({version:1,kind:"request",name:Protocol.SERVERS_LIST,id,body:{}}));}catch{finish(new SocketFailure("DISCONNECTED"));}
+      };
+      socket.onmessage=event=>{
+        try {
+          const frame=decodeGameFrame(event.data);
+          if(frame.version!==1 || frame.kind!=="response" || frame.name!==Protocol.SERVERS_LIST || frame.id!==id || frame.ok!==true || frame.error!==undefined) throw new SocketFailure("INVALID_MESSAGE");
+          this.traceReceived(frame);finish(null,this.object(frame.body).items);
+        }catch{finish(new SocketFailure("INVALID_MESSAGE"));}
+      };
+      socket.onerror=socket.onclose=()=>finish(new SocketFailure("DISCONNECTED"));
+    });
+  }
+
   /** 业务入口只检查当前会话就绪，不在断线期间排队扣费请求。 */
   assertReady(token: string): void {
     if (token === this.token && this.blocked) throw this.blocked;
     if (token !== this.token || !this.ready || this.socket?.readyState !== 1) throw new SocketFailure("NOT_READY", "网络正在恢复，请稍后重试");
   }
 
-  /** 首批只允许恢复、背包和心跳读取；绝不接收任意写请求或自动重放。 */
-  async request(token: string, name: "session.sync" | "inventory.list" | "session.heartbeat"): Promise<unknown> {
+  /** 已有账号调用只需要数据体，复用完整信封入口；不另建第二条网络链。 */
+  async request(token: string, name: ReadProtocol): Promise<unknown> {
+    return (await this.requestFrame(token, name)).body;
+  }
+
+  /** 请求并返回已关联的真实信封，让模块路由使用服务端的 name，而不是在 Promise 回调里写死协议。 */
+  async requestFrame(token: string, name: ReadProtocol): Promise<GameFrame> {
     this.assertReady(token);
     const generation = this.generation;
-    const value = await this.send(name, {});
+    const frame = await this.send(name, {});
     if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
-    if (name === "session.sync") {
-      try {
-        this.options.validateSnapshot(value);
-        if (this.object(this.object(value).role).id !== this.roleId) throw new SocketFailure("INVALID_MESSAGE");
-      } catch {
-        const error = new SocketFailure("INVALID_MESSAGE"); this.drop(error, false); throw error;
-      }
-    }
-    return value;
+    return frame;
   }
 
   /** 登出、换号或应用销毁时取消全部任务；迟到回包无法复活旧会话。 */
@@ -95,21 +139,25 @@ export class GameSocketClient {
     this.maintain = false;
     this.token = "";
     this.roleId = "";
+    this.latestState = null;
+    this.stateRevision = -1;
     this.retries = 0;
     this.blocked = null;
     this.drop(new SocketFailure("SESSION_CHANGED", "会话已切换"), false);
   }
 
   /** 打开传输后先鉴权，再校验一致快照；此阶段不向任何 Model 写数据。 */
-  private async establish(token: string, generation: number): Promise<void> {
+  private async establish(token: string, generation: number, login?: { account: string; serverId: string }): Promise<void> {
     try {
       const socket = this.options.create(this.url);
       this.socket = socket;
+      socket.binaryType = "arraybuffer";
       await new Promise<void>((resolve, reject) => {
         const timer = setTimeout(() => this.drop(new SocketFailure("TIMEOUT"), this.maintain), this.options.timeoutMs || 15000);
         this.rejectOpen = error => { clearTimeout(timer); reject(error); };
         socket.onopen = () => {
           if (generation !== this.generation) return;
+          if (socket.protocol !== GAME_SOCKET_PROTOCOL) { this.drop(new SocketFailure("INVALID_MESSAGE", "服务端协议版本不匹配，请重启后端"), false); return; }
           clearTimeout(timer); this.rejectOpen = null; resolve();
         };
         socket.onmessage = event => { if (generation === this.generation) this.receive(event.data); };
@@ -117,7 +165,8 @@ export class GameSocketClient {
           if (generation === this.generation) this.drop(new SocketFailure("DISCONNECTED"), this.maintain);
         };
       });
-      const accepted = this.object(await this.send("session.authenticate", { accessToken: token, clientInstanceId: this.instanceId }));
+      const frame = await this.send(login ? Protocol.SESSION_LOGIN : Protocol.SESSION_AUTHENTICATE, login ? { ...login, clientInstanceId: this.instanceId } : { accessToken: token, clientInstanceId: this.instanceId });
+      const accepted = this.object(frame.body);
       if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
       if (typeof accepted.connectionId !== "string" || !accepted.connectionId || accepted.connectionId.length > 128
           || typeof accepted.roleId !== "string" || !accepted.roleId || accepted.roleId.length > 128
@@ -125,10 +174,18 @@ export class GameSocketClient {
       this.connectionId = accepted.connectionId;
       if (this.roleId && this.roleId !== accepted.roleId) throw new SocketFailure("INVALID_MESSAGE");
       this.roleId = accepted.roleId;
-      const snapshot = await this.send("session.sync", {});
+      const snapshot = accepted.initial;
+      if (login) {
+        const session = this.object(accepted.session);
+        if(typeof session.accessToken!=="string" || !/^[A-Za-z0-9_-]{43}$/.test(session.accessToken)) throw new SocketFailure("INVALID_MESSAGE");
+        this.token=session.accessToken;
+      }
       if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
       this.options.validateSnapshot(snapshot);
       if (this.object(this.object(snapshot).role).id !== this.roleId) throw new SocketFailure("INVALID_MESSAGE");
+      if(!Number.isSafeInteger(this.object(snapshot).revision) || Number(this.object(snapshot).revision)<0) throw new SocketFailure("INVALID_MESSAGE");
+      this.stateRevision=Number(this.object(snapshot).revision);
+      this.latestState=frame;
       this.ready = true; this.maintain = true; this.retries = 0;
       this.scheduleHeartbeat();
       this.onReady?.();
@@ -143,7 +200,7 @@ export class GameSocketClient {
   }
 
   /** 有界请求表保存一次网络往返；超时结束连接，所有未决读取由模块决定是否重新查询。 */
-  private send(name: string, body: unknown): Promise<unknown> {
+  private send(name: string, body: unknown): Promise<GameFrame> {
     if (!this.socket || this.socket.readyState !== 1) return Promise.reject(new SocketFailure("DISCONNECTED"));
     if (this.pending.size >= 16) return Promise.reject(new SocketFailure("BUSY", "请求较多，请稍后重试"));
     const id = this.identifier();
@@ -151,7 +208,7 @@ export class GameSocketClient {
       const timer = setTimeout(() => this.drop(new SocketFailure("TIMEOUT"), this.maintain), this.options.timeoutMs || 15000);
       this.pending.set(id, { name, resolve, reject, timer });
       try {
-        this.socket!.send(JSON.stringify({ version: 1, kind: "request", name, id, body,
+        this.socket!.send(encodeGameFrame({ version: 1, kind: "request", name, id, body,
           ...(this.connectionId ? { connectionId: this.connectionId } : {}) }));
       } catch { this.drop(new SocketFailure("DISCONNECTED"), this.maintain); }
     });
@@ -160,11 +217,21 @@ export class GameSocketClient {
   /** 严格关联请求和连接标识；重复回包无副作用，顶号立即阻止自动重连。 */
   private receive(raw: unknown): void {
     try {
-      if (typeof raw !== "string" || raw.length > 65536 || this.byteLength(raw) > 65536) throw new SocketFailure("INVALID_MESSAGE");
-      const frame = this.object(JSON.parse(raw));
+      const frame = decodeGameFrame(raw);
       if (frame.version !== 1 || typeof frame.name !== "string") throw new SocketFailure("INVALID_MESSAGE");
       if (this.connectionId && frame.connectionId !== this.connectionId) throw new SocketFailure("INVALID_MESSAGE");
-      if (frame.kind === "event" && frame.name === "session.kicked" && this.connectionId) {
+      if (frame.kind === "event" && frame.name === Protocol.STATE_CHANGED && this.connectionId && this.ready) {
+        if(frame.id!==undefined || frame.ok!==undefined || frame.error!==undefined) throw new SocketFailure("INVALID_MESSAGE");
+        this.options.validateSnapshot(frame.body);
+        const revision=Number(this.object(frame.body).revision);
+        if(!Number.isSafeInteger(this.object(frame.body).revision) || revision<0) throw new SocketFailure("INVALID_MESSAGE");
+        if(this.object(this.object(frame.body).role).id!==this.roleId) throw new SocketFailure("INVALID_MESSAGE");
+        this.traceReceived(frame);
+        if(revision<=this.stateRevision)return;
+        this.stateRevision=revision;this.latestState=frame;this.onState?.(frame);return;
+      }
+      if (frame.kind === "event" && frame.name === Protocol.SESSION_KICKED && this.connectionId) {
+        this.traceReceived(frame);
         this.rejectSession(new SocketFailure("SESSION_REPLACED", "账号已在其他连接登录，请重新登录")); return;
       }
       if (frame.kind !== "response" || typeof frame.id !== "string" || typeof frame.ok !== "boolean") throw new SocketFailure("INVALID_MESSAGE");
@@ -173,16 +240,23 @@ export class GameSocketClient {
       if (pending.name !== frame.name) throw new SocketFailure("INVALID_MESSAGE");
       if (frame.ok) {
         if (!("body" in frame) || frame.error !== undefined) throw new SocketFailure("INVALID_MESSAGE");
-        if (pending.name === "session.authenticate" && this.object(frame.body).connectionId !== frame.connectionId) throw new SocketFailure("INVALID_MESSAGE");
-        this.pending.delete(frame.id); clearTimeout(pending.timer); pending.resolve(frame.body);
+        if ((pending.name === Protocol.SESSION_AUTHENTICATE || pending.name === Protocol.SESSION_LOGIN) && this.object(frame.body).connectionId !== frame.connectionId) throw new SocketFailure("INVALID_MESSAGE");
+        this.traceReceived(frame);
+        this.pending.delete(frame.id); clearTimeout(pending.timer); pending.resolve(frame);
       } else {
         const error = this.object(frame.error);
         if (typeof error.code !== "string" || !/^[A-Z_]{3,64}$/.test(error.code) || frame.body !== null) throw new SocketFailure("INVALID_MESSAGE");
-        const failure = new SocketFailure(error.code, error.code === "UNAUTHENTICATED" ? "登录已失效，请重新登录" : "连接请求失败，请重试");
+        const failure = new SocketFailure(error.code, error.code === "UNAUTHENTICATED" ? "登录已失效，请重新登录" : error.code === "SERVER_UNAVAILABLE" ? "服务器暂未开放，请重新选择" : "连接请求失败，请重试");
+        this.traceReceived(frame);
         this.pending.delete(frame.id); clearTimeout(pending.timer); pending.reject(failure);
         if (failure.unauthorized) this.rejectSession(failure);
       }
     } catch (error) { this.drop(error instanceof SocketFailure ? error : new SocketFailure("INVALID_MESSAGE"), false); }
+  }
+
+  /** 日志观察不参与协议处理；诊断回调异常不能关闭正常连接或阻断 Model 更新。 */
+  private traceReceived(frame: Readonly<GameFrame>): void {
+    try { this.options.onReceive?.(frame); } catch { /* 开发日志失败不影响业务。 */ }
   }
 
   /** 仅当前凭证失效时通知账号层；先停止重连，避免回登录后后台抢占会话。 */
@@ -224,7 +298,7 @@ export class GameSocketClient {
       this.heartbeatTimer = null;
       const generation = this.generation;
       try {
-        const value = this.object(await this.send("session.heartbeat", {}));
+        const value = this.object((await this.send(Protocol.SESSION_HEARTBEAT, {})).body);
         if (!Number.isSafeInteger(value.serverTimeMs) || Number(value.serverTimeMs) <= 0) throw new SocketFailure("INVALID_MESSAGE");
         if (generation === this.generation && this.ready) this.scheduleHeartbeat();
       } catch (error) {
@@ -236,17 +310,10 @@ export class GameSocketClient {
     }, this.options.heartbeatMs || 20000);
   }
 
-  /** 只接受 JSON 对象，不让数组/null 被当作合法消息或快照。 */
+  /** 只接受解码后的对象，不让数组/null 被当作合法消息或快照。 */
   private object(value: unknown): Record<string, unknown> {
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new SocketFailure("INVALID_MESSAGE");
     return value as Record<string, unknown>;
-  }
-
-  /** 计算 UTF-8 大小，避免依赖部分原生平台缺少的 TextEncoder。 */
-  private byteLength(value: string): number {
-    let bytes = 0;
-    for (const char of value) { const code = char.codePointAt(0)!; bytes += code < 128 ? 1 : code < 2048 ? 2 : code < 65536 ? 3 : 4; }
-    return bytes;
   }
 
   /** 请求标识只用于关联，不是安全凭证或业务幂等键。 */

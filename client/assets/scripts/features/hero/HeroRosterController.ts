@@ -1,7 +1,7 @@
 /** 会话级英雄名册协调：查询、鉴权、去重、升级结果提交与换号隔离；不持有 View，页面关闭不销毁。 */
 import type {AccountModel} from "../account/AccountModel";
 import type {AccountAuthorization} from "../account/AccountService";
-import {SessionChanged} from "../account/AccountService";
+import { SessionChanged } from "../../framework/SessionChanged";
 import {BaseController} from "../../framework/BaseController";
 import {publishNotification} from "../../framework/EventDispatcher";
 import {readOwnedHeroes} from "./HeroApi";

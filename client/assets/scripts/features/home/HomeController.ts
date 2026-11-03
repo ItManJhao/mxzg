@@ -17,10 +17,10 @@ export class HomeController {
 
   show(): void {
     if (this.disposers.length) return;
-    const unbind = this.view.bind({ logout: () => this.service.logout(), heroAvailable: !!this.openFeature,
-      availableFeatures: this.openFeature ? ["hero","bag","battle"] : [], openFeature: id => {
-      if (this.openFeature?.(id)) return;
-      this.view.showNotice(id === "city" ? "" : "该功能暂未开放");
+    const unbind = this.view.bind({ logout: () => this.service.logout(), heroAvailable: false,
+      availableFeatures: this.openFeature ? ["bag"] : [], openFeature: id => {
+      if ((id === "bag" || id === "city") && this.openFeature?.(id)) return;
+      this.view.showNotice(id === "city" ? "" : "该模块暂停，待登录和背包完善后按原项目重做");
     } });
     this.disposers = [unbind, this.account.subscribe(state => this.view.render(state))];
     try { this.view.render(this.account.snapshot); }

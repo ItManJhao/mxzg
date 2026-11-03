@@ -136,7 +136,7 @@ async function main() {
   model.replace({ busy: false, role: { id: "one", nickname: "one", level: 1, gold: 0, diamonds: 0 }, error: "" });
   controller.show(); controller.show(); assert.equal(renders, 1);
   assert(actions);
-  (actions as HomeActions).openFeature("hero"); assert.equal(notice, "该功能暂未开放");
+  (actions as HomeActions).openFeature("hero"); assert.equal(notice, "该模块暂停，待登录和背包完善后按原项目重做");
   (actions as HomeActions).openFeature("city"); assert.equal(notice, "");
   (actions as HomeActions).logout(); assert.equal(model.snapshot.role, null);
   controller.close(); const closedRenders = renders;
@@ -146,13 +146,13 @@ async function main() {
   const picked: string[] = [];
   const enabled = new HomeController(model, service, { bind: callbacks => { actions = callbacks; return () => { actions = null; }; },
     render: () => {}, showNotice: text => { notice = text; } }, id => {
-      if (id !== "hero" && id !== "city") return false;
+      if (id !== "bag" && id !== "city") return false;
       picked.push(id); return true;
     });
   enabled.show();
-  assert((actions as HomeActions).heroAvailable);
-  (actions as HomeActions).openFeature("hero"); assert.deepEqual(picked, ["hero"]);
-  (actions as HomeActions).openFeature("bag"); assert.equal(notice, "该功能暂未开放");
+  assert.equal((actions as HomeActions).heroAvailable,false);
+  (actions as HomeActions).openFeature("bag"); assert.deepEqual(picked, ["bag"]);
+  (actions as HomeActions).openFeature("hero"); assert.equal(notice, "该模块暂停，待登录和背包完善后按原项目重做");
   enabled.close();
 
   const assets = join(process.cwd(), "client/assets");
@@ -161,7 +161,7 @@ async function main() {
   assert.equal(prefab[view.profileLabel.__id__].__type__, "cc.Label");
   assert.equal(prefab[view.logoutButton.__id__].__type__, "cc.Button");
   const scene = JSON.parse(readFileSync(join(assets, "scenes/Remake.scene"), "utf8"));
-  assert(scene.some((row: Record<string, unknown>) => row.loginPrefab && row.apiBaseUrl));
+  assert(scene.some((row: Record<string, unknown>) => row.loginPrefab && row.socketUrl));
   console.log("remake-navigation-check passed: explicit registration, shared UIManager, controller cleanup, replacement, failure/cancellation, logout and Prefab bindings");
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

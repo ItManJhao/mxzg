@@ -7,7 +7,7 @@ package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.campaign.CampaignService;
 import com.funsgamex.mxzg.campaign.CampaignBattle;
-import com.funsgamex.mxzg.hero.HeroController;
+import com.funsgamex.mxzg.hero.HeroQueries;
 import com.funsgamex.mxzg.network.SessionSnapshotService;
 import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.lineup.LineupService;
@@ -39,9 +39,16 @@ class MySqlIT {
     private CampaignService campaign;
     private LineupService lineups;
     private RoleService roles;
-    private HeroController heroes;
+    private HeroQueries heroes;
     private SessionSnapshotService snapshots;
     /** 在原事务快照入口验证库存，不重新暴露已退役的 HTTP 查询。 */
+    /** 按物品 ID 和 long 数量比较 HTTP/PB 结果，忽略 JSON IntNode 与 Protobuf int64 投影的节点类型差异。 */
+    private static java.util.List<com.funsgamex.mxzg.inventory.InventoryService.Item> inventoryValues(tools.jackson.databind.JsonNode items) {
+        var result = new java.util.ArrayList<com.funsgamex.mxzg.inventory.InventoryService.Item>();
+        for (var item : items) result.add(new com.funsgamex.mxzg.inventory.InventoryService.Item(item.path("itemId").asInt(), item.path("quantity").asLong()));
+        return result;
+    }
+
     private java.util.List<com.funsgamex.mxzg.inventory.InventoryService.Item> inventory(String token) { return snapshots.snapshot(token).inventory(); }
     private boolean previewEligible;
     private record Player(String account, String id, String token) {}
@@ -72,7 +79,7 @@ class MySqlIT {
         campaign = app.getBean(CampaignService.class);
         lineups = app.getBean(LineupService.class);
         roles = app.getBean(RoleService.class);
-        heroes = app.getBean(HeroController.class);
+        heroes = app.getBean(HeroQueries.class);
         snapshots = app.getBean(SessionSnapshotService.class);
     }
 
@@ -144,7 +151,7 @@ class MySqlIT {
         assertEquals(0,number("SELECT stage FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         assertEquals(100,number("SELECT quantity FROM game_inventory WHERE role_id='00000000-0000-4000-8000-000000000001' AND item_id=900101"));
         System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V5; stage=0");
-        assertEquals(5, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(6, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals("bigint", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_inventory' AND COLUMN_NAME='quantity'", String.class));
         assertEquals("timestamp", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_session' AND COLUMN_NAME='expires_at'", String.class));
         assertEquals(1, number("SELECT COUNT(DISTINCT INDEX_NAME) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND INDEX_NAME='uq_role_account_server' AND NON_UNIQUE=0"));
@@ -282,95 +289,28 @@ class MySqlIT {
         assertEquals(settled.inventory(), inventory(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
-        assertEquals(5, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(6,number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals(settled, campaign.claim(token, report.id()));
         System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=5");
     }
 
     /** 通过独立 JVM 的真实 HTTP 完成业务链，在未领奖和已领奖两个阶段分别终止进程再登录核验恢复。 */
-    @Test @Order(8) void realHttpChainSurvivesIndependentJvmRestarts() throws Exception {
-        app.close(); app = null;
-        // 主测试仅用本批连接观察并发和查询未暴露字段；所有正常业务操作均经 HTTP。
-        jdbc = new JdbcTemplate(new org.springframework.jdbc.datasource.DriverManagerDataSource(mysql.url(), mysql.user, mysql.password));
-        mysql.guard();
-        try (var http = new MySqlHttpProcess(mysql.url(), mysql.user, mysql.password, mysql.database, mysql.uuid, mysql.port, mysql.run, mysql.root)) {
-            http.start();
-            assertTrue(http.request("GET", "/servers", null, null, 200).size() >= 2);
-            http.request("GET", "/roles/me", null, null, 401);
-            http.request("POST", "/development/login", null, Map.of("account", "a"), 400);
-            String account = "http_" + UUID.randomUUID().toString().substring(0, 12);
-            var credentials = Map.of("account", account, "serverId", "local-1");
-            Callable<tools.jackson.databind.JsonNode> signIn = () -> http.request("POST", "/development/login", null, credentials, 200);
-            var logins = overlap("http-role-create", List.of(signIn, signIn));
-            String role = logins.getFirst().get("role").get("id").asText();
-            assertEquals(role, logins.getLast().get("role").get("id").asText());
-            String token = logins.getFirst().get("session").get("accessToken").asText();
-            http.request("POST", "/campaign/initialize", token, null, 200);
-            var heroRows = http.request("GET", "/heroes", token, null, 200);
-            assertEquals(3, heroRows.size());
-            http.request("GET", "/heroes/" + heroRows.get(0).get("id").asText(), token, null, 200);
-            var initialInventory = http.inventory(token, 200);
-            assertTrue(initialInventory.size() >= 2);
-            var lineup = http.request("GET", "/lineups/main", token, null, 200);
-            var save = Map.of("expectedVersion", lineup.get("version").asLong(), "slots", lineup.get("slots"));
-            assertEquals(lineup, http.request("PUT", "/lineups/main", token, save, 200));
-            // 相同内容保存按现有规则不增版本；实际撤下一位再恢复，验证变更和冲突且保留正常初始战力。
-            var changed = http.request("PUT", "/lineups/main", token,
-                Map.of("expectedVersion", lineup.get("version").asLong(), "slots", List.of(lineup.get("slots").get(0), lineup.get("slots").get(1))), 200);
-            assertEquals(lineup.get("version").asLong() + 1, changed.get("version").asLong());
-            http.request("PUT", "/lineups/main", token, save, 409);
-            var saved = http.request("PUT", "/lineups/main", token,
-                Map.of("expectedVersion", changed.get("version").asLong(), "slots", lineup.get("slots")), 200);
-            assertEquals(changed.get("version").asLong() + 1, saved.get("version").asLong());
-            assertEquals(saved, http.request("GET", "/lineups/main", token, null, 200));
-            var otherWorld = http.request("POST", "/development/login", null, Map.of("account", account, "serverId", "local-2"), 200);
-            String otherToken = otherWorld.get("session").get("accessToken").asText();
-            assertNotEquals(role, otherWorld.get("role").get("id").asText());
-            assertEquals(0, http.inventory(otherToken, 200).size());
-            var challenge = Map.of("requestId", UUID.randomUUID().toString());
-            Callable<tools.jackson.databind.JsonNode> fight = () -> http.request("POST", "/campaign/battles", token, challenge, 200);
-            var reports = overlap("http-challenge", List.of(fight, fight));
-            assertEquals(reports.getFirst(), reports.getLast());
-            var report = reports.getFirst(); assertTrue(report.get("won").asBoolean());
-            String claimPath = "/campaign/battles/" + report.get("id").asText() + "/claim";
-            http.request("POST", claimPath, otherToken, null, 404);
-
-            http.restart();
-            var relogin = http.request("POST", "/development/login", null, credentials, 200);
-            assertEquals(role, relogin.get("role").get("id").asText());
-            String claimToken = relogin.get("session").get("accessToken").asText();
-            assertEquals(report, http.request("GET", "/campaign", claimToken, null, 200).get("pending"));
-            assertEquals(saved, http.request("GET", "/lineups/main", claimToken, null, 200));
-            assertEquals(heroRows, http.request("GET", "/heroes", claimToken, null, 200));
-            // 重启前颁发的有效会话也必须可从专用数据库恢复。
-            http.request("GET", "/roles/me", token, null, 200);
-            assertEquals(initialInventory, http.inventory(claimToken, 200));
-            // 新令牌通过 WS 接管后旧令牌必须持久失效，不能再沿 HTTP 访问同一角色。
-            http.request("GET", "/roles/me", token, null, 401);
-            Callable<tools.jackson.databind.JsonNode> claim = () -> http.request("POST", claimPath, claimToken, null, 200);
-            var settlements = overlap("http-claim", List.of(claim, claim));
-            assertEquals(settlements.getFirst(), settlements.getLast());
-            var settled = settlements.getFirst();
-            assertEquals(4000, settled.get("role").get("gold").asLong());
-            assertEquals(2, settled.get("stageId").asInt());
-            assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", role));
-
-            http.restart();
-            var lastLogin = http.request("POST", "/development/login", null, credentials, 200);
-            String lastToken = lastLogin.get("session").get("accessToken").asText();
-            assertEquals(settled.get("role"), lastLogin.get("role"));
-            assertEquals(settled.get("inventory"), http.inventory(lastToken, 200));
-            assertEquals(saved, http.request("GET", "/lineups/main", lastToken, null, 200));
-            assertEquals(heroRows, http.request("GET", "/heroes", lastToken, null, 200));
-            var state = http.request("GET", "/campaign", lastToken, null, 200);
-            assertEquals(2, state.get("stageId").asInt()); assertTrue(state.get("pending").isNull());
-            assertEquals(settled, http.request("POST", claimPath, lastToken, null, 200));
-            assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", role));
-            assertEquals(5, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
-            jdbc.update("UPDATE game_session SET expires_at=? WHERE role_id=?", Timestamp.from(Instant.now().minusSeconds(10)), role);
-            http.inventory(lastToken, 401);
-            http.request("GET", "/roles/me", lastToken, null, 401);
-            System.out.println("[MYSQL-IT] HTTP chain passed; independent JVM restarts=2; pending/settled snapshots restored; expired session=401");
+    /** 独立 JVM 使用 WS 完成选服/登录/角色背包初始化；重启后凭证和版本持久恢复。 */
+    @Test @Order(8) void websocketInitializationSurvivesIndependentJvmRestarts() throws Exception {
+        try(var process=new MySqlHttpProcess(mysql.url(),mysql.user,mysql.password,mysql.database,mysql.uuid,mysql.port,mysql.run,mysql.root)) {
+            process.start();assertTrue(process.exchange("servers.list",Map.of()).path("body").path("items").size()>=2);
+            String account="ws_"+mysql.run.substring(0,12);
+            var accepted=process.exchange("session.login",Map.of("account",account,"serverId","local-1","clientInstanceId",UUID.randomUUID().toString()));
+            assertTrue(accepted.path("ok").asBoolean());String token=accepted.path("body").path("session").path("accessToken").asString();
+            var initial=accepted.path("body").path("initial");assertTrue(initial.path("inventory").isEmpty());assertEquals(0,initial.path("revision").asLong());
+            campaign.initialize("Bearer "+token);
+            var state=snapshots.snapshot("Bearer "+token);assertTrue(state.revision()>0);
+            process.restart();assertEquals(state.inventory(),inventoryValues(process.inventory(token,200)));
+            var restored=process.exchange("session.authenticate",Map.of("accessToken",token,"clientInstanceId",UUID.randomUUID().toString())).path("body").path("initial");
+            assertEquals(state.revision(),restored.path("revision").asLong());assertEquals(state.role().id(),restored.path("role").path("id").asString());
+            process.restart();assertEquals(state.inventory(),inventoryValues(process.inventory(token,200)));
+            jdbc.update("UPDATE game_session SET expires_at=TIMESTAMP '2000-01-01 00:00:00' WHERE role_id=?",state.role().id());process.inventory(token,401);
+            System.out.println("[MYSQL-IT] WS+PB unified init persisted across independent JVM restarts; no game HTTP");
         }
     }
 
@@ -400,71 +340,29 @@ class MySqlIT {
     }
 
     /** 正常 HTTP 首胜奖励足够升级；第二场使用新属性，独立 JVM 重启后重登/重放不再扣费。 */
-    @Test @Order(10) void heroUpgradeHttpRewardBattleAndRestart() throws Exception {
-        app.close();app=null;jdbc=new JdbcTemplate(new org.springframework.jdbc.datasource.DriverManagerDataSource(mysql.url(),mysql.user,mysql.password));
-        try(var http=new MySqlHttpProcess(mysql.url(),mysql.user,mysql.password,mysql.database,mysql.uuid,mysql.port,mysql.run,Files.createDirectory(mysql.root.resolve("hero-http")))) {
-            http.start();var credentials=Map.of("account","hero_http_"+mysql.run.substring(0,10),"serverId","local-1");
-            var login=http.request("POST","/development/login",null,credentials,200);
-            String token=login.get("session").get("accessToken").asText();
-            http.request("POST","/campaign/initialize",token,null,200);
-            var roster=http.request("GET","/heroes",token,null,200);String hero=roster.get(0).get("id").asText();
-            String path="/heroes/"+hero+"/level-up";
-            assertEquals("INSUFFICIENT_GOLD",http.request("GET",path,token,null,200).get("status").asText());
-            var report=http.request("POST","/campaign/battles",token,Map.of("requestId",UUID.randomUUID().toString()),200);
-            assertTrue(report.get("won").asBoolean());
-            http.request("POST","/campaign/battles/"+report.get("id").asText()+"/claim",token,null,200);
-            var preview=http.request("GET",path,token,null,200);assertEquals(53,preview.get("cost").get("gold").asInt());
-            var request=Map.of("requestId",UUID.randomUUID().toString(),"expectedLevel",1);
-            var result=http.request("POST",path,token,request,200);
-            assertEquals(2,result.get("preview").get("hero").get("level").asInt());assertEquals(3947,result.get("role").get("gold").asLong());
-            assertEquals(538,result.get("preview").get("experience").asLong());
-            var second=http.request("POST","/campaign/battles",token,Map.of("requestId",UUID.randomUUID().toString()),200);
-            boolean found=false;
-            for(var unit:second.get("units"))if(hero.equals(unit.get("id").asText())) {
-                found=true;assertEquals(2,unit.get("level").asInt());assertEquals(result.get("preview").get("current").get("hp").asInt(),unit.get("maxHp").asInt());
-                assertEquals(result.get("preview").get("current").get("atk").asInt(),unit.get("attack").asInt());
-            }
-            assertTrue(found);http.restart();
-            var restored=http.request("POST","/development/login",null,credentials,200);String restoredToken=restored.get("session").get("accessToken").asText();
-            assertEquals(result.get("role"),restored.get("role"));assertEquals(result,http.request("POST",path,restoredToken,request,200));
-            assertEquals(second,http.request("GET","/campaign",restoredToken,null,200).get("pending"));
-            assertEquals(1,number("SELECT COUNT(*) FROM game_hero_level_request WHERE role_id=?",restored.get("role").get("id").asText()));
-            System.out.println("[MYSQL-IT] normal reward -> level 2 (53 gold/12 hero exp) -> real second battle won="+second.get("won").asBoolean()+" -> new JVM/relogin/receipt replay preserved");
-            previewEligible=true;
-        }
+    /** 一笔事务的多处资产写入共享一个持久版本，回滚不增加版本，应用重启保留已提交数据。 */
+    @Test @Order(10) void assetRevisionCommitRollbackAndRestart() throws Exception {
+        var p=player();var repo=app.getBean(com.funsgamex.mxzg.role.RoleRepository.class);var inventory=app.getBean(com.funsgamex.mxzg.inventory.InventoryService.class);
+        var tx=new org.springframework.transaction.support.TransactionTemplate(app.getBean(org.springframework.transaction.PlatformTransactionManager.class));
+        long before=repo.revision(p.id());
+        tx.executeWithoutResult(status->{repo.lock(p.id());repo.creditCurrency(p.id(),17,3);inventory.credit(p.id(),900101,8);inventory.credit(p.id(),900101,4);});
+        assertEquals(before+1,repo.revision(p.id()));var committed=snapshots.snapshot(p.token());
+        tx.executeWithoutResult(status->{repo.lock(p.id());inventory.credit(p.id(),900101,99);repo.creditCurrency(p.id(),99,0);status.setRollbackOnly();});
+        assertEquals(committed,snapshots.snapshot(p.token()));
+        app.close();boot();assertEquals(committed,snapshots.snapshot(p.token()));
+        assertEquals("bigint",jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND COLUMN_NAME='state_revision'",String.class));
     }
 
     /** 独立 MySQL 经 HTTP 并发领取后重启 JVM 和数据库，验证计时、随机收据和资产均不重复。 */
-    @Test @Order(11) void idleHttpClaimAndRestart() throws Exception {
-        if(app!=null){app.close();app=null;}
-        jdbc=new JdbcTemplate(new org.springframework.jdbc.datasource.DriverManagerDataSource(mysql.url(),mysql.user,mysql.password));
-        mysql.guard();
-        try(var http=new MySqlHttpProcess(mysql.url(),mysql.user,mysql.password,mysql.database,mysql.uuid,mysql.port,mysql.run,Files.createDirectory(mysql.root.resolve("idle-http")))) {
-            http.start();
-            var credentials=Map.of("account","idle_http_"+UUID.randomUUID().toString().substring(0,12),"serverId","local-1");
-            var signed=http.request("POST","/development/login",null,credentials,200);
-            String token=signed.get("session").get("accessToken").asText();
-            http.request("POST","/campaign/initialize",token,null,200);
-            var before=http.request("GET","/idle",token,null,200);assertTrue(before.get("claimable").asBoolean());
-            var request=Map.of("requestId",UUID.randomUUID().toString(),"expectedRevision",before.get("revision").asLong());
-            Callable<tools.jackson.databind.JsonNode> claim=()->http.request("POST","/idle/claim",token,request,200);
-            var results=overlap("idle-http-claim",List.of(claim,claim));
-            var result=results.getFirst();assertEquals(result.get("receipt"),results.getLast().get("receipt"));
-            assertEquals(200,result.get("role").get("gold").asLong());assertEquals(1,result.get("state").get("revision").asLong());
-            http.close();mysql.restart();http.start();
-            var again=http.request("POST","/development/login",null,credentials,200);
-            String restoredToken=again.get("session").get("accessToken").asText();
-            http.request("POST","/campaign/initialize",restoredToken,null,200);
-            var restored=http.request("GET","/idle",restoredToken,null,200);
-            assertEquals(result.get("state").get("startedAt"),restored.get("startedAt"));
-            assertEquals(result.get("role"),again.get("role"));
-            var replay=http.request("POST","/idle/claim",restoredToken,request,200);
-            assertEquals(result.get("receipt"),replay.get("receipt"));assertEquals(result.get("inventory"),replay.get("inventory"));
-            assertEquals(result.get("roleExperience"),replay.get("roleExperience"));
-            assertEquals(1,number("SELECT COUNT(*) FROM game_idle_receipt WHERE role_id=?",again.get("role").get("id").asText()));
-            http.request("GET","/idle",null,null,401);
-            System.out.println("[MYSQL-IT] idle HTTP concurrent claim/restart/relogin/replay: timer, random receipt and assets preserved");
-        }
+    /** 暂停的挂机仍保留真实 MySQL 领域幂等与重启测试，不发布网络入口。 */
+    @Test @Order(11) void idleDomainClaimAndRestart() throws Exception {
+        var p=player();campaign.initialize(p.token());var idle=app.getBean(com.funsgamex.mxzg.campaign.IdleService.class);
+        var state=idle.current(p.token());assertTrue(state.claimable());
+        var request=new com.funsgamex.mxzg.campaign.IdleService.Request(UUID.randomUUID().toString(),state.revision());
+        var first=idle.claim(p.token(),request);assertEquals(first.receipt(),idle.claim(p.token(),request).receipt());
+        var assets=snapshots.snapshot(p.token());app.close();mysql.restart();boot();
+        var restored=app.getBean(com.funsgamex.mxzg.campaign.IdleService.class).claim(p.token(),request);
+        assertEquals(first.receipt(),restored.receipt());assertEquals(assets,snapshots.snapshot(p.token()));
     }
 
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */

@@ -68,7 +68,7 @@ async function main() {
   assert.equal(app.paintWaiters.size, 0, "shutdown settles frame waiters");
 
   const scene = JSON.parse(readFileSync("client/assets/scenes/Remake.scene", "utf8"));
-  const binding = scene.find((row: any) => row.loginPrefab && row.apiBaseUrl);
+  const binding = scene.find((row: any) => row.loginPrefab && row.socketUrl);
   assert(binding.pageHost && binding.startupHost && binding.loadingPrefab);
   const accountMeta = JSON.parse(readFileSync("client/assets/prefabs/ui/account/AccountLoginView.prefab.meta", "utf8"));
   const legacyMeta = JSON.parse(readFileSync("client/assets/prefabs/ui/legacy-login/LoginPanel.prefab.meta", "utf8"));

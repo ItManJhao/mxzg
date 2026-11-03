@@ -9,7 +9,7 @@
 - `features/Bag`：唯一库存 Model、模块 Controller、库存事件与界面。
 - `features/battle`：主线请求、战报播放、领奖及战斗显示素材规则。
 - `framework`：全局事件、作用域、资源加载、UIManager、通用显示适配。
-- `platform`：HTTP 与平台能力；`config`：策划配置读取和资源目录。
+- `platform`：WebSocket、Protobuf 与平台能力；`config`：策划配置读取和资源目录。
 - `core`：现有日志与错误说明，不保存角色业务状态。
 
 `module` 和旧 `net` 已删除；没有兼容转发或旧数据源回退。通用框架不反向导入功能 UI。

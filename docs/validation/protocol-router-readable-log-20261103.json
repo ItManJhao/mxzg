@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-03",
+  "scope": "Explicit protocol directory/routing and readable inventory logs",
+  "catalog": "client/assets/scripts/platform/Protocol.ts",
+  "wireIdentifier": "Frame.name string; no numeric opcode migration in this batch",
+  "registration": "BagController.onInitialize -> ProtocolRouter.register(this,[Protocol.INVENTORY_LIST])",
+  "delivery": "GameSocketClient.requestFrame -> BagApi -> authenticated application wrapper -> BagUpdateCoordinator guards -> ProtocolRouter.dispatch by real frame.name -> onNotify -> onInventoryList -> Model -> View event",
+  "implementedBagMessages": [
+    "inventory.list"
+  ],
+  "notImplementedBagMessages": [
+    "use",
+    "sell",
+    "compose",
+    "active inventory push"
+  ],
+  "coordinator": "new client-only ordering/deduplication and notification-reentrancy helper; no ownership or asset rules",
+  "logging": {
+    "heartbeatsHiddenByDefault": true,
+    "requestConnectionIdsHiddenByDefault": true,
+    "multiline": true,
+    "fieldExplanations": true,
+    "credentialRedaction": true
+  },
+  "actualInventory": [
+    {
+      "itemId": 900101,
+      "quantity": 550
+    },
+    {
+      "itemId": 900102,
+      "quantity": 4
+    },
+    {
+      "itemId": 900401,
+      "quantity": 100
+    },
+    {
+      "itemId": 1004001,
+      "quantity": 1
+    },
+    {
+      "itemId": 20204004,
+      "quantity": 30
+    }
+  ],
+  "checks": {
+    "frontendSuites": 12,
+    "strict": true,
+    "backendTests": 51,
+    "realTsJava": true,
+    "previewLogin": true,
+    "previewBagDetailQuantity": 4,
+    "docs": true
+  },
+  "backendChangesThisBatch": false,
+  "manualDatabaseChanges": false
+}

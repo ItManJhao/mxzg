@@ -1,4 +1,5 @@
-import { JsonClient, HttpFailure } from "../../platform/http/JsonClient";
+/** 区服选择：读取应用注入的 WebSocket 目录，保存用户选择。 */
+import type { GameSocketClient } from "../../platform/GameSocketClient";
 export interface GameServer {
     readonly id: string;
     readonly regionId: string;
@@ -10,23 +11,17 @@ export class ServerSelection {
     private rows: readonly GameServer[] = [];
     private selectedId = "local-1";
     private listeners = new Set<() => void>();
-    constructor(private readonly http: JsonClient, private readonly save: (id: string) => void, saved?: string | null) {
+    /** 应用注入匿名目录连接、选择保存函数与上次区服，构造时不联网。 */
+    constructor(private readonly socket: Pick<GameSocketClient,"catalog">, private readonly save: (id: string) => void, saved?: string | null) {
         if (saved)
             this.selectedId = saved;
     }
     get servers(): readonly GameServer[] { return this.rows; }
     get selected(): GameServer | null { return this.rows.find(row => row.id === this.selectedId) || null; }
     subscribe(listener: () => void): () => void { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
+    /** 通过 WS 获取实际区服，整表校验后更新选择并通知页面。 */
     async load(): Promise<void> {
-        let data: unknown;
-        try {
-            data = await this.http.request("/api/v1/servers");
-        }
-        catch (error) {
-            if (error instanceof HttpFailure && error.status === 404)
-                throw new Error("后端缺少区服接口，请重启新后端");
-            throw error;
-        }
+        const data=await this.socket.catalog();
         if (!Array.isArray(data))
             throw new Error("区服列表无效");
         const seen = new Set<string>();

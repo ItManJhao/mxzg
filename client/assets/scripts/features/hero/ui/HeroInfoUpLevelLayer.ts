@@ -3,7 +3,7 @@ import { _decorator, Button, Label } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { HeroLevelController } from "../HeroLevelController";
 import type { HeroLevelPreview } from "../HeroLevelApi";
-import { HttpFailure } from "../../../platform/http/JsonClient";
+import { SocketFailure } from "../../../platform/GameSocketClient";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 const {ccclass,property}=_decorator;
@@ -84,7 +84,7 @@ export class HeroInfoUpLevelLayer extends BaseView<Arguments> {
         for(const [label,name,current,next] of rows)if(label)label.string=name+" "+current+(next!==undefined?" → "+next:"");
     }
     /** 稳定错误码映射本功能文案，网络不确定结果仍沿用同一逻辑请求重试。 */
-    private message(error:unknown):string { return error instanceof HttpFailure && messages[error.code]?messages[error.code]:error instanceof Error?error.message:"升级失败"; }
+    private message(error:unknown):string { return error instanceof SocketFailure && messages[error.code]?messages[error.code]:error instanceof Error?error.message:"升级失败"; }
     /** 关闭只解绑页面并作废绘制，不能取消已经送达服务器的会话级升级。 */
     onClose():void {
         this.epoch++;this.upgradeButton?.node.off(Button.EventType.CLICK,this.submit,this);this.backButton?.node.off(Button.EventType.CLICK,this.close,this);

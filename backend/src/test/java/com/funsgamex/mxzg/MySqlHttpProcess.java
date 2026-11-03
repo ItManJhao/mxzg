@@ -5,6 +5,8 @@
 package com.funsgamex.mxzg;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
+import com.funsgamex.mxzg.network.GameProtocolCodec;
 import java.net.http.*;
 import java.nio.file.*;
 import java.sql.DriverManager;
@@ -82,55 +84,32 @@ final class MySqlHttpProcess implements AutoCloseable {
         throw new IllegalStateException("独立 HTTP JVM 未就绪，查看本批 http-jvm 日志");
     }
 
-    /** 对已核对且仍存活的本批 JVM 发真实 HTTP 请求；断言不回显可能包含令牌的正文。 */
-    JsonNode request(String method, String path, String token, Object body, int expected) throws Exception {
-        assertTrue(process != null && process.isAlive(), "拒绝请求已停止或未知后端");
-        var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/v1" + path)).timeout(Duration.ofSeconds(25));
-        if (token != null) request.header("Authorization", "Bearer " + token);
-        request.header("Content-Type", "application/json").method(method,
-            body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body)));
-        var response = client.send(request.build(), HttpResponse.BodyHandlers.ofString());
-        assertEquals(expected, response.statusCode(), method + " " + path);
-        return json.readTree(response.body());
-    }
-
-    /** 库存只通过真实 WS 鉴权/同步/读取；失效令牌检查协议错误，不模拟 HTTP 返回。 */
-    JsonNode inventory(String token, int expected) throws Exception {
-        assertTrue(process != null && process.isAlive(), "拒绝请求未知后端");
-        var messages = new java.util.concurrent.LinkedBlockingQueue<JsonNode>();
-        var socket = client.newWebSocketBuilder().connectTimeout(Duration.ofSeconds(5))
-            .buildAsync(URI.create("ws://127.0.0.1:" + port + "/api/v1/game/socket"), new java.net.http.WebSocket.Listener() {
-                final StringBuilder buffer = new StringBuilder();
-                @Override public void onOpen(java.net.http.WebSocket webSocket) { webSocket.request(1); }
-                @Override public java.util.concurrent.CompletionStage<?> onText(java.net.http.WebSocket webSocket, CharSequence data, boolean last) {
-                    buffer.append(data);
-                    if (last) { messages.add(json.readTree(buffer.toString())); buffer.setLength(0); }
-                    webSocket.request(1); return null;
+    /** 已核对的独立进程只通过 WS+Protobuf 交换游戏消息；每次调用使用新连接。 */
+    JsonNode exchange(String name,Object body) throws Exception {
+        assertTrue(process!=null && process.isAlive());
+        var messages=new java.util.concurrent.LinkedBlockingQueue<JsonNode>();
+        var socket=client.newWebSocketBuilder().subprotocols(GameProtocolCodec.SUBPROTOCOL).connectTimeout(Duration.ofSeconds(5))
+            .buildAsync(URI.create("ws://127.0.0.1:"+port+"/api/v1/game/socket"),new WebSocket.Listener(){
+                final java.io.ByteArrayOutputStream buffer=new java.io.ByteArrayOutputStream();
+                @Override public void onOpen(WebSocket ws){ws.request(1);}
+                @Override public java.util.concurrent.CompletionStage<?> onBinary(WebSocket ws,ByteBuffer data,boolean last){
+                    byte[] bytes=new byte[data.remaining()];data.get(bytes);buffer.writeBytes(bytes);
+                    if(last){try{messages.add(GameProtocolCodec.decode(buffer.toByteArray()));}catch(Exception e){throw new IllegalStateException(e);}buffer.reset();}
+                    ws.request(1);return null;
                 }
-            }).get(5, TimeUnit.SECONDS);
+            }).get(5,TimeUnit.SECONDS);
         try {
-            String connection = null;
-            JsonNode result = null;
-            for (String name : List.of("session.authenticate", "session.sync", "inventory.list")) {
-                String id = UUID.randomUUID().toString();
-                var frame = new LinkedHashMap<String, Object>();
-                frame.put("version", 1); frame.put("kind", "request"); frame.put("name", name); frame.put("id", id);
-                frame.put("body", name.equals("session.authenticate") ? Map.of("accessToken", token, "clientInstanceId", UUID.randomUUID().toString()) : Map.of());
-                if (connection != null) frame.put("connectionId", connection);
-                socket.sendText(json.writeValueAsString(frame), true).get(5, TimeUnit.SECONDS);
-                var response = messages.poll(5, TimeUnit.SECONDS);
-                assertNotNull(response, "库存 WS 未响应"); assertEquals(id, response.path("id").asString());
-                if (expected == 401) {
-                    assertFalse(response.path("ok").asBoolean());
-                    assertEquals("UNAUTHENTICATED", response.path("error").path("code").asString()); return response;
-                }
-                assertEquals(200, expected); assertTrue(response.path("ok").asBoolean(), "库存 WS 请求失败");
-                connection = response.path("connectionId").asString(); result = response.path("body");
-            }
-            return result;
-        } finally { socket.abort(); }
+            String id=UUID.randomUUID().toString();
+            socket.sendBinary(ByteBuffer.wrap(GameProtocolCodec.encode(Map.of("version",1,"kind","request","name",name,"id",id,"body",body))),true).get(5,TimeUnit.SECONDS);
+            var response=messages.poll(5,TimeUnit.SECONDS);assertNotNull(response);assertEquals(id,response.path("id").asString());return response;
+        } finally {socket.abort();}
     }
-
+    /** 鉴权首包已经包含库存，不追加同步或背包查询；检查失效凭证时仍使用真实协议。 */
+    JsonNode inventory(String token,int expected) throws Exception {
+        var response=exchange("session.authenticate",Map.of("accessToken",token,"clientInstanceId",UUID.randomUUID().toString()));
+        if(expected==401){assertFalse(response.path("ok").asBoolean());assertEquals("UNAUTHENTICATED",response.path("error").path("code").asString());return response;}
+        assertTrue(response.path("ok").asBoolean());return response.path("body").path("initial").path("inventory");
+    }
     /** 停止旧进程后重新执行 java，断言 PID 改变，不能以同 JVM 的上下文刷新替代。 */
     void restart() throws Exception {
         long previous = process.pid(); close(); start(); assertNotEquals(previous, process.pid());

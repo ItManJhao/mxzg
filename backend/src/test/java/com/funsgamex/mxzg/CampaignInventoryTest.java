@@ -109,15 +109,13 @@ class CampaignInventoryTest {
         assertFalse(result.won());assertTrue(result.rewards().isEmpty());
     }
     /** 尚未迁移的选服和主线保留 HTTP，主线仍拒绝未鉴权访问。 */
-    @Test void publicServerCatalogAndAuthenticatedCampaignWorkOverHttp() throws Exception {
-        var http=HttpClient.newHttpClient();
-        var servers=http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/servers")).GET().build(),HttpResponse.BodyHandlers.ofString());
-        assertEquals(200,servers.statusCode());assertTrue(servers.body().contains("local-2"));
-        var p=player();
-        var init=http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/campaign/initialize"))
-            .header("Authorization",p.token()).POST(HttpRequest.BodyPublishers.noBody()).build(),HttpResponse.BodyHandlers.ofString());
-        assertEquals(200,init.statusCode());assertTrue(init.body().contains("\"initialized\":true"));
-        var denied=http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/campaign")).GET().build(),HttpResponse.BodyHandlers.ofString());
-        assertEquals(401,denied.statusCode());
+    /** 选服已转 WS，主线暂停；原 HTTP 入口不可再调用。 */
+    @Test void retiredCatalogAndCampaignRoutesCannotBeCalled() throws Exception {
+        try(var http=HttpClient.newHttpClient()) {
+            for(String path:List.of("servers","campaign","campaign/initialize")) {
+                var response=http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/"+path)).GET().build(),HttpResponse.BodyHandlers.discarding());
+                assertEquals(404,response.statusCode());
+            }
+        }
     }
 }

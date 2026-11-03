@@ -1,4 +1,4 @@
-/** 访问令牌的签发、校验与撤销；HTTP 和长连接共享持久化会话，数据库只保存令牌摘要。 */
+/** 访问令牌的签发、校验与撤销；长连接业务共享持久化会话，数据库只保存令牌摘要。 */
 package com.funsgamex.mxzg.auth;
 
 import java.nio.charset.StandardCharsets;

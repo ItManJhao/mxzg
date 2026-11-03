@@ -1,6 +1,6 @@
-/** 账号边界：HTTP 交换身份；显式长连接试点通过鉴权/同步后才交付角色，不持有玩家状态。 */
+/** 账号边界：WebSocket 交换身份；统一初始化通过鉴权/同步后才交付角色，不持有玩家状态。 */
+import type { GameFrame } from "../../platform/GameProtocolCodec";
 import type { RoleProfile } from "./AccountModel";
-import { JsonClient } from "../../platform/http/JsonClient";
 import type { GameSocketClient } from "../../platform/GameSocketClient";
 
 export interface AccountSession { accessToken: string; expiresAt: string; account?: string; }
@@ -8,15 +8,19 @@ export interface LoginResult { session: AccountSession; role: RoleProfile; }
 export interface AccountGateway {
   developmentLogin(account: string, serverId?: string): Promise<LoginResult>;
   currentRole(token: string): Promise<RoleProfile>;
+  /** 本次连接完整状态，由应用交给模块 onNotify。 */
+  initialization?(): GameFrame | null;
   disconnect?(): void;
   assertReady?(token: string): void;
 }
 
+/** 只接受对象资料，不将缺失数据解释成空角色或空会话。 */
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object") throw new Error("服务器返回的数据结构无效");
   return value as Record<string, unknown>;
 }
 
+/** 校验并拷贝持久凭证，拒绝非法令牌或无法解析的过期时间。 */
 export function readSession(value: unknown): AccountSession {
   const row = record(value);
   if (typeof row.accessToken !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(row.accessToken) ||
@@ -25,6 +29,7 @@ export function readSession(value: unknown): AccountSession {
   return { accessToken: row.accessToken, expiresAt: row.expiresAt, ...(typeof row.account === "string" ? { account: row.account } : {}) };
 }
 
+/** 校验角色归属字段及非负钱包，零余额是合法资料。 */
 export function readRole(value: unknown): RoleProfile {
   const row = record(value);
   if (typeof row.id !== "string" || !row.id || typeof row.nickname !== "string" ||
@@ -37,37 +42,29 @@ export function readRole(value: unknown): RoleProfile {
     ...(typeof serverId === "string" ? { serverId } : {}) };
 }
 
-/** Boundary for the first two backend endpoints, independent of legacy wire opcodes. */
+/** WebSocket 账号入口：登录回包包含统一初始化，角色与背包由应用协调提交。 */
 export class AccountApi implements AccountGateway {
-  private epoch = 0;
-  /** 应用选择唯一通信方式；关闭试点时保留现有 HTTP 行为。 */
-  constructor(private readonly http: JsonClient, private readonly socket?: GameSocketClient) {}
-  /** 交换开发身份并校验所选区服，等待长连接快照；旧登录任务不能接管新账号连接。 */
-  async developmentLogin(account: string, serverId?: string): Promise<LoginResult> {
-    const epoch = this.epoch;
-    const data = record(await this.http.request("/api/v1/development/login", { account, ...(serverId ? { serverId } : {}) }));
-    const session = readSession(data.session);
-    const role = readRole(data.role);
-    if (serverId && role.serverId !== serverId) throw new Error("服务器返回的角色区服与所选区服不一致，请重新选择服务器");
-    if (epoch !== this.epoch) throw new Error("会话已切换");
-    if (!this.socket) return { session, role };
-    const current = await this.currentRole(session.accessToken);
-    if (epoch !== this.epoch || current.id !== role.id || current.serverId !== role.serverId) throw new Error("会话角色不一致");
-    return { session, role: current };
+  /** 应用注入唯一长连接，不持有资产副本。 */
+  constructor(private readonly socket: GameSocketClient) {}
+  /** 本地身份交换成功后直接读取首包，不追加角色或背包查询。 */
+  async developmentLogin(account: string, serverId="local-1"): Promise<LoginResult> {
+    const frame=await this.socket.login(account,serverId), body=record(frame.body), initial=record(body.initial);
+    const role=readRole(initial.role);
+    if(role.serverId!==serverId) throw new Error("角色区服与所选区服不一致");
+    return {session:readSession(body.session),role};
   }
-  /** 重新读取权威角色；长连接重建后再次查询，避免拿连接建立时的旧钱包快照。 */
+  /** 恢复连接直接使用鉴权首包；已连接则读取同连接最近的权威状态，不发送额外查询。 */
   async currentRole(token: string): Promise<RoleProfile> {
-    if (this.socket) {
-      const epoch = this.epoch;
-      await this.socket.connect(token);
-      if (epoch !== this.epoch) throw new Error("会话已切换");
-      const snapshot = record(await this.socket.request(token, "session.sync"));
-      return readRole(snapshot.role);
-    }
-    return readRole(await this.http.request("/api/v1/roles/me", undefined, token));
+    await this.socket.connect(token);
+    const frame=this.socket.latestState;
+    if(!frame) throw new Error("缺少登录初始化数据");
+    const body=record(frame.body);
+    return readRole(record(frame.kind==="event"?body:body.initial).role);
   }
-  /** 登出/换号终止在途连接与登录任务，不等待窗口销毁。 */
-  disconnect(): void { this.epoch++; this.socket?.disconnect(); }
-  /** 试点断线期间拒绝新业务；现有 HTTP 写入口也不能绕过会话恢复门槛。 */
-  assertReady(token: string): void { this.socket?.assertReady(token); }
+  /** 应用在接纳账号的同一通知批次中交付初始化状态。 */
+  initialization(): GameFrame|null {return this.socket.latestState;}
+  /** 换号、退出使旧连接和在途请求失效。 */
+  disconnect(): void {this.socket.disconnect();}
+  /** 断线期间拒绝业务请求，等待统一恢复。 */
+  assertReady(token: string): void {this.socket.assertReady(token);}
 }

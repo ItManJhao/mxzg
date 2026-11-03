@@ -19,7 +19,7 @@
 | 环节 | 游爱现有写法 | 本项目固定写法 |
 |---|---|---|
 | 发请求 | SpiritGameMainView.onShow/onClick 可直接 NetHelper.sendProto；SGCtrl 也会发后续请求 | View 转交 Controller 的业务方法，由身份边界、模块 API、统一 GameSocketClient 发送 |
-| 收包 | SGCtrl.onNotify 按 Protocol/AOI 分发到 getSGameData 等方法 | 请求由 socket 关联回包，经 API 校验返回 Controller；尚未接入的业务推送不能描述为已完成 |
+| 收包 | SGCtrl.onNotify 按 Protocol/AOI 分发 | Protocol 登记真实消息，onNotify → onXxx → 唯一 Model → 事件；角色和背包按统一持久版本批量提交 |
 | 更新状态 | getSGameData → sgModel.setData；getRecord → setRecord | BagController.read → BagModel.replaceAll，状态由唯一 Model 持有 |
 | 通知界面 | setData 后 dispatch(SG_UPDATE_STATUS) | 提交后 notify → EventDispatcher → BagUpdate/BagSyncStateChanged |
 | 界面刷新 | onShow 登记监听并 updateView；updateView 读取 DataMgr.ins.sgModel | onOpen 登记监听并读取 BagModel；refreshFromModel 负责刷新 |
@@ -39,7 +39,7 @@
 | client/assets/scripts/app/remake | 启动、模块装配、页面入口和功能资源作用域 |
 | client/assets/scripts/features | account、Bag、battle、city、hero、home 等模块；功能 UI 放本模块 ui |
 | client/assets/scripts/framework | 事件、基础 Model/Controller、UIManager、资源作用域、SuperScroll 等公共能力 |
-| client/assets/scripts/platform | HTTP、GameSocketClient 和平台边界；传输实现与具体玩法分离 |
+| client/assets/scripts/platform | WebSocket、Protobuf 编解码与协议目录；不反向依赖功能 UI |
 | client/assets/scripts/core | 现有 GameLog 与通用错误辅助；不向此处堆业务 |
 | client/assets/scripts/config | 配置查询、生成类型及资源登记相关入口 |
 | client/assets/prefabs、resources、bundles | 静态界面、资源及按需加载包；修改保留对应 meta 和引用 |
@@ -50,6 +50,10 @@
 | docs | 需求、架构、规范、计划与维护指南；validation 只存历史证据 |
 
 目前模块大小写、旧辅助类和个别生命周期并未全部统一。整理遵循“先确认引用和职责，再在对应功能批次改造”，不因看到旧目录或大文件就整批搬迁；进度中的待迁移项仍须实际完成。现有根 scripts/ui 无业务文件，不作为新模块 UI 的放置入口。
+
+## 协议与生成代码
+
+登录会话与背包使用 WebSocket + Protobuf，统一在 protocol/game.proto 定义强类型载荷；前端执行 node tools/generate_game_protocol.cjs，Java 由 Maven 自动生成。新增或修改协议同时更新中文契约说明、边界校验、生成漂移和真实前后端互通测试；字段号不可复用，删除时 reserved。编解码留在 platform/network，Controller 只处理业务 DTO，不能新增 JSON/Base64 回退或将 JSON 文本包在 bytes 中。生成文件不手改注释，中文属性/函数注释仍约束手写适配代码。
 
 ## 一次操作应当怎样读
 
@@ -64,9 +68,11 @@ View 的点击方法
   → View 读取 Model 刷新
 ```
 
-后续业务推送须从网络入口进入所属 Controller，继续使用同一 Model 和事件；当前尚未接入库存资产推送。登录会话与背包查询已使用 WebSocket，其他玩法仍逐批从 HTTP 迁移。所有新增或迁移模块遵守[固定通信与状态模板](bag-mvc-maintenance.md#固定通信与状态模板)，不为形式新增转发文件。升级弹窗中的即时条件预览可以直接接收 Controller 返回值，持久角色/英雄/库存仍由模块 Model 管理。
+角色与背包已接入服务端 state.changed；登录/恢复回包统一初始化，不再追加库存查询。其他模块入口暂停，不再保留游戏 HTTP。后续模块按[固定模板](bag-mvc-maintenance.md#固定通信与状态模板)恢复，持久状态仍由所属 Model 唯一管理。
 
 阅读现有普通升级时依次看 HeroInfoUpLevelLayer.submit、HeroLevelController.upgrade、HeroLevelApi.upgrade、后端 HeroLevelController/Service，再回到 BagController.runInventoryUpdate 的状态提交和页面通知。点击方法里应看得出调用哪个业务，不能把身份、联网、扣资源和绘制挤在一个匿名回调中。
+
+账号变化的跨模块协调放在应用层：账号负责登录与凭证，应用通知背包清理/加载；背包只请求、提交库存并发事件。统一鉴权封装在应用注入的 api.list() 内，BagController 不依赖 AccountModel/AccountService，不接收 token。客户端会话标识只防止旧结果污染，服务端决定真实库存归属。该边界已落实背包；其他存量模块按批迁移。游爱继续提供明确业务方法、Model 更新与事件通知的阅读参考；需要补齐的后端以旧游戏规则和已核实的前端需求定义契约，不凭界面猜消耗与奖励。
 
 ## 文件组织与职责
 
@@ -87,6 +93,7 @@ View 的点击方法
 ## 方法、排版与注释
 
 - 文件头说明功能、角色、调用入口与重要状态归属；新增或修改函数用中文说明实际作用、结果和必要边界。
+- 新增或修改属性也必须写中文注释，说明保存内容、用途及生命周期；依赖说明注入与空值，计数/布尔值说明含义，Map/Set 说明键值与去重范围，Promise 说明等待、复用与清理。包含私有、静态及构造函数参数属性，详见 [属性注释要求](../AGENTS.md#31-属性与成员变量注释)。
 - 类内按属性绑定/依赖、状态、初始化与销毁、公开业务方法、回包处理、内部辅助分组。View 优先让人找到打开/关闭和按钮处理。
 - 名称表达业务：refreshRoster、upgrade、saveLineup、applySnapshot；避免 doIt、handleData、processAll。只有真正按协议路由时才使用清晰的 switch/映射表，不为模仿 onNotify 把全部业务重新塞进一个大 switch。
 - 状态改变、网络提交、通知等重要步骤独立成行；不同判断分支分段。不要把多个副作用写成一行，也不把普通逻辑过度压成三元表达式。
@@ -115,11 +122,19 @@ async confirmFormation(): Promise<void> {
 
 实际实现还需按本模块约束处理关闭、换号、冲突和错误展示；示意代码不是可直接复制的完整实现。
 
+## 游爱式协议处理的固定阅读结构
+
+Controller 采用 Protocol 登记 → onNotify 按真实消息分发 → onXxx → Model → 事件。背包登记 session.login/session.authenticate/state.changed，应用校验整包、身份与版本后交付。已移除 BagUpdateCoordinator 与单独查询；复杂度由后端事务/持久版本及统一应用提交承担，不能通过删掉正确性边界缩短代码。
+
+全部已实现消息标识集中在 platform/Protocol.ts；当前以 Frame.name 字符串为线上标识，不为模仿数字编号额外维护未使用的编号。
+
+开发预览的下发数据通过统一 [WS接收] 日志查看；默认隐藏心跳和请求/连接 ID，玩法消息附中文说明、字段含义与多行实际数据。日志在应用装配启用，隐藏凭证、限制长度，生产默认关闭。日志与协议事件分开，打印失败不能影响业务。
+
 ## 保留清晰写法，同时遵守当前边界
 
 游爱 SGCtrl 的部分方法直接打开窗口，View 也会直接发协议；本项目采用 View 转交业务、UIManager 管窗口、模块独立于窗口的约定，不照搬这些耦合。SGModel 中公开可写字段也不意味着本项目应允许所有页面任意写状态。
 
-现有 BagController 的串行资产操作、会话代次、幂等与批量通知有实际正确性用途，不能以“代码要短”为理由删除。HTTP 改为 WebSocket 只改变传输与会话基础，不改变玩法结果，不取消后端权威或持久化保护。
+资产以服务端为准；同一事务递增一个持久版本，提交后同步，回滚不推送。前端校验完整快照、身份和版本后批量更新，拒绝重复/过期数据；保留后端角色锁、业务幂等和持久化，禁止前端发奖或通过暂停模块回包写库存。
 
 Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScroll + SuperContent。页面只更新数据和必要的适配/动画，不能用代码另造一套更方便实现的界面来替代原效果。
 

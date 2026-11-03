@@ -2,7 +2,7 @@ package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.auth.SessionService;
-import com.funsgamex.mxzg.role.RoleController;
+import com.funsgamex.mxzg.role.RoleService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("local")
 class LoginIntegrationTest {
     @Autowired DevelopmentLoginService login;
-    @Autowired RoleController roles;
+    @Autowired RoleService roles;
     @Autowired SessionService sessions;
     @Autowired JdbcTemplate jdbc;
 

@@ -1,0 +1,194 @@
+{
+  "date": "2026-11-03",
+  "scope": "全部游戏业务 HTTP 退役；登录、角色、背包统一初始化与提交后同步；其他玩法入口暂停",
+  "oldSource": "G:/work/FsGame/Demo/mj/program",
+  "protocol": {
+    "transport": "WebSocket",
+    "encoding": "Protobuf",
+    "subprotocol": "mxzg.protobuf.v2",
+    "implemented": [
+      "servers.list",
+      "session.login",
+      "session.authenticate",
+      "session.heartbeat",
+      "session.kicked",
+      "state.changed"
+    ],
+    "retired": [
+      "session.sync",
+      "inventory.list"
+    ],
+    "initialization": "登录/恢复成功回包内包含角色、库存、持久版本"
+  },
+  "tests": {
+    "backend": {
+      "total": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "log": "backend/target/state-sync-test.log"
+    },
+    "mysql": {
+      "total": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "log": "backend/target/state-sync-mysql.log",
+      "run": "295309ec1a27479490fa565d2d13fdb0",
+      "schema": "V1-V6",
+      "ownedProcessesStopped": true,
+      "existingPlayerDatabaseAccessed": false
+    },
+    "frontend": [
+      {
+        "id": "resource-catalog",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "resource-generated",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "event-target",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "game-protocol",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "game-protocol-generated",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "game-socket",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "formation-view",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "remake-navigation",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "feature-navigation",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "login-presentation",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "home-presentation",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "startup",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "resources",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "home-bundle",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "config-groups",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "creator-compat",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "backpack",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "super-scroll",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "hero",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "city",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "battle",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "backend-launcher",
+        "passed": true,
+        "exitCode": 0
+      }
+    ],
+    "docs": {
+      "files": 26,
+      "brokenRelativeLinks": 0
+    },
+    "strict": "ES2017 passed",
+    "pausedFrontendSuites": [
+      "hero-roster",
+      "hero-level",
+      "formation",
+      "remake-playable",
+      "idle"
+    ],
+    "retiredQueryTestsReplacedBy": "client/tools/session-state-check.ts"
+  },
+  "creator": {
+    "observed": [
+      "有效凭证统一恢复",
+      "主城",
+      "背包",
+      "物品详情数量4",
+      "日志同条回包显示角色、钱包与5种库存",
+      "英雄入口显示暂停提示",
+      "背包返回主城正常",
+      "2026-11-03 17:28:48 后端重启后同页自动重新鉴权，背包保持数量4"
+    ],
+    "directPlayerAssetSql": false,
+    "screenshot": "C:/Users/HelloWorld/.codex/visualizations/2026/10/31/01a190dc-c785-7bd3-a4d9-9bbe637964bc/login-unified-bag-20261103.png",
+    "notClaimed": [
+      "未通过 Creator 手工改资产制造推送",
+      "未验证全部平台或完整正式服效果"
+    ],
+    "reconnectAuthenticationAt": "2026-11-03T17:28:48+08:00"
+  },
+  "pending": [
+    "完整角色字段、库存实例/模板ID和期限道具",
+    "旧5002提示类型及背包操作",
+    "正式服登录/背包逐项对照",
+    "生产身份、多实例协调、真机"
+  ],
+  "git": "未提交或推送，保留既有未提交修改"
+}

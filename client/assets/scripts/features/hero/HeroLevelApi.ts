@@ -1,5 +1,6 @@
+/** 此模块等待按原项目重做；旧业务通信已停用，保留 DTO 校验供后续恢复。 */
 /** 普通升级 HTTP 边界：只提交实例、逻辑请求标识和预期等级，校验服务端权威条件及资产快照。 */
-import {JsonClient} from "../../platform/http/JsonClient";
+import { featureUnavailable } from "../PausedFeatures";
 import {readOwnedHero, readOwnedHeroes} from "./HeroApi";
 import type {OwnedHero} from "./HeroApi";
 import {readRole} from "../account/AccountApi";
@@ -81,23 +82,19 @@ export function readHeroLevelPreview(value: unknown): HeroLevelPreview {
 }
 
 export class HeroLevelApi {
-    /** 复用应用已有 HTTP 客户端，不创建额外服务地址或身份状态。 */
-    constructor(private readonly http: JsonClient) {
-    }
+    /** 暂停模块不再依赖网络客户端。 */
+    constructor() {}
 
     /** 查询指定英雄实例的权威升级条件。 */
     async preview(token: string, heroId: string): Promise<HeroLevelPreview> {
-        const result = readHeroLevelPreview(await this.http.request("/api/v1/heroes/" + heroId + "/level-up", undefined, token));
+        const result = readHeroLevelPreview(await featureUnavailable());
         if (result.hero.id !== heroId) throw new Error("升级条件实例不匹配");
         return result;
     }
 
     /** 升级固定一级；重复收据原等级不变，关联状态采用服务端本次事务中的最新快照。 */
     async upgrade(token: string, heroId: string, requestId: string, expectedLevel: number): Promise<HeroLevelResult> {
-        const r = object(await this.http.request("/api/v1/heroes/" + heroId + "/level-up", {
-            requestId,
-            expectedLevel
-        }, token));
+        const r = object(await featureUnavailable());
         const op = object(r.operation), preview = readHeroLevelPreview(r.preview), heroes = readOwnedHeroes(r.heroes);
         if (op.requestId !== requestId || op.heroId !== heroId || op.fromLevel !== expectedLevel || op.toLevel !== expectedLevel + 1 ||
             typeof op.configVersion !== "string" || preview.hero.id !== heroId || preview.hero.level < expectedLevel + 1 ||

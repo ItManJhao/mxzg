@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-03",
+  "scope": "WebSocket Protobuf: session.authenticate/sync/heartbeat/kicked and inventory.list",
+  "contract": "protocol/game.proto",
+  "subprotocol": "mxzg.protobuf.v1",
+  "toolchain": {
+    "javaProtoc": "4.36.2",
+    "javaRuntime": "4.36.2",
+    "protobufjs": "7.6.6",
+    "protobufjsCli": "1.3.3",
+    "runtimeStyle": "static bundled minimal; no runtime proto parsing"
+  },
+  "checks": {
+    "frontendSuites": 13,
+    "creatorStrict": true,
+    "backendTests": 51,
+    "mysqlTests": 12,
+    "generatedDrift": true
+  },
+  "mysql": {
+    "run": "3856d028edfc4ac5bc064b9416785897",
+    "state": "stopped",
+    "port": 65361,
+    "mode": "new dedicated instance and synthetic accounts; no existing player MySQL used"
+  },
+  "actualPreview": {
+    "account": "player_1",
+    "transportOpcode": 2,
+    "flow": [
+      "restore/login",
+      "enter city",
+      "open bag",
+      "open item detail",
+      "stop owned local backend",
+      "notice and cached quantity retained",
+      "restart owned backend",
+      "reauthenticate/sync/list automatically; notice cleared"
+    ],
+    "itemQuantityBefore": 4,
+    "itemQuantityAfter": 4,
+    "finalBackendPort": 18080,
+    "finalBackendPid": 29536,
+    "rawFramesSaved": false
+  },
+  "boundaries": [
+    "HTTP development identity exchange and server selection remain JSON",
+    "Other HTTP gameplay not migrated",
+    "No DB schema migration or manual player data edit",
+    "WeChat/native device validation pending"
+  ],
+  "dependencyAudit": {
+    "productionAdvisories": 0,
+    "developmentModerateAdvisories": 3,
+    "notes": "npm audit: glob/minimatch/protobufjs-cli build-only chain; generated runtime ships without CLI"
+  }
+}

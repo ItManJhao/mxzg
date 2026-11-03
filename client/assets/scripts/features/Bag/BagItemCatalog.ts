@@ -7,12 +7,16 @@ import type { BagItemDisplayData } from "./data/BagItemData";
 
 
 export class BagItemCatalog {
+    /** 物品配置 ID 对应的静态配置行；构造时建立，不保存玩家数量。 */
     private items = new Map<number, ItemRow>();
+    /** 语言键对应的中文文案；随当前配置快照建立。 */
     private words = new Map<number, string>();
     /** 建立当前配置快照的显示索引，兼容源表数字文本语言键。 */
     constructor(items: {
+        /** 配置模块已经加载、校验的只读表格行。 */
         rows: readonly ItemRow[];
     }, language: {
+        /** 配置模块已经加载、校验的只读表格行。 */
         rows: readonly LanguageRow[];
     }) {
         for (const row of items.rows)
@@ -22,6 +26,7 @@ export class BagItemCatalog {
             if (Number.isFinite(Number(row.key)) && typeof row.value === "string")
                 this.words.set(Number(row.key), row.value);
     }
+    /** 读取店员欢迎语，语言键缺失时使用中文兜底。 */
     get greeting(): string { return this.words.get(5788) || "欢迎光临～"; }
     /** 按源表 place 决定标签及可见性；type 是效用类型，不能用来推断背包分类。缺图使用已登记占位图。 */
     face(id: number, quantity: number): BagItemDisplayData {

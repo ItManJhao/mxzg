@@ -2,6 +2,9 @@
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.*;
+import com.funsgamex.mxzg.network.GameProtocolCodec;
+import com.funsgamex.mxzg.protocol.GameProtocol;
+import java.nio.ByteBuffer;
 import com.funsgamex.mxzg.campaign.CampaignService;
 import java.net.URI;
 import java.net.http.*;
@@ -41,6 +44,9 @@ class GameSocketTest {
     @Autowired SessionService sessions;
     @Autowired CampaignService campaign;
     @Autowired JdbcTemplate jdbc;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
+    @Autowired com.funsgamex.mxzg.inventory.InventoryService inventory;
+    @Autowired com.funsgamex.mxzg.role.RoleRepository roles;
     private final ObjectMapper json = new ObjectMapper();
 
     /** 创建本测试专用账号，按真实初始化流程获得背包，不触碰文件数据库。 */
@@ -54,13 +60,13 @@ class GameSocketTest {
         final HttpClient client = HttpClient.newHttpClient();
         final BlockingQueue<JsonNode> messages = new LinkedBlockingQueue<>();
         final CompletableFuture<Integer> closed = new CompletableFuture<>();
-        final StringBuilder fragments = new StringBuilder();
+        final java.io.ByteArrayOutputStream fragments = new java.io.ByteArrayOutputStream();
         WebSocket socket;
         String connectionId;
 
         /** 建立真实本机连接，限定握手等待时间。 */
         Peer() {
-            socket = client.newWebSocketBuilder().connectTimeout(Duration.ofSeconds(5))
+            socket = client.newWebSocketBuilder().subprotocols(GameProtocolCodec.SUBPROTOCOL).connectTimeout(Duration.ofSeconds(5))
                 .buildAsync(URI.create("ws://127.0.0.1:" + port + "/api/v1/game/socket"), this).join();
         }
 
@@ -68,9 +74,13 @@ class GameSocketTest {
         @Override public void onOpen(WebSocket socket) { socket.request(1); }
 
         /** 合并分片后解析信封，测试不输出含令牌的请求体。 */
-        @Override public CompletionStage<?> onText(WebSocket socket, CharSequence data, boolean last) {
-            fragments.append(data);
-            if (last) { messages.add(json.readTree(fragments.toString())); fragments.setLength(0); }
+        @Override public CompletionStage<?> onBinary(WebSocket socket, ByteBuffer data, boolean last) {
+            byte[] part = new byte[data.remaining()]; data.get(part); fragments.writeBytes(part);
+            if (last) {
+                try { messages.add(GameProtocolCodec.decode(fragments.toByteArray())); }
+                catch (Exception error) { closed.completeExceptionally(error); }
+                fragments.reset();
+            }
             socket.request(1); return null;
         }
 
@@ -87,7 +97,7 @@ class GameSocketTest {
             String id = UUID.randomUUID().toString();
             Map<String, Object> frame = new LinkedHashMap<>(Map.of("version", 1, "kind", "request", "name", name, "id", id, "body", body));
             if (connectionId != null) frame.put("connectionId", connectionId);
-            socket.sendText(json.writeValueAsString(frame), true).get(5, TimeUnit.SECONDS);
+            socket.sendBinary(ByteBuffer.wrap(GameProtocolCodec.encode(frame)), true).get(5, TimeUnit.SECONDS);
             JsonNode response = messages.poll(5, TimeUnit.SECONDS);
             assertNotNull(response, "服务端未在期限内响应");
             assertEquals(id, response.path("id").asString());
@@ -95,7 +105,7 @@ class GameSocketTest {
             return response;
         }
 
-        /** 完成首帧鉴权，保存本连接标识，但尚不执行恢复同步。 */
+        /** 完成首帧鉴权与统一初始化，保存本连接标识。 */
         JsonNode authenticate(String token) throws Exception {
             JsonNode response = request("session.authenticate", Map.of("accessToken", token, "clientInstanceId", UUID.randomUUID().toString()));
             if (response.path("ok").asBoolean()) connectionId = response.path("body").path("connectionId").asString();
@@ -106,21 +116,62 @@ class GameSocketTest {
         @Override public void close() { socket.abort(); client.close(); }
     }
 
-    /** 未鉴权禁止读背包；正常鉴权后仍须先同步，快照与背包查询完全一致。 */
+    /** 未鉴权禁止读背包；正常鉴权后仍须先同步，登录首包同时包含角色与背包，不再提供重复查询。 */
     @Test void authenticationAndSyncGate() throws Exception {
-        var player = player();
-        try (var unauthenticated = new Peer()) {
-            assertEquals("UNAUTHENTICATED", unauthenticated.request("inventory.list", Map.of()).path("error").path("code").asString());
-            assertEquals(1008, unauthenticated.closed.get(5, TimeUnit.SECONDS));
+        var player=player();
+        try(var anonymous=new Peer()) {
+            assertFalse(anonymous.request("servers.list",Map.of()).path("body").path("items").isEmpty());
+            assertEquals("UNAUTHENTICATED",anonymous.request("inventory.list",Map.of()).path("error").path("code").asString());
         }
-        try (var peer = new Peer()) {
-            assertTrue(peer.authenticate(player.session().accessToken()).path("ok").asBoolean());
-            assertEquals("NOT_READY", peer.request("inventory.list", Map.of()).path("error").path("code").asString());
-            var sync = peer.request("session.sync", Map.of());
-            assertTrue(sync.path("ok").asBoolean());
-            assertEquals(player.role().id(), sync.path("body").path("role").path("id").asString());
-            assertEquals(sync.path("body").path("inventory"), peer.request("inventory.list", Map.of()).path("body"));
-            assertTrue(peer.request("session.heartbeat", Map.of()).path("body").path("serverTimeMs").asLong() > 0);
+        try(var peer=new Peer()) {
+            var accepted=peer.authenticate(player.session().accessToken());
+            var initial=accepted.path("body").path("initial");
+            assertEquals(player.role().id(),initial.path("role").path("id").asString());
+            assertTrue(initial.path("revision").isIntegralNumber());
+            assertFalse(initial.path("inventory").isEmpty());
+            assertEquals("UNKNOWN_MESSAGE",peer.request("inventory.list",Map.of()).path("error").path("code").asString());
+            assertEquals("UNKNOWN_MESSAGE",peer.request("session.sync",Map.of()).path("error").path("code").asString());
+            assertTrue(peer.request("session.heartbeat",Map.of()).path("ok").asBoolean());
+        }
+    }
+    /** 无事务调用资产入口必须在写入前拒绝，不产生自动提交的孤立资产变化。 */
+    @Test void assetsCannotBeWrittenOutsideTransaction() {
+        var player=player();var before=inventory.list(player.role().id());long gold=roles.findById(player.role().id()).orElseThrow().gold();
+        assertThrows(IllegalStateException.class,()->inventory.credit(player.role().id(),900101,8));
+        assertThrows(IllegalStateException.class,()->roles.creditCurrency(player.role().id(),9,0));
+        assertEquals(before,inventory.list(player.role().id()));assertEquals(gold,roles.findById(player.role().id()).orElseThrow().gold());
+    }
+
+    /** 本地登录同时完成身份交换、角色与背包首包；选服失败不登录。 */
+    @Test void loginContainsUnifiedInitialState() throws Exception {
+        try(var unavailable=new Peer()) {
+            var denied=unavailable.request("session.login",Map.of("account","invalid_world","serverId","missing-world","clientInstanceId",UUID.randomUUID().toString()));
+            assertEquals("SERVER_UNAVAILABLE",denied.path("error").path("code").asString());
+        }
+        try(var peer=new Peer()) {
+            var response=peer.request("session.login",Map.of("account","login_"+UUID.randomUUID().toString().substring(0,12),"serverId","local-2","clientInstanceId",UUID.randomUUID().toString()));
+            assertTrue(response.path("ok").asBoolean());
+            assertEquals("local-2",response.path("body").path("initial").path("role").path("serverId").asString());
+            assertTrue(response.path("body").path("initial").path("inventory").isArray());
+            assertEquals(43,response.path("body").path("session").path("accessToken").asString().length());
+            assertNull(peer.messages.poll(100,TimeUnit.MILLISECONDS),"首包只交付一次");
+        }
+    }
+    /** 同事务多次修改合并一次推送，角色钱包与库存同时可见；回滚不推送且版本不增加。 */
+    @Test void committedAssetsPushAndRollbackDoesNot() throws Exception {
+        var player=player(); String role=player.role().id(); var tx=new org.springframework.transaction.support.TransactionTemplate(transactions);
+        try(var peer=new Peer();var other=new Peer()) {
+            var initial=peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            other.authenticate(player().session().accessToken());
+            tx.executeWithoutResult(status->{roles.lock(role);roles.creditCurrency(role,7,3);inventory.credit(role,900101,5);inventory.credit(role,900101,6);});
+            var event=peer.messages.poll(5,TimeUnit.SECONDS);assertNotNull(event);assertEquals("state.changed",event.path("name").asString());
+            assertEquals(initial.path("revision").asLong()+1,event.path("body").path("revision").asLong());
+            assertEquals(initial.path("role").path("gold").asLong()+7,event.path("body").path("role").path("gold").asLong());
+            assertEquals(inventory.list(role).stream().filter(item->item.itemId()==900101).findFirst().orElseThrow().quantity(),event.path("body").path("inventory").get(0).path("quantity").asLong());
+            assertNull(peer.messages.poll(100,TimeUnit.MILLISECONDS));assertNull(other.messages.poll(100,TimeUnit.MILLISECONDS));
+            long revision=roles.revision(role);
+            tx.executeWithoutResult(status->{roles.lock(role);inventory.credit(role,900101,99);roles.creditCurrency(role,88,0);status.setRollbackOnly();});
+            assertEquals(revision,roles.revision(role));assertNull(peer.messages.poll(150,TimeUnit.MILLISECONDS));
         }
     }
 
@@ -138,26 +189,18 @@ class GameSocketTest {
             try (var rejected = new Peer()) {
                 assertEquals("UNAUTHENTICATED", rejected.authenticate(player.session().accessToken()).path("error").path("code").asString());
             }
-            assertTrue(replacement.request("session.sync", Map.of()).path("ok").asBoolean());
+            assertTrue(replacement.request("session.heartbeat", Map.of()).path("ok").asBoolean());
         }
     }
 
     /** 普通断线不撤销自身令牌；重连后获取正常战斗领奖产生的最新背包。 */
     @Test void reconnectReadsCommittedInventory() throws Exception {
-        var player = player();
-        JsonNode initial;
-        try (var first = new Peer()) {
-            first.authenticate(player.session().accessToken());
-            initial = first.request("session.sync", Map.of()).path("body").path("inventory");
-        }
-        String token = "Bearer " + player.session().accessToken();
-        var battle = campaign.challenge(token, UUID.randomUUID().toString());
-        assertTrue(battle.won()); campaign.claim(token, battle.id());
-        try (var second = new Peer()) {
-            assertTrue(second.authenticate(player.session().accessToken()).path("ok").asBoolean());
-            var sync = second.request("session.sync", Map.of());
-            assertNotEquals(initial, sync.path("body").path("inventory"));
-            assertEquals(sync.path("body").path("inventory"), second.request("inventory.list", Map.of()).path("body"));
+        var player=player(); String token="Bearer "+player.session().accessToken(); tools.jackson.databind.JsonNode initial;
+        try(var first=new Peer()){initial=first.authenticate(player.session().accessToken()).path("body").path("initial");}
+        var battle=campaign.challenge(token,UUID.randomUUID().toString());campaign.claim(token,battle.id());
+        try(var second=new Peer()) {
+            var state=second.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertTrue(state.path("revision").asLong()>initial.path("revision").asLong());assertNotEquals(initial.path("inventory"),state.path("inventory"));
         }
     }
 
@@ -167,7 +210,7 @@ class GameSocketTest {
         try (var peer = new Peer()) {
             peer.authenticate(player.session().accessToken());
             jdbc.update("UPDATE game_session SET expires_at=TIMESTAMP '2000-01-01 00:00:00' WHERE role_id=?", player.role().id());
-            assertEquals("UNAUTHENTICATED", peer.request("session.sync", Map.of()).path("error").path("code").asString());
+            assertEquals("UNAUTHENTICATED", peer.request("session.heartbeat", Map.of()).path("error").path("code").asString());
         }
     }
 
@@ -176,7 +219,6 @@ class GameSocketTest {
         var player = player();
         try (var peer = new Peer()) {
             peer.authenticate(player.session().accessToken());
-            assertEquals("INVALID_MESSAGE", peer.request("session.sync", Map.of("roleId", UUID.randomUUID().toString())).path("error").path("code").asString());
             assertEquals("UNKNOWN_MESSAGE", peer.request("hero.level.upgrade", Map.of()).path("error").path("code").asString());
             peer.connectionId = "obsolete";
             assertEquals("SESSION_REPLACED", peer.request("session.sync", Map.of()).path("error").path("code").asString());
@@ -190,45 +232,60 @@ class GameSocketTest {
 
     /** 同一令牌重连可替换残留 socket；旧关闭回调不能删除新在线映射。 */
     @Test void sameCredentialReconnectKeepsReplacementOnline() throws Exception {
-        var player = player();
-        try (var first = new Peer(); var second = new Peer()) {
+        var player=player();try(var first=new Peer();var second=new Peer()) {
             first.authenticate(player.session().accessToken());
-            assertTrue(second.authenticate(player.session().accessToken()).path("ok").asBoolean());
-            assertEquals(1008, first.closed.get(5, TimeUnit.SECONDS));
-            assertTrue(second.request("session.sync", Map.of()).path("ok").asBoolean());
-            assertTrue(second.request("inventory.list", Map.of()).path("ok").asBoolean());
+            assertTrue(second.authenticate(player.session().accessToken()).path("body").path("initial").isObject());
+            assertEquals(1008,first.closed.get(5,TimeUnit.SECONDS));assertTrue(second.request("session.heartbeat",Map.of()).path("ok").asBoolean());
         }
     }
 
     /** 不同角色同时在线且背包各自归属；一次正常奖励不会污染其他账号。 */
     @Test void accountsRemainIsolated() throws Exception {
-        var first = player(); var second = player();
-        try (var one = new Peer(); var two = new Peer()) {
-            one.authenticate(first.session().accessToken()); two.authenticate(second.session().accessToken());
-            var before = two.request("session.sync", Map.of()).path("body").path("inventory");
-            String token = "Bearer " + first.session().accessToken();
-            var battle = campaign.challenge(token, UUID.randomUUID().toString()); campaign.claim(token, battle.id());
-            assertTrue(one.request("session.sync", Map.of()).path("ok").asBoolean());
-            assertEquals(before, two.request("inventory.list", Map.of()).path("body"));
+        var first=player();var second=player();try(var one=new Peer();var two=new Peer()) {
+            one.authenticate(first.session().accessToken());two.authenticate(second.session().accessToken());
+            String token="Bearer "+first.session().accessToken();var battle=campaign.challenge(token,UUID.randomUUID().toString());campaign.claim(token,battle.id());
+            var event=one.messages.poll(5,TimeUnit.SECONDS);assertNotNull(event);assertEquals(first.role().id(),event.path("body").path("role").path("id").asString());
+            assertNull(two.messages.poll(150,TimeUnit.MILLISECONDS));
         }
     }
 
-    /** 重复 JSON 字段不能覆盖消息版本，超大帧由容器/处理器拒绝。 */
-    @Test void duplicateFieldsAndOversizedFramesCloseConnection() throws Exception {
+    /** 文本、截断二进制和超限帧均拒绝，不回退 JSON。 */
+    @Test void malformedAndOversizedBinaryFramesCloseConnection() throws Exception {
         try (var peer = new Peer()) {
-            peer.socket.sendText("{\"version\":1,\"version\":2}", true).join();
+            peer.socket.sendText("{\"version\":1}", true).join();
+            assertEquals(1003, peer.closed.get(5, TimeUnit.SECONDS));
+        }
+        try (var peer = new Peer()) {
+            peer.socket.sendBinary(ByteBuffer.wrap(new byte[]{10, 127}), true).join();
             assertEquals(1007, peer.closed.get(5, TimeUnit.SECONDS));
         }
         try (var peer = new Peer()) {
-            peer.socket.sendText("x".repeat(70000), true).join();
+            peer.socket.sendBinary(ByteBuffer.wrap(new byte[70000]), true).join();
             int status = peer.closed.get(5, TimeUnit.SECONDS);
             assertTrue(status == 1009 || status == 1008);
         }
+    }
+
+    /** 消息名与载荷不一致时拒绝；客户端不能给同步请求塞入角色选择或鉴权数据。 */
+    @Test void mismatchedPayloadClosesConnection() throws Exception {
         try (var peer = new Peer()) {
-            // UTF-8 三字节字符不足 64K 个，但总字节已经超限。
-            peer.socket.sendText("中".repeat(23000), true).join();
-            int status = peer.closed.get(5, TimeUnit.SECONDS);
-            assertTrue(status == 1009 || status == 1008);
+            var frame = GameProtocol.Frame.newBuilder().setVersion(1).setKind("request")
+                .setName("session.sync").setId(UUID.randomUUID().toString())
+                .setAuthenticate(GameProtocol.Authenticate.newBuilder().setAccessToken("a".repeat(43)).setClientInstanceId(UUID.randomUUID().toString())).build();
+            peer.socket.sendBinary(ByteBuffer.wrap(frame.toByteArray()), true).join();
+            assertEquals(1007, peer.closed.get(5, TimeUnit.SECONDS));
+        }
+    }
+
+    /** 未声明二进制子协议的旧客户端不能继续收发 JSON。 */
+    @Test void missingSubprotocolCannotUseEndpoint() throws Exception {
+        try (var client = HttpClient.newHttpClient()) {
+            var closed = new CompletableFuture<Integer>();
+            var socket = client.newWebSocketBuilder().buildAsync(URI.create("ws://127.0.0.1:" + port + "/api/v1/game/socket"),
+                new WebSocket.Listener() {
+                    @Override public CompletionStage<?> onClose(WebSocket ws, int status, String reason) { closed.complete(status); return null; }
+                }).join();
+            try { assertEquals(1008, closed.get(5, TimeUnit.SECONDS)); } finally { socket.abort(); }
         }
     }
 

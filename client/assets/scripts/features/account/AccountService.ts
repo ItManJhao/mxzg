@@ -1,9 +1,11 @@
 /** 账号会话服务：统一登录、恢复和失效处理；失效后仅保留本次应用内的账号提示，不保留授权。 */
+import { batchNotifications } from "../../framework/EventDispatcher";
+import type { GameFrame } from "../../platform/GameProtocolCodec";
+import { SessionChanged } from "../../framework/SessionChanged";
 import { AccountModel } from "./AccountModel";
 import type { RoleProfile } from "./AccountModel";
 import { readSession } from "./AccountApi";
 import type { AccountGateway, AccountSession, LoginResult } from "./AccountApi";
-import { HttpFailure } from "../../platform/http/JsonClient";
 import { SocketFailure } from "../../platform/GameSocketClient";
 
 export interface SessionStore {
@@ -12,9 +14,6 @@ export interface SessionStore {
   clear(): void;
 }
 
-export class SessionChanged extends Error {
-  constructor() { super("会话已切换，请重新请求"); this.name = "SessionChanged"; }
-}
 
 /** Features use this capability instead of reading storage or owning a token. */
 export interface AccountAuthorization {
@@ -22,9 +21,10 @@ export interface AccountAuthorization {
 }
 
 export class AccountService implements AccountAuthorization {
+  /** 应用安装的统一状态交付口，接纳身份与资产提交处于同一通知批次。 */
+  onInitialized: ((frame: GameFrame) => void) | null = null;
   private operation = 0;
   private session: AccountSession | null = null;
-  private profileRevision = 0;
   private expiredAccount = "";
   constructor(private readonly model: AccountModel, private readonly api: AccountGateway,
     private readonly store: SessionStore, private readonly now: () => number = Date.now) {}
@@ -86,22 +86,11 @@ export class AccountService implements AccountAuthorization {
     this.invalidate("");
   }
 
-  /** Refresh wallet/profile after an authoritative settlement, without reopening the session root. */
-  async refreshRole(): Promise<void> {
-    const operation = this.operation;
-    const revision = this.profileRevision;
-    const role = await this.authenticated(token => this.api.currentRole(token));
-    if (operation !== this.operation) throw new SessionChanged();
-    if (revision !== this.profileRevision) return;
-    this.model.replace({ busy: false, role, error: "" });
-  }
-
-  /** Validated authoritative role payload; notifications can be batched with other module commits. */
+  /** 接受经过校验的权威角色； notifications can be batched with other module commits. */
   acceptRole(role: RoleProfile): void {
     const current = this.model.snapshot.role;
     if (!this.session || this.model.snapshot.busy || !current || current.id !== role.id ||
       (current.serverId && role.serverId && current.serverId !== role.serverId)) throw new SessionChanged();
-    this.profileRevision++;
     this.model.replace({ busy: false, role, error: "" });
   }
 
@@ -128,7 +117,7 @@ export class AccountService implements AccountAuthorization {
     if (!session || this.model.snapshot.busy || !this.model.snapshot.role) throw new SessionChanged();
     if (Date.parse(session.expiresAt) <= this.now()) {
       this.expire();
-      throw new HttpFailure(401, "登录已失效，请重新登录");
+      throw new SocketFailure("UNAUTHENTICATED", "登录已失效，请重新登录");
     }
     const current = () => operation === this.operation && session === this.session;
     try {
@@ -136,7 +125,7 @@ export class AccountService implements AccountAuthorization {
       const value = await request(session.accessToken);
       if (!current()) throw new SessionChanged();
       if (Date.parse(session.expiresAt) <= this.now()) {
-        throw new HttpFailure(401, "登录已失效，请重新登录");
+        throw new SocketFailure("UNAUTHENTICATED", "登录已失效，请重新登录");
       }
       return value;
     } catch (error) {
@@ -147,9 +136,9 @@ export class AccountService implements AccountAuthorization {
     }
   }
 
-  /** HTTP 与长连接共享身份失效语义，网络超时不触发账号清理。 */
+  /** 长连接身份失效语义，网络超时不触发账号清理。 */
   private isUnauthorized(error: unknown): boolean {
-    return error instanceof HttpFailure && error.status === 401 || error instanceof SocketFailure && error.unauthorized;
+    return error instanceof SocketFailure && error.unauthorized;
   }
 
   /** 清除令牌之前记住账号，避免登录页面重建后误用 Prefab 的默认账号。 */
@@ -161,7 +150,11 @@ export class AccountService implements AccountAuthorization {
   private accept(result: LoginResult): void {
     this.session = result.session;
     this.safely(() => this.store.write(result.session));
-    this.model.replace({ busy: false, role: result.role, error: "" });
+    batchNotifications(() => {
+      this.model.replace({ busy: false, role: result.role, error: "" });
+      const frame=this.api.initialization?.();
+      if(frame) this.onInitialized?.(frame);
+    });
   }
   /** 仅当前登录失败可结束传输；保留可恢复凭证，但不在登录页后台自动重连。 */
   private fail(operation: number, error: unknown): false {

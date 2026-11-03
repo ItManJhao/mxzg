@@ -1,5 +1,5 @@
 /**
- * 背包页面：展示 BagModel 当前角色库存，将操作交给 BagController。
+ * 背包页面：展示 BagModel 当前角色库存；分类与只读详情由页面处理，库存由 BagController 接收协议更新。
  * Prefab 保存静态布局；页面关闭清理目标事件和按钮，模块库存独立存活。
  */
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
@@ -35,9 +35,12 @@ import {view} from "../../../framework/ui/UIRegistry";
 
 const {ccclass, property} = _decorator;
 
+/** 店员动画资源名，仅用于页面装饰。 */
 const BAG_PORTRAIT = "shangcheng";
 
+/** 打开背包时的可选展示参数，不携带角色身份或库存。 */
 export interface BagOpenArgs {
+    /** 显示分类；打开参数可覆盖默认道具分类，点击页签只改变展示。 */
     tab?: BagTabKind;
 }
 
@@ -52,52 +55,77 @@ export interface BagOpenArgs {
 })
 @ccclass("BagView")
 export class BagView extends BaseView<BagOpenArgs> {
+    /** 旧纸张背景的 Prefab 绑定，当前页面不运行时重建其布局。 */
     @property(Node)
     sprBox: Node | null = null;
 
+    /** Prefab 绑定的 SuperScroll，负责格子复用与滚动；缺失时拒绝打开。 */
     @property(SuperScroll)
     bagScroll: SuperScroll | null = null;
 
+    /** 页签实例的父节点，由 Prefab 绑定。 */
     @property(Node)
     tabContent: Node | null = null;
 
+    /** 店员气泡节点，显示同步提示时激活。 */
     @property(Node)
     bubble: Node | null = null;
 
+    /** 店员提示文本，按同步状态和库存是否为空更新。 */
     @property(Label)
     talk: Label | null = null;
 
+    /** 店员 Spine 挂载节点，每个页面实例只装配一次。 */
     @property(Node)
     portrait: Node | null = null;
 
+    /** 保留旧 Prefab 交互节点绑定，当前页面逻辑不使用。 */
     @property(Node)
     hitMenu: Node | null = null;
 
+    /** 页面关闭按钮，打开时绑定，页面监听释放时解绑。 */
     @property(Button)
     btnClose: Button | null = null;
 
+    /** 分类页签预制体，缺失时拒绝打开。 */
     @property(Prefab)
     tabPrefab: Prefab | null = null;
 
+    /** 只读详情预制体，缺失时拒绝打开。 */
     @property(Prefab)
     infoPrefab: Prefab | null = null;
 
+    /** 详情遮罩预制体，承接外部点击关闭并适配视口。 */
     @property(Prefab)
     dimPrefab: Prefab | null = null;
 
+    /** 显示分类；打开参数可覆盖默认道具分类，点击页签只改变展示。 */
     private tab: BagTabKind = "item";
+    /** 当前选中的配置 ID；换角色、条目消失或离开当前分类后清空。 */
     private pickedId: number | null = null;
+    /** 上次绘制的角色归属；变化时清空选中和详情并复位滚动。 */
     private lastRoleKey: string | null = null;
+    /** 当前详情数量；库存变化时重建详情，关闭后为 null。 */
     private detailQuantity: number | null = null;
+    /** 本页静态配置索引，初始化时创建，不保存数量；未初始化为 null。 */
     private catalog: BagItemCatalog | null = null;
+    /** 本页创建的分类组件，刷新时同步选中态，随页面节点销毁。 */
     private tabs: BagTabView[] = [];
+    /** 是否已创建页签，避免重复实例化。 */
     private tabsBuilt = false;
+    /** 是否已执行首次打开；后续 onOpen 只刷新已有内容。 */
     private opened = false;
+    /** 是否已装配店员动画，避免重复挂载。 */
     private portraitOn = false;
+    /** 下次绘制是否需回到顶部；换分类或角色时设置，执行后清除。 */
     private resetScroll = true;
+    /** 当前详情遮罩根节点，重开详情或关页时销毁并清空。 */
     private infoSheet: Node | null = null;
+    /** 等待节点激活的帧回调；显示成功、销毁或关页时解除并清空。 */
     private shownWatch: (() => void) | null = null;
+    /** 页面是否已关闭；为 true 时阻止后续刷新与异步展示。 */
     private closed = false;
+    /** 关闭按钮是否已绑定；监听释放时重置。 */
     private closeBound = false;
 
     /** 收到库存汇总通知后读取当前 Model；已关闭界面不再刷新。 */
@@ -154,7 +182,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
     }
 
-    /** Layout runs after mounting; no reparenting, mask creation or size repair. */
+    /** 挂载且激活后刷新分类与格子；未激活则等待，不重建遮罩或预制层级。 */
     private refreshGrid(): void {
         if (this.closed) return;
         if (!this.node || !this.node.isValid || !this.bagScroll || !this.tabPrefab) return;
@@ -166,6 +194,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.paint();
     }
 
+    /** 等待节点激活，注册唯一帧回调；激活后先解除等待再刷新。 */
     private watchShown(): void {
         if (this.shownWatch) return;
         const retry = () => {
@@ -182,6 +211,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.node.once(Node.EventType.NODE_DESTROYED, () => this.clearShownWatch());
     }
 
+    /** 解除等待页面激活的帧监听，重复调用安全。 */
     private clearShownWatch(): void {
         if (!this.shownWatch) return;
         director.off(Director.EVENT_AFTER_UPDATE, this.shownWatch);
@@ -204,6 +234,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         component.validateBindings();
     }
 
+    /** 登记一次关闭按钮回调，交给 BaseView 统一释放。 */
     private bindClose(): void {
         if (!this.btnClose || this.closeBound) return;
         this.closeBound = true;
@@ -239,7 +270,7 @@ export class BagView extends BaseView<BagOpenArgs> {
                     : state.items.length ? this.catalog!.greeting : "背包为空";
     }
 
-    /** 根据现有分类生成页签，点击只切换显示分类并按需重试查询。 */
+    /** 根据现有分类生成页签，点击只切换显示分类，不查询库存。 */
     private buildTabs(): void {
         if (this.tabsBuilt || !this.tabContent || !this.tabPrefab) return;
         this.tabsBuilt = true;
@@ -257,13 +288,13 @@ export class BagView extends BaseView<BagOpenArgs> {
                 if (this.closed) return;
                 if (this.tab !== spec.id) this.resetScroll = true;
                 this.tab = spec.id;
-                if (BagModel.instance.snapshot.status === "error") void BagController.instance.refresh();
                 this.refreshGrid();
             });
             this.tabs.push(tab);
         }
     }
 
+    /** 读取 Model 绘制页签与格子，处理换号、选中失效、详情数量变化及滚动复位，不写库存。 */
     private paint(): void {
         this.writeTalk();
         for (let i = 0; i < this.tabs.length; i++) {
@@ -283,7 +314,7 @@ export class BagView extends BaseView<BagOpenArgs> {
             this.pickedId = null;
             this.dismissInfo();
         } else if (this.infoSheet?.isValid && this.detailQuantity !== picked.quantity) this.showInfo(picked);
-        // Empty-slot padding belongs to the bag, never to the generic list component.
+        // 空槽补齐属于背包展示规则，通用列表只接收条目，不决定业务槽数。
         const entries = Array.from({length: bagSlotCount(rows.length)}, (_, index) => rows[index] || null);
         list.setData(entries, (node, item) => {
             const cell = node.getComponent(BagItemView)!;
@@ -299,8 +330,7 @@ export class BagView extends BaseView<BagOpenArgs> {
                 }
                 : rows.length === 0
                     ? () => {
-                        if (BagModel.instance.snapshot.status === "error") void BagController.instance.refresh();
-                        else this.toast(BagModel.instance.snapshot.status === "ready" ? emptyBagToast() : "背包尚未同步");
+                        this.toast(BagModel.instance.snapshot.status === "ready" ? emptyBagToast() : "背包尚未同步");
                     }
                     : null;
             cell.show(item, selected, onTap, item ? this.catalog!.face(item.itemId, item.quantity) : undefined);
@@ -331,6 +361,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.infoSheet = openBagInfo(this.node, this.dimPrefab, this.infoPrefab, this.catalog!.face(item.itemId, item.quantity), (text) => this.toast(text));
     }
 
+    /** 销毁详情遮罩并清空数量缓存，详情已经销毁时也可调用。 */
     private dismissInfo(): void {
         if (this.infoSheet && this.infoSheet.isValid) {
             this.infoSheet.removeFromParent();
@@ -340,6 +371,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.detailQuantity = null;
     }
 
+    /** 写入页面提示日志并交由 UIManager 展示。 */
     private toast(text: string): void {
         GameLog.shared.info("Bag", text);
         UIManager.instance.toast(text);

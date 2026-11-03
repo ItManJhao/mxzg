@@ -1,5 +1,6 @@
+/** 此模块等待按原项目重做；旧业务通信已停用，保留 DTO 校验供后续恢复。 */
 /** 普通挂机 HTTP 边界：校验可信时间、收益和收据，客户端不提交时长、随机结果或奖励数量。 */
-import { JsonClient } from "../../platform/http/JsonClient";
+import { featureUnavailable } from "../PausedFeatures";
 import { readRole } from "../account/AccountApi";
 import { readBagItems } from "../Bag/data/BagItemData";
 export interface IdleReward { readonly itemId:number; readonly quantity:number; }
@@ -26,13 +27,13 @@ export function readIdleState(value:unknown):IdleState {
     return Object.freeze({serverTime,startedAt,elapsedSeconds,maxSeconds,frequency,revision:integer(r.revision),rewardStage:integer(r.rewardStage,1),rates:rewards(r.rates),claimable:r.claimable as boolean,configVersion:r.configVersion});
 }
 export class IdleApi {
-    /** 复用应用 HTTP 与身份边界。 */
-    constructor(private readonly http:JsonClient) {}
+    /** 暂停模块不再依赖网络客户端。 */
+    constructor() {}
     /** 查询不会抽取随机物品。 */
-    async current(token:string):Promise<IdleState> {return readIdleState(await this.http.request("/api/v1/idle",undefined,token));}
+    async current(token:string):Promise<IdleState> {return readIdleState(await featureUnavailable());}
     /** 校验原操作收据，资产和计时采用本次服务端最新快照。 */
     async claim(token:string,requestId:string,expectedRevision:number) {
-        const r=object(await this.http.request("/api/v1/idle/claim",{requestId,expectedRevision},token)),receipt=object(r.receipt),state=readIdleState(r.state);
+        const r=object(await featureUnavailable()),receipt=object(r.receipt),state=readIdleState(r.state);
         if(receipt.requestId!==requestId || receipt.expectedRevision!==expectedRevision || state.revision<=expectedRevision ||
             typeof receipt.configVersion!=="string" || !/^idle-[a-f0-9]{16}$/.test(receipt.configVersion))throw new Error("挂机收据不匹配");
         return {state,receipt:{requestId,expectedRevision,claimedAt:integer(receipt.claimedAt),seconds:integer(receipt.seconds,1),

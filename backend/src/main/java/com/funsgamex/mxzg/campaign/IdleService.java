@@ -63,8 +63,8 @@ public class IdleService {
         if (!state.claimable()) throw error(HttpStatus.CONFLICT,"IDLE_NOT_READY");
         var roll=rules.roll(state.rewardStage(),state.elapsedSeconds(),saved.dropSeconds(),saved.counters().values(),ThreadLocalRandom.current());
         for (var reward:roll.rewards()) {
-            if (reward.itemId()==900001) jdbc.update("UPDATE game_role SET gold=gold+? WHERE id=?",reward.quantity(),role);
-            else if (reward.itemId()==900002) jdbc.update("UPDATE game_role SET diamonds=diamonds+? WHERE id=?",reward.quantity(),role);
+            if (reward.itemId()==900001) roles.creditCurrency(role,reward.quantity(),0);
+            else if (reward.itemId()==900002) roles.creditCurrency(role,0,reward.quantity());
             else if (reward.itemId()==900003) jdbc.update("UPDATE game_campaign SET role_exp=role_exp+? WHERE role_id=?",reward.quantity(),role);
             else inventory.credit(role,reward.itemId(),reward.quantity());
         }

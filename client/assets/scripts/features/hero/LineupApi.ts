@@ -1,4 +1,5 @@
-import { JsonClient } from "../../platform/http/JsonClient";
+/** 此模块等待按原项目重做；旧业务通信已停用，保留 DTO 校验供后续恢复。 */
+import { featureUnavailable } from "../PausedFeatures";
 export const MAIN_POSITIONS = [2, 3, 5, 6, 7, 8, 9] as const;
 export interface LineupSlot {
     position: number;
@@ -23,12 +24,13 @@ export function readMainLineup(value: unknown): MainLineup {
     return { version: row.version, slots: slots.sort((a, b) => a.position - b.position) };
 }
 export class LineupApi {
-    constructor(private readonly http: JsonClient) { }
+    /** 暂停模块不再依赖网络客户端。 */
+    constructor() {}
     /** GET: the version returned here is required by the subsequent PUT. */
     async current(token: string): Promise<MainLineup> {
-        return readMainLineup(await this.http.request("/api/v1/lineups/main", undefined, token));
+        return readMainLineup(await featureUnavailable());
     }
     async save(token: string, lineup: MainLineup): Promise<MainLineup> {
-        return readMainLineup(await this.http.request("/api/v1/lineups/main", { expectedVersion: lineup.version, slots: lineup.slots }, token, "PUT"));
+        return readMainLineup(await featureUnavailable());
     }
 }

@@ -13,6 +13,8 @@ public class RoleRepository {
         row.getString("id"), row.getString("nickname"), row.getInt("role_level"),
         row.getLong("gold"), row.getLong("diamonds"), row.getString("server_id"));
     private final JdbcTemplate jdbc;
+    /** 资产版本与事务提交同步，由所有钱包写入共同使用。 */
+    private final com.funsgamex.mxzg.network.AssetSyncService sync;
 
     /** 写用例在事务内先锁角色行，使发奖、阵容与升级按相同角色顺序串行。 */
     public void lock(String roleId) { jdbc.queryForObject("SELECT id FROM game_role WHERE id=? FOR UPDATE", String.class, roleId); }
@@ -20,10 +22,22 @@ public class RoleRepository {
     /** 调用者必须持有角色锁；余额不足不写入，数据库条件同时防止负余额。 */
     public boolean debitGold(String roleId, long amount) {
         if (amount <= 0) throw new IllegalArgumentException("Nonpositive gold debit");
-        return jdbc.update("UPDATE game_role SET gold=gold-? WHERE id=? AND gold>=?", amount, roleId, amount) == 1;
+        sync.requireTransaction();
+        boolean changed=jdbc.update("UPDATE game_role SET gold=gold-? WHERE id=? AND gold>=?", amount, roleId, amount) == 1;
+        if(changed) sync.changed(roleId);
+        return changed;
     }
 
-    public RoleRepository(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+    /** 注入角色持久化与资产同步出口。 */
+    public RoleRepository(JdbcTemplate jdbc, com.funsgamex.mxzg.network.AssetSyncService sync) { this.jdbc=jdbc; this.sync=sync; }
+    /** 持有角色锁时读取持久状态版本；同一提交的角色与背包共用此值。 */
+    public long revision(String role) { return jdbc.queryForObject("SELECT state_revision FROM game_role WHERE id=?",Long.class,role); }
+    /** 已验证奖励事务调用；只允许正数，金币和钻石共享提交同步。 */
+    public void creditCurrency(String role, long gold, long diamonds) {
+        if(gold<0 || diamonds<0 || gold+diamonds<=0) throw new IllegalArgumentException("无效奖励");
+        sync.requireTransaction();
+        jdbc.update("UPDATE game_role SET gold=gold+?,diamonds=diamonds+? WHERE id=?",gold,diamonds,role); sync.changed(role);
+    }
 
     public Optional<RoleProfile> findByAccount(String account) {
         return findByAccount(account, "local-1");

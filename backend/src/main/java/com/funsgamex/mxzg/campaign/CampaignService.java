@@ -120,8 +120,8 @@ public class CampaignService {
             var current=state(role);
             if(battle.stageId()!=current.stageId()) throw new ResponseStatusException(HttpStatus.CONFLICT,"Stage changed");
             for(var reward:battle.rewards()) {
-                if(reward.itemId()==900001) jdbc.update("UPDATE game_role SET gold=gold+? WHERE id=?",reward.quantity(),role);
-                else if(reward.itemId()==900002) jdbc.update("UPDATE game_role SET diamonds=diamonds+? WHERE id=?",reward.quantity(),role);
+                if(reward.itemId()==900001) roles.creditCurrency(role,reward.quantity(),0);
+                else if(reward.itemId()==900002) roles.creditCurrency(role,0,reward.quantity());
                 else if(reward.itemId()==900003) jdbc.update("UPDATE game_campaign SET role_exp=role_exp+? WHERE role_id=?",reward.quantity(),role);
                 else inventory.credit(role,reward.itemId(),reward.quantity());
             }

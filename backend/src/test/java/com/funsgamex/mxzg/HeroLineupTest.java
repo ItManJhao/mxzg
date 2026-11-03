@@ -1,7 +1,7 @@
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
-import com.funsgamex.mxzg.hero.HeroController;
+import com.funsgamex.mxzg.hero.HeroQueries;
 import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.lineup.LineupService;
 import com.jayway.jsonpath.JsonPath;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("local")
 class HeroLineupTest {
     @Autowired DevelopmentLoginService login;
-    @Autowired HeroController heroes;
+    @Autowired HeroQueries heroes;
     @Autowired LineupService lineups;
     @Autowired JdbcTemplate jdbc;
     @LocalServerPort int port;
@@ -118,20 +118,10 @@ class HeroLineupTest {
         if (json != null) builder.header("Content-Type","application/json");
         return http.send(builder.method(method, json == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json)).build(), HttpResponse.BodyHandlers.ofString());
     }
-    @Test void realHttpContractAndCreatorPutPreflight() throws Exception {
-        var player = player(); String id = seedHero(player);
-        assertEquals(200, request("GET","/api/v1/heroes",player.authorization(),null).statusCode());
-        assertEquals(401, request("GET","/api/v1/heroes",null,null).statusCode());
-        String body = "{\"expectedVersion\":0,\"slots\":[{\"position\":2,\"heroId\":\""+id+"\"}]}";
-        var saved = request("PUT","/api/v1/lineups/main",player.authorization(),body);
-        assertEquals(200,saved.statusCode()); assertEquals(1,((Number)JsonPath.read(saved.body(),"$.version")).intValue());
-        assertEquals(409,request("PUT","/api/v1/lineups/main",player.authorization(),body).statusCode());
-        assertEquals(400,request("PUT","/api/v1/lineups/main",player.authorization(),body.replace("\"position\":2","\"position\":2.5")).statusCode());
-        assertEquals(400,request("PUT","/api/v1/lineups/main",player.authorization(),body.replace("\"position\":2","\"position\":\"2\"")).statusCode());
-        var preflight = HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/v1/lineups/main"))
-            .header("Origin","http://localhost:7456").header("Access-Control-Request-Method","PUT")
-            .header("Access-Control-Request-Headers","authorization,content-type").method("OPTIONS",HttpRequest.BodyPublishers.noBody()).build();
-        assertEquals(200,http.send(preflight,HttpResponse.BodyHandlers.ofString()).statusCode());
+    /** 阵容与英雄旧路由已退役，后续仅保留领域规则测试。 */
+    @Test void retiredHeroAndLineupHttpCannotBeCalled() throws Exception {
+        assertEquals(404,request("GET","/api/v1/heroes",null,null).statusCode());
+        assertEquals(404,request("PUT","/api/v1/lineups/main",null,"{}").statusCode());
     }
     @Test void migrationFromExistingV1PreservesRolesAndSessions() {
         String url = "jdbc:h2:mem:upgrade_" + UUID.randomUUID() + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";

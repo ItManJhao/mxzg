@@ -1,4 +1,5 @@
-import { HttpFailure, JsonClient } from "../../platform/http/JsonClient";
+/** 此模块等待按原项目重做；旧业务通信已停用，保留 DTO 校验供后续恢复。 */
+import { featureUnavailable } from "../PausedFeatures";
 
 /** Server-owned instance ID stays a UUID; template ID is a separate config key. */
 export interface OwnedHero {
@@ -28,16 +29,8 @@ export function readOwnedHeroes(value: unknown): readonly OwnedHero[] {
   return Object.freeze(heroes);
 }
 
+/** 英雄模块暂停，禁止继续调用旧业务接口。 */
 export class HeroApi implements HeroGateway {
-  constructor(private readonly http: JsonClient) {}
-  async list(token: string): Promise<readonly OwnedHero[]> {
-    try {
-      return readOwnedHeroes(await this.http.request("/api/v1/heroes", undefined, token));
-    } catch (error) {
-      if (error instanceof HttpFailure && error.status === 404) {
-        throw new HttpFailure(404, "英雄接口不存在\n请更新并重启新后端");
-      }
-      throw error;
-    }
-  }
+  /** 后续重做时再接入实际协议，目前明确拒绝。 */
+  async list(_token:string):Promise<readonly OwnedHero[]> {return featureUnavailable();}
 }

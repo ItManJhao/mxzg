@@ -12,8 +12,11 @@ import { ancestorScale, assignContentSize, bindVisibleRefresh, fitVisibleRoot, p
 import { BagInfoView } from "./BagInfoView";
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
 
+/** 通用页面外壳预制路径。 */
 const PAGE_SHELL = ResourceCatalog.prefab_common.PagePrefabShell.assetPath;
+/** 列表背景预制路径。 */
 const LIST_BACKDROP = ResourceCatalog.prefab_common.ListBackdrop.assetPath;
+/** 背包背景按顺序尝试的登记资源路径。 */
 const BAG_BACKDROP = [ResourceCatalog.bag.map_bg_backpack_1.path, ResourceCatalog.maps.map_bg_backpack_1.path];
 
 /**

@@ -1,7 +1,8 @@
 /** 登录页面协调器：绑定输入、选服与进入游戏；页面重建时恢复失效前账号，不自动登录。 */
 import { AccountModel } from "./AccountModel";
 import type { AccountState } from "./AccountModel";
-import { AccountService, SessionChanged } from "./AccountService";
+import { AccountService } from "./AccountService";
+import { SessionChanged } from "../../framework/SessionChanged";
 import type { ServerSelection, GameServer } from "./ServerSelection";
 
 export interface AccountActions { login(account: string): void; restore(): void; logout(): void; chooseServer?(): void; }
@@ -47,9 +48,9 @@ export class AccountController {
     for (const dispose of this.disposers.splice(0)) dispose();
   }
 
+  /** 已就绪同角色直接进入；换号或切服先等待统一初始化，不追加背包查询。 */
   private async startGame(account: string): Promise<void> {
-    // A prepared session is revalidated on the explicit Start click. Switching
-    // accounts first clears the prepared session through the existing logout action.
+    // 同角色已完成初始化时直接进入，切服或换号才重新登录。
     this.entering = true;
     this.paint(this.model.snapshot);
     try {
@@ -57,7 +58,7 @@ export class AccountController {
       const role = this.model.snapshot.role;
       const sameWorld = !selected || (role?.serverId || "local-1") === selected.id;
       const identity = role ? this.service.accountName : account;
-      let success = role && sameWorld ? await this.service.restore() : await this.service.login(identity, selected?.id);
+      let success = role && sameWorld ? true : await this.service.login(identity, selected?.id);
       if (!success && role && sameWorld && !this.service.hasSession && this.open)
         success = await this.service.login(identity,selected?.id);
       if (!success || !this.open) return;

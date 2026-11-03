@@ -15,50 +15,67 @@ const {ccclass, property} = _decorator;
  */
 @ccclass("BagInfoView")
 export class BagInfoView extends Component {
+    /** 详情背景的 Prefab 绑定，当前代码不修改。 */
     @property(Node)
     bg: Node | null = null;
 
+    /** 物品名称文本，由 Prefab 绑定。 */
     @property(Label)
     propName: Label | null = null;
 
+    /** 数量说明文本，由 Prefab 绑定。 */
     @property(Label)
     propType: Label | null = null;
 
+    /** 配置说明文本，由 Prefab 绑定。 */
     @property(Label)
     desc: Label | null = null;
 
+    /** Prefab 绑定的图标节点，未绑定时为 null。 */
     @property(Node)
     icon: Node | null = null;
 
+    /** 稀有度底框节点，由 Prefab 绑定。 */
     @property(Node)
     rare: Node | null = null;
 
+    /** 关闭详情按钮，不关闭背包页。 */
     @property(Button)
     btnClose: Button | null = null;
 
+    /** 当前仅作确认关闭按钮，尚未接入使用道具。 */
     @property(Button)
     btnEnter: Button | null = null;
 
+    /** 确认按钮文案，当前显示“确定”。 */
     @property(Label)
     enterLabel: Label | null = null;
 
+    /** 物品来源按钮，当前置灰并提示尚未开放。 */
     @property(Button)
     btnSrc: Button | null = null;
 
+    /** 旧详情操作节点，目前隐藏，保留序列化绑定。 */
     @property(Node)
     btnDetail: Node | null = null;
 
+    /** 旧分解操作节点，目前隐藏，尚未恢复分解业务。 */
     @property(Node)
     btnDecompose: Node | null = null;
 
+    /** 旧全屏交互层，展示时收缩过大尺寸，避免阻挡关闭。 */
     @property(Node)
     hitMenu: Node | null = null;
 
+    /** 旧关闭交互层，展示时同样处理过大遮挡。 */
     @property(Node)
     hitMenuClose: Node | null = null;
 
+    /** 挂载层传入的关闭回调，show 时替换，销毁时释放。 */
     private onClose: (() => void) | null = null;
+    /** 页面传入的提示回调，销毁时清空，避免持有旧页面。 */
     private toast: ((text: string) => void) | null = null;
+    /** 按钮是否已经绑定；重复 show 不重复注册，销毁时重置。 */
     private wired = false;
 
     /** 展示配置与数量；重复展示只替换回调，不重复绑定按钮。 */

@@ -2,9 +2,10 @@
 import { AccountModel } from "../account/AccountModel";
 import type { IdleState, IdleReward } from "./IdleApi";
 import type { IdleController } from "./IdleController";
-import { AccountService, SessionChanged } from "../account/AccountService";
+import { AccountService } from "../account/AccountService";
+import { SessionChanged } from "../../framework/SessionChanged";
 import { CampaignApi } from "./CampaignApi";
-import { BagController } from "../Bag/BagController";
+import { PausedInventoryUpdates, pausedInventoryUpdates } from "../PausedFeatures";
 import type { CampaignState, CampaignReport } from "./CampaignApi";
 export type CampaignPhase = "loading" | "idle" | "formation" | "challenging" | "replaying" | "result" | "claiming" | "error";
 export interface CampaignActions {
@@ -45,7 +46,7 @@ export class CampaignController {
     private disposers: Array<() => void> = [];
     /** 页面持有显示状态，挂机领取由应用提供的会话级协调器持有。 */
     constructor(private readonly account: AccountModel, private readonly service: AccountService, private readonly api: CampaignApi, private readonly view: CampaignScreen, private readonly notice: (text: string) => void,
-        private readonly bag: BagController = BagController.instance, private readonly idle?:IdleController) { }
+        private readonly bag: PausedInventoryUpdates = pausedInventoryUpdates, private readonly idle?:IdleController) { }
     /** 绑定本页操作和会话观察，关闭后由对应解除函数清理。 */
     show(): void {
         if (this.closed || this.disposers.length)

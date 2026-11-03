@@ -1,5 +1,5 @@
 /**
- * 重做版应用装配入口，连接账号、主城、英雄、背包、阵容和主线流程。
+ * 重做版应用装配入口，装配选服、登录、角色和背包；其他玩法入口暂停。
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
 import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
@@ -14,8 +14,6 @@ import { readBagItems } from "../../features/Bag/data/BagItemData";
 import { AccountService } from "../../features/account/AccountService";
 import { AccountController } from "../../features/account/AccountController";
 import { AccountLoginView } from "../../features/account/ui/AccountLoginView";
-import { isolatedPreview } from "./IsolatedPreview";
-import { createXhrAdapter } from "../../platform/http/XhrAdapter";
 import { HomeController } from "../../features/home/HomeController";
 import { RemakeHomeView } from "../../features/home/ui/RemakeHomeView";
 import { UIManager, isOpenCancelled } from "../../framework/ui/UIManager";
@@ -31,35 +29,22 @@ import { LoginEntry } from "./LoginEntry";
 import { createStartupResourceScope, STARTUP_RESOURCE_KEYS } from "./StartupResources";
 import type { ResourceScope } from "../../framework/assets/ResourcePool";
 import { createHomeResourceScope } from "./HomeResources";
-import { createHeroResourceScope, loadHeroPage, loadHeroLevelPage } from "./HeroResources";
-import { HeroLevelApi } from "../../features/hero/HeroLevelApi";
-import { HeroLevelController } from "../../features/hero/HeroLevelController";
-import { HeroInfoUpLevelLayer } from "../../features/hero/ui/HeroInfoUpLevelLayer";
-import { HeroListView } from "../../features/hero/ui/HeroListView";
-import { mountHeroListPage } from "../../features/hero/ui/heroMount";
-import { HeroApi, readOwnedHeroes } from "../../features/hero/HeroApi";
-import { HeroCatalog } from "../../features/hero/HeroCatalog";
-import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
-import { HeroRosterController } from "../../features/hero/HeroRosterController";
 import { HomeFeatureNavigation, REMAKE_FEATURE_ROUTES } from "./HomeFeatureNavigation";
 import { ServerSelection } from "../../features/account/ServerSelection";
 import { ServerPickerView } from "../../features/account/ui/ServerPickerView";
-import { CampaignApi } from "../../features/battle/CampaignApi";
-import { IdleApi } from "../../features/battle/IdleApi";
-import { IdleController } from "../../features/battle/IdleController";
 import { slideFeaturePage } from "./PageTransition";
 import { createFeatureResourceScope, loadFeaturePage } from "./FeatureResources";
 import { BagView } from "../../features/Bag/ui/BagView";
+import { PREVIEW } from "cc/env";
+import { GameLog } from "../../core/GameLog";
+import { formatServerFrame } from "../../platform/GameProtocolLog";
+import { GAME_SOCKET_PROTOCOL } from "../../platform/GameProtocolCodec";
 import { BagController } from "../../features/Bag/BagController";
 import { mountBagPage } from "../../features/Bag/ui/BagMount";
-import { BagApi } from "../../features/Bag/BagApi";
-import { BagItemCatalog } from "../../features/Bag/BagItemCatalog";
-import { CampaignController } from "../../features/battle/CampaignController";
-import { CampaignView } from "../../features/battle/ui/CampaignView";
-import { mountCampaignPage } from "../../features/battle/ui/CampaignMount";
-import { FormationView } from "../../features/hero/ui/FormationView";
-import { FormationController } from "../../features/hero/FormationController";
-import { LineupApi } from "../../features/hero/LineupApi";
+
+import { isolatedSocketPreview } from "./IsolatedSocketPreview";
+import { AssetStateBinding } from "./AssetStateBinding";
+import { RoleController } from "../../features/account/RoleController";
 
 const { ccclass, property } = _decorator;
 const SESSION_KEY = "mxzg.remake.developmentSession";
@@ -71,14 +56,14 @@ export class RemakeApp extends Component {
   @property(Prefab) loadingPrefab: Prefab | null = null;
   @property(Node) pageHost: Node | null = null;
   @property(Node) startupHost: Node | null = null;
-  @property apiBaseUrl = "http://127.0.0.1:18080";
+  /** 完整长连接地址，由场景保存；凭证不进入 URL。 */
+  @property socketUrl = "ws://127.0.0.1:18080/api/v1/game/socket";
   private gameSocket: GameSocketClient | null = null;
   private navigation: RemakeNavigation | null = null;
   private offAccount: (() => void) | null = null;
+  /** 应用持有的角色与背包统一状态协调器，销毁时先解除，再释放模块。 */
+  private assetState: AssetStateBinding | null = null;
   private bagModule: BagController | null = null;
-  private heroRosterController: HeroRosterController | null = null;
-  private heroLevelController:HeroLevelController|null=null;
-  private idleController:IdleController|null=null;
   private unregisterViews: Array<() => void> = [];
   private requestedRoute = "";
   private alive = false;
@@ -90,7 +75,6 @@ export class RemakeApp extends Component {
   private paintWaiters = new Set<() => void>();
   private startupResources: ResourceScope<Asset> | null = null;
   private homeResources: ResourceScope<Prefab> | null = null;
-  private heroResources: ResourceScope<Prefab> | null = null;
   private features: HomeFeatureNavigation | null = null;
   private featureResources: ResourceScope<Prefab> | null = null;
 
@@ -98,54 +82,53 @@ export class RemakeApp extends Component {
   async start(): Promise<void> {
     if (!this.loginPrefab || !this.loadingPrefab || !this.pageHost || !this.startupHost) throw new Error("Remake 场景未绑定页面/加载 Prefab 或启动宿主，请重新打开已更新的 Remake.scene");
     const model = new AccountModel();
-    const connection=await isolatedPreview(this.apiBaseUrl,createXhrAdapter(),sys.localStorage);
+    const connection=await isolatedSocketPreview(this.socketUrl,sys.localStorage);
     if(!this.isValid)return;
-    const http=connection.http;
-    const socket = new GameSocketClient(http.baseAddress.replace(/^http/, "ws").replace(/\/$/, "") + "/api/v1/game/socket", {
-      create: url => new WebSocket(url),
+    const socket = new GameSocketClient(connection.socketUrl, {
+      create: url => new WebSocket(url, GAME_SOCKET_PROTOCOL),
+      onReceive: PREVIEW ? frame => {
+        const message = formatServerFrame(frame);
+        if (message) GameLog.shared.debug("WS接收", message);
+      } : undefined,
       validateSnapshot: value => {
         if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("恢复数据无效");
         const snapshot = value as Record<string, unknown>;
-        readRole(snapshot.role); readOwnedHeroes(snapshot.heroes); readBagItems(snapshot.inventory);
+        readRole(snapshot.role); readBagItems(snapshot.inventory);
+        if(!Number.isSafeInteger(snapshot.revision) || Number(snapshot.revision)<0) throw new Error("状态版本无效");
       },
     });
     this.gameSocket = socket;
-    const api = new AccountApi(http, socket);
+    const api = new AccountApi(socket);
     const storage = connection.storage;
     let savedServer: string | null = null;
     try { savedServer = storage.getItem("mxzg.remake.selectedServer"); } catch { }
-    const servers = new ServerSelection(http, id => storage.setItem("mxzg.remake.selectedServer", id), savedServer);
-    const campaignApi = new CampaignApi(http);
+    const servers = new ServerSelection(socket, id => storage.setItem("mxzg.remake.selectedServer", id), savedServer);
     const service = new AccountService(model, api, {
       read: () => { const saved = storage.getItem(SESSION_KEY); return saved ? readSession(JSON.parse(saved)) : null; },
       write: session => storage.setItem(SESSION_KEY, JSON.stringify(session)),
       clear: () => storage.removeItem(SESSION_KEY),
     });
-    BagController.instance.initialize({ account: model, authorization: service, api: new BagApi(socket) });
+    BagController.instance.initialize();
     this.bagModule = BagController.instance;
+    const roleController=new RoleController(role=>service.acceptRole(role));
+    const assets=this.assetState=new AssetStateBinding(model,BagController.instance,roleController);
+    service.onInitialized=frame=>assets.apply(frame);
+    socket.onState=frame=>assets.apply(frame);
     let connectionNotice = "";
     socket.onRejected = (token, message) => service.rejectSession(token, message);
-    // 恢复不直接应用握手快照：读请求须等背包已有写任务结束，避免旧库存覆盖新消费。
+    // 重连鉴权首包就是统一恢复数据，不再单独补查钱包或背包。
     socket.onReady = () => {
       if (connectionNotice) homeView?.showNotice("");
       connectionNotice = "";
       if (!model.snapshot.role || model.snapshot.busy) return;
-      void BagController.instance.refresh(true);
-      void service.refreshRole().catch(() => {});
+      if(socket.latestState) assets.apply(socket.latestState);
     };
     // 连接提示不改变账号 busy/role，避免断网被误当换号而清空模块和在途收据。
     socket.onDisconnected = message => {
       if (!model.snapshot.role || model.snapshot.busy) return;
       connectionNotice = message;
       homeView?.showNotice(message);
-      void BagController.instance.refresh(true);
     };
-    const idle=this.idleController=new IdleController(model,service,new IdleApi(http));
-    // 名册状态属于应用会话，关闭英雄页面只解除 View 观察，不销毁角色数据。
-    const roster = HeroRosterModel.instance;
-    const rosterController = this.heroRosterController = HeroRosterController.instance;
-    rosterController.initialize({account:model,authorization:service,api:new HeroApi(http)});
-    const levels=this.heroLevelController=new HeroLevelController(model,service,rosterController,new HeroLevelApi(http));
     const ui = UIManager.instance;
     const entry = new LoginEntry();
     let homeView: RemakeHomeView | null = null;
@@ -162,11 +145,6 @@ export class RemakeApp extends Component {
     });
     ui.install(this.navigation, { showToast: text => console.warn("[RemakeUI] " + text) });
     this.unregisterViews.push(ui.setResidentHost("remake-modal", () => this.pageHost));
-    this.unregisterViews.push(registerView(HeroInfoUpLevelLayer,{
-      id:"hero-level",prefab:ResourceCatalog.prefab_hero.HeroInfoUpLevelLayer.assetPath,layer:UILayer.Popup,
-      cache:false,allowMultiple:false,hostId:"remake-modal",
-      load:()=>{if(!this.heroResources)this.heroResources=createHeroResourceScope();return loadHeroLevelPage(this.heroResources);},
-    }));
     this.unregisterViews.push(registerView(ServerPickerView, {
       id: "server-picker", prefab: ResourceCatalog.prefab_login.ServerPickerView.assetPath, layer: UILayer.Popup,
       cache: false, allowMultiple: false, hostId: "remake-modal",
@@ -188,10 +166,7 @@ export class RemakeApp extends Component {
           if (!this.alive || isOpenCancelled(error)) return;
           model.replace({ ...model.snapshot, error: error instanceof Error ? error.message : "选服界面加载失败" });
         });
-      } }, async () => {
-        await service.authenticated(token => campaignApi.initialize(token));
-        await BagController.instance.refresh(true);
-      }),
+      } }),
     }));
     this.unregisterViews.push(registerView(RemakeHomeView, {
       id: "remake-home", prefab: ResourceCatalog.prefab_remake_home.RemakeHomeView.assetPath, layer: UILayer.Page,
@@ -204,52 +179,13 @@ export class RemakeApp extends Component {
         return new HomeController(model, service, homeView, id => features.open(id));
       },
     }));
-    this.unregisterViews.push(registerView(HeroListView, {
-      id: "hero", prefab: ResourceCatalog.prefab_hero.HeroListView.assetPath, layer: UILayer.Page,
-      cache: false, allowMultiple: false,
-      load: async () => {
-        if (!this.heroResources) this.heroResources = createHeroResourceScope();
-        return loadHeroPage(this.heroResources);
-      },
-      mount: async (host,prefab) => {
-        const root=await mountHeroListPage(host,prefab);
-        const page=root.getComponent(HeroListView)!;
-        const catalog = new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
-        page.configureRoster(roster, rosterController, catalog, text => homeView?.showNotice(text),heroId=>{
-          const hero=roster.snapshot.heroes.find(row=>row.id===heroId);
-          if(!hero)return;
-          void ui.open(HeroInfoUpLevelLayer,{heroId,name:catalog.find(hero.templateId)?.name || "英雄",controller:levels})
-            .catch(error=>{if(!isOpenCancelled(error))homeView?.showNotice(error instanceof Error?error.message:"升级详情打开失败");});
-        });
-        return root;
-      },
-    }));
-    const itemCatalog = () => new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
-      GameConfig.instance.getFile(GConfig.Language));
     const loadFeature = (group: "bag" | "campaign" | "formation") => {
       if (!this.featureResources) this.featureResources = createFeatureResourceScope();
       return loadFeaturePage(this.featureResources,group);
     };
-    this.unregisterViews.push(registerView(FormationView, {
-      id:"remake-formation",prefab:ResourceCatalog.prefab_hero.FormationView.assetPath,layer:UILayer.Popup,hostId:"remake-modal",cache:false,allowMultiple:false,
-      load:()=>loadFeature("formation"),
-      createController:view=>new FormationController(model,service,new HeroApi(http),new LineupApi(http),
-        new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType),GameConfig.instance.getFile(GConfig.Item)),view as FormationView),
-    }));
-    const chooseFormation = () => new Promise<boolean>((resolve,reject)=>{
-      void ui.openById("remake-formation",{complete:resolve}).catch(reject);
-    });
     this.unregisterViews.push(registerView(BagView, {
       id:"bag",prefab:ResourceCatalog.prefab_Bag.BagView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
       mount:mountBagPage,load:() => loadFeature("bag"),
-    }));
-    this.unregisterViews.push(registerView(CampaignView, {
-      id:"remake-campaign",prefab:ResourceCatalog.prefab_battle.CampaignView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
-      mount:mountCampaignPage,load:() => loadFeature("campaign"),
-      createController:view => {
-        (view as CampaignView).configure(itemCatalog(),() => model.snapshot.role?.level || 1,chooseFormation,()=>{ui.closeById("remake-formation");});
-        return new CampaignController(model,service,campaignApi,view as CampaignView,text => homeView?.showNotice(text),BagController.instance,idle);
-      },
     }));
     this.alive = true;
     this.startupResources = createStartupResourceScope();
@@ -379,7 +315,7 @@ export class RemakeApp extends Component {
     this.alive = false;
     this.started = false;
     if (this.gameSocket) {
-      this.gameSocket.onReady = this.gameSocket.onDisconnected = this.gameSocket.onRejected = null;
+      this.gameSocket.onReady = this.gameSocket.onDisconnected = this.gameSocket.onRejected = this.gameSocket.onState = null;
       this.gameSocket.disconnect(); this.gameSocket = null;
     }
     this.routeEpoch++;
@@ -387,17 +323,14 @@ export class RemakeApp extends Component {
     this.logo?.stop(); this.logo?.stopMusic(); this.logo = null;
     this.chrome?.destroy(); this.chrome = null;
     this.startupResources?.dispose(); this.startupResources = null;
+    this.assetState?.dispose(); this.assetState = null;
     this.offAccount?.(); this.offAccount = null;
     this.features?.dispose(); this.features = null;
     UIManager.instance.closeById("server-picker");
     UIManager.instance.closeById("remake-formation");
     this.navigation?.dispose(); this.navigation = null;
     this.bagModule?.dispose(); this.bagModule = null;
-    this.heroRosterController?.dispose(); this.heroRosterController = null;
-    this.heroLevelController?.dispose();this.heroLevelController=null;
-    this.idleController?.dispose();this.idleController=null;
     this.homeResources?.dispose(); this.homeResources = null;
-    this.heroResources?.dispose(); this.heroResources = null;
     this.featureResources?.dispose(); this.featureResources = null;
     for (const unregister of this.unregisterViews.splice(0)) unregister();
   }

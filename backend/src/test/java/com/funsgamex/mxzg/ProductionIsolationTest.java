@@ -1,6 +1,5 @@
 package com.funsgamex.mxzg;
 
-import com.funsgamex.mxzg.auth.DevelopmentLoginController;
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class ProductionIsolationTest {
     @Autowired ApplicationContext context;
     @Test void productionNeverRegistersDevelopmentIdentityProvider() {
-        assertTrue(context.getBeansOfType(DevelopmentLoginController.class).isEmpty());
         assertTrue(context.getBeansOfType(DevelopmentLoginService.class).isEmpty());
     }
 }

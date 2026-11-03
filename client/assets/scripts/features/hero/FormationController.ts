@@ -1,5 +1,7 @@
-import { HttpFailure } from "../../platform/http/JsonClient";
-import { AccountService, SessionChanged } from "../account/AccountService";
+/** 出阵页面控制器：组织阵容读取、编辑与保存，处理版本冲突和关闭/换号后的迟到结果。 */
+import { SocketFailure } from "../../platform/GameSocketClient";
+import { AccountService } from "../account/AccountService";
+import { SessionChanged } from "../../framework/SessionChanged";
 import { AccountModel } from "../account/AccountModel";
 import { HeroApi, OwnedHero } from "./HeroApi";
 import { HeroCatalog } from "./HeroCatalog";
@@ -123,7 +125,7 @@ export class FormationController {
                 this.view.complete(true);
         }
         catch (error) {
-            if (error instanceof HttpFailure && error.status === 409 && !this.closed) {
+            if (error instanceof SocketFailure && error.code === "LINEUP_CHANGED" && !this.closed) {
                 await this.load();
                 this.state = { ...this.state, message: "阵容已在其他操作中更新，请重新选择并确认" };
                 this.paint();

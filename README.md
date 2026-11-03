@@ -4,15 +4,15 @@
 
 ## 启动
 
-1. 运行 scripts/start-remake-backend.bat，新后端监听 http://127.0.0.1:18080。
+1. 运行 scripts/start-remake-backend.bat，长连接监听 ws://127.0.0.1:18080/api/v1/game/socket。
 2. Creator 打开 client，打开 assets/scenes/Remake.scene，预览当前场景。
-3. 登录/选服 → 主城 → 英雄/背包 → 出阵 → 主线战斗 → 结算 → 返回。
+3. 选服/登录 → 主城 → 背包/详情 → 返回；其他玩法入口暂时暂停，等待按旧项目重做。
 
 本机预览优先；未明确要求时不构建 H5/App/小游戏包。旧 module、Boot/Main、WebSocket 桥与旧网络链已删除。
 
 ## 文档入口
 
-最终目标：完整重做旧游戏，分批恢复玩法与社交；独立新版，暂不要求旧客户端兼容或旧玩家迁移。登录会话与背包已默认使用 WebSocket，背包 HTTP 分支及旧库存 HTTP 路由已删除；其他玩法暂继续 HTTP。接下来收尾登录/背包恢复体验与正式服对照，再按背包模板迁移其他模块。
+最终目标：完整重做旧游戏，分批恢复玩法与社交；独立新版，不要求旧客户端兼容或旧玩家迁移。全部游戏业务 HTTP 已移除，登录、角色、背包采用 WS＋Protobuf；统一登录初始化、资产事务提交后同步。先完成角色与背包模板及正式服对照，再恢复其他模块。
 
 阅读顺序：产品需求（要做什么）→ 开发进度（现在做到哪）→ 实施计划（接下来做什么）→ 架构（怎样做及证据）。同一事实只在对应主文档维护，不让历史批次覆盖当前结论。
 
@@ -35,6 +35,6 @@
 
 ## 常见代码入口
 
-app 负责启动装配；features 负责功能数据、业务、接口和 UI；framework 负责事件、资源及页面生命周期；platform 负责 HTTP/平台；config 负责生成配置与统一查询。Prefab 保存静态结构与样式。
+app 负责启动装配；features 负责功能数据、业务、接口和 UI；framework 负责事件、资源及页面生命周期；platform 负责 WebSocket/Protobuf/平台；config 负责生成配置与统一查询。Prefab 保存静态结构与样式。
 
 在 client 执行 npm run check。若 Python 为商店占位入口，将当前进程 MXZG_PYTHON 指向实际 Python。配置与资源生成检查、脚本/Prefab 绑定、业务和生命周期均在综合入口中；检查不读取玩家文件数据库。Creator strict 保持 ES2017。
