@@ -614,10 +614,6 @@
     "chromePrefab": {
       "__uuid__": "c97efb56-db67-4c93-84d5-e29436794e86",
       "__expectedType__": "cc.Prefab"
-    },
-    "profilePrefab": {
-      "__uuid__": "1aedb5a3-4e33-552f-843c-c419fd8174a4",
-      "__expectedType__": "cc.Prefab"
     }
   }
 ]

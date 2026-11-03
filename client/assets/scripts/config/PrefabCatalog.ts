@@ -15,6 +15,7 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "prefabs/ui/Bag/BagView": "6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb",
   "prefabs/ui/ability/AbilityInfoLayer": "3a767955-166a-4395-a9cf-28428a581864",
   "prefabs/ui/account/AccountLoginView": "61d32fd8-b35a-5ddc-bf5f-ea5026c8c23b",
+  "prefabs/ui/account/RoleProfileView": "1aedb5a3-4e33-552f-843c-c419fd8174a4",
   "prefabs/ui/battle/BattleDetailCell": "5292128a-6bc8-46d2-8df9-27c886761aa4",
   "prefabs/ui/battle/BattleDetailLayer": "8d8bc954-91e3-4cd3-a7a3-45f6ebb12ca5",
   "prefabs/ui/battle/BattleEditLayer": "63bafa92-a057-42a6-ba03-34a398a4d60f",
@@ -95,7 +96,6 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "prefabs/ui/role/ChangeNickLayer": "2759019b-9ad6-52ef-b337-1e52fc3f1d83",
   "prefabs/ui/role/RoleInfoLayer": "687dc47b-989e-58ca-8409-c21aafc9ab71",
   "prefabs/ui/role/RoleUpgradeLayer": "2f2236f9-769b-5a3a-b4ff-33ab50f0d54d",
-  "prefabs/ui/setting/RoleProfileView": "1aedb5a3-4e33-552f-843c-c419fd8174a4",
   "prefabs/ui/summon/SummonCell": "cba7a46f-c6dd-495d-b457-c0ff5404ab91",
   "prefabs/ui/summon/SummonLayer": "c046c79b-a2a4-4bf1-b93a-966094c105b8"
 };

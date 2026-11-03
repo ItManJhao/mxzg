@@ -210,6 +210,18 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
     if (this.levelBg) this.levelBg.active = show;
   }
 
+  /** 旧主城经验条的横向填充组件，只展示服务器同步的等级内经验。 */
+  @property(Sprite)
+  experienceFill: Sprite | null = null;
+
+  /** 刷新当前经验比例；缺失资料或最高级零门槛显示空条，不自行升级。 */
+  setExperience(experience?: number, required?: number): void {
+    if (!this.experienceFill) return;
+    const valid = typeof experience === "number" && Number.isFinite(experience)
+      && typeof required === "number" && Number.isFinite(required) && required > 0;
+    this.experienceFill.fillRange = valid ? Math.max(0, Math.min(1, experience! / required!)) : 0;
+  }
+
   setAvatar(icon: string | null): void {
     this.paintAvatar(icon);
   }

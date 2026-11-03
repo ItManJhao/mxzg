@@ -39,7 +39,7 @@ const suites = [
   ["creator-compat", "node", "client/tools/creator-compat-check.cjs"],
   ["prefab-plan", "python", "tools/check_prefab_plan.py"],
   ["architecture", "python", "tools/project_audit.py"],
-  ["bindings", "python", "client/tools/check_script_type_ids.py"],
+  ["bindings", "node", "client/tools/check-script-bindings.cjs"],
   ["backpack", "ts", "client/tools/backpack-view-check.ts"],
   ["super-scroll", "ts", "client/tools/super-scroll-check.ts"],
   ["hero", "ts", "client/tools/hero-view-check.ts"],

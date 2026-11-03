@@ -1,8 +1,7 @@
-/**
- * 选服弹层：展示 ServerSelection 的真实服务器列表并转交选择，关闭时解除界面回调。
- */
+/** 选服弹窗：UIManager 管理生命周期，SuperScroll 管理区域和服务器列表；只转交选择，不发登录协议。 */
 import { _decorator, Button, Node, Prefab, UITransform, view } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { ancestorScale } from "../../../framework/ui/visibleFit";
 import type { ServerSelection, GameServer } from "../ServerSelection";
@@ -10,71 +9,90 @@ import { ServerCellView } from "./ServerCellView";
 const { ccclass, property } = _decorator;
 @ccclass("ServerPickerView")
 export class ServerPickerView extends BaseView<ServerSelection> {
-    @property(Button)
-    closeButton: Button | null = null;
-    @property(Node)
-    serverContent: Node | null = null;
-    @property(Node)
-    regionContent: Node | null = null;
-    @property(Node)
-    scrollHost: Node | null = null;
-    @property(Node)
-    scrollPort: Node | null = null;
-    @property(Prefab)
-    cellPrefab: Prefab | null = null;
-    @property(Prefab)
-    dimPrefab: Prefab | null = null;
-    private off: (() => void) | null = null;
+    /** 关闭按钮，由统一窗口管理器关闭弹窗。 */
+    @property(Button) closeButton: Button | null = null;
+    /** 服务器列表，预制体保存格子、裁切和间距。 */
+    @property(SuperScroll) serverScroll: SuperScroll | null = null;
+    /** 区域列表，与服务器列表使用相同的滚动模板。 */
+    @property(SuperScroll) regionScroll: SuperScroll | null = null;
+    /** 通用遮罩预制体，拦截底层登录按钮。 */
+    @property(Prefab) dimPrefab: Prefab | null = null;
+    /** 本次打开选中的区域 ID，关闭后不保存业务状态。 */
     private region = "";
+    /** 本窗口的遮罩节点，关闭时清理。 */
     private dim: Node | null = null;
-    private dismiss = () => this.close();
-    /** 打开已静态绑定遮罩的选服预制体，登记会话观察与窗口适配。 */
+    /** 本次打开的监听注销函数；重复打开前和关闭时成对清理。 */
+    private stops: Array<() => void> = [];
+
+    /** 绑定真实选服状态，初始化两列列表和适配；空列表也允许关闭。 */
     onOpen(selection?: ServerSelection): void {
-        if (!selection || !this.cellPrefab || !this.dimPrefab || !this.serverContent || !this.regionContent)
-            throw new Error("选服 Prefab 或数据未绑定");
+        if (!selection || !this.serverScroll || !this.regionScroll || !this.dimPrefab || !this.closeButton) {
+            throw new Error("选服预制体或数据未绑定");
+        }
+        this.onClose();
         this.args = selection;
-        this.region = selection.selected?.regionId || selection.servers[0].regionId;
-        this.closeButton?.node.on(Button.EventType.CLICK, this.dismiss);
+        this.region = selection.selected?.regionId || selection.servers[0]?.regionId || "";
+        this.serverScroll.validateBindings();
+        this.regionScroll.validateBindings();
         this.dim = spawnPrefab(this.dimPrefab, this.node);
         this.dim.setSiblingIndex(0);
-        this.dim.getChildByName("dim")?.on(Button.EventType.CLICK, this.dismiss);
+        const dismiss = () => this.close();
+        for (const node of [this.closeButton.node, this.dim.getChildByName("dim")]) {
+            if (!node) continue;
+            node.on(Button.EventType.CLICK, dismiss);
+            this.stops.push(() => { if (node.isValid) node.off(Button.EventType.CLICK, dismiss); });
+        }
         view.on("canvas-resize", this.fit, this);
-        this.off = selection.subscribe(() => this.paint());
+        this.stops.push(() => view.off("canvas-resize", this.fit, this));
+        this.stops.push(selection.subscribe(() => this.paint()));
         this.fit();
         this.paint();
     }
+
+    /** 保持旧窗口比例和整体位置，只适配视口，不手动排列列表格子。 */
     private fit(): void {
         const { width, height } = view.getVisibleSize();
         const scale = Math.min(width * 0.94 / 614, height * 0.86 / 798);
         this.node.setScale(scale / ancestorScale(this.node), scale / ancestorScale(this.node), 1);
         this.node.setPosition(-307 * scale, -399 * scale, 0);
         this.dim?.setPosition(307, 399, 0);
-        const background = this.dim?.getChildByName("dim");
-        background?.getComponent(UITransform)?.setContentSize(width / scale + 8, height / scale + 8);
+        this.dim?.getChildByName("dim")?.getComponent(UITransform)?.setContentSize(width / scale + 8, height / scale + 8);
     }
+
+    /** 依据真实列表更新两列，布局和节点复用交给 SuperContent。 */
     private paint(): void {
-        const selection = this.args!;
-        for (const content of [this.regionContent!, this.serverContent!])
-            for (const child of content.children.slice())
-                child.destroy();
+        const selection = this.args;
+        if (!selection) return;
         const regions = Array.from(new Map(selection.servers.map(row => [row.regionId, row])).values());
-        regions.forEach((row, index) => this.cell(this.regionContent!, index, { ...row, name: row.regionName, enabled: true }, row.regionId === this.region, () => { this.region = row.regionId; this.paint(); }, true));
+        if (!regions.some(row => row.regionId === this.region)) this.region = regions[0]?.regionId || "";
+        this.regionScroll!.list.setData(regions, (node, row) => {
+            this.paintCell(node, { ...row, name: row.regionName, enabled: true }, this.region === row.regionId, () => {
+                this.region = row.regionId;
+                this.paint();
+                this.serverScroll!.toStart();
+            }, true);
+        });
         const servers = selection.servers.filter(row => row.regionId === this.region);
-        this.serverContent!.getComponent(UITransform)?.setContentSize(362, Math.max(602, servers.length * 88));
-        servers.forEach((row, index) => this.cell(this.serverContent!, index, row, selection.selected?.id === row.id, () => { selection.choose(row.id); this.close(); }));
+        this.serverScroll!.list.setData(servers, (node, row) => {
+            this.paintCell(node, row, selection.selected?.id === row.id, () => {
+                selection.choose(row.id);
+                this.close();
+            }, false);
+        });
     }
-    private cell(parent: Node, index: number, server: GameServer, selected: boolean, tap: () => void, region = false): void {
-        const node = spawnPrefab(this.cellPrefab!, parent);
-        node.setPosition(0, -88 * (index + 1), 0);
+
+    /** 向复用格子传递显示内容和选择回调，不设置格子坐标或 content 高度。 */
+    private paintCell(node: Node, server: GameServer, selected: boolean, tap: () => void, region: boolean): void {
         const cell = node.getComponent(ServerCellView);
-        if (!cell)
-            throw new Error("ChooseServerCell 缺少 ServerCellView");
+        if (!cell) throw new Error("ServerCellView 预制体缺少格子脚本");
         cell.show(server, selected, tap, region);
     }
+
+    /** 关闭时丢弃本页参数和遮罩；按钮及订阅由 BaseView 统一释放。 */
     onClose(): void {
-        this.off?.();
-        this.off = null;
-        view.off("canvas-resize", this.fit, this);
-        this.closeButton?.node.off(Button.EventType.CLICK, this.dismiss);
+        for (const stop of this.stops.splice(0)) stop();
+        this.args = undefined;
+        this.dim?.destroy();
+        this.dim = null;
     }
 }

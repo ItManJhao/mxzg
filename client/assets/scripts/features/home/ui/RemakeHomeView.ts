@@ -3,7 +3,7 @@
  */
 import { _decorator, Button, instantiate, Label, Node, Prefab } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
-import {RoleProfileView} from "../../account/ui/RoleProfileView";
+import { UIManager } from "../../../framework/ui/UIManager";
 import {paintRolePortrait} from "../../account/ui/RolePortrait";
 import { CityChromeView } from "../../city/ui/CityChromeView";
 import { CityHubView } from "../../city/ui/CityHubView";
@@ -22,10 +22,6 @@ export class RemakeHomeView extends BaseView implements HomeView {
   @property(Node) chromeHost: Node | null = null;
   @property(Label) noticeLabel: Label | null = null;
   @property(Node) noticePanel: Node | null = null;
-  /** 复用旧 SettingLayer 的只读角色资料预制体，由主城持有。 */
-  @property(Prefab) profilePrefab: Prefab | null = null;
-  /** 当前主城唯一详情实例，页面退出时销毁，不保存独立角色状态。 */
-  private profile: RoleProfileView | null = null;
   private city: CityHubView | null = null;
   private chrome: CityChromeView | null = null;
   private role: AccountState["role"] = null;
@@ -42,7 +38,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
     if (this.closed) return;
     this.currentFeature = id;
     if (this.city?.node.isValid) this.city.node.active = id === "city";
-    this.profile?.hide();
+    UIManager.instance.closeById("role-profile");
     this.showNotice("");
     this.paintRole();
   }
@@ -54,10 +50,10 @@ export class RemakeHomeView extends BaseView implements HomeView {
     void this.openCity();
   }
 
-  /** 加载原主城及顶栏，并挂载一个只读资料实例；关闭中断时不再创建节点。 */
+  /** 加载原主城及顶栏，并绑定统一资料弹窗入口；关闭中断时不再创建节点。 */
   private async openCity(): Promise<void> {
     try {
-      if (!this.cityPrefab || !this.chromePrefab || !this.cityHost || !this.chromeHost || !this.profilePrefab) throw new Error("RemakeHome 未绑定主城 Prefab 或宿主");
+      if (!this.cityPrefab || !this.chromePrefab || !this.cityHost || !this.chromeHost) throw new Error("RemakeHome 未绑定主城 Prefab 或宿主");
       await prepareCityConfig();
       if (this.closed) return;
       const cityNode = instantiate(this.cityPrefab);
@@ -81,16 +77,9 @@ export class RemakeHomeView extends BaseView implements HomeView {
           openMail: () => this.actions?.openFeature("mail"),
         },
       });
-      const profileNode = instantiate(this.profilePrefab);
-      profileNode.parent = this.node;
-      this.profile = profileNode.getComponent(RoleProfileView);
-      if (!this.profile) throw new Error("角色资料预制体缺少 RoleProfileView");
-      this.profile.bind(() => this.actions?.logout(), text => this.showNotice(text));
-      this.profile.hide();
-      this.noticePanel?.setSiblingIndex(this.node.children.length - 1);
       const avatar = this.chrome.avatar;
       if (!avatar) throw new Error("顶栏头像入口未绑定");
-      const openProfile = () => {if (this.role) {this.profile?.render(this.role);this.profile?.show();}};
+      const openProfile = () => { if (this.role) this.actions?.openFeature("role-profile"); };
       avatar.on(Button.EventType.CLICK, openProfile);
       this.extraUnbind.push(() => avatar.off(Button.EventType.CLICK, openProfile));
       const shell = chromeNode.getComponent(CityChromeShell);
@@ -126,10 +115,10 @@ export class RemakeHomeView extends BaseView implements HomeView {
     this.paintRole();
     return () => { if (this.actions === actions) this.actions = null; };
   }
-  /** 订阅唯一角色状态，同时刷新顶栏和已打开的资料页，不追加角色查询。 */
+  /** 订阅唯一角色状态，刷新顶栏，资料弹窗独立订阅同一状态，不追加角色查询。 */
   render(state: AccountState): void {
     this.role = state.role;
-    if (!state.role) this.profile?.hide();
+    if (!state.role) UIManager.instance.closeById("role-profile");
     this.paintRole();
   }
 
@@ -144,10 +133,10 @@ export class RemakeHomeView extends BaseView implements HomeView {
     if (!role || !this.chrome) return;
     this.chrome.setIdentity(role.nickname, "");
     this.chrome.setLevelBadge(String(role.level));
+    this.chrome.setExperience(role.basics?.experience, role.basics?.experienceToNextLevel);
     this.chrome.setCurrencies(String(role.gold), String(role.diamonds));
     this.chrome.setPower(""); // 战力尚未接入，不将未知值伪装为零。
     paintRolePortrait(this.chrome.avatarFace, this.chrome.avatarBorder, role.basics?.headId, role.basics?.borderId);
-    this.profile?.render(role);
     this.chrome.setCityExtras(false);
     this.chrome.setTabs(["city", "hero", "bag", "battle", "dungeon", "clan", "fetter"].map(id => ({
       id, text: "", state: id === this.currentFeature ? "selected" :
@@ -156,14 +145,12 @@ export class RemakeHomeView extends BaseView implements HomeView {
     this.city?.refreshLocks();
   }
 
-  /** 主城退出时销毁资料弹窗并解除头像、货币按钮和子页面监听。 */
+  /** 主城退出时通过 UIManager 关闭资料弹窗并解除头像、货币按钮和子页面监听。 */
   onClose(): void {
     if (this.closed) return;
     this.closed = true;
     this.failOpen(new Error("页面已关"));
-    this.profile?.hide();
-    this.profile?.node.destroy();
-    this.profile = null;
+    UIManager.instance.closeById("role-profile");
     for (const unbind of this.extraUnbind.splice(0)) unbind();
     this.city?.runDispose();
     this.chrome?.runDispose();

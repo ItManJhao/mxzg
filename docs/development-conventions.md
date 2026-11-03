@@ -20,7 +20,7 @@
 |---|---|---|
 | 发请求 | SpiritGameMainView.onShow/onClick 可直接 NetHelper.sendProto；SGCtrl 也会发后续请求 | View 转交 Controller 的业务方法，由身份边界、模块 API、统一 GameSocketClient 发送 |
 | 收包 | SGCtrl.onNotify 按 Protocol/AOI 分发 | Protocol 登记真实消息，onNotify → onXxx → 唯一 Model → 事件；角色和背包按统一持久版本批量提交 |
-| 更新状态 | getSGameData → sgModel.setData；getRecord → setRecord | BagController.read → BagModel.replaceAll，状态由唯一 Model 持有 |
+| 更新状态 | getSGameData → sgModel.setData；getRecord → setRecord | BagController.onNotify → 对应处理方法 → BagModel，状态由唯一 Model 持有 |
 | 通知界面 | setData 后 dispatch(SG_UPDATE_STATUS) | 提交后 notify → EventDispatcher → BagUpdate/BagSyncStateChanged |
 | 界面刷新 | onShow 登记监听并 updateView；updateView 读取 DataMgr.ins.sgModel | onOpen 登记监听并读取 BagModel；refreshFromModel 负责刷新 |
 | 关闭清理 | onHide 成对 offEvent，并清理页面定时器 | BaseView 清理本页目标监听；模块 Controller 独立存活 |
@@ -70,9 +70,9 @@ View 的点击方法
 
 角色与背包已接入服务端 state.changed；登录/恢复回包统一初始化，不再追加库存查询。其他模块入口暂停，不再保留游戏 HTTP。后续模块按[固定模板](bag-mvc-maintenance.md#固定通信与状态模板)恢复，持久状态仍由所属 Model 唯一管理。
 
-阅读现有普通升级时依次看 HeroInfoUpLevelLayer.submit、HeroLevelController.upgrade、HeroLevelApi.upgrade、后端 HeroLevelController/Service，再回到 BagController.runInventoryUpdate 的状态提交和页面通知。点击方法里应看得出调用哪个业务，不能把身份、联网、扣资源和绘制挤在一个匿名回调中。
+阅读当前角色与背包时，按 Protocol → 应用统一快照校验 → RoleController/BagController.onNotify → 唯一 Model → 页面刷新查找；暂停模块不作为现行模板。
 
-账号变化的跨模块协调放在应用层：账号负责登录与凭证，应用通知背包清理/加载；背包只请求、提交库存并发事件。统一鉴权封装在应用注入的 api.list() 内，BagController 不依赖 AccountModel/AccountService，不接收 token。客户端会话标识只防止旧结果污染，服务端决定真实库存归属。该边界已落实背包；其他存量模块按批迁移。游爱继续提供明确业务方法、Model 更新与事件通知的阅读参考；需要补齐的后端以旧游戏规则和已核实的前端需求定义契约，不凭界面猜消耗与奖励。
+账号变化的跨模块协调放在应用层 AssetStateBinding；账号服务负责登录与凭证，RoleController 和 BagController 消费统一初始化/推送。背包不监听账号、不持有 token、不单独查询库存；旧 api.list 和 BagUpdateCoordinator 已退役，不再作为开发示例。
 
 ## 文件组织与职责
 
@@ -156,3 +156,13 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 - headId、imageId、borderId 分别是头像、形象和头像框，禁止互相代用。服务端 Unix 秒字段名必须带 Seconds；历史未知时间为 0，页面不能显示成 1970 年。
 - 服务端变更基础资料须在角色锁事务内更新并调用 AssetSyncService.changed；同事务只递增一次版本，提交后同步，回滚不通知。禁止增加前端任意写角色属性的协议。
 - basics 若存在必须完整校验，非法字段拒绝角色与背包整包；缺失表示尚未同步，不能伪造成全零资料。修改 .proto 后生成协议代码并验证真实 TS/Java 互通。
+
+
+## 账号界面与窗口打开规范（2026-11-03 整理）
+
+- 独立业务窗口必须使用 BaseView、同名 Prefab、UIManager 注册与打开/关闭。不得在主城手动 instantiate 角色弹窗、维护第二套 show/hide 和销毁逻辑。
+- RoleProfileView 的 Prefab 位于 prefabs/ui/account，保留原 SettingLayer UUID。RemakeApp 注册 role-profile；头像点击经 HomeController 交回应用，UIManager 打开，窗口订阅唯一 AccountModel，关闭时退订。重复打开不累积监听；账号清空或忙于切换时关闭并取消未完成的打开。
+- AccountLoginView 是登录页面，ServerPickerView 是选服弹窗，两者都由 UIManager 管理。ServerCellView 是列表子组件；LoginArtwork 是登录页面适配组件；LoginLayout 和 RolePortrait 是辅助函数，不要求一一对应独立窗口。
+- 服务器和区域两列均为 SuperScroll → view/Mask → content/SuperContent。Prefab 保存 cellPrefab、尺寸、间距和方向；View 只 setData，不销毁重建所有格子、不计算格子坐标或 content 高度。
+- LoadingLayer/BootChrome 是启动加载流程，用于资源准备、进度和提示；AccountLoginView 负责账号、选服与进入。共享背景或尺寸计算不代表同一界面。启动层独立管理不构成业务弹窗绕过 UIManager 的例外。
+- 验收分别记录结构/自动检查与 Creator 实际效果；未实际打开不能声称完成视觉验收。

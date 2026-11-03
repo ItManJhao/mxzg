@@ -1,3 +1,4 @@
+/** 主城页面适配器：订阅唯一账号状态，向应用层转交页面入口，不创建弹窗或修改资产。 */
 import { AccountModel } from "../account/AccountModel";
 import type { AccountState } from "../account/AccountModel";
 import { AccountService } from "../account/AccountService";
@@ -15,11 +16,12 @@ export class HomeController {
   constructor(private readonly account: AccountModel, private readonly service: AccountService,
     private readonly view: HomeView, private readonly openFeature?: (id: string) => boolean) {}
 
+  /** 绑定主城操作并订阅账号资料，角色详情入口交由应用统一注册的 UIManager 打开。 */
   show(): void {
     if (this.disposers.length) return;
     const unbind = this.view.bind({ logout: () => this.service.logout(), heroAvailable: false,
       availableFeatures: this.openFeature ? ["bag"] : [], openFeature: id => {
-      if ((id === "bag" || id === "city") && this.openFeature?.(id)) return;
+      if ((id === "bag" || id === "city" || id === "role-profile") && this.openFeature?.(id)) return;
       this.view.showNotice(id === "city" ? "" : "该模块暂停，待登录和背包完善后按原项目重做");
     } });
     this.disposers = [unbind, this.account.subscribe(state => this.view.render(state))];

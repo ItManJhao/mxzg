@@ -76,6 +76,7 @@ export const ResourceCatalog = {
   },
   prefab_account: {
     AccountLoginView: {"bundle":"prefabs","path":"ui/account/AccountLoginView","assetPath":"prefabs/ui/account/AccountLoginView","loadPath":"ui/account/AccountLoginView","type":"Prefab","uuid":"61d32fd8-b35a-5ddc-bf5f-ea5026c8c23b"},
+    RoleProfileView: {"bundle":"prefabs","path":"ui/account/RoleProfileView","assetPath":"prefabs/ui/account/RoleProfileView","loadPath":"ui/account/RoleProfileView","type":"Prefab","uuid":"1aedb5a3-4e33-552f-843c-c419fd8174a4"},
   },
   prefab_battle: {
     BattleDetailCell: {"bundle":"prefabs","path":"ui/battle/BattleDetailCell","assetPath":"prefabs/ui/battle/BattleDetailCell","loadPath":"ui/battle/BattleDetailCell","type":"Prefab","uuid":"5292128a-6bc8-46d2-8df9-27c886761aa4"},
@@ -185,9 +186,6 @@ export const ResourceCatalog = {
     ChangeNickLayer: {"bundle":"prefabs","path":"ui/role/ChangeNickLayer","assetPath":"prefabs/ui/role/ChangeNickLayer","loadPath":"ui/role/ChangeNickLayer","type":"Prefab","uuid":"2759019b-9ad6-52ef-b337-1e52fc3f1d83"},
     RoleInfoLayer: {"bundle":"prefabs","path":"ui/role/RoleInfoLayer","assetPath":"prefabs/ui/role/RoleInfoLayer","loadPath":"ui/role/RoleInfoLayer","type":"Prefab","uuid":"687dc47b-989e-58ca-8409-c21aafc9ab71"},
     RoleUpgradeLayer: {"bundle":"prefabs","path":"ui/role/RoleUpgradeLayer","assetPath":"prefabs/ui/role/RoleUpgradeLayer","loadPath":"ui/role/RoleUpgradeLayer","type":"Prefab","uuid":"2f2236f9-769b-5a3a-b4ff-33ab50f0d54d"},
-  },
-  prefab_setting: {
-    RoleProfileView: {"bundle":"prefabs","path":"ui/setting/RoleProfileView","assetPath":"prefabs/ui/setting/RoleProfileView","loadPath":"ui/setting/RoleProfileView","type":"Prefab","uuid":"1aedb5a3-4e33-552f-843c-c419fd8174a4"},
   },
   prefab_summon: {
     SummonCell: {"bundle":"prefabs","path":"ui/summon/SummonCell","assetPath":"prefabs/ui/summon/SummonCell","loadPath":"ui/summon/SummonCell","type":"Prefab","uuid":"cba7a46f-c6dd-495d-b457-c0ff5404ab91"},

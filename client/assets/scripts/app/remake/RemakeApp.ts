@@ -15,6 +15,7 @@ import { GameSocketClient } from "../../platform/GameSocketClient";
 import { readBagItems, readTimedItems } from "../../features/Bag/data/BagItemData";
 import { AccountService } from "../../features/account/AccountService";
 import { AccountController } from "../../features/account/AccountController";
+import { RoleProfileView } from "../../features/account/ui/RoleProfileView";
 import { AccountLoginView } from "../../features/account/ui/AccountLoginView";
 import { HomeController } from "../../features/home/HomeController";
 import { RemakeHomeView } from "../../features/home/ui/RemakeHomeView";
@@ -157,6 +158,10 @@ export class RemakeApp extends Component {
         return loadFeaturePage(this.featureResources,"servers");
       },
     }));
+    this.unregisterViews.push(registerView(RoleProfileView, {
+      id: "role-profile", prefab: ResourceCatalog.prefab_account.RoleProfileView.assetPath,
+      layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
+    }));
     // All business composition lives here. The UI framework imports no account/home classes.
     this.unregisterViews.push(registerView(AccountLoginView, {
       id: "remake-login", prefab: ResourceCatalog.prefab_account.AccountLoginView.assetPath, layer: UILayer.Page,
@@ -180,7 +185,16 @@ export class RemakeApp extends Component {
       },
       createController: view => {
         homeView = view as RemakeHomeView;
-        return new HomeController(model, service, homeView, id => features.open(id));
+        return new HomeController(model, service, homeView, id => {
+          if (id !== "role-profile") return features.open(id);
+          if (!model.snapshot.role || model.snapshot.busy) return false;
+          void ui.openById("role-profile", {
+            model, logout: () => service.logout(), notice: (text: string) => ui.toast(text),
+          }).catch(error => {
+            if (!isOpenCancelled(error)) homeView?.showNotice("角色详情打开失败，请重试");
+          });
+          return true;
+        });
       },
     }));
     const loadFeature = (group: "bag" | "campaign" | "formation") => {
@@ -195,7 +209,7 @@ export class RemakeApp extends Component {
     this.startupResources = createStartupResourceScope();
     syncRoute = () => {
       if (!this.alive || !this.started) return;
-      if(model.snapshot.busy || !model.snapshot.role)ui.closeById("hero-level");
+      if(model.snapshot.busy || !model.snapshot.role) { ui.closeById("hero-level"); ui.closeById("role-profile"); }
       if (model.snapshot.busy) {
         this.chrome?.show();
         this.chrome?.setStage("同步角色资料");

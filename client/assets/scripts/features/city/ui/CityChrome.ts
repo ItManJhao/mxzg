@@ -294,6 +294,11 @@ export function layoutCityHeader(root: Node, width: number): void {
   const background = top.getChildByName("Bg");
   background?.setPosition(0, 40, 0);
   background?.getComponent(UITransform)?.setContentSize(width, width * 146 / 616);
+  // 与旧版顶部资源保持同一缩放比例，保留经验细条的原图高度。
+  for (const name of ["ExperienceBg", "ExperienceFill"]) {
+    const bar = top.getChildByName(name);
+    if (bar) bar.setScale(width / 640, width / 640, 1);
+  }
   const positions: Record<string,number> = { NameBg:-0.285,LblName:-0.285,LblSub:-0.285,
     PowerSlot:-0.055,CurrencyGold:0.129,CurrencyGem:0.33,Avatar:-0.435,LevelBg:-0.435,LblLevel:-0.435 };
   for (const name of Object.keys(positions)) {

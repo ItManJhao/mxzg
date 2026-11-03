@@ -141,3 +141,31 @@ Creator 刷新后在独立测试账号、393×852 视口完成实际验证：顶
 
 home-presentation、backpack、game-socket 回归及 strict/Creator 类型检查通过；资源生成检查通过，仍是既有 4 个动态资源缺口，无新增缺口。修改包含中文职责、属性和函数注释。本批未提交、未推送，保留已有工作区修改；未操作日常玩家数据库，其他玩法保持暂停。
 本轮独立 MySQL 最终 14/14 通过（run=e41e61e759c6426b9affc3079c5f4a2b），验收页已关闭，ownership 确认 stopped。后端测试仍有既有 Hikari 重启后旧连接校验警告，不影响测试结果，尚未在本批整理测试上下文。
+
+## 2026-11-03：头像详情提交与主城经验条接入
+
+顶部头像、只读详情及前批验收材料已提交本机 main：97a8b2e8，未推送。账号相关已有格式与注释修改保留在工作区，未混入提交。
+
+本批按旧 MainSceneCtr 的 setExp 规则复用两张旧经验条图片，预制体静态保存，主城刷新读取统一角色资料。已通过 home-presentation、city、strict 与 Creator 类型检查。经验条改动尚未提交，等待 Creator 资源刷新后的实际画面验收；不得将自动检查视作视觉验收。未操作数据库，角色修改及其他模块不动。
+
+经验条实际验收补记：独立 run=dc6782d4d88740a5b346d18a76ee2d30 已登录 bag_timed_preview。发现经验条绘制在 Bg 之前而被遮挡，已移到 Bg 后；切换账号暴露 RoleProfileView 销毁时 Button.node 已清空，已改为绑定时捕获节点、安全释放。新增这两项回归通过，Creator 类型通过。等待再次资源刷新复验，尚不标记视觉完成。
+
+最终刷新后复验通过：393×852 预览，bag_timed_preview 的 66/120 经验显示约 55% 黄色填充，位于顶栏上沿，无背景遮挡；头像打开详情、设置退出正常返回登录页，当前加载轮次浏览器 error/warn 为零。截图见 [主城经验条](images/role-experience-bar-20261103.png)。前述待刷新状态已完成，本次只验收浏览器此视口，不代替小游戏真机验证。经验条和销毁修复仍未提交。
+本轮独立 MySQL 14/14 通过，run=dc6782d4d88740a5b346d18a76ee2d30，ownership 确认 stopped。测试日志仍有已知 Hikari 旧连接校验警告；浏览器零警告仅指刷新后本轮页面。未操作玩家库。
+
+## 2026-11-03：账号 UI 结构整改（验收进行中）
+
+角色详情改为 BaseView，由 RemakeApp 注册 role-profile 并通过 UIManager 打开/关闭；移除主城的 profilePrefab 引用和手动实例。预制体移至 prefabs/ui/account/RoleProfileView，UUID 不变；唯一模型订阅属于弹窗生命周期。选服区域与服务器两列改为静态 SuperScroll/view/Mask/content/SuperContent，移除手动排位置和设置 content 高度。账号 UI 头注释、属性与方法说明同步补齐；文档中退役的 api.list 等模板描述已纠正。
+
+home-presentation（含统一开窗、重复打开、关闭退订）、login-presentation、SuperScroll、资源生成检查、strict/Creator 类型检查通过。资源仍有原先 4 项动态图标缺口，无新增。Python bindings 检查入口未成功执行，不能记为通过；移动后的绑定与 Creator 真正导入效果仍待实际验收。未操作玩家库，不启用角色写操作或其他玩法，本批未提交。
+
+账号 UI 整改最终浏览器验收：独立测试 run=dd6c9f7a38ff4305824fde878daa1174，393×852 游戏视口。选服两列正常显示，滚动手势后的点击取消保持原生行为，静止点击可选二服；重开保持二服标记并可选回一服。实际数据仅一个区域、两个服务器，不将这次记录宣称为长列表真机验收。角色详情通过 UIManager 真实打开、关闭、重开和退出登录均正常，返回登录后浏览器 error/warn 为零。截图：[统一资料弹窗](images/account-profile-managed-20261103.png)、[选服列表](images/account-server-scroll-20261103.png)。
+
+startup 回归最初因测试替身缺失 game/Game 导出而失败，补齐仅测试使用的前后台事件替身后通过。home-presentation 新增选服区域切换、选择、关闭退订和静态裁切层级检查并通过。Python 全库 bindings 入口仍未运行成功，但本批四个相关预制体的 10 个脚本绑定已通过独立 Node 校验，Creator 实际导入与打开也通过；不将局部校验冒充全库校验。
+本轮独立 MySQL 最终 14/14 通过，ownership 确认 stopped，验收页已关闭。未操作日常玩家库；本批结构整改及上一批经验条仍在工作区，未提交或推送。
+
+## 2026-11-03：全库绑定检查补齐与批次提交
+
+统一 bindings 检查入口改用 client/tools/check-script-bindings.cjs，使用项目已有 Node，不再依赖当前机器无法运行的 Python 占位程序。保留原 Python 检查规则：23 位类 ID、固定压缩锚点、禁止 22 位/未知类型、重复脚本 UUID、按钮目标必须为 Node；新增脚本源文件存在性检查及反例自检。旧 Python 文件保留供历史对照，日常入口以 check-project.mjs --suite bindings 为准。
+
+本轮全库扫描通过：156 个脚本、91 个 Prefab/Scene、47 处脚本绑定。此前“全库绑定未跑通”状态已解除。home-presentation、login-presentation、startup、super-scroll、strict/Creator 类型与资源生成检查均通过；资源仍为既有 4 项动态图标缺口。提交范围为账号 UI 整改、经验条、检查工具和相关文档/截图；账号核心及 ProtocolState 原有未提交修改保留，不混入本批。其他模块与数据库未操作。

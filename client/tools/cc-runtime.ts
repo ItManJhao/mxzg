@@ -602,3 +602,28 @@ export namespace sp {
     }
   }
 }
+
+/** 应用前后台事件的测试替身，回调目标与引擎 on/off 配对语义一致。 */
+export class Game {
+  /** 进入后台事件名。 */
+  static EVENT_HIDE = "game-hide";
+  /** 返回前台事件名。 */
+  static EVENT_SHOW = "game-show";
+}
+/** 仅供测试的前后台监听表，不影响真实 Creator 运行时。 */
+const gameListeners = new Map<string, Array<{callback: Listener; target: unknown}>>();
+export const game = {
+  /** 登记带调用目标的事件回调。 */
+  on(type: string, callback: Listener, target?: unknown): void {
+    const rows = gameListeners.get(type) || [];
+    rows.push({callback, target}); gameListeners.set(type, rows);
+  },
+  /** 只移除相同回调和目标的监听。 */
+  off(type: string, callback: Listener, target?: unknown): void {
+    gameListeners.set(type, (gameListeners.get(type) || []).filter(row => row.callback !== callback || row.target !== target));
+  },
+  /** 模拟引擎前后台事件，保持回调的 this。 */
+  emit(type: string, ...args: unknown[]): void {
+    for (const row of (gameListeners.get(type) || []).slice()) row.callback.apply(row.target, args);
+  },
+};

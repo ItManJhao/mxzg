@@ -666,7 +666,7 @@
       ]
     },
     {
-      "path": "prefabs/ui/setting/RoleProfileView.prefab",
+      "path": "prefabs/ui/account/RoleProfileView.prefab",
       "reason": "Basic settings only",
       "phases": [
         "P6"

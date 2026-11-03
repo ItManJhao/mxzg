@@ -71,3 +71,10 @@ V8 为 game_role 增加基础列。已有新版记录保持原 ID、等级和钱
 - 头像选择、改名、形象和称号按钮只显示未开放提示。原有退出登录保留在“设置 → 退出登录”，点击设置本身不会退出，也未接入新设置模块。
 - 删除临时 AccountButton/AccountPanel 和对应 Home 绑定。预制体静态保存头像 Face/Border、遮罩、详情布局与设置面板；运行时只更新资料、适配整体大小和绑定事件。
 - 旧文字导入乱码与 0.5 倍缩放在预制体中修正；原背景包含“个人空间”标题，不额外叠印标题。只读阶段不恢复英雄阵容、公会、战力或其他玩法。
+
+## 2026-11-03：主城经验条
+
+旧源码 MainSceneCtr.lua 166–179 创建 progress-role-exp-bg/progress-role-exp，位于顶部战力节点上方 25/26 单位，水平从左向右填充；1698–1708 的 setExp 使用等级内经验除以 mainlevel[level].exp，无配置时为 0。新版在 CityChromeView.prefab 静态保存两个原资源 Sprite，填充 Sprite 使用水平 FILLED；RemakeHomeView 从唯一角色 basics.experience / experienceToNextLevel 刷新，不新增协议或查询。最高级门槛为 0 时显示空条，资料缺失清零，不伪造满条或自行升级。
+
+自动回归覆盖 66/120=55%、升级清零、零门槛、缺失和越界裁切；主城与首页回归、strict/Creator 类型检查通过。Creator 刷新后实际画面位置与填充效果尚待复验。角色修改、公会、英雄等其他模块未开放。
+最终验收：Creator 再次导入后，独立测试角色 66/120 的顶部经验条实际显示约 55%，退出登录无清理异常。截图见 images/role-experience-bar-20261103.png。
