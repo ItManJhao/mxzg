@@ -87,7 +87,7 @@ const paths = new Set<string>([
   "prefabs/ui/role/ChangeNickLayer",
   "prefabs/ui/role/RoleInfoLayer",
   "prefabs/ui/role/RoleUpgradeLayer",
-  "prefabs/ui/setting/SettingLayer",
+  "prefabs/ui/setting/RoleProfileView",
   "prefabs/ui/summon/SummonCell",
   "prefabs/ui/summon/SummonLayer"
 ]);

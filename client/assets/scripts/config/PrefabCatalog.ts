@@ -95,7 +95,7 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "prefabs/ui/role/ChangeNickLayer": "2759019b-9ad6-52ef-b337-1e52fc3f1d83",
   "prefabs/ui/role/RoleInfoLayer": "687dc47b-989e-58ca-8409-c21aafc9ab71",
   "prefabs/ui/role/RoleUpgradeLayer": "2f2236f9-769b-5a3a-b4ff-33ab50f0d54d",
-  "prefabs/ui/setting/SettingLayer": "1aedb5a3-4e33-552f-843c-c419fd8174a4",
+  "prefabs/ui/setting/RoleProfileView": "1aedb5a3-4e33-552f-843c-c419fd8174a4",
   "prefabs/ui/summon/SummonCell": "cba7a46f-c6dd-495d-b457-c0ff5404ab91",
   "prefabs/ui/summon/SummonLayer": "c046c79b-a2a4-4bf1-b93a-966094c105b8"
 };

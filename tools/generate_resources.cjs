@@ -73,7 +73,7 @@ for (const relative of input.commonPaths) registerFile(source(relative), 'common
 for (const relative of json(path.join(root, 'config/resource-catalog.json')).staticPaths) registerFile(source(relative));
 for (const file of files(assets).filter(f => f.endsWith('.prefab'))) registerFile(file, 'prefab_' + key(path.basename(path.dirname(file))));
 const staticKeys = Object.fromEntries(Object.entries(groups).map(([group, entries]) => [group, Object.keys(entries)]));
-const itemIcons = {}, heroIcons = {}, missing = [];
+const itemIcons = {}, heroIcons = {}, headIcons = {}, borderIcons = {}, missing = [];
 /** 动态 ID 只映射实际存在的配置资源；缺失项保留报告，由业务使用明确占位图。 */
 function icon(map, id, relative) {
     const file = path.join(assets, 'resources', relative + '.png');
@@ -89,6 +89,12 @@ for (const row of json(path.join(assets, 'resources/config/item.json')).rows) {
     icon(itemIcons, row.idx, relative);
 }
 for (const row of json(path.join(assets, 'resources/config/herotype.json')).rows) if (row.item_id) icon(heroIcons, row.type, 'ui/hero/hero-icon_' + row.item_id);
+// 角色头像使用独立 head-icon；只登记存在的资源，不借用英雄图标。
+for (const file of files(path.join(assets, 'resources/ui/hero'))) {
+    const match = path.basename(file).match(/^head-icon_(\d+)\.png$/);
+    if (match) icon(headIcons, Number(match[1]), 'ui/hero/' + path.basename(file, '.png'));
+}
+for (const row of json(path.join(assets, 'resources/config/border.json')).rows) icon(borderIcons, row.icon, row.icon === 0 ? 'ui/bag/backpack_border-default' : 'ui/bag/backpack_' + (1005000 + row.icon));
 const output = ['/** 由 tools/generate_resources.cjs 生成；只登记资源描述，不预加载。修改扫描输入后重新生成。 */',
     'export type ResourceKind = "SpriteFrame" | "SpriteAtlas" | "Prefab" | "AudioClip" | "SkeletonData" | "JsonAsset";',
     'export interface ResourceDescriptor<K extends ResourceKind = ResourceKind> { readonly bundle: string; readonly path: string; readonly assetPath: string; readonly loadPath: string; readonly type: K; readonly uuid: string; }',
@@ -100,7 +106,7 @@ for (const group of Object.keys(staticKeys).sort()) {
 }
 output.push('} as const;');
 const icons = ['/** 由资源生成器按当前道具和英雄配置生成的实际图标映射；缺失 ID 不拼接未知地址。 */', 'import type { ResourceDescriptor } from "./ResourceCatalog";'];
-for (const [name, map] of [['ItemIconById', itemIcons], ['HeroIconById', heroIcons]]) {
+for (const [name, map] of [['ItemIconById', itemIcons], ['HeroIconById', heroIcons], ['HeadIconById', headIcons], ['BorderIconById', borderIcons]]) {
     icons.push('export const ' + name + ': Readonly<Partial<Record<number, ResourceDescriptor<"SpriteFrame">>>> = {');
     for (const id of Object.keys(map).sort((a, b) => Number(a) - Number(b))) icons.push('  ' + id + ': ' + JSON.stringify(map[id].descriptor) + ',');
     icons.push('};');

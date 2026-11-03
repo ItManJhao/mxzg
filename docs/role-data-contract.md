@@ -40,3 +40,34 @@ V8 为 game_role 增加基础列。已有新版记录保持原 ID、等级和钱
 ## 明确缺口
 
 正式渠道身份、创角命名与性别、初始奖励、完整角色详情、头像/头像框选择、改名、经验获取/升级奖励、战力计算、VIP/充值、公会、新手进度、神权/尊贵/称号等未完成。旧协议中未见实际赋值的字段不自行补假数据。以后逐项核对源码、配置及正式服效果，本批不恢复其他模块入口。
+
+
+## 2026-11-03：角色详情差异核查
+
+本节依据旧源码与当前资源，不把代码核对描述为正式服画面已验收。
+
+| 对照点 | 旧实现与证据 | 当前差异与下一步 |
+|---|---|---|
+| 主城经验 | MainSceneCtr.setExp 使用 mainlevel.exp 绘制进度条，显示等级 | 当前仅账号信息框显示经验数值；进度条视觉尚未还原 |
+| 自身资料入口 | MainSceneCtr.onRole 打开 SettingCtr / SettingLayer.ccbi | 当前账号信息框是阶段实现，不等价于旧设置页 |
+| 自身资料内容 | SettingCtr.initData 显示昵称、角色 ID、等级、公会；setHead 显示头像及头像框 | 当前缺头像、头像框与旧版布局；公会依赖暂停模块，不填假值 |
+| 出战英雄 | SettingCtr.updateHeroList 读取章节阵容，排除援助位，点击请求英雄简介 | 英雄与阵容尚暂停；本批只记录依赖，不启动 |
+| 公开玩家资料 | RoleInfoCtr / RoleInfoLayer.ccbi 使用 2004 GResPlayerDetaile，显示区服昵称、奖杯、战力、公会、阵容与英雄 | 与自身设置页是不同窗口；当前未恢复 2004，不应借此增加自身重复查询 |
+| 社交按钮 | RoleInfoCtr 按本人、同服/跨服、好友状态决定好友/私聊/切磋/黑名单按钮 | 依赖好友、聊天、战斗，保持暂停 |
+| 外观选择 | SettingChooseCtr 的头像使用 HeadPortrait 协议；头像框用 32001/32002/32003；2011 GReqRoleChangeHead 实际传 image_id/skin_id | 协议名称不能作为字段含义依据；当前只持久化选中 ID，未实现解锁与选择 |
+| 二次改名 | ChangeNickCtr 优先使用 consumption_props，否则 nick_change_cost；发送 2020 GReqRoleRename。RoleHandler.renameRole 校验名称、类型、重复并服务端扣费 | 2003 创角相关命名与 2020 二次改名要区分；本批不开放改名，不绕开背包禁用操作 |
+| 其他设置 | SettingCtr 按渠道开关显示省市，还连接称号、形象及高级设置 | 逐项核对后恢复，不直接照搬另一项目内容 |
+
+当前仓库已有 `client/assets/prefabs/ui/setting/SettingLayer.prefab` 与 `client/assets/prefabs/ui/role/RoleInfoLayer.prefab`，仅存在资源不代表布局、绑定和交互已验收。本批不改名、不重建 UUID、不启用窗口。后续先恢复自身资料只读布局与已具备字段，再按旧条件恢复写操作；公开资料及关联玩法独立排期。
+
+
+## 2026-11-03：正式服截图对应的只读详情实现
+
+用户提供的 [顶部栏](images/role-formal-header-reference.png) 与 [自身资料页](images/role-formal-profile-reference.png) 是本次效果依据。详情使用原 SettingLayer 的背景和图标，保留 UUID `1aedb5a3-4e33-552f-843c-c419fd8174a4`，改名为 `RoleProfileView.prefab`，与绑定的 View 一致；未改动公开玩家资料 RoleInfoLayer。
+
+- 顶部头像和头像框使用 `headId`、`borderId`；旧资源 head-icon_0 是真实默认头像，不能把 0 理解为不显示。头像资源与英雄图标分开登记，形象仍由 imageId 表达，不混用。
+- 头像点击打开资料页，关闭回到原页面；主城和背包共用同一入口。资料由 HomeController 的唯一账号订阅经 RemakeHomeView.render 注入，不新增角色查询，也不复制 Model。
+- 详情显示真实昵称、完整字符串角色 ID、等级、头像与头像框。公会写“暂未同步”，英雄区写“英雄展示暂未开放”，不伪造未加入公会或三名英雄。
+- 头像选择、改名、形象和称号按钮只显示未开放提示。原有退出登录保留在“设置 → 退出登录”，点击设置本身不会退出，也未接入新设置模块。
+- 删除临时 AccountButton/AccountPanel 和对应 Home 绑定。预制体静态保存头像 Face/Border、遮罩、详情布局与设置面板；运行时只更新资料、适配整体大小和绑定事件。
+- 旧文字导入乱码与 0.5 倍缩放在预制体中修正；原背景包含“个人空间”标题，不额外叠印标题。只读阶段不恢复英雄阵容、公会、战力或其他玩法。

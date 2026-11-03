@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-03",
+  "roleCommit": "8988b371",
+  "run": "d26950c3b29943c7ac24303000430d27",
+  "testAccount": "bag_timed_preview",
+  "experience": "66 / 120",
+  "actualBackgroundCycles": 2,
+  "secondBackgroundSeconds": 86,
+  "firstRestore": {
+    "revision": 3,
+    "serverTimeSeconds": 1793704687
+  },
+  "secondRestore": {
+    "revision": 3,
+    "serverTimeSeconds": 1793704818
+  },
+  "secondCountdownBefore": "6天4小时41分",
+  "secondCountdownAfter": "6天4小时39分",
+  "newBusinessConnectionsPerRestore": 1,
+  "authenticationRequestsPerRestore": 1,
+  "extraInventoryQueries": 0,
+  "consoleErrorsOrWarnings": 0,
+  "expiredItemReturned": false,
+  "expiryCrossingWhileActuallyHiddenVerified": false,
+  "miniGameDeviceVerified": false,
+  "dailyDatabaseTouched": false,
+  "temporaryFocusEmulationDisabled": true,
+  "testTabsClosed": true,
+  "mysqlPassed": 14,
+  "mysqlFailed": 0,
+  "ownedInstanceState": "stopped",
+  "backendTestWarnings": "Hikari stale connection validation after owned database restart"
+}

@@ -1,8 +1,10 @@
 /**
  * 主城组合页面：实例化已有地图和导航栏，使用新账号资料显示资产，并管理子 View 生命周期。
  */
-import { _decorator, Button, instantiate, Label, Node, Prefab, view } from "cc";
+import { _decorator, Button, instantiate, Label, Node, Prefab } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import {RoleProfileView} from "../../account/ui/RoleProfileView";
+import {paintRolePortrait} from "../../account/ui/RolePortrait";
 import { CityChromeView } from "../../city/ui/CityChromeView";
 import { CityHubView } from "../../city/ui/CityHubView";
 import { CityChromeShell } from "../../city/ui/CityChromeShell";
@@ -14,17 +16,16 @@ const { ccclass, property } = _decorator;
 
 @ccclass("RemakeHomeView")
 export class RemakeHomeView extends BaseView implements HomeView {
-  @property(Label) profileLabel: Label | null = null;
-  @property(Button) logoutButton: Button | null = null;
   @property(Prefab) cityPrefab: Prefab | null = null;
   @property(Prefab) chromePrefab: Prefab | null = null;
   @property(Node) cityHost: Node | null = null;
   @property(Node) chromeHost: Node | null = null;
-  @property(Node) accountPanel: Node | null = null;
-  @property(Button) accountButton: Button | null = null;
   @property(Label) noticeLabel: Label | null = null;
   @property(Node) noticePanel: Node | null = null;
-  @property(Node) accountTools: Node | null = null;
+  /** 复用旧 SettingLayer 的只读角色资料预制体，由主城持有。 */
+  @property(Prefab) profilePrefab: Prefab | null = null;
+  /** 当前主城唯一详情实例，页面退出时销毁，不保存独立角色状态。 */
+  private profile: RoleProfileView | null = null;
   private city: CityHubView | null = null;
   private chrome: CityChromeView | null = null;
   private role: AccountState["role"] = null;
@@ -36,27 +37,27 @@ export class RemakeHomeView extends BaseView implements HomeView {
   get featureHost(): Node | null { return this.cityHost; }
   get cityContent(): Node | null { return this.city?.node || null; }
 
-  /** The shared chrome/account tools stay on the root; only city content is hidden. */
+  /** 切换主城或背包只隐藏内容区；共用头像保留，角色详情同时收起。 */
   showFeature(id: "city" | "hero" | "bag" | "battle"): void {
     if (this.closed) return;
     this.currentFeature = id;
     if (this.city?.node.isValid) this.city.node.active = id === "city";
-    if (this.accountPanel) this.accountPanel.active = false;
+    this.profile?.hide();
     this.showNotice("");
     this.paintRole();
   }
 
+  /** 主城页面打开后加载已有预制体，生命周期由 UIManager 管理。 */
   onOpen(): void {
     this.closed = false;
     this.beginOpen();
-    view.on("canvas-resize", this.fitTools, this);
-    this.fitTools();
     void this.openCity();
   }
 
+  /** 加载原主城及顶栏，并挂载一个只读资料实例；关闭中断时不再创建节点。 */
   private async openCity(): Promise<void> {
     try {
-      if (!this.cityPrefab || !this.chromePrefab || !this.cityHost || !this.chromeHost) throw new Error("RemakeHome 未绑定主城 Prefab 或宿主");
+      if (!this.cityPrefab || !this.chromePrefab || !this.cityHost || !this.chromeHost || !this.profilePrefab) throw new Error("RemakeHome 未绑定主城 Prefab 或宿主");
       await prepareCityConfig();
       if (this.closed) return;
       const cityNode = instantiate(this.cityPrefab);
@@ -66,8 +67,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
       chromeNode.parent = this.chromeHost;
       this.chrome = chromeNode.getComponent(CityChromeView);
       if (!this.city || !this.chrome) throw new Error("已有主城 Prefab 缺少 View");
-      // Existing Views are owned children of this page. UIManager opens/closes the
-      // page; it drives both children's BaseView lifetimes, with no old MainApp.
+      // 主城持有两个子 View，随 UIManager 管理的主页面一起打开和释放。
       this.city.runOpen({
         onAtom: id => this.actions?.openFeature(id),
         onMainline: () => this.actions?.openFeature("mainline"),
@@ -81,6 +81,18 @@ export class RemakeHomeView extends BaseView implements HomeView {
           openMail: () => this.actions?.openFeature("mail"),
         },
       });
+      const profileNode = instantiate(this.profilePrefab);
+      profileNode.parent = this.node;
+      this.profile = profileNode.getComponent(RoleProfileView);
+      if (!this.profile) throw new Error("角色资料预制体缺少 RoleProfileView");
+      this.profile.bind(() => this.actions?.logout(), text => this.showNotice(text));
+      this.profile.hide();
+      this.noticePanel?.setSiblingIndex(this.node.children.length - 1);
+      const avatar = this.chrome.avatar;
+      if (!avatar) throw new Error("顶栏头像入口未绑定");
+      const openProfile = () => {if (this.role) {this.profile?.render(this.role);this.profile?.show();}};
+      avatar.on(Button.EventType.CLICK, openProfile);
+      this.extraUnbind.push(() => avatar.off(Button.EventType.CLICK, openProfile));
       const shell = chromeNode.getComponent(CityChromeShell);
       if (shell?.monthCard) shell.monthCard.active = false;
       for (const button of [shell?.btnAddGold, shell?.btnAddGem]) {
@@ -102,31 +114,22 @@ export class RemakeHomeView extends BaseView implements HomeView {
         this.chrome = null;
         for (const unbind of this.extraUnbind.splice(0)) unbind();
         this.showNotice("主城加载失败，请退出登录后重试");
-        // Keep logout available so a failed art load does not trap the session.
+        // 保留错误提示，不将资源失败显示成资料加载成功。
         this.finishOpen();
       }
     }
   }
 
+  /** 主城 Controller 注入已有操作；头像及详情按钮由所属实例统一清理。 */
   bind(actions: HomeActions): () => void {
-    if (!this.profileLabel || !this.logoutButton) throw new Error("RemakeHome Prefab 未绑定 profileLabel 或 logoutButton");
-    const logout = () => actions.logout();
     this.actions = actions;
     this.paintRole();
-    const toggleAccount = () => { if (this.accountPanel) this.accountPanel.active = !this.accountPanel.active; };
-    this.logoutButton.node.on(Button.EventType.CLICK, logout);
-    this.accountButton?.node.on(Button.EventType.CLICK, toggleAccount);
-    return () => {
-      this.actions = null;
-      this.logoutButton!.node.off(Button.EventType.CLICK, logout);
-      this.accountButton?.node.off(Button.EventType.CLICK, toggleAccount);
-    };
+    return () => { if (this.actions === actions) this.actions = null; };
   }
-  /** 订阅唯一角色状态，刷新已有账号信息区；基础资料缺失时明确提示未同步。 */
+  /** 订阅唯一角色状态，同时刷新顶栏和已打开的资料页，不追加角色查询。 */
   render(state: AccountState): void {
-    const role = state.role;
-    this.role = role;
-    this.profileLabel!.string = role ? `${role.nickname} · Lv.${role.level}\n角色 ID：${role.id}\n角色经验：${role.basics ? (role.basics.experienceToNextLevel === 0 ? "已满级" : role.basics.experience + " / " + role.basics.experienceToNextLevel) : "未同步"}` : "会话已结束，正在返回登录";
+    this.role = state.role;
+    if (!state.role) this.profile?.hide();
     this.paintRole();
   }
 
@@ -135,14 +138,16 @@ export class RemakeHomeView extends BaseView implements HomeView {
     if (this.noticePanel) this.noticePanel.active = !!text;
   }
 
+  /** 只显示服务器资料；头像与头像框分别解析，未知战力不伪造为零。 */
   private paintRole(): void {
     const role = this.role;
     if (!role || !this.chrome) return;
     this.chrome.setIdentity(role.nickname, "");
     this.chrome.setLevelBadge(String(role.level));
     this.chrome.setCurrencies(String(role.gold), String(role.diamonds));
-    this.chrome.setPower(""); // 战力计算与头像资源展示尚未接入，不用角色形象冒充头像。
-    this.chrome.setAvatar(null);
+    this.chrome.setPower(""); // 战力尚未接入，不将未知值伪装为零。
+    paintRolePortrait(this.chrome.avatarFace, this.chrome.avatarBorder, role.basics?.headId, role.basics?.borderId);
+    this.profile?.render(role);
     this.chrome.setCityExtras(false);
     this.chrome.setTabs(["city", "hero", "bag", "battle", "dungeon", "clan", "fetter"].map(id => ({
       id, text: "", state: id === this.currentFeature ? "selected" :
@@ -151,18 +156,14 @@ export class RemakeHomeView extends BaseView implements HomeView {
     this.city?.refreshLocks();
   }
 
-  private fitTools(): void {
-    const { width, height } = view.getVisibleSize();
-    const scale = Math.min(1, width / 640);
-    this.accountTools?.setScale(scale, scale, 1);
-    this.accountTools?.setPosition(0, height / 2 - 112 * scale, 0);
-  }
-
+  /** 主城退出时销毁资料弹窗并解除头像、货币按钮和子页面监听。 */
   onClose(): void {
     if (this.closed) return;
     this.closed = true;
     this.failOpen(new Error("页面已关"));
-    view.off("canvas-resize", this.fitTools, this);
+    this.profile?.hide();
+    this.profile?.node.destroy();
+    this.profile = null;
     for (const unbind of this.extraUnbind.splice(0)) unbind();
     this.city?.runDispose();
     this.chrome?.runDispose();

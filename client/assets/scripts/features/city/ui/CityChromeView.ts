@@ -86,8 +86,13 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
   @property(Node)
   levelBg: Node | null = null;
 
+  /** 顶栏头像点击区域，由主城绑定打开自身资料。 */
   @property(Node)
   avatar: Node | null = null;
+  /** 预制体内的头像图片，使用 headId，不能用角色形象代替。 */
+  @property(Node) avatarFace: Node | null = null;
+  /** 预制体内的头像框，独立于头像加载。 */
+  @property(Node) avatarBorder: Node | null = null;
 
   @property(Node)
   goldValue: Node | null = null;

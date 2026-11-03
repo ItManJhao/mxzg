@@ -165,7 +165,7 @@ class MySqlIT {
         previewEligible=true;
     }
 
-    /** 仅在本轮拥有的测试库创建可视夹具：两张同配置周卡，一张缩短为四分钟以验收到期，绝不进入业务发放入口。 */
+    /** 仅在本轮专用库创建可视夹具：角色经验 66、两张同配置周卡，其中一张四分钟到期；绝不进入业务发放入口。 */
     private void prepareTimedPreview() throws Exception {
         mysql.guard();
         var player=login.login("bag_timed_preview","local-1");
@@ -177,6 +177,7 @@ class MySqlIT {
         tx.executeWithoutResult(status->{
             locks.lock(player.role().id());
             inventory.credit(player.role().id(),900601,5);
+            assertEquals(1,jdbc.update("UPDATE game_role SET role_experience=66 WHERE id=?",player.role().id()));
             var shortItem=timed.grantOne(player.role().id(),902025,now);
             timed.grantOne(player.role().id(),902025,now);
             assertEquals(1,jdbc.update("UPDATE game_timed_inventory SET expires_at_seconds=? WHERE role_id=? AND instance_id=?",now+240,player.role().id(),shortItem.instanceId()));

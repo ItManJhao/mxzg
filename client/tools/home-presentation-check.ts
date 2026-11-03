@@ -1,7 +1,9 @@
+/** 主城与角色详情回归：验证唯一实例、真实资料刷新、头像入口和关闭清理，不连接数据库。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { Button, JsonAsset, Label, Node, Prefab, resources } from "cc";
 import { RemakeHomeView } from "../assets/scripts/features/home/ui/RemakeHomeView";
+import { RoleProfileView } from "../assets/scripts/features/account/ui/RoleProfileView";
 import { CityHubView } from "../assets/scripts/features/city/ui/CityHubView";
 import { CityChromeView } from "../assets/scripts/features/city/ui/CityChromeView";
 
@@ -34,13 +36,15 @@ function fixture() {
   home.cityPrefab = { _instantiate: () => cityNode } as unknown as Prefab;
   home.chromePrefab = { _instantiate: () => chromeNode } as unknown as Prefab;
   home.cityHost = new Node("CityMapHost"); home.chromeHost = new Node("CityChromeHost");
-  home.profileLabel = new Node("Profile").addComponent(Label);
-  home.logoutButton = new Node("Logout").addComponent(Button);
-  home.accountButton = new Node("Account").addComponent(Button);
-  home.accountPanel = new Node("AccountPanel"); home.accountPanel.active = false;
+  const profileNode=new Node("RoleProfileView"),profile=profileNode.addComponent(RoleProfileView);
+  profile.nickname=new Node("Name").addComponent(Label);profile.roleId=new Node("Id").addComponent(Label);profile.level=new Node("Level").addComponent(Label);
+  profile.closeButton=new Node("Close").addComponent(Button);profile.settingsButton=new Node("Settings").addComponent(Button);
+  profile.logoutButton=new Node("Logout").addComponent(Button);profile.settingsClose=new Node("Back").addComponent(Button);profile.settingsPanel=new Node("SettingsPanel");
+  home.profilePrefab={_instantiate:()=>profileNode} as unknown as Prefab;
+  chrome.avatar=new Node("Avatar");chrome.avatar.addComponent(Button);
   home.noticeLabel = new Node("Notice").addComponent(Label);
   home.noticePanel = new Node("NoticePanel"); home.noticePanel.active = false;
-  return { home, city, chrome };
+  return { home, city, chrome, profile };
 }
 async function main() {
   resources.load = (path: string, _type: unknown, done: Function) => {
@@ -48,7 +52,7 @@ async function main() {
     asset.json = JSON.parse(readFileSync(`client/assets/resources/${path}.json`, "utf8"));
     done(null, asset);
   };
-  const { home, city, chrome } = fixture();
+  const { home, city, chrome, profile } = fixture();
   let logouts = 0;
   const unbind = home.bind({ logout: () => { logouts++; }, openFeature: () => {} });
   home.runOpen();
@@ -68,11 +72,17 @@ async function main() {
   assert.equal(chrome.tabs.find(tab => tab.id === "city").state, "open");
   home.showFeature("city"); assert.equal(city.node.active, true);
   featureUnbind();
-  home.accountButton!.node.emit(Button.EventType.CLICK);
-  assert.equal(home.accountPanel!.active, true);
+  const rebound=home.bind({logout:()=>{logouts++;},openFeature:()=>{}});
+  chrome.avatar!.emit(Button.EventType.CLICK);
+  assert.equal(profile.node.active,true);assert.equal(profile.nickname!.string,"玩家甲");assert.equal(profile.level!.string,"7");
+  profile.closeButton!.node.emit(Button.EventType.CLICK);assert.equal(profile.node.active,false);
+  chrome.avatar!.emit(Button.EventType.CLICK);assert.equal(profile.node.active,true);
+  home.render({busy:false,error:"",role:{id:"role-new",nickname:"玩家乙",level:9,gold:5,diamonds:8}});
+  assert.equal(profile.nickname!.string,"玩家乙");assert.equal(profile.roleId!.string,"角色 ID：role-new");
+  profile.settingsButton!.node.emit(Button.EventType.CLICK);assert.equal(profile.settingsPanel!.active,true);
   home.showNotice("该功能暂未开放"); assert.equal(home.noticePanel!.active, true);
-  home.logoutButton!.node.emit(Button.EventType.CLICK); assert.equal(logouts, 1);
-  unbind(); home.logoutButton!.node.emit(Button.EventType.CLICK); assert.equal(logouts, 1);
+  profile.logoutButton!.node.emit(Button.EventType.CLICK); assert.equal(logouts, 1);
+  rebound(); unbind(); profile.logoutButton!.node.emit(Button.EventType.CLICK); assert.equal(logouts, 1);
   home.runDispose(); home.onDestroy();
   assert.equal(city.closedCount, 1); assert.equal(city.disposedCount, 1);
   assert.equal(chrome.closedCount, 1); assert.equal(chrome.disposedCount, 1);
@@ -91,6 +101,9 @@ async function main() {
     const meta = JSON.parse(readFileSync(`client/assets/prefabs/ui/city/${name}.prefab.meta`, "utf8"));
     assert.equal(binding[key].__uuid__, meta.uuid);
   }
+  assert(!prefab.some((row:any)=>row._name==="AccountButton"||row._name==="AccountPanel"),"临时账号框已从预制移除");
+  const profileMeta=JSON.parse(readFileSync("client/assets/prefabs/ui/setting/RoleProfileView.prefab.meta","utf8"));
+  assert.equal(binding.profilePrefab.__uuid__,profileMeta.uuid,"复用原设置预制体 UUID");
   const config = JSON.parse(readFileSync("client/settings/v2/packages/project.json", "utf8"));
   assert.deepEqual(config.general.designResolution, { width: 640, height: 1280, fitWidth: false, fitHeight: true });
   const citySource = readFileSync("client/assets/scripts/features/city/ui/CityHubView.ts", "utf8");

@@ -666,7 +666,7 @@
       ]
     },
     {
-      "path": "prefabs/ui/setting/SettingLayer.prefab",
+      "path": "prefabs/ui/setting/RoleProfileView.prefab",
       "reason": "Basic settings only",
       "phases": [
         "P6"

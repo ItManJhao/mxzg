@@ -6,6 +6,7 @@ export const ResourceCatalog = {
     bgm_logo: {"bundle":"resources","path":"audio/bgm-logo","assetPath":"resources/audio/bgm-logo","loadPath":"audio/bgm-logo","type":"AudioClip","uuid":"efd7ffc1-0096-4a81-ae05-a9325cd9be9e"},
   },
   bag: {
+    backpack_border_default: {"bundle":"resources","path":"ui/bag/backpack_border-default","assetPath":"resources/ui/bag/backpack_border-default","loadPath":"ui/bag/backpack_border-default/spriteFrame","type":"SpriteFrame","uuid":"d7dd0d2f-daf9-462f-b061-d5ac9e3646d6@f9941"},
     backpack_spr_default: {"bundle":"resources","path":"ui/bag/backpack_spr-default","assetPath":"resources/ui/bag/backpack_spr-default","loadPath":"ui/bag/backpack_spr-default/spriteFrame","type":"SpriteFrame","uuid":"272f4650-3774-4813-aedf-02edaab9a68c@f9941"},
     map_bg_backpack_1: {"bundle":"resources","path":"ui/bag/map-bg-backpack-1","assetPath":"resources/ui/bag/map-bg-backpack-1","loadPath":"ui/bag/map-bg-backpack-1/spriteFrame","type":"SpriteFrame","uuid":"93839820-644d-46de-9cf5-c2029669b85e@f9941"},
   },
@@ -43,6 +44,7 @@ export const ResourceCatalog = {
     other_spr_bubble_5: {"bundle":"resources","path":"ui/common/other_spr-bubble-5","assetPath":"resources/ui/common/other_spr-bubble-5","loadPath":"ui/common/other_spr-bubble-5/spriteFrame","type":"SpriteFrame","uuid":"0ded84dc-acec-4d0d-9a09-a8d2d62f9fa0@f9941"},
   },
   hero: {
+    head_icon_0: {"bundle":"resources","path":"ui/hero/head-icon_0","assetPath":"resources/ui/hero/head-icon_0","loadPath":"ui/hero/head-icon_0/spriteFrame","type":"SpriteFrame","uuid":"d26708bd-8d52-4347-bd52-2761a17087e6@f9941"},
     hero_icon_elem_0: {"bundle":"resources","path":"ui/hero/hero-icon_elem-0","assetPath":"resources/ui/hero/hero-icon_elem-0","loadPath":"ui/hero/hero-icon_elem-0/spriteFrame","type":"SpriteFrame","uuid":"e0c24160-8ef5-494b-8c78-3f3eb4ec8aab@f9941"},
     hero_icon_elem_1: {"bundle":"resources","path":"ui/hero/hero-icon_elem-1","assetPath":"resources/ui/hero/hero-icon_elem-1","loadPath":"ui/hero/hero-icon_elem-1/spriteFrame","type":"SpriteFrame","uuid":"6ac7088f-b451-4ee3-9253-283893c8b43a@f9941"},
     hero_icon_elem_2: {"bundle":"resources","path":"ui/hero/hero-icon_elem-2","assetPath":"resources/ui/hero/hero-icon_elem-2","loadPath":"ui/hero/hero-icon_elem-2/spriteFrame","type":"SpriteFrame","uuid":"9c200838-2dd8-48d2-8ac9-8a3ce9670524@f9941"},
@@ -185,7 +187,7 @@ export const ResourceCatalog = {
     RoleUpgradeLayer: {"bundle":"prefabs","path":"ui/role/RoleUpgradeLayer","assetPath":"prefabs/ui/role/RoleUpgradeLayer","loadPath":"ui/role/RoleUpgradeLayer","type":"Prefab","uuid":"2f2236f9-769b-5a3a-b4ff-33ab50f0d54d"},
   },
   prefab_setting: {
-    SettingLayer: {"bundle":"prefabs","path":"ui/setting/SettingLayer","assetPath":"prefabs/ui/setting/SettingLayer","loadPath":"ui/setting/SettingLayer","type":"Prefab","uuid":"1aedb5a3-4e33-552f-843c-c419fd8174a4"},
+    RoleProfileView: {"bundle":"prefabs","path":"ui/setting/RoleProfileView","assetPath":"prefabs/ui/setting/RoleProfileView","loadPath":"ui/setting/RoleProfileView","type":"Prefab","uuid":"1aedb5a3-4e33-552f-843c-c419fd8174a4"},
   },
   prefab_summon: {
     SummonCell: {"bundle":"prefabs","path":"ui/summon/SummonCell","assetPath":"prefabs/ui/summon/SummonCell","loadPath":"ui/summon/SummonCell","type":"Prefab","uuid":"cba7a46f-c6dd-495d-b457-c0ff5404ab91"},

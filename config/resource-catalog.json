@@ -39,7 +39,9 @@
     "ui/maps/map-bg-crusade-group-boss",
     "ui/maps/map-bg-loading",
     "ui/maps/map-bg-mission-1",
-    "ui/maps/map-bg-role-1"
+    "ui/maps/map-bg-role-1",
+    "ui/hero/head-icon_0",
+    "ui/bag/backpack_border-default"
   ],
   "keyOverrides": {
     "ui/common/god-equip_spr-bg": "god_dash_equip_spr_dash_bg",
