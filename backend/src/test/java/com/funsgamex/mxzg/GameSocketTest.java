@@ -42,6 +42,8 @@ class GameSocketTest {
     @LocalServerPort int port;
     @Autowired DevelopmentLoginService login;
     @Autowired SessionService sessions;
+    /** 测试真实接管锁竞争，不使用概率循环掩盖失败。 */
+    @Autowired com.funsgamex.mxzg.network.GameSocketHandler handler;
     @Autowired CampaignService campaign;
     @Autowired JdbcTemplate jdbc;
     @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
@@ -236,6 +238,34 @@ class GameSocketTest {
             first.authenticate(player.session().accessToken());
             assertTrue(second.authenticate(player.session().accessToken()).path("body").path("initial").isObject());
             assertEquals(1008,first.closed.get(5,TimeUnit.SECONDS));assertTrue(second.request("session.heartbeat",Map.of()).path("ok").asBoolean());
+        }
+    }
+
+    /** 确定性占住真实角色锁，验证重连等待短暂收尾，超时有界返回 BUSY。 */
+    @Test void reconnectWaitsForRoleLockAndTimesOutBoundedly() throws Exception {
+        var player=player();
+        var access=handler.getClass().getDeclaredMethod("roleLock",String.class);access.setAccessible(true);
+        var lock=(java.util.concurrent.locks.ReentrantLock)access.invoke(handler,player.role().id());
+        try(var first=new Peer();var second=new Peer();var executor=Executors.newSingleThreadExecutor()) {
+            assertTrue(first.authenticate(player.session().accessToken()).path("ok").asBoolean());
+            lock.lock();Future<JsonNode> response;
+            try {
+                response=executor.submit(()->second.authenticate(player.session().accessToken()));
+                long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(1);
+                while(!lock.hasQueuedThreads() && !response.isDone() && System.nanoTime()<deadline)Thread.sleep(5);
+                assertTrue(lock.hasQueuedThreads(),"重连接管应有界等待角色锁，不能立即返回 BUSY");
+            } finally {lock.unlock();}
+            assertTrue(response.get(5,TimeUnit.SECONDS).path("ok").asBoolean());
+            assertEquals(1008,first.closed.get(5,TimeUnit.SECONDS));
+            assertTrue(second.request("session.heartbeat",Map.of()).path("ok").asBoolean());
+            try(var third=new Peer()) {
+                lock.lock();
+                try {
+                    var busy=executor.submit(()->third.authenticate(player.session().accessToken())).get(4,TimeUnit.SECONDS);
+                    assertEquals("BUSY",busy.path("error").path("code").asString());
+                } finally {lock.unlock();}
+                assertTrue(second.request("session.heartbeat",Map.of()).path("ok").asBoolean(),"失败接管不影响现有连接");
+            }
         }
     }
 

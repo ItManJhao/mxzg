@@ -50,6 +50,8 @@ export class GameSocketClient {
   private stateRevision = -1;
   private blocked: SocketFailure | null = null;
   private maintain = false;
+  /** 应用是否在后台；后台保留凭证但停止连接与重试，重复生命周期事件无副作用。 */
+  private suspended = false;
   private retries = 0;
   private connecting: Promise<void> | null = null;
   private rejectOpen: ((error: Error) => void) | null = null;
@@ -67,6 +69,7 @@ export class GameSocketClient {
 
   /** 登录/恢复时等待鉴权及快照校验；相同会话共享连接任务，不回退 HTTP。 */
   connect(token: string): Promise<void> {
+    if (this.suspended) return Promise.reject(new SocketFailure("NOT_READY", "应用在后台，等待恢复"));
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return Promise.reject(new SocketFailure("UNAUTHENTICATED", "登录凭证无效"));
     if (token !== this.token) { this.disconnect(); this.token = token; }
     if (this.ready) return Promise.resolve();
@@ -83,6 +86,7 @@ export class GameSocketClient {
 
   /** 本地身份交换也走二进制连接；先结束旧会话，失败不会恢复旧账号。 */
   async login(account: string, serverId: string): Promise<GameFrame> {
+    if (this.suspended) throw new SocketFailure("NOT_READY", "应用在后台，等待恢复");
     this.disconnect(); const generation=++this.generation;
     await this.establish("",generation,{account,serverId});
     if(generation!==this.generation || !this.latestState) throw new SocketFailure("SESSION_CHANGED");
@@ -134,6 +138,14 @@ export class GameSocketClient {
     return frame;
   }
 
+  /** 后台主动结束旧通道及计时器，保留已登录凭证；回前台只重做鉴权首包，不重放业务请求。 */
+  setBackground(background: boolean): void {
+    if (this.suspended === background) return;
+    this.suspended = background;
+    if (background) this.drop(new SocketFailure("SUSPENDED", "应用已暂停，返回后恢复同步"), false);
+    else if (this.maintain && this.token && !this.blocked) void this.connect(this.token).catch(() => {});
+  }
+
   /** 登出、换号或应用销毁时取消全部任务；迟到回包无法复活旧会话。 */
   disconnect(): void {
     this.maintain = false;
@@ -165,6 +177,7 @@ export class GameSocketClient {
           if (generation === this.generation) this.drop(new SocketFailure("DISCONNECTED"), this.maintain);
         };
       });
+      if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
       const frame = await this.send(login ? Protocol.SESSION_LOGIN : Protocol.SESSION_AUTHENTICATE, login ? { ...login, clientInstanceId: this.instanceId } : { accessToken: token, clientInstanceId: this.instanceId });
       const accepted = this.object(frame.body);
       if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
@@ -283,7 +296,7 @@ export class GameSocketClient {
     const rejectOpen = this.rejectOpen; this.rejectOpen = null; rejectOpen?.(error);
     for (const pending of this.pending.values()) { clearTimeout(pending.timer); pending.reject(error); }
     this.pending.clear();
-    if (retry && this.token) {
+    if (retry && this.token && !this.suspended) {
       const token = this.token;
       const attempt = this.retries++;
       const delay = this.options.retryDelay?.(attempt) ?? Math.min(15000, 1000 * Math.pow(2, attempt) * (0.8 + Math.random() * 0.4));

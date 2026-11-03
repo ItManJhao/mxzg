@@ -118,3 +118,7 @@ Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItem
 ### 期限展示边界
 
 期限规则使用 GConfig.TimeLimitItem 与服务端打包的同源 timelimititem.json；不可从客户端传入天数或自行计算权威到期时间。BagModel 保存逐件期限快照与服务器秒，BagItemCatalog 只生成列表投影；期限格子和详情必须按字符串 instanceId 区分，同配置不能合并。到期由 View 隐藏、关闭详情，禁止删除 Model 或调用额外库存查询。使用、分解及权益相关操作当前未开放。展示时钟与后台恢复边界见 development-progress.md 的期限配置批次。
+
+### 后台恢复与同版本首包
+
+应用层负责 Game.EVENT_HIDE/SHOW：隐藏时停止通信重试并使背包时钟失效，显示后通过 session.authenticate 恢复。鉴权首包同资产版本也须校准服务器时刻；普通重复推送和低版本不得覆盖现有资产。后台退出后禁止自动恢复旧账号，禁止为校时添加库存查询或让背包控制器持有凭证。服务端接管锁最多等待两秒，超时返回 BUSY，客户端只重试鉴权，不重放资产操作。

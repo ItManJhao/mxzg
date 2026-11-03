@@ -22,7 +22,7 @@ export class AssetStateBinding {
   constructor(private readonly account:AccountModel,private readonly bag:BagController,private readonly role:RoleController) {
     this.stop=account.subscribe(state=>{if(!state.role)this.clear();});
   }
-  /** 在身份已经接纳后提交完整帧；同版本重复推送和低版本乱序帧不产生界面事件。 */
+  /** 在身份已经接纳后提交完整帧；重复推送和低版本不通知，同版本鉴权首包仍校准服务器时间。 */
   apply(frame:GameFrame):boolean {
     const current=this.account.snapshot;
     if(!current.role || current.busy)return false;
@@ -32,7 +32,8 @@ export class AssetStateBinding {
     readTimedItems(state.timedInventory);
     if(role.id!==current.role.id || role.serverId!==current.role.serverId)throw new Error("资产不属于当前角色");
     const key=(role.serverId||"")+"/"+role.id, revision=Number(state.revision);
-    if(this.key===key && revision<=this.revision)return false;
+    // 恢复首包即使资产未变化，也需要重新校准服务器时间；重复推送仍丢弃。
+    if(this.key===key && (revision<this.revision || (revision===this.revision && frame.name!=="session.authenticate")))return false;
     batchNotifications(()=>{
       if(this.key!==key){this.key=key;this.revision=-1;this.bag.resetSession(key);}
       ProtocolRouter.instance.dispatch(this.role,frame);

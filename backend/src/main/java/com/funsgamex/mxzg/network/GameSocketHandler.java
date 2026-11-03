@@ -72,11 +72,11 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         connections.put(session.getId(), new Connection(session));
     }
 
-    /** 解析受限信封并按角色串行调度；无排队空间时明确关闭连接，绝不堆积无界任务。 */
+    /** 解析受限信封并按角色串行调度；锁等待最多两秒，超时拒绝，不堆积无界任务。 */
     @Override protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
         Connection connection = connections.get(session.getId());
         if (connection == null) return;
-        if (!connection.lock.tryLock()) { close(connection, CloseStatus.POLICY_VIOLATION); return; }
+        if (!awaitLock(connection.lock)) { close(connection, CloseStatus.POLICY_VIOLATION); return; }
         JsonNode request = null;
         try {
             long now = System.nanoTime();
@@ -100,7 +100,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 }
             } else {
                 ReentrantLock roleLock = roleLock(connection.role);
-                if (!roleLock.tryLock()) throw rejected("BUSY");
+                if (!awaitLock(roleLock)) throw rejected("BUSY");
                 try { dispatch(connection, request, name); }
                 finally { roleLock.unlock(); }
             }
@@ -137,7 +137,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         String token = "Bearer " + accessToken;
         String role = sessions.requireRole(token);
         ReentrantLock roleLock = roleLock(role);
-        if (!roleLock.tryLock()) throw rejected("BUSY");
+        if (!awaitLock(roleLock)) throw rejected("BUSY");
         try {
             snapshots.claim(token);
             connection.token = token; connection.role = role;
@@ -218,7 +218,13 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         return new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, code);
     }
 
-    /** 固定散列锁允许角色间并行；散列碰撞只会短暂返回 BUSY，不影响数据归属。 */
+    /** 最多等待两秒，让首包发送后的收尾与接管串行完成；超时仍明确拒绝，不无限排队。 */
+    private static boolean awaitLock(ReentrantLock lock) {
+        try { return lock.tryLock(2, TimeUnit.SECONDS); }
+        catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); return false; }
+    }
+
+    /** 固定散列锁允许角色间并行；碰撞有界等待，超时返回 BUSY，不影响数据归属。 */
     private ReentrantLock roleLock(String role) { return roleLocks[Math.floorMod(role.hashCode(), roleLocks.length)]; }
 
     /** 返回带原请求标识的成功信封，业务结果仅在事务服务返回后发送。 */

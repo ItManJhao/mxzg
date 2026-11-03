@@ -22,13 +22,17 @@ export class BagModel extends BaseModel {
     /** 注入只用于计算流逝时间的时钟；默认使用单调时钟，不用本机日期推算服务器日切。
      * @param elapsedMs 测试可注入时钟；缺少 performance 的平台按帧累计，由应用每帧调用 advanceClock。 */
     constructor(private readonly elapsedMs: (() => number) | null = typeof performance !== "undefined" && typeof performance.now === "function" ? () => performance.now() : null) { super(); }
+    /** 后台暂停后时钟失效，只有新的服务器快照才能重新校准；不修改库存。 */
+    private clockValid = false;
+    /** 应用进入后台时停止使用旧计时基准，恢复期间详情显示同步提示。 */
+    suspendClock(): void { this.clockValid = false; }
     /** 无单调时钟的平台累计前台帧时间；后台时间等待重连快照校正，不以本机日期猜测。 */
     private frameElapsedMs = 0;
     /** 仅无单调时钟时累积非负帧时间，不改变库存或持久版本。 */
     advanceClock(seconds: number): void { if (!this.elapsedMs && Number.isFinite(seconds) && seconds > 0) this.frameElapsedMs += seconds * 1000; }
     /** 服务器秒加本地流逝时长；未收到期限快照返回 null，窗口关闭不重新计时。 */
     serverTimeSeconds(): number | null {
-        if (this.data.timedServerTimeSeconds === null) return null;
+        if (!this.clockValid || this.data.timedServerTimeSeconds === null) return null;
         return this.data.timedServerTimeSeconds + Math.max(0, Math.floor(((this.elapsedMs ? this.elapsedMs() : this.frameElapsedMs) - this.timedAnchorMs) / 1000));
     }
 
@@ -89,6 +93,7 @@ export class BagModel extends BaseModel {
             }
             removed.push(...Array.from(previous.values()));
         }
+        this.clockValid = true;
         this.timedAnchorMs = this.elapsedMs ? this.elapsedMs() : this.frameElapsedMs;
         this.commit({status: "ready", synced: true, items: rows, timedItems, timedServerTimeSeconds});
         return this.changeSet(initialSync, added, quantityChanged, removed);
@@ -96,6 +101,7 @@ export class BagModel extends BaseModel {
 
     /** 响应基类重置，清空库存、同步状态和快照缓存。 */
     protected onReset(): void {
+        this.clockValid = false;
         this.timedAnchorMs = 0;
         this.frameElapsedMs = 0;
         this.data = this.emptyData();

@@ -8,7 +8,7 @@ import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { GameConfig } from "../../config/GameConfig";
 import { GConfig } from "../../config/GConfig";
 
-import { _decorator, Asset, Component, director, Director, Node, Prefab, sys } from "cc";
+import { _decorator, Asset, Component, director, Director, Node, Prefab, sys, game, Game } from "cc";
 import { AccountModel } from "../../features/account/AccountModel";
 import { AccountApi, readSession, readRole } from "../../features/account/AccountApi";
 import { GameSocketClient } from "../../platform/GameSocketClient";
@@ -100,6 +100,8 @@ export class RemakeApp extends Component {
       },
     });
     this.gameSocket = socket;
+    game.on(Game.EVENT_HIDE, this.onBackground, this);
+    game.on(Game.EVENT_SHOW, this.onForeground, this);
     const api = new AccountApi(socket);
     const storage = connection.storage;
     let savedServer: string | null = null;
@@ -312,10 +314,21 @@ export class RemakeApp extends Component {
       director.once(Director.EVENT_AFTER_DRAW, done);
     });
   }
+  /** 平台进入后台时由应用统一暂停通信及背包计时，不让背包控制器依赖账号。 */
+  private onBackground(): void {
+    BagModel.instance.suspendClock();
+    this.gameSocket?.setBackground(true);
+  }
+
+  /** 返回前台只恢复已登录会话；新鉴权首包统一校准库存和服务器时间。 */
+  private onForeground(): void { this.gameSocket?.setBackground(false); }
+
   /** 应用销毁时先关闭页面，再释放模块、会话观察和资源作用域。 */
   onDestroy(): void {
     this.alive = false;
     this.started = false;
+    game.off(Game.EVENT_HIDE, this.onBackground, this);
+    game.off(Game.EVENT_SHOW, this.onForeground, this);
     if (this.gameSocket) {
       this.gameSocket.onReady = this.gameSocket.onDisconnected = this.gameSocket.onRejected = this.gameSocket.onState = null;
       this.gameSocket.disconnect(); this.gameSocket = null;

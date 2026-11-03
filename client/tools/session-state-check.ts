@@ -25,10 +25,13 @@ class Wire {
  drop(){this.readyState=3;this.onclose?.({});}
 }
 class Server {
+ /** 可控制的鉴权繁忙次数，用于验证后台恢复遇到 BUSY 后仍自动重连。 */
+ busyAuthentications=0;
  readonly wires:Wire[]=[];readonly requests:string[]=[];state:any=null;
  create=()=>{const wire=new Wire(this,"connection-"+this.wires.length);this.wires.push(wire);return wire as unknown as SocketPort;};
  receive(wire:Wire,frame:GameFrame){
   this.requests.push(frame.name);const data=frame.body as any;
+  if(frame.name==="session.authenticate" && this.busyAuthentications>0){this.busyAuthentications--;queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"BUSY",message:"BUSY",retryable:true}}));return;}
   if(frame.name==="session.login" && data.serverId==="missing-world") {queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"SERVER_UNAVAILABLE",message:"SERVER_UNAVAILABLE",retryable:false}}));return;}
   if(frame.name==="session.login")this.state={role:{id:"role-"+data.account,nickname:data.account,serverId:data.serverId,level:1,gold:0,diamonds:0},inventory:[],heroes:[],revision:0};
   const body=frame.name==="session.heartbeat"?{serverTimeMs:1}:{connectionId:wire.connection,roleId:this.state.role.id,serverTimeMs:1,initial:this.state,...(frame.name==="session.login"?{session:{accessToken:"a".repeat(43),expiresAt:"2099-01-01T00:00:00Z"}}:{})};
@@ -62,6 +65,10 @@ function checkInventoryIdentity(){
  assert.throws(()=>readTimedItems({...timed,serverTimeSeconds:200}));
  assert.throws(()=>readTimedItems({...timed,items:[timed.items[0],timed.items[0]]}));
  let elapsed=1000;const model=new BagModel(()=>elapsed);model.reset("role");model.replaceAll([],timed);assert.equal(model.snapshot.timedItems.length,2);assert.equal(model.snapshot.timedServerTimeSeconds,100);elapsed+=2500;assert.equal(model.serverTimeSeconds(),102);
+ model.suspendClock();elapsed+=100000;assert.equal(model.serverTimeSeconds(),null,"后台不能沿用旧时钟");
+ model.replaceAll([], {...timed,serverTimeSeconds:150});assert.equal(model.serverTimeSeconds(),150,"单调时钟暂停后按服务器首包校准");
+ const fallback=new BagModel(null);fallback.reset("role");fallback.replaceAll([],timed);fallback.advanceClock(2);assert.equal(fallback.serverTimeSeconds(),102);
+ fallback.suspendClock();fallback.advanceClock(30);assert.equal(fallback.serverTimeSeconds(),null);fallback.replaceAll([], {...timed,serverTimeSeconds:150});assert.equal(fallback.serverTimeSeconds(),150,"无单调时钟也以恢复首包校准");
  const before=model.snapshot;assert.throws(()=>model.replaceAll([{itemId:900102,quantity:9}],{...timed,serverTimeSeconds:300}));assert.equal(model.snapshot,before);
  model.reset(null);assert.equal(model.snapshot.timedItems.length,0);
 }
@@ -85,11 +92,26 @@ async function main(){
   server.state={...server.state,revision:2,role:{...server.state.role,gold:9},inventory:[{itemId:900101,quantity:8}]};
   const oldMessage=server.wires[0].onmessage;server.wires[0].drop();await until(()=>server.wires.length===2&&model.quantity(900101)===8);assert.deepEqual(server.requests,["session.login","session.authenticate"]);
   let actions:any,entered=0;const page=new AccountController(account,service,{bind:value=>{actions=value;return()=>{};},render:()=>{}},()=>entered++);page.show();actions.login("player");await until(()=>entered===1);page.close();assert.equal(server.requests.length,2,"开始按钮不重新查询");
+  // 同版本恢复也更新服务器秒；不额外请求背包，重复 show/hide 不建立多条连接。
+  const timed={serverTimeSeconds:100,items:[{instanceId:"timed-a",itemId:902025,activeAtSeconds:50,expiresAtSeconds:200}]};
+  server.state={...server.state,timedInventory:timed};server.push(3,9,8);assert.equal(model.serverTimeSeconds(),100);
+  const oldWire=server.wires[server.wires.length-1],lateMessage=oldWire.onmessage;
+  model.suspendClock();socket.setBackground(true);socket.setBackground(true);assert.equal(model.serverTimeSeconds(),null);assert.equal(oldWire.readyState,3);
+  const requestsBefore=server.requests.length,wiresBefore=server.wires.length;
+  await new Promise(r=>setTimeout(r,20));assert.equal(server.wires.length,wiresBefore,"后台停止重试");
+  server.state={...server.state,timedInventory:{...timed,serverTimeSeconds:150}};
+  server.busyAuthentications=1;socket.setBackground(false);socket.setBackground(false);
+  await until(()=>model.serverTimeSeconds()===150);assert.deepEqual(server.requests.slice(requestsBefore),["session.authenticate","session.authenticate"],"BUSY 只重试鉴权，不补查库存");
+  lateMessage({data:encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:oldWire.connection,body:{...server.state,revision:999,timedInventory:timed}})});assert.equal(model.serverTimeSeconds(),150,"后台旧连接回包不能倒退时钟");
+  model.suspendClock();socket.setBackground(true);
+  server.state={...server.state,revision:4,timedInventory:{serverTimeSeconds:250,items:[]}};
+  socket.setBackground(false);await until(()=>model.serverTimeSeconds()===250);assert.equal(model.snapshot.timedItems.length,0,"后台跨过期限后恢复到服务器有效列表");
   unwatch();assert(await service.login("other","local-2"));assert.equal(model.quantity(900101),0);assert.equal(model.snapshot.roleKey,"local-2/role-other");
   oldMessage({data:encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:"connection-0",body:{revision:999,role:{id:"role-player",nickname:"old",level:1,gold:999,diamonds:0,serverId:"local-1"},inventory:[{itemId:900101,quantity:999}],heroes:[]}})});
   assert.equal(model.quantity(900101),0);assert.equal(account.snapshot.role!.id,"role-other");
   const before=model.snapshot;server.push(1,3,-1);assert.equal(model.snapshot,before,"非法整包不得部分更新角色或背包");assert.equal(account.snapshot.role!.gold,0);
-  service.logout();assert.equal(model.snapshot.roleKey,null);assert.equal(model.items.length,0);
+  socket.setBackground(true);service.logout();assert.equal(model.snapshot.roleKey,null);assert.equal(model.items.length,0);
+  const loggedOutWires=server.wires.length;socket.setBackground(false);await new Promise(r=>setTimeout(r,20));assert.equal(server.wires.length,loggedOutWires,"后台退出后不能恢复旧账号");
   assert.equal(await service.login("player","missing-world"),false);assert(account.snapshot.error.includes("服务器暂未开放"));assert.equal(model.snapshot.roleKey,null);
   console.log("PASS unified initialization, no duplicate requests, atomic role/bag events, monotonic revision, reconnect, old-wire isolation, invalid payload, logout");
  }finally{stop();socket.onReady=socket.onState=null;socket.disconnect();assets.dispose();bag.dispose();EventDispatcher.instance.offTarget(target);}
