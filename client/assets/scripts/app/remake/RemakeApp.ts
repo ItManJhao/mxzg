@@ -123,14 +123,23 @@ export class RemakeApp extends Component {
     });
     BagController.instance.initialize({ account: model, authorization: service, api: new BagApi(socket) });
     this.bagModule = BagController.instance;
+    let connectionNotice = "";
     socket.onRejected = (token, message) => service.rejectSession(token, message);
     // 恢复不直接应用握手快照：读请求须等背包已有写任务结束，避免旧库存覆盖新消费。
     socket.onReady = () => {
+      if (connectionNotice) homeView?.showNotice("");
+      connectionNotice = "";
       if (!model.snapshot.role || model.snapshot.busy) return;
       void BagController.instance.refresh(true);
       void service.refreshRole().catch(() => {});
     };
-    socket.onDisconnected = () => { if (model.snapshot.role && !model.snapshot.busy) void BagController.instance.refresh(true); };
+    // 连接提示不改变账号 busy/role，避免断网被误当换号而清空模块和在途收据。
+    socket.onDisconnected = message => {
+      if (!model.snapshot.role || model.snapshot.busy) return;
+      connectionNotice = message;
+      homeView?.showNotice(message);
+      void BagController.instance.refresh(true);
+    };
     const idle=this.idleController=new IdleController(model,service,new IdleApi(http));
     // 名册状态属于应用会话，关闭英雄页面只解除 View 观察，不销毁角色数据。
     const roster = HeroRosterModel.instance;

@@ -115,6 +115,9 @@ async function main(): Promise<void> {
     else delete (globalThis as any).location;
   }
   const f = setup();
+  const notices: string[] = [];
+  const disconnected = f.socket.onDisconnected;
+  f.socket.onDisconnected = message => { notices.push(message); disconnected?.(message); };
   try {
     assert.equal(await f.service.login("aaa"), true);
     await until(() => f.model.snapshot.status === "ready");
@@ -126,6 +129,7 @@ async function main(): Promise<void> {
     await until(() => old.held.length === 1);
     const oldCallback = old.onmessage;
     old.breakConnection();
+    assert.equal(notices[0], "网络已断开，正在重新连接…");
     assert.equal(await stale, false);
     await assert.rejects(f.service.authenticated(async () => assert.fail("断线期间不应发出业务")), /恢复/);
     f.setQuantity(9);

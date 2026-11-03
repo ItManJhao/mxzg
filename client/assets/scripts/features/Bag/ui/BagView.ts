@@ -227,6 +227,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         mountNamedSpine(this.portrait, BAG_PORTRAIT, "act");
     }
 
+    /** 显示同步结果及缓存库存提示；重连由传输层自动处理，不诱导重复查询。 */
     private writeTalk(): void {
         if (this.bubble) this.bubble.active = true;
         if (!this.talk) return;
@@ -234,7 +235,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         const state = BagModel.instance.snapshot;
         this.talk.string = state.status === "idle" ? "背包尚未同步"
             : state.status === "loading" ? "正在同步背包…"
-                : state.status === "error" ? state.error + (state.synced ? "，显示上次库存" : "") + "，点击分类重试"
+                : state.status === "error" ? state.error + (state.synced ? "，显示上次库存" : "")
                     : state.items.length ? this.catalog!.greeting : "背包为空";
     }
 

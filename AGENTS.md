@@ -4,6 +4,8 @@
 
 ## 0. 项目目标与参考边界
 
+- 旧项目源码地址为 G:/work/FsGame/Demo/mj/program。用户已将原裸 Git 仓库转换为正常工作目录；后续优先直接读取 client/cocos_mxzg、server/mxzg-server、server/mxzg-common 和 mxzg-protofiles 内的源码/协议，不再默认用 git --git-dir 提取文件。历史架构索引中的裸仓库路径只代表当时快照；查历史版本时再使用 Git。新版项目地址仍为 G:/work/FsGame/Project/mxzg。
+
 - 重做原因是旧技术版本和代码难以人工维护；允许现代化技术与内部结构，旧游戏玩法、内容、规则、数值、界面、交互和表现以 1:1 还原为目标。分期实现不等于删减或重新设计。
 - 内容与规则主要依据 mxzg 原项目客户端、服务端及策划配置；正式服 https://mxzg-test.funsgamex.com/jp/ 是可观察效果与交互验收基准。源码、配置与正式服不一致时记录证据并向用户确认，不能自行选择方便实现的一版。
 - G:/游爱/trunk 只参考命名、方法拆分、Model/Controller/View 的阅读路径和注释习惯；不引入其玩法、数值、界面、Sproto 协议或整套管理框架。

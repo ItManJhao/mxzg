@@ -26,7 +26,7 @@ export interface SocketOptions {
 /** 仅使用原生 WebSocket 能力；平台适配器由应用注入，测试可注入受控连接。 */
 export class GameSocketClient {
   onReady: (() => void) | null = null;
-  onDisconnected: (() => void) | null = null;
+  onDisconnected: ((message: string) => void) | null = null;
   onRejected: ((token: string, message: string) => void) | null = null;
   private socket: SocketPort | null = null;
   private token = "";
@@ -215,7 +215,7 @@ export class GameSocketClient {
       const delay = this.options.retryDelay?.(attempt) ?? Math.min(15000, 1000 * Math.pow(2, attempt) * (0.8 + Math.random() * 0.4));
       this.retryTimer = setTimeout(() => { this.retryTimer = null; if (this.token === token) void this.connect(token).catch(() => {}); }, delay);
     }
-    if (wasReady) this.onDisconnected?.();
+    if (wasReady) this.onDisconnected?.(retry ? "网络已断开，正在重新连接…" : this.blocked?.message || error.message);
   }
 
   /** 心跳串行等待回应，失败由统一连接清理处理，不产生重复定时器。 */
