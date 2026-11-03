@@ -34,7 +34,7 @@ features/Bag/
 - [BagModel](../client/assets/scripts/features/Bag/BagModel.ts)：当前角色唯一库存、同步和错误状态，继承 BaseModel。查询 `snapshot/items/getItem/quantity`；更新 `replaceAll/applyDelta` 校验并一次提交后返回只读变化清单；同步/失败由 beginSync/fail，重置/清理沿用 reset/dispose。只由 Controller 提交，其他功能只读查询，不通过事件累加资产。
 - [BagItemData](../client/assets/scripts/features/Bag/data/BagItemData.ts)：itemId/quantity、signed delta、物品展示数据类型与纯数据校验 readBagItems；Model/API 共用，不从网络文件反向调用校验。[BagState](../client/assets/scripts/features/Bag/data/BagState.ts) 定义状态，[BagEventData](../client/assets/scripts/features/Bag/data/BagEventData.ts) 定义通知参数并为全局 EventPayloads 声明类型。
 - [BagEvent](../client/assets/scripts/features/Bag/BagEvent.ts)：集中声明 BagUpdate/BagAdd/BagRemove/BagQuantityChanged 和独立 BagSyncStateChanged，不持有派发器或历史数据。
-- [BagView](../client/assets/scripts/features/Bag/ui/BagView.ts)：页面绑定、分类、选中、详情与输入；继承 BaseView。onOpen 先监听再读 Model，refreshFromModel/paint 展示，visibleItems 分类，showInfo 打开详情。
+- [BagView](../client/assets/scripts/features/Bag/ui/BagView.ts)：页面绑定、分类、选中、详情与输入；继承 BaseView。onOpen 先监听再读 Model，refreshFromModel/refreshGrid/paint 展示，visibleItems 分类，showInfo 打开详情。
 - [BagItemView](../client/assets/scripts/features/Bag/ui/BagItemView.ts)、[BagInfoView](../client/assets/scripts/features/Bag/ui/BagInfoView.ts)、[BagTabView](../client/assets/scripts/features/Bag/ui/BagTabView.ts)：实际 Cell、详情和页签，无空类。
 - [BagApi](../client/assets/scripts/features/Bag/BagApi.ts)：只发送 inventory.list，统一校验 readBagItems，没有状态。传输状态留在 platform，不能搬进 Model。[BagItemCatalog](../client/assets/scripts/features/Bag/BagItemCatalog.ts) 只查询名称、图标、分类等配置，不保存角色数量。
 - [RemakeApp](../client/assets/scripts/app/remake/RemakeApp.ts)：显式提供依赖、初始化模块、注册 BagView；应用销毁才 dispose 模块。背包注册没有 createController。
@@ -52,6 +52,103 @@ features/Bag/
 BagView 开页先登记目标式 BagUpdate 监听，再读取 BagModel.snapshot 刷新；BaseView 关闭、打开失败或销毁时统一 offTarget(this)，无需保存全局事件的 stop；另监听 BagSyncStateChanged 仅更新提示文字，不订阅增删改细分事件。关闭只移除本页监听及按钮回调；其他模块的订阅仍有效，模块请求继续完成。
 
 UIRegistry 的 createController/show/close 只暂留给未迁移页面适配器。BagController 没有 show/close，类型不兼容页面 Controller，BaseView.attachController 也有运行时检查；**不能把 BagController 注入窗口并在关闭窗口时 dispose。**
+
+## 固定通信与状态模板
+
+更新：2026-11-03。本节是新增及迁移联网模块的固定规范，以背包当前实现为样板；按实际职责复用，不要求复制整套库存队列。玩法与界面仍以旧项目和正式服为依据，消息字段及限制以[通信契约](network-contract.md)为准。
+
+### 1. 职责与代码入口
+
+| 层次 | 真实入口与方法 | 固定职责 |
+|---|---|---|
+| 应用装配 | [RemakeApp](../client/assets/scripts/app/remake/RemakeApp.ts) start/onDestroy | 创建并注入唯一连接，initialize 模块，设置连接回调，应用退出时清理 |
+| 身份边界 | [AccountService](../client/assets/scripts/features/account/AccountService.ts) authenticated | 检查登录、有效期与传输就绪；等待后再次检查账号代次，旧账号失败不能踢掉新账号 |
+| 传输层 | [GameSocketClient](../client/assets/scripts/platform/GameSocketClient.ts) request/send/receive | 请求关联、超时、信封与连接校验、心跳及重连；不保存或提交资产 |
+| 模块 API | [BagApi](../client/assets/scripts/features/Bag/BagApi.ts) list | 发送 inventory.list，接收 unknown，以 readBagItems 校验后返回；无 Model、事件或 UI |
+| 业务控制 | [BagController](../client/assets/scripts/features/Bag/BagController.ts) refresh/read/notify | 查询去重、会话/读代次、写后读协调、提交 Model、通知与失败处理 |
+| 唯一状态 | [BagModel](../client/assets/scripts/features/Bag/BagModel.ts) replaceAll/beginSync/fail/reset | 保存只读库存与同步状态，整批校验后提交，返回变化清单；不联网、不发事件 |
+| 业务事件 | [BagEvent](../client/assets/scripts/features/Bag/BagEvent.ts)、[EventDispatcher](../client/assets/scripts/framework/EventDispatcher.ts) | Controller 提交完成后发布有类型的通知；事件不存储或累加资产 |
+| 界面展示 | [BagView](../client/assets/scripts/features/Bag/ui/BagView.ts) onOpen/refreshFromModel/onSyncStateChanged/onClose | 操作转交业务、读取 Model、SuperScroll.setData；不直接调用 socket/API 或修改资产 |
+| 服务端 | [GameSocketHandler](../backend/src/main/java/com/funsgamex/mxzg/network/GameSocketHandler.java) dispatch → [SessionSnapshotService](../backend/src/main/java/com/funsgamex/mxzg/network/SessionSnapshotService.java) snapshot | 重新校验身份、连接归属、恢复阶段及参数；在一致读边界返回库存，不信任客户端指定角色 |
+
+### 2. 正常请求与回包调用链
+
+~~~text
+触发：账号接受有效角色 → BagController.syncSession → resetSession → refresh
+      或模块业务明确调用 refresh；打开 BagView 本身只读已有 Model
+  → refresh：captureSession；复用 pendingRead，有库存写入则等待 writeTail
+  → 登记 pendingRead/readEpoch，beginSync → BagSyncStateChanged（loading）
+  → read → AccountService.authenticated(token => BagApi.list(token))
+  → GameSocketClient.request(token, "inventory.list") → assertReady → send
+  → 后端 GameSocketHandler.dispatch → snapshots.snapshot(token).inventory()
+  → GameSocketClient.receive：校验信封，按 id/name/connectionId 关联请求
+  → BagApi.list → readBagItems：校验完整业务数据
+  → AccountService：再次检查登录代次与凭证有效期
+  → BagController.read：afterBatch 内再次检查 isCurrent(session) 与 readEpoch
+  → BagModel.replaceAll → 返回 BagChangeSet
+  → BagController.notify → BaseController.emit → EventDispatcher
+  → BagView.refreshFromModel → refreshGrid → paint → SuperScroll.setData
+~~~
+
+三道校验不能相互替代：
+
+1. **传输校验**：消息长度、JSON 对象、version/kind、响应 id/name、connectionId、成功/失败形态；连接 generation 隔离旧回调。合法重复回包无待处理请求时忽略，畸形消息终止连接。
+2. **业务数据校验**：readBagItems 接受数组，itemId/quantity 必须为正的安全整数，物品不能重复；整批通过后返回冻结副本。空数组代表已确认空库存；null、未同步和错误不能伪装为空数组。Model 再用同一校验函数保护提交入口。
+3. **状态时效校验**：身份层 operation 隔离账号；ControllerSession 隔离角色会话，roleKey 为 serverId/roleId；readEpoch 阻止旧读覆盖新读/写。请求 id、connectionId、本地 revision 不能当作服务器资产版本或持久业务幂等键。
+
+失败走 Controller 的同步/错误状态；有效快照未到达前保留旧库存，不先清空、不预扣。旧会话/失效读结果丢弃，不改当前 Model，不展示旧账号错误。查询返回 false 表示未提交成功，调用方不能当成成功。
+
+### 3. Model 提交与事件刷新
+
+- Controller 是模块提交入口，API 和 View 不直接写 Model。Model 校验完成后一次提交，并返回变化清单；Controller 才发事件。
+- BagSyncStateChanged 负责 loading/ready/error 等提示；BagUpdate 负责列表汇总刷新。有变化时还可发 BagAdd/BagRemove/BagQuantityChanged，列表不同时订阅全部事件以免重复绘制。
+- 首次同步发汇总，不能把初始物品都当作新获得奖励；相同库存只在同步状态变化时通知，不强制发 BagUpdate。奖励演出使用业务收据，不通过 BagAdd 猜测。
+- View 开页先监听，再读当前 Model；关闭期间库存变化，重开也能显示最新状态。BaseView 清理页面目标监听，关页不 dispose 模块、不取消有效角色的在途资产提交。
+- 多资产响应先完成所有字段、会话与版本校验，再在同步 batchNotifications 内提交相关 Model，最后通知。批处理只延后通知，没有回滚能力，不允许内部 await，不能代替服务端事务。
+
+### 4. 断线与恢复调用链
+
+~~~text
+连接中断/请求超时 → GameSocketClient.drop
+  → 清理旧 socket、心跳和待回包请求，递增 generation
+  → 已建立会话按策略退避重连；onDisconnected(message)
+  → RemakeApp 显示连接提示，保持 AccountModel.role/busy
+  → BagController.refresh(true) 经就绪检查失败后记录同步错误，保留库存
+  → 恢复：connect → establish → session.authenticate → session.sync
+  → validateSnapshot（role/heroes/inventory）及角色身份校验 → ready → onReady
+  → RemakeApp 清理连接提示；有效角色且非 busy 时：
+       BagController.refresh(true)（等待 writeTail）
+       AccountService.refreshRole（profileRevision 防旧钱包回滚）
+  → 重新经过正常查询、校验、提交、事件、View 刷新链
+~~~
+
+- **连接 ready 不等于所有模块已刷新。** 现实现先校验握手快照，不把它直接写入资产 Model；背包的新查询完成后才进入库存 ready。应用连接提示可先消失，模块仍须展示自己的 loading/error。
+- 首次登录 onReady 时账号可能尚未接受角色或处于 busy，回调会跳过模块刷新；后续接受角色由 syncSession 发起查询，不能依赖 onReady 恰好晚于登录完成。
+- 普通断网不清账号角色、不伪造 busy，不把它当换号；未就绪时业务入口拒绝新请求，不排队扣费。保留缓存用于显示，不表示允许离线操作。
+- 登出、换号、切服、凭证过期或 session.kicked 走账号失效/断开链：取消重连、清身份并重置模块会话。顶号/身份失败不自动抢回；INVALID_MESSAGE 停止自动恢复，提示返回登录。
+- 首次连接失败由登录流程显示失败；自动重连用于已成功建立的会话。恢复只重建鉴权/同步，不自动重放业务请求，也不回退 HTTP。
+
+### 5. 库存写入与推送的补充约束
+
+当前 WS 只接会话与背包读取，英雄升级 WS 消息仍是预留；以下约束不代表 WS 写迁移已完成。现有升级/领奖等 HTTP 业务也经过同一个库存协调器。
+
+1. 对应 Controller 调用 BagController.runInventoryUpdate(responseId, request, inventory, commitRelated, reason)，沿用真实业务 API；不得再建库存副本或用 HTTP/WS 双发。
+2. 旧读失效，写操作串行，同一在途 responseId 共享 Promise；写后读等待 writeTail。回包校验及当前会话检查通过后，同步提交相关 Model 和完整库存，再统一通知。
+3. responseId/receipts 只提供本角色会话内的提交去重，不是数据库幂等保证；已提交的键不再更新 Model/广播，但以后再次调用仍可能执行 request，服务端必须校验持久业务键和参数。
+4. 没收到回包不能推断没有扣费。后续接入 WS 写操作必须按原业务键查结果或重发原参数确认；不得生成新键盲目重试。业务模块保存未决状态，传输层不做通用重放。
+5. applyDelta 是独立显式入口，目前没有网络库存推送接入。将来接推送须先补契约、会话归属、服务器版本/游标及乱序/重复恢复策略，再交同一 Controller 提交，不能在 socket 回调直接累加 Model。
+
+### 6. 后续模块交付清单
+
+每个新接入模块的说明和评审至少交代以下内容；不为填表创建无用类。
+
+- 消息名、方向、请求/响应结构、真实后端入口，标清已实现或预留；说明是否涉及资产和业务幂等键。
+- 点击/触发方法 → Controller → 身份边界 → API → socket → 后端 → 校验 → Model → 事件 → View 的真实文件和方法。
+- 字段校验函数、会话/区服归属、旧响应失效条件、错误展示和唯一 Model 提交入口。
+- 普通断线、恢复查询、身份失效/顶号、换号切服、关页重开的行为；写操作不确定结果如何确认。
+- 针对性验证：正常与空结果；非法回包不提交；旧会话/旧读不覆盖；重复/超时；关闭重开不重复监听；断线保留库存、恢复后刷新；涉及资产时验证幂等与写后读。
+- 区分受控回归、真实页面复验和正式服效果对照；未完成项单列，不用类型检查代替真实断线/界面验收。
+
 
 ## 一次“查询背包”如何执行
 

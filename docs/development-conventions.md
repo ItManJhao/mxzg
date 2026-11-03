@@ -21,7 +21,7 @@
 | client/assets/scripts/app/remake | 启动、模块装配、页面入口和功能资源作用域 |
 | client/assets/scripts/features | account、Bag、battle、city、hero、home 等模块；功能 UI 放本模块 ui |
 | client/assets/scripts/framework | 事件、基础 Model/Controller、UIManager、资源作用域、SuperScroll 等公共能力 |
-| client/assets/scripts/platform | 当前 HTTP 传输和平台边界；未来长连接实现也须与具体玩法分离 |
+| client/assets/scripts/platform | HTTP、GameSocketClient 和平台边界；传输实现与具体玩法分离 |
 | client/assets/scripts/core | 现有 GameLog 与通用错误辅助；不向此处堆业务 |
 | client/assets/scripts/config | 配置查询、生成类型及资源登记相关入口 |
 | client/assets/prefabs、resources、bundles | 静态界面、资源及按需加载包；修改保留对应 meta 和引用 |
@@ -46,7 +46,7 @@ View 的点击方法
   → View 读取 Model 刷新
 ```
 
-主动推送从网络入口进入同一个 Controller，继续使用同一 Model 和事件。当前网络实现仍是 HTTP，新 WebSocket 入口尚未实现；示意链不要求为了形式新增转发文件。升级弹窗中的即时条件预览可以直接接收 Controller 返回值，持久角色/英雄/库存仍由模块 Model 管理。
+后续业务推送须从网络入口进入所属 Controller，继续使用同一 Model 和事件；当前尚未接入库存资产推送。登录会话与背包查询已使用 WebSocket，其他玩法仍逐批从 HTTP 迁移。所有新增或迁移模块遵守[固定通信与状态模板](bag-mvc-maintenance.md#固定通信与状态模板)，不为形式新增转发文件。升级弹窗中的即时条件预览可以直接接收 Controller 返回值，持久角色/英雄/库存仍由模块 Model 管理。
 
 阅读现有普通升级时依次看 HeroInfoUpLevelLayer.submit、HeroLevelController.upgrade、HeroLevelApi.upgrade、后端 HeroLevelController/Service，再回到 BagController.runInventoryUpdate 的状态提交和页面通知。点击方法里应看得出调用哪个业务，不能把身份、联网、扣资源和绘制挤在一个匿名回调中。
 

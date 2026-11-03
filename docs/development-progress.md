@@ -108,3 +108,9 @@
 - 同账号 player_1：一服返回角色 ID 前缀 8ea71c27，二服为 5d19aafe，角色不同；没有发现后端强制回一服或两服混用同一角色的代码缺陷。本轮不改选服按钮/布局来修复不存在的问题。一次性浏览器诊断监听已随触发及页面关闭清理，未加入产品代码。
 - AccountApi 新增所选区服与登录回包区服一致性校验；不一致时在建立 WS 会话之前拒绝登录。受控测试明确覆盖“选择二服却回一服时，不建立错误角色连接”。game-socket、account、remake-playable 和 strict 通过。
 - 背包来源下一批按旧源码 BackpackSrcCtr.lua 还原：读取 item.source 顺序，以 source 键关联 itemsource 的 title_lang/description_lang/jump_info；数量走现有库存 Model，跳转先核对 JumpManager 开放条件，不伪造尚未恢复的塔/市场入口。itemsource.xlsx 已在策划表目录，来源 Prefab 当前未恢复。
+
+## 2026-11-03 固定通信与状态模板
+
+- 按现有源码将 WS 请求、三道校验、Controller 提交 Model、事件刷新 View 和断线恢复整理入 bag-mvc-maintenance.md，作为后续联网模块固定规范；AGENTS、开发约定与通信契约均链接该节，不另建重复文档。
+- 明确连接 ready 与模块同步完成不同，握手快照不直接写资产；标清库存推送和英雄升级 WS 尚未接入，以及本地去重不代替持久幂等。纠正开发约定中“WS 尚未实现”的旧描述。
+- 本批只改规范，核对实际文件/方法、相对链接和差异格式；不以文档整理宣称新增玩法或通信功能完成。
