@@ -1047,6 +1047,17 @@ function checkRealItemCategories(): void {
   assert(catalog.face(20204004, 30).category === "shard", "真实首通英雄碎片进入碎片标签");
   assert(catalog.face(900102, 4).category === "item" && !catalog.face(900102, 4).hiddenInBag, "真实道具可见");
   assert(catalog.face(900101, 550).hiddenInBag, "place=0 的经验只隐藏展示，不修改数量");
+  // 旧 Lua 明确按 sort 降序；真实配置中这三件道具权重分别为 105、201、401。
+  const inventory = Object.freeze([
+    Object.freeze({ itemId: 900201, quantity: 10 }),
+    Object.freeze({ itemId: 900102, quantity: 4 }),
+    Object.freeze({ itemId: 900202, quantity: 1 }),
+  ]);
+  assert(catalog.sortForTab(inventory, "item").map(x => x.itemId).join(",") === "900202,900102,900201", "普通道具按旧配置权重降序");
+  assert(inventory[0].itemId === 900201 && inventory[0].quantity === 10, "显示排序不改变原库存顺序或数量");
+  assert(catalog.sortForTab(inventory, "equip") === inventory, "装备不能误用普通道具排序");
+  const ties = [{ itemId: 900508, quantity: 1 }, { itemId: 900504, quantity: 2 }];
+  assert(catalog.sortForTab(ties, "item")[0].itemId === 900508, "旧 Lua 未定义同权重次序，当前保持输入顺序");
 }
 
 /** 宽屏及父层缩放下，详情遮罩必须覆盖整个可见区域，不只覆盖纸张宽度。 */

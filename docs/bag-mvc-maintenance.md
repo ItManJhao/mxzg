@@ -77,3 +77,20 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 [SuperScroll Inspector 指南](super-scroll-authoring.md) 的布局规则和无业务编辑器预览继续有效。本批没改源 Prefab、SuperScroll、SuperContent、资源路径与加载边界；10 个移动脚本 UUID 均逐一核对保留，BagView 仍是 `7b14e0a2-3c58-4d1f-8e6a-9f0b2c4d5e61`。Prefab 内稳定的 CompPrefabInfo.fileId 不是脚本路径，不因改名替换。目录实际名及导入统一为 `features/Bag`，旧 backpack 脚本目录已移除。
 
 尺寸/位置仍由以下入口控制，不宣称整页静态 UI 已全部整改：SuperContent 算 content/Cell 根尺寸，原生 Layout 排动态 Cell，ScrollView 管滚动；BagView 仅提供条目/渲染回调，保留同分类滚动、分类回起点和缩短限制。空槽至少 20/按四补齐是背包规则。`BagMount.mountBagPage` 只装配共享壳与可见区域；PrefabLayout 不再补偿静态文字/九宫格位置。BagView 保留动态分类排列，BagMount.openBagInfo/seatCenter 只按宿主尺寸居中详情。
+
+## 旧协议还原清单
+
+依据旧工作目录 G:/work/FsGame/Demo/mj/program；以下为源码核查结果，尚未完成正式服画面验收。
+
+| 原依据 | 当前差异与推进要求 |
+|---|---|
+| mxzg-protofiles/protofiles/game/BackPack.proto，ResBackPackItem | 旧 item_id 为数据 ID，item_type 为配置 ID，num 为数量；当前 Item.itemId 实为配置 ID。不可把旧数据 ID 强转成配置 ID；实例引入前需补持久模型与安全的 int64 编解码 |
+| 同文件，5010 / ResTimeLimitItem | 独立期限列表包含数据 ID、类型和 end_time；当前未实现。须核对服务器时间单位与过期回收，再合入登录快照，不能仅 UI 隐藏当作资产扣除 |
+| client/cocos_mxzg/client/idle/src/data/BackpackData.lua，getItemsByPageSign 487–697 行 | 普通道具按 sort 降序，本次恢复；旧 Lua 同权重无次序，配置说明提及物品类型次序，最终需正式服对照。装备增加装备稀有度，碎片按合成条件与 sort，特殊页依实例数据，不能共用普通道具排序 |
+| client/cocos_mxzg/client/idle/src/net/BackpackResponse.lua，backpackGain | 5002 同时包含增减与提示：0 静默、1 弹窗、2 文字；还排除英雄、符文、神装等由专用模块更新的数据。当前 state.changed 只有快照，不含演出原因；需另加明确提示载荷和重复消息处理，不能从差值猜演出 |
+| server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/observer/ThingObserver.java | 获得事件按业务 NoticeType 发 5002，消耗使用静默负数；当前事务后同步保留资产权威，后续提示应与同一次已提交事务关联 |
+| BackPack.proto 5004/5005/5006/5007/5008/5009 | 装备合成、一键合成、开箱、普通/精英英雄碎片、自选礼包；逐项查配置和服务端条件再恢复，不能创建通用“使用成功”接口替代 |
+| BackPack.proto 5011/5012/5013/5014 | 道具分解、充值卡、宠物碎片、装备合成日志；目前均未恢复。依赖英雄/宠物的操作在相关模块暂停期间不得开放 |
+| mxzg-protofiles/protofiles/game/Role.proto，GResRoleInfo 2001 | 当前仅基础身份、等级、金币与宝石；经验/英雄经验、精力、头像/形象/边框、VIP、创号及服务器时间、军团/引导、虹石/神权等仍有缺口。逐字段核对持久来源，不以固定默认值伪装已还原 |
+
+下一步先补身份字段映射与期限物品存储设计，再选择无英雄依赖的背包操作核对完整事务规则。此清单只记录已见源码和缺口，不表示全部旧背包功能已审完。

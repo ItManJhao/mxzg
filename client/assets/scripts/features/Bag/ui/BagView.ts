@@ -341,13 +341,14 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
     }
 
-    /** 按配置的可见性和当前标签筛选库存；隐藏条目仍由 Model 完整持有。 */
+    /** 按配置筛选库存并恢复普通道具排序；隐藏条目与服务器原始顺序仍由 Model 完整持有。 */
     visibleItems(): readonly BagItemData[] {
         if (!this.catalog) return [];
-        return BagModel.instance.items.filter(item => {
+        const items = BagModel.instance.items.filter(item => {
             const face = this.catalog!.face(item.itemId, item.quantity);
             return !face.hiddenInBag && face.category === this.tab;
         });
+        return this.catalog.sortForTab(items, this.tab);
     }
 
     /** 从当前库存打开只读详情，数量变化时重新展示。 */

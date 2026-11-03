@@ -3,7 +3,7 @@ import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { ItemIconById } from "../../framework/assets/IconCatalog";
 import type { ItemRow, LanguageRow } from "../../config/GConfig";
 import type { BagTabKind } from "./data/BagTabKind";
-import type { BagItemDisplayData } from "./data/BagItemData";
+import type { BagItemData, BagItemDisplayData } from "./data/BagItemData";
 
 
 export class BagItemCatalog {
@@ -28,6 +28,18 @@ export class BagItemCatalog {
     }
     /** 读取店员欢迎语，语言键缺失时使用中文兜底。 */
     get greeting(): string { return this.words.get(5788) || "欢迎光临～"; }
+    /**
+     * 普通道具按旧 BackpackData.getItemsByPageSign 的 item.sort 降序排列。
+     * 只排序副本，不改变服务器库存；同权重保持输入顺序，旧 Lua 未定义次序。
+     * 其他分类需要各自的实例/装备数据，暂保留原顺序，不能套用道具规则。
+     */
+    sortForTab(items: readonly BagItemData[], tab: BagTabKind): readonly BagItemData[] {
+        if (tab !== "item") return items;
+        return items.map((item, index) => ({ item, index, weight: this.items.get(item.itemId)?.sort ?? 0 }))
+            .sort((a, b) => b.weight - a.weight || a.index - b.index)
+            .map(entry => entry.item);
+    }
+
     /** 按源表 place 决定标签及可见性；type 是效用类型，不能用来推断背包分类。缺图使用已登记占位图。 */
     face(id: number, quantity: number): BagItemDisplayData {
         const row = this.items.get(id);
