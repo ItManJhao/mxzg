@@ -114,3 +114,7 @@ V7 给普通库存添加稳定记录 ID，不改变原数量；迁移旧记录�
 旧 LimitItemInfoService.selectList 在发送 5010 前删除 endTime<=当前秒的记录；客户端也只显示 end_time>服务器时间的条目。新版统一初始化/恢复及资产快照在角色锁事务内回收已过期记录，同事务更新持久版本，提交后同步；没有新增 5010 查询或业务 HTTP。尚未加入在线定时扫描，且期限权益的到期撤销事件、配置加载/业务发放、倒计时和逐件格子仍未接入，不能视为完整期限玩法。
 
 Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItems 与普通 items 分开保存，整包预校验后一起提交。当前期限数据只进入 Model，不混入普通按配置聚合的 UI。普通完整快照的 instanceId、期限载荷为增量可选字段，旧数据缺字段仍可读；实际新后端始终下发记录 ID。
+
+### 期限展示边界
+
+期限规则使用 GConfig.TimeLimitItem 与服务端打包的同源 timelimititem.json；不可从客户端传入天数或自行计算权威到期时间。BagModel 保存逐件期限快照与服务器秒，BagItemCatalog 只生成列表投影；期限格子和详情必须按字符串 instanceId 区分，同配置不能合并。到期由 View 隐藏、关闭详情，禁止删除 Model 或调用额外库存查询。使用、分解及权益相关操作当前未开放。展示时钟与后台恢复边界见 development-progress.md 的期限配置批次。

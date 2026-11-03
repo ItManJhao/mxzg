@@ -15,7 +15,7 @@ import {
     bagSlotCount,
 } from "./BagPresentation";
 import {BagModel} from "../BagModel";
-import type {BagItemData} from "../data/BagItemData";
+import type {BagListItem} from "../data/BagItemData";
 import {BagEvent} from "../BagEvent";
 import {EventDispatcher} from "../../../framework/EventDispatcher";
 import {BagItemCatalog} from "../BagItemCatalog";
@@ -100,12 +100,16 @@ export class BagView extends BaseView<BagOpenArgs> {
 
     /** 显示分类；打开参数可覆盖默认道具分类，点击页签只改变展示。 */
     private tab: BagTabKind = "item";
-    /** 当前选中的配置 ID；换角色、条目消失或离开当前分类后清空。 */
-    private pickedId: number | null = null;
+    /** 当前选中的格子 key（堆叠记录或期限实例）；换角色、条目消失或离开当前分类后清空。 */
+    private pickedId: string | null = null;
     /** 上次绘制的角色归属；变化时清空选中和详情并复位滚动。 */
     private lastRoleKey: string | null = null;
     /** 当前详情数量；库存变化时重建详情，关闭后为 null。 */
     private detailQuantity: number | null = null;
+    /** 当前详情的到期值，重连延期时刷新详情；普通物品为 undefined。 */
+    private detailExpiry: number | undefined;
+    /** 下次需隐藏过期格子的服务器秒，无期限格子时为无穷大。 */
+    private nextExpiry = Infinity;
     /** 本页静态配置索引，初始化时创建，不保存数量；未初始化为 null。 */
     private catalog: BagItemCatalog | null = null;
     /** 本页创建的分类组件，刷新时同步选中态，随页面节点销毁。 */
@@ -167,7 +171,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         try {
             this.validateBindings();
             this.catalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
-                GameConfig.instance.getFile(GConfig.Language));
+                GameConfig.instance.getFile(GConfig.Language), GameConfig.instance.getFile(GConfig.TimeLimitItem));
             this.dressPortrait();
             if (this.closed || !this.node || !this.node.isValid) {
                 this.failOpen(new Error("页面已关"));
@@ -306,22 +310,23 @@ export class BagView extends BaseView<BagOpenArgs> {
             this.dismissInfo();
         }
         const rows = this.visibleItems();
-        const picked = this.pickedId === null ? null : BagModel.instance.getItem(this.pickedId);
-        if (!picked || !rows.some(item => item.itemId === this.pickedId)) {
+        const picked = rows.find(item => item.key === this.pickedId);
+        this.nextExpiry = rows.reduce((next,item) => Math.min(next,item.expiresAtSeconds ?? Infinity),Infinity);
+        if (!picked) {
             this.pickedId = null;
             this.dismissInfo();
-        } else if (this.infoSheet?.isValid && this.detailQuantity !== picked.quantity) this.showInfo(picked);
+        } else if (this.infoSheet?.isValid && (this.detailQuantity !== picked.quantity || this.detailExpiry !== picked.expiresAtSeconds)) this.showInfo(picked);
         // 空槽补齐属于背包展示规则，通用列表只接收条目，不决定业务槽数。
         const entries = Array.from({length: bagSlotCount(rows.length)}, (_, index) => rows[index] || null);
         list.setData(entries, (node, item) => {
             const cell = node.getComponent(BagItemView)!;
-            const selected = item !== null && item.itemId === this.pickedId;
+            const selected = item !== null && item.key === this.pickedId;
             const onTap = item
                 ? () => {
                     if (this.closed) return;
-                    const current = BagModel.instance.getItem(item.itemId);
+                    const current = this.visibleItems().find(row => row.key === item.key);
                     if (!current) return;
-                    this.pickedId = current.itemId;
+                    this.pickedId = current.key;
                     this.showInfo(current);
                     this.refreshGrid();
                 }
@@ -339,24 +344,30 @@ export class BagView extends BaseView<BagOpenArgs> {
     }
 
     /** 按配置筛选库存并恢复普通道具排序；隐藏条目与服务器原始顺序仍由 Model 完整持有。 */
-    visibleItems(): readonly BagItemData[] {
+    visibleItems(): readonly BagListItem[] {
         if (!this.catalog) return [];
-        const items = BagModel.instance.items.filter(item => {
-            const face = this.catalog!.face(item.itemId, item.quantity);
-            return !face.hiddenInBag && face.category === this.tab;
-        });
-        return this.catalog.sortForTab(items, this.tab);
+        const state = BagModel.instance.snapshot;
+        return this.catalog.list(state.items, state.timedItems, this.tab, BagModel.instance.serverTimeSeconds());
     }
 
     /** 从当前库存打开只读详情，数量变化时重新展示。 */
-    private showInfo(item: Readonly<BagItemData>): void {
+    private showInfo(item: Readonly<BagListItem>): void {
         if (!this.infoPrefab || !this.dimPrefab) {
             GameLog.shared.warn("Bag", "背包详情预制没有绑定");
             return;
         }
         this.dismissInfo();
         this.detailQuantity = item.quantity;
-        this.infoSheet = openBagInfo(this.node, this.dimPrefab, this.infoPrefab, this.catalog!.face(item.itemId, item.quantity), (text) => this.toast(text));
+        this.detailExpiry = item.expiresAtSeconds;
+        this.infoSheet = openBagInfo(this.node, this.dimPrefab, this.infoPrefab, this.catalog!.face(item.itemId, item.quantity), (text) => this.toast(text), item.expiresAtSeconds === undefined ? undefined : { expiresAtSeconds: item.expiresAtSeconds, now: () => BagModel.instance.serverTimeSeconds() });
+    }
+
+    /** 到达下一件物品期限才重绘格子；关闭页面停止处理，不发补查或修改库存。 */
+    update(dt: number): void {
+        if(this.closed)return;
+
+        const now=BagModel.instance.serverTimeSeconds();
+        if(now!==null && now>=this.nextExpiry)this.refreshGrid();
     }
 
     /** 销毁详情遮罩并清空数量缓存，详情已经销毁时也可调用。 */
@@ -367,6 +378,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
         this.infoSheet = null;
         this.detailQuantity = null;
+        this.detailExpiry = undefined;
     }
 
     /** 写入页面提示日志并交由 UIManager 展示。 */

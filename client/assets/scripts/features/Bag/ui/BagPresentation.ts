@@ -29,3 +29,11 @@ export function bagSlotCount(count: number): number {
 
 /** 返回当前背包为空时的提示，不推断库存同步状态。 */
 export function emptyBagToast(): string { return '背包是空的'; }
+
+/** 按旧详情规则显示剩余时间：大于一天为天/时/分，否则为时/分/秒，绝不显示负数。 */
+export function bagCountdown(seconds: number): string {
+    const value=Math.max(0,Math.floor(seconds));
+    if(value===0)return "已到期";
+    if(value>86400)return "剩余："+Math.floor(value/86400)+"天"+Math.floor(value%86400/3600)+"小时"+Math.floor(value%3600/60)+"分";
+    return "剩余："+Math.floor(value/3600)+"小时"+Math.floor(value%3600/60)+"分"+value%60+"秒";
+}

@@ -262,6 +262,8 @@ function checkPrefabBindings(): void {
   assertNodeRef(infoData, info.comp, "btnDecompose", 86, "btn_decompose");
   assertNodeRef(infoData, info.comp, "hitMenu", 47, "menu");
   assertNodeRef(infoData, info.comp, "hitMenuClose", 101, "menu_close");
+  const countdownIndex=idOf(info.comp.countdown);
+  assert(countdownIndex!==null && infoData[countdownIndex].__type__==="cc.Label", "倒计时必须绑定静态 Prefab 标签");
 }
 
 function checkSources(): void {
@@ -419,6 +421,7 @@ function makeView(): BagView {
     info.propName = labelOn(new Node("lbl_prop_name"));
     info.propType = labelOn(new Node("lbl_prop_type"));
     info.desc = labelOn(new Node("lbl_desc"));
+    info.countdown = labelOn(new Node("lbl_countdown"));
     info.icon = new Node("spr_icon");
     info.icon.addComponent(Sprite);
     info.rare = new Node("spr_rare");
@@ -524,6 +527,8 @@ function bindTables(): void {
   const tables = new Map<string, ConfigTableFile<Record<string, unknown>>>();
   tables.set("language", language);
   tables.set("item", item);
+  item.rows.push({idx:902025,type:6,place:2,name:10020,rare_mark:1,sort:100});
+  tables.set("timelimititem", {table:"timelimititem",rows:[{item_id:902025,type:1,valid_time:7,reward:"[]"}]});
   GameConfig.instance.getFile = ((name: ConfigName) => tables.get(CONFIG_SCHEMA[name].path.replace("config/", ""))) as typeof GameConfig.instance.getFile;
 }
 
@@ -1083,6 +1088,34 @@ async function checkInfoMaskCoverage(): Promise<void> {
   }
 }
 
+/** 同配置期限物品分格并独立选中；过期只移出显示，关闭/重开不重置时间。 */
+async function checkTimedItems(): Promise<void> {
+  bindTables();installNav();noteBag([]);
+  let now=1000;const model=BagModel.instance,original=model.serverTimeSeconds;
+  model.serverTimeSeconds=()=>now;
+  model.replaceAll([], {serverTimeSeconds:1000,items:[
+    {instanceId:"timed-a",itemId:902025,activeAtSeconds:900,expiresAtSeconds:1002},
+    {instanceId:"timed-b",itemId:902025,activeAtSeconds:900,expiresAtSeconds:1005},
+  ]});
+  let page:BagView|null=null;
+  try {
+    page=await openView();assert(page.visibleItems().length===2,"同配置期限物品逐件显示");
+    assert(page.visibleItems()[0].key!==page.visibleItems()[1].key,"不同实例具有不同选中键");
+    cells(page)[0].node.emit(Button.EventType.CLICK);pump(1);
+    const info=infoCard(page);assert(info.countdown!.string==="剩余：0小时0分2秒","首件显示自己的到期时间");
+    assert(info.enterLabel!.string==="确定"&&!info.btnDecompose!.active,"只读详情不开放使用分解");
+    now=1001;info.update();assert(info.countdown!.string==="剩余：0小时0分1秒","每秒更新剩余时间");
+    now=1002;page.update(1);assert(page.visibleItems().length===1,"到期实例从格子隐藏");
+    assert(model.snapshot.timedItems.length===2,"本地到期不删服务器库存");
+    assert(!(page as any).infoSheet,"到期详情随对应实例关闭");
+    cells(page)[0].node.emit(Button.EventType.CLICK);pump(1);assert(infoCard(page).countdown!.string==="剩余：0小时0分3秒","另一个实例仍可独立查看");
+    page.runDispose();page.node.destroy();page=null;now=1004;
+    page=await openView();cells(page)[0].node.emit(Button.EventType.CLICK);pump(1);
+    assert(infoCard(page).countdown!.string==="剩余：0小时0分1秒","重新打开不重置期限");
+    now=1005;page.update(1);assert(page.visibleItems().length===0,"所有实例到期后显示空槽");
+  } finally {page?.runDispose();page?.node.destroy();model.serverTimeSeconds=original;noteBag(null);}
+}
+
 /** 执行绑定、真实配置、页面行为与关闭/迟到加载回归；不连接服务器。 */
 async function main(): Promise<void> {
   GameLog.shared.mirrorConsole = false;
@@ -1092,6 +1125,7 @@ async function main(): Promise<void> {
   checkInfoLifecycle();
   checkRealItemCategories();
   await checkBehavior();
+  await checkTimedItems();
   await checkInfoMaskCoverage();
   await checkOpenFailure();
   await checkOpenRaces();

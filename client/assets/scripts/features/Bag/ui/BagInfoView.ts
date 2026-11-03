@@ -2,6 +2,7 @@
  * 物品详情显示组件：由背包页面传入已查询的配置与数量，绑定既有 Prefab 字段。
  */
 import {_decorator, Button, Component, Label, Node, Sprite, UITransform} from "cc";
+import {bagCountdown} from "./BagPresentation";
 import {GameLog} from "../../../core/GameLog";
 import {BagFace} from "../data/BagItemData";
 import {positiveUiSize} from "../../../framework/ui/visibleFit";
@@ -71,6 +72,13 @@ export class BagInfoView extends Component {
     @property(Node)
     hitMenuClose: Node | null = null;
 
+    /** Prefab 中固定的底部倒计时标签，普通物品隐藏。 */
+    @property(Label)
+    countdown: Label | null = null;
+    /** 当前期限数据与服务器计时入口，关闭销毁时清空。 */
+    private timing: { expiresAtSeconds: number; now: () => number | null } | null = null;
+    /** 上次显示的剩余整数秒，避免逐帧重复写文本。 */
+    private lastRemaining: number | null = null;
     /** 挂载层传入的关闭回调，show 时替换，销毁时释放。 */
     private onClose: (() => void) | null = null;
     /** 页面传入的提示回调，销毁时清空，避免持有旧页面。 */
@@ -80,6 +88,7 @@ export class BagInfoView extends Component {
 
     /** 展示配置与数量；重复展示只替换回调，不重复绑定按钮。 */
     show(face: BagFace, onClose: () => void, toast: (text: string) => void): void {
+        this.setCountdown();
         this.onClose = onClose;
         this.toast = toast;
         if (this.propName) this.propName.string = face.title;
@@ -101,6 +110,23 @@ export class BagInfoView extends Component {
         this.silence(this.hitMenu);
         this.silence(this.hitMenuClose);
         this.wire();
+    }
+
+    /** 设置只读倒计时，不发请求、不修改库存；普通详情传空值以隐藏标签。 */
+    setCountdown(timing?: { expiresAtSeconds: number; now: () => number | null }): void {
+        this.timing=timing || null;this.lastRemaining=null;
+        if(this.countdown)this.countdown.node.active=!!timing;
+        if(timing && !this.countdown)throw new Error("BagInfoView 缺少 countdown 绑定");
+        this.update();
+    }
+    /** 每秒更新一次标签；未知服务器时刻显示同步提示，详情随节点销毁停止更新。 */
+    update(): void {
+        if(!this.timing || !this.countdown)return;
+        const now=this.timing.now();
+        if(now===null){this.countdown.string="等待服务器时间";return;}
+        const remaining=Math.max(0,Math.floor(this.timing.expiresAtSeconds-now));
+        if(remaining===this.lastRemaining)return;
+        this.lastRemaining=remaining;this.countdown.string=bagCountdown(remaining);
     }
 
     /** 确认或关闭仅退出详情，不触发库存写入。 */
@@ -134,6 +160,8 @@ export class BagInfoView extends Component {
         this.btnClose?.node?.off(Button.EventType.CLICK, this.closeInfo);
         this.btnEnter?.node?.off(Button.EventType.CLICK, this.closeInfo);
         this.btnSrc?.node?.off(Button.EventType.CLICK, this.showSourceNotice);
+        this.timing = null;
+        this.lastRemaining = null;
         this.onClose = null;
         this.toast = null;
         this.wired = false;

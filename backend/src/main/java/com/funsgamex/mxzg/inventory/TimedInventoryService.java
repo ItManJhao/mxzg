@@ -17,21 +17,23 @@ public class TimedInventoryService {
     private final JdbcTemplate jdbc;
     /** 事务内记录版本，提交后同步，回滚不推送。 */
     private final AssetSyncService sync;
-    /** 注入共享数据库和资产提交出口。 */
-    public TimedInventoryService(JdbcTemplate jdbc, AssetSyncService sync) { this.jdbc=jdbc; this.sync=sync; }
+    /** 原策划期限规则，拒绝调用方自行指定效果和时长。 */
+    private final TimedItemRules rules;
+    /** 注入共享数据库、资产提交出口和可信期限规则。 */
+    public TimedInventoryService(JdbcTemplate jdbc, AssetSyncService sync, TimedItemRules rules) { this.jdbc=jdbc; this.sync=sync; this.rules=rules; }
     /** 旧公式：激活当天当地零点 + 有效天数 × 86400 - 1 秒；统一北京时间，不取机器默认值。 */
     public static long expiration(long activeAtSeconds, int validDays) {
         if(activeAtSeconds<0 || validDays<=0) throw new IllegalArgumentException("期限参数无效");
         long start=Instant.ofEpochSecond(activeAtSeconds).atZone(RESET_ZONE).toLocalDate().atStartOfDay(RESET_ZONE).toEpochSecond();
         return Math.subtractExact(Math.addExact(start,Math.multiplyExact((long)validDays,86400L)),1L);
     }
-    /** 调用方须持有角色锁与事务，并从期限配置提供物品、效果类型和天数；每次只写一件，不合并同配置实例。 */
-    public Item grantOne(String roleId, int itemId, int effectType, int validDays, long nowSeconds) {
+    /** 调用方须持有角色锁与事务，仅提供期限配置 ID；效果类型和天数由服务端查表；每次只写一件，不合并同配置实例。 */
+    public Item grantOne(String roleId, int itemId, long nowSeconds) {
         sync.requireTransaction();
-        if(itemId<=0 || effectType<0) throw new IllegalArgumentException("期限道具配置无效");
-        Item item=new Item(UUID.randomUUID().toString(),itemId,nowSeconds,expiration(nowSeconds,validDays));
+        var rule=rules.require(itemId);
+        Item item=new Item(UUID.randomUUID().toString(),itemId,nowSeconds,expiration(nowSeconds,rule.validDays()));
         jdbc.update("INSERT INTO game_timed_inventory(instance_id,role_id,item_id,effect_type,active_at_seconds,expires_at_seconds) VALUES (?,?,?,?,?,?)",
-            item.instanceId(),roleId,itemId,effectType,nowSeconds,item.expiresAtSeconds());
+            item.instanceId(),roleId,itemId,rule.effectType(),nowSeconds,item.expiresAtSeconds());
         sync.changed(roleId); return item;
     }
     /** 角色锁事务内按服务器秒回收 expires<=now 的记录，再读取有效列表；过期删除同样递增版本。 */

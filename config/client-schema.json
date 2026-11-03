@@ -551,6 +551,38 @@
           "note": "升一级所需金币（900001）"
         }
       }
+    },
+    "TimeLimitItem": {
+      "path": "config/timelimititem",
+      "container": "rows",
+      "key": "item_id",
+      "fields": {
+        "item_id": {
+          "type": "number",
+          "required": true,
+          "note": "期限道具配置 ID"
+        },
+        "type": {
+          "type": "number",
+          "required": true,
+          "note": "期限效果类型"
+        },
+        "valid_time": {
+          "type": "number",
+          "required": true,
+          "note": "北京时间自然日有效天数"
+        },
+        "reward": {
+          "type": "string",
+          "required": true,
+          "note": "原表每日奖励 JSON，仅保留配置，不开放领取"
+        },
+        "note": {
+          "type": "string",
+          "required": false,
+          "note": "策划备注"
+        }
+      }
     }
   }
 }

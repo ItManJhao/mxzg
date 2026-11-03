@@ -55,7 +55,7 @@ export async function mountBagPage(host: Node, layer: Prefab): Promise<Node> {
 }
 
 /** 挂载只读详情，遮罩随可见视口伸缩并抵消页面缩放；监听归详情层所有，销毁时由既有适配器清理。 */
-export function openBagInfo(host: Node, dimPrefab: Prefab, infoPrefab: Prefab, face: BagFace, toast: (text: string) => void): Node | null {
+export function openBagInfo(host: Node, dimPrefab: Prefab, infoPrefab: Prefab, face: BagFace, toast: (text: string) => void, timing?: { expiresAtSeconds: number; now: () => number | null }): Node | null {
   if (!host.isValid) return null;
   const old = host.getChildByName("InfoCard");
   if (old) old.destroy();
@@ -92,6 +92,7 @@ export function openBagInfo(host: Node, dimPrefab: Prefab, infoPrefab: Prefab, f
     return sheet;
   }
   info.show(face, close, toast);
+  info.setCountdown(timing);
   return sheet;
 }
 

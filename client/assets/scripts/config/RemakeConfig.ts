@@ -18,7 +18,7 @@ export const REMAKE_CONFIG_GROUPS = {
     city: [GConfig.OpenCondition, GConfig.SystemGate, GConfig.CityPosition, GConfig.CityButton, GConfig.CityEffect],
     hero: [GConfig.HeroType, GConfig.Item],
     heroLevel: [GConfig.HeroLevel],
-    inventory: [GConfig.Item, GConfig.Language],
+    inventory: [GConfig.Item, GConfig.Language, GConfig.TimeLimitItem],
 } as const;
 /** 首屏只加载文字与提示，不提前加载主城、英雄和库存配置。 */
 export const prepareStartupConfig = (progress?: (done: number, total: number) => void) => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.startup, progress);

@@ -2,6 +2,8 @@
  * 重做版应用装配入口，装配选服、登录、角色和背包；其他玩法入口暂停。
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
+import {BagModel} from "../../features/Bag/BagModel";
+
 import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { GameConfig } from "../../config/GameConfig";
 import { GConfig } from "../../config/GConfig";
@@ -334,4 +336,7 @@ export class RemakeApp extends Component {
     this.featureResources?.dispose(); this.featureResources = null;
     for (const unregister of this.unregisterViews.splice(0)) unregister();
   }
+  /** 无单调时钟的平台持续累计背包时间，不随背包窗口关闭停止。 */
+  update(dt: number): void { BagModel.instance.advanceClock(dt); }
+
 }

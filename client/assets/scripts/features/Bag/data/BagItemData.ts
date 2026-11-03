@@ -80,3 +80,11 @@ export function readTimedItems(value: unknown): readonly BagTimedItem[] {
         return Object.freeze({ instanceId:item.instanceId, itemId:item.itemId, activeAtSeconds:item.activeAtSeconds, expiresAtSeconds:item.expiresAtSeconds });
     }));
 }
+
+/** 格子的只读显示投影；期限物品数量固定为一，以 key 区分同配置不同实例。 */
+export interface BagListItem extends BagItemData {
+    /** 普通堆叠与期限实例各自命名空间中的稳定选中键。 */
+    readonly key: string;
+    /** 仅期限实例具有 Unix 秒到期值，不由配置天数重新计算。 */
+    readonly expiresAtSeconds?: number;
+}

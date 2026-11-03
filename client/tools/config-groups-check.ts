@@ -70,6 +70,9 @@ async function main(): Promise<void> {
   await Promise.all([prepareHeroConfig(), prepareHeroConfig()]); assert.equal(requested.length, 9);
   assert(GameConfig.instance.getConfig(GConfig.HeroType).length > 0);
   assert.equal(GameConfig.instance.requireConfig(GConfig.Language, 11).value, "确 定", "数字文本主键统一索引");
+  await GameConfig.instance.prepare([GConfig.TimeLimitItem]);
+  assert.equal(GameConfig.instance.requireConfig(GConfig.TimeLimitItem,902025).valid_time,7);
+  assert.equal(GameConfig.instance.getConfig(GConfig.TimeLimitItem).length,3);
   console.log("config-groups-check passed");
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

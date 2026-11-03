@@ -50,6 +50,7 @@ class MySqlIT {
     }
 
     private java.util.List<com.funsgamex.mxzg.inventory.InventoryService.Item> inventory(String token) { return snapshots.snapshot(token).inventory(); }
+    /** 期限测试成功后才允许保留隔离预览；默认测试不创建预览账号。 */
     private boolean previewEligible;
     private record Player(String account, String id, String token) {}
 
@@ -115,8 +116,9 @@ class MySqlIT {
 
     /** 关闭本批上下文和持有的原生进程句柄；不删除库或猜测其他进程的归属。 */
     @AfterAll void close() throws Exception {
-        if (app != null) { app.close(); app = null; }
         try {
+            if (previewEligible && Boolean.getBoolean("mxzg.mysql.preview")) prepareTimedPreview();
+            if (app != null) { app.close(); app = null; }
             if(previewEligible && Boolean.getBoolean("mxzg.mysql.preview")) {
                 mysql.guard();Path root=Files.createDirectory(mysql.root.resolve("creator-preview"));
                 try(var http=new MySqlHttpProcess(mysql.url(),mysql.user,mysql.password,mysql.database,mysql.uuid,mysql.port,mysql.run,root)) {
@@ -126,7 +128,10 @@ class MySqlIT {
                     while(!Files.exists(root.resolve("stop-preview")) && System.nanoTime()<deadline)Thread.sleep(250);
                 }
             }
-        } finally { if (mysql != null) mysql.close(); }
+        } finally {
+            try { if (app != null) { app.close(); app = null; } }
+            finally { if (mysql != null) mysql.close(); }
+        }
     }
 
     /** 创建只存在于本批专用库的随机合成测试账号。 */
@@ -143,7 +148,7 @@ class MySqlIT {
         var repository=app.getBean(com.funsgamex.mxzg.role.RoleRepository.class);
         var tx=new org.springframework.transaction.support.TransactionTemplate(app.getBean(org.springframework.transaction.PlatformTransactionManager.class));
         long now=Instant.now().getEpochSecond();
-        tx.executeWithoutResult(status->{repository.lock(p.id());timed.grantOne(p.id(),123,0,2,now);timed.grantOne(p.id(),123,0,3,now);});
+        tx.executeWithoutResult(status->{repository.lock(p.id());timed.grantOne(p.id(),902025,now-86400);timed.grantOne(p.id(),902025,now);});
         var original=snapshots.snapshot(p.token()).timedInventory().items();assertEquals(2,original.size());
         assertNotEquals(original.get(0).instanceId(),original.get(1).instanceId());
         long end=original.stream().mapToLong(com.funsgamex.mxzg.inventory.TimedInventoryService.Item::expiresAtSeconds).min().orElseThrow();
@@ -157,8 +162,27 @@ class MySqlIT {
         transaction.executeWithoutResult(status->{locks.lock(p.id());assertEquals(1,refreshed.current(p.id(),end).items().size());});
         assertEquals(revision+1,snapshots.snapshot(p.token()).revision());
         assertEquals(1,snapshots.snapshot(p.token()).timedInventory().items().size());
+        previewEligible=true;
     }
 
+    /** 仅在本轮拥有的测试库创建可视夹具：两张同配置周卡，一张缩短为四分钟以验收到期，绝不进入业务发放入口。 */
+    private void prepareTimedPreview() throws Exception {
+        mysql.guard();
+        var player=login.login("bag_timed_preview","local-1");
+        var timed=app.getBean(com.funsgamex.mxzg.inventory.TimedInventoryService.class);
+        var inventory=app.getBean(com.funsgamex.mxzg.inventory.InventoryService.class);
+        var locks=app.getBean(com.funsgamex.mxzg.role.RoleRepository.class);
+        var tx=new org.springframework.transaction.support.TransactionTemplate(app.getBean(org.springframework.transaction.PlatformTransactionManager.class));
+        long now=Instant.now().getEpochSecond();
+        tx.executeWithoutResult(status->{
+            locks.lock(player.role().id());
+            inventory.credit(player.role().id(),900601,5);
+            var shortItem=timed.grantOne(player.role().id(),902025,now);
+            timed.grantOne(player.role().id(),902025,now);
+            assertEquals(1,jdbc.update("UPDATE game_timed_inventory SET expires_at_seconds=? WHERE role_id=? AND instance_id=?",now+240,player.role().id(),shortItem.instanceId()));
+        });
+        System.out.println("[MYSQL-IT] synthetic preview account=bag_timed_preview, one short fixture expires="+(now+240));
+    }
     /** 重启后资产完全一致，读取时刻允许前进；不能将运行时钟当持久资产比较。 */
     private static void assertStoredState(SessionSnapshotService.Snapshot before, SessionSnapshotService.Snapshot after) {
         assertEquals(before.role(),after.role());assertEquals(before.heroes(),after.heroes());assertEquals(before.inventory(),after.inventory());

@@ -209,6 +209,18 @@ export interface SystemGateRow {
   /** 开放所需开服自然日，0 表示不限制 */
   readonly open_server_day: number;
 }
+export interface TimeLimitItemRow {
+  /**   道具id */
+  readonly item_id: number;
+  /** 注释 */
+  readonly note?: string;
+  /** 奖励（每天奖励） */
+  readonly reward: string;
+  /** 类型 */
+  readonly type: number;
+  /** 有效时长（单位：天） */
+  readonly valid_time: number;
+}
 export const GConfig = {
   CityButton: "CityButton",
   CityEffect: "CityEffect",
@@ -221,6 +233,7 @@ export const GConfig = {
   LoadingTips: "LoadingTips",
   OpenCondition: "OpenCondition",
   SystemGate: "SystemGate",
+  TimeLimitItem: "TimeLimitItem",
 } as const;
 export interface ConfigRowMap {
   CityButton: CityButtonRow;
@@ -234,6 +247,7 @@ export interface ConfigRowMap {
   LoadingTips: LoadingTipsRow;
   OpenCondition: OpenConditionRow;
   SystemGate: SystemGateRow;
+  TimeLimitItem: TimeLimitItemRow;
 }
 export interface ConfigKeyMap {
   CityButton: string;
@@ -247,6 +261,7 @@ export interface ConfigKeyMap {
   LoadingTips: number;
   OpenCondition: string;
   SystemGate: string;
+  TimeLimitItem: number;
 }
 export interface ConfigFileMap {
   CityButton: { readonly act: Readonly<Record<string, CityButtonRow>> };
@@ -260,6 +275,7 @@ export interface ConfigFileMap {
   LoadingTips: { readonly rows: readonly LoadingTipsRow[] };
   OpenCondition: { readonly rows: readonly OpenConditionRow[] };
   SystemGate: { readonly rows: readonly SystemGateRow[] };
+  TimeLimitItem: { readonly rows: readonly TimeLimitItemRow[] };
 }
 export type ConfigName = keyof ConfigRowMap;
 export const CONFIG_SCHEMA = {
@@ -812,5 +828,37 @@ export const CONFIG_SCHEMA = {
     },
     "key": "key",
     "path": "config/system_gate"
+  },
+  "TimeLimitItem": {
+    "container": "rows",
+    "fields": {
+      "item_id": {
+        "note": "期限道具配置 ID",
+        "required": true,
+        "type": "number"
+      },
+      "note": {
+        "note": "策划备注",
+        "required": false,
+        "type": "string"
+      },
+      "reward": {
+        "note": "原表每日奖励 JSON，仅保留配置，不开放领取",
+        "required": true,
+        "type": "string"
+      },
+      "type": {
+        "note": "期限效果类型",
+        "required": true,
+        "type": "number"
+      },
+      "valid_time": {
+        "note": "北京时间自然日有效天数",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "item_id",
+    "path": "config/timelimititem"
   }
 } as const;

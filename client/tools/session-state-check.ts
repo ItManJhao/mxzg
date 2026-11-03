@@ -61,7 +61,7 @@ function checkInventoryIdentity(){
  assert.equal(readTimedItems(timed).length,2);
  assert.throws(()=>readTimedItems({...timed,serverTimeSeconds:200}));
  assert.throws(()=>readTimedItems({...timed,items:[timed.items[0],timed.items[0]]}));
- const model=new BagModel();model.reset("role");model.replaceAll([],timed);assert.equal(model.snapshot.timedItems.length,2);assert.equal(model.snapshot.timedServerTimeSeconds,100);
+ let elapsed=1000;const model=new BagModel(()=>elapsed);model.reset("role");model.replaceAll([],timed);assert.equal(model.snapshot.timedItems.length,2);assert.equal(model.snapshot.timedServerTimeSeconds,100);elapsed+=2500;assert.equal(model.serverTimeSeconds(),102);
  const before=model.snapshot;assert.throws(()=>model.replaceAll([{itemId:900102,quantity:9}],{...timed,serverTimeSeconds:300}));assert.equal(model.snapshot,before);
  model.reset(null);assert.equal(model.snapshot.timedItems.length,0);
 }
