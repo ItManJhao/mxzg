@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-03",
+  "previousCommit": "fd586f77",
+  "roleBatch": "uncommitted",
+  "backend": {
+    "passed": 56,
+    "failed": 0,
+    "log": "backend/target/role-basics-tests.log"
+  },
+  "mysql": {
+    "passed": 14,
+    "failed": 0,
+    "run": "4ac07e41169642f8bc46eaeba64c2c37",
+    "state": "stopped",
+    "log": "backend/target/role-basics-mysql.log"
+  },
+  "frontend": [
+    "game-socket",
+    "game-protocol",
+    "backpack",
+    "home-presentation",
+    "strict types",
+    "Creator types",
+    "generated protocol check"
+  ],
+  "legacyLevelThresholdsCompared": 300,
+  "dailyDatabaseModified": false,
+  "creatorRoleVisualVerified": false,
+  "backgroundVisualVerified": false,
+  "otherGameplayEnabled": false
+}

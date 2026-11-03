@@ -57,6 +57,21 @@ message Role {
   required int64 gold = 4;
   required int64 diamonds = 5;
   required string server_id = 6;
+  // 基础资料独立扩展，缺失表示尚未同步，不能当作全零玩家。
+  optional RoleBasics basics = 7;
+}
+// 对照旧 2001；经验为本级经验，时间为 Unix 秒，0 时间表示历史未知。
+message RoleBasics {
+  required int64 experience = 1;
+  required uint32 cup = 2;
+  required uint32 head_id = 3;
+  required uint32 image_id = 4;
+  required uint32 border_id = 5;
+  required uint32 language = 6;
+  required int64 created_at_seconds = 7;
+  required int64 last_login_at_seconds = 8;
+  // 来自 mainlevel 当前级门槛；最高级为 0，不授予升级或奖励。
+  required int64 experience_to_next_level = 9;
 }
 message Hero {
   required string id = 1;

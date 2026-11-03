@@ -159,15 +159,16 @@ class GameSocketTest {
             assertNull(peer.messages.poll(100,TimeUnit.MILLISECONDS),"首包只交付一次");
         }
     }
-    /** 同事务多次修改合并一次推送，角色钱包与库存同时可见；回滚不推送且版本不增加。 */
+    /** 同事务多次修改合并一次推送，角色基础资料、钱包与库存同时可见；回滚不推送且版本不增加。 */
     @Test void committedAssetsPushAndRollbackDoesNot() throws Exception {
         var player=player(); String role=player.role().id(); var tx=new org.springframework.transaction.support.TransactionTemplate(transactions);
         try(var peer=new Peer();var other=new Peer()) {
             var initial=peer.authenticate(player.session().accessToken()).path("body").path("initial");
             other.authenticate(player().session().accessToken());
-            tx.executeWithoutResult(status->{roles.lock(role);roles.creditCurrency(role,7,3);inventory.credit(role,900101,5);inventory.credit(role,900101,6);});
+            tx.executeWithoutResult(status->{roles.lock(role);roles.creditCurrency(role,7,3);jdbc.update("UPDATE game_role SET role_experience=66 WHERE id=?",role);inventory.credit(role,900101,5);inventory.credit(role,900101,6);});
             var event=peer.messages.poll(5,TimeUnit.SECONDS);assertNotNull(event);assertEquals("state.changed",event.path("name").asString());
             assertEquals(initial.path("revision").asLong()+1,event.path("body").path("revision").asLong());
+            assertEquals(66,event.path("body").path("role").path("basics").path("experience").asLong());
             assertEquals(initial.path("role").path("gold").asLong()+7,event.path("body").path("role").path("gold").asLong());
             assertEquals(inventory.list(role).stream().filter(item->item.itemId()==900101).findFirst().orElseThrow().quantity(),event.path("body").path("inventory").get(0).path("quantity").asLong());
             assertNull(peer.messages.poll(100,TimeUnit.MILLISECONDS));assertNull(other.messages.poll(100,TimeUnit.MILLISECONDS));

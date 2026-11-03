@@ -197,15 +197,17 @@ class MySqlIT {
         assertEquals(code, assertThrows(ResponseStatusException.class, action::run).getStatusCode().value());
     }
 
-    /** 空库必须执行现行七份迁移，真实 MySQL 列类型、索引和约束须可查询。 */
+    /** 空库必须执行现行八份迁移，真实 MySQL 列类型、索引和约束须可查询。 */
     @Test @Order(1) void emptySchemaMigratesWithRealMysqlTypesAndConstraints() {
         assertEquals(500,number("SELECT gold FROM game_role WHERE login_account='it_v3_migration'"));
         assertEquals(2,number("SELECT hero_level FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         assertEquals(0,number("SELECT stage FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         assertEquals(100,number("SELECT quantity FROM game_inventory WHERE role_id='00000000-0000-4000-8000-000000000001' AND item_id=900101"));
         assertEquals("stack:00000000-0000-4000-8000-000000000001:900101",jdbc.queryForObject("SELECT instance_id FROM game_inventory WHERE role_id='00000000-0000-4000-8000-000000000001' AND item_id=900101",String.class));
-        System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V7; stage=0");
-        assertEquals(7, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(0,number("SELECT created_at_seconds FROM game_role WHERE login_account='it_v3_migration'"));
+        assertEquals(0,number("SELECT role_experience FROM game_role WHERE login_account='it_v3_migration'"));
+        System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V8; stage=0");
+        assertEquals(8, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals("bigint", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_inventory' AND COLUMN_NAME='quantity'", String.class));
         assertEquals("timestamp", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_session' AND COLUMN_NAME='expires_at'", String.class));
         assertEquals(1, number("SELECT COUNT(DISTINCT INDEX_NAME) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND INDEX_NAME='uq_role_account_server' AND NON_UNIQUE=0"));
@@ -339,13 +341,19 @@ class MySqlIT {
         var settled = campaign.claim(p.token(), report.id());
         app.close(); app = null; mysql.restart(); boot();
         var again = login.login(p.account(), "local-1"); String token = "Bearer " + again.session().accessToken();
-        assertEquals(p.id(), again.role().id()); assertEquals(settled.role(), again.role());
+        assertEquals(p.id(), again.role().id());
+        var previous=settled.role();var current=again.role();
+        assertEquals(previous.gold(),current.gold());assertEquals(previous.diamonds(),current.diamonds());assertEquals(previous.level(),current.level());
+        assertEquals(previous.basics().createdAtSeconds(),current.basics().createdAtSeconds());assertEquals(previous.basics().experience(),current.basics().experience());
+        assertTrue(current.basics().lastLoginAtSeconds()>=previous.basics().lastLoginAtSeconds());
         assertEquals(settled.inventory(), inventory(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
-        assertEquals(7, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
-        assertEquals(settled, campaign.claim(token, report.id()));
-        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=7");
+        assertEquals(8, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        var replay=campaign.claim(token,report.id());
+        assertEquals(settled.battle(),replay.battle());assertEquals(settled.inventory(),replay.inventory());assertEquals(settled.stageId(),replay.stageId());
+        assertEquals(current,replay.role(),"重放携带当前角色快照，登录时间不是历史奖励收据");
+        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=8");
     }
 
     /** 通过独立 JVM 的真实 HTTP 完成业务链，在未领奖和已领奖两个阶段分别终止进程再登录核验恢复。 */
@@ -356,11 +364,13 @@ class MySqlIT {
             String account="ws_"+mysql.run.substring(0,12);
             var accepted=process.exchange("session.login",Map.of("account",account,"serverId","local-1","clientInstanceId",UUID.randomUUID().toString()));
             assertTrue(accepted.path("ok").asBoolean());String token=accepted.path("body").path("session").path("accessToken").asString();
-            var initial=accepted.path("body").path("initial");assertTrue(initial.path("inventory").isEmpty());assertEquals(0,initial.path("revision").asLong());
+            var initial=accepted.path("body").path("initial");assertTrue(initial.path("inventory").isEmpty());assertTrue(initial.path("revision").asLong()>=0);
+            var basics=initial.path("role").path("basics");assertEquals(1000,basics.path("cup").asInt());assertEquals(410304012,basics.path("imageId").asInt());assertEquals(120,basics.path("experienceToNextLevel").asLong());assertTrue(basics.path("createdAtSeconds").asLong()>0);
             campaign.initialize("Bearer "+token);
             var state=snapshots.snapshot("Bearer "+token);assertTrue(state.revision()>0);
             process.restart();assertEquals(state.inventory(),inventoryValues(process.inventory(token,200)));
             var restored=process.exchange("session.authenticate",Map.of("accessToken",token,"clientInstanceId",UUID.randomUUID().toString())).path("body").path("initial");
+            assertEquals(basics,restored.path("role").path("basics"));
             assertEquals(state.revision(),restored.path("revision").asLong());assertEquals(state.role().id(),restored.path("role").path("id").asString());
             process.restart();assertEquals(state.inventory(),inventoryValues(process.inventory(token,200)));
             jdbc.update("UPDATE game_session SET expires_at=TIMESTAMP '2000-01-01 00:00:00' WHERE role_id=?",state.role().id());process.inventory(token,401);
@@ -417,6 +427,22 @@ class MySqlIT {
         var assets=snapshots.snapshot(p.token());app.close();mysql.restart();boot();
         var restored=app.getBean(com.funsgamex.mxzg.campaign.IdleService.class).claim(p.token(),request);
         assertEquals(first.receipt(),restored.receipt());assertStoredState(assets,snapshots.snapshot(p.token()));
+    }
+
+    /** 角色基础字段与版本持久化，应用重启后完整恢复，回滚不影响经验和外观。 */
+    @Test @Order(14) void roleBasicsPersistAndRollback() throws Exception {
+        var p=player();var repo=app.getBean(com.funsgamex.mxzg.role.RoleRepository.class);
+        var sync=app.getBean(com.funsgamex.mxzg.network.AssetSyncService.class);
+        var tx=new org.springframework.transaction.support.TransactionTemplate(app.getBean(org.springframework.transaction.PlatformTransactionManager.class));
+        long before=repo.revision(p.id());
+        tx.executeWithoutResult(status->{repo.lock(p.id());jdbc.update("UPDATE game_role SET role_experience=66,cup=1450,head_id=12,border_id=34 WHERE id=?",p.id());sync.changed(p.id());});
+        var committed=snapshots.snapshot(p.token());assertEquals(before+1,committed.revision());
+        tx.executeWithoutResult(status->{repo.lock(p.id());jdbc.update("UPDATE game_role SET role_experience=99 WHERE id=?",p.id());sync.changed(p.id());status.setRollbackOnly();});
+        assertStoredState(committed,snapshots.snapshot(p.token()));
+        app.close();boot();var restored=snapshots.snapshot(p.token());assertStoredState(committed,restored);
+        assertEquals(66,restored.role().basics().experience());assertEquals(1450,restored.role().basics().cup());
+        assertEquals(12,restored.role().basics().headId());assertEquals(34,restored.role().basics().borderId());assertEquals(410304012,restored.role().basics().imageId());
+        System.out.println("[MYSQL-IT] role basics persisted; rollback/restart preserve role and unified revision");
     }
 
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */

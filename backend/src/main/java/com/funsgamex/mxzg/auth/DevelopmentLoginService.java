@@ -1,3 +1,4 @@
+/** 开发身份服务：按旧初始化配置创建角色，显式登录记录服务器时间并签发会话；正式渠道仍未开放。 */
 package com.funsgamex.mxzg.auth;
 
 import com.funsgamex.mxzg.role.RoleProfile;
@@ -32,6 +33,7 @@ public class DevelopmentLoginService {
         return login(rawAccount, null);
     }
 
+    /** 校验账号及区服，在角色锁事务内记录登录；不重置已有钱包、经验或外观。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public LoginResult login(String rawAccount, String serverId) {
         String account = rawAccount == null ? "" : rawAccount.trim().toLowerCase(Locale.ROOT);
@@ -40,7 +42,9 @@ public class DevelopmentLoginService {
         }
         String selected = servers.require(serverId);
         RoleProfile role = roles.findByAccount(account, selected).orElseGet(() -> createOrFind(account, selected));
-        return new LoginResult(sessions.issue(role.id()), role);
+        roles.lock(role.id());
+        roles.recordLogin(role.id(),java.time.Instant.now().getEpochSecond());
+        return new LoginResult(sessions.issue(role.id()), roles.findById(role.id()).orElseThrow());
     }
 
     private RoleProfile createOrFind(String account, String serverId) {

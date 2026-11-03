@@ -38,8 +38,10 @@ async function main(){
   const servers=await one.socket.catalog() as any[];assert(servers.some(row=>row.id==="local-2"));
   const account="wsclient_"+randomUUID().slice(0,12);
   assert(await one.service.login(account,"local-1"),one.account.snapshot.error);assert.equal(one.model.snapshot.synced,true);
+  const basics=one.account.snapshot.role!.basics!;assert(basics);assert.equal(basics.experience,0);assert.equal(basics.cup,1000);assert.equal(basics.imageId,410304012);assert.equal(basics.experienceToNextLevel,120);assert(basics.createdAtSeconds>0);assert(Object.isFrozen(basics));
   assert.deepEqual(one.model.items,[]);const role=one.account.snapshot.role!.id,count=one.wires.length;
   one.wires[one.wires.length-1].close();await until(()=>one.wires.length>count && one.socket.latestState?.name==="session.authenticate" && one.model.snapshot.synced);
+  assert.deepEqual(one.account.snapshot.role!.basics,basics,"网络恢复不重置角色基础资料");
   // 使用第二个连接登录同角色，旧客户端不能自动抢回。
   assert(await two.service.login(account,"local-1"),two.account.snapshot.error);await until(()=>!one.service.hasSession);
   assert.equal(one.model.items.length,0);assert.equal(two.account.snapshot.role!.id,role);

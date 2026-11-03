@@ -1,6 +1,6 @@
 /** 账号边界：WebSocket 交换身份；统一初始化通过鉴权/同步后才交付角色，不持有玩家状态。 */
 import type { GameFrame } from "../../platform/GameProtocolCodec";
-import type { RoleProfile } from "./AccountModel";
+import type { RoleProfile, RoleBasics } from "./AccountModel";
 import type { GameSocketClient } from "../../platform/GameSocketClient";
 
 export interface AccountSession { accessToken: string; expiresAt: string; account?: string; }
@@ -16,7 +16,7 @@ export interface AccountGateway {
 
 /** 只接受对象资料，不将缺失数据解释成空角色或空会话。 */
 function record(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== "object") throw new Error("服务器返回的数据结构无效");
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("服务器返回的数据结构无效");
   return value as Record<string, unknown>;
 }
 
@@ -29,7 +29,18 @@ export function readSession(value: unknown): AccountSession {
   return { accessToken: row.accessToken, expiresAt: row.expiresAt, ...(typeof row.account === "string" ? { account: row.account } : {}) };
 }
 
-/** 校验角色归属字段及非负钱包，零余额是合法资料。 */
+/** 严格校验整组角色基础字段；时间单位为秒，不能用缺省零掩盖缺字段。 */
+function readBasics(value: unknown): Readonly<RoleBasics> {
+  const row=record(value);
+  const keys=["experience","cup","headId","imageId","borderId","language","createdAtSeconds","lastLoginAtSeconds","experienceToNextLevel"] as const;
+  for(const key of keys)if(!Number.isSafeInteger(row[key]) || Number(row[key])<0)throw new Error("角色基础字段无效："+key);
+  for(const key of ["cup","headId","imageId","borderId"] as const)if(Number(row[key])>2147483647)throw new Error("角色基础字段超限："+key);
+  if(Number(row.language)>8 || Number(row.lastLoginAtSeconds)<Number(row.createdAtSeconds)
+    || (Number(row.experienceToNextLevel)>0 && Number(row.experience)>=Number(row.experienceToNextLevel)))throw new Error("角色基础资料范围无效");
+  return Object.freeze({experience:Number(row.experience),cup:Number(row.cup),headId:Number(row.headId),imageId:Number(row.imageId),borderId:Number(row.borderId),language:Number(row.language),createdAtSeconds:Number(row.createdAtSeconds),lastLoginAtSeconds:Number(row.lastLoginAtSeconds),experienceToNextLevel:Number(row.experienceToNextLevel)});
+}
+
+/** 校验角色归属、非负钱包及基础资料；任何字段非法则整份拒绝，不产生部分提交。 */
 export function readRole(value: unknown): RoleProfile {
   const row = record(value);
   if (typeof row.id !== "string" || !row.id || typeof row.nickname !== "string" ||
@@ -39,7 +50,7 @@ export function readRole(value: unknown): RoleProfile {
   const serverId = row.serverId;
   if (serverId !== undefined && (typeof serverId !== "string" || !/^[a-z0-9_-]{1,32}$/.test(serverId))) throw new Error("角色区服无效");
   return { id: row.id, nickname: row.nickname, level: Number(row.level), gold: Number(row.gold), diamonds: Number(row.diamonds),
-    ...(typeof serverId === "string" ? { serverId } : {}) };
+    ...(typeof serverId === "string" ? { serverId } : {}), ...(row.basics !== undefined ? {basics:readBasics(row.basics)} : {}) };
 }
 
 /** WebSocket 账号入口：登录回包包含统一初始化，角色与背包由应用协调提交。 */

@@ -33,7 +33,7 @@ class Server {
   this.requests.push(frame.name);const data=frame.body as any;
   if(frame.name==="session.authenticate" && this.busyAuthentications>0){this.busyAuthentications--;queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"BUSY",message:"BUSY",retryable:true}}));return;}
   if(frame.name==="session.login" && data.serverId==="missing-world") {queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"SERVER_UNAVAILABLE",message:"SERVER_UNAVAILABLE",retryable:false}}));return;}
-  if(frame.name==="session.login")this.state={role:{id:"role-"+data.account,nickname:data.account,serverId:data.serverId,level:1,gold:0,diamonds:0},inventory:[],heroes:[],revision:0};
+  if(frame.name==="session.login")this.state={role:{id:"role-"+data.account,nickname:data.account,serverId:data.serverId,level:1,gold:0,diamonds:0,basics:{experience:0,cup:1000,headId:0,imageId:410304012,borderId:0,language:1,createdAtSeconds:100,lastLoginAtSeconds:100,experienceToNextLevel:120}},inventory:[],heroes:[],revision:0};
   const body=frame.name==="session.heartbeat"?{serverTimeMs:1}:{connectionId:wire.connection,roleId:this.state.role.id,serverTimeMs:1,initial:this.state,...(frame.name==="session.login"?{session:{accessToken:"a".repeat(43),expiresAt:"2099-01-01T00:00:00Z"}}:{})};
   queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:true,body}));
  }
@@ -72,7 +72,18 @@ function checkInventoryIdentity(){
  const before=model.snapshot;assert.throws(()=>model.replaceAll([{itemId:900102,quantity:9}],{...timed,serverTimeSeconds:300}));assert.equal(model.snapshot,before);
  model.reset(null);assert.equal(model.snapshot.timedItems.length,0);
 }
+/** 基础角色资料不可缺字段、取负数或混淆时间顺序；唯一 Model 深层只读。 */
+function checkRoleBasics(){
+ const basics={experience:66,cup:1000,headId:0,imageId:410304012,borderId:0,language:1,createdAtSeconds:100,lastLoginAtSeconds:120,experienceToNextLevel:120};
+ const raw={id:"role-basic",nickname:"测试",serverId:"local-1",level:1,gold:0,diamonds:0,basics};
+ const role=readRole(raw);assert.deepEqual(role.basics,basics);assert(Object.isFrozen(role.basics));
+ for(const key of Object.keys(basics)){assert.throws(()=>readRole({...raw,basics:{...basics,[key]:-1}}));const incomplete:any={...basics};delete incomplete[key];assert.throws(()=>readRole({...raw,basics:incomplete}));}
+ assert.throws(()=>readRole({...raw,basics:{...basics,lastLoginAtSeconds:99}}));assert.throws(()=>readRole({...raw,basics:{...basics,experience:120}}));
+ assert.throws(()=>readRole({...raw,basics:null}));assert.throws(()=>readRole([]));
+ const account=new AccountModel();account.replace({busy:false,role:raw,error:""});basics.experience=99;assert.equal(account.snapshot.role!.basics!.experience,66);assert(Object.isFrozen(account.snapshot.role!.basics));
+}
 async function main(){
+ checkRoleBasics();
  checkInventoryIdentity();
  await checkPreviewIsolation();
  const server=new Server(),account=new AccountModel(),model=new BagModel(),bag=new BagController(model);
@@ -87,7 +98,8 @@ async function main(){
   home.show();homeActions.openFeature("bag");homeActions.openFeature("city");homeActions.openFeature("hero");homeActions.openFeature("battle");assert.deepEqual(opened,["bag","city"]);assert.equal(notices.length,2);home.close();
   const unwatch=account.subscribe(state=>{if(state.role&&!state.busy)assert(model.snapshot.synced,"角色通知前库存已提交");});
   assert(await service.login("player","local-1"));assert.equal(model.snapshot.synced,true);assert.deepEqual(server.requests,["session.login"]);
-  server.push(1,7,5);assert.equal(account.snapshot.role!.gold,7);assert.equal(model.quantity(900101),5);
+  server.state.role.basics={...server.state.role.basics,experience:66};
+  server.push(1,7,5);assert.equal(account.snapshot.role!.basics!.experience,66);assert.equal(account.snapshot.role!.gold,7);assert.equal(model.quantity(900101),5);
   const count=events;server.push(1,7,5);server.push(0,0,0);assert.equal(events,count);assert.equal(model.quantity(900101),5);
   server.state={...server.state,revision:2,role:{...server.state.role,gold:9},inventory:[{itemId:900101,quantity:8}]};
   const oldMessage=server.wires[0].onmessage;server.wires[0].drop();await until(()=>server.wires.length===2&&model.quantity(900101)===8);assert.deepEqual(server.requests,["session.login","session.authenticate"]);
@@ -109,7 +121,9 @@ async function main(){
   unwatch();assert(await service.login("other","local-2"));assert.equal(model.quantity(900101),0);assert.equal(model.snapshot.roleKey,"local-2/role-other");
   oldMessage({data:encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:"connection-0",body:{revision:999,role:{id:"role-player",nickname:"old",level:1,gold:999,diamonds:0,serverId:"local-1"},inventory:[{itemId:900101,quantity:999}],heroes:[]}})});
   assert.equal(model.quantity(900101),0);assert.equal(account.snapshot.role!.id,"role-other");
-  const before=model.snapshot;server.push(1,3,-1);assert.equal(model.snapshot,before,"非法整包不得部分更新角色或背包");assert.equal(account.snapshot.role!.gold,0);
+  const before=model.snapshot;const validBasics=server.state.role.basics;server.state.role.basics={...validBasics,experience:120};
+  server.push(1,3,9);assert.equal(model.snapshot,before,"非法角色资料不得部分写入合法库存");assert.equal(account.snapshot.role!.basics!.experience,0);
+  server.state.role.basics=validBasics;server.push(1,3,-1);assert.equal(model.snapshot,before,"非法整包不得部分更新角色或背包");assert.equal(account.snapshot.role!.gold,0);
   socket.setBackground(true);service.logout();assert.equal(model.snapshot.roleKey,null);assert.equal(model.items.length,0);
   const loggedOutWires=server.wires.length;socket.setBackground(false);await new Promise(r=>setTimeout(r,20));assert.equal(server.wires.length,loggedOutWires,"后台退出后不能恢复旧账号");
   assert.equal(await service.login("player","missing-world"),false);assert(account.snapshot.error.includes("服务器暂未开放"));assert.equal(model.snapshot.roleKey,null);

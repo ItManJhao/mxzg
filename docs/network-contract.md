@@ -32,7 +32,7 @@ inventory.list、session.sync 已删除业务处理，鉴权后请求返回 UNKN
 
 Frame 的 version=1，kind=request/response/event，name 是 Protocol.ts 统一登记的消息标识。id 关联单次请求，不是持久幂等键。成功响应含 ok=true/body，无 error；失败 ok=false/body=null/error。connectionId 标识当前连接，不是资产版本。令牌只在消息体，不放 URL、不打印。
 
-Accepted={connectionId,roleId,serverTimeMs,initial,session?}。Snapshot={role,inventory,revision,heroes:[]}；heroes 字段暂留字段号，不在当前范围加载英雄。role 包含当前实现的身份、区服、等级、金币、钻石；inventory 为 Item{itemId,quantity}[]，数量是正整数绝对值，空数组表示已确认没有库存。revision 来自 game_role.state_revision（V6），是安全整数；不与 BagModel 本地界面 revision 混用。
+Accepted={connectionId,roleId,serverTimeMs,initial,session?}。Snapshot={role,inventory,revision,heroes:[]}；heroes 字段暂留字段号，不在当前范围加载英雄。role 包含身份、区服、等级、金币、钻石，以及基础资料 basics（经验、奖杯、头像/形象/头像框、语言、创建/登录秒和当前级经验门槛）；字段依据及缺口见[角色基础契约](role-data-contract.md)。inventory 为 Item{itemId,quantity}[]，数量是正整数绝对值，空数组表示已确认没有库存。revision 来自 game_role.state_revision（V6），是安全整数；不与 BagModel 本地界面 revision 混用。
 
 ## 初始化与同步调用链
 

@@ -122,10 +122,11 @@ export class RemakeHomeView extends BaseView implements HomeView {
       this.accountButton?.node.off(Button.EventType.CLICK, toggleAccount);
     };
   }
+  /** 订阅唯一角色状态，刷新已有账号信息区；基础资料缺失时明确提示未同步。 */
   render(state: AccountState): void {
     const role = state.role;
     this.role = role;
-    this.profileLabel!.string = role ? `${role.nickname}\n角色 ID：${role.id}` : "会话已结束，正在返回登录";
+    this.profileLabel!.string = role ? `${role.nickname} · Lv.${role.level}\n角色 ID：${role.id}\n角色经验：${role.basics ? (role.basics.experienceToNextLevel === 0 ? "已满级" : role.basics.experience + " / " + role.basics.experienceToNextLevel) : "未同步"}` : "会话已结束，正在返回登录";
     this.paintRole();
   }
 
@@ -140,7 +141,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
     this.chrome.setIdentity(role.nickname, "");
     this.chrome.setLevelBadge(String(role.level));
     this.chrome.setCurrencies(String(role.gold), String(role.diamonds));
-    this.chrome.setPower(""); // The new role endpoint has no combat power or avatar.
+    this.chrome.setPower(""); // 战力计算与头像资源展示尚未接入，不用角色形象冒充头像。
     this.chrome.setAvatar(null);
     this.chrome.setCityExtras(false);
     this.chrome.setTabs(["city", "hero", "bag", "battle", "dungeon", "clan", "fetter"].map(id => ({

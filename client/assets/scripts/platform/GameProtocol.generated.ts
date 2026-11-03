@@ -4709,6 +4709,7 @@ var mxzg = $root.mxzg = (() => {
       Role.prototype.gold = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       Role.prototype.diamonds = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       Role.prototype.serverId = "";
+      Role.prototype.basics = null;
       Role.create = function create(properties) {
         return new Role(properties);
       };
@@ -4743,6 +4744,11 @@ var mxzg = $root.mxzg = (() => {
           /* id 6, wireType 2 =*/
           50
         ).string(message.serverId);
+        if (message.basics != null && Object.hasOwnProperty.call(message, "basics"))
+          $root.mxzg.game.RoleBasics.encode(message.basics, writer.uint32(
+            /* id 7, wireType 2 =*/
+            58
+          ).fork(), q + 1).ldelim();
         return writer;
       };
       Role.decode = function decode(reader, length, error, long) {
@@ -4792,6 +4798,10 @@ var mxzg = $root.mxzg = (() => {
               message.serverId = reader.string();
               break;
             }
+            case 7: {
+              message.basics = $root.mxzg.game.RoleBasics.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -4835,6 +4845,11 @@ var mxzg = $root.mxzg = (() => {
           return "diamonds: integer|Long expected";
         if (!$util.isString(message.serverId))
           return "serverId: string expected";
+        if (message.basics != null && Object.hasOwnProperty.call(message, "basics")) {
+          let error = $root.mxzg.game.RoleBasics.verify(message.basics, long + 1);
+          if (error)
+            return "basics." + error;
+        }
         return null;
       };
       Role.fromObject = function fromObject(object, long) {
@@ -4875,6 +4890,11 @@ var mxzg = $root.mxzg = (() => {
         }
         if (object.serverId != null)
           message.serverId = String(object.serverId);
+        if (object.basics != null) {
+          if (!$util.isObject(object.basics))
+            throw TypeError(".mxzg.game.Role.basics: object expected");
+          message.basics = $root.mxzg.game.RoleBasics.fromObject(object.basics, long + 1);
+        }
         return message;
       };
       Role.toObject = function toObject(message, options, q) {
@@ -4900,6 +4920,7 @@ var mxzg = $root.mxzg = (() => {
           } else
             object.diamonds = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
           object.serverId = "";
+          object.basics = null;
         }
         if (message.id != null && Object.hasOwnProperty.call(message, "id"))
           object.id = message.id;
@@ -4923,6 +4944,8 @@ var mxzg = $root.mxzg = (() => {
             object.diamonds = options.longs === String ? $util.Long.prototype.toString.call(message.diamonds) : options.longs === Number ? new $util.LongBits(message.diamonds.low >>> 0, message.diamonds.high >>> 0).toNumber() : message.diamonds;
         if (message.serverId != null && Object.hasOwnProperty.call(message, "serverId"))
           object.serverId = message.serverId;
+        if (message.basics != null && Object.hasOwnProperty.call(message, "basics"))
+          object.basics = $root.mxzg.game.RoleBasics.toObject(message.basics, options, q + 1);
         return object;
       };
       Role.prototype.toJSON = function toJSON() {
@@ -4935,6 +4958,335 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.Role";
       };
       return Role;
+    })();
+    game.RoleBasics = (function() {
+      function RoleBasics(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RoleBasics.prototype.experience = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      RoleBasics.prototype.cup = 0;
+      RoleBasics.prototype.headId = 0;
+      RoleBasics.prototype.imageId = 0;
+      RoleBasics.prototype.borderId = 0;
+      RoleBasics.prototype.language = 0;
+      RoleBasics.prototype.createdAtSeconds = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      RoleBasics.prototype.lastLoginAtSeconds = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      RoleBasics.prototype.experienceToNextLevel = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      RoleBasics.create = function create(properties) {
+        return new RoleBasics(properties);
+      };
+      RoleBasics.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).int64(message.experience);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).uint32(message.cup);
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).uint32(message.headId);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).uint32(message.imageId);
+        writer.uint32(
+          /* id 5, wireType 0 =*/
+          40
+        ).uint32(message.borderId);
+        writer.uint32(
+          /* id 6, wireType 0 =*/
+          48
+        ).uint32(message.language);
+        writer.uint32(
+          /* id 7, wireType 0 =*/
+          56
+        ).int64(message.createdAtSeconds);
+        writer.uint32(
+          /* id 8, wireType 0 =*/
+          64
+        ).int64(message.lastLoginAtSeconds);
+        writer.uint32(
+          /* id 9, wireType 0 =*/
+          72
+        ).int64(message.experienceToNextLevel);
+        return writer;
+      };
+      RoleBasics.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RoleBasics();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.experience = reader.int64();
+              break;
+            }
+            case 2: {
+              message.cup = reader.uint32();
+              break;
+            }
+            case 3: {
+              message.headId = reader.uint32();
+              break;
+            }
+            case 4: {
+              message.imageId = reader.uint32();
+              break;
+            }
+            case 5: {
+              message.borderId = reader.uint32();
+              break;
+            }
+            case 6: {
+              message.language = reader.uint32();
+              break;
+            }
+            case 7: {
+              message.createdAtSeconds = reader.int64();
+              break;
+            }
+            case 8: {
+              message.lastLoginAtSeconds = reader.int64();
+              break;
+            }
+            case 9: {
+              message.experienceToNextLevel = reader.int64();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "experience"))
+          throw $util.ProtocolError("missing required 'experience'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "cup"))
+          throw $util.ProtocolError("missing required 'cup'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "headId"))
+          throw $util.ProtocolError("missing required 'headId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "imageId"))
+          throw $util.ProtocolError("missing required 'imageId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "borderId"))
+          throw $util.ProtocolError("missing required 'borderId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "language"))
+          throw $util.ProtocolError("missing required 'language'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "createdAtSeconds"))
+          throw $util.ProtocolError("missing required 'createdAtSeconds'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "lastLoginAtSeconds"))
+          throw $util.ProtocolError("missing required 'lastLoginAtSeconds'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "experienceToNextLevel"))
+          throw $util.ProtocolError("missing required 'experienceToNextLevel'", { instance: message });
+        return message;
+      };
+      RoleBasics.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.experience) && !(message.experience && $util.isInteger(message.experience.low) && $util.isInteger(message.experience.high)))
+          return "experience: integer|Long expected";
+        if (!$util.isInteger(message.cup))
+          return "cup: integer expected";
+        if (!$util.isInteger(message.headId))
+          return "headId: integer expected";
+        if (!$util.isInteger(message.imageId))
+          return "imageId: integer expected";
+        if (!$util.isInteger(message.borderId))
+          return "borderId: integer expected";
+        if (!$util.isInteger(message.language))
+          return "language: integer expected";
+        if (!$util.isInteger(message.createdAtSeconds) && !(message.createdAtSeconds && $util.isInteger(message.createdAtSeconds.low) && $util.isInteger(message.createdAtSeconds.high)))
+          return "createdAtSeconds: integer|Long expected";
+        if (!$util.isInteger(message.lastLoginAtSeconds) && !(message.lastLoginAtSeconds && $util.isInteger(message.lastLoginAtSeconds.low) && $util.isInteger(message.lastLoginAtSeconds.high)))
+          return "lastLoginAtSeconds: integer|Long expected";
+        if (!$util.isInteger(message.experienceToNextLevel) && !(message.experienceToNextLevel && $util.isInteger(message.experienceToNextLevel.low) && $util.isInteger(message.experienceToNextLevel.high)))
+          return "experienceToNextLevel: integer|Long expected";
+        return null;
+      };
+      RoleBasics.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RoleBasics)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RoleBasics: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RoleBasics();
+        if (object.experience != null) {
+          if ($util.Long)
+            message.experience = $util.Long.fromValue(object.experience, false);
+          else if (typeof object.experience === "string")
+            message.experience = parseInt(object.experience, 10);
+          else if (typeof object.experience === "number")
+            message.experience = object.experience;
+          else if (typeof object.experience === "object")
+            message.experience = new $util.LongBits(object.experience.low >>> 0, object.experience.high >>> 0).toNumber();
+        }
+        if (object.cup != null)
+          message.cup = object.cup >>> 0;
+        if (object.headId != null)
+          message.headId = object.headId >>> 0;
+        if (object.imageId != null)
+          message.imageId = object.imageId >>> 0;
+        if (object.borderId != null)
+          message.borderId = object.borderId >>> 0;
+        if (object.language != null)
+          message.language = object.language >>> 0;
+        if (object.createdAtSeconds != null) {
+          if ($util.Long)
+            message.createdAtSeconds = $util.Long.fromValue(object.createdAtSeconds, false);
+          else if (typeof object.createdAtSeconds === "string")
+            message.createdAtSeconds = parseInt(object.createdAtSeconds, 10);
+          else if (typeof object.createdAtSeconds === "number")
+            message.createdAtSeconds = object.createdAtSeconds;
+          else if (typeof object.createdAtSeconds === "object")
+            message.createdAtSeconds = new $util.LongBits(object.createdAtSeconds.low >>> 0, object.createdAtSeconds.high >>> 0).toNumber();
+        }
+        if (object.lastLoginAtSeconds != null) {
+          if ($util.Long)
+            message.lastLoginAtSeconds = $util.Long.fromValue(object.lastLoginAtSeconds, false);
+          else if (typeof object.lastLoginAtSeconds === "string")
+            message.lastLoginAtSeconds = parseInt(object.lastLoginAtSeconds, 10);
+          else if (typeof object.lastLoginAtSeconds === "number")
+            message.lastLoginAtSeconds = object.lastLoginAtSeconds;
+          else if (typeof object.lastLoginAtSeconds === "object")
+            message.lastLoginAtSeconds = new $util.LongBits(object.lastLoginAtSeconds.low >>> 0, object.lastLoginAtSeconds.high >>> 0).toNumber();
+        }
+        if (object.experienceToNextLevel != null) {
+          if ($util.Long)
+            message.experienceToNextLevel = $util.Long.fromValue(object.experienceToNextLevel, false);
+          else if (typeof object.experienceToNextLevel === "string")
+            message.experienceToNextLevel = parseInt(object.experienceToNextLevel, 10);
+          else if (typeof object.experienceToNextLevel === "number")
+            message.experienceToNextLevel = object.experienceToNextLevel;
+          else if (typeof object.experienceToNextLevel === "object")
+            message.experienceToNextLevel = new $util.LongBits(object.experienceToNextLevel.low >>> 0, object.experienceToNextLevel.high >>> 0).toNumber();
+        }
+        return message;
+      };
+      RoleBasics.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.experience = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.experience = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          object.cup = 0;
+          object.headId = 0;
+          object.imageId = 0;
+          object.borderId = 0;
+          object.language = 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.createdAtSeconds = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.createdAtSeconds = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.lastLoginAtSeconds = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.lastLoginAtSeconds = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.experienceToNextLevel = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.experienceToNextLevel = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+        }
+        if (message.experience != null && Object.hasOwnProperty.call(message, "experience"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.experience = typeof message.experience === "number" ? BigInt(message.experience) : $util.Long.fromBits(message.experience.low >>> 0, message.experience.high >>> 0, false).toBigInt();
+          else if (typeof message.experience === "number")
+            object.experience = options.longs === String ? String(message.experience) : message.experience;
+          else
+            object.experience = options.longs === String ? $util.Long.prototype.toString.call(message.experience) : options.longs === Number ? new $util.LongBits(message.experience.low >>> 0, message.experience.high >>> 0).toNumber() : message.experience;
+        if (message.cup != null && Object.hasOwnProperty.call(message, "cup"))
+          object.cup = message.cup;
+        if (message.headId != null && Object.hasOwnProperty.call(message, "headId"))
+          object.headId = message.headId;
+        if (message.imageId != null && Object.hasOwnProperty.call(message, "imageId"))
+          object.imageId = message.imageId;
+        if (message.borderId != null && Object.hasOwnProperty.call(message, "borderId"))
+          object.borderId = message.borderId;
+        if (message.language != null && Object.hasOwnProperty.call(message, "language"))
+          object.language = message.language;
+        if (message.createdAtSeconds != null && Object.hasOwnProperty.call(message, "createdAtSeconds"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.createdAtSeconds = typeof message.createdAtSeconds === "number" ? BigInt(message.createdAtSeconds) : $util.Long.fromBits(message.createdAtSeconds.low >>> 0, message.createdAtSeconds.high >>> 0, false).toBigInt();
+          else if (typeof message.createdAtSeconds === "number")
+            object.createdAtSeconds = options.longs === String ? String(message.createdAtSeconds) : message.createdAtSeconds;
+          else
+            object.createdAtSeconds = options.longs === String ? $util.Long.prototype.toString.call(message.createdAtSeconds) : options.longs === Number ? new $util.LongBits(message.createdAtSeconds.low >>> 0, message.createdAtSeconds.high >>> 0).toNumber() : message.createdAtSeconds;
+        if (message.lastLoginAtSeconds != null && Object.hasOwnProperty.call(message, "lastLoginAtSeconds"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.lastLoginAtSeconds = typeof message.lastLoginAtSeconds === "number" ? BigInt(message.lastLoginAtSeconds) : $util.Long.fromBits(message.lastLoginAtSeconds.low >>> 0, message.lastLoginAtSeconds.high >>> 0, false).toBigInt();
+          else if (typeof message.lastLoginAtSeconds === "number")
+            object.lastLoginAtSeconds = options.longs === String ? String(message.lastLoginAtSeconds) : message.lastLoginAtSeconds;
+          else
+            object.lastLoginAtSeconds = options.longs === String ? $util.Long.prototype.toString.call(message.lastLoginAtSeconds) : options.longs === Number ? new $util.LongBits(message.lastLoginAtSeconds.low >>> 0, message.lastLoginAtSeconds.high >>> 0).toNumber() : message.lastLoginAtSeconds;
+        if (message.experienceToNextLevel != null && Object.hasOwnProperty.call(message, "experienceToNextLevel"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.experienceToNextLevel = typeof message.experienceToNextLevel === "number" ? BigInt(message.experienceToNextLevel) : $util.Long.fromBits(message.experienceToNextLevel.low >>> 0, message.experienceToNextLevel.high >>> 0, false).toBigInt();
+          else if (typeof message.experienceToNextLevel === "number")
+            object.experienceToNextLevel = options.longs === String ? String(message.experienceToNextLevel) : message.experienceToNextLevel;
+          else
+            object.experienceToNextLevel = options.longs === String ? $util.Long.prototype.toString.call(message.experienceToNextLevel) : options.longs === Number ? new $util.LongBits(message.experienceToNextLevel.low >>> 0, message.experienceToNextLevel.high >>> 0).toNumber() : message.experienceToNextLevel;
+        return object;
+      };
+      RoleBasics.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RoleBasics.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RoleBasics";
+      };
+      return RoleBasics;
     })();
     game.Hero = (function() {
       function Hero(properties) {
