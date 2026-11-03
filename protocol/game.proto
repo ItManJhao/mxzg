@@ -67,6 +67,8 @@ message Hero {
 message Item {
   required uint32 item_id = 1;
   required int64 quantity = 2;
+  // 稳定数据 ID；item_id 保持原配置 ID 含义，禁止重用字段号。
+  optional string instance_id = 3;
 }
 message Inventory { repeated Item items = 1; }
 message Snapshot {
@@ -74,4 +76,17 @@ message Snapshot {
   repeated Hero heroes = 2;
   repeated Item inventory = 3;
   required int64 revision = 4;
+  optional TimedInventory timed_inventory = 5;
+}
+
+// 期限道具每件一个实例；时间单位为 Unix 秒，与角色等级等无关。
+message TimedItem {
+ required string instance_id = 1;
+ required uint32 item_id = 2;
+ required int64 active_at_seconds = 3;
+ required int64 expires_at_seconds = 4;
+}
+message TimedInventory {
+ repeated TimedItem items = 1;
+ required int64 server_time_seconds = 2;
 }

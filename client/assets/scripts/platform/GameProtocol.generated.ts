@@ -5117,6 +5117,7 @@ var mxzg = $root.mxzg = (() => {
       }
       Item.prototype.itemId = 0;
       Item.prototype.quantity = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      Item.prototype.instanceId = "";
       Item.create = function create(properties) {
         return new Item(properties);
       };
@@ -5135,6 +5136,11 @@ var mxzg = $root.mxzg = (() => {
           /* id 2, wireType 0 =*/
           16
         ).int64(message.quantity);
+        if (message.instanceId != null && Object.hasOwnProperty.call(message, "instanceId"))
+          writer.uint32(
+            /* id 3, wireType 2 =*/
+            26
+          ).string(message.instanceId);
         return writer;
       };
       Item.decode = function decode(reader, length, error, long) {
@@ -5168,6 +5174,10 @@ var mxzg = $root.mxzg = (() => {
               message.quantity = reader.int64();
               break;
             }
+            case 3: {
+              message.instanceId = reader.string();
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -5195,6 +5205,10 @@ var mxzg = $root.mxzg = (() => {
           return "itemId: integer expected";
         if (!$util.isInteger(message.quantity) && !(message.quantity && $util.isInteger(message.quantity.low) && $util.isInteger(message.quantity.high)))
           return "quantity: integer|Long expected";
+        if (message.instanceId != null && Object.hasOwnProperty.call(message, "instanceId")) {
+          if (!$util.isString(message.instanceId))
+            return "instanceId: string expected";
+        }
         return null;
       };
       Item.fromObject = function fromObject(object, long) {
@@ -5219,6 +5233,8 @@ var mxzg = $root.mxzg = (() => {
           else if (typeof object.quantity === "object")
             message.quantity = new $util.LongBits(object.quantity.low >>> 0, object.quantity.high >>> 0).toNumber();
         }
+        if (object.instanceId != null)
+          message.instanceId = String(object.instanceId);
         return message;
       };
       Item.toObject = function toObject(message, options, q) {
@@ -5236,6 +5252,7 @@ var mxzg = $root.mxzg = (() => {
             object.quantity = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
           } else
             object.quantity = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          object.instanceId = "";
         }
         if (message.itemId != null && Object.hasOwnProperty.call(message, "itemId"))
           object.itemId = message.itemId;
@@ -5246,6 +5263,8 @@ var mxzg = $root.mxzg = (() => {
             object.quantity = options.longs === String ? String(message.quantity) : message.quantity;
           else
             object.quantity = options.longs === String ? $util.Long.prototype.toString.call(message.quantity) : options.longs === Number ? new $util.LongBits(message.quantity.low >>> 0, message.quantity.high >>> 0).toNumber() : message.quantity;
+        if (message.instanceId != null && Object.hasOwnProperty.call(message, "instanceId"))
+          object.instanceId = message.instanceId;
         return object;
       };
       Item.prototype.toJSON = function toJSON() {
@@ -5410,6 +5429,7 @@ var mxzg = $root.mxzg = (() => {
       Snapshot.prototype.heroes = $util.emptyArray;
       Snapshot.prototype.inventory = $util.emptyArray;
       Snapshot.prototype.revision = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      Snapshot.prototype.timedInventory = null;
       Snapshot.create = function create(properties) {
         return new Snapshot(properties);
       };
@@ -5440,6 +5460,11 @@ var mxzg = $root.mxzg = (() => {
           /* id 4, wireType 0 =*/
           32
         ).int64(message.revision);
+        if (message.timedInventory != null && Object.hasOwnProperty.call(message, "timedInventory"))
+          $root.mxzg.game.TimedInventory.encode(message.timedInventory, writer.uint32(
+            /* id 5, wireType 2 =*/
+            42
+          ).fork(), q + 1).ldelim();
         return writer;
       };
       Snapshot.decode = function decode(reader, length, error, long) {
@@ -5483,6 +5508,10 @@ var mxzg = $root.mxzg = (() => {
             }
             case 4: {
               message.revision = reader.int64();
+              break;
+            }
+            case 5: {
+              message.timedInventory = $root.mxzg.game.TimedInventory.decode(reader, reader.uint32(), void 0, long + 1);
               break;
             }
             default:
@@ -5533,6 +5562,11 @@ var mxzg = $root.mxzg = (() => {
         }
         if (!$util.isInteger(message.revision) && !(message.revision && $util.isInteger(message.revision.low) && $util.isInteger(message.revision.high)))
           return "revision: integer|Long expected";
+        if (message.timedInventory != null && Object.hasOwnProperty.call(message, "timedInventory")) {
+          let error = $root.mxzg.game.TimedInventory.verify(message.timedInventory, long + 1);
+          if (error)
+            return "timedInventory." + error;
+        }
         return null;
       };
       Snapshot.fromObject = function fromObject(object, long) {
@@ -5580,6 +5614,11 @@ var mxzg = $root.mxzg = (() => {
           else if (typeof object.revision === "object")
             message.revision = new $util.LongBits(object.revision.low >>> 0, object.revision.high >>> 0).toNumber();
         }
+        if (object.timedInventory != null) {
+          if (!$util.isObject(object.timedInventory))
+            throw TypeError(".mxzg.game.Snapshot.timedInventory: object expected");
+          message.timedInventory = $root.mxzg.game.TimedInventory.fromObject(object.timedInventory, long + 1);
+        }
         return message;
       };
       Snapshot.toObject = function toObject(message, options, q) {
@@ -5601,6 +5640,7 @@ var mxzg = $root.mxzg = (() => {
             object.revision = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
           } else
             object.revision = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          object.timedInventory = null;
         }
         if (message.role != null && Object.hasOwnProperty.call(message, "role"))
           object.role = $root.mxzg.game.Role.toObject(message.role, options, q + 1);
@@ -5621,6 +5661,8 @@ var mxzg = $root.mxzg = (() => {
             object.revision = options.longs === String ? String(message.revision) : message.revision;
           else
             object.revision = options.longs === String ? $util.Long.prototype.toString.call(message.revision) : options.longs === Number ? new $util.LongBits(message.revision.low >>> 0, message.revision.high >>> 0).toNumber() : message.revision;
+        if (message.timedInventory != null && Object.hasOwnProperty.call(message, "timedInventory"))
+          object.timedInventory = $root.mxzg.game.TimedInventory.toObject(message.timedInventory, options, q + 1);
         return object;
       };
       Snapshot.prototype.toJSON = function toJSON() {
@@ -5633,6 +5675,384 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.Snapshot";
       };
       return Snapshot;
+    })();
+    game.TimedItem = (function() {
+      function TimedItem(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      TimedItem.prototype.instanceId = "";
+      TimedItem.prototype.itemId = 0;
+      TimedItem.prototype.activeAtSeconds = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      TimedItem.prototype.expiresAtSeconds = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      TimedItem.create = function create(properties) {
+        return new TimedItem(properties);
+      };
+      TimedItem.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 2 =*/
+          10
+        ).string(message.instanceId);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).uint32(message.itemId);
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).int64(message.activeAtSeconds);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).int64(message.expiresAtSeconds);
+        return writer;
+      };
+      TimedItem.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.TimedItem();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.instanceId = reader.string();
+              break;
+            }
+            case 2: {
+              message.itemId = reader.uint32();
+              break;
+            }
+            case 3: {
+              message.activeAtSeconds = reader.int64();
+              break;
+            }
+            case 4: {
+              message.expiresAtSeconds = reader.int64();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "instanceId"))
+          throw $util.ProtocolError("missing required 'instanceId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "itemId"))
+          throw $util.ProtocolError("missing required 'itemId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "activeAtSeconds"))
+          throw $util.ProtocolError("missing required 'activeAtSeconds'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "expiresAtSeconds"))
+          throw $util.ProtocolError("missing required 'expiresAtSeconds'", { instance: message });
+        return message;
+      };
+      TimedItem.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isString(message.instanceId))
+          return "instanceId: string expected";
+        if (!$util.isInteger(message.itemId))
+          return "itemId: integer expected";
+        if (!$util.isInteger(message.activeAtSeconds) && !(message.activeAtSeconds && $util.isInteger(message.activeAtSeconds.low) && $util.isInteger(message.activeAtSeconds.high)))
+          return "activeAtSeconds: integer|Long expected";
+        if (!$util.isInteger(message.expiresAtSeconds) && !(message.expiresAtSeconds && $util.isInteger(message.expiresAtSeconds.low) && $util.isInteger(message.expiresAtSeconds.high)))
+          return "expiresAtSeconds: integer|Long expected";
+        return null;
+      };
+      TimedItem.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.TimedItem)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.TimedItem: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.TimedItem();
+        if (object.instanceId != null)
+          message.instanceId = String(object.instanceId);
+        if (object.itemId != null)
+          message.itemId = object.itemId >>> 0;
+        if (object.activeAtSeconds != null) {
+          if ($util.Long)
+            message.activeAtSeconds = $util.Long.fromValue(object.activeAtSeconds, false);
+          else if (typeof object.activeAtSeconds === "string")
+            message.activeAtSeconds = parseInt(object.activeAtSeconds, 10);
+          else if (typeof object.activeAtSeconds === "number")
+            message.activeAtSeconds = object.activeAtSeconds;
+          else if (typeof object.activeAtSeconds === "object")
+            message.activeAtSeconds = new $util.LongBits(object.activeAtSeconds.low >>> 0, object.activeAtSeconds.high >>> 0).toNumber();
+        }
+        if (object.expiresAtSeconds != null) {
+          if ($util.Long)
+            message.expiresAtSeconds = $util.Long.fromValue(object.expiresAtSeconds, false);
+          else if (typeof object.expiresAtSeconds === "string")
+            message.expiresAtSeconds = parseInt(object.expiresAtSeconds, 10);
+          else if (typeof object.expiresAtSeconds === "number")
+            message.expiresAtSeconds = object.expiresAtSeconds;
+          else if (typeof object.expiresAtSeconds === "object")
+            message.expiresAtSeconds = new $util.LongBits(object.expiresAtSeconds.low >>> 0, object.expiresAtSeconds.high >>> 0).toNumber();
+        }
+        return message;
+      };
+      TimedItem.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.instanceId = "";
+          object.itemId = 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.activeAtSeconds = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.activeAtSeconds = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.expiresAtSeconds = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.expiresAtSeconds = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+        }
+        if (message.instanceId != null && Object.hasOwnProperty.call(message, "instanceId"))
+          object.instanceId = message.instanceId;
+        if (message.itemId != null && Object.hasOwnProperty.call(message, "itemId"))
+          object.itemId = message.itemId;
+        if (message.activeAtSeconds != null && Object.hasOwnProperty.call(message, "activeAtSeconds"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.activeAtSeconds = typeof message.activeAtSeconds === "number" ? BigInt(message.activeAtSeconds) : $util.Long.fromBits(message.activeAtSeconds.low >>> 0, message.activeAtSeconds.high >>> 0, false).toBigInt();
+          else if (typeof message.activeAtSeconds === "number")
+            object.activeAtSeconds = options.longs === String ? String(message.activeAtSeconds) : message.activeAtSeconds;
+          else
+            object.activeAtSeconds = options.longs === String ? $util.Long.prototype.toString.call(message.activeAtSeconds) : options.longs === Number ? new $util.LongBits(message.activeAtSeconds.low >>> 0, message.activeAtSeconds.high >>> 0).toNumber() : message.activeAtSeconds;
+        if (message.expiresAtSeconds != null && Object.hasOwnProperty.call(message, "expiresAtSeconds"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.expiresAtSeconds = typeof message.expiresAtSeconds === "number" ? BigInt(message.expiresAtSeconds) : $util.Long.fromBits(message.expiresAtSeconds.low >>> 0, message.expiresAtSeconds.high >>> 0, false).toBigInt();
+          else if (typeof message.expiresAtSeconds === "number")
+            object.expiresAtSeconds = options.longs === String ? String(message.expiresAtSeconds) : message.expiresAtSeconds;
+          else
+            object.expiresAtSeconds = options.longs === String ? $util.Long.prototype.toString.call(message.expiresAtSeconds) : options.longs === Number ? new $util.LongBits(message.expiresAtSeconds.low >>> 0, message.expiresAtSeconds.high >>> 0).toNumber() : message.expiresAtSeconds;
+        return object;
+      };
+      TimedItem.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      TimedItem.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.TimedItem";
+      };
+      return TimedItem;
+    })();
+    game.TimedInventory = (function() {
+      function TimedInventory(properties) {
+        this.items = [];
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      TimedInventory.prototype.items = $util.emptyArray;
+      TimedInventory.prototype.serverTimeSeconds = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      TimedInventory.create = function create(properties) {
+        return new TimedInventory(properties);
+      };
+      TimedInventory.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        if (message.items != null && message.items.length)
+          for (let i = 0; i < message.items.length; ++i)
+            $root.mxzg.game.TimedItem.encode(message.items[i], writer.uint32(
+              /* id 1, wireType 2 =*/
+              10
+            ).fork(), q + 1).ldelim();
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).int64(message.serverTimeSeconds);
+        return writer;
+      };
+      TimedInventory.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.TimedInventory();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              if (!(message.items && message.items.length))
+                message.items = [];
+              message.items.push($root.mxzg.game.TimedItem.decode(reader, reader.uint32(), void 0, long + 1));
+              break;
+            }
+            case 2: {
+              message.serverTimeSeconds = reader.int64();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "serverTimeSeconds"))
+          throw $util.ProtocolError("missing required 'serverTimeSeconds'", { instance: message });
+        return message;
+      };
+      TimedInventory.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (message.items != null && Object.hasOwnProperty.call(message, "items")) {
+          if (!Array.isArray(message.items))
+            return "items: array expected";
+          for (let i = 0; i < message.items.length; ++i) {
+            let error = $root.mxzg.game.TimedItem.verify(message.items[i], long + 1);
+            if (error)
+              return "items." + error;
+          }
+        }
+        if (!$util.isInteger(message.serverTimeSeconds) && !(message.serverTimeSeconds && $util.isInteger(message.serverTimeSeconds.low) && $util.isInteger(message.serverTimeSeconds.high)))
+          return "serverTimeSeconds: integer|Long expected";
+        return null;
+      };
+      TimedInventory.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.TimedInventory)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.TimedInventory: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.TimedInventory();
+        if (object.items) {
+          if (!Array.isArray(object.items))
+            throw TypeError(".mxzg.game.TimedInventory.items: array expected");
+          message.items = [];
+          for (let i = 0; i < object.items.length; ++i) {
+            if (!$util.isObject(object.items[i]))
+              throw TypeError(".mxzg.game.TimedInventory.items: object expected");
+            message.items[i] = $root.mxzg.game.TimedItem.fromObject(object.items[i], long + 1);
+          }
+        }
+        if (object.serverTimeSeconds != null) {
+          if ($util.Long)
+            message.serverTimeSeconds = $util.Long.fromValue(object.serverTimeSeconds, false);
+          else if (typeof object.serverTimeSeconds === "string")
+            message.serverTimeSeconds = parseInt(object.serverTimeSeconds, 10);
+          else if (typeof object.serverTimeSeconds === "number")
+            message.serverTimeSeconds = object.serverTimeSeconds;
+          else if (typeof object.serverTimeSeconds === "object")
+            message.serverTimeSeconds = new $util.LongBits(object.serverTimeSeconds.low >>> 0, object.serverTimeSeconds.high >>> 0).toNumber();
+        }
+        return message;
+      };
+      TimedInventory.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.arrays || options.defaults)
+          object.items = [];
+        if (options.defaults)
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.serverTimeSeconds = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.serverTimeSeconds = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+        if (message.items && message.items.length) {
+          object.items = [];
+          for (let j = 0; j < message.items.length; ++j)
+            object.items[j] = $root.mxzg.game.TimedItem.toObject(message.items[j], options, q + 1);
+        }
+        if (message.serverTimeSeconds != null && Object.hasOwnProperty.call(message, "serverTimeSeconds"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.serverTimeSeconds = typeof message.serverTimeSeconds === "number" ? BigInt(message.serverTimeSeconds) : $util.Long.fromBits(message.serverTimeSeconds.low >>> 0, message.serverTimeSeconds.high >>> 0, false).toBigInt();
+          else if (typeof message.serverTimeSeconds === "number")
+            object.serverTimeSeconds = options.longs === String ? String(message.serverTimeSeconds) : message.serverTimeSeconds;
+          else
+            object.serverTimeSeconds = options.longs === String ? $util.Long.prototype.toString.call(message.serverTimeSeconds) : options.longs === Number ? new $util.LongBits(message.serverTimeSeconds.low >>> 0, message.serverTimeSeconds.high >>> 0).toNumber() : message.serverTimeSeconds;
+        return object;
+      };
+      TimedInventory.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      TimedInventory.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.TimedInventory";
+      };
+      return TimedInventory;
     })();
     return game;
   })();

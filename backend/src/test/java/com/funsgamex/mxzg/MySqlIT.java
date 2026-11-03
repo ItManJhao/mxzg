@@ -42,10 +42,10 @@ class MySqlIT {
     private HeroQueries heroes;
     private SessionSnapshotService snapshots;
     /** 在原事务快照入口验证库存，不重新暴露已退役的 HTTP 查询。 */
-    /** 按物品 ID 和 long 数量比较 HTTP/PB 结果，忽略 JSON IntNode 与 Protobuf int64 投影的节点类型差异。 */
+    /** 按配置 ID、记录 ID 和 long 数量比较 Protobuf 结果，忽略 JSON IntNode 与 Protobuf int64 投影的节点类型差异。 */
     private static java.util.List<com.funsgamex.mxzg.inventory.InventoryService.Item> inventoryValues(tools.jackson.databind.JsonNode items) {
         var result = new java.util.ArrayList<com.funsgamex.mxzg.inventory.InventoryService.Item>();
-        for (var item : items) result.add(new com.funsgamex.mxzg.inventory.InventoryService.Item(item.path("itemId").asInt(), item.path("quantity").asLong()));
+        for (var item : items) result.add(new com.funsgamex.mxzg.inventory.InventoryService.Item(item.path("itemId").asInt(), item.path("quantity").asLong(), item.path("instanceId").asString()));
         return result;
     }
 
@@ -136,6 +136,35 @@ class MySqlIT {
         return new Player(account, result.role().id(), "Bearer " + result.session().accessToken());
     }
 
+    /** 真 MySQL 验证期限同配置不同实例、事务回滚、到期回收与重启保留。 */
+    @Test @Order(13) void timedInventoryIdentityAndExpiry() throws Exception {
+        boot();var p=player();
+        var timed=app.getBean(com.funsgamex.mxzg.inventory.TimedInventoryService.class);
+        var repository=app.getBean(com.funsgamex.mxzg.role.RoleRepository.class);
+        var tx=new org.springframework.transaction.support.TransactionTemplate(app.getBean(org.springframework.transaction.PlatformTransactionManager.class));
+        long now=Instant.now().getEpochSecond();
+        tx.executeWithoutResult(status->{repository.lock(p.id());timed.grantOne(p.id(),123,0,2,now);timed.grantOne(p.id(),123,0,3,now);});
+        var original=snapshots.snapshot(p.token()).timedInventory().items();assertEquals(2,original.size());
+        assertNotEquals(original.get(0).instanceId(),original.get(1).instanceId());
+        long end=original.stream().mapToLong(com.funsgamex.mxzg.inventory.TimedInventoryService.Item::expiresAtSeconds).min().orElseThrow();
+        long revision=snapshots.snapshot(p.token()).revision();
+        tx.executeWithoutResult(status->{repository.lock(p.id());assertEquals(1,timed.current(p.id(),end).items().size());status.setRollbackOnly();});
+        assertEquals(revision,snapshots.snapshot(p.token()).revision());assertEquals(original,snapshots.snapshot(p.token()).timedInventory().items());
+        boot();assertEquals(original,snapshots.snapshot(p.token()).timedInventory().items());
+        var refreshed=app.getBean(com.funsgamex.mxzg.inventory.TimedInventoryService.class);
+        var locks=app.getBean(com.funsgamex.mxzg.role.RoleRepository.class);
+        var transaction=new org.springframework.transaction.support.TransactionTemplate(app.getBean(org.springframework.transaction.PlatformTransactionManager.class));
+        transaction.executeWithoutResult(status->{locks.lock(p.id());assertEquals(1,refreshed.current(p.id(),end).items().size());});
+        assertEquals(revision+1,snapshots.snapshot(p.token()).revision());
+        assertEquals(1,snapshots.snapshot(p.token()).timedInventory().items().size());
+    }
+
+    /** 重启后资产完全一致，读取时刻允许前进；不能将运行时钟当持久资产比较。 */
+    private static void assertStoredState(SessionSnapshotService.Snapshot before, SessionSnapshotService.Snapshot after) {
+        assertEquals(before.role(),after.role());assertEquals(before.heroes(),after.heroes());assertEquals(before.inventory(),after.inventory());
+        assertEquals(before.revision(),after.revision());assertEquals(before.timedInventory().items(),after.timedInventory().items());
+        assertTrue(after.timedInventory().serverTimeSeconds()>=before.timedInventory().serverTimeSeconds());
+    }
     /** 查询当前专用库中的标量，不接受外部连接。 */
     private long number(String sql, Object... args) { return jdbc.queryForObject(sql, Long.class, args); }
 
@@ -144,21 +173,22 @@ class MySqlIT {
         assertEquals(code, assertThrows(ResponseStatusException.class, action::run).getStatusCode().value());
     }
 
-    /** 空库必须执行现行四份迁移，真实 MySQL 列类型、索引和约束须可查询。 */
+    /** 空库必须执行现行七份迁移，真实 MySQL 列类型、索引和约束须可查询。 */
     @Test @Order(1) void emptySchemaMigratesWithRealMysqlTypesAndConstraints() {
         assertEquals(500,number("SELECT gold FROM game_role WHERE login_account='it_v3_migration'"));
         assertEquals(2,number("SELECT hero_level FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         assertEquals(0,number("SELECT stage FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         assertEquals(100,number("SELECT quantity FROM game_inventory WHERE role_id='00000000-0000-4000-8000-000000000001' AND item_id=900101"));
-        System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V5; stage=0");
-        assertEquals(6, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals("stack:00000000-0000-4000-8000-000000000001:900101",jdbc.queryForObject("SELECT instance_id FROM game_inventory WHERE role_id='00000000-0000-4000-8000-000000000001' AND item_id=900101",String.class));
+        System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V7; stage=0");
+        assertEquals(7, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals("bigint", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_inventory' AND COLUMN_NAME='quantity'", String.class));
         assertEquals("timestamp", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_session' AND COLUMN_NAME='expires_at'", String.class));
         assertEquals(1, number("SELECT COUNT(DISTINCT INDEX_NAME) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND INDEX_NAME='uq_role_account_server' AND NON_UNIQUE=0"));
         assertTrue(number("SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND CONSTRAINT_TYPE='FOREIGN KEY'") >= 7);
         var p = player(); campaign.initialize(p.token());
         assertThrows(RuntimeException.class, () -> jdbc.update("UPDATE game_inventory SET quantity=-1 WHERE role_id=?", p.id()));
-        assertThrows(RuntimeException.class, () -> jdbc.update("INSERT INTO game_inventory VALUES (?,1,1)", UUID.randomUUID().toString()));
+        assertThrows(RuntimeException.class, () -> jdbc.update("INSERT INTO game_inventory(role_id,item_id,quantity,instance_id) VALUES (?,1,1,'missing-role')", UUID.randomUUID().toString()));
     }
 
     /** 伪造预期 UUID 只读验证本批实例，确认身份不符时启动保护确实中止。 */
@@ -289,9 +319,9 @@ class MySqlIT {
         assertEquals(settled.inventory(), inventory(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
-        assertEquals(6,number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(7, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals(settled, campaign.claim(token, report.id()));
-        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=5");
+        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=7");
     }
 
     /** 通过独立 JVM 的真实 HTTP 完成业务链，在未领奖和已领奖两个阶段分别终止进程再登录核验恢复。 */
@@ -348,8 +378,8 @@ class MySqlIT {
         tx.executeWithoutResult(status->{repo.lock(p.id());repo.creditCurrency(p.id(),17,3);inventory.credit(p.id(),900101,8);inventory.credit(p.id(),900101,4);});
         assertEquals(before+1,repo.revision(p.id()));var committed=snapshots.snapshot(p.token());
         tx.executeWithoutResult(status->{repo.lock(p.id());inventory.credit(p.id(),900101,99);repo.creditCurrency(p.id(),99,0);status.setRollbackOnly();});
-        assertEquals(committed,snapshots.snapshot(p.token()));
-        app.close();boot();assertEquals(committed,snapshots.snapshot(p.token()));
+        assertStoredState(committed,snapshots.snapshot(p.token()));
+        app.close();boot();assertStoredState(committed,snapshots.snapshot(p.token()));
         assertEquals("bigint",jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND COLUMN_NAME='state_revision'",String.class));
     }
 
@@ -362,7 +392,7 @@ class MySqlIT {
         var first=idle.claim(p.token(),request);assertEquals(first.receipt(),idle.claim(p.token(),request).receipt());
         var assets=snapshots.snapshot(p.token());app.close();mysql.restart();boot();
         var restored=app.getBean(com.funsgamex.mxzg.campaign.IdleService.class).claim(p.token(),request);
-        assertEquals(first.receipt(),restored.receipt());assertEquals(assets,snapshots.snapshot(p.token()));
+        assertEquals(first.receipt(),restored.receipt());assertStoredState(assets,snapshots.snapshot(p.token()));
     }
 
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */

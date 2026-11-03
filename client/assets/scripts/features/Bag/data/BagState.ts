@@ -1,5 +1,5 @@
 /** 背包只读状态契约，区分未同步与空背包，角色归属由应用层协调。 */
-import type { BagItemData } from "./BagItemData";
+import type { BagItemData, BagTimedItem } from "./BagItemData";
 
 /** 本地展示同步状态；不表示 WebSocket 连接是否在线。 */
 export type BagStatus = "idle" | "ready";
@@ -16,4 +16,8 @@ export interface BagState {
     readonly synced: boolean;
     /** 完整只读库存，不因 UI 筛选而删除隐藏条目。 */
     readonly items: readonly BagItemData[];
+    /** 服务端确认的逐件期限库存，当前与普通格子分开保存，后续接入倒计时展示。 */
+    readonly timedItems: readonly BagTimedItem[];
+    /** 期限列表对应的服务器 Unix 秒；旧快照未携带时为 null，不以本机时间代替。 */
+    readonly timedServerTimeSeconds: number | null;
 }

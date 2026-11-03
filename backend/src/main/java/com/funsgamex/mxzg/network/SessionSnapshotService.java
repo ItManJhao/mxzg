@@ -4,6 +4,7 @@ package com.funsgamex.mxzg.network;
 import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.hero.*;
 import com.funsgamex.mxzg.inventory.InventoryService;
+import com.funsgamex.mxzg.inventory.TimedInventoryService;
 import com.funsgamex.mxzg.role.*;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ import org.springframework.transaction.annotation.*;
 @Service
 public class SessionSnapshotService {
     /** 角色、库存与持久版本的一致读结果；英雄字段保留但当前暂停加载。 */
-    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory, long revision) {}
+    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory, long revision, TimedInventoryService.State timedInventory) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -20,9 +21,12 @@ public class SessionSnapshotService {
     /** 唯一库存读取入口，不保存额外缓存。 */
     private final InventoryService inventory;
 
+    /** 逐件期限库存，在同一角色事务内回收过期记录。 */
+    private final TimedInventoryService timed;
+
     /** 注入原有数据入口，不新增玩家状态副本。 */
-    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory) {
-        this.sessions = sessions; this.roles = roles; this.inventory = inventory;
+    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory, TimedInventoryService timed) {
+        this.sessions = sessions; this.roles = roles; this.inventory = inventory; this.timed=timed;
     }
 
     /** 锁内再次校验，撤销同角色其他令牌；并发接管中已失效的令牌不能复活。 */
@@ -40,6 +44,7 @@ public class SessionSnapshotService {
         String role = sessions.requireRole(token);
         roles.lock(role);
         sessions.requireRole(token);
-        return new Snapshot(roles.findById(role).orElseThrow(), List.of(), inventory.list(role), roles.revision(role));
+        var timedState=timed.current(role,java.time.Instant.now().getEpochSecond());
+        return new Snapshot(roles.findById(role).orElseThrow(), List.of(), inventory.list(role), roles.revision(role), timedState);
     }
 }

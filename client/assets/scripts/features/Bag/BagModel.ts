@@ -1,6 +1,6 @@
 /** 背包唯一库存状态：由 Controller 提交服务端快照，View 只读；本地版本仅用于界面通知。 */
 import {BaseModel} from "../../framework/BaseModel";
-import {readBagItems} from "./data/BagItemData";
+import {readBagItems, readTimedItems} from "./data/BagItemData";
 import type {BagItemData} from "./data/BagItemData";
 import type {BagChangeSet, BagQuantityChange} from "./data/BagChangeSet";
 import type {BagState} from "./data/BagState";
@@ -52,10 +52,13 @@ export class BagModel extends BaseModel {
         return this.changeSet(false, [], [], []);
     }
 
-    /** 整批校验后替换绝对数量并计算增删改；首次同步不生成获得条目，空数组为合法空背包。校验失败不修改状态。 */
-    replaceAll(items: readonly BagItemData[]): BagChangeSet {
+    /** 整批校验后替换绝对数量并计算增删改；首次同步不生成获得条目，空数组为合法空背包。校验失败不修改状态。
+     * @param timedInventory 同帧逐件期限列表及服务器秒；与普通库存一起校验后提交。 */
+    replaceAll(items: readonly BagItemData[], timedInventory?: unknown): BagChangeSet {
         this.requireRole();
         const rows = readBagItems(items);
+        const timedItems = readTimedItems(timedInventory);
+        const timedServerTimeSeconds = timedInventory === undefined ? null : (timedInventory as {serverTimeSeconds: number}).serverTimeSeconds;
         const initialSync = !this.data.synced;
         const added: BagItemData[] = [], removed: BagItemData[] = [], quantityChanged: BagQuantityChange[] = [];
         if (!initialSync) {
@@ -71,7 +74,7 @@ export class BagModel extends BaseModel {
             }
             removed.push(...Array.from(previous.values()));
         }
-        this.commit({status: "ready", synced: true, items: rows});
+        this.commit({status: "ready", synced: true, items: rows, timedItems, timedServerTimeSeconds});
         return this.changeSet(initialSync, added, quantityChanged, removed);
     }
 
@@ -95,7 +98,7 @@ export class BagModel extends BaseModel {
 
     /** 创建未同步的空状态；idle 与已同步空背包 ready 含义不同。 */
     private emptyData(): BagContents {
-        return Object.freeze({status: "idle", synced: false, items: Object.freeze([])});
+        return Object.freeze({status: "idle", synced: false, items: Object.freeze([]), timedItems: Object.freeze([]), timedServerTimeSeconds: null});
     }
 
     /** 检查应用是否设置角色归属，缺失时抛错，拒绝接收无所属库存。 */

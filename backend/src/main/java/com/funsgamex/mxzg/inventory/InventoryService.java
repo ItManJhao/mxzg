@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class InventoryService {
-    public record Item(int itemId, long quantity) {}
+    /** itemId 是配置 ID，instanceId 是稳定库存记录 ID，字符串传输避免前端整数精度损失。 */
+    public record Item(int itemId, long quantity, String instanceId) {}
+    /** 库存持久化入口，由 Spring 注入。 */
     private final JdbcTemplate jdbc;
     /** 同事务更新版本并安排提交后同步。 */
     private final com.funsgamex.mxzg.network.AssetSyncService sync;
@@ -22,16 +24,17 @@ public class InventoryService {
     }
     /** 注入库存持久化与提交同步出口。 */
     public InventoryService(JdbcTemplate jdbc, com.funsgamex.mxzg.network.AssetSyncService sync) { this.jdbc = jdbc; this.sync=sync; }
+    /** 读取普通堆叠物品，保留记录身份；不混入逐件期限道具。 */
     public List<Item> list(String roleId) {
-        return jdbc.query("SELECT item_id,quantity FROM game_inventory WHERE role_id=? AND quantity>0 ORDER BY item_id",
-            (row,index) -> new Item(row.getInt(1), row.getLong(2)), roleId);
+        return jdbc.query("SELECT item_id,quantity,instance_id FROM game_inventory WHERE role_id=? AND quantity>0 ORDER BY item_id",
+            (row,index) -> new Item(row.getInt(1), row.getLong(2), row.getString(3)), roleId);
     }
     /** 在持有角色锁的奖励事务内发放正数库存；同事务登记版本，提交后统一同步。 */
     public void credit(String roleId, int itemId, long quantity) {
         if (quantity <= 0) throw new IllegalArgumentException("Nonpositive inventory credit");
         sync.requireTransaction();
         if (jdbc.update("UPDATE game_inventory SET quantity=quantity+? WHERE role_id=? AND item_id=?", quantity,roleId,itemId)==0)
-            jdbc.update("INSERT INTO game_inventory(role_id,item_id,quantity) VALUES (?,?,?)",roleId,itemId,quantity);
+            jdbc.update("INSERT INTO game_inventory(role_id,item_id,quantity,instance_id) VALUES (?,?,?,?)",roleId,itemId,quantity,java.util.UUID.randomUUID().toString());
         sync.changed(roleId);
     }
 }

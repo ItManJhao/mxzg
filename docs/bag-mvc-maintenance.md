@@ -22,7 +22,7 @@ BagApi、BagUpdateCoordinator、bindBagSession 已删除；不再保留背包查
 
 - 服务端 Snapshot.revision 是持久资产版本；BagState.revision 是本地提交序号；BagItemView.revision 是异步贴图代次，三者不得混用。
 - BagAdd 表示“新增库存种类”，不能代替旧 5002 的获得弹窗/文字提示；首次同步不播放奖励。
-- 当前 itemId 是配置 ID，尚未完成旧版实例 ID、到期字段和全部物品操作的还原。
+- 当前 itemId 是配置 ID；instanceId 与期限数据基础已补齐，逐件展示、倒计时和全部物品操作仍待还原。
 - 已删除无人调用的 BagModel.beginSync/fail/applyDelta 和 BagItemDelta，以及无人使用的 query 原因、loading/error 状态与错误字段、BagView 未使用的 Controller 导入。断线提示继续归应用层。库存唯一更新入口为 replaceAll。事件 reason 的 reward/consume 仍被暂停模块签名引用，暂不跨模块删除。
 - 详情当前只读，“确定”是关闭，来源/分解/使用尚未恢复；注释不能写成已实现操作。
 
@@ -84,8 +84,8 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 
 | 原依据 | 当前差异与推进要求 |
 |---|---|
-| mxzg-protofiles/protofiles/game/BackPack.proto，ResBackPackItem | 旧 item_id 为数据 ID，item_type 为配置 ID，num 为数量；当前 Item.itemId 实为配置 ID。不可把旧数据 ID 强转成配置 ID；实例引入前需补持久模型与安全的 int64 编解码 |
-| 同文件，5010 / ResTimeLimitItem | 独立期限列表包含数据 ID、类型和 end_time；当前未实现。须核对服务器时间单位与过期回收，再合入登录快照，不能仅 UI 隐藏当作资产扣除 |
+| mxzg-protofiles/protofiles/game/BackPack.proto，ResBackPackItem | 旧 item_id 为数据 ID，item_type 为配置 ID，num 为数量；新版 Item.itemId 保持配置 ID，V7 新增字符串 instanceId，已补持久记录身份与无精度损失传输 |
+| 同文件，5010 / ResTimeLimitItem | 独立期限列表包含数据 ID、类型和 end_time；本批已合入登录快照并由服务端读取时回收。逐件展示和权益撤销尚未实现 |
 | client/cocos_mxzg/client/idle/src/data/BackpackData.lua，getItemsByPageSign 487–697 行 | 普通道具按 sort 降序，本次恢复；旧 Lua 同权重无次序，配置说明提及物品类型次序，最终需正式服对照。装备增加装备稀有度，碎片按合成条件与 sort，特殊页依实例数据，不能共用普通道具排序 |
 | client/cocos_mxzg/client/idle/src/net/BackpackResponse.lua，backpackGain | 5002 同时包含增减与提示：0 静默、1 弹窗、2 文字；还排除英雄、符文、神装等由专用模块更新的数据。当前 state.changed 只有快照，不含演出原因；需另加明确提示载荷和重复消息处理，不能从差值猜演出 |
 | server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/observer/ThingObserver.java | 获得事件按业务 NoticeType 发 5002，消耗使用静默负数；当前事务后同步保留资产权威，后续提示应与同一次已提交事务关联 |
@@ -93,7 +93,7 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 | BackPack.proto 5011/5012/5013/5014 | 道具分解、充值卡、宠物碎片、装备合成日志；目前均未恢复。依赖英雄/宠物的操作在相关模块暂停期间不得开放 |
 | mxzg-protofiles/protofiles/game/Role.proto，GResRoleInfo 2001 | 当前仅基础身份、等级、金币与宝石；经验/英雄经验、精力、头像/形象/边框、VIP、创号及服务器时间、军团/引导、虹石/神权等仍有缺口。逐字段核对持久来源，不以固定默认值伪装已还原 |
 
-下一步先补身份字段映射与期限物品存储设计，再选择无英雄依赖的背包操作核对完整事务规则。此清单只记录已见源码和缺口，不表示全部旧背包功能已审完。
+身份字段映射与期限物品存储基础现已补齐；下一步接入期限配置、逐件格子与倒计时，再选择无英雄依赖的背包操作核对完整事务规则。此清单只记录已见源码和缺口，不表示全部旧背包功能已审完。
 
 ## 清理边界与类型检查
 
@@ -102,3 +102,15 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 client/tsconfig.json 显式声明 ES2017、DOM，并仅纳入 assets 游戏源码；tools 测试按独立检查入口运行。保留 Creator 生成的 ES2015 target，不编辑 temp/tsconfig.cocos.json。skipLibCheck 仅跳过依赖声明文件内部检查，游戏源码仍检查；独立 strict 检查继续执行。
 
 Object.entries 属于 ES2017 API；lib 只声明可用 API，不注入 polyfill，也不决定 Creator 最终构建。若发布目标缺该 API，应改用 Object.keys 加索引读取或按实测补兼容层，不能只提高 lib 掩盖运行时报错。低端机性能与 JS 引擎版本不是同一概念，发布前需目标平台验证。
+
+## 配置 ID、记录 ID 与期限基础（2026-11-03）
+
+旧 BackPackHandler._5001 将 BackPack.id 写入 item_id，将 BackPack.itemId 写入 item_type；ItemProcessor 按配置 ID 查找并叠加 num。所以普通库存也有记录 ID，但不是每一件堆叠道具一个 ID。新版 Item.itemId 保留已发布的配置 ID 含义，新增 instanceId 表示库存记录身份；不能重用 Protobuf 字段号。ID 用字符串传输，禁止 Number(instanceId)。
+
+V7 给普通库存添加稳定记录 ID，不改变原数量；迁移旧记录使用 stack:角色ID:配置ID，新建记录使用 UUID。game_timed_inventory 则每件一条，保存 instance_id、role_id、item_id、effect_type、active_at_seconds、expires_at_seconds，同配置也不合并。
+
+旧 TimeLimitItemProcessor 使用 TimeLimitItem 配置的 valid_time（天），不是 Item.use_value，也不是获得后完整 N×24 小时。公式为服务器激活当天零点 + valid_time×86400 − 1，所有协议时间为 Unix 秒；DateTimeUtil.theDayBreak 使用旧 JVM 默认时区，源码本身不足以证明正式服的实际时区。用户已确认新版所有区服统一 Asia/Shanghai 日切；服务端固定使用该时区，不依赖 JVM 默认值。真实业务发放尚未开放。
+
+旧 LimitItemInfoService.selectList 在发送 5010 前删除 endTime<=当前秒的记录；客户端也只显示 end_time>服务器时间的条目。新版统一初始化/恢复及资产快照在角色锁事务内回收已过期记录，同事务更新持久版本，提交后同步；没有新增 5010 查询或业务 HTTP。尚未加入在线定时扫描，且期限权益的到期撤销事件、配置加载/业务发放、倒计时和逐件格子仍未接入，不能视为完整期限玩法。
+
+Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItems 与普通 items 分开保存，整包预校验后一起提交。当前期限数据只进入 Model，不混入普通按配置聚合的 UI。普通完整快照的 instanceId、期限载荷为增量可选字段，旧数据缺字段仍可读；实际新后端始终下发记录 ID。

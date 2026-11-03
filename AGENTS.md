@@ -19,6 +19,8 @@
 - Protocol.ts 集中登记实际已实现消息，Controller 在初始化登记协议，onNotify 用清晰 switch 转入 onXxx 方法、提交唯一 Model、通知 View。session.login/session.authenticate 是统一初始化回包，state.changed 是服务端事务提交后事件；不在客户端伪造协议。AssetSyncService 在同一资产事务内递增持久版本、提交后通知，回滚无推送。完整版本快照支持断线恢复与旧版本丢弃；不能把连接 ID 或本地 UI revision 当服务端资产版本。开发日志默认隐藏心跳和凭证，显示中文说明、字段与真实多行数据。
 - 背包页面打开、切换分类、返回主城均不查询库存。BagApi、BagUpdateCoordinator、bindBagSession 已退役，排序/去重由服务端持久版本与应用统一状态入口承担。暂停模块不得通过旧资产回调写 Model；恢复模块前重新核对旧协议、规则、持久幂等和状态同步。
 
+- 背包身份：Item.itemId 是配置 ID，instanceId 是持久记录 ID，以字符串传输，禁止转 number；普通物品按配置堆叠，期限物品逐件独立。新版所有区服期限自然日计算统一使用 Asia/Shanghai（用户已确认），不可依赖机器默认时区或把 valid_time 天数解释成领取后满 24 小时。
+
 ## 1. 注释是代码交付的一部分
 
 - 手写代码的注释默认使用简体中文，标识符保持项目现有命名习惯。

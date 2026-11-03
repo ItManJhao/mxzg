@@ -11,6 +11,11 @@ const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,dia
 /** 协议帧往返必须保持结构和整数，不截取 Buffer 池其他字节。 */
 function roundTrip(frame:any){const bytes=encodeGameFrame(frame);assert(bytes instanceof ArrayBuffer);assert.deepEqual(decodeGameFrame(bytes),frame);}
 function main(){
+ const instance="9223372036854775807";
+ roundTrip({version:1,kind:"event",name:Protocol.STATE_CHANGED,connectionId:"conn",body:{...state,
+ inventory:[{itemId:900102,quantity:2,instanceId:instance}],
+ timedInventory:{serverTimeSeconds:100,items:[{instanceId:instance,itemId:123,activeAtSeconds:50,expiresAtSeconds:200},{instanceId:"other-instance",itemId:123,activeAtSeconds:60,expiresAtSeconds:300}]}}});
+
  roundTrip({version:1,kind:"request",name:Protocol.SESSION_LOGIN,id:"req",body:{account:"test",serverId:"local-1",clientInstanceId:"instance"}});
  roundTrip({version:1,kind:"request",name:Protocol.SESSION_AUTHENTICATE,id:"req",body:{accessToken:"a".repeat(43),clientInstanceId:"instance"}});
  for(const name of [Protocol.SESSION_HEARTBEAT,Protocol.SERVERS_LIST])roundTrip({version:1,kind:"request",name,id:"req",body:{}});

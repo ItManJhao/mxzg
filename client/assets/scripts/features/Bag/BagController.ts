@@ -50,10 +50,11 @@ export class BagController extends BaseController {
         }
     }
 
-    /** 使用绝对数量完整替换库存，首次不播放获得演出；空列表也是有效初始化。 */
+    /** 同帧提交普通库存与逐件期限库存，首次不播放获得演出；空列表也是有效初始化。 */
     private onInventoryState(protocol: ProtocolName, data: unknown): void {
-        const items = readBagItems(statePayload(protocol, data).inventory), previous = this.model.snapshot;
-        const changes = this.model.replaceAll(items);
+        const state = statePayload(protocol, data);
+        const items = readBagItems(state.inventory), previous = this.model.snapshot;
+        const changes = this.model.replaceAll(items, state.timedInventory);
         this.notify(changes, protocol === Protocol.STATE_CHANGED ? "unknown" : "initial-sync", previous);
     }
 
@@ -67,7 +68,8 @@ export class BagController extends BaseController {
                     status: state.status, synced: state.synced
                 }));
             }
-            if (changes && (changes.initialSync || reason === "session-reset" || changes.added.length || changes.quantityChanged.length || changes.removed.length)) {
+            // 每个已接纳版本均刷新汇总，期限列表或实例身份变化也必须可见。
+            if (changes) {
                 const update = Object.freeze({...changes, reason: changes.initialSync ? "initial-sync" : reason});
                 const header = {roleKey: update.roleKey, revision: update.revision, reason: update.reason};
                 if (update.added.length) this.emit(BagEvent.BagAdd, Object.freeze({...header, added: update.added}));

@@ -10,7 +10,7 @@ import { _decorator, Asset, Component, director, Director, Node, Prefab, sys } f
 import { AccountModel } from "../../features/account/AccountModel";
 import { AccountApi, readSession, readRole } from "../../features/account/AccountApi";
 import { GameSocketClient } from "../../platform/GameSocketClient";
-import { readBagItems } from "../../features/Bag/data/BagItemData";
+import { readBagItems, readTimedItems } from "../../features/Bag/data/BagItemData";
 import { AccountService } from "../../features/account/AccountService";
 import { AccountController } from "../../features/account/AccountController";
 import { AccountLoginView } from "../../features/account/ui/AccountLoginView";
@@ -93,7 +93,7 @@ export class RemakeApp extends Component {
       validateSnapshot: value => {
         if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("恢复数据无效");
         const snapshot = value as Record<string, unknown>;
-        readRole(snapshot.role); readBagItems(snapshot.inventory);
+        readRole(snapshot.role); readBagItems(snapshot.inventory); readTimedItems(snapshot.timedInventory);
         if(!Number.isSafeInteger(snapshot.revision) || Number(snapshot.revision)<0) throw new Error("状态版本无效");
       },
     });

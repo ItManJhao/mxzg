@@ -11,7 +11,7 @@ import {RoleController} from "../assets/scripts/features/account/RoleController"
 import {BagController} from "../assets/scripts/features/Bag/BagController";
 import {BagModel} from "../assets/scripts/features/Bag/BagModel";
 import {BagEvent} from "../assets/scripts/features/Bag/BagEvent";
-import {readBagItems} from "../assets/scripts/features/Bag/data/BagItemData";
+import {readBagItems,readTimedItems} from "../assets/scripts/features/Bag/data/BagItemData";
 import {isolatedSocketPreview} from "../assets/scripts/app/remake/IsolatedSocketPreview";
 import {AssetStateBinding} from "../assets/scripts/app/remake/AssetStateBinding";
 import {EventDispatcher} from "../assets/scripts/framework/EventDispatcher";
@@ -54,7 +54,19 @@ async function checkPreviewIsolation(){
   address("http://localhost:7456/?mxzgTestRun="+run+"&mxzgTestApi="+encodeURIComponent("http://127.0.0.1:18080"));await assert.rejects(isolatedSocketPreview(normal.socketUrl,storage));
  }finally{context.fetch=fetchBefore;if(previous)Object.defineProperty(context,"location",previous);else delete context.location;}
 }
+/** 逐件期限数据不按配置合并；字符串 ID 无精度损失，非法数据不污染整包。 */
+function checkInventoryIdentity(){
+ const id="9223372036854775807",timed={serverTimeSeconds:100,items:[{instanceId:id,itemId:123,activeAtSeconds:50,expiresAtSeconds:200},{instanceId:"second",itemId:123,activeAtSeconds:60,expiresAtSeconds:300}]};
+ assert.equal(readBagItems([{itemId:900102,quantity:1,instanceId:id}])[0].instanceId,id);
+ assert.equal(readTimedItems(timed).length,2);
+ assert.throws(()=>readTimedItems({...timed,serverTimeSeconds:200}));
+ assert.throws(()=>readTimedItems({...timed,items:[timed.items[0],timed.items[0]]}));
+ const model=new BagModel();model.reset("role");model.replaceAll([],timed);assert.equal(model.snapshot.timedItems.length,2);assert.equal(model.snapshot.timedServerTimeSeconds,100);
+ const before=model.snapshot;assert.throws(()=>model.replaceAll([{itemId:900102,quantity:9}],{...timed,serverTimeSeconds:300}));assert.equal(model.snapshot,before);
+ model.reset(null);assert.equal(model.snapshot.timedItems.length,0);
+}
 async function main(){
+ checkInventoryIdentity();
  await checkPreviewIsolation();
  const server=new Server(),account=new AccountModel(),model=new BagModel(),bag=new BagController(model);
  const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:value=>{const row=value as any;readRole(row.role);readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},retryDelay:()=>1,heartbeatMs:100000});

@@ -5,7 +5,7 @@ import type { AccountModel } from "../../features/account/AccountModel";
 import type { BagController } from "../../features/Bag/BagController";
 import type { RoleController } from "../../features/account/RoleController";
 import { readRole } from "../../features/account/AccountApi";
-import { readBagItems } from "../../features/Bag/data/BagItemData";
+import { readBagItems, readTimedItems } from "../../features/Bag/data/BagItemData";
 import { statePayload } from "../../platform/ProtocolState";
 import type { ProtocolName } from "../../platform/Protocol";
 import type { GameFrame } from "../../platform/GameProtocolCodec";
@@ -29,6 +29,7 @@ export class AssetStateBinding {
     if(frame.version!==1 || (frame.kind!=="event" && (frame.kind!=="response" || frame.ok!==true)) || frame.error!==undefined)throw new Error("资产信封无效");
     const state=statePayload(frame.name as ProtocolName,frame.body), role=readRole(state.role);
     readBagItems(state.inventory);
+    readTimedItems(state.timedInventory);
     if(role.id!==current.role.id || role.serverId!==current.role.serverId)throw new Error("资产不属于当前角色");
     const key=(role.serverId||"")+"/"+role.id, revision=Number(state.revision);
     if(this.key===key && revision<=this.revision)return false;
