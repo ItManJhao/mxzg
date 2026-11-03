@@ -1,8 +1,17 @@
 /**
- * 英雄立绘详情显示组件：只接受显式模板及等级数据，不读取旧角色仓库或触发养成写操作。
+ * 只读英雄详情页：由 UIManager 传入实例 ID，读取唯一英雄 Model 并订阅服务端同步后的事件。
+ * 复用旧详情预制体与立绘；展示服务器基础属性，关闭时释放监听和立绘，不触发养成写操作。
  */
+import { BaseView } from "../../../framework/ui/BaseView";
+import { UIManager } from "../../../framework/ui/UIManager";
+import { EventDispatcher } from "../../../framework/EventDispatcher";
+import { HeroRosterEvent } from "../HeroRosterEvent";
+import { HeroRosterModel } from "../HeroRosterModel";
+import { HeroCatalog } from "../HeroCatalog";
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { _decorator, Component, Label, Node, Overflow, UITransform } from "cc";
+import { _decorator, Button, Label, Node, Overflow, UITransform } from "cc";
 import { GameLog } from "../../../core/GameLog";
 interface HeroPortraitData { templateId: number; name: string; level: number; }
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
@@ -28,49 +37,107 @@ const TALK_BUBBLE = ResourceCatalog.common.other_spr_bubble_5.path;
  * 底栏字绑在按钮上的 Label。不搜整棵树，不发穿戴和升级。
  */
 @ccclass("HeroInfoView")
-export class HeroInfoView extends Component {
+export class HeroInfoView extends BaseView<{heroId:string}> {
+  /** 立绘挂载点，由预制体绑定。 */
   @property(Node)
   portrait: Node | null = null;
 
+  /** 旧对话背景，只读阶段隐藏。 */
   @property(Node)
   talkBubble: Node | null = null;
 
+  /** 旧升级引导台词，只读阶段不写入。 */
   @property(Label)
   talk: Label | null = null;
 
+  /** 英雄名称标题，按配置刷新。 */
   @property(Label)
   nameLabel: Label | null = null;
 
+  /** 旧穿戴标题，入口保持关闭。 */
   @property(Label)
   wearTitle: Label | null = null;
 
+  /** 旧卸下标题，入口保持关闭。 */
   @property(Label)
   offTitle: Label | null = null;
 
+  /** 旧升级标题，入口保持关闭。 */
   @property(Label)
   gradeTitle: Label | null = null;
 
+  /** 旧设置标题，入口保持关闭。 */
   @property(Label)
   settingTitle: Label | null = null;
 
+  /** 旧展开标题，入口保持关闭。 */
   @property(Label)
   unfoldTitle: Label | null = null;
 
+  /** 旧图鉴标题，入口保持关闭。 */
   @property(Label)
   bookTitle: Label | null = null;
 
+  /** 旧菜单容器，展示时清理整屏命中区域。 */
   @property([Node])
   hitMenus: Node[] = [];
 
+  /** 由详情预制体绑定的返回按钮。 */
+  @property(Button) backButton:Button|null=null;
+  /** 当前等级、星级与只读状态。 */
+  @property(Label) summary:Label|null=null;
+  /** 基础属性按攻击、生命、防御、速度绑定；不是完整加成战力。 */
+  @property([Label]) attributes:Label[]=[];
+  /** 由模板元素选择图标，不能沿用预制体占位元素。 */
+  @property(Node) elementIcon:Node|null=null;
+  /** 本次打开的实例 ID；关闭清空，不能误用模板 ID 查找。 */
+  private selectedId="";
+  /** 当前角色归属；换号后关闭，不能继续显示旧角色详情。 */
+  private owner:string|null=null;
+  /** 页面持有的动态立绘节点，切换或关闭时销毁。 */
   private spineNode: Node | null = null;
+  /** 已加载立绘的模板 ID，仅用于资源复用。 */
   private heroId = 0;
+  /** 统一入口只传实例 ID；资料来自唯一名册，不额外发送详情查询。 */
+  onOpen(args:{heroId:string}):void {
+    if(!args?.heroId)throw new Error("缺少英雄实例 ID");
+    this.selectedId=args.heroId;this.owner=HeroRosterModel.instance.roleKey;
+    this.backButton?.node.on(Button.EventType.CLICK,this.goBack,this);
+    EventDispatcher.instance.on(HeroRosterEvent.Updated,this,this.refresh);
+    this.refresh();
+  }
+  /** 读取最新实例和服务器基础属性；角色变化或实例删除即返回列表。 */
+  private refresh():void {
+    const model=HeroRosterModel.instance;
+    const hero=model.snapshot.heroes.find(row=>row.id===this.selectedId);
+    if(!hero || model.roleKey!==this.owner){this.goBack();return;}
+    const catalog=new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType),GameConfig.instance.getFile(GConfig.Item));
+    const elem=catalog.find(hero.templateId)?.elem;
+    const icons=[ResourceCatalog.hero.hero_icon_elem_0,ResourceCatalog.hero.hero_icon_elem_1,ResourceCatalog.hero.hero_icon_elem_2,ResourceCatalog.hero.hero_icon_elem_3,ResourceCatalog.hero.hero_icon_elem_4,ResourceCatalog.hero.hero_icon_elem_5];
+    if(this.elementIcon){this.elementIcon.active=!!elem;if(elem)paintSpritePaths(this.elementIcon,[icons[elem].path]);}
+    this.show({templateId:hero.templateId,name:catalog.find(hero.templateId)?.name||"未知英雄",level:hero.level});
+    if(this.summary)this.summary.string="等级："+hero.level+"    星级："+hero.star+"    强化："+(hero.stage??"—")+"\n基础属性（不含装备、天赋加成）";
+    const stats=hero.baseStats;const names=["攻击","生命","防御","速度"],values=stats?[stats.atk,stats.hp,stats.def,stats.spd]:[];
+    this.attributes.forEach((label,i)=>{label.string=names[i]+"："+(values[i]??"待同步");});
+  }
+  /** 返回已有列表，不触发升级、穿戴或扩容。 */
+  private goBack():void {
+    if (HeroRosterModel.instance.roleKey !== this.owner) { UIManager.instance.back(); return; }
+    // 当前导航只保留主城根页面，详情必须显式打开列表，不能直接调用 back 回主城。
+    void UIManager.instance.openById("hero").catch(error => GameLog.shared.warn("Hero", "返回英雄列表失败：" + String(error)));
+  }
+  /** 关页释放订阅和立绘；异步加载由无效节点检查阻止回写。 */
+  onClose():void {
+    EventDispatcher.instance.offTarget(this);this.backButton?.node?.off(Button.EventType.CLICK,this.goBack,this);
+    this.selectedId="";this.owner=null;if(this.spineNode?.isValid)this.spineNode.destroy();this.spineNode=null;this.heroId=0;
+  }
 
 /** 显示显式传入的英雄资料，不读取其他角色仓库。 */
   show(hero: HeroPortraitData): void {
     this.silenceHits();
     this.writeName(hero);
-    this.writeActions();
-    this.writeTalk(hero);
+    // 只读版本的写操作节点已在 Prefab 中关闭。
+    // 旧升级引导台词不属于只读详情，不显示。
     this.mountPortrait(hero);
   }
 
@@ -82,6 +149,7 @@ export class HeroInfoView extends Component {
     this.nameLabel.node.active = true;
   }
 
+  /** 为保留的旧养成按钮设置标题；只读页面不调用。 */
   private writeActions(): void {
     this.fitAction(this.wearTitle, HERO_DETAIL_WEAR, 22);
     this.fitAction(this.offTitle, HERO_DETAIL_OFF, 22);
@@ -129,11 +197,12 @@ export class HeroInfoView extends Component {
     if (!id) return;
     const actor = mountBattleSpine(host, String(id), () => {
       GameLog.shared.warn("Hero", "详情立绘没有挂上");
-    }, { seatY: HERO_DETAIL_SPINE_SEAT_Y });
+    }, { seatY: -160, scale: 2.13 });
     this.spineNode = actor.node;
     if (this.spineNode.parent === host) this.spineNode.setSiblingIndex(1);
   }
 
+  /** 按旧按钮尺寸缩放标题，供后续恢复养成入口时使用。 */
   private fitAction(label: Label | null, text: string, size: number): void {
     if (!label) return;
     label.string = text;
@@ -150,10 +219,12 @@ export class HeroInfoView extends Component {
     label.overflow = Overflow.SHRINK;
   }
 
+  /** 清除旧菜单的整屏命中区域，避免挡住返回按钮。 */
   private silenceHits(): void {
     for (let i = 0; i < this.hitMenus.length; i++) this.zeroIfHuge(this.hitMenus[i]);
   }
 
+  /** 仅清空异常大的菜单命中尺寸，保留正常局部控件。 */
   private zeroIfHuge(node: Node | null): void {
     if (!node) return;
     const ui = node.getComponent(UITransform);

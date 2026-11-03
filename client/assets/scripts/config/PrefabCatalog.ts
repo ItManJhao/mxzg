@@ -46,6 +46,8 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "prefabs/ui/common/NpcTalkLayer": "85ab48b1-b37f-583f-a385-46c6baec094b",
   "prefabs/ui/common/PagePrefabShell": "7a5a3d49-f6b1-48ec-85aa-b31467f6e5d9",
   "prefabs/ui/common/TextChip": "1af4d7e3-905b-4286-cf44-5dbe01908f73",
+  "prefabs/ui/gm/GmOptionCellView": "ac4b58d6-8086-44b6-9701-4997d58d6b13",
+  "prefabs/ui/gm/GmView": "76ebb0c2-3e4e-48b1-ae9c-291a56089c8e",
   "prefabs/ui/hero/FormationView": "c75bff2b-0944-4809-9b5f-1eb8c09107f8",
   "prefabs/ui/hero/HeroIconCellView": "e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40",
   "prefabs/ui/hero/HeroInfoAttrLayer": "65f0e985-d8ec-4f76-92bb-57b980e4b132",

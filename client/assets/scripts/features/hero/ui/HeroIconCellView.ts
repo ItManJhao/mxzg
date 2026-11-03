@@ -64,7 +64,7 @@ export class HeroIconCellView extends Component {
     this.paintStars(empty ? 0 : cell.stars);
     this.paintLevel(empty ? null : cell.level);
     if (this.lock) this.lock.active = !empty && cell.locked;
-    if (this.battle) this.battle.active = !empty && cell.deployed && !cell.locked;
+    if (this.battle) this.battle.active = !empty && cell.deployed && cell.kind === "owned";
     this.bindTap(empty || !onTap ? null : onTap);
   }
 
@@ -89,7 +89,7 @@ export class HeroIconCellView extends Component {
   private paintFace(cell: HeroCellModel, empty: boolean, revision:number): void {
     if (!this.face) return;
     const image = this.face.getComponent(Sprite);
-    if (image) image.grayscale = !empty && cell.locked;
+    if (image) image.grayscale = !empty && cell.kind === "locked";
     if (empty || !cell.face) {
       this.face.active = false;
       return;

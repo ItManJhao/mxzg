@@ -1,3 +1,4 @@
+/** 英雄名册归属、统一快照及保留阵容规则的独立数据库回归。 */
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class HeroLineupTest {
     @Autowired DevelopmentLoginService login;
     @Autowired HeroQueries heroes;
+    @Autowired com.funsgamex.mxzg.network.SessionSnapshotService snapshots;
     @Autowired LineupService lineups;
     @Autowired JdbcTemplate jdbc;
     @LocalServerPort int port;
@@ -35,6 +37,28 @@ class HeroLineupTest {
         String account = "test_" + UUID.randomUUID().toString().substring(0, 12);
         var result = login.login(account);
         return new Player(account, result.role().id(), "Bearer " + result.session().accessToken());
+    }
+    /** 登录/恢复完整快照必须读取本角色持久名册，不返回暂停占位空数组或其他角色英雄。 */
+    @Test void unifiedSnapshotContainsOnlyOwnedHeroes() {
+        var owner=player(); var other=player();
+        String first=seedHero(owner),second=seedHero(owner);seedHero(other);
+        jdbc.update("UPDATE game_hero SET is_locked=TRUE WHERE id=?", first);
+        lineups.save(owner.authorization(),save(0,new Lineup.Slot(2,first)));
+        var snapshot=snapshots.snapshot(owner.authorization());
+        var selected=snapshot.heroes().stream().filter(hero->hero.id().equals(first)).findFirst().orElseThrow();
+        assertTrue(selected.locked());assertTrue(selected.deployed());
+        assertEquals(0,selected.stage());assertNotNull(selected.baseStats());assertTrue(selected.baseStats().hp()>0);
+        var reserve=snapshot.heroes().stream().filter(hero->hero.id().equals(second)).findFirst().orElseThrow();
+        assertFalse(reserve.locked());assertFalse(reserve.deployed());
+        assertEquals(Set.of(first,second),snapshot.heroes().stream().map(hero->hero.id()).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(snapshot.heroes(),snapshots.snapshot(owner.authorization()).heroes());
+        assertEquals(owner.roleId(),snapshot.role().id());
+        assertEquals(300,snapshot.heroRoster().capacity());
+        assertEquals(0,snapshot.heroRoster().buySpaceTimes());
+        jdbc.update("UPDATE game_role SET hero_capacity=301,hero_capacity_buys=1,goddess_vip=1 WHERE id=?",owner.roleId());
+        var expanded=snapshots.snapshot(owner.authorization()).heroRoster();
+        assertEquals(326,expanded.capacity());assertEquals(1,expanded.buySpaceTimes());
+        assertEquals(300,snapshots.snapshot(other.authorization()).heroRoster().capacity());
     }
     private String seedHero(Player player) {
         String id = UUID.randomUUID().toString();

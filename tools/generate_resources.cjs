@@ -126,3 +126,8 @@ let catalog = fs.readFileSync(catalogFile, 'utf8');
 catalog = catalog.replace(/export const PREFAB_UUID[^=]*=\s*\{[\s\S]*?\n\};/, 'export const PREFAB_UUID: Readonly<Record<string, string>> = ' + JSON.stringify(Object.fromEntries(Object.entries(prefabIds).sort()), null, 2) + ';');
 write('client/assets/scripts/config/PrefabCatalog.ts', catalog);
 console.log('资源目录验证：' + Object.keys(groups).length + ' 组，' + Object.keys(prefabIds).length + ' Prefab，缺失动态图标 ' + missing.length + ' 项（记录于 config/resource-missing.json）');
+
+// GM 等新增资源登记后同步运行时准入清单；只生成索引，不删除资源。
+const prefabPlan = JSON.parse(fs.readFileSync(path.join(root, 'tools/prefab-plan.json'), 'utf8'));
+const plannedPaths = [...new Set(prefabPlan.groups.flatMap(group => group.names.map(name => group.directory + '/' + name)))].sort();
+write('client/assets/scripts/config/PrefabPlan.ts', '/** Generated from tools/prefab-plan.json by tools/generate_resources.cjs. */\nconst paths = new Set<string>([\n' + plannedPaths.map(value => '  ' + JSON.stringify(value)).join(',\n') + '\n]);\nexport function prefabInPlan(assetPath: string): boolean { return paths.has(assetPath); }\n');

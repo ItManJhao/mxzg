@@ -2,10 +2,10 @@
  * 模块生命周期基类：管理会话代次、显式初始化和模块自有监听。
  * 不持有界面或协议状态，页面关闭不释放模块。
  */
-import { EventDispatcher } from "./EventDispatcher";
-import type { EventPayloads } from "./EventDispatcher";
-import { EventScope } from "./EventScope";
-import type { Unsubscribe } from "./EventScope";
+import {EventDispatcher} from "./EventDispatcher";
+import type {EventPayloads} from "./EventDispatcher";
+import {EventScope} from "./EventScope";
+import type {Unsubscribe} from "./EventScope";
 
 export interface ControllerSession {
     readonly generation: number;
@@ -19,13 +19,19 @@ export abstract class BaseController {
     private generation = 0;
     private readonly eventScope = new EventScope(this.constructor.name);
 
-    protected get isInitialized(): boolean { return this.initialized; }
+    protected get isInitialized(): boolean {
+        return this.initialized;
+    }
 
     initialize(): void {
         if (this.initialized) return;
         this.initialized = true;
-        try { this.onInitialize(); }
-        catch (error) { this.dispose(); throw error; }
+        try {
+            this.onInitialize();
+        } catch (error) {
+            this.dispose();
+            throw error;
+        }
     }
 
     resetSession(roleKey: string | null): void {
@@ -35,7 +41,7 @@ export abstract class BaseController {
     }
 
     captureSession(): Readonly<ControllerSession> {
-        return Object.freeze({ generation: this.generation, roleKey: this.roleKey });
+        return Object.freeze({generation: this.generation, roleKey: this.roleKey});
     }
 
     isCurrent(session: ControllerSession): boolean {
@@ -51,12 +57,18 @@ export abstract class BaseController {
         this.onDispose();
     }
 
-    protected ownListener(unsubscribe: Unsubscribe): Unsubscribe { return this.eventScope.add(unsubscribe); }
+    protected ownListener(unsubscribe: Unsubscribe): Unsubscribe {
+        return this.eventScope.add(unsubscribe);
+    }
+
     protected emit<K extends keyof EventPayloads>(event: K, payload: EventPayloads[K]): void {
         EventDispatcher.instance.emit(event, payload);
     }
 
     protected abstract onInitialize(): void;
+
     protected abstract onResetSession(roleKey: string | null): void;
-    protected onDispose(): void {}
+
+    protected onDispose(): void {
+    }
 }

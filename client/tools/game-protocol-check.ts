@@ -7,10 +7,11 @@ import {Protocol} from "../assets/scripts/platform/Protocol";
 import {ProtocolRouter} from "../assets/scripts/platform/ProtocolRouter";
 import {formatServerFrame} from "../assets/scripts/platform/GameProtocolLog";
 import {mxzg} from "../assets/scripts/platform/GameProtocol.generated";
-const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[],inventory:[{itemId:900101,quantity:4}]};
+const state={revision:2,role:{id:"role",nickname:"测试😀",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[],heroRoster:{capacity:325,buySpaceTimes:1},inventory:[{itemId:900101,quantity:4}]};
 /** 协议帧往返必须保持结构和整数，不截取 Buffer 池其他字节。 */
 function roundTrip(frame:any){const bytes=encodeGameFrame(frame);assert(bytes instanceof ArrayBuffer);assert.deepEqual(decodeGameFrame(bytes),frame);}
 function main(){
+ for(const locked of [true,false]) roundTrip({version:1,kind:"event",name:Protocol.STATE_CHANGED,body:{...state,heroes:[{id:"hero",templateId:1,level:1,star:1,locked,deployed:true,stage:0,baseStats:{hp:120,atk:30,def:10,spd:100}}]}});
  const instance="9223372036854775807";
  roundTrip({version:1,kind:"event",name:Protocol.STATE_CHANGED,connectionId:"conn",body:{...state,
  inventory:[{itemId:900102,quantity:2,instanceId:instance}],

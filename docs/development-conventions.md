@@ -166,3 +166,7 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 - 服务器和区域两列均为 SuperScroll → view/Mask → content/SuperContent。Prefab 保存 cellPrefab、尺寸、间距和方向；View 只 setData，不销毁重建所有格子、不计算格子坐标或 content 高度。
 - LoadingLayer/BootChrome 是启动加载流程，用于资源准备、进度和提示；AccountLoginView 负责账号、选服与进入。共享背景或尺寸计算不代表同一界面。启动层独立管理不构成业务弹窗绕过 UIManager 的例外。
 - 验收分别记录结构/自动检查与 Creator 实际效果；未实际打开不能声称完成视觉验收。
+
+## 预制体节点命名
+
+- 新增或修改的 Prefab/Scene 节点使用有业务含义的英文名称，禁止中文节点名；例如 CloseButton、HeroTabButton、SearchInput、StatusLabel。界面展示文字和源码注释仍使用中文。重命名时检查节点路径、动画轨道与代码查找，保留资源 UUID 和组件绑定；旧模块在涉及修改时逐步整改，不批量改动无关模块。

@@ -1,11 +1,13 @@
 /** 英雄名册唯一状态：保存只读英雄与同步状态，由模块 Controller 提交，不持有网络或监听。 */
-import type {OwnedHero} from "./HeroApi";
+import type {OwnedHero, HeroRosterInfo} from "./HeroApi";
 import {BaseModel} from "../../framework/BaseModel";
 
 export interface HeroRosterState {
     readonly status: "idle" | "loading" | "ready" | "error";
     readonly heroes: readonly OwnedHero[];
     readonly error: string;
+    /** 同一快照下发的总容量；缺失时显示未同步，不使用本地默认上限。 */
+    readonly rosterInfo?:HeroRosterInfo;
 }
 
 export class HeroRosterModel extends BaseModel {
@@ -21,6 +23,7 @@ export class HeroRosterModel extends BaseModel {
     replace(state: HeroRosterState): void {
         this.state = Object.freeze({
             ...state,
+            rosterInfo:state.rosterInfo?Object.freeze({...state.rosterInfo}):undefined,
             heroes: Object.freeze(state.heroes.map(hero => Object.freeze({...hero})))
         });
         this.incrementVersion();

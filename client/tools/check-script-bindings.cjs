@@ -44,6 +44,16 @@ function checkButtons(data, errors) {
     if (!Number.isInteger(id) || data[id]?.__type__ !== 'cc.Node') errors.push('Button[' + index + '] target 不是 cc.Node');
   });
 }
+/** 校验预制体根节点的编辑器元数据，防止运行时可加载但 Creator 打开时报 instance 空引用。 */
+function checkPrefabRoot(data, errors) {
+  if (!Array.isArray(data) || data[0]?.__type__ !== 'cc.Prefab') return;
+  const rootId = data[0].data?.__id__, node = data[rootId];
+  const info = data[node?._prefab?.__id__];
+  if (node?.__type__ !== 'cc.Node' || info?.__type__ !== 'cc.PrefabInfo'
+      || info.root?.__id__ !== rootId || info.asset?.__id__ !== 0 || !info.fileId) {
+    errors.push('Prefab 根节点缺少有效 PrefabInfo（Creator 无法打开）');
+  }
+}
 /** 固定压缩锚点及反例，防止检查器放过 22 位 ID、未知类或错误按钮引用。 */
 function selfTest() {
   for (const [uuid, packed, legacy] of [
@@ -59,6 +69,10 @@ function selfTest() {
   const errors=[];
   checkButtons([{__type__:'cc.Node'},{__type__:'cc.Button',_target:{__id__:0}},{__type__:'cc.Button',_target:{__id__:1}},{__type__:'cc.Button',_target:{__id__:99}}],errors);
   assert.equal(errors.length,2);
+  const missing=[{__type__:'cc.Prefab',data:{__id__:1}},{__type__:'cc.Node',_prefab:null}];
+  const prefabErrors=[]; checkPrefabRoot(missing,prefabErrors); assert.equal(prefabErrors.length,1);
+  missing[1]._prefab={__id__:2}; missing.push({__type__:'cc.PrefabInfo',root:{__id__:1},asset:{__id__:0},fileId:'root'});
+  const validErrors=[]; checkPrefabRoot(missing,validErrors); assert.equal(validErrors.length,0);
   assert.throws(()=>compress('broken',5));
 }
 /** 全库扫描脚本元数据与所有预制体/场景；任何失败均返回非零退出码。 */
@@ -77,7 +91,7 @@ function main() {
   const assets = all.filter(p=>/\.(prefab|scene)$/.test(p));
   for (const file of assets) {
     const data=JSON.parse(fs.readFileSync(file,'utf8')), local=[];
-    checkTypes(data,classes,local,bindings); checkButtons(data,local);
+    checkTypes(data,classes,local,bindings); checkButtons(data,local); checkPrefabRoot(data,local);
     errors.push(...local.map(message=>path.relative(root,file)+': '+message));
   }
   if (errors.length) throw new Error(errors.join('\n'));

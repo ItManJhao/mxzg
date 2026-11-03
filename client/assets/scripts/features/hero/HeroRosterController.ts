@@ -1,133 +1,59 @@
-/** 会话级英雄名册协调：查询、鉴权、去重、升级结果提交与换号隔离；不持有 View，页面关闭不销毁。 */
-import type {AccountModel} from "../account/AccountModel";
-import type {AccountAuthorization} from "../account/AccountService";
-import { SessionChanged } from "../../framework/SessionChanged";
+/** 英雄名册控制器：统一登录/恢复和服务端同步 → 唯一 Model → 列表刷新事件；不持有账号、凭证或查询接口。 */
 import {BaseController} from "../../framework/BaseController";
 import {publishNotification} from "../../framework/EventDispatcher";
-import {readOwnedHeroes} from "./HeroApi";
-import type {HeroGateway, OwnedHero} from "./HeroApi";
+import {Protocol, ProtocolName} from "../../platform/Protocol";
+import {ProtocolRouter} from "../../platform/ProtocolRouter";
+import {statePayload, STATE_PROTOCOLS} from "../../platform/ProtocolState";
+import {readOwnedHeroes, readHeroRosterInfo} from "./HeroApi";
 import {HeroRosterModel} from "./HeroRosterModel";
-import type {HeroRosterState} from "./HeroRosterModel";
 import {HeroRosterEvent} from "./HeroRosterEvent";
 
-export interface HeroRosterDependencies {
-    account: AccountModel;
-    authorization: AccountAuthorization;
-    api: HeroGateway;
-}
-
 export class HeroRosterController extends BaseController {
+    /** 应用唯一模块，独立于窗口开关。 */
     static readonly instance = new HeroRosterController(HeroRosterModel.instance);
-    private dependencies: HeroRosterDependencies | null = null;
-    private epoch = 0;
-    private pending: Promise<boolean> | null = null;
 
-    /** 构造仅注入状态容器，不监听账号、不联网。 */
+    /** 注入唯一名册状态；构造不联网，不监听登录。 */
     constructor(private readonly model: HeroRosterModel) {
         super();
     }
 
-    /** 应用显式初始化；重复同依赖不叠加监听，替换依赖必须先销毁。 */
-    initialize(dependencies?: HeroRosterDependencies): void {
-        if (this.isInitialized) {
-            if (dependencies && (dependencies.account !== this.dependencies?.account || dependencies.authorization !== this.dependencies?.authorization || dependencies.api !== this.dependencies?.api)) throw new Error("英雄名册请先 dispose 再替换依赖");
-            return;
-        }
-        if (!dependencies) throw new Error("英雄名册缺少初始化依赖");
-        this.dependencies = Object.freeze({...dependencies});
-        super.initialize();
-    }
-
-    /** 登记模块账号监听并同步角色归属；查询由明确 refresh 发起。 */
+    /** 登记真实统一状态协议，身份协调由应用层处理。 */
     protected onInitialize(): void {
-        this.ownListener(this.dependencies!.account.subscribe(() => this.syncSession()));
-        this.syncSession();
+        this.ownListener(ProtocolRouter.instance.register(this, STATE_PROTOCOLS));
+        this.resetSession(null);
     }
 
-    /** 角色与区服共同决定归属，退出/失效立即清空并废弃旧查询。 */
-    private syncSession(): void {
-        const state = this.dependencies!.account.snapshot;
-        const key = !state.busy && state.role ? (state.role.serverId || "") + ":" + state.role.id : null;
-        if (key !== this.model.roleKey) this.resetSession(key);
-    }
-
-    /** 会话切换或销毁时只重置本模块状态，不清理全局派发器。 */
+    /** 换号或退出清空上一角色数据，禁止额外查询。 */
     protected onResetSession(roleKey: string | null): void {
-        this.invalidateQueries();
         this.model.reset(roleKey);
         this.notify();
     }
 
-    /** 释放依赖；基类先解除监听和重置会话。 */
-    protected onDispose(): void {
-        this.dependencies = null;
-    }
-
-    /** 升级开始/提交时废弃旧读取，防止迟到名册覆盖新等级。 */
-    invalidateQueries(): void {
-        this.epoch++;
-        this.pending = null;
-    }
-
-    /** 已鉴权资产事务提交权威名册；不计算等级或改库存。 */
-    accept(heroes: readonly OwnedHero[]): void {
-        if (!this.isInitialized || !this.model.roleKey) throw new SessionChanged();
-        const rows = readOwnedHeroes(heroes);
-        this.invalidateQueries();
-        this.commit({status: "ready", heroes: rows, error: ""});
-    }
-
-    /** 查询共用在途请求；先登记 Promise 再通知，避免同步观察者重复请求。 */
-    refresh(): Promise<boolean> {
-        if (!this.isInitialized || !this.model.roleKey || !this.dependencies) return Promise.resolve(false);
-        if (this.pending) return this.pending;
-        const epoch = ++this.epoch, session = this.captureSession(), dependencies = this.dependencies;
-        const request = Promise.resolve().then(() => this.load(epoch, session, dependencies));
-        this.pending = request;
-        void request.then(() => {
-            if (this.pending === request) this.pending = null;
-        });
-        this.commit({status: "loading", heroes: [], error: ""});
-        return request;
-    }
-
-    /** 明确废弃本角色当前查询，保留有效会话，可再次刷新。 */
-    clear(): void {
-        this.invalidateQueries();
-        this.model.reset(this.model.roleKey);
-        this.notify();
-    }
-
-    /** 查询完成前后均核对会话/查询代次；旧错误不能清空新角色。 */
-    private async load(epoch: number, session: ReturnType<BaseController["captureSession"]>, dependencies: HeroRosterDependencies): Promise<boolean> {
-        try {
-            if (!this.isCurrent(session) || epoch !== this.epoch) return false;
-            const heroes = await dependencies.authorization.authenticated(token => dependencies.api.list(token));
-            if (!this.isCurrent(session) || epoch !== this.epoch) return false;
-            this.commit({status: "ready", heroes: readOwnedHeroes(heroes), error: ""});
-            return true;
-        } catch (error) {
-            if (!this.isCurrent(session) || epoch !== this.epoch || error instanceof SessionChanged) return false;
-            this.commit({
-                status: "error",
-                heroes: [],
-                error: error instanceof Error ? error.message : "英雄列表加载失败，请重试"
-            });
-            return false;
+    /** 明确名册接收的登录、恢复和资产同步消息。 */
+    onNotify(protocol: ProtocolName, data: unknown): void {
+        switch (protocol) {
+            case Protocol.SESSION_LOGIN:
+            case Protocol.SESSION_AUTHENTICATE:
+            case Protocol.STATE_CHANGED:
+                this.onHeroState(protocol, data);
+                break;
+            default:
+                throw new Error("英雄名册未登记协议：" + protocol);
         }
     }
 
-    /** 先提交唯一状态，再发布允许与库存事务一起延后的全局通知。 */
-    private commit(state: HeroRosterState): void {
-        this.model.replace(state);
+    /** 提交服务端完整名册，空数组表示没有英雄；不推算升级或增减英雄。 */
+    private onHeroState(protocol: ProtocolName, data: unknown): void {
+        const heroes = readOwnedHeroes(statePayload(protocol, data).heroes);
+        const rosterInfo=readHeroRosterInfo(statePayload(protocol,data).heroRoster);
+        this.model.replace({status: "ready", heroes, rosterInfo, error: ""});
         this.notify();
     }
 
-    /** 延后通知读取最新状态，避免事务内英雄已升级而库存尚未提交。 */
+    /** 延后通知，确保同一快照的角色、背包和名册已全部提交。 */
     private notify(): void {
         publishNotification(() => this.emit(HeroRosterEvent.Updated, {
-            roleKey: this.model.roleKey,
-            revision: this.model.version
+            roleKey: this.model.roleKey, revision: this.model.version,
         }));
     }
 }

@@ -38,40 +38,9 @@ export class HeroLevelController {
         return this.auth.authenticated(token => this.api.preview(token, heroId));
     }
 
-    /** 页面关闭仍保留操作；重复点击复用在途任务，不确定失败保留原标识以便超时重试。 */
-    upgrade(heroId: string, level: number): Promise<HeroLevelPreview> {
-        if (this.pending) return this.attempt?.heroId === heroId ? this.pending : Promise.reject(new Error("其他英雄升级提交中"));
-        if (this.attempt && this.attempt.heroId !== heroId) return Promise.reject(new Error("请先重试上次未确认的英雄升级"));
-        const attempt = this.attempt || {
-            heroId, level, requestId: "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-                const n = Math.floor(Math.random() * 16);
-                return (c === "x" ? n : (n & 3) | 8).toString(16);
-            })
-        };
-        this.attempt = attempt;
-        const epoch = this.epoch;
-        this.roster.invalidateQueries();
-        const promise = this.bag.runInventoryUpdate("hero-level:" + attempt.requestId,
-            () => this.auth.authenticated(token => this.api.upgrade(token, attempt.heroId, attempt.requestId, attempt.level)),
-            result => result.inventory,
-            result => {
-                this.auth.acceptRole(result.role);
-                this.roster.accept(result.heroes);
-            }, "consume")
-            .then(result => {
-                if (epoch === this.epoch) this.attempt = null;
-                return result.preview;
-            })
-            .catch(error => {
-                if (epoch === this.epoch && error instanceof SocketFailure && !error.unauthorized && error.code!=="DISCONNECTED" && error.code!=="TIMEOUT") this.attempt = null;
-                throw error;
-            });
-        this.pending = promise;
-        const finish = () => {
-            if (this.pending === promise) this.pending = null;
-        };
-        void promise.then(finish, finish);
-        return promise;
+    /** 普通升级尚未迁移到统一协议，禁止使用旧资产回调更新名册或库存。 */
+    upgrade(_heroId: string, _level: number): Promise<HeroLevelPreview> {
+        return Promise.reject(new Error("英雄升级待按旧项目核对并接入新协议"));
     }
 
     /** 查询提交中状态，跨窗口也不能开始第二笔升级。 */

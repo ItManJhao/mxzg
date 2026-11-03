@@ -1,79 +1,107 @@
 /** 登录页面协调器：绑定输入、选服与进入游戏；页面重建时恢复失效前账号，不自动登录。 */
-import { AccountModel } from "./AccountModel";
-import type { AccountState } from "./AccountModel";
-import { AccountService } from "./AccountService";
-import { SessionChanged } from "../../framework/SessionChanged";
-import type { ServerSelection, GameServer } from "./ServerSelection";
+import {AccountModel} from "./AccountModel";
+import type {AccountState} from "./AccountModel";
+import {AccountService} from "./AccountService";
+import {SessionChanged} from "../../framework/SessionChanged";
+import type {ServerSelection, GameServer} from "./ServerSelection";
 
-export interface AccountActions { login(account: string): void; restore(): void; logout(): void; chooseServer?(): void; }
+export interface AccountActions {
+    login(account: string): void;
+
+    restore(): void;
+
+    logout(): void;
+
+    chooseServer?(): void;
+}
+
 export interface AccountView {
-  bind(actions: AccountActions): () => void;
-  render(state: AccountState): void;
-  renderServer?(server: GameServer | null): void;
-  prepareAccount?(account: string): void;
+    bind(actions: AccountActions): () => void;
+
+    render(state: AccountState): void;
+
+    renderServer?(server: GameServer | null): void;
+
+    prepareAccount?(account: string): void;
 }
 
 /** UI lifetime only. Network state continues in the feature when a view is closed. */
 export class AccountController {
-  private disposers: Array<() => void> = [];
-  private open = false;
-  private entering = false;
-  constructor(private readonly model: AccountModel, private readonly service: AccountService,
-    private readonly view: AccountView, private readonly enterGame: () => void = () => {},
-    private readonly worlds?: { selection: ServerSelection; openPicker(): void },
-    private readonly initialize: () => Promise<void> = async () => {}) {}
+    private disposers: Array<() => void> = [];
+    private open = false;
+    private entering = false;
 
-  /** 打开时预填已知账号一次；之后无会话时保留用户编辑，避免状态刷新覆盖新输入。 */
-  show(): void {
-    if (this.open) return;
-    if (this.service.accountName) this.view.prepareAccount?.(this.service.accountName);
-    const unbind = this.view.bind({
-      login: account => {
-        if (this.model.snapshot.busy || this.entering) return;
-        void this.startGame(account);
-      },
-      restore: () => { if (!this.model.snapshot.busy) void this.service.restore(); },
-      logout: () => this.service.logout(),
-      chooseServer: () => { if (!this.model.snapshot.busy) this.worlds?.openPicker(); },
-    });
-    this.disposers = [unbind, this.model.subscribe(state => this.paint(state))];
-    this.open = true;
-    if (this.worlds) this.disposers.push(this.worlds.selection.subscribe(() => this.view.renderServer?.(this.worlds!.selection.selected)));
-    this.view.renderServer?.(this.worlds?.selection.selected || null);
-    try { this.paint(this.model.snapshot); }
-    catch (error) { this.close(); throw error; }
-  }
-  close(): void {
-    this.open = false;
-    for (const dispose of this.disposers.splice(0)) dispose();
-  }
-
-  /** 已就绪同角色直接进入；换号或切服先等待统一初始化，不追加背包查询。 */
-  private async startGame(account: string): Promise<void> {
-    // 同角色已完成初始化时直接进入，切服或换号才重新登录。
-    this.entering = true;
-    this.paint(this.model.snapshot);
-    try {
-      const selected = this.worlds?.selection.selected;
-      const role = this.model.snapshot.role;
-      const sameWorld = !selected || (role?.serverId || "local-1") === selected.id;
-      const identity = role ? this.service.accountName : account;
-      let success = role && sameWorld ? true : await this.service.login(identity, selected?.id);
-      if (!success && role && sameWorld && !this.service.hasSession && this.open)
-        success = await this.service.login(identity,selected?.id);
-      if (!success || !this.open) return;
-      await this.initialize();
-      if (this.open) this.enterGame();
-    } catch (error) {
-      if (!(error instanceof SessionChanged) && this.open && this.model.snapshot.role) this.model.replace({ ...this.model.snapshot,
-        error: error instanceof Error ? error.message : "角色初始化失败，请重试" });
-    } finally {
-      this.entering = false;
-      if (this.open) this.paint(this.model.snapshot);
+    constructor(private readonly model: AccountModel, private readonly service: AccountService,
+                private readonly view: AccountView, private readonly enterGame: () => void = () => {
+        },
+                private readonly worlds?: { selection: ServerSelection; openPicker(): void },
+                private readonly initialize: () => Promise<void> = async () => {
+                }) {
     }
-  }
-  private paint(state: AccountState): void {
-    if (state.role) this.view.prepareAccount?.(this.service.accountName);
-    this.view.render({ ...state, busy: state.busy || this.entering });
-  }
+
+    /** 打开时预填已知账号一次；之后无会话时保留用户编辑，避免状态刷新覆盖新输入。 */
+    show(): void {
+        if (this.open) return;
+        if (this.service.accountName) this.view.prepareAccount?.(this.service.accountName);
+        const unbind = this.view.bind({
+            login: account => {
+                if (this.model.snapshot.busy || this.entering) return;
+                void this.startGame(account);
+            },
+            restore: () => {
+                if (!this.model.snapshot.busy) void this.service.restore();
+            },
+            logout: () => this.service.logout(),
+            chooseServer: () => {
+                if (!this.model.snapshot.busy) this.worlds?.openPicker();
+            },
+        });
+        this.disposers = [unbind, this.model.subscribe(state => this.paint(state))];
+        this.open = true;
+        if (this.worlds) this.disposers.push(this.worlds.selection.subscribe(() => this.view.renderServer?.(this.worlds!.selection.selected)));
+        this.view.renderServer?.(this.worlds?.selection.selected || null);
+        try {
+            this.paint(this.model.snapshot);
+        } catch (error) {
+            this.close();
+            throw error;
+        }
+    }
+
+    close(): void {
+        this.open = false;
+        for (const dispose of this.disposers.splice(0)) dispose();
+    }
+
+    /** 已就绪同角色直接进入；换号或切服先等待统一初始化，不追加背包查询。 */
+    private async startGame(account: string): Promise<void> {
+        // 同角色已完成初始化时直接进入，切服或换号才重新登录。
+        this.entering = true;
+        this.paint(this.model.snapshot);
+        try {
+            const selected = this.worlds?.selection.selected;
+            const role = this.model.snapshot.role;
+            const sameWorld = !selected || (role?.serverId || "local-1") === selected.id;
+            const identity = role ? this.service.accountName : account;
+            let success = role && sameWorld ? true : await this.service.login(identity, selected?.id);
+            if (!success && role && sameWorld && !this.service.hasSession && this.open)
+                success = await this.service.login(identity, selected?.id);
+            if (!success || !this.open) return;
+            await this.initialize();
+            if (this.open) this.enterGame();
+        } catch (error) {
+            if (!(error instanceof SessionChanged) && this.open && this.model.snapshot.role) this.model.replace({
+                ...this.model.snapshot,
+                error: error instanceof Error ? error.message : "角色初始化失败，请重试"
+            });
+        } finally {
+            this.entering = false;
+            if (this.open) this.paint(this.model.snapshot);
+        }
+    }
+
+    private paint(state: AccountState): void {
+        if (state.role) this.view.prepareAccount?.(this.service.accountName);
+        this.view.render({...state, busy: state.busy || this.entering});
+    }
 }

@@ -18,7 +18,9 @@ export interface HeroCellModel {
   elem: number | null;
   stars: number;
   level: number | null;
+  /** 已拥有英雄的自身锁定；未获得图鉴使用 kind=locked 区分。 */
   locked: boolean;
+  /** 当前英雄位于服务器主线阵容。 */
   deployed: boolean;
 }
 
@@ -35,7 +37,7 @@ export interface HeroListModel {
 export function heroCellLine(cell: HeroCellModel): string {
   if (cell.kind === "empty") return "";
   const name = cell.name || "英雄";
-  if (cell.kind === "locked" || cell.locked) return name + "未获得";
+  if (cell.kind === "locked") return name + "未获得";
   if (cell.level === null) return name;
   return name + " Lv" + cell.level;
 }

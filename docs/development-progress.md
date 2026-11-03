@@ -169,3 +169,71 @@ startup 回归最初因测试替身缺失 game/Game 导出而失败，补齐仅�
 统一 bindings 检查入口改用 client/tools/check-script-bindings.cjs，使用项目已有 Node，不再依赖当前机器无法运行的 Python 占位程序。保留原 Python 检查规则：23 位类 ID、固定压缩锚点、禁止 22 位/未知类型、重复脚本 UUID、按钮目标必须为 Node；新增脚本源文件存在性检查及反例自检。旧 Python 文件保留供历史对照，日常入口以 check-project.mjs --suite bindings 为准。
 
 本轮全库扫描通过：156 个脚本、91 个 Prefab/Scene、47 处脚本绑定。此前“全库绑定未跑通”状态已解除。home-presentation、login-presentation、startup、super-scroll、strict/Creator 类型与资源生成检查均通过；资源仍为既有 4 项动态图标缺口。提交范围为账号 UI 整改、经验条、检查工具和相关文档/截图；账号核心及 ProtocolState 原有未提交修改保留，不混入本批。其他模块与数据库未操作。
+
+
+## 2026-11-03：英雄恢复第一批——统一名册数据基础
+
+核对旧 RoleResponse.lua、LoadingSceneCtr.lua 与 Hero.proto：旧版登录请求 4001 分页名册并等待完成，包含容量与完整英雄字段；新版继续使用已确认的统一初始化契约，不宣称协议实现与旧版完全相同。具体依据与后续顺序见 hero-data-contract.md。
+
+SessionSnapshotService 移除空名册占位，按角色锁读取持久英雄；HeroRosterController 改为 Protocol/onNotify → 唯一 Model → 批次事件，应用统一处理身份切换、版本与整包校验。移除页面重复查询及旧升级控制器写名册路径。保留 WS＋Protobuf，不新增 HTTP 或重复查询。当前只有既有四字段基础，英雄入口、升级和阵容保持暂停，不将占位锁定/上阵状态展示给玩家。
+
+验证：hero-state、game-socket、game-protocol、全库 bindings、strict/Creator 类型检查通过；后端独立 H2 回归 57/57 通过。新增快照测试首次错误地移除了 Bearer 前缀，修正测试传参后全量通过。覆盖非法/重复英雄整包拒绝、版本隔离、恢复、空名册、退出迟到与后端角色归属。未运行本批 MySQL 或英雄真实页面验收，未操作玩家数据库，未重启日常后端。本批未提交；原账号核心和 ProtocolState 未提交修改继续保留。
+
+
+## 2026-11-03：英雄第二批——自身锁定、主线上阵与旧版排序
+
+Hero 增加 locked/deployed 两个可选 Protobuf 字段；新增 V9 持久锁定列，服务端按本角色主线阵容计算上阵标记。前端严格校验、保存真实状态，按旧版上阵/星级/等级/配置 ID 排序。修复锁定英雄被误判未获得、灰显且不显示上阵的问题。hero 页面测试从已删除 refresh 查询迁至统一 onNotify，覆盖开关监听、空名册、筛选、排序、锁定/上阵共存与页面关闭后的同步。
+
+本轮后端独立 H2 57/57 通过；hero、hero-state、game-protocol、game-socket、协议生成漂移检查通过，strict/Creator 类型检查通过。测试首次使用了不支持的阵容位置 1，改为既有位置 2 后通过。未连接玩家库、未重启日常后端、未执行 MySQL 或 Creator 视觉验收。本批未提交；账号与 BaseController 等既有工作区修改未覆盖。
+
+容量来源已核对，但协议和持久字段尚未补齐；入口继续关闭，英雄模块仍在恢复中。下一步完成容量（基础/扩容/VIP）数据契约，再开放只读列表并复验正式服效果；详情和写操作分批推进。
+
+
+## 2026-11-03：英雄第三批——容量、扩容次数只读同步
+
+从旧配置与 HeroHandler 确认初始 300、扩容累计至持久容量、VIP 独立加成。新增 V10 容量/次数/VIP 等级字段；构建复用 goddessvip 同源配置。服务端统一快照携带最终容量及购买次数，前端整包校验后提交唯一英雄 Model，列表显示已有数量/总容量。未同步显示 —，不伪造上限；购买、VIP 修改、升级等入口不开启。
+
+后端独立 H2 57/57 通过，覆盖初始容量、扩容持久值、VIP 加成和角色隔离；hero-state、hero、game-protocol、game-socket、协议生成漂移与 strict/Creator 类型通过。本批没有 MySQL、Creator 视觉验收，未操作玩家库、未重启日常后端、未提交代码。只读英雄入口仍关闭，下一批接入入口并进行独立环境列表验收；不把数据层通过描述为英雄模块完成。
+
+
+## 2026-11-03：英雄第四批——只读入口与独立预览
+
+主城开放只读英雄入口，由 RemakeApp 注册 UIManager 页面、HeroResources 按需加载，View 默认读取唯一模块和共享配置，不注入升级回调。升级、扩容购买、阵容等保持暂停。修正旧导航回归里已退役的主城 profileLabel/logoutButton 绑定断言，并新增无测试注入的真实默认开页回归。
+
+hero、remake-navigation、feature-navigation、home-presentation、startup、game-socket、全库 bindings 与 Creator 类型检查通过。独立 MySQL 预览 run=02a6c4cf8877498dbf43b4f97eac14c9，393×852，账号 bag_timed_preview：36 个同模板测试英雄，容量 36/300；滚动到低等级末行、空水元素筛选、回城及重新打开通过。当前浏览器无 error/warn。截图见 images/hero-readonly-20261103.png。首次点击经历预览重新加载，重新登录后完成验收；未将该现象认定为业务崩溃。实例 ownership 已确认 stopped，验收页已关闭，未连接玩家库。
+
+本轮 MySQL 首次 12/14，失败为两项迁移数量仍期待 8，实际已经新增到 10；已更新断言，正在以另一新实例重跑，最终结果后补。日志存在已知 Hikari 旧连接校验警告。视觉仍有列表三行半视口/下方留白和名称覆盖头像问题，未达到正式服 1:1；下批优先对照并修复，再恢复真实只读详情。本批未提交。
+
+最终独立 MySQL 重跑 14/14 通过，run=e81de14329a04645b717f3ce5592ce66，ownership 确认 stopped；此前 12/14 已修正。重跑日志中 migrations=8 是旧固定打印，实际断言和库均为 10；该说明字符串已同步为 10，不涉及业务或验证逻辑变化。
+
+
+## 2026-11-03：英雄第五批——列表视觉修正与只读基础详情
+
+已实际查看正式服列表和详情，保存 official-hero-list-20261103.png / official-hero-info-20261103.png。列表移除名称覆盖头像，扩大格子和滚动区域至容量栏上方；393×852 独立预览验证末行完整可达、空元素筛选与容量 36/300 不变，截图 images/hero-list-fixed-20261103.png。
+
+HeroInfoView 改为 BaseView，由 UIManager 正式注册，点击实例打开。复用旧预制体与立绘，显示服务器 stage/base_stats；状态更新刷新，删除或换角色退出，关闭清理。当前是基础详情，技能、装备、完整加成及旧列表空槽补齐尚未恢复，不宣称完整 1:1。升级和扩容购买未开启，其他模块不扩展。
+
+后端 57/57 通过；hero、hero-state、game-protocol、game-socket、game-protocol-generated、remake-navigation、startup、bindings、Creator 和 strict 类型通过。最新运行画面无 error/warn。真实点击发现详情返回按钮与常驻顶栏重叠，已将标题及返回组下移 65，但 Creator 尚未导入最终位置，最终返回点击待刷新复验；此前截图仅作为基础展示证据，不算返回通过。
+
+独立 MySQL run=42fbe6e9385445d6a46b2d03194c4367 正在等待预览结束，最终结果后补。未操作玩家库，未重启日常后端，未提交本批代码。
+
+本轮独立 MySQL 最终 14/14 通过，ownership 确认 stopped，验收页已关闭。仍有既有 Hikari 旧连接校验警告。等待 Creator 刷新后再启动独立预览完成返回按钮验收；不连接玩家库。
+
+刷新后补验：新独立 run=3fc80095ff0b464684c021c3f5a3d4a4，预览端口 62525，返回按钮位置已正确并可点击；继续发现 RemakeNavigation.back 只返回主城根，已在 HeroInfoView 显式打开 hero 页面，同角色删除实例也返回列表、换号回根。hero 回归和双类型检查通过，但 Creator 仍使用旧脚本，已请求再次刷新。本轮预览保留等待最终复验，不能将当前导航验收标通过。详情截图已更新为正确位置。
+
+最终刷新复验通过：2026-11-03，独立 run=3fc80095ff0b464684c021c3f5a3d4a4，393×852 浏览器预览。英雄列表→7 级详情→返回英雄列表，再打开另一 6 级实例→返回英雄列表均正常；6 级显示攻击73/生命317/防御33/速度53，与 7 级实例区分，没有残留旧实例资料。当前轮次浏览器 error/warn 为零。上文返回链路待刷新状态已解除，截图 images/hero-return-verified-20261103.png。
+
+独立 MySQL 最终 14/14 通过，ownership=stopped，验收页已关闭。后端57项、前端相关回归与双类型检查结果沿用前批，本次未修改代码。技能、装备、完整加成和列表空槽补齐仍未恢复，不称完整英雄详情1:1；升级、扩容购买仍关闭，其他模块未扩展，工作区未提交。
+
+## 2026-11-03 游戏内 GM 与英雄只读批次收尾
+
+- 游戏入口为头像 → 设置 → 开发 GM；复用背包底板、标题、按钮与页签资源，静态 GmView / GmOptionCellView 预制体使用英文节点名和 SuperScroll。补齐 PrefabInfo，新增全库根元数据检查，修正 EditBox 左上锚点及底框内边距。
+- gm.status / gm.grant 使用 WS + Protobuf，当前会话限定角色；服务端开关默认关闭，事务内持久化发放回执，state.changed 同步英雄、角色及背包。开发说明见 [游戏内 GM](gm-development.md)。
+- 修复资源计划生成时遗漏 account/RoleProfileView 的问题，计划源文件登记正确路径；保留编辑器内调整的按钮九宫格边距。
+- 独立 MySQL 运行标识 `1090dc2a29cb4fc6b4c7a8fa64b5cd02`，专用实例端口 65450、预览后端端口 49267；未连接现有玩家数据库。测试专用配置显式开启 GM，不继承外部环境开关。
+- 真实页面验证：英雄中文名“玛蒙”和 ID 10102002 搜索；发放 1 名后重登，英雄列表仍显示 1/300、初始 2 星。发放英雄经验 900101 ×5（配置 place=0，库存同步但不占可见格），另发放宠物自选材料礼包 900505 ×5，背包实际格子显示 5。未开启道具使用/分解或英雄升级/扩容购买。
+- 已验证英雄/道具页签切换、搜索、选中收起、列表滚动、数量输入、重复开关；最终预览无 error 日志。输入框最终画面见 [GM](images/gm-final-20261103.png)，到账证据见 [英雄](images/gm-hero-delivered-20261103.png)、[背包](images/gm-item-delivered-20261103.png)。
+- 本批后端 62/62 通过；客户端 gm、bindings、game-protocol、game-socket、hero、hero-state、remake-navigation、startup、home-presentation 与两组类型检查通过，协议/资源生成检查通过。现有 4 个缺失动态图标仍由 resource-missing.json 记录，本批未扩展处理。
+- MySQL 新增 GM 重启后同请求重试不重复到账验证；英雄技能、装备和完整加成仍是后续只读还原缺口，本批没有扩展其他模块。
+
+- 独立 MySQL 最终结果：15/15、0 失败；本批 ownership.properties 已确认 state=stopped，数据保留在专用 target/mysql-it 目录，未清理或访问玩家库。

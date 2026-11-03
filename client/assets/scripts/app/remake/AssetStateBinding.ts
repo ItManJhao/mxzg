@@ -1,6 +1,8 @@
-/** 应用层统一资产提交：校验角色归属和持久版本，再把真实协议交给角色/背包 onNotify。
+/** 应用层统一资产提交：校验角色归属和持久版本，再把真实协议交给角色/背包/英雄 onNotify。
  * 同一通知批次完成全部 Model 更新；不查询库存、不反推玩家资产、不保存第二份资产。
  */
+import type { HeroRosterController } from "../../features/hero/HeroRosterController";
+import { readOwnedHeroes, readHeroRosterInfo } from "../../features/hero/HeroApi";
 import type { AccountModel } from "../../features/account/AccountModel";
 import type { BagController } from "../../features/Bag/BagController";
 import type { RoleController } from "../../features/account/RoleController";
@@ -18,8 +20,13 @@ export class AssetStateBinding {
   private revision=-1;
   /** 账号退出监听归属应用，销毁时解除。 */
   private readonly stop:()=>void;
-  /** 注入唯一模块，不直接写它们的资产状态。 */
-  constructor(private readonly account:AccountModel,private readonly bag:BagController,private readonly role:RoleController) {
+  /** 注入唯一模块，不直接写它们的资产状态。
+   * @param account 应用账号状态，用于角色归属核对和退出清理。
+   * @param bag 唯一背包控制器，接收同批库存。
+   * @param role 唯一角色控制器，接收同批角色资料。
+   * @param heroes 唯一英雄控制器；生产应用必须传入，旧模块独立测试允许省略。
+   */
+  constructor(private readonly account:AccountModel,private readonly bag:BagController,private readonly role:RoleController,private readonly heroes?:HeroRosterController) {
     this.stop=account.subscribe(state=>{if(!state.role)this.clear();});
   }
   /** 在身份已经接纳后提交完整帧；重复推送和低版本不通知，同版本鉴权首包仍校准服务器时间。 */
@@ -28,6 +35,8 @@ export class AssetStateBinding {
     if(!current.role || current.busy)return false;
     if(frame.version!==1 || (frame.kind!=="event" && (frame.kind!=="response" || frame.ok!==true)) || frame.error!==undefined)throw new Error("资产信封无效");
     const state=statePayload(frame.name as ProtocolName,frame.body), role=readRole(state.role);
+    readOwnedHeroes(state.heroes);
+    readHeroRosterInfo(state.heroRoster);
     readBagItems(state.inventory);
     readTimedItems(state.timedInventory);
     if(role.id!==current.role.id || role.serverId!==current.role.serverId)throw new Error("资产不属于当前角色");
@@ -35,15 +44,16 @@ export class AssetStateBinding {
     // 恢复首包即使资产未变化，也需要重新校准服务器时间；重复推送仍丢弃。
     if(this.key===key && (revision<this.revision || (revision===this.revision && frame.name!=="session.authenticate")))return false;
     batchNotifications(()=>{
-      if(this.key!==key){this.key=key;this.revision=-1;this.bag.resetSession(key);}
+      if(this.key!==key){this.key=key;this.revision=-1;this.bag.resetSession(key);this.heroes?.resetSession(key);}
       ProtocolRouter.instance.dispatch(this.role,frame);
       ProtocolRouter.instance.dispatch(this.bag,frame);
+      if(this.heroes)ProtocolRouter.instance.dispatch(this.heroes,frame);
       this.revision=revision;
     });
     return true;
   }
-  /** 登出或登录新身份前清理库存和版本，不发送任何补查。 */
-  private clear():void {if(this.key!==null){this.key=null;this.revision=-1;this.bag.resetSession(null);}}
+  /** 登出或登录新身份前清理库存、英雄名册和版本，不发送任何补查。 */
+  private clear():void {if(this.key!==null){this.key=null;this.revision=-1;this.bag.resetSession(null);this.heroes?.resetSession(null);}}
   /** 应用结束时释放监听，不改变仍在使用的其他模块。 */
-  dispose():void {this.stop();this.clear();this.role.dispose();}
+  dispose():void {this.stop();this.clear();this.role.dispose();this.heroes?.dispose();}
 }

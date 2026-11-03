@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.*;
 
 @Service
 public class SessionSnapshotService {
-    /** 角色、库存与持久版本的一致读结果；英雄字段保留但当前暂停加载。 */
-    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory, long revision, TimedInventoryService.State timedInventory) {}
+    /** 角色、库存与持久版本的一致读结果；英雄名册与库存处于同一角色锁事务。 */
+    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory, long revision, TimedInventoryService.State timedInventory, HeroCapacityService.State heroRoster) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -23,10 +23,15 @@ public class SessionSnapshotService {
 
     /** 逐件期限库存，在同一角色事务内回收过期记录。 */
     private final TimedInventoryService timed;
+    /** 按角色读取持久英雄实例，不在客户端生成或跨角色查询。 */
+    private final HeroRepository heroes;
+
+    /** 同一角色锁内读取总容量和扩容次数。 */
+    private final HeroCapacityService capacity;
 
     /** 注入原有数据入口，不新增玩家状态副本。 */
-    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory, TimedInventoryService timed) {
-        this.sessions = sessions; this.roles = roles; this.inventory = inventory; this.timed=timed;
+    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory, TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity) {
+        this.sessions = sessions; this.roles = roles; this.inventory = inventory; this.timed=timed; this.heroes=heroes; this.capacity=capacity;
     }
 
     /** 锁内再次校验，撤销同角色其他令牌；并发接管中已失效的令牌不能复活。 */
@@ -38,13 +43,13 @@ public class SessionSnapshotService {
         return role;
     }
 
-    /** 在同一角色锁中读取钱包、持久版本和背包，避免升级中间状态被恢复到前端。 */
+    /** 在同一角色锁中读取钱包、持久版本、背包和英雄名册，避免升级中间状态被恢复到前端。 */
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Snapshot snapshot(String token) {
         String role = sessions.requireRole(token);
         roles.lock(role);
         sessions.requireRole(token);
         var timedState=timed.current(role,java.time.Instant.now().getEpochSecond());
-        return new Snapshot(roles.findById(role).orElseThrow(), List.of(), inventory.list(role), roles.revision(role), timedState);
+        return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role), roles.revision(role), timedState, capacity.current(role));
     }
 }

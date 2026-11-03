@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const output = resolve(root, "client/temp/project-checks");
 const suites = [
+  ["gm", "ts", "client/tools/gm-check.ts"],
   ["docs", "python", "tools/check_docs.py"],
   ["resource-catalog", "ts", "client/tools/resource-catalog-check.ts"],
   ["resource-generated", "node", "tools/generate_resources.cjs"],
@@ -18,6 +19,7 @@ const suites = [
   ["game-protocol-generated", "node", "tools/generate_game_protocol.cjs"],
   ["game-socket", "ts", "client/tools/session-state-check.ts"],
   ["hero-roster", "paused", null],
+  ["hero-state", "ts", "client/tools/hero-state-check.ts"],
   ["hero-level", "paused", null],
   ["formation", "paused", null],
   ["formation-view", "ts", "client/tools/formation-view-check.ts"],

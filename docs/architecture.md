@@ -25,7 +25,7 @@ BaseModel 管角色会话和本地界面版本；BaseController 管显式模块�
 
 ## 单一全局事件与数据顺序
 
-使用同一 EventDispatcher。应用先校验完整角色、库存、身份和持久版本，再在 batchNotifications 中提交两个 Model，最后交付界面通知。订阅者不按事件 delta 再次改资产；BagAdd 只表示新增条目，不能推断奖励或获得提示。
+使用同一 EventDispatcher。应用先校验完整角色、库存、身份和持久版本，再在 batchNotifications 中提交角色、背包和英雄 Model，最后交付界面通知。订阅者不按事件 delta 再次改资产；BagAdd 只表示新增条目，不能推断奖励或获得提示。
 
 服务器 game_role.state_revision 是资产提交版本，与 BagModel/基类本地 revision、连接 connectionId、单次请求 id 均不同。重复/较旧持久版本不提交，旧连接回调由连接代次隔离。非法整包不允许先改钱包；回滚不发送成功状态。
 
@@ -35,7 +35,7 @@ Prefab 保存静态结构、布局、样式和绑定；业务列表使用 SuperS
 
 ## 当前入口与职责
 
-RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。AccountApi 只调用 WS 登录/恢复；角色/背包初始化在接纳账号的同批通知中交付。背包打开、切分类、同角色再次开始不查询库存。英雄、阵容、战斗、挂机未装配可操作入口。
+RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。AccountApi 只调用 WS 登录/恢复；角色/背包初始化在接纳账号的同批通知中交付。背包打开、切分类、同角色再次开始不查询库存。英雄已装配只读列表，按需加载旧 Prefab 与配置；升级、阵容、战斗、挂机仍未开放。
 
 目录：app 负责装配，features 负责功能 Model/Controller/View，framework 负责通用事件/页面/资源，platform 负责 WS/Protobuf/协议路由，config 负责生成配置。通用层不得反向依赖具体业务 UI。
 

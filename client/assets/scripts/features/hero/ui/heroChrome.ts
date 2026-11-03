@@ -19,11 +19,8 @@ export const HERO_DETAIL_SETTING = "设置";
 export const HERO_DETAIL_UNFOLD = "展开";
 export const HERO_DETAIL_BOOK = "图鉴";
 
-/**
- * 格子 96×104，中心从 -52 起，行距 112。
- * 第 4 行中心在 388。视口顶锚点切到这里，露出 3 行再加半行。
- */
-export const HERO_PORT_H = 52 + 3 * 112;
+/** 四列头像滚动区域延伸到容量栏上方；静态尺寸与 HeroListBoardView.prefab 一致。 */
+export const HERO_PORT_H = 720;
 
 /** 顶栏下沿、底栏上沿。羊皮纸贴在这两条之间，不把九宫格再乘一层放大。 */
 export const HERO_WINDOW_TOP = 482;

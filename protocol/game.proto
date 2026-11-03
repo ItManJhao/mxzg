@@ -24,6 +24,9 @@ message Frame {
     Empty empty = 16;
     Login login = 17;
     Servers servers = 18;
+    GmGrant gm_grant = 19;
+    GmResult gm_result = 20;
+    GmStatus gm_status = 21;
   }
 }
 message Empty {}
@@ -78,7 +81,15 @@ message Hero {
   required uint32 template_id = 2;
   required uint32 level = 3;
   required uint32 star = 4;
+  // 英雄自身的持久锁定，不等于未获得或阵容占用；缺失表示旧快照尚未同步。
+  optional bool locked = 5;
+  // 是否在主线阵容中；由服务端按本角色持久阵容计算。
+  optional bool deployed = 6;
+  optional uint32 stage = 7;
+  // 仅基础成长属性，不含尚未恢复的装备/天赋等加成。
+  optional HeroBaseStats base_stats = 8;
 }
+message HeroBaseStats { required uint32 hp = 1; required uint32 atk = 2; required uint32 def = 3; required uint32 spd = 4; }
 message Item {
   required uint32 item_id = 1;
   required int64 quantity = 2;
@@ -92,6 +103,13 @@ message Snapshot {
   repeated Item inventory = 3;
   required int64 revision = 4;
   optional TimedInventory timed_inventory = 5;
+  optional HeroRoster hero_roster = 6;
+}
+
+// 服务端最终容量已经包含 VIP 加成；缺失表示尚未同步，不能当作零容量。
+message HeroRoster {
+ required uint32 capacity = 1;
+ required uint32 buy_space_times = 2;
 }
 
 // 期限道具每件一个实例；时间单位为 Unix 秒，与角色等级等无关。
@@ -105,3 +123,8 @@ message TimedInventory {
  repeated TimedItem items = 1;
  required int64 server_time_seconds = 2;
 }
+
+// 本机开发 GM；目标角色只从鉴权连接获取。
+message GmGrant { required string request_id = 1; required string kind = 2; required uint32 config_id = 3; required uint32 quantity = 4; }
+message GmResult { required string request_id = 1; required string kind = 2; required uint32 config_id = 3; required uint32 quantity = 4; }
+message GmStatus { required bool enabled = 1; }

@@ -116,6 +116,10 @@ export const ResourceCatalog = {
     PagePrefabShell: {"bundle":"prefabs","path":"ui/common/PagePrefabShell","assetPath":"prefabs/ui/common/PagePrefabShell","loadPath":"ui/common/PagePrefabShell","type":"Prefab","uuid":"7a5a3d49-f6b1-48ec-85aa-b31467f6e5d9"},
     TextChip: {"bundle":"prefabs","path":"ui/common/TextChip","assetPath":"prefabs/ui/common/TextChip","loadPath":"ui/common/TextChip","type":"Prefab","uuid":"1af4d7e3-905b-4286-cf44-5dbe01908f73"},
   },
+  prefab_gm: {
+    GmOptionCellView: {"bundle":"prefabs","path":"ui/gm/GmOptionCellView","assetPath":"prefabs/ui/gm/GmOptionCellView","loadPath":"ui/gm/GmOptionCellView","type":"Prefab","uuid":"ac4b58d6-8086-44b6-9701-4997d58d6b13"},
+    GmView: {"bundle":"prefabs","path":"ui/gm/GmView","assetPath":"prefabs/ui/gm/GmView","loadPath":"ui/gm/GmView","type":"Prefab","uuid":"76ebb0c2-3e4e-48b1-ae9c-291a56089c8e"},
+  },
   prefab_hero: {
     FormationView: {"bundle":"prefabs","path":"ui/hero/FormationView","assetPath":"prefabs/ui/hero/FormationView","loadPath":"ui/hero/FormationView","type":"Prefab","uuid":"c75bff2b-0944-4809-9b5f-1eb8c09107f8"},
     HeroIconCellView: {"bundle":"prefabs","path":"ui/hero/HeroIconCellView","assetPath":"prefabs/ui/hero/HeroIconCellView","loadPath":"ui/hero/HeroIconCellView","type":"Prefab","uuid":"e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40"},

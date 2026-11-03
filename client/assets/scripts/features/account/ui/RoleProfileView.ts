@@ -13,6 +13,8 @@ export interface RoleProfileOpenArgs {
     model: AccountModel;
     /** 用户明确点击退出时交回账号服务。 */
     logout: () => void;
+    /** 仅预览环境由应用注入，生产不显示入口。 */
+    openGm?: () => void;
     /** 只读入口的提示出口。 */
     notice: (text: string) => void;
 }
@@ -42,6 +44,8 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
     @property(Button) logoutButton: Button | null = null;
     /** 设置面板返回按钮。 */
     @property(Button) settingsClose: Button | null = null;
+    /** 设置中的开发 GM 入口，未注入能力时隐藏。 */
+    @property(Button) gmButton:Button|null=null;
     /** 当前实例的按钮注销函数；重复绑定先清理，销毁时释放。 */
     private stops: Array<() => void> = [];
     /** 当前模型订阅；重复打开先退订，关闭时释放。 */
@@ -66,6 +70,7 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
             if (this.settingsPanel) this.settingsPanel.active = false;
         });
         bind(this.logoutButton, logout);
+        if(this.gmButton){this.gmButton.node.active=!!this.args?.openGm;if(this.args?.openGm)bind(this.gmButton,()=>this.args?.openGm?.());}
         for (const button of this.readonlyButtons) bind(button, () => notice("当前为角色资料只读展示，该操作暂未开放"));
     }
 

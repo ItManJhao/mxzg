@@ -1,3 +1,9 @@
+import { UIManager } from "../assets/scripts/framework/ui/UIManager";
+import { HeroInfoView } from "../assets/scripts/features/hero/ui/HeroInfoView";
+import { GameConfig } from "../assets/scripts/config/GameConfig";
+import { GConfig } from "../assets/scripts/config/GConfig";
+import { presentHeroRoster } from "../assets/scripts/features/hero/HeroRosterPresentation";
+import { Protocol } from "../assets/scripts/platform/Protocol";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
@@ -157,9 +163,9 @@ function checkPrefab(): void {
   assertNode(boardData, board.comp, "skin", 93, "btn_permanent_skin");
   assertNode(boardData, board.comp, "evolve", 111, "btn_evolve");
   assertNode(boardData, board.comp, "pattern", 11, "CCSprite_1");
-  assert(uiHeight(boardData, 119) === HERO_PORT_H, "滚动视口高 388，大约露出 3.5 行");
+  assert(uiHeight(boardData, 119) === HERO_PORT_H, "滚动视口延伸至容量栏上方");
   assert(uiHeight(boardData, 123) === HERO_PORT_H, "view 跟滚动视口一样高");
-  assert(uiHeight(boardData, 119) < 448, "视口不要撑到四行");
+  assert(uiHeight(boardData, 119) + 88 < uiHeight(boardData, 5), "滚动视口与顶部偏移不超过装饰底板");
   assert(JSON.stringify(boardData).indexOf("永久皮肤") >= 0, "永久皮肤用简体");
   const elems = board.comp.elemButtons as { __id__?: number }[];
   assert(elems.length === 6, "六个元素钮");
@@ -236,7 +242,7 @@ function fakePrefab(build: (node: Node) => void): Prefab {
 
 function makeCell(node: Node): void {
   node.name = "HeroIconCellView";
-  node.addComponent(UITransform).setContentSize(96,104);
+  node.addComponent(UITransform).setContentSize(124,134);
   const cell = node.addComponent(HeroIconCellView);
   cell.button = node.addComponent(Button);
   cell.face = new Node("spr_face");
@@ -373,19 +379,23 @@ function pump(frames: number): void {
 }
 
 async function checkRemakeRoster(): Promise<void> {
-  const account = new AccountModel();
-  const accountService = new AccountService(account, {
-    developmentLogin: async () => ({ session: { accessToken: "a".repeat(43), expiresAt: "2099-01-01T00:00:00Z" },
-      role: { id: "hero-ui", nickname: "hero-ui", level: 1, gold: 0, diamonds: 0 } }),
-    currentRole: async () => { throw new Error("not used"); },
-  }, { read: () => null, write: () => {}, clear: () => {} });
-  await accountService.login("hero_ui");
   const model = new HeroRosterModel();
-  let resolve!: (heroes: OwnedHero[]) => void;
-  let response = new Promise<OwnedHero[]>(done => { resolve = done; });
   const service = new HeroRosterController(model);
-  service.initialize({account,authorization:accountService,api:{list:()=>response}});
+  service.initialize();service.resetSession("local-1/hero-ui");
+  /** 模拟已由应用验收的统一回包，不再模拟已删除的查询接口。 */
+  const sync=(heroes:OwnedHero[])=>service.onNotify(Protocol.STATE_CHANGED,{heroes,role:{},inventory:[],revision:1});
   const catalog = new HeroCatalog(JSON.parse(read("client/assets/resources/config/herotype.json")), JSON.parse(read("client/assets/resources/config/item.json")));
+  const samples = [
+    {id:"reserve",templateId:10101001,level:99,star:9,deployed:false},
+    {id:"lower",templateId:10101001,level:1,star:3,deployed:true},
+    {id:"higher",templateId:10101001,level:1,star:4,deployed:true},
+    {id:"level",templateId:10101001,level:2,star:4,deployed:true},
+    {id:"template",templateId:10101002,level:2,star:4,deployed:true},
+  ];
+  const sorted=presentHeroRoster({status:"ready",heroes:samples,error:"",rosterInfo:{capacity:326,buySpaceTimes:1}},catalog,0);
+  assert(sorted.capacityLine==="英雄：5/326","直接显示服务端总容量，不重复叠加 VIP");
+  assert(sorted.cells.map(cell=>cell.instanceId).join(",")==="template,level,higher,lower,reserve","旧版上阵、星级、等级、模板优先级");
+  assert(samples[0].id==="reserve","展示排序不修改唯一名册");
   const view = makeView();
   let notice = "";
   view.configureRoster(model,service,catalog,text=>{notice=text;});
@@ -403,16 +413,14 @@ async function checkRemakeRoster(): Promise<void> {
     assert(board.emptyLabel!.string === "正在加载英雄…", "绘制加载状态");
     assert(!view.btnBook!.node.active && !view.btnDragon!.node.active, "隐藏未接入页签");
     assert(!board.skin!.active && !board.evolve!.active, "隐藏未接入养成按钮");
-    resolve([]); await service.refresh(); pump(1);
+    sync([]); pump(1);
     assert(board.emptyLabel!.string === "尚未获得英雄" && cellsOf(view).length === 0, "真实空名册不回退图鉴");
-    assert(board.capacityLabel!.string === "英雄：0", "不显示旧协议容量");
-    response = Promise.reject(new Error("读取失败"));
-    view.btnHero!.node.emit(Button.EventType.CLICK); await service.refresh(); pump(1);
-    assert(board.emptyLabel!.string.indexOf("点击上方“英雄”重试") >= 0, "失败保留重试入口");
-    response = Promise.resolve([{ id: "f45747b7-f032-4d00-9546-3504b9a967e5", templateId: 10101001, level: 7, star: 4 }]);
-    view.btnHero!.node.emit(Button.EventType.CLICK); await service.refresh(); pump(1);
+    assert(board.capacityLabel!.string === "英雄：0/—", "不显示旧协议容量");
+    view.btnHero!.node.emit(Button.EventType.CLICK); pump(1);
+    assert(notice.includes("自动同步"), "点击不发送重复查询");
+    sync([{ id: "f45747b7-f032-4d00-9546-3504b9a967e5", templateId: 10101001, level: 7, star: 4, locked:true, deployed:true }]);pump(1);
     const cells = cellsOf(view);
-    assert(cells.length === 1 && cells[0].nameLabel!.string === "独眼梦魇", "复用格子显示新名册与现有简体配置");
+    assert(cells.length === 1 && !cells[0].nameLabel!.node.active, "正式列表不在头像上叠名称");
     assert(cells[0].levelLabel!.string === "7" && cells[0].stars.filter(node => node.active).length === 4, "等级和星级来自实例");
     cells[0].node.emit(Button.EventType.CLICK);
     assert(notice.indexOf("详情暂未开放") >= 0 && !view.node.parent!.getChildByName("HeroDetailSheet"), "不打开旧详情");
@@ -420,11 +428,10 @@ async function checkRemakeRoster(): Promise<void> {
     assert(cellsOf(view).length === 0 && board.emptyLabel!.string === "没有符合筛选条件的英雄", "筛选空态");
     board.elemButtons[0].node.emit(Button.EventType.CLICK); pump(1);
     assert(cellsOf(view).length === 1, "切回全部显示英雄");
-    response = new Promise<OwnedHero[]>(done => { resolve = done; });
-    view.btnHero!.node.emit(Button.EventType.CLICK);
-    const pending = service.refresh();
-    view.runDispose(); resolve([{ id: "f45747b7-f032-4d00-9546-3504b9a967e5", templateId: 10101001, level: 7, star: 4 }]);
-    assert(await pending === true && model.snapshot.status === "ready", "关闭页面不销毁模块，有效查询仍提交到当前角色名册");
+    assert(cells[0].lock!.active && cells[0].battle!.active,"自身锁定与上阵可同时显示");
+    assert(!cells[0].face!.getComponent(Sprite)!.grayscale,"已拥有的锁定英雄不能灰显为未获得");
+    view.runDispose();sync([]);
+    assert(model.snapshot.status === "ready" && model.snapshot.heroes.length === 0,"页面关闭后模块继续接收同步");
   } finally {
     view.runDispose();
     assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===baseline,"关页只清理本页名册监听");
@@ -456,10 +463,33 @@ function checkHeroScrollBounds():void {
  for(const key of ["columns","rows","layoutType","gridAxis"] as const)list[key]=config[key];
  for(const key of ["spacingX","spacingY","paddingLeft","paddingRight","paddingTop","paddingBottom"] as const)list[key]=config["_"+key];
  list.setData(Array.from({length:20},(_,i)=>i),()=>{});
- assert(board.heroContent!.getComponent(UITransform)!.height===552,"真实格子和间距计算长列表高度");
- scroll.restorePosition({x:0,y:164} as any);assert(scroll.readPosition().y===164,"末行可达");
- list.refresh();assert(scroll.readPosition().y===164,"普通刷新保留位置");
+ assert(board.heroContent!.getComponent(UITransform)!.height===750,"真实格子和间距计算长列表高度");
+ scroll.restorePosition({x:0,y:30} as any);assert(scroll.readPosition().y===30,"末行可达");
+ list.refresh();assert(scroll.readPosition().y===30,"普通刷新保留位置");
  list.setData([1,2,3],()=>{});assert(scroll.readPosition().y===0,"筛选缩短不留下空白滚动区域");root.destroy();
 }
 
-async function main() { checkHeroCellReuse();checkHeroScrollBounds();checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/error/retry/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });
+/** 验证应用实际开页无需测试注入，使用唯一模块和已准备配置。 */
+async function checkDefaultRoster():Promise<void> {
+ GameConfig.instance.initialize(async path=>JSON.parse(read("client/assets/resources/"+path+".json")));
+ await GameConfig.instance.prepare([GConfig.HeroType,GConfig.Item]);
+ const service=HeroRosterController.instance;service.initialize();service.resetSession("local-1/default");
+ service.onNotify(Protocol.STATE_CHANGED,{revision:1,heroes:[],heroRoster:{capacity:300,buySpaceTimes:0}});
+ const page=makeView();try {page.runOpen();await page.whenReady();pump(2);assert(boardOf(page).capacityLabel!.string==="英雄：0/300","实际默认装配显示容量");}
+ finally {page.runDispose();page.node.destroy();service.dispose();}
+}
+/** 只读详情随统一快照刷新，删除与换号返回，关闭后解除监听。 */
+async function checkReadonlyInfo():Promise<void> {
+ const controller=HeroRosterController.instance;controller.initialize();controller.resetSession("local-1/info");
+ const hero={id:"00000000-0000-4000-8000-000000000001",templateId:10101001,level:1,star:1,stage:0,baseStats:{hp:120,atk:30,def:10,spd:100}};
+ const sync=(rows:any[])=>controller.onNotify(Protocol.STATE_CHANGED,{revision:1,heroes:rows});sync([hero]);
+ const root=new Node("info"),page=root.addComponent(HeroInfoView);page.summary=new Node("summary").addComponent(Label);page.attributes=Array.from({length:4},()=>new Node("attr").addComponent(Label));
+ (page as any).mountPortrait=()=>{};
+ const ui=UIManager.instance,original=ui.back,originalOpen=ui.openById;let backs=0,lists=0;ui.back=()=>{backs++;return true;};ui.openById=(async(id:string)=>{assert(id==="hero","详情明确返回英雄列表");lists++;return page;}) as typeof ui.openById;
+ const before=EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
+ try {page.onOpen({heroId:hero.id});assert(page.attributes[0].string==="攻击：30","展示服务器基础属性");sync([{...hero,level:2,baseStats:{...hero.baseStats,atk:35}}]);assert(page.attributes[0].string==="攻击：35","同步后详情更新");(page as any).goBack();assert(lists===1,"返回按钮打开列表而非主城");sync([]);assert(lists===2,"实例删除返回列表");controller.resetSession(null);assert(backs===1,"退出账号返回根页面");page.onClose();assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===before,"关页释放详情监听");}
+ finally {page.onClose();ui.back=original;ui.openById=originalOpen;controller.dispose();root.destroy();}
+ const data=loadPrefab("client/assets/prefabs/ui/hero/HeroInfoView.prefab");const buttons=data.filter((x:any)=>x.__type__==="cc.Button"&&x._interactable);
+ assert(buttons.length===1,"详情仅返回按钮可操作，不开放升级/扩容");
+}
+async function main() { await checkDefaultRoster();await checkReadonlyInfo(); checkHeroCellReuse();checkHeroScrollBounds();checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/sync/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });

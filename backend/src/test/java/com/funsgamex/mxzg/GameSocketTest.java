@@ -343,6 +343,9 @@ class GameSocketTest {
         } finally { if (process.isAlive()) process.destroyForcibly(); }
     }
 
+    /** 默认关闭的本机服务拒绝 GM 发放，即使客户端伪造开发入口。 */
+    @Test void gmDisabledIsEnforced() throws Exception {var p=player();try(var peer=new Peer()){peer.authenticate(p.session().accessToken());assertFalse(peer.request("gm.status",Map.of()).path("body").path("enabled").asBoolean());assertEquals("GM_DISABLED",peer.request("gm.grant",Map.of("requestId",UUID.randomUUID().toString(),"kind","item","configId",900101,"quantity",1)).path("error").path("code").asString());}}
+
     /** 原库存 HTTP 路由已退役，默认客户端不能再通过它回退读取。 */
     @Test void inventoryHttpEndpointIsRetired() throws Exception {
         try (var client = HttpClient.newHttpClient()) {

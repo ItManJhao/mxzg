@@ -138,6 +138,14 @@ export class GameSocketClient {
     return frame;
   }
 
+  /** GM 显式写请求，不自动重放；幂等键由 GM 模块保存，迟到回包按连接代次拒绝。 */
+  async gmGrant(token:string, body:unknown):Promise<GameFrame> {
+    this.assertReady(token);const generation=this.generation;
+    const frame=await this.send(Protocol.GM_GRANT,body);
+    if(generation!==this.generation)throw new SocketFailure("SESSION_CHANGED");
+    return frame;
+  }
+
   /** 后台主动结束旧通道及计时器，保留已登录凭证；回前台只重做鉴权首包，不重放业务请求。 */
   setBackground(background: boolean): void {
     if (this.suspended === background) return;

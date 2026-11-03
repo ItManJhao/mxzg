@@ -146,20 +146,20 @@ async function main() {
   const picked: string[] = [];
   const enabled = new HomeController(model, service, { bind: callbacks => { actions = callbacks; return () => { actions = null; }; },
     render: () => {}, showNotice: text => { notice = text; } }, id => {
-      if (id !== "bag" && id !== "city") return false;
+      if (id !== "bag" && id !== "city" && id !== "hero") return false;
       picked.push(id); return true;
     });
   enabled.show();
-  assert.equal((actions as HomeActions).heroAvailable,false);
+  assert.equal((actions as HomeActions).heroAvailable,true);
   (actions as HomeActions).openFeature("bag"); assert.deepEqual(picked, ["bag"]);
-  (actions as HomeActions).openFeature("hero"); assert.equal(notice, "该模块暂停，待登录和背包完善后按原项目重做");
+  (actions as HomeActions).openFeature("hero"); assert.deepEqual(picked,["bag","hero"]);
   enabled.close();
 
   const assets = join(process.cwd(), "client/assets");
   const prefab = JSON.parse(readFileSync(join(assets, "bundles/remake-home/RemakeHomeView.prefab"), "utf8"));
-  const view = prefab.find((row: Record<string, unknown>) => row.logoutButton && row.profileLabel);
-  assert.equal(prefab[view.profileLabel.__id__].__type__, "cc.Label");
-  assert.equal(prefab[view.logoutButton.__id__].__type__, "cc.Button");
+  const view = prefab.find((row: Record<string, unknown>) => row.cityHost && row.noticeLabel);
+  assert.equal(prefab[view.noticeLabel.__id__].__type__, "cc.Label");
+  assert.equal(prefab[view.cityHost.__id__].__type__, "cc.Node");
   const scene = JSON.parse(readFileSync(join(assets, "scenes/Remake.scene"), "utf8"));
   assert(scene.some((row: Record<string, unknown>) => row.loginPrefab && row.socketUrl));
   console.log("remake-navigation-check passed: explicit registration, shared UIManager, controller cleanup, replacement, failure/cancellation, logout and Prefab bindings");

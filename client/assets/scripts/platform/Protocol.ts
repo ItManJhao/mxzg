@@ -3,6 +3,10 @@
  * 当前线上使用 Frame.name 字符串作协议标识；不是另造一套数字号，不复制游爱 Sproto 协议。
  */
 export class Protocol {
+    /** 查询本机 GM 实际开关。 */
+    static readonly GM_STATUS = "gm.status";
+    /** 向当前角色发放开发资产；服务端持久幂等。 */
+    static readonly GM_GRANT = "gm.grant";
     /** 匿名读取开放区服。 */
     static readonly SERVERS_LIST = "servers.list";
     /** 本地登录并统一初始化角色和背包。 */
@@ -19,7 +23,7 @@ export class Protocol {
 /** 已实现消息标识集合，预留玩法不伪装成可调用协议。 */
 export type ProtocolName = Extract<typeof Protocol[keyof typeof Protocol], string>;
 /** 当前只允许读取的业务请求；鉴权首帧由连接层单独处理。 */
-export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT;
+export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.GM_STATUS;
 /** 协议目录的可读说明，不存玩家数据。 */
 export interface ProtocolDefinition {
     /** 与服务端 Frame.name 相同的协议标识。 */
@@ -31,6 +35,8 @@ export interface ProtocolDefinition {
 }
 /** 仅列出真正已接通的消息，新增协议须同步 .proto、服务端和模块处理。 */
 export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze([
+    {name:Protocol.GM_STATUS,module:"开发GM",description:"GM 开关"},
+    {name:Protocol.GM_GRANT,module:"开发GM",description:"当前角色资产发放回执"},
     {name:Protocol.SESSION_AUTHENTICATE,module:"会话",description:"连接鉴权确认"},
     {name:Protocol.SERVERS_LIST,module:"选服",description:"开放区服"},
     {name:Protocol.SESSION_LOGIN,module:"登录",description:"统一初始化角色和背包"},

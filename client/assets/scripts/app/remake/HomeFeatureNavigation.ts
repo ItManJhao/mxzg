@@ -10,7 +10,7 @@ interface FeatureHost {
   authorized(): boolean;
   notice(text: string): void;
 }
-export const REMAKE_FEATURE_ROUTES: Readonly<Record<string,string>> = { hero:"hero",bag:"bag",battle:"remake-campaign" };
+export const REMAKE_FEATURE_ROUTES: Readonly<Record<string,string>> = { "hero-info":"hero-info",hero:"hero",bag:"bag",battle:"remake-campaign" };
 
 /** Feature intent is separate from login/Start intent. Loading never removes the home root. */
 export class HomeFeatureNavigation {

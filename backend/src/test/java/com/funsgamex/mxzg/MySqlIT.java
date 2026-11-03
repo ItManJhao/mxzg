@@ -97,6 +97,8 @@ class MySqlIT {
                 Map.entry("spring.config.location", "classpath:/"),
                 Map.entry("server.address", "127.0.0.1"),
                 Map.entry("server.port", "0"),
+                // 仅此测试类创建并核验的独立实例开启 GM；不继承外部业务配置。
+                Map.entry("mxzg.gm.enabled", "true"),
                 Map.entry("spring.datasource.url", url),
                 Map.entry("spring.datasource.username", user),
                 Map.entry("spring.datasource.password", password),
@@ -165,7 +167,7 @@ class MySqlIT {
         previewEligible=true;
     }
 
-    /** 仅在本轮专用库创建可视夹具：角色经验 66、两张同配置周卡，其中一张四分钟到期；绝不进入业务发放入口。 */
+    /** 仅在本轮专用库创建可视夹具：角色经验 66、两张同配置周卡、36 个只读英雄，其中一张卡四分钟到期；绝不进入业务发放入口。 */
     private void prepareTimedPreview() throws Exception {
         mysql.guard();
         var player=login.login("bag_timed_preview","local-1");
@@ -176,6 +178,8 @@ class MySqlIT {
         long now=Instant.now().getEpochSecond();
         tx.executeWithoutResult(status->{
             locks.lock(player.role().id());
+            // 仅独立预览库：长列表用于滚动和复用验证，不接入业务发放入口。
+            for(int i=0;i<36;i++)jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,is_locked) VALUES (?,?,10101001,?,1,?)",UUID.randomUUID().toString(),player.role().id(),1+i%7,i%3==0);
             inventory.credit(player.role().id(),900601,5);
             assertEquals(1,jdbc.update("UPDATE game_role SET role_experience=66 WHERE id=?",player.role().id()));
             var shortItem=timed.grantOne(player.role().id(),902025,now);
@@ -208,7 +212,7 @@ class MySqlIT {
         assertEquals(0,number("SELECT created_at_seconds FROM game_role WHERE login_account='it_v3_migration'"));
         assertEquals(0,number("SELECT role_experience FROM game_role WHERE login_account='it_v3_migration'"));
         System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V8; stage=0");
-        assertEquals(8, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(11, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals("bigint", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_inventory' AND COLUMN_NAME='quantity'", String.class));
         assertEquals("timestamp", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_session' AND COLUMN_NAME='expires_at'", String.class));
         assertEquals(1, number("SELECT COUNT(DISTINCT INDEX_NAME) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND INDEX_NAME='uq_role_account_server' AND NON_UNIQUE=0"));
@@ -350,11 +354,11 @@ class MySqlIT {
         assertEquals(settled.inventory(), inventory(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
-        assertEquals(8, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(11, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         var replay=campaign.claim(token,report.id());
         assertEquals(settled.battle(),replay.battle());assertEquals(settled.inventory(),replay.inventory());assertEquals(settled.stageId(),replay.stageId());
         assertEquals(current,replay.role(),"重放携带当前角色快照，登录时间不是历史奖励收据");
-        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=8");
+        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=11");
     }
 
     /** 通过独立 JVM 的真实 HTTP 完成业务链，在未领奖和已领奖两个阶段分别终止进程再登录核验恢复。 */
@@ -444,6 +448,24 @@ class MySqlIT {
         assertEquals(66,restored.role().basics().experience());assertEquals(1450,restored.role().basics().cup());
         assertEquals(12,restored.role().basics().headId());assertEquals(34,restored.role().basics().borderId());assertEquals(410304012,restored.role().basics().imageId());
         System.out.println("[MYSQL-IT] role basics persisted; rollback/restart preserve role and unified revision");
+    }
+
+
+    /** 独立 MySQL 验证 GM 英雄、道具发放及重启后的持久幂等，不连接玩家库。 */
+    @Test @Order(15) void gmGrantsPersistAndRetrySafely() throws Exception {
+        var p=player();var other=player();var gm=app.getBean(com.funsgamex.mxzg.gm.GmService.class);
+        String itemRequest=UUID.randomUUID().toString(),heroRequest=UUID.randomUUID().toString();
+        gm.grant(p.token(),itemRequest,"item",900101,5);
+        gm.grant(p.token(),heroRequest,"hero",10102002,2);
+        var committed=snapshots.snapshot(p.token());
+        app.close();boot();gm=app.getBean(com.funsgamex.mxzg.gm.GmService.class);
+        gm.grant(p.token(),itemRequest,"item",900101,5);gm.grant(p.token(),heroRequest,"hero",10102002,2);
+        assertStoredState(committed,snapshots.snapshot(p.token()));
+        assertEquals(5,number("SELECT quantity FROM game_inventory WHERE role_id=? AND item_id=900101",p.id()));
+        assertEquals(2,number("SELECT COUNT(*) FROM game_hero WHERE role_id=? AND star=2 AND hero_level=1",p.id()));
+        assertEquals(2,number("SELECT COUNT(*) FROM game_gm_grant WHERE role_id=?",p.id()));
+        assertEquals(0,number("SELECT COUNT(*) FROM game_gm_grant WHERE role_id=?",other.id()));
+        System.out.println("[MYSQL-IT] GM hero/item persisted; retry after restart does not duplicate grants");
     }
 
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */

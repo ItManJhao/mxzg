@@ -2,6 +2,10 @@
  * 重做版应用装配入口，装配选服、登录、角色和背包；其他玩法入口暂停。
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
+import { GmController } from "../../features/gm/GmController";
+import { GmView } from "../../features/gm/GmView";
+import { loadPrefab } from "../../framework/assets/PrefabLoader";
+import { Protocol } from "../../platform/Protocol";
 import {BagModel} from "../../features/Bag/BagModel";
 
 import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
@@ -15,6 +19,11 @@ import { GameSocketClient } from "../../platform/GameSocketClient";
 import { readBagItems, readTimedItems } from "../../features/Bag/data/BagItemData";
 import { AccountService } from "../../features/account/AccountService";
 import { AccountController } from "../../features/account/AccountController";
+import { HeroInfoView } from "../../features/hero/ui/HeroInfoView";
+import { HeroListView } from "../../features/hero/ui/HeroListView";
+import { mountHeroListPage } from "../../features/hero/ui/heroMount";
+import { createHeroResourceScope, loadHeroPage } from "./HeroResources";
+import { HeroRosterController } from "../../features/hero/HeroRosterController";
 import { RoleProfileView } from "../../features/account/ui/RoleProfileView";
 import { AccountLoginView } from "../../features/account/ui/AccountLoginView";
 import { HomeController } from "../../features/home/HomeController";
@@ -79,6 +88,8 @@ export class RemakeApp extends Component {
   private startupResources: ResourceScope<Asset> | null = null;
   private homeResources: ResourceScope<Prefab> | null = null;
   private features: HomeFeatureNavigation | null = null;
+  /** 英雄只读列表资源，首次点击时加载，应用销毁时释放。 */
+  private heroResources:ResourceScope<Prefab>|null=null;
   private featureResources: ResourceScope<Prefab> | null = null;
 
   /** 编辑器启动应用时装配唯一会话服务和页面注册，并执行新链路启动流程。 */
@@ -116,7 +127,8 @@ export class RemakeApp extends Component {
     BagController.instance.initialize();
     this.bagModule = BagController.instance;
     const roleController=new RoleController(role=>service.acceptRole(role));
-    const assets=this.assetState=new AssetStateBinding(model,BagController.instance,roleController);
+    HeroRosterController.instance.initialize();
+    const assets=this.assetState=new AssetStateBinding(model,BagController.instance,roleController,HeroRosterController.instance);
     service.onInitialized=frame=>assets.apply(frame);
     socket.onState=frame=>assets.apply(frame);
     let connectionNotice = "";
@@ -141,14 +153,23 @@ export class RemakeApp extends Component {
     this.navigation = new RemakeNavigation(ui, this.pageHost, {
       parent: id => Object.values(REMAKE_FEATURE_ROUTES).includes(id) ? homeView?.featureHost || null : null,
       content: () => homeView?.cityContent || null,
-      changed: id => homeView?.showFeature(id === "remake-campaign" ? "battle" : id === "hero" || id === "bag" ? id : "city"),
+      changed: id => homeView?.showFeature(id === "remake-campaign" ? "battle" : id === "hero-info" ? "hero" : id === "hero" || id === "bag" ? id : "city"),
     },slideFeaturePage);
+    const gm = new GmController(
+      () => service.authenticated(token => socket.request(token,Protocol.GM_STATUS)),
+      body => service.authenticated(async token => (await socket.gmGrant(token,body)).body));
+    if(PREVIEW)this.unregisterViews.push(registerView(GmView,{
+      id:"gm",prefab:ResourceCatalog.prefab_gm.GmView.assetPath,layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"remake-modal",
+      load:async()=>{await GameConfig.instance.prepare([GConfig.HeroType,GConfig.Item,GConfig.Language]);return loadPrefab(ResourceCatalog.prefab_gm.GmView.assetPath);}
+    }));
+    const openGm=()=>{const role=model.snapshot.role;if(!PREVIEW||!role||model.snapshot.busy)return;
+      void ui.openById("gm",{controller:gm,roleId:role.id,nickname:role.nickname}).catch(error=>ui.toast("GM 打开失败："+String(error)));};
     const features = this.features = new HomeFeatureNavigation(ui, {
       current: () => this.navigation?.current || null,
       authorized: () => this.alive && this.started && !model.snapshot.busy && !!model.snapshot.role && entry.route(true) === "remake-home",
       notice: text => homeView?.showNotice(text),
     });
-    ui.install(this.navigation, { showToast: text => console.warn("[RemakeUI] " + text) });
+    ui.install(this.navigation, { showToast: text => homeView?.showNotice(text) });
     this.unregisterViews.push(ui.setResidentHost("remake-modal", () => this.pageHost));
     this.unregisterViews.push(registerView(ServerPickerView, {
       id: "server-picker", prefab: ResourceCatalog.prefab_login.ServerPickerView.assetPath, layer: UILayer.Popup,
@@ -189,7 +210,7 @@ export class RemakeApp extends Component {
           if (id !== "role-profile") return features.open(id);
           if (!model.snapshot.role || model.snapshot.busy) return false;
           void ui.openById("role-profile", {
-            model, logout: () => service.logout(), notice: (text: string) => ui.toast(text),
+            model, openGm:PREVIEW?openGm:undefined, logout: () => service.logout(), notice: (text: string) => ui.toast(text),
           }).catch(error => {
             if (!isOpenCancelled(error)) homeView?.showNotice("角色详情打开失败，请重试");
           });
@@ -205,11 +226,22 @@ export class RemakeApp extends Component {
       id:"bag",prefab:ResourceCatalog.prefab_Bag.BagView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
       mount:mountBagPage,load:() => loadFeature("bag"),
     }));
+    this.unregisterViews.push(registerView(HeroListView, {
+      id:"hero",prefab:ResourceCatalog.prefab_hero.HeroListView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
+      mount:mountHeroListPage,load:()=>{
+        if(!this.heroResources)this.heroResources=createHeroResourceScope();
+        return loadHeroPage(this.heroResources);
+      },
+    }));
+    this.unregisterViews.push(registerView(HeroInfoView,{
+      id:"hero-info",prefab:ResourceCatalog.prefab_hero.HeroInfoView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
+      mount:mountHeroListPage,load:()=>{if(!this.heroResources)this.heroResources=createHeroResourceScope();return this.heroResources.load("info");},
+    }));
     this.alive = true;
     this.startupResources = createStartupResourceScope();
     syncRoute = () => {
       if (!this.alive || !this.started) return;
-      if(model.snapshot.busy || !model.snapshot.role) { ui.closeById("hero-level"); ui.closeById("role-profile"); }
+      if(model.snapshot.busy || !model.snapshot.role) { ui.closeById("hero-level"); ui.closeById("role-profile"); ui.closeById("gm"); gm.reset(); }
       if (model.snapshot.busy) {
         this.chrome?.show();
         this.chrome?.setStage("同步角色资料");
@@ -360,6 +392,7 @@ export class RemakeApp extends Component {
     this.navigation?.dispose(); this.navigation = null;
     this.bagModule?.dispose(); this.bagModule = null;
     this.homeResources?.dispose(); this.homeResources = null;
+    this.heroResources?.dispose(); this.heroResources=null;
     this.featureResources?.dispose(); this.featureResources = null;
     for (const unregister of this.unregisterViews.splice(0)) unregister();
   }

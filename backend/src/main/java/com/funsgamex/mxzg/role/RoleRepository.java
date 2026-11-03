@@ -12,6 +12,8 @@ public class RoleRepository {
     private final JdbcTemplate jdbc;
     /** 初始值与当前等级经验门槛，由原配置决定。 */
     private final RoleRules rules;
+    /** 旧英雄容量配置，只在创建角色时提供持久初值。 */
+    private final com.funsgamex.mxzg.hero.HeroCapacityService heroCapacity;
     /** 行映射保留持久字段，等级门槛按可信配置派生。 */
     private RoleProfile map(java.sql.ResultSet row,int index) throws java.sql.SQLException {
         int level=row.getInt("role_level");
@@ -34,7 +36,7 @@ public class RoleRepository {
     }
 
     /** 注入角色持久化与资产同步出口。 */
-    public RoleRepository(JdbcTemplate jdbc, com.funsgamex.mxzg.network.AssetSyncService sync, RoleRules rules) { this.jdbc=jdbc; this.sync=sync; this.rules=rules; }
+    public RoleRepository(JdbcTemplate jdbc, com.funsgamex.mxzg.network.AssetSyncService sync, RoleRules rules, com.funsgamex.mxzg.hero.HeroCapacityService heroCapacity) { this.jdbc=jdbc; this.sync=sync; this.rules=rules; this.heroCapacity=heroCapacity; }
     /** 持有角色锁时读取持久状态版本；同一提交的角色与背包共用此值。 */
     public long revision(String role) { return jdbc.queryForObject("SELECT state_revision FROM game_role WHERE id=?",Long.class,role); }
     /** 已验证奖励事务调用；只允许正数，金币和钻石共享提交同步。 */
@@ -67,8 +69,8 @@ public class RoleRepository {
         String id = UUID.randomUUID().toString();
         String key = serverId.equals("local-1") ? account : account + "@" + serverId;
         long now=java.time.Instant.now().getEpochSecond();
-        jdbc.update("INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id,role_experience,cup,image_id,created_at_seconds,last_login_at_seconds) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            id,key,account,rules.initial("level"),rules.initial("gold"),rules.initial("gem"),account,serverId,rules.initial("exp"),rules.initial("cup"),rules.imageId(),now,now);
+        jdbc.update("INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id,role_experience,cup,image_id,created_at_seconds,last_login_at_seconds,hero_capacity) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            id,key,account,rules.initial("level"),rules.initial("gold"),rules.initial("gem"),account,serverId,rules.initial("exp"),rules.initial("cup"),rules.imageId(),now,now,heroCapacity.initial());
         return findById(id).orElseThrow();
     }
     /** 显式登录时记录服务器秒；须持有角色锁与事务，变更后统一通知，不把网络重连当作新登录。 */

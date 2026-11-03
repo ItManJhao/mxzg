@@ -2761,9 +2761,12 @@ var mxzg = $root.mxzg = (() => {
       Frame.prototype.empty = null;
       Frame.prototype.login = null;
       Frame.prototype.servers = null;
+      Frame.prototype.gmGrant = null;
+      Frame.prototype.gmResult = null;
+      Frame.prototype.gmStatus = null;
       let $oneOfFields;
       Object.defineProperty(Frame.prototype, "payload", {
-        get: $util.oneOfGetter($oneOfFields = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers"]),
+        get: $util.oneOfGetter($oneOfFields = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus"]),
         set: $util.oneOfSetter($oneOfFields)
       });
       Frame.create = function create(properties) {
@@ -2853,6 +2856,21 @@ var mxzg = $root.mxzg = (() => {
             /* id 18, wireType 2 =*/
             146
           ).fork(), q + 1).ldelim();
+        if (message.gmGrant != null && Object.hasOwnProperty.call(message, "gmGrant"))
+          $root.mxzg.game.GmGrant.encode(message.gmGrant, writer.uint32(
+            /* id 19, wireType 2 =*/
+            154
+          ).fork(), q + 1).ldelim();
+        if (message.gmResult != null && Object.hasOwnProperty.call(message, "gmResult"))
+          $root.mxzg.game.GmResult.encode(message.gmResult, writer.uint32(
+            /* id 20, wireType 2 =*/
+            162
+          ).fork(), q + 1).ldelim();
+        if (message.gmStatus != null && Object.hasOwnProperty.call(message, "gmStatus"))
+          $root.mxzg.game.GmStatus.encode(message.gmStatus, writer.uint32(
+            /* id 21, wireType 2 =*/
+            170
+          ).fork(), q + 1).ldelim();
         return writer;
       };
       Frame.decode = function decode(reader, length, error, long) {
@@ -2940,6 +2958,18 @@ var mxzg = $root.mxzg = (() => {
             }
             case 18: {
               message.servers = $root.mxzg.game.Servers.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 19: {
+              message.gmGrant = $root.mxzg.game.GmGrant.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 20: {
+              message.gmResult = $root.mxzg.game.GmResult.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 21: {
+              message.gmStatus = $root.mxzg.game.GmStatus.decode(reader, reader.uint32(), void 0, long + 1);
               break;
             }
             default:
@@ -3079,6 +3109,36 @@ var mxzg = $root.mxzg = (() => {
               return "servers." + error;
           }
         }
+        if (message.gmGrant != null && Object.hasOwnProperty.call(message, "gmGrant")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.GmGrant.verify(message.gmGrant, long + 1);
+            if (error)
+              return "gmGrant." + error;
+          }
+        }
+        if (message.gmResult != null && Object.hasOwnProperty.call(message, "gmResult")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.GmResult.verify(message.gmResult, long + 1);
+            if (error)
+              return "gmResult." + error;
+          }
+        }
+        if (message.gmStatus != null && Object.hasOwnProperty.call(message, "gmStatus")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.GmStatus.verify(message.gmStatus, long + 1);
+            if (error)
+              return "gmStatus." + error;
+          }
+        }
         return null;
       };
       Frame.fromObject = function fromObject(object, long) {
@@ -3152,6 +3212,21 @@ var mxzg = $root.mxzg = (() => {
           if (!$util.isObject(object.servers))
             throw TypeError(".mxzg.game.Frame.servers: object expected");
           message.servers = $root.mxzg.game.Servers.fromObject(object.servers, long + 1);
+        }
+        if (object.gmGrant != null) {
+          if (!$util.isObject(object.gmGrant))
+            throw TypeError(".mxzg.game.Frame.gmGrant: object expected");
+          message.gmGrant = $root.mxzg.game.GmGrant.fromObject(object.gmGrant, long + 1);
+        }
+        if (object.gmResult != null) {
+          if (!$util.isObject(object.gmResult))
+            throw TypeError(".mxzg.game.Frame.gmResult: object expected");
+          message.gmResult = $root.mxzg.game.GmResult.fromObject(object.gmResult, long + 1);
+        }
+        if (object.gmStatus != null) {
+          if (!$util.isObject(object.gmStatus))
+            throw TypeError(".mxzg.game.Frame.gmStatus: object expected");
+          message.gmStatus = $root.mxzg.game.GmStatus.fromObject(object.gmStatus, long + 1);
         }
         return message;
       };
@@ -3230,6 +3305,21 @@ var mxzg = $root.mxzg = (() => {
           object.servers = $root.mxzg.game.Servers.toObject(message.servers, options, q + 1);
           if (options.oneofs)
             object.payload = "servers";
+        }
+        if (message.gmGrant != null && Object.hasOwnProperty.call(message, "gmGrant")) {
+          object.gmGrant = $root.mxzg.game.GmGrant.toObject(message.gmGrant, options, q + 1);
+          if (options.oneofs)
+            object.payload = "gmGrant";
+        }
+        if (message.gmResult != null && Object.hasOwnProperty.call(message, "gmResult")) {
+          object.gmResult = $root.mxzg.game.GmResult.toObject(message.gmResult, options, q + 1);
+          if (options.oneofs)
+            object.payload = "gmResult";
+        }
+        if (message.gmStatus != null && Object.hasOwnProperty.call(message, "gmStatus")) {
+          object.gmStatus = $root.mxzg.game.GmStatus.toObject(message.gmStatus, options, q + 1);
+          if (options.oneofs)
+            object.payload = "gmStatus";
         }
         return object;
       };
@@ -5300,6 +5390,10 @@ var mxzg = $root.mxzg = (() => {
       Hero.prototype.templateId = 0;
       Hero.prototype.level = 0;
       Hero.prototype.star = 0;
+      Hero.prototype.locked = false;
+      Hero.prototype.deployed = false;
+      Hero.prototype.stage = 0;
+      Hero.prototype.baseStats = null;
       Hero.create = function create(properties) {
         return new Hero(properties);
       };
@@ -5326,6 +5420,26 @@ var mxzg = $root.mxzg = (() => {
           /* id 4, wireType 0 =*/
           32
         ).uint32(message.star);
+        if (message.locked != null && Object.hasOwnProperty.call(message, "locked"))
+          writer.uint32(
+            /* id 5, wireType 0 =*/
+            40
+          ).bool(message.locked);
+        if (message.deployed != null && Object.hasOwnProperty.call(message, "deployed"))
+          writer.uint32(
+            /* id 6, wireType 0 =*/
+            48
+          ).bool(message.deployed);
+        if (message.stage != null && Object.hasOwnProperty.call(message, "stage"))
+          writer.uint32(
+            /* id 7, wireType 0 =*/
+            56
+          ).uint32(message.stage);
+        if (message.baseStats != null && Object.hasOwnProperty.call(message, "baseStats"))
+          $root.mxzg.game.HeroBaseStats.encode(message.baseStats, writer.uint32(
+            /* id 8, wireType 2 =*/
+            66
+          ).fork(), q + 1).ldelim();
         return writer;
       };
       Hero.decode = function decode(reader, length, error, long) {
@@ -5367,6 +5481,22 @@ var mxzg = $root.mxzg = (() => {
               message.star = reader.uint32();
               break;
             }
+            case 5: {
+              message.locked = reader.bool();
+              break;
+            }
+            case 6: {
+              message.deployed = reader.bool();
+              break;
+            }
+            case 7: {
+              message.stage = reader.uint32();
+              break;
+            }
+            case 8: {
+              message.baseStats = $root.mxzg.game.HeroBaseStats.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -5402,6 +5532,23 @@ var mxzg = $root.mxzg = (() => {
           return "level: integer expected";
         if (!$util.isInteger(message.star))
           return "star: integer expected";
+        if (message.locked != null && Object.hasOwnProperty.call(message, "locked")) {
+          if (typeof message.locked !== "boolean")
+            return "locked: boolean expected";
+        }
+        if (message.deployed != null && Object.hasOwnProperty.call(message, "deployed")) {
+          if (typeof message.deployed !== "boolean")
+            return "deployed: boolean expected";
+        }
+        if (message.stage != null && Object.hasOwnProperty.call(message, "stage")) {
+          if (!$util.isInteger(message.stage))
+            return "stage: integer expected";
+        }
+        if (message.baseStats != null && Object.hasOwnProperty.call(message, "baseStats")) {
+          let error = $root.mxzg.game.HeroBaseStats.verify(message.baseStats, long + 1);
+          if (error)
+            return "baseStats." + error;
+        }
         return null;
       };
       Hero.fromObject = function fromObject(object, long) {
@@ -5422,6 +5569,17 @@ var mxzg = $root.mxzg = (() => {
           message.level = object.level >>> 0;
         if (object.star != null)
           message.star = object.star >>> 0;
+        if (object.locked != null)
+          message.locked = Boolean(object.locked);
+        if (object.deployed != null)
+          message.deployed = Boolean(object.deployed);
+        if (object.stage != null)
+          message.stage = object.stage >>> 0;
+        if (object.baseStats != null) {
+          if (!$util.isObject(object.baseStats))
+            throw TypeError(".mxzg.game.Hero.baseStats: object expected");
+          message.baseStats = $root.mxzg.game.HeroBaseStats.fromObject(object.baseStats, long + 1);
+        }
         return message;
       };
       Hero.toObject = function toObject(message, options, q) {
@@ -5437,6 +5595,10 @@ var mxzg = $root.mxzg = (() => {
           object.templateId = 0;
           object.level = 0;
           object.star = 0;
+          object.locked = false;
+          object.deployed = false;
+          object.stage = 0;
+          object.baseStats = null;
         }
         if (message.id != null && Object.hasOwnProperty.call(message, "id"))
           object.id = message.id;
@@ -5446,6 +5608,14 @@ var mxzg = $root.mxzg = (() => {
           object.level = message.level;
         if (message.star != null && Object.hasOwnProperty.call(message, "star"))
           object.star = message.star;
+        if (message.locked != null && Object.hasOwnProperty.call(message, "locked"))
+          object.locked = message.locked;
+        if (message.deployed != null && Object.hasOwnProperty.call(message, "deployed"))
+          object.deployed = message.deployed;
+        if (message.stage != null && Object.hasOwnProperty.call(message, "stage"))
+          object.stage = message.stage;
+        if (message.baseStats != null && Object.hasOwnProperty.call(message, "baseStats"))
+          object.baseStats = $root.mxzg.game.HeroBaseStats.toObject(message.baseStats, options, q + 1);
         return object;
       };
       Hero.prototype.toJSON = function toJSON() {
@@ -5458,6 +5628,177 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.Hero";
       };
       return Hero;
+    })();
+    game.HeroBaseStats = (function() {
+      function HeroBaseStats(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      HeroBaseStats.prototype.hp = 0;
+      HeroBaseStats.prototype.atk = 0;
+      HeroBaseStats.prototype.def = 0;
+      HeroBaseStats.prototype.spd = 0;
+      HeroBaseStats.create = function create(properties) {
+        return new HeroBaseStats(properties);
+      };
+      HeroBaseStats.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.hp);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).uint32(message.atk);
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).uint32(message.def);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).uint32(message.spd);
+        return writer;
+      };
+      HeroBaseStats.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.HeroBaseStats();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.hp = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.atk = reader.uint32();
+              break;
+            }
+            case 3: {
+              message.def = reader.uint32();
+              break;
+            }
+            case 4: {
+              message.spd = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "hp"))
+          throw $util.ProtocolError("missing required 'hp'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "atk"))
+          throw $util.ProtocolError("missing required 'atk'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "def"))
+          throw $util.ProtocolError("missing required 'def'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "spd"))
+          throw $util.ProtocolError("missing required 'spd'", { instance: message });
+        return message;
+      };
+      HeroBaseStats.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.hp))
+          return "hp: integer expected";
+        if (!$util.isInteger(message.atk))
+          return "atk: integer expected";
+        if (!$util.isInteger(message.def))
+          return "def: integer expected";
+        if (!$util.isInteger(message.spd))
+          return "spd: integer expected";
+        return null;
+      };
+      HeroBaseStats.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.HeroBaseStats)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.HeroBaseStats: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.HeroBaseStats();
+        if (object.hp != null)
+          message.hp = object.hp >>> 0;
+        if (object.atk != null)
+          message.atk = object.atk >>> 0;
+        if (object.def != null)
+          message.def = object.def >>> 0;
+        if (object.spd != null)
+          message.spd = object.spd >>> 0;
+        return message;
+      };
+      HeroBaseStats.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.hp = 0;
+          object.atk = 0;
+          object.def = 0;
+          object.spd = 0;
+        }
+        if (message.hp != null && Object.hasOwnProperty.call(message, "hp"))
+          object.hp = message.hp;
+        if (message.atk != null && Object.hasOwnProperty.call(message, "atk"))
+          object.atk = message.atk;
+        if (message.def != null && Object.hasOwnProperty.call(message, "def"))
+          object.def = message.def;
+        if (message.spd != null && Object.hasOwnProperty.call(message, "spd"))
+          object.spd = message.spd;
+        return object;
+      };
+      HeroBaseStats.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      HeroBaseStats.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.HeroBaseStats";
+      };
+      return HeroBaseStats;
     })();
     game.Item = (function() {
       function Item(properties) {
@@ -5782,6 +6123,7 @@ var mxzg = $root.mxzg = (() => {
       Snapshot.prototype.inventory = $util.emptyArray;
       Snapshot.prototype.revision = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       Snapshot.prototype.timedInventory = null;
+      Snapshot.prototype.heroRoster = null;
       Snapshot.create = function create(properties) {
         return new Snapshot(properties);
       };
@@ -5816,6 +6158,11 @@ var mxzg = $root.mxzg = (() => {
           $root.mxzg.game.TimedInventory.encode(message.timedInventory, writer.uint32(
             /* id 5, wireType 2 =*/
             42
+          ).fork(), q + 1).ldelim();
+        if (message.heroRoster != null && Object.hasOwnProperty.call(message, "heroRoster"))
+          $root.mxzg.game.HeroRoster.encode(message.heroRoster, writer.uint32(
+            /* id 6, wireType 2 =*/
+            50
           ).fork(), q + 1).ldelim();
         return writer;
       };
@@ -5864,6 +6211,10 @@ var mxzg = $root.mxzg = (() => {
             }
             case 5: {
               message.timedInventory = $root.mxzg.game.TimedInventory.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 6: {
+              message.heroRoster = $root.mxzg.game.HeroRoster.decode(reader, reader.uint32(), void 0, long + 1);
               break;
             }
             default:
@@ -5919,6 +6270,11 @@ var mxzg = $root.mxzg = (() => {
           if (error)
             return "timedInventory." + error;
         }
+        if (message.heroRoster != null && Object.hasOwnProperty.call(message, "heroRoster")) {
+          let error = $root.mxzg.game.HeroRoster.verify(message.heroRoster, long + 1);
+          if (error)
+            return "heroRoster." + error;
+        }
         return null;
       };
       Snapshot.fromObject = function fromObject(object, long) {
@@ -5971,6 +6327,11 @@ var mxzg = $root.mxzg = (() => {
             throw TypeError(".mxzg.game.Snapshot.timedInventory: object expected");
           message.timedInventory = $root.mxzg.game.TimedInventory.fromObject(object.timedInventory, long + 1);
         }
+        if (object.heroRoster != null) {
+          if (!$util.isObject(object.heroRoster))
+            throw TypeError(".mxzg.game.Snapshot.heroRoster: object expected");
+          message.heroRoster = $root.mxzg.game.HeroRoster.fromObject(object.heroRoster, long + 1);
+        }
         return message;
       };
       Snapshot.toObject = function toObject(message, options, q) {
@@ -5993,6 +6354,7 @@ var mxzg = $root.mxzg = (() => {
           } else
             object.revision = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
           object.timedInventory = null;
+          object.heroRoster = null;
         }
         if (message.role != null && Object.hasOwnProperty.call(message, "role"))
           object.role = $root.mxzg.game.Role.toObject(message.role, options, q + 1);
@@ -6015,6 +6377,8 @@ var mxzg = $root.mxzg = (() => {
             object.revision = options.longs === String ? $util.Long.prototype.toString.call(message.revision) : options.longs === Number ? new $util.LongBits(message.revision.low >>> 0, message.revision.high >>> 0).toNumber() : message.revision;
         if (message.timedInventory != null && Object.hasOwnProperty.call(message, "timedInventory"))
           object.timedInventory = $root.mxzg.game.TimedInventory.toObject(message.timedInventory, options, q + 1);
+        if (message.heroRoster != null && Object.hasOwnProperty.call(message, "heroRoster"))
+          object.heroRoster = $root.mxzg.game.HeroRoster.toObject(message.heroRoster, options, q + 1);
         return object;
       };
       Snapshot.prototype.toJSON = function toJSON() {
@@ -6027,6 +6391,141 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.Snapshot";
       };
       return Snapshot;
+    })();
+    game.HeroRoster = (function() {
+      function HeroRoster(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      HeroRoster.prototype.capacity = 0;
+      HeroRoster.prototype.buySpaceTimes = 0;
+      HeroRoster.create = function create(properties) {
+        return new HeroRoster(properties);
+      };
+      HeroRoster.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.capacity);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).uint32(message.buySpaceTimes);
+        return writer;
+      };
+      HeroRoster.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.HeroRoster();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.capacity = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.buySpaceTimes = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "capacity"))
+          throw $util.ProtocolError("missing required 'capacity'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "buySpaceTimes"))
+          throw $util.ProtocolError("missing required 'buySpaceTimes'", { instance: message });
+        return message;
+      };
+      HeroRoster.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.capacity))
+          return "capacity: integer expected";
+        if (!$util.isInteger(message.buySpaceTimes))
+          return "buySpaceTimes: integer expected";
+        return null;
+      };
+      HeroRoster.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.HeroRoster)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.HeroRoster: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.HeroRoster();
+        if (object.capacity != null)
+          message.capacity = object.capacity >>> 0;
+        if (object.buySpaceTimes != null)
+          message.buySpaceTimes = object.buySpaceTimes >>> 0;
+        return message;
+      };
+      HeroRoster.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.capacity = 0;
+          object.buySpaceTimes = 0;
+        }
+        if (message.capacity != null && Object.hasOwnProperty.call(message, "capacity"))
+          object.capacity = message.capacity;
+        if (message.buySpaceTimes != null && Object.hasOwnProperty.call(message, "buySpaceTimes"))
+          object.buySpaceTimes = message.buySpaceTimes;
+        return object;
+      };
+      HeroRoster.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      HeroRoster.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.HeroRoster";
+      };
+      return HeroRoster;
     })();
     game.TimedItem = (function() {
       function TimedItem(properties) {
@@ -6405,6 +6904,464 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.TimedInventory";
       };
       return TimedInventory;
+    })();
+    game.GmGrant = (function() {
+      function GmGrant(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      GmGrant.prototype.requestId = "";
+      GmGrant.prototype.kind = "";
+      GmGrant.prototype.configId = 0;
+      GmGrant.prototype.quantity = 0;
+      GmGrant.create = function create(properties) {
+        return new GmGrant(properties);
+      };
+      GmGrant.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 2 =*/
+          10
+        ).string(message.requestId);
+        writer.uint32(
+          /* id 2, wireType 2 =*/
+          18
+        ).string(message.kind);
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).uint32(message.configId);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).uint32(message.quantity);
+        return writer;
+      };
+      GmGrant.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.GmGrant();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.requestId = reader.string();
+              break;
+            }
+            case 2: {
+              message.kind = reader.string();
+              break;
+            }
+            case 3: {
+              message.configId = reader.uint32();
+              break;
+            }
+            case 4: {
+              message.quantity = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "requestId"))
+          throw $util.ProtocolError("missing required 'requestId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "kind"))
+          throw $util.ProtocolError("missing required 'kind'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "configId"))
+          throw $util.ProtocolError("missing required 'configId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "quantity"))
+          throw $util.ProtocolError("missing required 'quantity'", { instance: message });
+        return message;
+      };
+      GmGrant.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isString(message.requestId))
+          return "requestId: string expected";
+        if (!$util.isString(message.kind))
+          return "kind: string expected";
+        if (!$util.isInteger(message.configId))
+          return "configId: integer expected";
+        if (!$util.isInteger(message.quantity))
+          return "quantity: integer expected";
+        return null;
+      };
+      GmGrant.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.GmGrant)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.GmGrant: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.GmGrant();
+        if (object.requestId != null)
+          message.requestId = String(object.requestId);
+        if (object.kind != null)
+          message.kind = String(object.kind);
+        if (object.configId != null)
+          message.configId = object.configId >>> 0;
+        if (object.quantity != null)
+          message.quantity = object.quantity >>> 0;
+        return message;
+      };
+      GmGrant.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.requestId = "";
+          object.kind = "";
+          object.configId = 0;
+          object.quantity = 0;
+        }
+        if (message.requestId != null && Object.hasOwnProperty.call(message, "requestId"))
+          object.requestId = message.requestId;
+        if (message.kind != null && Object.hasOwnProperty.call(message, "kind"))
+          object.kind = message.kind;
+        if (message.configId != null && Object.hasOwnProperty.call(message, "configId"))
+          object.configId = message.configId;
+        if (message.quantity != null && Object.hasOwnProperty.call(message, "quantity"))
+          object.quantity = message.quantity;
+        return object;
+      };
+      GmGrant.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      GmGrant.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.GmGrant";
+      };
+      return GmGrant;
+    })();
+    game.GmResult = (function() {
+      function GmResult(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      GmResult.prototype.requestId = "";
+      GmResult.prototype.kind = "";
+      GmResult.prototype.configId = 0;
+      GmResult.prototype.quantity = 0;
+      GmResult.create = function create(properties) {
+        return new GmResult(properties);
+      };
+      GmResult.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 2 =*/
+          10
+        ).string(message.requestId);
+        writer.uint32(
+          /* id 2, wireType 2 =*/
+          18
+        ).string(message.kind);
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).uint32(message.configId);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).uint32(message.quantity);
+        return writer;
+      };
+      GmResult.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.GmResult();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.requestId = reader.string();
+              break;
+            }
+            case 2: {
+              message.kind = reader.string();
+              break;
+            }
+            case 3: {
+              message.configId = reader.uint32();
+              break;
+            }
+            case 4: {
+              message.quantity = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "requestId"))
+          throw $util.ProtocolError("missing required 'requestId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "kind"))
+          throw $util.ProtocolError("missing required 'kind'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "configId"))
+          throw $util.ProtocolError("missing required 'configId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "quantity"))
+          throw $util.ProtocolError("missing required 'quantity'", { instance: message });
+        return message;
+      };
+      GmResult.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isString(message.requestId))
+          return "requestId: string expected";
+        if (!$util.isString(message.kind))
+          return "kind: string expected";
+        if (!$util.isInteger(message.configId))
+          return "configId: integer expected";
+        if (!$util.isInteger(message.quantity))
+          return "quantity: integer expected";
+        return null;
+      };
+      GmResult.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.GmResult)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.GmResult: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.GmResult();
+        if (object.requestId != null)
+          message.requestId = String(object.requestId);
+        if (object.kind != null)
+          message.kind = String(object.kind);
+        if (object.configId != null)
+          message.configId = object.configId >>> 0;
+        if (object.quantity != null)
+          message.quantity = object.quantity >>> 0;
+        return message;
+      };
+      GmResult.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.requestId = "";
+          object.kind = "";
+          object.configId = 0;
+          object.quantity = 0;
+        }
+        if (message.requestId != null && Object.hasOwnProperty.call(message, "requestId"))
+          object.requestId = message.requestId;
+        if (message.kind != null && Object.hasOwnProperty.call(message, "kind"))
+          object.kind = message.kind;
+        if (message.configId != null && Object.hasOwnProperty.call(message, "configId"))
+          object.configId = message.configId;
+        if (message.quantity != null && Object.hasOwnProperty.call(message, "quantity"))
+          object.quantity = message.quantity;
+        return object;
+      };
+      GmResult.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      GmResult.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.GmResult";
+      };
+      return GmResult;
+    })();
+    game.GmStatus = (function() {
+      function GmStatus(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      GmStatus.prototype.enabled = false;
+      GmStatus.create = function create(properties) {
+        return new GmStatus(properties);
+      };
+      GmStatus.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).bool(message.enabled);
+        return writer;
+      };
+      GmStatus.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.GmStatus();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.enabled = reader.bool();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "enabled"))
+          throw $util.ProtocolError("missing required 'enabled'", { instance: message });
+        return message;
+      };
+      GmStatus.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (typeof message.enabled !== "boolean")
+          return "enabled: boolean expected";
+        return null;
+      };
+      GmStatus.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.GmStatus)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.GmStatus: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.GmStatus();
+        if (object.enabled != null)
+          message.enabled = Boolean(object.enabled);
+        return message;
+      };
+      GmStatus.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults)
+          object.enabled = false;
+        if (message.enabled != null && Object.hasOwnProperty.call(message, "enabled"))
+          object.enabled = message.enabled;
+        return object;
+      };
+      GmStatus.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      GmStatus.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.GmStatus";
+      };
+      return GmStatus;
     })();
     return game;
   })();

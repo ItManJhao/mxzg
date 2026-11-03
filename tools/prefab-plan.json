@@ -8,7 +8,8 @@
       ],
       "reason": "New login MVC",
       "names": [
-        "AccountLoginView"
+        "AccountLoginView",
+        "RoleProfileView"
       ]
     },
     {
@@ -271,6 +272,17 @@
       "names": [
         "LoginPanel",
         "UserLoginLayer"
+      ]
+    },
+    {
+      "directory": "prefabs/ui/gm",
+      "phases": [
+        "P8"
+      ],
+      "reason": "游戏内本机开发 GM 与可搜索下拉选项",
+      "names": [
+        "GmView",
+        "GmOptionCellView"
       ]
     }
   ]

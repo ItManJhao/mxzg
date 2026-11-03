@@ -9,6 +9,7 @@ import { prepareHeroConfig, prepareHeroLevelConfig } from "../../config/RemakeCo
 import { loadPrefab } from "../../framework/assets/PrefabLoader";
 
 export const HERO_PAGE_RESOURCES = {
+  info: ResourceCatalog.prefab_hero.HeroInfoView.assetPath,
   level: ResourceCatalog.prefab_hero.HeroInfoUpLevelLayer.assetPath,
   list: ResourceCatalog.prefab_hero.HeroListView.assetPath,
   board: ResourceCatalog.prefab_hero.HeroListBoardView.assetPath,
@@ -30,7 +31,7 @@ export const createHeroResourceScope = () => pool.createScope();
 /** 主页已打开共享 Bundle；只准备名册资源，普通升级窗口留到实际打开时加载。 */
 export async function loadHeroPage(scope: ResourceScope<Prefab>): Promise<Prefab> {
   await prepareHeroConfig();
-  await Promise.all(Object.keys(HERO_PAGE_RESOURCES).filter(key=>key!=="level").map(key => scope.load(key)));
+  await Promise.all(Object.keys(HERO_PAGE_RESOURCES).filter(key=>key!=="level"&&key!=="info").map(key => scope.load(key)));
   return scope.load("list");
 }
 

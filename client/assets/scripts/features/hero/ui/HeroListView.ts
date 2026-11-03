@@ -6,7 +6,9 @@ import { HeroRosterEvent } from "../HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroRosterController } from "../HeroRosterController";
 import { presentHeroRoster } from "../HeroRosterPresentation";
-import type { HeroCatalog } from "../HeroCatalog";
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
+import { HeroCatalog } from "../HeroCatalog";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Button, director, Director, HorizontalTextAlignment, Label, Node, Overflow, Prefab, UITransform, VerticalTextAlignment } from "cc";
 import { messageOf } from "../../../core/errors";
@@ -34,7 +36,7 @@ const BOARD_PREFAB = ResourceCatalog.prefab_hero.HeroListBoardView.assetPath;
 /**
  * 英雄列表。页签、羊皮纸和筛选都绑在 HeroListLayer / HeroListHeroLayer 上。
  * 格子数据只来自当前角色的 HeroRosterSource。
- * 点击英雄由应用注入的 openHero 打开普通升级弹窗；未接入的详情和圣龙功能只给出提示。
+ * 当前只读入口不注入升级操作；点击英雄仅提示名称，详情与圣龙待按旧版恢复。
  */
 @view({
   id: "hero",
@@ -109,7 +111,7 @@ export class HeroListView extends BaseView implements HeroRosterView {
   configureRoster(model:HeroRosterModel, controller:HeroRosterController, catalog:HeroCatalog, notice:(text:string)=>void, openHero?:(id:string)=>void):void {
     this.rosterModule=controller;
     this.useRoster({read:elem=>presentHeroRoster(model.snapshot,catalog,elem),
-      retry:()=>{if(!this.closed){notice("");void controller.refresh();}},
+      retry:()=>{if(!this.closed){notice("");notice("英雄数据随登录和重连自动同步，请等待连接恢复");}},
       select:cell=>{if(this.closed)return;if(openHero && cell.instanceId)openHero(cell.instanceId);else notice(cell.name+" Lv"+cell.level+"，详情暂未开放");}});
   }
   /** Called by application composition before opening. A current role source is required. */
@@ -125,11 +127,13 @@ export class HeroListView extends BaseView implements HeroRosterView {
     return this.roster.read(this.elem);
   }
 
-  /** 确认当前名册源后开始挂载已有列表，重复打开沿用已绑定板子。 */
+  /** 默认绑定唯一英雄模块和已准备配置，再挂载已有列表；测试可提前注入只读源，重复打开不叠加板子。 */
   onOpen(): void {
-    if (!this.roster) throw new Error("HeroListView requires the current role roster source");
+    if (!this.roster) this.configureRoster(HeroRosterModel.instance,HeroRosterController.instance,
+      new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType),GameConfig.instance.getFile(GConfig.Item)),
+      text=>UIManager.instance.toast(text),id=>{void UIManager.instance.openById("hero-info",{heroId:id}).catch(error=>UIManager.instance.toast(messageOf(error)));});
     this.closed = false;
-    if(this.rosterModule){EventDispatcher.instance.on(HeroRosterEvent.Updated,this,this.refreshRoster);void this.rosterModule.refresh();}
+    if(this.rosterModule){EventDispatcher.instance.on(HeroRosterEvent.Updated,this,this.refreshRoster);/* 名册由统一状态同步，页面不发查询。 */}
     GameLog.shared.info("Hero", "打开实现 新 HeroListView");
     if (this.opened) {
       this.refresh();
@@ -244,7 +248,7 @@ export class HeroListView extends BaseView implements HeroRosterView {
 
   /**
    * 羊皮纸占满顶栏和底栏之间。页签和板子跟着纸的上沿抬。
-   * 滚动视口仍只露大约 3.5 行。
+   * 滚动视口延伸至容量栏上方，避免下方出现大段留白。
    * 没绑 spr_bg 时不动，检查里的板子留在底左。
    */
   private fitCityMiddle(): void {

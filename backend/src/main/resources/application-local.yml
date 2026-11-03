@@ -7,5 +7,7 @@ spring:
 server:
   address: 127.0.0.1
 mxzg:
+  gm:
+    enabled: ${MXZG_GM_ENABLED:false}
   websocket:
     enabled: true

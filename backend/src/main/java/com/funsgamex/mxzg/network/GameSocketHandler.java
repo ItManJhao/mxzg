@@ -1,6 +1,6 @@
 /**
- * 本机登录/背包 Protobuf 二进制长连接：匿名选服、登录统一初始化、同角色连接替换和提交后资产同步。
- * 请求按连接及角色串行处理，业务尚未同步时拒绝访问；不提供英雄升级或其他写操作。
+ * 本机登录、角色、英雄与背包 Protobuf 二进制长连接：匿名选服、登录统一初始化、同角色连接替换和提交后资产同步。
+ * 请求按连接及角色串行处理，业务尚未同步时拒绝访问；仅开放受服务端开关保护的开发 GM 发放，英雄升级等玩法写操作仍暂停。
  */
 package com.funsgamex.mxzg.network;
 
@@ -29,6 +29,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final com.funsgamex.mxzg.auth.DevelopmentLoginService login;
     /** 未登录选服也走二进制长连接。 */
     private final com.funsgamex.mxzg.server.ServerCatalog servers;
+    /** 当前鉴权角色的本机 GM 服务。 */
+    private final com.funsgamex.mxzg.gm.GmService gm;
     private final SessionService sessions;
     private final SessionSnapshotService snapshots;
     private final ConcurrentMap<String, Connection> connections = new ConcurrentHashMap<>();
@@ -54,7 +56,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     }
 
     /** 注入共享鉴权和快照服务，创建固定数量角色锁，避免锁表无限增长。 */
-    public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots, com.funsgamex.mxzg.auth.DevelopmentLoginService login, com.funsgamex.mxzg.server.ServerCatalog servers) {
+    public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots, com.funsgamex.mxzg.auth.DevelopmentLoginService login, com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm) {
+        this.gm=gm;
         this.sessions = sessions; this.snapshots = snapshots; this.login=login; this.servers=servers;
         Arrays.setAll(roleLocks, index -> new ReentrantLock());
     }
@@ -167,9 +170,15 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         if (online.get(connection.role) != connection) throw rejected("SESSION_REPLACED");
         if (!connection.role.equals(sessions.requireRole(connection.token))) throw rejected("UNAUTHENTICATED");
         if (!connection.socket.getId().equals(request.path("connectionId").asString(""))) throw rejected("SESSION_REPLACED");
+        if(name.equals("gm.grant")) {
+            var body=request.path("body");fields(body,Set.of("requestId","kind","configId","quantity"));
+            if(!body.path("configId").canConvertToInt()||!body.path("quantity").canConvertToInt())throw rejected("GM_INVALID");
+            respond(connection,request,gm.grant(connection.token,text(body,"requestId",UUID_PATTERN),text(body,"kind","hero|item"),body.path("configId").asInt(),body.path("quantity").asInt()));return;
+        }
         fields(request.path("body"), Set.of());
         switch (name) {
 
+            case "gm.status" -> respond(connection,request,Map.of("enabled",gm.enabled()));
             case "session.heartbeat" -> respond(connection, request, Map.of("serverTimeMs", System.currentTimeMillis()));
 
             default -> throw rejected("UNKNOWN_MESSAGE");
