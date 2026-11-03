@@ -42,12 +42,13 @@ export class AccountApi implements AccountGateway {
   private epoch = 0;
   /** 应用选择唯一通信方式；关闭试点时保留现有 HTTP 行为。 */
   constructor(private readonly http: JsonClient, private readonly socket?: GameSocketClient) {}
-  /** 交换开发身份并等待长连接快照；旧登录任务不能接管新账号连接。 */
+  /** 交换开发身份并校验所选区服，等待长连接快照；旧登录任务不能接管新账号连接。 */
   async developmentLogin(account: string, serverId?: string): Promise<LoginResult> {
     const epoch = this.epoch;
     const data = record(await this.http.request("/api/v1/development/login", { account, ...(serverId ? { serverId } : {}) }));
     const session = readSession(data.session);
     const role = readRole(data.role);
+    if (serverId && role.serverId !== serverId) throw new Error("服务器返回的角色区服与所选区服不一致，请重新选择服务器");
     if (epoch !== this.epoch) throw new Error("会话已切换");
     if (!this.socket) return { session, role };
     const current = await this.currentRole(session.accessToken);

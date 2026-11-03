@@ -197,6 +197,13 @@ async function main(): Promise<void> {
   const unusedSocket = new GameSocketClient("ws://127.0.0.1:19080/api/v1/game/socket", {
     create: () => { created++; throw new Error("旧登录不得建立连接"); }, validateSnapshot: () => {},
   });
+  // 选择二服却返回一服时，拒绝身份结果，且不能先建立错误角色的连接。
+  const wrongWorld = new AccountApi(new JsonClient("http://127.0.0.1:19080", async () => ({ status: 200, data: {
+    role: { id: "wrong-world", nickname: "eee", serverId: "local-1", level: 1, gold: 0, diamonds: 0 },
+    session: { accessToken: "e".repeat(43), expiresAt: "2099-01-01T00:00:00Z" },
+  } })), unusedSocket);
+  await assert.rejects(wrongWorld.developmentLogin("eee", "local-2"), /区服不一致/);
+  assert.equal(created, 0);
   const delayedModel = new AccountModel();
   const delayedService = new AccountService(delayedModel, new AccountApi(new JsonClient("http://127.0.0.1:19080", () => delayed.promise), unusedSocket),
     { read: () => null, write: () => {}, clear: () => {} });
