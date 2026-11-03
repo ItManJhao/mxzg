@@ -12,6 +12,24 @@
 
 参考源码（相对 G:/游爱/trunk）：`src/game/main/model/SGModel.ts`、`src/game/main/controller/SGCtrl.ts`、`src/game/main/view/sg/SpiritGameMainView.ts`。SGModel 的 setData/setRecord、SGCtrl 的 onNotify 分发与明确业务方法、View 的 onShow/onHide 成对监听，是值得借鉴的可读性。mxzg 原源码路径和固定版本见 [架构核查](architecture.md#原项目架构核查2026-11-02)。
 
+## 与游爱 SGModel/SGCtrl 的对应关系
+
+2026-11-03 直接复核上述三份源码：**本项目模板与游爱在 MVC 职责、收包后更新数据再通知界面、中文方法说明和阅读顺序上相仿；不要求网络框架和调用形式完全一致。**
+
+| 环节 | 游爱现有写法 | 本项目固定写法 |
+|---|---|---|
+| 发请求 | SpiritGameMainView.onShow/onClick 可直接 NetHelper.sendProto；SGCtrl 也会发后续请求 | View 转交 Controller 的业务方法，由身份边界、模块 API、统一 GameSocketClient 发送 |
+| 收包 | SGCtrl.onNotify 按 Protocol/AOI 分发到 getSGameData 等方法 | 请求由 socket 关联回包，经 API 校验返回 Controller；尚未接入的业务推送不能描述为已完成 |
+| 更新状态 | getSGameData → sgModel.setData；getRecord → setRecord | BagController.read → BagModel.replaceAll，状态由唯一 Model 持有 |
+| 通知界面 | setData 后 dispatch(SG_UPDATE_STATUS) | 提交后 notify → EventDispatcher → BagUpdate/BagSyncStateChanged |
+| 界面刷新 | onShow 登记监听并 updateView；updateView 读取 DataMgr.ins.sgModel | onOpen 登记监听并读取 BagModel；refreshFromModel 负责刷新 |
+| 关闭清理 | onHide 成对 offEvent，并清理页面定时器 | BaseView 清理本页目标监听；模块 Controller 独立存活 |
+
+本项目额外明确入站校验、账号/区服代次、读写排序、持久幂等边界和断线恢复。这些是新版维护与正确性约束；上述三份游爱文件不足以证明其底层是否具备同类保护，不据此断言游爱没有这些能力。
+
+后续保持完整类名、明确业务方法和中文注释，确保能沿“请求 → 收包 → 更新 Model → 通知 View”读懂代码；不为模仿 SGCtrl 增加巨大 switch、公开可写资产、Controller 直接开窗或 View 直接发资产协议。具体链路统一遵守[固定通信与状态模板](bag-mvc-maintenance.md#固定通信与状态模板)。玩法、内容与效果仍以 mxzg 旧项目为准。
+
+
 ## 当前项目从哪里找
 
 以下是现有目录的维护入口，不是要求额外创建一套目录：
