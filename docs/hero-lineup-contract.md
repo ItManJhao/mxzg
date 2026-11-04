@@ -118,3 +118,25 @@ H2 验证不能替代 MySQL。独立 MySQL 已覆盖阵容并发、升级/领奖
 主城通过 RemakeNavigation/HomeFeatureNavigation 管理页面意图和关闭取消；不恢复旧 Boot/GameStore/WireSession。HeroResources 按需加载列表资源，普通升级资源在实际开窗时加载。服务器 Start 初始化会为无英雄角色发放三名初始英雄；开发登录本身不发放。
 
 现有 hero、hero-roster、hero-level、formation、formation-view 检查分别覆盖列表、名册、升级及阵容边界，历史结果不等于本次运行。真实长名册、更多尺寸和完整英雄详情仍待验收。契约生成/漂移检查尚未完成，新通信契约须同时解决该缺口。
+
+## 2026-11-04 主线阵容规则核查与基础实现
+
+前批共享战斗输入已提交本机main：`c3e0d82d`，未推送。本批新增MainFormationRules纯规则；尚未替换历史LineupService.save，尚未开放阵容网络协议/页面，不把保留领域测试当作原版规则已全部接入。
+
+旧源码根目录：G:/work/FsGame/Demo/mj/program。以下路径位于server/mxzg-server：
+
+| 核查项 | 证据 | 当前结论 |
+|---|---|---|
+| 实际配置 | mxzg-config/.../excel/cache/BattleMatrixSysCache.getFileName；gameserver/.../battle/service/FormationService | 读取battlematrix（8行）及battlematrixaddition（72行），不是另一张formation（9行）；两表门槛不同，不混用 |
+| 基础阵型 | FormationService.getFormation | 阵型1默认解锁，即使空名册也保留；battlematrix六星条件对应阵型2 |
+| 永久解锁 | FormationService.checkUnLockFormation、battle/domain/Formation；config/struct/UnlockCondition | 登录/升星检查星级>=阈值、元素包含及数量，已解锁ID只增加；不能因消耗英雄取消 |
+| 助战 | hero/service/HeroService.assistanceUnlock与selectHeroListBy；HeroObserver、RoleObserver；RoleConst与system表 | 至少6名十星及以上英雄实例；不按模板去重计数。持久assistanceUnlock一旦true不回退；9号位未解锁则跳过 |
+| 保存顺序 | hero/service/HeroLineUpService.saveLineUpFormation | 未知/未解锁阵型拒绝；未知位置拒绝；关闭位跳过；已接纳位置重复拒绝；助战未解锁跳过；非所属英雄跳过；同模板后续英雄跳过；等级不足拒绝 |
+| 主线等级 | config/struct/LineUpType.MAIN=0与battleformation[0] | 主线最低英雄等级1；不要将其他玩法等级限制混入主线 |
+| 站位属性 | battlematrixaddition | 基础阵型2/3位减伤291=300，5位生命102=300，6位205=500，7/8位攻击201=300；9位无加成，1/4位关闭。保留全部编号，战斗应用时序还需接线 |
+
+实现提供unlock(previous,heroes)、normalize(formation,unlocks,owned,requested)和position查询。永久语义通过显式previous输入保留；调用方后续必须持久化结果，本批没有用“每次从当前名册重算”代替持久解锁。normalize按请求顺序处理同模板，只返回不可变副本，不清理/改写当前阵容。严格缺表/引用校验，使用真实配置测试默认阵型、六星阈值、六名十星边界、解锁保持、同模板/助战/归属/等级、重复站位和不可变属性。
+
+下一批：持久保存选中阵型、已解锁ID及助战状态；在登录/合法英雄变化的现有事务中更新，并统一revision同步。之后迁移保存协议与Model/View。旧LineupService固定位置、同模板未过滤、助战无限制的历史行为不能直接对外开放。对现有测试阵容迁移需保留数据并单独验收，不通过清库解决规则差异。升级、穿脱、其他模块维持关闭。
+
+本轮后端80/80通过，日志backend/target/main-formation-rules-test.log；其中新增4项真实配置规则测试。本批无迁移、无前端/协议变更，未重跑MySQL或画面、未重启日常后端、未修改玩家资产；规则批次尚未提交。
