@@ -72,6 +72,16 @@ public final class HeroBattleEventProcessor {
         public void setDead(boolean value) { dead = value; }
         /** 设置旧挂机封印标志；不开放挂机玩法。 */
         public void setHangUpSeal(boolean value) { hangUpSeal = value; }
+        /** 查询当前控制状态，供效果执行器判断禁疗与未支持的目标改选。 */
+        public boolean hasControl(int type) {
+            return controls.contains(type);
+        }
+
+        /** 查询战场标记的死亡状态，不通过施法者配置推测。 */
+        public boolean isDead() {
+            return dead;
+        }
+
         /** 安装或移除当前有效控制类型；持续时间管理后续接入。 */
         public void control(int type, boolean present) {
             if (present) {
@@ -96,7 +106,7 @@ public final class HeroBattleEventProcessor {
         /** 查询当前出手中断标记，供真实动作执行器使用。 */
         public boolean interrupted(int target) { return interrupts.contains(target); }
         /** 旧restore只清中断标记，不清Buff或控制状态。 */
-        private void restore() { interrupts.clear(); }
+        void restore() { interrupts.clear(); }
     }
 
     /** 必须实现真实动作处理；未支持的动作应抛错，不能空回调伪造战斗完成。 */

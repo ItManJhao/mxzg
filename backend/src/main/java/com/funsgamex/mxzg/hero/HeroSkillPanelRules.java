@@ -91,6 +91,58 @@ public class HeroSkillPanelRules {
         return new HeroBattleEventProcessor.Definition(buffId, type, skillFilter, arts);
     }
 
+    /** 从同源动作表解析已支持的目标选择计划；未知选择器拒绝，不猜默认目标。 */
+    public HeroBattleTargetUtils.Plan battleTargets(int artId) {
+        var art = row("buffart", artId);
+        var raw = mapper.readTree(art.path("target").asString());
+        if (!raw.isArray() || !art.path("target_num").isIntegralNumber()
+            || !art.path("target_num").canConvertToInt()) {
+            throw new IllegalStateException("动作目标配置无效：" + artId);
+        }
+        var selectors = new ArrayList<Integer>();
+        for (var value : raw) {
+            if (!value.isIntegralNumber() || !value.canConvertToInt()) {
+                throw new IllegalStateException("动作目标类型无效：" + artId);
+            }
+            selectors.add(value.asInt());
+        }
+        return new HeroBattleTargetUtils.Plan(artId, selectors, art.path("target_num").asInt());
+    }
+
+    /** 解析旧218号血量条件的前三个参数；后续art_list由动作层负责，不在此伪执行。 */
+    public HeroBattleConditionUtils.HpCondition battleHpCondition(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 218) {
+            throw new IllegalArgumentException("不是血量条件Buff：" + buffId);
+        }
+        String[] values = buff.path("value").asString().split("\\|", -1);
+        if (values.length < 3) {
+            throw new IllegalStateException("血量条件参数不足：" + buffId);
+        }
+        return new HeroBattleConditionUtils.HpCondition(buffId, Integer.parseInt(values[0]),
+            Integer.parseInt(values[1]), Integer.parseInt(values[2]));
+    }
+
+    /** 预检整个治疗动作；仅接受必中的130号即时效果，无后续动作，未知效果整组拒绝。 */
+    public HeroBattleHealingExecutor.Plan battleHealing(int artId) {
+        var art = row("buffart", artId);
+        var effects = new ArrayList<HeroBattleHealingExecutor.Effect>();
+        for (var id : mapper.readTree(art.path("buff_list").asString())) {
+            var buff = row("buff", id.asInt());
+            if (buff.path("type").asInt() != 130 || buff.path("attach_percent").asInt() != 10000
+                || buff.path("effecttype").asInt() != 0 || buff.path("round").asInt() != 0
+                || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+                throw new IllegalArgumentException("治疗动作包含未支持效果：" + artId + "/" + id.asInt());
+            }
+            int rate = Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]);
+            effects.add(new HeroBattleHealingExecutor.Effect(id.asInt(), rate));
+        }
+        if (effects.isEmpty()) {
+            throw new IllegalArgumentException("治疗动作没有效果：" + artId);
+        }
+        return new HeroBattleHealingExecutor.Plan(battleTargets(artId), effects);
+    }
+
     /** 面板仅使用基础已解锁技能，进化替换在其后，不重复执行面板被动。 */
     public void contribute(int template,int star,int stage,BiConsumer<Integer,Long> add){
         for(var reference:select(template,star,stage)) {

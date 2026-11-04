@@ -250,3 +250,34 @@ HeroBattleEventProcessor是每场新建的内存对象，Actor只保存本场单
 ### 本批边界
 
 技能动作与触发动作通过必需Executor接口交付；没有默认空执行器或假伤害结果。当前已落地的是内存事件处理与行动资格，并可从真实配置解析四类触发定义；尚未自动安装所有技能Buff，未实现持续时间、叠层、别名listenType/listenType2、其他优先级类型、条件概率、完整目标筛选、物理/法术技能后事件、伤害及死亡/反击递归链。未知事件/触发类型明确拒绝，不按无效果成功处理。battle_special_attributes_and_triggers仍保留，战斗入口仍关闭。
+
+
+## 2026-11-04 动作目标选择第一批
+
+旧依据：BattleService.selectTargets、CBuffArt.isLastType、BattlerDo.getHeros，以及Self/Friend/Enemy/RemoveSelf/Survive/Position/AttackPositiveSelector。新增HeroBattleTargetUtils，HeroSkillPanelRules.battleTargets复用已有buffart索引解析真实动作；目前是动作执行前的独立规则入口，尚未接入完整技能效果执行器，不代表技能已造成伤害。
+
+支持选择器0移除自身、1添加自身、2添加友方、3添加敌方、4按原顺序截取、10位置排序、12当前攻击降序。友敌名单由调用者按战场顺序提供；旧getHeros由战场维护存活状态，4号选择器本身不额外判死。自身选择实际也是添加，不能只按枚举注释写成筛选。配置非空时清除目标上下文；配置为空时保留；普通反击已有目标时直接保留。
+
+目标数量仅用于支持截取的选择器，0转99；中间步骤用99。旧isLastType按类型值等于末项判断，重复出现末项类型时也会截取。位置每排4个，优先级为10×(行×10+与施法者列距)−列号，沿用TreeMap同优先级覆盖；攻击降序同值保持输入顺序。返回不可变目标列表，未知选择器整份计划拒绝，不回退为敌方默认目标。
+
+边界：调用方须提供同一战场的单位及上下文；暂不支持死亡选择、前后排、随机、混乱/离间/挑衅改选、临时增加目标数、保存技能目标、伤害/治疗及Buff实际应用。当前没有将该子集接到开放战斗接口，battle_special_attributes_and_triggers继续保留。真实动作2114201验证[2,4,12]选友方攻击最高两名；其后续Buff效果仍未实现。
+
+
+## 2026-11-04 血量条件效果前置处理
+
+依据旧HpCheckerBuffHandler、AbstractConditionBuffHandler、HeroDo.getHpRate、AttributeUtil.calPercent和BattleService.executeBuff，新增HeroBattleConditionUtils.apply；HeroSkillPanelRules.battleHpCondition读取原218号Buff的前三个value参数。真实1083201为3000|0|0：目标血量严格小于30%才通过，等于30%失败。
+
+比较参数0为小于，其他整数为大于等于；来源0取目标，1取施法者，其他整数取施法者阵营存活单位总血量/总生命上限，不取个人比例平均。保留旧double除法，包括0/0产生NaN后两种比较都失败。条件失败调用同一个Actor.interrupt(targetId)，通过不清已有中断；既有事件处理器在监听结束后restore清理中断。
+
+这是效果处理中的条件分支，不是完整动作执行器：调用前仍须由动作层检查命中、既有中断、非英雄和死亡执行限制。工具不读取数据库、不改血量，不自动执行buff.art_list。旧1083201的后续动作1083301以及所属1083101整组动作尚未恢复，不得将条件解析/通过宣称为该技能成功。当前命中概率、效果递归、伤害、治疗和战报仍有缺口，战斗入口保持关闭。
+
+
+## 2026-11-04 首个实际治疗动作
+
+HeroBattleHealingExecutor实现既有Executor.art，以真实1063201为验收案例：buffart.target=[1]、buff_list=[1063201]，130号Buff按当前施法者攻击的5000/10000治疗自身。HeroSkillPanelRules.battleHealing预检整组配置，限定必中特效、effecttype=0、round=0、无后续art_list，目标选择继续复用已核对规则；不支持的类型整组拒绝。
+
+依据旧ReplenishHpBuffHandler、AbstractReplenishBuffHandler、BattleContext.replenish、HeroDo.replenish、AttributeUtil和BattleService.executeBuffArt。计算顺序为基础攻击比例治疗（向零取整）→加固定治疗→加治疗比例（再次取整）→加受治疗比例（再次取整）。生命按缺失量封顶，但旧BattleContext返回并记录的是封顶前治疗值，因此Recovery分别保存base、reported和actual，不把三者混成一个值。基础量<=0或1009禁疗不生成治疗记录；既有中断、死亡目标也跳过。每个Buff后旧restore清除中断，本执行器暂存这一阶段状态，全部计算成功后提交生命、记录并清理真实中断集合。
+
+执行器每场独立创建，State只保存场内生命和已折算属性，输入快照不回写，记录不可变。来源/上下文缺失、重复单位、未知效果、控制改选、溢出或负治疗跨越死亡边界明确失败，不留下半次回血。测试组合“1083201条件失败→1063201治疗跳过”验证共用同一Actor中断集合；这是人为组合的规则集成测试，不宣称两者在原配置中直接相连。
+
+范围仍有限：仅普通动作，无临时属性消费、临时目标数、目标重定向、反击，以及186治疗/206受治疗/311治疗后监听；当前事件定义本身尚不允许安装这些治疗监听。当前输入必须是这类状态不存在的独立子集。skill入口显式拒绝整组技能调度；未把1063201的上游技能/触发链宣称完成。没有战报协议、奖励结算或对外战斗接口，未开放战斗。后续优先补治疗事件及上游真实技能，再接入伤害与死亡链。
