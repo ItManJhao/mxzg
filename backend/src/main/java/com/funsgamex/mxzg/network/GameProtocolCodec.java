@@ -18,7 +18,7 @@ public final class GameProtocolCodec {
     /** 只用于将已有业务记录转换为内存字段树，不解析网络 JSON。 */
     private static final ObjectMapper MAPPER = new ObjectMapper();
     /** oneof 载荷名，由唯一 .proto 定义约束。 */
-    private static final Set<String> PAYLOADS = Set.of("authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus");
+    private static final Set<String> PAYLOADS = Set.of("authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -61,12 +61,12 @@ public final class GameProtocolCodec {
     private static String payload(JsonNode frame) {
         String kind = frame.path("kind").asString(), name = frame.path("name").asString();
         if (kind.equals("response") && frame.has("ok") && !frame.path("ok").asBoolean()) return null;
-        if (kind.equals("request")) return switch(name) { case "session.authenticate" -> "authenticate"; case "session.login" -> "login"; case "gm.grant" -> "gmGrant"; default -> "empty"; };
+        if (kind.equals("request")) return switch(name) { case "session.authenticate" -> "authenticate"; case "session.login" -> "login"; case "gm.grant" -> "gmGrant"; case "formation.save" -> "formationSave"; default -> "empty"; };
         if (kind.equals("event") && name.equals("state.changed")) return "snapshot";
         if (kind.equals("event") && name.equals("session.kicked")) return "kicked";
         if (kind.equals("response")) return switch (name) {
             case "session.login", "session.authenticate" -> "accepted"; case "servers.list" -> "servers";
-            case "session.heartbeat" -> "heartbeat"; case "gm.grant" -> "gmResult"; case "gm.status" -> "gmStatus";
+            case "formation.save" -> "formationSaved"; case "session.heartbeat" -> "heartbeat"; case "gm.grant" -> "gmResult"; case "gm.status" -> "gmStatus";
             default -> throw new IllegalArgumentException("Unknown payload");
         };
         throw new IllegalArgumentException("Invalid direction");

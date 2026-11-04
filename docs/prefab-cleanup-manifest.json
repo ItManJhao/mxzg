@@ -1,6 +1,6 @@
 {
   "plan": "tools/prefab-plan.json",
-  "kept_count": 90,
+  "kept_count": 95,
   "removed_count": 517,
   "backup": "client\\temp\\prefab-cleanup\\removed-330ebc693a804d3780f2347b49db93c0.zip",
   "kept": [
@@ -28,6 +28,13 @@
       ]
     },
     {
+      "path": "prefabs/ui/account/RoleProfileView.prefab",
+      "reason": "New login MVC",
+      "phases": [
+        "P1"
+      ]
+    },
+    {
       "path": "prefabs/ui/bag/BagInfoView.prefab",
       "reason": "Inventory list, tabs, cell and detail",
       "phases": [
@@ -42,14 +49,14 @@
       ]
     },
     {
-      "path": "prefabs/ui/bag/BagView.prefab",
+      "path": "prefabs/ui/bag/BagTabView.prefab",
       "reason": "Inventory list, tabs, cell and detail",
       "phases": [
         "P4"
       ]
     },
     {
-      "path": "prefabs/ui/bag/BagTabView.prefab",
+      "path": "prefabs/ui/bag/BagView.prefab",
       "reason": "Inventory list, tabs, cell and detail",
       "phases": [
         "P4"
@@ -104,7 +111,7 @@
       ]
     },
     {
-      "path": "prefabs/ui/battle/CampaignView.prefab",
+      "path": "prefabs/ui/battle/BattleReportLayer.prefab",
       "reason": "Formation editing, mainline battle, report and settlement",
       "phases": [
         "P4",
@@ -112,7 +119,7 @@
       ]
     },
     {
-      "path": "prefabs/ui/battle/BattleReportLayer.prefab",
+      "path": "prefabs/ui/battle/CampaignView.prefab",
       "reason": "Formation editing, mainline battle, report and settlement",
       "phases": [
         "P4",
@@ -222,6 +229,14 @@
       ]
     },
     {
+      "path": "prefabs/ui/common/CommonPanel1.prefab",
+      "reason": "Canonical framework controls, page mounting and guide dialogue",
+      "phases": [
+        "P1",
+        "P6"
+      ]
+    },
+    {
       "path": "prefabs/ui/common/CommonPanelShell.prefab",
       "reason": "Canonical framework controls, page mounting and guide dialogue",
       "phases": [
@@ -286,6 +301,34 @@
       ]
     },
     {
+      "path": "prefabs/ui/gm/GmOptionCellView.prefab",
+      "reason": "游戏内本机开发 GM 与可搜索下拉选项",
+      "phases": [
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/gm/GmView.prefab",
+      "reason": "游戏内本机开发 GM 与可搜索下拉选项",
+      "phases": [
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/FormationHeroCellView.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/FormationView.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
       "path": "prefabs/ui/hero/HeroIconCellView.prefab",
       "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
       "phases": [
@@ -294,13 +337,6 @@
     },
     {
       "path": "prefabs/ui/hero/HeroInfoAttrLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
-      "phases": [
-        "P4"
-      ]
-    },
-    {
-      "path": "prefabs/ui/hero/HeroInfoView.prefab",
       "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
       "phases": [
         "P4"
@@ -335,6 +371,13 @@
       ]
     },
     {
+      "path": "prefabs/ui/hero/HeroInfoView.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
       "path": "prefabs/ui/hero/HeroListBoardView.prefab",
       "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
       "phases": [
@@ -356,13 +399,6 @@
       ]
     },
     {
-      "path": "prefabs/ui/hero/FormationView.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
-      "phases": [
-        "P4"
-      ]
-    },
-    {
       "path": "prefabs/ui/hero/HeroSkillInfoLayer.prefab",
       "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
       "phases": [
@@ -371,6 +407,13 @@
     },
     {
       "path": "prefabs/ui/hero/HeroSkillOpenInfoLayer.prefab",
+      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "phases": [
+        "P4"
+      ]
+    },
+    {
+      "path": "prefabs/ui/hero/HeroSkillView.prefab",
       "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
       "phases": [
         "P4"
@@ -440,7 +483,7 @@
       ]
     },
     {
-      "path": "prefabs/ui/idle-hero/IdleFormationView.prefab",
+      "path": "prefabs/ui/idle-hero/IdleHeroSelectLayer.prefab",
       "reason": "Reusable idle hero selection",
       "phases": [
         "P4",
@@ -480,60 +523,6 @@
       ]
     },
     {
-      "path": "prefabs/ui/login/ServerCellView.prefab",
-      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/ServerPickerView.prefab",
-      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/ChooseServerRoleCell.prefab",
-      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/CreateRolePanel.prefab",
-      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/ErrorLayer.prefab",
-      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/LoadingLayer.prefab",
-      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
       "path": "prefabs/ui/legacy-login/LoginPanel.prefab",
       "reason": "Old Boot login compatibility and original artwork reference; never used by RemakeApp",
       "phases": [
@@ -542,8 +531,70 @@
       ]
     },
     {
+      "path": "prefabs/ui/legacy-login/UserLoginLayer.prefab",
+      "reason": "Old Boot login compatibility and original artwork reference; never used by RemakeApp",
+      "phases": [
+        "P1",
+        "P9"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/ChooseServerRoleCell.prefab",
+      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/CreateRolePanel.prefab",
+      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/ErrorLayer.prefab",
+      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/LoadingLayer.prefab",
+      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
       "path": "prefabs/ui/login/NoticeLayer.prefab",
-      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/ServerCellView.prefab",
+      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
+      "phases": [
+        "P1",
+        "P6",
+        "P8"
+      ]
+    },
+    {
+      "path": "prefabs/ui/login/ServerPickerView.prefab",
+      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
       "phases": [
         "P1",
         "P6",
@@ -552,19 +603,11 @@
     },
     {
       "path": "prefabs/ui/login/UpdateLayer.prefab",
-      "reason": "Startup, login, role initialization, notice and maintenance; original LoginPanel remains the artwork reference",
+      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
       "phases": [
         "P1",
         "P6",
         "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/legacy-login/UserLoginLayer.prefab",
-      "reason": "Old Boot login compatibility and original artwork reference; never used by RemakeApp",
-      "phases": [
-        "P1",
-        "P9"
       ]
     },
     {
@@ -661,13 +704,6 @@
     {
       "path": "prefabs/ui/role/RoleUpgradeLayer.prefab",
       "reason": "Basic profile, rename and role level feedback",
-      "phases": [
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/account/RoleProfileView.prefab",
-      "reason": "Basic settings only",
       "phases": [
         "P6"
       ]

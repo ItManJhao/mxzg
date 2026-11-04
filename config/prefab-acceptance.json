@@ -358,6 +358,20 @@
       "status": "结构检查通过但视觉待验收",
       "scope": "97a8b2e8已保留UUID迁移为RoleProfileView，旧路径不再是独立设置窗口。 本次核对提交历史、当前根节点/脚本绑定及模块回归，并执行全库结构审查；本次未启动Creator，不重新签署三尺寸、动态内容或Inspector验收。",
       "inspector": "当前版本待重新确认"
+    },
+    "client/assets/prefabs/ui/hero/FormationView.prefab": {
+      "sha256": "3f961c500e5bada9c938892c0d2825f635e7a9d1c647814cae89aec0010e67e6",
+      "date": "2026-11-04",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "本次独立内存预览393×852实际完成选英雄/放位/保存、切阵型2并调整7号位、刷新重登保持版本2、未保存关闭重开恢复旧阵容，警告/错误0；图片docs/images/formation-save-20261104.png和formation-recovery-20261104.png。未签署完整正式服视觉、三尺寸、Inspector或小游戏真机。",
+      "inspector": "本批新版本待确认"
+    },
+    "client/assets/prefabs/ui/hero/HeroListView.prefab": {
+      "sha256": "1a536ba537bebd25540e699cffced1193a5843c807ed167c22ee9494146a731d",
+      "date": "2026-11-04",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "本次仅复验真实布阵按钮显示层级、点击打开阵容与反复关闭返回名册；未重复巡检用户已验收的其他英雄页内容。",
+      "inspector": "本批新版本待确认"
     }
   },
   "evidenceDirectories": [

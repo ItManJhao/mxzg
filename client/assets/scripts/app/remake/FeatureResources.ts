@@ -12,7 +12,7 @@ const groups = {
         ResourceCatalog.prefab_bag.BagInfoView.assetPath, ResourceCatalog.prefab_common.DimSheet.assetPath, ResourceCatalog.prefab_common.PagePrefabShell.assetPath, ResourceCatalog.prefab_common.ListBackdrop.assetPath],
     campaign: [ResourceCatalog.prefab_battle.CampaignView.assetPath, ResourceCatalog.prefab_battle.BattlePage.assetPath, ResourceCatalog.prefab_battle.BattleEndLayer.assetPath, ResourceCatalog.prefab_common.PagePrefabShell.assetPath],
     servers: [ResourceCatalog.prefab_login.ServerPickerView.assetPath],
-    formation: [ResourceCatalog.prefab_hero.FormationView.assetPath,ResourceCatalog.prefab_hero.HeroIconCellView.assetPath],
+    formation: [ResourceCatalog.prefab_hero.FormationView.assetPath,ResourceCatalog.prefab_hero.FormationHeroCellView.assetPath],
 } as const;
 const allowed = new Set<string>([...groups.bag, ...groups.campaign, ...groups.servers, ...groups.formation]);
 const pool = new ResourcePool<Prefab>({

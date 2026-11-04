@@ -2,6 +2,9 @@
  * 重做版应用装配入口，装配选服、登录、角色和背包；其他玩法入口暂停。
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
+import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
+import { FormationView } from "../../features/hero/ui/FormationView";
+import { FormationController } from "../../features/hero/FormationController";
 import {HeroSkillView} from "../../features/hero/ui/HeroSkillView";
 import {prepareHeroDetailConfig} from "../../config/RemakeConfig";
 
@@ -131,7 +134,18 @@ export class RemakeApp extends Component {
     this.bagModule = BagController.instance;
     const roleController=new RoleController(role=>service.acceptRole(role));
     HeroRosterController.instance.initialize();
-    const assets=this.assetState=new AssetStateBinding(model,BagController.instance,roleController,HeroRosterController.instance);
+    const formation = FormationController.instance;
+    formation.configure((body, received, failed) => service.deliverAuthenticated(
+      token => socket.saveFormation(token, body),
+      frame => { if (this.alive) received(frame); },
+      error => { if (this.alive) failed(error); },
+    ));
+    formation.initialize();
+    const assets=this.assetState=new AssetStateBinding(model,BagController.instance,roleController,HeroRosterController.instance,formation, () => {
+      // 身份切换时统一关闭角色页面，页面自身无需比较角色键；取消在途打开也由UIManager负责。
+      UIManager.instance.closeById("bag");
+      UIManager.instance.closeById("remake-formation");
+    });
     service.onInitialized=frame=>assets.apply(frame);
     socket.onState=frame=>assets.apply(frame);
     let connectionNotice = "";
@@ -225,6 +239,11 @@ export class RemakeApp extends Component {
       if (!this.featureResources) this.featureResources = createFeatureResourceScope();
       return loadFeaturePage(this.featureResources,group);
     };
+    this.unregisterViews.push(registerView(FormationView, {
+      id: "remake-formation", prefab: ResourceCatalog.prefab_hero.FormationView.assetPath,
+      layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
+      load: () => loadFeature("formation"),
+    }));
     this.unregisterViews.push(registerView(BagView, {
       id:"bag",prefab:ResourceCatalog.prefab_bag.BagView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
       mount:mountBagPage,load:() => loadFeature("bag"),
@@ -248,7 +267,7 @@ export class RemakeApp extends Component {
     this.startupResources = createStartupResourceScope();
     syncRoute = () => {
       if (!this.alive || !this.started) return;
-      if(model.snapshot.busy || !model.snapshot.role) { ui.closeById("hero-level"); ui.closeById("role-profile"); ui.closeById("gm"); gm.reset(); }
+      if(model.snapshot.busy || !model.snapshot.role) { ui.closeById("remake-formation"); ui.closeById("hero-level"); ui.closeById("role-profile"); ui.closeById("gm"); gm.reset(); }
       if (model.snapshot.busy) {
         this.chrome?.show();
         this.chrome?.setStage("同步角色资料");

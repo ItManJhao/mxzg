@@ -61,6 +61,8 @@ class GameSocketTest {
     private final class Peer implements WebSocket.Listener, AutoCloseable {
         final HttpClient client = HttpClient.newHttpClient();
         final BlockingQueue<JsonNode> messages = new LinkedBlockingQueue<>();
+        /** 请求等待期间先到的提交事件单独保存，模拟真实客户端按kind路由。 */
+        final BlockingQueue<JsonNode> events = new LinkedBlockingQueue<>();
         final CompletableFuture<Integer> closed = new CompletableFuture<>();
         final java.io.ByteArrayOutputStream fragments = new java.io.ByteArrayOutputStream();
         WebSocket socket;
@@ -101,6 +103,10 @@ class GameSocketTest {
             if (connectionId != null) frame.put("connectionId", connectionId);
             socket.sendBinary(ByteBuffer.wrap(GameProtocolCodec.encode(frame)), true).get(5, TimeUnit.SECONDS);
             JsonNode response = messages.poll(5, TimeUnit.SECONDS);
+            while (response != null && response.path("kind").asString().equals("event")) {
+                events.add(response);
+                response = messages.poll(5, TimeUnit.SECONDS);
+            }
             assertNotNull(response, "服务端未在期限内响应");
             assertEquals(id, response.path("id").asString());
             assertEquals(name, response.path("name").asString());
@@ -119,6 +125,26 @@ class GameSocketTest {
     }
 
     /** 未鉴权禁止读背包；正常鉴权后仍须先同步，登录首包同时包含角色与背包，不再提供重复查询。 */
+    /** 真实Protobuf长连接保存、重试和重连恢复，不用HTTP写入阵容。 */
+    @Test void formationSaveSynchronizesAndRecovers() throws Exception {
+        var player=player();String hero=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10105008,1,5)",hero,player.role().id());
+        long expected=jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?",Long.class,player.role().id());
+        var body=Map.of("requestId",UUID.randomUUID().toString(),"expectedVersion",expected,"formationId",1,"slots",List.of(Map.of("position",2,"heroId",hero)));
+        try(var peer=new Peer()) {
+            peer.authenticate(player.session().accessToken());
+            var result=peer.request("formation.save",body);assertTrue(result.path("ok").asBoolean(), () -> "保存错误码：" + result.path("error").path("code").asString());assertEquals(expected+1,result.path("body").path("version").asLong());
+            var changed=peer.events.poll(5,TimeUnit.SECONDS);assertNotNull(changed);assertEquals("state.changed",changed.path("name").asString());
+            assertEquals(hero,changed.path("body").path("mainFormation").path("slots").get(0).path("heroId").asString());
+            assertTrue(peer.request("formation.save",body).path("ok").asBoolean());
+        }
+        try(var peer=new Peer()) {
+            var restored=peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(expected+1,restored.path("mainFormation").path("version").asLong());
+            assertFalse(restored.path("mainFormation").path("options").isEmpty());
+        }
+    }
+
     @Test void authenticationAndSyncGate() throws Exception {
         var player=player();
         try(var anonymous=new Peer()) {

@@ -41,6 +41,7 @@ const paths = new Set<string>([
   "prefabs/ui/common/TextChip",
   "prefabs/ui/gm/GmOptionCellView",
   "prefabs/ui/gm/GmView",
+  "prefabs/ui/hero/FormationHeroCellView",
   "prefabs/ui/hero/FormationView",
   "prefabs/ui/hero/HeroIconCellView",
   "prefabs/ui/hero/HeroInfoAttrLayer",

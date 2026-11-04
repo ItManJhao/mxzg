@@ -122,3 +122,10 @@ Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItem
 ### 后台恢复与同版本首包
 
 应用层负责 Game.EVENT_HIDE/SHOW：隐藏时停止通信重试并使背包时钟失效，显示后通过 session.authenticate 恢复。鉴权首包同资产版本也须校准服务器时刻；普通重复推送和低版本不得覆盖现有资产。后台退出后禁止自动恢复旧账号，禁止为校时添加库存查询或让背包控制器持有凭证。服务端接管锁最多等待两秒，超时返回 BUSY，客户端只重试鉴权，不重放资产操作。
+
+
+## 2026-11-04 统一隔离边界
+
+背包不发送查询，BagController原本就没有异步换号保护；本批移除BagView的lastRoleKey及换号分支。身份改变时由AssetStateBinding调用应用关闭背包/布阵，再通知模块清空业务数据。BagModel的roleKey仅描述数据归属，“初始化前不接收库存”的检查仍是提交前置条件，不是旧回包隔离。
+
+通信层拒绝旧连接消息；应用统一校验身份、资产版本及整包内容后才调用onNotify。布阵写操作同样由应用的AccountService.deliverAuthenticated交付结果，模块不判断账号。BaseController不再维护captureSession/isCurrent或会话代次。业务回执匹配、幂等重试与页面自身关闭清理继续保留。

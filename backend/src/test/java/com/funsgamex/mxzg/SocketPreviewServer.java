@@ -26,6 +26,13 @@ public class SocketPreviewServer {
             jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10301001,1,1)",empty,player.role().id());
             for(int slot=1;slot<=4;slot++)jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,?,?,?,?)","922337203685477580"+slot,player.role().id(),1000001+slot*1000,slot,slot==1?3:0,hero);
         }
+        // 仅本次独立内存预览准备主线布阵实例，不修改日常角色或数据库。
+        if(Arrays.asList(args).contains("--formation-fixture")) {
+            var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("formation_review");
+            var jdbc=context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+            for(int template:new int[]{10105008,10101001,10102002})
+                jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,?,1,10,0)",UUID.randomUUID().toString(),player.role().id(),template);
+        }
         // 仅独立内存预览夹具：同模板未进化/进化角色，用于检查切换和技能说明。
         if(Arrays.asList(args).contains("--evolution-fixture")) {
             var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("evolution_review");

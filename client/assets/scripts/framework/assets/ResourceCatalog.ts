@@ -128,6 +128,7 @@ export const ResourceCatalog = {
     GmView: {"bundle":"prefabs","path":"ui/gm/GmView","assetPath":"prefabs/ui/gm/GmView","loadPath":"ui/gm/GmView","type":"Prefab","uuid":"76ebb0c2-3e4e-48b1-ae9c-291a56089c8e"},
   },
   prefab_hero: {
+    FormationHeroCellView: {"bundle":"prefabs","path":"ui/hero/FormationHeroCellView","assetPath":"prefabs/ui/hero/FormationHeroCellView","loadPath":"ui/hero/FormationHeroCellView","type":"Prefab","uuid":"a49f3984-6d14-4b45-a97c-8dc81d1ea24f"},
     FormationView: {"bundle":"prefabs","path":"ui/hero/FormationView","assetPath":"prefabs/ui/hero/FormationView","loadPath":"ui/hero/FormationView","type":"Prefab","uuid":"c75bff2b-0944-4809-9b5f-1eb8c09107f8"},
     HeroIconCellView: {"bundle":"prefabs","path":"ui/hero/HeroIconCellView","assetPath":"prefabs/ui/hero/HeroIconCellView","loadPath":"ui/hero/HeroIconCellView","type":"Prefab","uuid":"e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40"},
     HeroInfoAttrLayer: {"bundle":"prefabs","path":"ui/hero/HeroInfoAttrLayer","assetPath":"prefabs/ui/hero/HeroInfoAttrLayer","loadPath":"ui/hero/HeroInfoAttrLayer","type":"Prefab","uuid":"65f0e985-d8ec-4f76-92bb-57b980e4b132"},

@@ -214,7 +214,7 @@ class MySqlIT {
         assertEquals(0,number("SELECT evolve_type FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         assertEquals(0,number("SELECT evolve_level FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V14; stage=0, evolution=0/0");
-        assertEquals(14, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(15, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals("bigint", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_inventory' AND COLUMN_NAME='quantity'", String.class));
         assertEquals("timestamp", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_session' AND COLUMN_NAME='expires_at'", String.class));
         assertEquals(1, number("SELECT COUNT(DISTINCT INDEX_NAME) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND INDEX_NAME='uq_role_account_server' AND NON_UNIQUE=0"));
@@ -356,11 +356,11 @@ class MySqlIT {
         assertEquals(settled.inventory(), inventory(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
-        assertEquals(14, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(15, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         var replay=campaign.claim(token,report.id());
         assertEquals(settled.battle(),replay.battle());assertEquals(settled.inventory(),replay.inventory());assertEquals(settled.stageId(),replay.stageId());
         assertEquals(current,replay.role(),"重放携带当前角色快照，登录时间不是历史奖励收据");
-        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=14");
+        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=15");
     }
 
     /** 通过独立 JVM 的真实 HTTP 完成业务链，在未领奖和已领奖两个阶段分别终止进程再登录核验恢复。 */
@@ -510,6 +510,20 @@ class MySqlIT {
         assertTrue(before.mainFormation().assistanceUnlocked());assertEquals(8,before.mainFormation().unlockedIds().size());
         System.out.println("[MYSQL-IT] permanent formation and assistance unlocks survive restart and hero removal");
     }
+    /** 独立MySQL验证真实保存回执及阵型版本跨应用重启保持。 */
+    @Test @Order(19) void formationSaveReceiptSurvivesRestart() throws Exception {
+        var p=player();String hero=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10105008,1,5)",hero,p.id());
+        var service=app.getBean(com.funsgamex.mxzg.lineup.MainFormationCommandService.class);
+        long expected=snapshots.snapshot(p.token()).mainFormation().version();
+        var request=new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(UUID.randomUUID().toString(),expected,1,List.of(new Lineup.Slot(2,hero)));
+        var receipt=service.save(p.token(),request);var before=snapshots.snapshot(p.token());
+        app.close();boot();
+        assertEquals(receipt,app.getBean(com.funsgamex.mxzg.lineup.MainFormationCommandService.class).save(p.token(),request));
+        assertStoredState(before,snapshots.snapshot(p.token()));assertEquals(expected+1,snapshots.snapshot(p.token()).mainFormation().version());
+        System.out.println("[MYSQL-IT] V15 formation receipt replay and snapshot survive application restart");
+    }
+
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */
     private static final class OwnedMysql implements AutoCloseable {
         private final String run = UUID.randomUUID().toString().replace("-", "");

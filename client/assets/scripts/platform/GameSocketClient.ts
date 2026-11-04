@@ -146,6 +146,15 @@ export class GameSocketClient {
     return frame;
   }
 
+  /** 主线保存不自动重放；业务模块保留原幂等键，换连接的迟到回执拒绝。 */
+  async saveFormation(token: string, body: unknown): Promise<GameFrame> {
+    this.assertReady(token);
+    const generation = this.generation;
+    const frame = await this.send(Protocol.FORMATION_SAVE, body);
+    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
+    return frame;
+  }
+
   /** 后台主动结束旧通道及计时器，保留已登录凭证；回前台只重做鉴权首包，不重放业务请求。 */
   setBackground(background: boolean): void {
     if (this.suspended === background) return;

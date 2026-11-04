@@ -48,6 +48,8 @@ const BOARD_PREFAB = ResourceCatalog.prefab_hero.HeroListBoardView.assetPath;
 })
 @ccclass("HeroListView")
 export class HeroListView extends BaseView implements HeroRosterView {
+    /** 旧版阵容入口；仅打开主线草稿页，不开启战斗。 */
+    @property(Button) lineupButton: Button | null = null;
     @property(Button)
     btnHero: Button | null = null;
 
@@ -130,6 +132,13 @@ read: elem => HeroRosterUtils.present(model.snapshot, catalog, elem),
 
     /** 默认绑定唯一英雄模块和已准备配置，再挂载已有列表；测试可提前注入只读源，重复打开不叠加板子。 */
     onOpen(): void {
+        if (this.lineupButton) {
+            const button = this.lineupButton;
+            const open = () => { void UIManager.instance.openById("remake-formation", { complete: () => {} })
+                .catch(error => UIManager.instance.toast(messageOf(error))); };
+            button.node.on(Button.EventType.CLICK, open);
+            this.ownListener(() => button.node.off(Button.EventType.CLICK, open));
+        }
         if (!this.roster) this.configureRoster(HeroRosterModel.instance, HeroRosterController.instance,
             new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item)),
             text => UIManager.instance.toast(text), id => { void UIManager.instance.openById("hero-info", { heroId: id }).catch(error => UIManager.instance.toast(messageOf(error))); });
@@ -382,6 +391,11 @@ read: elem => HeroRosterUtils.present(model.snapshot, catalog, elem),
             this.tabMenu.setSiblingIndex(this.tabMenu.parent.children.length - 1);
         } else {
             GameLog.shared.classified("MODULE", "warn", "Hero", "HeroListLayer 没有 UIMenu_1");
+        }
+        // 名册底板会后挂载，原阵容菜单需位于其上方才能显示并接收点击。
+        const lineupMenu = this.lineupButton?.node.parent;
+        if (lineupMenu?.parent) {
+            lineupMenu.setSiblingIndex(lineupMenu.parent.children.length - 1);
         }
         if (this.roster) {
             this.listenTab(this.btnHero, () => this.roster?.retry());

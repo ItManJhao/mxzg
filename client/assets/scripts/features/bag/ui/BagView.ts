@@ -96,10 +96,8 @@ export class BagView extends BaseView<BagOpenArgs> {
 
     /** 显示分类；打开参数可覆盖默认道具分类，点击页签只改变展示。 */
     private tab: BagTabKind = "item";
-    /** 当前选中的格子 key（堆叠记录或期限实例）；换角色、条目消失或离开当前分类后清空。 */
+    /** 当前选中的格子 key（堆叠记录或期限实例）；条目消失、离开当前分类或关页后清空。 */
     private pickedId: string | null = null;
-    /** 上次绘制的角色归属；变化时清空选中和详情并复位滚动。 */
-    private lastRoleKey: string | null = null;
     /** 当前详情数量；库存变化时重建详情，关闭后为 null。 */
     private detailQuantity: number | null = null;
     /** 当前详情的到期值，重连延期时刷新详情；普通物品为 undefined。 */
@@ -116,7 +114,7 @@ export class BagView extends BaseView<BagOpenArgs> {
     private opened = false;
     /** 是否已装配店员动画，避免重复挂载。 */
     private portraitOn = false;
-    /** 下次绘制是否需回到顶部；换分类或角色时设置，执行后清除。 */
+    /** 下次绘制是否需回到顶部；换分类或关页时设置，首次打开默认复位，执行后清除。 */
     private resetScroll = true;
     /** 当前详情遮罩根节点，重开详情或关页时销毁并清空。 */
     private infoSheet: Node | null = null;
@@ -154,9 +152,11 @@ export class BagView extends BaseView<BagOpenArgs> {
         void this.initialize();
     }
 
-    /** 关闭详情与帧等待；全局事件由 BaseView 按目标清理。 */
+    /** 清空选中与滚动状态，关闭详情与帧等待；全局事件由 BaseView 按目标清理。 */
     onClose(): void {
         this.closed = true;
+        this.pickedId = null;
+        this.resetScroll = true;
         this.failOpen(new Error("页面已关"));
         this.dismissInfo();
         this.clearShownWatch();
@@ -291,20 +291,13 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
     }
 
-    /** 读取 Model 绘制页签与格子，处理换号、选中失效、详情数量变化及滚动复位，不写库存。 */
+    /** 读取 Model 绘制页签与格子，处理选中失效、详情数量变化及滚动复位，不写库存。 */
     private paint(): void {
         this.writeTalk();
         for (let i = 0; i < this.tabs.length; i++) {
             this.tabs[i].setSelected(BAG_TABS[i].id === this.tab);
         }
         const list = this.bagScroll!.list;
-        const state = BagModel.instance.snapshot;
-        if (state.roleKey !== this.lastRoleKey) {
-            this.lastRoleKey = state.roleKey;
-            this.pickedId = null;
-            this.resetScroll = true;
-            this.dismissInfo();
-        }
         const rows = this.visibleItems();
         const picked = rows.find(item => item.key === this.pickedId);
         this.nextExpiry = rows.reduce((next, item) => Math.min(next, item.expiresAtSeconds ?? Infinity), Infinity);

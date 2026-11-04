@@ -1,4 +1,4 @@
-> 历史领域规则参考：本文早期升级/阵容接口不代表当前开放协议。当前英雄只读状态见 [英雄数据契约](hero-data-contract.md)，升级与阵容操作仍暂停；重新接入必须使用唯一 WS＋Protobuf 契约，禁止恢复旧 HTTP。
+> 当前主线阵容保存已使用WS＋Protobuf接入。下方早期HTTP合同仅为历史参考，不得恢复；英雄升级、战斗、挂机及其他阵容模式仍暂停。
 
 # 英雄与主阵容：第一批接口与复用边界
 
@@ -154,3 +154,29 @@ Snapshot.main_formation使用新字段7：formationId、unlockedIds、assistance
 本轮H2后端83/83、前端hero-state和game-socket、两组类型与协议生成检查通过；含事务回滚、永久解锁保留、无事务拒绝、角色隔离、重复快照revision不变及Protobuf往返。独立MySQL18/18通过，run=9dfe3a64d6a943b78e77814538627dca，state=stopped，日志backend/target/formation-state-mysql.log；覆盖V14迁移、选中阵型重启和英雄减少后永久解锁不回退；无新增可见界面，未重跑Creator画面。日常后端未更新，日常玩家库未迁移；本批尚未提交。
 
 下一批先将持久阵型和规则接到阵容保存事务，再实现WS请求、持久幂等/并发版本、统一推送与页面；保存前后的旧站位差异需明确记录。共享战斗输入仍有战斗专属属性/触发等pending，不能直接开放简化战斗。
+
+## 2026-11-04 主线阵容最小保存闭环
+
+用户已确认上一批Creator页面验收，本批直接恢复主线阵容。旧规则依据仍为HeroLineUpService.saveLineUpFormation（270～399行）：按请求顺序跳过关闭位、未解锁助战、缺失/非所属英雄及同模板后续项，未知位置/未解锁阵型/等级不足拒绝；归一化后空阵拒绝。不将客户端草稿当服务器资产。
+
+协议formation.save使用Frame的新字段22/23：FormationSave(requestId,expectedVersion,formationId,slots) → FormationSaved(requestId,version)。MainFormation新增options字段6，由同源阵型表及永久助战状态下发当前允许位置，不让客户端复制配置规则。协议目录、两端Codec和生成代码已同步，无HTTP或查询回退。
+
+MainFormationCommandService使用现有角色行锁；先查V15的game_formation_save回执，再检查阵容版本和原版归一化。相同请求返回原版本，不重复修改；同键换参数拒绝。选中阵型和站位同事务写入，有实际变化才递增阵容版本并调用AssetSyncService.changed，同事务仅一次资产revision。无变化保存只写回执；回滚不留回执、站位或推送。旧LineupService仍用于暂停的历史领域测试，不作为新WS入口。
+
+HeroRosterController仍负责统一state.changed/登录恢复中的唯一Model。FormationController只持有页面草稿和未确认请求，接收FORMATION_SAVE回执后等待Model达到确认版本；不写Model、不持有账号/凭证、不查询英雄或阵容。断线不自动重放，页面确认可原样重试；关闭/换号后不绘制迟到回包。版本冲突使用已恢复的权威状态重新选择；同阵容版本下名册新增或属性变化更新可选英雄，同时保留草稿。
+
+入口为英雄列表原布阵按钮，UIManager弹出FormationView。选英雄后点击允许位置放置，无选中英雄时点击位置撤下；阵型按钮循环已解锁阵型，确认后才保存。SuperScroll＋SuperContent保存五列格子布局，专属FormationHeroCellView继承通用显示组件，0.85缩放保存在同名Prefab，不运行时手排坐标或改content高度。英雄菜单层级已修正，避免被名册底板盖住。
+
+本次实际验证：后端88项通过，独立MySQL19项通过（包含V15、同回执应用重启恢复）；前端formation-state覆盖草稿隔离、真实协议路由、等待统一同步、原请求重试、同版本名册刷新、关闭和换号；formation-view读取真实Prefab验证Inspector值、两列临时布局参数及损坏绑定。独立内存预览run=3f05bc64554b495b93edc9ad6b423363，实际完成版本0→1、移动至7号位并切阵型2后版本2、刷新重登恢复、未保存关闭重开保持旧数据，警告/错误0。仅本次合成账号，宿主已停止；没有更新日常数据库或开启其他玩法。
+
+证据：[保存完成](images/formation-save-20261104.png)、[刷新恢复](images/formation-recovery-20261104.png)。截图仅证明当前393×852预览中的操作，不替代完整正式服视觉或小游戏真机验收。
+
+下一批：让共享战斗输入消费持久选中阵型及站位加成，再对照旧版补技能/状态处理与战斗入口；本批不直接开放原简化普攻战斗。
+
+## 2026-11-04 模块与页面解耦
+
+上一节的页面控制器结构已收整：FormationController不再拥有View、catalog、selected、草稿或页面show/close。它继承BaseController，应用单例初始化一次，按真实FORMATION_SAVE回执更新FormationSaveModel并发事件；权威阵容仍由HeroRosterController更新唯一HeroRosterModel。
+
+FormationView在onOpen读取这两个Model，绑定自己的按钮并维护草稿；同版本名册变化保留草稿，服务器阵容版本变化载入最新状态。onClose只解除本页监听，关窗期间保存仍由模块完成；未确认请求可跨窗口重开重试。换号/退出由AssetStateBinding先关闭旧角色页面再统一resetSession；请求成功及失败是否交付由应用的AccountService.deliverAuthenticated决定，模块和页面不再比较会话代次或角色键。
+
+此处会话隔离只阻止旧角色结果更新当前客户端状态，不撤销已提交的服务端保存，也不把关窗视为换号；这是通信异步边界，不是新增玩法规则或已发现串号故障的描述。

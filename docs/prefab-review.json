@@ -2914,6 +2914,51 @@
     "sha256": "8fd9d325217e330c40586048ff43c5cf615d8fd5807ec19f379152f4d14b4da6"
   },
   {
+    "path": "client/assets/prefabs/ui/hero/FormationHeroCellView.prefab",
+    "classes": [
+      "FormationHeroCellView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 0.85,
+        "y": 0.85,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 124,
+        "height": 134
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 1,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "513c7b99372b1302b6b6b8de94241d2c2ac35f223d02be63778618cc405a7769"
+  },
+  {
     "path": "client/assets/prefabs/ui/hero/FormationView.prefab",
     "classes": [
       "FormationView"
@@ -2946,7 +2991,7 @@
       "Widget": 0,
       "Layout": 0,
       "Mask": 2,
-      "ScrollView": 2,
+      "ScrollView": 1,
       "Animation": 0,
       "PrefabInstance": 0
     },
@@ -3129,12 +3174,6 @@
     ],
     "scrolls": [
       {
-        "node": "scroll_view_backpack",
-        "content": {
-          "__id__": 113
-        }
-      },
-      {
         "node": "scroll_view_team_title",
         "content": {
           "__id__": 661
@@ -3144,8 +3183,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "fcbc24c9fa3b3cd3314ddaebb94c4e2eef68497cddfd84139a585b17896b5bb5"
+    "visual": "本次独立内存预览393×852实际完成选英雄/放位/保存、切阵型2并调整7号位、刷新重登保持版本2、未保存关闭重开恢复旧阵容，警告/错误0；图片docs/images/formation-save-20261104.png和formation-recovery-20261104.png。未签署完整正式服视觉、三尺寸、Inspector或小游戏真机。",
+    "sha256": "3f961c500e5bada9c938892c0d2825f635e7a9d1c647814cae89aec0010e67e6",
+    "acceptance": {
+      "sha256": "3f961c500e5bada9c938892c0d2825f635e7a9d1c647814cae89aec0010e67e6",
+      "date": "2026-11-04",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "本次独立内存预览393×852实际完成选英雄/放位/保存、切阵型2并调整7号位、刷新重登保持版本2、未保存关闭重开恢复旧阵容，警告/错误0；图片docs/images/formation-save-20261104.png和formation-recovery-20261104.png。未签署完整正式服视觉、三尺寸、Inspector或小游戏真机。",
+      "inspector": "本批新版本待确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroIconCellView.prefab",
@@ -4677,8 +4723,15 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "59a11e045aa0ec29d7854091262d939ca573b7a87755eca547deb7a12cbee0a1"
+    "visual": "本次仅复验真实布阵按钮显示层级、点击打开阵容与反复关闭返回名册；未重复巡检用户已验收的其他英雄页内容。",
+    "sha256": "1a536ba537bebd25540e699cffced1193a5843c807ed167c22ee9494146a731d",
+    "acceptance": {
+      "sha256": "1a536ba537bebd25540e699cffced1193a5843c807ed167c22ee9494146a731d",
+      "date": "2026-11-04",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "本次仅复验真实布阵按钮显示层级、点击打开阵容与反复关闭返回名册；未重复巡检用户已验收的其他英雄页内容。",
+      "inspector": "本批新版本待确认"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/hero/HeroSkillInfoLayer.prefab",

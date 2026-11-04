@@ -107,6 +107,8 @@ function readEvolution(value: unknown): OwnedHero["evolution"] {
 
 /** 只读主线阵型，仍属于英雄模块统一状态；undefined表示旧快照未同步。 */
 export interface MainFormation {
+    /** 可选阵型及允许站位；未同步时不开放编辑，禁止自行推算。 */
+    readonly options?: readonly Readonly<{ formationId: number; openPositions: readonly number[] }>[];
     /** 服务端持久选中阵型。 */
     readonly formationId: number;
     /** 永久解锁阵型，包含默认1。 */
@@ -131,5 +133,20 @@ export function readMainFormation(value: unknown, heroes: readonly OwnedHero[]):
         if (!positiveInteger(slot.position) || slot.position > 9 || typeof slot.heroId !== "string" || !owned.has(slot.heroId) || positions.has(slot.position) || ids.has(slot.heroId)) throw new Error("阵容归属或站位无效");
         positions.add(slot.position); ids.add(slot.heroId); return Object.freeze({ position: slot.position, heroId: slot.heroId });
     });
-    return Object.freeze({ formationId: row.formationId, unlockedIds: Object.freeze([...row.unlockedIds]), assistanceUnlocked: row.assistanceUnlocked, version: row.version as number, slots: Object.freeze(slots) });
+    const unlockedIds = row.unlockedIds as number[];
+    let options: MainFormation["options"];
+    if (row.options !== undefined) {
+        if (!Array.isArray(row.options)) throw new Error("阵型选项无效");
+        const seen = new Set<number>();
+        options = Object.freeze(row.options.map(value => {
+            const option = value as { formationId: number; openPositions: number[] };
+            if (!option || !unlockedIds.includes(option.formationId) || seen.has(option.formationId) ||
+                !Array.isArray(option.openPositions) || option.openPositions.some(pos => !positiveInteger(pos) || pos > 9 || (pos === 9 && !row.assistanceUnlocked)) ||
+                new Set(option.openPositions).size !== option.openPositions.length) throw new Error("阵型允许位置无效");
+            seen.add(option.formationId);
+            return Object.freeze({ formationId: option.formationId, openPositions: Object.freeze([...option.openPositions]) });
+        }));
+        if (options.length && seen.size !== row.unlockedIds.length) throw new Error("阵型选项不完整");
+    }
+    return Object.freeze({ options, formationId: row.formationId, unlockedIds: Object.freeze([...row.unlockedIds]), assistanceUnlocked: row.assistanceUnlocked, version: row.version as number, slots: Object.freeze(slots) });
 }

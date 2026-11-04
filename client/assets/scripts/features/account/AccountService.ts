@@ -17,7 +17,7 @@ export interface SessionStore {
 }
 
 
-/** Features use this capability instead of reading storage or owning a token. */
+/** 应用装配业务能力时使用统一鉴权入口；模块不直接读取凭证。 */
 export interface AccountAuthorization {
     authenticated<T>(request: (token: string) => Promise<T>): Promise<T>;
 }
@@ -155,6 +155,24 @@ export class AccountService implements AccountAuthorization {
             if (!current()) throw new SessionChanged();
             if (this.isUnauthorized(error)) this.expire();
             throw error;
+        }
+    }
+
+    /**
+     * 应用层统一交付业务请求：只向发起请求的当前身份交付成功或失败。
+     * 换号、退出或身份失效后两种结果均静默结束，不让模块恢复旧请求状态；
+     * 普通断网仍交付失败，模块可保留原幂等请求。关窗不改变身份，不取消交付。
+     */
+    async deliverAuthenticated<T>(request: (token: string) => Promise<T>,
+        received: (value: T) => void, failed: (error: unknown) => void): Promise<void> {
+        const operation = this.operation;
+        const session = this.session;
+        const current = () => operation === this.operation && session === this.session;
+        try {
+            const value = await this.authenticated(request);
+            if (current()) received(value);
+        } catch (error) {
+            if (current()) failed(error);
         }
     }
 

@@ -41,11 +41,12 @@ interface GeneratedType {
 /** 唯一生成代码调用口，避免在业务模块散落生成器类型转换。 */
 const Frame = (mxzg as unknown as { game: { Frame: GeneratedType } }).game.Frame;
 /** oneof 的所有有效载荷字段，用于检查消息名与载荷类型必须对应。 */
-const payloads = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus"];
+const payloads = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved"];
 
 /** 按消息方向和名称选择强类型载荷，不允许以 JSON 字符串或任意 bytes 代替业务定义。 */
 function payloadName(frame: GameFrame): string | null {
   if (frame.kind === "response" && frame.ok === false) return null;
+  if (frame.kind === "request" && frame.name === Protocol.FORMATION_SAVE) return "formationSave";
   if (frame.kind === "request" && frame.name === Protocol.GM_GRANT) return "gmGrant";
   if (frame.kind === "request") return frame.name === Protocol.SESSION_AUTHENTICATE ? "authenticate" : frame.name === Protocol.SESSION_LOGIN ? "login" : "empty";
   if (frame.kind === "event" && frame.name === Protocol.STATE_CHANGED) return "snapshot";
@@ -54,6 +55,7 @@ function payloadName(frame: GameFrame): string | null {
     switch (frame.name) {
       case Protocol.SESSION_LOGIN:
       case Protocol.SESSION_AUTHENTICATE: return "accepted";
+      case Protocol.FORMATION_SAVE: return "formationSaved";
       case Protocol.GM_GRANT: return "gmResult";
       case Protocol.GM_STATUS: return "gmStatus";
       case Protocol.SERVERS_LIST: return "servers";

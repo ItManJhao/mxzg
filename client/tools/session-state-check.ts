@@ -1,6 +1,6 @@
 /** 统一登录与资产同步回归：只使用受控二进制连接和内存 Model，不访问任何数据库。 */
 import {strict as assert} from "node:assert";
-import {GameSocketClient,SocketPort} from "../assets/scripts/platform/GameSocketClient";
+import {GameSocketClient,SocketPort,SocketFailure} from "../assets/scripts/platform/GameSocketClient";
 import {encodeGameFrame,decodeGameFrame,GAME_SOCKET_PROTOCOL,GameFrame} from "../assets/scripts/platform/GameProtocolCodec";
 import {AccountApi,readRole} from "../assets/scripts/features/account/AccountApi";
 import {AccountModel} from "../assets/scripts/features/account/AccountModel";
@@ -15,6 +15,10 @@ import {readBagItems,readTimedItems} from "../assets/scripts/features/bag/data/B
 import {isolatedSocketPreview} from "../assets/scripts/app/remake/IsolatedSocketPreview";
 import {AssetStateBinding} from "../assets/scripts/app/remake/AssetStateBinding";
 import {EventDispatcher} from "../assets/scripts/framework/EventDispatcher";
+import {FormationController} from "../assets/scripts/features/hero/FormationController";
+import {FormationSaveModel} from "../assets/scripts/features/hero/FormationSaveModel";
+import {HeroRosterModel} from "../assets/scripts/features/hero/HeroRosterModel";
+import type {FormationSaveRequest} from "../assets/scripts/features/hero/data/FormationData";
 /** 给真实客户端提供合法二进制服务器帧，记录请求以检查重复读取。 */
 class Wire {
  onopen:any=null;onmessage:any=null;onerror:any=null;onclose:any=null;readyState=0;binaryType="";protocol=GAME_SOCKET_PROTOCOL;
@@ -83,7 +87,46 @@ function checkRoleBasics(){
  assert.throws(()=>readRole({...raw,basics:null}));assert.throws(()=>readRole([]));
  const account=new AccountModel();account.replace({busy:false,role:raw,error:""});basics.experience=99;assert.equal(account.snapshot.role!.basics!.experience,66);assert(Object.isFrozen(account.snapshot.role!.basics));
 }
+/** 应用统一隔离成功与失败；业务模块不比较账号、令牌或会话代次。 */
+async function checkApplicationDelivery(): Promise<void> {
+ const server=new Server(), account=new AccountModel(), inventory=new BagModel(), bag=new BagController(inventory);
+ const saves=new FormationSaveModel(), formation=new FormationController(saves,new HeroRosterModel());
+ const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:()=>{},heartbeatMs:100000});
+ const service=new AccountService(account,new AccountApi(socket),{read:()=>null,write:()=>{},clear:()=>{}});
+ let closePages=0;
+ bag.initialize();formation.initialize();
+ const assets=new AssetStateBinding(account,bag,new RoleController(role=>service.acceptRole(role)),undefined,formation,()=>{closePages++;});
+ service.onInitialized=frame=>assets.apply(frame);
+ let resolve!: (frame:GameFrame)=>void, reject!: (error:unknown)=>void, sent!:FormationSaveRequest;
+ formation.configure((body,received,failed)=>service.deliverAuthenticated(()=>{
+  sent=body;return new Promise<GameFrame>((yes,no)=>{resolve=yes;reject=no;});
+ },received,failed));
+ const draft={expectedVersion:0,formationId:1,slots:[{position:3,heroId:"hero-one"}]};
+ const receipt=():GameFrame=>({version:1,kind:"response",name:"formation.save",ok:true,body:{requestId:sent.requestId,version:1}});
+ try {
+  assert(await service.login("player","local-1"));
+  let done=formation.save(draft);
+  assert(await service.login("other","local-2"));
+  const switched=saves.snapshot, pages=closePages;
+  resolve(receipt());await done;
+  assert.equal(saves.snapshot,switched,"旧成功结果不进入模块");
+  assert.equal(inventory.snapshot.roleKey,"local-2/role-other");
+  server.state={...server.state,revision:1};socket.onState=frame=>assets.apply(frame);
+  server.push(1,0,0);assert.equal(closePages,pages,"同角色状态同步不关页");
+  done=formation.save(draft);
+  service.logout();assert(await service.login("other","local-2")); // 同角色重新登录也是新身份周期。
+  const relogged=saves.snapshot;
+  reject(new SocketFailure("UNAUTHENTICATED"));await done;
+  assert.equal(saves.snapshot,relogged,"旧失败不能恢复待重试请求");assert(account.snapshot.role);
+  done=formation.save(draft);reject(new Error("网络断开"));await done;
+  const original=saves.snapshot.pending;assert(original);assert(!saves.snapshot.busy);
+  done=formation.save({...draft,slots:[]});assert.deepEqual(sent,original,"当前身份断网重试保留幂等请求");
+  resolve(receipt());await done;assert.equal(saves.snapshot.acknowledged,1);
+  assert(closePages>=3,"角色页面由应用统一关闭");
+ } finally { socket.onState=null;socket.disconnect();assets.dispose();bag.dispose(); }
+}
 async function main(){
+ await checkApplicationDelivery();
  const oldServer=new Server(),oldSocket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:oldServer.create,validateSnapshot:()=>{},heartbeatMs:100000});
  try{await oldSocket.login("player","local-1");await assert.rejects(oldSocket.request("a".repeat(43),"gm.status"), (error:any)=>error.code==="UNKNOWN_MESSAGE" && error.message.includes("更新并重启后端"));}finally{oldSocket.disconnect();}
  checkRoleBasics();

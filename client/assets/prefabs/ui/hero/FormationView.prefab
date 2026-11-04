@@ -2632,7 +2632,7 @@
     "__type__": "cc.CompPrefabInfo"
   },
   {
-    "__type__": "cc.ScrollView",
+    "__type__": "eed84/fAPdIqoL8eDBpgRdQ",
     "_name": "",
     "_objFlags": 0,
     "_enabled": true,
@@ -2682,6 +2682,9 @@
     "_children": [
       {
         "__id__": 113
+      },
+      {
+        "__id__": 665
       }
     ],
     "_name": "view",
@@ -2774,11 +2777,7 @@
       "x": -290
     },
     "_objFlags": 0,
-    "_children": [
-      {
-        "__id__": 665
-      }
-    ],
+    "_children": [],
     "_name": "content",
     "_mobility": 0,
     "_lscale": {
@@ -2790,6 +2789,9 @@
     "_components": [
       {
         "__id__": 114
+      },
+      {
+        "__id__": 779
       }
     ],
     "_prefab": {
@@ -11025,7 +11027,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_active": false,
+    "_active": true,
     "_layer": 33554432,
     "_parent": {
       "__id__": 441
@@ -11047,9 +11049,12 @@
     "_children": [
       {
         "__id__": 461
+      },
+      {
+        "__id__": 780
       }
     ],
-    "_name": "btn_matrix",
+    "_name": "FormationButton",
     "_mobility": 0,
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -16267,10 +16272,10 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
-      "__id__": 113
+      "__id__": 109
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 666
@@ -18714,15 +18719,6 @@
     "countLabel": {
       "__id__": 138
     },
-    "grid": {
-      "__id__": 665
-    },
-    "scrollContent": {
-      "__id__": 113
-    },
-    "scrollPort": {
-      "__id__": 109
-    },
     "filterMark": {
       "__id__": 89
     },
@@ -18775,14 +18771,7 @@
         "__id__": 768
       }
     ],
-    "cellPrefab": {
-      "__uuid__": "e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40",
-      "__expectedType__": "cc.Prefab"
-    },
     "_id": "",
-    "scrollView": {
-      "__id__": 108
-    },
     "panelBounds": {
       "__id__": 2
     },
@@ -18792,21 +18781,17 @@
     "backdropBounds": {
       "__id__": 770
     },
-    "columns": 5,
-    "cellStep": {
-      "__type__": "cc.Vec2",
-      "x": 112,
-      "y": 130
-    },
-    "firstCellPosition": {
-      "__type__": "cc.Vec2",
-      "x": 60,
-      "y": -65
-    },
-    "cellScale": 0.85,
-    "contentPaddingBottom": 16,
     "maxWidthRatio": 0.94,
-    "maxHeightRatio": 0.8
+    "maxHeightRatio": 0.8,
+    "heroScroll": {
+      "__id__": 108
+    },
+    "formationButton": {
+      "__id__": 460
+    },
+    "formationLabel": {
+      "__id__": 782
+    }
   },
   {
     "__type__": "cc.CompPrefabInfo",
@@ -19304,5 +19289,190 @@
       "__id__": 777
     },
     "_id": ""
+  },
+  {
+    "__type__": "27b5aSIleBEMqaxNSfTT/yT",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 113
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_resizeMode": 0,
+    "_layoutType": 3,
+    "_cellSize": {
+      "__type__": "cc.Size",
+      "width": 96,
+      "height": 96
+    },
+    "_startAxis": 0,
+    "_paddingLeft": 35,
+    "_paddingRight": 35,
+    "_paddingTop": 8,
+    "_paddingBottom": 38,
+    "_spacingX": 22,
+    "_spacingY": 22,
+    "_verticalDirection": 1,
+    "_horizontalDirection": 0,
+    "_constraint": 2,
+    "_constraintNum": 4,
+    "_affectedByScale": true,
+    "_isAlign": false,
+    "layoutType": 2,
+    "gridAxis": 0,
+    "columns": 5,
+    "rows": 2,
+    "cellPrefab": {
+      "__uuid__": "a49f3984-6d14-4b45-a97c-8dc81d1ea24f",
+      "__expectedType__": "cc.Prefab"
+    },
+    "overrideCellSize": false,
+    "explicitCellSize": {
+      "__type__": "cc.Size",
+      "width": 96,
+      "height": 96
+    },
+    "previewCount": 0,
+    "_id": "",
+    "spacingX": 6,
+    "spacingY": 12,
+    "paddingTop": 8,
+    "paddingBottom": 16,
+    "paddingLeft": 10,
+    "paddingRight": 10
+  },
+  {
+    "__type__": "cc.Node",
+    "_active": true,
+    "_layer": 33554432,
+    "_parent": {
+      "__id__": 453
+    },
+    "_euler": {
+      "__type__": "cc.Vec3",
+      "z": 0,
+      "y": 0,
+      "x": 0
+    },
+    "_id": "",
+    "_lpos": {
+      "__type__": "cc.Vec3",
+      "z": 0,
+      "y": -40,
+      "x": 0
+    },
+    "_objFlags": 0,
+    "_children": [],
+    "_name": "FormationLabel",
+    "_mobility": 0,
+    "_lscale": {
+      "__type__": "cc.Vec3",
+      "z": 1,
+      "y": 1,
+      "x": 1
+    },
+    "_components": [
+      {
+        "__id__": 781
+      },
+      {
+        "__id__": 782
+      }
+    ],
+    "_prefab": null,
+    "__editorExtras__": {},
+    "_lrot": {
+      "__type__": "cc.Quat",
+      "z": 0,
+      "w": 1,
+      "y": 0,
+      "x": 0
+    }
+  },
+  {
+    "_enabled": true,
+    "_name": "",
+    "__prefab": null,
+    "node": {
+      "__id__": 780
+    },
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 150,
+      "height": 32
+    },
+    "_objFlags": 0,
+    "__type__": "cc.UITransform",
+    "__editorExtras__": {},
+    "_id": "",
+    "_anchorPoint": {
+      "__type__": "cc.Vec2",
+      "y": 0.5,
+      "x": 0.5
+    }
+  },
+  {
+    "_underlineHeight": 2,
+    "_actualFontSize": 30,
+    "_isItalic": false,
+    "_spacingX": 0,
+    "_string": "阵型 1 ▼",
+    "_font": null,
+    "_srcBlendFactor": 2,
+    "__type__": "cc.Label",
+    "_color": {
+      "__type__": "cc.Color",
+      "r": 112,
+      "g": 73,
+      "b": 38,
+      "a": 255
+    },
+    "_overflow": 1,
+    "_horizontalAlign": 1,
+    "_outlineWidth": 2,
+    "_isBold": false,
+    "_shadowOffset": {
+      "__type__": "cc.Vec2",
+      "y": -2,
+      "x": 2
+    },
+    "_shadowColor": {
+      "__type__": "cc.Color",
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 255
+    },
+    "_customMaterial": null,
+    "__editorExtras__": {},
+    "_name": "",
+    "_shadowBlur": 2,
+    "_lineHeight": 24,
+    "_enableOutline": false,
+    "_outlineColor": {
+      "__type__": "cc.Color",
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 255
+    },
+    "_isSystemFontUsed": true,
+    "_enableShadow": false,
+    "_dstBlendFactor": 4,
+    "_enabled": true,
+    "_isUnderline": false,
+    "_fontSize": 20,
+    "_fontFamily": "Arial",
+    "_id": "",
+    "_objFlags": 0,
+    "_verticalAlign": 1,
+    "_enableWrapText": false,
+    "_cacheMode": 0,
+    "__prefab": null,
+    "node": {
+      "__id__": 780
+    }
   }
 ]

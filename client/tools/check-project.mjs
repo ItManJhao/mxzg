@@ -22,6 +22,7 @@ const suites = [
   ["hero-state", "ts", "client/tools/hero-state-check.ts"],
   ["hero-level", "paused", null],
   ["formation", "paused", null],
+  ["formation-state", "ts", "client/tools/formation-state-check.ts"],
   ["formation-view", "ts", "client/tools/formation-view-check.ts"],
   ["remake-playable", "paused", null],
   ["hero-growth-generated", "python", "tools/export_hero_growth.py"],

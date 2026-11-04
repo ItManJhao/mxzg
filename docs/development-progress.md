@@ -20,7 +20,7 @@
 | 英雄 | 统一名册、SuperScroll 列表、只读详情与基础技能；持久普通四槽；服务器基础/装备/套装/技能面板属性 | 进化状态、面板和技能替换已接入代码，独立环境画面通过；天赋、符文、觉醒等加成不全；升级/穿脱/扩容未开；视觉仍有差异 |
 | 附魂 | 规则与可选技能快照已写入；保留配置 999 星关闭条件 | 当前正常英雄不激活；已提交10546843；不代表恢复完整附魂玩法 |
 | 开发 GM | 游戏内英雄/道具搜索选择与发放；开关、归属校验、持久回执及统一同步 | 仅开发辅助，不能代替正常获取途径 |
-| 阵容 | 原版规则、V14选中阵型/永久解锁/助战状态与只读统一快照；前端唯一Model接通 | 保存事务/WS请求和页面待接，当前入口仍暂停，历史站位未自动清理 |
+| 阵容 | 主线WS＋Protobuf保存、V15持久回执、版本冲突保护、统一快照；英雄页原布阵入口和SuperScroll草稿页，独立环境保存/刷新恢复通过 | 其他阵容模式未开；战斗输入尚未接站位加成，完整视觉和真机待验收 |
 | 战斗 | 保留战报、事务、结算和表现代码 | 当前入口暂停；仍是基础属性和简化普攻，尚未接完整技能/状态及新通信 |
 | 挂机 | 保留计时、随机收益、持久收据与历史测试 | 当前入口暂停；新协议、关卡衔接、完整加成、领取同步及页面均需重新验收 |
 | 其他玩法/社交 | 部分旧资源与代码可供恢复 | 不在本批范围，仍属于最终完整重做目标 |
@@ -105,3 +105,37 @@ HeroInfoView的旧壳层记录早于5c95c7a6四槽装备接入；ItemRewardLayer
 全库审查器同时修正ServerPickerView旧scrollHost/scrollPort字段假设，改为验证两个实际serverScroll/regionScroll组件、SuperScroll类型、Scroll/view/content层级、Mask和SuperContent。94份结构报告已重新生成并通过一致性检查。
 
 提交前本次实际执行：23组客户端/资源/文档检查通过；两套客户端类型检查通过；Protobuf生成无漂移；后端83项测试通过；独立MySQL18项通过（backend/target/cleanup-final-test.log、cleanup-final-mysql.log为本机日志）。未改现有玩家数据、未重启日常服务；本批包含此前待提交的V14阵容持久状态/统一快照和代码规范整理，玩法入口仍保持暂停。
+
+## 主线阵容保存闭环（2026-11-04）
+
+按用户要求跳过上一批页面巡检，直接恢复主线阵容。完成旧规则核对、V15保存回执、角色锁/阵容版本/持久站位与阵型同事务、formation.save二进制协议、应用注入写能力、Controller草稿和回执路由、唯一Model统一同步。打开窗口不查询，页面不监听账号、不持有token、不先改资产。
+
+英雄列表原布阵按钮恢复并修正显示层级；FormationView改为SuperScroll和五列专属格子，按服务器options编辑，确认才保存，关闭放弃草稿。资源和代码保留原UUID，新Cell使用新UUID及同名类。英雄升级、穿脱、战斗和挂机入口仍关闭。
+
+实际预览：独立内存账号formation_review，初始空阵/版本0；放置英雄保存得到版本1；调整到7号位并切换阵型2保存得到版本2；刷新重登和再次开页保持阵型2/位置7；修改未保存直接关闭重开，仍保持已保存结果；警告/错误0。图片见images/formation-save-20261104.png、formation-recovery-20261104.png。该预览宿主9408已精确停止；独立MySQL19项通过且实例已停止，未修改日常玩家库或重启日常后端。
+
+本批后端88项通过；前端新增formation-state与迁移后的formation-view通过，既有英雄/背包/协议/会话回归通过；最终18组客户端/资源/文档检查全部通过；两套类型及Protobuf生成检查通过。独立MySQL run=6723cad8788c40139d70a51b69e87ea5，state=stopped。用户上一批验收不等于本批新UI完整视觉验收，当前仅记录上述独立预览局部结果。本批尚未提交或推送。
+
+## 阵容控制器按背包模板解耦（2026-11-04）
+
+去掉FormationController对FormationScreen/View、目录索引和草稿的依赖，删除页面控制器工厂；应用初始化唯一BaseController模块并注入原鉴权WS写能力。新增FormationSaveModel保存过程状态，权威阵容仍只在HeroRosterModel，FormationEvent仅通知状态已提交。未保存草稿、选位和筛选全部回到FormationView，页面按事件读Model刷新。
+
+关闭窗口不终止模块保存或丢失未确认请求；结果不明时重开仍原样重试，明确成功后等待统一快照。角色变化/退出由AssetStateBinding统一关闭页面并重置模块，旧会话迟到的成功/失败由应用统一交付口拒绝。不会撤销旧角色已经在服务端完成的保存。
+
+本次不改服务端/协议/预制体或玩法规则；新增无View模块回归和真实Prefab按钮回归，覆盖草稿不写资产、关闭后仍处理回执、重开显示结果、原请求重试、重复提交保护、应用退出清理及换号隔离。本次真实Creator画面尚未重新复验，上批局部画面证据不能替代本次新结构验收。本批未提交/推送，日常后端未更新。
+
+
+## 2026-11-04 连接与身份隔离统一收整
+
+按用户确认，旧连接隔离归GameSocketClient，旧身份请求的成功/失败交付归应用装配的AccountService.deliverAuthenticated；移除FormationController的captureSession/isCurrent和角色键比较、FormationView的owner比较、BagView的lastRoleKey分支，同时删除BaseController未再使用的会话代次API。AssetStateBinding统一先关闭旧角色背包/布阵页面，再重置业务状态；同角色状态同步及自动重连不关页。回执匹配、幂等重试、重复点击保护和页面关闭清理保留。
+
+本批没有修改服务端、协议、预制体或玩法开关，没有操作玩家数据库。本批9组回归通过：game-socket、formation-state、formation-view、hero-state、backpack、startup、hero、bindings、docs；Creator项目和独立运行入口两套类型检查、git diff --check通过。新增受控二进制连接测试覆盖旧成功、旧鉴权失败、退出后同角色重登、当前网络失败原请求重试及同角色推送不关页。未重新运行Creator画面验收，前批截图不作为当前结构的重新验收证据。本批尚未提交或推送。
+
+
+## 2026-11-04 布阵批次提交前实际复验
+
+独立内存预览run=7cb16c6c6ada498fabab37265fbe9fcf，合成账号formation_review：通过界面放置英雄到3号位并保存，收到“阵容已保存”；刷新重登后再次打开布阵，权威数据为formationId=1、version=1、position=3，画面一致。已读取预览实际编译方法，确认使用统一结果交付版本，不再调用captureSession/isCurrent。浏览器警告和错误记录为空。证据：images/formation-final-recovery-20261104.png。预览进程40808已核验并停止，未操作日常玩家库。
+
+本轮真实预览覆盖保存及刷新恢复；换号迟到成功/失败、同角色重登和断线重试由上一批受控连接回归覆盖，不将浏览器离线开关尝试等同于真实WebSocket断线验收。
+
+下一批明确入口：旧FormationReceivers.setAttribute按当前阵型及hero.position取得BattleMatrixAddition.ability，加入战斗英雄AttributeInfo，并把formationId交给战斗命令。新版HeroBattleInputService目前没有把选中阵型及站位加成放入Input，pending仍含formation_unlock_and_template_limits；应先接入持久选中阵型与旧配置的站位属性，验证加成不回写英雄面板、换阵型不重复累加，然后继续处理战斗专属属性和技能触发。此处仅完成源码核对，尚未宣称战斗输入完整或开放战斗。

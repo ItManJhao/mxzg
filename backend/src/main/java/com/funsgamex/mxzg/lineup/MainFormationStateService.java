@@ -8,10 +8,15 @@ import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.role.RoleRepository;
 @Service
 public class MainFormationStateService {
+    /** 已解锁阵型当前允许的站位，包含永久助战判定。 */
+    public record Option(int formationId,List<Integer> openPositions) {
+        /** 固定只读站位列表。 */
+        public Option { openPositions=List.copyOf(openPositions); }
+    }
     /** 选中阵型、永久解锁与现有持久站位；version只代表阵容版本，不替代资产revision。 */
-    public record State(int formationId,List<Integer> unlockedIds,boolean assistanceUnlocked,long version,List<Lineup.Slot> slots) {
+    public record State(int formationId,List<Integer> unlockedIds,boolean assistanceUnlocked,long version,List<Lineup.Slot> slots,List<Option> options) {
         /** 所有集合冻结，禁止临时战斗状态反写。 */
-        public State { unlockedIds=List.copyOf(unlockedIds);slots=List.copyOf(slots); }
+        public State { unlockedIds=List.copyOf(unlockedIds);slots=List.copyOf(slots);options=List.copyOf(options); }
     }
     /** 同一事务数据库入口。 */
     private final JdbcTemplate jdbc;
@@ -50,6 +55,9 @@ public class MainFormationStateService {
         if(!unlocked.contains(formation))throw new IllegalStateException("选中阵型未解锁");
         rules.position(formation,1);
         var lineup=lineups.read(role);
-        return new State(formation,unlocked,(Boolean)selected.get("assistance_unlocked"),lineup.version(),lineup.slots());
+        boolean assistance=(Boolean)selected.get("assistance_unlocked");
+        var options=unlocked.stream().map(id -> new Option(id,
+            java.util.stream.IntStream.rangeClosed(1,9).filter(pos -> rules.position(id,pos).open() && (pos!=9 || assistance)).boxed().toList())).toList();
+        return new State(formation,unlocked,assistance,lineup.version(),lineup.slots(),options);
     }
 }

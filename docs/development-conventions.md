@@ -248,3 +248,21 @@ UIManager打印“打开HeroInfoView”仍是框架层蓝色；HeroInfoView打�
 本批Bag已改为bag；HeroRosterUtils以public static present投影名册，HeroRosterSource/View归入data/HeroRosterData。英雄技能、配置索引、装备读取、事件和详情尺寸归入hero/utils；账号头像/布局归入account/utils；主城导航归入city/utils；战斗字体/只读资源目录归入battle/utils；GM两个View归入gm/ui。所有移动脚本保留原meta，背包展示工具的孤立meta已归位并恢复原UUID。
 
 三个模块Controller对于非自身协议的直接通知改为MODULE去重告警后忽略，未更新Model；ProtocolRouter仍拒绝未登记/非法回包，应用仍原子校验整包资产。这不表示允许未知协议或错误数据入库。
+
+## 主线阵容按背包模板收整（2026-11-04）
+
+FormationController是应用持有的BaseController模块，构造只接收FormationSaveModel和HeroRosterModel，不接收View/Screen/绘制回调；不提供show/close页面生命周期。configure由应用注入已有鉴权写入口，initialize只登记FORMATION_SAVE和权威状态通知。应用层AssetStateBinding统一resetSession/dispose，模块不监听登录。
+
+权威阵容仍唯一位于HeroRosterModel.mainFormation。FormationSaveModel只保存busy、未确认请求、回执等待版本与提示，不保存站位资产或页面草稿；Controller提交进度后发FormationEvent.SaveChanged。页面监听该事件和HeroRosterEvent.Updated，读取Model后自行绘制。
+
+FormationView维护选中英雄、未保存站位/阵型、元素筛选与按钮监听；关闭丢弃草稿、清理本页监听，不销毁模块。保存期间关闭窗口，模块仍可接收回执并等待统一状态；结果不明请求保留原幂等键，重新打开仍可重试。角色变化才由应用统一清空请求。GameSocketClient负责连接代次，应用装配的AccountService.deliverAuthenticated统一决定是否交付成功/失败；BaseController不保存会话代次。各业务不新增账号监听、角色键比较、全局队列或独立会话去重体系。
+
+
+## 连接、身份与业务的固定边界
+
+- 通信层GameSocketClient持有连接代次、连接ID与请求关联；旧连接的回调不交付，切换连接统一结束在途请求。
+- 应用通过AccountService.deliverAuthenticated装配写请求。它使用账号服务已有身份周期，在返回成功及失败前均检查当前身份；换号、退出、重新登录同一角色后都不向旧请求交付业务结果。不能只隔离成功而把旧失败交给模块恢复待重试状态。
+- AssetStateBinding整包校验角色归属及服务器revision，身份改变时先调用应用页面清理入口，再统一重置模块，最后提交新身份的快照。恢复同一角色只提交快照，不关闭页面、不清空未确认请求。
+- Controller只登记onNotify、校验业务回执、更新唯一Model和发布事件；不捕获会话代次、不比较角色键、不监听账号。Model/事件保留roleKey作为数据归属描述及应用重置参数，不据此建立第二套请求防护。
+- View只管理页面草稿、选中、滚动和自身监听；应用关闭旧角色页面。closed、节点有效性和异步贴图代次属于页面/资源生命周期，应保留。
+- 请求幂等键、重复点击保护、回执requestId匹配及服务器版本校验属于业务正确性，应保留。断网失败允许原请求显式重试；关窗不取消模块保存；客户端隔离不撤销旧角色已提交的服务端事务。
