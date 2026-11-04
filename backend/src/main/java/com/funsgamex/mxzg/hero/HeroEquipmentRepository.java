@@ -7,16 +7,21 @@ import tools.jackson.databind.ObjectMapper;
 @Repository
 public class HeroEquipmentRepository {
     /** 实例 ID、配置 ID、槽位和附魂等级，均来自持久记录。 */
-    public record Item(String instanceId, int templateId, int slot, int soulLevel) {}
+    public record Item(String instanceId, int templateId, int slot, int soulLevel, HeroSoulRules.Skill soulSkill) {
+        /** 独立规则夹具可仅提供持久四字段；生效技能由读取入口计算。 */
+        public Item(String instanceId,int templateId,int slot,int soulLevel){this(instanceId,templateId,slot,soulLevel,null);}
+    }
     /** 显式同步包装；空列表表示确实未穿戴，缺包装表示旧端未同步。 */
     public record State(List<Item> items) {}
     /** 唯一持久读取入口。 */
     private final JdbcTemplate jdbc;
+    /** 附魂生效判定共用旧配置，读取不触发养成操作。 */
+    private final HeroSoulRules soulRules;
     /** 同源装备配置的槽位约束，玩家状态不存于此。 */
     private final Map<Integer,Integer> slots = new HashMap<>();
     /** 加载同源表，拒绝未知或重复配置，不猜测装备位置。 */
-    public HeroEquipmentRepository(JdbcTemplate jdbc, ObjectMapper mapper) {
-        this.jdbc=jdbc;
+    public HeroEquipmentRepository(JdbcTemplate jdbc, ObjectMapper mapper,HeroSoulRules soulRules) {
+        this.jdbc=jdbc;this.soulRules=soulRules;
         try(var input=getClass().getResourceAsStream("/gameplay/equipmenttype.json")) {
             if(input==null)throw new IllegalStateException("装备配置缺失");
             for(var row:mapper.readTree(input).path("rows")) {
@@ -29,10 +34,10 @@ public class HeroEquipmentRepository {
     /** 一次读取本角色全部穿戴关系并按英雄分组，避免逐英雄补查。 */
     public Map<String,State> equipped(String roleId) {
         Map<String,List<Item>> groups=new HashMap<>();
-        jdbc.query("SELECT * FROM game_equipment WHERE role_id=? AND hero_id IS NOT NULL ORDER BY hero_id,slot", row->{
+        jdbc.query("SELECT e.*,h.star AS hero_star FROM game_equipment e JOIN game_hero h ON h.id=e.hero_id AND h.role_id=e.role_id WHERE e.role_id=? ORDER BY e.hero_id,e.slot", row->{
             int template=row.getInt("template_id"),slot=row.getInt("slot");
             if(!Objects.equals(slots.get(template),slot))throw new IllegalStateException("持久装备槽位与配置不符");
-            groups.computeIfAbsent(row.getString("hero_id"),key->new ArrayList<>()).add(new Item(row.getString("id"),template,slot,row.getInt("soul_level")));
+            groups.computeIfAbsent(row.getString("hero_id"),key->new ArrayList<>()).add(new Item(row.getString("id"),template,slot,row.getInt("soul_level"),soulRules.resolve(row.getInt("hero_star"),template,slot,row.getInt("soul_level"))));
         },roleId);
         Map<String,State> result=new HashMap<>();groups.forEach((id,items)->result.put(id,new State(List.copyOf(items))));
         return Map.copyOf(result);

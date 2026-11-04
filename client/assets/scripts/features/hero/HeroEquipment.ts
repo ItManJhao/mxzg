@@ -15,6 +15,8 @@ export interface HeroEquipment {
     readonly slot: number;
     /** 旧 soul_lv，非负附魂等级。 */
     readonly soulLevel: number;
+    /** 服务端判定已生效的附魂技能；缺失表示未生效，不能按等级自行推测。 */
+    readonly soulSkill?:Readonly<{skillId:number;level:number}>;
 }
 
 /**
@@ -45,6 +47,8 @@ export function readHeroEquipment(value: unknown, config?: GameConfig): readonly
         if (slots.has(slot) || instances.has(row.instanceId)) throw new Error("英雄装备槽位或实例重复");
         slots.add(slot);
         instances.add(row.instanceId);
-        return Object.freeze({ instanceId: row.instanceId, templateId, slot, soulLevel: row.soulLevel as number });
+                let soulSkill:HeroEquipment["soulSkill"];
+        if(row.soulSkill!==undefined){const skill=row.soulSkill as Record<string,unknown>;if(!skill||typeof skill!=="object"||Array.isArray(skill)||!Number.isSafeInteger(skill.skillId)||Number(skill.skillId)<=0||!Number.isSafeInteger(skill.level)||Number(skill.level)<=0||Number(row.soulLevel)<=0)throw new Error("附魂技能资料无效");soulSkill=Object.freeze({skillId:skill.skillId as number,level:skill.level as number});}
+        return Object.freeze({ soulSkill,instanceId: row.instanceId, templateId, slot, soulLevel: row.soulLevel as number });
     }));
 }

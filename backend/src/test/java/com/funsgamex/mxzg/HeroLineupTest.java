@@ -69,7 +69,7 @@ class HeroLineupTest {
         var snapshot=snapshots.snapshot(owner.authorization());
         var hero=snapshot.heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow();
         assertEquals(id,hero.equipment().items().getFirst().instanceId());
-        assertEquals(3,hero.equipment().items().getFirst().soulLevel());
+        assertEquals(3,hero.equipment().items().getFirst().soulLevel());assertNull(hero.equipment().items().getFirst().soulSkill(),"旧999星门槛不因有附魂等级而跳过");
         assertEquals(hero.baseStats().atk()+33,hero.panelStats().values().atk());assertFalse(hero.panelStats().complete());
         assertTrue(snapshot.heroes().stream().filter(row->row.id().equals(second)).findFirst().orElseThrow().equipment().items().isEmpty());
         assertEquals(hero.equipment(),snapshots.snapshot(owner.authorization()).heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow().equipment());

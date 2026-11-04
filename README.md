@@ -6,13 +6,13 @@
 
 1. 运行 scripts/start-remake-backend.bat，长连接监听 ws://127.0.0.1:18080/api/v1/game/socket。
 2. Creator 打开 client，打开 assets/scenes/Remake.scene，预览当前场景。
-3. 选服/登录 → 主城 → 背包/详情 → 返回；其他玩法入口暂时暂停，等待按旧项目重做。
+3. 选服/登录 → 主城 → 背包、角色详情、英雄只读列表/详情；阵容、战斗、挂机和养成写操作仍暂停。
 
 本机预览优先；未明确要求时不构建 H5/App/小游戏包。旧 module、Boot/Main、WebSocket 桥与旧网络链已删除。
 
 ## 文档入口
 
-最终目标：完整重做旧游戏，分批恢复玩法与社交；独立新版，不要求旧客户端兼容或旧玩家迁移。全部游戏业务 HTTP 已移除，登录、角色、背包采用 WS＋Protobuf；统一登录初始化、资产事务提交后同步。先完成角色与背包模板及正式服对照，再恢复其他模块。
+最终目标：完整重做旧游戏，分批恢复玩法与社交；独立新版，不要求旧客户端兼容或旧玩家迁移。全部游戏业务 HTTP 已移除，登录、角色、背包采用 WS＋Protobuf；统一登录初始化、资产事务提交后同步。角色、背包模板已接通，当前补齐英雄只读数据；下一阶段围绕阵容、战斗输入和挂机闭环推进，具体门槛见实施计划。
 
 阅读顺序：产品需求（要做什么）→ 开发进度（现在做到哪）→ 实施计划（接下来做什么）→ 架构（怎样做及证据）。同一事实只在对应主文档维护，不让历史批次覆盖当前结论。
 
@@ -27,7 +27,7 @@
 - [Prefab 编辑](docs/prefab-layout.md)：命名、坐标、逐项审查及视觉待验收。
 - [当前计划](docs/restructuring-plan.md) / [实际进度](docs/development-progress.md)。
 
-历史记录：[截至 2026-11-02 的开发过程](docs/validation/development-history-20261102.md)。[开服规则参考](docs/day60-open-server.md)只用于核对配置，不再作为另一套删减玩法/排期方案。
+历史记录：[11月3–4日批次快照](docs/validation/development-history-20261104.md)；[截至 2026-11-02 的开发过程](docs/validation/development-history-20261102.md)。[开服规则参考](docs/day60-open-server.md)只用于核对配置，不再作为另一套删减玩法/排期方案。
 
 文档目录的 JSON 是资源来源、Prefab 保留清单和审查数据，供工具/追溯使用；validation 保存历史证据。它们不作为当前计划，也不因文件多而删除。
 

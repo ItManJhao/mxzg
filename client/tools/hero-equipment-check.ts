@@ -33,6 +33,13 @@ async function main(): Promise<void> {
         const fullRoster=Array.from({length:300},(_,i)=>({...hero,id:"00000000-0000-4000-8000-"+String(i+1).padStart(12,"0"),panelStats:panel,equipment:{items:rows.map((row,slot)=>({...row,instanceId:"10000000-0000-4000-8000-"+String(i*4+slot+1).padStart(12,"0")}))}}));
     const fullFrame=encodeGameFrame({version:1,kind:"event",name:"state.changed",body:{role:{id:hero.id,nickname:"容量验证",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:fullRoster,inventory:[],revision:2}});
     assert.equal((decodeGameFrame(fullFrame).body as any).heroes.length,300);
+        const soul={...rows[0],soulLevel:1,soulSkill:{skillId:1001015,level:1}};
+    assert.equal(readHeroEquipment([soul],config)[0].soulSkill!.skillId,1001015);
+    assert(Object.isFrozen(readHeroEquipment([soul],config)[0].soulSkill));
+    assert.throws(()=>readHeroEquipment([{...soul,soulLevel:0}],config));
+    assert.throws(()=>readHeroEquipment([{...soul,soulSkill:{skillId:1001015,level:-1}}],config));
+    const soulFrame=decodeGameFrame(encodeGameFrame({version:1,kind:"event",name:"state.changed",body:{role:{id:hero.id,nickname:"附魂验证",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[{...hero,equipment:{items:[soul]}}],inventory:[],revision:3}}));
+    assert.equal((soulFrame.body as any).heroes[0].equipment.items[0].soulSkill.skillId,1001015);
     rows[0].soulLevel = 9;
     assert.equal(result[0].soulLevel, 0);
     console.log("PASS hero equipment: four real slots, instance precision, config matching, duplicates, missing state, immutable copies");

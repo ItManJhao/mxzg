@@ -154,3 +154,15 @@ CBuff属性分支为160、163及BuffType.stateAttributeBuff确认的323/324/330/
 后端69/69通过：真实10103003模板强化前后生命/防御加成、成长率独立截断、生命上限差异、持久英雄快照与重复恢复，包含既有真实WS300英雄容量回归。前端装备/面板容量与统一名册回归通过。本批没有改变前端源码或协议字段，没有重跑MySQL，不引用前批MySQL作为本批新增结果。独立内存页面使用显式--skill-panel-fixture参数创建30级/3星/强化1英雄，日常资产未修改。
 
 最终页面通过：独立内存run=c05999b68e774c52bb2f4cbe74a49d52，skill_panel_review，30级/3星/强化1灰烬使者。旧基础生命1567、防御145，经“战意”生命+10%、护甲+16%，页面显示生命1723、防御168，攻击221、速度161；技能说明与真实语言表一致，error/warn为空。截图images/hero-skill-panel-20261104.png及hero-skill-panel-description-20261104.png。测试页面关闭，本次内存宿主按身份停止；日常8676继续运行。本批未提交，未开放任何养成操作，下一步先核对附魂技能与进化状态对技能替换/面板的影响。
+
+## 第十一批：附魂只读规则与进化核查（2026-11-04）
+
+技能面板批次已提交dcae541d。本批HeroSoulRules读取同源heroequipsoulextra全局第一行、equipmenttype、heroequipsoul和heroskill引用。旧缓存getConfig()取getAll().get(0)；当前四行need_star均999，need_equip_star=4，客户端原拼写need_euqip_rare=5。旧客户端EquipData/HeroSoulCtr也按该拼写读取，服务器Java实体为need_equip_rare；新版明确沿当前已导出表读取，不偷偷改表或降低门槛。
+
+HeroEquipmentRepository在同一角色读取中联结英雄真实star，校验英雄星级、装备品质/星级、附魂等级后才推导soulSkill。protocol/game.proto在HeroEquipment追加optional soul_skill=5，含skill_id和level；无生效技能则缺失。前端整包校验正整数、附魂等级>0及不可变副本，不依据soulLevel拼出技能。不新增附魂请求或开启按钮，不改数据库结构，不发放装备。
+
+旧HeroReceivers先经BattleTemplate完成基础技能面板，再addSoulSkill，后者只加入SkillInfo，没有再次调用addSkillAttribute。当前附魂技能表count_stats=0，且英雄门槛999，因此正常英雄下发soulSkill应为空；不能给已有附魂等级增加虚假属性。该批不表示附魂战斗触发链、附魂养成界面已恢复，pending_sources的soul_skill缺口仍保留。
+
+进化后续依据：HeroEvolveReceiver在LOWEST阶段对QueryHeroCommand等追加当前heroevolvelevel.attr，再替换/添加技能；未重算新技能的count_stats初始面板。客户端HeroData.getHeroSkillLevel按hero_type/evolve.type/evolve.level查表，匹配skill_old_id后显示新skill_id/skill_level，且仍先判断强化解锁。当前导出174行，全部skill_id==skill_old_id（升级同一技能的等级）。服务端removeIf比较idx、配置值为type，需继续核对SkillInfo.addSkill按类型升级的实际效果，不能将字面removeIf直接照搬成正确实现。下一步先补持久evolve.type/level、统一快照、属性与只读技能替换；不开启进化操作，不默认所有英雄已进化。
+
+本批后端71/71、前端hero-equipment（含生效字段Protobuf往返、冻结及非法值）、hero-state、hero、生成漂移及双类型通过。正常角色门槛关闭在真实统一快照测试核对；999星仅纯规则测试夹具，用于验证达标分支，未创建999星玩家英雄。未重跑MySQL、没有新增UI或进行本批页面验收。日常后端已更新，GM保留，现有玩家资产未修改。本批尚未提交。

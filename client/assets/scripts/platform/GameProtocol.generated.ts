@@ -7421,6 +7421,7 @@ var mxzg = $root.mxzg = (() => {
       HeroEquipment.prototype.templateId = 0;
       HeroEquipment.prototype.slot = 0;
       HeroEquipment.prototype.soulLevel = 0;
+      HeroEquipment.prototype.soulSkill = null;
       HeroEquipment.create = function create(properties) {
         return new HeroEquipment(properties);
       };
@@ -7447,6 +7448,11 @@ var mxzg = $root.mxzg = (() => {
           /* id 4, wireType 0 =*/
           32
         ).uint32(message.soulLevel);
+        if (message.soulSkill != null && Object.hasOwnProperty.call(message, "soulSkill"))
+          $root.mxzg.game.HeroSoulSkill.encode(message.soulSkill, writer.uint32(
+            /* id 5, wireType 2 =*/
+            42
+          ).fork(), q + 1).ldelim();
         return writer;
       };
       HeroEquipment.decode = function decode(reader, length, error, long) {
@@ -7488,6 +7494,10 @@ var mxzg = $root.mxzg = (() => {
               message.soulLevel = reader.uint32();
               break;
             }
+            case 5: {
+              message.soulSkill = $root.mxzg.game.HeroSoulSkill.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -7523,6 +7533,11 @@ var mxzg = $root.mxzg = (() => {
           return "slot: integer expected";
         if (!$util.isInteger(message.soulLevel))
           return "soulLevel: integer expected";
+        if (message.soulSkill != null && Object.hasOwnProperty.call(message, "soulSkill")) {
+          let error = $root.mxzg.game.HeroSoulSkill.verify(message.soulSkill, long + 1);
+          if (error)
+            return "soulSkill." + error;
+        }
         return null;
       };
       HeroEquipment.fromObject = function fromObject(object, long) {
@@ -7543,6 +7558,11 @@ var mxzg = $root.mxzg = (() => {
           message.slot = object.slot >>> 0;
         if (object.soulLevel != null)
           message.soulLevel = object.soulLevel >>> 0;
+        if (object.soulSkill != null) {
+          if (!$util.isObject(object.soulSkill))
+            throw TypeError(".mxzg.game.HeroEquipment.soulSkill: object expected");
+          message.soulSkill = $root.mxzg.game.HeroSoulSkill.fromObject(object.soulSkill, long + 1);
+        }
         return message;
       };
       HeroEquipment.toObject = function toObject(message, options, q) {
@@ -7558,6 +7578,7 @@ var mxzg = $root.mxzg = (() => {
           object.templateId = 0;
           object.slot = 0;
           object.soulLevel = 0;
+          object.soulSkill = null;
         }
         if (message.instanceId != null && Object.hasOwnProperty.call(message, "instanceId"))
           object.instanceId = message.instanceId;
@@ -7567,6 +7588,8 @@ var mxzg = $root.mxzg = (() => {
           object.slot = message.slot;
         if (message.soulLevel != null && Object.hasOwnProperty.call(message, "soulLevel"))
           object.soulLevel = message.soulLevel;
+        if (message.soulSkill != null && Object.hasOwnProperty.call(message, "soulSkill"))
+          object.soulSkill = $root.mxzg.game.HeroSoulSkill.toObject(message.soulSkill, options, q + 1);
         return object;
       };
       HeroEquipment.prototype.toJSON = function toJSON() {
@@ -8166,6 +8189,141 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.HeroPanelStats";
       };
       return HeroPanelStats;
+    })();
+    game.HeroSoulSkill = (function() {
+      function HeroSoulSkill(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      HeroSoulSkill.prototype.skillId = 0;
+      HeroSoulSkill.prototype.level = 0;
+      HeroSoulSkill.create = function create(properties) {
+        return new HeroSoulSkill(properties);
+      };
+      HeroSoulSkill.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.skillId);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).uint32(message.level);
+        return writer;
+      };
+      HeroSoulSkill.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.HeroSoulSkill();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.skillId = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.level = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "skillId"))
+          throw $util.ProtocolError("missing required 'skillId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "level"))
+          throw $util.ProtocolError("missing required 'level'", { instance: message });
+        return message;
+      };
+      HeroSoulSkill.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.skillId))
+          return "skillId: integer expected";
+        if (!$util.isInteger(message.level))
+          return "level: integer expected";
+        return null;
+      };
+      HeroSoulSkill.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.HeroSoulSkill)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.HeroSoulSkill: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.HeroSoulSkill();
+        if (object.skillId != null)
+          message.skillId = object.skillId >>> 0;
+        if (object.level != null)
+          message.level = object.level >>> 0;
+        return message;
+      };
+      HeroSoulSkill.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.skillId = 0;
+          object.level = 0;
+        }
+        if (message.skillId != null && Object.hasOwnProperty.call(message, "skillId"))
+          object.skillId = message.skillId;
+        if (message.level != null && Object.hasOwnProperty.call(message, "level"))
+          object.level = message.level;
+        return object;
+      };
+      HeroSoulSkill.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      HeroSoulSkill.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.HeroSoulSkill";
+      };
+      return HeroSoulSkill;
     })();
     return game;
   })();
