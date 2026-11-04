@@ -59,6 +59,66 @@ export interface HeroLevelRow {
   /** 英雄登记 */
   readonly level: number;
 }
+export interface HeroSkillRow {
+  /** 是否主动（0：被动，1：主动技能，2：普攻，3：光环） */
+  readonly active_type?: number;
+  /** 触发的art类型 */
+  readonly art_list?: string;
+  /** 是否有特殊词条层级（0没有，1有） */
+  readonly buff_lan_on?: number;
+  /** 冷却回合 */
+  readonly cool_round?: number;
+  /** 是否计算到面板上显示 */
+  readonly count_stats?: number;
+  /** 唯一编号 */
+  readonly idx: number;
+  /** 初始回合 */
+  readonly initial_round?: number;
+  /** 技能描述语言包 */
+  readonly lan_describe: number;
+  /** 技能名称语言包 */
+  readonly lan_name: number;
+  /** 技能等级 */
+  readonly level: number;
+  /** 下级描述语言包 */
+  readonly levelup_describe?: number;
+  /** 注释·英雄名称 */
+  readonly note3?: string;
+  /** 强力标志 */
+  readonly power_mark?: number;
+  /** 需要英雄n星才拥有此技能 */
+  readonly star?: number;
+  /** 515 */
+  readonly type: number;
+}
+export interface HeroStarRow {
+  /** 攻击提升（显示） */
+  readonly attack_show?: number;
+  /** 血量提升（显示） */
+  readonly hp_show?: number;
+  /** 英雄等级上限 */
+  readonly level_limit: number;
+  /** 升星所需额外道具 */
+  readonly need_item?: string;
+  /** 个人等级要求 */
+  readonly role_level_require?: number;
+  /** 献祭基础收益 */
+  readonly sacrifice_item_refund?: string;
+  /** 技能1等级 */
+  readonly skill1: number;
+  /** 技能2等级 */
+  readonly skill2: number;
+  /** 技能3等级 */
+  readonly skill3: number;
+  /** 技能4等级 */
+  readonly skill4: number;
+  /** 英雄星级 */
+  readonly star: number;
+  /** 升星消耗（升阶石） */
+  readonly upstar_cost?: string;
+  /** 世界等级要求 */
+  readonly world_level_require?: number;
+}
 export interface HeroTalkRow {
   /** 编号 */
   readonly idx: number;
@@ -122,6 +182,28 @@ export interface HeroTypeRow {
   readonly to_9_star?: string;
   /** 英雄类型 */
   readonly type: number;
+}
+export interface HeroUpgradeRow {
+  /** 阶级初始等级 */
+  readonly begin_level?: number;
+  /** 升阶所需金币 */
+  readonly gold?: number;
+  /** 英雄阶级 */
+  readonly grade: number;
+  /** 等级上限 */
+  readonly level: number;
+  /** 英雄变强评分 */
+  readonly score?: number;
+  /** 技能1是否解锁 */
+  readonly skill1: number;
+  /** 技能2是否解锁 */
+  readonly skill2: number;
+  /** 技能3是否解锁 */
+  readonly skill3: number;
+  /** 技能4是否解锁 */
+  readonly skill4: number;
+  /** 升阶所需升阶石 */
+  readonly soul?: number;
 }
 export interface ItemRow {
   /** 道具简介（填语言包id） */
@@ -226,8 +308,11 @@ export const GConfig = {
   CityEffect: "CityEffect",
   CityPosition: "CityPosition",
   HeroLevel: "HeroLevel",
+  HeroSkill: "HeroSkill",
+  HeroStar: "HeroStar",
   HeroTalk: "HeroTalk",
   HeroType: "HeroType",
+  HeroUpgrade: "HeroUpgrade",
   Item: "Item",
   Language: "Language",
   LoadingTips: "LoadingTips",
@@ -240,8 +325,11 @@ export interface ConfigRowMap {
   CityEffect: CityEffectRow;
   CityPosition: CityPositionRow;
   HeroLevel: HeroLevelRow;
+  HeroSkill: HeroSkillRow;
+  HeroStar: HeroStarRow;
   HeroTalk: HeroTalkRow;
   HeroType: HeroTypeRow;
+  HeroUpgrade: HeroUpgradeRow;
   Item: ItemRow;
   Language: LanguageRow;
   LoadingTips: LoadingTipsRow;
@@ -254,8 +342,11 @@ export interface ConfigKeyMap {
   CityEffect: number;
   CityPosition: number;
   HeroLevel: number;
+  HeroSkill: number;
+  HeroStar: number;
   HeroTalk: number;
   HeroType: number;
+  HeroUpgrade: number;
   Item: number;
   Language: number | string;
   LoadingTips: number;
@@ -268,8 +359,11 @@ export interface ConfigFileMap {
   CityEffect: { readonly maincityeffect: readonly CityEffectRow[] };
   CityPosition: { readonly main: readonly CityPositionRow[] };
   HeroLevel: { readonly rows: readonly HeroLevelRow[] };
+  HeroSkill: { readonly rows: readonly HeroSkillRow[] };
+  HeroStar: { readonly rows: readonly HeroStarRow[] };
   HeroTalk: { readonly rows: readonly HeroTalkRow[] };
   HeroType: { readonly rows: readonly HeroTypeRow[] };
+  HeroUpgrade: { readonly rows: readonly HeroUpgradeRow[] };
   Item: { readonly rows: readonly ItemRow[] };
   Language: { readonly rows: readonly LanguageRow[] };
   LoadingTips: { readonly rows: readonly LoadingTipsRow[] };
@@ -437,6 +531,160 @@ export const CONFIG_SCHEMA = {
     "key": "level",
     "path": "config/herolevel"
   },
+  "HeroSkill": {
+    "container": "rows",
+    "fields": {
+      "active_type": {
+        "note": "active_type",
+        "required": false,
+        "type": "number"
+      },
+      "art_list": {
+        "note": "art_list",
+        "required": false,
+        "type": "string"
+      },
+      "buff_lan_on": {
+        "note": "buff_lan_on",
+        "required": false,
+        "type": "number"
+      },
+      "cool_round": {
+        "note": "cool_round",
+        "required": false,
+        "type": "number"
+      },
+      "count_stats": {
+        "note": "count_stats",
+        "required": false,
+        "type": "number"
+      },
+      "idx": {
+        "note": "idx",
+        "required": true,
+        "type": "number"
+      },
+      "initial_round": {
+        "note": "initial_round",
+        "required": false,
+        "type": "number"
+      },
+      "lan_describe": {
+        "note": "lan_describe",
+        "required": true,
+        "type": "number"
+      },
+      "lan_name": {
+        "note": "lan_name",
+        "required": true,
+        "type": "number"
+      },
+      "level": {
+        "note": "level",
+        "required": true,
+        "type": "number"
+      },
+      "levelup_describe": {
+        "note": "levelup_describe",
+        "required": false,
+        "type": "number"
+      },
+      "note3": {
+        "note": "note3",
+        "required": false,
+        "type": "string"
+      },
+      "power_mark": {
+        "note": "power_mark",
+        "required": false,
+        "type": "number"
+      },
+      "star": {
+        "note": "star",
+        "required": false,
+        "type": "number"
+      },
+      "type": {
+        "note": "type",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "idx",
+    "path": "config/heroskill"
+  },
+  "HeroStar": {
+    "container": "rows",
+    "fields": {
+      "attack_show": {
+        "note": "attack_show",
+        "required": false,
+        "type": "number"
+      },
+      "hp_show": {
+        "note": "hp_show",
+        "required": false,
+        "type": "number"
+      },
+      "level_limit": {
+        "note": "level_limit",
+        "required": true,
+        "type": "number"
+      },
+      "need_item": {
+        "note": "need_item",
+        "required": false,
+        "type": "string"
+      },
+      "role_level_require": {
+        "note": "role_level_require",
+        "required": false,
+        "type": "number"
+      },
+      "sacrifice_item_refund": {
+        "note": "sacrifice_item_refund",
+        "required": false,
+        "type": "string"
+      },
+      "skill1": {
+        "note": "skill1",
+        "required": true,
+        "type": "number"
+      },
+      "skill2": {
+        "note": "skill2",
+        "required": true,
+        "type": "number"
+      },
+      "skill3": {
+        "note": "skill3",
+        "required": true,
+        "type": "number"
+      },
+      "skill4": {
+        "note": "skill4",
+        "required": true,
+        "type": "number"
+      },
+      "star": {
+        "note": "star",
+        "required": true,
+        "type": "number"
+      },
+      "upstar_cost": {
+        "note": "upstar_cost",
+        "required": false,
+        "type": "string"
+      },
+      "world_level_require": {
+        "note": "world_level_require",
+        "required": false,
+        "type": "number"
+      }
+    },
+    "key": "star",
+    "path": "config/herostar"
+  },
   "HeroTalk": {
     "container": "rows",
     "fields": {
@@ -600,6 +848,63 @@ export const CONFIG_SCHEMA = {
     },
     "key": "type",
     "path": "config/herotype"
+  },
+  "HeroUpgrade": {
+    "container": "rows",
+    "fields": {
+      "begin_level": {
+        "note": "begin_level",
+        "required": false,
+        "type": "number"
+      },
+      "gold": {
+        "note": "gold",
+        "required": false,
+        "type": "number"
+      },
+      "grade": {
+        "note": "grade",
+        "required": true,
+        "type": "number"
+      },
+      "level": {
+        "note": "level",
+        "required": true,
+        "type": "number"
+      },
+      "score": {
+        "note": "score",
+        "required": false,
+        "type": "number"
+      },
+      "skill1": {
+        "note": "skill1",
+        "required": true,
+        "type": "number"
+      },
+      "skill2": {
+        "note": "skill2",
+        "required": true,
+        "type": "number"
+      },
+      "skill3": {
+        "note": "skill3",
+        "required": true,
+        "type": "number"
+      },
+      "skill4": {
+        "note": "skill4",
+        "required": true,
+        "type": "number"
+      },
+      "soul": {
+        "note": "soul",
+        "required": false,
+        "type": "number"
+      }
+    },
+    "key": "grade",
+    "path": "config/heroupgrade"
   },
   "Item": {
     "container": "rows",

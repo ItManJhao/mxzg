@@ -7,11 +7,12 @@ import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
+import {presentHeroSkills,heroSkillStatus} from "../HeroSkillPresentation";
 import { HeroCatalog } from "../HeroCatalog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { _decorator, Button, Label, Node, Overflow, UITransform } from "cc";
+import { _decorator, Button, Label, Node, Sprite, Overflow, UITransform } from "cc";
 import { GameLog } from "../../../core/GameLog";
 interface HeroPortraitData { templateId: number; name: string; level: number; }
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
@@ -90,6 +91,18 @@ export class HeroInfoView extends BaseView<{heroId:string}> {
   @property([Label]) attributes:Label[]=[];
   /** 由模板元素选择图标，不能沿用预制体占位元素。 */
   @property(Node) elementIcon:Node|null=null;
+  /** 四个技能图标节点；空技能显示旧版空槽，锁定技能灰显。 */
+  @property([Node]) skillIcons:Node[]=[];
+  /** 四个技能名称，来自同等级语言表。 */
+  @property([Label]) skillNames:Label[]=[];
+  /** 四个技能等级或强化解锁条件。 */
+  @property([Label]) skillLevels:Label[]=[];
+  /** 四个只读说明入口，不执行养成。 */
+  @property([Button]) skillButtons:Button[]=[];
+  /** 图标异步绘制代次；每次刷新递增，关闭作废，防止旧图片覆盖新实例。 */
+  private paintVersion=0;
+  /** 技能按钮解除函数，关闭时逐一释放。 */
+  private skillStops:Array<()=>void>=[];
   /** 本次打开的实例 ID；关闭清空，不能误用模板 ID 查找。 */
   private selectedId="";
   /** 当前角色归属；换号后关闭，不能继续显示旧角色详情。 */
@@ -104,6 +117,7 @@ export class HeroInfoView extends BaseView<{heroId:string}> {
     this.selectedId=args.heroId;this.owner=HeroRosterModel.instance.roleKey;
     this.backButton?.node.on(Button.EventType.CLICK,this.goBack,this);
     EventDispatcher.instance.on(HeroRosterEvent.Updated,this,this.refresh);
+    this.skillButtons.forEach((button,slot)=>{const click=()=>{void UIManager.instance.openById("hero-skill",{heroId:this.selectedId,slot}).catch(error=>GameLog.shared.warn("Hero",String(error)));};button.node.on(Button.EventType.CLICK,click);this.skillStops.push(()=>button.node.off(Button.EventType.CLICK,click));});
     this.refresh();
   }
   /** 读取最新实例和服务器基础属性；角色变化或实例删除即返回列表。 */
@@ -119,6 +133,14 @@ export class HeroInfoView extends BaseView<{heroId:string}> {
     if(this.summary)this.summary.string="等级："+hero.level+"    星级："+hero.star+"    强化："+(hero.stage??"—")+"\n基础属性（不含装备、天赋加成）";
     const stats=hero.baseStats;const names=["攻击","生命","防御","速度"],values=stats?[stats.atk,stats.hp,stats.def,stats.spd]:[];
     this.attributes.forEach((label,i)=>{label.string=names[i]+"："+(values[i]??"待同步");});
+    const version=++this.paintVersion;
+    if(this.skillIcons.length)presentHeroSkills(hero).forEach((skill,i)=>{
+      const icon=this.skillIcons[i],sprite=icon?.getComponent(Sprite);if(sprite){sprite.spriteFrame=null;sprite.grayscale=skill.id>0 && skill.level===0;}
+      if(icon)paintSpritePaths(icon,[skill.icon||ResourceCatalog.hero.hero_info_spr_new_9.path],()=>this.paintVersion===version && this.selectedId===hero.id);
+      if(this.skillNames[i])this.skillNames[i].string=skill.name;
+      if(this.skillLevels[i])this.skillLevels[i].string=skill.id?heroSkillStatus(skill):"";
+      if(this.skillButtons[i])this.skillButtons[i].interactable=skill.id>0;
+    });
   }
   /** 返回已有列表，不触发升级、穿戴或扩容。 */
   private goBack():void {
@@ -129,6 +151,7 @@ export class HeroInfoView extends BaseView<{heroId:string}> {
   /** 关页释放订阅和立绘；异步加载由无效节点检查阻止回写。 */
   onClose():void {
     EventDispatcher.instance.offTarget(this);this.backButton?.node?.off(Button.EventType.CLICK,this.goBack,this);
+    this.paintVersion++;for(const stop of this.skillStops.splice(0))stop();UIManager.instance.closeById("hero-skill");
     this.selectedId="";this.owner=null;if(this.spineNode?.isValid)this.spineNode.destroy();this.spineNode=null;this.heroId=0;
   }
 

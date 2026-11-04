@@ -2,6 +2,9 @@
  * 重做版应用装配入口，装配选服、登录、角色和背包；其他玩法入口暂停。
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
+import {HeroSkillView} from "../../features/hero/ui/HeroSkillView";
+import {prepareHeroDetailConfig} from "../../config/RemakeConfig";
+
 import { GmController } from "../../features/gm/GmController";
 import { GmView } from "../../features/gm/GmView";
 import { loadPrefab } from "../../framework/assets/PrefabLoader";
@@ -22,7 +25,7 @@ import { AccountController } from "../../features/account/AccountController";
 import { HeroInfoView } from "../../features/hero/ui/HeroInfoView";
 import { HeroListView } from "../../features/hero/ui/HeroListView";
 import { mountHeroListPage } from "../../features/hero/ui/heroMount";
-import { createHeroResourceScope, loadHeroPage } from "./HeroResources";
+import { createHeroResourceScope, loadHeroPage, loadHeroDetailPage } from "./HeroResources";
 import { HeroRosterController } from "../../features/hero/HeroRosterController";
 import { RoleProfileView } from "../../features/account/ui/RoleProfileView";
 import { AccountLoginView } from "../../features/account/ui/AccountLoginView";
@@ -235,7 +238,11 @@ export class RemakeApp extends Component {
     }));
     this.unregisterViews.push(registerView(HeroInfoView,{
       id:"hero-info",prefab:ResourceCatalog.prefab_hero.HeroInfoView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
-      mount:mountHeroListPage,load:()=>{if(!this.heroResources)this.heroResources=createHeroResourceScope();return this.heroResources.load("info");},
+      mount:mountHeroListPage,load:()=>{if(!this.heroResources)this.heroResources=createHeroResourceScope();return loadHeroDetailPage(this.heroResources);},
+    }));
+    this.unregisterViews.push(registerView(HeroSkillView,{
+      id:"hero-skill",prefab:ResourceCatalog.prefab_hero.HeroSkillView.assetPath,layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"remake-modal",
+      load:async()=>{await prepareHeroDetailConfig();return loadPrefab(ResourceCatalog.prefab_hero.HeroSkillView.assetPath);}
     }));
     this.alive = true;
     this.startupResources = createStartupResourceScope();

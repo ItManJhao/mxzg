@@ -492,6 +492,6 @@ async function checkReadonlyInfo():Promise<void> {
  try {page.onOpen({heroId:hero.id});assert(page.attributes[0].string==="攻击：30","展示服务器基础属性");sync([{...hero,level:2,baseStats:{...hero.baseStats,atk:35}}]);assert(page.attributes[0].string==="攻击：35","同步后详情更新");(page as any).goBack();assert(lists===1,"返回按钮打开列表而非主城");sync([]);assert(lists===2,"实例删除返回列表");controller.resetSession(null);assert(backs===1,"退出账号返回根页面");page.onClose();assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===before,"关页释放详情监听");}
  finally {page.onClose();ui.back=original;ui.openById=originalOpen;controller.dispose();root.destroy();}
  const data=loadPrefab("client/assets/prefabs/ui/hero/HeroInfoView.prefab");const buttons=data.filter((x:any)=>x.__type__==="cc.Button"&&x._interactable);
- assert(buttons.length===1,"详情仅返回按钮可操作，不开放升级/扩容");
+ assert(buttons.length===5,"详情仅返回和四个技能说明按钮可操作，不开放升级/扩容");
 }
 async function main() { await checkDefaultRoster();await checkReadonlyInfo(); checkHeroCellReuse();checkHeroScrollBounds();checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/sync/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });

@@ -17,6 +17,7 @@ export const REMAKE_CONFIG_GROUPS = {
     startup: [GConfig.Language, GConfig.LoadingTips],
     city: [GConfig.OpenCondition, GConfig.SystemGate, GConfig.CityPosition, GConfig.CityButton, GConfig.CityEffect],
     hero: [GConfig.HeroType, GConfig.Item],
+    heroDetail: [GConfig.HeroType, GConfig.HeroSkill, GConfig.HeroStar, GConfig.HeroUpgrade, GConfig.Language, GConfig.Item],
     heroLevel: [GConfig.HeroLevel],
     inventory: [GConfig.Item, GConfig.Language, GConfig.TimeLimitItem],
 } as const;
@@ -35,3 +36,6 @@ export function readCityGates(): GateSnapshot | null {
     if (GameConfig.instance.status(GConfig.OpenCondition).state !== "ready" || GameConfig.instance.status(GConfig.SystemGate).state !== "ready") return null;
     return { opencondition: GameConfig.instance.getConfig(GConfig.OpenCondition), systemGate: GameConfig.instance.getConfig(GConfig.SystemGate) };
 }
+
+/** 只读详情打开前准备技能与星级规则，不增加登录或列表首屏加载。 */
+export const prepareHeroDetailConfig = () => GameConfig.instance.prepare(REMAKE_CONFIG_GROUPS.heroDetail);

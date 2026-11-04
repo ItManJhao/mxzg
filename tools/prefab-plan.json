@@ -103,7 +103,8 @@
         "HeroSuggestCell",
         "HeroStrongInfoCell",
         "HeroStrongResourceMainCell",
-        "HeroStrongResourceSubCell"
+        "HeroStrongResourceSubCell",
+        "HeroSkillView"
       ]
     },
     {

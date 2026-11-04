@@ -5,7 +5,7 @@ import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { Prefab } from "cc";
 import { ResourcePool } from "../../framework/assets/ResourcePool";
 import type { ResourceScope } from "../../framework/assets/ResourcePool";
-import { prepareHeroConfig, prepareHeroLevelConfig } from "../../config/RemakeConfig";
+import { prepareHeroConfig, prepareHeroLevelConfig, prepareHeroDetailConfig } from "../../config/RemakeConfig";
 import { loadPrefab } from "../../framework/assets/PrefabLoader";
 
 export const HERO_PAGE_RESOURCES = {
@@ -38,4 +38,9 @@ export async function loadHeroPage(scope: ResourceScope<Prefab>): Promise<Prefab
 /** 仅打开普通升级时持有该组合 Prefab，并复用当前配置仓库与资源作用域。 */
 export async function loadHeroLevelPage(scope:ResourceScope<Prefab>):Promise<Prefab> {
   await prepareHeroLevelConfig();return scope.load("level");
+}
+
+/** 详情使用统一配置仓库；配置与预制体就绪后才显示，避免短暂展示占位技能。 */
+export async function loadHeroDetailPage(scope:ResourceScope<Prefab>):Promise<Prefab> {
+ await prepareHeroDetailConfig();return scope.load("info");
 }

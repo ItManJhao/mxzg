@@ -583,6 +583,217 @@
           "note": "策划备注"
         }
       }
+    },
+    "HeroUpgrade": {
+      "path": "config/heroupgrade",
+      "container": "rows",
+      "key": "grade",
+      "fields": {
+        "grade": {
+          "type": "number",
+          "required": true,
+          "note": "grade"
+        },
+        "soul": {
+          "type": "number",
+          "required": false,
+          "note": "soul"
+        },
+        "gold": {
+          "type": "number",
+          "required": false,
+          "note": "gold"
+        },
+        "level": {
+          "type": "number",
+          "required": true,
+          "note": "level"
+        },
+        "skill1": {
+          "type": "number",
+          "required": true,
+          "note": "skill1"
+        },
+        "skill2": {
+          "type": "number",
+          "required": true,
+          "note": "skill2"
+        },
+        "skill3": {
+          "type": "number",
+          "required": true,
+          "note": "skill3"
+        },
+        "skill4": {
+          "type": "number",
+          "required": true,
+          "note": "skill4"
+        },
+        "begin_level": {
+          "type": "number",
+          "required": false,
+          "note": "begin_level"
+        },
+        "score": {
+          "type": "number",
+          "required": false,
+          "note": "score"
+        }
+      }
+    },
+    "HeroStar": {
+      "path": "config/herostar",
+      "container": "rows",
+      "key": "star",
+      "fields": {
+        "star": {
+          "type": "number",
+          "required": true,
+          "note": "star"
+        },
+        "level_limit": {
+          "type": "number",
+          "required": true,
+          "note": "level_limit"
+        },
+        "role_level_require": {
+          "type": "number",
+          "required": false,
+          "note": "role_level_require"
+        },
+        "world_level_require": {
+          "type": "number",
+          "required": false,
+          "note": "world_level_require"
+        },
+        "skill1": {
+          "type": "number",
+          "required": true,
+          "note": "skill1"
+        },
+        "skill2": {
+          "type": "number",
+          "required": true,
+          "note": "skill2"
+        },
+        "skill3": {
+          "type": "number",
+          "required": true,
+          "note": "skill3"
+        },
+        "skill4": {
+          "type": "number",
+          "required": true,
+          "note": "skill4"
+        },
+        "upstar_cost": {
+          "type": "string",
+          "required": false,
+          "note": "upstar_cost"
+        },
+        "need_item": {
+          "type": "string",
+          "required": false,
+          "note": "need_item"
+        },
+        "sacrifice_item_refund": {
+          "type": "string",
+          "required": false,
+          "note": "sacrifice_item_refund"
+        },
+        "attack_show": {
+          "type": "number",
+          "required": false,
+          "note": "attack_show"
+        },
+        "hp_show": {
+          "type": "number",
+          "required": false,
+          "note": "hp_show"
+        }
+      }
+    },
+    "HeroSkill": {
+      "path": "config/heroskill",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "idx"
+        },
+        "type": {
+          "type": "number",
+          "required": true,
+          "note": "type"
+        },
+        "initial_round": {
+          "type": "number",
+          "required": false,
+          "note": "initial_round"
+        },
+        "cool_round": {
+          "type": "number",
+          "required": false,
+          "note": "cool_round"
+        },
+        "star": {
+          "type": "number",
+          "required": false,
+          "note": "star"
+        },
+        "level": {
+          "type": "number",
+          "required": true,
+          "note": "level"
+        },
+        "count_stats": {
+          "type": "number",
+          "required": false,
+          "note": "count_stats"
+        },
+        "active_type": {
+          "type": "number",
+          "required": false,
+          "note": "active_type"
+        },
+        "art_list": {
+          "type": "string",
+          "required": false,
+          "note": "art_list"
+        },
+        "lan_name": {
+          "type": "number",
+          "required": true,
+          "note": "lan_name"
+        },
+        "lan_describe": {
+          "type": "number",
+          "required": true,
+          "note": "lan_describe"
+        },
+        "note3": {
+          "type": "string",
+          "required": false,
+          "note": "note3"
+        },
+        "power_mark": {
+          "type": "number",
+          "required": false,
+          "note": "power_mark"
+        },
+        "buff_lan_on": {
+          "type": "number",
+          "required": false,
+          "note": "buff_lan_on"
+        },
+        "levelup_describe": {
+          "type": "number",
+          "required": false,
+          "note": "levelup_describe"
+        }
+      }
     }
   }
 }

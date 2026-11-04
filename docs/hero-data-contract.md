@@ -68,3 +68,22 @@ RemakeApp 通过 UIManager 注册 HeroListView，按需加载 HeroResources；Vi
 HeroInfoView 通过 UIManager 的 hero-info 页面打开，参数是实例 ID；读取唯一 HeroRosterModel，订阅更新，删除实例或角色归属变化时返回，关闭释放监听与立绘。复用旧详情预制体和 Spine；立绘比例参考旧 HeroInfoLayer.createSpine 的 1.5×1.42。升级、装备、扩容等写入口不开放。
 
 Hero 新增 optional stage=7 和 base_stats=8，原有字段号不变；基础属性由服务端按 HeroGrowthRules 和持久等级/星级/强化计算，随登录、恢复和状态变化快照统一下发。前端严格校验并冻结数据，详情不额外查询。当前只展示名称、元素、立绘、等级、星级、强化与攻防血速基础值；不将这些值称为完整战力。技能、装备、天赋和完整加成是明确缺口，需要继续对照旧协议与配置恢复只读展示。
+
+## 第六批：四个基础技能与只读说明（2026-11-04）
+
+依据旧 HeroData.lua 的 getHeroSkillList/getHeroSkillLevel、HeroInfoUpLevelLayer.updateLevelSkillInfo 和 UIMenuItemSkill，只展示模板 skill_1 至 skill_4；skill_5 普攻不加入四格。HeroUpgrade 控制强化解锁，HeroStar 控制等级；星级不超过 5 且强化低于星级时，按强化 + 1 查技能等级。未解锁技能灰显并显示强化条件，点击明确标记一级效果预览；阶段缺失显示待同步，不当作强化 0。
+
+新增 HeroUpgrade、HeroStar、HeroSkill 的生成配置入口，名称和效果使用同等级技能行的语言 ID。图标在资源生成阶段登记真实旧资源。HeroInfoView 读取唯一名册并刷新四格；HeroSkillView 是独立静态预制体，经 UIManager 打开，订阅名册更新，英雄删除或角色变化时关闭。两页不新增请求、不写资产，不开放升级。
+
+本批只覆盖基础技能。旧 getHeroSkillLevel 另有进化状态替换技能的分支，新版尚无该状态，不能宣称进化技能已恢复。技能文案暂用纯文本保留换行，旧富文本颜色等表现仍待还原。
+
+后续必须补齐的服务端数据边界：
+
+| 内容 | 原项目证据 | 新版缺口 |
+|---|---|---|
+| 英雄穿戴关系 | HeroResponse.heroEquipData / heroEquipChange；EquipData 按 hero_id 保存槽位、equip_id、equip_type、soul_lv | 背包物品不等于已穿装备；须补英雄实例与装备实例/槽位的持久关系和统一同步 |
+| 完整属性 | HeroResponse.heroList 接收 atk/hp/def/spd；HeroAbilityData 的 getAtk/getHp/getDef/getSpd 直接读取下发值 | 当前 base_stats 仅基础属性，不能用前端猜算代替装备、天赋等最终加成 |
+| 进化技能 | HeroData.getHeroSkillLevel 的 heroevolvelevel 替换分支 | 先补真实进化状态与配置，再替换基础技能 |
+| 星级图形 | HeroInfoLayer.createStar 区分黄星、红星、十星及觉醒 | 当前数字星级准确，但图形和觉醒状态尚未完整还原 |
+
+自动回归覆盖强化解锁、星级等级、语言、空槽、未同步、错误配置和只读结果。Creator 实测树精技能说明、关闭返回和切换布鲁，图标/名称正确更新，无旧实例残留。此次只读使用日常测试角色，未发放资产；未重跑后端/MySQL 测试，不能引用前批结果作为本批新增验证。

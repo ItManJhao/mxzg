@@ -41,7 +41,9 @@
     "ui/maps/map-bg-mission-1",
     "ui/maps/map-bg-role-1",
     "ui/hero/head-icon_0",
-    "ui/bag/backpack_border-default"
+    "ui/bag/backpack_border-default",
+    "ui/hero/hero-info_spr-new-9",
+    "ui/hero/skill-icon_spr-skill-bg-1"
   ],
   "keyOverrides": {
     "ui/common/god-equip_spr-bg": "god_dash_equip_spr_dash_bg",

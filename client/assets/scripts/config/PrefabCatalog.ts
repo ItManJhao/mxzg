@@ -62,6 +62,7 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "prefabs/ui/hero/HeroListView": "95a097b8-9964-4ac3-8b3d-b4f568b1eb53",
   "prefabs/ui/hero/HeroSkillInfoLayer": "c403f3e0-51d9-447d-978b-81f90b52fe69",
   "prefabs/ui/hero/HeroSkillOpenInfoLayer": "baf42908-5ca4-4151-a680-130cb8556d15",
+  "prefabs/ui/hero/HeroSkillView": "65ad86c3-aeb9-4df2-9bc5-cff830b678b0",
   "prefabs/ui/hero/HeroStrongInfoCell": "68538b03-ae51-47b1-a655-cf2141d14294",
   "prefabs/ui/hero/HeroStrongResourceMainCell": "19191c8d-9aed-4f17-aef1-cd3609b18dc7",
   "prefabs/ui/hero/HeroStrongResourceSubCell": "5a6285d3-4efe-4d64-b00a-c321546ac49e",

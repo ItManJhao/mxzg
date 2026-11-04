@@ -245,3 +245,12 @@ HeroInfoView 改为 BaseView，由 UIManager 正式注册，点击实例打开�
 - BagView、HeroListView 静态嵌套用户创建的 CommonPanel1，保留原 UUID；删除两页重复背景和标题。通用根尺寸代表可见纸面，背景 Widget 填满根、标题水平居中跟随上沿；每页仅覆盖位置、尺寸和标题文字。英雄运行时只适配共同面板根，不再重复移动标题。
 - 保留用户的背包立绘位置/缩放及 GmView 预制体编辑。资源目录登记 CommonPanel1；绑定检查覆盖嵌套资源、实例登记与属性覆盖目标。
 - 当前验证：game-socket、gm、bindings、hero、backpack、resource-catalog 通过；Creator 与严格前端类型检查通过。Creator 刷新后实测背包/英雄切页，标题、列表及底部导航无重叠，浏览器无错误日志。
+
+## 2026-11-04：同步前批并恢复英雄基础技能
+
+- 日常 GM 与 CommonPanel1 批次已提交并推送 main：ba5dac29。包含协议不支持提示、背包/英雄共用面板及相关文档。
+- 本批新增四个基础技能格及 HeroSkillView 静态说明预制体；按旧源码读取强化解锁、星级等级、同等级语言与图标，不增加查询、不开放写操作。
+- Creator 已实际导入：树精“邪恶缠绕”显示 Lv.1、180% 物理伤害；关闭说明返回详情、返回英雄列表，再打开布鲁时正确显示“泡泡攻击”，无上一位英雄数据残留。截图见 images/hero-skill-20261104.png。
+- 本批验证：hero-detail、hero、bindings、startup、config-groups、Creator 与严格类型检查通过。浏览器 error/warn 为零。前批后端和独立 MySQL 结果未在本批重跑；日常角色仅只读查看，没有发放或改资产。
+- 当前只恢复基础技能。进化技能、装备穿戴关系、最终属性、星级图形、富文本表现仍未完成，依据与边界见 hero-data-contract.md 第六批；不称为完整英雄详情 1:1。下一步先补装备关系及服务器同步，继续保持只读，升级/购买和其他模块不动。
+- 本批英雄技能代码待提交，与上述已推送的 GM/通用面板提交分开记录。

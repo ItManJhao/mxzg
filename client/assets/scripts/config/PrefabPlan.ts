@@ -54,6 +54,7 @@ const paths = new Set<string>([
   "prefabs/ui/hero/HeroListView",
   "prefabs/ui/hero/HeroSkillInfoLayer",
   "prefabs/ui/hero/HeroSkillOpenInfoLayer",
+  "prefabs/ui/hero/HeroSkillView",
   "prefabs/ui/hero/HeroStrongInfoCell",
   "prefabs/ui/hero/HeroStrongResourceMainCell",
   "prefabs/ui/hero/HeroStrongResourceSubCell",
