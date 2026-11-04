@@ -291,7 +291,7 @@ class GameSocketTest {
             assertEquals(1007, peer.closed.get(5, TimeUnit.SECONDS));
         }
         try (var peer = new Peer()) {
-            peer.socket.sendBinary(ByteBuffer.wrap(new byte[70000]), true).join();
+            peer.socket.sendBinary(ByteBuffer.wrap(new byte[GameProtocolCodec.FRAME_LIMIT+1]), true).join();
             int status = peer.closed.get(5, TimeUnit.SECONDS);
             assertTrue(status == 1009 || status == 1008);
         }
@@ -343,6 +343,25 @@ class GameSocketTest {
         } finally { if (process.isAlive()) process.destroyForcibly(); }
     }
 
+    /** 初始容量 300 英雄带完整四槽与面板可经真实长连接恢复，仍拒绝超过 256KB 的消息。 */
+    @Test void fullRosterFitsBoundedFrame() throws Exception {
+        var owner=login.login("capacity_"+UUID.randomUUID().toString().substring(0,12),"local-1");
+        for(int i=0;i<300;i++){
+            String hero=UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10101001,1,1)",hero,owner.role().id());
+            for(int slot=1;slot<=4;slot++)jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,?,?,0,?)",UUID.randomUUID().toString(),owner.role().id(),1000001+slot*1000,slot,hero);
+        }
+        try(var peer=new Peer()){
+            var accepted=peer.authenticate(owner.session().accessToken());assertTrue(accepted.path("ok").asBoolean());
+            var initial=accepted.path("body").path("initial");assertEquals(300,initial.path("heroes").size());
+            var hero=initial.path("heroes").get(0);assertEquals(4,hero.path("equipment").path("items").size());assertTrue(hero.path("panelStats").path("values").path("atk").asLong()>hero.path("baseStats").path("atk").asLong());
+            var encoded=GameProtocolCodec.encode(Map.of("version",1,"kind","event","name","state.changed","body",initial));
+            assertTrue(encoded.length>65536);assertTrue(encoded.length<=GameProtocolCodec.FRAME_LIMIT);
+        }
+        assertEquals(262144,GameProtocolCodec.FRAME_LIMIT);
+        assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.decode(new byte[GameProtocolCodec.FRAME_LIMIT+1]));
+        assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.encode(Map.of("version",1,"kind","request","name","session.login","body",Map.of("account","x".repeat(GameProtocolCodec.FRAME_LIMIT+1),"serverId","local-1","clientInstanceId","frame-limit-test"))));
+    }
     /** 默认关闭的本机服务拒绝 GM 发放，即使客户端伪造开发入口。 */
     @Test void gmDisabledIsEnforced() throws Exception {var p=player();try(var peer=new Peer()){peer.authenticate(p.session().accessToken());assertFalse(peer.request("gm.status",Map.of()).path("body").path("enabled").asBoolean());assertEquals("GM_DISABLED",peer.request("gm.grant",Map.of("requestId",UUID.randomUUID().toString(),"kind","item","configId",900101,"quantity",1)).path("error").path("code").asString());}}
 

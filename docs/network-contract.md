@@ -57,3 +57,5 @@ Creator PREVIEW 的 WS接收日志显示协议中文说明、物品种类、item
 ## 背包数据身份扩展
 
 Item 增加可选字符串 instance_id=3，item_id=1 仍为配置 ID；不得把二者混用。Snapshot 增加可选 timed_inventory=5，内含逐件 TimedItem 和服务器 Unix 秒。旧协议字段号保持不变；两个方向都使用原 WS+Protobuf v2，未引入新查询。期限清理和身份规则见[背包说明](bag-mvc-maintenance.md#配置-id记录-id-与期限基础2026-11-03)。
+
+单帧限制为256KB（262144字节），前后端编解码和服务端接收统一约束；300名英雄带四槽与当前面板数据的真实WS容量测试通过。面板目前只覆盖基础、装备与累计套装，其余旧加成通过pending_sources明确声明；详情不在前端叠加数值。

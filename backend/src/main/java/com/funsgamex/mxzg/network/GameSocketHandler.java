@@ -24,7 +24,7 @@ import tools.jackson.databind.*;
 @ConditionalOnProperty(name = "mxzg.websocket.enabled", havingValue = "true")
 public class GameSocketHandler extends BinaryWebSocketHandler implements SubProtocolCapable {
     private static final String UUID_PATTERN = "[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}";
-    private static final int FRAME_LIMIT = 65536;
+    private static final int FRAME_LIMIT = GameProtocolCodec.FRAME_LIMIT;
     /** 本地身份提供方，生产环境不装配此处理器。 */
     private final com.funsgamex.mxzg.auth.DevelopmentLoginService login;
     /** 未登录选服也走二进制长连接。 */

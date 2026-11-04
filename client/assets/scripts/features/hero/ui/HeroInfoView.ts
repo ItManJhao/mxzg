@@ -89,7 +89,7 @@ export class HeroInfoView extends BaseView<{heroId:string}> {
   @property(Button) backButton:Button|null=null;
   /** 当前等级、星级与只读状态。 */
   @property(Label) summary:Label|null=null;
-  /** 基础属性按攻击、生命、防御、速度绑定；不是完整加成战力。 */
+  /** 服务端面板按攻击、生命、防御、速度绑定；不在客户端叠加装备。 */
   @property([Label]) attributes:Label[]=[];
   /** 由模板元素选择图标，不能沿用预制体占位元素。 */
   @property(Node) elementIcon:Node|null=null;
@@ -138,8 +138,8 @@ export class HeroInfoView extends BaseView<{heroId:string}> {
     const icons=[ResourceCatalog.hero.hero_icon_elem_0,ResourceCatalog.hero.hero_icon_elem_1,ResourceCatalog.hero.hero_icon_elem_2,ResourceCatalog.hero.hero_icon_elem_3,ResourceCatalog.hero.hero_icon_elem_4,ResourceCatalog.hero.hero_icon_elem_5];
     if(this.elementIcon){this.elementIcon.active=!!elem;if(elem)paintSpritePaths(this.elementIcon,[icons[elem].path]);}
     this.show({templateId:hero.templateId,name:catalog.find(hero.templateId)?.name||"未知英雄",level:hero.level});
-    if(this.summary)this.summary.string="等级："+hero.level+"    星级："+hero.star+"    强化："+(hero.stage??"—")+"\n基础属性（不含装备、天赋加成）";
-    const stats=hero.baseStats;const names=["攻击","生命","防御","速度"],values=stats?[stats.atk,stats.hp,stats.def,stats.spd]:[];
+    if(this.summary)this.summary.string="等级："+hero.level+"    星级："+hero.star+"    强化："+(hero.stage??"—")+"\n"+(hero.panelStats?(hero.panelStats.complete?"英雄属性":"当前属性（部分加成待恢复）"):"属性待同步");
+    const stats=hero.panelStats?.values;const names=["攻击","生命","防御","速度"],values=stats?[stats.atk,stats.hp,stats.def,stats.spd]:[];
     this.attributes.forEach((label,i)=>{label.string=names[i]+"："+(values[i]??"待同步");});
     const version=++this.paintVersion;
     this.refreshEquipment(hero,version);

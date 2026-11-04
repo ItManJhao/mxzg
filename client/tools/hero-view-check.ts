@@ -483,13 +483,13 @@ async function checkDefaultRoster():Promise<void> {
 /** 只读详情随统一快照刷新，删除与换号返回，关闭后解除监听。 */
 async function checkReadonlyInfo():Promise<void> {
  const controller=HeroRosterController.instance;controller.initialize();controller.resetSession("local-1/info");
- const hero={id:"00000000-0000-4000-8000-000000000001",templateId:10101001,level:1,star:1,stage:0,baseStats:{hp:120,atk:30,def:10,spd:100}};
+ const hero={id:"00000000-0000-4000-8000-000000000001",templateId:10101001,level:1,star:1,stage:0,panelStats:{values:{hp:120,atk:30,def:10,spd:100},includedSources:["base","equipment","equipment_set"],pendingSources:["skill_panel"],complete:false},baseStats:{hp:120,atk:30,def:10,spd:100}};
  const sync=(rows:any[])=>controller.onNotify(Protocol.STATE_CHANGED,{revision:1,heroes:rows});sync([hero]);
  const root=new Node("info"),page=root.addComponent(HeroInfoView);page.summary=new Node("summary").addComponent(Label);page.attributes=Array.from({length:4},()=>new Node("attr").addComponent(Label));
  (page as any).mountPortrait=()=>{};
  const ui=UIManager.instance,original=ui.back,originalOpen=ui.openById;let backs=0,lists=0;ui.back=()=>{backs++;return true;};ui.openById=(async(id:string)=>{assert(id==="hero","详情明确返回英雄列表");lists++;return page;}) as typeof ui.openById;
  const before=EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
- try {page.onOpen({heroId:hero.id});assert(page.attributes[0].string==="攻击：30","展示服务器基础属性");sync([{...hero,level:2,baseStats:{...hero.baseStats,atk:35}}]);assert(page.attributes[0].string==="攻击：35","同步后详情更新");(page as any).goBack();assert(lists===1,"返回按钮打开列表而非主城");sync([]);assert(lists===2,"实例删除返回列表");controller.resetSession(null);assert(backs===1,"退出账号返回根页面");page.onClose();assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===before,"关页释放详情监听");}
+ try {page.onOpen({heroId:hero.id});assert(page.attributes[0].string==="攻击：30","展示服务器面板属性");sync([{...hero,level:2,panelStats:{...hero.panelStats,values:{...hero.panelStats.values,atk:35}},baseStats:{...hero.baseStats,atk:35}}]);assert(page.attributes[0].string==="攻击：35","同步后详情更新");(page as any).goBack();assert(lists===1,"返回按钮打开列表而非主城");sync([]);assert(lists===2,"实例删除返回列表");controller.resetSession(null);assert(backs===1,"退出账号返回根页面");page.onClose();assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===before,"关页释放详情监听");}
  finally {page.onClose();ui.back=original;ui.openById=originalOpen;controller.dispose();root.destroy();}
  const data=loadPrefab("client/assets/prefabs/ui/hero/HeroInfoView.prefab");const buttons=data.filter((x:any)=>x.__type__==="cc.Button"&&x._interactable);
   const detail=data.find((row:any)=>row.equipmentIcons);

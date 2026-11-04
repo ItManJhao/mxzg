@@ -70,6 +70,7 @@ class HeroLineupTest {
         var hero=snapshot.heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow();
         assertEquals(id,hero.equipment().items().getFirst().instanceId());
         assertEquals(3,hero.equipment().items().getFirst().soulLevel());
+        assertEquals(hero.baseStats().atk()+33,hero.panelStats().values().atk());assertFalse(hero.panelStats().complete());
         assertTrue(snapshot.heroes().stream().filter(row->row.id().equals(second)).findFirst().orElseThrow().equipment().items().isEmpty());
         assertEquals(hero.equipment(),snapshots.snapshot(owner.authorization()).heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow().equipment());
         var wire=com.funsgamex.mxzg.network.GameProtocolCodec.encode(Map.of("version",1,"kind","event","name","state.changed","body",snapshot));
@@ -79,7 +80,8 @@ class HeroLineupTest {
         assertThrows(org.springframework.dao.DataIntegrityViolationException.class,()->jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,1001001,1,0,?)",UUID.randomUUID().toString(),owner.roleId(),first));
         assertThrows(org.springframework.dao.DataIntegrityViolationException.class,()->jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,1001001,1,0,?)",UUID.randomUUID().toString(),owner.roleId(),foreign));
         jdbc.update("DELETE FROM game_equipment WHERE id=?",id);
-        assertTrue(snapshots.snapshot(owner.authorization()).heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow().equipment().items().isEmpty());
+        var cleared=snapshots.snapshot(owner.authorization()).heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow();
+        assertTrue(cleared.equipment().items().isEmpty());assertEquals(cleared.baseStats().atk(),cleared.panelStats().values().atk());
     }
     private String seedHero(Player player) {
         String id = UUID.randomUUID().toString();

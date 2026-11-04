@@ -8,6 +8,8 @@ export interface OwnedHero {
   readonly templateId: number;
   readonly level: number;
   readonly star: number;
+  /** 服务端面板属性及来源覆盖；complete=false 时仍有旧版加成未恢复。 */
+  readonly panelStats?:Readonly<{values:Readonly<{hp:number;atk:number;def:number;spd:number}>;includedSources:readonly string[];pendingSources:readonly string[];complete:boolean}>;
   /** 普通装备完整状态；undefined 未同步，items 空数组明确未穿戴。 */
   readonly equipment?: Readonly<{items:readonly HeroEquipment[]}>;
   /** 服务端当前强化阶段；缺失表示未同步。 */
@@ -34,7 +36,8 @@ export function readOwnedHero(value: unknown): OwnedHero {
   if(row.baseStats!==undefined){const b=row.baseStats as Record<string,unknown>;if(!b||typeof b!=="object"||Array.isArray(b)||![b.hp,b.atk,b.def,b.spd].every(positiveInteger))throw new Error("英雄基础属性无效");baseStats=Object.freeze({hp:b.hp as number,atk:b.atk as number,def:b.def as number,spd:b.spd as number});}
   let equipment:OwnedHero["equipment"];
   if(row.equipment!==undefined){const state=row.equipment as Record<string,unknown>;if(!state||typeof state!=="object"||Array.isArray(state))throw new Error("英雄装备状态无效");equipment=Object.freeze({items:readHeroEquipment(state.items)});}
-  return Object.freeze({equipment,stage:row.stage as number|undefined,baseStats, deployed: row.deployed as boolean | undefined, locked: row.locked as boolean | undefined, id: row.id, templateId: row.templateId, level: row.level, star: row.star });
+  const panelStats=readPanelStats(row.panelStats);
+  return Object.freeze({panelStats,equipment,stage:row.stage as number|undefined,baseStats, deployed: row.deployed as boolean | undefined, locked: row.locked as boolean | undefined, id: row.id, templateId: row.templateId, level: row.level, star: row.star });
 }
 
 /** 基础等级、星级和配置 ID 必须是安全的正整数。 */
@@ -72,4 +75,16 @@ export function readHeroRosterInfo(value:unknown):HeroRosterInfo|undefined {
   const row=value as Record<string,unknown>;
   if(!positiveInteger(row.capacity)||!Number.isSafeInteger(row.buySpaceTimes)||Number(row.buySpaceTimes)<0)throw new Error("英雄容量无效");
   return Object.freeze({capacity:row.capacity,buySpaceTimes:row.buySpaceTimes as number});
+}
+
+/** 校验服务端面板与覆盖声明；缺失保留未同步，不能前端自行把基础值当最终属性。 */
+function readPanelStats(value:unknown):OwnedHero["panelStats"] {
+  if(value===undefined)return undefined;
+  if(!value||typeof value!=="object"||Array.isArray(value))throw new Error("英雄面板无效");
+  const row=value as Record<string,unknown>,stats=row.values as Record<string,unknown>;
+  if(!stats||typeof stats!=="object"||Array.isArray(stats)||![stats.hp,stats.atk,stats.def,stats.spd].every(positiveInteger))throw new Error("英雄面板数值无效");
+  if(typeof row.complete!=="boolean"||!Array.isArray(row.includedSources)||!Array.isArray(row.pendingSources)||![...row.includedSources,...row.pendingSources].every(v=>typeof v==="string"&&!!v.trim()))throw new Error("英雄面板来源无效");
+  const included=row.includedSources as string[],pending=row.pendingSources as string[];
+  if(new Set([...included,...pending]).size!==included.length+pending.length||!included.length||row.complete!==(pending.length===0))throw new Error("英雄面板覆盖状态矛盾");
+  return Object.freeze({values:Object.freeze({hp:stats.hp as number,atk:stats.atk as number,def:stats.def as number,spd:stats.spd as number}),includedSources:Object.freeze([...included]),pendingSources:Object.freeze([...pending]),complete:row.complete});
 }

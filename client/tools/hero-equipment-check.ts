@@ -25,6 +25,14 @@ async function main(): Promise<void> {
     const decoded=decodeGameFrame(encodeGameFrame({version:1,kind:"event",name:"state.changed",body:{role:{id:hero.id,nickname:"装备测试",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[hero],inventory:[],revision:1}}));
     assert.equal((decoded.body as any).heroes[0].equipment.items[0].instanceId,rows[0].instanceId);
     assert.equal(readOwnedHeroes([hero])[0].equipment!.items.length,4);
+        const panel={values:{hp:120,atk:99,def:20,spd:50},includedSources:["base","equipment","equipment_set"],pendingSources:["skill_panel"],complete:false};
+    assert.equal(readOwnedHeroes([{...hero,panelStats:panel}])[0].panelStats!.values.atk,99);
+    assert.throws(()=>readOwnedHeroes([{...hero,panelStats:{...panel,complete:true}}]));
+    assert.throws(()=>readOwnedHeroes([{...hero,panelStats:{...panel,values:{...panel.values,atk:Number.MAX_SAFE_INTEGER+1}}}]));
+    assert.throws(()=>readOwnedHeroes([{...hero,panelStats:{...panel,pendingSources:["base"]}}]));
+        const fullRoster=Array.from({length:300},(_,i)=>({...hero,id:"00000000-0000-4000-8000-"+String(i+1).padStart(12,"0"),panelStats:panel,equipment:{items:rows.map((row,slot)=>({...row,instanceId:"10000000-0000-4000-8000-"+String(i*4+slot+1).padStart(12,"0")}))}}));
+    const fullFrame=encodeGameFrame({version:1,kind:"event",name:"state.changed",body:{role:{id:hero.id,nickname:"容量验证",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:fullRoster,inventory:[],revision:2}});
+    assert.equal((decodeGameFrame(fullFrame).body as any).heroes.length,300);
     rows[0].soulLevel = 9;
     assert.equal(result[0].soulLevel, 0);
     console.log("PASS hero equipment: four real slots, instance precision, config matching, duplicates, missing state, immutable copies");

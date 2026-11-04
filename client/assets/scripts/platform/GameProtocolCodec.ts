@@ -8,7 +8,7 @@ import { mxzg } from "./GameProtocol.generated";
 /** 两端共同声明的 WebSocket 子协议；握手阶段拒绝误连旧 JSON 服务。 */
 export const GAME_SOCKET_PROTOCOL = "mxzg.protobuf.v2";
 /** 单个完整消息的最大字节数，解码前检查，防止无界输入。 */
-export const GAME_FRAME_LIMIT = 65536;
+export const GAME_FRAME_LIMIT = 262144;
 /** 内部可读信封；body 保持模块原有 DTO，网络上传输的是明确的 Protobuf 消息。 */
 export interface GameFrame {
   /** 当前信封版本，与握手子协议共同约束兼容范围。 */

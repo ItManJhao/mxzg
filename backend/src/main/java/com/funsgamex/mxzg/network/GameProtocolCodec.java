@@ -12,7 +12,7 @@ import tools.jackson.databind.node.*;
 
 public final class GameProtocolCodec {
     /** 消息字节上限；连接层和编解码层共同限制。 */
-    public static final int FRAME_LIMIT = 65536;
+    public static final int FRAME_LIMIT = 262144;
     /** WebSocket 握手协议名，防止新版二进制客户端误连旧 JSON 进程。 */
     public static final String SUBPROTOCOL = "mxzg.protobuf.v2";
     /** 只用于将已有业务记录转换为内存字段树，不解析网络 JSON。 */

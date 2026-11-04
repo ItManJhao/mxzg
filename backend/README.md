@@ -15,14 +15,14 @@
 
 也可双击 scripts/start-remake-backend.bat。修改后端使用 restart-remake-backend.bat；只停止核对归属的本仓库 Java 进程。已有服务复用前验证 v2 子协议，不发英雄/角色/选服 HTTP 探针，不启动第二份进程。
 
-Java 21 与 Maven Wrapper，优先采用 .tools 内隔离 JDK，不改系统 Java。local 仅绑定 127.0.0.1，默认 .local/game 文件 H2，Flyway 自动迁移 V1–V6；V6 只增加资产状态版本，不发放或清除玩家资产。正式配置必须显式提供数据源，开发身份提供方与本机 WS 处理器在 production 下不会装配。
+Java 21 与 Maven Wrapper，优先采用 .tools 内隔离 JDK，不改系统 Java。local 仅绑定 127.0.0.1，默认 .local/game 文件 H2，Flyway 自动迁移 V1–V12；V6 只增加资产状态版本，不发放或清除玩家资产。正式配置必须显式提供数据源，开发身份提供方与本机 WS 处理器在 production 下不会装配。
 
 浏览器根地址不是游戏登录页面；请在 Creator 打开 client/assets/scenes/Remake.scene 并预览。启动入口、故障排查见[本机工作流](../docs/local-remake-workflow.md)。
 
 ## 状态与持久化
 
 - SessionService 持久化令牌摘要与过期时间，角色身份来自服务端会话。
-- SessionSnapshotService 在角色锁内读取钱包、库存和持久版本，英雄字段暂空，避免把暂停范围描述为完整恢复。
+- SessionSnapshotService 在角色锁内读取钱包、库存和持久版本，包含持久英雄名册、容量及普通四槽装备；养成写入口仍暂停。
 - 业务用例在角色锁事务内改资产；RoleRepository/InventoryService 显式接入 AssetSyncService，写入前要求事务，同角色每事务递增一次版本，提交后发送 state.changed。
 - 回滚没有新版本/推送；发送失败不重新发奖，重连从数据库恢复完整状态。禁止新增资产 SQL 绕过同步出口。
 - 当前在线连接表只支持单进程。多实例会话协调、正式渠道身份、WSS/TLS 部署及三端发布仍待完成。
