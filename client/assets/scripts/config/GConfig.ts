@@ -51,6 +51,26 @@ export interface CityPositionRow {
   /** 所处场景层级 */
   readonly zorder: number;
 }
+export interface EquipmentTypeRow {
+  /** 基础属性 */
+  readonly ability: string;
+  /** 合成目标 */
+  readonly combine_target?: number;
+  /** 装备id */
+  readonly equipment_type: number;
+  /** 锻造所需素材 */
+  readonly need_equipment: string;
+  /** 锻造所需金币 */
+  readonly need_gold: number;
+  /** 装备位置 */
+  readonly place: number;
+  /** 颜色稀有度 */
+  readonly rare: number;
+  /** 套装属性 */
+  readonly set_type?: number;
+  /** 星级 */
+  readonly star: number;
+}
 export interface HeroLevelRow {
   /** 升级所需英雄经验 */
   readonly exp_need: number;
@@ -307,6 +327,7 @@ export const GConfig = {
   CityButton: "CityButton",
   CityEffect: "CityEffect",
   CityPosition: "CityPosition",
+  EquipmentType: "EquipmentType",
   HeroLevel: "HeroLevel",
   HeroSkill: "HeroSkill",
   HeroStar: "HeroStar",
@@ -324,6 +345,7 @@ export interface ConfigRowMap {
   CityButton: CityButtonRow;
   CityEffect: CityEffectRow;
   CityPosition: CityPositionRow;
+  EquipmentType: EquipmentTypeRow;
   HeroLevel: HeroLevelRow;
   HeroSkill: HeroSkillRow;
   HeroStar: HeroStarRow;
@@ -341,6 +363,7 @@ export interface ConfigKeyMap {
   CityButton: string;
   CityEffect: number;
   CityPosition: number;
+  EquipmentType: number;
   HeroLevel: number;
   HeroSkill: number;
   HeroStar: number;
@@ -358,6 +381,7 @@ export interface ConfigFileMap {
   CityButton: { readonly act: Readonly<Record<string, CityButtonRow>> };
   CityEffect: { readonly maincityeffect: readonly CityEffectRow[] };
   CityPosition: { readonly main: readonly CityPositionRow[] };
+  EquipmentType: { readonly rows: readonly EquipmentTypeRow[] };
   HeroLevel: { readonly rows: readonly HeroLevelRow[] };
   HeroSkill: { readonly rows: readonly HeroSkillRow[] };
   HeroStar: { readonly rows: readonly HeroStarRow[] };
@@ -508,6 +532,58 @@ export const CONFIG_SCHEMA = {
     },
     "key": "idx",
     "path": "config/maincity/maincitypos"
+  },
+  "EquipmentType": {
+    "container": "rows",
+    "fields": {
+      "ability": {
+        "note": "装备属性原始 JSON 文本；最终属性以后端为准",
+        "required": true,
+        "type": "string"
+      },
+      "combine_target": {
+        "note": "combine_target",
+        "required": false,
+        "type": "number"
+      },
+      "equipment_type": {
+        "note": "equipment_type",
+        "required": true,
+        "type": "number"
+      },
+      "need_equipment": {
+        "note": "合成消耗原始 JSON 文本；只读阶段不执行合成",
+        "required": true,
+        "type": "string"
+      },
+      "need_gold": {
+        "note": "合成金币；当前不开放操作",
+        "required": true,
+        "type": "number"
+      },
+      "place": {
+        "note": "place",
+        "required": true,
+        "type": "number"
+      },
+      "rare": {
+        "note": "rare",
+        "required": true,
+        "type": "number"
+      },
+      "set_type": {
+        "note": "set_type",
+        "required": false,
+        "type": "number"
+      },
+      "star": {
+        "note": "star",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "equipment_type",
+    "path": "config/equipmenttype"
   },
   "HeroLevel": {
     "container": "rows",

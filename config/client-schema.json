@@ -794,6 +794,58 @@
           "note": "levelup_describe"
         }
       }
+    },
+    "EquipmentType": {
+      "path": "config/equipmenttype",
+      "key": "equipment_type",
+      "fields": {
+        "equipment_type": {
+          "note": "equipment_type",
+          "type": "number",
+          "required": true
+        },
+        "place": {
+          "note": "place",
+          "type": "number",
+          "required": true
+        },
+        "rare": {
+          "note": "rare",
+          "type": "number",
+          "required": true
+        },
+        "star": {
+          "note": "star",
+          "type": "number",
+          "required": true
+        },
+        "set_type": {
+          "note": "set_type",
+          "type": "number",
+          "required": false
+        },
+        "combine_target": {
+          "note": "combine_target",
+          "type": "number",
+          "required": false
+        },
+        "need_equipment": {
+          "required": true,
+          "type": "string",
+          "note": "合成消耗原始 JSON 文本；只读阶段不执行合成"
+        },
+        "need_gold": {
+          "required": true,
+          "type": "number",
+          "note": "合成金币；当前不开放操作"
+        },
+        "ability": {
+          "required": true,
+          "type": "string",
+          "note": "装备属性原始 JSON 文本；最终属性以后端为准"
+        }
+      },
+      "container": "rows"
     }
   }
 }

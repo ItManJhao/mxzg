@@ -45,6 +45,7 @@ const suites = [
   ["backpack", "ts", "client/tools/backpack-view-check.ts"],
   ["super-scroll", "ts", "client/tools/super-scroll-check.ts"],
   ["hero-detail", "ts", "client/tools/hero-detail-check.ts"],
+  ["hero-equipment", "ts", "client/tools/hero-equipment-check.ts"],
   ["hero", "ts", "client/tools/hero-view-check.ts"],
   ["city", "ts", "client/tools/city-view-check.ts"],
   ["battle", "ts", "client/tools/battle-view-check.ts"],
