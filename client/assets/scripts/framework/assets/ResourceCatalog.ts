@@ -42,6 +42,10 @@ export const ResourceCatalog = {
     other_rare_5: {"bundle":"resources","path":"ui/common/other_rare-5","assetPath":"resources/ui/common/other_rare-5","loadPath":"ui/common/other_rare-5/spriteFrame","type":"SpriteFrame","uuid":"c5c4ed09-8247-4846-9ec2-450de4618e03@f9941"},
     other_rare_6: {"bundle":"resources","path":"ui/common/other_rare-6","assetPath":"resources/ui/common/other_rare-6","loadPath":"ui/common/other_rare-6/spriteFrame","type":"SpriteFrame","uuid":"bb63dc3b-8489-4f68-ba78-62d209170e6d@f9941"},
     other_spr_bubble_5: {"bundle":"resources","path":"ui/common/other_spr-bubble-5","assetPath":"resources/ui/common/other_spr-bubble-5","loadPath":"ui/common/other_spr-bubble-5/spriteFrame","type":"SpriteFrame","uuid":"0ded84dc-acec-4d0d-9a09-a8d2d62f9fa0@f9941"},
+    other_spr_equip_1: {"bundle":"resources","path":"ui/common/other_spr-equip-1","assetPath":"resources/ui/common/other_spr-equip-1","loadPath":"ui/common/other_spr-equip-1/spriteFrame","type":"SpriteFrame","uuid":"4764c728-8ee8-4ebd-a8ce-11ec1dc67d41@f9941"},
+    other_spr_equip_2: {"bundle":"resources","path":"ui/common/other_spr-equip-2","assetPath":"resources/ui/common/other_spr-equip-2","loadPath":"ui/common/other_spr-equip-2/spriteFrame","type":"SpriteFrame","uuid":"81e03189-d853-4fcd-9c3a-e7873c999c08@f9941"},
+    other_spr_equip_3: {"bundle":"resources","path":"ui/common/other_spr-equip-3","assetPath":"resources/ui/common/other_spr-equip-3","loadPath":"ui/common/other_spr-equip-3/spriteFrame","type":"SpriteFrame","uuid":"fda11489-6881-47d7-846c-e0c550db7f81@f9941"},
+    other_spr_equip_4: {"bundle":"resources","path":"ui/common/other_spr-equip-4","assetPath":"resources/ui/common/other_spr-equip-4","loadPath":"ui/common/other_spr-equip-4/spriteFrame","type":"SpriteFrame","uuid":"de8159ad-ad76-4d74-a8a5-2b4f7a8b743e@f9941"},
   },
   hero: {
     head_icon_0: {"bundle":"resources","path":"ui/hero/head-icon_0","assetPath":"resources/ui/hero/head-icon_0","loadPath":"ui/hero/head-icon_0/spriteFrame","type":"SpriteFrame","uuid":"d26708bd-8d52-4347-bd52-2761a17087e6@f9941"},

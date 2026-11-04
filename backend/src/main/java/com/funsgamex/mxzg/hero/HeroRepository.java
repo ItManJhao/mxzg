@@ -16,16 +16,20 @@ public class HeroRepository {
         row.getString("id"), row.getInt("template_id"), row.getInt("hero_level"), row.getInt("star"), row.getBoolean("is_locked"), row.getBoolean("deployed"), row.getInt("stage"), rules.stats(row.getInt("template_id"),row.getInt("star"),row.getInt("hero_level"),row.getInt("stage"))); }
     /** 容器注入的数据库入口，只读取指定角色数据。 */
     private final JdbcTemplate jdbc;
+    /** 快照共用的本角色持久装备读取入口。 */
+    private final HeroEquipmentRepository equipment;
     /** 注入数据库访问入口。 */
-    public HeroRepository(JdbcTemplate jdbc, HeroGrowthRules rules) { this.jdbc = jdbc; this.rules=rules; }
+    public HeroRepository(JdbcTemplate jdbc, HeroGrowthRules rules, HeroEquipmentRepository equipment) { this.jdbc = jdbc; this.rules=rules; this.equipment=equipment; }
 
     /** 读取本角色全部实例及主线阵容占用，界面排序由旧版展示规则决定。 */
     public List<HeroProfile> list(String roleId) {
-        return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? ORDER BY id", this::map, roleId);
+        var equipped=equipment.equipped(roleId);
+        return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? ORDER BY id", this::map, roleId).stream().map(hero->hero.withEquipment(equipped.getOrDefault(hero.id(),new HeroEquipmentRepository.State(List.of())))).toList();
     }
     /** 以角色和实例双条件查询，禁止跨角色取得英雄。 */
     public Optional<HeroProfile> find(String roleId, String heroId) {
+        var equipped=equipment.equipped(roleId);
         return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? AND h.id = ?", this::map, roleId, heroId)
-            .stream().findFirst();
+            .stream().map(hero->hero.withEquipment(equipped.getOrDefault(hero.id(),new HeroEquipmentRepository.State(List.of())))).findFirst();
     }
 }

@@ -8,6 +8,8 @@ import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
 import {presentHeroSkills,heroSkillStatus} from "../HeroSkillPresentation";
+import { readHeroEquipment } from "../HeroEquipment";
+import { EquipmentIconById } from "../../../framework/assets/IconCatalog";
 import { HeroCatalog } from "../HeroCatalog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
@@ -101,6 +103,12 @@ export class HeroInfoView extends BaseView<{heroId:string}> {
   @property([Button]) skillButtons:Button[]=[];
   /** 图标异步绘制代次；每次刷新递增，关闭作废，防止旧图片覆盖新实例。 */
   private paintVersion=0;
+  /** 普通装备四槽图标，静态节点不提供穿脱按钮。 */
+  @property([Node]) equipmentIcons:Node[]=[];
+  /** 按旧物品品质显示四槽边框。 */
+  @property([Node]) equipmentFrames:Node[]=[];
+  /** 装备星级和附魂等级；旧快照明确显示待同步。 */
+  @property([Label]) equipmentLabels:Label[]=[];
   /** 技能按钮解除函数，关闭时逐一释放。 */
   private skillStops:Array<()=>void>=[];
   /** 本次打开的实例 ID；关闭清空，不能误用模板 ID 查找。 */
@@ -134,12 +142,31 @@ export class HeroInfoView extends BaseView<{heroId:string}> {
     const stats=hero.baseStats;const names=["攻击","生命","防御","速度"],values=stats?[stats.atk,stats.hp,stats.def,stats.spd]:[];
     this.attributes.forEach((label,i)=>{label.string=names[i]+"："+(values[i]??"待同步");});
     const version=++this.paintVersion;
+    this.refreshEquipment(hero,version);
     if(this.skillIcons.length)presentHeroSkills(hero).forEach((skill,i)=>{
       const icon=this.skillIcons[i],sprite=icon?.getComponent(Sprite);if(sprite){sprite.spriteFrame=null;sprite.grayscale=skill.id>0 && skill.level===0;}
       if(icon)paintSpritePaths(icon,[skill.icon||ResourceCatalog.hero.hero_info_spr_new_9.path],()=>this.paintVersion===version && this.selectedId===hero.id);
       if(this.skillNames[i])this.skillNames[i].string=skill.name;
       if(this.skillLevels[i])this.skillLevels[i].string=skill.id?heroSkillStatus(skill):"";
       if(this.skillButtons[i])this.skillButtons[i].interactable=skill.id>0;
+    });
+  }
+  /** 从已校验的统一名册绘制四槽；空槽沿用旧资源，不从背包库存推测穿戴。 */
+  private refreshEquipment(hero:import("../HeroApi").OwnedHero,version:number):void {
+    if(!this.equipmentIcons.length)return;
+    const config=GameConfig.instance;
+    const items=hero.equipment?readHeroEquipment(hero.equipment.items,config):undefined;
+    const empty=[ResourceCatalog.common.other_spr_equip_1,ResourceCatalog.common.other_spr_equip_2,ResourceCatalog.common.other_spr_equip_3,ResourceCatalog.common.other_spr_equip_4];
+    const rare=[ResourceCatalog.common.other_rare_0,ResourceCatalog.common.other_rare_1,ResourceCatalog.common.other_rare_2,ResourceCatalog.common.other_rare_3,ResourceCatalog.common.other_rare_4,ResourceCatalog.common.other_rare_5,ResourceCatalog.common.other_rare_6];
+    this.equipmentIcons.forEach((icon,index)=>{
+      const item=items?.find(row=>row.slot===index+1),frame=this.equipmentFrames[index];
+      const sprite=icon.getComponent(Sprite);if(sprite)sprite.spriteFrame=null;
+      let path:string=empty[index].path,quality=0,status=items?"":"待同步";
+      if(item){const template=config.requireConfig(GConfig.EquipmentType,item.templateId);const itemConfig=config.requireConfig(GConfig.Item,item.templateId);path=EquipmentIconById[item.templateId]?.path||path;quality=itemConfig.rare_mark||0;status="★"+template.star+(item.soulLevel?" · 附魂"+item.soulLevel:"");}
+      const current=()=>this.paintVersion===version&&this.selectedId===hero.id;
+      paintSpritePaths(icon,[path],current);
+      if(frame){frame.active=true;const border=frame.getComponent(Sprite);if(border)border.spriteFrame=null;paintSpritePaths(frame,[rare[quality]?.path||rare[0].path],current);}
+      if(this.equipmentLabels[index])this.equipmentLabels[index].string=status;
     });
   }
   /** 返回已有列表，不触发升级、穿戴或扩容。 */

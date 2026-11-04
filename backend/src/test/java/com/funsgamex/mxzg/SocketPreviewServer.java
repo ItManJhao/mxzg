@@ -18,6 +18,14 @@ public class SocketPreviewServer {
             "--spring.datasource.url=jdbc:h2:mem:socket_preview_" + RUN + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
             "--spring.datasource.username=sa", "--spring.datasource.password=", "--mxzg.websocket.enabled=true"
         });
+                if(Arrays.asList(args).contains("--equipment-fixture")) {
+            var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("equipment_review");
+            var jdbc=context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+            String hero=UUID.randomUUID().toString(),empty=UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10101001,1,1)",hero,player.role().id());
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10301001,1,1)",empty,player.role().id());
+            for(int slot=1;slot<=4;slot++)jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,?,?,?,?)","922337203685477580"+slot,player.role().id(),1000001+slot*1000,slot,slot==1?3:0,hero);
+        }
         int port = ((WebServerApplicationContext) context).getWebServer().getPort();
         Path manifest = Path.of("..", "client", "temp", "socket-preview.json");
         Files.createDirectories(manifest.getParent());

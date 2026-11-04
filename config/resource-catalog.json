@@ -43,7 +43,11 @@
     "ui/hero/head-icon_0",
     "ui/bag/backpack_border-default",
     "ui/hero/hero-info_spr-new-9",
-    "ui/hero/skill-icon_spr-skill-bg-1"
+    "ui/hero/skill-icon_spr-skill-bg-1",
+    "ui/common/other_spr-equip-1",
+    "ui/common/other_spr-equip-2",
+    "ui/common/other_spr-equip-3",
+    "ui/common/other_spr-equip-4"
   ],
   "keyOverrides": {
     "ui/common/god-equip_spr-bg": "god_dash_equip_spr_dash_bg",

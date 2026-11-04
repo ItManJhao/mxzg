@@ -17,7 +17,7 @@ export const REMAKE_CONFIG_GROUPS = {
     startup: [GConfig.Language, GConfig.LoadingTips],
     city: [GConfig.OpenCondition, GConfig.SystemGate, GConfig.CityPosition, GConfig.CityButton, GConfig.CityEffect],
     hero: [GConfig.HeroType, GConfig.Item],
-    heroDetail: [GConfig.HeroType, GConfig.HeroSkill, GConfig.HeroStar, GConfig.HeroUpgrade, GConfig.Language, GConfig.Item],
+    heroDetail: [GConfig.EquipmentType, GConfig.HeroType, GConfig.HeroSkill, GConfig.HeroStar, GConfig.HeroUpgrade, GConfig.Language, GConfig.Item],
     heroLevel: [GConfig.HeroLevel],
     inventory: [GConfig.Item, GConfig.Language, GConfig.TimeLimitItem],
 } as const;

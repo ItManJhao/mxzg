@@ -1,6 +1,8 @@
 /** 用真实旧装备配置验证实例/槽位边界；不启动服务器、不修改数据库。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
+import { readOwnedHeroes } from "../assets/scripts/features/hero/HeroApi";
+import { encodeGameFrame, decodeGameFrame } from "../assets/scripts/platform/GameProtocolCodec";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";
 import { readHeroEquipment } from "../assets/scripts/features/hero/HeroEquipment";
@@ -18,6 +20,11 @@ async function main(): Promise<void> {
     for (const invalid of [undefined, {}, [rows[0], rows[0]], [rows[0], { ...rows[1], instanceId: rows[0].instanceId }], [{ ...rows[0], slot: 2 }], [{ ...rows[0], templateId: 999 }], [{ ...rows[0], soulLevel: -1 }], [{ ...rows[0], instanceId: 123 }]]) {
         assert.throws(() => readHeroEquipment(invalid, config));
     }
+        const hero={id:"00000000-0000-4000-8000-000000000001",templateId:10101001,level:1,star:1,equipment:{items:rows}};
+    assert.throws(()=>readOwnedHeroes([hero,{...hero,id:"00000000-0000-4000-8000-000000000002"}]));
+    const decoded=decodeGameFrame(encodeGameFrame({version:1,kind:"event",name:"state.changed",body:{role:{id:hero.id,nickname:"装备测试",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[hero],inventory:[],revision:1}}));
+    assert.equal((decoded.body as any).heroes[0].equipment.items[0].instanceId,rows[0].instanceId);
+    assert.equal(readOwnedHeroes([hero])[0].equipment!.items.length,4);
     rows[0].soulLevel = 9;
     assert.equal(result[0].soulLevel, 0);
     console.log("PASS hero equipment: four real slots, instance precision, config matching, duplicates, missing state, immutable copies");

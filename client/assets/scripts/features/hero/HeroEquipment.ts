@@ -1,6 +1,6 @@
 /**
  * 英雄普通装备的只读数据边界，依据旧 HeroResponse 与 equipmenttype。
- * 供后续统一快照接入使用；当前未注册为协议，也不从背包推断穿戴关系。
+ * 供统一快照整包校验与只读详情使用，不从背包推断穿戴关系。
  */
 import { GameConfig } from "../../config/GameConfig";
 import { GConfig } from "../../config/GConfig";
@@ -20,9 +20,10 @@ export interface HeroEquipment {
 /**
  * 校验一个英雄完整的普通装备列表并冻结副本；空列表表示明确未穿戴。
  * 缺失数据必须由调用方保留“未同步”，本函数拒绝将 undefined 转为空列表。
- * 同一实例不得占多个槽，同槽不得放多件，槽位必须匹配真实配置。
+ * 同一实例不得占多个槽，同槽不得放多件；详情提供已加载配置时额外校验槽位匹配。
+ * 快照首包不加载配置，配置一致性由服务端读取时校验。
  */
-export function readHeroEquipment(value: unknown, config = GameConfig.instance): readonly HeroEquipment[] {
+export function readHeroEquipment(value: unknown, config?: GameConfig): readonly HeroEquipment[] {
     if (!Array.isArray(value)) throw new Error("英雄装备未同步或格式无效");
     const slots = new Set<number>();
     const instances = new Set<string>();
@@ -39,8 +40,8 @@ export function readHeroEquipment(value: unknown, config = GameConfig.instance):
         }
         const templateId = row.templateId as number;
         const slot = row.slot as number;
-        const template = config.requireConfig(GConfig.EquipmentType, templateId);
-        if (template.place !== slot) throw new Error("英雄装备槽位与配置不符");
+        const template = config?.requireConfig(GConfig.EquipmentType, templateId);
+        if (template && template.place !== slot) throw new Error("英雄装备槽位与配置不符");
         if (slots.has(slot) || instances.has(row.instanceId)) throw new Error("英雄装备槽位或实例重复");
         slots.add(slot);
         instances.add(row.instanceId);

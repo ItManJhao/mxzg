@@ -88,6 +88,8 @@ message Hero {
   optional uint32 stage = 7;
   // 仅基础成长属性，不含尚未恢复的装备/天赋等加成。
   optional HeroBaseStats base_stats = 8;
+  // 普通四槽的完整穿戴状态；缺失表示未同步，空 items 表示未穿戴。
+  optional HeroEquipmentState equipment = 9;
 }
 message HeroBaseStats { required uint32 hp = 1; required uint32 atk = 2; required uint32 def = 3; required uint32 spd = 4; }
 message Item {
@@ -128,3 +130,7 @@ message TimedInventory {
 message GmGrant { required string request_id = 1; required string kind = 2; required uint32 config_id = 3; required uint32 quantity = 4; }
 message GmResult { required string request_id = 1; required string kind = 2; required uint32 config_id = 3; required uint32 quantity = 4; }
 message GmStatus { required bool enabled = 1; }
+
+// 装备实例 ID 用字符串保留精度，不与配置 ID 混用。
+message HeroEquipment { required string instance_id = 1; required uint32 template_id = 2; required uint32 slot = 3; required uint32 soul_level = 4; }
+message HeroEquipmentState { repeated HeroEquipment items = 1; }

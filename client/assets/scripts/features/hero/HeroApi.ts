@@ -1,4 +1,5 @@
 /** 英雄名册 DTO 校验：供统一 Protobuf 快照使用；旧查询类保持停用，不作为新版数据入口。 */
+import { readHeroEquipment, HeroEquipment } from "./HeroEquipment";
 import { featureUnavailable } from "../PausedFeatures";
 
 /** 服务端英雄实例 ID 保持字符串 UUID，templateId 为独立的英雄类型配置键。 */
@@ -7,6 +8,8 @@ export interface OwnedHero {
   readonly templateId: number;
   readonly level: number;
   readonly star: number;
+  /** 普通装备完整状态；undefined 未同步，items 空数组明确未穿戴。 */
+  readonly equipment?: Readonly<{items:readonly HeroEquipment[]}>;
   /** 服务端当前强化阶段；缺失表示未同步。 */
   readonly stage?:number;
   /** 服务端基础成长属性，不包含未恢复的装备和天赋加成。 */
@@ -29,7 +32,9 @@ export function readOwnedHero(value: unknown): OwnedHero {
   let baseStats:OwnedHero["baseStats"];
   if(row.stage!==undefined && (!Number.isSafeInteger(row.stage)||Number(row.stage)<0))throw new Error("英雄阶段无效");
   if(row.baseStats!==undefined){const b=row.baseStats as Record<string,unknown>;if(!b||typeof b!=="object"||Array.isArray(b)||![b.hp,b.atk,b.def,b.spd].every(positiveInteger))throw new Error("英雄基础属性无效");baseStats=Object.freeze({hp:b.hp as number,atk:b.atk as number,def:b.def as number,spd:b.spd as number});}
-  return Object.freeze({stage:row.stage as number|undefined,baseStats, deployed: row.deployed as boolean | undefined, locked: row.locked as boolean | undefined, id: row.id, templateId: row.templateId, level: row.level, star: row.star });
+  let equipment:OwnedHero["equipment"];
+  if(row.equipment!==undefined){const state=row.equipment as Record<string,unknown>;if(!state||typeof state!=="object"||Array.isArray(state))throw new Error("英雄装备状态无效");equipment=Object.freeze({items:readHeroEquipment(state.items)});}
+  return Object.freeze({equipment,stage:row.stage as number|undefined,baseStats, deployed: row.deployed as boolean | undefined, locked: row.locked as boolean | undefined, id: row.id, templateId: row.templateId, level: row.level, star: row.star });
 }
 
 /** 基础等级、星级和配置 ID 必须是安全的正整数。 */
@@ -42,6 +47,8 @@ export function readOwnedHeroes(value: unknown): readonly OwnedHero[] {
   if (!Array.isArray(value)) throw new Error("英雄列表无效");
   const heroes = value.map(readOwnedHero);
   if (new Set(heroes.map(hero => hero.id)).size !== heroes.length) throw new Error("英雄实例 ID 重复");
+  const equipmentIds=new Set<string>();
+  for(const hero of heroes)for(const item of hero.equipment?.items||[]){if(equipmentIds.has(item.instanceId))throw new Error("装备实例跨英雄重复");equipmentIds.add(item.instanceId);}
   return Object.freeze(heroes);
 }
 

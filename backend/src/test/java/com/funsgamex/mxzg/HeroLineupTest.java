@@ -60,6 +60,27 @@ class HeroLineupTest {
         assertEquals(326,expanded.capacity());assertEquals(1,expanded.buySpaceTimes());
         assertEquals(300,snapshots.snapshot(other.authorization()).heroRoster().capacity());
     }
+    /** 持久四槽进入统一快照并经 Protobuf 保留长 ID；空槽与他人装备严格区分。 */
+    @Test void equipmentPersistsInUnifiedSnapshot() throws Exception {
+        var owner=player();var other=player();String first=seedHero(owner),second=seedHero(owner),foreign=seedHero(other);
+        String id="9223372036854775801";
+        jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,1001001,1,3,?)",id,owner.roleId(),first);
+        jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,1002001,2,0,?)",UUID.randomUUID().toString(),other.roleId(),foreign);
+        var snapshot=snapshots.snapshot(owner.authorization());
+        var hero=snapshot.heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow();
+        assertEquals(id,hero.equipment().items().getFirst().instanceId());
+        assertEquals(3,hero.equipment().items().getFirst().soulLevel());
+        assertTrue(snapshot.heroes().stream().filter(row->row.id().equals(second)).findFirst().orElseThrow().equipment().items().isEmpty());
+        assertEquals(hero.equipment(),snapshots.snapshot(owner.authorization()).heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow().equipment());
+        var wire=com.funsgamex.mxzg.network.GameProtocolCodec.encode(Map.of("version",1,"kind","event","name","state.changed","body",snapshot));
+        var decoded=com.funsgamex.mxzg.network.GameProtocolCodec.decode(wire).path("body").path("heroes");
+        boolean found=false;for(var row:decoded)if(row.path("id").asString().equals(first)){assertEquals(id,row.path("equipment").path("items").get(0).path("instanceId").asString());found=true;}
+        assertTrue(found);
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,()->jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,1001001,1,0,?)",UUID.randomUUID().toString(),owner.roleId(),first));
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,()->jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,1001001,1,0,?)",UUID.randomUUID().toString(),owner.roleId(),foreign));
+        jdbc.update("DELETE FROM game_equipment WHERE id=?",id);
+        assertTrue(snapshots.snapshot(owner.authorization()).heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow().equipment().items().isEmpty());
+    }
     private String seedHero(Player player) {
         String id = UUID.randomUUID().toString();
         // Fixtures only: production has no client-facing grant endpoint.
