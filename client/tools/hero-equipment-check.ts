@@ -5,7 +5,7 @@ import { readOwnedHeroes } from "../assets/scripts/features/hero/HeroApi";
 import { encodeGameFrame, decodeGameFrame } from "../assets/scripts/platform/GameProtocolCodec";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";
-import { readHeroEquipment } from "../assets/scripts/features/hero/HeroEquipment";
+import { readHeroEquipment } from "../assets/scripts/features/hero/utils/HeroEquipment";
 
 /** 验证四槽配置、长整数字符串、错误装备与缺失同步不能被静默接受。 */
 async function main(): Promise<void> {

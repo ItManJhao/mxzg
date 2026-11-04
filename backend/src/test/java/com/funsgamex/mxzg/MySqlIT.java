@@ -191,7 +191,7 @@ class MySqlIT {
     /** 重启后资产完全一致，读取时刻允许前进；不能将运行时钟当持久资产比较。 */
     private static void assertStoredState(SessionSnapshotService.Snapshot before, SessionSnapshotService.Snapshot after) {
         assertEquals(before.role(),after.role());assertEquals(before.heroes(),after.heroes());assertEquals(before.inventory(),after.inventory());
-        assertEquals(before.revision(),after.revision());assertEquals(before.timedInventory().items(),after.timedInventory().items());
+        assertEquals(before.mainFormation(),after.mainFormation());assertEquals(before.revision(),after.revision());assertEquals(before.timedInventory().items(),after.timedInventory().items());
         assertTrue(after.timedInventory().serverTimeSeconds()>=before.timedInventory().serverTimeSeconds());
     }
     /** 查询当前专用库中的标量，不接受外部连接。 */
@@ -213,8 +213,8 @@ class MySqlIT {
         assertEquals(0,number("SELECT role_experience FROM game_role WHERE login_account='it_v3_migration'"));
         assertEquals(0,number("SELECT evolve_type FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         assertEquals(0,number("SELECT evolve_level FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
-        System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V13; stage=0, evolution=0/0");
-        assertEquals(13, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V14; stage=0, evolution=0/0");
+        assertEquals(14, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals("bigint", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_inventory' AND COLUMN_NAME='quantity'", String.class));
         assertEquals("timestamp", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_session' AND COLUMN_NAME='expires_at'", String.class));
         assertEquals(1, number("SELECT COUNT(DISTINCT INDEX_NAME) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND INDEX_NAME='uq_role_account_server' AND NON_UNIQUE=0"));
@@ -356,11 +356,11 @@ class MySqlIT {
         assertEquals(settled.inventory(), inventory(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
-        assertEquals(13, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(14, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         var replay=campaign.claim(token,report.id());
         assertEquals(settled.battle(),replay.battle());assertEquals(settled.inventory(),replay.inventory());assertEquals(settled.stageId(),replay.stageId());
         assertEquals(current,replay.role(),"重放携带当前角色快照，登录时间不是历史奖励收据");
-        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=13");
+        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=14");
     }
 
     /** 通过独立 JVM 的真实 HTTP 完成业务链，在未领奖和已领奖两个阶段分别终止进程再登录核验恢复。 */
@@ -497,6 +497,18 @@ class MySqlIT {
         app.close();boot();assertStoredState(before,snapshots.snapshot(p.token()));
         assertEquals(5,snapshots.snapshot(p.token()).heroes().getFirst().evolution().skill().level());
         System.out.println("[MYSQL-IT] evolution state, constraints and restart verified");
+    }
+    /** 独立MySQL确认永久解锁、选中阵型和重启恢复，英雄消耗不回收助战资格。 */
+    @Test @Order(18) void formationUnlocksSurviveRestart() throws Exception {
+        var p=player();assertEquals(List.of(1),snapshots.snapshot(p.token()).mainFormation().unlockedIds());
+        for(int i=0;i<6;i++)jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10105008,1,10)",UUID.randomUUID().toString(),p.id());
+        assertTrue(snapshots.snapshot(p.token()).mainFormation().assistanceUnlocked());
+        jdbc.update("UPDATE game_role SET main_formation_id=2 WHERE id=?",p.id());
+        jdbc.update("DELETE FROM game_hero WHERE role_id=?",p.id());
+        var before=snapshots.snapshot(p.token());app.close();boot();
+        assertStoredState(before,snapshots.snapshot(p.token()));assertEquals(2,before.mainFormation().formationId());
+        assertTrue(before.mainFormation().assistanceUnlocked());assertEquals(8,before.mainFormation().unlockedIds().size());
+        System.out.println("[MYSQL-IT] permanent formation and assistance unlocks survive restart and hero removal");
     }
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */
     private static final class OwnedMysql implements AutoCloseable {

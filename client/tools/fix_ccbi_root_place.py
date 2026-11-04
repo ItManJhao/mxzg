@@ -49,7 +49,7 @@ WIRED = [
     "ui/hero/HeroPernuteLayer.prefab",
     "ui/summon/SummonLayer.prefab",
     "ui/smith/SmithLayer.prefab",
-    "ui/Bag/BagView.prefab",
+    "ui/bag/BagView.prefab",
     "ui/mail/MailLayer.prefab",
     "ui/pvp/PvpLayer.prefab",
     "ui/fantasy-tower/FantasyTowerLayer.prefab",

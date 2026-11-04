@@ -8,9 +8,9 @@
 
 - 滚动组件：[SuperScroll.ts](../client/assets/scripts/framework/ui/SuperScroll.ts)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\scripts\framework\ui\SuperScroll.ts`。
 - 内容组件：[SuperContent.ts](../client/assets/scripts/framework/ui/SuperContent.ts)，同目录。两个组件分别继承原生 ScrollView、Layout，没有另建拖动/惯性/回弹或列表框架。
-- 页面：[BagView.prefab](../client/assets/prefabs/ui/Bag/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\Bag\BagView.prefab`。
-- Cell：[BagItemView.prefab](../client/assets/prefabs/ui/Bag/BagItemView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\backpack\BagItemView.prefab`。
-- 背包业务展示：[BagView.ts](../client/assets/scripts/features/Bag/ui/BagView.ts)；格子展示：[BagItemView.ts](../client/assets/scripts/features/Bag/ui/BagItemView.ts)；真实库存同步：[BagController.ts](../client/assets/scripts/features/Bag/BagController.ts)、[BagModel.ts](../client/assets/scripts/features/Bag/BagModel.ts)。当前通信模板见背包维护指南。
+- 页面：[BagView.prefab](../client/assets/prefabs/ui/bag/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\bag\BagView.prefab`。
+- Cell：[BagItemView.prefab](../client/assets/prefabs/ui/bag/BagItemView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\bag\BagItemView.prefab`。
+- 背包业务展示：[BagView.ts](../client/assets/scripts/features/bag/ui/BagView.ts)；格子展示：[BagItemView.ts](../client/assets/scripts/features/bag/ui/BagItemView.ts)；真实库存同步：[BagController.ts](../client/assets/scripts/features/bag/BagController.ts)、[BagModel.ts](../client/assets/scripts/features/bag/BagModel.ts)。当前通信模板见背包维护指南。
 
 以下均相对 BagView 根节点：
 
@@ -81,7 +81,7 @@ this.bagScroll.restorePosition(position);
 
 `setData<T>(readonly T[], render)` 保存数组的浅拷贝；`refresh` 使用上次数据和回调，替换数据请再次 setData。滚动位置为距左上起点的正数设计单位，不是百分比；横向符号已适配原生 getScrollOffset 与 scrollToOffset 的差别。普通刷新默认保留位置，内容缩短后自动限制到合法范围，不要求业务手动保存/恢复坐标。
 
-背包最少 20 个槽、超出后每 4 个补齐，是 [BagPresentation.ts](../client/assets/scripts/features/Bag/ui/BagPresentation.ts) 的展示条目规则，与列数独立。修改为三列后，20 个槽可以留下不满的一行，不会为凑行数修改玩家库存。SuperContent 不知道这些空槽规则、物品 ID、分类、协议或奖励。
+背包最少 20 个槽、超出后每 4 个补齐，是 [BagUtils.ts](../client/assets/scripts/features/bag/utils/BagUtils.ts) 的展示条目规则，与列数独立。修改为三列后，20 个槽可以留下不满的一行，不会为凑行数修改玩家库存。SuperContent 不知道这些空槽规则、物品 ID、分类、协议或奖励。
 
 背包分类切换回到起点，同分类刷新保留位置。库存请求期间保留上次已接受的真实数据；失败时明确提示显示上次库存，换号/退出/关闭立即清空，迟到回包不会恢复前一角色的数据。
 

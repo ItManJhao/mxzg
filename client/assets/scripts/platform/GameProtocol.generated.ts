@@ -6193,6 +6193,7 @@ var mxzg = $root.mxzg = (() => {
       Snapshot.prototype.revision = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       Snapshot.prototype.timedInventory = null;
       Snapshot.prototype.heroRoster = null;
+      Snapshot.prototype.mainFormation = null;
       Snapshot.create = function create(properties) {
         return new Snapshot(properties);
       };
@@ -6232,6 +6233,11 @@ var mxzg = $root.mxzg = (() => {
           $root.mxzg.game.HeroRoster.encode(message.heroRoster, writer.uint32(
             /* id 6, wireType 2 =*/
             50
+          ).fork(), q + 1).ldelim();
+        if (message.mainFormation != null && Object.hasOwnProperty.call(message, "mainFormation"))
+          $root.mxzg.game.MainFormation.encode(message.mainFormation, writer.uint32(
+            /* id 7, wireType 2 =*/
+            58
           ).fork(), q + 1).ldelim();
         return writer;
       };
@@ -6284,6 +6290,10 @@ var mxzg = $root.mxzg = (() => {
             }
             case 6: {
               message.heroRoster = $root.mxzg.game.HeroRoster.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 7: {
+              message.mainFormation = $root.mxzg.game.MainFormation.decode(reader, reader.uint32(), void 0, long + 1);
               break;
             }
             default:
@@ -6344,6 +6354,11 @@ var mxzg = $root.mxzg = (() => {
           if (error)
             return "heroRoster." + error;
         }
+        if (message.mainFormation != null && Object.hasOwnProperty.call(message, "mainFormation")) {
+          let error = $root.mxzg.game.MainFormation.verify(message.mainFormation, long + 1);
+          if (error)
+            return "mainFormation." + error;
+        }
         return null;
       };
       Snapshot.fromObject = function fromObject(object, long) {
@@ -6401,6 +6416,11 @@ var mxzg = $root.mxzg = (() => {
             throw TypeError(".mxzg.game.Snapshot.heroRoster: object expected");
           message.heroRoster = $root.mxzg.game.HeroRoster.fromObject(object.heroRoster, long + 1);
         }
+        if (object.mainFormation != null) {
+          if (!$util.isObject(object.mainFormation))
+            throw TypeError(".mxzg.game.Snapshot.mainFormation: object expected");
+          message.mainFormation = $root.mxzg.game.MainFormation.fromObject(object.mainFormation, long + 1);
+        }
         return message;
       };
       Snapshot.toObject = function toObject(message, options, q) {
@@ -6424,6 +6444,7 @@ var mxzg = $root.mxzg = (() => {
             object.revision = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
           object.timedInventory = null;
           object.heroRoster = null;
+          object.mainFormation = null;
         }
         if (message.role != null && Object.hasOwnProperty.call(message, "role"))
           object.role = $root.mxzg.game.Role.toObject(message.role, options, q + 1);
@@ -6448,6 +6469,8 @@ var mxzg = $root.mxzg = (() => {
           object.timedInventory = $root.mxzg.game.TimedInventory.toObject(message.timedInventory, options, q + 1);
         if (message.heroRoster != null && Object.hasOwnProperty.call(message, "heroRoster"))
           object.heroRoster = $root.mxzg.game.HeroRoster.toObject(message.heroRoster, options, q + 1);
+        if (message.mainFormation != null && Object.hasOwnProperty.call(message, "mainFormation"))
+          object.mainFormation = $root.mxzg.game.MainFormation.toObject(message.mainFormation, options, q + 1);
         return object;
       };
       Snapshot.prototype.toJSON = function toJSON() {
@@ -8505,6 +8528,397 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.HeroEvolution";
       };
       return HeroEvolution;
+    })();
+    game.MainFormation = (function() {
+      function MainFormation(properties) {
+        this.unlockedIds = [];
+        this.slots = [];
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      MainFormation.prototype.formationId = 0;
+      MainFormation.prototype.unlockedIds = $util.emptyArray;
+      MainFormation.prototype.assistanceUnlocked = false;
+      MainFormation.prototype.version = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      MainFormation.prototype.slots = $util.emptyArray;
+      MainFormation.create = function create(properties) {
+        return new MainFormation(properties);
+      };
+      MainFormation.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.formationId);
+        if (message.unlockedIds != null && message.unlockedIds.length)
+          for (let i = 0; i < message.unlockedIds.length; ++i)
+            writer.uint32(
+              /* id 2, wireType 0 =*/
+              16
+            ).uint32(message.unlockedIds[i]);
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).bool(message.assistanceUnlocked);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).int64(message.version);
+        if (message.slots != null && message.slots.length)
+          for (let i = 0; i < message.slots.length; ++i)
+            $root.mxzg.game.FormationSlot.encode(message.slots[i], writer.uint32(
+              /* id 5, wireType 2 =*/
+              42
+            ).fork(), q + 1).ldelim();
+        return writer;
+      };
+      MainFormation.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.MainFormation();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.formationId = reader.uint32();
+              break;
+            }
+            case 2: {
+              if (!(message.unlockedIds && message.unlockedIds.length))
+                message.unlockedIds = [];
+              if ((tag & 7) === 2) {
+                let end2 = reader.uint32() + reader.pos;
+                if (end2 > reader.len)
+                  throw RangeError("index out of range");
+                reader.len = end2;
+                while (reader.pos < end2)
+                  message.unlockedIds.push(reader.uint32());
+                if (reader.pos !== end2)
+                  throw RangeError("index out of range");
+                reader.len = end;
+              } else
+                message.unlockedIds.push(reader.uint32());
+              break;
+            }
+            case 3: {
+              message.assistanceUnlocked = reader.bool();
+              break;
+            }
+            case 4: {
+              message.version = reader.int64();
+              break;
+            }
+            case 5: {
+              if (!(message.slots && message.slots.length))
+                message.slots = [];
+              message.slots.push($root.mxzg.game.FormationSlot.decode(reader, reader.uint32(), void 0, long + 1));
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "formationId"))
+          throw $util.ProtocolError("missing required 'formationId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "assistanceUnlocked"))
+          throw $util.ProtocolError("missing required 'assistanceUnlocked'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "version"))
+          throw $util.ProtocolError("missing required 'version'", { instance: message });
+        return message;
+      };
+      MainFormation.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.formationId))
+          return "formationId: integer expected";
+        if (message.unlockedIds != null && Object.hasOwnProperty.call(message, "unlockedIds")) {
+          if (!Array.isArray(message.unlockedIds))
+            return "unlockedIds: array expected";
+          for (let i = 0; i < message.unlockedIds.length; ++i)
+            if (!$util.isInteger(message.unlockedIds[i]))
+              return "unlockedIds: integer[] expected";
+        }
+        if (typeof message.assistanceUnlocked !== "boolean")
+          return "assistanceUnlocked: boolean expected";
+        if (!$util.isInteger(message.version) && !(message.version && $util.isInteger(message.version.low) && $util.isInteger(message.version.high)))
+          return "version: integer|Long expected";
+        if (message.slots != null && Object.hasOwnProperty.call(message, "slots")) {
+          if (!Array.isArray(message.slots))
+            return "slots: array expected";
+          for (let i = 0; i < message.slots.length; ++i) {
+            let error = $root.mxzg.game.FormationSlot.verify(message.slots[i], long + 1);
+            if (error)
+              return "slots." + error;
+          }
+        }
+        return null;
+      };
+      MainFormation.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.MainFormation)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.MainFormation: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.MainFormation();
+        if (object.formationId != null)
+          message.formationId = object.formationId >>> 0;
+        if (object.unlockedIds) {
+          if (!Array.isArray(object.unlockedIds))
+            throw TypeError(".mxzg.game.MainFormation.unlockedIds: array expected");
+          message.unlockedIds = [];
+          for (let i = 0; i < object.unlockedIds.length; ++i)
+            message.unlockedIds[i] = object.unlockedIds[i] >>> 0;
+        }
+        if (object.assistanceUnlocked != null)
+          message.assistanceUnlocked = Boolean(object.assistanceUnlocked);
+        if (object.version != null) {
+          if ($util.Long)
+            message.version = $util.Long.fromValue(object.version, false);
+          else if (typeof object.version === "string")
+            message.version = parseInt(object.version, 10);
+          else if (typeof object.version === "number")
+            message.version = object.version;
+          else if (typeof object.version === "object")
+            message.version = new $util.LongBits(object.version.low >>> 0, object.version.high >>> 0).toNumber();
+        }
+        if (object.slots) {
+          if (!Array.isArray(object.slots))
+            throw TypeError(".mxzg.game.MainFormation.slots: array expected");
+          message.slots = [];
+          for (let i = 0; i < object.slots.length; ++i) {
+            if (!$util.isObject(object.slots[i]))
+              throw TypeError(".mxzg.game.MainFormation.slots: object expected");
+            message.slots[i] = $root.mxzg.game.FormationSlot.fromObject(object.slots[i], long + 1);
+          }
+        }
+        return message;
+      };
+      MainFormation.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.arrays || options.defaults) {
+          object.unlockedIds = [];
+          object.slots = [];
+        }
+        if (options.defaults) {
+          object.formationId = 0;
+          object.assistanceUnlocked = false;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.version = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.version = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+        }
+        if (message.formationId != null && Object.hasOwnProperty.call(message, "formationId"))
+          object.formationId = message.formationId;
+        if (message.unlockedIds && message.unlockedIds.length) {
+          object.unlockedIds = [];
+          for (let j = 0; j < message.unlockedIds.length; ++j)
+            object.unlockedIds[j] = message.unlockedIds[j];
+        }
+        if (message.assistanceUnlocked != null && Object.hasOwnProperty.call(message, "assistanceUnlocked"))
+          object.assistanceUnlocked = message.assistanceUnlocked;
+        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.version = typeof message.version === "number" ? BigInt(message.version) : $util.Long.fromBits(message.version.low >>> 0, message.version.high >>> 0, false).toBigInt();
+          else if (typeof message.version === "number")
+            object.version = options.longs === String ? String(message.version) : message.version;
+          else
+            object.version = options.longs === String ? $util.Long.prototype.toString.call(message.version) : options.longs === Number ? new $util.LongBits(message.version.low >>> 0, message.version.high >>> 0).toNumber() : message.version;
+        if (message.slots && message.slots.length) {
+          object.slots = [];
+          for (let j = 0; j < message.slots.length; ++j)
+            object.slots[j] = $root.mxzg.game.FormationSlot.toObject(message.slots[j], options, q + 1);
+        }
+        return object;
+      };
+      MainFormation.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      MainFormation.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.MainFormation";
+      };
+      return MainFormation;
+    })();
+    game.FormationSlot = (function() {
+      function FormationSlot(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      FormationSlot.prototype.position = 0;
+      FormationSlot.prototype.heroId = "";
+      FormationSlot.create = function create(properties) {
+        return new FormationSlot(properties);
+      };
+      FormationSlot.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.position);
+        writer.uint32(
+          /* id 2, wireType 2 =*/
+          18
+        ).string(message.heroId);
+        return writer;
+      };
+      FormationSlot.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.FormationSlot();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.position = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.heroId = reader.string();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "position"))
+          throw $util.ProtocolError("missing required 'position'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "heroId"))
+          throw $util.ProtocolError("missing required 'heroId'", { instance: message });
+        return message;
+      };
+      FormationSlot.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.position))
+          return "position: integer expected";
+        if (!$util.isString(message.heroId))
+          return "heroId: string expected";
+        return null;
+      };
+      FormationSlot.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.FormationSlot)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.FormationSlot: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.FormationSlot();
+        if (object.position != null)
+          message.position = object.position >>> 0;
+        if (object.heroId != null)
+          message.heroId = String(object.heroId);
+        return message;
+      };
+      FormationSlot.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.position = 0;
+          object.heroId = "";
+        }
+        if (message.position != null && Object.hasOwnProperty.call(message, "position"))
+          object.position = message.position;
+        if (message.heroId != null && Object.hasOwnProperty.call(message, "heroId"))
+          object.heroId = message.heroId;
+        return object;
+      };
+      FormationSlot.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      FormationSlot.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.FormationSlot";
+      };
+      return FormationSlot;
     })();
     return game;
   })();

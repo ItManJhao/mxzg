@@ -14,7 +14,7 @@ export interface ViewController {
 /** 一个正式界面：视图类、Prefab、页面 id 绑在一起。 */
 export interface ViewSpec {
   id: string;
-  /** 相对 assets，例如 prefabs/ui/Bag/BagView。 */
+  /** 相对 assets，例如 prefabs/ui/bag/BagView。 */
   prefab: string;
   layer: UILayer;
   /** 关掉后如果节点还在，留着实例，下次不再加载。 */

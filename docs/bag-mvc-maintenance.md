@@ -4,10 +4,10 @@
 
 ## 固定目录与文件职责
 
-- features/Bag/BagController.ts：声明协议，onNotify → onInventoryState → Model → BagEvent。
-- features/Bag/BagModel.ts：唯一库存状态、全量校验与界面 revision，不联网。
-- features/Bag/BagEvent.ts、data/：界面事件、状态、变更集和物品类型。
-- features/Bag/ui/：BagView、BagItemView、BagInfoView、BagTabView 和挂载辅助。
+- features/bag/BagController.ts：声明协议，onNotify → onInventoryState → Model → BagEvent。
+- features/bag/BagModel.ts：唯一库存状态、全量校验与界面 revision，不联网。
+- features/bag/utils/BagEvent.ts、data/：界面事件、状态、变更集和物品类型。
+- features/bag/ui/：BagView、BagItemView、BagInfoView、BagTabView 和挂载辅助。
 - features/account/RoleController.ts：角色协议入口，提交 AccountModel 中唯一角色资料，不处理登录。
 - app/remake/AssetStateBinding.ts：应用协调身份、持久版本、角色与背包原子通知。
 - platform/Protocol.ts / ProtocolRouter.ts：统一消息目录与真实消息定向分发，不保存玩家资产。
@@ -66,13 +66,13 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 
 ## 在 Creator 修改 UI
 
-页面：[client/assets/prefabs/ui/Bag/BagView.prefab](../client/assets/prefabs/ui/Bag/BagView.prefab)。列表节点路径不变：
+页面：[client/assets/prefabs/ui/bag/BagView.prefab](../client/assets/prefabs/ui/bag/BagView.prefab)。列表节点路径不变：
 
 - `BagView/spr_box/BagScroll`：SuperScroll，Content 只绑定一次。
 - `BagView/spr_box/BagScroll/view`：UITransform/Mask，手动调整裁剪范围。
 - `BagView/spr_box/BagScroll/view/content`：SuperContent，修改布局、列/行、方向、间距、四边距、Cell Prefab 与明确的尺寸覆盖开关。
-- Cell：[BagItemView.prefab](../client/assets/prefabs/ui/Bag/BagItemView.prefab)，组件现名 BagItemView；外观/数量字/选中图片在 Cell 内编辑。
-- 详情：[BagInfoView.prefab](../client/assets/prefabs/ui/Bag/BagInfoView.prefab)，组件 BagInfoView；页签：[BagTabView.prefab](../client/assets/prefabs/ui/Bag/BagTabView.prefab)，组件 BagTabView。
+- Cell：[BagItemView.prefab](../client/assets/prefabs/ui/bag/BagItemView.prefab)，组件现名 BagItemView；外观/数量字/选中图片在 Cell 内编辑。
+- 详情：[BagInfoView.prefab](../client/assets/prefabs/ui/bag/BagInfoView.prefab)，组件 BagInfoView；页签：[BagTabView.prefab](../client/assets/prefabs/ui/bag/BagTabView.prefab)，组件 BagTabView。
 
 [SuperScroll Inspector 指南](super-scroll-authoring.md) 的布局规则和无业务编辑器预览继续有效。本批没改源 Prefab、SuperScroll、SuperContent、资源路径与加载边界；10 个移动脚本 UUID 均逐一核对保留，BagView 仍是 `7b14e0a2-3c58-4d1f-8e6a-9f0b2c4d5e61`。Prefab 内稳定的 CompPrefabInfo.fileId 不是脚本路径，不因改名替换。目录实际名及导入统一为 `features/Bag`，旧 backpack 脚本目录已移除。
 

@@ -13,8 +13,10 @@ export async function mountCampaignPage(host: Node, prefab: Prefab): Promise<Nod
         throw new Error("战斗页面已关闭");
     const shell = spawnPrefab(shellPrefab, host);
     shell.name = "PagePrefabShell";
-    bindVisibleRefresh(shell, () => { if (shell.isValid)
-        fitVisibleRoot(shell); });
+    bindVisibleRefresh(shell, () => {
+        if (shell.isValid)
+            fitVisibleRoot(shell);
+    });
     const panel = spawnPrefab(prefab, shell);
     mountCcbiView(panel);
     return panel;

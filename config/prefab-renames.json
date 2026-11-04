@@ -15,28 +15,28 @@
   },
   {
     "from": "client/assets/prefabs/ui/Bag/BagInfoLayer.prefab",
-    "to": "client/assets/prefabs/ui/Bag/BagInfoView.prefab",
+    "to": "client/assets/prefabs/ui/bag/BagInfoView.prefab",
     "oldName": "BagInfoLayer",
     "name": "BagInfoView",
     "uuid": "f151a2c1-a24a-4e5d-9d67-2096089cde82"
   },
   {
     "from": "client/assets/prefabs/ui/Bag/BagItemCell.prefab",
-    "to": "client/assets/prefabs/ui/Bag/BagItemView.prefab",
+    "to": "client/assets/prefabs/ui/bag/BagItemView.prefab",
     "oldName": "BagItemCell",
     "name": "BagItemView",
     "uuid": "c4e8a1b2-7d33-4f61-9a20-6b5e0d4c8f11"
   },
   {
     "from": "client/assets/prefabs/ui/Bag/BagLayer.prefab",
-    "to": "client/assets/prefabs/ui/Bag/BagView.prefab",
+    "to": "client/assets/prefabs/ui/bag/BagView.prefab",
     "oldName": "BagLayer",
     "name": "BagView",
     "uuid": "6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb"
   },
   {
     "from": "client/assets/prefabs/ui/Bag/BagTabButton.prefab",
-    "to": "client/assets/prefabs/ui/Bag/BagTabView.prefab",
+    "to": "client/assets/prefabs/ui/bag/BagTabView.prefab",
     "oldName": "BagTabButton",
     "name": "BagTabView",
     "uuid": "d5f9b2c3-8e44-4072-ab31-7c6f1e5d9022"
@@ -152,5 +152,12 @@
     "oldName": "ChooseServerLayer",
     "name": "ServerPickerView",
     "uuid": "46c73fed-68c2-5589-8720-d11645528009"
+  },
+  {
+    "from": "client/assets/prefabs/ui/setting/SettingLayer.prefab",
+    "to": "client/assets/prefabs/ui/account/RoleProfileView.prefab",
+    "oldName": "SettingLayer",
+    "name": "RoleProfileView",
+    "uuid": "1aedb5a3-4e33-552f-843c-c419fd8174a4"
   }
 ]

@@ -135,13 +135,6 @@
       "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
       "inspector": "待负责人逐项确认"
     },
-    "client/assets/prefabs/ui/hero/HeroInfoView.prefab": {
-      "sha256": "f038964c298a744bf73d2ba55c36b8a4b166134925db9777dff431ee42efdc3d",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
     "client/assets/prefabs/ui/hero/HeroSkillInfoLayer.prefab": {
       "sha256": "05cc56c52035d46c2d42a83ae480daaa75b82bbe3ad2a8dfefcda185676afe5a",
       "date": "2026-11-02",
@@ -192,11 +185,11 @@
       "inspector": "待负责人逐项确认"
     },
     "client/assets/prefabs/ui/item/ItemRewardLayer.prefab": {
-      "sha256": "de979fb4a70317c8a1029b977847871b4855ceb0ee0d82dcdfa2e526147a7ece",
-      "date": "2026-11-02",
+      "sha256": "870ca892265977f6bdba5df3508d3e800f78506b4422f26de806d2a9f42d76ed",
+      "date": "2026-11-04",
       "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
+      "scope": "4ae4a156已将奖励列表改为SuperScroll，旧壳层指纹不再覆盖当前预制体。 本次仅核对迁移提交、静态滚动绑定和全库结构，不重新签署画面或领取业务验收。",
+      "inspector": "当前版本待重新确认"
     },
     "client/assets/prefabs/ui/item/ItemScelectNumLayer.prefab": {
       "sha256": "0179789b6a81ef3a5c1e58b138e4f3824fd2937464e920c38cb19f9508234f02",
@@ -338,13 +331,6 @@
       "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
       "inspector": "待负责人逐项确认"
     },
-    "client/assets/prefabs/ui/setting/SettingLayer.prefab": {
-      "sha256": "bf6759cf4e048ff28dcb0e798603f8a95410f028cdd2672dc619c75124236758",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
-      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
-    },
     "client/assets/prefabs/ui/summon/SummonLayer.prefab": {
       "sha256": "be4ac8b42193feefb7b5af331933fcf4914595888d9c2620a981d7c181af1ce8",
       "date": "2026-11-02",
@@ -358,10 +344,62 @@
       "status": "实际预览通过",
       "scope": "静态空壳：640×1280、360×800、960×1280 均显示完整，各实际点击关闭三轮。关闭临时回调只销毁节点；不含领奖业务及有内容滚动验收。",
       "inspector": "负责人明确回复已完成改值、保存、恢复 X=-272、重开检查并认可编辑体验；源码最终位置(-272,-442)、缩放0.85。"
+    },
+    "client/assets/prefabs/ui/hero/HeroInfoView.prefab": {
+      "sha256": "04cf8e1bfaba2a4a41828f09f6368fdf636b40c43417f0f850873db4544f68da",
+      "date": "2026-11-04",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "旧壳层在5c95c7a6接入四槽装备后已变化，旧画面证据不能覆盖当前版本。 本次核对提交历史、当前根节点/脚本绑定及模块回归，并执行全库结构审查；本次未启动Creator，不重新签署三尺寸、动态内容或Inspector验收。",
+      "inspector": "当前版本待重新确认"
+    },
+    "client/assets/prefabs/ui/account/RoleProfileView.prefab": {
+      "sha256": "9433651d05ec664dcfbacf796cda83364f05a8495ba4da6f62f36947699e5b61",
+      "date": "2026-11-04",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "97a8b2e8已保留UUID迁移为RoleProfileView，旧路径不再是独立设置窗口。 本次核对提交历史、当前根节点/脚本绑定及模块回归，并执行全库结构审查；本次未启动Creator，不重新签署三尺寸、动态内容或Inspector验收。",
+      "inspector": "当前版本待重新确认"
     }
   },
   "evidenceDirectories": [
     "client/temp/prefab-acceptance-20261102",
     "client/temp/prefab-followup-20261102"
+  ],
+  "supersededEntries": [
+    {
+      "path": "client/assets/prefabs/ui/hero/HeroInfoView.prefab",
+      "supersededOn": "2026-11-04",
+      "reason": "旧壳层在5c95c7a6接入四槽装备后已变化，旧画面证据不能覆盖当前版本。",
+      "record": {
+        "sha256": "f038964c298a744bf73d2ba55c36b8a4b166134925db9777dff431ee42efdc3d",
+        "date": "2026-11-02",
+        "status": "结构检查通过但视觉待验收",
+        "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+        "inspector": "待负责人逐项确认"
+      }
+    },
+    {
+      "path": "client/assets/prefabs/ui/setting/SettingLayer.prefab",
+      "supersededOn": "2026-11-04",
+      "reason": "97a8b2e8已保留UUID迁移为RoleProfileView，旧路径不再是独立设置窗口。",
+      "record": {
+        "sha256": "bf6759cf4e048ff28dcb0e798603f8a95410f028cdd2672dc619c75124236758",
+        "date": "2026-11-02",
+        "status": "实际预览通过",
+        "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
+        "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
+      }
+    },
+    {
+      "path": "client/assets/prefabs/ui/item/ItemRewardLayer.prefab",
+      "supersededOn": "2026-11-04",
+      "reason": "4ae4a156已将奖励列表改为SuperScroll，旧壳层指纹不再覆盖当前预制体。",
+      "record": {
+        "sha256": "de979fb4a70317c8a1029b977847871b4855ceb0ee0d82dcdfa2e526147a7ece",
+        "date": "2026-11-02",
+        "status": "结构检查通过但视觉待验收",
+        "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
+        "inspector": "待负责人逐项确认"
+      }
+    }
   ]
 }

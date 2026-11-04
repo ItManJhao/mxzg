@@ -6,10 +6,10 @@ import {HeroSkillView} from "../../features/hero/ui/HeroSkillView";
 import {prepareHeroDetailConfig} from "../../config/RemakeConfig";
 
 import { GmController } from "../../features/gm/GmController";
-import { GmView } from "../../features/gm/GmView";
+import { GmView } from "../../features/gm/ui/GmView";
 import { loadPrefab } from "../../framework/assets/PrefabLoader";
 import { Protocol } from "../../platform/Protocol";
-import {BagModel} from "../../features/Bag/BagModel";
+import {BagModel} from "../../features/bag/BagModel";
 
 import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { GameConfig } from "../../config/GameConfig";
@@ -19,7 +19,7 @@ import { _decorator, Asset, Component, director, Director, Node, Prefab, sys, ga
 import { AccountModel } from "../../features/account/AccountModel";
 import { AccountApi, readSession, readRole } from "../../features/account/AccountApi";
 import { GameSocketClient } from "../../platform/GameSocketClient";
-import { readBagItems, readTimedItems } from "../../features/Bag/data/BagItemData";
+import { readBagItems, readTimedItems } from "../../features/bag/data/BagItemData";
 import { AccountService } from "../../features/account/AccountService";
 import { AccountController } from "../../features/account/AccountController";
 import { HeroInfoView } from "../../features/hero/ui/HeroInfoView";
@@ -49,13 +49,13 @@ import { ServerSelection } from "../../features/account/ServerSelection";
 import { ServerPickerView } from "../../features/account/ui/ServerPickerView";
 import { slideFeaturePage } from "./PageTransition";
 import { createFeatureResourceScope, loadFeaturePage } from "./FeatureResources";
-import { BagView } from "../../features/Bag/ui/BagView";
+import { BagView } from "../../features/bag/ui/BagView";
 import { PREVIEW } from "cc/env";
 import { GameLog } from "../../core/GameLog";
 import { formatServerFrame } from "../../platform/GameProtocolLog";
 import { GAME_SOCKET_PROTOCOL } from "../../platform/GameProtocolCodec";
-import { BagController } from "../../features/Bag/BagController";
-import { mountBagPage } from "../../features/Bag/ui/BagMount";
+import { BagController } from "../../features/bag/BagController";
+import { mountBagPage } from "../../features/bag/ui/BagMount";
 
 import { isolatedSocketPreview } from "./IsolatedSocketPreview";
 import { AssetStateBinding } from "./AssetStateBinding";
@@ -105,7 +105,7 @@ export class RemakeApp extends Component {
       create: url => new WebSocket(url, GAME_SOCKET_PROTOCOL),
       onReceive: PREVIEW ? frame => {
         const message = formatServerFrame(frame);
-        if (message) GameLog.shared.debug("WS接收", message);
+        if (message) GameLog.shared.classified("APP", "debug", "WS接收", message);
       } : undefined,
       validateSnapshot: value => {
         if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("恢复数据无效");
@@ -226,7 +226,7 @@ export class RemakeApp extends Component {
       return loadFeaturePage(this.featureResources,group);
     };
     this.unregisterViews.push(registerView(BagView, {
-      id:"bag",prefab:ResourceCatalog.prefab_Bag.BagView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
+      id:"bag",prefab:ResourceCatalog.prefab_bag.BagView.assetPath,layer:UILayer.Page,cache:false,allowMultiple:false,
       mount:mountBagPage,load:() => loadFeature("bag"),
     }));
     this.unregisterViews.push(registerView(HeroListView, {

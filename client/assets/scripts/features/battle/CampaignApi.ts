@@ -2,8 +2,8 @@
 import { featureUnavailable } from "../PausedFeatures";
 import { readRole } from "../account/AccountApi";
 import type { RoleProfile } from "../account/AccountModel";
-import { readBagItems } from "../Bag/data/BagItemData";
-import type { BagItemData } from "../Bag/data/BagItemData";
+import { readBagItems } from "../bag/data/BagItemData";
+import type { BagItemData } from "../bag/data/BagItemData";
 export interface CampaignUnit {
     id: string;
     ally: boolean;
@@ -61,16 +61,24 @@ function integer(value: unknown, min = 0): number {
         throw new Error("战斗数值无效");
     return value;
 }
-function text(value: unknown): string { if (typeof value !== "string" || !value)
-    throw new Error("战斗标识无效"); return value; }
-function boolean(value: unknown): boolean { if (typeof value !== "boolean")
-    throw new Error("战斗状态无效"); return value; }
-function array(value: unknown): unknown[] { if (!Array.isArray(value))
-    throw new Error("战斗列表无效"); return value; }
+function text(value: unknown): string {
+    if (typeof value !== "string" || !value)
+        throw new Error("战斗标识无效"); return value;
+}
+function boolean(value: unknown): boolean {
+    if (typeof value !== "boolean")
+        throw new Error("战斗状态无效"); return value;
+}
+function array(value: unknown): unknown[] {
+    if (!Array.isArray(value))
+        throw new Error("战斗列表无效"); return value;
+}
 function readUnit(value: unknown): CampaignUnit {
     const u = object(value);
-    return { id: text(u.id), ally: boolean(u.ally), position: integer(u.position, 1), templateId: integer(u.templateId, 1),
-        name: text(u.name), level: integer(u.level, 1), maxHp: integer(u.maxHp, 1), attack: integer(u.attack), defense: integer(u.defense), speed: integer(u.speed) };
+    return {
+        id: text(u.id), ally: boolean(u.ally), position: integer(u.position, 1), templateId: integer(u.templateId, 1),
+        name: text(u.name), level: integer(u.level, 1), maxHp: integer(u.maxHp, 1), attack: integer(u.attack), defense: integer(u.defense), speed: integer(u.speed)
+    };
 }
 function readReward(value: unknown): CampaignReward { const r = object(value); return { itemId: integer(r.itemId, 1), quantity: integer(r.quantity, 1) }; }
 export function readCampaignReport(value: unknown): CampaignReport {
@@ -101,12 +109,14 @@ export function readCampaignReport(value: unknown): CampaignReport {
 }
 function readState(value: unknown): CampaignState {
     const row = object(value);
-    return { stageId: integer(row.stageId, 1), initialized: boolean(row.initialized), pending: row.pending === null ? null : readCampaignReport(row.pending),
-        rewards: array(row.rewards).map(readReward), units: array(row.units).map(readUnit), available: boolean(row.available) };
+    return {
+        stageId: integer(row.stageId, 1), initialized: boolean(row.initialized), pending: row.pending === null ? null : readCampaignReport(row.pending),
+        rewards: array(row.rewards).map(readReward), units: array(row.units).map(readUnit), available: boolean(row.available)
+    };
 }
 export class CampaignApi {
     /** 暂停模块不再依赖网络客户端。 */
-    constructor() {}
+    constructor() { }
     async initialize(token: string): Promise<CampaignState> { return readState(await featureUnavailable()); }
     async current(token: string): Promise<CampaignState> { return readState(await featureUnavailable()); }
     async challenge(token: string, requestId: string): Promise<CampaignReport> { return readCampaignReport(await featureUnavailable()); }

@@ -177,10 +177,20 @@ def audit():
                 expected = (anchor[axis] - 0.5) * size[dimension] * scale[axis]
                 assert math.isclose(root['_lpos'][axis], expected), (rel, '缩放后根位置未居中')
         if file.stem == 'ServerPickerView':
-            view = next(c for c in components if 'scrollHost' in c)
-            host, port = data[view['scrollHost']['__id__']], data[view['scrollPort']['__id__']]
-            assert not any(data[c['__id__']]['__type__'] == 'cc.Mask' for c in host['_components'])
-            assert any(data[c['__id__']]['__type__'] == 'cc.Mask' for c in port['_components'])
+            # 选服已迁为两个SuperScroll；检查实际绑定，不能继续读取旧scrollHost字段。
+            view = next(c for c in components if 'serverScroll' in c and 'regionScroll' in c)
+            assert view['serverScroll'] != view['regionScroll'], (rel, '两列滚动不能复用同一组件')
+            for field in ('serverScroll', 'regionScroll'):
+                scroll = data[view[field]['__id__']]
+                assert scripts.get(scroll['__type__']) == 'SuperScroll', (rel, field, '必须绑定SuperScroll')
+                host = data[scroll['node']['__id__']]
+                content = data[scroll['_content']['__id__']]
+                port = data[content['_parent']['__id__']]
+                assert port['_parent'] == scroll['node'], (rel, field, '需要Scroll/view/content层级')
+                assert not any(data[c['__id__']]['__type__'] == 'cc.Mask' for c in host['_components'])
+                assert any(data[c['__id__']]['__type__'] == 'cc.Mask' for c in port['_components'])
+                assert any(scripts.get(data[c['__id__']]['__type__']) == 'SuperContent'
+                           for c in content['_components']), (rel, field, '内容必须使用SuperContent')
         if file.stem == 'HeroListBoardView':
             view = next(c for c in components if 'heroScroll' in c)
             host, port, content = [data[view[key]['__id__']] for key in ['heroScroll', 'heroPort', 'heroContent']]

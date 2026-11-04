@@ -2,12 +2,12 @@
  * 同一通知批次完成全部 Model 更新；不查询库存、不反推玩家资产、不保存第二份资产。
  */
 import type { HeroRosterController } from "../../features/hero/HeroRosterController";
-import { readOwnedHeroes, readHeroRosterInfo } from "../../features/hero/HeroApi";
+import { readOwnedHeroes, readHeroRosterInfo, readMainFormation } from "../../features/hero/HeroApi";
 import type { AccountModel } from "../../features/account/AccountModel";
-import type { BagController } from "../../features/Bag/BagController";
+import type { BagController } from "../../features/bag/BagController";
 import type { RoleController } from "../../features/account/RoleController";
 import { readRole } from "../../features/account/AccountApi";
-import { readBagItems, readTimedItems } from "../../features/Bag/data/BagItemData";
+import { readBagItems, readTimedItems } from "../../features/bag/data/BagItemData";
 import { statePayload } from "../../platform/ProtocolState";
 import type { ProtocolName } from "../../platform/Protocol";
 import type { GameFrame } from "../../platform/GameProtocolCodec";
@@ -35,7 +35,8 @@ export class AssetStateBinding {
     if(!current.role || current.busy)return false;
     if(frame.version!==1 || (frame.kind!=="event" && (frame.kind!=="response" || frame.ok!==true)) || frame.error!==undefined)throw new Error("资产信封无效");
     const state=statePayload(frame.name as ProtocolName,frame.body), role=readRole(state.role);
-    readOwnedHeroes(state.heroes);
+    const heroRows=readOwnedHeroes(state.heroes);
+    readMainFormation(state.mainFormation,heroRows);
     readHeroRosterInfo(state.heroRoster);
     readBagItems(state.inventory);
     readTimedItems(state.timedInventory);

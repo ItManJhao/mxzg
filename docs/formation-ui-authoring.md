@@ -58,7 +58,7 @@ Creator 外部修改的脚本要等编辑器导入/编译完成再刷新预览�
 - Cell：[HeroIconCellView.ts](../client/assets/scripts/features/hero/ui/HeroIconCellView.ts)。只刷数据和点击；不补 Button，不改字体/坐标；缺字段报告具体 Prefab 和字段。
 - 业务：[FormationController.ts](../client/assets/scripts/features/hero/FormationController.ts)。查询真实名册/阵容，维护未保存草稿；取消丢弃草稿，确认 PUT 后才返回成功；空阵容、重复点击、换号/关闭及 409 版本冲突保持原有处理。
 - 阵容接口：[LineupApi.ts](../client/assets/scripts/features/hero/LineupApi.ts)。`GET /api/v1/lineups/main` 返回 `{version,slots}`；`PUT` 发送 `{expectedVersion,slots}`，slot 为 `{position,heroId}`，heroId 是实例 UUID。当前七个合法位置为 2/3/5/6/7/8/9。
-- 名册：[HeroApi.ts](../client/assets/scripts/features/hero/HeroApi.ts)；本地名称/头像投影：[HeroCatalog.ts](../client/assets/scripts/features/hero/HeroCatalog.ts)。协议说明见 [英雄与阵容契约](hero-lineup-contract.md)。当前类型/请求仍是手写实现，不宣称已建立接口自动生成。
+- 名册：[HeroApi.ts](../client/assets/scripts/features/hero/HeroApi.ts)；本地名称/头像投影：[HeroCatalog.ts](../client/assets/scripts/features/hero/utils/HeroCatalog.ts)。协议说明见 [英雄与阵容契约](hero-lineup-contract.md)。当前类型/请求仍是手写实现，不宣称已建立接口自动生成。
 - 装配：`app/remake/RemakeApp.ts` 中的 `remake-formation` 注册；进入战斗由 `CampaignController` 在出阵确认成功后继续。没有另建平行的登录/阵容状态。
 
 ## 技术验证与用户验收分开

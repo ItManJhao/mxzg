@@ -6,9 +6,9 @@ import { _decorator, Button, Label, view } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { ancestorScale } from "../../../framework/ui/visibleFit";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
-import { HeroRosterEvent } from "../HeroRosterEvent";
+import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
-import { presentHeroSkills, heroSkillStatus } from "../HeroSkillPresentation";
+import { HeroSkillUtils } from "../utils/HeroSkillUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -45,14 +45,14 @@ export class HeroSkillView extends BaseView<{ heroId: string; slot: number }> {
             this.close();
             return;
         }
-        const skill = presentHeroSkills(hero)[this.args!.slot];
-        if (!skill?.id) {
+        const skill = HeroSkillUtils.present(hero)[this.args!.slot];
+        if (!skill?.id || !skill.available) {
             this.close();
             return;
         }
         if (this.title) this.title.string = skill.name;
         if (this.status) {
-            this.status.string = heroSkillStatus(skill) + (skill.level === 0 ? " · 一级效果预览" : "");
+            this.status.string = HeroSkillUtils.status(skill) + (skill.level === 0 ? " · 一级效果预览" : "");
         }
         if (this.description) {
             this.description.string = skill.description.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<[^>]+>/g, "");

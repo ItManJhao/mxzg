@@ -1,10 +1,11 @@
 /** 角色协议控制器：按实际协议更新唯一 AccountModel 中的角色资料，不处理登录或签发凭证。 */
-import {readRole} from "./AccountApi";
-import type {RoleProfile} from "./AccountModel";
-import type {ProtocolName} from "../../platform/Protocol";
-import {Protocol} from "../../platform/Protocol";
-import {ProtocolRouter} from "../../platform/ProtocolRouter";
-import {statePayload, STATE_PROTOCOLS} from "../../platform/ProtocolState";
+import { GameLog } from "../../core/GameLog";
+import { readRole } from "./AccountApi";
+import type { RoleProfile } from "./AccountModel";
+import type { ProtocolName } from "../../platform/Protocol";
+import { Protocol } from "../../platform/Protocol";
+import { ProtocolRouter } from "../../platform/ProtocolRouter";
+import { statePayload, STATE_PROTOCOLS } from "../../platform/ProtocolState";
 
 export class RoleController {
     /** 模块的协议登记，销毁应用时释放。 */
@@ -24,7 +25,10 @@ export class RoleController {
                 this.onRoleState(protocol, data);
                 break;
             default:
-                throw new Error("角色未登记协议：" + protocol);
+                // 路由会拒绝非法回包；模块仅忽略不属于自身的通知，不触碰Model。
+                GameLog.shared.warnOnce("MODULE", "RoleController", "UNHANDLED_PROTOCOL:" + protocol,
+                    "角色未登记协议：" + protocol + "；已忽略，未更新数据");
+                return;
         }
     }
 

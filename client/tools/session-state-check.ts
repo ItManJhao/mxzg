@@ -8,10 +8,10 @@ import {AccountService} from "../assets/scripts/features/account/AccountService"
 import {HomeController} from "../assets/scripts/features/home/HomeController";
 import {AccountController} from "../assets/scripts/features/account/AccountController";
 import {RoleController} from "../assets/scripts/features/account/RoleController";
-import {BagController} from "../assets/scripts/features/Bag/BagController";
-import {BagModel} from "../assets/scripts/features/Bag/BagModel";
-import {BagEvent} from "../assets/scripts/features/Bag/BagEvent";
-import {readBagItems,readTimedItems} from "../assets/scripts/features/Bag/data/BagItemData";
+import {BagController} from "../assets/scripts/features/bag/BagController";
+import {BagModel} from "../assets/scripts/features/bag/BagModel";
+import {BagEvent} from "../assets/scripts/features/bag/utils/BagEvent";
+import {readBagItems,readTimedItems} from "../assets/scripts/features/bag/data/BagItemData";
 import {isolatedSocketPreview} from "../assets/scripts/app/remake/IsolatedSocketPreview";
 import {AssetStateBinding} from "../assets/scripts/app/remake/AssetStateBinding";
 import {EventDispatcher} from "../assets/scripts/framework/EventDispatcher";

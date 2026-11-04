@@ -13,9 +13,9 @@ import { CITY_CHROME_PREFAB_PATH, CITY_HUB_PREFAB_PATH } from "../../../config/P
 const AFTER_DRAW = "director_after_draw";
 
 interface StagedCity {
-  holder: Node;
-  hub: Node | null;
-  chrome: Node | null;
+    holder: Node;
+    hub: Node | null;
+    chrome: Node | null;
 }
 
 let staged: StagedCity | null = null;
@@ -23,48 +23,48 @@ let stageTask: Promise<void> | null = null;
 
 /** 挂在开机 Canvas 最底层、保持未激活。加载层盖在上面，登录点不到这层。 */
 export function stageCityShell(parent: Node): Promise<void> {
-  if (stageTask) return stageTask;
-  stageTask = runStage(parent);
-  return stageTask;
+    if (stageTask) return stageTask;
+    stageTask = runStage(parent);
+    return stageTask;
 }
 
 async function runStage(parent: Node): Promise<void> {
-  try {
-    if (staged && staged.holder.isValid) return;
-    const [hubPrefab, chromePrefab] = await Promise.all([
-      loadPrefab(CITY_HUB_PREFAB_PATH),
-      loadPrefab(CITY_CHROME_PREFAB_PATH),
-    ]);
-    if (!parent.isValid) return;
-    const holder = new Node("CityStage");
-    holder.active = false;
     try {
-      const hub = spawnPrefab(hubPrefab, holder);
-      const chrome = spawnPrefab(chromePrefab, holder);
-      holder.parent = parent;
-      holder.setSiblingIndex(0);
-      // 未激活时 Label/Sprite 不跑 onEnable，方正字和解码会拖到空的 Main 里。加载层盖住并挡住点击。
-      // 画完两帧再关掉，登录界面出来之前这层是隐藏的。
-      try {
-        holder.active = true;
-        await afterPaint();
-        await afterPaint();
-      } catch (err) {
-        GameLog.shared.warn("CityHubView", "stage paint " + (err instanceof Error ? err.message : "failed"));
-      }
-      if (!holder.isValid) return;
-      holder.active = false;
-      if (holder.parent === parent) holder.setSiblingIndex(0);
-      staged = { holder, hub, chrome };
-      GameLog.shared.info("CityHubView", "staged shell behind loading");
+        if (staged && staged.holder.isValid) return;
+        const [hubPrefab, chromePrefab] = await Promise.all([
+            loadPrefab(CITY_HUB_PREFAB_PATH),
+            loadPrefab(CITY_CHROME_PREFAB_PATH),
+        ]);
+        if (!parent.isValid) return;
+        const holder = new Node("CityStage");
+        holder.active = false;
+        try {
+            const hub = spawnPrefab(hubPrefab, holder);
+            const chrome = spawnPrefab(chromePrefab, holder);
+            holder.parent = parent;
+            holder.setSiblingIndex(0);
+            // 未激活时 Label/Sprite 不跑 onEnable，方正字和解码会拖到空的 Main 里。加载层盖住并挡住点击。
+            // 画完两帧再关掉，登录界面出来之前这层是隐藏的。
+            try {
+                holder.active = true;
+                await afterPaint();
+                await afterPaint();
+            } catch (err) {
+                GameLog.shared.classified("MODULE", "warn", "CityHubView", "stage paint " + (err instanceof Error ? err.message : "failed"));
+            }
+            if (!holder.isValid) return;
+            holder.active = false;
+            if (holder.parent === parent) holder.setSiblingIndex(0);
+            staged = { holder, hub, chrome };
+            GameLog.shared.classified("MODULE", "info", "CityHubView", "staged shell behind loading");
+        } catch (err) {
+            if (holder.isValid) holder.destroy();
+            throw err;
+        }
     } catch (err) {
-      if (holder.isValid) holder.destroy();
-      throw err;
+        staged = null;
+        GameLog.shared.classified("MODULE", "warn", "CityHubView", "stage shell " + (err instanceof Error ? err.message : "failed"));
     }
-  } catch (err) {
-    staged = null;
-    GameLog.shared.warn("CityHubView", "stage shell " + (err instanceof Error ? err.message : "failed"));
-  }
 }
 
 /**
@@ -72,81 +72,81 @@ async function runStage(parent: Node): Promise<void> {
  * 进 Main 的回调里再挂回新画布。
  */
 export function liftStagedCity(): void {
-  if (!staged || !staged.holder.isValid) return;
-  const scene = director.getScene();
-  if (!scene) return;
-  const holder = staged.holder;
-  holder.parent = scene;
-  director.addPersistRootNode(holder);
+    if (!staged || !staged.holder.isValid) return;
+    const scene = director.getScene();
+    if (!scene) return;
+    const holder = staged.holder;
+    holder.parent = scene;
+    director.addPersistRootNode(holder);
 }
 
 export function takeStagedHub(): Node | null {
-  return take("hub");
+    return take("hub");
 }
 
 export function takeStagedChrome(): Node | null {
-  return take("chrome");
+    return take("chrome");
 }
 
 /** 不用预制时把已经实例化的那份拆掉，避免常驻节点空挂着。 */
 export function discardStagedHub(): void {
-  discard("hub");
+    discard("hub");
 }
 
 export function discardStagedChrome(): void {
-  discard("chrome");
+    discard("chrome");
 }
 
 function take(kind: "hub" | "chrome"): Node | null {
-  if (!staged) return null;
-  const node = staged[kind];
-  if (!node || !node.isValid) {
+    if (!staged) return null;
+    const node = staged[kind];
+    if (!node || !node.isValid) {
+        staged[kind] = null;
+        releaseHolderIfEmpty();
+        return null;
+    }
     staged[kind] = null;
+    node.parent = null;
+    node.active = true;
     releaseHolderIfEmpty();
-    return null;
-  }
-  staged[kind] = null;
-  node.parent = null;
-  node.active = true;
-  releaseHolderIfEmpty();
-  return node;
+    return node;
 }
 
 function discard(kind: "hub" | "chrome"): void {
-  if (!staged) return;
-  const node = staged[kind];
-  staged[kind] = null;
-  if (node && node.isValid) node.destroy();
-  releaseHolderIfEmpty();
+    if (!staged) return;
+    const node = staged[kind];
+    staged[kind] = null;
+    if (node && node.isValid) node.destroy();
+    releaseHolderIfEmpty();
 }
 
 /** 等一帧绘制。事件没发出时用定时器放行，避免加载条永远停住。 */
 function afterPaint(): Promise<void> {
-  return new Promise((resolve) => {
-    let settled = false;
-    const finish = (): void => {
-      if (settled) return;
-      settled = true;
-      resolve();
-    };
-    const timer = setTimeout(finish, 100);
-    try {
-      director.once(AFTER_DRAW, () => {
-        clearTimeout(timer);
-        finish();
-      });
-    } catch (_err) {
-      // 定时器仍会放行。
-    }
-  });
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = (): void => {
+            if (settled) return;
+            settled = true;
+            resolve();
+        };
+        const timer = setTimeout(finish, 100);
+        try {
+            director.once(AFTER_DRAW, () => {
+                clearTimeout(timer);
+                finish();
+            });
+        } catch (_err) {
+            // 定时器仍会放行。
+        }
+    });
 }
 
 function releaseHolderIfEmpty(): void {
-  if (!staged) return;
-  if (staged.hub || staged.chrome) return;
-  const holder = staged.holder;
-  staged = null;
-  if (!holder.isValid) return;
-  director.removePersistRootNode(holder);
-  holder.destroy();
+    if (!staged) return;
+    if (staged.hub || staged.chrome) return;
+    const holder = staged.holder;
+    staged = null;
+    if (!holder.isValid) return;
+    director.removePersistRootNode(holder);
+    holder.destroy();
 }

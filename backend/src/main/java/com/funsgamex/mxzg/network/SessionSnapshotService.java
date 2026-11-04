@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.*;
 @Service
 public class SessionSnapshotService {
     /** 角色、库存与持久版本的一致读结果；英雄名册与库存处于同一角色锁事务。 */
-    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory, long revision, TimedInventoryService.State timedInventory, HeroCapacityService.State heroRoster) {}
+    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory, long revision, TimedInventoryService.State timedInventory, HeroCapacityService.State heroRoster, com.funsgamex.mxzg.lineup.MainFormationStateService.State mainFormation) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -29,9 +29,12 @@ public class SessionSnapshotService {
     /** 同一角色锁内读取总容量和扩容次数。 */
     private final HeroCapacityService capacity;
 
+    /** 与名册同事务的阵型永久解锁和站位投影。 */
+    private final com.funsgamex.mxzg.lineup.MainFormationStateService formations;
+
     /** 注入原有数据入口，不新增玩家状态副本。 */
-    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory, TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity) {
-        this.sessions = sessions; this.roles = roles; this.inventory = inventory; this.timed=timed; this.heroes=heroes; this.capacity=capacity;
+    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory, TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity,com.funsgamex.mxzg.lineup.MainFormationStateService formations) {
+        this.sessions = sessions; this.roles = roles; this.inventory = inventory; this.timed=timed; this.heroes=heroes; this.capacity=capacity;this.formations=formations;
     }
 
     /** 锁内再次校验，撤销同角色其他令牌；并发接管中已失效的令牌不能复活。 */
@@ -49,7 +52,8 @@ public class SessionSnapshotService {
         String role = sessions.requireRole(token);
         roles.lock(role);
         sessions.requireRole(token);
+        var formation=formations.refresh(role);
         var timedState=timed.current(role,java.time.Instant.now().getEpochSecond());
-        return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role), roles.revision(role), timedState, capacity.current(role));
+        return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role), roles.revision(role), timedState, capacity.current(role),formation);
     }
 }

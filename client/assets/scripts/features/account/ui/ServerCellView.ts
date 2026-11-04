@@ -55,8 +55,10 @@ export class ServerCellView extends Component {
         }
         if (this.tap)
             this.node.off(Button.EventType.CLICK, this.tap);
-        this.tap = () => { if (server.enabled)
-            select(); };
+        this.tap = () => {
+            if (server.enabled)
+                select();
+        };
         this.node.on(Button.EventType.CLICK, this.tap);
     }
     /** 销毁格子时解除本实例的按钮监听。 */

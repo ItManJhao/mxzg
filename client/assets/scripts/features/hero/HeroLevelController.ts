@@ -1,11 +1,11 @@
 /** 会话级普通升级协调：复用唯一名册和 Bag 串行资产入口，关闭窗口不丢写结果，换号拒绝迟到状态。 */
-import {AccountModel} from "../account/AccountModel";
+import { AccountModel } from "../account/AccountModel";
 import { AccountService } from "../account/AccountService";
 import { SessionChanged } from "../../framework/SessionChanged";
 import { PausedInventoryUpdates, pausedInventoryUpdates } from "../PausedFeatures";
-import {HeroRosterController} from "./HeroRosterController";
-import {HeroLevelApi} from "./HeroLevelApi";
-import type {HeroLevelPreview} from "./HeroLevelApi";
+import { HeroRosterController } from "./HeroRosterController";
+import { HeroLevelApi } from "./HeroLevelApi";
+import type { HeroLevelPreview } from "./HeroLevelApi";
 import { SocketFailure } from "../../platform/GameSocketClient";
 
 export class HeroLevelController {
@@ -17,7 +17,7 @@ export class HeroLevelController {
     /** 只持有升级操作状态；角色身份、名册及库存仍由原模块管理。 */
     /** 注入会话服务、唯一名册模块和升级接口；页面不持有或销毁名册。 */
     constructor(private readonly account: AccountModel, private readonly auth: AccountService, private readonly roster: HeroRosterController,
-                private readonly api: HeroLevelApi, private readonly bag: PausedInventoryUpdates = pausedInventoryUpdates) {
+        private readonly api: HeroLevelApi, private readonly bag: PausedInventoryUpdates = pausedInventoryUpdates) {
         let role = account.snapshot.role?.id;
         this.off = account.subscribe(state => {
             if (state.busy || !state.role || state.role.id !== role) {

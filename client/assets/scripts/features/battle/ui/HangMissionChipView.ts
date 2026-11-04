@@ -13,19 +13,19 @@ const CHIP_ICON = ResourceCatalog.city.main_city_icon_main_mission.path;
  */
 @ccclass("HangMissionChipView")
 export class HangMissionChipView extends Component {
-  @property(Label)
-  caption: Label | null = null;
+    @property(Label)
+    caption: Label | null = null;
 
-  @property(Node)
-  icon: Node | null = null;
+    @property(Node)
+    icon: Node | null = null;
 
-  private painted = false;
+    private painted = false;
 
-  show(text: string): void {
-    if (!this.painted) {
-      this.painted = true;
-      paintSpritePaths(this.icon, [CHIP_ICON]);
+    show(text: string): void {
+        if (!this.painted) {
+            this.painted = true;
+            paintSpritePaths(this.icon, [CHIP_ICON]);
+        }
+        if (this.caption) this.caption.string = text;
     }
-    if (this.caption) this.caption.string = text;
-  }
 }

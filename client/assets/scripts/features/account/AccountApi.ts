@@ -1,7 +1,7 @@
 /** 账号边界：WebSocket 交换身份；统一初始化通过鉴权/同步后才交付角色，不持有玩家状态。 */
-import type {GameFrame} from "../../platform/GameProtocolCodec";
-import type {RoleProfile, RoleBasics} from "./AccountModel";
-import type {GameSocketClient} from "../../platform/GameSocketClient";
+import type { GameFrame } from "../../platform/GameProtocolCodec";
+import type { RoleProfile, RoleBasics } from "./AccountModel";
+import type { GameSocketClient } from "../../platform/GameSocketClient";
 
 export interface AccountSession {
     accessToken: string;
@@ -41,7 +41,7 @@ export function readSession(value: unknown): AccountSession {
     if (row.account !== undefined && (typeof row.account !== "string" || !/^[a-z0-9_-]{3,32}$/.test(row.account))) throw new Error("会话账号无效");
     return {
         accessToken: row.accessToken,
-        expiresAt: row.expiresAt, ...(typeof row.account === "string" ? {account: row.account} : {})
+        expiresAt: row.expiresAt, ...(typeof row.account === "string" ? { account: row.account } : {})
     };
 }
 
@@ -81,7 +81,7 @@ export function readRole(value: unknown): RoleProfile {
         level: Number(row.level),
         gold: Number(row.gold),
         diamonds: Number(row.diamonds),
-        ...(typeof serverId === "string" ? {serverId} : {}), ...(row.basics !== undefined ? {basics: readBasics(row.basics)} : {})
+        ...(typeof serverId === "string" ? { serverId } : {}), ...(row.basics !== undefined ? { basics: readBasics(row.basics) } : {})
     };
 }
 
@@ -97,7 +97,7 @@ export class AccountApi implements AccountGateway {
             initial = record(body.initial);
         const role = readRole(initial.role);
         if (role.serverId !== serverId) throw new Error("角色区服与所选区服不一致");
-        return {session: readSession(body.session), role};
+        return { session: readSession(body.session), role };
     }
 
     /** 恢复连接直接使用鉴权首包；已连接则读取同连接最近的权威状态，不发送额外查询。 */

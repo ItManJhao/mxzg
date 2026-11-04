@@ -174,3 +174,77 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 ### 通用纸面面板 CommonPanel1
 
 背包和英雄列表通过静态嵌套引用 assets/prefabs/ui/common/CommonPanel1.prefab，共享背景和标题，不复制独立节点。面板根 UITransform 尺寸就是可见纸面尺寸，背景填满根；标题由面板内部 Widget 居中并跟随上沿。页面只覆盖实例的位置、尺寸和标题文字；修改共用样式应编辑源预制体。不要解除嵌套关联，也不要在页面脚本重复移动内部标题。
+
+## 格式化与工具类静态入口
+
+2026-11-04新增用户约束；对后续新增和实际修改代码生效，现有文件按涉及范围逐步整改，不批量改无关模块。现有package.json未配置统一格式命令，本次只制定规范，不声称已安装/运行格式化工具。
+
+- 多条语句、构造函数注入、复杂分支和对象初始化展开；默认新建TS/Java使用4空格，已有文件先保持局部风格。长参数和长条件换行，逻辑块使用大括号，方法之间留空行。交付前检查排版；禁止继续压成难读的一行。
+- 无状态的数据转换/展示辅助用XxxUtils；面向某项协作任务的辅助用XxxHelper。统一使用完整英文名称，不混用help/util随意缩写。HeroSkillPresentation已迁为HeroSkillUtils，仍放在features/hero，不因Utils后缀移到通用层。
+- 工具类显式public static暴露入口、private static封装内部方法、private constructor阻止实例化。Controller/Model/Service等具有状态和生命周期的对象保持实例方法；静态方法不是消除依赖、缓存或生命周期的手段。
+- 允许类型/interface导出；引擎约定的函数、脚本入口、闭包工厂有理由时保留export function。迁移同步全部引用、测试与meta，保留资源UUID，不另留无必要旧入口。
+
+目标写法示意（不是已落地的HeroSkillUtils API）：
+
+```ts
+/** 英雄技能显示辅助：只整理文案，不管理窗口或玩家状态。 */
+export class HeroSkillUtils {
+    /** 纯静态工具不允许实例化。 */
+    private constructor() {}
+
+    /** 将已校验的技能等级转换为展示文字。 */
+    public static formatLevel(level: number): string {
+        if (level <= 0) {
+            return "未解锁";
+        }
+
+        return `Lv.${level}`;
+    }
+}
+```
+
+## 日志分层、颜色和失败处理
+
+现状：core/GameLog保留环形缓冲及旧入口，新增LogLayer、classified和warnOnce，集中管理职责层颜色。openView归框架层，默认蓝色#4ea1ff；framework/ui/UIOpenLog由UIManager等调用。业务模块原有GameLog日志已显式分类，应用装配和框架调用也已迁移；少量底层直接console异常入口仍待逐一核对后迁移。
+
+### 分类按职责，不按页面名称
+
+| 所属层 | 标识建议 | 固定颜色 | 典型来源 |
+|---|---|---|---|
+| 应用层 | APP | 紫色 #B388FF | 启动装配、登录后协调、AssetStateBinding |
+| 模块层 | MODULE | 绿色 #66BB6A | Hero/Bag/Role等Controller、Model、View及业务Utils |
+| 框架层 | FRAMEWORK | 蓝色 #4EA1FF | UIManager、页面栈、事件派发、通用资源生命周期 |
+| 平台通信层 | PLATFORM | 青色 #26C6DA | WebSocket、Protobuf、平台适配、网络收发 |
+| 配置资源层 | CONFIG | 金色 #D4A72C | 配置解析/引用校验、资源目录查找与配置生成结果 |
+| 开发工具层 | DEV | 灰色 #90A4AE | GM开发诊断、测试宿主与编辑器辅助 |
+
+UIManager打印“打开HeroInfoView”仍是框架层蓝色；HeroInfoView打印“英雄技能配置缺失”属于模块层/Hero；配置加载器自身报告同一缺表属于配置资源层。业务调用点明确传所属层与来源，不按路径字符串自动猜测。只在真正负责处理失败的一层记录一次，避免同一错误在两层重复打印。
+
+分层、来源、级别是三个维度。建议纯文本形态为`[mxzg][MODULE][HeroSkillUtils][error] 时间 内容`。debug/info常规文本沿分类色；warn/error保留分类前缀色，级别可额外使用橙色#FFB74D/红色#EF5350并走相应控制台通道。不能让错误把所属层信息覆盖掉；也不能只靠颜色辨识错误。无CSS控制台（Node/部分小游戏环境）保留完整文本，不输出裸%c或颜色控制字符。
+
+色板/枚举统一放GameLog相关核心，不由每个模块维护。现有UI打开蓝色行为保留；迁移时兼容环形缓冲、纯文本format、订阅和收包脱敏。业务不直接调用console；日志核心、不可依赖核心的启动兜底及独立工具可按边界使用。后端继续使用现有Java日志体系，以分类标签对应上述职责，不要求把浏览器CSS输出搬到Java。
+
+### 打印与中止不是同一件事
+
+| 情况 | 日志与行为 |
+|---|---|
+| 正常开窗、状态同步完成 | info/debug，记录必要来源与耗时，不抛异常 |
+| 可恢复展示缺配置/资源 | warn/error一次，返回明确缺失结果或中止本页打开；View展示缺失/失败状态，不造默认属性 |
+| 非法协议、角色归属错误、资产不一致 | 拒绝整包/回滚；在接收边界记录一次，保留异常原因，不能仅打印后继续提交Model |
+| 无法安全继续的配置缺失/程序不变量 | 中止该流程，保留throw或明确失败结果，上层负责统一记录与反馈 |
+
+针对`throw new Error("缺少英雄技能配置：" + id + " / " + previewLevel)`，后续整改应把错误日志归为模块层/HeroSkillUtils，记录技能ID、等级及调用结果。若采用“打印并返回缺失”的方式，必须同步修改返回类型、调用方和测试，禁止只删除throw后继续访问row。整包协议和资产校验的throw不在这类展示提示替换范围。
+
+重复刷新按来源/稳定错误码/配置键去重或限频；退出或会话切换按需要清理限频状态。网络日志仍脱敏凭证，默认不显示心跳，有界截断；任何日志故障不得导致业务失败。用户可见提示由View/Controller的失败流程负责，不直接将开发堆栈弹给玩家。
+
+### 实施顺序与本轮边界
+
+已接入GameLog.classified与warnOnce，集中管理层颜色、级别颜色和有界告警去重；UIManager打开日志归FRAMEWORK。HeroSkillUtils已替代HeroSkillPresentation并保留脚本meta UUID；技能展示缺行时返回available=false，禁用说明入口并记录MODULE告警。其余旧日志入口继续可用，尚未全库迁移。
+
+## 当前模块归档标准（2026-11-04）
+
+以用户整理的bag为准：模块目录小写，根目录保留业务Controller/Model及有生命周期的入口；data保存数据和交互类型；ui保存页面与格子组件；utils保存事件名、配置索引及展示工具。目录归档不强制将有缓存/订阅的对象变成静态类。
+
+本批Bag已改为bag；HeroRosterUtils以public static present投影名册，HeroRosterSource/View归入data/HeroRosterData。英雄技能、配置索引、装备读取、事件和详情尺寸归入hero/utils；账号头像/布局归入account/utils；主城导航归入city/utils；战斗字体/只读资源目录归入battle/utils；GM两个View归入gm/ui。所有移动脚本保留原meta，背包展示工具的孤立meta已归位并恢复原UUID。
+
+三个模块Controller对于非自身协议的直接通知改为MODULE去重告警后忽略，未更新Model；ProtocolRouter仍拒绝未登记/非法回包，应用仍原子校验整包资产。这不表示允许未知协议或错误数据入库。

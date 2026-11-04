@@ -1,13 +1,13 @@
 /** Generated from tools/prefab-plan.json by tools/generate_resources.cjs. */
 const paths = new Set<string>([
   "bundles/remake-home/RemakeHomeView",
-  "prefabs/ui/Bag/BagInfoView",
-  "prefabs/ui/Bag/BagItemView",
-  "prefabs/ui/Bag/BagTabView",
-  "prefabs/ui/Bag/BagView",
   "prefabs/ui/ability/AbilityInfoLayer",
   "prefabs/ui/account/AccountLoginView",
   "prefabs/ui/account/RoleProfileView",
+  "prefabs/ui/bag/BagInfoView",
+  "prefabs/ui/bag/BagItemView",
+  "prefabs/ui/bag/BagTabView",
+  "prefabs/ui/bag/BagView",
   "prefabs/ui/battle/BattleDetailCell",
   "prefabs/ui/battle/BattleDetailLayer",
   "prefabs/ui/battle/BattleEditLayer",
@@ -92,7 +92,6 @@ const paths = new Set<string>([
   "prefabs/ui/role/ChangeNickLayer",
   "prefabs/ui/role/RoleInfoLayer",
   "prefabs/ui/role/RoleUpgradeLayer",
-  "prefabs/ui/setting/SettingLayer",
   "prefabs/ui/summon/SummonCell",
   "prefabs/ui/summon/SummonLayer"
 ]);

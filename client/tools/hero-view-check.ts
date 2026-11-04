@@ -2,12 +2,12 @@ import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { HeroInfoView } from "../assets/scripts/features/hero/ui/HeroInfoView";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";
-import { presentHeroRoster } from "../assets/scripts/features/hero/HeroRosterPresentation";
+import { HeroRosterUtils } from "../assets/scripts/features/hero/utils/HeroRosterUtils";
 import { Protocol } from "../assets/scripts/platform/Protocol";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
-import { HeroRosterEvent } from "../assets/scripts/features/hero/HeroRosterEvent";
+import { HeroRosterEvent } from "../assets/scripts/features/hero/utils/HeroRosterEvent";
 /** 英雄模块回归：核对显式初始化、唯一状态、事件清理和异步会话隔离。 */
 import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
 /** Display-only helpers retained for the Remake flow. */
@@ -35,7 +35,7 @@ import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 
 import { AccountService } from "../assets/scripts/features/account/AccountService";
 
-import { HeroCatalog } from "../assets/scripts/features/hero/HeroCatalog";
+import { HeroCatalog } from "../assets/scripts/features/hero/utils/HeroCatalog";
 
 import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
 
@@ -394,7 +394,7 @@ async function checkRemakeRoster(): Promise<void> {
     {id:"level",templateId:10101001,level:2,star:4,deployed:true},
     {id:"template",templateId:10101002,level:2,star:4,deployed:true},
   ];
-  const sorted=presentHeroRoster({status:"ready",heroes:samples,error:"",rosterInfo:{capacity:326,buySpaceTimes:1}},catalog,0);
+  const sorted=HeroRosterUtils.present({status:"ready",heroes:samples,error:"",rosterInfo:{capacity:326,buySpaceTimes:1}},catalog,0);
   assert(sorted.capacityLine==="英雄：5/326","直接显示服务端总容量，不重复叠加 VIP");
   assert(sorted.cells.map(cell=>cell.instanceId).join(",")==="template,level,higher,lower,reserve","旧版上阵、星级、等级、模板优先级");
   assert(samples[0].id==="reserve","展示排序不修改唯一名册");

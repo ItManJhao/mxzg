@@ -4,7 +4,7 @@ import { AccountService } from "../account/AccountService";
 import { SessionChanged } from "../../framework/SessionChanged";
 import { AccountModel } from "../account/AccountModel";
 import { HeroApi, OwnedHero } from "./HeroApi";
-import { HeroCatalog } from "./HeroCatalog";
+import { HeroCatalog } from "./utils/HeroCatalog";
 import { LineupApi, MainLineup, MAIN_POSITIONS } from "./LineupApi";
 export interface FormationState {
     heroes: readonly OwnedHero[];

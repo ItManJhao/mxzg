@@ -5,7 +5,7 @@ import { Button, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UITr
 import { setEditorContext } from "./cc-env";
 import { SuperAxis, SuperContent, SuperLayout } from "../assets/scripts/framework/ui/SuperContent";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
-import { BagItemView } from "../assets/scripts/features/Bag/ui/BagItemView";
+import { BagItemView } from "../assets/scripts/features/bag/ui/BagItemView";
 
 function node(name: string, width: number, height: number, parent?: Node): Node {
     const result = new Node(name); const ui = result.addComponent(UITransform);
@@ -114,7 +114,7 @@ function checkEditorPreview(): void {
         assert.equal(list.length,0,"editor samples are not runtime data");
         list.previewCount=0;(list as any).update();assert.equal(list.node.children.length,0);
         setEditorContext(false,true);list.previewCount=6;(list as any).update();assert.equal(list.node.children.length,0,"preview samples cannot become player inventory");
-        const source=JSON.parse(readFileSync("client/assets/prefabs/ui/Bag/BagView.prefab","utf8"));
+        const source=JSON.parse(readFileSync("client/assets/prefabs/ui/bag/BagView.prefab","utf8"));
         assert.equal(source.find((row:any)=>"previewCount"in row).previewCount,0);
         assert(!source.some((row:any)=>row._name?.startsWith("__SuperContentPreview__")));
     } finally {setEditorContext(false,true);}

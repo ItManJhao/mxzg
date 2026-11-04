@@ -25,7 +25,7 @@ export function readMainLineup(value: unknown): MainLineup {
 }
 export class LineupApi {
     /** 暂停模块不再依赖网络客户端。 */
-    constructor() {}
+    constructor() { }
     /** GET: the version returned here is required by the subsequent PUT. */
     async current(token: string): Promise<MainLineup> {
         return readMainLineup(await featureUnavailable());

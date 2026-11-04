@@ -12,7 +12,7 @@ import { mountNamedSpine } from "../../features/battle/ui/battleSpine";
 import { findNode, loadPrefab, spawnPrefab } from "../../framework/assets/PrefabLoader";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../framework/ui/visibleFit";
 import { createButton, createLabel, place, setText, uiNode } from "../../framework/ui/UiKit";
-import { loginLayout } from "../../features/account/ui/LoginLayout";
+import { LoginLayoutUtils } from "../../features/account/utils/LoginLayoutUtils";
 
 /** 登陆界面人物簇。spine/jiemian，动作 stand。 */
 const BOOT_CAST_STEM = "jiemian";
@@ -130,7 +130,7 @@ export class BootChrome {
       root = spawnPrefab(prefab, this.parent);
     } catch (err) {
       if (this.destroyed || !this.parent.isValid) return;
-      GameLog.shared.warn("BootChrome", "加载层预制没有，不另造 " + (kind === "update" ? "UpdateLayer" : "LoadingLayer"));
+      GameLog.shared.classified("APP", "warn", "BootChrome", "加载层预制没有，不另造 " + (kind === "update" ? "UpdateLayer" : "LoadingLayer"));
       return;
     }
     this.root = root;
@@ -304,7 +304,7 @@ export class BootChrome {
     const bg = root.getChildByName("Bg");
     if (bg) host.setSiblingIndex(bg.getSiblingIndex() + 1);
     mountNamedSpine(host, BOOT_CAST_STEM, BOOT_CAST_CLIP, {
-      onFail: () => GameLog.shared.warn("Boot", "loading cast miss spine/" + BOOT_CAST_STEM + " clip=" + BOOT_CAST_CLIP),
+      onFail: () => GameLog.shared.classified("APP", "warn", "Boot", "loading cast miss spine/" + BOOT_CAST_STEM + " clip=" + BOOT_CAST_CLIP),
     });
   }
 
@@ -367,7 +367,7 @@ export class BootChrome {
 export function fitLoadingBackdrop(root: Node): void {
   if (!root.isValid) return;
   const box = fitVisibleRoot(root);
-  const layout = loginLayout(box.width, box.height);
+  const layout = LoginLayoutUtils.calculate(box.width, box.height);
   const cast = root.getChildByName("BootCast");
   if (cast) {
     cast.setScale(layout.castScale, layout.castScale, 1);

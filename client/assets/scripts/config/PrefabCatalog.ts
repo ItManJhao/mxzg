@@ -9,13 +9,13 @@ export const CITY_HUB_PREFAB_PATH = "prefabs/ui/city/CityHubView";
 /** 与 .prefab.meta 的 uuid 一致。只给 loadAny 兜底，不拿去 resources.load。 */
 export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "bundles/remake-home/RemakeHomeView": "bd1203e8-e72a-5d44-bc5c-ab68a868898a",
-  "prefabs/ui/Bag/BagInfoView": "f151a2c1-a24a-4e5d-9d67-2096089cde82",
-  "prefabs/ui/Bag/BagItemView": "c4e8a1b2-7d33-4f61-9a20-6b5e0d4c8f11",
-  "prefabs/ui/Bag/BagTabView": "d5f9b2c3-8e44-4072-ab31-7c6f1e5d9022",
-  "prefabs/ui/Bag/BagView": "6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb",
   "prefabs/ui/ability/AbilityInfoLayer": "3a767955-166a-4395-a9cf-28428a581864",
   "prefabs/ui/account/AccountLoginView": "61d32fd8-b35a-5ddc-bf5f-ea5026c8c23b",
   "prefabs/ui/account/RoleProfileView": "1aedb5a3-4e33-552f-843c-c419fd8174a4",
+  "prefabs/ui/bag/BagInfoView": "f151a2c1-a24a-4e5d-9d67-2096089cde82",
+  "prefabs/ui/bag/BagItemView": "c4e8a1b2-7d33-4f61-9a20-6b5e0d4c8f11",
+  "prefabs/ui/bag/BagTabView": "d5f9b2c3-8e44-4072-ab31-7c6f1e5d9022",
+  "prefabs/ui/bag/BagView": "6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb",
   "prefabs/ui/battle/BattleDetailCell": "5292128a-6bc8-46d2-8df9-27c886761aa4",
   "prefabs/ui/battle/BattleDetailLayer": "8d8bc954-91e3-4cd3-a7a3-45f6ebb12ca5",
   "prefabs/ui/battle/BattleEditLayer": "63bafa92-a057-42a6-ba03-34a398a4d60f",

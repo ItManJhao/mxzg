@@ -7,7 +7,7 @@ import { ancestorScale } from "../../../framework/ui/visibleFit";
 import { spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { HeroIconCellView } from "./HeroIconCellView";
 import { FormationSlotView } from "./FormationSlotView";
-import { HeroCatalog } from "../HeroCatalog";
+import { HeroCatalog } from "../utils/HeroCatalog";
 import { MAIN_POSITIONS } from "../LineupApi";
 import type { FormationState, FormationScreen, FormationActions } from "../FormationController";
 
@@ -71,10 +71,12 @@ export class FormationView extends BaseView<FormationRequest> implements Formati
     }
 
     private validateBindings(): void {
-        const fields = { closeButton: this.closeButton, confirmButton: this.confirmButton, titleLabel: this.titleLabel,
+        const fields = {
+            closeButton: this.closeButton, confirmButton: this.confirmButton, titleLabel: this.titleLabel,
             tipLabel: this.tipLabel, countLabel: this.countLabel, grid: this.grid, scrollContent: this.scrollContent,
             scrollPort: this.scrollPort, scrollView: this.scrollView, filterMark: this.filterMark, cellPrefab: this.cellPrefab,
-            panelBounds: this.panelBounds, backdropButton: this.backdropButton, backdropBounds: this.backdropBounds };
+            panelBounds: this.panelBounds, backdropButton: this.backdropButton, backdropBounds: this.backdropBounds
+        };
         for (const [field, value] of Object.entries(fields)) {
             if (!value) throw new Error(PREFAB + " / FormationView: 缺失绑定 " + field);
         }
@@ -162,9 +164,11 @@ export class FormationView extends BaseView<FormationRequest> implements Formati
             const bounds = cell.getComponent(UITransform);
             if (!component || !bounds) throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab: 缺少 HeroIconCellView 或 UITransform");
             cellHeight = Math.max(cellHeight, bounds.height * Math.abs(cell.scale.y));
-            component.show({ kind: "owned", name: face?.name || String(hero.templateId), showName: true,
+            component.show({
+                kind: "owned", name: face?.name || String(hero.templateId), showName: true,
                 face: face?.icon || null, elem: face?.elem || null, level: hero.level, stars: hero.star, locked: false,
-                deployed: state.lineup.slots.some(slot => slot.heroId === hero.id) }, state.busy ? null : () => this.actions?.toggle(hero.id));
+                deployed: state.lineup.slots.some(slot => slot.heroId === hero.id)
+            }, state.busy ? null : () => this.actions?.toggle(hero.id));
         });
         const content = this.scrollContent!.getComponent(UITransform)!;
         const port = this.scrollPort!.getComponent(UITransform)!;

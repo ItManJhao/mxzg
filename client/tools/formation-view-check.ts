@@ -5,7 +5,7 @@ import { Button, Color, Label, Mask, Node, Prefab, ScrollView, Sprite, UITransfo
 import { FormationView } from "../assets/scripts/features/hero/ui/FormationView";
 import { FormationSlotView } from "../assets/scripts/features/hero/ui/FormationSlotView";
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
-import { HeroCatalog } from "../assets/scripts/features/hero/HeroCatalog";
+import { HeroCatalog } from "../assets/scripts/features/hero/utils/HeroCatalog";
 
 const PAGE = "client/assets/prefabs/ui/hero/FormationView.prefab";
 const CELL = "client/assets/prefabs/ui/hero/HeroIconCellView.prefab";

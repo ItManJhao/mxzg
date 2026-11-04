@@ -185,7 +185,7 @@ export function bindVisibleRefresh(owner: Node, apply: () => void): void {
     try {
       apply();
     } catch (err) {
-      GameLog.shared.error("VisibleFit", messageOf(err));
+      GameLog.shared.classified("FRAMEWORK", "error", "VisibleFit", messageOf(err));
     }
   };
   safe();

@@ -1,8 +1,8 @@
 /** Compile-only contracts. This function is never executed and sends no test events. */
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
-import { BagEvent } from "../assets/scripts/features/Bag/BagEvent";
-import type { BagUpdateData } from "../assets/scripts/features/Bag/data/BagEventData";
-import { BagController } from "../assets/scripts/features/Bag/BagController";
+import { BagEvent } from "../assets/scripts/features/bag/utils/BagEvent";
+import type { BagUpdateData } from "../assets/scripts/features/bag/data/BagEventData";
+import { BagController } from "../assets/scripts/features/bag/BagController";
 import type { ViewController } from "../assets/scripts/framework/ui/UIRegistry";
 
 function checkEventAndLifecycleTypes(data: BagUpdateData): void {

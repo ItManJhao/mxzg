@@ -215,7 +215,7 @@ export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle 
   };
   resources.load(LOADING_BG_FRAME + "/spriteFrame", SpriteFrame, (err, frame) => {
     if (!stopped && bg.isValid) {
-      if (err || !frame) GameLog.shared.warn("Boot", "logo backdrop miss " + LOADING_BG_FRAME);
+      if (err || !frame) GameLog.shared.classified("APP", "warn", "Boot", "logo backdrop miss " + LOADING_BG_FRAME);
       else bgSprite.spriteFrame = frame;
     }
     begin();

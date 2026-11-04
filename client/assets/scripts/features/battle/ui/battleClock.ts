@@ -7,58 +7,58 @@
 import { director, Director } from "cc";
 
 export function armBattleDelay(ms: number, fn: () => void): () => void {
-  let done = false;
-  const stops: Array<() => void> = [];
-  const finish = (): void => {
-    if (done) return;
-    done = true;
-    for (let i = 0; i < stops.length; i++) stops[i]();
-    fn();
-  };
-  let elapsed = 0;
-  let last = Date.now();
-  const tick = (): void => {
-    const now = Date.now();
-    let step = now - last;
-    last = now;
-    if (step < 0) step = 0;
-    if (step > 100) step = 100;
-    elapsed += step;
-    if (elapsed >= ms) finish();
-  };
-  let armed = false;
-  const eventName = Director && Director.EVENT_AFTER_UPDATE;
-  if (eventName && director && typeof director.on === "function") {
-    try {
-      director.on(eventName, tick);
-      armed = true;
-      stops.push(() => {
-        if (typeof director.off === "function") director.off(eventName, tick);
-      });
-    } catch (err) {
-      armed = false;
-    }
-  }
-  if (!armed && typeof requestAnimationFrame === "function") {
-    let raf = 0;
-    const frame = (): void => {
-      if (done) return;
-      tick();
-      if (!done) raf = requestAnimationFrame(frame);
+    let done = false;
+    const stops: Array<() => void> = [];
+    const finish = (): void => {
+        if (done) return;
+        done = true;
+        for (let i = 0; i < stops.length; i++) stops[i]();
+        fn();
     };
-    raf = requestAnimationFrame(frame);
-    stops.push(() => {
-      if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(raf);
-    });
-  }
-  const wait = ms < 0 ? 0 : ms;
-  const timer = setTimeout(finish, wait);
-  const maybe = timer as { unref?: () => void };
-  if (typeof maybe.unref === "function") maybe.unref();
-  stops.push(() => clearTimeout(timer));
-  return () => {
-    if (done) return;
-    done = true;
-    for (let i = 0; i < stops.length; i++) stops[i]();
-  };
+    let elapsed = 0;
+    let last = Date.now();
+    const tick = (): void => {
+        const now = Date.now();
+        let step = now - last;
+        last = now;
+        if (step < 0) step = 0;
+        if (step > 100) step = 100;
+        elapsed += step;
+        if (elapsed >= ms) finish();
+    };
+    let armed = false;
+    const eventName = Director && Director.EVENT_AFTER_UPDATE;
+    if (eventName && director && typeof director.on === "function") {
+        try {
+            director.on(eventName, tick);
+            armed = true;
+            stops.push(() => {
+                if (typeof director.off === "function") director.off(eventName, tick);
+            });
+        } catch (err) {
+            armed = false;
+        }
+    }
+    if (!armed && typeof requestAnimationFrame === "function") {
+        let raf = 0;
+        const frame = (): void => {
+            if (done) return;
+            tick();
+            if (!done) raf = requestAnimationFrame(frame);
+        };
+        raf = requestAnimationFrame(frame);
+        stops.push(() => {
+            if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(raf);
+        });
+    }
+    const wait = ms < 0 ? 0 : ms;
+    const timer = setTimeout(finish, wait);
+    const maybe = timer as { unref?: () => void };
+    if (typeof maybe.unref === "function") maybe.unref();
+    stops.push(() => clearTimeout(timer));
+    return () => {
+        if (done) return;
+        done = true;
+        for (let i = 0; i < stops.length; i++) stops[i]();
+    };
 }

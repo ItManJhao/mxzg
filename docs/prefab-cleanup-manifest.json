@@ -28,28 +28,28 @@
       ]
     },
     {
-      "path": "prefabs/ui/Bag/BagInfoView.prefab",
+      "path": "prefabs/ui/bag/BagInfoView.prefab",
       "reason": "Inventory list, tabs, cell and detail",
       "phases": [
         "P4"
       ]
     },
     {
-      "path": "prefabs/ui/Bag/BagItemView.prefab",
+      "path": "prefabs/ui/bag/BagItemView.prefab",
       "reason": "Inventory list, tabs, cell and detail",
       "phases": [
         "P4"
       ]
     },
     {
-      "path": "prefabs/ui/Bag/BagView.prefab",
+      "path": "prefabs/ui/bag/BagView.prefab",
       "reason": "Inventory list, tabs, cell and detail",
       "phases": [
         "P4"
       ]
     },
     {
-      "path": "prefabs/ui/Bag/BagTabView.prefab",
+      "path": "prefabs/ui/bag/BagTabView.prefab",
       "reason": "Inventory list, tabs, cell and detail",
       "phases": [
         "P4"

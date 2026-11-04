@@ -1,5 +1,5 @@
 /** 区服选择：读取应用注入的 WebSocket 目录，保存用户选择。 */
-import type {GameSocketClient} from "../../platform/GameSocketClient";
+import type { GameSocketClient } from "../../platform/GameSocketClient";
 
 export interface GameServer {
     readonly id: string;

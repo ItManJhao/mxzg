@@ -1,11 +1,11 @@
 /** 自身角色资料只读 View：复用旧 SettingLayer，UIManager 统一开关并订阅唯一账号状态；不查询角色、不修改资产。 */
-import {_decorator, Button, Label, Node, UITransform, view} from "cc";
+import { _decorator, Button, Label, Node, UITransform, view } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import type { AccountModel } from "../AccountModel";
-import type {RoleProfile} from "../AccountModel";
-import {paintRolePortrait} from "./RolePortrait";
+import type { RoleProfile } from "../AccountModel";
+import { paintRolePortrait } from "../utils/RolePortrait";
 
-const {ccclass, property} = _decorator;
+const { ccclass, property } = _decorator;
 
 /** 应用层注入唯一账号状态与既有操作，不携带凭证或另存角色快照。 */
 export interface RoleProfileOpenArgs {
@@ -45,7 +45,7 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
     /** 设置面板返回按钮。 */
     @property(Button) settingsClose: Button | null = null;
     /** 设置中的开发 GM 入口，未注入能力时隐藏。 */
-    @property(Button) gmButton:Button|null=null;
+    @property(Button) gmButton: Button | null = null;
     /** 当前实例的按钮注销函数；重复绑定先清理，销毁时释放。 */
     private stops: Array<() => void> = [];
     /** 当前模型订阅；重复打开先退订，关闭时释放。 */
@@ -70,7 +70,7 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
             if (this.settingsPanel) this.settingsPanel.active = false;
         });
         bind(this.logoutButton, logout);
-        if(this.gmButton){this.gmButton.node.active=!!this.args?.openGm;if(this.args?.openGm)bind(this.gmButton,()=>this.args?.openGm?.());}
+        if (this.gmButton) { this.gmButton.node.active = !!this.args?.openGm; if (this.args?.openGm) bind(this.gmButton, () => this.args?.openGm?.()); }
         for (const button of this.readonlyButtons) bind(button, () => notice("当前为角色资料只读展示，该操作暂未开放"));
     }
 

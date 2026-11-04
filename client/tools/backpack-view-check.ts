@@ -8,20 +8,20 @@ import { clearPrefabCache } from "../assets/scripts/framework/assets/PrefabLoade
 import { ConfigTableFile } from "../assets/scripts/config/types";
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
-import { BagItemCatalog } from "../assets/scripts/features/Bag/BagItemCatalog";
+import { BagItemCatalog } from "../assets/scripts/features/bag/utils/BagItemCatalog";
 import { ancestorScale } from "../assets/scripts/framework/ui/visibleFit";
 import { CONFIG_SCHEMA, ConfigName } from "../assets/scripts/config/GConfig";
-import { BagModel } from "../assets/scripts/features/Bag/BagModel";
+import { BagModel } from "../assets/scripts/features/bag/BagModel";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
-import { BagController } from "../assets/scripts/features/Bag/BagController";
-import { BagEvent } from "../assets/scripts/features/Bag/BagEvent";
+import { BagController } from "../assets/scripts/features/bag/BagController";
+import { BagEvent } from "../assets/scripts/features/bag/utils/BagEvent";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
-import { BagInfoView } from "../assets/scripts/features/Bag/ui/BagInfoView";
-import { BagItemView } from "../assets/scripts/features/Bag/ui/BagItemView";
-import { BagTabView } from "../assets/scripts/features/Bag/ui/BagTabView";
+import { BagInfoView } from "../assets/scripts/features/bag/ui/BagInfoView";
+import { BagItemView } from "../assets/scripts/features/bag/ui/BagItemView";
+import { BagTabView } from "../assets/scripts/features/bag/ui/BagTabView";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
-import { BagView } from "../assets/scripts/features/Bag/ui/BagView";
+import { BagView } from "../assets/scripts/features/bag/ui/BagView";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { isOpenCancelled, UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { view, viewCtorById, viewSpecOf } from "../assets/scripts/framework/ui/UIRegistry";
@@ -200,7 +200,7 @@ function assertRootOwns(data: PrefabObj[], compIndex: number): void {
 }
 
 function checkPrefabBindings(): void {
-  const layer = prefabAt("client/assets/prefabs/ui/Bag/BagView.prefab");
+  const layer = prefabAt("client/assets/prefabs/ui/bag/BagView.prefab");
   const view = componentOn(layer, VIEW_TYPE);
   assertRootOwns(layer, view.index);
   assertNodeRef(layer, view.comp, "sprBox", 10, "spr_box");
@@ -220,7 +220,7 @@ function checkPrefabBindings(): void {
   assert(uuidOf(view.comp.infoPrefab) === INFO_UUID, "infoPrefab uuid");
   assert(uuidOf(view.comp.dimPrefab) === DIM_UUID, "dimPrefab uuid");
 
-  const cellData = prefabAt("client/assets/prefabs/ui/Bag/BagItemView.prefab");
+  const cellData = prefabAt("client/assets/prefabs/ui/bag/BagItemView.prefab");
   const cell = componentOn(cellData, CELL_TYPE);
   assertRootOwns(cellData, cell.index);
   assertNodeRef(cellData, cell.comp, "frame", 5, "spr_frame");
@@ -239,13 +239,13 @@ function checkPrefabBindings(): void {
   const order = (layer[1]._children || []).map((row) => row.__id__);
   assert(order[0] === idOf(view.comp.portrait), "node_portrait 画在羊皮纸和 spr_bg 下面");
 
-  const tabData = prefabAt("client/assets/prefabs/ui/Bag/BagTabView.prefab");
+  const tabData = prefabAt("client/assets/prefabs/ui/bag/BagTabView.prefab");
   const tab = componentOn(tabData, TAB_TYPE);
   assertRootOwns(tabData, tab.index);
   assertCompRef(tabData, tab.comp, "title", 13, "cc.Label");
   assertCompRef(tabData, tab.comp, "button", 7, "cc.Button");
 
-  const infoData = prefabAt("client/assets/prefabs/ui/Bag/BagInfoView.prefab");
+  const infoData = prefabAt("client/assets/prefabs/ui/bag/BagInfoView.prefab");
   const info = componentOn(infoData, INFO_TYPE);
   assertRootOwns(infoData, info.index);
   assertNodeRef(infoData, info.comp, "bg", 4, "spr_bg");
@@ -268,29 +268,29 @@ function checkPrefabBindings(): void {
 
 function checkSources(): void {
   const views = [
-    "client/assets/scripts/features/Bag/ui/BagView.ts",
-    "client/assets/scripts/features/Bag/ui/BagItemView.ts",
-    "client/assets/scripts/features/Bag/ui/BagTabView.ts",
-    "client/assets/scripts/features/Bag/ui/BagInfoView.ts",
+    "client/assets/scripts/features/bag/ui/BagView.ts",
+    "client/assets/scripts/features/bag/ui/BagItemView.ts",
+    "client/assets/scripts/features/bag/ui/BagTabView.ts",
+    "client/assets/scripts/features/bag/ui/BagInfoView.ts",
   ];
   for (let i = 0; i < views.length; i++) {
     const text = read(views[i]);
     assert(text.indexOf("getChildByName") < 0, views[i] + " 不应 getChildByName");
     assert(text.indexOf("findNamed") < 0, views[i] + " 不应 findNamed");
   }
-  const cellSrc = read("client/assets/scripts/features/Bag/ui/BagItemView.ts");
+  const cellSrc = read("client/assets/scripts/features/bag/ui/BagItemView.ts");
   assert(cellSrc.indexOf("ResourceCatalog.common.other_rare_0") >= 0, "运行时格子底图走 other_rare");
   assert(cellSrc.indexOf("backpack_item-frame-1") < 0, "运行时不再把细金框刷进 spr_frame");
   assert(cellSrc.indexOf("backpack_spr-rare-") < 0, "运行时不再把稀有文字图刷进 spr_frame");
   assert(cellSrc.indexOf("other_spr-null") < 0, "空槽不再换成菱形空图");
-  const mount = read("client/assets/scripts/features/Bag/ui/BagMount.ts");
+  const mount = read("client/assets/scripts/features/bag/ui/BagMount.ts");
   assert(mount.indexOf("findNamed") < 0, "backpackMount 不应整树搜索");
   const layout = read("client/assets/scripts/framework/ui/PrefabLayout.ts");
   assert(!/WireSession|GameStore|fillPageShell/.test(layout), "shared layout has no retired business entry");
   assert(read("client/assets/scripts/framework/ui/UIManager.ts").includes("noteOpened("), "UIManager records page readiness");
   const detail =
-    read("client/assets/scripts/features/Bag/ui/BagMount.ts") +
-    read("client/assets/scripts/features/Bag/ui/BagInfoView.ts");
+    read("client/assets/scripts/features/bag/ui/BagMount.ts") +
+    read("client/assets/scripts/features/bag/ui/BagInfoView.ts");
   assert(detail.indexOf("195, 148") < 0, "详情底不再写死 195,148");
   assert(detail.indexOf("125, 330") < 0, "详情卡不再写死 125,330");
   assert(detail.indexOf("320, 480") < 0, "遮罩不再写死 320,480");
@@ -306,7 +306,7 @@ function checkSources(): void {
   assert(base.indexOf("onCreate") >= 0 && base.indexOf("onBind") >= 0, "BaseView 有 onCreate/onBind");
   assert(base.indexOf("onUnbind") >= 0 && base.indexOf("dispose") >= 0, "BaseView 有 onUnbind/dispose");
   assert(base.indexOf("failOpen") >= 0, "BaseView 能拒绝 whenReady");
-  const bagView = read("client/assets/scripts/features/Bag/ui/BagView.ts");
+  const bagView = read("client/assets/scripts/features/bag/ui/BagView.ts");
   assert(bagView.indexOf("failOpen") >= 0, "背包挂载失败要拒绝 whenReady");
   assert(bagView.indexOf("finally") < 0, "不能 catch 之后仍 finishOpen");
   assert(bagView.indexOf("mount: mountBagPage") >= 0, "挂载策略写在背包 ViewSpec 上");
@@ -318,7 +318,7 @@ function checkRegistry(): void {
   const spec = viewSpecOf(BagView);
   assert(spec !== null, "BagView 未注册");
   assert(spec.id === "bag", "页面 id 应是 bag");
-  assert(spec.prefab === "prefabs/ui/Bag/BagView", "预制路径");
+  assert(spec.prefab === "prefabs/ui/bag/BagView", "预制路径");
   assert(spec.layer === UILayer.Page, "层应是 Page");
   assert(spec.cache === false, "背包不缓存");
   assert(spec.allowMultiple === false, "背包不叠两份");

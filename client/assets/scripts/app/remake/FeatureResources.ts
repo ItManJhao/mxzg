@@ -8,8 +8,8 @@ import type { ResourceScope } from "../../framework/assets/ResourcePool";
 import { prepareInventoryConfig,prepareHeroConfig } from "../../config/RemakeConfig";
 import { loadPrefab } from "../../framework/assets/PrefabLoader";
 const groups = {
-    bag: [ResourceCatalog.prefab_Bag.BagView.assetPath, ResourceCatalog.prefab_Bag.BagItemView.assetPath, ResourceCatalog.prefab_Bag.BagTabView.assetPath,
-        ResourceCatalog.prefab_Bag.BagInfoView.assetPath, ResourceCatalog.prefab_common.DimSheet.assetPath, ResourceCatalog.prefab_common.PagePrefabShell.assetPath, ResourceCatalog.prefab_common.ListBackdrop.assetPath],
+    bag: [ResourceCatalog.prefab_bag.BagView.assetPath, ResourceCatalog.prefab_bag.BagItemView.assetPath, ResourceCatalog.prefab_bag.BagTabView.assetPath,
+        ResourceCatalog.prefab_bag.BagInfoView.assetPath, ResourceCatalog.prefab_common.DimSheet.assetPath, ResourceCatalog.prefab_common.PagePrefabShell.assetPath, ResourceCatalog.prefab_common.ListBackdrop.assetPath],
     campaign: [ResourceCatalog.prefab_battle.CampaignView.assetPath, ResourceCatalog.prefab_battle.BattlePage.assetPath, ResourceCatalog.prefab_battle.BattleEndLayer.assetPath, ResourceCatalog.prefab_common.PagePrefabShell.assetPath],
     servers: [ResourceCatalog.prefab_login.ServerPickerView.assetPath],
     formation: [ResourceCatalog.prefab_hero.FormationView.assetPath,ResourceCatalog.prefab_hero.HeroIconCellView.assetPath],

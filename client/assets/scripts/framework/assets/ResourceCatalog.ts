@@ -71,18 +71,18 @@ export const ResourceCatalog = {
     map_bg_mission_1: {"bundle":"resources","path":"ui/maps/map-bg-mission-1","assetPath":"resources/ui/maps/map-bg-mission-1","loadPath":"ui/maps/map-bg-mission-1/spriteFrame","type":"SpriteFrame","uuid":"26aac3a3-2eeb-4fc3-99a1-fb5c2782be7b@f9941"},
     map_bg_role_1: {"bundle":"resources","path":"ui/maps/map-bg-role-1","assetPath":"resources/ui/maps/map-bg-role-1","loadPath":"ui/maps/map-bg-role-1/spriteFrame","type":"SpriteFrame","uuid":"4e49da4f-d5e5-4340-b7ce-22256ee81e7c@f9941"},
   },
-  prefab_Bag: {
-    BagInfoView: {"bundle":"prefabs","path":"ui/Bag/BagInfoView","assetPath":"prefabs/ui/Bag/BagInfoView","loadPath":"ui/Bag/BagInfoView","type":"Prefab","uuid":"f151a2c1-a24a-4e5d-9d67-2096089cde82"},
-    BagItemView: {"bundle":"prefabs","path":"ui/Bag/BagItemView","assetPath":"prefabs/ui/Bag/BagItemView","loadPath":"ui/Bag/BagItemView","type":"Prefab","uuid":"c4e8a1b2-7d33-4f61-9a20-6b5e0d4c8f11"},
-    BagTabView: {"bundle":"prefabs","path":"ui/Bag/BagTabView","assetPath":"prefabs/ui/Bag/BagTabView","loadPath":"ui/Bag/BagTabView","type":"Prefab","uuid":"d5f9b2c3-8e44-4072-ab31-7c6f1e5d9022"},
-    BagView: {"bundle":"prefabs","path":"ui/Bag/BagView","assetPath":"prefabs/ui/Bag/BagView","loadPath":"ui/Bag/BagView","type":"Prefab","uuid":"6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb"},
-  },
   prefab_ability: {
     AbilityInfoLayer: {"bundle":"prefabs","path":"ui/ability/AbilityInfoLayer","assetPath":"prefabs/ui/ability/AbilityInfoLayer","loadPath":"ui/ability/AbilityInfoLayer","type":"Prefab","uuid":"3a767955-166a-4395-a9cf-28428a581864"},
   },
   prefab_account: {
     AccountLoginView: {"bundle":"prefabs","path":"ui/account/AccountLoginView","assetPath":"prefabs/ui/account/AccountLoginView","loadPath":"ui/account/AccountLoginView","type":"Prefab","uuid":"61d32fd8-b35a-5ddc-bf5f-ea5026c8c23b"},
     RoleProfileView: {"bundle":"prefabs","path":"ui/account/RoleProfileView","assetPath":"prefabs/ui/account/RoleProfileView","loadPath":"ui/account/RoleProfileView","type":"Prefab","uuid":"1aedb5a3-4e33-552f-843c-c419fd8174a4"},
+  },
+  prefab_bag: {
+    BagInfoView: {"bundle":"prefabs","path":"ui/bag/BagInfoView","assetPath":"prefabs/ui/bag/BagInfoView","loadPath":"ui/bag/BagInfoView","type":"Prefab","uuid":"f151a2c1-a24a-4e5d-9d67-2096089cde82"},
+    BagItemView: {"bundle":"prefabs","path":"ui/bag/BagItemView","assetPath":"prefabs/ui/bag/BagItemView","loadPath":"ui/bag/BagItemView","type":"Prefab","uuid":"c4e8a1b2-7d33-4f61-9a20-6b5e0d4c8f11"},
+    BagTabView: {"bundle":"prefabs","path":"ui/bag/BagTabView","assetPath":"prefabs/ui/bag/BagTabView","loadPath":"ui/bag/BagTabView","type":"Prefab","uuid":"d5f9b2c3-8e44-4072-ab31-7c6f1e5d9022"},
+    BagView: {"bundle":"prefabs","path":"ui/bag/BagView","assetPath":"prefabs/ui/bag/BagView","loadPath":"ui/bag/BagView","type":"Prefab","uuid":"6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb"},
   },
   prefab_battle: {
     BattleDetailCell: {"bundle":"prefabs","path":"ui/battle/BattleDetailCell","assetPath":"prefabs/ui/battle/BattleDetailCell","loadPath":"ui/battle/BattleDetailCell","type":"Prefab","uuid":"5292128a-6bc8-46d2-8df9-27c886761aa4"},

@@ -405,7 +405,7 @@ export class UIManager {
       if (page.host.isValid) this.cached.set(spec.id, page);
       if (!cancelled) this.reportOpenFailed(spec.id, err);
       if (cancelled && !isOpenCancelled(err)) {
-        GameLog.shared.info("UI", "打开已取消 " + spec.id + " " + messageOf(err));
+        GameLog.shared.classified("FRAMEWORK", "info", "UI", "打开已取消 " + spec.id + " " + messageOf(err));
         throw new OpenCancelled();
       }
       throw err instanceof Error ? err : new Error(messageOf(err));
@@ -451,7 +451,7 @@ export class UIManager {
     if (shell.isValid) shell.destroy();
     if (!cancelled) this.reportOpenFailed(spec.id, err);
     if (cancelled && !isOpenCancelled(err)) {
-      GameLog.shared.info("UI", "打开已取消 " + spec.id + " " + messageOf(err));
+      GameLog.shared.classified("FRAMEWORK", "info", "UI", "打开已取消 " + spec.id + " " + messageOf(err));
       return new OpenCancelled();
     }
     return err instanceof Error ? err : new Error(messageOf(err));
@@ -495,7 +495,7 @@ export class UIManager {
   /** 页面还没进栈。Toast 给玩家看，日志留给排查。取消不走这里。 */
   private reportOpenFailed(id: string, err: unknown): void {
     const text = id === "bag" ? "背包没有打开" : "页面没有打开";
-    GameLog.shared.error("UI", text + " " + messageOf(err));
+    GameLog.shared.classified("FRAMEWORK", "error", "UI", text + " " + messageOf(err));
     this.toast(text);
   }
 }

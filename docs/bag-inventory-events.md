@@ -4,7 +4,7 @@
 
 ## 四种库存事件
 
-名称集中在 [BagEvent.ts](../client/assets/scripts/features/Bag/BagEvent.ts)，参数类型在 [data/BagEventData.ts](../client/assets/scripts/features/Bag/data/BagEventData.ts)，Model 返回结构在 [data/BagChangeSet.ts](../client/assets/scripts/features/Bag/data/BagChangeSet.ts)。
+名称集中在 [BagEvent.ts](../client/assets/scripts/features/bag/utils/BagEvent.ts)，参数类型在 [data/BagEventData.ts](../client/assets/scripts/features/bag/data/BagEventData.ts)，Model 返回结构在 [data/BagChangeSet.ts](../client/assets/scripts/features/bag/data/BagChangeSet.ts)。
 
 - `BagEvent.BagUpdate` / `bag.update`：一批成功库存变化的汇总。包括 roleKey、revision、reason、initialSync、added、quantityChanged、removed；普通页面监听此事件。
 - `BagEvent.BagAdd` / `bag.add`：从不存在变为存在的新条目；added 保留新条目完整数据。已有条目数量增加不属于 Add。
@@ -39,7 +39,7 @@ session.login/session.authenticate 回包内的 initial，或 state.changed 事�
 
 ## 实际界面订阅
 
-[BagView.onOpen](../client/assets/scripts/features/Bag/ui/BagView.ts) 先调用 `EventDispatcher.instance.on(BagEvent.BagUpdate, () => this.refreshFromModel())`，把退订交给 BaseView.ownListener，再立即读取 Model 展示。另订阅 BagSyncStateChanged，仅调用 writeTalk 更新加载/错误提示，避免一批变更多次重绘列表；不监听全部细分事件。
+[BagView.onOpen](../client/assets/scripts/features/bag/ui/BagView.ts) 先调用 `EventDispatcher.instance.on(BagEvent.BagUpdate, () => this.refreshFromModel())`，把退订交给 BaseView.ownListener，再立即读取 Model 展示。另订阅 BagSyncStateChanged，仅调用 writeTalk 更新加载/错误提示，避免一批变更多次重绘列表；不监听全部细分事件。
 
 BaseView.runClose 的 EventScope 自动清理这两个本页订阅和按钮监听，其他模块订阅保留。页面关闭不影响 BagController。其他功能可以直接监听全局 BagEvent，然后读 BagModel；只有明确需要局部行为时才选细分事件。Prefab/SuperScroll 配置与节点路径不改，仍见 [维护指南](bag-mvc-maintenance.md)。
 

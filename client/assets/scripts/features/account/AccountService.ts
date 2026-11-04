@@ -1,12 +1,12 @@
 /** 账号会话服务：统一登录、恢复和失效处理；失效后仅保留本次应用内的账号提示，不保留授权。 */
-import {batchNotifications} from "../../framework/EventDispatcher";
-import type {GameFrame} from "../../platform/GameProtocolCodec";
-import {SessionChanged} from "../../framework/SessionChanged";
-import {AccountModel} from "./AccountModel";
-import type {RoleProfile} from "./AccountModel";
-import {readSession} from "./AccountApi";
-import type {AccountGateway, AccountSession, LoginResult} from "./AccountApi";
-import {SocketFailure} from "../../platform/GameSocketClient";
+import { batchNotifications } from "../../framework/EventDispatcher";
+import type { GameFrame } from "../../platform/GameProtocolCodec";
+import { SessionChanged } from "../../framework/SessionChanged";
+import { AccountModel } from "./AccountModel";
+import type { RoleProfile } from "./AccountModel";
+import { readSession } from "./AccountApi";
+import type { AccountGateway, AccountSession, LoginResult } from "./AccountApi";
+import { SocketFailure } from "../../platform/GameSocketClient";
 
 export interface SessionStore {
     read(): AccountSession | null;
@@ -30,7 +30,7 @@ export class AccountService implements AccountAuthorization {
     private expiredAccount = "";
 
     constructor(private readonly model: AccountModel, private readonly api: AccountGateway,
-                private readonly store: SessionStore, private readonly now: () => number = Date.now) {
+        private readonly store: SessionStore, private readonly now: () => number = Date.now) {
     }
 
     /** 返回当前身份或失效前的账号，供重建的登录页面预填；该提示不授予访问权限。 */
@@ -51,14 +51,14 @@ export class AccountService implements AccountAuthorization {
         this.api.disconnect?.();
         this.safely(() => this.store.clear());
         if (!/^[a-z0-9_-]{3,32}$/.test(normalized)) {
-            this.model.replace({busy: false, role: null, error: "账号需为 3–32 位英文、数字、下划线或连字符"});
+            this.model.replace({ busy: false, role: null, error: "账号需为 3–32 位英文、数字、下划线或连字符" });
             return false;
         }
-        this.model.replace({busy: true, role: null, error: ""});
+        this.model.replace({ busy: true, role: null, error: "" });
         try {
             const result = await this.api.developmentLogin(normalized, serverId);
             if (operation !== this.operation) return false;
-            this.accept({...result, session: {...result.session, account: normalized}});
+            this.accept({ ...result, session: { ...result.session, account: normalized } });
             return true;
         } catch (error) {
             return this.fail(operation, error);
@@ -85,11 +85,11 @@ export class AccountService implements AccountAuthorization {
             this.expire();
             return false;
         }
-        this.model.replace({busy: true, role: null, error: ""});
+        this.model.replace({ busy: true, role: null, error: "" });
         try {
             const role = await this.api.currentRole(session.accessToken);
             if (operation !== this.operation) return false;
-            this.accept({session, role});
+            this.accept({ session, role });
             return true;
         } catch (error) {
             if (operation !== this.operation) return false;
@@ -113,7 +113,7 @@ export class AccountService implements AccountAuthorization {
         const current = this.model.snapshot.role;
         if (!this.session || this.model.snapshot.busy || !current || current.id !== role.id ||
             (current.serverId && role.serverId && current.serverId !== role.serverId)) throw new SessionChanged();
-        this.model.replace({busy: false, role, error: ""});
+        this.model.replace({ busy: false, role, error: "" });
     }
 
     /** 顶号事件只撤销其对应的当前令牌，旧连接通知不能影响新账号。 */
@@ -129,7 +129,7 @@ export class AccountService implements AccountAuthorization {
         this.session = null;
         this.api.disconnect?.();
         this.safely(() => this.store.clear());
-        this.model.replace({busy: false, role: null, error});
+        this.model.replace({ busy: false, role: null, error });
     }
 
     /** 统一会话检查和旧回包隔离；断线未恢复时不排队发送任何新业务。 */
@@ -173,7 +173,7 @@ export class AccountService implements AccountAuthorization {
         this.session = result.session;
         this.safely(() => this.store.write(result.session));
         batchNotifications(() => {
-            this.model.replace({busy: false, role: result.role, error: ""});
+            this.model.replace({ busy: false, role: result.role, error: "" });
             const frame = this.api.initialization?.();
             if (frame) this.onInitialized?.(frame);
         });

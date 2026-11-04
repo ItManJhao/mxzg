@@ -10,7 +10,7 @@ import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { view } from "../../../framework/ui/UIRegistry";
 import { CityChrome, CityChromeActions, isCityTab, layoutCityTab, layoutCityHeader, prepareCityTab, setCityTabSelected, TabState } from "./CityChrome";
-import { tabPaintState } from "./cityTabScale";
+import { CityTabUtils } from "../utils/CityTabUtils";
 import { bindClick, tintSprite } from "../../../framework/assets/PrefabLoader";
 import { CITY_CHROME_PREFAB_PATH } from "../../../config/PrefabCatalog";
 import { createLabel, setText, uiNode } from "../../../framework/ui/UiKit";
@@ -30,33 +30,33 @@ const BOTTOM_BG_WIDTH = 724;
  * 最右一格用日服 VIP 字，不用国服「羁绊」。
  */
 const TAB_CAPTION: { [id: string]: string } = {
-  city: ResourceCatalog.city.main_scene_lang_lbl_city.path,
-  hero: ResourceCatalog.city.main_scene_lang_lbl_hero.path,
-  bag: ResourceCatalog.city.main_scene_lang_lbl_backpack.path,
-  battle: ResourceCatalog.city.main_scene_lang_lbl_battle.path,
-  dungeon: ResourceCatalog.city.main_scene_lang_lbl_skin.path,
-  clan: ResourceCatalog.city.main_scene_lang_lbl_clan.path,
-  fetter: ResourceCatalog.city.main_scene_lang_lbl_fetters_unlock.path,
+    city: ResourceCatalog.city.main_scene_lang_lbl_city.path,
+    hero: ResourceCatalog.city.main_scene_lang_lbl_hero.path,
+    bag: ResourceCatalog.city.main_scene_lang_lbl_backpack.path,
+    battle: ResourceCatalog.city.main_scene_lang_lbl_battle.path,
+    dungeon: ResourceCatalog.city.main_scene_lang_lbl_skin.path,
+    clan: ResourceCatalog.city.main_scene_lang_lbl_clan.path,
+    fetter: ResourceCatalog.city.main_scene_lang_lbl_fetters_unlock.path,
 };
 
 const TAB_ICON: { [id: string]: string } = {
-  fetter: ResourceCatalog.city.main_scene_spr_fetters_unlock.path,
+    fetter: ResourceCatalog.city.main_scene_spr_fetters_unlock.path,
 };
 
 const ACTIVITY_NAMES = [
-  "ActRecommend",
-  "ActSevenDay",
-  "ActHeroArrive",
-  "ActPrivilege",
-  "ActWelfare",
-  "BtnActExpand",
-  "ActLimitGift",
-  "ActLimitTime",
+    "ActRecommend",
+    "ActSevenDay",
+    "ActHeroArrive",
+    "ActPrivilege",
+    "ActWelfare",
+    "BtnActExpand",
+    "ActLimitGift",
+    "ActLimitTime",
 ];
 
 export interface CityChromeOpenArgs {
-  onTab: (id: string) => void;
-  actions: CityChromeActions;
+    onTab: (id: string) => void;
+    actions: CityChromeActions;
 }
 
 /**
@@ -64,391 +64,391 @@ export interface CityChromeOpenArgs {
  * 货币、战力和头像只显示 MainApp 送进来的字符串，这里不读协议。
  */
 @view({
-  id: CITY_CHROME_VIEW_ID,
-  prefab: CITY_CHROME_PREFAB_PATH,
-  layer: UILayer.Hud,
-  cache: false,
-  allowMultiple: false,
-  hostId: CITY_CHROME_HOST,
-  mount: mountCityChromeView,
+    id: CITY_CHROME_VIEW_ID,
+    prefab: CITY_CHROME_PREFAB_PATH,
+    layer: UILayer.Hud,
+    cache: false,
+    allowMultiple: false,
+    hostId: CITY_CHROME_HOST,
+    mount: mountCityChromeView,
 })
 @ccclass("CityChromeView")
 export class CityChromeView extends BaseView<CityChromeOpenArgs> implements CityChrome {
-  @property(Node)
-  lblName: Node | null = null;
+    @property(Node)
+    lblName: Node | null = null;
 
-  @property(Node)
-  lblSub: Node | null = null;
+    @property(Node)
+    lblSub: Node | null = null;
 
-  @property(Node)
-  lblLevel: Node | null = null;
+    @property(Node)
+    lblLevel: Node | null = null;
 
-  @property(Node)
-  levelBg: Node | null = null;
+    @property(Node)
+    levelBg: Node | null = null;
 
-  /** 顶栏头像点击区域，由主城绑定打开自身资料。 */
-  @property(Node)
-  avatar: Node | null = null;
-  /** 预制体内的头像图片，使用 headId，不能用角色形象代替。 */
-  @property(Node) avatarFace: Node | null = null;
-  /** 预制体内的头像框，独立于头像加载。 */
-  @property(Node) avatarBorder: Node | null = null;
+    /** 顶栏头像点击区域，由主城绑定打开自身资料。 */
+    @property(Node)
+    avatar: Node | null = null;
+    /** 预制体内的头像图片，使用 headId，不能用角色形象代替。 */
+    @property(Node) avatarFace: Node | null = null;
+    /** 预制体内的头像框，独立于头像加载。 */
+    @property(Node) avatarBorder: Node | null = null;
 
-  @property(Node)
-  goldValue: Node | null = null;
+    @property(Node)
+    goldValue: Node | null = null;
 
-  @property(Node)
-  gemValue: Node | null = null;
+    @property(Node)
+    gemValue: Node | null = null;
 
-  @property(Node)
-  powerValue: Node | null = null;
+    @property(Node)
+    powerValue: Node | null = null;
 
-  @property(Node)
-  actGroup: Node | null = null;
+    @property(Node)
+    actGroup: Node | null = null;
 
-  @property(Node)
-  utilityRow: Node | null = null;
+    @property(Node)
+    utilityRow: Node | null = null;
 
-  @property(Node)
-  bottomBg: Node | null = null;
+    @property(Node)
+    bottomBg: Node | null = null;
 
-  @property(Node)
-  tabCity: Node | null = null;
+    @property(Node)
+    tabCity: Node | null = null;
 
-  @property(Node)
-  tabHero: Node | null = null;
+    @property(Node)
+    tabHero: Node | null = null;
 
-  @property(Node)
-  tabBag: Node | null = null;
+    @property(Node)
+    tabBag: Node | null = null;
 
-  @property(Node)
-  tabBattle: Node | null = null;
+    @property(Node)
+    tabBattle: Node | null = null;
 
-  @property(Node)
-  tabDungeon: Node | null = null;
+    @property(Node)
+    tabDungeon: Node | null = null;
 
-  @property(Node)
-  tabClan: Node | null = null;
+    @property(Node)
+    tabClan: Node | null = null;
 
-  @property(Node)
-  tabFetter: Node | null = null;
+    @property(Node)
+    tabFetter: Node | null = null;
 
-  @property([Node])
-  activityButtons: Node[] = [];
+    @property([Node])
+    activityButtons: Node[] = [];
 
-  @property(Node)
-  btnReplay: Node | null = null;
+    @property(Node)
+    btnReplay: Node | null = null;
 
-  @property(Node)
-  btnFriend: Node | null = null;
+    @property(Node)
+    btnFriend: Node | null = null;
 
-  @property(Node)
-  btnMail: Node | null = null;
+    @property(Node)
+    btnMail: Node | null = null;
 
-  @property(Node)
-  btnRank: Node | null = null;
+    @property(Node)
+    btnRank: Node | null = null;
 
-  @property(Node)
-  btnMore: Node | null = null;
+    @property(Node)
+    btnMore: Node | null = null;
 
-  private onTab: ((id: string) => void) | null = null;
-  private actions: CityChromeActions | null = null;
-  private tabs: { [id: string]: Node } = {};
-  private started = false;
+    private onTab: ((id: string) => void) | null = null;
+    private actions: CityChromeActions | null = null;
+    private tabs: { [id: string]: Node } = {};
+    private started = false;
 
-  get root(): Node {
-    return this.node;
-  }
-
-  onOpen(args?: CityChromeOpenArgs): void {
-    if (args) {
-      this.args = args;
-      this.onTab = args.onTab;
-      this.actions = args.actions;
+    get root(): Node {
+        return this.node;
     }
-    if (this.started) return;
-    this.started = true;
-    this.beginOpen();
-    try {
-      this.bindAll();
-      this.finishOpen();
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(messageOf(err));
-      GameLog.shared.warn("CityChromeView", "没有挂上 " + error.message);
-      this.failOpen(error);
+
+    onOpen(args?: CityChromeOpenArgs): void {
+        if (args) {
+            this.args = args;
+            this.onTab = args.onTab;
+            this.actions = args.actions;
+        }
+        if (this.started) return;
+        this.started = true;
+        this.beginOpen();
+        try {
+            this.bindAll();
+            this.finishOpen();
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error(messageOf(err));
+            GameLog.shared.classified("MODULE", "warn", "CityChromeView", "没有挂上 " + error.message);
+            this.failOpen(error);
+        }
     }
-  }
 
-  setIdentity(nameLine: string, subLine: string): void {
-    if (this.lblName) setText(this.lblName, nameLine);
-    if (!this.lblSub) return;
-    const debug = subLine.indexOf("真服 ·") === 0;
-    this.lblSub.active = !debug;
-    setText(this.lblSub, debug ? "" : subLine);
-  }
-
-  setCurrencies(goldLine: string, diamondLine: string): void {
-    if (this.goldValue) setText(this.goldValue, goldLine);
-    if (this.gemValue) setText(this.gemValue, diamondLine);
-  }
-
-  setPower(text: string): void {
-    const node = this.powerValue;
-    if (!node) return;
-    setText(node, text);
-    const label = node.getComponent(Label);
-    if (label) label.overflow = Overflow.SHRINK;
-    assignContentSize(node.getComponent(UITransform), 68, 24);
-  }
-
-  setLevelBadge(text: string): void {
-    const show = text.length > 0;
-    if (this.lblLevel) {
-      this.lblLevel.active = show;
-      if (show) setText(this.lblLevel, text);
+    setIdentity(nameLine: string, subLine: string): void {
+        if (this.lblName) setText(this.lblName, nameLine);
+        if (!this.lblSub) return;
+        const debug = subLine.indexOf("真服 ·") === 0;
+        this.lblSub.active = !debug;
+        setText(this.lblSub, debug ? "" : subLine);
     }
-    if (this.levelBg) this.levelBg.active = show;
-  }
 
-  /** 旧主城经验条的横向填充组件，只展示服务器同步的等级内经验。 */
-  @property(Sprite)
-  experienceFill: Sprite | null = null;
-
-  /** 刷新当前经验比例；缺失资料或最高级零门槛显示空条，不自行升级。 */
-  setExperience(experience?: number, required?: number): void {
-    if (!this.experienceFill) return;
-    const valid = typeof experience === "number" && Number.isFinite(experience)
-      && typeof required === "number" && Number.isFinite(required) && required > 0;
-    this.experienceFill.fillRange = valid ? Math.max(0, Math.min(1, experience! / required!)) : 0;
-  }
-
-  setAvatar(icon: string | null): void {
-    this.paintAvatar(icon);
-  }
-
-  setTabs(tabs: TabState[]): void {
-    const paint = tabPaintState(tabs.map((tab) => tab.state));
-    for (let i = 0; i < tabs.length; i++) {
-      const tab = tabs[i];
-      const button = this.tabs[tab.id];
-      if (!button) continue;
-      const state = paint[i] === "locked" ? "locked" : paint[i] === "selected" ? "selected" : "open";
-      setCityTabSelected(button, state === "selected");
-      tintSprite(button, prefabTabColor(state));
-      const lock = button.getChildByName("Lock");
-      if (lock) {
-        const locked = tab.state === "locked";
-        lock.active = locked;
-        if (locked) paintLockLevel(lock, tab.lockLevel && tab.lockLevel > 1 ? tab.lockLevel : 0);
-      }
+    setCurrencies(goldLine: string, diamondLine: string): void {
+        if (this.goldValue) setText(this.goldValue, goldLine);
+        if (this.gemValue) setText(this.gemValue, diamondLine);
     }
-  }
 
-  setCityExtras(visible: boolean): void {
-    if (this.actGroup) this.actGroup.active = visible;
-    if (this.utilityRow) this.utilityRow.active = visible;
-  }
-
-  private bindAll(): void {
-    this.sealBottom();
-    const tabNodes = [this.tabCity, this.tabHero, this.tabBag, this.tabBattle, this.tabDungeon, this.tabClan, this.tabFetter];
-    if (tabNodes.length !== CITY_BAR.length) throw new Error("底栏按钮数量不对");
-    for (let i = 0; i < CITY_BAR.length; i++) {
-      const entry = CITY_BAR[i];
-      const button = tabNodes[i];
-      if (!button) throw new Error("缺少节点 " + entry.id);
-      prepareCityTab(button);
-      const lock = button.getChildByName("Lock");
-      if (lock) lock.active = false;
-      const label = button.getChildByName("Label");
-      if (label) label.active = false;
-      mountTabCaption(button, TAB_CAPTION[entry.id] || "");
-      mountTabIcon(button, TAB_ICON[entry.id] || "");
-      bindClick(button, () => {
-        if (this.onTab) this.onTab(entry.id);
-      });
-      this.tabs[entry.id] = button;
+    setPower(text: string): void {
+        const node = this.powerValue;
+        if (!node) return;
+        setText(node, text);
+        const label = node.getComponent(Label);
+        if (label) label.overflow = Overflow.SHRINK;
+        assignContentSize(node.getComponent(UITransform), 68, 24);
     }
-    this.bindActivity();
-    this.bindMore();
-    this.requireNode(this.lblName, "LblName");
-    this.requireNode(this.lblSub, "LblSub");
-    this.requireNode(this.goldValue, "CurrencyGold/Value");
-    this.requireNode(this.gemValue, "CurrencyGem/Value");
-    this.requireNode(this.powerValue, "PowerSlot/Value");
-    this.requireNode(this.lblLevel, "LblLevel");
-    this.requireNode(this.levelBg, "LevelBg");
-    this.requireNode(this.avatar, "Avatar");
-    this.requireNode(this.actGroup, "ActGroup");
-    this.requireNode(this.utilityRow, "UtilityRow");
-    bindVisibleRefresh(this.node, () => {
-      if (!this.node || !this.node.isValid) return;
-      const box = fitVisibleRoot(this.node);
-      this.fitChildren(box.width);
-    });
-    GameLog.shared.info("CityChromeView", "view " + CITY_CHROME_PREFAB_PATH);
-  }
 
-  private bindActivity(): void {
-    const buttons = this.activityButtons;
-    if (!buttons || buttons.length !== ACTIVITY_NAMES.length) throw new Error("ActGroup 按钮没有绑全");
-    for (let i = 0; i < buttons.length; i++) {
-      const button = buttons[i];
-      if (!button) throw new Error("缺少节点 " + ACTIVITY_NAMES[i]);
-      bindClick(button, () => {
-        if (this.actions) this.actions.openActivity();
-        else GameLog.shared.warn("CityChromeView", "活动按钮没有回调");
-      });
+    setLevelBadge(text: string): void {
+        const show = text.length > 0;
+        if (this.lblLevel) {
+            this.lblLevel.active = show;
+            if (show) setText(this.lblLevel, text);
+        }
+        if (this.levelBg) this.levelBg.active = show;
     }
-  }
 
-  private bindMore(): void {
-    const more = [this.btnReplay, this.btnFriend, this.btnRank, this.btnMore];
-    const names = ["BtnReplay", "BtnFriend", "BtnRank", "BtnMore"];
-    for (let i = 0; i < more.length; i++) {
-      const button = more[i];
-      if (!button) throw new Error("缺少节点 " + names[i]);
-      bindClick(button, () => {
-        if (this.actions) this.actions.openMore();
-        else GameLog.shared.warn("CityChromeView", "更多按钮没有回调");
-      });
-    }
-    const mail = this.requireNode(this.btnMail, "BtnMail");
-    bindClick(mail, () => {
-      if (this.actions) this.actions.openMail();
-      else GameLog.shared.warn("CityChromeView", "邮件按钮没有回调");
-    });
-  }
+    /** 旧主城经验条的横向填充组件，只展示服务器同步的等级内经验。 */
+    @property(Sprite)
+    experienceFill: Sprite | null = null;
 
-  private requireNode(node: Node | null, label: string): Node {
-    if (!node) throw new Error("缺少节点 " + label);
-    return node;
-  }
+    /** 刷新当前经验比例；缺失资料或最高级零门槛显示空条，不自行升级。 */
+    setExperience(experience?: number, required?: number): void {
+        if (!this.experienceFill) return;
+        const valid = typeof experience === "number" && Number.isFinite(experience)
+            && typeof required === "number" && Number.isFinite(required) && required > 0;
+        this.experienceFill.fillRange = valid ? Math.max(0, Math.min(1, experience! / required!)) : 0;
+    }
 
-  /**
-   * 底栏只用预制上的 Bg。不再铺运行时色块，避免七个键后面多一层深色垫。
-   */
-  private sealBottom(): void {
-    const bg = this.requireNode(this.bottomBg, "BottomBar/Bg");
-    const ui = bg.getComponent(UITransform);
-    const bottom = bg.parent;
-    if (!bottom) return;
-    const barUi = bottom.getComponent(UITransform);
-    const barSize = uiSize(barUi);
-    const bgSize = uiSize(ui);
-    const barW = barSize && barSize.width > BOTTOM_BG_WIDTH ? barSize.width : BOTTOM_BG_WIDTH;
-    const height = bgSize && bgSize.height > 0 ? bgSize.height : 129;
-    if (ui) ui.setContentSize(barW, height);
-    const pad = bottom.getChildByName("BgPad");
-    if (pad) pad.active = false;
-  }
+    setAvatar(icon: string | null): void {
+        this.paintAvatar(icon);
+    }
 
-  /**
-   * 顶栏底栏按可见宽拉开。这里只看根的直接子节点，用来拉条，不拿来找业务节点。
-   */
-  private fitChildren(width: number): void {
-    const kids = this.node.children;
-    for (let i = 0; i < kids.length; i++) {
-      const child = kids[i];
-      if (child.name === "TopBar" || child.name === "top-bg") stretchBar(child, width, "top");
-      else if (child.name === "BottomBar" || child.name === "bottom-bg") stretchBar(child, width, "bottom");
-      else squeezeWideNode(child, width);
+    setTabs(tabs: TabState[]): void {
+        const paint = CityTabUtils.tabPaintState(tabs.map((tab) => tab.state));
+        for (let i = 0; i < tabs.length; i++) {
+            const tab = tabs[i];
+            const button = this.tabs[tab.id];
+            if (!button) continue;
+            const state = paint[i] === "locked" ? "locked" : paint[i] === "selected" ? "selected" : "open";
+            setCityTabSelected(button, state === "selected");
+            tintSprite(button, prefabTabColor(state));
+            const lock = button.getChildByName("Lock");
+            if (lock) {
+                const locked = tab.state === "locked";
+                lock.active = locked;
+                if (locked) paintLockLevel(lock, tab.lockLevel && tab.lockLevel > 1 ? tab.lockLevel : 0);
+            }
+        }
     }
-    for (let i = 0; i < kids.length; i++) {
-      const child = kids[i];
-      if (child.name !== "TopBar" && child.name !== "BottomBar") continue;
-      const inner = child.children;
-      for (let j = 0; j < inner.length; j++) {
-        const node = inner[j];
-        if (node.name === "Bg" || node.name === "BgPad") continue;
-        if (isCityTab(node.name)) layoutCityTab(node, width);
-        else squeezeWideNode(node, width);
-      }
-    }
-    layoutCityHeader(this.node,width);
-  }
 
-  private paintAvatar(icon: string | null): void {
-    const avatar = this.avatar;
-    if (!avatar) return;
-    if (!icon) {
-      avatar.active = false;
-      return;
+    setCityExtras(visible: boolean): void {
+        if (this.actGroup) this.actGroup.active = visible;
+        if (this.utilityRow) this.utilityRow.active = visible;
     }
-    avatar.active = true;
-    let face = avatar.getChildByName("Face");
-    if (!face) {
-      face = uiNode("Face");
-      const ui = face.addComponent(UITransform);
-      ui.setContentSize(78, 78);
-      const sprite = face.addComponent(Sprite);
-      sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-      face.setPosition(0, 0, 0);
-      face.parent = avatar;
+
+    private bindAll(): void {
+        this.sealBottom();
+        const tabNodes = [this.tabCity, this.tabHero, this.tabBag, this.tabBattle, this.tabDungeon, this.tabClan, this.tabFetter];
+        if (tabNodes.length !== CITY_BAR.length) throw new Error("底栏按钮数量不对");
+        for (let i = 0; i < CITY_BAR.length; i++) {
+            const entry = CITY_BAR[i];
+            const button = tabNodes[i];
+            if (!button) throw new Error("缺少节点 " + entry.id);
+            prepareCityTab(button);
+            const lock = button.getChildByName("Lock");
+            if (lock) lock.active = false;
+            const label = button.getChildByName("Label");
+            if (label) label.active = false;
+            mountTabCaption(button, TAB_CAPTION[entry.id] || "");
+            mountTabIcon(button, TAB_ICON[entry.id] || "");
+            bindClick(button, () => {
+                if (this.onTab) this.onTab(entry.id);
+            });
+            this.tabs[entry.id] = button;
+        }
+        this.bindActivity();
+        this.bindMore();
+        this.requireNode(this.lblName, "LblName");
+        this.requireNode(this.lblSub, "LblSub");
+        this.requireNode(this.goldValue, "CurrencyGold/Value");
+        this.requireNode(this.gemValue, "CurrencyGem/Value");
+        this.requireNode(this.powerValue, "PowerSlot/Value");
+        this.requireNode(this.lblLevel, "LblLevel");
+        this.requireNode(this.levelBg, "LevelBg");
+        this.requireNode(this.avatar, "Avatar");
+        this.requireNode(this.actGroup, "ActGroup");
+        this.requireNode(this.utilityRow, "UtilityRow");
+        bindVisibleRefresh(this.node, () => {
+            if (!this.node || !this.node.isValid) return;
+            const box = fitVisibleRoot(this.node);
+            this.fitChildren(box.width);
+        });
+        GameLog.shared.classified("MODULE", "info", "CityChromeView", "view " + CITY_CHROME_PREFAB_PATH);
     }
-    const mark = face as Node & { mxzgIcon?: string };
-    if (mark.mxzgIcon === icon) return;
-    mark.mxzgIcon = icon;
-    const sprite = face.getComponent(Sprite);
-    if (!sprite) return;
-    const wanted = icon;
-    resources.load(wanted + "/spriteFrame", SpriteFrame, (err, frame) => {
-      if (err || !frame || !face || !face.isValid) return;
-      if (mark.mxzgIcon !== wanted) return;
-      sprite.spriteFrame = frame;
-    });
-  }
+
+    private bindActivity(): void {
+        const buttons = this.activityButtons;
+        if (!buttons || buttons.length !== ACTIVITY_NAMES.length) throw new Error("ActGroup 按钮没有绑全");
+        for (let i = 0; i < buttons.length; i++) {
+            const button = buttons[i];
+            if (!button) throw new Error("缺少节点 " + ACTIVITY_NAMES[i]);
+            bindClick(button, () => {
+                if (this.actions) this.actions.openActivity();
+                else GameLog.shared.classified("MODULE", "warn", "CityChromeView", "活动按钮没有回调");
+            });
+        }
+    }
+
+    private bindMore(): void {
+        const more = [this.btnReplay, this.btnFriend, this.btnRank, this.btnMore];
+        const names = ["BtnReplay", "BtnFriend", "BtnRank", "BtnMore"];
+        for (let i = 0; i < more.length; i++) {
+            const button = more[i];
+            if (!button) throw new Error("缺少节点 " + names[i]);
+            bindClick(button, () => {
+                if (this.actions) this.actions.openMore();
+                else GameLog.shared.classified("MODULE", "warn", "CityChromeView", "更多按钮没有回调");
+            });
+        }
+        const mail = this.requireNode(this.btnMail, "BtnMail");
+        bindClick(mail, () => {
+            if (this.actions) this.actions.openMail();
+            else GameLog.shared.classified("MODULE", "warn", "CityChromeView", "邮件按钮没有回调");
+        });
+    }
+
+    private requireNode(node: Node | null, label: string): Node {
+        if (!node) throw new Error("缺少节点 " + label);
+        return node;
+    }
+
+    /**
+     * 底栏只用预制上的 Bg。不再铺运行时色块，避免七个键后面多一层深色垫。
+     */
+    private sealBottom(): void {
+        const bg = this.requireNode(this.bottomBg, "BottomBar/Bg");
+        const ui = bg.getComponent(UITransform);
+        const bottom = bg.parent;
+        if (!bottom) return;
+        const barUi = bottom.getComponent(UITransform);
+        const barSize = uiSize(barUi);
+        const bgSize = uiSize(ui);
+        const barW = barSize && barSize.width > BOTTOM_BG_WIDTH ? barSize.width : BOTTOM_BG_WIDTH;
+        const height = bgSize && bgSize.height > 0 ? bgSize.height : 129;
+        if (ui) ui.setContentSize(barW, height);
+        const pad = bottom.getChildByName("BgPad");
+        if (pad) pad.active = false;
+    }
+
+    /**
+     * 顶栏底栏按可见宽拉开。这里只看根的直接子节点，用来拉条，不拿来找业务节点。
+     */
+    private fitChildren(width: number): void {
+        const kids = this.node.children;
+        for (let i = 0; i < kids.length; i++) {
+            const child = kids[i];
+            if (child.name === "TopBar" || child.name === "top-bg") stretchBar(child, width, "top");
+            else if (child.name === "BottomBar" || child.name === "bottom-bg") stretchBar(child, width, "bottom");
+            else squeezeWideNode(child, width);
+        }
+        for (let i = 0; i < kids.length; i++) {
+            const child = kids[i];
+            if (child.name !== "TopBar" && child.name !== "BottomBar") continue;
+            const inner = child.children;
+            for (let j = 0; j < inner.length; j++) {
+                const node = inner[j];
+                if (node.name === "Bg" || node.name === "BgPad") continue;
+                if (isCityTab(node.name)) layoutCityTab(node, width);
+                else squeezeWideNode(node, width);
+            }
+        }
+        layoutCityHeader(this.node, width);
+    }
+
+    private paintAvatar(icon: string | null): void {
+        const avatar = this.avatar;
+        if (!avatar) return;
+        if (!icon) {
+            avatar.active = false;
+            return;
+        }
+        avatar.active = true;
+        let face = avatar.getChildByName("Face");
+        if (!face) {
+            face = uiNode("Face");
+            const ui = face.addComponent(UITransform);
+            ui.setContentSize(78, 78);
+            const sprite = face.addComponent(Sprite);
+            sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+            face.setPosition(0, 0, 0);
+            face.parent = avatar;
+        }
+        const mark = face as Node & { mxzgIcon?: string };
+        if (mark.mxzgIcon === icon) return;
+        mark.mxzgIcon = icon;
+        const sprite = face.getComponent(Sprite);
+        if (!sprite) return;
+        const wanted = icon;
+        resources.load(wanted + "/spriteFrame", SpriteFrame, (err, frame) => {
+            if (err || !frame || !face || !face.isValid) return;
+            if (mark.mxzgIcon !== wanted) return;
+            sprite.spriteFrame = frame;
+        });
+    }
 }
 
 function mountTabCaption(button: Node, path: string): void {
-  if (!path) return;
-  const size = uiSize(button.getComponent(UITransform));
-  const plate = size ? size.height : 78;
-  const node = uiNode("Caption");
-  const captionUi = node.addComponent(UITransform);
-  captionUi.setContentSize(plate >= 90 ? 65 : 54, plate >= 90 ? 36 : 30);
-  const sprite = node.addComponent(Sprite);
-  sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-  node.setPosition(0, plate >= 90 ? -46 : -36, 0);
-  node.parent = button;
-  resources.load(path + "/spriteFrame", SpriteFrame, (err, frame) => {
-    if (err || !frame || !sprite.isValid) return;
-    sprite.spriteFrame = frame;
-  });
+    if (!path) return;
+    const size = uiSize(button.getComponent(UITransform));
+    const plate = size ? size.height : 78;
+    const node = uiNode("Caption");
+    const captionUi = node.addComponent(UITransform);
+    captionUi.setContentSize(plate >= 90 ? 65 : 54, plate >= 90 ? 36 : 30);
+    const sprite = node.addComponent(Sprite);
+    sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+    node.setPosition(0, plate >= 90 ? -46 : -36, 0);
+    node.parent = button;
+    resources.load(path + "/spriteFrame", SpriteFrame, (err, frame) => {
+        if (err || !frame || !sprite.isValid) return;
+        sprite.spriteFrame = frame;
+    });
 }
 
 function mountTabIcon(button: Node, path: string): void {
-  if (!path) return;
-  const icon = button.getChildByName("Icon");
-  const sprite = icon ? icon.getComponent(Sprite) : null;
-  if (!sprite) return;
-  resources.load(path + "/spriteFrame", SpriteFrame, (err, frame) => {
-    if (err || !frame || !sprite.isValid) return;
-    sprite.spriteFrame = frame;
-  });
+    if (!path) return;
+    const icon = button.getChildByName("Icon");
+    const sprite = icon ? icon.getComponent(Sprite) : null;
+    if (!sprite) return;
+    resources.load(path + "/spriteFrame", SpriteFrame, (err, frame) => {
+        if (err || !frame || !sprite.isValid) return;
+        sprite.spriteFrame = frame;
+    });
 }
 
 function paintLockLevel(lock: Node, level: number): void {
-  const text = level > 1 ? "Lv" + level : "";
-  let node = lock.getChildByName("Lv");
-  if (!text) {
-    if (node) node.active = false;
-    return;
-  }
-  if (!node) {
-    node = createLabel(text, 16, { color: new Color(255, 244, 220, 255), width: 64, height: 22 });
-    node.name = "Lv";
-    node.setPosition(0, -20, 0);
-    node.parent = lock;
-  }
-  node.active = true;
-  setText(node, text);
-  const label = node.getComponent(Label);
-  if (label) label.overflow = Overflow.SHRINK;
+    const text = level > 1 ? "Lv" + level : "";
+    let node = lock.getChildByName("Lv");
+    if (!text) {
+        if (node) node.active = false;
+        return;
+    }
+    if (!node) {
+        node = createLabel(text, 16, { color: new Color(255, 244, 220, 255), width: 64, height: 22 });
+        node.name = "Lv";
+        node.setPosition(0, -20, 0);
+        node.parent = lock;
+    }
+    node.active = true;
+    setText(node, text);
+    const label = node.getComponent(Label);
+    if (label) label.overflow = Overflow.SHRINK;
 }
 
 function prefabTabColor(state: TabState["state"]): Color {
-  if (state === "locked") return PREFAB_TAB_LOCKED;
-  if (state === "selected") return PREFAB_TAB_SELECTED;
-  return PREFAB_TAB_OPEN;
+    if (state === "locked") return PREFAB_TAB_LOCKED;
+    if (state === "selected") return PREFAB_TAB_SELECTED;
+    return PREFAB_TAB_OPEN;
 }

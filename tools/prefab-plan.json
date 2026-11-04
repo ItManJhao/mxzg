@@ -108,7 +108,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/Bag",
+      "directory": "prefabs/ui/bag",
       "phases": [
         "P4"
       ],
@@ -224,16 +224,6 @@
         "ChangeNickLayer",
         "RoleInfoLayer",
         "RoleUpgradeLayer"
-      ]
-    },
-    {
-      "directory": "prefabs/ui/setting",
-      "phases": [
-        "P6"
-      ],
-      "reason": "Basic settings only",
-      "names": [
-        "SettingLayer"
       ]
     },
     {

@@ -33,7 +33,7 @@ export class CampaignField {
     private idleKey = "";
     private poseTimers = new Set<ReturnType<typeof setTimeout>>();
     private constructor(private readonly shell: BattlePrefabShell) { }
-/** 按真实战报装配战斗显示资源，页面关闭后拒绝迟到显示结果。 */
+    /** 按真实战报装配战斗显示资源，页面关闭后拒绝迟到显示结果。 */
     static async open(parent: Node): Promise<CampaignField> {
         const shell = await mountBattlePrefab(parent);
         const field = new CampaignField(shell);
@@ -54,7 +54,7 @@ export class CampaignField {
             paintSpritePaths(bg, [ResourceCatalog.chapter.map01_B.path]);
         // Match the retained idle hall: the sky is a short distant layer, while
         // the transparent foreground/floor covers the entire portrait viewport.
-        if (bg) { bg.name = "IdleSky"; bg.setPosition(0,430,0); bg.getComponent(UITransform)?.setContentSize(Math.max(640,view.getVisibleSize().width),420); }
+        if (bg) { bg.name = "IdleSky"; bg.setPosition(0, 430, 0); bg.getComponent(UITransform)?.setContentSize(Math.max(640, view.getVisibleSize().width), 420); }
         if (floor) floor.name = "IdleFloor";
         for (const path of ["LayerAppear", "LayerHud/TopBar", "LayerHud/BtnRetreat", "LayerHud/TopBar/BtnClose", "LayerHud/SkillBars"]) {
             const node = shell.root.getChildByPath(path);
@@ -121,11 +121,13 @@ export class CampaignField {
                 const label = slot.getChildByName("Label");
                 if (label)
                     label.active = false;
-                const actor = mountBattleSpine(slot, String(unit.templateId), () => { if (label?.isValid) {
-                    label.active = true;
-                    setText(label, unit.name);
-                } }, { face: ally ? 1 : -1, scale: 0.36, seatY: 0 });
-                this.actors.set(unit.id, { actor, unit, index, hp:unit.maxHp, pose:0 });
+                const actor = mountBattleSpine(slot, String(unit.templateId), () => {
+                    if (label?.isValid) {
+                        label.active = true;
+                        setText(label, unit.name);
+                    }
+                }, { face: ally ? 1 : -1, scale: 0.36, seatY: 0 });
+                this.actors.set(unit.id, { actor, unit, index, hp: unit.maxHp, pose: 0 });
                 this.hp(unit.id, unit.maxHp);
             });
         }
@@ -134,7 +136,7 @@ export class CampaignField {
     }
     /** 恢复服务端单位的挂机演出，并使动态生成的敌人/特效与已有英雄采用相同视口缩放。 */
     startIdle(units: CampaignUnit[]): void {
-        const key = JSON.stringify(units.map(unit => [unit.id,unit.templateId,unit.position,unit.maxHp]));
+        const key = JSON.stringify(units.map(unit => [unit.id, unit.templateId, unit.position, unit.maxHp]));
         if (this.idle && key === this.idleKey) return;
         this.show(units.filter(unit => unit.ally));
         this.idleKey = key;
@@ -142,9 +144,11 @@ export class CampaignField {
             const slot = entry.actor.node.parent as Node & { mxzgHangPos?: number };
             slot.mxzgHangPos = entry.unit.position;
         }
-        this.idle = mountIdleSkirmish(this.shell.root,{ plans: () => units.filter(unit => !unit.ally).slice(0,7).map((unit,index) => ({
-            stem:String(unit.templateId),spot:index,face:-1 as const,maxHp:unit.maxHp,
-        })) });
+        this.idle = mountIdleSkirmish(this.shell.root, {
+            plans: () => units.filter(unit => !unit.ally).slice(0, 7).map((unit, index) => ({
+                stem: String(unit.templateId), spot: index, face: -1 as const, maxHp: unit.maxHp,
+            }))
+        });
         this.idle.retarget(Array.from(this.actors.values()).map(entry => entry.actor));
         this.fitCombatLayers();
     }
@@ -152,7 +156,7 @@ export class CampaignField {
     resumeIdle(): void { this.idle?.resume(); }
     private stopIdle(): void {
         this.idle?.stop(); this.idle = null; this.idleKey = "";
-        for (const name of ["IdleFoes","IdleSkirmishFx"]) this.shell.root.getChildByName(name)?.destroy();
+        for (const name of ["IdleFoes", "IdleSkirmishFx"]) this.shell.root.getChildByName(name)?.destroy();
     }
     private hp(id: string, value: number): void {
         const entry = this.actors.get(id);
@@ -166,11 +170,11 @@ export class CampaignField {
             setText(label, String(entry.unit.level));
             const number = label.getComponent(Label);
             if (number) { number.fontSize = 28; number.lineHeight = 36; }
-            label.getComponent(UITransform)?.setContentSize(50,40);
-            label.setPosition(-98,0,0);
+            label.getComponent(UITransform)?.setContentSize(50, 40);
+            label.setPosition(-98, 0, 0);
             if (label.parent) {
                 label.parent.active = true;
-                label.parent.setScale(.7,.7,1);
+                label.parent.setScale(.7, .7, 1);
                 const point = hangFormationPoint(entry.unit.position, entry.unit.ally);
                 label.parent.setPosition(point.x, point.y + 100, 0);
             }
@@ -216,8 +220,8 @@ export class CampaignField {
         const intro = this.shell.root.getChildByName("LayerAppear");
         if (intro) {
             for (const child of intro.children) child.active = false;
-            intro.setPosition(0,180,0); intro.active = true;
-            mountNamedSpine(intro,"ZDKS","stand",{loop:false,onComplete:()=>{if(intro.isValid)intro.active=false;},onFail:()=>{if(intro.isValid)intro.active=false;}});
+            intro.setPosition(0, 180, 0); intro.active = true;
+            mountNamedSpine(intro, "ZDKS", "stand", { loop: false, onComplete: () => { if (intro.isValid) intro.active = false; }, onFail: () => { if (intro.isValid) intro.active = false; } });
         }
         const skip = this.shell.root.getChildByPath("LayerHud/BtnSkip");
         if (skip)
@@ -237,8 +241,10 @@ export class CampaignField {
                 this.onSkip = null;
                 resolve();
             };
-            const final = () => { for (; index < report.hits.length; index++)
-                this.hit(report.hits[index], false); finish(); };
+            const final = () => {
+                for (; index < report.hits.length; index++)
+                    this.hit(report.hits[index], false); finish();
+            };
             const step = () => {
                 if (this.closed || !this.shell.root.isValid) {
                     finish();
@@ -253,7 +259,7 @@ export class CampaignField {
             };
             this.cancelPlayback = finish;
             this.onSkip = final;
-            timer = setTimeout(() => { if (intro?.isValid) intro.active=false; step(); },700);
+            timer = setTimeout(() => { if (intro?.isValid) intro.active = false; step(); }, 700);
         });
     }
     /** 应用服务端命中与血量；死亡动作允许资源回退，延迟隐藏单位，跳播时直接隐藏。 */
@@ -280,7 +286,7 @@ export class CampaignField {
         if (!animate && !hit.remainingHp) target.actor.node.active = false;
     }
     private afterPose(run: () => void): void {
-        const timer = setTimeout(() => { this.poseTimers.delete(timer); if (!this.closed) run(); },350 / this.speed);
+        const timer = setTimeout(() => { this.poseTimers.delete(timer); if (!this.closed) run(); }, 350 / this.speed);
         this.poseTimers.add(timer);
     }
     private clearPoseTimers(): void { for (const timer of this.poseTimers) clearTimeout(timer); this.poseTimers.clear(); }
@@ -288,6 +294,8 @@ export class CampaignField {
     skip(): void { this.onSkip?.(); }
     private cancel(): void { this.cancelPlayback?.(); }
     private clearPresent(): void { paintBattleFloats(this.shell.present, []); paintBattleSkillName(this.shell.present, null); }
-    dispose(): void { this.closed = true; this.clearPoseTimers(); this.stopIdle(); this.cancel(); if (this.shell.root.isValid)
-        this.shell.root.destroy(); }
+    dispose(): void {
+        this.closed = true; this.clearPoseTimers(); this.stopIdle(); this.cancel(); if (this.shell.root.isValid)
+            this.shell.root.destroy();
+    }
 }

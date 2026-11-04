@@ -34,6 +34,8 @@ public class GmService {
  private final HeroGrowthRules growth;
  /** 持久英雄容量查询。 */
  private final HeroCapacityService capacity;
+ /** 英雄新增后在同事务内更新永久解锁。 */
+ private final com.funsgamex.mxzg.lineup.MainFormationStateService formations;
  /** 启动加载的可信配置索引，不存玩家资产。 */
  private final Map<Integer,JsonNode> heroes=new HashMap<>(),items=new HashMap<>();
  /** 需要逐件发放的期限配置 ID。 */
@@ -41,8 +43,8 @@ public class GmService {
  /** 成功回执；资产仍由 state.changed 更新。 */
  public record Result(String requestId,String kind,int configId,int quantity) {}
  /** 注入现有资产服务并读取同源策划配置。 */
- public GmService(@Value("${mxzg.gm.enabled:false}") boolean enabled,SessionService sessions,RoleRepository roles,JdbcTemplate jdbc,InventoryService inventory,TimedInventoryService timed,AssetSyncService sync,HeroGrowthRules growth,HeroCapacityService capacity,ObjectMapper mapper) {
-  this.enabled=enabled;this.sessions=sessions;this.roles=roles;this.jdbc=jdbc;this.inventory=inventory;this.timed=timed;this.sync=sync;this.growth=growth;this.capacity=capacity;
+ public GmService(@Value("${mxzg.gm.enabled:false}") boolean enabled,SessionService sessions,RoleRepository roles,JdbcTemplate jdbc,InventoryService inventory,TimedInventoryService timed,AssetSyncService sync,HeroGrowthRules growth,HeroCapacityService capacity,com.funsgamex.mxzg.lineup.MainFormationStateService formations,ObjectMapper mapper) {
+  this.enabled=enabled;this.sessions=sessions;this.roles=roles;this.jdbc=jdbc;this.inventory=inventory;this.timed=timed;this.sync=sync;this.growth=growth;this.capacity=capacity;this.formations=formations;
   for(var row:rows(mapper,"herotype"))if(row.path("type").isIntegralNumber())heroes.put(row.path("type").asInt(),row);
   for(var row:rows(mapper,"item"))if(row.path("idx").isIntegralNumber())items.put(row.path("idx").asInt(),row);
   for(var row:rows(mapper,"timelimititem"))timedIds.add(row.path("item_id").asInt());
@@ -64,6 +66,7 @@ public class GmService {
    int owned=jdbc.queryForObject("SELECT COUNT(*) FROM game_hero WHERE role_id=?",Integer.class,role);
    if((long)owned+quantity>capacity.current(role).capacity())throw rejected("GM_CAPACITY_FULL");
    for(int i=0;i<quantity;i++)jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,?,1,?)",UUID.randomUUID().toString(),role,configId,star);
+   formations.refresh(role);
    sync.changed(role);
   } else {
    if(!items.containsKey(configId))throw rejected("GM_UNKNOWN_ITEM");

@@ -9,8 +9,8 @@ import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibl
 import { bindTap } from "../../../framework/ui/PrefabLayout";
 import { createRect, paintRect } from "../../../framework/ui/UiKit";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
-import { BagItemView } from "../../Bag/ui/BagItemView";
-import type { BagItemCatalog } from "../../Bag/BagItemCatalog";
+import { BagItemView } from "../../bag/ui/BagItemView";
+import type { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import type { IdleReward } from "../IdleApi";
 
 /** 加载已配置 SuperContent/Cell 的窗口，呈现全部真实奖励；父页面在加载期间关闭时不挂载。 */

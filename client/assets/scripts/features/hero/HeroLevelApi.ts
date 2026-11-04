@@ -1,12 +1,12 @@
 /** 此模块等待按原项目重做；旧业务通信已停用，保留 DTO 校验供后续恢复。 */
 /** 普通升级 HTTP 边界：只提交实例、逻辑请求标识和预期等级，校验服务端权威条件及资产快照。 */
 import { featureUnavailable } from "../PausedFeatures";
-import {readOwnedHero, readOwnedHeroes} from "./HeroApi";
-import type {OwnedHero} from "./HeroApi";
-import {readRole} from "../account/AccountApi";
-import type {RoleProfile} from "../account/AccountModel";
-import {readBagItems} from "../Bag/data/BagItemData";
-import type {BagItemData} from "../Bag/data/BagItemData";
+import { readOwnedHero, readOwnedHeroes } from "./HeroApi";
+import type { OwnedHero } from "./HeroApi";
+import { readRole } from "../account/AccountApi";
+import type { RoleProfile } from "../account/AccountModel";
+import { readBagItems } from "../bag/data/BagItemData";
+import type { BagItemData } from "../bag/data/BagItemData";
 
 export interface HeroStats {
     readonly hp: number;
@@ -57,7 +57,7 @@ function number(value: unknown, min = 0): number {
 /** 属性由服务端提供，客户端只校验，不另算一套成长公式。 */
 function stats(value: unknown): HeroStats {
     const r = object(value);
-    return Object.freeze({hp: number(r.hp, 1), atk: number(r.atk, 1), def: number(r.def, 1), spd: number(r.spd, 1)});
+    return Object.freeze({ hp: number(r.hp, 1), atk: number(r.atk, 1), def: number(r.def, 1), spd: number(r.spd, 1) });
 }
 
 /** 条件、消耗和下一等级必须彼此一致，不能把缺失字段当作零消耗。 */
@@ -76,14 +76,14 @@ export function readHeroLevelPreview(value: unknown): HeroLevelPreview {
     }
     return Object.freeze({
         hero, stage, levelLimit, current: stats(r.current), next: capped ? null : stats(r.next),
-        cost: cost ? Object.freeze({gold: number(cost.gold, 1), experience: number(cost.experience, 1)}) : null,
+        cost: cost ? Object.freeze({ gold: number(cost.gold, 1), experience: number(cost.experience, 1) }) : null,
         gold, experience, status: String(r.status), configVersion: r.configVersion
     });
 }
 
 export class HeroLevelApi {
     /** 暂停模块不再依赖网络客户端。 */
-    constructor() {}
+    constructor() { }
 
     /** 查询指定英雄实例的权威升级条件。 */
     async preview(token: string, heroId: string): Promise<HeroLevelPreview> {

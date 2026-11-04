@@ -56,7 +56,7 @@ function applyParchmentFit(view: Node): boolean {
     side: PARCHMENT_FIT_SIDE,
   });
   if (spread.scale > 1 || spread.extraTop !== 0 || spread.extraBottom !== 0) {
-    GameLog.shared.warn("UI", "羊皮纸铺窗忽略放大 " + spread.scale);
+    GameLog.shared.classified("FRAMEWORK", "warn", "UI", "羊皮纸铺窗忽略放大 " + spread.scale);
   }
   const scale = spread.scale > 1 ? 1 : spread.scale;
   view.setScale(scale, scale, 1);
@@ -112,7 +112,7 @@ function syncParchmentPlate(view: Node, bg: Node | null): void {
   const ay = ui && typeof ui.anchorY === "number" ? ui.anchorY : 0.5;
   const plate = view.getChildByName("ParchmentPlate");
   if (!plate) {
-    GameLog.shared.warn("UI", "羊皮纸没有 ParchmentPlate");
+    GameLog.shared.classified("FRAMEWORK", "warn", "UI", "羊皮纸没有 ParchmentPlate");
     return;
   }
   const plateUi = plate.getComponent(UITransform);

@@ -11,7 +11,7 @@ import { buildCityMapLayout, CITY_EDGE_BLEED, findCityNode, layerAnchorX, layerC
 
 import { BAR_SLIDE_MS, barIndex, barPageId, barSlideDir, expoOut, pageContentReady, selectedBarId, slideOffset, slideTravel, SlideCapture } from "../assets/scripts/framework/ui/barSlide";
 
-import { TAB_SELECTED_SCALE, tabPaintState, tabVisualScale, cityTabLayout } from "../assets/scripts/features/city/ui/cityTabScale";
+import { TAB_SELECTED_SCALE, CityTabUtils } from "../assets/scripts/features/city/utils/CityTabUtils";
 
 const root = process.cwd();
 
@@ -157,7 +157,7 @@ function checkSources(): void {
   assert(leftPlate !== null && leftPlate.x === 0 && leftPlate.ax === 0, "left foreground plate stays on the content left");
   assert(chrome.indexOf("ResourceCatalog.city.main_scene_lang_lbl_fetters_unlock") >= 0, "chrome keeps the VIP caption");
   assert(Math.abs(TAB_SELECTED_SCALE - 1.5) < 1e-6, "selected tab matches MainSceneCtr 1.5x checked size");
-  assert(tabVisualScale(true) > tabVisualScale(false) * 1.2 && tabVisualScale(false) === 1, "only the selected tab grows");
+  assert(CityTabUtils.tabVisualScale(true) > CityTabUtils.tabVisualScale(false) * 1.2 && CityTabUtils.tabVisualScale(false) === 1, "only the selected tab grows");
   assert(chrome.indexOf('setCityTabSelected(button, state === "selected")') >= 0, "new chrome scales the selected tab");
   assert(chrome.indexOf("tabPaintState") >= 0, "new chrome keeps a single selected tab");
   assert(chrome.indexOf("layoutCityTab") >= 0, "new chrome keeps the selected scale after fit");
@@ -237,7 +237,7 @@ function checkBarSlide(): void {
   assert(selectedBarId("mainline", "hero") === "battle", "mainline selects battle even if hero is the root");
   assert(selectedBarId("city", "city") === "city" && selectedBarId("daily", "city") === "dungeon", "city and daily map to their own tabs");
   assert(selectedBarId("fetterData", "fetter") === "fetter", "fetter subpages select fetter");
-  const paint = tabPaintState(["selected", "selected", "open", "locked"]);
+  const paint = CityTabUtils.tabPaintState(["selected", "selected", "open", "locked"]);
   assert(paint.join(",") === "open,selected,open,locked", "two selected states collapse to the later tab");
   assert(pageContentReady([]) === false && pageContentReady(["ListBackdrop"]) === false, "backdrop alone is not a ready page");
   assert(pageContentReady(["ListBackdrop", "PagePrefabShell"]) && pageContentReady(["bg"]), "shell or city content can slide");
@@ -277,9 +277,9 @@ function checkBarSlide(): void {
 }
 /** 宽屏只增加导航间距，选中图标不能越长越高而挡住主线挑战按钮。 */
 function checkWideTabSize(): void {
-  const base = cityTabLayout(640, 3, true), wide = cityTabLayout(960, 3, true);
+  const base = CityTabUtils.cityTabLayout(640, 3, true), wide = CityTabUtils.cityTabLayout(960, 3, true);
   assert(wide.scale === base.scale && wide.y === base.y, "宽屏选中图标保持默认大小和高度");
-  assert(cityTabLayout(360, 3, true).scale < base.scale, "窄屏仍按可用宽度缩小");
-  assert(cityTabLayout(960, 6, false).x > cityTabLayout(640, 6, false).x, "宽屏按钮间距仍展开");
+  assert(CityTabUtils.cityTabLayout(360, 3, true).scale < base.scale, "窄屏仍按可用宽度缩小");
+  assert(CityTabUtils.cityTabLayout(960, 6, false).x > CityTabUtils.cityTabLayout(640, 6, false).x, "宽屏按钮间距仍展开");
 }
 checkFramework(); checkHubPrefab(); checkChromePrefab(); checkSources(); checkBarSlide(); checkWideTabSize(); console.log("city-view passed: bindings, framework isolation, narrow viewport coverage, tab scaling and transitions");

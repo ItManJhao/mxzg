@@ -7,9 +7,9 @@ import {AccountApi,readRole} from "../assets/scripts/features/account/AccountApi
 import {AccountModel} from "../assets/scripts/features/account/AccountModel";
 import {AccountService} from "../assets/scripts/features/account/AccountService";
 import {RoleController} from "../assets/scripts/features/account/RoleController";
-import {BagController} from "../assets/scripts/features/Bag/BagController";
-import {BagModel} from "../assets/scripts/features/Bag/BagModel";
-import {readBagItems} from "../assets/scripts/features/Bag/data/BagItemData";
+import {BagController} from "../assets/scripts/features/bag/BagController";
+import {BagModel} from "../assets/scripts/features/bag/BagModel";
+import {readBagItems} from "../assets/scripts/features/bag/data/BagItemData";
 import {AssetStateBinding} from "../assets/scripts/app/remake/AssetStateBinding";
 /** 等待真实连接状态，超时明确失败。 */
 async function until(check:()=>boolean):Promise<void>{for(let i=0;i<300;i++){if(check())return;await new Promise(r=>setTimeout(r,10));}assert.fail("真实客户端状态超时");}

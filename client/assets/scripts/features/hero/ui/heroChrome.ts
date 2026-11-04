@@ -27,12 +27,12 @@ export const HERO_WINDOW_TOP = 482;
 export const HERO_WINDOW_BOTTOM = -499;
 
 export interface HeroParchmentSeat {
-  centerY: number;
-  height: number;
-  top: number;
-  bottom: number;
-  extraTop: number;
-  extraBottom: number;
+    centerY: number;
+    height: number;
+    top: number;
+    bottom: number;
+    extraTop: number;
+    extraBottom: number;
 }
 
 /**
@@ -40,33 +40,33 @@ export interface HeroParchmentSeat {
  * 算出贴住主城中部之后的中心、高度，以及相对当前纸要上抬、下延多少。
  */
 export function seatHeroParchment(
-  currentCenterY: number,
-  currentH: number,
-  rootScreenY: number,
-  scale: number
+    currentCenterY: number,
+    currentH: number,
+    rootScreenY: number,
+    scale: number
 ): HeroParchmentSeat {
-  const s = scale > 0.01 ? scale : 1;
-  const bottom = (HERO_WINDOW_BOTTOM - rootScreenY) / s;
-  const top = (HERO_WINDOW_TOP - rootScreenY) / s;
-  const height = currentH > 1 ? Math.max(currentH, top - bottom) : top - bottom;
-  const centerY = bottom + height / 2;
-  const oldTop = currentCenterY + currentH / 2;
-  const oldBottom = currentCenterY - currentH / 2;
-  return {
-    centerY,
-    height,
-    top: bottom + height,
-    bottom,
-    extraTop: top - oldTop,
-    extraBottom: oldBottom - bottom,
-  };
+    const s = scale > 0.01 ? scale : 1;
+    const bottom = (HERO_WINDOW_BOTTOM - rootScreenY) / s;
+    const top = (HERO_WINDOW_TOP - rootScreenY) / s;
+    const height = currentH > 1 ? Math.max(currentH, top - bottom) : top - bottom;
+    const centerY = bottom + height / 2;
+    const oldTop = currentCenterY + currentH / 2;
+    const oldBottom = currentCenterY - currentH / 2;
+    return {
+        centerY,
+        height,
+        top: bottom + height,
+        bottom,
+        extraTop: top - oldTop,
+        extraBottom: oldBottom - bottom,
+    };
 }
 
 /** 从统一配置选择当前等级首条台词，未准备的详情配置不触发隐式加载。 */
 export function heroDetailTalk(level: number | null): string {
-  if (GameConfig.instance.status(GConfig.HeroTalk).state !== "ready") return "";
-  const row = GameConfig.instance.getConfig(GConfig.HeroTalk).find(row => (level || 1) >= row.level_min && (level || 1) <= row.level_max);
-  if (!row) return "";
-  const word = GameConfig.instance.status(GConfig.Language).state === "ready" ? GameConfig.instance.getConfig(GConfig.Language, row.lan)?.value : undefined;
-  return plainTalk(word || row.note || "");
+    if (GameConfig.instance.status(GConfig.HeroTalk).state !== "ready") return "";
+    const row = GameConfig.instance.getConfig(GConfig.HeroTalk).find(row => (level || 1) >= row.level_min && (level || 1) <= row.level_max);
+    if (!row) return "";
+    const word = GameConfig.instance.status(GConfig.Language).state === "ready" ? GameConfig.instance.getConfig(GConfig.Language, row.lan)?.value : undefined;
+    return plainTalk(word || row.note || "");
 }

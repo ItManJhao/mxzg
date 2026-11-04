@@ -140,3 +140,17 @@ H2 验证不能替代 MySQL。独立 MySQL 已覆盖阵容并发、升级/领奖
 下一批：持久保存选中阵型、已解锁ID及助战状态；在登录/合法英雄变化的现有事务中更新，并统一revision同步。之后迁移保存协议与Model/View。旧LineupService固定位置、同模板未过滤、助战无限制的历史行为不能直接对外开放。对现有测试阵容迁移需保留数据并单独验收，不通过清库解决规则差异。升级、穿脱、其他模块维持关闭。
 
 本轮后端80/80通过，日志backend/target/main-formation-rules-test.log；其中新增4项真实配置规则测试。本批无迁移、无前端/协议变更，未重跑MySQL或画面、未重启日常后端、未修改玩家资产；规则批次尚未提交。
+
+## 2026-11-04 V14永久阵型状态与统一同步
+
+规则批次已提交`b1261431`。本批新增game_role.main_formation_id默认1、assistance_unlocked默认false，以及game_formation_unlock的角色/阵型唯一记录；基础阵型1隐式永久解锁，不为每次登录重复写默认行。迁移保留原game_lineup_slot和阵容版本，不删除或重新排列历史站位。
+
+MainFormationStateService.refresh必须在现有事务中执行并持有角色行锁。它在旧持久集合上只追加解锁，助战仅false→true；新增时调用AssetSyncService.changed，同角色同事务仅一次资产revision及提交后通知。无变化不写、不递增版本。统一登录/恢复快照执行检查，当前已开放的GM英雄发放在同一发放事务内检查；以后正式升星/获取英雄需复用此入口，不能在客户端推算或仅依赖重连补齐。历史领域服务仍暂停，不将其视为已迁移完成。
+
+Snapshot.main_formation使用新字段7：formationId、unlockedIds、assistanceUnlocked、阵容version和slots。缺失表示未同步；角色/背包/英雄/阵型在应用层先整包校验，再由HeroRosterController.onNotify提交同一HeroRosterModel并通知。阵型只读状态暂归英雄模块，未创建第二份阵容缓存；换号/退出一起清空。不增加查询或保存协议，不开放UI入口。
+
+客户端拒绝非法/重复解锁、选中未解锁阵型、非法版本、重复站位或实例、跨角色英雄；保留真实历史站位（包括尚待后续保存规则整改的同模板/助战配置），不在快照中偷偷归一化。服务端选中未解锁/未知阵型明确拒绝，不替换成默认值。
+
+本轮H2后端83/83、前端hero-state和game-socket、两组类型与协议生成检查通过；含事务回滚、永久解锁保留、无事务拒绝、角色隔离、重复快照revision不变及Protobuf往返。独立MySQL18/18通过，run=9dfe3a64d6a943b78e77814538627dca，state=stopped，日志backend/target/formation-state-mysql.log；覆盖V14迁移、选中阵型重启和英雄减少后永久解锁不回退；无新增可见界面，未重跑Creator画面。日常后端未更新，日常玩家库未迁移；本批尚未提交。
+
+下一批先将持久阵型和规则接到阵容保存事务，再实现WS请求、持久幂等/并发版本、统一推送与页面；保存前后的旧站位差异需明确记录。共享战斗输入仍有战斗专属属性/触发等pending，不能直接开放简化战斗。
