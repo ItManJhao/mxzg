@@ -31,7 +31,7 @@ class HeroBattleRulesTest {
 
     /** 主动初始1、冷却3的真实配置为1/5/9回合，不能误写成每3回合。 */
     @Test void activeRoundsUseCooldownPlusOne() {
-        var active = new Skill(101050081, 5, 1, 1, 3, false);
+        var active = new Skill(101050081, 5, 1, 1, 3, false, false);
         for (int round : List.of(1, 5, 9)) {
             assertTrue(HeroBattleSkillUtils.canRelease(active, round, 0));
         }
@@ -43,22 +43,22 @@ class HeroBattleRulesTest {
 
     /** 旧公式没有初始回合下限；负差整除仍命中，不能擅自修正规则。 */
     @Test void preservesInitialFallbackAndNegativeModulo() {
-        var configured = new Skill(1, 0, 1, 5, 3, false);
+        var configured = new Skill(1, 0, 1, 5, 3, false, false);
         assertTrue(HeroBattleSkillUtils.canRelease(configured, 1, 0));
-        var instance = new Skill(2, 0, 1, 0, 2, false);
+        var instance = new Skill(2, 0, 1, 0, 2, false, false);
         assertTrue(HeroBattleSkillUtils.canRelease(instance, 2, 2));
         assertTrue(HeroBattleSkillUtils.canRelease(instance, 5, 2));
         assertFalse(HeroBattleSkillUtils.canRelease(instance, 3, 2));
-        assertTrue(HeroBattleSkillUtils.canRelease(new Skill(3, 0, 1, 1, 0, false), 2, 0));
+        assertTrue(HeroBattleSkillUtils.canRelease(new Skill(3, 0, 1, 1, 0, false, false), 2, 0));
     }
 
     /** 追加行动优先；只能普攻次之；主动按列表首项，0被动和3光环不参与主动排期。 */
     @Test void selectionPreservesLegacyPriority() {
-        var ordinary = new Skill(1, 0, 2, 0, 0, false);
-        var first = new Skill(2, 1, 1, 1, 3, false);
-        var second = new Skill(3, 1, 1, 1, 1, false);
-        var passive = new Skill(4, 1, 0, 0, 0, true);
-        var halo = new Skill(5, 1, 3, 0, 0, false);
+        var ordinary = new Skill(1, 0, 2, 0, 0, false, false);
+        var first = new Skill(2, 1, 1, 1, 3, false, false);
+        var second = new Skill(3, 1, 1, 1, 1, false, false);
+        var passive = new Skill(4, 1, 0, 0, 0, true, false);
+        var halo = new Skill(5, 1, 3, 0, 0, false, false);
         var list = List.of(passive, halo, first, second, ordinary);
         assertEquals(first, HeroBattleSkillUtils.choose(list, 1, null, false));
         assertEquals(second, HeroBattleSkillUtils.choose(list, 3, null, false));

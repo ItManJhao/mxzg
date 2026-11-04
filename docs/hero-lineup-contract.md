@@ -227,3 +227,26 @@ Unit新增opening与skillSchedule；attributes保留全部原始编号，HeroPro
 - 攻击侧触发涉及暴击、技能伤害类型、造成伤害、击杀；防守侧死亡分支先处理死亡触发/清理并返回，存活侧再按各事件与固定伤害条件推进。反击资格、目标选择、随机概率、Buff条件/持续时间及递归行动仍须逐处理器核对。
 
 本批HeroBattleSkillUtils只复现候选排期，不执行上述触发，不伪造胜负、战报或奖励。pending中的battle_special_attributes_and_triggers继续保留；已有count_stats面板被动不因提供skillSchedule而再次执行。下一批优先核对并恢复行动资格与最小Buff事件状态机，再接伤害和目标选择。
+
+
+## 2026-11-04 行动资格与最小Buff事件
+
+上一批属性折算/技能排期已本机提交6614b7f5。旧依据为HeroDo.canAttack/isOnlyAttack/getSkill/restore、BuffType三个控制集合、HeroSkillSysCache.checkFirstSkill、BattleTrigger.trigger、BuffDo.isSelf/isTriggerType/compareTo、AbstractArtTriggerBuffHandler.trigger/getTarget和UseSkillBuffHandler.checkCondition。
+
+### 行动资格
+
+HeroBattleActionUtils沿旧编号使用只能普攻集合1001/1011/1013/1015；主动禁止1003/1004/1005/1006/1010/1012/1014，普攻另受1002缴械限制。候选选择在行动前事件之前，事件中新加沉默不会重新选择该次候选；事件中新加眩晕会在随后的资格检查阻止行动。死亡总是优先拒绝，能量9999和先手技能才可绕过控制集合。封印1007/挂机封印控制触发，不直接代替行动禁止判断。
+
+先手不是表中默认布尔字段：沿旧HeroSkillSysCache从技能art_list到buff_list检查260号Buff。新增Skill.first，由现有配置索引解析，并随内部skillSchedule传入；不修改协议。
+
+### 四类最小事件处理
+
+HeroBattleEventProcessor是每场新建的内存对象，Actor只保存本场单位编号、控制集合、监听实例、中断标记及候选技能，不持有账号或数据库。支持197行动前、172使用普攻、173使用技能、170攻击后。正常流程为选候选→197→资格判断→技能执行器→172或173→170；追加行动按旧反击路径跳过使用/攻击后事件。返回true只表示本批范围的技能执行器被调用，不表示完整战斗、伤害或奖励已完成。
+
+配置解析复用HeroSkillPanelRules已有buff/buffart索引。173仅沿旧处理器检查value0技能ID（0不限）；不根据注释擅自增加value1伤害类型条件。各监听保留art_list顺序：source_type=0使用原施加者，1使用携带者；有target配置时以携带者作为选目标上下文，无target时自身Buff沿用传入目标、外来Buff使用携带者。传给执行器的是目标上下文，不伪称已完成完整目标筛选。
+
+监听按事件开始时的快照筛选和稳定排序：外来Buff先执行，自身其次；本批四种类型在旧枚举priority均为0，同组保留安装顺序，不按ID排序。执行期间新增/移除监听只影响后续事件，本次快照继续。封印只在该次dispatch入口判断；每个监听处理后restore只清中断标记，不清控制/Buff。战斗结束时处理器不执行后续监听动作。异常向上传播，不吞掉未实现效果。
+
+### 本批边界
+
+技能动作与触发动作通过必需Executor接口交付；没有默认空执行器或假伤害结果。当前已落地的是内存事件处理与行动资格，并可从真实配置解析四类触发定义；尚未自动安装所有技能Buff，未实现持续时间、叠层、别名listenType/listenType2、其他优先级类型、条件概率、完整目标筛选、物理/法术技能后事件、伤害及死亡/反击递归链。未知事件/触发类型明确拒绝，不按无效果成功处理。battle_special_attributes_and_triggers仍保留，战斗入口仍关闭。

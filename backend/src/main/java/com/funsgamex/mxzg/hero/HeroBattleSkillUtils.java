@@ -4,8 +4,8 @@ package com.funsgamex.mxzg.hero;
 import java.util.List;
 
 public final class HeroBattleSkillUtils {
-    /** activeType沿旧枚举：0被动、1主动、2普攻、3光环；initialRound/coolRound来自精确技能等级配置。 */
-    public record Skill(int skillId, int level, int activeType, int initialRound, int coolRound, boolean countStats) {
+    /** activeType沿旧枚举：0被动、1主动、2普攻、3光环；initialRound/coolRound来自精确技能等级配置，first由动作内260号先手Buff推导。 */
+    public record Skill(int skillId, int level, int activeType, int initialRound, int coolRound, boolean countStats, boolean first) {
         /** 拒绝非法配置，避免冷却除零或把未知类别当成主动。 */
         public Skill {
             if (skillId <= 0 || level < 0 || activeType < 0 || activeType > 3 || initialRound < 0 || coolRound < 0) {

@@ -157,3 +157,12 @@ HeroBattleInputService已按旧FormationReceivers接入持久选中阵型，Inpu
 已核对旧AttributeInfo、SkillDo、SkillInfo、HeroDo、BattleService、BattleTrigger及BuffDo顺序，详见hero-lineup-contract.md本日核查节。完整Buff触发、行动禁止、伤害、概率和目标选择仍待恢复，battle_special_attributes_and_triggers继续保留；不会把排期工具视为完整战斗引擎。
 
 新增5项特征测试及既有持久输入集成断言：生命与攻防速上限差异、负比例与截断、不重复折算、1/5/9回合、旧负差模运算、主动列表顺序/普攻回退/追加行动优先、进化技能精确等级与不可变排期。后端全套97项通过，0失败/0错误，日志backend/target/battle-rules-test.log。仅隔离H2测试，未访问现有玩家库、未重启日常后端。升级、穿脱与其他模块未修改。本轮新增核查/实现尚未提交。
+
+
+## 2026-11-04 行动资格与最小Buff事件处理
+
+属性折算和技能排期批次已本机提交6614b7f5，未推送。本轮新增HeroBattleActionUtils与每场独立的HeroBattleEventProcessor，补死亡、控制集合、能量9999与先手例外；先手沿旧配置扫描260号Buff。HeroSkillPanelRules复用既有配置索引解析四类触发定义。
+
+最小事件覆盖197/172/173/170，按候选→行动前→资格→技能执行器→使用事件→攻击事件推进；反击不重复派发使用/攻击事件。保留外来优先、稳定监听快照、封印、技能ID条件、动作来源/目标上下文和restore清中断语义。需要显式提供动作执行器，不提供假伤害或默认空处理；未知类型拒绝。完整目标/伤害/Buff生命周期及其他触发仍待接入，战斗输入pending保持。
+
+新增HeroBattleEventsTest六项，包含真实配置先手/限定技能解析与内存行为测试。后端全套103项通过，0失败/0错误，日志backend/target/battle-events-test.log。测试仅使用隔离H2和本场内存状态；未访问日常玩家数据库，未改客户端、协议或其他玩法，升级与穿脱继续关闭。本轮新增内容尚未提交。下一步接入最小动作效果与目标选择，继续按旧处理器逐项恢复，不直接开放战斗结算。

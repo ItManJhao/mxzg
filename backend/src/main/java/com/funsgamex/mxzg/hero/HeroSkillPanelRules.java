@@ -58,8 +58,37 @@ public class HeroSkillPanelRules {
             }
             return new HeroBattleSkillUtils.Skill(reference.skillId(), reference.level(),
                 row.path("active_type").asInt(), row.path("initial_round").asInt(),
-                row.path("cool_round").asInt(), count == 1);
+                row.path("cool_round").asInt(), count == 1, firstSkill(row));
         }).toList();
+    }
+
+    /** 沿旧HeroSkillSysCache.checkFirstSkill扫描动作内的260号Buff，不把先手当作排期字段。 */
+    private boolean firstSkill(JsonNode skill) {
+        for (var artId : mapper.readTree(skill.path("art_list").asString())) {
+            for (var buffId : mapper.readTree(row("buffart", artId.asInt()).path("buff_list").asString())) {
+                if (row("buff", buffId.asInt()).path("type").asInt() == 260) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** 解析本批四类触发Buff；未知类型明确拒绝，动作的实际效果交给战斗执行器。 */
+    public HeroBattleEventProcessor.Definition battleTrigger(int buffId) {
+        var buff = row("buff", buffId);
+        int type = buff.path("type").asInt();
+        int skillFilter = type == 173 ? Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) : 0;
+        var arts = new ArrayList<HeroBattleEventProcessor.Art>();
+        for (var id : mapper.readTree(buff.path("art_list").asString())) {
+            var art = row("buffart", id.asInt());
+            var targets = mapper.readTree(art.path("target").asString());
+            if (!targets.isArray()) {
+                throw new IllegalStateException("触发动作目标配置无效");
+            }
+            arts.add(new HeroBattleEventProcessor.Art(id.asInt(), art.path("source_type").asInt(), !targets.isEmpty()));
+        }
+        return new HeroBattleEventProcessor.Definition(buffId, type, skillFilter, arts);
     }
 
     /** 面板仅使用基础已解锁技能，进化替换在其后，不重复执行面板被动。 */
