@@ -26,7 +26,11 @@ public class SocketPreviewServer {
             jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10301001,1,1)",empty,player.role().id());
             for(int slot=1;slot<=4;slot++)jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,?,?,?,?)","922337203685477580"+slot,player.role().id(),1000001+slot*1000,slot,slot==1?3:0,hero);
         }
-        int port = ((WebServerApplicationContext) context).getWebServer().getPort();
+        if(Arrays.asList(args).contains("--skill-panel-fixture")) {
+            var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("skill_panel_review");
+            var jdbc=context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10103003,30,3,1)",UUID.randomUUID().toString(),player.role().id());
+        }        int port = ((WebServerApplicationContext) context).getWebServer().getPort();
         Path manifest = Path.of("..", "client", "temp", "socket-preview.json");
         Files.createDirectories(manifest.getParent());
         Files.writeString(manifest, "{\"port\":" + port + ",\"run\":\"" + RUN + "\",\"pid\":" + ProcessHandle.current().pid() + "}");

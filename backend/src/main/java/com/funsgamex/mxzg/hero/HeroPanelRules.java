@@ -22,7 +22,9 @@ public class HeroPanelRules {
         rows("equipmentsettype").forEach(sets::add);
     }
     /** 计算当前已恢复来源；不保存派生值，不增加任何养成写入口。 */
-    public State calculate(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn){
+    public State calculate(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn){var result=calculate(base,worn,add->{});var pending=new ArrayList<>(result.pendingSources());pending.add(0,"skill_panel");return new State(result.values(),List.of("base","equipment","equipment_set"),List.copyOf(pending),false); }
+    /** 合并技能贡献后统一取整，成长率仅作用于原基础属性。 */
+    public State calculate(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn,java.util.function.Consumer<java.util.function.BiConsumer<Integer,Long>> skills){
         Map<Integer,Long> attrs=new HashMap<>();
         attrs.put(223,(long)base.hp());attrs.put(220,(long)base.atk());attrs.put(224,(long)base.def());attrs.put(101,(long)base.spd());
         Map<Integer,Integer> counts=new HashMap<>();
@@ -31,9 +33,12 @@ public class HeroPanelRules {
             add(attrs,row.path("ability").asString());int set=row.path("set_type").asInt();if(set!=0)counts.merge(set,1,Integer::sum);
         }
         for(var row:sets)if(counts.getOrDefault(Integer.parseInt(row.path("type").asString()),0)>=row.path("num").asInt())add(attrs,row.path("attr").asString());
-        var values=new Values(scale(attrs.getOrDefault(223,0L),attrs.getOrDefault(102,0L)),scale(attrs.getOrDefault(220,0L),attrs.getOrDefault(201,0L)),scale(attrs.getOrDefault(224,0L),attrs.getOrDefault(202,0L)),scale(attrs.getOrDefault(101,0L),attrs.getOrDefault(204,0L)));
-        return new State(values,List.of("base","equipment","equipment_set"),List.of("skill_panel","soul_skill","talent","runes","awakening","account_and_other_hero_sources"),false);
+        skills.accept((type,value)->{attrs.merge(type,value,Math::addExact);if(type==120){int[] keys={223,220,224,101};long[] original={base.hp(),base.atk(),base.def(),base.spd()};for(int i=0;i<keys.length;i++)attrs.merge(keys[i],(long)(original[i]*(value/10000D)),Math::addExact);}});
+        var values=new Values(scaleHp(attrs.getOrDefault(223,0L),attrs.getOrDefault(102,0L)),scale(attrs.getOrDefault(220,0L),attrs.getOrDefault(201,0L)),scale(attrs.getOrDefault(224,0L),attrs.getOrDefault(202,0L)),scale(attrs.getOrDefault(101,0L),attrs.getOrDefault(204,0L)));
+        return new State(values,List.of("base","equipment","equipment_set","skill_panel"),List.of("soul_skill","talent","runes","awakening","account_and_other_hero_sources"),false);
     }
+    /** 旧 initMaxHp 直接使用生命百分比，不套用攻防速 getRate 的50000上限。 */
+    private long scaleHp(long value,long rate){double result=value*(1+rate/10000D);if(!Double.isFinite(result)||result<=0||result>9007199254740991D)throw new IllegalStateException("生命面板越界");return (long)result;}
     /** 沿旧 AttributeInfo.getRate 的百分比上限与 double 后向零截断顺序；拒绝前端不安全整数。 */
     private long scale(long value,long rate){double result=value*(1+Math.min(rate,50000)/10000D);if(!Double.isFinite(result)||result<=0||result>9007199254740991D)throw new IllegalStateException("面板属性越界");return (long)result;}
     /** 合并旧属性 JSON 数组；同类型相加，非面板属性保留参与累加但不伪造额外展示。 */

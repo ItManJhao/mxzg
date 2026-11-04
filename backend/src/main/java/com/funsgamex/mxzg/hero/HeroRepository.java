@@ -20,18 +20,20 @@ public class HeroRepository {
     private final HeroEquipmentRepository equipment;
     /** 面板属性在同一快照读取时计算，不另存过期数值。 */
     private final HeroPanelRules panelRules;
+    /** 技能面板贡献在服务器统一计算，客户端不重复叠加。 */
+    private final HeroSkillPanelRules skillRules;
     /** 注入数据库访问入口。 */
-    public HeroRepository(JdbcTemplate jdbc, HeroGrowthRules rules, HeroEquipmentRepository equipment,HeroPanelRules panelRules) { this.jdbc = jdbc; this.rules=rules; this.equipment=equipment;this.panelRules=panelRules; }
+    public HeroRepository(JdbcTemplate jdbc, HeroGrowthRules rules, HeroEquipmentRepository equipment,HeroPanelRules panelRules,HeroSkillPanelRules skillRules) { this.jdbc = jdbc; this.rules=rules; this.equipment=equipment;this.panelRules=panelRules;this.skillRules=skillRules; }
 
     /** 读取本角色全部实例及主线阵容占用，界面排序由旧版展示规则决定。 */
     public List<HeroProfile> list(String roleId) {
         var equipped=equipment.equipped(roleId);
-        return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? ORDER BY id", this::map, roleId).stream().map(hero->hero.withEquipment(equipped.getOrDefault(hero.id(),new HeroEquipmentRepository.State(List.of())),panelRules)).toList();
+        return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? ORDER BY id", this::map, roleId).stream().map(hero->hero.withEquipment(equipped.getOrDefault(hero.id(),new HeroEquipmentRepository.State(List.of())),panelRules,skillRules)).toList();
     }
     /** 以角色和实例双条件查询，禁止跨角色取得英雄。 */
     public Optional<HeroProfile> find(String roleId, String heroId) {
         var equipped=equipment.equipped(roleId);
         return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? AND h.id = ?", this::map, roleId, heroId)
-            .stream().map(hero->hero.withEquipment(equipped.getOrDefault(hero.id(),new HeroEquipmentRepository.State(List.of())),panelRules)).findFirst();
+            .stream().map(hero->hero.withEquipment(equipped.getOrDefault(hero.id(),new HeroEquipmentRepository.State(List.of())),panelRules,skillRules)).findFirst();
     }
 }

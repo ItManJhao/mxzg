@@ -26,7 +26,7 @@
   <build><resources>
     <resource><directory>src/main/resources</directory></resource>
     <!-- 与客户端读取同一份已导出期限及角色基础表，构建时打包，不维护手工副本。 -->
-    <resource><directory>../client/assets/resources/config</directory><targetPath>gameplay</targetPath><includes><include>timelimititem.json</include><include>inituser.json</include><include>mainlevel.json</include><include>system.json</include><include>goddessvip.json</include><include>herotype.json</include><include>equipmenttype.json</include><include>equipmentsettype.json</include><include>item.json</include></includes></resource>
+    <resource><directory>../client/assets/resources/config</directory><targetPath>gameplay</targetPath><includes><include>timelimititem.json</include><include>inituser.json</include><include>mainlevel.json</include><include>system.json</include><include>goddessvip.json</include><include>herotype.json</include><include>equipmenttype.json</include><include>equipmentsettype.json</include><include>heroupgrade.json</include><include>herostar.json</include><include>heroskill.json</include><include>buffart.json</include><include>buff.json</include><include>item.json</include></includes></resource>
   </resources><extensions><extension><groupId>kr.motd.maven</groupId><artifactId>os-maven-plugin</artifactId><version>1.7.1</version></extension></extensions><plugins>
     <plugin><groupId>org.xolstice.maven.plugins</groupId><artifactId>protobuf-maven-plugin</artifactId><version>0.6.1</version>
       <configuration><protoSourceRoot>${project.basedir}/../protocol</protoSourceRoot><protocArtifact>com.google.protobuf:protoc:4.36.2:exe:${os.detected.classifier}</protocArtifact></configuration>

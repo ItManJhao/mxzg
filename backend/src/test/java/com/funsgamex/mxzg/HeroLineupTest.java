@@ -83,6 +83,14 @@ class HeroLineupTest {
         var cleared=snapshots.snapshot(owner.authorization()).heroes().stream().filter(row->row.id().equals(first)).findFirst().orElseThrow();
         assertTrue(cleared.equipment().items().isEmpty());assertEquals(cleared.baseStats().atk(),cleared.panelStats().values().atk());
     }
+    /** 统一快照包含真实技能面板加成；刷新后仍从持久星级/强化读取，客户端不补算。 */
+    @Test void skillPanelIsIncludedInSnapshot(){
+        var p=player();String id=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10103003,30,3,1)",id,p.roleId());
+        var first=snapshots.snapshot(p.authorization()).heroes().getFirst();
+        assertEquals((long)(first.baseStats().hp()*1.1),first.panelStats().values().hp());assertEquals((long)(first.baseStats().def()*1.16),first.panelStats().values().def());
+        assertTrue(first.panelStats().includedSources().contains("skill_panel"));assertFalse(first.panelStats().pendingSources().contains("skill_panel"));assertEquals(first.panelStats(),snapshots.snapshot(p.authorization()).heroes().getFirst().panelStats());
+    }
     private String seedHero(Player player) {
         String id = UUID.randomUUID().toString();
         // Fixtures only: production has no client-facing grant endpoint.

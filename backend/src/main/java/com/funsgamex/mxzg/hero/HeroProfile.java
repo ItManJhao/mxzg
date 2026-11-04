@@ -5,5 +5,5 @@ public record HeroProfile(String id, int templateId, int level, int star, boolea
     /** 保留领域调用的构造方式；持久读取时补上真实穿戴快照。 */
     public HeroProfile(String id,int templateId,int level,int star,boolean locked,boolean deployed,int stage,HeroGrowthRules.Stats baseStats) { this(id,templateId,level,star,locked,deployed,stage,baseStats,null,null); }
     /** 返回同一英雄的完整只读穿戴投影，不修改原记录。 */
-    public HeroProfile withEquipment(HeroEquipmentRepository.State value,HeroPanelRules rules) { return new HeroProfile(id,templateId,level,star,locked,deployed,stage,baseStats,value,rules.calculate(baseStats,value)); }
+    public HeroProfile withEquipment(HeroEquipmentRepository.State value,HeroPanelRules rules,HeroSkillPanelRules skillRules) { return new HeroProfile(id,templateId,level,star,locked,deployed,stage,baseStats,value,rules.calculate(baseStats,value,add->skillRules.contribute(templateId,star,stage,add))); }
 }

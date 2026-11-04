@@ -25,6 +25,18 @@ class HeroPanelRulesTest {
         var four=rules.calculate(base,new HeroEquipmentRepository.State(List.of(item(1001007,1),item(1002007,2),item(1003007,3),item(1004007,4))));
         assertEquals(5000,four.values().hp());assertEquals(569,four.values().atk());
     }
-    /** 夹具只提供持久只读记录，不开放穿戴接口。 */
+    /** 强化前技能锁定，强化后按旧技能/buff 配置计入生命和防御百分比。 */
+    @Test void skillUnlockUsesRealPanelBuffs(){
+        var mapper=new ObjectMapper();var rules=new HeroPanelRules(mapper);var skills=new HeroSkillPanelRules(mapper);var base=new HeroGrowthRules.Stats(1000,100,100,100);var empty=new HeroEquipmentRepository.State(List.of());
+        var locked=rules.calculate(base,empty,add->skills.contribute(10103003,3,0,add));assertEquals(1000,locked.values().hp());assertEquals(100,locked.values().def());
+        var unlocked=rules.calculate(base,empty,add->skills.contribute(10103003,3,1,add));assertEquals(1100,unlocked.values().hp());assertEquals(115,unlocked.values().def());assertTrue(unlocked.includedSources().contains("skill_panel"));assertFalse(unlocked.pendingSources().contains("skill_panel"));assertFalse(unlocked.complete());
+        assertThrows(IllegalStateException.class,()->skills.contribute(99999999,3,1,(type,value)->{}));
+    }
+    /** 生命初始化百分比不使用攻防速上限；成长百分比基于原基础值，每次贡献独立截断。 */
+    @Test void healthCapAndGrowthOrder(){
+        var rules=new HeroPanelRules(new ObjectMapper());var base=new HeroGrowthRules.Stats(1000,100,100,100);var empty=new HeroEquipmentRepository.State(List.of());
+        var hp=rules.calculate(base,empty,add->{add.accept(102,60000L);add.accept(201,60000L);});assertEquals(7000,hp.values().hp());assertEquals(600,hp.values().atk());
+        var growth=rules.calculate(base,empty,add->{add.accept(120,333L);add.accept(120,333L);});assertEquals(1066,growth.values().hp());assertEquals(106,growth.values().atk());
+    }    /** 夹具只提供持久只读记录，不开放穿戴接口。 */
     private HeroEquipmentRepository.Item item(int template,int slot){return new HeroEquipmentRepository.Item("test-"+slot,template,slot,0);}
 }
