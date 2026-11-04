@@ -139,3 +139,12 @@ HeroInfoView的旧壳层记录早于5c95c7a6四槽装备接入；ItemRewardLayer
 本轮真实预览覆盖保存及刷新恢复；换号迟到成功/失败、同角色重登和断线重试由上一批受控连接回归覆盖，不将浏览器离线开关尝试等同于真实WebSocket断线验收。
 
 下一批明确入口：旧FormationReceivers.setAttribute按当前阵型及hero.position取得BattleMatrixAddition.ability，加入战斗英雄AttributeInfo，并把formationId交给战斗命令。新版HeroBattleInputService目前没有把选中阵型及站位加成放入Input，pending仍含formation_unlock_and_template_limits；应先接入持久选中阵型与旧配置的站位属性，验证加成不回写英雄面板、换阵型不重复累加，然后继续处理战斗专属属性和技能触发。此处仅完成源码核对，尚未宣称战斗输入完整或开放战斗。
+
+
+## 2026-11-04 服务端战斗输入的阵型/站位加成
+
+HeroBattleInputService已按旧FormationReceivers接入持久选中阵型，Input携带formationId；与统一快照复用MainFormationStateService、MainFormationRules。按位置把原始属性加入重新构建的战斗属性Map，保留比例、治疗、最终减伤等全部编号，不回写英雄面板。读取期间不刷新解锁、不保存站位、不递增资产版本；无效持久阵容拒绝，不静默过滤。已移除formation_unlock_and_template_limits缺口，其余缺口继续保留。
+
+新增HeroBattleFormationTest四项独立H2回归：同站位换阵型、同阵型换位置及原始百分比、空阵与合法零加成助战、非法持久阵型/位置拒绝及角色隔离；同时检查重复读取、面板不变、版本无读副作用和不可变结果。后端全套92项通过，0失败/0错误，日志backend/target/battle-formation-test.log。该结果来自本批执行，不沿用前批记录。
+
+未改数据库结构、协议、客户端和其他模块，未操作现有玩家库，未重启日常后端；升级和穿脱入口保持关闭。本批尚未提交或推送。下一步核对战斗专属属性折算与技能触发规则，待缺口收敛后再开放主线战斗。
