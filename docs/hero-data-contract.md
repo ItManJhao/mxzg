@@ -166,3 +166,34 @@ HeroEquipmentRepository在同一角色读取中联结英雄真实star，校验�
 进化后续依据：HeroEvolveReceiver在LOWEST阶段对QueryHeroCommand等追加当前heroevolvelevel.attr，再替换/添加技能；未重算新技能的count_stats初始面板。客户端HeroData.getHeroSkillLevel按hero_type/evolve.type/evolve.level查表，匹配skill_old_id后显示新skill_id/skill_level，且仍先判断强化解锁。当前导出174行，全部skill_id==skill_old_id（升级同一技能的等级）。服务端removeIf比较idx、配置值为type，需继续核对SkillInfo.addSkill按类型升级的实际效果，不能将字面removeIf直接照搬成正确实现。下一步先补持久evolve.type/level、统一快照、属性与只读技能替换；不开启进化操作，不默认所有英雄已进化。
 
 本批后端71/71、前端hero-equipment（含生效字段Protobuf往返、冻结及非法值）、hero-state、hero、生成漂移及双类型通过。正常角色门槛关闭在真实统一快照测试核对；999星仅纯规则测试夹具，用于验证达标分支，未创建999星玩家英雄。未重跑MySQL、没有新增UI或进行本批页面验收。日常后端已更新，GM保留，现有玩家资产未修改。本批尚未提交。
+
+## 12. 2026-11-04：进化与战斗输入核查、纯规则基础
+
+前批附魂及文档已提交本机 main `10546843`，未推送。本批不开放进化、升级、穿脱、阵容或战斗，不改数据库和游戏协议。
+
+### 已确认的源码链
+
+路径相对旧项目 `G:/work/FsGame/Demo/mj/program`：
+
+| 规则 | 依据 | 新版处理与边界 |
+|---|---|---|
+| 基础成长、装备/套装、技能面板贡献 | `server/mxzg-server/mxzg-template/src/main/java/com/ayjs/mxzg/module/battle/BattleTemplate.java`：convertFrom、addEquipmentAttr、addSkillAttribute | 既有面板仅覆盖部分来源；战斗不得把四维展示结果再次作为基础叠加装备 |
+| 技能解锁和等级 | 同文件 getSkillsBy：强化控制前四技能解锁，真实星级决定技能等级；skill_5 固定查等级0 | 后续战斗共享此选择规则，不能从文字或前端图标反推；普攻和主动/被动分桶 |
+| 技能身份与升级 | `server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/SkillDo.java` createOf；同目录 SkillInfo.addSkill | skillId 是 type，不是 idx；同类型仅以更高等级替换，没有原技能则添加 |
+| 进化属性与技能 | `server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/hero/receiver/HeroEvolveReceiver.java` doEvolveHeroDo | 查当前英雄/type/level 行，读取 attr 总量；不能累计各级，也不能用 attr_show 增量代替 |
+| 附加效果顺序 | 同目录 HeroReceivers.buildHeroDo：convertFrom 后觉醒、附魂、设置进化；进化接收器 LOWEST | 进化替换后没有在该接收器再次执行 addSkillAttribute；不能自行再加一次进化被动面板贡献。完整接收器顺序仍需战斗集成时核对 |
+| 战斗属性与结算 | `server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/AttributeInfo.java`；`util/FightUtil.java` calDamage | 最大血量初始化、百分比、暴击/格挡、能量、元素/职业/伤害类型等与四维分离；当前新版 CampaignBattle 的攻击减防御不等价 |
+
+### 本批实现
+
+新增 `HeroEvolutionRules` 纯规则基础，构建打包共享 heroevolvelevel 表，精确索引英雄配置/分支/等级，校验技能类型+等级引用。当前真实表174行，skill_id均等于skill_old_id；进化技能 active_type 包含0、1、3。属性包含101、102、201、204、207、220、223、224，保留207暴击率等非四维项。
+
+旧进化删除逻辑比较 idx 与配置的 type，且 getPassiveSkills 返回副本；不能按字面解释为可靠删除。当前表全部同类型，SkillInfo.addSkill 的较高等级覆盖能确定实际结果。本批仅实现这个已确认范围；将来出现不同类型替换配置时显式拒绝并要求重新核查，不静默猜测。
+
+0/0表示明确未进化，部分零值、负值、不存在的进化行拒绝；只返回不可变当前总属性和技能结果。不写持久状态、不接入现有 HeroRepository 或面板；因此玩家当前显示与战斗行为不变。下一批仍需进化持久化、统一快照、技能只读投影和共享战斗输入接线，不能把本纯规则测试称为进化已上线。
+
+### 验证与下一批出口
+
+本轮后端74/74、0失败，日志 `backend/target/evolution-foundation-test.log`。新增3项测试覆盖当前总量而非累计、非四维保留、不可变性、非法状态/缺配置、技能type替换、较高等级保留、不改变输入及重复技能拒绝。未重跑MySQL、Creator或正式服；无前端变更，无玩家数据修改，本批未提交。
+
+下一批先将进化type/level持久化并进入统一快照；同源选择基础/进化技能，保留属性来源与未支持项。阵容/战斗接入前另验：角色归属与站位、战斗专属属性、技能目标/冷却/触发/状态、规则版本与随机记录、待结算战报恢复和唯一领奖事务。逐条恢复，禁止用普攻或零属性代替未支持机制。
