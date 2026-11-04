@@ -25,6 +25,12 @@ public class HeroPanelRules {
     public State calculate(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn){var result=calculate(base,worn,add->{});var pending=new ArrayList<>(result.pendingSources());pending.add(0,"skill_panel");return new State(result.values(),List.of("base","equipment","equipment_set"),List.copyOf(pending),false); }
     /** 合并技能贡献后统一取整，成长率仅作用于原基础属性。 */
     public State calculate(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn,java.util.function.Consumer<java.util.function.BiConsumer<Integer,Long>> skills){
+        var attrs=attributes(base,worn,skills);
+        var values=new Values(scaleHp(attrs.getOrDefault(223,0L),attrs.getOrDefault(102,0L)),scale(attrs.getOrDefault(220,0L),attrs.getOrDefault(201,0L)),scale(attrs.getOrDefault(224,0L),attrs.getOrDefault(202,0L)),scale(attrs.getOrDefault(101,0L),attrs.getOrDefault(204,0L)));
+        return new State(values,List.of("base","equipment","equipment_set","skill_panel"),List.of("soul_skill","talent","runes","awakening","account_and_other_hero_sources"),false);
+    }
+    /** 保留全部属性编号的未折算数据，供战斗构建使用；不从四维面板反推，不丢弃暴击等属性。 */
+    public Map<Integer,Long> attributes(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn,java.util.function.Consumer<java.util.function.BiConsumer<Integer,Long>> skills){
         Map<Integer,Long> attrs=new HashMap<>();
         attrs.put(223,(long)base.hp());attrs.put(220,(long)base.atk());attrs.put(224,(long)base.def());attrs.put(101,(long)base.spd());
         Map<Integer,Integer> counts=new HashMap<>();
@@ -34,8 +40,7 @@ public class HeroPanelRules {
         }
         for(var row:sets)if(counts.getOrDefault(Integer.parseInt(row.path("type").asString()),0)>=row.path("num").asInt())add(attrs,row.path("attr").asString());
         skills.accept((type,value)->{attrs.merge(type,value,Math::addExact);if(type==120){int[] keys={223,220,224,101};long[] original={base.hp(),base.atk(),base.def(),base.spd()};for(int i=0;i<keys.length;i++)attrs.merge(keys[i],(long)(original[i]*(value/10000D)),Math::addExact);}});
-        var values=new Values(scaleHp(attrs.getOrDefault(223,0L),attrs.getOrDefault(102,0L)),scale(attrs.getOrDefault(220,0L),attrs.getOrDefault(201,0L)),scale(attrs.getOrDefault(224,0L),attrs.getOrDefault(202,0L)),scale(attrs.getOrDefault(101,0L),attrs.getOrDefault(204,0L)));
-        return new State(values,List.of("base","equipment","equipment_set","skill_panel"),List.of("soul_skill","talent","runes","awakening","account_and_other_hero_sources"),false);
+        return Map.copyOf(attrs);
     }
     /** 旧 initMaxHp 直接使用生命百分比，不套用攻防速 getRate 的50000上限。 */
     private long scaleHp(long value,long rate){double result=value*(1+rate/10000D);if(!Double.isFinite(result)||result<=0||result>9007199254740991D)throw new IllegalStateException("生命面板越界");return (long)result;}

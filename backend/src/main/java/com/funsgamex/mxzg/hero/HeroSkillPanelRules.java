@@ -28,13 +28,22 @@ public class HeroSkillPanelRules {
             }catch(java.io.IOException error){throw new IllegalStateException("技能面板表读取失败",error);}
         }
     }
-    /** 按真实星级和强化解锁选择四个技能，普攻 level=0；仅属性面板 buff 回调累加，不执行触发链。 */
-    public void contribute(int template,int star,int stage,BiConsumer<Integer,Long> add){
+    /** 名册面板与战斗输入共用技能选择；普攻等级为0，其余受强化解锁和真实星级控制。 */
+    public List<HeroEvolutionRules.Skill> select(int template,int star,int stage){
         var hero=row("herotype",template);var rank=row("herostar",star);var upgrade=row("heroupgrade",stage);
+        var selected=new ArrayList<HeroEvolutionRules.Skill>();
         for(int slot=1;slot<=5;slot++){
             int id=hero.path("skill_"+slot).asInt();if(id==0||(slot<5&&upgrade.path("skill"+slot).asInt()!=1))continue;
             int level=slot==5?0:rank.path("skill"+slot).asInt();var skill=skills.get(id+":"+level);
             if(skill==null)throw new IllegalStateException("面板技能等级缺失："+id+":"+level);
+            selected.add(new HeroEvolutionRules.Skill(id,level));
+        }
+        return List.copyOf(selected);
+    }
+    /** 面板仅使用基础已解锁技能，进化替换在其后，不重复执行面板被动。 */
+    public void contribute(int template,int star,int stage,BiConsumer<Integer,Long> add){
+        for(var reference:select(template,star,stage)) {
+            var skill=skills.get(reference.skillId()+":"+reference.level());
             int active=skill.path("active_type").asInt();if(active==1||active==2||skill.path("count_stats").asInt()!=1)continue;
             for(var artId:mapper.readTree(skill.path("art_list").asString())){
                 var art=row("buffart",artId.asInt());

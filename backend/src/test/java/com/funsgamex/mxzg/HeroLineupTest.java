@@ -29,6 +29,7 @@ class HeroLineupTest {
     @Autowired HeroQueries heroes;
     @Autowired com.funsgamex.mxzg.network.SessionSnapshotService snapshots;
     @Autowired LineupService lineups;
+    @Autowired com.funsgamex.mxzg.hero.HeroBattleInputService battleInputs;
     @Autowired JdbcTemplate jdbc;
     @LocalServerPort int port;
     private final HttpClient http = HttpClient.newHttpClient();
@@ -37,6 +38,25 @@ class HeroLineupTest {
         String account = "test_" + UUID.randomUUID().toString().substring(0, 12);
         var result = login.login(account);
         return new Player(account, result.role().id(), "Bearer " + result.session().accessToken());
+    }
+    /** 阵容输入与名册共用持久进化/技能；保留暴击而不将四维展示值反当基础再加一次。 */
+    @Test void battleInputSharesRulesAndOwnership(){
+        var owner=player();var other=player();String id=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage,evolve_type,evolve_level) VALUES (?,?,10105008,1,5,0,1,2)",id,owner.roleId());
+        assertTrue(battleInputs.current(owner.authorization()).units().isEmpty());
+        lineups.save(owner.authorization(),save(0,new Lineup.Slot(2,id)));
+        var result=battleInputs.current(owner.authorization());var unit=result.units().getFirst();
+        assertEquals(1,result.lineupVersion());assertEquals(2,unit.position());assertEquals(id,unit.hero().id());
+        assertEquals(300L,unit.attributes().get(207));assertEquals(300L,unit.attributes().get(201));
+        assertEquals(unit.hero().baseStats().atk()+7500,unit.attributes().get(220));
+        assertEquals((long)(unit.attributes().get(220)*1.03),unit.hero().panelStats().values().atk());
+        assertTrue(unit.skills().contains(new com.funsgamex.mxzg.hero.HeroEvolutionRules.Skill(101050081,5)));
+        assertTrue(unit.skills().stream().anyMatch(skill->skill.level()==0),"普攻必须保留");
+        assertEquals(2,unit.skills().size(),"未解锁被动不能加入战斗输入");
+        assertFalse(result.pending().isEmpty());assertTrue(battleInputs.current(other.authorization()).units().isEmpty());
+        assertThrows(UnsupportedOperationException.class,()->unit.attributes().put(220,1L));
+        assertThrows(UnsupportedOperationException.class,()->unit.skills().clear());
+        assertEquals(result,battleInputs.current(owner.authorization()));
     }
     /** 进化状态来自持久记录，统一快照与协议保留技能覆盖和属性；不提供进化写协议。 */
     @Test void evolutionPersistsAndSynchronizes() throws Exception {

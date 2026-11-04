@@ -215,3 +215,15 @@ Hero.evolution使用新字段11，携带type、level及服务端核验的技能t
 ### 进化画面验收完成
 
 2026-11-04 Creator预览393×852，独立内存实例ddee0f57b1f0422ba5368602ec63004e，测试账号evolution_review。同模板10105008：进化1/2显示攻击7845、生命46941、防御245、速度168、灵魂窃取Lv.5（209%伤害、70%沉默等）；未进化显示117/574/45/114、Lv.1（145%伤害、35%沉默）。详情→技能说明→返回列表→切换对照英雄正常，未出现数据残留，error/warn为零。证据：[进化面板](images/hero-evolution-panel-20261104.png)、[进化技能](images/hero-evolution-skill-20261104.png)、[未进化对照](images/hero-evolution-control-20261104.png)。测试宿主与页面已关闭，未改日常资产。新增夹具仅测试classpath、显式参数、强制内存库；已完成test-compile和真实启动验证，前批75/75及MySQL17/17结果沿用，未重复运行。
+
+## 14. 共享技能、全属性编号与主线阵容输入基础
+
+进化批次画面通过后已提交`cbdfc5b0`。后续新增HeroBattleInputService内部只读入口：同一角色行锁内鉴权、读取资产revision和阵容version，按持久站位关联自身英雄。它不提供网络协议、不调用CampaignBattle、不修改玩家状态。
+
+HeroSkillPanelRules.select由面板与战斗输入共用：按真实星级/强化选择，保留等级0普攻，进化用同类型较高等级覆盖。HeroPanelRules.attributes抽取原累加路径，输出不可变的全部属性编号映射，面板继续通过同一路径折算四维；进化后的暴击207和攻击百分比201均保留，不能从展示四维反推或重复加装备。
+
+当前输入带pending，明确缺阵容开放/同模板限制、附魂/天赋/符文/觉醒、账号/队伍来源和战斗专属属性/触发，不得作为完整战斗输入启动战斗。现有CampaignService的简化基础普攻仍未迁移，玩法入口继续暂停。
+
+原版阵容新增核查：旧`server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/hero/service/HeroLineUpService.java` saveLineUpFormation读取阵型位置配置、is_open、9号助战位开放、英雄等级要求；同模板重复会跳过。现有新版固定POSITIONS集合和仅实例去重不能宣称等价。下一批先恢复主线阵型/位置与助战规则及归属校验，再接WS协议与统一阵容状态；不直接开放历史save入口。
+
+本批后端76/76通过，日志backend/target/battle-input-foundation-test.log；新增内部阵容输入测试覆盖空阵容/角色隔离、版本/站位、进化技能与普攻、锁定技能不进入输入、非四维属性保留、面板同源和集合不可变。没有新增迁移或前端改动，未重跑MySQL和页面，本批基础代码尚未提交。日常后端未重启，玩家库未改。
