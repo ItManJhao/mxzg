@@ -32,10 +32,10 @@ function fitParchmentWindow(view: Node): ParchmentFit {
   return mark.mxzgParchment || NO_PARCHMENT;
 }
 
-/** 读取既有 Prefab 尺寸并应用等比缩小；尺寸未就绪返回 false。 */
+/** 读取 CommonPanel1（旧资源回退 spr_bg）的纸面尺寸并等比缩小；尺寸未就绪返回 false。 */
 function applyParchmentFit(view: Node): boolean {
   const mark = view as Node & { mxzgParchment?: ParchmentFit };
-  const bg = view.getChildByName("spr_bg");
+  const bg = (view.getChildByName("CommonPanel1") || view.getChildByName("spr_bg"));
   const ui = view.getComponent(UITransform);
   const bgUi = bg ? bg.getComponent(UITransform) : null;
   const rootSize = positiveUiSize(ui);
@@ -85,7 +85,7 @@ function watchParchment(view: Node): void {
     }
     frames += 1;
     const ui = view.getComponent(UITransform);
-    const bg = view.getChildByName("spr_bg");
+    const bg = (view.getChildByName("CommonPanel1") || view.getChildByName("spr_bg"));
     const bgUi = bg ? bg.getComponent(UITransform) : null;
     const ready = !!positiveUiSize(ui) && !!positiveUiSize(bgUi);
     if (!ready && frames < 45) return;

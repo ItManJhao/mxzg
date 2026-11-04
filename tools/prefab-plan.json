@@ -71,7 +71,8 @@
         "ListBackdrop",
         "NpcTalkLayer",
         "PagePrefabShell",
-        "TextChip"
+        "TextChip",
+        "CommonPanel1"
       ]
     },
     {

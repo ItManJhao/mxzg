@@ -28,3 +28,7 @@
 - `MySqlIT.gmGrantsPersistAndRetrySafely`：独立 MySQL 发放英雄和道具，应用重启后重试仍不重复到账。
 
 实际页面验收结果与本批运行标识见 `development-progress.md`。配置存在不代表对应玩法已经开放；GM 用于测试数据准备，不能作为玩法还原完成的证明。
+
+### 日常后端版本提示
+
+刷新 Creator 不会替换已运行的 Java 后端。收到 UNKNOWN_MESSAGE 时，前端提示“服务端不支持此协议，请更新并重启后端”；应重启到包含 GM 的代码。2026-11-04 日常后端已以 MXZG_GM_ENABLED=true 启动并通过真实 gm.status 查询；该开关只对本次启动进程生效，重新启动时仍须显式设置。

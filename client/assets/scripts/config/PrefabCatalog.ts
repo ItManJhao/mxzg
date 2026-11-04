@@ -38,6 +38,7 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "prefabs/ui/common/CommonBtnPrimaryShell": "0cfeebba-f0fc-4027-8db5-d76c7fc999e2",
   "prefabs/ui/common/CommonBtnSecondaryShell": "a09db064-547d-4821-b6cc-239926d54c4a",
   "prefabs/ui/common/CommonListRowShell": "074ae72e-69c8-4bc1-8ea5-f9311210b849",
+  "prefabs/ui/common/CommonPanel1": "a947bf3d-bdb0-4b1c-b9c5-30997719c343",
   "prefabs/ui/common/CommonPanelShell": "03989589-fea0-441f-a57e-1abd51df09ff",
   "prefabs/ui/common/CommonRedDotShell": "9f129813-104d-4842-a449-710156b5a743",
   "prefabs/ui/common/DimSheet": "2b05e8f4-a16c-4397-d055-6ecf12a19084",

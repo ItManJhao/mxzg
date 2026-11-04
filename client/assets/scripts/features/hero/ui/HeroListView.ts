@@ -84,14 +84,13 @@ export class HeroListView extends BaseView implements HeroRosterView {
   @property(Prefab)
   boardPrefab: Prefab | null = null;
 
-@property(Node)
+  /** 静态嵌套的 CommonPanel1 根节点；内部标题由通用面板 Widget 维护。 */
+  @property(Node)
   sprBg: Node | null = null;
 
   @property(Node)
   parchment: Node | null = null;
 
-  @property(Node)
-  titleRoot: Node | null = null;
 
   private tab: HeroListTab = "hero";
   private elem = 0;
@@ -249,7 +248,7 @@ export class HeroListView extends BaseView implements HeroRosterView {
   /**
    * 羊皮纸占满顶栏和底栏之间。页签和板子跟着纸的上沿抬。
    * 滚动视口延伸至容量栏上方，避免下方出现大段留白。
-   * 没绑 spr_bg 时不动，检查里的板子留在底左。
+   * 未绑定 CommonPanel1 时不调整；内部标题由通用面板跟随上沿。
    */
   private fitCityMiddle(): void {
     if (this.cityFit || !this.sprBg || !this.board) return;
@@ -267,7 +266,7 @@ export class HeroListView extends BaseView implements HeroRosterView {
       assignContentSize(plate, width, seat.height);
       this.parchment.setPosition(this.parchment.position.x, seat.centerY, this.parchment.position.z);
     }
-    this.lift(this.titleRoot, seat.extraTop);
+    // 通用面板标题由自身 Widget 跟随纸面上沿，页面不再重复抬高标题。
     this.lift(this.tabMenu, seat.extraTop);
     this.lift(this.board.node, seat.extraTop);
     this.board.pinLower(seat.bottom);

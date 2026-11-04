@@ -30,6 +30,7 @@ const paths = new Set<string>([
   "prefabs/ui/common/CommonBtnPrimaryShell",
   "prefabs/ui/common/CommonBtnSecondaryShell",
   "prefabs/ui/common/CommonListRowShell",
+  "prefabs/ui/common/CommonPanel1",
   "prefabs/ui/common/CommonPanelShell",
   "prefabs/ui/common/CommonRedDotShell",
   "prefabs/ui/common/DimSheet",

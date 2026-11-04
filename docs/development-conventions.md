@@ -170,3 +170,7 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 ## 预制体节点命名
 
 - 新增或修改的 Prefab/Scene 节点使用有业务含义的英文名称，禁止中文节点名；例如 CloseButton、HeroTabButton、SearchInput、StatusLabel。界面展示文字和源码注释仍使用中文。重命名时检查节点路径、动画轨道与代码查找，保留资源 UUID 和组件绑定；旧模块在涉及修改时逐步整改，不批量改动无关模块。
+
+### 通用纸面面板 CommonPanel1
+
+背包和英雄列表通过静态嵌套引用 assets/prefabs/ui/common/CommonPanel1.prefab，共享背景和标题，不复制独立节点。面板根 UITransform 尺寸就是可见纸面尺寸，背景填满根；标题由面板内部 Widget 居中并跟随上沿。页面只覆盖实例的位置、尺寸和标题文字；修改共用样式应编辑源预制体。不要解除嵌套关联，也不要在页面脚本重复移动内部标题。

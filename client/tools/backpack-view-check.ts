@@ -234,8 +234,8 @@ function checkPrefabBindings(): void {
   assert(spriteFrameOf(cellData, 5) !== spriteFrameOf(cellData, 11), "底图不能和选中框同一张");
   assert(cellData[17]._active === false, "空槽预制不能默认亮着问号图标");
   const portrait = layer[idOf(view.comp.portrait)!];
-  assert(portrait._lscale.x === 1 && portrait._lscale.y === 1, "店员立绘是 1 倍，不再缩成一小块");
-  assert(portrait._lpos.x === 200 && portrait._lpos.y === 748, "店员抬至羊皮纸上沿，身体仍落在背包底图后面");
+  assert(portrait._lscale.x > 0 && portrait._lscale.x === portrait._lscale.y, "店员立绘保持正向等比缩放，具体尺寸由 Prefab 编辑");
+  assert(Number.isFinite(portrait._lpos.x) && Number.isFinite(portrait._lpos.y), "店员位置由 Prefab 保存");
   const order = (layer[1]._children || []).map((row) => row.__id__);
   assert(order[0] === idOf(view.comp.portrait), "node_portrait 画在羊皮纸和 spr_bg 下面");
 

@@ -237,3 +237,11 @@ HeroInfoView 改为 BaseView，由 UIManager 正式注册，点击实例打开�
 - MySQL 新增 GM 重启后同请求重试不重复到账验证；英雄技能、装备和完整加成仍是后续只读还原缺口，本批没有扩展其他模块。
 
 - 独立 MySQL 最终结果：15/15、0 失败；本批 ownership.properties 已确认 state=stopped，数据保留在专用 target/mysql-it 目录，未清理或访问玩家库。
+
+## 2026-11-04：日常 GM 恢复与 CommonPanel1 接入
+
+- 按用户要求启动日常 local 后端（127.0.0.1:18080），本次进程设置 MXZG_GM_ENABLED=true；本机 H2 自动迁移至 V11，未连接旧服 MySQL。实际预览 gm.status 回包 enabled=true，英雄/道具下拉切换正常；本批未追加发放日常角色资产。
+- UNKNOWN_MESSAGE 明确显示“服务端不支持此协议，请更新并重启后端”，GM 查询不再显示 SocketFailure 类名前缀。受控二进制回包回归通过。
+- BagView、HeroListView 静态嵌套用户创建的 CommonPanel1，保留原 UUID；删除两页重复背景和标题。通用根尺寸代表可见纸面，背景 Widget 填满根、标题水平居中跟随上沿；每页仅覆盖位置、尺寸和标题文字。英雄运行时只适配共同面板根，不再重复移动标题。
+- 保留用户的背包立绘位置/缩放及 GmView 预制体编辑。资源目录登记 CommonPanel1；绑定检查覆盖嵌套资源、实例登记与属性覆盖目标。
+- 当前验证：game-socket、gm、bindings、hero、backpack、resource-catalog 通过；Creator 与严格前端类型检查通过。Creator 刷新后实测背包/英雄切页，标题、列表及底部导航无重叠，浏览器无错误日志。

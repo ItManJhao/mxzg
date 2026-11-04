@@ -267,7 +267,7 @@ export class GameSocketClient {
       } else {
         const error = this.object(frame.error);
         if (typeof error.code !== "string" || !/^[A-Z_]{3,64}$/.test(error.code) || frame.body !== null) throw new SocketFailure("INVALID_MESSAGE");
-        const failure = new SocketFailure(error.code, error.code === "UNAUTHENTICATED" ? "登录已失效，请重新登录" : error.code === "SERVER_UNAVAILABLE" ? "服务器暂未开放，请重新选择" : "连接请求失败，请重试");
+        const failure = new SocketFailure(error.code, error.code === "UNAUTHENTICATED" ? "登录已失效，请重新登录" : error.code === "SERVER_UNAVAILABLE" ? "服务器暂未开放，请重新选择" : error.code === "UNKNOWN_MESSAGE" ? "服务端不支持此协议，请更新并重启后端" : "连接请求失败，请重试");
         this.traceReceived(frame);
         this.pending.delete(frame.id); clearTimeout(pending.timer); pending.reject(failure);
         if (failure.unauthorized) this.rejectSession(failure);

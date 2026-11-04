@@ -22,12 +22,12 @@ function files(dir) {
     return entry.isDirectory() ? entry.name === '.git' ? [] : files(full) : [full];
   });
 }
-/** 递归检查序列化类型，包括嵌套对象；数字和 cc.* 保留为引擎内置类型。 */
+/** 递归检查序列化类型；CCPropertyOverrideInfo 是 Creator 3.8.8 嵌套预制体的内置覆盖记录。 */
 function checkTypes(value, classes, errors, bindings) {
   if (!value || typeof value !== 'object') return;
   if (Object.hasOwn(value, '__type__')) {
     const type = value.__type__;
-    const builtin = Number.isInteger(type) || typeof type === 'string' && (type.startsWith('cc.') || /^\d+$/.test(type));
+    const builtin = Number.isInteger(type) || typeof type === 'string' && (type.startsWith('cc.') || type === 'CCPropertyOverrideInfo' || /^\d+$/.test(type));
     if (!builtin) {
       if (typeof type !== 'string' || type.length !== 23 || !classes.has(type)) errors.push('未解析或旧格式脚本类型: ' + String(type));
       else bindings.push(type);
@@ -52,6 +52,22 @@ function checkPrefabRoot(data, errors) {
   if (node?.__type__ !== 'cc.Node' || info?.__type__ !== 'cc.PrefabInfo'
       || info.root?.__id__ !== rootId || info.asset?.__id__ !== 0 || !info.fileId) {
     errors.push('Prefab 根节点缺少有效 PrefabInfo（Creator 无法打开）');
+  }
+}
+/** 校验直接嵌套预制体的资源、实例及覆盖目标，防止通用面板断链或标题覆盖失效。 */
+function checkNestedPrefabs(data, prefabs, errors) {
+  for (const node of data.filter(row=>row?.__type__==='cc.Node')) {
+    const info=data[node._prefab?.__id__];
+    if (!info?.instance) continue;
+    const nested=prefabs.get(info.asset?.__uuid__), instance=data[info.instance.__id__];
+    if (!nested || instance?.__type__!=='cc.PrefabInstance') {errors.push('嵌套预制体资源或实例缺失: '+node._name);continue;}
+    const fileIds=new Set(nested.filter(row=>row.fileId).map(row=>row.fileId));
+    const owner=data[data[instance.prefabRootNode?.__id__]?._prefab?.__id__];
+    if (!owner?.nestedPrefabInstanceRoots?.some(ref=>data[ref.__id__]===node)) errors.push('嵌套根未登记: '+node._name);
+    for (const ref of instance.propertyOverrides||[]) {
+      const override=data[ref.__id__],target=data[override?.targetInfo?.__id__];
+      if (override?.__type__!=='CCPropertyOverrideInfo' || target?.localID?.length!==1 || !fileIds.has(target.localID[0])) errors.push('嵌套属性覆盖目标无效: '+node._name);
+    }
   }
 }
 /** 固定压缩锚点及反例，防止检查器放过 22 位 ID、未知类或错误按钮引用。 */
@@ -89,9 +105,10 @@ function main() {
   }
   const errors=[], bindings=[];
   const assets = all.filter(p=>/\.(prefab|scene)$/.test(p));
+  const prefabs=new Map(assets.filter(file=>file.endsWith('.prefab')).map(file=>[JSON.parse(fs.readFileSync(file+'.meta','utf8')).uuid,JSON.parse(fs.readFileSync(file,'utf8'))]));
   for (const file of assets) {
     const data=JSON.parse(fs.readFileSync(file,'utf8')), local=[];
-    checkTypes(data,classes,local,bindings); checkButtons(data,local); checkPrefabRoot(data,local);
+    checkTypes(data,classes,local,bindings); checkButtons(data,local); checkPrefabRoot(data,local); checkNestedPrefabs(data,prefabs,local);
     errors.push(...local.map(message=>path.relative(root,file)+': '+message));
   }
   if (errors.length) throw new Error(errors.join('\n'));

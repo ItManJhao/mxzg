@@ -31,6 +31,7 @@ class Server {
  create=()=>{const wire=new Wire(this,"connection-"+this.wires.length);this.wires.push(wire);return wire as unknown as SocketPort;};
  receive(wire:Wire,frame:GameFrame){
   this.requests.push(frame.name);const data=frame.body as any;
+  if(frame.name==="gm.status"){queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"UNKNOWN_MESSAGE",message:"UNKNOWN_MESSAGE",retryable:false}}));return;}
   if(frame.name==="session.authenticate" && this.busyAuthentications>0){this.busyAuthentications--;queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"BUSY",message:"BUSY",retryable:true}}));return;}
   if(frame.name==="session.login" && data.serverId==="missing-world") {queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"SERVER_UNAVAILABLE",message:"SERVER_UNAVAILABLE",retryable:false}}));return;}
   if(frame.name==="session.login")this.state={role:{id:"role-"+data.account,nickname:data.account,serverId:data.serverId,level:1,gold:0,diamonds:0,basics:{experience:0,cup:1000,headId:0,imageId:410304012,borderId:0,language:1,createdAtSeconds:100,lastLoginAtSeconds:100,experienceToNextLevel:120}},inventory:[],heroes:[],revision:0};
@@ -83,6 +84,8 @@ function checkRoleBasics(){
  const account=new AccountModel();account.replace({busy:false,role:raw,error:""});basics.experience=99;assert.equal(account.snapshot.role!.basics!.experience,66);assert(Object.isFrozen(account.snapshot.role!.basics));
 }
 async function main(){
+ const oldServer=new Server(),oldSocket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:oldServer.create,validateSnapshot:()=>{},heartbeatMs:100000});
+ try{await oldSocket.login("player","local-1");await assert.rejects(oldSocket.request("a".repeat(43),"gm.status"), (error:any)=>error.code==="UNKNOWN_MESSAGE" && error.message.includes("更新并重启后端"));}finally{oldSocket.disconnect();}
  checkRoleBasics();
  checkInventoryIdentity();
  await checkPreviewIsolation();

@@ -57,7 +57,7 @@ export class GmView extends BaseView<GmOpenArgs> {
   this.tabFrames=this.kindButtons.map(b=>b.getComponent(Sprite)?.spriteFrame||null);
   const dim=this.node.getChildByName("Dim")?.getComponent(UITransform);if(dim)dim.setContentSize(size.width/(scale*ancestorScale(this.node)),size.height/(scale*ancestorScale(this.node)));
   this.quantity!.string="1";this.chooseKind("hero");this.message!.string="正在检查服务端 GM 开关…";
-  void args.controller.enabled().then(enabled=>{if(!this.closed){this.grantButton!.interactable=enabled;this.message!.string=enabled?"仅开发测试：英雄每次最多20个；期限道具最多100件":"服务端 GM 未开启（MXZG_GM_ENABLED=true）";}}).catch(e=>{if(!this.closed)this.message!.string=String(e);});
+  void args.controller.enabled().then(enabled=>{if(!this.closed){this.grantButton!.interactable=enabled;this.message!.string=enabled?"仅开发测试：英雄每次最多20个；期限道具最多100件":"服务端 GM 未开启（MXZG_GM_ENABLED=true）";}}).catch(e=>{if(!this.closed)this.message!.string=e instanceof Error?e.message:String(e);});
  }
  /** 切换类别时按共享表创建展示索引，不创建英雄或库存假数据。 */
  private chooseKind(kind:string):void{
@@ -76,7 +76,7 @@ export class GmView extends BaseView<GmOpenArgs> {
   if(!this.selected||!/^\d+$/.test(this.quantity!.string.trim())){this.message!.string="请先选择配置并输入整数数量";return;}
   this.grantButton!.interactable=false;this.message!.string="正在发放…";
   try{await this.args!.controller.grant(this.args!.roleId,this.kind,this.selected.id,Number(this.quantity!.string));if(!this.closed)this.message!.string="发放成功，资产由服务端同步。";}
-  catch(e){if(!this.closed)this.message!.string="发放失败："+((e as {code?:string}).code||String(e));}
+  catch(e){if(!this.closed)this.message!.string="发放失败："+(e instanceof Error?e.message:String(e));}
   finally{if(!this.closed)this.grantButton!.interactable=true;}
  }
  /** 关闭清理事件，控制器保留未确认请求供安全重试。 */

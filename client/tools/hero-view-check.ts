@@ -99,17 +99,19 @@ function idOf(value: unknown): number {
   return ref.__id__;
 }
 
+/** 验证实际节点名称，允许 Creator 重排序列化索引。 */
 function assertNode(data: PrefabObj[], comp: PrefabObj, field: string, nodeId: number, nodeName: string): void {
   const id = idOf(comp[field]);
-  assert(id === nodeId, field + " 应指向 " + nodeName + " #" + nodeId + "，实际 " + id);
-  const node = data[nodeId];
+
+  const node = data[id];
   assert(node && node.__type__ === "cc.Node" && node._name === nodeName, field + " 指向的不是 " + nodeName);
 }
 
+/** 验证绑定组件类型，不依赖序列化数组位置。 */
 function assertComp(data: PrefabObj[], comp: PrefabObj, field: string, compId: number, typeName: string): void {
   const id = idOf(comp[field]);
-  assert(id === compId, field + " 应指向 " + typeName + " #" + compId + "，实际 " + id);
-  const target = data[compId];
+
+  const target = data[id];
   assert(target && target.__type__ === typeName, field + " 指向的不是 " + typeName);
 }
 
@@ -134,13 +136,13 @@ function checkPrefab(): void {
   const boardPrefab = view.comp.boardPrefab as { __uuid__?: string };
   assert(boardPrefab.__uuid__ === "d3a470c0-fa13-47fa-811e-f38c7317e9d8", "boardPrefab 是 HeroListHeroLayer");
   assert(!("cellPrefab" in view.comp),"Cell 资源只在 SuperContent 维护");
-  assertNode(layer, view.comp, "sprBg", 5, "spr_bg");
+  assertNode(layer, view.comp, "sprBg", 5, "CommonPanel1");
   assertNode(layer, view.comp, "parchment", 155, "ParchmentPlate");
-  assertNode(layer, view.comp, "titleRoot", 11, "node_title");
+  assert(!("titleRoot" in view.comp), "标题归 CommonPanel1 维护");
   assert(!("infoPrefab" in view.comp), "英雄列表不得保留未使用的旧详情资源绑定");
-  assert(uiHeight(layer, idOf(layer[44].node)) === 32, "英雄页签字有高度");
-  assert(uiHeight(layer, idOf(layer[58].node)) === 32, "图鉴页签字有高度");
-  assert(uiHeight(layer, idOf(layer[72].node)) === 32, "圣龙页签字有高度");
+  assert(uiHeight(layer, idOf(layer[idOf(view.comp.heroTitle)].node)) === 32, "英雄页签字有高度");
+  assert(uiHeight(layer, idOf(layer[idOf(view.comp.bookTitle)].node)) === 32, "图鉴页签字有高度");
+  assert(uiHeight(layer, idOf(layer[idOf(view.comp.dragonTitle)].node)) === 32, "圣龙页签字有高度");
 
   const boardData = loadPrefab("client/assets/prefabs/ui/hero/HeroListBoardView.prefab");
   const listConfig=boardData.find((row:any)=>row.columns!==undefined) as any;
