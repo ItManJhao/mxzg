@@ -21,7 +21,7 @@ export interface HeroSkillFace {
  readonly icon:string|null;
 }
 
-/** 读取旧表确定的四个基础技能；进化替换须待服务端恢复进化状态后另行接入。 */
+/** 读取四个展示槽；已解锁技能采用服务端验证的同类型进化等级。 */
 export function presentHeroSkills(hero:OwnedHero,config:GameConfig=GameConfig.instance):readonly HeroSkillFace[] {
  const template=config.requireConfig(GConfig.HeroType,hero.templateId);
  const stage=hero.stage===undefined?null:config.requireConfig(GConfig.HeroUpgrade,hero.stage);
@@ -32,7 +32,9 @@ export function presentHeroSkills(hero:OwnedHero,config:GameConfig=GameConfig.in
  const ids=[template.skill_1,template.skill_2,template.skill_3,template.skill_4];
  return Object.freeze(ids.map((id,slot)=>{
   if(!id)return Object.freeze({slot,id:0,level:0,unlockStage:null,name:"",description:"",icon:null});
-  const level=enabled?(enabled[slot]===0?0:levels[slot]):null;
+  let level=enabled?(enabled[slot]===0?0:levels[slot]):null;
+  const evolved=hero.evolution?.skill;
+  if(level!==null && level>0 && evolved?.skillId===id)level=Math.max(level,evolved.level);
   const previewLevel=Math.max(1,level??1);
   const row=config.getConfig(GConfig.HeroSkill).find(row=>row.type===id && row.level===previewLevel);
   if(!row)throw new Error("缺少英雄技能配置："+id+" / "+previewLevel);

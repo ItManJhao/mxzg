@@ -7,7 +7,10 @@ package com.funsgamex.mxzg.hero;
 import java.util.*;
 import tools.jackson.databind.*;
 
+@org.springframework.stereotype.Component
 public final class HeroEvolutionRules {
+    /** 持久进化状态与服务端验证后的技能覆盖；0/0时skill为空。 */
+    public record State(int type,int level,Skill skill) {}
     /** 技能类型 ID 和等级；skillId 不是 heroskill.idx。 */
     public record Skill(int skillId, int level) {}
     /** 当前等级的总加成，保留全部属性编号，不能仅截取攻血防速。 */

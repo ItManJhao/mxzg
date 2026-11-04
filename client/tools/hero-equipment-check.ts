@@ -40,6 +40,9 @@ async function main(): Promise<void> {
     assert.throws(()=>readHeroEquipment([{...soul,soulSkill:{skillId:1001015,level:-1}}],config));
     const soulFrame=decodeGameFrame(encodeGameFrame({version:1,kind:"event",name:"state.changed",body:{role:{id:hero.id,nickname:"附魂验证",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[{...hero,equipment:{items:[soul]}}],inventory:[],revision:3}}));
     assert.equal((soulFrame.body as any).heroes[0].equipment.items[0].soulSkill.skillId,1001015);
+    const evolution={type:1,level:2,skill:{skillId:101050081,level:5}};
+    const evolvedFrame=decodeGameFrame(encodeGameFrame({version:1,kind:"event",name:"state.changed",body:{role:{id:hero.id,nickname:"进化验证",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[{...hero,evolution}],inventory:[],revision:4}}));
+    assert.deepEqual(readOwnedHeroes((evolvedFrame.body as any).heroes)[0].evolution,evolution);
     rows[0].soulLevel = 9;
     assert.equal(result[0].soulLevel, 0);
     console.log("PASS hero equipment: four real slots, instance precision, config matching, duplicates, missing state, immutable copies");

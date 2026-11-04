@@ -38,6 +38,27 @@ class HeroLineupTest {
         var result = login.login(account);
         return new Player(account, result.role().id(), "Bearer " + result.session().accessToken());
     }
+    /** 进化状态来自持久记录，统一快照与协议保留技能覆盖和属性；不提供进化写协议。 */
+    @Test void evolutionPersistsAndSynchronizes() throws Exception {
+        var owner=player();var other=player();String id=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105008,1,5,0)",id,owner.roleId());
+        var original=snapshots.snapshot(owner.authorization()).heroes().getFirst();
+        assertEquals(0,original.evolution().type());assertNull(original.evolution().skill());
+        jdbc.update("UPDATE game_hero SET evolve_type=1,evolve_level=2 WHERE id=?",id);
+        var evolved=snapshots.snapshot(owner.authorization()).heroes().getFirst();
+        assertEquals(2,evolved.evolution().level());assertEquals(101050081,evolved.evolution().skill().skillId());assertEquals(5,evolved.evolution().skill().level());
+        assertEquals((long)((original.panelStats().values().atk()+7500)*1.03),evolved.panelStats().values().atk());
+        assertEquals((long)((original.panelStats().values().hp()+45000)*1.03),evolved.panelStats().values().hp());
+        assertTrue(evolved.panelStats().includedSources().contains("evolution"));assertFalse(evolved.panelStats().complete());
+        assertEquals(evolved,snapshots.snapshot(owner.authorization()).heroes().getFirst());
+        assertTrue(snapshots.snapshot(other.authorization()).heroes().isEmpty());
+        var bytes=com.funsgamex.mxzg.network.GameProtocolCodec.encode(Map.of("version",1,"kind","event","name","state.changed","body",snapshots.snapshot(owner.authorization())));
+        var decoded=com.funsgamex.mxzg.network.GameProtocolCodec.decode(bytes).path("body").path("heroes").get(0).path("evolution");
+        assertEquals(2,decoded.path("level").asInt());assertEquals(5,decoded.path("skill").path("level").asInt());
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,()->jdbc.update("UPDATE game_hero SET evolve_level=0 WHERE id=?",id));
+        jdbc.update("UPDATE game_hero SET evolve_level=999 WHERE id=?",id);
+        assertThrows(IllegalArgumentException.class,()->snapshots.snapshot(owner.authorization()));
+    }
     /** 登录/恢复完整快照必须读取本角色持久名册，不返回暂停占位空数组或其他角色英雄。 */
     @Test void unifiedSnapshotContainsOnlyOwnedHeroes() {
         var owner=player(); var other=player();

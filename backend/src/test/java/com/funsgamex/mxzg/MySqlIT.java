@@ -211,8 +211,10 @@ class MySqlIT {
         assertEquals("stack:00000000-0000-4000-8000-000000000001:900101",jdbc.queryForObject("SELECT instance_id FROM game_inventory WHERE role_id='00000000-0000-4000-8000-000000000001' AND item_id=900101",String.class));
         assertEquals(0,number("SELECT created_at_seconds FROM game_role WHERE login_account='it_v3_migration'"));
         assertEquals(0,number("SELECT role_experience FROM game_role WHERE login_account='it_v3_migration'"));
-        System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V8; stage=0");
-        assertEquals(12, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(0,number("SELECT evolve_type FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
+        assertEquals(0,number("SELECT evolve_level FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
+        System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V13; stage=0, evolution=0/0");
+        assertEquals(13, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals("bigint", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_inventory' AND COLUMN_NAME='quantity'", String.class));
         assertEquals("timestamp", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_session' AND COLUMN_NAME='expires_at'", String.class));
         assertEquals(1, number("SELECT COUNT(DISTINCT INDEX_NAME) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND INDEX_NAME='uq_role_account_server' AND NON_UNIQUE=0"));
@@ -354,11 +356,11 @@ class MySqlIT {
         assertEquals(settled.inventory(), inventory(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
-        assertEquals(12, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(13, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         var replay=campaign.claim(token,report.id());
         assertEquals(settled.battle(),replay.battle());assertEquals(settled.inventory(),replay.inventory());assertEquals(settled.stageId(),replay.stageId());
         assertEquals(current,replay.role(),"重放携带当前角色快照，登录时间不是历史奖励收据");
-        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=12");
+        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=13");
     }
 
     /** 通过独立 JVM 的真实 HTTP 完成业务链，在未领奖和已领奖两个阶段分别终止进程再登录核验恢复。 */
@@ -481,6 +483,20 @@ class MySqlIT {
         jdbc.update("UPDATE game_equipment SET hero_id=NULL WHERE id=?",item);
         assertTrue(snapshots.snapshot(p.token()).heroes().getFirst().equipment().items().isEmpty());
         System.out.println("[MYSQL-IT] equipment ownership, unique slot, restart and empty state verified");
+    }
+    /** 独立MySQL验证进化默认值、约束和应用重启后统一快照不丢失。 */
+    @Test @Order(17) void evolutionSurvivesRestart() throws Exception {
+        var p=player();String id=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10105008,1,5)",id,p.id());
+        assertEquals(0,snapshots.snapshot(p.token()).heroes().getFirst().evolution().type());
+        var rejected=assertThrows(org.springframework.jdbc.UncategorizedSQLException.class,()->jdbc.update("UPDATE game_hero SET evolve_type=1 WHERE id=?",id));
+        assertEquals(3819,rejected.getSQLException().getErrorCode());
+        assertEquals(0,number("SELECT evolve_type FROM game_hero WHERE id=?",id));
+        jdbc.update("UPDATE game_hero SET evolve_type=1,evolve_level=2 WHERE id=?",id);
+        var before=snapshots.snapshot(p.token());
+        app.close();boot();assertStoredState(before,snapshots.snapshot(p.token()));
+        assertEquals(5,snapshots.snapshot(p.token()).heroes().getFirst().evolution().skill().level());
+        System.out.println("[MYSQL-IT] evolution state, constraints and restart verified");
     }
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */
     private static final class OwnedMysql implements AutoCloseable {

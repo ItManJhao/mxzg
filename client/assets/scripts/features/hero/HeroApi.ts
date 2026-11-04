@@ -4,6 +4,8 @@ import { featureUnavailable } from "../PausedFeatures";
 
 /** 服务端英雄实例 ID 保持字符串 UUID，templateId 为独立的英雄类型配置键。 */
 export interface OwnedHero {
+  /** 持久进化分支/等级及已核验技能；undefined未同步，0/0明确未进化。 */
+  readonly evolution?:Readonly<{type:number;level:number;skill?:Readonly<{skillId:number;level:number}>}>;
   readonly id: string;
   readonly templateId: number;
   readonly level: number;
@@ -37,7 +39,7 @@ export function readOwnedHero(value: unknown): OwnedHero {
   let equipment:OwnedHero["equipment"];
   if(row.equipment!==undefined){const state=row.equipment as Record<string,unknown>;if(!state||typeof state!=="object"||Array.isArray(state))throw new Error("英雄装备状态无效");equipment=Object.freeze({items:readHeroEquipment(state.items)});}
   const panelStats=readPanelStats(row.panelStats);
-  return Object.freeze({panelStats,equipment,stage:row.stage as number|undefined,baseStats, deployed: row.deployed as boolean | undefined, locked: row.locked as boolean | undefined, id: row.id, templateId: row.templateId, level: row.level, star: row.star });
+  return Object.freeze({evolution:readEvolution(row.evolution),panelStats,equipment,stage:row.stage as number|undefined,baseStats, deployed: row.deployed as boolean | undefined, locked: row.locked as boolean | undefined, id: row.id, templateId: row.templateId, level: row.level, star: row.star });
 }
 
 /** 基础等级、星级和配置 ID 必须是安全的正整数。 */
@@ -87,4 +89,18 @@ function readPanelStats(value:unknown):OwnedHero["panelStats"] {
   const included=row.includedSources as string[],pending=row.pendingSources as string[];
   if(new Set([...included,...pending]).size!==included.length+pending.length||!included.length||row.complete!==(pending.length===0))throw new Error("英雄面板覆盖状态矛盾");
   return Object.freeze({values:Object.freeze({hp:stats.hp as number,atk:stats.atk as number,def:stats.def as number,spd:stats.spd as number}),includedSources:Object.freeze([...included]),pendingSources:Object.freeze([...pending]),complete:row.complete});
+}
+/** 严格区分未同步/未进化/已进化，技能字段不得与状态矛盾。 */
+function readEvolution(value:unknown):OwnedHero["evolution"] {
+  if(value===undefined)return undefined;
+  if(!value||typeof value!=="object"||Array.isArray(value))throw new Error("英雄进化状态无效");
+  const row=value as Record<string,unknown>;
+  if(!Number.isSafeInteger(row.type)||!Number.isSafeInteger(row.level)||Number(row.type)<0||Number(row.level)<0||(row.type===0)!==(row.level===0))throw new Error("英雄进化状态无效");
+  let skill:Readonly<{skillId:number;level:number}>|undefined;
+  if(row.type!==0){
+    const source=row.skill as Record<string,unknown>;
+    if(!source||typeof source!=="object"||Array.isArray(source)||!positiveInteger(source.skillId)||!positiveInteger(source.level))throw new Error("进化技能无效");
+    skill=Object.freeze({skillId:source.skillId,level:source.level});
+  }else if(row.skill!==undefined)throw new Error("未进化英雄不能附带进化技能");
+  return Object.freeze({type:row.type as number,level:row.level as number,skill});
 }

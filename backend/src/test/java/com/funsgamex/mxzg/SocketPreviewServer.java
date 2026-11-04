@@ -26,6 +26,12 @@ public class SocketPreviewServer {
             jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10301001,1,1)",empty,player.role().id());
             for(int slot=1;slot<=4;slot++)jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,?,?,?,?)","922337203685477580"+slot,player.role().id(),1000001+slot*1000,slot,slot==1?3:0,hero);
         }
+        // 仅独立内存预览夹具：同模板未进化/进化角色，用于检查切换和技能说明。
+        if(Arrays.asList(args).contains("--evolution-fixture")) {
+            var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("evolution_review");
+            var jdbc=context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+            for(int level:new int[]{0,2})jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage,evolve_type,evolve_level) VALUES (?,?,10105008,1,5,0,?,?)",UUID.randomUUID().toString(),player.role().id(),level==0?0:1,level);
+        }
         if(Arrays.asList(args).contains("--skill-panel-fixture")) {
             var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("skill_panel_review");
             var jdbc=context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
