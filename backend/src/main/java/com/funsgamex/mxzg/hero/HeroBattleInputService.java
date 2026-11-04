@@ -14,13 +14,15 @@ import org.springframework.transaction.annotation.*;
 
 @Service
 public class HeroBattleInputService {
-    /** 对应持久站位的英雄；attributes保留全部编号及未折算加成，hero仍是独立面板快照。 */
+    /** 对应持久站位的英雄；attributes保留全部编号及未折算加成，hero仍是独立面板快照；opening仅代表入场基础折算，skillSchedule不执行触发。 */
     public record Unit(int position, HeroProfile hero, Map<Integer, Long> attributes,
-                       List<HeroEvolutionRules.Skill> skills) {
+                       List<HeroEvolutionRules.Skill> skills, HeroBattleAttributeUtils.Opening opening,
+                       List<HeroBattleSkillUtils.Skill> skillSchedule) {
         /** 冻结战斗输入，禁止临时计算反写快照。 */
         public Unit {
             attributes = Map.copyOf(attributes);
             skills = List.copyOf(skills);
+            skillSchedule = List.copyOf(skillSchedule);
         }
     }
 
@@ -101,7 +103,8 @@ public class HeroBattleInputService {
             });
             var selected = evolution.applySkills(
                 skills.select(hero.templateId(), hero.star(), hero.stage()), evolved);
-            units.add(new Unit(slot.position(), hero, attributes, selected));
+            units.add(new Unit(slot.position(), hero, attributes, selected,
+                HeroBattleAttributeUtils.opening(attributes), skills.battleSchedule(selected)));
         }
         return new Input(roles.revision(role), formation.version(), formation.formationId(), units,
             List.of("soul_talent_runes_awakening", "account_and_team_sources",

@@ -40,6 +40,28 @@ public class HeroSkillPanelRules {
         }
         return List.copyOf(selected);
     }
+    /** 为已完成进化覆盖的技能解析排期元数据；保留原顺序，不按ID重排或执行被动。 */
+    public List<HeroBattleSkillUtils.Skill> battleSchedule(List<HeroEvolutionRules.Skill> selected) {
+        return selected.stream().map(reference -> {
+            var row = skills.get(reference.skillId() + ":" + reference.level());
+            if (row == null) {
+                throw new IllegalStateException("战斗技能等级缺失：" + reference.skillId() + ":" + reference.level());
+            }
+            for (String key : List.of("active_type", "initial_round", "cool_round", "count_stats")) {
+                if (!row.path(key).isIntegralNumber() || !row.path(key).canConvertToInt()) {
+                    throw new IllegalStateException("战斗技能字段无效：" + key);
+                }
+            }
+            int count = row.path("count_stats").asInt();
+            if (count != 0 && count != 1) {
+                throw new IllegalStateException("战斗技能面板标志无效");
+            }
+            return new HeroBattleSkillUtils.Skill(reference.skillId(), reference.level(),
+                row.path("active_type").asInt(), row.path("initial_round").asInt(),
+                row.path("cool_round").asInt(), count == 1);
+        }).toList();
+    }
+
     /** 面板仅使用基础已解锁技能，进化替换在其后，不重复执行面板被动。 */
     public void contribute(int template,int star,int stage,BiConsumer<Integer,Long> add){
         for(var reference:select(template,star,stage)) {

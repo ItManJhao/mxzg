@@ -148,3 +148,12 @@ HeroBattleInputService已按旧FormationReceivers接入持久选中阵型，Inpu
 新增HeroBattleFormationTest四项独立H2回归：同站位换阵型、同阵型换位置及原始百分比、空阵与合法零加成助战、非法持久阵型/位置拒绝及角色隔离；同时检查重复读取、面板不变、版本无读副作用和不可变结果。后端全套92项通过，0失败/0错误，日志backend/target/battle-formation-test.log。该结果来自本批执行，不沿用前批记录。
 
 未改数据库结构、协议、客户端和其他模块，未操作现有玩家库，未重启日常后端；升级和穿脱入口保持关闭。本批尚未提交或推送。下一步核对战斗专属属性折算与技能触发规则，待缺口收敛后再开放主线战斗。
+
+
+## 2026-11-04 入场折算与技能触发规则核查
+
+上一批阵型及站位加成本机提交10555373；本次用户要求先提交，未请求推送。新增HeroBattleAttributeUtils固化旧普通新战斗入场生命、攻防速上限/取整规则；HeroBattleSkillUtils固化技能分类、初始/冷却回合、追加行动与只能普攻的候选优先级。HeroSkillPanelRules复用现有索引解析进化后精确技能排期，HeroBattleInputService.Unit增加opening和skillSchedule，只在内部输入使用，不改协议或客户端。
+
+已核对旧AttributeInfo、SkillDo、SkillInfo、HeroDo、BattleService、BattleTrigger及BuffDo顺序，详见hero-lineup-contract.md本日核查节。完整Buff触发、行动禁止、伤害、概率和目标选择仍待恢复，battle_special_attributes_and_triggers继续保留；不会把排期工具视为完整战斗引擎。
+
+新增5项特征测试及既有持久输入集成断言：生命与攻防速上限差异、负比例与截断、不重复折算、1/5/9回合、旧负差模运算、主动列表顺序/普攻回退/追加行动优先、进化技能精确等级与不可变排期。后端全套97项通过，0失败/0错误，日志backend/target/battle-rules-test.log。仅隔离H2测试，未访问现有玩家库、未重启日常后端。升级、穿脱与其他模块未修改。本轮新增核查/实现尚未提交。

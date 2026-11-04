@@ -53,6 +53,15 @@ class HeroLineupTest {
         assertTrue(unit.skills().contains(new com.funsgamex.mxzg.hero.HeroEvolutionRules.Skill(101050081,5)));
         assertTrue(unit.skills().stream().anyMatch(skill->skill.level()==0),"普攻必须保留");
         assertEquals(2,unit.skills().size(),"未解锁被动不能加入战斗输入");
+        assertEquals(unit.hero().panelStats().values().atk(), unit.opening().attack());
+        var active = unit.skillSchedule().stream().filter(skill -> skill.activeType() == 1).findFirst().orElseThrow();
+        assertEquals(101050081, active.skillId());
+        assertEquals(5, active.level());
+        assertEquals(1, active.initialRound());
+        assertEquals(3, active.coolRound());
+        assertEquals(active, com.funsgamex.mxzg.hero.HeroBattleSkillUtils.choose(unit.skillSchedule(), 1, null, false));
+        assertEquals(2, com.funsgamex.mxzg.hero.HeroBattleSkillUtils.choose(unit.skillSchedule(), 2, null, false).activeType());
+        assertThrows(UnsupportedOperationException.class, () -> unit.skillSchedule().clear());
         assertFalse(result.pending().isEmpty());assertTrue(battleInputs.current(other.authorization()).units().isEmpty());
         assertThrows(UnsupportedOperationException.class,()->unit.attributes().put(220,1L));
         assertThrows(UnsupportedOperationException.class,()->unit.skills().clear());

@@ -191,3 +191,39 @@ FormationView在onOpen读取这两个Model，绑定自己的按钮并维护草�
 属性由基础、装备、技能和进化重新组装，再加入当前阵型/位置的原始属性；每次读取新建不可变结果，不使用上次战斗输入或四维面板作为基础。英雄快照中的panelStats保持原面板语义。本批使用的旧表例子：阵型1位置2/3为291最终减伤300，位置5为102生命比例300，位置6为205治疗比例500，位置7/8为201攻击比例300；阵型2位置2为291最终减伤800；助战9号位合法且无阵型属性。
 
 已移除pending中的formation_unlock_and_template_limits。灵魂技能/天赋/符文/觉醒、账号与队伍来源、战斗特殊属性与触发仍列为缺口，不将本批输入标成完整战斗能力。本批无协议、迁移、客户端或玩法入口变更。
+
+
+## 2026-11-04 战斗属性折算与技能触发核查
+
+上一批阵型/站位加成已本机提交10555373。本节以旧mxzg-battle源码为依据，区分已落地的输入规则与尚待恢复的执行链。
+
+### 已固化的入场属性规则
+
+依据model/AttributeInfo.java的initMaxHp、getRate、getAttribute，以及util/FightUtil.java实际攻击读取点：
+
+| 属性 | 旧计算顺序 |
+| --- | --- |
+| 普通新战斗初始HP和MAX_HP | `(long)(rawHP * (1 + hpPercent / 10000D))`，生命比例不封顶50000 |
+| 攻击、防御、速度 | `(long)(raw * (1 + min(percent, 50000) / 10000D))`，只折算一次 |
+| 负比例 | 旧getRate没有零下限，不自行夹到0；此处保留数值，行动/伤害限制由后续规则处理 |
+| 取整 | Java double计算后向零截断，不改成四舍五入或整数除法；超出long范围明确拒绝 |
+
+旧AttributeInfo.getAttack还有一次攻击比例折算，但本次核对的伤害入口FightUtil与AbstractBaseDamageBuffHandler使用getAttribute(ATTACK)，不能仅凭方法名称调用getAttack并重复加成。HeroBattleAttributeUtils只提供普通满血入场的基线，不处理固定血量回放、续战当前血量、动态最大生命、一次性属性消费或临时Buff。
+
+Unit新增opening与skillSchedule；attributes保留全部原始编号，HeroProfile.panelStats仍独立。opening每次从该次原始属性新建，不能再次作为原始属性参与折算。技能元数据从HeroSkillPanelRules已有精确type/level索引解析，按进化覆盖后的引用取值，不复制配置加载器。
+
+### 已固化的技能候选排期
+
+依据model/SkillDo.java:isCanRelease、model/SkillInfo.java:createOf/getSkillBy、model/HeroDo.java:getSkill：active_type为0被动、1主动、2普攻、3光环，不能颠倒主动与普攻。主动按已有列表顺序选第一个可释放项；无可释放主动则普攻。追加行动优先于“只能普攻”，后者优先于正常排期；候选选择不等同于允许行动。
+
+可释放条件是`(currentRound - initialRound) % (coolRound + 1) == 0`；配置initial_round为0时使用实例初始回合，普通英雄实例为0。真实技能101050081等级5配置初始1、冷却3，因此回合1/5/9命中。旧方法没有`currentRound >= initialRound`保护，负差整除也会命中；本批忠实保留并增加特征测试，不能作为“修复”自行改变规则。神龙实例初始回合仅在工具参数中支持，本批不恢复神龙玩法。
+
+### 已核对、尚未实现的执行/触发链
+
+- BattleService.executeRound：助战效果、回合加成、回合开始/固定回合/按回合治疗、死亡回合处理、移除Buff、女神/神龙行动、英雄行动、回合结束。
+- 英雄行动：先选候选技能，再BT_BEFORE_ACTION，再HeroDo.canAttack。死亡直接禁止；skillEnergy=9999、先手技能和不同active_type的禁止Buff集合有独立分支，不能用一个“沉默就普攻”的判断替代。
+- executeSkill按art_list顺序执行动作并restore；普通攻击/主动技能且非反击时，依次触发对应USE类型、BT_ATTACK、主动技能伤害类型事件。
+- BattleTrigger.trigger在被触发者为空或封印时返回；监听Buff排序后逐项执行并restore。BuffDo.compareTo先执行非自身Buff；自身Buff按类型priority降序，不能按ID重排。
+- 攻击侧触发涉及暴击、技能伤害类型、造成伤害、击杀；防守侧死亡分支先处理死亡触发/清理并返回，存活侧再按各事件与固定伤害条件推进。反击资格、目标选择、随机概率、Buff条件/持续时间及递归行动仍须逐处理器核对。
+
+本批HeroBattleSkillUtils只复现候选排期，不执行上述触发，不伪造胜负、战报或奖励。pending中的battle_special_attributes_and_triggers继续保留；已有count_stats面板被动不因提供skillSchedule而再次执行。下一批优先核对并恢复行动资格与最小Buff事件状态机，再接伤害和目标选择。
