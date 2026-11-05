@@ -348,3 +348,21 @@ installTreatmentStatus显式接收来源、携带者与契约对象，仅支持�
 **纠正上一批计划：5181403不是已证实漏接的后续效果。** CBuff.notTrigger要求triggerArt=false且listenType/listenType2均为空；199.listenType=189，故BattleService.executeBuffArt不会在安装后递归其art_list。SoulContractBuffHandler覆盖trigger，仅处理伤害转移，不调用父类的art_list执行。当前源码这两条路径均不会执行5181403。新版不擅自补上属性291，测试断言该链只有199/200实例。配置存在不等于运行路径一定执行；若后续正式服有不同效果，再比较版本与策划规则。
 
 护盾源码疑点新增客户端证据：旧client/idle/src/utils/BattleAttrUpdateUtils.lua的223处理直接以update.value累加血条，BattleController.lua分发战报属性更新。因此客户端展示使用战报HP值，不能用“画面显示抵消”证明服务端实际扣血已抵消。本轮只完成源码核查，没有正式服实战验收，不能宣称疑点已排除或已修正。
+
+
+## 2026-11-05 普通伤害准备：星级防御系数
+
+旧 `BattleTemplate.convertFrom` 按 `heroInfo.star` 读取 `battledefend`，作为基础属性150（DEFEND_RAGE）加入战斗属性；不使用进化等级或强化阶段代替。新版 `HeroBattleDefenseRules` 读取同源14档配置（1星500，10星840，14星1080），缺表、重复星级或缺失星级拒绝组装；`HeroBattleInputService` 每次重建并累加一次，保持面板、资产版本和持久数据不变。
+
+旧 `FightUtil.calDefenseRate` 为 `min(defense / (defense + coefficient), 0.8)`，其中防御是当前已折算属性224，系数是当前属性150。`HeroBattleAttributeUtils.defenseRate` 保留double运算、80%上限和无零下限；分母为零、非有限结果及long加法溢出明确拒绝，不能当作零减伤或默认80%。这是非法输入拒绝边界，非复刻旧Java溢出/非有限数行为。
+
+本批只接入战斗输入系数并提供防御率计算工具，尚未把工具用于普通伤害执行；105真实伤害保持原链路，不额外套防御减伤。普通命中、暴击、格挡、法术防御、破甲、神圣伤害及完整乘区仍待逐项恢复，不用中性默认值冒充完整公式。清心概率“待审”与护盾战报/实际扣血疑点继续保留。
+
+
+## 2026-11-05 命中、暴击和格挡规则准备
+
+依据旧FightUtil.isHitRate/isCrit/isBlook/calCritRate/calDamage及BattleConstant，本批新增HeroBattleHitUtils纯规则工具，所有比例参数已经除以10000：命中为1-(1-命中226)*闪避227；暴击为暴击207*(1-抗暴208)；格挡为(1-精准211-(元素命中克制倍率-1))*格挡比例。元素配置缺失时旧版直接跳过格挡，不是补默认倍率。公式不加0至1截断；非有限数值明确拒绝。暴伤倍率为1.5+min(暴伤222,1.5)，不加零下限。
+
+旧执行顺序：未命中立即返回，不抽暴击/格挡；命中后即使fixedAttack仍抽暴击。非固定、抽中暴击且未封印时，存在抗暴Buff则移除首个且不读暴伤，否则读取暴伤并标记实际暴击。其他分支仍读取暴伤以消耗一次性属性。新Critical结果只表达分支要求，不实际移除Buff或读取属性；未来执行器必须按顺序落实。格挡只在非固定攻击且双方有元素配置时抽样，减伤30%，原始暴击抽样成功再加20%，即便实际暴击被封印/抗暴取消也是如此。
+
+旧调用的RandomUtils源码仍缺失，本批不实现新的随机适配器，不扩大清心概率推定授权。概率公式及分支通过测试不表示普通伤害已接入；尚需元素配置读取、属性一次性消费、随机抽样、抗暴移除回调及完整伤害公式。105真实伤害保持原实现。

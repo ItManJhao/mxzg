@@ -1,4 +1,4 @@
-/** 旧服入场基础属性折算：只计算初始血量及攻防速，不替代战斗中的一次性属性、Buff或伤害公式。 */
+/** 旧服入场基础属性折算：计算初始血量、攻防速和防御率，不替代战斗中的一次性属性、Buff或伤害公式。 */
 package com.funsgamex.mxzg.hero;
 
 import java.util.Map;
@@ -15,6 +15,20 @@ public final class HeroBattleAttributeUtils {
         long hp = scale(attributes.getOrDefault(223, 0L), attributes.getOrDefault(102, 0L));
         return new Opening(hp, hp, attribute(attributes, 220, 201),
             attribute(attributes, 224, 202), attribute(attributes, 101, 204));
+    }
+
+    /**
+     * 沿旧 FightUtil 计算防御率，仅设80%上限，不添加零下限。
+     * defense 是已折算一次的当前防御；coefficient 是当前150号属性，不是星级。
+     * 此结果仅是普通伤害公式的一项，不含法术防御、破甲、命中或暴击。
+     */
+    public static double defenseRate(long defense, long coefficient) {
+        long denominator = Math.addExact(defense, coefficient);
+        double result = 1D * defense / denominator;
+        if (!Double.isFinite(result)) {
+            throw new IllegalArgumentException("战斗防御率分母为零或结果无效");
+        }
+        return Math.min(result, 0.8D);
     }
 
     /** 攻防速读取只折算一次；旧伤害入口使用getAttribute而非再次折算的getAttack。 */

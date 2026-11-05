@@ -50,6 +50,8 @@ public class HeroBattleInputService {
     private final HeroPanelRules panels;
     /** 共用基础技能选择及技能属性贡献。 */
     private final HeroSkillPanelRules skills;
+    /** 星级决定的战斗专用防御系数，不加入名册面板。 */
+    private final HeroBattleDefenseRules defense;
     /** 共用进化属性和同类型技能覆盖。 */
     private final HeroEvolutionRules evolution;
 
@@ -57,7 +59,8 @@ public class HeroBattleInputService {
     public HeroBattleInputService(SessionService sessions, RoleRepository roles,
                                  MainFormationStateService formations, MainFormationRules formationRules,
                                  HeroRepository heroes, HeroPanelRules panels,
-                                 HeroSkillPanelRules skills, HeroEvolutionRules evolution) {
+                                 HeroSkillPanelRules skills, HeroEvolutionRules evolution,
+                                 HeroBattleDefenseRules defense) {
         this.sessions = sessions;
         this.roles = roles;
         this.formations = formations;
@@ -66,6 +69,7 @@ public class HeroBattleInputService {
         this.panels = panels;
         this.skills = skills;
         this.evolution = evolution;
+        this.defense = defense;
     }
 
     /**
@@ -96,6 +100,8 @@ public class HeroBattleInputService {
             var evolved = evolution.resolve(hero.templateId(), hero.evolution().type(), hero.evolution().level());
             var position = formationRules.position(formation.formationId(), slot.position());
             var attributes = panels.attributes(hero.baseStats(), hero.equipment(), add -> {
+                // 旧 BattleTemplate 先设置星级基础系数，再累加其他来源的同编号属性。
+                add.accept(150, defense.coefficient(hero.star()));
                 skills.contribute(hero.templateId(), hero.star(), hero.stage(), add);
                 evolved.attributes().forEach(add);
                 // 与旧FormationReceivers一致：按阵型/站位加入原始属性，百分比不提前折算。
