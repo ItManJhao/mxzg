@@ -8,9 +8,17 @@ import java.util.*;
 
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
-    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174, 175, 178, 179, 181, 182, 184, 190, 194);
+    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
+    /** 当前事件所属回合，行动调度或战场回合入口显式设置。 */
+    private int round;
+
+    /** 设置本场回合，供174回合上限判断，不使用机器时间。 */
+    public void round(int value) {
+        if (value < 0) throw new IllegalArgumentException("战斗回合不能为负");
+        round = value;
+    }
 
     /** 原动作ID、施加者来源（0施加者/1携带者）、是否配置选目标；不在这里猜目标。 */
     public record Art(int id, int sourceType, boolean hasTargets) {
@@ -23,10 +31,15 @@ public final class HeroBattleEventProcessor {
     }
 
     /** 已解析的通用动作触发Buff配置；173可限制技能ID，动作保留配置顺序。 */
-    public record Definition(int buffId, int event, int skillFilter, List<Art> arts) {
+    public record Definition(int buffId, int event, int skillFilter, List<Art> arts,
+                             int roundLimit, boolean sourceOnly, int triggerLimit) {
+        /** 既有通用监听无额外次数或回合限制。 */
+        public Definition(int buffId, int event, int skillFilter, List<Art> arts) {
+            this(buffId, event, skillFilter, arts, 0, false, 0);
+        }
         /** 未支持事件明确失败；不把未知处理器返回成功。 */
         public Definition {
-            if (buffId <= 0 || !SUPPORTED.contains(event) || skillFilter < 0) {
+            if (buffId <= 0 || !SUPPORTED.contains(event) || skillFilter < 0 || roundLimit < 0 || triggerLimit < 0) {
                 throw new IllegalArgumentException("尚未支持的战斗触发Buff");
             }
             arts = List.copyOf(arts);
@@ -59,6 +72,8 @@ public final class HeroBattleEventProcessor {
         private final Set<Integer> closedDamageTargets = new HashSet<>();
         /** 当前选中的是队列反击动作；控制伤害后置事件资格，不代表已执行反击技能。 */
         private boolean counterattack;
+        /** 175监听各实例累计触发次数；移除实例时删除，动作失败恢复。 */
+        private final Map<Long, Long> triggerCounts = new HashMap<>();
         /** 死亡优先阻止行动，不能被能量9999绕过。 */
         private boolean dead;
         /** 挂机封印与1007状态共同控制事件触发，不代替行动禁止集合。 */
@@ -67,6 +82,8 @@ public final class HeroBattleEventProcessor {
         private long lastTreatment;
         /** 本次已选定技能；行动前事件改变控制状态也不重新选技能。 */
         private HeroBattleSkillUtils.Skill current;
+        /** 当前技能选定时能量，供主动伤害加成读取；不在此负责能量获得或扣除。 */
+        private long currentEnergy;
 
         /** 从只读计划创建独立临时单位，不持有角色凭证或数据库。 */
         public Actor(int id, List<HeroBattleSkillUtils.Skill> skills) {
@@ -80,12 +97,12 @@ public final class HeroBattleEventProcessor {
         /** 动作事务只修改的临时状态，用于失败回滚与被动初始化回滚。 */
         record Checkpoint(Set<Integer> interrupts, List<Listener> listeners, long lastTreatment, boolean dead,
                           Set<Integer> closedDamageTargets, boolean counterattack,
-                          Set<Integer> controls, boolean hangUpSeal, HeroBattleSkillUtils.Skill current) {}
+                          Set<Integer> controls, boolean hangUpSeal, HeroBattleSkillUtils.Skill current, Map<Long, Long> triggerCounts, long currentEnergy) {}
 
         /** 保存本场动作状态，不包含数据库或角色资产。 */
         Checkpoint checkpoint() {
             return new Checkpoint(Set.copyOf(interrupts), List.copyOf(listeners), lastTreatment, dead,
-                Set.copyOf(closedDamageTargets), counterattack, Set.copyOf(controls), hangUpSeal, current);
+                Set.copyOf(closedDamageTargets), counterattack, Set.copyOf(controls), hangUpSeal, current, Map.copyOf(triggerCounts), currentEnergy);
         }
 
         /** 失败时恢复动作前状态，不把失败的嵌套治疗残留到下一次动作。 */
@@ -103,7 +120,15 @@ public final class HeroBattleEventProcessor {
             controls.addAll(state.controls());
             hangUpSeal = state.hangUpSeal();
             current = state.current();
+            currentEnergy = state.currentEnergy();
+            triggerCounts.clear();
+            triggerCounts.putAll(state.triggerCounts());
         }
+
+        /** 当前已选技能的主动标志，尚未出手时不能假设为主动。 */
+        public boolean activeSkill() { return current != null && current.activeType() == 1; }
+        /** 当前技能实例的能量值，反击由队列入口显式传入。 */
+        public long skillEnergy() { return currentEnergy; }
 
         /** 反击1301取当前技能计划中的普通攻击，不借用主动技能。 */
         public HeroBattleSkillUtils.Skill generalAttack() {
@@ -150,6 +175,8 @@ public final class HeroBattleEventProcessor {
         public void setDead(boolean value) { dead = value; }
         /** 设置旧挂机封印标志；不开放挂机玩法。 */
         public void setHangUpSeal(boolean value) { hangUpSeal = value; }
+        /** 回合Buff阶段只检查旧挂机封印，不能用普通封印替代。 */
+        public boolean isHangUpSealed() { return hangUpSeal; }
         /** 查询当前控制状态，供效果执行器判断禁疗与未支持的目标改选。 */
         public boolean hasControl(int type) {
             return controls.contains(type);
@@ -178,7 +205,10 @@ public final class HeroBattleEventProcessor {
             listeners.add(listener);
         }
         /** 移除后续事件的监听；不修改本次已经捕获的触发快照。 */
-        public void remove(long instanceId) { listeners.removeIf(row -> row.instanceId() == instanceId); }
+        public void remove(long instanceId) {
+            listeners.removeIf(row -> row.instanceId() == instanceId);
+            triggerCounts.remove(instanceId);
+        }
         /** 记录当前出手被中断的目标。 */
         public void interrupt(int target) { interrupts.add(target); }
         /** 查询当前出手中断标记，供真实动作执行器使用。 */
@@ -193,6 +223,10 @@ public final class HeroBattleEventProcessor {
         void skill(Actor actor, HeroBattleSkillUtils.Skill skill);
         /** 按动作ID执行效果，来源和目标上下文已经依旧规则确定。 */
         void art(Invocation invocation);
+        /** 达到触发次数时移除实例；战场执行器覆写以同步Buff集合及移除记录。 */
+        default void triggerExpired(Actor carrier, Listener listener) {
+            carrier.remove(listener.instanceId());
+        }
         /** 专用监听处理器；未实现时必须拒绝，不能用空回调冒充驱散/契约。 */
         default void special(Listener listener, Actor carrier, int target) {
             throw new UnsupportedOperationException("尚未支持的特殊Buff：" + listener.definition().event());
@@ -209,12 +243,14 @@ public final class HeroBattleEventProcessor {
     public boolean act(Actor actor, int round, HeroBattleSkillUtils.Skill queuedAction,
                        long skillEnergy, Executor executor) {
         Objects.requireNonNull(executor);
+        round(round);
         if (ended) {
             return false;
         }
         actor.current = HeroBattleSkillUtils.choose(actor.skills, round, queuedAction,
             HeroBattleActionUtils.onlyAttack(actor.controls));
         actor.counterattack = queuedAction != null;
+        actor.currentEnergy = skillEnergy;
         dispatch(197, actor, actor.id, executor);
         if (!HeroBattleActionUtils.canAct(actor.dead, actor.current, skillEnergy, actor.controls)) {
             return false;
@@ -241,6 +277,14 @@ public final class HeroBattleEventProcessor {
             .sorted(Comparator.comparing(row -> row.sourceId() == carrier.id)).toList();
         for (var listener : pending) {
             var definition = listener.definition();
+            if (definition.event() == 174 && definition.roundLimit() != 0 && round > definition.roundLimit()) {
+                carrier.restore();
+                continue;
+            }
+            if (definition.event() == 175 && definition.sourceOnly() && listener.sourceId() != target) {
+                carrier.restore();
+                continue;
+            }
             if (definition.event() == 199 || definition.event() == 200 || definition.event() == 311) {
                 // 旧专用trigger不经过AbstractArtTrigger的战斗结束检查。
                 executor.special(listener, carrier, target);
@@ -252,6 +296,12 @@ public final class HeroBattleEventProcessor {
                     targetContext = art.hasTargets() || listener.sourceId() != carrier.id ? carrier.id : targetContext;
                     executor.art(new Invocation(definition.buffId(), art.id(), source, targetContext));
                 }
+            }
+            if (definition.event() == 175) {
+                // 旧Becritical在super.trigger之后计数，即使战斗结束导致通用动作跳过也会计数。
+                long count = Math.addExact(carrier.triggerCounts.getOrDefault(listener.instanceId(), listener.value()), 1);
+                carrier.triggerCounts.put(listener.instanceId(), count);
+                if (definition.triggerLimit() != 0 && count >= definition.triggerLimit()) executor.triggerExpired(carrier, listener);
             }
             carrier.restore();
         }

@@ -78,12 +78,6 @@ public class HeroSkillPanelRules {
     public HeroBattleEventProcessor.Definition battleTrigger(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (type == 174 || type == 175) {
-            var limits = buff.path("value").asString().split("\\|", -1);
-            if (Integer.parseInt(limits[0]) != 0 || (type == 175 && limits.length > 1 && Integer.parseInt(limits[1]) != 0)) {
-                throw new IllegalArgumentException("暴击事件次数或回合限制尚未支持：" + buffId);
-            }
-        }
         if (type == 171 && Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) != 0) {
             throw new IllegalArgumentException("受击事件的前置Buff条件尚未支持：" + buffId);
         }
@@ -101,7 +95,12 @@ public class HeroSkillPanelRules {
             }
             arts.add(new HeroBattleEventProcessor.Art(id.asInt(), art.path("source_type").asInt(), !targets.isEmpty()));
         }
-        return new HeroBattleEventProcessor.Definition(buffId, type, skillFilter, arts);
+        var limits = buff.path("value").asString().split("\\|", -1);
+        int first = Integer.parseInt(limits[0]);
+        if (type == 175 && first != 0 && first != 1) throw new IllegalArgumentException("被暴击来源条件无效");
+        return new HeroBattleEventProcessor.Definition(buffId, type, skillFilter, arts,
+            type == 174 ? first : 0, type == 175 && first == 1,
+            type == 175 && limits.length > 1 ? Integer.parseInt(limits[1]) : 0);
     }
 
     /** 从同源动作表解析已支持的目标选择计划；未知选择器拒绝，不猜默认目标。 */
@@ -202,7 +201,7 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194).contains(type)) {
+        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201).contains(type)) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
         return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
@@ -249,18 +248,22 @@ public class HeroSkillPanelRules {
     /** 一个已预检的纯普通伤害动作，保留目标规则和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
-    /** 按真实普攻技能配置预检整组100号效果；未知效果拒绝，不执行半组技能。 */
-    public List<DamageArt> ordinarySkillArts(HeroBattleSkillUtils.Skill skill) {
+    /** 按真实普攻/主动技能预检100伤害、201监听及2/3/5表现；未知效果拒绝，不执行半组技能。 */
+    public List<DamageArt> damageSkillArts(HeroBattleSkillUtils.Skill skill) {
         var config = skills.get(skill.skillId() + ":" + skill.level());
-        if (config == null || config.path("active_type").asInt() != 2) {
-            throw new IllegalArgumentException("当前只接入真实普通攻击技能");
+        if (config == null || !Set.of(1, 2).contains(config.path("active_type").asInt())) {
+            throw new IllegalArgumentException("当前只接入真实普通或主动伤害技能");
         }
         var result = new ArrayList<DamageArt>();
         for (var id : mapper.readTree(config.path("art_list").asString())) {
             var art = row("buffart", id.asInt());
             var ids = new ArrayList<Integer>();
             for (var buff : mapper.readTree(art.path("buff_list").asString())) {
-                if (!battleProjectile(buff.asInt())) battleOrdinaryDamageRate(buff.asInt(), true);
+                if (!battleProjectile(buff.asInt())) {
+                    if (battleRoundListener(buff.asInt())) {
+                        battleTrigger(buff.asInt());
+                    } else battleOrdinaryDamageRate(buff.asInt(), true);
+                }
                 ids.add(buff.asInt());
             }
             if (ids.isEmpty()) throw new IllegalArgumentException("普通攻击动作没有效果");
@@ -270,14 +273,43 @@ public class HeroSkillPanelRules {
         return List.copyOf(result);
     }
 
-    /** 旧5号投射表现由ClientBuffHandler处理，只记录表现，不参与服务端伤害。 */
+    /** 旧2/3/5近身、远程、投射表现由ClientBuffHandler处理，只记录表现，不参与服务端伤害。 */
     public boolean battleProjectile(int buffId) {
         var buff = row("buff", buffId);
-        if (buff.path("type").asInt() != 5) return false;
+        if (!Set.of(2, 3, 5).contains(buff.path("type").asInt())) return false;
         if (buff.path("attach_percent").asInt() != 10000 || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
             throw new IllegalArgumentException("投射表现含未支持分支");
         }
         return true;
+    }
+
+    /** 201回合开始监听预检；仅允许必中安装和其后续纯100号动作，避免隐藏未知效果。 */
+    public boolean battleRoundListener(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 201) return false;
+        if (buff.path("attach_percent").asInt() != 10000) throw new IllegalArgumentException("回合监听概率尚未接入");
+        for (var art : mapper.readTree(buff.path("art_list").asString())) {
+            if (!isDamageArt(art.asInt())) throw new IllegalArgumentException("回合监听后续动作尚未支持");
+        }
+        battleBuff(buffId);
+        return true;
+    }
+
+    /** 判断纯普通伤害动作，并逐个校验配置；其他动作交已有治疗/反击入口处理。 */
+    public boolean isDamageArt(int artId) {
+        var buffs = mapper.readTree(row("buffart", artId).path("buff_list").asString());
+        if (buffs.isEmpty()) return false;
+        for (var buff : buffs) if (row("buff", buff.asInt()).path("type").asInt() != 100) return false;
+        for (var buff : buffs) battleOrdinaryDamageRate(buff.asInt(), true);
+        return true;
+    }
+
+    /** 返回预检纯伤害动作的效果顺序。 */
+    public List<Integer> damageArtBuffs(int artId) {
+        if (!isDamageArt(artId)) throw new IllegalArgumentException("不是纯伤害动作");
+        var result = new ArrayList<Integer>();
+        for (var buff : mapper.readTree(row("buffart", artId).path("buff_list").asString())) result.add(buff.asInt());
+        return List.copyOf(result);
     }
 
     /** 仅识别纯1301动作；非1301返回false交由既有执行器处理，混合类型明确拒绝。 */

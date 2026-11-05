@@ -59,6 +59,11 @@ public final class HeroBattleBuffState {
         return new Change(current, List.copyOf(removed));
     }
 
+    /** 按实例身份移除一次触发耗尽的Buff，不误清同配置其他来源或层数。 */
+    public List<Entry> removeInstance(long instanceId) {
+        return remove(entries.stream().filter(entry -> entry.instanceId() == instanceId).toList());
+    }
+
     /** 沿旧getBuffersByType顺序移除首个指定类型实例；由调用方同步记录和清理关联监听。 */
     public List<Entry> removeFirst(int type) {
         return remove(entries.stream().filter(entry -> entry.spec().type() == type).limit(1).toList());

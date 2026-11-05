@@ -185,7 +185,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
-    /** 执行预检的纯100号普通攻击技能；其他技能类型仍拒绝。 */
+    /** 执行预检的普通/主动伤害技能、201监听和表现；其他效果仍拒绝。 */
     @Override
     public void skill(Actor actor, HeroBattleSkillUtils.Skill skill) {
         if (attackContext == null) throw new UnsupportedOperationException("普通攻击缺少根动作上下文");
@@ -193,7 +193,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         if (actor.hasControl(1011) || actor.hasControl(1013) || actor.hasControl(1015)) {
             throw new UnsupportedOperationException("普通攻击控制改选尚未支持");
         }
-        for (var art : rules.ordinarySkillArts(skill)) {
+        for (var art : rules.damageSkillArts(skill)) {
             var living = units.values().stream().filter(u -> u.hp() > 0 && !u.actor().isDead()).map(State::target).toList();
             var targets = HeroBattleTargetUtils.select(art.targets(), source.target(), living,
                 List.of(require(attackContext.target).target()), attackContext.queued);
@@ -202,27 +202,41 @@ public final class HeroBattleHealingExecutor implements Executor {
                     for (var target : targets) presentations.add(new Presentation(buffId, actor.id(), target.id()));
                     continue;
                 }
+                if (rules.battleRoundListener(buffId)) {
+                    for (var target : targets) {
+                        if (require(target.id()).hp() <= 0 || actor.interrupted(target.id())) continue;
+                        var entry = installBuff(actor.id(), target.id(), rules.battleBuff(buffId), 0);
+                        require(target.id()).actor().listen(new Listener(entry.instanceId(), actor.id(), rules.battleTrigger(buffId)));
+                    }
+                    continue;
+                }
                 ordinaryDamage(buffId, actor.id(), targets.stream().map(HeroBattleTargetUtils.Unit::id).toList(),
-                    attackContext.damageType, false, 0, attackContext.elements, attackContext.decision);
+                    attackContext.damageType, skill.activeType() == 1, actor.skillEnergy(), attackContext.elements, attackContext.decision);
                 actor.restore();
             }
         }
     }
 
-    /** 执行单位真实普攻并依序排空1301反击；暂只支持物理普攻，完整技能/回合调度后续接入。 */
+    /** 执行单位真实普攻并依序排空1301反击；当前为物理伤害子集，主动技能通过act传入真实能量；完整回合调度后续接入。 */
     public void attack(int sourceId, int targetId, HeroBattleElementRules elements,
                        java.util.function.DoublePredicate decision) {
+        act(sourceId, targetId, 0, elements, decision);
+    }
+
+    /** 使用真实技能排期执行当前出手；能量必须由战场提供，尚不负责整回合能量收支。 */
+    public void act(int sourceId, int targetId, long energy, HeroBattleElementRules elements,
+                    java.util.function.DoublePredicate decision) {
         if (attackContext != null) throw new IllegalStateException("技能根动作不能嵌套，反击必须入队");
         var actor = require(sourceId).actor();
         require(targetId);
-        rules.ordinarySkillArts(actor.generalAttack());
+        rules.damageSkillArts(actor.generalAttack());
         var context = new AttackContext(elements, decision, 1);
         context.target = targetId;
         attackContext = context;
         try {
             transaction(() -> {
                 started = true;
-                events.act(actor, round, null, 0, this);
+                events.act(actor, round, null, energy, this);
                 int count = 0;
                 while (!context.queue.isEmpty()) {
                     if (++count > 128) throw new IllegalStateException("反击队列超过执行上限");
@@ -257,6 +271,14 @@ public final class HeroBattleHealingExecutor implements Executor {
         });
     }
 
+    /** 监听次数耗尽沿统一移除口清理实例与监听，根事务保存完整回滚点。 */
+    @Override
+    public void triggerExpired(Actor carrier, Listener listener) {
+        var removedEntries = buffs.get(carrier.id()).removeInstance(listener.instanceId());
+        if (removedEntries.isEmpty()) carrier.remove(listener.instanceId());
+        else removed(carrier.id(), removedEntries, "trigger-limit");
+    }
+
     /** 战场提交真实事件；171由伤害流程提供，本入口不伪造受击或扣血。 */
     public void signal(int event, int carrierId, int targetId) {
         transaction(() -> {
@@ -276,6 +298,17 @@ public final class HeroBattleHealingExecutor implements Executor {
 
     /** 沿旧顺序分发186、206，读取可被嵌套覆盖的最近治疗量，再回血并分发311。 */
     private void executeArt(Invocation invocation) {
+        if (rules.isDamageArt(invocation.artId())) {
+            if (attackContext == null) throw new IllegalStateException("触发伤害缺少动作环境");
+            var source = require(invocation.sourceId());
+            var living = units.values().stream().filter(u -> u.hp() > 0 && !u.actor().isDead()).map(State::target).toList();
+            var targets = HeroBattleTargetUtils.select(rules.battleTargets(invocation.artId()), source.target(), living,
+                List.of(require(invocation.targetContext()).target()), false);
+            for (int buffId : rules.damageArtBuffs(invocation.artId())) ordinaryDamage(buffId, invocation.sourceId(),
+                targets.stream().map(HeroBattleTargetUtils.Unit::id).toList(), attackContext.damageType,
+                source.actor().activeSkill(), source.actor().skillEnergy(), attackContext.elements, attackContext.decision);
+            return;
+        }
         if (rules.isGeneralCounterattackArt(invocation.artId())) {
             if (attackContext == null) throw new IllegalStateException("反击动作没有技能根事务");
             var source = require(invocation.sourceId());
@@ -283,7 +316,7 @@ public final class HeroBattleHealingExecutor implements Executor {
             var selected = HeroBattleTargetUtils.select(rules.battleTargets(invocation.artId()), source.target(), living,
                 List.of(require(invocation.targetContext()).target()), false);
             var skill = source.actor().generalAttack();
-            rules.ordinarySkillArts(skill);
+            rules.damageSkillArts(skill);
             for (var target : selected) attackContext.queue.addLast(new CounterAction(source.actor().id(), target.id(), skill));
             return;
         }
@@ -735,6 +768,44 @@ public final class HeroBattleHealingExecutor implements Executor {
         return change.current();
     }
 
+    /**
+     * 选定场景的201回合开始阶段：按调用方提供的出手顺序执行，再做到期移除。
+     * 本入口不是完整回合（尚无能量收支/女神/周期特殊效果）；必须覆盖全部场内单位且不重复。
+     */
+    public void beginRound(int currentRound, List<Integer> order, HeroBattleElementRules elements,
+                           java.util.function.DoublePredicate decision) {
+        if (currentRound <= round || attackContext != null
+            || order.size() != units.size() || !new HashSet<>(order).equals(units.keySet())) {
+            throw new IllegalArgumentException("回合或单位顺序无效");
+        }
+        var context = new AttackContext(elements, decision, 1);
+        attackContext = context;
+        try {
+            transaction(() -> {
+                started = true;
+                round = currentRound;
+                events.round(round);
+                for (int id : order) {
+                    var actor = require(id).actor();
+                    if (actor.isHangUpSealed()) continue;
+                    for (var entry : buffs.get(id).snapshot()) {
+                        if (actor.isDead()) break;
+                        if (entry.spec().type() != 201) continue;
+                        for (var art : rules.battleTrigger(entry.spec().id()).arts()) {
+                            // 旧executeRoundArt固定使用Buff施加者和携带者上下文，不复用通用trigger目标改写。
+                            art(new Invocation(entry.spec().id(), art.id(), entry.sourceId(), id));
+                        }
+                        if (entry.expiresAt() <= round) removed(id, buffs.get(id).removeInstance(entry.instanceId()), "expire");
+                    }
+                }
+                if (!context.queue.isEmpty()) throw new UnsupportedOperationException("回合开始阶段额外行动尚未接入");
+                expireAt(round);
+            });
+        } finally {
+            attackContext = null;
+        }
+    }
+
     /** 战场在旧到期检查时点调用；只推进本批无周期效果的Buff，不模拟整回合战斗。 */
     public void expireAt(int currentRound) {
         if (currentRound < round || currentRound < 0) {
@@ -743,6 +814,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         transaction(() -> {
             started = true;
             round = currentRound;
+            events.round(currentRound);
             for (var id : units.keySet()) {
                 removed(id, buffs.get(id).expire(round), "expire");
             }
@@ -834,6 +906,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                 signals.subList(signalSize, signals.size()).clear();
                 buffBefore.forEach((id, state) -> buffs.get(id).restore(state));
                 round = roundBefore;
+                events.round(roundBefore);
                 nextBuffInstance = nextInstanceBefore;
                 removals.subList(removalSize, removals.size()).clear();
                 installed.clear();
