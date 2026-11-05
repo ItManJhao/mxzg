@@ -94,6 +94,8 @@ export const ResourceCatalog = {
     BattleReportLayer: {"bundle":"prefabs","path":"ui/battle/BattleReportLayer","assetPath":"prefabs/ui/battle/BattleReportLayer","loadPath":"ui/battle/BattleReportLayer","type":"Prefab","uuid":"01a90dce-7567-4e7f-8d0b-a8bcdec84ed1"},
     CampaignView: {"bundle":"prefabs","path":"ui/battle/CampaignView","assetPath":"prefabs/ui/battle/CampaignView","loadPath":"ui/battle/CampaignView","type":"Prefab","uuid":"ac146bb3-359f-4506-8fcf-32f8c56ef4d3"},
     HangMissionChipView: {"bundle":"prefabs","path":"ui/battle/HangMissionChipView","assetPath":"prefabs/ui/battle/HangMissionChipView","loadPath":"ui/battle/HangMissionChipView","type":"Prefab","uuid":"4d270a16-c38e-45b9-f277-80e134c3b2a6"},
+    SkillAuditCellView: {"bundle":"prefabs","path":"ui/battle/SkillAuditCellView","assetPath":"prefabs/ui/battle/SkillAuditCellView","loadPath":"ui/battle/SkillAuditCellView","type":"Prefab","uuid":"e1204782-0759-492f-b8ec-54bd381fbc83"},
+    SkillAuditView: {"bundle":"prefabs","path":"ui/battle/SkillAuditView","assetPath":"prefabs/ui/battle/SkillAuditView","loadPath":"ui/battle/SkillAuditView","type":"Prefab","uuid":"34d5372d-d0b5-43b0-965f-db66c446f775"},
   },
   prefab_chapter: {
     ChapterEndLayer: {"bundle":"prefabs","path":"ui/chapter/ChapterEndLayer","assetPath":"prefabs/ui/chapter/ChapterEndLayer","loadPath":"ui/chapter/ChapterEndLayer","type":"Prefab","uuid":"f67629be-903e-4f42-bca0-bdc14685a22c"},

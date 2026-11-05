@@ -147,4 +147,161 @@ class HeroBattleDizzyTest {
         assertFalse(failed.state(2).actor().hasControl(1005));
     }
 
+    /** 真实207配置只接受1004，不能因安装眩晕1005而误触发；移除不清历史。 */
+    @Test void controllingFilterUsesActualConfiguration() {
+        var rules = new HeroSkillPanelRules(new ObjectMapper());
+        var definition = rules.battleTrigger(2234201);
+        assertEquals(207, definition.event());
+        assertTrue(rules.matchesControlTrigger(2234201, 1004));
+        assertFalse(rules.matchesControlTrigger(2234201, 1005));
+        var engine = engine();
+        var listener = new HeroBattleEventProcessor.Listener(500, 1, definition);
+        engine.state(1).actor().listen(listener);
+        assertFalse(engine.controlMatches(listener, engine.state(1).actor(), 2));
+        engine.applyDizzy(1041301, 1, 2, probability -> true);
+        assertFalse(engine.controlMatches(listener, engine.state(1).actor(), 2));
+        engine.dispel(2, 3);
+        assertNotNull(engine.lastControl(2));
+    }
+
+    /** 独立处理器验证过滤、先被控后施控及来源目标；不冒充缺失的185策划配置。 */
+    @Test void controlDispatchChecksFilterBeforeArts() {
+        var processor = new HeroBattleEventProcessor();
+        var actor = new Actor(1, List.of());
+        var seen = new ArrayList<Integer>();
+        for (int event : List.of(185, 207)) {
+            actor.listen(new HeroBattleEventProcessor.Listener(event, 1,
+                new HeroBattleEventProcessor.Definition(event, event, 0,
+                    List.of(new HeroBattleEventProcessor.Art(event, 1, false)))));
+        }
+        var executor = new HeroBattleEventProcessor.Executor() {
+            public void skill(Actor carrier, HeroBattleSkillUtils.Skill skill) { fail(); }
+            public boolean controlMatches(HeroBattleEventProcessor.Listener listener, Actor carrier, int target) {
+                assertEquals(2, target);
+                return listener.definition().event() == 185;
+            }
+            public void art(HeroBattleEventProcessor.Invocation invocation) {
+                assertEquals(1, invocation.sourceId());
+                assertEquals(2, invocation.targetContext());
+                seen.add(invocation.artId());
+            }
+        };
+        processor.dispatch(185, actor, 2, executor);
+        processor.dispatch(207, actor, 2, executor);
+        assertEquals(List.of(185), seen);
+        processor.end();
+        processor.dispatch(185, actor, 2, executor);
+        assertEquals(1, seen.size());
+    }
+
+    /** 真实三击破冰配置安装计数，受击逐次扣减，最后先移除再通知攻击者。 */
+    @Test void frozenHitCounterAndBreakIce() {
+        var engine = engine();
+        engine.applyFrozen(2223301, 1, 2, rate -> true);
+        assertTrue(engine.state(2).actor().hasControl(1004));
+        assertEquals(3, engine.buffs(2).getFirst().value());
+        engine.signal(171, 2, 1);
+        engine.signal(171, 2, 1);
+        assertEquals(1, engine.buffs(2).getFirst().value());
+        engine.signal(171, 2, 1);
+        assertFalse(engine.state(2).actor().hasControl(1004));
+        assertTrue(engine.buffs(2).isEmpty());
+        assertEquals("break-ice", engine.removals().getFirst().reason());
+        var signal = engine.signals().getLast();
+        assertEquals(208, signal.event());
+        assertEquals(1, signal.carrierId());
+        assertEquals(2, signal.targetId());
+    }
+
+    /** 真实207监听由冰冻命中触发，原始两条属性Buff到期统一移除。 */
+    @Test void frozenTriggersRealControlAttributes() {
+        var rules = new HeroSkillPanelRules(new ObjectMapper());
+        var engine = engine();
+        engine.state(1).actor().listen(new HeroBattleEventProcessor.Listener(500, 1, rules.battleTrigger(2234203)));
+        engine.applyFrozen(2223301, 1, 2, rate -> true);
+        assertEquals(List.of(2234301, 2234403), engine.buffs(1).stream().map(v -> v.spec().id()).toList());
+        engine.expireAt(2);
+        assertTrue(engine.buffs(1).isEmpty());
+        assertFalse(engine.state(2).actor().hasControl(1004));
+    }
+
+    /** 第二条监听故障撤回冰冻、前一条监听已经安装的属性增益及记录。 */
+    @Test void controlAttributeFailureRollsBackWholeRoot() {
+        var rules = new HeroSkillPanelRules(new ObjectMapper());
+        var engine = engine();
+        engine.state(1).actor().listen(new HeroBattleEventProcessor.Listener(500, 1, rules.battleTrigger(2234201)));
+        engine.state(1).actor().listen(new HeroBattleEventProcessor.Listener(501, 1,
+            new HeroBattleEventProcessor.Definition(2234201, 207, 0,
+                List.of(new HeroBattleEventProcessor.Art(99999999, 1, false)))));
+        assertThrows(RuntimeException.class, () -> engine.applyFrozen(2223301, 1, 2, rate -> true));
+        assertTrue(engine.buffs(1).isEmpty());
+        assertTrue(engine.buffs(2).isEmpty());
+        assertNull(engine.lastControl(2));
+        assertTrue(engine.trace().isEmpty());
+        assertFalse(engine.state(2).actor().hasControl(1004));
+    }
+
+    /** 冰冻使用216抗性而非217；未命中不发控制事件，到期后解除行动限制。 */
+    @Test void frozenUsesOwnResistanceAndExpiry() {
+        var engine = engine();
+        engine.setOnceAttribute(2, 216, 2000);
+        engine.setOnceAttribute(2, 217, 9000);
+        engine.applyFrozen(2051301, 1, 2, rate -> {
+            assertEquals(.15 * .8, rate, 1e-12);
+            return false;
+        });
+        assertEquals(java.util.Map.of(217, 9000L), engine.onceAttributes(2));
+        assertTrue(engine.signals().isEmpty());
+        engine.applyFrozen(2051301, 1, 2, rate -> true);
+        assertEquals(999, engine.buffs(2).getFirst().value());
+        engine.expireAt(2);
+        assertFalse(engine.state(2).actor().hasControl(1004));
+        assertTrue(engine.signals().stream().noneMatch(v -> v.event() == 208));
+    }
+
+    /** 旧属性安装不对死亡来源继续增加属性或留下实例。 */
+    @Test void deadSourceCannotReceiveControlAttributes() {
+        var engine = engine();
+        engine.state(1).actor().setDead(true);
+        engine.art(new HeroBattleEventProcessor.Invocation(2234201, 2234301, 1, 2));
+        assertTrue(engine.buffs(1).isEmpty());
+    }
+
+    /** 到期逐实例通知原施加者；驱散只移除，不错误发送到期事件。 */
+    @Test void expirySignalsOriginalSourceAndDispelDoesNot() {
+        var engine = engine();
+        engine.applyDizzy(1041301, 1, 2, rate -> true);
+        engine.expireAt(2);
+        var expired = engine.signals().stream().filter(v -> v.event() == 209).toList();
+        assertEquals(1, expired.size());
+        assertEquals(1, expired.getFirst().carrierId());
+        assertEquals(2, expired.getFirst().targetId());
+        var dispelled = engine();
+        dispelled.applyDizzy(1041301, 1, 2, rate -> true);
+        dispelled.dispel(2, 3);
+        dispelled.expireAt(2);
+        assertTrue(dispelled.signals().stream().noneMatch(v -> v.event() == 209));
+    }
+
+    /** 四组真实入场配置：敌方减抗、自身三监听；减抗影响真实冰冻概率并触发207。 */
+    @Test void nanakoOpeningPassiveAndControlChain() {
+        var engine = engine();
+        engine.initializePassive(1, 102050234, 1);
+        assertEquals(List.of(2234201, 2234501, 2234701), engine.buffs(1).stream().map(v -> v.spec().id()).toList());
+        assertEquals(List.of(2234101), engine.buffs(2).stream().map(v -> v.spec().id()).toList());
+        assertThrows(IllegalArgumentException.class, () -> engine.initializePassive(1, 102050234, 1));
+        double baseRate = new HeroSkillPanelRules(new ObjectMapper()).battleFrozenDefinition(2223301).rate();
+        engine.applyFrozen(2223301, 1, 2, rate -> {
+            assertEquals(baseRate * 1.1, rate, 1e-12);
+            return true;
+        });
+        assertTrue(engine.buffs(1).stream().anyMatch(v -> v.spec().id() == 2234301));
+        assertTrue(engine.buffs(1).stream().anyMatch(v -> v.spec().id() == 2234401));
+        engine.signal(171, 2, 1);
+        engine.signal(171, 2, 1);
+        engine.signal(171, 2, 1);
+        assertFalse(engine.state(2).actor().hasControl(1004));
+        assertEquals(1000, engine.state(2).hp()); // 旧208 value=0不匹配1004，不能偷偷触发全体伤害。
+    }
+
 }

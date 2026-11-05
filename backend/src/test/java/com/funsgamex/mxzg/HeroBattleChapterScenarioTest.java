@@ -260,6 +260,26 @@ class HeroBattleChapterScenarioTest {
         assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(forged));
     }
 
+    /** 真实配置的两名我方同时受控，保留独立来源与每个目标的安装/移除，不伪造战报事件。 */
+    @Test
+    void independentControlTeamProducesMultiTargetEffects() throws Exception {
+        var mapper = new ObjectMapper();
+        var report = new HeroBattleChapterScenario(mapper).runIndependentControlTeam(
+            rate -> rate == 1D || Math.abs(rate - .35D) < 1e-12);
+        assertEquals("audit:control-teams", report.scenario());
+        assertEquals(4, report.initial().size());
+        var first = report.frames().stream().filter(frame -> frame.round() == 1 && frame.sourceId() == 3)
+            .findFirst().orElseThrow();
+        assertEquals(Set.of(1, 4), first.trace().stream()
+            .filter(trace -> trace.kind().equals("presentation") && trace.configId() == 1041101)
+            .map(HeroBattleHealingExecutor.Trace::targetId).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(2, first.trace().stream()
+            .filter(trace -> trace.kind().equals("buff.upsert") && trace.configId() == 1041301).count());
+        HeroBattleReplayUtils.validate(report);
+        Files.writeString(Path.of("target/independent-control-teams-report.json"), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+        Files.write(Path.of("target/independent-control-teams-replay.pb"), HeroBattleReplayProtocolUtils.encode(report).toByteArray());
+    }
+
     /** 概率非零的真实流血配置继续拒绝，防止把“不安装”错误扩大到完整流血实现。 */
     @Test void positiveBleedProbabilityRemainsUnsupported() {
         var rules = new HeroSkillPanelRules(new ObjectMapper());
@@ -379,4 +399,44 @@ class HeroBattleChapterScenarioTest {
             }
         }
     }
+    /** 真实服务端冰冻安装与到期生成演出夹具，来源显式标为audit。 */
+    @Test void independentFrozenReplay() throws Exception {
+        var mapper = new ObjectMapper();
+        var report = new HeroBattleChapterScenario(mapper).runIndependentFrozen(rate -> rate == 1D);
+        HeroBattleReplayUtils.validate(report);
+        assertTrue(report.frames().stream().flatMap(f -> f.trace().stream())
+            .anyMatch(t -> t.kind().equals("buff.upsert") && t.configId() == 2234801));
+        assertTrue(report.frames().stream().flatMap(f -> f.trace().stream())
+            .anyMatch(t -> t.kind().equals("buff.remove") && t.configId() == 2234801));
+        Files.write(Path.of("target/independent-frozen-replay.pb"), HeroBattleReplayProtocolUtils.encode(report).toByteArray());
+    }
+
+    /** 真实奈奈子完整五技能开场、施法与到期冰冻生成独立战报；不连接数据库。 */
+    @Test void completeNanakoReplay() throws Exception {
+        var mapper = new ObjectMapper();
+        var report = new HeroBattleChapterScenario(mapper).runIndependentNanako(rate -> rate >= 0.5);
+        assertEquals(5, report.initial().getFirst().skills().size());
+        Files.writeString(Path.of("target/independent-nanako-report.json"),
+            mapper.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+        Files.write(Path.of("target/independent-nanako-replay.pb"), HeroBattleReplayProtocolUtils.encode(report).toByteArray());
+        var trace = report.frames().stream().flatMap(v -> v.trace().stream()).toList();
+        assertTrue(trace.stream().anyMatch(v -> v.configId() == 2231303));
+        assertTrue(trace.stream().anyMatch(v -> v.configId() == 2233202));
+        assertTrue(trace.stream().anyMatch(v -> v.configId() == 2234802));
+    }
+
+    /** 固定正概率命中覆盖暴击追加；与到期冰冻夹具分开，避免提前结束导致误称覆盖全路径。 */
+    @Test void completeNanakoCriticalReplay() throws Exception {
+        var mapper = new ObjectMapper();
+        var report = new HeroBattleChapterScenario(mapper).runIndependentNanako(rate -> rate > 0);
+        var firstAttack = report.frames().stream().filter(frame -> frame.sourceId() == 1).findFirst().orElseThrow();
+        var skillStarts = firstAttack.trace().stream().filter(event -> event.kind().equals("skill.begin"))
+            .map(event -> event.configId()).toList();
+        assertEquals(List.of(102050231, 102050230), skillStarts);
+        var wire = HeroBattleReplayProtocolUtils.encode(report);
+        Files.write(Path.of("target/independent-nanako-critical-replay.pb"), wire.toByteArray());
+        Files.writeString(Path.of("target/independent-nanako-critical-report.json"),
+            mapper.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+    }
+
 }

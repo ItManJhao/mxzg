@@ -148,7 +148,9 @@
         "BattlePage",
         "CampaignView",
         "BattleReportLayer",
-        "HangMissionChipView"
+        "HangMissionChipView",
+        "SkillAuditView",
+        "SkillAuditCellView"
       ]
     },
     {

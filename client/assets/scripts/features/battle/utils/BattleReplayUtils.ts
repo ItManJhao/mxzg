@@ -37,6 +37,8 @@ interface WireReplay {
 
 /** 每步保留真实事件及执行后的逐单位血量，供播放器按顺序消费。 */
 export interface BattleReplayStep {
+    /** 本地回合准备步骤的旧版停顿秒数，不属于服务端业务事件。 */
+    readonly readySeconds?: number;
     readonly round: number;
     readonly kind: string;
     readonly sourceId: number;
@@ -110,13 +112,17 @@ export class BattleReplayUtils {
             game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
         }).game.BattleReplay;
         const report = codec.decode(bytes);
-        if (report.schemaVersion !== 1 || ["main:1:1:1", "main:1:1:2", "main:1:1:3"].indexOf(report.scenario) < 0
-            || report.units.length !== (report.scenario === "main:1:1:3" ? 3 : 2) || report.rounds < 1 || report.rounds > 15) {
+        if (report.schemaVersion !== 1 || ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:control-teams", "audit:frozen", "audit:nanako"].indexOf(report.scenario) < 0
+            || report.units.length !== (report.scenario === "audit:control-teams" ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2) || report.rounds < 1 || report.rounds > 15) {
             throw new Error("战报版本或场景不支持");
         }
         const roster = this.validateUnits(report.units);
         const hp = new Map<number, number>();
-        const expected = report.scenario === "main:1:1:3"
+        const expected = report.scenario === "audit:nanako"
+            ? [[1, 1, 10205023, 2, 100], [2, 2, 10205023, 2, 100]]
+            : report.scenario === "audit:control-teams"
+            ? [[1, 1, 10101001, 2, 1], [4, 1, 10101001, 1, 1], [2, 2, 10101001, 2, 2], [3, 2, 10104004, 3, 2]]
+            : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen")
             ? [[1, 1, 10101001, 2, 1], [2, 2, 10101001, 2, 2], [3, 2, 10104004, 3, 2]]
             : [[1, 1, 10101001, 2, 1], [2, 2, report.scenario === "main:1:1:2" ? 10505005 : 10101001, 2,
                 report.scenario === "main:1:1:2" ? 2 : 1]];
@@ -221,6 +227,19 @@ export class BattleReplayUtils {
                     }, {} as Record<number, number>)) }));
             }
             if (skill) throw new Error("战报技能未结束");
+            if (phase.sourceId === 0) {
+                // 旧BattleController：回合准备1秒，有回合前Buff再停2秒；控制跳过行动也保留可见状态。
+                steps.push(Object.freeze({
+                    round, kind: "round.ready", sourceId: 0, targetId: 0, configId: 0,
+                    readySeconds: phase.events.some(event => event.kind === "buff.upsert" || event.kind === "buff.remove") ? 3 : 1,
+                    skillLevel: null, skillType: null, actualHpChange: null, reportedHpChange: null,
+                    dead: null, buffInstanceId: null, expiresAtRound: null, buffValue: null, removalReason: null,
+                    hpByUnit: Object.freeze(Array.from(hp).reduce((snapshot, [id, value]) => {
+                        snapshot[id] = value;
+                        return snapshot;
+                    }, {} as Record<number, number>))
+                }));
+            }
         }
         if (round !== report.rounds) throw new Error("战报总回合不匹配");
         for (const unit of roster) {

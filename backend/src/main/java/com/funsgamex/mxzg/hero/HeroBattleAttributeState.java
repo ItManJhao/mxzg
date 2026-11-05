@@ -15,7 +15,21 @@ public final class HeroBattleAttributeState {
 
     /** 建立独立战斗读取状态；不把入场已折算的攻防速再次作为原始值。 */
     public HeroBattleAttributeState(Map<Integer, Long> attributes) {
-        base = Map.copyOf(attributes);
+        base = new HashMap<>(attributes);
+    }
+
+    /** 固定属性Buff按原整数增减；不消费一次性覆盖。 */
+    public void addBase(int type, long amount) {
+        base.put(type, Math.addExact(base.getOrDefault(type, 0L), amount));
+    }
+
+    /** 保存可变基础属性供根动作回滚。 */
+    public Map<Integer, Long> baseSnapshot() { return Map.copyOf(base); }
+
+    /** 恢复Buff增减前的基础属性。 */
+    public void restoreBase(Map<Integer, Long> values) {
+        base.clear();
+        base.putAll(values);
     }
 
     /** 读取当前值：一次性覆盖优先并直接返回，否则依次执行比例及效果修正。 */

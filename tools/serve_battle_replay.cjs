@@ -2,8 +2,13 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
-const fixtures = new Map([1, 2].map(mission => ["/chapter-1-1-" + mission + "-replay.pb",
+const fixtures = new Map([1, 2, 3, "3-control"].map(mission => ["/chapter-1-1-" + mission + "-replay.pb",
     fs.readFileSync(path.resolve(__dirname, "../backend/target/chapter-1-1-" + mission + "-replay.pb"))]));
+fixtures.set("/independent-control-teams-replay.pb",
+    fs.readFileSync(path.resolve(__dirname, "../backend/target/independent-control-teams-replay.pb")));
+fixtures.set("/independent-nanako-critical-replay.pb", fs.readFileSync(path.join(__dirname, "../backend/target/independent-nanako-critical-replay.pb")));
+fixtures.set("/independent-nanako-replay.pb", fs.readFileSync(path.join(__dirname, "../backend/target/independent-nanako-replay.pb")));
+fixtures.set("/independent-frozen-replay.pb", fs.readFileSync(path.join(__dirname, "../backend/target/independent-frozen-replay.pb")));
 http.createServer((request, response) => {
     if (request.method !== "GET" || !fixtures.has(request.url)) {
         response.writeHead(404);

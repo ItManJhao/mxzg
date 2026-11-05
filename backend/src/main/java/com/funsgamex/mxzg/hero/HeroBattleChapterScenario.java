@@ -186,10 +186,7 @@ public final class HeroBattleChapterScenario {
         }
         var plan = skills.battleSchedule(skills.select(template, star, stage));
         for (var skill : plan) {
-            if (skill.first() || (skill.activeType() != 1 && skill.activeType() != 2)) {
-                throw new IllegalStateException("测试阵容新增先手/被动依赖，需重新核查");
-            }
-            skills.damageSkillArts(skill);
+            validateSkill(skill);
         }
         return new Unit(id, enemy == null ? 1 : 2, template, level, star, stage,
             enemy == null ? 2 : enemy.path("pos").asInt(), attributes,
@@ -213,6 +210,53 @@ public final class HeroBattleChapterScenario {
     public Result runIndependentDuel(List<Unit> input, DoublePredicate decision) {
         if (input.size() != 2) throw new IllegalArgumentException("独立双单位输入无效");
         return runBattle("audit:duel", input, decision);
+    }
+
+    /** 第3关敌方对两名一级测试英雄的独立演出夹具；双方光环各算一次，不冒充玩家阵容或真实关卡结果。 */
+    public Result runIndependentControlTeam(DoublePredicate decision) {
+        var chapter = initial(3);
+        var first = chapter.getFirst();
+        var second = new Unit(4, 1, first.template(), first.level(), first.star(), first.stage(), 1,
+            first.attributes(), first.opening(), first.skills());
+        var input = new ArrayList<>(applyElementHalo(List.of(first, second)));
+        input.addAll(chapter.subList(1, chapter.size()));
+        return runBattle("audit:control-teams", input, decision);
+    }
+
+    /** 独立冰冻表现夹具：第1回合显式安装真实2234801，非关卡技能或玩家阵容。 */
+    public Result runIndependentFrozen(DoublePredicate decision) {
+        return runBattle("audit:frozen", initial(3), decision);
+    }
+
+    /** 双方均为真实七星100级强化5奈奈子，完整技能及配置属性；固定判定仅用于独立演出验收。 */
+    public Result runIndependentNanako(DoublePredicate decision) {
+        var input = new ArrayList<Unit>();
+        for (int id : List.of(1, 2)) {
+            var enemy = mapper.createObjectNode();
+            enemy.put("hero_type", 10205023);
+            enemy.put("hero_star", 7);
+            enemy.put("hero_level", 100);
+            enemy.put("pos", 2);
+            enemy.put("attr", "[]");
+            var built = unit(id, 5, enemy);
+            input.add(new Unit(id, id, built.template(), built.level(), built.star(), built.stage(),
+                built.position(), built.attributes(), built.opening(), built.skills()));
+        }
+        return runBattle("audit:nanako", applyElementHalo(input), decision);
+    }
+
+    /** 仅允许已核对的奈奈子静态被动与控制被动，未知先手或其他被动在开场前拒绝。 */
+    private void validateSkill(HeroBattleSkillUtils.Skill skill) {
+        if (skill.first()) {
+            throw new IllegalArgumentException("独立战场尚未接入先手技能");
+        }
+        if (skill.activeType() == 1 || skill.activeType() == 2) {
+            skills.damageSkillArts(skill);
+        } else if (skill.skillId() == 102050234) {
+            skills.controlPassiveArts(skill.skillId(), skill.level());
+        } else if (skill.skillId() != 102050232 || !skill.countStats()) {
+            throw new IllegalArgumentException("独立战场被动技能未核对");
+        }
     }
 
     /** 独立多单位审计，只接受已支持技能；不能借此宣称真实主线画面已验收。 */
@@ -244,10 +288,7 @@ public final class HeroBattleChapterScenario {
         var initial = roster(input);
         for (var unit : initial) {
             for (var skill : unit.skills()) {
-                if (skill.first() || (skill.activeType() != 1 && skill.activeType() != 2)) {
-                    throw new IllegalArgumentException("独立战场未接入先手或被动技能");
-                }
-                skills.damageSkillArts(skill);
+                validateSkill(skill);
             }
         }
         var states = initial.stream().map(unit -> new HeroBattleHealingExecutor.State(
@@ -255,6 +296,13 @@ public final class HeroBattleChapterScenario {
             unit.opening().hp(), unit.opening().maxHp(), unit.opening().attack(), 0, 0, 0)).toList();
         var engine = new HeroBattleHealingExecutor(skills, states);
         initial.forEach(unit -> engine.bindCombatData(unit.id(), unit.template(), unit.attributes()));
+        for (var unit : initial) {
+            for (var skill : unit.skills()) {
+                if (skill.skillId() == 102050234) {
+                    engine.initializePassive(unit.id(), skill.skillId(), skill.level());
+                }
+            }
+        }
         var turns = new ArrayList<Turn>();
         var frames = new ArrayList<Frame>();
         var outcome = HeroBattleRoundUtils.Outcome.ONGOING;
@@ -265,8 +313,11 @@ public final class HeroBattleChapterScenario {
                 .map(unit -> new HeroBattleRoundUtils.Unit(unit.id(), unit.opening().speed())).toList());
             var before = snapshot(engine, initial);
             int damageStart = engine.damages().size();
-            int traceStart = engine.trace().size();
+            int traceStart = round == 1 ? 0 : engine.trace().size();
             engine.beginRound(round, order, elements, decision);
+            if (scenario.equals("audit:frozen") && round == 1) {
+                engine.applyFrozen(2234801, 1, 2, rate -> true);
+            }
             frames.add(frame(engine, initial, round, 0, before, damageStart, traceStart));
             outcome = outcome(initial, snapshot(engine, initial), 0);
             if (outcome == HeroBattleRoundUtils.Outcome.ONGOING) {

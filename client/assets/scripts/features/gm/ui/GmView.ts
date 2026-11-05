@@ -9,9 +9,11 @@ import { GmController } from "../GmController";
 import { GmOptionCellView } from "./GmOptionCellView";
 const { ccclass, property } = _decorator;
 interface Option { id: number; name: string; }
-export interface GmOpenArgs { controller: GmController; roleId: string; nickname: string; }
+export interface GmOpenArgs { controller: GmController; roleId: string; nickname: string; openSkillAudit?: () => void; }
 @ccclass("GmView")
 export class GmView extends BaseView<GmOpenArgs> {
+    /** 开发技能验收入口，由应用提供打开动作。 */
+    @property(Button) auditButton: Button | null = null;
     /** 当前角色说明。 */
     @property(Label) owner: Label | null = null;
     /** 英雄与道具分类按钮。 */
@@ -50,6 +52,7 @@ export class GmView extends BaseView<GmOpenArgs> {
     onOpen(args: GmOpenArgs): void {
         this.args = args; this.closed = false; this.owner!.string = "当前角色：" + args.nickname + "\n" + args.roleId; this.grantButton!.interactable = false;
         const bind = (b: Button, fn: () => void) => { const n = b.node; n.on(Button.EventType.CLICK, fn); this.stops.push(() => { if (n.isValid) n.off(Button.EventType.CLICK, fn); }); };
+        if (this.auditButton) { this.auditButton.node.active = !!args.openSkillAudit; bind(this.auditButton, () => args.openSkillAudit?.()); }
         bind(this.closeButton!, () => this.close()); this.kindButtons.forEach((b, i) => bind(b, () => this.chooseKind(i === 0 ? "hero" : "item")));
         bind(this.dropdownButton!, () => { this.dropdown!.active = !this.dropdown!.active; }); bind(this.grantButton!, () => { void this.grant(); });
         const search = () => this.paintOptions(); this.search!.node.on(EditBox.EventType.TEXT_CHANGED, search); this.stops.push(() => this.search?.node?.off(EditBox.EventType.TEXT_CHANGED, search));

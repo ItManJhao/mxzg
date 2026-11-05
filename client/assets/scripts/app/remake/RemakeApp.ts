@@ -10,6 +10,8 @@ import {HeroSkillView} from "../../features/hero/ui/HeroSkillView";
 import {prepareHeroDetailConfig} from "../../config/RemakeConfig";
 
 import { GmController } from "../../features/gm/GmController";
+import { SkillAuditEntry } from "../../features/battle/utils/SkillAuditUtils";
+import { SkillAuditView } from "../../features/battle/ui/SkillAuditView";
 import { GmView } from "../../features/gm/ui/GmView";
 import { loadPrefab } from "../../framework/assets/PrefabLoader";
 import { Protocol } from "../../platform/Protocol";
@@ -103,14 +105,37 @@ export class RemakeApp extends Component {
 
   /** 编辑器启动应用时装配唯一会话服务和页面注册，并执行新链路启动流程。 */
   async start(): Promise<void> {
+    if (PREVIEW && this.pageHost) {
+      this.unregisterViews.push(UIManager.instance.setResidentHost("skill-audit-host", () => this.pageHost));
+      this.unregisterViews.push(registerView(SkillAuditView, {
+        id: "skill-audit", prefab: ResourceCatalog.prefab_battle.SkillAuditView.assetPath,
+        layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "skill-audit-host",
+        load: async () => {
+          await GameConfig.instance.prepare([GConfig.HeroType, GConfig.HeroSkill, GConfig.Language]);
+          return loadPrefab(ResourceCatalog.prefab_battle.SkillAuditView.assetPath);
+        }
+      }));
+      if (typeof location !== "undefined" && new URLSearchParams(location.search).get("skillAudit") === "1") {
+        if (this.startupHost) this.startupHost.active = false;
+        await this.openSkillAudit();
+        return;
+      }
+    }
+
     if (PREVIEW && typeof location !== "undefined" && new URLSearchParams(location.search).get("battleReplay") === "1") {
       if (!/^http:\/\/(localhost|127\.0\.0\.1):7456\//.test(location.href) || !this.pageHost) {
         throw new Error("独立战报仅允许本机Creator预览");
       }
       // 固定只读二进制资源服务，不建立游戏连接，不读取登录凭证。
       if (this.startupHost) this.startupHost.active = false;
-      const mission = new URLSearchParams(location.search).get("mission") === "2" ? "2" : "1";
-      const response = await fetch("http://127.0.0.1:19091/chapter-1-1-" + mission + "-replay.pb");
+      const requestedMission = new URLSearchParams(location.search).get("mission");
+      const mission = requestedMission === "3" ? "3" : requestedMission === "2" ? "2" : "1";
+      const control = mission === "3" && new URLSearchParams(location.search).get("control") === "1" ? "-control" : "";
+      const fixture = new URLSearchParams(location.search).get("fixture") === "nanako"
+        ? "independent-nanako-replay.pb" : new URLSearchParams(location.search).get("fixture") === "frozen"
+        ? "independent-frozen-replay.pb" : new URLSearchParams(location.search).get("fixture") === "control-teams"
+        ? "independent-control-teams-replay.pb" : "chapter-1-1-" + mission + control + "-replay.pb";
+      const response = await fetch("http://127.0.0.1:19091/" + fixture);
       if (!response.ok) throw new Error("独立战报文件读取失败");
       this.replayCleanup = await BattleReplayPreview.open(this.pageHost, new Uint8Array(await response.arrayBuffer()),
         new URLSearchParams(location.search).get("chapterEnd") === "defeat");
@@ -197,7 +222,7 @@ export class RemakeApp extends Component {
       load:async()=>{await GameConfig.instance.prepare([GConfig.HeroType,GConfig.Item,GConfig.Language]);return loadPrefab(ResourceCatalog.prefab_gm.GmView.assetPath);}
     }));
     const openGm=()=>{const role=model.snapshot.role;if(!PREVIEW||!role||model.snapshot.busy)return;
-      void ui.openById("gm",{controller:gm,roleId:role.id,nickname:role.nickname}).catch(error=>ui.toast("GM 打开失败："+String(error)));};
+      void ui.openById("gm",{controller:gm,roleId:role.id,nickname:role.nickname,openSkillAudit:()=>{ui.closeById("gm"); void this.openSkillAudit().catch(error => ui.toast("技能验收打开失败：" + String(error)));}}).catch(error=>ui.toast("GM 打开失败："+String(error)));};
     const features = this.features = new HomeFeatureNavigation(ui, {
       current: () => this.navigation?.current || null,
       authorized: () => this.alive && this.started && !model.snapshot.busy && !!model.snapshot.role && entry.route(true) === "remake-home",
@@ -413,7 +438,39 @@ export class RemakeApp extends Component {
   private onForeground(): void { this.gameSocket?.setBackground(false); }
 
   /** 应用销毁时先关闭页面，再释放模块、会话观察和资源作用域。 */
+  /** 打开开发技能目录；固定只读战报资源不携带账号凭证，也不请求游戏业务HTTP。 */
+  private async openSkillAudit(): Promise<void> {
+    if (!PREVIEW || !this.pageHost) return;
+    await UIManager.instance.open(SkillAuditView, {
+      play: async (skill: SkillAuditEntry, returned: () => void) => {
+        const fixture = skill.fixture || "";
+        if (!/^http:\/\/(localhost|127\.0\.0\.1):7456\//.test(location.href)
+          || !/^[a-z0-9-]+\.pb$/.test(fixture)) {
+          throw new Error("技能演示仅允许本机Creator预览");
+        }
+        const response = await fetch("http://127.0.0.1:19091/" + fixture);
+        if (!response.ok) throw new Error("演示战报资源缺失");
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        const show = async () => {
+          this.replayCleanup?.();
+          if (!this.isValid || !this.pageHost?.isValid) return;
+          this.replayCleanup = await BattleReplayPreview.open(this.pageHost, bytes, false, returned, {
+            skillId: skill.id, level: skill.level, name: skill.name,
+            passive: skill.activeType !== 1 && skill.activeType !== 2,
+            replay: () => { void show().catch(error => {
+              returned();
+              UIManager.instance.toast("重播失败：" + String(error));
+            }); }
+          });
+        };
+        await show();
+      }
+    });
+  }
+
+  /** 应用销毁时清理开发演示、页面注册与会话资源。 */
   onDestroy(): void {
+    UIManager.instance.closeById("skill-audit");
     this.replayCleanup?.();
     this.alive = false;
     this.started = false;

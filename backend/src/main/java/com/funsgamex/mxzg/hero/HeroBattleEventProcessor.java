@@ -8,7 +8,7 @@ import java.util.*;
 
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
-    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201);
+    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
     /** 当前事件所属回合，行动调度或战场回合入口显式设置。 */
@@ -227,6 +227,14 @@ public final class HeroBattleEventProcessor {
         default void triggerExpired(Actor carrier, Listener listener) {
             carrier.remove(listener.instanceId());
         }
+        /** 到期监听由战场核对目标最近移除配置；缺少上下文时明确拒绝。 */
+        default boolean expiryMatches(Listener listener, Actor carrier, int target) {
+            throw new UnsupportedOperationException("到期监听上下文未接入");
+        }
+        /** 控制监听按最近控制类型过滤；缺少战场上下文时拒绝，不能默认放行。 */
+        default boolean controlMatches(Listener listener, Actor carrier, int target) {
+            throw new UnsupportedOperationException("控制监听上下文未接入");
+        }
         /** 专用监听处理器；未实现时必须拒绝，不能用空回调冒充驱散/契约。 */
         default void special(Listener listener, Actor carrier, int target) {
             throw new UnsupportedOperationException("尚未支持的特殊Buff：" + listener.definition().event());
@@ -273,10 +281,18 @@ public final class HeroBattleEventProcessor {
         if (carrier == null || carrier.hangUpSeal || carrier.controls.contains(1007)) {
             return;
         }
-        var pending = carrier.listeners.stream().filter(row -> (row.definition().event() == event || (event == 206 && row.definition().event() == 200) || (event == 189 && row.definition().event() == 199)))
+        var pending = carrier.listeners.stream().filter(row -> (row.definition().event() == event || (event == 171 && row.definition().event() == 1004) || (event == 206 && row.definition().event() == 200) || (event == 189 && row.definition().event() == 199)))
             .sorted(Comparator.comparing(row -> row.sourceId() == carrier.id)).toList();
         for (var listener : pending) {
             var definition = listener.definition();
+            if (event == 209 && !executor.expiryMatches(listener, carrier, target)) {
+                carrier.restore();
+                continue;
+            }
+            if ((event == 185 || event == 207 || event == 208) && !executor.controlMatches(listener, carrier, target)) {
+                carrier.restore();
+                continue;
+            }
             if (definition.event() == 174 && definition.roundLimit() != 0 && round > definition.roundLimit()) {
                 carrier.restore();
                 continue;
@@ -285,7 +301,7 @@ public final class HeroBattleEventProcessor {
                 carrier.restore();
                 continue;
             }
-            if (definition.event() == 199 || definition.event() == 200 || definition.event() == 311) {
+            if (definition.event() == 1004 || definition.event() == 199 || definition.event() == 200 || definition.event() == 311) {
                 // 旧专用trigger不经过AbstractArtTrigger的战斗结束检查。
                 executor.special(listener, carrier, target);
             } else if (!ended && (event != 173 || definition.skillFilter() == 0

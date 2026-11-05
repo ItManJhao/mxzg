@@ -59,6 +59,19 @@ public final class HeroBattleBuffState {
         return new Change(current, List.copyOf(removed));
     }
 
+    /** 修改已有实例的计数，不刷新期限或重排监听；不存在时拒绝。 */
+    public long decrement(long instanceId) {
+        for (int i = 0; i < entries.size(); i++) {
+            var entry = entries.get(i);
+            if (entry.instanceId() == instanceId) {
+                long next = Math.subtractExact(entry.value(), 1);
+                entries.set(i, new Entry(instanceId, entry.sourceId(), entry.expiresAt(), entry.spec(), next));
+                return next;
+            }
+        }
+        throw new IllegalStateException("冰冻实例已失效");
+    }
+
     /** 按实例身份移除一次触发耗尽的Buff，不误清同配置其他来源或层数。 */
     public List<Entry> removeInstance(long instanceId) {
         return remove(entries.stream().filter(entry -> entry.instanceId() == instanceId).toList());

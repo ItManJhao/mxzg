@@ -103,6 +103,32 @@ public class HeroSkillPanelRules {
             type == 175 && limits.length > 1 ? Integer.parseInt(limits[1]) : 0);
     }
 
+    /** 185/207只匹配value中的控制类型；空列表不代表全部控制。 */
+    public boolean matchesControlTrigger(int buffId, int controlType) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 185 && buff.path("type").asInt() != 207 && buff.path("type").asInt() != 208) {
+            throw new IllegalArgumentException("不是控制监听配置：" + buffId);
+        }
+        for (String value : buff.path("value").asString().split("\\|", -1)) {
+            if (Integer.parseInt(value) == controlType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 209按目标最近移除的Buff配置ID过滤，不按类型、不把0当通配符。 */
+    public boolean matchesExpiredTrigger(int listenerId, int expiredBuffId) {
+        var buff = row("buff", listenerId);
+        if (buff.path("type").asInt() != 209) {
+            throw new IllegalArgumentException("不是到期监听：" + listenerId);
+        }
+        for (String value : buff.path("value").asString().split("\\|", -1)) {
+            if (Integer.parseInt(value) == expiredBuffId) return true;
+        }
+        return false;
+    }
+
     /** 从同源动作表解析已支持的目标选择计划；未知选择器拒绝，不猜默认目标。 */
     public HeroBattleTargetUtils.Plan battleTargets(int artId) {
         var art = row("buffart", artId);
@@ -186,7 +212,7 @@ public class HeroSkillPanelRules {
                 }
                 var definition = battleTrigger(buffId.asInt());
                 for (var next : definition.arts()) {
-                    battleHealing(next.id());
+                    if (!isControlAttributeArt(next.id())) battleHealing(next.id());
                 }
                 definitions.add(definition);
             }
@@ -201,12 +227,13 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201).contains(type)) {
+        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 160).contains(type)) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
+        if (type == 160) controlAttribute(buffId);
         return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
             buff.path("dispelled").asInt() == 1, buff.path("effecttype").asInt(),
-            buff.path("conflict_type").asInt(), buff.path("stacking_max").asInt(), false);
+            buff.path("conflict_type").asInt(), buff.path("stacking_max").asInt(), type == 160);
     }
 
     /** 当前模板真实职业和元素，用于装配战场，不从UI面板或调用方猜测。 */
@@ -234,10 +261,77 @@ public class HeroSkillPanelRules {
         var values = buff.path("value").asString().split("\\|", -1);
         if (buff.path("type").asInt() != 100 || buff.path("attach_percent").asInt() != 10000
             || values.length < 2 || (!values[1].equals("1") && !allowCounterattack)
-            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            || (!mapper.readTree(buff.path("art_list").asString()).isEmpty() && !nanakoDamageChain(buffId) && !nanakoCriticalChain(buffId))) {
             throw new IllegalArgumentException("普通伤害配置的反击或后续动作尚未支持：" + buffId);
         }
         return Integer.parseInt(values[0]);
+    }
+
+    /** 仅允许已核对奈奈子223320x的降攻→职业筛选→额外伤害子链，其他子动作仍拒绝。 */
+    public boolean nanakoDamageChain(int buffId) {
+        if (buffId < 2233201 || buffId > 2233203) return false;
+        int level = buffId - 2233200;
+        for (int stage : List.of(2233200, 2233300, 2233400)) {
+            int expected = stage + 100 + level;
+            var children = mapper.readTree(row("buff", stage + level).path("art_list").asString());
+            var effects = mapper.readTree(row("buffart", expected).path("buff_list").asString());
+            if (children.size() != 1 || children.get(0).asInt() != expected
+                || effects.size() != 1 || effects.get(0).asInt() != expected
+                || !battleTargets(expected).selectors().isEmpty()) {
+                throw new IllegalArgumentException("奈奈子子链配置变化");
+            }
+        }
+        if (row("buff", 2233400 + level).path("type").asInt() != 212
+            || !row("buff", 2233400 + level).path("value").asString().equals("1|0|0|0")) {
+            throw new IllegalArgumentException("奈奈子职业条件变化");
+        }
+        controlAttribute(2233300 + level);
+        battleOrdinaryDamageRate(2233500 + level, true);
+        return true;
+    }
+
+    /** 奈奈子一技能前两级追加概率为零，第三级暴击后重选最高攻击目标并追加自身普攻。 */
+    public boolean nanakoCriticalChain(int buffId) {
+        if (buffId < 2231301 || buffId > 2231303) {
+            return false;
+        }
+        int childId = buffId + 100;
+        var children = mapper.readTree(row("buff", buffId).path("art_list").asString());
+        var effects = mapper.readTree(row("buffart", childId).path("buff_list").asString());
+        var child = row("buff", childId);
+        if (children.size() != 1 || children.get(0).asInt() != childId
+            || effects.size() != 1 || effects.get(0).asInt() != childId
+            || !battleTargets(childId).selectors().isEmpty()
+            || child.path("type").asInt() != 224 || child.path("attach_percent").asInt() != (buffId == 2231303 ? 10000 : 0)) {
+            throw new IllegalArgumentException("奈奈子暴击子链配置变化：" + buffId);
+        }
+        var next = mapper.readTree(child.path("art_list").asString());
+        if (next.size() != 1 || next.get(0).asInt() != childId + 100
+            || !isGeneralCounterattackArt(childId + 100)) {
+            throw new IllegalArgumentException("奈奈子暴击追加动作变化");
+        }
+        battleTargets(childId + 100);
+        return true;
+    }
+
+    /** 一技能已核对的先降护甲效果，保持与后续伤害的原配置顺序。 */
+    public boolean nanakoArmorDebuff(int buffId) {
+        if (buffId < 2231201 || buffId > 2231203) {
+            return false;
+        }
+        controlAttribute(buffId);
+        var buff = row("buff", buffId);
+        if (buff.path("attach_percent").asInt() != 10000
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("奈奈子降护甲配置变化：" + buffId);
+        }
+        return true;
+    }
+
+    /** 已核对降攻自身概率，单位为0至1的小数，不与主伤害命中率合并。 */
+    public double nanakoDebuffRate(int level) {
+        if (level < 1 || level > 3) throw new IllegalArgumentException("奈奈子技能等级无效");
+        return row("buff", 2233300 + level).path("attach_percent").asInt() / 10000D;
     }
 
     /** 读取旧value[1]反击资格；仅在伤害配置已经校验后使用。 */
@@ -262,7 +356,7 @@ public class HeroSkillPanelRules {
                 if (!battleProjectile(buff.asInt())) {
                     if (battleRoundListener(buff.asInt())) {
                         battleTrigger(buff.asInt());
-                    } else if (!battleDizzy(buff.asInt()) && !battleZeroProbabilityBleed(buff.asInt())) {
+                    } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleZeroProbabilityBleed(buff.asInt()) && !nanakoArmorDebuff(buff.asInt())) {
                         battleOrdinaryDamageRate(buff.asInt(), true);
                     }
                 }
@@ -272,6 +366,124 @@ public class HeroSkillPanelRules {
             result.add(new DamageArt(battleTargets(id.asInt()), List.copyOf(ids)));
         }
         if (result.isEmpty()) throw new IllegalArgumentException("普通攻击技能没有动作");
+        return List.copyOf(result);
+    }
+
+    /** 已核实的奈奈子控制增益动作白名单，不放开其他属性动作。 */
+    public boolean isControlAttributeArt(int artId) {
+        return artId >= 2234301 && artId <= 2234303;
+    }
+
+    /** 奈奈子完整入场四组动作，保留敌方减抗及三个自身监听的配置顺序。 */
+    public List<DamageArt> controlPassiveArts(int skillId, int level) {
+        if (skillId != 102050234 || level < 1 || level > 3) {
+            throw new IllegalArgumentException("未核对的控制被动");
+        }
+        var skill = skills.get(skillId + ":" + level);
+        var result = new ArrayList<DamageArt>();
+        for (var artId : mapper.readTree(skill.path("art_list").asString())) {
+            var art = row("buffart", artId.asInt());
+            var ids = new ArrayList<Integer>();
+            if (art.path("source_type").asInt() != 0) throw new IllegalArgumentException("控制被动来源变化");
+            for (var id : mapper.readTree(art.path("buff_list").asString())) {
+                var buff = row("buff", id.asInt());
+                if (buff.path("attach_percent").asInt() != 10000 || buff.path("round").asInt() != 999) {
+                    throw new IllegalArgumentException("控制被动期限或概率变化");
+                }
+                battleBuff(id.asInt());
+                if (buff.path("type").asInt() == 160) controlAttribute(id.asInt());
+                else {
+                    var listener = battleTrigger(id.asInt());
+                    for (var next : listener.arts()) {
+                        if (isControlAttributeArt(next.id()) || isExpiryFrozenArt(next.id())) continue;
+                        if (!isDamageArt(next.id())) throw new IllegalArgumentException("控制被动下游未实现");
+                    }
+                }
+                ids.add(id.asInt());
+            }
+            result.add(new DamageArt(battleTargets(artId.asInt()), List.copyOf(ids)));
+        }
+        return List.copyOf(result);
+    }
+
+    /** 209下游已核对的单目标冰冻动作，目标沿到期Buff携带者上下文继承。 */
+    public boolean isExpiryFrozenArt(int artId) {
+        if (artId < 2234801 || artId > 2234803) return false;
+        var buffs = mapper.readTree(row("buffart", artId).path("buff_list").asString());
+        if (buffs.size() != 1 || buffs.get(0).asInt() != artId) throw new IllegalArgumentException("到期冰冻配置变化");
+        battleFrozenDefinition(artId);
+        return true;
+    }
+
+    /** 查询已核对的固定属性效果，供安装和移除使用同一数值。 */
+    public ControlAttributeDefinition controlAttribute(int buffId) {
+        if ((buffId >= 2233301 && buffId <= 2233303)
+            || (buffId >= 2231201 && buffId <= 2231203)) {
+            var buff = row("buff", buffId);
+            var values = buff.path("value").asString().split("\\|", -1);
+            if (buff.path("type").asInt() != 160) throw new IllegalArgumentException("奈奈子降攻配置变化");
+            return new ControlAttributeDefinition(buffId, Integer.parseInt(values[0]),
+                Long.parseLong(values[1]), buff.path("round").asInt());
+        }
+        if (buffId >= 2234101 && buffId <= 2234103) {
+            var buff = row("buff", buffId);
+            var values = buff.path("value").asString().split("\\|", -1);
+            if (buff.path("type").asInt() != 160 || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+                throw new IllegalArgumentException("入场减抗配置变化");
+            }
+            return new ControlAttributeDefinition(buffId, Integer.parseInt(values[0]),
+                Long.parseLong(values[1]), buff.path("round").asInt());
+        }
+        for (int id = 2234201; id <= 2234203; id++) {
+            for (var entry : controllingAttributes(id)) {
+                if (entry.buffId() == buffId) return entry;
+            }
+        }
+        throw new IllegalArgumentException("未核对的控制属性效果：" + buffId);
+    }
+
+    /** 预检冰冻类型与真实配置；其他类型交由各自处理器。 */
+    public boolean battleFrozen(int buffId) {
+        if (row("buff", buffId).path("type").asInt() != 1004) return false;
+        battleFrozenDefinition(buffId);
+        return true;
+    }
+
+    /** 冰冻配置基础：基础概率、受击次数及抗性编号；尚不代表运行时已支持。 */
+    public record FrozenDefinition(int buffId, double rate, int hitCount, int resistanceAttribute, int duration) {}
+
+    /** 从旧1004配置读取冰冻，value首项0沿旧回调解释为999次，不解释为永久免破冰。 */
+    public FrozenDefinition battleFrozenDefinition(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 1004 || buff.path("effecttype").asInt() != 3
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("不是已核对的冰冻配置：" + buffId);
+        }
+        int count = Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]);
+        return new FrozenDefinition(buffId, buff.path("attach_percent").asInt() / 10000D,
+            count == 0 ? 999 : count, 216, buff.path("round").asInt());
+    }
+
+    /** 207后续160属性增益的原始属性编号、整数增量与期限；禁止按百分比提前改写数值。 */
+    public record ControlAttributeDefinition(int buffId, int attribute, long amount, int duration) {}
+
+    /** 只解析已核对的奈奈子207下游配置；加成应用和移除回调需单独接入运行时。 */
+    public List<ControlAttributeDefinition> controllingAttributes(int triggerId) {
+        if (triggerId < 2234201 || triggerId > 2234203) {
+            throw new IllegalArgumentException("未核对的控制属性链：" + triggerId);
+        }
+        var result = new ArrayList<ControlAttributeDefinition>();
+        for (var art : battleTrigger(triggerId).arts()) {
+            for (var buffId : mapper.readTree(row("buffart", art.id()).path("buff_list").asString())) {
+                var buff = row("buff", buffId.asInt());
+                if (buff.path("type").asInt() != 160) {
+                    throw new IllegalArgumentException("控制后续不是固定属性增益");
+                }
+                var values = buff.path("value").asString().split("\\|", -1);
+                result.add(new ControlAttributeDefinition(buffId.asInt(), Integer.parseInt(values[0]),
+                    Long.parseLong(values[1]), buff.path("round").asInt()));
+            }
+        }
         return List.copyOf(result);
     }
 

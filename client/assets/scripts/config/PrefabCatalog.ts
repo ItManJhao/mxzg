@@ -25,6 +25,8 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "prefabs/ui/battle/BattleReportLayer": "01a90dce-7567-4e7f-8d0b-a8bcdec84ed1",
   "prefabs/ui/battle/CampaignView": "ac146bb3-359f-4506-8fcf-32f8c56ef4d3",
   "prefabs/ui/battle/HangMissionChipView": "4d270a16-c38e-45b9-f277-80e134c3b2a6",
+  "prefabs/ui/battle/SkillAuditCellView": "e1204782-0759-492f-b8ec-54bd381fbc83",
+  "prefabs/ui/battle/SkillAuditView": "34d5372d-d0b5-43b0-965f-db66c446f775",
   "prefabs/ui/chapter/ChapterEndLayer": "f67629be-903e-4f42-bca0-bdc14685a22c",
   "prefabs/ui/chapter/ChapterEndLoseCell": "7ee49873-d250-4cbd-afb8-e173948a84c4",
   "prefabs/ui/chapter/ChapterEndView": "87487742-8794-4b8b-824c-ef1c009cdf27",

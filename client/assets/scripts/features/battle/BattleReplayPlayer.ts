@@ -3,7 +3,10 @@ import { BattleReplayStep, BattleReplayUtils } from "./utils/BattleReplayUtils";
 
 /** 页面负责真实资源与动画完成通知；stop必须停止当前动画和释放本次挂点。 */
 export interface BattleReplayPresentation {
-    play(step: BattleReplayStep): Promise<void>;
+    /** 同组表现只驱动一次施法；targets保留每个实际目标，不合并伤害或Buff实例。 */
+    play(step: BattleReplayStep, targets?: readonly BattleReplayStep[]): Promise<void>;
+    /** 定位前恢复真实战报快照，不播放动画、不重新计算伤害。 */
+    restore?(step: BattleReplayStep): void;
     stop(): void;
 }
 
@@ -16,14 +19,26 @@ export class BattleReplayPlayer {
     /** 注入页面播放能力，不持有服务器业务状态。 */
     public constructor(private readonly presentation: BattleReplayPresentation) {}
 
-    /** 先校验整包，技能内并行、技能间等待全部效果；返回false表示取消，异常停止所有分支后向页面边界传播。 */
-    public async play(bytes: Uint8Array): Promise<boolean> {
+    /** 先校验整包；指定技能等级时按序恢复前置状态，再从首次施法播放。技能内并行、技能间等待；false表示取消，失败向页面边界传播。 */
+    public async play(bytes: Uint8Array, focus?: { skillId: number; level: number }): Promise<boolean> {
         const steps = BattleReplayUtils.decode(bytes);
+        const start = focus ? steps.findIndex(step => step.kind === "skill.begin"
+            && step.configId === focus.skillId && step.skillLevel === focus.level) : 0;
+        if (start < 0) {
+            throw new Error("战报中没有选定技能等级");
+        }
+        if (start > 0 && !this.presentation.restore) {
+            throw new Error("播放宿主不支持状态定位");
+        }
         this.stop();
         const generation = this.generation;
         this.active = true;
         try {
-            for (let index = 0; index < steps.length; index++) {
+            for (let index = 0; index < start; index++) {
+                if (generation !== this.generation) return false;
+                this.presentation.restore!(steps[index]);
+            }
+            for (let index = start; index < steps.length; index++) {
                 if (generation !== this.generation) return false;
                 const step = steps[index];
                 await this.presentation.play(step);
@@ -37,7 +52,17 @@ export class BattleReplayPlayer {
                     if (effect.kind === "buff.remove") removals.push(effect);
                     else effects.push(effect);
                 }
-                await Promise.all(effects.map(effect => this.presentation.play(effect)));
+                const groups: BattleReplayStep[][] = [];
+                for (const effect of effects) {
+                    const previous = groups[groups.length - 1];
+                    if (effect.kind === "presentation" && previous && previous[0].kind === "presentation"
+                        && previous[0].configId === effect.configId && previous[0].sourceId === effect.sourceId) {
+                        previous.push(effect);
+                    } else {
+                        groups.push([effect]);
+                    }
+                }
+                await Promise.all(groups.map(group => this.presentation.play(group[0], Object.freeze(group))));
                 if (generation !== this.generation) return false;
                 for (const removal of removals) {
                     await this.presentation.play(removal);

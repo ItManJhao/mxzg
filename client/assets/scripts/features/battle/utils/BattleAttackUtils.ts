@@ -2,6 +2,11 @@
 export interface BattleAttackPlan {
     /** true为type2近身移动；false为type3原地施法，不能瞬移到目标。 */
     readonly melee: boolean;
+    /** type5投射，按旧帧计数飞行；type3在各目标脚下播放一次。 */
+    readonly projectile: boolean;
+    /** 同源序列帧路径、帧间隔、缩放和锚点；空file时为null。 */
+    readonly effect: { paths: readonly string[]; interval: number; flightSeconds: number;
+        scaleX: number; scaleY: number; anchorX: number; anchorY: number } | null;
     /** 秒；去程与回程分别使用相同移动时间。 */
     readonly moveSeconds: number;
     /** 按旧BattleHeroNode.Action映射骨骼动作：skill为attack2，skill2为attack3，transform为skill。 */
@@ -20,19 +25,19 @@ export class BattleAttackUtils {
     /** 纯配置工具不保存播放状态。 */
     private constructor() {}
 
-    /** 读取同源buff行；只开放已核对的type2/3空file子集，未知表现明确拒绝。 */
+    /** 读取同源buff行；开放type2/3及第3关type5与远程真实帧资源，未知表现明确拒绝。 */
     public static plan(row: { type: number; ani_base: string; file: string; sound: string }): BattleAttackPlan {
-        if (row.type !== 2 && row.type !== 3) throw new Error("尚未支持该战斗动作类型");
+        if ([2, 3, 5].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
         const base: unknown = JSON.parse(row.ani_base);
         const files: unknown = JSON.parse(row.file);
         const sounds: unknown = JSON.parse(row.sound);
         if (!base || typeof base !== "object" || Array.isArray(base)
-            || !Array.isArray(files) || files.length !== 0
+            || !Array.isArray(files)
             || !Array.isArray(sounds) || !sounds.every(value => typeof value === "string")) {
             throw new Error("攻击动作配置超出当前支持范围");
         }
         const values = base as Record<string, unknown>;
-        const known = ["move_time", "attack_time", "attack_delay", "action_time", "move_back", "action"];
+        const known = ["move_time", "attack_time", "attack_delay", "action_time", "move_back", "action", "format", "duration", "scale_x", "scale_y", "anchor_x", "anchor_y"];
         if (Object.keys(values).some(key => known.indexOf(key) < 0)) {
             throw new Error("攻击动作存在未支持参数");
         }
@@ -40,8 +45,30 @@ export class BattleAttackUtils {
         if (["attack", "skill", "skill2", "transform"].indexOf(action as string) < 0) {
             throw new Error("攻击动作名称无效");
         }
+        let effect: BattleAttackPlan["effect"] = null;
+        if (files.length) {
+            const counts: Record<string, number> = { "skill-101040050": 7, "skill-101020021": 11 };
+            const file = files[0];
+            if (files.length !== 1 || typeof file !== "string" || !counts[file]
+                || values.format !== file + "/%d.png" || row.type === 2) {
+                throw new Error("战斗帧资源尚未核对");
+            }
+            const interval = this.seconds(values, "duration", 0.05);
+            if (interval <= 0) throw new Error("特效帧间隔无效");
+            effect = Object.freeze({
+                paths: Object.freeze(Array.from({length: counts[file]}, (_, index) =>
+                    "battle/skill/" + file + "/" + file + "_" + index + "/spriteFrame")),
+                interval,
+                // 旧getAnimateCount包含首次查找失败的那一帧，7张图实际飞行8个间隔。
+                flightSeconds: (counts[file] + 1) * interval,
+                scaleX: this.seconds(values, "scale_x", 1), scaleY: this.seconds(values, "scale_y", 1),
+                anchorX: this.seconds(values, "anchor_x", 0.5), anchorY: this.seconds(values, "anchor_y", 0.5) - 0.07
+            });
+        } else if (values.format !== undefined || row.type === 5) {
+            throw new Error("投射或序列帧缺少资源");
+        }
         return Object.freeze({
-            melee: row.type === 2,
+            melee: row.type === 2, projectile: row.type === 5, effect,
             moveSeconds: row.type === 2 ? this.seconds(values, "move_time", 0.1) : 0, action: action === "skill" ? "attack2" : action === "skill2" ? "attack3" : action === "transform" ? "skill" : "attack",
             attackSeconds: this.seconds(values, "attack_time", 0),
             attackDelaySeconds: this.seconds(values, "attack_delay", 0),
@@ -49,6 +76,12 @@ export class BattleAttackUtils {
             beforeReturnSeconds: this.seconds(values, "move_back", 0),
             sounds: Object.freeze(sounds.slice()) as readonly string[]
         });
+    }
+
+    /** 旧1005固定头顶循环眩晕帧，与技能图标分别加载；实例移除不能删除同类型剩余实例的装饰。 */
+    public static dizzyFrames(): readonly string[] {
+        return Object.freeze(Array.from({length: 10}, (_, index) =>
+            "battle/skill/hero-skill/hero-skill_effect-1-" + index + "/spriteFrame"));
     }
 
     /** 旧SkillController每个效果从技能起点延迟delay帧，按60帧换算，不叠加攻击动作耗时。 */

@@ -56,7 +56,7 @@ console.log("PASS client replay plan, unknown effect, final HP and missing phase
 assert.equal(steps.find(step => step.kind === "skill.begin").skillLevel, 1);
 assert.equal(steps.find(step => step.kind === "damage").reportedHpChange, -53);
 assert.equal(steps.find(step => step.kind === "buff.upsert").expiresAtRound, 3);
-assert.equal(steps[steps.length - 1].removalReason, "death");
+assert.equal(steps.filter(step => step.kind !== "round.ready").at(-1).removalReason, "death");
 const noSkillType = protocol.decode(bytes);
 delete noSkillType.phases[1].events[0].skillType;
 assert.throws(() => decode(protocol.encode(noSkillType).finish()), /缺少事件字段/);
@@ -116,7 +116,7 @@ for (const id of [1010100, 1011101]) {
     assert.throws(() => melee.exports.BattleAttackUtils.plan({...row,
         ani_base: '{"move_back":true}'}), /时间无效/);
     assert.throws(() => melee.exports.BattleAttackUtils.plan({...row,
-        file: '["unverified-effect"]'}), /支持范围/);
+        file: '["unverified-effect"]'}), /支持范围|尚未核对/);
 }
 console.log("PASS legacy melee timing from actual buff configuration");
 
@@ -177,7 +177,7 @@ assert.equal(ranged.attackSeconds, 0.6);
 assert.equal(ranged.actionSeconds, 1.8);
 assert.equal(ranged.beforeReturnSeconds, 0);
 assert.deepEqual(ranged.sounds, []);
-assert.throws(() => melee.exports.BattleAttackUtils.plan({...buffRows.find(row => row.idx === 5051101), file: '["unknown"]'}), /支持范围/);
+assert.throws(() => melee.exports.BattleAttackUtils.plan({...buffRows.find(row => row.idx === 5051101), file: '["unknown"]'}), /支持范围|尚未核对/);
 assert.equal(melee.exports.BattleAttackUtils.plan(buffRows.find(row => row.idx === 5050100)).beforeReturnSeconds, 2);
 const secondBytes = fs.readFileSync(path.join(root, "backend/target/chapter-1-1-2-replay.pb"));
 const second = protocol.decode(secondBytes);
@@ -252,7 +252,7 @@ async function checkParallelEffects() {
 }
 checkParallelEffects().catch(error => { console.error(error); process.exitCode = 1; });
 
-// 第3关尚未接阵营和多单位回放；不能仅修改scenario或塞入第三单位绕过验收范围。
+// 不能仅修改scenario或塞入第三单位绕过已核实的阵容边界。
 const thirdUnsupported = protocol.decode(secondBytes);
 thirdUnsupported.scenario = "main:1:1:3";
 assert.throws(() => decode(protocol.encode(thirdUnsupported).finish()), /场景不支持/);
@@ -280,7 +280,7 @@ for (const name of ["chapter-1-1-3", "chapter-1-1-3-control"]) {
 }
 console.log("PASS real third-chapter control branches, three-unit HP and team outcome");
 
-// 数据层独立覆盖多单位、重复模板及任意本场ID；播放入口仍只开放第1/2关。
+// 数据层独立覆盖多单位、重复模板及任意本场ID；播放入口仍只开放已核实的场景。
 const validateRoster = adapter.exports.BattleReplayUtils.validateUnits.bind(adapter.exports.BattleReplayUtils);
 const rosterFixture = [
     {...report.units[0], unitId: 10, faction: 1, initialHp: 50, maxHp: 100, finalHp: 40},
@@ -311,3 +311,136 @@ assert.equal(teamsWire.rounds, 4);
 assert.deepEqual(Buffer.from(protocol.encode(teamsWire).finish()), teamsBytes);
 assert.throws(() => decode(teamsBytes), /场景不支持/);
 console.log("PASS four-unit server replay roundtrip and client boundary rejection");
+
+// 第3关真实资源帧数、默认帧间隔及旧飞行计数，不以life字段代替。
+for (const [id, count, interval] of [[1040100, 7, .05], [1041101, 11, .1]]) {
+    const plan = melee.exports.BattleAttackUtils.plan(buffRows.find(row => row.idx === id));
+    assert.equal(plan.projectile, id === 1040100);
+    assert.equal(plan.effect.paths.length, count);
+    near(plan.effect.interval, interval);
+    near(plan.effect.flightSeconds, (count + 1) * interval);
+    near(plan.effect.anchorY, id === 1040100 ? .43 : .28);
+    for (const resource of plan.effect.paths) {
+        assert.ok(fs.existsSync(path.join(root, "client/assets/resources", resource.replace("/spriteFrame", ".png"))));
+    }
+}
+console.log("PASS third chapter real frame resources and legacy projectile timing");
+
+/** 人工扩展目标的协议夹具，只验证分组，不冒充服务端生成的额外伤害。 */
+async function checkMultiTargetPresentation() {
+    const data = protocol.decode(fs.readFileSync(path.join(root, "backend/target/chapter-1-1-3-replay.pb")));
+    const phase = data.phases.find(phase => phase.sourceId === 1 && phase.events.some(event => event.kind === "presentation"));
+    const index = phase.events.findIndex(event => event.kind === "presentation");
+    const original = phase.events[index];
+    phase.events.splice(index + 1, 0, {...original, targetId: 3});
+    const seen = [];
+    const player = new playerModule.exports.BattleReplayPlayer({
+        play: async (step, targets) => { if (step.kind === "presentation") seen.push({step, targets}); },
+        stop: () => {}
+    });
+    await player.play(protocol.encode(data).finish());
+    const grouped = seen.filter(value => value.step.sourceId === 1 && value.targets.length === 2);
+    assert.equal(grouped.length, 1);
+    assert.deepEqual(grouped[0].targets.map(value => value.targetId), [original.targetId, 3]);
+    assert.ok(Object.isFrozen(grouped[0].targets));
+    console.log("PASS one casting animation per effect with separate target presentations");
+}
+checkMultiTargetPresentation().catch(error => { console.error(error); process.exitCode = 1; });
+
+/** 用服务端真实四单位战报检查同次施法分组及独立血量、眩晕生命周期。 */
+async function checkControlTeamPlayback() {
+    const data = fs.readFileSync(path.join(root, "backend/target/independent-control-teams-replay.pb"));
+    const plan = decode(data);
+    const seen = [];
+    const player = new playerModule.exports.BattleReplayPlayer({
+        play: async (step, targets) => { seen.push({step, targets}); },
+        stop: () => {}
+    });
+    assert.equal(await player.play(data), true);
+    const grouped = seen.filter(value => value.step.kind === "presentation" && value.step.configId === 1041101);
+    assert.ok(grouped.some(value => value.targets.length === 2 && value.targets.map(target => target.targetId).sort().join() === "1,4"));
+    for (const id of [1, 4]) {
+        assert.ok(plan.some(step => step.kind === "buff.upsert" && step.configId === 1041301 && step.targetId === id));
+        assert.ok(plan.some(step => step.kind === "buff.remove" && step.targetId === id));
+        assert.equal(plan[plan.length - 1].hpByUnit[id], 0);
+    }
+    const wrong = protocol.decode(data);
+    wrong.units[1].position = 2;
+    assert.throws(() => decode(protocol.encode(wrong).finish()));
+    console.log("PASS real four-unit multi-target casting, independent HP and stun removal");
+}
+for (const resource of melee.exports.BattleAttackUtils.dizzyFrames()) {
+    assert.ok(fs.existsSync(path.join(root, "client/assets/resources", resource.replace("/spriteFrame", ".png"))));
+}
+checkControlTeamPlayback().catch(error => { console.error(error); process.exitCode = 1; });
+
+// 冰冻演出来源独立标注，安装和移除均来自真实服务端事件。
+const frozenBytes = fs.readFileSync(path.join(root, "backend/target/independent-frozen-replay.pb"));
+const frozenWire = protocol.decode(frozenBytes);
+assert.equal(frozenWire.scenario, "audit:frozen");
+const frozenPlan = decode(frozenBytes);
+assert.ok(frozenPlan.some(step => step.kind === "buff.upsert" && step.configId === 2234801));
+assert.ok(frozenPlan.some(step => step.kind === "buff.remove" && step.configId === 2234801));
+const wrongFrozen = protocol.decode(frozenBytes);
+wrongFrozen.units[2].position = 4;
+assert.throws(() => decode(protocol.encode(wrongFrozen).finish()));
+console.log("PASS independent frozen replay lifecycle and strict roster");
+
+// 完整奈奈子配置战报必须保留开场监听、真实施法、到期冰冻及移除。
+const nanakoBytes = fs.readFileSync(path.join(root, "backend/target/independent-nanako-replay.pb"));
+const nanakoPlan = decode(nanakoBytes);
+for (const configId of [2234102, 2231303, 2233202, 2234802]) {
+    assert.ok(nanakoPlan.some(step => step.configId === configId));
+}
+assert.ok(nanakoPlan.some(step => step.kind === "buff.remove" && step.configId === 2234802));
+const wrongNanako = protocol.decode(nanakoBytes);
+wrongNanako.units[0].templateId = 10101001;
+assert.throws(() => decode(protocol.encode(wrongNanako).finish()), /单位无效/);
+console.log("PASS full Nanako skills, opening passives, expiry freeze and strict roster");
+
+assert.equal(nanakoPlan.find(step => step.kind === "round.ready" && step.round === 4).readySeconds, 3);
+assert.equal(steps.filter(step => step.kind === "round.ready").length, report.rounds);
+
+// 单独覆盖暴击分支：完整主技能之后才播放追加普攻，不合并为一个技能或漏掉追加。
+const nanakoCriticalBytes = fs.readFileSync(path.join(root, "backend/target/independent-nanako-critical-replay.pb"));
+const nanakoCriticalPlan = decode(nanakoCriticalBytes);
+const firstNanakoSkills = nanakoCriticalPlan.filter(step => step.round === 1 && step.sourceId === 1
+    && (step.kind === "skill.begin" || step.kind === "skill.end"));
+assert.deepEqual(firstNanakoSkills.map(step => [step.kind, step.configId]), [
+    ["skill.begin", 102050231], ["skill.end", 102050231],
+    ["skill.begin", 102050230], ["skill.end", 102050230]
+]);
+console.log("PASS Nanako critical followup preserves two complete sequential skills");
+/** 定位技能必须按序恢复此前权威状态；缺少技能或恢复能力时拒绝，取消后不再播放。 */
+async function checkSkillFocus() {
+    const focus = {skillId: 102050233, level: 2};
+    const start = nanakoPlan.findIndex(step => step.kind === 'skill.begin' && step.configId === focus.skillId && step.skillLevel === focus.level);
+    assert.ok(start > 0);
+    const restored = [];
+    const played = [];
+    const player = new playerModule.exports.BattleReplayPlayer({
+        restore: step => restored.push(step),
+        play: async step => played.push(step),
+        stop: () => {}
+    });
+    assert.equal(await player.play(nanakoBytes, focus), true);
+    assert.deepEqual(restored, nanakoPlan.slice(0, start));
+    assert.deepEqual(played[0], nanakoPlan[start]);
+    assert.ok(restored.some(step => step.kind === 'buff.upsert'));
+    assert.ok(restored.some(step => step.kind === 'damage'));
+    const before = played.length;
+    await assert.rejects(player.play(nanakoBytes, {skillId: 999, level: 1}), /没有选定技能/);
+    assert.equal(played.length, before);
+    const unsupported = new playerModule.exports.BattleReplayPlayer({play: async () => assert.fail('must not play'), stop: () => {}});
+    await assert.rejects(unsupported.play(nanakoBytes, focus), /不支持状态定位/);
+    let count = 0;
+    const cancelled = new playerModule.exports.BattleReplayPlayer({
+        restore: () => { count++; cancelled.stop(); },
+        play: async () => assert.fail('cancelled focus must not play'),
+        stop: () => {}
+    });
+    assert.equal(await cancelled.play(nanakoBytes, focus), false);
+    assert.equal(count, 1);
+    console.log('PASS selected skill restores prior HP/Buffs, rejects missing focus and cancels safely');
+}
+checkSkillFocus().catch(error => { console.error(error); process.exitCode = 1; });
