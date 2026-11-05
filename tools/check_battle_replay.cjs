@@ -485,3 +485,24 @@ assert.equal(cleanupCalls, 4, '重复调用必须无副作用');
 cleanupFactory(true, () => assert.fail('已退出不可再次释放'), null,
     () => assert.fail('已退出不可操作节点'), null)();
 console.log('PASS preview cleanup is idempotent after exit and application switching');
+// 旧actions覆盖表含独立特效，不能因基础Buff.file为空就判定无特效。
+const nanakoActionRows = JSON.parse(fs.readFileSync(path.join(root, 'client/assets/resources/config/buff.json'), 'utf8')).rows;
+for (const id of [2230100,2231101,2231102,2231103,2233101,2233102,2233103]) {
+    const row = nanakoActionRows.find(row => row.idx === id);
+    const actions = melee.exports.BattleAttackUtils.legacyActions(row);
+    assert.equal(actions.length, id >= 2233101 ? 3 : 2);
+    assert.equal(actions[0].type, id === 2230100 ? 2 : 3);
+    assert.equal(melee.exports.BattleAttackUtils.plan(actions[0]).action, id >= 2233101 ? 'attack3' : id === 2230100 ? 'attack' : 'attack2');
+    const effects = actions.slice(1);
+    assert.deepEqual(effects.map(value => value.delay), id >= 2233101 ? [0,120] : [id === 2230100 ? 40 : 90]);
+    for (const effect of effects) {
+        const plan = melee.exports.BattleAttackUtils.plan(effect);
+        assert.ok(plan.effectOnly);
+        assert.equal(plan.onSource, effect.type === 6);
+        for (const resource of plan.effect.paths) {
+            assert.ok(fs.existsSync(path.join(root,'client/assets/resources',resource.replace('/spriteFrame','.png'))));
+        }
+    }
+    if (id >= 2233101) assert.equal(melee.exports.BattleAttackUtils.plan(actions[2]).effect.scaleX,-1);
+}
+console.log('PASS legacy Nanako override actions, complete frame assets, source/target and signed scale');

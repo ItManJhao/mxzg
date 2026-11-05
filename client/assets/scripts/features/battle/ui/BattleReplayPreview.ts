@@ -41,6 +41,8 @@ export class BattleReplayPreview {
             (error, asset) => error ? reject(error) : resolve(asset)));
         const rows = (config.json as { rows: BuffRow[] }).rows;
         const selected = new Map<number, BuffRow>();
+        // 一个旧Buff可展开多个并行表现，索引仅供本页资源缓存使用，不修改权威事件。
+        const expanded = new Map<number, readonly BuffRow[]>();
         for (const step of steps) {
             if (step.kind === "presentation" || step.kind === "buff.upsert" || step.kind === "damage") {
                 const row = rows.find(row => row.idx === step.configId);
@@ -48,6 +50,13 @@ export class BattleReplayPreview {
                 if (step.kind === "presentation") BattleAttackUtils.plan(row);
                 if (step.kind === "damage" && row.type === 100) BattleAttackUtils.damageSounds(row);
                 selected.set(row.idx, row);
+                if (step.kind === "presentation") {
+                    const actions = BattleAttackUtils.legacyActions(row);
+                    if (actions[0].idx !== row.idx) {
+                        expanded.set(row.idx, actions);
+                        for (const action of actions) selected.set(action.idx, action);
+                    }
+                }
             }
         }
         const shell = await mountBattlePrefab(parent);
@@ -223,7 +232,7 @@ export class BattleReplayPreview {
                         (error, asset) => error ? reject(error) : resolve(asset)))));
             }
             for (const row of selected.values()) {
-                if (row.type === 2 || row.type === 3 || row.type === 5 || row.type === 100) {
+                if (row.type === 2 || row.type === 3 || row.type === 5 || row.type === 6 || row.type === 7 || row.type === 100) {
                     const names = row.type === 100 ? BattleAttackUtils.damageSounds(row) : BattleAttackUtils.plan(row).sounds;
                     if (row.type !== 100) {
                         const effect = BattleAttackUtils.plan(row).effect;
@@ -305,7 +314,12 @@ export class BattleReplayPreview {
             player = new BattleReplayPlayer({
                 stop,
                 restore,
-                play: async (step, targets = [step]) => {
+                play: async function play(step, targets = [step]) {
+                    const actions = step.kind === "presentation" ? expanded.get(step.configId) : undefined;
+                    if (actions) {
+                        await Promise.all(actions.map(action => play({ ...step, configId: action.idx }, targets)));
+                        return;
+                    }
                     const epoch = effectEpoch;
                     const cancelled = () => closed || epoch !== effectEpoch;
                     if (cancelled()) return;
@@ -357,13 +371,13 @@ export class BattleReplayPreview {
                             await wait(plan.moveSeconds);
                         }
                         if (cancelled()) return;
-                        if (!actors.get(step.sourceId)!.gesture(plan.action)) throw new Error("缺少英雄动作：" + plan.action);
+                        if (!plan.effectOnly && !actors.get(step.sourceId)!.gesture(plan.action)) throw new Error("缺少英雄动作：" + plan.action);
                         // 施法只播一次，各目标特效同时在旧attack_time时点启动。
                         const targetEffects = (async () => {
                             await wait(plan.attackSeconds);
                             if (cancelled() || !plan.effect) return;
                             const definition = plan.effect;
-                            await Promise.all(targets.map(async hit => {
+                            await Promise.all((plan.onSource ? [step] : targets).map(async hit => {
                                 if (cancelled()) return;
                                 const layer = shell.root.getChildByPath("LayerVfx")!;
                                 const transform = layer.getComponent(UITransform)!;
@@ -374,7 +388,8 @@ export class BattleReplayPreview {
                                     return transform.convertToNodeSpaceAR(world);
                                 };
                                 const from = pointOf(step.sourceId, true);
-                                const to = pointOf(hit.targetId, plan.projectile);
+                                const effectUnit = plan.onSource ? step.sourceId : hit.targetId;
+                                const to = pointOf(effectUnit, plan.projectile);
                                 const node = new Node("SkillEffect");
                                 node.layer = layer.layer;
                                 node.parent = layer;
@@ -386,7 +401,7 @@ export class BattleReplayPreview {
                                 sprite.trim = false;
                                 const sequence = frames.get(step.configId)!;
                                 sprite.spriteFrame = sequence[0];
-                                node.setScale(definition.scaleX, definition.scaleY, 1);
+                                node.setScale(definition.scaleX * (plan.effectOnly && units.find(unit => unit.unitId === effectUnit)!.faction === 1 ? -1 : 1), definition.scaleY, 1);
                                 node.setPosition(plan.projectile ? from : to);
                                 if (plan.projectile) {
                                     node.angle = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI;
@@ -411,7 +426,7 @@ export class BattleReplayPreview {
                             tween(slot).to(plan.moveSeconds, { position: origins.get(step.sourceId)! }).start();
                             await wait(plan.moveSeconds);
                         }
-                        if (!cancelled()) actors.get(step.sourceId)!.play("stand");
+                        if (!cancelled() && !plan.effectOnly) actors.get(step.sourceId)!.play("stand");
                     } else if (step.kind === "damage") {
                         const row = selected.get(step.configId)!;
                         // 持续伤害201不冒充直接伤害100；这里只恢复已核对的伤害音效来源。

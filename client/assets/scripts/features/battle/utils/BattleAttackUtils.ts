@@ -1,7 +1,10 @@
-/** 按旧BattleActionUtils._attackingAction及_actions[2/3]解析近身与原地远程时序；不把life当动作时长或生成通用特效。 */
+/** 按旧G_BATTLE_ACTIONS覆盖及BattleActionUtils解析近身、远程和独立特效时序；不把life当动作时长或生成通用特效。 */
 export interface BattleAttackPlan {
     /** true为type2近身移动；false为type3原地施法，不能瞬移到目标。 */
     readonly melee: boolean;
+    /** 6/7只播放独立特效，不覆盖施法骨骼；6定位施法者，7定位各目标。 */
+    readonly effectOnly: boolean;
+    readonly onSource: boolean;
     /** type5投射，按旧帧计数飞行；type3在各目标脚下播放一次。 */
     readonly projectile: boolean;
     /** 同源序列帧路径、帧间隔、缩放和锚点；空file时为null。 */
@@ -25,9 +28,34 @@ export class BattleAttackUtils {
     /** 纯配置工具不保存播放状态。 */
     private constructor() {}
 
-    /** 读取同源buff行；开放type2/3及第3关type5与远程真实帧资源，未知表现明确拒绝。 */
+    /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；这里只恢复已逐项核对的奈奈子，内部索引不写回战报。 */
+    public static legacyActions<T extends { idx: number; type: number; ani_base: string; file: string; sound: string; delay: number; dimly: number }>(row: T): readonly T[] {
+        const normal = row.idx === 2230100;
+        const first = row.idx >= 2231101 && row.idx <= 2231103;
+        const second = row.idx >= 2233101 && row.idx <= 2233103;
+        if (!normal && !first && !second) {
+            return [row];
+        }
+        const entries: { type: number; delay: number; dimly?: number; base: Record<string, number | string>; file?: string; sound?: string }[] = normal ? [
+            { type: 2, delay: 0, base: { move_time: 0.1, attack_delay: 0.3, move_back: 1 } },
+            { type: 7, delay: 40, base: { format: "skill-102050230/%d.png", anchor_x: 0.5, anchor_y: 0.4, duration: 0.03, scale_x: 2, scale_y: 2 }, file: "skill-102050230", sound: "skill-102050230" }
+        ] : first ? [
+            { type: 3, delay: 0, base: { action: "skill", attack_time: 1.22, action_time: 1.8 } },
+            { type: 7, delay: 90, dimly: 1, base: { format: "skill-102050231/%d.png", anchor_x: 0.5, anchor_y: 0.45, duration: 0.03, scale_x: 1, scale_y: 1 }, file: "skill-102050231", sound: "skill-102050231" }
+        ] : [
+            { type: 3, delay: 0, base: { action: "skill2", attack_time: 0.6, action_time: 1.8 } },
+            { type: 6, delay: 0, dimly: 1, base: { format: "skill-102050233/%d.png", anchor_x: 0.5, anchor_y: 0.25, duration: 0.06, scale_x: 1, scale_y: 1 }, file: "skill-102050233" },
+            { type: 7, delay: 120, dimly: 1, base: { format: "skill-102050233_1/%d.png", anchor_x: 0.5, anchor_y: 0.3, duration: 0.06, scale_x: -1, scale_y: 1 }, file: "skill-102050233_1", sound: "skill-102050233" }
+        ];
+        return entries.map((entry, index) => ({ ...row, idx: row.idx * 10 + index,
+            type: entry.type, delay: entry.delay, dimly: entry.dimly || 0,
+            ani_base: JSON.stringify(entry.base), file: JSON.stringify(entry.file ? [entry.file] : []),
+            sound: JSON.stringify(entry.sound ? [entry.sound] : []) }));
+    }
+
+    /** 读取同源buff行；开放type2/3/5和已核对覆盖表的type6/7真实帧资源，未知表现明确拒绝。 */
     public static plan(row: { type: number; ani_base: string; file: string; sound: string }): BattleAttackPlan {
-        if ([2, 3, 5].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
+        if ([2, 3, 5, 6, 7].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
         const base: unknown = JSON.parse(row.ani_base);
         const files: unknown = JSON.parse(row.file);
         const sounds: unknown = JSON.parse(row.sound);
@@ -47,7 +75,7 @@ export class BattleAttackUtils {
         }
         let effect: BattleAttackPlan["effect"] = null;
         if (files.length) {
-            const counts: Record<string, number> = { "skill-101040050": 7, "skill-101020021": 11 };
+            const counts: Record<string, number> = { "skill-101040050": 7, "skill-101020021": 11, "skill-102050230": 8, "skill-102050231": 17, "skill-102050233": 22, "skill-102050233_1": 22 };
             const file = files[0];
             if (files.length !== 1 || typeof file !== "string" || !counts[file]
                 || values.format !== file + "/%d.png" || row.type === 2) {
@@ -61,13 +89,14 @@ export class BattleAttackUtils {
                 interval,
                 // 旧getAnimateCount包含首次查找失败的那一帧，7张图实际飞行8个间隔。
                 flightSeconds: (counts[file] + 1) * interval,
-                scaleX: this.seconds(values, "scale_x", 1), scaleY: this.seconds(values, "scale_y", 1),
+                scaleX: typeof values.scale_x === "number" && Number.isFinite(values.scale_x) ? values.scale_x : 1, scaleY: this.seconds(values, "scale_y", 1),
                 anchorX: this.seconds(values, "anchor_x", 0.5), anchorY: this.seconds(values, "anchor_y", 0.5) - 0.07
             });
         } else if (values.format !== undefined || row.type === 5) {
             throw new Error("投射或序列帧缺少资源");
         }
         return Object.freeze({
+            effectOnly: row.type === 6 || row.type === 7, onSource: row.type === 6,
             melee: row.type === 2, projectile: row.type === 5, effect,
             moveSeconds: row.type === 2 ? this.seconds(values, "move_time", 0.1) : 0, action: action === "skill" ? "attack2" : action === "skill2" ? "attack3" : action === "transform" ? "skill" : "attack",
             attackSeconds: this.seconds(values, "attack_time", 0),
