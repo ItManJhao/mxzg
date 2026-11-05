@@ -74,10 +74,13 @@ public class HeroSkillPanelRules {
         return false;
     }
 
-    /** 解析本批四类触发Buff；未知类型明确拒绝，动作的实际效果交给战斗执行器。 */
+    /** 解析已支持的通用触发Buff；未知类型明确拒绝，动作的实际效果交给战斗执行器。 */
     public HeroBattleEventProcessor.Definition battleTrigger(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
+        if (type == 171 && Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) != 0) {
+            throw new IllegalArgumentException("受击事件的前置Buff条件尚未支持：" + buffId);
+        }
         int skillFilter = type == 173 ? Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) : 0;
         var arts = new ArrayList<HeroBattleEventProcessor.Art>();
         for (var id : mapper.readTree(buff.path("art_list").asString())) {
@@ -141,6 +144,42 @@ public class HeroSkillPanelRules {
             throw new IllegalArgumentException("治疗动作没有效果：" + artId);
         }
         return new HeroBattleHealingExecutor.Plan(battleTargets(artId), effects);
+    }
+
+    /**
+     * 预检入场被动技能的自身监听安装链；当前只接受长期、必中的无冲突监听。
+     * 整链效果必须为已支持治疗动作，护盾、清心或契约等不得按空效果安装。
+     */
+    public List<HeroBattleEventProcessor.Definition> battleHealingPassive(int skillId, int level) {
+        var skill = skills.get(skillId + ":" + level);
+        if (skill == null || skill.path("active_type").asInt() != 0
+            || skill.path("count_stats").asInt() != 0) {
+            throw new IllegalArgumentException("不是已支持的治疗被动技能：" + skillId + ":" + level);
+        }
+        var definitions = new ArrayList<HeroBattleEventProcessor.Definition>();
+        for (var id : mapper.readTree(skill.path("art_list").asString())) {
+            var art = row("buffart", id.asInt());
+            if (!battleTargets(id.asInt()).selectors().equals(List.of(1))
+                || art.path("source_type").asInt() != 0) {
+                throw new IllegalArgumentException("被动技能安装目标尚未支持");
+            }
+            for (var buffId : mapper.readTree(art.path("buff_list").asString())) {
+                var buff = row("buff", buffId.asInt());
+                if (buff.path("round").asInt() != 999 || buff.path("attach_percent").asInt() != 10000
+                    || buff.path("conflict_type").asInt() != 0 || buff.path("effecttype").asInt() != 0) {
+                    throw new IllegalArgumentException("被动监听持续/概率/冲突规则尚未支持");
+                }
+                var definition = battleTrigger(buffId.asInt());
+                for (var next : definition.arts()) {
+                    battleHealing(next.id());
+                }
+                definitions.add(definition);
+            }
+        }
+        if (definitions.isEmpty()) {
+            throw new IllegalArgumentException("被动技能没有可安装监听");
+        }
+        return List.copyOf(definitions);
     }
 
     /** 面板仅使用基础已解锁技能，进化替换在其后，不重复执行面板被动。 */

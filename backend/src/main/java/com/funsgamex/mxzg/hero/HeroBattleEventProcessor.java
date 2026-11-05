@@ -1,5 +1,5 @@
 /**
- * 最小战斗行动与Buff事件处理：197行动前、172普攻后、173技能后、170攻击后。
+ * 最小战斗行动与Buff事件处理：行动、受击及治疗事件；311仅分发空事件点，清心特殊监听尚未支持。
  * 每场战斗独立创建；只操作临时单位，不写资产。动作效果必须由调用者提供执行器，不提供空实现。
  */
 package com.funsgamex.mxzg.hero;
@@ -8,7 +8,7 @@ import java.util.*;
 
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
-    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170);
+    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
 
@@ -22,7 +22,7 @@ public final class HeroBattleEventProcessor {
         }
     }
 
-    /** 已解析的四类Buff配置；173可限制技能ID，动作保留配置顺序。 */
+    /** 已解析的通用动作触发Buff配置；173可限制技能ID，动作保留配置顺序。 */
     public record Definition(int buffId, int event, int skillFilter, List<Art> arts) {
         /** 未支持事件明确失败；不把未知处理器返回成功。 */
         public Definition {
@@ -54,6 +54,8 @@ public final class HeroBattleEventProcessor {
         private boolean dead;
         /** 挂机封印与1007状态共同控制事件触发，不代替行动禁止集合。 */
         private boolean hangUpSeal;
+        /** 最近一次基础治疗量；治疗前设置，嵌套治疗可按旧语义覆盖，不使用局部变量替代。 */
+        private long lastTreatment;
         /** 本次已选定技能；行动前事件改变控制状态也不重新选技能。 */
         private HeroBattleSkillUtils.Skill current;
 
@@ -64,6 +66,38 @@ public final class HeroBattleEventProcessor {
             }
             this.id = id;
             this.skills = List.copyOf(skills);
+        }
+
+        /** 动作事务只修改的临时状态，用于失败回滚与被动初始化回滚。 */
+        record Checkpoint(Set<Integer> interrupts, List<Listener> listeners, long lastTreatment) {}
+
+        /** 保存本场动作状态，不包含数据库或角色资产。 */
+        Checkpoint checkpoint() {
+            return new Checkpoint(Set.copyOf(interrupts), List.copyOf(listeners), lastTreatment);
+        }
+
+        /** 失败时恢复动作前状态，不把失败的嵌套治疗残留到下一次动作。 */
+        void rollback(Checkpoint state) {
+            interrupts.clear();
+            interrupts.addAll(state.interrupts());
+            listeners.clear();
+            listeners.addAll(state.listeners());
+            lastTreatment = state.lastTreatment();
+        }
+
+        /** 取得当前单位未使用的监听实例编号，保留已有手工安装的监听。 */
+        long nextListenerId() {
+            return Math.addExact(listeners.stream().mapToLong(Listener::instanceId).max().orElse(0), 1);
+        }
+
+        /** 治疗前设置基础量，供治疗相关事件读取。 */
+        void treatment(long value) {
+            lastTreatment = value;
+        }
+
+        /** 返回最近基础治疗量，尚未发生治疗时为0。 */
+        public long lastTreatment() {
+            return lastTreatment;
         }
 
         /** 返回本场编号。 */
@@ -144,9 +178,9 @@ public final class HeroBattleEventProcessor {
         return true;
     }
 
-    /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批四种类型priority均为0。 */
+    /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event)) {
+        if (!SUPPORTED.contains(event) && event != 311) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);
