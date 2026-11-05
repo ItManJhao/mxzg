@@ -8,7 +8,7 @@ import java.util.*;
 
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
-    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 200, 311);
+    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
 
@@ -74,11 +74,11 @@ public final class HeroBattleEventProcessor {
         }
 
         /** 动作事务只修改的临时状态，用于失败回滚与被动初始化回滚。 */
-        record Checkpoint(Set<Integer> interrupts, List<Listener> listeners, long lastTreatment) {}
+        record Checkpoint(Set<Integer> interrupts, List<Listener> listeners, long lastTreatment, boolean dead) {}
 
         /** 保存本场动作状态，不包含数据库或角色资产。 */
         Checkpoint checkpoint() {
-            return new Checkpoint(Set.copyOf(interrupts), List.copyOf(listeners), lastTreatment);
+            return new Checkpoint(Set.copyOf(interrupts), List.copyOf(listeners), lastTreatment, dead);
         }
 
         /** 失败时恢复动作前状态，不把失败的嵌套治疗残留到下一次动作。 */
@@ -88,6 +88,7 @@ public final class HeroBattleEventProcessor {
             listeners.clear();
             listeners.addAll(state.listeners());
             lastTreatment = state.lastTreatment();
+            dead = state.dead();
         }
 
         /** 取得当前单位未使用的监听实例编号，保留已有手工安装的监听。 */
@@ -189,18 +190,18 @@ public final class HeroBattleEventProcessor {
 
     /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event)) {
+        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180).contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);
         if (carrier == null || carrier.hangUpSeal || carrier.controls.contains(1007)) {
             return;
         }
-        var pending = carrier.listeners.stream().filter(row -> (row.definition().event() == event || (event == 206 && row.definition().event() == 200)))
+        var pending = carrier.listeners.stream().filter(row -> (row.definition().event() == event || (event == 206 && row.definition().event() == 200) || (event == 189 && row.definition().event() == 199)))
             .sorted(Comparator.comparing(row -> row.sourceId() == carrier.id)).toList();
         for (var listener : pending) {
             var definition = listener.definition();
-            if (definition.event() == 200 || definition.event() == 311) {
+            if (definition.event() == 199 || definition.event() == 200 || definition.event() == 311) {
                 // 旧专用trigger不经过AbstractArtTrigger的战斗结束检查。
                 executor.special(listener, carrier, target);
             } else if (!ended && (event != 173 || definition.skillFilter() == 0

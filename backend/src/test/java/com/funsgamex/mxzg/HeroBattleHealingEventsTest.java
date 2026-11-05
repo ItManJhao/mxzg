@@ -125,6 +125,6 @@ class HeroBattleHealingEventsTest {
         assertEquals(0, one.actor().lastTreatment());
         assertTrue(engine.signals().isEmpty());
         assertThrows(IllegalArgumentException.class, () -> new Definition(1, 9999, 0, List.of()));
-        assertThrows(IllegalArgumentException.class, () -> new Definition(1, 199, 0, List.of()));
+        assertThrows(IllegalArgumentException.class, () -> new Definition(1, 198, 0, List.of()));
     }
 }

@@ -10,12 +10,12 @@ import tools.jackson.databind.ObjectMapper;
 
 class HeroBattleTargetsTest {
     /** 施法者位于第一排第二列。 */
-    private final Unit source = new Unit(1, 1, 2, 10);
+    private final Unit source = new Unit(1, 1, 2, 10, 100, 100);
     /** 同阵营高攻击单位。 */
-    private final Unit friend = new Unit(2, 1, 5, 30);
+    private final Unit friend = new Unit(2, 1, 5, 30, 100, 100);
     /** 敌方传入顺序刻意不按站位，检验排序与数量限制。 */
-    private final List<Unit> enemies = List.of(new Unit(3, 2, 5, 50),
-        new Unit(4, 2, 1, 20), new Unit(5, 2, 3, 20), new Unit(6, 2, 2, 10));
+    private final List<Unit> enemies = List.of(new Unit(3, 2, 5, 50, 100, 100),
+        new Unit(4, 2, 1, 20, 100, 100), new Unit(5, 2, 3, 20, 100, 100), new Unit(6, 2, 2, 10, 100, 100));
 
     /** 创建本场有序存活名单。 */
     private List<Unit> living() {

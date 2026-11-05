@@ -8,13 +8,13 @@ import java.util.*;
 
 public final class HeroBattleTargetUtils {
     /** 已核对的选择器，未知类型不能降级为默认敌人。 */
-    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 10, 12);
+    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 6, 7, 10, 11, 12);
 
     /** 纯规则工具禁止实例化。 */
     private HeroBattleTargetUtils() {}
 
-    /** 本场单位编号、阵营、站位及当前折算攻击；不使用英雄配置ID代替单位编号。 */
-    public record Unit(int id, int faction, int position, double attack) {
+    /** 本场单位编号、阵营、站位、当前折算攻击及实时生命；不使用英雄配置ID代替单位编号。 */
+    public record Unit(int id, int faction, int position, double attack, long hp, long maxHp) {
         /** 拒绝无法用于定位或排序的单位。 */
         public Unit {
             if (id <= 0 || position <= 0 || !Double.isFinite(attack)) {
@@ -60,6 +60,16 @@ public final class HeroBattleTargetUtils {
                     .filter(unit -> (unit.faction() == source.faction()) == (type == 2))
                     .forEach(targets::add);
                 case 4 -> replace(targets, targets.stream().limit(count).toList());
+                case 6, 7 -> {
+                    var preferred = targets.stream().filter(unit -> (unit.position() <= 4) == (type == 6)).toList();
+                    // 旧规则：目标排为空则保持原集合，不自行截取数量。
+                    if (!preferred.isEmpty()) {
+                        replace(targets, preferred);
+                    }
+                }
+                case 11 -> replace(targets, targets.stream()
+                    .sorted(Comparator.comparingDouble(unit -> unit.hp() * 1D / unit.maxHp()))
+                    .limit(count).toList());
                 case 10 -> {
                     // 保留旧TreeMap同优先级覆盖语义，不擅自改成稳定排序。
                     var positions = new TreeMap<Integer, Unit>();

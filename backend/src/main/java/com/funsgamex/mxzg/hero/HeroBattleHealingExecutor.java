@@ -1,5 +1,5 @@
 /**
- * 每场战斗独立的治疗与治疗护盾执行器：配置→目标→事件→生命/Buff变化。
+ * 每场战斗独立的治疗/契约及105伤害子集执行器：配置→目标→事件→生命/Buff变化。
  * 支持通用治疗事件及自身被动安装；不支持控制改选/临时目标数；不写资产、不生成奖励，不代表完整技能引擎。
  */
 package com.funsgamex.mxzg.hero;
@@ -37,6 +37,26 @@ public final class HeroBattleHealingExecutor implements Executor {
 
     /** 移除前完整实例与原因；不等同于完整战报协议。 */
     public record Removal(int unitId, HeroBattleBuffState.Entry entry, String reason) {}
+
+    /** 当前伤害帧仅在187/188/189和伤害处理期间有效，额外伤害不重入189。 */
+    private DamageFrame damageFrame;
+    /** 成功的伤害记录；根动作失败时与血量及Buff一起回滚。 */
+    private final List<Damage> damages = new ArrayList<>();
+    /** 配置计算伤害、护盾消耗、旧战报扣血与实际血量变化分别保留。 */
+    public record Damage(int buffId, int sourceId, int targetId, long incoming,
+                         long absorbed, long reported, long actual, boolean dead) {}
+    /** 本次可被契约修改的扣血前伤害绝对量。 */
+    private static final class DamageFrame {
+        /** 原始伤害配置，额外伤害沿用。 */
+        final int buffId;
+        /** 当前剩余伤害，被199监听减少。 */
+        long remaining;
+        /** 保存当前伤害上下文，不创建新的资产状态。 */
+        DamageFrame(int buffId, long remaining) {
+            this.buffId = buffId;
+            this.remaining = remaining;
+        }
+    }
 
     /** 本场事件调度器，与本场Actor使用同一实例。 */
     private final HeroBattleEventProcessor events = new HeroBattleEventProcessor();
@@ -83,7 +103,7 @@ public final class HeroBattleHealingExecutor implements Executor {
 
         /** 复用旧选目标规则所需的最小属性。 */
         private HeroBattleTargetUtils.Unit target() {
-            return new HeroBattleTargetUtils.Unit(actor.id(), faction, position, attack);
+            return new HeroBattleTargetUtils.Unit(actor.id(), faction, position, attack, hp, maxHp);
         }
     }
     /** 基础治疗、战报治疗值、实际生命变化；满血时后者可为0。 */
@@ -258,6 +278,10 @@ public final class HeroBattleHealingExecutor implements Executor {
     @Override
     public void special(Listener listener, Actor carrier, int targetId) {
         transaction(() -> {
+            if (listener.definition().event() == 199) {
+                transferDamage(listener, targetId);
+                return;
+            }
             var config = rules.battleTreatmentSpecial(listener.definition().buffId());
             if (config.type() == 311) {
                 pureHeart(carrier, config);
@@ -327,6 +351,150 @@ public final class HeroBattleHealingExecutor implements Executor {
         units.put(contractor.actor().id(), contractor.withHp(nextHp));
         recoveries.add(new Recovery(listener.definition().buffId(), source.actor().id(),
             contractor.actor().id(), transfer, amount, actual));
+    }
+
+    /** 已成功安装的契约对，仅用于核对动作选择，不代替Buff实例本身。 */
+    public record ContractPair(int buffId, int carrierId, int enemyId) {}
+
+    /**
+     * 执行真实199动作的选目标与建约，5181303为友方存活→后排优先→最低血量比例。
+     * 旧199属于监听，notTrigger=false；不擅自执行配置中的5181403属性动作。
+     */
+    public List<ContractPair> contractArt(int artId, int sourceId, int contextId) {
+        var plan = rules.battleContractAction(artId);
+        State source = require(sourceId);
+        State context = require(contextId);
+        if (source.actor().hasControl(1011) || source.actor().hasControl(1013)
+            || source.actor().hasControl(1015)) {
+            throw new UnsupportedOperationException("契约动作尚未支持控制改选");
+        }
+        var result = new ArrayList<ContractPair>();
+        transaction(() -> {
+            started = true;
+            var living = units.values().stream().filter(unit -> unit.hp() > 0 && !unit.actor().isDead())
+                .map(State::target).toList();
+            var targets = HeroBattleTargetUtils.select(plan.targets(), source.target(), living,
+                List.of(context.target()), false);
+            for (int buffId : plan.buffs()) {
+                for (var target : targets) {
+                    if (!source.actor().interrupted(target.id())) {
+                        result.add(new ContractPair(buffId, target.id(), establishContract(buffId, sourceId, target.id())));
+                    }
+                }
+                source.actor().restore();
+            }
+        });
+        return List.copyOf(result);
+    }
+
+    /**
+     * 执行旧199号建约处理器：随机存活敌人→两份199实例→可选反向200实例。
+     * 199的art_list不自动执行；完整主动技能入口尚未开放。
+     */
+    public int establishContract(int buffId, int sourceId, int defenderId) {
+        var config = rules.battleContract(buffId);
+        State source = require(sourceId);
+        require(defenderId);
+        var enemies = units.values().stream().filter(unit -> unit.faction() != source.faction()
+            && unit.hp() > 0 && !unit.actor().isDead()).map(unit -> unit.actor().id()).toList();
+        if (enemies.isEmpty()) {
+            throw new IllegalStateException("没有可建立契约的存活敌人");
+        }
+        int[] selected = new int[1];
+        transaction(() -> {
+            started = true;
+            selected[0] = enemies.get(randomIndex(enemies.size()));
+            var spec = rules.battleBuff(buffId);
+            var self = installBuff(sourceId, defenderId, spec, selected[0]);
+            require(defenderId).actor().listen(new Listener(self.instanceId(), sourceId,
+                rules.battleTrigger(buffId), selected[0]));
+            var enemy = installBuff(sourceId, selected[0], spec, 0);
+            require(selected[0]).actor().listen(new Listener(enemy.instanceId(), sourceId,
+                rules.battleTrigger(buffId), 0));
+            if (config.reverseBuff() != 0) {
+                installTreatmentStatus(config.reverseBuff(), sourceId, selected[0], defenderId);
+            }
+        });
+        return selected[0];
+    }
+
+    /** 使用真实105配置执行最小必中伤害链；不替代普通攻击命中、暴击、反击算法。 */
+    public void realDamage(int buffId, int sourceId, int targetId) {
+        int rate = rules.battleRealDamageRate(buffId);
+        require(sourceId);
+        require(targetId);
+        transaction(() -> {
+            started = true;
+            State source = require(sourceId);
+            State target = require(targetId);
+            if (source.actor().isDead() || source.hp() <= 0 || target.actor().isDead() || target.hp() <= 0
+                || source.actor().interrupted(targetId)) {
+                return;
+            }
+            emit(187, source.actor(), target.actor());
+            long amount = percent(source.attack(), rate);
+            if (amount <= 0) {
+                return;
+            }
+            DamageFrame previous = damageFrame;
+            damageFrame = new DamageFrame(buffId, amount);
+            try {
+                emit(188, source.actor(), target.actor());
+                emit(189, target.actor(), source.actor());
+                deductDamage(buffId, sourceId, targetId, damageFrame.remaining);
+            } finally {
+                damageFrame = previous;
+            }
+        });
+    }
+
+    /** 旧199只在关联值非0且关联者存活时转移；额外伤害不再触发189，避免重复分摊。 */
+    private void transferDamage(Listener listener, int attackerId) {
+        if (listener.value() == 0) {
+            return;
+        }
+        if (damageFrame == null) {
+            throw new IllegalStateException("契约伤害事件缺少当前伤害上下文");
+        }
+        State contractor = require(Math.toIntExact(listener.value()));
+        if (contractor.hp() <= 0 || contractor.actor().isDead()) {
+            return;
+        }
+        int rate = rules.battleContract(listener.definition().buffId()).damageRate();
+        long transfer = percent(damageFrame.remaining, rate);
+        if (transfer < 0 || transfer > damageFrame.remaining) {
+            throw new UnsupportedOperationException("契约异常伤害比例尚未支持");
+        }
+        damageFrame.remaining -= transfer;
+        deductDamage(damageFrame.buffId, listener.sourceId(), contractor.actor().id(), transfer);
+    }
+
+    /**
+     * 按旧consumeShield→heroHurt→triggerDefender执行；当前支持类型均非死亡保留Buff。
+     * 源码疑点：heroHurt再次减去shieldValue，因此实际扣血仍含抵消量；先忠实保留，待正式服复核。
+     */
+    private void deductDamage(int buffId, int sourceId, int targetId, long amount) {
+        State target = require(targetId);
+        var absorption = buffs.get(targetId).absorb(amount);
+        removed(targetId, absorption.removed(), "shield-depleted");
+        long reported = -(amount - absorption.absorbed());
+        long actual = -Math.min(target.hp(), amount);
+        long nextHp = target.hp() + actual;
+        boolean dead = nextHp <= 0;
+        units.put(targetId, target.withHp(nextHp));
+        target.actor().setDead(dead);
+        damages.add(new Damage(buffId, sourceId, targetId, amount, absorption.absorbed(), reported, actual, dead));
+        if (dead) {
+            emit(180, target.actor(), require(sourceId).actor());
+            removed(targetId, buffs.get(targetId).clearOnDeath(), "death");
+            require(sourceId).actor().interrupt(targetId);
+        }
+        // 105及契约额外伤害为fixedAttack，旧triggerDefender不触发171/反击。
+    }
+
+    /** 返回不可变的伤害记录，明确区分旧战报量与真实血量变化。 */
+    public List<Damage> damages() {
+        return List.copyOf(damages);
     }
 
     /** 安装支持的逻辑Buff，先同步移除旧监听；护盾重用时保留原实例身份。 */
@@ -407,6 +575,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         int roundBefore = round;
         long nextInstanceBefore = nextBuffInstance;
         int removalSize = removals.size();
+        int damageSize = damages.size();
         int recoverySize = recoveries.size();
         int signalSize = signals.size();
         var installedBefore = root ? new HashSet<>(installed) : null;
@@ -427,6 +596,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                 units.clear();
                 units.putAll(before);
                 checkpoints.forEach(Actor::rollback);
+                damages.subList(damageSize, damages.size()).clear();
                 recoveries.subList(recoverySize, recoveries.size()).clear();
                 signals.subList(signalSize, signals.size()).clear();
                 buffBefore.forEach((id, state) -> buffs.get(id).restore(state));

@@ -81,7 +81,7 @@ public class HeroSkillPanelRules {
         if (type == 171 && Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) != 0) {
             throw new IllegalArgumentException("受击事件的前置Buff条件尚未支持：" + buffId);
         }
-        if (type == 200 || type == 311) {
+        if (type == 199 || type == 200 || type == 311) {
             // 旧专用处理器覆盖trigger，并不执行配置里的art_list。
             return new HeroBattleEventProcessor.Definition(buffId, type, 0, List.of());
         }
@@ -196,7 +196,7 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 200, 311, 1009).contains(type)) {
+        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009).contains(type)) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
         return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
@@ -226,6 +226,59 @@ public class HeroSkillPanelRules {
             throw new IllegalArgumentException("特殊Buff安装尚未支持：" + buffId);
         }
         return battleBuff(buffId);
+    }
+
+    /** 199建约处理器所需配置；reverseBuff=0表示旧配置不建立反向契约。 */
+    public record Contract(int buffId, int damageRate, int reverseBuff) {}
+
+    /** 读取真实199配置；199为监听类型且覆盖trigger，配置art_list不由通用安装/专用触发自动执行。 */
+    public Contract battleContract(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 199 || buff.path("attach_percent").asInt() != 10000) {
+            throw new IllegalArgumentException("契约建约配置尚未支持：" + buffId);
+        }
+        var values = buff.path("value").asString().split("\\|", -1);
+        int reverse = Integer.parseInt(values[2]);
+        if (reverse != 0 && battleTreatmentStatus(reverse).type() != 200) {
+            throw new IllegalArgumentException("反向契约引用无效");
+        }
+        return new Contract(buffId, Integer.parseInt(values[0]), reverse);
+    }
+
+    /** 完整199动作入口的选目标与效果清单；不把Buff的art_list误当成安装后自动执行。 */
+    public record ContractAction(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {
+        /** 固定配置顺序，防止执行前清单被修改。 */
+        public ContractAction {
+            buffs = List.copyOf(buffs);
+        }
+    }
+
+    /** 预检动作内全部Buff均为已支持199，未知混合效果在安装前拒绝。 */
+    public ContractAction battleContractAction(int artId) {
+        var art = row("buffart", artId);
+        var buffIds = new ArrayList<Integer>();
+        for (var id : mapper.readTree(art.path("buff_list").asString())) {
+            battleContract(id.asInt());
+            buffIds.add(id.asInt());
+        }
+        if (buffIds.isEmpty()) {
+            throw new IllegalArgumentException("契约动作没有建约效果");
+        }
+        return new ContractAction(battleTargets(artId), buffIds);
+    }
+
+    /** 最小真实伤害采用旧105号处理器：必中、攻击比例、无后续动作，不冒充普通物理伤害。 */
+    public int battleRealDamageRate(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 105 || buff.path("attach_percent").asInt() != 10000
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("真实伤害配置尚未支持：" + buffId);
+        }
+        int rate = Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]);
+        if (rate < 0) {
+            throw new IllegalArgumentException("负攻击伤害比例尚未支持");
+        }
+        return rate;
     }
 
     /** 面板仅使用基础已解锁技能，进化替换在其后，不重复执行面板被动。 */

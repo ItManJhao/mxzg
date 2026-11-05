@@ -81,6 +81,42 @@ public final class HeroBattleBuffState {
         return List.copyOf(selected);
     }
 
+    /** 护盾实际消耗量及耗尽实例，供调用方走统一移除入口。 */
+    public record Absorption(long absorbed, List<Entry> removed) {}
+
+    /** 按安装顺序消耗1008护盾，耗尽即删除；未覆盖的伤害由战场继续处理。 */
+    public Absorption absorb(long damage) {
+        if (damage < 0) {
+            throw new IllegalArgumentException("护盾吸收量不能为负");
+        }
+        long remaining = damage;
+        var depleted = new ArrayList<Entry>();
+        for (var old : List.copyOf(entries)) {
+            if (old.spec().type() != 1008) {
+                continue;
+            }
+            long used = Math.min(remaining, old.value());
+            long next = old.value() - used;
+            int index = entries.indexOf(old);
+            if (next == 0) {
+                entries.remove(index);
+                depleted.add(old);
+            } else {
+                entries.set(index, new Entry(old.instanceId(), old.sourceId(), old.expiresAt(), old.spec(), next));
+            }
+            remaining -= used;
+            if (remaining == 0) {
+                break;
+            }
+        }
+        return new Absorption(damage - remaining, List.copyOf(depleted));
+    }
+
+    /** 当前运行接入的类型均非deathBuff；死亡时返回并清除实例，监听由调用方统一移除。 */
+    public List<Entry> clearOnDeath() {
+        return remove(List.copyOf(entries));
+    }
+
     /** 返回安装顺序快照，不允许外部改写实例集合。 */
     public List<Entry> snapshot() {
         return List.copyOf(entries);
