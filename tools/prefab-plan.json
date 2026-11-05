@@ -165,7 +165,8 @@
         "ChapterPreviewLayer",
         "ChapterRewardCell",
         "ChapterRewardLayer",
-        "ChapterStageChip"
+        "ChapterStageChip",
+        "ChapterEndView"
       ]
     },
     {

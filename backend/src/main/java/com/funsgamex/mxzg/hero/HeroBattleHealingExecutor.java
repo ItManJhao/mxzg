@@ -43,6 +43,18 @@ public final class HeroBattleHealingExecutor implements Executor {
     /** 返回当前投射表现记录，不等于前端已播放。 */
     public List<Presentation> presentations() { return List.copyOf(presentations); }
 
+    /** 已支持场景的执行顺序记录；非对应类型的载荷为null，不作为网络协议。 */
+    public record Trace(String kind, int round, int sourceId, int targetId, int configId,
+                        HeroBattleSkillUtils.Skill skill, Damage damage,
+                        HeroBattleBuffState.Entry buff, String reason) {}
+    /** 本场顺序记录，与根事务一起回滚；不把不同类型的独立列表事后拼接。 */
+    private final List<Trace> trace = new ArrayList<>();
+
+    /** 返回不可变执行记录；目前覆盖技能起止、表现、伤害和Buff安装/移除。 */
+    public List<Trace> trace() {
+        return List.copyOf(trace);
+    }
+
     /** 本次完整普攻动作上下文；反击共用配置及随机入口，结束或失败后恢复外层。 */
     private AttackContext attackContext;
     /** 额外普攻动作，按旧队列先进先出；不合并同一单位的多个动作。 */
@@ -193,13 +205,19 @@ public final class HeroBattleHealingExecutor implements Executor {
         if (actor.hasControl(1011) || actor.hasControl(1013) || actor.hasControl(1015)) {
             throw new UnsupportedOperationException("普通攻击控制改选尚未支持");
         }
+        trace.add(new Trace("skill.begin", round, actor.id(), attackContext.target,
+            skill.skillId(), skill, null, null, ""));
         for (var art : rules.damageSkillArts(skill)) {
             var living = units.values().stream().filter(u -> u.hp() > 0 && !u.actor().isDead()).map(State::target).toList();
             var targets = HeroBattleTargetUtils.select(art.targets(), source.target(), living,
                 List.of(require(attackContext.target).target()), attackContext.queued);
             for (int buffId : art.buffs()) {
                 if (rules.battleProjectile(buffId)) {
-                    for (var target : targets) presentations.add(new Presentation(buffId, actor.id(), target.id()));
+                    for (var target : targets) {
+                        presentations.add(new Presentation(buffId, actor.id(), target.id()));
+                        trace.add(new Trace("presentation", round, actor.id(), target.id(), buffId,
+                            null, null, null, ""));
+                    }
                     continue;
                 }
                 if (rules.battleRoundListener(buffId)) {
@@ -215,6 +233,8 @@ public final class HeroBattleHealingExecutor implements Executor {
                 actor.restore();
             }
         }
+        trace.add(new Trace("skill.end", round, actor.id(), attackContext.target,
+            skill.skillId(), skill, null, null, ""));
     }
 
     /** 执行单位真实普攻并依序排空1301反击；当前为物理伤害子集，主动技能通过act传入真实能量；完整回合调度后续接入。 */
@@ -738,7 +758,9 @@ public final class HeroBattleHealingExecutor implements Executor {
         boolean dead = nextHp <= 0;
         units.put(targetId, target.withHp(nextHp));
         target.actor().setDead(dead);
-        damages.add(new Damage(buffId, sourceId, targetId, amount, absorption.absorbed(), reported, actual, dead));
+        var damage = new Damage(buffId, sourceId, targetId, amount, absorption.absorbed(), reported, actual, dead);
+        damages.add(damage);
+        trace.add(new Trace("damage", round, sourceId, targetId, buffId, null, damage, null, ""));
         if (dead && finishDeath) {
             finishDeath(sourceId, targetId);
         }
@@ -765,6 +787,8 @@ public final class HeroBattleHealingExecutor implements Executor {
         nextBuffInstance = Math.addExact(next, 1);
         var change = state.add(next, sourceId, round, spec, value);
         removed(targetId, change.removed(), "replace");
+        trace.add(new Trace("buff.upsert", round, sourceId, targetId, change.current().spec().id(),
+            null, null, change.current(), ""));
         return change.current();
     }
 
@@ -835,6 +859,8 @@ public final class HeroBattleHealingExecutor implements Executor {
         for (var entry : entries) {
             require(unitId).actor().remove(entry.instanceId());
             removals.add(new Removal(unitId, entry, reason));
+            trace.add(new Trace("buff.remove", round, entry.sourceId(), unitId, entry.spec().id(),
+                null, null, entry, reason));
         }
     }
 
@@ -876,6 +902,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         int damageSize = damages.size();
         int ordinarySize = ordinaryResults.size();
         int presentationSize = presentations.size();
+        int traceSize = trace.size();
         var attributeBefore = new HashMap<Integer, Map<Integer, Long>>();
         int recoverySize = recoveries.size();
         int signalSize = signals.size();
@@ -898,6 +925,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                 attributeBefore.forEach((id, values) -> combat.get(id).attributes().restore(values));
                 ordinaryResults.subList(ordinarySize, ordinaryResults.size()).clear();
                 presentations.subList(presentationSize, presentations.size()).clear();
+                trace.subList(traceSize, trace.size()).clear();
                 units.clear();
                 units.putAll(before);
                 checkpoints.forEach(Actor::rollback);

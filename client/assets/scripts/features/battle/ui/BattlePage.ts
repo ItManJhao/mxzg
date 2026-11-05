@@ -1,14 +1,10 @@
 /**
- * 绑定 BattlePage.prefab。节点名对齐 docs/battle-prefab-layout.md。
- * 路径相对 assets：prefabs/ui/battle/BattlePage。Prefab 本身不走 resources.load。
- * 战斗场景底是 ui/maps/map-bg-mission-1。battle-scene_spr-bg-1 是 112×64 边角，不能当全屏底。
- * 不挂脚本组件，不改 Prefab。USE_BATTLE_PREFAB 为 false，或加载 / 绑节点失败时，调用方仍走代码 UI。
- * 飘字写 LayerFloat/FloatDmg_0..3 和 FloatCrit，技能名写 SkillNameBanner，前排头顶写 HeadAnchor。
- * 这些节点必须已经在 Prefab 上。缺一个就整页退回代码 UI，不另建同名节点。
- * 不发协议。WireBattlePage 没有站位和特效挂点，这一刀不挂它。
+ * 绑定序列化战场 BattlePage，节点契约见 docs/battle-prefab-layout.md。
+ * 当前主线使用宫殿远景、地板和紧凑血条；静态布局由预制体维护。
+ * 只装配显示与事件，不发协议。缺失必要挂点时拒绝打开，由调用边界报告错误。
  */
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { Color, Node, resources, Sprite, SpriteFrame, UITransform } from "cc";
+import { Node, resources, Sprite, SpriteFrame, UITransform } from "cc";
 import {
     BATTLE_PREFAB_PATH,
     battleHpPath,
@@ -27,94 +23,6 @@ import { bindClick, loadPrefab, requireNode, spawnPrefab } from "../../../framew
 import { setText } from "../../../framework/ui/UiKit";
 
 export { BATTLE_PREFAB_PATH };
-
-/**
- * 真服进战默认挂 BattlePage。和登录、主城壳一样默认开。
- * 改成 false 再预览，就回到 WireMainlinePage 里代码搭的战斗页。不要改 Boot。
- */
-export const USE_BATTLE_PREFAB = true;
-
-/**
- * 全屏战场底，和 Prefab Bg 同一张。648×1152，拉到 720×1280。
- * battle-scene_spr-bg-1 只有约 112×64，不能铺满页面。
- */
-export const BATTLE_SCENE_BG_PATHS = [
-    ResourceCatalog.maps.map_bg_mission_1.path,
-];
-
-/** 代码战斗页没有 Prefab 底时用的沙地。已在 resources。 */
-export const BATTLE_SCENE_BG_FALLBACK = ResourceCatalog.maps.map_bg_crusade_group_boss.path;
-
-/**
- * map-bg-mission-1 下半是黑的。放大并下移，让石板盖住站位，黑边落到画面外。
- * 回合和倍速从顶栏挪到主城条下面。
- */
-export function seatBattleField(root: Node): void {
-    const bg = root.name === "Bg" ? root : root.getChildByName("Bg");
-    if (bg) {
-        bg.setScale(1.85, 1.85, 1);
-        bg.setPosition(0, -280, 0);
-    }
-    const top = findNamed(root, "TopBar");
-    if (top) top.setPosition(0, 420, 0);
-}
-
-function findNamed(root: Node, name: string): Node | null {
-    if (root.name === name) return root;
-    const kids = root.children;
-    for (let i = 0; i < kids.length; i++) {
-        const found = findNamed(kids[i], name);
-        if (found) return found;
-    }
-    return null;
-}
-
-export function paintBattleScene(root: Node): void {
-    seatBattleField(root);
-    const bg = root.name === "Bg" ? root : root.getChildByName("Bg");
-    if (!bg) return;
-    void loadFirstFrame(BATTLE_SCENE_BG_PATHS).then((frame) => {
-        if (!frame || !bg.isValid) return;
-        applyFrame(bg, frame);
-    });
-}
-
-/** 代码页同步铺一张底，再尝试战斗场景图，没有就用沙地。后加的子节点盖在上面。 */
-export function mountBattleBackdrop(parent: Node): Node {
-    const bg = new Node("Bg");
-    bg.layer = parent.layer;
-    const ui = bg.addComponent(UITransform);
-    ui.setContentSize(720, 1280);
-    bg.addComponent(Sprite);
-    bg.setPosition(0, 0, 0);
-    bg.parent = parent;
-    bg.setSiblingIndex(0);
-    const paths = [...BATTLE_SCENE_BG_PATHS, BATTLE_SCENE_BG_FALLBACK];
-    void loadFirstFrame(paths).then((frame) => {
-        if (!frame || !bg.isValid) return;
-        applyFrame(bg, frame);
-    });
-    return bg;
-}
-
-function applyFrame(bg: Node, frame: SpriteFrame): void {
-    const sprite = bg.getComponent(Sprite) || bg.addComponent(Sprite);
-    sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-    sprite.type = Sprite.Type.SIMPLE;
-    sprite.spriteFrame = frame;
-    sprite.color = Color.WHITE;
-}
-
-function loadFirstFrame(paths: string[]): Promise<SpriteFrame | null> {
-    const step = (index: number): Promise<SpriteFrame | null> => {
-        if (index >= paths.length) return Promise.resolve(null);
-        return loadFrame(paths[index]).then((frame) => {
-            if (frame) return frame;
-            return step(index + 1);
-        });
-    };
-    return step(0);
-}
 
 /** 顶栏加速钮。1 / 2 / 3 对 battle-scene_btn-speed-1 / 2 / 3。 */
 export const BATTLE_SPEED_ICON = [
@@ -244,7 +152,14 @@ function bindBattlePrefab(root: Node): BattlePrefabShell {
     };
 }
 
+/** 更新血条比例；正式资源采用裁切填充，旧占位填充保留原尺寸算法。 */
 function paintHpFill(node: Node, ratio: number): void {
+    const sprite = node.getComponent(Sprite);
+    if (sprite?.type === Sprite.Type.FILLED) {
+        sprite.fillRange = Math.max(0, Math.min(1, ratio));
+        node.active = ratio > 0;
+        return;
+    }
     const ui = node.getComponent(UITransform);
     if (!ui) return;
     const layout = hpFillLayout(ratio);

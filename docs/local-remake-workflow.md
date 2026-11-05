@@ -79,3 +79,13 @@ node C:/ProgramData/cocos/editors/Creator/3.8.8/resources/app.asar.unpacked/node
 ## 普通升级的专用测试连接
 
 普通升级验证不能使用上文日常开发后端。使用 [后端说明](../backend/README.md) 的 `test-mysql.ps1 -Preview` 创建全新实例、受限账号和独立 HTTP 进程；把其显示的 run/端口填入 Creator 新测试页的显式参数。日常 scene 地址、默认配置和会话不覆盖。先确认身份握手成功，再以本批新账号登录。普通升级 Prefab 修改后等待 Creator 导入；页面连点、关闭和换号用真实返回复验，不能把 H2 或引擎替身当作视觉验收。
+
+
+### 独立战报画面（2026-11-05）
+
+先运行后端测试生成backend/target/chapter-1-1-1-replay.pb，再运行`node tools/check_battle_replay.cjs`。通过后在仓库根启动`node tools/serve_battle_replay.cjs`，只监听127.0.0.1:19091。Creator刷新资源并启动Remake预览，打开`http://localhost:7456/?battleReplay=1`，点击“开始”。本入口不登录、不读写玩家库；“撤退”清理测试战场，重新验收需刷新页面。验收完在资源服务终端按Ctrl+C停止。此入口不能用于生产部署或真实挑战。
+
+
+### ChapterEnd 只读复验
+
+启动 `node tools/serve_battle_replay.cjs` 后，用 `http://localhost:7456/?battleReplay=1` 点击开始，完整战报结束后检查胜利翅膀、结算声、遮罩关闭和退出测试。失败样式使用 `http://localhost:7456/?battleReplay=1&chapterEnd=defeat`，点击“失败样式验收”检查失败标题、只读四图标、失败音效和5秒关闭；该入口不播放或伪造失败战报。两者均只允许本机Creator预览，不连接账号或数据库。运行 `node tools/check_chapter_end.cjs` 验证生命周期与预制体绑定。

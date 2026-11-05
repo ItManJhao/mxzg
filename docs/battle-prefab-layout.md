@@ -1,0 +1,87 @@
+# 战斗预制体整理与正式服对照
+
+更新：2026-11-05。当前仅整理战斗表现，不开放挑战、领奖、升级或穿脱。
+
+## 依据
+
+- 正式服 hao1：主线战斗在宫殿挂机场景内播放，回合显示在战场下缘，双方信息在其下方；不是独立森林战场。
+- 旧 BattleLayer.lua 组合 BattlePanelLayer、BattleMissionLayer、BattleIdleLayer；不能用一个旧 Layer 代替整个页面。
+- BattleHeroInfoNode.lua 使用 hero/progress-hp-bg、green，背景缩放 0.5，显示等级与元素；能量条初始化被注释。
+- BattleMissionLayer.lua 主线失败进入 ChapterEndCtr，胜利请求 ChapterEnd。BattleEndLayer 是通用结算，不是已证实的主线最终模板。
+
+## 资源盘点
+
+| 当前预制体 | 状态与处理 |
+| --- | --- |
+| BattlePage | 独立真实战报的当前显示壳。本批复用宫殿远景与地板、旧紧凑血条，回合栏移至下方，隐藏占位技能条与未接通倍速。保留原 UUID。 |
+| CampaignView | 暂停的主线页面壳；后续按旧 BattleLayer 组合恢复，不在本批开放。 |
+| BattleInfoLayer | 旧双方对阵信息资源，待接入真实双方名称、阵型与回合数据。 |
+| BattleEndLayer | 暂停链路的通用结算，暂不冒充主线 ChapterEnd。 |
+| BattleDetailLayer | 旧统计页，含两处原生 ScrollView；接入时迁移 SuperScroll，当前不开放。 |
+| BattleDetailCell | 上述统计页单元，随统计协议一起恢复。 |
+| BattleEditLayer | 旧布阵容器；当前已恢复布阵走英雄模块 FormationView，不新增第二套入口。 |
+| BattleReportLayer | 只有根节点，不能当作可用完整战报页；先保留来源及 UUID，待引用退役检查后决定删除。 |
+| HangMissionChipView | 当前关卡显示单元，保留。 |
+
+## BattlePage 节点契约
+
+- Bg：map01_B 远景；CampaignFloor：map01_F 地板，位于角色之前。
+- LayerField/AllySlots、EnemySlots：角色与头顶 Buff 的父层。
+- LayerHud/HpBars：旧血条资源，Fill 使用水平 FILLED 裁切，更新 fillRange 不重新拉伸图片。Label 显示等级，不显示剩余血量数字。
+- LayerHud/TopBar/RoundLabel：暂保留绑定路径，位置已移至下方；名称迁移需同步所有引用。
+- LayerHud/BtnSkip、BtnRetreat：当前独立测试的开始、退出控件；不表示正式服有这两个按钮。
+- LayerFloat：真实伤害飘字。静态占位数字清空；LayerAppear、SkillBars 默认隐藏。
+- HeadAnchor/BuffRow：Buff 实例图标；默认隐藏，由真实事件开启。
+
+## 尚未完成的对齐
+
+本批不是完整正式服等价验收：当前显示壳已补齐每侧八槽及头顶挂点；当前独立战报仍仅双方各一名一级英雄，多人战报播放尚未验收。等级暂依据该固定场景，正式入口必须携带真实单位等级和元素，不可泛化硬编码。
+
+八站位、模板元素和双方信息底条已接入独立预览；后续按 ChapterEnd 资源恢复主线结算与统计。正式服本次战斗过程中曾出现角色未显示，不能用这一异常作为隐藏角色的依据；继续以旧源码和可见挂机角色信息交叉核对。
+
+清心概率待审、护盾疑点继续保留。独立战报不连接玩家数据库，也不发奖励。
+
+
+## 640设计与九宫格整改（2026-11-05）
+
+- 项目设计设置为640×1280、Fit Height。BattlePage根节点已由用户改为640；本批补齐内部11个遗留720宽容器。可见宽度与设计宽不同，结算遮罩使用实际视口尺寸。
+- 保留用户设置的win-bg_msg-bg四边10像素边距和LogBg的Sliced模式；补齐BannerBg及隐藏面板占位的Sliced模式。Buff图标是运行时替换的完整图标，继续使用Simple，不按底板处理。
+- 删除BattlePage中没有调用者的旧森林背景加载、1.85倍放大及代码生成背景分支，避免后续误用。保留实际使用的预制体绑定。
+- tools/check_battle_prefab_layout.py 检查设计设置、战斗目录残留720宽、Sliced资源边距及提示底板模式。本批9份预制体、22处Sliced组件通过；只证明静态资源约束，不替代正式服视觉验收。
+- 背景、角色、图标不能为了拉伸方便统一改九宫格；边框资源需同时核对SpriteFrame边距、Sprite模式、目标尺寸和运行时代码覆盖。
+
+## 正式服录像参照方法
+
+建议用正常1倍速、固定窗口和完整游戏区域录制，从点击挑战前开始，到结算关闭后结束。保存原始声音，30或60fps均可；注明关卡、阵容、等级、窗口尺寸和是否手动切换倍速。不要只提供语音转写，语音转写不能描述画面运动。
+
+视频理解可用Google AI Studio/Gemini，官方支持画面分析与时间戳问答：
+https://ai.google.dev/gemini-api/docs/video-understanding
+
+自动视频理解可能漏掉瞬间动作，保留原视频、关键帧和文字记录。争议片段按实际帧号复核，未知规则标“无法从画面确定”，不依据视频猜伤害公式或技能概率。
+
+可复制给视频分析工具：
+
+> 这是旧游戏正式服战斗录像，用于1:1恢复界面和表现。请按时间顺序输出表格：时间段、对象、起止位置（以游戏区域宽高百分比表示）、动作/朝向、技能文字与特效、血条/等级/元素变化、Buff出现消失、音效、界面切换、证据关键帧时间、置信度。分别覆盖进场、普攻、主动技能、受击、死亡、回合切换、胜负结算。区分直接观察与推测；看不清或未出现的写“未确认”。不要猜伤害公式，不要概括为“角色互相攻击”。对快速动作指出需要逐帧复核的时间段，并说明录像中是否发生倍速变化。
+
+分析结果回到仓库后，逐条映射到预制体、资源或播放器差异，不将模型生成的描述直接视为规则事实。
+
+
+## 八站位与对阵栏（2026-11-05）
+
+- BattleStageUtils逐项还原旧BattleUtils.getHeroPosition的高度档位、两列四行及左右镜像；主线按BattlePanelLayer的300底部高度、BattleLayer的637战场高度换算到640×1280中心坐标。
+- Slot_A0..7、Slot_E0..7及独立血条/元素/HeadAnchor均保存于预制体。预览根据战报position=2选索引1，不再固定使用索引0。当前单位和血条容器统一0.9缩放以保留窄屏外侧头顶信息边距，此适配不是旧公式的一部分，完整多人密度仍待录像比对。
+- Hero模板元素从同源herotype读取，经ResourceCatalog加载完整元素图标；不以元素图标冒充团队光环。血条与元素在独立播放时挂到对应英雄槽，跟随近身移动。
+- MatchInfo复用BattleInfoLayer的蓝红底条与VS，纠正旧蓝底条锚点；独立测试名字明确标“独立测试阵容/主线第1关”，不冒充真实账号名。契约和光环没有权威数据，暂不显示。
+- ChapterEndCtr核实：主线胜利用chibang骨骼动画，胜负音效battle-end-1/0；旧奖励使用scroll_view；ChapterEndCtr自身倒计时需startTimer调用，但默认失败ChapterEndLoseCell.reset会独立启动5秒关闭。战报按钮依detail存在显示。只读恢复见下节，不使用通用BattleEndLayer或伪造奖励。
+- 旧client/tools/gen_battle_prefab.py会重建720森林与已退役WireBattlePage，已停止生成，改为明确失败提示；现有资源保留人工编辑和UUID。
+
+
+## ChapterEnd 主线只读结算（2026-11-05）
+
+- 新 ChapterEndView.prefab 从旧 ChapterEndLayer/ChapterEndLoseCell 的资源与坐标恢复；旧两份预制体及 UUID 保留。新 View 与预制体同名，经 UIManager 的 Popup 宿主打开，预制体保存静态布局与组件绑定，节点使用英文名。
+- 胜利播放 chibang/idle 循环并隐藏静态翅膀标题；失败使用 spr-wing-0 与 lbl-result-0、四个只读养成图标，修复旧导入乱码。音效分别使用 battle-end-1/0。
+- Tools.layerEnterAction：主体 1.01→1，0.15 秒 backOut；透明度 0→255，0.08 秒；effect2[73] 彩带 0..10 帧、scale=2。anim/EffectFactory 将 speed=8 除以100，因此是每帧0.08秒，不是每秒8帧。
+- 失败沿用 ChapterEndLoseCell 的5秒倒计时；胜利不自动关闭。点击遮罩关闭，暂停时引擎倒计时暂停；关场时关闭弹窗、音效、动画和定时器。播放动画结束与整个战场销毁分开，不能提前注销结算注册。
+- 当前 BattleReplay 不含奖励/结算回执，只显示真实胜负与只读说明；不构造奖励，不发送挑战结束或领取协议。旧奖励 ScrollView 没有接入新 View；后续有权威奖励数据再接 SuperScroll。战报详情、养成、装备等跳转未开放。
+- 正常独立战报入口在完整播放后显示结算。`?battleReplay=1&chapterEnd=defeat` 只验证失败样式、音效与关闭流程，明确标“失败样式验收”，不改真实战报、不宣称跑通真实失败关卡。
+- 自动回归：`node tools/check_chapter_end.cjs` 覆盖真实 View 的胜败分支、音效选择、翅膀播放、彩带结束、5秒关闭、提前关闭及迟到资源、英文节点和组件引用。真实 Creator 视觉验收状态见开发进度，不以模拟生命周期测试代替画面验收。

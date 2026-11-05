@@ -75,6 +75,7 @@ class HeroBattlePostCounterTest {
         assertTrue(e.damages().isEmpty());
         assertTrue(e.signals().isEmpty());
         assertTrue(e.presentations().isEmpty());
+        assertTrue(e.trace().isEmpty());
         e.attack(1, 2, new HeroBattleElementRules(new ObjectMapper()), decisions(false));
         assertEquals(1000, e.state(2).hp());
     }

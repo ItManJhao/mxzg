@@ -167,3 +167,41 @@ message FormationSaved {
 
 // 可选阵型与当前允许站位由服务端同源配置投影，不由客户端猜测。
 message FormationOption { required uint32 formation_id = 1; repeated uint32 open_positions = 2; }
+
+// 独立关卡验收战报；尚未注册业务消息，不开放挑战/奖励接口。
+message BattleReplay {
+  required uint32 schema_version = 1;
+  required string scenario = 2;
+  required string outcome = 3;
+  required uint32 rounds = 4;
+  repeated BattleReplayUnit units = 5;
+  repeated BattleReplayPhase phases = 6;
+}
+message BattleReplayUnit {
+  required uint32 unit_id = 1;
+  required uint32 template_id = 2;
+  required uint32 position = 3;
+  required int64 initial_hp = 4;
+  required int64 final_hp = 5;
+}
+message BattleReplayPhase {
+  required uint32 round = 1;
+  // 0为回合开始，1/2为当前双单位验收场景出手者。
+  required uint32 source_id = 2;
+  repeated BattleReplayEvent events = 3;
+}
+message BattleReplayEvent {
+  required string kind = 1;
+  required uint32 source_id = 2;
+  required uint32 target_id = 3;
+  required uint32 config_id = 4;
+  optional uint32 skill_level = 5;
+  optional uint32 skill_type = 6;
+  optional int64 actual_hp_change = 7;
+  optional int64 reported_hp_change = 8;
+  optional bool dead = 9;
+  optional int64 buff_instance_id = 10;
+  optional uint32 expires_at_round = 11;
+  optional int64 buff_value = 12;
+  optional string removal_reason = 13;
+}

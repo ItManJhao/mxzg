@@ -45,9 +45,11 @@ export async function mountBattleEnd(
         if (!parent.isValid) return null;
         const hold = uiNode("BattleEndHold");
         const ui = hold.addComponent(UITransform);
-        ui.setContentSize(720, 1280);
+        // 遮罩按实际视口覆盖；设计宽640不等于所有设备的可见宽。
+        const visibleSize = gameView.getVisibleSize();
+        ui.setContentSize(visibleSize.width, visibleSize.height);
         hold.addComponent(BlockInputEvents);
-        place(createRect("dim", 720, 1280, new Color(8, 16, 32, 160)), hold, 0, 0);
+        place(createRect("dim", visibleSize.width, visibleSize.height, new Color(8, 16, 32, 160)), hold, 0, 0);
         const view = spawnPrefab(prefab, hold);
         mountCcbiView(view);
         const headline = options?.receiptTitle || (win === true ? "胜利" : win === false ? "失败" : "胜负未带");

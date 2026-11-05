@@ -98,6 +98,7 @@ export const ResourceCatalog = {
   prefab_chapter: {
     ChapterEndLayer: {"bundle":"prefabs","path":"ui/chapter/ChapterEndLayer","assetPath":"prefabs/ui/chapter/ChapterEndLayer","loadPath":"ui/chapter/ChapterEndLayer","type":"Prefab","uuid":"f67629be-903e-4f42-bca0-bdc14685a22c"},
     ChapterEndLoseCell: {"bundle":"prefabs","path":"ui/chapter/ChapterEndLoseCell","assetPath":"prefabs/ui/chapter/ChapterEndLoseCell","loadPath":"ui/chapter/ChapterEndLoseCell","type":"Prefab","uuid":"7ee49873-d250-4cbd-afb8-e173948a84c4"},
+    ChapterEndView: {"bundle":"prefabs","path":"ui/chapter/ChapterEndView","assetPath":"prefabs/ui/chapter/ChapterEndView","loadPath":"ui/chapter/ChapterEndView","type":"Prefab","uuid":"87487742-8794-4b8b-824c-ef1c009cdf27"},
     ChapterExtraRewardCell: {"bundle":"prefabs","path":"ui/chapter/ChapterExtraRewardCell","assetPath":"prefabs/ui/chapter/ChapterExtraRewardCell","loadPath":"ui/chapter/ChapterExtraRewardCell","type":"Prefab","uuid":"82856eb9-fd9b-4e2e-9c8d-dcd371227229"},
     ChapterMapLayer: {"bundle":"prefabs","path":"ui/chapter/ChapterMapLayer","assetPath":"prefabs/ui/chapter/ChapterMapLayer","loadPath":"ui/chapter/ChapterMapLayer","type":"Prefab","uuid":"8a6b4e50-17c2-49fd-96bb-c42578a7f6ea"},
     ChapterPreviewLayer: {"bundle":"prefabs","path":"ui/chapter/ChapterPreviewLayer","assetPath":"prefabs/ui/chapter/ChapterPreviewLayer","loadPath":"ui/chapter/ChapterPreviewLayer","type":"Prefab","uuid":"9b27aa5f-aed6-4237-be28-f887c7269fd8"},

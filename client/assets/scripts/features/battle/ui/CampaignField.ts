@@ -2,7 +2,7 @@
  * 主线战报显示：消费服务端单位与命中事件，管理骨骼、动画及演武的显示生命周期，不计算奖励。
  */
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { instantiate, Label, Node, UITransform, view } from "cc";
+import { Label, Node, Sprite, UITransform, view } from "cc";
 import { mountBattlePrefab } from "./BattlePage";
 import type { BattlePrefabShell } from "./BattlePage";
 import { mountBattleSpine, mountNamedSpine } from "./battleSpine";
@@ -98,7 +98,7 @@ export class CampaignField {
                 entry.actor.node.destroy();
         this.actors.clear();
         for (const side of ["ally", "enemy"] as const)
-            for (let index = 0; index < 7; index++) {
+            for (let index = 0; index < 8; index++) {
                 const slot = this.slot(side, index);
                 slot.active = false;
                 clearBattleOverhead(slot);
@@ -181,40 +181,28 @@ export class CampaignField {
         }
         const fill = label?.parent?.getChildByName("Fill");
         if (fill) {
+            const sprite = fill.getComponent(Sprite);
+            if (sprite?.type === Sprite.Type.FILLED) {
+                sprite.fillRange = Math.max(0, Math.min(1, value / entry.unit.maxHp));
+                fill.active = value > 0;
+                return;
+            }
             const layout = hpFillLayout(value / entry.unit.maxHp);
             fill.active = layout.visible;
             fill.getComponent(UITransform)?.setContentSize(layout.width, HP_FILL_HEIGHT);
             fill.setPosition(layout.x, 0, 0);
         }
     }
-    /** The main formation allows seven heroes. Reuse the last serialized slot as
-     * its template so every server participant has an actor and an HP bar. */
+    /** 复用预制体完整八槽，不再在运行时克隆第七格。 */
     private slot(side: "ally" | "enemy", index: number): Node {
-        if (index < 6)
-            return this.shell.slot(side, index);
-        const template = this.shell.slot(side, 5);
-        const name = side === "ally" ? "Slot_A6" : "Slot_E6";
-        let extra = template.parent!.getChildByName(name);
-        if (!extra) {
-            extra = instantiate(template);
-            extra.name = name;
-            extra.parent = template.parent;
-        }
-        return extra;
+        return this.shell.slot(side, index);
     }
+
+    /** 每个序列化站位均有独立血条，防止第七和第八格共享节点。 */
     private hpLabel(side: "ally" | "enemy", index: number): Node | null {
-        if (index < 6)
-            return this.shell.hpLabel(side, index);
-        const template = this.shell.hpLabel(side, 5)!.parent!;
-        const name = side === "ally" ? "AllyHp_6" : "EnemyHp_6";
-        let extra = template.parent!.getChildByName(name);
-        if (!extra) {
-            extra = instantiate(template);
-            extra.name = name;
-            extra.parent = template.parent;
-        }
-        return extra.getChildByName("Label");
+        return this.shell.hpLabel(side, index);
     }
+
     replay(report: CampaignReport): Promise<void> {
         this.show(report.units);
         const intro = this.shell.root.getChildByName("LayerAppear");

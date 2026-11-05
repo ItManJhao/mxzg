@@ -2,6 +2,7 @@
  * 重做版应用装配入口，装配选服、登录、角色和背包；其他玩法入口暂停。
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
+import { BattleReplayPreview } from "../../features/battle/ui/BattleReplayPreview";
 import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
 import { FormationView } from "../../features/hero/ui/FormationView";
 import { FormationController } from "../../features/hero/FormationController";
@@ -76,6 +77,8 @@ export class RemakeApp extends Component {
   @property(Node) startupHost: Node | null = null;
   /** 完整长连接地址，由场景保存；凭证不进入 URL。 */
   @property socketUrl = "ws://127.0.0.1:18080/api/v1/game/socket";
+  /** 独立只读战报验收页的清理函数，不影响正常登录流程。 */
+  private replayCleanup: (() => void) | null = null;
   private gameSocket: GameSocketClient | null = null;
   private navigation: RemakeNavigation | null = null;
   private offAccount: (() => void) | null = null;
@@ -100,6 +103,19 @@ export class RemakeApp extends Component {
 
   /** 编辑器启动应用时装配唯一会话服务和页面注册，并执行新链路启动流程。 */
   async start(): Promise<void> {
+    if (PREVIEW && typeof location !== "undefined" && new URLSearchParams(location.search).get("battleReplay") === "1") {
+      if (!/^http:\/\/(localhost|127\.0\.0\.1):7456\//.test(location.href) || !this.pageHost) {
+        throw new Error("独立战报仅允许本机Creator预览");
+      }
+      // 固定只读二进制资源服务，不建立游戏连接，不读取登录凭证。
+      if (this.startupHost) this.startupHost.active = false;
+      const response = await fetch("http://127.0.0.1:19091/chapter-1-1-1-replay.pb");
+      if (!response.ok) throw new Error("独立战报文件读取失败");
+      this.replayCleanup = await BattleReplayPreview.open(this.pageHost, new Uint8Array(await response.arrayBuffer()),
+        new URLSearchParams(location.search).get("chapterEnd") === "defeat");
+      if (!this.isValid) this.replayCleanup();
+      return;
+    }
     if (!this.loginPrefab || !this.loadingPrefab || !this.pageHost || !this.startupHost) throw new Error("Remake 场景未绑定页面/加载 Prefab 或启动宿主，请重新打开已更新的 Remake.scene");
     const model = new AccountModel();
     const connection=await isolatedSocketPreview(this.socketUrl,sys.localStorage);
@@ -397,6 +413,7 @@ export class RemakeApp extends Component {
 
   /** 应用销毁时先关闭页面，再释放模块、会话观察和资源作用域。 */
   onDestroy(): void {
+    this.replayCleanup?.();
     this.alive = false;
     this.started = false;
     game.off(Game.EVENT_HIDE, this.onBackground, this);
