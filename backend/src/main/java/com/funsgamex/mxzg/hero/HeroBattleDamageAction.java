@@ -18,7 +18,7 @@ public final class HeroBattleDamageAction {
     /**
      * 单目标计算上下文：伤害类型1物理/2法术，技能伤害为万分比，能量为旧整数点数。
      * jobBonus是守方职业对应的攻方属性281至285；activeStatusBonuses由真实目标状态判断提供。
-     * hasCounterCrit表示攻方有抗暴Buff；移除回调未恢复，遇到需要移除的分支明确拒绝。
+     * hasCounterCrit表示攻方有抗暴Buff；独立计算入口缺少移除回调时拒绝，战场入口在根事务内提供回调。
      */
     public record Request(HeroBattleAttributeState attacker, HeroBattleAttributeState defender,
                           int attackerElement, int defenderElement, int damageType,
@@ -70,6 +70,11 @@ public final class HeroBattleDamageAction {
 
     /** 严格沿旧calDamage的读取顺序计算，不能预读成Map或复用被消费前的攻击/精准值。 */
     private Result calculate(Request r) {
+        return calculate(r, null);
+    }
+
+    /** 由战场根事务调用；抗暴移除回调必须与属性、Buff和血量共同回滚。 */
+    Result calculate(Request r, Runnable removeCounterCrit) {
         var a = r.attacker();
         var d = r.defender();
         long attack = a.get(220);
@@ -92,9 +97,13 @@ public final class HeroBattleDamageAction {
         boolean rolledCritical = random.test(HeroBattleHitUtils.criticalChance(a.rate(207), d.rate(208)));
         var critical = HeroBattleHitUtils.critical(r.fixedAttack(), rolledCritical, r.sealed(), r.hasCounterCrit());
         if (critical.removeCounterCrit()) {
-            throw new IllegalArgumentException("普通伤害抗暴Buff移除回调尚未接入");
+            if (removeCounterCrit == null) {
+                throw new IllegalArgumentException("普通伤害抗暴Buff移除回调尚未接入");
+            }
+            removeCounterCrit.run();
         }
-        double criticalDamage = HeroBattleHitUtils.criticalMultiplier(a.rate(222));
+        double criticalDamage = critical.readCriticalDamage()
+            ? HeroBattleHitUtils.criticalMultiplier(a.rate(222)) : 1D;
         double criticalRate = critical.critical() ? criticalDamage : 1D;
         boolean blocked = !r.fixedAttack() && random.test(
             HeroBattleHitUtils.blockChance(a.rate(211), elementHit, d.rate(210)));

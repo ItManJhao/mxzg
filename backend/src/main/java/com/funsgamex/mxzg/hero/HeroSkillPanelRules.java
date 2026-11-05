@@ -196,12 +196,48 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009).contains(type)) {
+        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251).contains(type)) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
         return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
             buff.path("dispelled").asInt() == 1, buff.path("effecttype").asInt(),
             buff.path("conflict_type").asInt(), buff.path("stacking_max").asInt(), false);
+    }
+
+    /** 当前模板真实职业和元素，用于装配战场，不从UI面板或调用方猜测。 */
+    public record BattleIdentity(int element, int jobBonus) {}
+
+    /** 根据旧herotype occupation/elem生成普通伤害所需身份。 */
+    public BattleIdentity battleIdentity(int templateId) {
+        var hero = row("herotype", templateId);
+        int job = hero.path("occupation").asInt();
+        int element = hero.path("elem").asInt();
+        if (job < 1 || job > 5 || element < 1 || element > 5) {
+            throw new IllegalArgumentException("战斗英雄身份配置无效");
+        }
+        return new BattleIdentity(element, 280 + job);
+    }
+
+    /** 解析不触发反击、必中安装且无后续动作的100号伤害子集；未恢复的反击链明确拒绝。 */
+    public int battleOrdinaryDamageRate(int buffId) {
+        var buff = row("buff", buffId);
+        var values = buff.path("value").asString().split("\\|", -1);
+        if (buff.path("type").asInt() != 100 || buff.path("attach_percent").asInt() != 10000
+            || values.length < 2 || !values[1].equals("1")
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("普通伤害配置的反击或后续动作尚未支持：" + buffId);
+        }
+        return Integer.parseInt(values[0]);
+    }
+
+    /** 核对独立抗暴状态；当前真实1251没有额外动作或属性移除副作用。 */
+    public HeroBattleBuffState.Spec battleCounterCrit(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 1251 || buff.path("attach_percent").asInt() != 10000
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("抗暴Buff配置尚未支持：" + buffId);
+        }
+        return battleBuff(buffId);
     }
 
     /** 清心/契约专用参数：rate保留原整数，count只用于清心随机目标数。 */

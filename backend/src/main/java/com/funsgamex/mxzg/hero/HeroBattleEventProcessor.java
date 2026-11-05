@@ -55,6 +55,10 @@ public final class HeroBattleEventProcessor {
         private final List<Listener> listeners = new ArrayList<>();
         /** 当前出手中断标记；与旧restore一致在每个监听处理后清空。 */
         private final Set<Integer> interrupts = new HashSet<>();
+        /** 本次出手已关闭后置伤害触发的目标，合法新出手时清空；不能每段伤害重置。 */
+        private final Set<Integer> closedDamageTargets = new HashSet<>();
+        /** 当前选中的是队列反击动作；控制伤害后置事件资格，不代表已执行反击技能。 */
+        private boolean counterattack;
         /** 死亡优先阻止行动，不能被能量9999绕过。 */
         private boolean dead;
         /** 挂机封印与1007状态共同控制事件触发，不代替行动禁止集合。 */
@@ -74,11 +78,14 @@ public final class HeroBattleEventProcessor {
         }
 
         /** 动作事务只修改的临时状态，用于失败回滚与被动初始化回滚。 */
-        record Checkpoint(Set<Integer> interrupts, List<Listener> listeners, long lastTreatment, boolean dead) {}
+        record Checkpoint(Set<Integer> interrupts, List<Listener> listeners, long lastTreatment, boolean dead,
+                          Set<Integer> closedDamageTargets, boolean counterattack,
+                          Set<Integer> controls, boolean hangUpSeal, HeroBattleSkillUtils.Skill current) {}
 
         /** 保存本场动作状态，不包含数据库或角色资产。 */
         Checkpoint checkpoint() {
-            return new Checkpoint(Set.copyOf(interrupts), List.copyOf(listeners), lastTreatment, dead);
+            return new Checkpoint(Set.copyOf(interrupts), List.copyOf(listeners), lastTreatment, dead,
+                Set.copyOf(closedDamageTargets), counterattack, Set.copyOf(controls), hangUpSeal, current);
         }
 
         /** 失败时恢复动作前状态，不把失败的嵌套治疗残留到下一次动作。 */
@@ -89,6 +96,31 @@ public final class HeroBattleEventProcessor {
             listeners.addAll(state.listeners());
             lastTreatment = state.lastTreatment();
             dead = state.dead();
+            closedDamageTargets.clear();
+            closedDamageTargets.addAll(state.closedDamageTargets());
+            counterattack = state.counterattack();
+            controls.clear();
+            controls.addAll(state.controls());
+            hangUpSeal = state.hangUpSeal();
+            current = state.current();
+        }
+
+        /** 旧isCounterattack条件：控制整组伤害后置事件，不是单纯是否追加反击动作。 */
+        public boolean canTriggerDamage(boolean fixedAttack, boolean buffAllowsCounterattack, int targetId) {
+            return !fixedAttack && buffAllowsCounterattack && !counterattack
+                && !closedDamageTargets.contains(targetId);
+        }
+
+        /** 命中且后置处理完成后关闭目标；未命中提前返回时不得调用，防止下一段错误跳过事件。 */
+        public void finishDamage(boolean buffAllowsCounterattack, int targetId) {
+            if (buffAllowsCounterattack || counterattack) {
+                closedDamageTargets.add(targetId);
+            }
+        }
+
+        /** 仅在合法出手开始时清空本次目标标记，不在目标循环、嵌套伤害或事件回调中重置。 */
+        private void beginDamageAction() {
+            closedDamageTargets.clear();
         }
 
         /** 取得当前单位未使用的监听实例编号，保留已有手工安装的监听。 */
@@ -176,10 +208,12 @@ public final class HeroBattleEventProcessor {
         }
         actor.current = HeroBattleSkillUtils.choose(actor.skills, round, queuedAction,
             HeroBattleActionUtils.onlyAttack(actor.controls));
+        actor.counterattack = queuedAction != null;
         dispatch(197, actor, actor.id, executor);
         if (!HeroBattleActionUtils.canAct(actor.dead, actor.current, skillEnergy, actor.controls)) {
             return false;
         }
+        actor.beginDamageAction();
         executor.skill(actor, actor.current);
         if (queuedAction == null) {
             dispatch(actor.current.activeType() == 1 ? 173 : 172, actor, actor.id, executor);
@@ -190,7 +224,7 @@ public final class HeroBattleEventProcessor {
 
     /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180).contains(event)) {
+        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180, 177, 204).contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);

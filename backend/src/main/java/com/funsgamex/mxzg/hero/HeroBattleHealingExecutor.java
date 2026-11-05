@@ -1,5 +1,5 @@
 /**
- * 每场战斗独立的治疗/契约及105伤害子集执行器：配置→目标→事件→生命/Buff变化。
+ * 每场战斗独立的治疗/契约及普通与105伤害子集执行器：配置→目标→事件→生命/Buff变化。
  * 支持通用治疗事件及自身被动安装；不支持控制改选/临时目标数；不写资产、不生成奖励，不代表完整技能引擎。
  */
 package com.funsgamex.mxzg.hero;
@@ -28,6 +28,13 @@ public final class HeroBattleHealingExecutor implements Executor {
 
     /** 每个单位自己的Buff实例集合，与Actor监听通过实例编号关联。 */
     private final Map<Integer, HeroBattleBuffState> buffs = new LinkedHashMap<>();
+    /** 战场单位的真实模板身份与独立属性状态；动作失败时属性消费一起恢复。 */
+    private final Map<Integer, CombatData> combat = new LinkedHashMap<>();
+    /** 模板决定元素/职业，属性来自该单位战斗输入；生命周期与当前执行器一致。 */
+    private record CombatData(HeroSkillPanelRules.BattleIdentity identity, HeroBattleAttributeState attributes) {}
+    /** 普通伤害计算结果记录，包含未命中；事务失败时撤回，不作为网络战报。 */
+    private final List<HeroBattleDamageAction.Result> ordinaryResults = new ArrayList<>();
+
     /** 当前回合，从入场0开始，由战场在到期检查时点显式推进。 */
     private int round;
     /** 本场Buff编号单调递增，实例移除后也不复用，失败时回滚编号。 */
@@ -418,6 +425,104 @@ public final class HeroBattleHealingExecutor implements Executor {
         return selected[0];
     }
 
+    /** 入场绑定同一单位的真实模板和原始战斗属性；不接受已折算面板替代原始输入。 */
+    public void bindCombatData(int unitId, int templateId, Map<Integer, Long> attributes) {
+        require(unitId);
+        if (started || combat.containsKey(unitId)) {
+            throw new IllegalStateException("战斗已开始或单位属性重复绑定");
+        }
+        combat.put(unitId, new CombatData(rules.battleIdentity(templateId), new HeroBattleAttributeState(attributes)));
+    }
+
+    /** 从已校验的持久阵容输入装配，复用模板/原始属性，不追加资产查询。 */
+    public void bindCombatData(int unitId, HeroBattleInputService.Unit input) {
+        bindCombatData(unitId, input.hero().templateId(), input.attributes());
+    }
+
+    /** 本场效果设置下一次读取覆盖值；值只保存在战斗状态，根事务会撤回。 */
+    public void setOnceAttribute(int unitId, int type, long value) {
+        requireCombat(unitId).attributes().setOnce(type, value);
+    }
+
+    /** 返回一次性状态只读快照，供动作及回归核对消费边界。 */
+    public Map<Integer, Long> onceAttributes(int unitId) {
+        return requireCombat(unitId).attributes().snapshot();
+    }
+
+    /** 安装已命中的真实1251抗暴实例；由伤害计算移除首层，不伪触发通用到期回调。 */
+    public void installCounterCrit(int buffId, int sourceId, int targetId) {
+        var spec = rules.battleCounterCrit(buffId);
+        require(sourceId);
+        require(targetId);
+        transaction(() -> installBuff(sourceId, targetId, spec, 0));
+    }
+
+    /**
+     * 执行已选定目标的普通伤害子集；伤害类型、主动标志和能量由当前技能上下文显式提供。
+     * 反击配置尚不支持；每目标计算后立即处理事件/扣血，整组共享属性、Buff、血量事务。
+     */
+    public void ordinaryDamage(int buffId, int sourceId, List<Integer> targetIds, int damageType,
+                               boolean activeSkill, long energy, HeroBattleElementRules elements,
+                               java.util.function.DoublePredicate decision) {
+        int rate = rules.battleOrdinaryDamageRate(buffId);
+        var targets = List.copyOf(targetIds);
+        requireCombat(sourceId);
+        targets.forEach(this::requireCombat);
+        var calculator = new HeroBattleDamageAction(elements, decision);
+        transaction(() -> {
+            started = true;
+            for (int targetId : targets) {
+                var source = require(sourceId);
+                var target = require(targetId);
+                if (source.hp() <= 0 || source.actor().isDead() || target.hp() <= 0
+                    || target.actor().isDead() || source.actor().interrupted(targetId)) continue;
+                emit(187, source.actor(), target.actor());
+                var a = requireCombat(sourceId);
+                var d = requireCombat(targetId);
+                var activeBonuses = new HashSet<Integer>();
+                for (int n = 0; n < 6; n++) {
+                    if (hasStatus(targetId, 1001 + n)) activeBonuses.add(260 + n);
+                    if (hasStatus(targetId, 1201 + n)) activeBonuses.add(301 + n);
+                }
+                var request = new HeroBattleDamageAction.Request(a.attributes(), d.attributes(),
+                    a.identity().element(), d.identity().element(), damageType, rate, activeSkill, energy,
+                    false, hasStatus(sourceId, 1007), hasStatus(sourceId, 1251), d.identity().jobBonus(), activeBonuses);
+                var result = calculator.calculate(request, () -> {
+                    var entries = buffs.get(sourceId).removeFirst(1251);
+                    if (entries.isEmpty()) throw new IllegalStateException("抗暴标记没有对应实例");
+                    removed(sourceId, entries, "counter-crit");
+                });
+                ordinaryResults.add(result);
+                if (result.missed()) {
+                    emit(204, target.actor(), source.actor());
+                    continue;
+                }
+                var previous = damageFrame;
+                damageFrame = new DamageFrame(buffId, Math.negateExact(result.damage()));
+                try {
+                    emit(188, source.actor(), target.actor());
+                    emit(189, target.actor(), source.actor());
+                    deductDamage(buffId, sourceId, targetId, damageFrame.remaining);
+                    if (!require(targetId).actor().isDead()) emit(177, target.actor(), source.actor());
+                } finally {
+                    damageFrame = previous;
+                }
+            }
+        });
+    }
+
+    /** 不可变的普通伤害判定记录，未命中不转成1点伤害。 */
+    public List<HeroBattleDamageAction.Result> ordinaryResults() {
+        return List.copyOf(ordinaryResults);
+    }
+
+    /** 缺少入场属性时拒绝，不借用治疗简化属性构造普通伤害。 */
+    private CombatData requireCombat(int id) {
+        var data = combat.get(id);
+        if (data == null) throw new IllegalStateException("战斗单位尚未绑定普通伤害数据：" + id);
+        return data;
+    }
+
     /** 使用真实105配置执行最小必中伤害链；不替代普通攻击命中、暴击、反击算法。 */
     public void realDamage(int buffId, int sourceId, int targetId) {
         int rate = rules.battleRealDamageRate(buffId);
@@ -566,7 +671,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         return List.copyOf(signals);
     }
 
-    /** 根调用保留回滚点；嵌套治疗失败时撤回血量、记录、监听与临时治疗量。 */
+    /** 根调用保留回滚点；嵌套动作失败时撤回属性消费、血量、Buff、记录、监听与临时治疗量。 */
     private void transaction(Runnable action) {
         boolean root = depth == 0;
         var before = root ? new LinkedHashMap<>(units) : null;
@@ -576,12 +681,15 @@ public final class HeroBattleHealingExecutor implements Executor {
         long nextInstanceBefore = nextBuffInstance;
         int removalSize = removals.size();
         int damageSize = damages.size();
+        int ordinarySize = ordinaryResults.size();
+        var attributeBefore = new HashMap<Integer, Map<Integer, Long>>();
         int recoverySize = recoveries.size();
         int signalSize = signals.size();
         var installedBefore = root ? new HashSet<>(installed) : null;
         boolean startedBefore = started;
         if (root) {
             steps = 0;
+            combat.forEach((id, data) -> attributeBefore.put(id, data.attributes().snapshot()));
             buffs.forEach((id, state) -> buffBefore.put(id, state.snapshot()));
             units.values().forEach(unit -> checkpoints.put(unit.actor(), unit.actor().checkpoint()));
         }
@@ -593,6 +701,8 @@ public final class HeroBattleHealingExecutor implements Executor {
             action.run();
         } catch (RuntimeException error) {
             if (root) {
+                attributeBefore.forEach((id, values) -> combat.get(id).attributes().restore(values));
+                ordinaryResults.subList(ordinarySize, ordinaryResults.size()).clear();
                 units.clear();
                 units.putAll(before);
                 checkpoints.forEach(Actor::rollback);

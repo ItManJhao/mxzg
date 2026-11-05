@@ -59,6 +59,11 @@ public final class HeroBattleBuffState {
         return new Change(current, List.copyOf(removed));
     }
 
+    /** 沿旧getBuffersByType顺序移除首个指定类型实例；由调用方同步记录和清理关联监听。 */
+    public List<Entry> removeFirst(int type) {
+        return remove(entries.stream().filter(entry -> entry.spec().type() == type).limit(1).toList());
+    }
+
     /** 在旧到期检查时点移除expiry<=当前回合的实例，不执行回合伤害或死亡处理。 */
     public List<Entry> expire(int round) {
         return remove(entries.stream().filter(entry -> entry.expiresAt() <= round).toList());
