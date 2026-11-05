@@ -163,3 +163,8 @@ TypeScript 优先使用 JSDoc，Java 使用 Javadoc，Python 使用 docstring，
 - 模块归档同时覆盖资源目录：例如features/bag和prefabs/ui/bag均使用小写模块目录；BagView等预制体/类名保留PascalCase。资源改路径后修改生成输入并重新生成资源索引，不手改生成结果；同步加载路径、测试、当前文档，校验原资源及meta UUID未变。
 
 - 主线阵容也遵守模块Controller不持有View：保存协议与回执进度归FormationController/FormationSaveModel，权威阵容归HeroRosterModel，未保存草稿及交互归FormationView；页面关闭不销毁模块，账号变化由AssetStateBinding统一协调。连接切换与旧回包隔离统一归GameSocketClient和应用装配的AccountService.deliverAuthenticated；BaseController只管理模块生命周期，不再保存会话代次。模块与View不得比较账号/角色键来隔离异步回包。
+
+
+## 2026-11-05 技能表现参考与推进边界
+
+负责人确认：正式服会持续迭代，技能表现以旧项目源码、配置、资源为实现依据，不再将逐技能正式服对照作为开发推进门槛。正式服主要用于界面和其他可对照效果。非阻塞差异先记录到[战斗待复验问题](docs/battle-known-issues.md)，上线前重新复验；仍需完成针对性检查与实际演示，不得把待审问题标为完整验收。既有玩法1:1目标和当前模块范围保持不变。
