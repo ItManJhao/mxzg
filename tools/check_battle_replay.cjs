@@ -444,3 +444,44 @@ async function checkSkillFocus() {
     console.log('PASS selected skill restores prior HP/Buffs, rejects missing focus and cancels safely');
 }
 checkSkillFocus().catch(error => { console.error(error); process.exitCode = 1; });
+
+// 五星/六星独立战报必须使用各自等级，且能恢复前置状态定位第二主动。
+async function checkLowerNanakoLevels() {
+    for (const star of [5, 6]) {
+        const level = star - 4;
+        const data = fs.readFileSync(path.join(root, `backend/target/independent-nanako-star-${star}-replay.pb`));
+        const plan = decode(data);
+        for (const skill of [102050231, 102050233]) {
+            assert.ok(plan.some(step => step.kind === 'skill.begin' && step.configId === skill && step.skillLevel === level));
+            assert.ok(!plan.some(step => step.kind === 'skill.begin' && step.configId === skill && step.skillLevel !== level));
+        }
+        assert.ok(plan.some(step => step.kind === 'buff.upsert' && step.configId === 2234800 + level));
+        const played = [];
+        const player = new playerModule.exports.BattleReplayPlayer({
+            restore: () => {}, play: async step => played.push(step), stop: () => {}
+        });
+        assert.equal(await player.play(data, {skillId: 102050233, level}), true);
+        assert.equal(played[0].configId, 102050233);
+        assert.equal(played[0].skillLevel, level);
+    }
+    console.log('PASS real five/six-star Nanako levels, freeze and exact-level focus');
+}
+checkLowerNanakoLevels().catch(error => { console.error(error); process.exitCode = 1; });
+// 执行实际预览清理闭包：模拟退出按钮已关闭及应用再次关闭，防止操作已销毁节点。
+const previewSource = fs.readFileSync(path.join(root, 'client/assets/scripts/features/battle/ui/BattleReplayPreview.ts'), 'utf8');
+const cleanupStart = previewSource.lastIndexOf('return () =>');
+const cleanupEnd = previewSource.indexOf('\n        };', cleanupStart) + '\n        };'.length;
+assert.ok(cleanupStart > 0 && cleanupEnd > cleanupStart);
+const cleanupFactory = new Function('closed', 'releaseSettlement', 'player', 'stop', 'shell',
+    previewSource.slice(cleanupStart, cleanupEnd));
+let cleanupCalls = 0;
+const countCleanup = () => cleanupCalls++;
+const cleanup = cleanupFactory(false, countCleanup, {stop: countCleanup}, countCleanup,
+    {root: {isValid: true, destroy: countCleanup}});
+cleanup();
+assert.equal(cleanupCalls, 4);
+cleanup();
+assert.equal(cleanupCalls, 4, '重复调用必须无副作用');
+cleanupFactory(true, () => assert.fail('已退出不可再次释放'), null,
+    () => assert.fail('已退出不可操作节点'), null)();
+console.log('PASS preview cleanup is idempotent after exit and application switching');

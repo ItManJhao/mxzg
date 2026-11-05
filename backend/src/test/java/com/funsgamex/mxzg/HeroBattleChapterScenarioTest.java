@@ -439,4 +439,33 @@ class HeroBattleChapterScenarioTest {
             mapper.writerWithDefaultPrettyPrinter().writeValueAsString(report));
     }
 
+    /** 五星/六星由旧星级表选择真实一级/二级技能，零概率追加不能被固定判定误触发。 */
+    @Test void lowerStarNanakoReplays() throws Exception {
+        var mapper = new ObjectMapper();
+        var scenario = new HeroBattleChapterScenario(mapper);
+        for (int star : List.of(5, 6)) {
+            int level = star - 4;
+            var report = scenario.runIndependentNanako(star, rate -> rate >= 0.5);
+            var unit = report.initial().getFirst();
+            assertEquals(star, unit.star());
+            assertEquals(5, unit.skills().size());
+            assertTrue(unit.skills().stream().allMatch(skill -> skill.level() ==
+                (skill.skillId() == 102050230 ? 0 : level)));
+            var trace = report.frames().stream().flatMap(frame -> frame.trace().stream()).toList();
+            assertTrue(trace.stream().anyMatch(event -> event.configId() == 2231300 + level));
+            assertTrue(trace.stream().anyMatch(event -> event.configId() == 2233200 + level));
+            assertTrue(trace.stream().anyMatch(event -> event.configId() == 2234800 + level));
+            var critical = scenario.runIndependentNanako(star, rate -> rate > 0);
+            var first = critical.frames().stream().filter(frame -> frame.sourceId() == 1).findFirst().orElseThrow();
+            assertEquals(List.of(102050231), first.trace().stream()
+                .filter(event -> event.kind().equals("skill.begin")).map(event -> event.configId()).toList());
+            String prefix = "target/independent-nanako-star-" + star;
+            Files.write(Path.of(prefix + "-replay.pb"), HeroBattleReplayProtocolUtils.encode(report).toByteArray());
+            Files.writeString(Path.of(prefix + "-report.json"),
+                mapper.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+        }
+        assertThrows(IllegalArgumentException.class, () -> scenario.runIndependentNanako(4, rate -> true));
+        assertThrows(IllegalArgumentException.class, () -> scenario.runIndependentNanako(8, rate -> true));
+    }
+
 }

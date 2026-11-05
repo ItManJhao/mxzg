@@ -9,6 +9,11 @@ fixtures.set("/independent-control-teams-replay.pb",
 fixtures.set("/independent-nanako-critical-replay.pb", fs.readFileSync(path.join(__dirname, "../backend/target/independent-nanako-critical-replay.pb")));
 fixtures.set("/independent-nanako-replay.pb", fs.readFileSync(path.join(__dirname, "../backend/target/independent-nanako-replay.pb")));
 fixtures.set("/independent-frozen-replay.pb", fs.readFileSync(path.join(__dirname, "../backend/target/independent-frozen-replay.pb")));
+// 五星、六星使用原星级技能配置，各自固定战报，不提供任意文件访问。
+for (const star of [5, 6]) {
+    const name = "independent-nanako-star-" + star + "-replay.pb";
+    fixtures.set("/" + name, fs.readFileSync(path.join(__dirname, "../backend/target", name)));
+}
 http.createServer((request, response) => {
     if (request.method !== "GET" || !fixtures.has(request.url)) {
         response.writeHead(404);

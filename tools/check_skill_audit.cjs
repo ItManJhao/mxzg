@@ -36,13 +36,13 @@ for (const hero of tables.HeroType.rows) {
             assert.ok(replay.phases.some(phase => phase.events.some(event => event.kind === 'skill.begin'
                 && event.configId === entry.id && event.skillLevel === entry.level)), `战报缺少登记技能 ${entry.id}:${entry.level}`);
         } else {
-            const report = JSON.parse(fs.readFileSync(path.join(root,'backend/target/independent-nanako-report.json'),'utf8'));
+            const report = JSON.parse(fs.readFileSync(path.join(root,'backend/target',entry.fixture.replace('-replay.pb','-report.json')),'utf8'));
             assert.ok(report.initial.some(unit => unit.template === hero.type
                 && unit.skills.some(skill => skill.skillId === entry.id && skill.level === entry.level)));
         }
     }
 }
-assert.ok(utils.skills(10205023,config).some(row => row.id === 102050231 && row.level === 1 && !row.fixture));
+assert.ok(utils.skills(10205023,config).some(row => row.id === 102050233 && row.level === 3 && !row.fixture));
 console.log(`PASS 技能验收目录：${tables.HeroType.rows.length}英雄，${total}技能等级条目，${playable}个已登记演示；等级不互相冒认。`);
 
 // 克隆静态按钮/提示节点必须生成各自fileId，防止Creator编辑预制体时报parameter error。

@@ -508,6 +508,18 @@ export class BattleReplayPreview {
             if (shell.root.isValid) shell.root.destroy();
             throw error;
         }
-        return () => { closed = true; releaseSettlement(); player?.stop(); stop(); if (shell.root.isValid) shell.root.destroy(); };
+        // 退出按钮与应用切换可能先后调用同一清理函数；已关闭后不得再次操作销毁的节点。
+        return () => {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            releaseSettlement();
+            player?.stop();
+            stop();
+            if (shell.root.isValid) {
+                shell.root.destroy();
+            }
+        };
     }
 }

@@ -230,11 +230,19 @@ public final class HeroBattleChapterScenario {
 
     /** 双方均为真实七星100级强化5奈奈子，完整技能及配置属性；固定判定仅用于独立演出验收。 */
     public Result runIndependentNanako(DoublePredicate decision) {
+        return runIndependentNanako(7, decision);
+    }
+
+    /** 五至七星真实技能等级夹具；固定100级强化5，不改玩家养成或手工替换技能等级。 */
+    public Result runIndependentNanako(int star, DoublePredicate decision) {
+        if (star < 5 || star > 7) {
+            throw new IllegalArgumentException("奈奈子等级验收只支持五星至七星");
+        }
         var input = new ArrayList<Unit>();
         for (int id : List.of(1, 2)) {
             var enemy = mapper.createObjectNode();
             enemy.put("hero_type", 10205023);
-            enemy.put("hero_star", 7);
+            enemy.put("hero_star", star);
             enemy.put("hero_level", 100);
             enemy.put("pos", 2);
             enemy.put("attr", "[]");
