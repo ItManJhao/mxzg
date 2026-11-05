@@ -129,7 +129,7 @@ class HeroBattleEventsTest {
         actor.setHangUpSeal(false);
         assertThrows(UnsupportedOperationException.class, () -> processor.dispatch(197, actor, 1,
             executor(trace, action -> { throw new UnsupportedOperationException("效果尚未实现"); })));
-        assertThrows(IllegalArgumentException.class, () -> processor.dispatch(174, actor, 1, executor(trace, action -> {})));
+        assertThrows(IllegalArgumentException.class, () -> processor.dispatch(9999, actor, 1, executor(trace, action -> {})));
         processor.end();
         trace.clear();
         assertFalse(processor.act(actor, 1, null, 0, executor(trace, action -> {})));

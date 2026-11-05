@@ -8,7 +8,7 @@ import java.util.*;
 
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
-    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311);
+    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174, 175, 178, 179, 181, 182, 184, 190, 194);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
 
@@ -103,6 +103,12 @@ public final class HeroBattleEventProcessor {
             controls.addAll(state.controls());
             hangUpSeal = state.hangUpSeal();
             current = state.current();
+        }
+
+        /** 反击1301取当前技能计划中的普通攻击，不借用主动技能。 */
+        public HeroBattleSkillUtils.Skill generalAttack() {
+            return skills.stream().filter(skill -> skill.activeType() == 2).reduce((a, b) -> b)
+                .orElseThrow(() -> new IllegalStateException("单位缺少普通攻击技能"));
         }
 
         /** 旧isCounterattack条件：控制整组伤害后置事件，不是单纯是否追加反击动作。 */
@@ -224,7 +230,7 @@ public final class HeroBattleEventProcessor {
 
     /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180, 177, 204).contains(event)) {
+        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180, 177, 176, 204).contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);

@@ -78,6 +78,12 @@ public class HeroSkillPanelRules {
     public HeroBattleEventProcessor.Definition battleTrigger(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
+        if (type == 174 || type == 175) {
+            var limits = buff.path("value").asString().split("\\|", -1);
+            if (Integer.parseInt(limits[0]) != 0 || (type == 175 && limits.length > 1 && Integer.parseInt(limits[1]) != 0)) {
+                throw new IllegalArgumentException("暴击事件次数或回合限制尚未支持：" + buffId);
+            }
+        }
         if (type == 171 && Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) != 0) {
             throw new IllegalArgumentException("受击事件的前置Buff条件尚未支持：" + buffId);
         }
@@ -196,7 +202,7 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251).contains(type)) {
+        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194).contains(type)) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
         return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
@@ -220,14 +226,75 @@ public class HeroSkillPanelRules {
 
     /** 解析不触发反击、必中安装且无后续动作的100号伤害子集；未恢复的反击链明确拒绝。 */
     public int battleOrdinaryDamageRate(int buffId) {
+        return battleOrdinaryDamageRate(buffId, false);
+    }
+
+    /** 完整后置入口可允许反击配置；旧单独扣血入口仍禁止，避免绕过动作生命周期。 */
+    public int battleOrdinaryDamageRate(int buffId, boolean allowCounterattack) {
         var buff = row("buff", buffId);
         var values = buff.path("value").asString().split("\\|", -1);
         if (buff.path("type").asInt() != 100 || buff.path("attach_percent").asInt() != 10000
-            || values.length < 2 || !values[1].equals("1")
+            || values.length < 2 || (!values[1].equals("1") && !allowCounterattack)
             || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
             throw new IllegalArgumentException("普通伤害配置的反击或后续动作尚未支持：" + buffId);
         }
         return Integer.parseInt(values[0]);
+    }
+
+    /** 读取旧value[1]反击资格；仅在伤害配置已经校验后使用。 */
+    public boolean damageAllowsCounterattack(int buffId) {
+        return !row("buff", buffId).path("value").asString().split("\\|", -1)[1].equals("1");
+    }
+
+    /** 一个已预检的纯普通伤害动作，保留目标规则和Buff顺序。 */
+    public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
+
+    /** 按真实普攻技能配置预检整组100号效果；未知效果拒绝，不执行半组技能。 */
+    public List<DamageArt> ordinarySkillArts(HeroBattleSkillUtils.Skill skill) {
+        var config = skills.get(skill.skillId() + ":" + skill.level());
+        if (config == null || config.path("active_type").asInt() != 2) {
+            throw new IllegalArgumentException("当前只接入真实普通攻击技能");
+        }
+        var result = new ArrayList<DamageArt>();
+        for (var id : mapper.readTree(config.path("art_list").asString())) {
+            var art = row("buffart", id.asInt());
+            var ids = new ArrayList<Integer>();
+            for (var buff : mapper.readTree(art.path("buff_list").asString())) {
+                if (!battleProjectile(buff.asInt())) battleOrdinaryDamageRate(buff.asInt(), true);
+                ids.add(buff.asInt());
+            }
+            if (ids.isEmpty()) throw new IllegalArgumentException("普通攻击动作没有效果");
+            result.add(new DamageArt(battleTargets(id.asInt()), List.copyOf(ids)));
+        }
+        if (result.isEmpty()) throw new IllegalArgumentException("普通攻击技能没有动作");
+        return List.copyOf(result);
+    }
+
+    /** 旧5号投射表现由ClientBuffHandler处理，只记录表现，不参与服务端伤害。 */
+    public boolean battleProjectile(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 5) return false;
+        if (buff.path("attach_percent").asInt() != 10000 || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("投射表现含未支持分支");
+        }
+        return true;
+    }
+
+    /** 仅识别纯1301动作；非1301返回false交由既有执行器处理，混合类型明确拒绝。 */
+    public boolean isGeneralCounterattackArt(int artId) {
+        var list = mapper.readTree(row("buffart", artId).path("buff_list").asString());
+        boolean found = false;
+        for (var id : list) found |= row("buff", id.asInt()).path("type").asInt() == 1301;
+        if (!found) return false;
+        for (var id : list) {
+            var buff = row("buff", id.asInt());
+            if (buff.path("type").asInt() != 1301 || buff.path("attach_percent").asInt() != 10000
+                || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+                throw new IllegalArgumentException("反击动作混有未支持效果");
+            }
+        }
+        if (list.size() != 1) throw new IllegalArgumentException("多重反击效果尚未支持");
+        return true;
     }
 
     /** 核对独立抗暴状态；当前真实1251没有额外动作或属性移除副作用。 */
