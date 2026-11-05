@@ -1,4 +1,4 @@
-"""检查战斗图集恢复：Y偏移、半像素、RGBA透明度及奈奈子实际帧与旧sourceColorRect一致。"""
+"""检查战斗图集恢复：Y偏移、半像素、RGBA透明度及已接入战斗实际帧与旧sourceColorRect一致。"""
 import argparse
 import importlib.util
 import plistlib
@@ -25,7 +25,8 @@ def main():
         assert image.getpixel((2, 1)) == (100, 150, 200, 128), '偏移方向或透明度错误'
         assert image.getpixel((2, 2)) == (0, 0, 0, 0)
     total = 0
-    for name in ['skill-102050230', 'skill-102050231', 'skill-102050233', 'skill-102050233_1']:
+    for name in ['skill-102050230', 'skill-102050231', 'skill-102050233', 'skill-102050233_1',
+                 'skill-101040050', 'skill-101020021', 'hero-skill']:
         source = atlas.load_ccz_pvr(args.legacy / (name + '.pvr.ccz'))
         data = plistlib.loads((args.legacy / (name + '.plist')).read_bytes())
         for key, frame in data['frames'].items():

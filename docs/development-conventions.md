@@ -633,3 +633,5 @@ SkillAuditUtils按技能ID＋等级登记演示证据；禁止将一个等级的
 - 战斗表现必须同时核对旧BattleInfoFactory与G_BATTLE_ACTIONS覆盖表，不能只读cfg.buff。覆盖表一个Buff展开多个并行表现时，保留独立延迟、施法者/目标位置、骨骼动作与负缩放；不改变服务端伤害。战报可播放与完整特效验收分开记录。
 
 - 旧图集转PNG须保持sourceSize画布，offset.y从向上坐标转换为向下坐标；保留半像素到最终坐标，不重复以alpha掩膜复制RGBA。验收须比对旧sourceColorRect和透明度，不能仅检查文件存在。动态人物上方血条保留HUD层，通过世界坐标跟随，不能因重新挂载而落到骨骼之后。
+
+- 主城等循环帧特效同样必须保留旧图集的原始画布和帧偏移；不能把不同裁切尺寸的PNG直接居中轮播。主城河流使用 tools/check_city_atlas.py 对照旧 main-city-effect 图集检查，资源修正与动态验收分别记录。
