@@ -1,5 +1,5 @@
 /**
- * 每场战斗独立的130号治疗动作执行器：真实配置→目标选择→禁疗检查→生命变化记录。
+ * 每场战斗独立的治疗与治疗护盾执行器：配置→目标→事件→生命/Buff变化。
  * 支持通用治疗事件及自身被动安装；不支持控制改选/临时目标数；不写资产、不生成奖励，不代表完整技能引擎。
  */
 package com.funsgamex.mxzg.hero;
@@ -14,6 +14,18 @@ public final class HeroBattleHealingExecutor implements Executor {
     private final Map<Integer, State> units = new LinkedHashMap<>();
     /** 已成功执行的治疗记录，与实际血量增量分别保存。 */
     private final List<Recovery> recoveries = new ArrayList<>();
+
+    /** 每个单位自己的Buff实例集合，与Actor监听通过实例编号关联。 */
+    private final Map<Integer, HeroBattleBuffState> buffs = new LinkedHashMap<>();
+    /** 当前回合，从入场0开始，由战场在到期检查时点显式推进。 */
+    private int round;
+    /** 本场Buff编号单调递增，实例移除后也不复用，失败时回滚编号。 */
+    private long nextBuffInstance = 1;
+    /** 已完成的移除记录，区分到期、驱散和替换；失败时回滚。 */
+    private final List<Removal> removals = new ArrayList<>();
+
+    /** 移除前完整实例与原因；不等同于完整战报协议。 */
+    public record Removal(int unitId, HeroBattleBuffState.Entry entry, String reason) {}
 
     /** 本场事件调度器，与本场Actor使用同一实例。 */
     private final HeroBattleEventProcessor events = new HeroBattleEventProcessor();
@@ -71,6 +83,7 @@ public final class HeroBattleHealingExecutor implements Executor {
     public HeroBattleHealingExecutor(HeroSkillPanelRules rules, List<State> initial) {
         this.rules = Objects.requireNonNull(rules);
         for (var unit : initial) {
+            buffs.put(unit.actor().id(), new HeroBattleBuffState());
             if (units.put(unit.actor().id(), unit) != null) {
                 throw new IllegalArgumentException("治疗战场单位编号重复");
             }
@@ -96,7 +109,8 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
         transaction(() -> {
             for (var definition : definitions) {
-                actor.listen(new Listener(actor.nextListenerId(), unitId, definition));
+                var entry = installBuff(unitId, unitId, rules.battleBuff(definition.buffId()), 0);
+                actor.listen(new Listener(entry.instanceId(), unitId, definition));
             }
             installed.add(key);
         });
@@ -136,7 +150,20 @@ public final class HeroBattleHealingExecutor implements Executor {
             for (var target : targets) {
                 State defender = require(target.id());
                 if (defender.hp() <= 0 || defender.actor().isDead()
-                    || source.actor().interrupted(target.id()) || defender.actor().hasControl(1009)) {
+                    || source.actor().interrupted(target.id())) {
+                    continue;
+                }
+                var spec = rules.battleBuff(effect.buffId());
+                if (spec.type() == 1008) {
+                    // 护盾不受禁疗限制；此分支在下方治疗禁疗判断之前执行。
+                    long value = percent(source.actor().lastTreatment(), effect.attackRate());
+                    if (value == Long.MIN_VALUE) {
+                        throw new IllegalArgumentException("护盾数值绝对值溢出");
+                    }
+                    installBuff(source.actor().id(), target.id(), spec, Math.abs(value));
+                    continue;
+                }
+                if (defender.actor().hasControl(1009)) {
                     continue;
                 }
                 long base = percent(source.attack(), effect.attackRate());
@@ -164,6 +191,60 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
+    /** 安装支持的逻辑Buff，先同步移除旧监听；护盾重用时保留原实例身份。 */
+    private HeroBattleBuffState.Entry installBuff(int sourceId, int targetId,
+                                                  HeroBattleBuffState.Spec spec, long value) {
+        Actor actor = require(targetId).actor();
+        var state = buffs.get(targetId);
+        long next = Math.max(actor.nextListenerId(), nextBuffInstance);
+        nextBuffInstance = Math.addExact(next, 1);
+        var change = state.add(next, sourceId, round, spec, value);
+        removed(targetId, change.removed(), "replace");
+        return change.current();
+    }
+
+    /** 战场在旧到期检查时点调用；只推进本批无周期效果的Buff，不模拟整回合战斗。 */
+    public void expireAt(int currentRound) {
+        if (currentRound < round || currentRound < 0) {
+            throw new IllegalArgumentException("Buff回合不能倒退");
+        }
+        transaction(() -> {
+            started = true;
+            round = currentRound;
+            for (var id : units.keySet()) {
+                removed(id, buffs.get(id).expire(round), "expire");
+            }
+        });
+    }
+
+    /** 驱散指定效果类别的可驱散实例；绝对到期回合>=999的实例按旧规则保留。 */
+    public void dispel(int targetId, int effect) {
+        require(targetId);
+        if (effect < 0 || effect > 3) {
+            throw new IllegalArgumentException("驱散类别无效");
+        }
+        transaction(() -> removed(targetId, buffs.get(targetId).dispel(effect), "dispel"));
+    }
+
+    /** 统一移除关联监听并保存原因；暂不安装209到期触发等未实现的移除回调。 */
+    private void removed(int unitId, List<HeroBattleBuffState.Entry> entries, String reason) {
+        for (var entry : entries) {
+            require(unitId).actor().remove(entry.instanceId());
+            removals.add(new Removal(unitId, entry, reason));
+        }
+    }
+
+    /** 返回当前单位的独立Buff实例快照，包括护盾值和绝对期限。 */
+    public List<HeroBattleBuffState.Entry> buffs(int unitId) {
+        require(unitId);
+        return buffs.get(unitId).snapshot();
+    }
+
+    /** 返回成功移除记录，不暴露可写列表。 */
+    public List<Removal> removals() {
+        return List.copyOf(removals);
+    }
+
     /** 保存可核对的事件时点，然后交给已有事件处理器；311不允许安装未支持的清心监听。 */
     private void emit(int event, Actor carrier, Actor target) {
         if (++steps > 128) {
@@ -184,12 +265,17 @@ public final class HeroBattleHealingExecutor implements Executor {
         boolean root = depth == 0;
         var before = root ? new LinkedHashMap<>(units) : null;
         var checkpoints = new HashMap<Actor, Actor.Checkpoint>();
+        var buffBefore = new HashMap<Integer, List<HeroBattleBuffState.Entry>>();
+        int roundBefore = round;
+        long nextInstanceBefore = nextBuffInstance;
+        int removalSize = removals.size();
         int recoverySize = recoveries.size();
         int signalSize = signals.size();
         var installedBefore = root ? new HashSet<>(installed) : null;
         boolean startedBefore = started;
         if (root) {
             steps = 0;
+            buffs.forEach((id, state) -> buffBefore.put(id, state.snapshot()));
             units.values().forEach(unit -> checkpoints.put(unit.actor(), unit.actor().checkpoint()));
         }
         depth++;
@@ -205,6 +291,10 @@ public final class HeroBattleHealingExecutor implements Executor {
                 checkpoints.forEach(Actor::rollback);
                 recoveries.subList(recoverySize, recoveries.size()).clear();
                 signals.subList(signalSize, signals.size()).clear();
+                buffBefore.forEach((id, state) -> buffs.get(id).restore(state));
+                round = roundBefore;
+                nextBuffInstance = nextInstanceBefore;
+                removals.subList(removalSize, removals.size()).clear();
                 installed.clear();
                 installed.addAll(installedBefore);
                 started = startedBefore;

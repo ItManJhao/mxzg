@@ -126,18 +126,24 @@ public class HeroSkillPanelRules {
             Integer.parseInt(values[1]), Integer.parseInt(values[2]));
     }
 
-    /** 预检整个治疗动作；仅接受必中的130号即时效果，无后续动作，未知效果整组拒绝。 */
+    /** 预检整个治疗动作；仅接受必中的130号治疗和按治疗量生成的1008护盾，无后续动作，未知效果整组拒绝。 */
     public HeroBattleHealingExecutor.Plan battleHealing(int artId) {
         var art = row("buffart", artId);
         var effects = new ArrayList<HeroBattleHealingExecutor.Effect>();
         for (var id : mapper.readTree(art.path("buff_list").asString())) {
             var buff = row("buff", id.asInt());
-            if (buff.path("type").asInt() != 130 || buff.path("attach_percent").asInt() != 10000
-                || buff.path("effecttype").asInt() != 0 || buff.path("round").asInt() != 0
+            int type = buff.path("type").asInt();
+            if ((type != 130 && type != 1008) || buff.path("attach_percent").asInt() != 10000
+                || buff.path("effecttype").asInt() != 0
+                || (type == 130 && buff.path("round").asInt() != 0)
                 || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
                 throw new IllegalArgumentException("治疗动作包含未支持效果：" + artId + "/" + id.asInt());
             }
             int rate = Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]);
+            if (type == 1008 && rate == 0) {
+                throw new IllegalArgumentException("当前护盾仅支持治疗量转换：" + id.asInt());
+            }
+            battleBuff(id.asInt());
             effects.add(new HeroBattleHealingExecutor.Effect(id.asInt(), rate));
         }
         if (effects.isEmpty()) {
@@ -180,6 +186,18 @@ public class HeroSkillPanelRules {
             throw new IllegalArgumentException("被动技能没有可安装监听");
         }
         return List.copyOf(definitions);
+    }
+
+    /** 解析当前已支持的治疗/通用监听元数据；属性Buff等有移除副作用的类型尚不接入。 */
+    public HeroBattleBuffState.Spec battleBuff(int buffId) {
+        var buff = row("buff", buffId);
+        int type = buff.path("type").asInt();
+        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170).contains(type)) {
+            throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
+        }
+        return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
+            buff.path("dispelled").asInt() == 1, buff.path("effecttype").asInt(),
+            buff.path("conflict_type").asInt(), buff.path("stacking_max").asInt(), false);
     }
 
     /** 面板仅使用基础已解锁技能，进化替换在其后，不重复执行面板被动。 */
