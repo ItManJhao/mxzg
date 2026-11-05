@@ -44,12 +44,15 @@ export class BattleAttackUtils {
                     file: JSON.stringify(["skill-101010011"]), sound: "[]" }
             ];
         }
-        // 黑暗切割者一级主动：地图定位与施法者两段特效同在145帧启动。
-        if (row.idx === 5051101) {
+        // 黑暗切割者六级主动：四/五级地图偏移不同，六级锚点不同；不复用一级掩盖等级差异。
+        if (row.idx >= 5051101 && row.idx <= 5051106) {
+            const level = row.idx - 5051100;
+            const middle = level === 4 || level === 5;
             const entries = [
                 { type: 3, delay: 0, dimly: 0, base: { action: "skill", attack_time: 0.6, action_time: 1.8 }, file: "" },
-                { type: 9, delay: 145, dimly: 1, base: { format: "skill-105050051/%d.png", anchor_y: 0.7,
-                    anchor_x: 0.6, duration: 0.06, scale_x: 3, scale_y: 3, offset_x: 0.6, offset_y: 0.5 }, file: "skill-105050051" },
+                { type: 9, delay: 145, dimly: 1, base: { format: "skill-105050051/%d.png", anchor_y: level <= 3 ? 0.7 : 0.5,
+                    anchor_x: level === 6 ? 0.7 : middle ? 0.5 : 0.6, duration: 0.06,
+                    scale_x: 3, scale_y: 3, offset_x: middle ? 0.7 : 0.6, offset_y: 0.5 }, file: "skill-105050051" },
                 { type: 6, delay: 145, dimly: 0, base: { format: "skill-105050051-1/%d.png", anchor_x: 0.2,
                     anchor_y: 0.2, duration: 0.12, scale_x: 2, scale_y: 2 }, file: "skill-105050051-1" }
             ];

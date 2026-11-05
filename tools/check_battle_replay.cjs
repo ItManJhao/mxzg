@@ -542,3 +542,16 @@ for (const action of darkActions) {
 }
 assert.throws(() => melee.exports.BattleAttackUtils.plan({...darkActions[1], ani_base: '{"offset_x":-1}'}));
 console.log('PASS dark cutter map/source effects, delays and resource coverage');
+
+// 旧5051101..6覆盖表的等级差异；只验证表现，不冒充高等级后端战报已接入。
+for (const [level, x, y, offset] of [[1,.6,.7,.6],[2,.6,.7,.6],[3,.6,.7,.6],[4,.5,.5,.7],[5,.5,.5,.7],[6,.7,.5,.6]]) {
+    const actions = melee.exports.BattleAttackUtils.legacyActions(buffRows.find(row => row.idx === 5051100 + level));
+    assert.equal(actions.length, 3);
+    assert.equal(new Set(actions.map(row => row.idx)).size, 3);
+    const plan = melee.exports.BattleAttackUtils.plan(actions[1]);
+    assert.deepEqual(plan.battlefieldOffset, [offset,.5]);
+    assert.equal(plan.effect.anchorX, x);
+    assert.ok(Math.abs(plan.effect.anchorY - (y - .07)) < 1e-10);
+    assert.deepEqual(actions.map(row => row.delay), [0,145,145]);
+}
+console.log('PASS all six dark cutter presentation levels preserve legacy anchors and offsets');
