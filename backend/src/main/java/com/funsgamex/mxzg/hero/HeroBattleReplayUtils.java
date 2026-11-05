@@ -9,13 +9,27 @@ public final class HeroBattleReplayUtils {
 
     /** 重放完整名册生命，拒绝少帧、乱序、未知单位及提前结束；审计场景保持独立来源。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
-        if (!Set.of("main:1:1:1", "main:1:1:2", "audit:duel", "audit:teams", "audit:round-limit").contains(report.scenario())
+        if (!Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:teams", "audit:round-limit").contains(report.scenario())
             || report.rounds() < 1 || report.rounds() > HeroBattleRoundUtils.MAX_ROUNDS || report.frames().isEmpty()) {
             throw new IllegalArgumentException("战斗回放场景或回合范围无效");
         }
         var units = HeroBattleChapterScenario.roster(report.initial());
-        if (!report.scenario().equals("audit:teams") && units.size() != 2) {
+        if (!Set.of("audit:teams", "main:1:1:3").contains(report.scenario()) && units.size() != 2) {
             throw new IllegalArgumentException("该战斗来源未开放多单位");
+        }
+        if (report.scenario().equals("main:1:1:3")) {
+            if (units.size() != 3) {
+                throw new IllegalArgumentException("第3关必须保留真实三单位名册");
+            }
+            for (int index = 0; index < units.size(); index++) {
+                var unit = units.get(index);
+                if (unit.id() != index + 1 || unit.faction() != (index == 0 ? 1 : 2)
+                    || unit.template() != (index == 2 ? 10104004 : 10101001)
+                    || unit.position() != (index == 2 ? 3 : 2)
+                    || unit.level() != (index == 0 ? 1 : 2)) {
+                    throw new IllegalArgumentException("第3关名册与已核对配置不符");
+                }
+            }
         }
         var hp = new LinkedHashMap<Integer, Long>();
         units.forEach(unit -> hp.put(unit.id(), unit.opening().hp()));

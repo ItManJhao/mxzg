@@ -101,7 +101,7 @@ export class BattleReplayUtils {
         return Object.freeze(result);
     }
 
-    /** 当前只接受固定双单位纯伤害验收场景；整包校验成功后才返回播放步骤。 */
+    /** 接受已核对的前三关战报数据；第3关解码成功不代表投射资源与画面已验收。 */
     public static decode(bytes: Uint8Array): readonly BattleReplayStep[] {
         if (!bytes.length || bytes.length > 256 * 1024) {
             throw new Error("战报大小无效");
@@ -110,19 +110,23 @@ export class BattleReplayUtils {
             game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
         }).game.BattleReplay;
         const report = codec.decode(bytes);
-        if (report.schemaVersion !== 1 || ["main:1:1:1", "main:1:1:2"].indexOf(report.scenario) < 0
-            || report.units.length !== 2 || report.rounds < 1 || report.rounds > 15) {
+        if (report.schemaVersion !== 1 || ["main:1:1:1", "main:1:1:2", "main:1:1:3"].indexOf(report.scenario) < 0
+            || report.units.length !== (report.scenario === "main:1:1:3" ? 3 : 2) || report.rounds < 1 || report.rounds > 15) {
             throw new Error("战报版本或场景不支持");
         }
         const roster = this.validateUnits(report.units);
         const hp = new Map<number, number>();
+        const expected = report.scenario === "main:1:1:3"
+            ? [[1, 1, 10101001, 2, 1], [2, 2, 10101001, 2, 2], [3, 2, 10104004, 3, 2]]
+            : [[1, 1, 10101001, 2, 1], [2, 2, report.scenario === "main:1:1:2" ? 10505005 : 10101001, 2,
+                report.scenario === "main:1:1:2" ? 2 : 1]];
         for (const unit of roster) {
-            if ((unit.unitId !== 1 && unit.unitId !== 2) || hp.has(unit.unitId)
-                || unit.faction !== unit.unitId
-                || unit.templateId !== (unit.unitId === 2 && report.scenario === "main:1:1:2" ? 10505005 : 10101001) || unit.position !== 2) {
+            const entry = expected.find(value => value[0] === unit.unitId);
+            if (!entry || unit.faction !== entry[1] || unit.templateId !== entry[2]
+                || unit.position !== entry[3] || unit.level !== entry[4]) {
                 throw new Error("战报单位无效");
             }
-            hp.set(unit.unitId, this.integer(unit.initialHp));
+            hp.set(unit.unitId, unit.initialHp);
         }
         const steps: BattleReplayStep[] = [];
         const buffs = new Map<string, number>();
@@ -222,7 +226,9 @@ export class BattleReplayUtils {
         for (const unit of roster) {
             if (hp.get(unit.unitId) !== this.integer(unit.finalHp)) throw new Error("战报最终血量不匹配");
         }
-        const outcome = hp.get(1) === 0 ? "DEFENDER_WIN" : hp.get(2) === 0 ? "ATTACKER_WIN"
+        const attackersAlive = roster.some(unit => unit.faction === 1 && hp.get(unit.unitId)! > 0);
+        const defendersAlive = roster.some(unit => unit.faction === 2 && hp.get(unit.unitId)! > 0);
+        const outcome = !attackersAlive ? "DEFENDER_WIN" : !defendersAlive ? "ATTACKER_WIN"
             : round === 15 ? "DEFENDER_WIN" : "ONGOING";
         if (outcome === "ONGOING" || report.outcome !== outcome) throw new Error("战报胜负无效");
         return Object.freeze(steps);

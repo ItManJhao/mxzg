@@ -28,6 +28,8 @@ public final class HeroBattleHealingExecutor implements Executor {
 
     /** 每个单位自己的Buff实例集合，与Actor监听通过实例编号关联。 */
     private final Map<Integer, HeroBattleBuffState> buffs = new LinkedHashMap<>();
+    /** 沿旧lastControlBuff保留最近成功控制实例，供后续控制触发条件读取；移除不重写历史。 */
+    private final Map<Integer, HeroBattleBuffState.Entry> lastControls = new HashMap<>();
     /** 战场单位的真实模板身份与独立属性状态；动作失败时属性消费一起恢复。 */
     private final Map<Integer, CombatData> combat = new LinkedHashMap<>();
     /** 模板决定元素/职业，属性来自该单位战斗输入；生命周期与当前执行器一致。 */
@@ -197,7 +199,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
-    /** 执行预检的普通/主动伤害技能、201监听、零概率流血和表现；其他效果仍拒绝。 */
+    /** 执行预检的普通/主动伤害技能、201监听、眩晕、零概率流血和表现；其他效果仍拒绝。 */
     @Override
     public void skill(Actor actor, HeroBattleSkillUtils.Skill skill) {
         if (attackContext == null) throw new UnsupportedOperationException("普通攻击缺少根动作上下文");
@@ -225,6 +227,12 @@ public final class HeroBattleHealingExecutor implements Executor {
                         if (require(target.id()).hp() <= 0 || actor.interrupted(target.id())) continue;
                         var entry = installBuff(actor.id(), target.id(), rules.battleBuff(buffId), 0);
                         require(target.id()).actor().listen(new Listener(entry.instanceId(), actor.id(), rules.battleTrigger(buffId)));
+                    }
+                    continue;
+                }
+                if (rules.battleDizzy(buffId)) {
+                    for (var target : targets) {
+                        applyDizzy(buffId, actor.id(), target.id(), attackContext.decision);
                     }
                     continue;
                 }
@@ -604,6 +612,43 @@ public final class HeroBattleHealingExecutor implements Executor {
         return requireCombat(unitId).attributes().snapshot();
     }
 
+    /**
+     * 沿旧控制处理器判定并安装眩晕：153免控先返回，再依次读取212、219、217。
+     * 成功安装后发出被控185与施控207事件；未命中不伪造Buff。全流程参与根动作回滚。
+     * 185/207专用被动监听尚未开放，配置预检仍拒绝，不能当作普通监听跳过类型条件。
+     */
+    public void applyDizzy(int buffId, int sourceId, int targetId,
+                           java.util.function.DoublePredicate decision) {
+        double base = rules.battleDizzyRate(buffId);
+        var source = require(sourceId);
+        var target = require(targetId);
+        transaction(() -> {
+            started = true;
+            if (source.hp() <= 0 || source.actor().isDead() || target.hp() <= 0
+                || target.actor().isDead() || source.actor().interrupted(targetId)
+                || hasStatus(targetId, 153)) {
+                return;
+            }
+            double freeControl = requireCombat(targetId).attributes().rate(212);
+            double control = requireCombat(sourceId).attributes().rate(219);
+            double resistance = requireCombat(targetId).attributes().rate(217);
+            if (!decision.test(base * (1D - resistance) * (1D + control) * (1D - freeControl))) {
+                return;
+            }
+            var entry = installBuff(sourceId, targetId, rules.battleBuff(buffId), 0);
+            lastControls.put(targetId, entry);
+            target.actor().control(1005, true);
+            emit(185, target.actor(), source.actor());
+            emit(207, source.actor(), target.actor());
+        });
+    }
+
+    /** 返回最近成功安装的控制实例；null表示从未受控，不等于当前仍处于控制状态。 */
+    public HeroBattleBuffState.Entry lastControl(int unitId) {
+        require(unitId);
+        return lastControls.get(unitId);
+    }
+
     /** 安装已命中的真实1251抗暴实例；由伤害计算移除首层，不伪触发通用到期回调。 */
     public void installCounterCrit(int buffId, int sourceId, int targetId) {
         var spec = rules.battleCounterCrit(buffId);
@@ -866,8 +911,12 @@ public final class HeroBattleHealingExecutor implements Executor {
         transaction(() -> removed(targetId, buffs.get(targetId).dispel(effect), "dispel"));
     }
 
-    /** 统一移除关联监听并保存原因；暂不安装209到期触发等未实现的移除回调。 */
+    /** 统一移除关联监听、刷新剩余眩晕状态并保存原因；暂不安装209到期触发等未实现的移除回调。 */
     private void removed(int unitId, List<HeroBattleBuffState.Entry> entries, String reason) {
+        if (entries.stream().anyMatch(entry -> entry.spec().type() == 1005)) {
+            require(unitId).actor().control(1005, buffs.get(unitId).snapshot().stream()
+                .anyMatch(entry -> entry.spec().type() == 1005));
+        }
         for (var entry : entries) {
             require(unitId).actor().remove(entry.instanceId());
             removals.add(new Removal(unitId, entry, reason));
@@ -908,6 +957,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         var before = root ? new LinkedHashMap<>(units) : null;
         var checkpoints = new HashMap<Actor, Actor.Checkpoint>();
         var buffBefore = new HashMap<Integer, List<HeroBattleBuffState.Entry>>();
+        var controlsBefore = root ? new HashMap<>(lastControls) : null;
         int roundBefore = round;
         long nextInstanceBefore = nextBuffInstance;
         int removalSize = removals.size();
@@ -934,6 +984,8 @@ public final class HeroBattleHealingExecutor implements Executor {
             action.run();
         } catch (RuntimeException error) {
             if (root) {
+                lastControls.clear();
+                lastControls.putAll(controlsBefore);
                 attributeBefore.forEach((id, values) -> combat.get(id).attributes().restore(values));
                 ordinaryResults.subList(ordinarySize, ordinaryResults.size()).clear();
                 presentations.subList(presentationSize, presentations.size()).clear();

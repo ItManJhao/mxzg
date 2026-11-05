@@ -62,7 +62,7 @@ public final class HeroBattleEventProcessor {
         private final int id;
         /** 只读技能计划，包含配置推导的先手标志。 */
         private final List<HeroBattleSkillUtils.Skill> skills;
-        /** 当前有效控制Buff类型，本批不负责持续时间或叠层。 */
+        /** 当前有效控制Buff类型；真实眩晕由执行器随安装、驱散、到期及死亡同步。 */
         private final Set<Integer> controls = new HashSet<>();
         /** 监听安装顺序；同优先级稳定保留，不按Buff ID排序。 */
         private final List<Listener> listeners = new ArrayList<>();
@@ -266,7 +266,7 @@ public final class HeroBattleEventProcessor {
 
     /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180, 177, 176, 204).contains(event)) {
+        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180, 177, 176, 204, 185, 207).contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);

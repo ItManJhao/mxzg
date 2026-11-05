@@ -259,7 +259,26 @@ assert.throws(() => decode(protocol.encode(thirdUnsupported).finish()), /场景�
 const extraUnit = protocol.decode(secondBytes);
 extraUnit.units.push({...extraUnit.units[1], unitId: 3, templateId: 10104004, position: 3});
 assert.throws(() => decode(protocol.encode(extraUnit).finish()), /场景不支持/);
-console.log("PASS unopened third chapter and extra-unit rejection");
+console.log("PASS wrong third-chapter roster and extra-unit rejection");
+for (const name of ["chapter-1-1-3", "chapter-1-1-3-control"]) {
+    const data = fs.readFileSync(path.join(root, "backend/target/" + name + "-replay.pb"));
+    const wire = protocol.decode(data);
+    const plan = decode(data);
+    assert.equal(wire.units.length, 3);
+    assert.deepEqual(wire.units.map(unit => unit.position), [2, 2, 3]);
+    assert.deepEqual(Buffer.from(protocol.encode(wire).finish()), data);
+    for (const unit of wire.units) {
+        assert.equal(plan[plan.length - 1].hpByUnit[unit.unitId], Number(unit.finalHp.toString()));
+    }
+    assert.equal(plan.some(step => step.kind === "buff.upsert" && step.configId === 1041301), name.endsWith("control"));
+    const wrong = protocol.decode(data);
+    wrong.units[2].position = 4;
+    assert.throws(() => decode(protocol.encode(wrong).finish()), /单位无效/);
+    const outcome = protocol.decode(data);
+    outcome.outcome = outcome.outcome === "ATTACKER_WIN" ? "DEFENDER_WIN" : "ATTACKER_WIN";
+    assert.throws(() => decode(protocol.encode(outcome).finish()), /胜负无效/);
+}
+console.log("PASS real third-chapter control branches, three-unit HP and team outcome");
 
 // 数据层独立覆盖多单位、重复模板及任意本场ID；播放入口仍只开放第1/2关。
 const validateRoster = adapter.exports.BattleReplayUtils.validateUnits.bind(adapter.exports.BattleReplayUtils);

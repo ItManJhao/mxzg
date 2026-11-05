@@ -201,7 +201,7 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201).contains(type)) {
+        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201).contains(type)) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
         return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
@@ -248,7 +248,7 @@ public class HeroSkillPanelRules {
     /** 一个已预检的纯普通伤害动作，保留目标规则和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
-    /** 按真实普攻/主动技能预检100伤害、201监听、零概率1205及2/3/5表现；未知效果拒绝，不执行半组技能。 */
+    /** 按真实普攻/主动技能预检100伤害、1005眩晕、201监听、零概率1205及2/3/5表现；未知效果拒绝，不执行半组技能。 */
     public List<DamageArt> damageSkillArts(HeroBattleSkillUtils.Skill skill) {
         var config = skills.get(skill.skillId() + ":" + skill.level());
         if (config == null || !Set.of(1, 2).contains(config.path("active_type").asInt())) {
@@ -262,7 +262,7 @@ public class HeroSkillPanelRules {
                 if (!battleProjectile(buff.asInt())) {
                     if (battleRoundListener(buff.asInt())) {
                         battleTrigger(buff.asInt());
-                    } else if (!battleZeroProbabilityBleed(buff.asInt())) {
+                    } else if (!battleDizzy(buff.asInt()) && !battleZeroProbabilityBleed(buff.asInt())) {
                         battleOrdinaryDamageRate(buff.asInt(), true);
                     }
                 }
@@ -273,6 +273,28 @@ public class HeroSkillPanelRules {
         }
         if (result.isEmpty()) throw new IllegalArgumentException("普通攻击技能没有动作");
         return List.copyOf(result);
+    }
+
+    /** 预检无子动作的眩晕；其他控制类型仍拒绝，概率保留旧万分比配置。 */
+    public boolean battleDizzy(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 1005) {
+            return false;
+        }
+        if (buff.path("effecttype").asInt() != 3
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("扩展眩晕效果尚未支持：" + buffId);
+        }
+        battleBuff(buffId);
+        return true;
+    }
+
+    /** 返回已预检眩晕的基础附加率；抗性和一次性属性由执行器按旧顺序读取。 */
+    public double battleDizzyRate(int buffId) {
+        if (!battleDizzy(buffId)) {
+            throw new IllegalArgumentException("不是眩晕配置：" + buffId);
+        }
+        return row("buff", buffId).path("attach_percent").asInt() / 10000D;
     }
 
     /**

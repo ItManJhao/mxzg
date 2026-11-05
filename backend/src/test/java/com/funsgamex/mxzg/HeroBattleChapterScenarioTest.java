@@ -210,7 +210,54 @@ class HeroBattleChapterScenarioTest {
         HeroBattleReplayUtils.validate(result);
         Files.writeString(Path.of("target/chapter-1-1-2-report.json"), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
         Files.write(Path.of("target/chapter-1-1-2-replay.pb"), HeroBattleReplayProtocolUtils.encode(result).toByteArray());
-        assertThrows(IllegalArgumentException.class, () -> scenario.initial(3));
+        assertThrows(IllegalArgumentException.class, () -> scenario.initial(4));
+    }
+
+    /** 第3关真实双敌方保持配置站位，分别生成眩晕命中/未命中整场夹具，不改玩家资产。 */
+    @Test
+    void thirdChapterRunsBothControlBranches() throws Exception {
+        var mapper = new ObjectMapper();
+        var scenario = new HeroBattleChapterScenario(mapper);
+        var initial = scenario.initial(3);
+        assertEquals(List.of(1, 2, 2), initial.stream().map(HeroBattleChapterScenario.Unit::faction).toList());
+        assertEquals(List.of(10101001, 10101001, 10104004), initial.stream().map(HeroBattleChapterScenario.Unit::template).toList());
+        assertEquals(List.of(2, 2, 3), initial.stream().map(HeroBattleChapterScenario.Unit::position).toList());
+        assertEquals(List.of(1, 2, 2), initial.stream().map(HeroBattleChapterScenario.Unit::level).toList());
+        // 旧元素光环idx=1：两个元素1单位使守方全队增加102/201各300，攻方单英雄不增加。
+        assertEquals(0L, initial.get(0).attributes().getOrDefault(102, 0L));
+        for (var enemy : initial.subList(1, 3)) {
+            assertEquals(300L, enemy.attributes().get(102));
+            assertEquals(300L, enemy.attributes().get(201));
+        }
+        assertEquals(List.of(238L, 182L, 302L), initial.stream().map(unit -> unit.opening().hp()).toList());
+        assertEquals(List.of(56L, 72L, 93L), initial.stream().map(unit -> unit.opening().attack()).toList());
+        for (boolean controlHit : List.of(false, true)) {
+            var result = scenario.runMission(3, rate -> rate == 1D || (controlHit && Math.abs(rate - .35D) < 1e-12));
+            assertEquals("main:1:1:3", result.scenario());
+            assertEquals(HeroBattleRoundUtils.Outcome.DEFENDER_WIN, result.outcome());
+            assertEquals(2, result.rounds());
+            assertEquals(Map.of(1, 0L, 2, controlHit ? 182L : 104L, 3, 302L), result.finalHp());
+            assertEquals(controlHit, result.frames().stream().anyMatch(frame -> frame.round() == 1
+                && frame.sourceId() == 1 && frame.trace().isEmpty()));
+            assertEquals(Set.of(1, 2, 3), result.finalHp().keySet());
+            HeroBattleReplayUtils.validate(result);
+            var controls = result.frames().stream().flatMap(frame -> frame.trace().stream())
+                .filter(trace -> trace.kind().equals("buff.upsert") && trace.configId() == 1041301).toList();
+            assertEquals(controlHit, !controls.isEmpty());
+            String name = controlHit ? "chapter-1-1-3-control" : "chapter-1-1-3";
+            Files.writeString(Path.of("target/" + name + "-report.json"),
+                mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
+            Files.write(Path.of("target/" + name + "-replay.pb"), HeroBattleReplayProtocolUtils.encode(result).toByteArray());
+        }
+    }
+
+    /** 不能把第一关双单位结果改名后冒充第三关真实战报。 */
+    @Test
+    void thirdChapterRejectsRelabeledDuel() {
+        var report = new HeroBattleChapterScenario(new ObjectMapper()).run(rate -> rate == 1D);
+        var forged = new HeroBattleChapterScenario.Result("main:1:1:3", report.outcome(), report.rounds(),
+            report.initial(), report.turns(), report.damages(), report.frames(), report.finalHp());
+        assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(forged));
     }
 
     /** 概率非零的真实流血配置继续拒绝，防止把“不安装”错误扩大到完整流血实现。 */

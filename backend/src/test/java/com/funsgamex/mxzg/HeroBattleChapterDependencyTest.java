@@ -58,14 +58,14 @@ class HeroBattleChapterDependencyTest {
         var audit = mapper.readTree(json);
         assertTrue(audit.get(0).path("enemies").get(0).path("skills").get(0).path("supportedByCurrentDamagePreflight").asBoolean());
         assertTrue(audit.get(1).path("enemies").get(0).path("skills").get(0).path("supportedByCurrentDamagePreflight").asBoolean());
-        assertFalse(audit.get(2).path("enemies").get(1).path("skills").get(0).path("supportedByCurrentDamagePreflight").asBoolean());
+        assertTrue(audit.get(2).path("enemies").get(1).path("skills").get(0).path("supportedByCurrentDamagePreflight").asBoolean());
         assertTrue(json.contains("1205"));
         assertTrue(json.contains("1005"));
     }
 
     /** 第3关按非零模板筛选两个真实敌人，空站位配置不得实例化成英雄。 */
     @Test
-    void thirdChapterRetainsBothEnemiesAndRejectsPrematureOpening() throws Exception {
+    void thirdChapterRetainsBothEnemiesAndRealPositions() throws Exception {
         var mapper = new ObjectMapper();
         var enemies = rows(mapper, "chapter").stream()
             .filter(row -> row.path("mode_id").asInt() == 1 && row.path("chapter_id").asInt() == 1
@@ -74,10 +74,10 @@ class HeroBattleChapterDependencyTest {
         assertEquals(List.of(2, 3), enemies.stream().map(row -> row.path("pos").asInt()).toList());
         assertEquals(List.of(1, 4), enemies.stream().map(row -> row.path("hero_star").asInt()).toList());
         assertTrue(enemies.stream().allMatch(row -> row.path("hero_level").asInt() == 2));
-        assertThrows(IllegalArgumentException.class, () -> new HeroBattleChapterScenario(mapper).initial(3));
+        assertEquals(3, new HeroBattleChapterScenario(mapper).initial(3).size());
     }
 
-    /** 眩晕是1005而非沉默；已有行动资格禁止普攻和主动，但不能冒称已经能安装控制Buff。 */
+    /** 眩晕是1005而非沉默；已有行动资格禁止普攻和主动，保留9999强制行动例外，真实主动技能现可预检。 */
     @Test
     void thirdChapterDizzyDependencyAndActionGateRemainExplicit() throws Exception {
         var mapper = new ObjectMapper();
@@ -97,7 +97,7 @@ class HeroBattleChapterDependencyTest {
         }
         assertFalse(HeroBattleActionUtils.onlyAttack(Set.of(1005)));
         var active = skills.stream().filter(skill -> skill.activeType() == 1).findFirst().orElseThrow();
-        assertThrows(IllegalArgumentException.class, () -> rules.damageSkillArts(active));
+        assertFalse(rules.damageSkillArts(active).isEmpty());
     }
 
     /** 第3关普攻有type5投射物，主动type3也有非空file，不能复用第2关空特效路径伪称支持。 */
