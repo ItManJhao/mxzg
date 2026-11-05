@@ -109,7 +109,8 @@ export class RemakeApp extends Component {
       }
       // 固定只读二进制资源服务，不建立游戏连接，不读取登录凭证。
       if (this.startupHost) this.startupHost.active = false;
-      const response = await fetch("http://127.0.0.1:19091/chapter-1-1-1-replay.pb");
+      const mission = new URLSearchParams(location.search).get("mission") === "2" ? "2" : "1";
+      const response = await fetch("http://127.0.0.1:19091/chapter-1-1-" + mission + "-replay.pb");
       if (!response.ok) throw new Error("独立战报文件读取失败");
       this.replayCleanup = await BattleReplayPreview.open(this.pageHost, new Uint8Array(await response.arrayBuffer()),
         new URLSearchParams(location.search).get("chapterEnd") === "defeat");

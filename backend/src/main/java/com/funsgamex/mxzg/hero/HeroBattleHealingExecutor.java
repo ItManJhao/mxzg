@@ -197,7 +197,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
-    /** 执行预检的普通/主动伤害技能、201监听和表现；其他效果仍拒绝。 */
+    /** 执行预检的普通/主动伤害技能、201监听、零概率流血和表现；其他效果仍拒绝。 */
     @Override
     public void skill(Actor actor, HeroBattleSkillUtils.Skill skill) {
         if (attackContext == null) throw new UnsupportedOperationException("普通攻击缺少根动作上下文");
@@ -226,6 +226,18 @@ public final class HeroBattleHealingExecutor implements Executor {
                         var entry = installBuff(actor.id(), target.id(), rules.battleBuff(buffId), 0);
                         require(target.id()).actor().listen(new Listener(entry.instanceId(), actor.id(), rules.battleTrigger(buffId)));
                     }
+                    continue;
+                }
+                if (rules.battleZeroProbabilityBleed(buffId)) {
+                    for (var target : targets) {
+                        if (require(target.id()).hp() <= 0 || actor.interrupted(target.id()) || hasStatus(target.id(), 152)) continue;
+                        // 旧AbstractResistanceHandler即使附加率为0也读取抗性，消费一次性325属性。
+                        double resistance = requireCombat(target.id()).attributes().rate(325);
+                        if (attackContext.decision.test(0D * (1D - resistance))) {
+                            throw new IllegalStateException("零概率流血判定不可命中");
+                        }
+                    }
+                    // 旧未初始化BuffInfo不进入EffectInfo，不伪造安装、图标或持续伤害事件。
                     continue;
                 }
                 ordinaryDamage(buffId, actor.id(), targets.stream().map(HeroBattleTargetUtils.Unit::id).toList(),

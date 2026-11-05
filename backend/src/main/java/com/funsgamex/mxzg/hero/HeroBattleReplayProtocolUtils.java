@@ -11,10 +11,10 @@ public final class HeroBattleReplayProtocolUtils {
     public static GameProtocol.BattleReplay encode(HeroBattleChapterScenario.Result report) {
         HeroBattleReplayUtils.validate(report);
         var result = GameProtocol.BattleReplay.newBuilder().setSchemaVersion(1)
-            .setScenario("main:1:1:1").setOutcome(report.outcome().name()).setRounds(report.rounds());
+            .setScenario(report.scenario()).setOutcome(report.outcome().name()).setRounds(report.rounds());
         for (var unit : report.initial()) {
             result.addUnits(GameProtocol.BattleReplayUnit.newBuilder().setUnitId(unit.id())
-                .setTemplateId(unit.template()).setPosition(unit.position()).setInitialHp(unit.opening().hp())
+                .setTemplateId(unit.template()).setLevel(unit.level()).setPosition(unit.position()).setInitialHp(unit.opening().hp())
                 .setFinalHp(unit.id() == 1 ? report.attackerHp() : report.defenderHp()));
         }
         for (var frame : report.frames()) {

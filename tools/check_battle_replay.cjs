@@ -12,6 +12,8 @@ const protocol = generated.exports.mxzg.game.BattleReplay;
 const bytes = fs.readFileSync(path.join(root, "backend/target/chapter-1-1-1-replay.pb"));
 const report = protocol.decode(bytes);
 assert.equal(report.schemaVersion, 1);
+assert.equal(report.units[0].level, 1);
+assert.equal(report.units[1].level, 1);
 assert.equal(report.scenario, "main:1:1:1");
 assert.equal(report.outcome, "ATTACKER_WIN");
 assert.equal(report.phases.length, 7);
@@ -34,6 +36,12 @@ const steps = decode(bytes);
 assert.equal(steps[steps.length - 1].attackerHp, 56);
 assert.equal(steps[steps.length - 1].defenderHp, 0);
 assert.ok(Object.isFrozen(steps));
+const noLevel = protocol.decode(bytes);
+delete noLevel.units[0].level;
+assert.throws(() => decode(protocol.encode(noLevel).finish()), /缺少事件字段/);
+const badLevel = protocol.decode(bytes);
+badLevel.units[0].level = 0;
+assert.throws(() => decode(protocol.encode(badLevel).finish()), /等级无效/);
 const broken = protocol.decode(bytes);
 broken.phases[1].events[0].kind = "unknown";
 assert.throws(() => decode(protocol.encode(broken).finish()), /尚未支持/);
@@ -89,7 +97,7 @@ async function checkPlayback() {
 checkPlayback().catch(error => { console.error(error); process.exitCode = 1; });
 
 const meleeCode = esbuild.buildSync({entryPoints: [path.join(root,
-    "client/assets/scripts/features/battle/utils/BattleMeleeUtils.ts")], bundle: true,
+    "client/assets/scripts/features/battle/utils/BattleAttackUtils.ts")], bundle: true,
     platform: "node", format: "cjs", write: false}).outputFiles[0].text;
 const melee = {exports: {}};
 new Function("module", "exports", "require", meleeCode)(melee, melee.exports, require);
@@ -97,7 +105,7 @@ const buffRows = JSON.parse(fs.readFileSync(path.join(root,
     "client/assets/resources/config/buff.json"), "utf8")).rows;
 for (const id of [1010100, 1011101]) {
     const row = buffRows.find(row => row.idx === id);
-    const plan = melee.exports.BattleMeleeUtils.plan(row);
+    const plan = melee.exports.BattleAttackUtils.plan(row);
     assert.equal(plan.moveSeconds, 0.1);
     assert.equal(plan.beforeReturnSeconds, 1);
     assert.equal(plan.action, "attack");
@@ -105,9 +113,9 @@ for (const id of [1010100, 1011101]) {
     assert.equal(plan.attackDelaySeconds, 0);
     assert.equal(plan.actionSeconds, 0);
     assert.deepEqual(plan.sounds, id === 1011101 ? ["skill-101010011"] : []);
-    assert.throws(() => melee.exports.BattleMeleeUtils.plan({...row,
+    assert.throws(() => melee.exports.BattleAttackUtils.plan({...row,
         ani_base: '{"move_back":true}'}), /时间无效/);
-    assert.throws(() => melee.exports.BattleMeleeUtils.plan({...row,
+    assert.throws(() => melee.exports.BattleAttackUtils.plan({...row,
         file: '["unverified-effect"]'}), /支持范围/);
 }
 console.log("PASS legacy melee timing from actual buff configuration");
@@ -145,3 +153,101 @@ assert.deepEqual(displayUnits.map(unit => [unit.unitId, unit.templateId, unit.po
     [[1, 10101001, 2], [2, 10101001, 2]]);
 assert.ok(Object.isFrozen(displayUnits) && displayUnits.every(Object.isFrozen));
 console.log("PASS legacy eight positions, mirroring and serialized slot coordinates");
+
+// 服务器实际执行的独立败局可解码，但不能冒充已开放的主线播放场景。
+const defeatBytes = fs.readFileSync(path.join(root, "backend/target/independent-reversed-duel-replay.pb"));
+const defeat = protocol.decode(defeatBytes);
+assert.equal(defeat.scenario, "audit:duel");
+assert.equal(defeat.outcome, "DEFENDER_WIN");
+assert.equal(defeat.units[0].finalHp.toString(), "0");
+assert.ok(Number(defeat.units[1].finalHp.toString()) > 0);
+assert.throws(() => decode(defeatBytes), /场景不支持/);
+console.log("PASS independent defeat provenance and unsupported scene rejection");
+
+// type3复用旧攻击序列但不移出/返回；本关无file，不捏造投射物。
+const ranged = melee.exports.BattleAttackUtils.plan(buffRows.find(row => row.idx === 5051101));
+assert.equal(ranged.melee, false);
+assert.equal(ranged.moveSeconds, 0);
+assert.equal(ranged.action, "attack2");
+for (const [configured, clip] of [["attack", "attack"], ["skill", "attack2"], ["skill2", "attack3"], ["transform", "skill"]]) {
+    assert.equal(melee.exports.BattleAttackUtils.plan({type: 3, ani_base: JSON.stringify({action: configured}), file: "[]", sound: "[]"}).action, clip);
+}
+assert.ok(Object.hasOwn(JSON.parse(fs.readFileSync(path.join(root, "client/assets/resources/spine/10505005.json"), "utf8")).animations, ranged.action));
+assert.equal(ranged.attackSeconds, 0.6);
+assert.equal(ranged.actionSeconds, 1.8);
+assert.equal(ranged.beforeReturnSeconds, 0);
+assert.deepEqual(ranged.sounds, []);
+assert.throws(() => melee.exports.BattleAttackUtils.plan({...buffRows.find(row => row.idx === 5051101), file: '["unknown"]'}), /支持范围/);
+assert.equal(melee.exports.BattleAttackUtils.plan(buffRows.find(row => row.idx === 5050100)).beforeReturnSeconds, 2);
+const secondBytes = fs.readFileSync(path.join(root, "backend/target/chapter-1-1-2-replay.pb"));
+const second = protocol.decode(secondBytes);
+assert.equal(second.scenario, "main:1:1:2");
+assert.equal(second.units[1].level, 2);
+assert.deepEqual(melee.exports.BattleAttackUtils.damageSounds(buffRows.find(row => row.idx === 5051201)), ["skill-105050051"]);
+assert.throws(() => melee.exports.BattleAttackUtils.damageSounds({type: 100, sound: '["../bad"]'}), /配置无效/);
+assert.equal(second.outcome, "ATTACKER_WIN");
+assert.equal(second.units[0].finalHp.toString(), "102");
+assert.ok(second.phases.some(phase => phase.events.some(event => event.kind === "presentation" && event.configId === 5051101)));
+assert.ok(!second.phases.some(phase => phase.events.some(event => event.configId === 5051301)));
+assert.equal(decode(secondBytes).at(-1).attackerHp, 102);
+assert.equal(melee.exports.BattleAttackUtils.delaySeconds(buffRows.find(row => row.idx === 5051201)), 2.5);
+assert.deepEqual(melee.exports.BattleAttackUtils.dimly(buffRows.find(row => row.idx === 5051201)), [0.5, 1, 0.5]);
+console.log("PASS real second chapter wire, zero-probability bleed and stationary ranged timing");
+
+/** 使用真实第二关战报阻塞攻击动作，证明伤害已并行启动且下一技能必须等待整组完成。 */
+async function checkParallelEffects() {
+    const seen = [];
+    let unblock;
+    const gate = new Promise(resolve => { unblock = resolve; });
+    let held = false;
+    const player = new playerModule.exports.BattleReplayPlayer({
+        play: async step => {
+            seen.push(step);
+            if (step.kind === "presentation" && !held) {
+                held = true;
+                await gate;
+            }
+        },
+        stop: () => unblock()
+    });
+    const pending = player.play(secondBytes);
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    assert.equal(seen.filter(step => step.kind === "skill.begin").length, 1);
+    assert.ok(seen.some(step => step.kind === "damage" && step.configId === 5051201));
+    assert.ok(!seen.some(step => step.kind === "skill.end"));
+    player.stop();
+    assert.equal(await pending, false);
+    assert.ok(!seen.some(step => step.kind === "skill.end"));
+    const releases = [];
+    const multi = new playerModule.exports.BattleReplayPlayer({
+        play: step => step.kind === "presentation" || step.kind === "damage"
+            ? new Promise(resolve => releases.push(resolve)) : Promise.resolve(),
+        stop: () => releases.splice(0).forEach(resolve => resolve())
+    });
+    const multiPending = multi.play(secondBytes);
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    assert.equal(releases.length, 2);
+    multi.stop();
+    assert.equal(await multiPending, false);
+    assert.equal(releases.length, 0);
+    let releaseAttack;
+    let attackReleased = false;
+    let ended = false;
+    const failure = new playerModule.exports.BattleReplayPlayer({
+        play: async step => {
+            if (step.kind === "presentation") {
+                await new Promise(resolve => { releaseAttack = resolve; });
+                attackReleased = true;
+            }
+            if (step.kind === "damage") throw new Error("parallel damage failed");
+            if (step.kind === "skill.end") ended = true;
+        },
+        stop: () => releaseAttack?.()
+    });
+    await assert.rejects(failure.play(secondBytes), /parallel damage failed/);
+    await Promise.resolve();
+    assert.equal(attackReleased, true);
+    assert.equal(ended, false);
+    console.log("PASS same-skill parallel damage, skill barrier and cancellation of all branches");
+}
+checkParallelEffects().catch(error => { console.error(error); process.exitCode = 1; });

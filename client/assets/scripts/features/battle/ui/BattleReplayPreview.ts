@@ -1,11 +1,11 @@
 /** 独立战报画面验收：复用BattlePage及真实资源，不连接账号、数据库或奖励接口。 */
-import { Color, AudioClip, AudioSource, JsonAsset, Node, resources, Sprite, SpriteFrame, Tween, tween, Vec3, UITransform } from "cc";
+import { UIOpacity, Color, AudioClip, AudioSource, JsonAsset, Node, resources, Sprite, SpriteFrame, Tween, tween, Vec3, UITransform } from "cc";
 import { mountBattlePrefab } from "./BattlePage";
 import { mountBattleSpine, SpineActor } from "./battleSpine";
 import { paintBattleFloats } from "./battlePresentView";
 import { BattleReplayPlayer } from "../BattleReplayPlayer";
 import { BattleReplayUtils } from "../utils/BattleReplayUtils";
-import { BattleMeleeUtils } from "../utils/BattleMeleeUtils";
+import { BattleAttackUtils } from "../utils/BattleAttackUtils";
 import { GameLog } from "../../../core/GameLog";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { ChapterEndView } from "./ChapterEndView";
@@ -14,8 +14,8 @@ import { registerView } from "../../../framework/ui/UIRegistry";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { setText } from "../../../framework/ui/UiKit";
 
-/** 同源配置行，只消费当前已核对的近身和201图标字段。 */
-interface BuffRow { idx: number; type: number; ani_base: string; file: string; sound: string; buff_icon: number; }
+/** 同源配置行，只消费当前已核对的近身/远程、伤害音效和201图标字段。 */
+interface BuffRow { idx: number; type: number; ani_base: string; file: string; sound: string; buff_icon: number; delay: number; shake: number; dimly: number; }
 
 export class BattleReplayPreview {
     /** 装载资源及真实预制体后执行二进制战报；返回用于关场的清理函数。 */
@@ -33,10 +33,11 @@ export class BattleReplayPreview {
         const rows = (config.json as { rows: BuffRow[] }).rows;
         const selected = new Map<number, BuffRow>();
         for (const step of steps) {
-            if (step.kind === "presentation" || step.kind === "buff.upsert") {
+            if (step.kind === "presentation" || step.kind === "buff.upsert" || step.kind === "damage") {
                 const row = rows.find(row => row.idx === step.configId);
                 if (!row) throw new Error("缺少战斗表现配置：" + step.configId);
-                if (step.kind === "presentation") BattleMeleeUtils.plan(row);
+                if (step.kind === "presentation") BattleAttackUtils.plan(row);
+                if (step.kind === "damage" && row.type === 100) BattleAttackUtils.damageSounds(row);
                 selected.set(row.idx, row);
             }
         }
@@ -51,7 +52,7 @@ export class BattleReplayPreview {
             if (node) node.active = false;
         }
         setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, "独立测试阵容");
-        setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, "主线第1关");
+        setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, units[1].templateId === 10505005 ? "主线第2关" : "主线第1关");
         const actors = new Map<number, SpineActor>();
         const slots = new Map<number, Node>();
         /** 当前出场单位的头顶血条，随英雄槽移动；页面关闭时随预制体销毁。 */
@@ -65,19 +66,30 @@ export class BattleReplayPreview {
             GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "audio.started " + audio.clip?.name);
         });
         let closed = false;
-        let finishWait: (() => void) | null = null;
+        /** 每个并行效果单独登记等待；停止时全部结束，代次使后续回调失效。 */
+        const waits = new Set<() => void>();
+        let effectEpoch = 0;
+        const rootOrigin = shell.root.position.clone();
+        const dimNode = shell.root.getChildByPath("LayerVfx/VfxScreen/DimOverlay")!;
+        const dimOpacity = dimNode.getComponent(UIOpacity)!;
+        const viewport = shell.root.getComponent(UITransform)!;
+        dimNode.getComponent(UITransform)!.setContentSize(viewport.width + 50, viewport.height + 50);
         let player: BattleReplayPlayer | null = null;
         /** 停止动画等待、声音并恢复站位；不更改服务器数据。 */
         const stop = () => {
             Tween.stopAllByTarget(shell.root);
-            const finish = finishWait;
-            finishWait = null;
+            effectEpoch++;
+            Tween.stopAllByTarget(dimOpacity);
+            dimOpacity.opacity = 0;
+            shell.root.setPosition(rootOrigin);
+            const pending = Array.from(waits);
+            waits.clear();
             for (const [id, slot] of slots) {
                 Tween.stopAllByTarget(slot);
                 if (slot.isValid) slot.setPosition(origins.get(id)!);
             }
             audio.stop();
-            finish?.();
+            for (const finish of pending) finish();
         };
         /** 战场销毁才释放结算入口；正常播放结束仍需打开结算。 */
         const releaseSettlement = () => {
@@ -87,16 +99,17 @@ export class BattleReplayPreview {
         };
         /** 延迟使用引擎时钟，随Creator暂停；关页清理结束等待，避免遗留Promise。 */
         const wait = (seconds: number) => new Promise<void>(resolve => {
-            finishWait = resolve;
-            tween(shell.root).delay(seconds).call(() => { finishWait = null; resolve(); }).start();
+            const finish = () => { waits.delete(finish); resolve(); };
+            waits.add(finish);
+            tween(shell.root).delay(seconds).call(finish).start();
         });
         /** 只更新预制体血条，实际扣血已由整包校验确认。 */
         const hp = (id: number, value: number) => {
             const label = hpRows.get(id)?.getChildByName("Label");
             if (!label?.parent) throw new Error("战斗血条挂点缺失");
             label.parent.active = value > 0;
-            // 当前独立关卡双方均为一级；正式入口接通后由战报单位字段提供等级。
-            setText(label, "1");
+            // 等级来自整包校验后的服务器快照，不按关卡或模板猜测。
+            setText(label, String(units.find(unit => unit.unitId === id)!.level));
             const fill = label.parent.getChildByName("Fill")!;
             const max = id === 1 ? steps[0].attackerHp : steps[0].defenderHp;
             fill.active = value > 0;
@@ -122,8 +135,9 @@ export class BattleReplayPreview {
         };
         try {
             for (const row of selected.values()) {
-                if (row.type === 2) {
-                    for (const name of BattleMeleeUtils.plan(row).sounds) {
+                if (row.type === 2 || row.type === 3 || row.type === 100) {
+                    const names = row.type === 100 ? BattleAttackUtils.damageSounds(row) : BattleAttackUtils.plan(row).sounds;
+                    for (const name of names) {
                         sounds.set(name, await new Promise<AudioClip>((resolve, reject) => resources.load("audio/" + name,
                             AudioClip, (error, asset) => error ? reject(error) : resolve(asset))));
                     }
@@ -172,39 +186,79 @@ export class BattleReplayPreview {
             player = new BattleReplayPlayer({
                 stop,
                 play: async step => {
-                    if (closed) return;
+                    const epoch = effectEpoch;
+                    const cancelled = () => closed || epoch !== effectEpoch;
+                    if (cancelled()) return;
+                    const effectRow = selected.get(step.configId);
+                    if (effectRow && step.kind !== "buff.remove") {
+                        await wait(BattleAttackUtils.delaySeconds(effectRow));
+                        if (cancelled()) return;
+                        if (effectRow.shake === 1) {
+                            let shake = tween(shell.root);
+                            // 旧Lua的0..5为六次，最后幅度保持1；每组位移净值为0。
+                            for (let index = 0; index <= 5; index++) {
+                                const range = Math.max(1, 5 - index);
+                                shake = shake.by(0.016, { position: new Vec3(range, range, 0) })
+                                    .by(0.032, { position: new Vec3(-2 * range, -2 * range, 0) })
+                                    .by(0.016, { position: new Vec3(range, range, 0) });
+                            }
+                            shake.start();
+                        }
+                        if (effectRow.dimly === 1) {
+                            Tween.stopAllByTarget(dimOpacity);
+                            dimOpacity.opacity = 0;
+                            const times = BattleAttackUtils.dimly(effectRow);
+                            tween(dimOpacity).to(times[0], { opacity: 128 }, { easing: "expoOut" })
+                                .delay(times[1]).to(times[2], { opacity: 0 }, { easing: "expoOut" }).start();
+                        }
+                        GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
+                            "effect.start " + step.configId + " delay=" + BattleAttackUtils.delaySeconds(effectRow));
+                    }
                     setText(shell.roundLabel, "第" + step.round + "/15回合");
                     setText(shell.logLabel, "独立测试 · 第" + step.round + "回合");
                     if (step.kind === "presentation") {
-                        const plan = BattleMeleeUtils.plan(selected.get(step.configId)!);
+                        const plan = BattleAttackUtils.plan(selected.get(step.configId)!);
+                        for (const sound of plan.sounds) {
+                            audio.clip = sounds.get(sound)!;
+                            audio.play();
+                            GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "sound " + sound + " playing=" + audio.playing);
+                        }
                         const slot = slots.get(step.sourceId)!;
                         const target = slots.get(step.targetId)!;
                         // 使用世界坐标转回攻击者父节点，避免双方槽组偏移导致移错位置。
                         const world = target.worldPosition.clone();
                         world.x += step.targetId === 1 ? 100 : -100;
                         const point = slot.parent!.getComponent(UITransform)!.convertToNodeSpaceAR(world);
-                        tween(slot).to(plan.moveSeconds, { position: point }).start();
-                        await wait(plan.moveSeconds);
-                        if (closed) return;
-                        if (!actors.get(step.sourceId)!.gesture(plan.action)) throw new Error("缺少英雄动作：" + plan.action);
-                        for (const sound of plan.sounds) {
-                            audio.clip = sounds.get(sound)!;
-                            audio.play();
-                            GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "sound " + sound + " playing=" + audio.playing);
+                        if (plan.melee) {
+                            tween(slot).to(plan.moveSeconds, { position: point }).start();
+                            await wait(plan.moveSeconds);
                         }
+                        if (cancelled()) return;
+                        if (!actors.get(step.sourceId)!.gesture(plan.action)) throw new Error("缺少英雄动作：" + plan.action);
                         await wait(plan.attackSeconds + plan.attackDelaySeconds + plan.actionSeconds + plan.beforeReturnSeconds);
-                        if (closed) return;
-                        tween(slot).to(plan.moveSeconds, { position: origins.get(step.sourceId)! }).start();
-                        await wait(plan.moveSeconds);
-                        if (!closed) actors.get(step.sourceId)!.play("stand");
+                        if (cancelled()) return;
+                        if (plan.melee) {
+                            tween(slot).to(plan.moveSeconds, { position: origins.get(step.sourceId)! }).start();
+                            await wait(plan.moveSeconds);
+                        }
+                        if (!cancelled()) actors.get(step.sourceId)!.play("stand");
                     } else if (step.kind === "damage") {
-                        hp(1, step.attackerHp); hp(2, step.defenderHp);
+                        const row = selected.get(step.configId)!;
+                        // 持续伤害201不冒充直接伤害100；这里只恢复已核对的伤害音效来源。
+                        if (row.type === 100) {
+                            for (const name of BattleAttackUtils.damageSounds(row)) {
+                                audio.clip = sounds.get(name)!;
+                                audio.play();
+                                GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "damage.sound " + name);
+                            }
+                        }
+                        hp(step.targetId, step.targetId === 1 ? step.attackerHp : step.defenderHp);
                         const target = slots.get(step.targetId)!;
                         const point = shell.root.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
                         paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
                         actors.get(step.targetId)!.play(step.dead ? "die" : "hit");
                         await wait(0.35);
-                        if (!closed) {
+                        if (!cancelled()) {
                             if (step.dead) actors.get(step.targetId)!.node.active = false;
                             else actors.get(step.targetId)!.play("stand");
                         }

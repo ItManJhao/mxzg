@@ -183,6 +183,8 @@ message BattleReplayUnit {
   required uint32 position = 3;
   required int64 initial_hp = 4;
   required int64 final_hp = 5;
+  // 服务端战斗快照等级；旧战报可解码，但展示层须明确拒绝缺失值。
+  optional uint32 level = 6;
 }
 message BattleReplayPhase {
   required uint32 round = 1;

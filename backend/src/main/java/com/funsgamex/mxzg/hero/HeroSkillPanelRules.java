@@ -248,7 +248,7 @@ public class HeroSkillPanelRules {
     /** 一个已预检的纯普通伤害动作，保留目标规则和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
-    /** 按真实普攻/主动技能预检100伤害、201监听及2/3/5表现；未知效果拒绝，不执行半组技能。 */
+    /** 按真实普攻/主动技能预检100伤害、201监听、零概率1205及2/3/5表现；未知效果拒绝，不执行半组技能。 */
     public List<DamageArt> damageSkillArts(HeroBattleSkillUtils.Skill skill) {
         var config = skills.get(skill.skillId() + ":" + skill.level());
         if (config == null || !Set.of(1, 2).contains(config.path("active_type").asInt())) {
@@ -262,7 +262,9 @@ public class HeroSkillPanelRules {
                 if (!battleProjectile(buff.asInt())) {
                     if (battleRoundListener(buff.asInt())) {
                         battleTrigger(buff.asInt());
-                    } else battleOrdinaryDamageRate(buff.asInt(), true);
+                    } else if (!battleZeroProbabilityBleed(buff.asInt())) {
+                        battleOrdinaryDamageRate(buff.asInt(), true);
+                    }
                 }
                 ids.add(buff.asInt());
             }
@@ -271,6 +273,20 @@ public class HeroSkillPanelRules {
         }
         if (result.isEmpty()) throw new IllegalArgumentException("普通攻击技能没有动作");
         return List.copyOf(result);
+    }
+
+    /**
+     * 第2关1205流血的零概率分支：旧抗性处理仍读取325并判定，但不会安装Buff。
+     * 这里只接受真实零概率、无子动作的负面流血；非零概率持续流血尚未接入，必须拒绝。
+     */
+    public boolean battleZeroProbabilityBleed(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 1205) return false;
+        if (buff.path("attach_percent").asInt() != 0 || buff.path("effecttype").asInt() != 2
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("非零概率或扩展流血尚未支持：" + buffId);
+        }
+        return true;
     }
 
     /** 旧2/3/5近身、远程、投射表现由ClientBuffHandler处理，只记录表现，不参与服务端伤害。 */

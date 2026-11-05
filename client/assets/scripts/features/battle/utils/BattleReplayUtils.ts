@@ -13,7 +13,7 @@ interface WireEvent {
 /** 仅声明本适配器使用的解码字段，不手改生成代码。 */
 interface WireReplay {
     schemaVersion: number; scenario: string; rounds: number; outcome: string;
-    units: Array<{ unitId: number; templateId: number; position: number; initialHp: WireLong; finalHp: WireLong }>;
+    units: Array<{ unitId: number; templateId: number; level: number; position: number; initialHp: WireLong; finalHp: WireLong }>;
     phases: Array<{ round: number; sourceId: number; events: WireEvent[] }>;
 }
 
@@ -42,13 +42,13 @@ export interface BattleReplayStep {
 
 export class BattleReplayUtils {
     /** 校验整包后保留服务器单位身份、模板及站位，展示层不再把所有人塞入首槽。 */
-    public static units(bytes: Uint8Array): readonly { unitId: number; templateId: number; position: number }[] {
+    public static units(bytes: Uint8Array): readonly { unitId: number; templateId: number; level: number; position: number }[] {
         this.decode(bytes);
         const report = (mxzg as unknown as {
             game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
         }).game.BattleReplay.decode(bytes);
         return Object.freeze(report.units.map(unit => Object.freeze({
-            unitId: unit.unitId, templateId: unit.templateId, position: unit.position,
+            unitId: unit.unitId, templateId: unit.templateId, level: unit.level, position: unit.position,
         })));
     }
 
@@ -61,15 +61,19 @@ export class BattleReplayUtils {
             game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
         }).game.BattleReplay;
         const report = codec.decode(bytes);
-        if (report.schemaVersion !== 1 || report.scenario !== "main:1:1:1"
+        if (report.schemaVersion !== 1 || ["main:1:1:1", "main:1:1:2"].indexOf(report.scenario) < 0
             || report.units.length !== 2 || report.rounds < 1 || report.rounds > 15) {
             throw new Error("战报版本或场景不支持");
         }
         const hp = new Map<number, number>();
         for (const unit of report.units) {
             if ((unit.unitId !== 1 && unit.unitId !== 2) || hp.has(unit.unitId)
-                || unit.templateId !== 10101001 || unit.position !== 2) {
+                || unit.templateId !== (unit.unitId === 2 && report.scenario === "main:1:1:2" ? 10505005 : 10101001) || unit.position !== 2) {
                 throw new Error("战报单位无效");
+            }
+            this.required(unit, ["level"]);
+            if (!Number.isInteger(unit.level) || unit.level < 1) {
+                throw new Error("战报单位等级无效");
             }
             hp.set(unit.unitId, this.integer(unit.initialHp));
         }

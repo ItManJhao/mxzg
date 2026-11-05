@@ -9807,6 +9807,7 @@ var mxzg = $root.mxzg = (() => {
       BattleReplayUnit.prototype.position = 0;
       BattleReplayUnit.prototype.initialHp = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       BattleReplayUnit.prototype.finalHp = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      BattleReplayUnit.prototype.level = 0;
       BattleReplayUnit.create = function create(properties) {
         return new BattleReplayUnit(properties);
       };
@@ -9837,6 +9838,11 @@ var mxzg = $root.mxzg = (() => {
           /* id 5, wireType 0 =*/
           40
         ).int64(message.finalHp);
+        if (message.level != null && Object.hasOwnProperty.call(message, "level"))
+          writer.uint32(
+            /* id 6, wireType 0 =*/
+            48
+          ).uint32(message.level);
         return writer;
       };
       BattleReplayUnit.decode = function decode(reader, length, error, long) {
@@ -9882,6 +9888,10 @@ var mxzg = $root.mxzg = (() => {
               message.finalHp = reader.int64();
               break;
             }
+            case 6: {
+              message.level = reader.uint32();
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -9921,6 +9931,10 @@ var mxzg = $root.mxzg = (() => {
           return "initialHp: integer|Long expected";
         if (!$util.isInteger(message.finalHp) && !(message.finalHp && $util.isInteger(message.finalHp.low) && $util.isInteger(message.finalHp.high)))
           return "finalHp: integer|Long expected";
+        if (message.level != null && Object.hasOwnProperty.call(message, "level")) {
+          if (!$util.isInteger(message.level))
+            return "level: integer expected";
+        }
         return null;
       };
       BattleReplayUnit.fromObject = function fromObject(object, long) {
@@ -9959,6 +9973,8 @@ var mxzg = $root.mxzg = (() => {
           else if (typeof object.finalHp === "object")
             message.finalHp = new $util.LongBits(object.finalHp.low >>> 0, object.finalHp.high >>> 0).toNumber();
         }
+        if (object.level != null)
+          message.level = object.level >>> 0;
         return message;
       };
       BattleReplayUnit.toObject = function toObject(message, options, q) {
@@ -9983,6 +9999,7 @@ var mxzg = $root.mxzg = (() => {
             object.finalHp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
           } else
             object.finalHp = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          object.level = 0;
         }
         if (message.unitId != null && Object.hasOwnProperty.call(message, "unitId"))
           object.unitId = message.unitId;
@@ -10004,6 +10021,8 @@ var mxzg = $root.mxzg = (() => {
             object.finalHp = options.longs === String ? String(message.finalHp) : message.finalHp;
           else
             object.finalHp = options.longs === String ? $util.Long.prototype.toString.call(message.finalHp) : options.longs === Number ? new $util.LongBits(message.finalHp.low >>> 0, message.finalHp.high >>> 0).toNumber() : message.finalHp;
+        if (message.level != null && Object.hasOwnProperty.call(message, "level"))
+          object.level = message.level;
         return object;
       };
       BattleReplayUnit.prototype.toJSON = function toJSON() {

@@ -72,7 +72,7 @@ class HeroBattleChapterScenarioTest {
         var report = new HeroBattleChapterScenario(new ObjectMapper()).run(rate -> rate == 1D);
         var frames = new ArrayList<>(report.frames());
         frames.remove(3);
-        var broken = new HeroBattleChapterScenario.Result(report.outcome(), report.rounds(),
+        var broken = new HeroBattleChapterScenario.Result(report.scenario(), report.outcome(), report.rounds(),
             report.initial(), report.turns(), report.damages(), frames, report.attackerHp(), report.defenderHp());
         assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(broken));
     }
@@ -103,5 +103,153 @@ class HeroBattleChapterScenarioTest {
         assertEquals(-53, decoded.getPhases(1).getEvents(2).getActualHpChange());
         assertEquals(56, decoded.getUnits(0).getFinalHp());
         Files.write(Path.of("target/chapter-1-1-1-replay.pb"), bytes);
+    }
+
+    /** 保留两份真实初始属性，仅互换攻守身份，验证执行器实际算出败局；不是主线第二关。 */
+    @Test void reversedRealInputsProduceIndependentDefeat() throws Exception {
+        var mapper = new ObjectMapper();
+        var scenario = new HeroBattleChapterScenario(mapper);
+        var initial = scenario.initial();
+        var result = scenario.runIndependentDuel(List.of(withId(initial.getLast(), 1), withId(initial.getFirst(), 2)),
+            rate -> rate == 1D);
+        assertEquals(HeroBattleRoundUtils.Outcome.DEFENDER_WIN, result.outcome());
+        assertEquals(0, result.attackerHp());
+        assertTrue(result.defenderHp() > 0);
+        HeroBattleReplayUtils.validate(result);
+        assertEquals("audit:duel", result.scenario());
+        var wire = HeroBattleReplayProtocolUtils.encode(result);
+        assertEquals("audit:duel", wire.getScenario());
+        assertEquals("DEFENDER_WIN", wire.getOutcome());
+        Files.write(Path.of("target/independent-reversed-duel-replay.pb"), wire.toByteArray());
+        Files.writeString(Path.of("target/independent-reversed-duel-report.json"),
+            mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
+    }
+
+    /** 回合上限边界夹具只验证记录完整性，不冒充真实关卡计算结果。 */
+    @Test void roundLimitRequiresAllFifteenCompleteRounds() {
+        var initial = new HeroBattleChapterScenario(new ObjectMapper()).initial();
+        long a = initial.getFirst().opening().hp(), d = initial.getLast().opening().hp();
+        var frames = new ArrayList<HeroBattleChapterScenario.Frame>();
+        var turns = new ArrayList<HeroBattleChapterScenario.Turn>();
+        for (int round = 1; round <= 15; round++) {
+            for (int source = 0; source <= 2; source++) {
+                frames.add(new HeroBattleChapterScenario.Frame(round, source, a, d, a, d, List.of(), List.of()));
+                if (source != 0) turns.add(new HeroBattleChapterScenario.Turn(round, source, 0, a, d));
+            }
+        }
+        var result = new HeroBattleChapterScenario.Result("audit:round-limit", HeroBattleRoundUtils.Outcome.DEFENDER_WIN,
+            15, initial, turns, List.of(), frames, a, d);
+        assertDoesNotThrow(() -> HeroBattleReplayUtils.validate(result));
+        frames.removeLast();
+        var truncated = new HeroBattleChapterScenario.Result(result.scenario(), result.outcome(), 15, initial, turns, List.of(), frames, a, d);
+        assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(truncated));
+    }
+
+    /** 结局之后追加空阶段也必须拒绝，不能因为没有伤害而放行。 */
+    @Test void replayRejectsFramesAfterDeath() {
+        var result = new HeroBattleChapterScenario(new ObjectMapper()).run(rate -> rate == 1D);
+        var frames = new ArrayList<>(result.frames());
+        frames.add(new HeroBattleChapterScenario.Frame(result.rounds(), 1, result.attackerHp(), 0,
+            result.attackerHp(), 0, List.of(), List.of()));
+        assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(withFrames(result, frames)));
+    }
+
+    /** 同一回合重复开始或同一单位重复出手，血量不变也不得放行。 */
+    @Test void replayRejectsDuplicateRoundStartAndTurn() {
+        var result = new HeroBattleChapterScenario(new ObjectMapper()).run(rate -> rate == 1D);
+        for (int source : List.of(0, 1)) {
+            var frames = new ArrayList<>(result.frames());
+            var previous = frames.get(source);
+            frames.add(source + 1, new HeroBattleChapterScenario.Frame(1, source,
+                previous.attackerAfter(), previous.defenderAfter(), previous.attackerAfter(), previous.defenderAfter(),
+                List.of(), List.of()));
+            assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(withFrames(result, frames)));
+        }
+    }
+
+    /** 伤害集合与事件轨迹必须一致，否则编码后的客户端回放会丢伤害。 */
+    @Test void replayRejectsMissingDamageTrace() {
+        var result = new HeroBattleChapterScenario(new ObjectMapper()).run(rate -> rate == 1D);
+        var frames = new ArrayList<>(result.frames());
+        var frame = frames.get(1);
+        frames.set(1, new HeroBattleChapterScenario.Frame(frame.round(), frame.sourceId(), frame.attackerBefore(),
+            frame.defenderBefore(), frame.attackerAfter(), frame.defenderAfter(), frame.damages(), List.of()));
+        assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(withFrames(result, frames)));
+    }
+
+    /** 重建测试输入身份，其余配置与计算属性保持不变。 */
+    private static HeroBattleChapterScenario.Unit withId(HeroBattleChapterScenario.Unit unit, int id) {
+        return new HeroBattleChapterScenario.Unit(id, unit.template(), unit.level(), unit.star(), unit.stage(),
+            unit.position(), unit.attributes(), unit.opening(), unit.skills());
+    }
+
+    /** 仅替换待检阶段，保留最终值，确保测试能发现伪造的连续性。 */
+    private static HeroBattleChapterScenario.Result withFrames(HeroBattleChapterScenario.Result result,
+        List<HeroBattleChapterScenario.Frame> frames) {
+        return new HeroBattleChapterScenario.Result(result.scenario(), result.outcome(), result.rounds(), result.initial(), result.turns(),
+            result.damages(), frames, result.attackerHp(), result.defenderHp());
+    }
+
+    /** 真实第二关按配置执行；零概率流血不得产生安装或后续流血伤害。 */
+    @Test void realSecondMissionCompletesWithoutInventingBleed() throws Exception {
+        var mapper = new ObjectMapper();
+        var scenario = new HeroBattleChapterScenario(mapper);
+        var result = scenario.runMission(2, rate -> {
+            assertTrue(rate == 0D || rate == 1D, "新增随机依赖需要先核对");
+            return rate == 1D;
+        });
+        assertEquals("main:1:1:2", result.scenario());
+        assertEquals(HeroBattleRoundUtils.Outcome.ATTACKER_WIN, result.outcome());
+        assertEquals(3, result.rounds());
+        assertEquals(102, result.attackerHp());
+        assertEquals(0, result.defenderHp());
+        assertEquals(10505005, result.initial().getLast().template());
+        assertEquals(2, result.initial().getLast().level());
+        assertEquals(5, result.initial().getLast().star());
+        assertTrue(result.frames().stream().flatMap(frame -> frame.trace().stream())
+            .anyMatch(trace -> trace.kind().equals("presentation") && trace.configId() == 5051101));
+        assertFalse(result.frames().stream().flatMap(frame -> frame.trace().stream()).anyMatch(trace -> trace.configId() == 5051301));
+        HeroBattleReplayUtils.validate(result);
+        Files.writeString(Path.of("target/chapter-1-1-2-report.json"), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
+        Files.write(Path.of("target/chapter-1-1-2-replay.pb"), HeroBattleReplayProtocolUtils.encode(result).toByteArray());
+        assertThrows(IllegalArgumentException.class, () -> scenario.initial(3));
+    }
+
+    /** 概率非零的真实流血配置继续拒绝，防止把“不安装”错误扩大到完整流血实现。 */
+    @Test void positiveBleedProbabilityRemainsUnsupported() {
+        var rules = new HeroSkillPanelRules(new ObjectMapper());
+        assertTrue(rules.battleZeroProbabilityBleed(5051301));
+        assertFalse(rules.battleZeroProbabilityBleed(5051201));
+        assertThrows(IllegalArgumentException.class, () -> rules.battleZeroProbabilityBleed(5051303));
+    }
+
+    /** 零概率流血仍消费抗性；判定器非法命中时，根动作伤害和一次性读取一起回滚。 */
+    @Test void zeroBleedConsumesResistanceAndRollsBackOnInvalidDecision() {
+        var mapper = new ObjectMapper();
+        var units = new HeroBattleChapterScenario(mapper).initial(2);
+        for (boolean invalidDecision : List.of(false, true)) {
+            var states = units.stream().map(unit -> new HeroBattleHealingExecutor.State(
+                new HeroBattleEventProcessor.Actor(unit.id(), unit.skills()), unit.id(), unit.position(),
+                unit.opening().hp(), unit.opening().maxHp(), unit.opening().attack(), 0, 0, 0)).toList();
+            var engine = new HeroBattleHealingExecutor(new HeroSkillPanelRules(mapper), states);
+            units.forEach(unit -> engine.bindCombatData(unit.id(), unit.template(), unit.attributes()));
+            var elements = new HeroBattleElementRules(mapper);
+            engine.beginRound(1, List.of(2, 1), elements, rate -> rate == 1D);
+            engine.setOnceAttribute(1, 325, 1234);
+            java.util.function.DoublePredicate decision = rate -> rate == 1D
+                || (invalidDecision && !engine.onceAttributes(1).containsKey(325));
+            if (invalidDecision) {
+                assertThrows(IllegalStateException.class, () -> engine.act(2, 1, 0, elements, decision));
+                assertEquals(units.getFirst().opening().hp(), engine.state(1).hp());
+                assertEquals(1234L, engine.onceAttributes(1).get(325));
+                assertTrue(engine.damages().isEmpty());
+                assertTrue(engine.trace().isEmpty());
+            } else {
+                engine.act(2, 1, 0, elements, decision);
+                assertFalse(engine.onceAttributes(1).containsKey(325));
+                assertTrue(engine.state(1).hp() < units.getFirst().opening().hp());
+                assertFalse(engine.trace().stream().anyMatch(trace -> trace.configId() == 5051301));
+            }
+        }
     }
 }

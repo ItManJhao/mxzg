@@ -2,9 +2,10 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
-const fixture = fs.readFileSync(path.resolve(__dirname, "../backend/target/chapter-1-1-1-replay.pb"));
+const fixtures = new Map([1, 2].map(mission => ["/chapter-1-1-" + mission + "-replay.pb",
+    fs.readFileSync(path.resolve(__dirname, "../backend/target/chapter-1-1-" + mission + "-replay.pb"))]));
 http.createServer((request, response) => {
-    if (request.method !== "GET" || request.url !== "/chapter-1-1-1-replay.pb") {
+    if (request.method !== "GET" || !fixtures.has(request.url)) {
         response.writeHead(404);
         response.end();
         return;
@@ -17,5 +18,5 @@ http.createServer((request, response) => {
     }
     response.writeHead(200, {"Content-Type": "application/octet-stream", "Cache-Control": "no-store",
         ...(origin ? {"Access-Control-Allow-Origin": origin, "Vary": "Origin"} : {})});
-    response.end(fixture);
+    response.end(fixtures.get(request.url));
 }).listen(19091, "127.0.0.1", () => console.log("Read-only replay fixture: 127.0.0.1:19091"));

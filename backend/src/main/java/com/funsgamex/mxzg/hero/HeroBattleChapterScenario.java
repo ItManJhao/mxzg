@@ -1,6 +1,6 @@
 /**
- * 独立环境的旧主线1-1-1战斗验收器：读取真实敌方、成长和技能，驱动完整选定场景到胜负。
- * 仅限固定无装备单英雄测试阵容；不接玩家库、协议、关卡进度或奖励，不是通用主线服务。
+ * 独立环境的旧主线第一章第1/2关战斗验收器：读取真实敌方、成长和技能，驱动完整选定场景到胜负。
+ * 默认使用固定无装备单英雄阵容，另提供明确标识的独立双单位审计入口；不接玩家库、业务协议、关卡进度或奖励。
  */
 package com.funsgamex.mxzg.hero;
 
@@ -46,8 +46,8 @@ public final class HeroBattleChapterScenario {
             trace = List.copyOf(trace);
         }
     }
-    /** 本场最终结果与可核对伤害；无奖励或持久版本。 */
-    public record Result(HeroBattleRoundUtils.Outcome outcome, int rounds, List<Unit> initial,
+    /** 本场最终结果、来源与可核对伤害；scenario区分真实主线和独立审计，无奖励或持久版本。 */
+    public record Result(String scenario, HeroBattleRoundUtils.Outcome outcome, int rounds, List<Unit> initial,
                          List<Turn> turns, List<HeroBattleHealingExecutor.Damage> damages, List<Frame> frames,
                          long attackerHp, long defenderHp) {
         /** 冻结验收结果，避免把显示修改当服务器结果。 */
@@ -71,10 +71,16 @@ public final class HeroBattleChapterScenario {
 
     /** 加载固定测试双方；配置变化超出验收范围时拒绝，不能继续假装原场景已覆盖。 */
     public List<Unit> initial() {
+        return initial(1);
+    }
+
+    /** 只允许已核对的第一章第1/2关单敌方输入，其余关卡不得绕过依赖审计。 */
+    public List<Unit> initial(int mission) {
+        if (mission != 1 && mission != 2) throw new IllegalArgumentException("该主线关卡尚未接入");
         var enemies = new ArrayList<JsonNode>();
         for (var row : rows("chapter")) {
             if (row.path("mode_id").asInt() == 1 && row.path("chapter_id").asInt() == 1
-                && row.path("mission_id").asInt() == 1 && row.path("hero_type").asInt() != 0) {
+                && row.path("mission_id").asInt() == mission && row.path("hero_type").asInt() != 0) {
                 enemies.add(row);
             }
         }
@@ -82,17 +88,20 @@ public final class HeroBattleChapterScenario {
             throw new IllegalStateException("选定关卡不再是单敌方，需重新核对依赖");
         }
         var enemy = enemies.getFirst();
-        if (enemy.path("hero_type").asInt() != 10101001 || enemy.path("hero_level").asInt() != 1
-            || enemy.path("hero_star").asInt() != 1 || enemy.path("pos").asInt() != 2
+        if (enemy.path("hero_type").asInt() != (mission == 1 ? 10101001 : 10505005)
+            || enemy.path("hero_level").asInt() != (mission == 1 ? 1 : 2)
+            || enemy.path("hero_star").asInt() != (mission == 1 ? 1 : 5) || enemy.path("pos").asInt() != 2
             || !mapper.readTree(enemy.path("equipment").asString()).isEmpty()
             || !mapper.readTree(enemy.path("runes").asString()).isEmpty()) {
             throw new IllegalStateException("选定关卡内容变化，需扩展验收范围");
         }
-        // 单个火元素未激活旧元素光环；主线无回合额外加成，配置变化不能静默忽略。
+        // 双方各单英雄，按实际元素拒绝新出现的单元素光环；主线回合加成也不能静默忽略。
+        int enemyElement = skills.battleIdentity(enemy.path("hero_type").asInt()).element();
         for (var row : rows("elementaddition")) {
             var required = mapper.readTree(row.path("elements").asString());
-            if (required.isEmpty() || (required.size() == 1 && required.get(0).asInt() == 1)) {
-                throw new IllegalStateException("单火元素出现光环依赖，需接入后再验收");
+            if (required.isEmpty() || (required.size() == 1
+                && (required.get(0).asInt() == 1 || required.get(0).asInt() == enemyElement))) {
+                throw new IllegalStateException("单英雄出现光环依赖，需接入后再验收");
             }
         }
         for (var row : rows("battleroundaddition")) {
@@ -100,18 +109,21 @@ public final class HeroBattleChapterScenario {
                 throw new IllegalStateException("主线出现回合加成，需接入后再验收");
             }
         }
-        return List.of(unit(1, 0, null), unit(2, growth.npcStage(1), enemy));
+        return List.of(unit(1, 0, null), unit(2, growth.npcStage(enemy.path("hero_level").asInt()), enemy));
     }
 
     /** 按旧基础成长→怪物初始修正→技能加成→玩家阵型顺序创建本场原始属性。 */
     private Unit unit(int id, int stage, JsonNode enemy) {
-        var base = growth.stats(10101001, 1, 1, stage);
+        int template = enemy == null ? 10101001 : enemy.path("hero_type").asInt();
+        int star = enemy == null ? 1 : enemy.path("hero_star").asInt();
+        int level = enemy == null ? 1 : enemy.path("hero_level").asInt();
+        var base = growth.stats(template, star, level, stage);
         var attributes = new HashMap<Integer, Long>();
         attributes.put(220, (long) base.atk());
         attributes.put(223, (long) base.hp());
         attributes.put(224, (long) base.def());
         attributes.put(101, (long) base.spd());
-        attributes.put(150, defense.coefficient(1));
+        attributes.put(150, defense.coefficient(star));
         if (enemy != null) {
             for (var modifier : mapper.readTree(enemy.path("attr").asString())) {
                 int type = modifier.path("type").asInt();
@@ -119,24 +131,55 @@ public final class HeroBattleChapterScenario {
                     modifier.path("kind").asInt(), modifier.path("value").asLong()));
             }
         }
-        skills.contribute(10101001, 1, stage, (type, value) -> attributes.merge(type, value, Math::addExact));
+        skills.contribute(template, star, stage, (type, value) -> attributes.merge(type, value, Math::addExact));
         if (enemy == null) {
             formations.position(1, 2).attributes()
                 .forEach((type, value) -> attributes.merge(type, value, Math::addExact));
         }
-        var plan = skills.battleSchedule(skills.select(10101001, 1, stage));
+        var plan = skills.battleSchedule(skills.select(template, star, stage));
         for (var skill : plan) {
             if (skill.first() || (skill.activeType() != 1 && skill.activeType() != 2)) {
                 throw new IllegalStateException("测试阵容新增先手/被动依赖，需重新核查");
             }
             skills.damageSkillArts(skill);
         }
-        return new Unit(id, 10101001, 1, 1, stage, 2, attributes, HeroBattleAttributeUtils.opening(attributes), plan);
+        return new Unit(id, template, level, star, stage, 2, attributes, HeroBattleAttributeUtils.opening(attributes), plan);
     }
 
     /** 在独立内存战场执行到真实胜负或15回合上限；调用方提供判定，不引入新随机推定。 */
     public Result run(DoublePredicate decision) {
-        var initial = initial();
+        return runDuel("main:1:1:1", initial(), decision);
+    }
+
+    /** 读取已核对的真实第1/2关敌方并完成只读整场，不允许从调用方提交怪物属性。 */
+    public Result runMission(int mission, DoublePredicate decision) {
+        return runDuel("main:1:1:" + mission, initial(mission), decision);
+    }
+
+    /**
+     * 独立双单位规则验收入口；输入来自同源配置或明确标识的边界夹具，不读取玩家数据。
+     * 不代表新主线关卡已开放；调用方不得把互换攻守等测试输入标成原关卡战报。
+     */
+    public Result runIndependentDuel(List<Unit> input, DoublePredicate decision) {
+        return runDuel("audit:duel", input, decision);
+    }
+
+    /** 执行本场双单位输入；来源在执行前确定，审计结果不得冒充主线关卡。 */
+    private Result runDuel(String scenario, List<Unit> input, DoublePredicate decision) {
+        var initial = List.copyOf(input);
+        if (initial.size() != 2 || initial.getFirst().id() != 1 || initial.getLast().id() != 2
+            || initial.stream().anyMatch(unit -> unit.opening().hp() <= 0
+                || unit.opening().hp() > unit.opening().maxHp() || unit.position() < 1 || unit.position() > 8)) {
+            throw new IllegalArgumentException("独立双单位输入无效");
+        }
+        for (var unit : initial) {
+            for (var skill : unit.skills()) {
+                if (skill.first() || (skill.activeType() != 1 && skill.activeType() != 2)) {
+                    throw new IllegalArgumentException("独立双单位未接入先手或被动技能");
+                }
+                skills.damageSkillArts(skill);
+            }
+        }
         var states = initial.stream().map(unit -> new HeroBattleHealingExecutor.State(
             new HeroBattleEventProcessor.Actor(unit.id(), unit.skills()), unit.id(), unit.position(),
             unit.opening().hp(), unit.opening().maxHp(), unit.opening().attack(), 0, 0, 0)).toList();
@@ -180,7 +223,7 @@ public final class HeroBattleChapterScenario {
                 break;
             }
         }
-        return new Result(outcome, completed, initial, turns, engine.damages(), frames, engine.state(1).hp(), engine.state(2).hp());
+        return new Result(scenario, outcome, completed, initial, turns, engine.damages(), frames, engine.state(1).hp(), engine.state(2).hp());
     }
 
     /** 根动作成功后截取新增伤害，失败不会生成半帧；回合持续伤害单独归档。 */
