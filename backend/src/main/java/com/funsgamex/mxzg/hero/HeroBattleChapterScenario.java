@@ -1,6 +1,6 @@
 /**
  * 独立环境的旧主线第一章第1/2关战斗验收器：读取真实敌方、成长和技能，驱动完整选定场景到胜负。
- * 默认使用固定无装备单英雄阵容，另提供明确标识的独立双单位审计入口；不接玩家库、业务协议、关卡进度或奖励。
+ * 默认使用固定无装备单英雄阵容，另提供明确标识的独立双单位/多单位审计入口；不接玩家库、业务协议、关卡进度或奖励。
  */
 package com.funsgamex.mxzg.hero;
 
@@ -23,7 +23,7 @@ public final class HeroBattleChapterScenario {
     /** 我方已选阵型1的站位属性；怪物不走玩家FormationReceivers。 */
     private final MainFormationRules formations;
 
-    /** 初始单位信息及原始战斗属性，冻结供验收对照。 */
+    /** 初始单位信息与原始属性；faction明确为1攻方/2守方，id为本场身份，模板可重复。 */
     public record Unit(int id, int faction, int template, int level, int star, int stage, int position,
                        Map<Integer, Long> attributes, HeroBattleAttributeUtils.Opening opening,
                        List<HeroBattleSkillUtils.Skill> skills) {
@@ -33,29 +33,36 @@ public final class HeroBattleChapterScenario {
             skills = List.copyOf(skills);
         }
     }
-    /** 一次合法出手的输入/输出血量，能量明确保存旧默认0。 */
-    public record Turn(int round, int sourceId, long skillEnergy, long attackerHp, long defenderHp) {}
-    /** 单个回合开始阶段或一次出手；保留技能、表现、伤害和Buff变化的实际交错顺序。 */
-    public record Frame(int round, int sourceId, long attackerBefore, long defenderBefore,
-                        long attackerAfter, long defenderAfter,
+    /** 一次出手结束后的完整单位生命，包含死亡单位，不按阵营合并。 */
+    public record Turn(int round, int sourceId, long skillEnergy, Map<Integer, Long> hp) {
+        /** 冻结本次出手生命，后续行动不能改写历史记录。 */
+        public Turn {
+            hp = Map.copyOf(hp);
+        }
+    }
+    /** 一个回合开始或出手阶段；完整快照便于拒绝丢单位、未知单位和半帧记录。 */
+    public record Frame(int round, int sourceId, Map<Integer, Long> before, Map<Integer, Long> after,
                         List<HeroBattleHealingExecutor.Damage> damages,
                         List<HeroBattleHealingExecutor.Trace> trace) {
-        /** sourceId为0表示回合开始持续效果，1/2表示双方出手。 */
+        /** 冻结前后生命与本阶段事件，防止事务外修改。 */
         public Frame {
+            before = Map.copyOf(before);
+            after = Map.copyOf(after);
             damages = List.copyOf(damages);
             trace = List.copyOf(trace);
         }
     }
-    /** 本场最终结果、来源与可核对伤害；scenario区分真实主线和独立审计，无奖励或持久版本。 */
+    /** 本场结果与逐单位最终生命；审计来源不能冒充真实主线，无奖励和持久状态。 */
     public record Result(String scenario, HeroBattleRoundUtils.Outcome outcome, int rounds, List<Unit> initial,
                          List<Turn> turns, List<HeroBattleHealingExecutor.Damage> damages, List<Frame> frames,
-                         long attackerHp, long defenderHp) {
-        /** 冻结验收结果，避免把显示修改当服务器结果。 */
+                         Map<Integer, Long> finalHp) {
+        /** 冻结完整名册、轨迹与最终逐单位生命。 */
         public Result {
             initial = List.copyOf(initial);
             turns = List.copyOf(turns);
             damages = List.copyOf(damages);
             frames = List.copyOf(frames);
+            finalHp = Map.copyOf(finalHp);
         }
     }
 
@@ -148,12 +155,12 @@ public final class HeroBattleChapterScenario {
 
     /** 在独立内存战场执行到真实胜负或15回合上限；调用方提供判定，不引入新随机推定。 */
     public Result run(DoublePredicate decision) {
-        return runDuel("main:1:1:1", initial(), decision);
+        return runBattle("main:1:1:1", initial(), decision);
     }
 
     /** 读取已核对的真实第1/2关敌方并完成只读整场，不允许从调用方提交怪物属性。 */
     public Result runMission(int mission, DoublePredicate decision) {
-        return runDuel("main:1:1:" + mission, initial(mission), decision);
+        return runBattle("main:1:1:" + mission, initial(mission), decision);
     }
 
     /**
@@ -161,76 +168,117 @@ public final class HeroBattleChapterScenario {
      * 不代表新主线关卡已开放；调用方不得把互换攻守等测试输入标成原关卡战报。
      */
     public Result runIndependentDuel(List<Unit> input, DoublePredicate decision) {
-        return runDuel("audit:duel", input, decision);
+        if (input.size() != 2) throw new IllegalArgumentException("独立双单位输入无效");
+        return runBattle("audit:duel", input, decision);
     }
 
-    /** 执行本场双单位输入；来源在执行前确定，审计结果不得冒充主线关卡。 */
-    private Result runDuel(String scenario, List<Unit> input, DoublePredicate decision) {
-        var initial = List.copyOf(input);
-        if (initial.size() != 2 || initial.getFirst().id() != 1 || initial.getLast().id() != 2
-            || initial.stream().anyMatch(unit -> unit.opening().hp() <= 0
-                || unit.opening().hp() > unit.opening().maxHp() || unit.position() < 1 || unit.position() > 8)) {
-            throw new IllegalArgumentException("独立双单位输入无效");
+    /** 独立多单位审计，只接受已支持技能；不能借此开放仍有眩晕缺口的第3关。 */
+    public Result runIndependentTeams(List<Unit> input, DoublePredicate decision) {
+        return runBattle("audit:teams", input, decision);
+    }
+
+    /** 校验本场身份/站位/生命并规范为攻方在前；同模板不同单位合法，同侧站位不得重叠。 */
+    public static List<Unit> roster(List<Unit> input) {
+        if (input.size() < 2 || input.size() > 16) throw new IllegalArgumentException("战斗单位数量无效");
+        var ids = new HashSet<Integer>();
+        var seats = new HashSet<String>();
+        var factions = new HashSet<Integer>();
+        for (var unit : input) {
+            if (unit.id() <= 0 || !ids.add(unit.id()) || (unit.faction() != 1 && unit.faction() != 2)
+                || unit.position() < 1 || unit.position() > 8
+                || !seats.add(unit.faction() + ":" + unit.position())
+                || unit.opening().hp() <= 0 || unit.opening().hp() > unit.opening().maxHp()) {
+                throw new IllegalArgumentException("战斗单位身份、站位或生命无效");
+            }
+            factions.add(unit.faction());
         }
+        if (factions.size() != 2) throw new IllegalArgumentException("战斗缺少对战阵营");
+        return input.stream().sorted(Comparator.comparingInt(Unit::faction)).toList();
+    }
+
+    /** 每个阶段前后记录全部单位；按阵营存活判胜负，不在首个敌人死亡时提前结束。 */
+    private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision) {
+        var initial = roster(input);
         for (var unit : initial) {
             for (var skill : unit.skills()) {
                 if (skill.first() || (skill.activeType() != 1 && skill.activeType() != 2)) {
-                    throw new IllegalArgumentException("独立双单位未接入先手或被动技能");
+                    throw new IllegalArgumentException("独立战场未接入先手或被动技能");
                 }
                 skills.damageSkillArts(skill);
             }
         }
         var states = initial.stream().map(unit -> new HeroBattleHealingExecutor.State(
-            new HeroBattleEventProcessor.Actor(unit.id(), unit.skills()), unit.id(), unit.position(),
+            new HeroBattleEventProcessor.Actor(unit.id(), unit.skills()), unit.faction(), unit.position(),
             unit.opening().hp(), unit.opening().maxHp(), unit.opening().attack(), 0, 0, 0)).toList();
         var engine = new HeroBattleHealingExecutor(skills, states);
         initial.forEach(unit -> engine.bindCombatData(unit.id(), unit.template(), unit.attributes()));
-        var order = HeroBattleRoundUtils.order(initial.stream()
-            .map(unit -> new HeroBattleRoundUtils.Unit(unit.id(), unit.opening().speed())).toList());
         var turns = new ArrayList<Turn>();
         var frames = new ArrayList<Frame>();
         var outcome = HeroBattleRoundUtils.Outcome.ONGOING;
         int completed = 0;
         for (int round = 1; round <= HeroBattleRoundUtils.MAX_ROUNDS; round++) {
-            long beforeA = engine.state(1).hp();
-            long beforeD = engine.state(2).hp();
+            // 当前技能子集没有速度增减；每轮仍重建全体排序，不把上一轮存活名单当完整输入。
+            var order = HeroBattleRoundUtils.order(initial.stream()
+                .map(unit -> new HeroBattleRoundUtils.Unit(unit.id(), unit.opening().speed())).toList());
+            var before = snapshot(engine, initial);
             int damageStart = engine.damages().size();
             int traceStart = engine.trace().size();
             engine.beginRound(round, order, elements, decision);
-            frames.add(frame(engine, round, 0, beforeA, beforeD, damageStart, traceStart));
-            outcome = HeroBattleRoundUtils.outcome(engine.state(1).hp() > 0, engine.state(2).hp() > 0, 0);
+            frames.add(frame(engine, initial, round, 0, before, damageStart, traceStart));
+            outcome = outcome(initial, snapshot(engine, initial), 0);
             if (outcome == HeroBattleRoundUtils.Outcome.ONGOING) {
                 for (int id : order) {
-                    if (engine.state(id).hp() <= 0) {
-                        continue;
-                    }
-                    beforeA = engine.state(1).hp();
-                    beforeD = engine.state(2).hp();
+                    if (engine.state(id).hp() <= 0) continue;
+                    int faction = engine.state(id).faction();
+                    int target = initial.stream().filter(unit -> unit.faction() != faction && engine.state(unit.id()).hp() > 0)
+                        .findFirst().orElseThrow().id();
+                    before = snapshot(engine, initial);
                     damageStart = engine.damages().size();
                     traceStart = engine.trace().size();
-                    engine.act(id, id == 1 ? 2 : 1, HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, elements, decision);
-                    frames.add(frame(engine, round, id, beforeA, beforeD, damageStart, traceStart));
-                    turns.add(new Turn(round, id, HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, engine.state(1).hp(), engine.state(2).hp()));
-                    outcome = HeroBattleRoundUtils.outcome(engine.state(1).hp() > 0, engine.state(2).hp() > 0, 0);
-                    if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) {
-                        break;
-                    }
+                    // context仅提供合法存活对手，真实动作的目标仍由各自配置选择器决定。
+                    engine.act(id, target, HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, elements, decision);
+                    var after = snapshot(engine, initial);
+                    frames.add(frame(engine, initial, round, id, before, damageStart, traceStart));
+                    turns.add(new Turn(round, id, HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, after));
+                    outcome = outcome(initial, after, 0);
+                    if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) break;
                 }
             }
             completed = round;
-            outcome = HeroBattleRoundUtils.outcome(engine.state(1).hp() > 0, engine.state(2).hp() > 0, completed);
-            if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) {
-                break;
-            }
+            outcome = outcome(initial, snapshot(engine, initial), completed);
+            if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) break;
         }
-        return new Result(scenario, outcome, completed, initial, turns, engine.damages(), frames, engine.state(1).hp(), engine.state(2).hp());
+        return new Result(scenario, outcome, completed, initial, turns, engine.damages(), frames, snapshot(engine, initial));
     }
 
-    /** 根动作成功后截取新增伤害，失败不会生成半帧；回合持续伤害单独归档。 */
-    private Frame frame(HeroBattleHealingExecutor engine, int round, int source,
-                        long beforeA, long beforeD, int start, int traceStart) {
+    /** 完整生命快照严格匹配名册；双方同时全灭仍由旧规则先判攻方失败。 */
+    public static HeroBattleRoundUtils.Outcome outcome(List<Unit> units, Map<Integer, Long> hp, int rounds) {
+        var ids = new HashSet<Integer>();
+        for (var unit : units) {
+            ids.add(unit.id());
+            var value = hp.get(unit.id());
+            if (value == null || value < 0 || value > unit.opening().maxHp()) {
+                throw new IllegalArgumentException("战斗单位生命快照无效");
+            }
+        }
+        if (!ids.equals(hp.keySet())) throw new IllegalArgumentException("战斗单位生命快照不完整");
+        return HeroBattleRoundUtils.outcome(
+            units.stream().anyMatch(unit -> unit.faction() == 1 && hp.get(unit.id()) > 0),
+            units.stream().anyMatch(unit -> unit.faction() == 2 && hp.get(unit.id()) > 0), rounds);
+    }
+
+    /** 捕获引擎中所有单位生命，死亡单位保留0，避免改变名册身份。 */
+    private static Map<Integer, Long> snapshot(HeroBattleHealingExecutor engine, List<Unit> units) {
+        var result = new LinkedHashMap<Integer, Long>();
+        units.forEach(unit -> result.put(unit.id(), engine.state(unit.id()).hp()));
+        return Map.copyOf(result);
+    }
+
+    /** 成功阶段截取新增伤害与事件，异常事务不会生成半帧。 */
+    private Frame frame(HeroBattleHealingExecutor engine, List<Unit> units, int round, int source,
+                        Map<Integer, Long> before, int start, int traceStart) {
         var damages = engine.damages();
-        return new Frame(round, source, beforeA, beforeD, engine.state(1).hp(), engine.state(2).hp(),
+        return new Frame(round, source, before, snapshot(engine, units),
             damages.subList(start, damages.size()), engine.trace().subList(traceStart, engine.trace().size()));
     }
 

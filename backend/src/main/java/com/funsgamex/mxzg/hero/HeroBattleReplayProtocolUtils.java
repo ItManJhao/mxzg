@@ -15,7 +15,7 @@ public final class HeroBattleReplayProtocolUtils {
         for (var unit : report.initial()) {
             result.addUnits(GameProtocol.BattleReplayUnit.newBuilder().setUnitId(unit.id())
                 .setFaction(unit.faction()).setMaxHp(unit.opening().maxHp()).setTemplateId(unit.template()).setLevel(unit.level()).setPosition(unit.position()).setInitialHp(unit.opening().hp())
-                .setFinalHp(unit.id() == 1 ? report.attackerHp() : report.defenderHp()));
+                .setFinalHp(report.finalHp().get(unit.id())));
         }
         for (var frame : report.frames()) {
             var phase = GameProtocol.BattleReplayPhase.newBuilder().setRound(frame.round()).setSourceId(frame.sourceId());

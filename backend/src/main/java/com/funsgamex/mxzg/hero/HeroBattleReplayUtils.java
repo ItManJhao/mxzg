@@ -1,78 +1,89 @@
-/** 选定双单位关卡的血量回放校验；仅消费记录，不重算伤害、不代表动画播放协议。 */
+/** 逐单位阶段回放校验：核对全体行动顺序、生命连续性和整队胜负，不重算伤害或开放业务入口。 */
 package com.funsgamex.mxzg.hero;
+
+import java.util.*;
 
 public final class HeroBattleReplayUtils {
     /** 工具类不保存跨场状态。 */
     private HeroBattleReplayUtils() {}
 
-    /** 从初始血量逐帧重放实际扣血，拒绝断裂、未知目标和与最终结果不一致的记录。 */
+    /** 重放完整名册生命，拒绝少帧、乱序、未知单位及提前结束；审计场景保持独立来源。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
-        if (!java.util.Set.of("main:1:1:1", "main:1:1:2", "audit:duel", "audit:round-limit").contains(report.scenario())
-            || report.initial().size() != 2 || report.initial().getFirst().id() != 1
-            || report.initial().getLast().id() != 2 || report.initial().getFirst().faction() != 1
-            || report.initial().getLast().faction() != 2 || report.rounds() < 1
-            || report.rounds() > HeroBattleRoundUtils.MAX_ROUNDS || report.frames().isEmpty()) {
-            throw new IllegalArgumentException("战斗回放单位或回合范围无效");
+        if (!Set.of("main:1:1:1", "main:1:1:2", "audit:duel", "audit:teams", "audit:round-limit").contains(report.scenario())
+            || report.rounds() < 1 || report.rounds() > HeroBattleRoundUtils.MAX_ROUNDS || report.frames().isEmpty()) {
+            throw new IllegalArgumentException("战斗回放场景或回合范围无效");
         }
-        long a = report.initial().getFirst().opening().hp();
-        long d = report.initial().getLast().opening().hp();
+        var units = HeroBattleChapterScenario.roster(report.initial());
+        if (!report.scenario().equals("audit:teams") && units.size() != 2) {
+            throw new IllegalArgumentException("该战斗来源未开放多单位");
+        }
+        var hp = new LinkedHashMap<Integer, Long>();
+        units.forEach(unit -> hp.put(unit.id(), unit.opening().hp()));
+        var order = HeroBattleRoundUtils.order(units.stream()
+            .map(unit -> new HeroBattleRoundUtils.Unit(unit.id(), unit.opening().speed())).toList());
         int lastRound = 0;
-        var acted = new java.util.HashSet<Integer>();
-        var turns = new java.util.ArrayList<HeroBattleChapterScenario.Turn>();
-        var all = new java.util.ArrayList<HeroBattleHealingExecutor.Damage>();
+        int cursor = 0;
+        var turns = new ArrayList<HeroBattleChapterScenario.Turn>();
+        var all = new ArrayList<HeroBattleHealingExecutor.Damage>();
         for (var frame : report.frames()) {
-            if (frame.round() < lastRound || frame.round() > lastRound + 1
-                || frame.round() < 1 || frame.sourceId() < 0 || frame.sourceId() > 2
-                || a != frame.attackerBefore() || d != frame.defenderBefore()) {
-                throw new IllegalArgumentException("战斗回放阶段或前置血量不连续");
-            }
-            if (a <= 0 || d <= 0) {
+            if (HeroBattleChapterScenario.outcome(units, hp, 0) != HeroBattleRoundUtils.Outcome.ONGOING) {
                 throw new IllegalArgumentException("战斗已结束后仍有阶段");
             }
-            if (frame.round() != lastRound) {
-                if (frame.sourceId() != 0 || (lastRound != 0 && acted.size() != 2)) {
-                    throw new IllegalArgumentException("战斗缺少回合开始或单位出手阶段");
-                }
-                acted.clear();
-            } else if (frame.sourceId() == 0 || !acted.add(frame.sourceId())) {
-                throw new IllegalArgumentException("战斗回合开始或单位出手重复");
+            if (!hp.equals(frame.before()) || frame.round() < 1 || frame.round() < lastRound || frame.round() > lastRound + 1) {
+                throw new IllegalArgumentException("战斗阶段或前置生命不连续");
             }
-            lastRound = frame.round();
+            if (frame.round() != lastRound) {
+                if (frame.sourceId() != 0 || (lastRound != 0 && nextAlive(order, hp, cursor) < order.size())) {
+                    throw new IllegalArgumentException("战斗缺少回合开始或单位出手");
+                }
+                cursor = 0;
+                lastRound = frame.round();
+            } else {
+                cursor = nextAlive(order, hp, cursor);
+                if (cursor >= order.size() || frame.sourceId() != order.get(cursor)) {
+                    throw new IllegalArgumentException("战斗出手乱序、重复或死亡单位出手");
+                }
+                cursor++;
+            }
             var traced = frame.trace().stream().filter(trace -> trace.kind().equals("damage"))
                 .map(HeroBattleHealingExecutor.Trace::damage).toList();
-            if (!traced.equals(frame.damages())) {
-                throw new IllegalArgumentException("战斗伤害与事件记录不一致");
+            if (!traced.equals(frame.damages())) throw new IllegalArgumentException("战斗伤害与事件不一致");
+            for (var trace : frame.trace()) {
+                if (!hp.containsKey(trace.sourceId()) || !hp.containsKey(trace.targetId())) {
+                    throw new IllegalArgumentException("战斗事件引用未知单位");
+                }
             }
             for (var hit : frame.damages()) {
-                if (hit.actual() > 0 || hit.targetId() < 1 || hit.targetId() > 2) {
-                    throw new IllegalArgumentException("战斗回放伤害目标或符号无效");
+                if (hit.actual() > 0 || !hp.containsKey(hit.targetId())) {
+                    throw new IllegalArgumentException("战斗伤害目标或符号无效");
                 }
-                if (hit.targetId() == 1) {
-                    a = Math.addExact(a, hit.actual());
-                } else {
-                    d = Math.addExact(d, hit.actual());
-                }
-                long hp = hit.targetId() == 1 ? a : d;
-                if (hp < 0 || hit.dead() != (hp == 0)) {
-                    throw new IllegalArgumentException("战斗回放死亡状态不一致");
-                }
+                long value = Math.addExact(hp.get(hit.targetId()), hit.actual());
+                if (value < 0 || hit.dead() != (value == 0)) throw new IllegalArgumentException("战斗死亡状态不一致");
+                hp.put(hit.targetId(), value);
                 all.add(hit);
             }
-            if (a != frame.attackerAfter() || d != frame.defenderAfter()) {
-                throw new IllegalArgumentException("战斗回放帧末血量不一致");
-            }
+            if (!hp.equals(frame.after())) throw new IllegalArgumentException("战斗阶段结束生命不一致");
+            HeroBattleChapterScenario.outcome(units, hp, 0);
             if (frame.sourceId() != 0) {
                 turns.add(new HeroBattleChapterScenario.Turn(frame.round(), frame.sourceId(),
-                    HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, a, d));
+                    HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, hp));
             }
         }
-        if (a > 0 && d > 0 && acted.size() != 2) {
-            throw new IllegalArgumentException("回合上限前出手阶段未完成");
+        if (HeroBattleChapterScenario.outcome(units, hp, 0) == HeroBattleRoundUtils.Outcome.ONGOING
+            && nextAlive(order, hp, cursor) < order.size()) {
+            throw new IllegalArgumentException("最终回合仍缺存活单位出手");
         }
-        if (!turns.equals(report.turns()) || a != report.attackerHp() || d != report.defenderHp() || lastRound != report.rounds()
+        if (!turns.equals(report.turns()) || !hp.equals(report.finalHp()) || lastRound != report.rounds()
             || !all.equals(report.damages())
-            || HeroBattleRoundUtils.outcome(a > 0, d > 0, lastRound) != report.outcome()) {
-            throw new IllegalArgumentException("战斗回放最终结果不一致");
+            || HeroBattleChapterScenario.outcome(units, hp, lastRound) != report.outcome()
+            || report.outcome() == HeroBattleRoundUtils.Outcome.ONGOING) {
+            throw new IllegalArgumentException("战斗最终结果不一致");
         }
+    }
+
+    /** 从当前游标跳过死亡单位；存活单位不可遗漏，同速保持名册的攻方优先稳定顺序。 */
+    private static int nextAlive(List<Integer> order, Map<Integer, Long> hp, int cursor) {
+        while (cursor < order.size() && hp.get(order.get(cursor)) == 0) cursor++;
+        return cursor;
     }
 }

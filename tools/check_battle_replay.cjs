@@ -280,3 +280,15 @@ const missingFaction = protocol.decode(bytes);
 delete missingFaction.units[0].faction;
 assert.throws(() => decode(protocol.encode(missingFaction).finish()), /缺少事件字段/);
 console.log("PASS explicit factions, multi-unit roster, per-unit HP and maximum HP boundaries");
+
+// 服务端四单位真实计算审计可以二进制往返，但不借此开放尚未支持的多单位画面。
+const teamsBytes = fs.readFileSync(path.join(root, "backend/target/independent-teams-replay.pb"));
+const teamsWire = protocol.decode(teamsBytes);
+assert.equal(teamsWire.scenario, "audit:teams");
+assert.equal(teamsWire.units.length, 4);
+assert.deepEqual(teamsWire.units.map(unit => [unit.unitId, unit.faction]), [[10, 1], [11, 1], [20, 2], [21, 2]]);
+assert.deepEqual(teamsWire.units.map(unit => Number(unit.finalHp.toString())), [0, 176, 0, 0]);
+assert.equal(teamsWire.rounds, 4);
+assert.deepEqual(Buffer.from(protocol.encode(teamsWire).finish()), teamsBytes);
+assert.throws(() => decode(teamsBytes), /场景不支持/);
+console.log("PASS four-unit server replay roundtrip and client boundary rejection");
