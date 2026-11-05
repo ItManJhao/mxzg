@@ -24,7 +24,7 @@ public final class HeroBattleChapterScenario {
     private final MainFormationRules formations;
 
     /** 初始单位信息及原始战斗属性，冻结供验收对照。 */
-    public record Unit(int id, int template, int level, int star, int stage, int position,
+    public record Unit(int id, int faction, int template, int level, int star, int stage, int position,
                        Map<Integer, Long> attributes, HeroBattleAttributeUtils.Opening opening,
                        List<HeroBattleSkillUtils.Skill> skills) {
         /** 不允许测试结束后反写输入或技能计划。 */
@@ -143,7 +143,7 @@ public final class HeroBattleChapterScenario {
             }
             skills.damageSkillArts(skill);
         }
-        return new Unit(id, template, level, star, stage, 2, attributes, HeroBattleAttributeUtils.opening(attributes), plan);
+        return new Unit(id, enemy == null ? 1 : 2, template, level, star, stage, 2, attributes, HeroBattleAttributeUtils.opening(attributes), plan);
     }
 
     /** 在独立内存战场执行到真实胜负或15回合上限；调用方提供判定，不引入新随机推定。 */

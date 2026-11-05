@@ -179,7 +179,7 @@ class HeroBattleChapterScenarioTest {
 
     /** 重建测试输入身份，其余配置与计算属性保持不变。 */
     private static HeroBattleChapterScenario.Unit withId(HeroBattleChapterScenario.Unit unit, int id) {
-        return new HeroBattleChapterScenario.Unit(id, unit.template(), unit.level(), unit.star(), unit.stage(),
+        return new HeroBattleChapterScenario.Unit(id, id == 1 ? 1 : 2, unit.template(), unit.level(), unit.star(), unit.stage(),
             unit.position(), unit.attributes(), unit.opening(), unit.skills());
     }
 

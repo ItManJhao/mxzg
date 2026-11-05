@@ -52,7 +52,7 @@ export class BattleReplayPreview {
             if (node) node.active = false;
         }
         setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, "独立测试阵容");
-        setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, units[1].templateId === 10505005 ? "主线第2关" : "主线第1关");
+        setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关");
         const actors = new Map<number, SpineActor>();
         const slots = new Map<number, Node>();
         /** 当前出场单位的头顶血条，随英雄槽移动；页面关闭时随预制体销毁。 */
@@ -60,7 +60,7 @@ export class BattleReplayPreview {
         const origins = new Map<number, Vec3>();
         const sounds = new Map<string, AudioClip>();
         const icons = new Map<number, SpriteFrame>();
-        const activeBuffs = new Map<number, Map<string, number>>([[1, new Map()], [2, new Map()]]);
+        const activeBuffs = new Map<number, Map<string, number>>(units.map(unit => [unit.unitId, new Map<string, number>()]));
         const audio = shell.root.addComponent(AudioSource);
         audio.node.on(AudioSource.EventType.STARTED, () => {
             GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "audio.started " + audio.clip?.name);
@@ -111,7 +111,7 @@ export class BattleReplayPreview {
             // 等级来自整包校验后的服务器快照，不按关卡或模板猜测。
             setText(label, String(units.find(unit => unit.unitId === id)!.level));
             const fill = label.parent.getChildByName("Fill")!;
-            const max = id === 1 ? steps[0].attackerHp : steps[0].defenderHp;
+            const max = units.find(unit => unit.unitId === id)!.maxHp;
             fill.active = value > 0;
             fill.getComponent(Sprite)!.fillRange = Math.max(0, Math.min(1, value / max));
         };
@@ -148,8 +148,8 @@ export class BattleReplayPreview {
                 }
             }
             for (const side of ["ally", "enemy"] as const) {
-                const id = side === "ally" ? 1 : 2;
-                const unit = units.find(unit => unit.unitId === id)!;
+                const unit = units.find(unit => unit.faction === (side === "ally" ? 1 : 2))!;
+                const id = unit.unitId;
                 const index = unit.position - 1;
                 for (let i = 0; i < 8; i++) {
                     shell.slot(side, i).active = i === index;
@@ -175,12 +175,12 @@ export class BattleReplayPreview {
                 }
                 const actor = await new Promise<SpineActor>((resolve, reject) => {
                     const actor = mountBattleSpine(slot, String(unit.templateId), () => reject(new Error("英雄骨骼加载失败")),
-                        { face: id === 1 ? 1 : -1, scale: 0.36, seatY: 0, onReady: () => resolve(actor) });
+                        { face: unit.faction === 1 ? 1 : -1, scale: 0.36, seatY: 0, onReady: () => resolve(actor) });
                 });
                 actors.set(id, actor);
                 const head = slot.getChildByName("HeadAnchor");
                 if (head) head.setSiblingIndex(slot.children.length - 1);
-                hp(id, id === 1 ? steps[0].attackerHp : steps[0].defenderHp);
+                hp(id, unit.initialHp);
                 paintBuffs(id);
             }
             player = new BattleReplayPlayer({
@@ -227,7 +227,7 @@ export class BattleReplayPreview {
                         const target = slots.get(step.targetId)!;
                         // 使用世界坐标转回攻击者父节点，避免双方槽组偏移导致移错位置。
                         const world = target.worldPosition.clone();
-                        world.x += step.targetId === 1 ? 100 : -100;
+                        world.x += units.find(unit => unit.unitId === step.targetId)!.faction === 1 ? 100 : -100;
                         const point = slot.parent!.getComponent(UITransform)!.convertToNodeSpaceAR(world);
                         if (plan.melee) {
                             tween(slot).to(plan.moveSeconds, { position: point }).start();
@@ -252,7 +252,7 @@ export class BattleReplayPreview {
                                 GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "damage.sound " + name);
                             }
                         }
-                        hp(step.targetId, step.targetId === 1 ? step.attackerHp : step.defenderHp);
+                        hp(step.targetId, step.hpByUnit[step.targetId]);
                         const target = slots.get(step.targetId)!;
                         const point = shell.root.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
                         paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
@@ -290,9 +290,15 @@ export class BattleReplayPreview {
                     if (!closed && completed) {
                         paintBattleFloats(shell.present, []);
                         const last = steps[steps.length - 1];
-                        setText(shell.logLabel, "战报结束 · 剩余生命 " + last.attackerHp);
-                        await UIManager.instance.open(ChapterEndView, { won: last.attackerHp > 0 && last.defenderHp === 0 });
-                        GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "completed hp=" + last.attackerHp + "/" + last.defenderHp + " round=" + last.round);
+                        const ally = units.find(unit => unit.faction === 1)!;
+                        const enemy = units.find(unit => unit.faction === 2)!;
+                        const allyHp = last.hpByUnit[ally.unitId];
+                        const enemyHp = last.hpByUnit[enemy.unitId];
+                        // 当前入口仍只开放双单位场景；整队胜负随服务端多单位场景一起接入。
+                        setText(shell.logLabel, "战报结束 · 剩余生命 " + allyHp);
+                        await UIManager.instance.open(ChapterEndView, { won: allyHp > 0 && enemyHp === 0 });
+                        GameLog.shared.classified("MODULE", "info", "BattleReplayPreview",
+                            "completed hp=" + allyHp + "/" + enemyHp + " round=" + last.round);
                     }
                 }).catch(error => {
                     if (!closed) setText(shell.logLabel, "战报播放失败，请查看日志");

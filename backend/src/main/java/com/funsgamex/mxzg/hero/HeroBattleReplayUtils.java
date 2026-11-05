@@ -9,7 +9,8 @@ public final class HeroBattleReplayUtils {
     public static void validate(HeroBattleChapterScenario.Result report) {
         if (!java.util.Set.of("main:1:1:1", "main:1:1:2", "audit:duel", "audit:round-limit").contains(report.scenario())
             || report.initial().size() != 2 || report.initial().getFirst().id() != 1
-            || report.initial().getLast().id() != 2 || report.rounds() < 1
+            || report.initial().getLast().id() != 2 || report.initial().getFirst().faction() != 1
+            || report.initial().getLast().faction() != 2 || report.rounds() < 1
             || report.rounds() > HeroBattleRoundUtils.MAX_ROUNDS || report.frames().isEmpty()) {
             throw new IllegalArgumentException("战斗回放单位或回合范围无效");
         }

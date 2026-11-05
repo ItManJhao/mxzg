@@ -185,6 +185,10 @@ message BattleReplayUnit {
   required int64 final_hp = 5;
   // 服务端战斗快照等级；旧战报可解码，但展示层须明确拒绝缺失值。
   optional uint32 level = 6;
+  // 本场阵营：1攻方、2守方，不从unit_id推断。
+  optional uint32 faction = 7;
+  // 与初始生命分开，残血入场也按真实最大生命显示血条。
+  optional int64 max_hp = 8;
 }
 message BattleReplayPhase {
   required uint32 round = 1;

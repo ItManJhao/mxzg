@@ -10,14 +10,32 @@ interface WireEvent {
     reportedHpChange: WireLong; dead: boolean; buffInstanceId: WireLong;
     expiresAtRound: number; buffValue: WireLong; removalReason: string;
 }
+/** 协议单位：身份、阵营和生命各自独立，不用模板或ID推断阵营。 */
+interface WireUnit {
+    unitId: number; faction: number; templateId: number; level: number; position: number;
+    initialHp: WireLong; maxHp: WireLong; finalHp: WireLong;
+}
+
+/** 校验后的只读展示单位；生命为可精确显示的安全整数。 */
+export interface BattleReplayUnit {
+    readonly unitId: number;
+    readonly faction: number;
+    readonly templateId: number;
+    readonly level: number;
+    readonly position: number;
+    readonly initialHp: number;
+    readonly maxHp: number;
+    readonly finalHp: number;
+}
+
 /** 仅声明本适配器使用的解码字段，不手改生成代码。 */
 interface WireReplay {
     schemaVersion: number; scenario: string; rounds: number; outcome: string;
-    units: Array<{ unitId: number; templateId: number; level: number; position: number; initialHp: WireLong; finalHp: WireLong }>;
+    units: WireUnit[];
     phases: Array<{ round: number; sourceId: number; events: WireEvent[] }>;
 }
 
-/** 每步保留真实事件及执行后的双方血量，供播放器按顺序消费。 */
+/** 每步保留真实事件及执行后的逐单位血量，供播放器按顺序消费。 */
 export interface BattleReplayStep {
     readonly round: number;
     readonly kind: string;
@@ -36,20 +54,51 @@ export interface BattleReplayStep {
     readonly expiresAtRound: number | null;
     readonly buffValue: string | null;
     readonly removalReason: string | null;
-    readonly attackerHp: number;
-    readonly defenderHp: number;
+    /** 按本场unitId索引的冻结生命快照，不固定为攻守双方各一个数。 */
+    readonly hpByUnit: Readonly<Record<number, number>>;
 }
 
 export class BattleReplayUtils {
     /** 校验整包后保留服务器单位身份、模板及站位，展示层不再把所有人塞入首槽。 */
-    public static units(bytes: Uint8Array): readonly { unitId: number; templateId: number; level: number; position: number }[] {
+    public static units(bytes: Uint8Array): readonly BattleReplayUnit[] {
         this.decode(bytes);
         const report = (mxzg as unknown as {
             game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
         }).game.BattleReplay.decode(bytes);
-        return Object.freeze(report.units.map(unit => Object.freeze({
-            unitId: unit.unitId, templateId: unit.templateId, level: unit.level, position: unit.position,
-        })));
+        return this.validateUnits(report.units);
+    }
+
+    /** 校验最多双方各8个单位；支持重复模板与跨侧同站位，拒绝缺字段、重复身份和同侧重叠。 */
+    public static validateUnits(units: readonly WireUnit[]): readonly BattleReplayUnit[] {
+        if (units.length < 2 || units.length > 16) throw new Error("战报单位数量无效");
+        const ids = new Set<number>();
+        const seats = new Set<string>();
+        const factions = new Set<number>();
+        const result = units.map(unit => {
+            this.required(unit, ["level", "faction", "maxHp"]);
+            if (!Number.isInteger(unit.unitId) || unit.unitId <= 0 || ids.has(unit.unitId)
+                || (unit.faction !== 1 && unit.faction !== 2)
+                || !Number.isInteger(unit.position) || unit.position < 1 || unit.position > 8
+                || !Number.isInteger(unit.templateId) || unit.templateId <= 0) {
+                throw new Error("战报单位身份或阵营站位无效");
+            }
+            if (!Number.isInteger(unit.level) || unit.level < 1) throw new Error("战报单位等级无效");
+            const seat = unit.faction + ":" + unit.position;
+            if (seats.has(seat)) throw new Error("战报同侧站位重复");
+            ids.add(unit.unitId);
+            seats.add(seat);
+            factions.add(unit.faction);
+            const initialHp = this.integer(unit.initialHp);
+            const maxHp = this.integer(unit.maxHp);
+            const finalHp = this.integer(unit.finalHp);
+            if (maxHp <= 0 || initialHp <= 0 || initialHp > maxHp || finalHp > maxHp) {
+                throw new Error("战报单位生命范围无效");
+            }
+            return Object.freeze({unitId: unit.unitId, faction: unit.faction, templateId: unit.templateId,
+                level: unit.level, position: unit.position, initialHp, maxHp, finalHp});
+        });
+        if (factions.size !== 2) throw new Error("战报缺少对战阵营");
+        return Object.freeze(result);
     }
 
     /** 当前只接受固定双单位纯伤害验收场景；整包校验成功后才返回播放步骤。 */
@@ -65,15 +114,13 @@ export class BattleReplayUtils {
             || report.units.length !== 2 || report.rounds < 1 || report.rounds > 15) {
             throw new Error("战报版本或场景不支持");
         }
+        const roster = this.validateUnits(report.units);
         const hp = new Map<number, number>();
-        for (const unit of report.units) {
+        for (const unit of roster) {
             if ((unit.unitId !== 1 && unit.unitId !== 2) || hp.has(unit.unitId)
+                || unit.faction !== unit.unitId
                 || unit.templateId !== (unit.unitId === 2 && report.scenario === "main:1:1:2" ? 10505005 : 10101001) || unit.position !== 2) {
                 throw new Error("战报单位无效");
-            }
-            this.required(unit, ["level"]);
-            if (!Number.isInteger(unit.level) || unit.level < 1) {
-                throw new Error("战报单位等级无效");
             }
             hp.set(unit.unitId, this.integer(unit.initialHp));
         }
@@ -164,12 +211,15 @@ export class BattleReplayUtils {
                     expiresAtRound: isBuff ? event.expiresAtRound : null,
                     buffValue: isBuff ? event.buffValue.toString() : null,
                     removalReason: event.kind === "buff.remove" ? event.removalReason : null,
-                    attackerHp: hp.get(1)!, defenderHp: hp.get(2)! }));
+                    hpByUnit: Object.freeze(Array.from(hp).reduce((snapshot, [id, value]) => {
+                        snapshot[id] = value;
+                        return snapshot;
+                    }, {} as Record<number, number>)) }));
             }
             if (skill) throw new Error("战报技能未结束");
         }
         if (round !== report.rounds) throw new Error("战报总回合不匹配");
-        for (const unit of report.units) {
+        for (const unit of roster) {
             if (hp.get(unit.unitId) !== this.integer(unit.finalHp)) throw new Error("战报最终血量不匹配");
         }
         const outcome = hp.get(1) === 0 ? "DEFENDER_WIN" : hp.get(2) === 0 ? "ATTACKER_WIN"

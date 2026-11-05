@@ -63,6 +63,56 @@ class HeroBattleChapterDependencyTest {
         assertTrue(json.contains("1005"));
     }
 
+    /** 第3关按非零模板筛选两个真实敌人，空站位配置不得实例化成英雄。 */
+    @Test
+    void thirdChapterRetainsBothEnemiesAndRejectsPrematureOpening() throws Exception {
+        var mapper = new ObjectMapper();
+        var enemies = rows(mapper, "chapter").stream()
+            .filter(row -> row.path("mode_id").asInt() == 1 && row.path("chapter_id").asInt() == 1
+                && row.path("mission_id").asInt() == 3 && row.path("hero_type").asInt() != 0).toList();
+        assertEquals(List.of(10101001, 10104004), enemies.stream().map(row -> row.path("hero_type").asInt()).toList());
+        assertEquals(List.of(2, 3), enemies.stream().map(row -> row.path("pos").asInt()).toList());
+        assertEquals(List.of(1, 4), enemies.stream().map(row -> row.path("hero_star").asInt()).toList());
+        assertTrue(enemies.stream().allMatch(row -> row.path("hero_level").asInt() == 2));
+        assertThrows(IllegalArgumentException.class, () -> new HeroBattleChapterScenario(mapper).initial(3));
+    }
+
+    /** 眩晕是1005而非沉默；已有行动资格禁止普攻和主动，但不能冒称已经能安装控制Buff。 */
+    @Test
+    void thirdChapterDizzyDependencyAndActionGateRemainExplicit() throws Exception {
+        var mapper = new ObjectMapper();
+        var buff = find(rows(mapper, "buff"), 1041301);
+        assertEquals(1005, buff.path("type").asInt());
+        assertEquals(3500, buff.path("attach_percent").asInt());
+        assertEquals(2, buff.path("round").asInt());
+        assertEquals(3, buff.path("effecttype").asInt());
+        assertEquals(5, buff.path("conflict_type").asInt());
+        assertEquals(101040041, buff.path("buff_icon").asInt());
+        var rules = new HeroSkillPanelRules(mapper);
+        var skills = rules.battleSchedule(rules.select(10104004, 4, 0));
+        for (var skill : skills) {
+            assertFalse(HeroBattleActionUtils.canAct(false, skill, 0, Set.of(1005)));
+            assertTrue(HeroBattleActionUtils.canAct(false, skill, 9999, Set.of(1005)));
+            assertFalse(HeroBattleActionUtils.canAct(true, skill, 9999, Set.of(1005)));
+        }
+        assertFalse(HeroBattleActionUtils.onlyAttack(Set.of(1005)));
+        var active = skills.stream().filter(skill -> skill.activeType() == 1).findFirst().orElseThrow();
+        assertThrows(IllegalArgumentException.class, () -> rules.damageSkillArts(active));
+    }
+
+    /** 第3关普攻有type5投射物，主动type3也有非空file，不能复用第2关空特效路径伪称支持。 */
+    @Test
+    void thirdChapterNeedsProjectileAndNonemptyRangedResources() throws Exception {
+        var mapper = new ObjectMapper();
+        var buffs = rows(mapper, "buff");
+        var ordinary = find(buffs, 1040100);
+        var active = find(buffs, 1041101);
+        assertEquals(5, ordinary.path("type").asInt());
+        assertEquals("skill-101040050", mapper.readTree(ordinary.path("file").asString()).get(0).asString());
+        assertEquals(3, active.path("type").asInt());
+        assertEquals("skill-101020021", mapper.readTree(active.path("file").asString()).get(0).asString());
+    }
+
     /** 递归保留动作→Buff→子动作依赖，已访问动作只记一次，避免配置环无限递归。 */
     private static void collectArts(ObjectMapper mapper, Map<String, List<JsonNode>> tables, JsonNode artIds,
         Set<Integer> visited, List<Map<String, Object>> effects) {

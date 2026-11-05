@@ -33,8 +33,8 @@ const adapter = { exports: {} };
 new Function("module", "exports", "require", built.outputFiles[0].text)(adapter, adapter.exports, require);
 const decode = data => adapter.exports.BattleReplayUtils.decode(data);
 const steps = decode(bytes);
-assert.equal(steps[steps.length - 1].attackerHp, 56);
-assert.equal(steps[steps.length - 1].defenderHp, 0);
+assert.equal(steps[steps.length - 1].hpByUnit[1], 56);
+assert.equal(steps[steps.length - 1].hpByUnit[2], 0);
 assert.ok(Object.isFrozen(steps));
 const noLevel = protocol.decode(bytes);
 delete noLevel.units[0].level;
@@ -189,7 +189,7 @@ assert.equal(second.outcome, "ATTACKER_WIN");
 assert.equal(second.units[0].finalHp.toString(), "102");
 assert.ok(second.phases.some(phase => phase.events.some(event => event.kind === "presentation" && event.configId === 5051101)));
 assert.ok(!second.phases.some(phase => phase.events.some(event => event.configId === 5051301)));
-assert.equal(decode(secondBytes).at(-1).attackerHp, 102);
+assert.equal(decode(secondBytes).at(-1).hpByUnit[1], 102);
 assert.equal(melee.exports.BattleAttackUtils.delaySeconds(buffRows.find(row => row.idx === 5051201)), 2.5);
 assert.deepEqual(melee.exports.BattleAttackUtils.dimly(buffRows.find(row => row.idx === 5051201)), [0.5, 1, 0.5]);
 console.log("PASS real second chapter wire, zero-probability bleed and stationary ranged timing");
@@ -251,3 +251,32 @@ async function checkParallelEffects() {
     console.log("PASS same-skill parallel damage, skill barrier and cancellation of all branches");
 }
 checkParallelEffects().catch(error => { console.error(error); process.exitCode = 1; });
+
+// 第3关尚未接阵营和多单位回放；不能仅修改scenario或塞入第三单位绕过验收范围。
+const thirdUnsupported = protocol.decode(secondBytes);
+thirdUnsupported.scenario = "main:1:1:3";
+assert.throws(() => decode(protocol.encode(thirdUnsupported).finish()), /场景不支持/);
+const extraUnit = protocol.decode(secondBytes);
+extraUnit.units.push({...extraUnit.units[1], unitId: 3, templateId: 10104004, position: 3});
+assert.throws(() => decode(protocol.encode(extraUnit).finish()), /场景不支持/);
+console.log("PASS unopened third chapter and extra-unit rejection");
+
+// 数据层独立覆盖多单位、重复模板及任意本场ID；播放入口仍只开放第1/2关。
+const validateRoster = adapter.exports.BattleReplayUtils.validateUnits.bind(adapter.exports.BattleReplayUtils);
+const rosterFixture = [
+    {...report.units[0], unitId: 10, faction: 1, initialHp: 50, maxHp: 100, finalHp: 40},
+    {...report.units[1], unitId: 20, faction: 2, initialHp: 80, maxHp: 100, finalHp: 0},
+    {...report.units[1], unitId: 30, faction: 2, position: 3, initialHp: 90, maxHp: 100, finalHp: 80}
+];
+assert.equal(validateRoster(rosterFixture).length, 3);
+assert.equal(validateRoster(rosterFixture)[0].maxHp, 100);
+assert.throws(() => validateRoster([...rosterFixture, {...rosterFixture[2], unitId: 40}]), /站位重复/);
+assert.throws(() => validateRoster([...rosterFixture, {...rosterFixture[2], position: 4}]), /身份/);
+for (const patch of [{faction: 3}, {maxHp: 49}, {finalHp: 101}, {position: 9}]) {
+    assert.throws(() => validateRoster([{...rosterFixture[0], ...patch}, ...rosterFixture.slice(1)]));
+}
+assert.ok(Object.isFrozen(steps[0].hpByUnit));
+const missingFaction = protocol.decode(bytes);
+delete missingFaction.units[0].faction;
+assert.throws(() => decode(protocol.encode(missingFaction).finish()), /缺少事件字段/);
+console.log("PASS explicit factions, multi-unit roster, per-unit HP and maximum HP boundaries");

@@ -9808,6 +9808,8 @@ var mxzg = $root.mxzg = (() => {
       BattleReplayUnit.prototype.initialHp = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       BattleReplayUnit.prototype.finalHp = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       BattleReplayUnit.prototype.level = 0;
+      BattleReplayUnit.prototype.faction = 0;
+      BattleReplayUnit.prototype.maxHp = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       BattleReplayUnit.create = function create(properties) {
         return new BattleReplayUnit(properties);
       };
@@ -9843,6 +9845,16 @@ var mxzg = $root.mxzg = (() => {
             /* id 6, wireType 0 =*/
             48
           ).uint32(message.level);
+        if (message.faction != null && Object.hasOwnProperty.call(message, "faction"))
+          writer.uint32(
+            /* id 7, wireType 0 =*/
+            56
+          ).uint32(message.faction);
+        if (message.maxHp != null && Object.hasOwnProperty.call(message, "maxHp"))
+          writer.uint32(
+            /* id 8, wireType 0 =*/
+            64
+          ).int64(message.maxHp);
         return writer;
       };
       BattleReplayUnit.decode = function decode(reader, length, error, long) {
@@ -9892,6 +9904,14 @@ var mxzg = $root.mxzg = (() => {
               message.level = reader.uint32();
               break;
             }
+            case 7: {
+              message.faction = reader.uint32();
+              break;
+            }
+            case 8: {
+              message.maxHp = reader.int64();
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -9935,6 +9955,14 @@ var mxzg = $root.mxzg = (() => {
           if (!$util.isInteger(message.level))
             return "level: integer expected";
         }
+        if (message.faction != null && Object.hasOwnProperty.call(message, "faction")) {
+          if (!$util.isInteger(message.faction))
+            return "faction: integer expected";
+        }
+        if (message.maxHp != null && Object.hasOwnProperty.call(message, "maxHp")) {
+          if (!$util.isInteger(message.maxHp) && !(message.maxHp && $util.isInteger(message.maxHp.low) && $util.isInteger(message.maxHp.high)))
+            return "maxHp: integer|Long expected";
+        }
         return null;
       };
       BattleReplayUnit.fromObject = function fromObject(object, long) {
@@ -9975,6 +10003,18 @@ var mxzg = $root.mxzg = (() => {
         }
         if (object.level != null)
           message.level = object.level >>> 0;
+        if (object.faction != null)
+          message.faction = object.faction >>> 0;
+        if (object.maxHp != null) {
+          if ($util.Long)
+            message.maxHp = $util.Long.fromValue(object.maxHp, false);
+          else if (typeof object.maxHp === "string")
+            message.maxHp = parseInt(object.maxHp, 10);
+          else if (typeof object.maxHp === "number")
+            message.maxHp = object.maxHp;
+          else if (typeof object.maxHp === "object")
+            message.maxHp = new $util.LongBits(object.maxHp.low >>> 0, object.maxHp.high >>> 0).toNumber();
+        }
         return message;
       };
       BattleReplayUnit.toObject = function toObject(message, options, q) {
@@ -10000,6 +10040,12 @@ var mxzg = $root.mxzg = (() => {
           } else
             object.finalHp = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
           object.level = 0;
+          object.faction = 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.maxHp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.maxHp = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
         }
         if (message.unitId != null && Object.hasOwnProperty.call(message, "unitId"))
           object.unitId = message.unitId;
@@ -10023,6 +10069,15 @@ var mxzg = $root.mxzg = (() => {
             object.finalHp = options.longs === String ? $util.Long.prototype.toString.call(message.finalHp) : options.longs === Number ? new $util.LongBits(message.finalHp.low >>> 0, message.finalHp.high >>> 0).toNumber() : message.finalHp;
         if (message.level != null && Object.hasOwnProperty.call(message, "level"))
           object.level = message.level;
+        if (message.faction != null && Object.hasOwnProperty.call(message, "faction"))
+          object.faction = message.faction;
+        if (message.maxHp != null && Object.hasOwnProperty.call(message, "maxHp"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.maxHp = typeof message.maxHp === "number" ? BigInt(message.maxHp) : $util.Long.fromBits(message.maxHp.low >>> 0, message.maxHp.high >>> 0, false).toBigInt();
+          else if (typeof message.maxHp === "number")
+            object.maxHp = options.longs === String ? String(message.maxHp) : message.maxHp;
+          else
+            object.maxHp = options.longs === String ? $util.Long.prototype.toString.call(message.maxHp) : options.longs === Number ? new $util.LongBits(message.maxHp.low >>> 0, message.maxHp.high >>> 0).toNumber() : message.maxHp;
         return object;
       };
       BattleReplayUnit.prototype.toJSON = function toJSON() {
