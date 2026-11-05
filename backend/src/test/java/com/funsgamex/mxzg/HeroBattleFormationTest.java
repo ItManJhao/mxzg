@@ -56,6 +56,12 @@ class HeroBattleFormationTest {
         var first = inputs.current(p.token());
         var before = snapshots.snapshot(p.token());
         assertEquals(1, first.formationId());
+        var unit = first.units().getFirst();
+        assertTrue(unit.element() >= 1 && unit.element() <= 5);
+        var attributeState = unit.newAttributeState();
+        assertEquals(unit.opening().attack(), attributeState.get(220));
+        attributeState.setOnce(220, 7);
+        assertEquals(unit.opening().attack(), unit.newAttributeState().get(220));
         assertEquals(840L, first.units().getFirst().attributes().get(150), "10星使用真实战斗防御系数");
         assertEquals(first, inputs.current(p.token()), "重复读取不能累加属性");
         assertEquals(before, snapshots.snapshot(p.token()), "战斗读取不能写资产或版本");

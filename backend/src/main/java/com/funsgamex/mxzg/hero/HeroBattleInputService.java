@@ -14,15 +14,20 @@ import org.springframework.transaction.annotation.*;
 
 @Service
 public class HeroBattleInputService {
-    /** 对应持久站位的英雄；attributes保留全部编号及未折算加成，hero仍是独立面板快照；opening仅代表入场基础折算，skillSchedule不执行触发。 */
+    /** 对应持久站位的英雄；attributes保留全部编号及未折算加成，hero仍是独立面板快照；opening仅代表入场基础折算，skillSchedule不执行触发；element来自英雄模板，不受外观影响。 */
     public record Unit(int position, HeroProfile hero, Map<Integer, Long> attributes,
                        List<HeroEvolutionRules.Skill> skills, HeroBattleAttributeUtils.Opening opening,
-                       List<HeroBattleSkillUtils.Skill> skillSchedule) {
+                       List<HeroBattleSkillUtils.Skill> skillSchedule, int element) {
         /** 冻结战斗输入，禁止临时计算反写快照。 */
         public Unit {
             attributes = Map.copyOf(attributes);
             skills = List.copyOf(skills);
             skillSchedule = List.copyOf(skillSchedule);
+        }
+
+        /** 为本次战斗创建独立读取状态；不能在每次属性读取时重建，否则会丢失一次性消费。 */
+        public HeroBattleAttributeState newAttributeState() {
+            return new HeroBattleAttributeState(attributes);
         }
     }
 
@@ -52,6 +57,8 @@ public class HeroBattleInputService {
     private final HeroSkillPanelRules skills;
     /** 星级决定的战斗专用防御系数，不加入名册面板。 */
     private final HeroBattleDefenseRules defense;
+    /** 英雄真实元素及克制配置，仅用于战斗输入。 */
+    private final HeroBattleElementRules elements;
     /** 共用进化属性和同类型技能覆盖。 */
     private final HeroEvolutionRules evolution;
 
@@ -60,7 +67,7 @@ public class HeroBattleInputService {
                                  MainFormationStateService formations, MainFormationRules formationRules,
                                  HeroRepository heroes, HeroPanelRules panels,
                                  HeroSkillPanelRules skills, HeroEvolutionRules evolution,
-                                 HeroBattleDefenseRules defense) {
+                                 HeroBattleDefenseRules defense, HeroBattleElementRules elements) {
         this.sessions = sessions;
         this.roles = roles;
         this.formations = formations;
@@ -70,6 +77,7 @@ public class HeroBattleInputService {
         this.skills = skills;
         this.evolution = evolution;
         this.defense = defense;
+        this.elements = elements;
     }
 
     /**
@@ -110,7 +118,7 @@ public class HeroBattleInputService {
             var selected = evolution.applySkills(
                 skills.select(hero.templateId(), hero.star(), hero.stage()), evolved);
             units.add(new Unit(slot.position(), hero, attributes, selected,
-                HeroBattleAttributeUtils.opening(attributes), skills.battleSchedule(selected)));
+                HeroBattleAttributeUtils.opening(attributes), skills.battleSchedule(selected), elements.element(hero.templateId())));
         }
         return new Input(roles.revision(role), formation.version(), formation.formationId(), units,
             List.of("soul_talent_runes_awakening", "account_and_team_sources",
