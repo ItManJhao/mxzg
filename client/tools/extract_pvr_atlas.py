@@ -86,11 +86,13 @@ def slice_frames(img: Image.Image, frames: dict, out_dir: Path, prefix: str, pad
         if pad_source and src_size and len(src_size) >= 2:
             sw, sh = map(int, src_size[:2])
             canvas = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
-            ox, oy = (0, 0) if not offset else (int(offset[0]), int(offset[1]))
+            ox, oy = (0, 0) if not offset else offset[:2]
             # TexturePacker offset is from center; convert to top-left
-            px = (sw - crop.size[0]) // 2 + ox
-            py = (sh - crop.size[1]) // 2 + oy
-            canvas.paste(crop, (px, py), crop)
+            # 旧offset的Y向上；PNG坐标Y向下。保留半像素偏移直到最终换算。
+            px = round((sw - crop.size[0]) / 2 + ox)
+            py = round((sh - crop.size[1]) / 2 - oy)
+            # 直接复制RGBA；不能把同一alpha再作为mask，否则透明度被平方。
+            canvas.paste(crop, (px, py))
             crop = canvas
         safe = fname.replace("/", "_").replace("\\", "_")
         if prefix and not safe.startswith(prefix):

@@ -1,5 +1,5 @@
 /** 独立战报画面验收：复用BattlePage及真实资源，不连接账号、数据库或奖励接口。 */
-import { EffectAsset, Material, sp, UIOpacity, Color, AudioClip, AudioSource, JsonAsset, Node, resources, Sprite, SpriteFrame, Tween, tween, Vec3, UITransform } from "cc";
+import { director, Director, EffectAsset, Material, sp, UIOpacity, Color, AudioClip, AudioSource, JsonAsset, Node, resources, Sprite, SpriteFrame, Tween, tween, Vec3, UITransform } from "cc";
 import { mountBattlePrefab } from "./BattlePage";
 import { mountBattleSpine, SpineActor } from "./battleSpine";
 import { paintBattleFloats } from "./battlePresentView";
@@ -75,6 +75,16 @@ export class BattleReplayPreview {
         const slots = new Map<number, Node>();
         /** 当前出场单位的头顶血条，随英雄槽移动；页面关闭时随预制体销毁。 */
         const hpRows = new Map<number, Node>();
+        /** 血条保留HUD层，每帧跟随槽世界坐标，保证所有骨骼都绘制在血条下方。 */
+        const syncHpRows = () => {
+            for (const [id, row] of hpRows) {
+                const slot = slots.get(id);
+                if (!slot?.isValid || !row.isValid || !row.parent) continue;
+                const world = slot.getComponent(UITransform)!.convertToWorldSpaceAR(new Vec3(0, 120, 0));
+                row.setPosition(row.parent.getComponent(UITransform)!.convertToNodeSpaceAR(world));
+            }
+        };
+        director.on(Director.EVENT_AFTER_UPDATE, syncHpRows);
         const origins = new Map<number, Vec3>();
         const sounds = new Map<string, AudioClip>();
         const icons = new Map<number, SpriteFrame>();
@@ -104,6 +114,7 @@ export class BattleReplayPreview {
         let player: BattleReplayPlayer | null = null;
         /** 停止动画等待、声音并恢复站位；不更改服务器数据。 */
         const stop = () => {
+            director.off(Director.EVENT_AFTER_UPDATE, syncHpRows);
             Tween.stopAllByTarget(shell.root);
             effectEpoch++;
             Tween.stopAllByTarget(dimOpacity);
@@ -272,8 +283,7 @@ export class BattleReplayPreview {
                 element.active = true;
                 const hpRow = element.parent!;
                 hpRows.set(id, hpRow);
-                hpRow.parent = slot;
-                hpRow.setPosition(0, 90, 0);
+                // 血条不再移入人物槽，保留预制体HUD层，避免被本方或其他骨骼遮挡。
                 slots.set(id, slot);
                 origins.set(id, slot.position.clone());
                 for (const name of ["Placeholder", "Label"]) {
@@ -282,7 +292,7 @@ export class BattleReplayPreview {
                 }
                 const actor = await new Promise<SpineActor>((resolve, reject) => {
                     const actor = mountBattleSpine(slot, String(unit.templateId), () => reject(new Error("英雄骨骼加载失败")),
-                        { face: unit.faction === 1 ? 1 : -1, scale: 0.36, seatY: 0, onReady: () => resolve(actor) });
+                        { face: unit.faction === 1 ? 1 : -1, scale: 0.48, seatY: 0, onReady: () => resolve(actor) });
                 });
                 actors.set(id, actor);
                 const head = slot.getChildByName("HeadAnchor");
@@ -290,6 +300,7 @@ export class BattleReplayPreview {
                 hp(id, unit.initialHp);
                 paintBuffs(id);
             }
+            syncHpRows();
             /** 只恢复服务端已记录的血量和Buff，用于跳过选中技能之前的动画。 */
             const restore = (step: typeof steps[number]) => {
                 for (const unit of units) {
