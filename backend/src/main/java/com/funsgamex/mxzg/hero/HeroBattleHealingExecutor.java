@@ -8,6 +8,17 @@ import java.util.*;
 import com.funsgamex.mxzg.hero.HeroBattleEventProcessor.*;
 
 public final class HeroBattleHealingExecutor implements Executor {
+    /** 清心所需随机决策；默认整数概率按用户授权推算并标为待审，测试可注入固定决策。 */
+    public interface RandomDecision {
+        /** 按旧整数概率参数返回命中结果；参数不在此擅自归一化。 */
+        boolean hit(int configuredRate);
+        /** 返回[0,bound)下标，沿旧RandomUtil.randomList无放回取样。 */
+        int index(int bound);
+    }
+
+    /** 可控随机入口；默认使用标记待审的推算算法，测试可注入确定性结果。 */
+    private final RandomDecision random;
+
     /** 复用现有同源配置索引，不另建缓存。 */
     private final HeroSkillPanelRules rules;
     /** 本场单位按传入顺序存放；血量变化仅保存在本执行器。 */
@@ -81,7 +92,31 @@ public final class HeroBattleHealingExecutor implements Executor {
 
     /** 创建独立战场；重复单位编号拒绝，避免状态互相覆盖。 */
     public HeroBattleHealingExecutor(HeroSkillPanelRules rules, List<State> initial) {
+        this(rules, initial, inferredRandom(new Random()));
+    }
+
+    /**
+     * 待审：旧RandomUtils.isHit(int)缺失，经用户授权参考现有RandomUtil.isHit(double)推算。
+     * 暂按整数/10000D且nextDouble<=概率；上线前须对照正式服审查，不宣称已证实等价。
+     */
+    public static RandomDecision inferredRandom(Random generator) {
+        Objects.requireNonNull(generator);
+        return new RandomDecision() {
+            /** 非正概率不抽样；其余沿现有RandomUtil的<=边界，整数换算部分待审。 */
+            public boolean hit(int configuredRate) {
+                return configuredRate > 0 && generator.nextDouble() <= configuredRate / 10000D;
+            }
+            /** 沿已核对的旧RandomUtil.randomList使用[0,bound)下标。 */
+            public int index(int bound) {
+                return generator.nextInt(bound);
+            }
+        };
+    }
+
+    /** 注入已核对的随机决策，测试可固定命中及选人；不在执行器内隐藏概率规则。 */
+    public HeroBattleHealingExecutor(HeroSkillPanelRules rules, List<State> initial, RandomDecision random) {
         this.rules = Objects.requireNonNull(rules);
+        this.random = random;
         for (var unit : initial) {
             buffs.put(unit.actor().id(), new HeroBattleBuffState());
             if (units.put(unit.actor().id(), unit) != null) {
@@ -163,7 +198,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                     installBuff(source.actor().id(), target.id(), spec, Math.abs(value));
                     continue;
                 }
-                if (defender.actor().hasControl(1009)) {
+                if (hasStatus(target.id(), 1009)) {
                     continue;
                 }
                 long base = percent(source.attack(), effect.attackRate());
@@ -189,6 +224,109 @@ public final class HeroBattleHealingExecutor implements Executor {
             }
             source.actor().restore();
         }
+    }
+
+    /**
+     * 安装已命中的清心、反向契约或必中禁疗；反向契约关联由199安装链提供。
+     * 当前199随机建约/伤害转移未开放，本入口不伪造双方关系或默认命中概率。
+     */
+    public void installTreatmentStatus(int buffId, int sourceId, int carrierId, int contractId) {
+        var spec = rules.battleTreatmentStatus(buffId);
+        require(sourceId);
+        require(carrierId);
+        if (spec.type() == 200) {
+            require(contractId);
+        } else if (contractId != 0) {
+            throw new IllegalArgumentException("非契约Buff不应携带关联单位");
+        }
+        transaction(() -> {
+            var entry = installBuff(sourceId, carrierId, spec, contractId);
+            if (spec.type() == 200 || spec.type() == 311) {
+                require(carrierId).actor().listen(new Listener(entry.instanceId(), sourceId,
+                    rules.battleTrigger(buffId), contractId));
+            }
+        });
+    }
+
+    /** 查询手工测试状态及实际Buff实例，移除最后一层禁疗后自然恢复，不误清其他来源。 */
+    private boolean hasStatus(int unitId, int type) {
+        return require(unitId).actor().hasControl(type)
+            || buffs.get(unitId).snapshot().stream().anyMatch(entry -> entry.spec().type() == type);
+    }
+
+    /** 执行专用trigger，保持事件快照中的关联值，即使同轮监听已被移除也不丢失上下文。 */
+    @Override
+    public void special(Listener listener, Actor carrier, int targetId) {
+        transaction(() -> {
+            var config = rules.battleTreatmentSpecial(listener.definition().buffId());
+            if (config.type() == 311) {
+                pureHeart(carrier, config);
+            } else {
+                reverseContract(listener, targetId, config.rate());
+            }
+        });
+    }
+
+    /** 旧清心先判概率，再从己方含可驱散负面Buff的全部单位中无放回随机选择。 */
+    private void pureHeart(Actor carrier, HeroSkillPanelRules.TreatmentSpecial config) {
+        if (random == null) {
+            throw new IllegalStateException("清心随机入口缺失");
+        }
+        if (!random.hit(config.rate())) {
+            return;
+        }
+        int faction = require(carrier.id()).faction();
+        var candidates = new ArrayList<>(units.values().stream().filter(unit -> unit.faction() == faction
+            && !buffs.get(unit.actor().id()).dispellable(2).isEmpty()).map(unit -> unit.actor().id()).toList());
+        int count = config.count();
+        if (count <= 0 || candidates.isEmpty()) {
+            return;
+        }
+        var selected = new ArrayList<Integer>();
+        if (count == 1) {
+            selected.add(candidates.get(randomIndex(candidates.size())));
+        } else if (count >= candidates.size()) {
+            selected.addAll(candidates);
+        } else {
+            for (int i = 0; i < count; i++) {
+                selected.add(candidates.remove(randomIndex(candidates.size())));
+            }
+        }
+        for (int id : selected) {
+            removed(id, buffs.get(id).dispel(2), "pure-heart");
+        }
+    }
+
+    /** 校验随机入口返回范围，错误时回滚，不用取模掩盖不兼容算法。 */
+    private int randomIndex(int bound) {
+        int index = random.index(bound);
+        if (index < 0 || index >= bound) {
+            throw new IllegalArgumentException("清心随机下标越界");
+        }
+        return index;
+    }
+
+    /** 旧反向契约先扣原治疗量；关联者死亡也不退还，转移回血不再分发治疗/清心事件。 */
+    private void reverseContract(Listener listener, int healerId, int rate) {
+        State healer = require(healerId);
+        State contractor = require(Math.toIntExact(listener.value()));
+        State source = require(listener.sourceId());
+        long transfer = percent(healer.actor().lastTreatment(), rate);
+        healer.actor().treatment(Math.subtractExact(healer.actor().lastTreatment(), transfer));
+        if (contractor.actor().isDead() || contractor.hp() <= 0) {
+            return;
+        }
+        long amount = Math.addExact(transfer, source.treatment());
+        amount = Math.addExact(amount, percent(amount, source.treatmentRate()));
+        amount = Math.addExact(amount, percent(amount, contractor.receivedRate()));
+        long actual = Math.min(amount, contractor.maxHp() - contractor.hp());
+        long nextHp = Math.addExact(contractor.hp(), actual);
+        if (nextHp <= 0) {
+            throw new UnsupportedOperationException("契约负治疗死亡边界尚未支持");
+        }
+        units.put(contractor.actor().id(), contractor.withHp(nextHp));
+        recoveries.add(new Recovery(listener.definition().buffId(), source.actor().id(),
+            contractor.actor().id(), transfer, amount, actual));
     }
 
     /** 安装支持的逻辑Buff，先同步移除旧监听；护盾重用时保留原实例身份。 */
@@ -245,7 +383,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         return List.copyOf(removals);
     }
 
-    /** 保存可核对的事件时点，然后交给已有事件处理器；311不允许安装未支持的清心监听。 */
+    /** 保存可核对的事件时点，然后交给已有事件处理器和专用清心/契约处理器。 */
     private void emit(int event, Actor carrier, Actor target) {
         if (++steps > 128) {
             throw new IllegalStateException("治疗事件链超过当前执行上限，可能存在循环");

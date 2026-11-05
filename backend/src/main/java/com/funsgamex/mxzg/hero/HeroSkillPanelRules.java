@@ -81,6 +81,10 @@ public class HeroSkillPanelRules {
         if (type == 171 && Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) != 0) {
             throw new IllegalArgumentException("受击事件的前置Buff条件尚未支持：" + buffId);
         }
+        if (type == 200 || type == 311) {
+            // 旧专用处理器覆盖trigger，并不执行配置里的art_list。
+            return new HeroBattleEventProcessor.Definition(buffId, type, 0, List.of());
+        }
         int skillFilter = type == 173 ? Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) : 0;
         var arts = new ArrayList<HeroBattleEventProcessor.Art>();
         for (var id : mapper.readTree(buff.path("art_list").asString())) {
@@ -192,12 +196,36 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170).contains(type)) {
+        if (!Set.of(130, 1008, 171, 186, 206, 197, 172, 173, 170, 200, 311, 1009).contains(type)) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
         return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
             buff.path("dispelled").asInt() == 1, buff.path("effecttype").asInt(),
             buff.path("conflict_type").asInt(), buff.path("stacking_max").asInt(), false);
+    }
+
+    /** 清心/契约专用参数：rate保留原整数，count只用于清心随机目标数。 */
+    public record TreatmentSpecial(int type, int rate, int count) {}
+
+    /** 解析清心与反向契约，不能用普通art_list解释它们的真实行为。 */
+    public TreatmentSpecial battleTreatmentSpecial(int buffId) {
+        var buff = row("buff", buffId);
+        int type = buff.path("type").asInt();
+        if (type != 311 && type != 200) {
+            throw new IllegalArgumentException("不是已支持的治疗特殊Buff：" + buffId);
+        }
+        var values = buff.path("value").asString().split("\\|", -1);
+        return new TreatmentSpecial(type, Integer.parseInt(values[0]), Integer.parseInt(values[1]));
+    }
+
+    /** 显式安装入口仅接收当前已命中且必中的配置，概率型附加不能默认命中。 */
+    public HeroBattleBuffState.Spec battleTreatmentStatus(int buffId) {
+        var buff = row("buff", buffId);
+        int type = buff.path("type").asInt();
+        if (!Set.of(200, 311, 1009).contains(type) || buff.path("attach_percent").asInt() != 10000) {
+            throw new IllegalArgumentException("特殊Buff安装尚未支持：" + buffId);
+        }
+        return battleBuff(buffId);
     }
 
     /** 面板仅使用基础已解锁技能，进化替换在其后，不重复执行面板被动。 */

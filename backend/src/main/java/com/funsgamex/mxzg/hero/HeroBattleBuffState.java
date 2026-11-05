@@ -66,8 +66,13 @@ public final class HeroBattleBuffState {
 
     /** 沿旧getBuffersBy过滤：绝对到期回合小于999、允许驱散、效果类别相等。 */
     public List<Entry> dispel(int effect) {
-        return remove(entries.stream().filter(entry -> entry.expiresAt() < 999
-            && entry.spec().dispelled() && entry.spec().effect() == effect).toList());
+        return remove(dispellable(effect));
+    }
+
+    /** 返回可驱散项而不提前删除，清心据此选择英雄，再统一调用移除入口。 */
+    public List<Entry> dispellable(int effect) {
+        return entries.stream().filter(entry -> entry.expiresAt() < 999
+            && entry.spec().dispelled() && entry.spec().effect() == effect).toList();
     }
 
     /** 删除给定快照并返回实际移除项，供调用方执行清理。 */

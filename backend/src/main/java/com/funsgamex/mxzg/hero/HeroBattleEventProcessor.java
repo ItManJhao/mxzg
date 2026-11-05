@@ -1,5 +1,5 @@
 /**
- * 最小战斗行动与Buff事件处理：行动、受击及治疗事件；311仅分发空事件点，清心特殊监听尚未支持。
+ * 最小战斗行动与Buff事件处理：行动、受击及治疗事件；200/311交给专用处理器，不能当成普通动作列表。
  * 每场战斗独立创建；只操作临时单位，不写资产。动作效果必须由调用者提供执行器，不提供空实现。
  */
 package com.funsgamex.mxzg.hero;
@@ -8,7 +8,7 @@ import java.util.*;
 
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
-    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206);
+    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 200, 311);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
 
@@ -34,7 +34,12 @@ public final class HeroBattleEventProcessor {
     }
 
     /** 本场监听实例；sourceId用于区分自身与外来Buff，同配置的不同实例不合并。 */
-    public record Listener(long instanceId, int sourceId, Definition definition) {}
+    public record Listener(long instanceId, int sourceId, Definition definition, long value) {
+        /** 普通动作监听没有额外关联值；反向契约显式传入契约单位编号。 */
+        public Listener(long instanceId, int sourceId, Definition definition) {
+            this(instanceId, sourceId, definition, 0);
+        }
+    }
     /** 交给动作执行器的真实动作及来源、选目标上下文；targetContext不是最终目标列表。 */
     public record Invocation(int buffId, int artId, int sourceId, int targetContext) {}
 
@@ -149,6 +154,10 @@ public final class HeroBattleEventProcessor {
         void skill(Actor actor, HeroBattleSkillUtils.Skill skill);
         /** 按动作ID执行效果，来源和目标上下文已经依旧规则确定。 */
         void art(Invocation invocation);
+        /** 专用监听处理器；未实现时必须拒绝，不能用空回调冒充驱散/契约。 */
+        default void special(Listener listener, Actor carrier, int target) {
+            throw new UnsupportedOperationException("尚未支持的特殊Buff：" + listener.definition().event());
+        }
     }
 
     /** 显式标记战斗结束，后续Buff处理不执行动作。 */
@@ -180,18 +189,21 @@ public final class HeroBattleEventProcessor {
 
     /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event) && event != 311) {
+        if (!SUPPORTED.contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);
         if (carrier == null || carrier.hangUpSeal || carrier.controls.contains(1007)) {
             return;
         }
-        var pending = carrier.listeners.stream().filter(row -> row.definition().event() == event)
+        var pending = carrier.listeners.stream().filter(row -> (row.definition().event() == event || (event == 206 && row.definition().event() == 200)))
             .sorted(Comparator.comparing(row -> row.sourceId() == carrier.id)).toList();
         for (var listener : pending) {
             var definition = listener.definition();
-            if (!ended && (event != 173 || definition.skillFilter() == 0
+            if (definition.event() == 200 || definition.event() == 311) {
+                // 旧专用trigger不经过AbstractArtTrigger的战斗结束检查。
+                executor.special(listener, carrier, target);
+            } else if (!ended && (event != 173 || definition.skillFilter() == 0
                 || (carrier.current != null && carrier.current.skillId() == definition.skillFilter()))) {
                 int targetContext = target;
                 for (var art : definition.arts()) {
