@@ -519,3 +519,26 @@ assert.equal(nightmareFx.effect.scaleX, 1.7);
 assert.deepEqual(nightmareFx.sounds, []);
 assert.equal(melee.exports.BattleAttackUtils.delaySeconds(nightmare[1]), 20 / 60);
 console.log('PASS nightmare active source effect, delay, scale and single sound');
+
+// 黑暗切割者一级主动包含一个动作和两段独立特效，不能按目标重复地图特效。
+const darkActions = melee.exports.BattleAttackUtils.legacyActions(buffRows.find(row => row.idx === 5051101));
+assert.deepEqual(darkActions.map(row => [row.type, row.delay, row.dimly]), [[3,0,0],[9,145,1],[6,145,0]]);
+const darkMap = melee.exports.BattleAttackUtils.plan(darkActions[1]);
+const darkSource = melee.exports.BattleAttackUtils.plan(darkActions[2]);
+assert.deepEqual(darkMap.battlefieldOffset, [0.6, 0.5]);
+assert.equal(darkMap.effectOnly, true);
+assert.equal(darkMap.onSource, true);
+assert.equal(darkMap.effect.paths.length, 19);
+assert.equal(darkMap.effect.interval, 0.06);
+assert.equal(darkSource.effect.paths.length, 8);
+assert.equal(darkSource.effect.interval, 0.12);
+assert.equal(darkSource.battlefieldOffset, null);
+for (const action of darkActions) {
+    const plan = melee.exports.BattleAttackUtils.plan(action);
+    assert.deepEqual(plan.sounds, []);
+    for (const resource of plan.effect?.paths || []) {
+        assert.ok(fs.existsSync(path.join(root, 'client/assets/resources', resource.replace('/spriteFrame', '.png'))));
+    }
+}
+assert.throws(() => melee.exports.BattleAttackUtils.plan({...darkActions[1], ani_base: '{"offset_x":-1}'}));
+console.log('PASS dark cutter map/source effects, delays and resource coverage');

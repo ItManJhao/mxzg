@@ -243,7 +243,7 @@ export class BattleReplayPreview {
                         (error, asset) => error ? reject(error) : resolve(asset)))));
             }
             for (const row of selected.values()) {
-                if (row.type === 2 || row.type === 3 || row.type === 5 || row.type === 6 || row.type === 7 || row.type === 100) {
+                if (row.type === 2 || row.type === 3 || row.type === 5 || row.type === 6 || row.type === 7 || row.type === 9 || row.type === 100) {
                     const names = row.type === 100 ? BattleAttackUtils.damageSounds(row) : BattleAttackUtils.plan(row).sounds;
                     if (row.type !== 100) {
                         const effect = BattleAttackUtils.plan(row).effect;
@@ -401,6 +401,16 @@ export class BattleReplayPreview {
                                 const from = pointOf(step.sourceId, true);
                                 const effectUnit = plan.onSource ? step.sourceId : hit.targetId;
                                 const to = pointOf(effectUnit, plan.projectile);
+                                if (plan.battlefieldOffset) {
+                                    // 旧type9用战场尺寸定位，不随目标数量重复生成；旧敌方LeftEffectLayer横向镜像。
+                                    const field = shell.root.getComponent(UITransform)!;
+                                    const ratioX = units.find(unit => unit.unitId === step.sourceId)!.faction === 2
+                                        ? 1 - plan.battlefieldOffset[0] : plan.battlefieldOffset[0];
+                                    const world = field.convertToWorldSpaceAR(new Vec3(
+                                        field.width * (ratioX - field.anchorX),
+                                        field.height * (plan.battlefieldOffset[1] - field.anchorY), 0));
+                                    to.set(transform.convertToNodeSpaceAR(world));
+                                }
                                 const node = new Node("SkillEffect");
                                 node.layer = layer.layer;
                                 node.parent = layer;
@@ -412,7 +422,7 @@ export class BattleReplayPreview {
                                 sprite.trim = false;
                                 const sequence = frames.get(step.configId)!;
                                 sprite.spriteFrame = sequence[0];
-                                node.setScale(definition.scaleX * (plan.effectOnly && units.find(unit => unit.unitId === effectUnit)!.faction === 1 ? -1 : 1), definition.scaleY, 1);
+                                node.setScale(definition.scaleX * (plan.effectOnly && units.find(unit => unit.unitId === effectUnit)!.faction === 2 ? -1 : 1), definition.scaleY, 1);
                                 node.setPosition(plan.projectile ? from : to);
                                 if (plan.projectile) {
                                     node.angle = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI;

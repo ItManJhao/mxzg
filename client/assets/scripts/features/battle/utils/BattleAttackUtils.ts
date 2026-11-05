@@ -2,9 +2,11 @@
 export interface BattleAttackPlan {
     /** true为type2近身移动；false为type3原地施法，不能瞬移到目标。 */
     readonly melee: boolean;
-    /** 6/7只播放独立特效，不覆盖施法骨骼；6定位施法者，7定位各目标。 */
+    /** 6/7/9只播放独立特效，不覆盖施法骨骼；6定位施法者，7定位各目标，9定位战场。 */
     readonly effectOnly: boolean;
     readonly onSource: boolean;
+    /** type9按战场宽高比例定位，仅播放一次；左右阵营按旧特效层镜像。 */
+    readonly battlefieldOffset: readonly [number, number] | null;
     /** type5投射，按旧帧计数飞行；type3在各目标脚下播放一次。 */
     readonly projectile: boolean;
     /** 同源序列帧路径、帧间隔、缩放和锚点；空file时为null。 */
@@ -28,7 +30,7 @@ export class BattleAttackUtils {
     /** 纯配置工具不保存播放状态。 */
     private constructor() {}
 
-    /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；这里只恢复已逐项核对的独眼梦魇主动与奈奈子，内部索引不写回战报。 */
+    /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；这里只恢复已逐项核对的独眼梦魇主动、黑暗切割者主动与奈奈子，内部索引不写回战报。 */
     public static legacyActions<T extends { idx: number; type: number; ani_base: string; file: string; sound: string; delay: number; dimly: number }>(row: T): readonly T[] {
         // 独眼梦魇一级主动：近身骨骼与第20帧的施法者特效并行，音效仅由近身动作播放。
         if (row.idx === 1011101) {
@@ -41,6 +43,19 @@ export class BattleAttackUtils {
                         duration: 0.025, scale_x: 1.7, scale_y: 1.7 }),
                     file: JSON.stringify(["skill-101010011"]), sound: "[]" }
             ];
+        }
+        // 黑暗切割者一级主动：地图定位与施法者两段特效同在145帧启动。
+        if (row.idx === 5051101) {
+            const entries = [
+                { type: 3, delay: 0, dimly: 0, base: { action: "skill", attack_time: 0.6, action_time: 1.8 }, file: "" },
+                { type: 9, delay: 145, dimly: 1, base: { format: "skill-105050051/%d.png", anchor_y: 0.7,
+                    anchor_x: 0.6, duration: 0.06, scale_x: 3, scale_y: 3, offset_x: 0.6, offset_y: 0.5 }, file: "skill-105050051" },
+                { type: 6, delay: 145, dimly: 0, base: { format: "skill-105050051-1/%d.png", anchor_x: 0.2,
+                    anchor_y: 0.2, duration: 0.12, scale_x: 2, scale_y: 2 }, file: "skill-105050051-1" }
+            ];
+            return entries.map((entry, index) => ({ ...row, idx: row.idx * 10 + index,
+                type: entry.type, delay: entry.delay, dimly: entry.dimly,
+                ani_base: JSON.stringify(entry.base), file: JSON.stringify(entry.file ? [entry.file] : []), sound: "[]" }));
         }
         const normal = row.idx === 2230100;
         const first = row.idx >= 2231101 && row.idx <= 2231103;
@@ -65,9 +80,9 @@ export class BattleAttackUtils {
             sound: JSON.stringify(entry.sound ? [entry.sound] : []) }));
     }
 
-    /** 读取同源buff行；开放type2/3/5和已核对覆盖表的type6/7真实帧资源，未知表现明确拒绝。 */
+    /** 读取同源buff行；开放type2/3/5和已核对覆盖表的type6/7/9真实帧资源，未知表现明确拒绝。 */
     public static plan(row: { type: number; ani_base: string; file: string; sound: string }): BattleAttackPlan {
-        if ([2, 3, 5, 6, 7].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
+        if ([2, 3, 5, 6, 7, 9].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
         const base: unknown = JSON.parse(row.ani_base);
         const files: unknown = JSON.parse(row.file);
         const sounds: unknown = JSON.parse(row.sound);
@@ -78,6 +93,7 @@ export class BattleAttackUtils {
         }
         const values = base as Record<string, unknown>;
         const known = ["move_time", "attack_time", "attack_delay", "action_time", "move_back", "action", "format", "duration", "scale_x", "scale_y", "anchor_x", "anchor_y"];
+        if (row.type === 9) known.push("offset_x", "offset_y");
         if (Object.keys(values).some(key => known.indexOf(key) < 0)) {
             throw new Error("攻击动作存在未支持参数");
         }
@@ -87,7 +103,7 @@ export class BattleAttackUtils {
         }
         let effect: BattleAttackPlan["effect"] = null;
         if (files.length) {
-            const counts: Record<string, number> = { "skill-101010011": 9, "skill-101040050": 7, "skill-101020021": 11, "skill-102050230": 8, "skill-102050231": 17, "skill-102050233": 22, "skill-102050233_1": 22 };
+            const counts: Record<string, number> = { "skill-105050051": 19, "skill-105050051-1": 8, "skill-101010011": 9, "skill-101040050": 7, "skill-101020021": 11, "skill-102050230": 8, "skill-102050231": 17, "skill-102050233": 22, "skill-102050233_1": 22 };
             const file = files[0];
             if (files.length !== 1 || typeof file !== "string" || !counts[file]
                 || values.format !== file + "/%d.png" || row.type === 2) {
@@ -108,7 +124,8 @@ export class BattleAttackUtils {
             throw new Error("投射或序列帧缺少资源");
         }
         return Object.freeze({
-            effectOnly: row.type === 6 || row.type === 7, onSource: row.type === 6,
+            effectOnly: row.type === 6 || row.type === 7 || row.type === 9, onSource: row.type === 6 || row.type === 9,
+            battlefieldOffset: row.type === 9 ? Object.freeze([this.seconds(values, "offset_x", 0), this.seconds(values, "offset_y", 0)]) as readonly [number, number] : null,
             melee: row.type === 2, projectile: row.type === 5, effect,
             moveSeconds: row.type === 2 ? this.seconds(values, "move_time", 0.1) : 0, action: action === "skill" ? "attack2" : action === "skill2" ? "attack3" : action === "transform" ? "skill" : "attack",
             attackSeconds: this.seconds(values, "attack_time", 0),
