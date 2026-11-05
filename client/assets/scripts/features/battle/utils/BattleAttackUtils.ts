@@ -28,8 +28,20 @@ export class BattleAttackUtils {
     /** 纯配置工具不保存播放状态。 */
     private constructor() {}
 
-    /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；这里只恢复已逐项核对的奈奈子，内部索引不写回战报。 */
+    /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；这里只恢复已逐项核对的独眼梦魇主动与奈奈子，内部索引不写回战报。 */
     public static legacyActions<T extends { idx: number; type: number; ani_base: string; file: string; sound: string; delay: number; dimly: number }>(row: T): readonly T[] {
+        // 独眼梦魇一级主动：近身骨骼与第20帧的施法者特效并行，音效仅由近身动作播放。
+        if (row.idx === 1011101) {
+            return [
+                { ...row, idx: row.idx * 10, type: 2, delay: 0, dimly: 0,
+                    ani_base: JSON.stringify({ move_time: 0.1, move_back: 1 }),
+                    file: "[]", sound: JSON.stringify(["skill-101010011"]) },
+                { ...row, idx: row.idx * 10 + 1, type: 6, delay: 20, dimly: 1,
+                    ani_base: JSON.stringify({ format: "skill-101010011/%d.png", anchor_x: 0.5,
+                        duration: 0.025, scale_x: 1.7, scale_y: 1.7 }),
+                    file: JSON.stringify(["skill-101010011"]), sound: "[]" }
+            ];
+        }
         const normal = row.idx === 2230100;
         const first = row.idx >= 2231101 && row.idx <= 2231103;
         const second = row.idx >= 2233101 && row.idx <= 2233103;
@@ -75,7 +87,7 @@ export class BattleAttackUtils {
         }
         let effect: BattleAttackPlan["effect"] = null;
         if (files.length) {
-            const counts: Record<string, number> = { "skill-101040050": 7, "skill-101020021": 11, "skill-102050230": 8, "skill-102050231": 17, "skill-102050233": 22, "skill-102050233_1": 22 };
+            const counts: Record<string, number> = { "skill-101010011": 9, "skill-101040050": 7, "skill-101020021": 11, "skill-102050230": 8, "skill-102050231": 17, "skill-102050233": 22, "skill-102050233_1": 22 };
             const file = files[0];
             if (files.length !== 1 || typeof file !== "string" || !counts[file]
                 || values.format !== file + "/%d.png" || row.type === 2) {

@@ -21,12 +21,12 @@ export class SkillAuditUtils {
 
     /** 精确技能/等级对应的已有只读场景；未登记不是对后端全部能力的推断。 */
     private static readonly demos: Readonly<Record<string, readonly [string | null, string, string]>> = {
-        "101010010:0": ["chapter-1-1-1-replay.pb", "已验收", "独眼梦魇完整关卡演示，包含普攻。"],
-        "101010011:1": ["chapter-1-1-1-replay.pb", "已验收", "第一关真实主动与持续效果。"],
+        "101010010:0": ["chapter-1-1-1-replay.pb", "部分接入", "普攻战报可播放；旧覆盖表ani_ba4e字段疑点待核对，独立特效未恢复。"],
+        "101010011:1": ["chapter-1-1-1-replay.pb", "可演示", "一级主动已复验斩击特效、暗屏和退出；正式服完整时序对照仍待验收。"],
         "101040040:0": ["chapter-1-1-3-control-replay.pb", "已验收", "第三关敌方赛西莉普攻与多单位场景。"],
         "101040041:1": ["chapter-1-1-3-control-replay.pb", "已验收", "第三关赛西莉真实施法与眩晕。"],
         "105050050:0": ["chapter-1-1-2-replay.pb", "已验收", "第二关黑暗切割者普攻。"],
-        "105050051:1": ["chapter-1-1-2-replay.pb", "已验收", "第二关真实施法；本等级流血配置概率为零。"],
+        "105050051:1": ["chapter-1-1-2-replay.pb", "部分接入", "真实施法战报可播放；旧type9等覆盖特效尚未恢复，本等级流血概率为零。"],
         "102050230:0": ["independent-nanako-replay.pb", "可演示", "普攻已补旧表现覆盖；正式服完整特效对照待验收。"],
         "102050231:1": ["independent-nanako-star-5-replay.pb", "可演示", "五星真实一级技能，降护甲后伤害；暴击追加概率为零。"],
         "102050231:2": ["independent-nanako-star-6-replay.pb", "可演示", "六星真实二级技能，降护甲后伤害；暴击追加概率为零。"],

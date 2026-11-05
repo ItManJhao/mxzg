@@ -506,3 +506,16 @@ for (const id of [2230100,2231101,2231102,2231103,2233101,2233102,2233103]) {
     if (id >= 2233101) assert.equal(melee.exports.BattleAttackUtils.plan(actions[2]).effect.scaleX,-1);
 }
 console.log('PASS legacy Nanako override actions, complete frame assets, source/target and signed scale');
+
+// 独眼梦魇主动必须播放旧覆盖表的施法者特效，不重复播放骨骼或音效。
+const nightmare = melee.exports.BattleAttackUtils.legacyActions(buffRows.find(row => row.idx === 1011101));
+assert.deepEqual(nightmare.map(row => [row.type, row.delay, row.dimly]), [[2, 0, 0], [6, 20, 1]]);
+const nightmareFx = melee.exports.BattleAttackUtils.plan(nightmare[1]);
+assert.equal(nightmareFx.onSource, true);
+assert.equal(nightmareFx.effectOnly, true);
+assert.equal(nightmareFx.effect.paths.length, 9);
+assert.equal(nightmareFx.effect.interval, 0.025);
+assert.equal(nightmareFx.effect.scaleX, 1.7);
+assert.deepEqual(nightmareFx.sounds, []);
+assert.equal(melee.exports.BattleAttackUtils.delaySeconds(nightmare[1]), 20 / 60);
+console.log('PASS nightmare active source effect, delay, scale and single sound');
