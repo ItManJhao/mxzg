@@ -5,7 +5,7 @@ import { publishNotification } from "../../framework/EventDispatcher";
 import { Protocol, ProtocolName } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
 import { statePayload, STATE_PROTOCOLS } from "../../platform/ProtocolState";
-import { readOwnedHeroes, readHeroRosterInfo, readMainFormation } from "./HeroApi";
+import { readOwnedHeroes, readHeroRosterInfo, readMainFormation } from "./data/HeroSnapshotData";
 import { HeroRosterModel } from "./HeroRosterModel";
 import { HeroRosterEvent } from "./utils/HeroRosterEvent";
 

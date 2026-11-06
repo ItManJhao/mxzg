@@ -1,5 +1,5 @@
 /** 英雄名册唯一状态：保存只读英雄与同步状态，由模块 Controller 提交，不持有网络或监听。 */
-import type { OwnedHero, HeroRosterInfo, MainFormation } from "./HeroApi";
+import type { OwnedHero, HeroRosterInfo, MainFormation } from "./data/HeroSnapshotData";
 import { BaseModel } from "../../framework/BaseModel";
 
 export interface HeroRosterState {

@@ -79,7 +79,7 @@ function checkLayouts(): void {
     scroll.content=null;assert.throws(()=>scroll.validateBindings(),/TestScroll.*Content/);
 }
 
-function checkCellReuse(): void {
+async function checkCellReuse(): Promise<void> {
     const root=node("BagItemView",96,96), cell=root.addComponent(BagItemView) as BagItemView;
     cell.button=root.addComponent(Button);cell.frame=node("frame",96,96,root);cell.frame.addComponent(Sprite);
     cell.icon=node("icon",64,64,root);cell.icon.addComponent(Sprite);cell.count=node("count",96,24,root).addComponent(Label);
@@ -92,9 +92,11 @@ function checkCellReuse(): void {
         cell.show({itemId:1,quantity:1},false,()=>old++,face("A"));
         for(let i=0;i<5;i++) cell.show({itemId:2,quantity:2},true,()=>current++,face("B"));
         root.emit(Button.EventType.CLICK);assert.equal(old,0);assert.equal(current,1,"a refresh cannot duplicate click callbacks");
+        await new Promise(resolve => setImmediate(resolve));
         const b=new SpriteFrame(),a=new SpriteFrame();
         pending.filter(row=>row.path==="B/spriteFrame").forEach(row=>row.done(null,b));
         pending.filter(row=>row.path==="A/spriteFrame").forEach(row=>row.done(null,a));
+        await new Promise(resolve => setImmediate(resolve));
         assert.equal((cell.icon.getComponent(Sprite) as Sprite).spriteFrame,b,"late A must not overwrite B");
         cell.show(null,false,null);root.emit(Button.EventType.CLICK);assert.equal(current,1);assert.equal(cell.button.interactable,false);
         pending.filter(row=>row.path==="B/spriteFrame").forEach(row=>row.done(null,b));
@@ -141,5 +143,6 @@ function checkRewardLayout(): void {
     assert.equal(source[port._children[0].__id__]._name,"content");
 }
 
-checkLayouts();checkCellReuse();checkEditorPreview();checkRewardLayout();
+async function main() { checkLayouts();await checkCellReuse();checkEditorPreview();checkRewardLayout(); }
+void main().catch(error => { console.error(error); process.exitCode=1; });
 console.log("super-scroll-check passed: layout boundaries, reuse, offset preservation/clamp, compatible Prefab, explicit bindings, async icon races and editor-only samples");

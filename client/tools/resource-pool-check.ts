@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { ResourcePool, ResourceScopeClosed } from "../assets/scripts/framework/assets/ResourcePool";
 import { assetManager, Prefab } from "cc";
-import { loadPrefab } from "../assets/scripts/framework/assets/PrefabLoader";
+import { loadPrefab, clearPrefabCache, prefabCacheSnapshot } from "../assets/scripts/framework/assets/PrefabLoader";
 import { readFileSync } from "node:fs";
 
 function deferred<T>() {
@@ -64,6 +64,34 @@ async function main() {
   assert.equal(bundleRequests, 0, "retired Prefabs are rejected before any engine request");
   assert.equal(await loadPrefab("prefabs/ui/login/LoadingLayer"), planned);
   assert.equal(bundleRequests, 1, "planned core Prefabs still load normally");
+  assert.deepEqual(prefabCacheSnapshot(), { pending: 0, cached: 1 });
+  assert.equal(planned.refCount, 1);
+  clearPrefabCache();
+  assert.equal(planned.refCount, 0);
+  let lateCallback!: (error: unknown, asset: Prefab) => void;
+  Object.assign(assetManager, { loadBundle: (_name: string, done: Function) => done(null, {
+    load: (_path: string, _type: unknown, callback: typeof lateCallback) => { lateCallback = callback; }
+  }) });
+  const obsolete = assert.rejects(loadPrefab("prefabs/ui/login/LoadingLayer"), /应用已关闭/);
+  clearPrefabCache();
+  const latePrefab = new Prefab(); lateCallback(null, latePrefab); await obsolete;
+  assert.equal(latePrefab.refCount, 0, "关闭应用后的迟到预制体不重新占用缓存");
+  assert.deepEqual(prefabCacheSnapshot(), { pending: 0, cached: 0 });
+  assert.deepEqual(pool.snapshot(), { scopes: 0, entries: 0, pending: 0, owners: 0, retained: 0 });
+  let discarded = 0;
+  const lateDiscard = deferred<object>();
+  const discardPool = new ResourcePool({ load: () => lateDiscard.promise, retain: () => {},
+    release: () => {}, discard: () => { discarded++; } });
+  const discardedScope = discardPool.createScope();
+  const rejected = assert.rejects(discardedScope.load("late"), ResourceScopeClosed);
+  discardedScope.dispose(); lateDiscard.resolve({}); await rejected;
+  assert.equal(discarded, 1, "无人接收的迟到资源仍交还引擎");
+  assert.deepEqual(discardPool.snapshot(), { scopes: 0, entries: 0, pending: 0, owners: 0, retained: 0 });
+  for (let i = 0; i < 20; i++) {
+    const scope = retryPool.createScope();
+    await scope.load("cycle"); scope.dispose();
+  }
+  assert.deepEqual(retryPool.snapshot(), { scopes: 0, entries: 0, pending: 0, owners: 0, retained: 0 });
   console.log("resource-pool-check passed: shared ownership, retry/cancel/reopen and Prefab plan runtime guard");
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

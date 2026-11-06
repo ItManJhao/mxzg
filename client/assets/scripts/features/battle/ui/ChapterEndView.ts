@@ -2,9 +2,10 @@
  * 主线只读结算：复用旧 ChapterEnd 的底板、胜利翅膀、失败引导图标与胜负音效。
  * 由 UIManager 打开，仅展示已验证战报结果；不请求结算、不发奖、不开放养成跳转。
  */
-import { _decorator, AudioClip, AudioSource, Button, Label, Node, resources, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec3, view } from "cc";
-import { BaseView } from "../../../framework/ui/BaseView";
+import { _decorator,AudioSource,Button,Label,Node,Sprite,SpriteFrame,tween,Tween,UIOpacity,UITransform,Vec3,view } from "cc";
 import { GameLog } from "../../../core/GameLog";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
+import { BaseView } from "../../../framework/ui/BaseView";
 import { mountNamedSpine } from "./battleSpine";
 
 const { ccclass, property } = _decorator;
@@ -78,14 +79,10 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
 
     /** 预载本页所需音频和彩带，胜利额外等待翅膀资源，失败不播放胜利动画。 */
     private async prepare(args: ChapterEndArgs): Promise<void> {
-        const clipPromise = new Promise<AudioClip>((resolve, reject) => {
-            resources.load("audio/battle-end-" + (args.won ? "1" : "0"), AudioClip,
-                (error, clip) => error ? reject(error) : resolve(clip));
-        });
-        const framesPromise = Promise.all(Array.from({ length: 11 }, (_, index) => new Promise<SpriteFrame>((resolve, reject) => {
-            resources.load("ui/common/item-reward-effect-2_effect-bomb-" + index + "/spriteFrame", SpriteFrame,
-                (error, frame) => error ? reject(error) : resolve(frame));
-        })));
+        const assets = ResourceAssetsUtils.forNode(this.node);
+        const clipPromise = assets.loadPath("audio/battle-end-" + (args.won ? "1" : "0"), "AudioClip");
+        const framesPromise = Promise.all(Array.from({ length: 11 }, (_, index) =>
+            assets.loadPath("ui/common/item-reward-effect-2_effect-bomb-" + index + "/spriteFrame", "SpriteFrame")));
         const [clip, frames] = await Promise.all([clipPromise, framesPromise]);
         if (this.released || !this.node.isValid) return;
         if (args.won) {
@@ -145,6 +142,8 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.released = true;
         this.unscheduleAllCallbacks();
         this.audio?.stop();
+        if (this.audio?.isValid) this.audio.clip = null;
+        if (this.confetti?.isValid) this.confetti.spriteFrame = null;
         this.frames = [];
         if (this.panel) {
             Tween.stopAllByTarget(this.panel);

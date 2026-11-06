@@ -2,6 +2,8 @@
  * 全局有类型事件派发器，负责通知批次及目标作用域的监听归属。
  * View 关闭时按目标解除；模块监听由模块生命周期清理，事件不保存业务状态。
  */
+import { GameLog } from "../core/GameLog";
+
 type Stop = () => void;
 let batchDepth = 0;
 const notifications = new Set<() => void>();
@@ -29,7 +31,7 @@ function flush(): void {
             const pending = Array.from(notifications);
             notifications.clear();
             for (const notify of pending) {
-                try { notify(); } catch (error) { console.error("[Events] subscriber failed", error); }
+                try { notify(); } catch (error) { GameLog.shared.classified("FRAMEWORK", "error", "Events", "订阅执行失败：" + String(error)); }
             }
         }
     } finally { flushing = false; }
@@ -120,6 +122,13 @@ export class EventDispatcher {
         }
     }
 
+    /** 当前派发器的监听和目标计数，用于重复开关页面的基线对比。 */
+    public snapshot(): { listeners: number; targets: number } {
+        let count = 0;
+        for (const group of this.listeners.values()) count += group.size;
+        return { listeners: count, targets: this.targets.size };
+    }
+
     /** 返回指定目标的监听数量，供生命周期检查使用。 */
     targetListenerCount(target: object): number {
         let count = 0;
@@ -134,7 +143,7 @@ export class EventDispatcher {
                 // 本轮交付中已被其他回调移除的监听不再执行。
                 if (!this.listeners.get(event)?.has(handler)) continue;
                 try { handler(payload); }
-                catch (error) { console.error("[EventDispatcher] " + String(event) + " handler " + (handler.name || "anonymous"), error); }
+                catch (error) { GameLog.shared.classified("FRAMEWORK", "error", "EventDispatcher", String(event) + " 监听失败：" + String(error)); }
             }
         });
     }

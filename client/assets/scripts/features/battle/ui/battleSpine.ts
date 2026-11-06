@@ -1,16 +1,18 @@
 /**
  * 战斗和加载层的动态 spine。
- * resources.load("spine/<stem>") + sp.Skeleton。加载或挂组件失败时回调，不抛到外面。
+ * 原骨架由节点资源作用域持有，转换副本随最后使用节点销毁；加载失败或取消会结束调用方等待。
  * 英雄槽没有请求的动作时留在 stand / idle。套里没有 hit 就不播受击。不播 bisha。
  * effect 模式给 batch2 命名特效：按名字播，没有这个动作就跳过，不拆站场。
  * 这些套是 Spine 3.7.94。播之前在内存里收成 spine-3.8 能读的皮和曲线，不改磁盘上的 json。
  * Creator 3.8.8 仍可能加载失败，失败只回调，攻击照旧。不播 bisha。
  */
-import { Node, resources, sp } from "cc";
+import { Node,sp } from "cc";
 import { GameLog } from "../../../core/GameLog";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
+import { TrackedTimers } from "../../../framework/TrackedTimers";
+import { plantHangLocomotion,upgradeSpine37Json } from "../../../framework/ui/spineUpgrade";
+import { place,uiNode } from "../../../framework/ui/UiKit";
 import { BattleAnimationClip } from "../utils/BattleAnimationCatalog";
-import { plantHangLocomotion, upgradeSpine37Json } from "../../../framework/ui/spineUpgrade";
-import { place, uiNode } from "../../../framework/ui/UiKit";
 
 export interface SpineActor {
     /** 骨架节点。挂机行军不挪父格，父格留在地砖槽上。 */
@@ -78,6 +80,12 @@ export interface NamedSpinePlay {
 /** 进度条、掉落堆这类单节点特效。失败只留空节点并回调，不抛。 */
 export function mountNamedSpine(host: Node, stem: string, clip: string, play?: NamedSpinePlay): void {
     const loop = !play || play.loop !== false;
+    let loading = true;
+    host.once(Node.EventType.NODE_DESTROYED, () => {
+        if (!loading) return;
+        loading = false;
+        play?.onFail?.();
+    });
     const fail = (): void => {
         GameLog.shared.classified("MODULE", "warn", "BattleSpine", "named miss spine/" + stem + " clip=" + clip);
         if (play && play.onFail) play.onFail();
@@ -88,11 +96,15 @@ export function mountNamedSpine(host: Node, stem: string, clip: string, play?: N
         const done = play.onComplete;
         const listen = view as sp.Skeleton & { setCompleteListener?: (cb: (() => void) | null) => void };
         if (typeof listen.setCompleteListener === "function") listen.setCompleteListener(() => done());
-        else setTimeout(done, 2400);
+        else {
+            const timer = TrackedTimers.timeout(() => { if (host.isValid) done(); }, 2400);
+            host.once(Node.EventType.NODE_DESTROYED, () => TrackedTimers.clear(timer));
+        }
     };
     try {
-        resources.load("spine/" + stem, sp.SkeletonData, (err, asset) => {
+        ResourceAssetsUtils.loadForNode(host, "spine/" + stem, "SkeletonData", (err, asset) => {
             if (!host.isValid) return;
+            loading = false;
             if (err || !asset) {
                 fail();
                 return;
@@ -100,7 +112,7 @@ export function mountNamedSpine(host: Node, stem: string, clip: string, play?: N
             try {
                 const view = host.getComponent(sp.Skeleton) || host.addComponent(sp.Skeleton);
                 view.premultipliedAlpha = false;
-                view.skeletonData = runtimeSpineData(stem, asset);
+                view.skeletonData = runtimeSpineData(host, stem, asset);
                 const skinned = view as sp.Skeleton & { setSkin?: (name: string) => void };
                 if (typeof skinned.setSkin === "function") {
                     try {
@@ -134,6 +146,14 @@ export function mountBattleSpine(parent: Node, stem: string, onFail: () => void,
     place(node, parent, 0, seatY);
     let skel: sp.Skeleton | null = null;
     let dead = false;
+    let loading = true;
+    // 加载中的节点销毁也结束调用方等待，不能让战场打开Promise永远悬挂。
+    node.once(Node.EventType.NODE_DESTROYED, () => {
+        if (!loading || dead) return;
+        loading = false;
+        dead = true;
+        onFail();
+    });
     let pending: string | null = null;
     let pendingHero: BattleAnimationClip | null = null;
     let exact: string | null = null;
@@ -199,8 +219,9 @@ export function mountBattleSpine(parent: Node, stem: string, onFail: () => void,
         return played;
     };
     try {
-        resources.load("spine/" + stem, sp.SkeletonData, (err, asset) => {
+        ResourceAssetsUtils.loadForNode(node, "spine/" + stem, "SkeletonData", (err, asset) => {
             if (!node.isValid) return;
+            loading = false;
             if (err || !asset) {
                 fail();
                 return;
@@ -208,7 +229,7 @@ export function mountBattleSpine(parent: Node, stem: string, onFail: () => void,
             try {
                 const view = node.addComponent(sp.Skeleton);
                 view.premultipliedAlpha = false;
-                view.skeletonData = runtimeSpineData(stem, asset);
+                view.skeletonData = runtimeSpineData(node, stem, asset);
                 const skinned = view as sp.Skeleton & { setSkin?: (name: string) => void };
                 if (typeof skinned.setSkin === "function") {
                     try {
@@ -247,12 +268,27 @@ export function mountBattleSpine(parent: Node, stem: string, onFail: () => void,
     return { node, stem, play, burst, gesture, hasGesture };
 }
 
-const runtimePacks: { [stem: string]: sp.SkeletonData } = {};
+/** 转换副本按原包标识共享，记录使用节点；最后一个节点销毁时释放副本。 */
+const runtimePacks = new Map<string, { data: sp.SkeletonData; owners: Set<Node> }>();
 
 /** 原资源的 wasm 缓存按 uuid 记住第一次解析。3.7 失败过的 uuid 不能复用，所以副本用 #38。 */
-function runtimeSpineData(stem: string, asset: sp.SkeletonData): sp.SkeletonData {
-    const cached = runtimePacks[stem];
-    if (cached) return cached;
+function runtimeSpineData(owner: Node, stem: string, asset: sp.SkeletonData): sp.SkeletonData {
+    const key = asset.uuid || stem;
+    const keep = (entry: { data: sp.SkeletonData; owners: Set<Node> }): sp.SkeletonData => {
+        if (!entry.owners.has(owner)) {
+            entry.owners.add(owner);
+            owner.once(Node.EventType.NODE_DESTROYED, () => {
+                entry.owners.delete(owner);
+                if (entry.owners.size === 0 && runtimePacks.get(key) === entry) {
+                    runtimePacks.delete(key);
+                    if (entry.data.isValid) entry.data.destroy();
+                }
+            });
+        }
+        return entry.data;
+    };
+    const cached = runtimePacks.get(key);
+    if (cached) return keep(cached);
     try {
         const src = asset as sp.SkeletonData & {
             skeletonJson?: unknown;
@@ -292,8 +328,9 @@ function runtimeSpineData(stem: string, asset: sp.SkeletonData): sp.SkeletonData
         dst._uuid = uuid;
         const upgraded = upgradeSpine37Json(raw);
         dst.skeletonJson = plantHangLocomotion(upgraded === raw ? JSON.parse(JSON.stringify(upgraded)) : upgraded) as typeof copy.skeletonJson;
-        runtimePacks[stem] = copy;
-        return copy;
+        const entry = { data: copy, owners: new Set<Node>() };
+        runtimePacks.set(key, entry);
+        return keep(entry);
     } catch (err) {
         return asset;
     }

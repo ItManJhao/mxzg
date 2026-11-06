@@ -555,3 +555,16 @@ for (const [level, x, y, offset] of [[1,.6,.7,.6],[2,.6,.7,.6],[3,.6,.7,.6],[4,.
     assert.deepEqual(actions.map(row => row.delay), [0,145,145]);
 }
 console.log('PASS all six dark cutter presentation levels preserve legacy anchors and offsets');
+
+// 三级主动专项战报必须区分安装与回合伤害，保留实例移除，不冒用其他英雄。
+const bleedBytes = fs.readFileSync(path.join(root, "backend/target/independent-dark-cutter-bleed-replay.pb"));
+const bleedPlan = decode(bleedBytes);
+for (const kind of ["buff.upsert", "damage", "buff.remove"]) {
+    assert.ok(bleedPlan.some(step => step.kind === kind && step.configId === 5051303));
+}
+const install = bleedPlan.find(step => step.kind === "buff.upsert" && step.configId === 5051303);
+assert.ok(bleedPlan.filter(step => step.kind === "damage" && step.configId === 5051303).every(step => step.round > install.round));
+const wrongBleed = protocol.decode(bleedBytes);
+wrongBleed.units[0].templateId = 10101001;
+assert.throws(() => decode(protocol.encode(wrongBleed).finish()), /单位无效/);
+console.log("PASS dark cutter level 3 bleed installation, round damage, removal and strict roster");

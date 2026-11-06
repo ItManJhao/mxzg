@@ -2,11 +2,12 @@
  * 在已有挂点上播一串 spriteFrame。最后一帧停住，下一拍重新 play 或 stop。
  * 路径是 resources 里的 spriteFrame，不带扩展名。
  */
-import { Node, resources, Sprite, SpriteFrame, UITransform } from "cc";
-import { GameLog } from "../../../core/GameLog";
+import { Node,Sprite,SpriteFrame,UITransform } from "cc";
 import { battleFrameStepMs } from "../../../config/battleTiming";
-import { armBattleDelay } from "./battleClock";
+import { GameLog } from "../../../core/GameLog";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { uiNode } from "../../../framework/ui/UiKit";
+import { armBattleDelay } from "./battleClock";
 
 export const FRAME_STEP_MS = 70;
 
@@ -20,22 +21,13 @@ export function battleFrameStep(speed: number): number {
     return step;
 }
 
-/** 进战先把帧拉进缓存。站场那一拍用来等图，第一下技能不用再空等加载。 */
-export function warmBattleFrames(paths: string[]): void {
-    for (let i = 0; i < paths.length; i++) {
-        const path = paths[i];
-        if (path) void loadFrame(path);
-    }
-}
-
-const frameLoads = new Map<string, Promise<SpriteFrame | null>>();
-
 export interface FrameReel {
     node: Node;
     play(paths: string[], onResult?: (ok: boolean) => void, stepMs?: number): void;
     stop(): void;
 }
 
+/** 创建节点拥有的序列帧播放器；销毁自动停止调度并释放帧资源。 */
 export function mountFrameReel(parent: Node, size: number, name = "FrameReel"): FrameReel {
     const node = uiNode(name);
     const ui = node.addComponent(UITransform);
@@ -61,6 +53,8 @@ export function mountFrameReel(parent: Node, size: number, name = "FrameReel"): 
         if (node.isValid) node.active = false;
     };
 
+    node.once(Node.EventType.NODE_DESTROYED, stop);
+
     const play = (paths: string[], onResult?: (ok: boolean) => void, stepMs?: number) => {
         token += 1;
         const mine = token;
@@ -72,7 +66,7 @@ export function mountFrameReel(parent: Node, size: number, name = "FrameReel"): 
             return;
         }
         const pending: Promise<SpriteFrame | null>[] = [];
-        for (let i = 0; i < paths.length; i++) pending.push(loadFrame(paths[i]));
+        for (let i = 0; i < paths.length; i++) pending.push(loadFrame(node, paths[i]));
         Promise.all(pending).then((frames) => {
             if (mine !== token || !node.isValid) return;
             const ready: SpriteFrame[] = [];
@@ -107,22 +101,7 @@ export function mountFrameReel(parent: Node, size: number, name = "FrameReel"): 
     return { node, play, stop };
 }
 
-function loadFrame(path: string): Promise<SpriteFrame | null> {
-    const cached = frameLoads.get(path);
-    if (cached) return cached;
-    const pending = new Promise<SpriteFrame | null>((resolve) => {
-        try {
-            resources.load(path + "/spriteFrame", SpriteFrame, (err, asset) => {
-                if (err || !asset) {
-                    resolve(null);
-                    return;
-                }
-                resolve(asset);
-            });
-        } catch (err) {
-            resolve(null);
-        }
-    });
-    frameLoads.set(path, pending);
-    return pending;
+/** 同节点重复加载由共享池去重，失败不永久缓存，节点销毁后释放。 */
+function loadFrame(node: Node, path: string): Promise<SpriteFrame | null> {
+    return ResourceAssetsUtils.forNode(node).loadPath(path + "/spriteFrame", "SpriteFrame").catch(() => null);
 }

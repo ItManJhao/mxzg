@@ -1,8 +1,8 @@
 /** 此模块等待按原项目重做；旧业务通信已停用，保留 DTO 校验供后续恢复。 */
 /** 普通升级 HTTP 边界：只提交实例、逻辑请求标识和预期等级，校验服务端权威条件及资产快照。 */
 import { featureUnavailable } from "../PausedFeatures";
-import { readOwnedHero, readOwnedHeroes } from "./HeroApi";
-import type { OwnedHero } from "./HeroApi";
+import { readOwnedHero, readOwnedHeroes } from "./data/HeroSnapshotData";
+import type { OwnedHero } from "./data/HeroSnapshotData";
 import { readRole } from "../account/AccountApi";
 import type { RoleProfile } from "../account/AccountModel";
 import { readBagItems } from "../bag/data/BagItemData";

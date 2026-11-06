@@ -23,8 +23,9 @@ const pool = new ResourcePool<Prefab>({
     if (!path) return Promise.reject(new Error("未登记的英雄资源：" + key));
     return loadPrefab(path);
   },
+  discard: asset => { asset.addRef(); asset.decRef(); },
   retain: asset => { asset.addRef(); },
-  release: asset => { asset.decRef(false); },
+  release: asset => { asset.decRef(); },
 });
 export const createHeroResourceScope = () => pool.createScope();
 

@@ -4,6 +4,9 @@
  * 帧按序号往下要，缺一张就停，不再一次等 64 张不存在的帧。
  * dx 播不出来时改播 portrait 光球序列。失败打 GameLog。
  */
+import { TrackedTimers } from "../../../framework/TrackedTimers";
+import { ResourceAssetsUtils, AssetScope } from "../../../framework/assets/ResourceAssets";
+
 import { Node, Sprite, SpriteFrame, UITransform, Vec3, resources } from "cc";
 import { GameLog } from "../../../core/GameLog";
 import { mountNamedSpine } from "../../battle/ui/battleSpine";
@@ -144,10 +147,10 @@ function followLayer(node: Node, layer: Node, x: number, y: number, placeBottomL
         if (scale) node.setScale(scale.x, scale.y, 1);
     };
     sync();
-    const timer = setInterval(sync, FOLLOW_MS);
+    const timer = TrackedTimers.interval(sync, FOLLOW_MS);
     return () => {
         alive = false;
-        clearInterval(timer);
+        TrackedTimers.clear(timer);
     };
 }
 
@@ -161,11 +164,11 @@ function playFrameStem(node: Node, stem: string): () => void {
     const stop = () => {
         alive = false;
         if (timer) {
-            clearInterval(timer);
+            TrackedTimers.clear(timer);
             timer = null;
         }
     };
-    void loadFrameSequence(stem).then((frames) => {
+    void loadFrameSequence(stem, ResourceAssetsUtils.forNode(node)).then((frames) => {
         if (!alive || !node.isValid) return;
         if (frames.length === 0) {
             GameLog.shared.classified("MODULE", "warn", "CityFx", "anim frames empty " + stem);
@@ -177,7 +180,7 @@ function playFrameStem(node: Node, stem: string): () => void {
             return;
         }
         let index = 0;
-        timer = setInterval(() => {
+        timer = TrackedTimers.interval(() => {
             if (!alive || !node.isValid) {
                 stop();
                 return;
@@ -208,11 +211,11 @@ function applyFrame(node: Node, sprite: Sprite, frame: SpriteFrame): void {
     if (typeof dirty.markForUpdateRenderData === "function") dirty.markForUpdateRenderData(true);
 }
 
-function loadFrameSequence(stem: string): Promise<SpriteFrame[]> {
+function loadFrameSequence(stem: string, scope: AssetScope): Promise<SpriteFrame[]> {
     const probed: (SpriteFrame | null)[] = [];
     const step = (index: number): Promise<SpriteFrame[]> => {
         if (index >= FRAME_CAP) return Promise.resolve(takeFrameRun(probed));
-        return loadOne(stem + "-" + String(index)).then((frame) => {
+        return loadOne(stem + "-" + String(index), scope).then((frame) => {
             probed.push(frame);
             if (!frame && index > 0) return takeFrameRun(probed);
             if (!frame && index === 0) return step(1);
@@ -222,7 +225,7 @@ function loadFrameSequence(stem: string): Promise<SpriteFrame[]> {
     return step(0);
 }
 
-function loadOne(path: string): Promise<SpriteFrame | null> {
+function loadOne(path: string, scope: AssetScope): Promise<SpriteFrame | null> {
     return new Promise((resolve) => {
         let settled = false;
         const finish = (frame: SpriteFrame | null) => {
@@ -230,15 +233,17 @@ function loadOne(path: string): Promise<SpriteFrame | null> {
             settled = true;
             resolve(frame);
         };
-        const timer = setTimeout(() => finish(null), FRAME_WAIT_MS);
+        const timer = TrackedTimers.timeout(() => finish(null), FRAME_WAIT_MS);
         try {
-            resources.load(path + "/spriteFrame", SpriteFrame, (err, asset) => {
-                clearTimeout(timer);
-                if (err || !asset) finish(null);
-                else finish(asset);
+            scope.load(ResourceAssetsUtils.sprite(path)).then(asset => {
+                TrackedTimers.clear(timer);
+                finish(asset);
+            }, () => {
+                TrackedTimers.clear(timer);
+                finish(null);
             });
         } catch (_e) {
-            clearTimeout(timer);
+            TrackedTimers.clear(timer);
             finish(null);
         }
     });

@@ -3,7 +3,7 @@
  */
 import type { FormationController } from "../../features/hero/FormationController";
 import type { HeroRosterController } from "../../features/hero/HeroRosterController";
-import { readOwnedHeroes, readHeroRosterInfo, readMainFormation } from "../../features/hero/HeroApi";
+import { readOwnedHeroes, readHeroRosterInfo, readMainFormation } from "../../features/hero/data/HeroSnapshotData";
 import type { AccountModel } from "../../features/account/AccountModel";
 import type { BagController } from "../../features/bag/BagController";
 import type { RoleController } from "../../features/account/RoleController";

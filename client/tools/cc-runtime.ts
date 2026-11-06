@@ -291,6 +291,9 @@ export class Label extends Component {
 }
 
 export class SpriteFrame {
+  refCount = 0;
+  addRef(): this { this.refCount++; return this; }
+  decRef(): this { this.refCount--; return this; }
   originalSize = { width: 0, height: 0 };
 }
 
@@ -468,11 +471,17 @@ export class Widget extends Component {
   updateAlignment(): void {}
 }
 
-export class Prefab {}
+/** 引用计数替身只验证拥有者配对，不模拟引擎依赖释放。 */
+export class Prefab {
+  refCount = 0;
+  isValid = true;
+  addRef(): this { this.refCount++; return this; }
+  decRef(): this { this.refCount = Math.max(0, this.refCount - 1); return this; }
+}
 
 export class TTFFont {}
 export class BitmapFont {}
-export class AudioClip {}
+export class AudioClip { refCount = 0; addRef(): this { this.refCount++; return this; } decRef(): this { this.refCount--; return this; } }
 
 export class AudioSource extends Component {
   clip: AudioClip | null = null;
@@ -591,7 +600,14 @@ export const assetManager = {
 };
 
 export namespace sp {
-  export class SkeletonData {}
+  export class SkeletonData {
+    refCount = 0;
+    isValid = true;
+    uuid = "";
+    addRef(): this { this.refCount++; return this; }
+    decRef(): this { this.refCount--; return this; }
+    destroy(): void { this.isValid = false; }
+  }
   export class Skeleton extends Component {
     skeletonData: SkeletonData | null = null;
     premultipliedAlpha = false;
@@ -627,3 +643,8 @@ export const game = {
     for (const row of (gameListeners.get(type) || []).slice()) row.callback.apply(row.target, args);
   },
 };
+/** 启动测试只导入开发入口，不模拟材质或动画；误执行时明确失败，不能冒充画面验收。 */
+export class EffectAsset {}
+export class Material {}
+export class Tween { static stopAllByTarget(): never { throw new Error("测试替身不支持动画，需要 Creator 验收"); } }
+export function tween(): never { throw new Error("测试替身不支持动画，需要 Creator 验收"); }

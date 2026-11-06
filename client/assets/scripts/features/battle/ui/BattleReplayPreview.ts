@@ -1,18 +1,19 @@
 /** 独立战报画面验收：复用BattlePage及真实资源，不连接账号、数据库或奖励接口。 */
-import { director, Director, EffectAsset, Material, sp, UIOpacity, Color, AudioClip, AudioSource, JsonAsset, Node, resources, Sprite, SpriteFrame, Tween, tween, Vec3, UITransform } from "cc";
-import { mountBattlePrefab } from "./BattlePage";
-import { mountBattleSpine, SpineActor } from "./battleSpine";
-import { paintBattleFloats } from "./battlePresentView";
-import { BattleReplayPlayer } from "../BattleReplayPlayer";
-import { BattleReplayUtils } from "../utils/BattleReplayUtils";
-import { BattleAttackUtils } from "../utils/BattleAttackUtils";
+import { AudioClip,AudioSource,Color,director,Director,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
 import { GameLog } from "../../../core/GameLog";
+import { createAssetScope,ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { ChapterEndView } from "./ChapterEndView";
+import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { registerView } from "../../../framework/ui/UIRegistry";
-import { UILayer } from "../../../framework/ui/UILayer";
 import { setText } from "../../../framework/ui/UiKit";
+import { BattleReplayPlayer } from "../BattleReplayPlayer";
+import { BattleAttackUtils } from "../utils/BattleAttackUtils";
+import { BattleReplayUtils } from "../utils/BattleReplayUtils";
+import { mountBattlePrefab } from "./BattlePage";
+import { ChapterEndView } from "./ChapterEndView";
+import { paintBattleFloats } from "./battlePresentView";
+import { mountBattleSpine,SpineActor } from "./battleSpine";
 
 /** 同源配置行，只消费当前已核对的近身/远程、伤害音效和201图标字段。 */
 interface BuffRow { idx: number; type: number; ani_base: string; file: string; sound: string; buff_icon: number; delay: number; shake: number; dimly: number; }
@@ -31,15 +32,21 @@ export class BattleReplayPreview {
     public static async open(parent: Node, bytes: Uint8Array, defeatPresentation = false, onClosed?: () => void, audit?: SkillReplayFocus): Promise<() => void> {
         const steps = BattleReplayUtils.decode(bytes);
         const units = BattleReplayUtils.units(bytes);
-        const templates = await new Promise<JsonAsset>((resolve, reject) => resources.load("config/herotype", JsonAsset,
-            (error, asset) => error ? reject(error) : resolve(asset)));
-        const templateRows = (templates.json as { rows: { type: number; elem: number }[] }).rows;
+        const configScope = createAssetScope();
+        let templateRows: { type: number; elem: number }[];
+        let rows: BuffRow[];
+        try {
+            const templates = await configScope.loadPath("config/herotype", "JsonAsset");
+            const config = await configScope.loadPath("config/buff", "JsonAsset");
+            templateRows = (templates.json as { rows: { type: number; elem: number }[] }).rows;
+            rows = (config.json as { rows: BuffRow[] }).rows;
+        } finally {
+            // 后续只读取普通配置对象，释放JsonAsset持有，不保留引擎资产缓存。
+            configScope.dispose();
+        }
         const elementPaths = [ResourceCatalog.hero.hero_icon_elem_1.loadPath, ResourceCatalog.hero.hero_icon_elem_2.loadPath,
             ResourceCatalog.hero.hero_icon_elem_3.loadPath, ResourceCatalog.hero.hero_icon_elem_4.loadPath,
             ResourceCatalog.hero.hero_icon_elem_5.loadPath];
-        const config = await new Promise<JsonAsset>((resolve, reject) => resources.load("config/buff", JsonAsset,
-            (error, asset) => error ? reject(error) : resolve(asset)));
-        const rows = (config.json as { rows: BuffRow[] }).rows;
         const selected = new Map<number, BuffRow>();
         // 一个旧Buff可展开多个并行表现，索引仅供本页资源缓存使用，不修改权威事件。
         const expanded = new Map<number, readonly BuffRow[]>();
@@ -70,7 +77,7 @@ export class BattleReplayPreview {
             if (node) node.active = false;
         }
         setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, "独立测试阵容");
-        setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关");
+        setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, units.every(unit => unit.templateId === 10505005) ? "三级流血专项" : units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关");
         const actors = new Map<number, SpineActor>();
         const slots = new Map<number, Node>();
         /** 当前出场单位的头顶血条，随英雄槽移动；页面关闭时随预制体销毁。 */
@@ -227,10 +234,10 @@ export class BattleReplayPreview {
                 }
             }
         };
+        const assets = ResourceAssetsUtils.forNode(shell.root);
         try {
             if (Array.from(selected.values()).some(row => row.type === 1004)) {
-                const effect = await new Promise<EffectAsset>((resolve, reject) => resources.load("battle/legacy-frozen", EffectAsset,
-                    (error, asset) => error ? reject(error) : resolve(asset)));
+                const effect = await assets.loadPath("battle/legacy-frozen", "EffectAsset");
                 frozenMaterial = new Material();
                 frozenMaterial.initialize({ effectAsset: effect });
                 if (!units.every(unit => unit.templateId === 10205023)) {
@@ -239,8 +246,7 @@ export class BattleReplayPreview {
             }
             if (Array.from(selected.values()).some(row => row.type === 1005)) {
                 dizzyFrames = await Promise.all(BattleAttackUtils.dizzyFrames().map(path =>
-                    new Promise<SpriteFrame>((resolve, reject) => resources.load(path, SpriteFrame,
-                        (error, asset) => error ? reject(error) : resolve(asset)))));
+                    assets.loadPath(path, "SpriteFrame")));
             }
             for (const row of selected.values()) {
                 if (row.type === 2 || row.type === 3 || row.type === 5 || row.type === 6 || row.type === 7 || row.type === 9 || row.type === 100) {
@@ -248,17 +254,14 @@ export class BattleReplayPreview {
                     if (row.type !== 100) {
                         const effect = BattleAttackUtils.plan(row).effect;
                         if (effect) frames.set(row.idx, await Promise.all(effect.paths.map(path =>
-                            new Promise<SpriteFrame>((resolve, reject) => resources.load(path, SpriteFrame,
-                                (error, asset) => error ? reject(error) : resolve(asset))))));
+                            assets.loadPath(path, "SpriteFrame"))));
                     }
                     for (const name of names) {
-                        sounds.set(name, await new Promise<AudioClip>((resolve, reject) => resources.load("audio/" + name,
-                            AudioClip, (error, asset) => error ? reject(error) : resolve(asset))));
+                        sounds.set(name, await assets.loadPath("audio/" + name, "AudioClip"));
                     }
                 } else if (row.buff_icon) {
-                    icons.set(row.idx, await new Promise<SpriteFrame>((resolve, reject) => resources.load(
-                        "ui/hero/skill-icon_" + row.buff_icon + "/spriteFrame", SpriteFrame,
-                        (error, asset) => error ? reject(error) : resolve(asset))));
+                    icons.set(row.idx, await assets.loadPath(
+                        "ui/hero/skill-icon_" + row.buff_icon + "/spriteFrame", "SpriteFrame"));
                 }
             }
             for (const side of ["ally", "enemy"] as const) {
@@ -278,8 +281,8 @@ export class BattleReplayPreview {
                 const template = templateRows.find(row => row.type === unit.templateId);
                 if (!template || !elementPaths[template.elem - 1]) throw new Error("战斗英雄元素配置缺失");
                 const element = shell.hpLabel(side, index)!.parent!.getChildByName("ElementIcon")!;
-                element.getComponent(Sprite)!.spriteFrame = await new Promise<SpriteFrame>((resolve, reject) => resources.load(
-                    elementPaths[template.elem - 1], SpriteFrame, (error, asset) => error ? reject(error) : resolve(asset)));
+                element.getComponent(Sprite)!.spriteFrame = await assets.loadPath(
+                    elementPaths[template.elem - 1], "SpriteFrame");
                 element.active = true;
                 const hpRow = element.parent!;
                 hpRows.set(id, hpRow);
@@ -450,7 +453,7 @@ export class BattleReplayPreview {
                         if (!cancelled() && !plan.effectOnly) actors.get(step.sourceId)!.play("stand");
                     } else if (step.kind === "damage") {
                         const row = selected.get(step.configId)!;
-                        // 持续伤害201不冒充直接伤害100；这里只恢复已核对的伤害音效来源。
+                        // 回合伤害不冒充直接伤害100；这里只恢复已核对的伤害音效来源。
                         if (row.type === 100) {
                             for (const name of BattleAttackUtils.damageSounds(row)) {
                                 audio.clip = sounds.get(name)!;
@@ -475,7 +478,7 @@ export class BattleReplayPreview {
                         else active.delete(step.buffInstanceId!);
                         paintBuffs(step.targetId);
                         const type = selected.get(step.configId)?.type;
-                        const name = type === 1004 ? "冰冻" : type === 1005 ? "眩晕"
+                        const name = type === 1205 ? "流血" : type === 1004 ? "冰冻" : type === 1005 ? "眩晕"
                             : step.configId >= 2233301 && step.configId <= 2233303 ? "降攻"
                             : step.configId >= 2231201 && step.configId <= 2231203 ? "降护甲" : "状态";
                         record("单位" + step.targetId + " " + name + (step.kind === "buff.remove" ? "解除" : "生效"));

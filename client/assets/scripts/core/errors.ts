@@ -1,11 +1,9 @@
 import { GameLog } from "./GameLog";
 
 /**
- * Mock / 网络已经会返回的失败。
- * 数值是客户端自己的，不是旧服错误码。阶段 D 再对照。
- *
- * 未登记的业务 cmd 仍按 B4 echo（自检 echo.ping）。空 cmd 才回 UNKNOWN_CMD。
- * ok:false 但没带 code 时，展示也按未知指令。
+ * 历史暂停模块使用的客户端错误字典及通用错误展示转换。
+ * 这些数字不是当前WS＋Protobuf服务端错误码；现行业务按SocketFailure和协议返回处理。
+ * 恢复旧模块时应迁移调用者，不允许将此字典继续扩充为第二套服务器协议。
  */
 export const ErrorCode = {
   OK: 0,

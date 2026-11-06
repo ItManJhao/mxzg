@@ -152,7 +152,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         });
     }
     /** 从已校验的统一名册绘制四槽；空槽沿用旧资源，不从背包库存推测穿戴。 */
-    private refreshEquipment(hero: import("../HeroApi").OwnedHero, version: number): void {
+    private refreshEquipment(hero: import("../data/HeroSnapshotData").OwnedHero, version: number): void {
         if (!this.equipmentIcons.length) return;
         const config = GameConfig.instance;
         const items = hero.equipment ? readHeroEquipment(hero.equipment.items, config) : undefined;

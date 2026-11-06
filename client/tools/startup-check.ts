@@ -1,8 +1,15 @@
+/** 启动、取消、独立提示与资源结束后的行为检查；渲染仍由Creator验收。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { director, Director, Node, UIOpacity } from "cc";
 import { runStartup, StartupCancelled } from "../assets/scripts/app/remake/StartupFlow";
 import { RemakeApp } from "../assets/scripts/app/remake/RemakeApp";
+import { UIManager } from "../assets/scripts/framework/ui/UIManager";
+import { playLogoSplash, LOGO_BGM } from "../assets/scripts/app/remake/logoSplash";
+import { resources, AudioClip, AudioSource } from "cc";
+import { ApplicationNotice } from "../assets/scripts/app/remake/ApplicationNotice";
+import { TrackedTimers } from "../assets/scripts/framework/TrackedTimers";
+import { Label } from "cc";
 import { BootChrome } from "../assets/scripts/app/remake/bootChrome";
 
 const deferred = () => {
@@ -67,9 +74,49 @@ async function main() {
   const waiting = app.afterPaint(); app.onDestroy(); await waiting;
   assert.equal(app.paintWaiters.size, 0, "shutdown settles frame waiters");
 
+  const ui = UIManager.instance;
+  let delivered = "";
+  const oldNotice = ui.bindNotice(() => { throw new Error("旧绑定应被替换"); });
+  const newNotice = ui.bindNotice(text => { delivered = text; });
+  oldNotice(); ui.toast("无导航也能提示");
+  assert.equal(delivered, "无导航也能提示"); newNotice();
+  const timerBaseline = TrackedTimers.snapshot();
+  const noticeNode = new Node("ApplicationNotice");
+  const noticeLabel = noticeNode.addComponent(Label);
+  const notices = new ApplicationNotice(noticeNode, noticeLabel);
+  for (let cycle = 0; cycle < 20; cycle++) {
+    notices.show("登录前可见");
+    assert.equal(noticeNode.active, true);
+    assert.equal(noticeLabel.string, "登录前可见");
+    assert.equal(TrackedTimers.snapshot(), timerBaseline + 1);
+    notices.show("替换提示");
+    assert.equal(TrackedTimers.snapshot(), timerBaseline + 1, "替换提示不叠加计时器");
+    notices.dispose(); notices.dispose();
+    assert.equal(TrackedTimers.snapshot(), timerBaseline);
+  }
+  notices.show("常驻错误", 0);
+  assert.equal(TrackedTimers.snapshot(), timerBaseline);
+  notices.dispose(); noticeNode.destroy();
+
+  const originalLoad = resources.load;
+  const pendingAssets: Array<{ path: string; done: Function }> = [];
+  resources.load = ((path: string, _type: unknown, done: Function) => pendingAssets.push({ path, done })) as typeof resources.load;
+  const splashParent = new Node("SplashHost"), audioHost = new Node("AudioHost");
+  const splash = playLogoSplash(splashParent, audioHost);
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  splash.stopMusic(); splash.stop(); splash.stopMusic();
+  const lateClip = new AudioClip();
+  for (const row of pendingAssets) row.done(row.path === LOGO_BGM ? null : new Error("cancelled fixture"), row.path === LOGO_BGM ? lateClip : null);
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  assert.equal(audioHost.getComponent(AudioSource), null, "停止音乐后迟到加载不能创建或启动音源");
+  assert.equal(lateClip.refCount, 0, "迟到音频交还引擎");
+  assert.equal(TrackedTimers.snapshot(), timerBaseline, "取消logo后没有遗留淡入/等待计时器");
+  resources.load = originalLoad; splashParent.destroy(); audioHost.destroy();
+
   const scene = JSON.parse(readFileSync("client/assets/scenes/Remake.scene", "utf8"));
   const binding = scene.find((row: any) => row.loginPrefab && row.socketUrl);
   assert(binding.pageHost && binding.startupHost && binding.loadingPrefab);
+  assert(binding.noticePanel && binding.noticeLabel, "提示静态绑定在场景，不依赖主城");
   const accountMeta = JSON.parse(readFileSync("client/assets/prefabs/ui/account/AccountLoginView.prefab.meta", "utf8"));
   const legacyMeta = JSON.parse(readFileSync("client/assets/prefabs/ui/legacy-login/LoginPanel.prefab.meta", "utf8"));
   assert.equal(binding.loginPrefab.__uuid__, accountMeta.uuid, "Remake uses only the account login page");

@@ -1,5 +1,5 @@
 /** 主线阵容页面草稿与交互类型：不是资产Model，服务器确认状态仍归HeroRosterModel。 */
-import type { OwnedHero } from "../HeroApi";
+import type { OwnedHero } from "./HeroSnapshotData";
 
 /** 草稿专用站位集合，不依赖已暂停的旧LineupApi。 */
 export interface FormationDraft {

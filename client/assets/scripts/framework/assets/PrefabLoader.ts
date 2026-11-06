@@ -17,26 +17,54 @@ import { prefabInPlan } from "../../config/PrefabPlan";
 import { PREFAB_UUID } from "../../config/PrefabCatalog";
 
 
+/** 只保存正在加载的Promise，成功后移入显式应用缓存。 */
 const prefabPending = new Map<string, Promise<Prefab>>();
 
-/** 清掉路径缓存。加载失败的下次本来就会再试；检查要换掉成功结果时用这个。 */
+/** 应用常驻Prefab缓存：每份保留一次引擎引用，只有应用关闭后清理。 */
+const prefabLoaded = new Map<string, Prefab>();
+/** 清缓存递增代次，禁止清理前的迟到请求重新填充缓存。 */
+let cacheEpoch = 0;
+
+/** 应用已关闭页面和资源作用域后调用；不强制释放其他拥有者的引用。 */
 export function clearPrefabCache(): void {
+  cacheEpoch++;
   prefabPending.clear();
+  for (const prefab of prefabLoaded.values()) prefab.decRef();
+  prefabLoaded.clear();
 }
 
-/** 同一路径共用一次加载。预热和进城挂载不要各解一遍。失败删掉，下次还能再试。 */
+/** 仅输出明确缓存和在途计数，不把缓存保留描述为内存泄漏。 */
+export function prefabCacheSnapshot(): { pending: number; cached: number } {
+  return { pending: prefabPending.size, cached: prefabLoaded.size };
+}
+
+/** 同路径合并在途加载，成功结果由应用缓存持有；失败或过期清理后可重试。 */
 export function loadPrefab(assetPath: string): Promise<Prefab> {
   if (!prefabInPlan(assetPath)) return Promise.reject(new Error("该界面不在当前重做计划内：" + assetPath));
+  const loaded = prefabLoaded.get(assetPath);
+  if (loaded && loaded.isValid !== false) return Promise.resolve(loaded);
   const cached = prefabPending.get(assetPath);
   if (cached) return cached;
-  const pending = loadPrefabOnce(assetPath);
-  prefabPending.set(assetPath, pending);
-  pending.catch(() => {
+  const epoch = cacheEpoch;
+  const pending = loadPrefabOnce(assetPath).then(prefab => {
+    if (epoch !== cacheEpoch) {
+      prefab.addRef();
+      prefab.decRef();
+      throw new Error("Prefab所属应用已关闭");
+    }
+    prefab.addRef();
+    prefabLoaded.set(assetPath, prefab);
     if (prefabPending.get(assetPath) === pending) prefabPending.delete(assetPath);
+    return prefab;
+  }, error => {
+    if (prefabPending.get(assetPath) === pending) prefabPending.delete(assetPath);
+    throw error;
   });
+  prefabPending.set(assetPath, pending);
   return pending;
 }
 
+/** 按计划Bundle加载，编辑器导入尚未完成时保留原UUID回退。 */
 function loadPrefabOnce(assetPath: string): Promise<Prefab> {
   const parsed = splitAssetPath(assetPath);
   return loadBundlePrefab(parsed.bundle, parsed.inner).catch((bundleErr: unknown) => {

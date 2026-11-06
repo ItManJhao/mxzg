@@ -3,6 +3,9 @@
  * 这里不再手搓 CityMap。缺预制由调用方打日志。
  * 配置里的活动图标不再铺成通栏。右上活动在 CityChrome 的 ActGroup。
  */
+import { TrackedTimers } from "../../../framework/TrackedTimers";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
+
 import { Color, Node, Sprite, SpriteFrame, resources } from "cc";
 import { GateSnapshot } from "../../../config/nav";
 
@@ -81,19 +84,21 @@ export function loadCitySpriteFrame(path: string): Promise<SpriteFrame | null> {
             unblocked = true;
             resolve(frame);
         };
-        const timer = setTimeout(() => {
+        const timer = TrackedTimers.timeout(() => {
             if (unblocked) return;
             unblocked = true;
             resolve(null);
         }, CITY_PLATE_WAIT_MS);
         try {
-            resources.load(path + "/spriteFrame", SpriteFrame, (err, asset) => {
-                clearTimeout(timer);
-                if (err || !asset) give(null, true);
-                else give(asset, false);
+            ResourceAssetsUtils.loadResidentSprite(path).then(asset => {
+                TrackedTimers.clear(timer);
+                give(asset, false);
+            }, () => {
+                TrackedTimers.clear(timer);
+                give(null, true);
             });
         } catch (_err) {
-            clearTimeout(timer);
+            TrackedTimers.clear(timer);
             give(null, true);
         }
     });
@@ -170,4 +175,10 @@ function clamp(value: number, min: number, max: number): number {
     if (value < min) return min;
     if (value > max) return max;
     return value;
+}
+
+/** 应用结束后清除旧底板索引，不在页面仍显示时调用。 */
+export function clearCitySpriteCache(): void {
+    plateLoads.clear();
+    cityPlateMisses.clear();
 }

@@ -49,7 +49,23 @@ export function isOpenCancelled(err: unknown): boolean {
  * 非 Page 且写了 hostId 的界面挂到常驻宿主，不进页面栈，也不改底栏。
  */
 export class UIManager {
+  /** 返回页面管理计数；缓存页面与活动页面分开，不能以缓存数非零认定泄漏。 */
+  public snapshot(): Record<string, number> {
+    return { pages: Array.from(this.pages.values()).reduce((sum, group) => sum + group.length, 0),
+      residents: this.residents.size, cached: this.cached.size, prepared: this.prepared.size,
+      opening: this.opening.size, pendingResident: this.pendingResident.size, intents: this.tokens.size };
+  }
+
   static readonly instance = new UIManager();
+
+  /** 应用提示独立于正式导航，开发预览和登录前也可使用。 */
+  private notice: ((text: string, durationMs: number) => void) | null = null;
+
+  /** 由场景应用绑定提示，返回只撤销本次绑定的句柄。 */
+  public bindNotice(show: (text: string, durationMs: number) => void): () => void {
+    this.notice = show;
+    return () => { if (this.notice === show) this.notice = null; };
+  }
 
   private nav: PageNav | null = null;
   private host: UIManagerHost | null = null;
@@ -177,7 +193,8 @@ export class UIManager {
   }
 
   toast(text: string): void {
-    if (this.host) this.host.showToast(text, 1600);
+    if (this.notice) this.notice(text, 1600);
+    else if (this.host) this.host.showToast(text, 1600);
   }
 
   /**

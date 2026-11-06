@@ -112,13 +112,15 @@ export class BattleReplayUtils {
             game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
         }).game.BattleReplay;
         const report = codec.decode(bytes);
-        if (report.schemaVersion !== 1 || ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:control-teams", "audit:frozen", "audit:nanako"].indexOf(report.scenario) < 0
+        if (report.schemaVersion !== 1 || ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0
             || report.units.length !== (report.scenario === "audit:control-teams" ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2) || report.rounds < 1 || report.rounds > 15) {
             throw new Error("战报版本或场景不支持");
         }
         const roster = this.validateUnits(report.units);
         const hp = new Map<number, number>();
-        const expected = report.scenario === "audit:nanako"
+        const expected = report.scenario === "audit:dark-cutter-bleed"
+            ? [[1, 1, 10505005, 2, 100], [2, 2, 10505005, 2, 100]]
+            : report.scenario === "audit:nanako"
             ? [[1, 1, 10205023, 2, 100], [2, 2, 10205023, 2, 100]]
             : report.scenario === "audit:control-teams"
             ? [[1, 1, 10101001, 2, 1], [4, 1, 10101001, 1, 1], [2, 2, 10101001, 2, 2], [3, 2, 10104004, 3, 2]]

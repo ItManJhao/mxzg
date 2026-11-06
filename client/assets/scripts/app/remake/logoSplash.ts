@@ -6,12 +6,14 @@
  * 不再把左右饰纹拼成焰环，也不铺黑底。画面用 LoadingLayer 同一张 bg-loading，
  * cover 和加载层一致。淡出时加载层已经在下面，不会收回成黑屏。
  */
-import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
-import { AudioClip, AudioSource, BlockInputEvents, Node, resources, Sprite, SpriteFrame, UIOpacity, UITransform } from "cc";
+import { AudioSource,BlockInputEvents,Node,Sprite,SpriteFrame,UIOpacity,UITransform } from "cc";
 import { GameLog } from "../../core/GameLog";
-import { LOADING_BG_DRAW_H, LOADING_BG_DRAW_W, LOADING_BG_FRAME, fitLoadingBackdrop } from "./bootChrome";
+import { createAssetScope,ResourceAssetsUtils } from "../../framework/assets/ResourceAssets";
+import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
+import { TrackedTimers } from "../../framework/TrackedTimers";
+import { place,uiNode } from "../../framework/ui/UiKit";
 import { bindVisibleRefresh } from "../../framework/ui/visibleFit";
-import { place, uiNode } from "../../framework/ui/UiKit";
+import { fitLoadingBackdrop,LOADING_BG_DRAW_H,LOADING_BG_DRAW_W,LOADING_BG_FRAME } from "./bootChrome";
 
 export const LOGO_FADE_IN_SEC = 1;
 export const LOGO_HOLD_SEC = 1;
@@ -46,6 +48,7 @@ export function logoFrameIsSpeck(frame: SpriteFrame | null | undefined): boolean
   return false;
 }
 
+/** 启动图片归logo节点，音乐由独立句柄持有，停止后拒绝迟到音频。 */
 export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle {
   const root = uiNode("LogoSplash");
   const ui = root.addComponent(UITransform);
@@ -78,6 +81,17 @@ export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle 
   let stopped = false;
   let dismissStarted = false;
   let audio: AudioSource | null = null;
+  const musicScope = createAssetScope();
+  let musicStopped = false;
+  /** 音乐寿命长于logo节点；进入主城或宿主销毁时单独停止并释放。 */
+  const stopMusic = () => {
+    if (musicStopped) return;
+    musicStopped = true;
+    if (audio?.isValid) { audio.stop(); audio.clip = null; }
+    audio = null;
+    musicScope.dispose();
+  };
+  audioHost.once(Node.EventType.NODE_DESTROYED, stopMusic);
   const timers: Array<ReturnType<typeof setTimeout>> = [];
   let fadeTimer: ReturnType<typeof setInterval> | null = null;
   let fadeResolve: (() => void) | null = null;
@@ -116,12 +130,12 @@ export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle 
   };
 
   const clearTimers = () => {
-    for (let i = 0; i < timers.length; i++) clearTimeout(timers[i]);
+    for (let i = 0; i < timers.length; i++) TrackedTimers.clear(timers[i]);
     timers.length = 0;
   };
   const cancelFade = () => {
     if (fadeTimer) {
-      clearInterval(fadeTimer);
+      TrackedTimers.clear(fadeTimer);
       fadeTimer = null;
     }
     const resolve = fadeResolve;
@@ -141,6 +155,8 @@ export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle 
     settleDone();
   };
 
+  root.once(Node.EventType.NODE_DESTROYED, finish);
+
   const stayOnTop = () => {
     if (stopped || !root.isValid || !root.parent) return;
     root.setSiblingIndex(Math.max(0, root.parent.children.length - 1));
@@ -158,7 +174,7 @@ export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle 
   };
   root.on(Node.EventType.TOUCH_END, onSkip);
 
-  resources.load(LOGO_SPRITE + "/spriteFrame", SpriteFrame, (err, frame) => {
+  ResourceAssetsUtils.loadForNode(logo, LOGO_SPRITE + "/spriteFrame", "SpriteFrame", (err, frame) => {
     if (stopped || !logo.isValid) return;
     if (err || !frame || logoFrameIsSpeck(frame)) return;
     sprite.enabled = true;
@@ -166,12 +182,14 @@ export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle 
     const size = frame.originalSize;
     if (size && size.width > 0 && size.height > 0) logoUi.setContentSize(size.width, size.height);
   });
-  resources.load(LOGO_BGM, AudioClip, (err, clip) => {
-    if (stopped || !audioHost.isValid || err || !clip) return;
+  void musicScope.loadPath(LOGO_BGM, "AudioClip").then(clip => {
+    if (musicStopped || !audioHost.isValid) return;
     audio = audioHost.getComponent(AudioSource) || audioHost.addComponent(AudioSource);
     audio.clip = clip;
     audio.loop = true;
     audio.play();
+  }).catch(error => {
+    if (!musicStopped) GameLog.shared.classified("APP", "warn", "Boot", "启动音乐加载失败：" + String(error));
   });
 
   const fade = (from: number, to: number, seconds: number): Promise<void> => {
@@ -186,7 +204,7 @@ export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle 
     return new Promise((resolve) => {
       fadeResolve = resolve;
       const started = Date.now();
-      fadeTimer = setInterval(() => {
+      fadeTimer = TrackedTimers.interval(() => {
         if (stopped || !opacity.isValid) {
           cancelFade();
           return;
@@ -206,14 +224,14 @@ export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle 
     void fade(0, 255, LOGO_FADE_IN_SEC).then(() => {
       if (stopped || skipped) return;
       settleFaded();
-      const hold = setTimeout(() => {
+      const hold = TrackedTimers.timeout(() => {
         if (stopped || skipped) return;
         settleHeld();
       }, LOGO_HOLD_SEC * 1000);
       timers.push(hold);
     });
   };
-  resources.load(LOADING_BG_FRAME + "/spriteFrame", SpriteFrame, (err, frame) => {
+  ResourceAssetsUtils.loadForNode(bg, LOADING_BG_FRAME + "/spriteFrame", "SpriteFrame", (err, frame) => {
     if (!stopped && bg.isValid) {
       if (err || !frame) GameLog.shared.classified("APP", "warn", "Boot", "logo backdrop miss " + LOADING_BG_FRAME);
       else bgSprite.spriteFrame = frame;
@@ -240,9 +258,7 @@ export function playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle 
     stop() {
       finish();
     },
-    stopMusic() {
-      if (audio) audio.stop();
-    },
+    stopMusic,
   };
 }
 

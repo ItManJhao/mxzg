@@ -1,0 +1,74 @@
+[
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 14:56:31 {\"assets\":{\"scopes\":1,\"entries\":4,\"pending\":0,\"owners\":4,\"retained\":4},\"prefabs\":{\"pending\":0,\"cached\":0},\"ui\":{\"pages\":1,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":0,\"engineAssets\":74} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T06:56:31.556Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 14:58:36 {\"assets\":{\"scopes\":1,\"entries\":4,\"pending\":0,\"owners\":4,\"retained\":4},\"prefabs\":{\"pending\":0,\"cached\":0},\"ui\":{\"pages\":1,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":0,\"engineAssets\":74} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T06:58:36.786Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 14:59:08 {\"assets\":{\"scopes\":16,\"entries\":64,\"pending\":0,\"owners\":64,\"retained\":64},\"prefabs\":{\"pending\":0,\"cached\":0},\"ui\":{\"pages\":1,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":448} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T06:59:08.536Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 14:59:23 {\"assets\":{\"scopes\":43,\"entries\":72,\"pending\":0,\"owners\":91,\"retained\":72},\"prefabs\":{\"pending\":0,\"cached\":7},\"ui\":{\"pages\":2,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":3,\"targets\":2},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":524} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T06:59:23.052Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:00:11 {\"assets\":{\"scopes\":34,\"entries\":77,\"pending\":0,\"owners\":82,\"retained\":77},\"prefabs\":{\"pending\":0,\"cached\":10},\"ui\":{\"pages\":2,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":2,\"targets\":2},\"scopedSubscriptions\":5,\"nativeTimers\":12,\"engineAssets\":585} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T07:00:11.585Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:00:21 {\"assets\":{\"scopes\":16,\"entries\":64,\"pending\":0,\"owners\":64,\"retained\":64},\"prefabs\":{\"pending\":0,\"cached\":10},\"ui\":{\"pages\":1,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":570} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T07:00:21.148Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:05:09 {\"assets\":{\"scopes\":16,\"entries\":64,\"pending\":0,\"owners\":64,\"retained\":64},\"prefabs\":{\"pending\":0,\"cached\":0},\"ui\":{\"pages\":1,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":448} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T07:05:09.925Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:05:30 {\"assets\":{\"scopes\":41,\"entries\":68,\"pending\":0,\"owners\":89,\"retained\":68},\"prefabs\":{\"pending\":0,\"cached\":7},\"ui\":{\"pages\":2,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":3,\"targets\":2},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":512} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T07:05:30.873Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:05:39 {\"assets\":{\"scopes\":26,\"entries\":73,\"pending\":0,\"owners\":74,\"retained\":73},\"prefabs\":{\"pending\":0,\"cached\":10},\"ui\":{\"pages\":2,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":2,\"targets\":2},\"scopedSubscriptions\":5,\"nativeTimers\":12,\"engineAssets\":573} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T07:05:39.677Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:05:46 {\"assets\":{\"scopes\":16,\"entries\":64,\"pending\":0,\"owners\":64,\"retained\":64},\"prefabs\":{\"pending\":0,\"cached\":10},\"ui\":{\"pages\":1,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":570} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T07:05:46.596Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:06:55 {\"assets\":{\"scopes\":16,\"entries\":64,\"pending\":0,\"owners\":64,\"retained\":64},\"prefabs\":{\"pending\":0,\"cached\":10},\"ui\":{\"pages\":1,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":570} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T07:06:55.190Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:07:43 {\"assets\":{\"scopes\":1,\"entries\":4,\"pending\":0,\"owners\":4,\"retained\":4},\"prefabs\":{\"pending\":0,\"cached\":11},\"ui\":{\"pages\":1,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":0,\"engineAssets\":436} color:#90A4AE color:#90A4AE",
+    "timestamp": "2026-11-06T07:07:43.845Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  }
+]

@@ -3,16 +3,17 @@
  * 确认交回调用方：战斗触发领取，挂机已到账收据仅翻页或关闭；本文件不发奖或推算掉落。
  * 弹层随页面关闭销毁；无评分规则的服务端结算不显示星级评价。
  */
+import { BlockInputEvents,Color,view as gameView,HorizontalTextAlignment,Label,Node,Overflow,Sprite,UITransform,VerticalTextAlignment } from "cc";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { BlockInputEvents, Color, HorizontalTextAlignment, Label, Node, Overflow, resources, Sprite, SpriteFrame, UITransform, VerticalTextAlignment, view as gameView } from "cc";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { bindVisibleRefresh,fitVisibleRoot } from "../../../framework/ui/visibleFit";
 
 
 import { messageOf } from "../../../core/errors";
 import { GameLog } from "../../../core/GameLog";
-import { bindTap, findDescendant, liftNode, mountCcbiView } from "../../../framework/ui/PrefabLayout";
-import { loadPrefab, spawnPrefab } from "../../../framework/assets/PrefabLoader";
-import { createButton, createLabel, createRect, paintRect, place, setText, uiNode } from "../../../framework/ui/UiKit";
+import { loadPrefab,spawnPrefab } from "../../../framework/assets/PrefabLoader";
+import { bindTap,findDescendant,liftNode,mountCcbiView } from "../../../framework/ui/PrefabLayout";
+import { createButton,createLabel,createRect,paintRect,place,setText,uiNode } from "../../../framework/ui/UiKit";
 
 const RESULT_WIN = ResourceCatalog.battle.battle_end_lang_lbl_result_1.path;
 const RESULT_LOSE = ResourceCatalog.battle.battle_end_lang_lbl_result_0.path;
@@ -271,11 +272,12 @@ function caption(node: Node, text: string): void {
     }
 }
 
+/** 结算横幅归显示节点持有，关闭销毁后忽略结果并释放资源。 */
 function paintFrame(node: Node, path: string, onReady?: () => void): void {
     const sprite = node.getComponent(Sprite);
     if (!sprite) return;
     try {
-        resources.load(path + "/spriteFrame", SpriteFrame, (err, asset) => {
+        ResourceAssetsUtils.loadForNode(node, path + "/spriteFrame", "SpriteFrame", (err, asset) => {
             if (err || !asset || !node.isValid) {
                 if (err) GameLog.shared.classified("MODULE", "warn", "Mainline", "结算横幅 " + path + " 没有挂上");
                 return;

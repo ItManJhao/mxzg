@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-06",
+  "scenario": "奈奈子淘沙澜蝶Lv.3；完整播放、再次加载、中途退出、重播后退出",
+  "lifecycle": [
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:21:30 {\"assets\":{\"scopes\":0,\"entries\":0,\"pending\":0,\"owners\":0,\"retained\":0},\"prefabs\":{\"pending\":0,\"cached\":1},\"ui\":{\"pages\":0,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":0,\"targets\":0},\"scopedSubscriptions\":5,\"nativeTimers\":0,\"engineAssets\":91} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:21:30.529Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:21:50 {\"assets\":{\"scopes\":3,\"entries\":75,\"pending\":0,\"owners\":76,\"retained\":75},\"prefabs\":{\"pending\":0,\"cached\":2},\"ui\":{\"pages\":0,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":0,\"targets\":0},\"scopedSubscriptions\":5,\"nativeTimers\":0,\"engineAssets\":355} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:21:50.364Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:22:19 {\"assets\":{\"scopes\":4,\"entries\":76,\"pending\":0,\"owners\":77,\"retained\":76},\"prefabs\":{\"pending\":0,\"cached\":3},\"ui\":{\"pages\":0,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":0,\"targets\":0},\"scopedSubscriptions\":5,\"nativeTimers\":0,\"engineAssets\":384} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:22:19.855Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:22:33 {\"assets\":{\"scopes\":0,\"entries\":0,\"pending\":0,\"owners\":0,\"retained\":0},\"prefabs\":{\"pending\":0,\"cached\":3},\"ui\":{\"pages\":0,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":0,\"targets\":0},\"scopedSubscriptions\":5,\"nativeTimers\":0,\"engineAssets\":163} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:22:33.532Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:22:53 {\"assets\":{\"scopes\":0,\"entries\":0,\"pending\":0,\"owners\":0,\"retained\":0},\"prefabs\":{\"pending\":0,\"cached\":3},\"ui\":{\"pages\":0,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":0,\"targets\":0},\"scopedSubscriptions\":5,\"nativeTimers\":0,\"engineAssets\":163} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:22:53.479Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:23:48 {\"assets\":{\"scopes\":3,\"entries\":75,\"pending\":0,\"owners\":76,\"retained\":75},\"prefabs\":{\"pending\":0,\"cached\":3},\"ui\":{\"pages\":0,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":0,\"targets\":0},\"scopedSubscriptions\":5,\"nativeTimers\":0,\"engineAssets\":382} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:23:48.914Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:29:19 {\"assets\":{\"scopes\":4,\"entries\":76,\"pending\":0,\"owners\":77,\"retained\":76},\"prefabs\":{\"pending\":0,\"cached\":3},\"ui\":{\"pages\":0,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":0,\"targets\":0},\"scopedSubscriptions\":5,\"nativeTimers\":0,\"engineAssets\":384} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:29:19.658Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:29:30 {\"assets\":{\"scopes\":0,\"entries\":0,\"pending\":0,\"owners\":0,\"retained\":0},\"prefabs\":{\"pending\":0,\"cached\":3},\"ui\":{\"pages\":0,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":0,\"targets\":0},\"scopedSubscriptions\":5,\"nativeTimers\":0,\"engineAssets\":163} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:29:30.030Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    }
+  ],
+  "errors": []
+}

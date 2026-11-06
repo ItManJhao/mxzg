@@ -26,8 +26,8 @@ async function main(): Promise<void> {
     };
     const asset = { addRef: () => { retained++; }, decRef: () => { released++; } };
     const a = createAssetScope(), b = createAssetScope(), descriptor = ResourceCatalog.common.button_btn_tab_24;
-    const first = a.load(descriptor), shared = b.load(descriptor);
-    await Promise.resolve(); assert.equal(requests, 1);
+    const first = a.load(descriptor), shared = b.loadPath(descriptor.loadPath, "SpriteFrame");
+    await Promise.resolve(); assert.equal(requests, 1, "目录UUID与动态路径解析为同一类型/路径，不重复持有");
     a.dispose(); const cancelled = assert.rejects(first, ResourceScopeClosed);
     callbacks.shift()!(null, asset);
     await cancelled; assert.equal(await shared, asset); assert.equal(retained, 1);

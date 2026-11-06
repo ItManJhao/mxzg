@@ -3,24 +3,25 @@
  * 当前主线使用宫殿远景、地板和紧凑血条；静态布局由预制体维护。
  * 只装配显示与事件，不发协议。缺失必要挂点时拒绝打开，由调用边界报告错误。
  */
+import { Node,Sprite,UITransform } from "cc";
+import { bindClick,loadPrefab,requireNode,spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { Node, resources, Sprite, SpriteFrame, UITransform } from "cc";
-import {
-    BATTLE_PREFAB_PATH,
-    battleHpPath,
-    battlePrefabRequiredPaths,
-    battleSkillLabelPath,
-    battleSlotPath,
-    battleVfxPath,
-    BattleSlotSide,
-    BattleVfxRole,
-    HP_FILL_HEIGHT,
-    hpFillLayout,
-    vfxLocal,
-} from "./battlePrefabLayout";
-import { BattlePresentMount, bindBattlePresent } from "./battlePresentView";
-import { bindClick, loadPrefab, requireNode, spawnPrefab } from "../../../framework/assets/PrefabLoader";
+import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
 import { setText } from "../../../framework/ui/UiKit";
+import {
+BATTLE_PREFAB_PATH,
+battleHpPath,
+battlePrefabRequiredPaths,
+battleSkillLabelPath,
+battleSlotPath,
+BattleSlotSide,
+battleVfxPath,
+BattleVfxRole,
+HP_FILL_HEIGHT,
+hpFillLayout,
+vfxLocal,
+} from "./battlePrefabLayout";
+import { BattlePresentMount,bindBattlePresent } from "./battlePresentView";
 
 export { BATTLE_PREFAB_PATH };
 
@@ -31,30 +32,10 @@ export const BATTLE_SPEED_ICON = [
     ResourceCatalog.battle.battle_scene_btn_speed_3.path,
 ];
 
+/** 加速图标随按钮节点持有，不留下无所有者的加载缓存。 */
 export function paintSpeedIcon(node: Node, speed: number): void {
     const index = speed === 2 ? 1 : speed === 3 ? 2 : 0;
-    void loadFrame(BATTLE_SPEED_ICON[index]).then((frame) => {
-        if (!frame || !node.isValid) return;
-        const sprite = node.getComponent(Sprite);
-        if (!sprite) return;
-        sprite.spriteFrame = frame;
-    });
-}
-
-function loadFrame(path: string): Promise<SpriteFrame | null> {
-    return new Promise((resolve) => {
-        try {
-            resources.load(path + "/spriteFrame", SpriteFrame, (err, asset) => {
-                if (err || !asset) {
-                    resolve(null);
-                    return;
-                }
-                resolve(asset);
-            });
-        } catch (err) {
-            resolve(null);
-        }
-    });
+    paintSpritePaths(node, [BATTLE_SPEED_ICON[index]]);
 }
 
 export interface BattlePrefabShell {

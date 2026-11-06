@@ -1,7 +1,7 @@
 /** 用真实旧装备配置验证实例/槽位边界；不启动服务器、不修改数据库。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
-import { readOwnedHeroes } from "../assets/scripts/features/hero/HeroApi";
+import { readOwnedHeroes } from "../assets/scripts/features/hero/data/HeroSnapshotData";
 import { encodeGameFrame, decodeGameFrame } from "../assets/scripts/platform/GameProtocolCodec";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";

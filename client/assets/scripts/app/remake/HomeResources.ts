@@ -34,8 +34,9 @@ const pool = new ResourcePool<Prefab>({
       });
     });
   },
+  discard: asset => { asset.addRef(); asset.decRef(); },
   retain: asset => { asset.addRef(); },
-  release: asset => { asset.decRef(false); },
+  release: asset => { asset.decRef(); },
 });
 
 /** First lazy feature bundle; kept by the app until page ownership migration is complete. */

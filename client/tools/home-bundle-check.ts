@@ -23,7 +23,7 @@ async function main() {
   assert(resources.priority > prefabs.priority && prefabs.priority > feature.priority, "shared bundle priority must exceed the feature");
   const loaded = new Map<string, object>(); const order: string[] = [];
   let attempts = 0, pins = 0, drops = 0;
-  const prefab = Object.assign(new Prefab(), { addRef: () => { pins++; }, decRef: (free: boolean) => { assert.equal(free, false); drops++; } });
+  const prefab = Object.assign(new Prefab(), { addRef: () => { pins++; }, decRef: (free: boolean) => { assert.notEqual(free, false); drops++; } });
   Object.assign(assetManager, {
     getBundle: (name: string) => loaded.get(name) || null,
     loadBundle: (name: string, done: Function) => {
@@ -58,7 +58,7 @@ async function main() {
   const heroLoads: string[] = []; let heroPins = 0, heroDrops = 0;
   const heroBundle = { load: (path: string, type: unknown, done: Function) => {
     heroLoads.push(path); assert.equal(type, Prefab);
-    done(null, Object.assign(new Prefab(), { addRef: () => { heroPins++; }, decRef: (free: boolean) => { assert.equal(free, false); heroDrops++; } }));
+    done(null, Object.assign(new Prefab(), { addRef: () => { heroPins++; }, decRef: (free: boolean) => { assert.notEqual(free, false); heroDrops++; } }));
   } };
   Object.assign(assetManager, {
     getBundle: (name: string) => name === "prefabs" ? heroBundle : null,
@@ -72,8 +72,8 @@ async function main() {
   const otherHeroScope = createHeroResourceScope();
   const [heroOne, heroTwo] = await Promise.all([loadHeroPage(heroScope), loadHeroPage(otherHeroScope)]);
   assert.equal(heroOne, heroTwo);
-  assert.deepEqual(heroLoads.sort(), Object.entries(HERO_PAGE_RESOURCES).filter(([key]) => key !== "level").map(([,path]) => path.replace(/^prefabs\//, "")).sort());
-  assert.equal(heroPins, 5, "list/board/cell/shell/backdrop share one retained asset each");
+  assert.deepEqual(heroLoads.sort(), Object.entries(HERO_PAGE_RESOURCES).filter(([key]) => key !== "level" && key !== "info").map(([,path]) => path.replace(/^prefabs\//, "")).sort());
+  assert.equal(heroPins, 10, "每份Prefab由应用缓存和模块作用域各持有一次");
   heroScope.dispose(); assert.equal(heroDrops, 0);
   otherHeroScope.dispose(); assert.equal(heroDrops, 5);
   console.log("home-bundle-check passed: lazy entry, dependency order, failure retry and scoped shared Prefab");

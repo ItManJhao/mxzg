@@ -1,6 +1,8 @@
 /**
  * 主城顶底栏 View：绑定导航与资产显示，由主城页面提供数据和操作，不读取网络或全局角色仓库。
  */
+import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Color, Label, Node, Overflow, resources, Sprite, SpriteFrame, UITransform } from "cc";
 import { CITY_BAR } from "../../../config/nav";
@@ -63,15 +65,6 @@ export interface CityChromeOpenArgs {
  * 顶栏和底栏。挂在 UIShell 的 chrome 层，不进页面栈。
  * 货币、战力和头像只显示 MainApp 送进来的字符串，这里不读协议。
  */
-@view({
-    id: CITY_CHROME_VIEW_ID,
-    prefab: CITY_CHROME_PREFAB_PATH,
-    layer: UILayer.Hud,
-    cache: false,
-    allowMultiple: false,
-    hostId: CITY_CHROME_HOST,
-    mount: mountCityChromeView,
-})
 @ccclass("CityChromeView")
 export class CityChromeView extends BaseView<CityChromeOpenArgs> implements CityChrome {
     @property(Node)
@@ -392,11 +385,7 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
         const sprite = face.getComponent(Sprite);
         if (!sprite) return;
         const wanted = icon;
-        resources.load(wanted + "/spriteFrame", SpriteFrame, (err, frame) => {
-            if (err || !frame || !face || !face.isValid) return;
-            if (mark.mxzgIcon !== wanted) return;
-            sprite.spriteFrame = frame;
-        });
+        paintSpritePaths(face, [wanted], () => mark.mxzgIcon === wanted);
     }
 }
 
@@ -411,10 +400,7 @@ function mountTabCaption(button: Node, path: string): void {
     sprite.sizeMode = Sprite.SizeMode.CUSTOM;
     node.setPosition(0, plate >= 90 ? -46 : -36, 0);
     node.parent = button;
-    resources.load(path + "/spriteFrame", SpriteFrame, (err, frame) => {
-        if (err || !frame || !sprite.isValid) return;
-        sprite.spriteFrame = frame;
-    });
+    paintSpritePaths(sprite.node, [path]);
 }
 
 function mountTabIcon(button: Node, path: string): void {
@@ -422,10 +408,7 @@ function mountTabIcon(button: Node, path: string): void {
     const icon = button.getChildByName("Icon");
     const sprite = icon ? icon.getComponent(Sprite) : null;
     if (!sprite) return;
-    resources.load(path + "/spriteFrame", SpriteFrame, (err, frame) => {
-        if (err || !frame || !sprite.isValid) return;
-        sprite.spriteFrame = frame;
-    });
+    paintSpritePaths(sprite.node, [path]);
 }
 
 function paintLockLevel(lock: Node, level: number): void {

@@ -1160,7 +1160,7 @@
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 720,
+        "width": 640,
         "height": 1280
       },
       "anchor": {
@@ -1182,14 +1182,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-    "sha256": "945f7d3317000514fb62186aaa2a8a17de3b2fe7b1d2187323474c1d1b0edb4d",
+    "visual": "原2026-11-02记录对应旧文件，已失效。本轮仅重新核对当前文件结构、全库绑定及战报自动检查；不延用旧三尺寸巡检结论，当前版本完整视觉验收仍待补录。",
+    "sha256": "deac4154a38025d3dd10a3e198b01690aa5a9b165c50e226bb1920817b109cd9",
     "acceptance": {
-      "sha256": "945f7d3317000514fb62186aaa2a8a17de3b2fe7b1d2187323474c1d1b0edb4d",
-      "date": "2026-11-02",
+      "sha256": "deac4154a38025d3dd10a3e198b01690aa5a9b165c50e226bb1920817b109cd9",
+      "date": "2026-11-06",
       "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
+      "scope": "原2026-11-02记录对应旧文件，已失效。本轮仅重新核对当前文件结构、全库绑定及战报自动检查；不延用旧三尺寸巡检结论，当前版本完整视觉验收仍待补录。",
+      "inspector": "自动结构复核；完整视觉待负责人确认"
     }
   },
   {
@@ -1391,6 +1391,146 @@
     "sha256": "b9dbcd9c9c497e87ee8896b0c76c3c758062d9721045c1a1c7d673b2720800d5"
   },
   {
+    "path": "client/assets/prefabs/ui/battle/SkillAuditCellView.prefab",
+    "classes": [
+      "SkillAuditCellView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 488,
+        "height": 54
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b375a71d8e2c723e45127feb686cdb6712af8fe4ab4ae3e8a4d294af6c8b3c9f"
+  },
+  {
+    "path": "client/assets/prefabs/ui/battle/SkillAuditView.prefab",
+    "classes": [
+      "SkillAuditView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 600,
+        "height": 820
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "QuantityLabel",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "QuantityPlaceholder",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "SearchLabel",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "SearchPlaceholder",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "Options",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4d219bf8f24368656db5271b82eef626811e4ebd2fc32c45baf4a79010f1f56e"
+  },
+  {
     "path": "client/assets/prefabs/ui/chapter/ChapterEndLayer.prefab",
     "classes": [],
     "root": {
@@ -1554,6 +1694,73 @@
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
     "sha256": "0fca42fcbde7088df6cd6982abd35b836638490ee423e3fb1e03a6c6f1cc01ad"
+  },
+  {
+    "path": "client/assets/prefabs/ui/chapter/ChapterEndView.prefab",
+    "classes": [
+      "ChapterEndView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Panel",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "Background",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "DefeatContent",
+        "anchor": [
+          0,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "21cf159d023f1dd1b8148b588aac58eb29b14179c2a3e30811a6e33f8b119cc4"
   },
   {
     "path": "client/assets/prefabs/ui/chapter/ChapterExtraRewardCell.prefab",
@@ -2911,7 +3118,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "8fd9d325217e330c40586048ff43c5cf615d8fd5807ec19f379152f4d14b4da6"
+    "sha256": "f02cf0c1b72930a41fb79a2fe3cf559116b36b3e3919907189bd86c9993ad346"
   },
   {
     "path": "client/assets/prefabs/ui/hero/FormationHeroCellView.prefab",

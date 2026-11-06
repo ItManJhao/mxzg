@@ -22,7 +22,7 @@ function checkCombatBounds(): void {
  assert.equal(hangStageScale(960),1);assert(Number.isFinite(hangStageScale(NaN)));
 }
 /** 使用实际资源动作表验证可选动作查询及销毁边界，不伪造资源具备的动作。 */
-function checkOptionalClips(): void {
+async function checkOptionalClips(): Promise<void> {
  const originalLoad=resources.load, originalFind=sp.Skeleton.prototype.findAnimation;
  let clips: Record<string, unknown>={};
  try {
@@ -31,14 +31,34 @@ function checkOptionalClips(): void {
   for(const stem of ["10101001","10201001","10301001"]){
    clips=JSON.parse(readFileSync(`client/assets/resources/spine/${stem}.json`,"utf8")).animations;
    const host=new Node("actor-test");let failed=0;const actor=mountBattleSpine(host,stem,()=>failed++);
+   for (let flush=0;flush<10;flush++) await Promise.resolve();
    assert(actor.hasGesture("attack"));assert(!actor.hasGesture("attack2"));assert(!actor.hasGesture("die"));
    actor.play("die");assert.equal(failed,0);host.destroy();assert(!actor.hasGesture("attack"));
   }
  } finally {resources.load=originalLoad;sp.Skeleton.prototype.findAnimation=originalFind;}
 }
 
+/** 两个节点共享转换骨架，关闭一个不得释放另一份；最后关闭才销毁副本。 */
+async function checkSharedSkeleton(): Promise<void> {
+ const original = resources.load;
+ const asset = new sp.SkeletonData();
+ Object.assign(asset, { uuid: "shared-copy", skeletonJson: JSON.parse(readFileSync("client/assets/resources/spine/10101001.json", "utf8")), atlasText: "fixture", textures: [], textureNames: [] });
+ resources.load = (_path, _type, done) => done(null, asset);
+ const a = new Node("one"), b = new Node("two");
+ try {
+  const first = mountBattleSpine(a, "shared-copy", () => { throw new Error("first failed"); });
+  const second = mountBattleSpine(b, "shared-copy", () => { throw new Error("second failed"); });
+  for (let i=0;i<10;i++) await Promise.resolve();
+  const copy = first.node.getComponent(sp.Skeleton)!.skeletonData!;
+  assert.notEqual(copy, asset);
+  assert.equal(second.node.getComponent(sp.Skeleton)!.skeletonData, copy);
+  a.destroy(); assert.equal(copy.isValid, true); assert.equal(asset.refCount, 1);
+  b.destroy(); assert.equal(copy.isValid, false); assert.equal(asset.refCount, 0);
+ } finally { a.destroy(); b.destroy(); resources.load = original; }
+}
+
 /** 模拟后台节流：超时先于八段进场回调执行，已加载敌人仍应到位；真未加载仍清理。 */
-function checkThrottledEntry():void {
+async function checkThrottledEntry():Promise<void> {
  const nativeTimer=globalThis.setTimeout,nativeNow=Date.now,nativeLoad=resources.load;
  try {
   for(const ready of [true,false]) {
@@ -54,6 +74,7 @@ function checkThrottledEntry():void {
     queue.sort((a,b)=>a.at-b.at);const task=queue.shift()!;now=task.at;task.run();
    }
    const foe=hang.getChildByName("IdleFoes")!.children[0];assert(foe,"本波应已创建");
+   for (let flush=0;flush<10;flush++) await Promise.resolve();
    const timeout=queue.find(task=>task.delay===2600)!;assert(timeout);now=timeout.at;timeout.run();
    assert.equal(foe.isValid,ready,"已加载敌人不能因进场回调节流被超时删除；真正未加载应清理");
    if(ready){assert.equal(foe.position.x,IDLE_SKIRMISH_SPOTS[0].x);assert.equal(foe.position.y,IDLE_SKIRMISH_SPOTS[0].y);}
@@ -64,9 +85,10 @@ function checkThrottledEntry():void {
 
 /** 执行视图交互、关闭清理和资源迟到回归，失败时由调用方返回非零状态。 */
 async function main() {
- checkThrottledEntry();
+ await checkThrottledEntry();
  checkCombatBounds();
- checkOptionalClips();
+ await checkOptionalClips();
+ await checkSharedSkeleton();
  const root = new Node("scene"), node = new Node("CampaignView"); node.parent=root;
  const view=node.addComponent(CampaignView);
  for(const key of ["fightButton","speedButton","growButton","idleClaimButton"] as const) view[key]=new Node(key).addComponent(Button);

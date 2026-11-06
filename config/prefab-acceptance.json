@@ -38,11 +38,11 @@
       "inspector": "待负责人逐项确认"
     },
     "client/assets/prefabs/ui/battle/BattlePage.prefab": {
-      "sha256": "945f7d3317000514fb62186aaa2a8a17de3b2fe7b1d2187323474c1d1b0edb4d",
-      "date": "2026-11-02",
+      "sha256": "deac4154a38025d3dd10a3e198b01690aa5a9b165c50e226bb1920817b109cd9",
+      "date": "2026-11-06",
       "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
+      "scope": "原2026-11-02记录对应旧文件，已失效。本轮仅重新核对当前文件结构、全库绑定及战报自动检查；不延用旧三尺寸巡检结论，当前版本完整视觉验收仍待补录。",
+      "inspector": "自动结构复核；完整视觉待负责人确认"
     },
     "client/assets/prefabs/ui/battle/BattleReportLayer.prefab": {
       "sha256": "5e7e5eb31b23254d650e4de499d3bae43a3be6269f1a7199197bf7b411fbcbfb",

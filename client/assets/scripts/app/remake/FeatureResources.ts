@@ -17,7 +17,8 @@ const groups = {
 const allowed = new Set<string>([...groups.bag, ...groups.campaign, ...groups.servers, ...groups.formation]);
 const pool = new ResourcePool<Prefab>({
     load: path => allowed.has(path) ? loadPrefab(path) : Promise.reject(new Error("未登记的功能资源：" + path)),
-    retain: asset => { asset.addRef(); }, release: asset => { asset.decRef(false); },
+    discard: asset => { asset.addRef(); asset.decRef(); },
+  retain: asset => { asset.addRef(); }, release: asset => { asset.decRef(); },
 });
 export const createFeatureResourceScope = () => pool.createScope();
 export async function loadFeaturePage(scope: ResourceScope<Prefab>, group: keyof typeof groups): Promise<Prefab> {

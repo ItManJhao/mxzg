@@ -106,7 +106,7 @@ H2 验证不能替代 MySQL。独立 MySQL 已覆盖阵容并发、升级/领奖
 
 ## 当前客户端数据与界面
 
-- HeroApi：校验英雄列表/详情响应，区分实例 UUID 和模板 ID。
+- HeroSnapshotData：校验统一快照中的英雄列表/详情数据，区分实例 UUID 和模板 ID。
 - HeroRosterModel：模块唯一不可变名册及同步状态，不持有 token 或派发事件。
 - HeroRosterController：应用 initialize/dispose，负责鉴权读取、请求去重、会话/查询代次与名册事件；页面关闭不销毁模块。原 HeroRosterService 已删除。
 - AccountService.authenticated：统一会话校验，旧角色 401 不清除新角色。

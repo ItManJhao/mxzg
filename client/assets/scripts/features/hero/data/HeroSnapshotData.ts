@@ -1,6 +1,5 @@
-/** 英雄名册 DTO 校验：供统一 Protobuf 快照使用；旧查询类保持停用，不作为新版数据入口。 */
-import { readHeroEquipment, HeroEquipment } from "./utils/HeroEquipment";
-import { featureUnavailable } from "../PausedFeatures";
+/** 英雄名册 DTO 校验：供统一 Protobuf 快照使用；供唯一Model提交使用，不提供网络查询或持有会话。 */
+import { readHeroEquipment, HeroEquipment } from "../utils/HeroEquipment";
 
 /** 服务端英雄实例 ID 保持字符串 UUID，templateId 为独立的英雄类型配置键。 */
 export interface OwnedHero {
@@ -23,7 +22,6 @@ export interface OwnedHero {
     /** 主线阵容占用标记；缺失表示未同步，不等于未上阵。 */
     readonly deployed?: boolean;
 }
-export interface HeroGateway { list(token: string): Promise<readonly OwnedHero[]>; }
 
 /** 校验单个持久英雄的基础字段并返回冻结副本，不接收客户端自建英雄。 */
 export function readOwnedHero(value: unknown): OwnedHero {
@@ -57,11 +55,6 @@ export function readOwnedHeroes(value: unknown): readonly OwnedHero[] {
     return Object.freeze(heroes);
 }
 
-/** 英雄模块暂停，禁止继续调用旧业务接口。 */
-export class HeroApi implements HeroGateway {
-    /** 后续重做时再接入实际协议，目前明确拒绝。 */
-    async list(_token: string): Promise<readonly OwnedHero[]> { return featureUnavailable(); }
-}
 
 /** 服务端最终容量和购买次数，容量已经包含 VIP；不在客户端计算消耗或上限。 */
 export interface HeroRosterInfo {

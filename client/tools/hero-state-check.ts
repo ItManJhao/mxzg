@@ -12,7 +12,7 @@ import { HeroRosterEvent } from "../assets/scripts/features/hero/utils/HeroRoste
 import { AssetStateBinding } from "../assets/scripts/app/remake/AssetStateBinding";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { encodeGameFrame,decodeGameFrame } from "../assets/scripts/platform/GameProtocolCodec";
-import {readMainFormation} from "../assets/scripts/features/hero/HeroApi";
+import {readMainFormation} from "../assets/scripts/features/hero/data/HeroSnapshotData";
 import type { GameFrame } from "../assets/scripts/platform/GameProtocolCodec";
 const account=new AccountModel(), bagModel=new BagModel(), bag=new BagController(bagModel);
 const model=new HeroRosterModel(), heroes=new HeroRosterController(model);

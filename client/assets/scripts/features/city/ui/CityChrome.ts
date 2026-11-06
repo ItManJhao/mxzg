@@ -1,4 +1,6 @@
 /** 主城顶底栏显示辅助：更新已有节点的身份、货币和导航样式，资源地址来自生成目录。 */
+import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { Button, Color, Label, Node, Overflow, resources, Sprite, SpriteFrame, UITransform } from "cc";
 import { CITY_BAR, cityBarSlot } from "../../../config/nav";
@@ -333,11 +335,7 @@ function paintAvatar(root: Node, icon: string | null): void {
     const sprite = face.getComponent(Sprite);
     if (!sprite) return;
     const wanted = icon;
-    resources.load(wanted + "/spriteFrame", SpriteFrame, (err, frame) => {
-        if (err || !frame || !face || !face.isValid) return;
-        if (mark.mxzgIcon !== wanted) return;
-        sprite.spriteFrame = frame;
-    });
+        paintSpritePaths(face, [wanted], () => mark.mxzgIcon === wanted);
 }
 
 function mountTabCaption(button: Node, path: string): void {
@@ -351,10 +349,7 @@ function mountTabCaption(button: Node, path: string): void {
     sprite.sizeMode = Sprite.SizeMode.CUSTOM;
     node.setPosition(0, plate >= 90 ? -46 : -36, 0);
     node.parent = button;
-    resources.load(path + "/spriteFrame", SpriteFrame, (err, frame) => {
-        if (err || !frame || !sprite.isValid) return;
-        sprite.spriteFrame = frame;
-    });
+    paintSpritePaths(sprite.node, [path]);
 }
 
 /** 只换指定格子的 Icon。其它格子继续用 Prefab 里的图。 */
@@ -363,10 +358,7 @@ function mountTabIcon(button: Node, path: string): void {
     const icon = button.getChildByName("Icon");
     const sprite = icon ? icon.getComponent(Sprite) : null;
     if (!sprite) return;
-    resources.load(path + "/spriteFrame", SpriteFrame, (err, frame) => {
-        if (err || !frame || !sprite.isValid) return;
-        sprite.spriteFrame = frame;
-    });
+    paintSpritePaths(sprite.node, [path]);
 }
 
 interface CityTabMark extends Node {

@@ -1,7 +1,7 @@
 /** 按旧 HeroData 的具体规则验证基础技能，不启动服务或访问玩家数据库。 */
 import {strict as assert} from "node:assert";
 import {readFileSync} from "node:fs";
-import {readOwnedHero} from "../assets/scripts/features/hero/HeroApi";
+import {readOwnedHero} from "../assets/scripts/features/hero/data/HeroSnapshotData";
 import {GameConfig} from "../assets/scripts/config/GameConfig";
 import {GConfig} from "../assets/scripts/config/GConfig";
 import { HeroSkillUtils } from "../assets/scripts/features/hero/utils/HeroSkillUtils";

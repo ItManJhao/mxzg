@@ -1,14 +1,13 @@
 /**
  * 把一条飘字换成位图数字。字库没挂上时涂回系统字：掉血红，治疗绿，暴击金。
  */
-import { BitmapFont, Color, Label, resources } from "cc";
+import { BitmapFont,Color,Label } from "cc";
 import { GameLog } from "../../../core/GameLog";
-import { BattleNumberKind, BattleNumberUtils } from "../utils/BattleNumberUtils";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
+import { BattleNumberKind,BattleNumberUtils } from "../utils/BattleNumberUtils";
 
 const WHITE = new Color(255, 255, 255, 255);
 
-const fontCache = new Map<string, BitmapFont | null>();
-const fontWait = new Map<string, Array<(font: BitmapFont | null) => void>>();
 let fontMissLogged = false;
 
 function noteFontMiss(path: string): void {
@@ -17,36 +16,13 @@ function noteFontMiss(path: string): void {
     GameLog.shared.classified("MODULE", "warn", "BattleFx", "飘字字库 " + path + " 没有挂上，仍用系统字");
 }
 
-function loadNumberFont(path: string, done: (font: BitmapFont | null) => void): void {
-    if (fontCache.has(path)) {
-        done(fontCache.get(path) || null);
-        return;
-    }
-    const queue = fontWait.get(path);
-    if (queue) {
-        queue.push(done);
-        return;
-    }
-    fontWait.set(path, [done]);
-    const finish = (font: BitmapFont | null) => {
-        fontCache.set(path, font);
-        const waiting = fontWait.get(path) || [];
-        fontWait.delete(path);
-        for (let i = 0; i < waiting.length; i++) waiting[i](font);
-    };
-    try {
-        resources.load(path, BitmapFont, (err, asset) => {
-            if (err || !asset) {
-                noteFontMiss(path);
-                finish(null);
-                return;
-            }
-            finish(asset);
-        });
-    } catch (_err) {
-        noteFontMiss(path);
-        finish(null);
-    }
+/** 字库归属文字节点，失败不永久缓存；销毁后不再回写。 */
+function loadNumberFont(label: Label, path: string, done: (font: BitmapFont | null) => void): void {
+    ResourceAssetsUtils.loadForNode(label.node, path, "BitmapFont", (error, font) => {
+        if (!label.isValid) return;
+        if (error || !font) noteFontMiss(path);
+        done(font);
+    });
 }
 
 /**
@@ -63,7 +39,7 @@ export function applyBattleNumberFont(label: Label, kind: BattleNumberKind, text
     label.fontSize = size;
     label.lineHeight = size + 4;
     const path = BattleNumberUtils.battleNumberFontPath(kind);
-    loadNumberFont(path, (font) => {
+    loadNumberFont(label, path, (font) => {
         if (!label.isValid) return;
         if (!font) {
             paintSystemNumber(label, kind);

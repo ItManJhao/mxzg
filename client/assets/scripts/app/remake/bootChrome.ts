@@ -3,16 +3,17 @@
  * 挂在 SafeFrame 上。项目设计分辨率是 640×1280。进场景后按可见尺寸铺，不再按父节点 2000 放大。
  * Prefab 加载失败只打日志，不另造 LoadingLayer / UpdateLayer。
  */
-import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
-import { Asset, BlockInputEvents, Button, Color, Label, Mask, Node, Prefab, Sprite, SpriteFrame, UIOpacity, UITransform, resources } from "cc";
+import { Button,Color,Label,Node,Prefab,Sprite,UIOpacity,UITransform } from "cc";
 import { GameConfig } from "../../config/GameConfig";
-import { GConfig, ConfigName, ConfigFileMap } from "../../config/GConfig";
+import { ConfigFileMap,ConfigName,GConfig } from "../../config/GConfig";
 import { GameLog } from "../../core/GameLog";
-import { mountNamedSpine } from "../../features/battle/ui/battleSpine";
-import { findNode, loadPrefab, spawnPrefab } from "../../framework/assets/PrefabLoader";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../framework/ui/visibleFit";
-import { createButton, createLabel, place, setText, uiNode } from "../../framework/ui/UiKit";
 import { LoginLayoutUtils } from "../../features/account/utils/LoginLayoutUtils";
+import { mountNamedSpine } from "../../features/battle/ui/battleSpine";
+import { findNode,loadPrefab,spawnPrefab } from "../../framework/assets/PrefabLoader";
+import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssets";
+import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
+import { place,setText,uiNode } from "../../framework/ui/UiKit";
+import { bindVisibleRefresh,fitVisibleRoot } from "../../framework/ui/visibleFit";
 
 /** 登陆界面人物簇。spine/jiemian，动作 stand。 */
 const BOOT_CAST_STEM = "jiemian";
@@ -391,8 +392,9 @@ function tintLabel(node: Node | null, color: Color): void {
   if (label) label.color = color;
 }
 
+/** 加载画面的动态图片跟随显示节点持有，销毁后释放且不回写。 */
 function paintSprite(node: Node, sprite: Sprite, path: string): void {
-  resources.load(path + "/spriteFrame", SpriteFrame, (err, frame) => {
+  ResourceAssetsUtils.loadForNode(node, path + "/spriteFrame", "SpriteFrame", (err, frame) => {
     if (!node.isValid || err || !frame) return;
     sprite.spriteFrame = frame;
   });
@@ -417,10 +419,4 @@ function pick(map: { [key: string]: string }, key: string, fallback: string): st
 
 function stripHtml(raw: string): string {
   return raw.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
-}
-
-export function preloadBootAsset(path: string, type: unknown): Promise<void> {
-  return new Promise((resolve) => {
-    resources.load(path, type as typeof Asset, () => resolve());
-  });
 }

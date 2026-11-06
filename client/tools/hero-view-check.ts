@@ -41,7 +41,7 @@ import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel
 
 
 
-import type { OwnedHero } from "../assets/scripts/features/hero/HeroApi";
+import type { OwnedHero } from "../assets/scripts/features/hero/data/HeroSnapshotData";
 
 const root = process.cwd();
 
@@ -443,7 +443,7 @@ async function checkRemakeRoster(): Promise<void> {
 }
 
 /** 英雄格子复用后旧头像不能覆盖新英雄，点击只触发最新回调，销毁后迟到结果失效。 */
-function checkHeroCellReuse():void {
+async function checkHeroCellReuse():Promise<void> {
  const root=new Node("reuse");makeCell(root);const cell=root.getComponent(HeroIconCellView)!;
  const original=resources.load;const pending:Array<{path:string;done:(err:any,asset:any)=>void}>=[];
  resources.load=((path:any,type:any,done:any)=>{pending.push({path,done});}) as any;
@@ -451,8 +451,10 @@ function checkHeroCellReuse():void {
   const face=(path:string)=>({kind:"owned" as const,name:path,showName:true,face:path,elem:null,stars:1,level:1,locked:false,deployed:false});
   let old=0,current=0;cell.show(face("A"),()=>old++);cell.show(face("B"),()=>current++);cell.show(face("B"),()=>current++);
   root.emit(Button.EventType.CLICK);assert(old===0 && current===1,"只保留最新点击");
+  await new Promise(resolve => setImmediate(resolve));
   const a=new SpriteFrame(),b=new SpriteFrame();pending.filter(x=>x.path==="B/spriteFrame").forEach(x=>x.done(null,b));
   pending.filter(x=>x.path==="A/spriteFrame").forEach(x=>x.done(null,a));
+  await new Promise(resolve => setImmediate(resolve));
   assert(cell.face!.getComponent(Sprite)!.spriteFrame===b,"迟到旧头像不能覆盖新英雄");
   cell.show(face("C"),null);cell.onDestroy();pending.filter(x=>x.path==="C/spriteFrame").forEach(x=>x.done(null,a));
   assert(cell.face!.getComponent(Sprite)!.spriteFrame===null,"销毁后不写回头像");
@@ -497,4 +499,4 @@ async function checkReadonlyInfo():Promise<void> {
  for(let i=1;i<=4;i++){const slot=data.find((row:any)=>row._name==="EquipmentSlot"+i);assert(slot&&slot._components.every((ref:any)=>data[ref.__id__].__type__!=="cc.Button"||!data[ref.__id__]._interactable),"四槽没有穿脱操作入口");}
  assert(buttons.length===5,"详情仅返回和四个技能说明按钮可操作，不开放升级/扩容");
 }
-async function main() { await checkDefaultRoster();await checkReadonlyInfo(); checkHeroCellReuse();checkHeroScrollBounds();checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/sync/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });
+async function main() { await checkDefaultRoster();await checkReadonlyInfo(); await checkHeroCellReuse();checkHeroScrollBounds();checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/sync/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });

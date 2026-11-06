@@ -68,18 +68,10 @@ export interface CityHubOpenArgs {
 
 /**
  * 主城地图。视差和建筑都绑在 CityHub 上。
+ * 生命周期仅由RemakeHomeView持有，不独立登记到UIManager。
  * 点击交给打开参数里的 onAtom，主线按钮交给原来的主线页。
  * 锁态只问 query，这里不读协议。
  */
-@view({
-    id: CITY_VIEW_ID,
-    prefab: CITY_HUB_PREFAB_PATH,
-    layer: UILayer.Hud,
-    cache: false,
-    allowMultiple: false,
-    hostId: CITY_MAP_HOST,
-    mount: mountCityHubView,
-})
 @ccclass("CityHubView")
 export class CityHubView extends BaseView<CityHubOpenArgs> {
     @property(Node)

@@ -27,6 +27,7 @@ export class SkillAuditUtils {
         "101040041:1": ["chapter-1-1-3-control-replay.pb", "已验收", "第三关赛西莉真实施法与眩晕。"],
         "105050050:0": ["chapter-1-1-2-replay.pb", "已验收", "第二关黑暗切割者普攻。"],
         "105050051:1": ["chapter-1-1-2-replay.pb", "部分接入", "两段旧特效已接入；紫色特效出屏范围待正式服核对，本等级流血概率为零。"],
+        "105050051:3": ["independent-dark-cutter-bleed-replay.pb", "部分接入", "三级主动专项战报：安装流血、回合伤害及移除；已复验图标及结算，非完整英雄技能；紫色特效范围疑点保留。"],
         "102050230:0": ["independent-nanako-replay.pb", "可演示", "普攻已补旧表现覆盖；正式服完整特效对照待验收。"],
         "102050231:1": ["independent-nanako-star-5-replay.pb", "可演示", "五星真实一级技能，降护甲后伤害；暴击追加概率为零。"],
         "102050231:2": ["independent-nanako-star-6-replay.pb", "可演示", "六星真实二级技能，降护甲后伤害；暴击追加概率为零。"],

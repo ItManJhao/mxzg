@@ -23,6 +23,8 @@ export class RemakeHomeView extends BaseView implements HomeView {
     @property(Node) chromeHost: Node | null = null;
     @property(Label) noticeLabel: Label | null = null;
     @property(Node) noticePanel: Node | null = null;
+    /** 当前组合页面拥有的子节点，失败或关闭时销毁，避免残留半初始化界面。 */
+    private childNodes: Node[] = [];
     private city: CityHubView | null = null;
     private chrome: CityChromeView | null = null;
     private role: AccountState["role"] = null;
@@ -58,9 +60,11 @@ export class RemakeHomeView extends BaseView implements HomeView {
             await prepareCityConfig();
             if (this.closed) return;
             const cityNode = instantiate(this.cityPrefab);
+            this.childNodes.push(cityNode);
             cityNode.parent = this.cityHost;
             this.city = cityNode.getComponent(CityHubView);
             const chromeNode = instantiate(this.chromePrefab);
+            this.childNodes.push(chromeNode);
             chromeNode.parent = this.chromeHost;
             this.chrome = chromeNode.getComponent(CityChromeView);
             if (!this.city || !this.chrome) throw new Error("已有主城 Prefab 缺少 View");
@@ -98,11 +102,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
         } catch (error) {
             if (!this.closed) {
                 GameLog.shared.classified("MODULE", "error", "RemakeHomeView", "主城初始化失败：" + String(error));
-                this.city?.runDispose();
-                this.chrome?.runDispose();
-                this.city = null;
-                this.chrome = null;
-                for (const unbind of this.extraUnbind.splice(0)) unbind();
+                this.disposeChildren();
                 this.showNotice("主城加载失败，请退出登录后重试");
                 // 保留错误提示，不将资源失败显示成资料加载成功。
                 this.finishOpen();
@@ -152,11 +152,17 @@ export class RemakeHomeView extends BaseView implements HomeView {
         this.closed = true;
         this.failOpen(new Error("页面已关"));
         UIManager.instance.closeById("role-profile");
+        this.disposeChildren();
+    }
+
+    /** 先解绑，再关闭子视图和销毁其节点；重复清理不影响其他页面。 */
+    private disposeChildren(): void {
         for (const unbind of this.extraUnbind.splice(0)) unbind();
         this.city?.runDispose();
         this.chrome?.runDispose();
         this.city = null;
         this.chrome = null;
+        for (const node of this.childNodes.splice(0)) if (node.isValid) node.destroy();
     }
 
     /** 直接销毁主城节点时，先释放子界面，再交给基类清理目标监听和页面适配器。 */

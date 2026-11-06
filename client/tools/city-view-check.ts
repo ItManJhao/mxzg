@@ -122,9 +122,7 @@ function checkSources(): void {
   const chrome = read("client/assets/scripts/features/city/ui/CityChromeView.ts");
   assert(hub.indexOf("findNode") < 0 && chrome.indexOf("findNode") < 0, "new city views do not findNode");
   assert(hub.indexOf("indexByName") < 0 && chrome.indexOf("indexByName") < 0, "new city views do not index the tree");
-  assert(hub.indexOf('@view(') >= 0 && chrome.indexOf('@view(') >= 0, "both city views register");
-  assert(hub.indexOf('id: CITY_VIEW_ID') >= 0, "hub id is the city page id");
-  assert(chrome.indexOf("UILayer.Hud") >= 0 && hub.indexOf("UILayer.Hud") >= 0, "city stays on the HUD layer");
+  assert(!hub.includes("@view(") && !chrome.includes("@view("), "主城子视图只由组合页面持有，不重复登记");
   assert(hub.indexOf("onCityAtom") < 0, "hub does not reimplement routing");
   assert(hub.indexOf("cityAtomLocked") >= 0, "hub still locks buildings from the query");
   assert(chrome.indexOf("setCityExtras") >= 0, "chrome still hides the activity row");
