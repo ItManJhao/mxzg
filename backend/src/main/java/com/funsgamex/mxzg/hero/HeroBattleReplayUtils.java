@@ -9,7 +9,7 @@ public final class HeroBattleReplayUtils {
 
     /** 重放完整名册生命，拒绝少帧、乱序、未知单位及提前结束；审计场景保持独立来源。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
-        if (!Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:round-limit").contains(report.scenario())
+        if (!Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed", "audit:round-limit").contains(report.scenario())
             || report.rounds() < 1 || report.rounds() > HeroBattleRoundUtils.MAX_ROUNDS || report.frames().isEmpty()) {
             throw new IllegalArgumentException("战斗回放场景或回合范围无效");
         }

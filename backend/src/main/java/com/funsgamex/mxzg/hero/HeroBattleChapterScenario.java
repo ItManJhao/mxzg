@@ -253,6 +253,30 @@ public final class HeroBattleChapterScenario {
         return runBattle("audit:nanako", applyElementHalo(input), decision);
     }
 
+    /** 黑暗切割者七星三级主动专项夹具：真实成长/静态属性，仅选主动一和普攻，非整英雄技能验收。 */
+    public Result runIndependentDarkCutterBleed(DoublePredicate decision) {
+        int template = 10505005;
+        var base = growth.stats(template, 7, 100, 5);
+        var attributes = new HashMap<Integer, Long>();
+        attributes.put(220, (long) base.atk());
+        attributes.put(223, (long) base.hp());
+        attributes.put(224, (long) base.def());
+        attributes.put(101, (long) base.spd());
+        attributes.put(150, defense.coefficient(7));
+        skills.contribute(template, 7, 5, (type, value) -> attributes.merge(type, value, Math::addExact));
+        var selected = skills.battleSchedule(skills.select(template, 7, 5)).stream()
+            .filter(skill -> skill.skillId() == 105050051 || skill.skillId() == 105050050).toList();
+        if (selected.stream().noneMatch(skill -> skill.skillId() == 105050051 && skill.level() == 3)) {
+            throw new IllegalStateException("专项夹具未选中真实三级主动");
+        }
+        var input = new ArrayList<Unit>();
+        for (int id : List.of(1, 2)) {
+            input.add(new Unit(id, id, template, 100, 7, 5, 2, attributes,
+                HeroBattleAttributeUtils.opening(attributes), selected));
+        }
+        return runBattle("audit:dark-cutter-bleed", applyElementHalo(input), decision);
+    }
+
     /** 仅允许已核对的奈奈子静态被动与控制被动，未知先手或其他被动在开场前拒绝。 */
     private void validateSkill(HeroBattleSkillUtils.Skill skill) {
         if (skill.first()) {

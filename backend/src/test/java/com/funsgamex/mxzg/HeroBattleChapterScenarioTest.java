@@ -280,12 +280,14 @@ class HeroBattleChapterScenarioTest {
         Files.write(Path.of("target/independent-control-teams-replay.pb"), HeroBattleReplayProtocolUtils.encode(report).toByteArray());
     }
 
-    /** 概率非零的真实流血配置继续拒绝，防止把“不安装”错误扩大到完整流血实现。 */
-    @Test void positiveBleedProbabilityRemainsUnsupported() {
+    /** 分别核对零概率与三级流血的真实概率和攻击比例。 */
+    @Test void positiveBleedProbabilityUsesRealConfiguration() {
         var rules = new HeroSkillPanelRules(new ObjectMapper());
-        assertTrue(rules.battleZeroProbabilityBleed(5051301));
-        assertFalse(rules.battleZeroProbabilityBleed(5051201));
-        assertThrows(IllegalArgumentException.class, () -> rules.battleZeroProbabilityBleed(5051303));
+        assertTrue(rules.battleBleed(5051301));
+        assertFalse(rules.battleBleed(5051201));
+        assertTrue(rules.battleBleed(5051303));
+        assertEquals(1D, rules.battleBleedChance(5051303));
+        assertEquals(1500, rules.battleBleedDamageRate(5051303));
     }
 
     /** 使用真实第1关双方属性各两名，独立来源标识，不冒充有眩晕缺口的第3关。 */

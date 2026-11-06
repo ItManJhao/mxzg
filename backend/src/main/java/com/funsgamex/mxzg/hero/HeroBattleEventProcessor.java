@@ -274,7 +274,7 @@ public final class HeroBattleEventProcessor {
 
     /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180, 177, 176, 204, 185, 207).contains(event)) {
+        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180, 177, 176, 183, 204, 185, 207).contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);

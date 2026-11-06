@@ -227,7 +227,7 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 160).contains(type)) {
+        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 160, 1205).contains(type)) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
         if (type == 160) controlAttribute(buffId);
@@ -342,7 +342,7 @@ public class HeroSkillPanelRules {
     /** 一个已预检的纯普通伤害动作，保留目标规则和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
-    /** 按真实普攻/主动技能预检100伤害、1005眩晕、201监听、零概率1205及2/3/5表现；未知效果拒绝，不执行半组技能。 */
+    /** 按真实普攻/主动技能预检100伤害、1005眩晕、201监听、1205流血及2/3/5表现；未知效果拒绝，不执行半组技能。 */
     public List<DamageArt> damageSkillArts(HeroBattleSkillUtils.Skill skill) {
         var config = skills.get(skill.skillId() + ":" + skill.level());
         if (config == null || !Set.of(1, 2).contains(config.path("active_type").asInt())) {
@@ -356,7 +356,7 @@ public class HeroSkillPanelRules {
                 if (!battleProjectile(buff.asInt())) {
                     if (battleRoundListener(buff.asInt())) {
                         battleTrigger(buff.asInt());
-                    } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleZeroProbabilityBleed(buff.asInt()) && !nanakoArmorDebuff(buff.asInt())) {
+                    } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleBleed(buff.asInt()) && !nanakoArmorDebuff(buff.asInt())) {
                         battleOrdinaryDamageRate(buff.asInt(), true);
                     }
                 }
@@ -509,18 +509,37 @@ public class HeroSkillPanelRules {
         return row("buff", buffId).path("attach_percent").asInt() / 10000D;
     }
 
-    /**
-     * 第2关1205流血的零概率分支：旧抗性处理仍读取325并判定，但不会安装Buff。
-     * 这里只接受真实零概率、无子动作的负面流血；非零概率持续流血尚未接入，必须拒绝。
-     */
-    public boolean battleZeroProbabilityBleed(int buffId) {
+    /** 预检攻击比例型流血；未接入的子动作或其他数值形式拒绝，避免半组技能执行。 */
+    public boolean battleBleed(int buffId) {
         var buff = row("buff", buffId);
-        if (buff.path("type").asInt() != 1205) return false;
-        if (buff.path("attach_percent").asInt() != 0 || buff.path("effecttype").asInt() != 2
-            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
-            throw new IllegalArgumentException("非零概率或扩展流血尚未支持：" + buffId);
+        if (buff.path("type").asInt() != 1205) {
+            return false;
         }
+        var values = buff.path("value").asString().split("\\|");
+        if (buff.path("effecttype").asInt() != 2 || values.length != 4
+            || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")
+            || Integer.parseInt(values[0]) < 0
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("扩展流血尚未支持：" + buffId);
+        }
+        battleBuff(buffId);
         return true;
+    }
+
+    /** 返回流血附加万分率；执行器仍读取目标325抗性，包括零概率配置。 */
+    public double battleBleedChance(int buffId) {
+        if (!battleBleed(buffId)) {
+            throw new IllegalArgumentException("不是流血配置：" + buffId);
+        }
+        return row("buff", buffId).path("attach_percent").asInt() / 10000D;
+    }
+
+    /** 每次回合伤害按施法者当时攻击乘此万分比，不在安装时快照攻击力。 */
+    public int battleBleedDamageRate(int buffId) {
+        if (!battleBleed(buffId)) {
+            throw new IllegalArgumentException("不是流血配置：" + buffId);
+        }
+        return Integer.parseInt(row("buff", buffId).path("value").asString().split("\\|")[0]);
     }
 
     /** 旧2/3/5近身、远程、投射表现由ClientBuffHandler处理，只记录表现，不参与服务端伤害。 */

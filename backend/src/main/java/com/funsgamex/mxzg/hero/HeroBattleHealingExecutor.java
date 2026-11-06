@@ -255,16 +255,10 @@ public final class HeroBattleHealingExecutor implements Executor {
                     }
                     continue;
                 }
-                if (rules.battleZeroProbabilityBleed(buffId)) {
+                if (rules.battleBleed(buffId)) {
                     for (var target : targets) {
-                        if (require(target.id()).hp() <= 0 || actor.interrupted(target.id()) || hasStatus(target.id(), 152)) continue;
-                        // 旧AbstractResistanceHandler即使附加率为0也读取抗性，消费一次性325属性。
-                        double resistance = requireCombat(target.id()).attributes().rate(325);
-                        if (attackContext.decision.test(0D * (1D - resistance))) {
-                            throw new IllegalStateException("零概率流血判定不可命中");
-                        }
+                        applyBleed(buffId, actor.id(), target.id(), attackContext.decision);
                     }
-                    // 旧未初始化BuffInfo不进入EffectInfo，不伪造安装、图标或持续伤害事件。
                     continue;
                 }
                 ordinaryDamage(buffId, actor.id(), targets.stream().map(HeroBattleTargetUtils.Unit::id).toList(),
@@ -715,6 +709,39 @@ public final class HeroBattleHealingExecutor implements Executor {
         applyControl(buffId, sourceId, targetId, decision, false);
     }
 
+    /** 按旧负面免疫→325抗性判定安装流血；只记录实例，不在安装时扣血。 */
+    public void applyBleed(int buffId, int sourceId, int targetId,
+                           java.util.function.DoublePredicate decision) {
+        double chance = rules.battleBleedChance(buffId);
+        transaction(() -> {
+            started = true;
+            var source = require(sourceId);
+            var target = require(targetId);
+            if (target.hp() <= 0 || source.actor().interrupted(targetId) || hasStatus(targetId, 152)) {
+                return;
+            }
+            double resistance = requireCombat(targetId).attributes().rate(325);
+            if (decision.test(chance * (1D - resistance))) {
+                if (chance == 0D) {
+                    throw new IllegalStateException("零概率流血判定不可命中");
+                }
+                installBuff(sourceId, targetId, rules.battleBuff(buffId), 0);
+            }
+        });
+    }
+
+    /** 回合流血使用实时攻击和固定伤害；不走普攻暴击/反击，仍走护盾、生命条件和死亡清理。 */
+    private void tickBleed(int targetId, HeroBattleBuffState.Entry entry) {
+        int sourceId = entry.sourceId();
+        long attack = requireCombat(sourceId).attributes().get(220);
+        long amount = (long) (attack * (rules.battleBleedDamageRate(entry.spec().id()) / 10000D));
+        emit(183, require(targetId).actor(), require(sourceId).actor());
+        deductDamage(entry.spec().id(), sourceId, targetId, amount);
+        if (!require(targetId).actor().isDead()) {
+            emit(177, require(targetId).actor(), require(sourceId).actor());
+        }
+    }
+
     /** 冰冻沿216抗性判定，安装受击计数监听；失败回滚控制及其被动增益。 */
     public void applyFrozen(int buffId, int sourceId, int targetId,
                             java.util.function.DoublePredicate decision) {
@@ -988,7 +1015,7 @@ public final class HeroBattleHealingExecutor implements Executor {
     }
 
     /**
-     * 选定场景的201回合开始阶段：按调用方提供的出手顺序执行，再做到期移除。
+     * 选定场景的201监听和1205流血回合开始阶段：按调用方提供的出手顺序执行，再做到期移除。
      * 本入口不是完整回合（尚无能量收支/女神/周期特殊效果）；必须覆盖全部场内单位且不重复。
      */
     public void beginRound(int currentRound, List<Integer> order, HeroBattleElementRules elements,
@@ -1009,6 +1036,13 @@ public final class HeroBattleHealingExecutor implements Executor {
                     if (actor.isHangUpSealed()) continue;
                     for (var entry : buffs.get(id).snapshot()) {
                         if (actor.isDead()) break;
+                        if (entry.spec().type() == 1205) {
+                            tickBleed(id, entry);
+                            if (buffs.get(id).snapshot().contains(entry) && entry.expiresAt() <= round) {
+                                expireEntry(id, entry);
+                            }
+                            continue;
+                        }
                         if (entry.spec().type() != 201) continue;
                         for (var art : rules.battleTrigger(entry.spec().id()).arts()) {
                             // 旧executeRoundArt固定使用Buff施加者和携带者上下文，不复用通用trigger目标改写。
