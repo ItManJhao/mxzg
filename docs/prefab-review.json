@@ -3118,7 +3118,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "f02cf0c1b72930a41fb79a2fe3cf559116b36b3e3919907189bd86c9993ad346"
+    "sha256": "b387c838625f5bc7d60c114994c30d798ad988b3d2e9168061f24c91d50777a9"
   },
   {
     "path": "client/assets/prefabs/ui/hero/FormationHeroCellView.prefab",

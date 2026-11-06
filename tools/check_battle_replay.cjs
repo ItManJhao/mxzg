@@ -568,3 +568,106 @@ const wrongBleed = protocol.decode(bleedBytes);
 wrongBleed.units[0].templateId = 10101001;
 assert.throws(() => decode(protocol.encode(wrongBleed).finish()), /单位无效/);
 console.log("PASS dark cutter level 3 bleed installation, round damage, removal and strict roster");
+
+// 魅惑之拥：服务器完整四单位战报，真实技能等级、随机目标、11号动作及旧覆盖资源。
+for (const star of [5, 6, 7]) {
+    const wire = fs.readFileSync(path.join(root, `backend/target/independent-charm-star-${star}-replay.pb`));
+    const decoded = protocol.decode(wire);
+    const charmSteps = decode(wire);
+    assert.equal(decoded.units.length, 4);
+    assert.ok(charmSteps.some(step => step.kind === "presentation" && step.configId === 1110200));
+    assert.ok(charmSteps.some(step => step.kind === "buff.upsert" && step.configId === 1111401 + star - 5));
+    assert.ok(charmSteps.some(step => step.kind === "buff.remove" && step.configId === 1111401 + star - 5));
+    decoded.units[1].position = 2;
+    assert.throws(() => decode(protocol.encode(decoded).finish()), /单位无效/);
+}
+const charmNormal = melee.exports.BattleAttackUtils.legacyActions(buffRows.find(row => row.idx === 1110200));
+assert.deepEqual(charmNormal.map(row => row.type), [7, 11]);
+const closePlan = melee.exports.BattleAttackUtils.plan(charmNormal[1]);
+assert.equal(closePlan.melee, true);
+assert.equal(closePlan.moveSeconds, 0.1);
+assert.equal(closePlan.attackDelaySeconds, 0.8);
+assert.equal(closePlan.beforeReturnSeconds, 0.5);
+const flipped = melee.exports.BattleAttackUtils.plan(charmNormal[0]);
+assert.equal(flipped.effect.scaleX, -1);
+assert.equal(flipped.effect.anchorX, 0.65);
+assert.equal(flipped.effect.paths.length, 10);
+assert.equal(melee.exports.BattleAttackUtils.delaySeconds(charmNormal[0]), 20 / 60);
+for (const id of [1111201, 1111202, 1111203]) {
+    const parts = melee.exports.BattleAttackUtils.legacyActions(buffRows.find(row => row.idx === id));
+    assert.deepEqual(parts.map(row => row.type), [7, 3, 1]);
+    assert.equal(melee.exports.BattleAttackUtils.plan(parts[1]).action, "attack2");
+    assert.equal(melee.exports.BattleAttackUtils.plan(parts[2]).effectOnly, true);
+    assert.equal(melee.exports.BattleAttackUtils.delaySeconds(parts[0]), 50 / 60);
+    for (const part of parts) {
+        const plan = melee.exports.BattleAttackUtils.plan(part);
+        for (const resource of plan.effect?.paths || []) {
+            assert.ok(fs.existsSync(path.join(root, "client/assets/resources", resource.replace("/spriteFrame", ".png"))));
+        }
+    }
+}
+console.log("PASS charm complete three-level replay, strict roster, type11 timing, flipped frames and no-op action");
+
+// 恶魔魅影：同一帧的击杀、叠层、清理依序传给客户端；第三次死亡只清理监听。
+const charmDeathBytes = fs.readFileSync(path.join(root, "backend/target/independent-charm-death-replay.pb"));
+const charmDeathSteps = decode(charmDeathBytes);
+const deathFlow = charmDeathSteps.filter(step => (step.kind === "damage" && step.dead)
+    || (step.kind === "buff.upsert" && step.configId === 1113203)
+    || (step.kind === "buff.remove" && step.configId === 1113103));
+assert.deepEqual(deathFlow.map(step => step.kind), [
+    "damage", "buff.upsert", "buff.remove", "damage", "buff.upsert", "buff.remove", "damage", "buff.remove"
+]);
+assert.ok(deathFlow.filter(step => step.configId === 1113203).every(step => step.targetId === 1));
+assert.equal(charmDeathSteps.at(-1).hpByUnit[1], 19906);
+console.log("PASS charm death replay preserves ordered kills, two critical stacks and final listener cleanup");
+
+/** 阻塞两个目标各自的伤害动画，核对恶魔魅影依附对应命中，取消后不会补播。 */
+async function checkCharmDeathPlayback() {
+    for (const cancel of [false, true]) {
+        const hits = new Map();
+        const seen = [];
+        let pendingPresentation;
+        const player = new playerModule.exports.BattleReplayPlayer({
+            play: async (step, targets) => {
+                seen.push(step);
+                if (step.kind === "presentation" && step.configId === 1111203) {
+                    assert.deepEqual(targets.map(target => target.targetId), [2, 4]);
+                    await new Promise(resolve => { pendingPresentation = resolve; });
+                }
+                if (step.kind === "damage" && step.configId === 1111303) {
+                    await new Promise(resolve => hits.set(step.targetId, resolve));
+                }
+            },
+            stop: () => {
+                pendingPresentation?.();
+                for (const resolve of hits.values()) resolve();
+            }
+        });
+        const playback = player.play(charmDeathBytes);
+        const nextTick = () => new Promise(resolve => setImmediate(resolve));
+        const stacks = () => seen.filter(step => step.kind === "buff.upsert" && step.configId === 1113203).length;
+        await nextTick();
+        assert.ok(pendingPresentation, "双目标表现独立启动");
+        assert.deepEqual([...hits.keys()], [2, 4], "两个目标的伤害并行开始");
+        assert.equal(stacks(), 0, "未命中时不显示增益");
+        hits.get(2)();
+        await nextTick();
+        assert.equal(stacks(), 1, "首个目标只触发自身对应的一层");
+        assert.ok(!seen.some(step => step.kind === "buff.remove" && step.configId === 1113103));
+        if (cancel) {
+            player.stop();
+            assert.equal(await playback, false);
+            assert.equal(stacks(), 1, "取消后不补播第二层");
+        } else {
+            hits.get(4)();
+            await nextTick();
+            assert.equal(stacks(), 2);
+            assert.ok(!seen.some(step => step.kind === "skill.end"), "还在等待技能表现完成");
+            pendingPresentation();
+            assert.equal(await playback, true);
+            assert.equal(stacks(), 2, "末名敌人死亡不触发增益");
+        }
+    }
+    console.log("PASS charm death bonus waits for its own lethal hit and skips late playback after cancellation");
+}
+checkCharmDeathPlayback().catch(error => { console.error(error); process.exitCode = 1; });

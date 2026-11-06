@@ -1,0 +1,61 @@
+{
+  "buff": [
+    {
+      "level": "log",
+      "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 15:33:28 buff buff.upsert config=5051303 round=1 target=2 instance=1 visible=1 color:#66BB6A color:#66BB6A",
+      "timestamp": "2026-11-06T07:33:28.680Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 15:33:32 buff buff.upsert config=5051303 round=1 target=1 instance=2 visible=1 color:#66BB6A color:#66BB6A",
+      "timestamp": "2026-11-06T07:33:32.737Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 15:33:43 buff buff.remove config=5051303 round=3 target=1 instance=2 visible=0 color:#66BB6A color:#66BB6A",
+      "timestamp": "2026-11-06T07:33:43.796Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 15:33:44 buff buff.remove config=5051303 round=3 target=2 instance=1 visible=0 color:#66BB6A color:#66BB6A",
+      "timestamp": "2026-11-06T07:33:44.197Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 15:33:58 buff buff.upsert config=5051303 round=5 target=2 instance=3 visible=1 color:#66BB6A color:#66BB6A",
+      "timestamp": "2026-11-06T07:33:58.937Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 15:34:02 buff buff.upsert config=5051303 round=5 target=1 instance=4 visible=1 color:#66BB6A color:#66BB6A",
+      "timestamp": "2026-11-06T07:34:02.990Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 15:34:14 buff buff.remove config=5051303 round=7 target=1 instance=4 visible=0 color:#66BB6A color:#66BB6A",
+      "timestamp": "2026-11-06T07:34:14.099Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 15:34:14 buff buff.remove config=5051303 round=7 target=2 instance=3 visible=0 color:#66BB6A color:#66BB6A",
+      "timestamp": "2026-11-06T07:34:14.512Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    }
+  ],
+  "lifecycle": [
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:34:34 {\"assets\":{\"scopes\":0,\"entries\":0,\"pending\":0,\"owners\":0,\"retained\":0},\"prefabs\":{\"pending\":0,\"cached\":3},\"ui\":{\"pages\":0,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":0,\"targets\":0},\"scopedSubscriptions\":5,\"nativeTimers\":0,\"engineAssets\":163} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:34:34.771Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    }
+  ],
+  "errors": []
+}

@@ -29,6 +29,8 @@ message Frame {
     GmStatus gm_status = 21;
     FormationSave formation_save = 22;
     FormationSaved formation_saved = 23;
+    BattlePreviewRequest battle_preview = 24;
+    BattlePreviewResult battle_previewed = 25;
   }
 }
 message Empty {}
@@ -210,4 +212,15 @@ message BattleReplayEvent {
   optional uint32 expires_at_round = 11;
   optional int64 buff_value = 12;
   optional string removal_reason = 13;
+}
+
+// 开发只读试战：只提交关卡，不接受角色、阵容、属性或伤害；不产生通关与奖励。
+message BattlePreviewRequest { required uint32 mission = 1; }
+message BattlePreviewResult {
+  required uint32 mission = 1;
+  required int64 asset_revision = 2;
+  required int64 lineup_version = 3;
+  required uint32 formation_id = 4;
+  repeated string pending = 5;
+  required BattleReplay replay = 6;
 }

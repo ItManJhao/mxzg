@@ -253,6 +253,37 @@ public final class HeroBattleChapterScenario {
         return runBattle("audit:nanako", applyElementHalo(input), decision);
     }
 
+    /** 魅惑之拥完整初始技能对三个后排目标；真实100级配置，种子仅固定独立验收选人。 */
+    public Result runIndependentCharm(int star, long seed, DoublePredicate decision) {
+        if (star < 5 || star > 7) {
+            throw new IllegalArgumentException("魅惑之拥验收仅支持五星至七星");
+        }
+        return runIndependentCharm("audit:charm", star, 0, 100, 100, seed, decision);
+    }
+
+    /** 恶魔魅影专用战报，强化3并保留所有已解锁技能，双方仍从真实成长表装配。 */
+    public Result runIndependentCharmDeath(long seed, DoublePredicate decision) {
+        return runIndependentCharm("audit:charm-death", 9, 3, 50, 25, seed, decision);
+    }
+
+    /** 构建同一四单位阵容，保留各演示配置的星级、强化和等级。 */
+    private Result runIndependentCharm(String scenario, int star, int stage, int level, int enemyLevel,
+                                       long seed, DoublePredicate decision) {
+        var input = new ArrayList<Unit>();
+        for (int id = 1; id <= 4; id++) {
+            var config = mapper.createObjectNode();
+            config.put("hero_type", id == 1 ? 10105011 : 10101001);
+            config.put("hero_star", id == 1 ? star : 1);
+            config.put("hero_level", id == 1 ? level : enemyLevel);
+            config.put("pos", id == 1 ? 2 : id + 3);
+            config.put("attr", "[]");
+            var built = unit(id, id == 1 ? stage : 0, config);
+            input.add(new Unit(id, id == 1 ? 1 : 2, built.template(), built.level(), built.star(), built.stage(),
+                built.position(), built.attributes(), built.opening(), built.skills()));
+        }
+        return runBattle(scenario, applyElementHalo(input), decision, new Random(seed));
+    }
+
     /** 黑暗切割者七星三级主动专项夹具：真实成长/静态属性，仅选主动一和普攻，非整英雄技能验收。 */
     public Result runIndependentDarkCutterBleed(DoublePredicate decision) {
         int template = 10505005;
@@ -277,18 +308,48 @@ public final class HeroBattleChapterScenario {
         return runBattle("audit:dark-cutter-bleed", applyElementHalo(input), decision);
     }
 
-    /** 仅允许已核对的奈奈子静态被动与控制被动，未知先手或其他被动在开场前拒绝。 */
+    /** 预检静态被动、开场监听和出手动作；未知效果在开场前拒绝。 */
     private void validateSkill(HeroBattleSkillUtils.Skill skill) {
         if (skill.first()) {
             throw new IllegalArgumentException("独立战场尚未接入先手技能");
         }
         if (skill.activeType() == 1 || skill.activeType() == 2) {
             skills.damageSkillArts(skill);
-        } else if (skill.skillId() == 102050234) {
-            skills.controlPassiveArts(skill.skillId(), skill.level());
-        } else if (skill.skillId() != 102050232 || !skill.countStats()) {
-            throw new IllegalArgumentException("独立战场被动技能未核对");
+        } else if (HeroSkillPanelRules.usesOpeningBattlePassive(skill.skillId())) {
+            skills.openingPassiveArts(skill.skillId(), skill.level());
+        } else {
+            skills.validateStaticPanelSkill(skill);
         }
+    }
+
+    /**
+     * 将服务端已鉴权读取的持久阵容接入前三关，只读审计，不生成主线通关凭据。
+     * 直接复用原始属性和完整技能排期，不替换为固定英雄，不重复添加阵型属性；助战暂不支持。
+     */
+    public Result runSavedFormation(int mission, HeroBattleInputService.Input input, DoublePredicate decision) {
+        if (input.units().isEmpty()) {
+            throw new IllegalArgumentException("请先保存非空主线阵容");
+        }
+        var units = new ArrayList<Unit>();
+        var heroIds = new HashSet<String>();
+        for (var source : input.units()) {
+            var hero = source.hero();
+            if (!heroIds.add(hero.id()) || source.position() < 1 || source.position() > 8) {
+                throw new IllegalArgumentException("阵容英雄重复或包含尚未接入的助战位");
+            }
+            units.add(new Unit(source.position(), 1, hero.templateId(), hero.level(), hero.star(), hero.stage(),
+                source.position(), source.attributes(), HeroBattleAttributeUtils.opening(source.attributes()),
+                source.skillSchedule()));
+        }
+        // 本场ID与持久英雄ID分离：攻方使用1至8，守方使用9至16，避免双方同站位碰撞。
+        for (var enemy : initial(mission)) {
+            if (enemy.faction() == 2) {
+                units.add(new Unit(8 + enemy.position(), 2, enemy.template(), enemy.level(), enemy.star(),
+                    enemy.stage(), enemy.position(), enemy.attributes(), enemy.opening(), enemy.skills()));
+            }
+        }
+        roster(units);
+        return runBattle("audit:lineup:" + mission, applyElementHalo(units), decision);
     }
 
     /** 独立多单位审计，只接受已支持技能；不能借此宣称真实主线画面已验收。 */
@@ -317,6 +378,11 @@ public final class HeroBattleChapterScenario {
 
     /** 每个阶段前后记录全部单位；按阵营存活判胜负，不在首个敌人死亡时提前结束。 */
     private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision) {
+        return runBattle(scenario, input, decision, new Random());
+    }
+
+    /** 每场注入独立随机源，抽样算法与旧randomList一致；概率待审标记不因此移除。 */
+    private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision, Random random) {
         var initial = roster(input);
         for (var unit : initial) {
             for (var skill : unit.skills()) {
@@ -326,11 +392,11 @@ public final class HeroBattleChapterScenario {
         var states = initial.stream().map(unit -> new HeroBattleHealingExecutor.State(
             new HeroBattleEventProcessor.Actor(unit.id(), unit.skills()), unit.faction(), unit.position(),
             unit.opening().hp(), unit.opening().maxHp(), unit.opening().attack(), 0, 0, 0)).toList();
-        var engine = new HeroBattleHealingExecutor(skills, states);
+        var engine = new HeroBattleHealingExecutor(skills, states, HeroBattleHealingExecutor.inferredRandom(random));
         initial.forEach(unit -> engine.bindCombatData(unit.id(), unit.template(), unit.attributes()));
         for (var unit : initial) {
             for (var skill : unit.skills()) {
-                if (skill.skillId() == 102050234) {
+                if (HeroSkillPanelRules.usesOpeningBattlePassive(skill.skillId())) {
                     engine.initializePassive(unit.id(), skill.skillId(), skill.level());
                 }
             }

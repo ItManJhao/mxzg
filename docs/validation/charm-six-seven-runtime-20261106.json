@@ -1,0 +1,818 @@
+[
+  {
+    "level": "log",
+    "message": "Init Base: 0.364990234375 ms",
+    "timestamp": "2026-11-06T08:56:00.160Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "Init Infrastructure: 23.01513671875 ms",
+    "timestamp": "2026-11-06T08:56:00.185Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "Init SubSystem: 161.739990234375 ms",
+    "timestamp": "2026-11-06T08:56:00.400Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "Init Project: 768.4541015625 ms",
+    "timestamp": "2026-11-06T08:56:01.169Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 16:56:01 打开界面 SkillAuditView ui SkillAuditView 耗时 397ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-06T08:56:01.948Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:34 effect.start 11112021 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:34.181Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:34 effect.start 11112022 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:34.182Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:34 effect.start 1111402 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:34.183Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:34 buff buff.upsert config=1111402 round=1 target=1 instance=1 visible=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:34.183Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:35 effect.start 11112020 delay=0.8333333333333334 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:35.015Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:35 sound skill-101050111 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:35.015Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:35 audio.started skill-101050111 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:35.039Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:35 effect.frames 11112020 target=2 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:35.049Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:35 effect.frames 11112020 target=4 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:35.049Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:35 effect.start 1111302 delay=1.6666666666666667 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:35.847Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:35 effect.start 1111302 delay=1.6666666666666667 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:35.849Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:36 effect.start 10111010 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:36.331Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:36 sound skill-101010011 playing=true color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:36.332Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:36 effect.start 1011301 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:36.332Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:36 buff buff.upsert config=1011301 round=1 target=1 instance=2 visible=2 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:36.333Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:36 audio.started skill-101010011 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:36.333Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:36 effect.start 10111011 delay=0.3333333333333333 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:36.664Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:36 effect.frames 10111011 target=1 count=9 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:36.698Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:36 effect.start 1011201 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:36.820Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:37 effect.start 10111010 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:37.631Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:37 sound skill-101010011 playing=true color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:37.632Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:37 effect.start 1011301 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:37.632Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:37 buff buff.upsert config=1011301 round=1 target=1 instance=3 visible=3 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:37.632Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:37 audio.started skill-101010011 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:37.632Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:37 effect.start 10111011 delay=0.3333333333333333 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:37.964Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:37 effect.frames 10111011 target=1 count=9 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:37.998Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:38 effect.start 1011201 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:38.119Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:38 buff buff.remove config=1011301 round=1 target=1 instance=2 visible=2 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:38.914Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:38 effect.start 10111010 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:38.947Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:38 sound skill-101010011 playing=true color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:38.948Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:38 effect.start 1011301 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:38.948Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:38 buff buff.upsert config=1011301 round=1 target=1 instance=4 visible=3 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:38.948Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:38 audio.started skill-101010011 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:38.948Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:39 effect.start 10111011 delay=0.3333333333333333 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:39.265Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:39 effect.frames 10111011 target=1 count=9 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:39.298Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:39 effect.start 1011201 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:39.431Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:40 buff buff.remove config=1011301 round=1 target=1 instance=3 visible=2 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:40.231Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:40 effect.start 1011401 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:40.265Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:41 effect.start 11102001 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:41.698Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:42 effect.start 11102000 delay=0.3333333333333333 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:42.031Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:42 sound skill-101050110 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:42.054Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:42 audio.started skill-101050110 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:42.054Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:42 effect.frames 11102000 target=3 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:42.069Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:42 effect.start 1110300 delay=0.8333333333333334 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:42.531Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:43 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:43.314Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:43 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:43.798Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:44 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:44.614Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:45 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:45.106Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:45 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:45.938Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:46 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:46.431Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:47 effect.start 1011401 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:47.230Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:47 buff buff.remove config=1011301 round=3 target=1 instance=4 visible=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:47.615Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:47 buff buff.remove config=1111402 round=3 target=1 instance=1 visible=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:47.615Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:50 effect.start 11102001 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:50.681Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:50 effect.start 11102000 delay=0.3333333333333333 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:50.998Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:50 sound skill-101050110 playing=true color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:50.998Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:50 audio.started skill-101050110 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:50.998Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:51 effect.frames 11102000 target=3 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:51.031Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:51 effect.start 1110300 delay=0.8333333333333334 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:51.514Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:52 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:52.281Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:52 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:52.764Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:53 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:53.598Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:54 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:54.081Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:54 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:54.898Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:55 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:55.398Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:57 effect.start 11102001 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:57.231Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:57 effect.start 11102000 delay=0.3333333333333333 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:57.565Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:57 sound skill-101050110 playing=true color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:57.565Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:56:57 audio.started skill-101050110 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:57.565Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:57 effect.frames 11102000 target=3 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:57.600Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:58 effect.start 1110300 delay=0.8333333333333334 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:58.064Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:58 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:58.831Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:56:59 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:56:59.315Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:00 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:00.131Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:00 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:00.631Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:02 effect.start 11112021 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:02.481Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:02 effect.start 11112022 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:02.482Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:02 effect.start 1111402 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:02.482Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:02 buff buff.upsert config=1111402 round=5 target=1 instance=5 visible=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:02.482Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:03 effect.start 11112020 delay=0.8333333333333334 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:03.300Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:03 sound skill-101050111 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:03.300Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:03 audio.started skill-101050111 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:03.300Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:03 effect.frames 11112020 target=2 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:03.339Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:03 effect.frames 11112020 target=4 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:03.339Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:04 effect.start 1111302 delay=1.6666666666666667 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:04.131Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:04 effect.start 1111302 delay=1.6666666666666667 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:04.132Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 16:57:04 只读结算 胜利 sound=battle-end-1 presentationOnly=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:04.886Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 16:57:04 打开界面 ChapterEndView ui ChapterEndView 耗时 288ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-06T08:57:04.887Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 16:57:04 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:04.887Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:04 completed hp={\"1\":3020,\"2\":0,\"3\":0,\"4\":0} round=5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:04.887Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:35 effect.start 11112031 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:35.649Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:35 effect.start 11112032 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:35.649Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:35 effect.start 1111403 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:35.650Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:35 buff buff.upsert config=1111403 round=1 target=1 instance=1 visible=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:35.650Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:36 effect.start 11112030 delay=0.8333333333333334 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:36.484Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:36 sound skill-101050111 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:36.484Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:36 audio.started skill-101050111 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:36.484Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:36 effect.frames 11112030 target=2 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:36.515Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:36 effect.frames 11112030 target=4 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:36.516Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:37 effect.start 1111303 delay=1.6666666666666667 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:37.316Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:37 effect.start 1111303 delay=1.6666666666666667 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:37.316Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:45 effect.start 10111010 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:45.233Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:45 sound skill-101010011 playing=true color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:45.233Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:45 effect.start 1011301 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:45.233Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:45 buff buff.upsert config=1011301 round=1 target=1 instance=2 visible=2 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:45.233Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:45 audio.started skill-101010011 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:45.233Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:45 effect.start 10111011 delay=0.3333333333333333 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:45.566Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:45 effect.frames 10111011 target=1 count=9 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:45.599Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:45 effect.start 1011201 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:45.732Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:46 effect.start 1011401 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:46.549Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:47 effect.start 11102001 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:47.982Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:48 effect.start 11102000 delay=0.3333333333333333 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:48.315Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:48 sound skill-101050110 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:48.316Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:48 audio.started skill-101050110 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:48.316Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:48 effect.frames 11102000 target=3 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:48.349Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:48 effect.start 1110300 delay=0.8333333333333334 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:48.815Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:49 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:49.582Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:50 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:50.066Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:50 effect.start 1011401 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:50.887Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:51 buff buff.remove config=1011301 round=3 target=1 instance=2 visible=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:51.266Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:51 buff buff.remove config=1111403 round=3 target=1 instance=1 visible=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:51.266Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:54 effect.start 11102001 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:54.315Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:54 effect.start 11102000 delay=0.3333333333333333 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:54.633Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:54 sound skill-101050110 playing=true color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:54.633Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:54 audio.started skill-101050110 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:54.633Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:54 effect.frames 11102000 target=3 count=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:54.665Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 16:57:55 effect.start 1110300 delay=0.8333333333333334 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:55.132Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 16:57:56 只读结算 胜利 sound=battle-end-1 presentationOnly=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:56.001Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 16:57:56 打开界面 ChapterEndView ui ChapterEndView 耗时 118ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-06T08:57:56.001Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 16:57:56 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:56.001Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 16:57:56 completed hp={\"1\":8033,\"2\":0,\"3\":0,\"4\":0} round=3 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-06T08:57:56.001Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  }
+]

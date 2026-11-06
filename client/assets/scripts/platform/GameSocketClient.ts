@@ -138,6 +138,15 @@ export class GameSocketClient {
     return frame;
   }
 
+  /** 当前阵容只读试战，不自动重放；连接切换由通信层拒绝旧结果。 */
+  async previewBattle(token: string, mission: number): Promise<GameFrame> {
+    this.assertReady(token);
+    const generation = this.generation;
+    const frame = await this.send(Protocol.BATTLE_PREVIEW, { mission });
+    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
+    return frame;
+  }
+
   /** GM 显式写请求，不自动重放；幂等键由 GM 模块保存，迟到回包按连接代次拒绝。 */
   async gmGrant(token:string, body:unknown):Promise<GameFrame> {
     this.assertReady(token);const generation=this.generation;
@@ -276,7 +285,7 @@ export class GameSocketClient {
       } else {
         const error = this.object(frame.error);
         if (typeof error.code !== "string" || !/^[A-Z_]{3,64}$/.test(error.code) || frame.body !== null) throw new SocketFailure("INVALID_MESSAGE");
-        const failure = new SocketFailure(error.code, error.code === "UNAUTHENTICATED" ? "登录已失效，请重新登录" : error.code === "SERVER_UNAVAILABLE" ? "服务器暂未开放，请重新选择" : error.code === "UNKNOWN_MESSAGE" ? "服务端不支持此协议，请更新并重启后端" : "连接请求失败，请重试");
+        const failure = new SocketFailure(error.code, error.code === "UNAUTHENTICATED" ? "登录已失效，请重新登录" : error.code === "SERVER_UNAVAILABLE" ? "服务器暂未开放，请重新选择" : error.code === "GM_DISABLED" ? "服务端开发GM未开启" : error.code === "BATTLE_EMPTY" ? "请先保存非空主线阵容" : error.code === "BATTLE_UNSUPPORTED" ? "当前阵容包含尚未支持的技能或助战，请调整阵容" : error.code === "BATTLE_INVALID" ? "只读试战仅支持第一章前三关" : error.code === "UNKNOWN_MESSAGE" ? "服务端不支持此协议，请更新并重启后端" : "连接请求失败，请重试");
         this.traceReceived(frame);
         this.pending.delete(frame.id); clearTimeout(pending.timer); pending.reject(failure);
         if (failure.unauthorized) this.rejectSession(failure);

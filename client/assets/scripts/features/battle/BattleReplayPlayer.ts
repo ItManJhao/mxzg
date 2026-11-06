@@ -62,7 +62,27 @@ export class BattleReplayPlayer {
                         groups.push([effect]);
                     }
                 }
-                await Promise.all(groups.map(group => this.presentation.play(group[0], Object.freeze(group))));
+                // 恶魔魅影的增益由前一条致死伤害触发。各目标照常并行播伤害，增益依次等各自命中。
+                let lethalHit: Promise<void> | undefined;
+                let deathBonus: Promise<void> | undefined;
+                const pending = groups.map(group => {
+                    const effect = group[0];
+                    const targets = Object.freeze(group);
+                    if (lethalHit && effect.kind === "buff.upsert" && effect.configId >= 1113201 && effect.configId <= 1113203) {
+                        deathBonus = Promise.all([lethalHit, deathBonus]).then(async () => {
+                            if (generation === this.generation && this.active) {
+                                await this.presentation.play(effect, targets);
+                            }
+                        });
+                        return deathBonus;
+                    }
+                    const playing = this.presentation.play(effect, targets);
+                    if (effect.kind === "damage" && effect.dead) {
+                        lethalHit = playing;
+                    }
+                    return playing;
+                });
+                await Promise.all(pending);
                 if (generation !== this.generation) return false;
                 for (const removal of removals) {
                     await this.presentation.play(removal);

@@ -29,7 +29,7 @@ export interface SkillReplayFocus {
 
 export class BattleReplayPreview {
     /** 装载资源及真实预制体后执行二进制战报；返回用于关场的清理函数。 */
-    public static async open(parent: Node, bytes: Uint8Array, defeatPresentation = false, onClosed?: () => void, audit?: SkillReplayFocus): Promise<() => void> {
+    public static async open(parent: Node, bytes: Uint8Array, defeatPresentation = false, onClosed?: () => void, audit?: SkillReplayFocus, lineupTitle?: string): Promise<() => void> {
         const steps = BattleReplayUtils.decode(bytes);
         const units = BattleReplayUtils.units(bytes);
         const configScope = createAssetScope();
@@ -76,8 +76,8 @@ export class BattleReplayPreview {
             const node = shell.root.getChildByPath(path);
             if (node) node.active = false;
         }
-        setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, "独立测试阵容");
-        setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, units.every(unit => unit.templateId === 10505005) ? "三级流血专项" : units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关");
+        setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, lineupTitle ? "当前保存阵容·只读" : "独立测试阵容");
+        setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, lineupTitle || (units.some(unit => unit.templateId === 10105011) ? "魅惑之拥·随机目标验收" : units.every(unit => unit.templateId === 10505005) ? "三级流血专项" : units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关"));
         const actors = new Map<number, SpineActor>();
         const slots = new Map<number, Node>();
         /** 当前出场单位的头顶血条，随英雄槽移动；页面关闭时随预制体销毁。 */
@@ -249,7 +249,7 @@ export class BattleReplayPreview {
                     assets.loadPath(path, "SpriteFrame")));
             }
             for (const row of selected.values()) {
-                if (row.type === 2 || row.type === 3 || row.type === 5 || row.type === 6 || row.type === 7 || row.type === 9 || row.type === 100) {
+                if (row.type === 1 || row.type === 11 || row.type === 2 || row.type === 3 || row.type === 5 || row.type === 6 || row.type === 7 || row.type === 9 || row.type === 100) {
                     const names = row.type === 100 ? BattleAttackUtils.damageSounds(row) : BattleAttackUtils.plan(row).sounds;
                     if (row.type !== 100) {
                         const effect = BattleAttackUtils.plan(row).effect;
@@ -487,7 +487,7 @@ export class BattleReplayPreview {
                 }
             });
             // 复用已有按钮启动，确保浏览器用户手势允许音频，不自动绕过音频策略。
-            setText(shell.logLabel, audit ? audit.name + " Lv." + audit.level + (audit.passive ? " · 播放完整触发过程" : " · 从首次施法开始") : "测试已就绪，请点击开始");
+            setText(shell.logLabel, audit ? audit.name + " Lv." + audit.level + (audit.passive ? " · 播放完整触发过程" : " · 从首次施法开始") : lineupTitle ? "属性尚未完整；只读试战，不发奖励" : "测试已就绪，请点击开始");
             const button = shell.root.getChildByPath("LayerHud/BtnSkip")!;
             setText(button.getChildByName("Label")!, defeatPresentation ? "失败样式验收" : "开始");
             let started = false;

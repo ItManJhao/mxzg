@@ -33,6 +33,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final com.funsgamex.mxzg.gm.GmService gm;
     /** 主线阵容保存事务，不恢复其他暂停玩法。 */
     private final com.funsgamex.mxzg.lineup.MainFormationCommandService formations;
+    /** 开发只读试战，鉴权及真实阵容读取均在服务端完成。 */
+    private final com.funsgamex.mxzg.hero.HeroLineupBattleService battles;
     private final SessionService sessions;
     private final SessionSnapshotService snapshots;
     private final ConcurrentMap<String, Connection> connections = new ConcurrentHashMap<>();
@@ -58,7 +60,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     }
 
     /** 注入共享鉴权和快照服务，创建固定数量角色锁，避免锁表无限增长。 */
-    public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots, com.funsgamex.mxzg.auth.DevelopmentLoginService login, com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm, com.funsgamex.mxzg.lineup.MainFormationCommandService formations) {
+    public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots, com.funsgamex.mxzg.auth.DevelopmentLoginService login, com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm, com.funsgamex.mxzg.lineup.MainFormationCommandService formations, com.funsgamex.mxzg.hero.HeroLineupBattleService battles) {
+        this.battles = battles;
         this.formations = formations;
         this.gm=gm;
         this.sessions = sessions; this.snapshots = snapshots; this.login=login; this.servers=servers;
@@ -173,6 +176,27 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         if (online.get(connection.role) != connection) throw rejected("SESSION_REPLACED");
         if (!connection.role.equals(sessions.requireRole(connection.token))) throw rejected("UNAUTHENTICATED");
         if (!connection.socket.getId().equals(request.path("connectionId").asString(""))) throw rejected("SESSION_REPLACED");
+        if (name.equals("battle.preview")) {
+            if (!gm.enabled()) throw rejected("GM_DISABLED");
+            var body = request.path("body");
+            fields(body, Set.of("mission"));
+            if (!body.path("mission").canConvertToInt() || body.path("mission").asInt() < 1
+                || body.path("mission").asInt() > 3) throw rejected("BATTLE_INVALID");
+            int mission = body.path("mission").asInt();
+            com.funsgamex.mxzg.hero.HeroLineupBattleService.Preview result;
+            try {
+                result = battles.preview(connection.token, mission,
+                    rate -> ThreadLocalRandom.current().nextDouble() < rate);
+            } catch (IllegalArgumentException error) {
+                throw rejected(error.getMessage().contains("非空") ? "BATTLE_EMPTY" : "BATTLE_UNSUPPORTED");
+            }
+            var pending = new ArrayList<>(result.pending());
+            pending.add("random_probability_pending_review");
+            respond(connection, request, Map.of("mission", mission, "assetRevision", result.assetRevision(),
+                "lineupVersion", result.lineupVersion(), "formationId", result.formationId(), "pending", pending,
+                "replay", GameProtocolCodec.tree(com.funsgamex.mxzg.hero.HeroBattleReplayProtocolUtils.encode(result.battle()))));
+            return;
+        }
         if(name.equals("gm.grant")) {
             var body=request.path("body");fields(body,Set.of("requestId","kind","configId","quantity"));
             if(!body.path("configId").canConvertToInt()||!body.path("quantity").canConvertToInt())throw rejected("GM_INVALID");

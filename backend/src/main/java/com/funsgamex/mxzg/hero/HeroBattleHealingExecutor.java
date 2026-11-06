@@ -201,7 +201,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
-    /** 执行预检的普通/主动伤害技能、201监听、眩晕、零概率流血和表现；其他效果仍拒绝。 */
+    /** 执行预检的伤害技能、监听、控制、流血与直接属性动作；未知效果仍拒绝。 */
     @Override
     public void skill(Actor actor, HeroBattleSkillUtils.Skill skill) {
         if (attackContext == null) throw new UnsupportedOperationException("普通攻击缺少根动作上下文");
@@ -214,7 +214,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         for (var art : rules.damageSkillArts(skill)) {
             var living = units.values().stream().filter(u -> u.hp() > 0 && !u.actor().isDead()).map(State::target).toList();
             var targets = HeroBattleTargetUtils.select(art.targets(), source.target(), living,
-                List.of(require(attackContext.target).target()), attackContext.queued);
+                List.of(require(attackContext.target).target()), attackContext.queued, random::index);
             for (int buffId : art.buffs()) {
                 if (rules.battleProjectile(buffId)) {
                     for (var target : targets) {
@@ -244,14 +244,9 @@ public final class HeroBattleHealingExecutor implements Executor {
                     }
                     continue;
                 }
-                if (rules.nanakoArmorDebuff(buffId)) {
-                    var effect = rules.controlAttribute(buffId);
+                if (rules.battleDirectAttribute(buffId)) {
                     for (var target : targets) {
-                        if (require(target.id()).hp() <= 0 || actor.interrupted(target.id())) {
-                            continue;
-                        }
-                        installBuff(actor.id(), target.id(), rules.battleBuff(buffId), 0);
-                        requireCombat(target.id()).attributes().addBase(effect.attribute(), effect.amount());
+                        applyDirectAttribute(buffId, actor.id(), target.id());
                     }
                     continue;
                 }
@@ -271,6 +266,18 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
         trace.add(new Trace("skill.end", round, actor.id(), attackContext.target,
             skill.skillId(), skill, null, null, ""));
+    }
+
+    /** 直接属性动作沿旧安装成功后累加；移除回调统一减回，死亡或中断目标不安装。 */
+    private void applyDirectAttribute(int buffId, int sourceId, int targetId) {
+        var effect = rules.controlAttribute(buffId);
+        var source = require(sourceId);
+        var target = require(targetId);
+        if (target.hp() <= 0 || target.actor().isDead() || source.actor().interrupted(targetId)) {
+            return;
+        }
+        installBuff(sourceId, targetId, rules.battleBuff(buffId), 0);
+        requireCombat(targetId).attributes().addBase(effect.attribute(), effect.amount());
     }
 
     /** 执行单位真实普攻并依序排空1301反击；当前为物理伤害子集，主动技能通过act传入真实能量；完整回合调度后续接入。 */
@@ -312,8 +319,8 @@ public final class HeroBattleHealingExecutor implements Executor {
         if (started) {
             throw new IllegalStateException("战斗动作已开始，不能重新安装入场被动");
         }
-        if (skillId == 102050234) {
-            initializeControlPassive(unitId, skillId, level);
+        if (HeroSkillPanelRules.usesOpeningBattlePassive(skillId)) {
+            initializeOpeningPassive(unitId, skillId, level);
             return;
         }
         var definitions = rules.battleHealingPassive(skillId, level);
@@ -331,9 +338,9 @@ public final class HeroBattleHealingExecutor implements Executor {
         });
     }
 
-    /** 安装已整链预检的奈奈子入场减抗及207/208/209监听，不执行主动攻击。 */
-    private void initializeControlPassive(int unitId, int skillId, int level) {
-        var plans = rules.controlPassiveArts(skillId, level);
+    /** 安装已整链预检的入场属性和监听，原施加者保存在每个实例中。 */
+    private void initializeOpeningPassive(int unitId, int skillId, int level) {
+        var plans = rules.openingPassiveArts(skillId, level);
         String key = unitId + ":" + skillId;
         if (installed.contains(key)) throw new IllegalArgumentException("被动技能已安装：" + key);
         transaction(() -> {
@@ -341,7 +348,7 @@ public final class HeroBattleHealingExecutor implements Executor {
             var living = units.values().stream().filter(u -> u.hp() > 0 && !u.actor().isDead()).map(State::target).toList();
             for (var plan : plans) {
                 var targets = HeroBattleTargetUtils.select(plan.targets(), source.target(), living,
-                    List.of(source.target()), false);
+                    List.of(source.target()), false, random::index);
                 for (int buffId : plan.buffs()) {
                     for (var target : targets) {
                         var spec = rules.battleBuff(buffId);
@@ -384,8 +391,22 @@ public final class HeroBattleHealingExecutor implements Executor {
         });
     }
 
-    /** 沿旧顺序分发186、206，读取可被嵌套覆盖的最近治疗量，再回血并分发311。 */
+    /** 分发已核对的属性、控制、伤害和治疗动作；治疗沿186、206、回血、311顺序，全部共用根事务。 */
     private void executeArt(Invocation invocation) {
+        if (invocation.artId() >= 1113201 && invocation.artId() <= 1113203) {
+            // 旧heroHurt先checkOver；最后一名敌人死亡时通用死亡监听不再执行属性动作。
+            var source = require(invocation.sourceId());
+            if (units.values().stream().anyMatch(unit -> unit.faction() != source.faction() && unit.hp() > 0)) {
+                applyDirectAttribute(invocation.artId(), source.actor().id(), source.actor().id());
+            }
+            return;
+        }
+        if (invocation.artId() >= 1111401 && invocation.artId() <= 1111403) {
+            // 已核对target=[1]，动作来源自身；独立规则测试不冒充完整技能已接通。
+            rules.battleDirectAttribute(invocation.artId());
+            applyDirectAttribute(invocation.artId(), invocation.sourceId(), invocation.sourceId());
+            return;
+        }
         if (rules.isExpiryFrozenArt(invocation.artId())) {
             if (attackContext == null) throw new IllegalStateException("到期冰冻缺少回合随机上下文");
             applyFrozen(invocation.artId(), invocation.sourceId(), invocation.targetContext(), attackContext.decision);
@@ -405,7 +426,7 @@ public final class HeroBattleHealingExecutor implements Executor {
             var source = require(invocation.sourceId());
             var living = units.values().stream().filter(u -> u.hp() > 0 && !u.actor().isDead()).map(State::target).toList();
             var targets = HeroBattleTargetUtils.select(rules.battleTargets(invocation.artId()), source.target(), living,
-                List.of(require(invocation.targetContext()).target()), false);
+                List.of(require(invocation.targetContext()).target()), false, random::index);
             for (int buffId : rules.damageArtBuffs(invocation.artId())) {
                 var targetIds = targets.stream().map(HeroBattleTargetUtils.Unit::id).toList();
                 ordinaryDamage(buffId, invocation.sourceId(), targetIds, attackContext.damageType,
@@ -419,7 +440,7 @@ public final class HeroBattleHealingExecutor implements Executor {
             var source = require(invocation.sourceId());
             var living = units.values().stream().filter(u -> u.hp() > 0 && !u.actor().isDead()).map(State::target).toList();
             var selected = HeroBattleTargetUtils.select(rules.battleTargets(invocation.artId()), source.target(), living,
-                List.of(require(invocation.targetContext()).target()), false);
+                List.of(require(invocation.targetContext()).target()), false, random::index);
             var skill = source.actor().generalAttack();
             rules.damageSkillArts(skill);
             for (var target : selected) attackContext.queue.addLast(new CounterAction(source.actor().id(), target.id(), skill));
@@ -435,7 +456,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         var living = units.values().stream()
             .filter(unit -> unit.hp() > 0 && !unit.actor().isDead()).map(State::target).toList();
         var targets = HeroBattleTargetUtils.select(plan.targets(), source.target(), living,
-            List.of(context.target()), false);
+            List.of(context.target()), false, random::index);
         for (var effect : plan.effects()) {
             for (var target : targets) {
                 State defender = require(target.id());
@@ -631,7 +652,7 @@ public final class HeroBattleHealingExecutor implements Executor {
             var living = units.values().stream().filter(unit -> unit.hp() > 0 && !unit.actor().isDead())
                 .map(State::target).toList();
             var targets = HeroBattleTargetUtils.select(plan.targets(), source.target(), living,
-                List.of(context.target()), false);
+                List.of(context.target()), false, random::index);
             for (int buffId : plan.buffs()) {
                 for (var target : targets) {
                     if (!source.actor().interrupted(target.id())) {

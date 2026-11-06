@@ -9,6 +9,22 @@ import com.funsgamex.mxzg.hero.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HeroBattleChapterScenarioTest {
+    /** 静态被动按真实效果预检，不能伪造countStats将控制监听或主动技能当属性跳过。 */
+    @Test void staticPassivePreflightRejectsRuntimeEffects() {
+        var rules = new HeroSkillPanelRules(new ObjectMapper());
+        for (int id : List.of(101020022, 101030032, 101040042, 102050232)) {
+            for (int level = 1; level <= 3; level++) {
+                rules.validateStaticPanelSkill(new HeroBattleSkillUtils.Skill(id, level, 0, 0, 0, true, false));
+            }
+        }
+        assertThrows(IllegalArgumentException.class, () -> rules.validateStaticPanelSkill(
+            new HeroBattleSkillUtils.Skill(102050234, 1, 0, 0, 0, true, false)));
+        assertThrows(IllegalArgumentException.class, () -> rules.validateStaticPanelSkill(
+            new HeroBattleSkillUtils.Skill(102050231, 1, 0, 0, 0, true, false)));
+        assertThrows(IllegalArgumentException.class, () -> rules.validateStaticPanelSkill(
+            new HeroBattleSkillUtils.Skill(101040042, 1, 0, 0, 0, false, false)));
+    }
+
     /** 核对旧kind语义和逐步截断，12000表示120%而非额外加120%。 */
     @Test void initialModifiersFollowOldKindSemantics() {
         assertEquals(67, HeroBattleRoundUtils.initialAttribute(56, 2, 12000));

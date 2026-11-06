@@ -15,6 +15,24 @@ for (const star of [5, 6]) {
     const name = "independent-nanako-star-" + star + "-replay.pb";
     fixtures.set("/" + name, fs.readFileSync(path.join(__dirname, "../backend/target", name)));
 }
+for (const star of [5, 6, 7]) {
+    const name = "independent-charm-star-" + star + "-replay.pb";
+    fixtures.set("/" + name, fs.readFileSync(path.join(__dirname, "../backend/target", name)));
+}
+// 新专项按固定文件名挂载，保留只生成旧夹具时的启动方式。
+const charmDeathName = "independent-charm-death-replay.pb";
+const charmDeathPath = path.join(__dirname, "../backend/target", charmDeathName);
+if (fs.existsSync(charmDeathPath)) {
+    fixtures.set("/" + charmDeathName, fs.readFileSync(charmDeathPath));
+}
+// 独立WebSocket试战的导出文件可选，不接受任意路径。
+for (const mission of [1, 2, 3]) {
+    const name = "lineup-mixed-" + mission + "-replay.pb";
+    const file = path.join(__dirname, "../backend/target", name);
+    if (fs.existsSync(file)) {
+        fixtures.set("/" + name, fs.readFileSync(file));
+    }
+}
 http.createServer((request, response) => {
     if (request.method !== "GET" || !fixtures.has(request.url)) {
         response.writeHead(404);

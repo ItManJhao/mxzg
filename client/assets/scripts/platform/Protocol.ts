@@ -3,6 +3,8 @@
  * 当前线上使用 Frame.name 字符串作协议标识；不是另造一套数字号，不复制游爱 Sproto 协议。
  */
 export class Protocol {
+    /** 当前已保存阵容的开发只读试战，不发奖、不记录通关。 */
+    static readonly BATTLE_PREVIEW = "battle.preview";
     /** 主线阵型和站位保存；资产仍从统一状态同步。 */
     static readonly FORMATION_SAVE = "formation.save";
     /** 查询本机 GM 实际开关。 */
@@ -37,6 +39,7 @@ export interface ProtocolDefinition {
 }
 /** 仅列出真正已接通的消息，新增协议须同步 .proto、服务端和模块处理。 */
 export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze([
+    {name:Protocol.BATTLE_PREVIEW,module:"战斗",description:"当前阵容只读试战"},
     {name:Protocol.FORMATION_SAVE,module:"阵容",description:"主线阵容保存回执"},
     {name:Protocol.GM_STATUS,module:"开发GM",description:"GM 开关"},
     {name:Protocol.GM_GRANT,module:"开发GM",description:"当前角色资产发放回执"},

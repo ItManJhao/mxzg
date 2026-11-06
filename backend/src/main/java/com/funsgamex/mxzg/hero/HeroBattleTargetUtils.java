@@ -1,6 +1,6 @@
 /**
  * 旧版动作目标选择子集：由动作执行器在应用效果前调用，只计算本场目标，不修改资产。
- * 调用者提供战场维护的存活名单；死亡、随机、控制改选和临时目标数尚未接入。
+ * 调用者提供战场维护的存活名单；死亡、控制改选和临时目标数尚未接入；随机选择由调用方提供有界下标。
  */
 package com.funsgamex.mxzg.hero;
 
@@ -8,7 +8,7 @@ import java.util.*;
 
 public final class HeroBattleTargetUtils {
     /** 已核对的选择器，未知类型不能降级为默认敌人。 */
-    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 6, 7, 10, 11, 12);
+    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 12);
 
     /** 纯规则工具禁止实例化。 */
     private HeroBattleTargetUtils() {}
@@ -41,6 +41,15 @@ public final class HeroBattleTargetUtils {
      */
     public static List<Unit> select(Plan plan, Unit source, List<Unit> liveUnits,
                                     List<Unit> context, boolean ordinaryCounterattack) {
+        return select(plan, source, liveUnits, context, ordinaryCounterattack, bound -> {
+            throw new IllegalStateException("随机选目标缺少本场随机源");
+        });
+    }
+
+    /** 旧RandomSelector/RandomUtil.randomList：逐次从剩余列表移除随机下标；不足数量不抽样、不重排。 */
+    public static List<Unit> select(Plan plan, Unit source, List<Unit> liveUnits,
+                                    List<Unit> context, boolean ordinaryCounterattack,
+                                    java.util.function.IntUnaryOperator randomIndex) {
         var targets = new LinkedHashSet<Unit>(context);
         if (ordinaryCounterattack && !targets.isEmpty()) {
             return List.copyOf(targets);
@@ -65,6 +74,20 @@ public final class HeroBattleTargetUtils {
                     // 旧规则：目标排为空则保持原集合，不自行截取数量。
                     if (!preferred.isEmpty()) {
                         replace(targets, preferred);
+                    }
+                }
+                case 8 -> {
+                    if (targets.size() > count) {
+                        var remaining = new ArrayList<>(targets);
+                        var selected = new ArrayList<Unit>();
+                        for (int index = 0; index < count; index++) {
+                            int chosen = randomIndex.applyAsInt(remaining.size());
+                            if (chosen < 0 || chosen >= remaining.size()) {
+                                throw new IllegalArgumentException("随机目标下标越界");
+                            }
+                            selected.add(remaining.remove(chosen));
+                        }
+                        replace(targets, selected);
                     }
                 }
                 case 11 -> replace(targets, targets.stream()

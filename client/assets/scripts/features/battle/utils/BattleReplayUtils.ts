@@ -112,13 +112,18 @@ export class BattleReplayUtils {
             game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
         }).game.BattleReplay;
         const report = codec.decode(bytes);
-        if (report.schemaVersion !== 1 || ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0
-            || report.units.length !== (report.scenario === "audit:control-teams" ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2) || report.rounds < 1 || report.rounds > 15) {
+        const lineupMission = /^audit:lineup:[123]$/.test(report.scenario) ? Number(report.scenario.slice(-1)) : 0;
+        if (report.schemaVersion !== 1 || (!lineupMission && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
+            || (!lineupMission && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > 15) {
             throw new Error("战报版本或场景不支持");
         }
         const roster = this.validateUnits(report.units);
         const hp = new Map<number, number>();
-        const expected = report.scenario === "audit:dark-cutter-bleed"
+        const expected = report.scenario === "audit:charm-death"
+            ? [[1, 1, 10105011, 2, 50], [2, 2, 10101001, 5, 25], [3, 2, 10101001, 6, 25], [4, 2, 10101001, 7, 25]]
+            : report.scenario === "audit:charm"
+            ? [[1, 1, 10105011, 2, 100], [2, 2, 10101001, 5, 100], [3, 2, 10101001, 6, 100], [4, 2, 10101001, 7, 100]]
+            : report.scenario === "audit:dark-cutter-bleed"
             ? [[1, 1, 10505005, 2, 100], [2, 2, 10505005, 2, 100]]
             : report.scenario === "audit:nanako"
             ? [[1, 1, 10205023, 2, 100], [2, 2, 10205023, 2, 100]]
@@ -129,12 +134,26 @@ export class BattleReplayUtils {
             : [[1, 1, 10101001, 2, 1], [2, 2, report.scenario === "main:1:1:2" ? 10505005 : 10101001, 2,
                 report.scenario === "main:1:1:2" ? 2 : 1]];
         for (const unit of roster) {
-            const entry = expected.find(value => value[0] === unit.unitId);
-            if (!entry || unit.faction !== entry[1] || unit.templateId !== entry[2]
-                || unit.position !== entry[3] || unit.level !== entry[4]) {
-                throw new Error("战报单位无效");
+            if (lineupMission) {
+                if (unit.unitId !== unit.position + (unit.faction === 2 ? 8 : 0)) throw new Error("阵容战报身份无效");
+                if (unit.faction === 2) {
+                    const template = unit.position === 2 ? (lineupMission === 2 ? 10505005 : 10101001)
+                        : lineupMission === 3 && unit.position === 3 ? 10104004 : 0;
+                    if (unit.templateId !== template || unit.level !== (lineupMission === 1 ? 1 : 2)) {
+                        throw new Error("阵容战报敌方与关卡不符");
+                    }
+                }
+            } else {
+                const entry = expected.find(value => value[0] === unit.unitId);
+                if (!entry || unit.faction !== entry[1] || unit.templateId !== entry[2]
+                    || unit.position !== entry[3] || unit.level !== entry[4]) {
+                    throw new Error("战报单位无效");
+                }
             }
             hp.set(unit.unitId, unit.initialHp);
+        }
+        if (lineupMission && roster.filter(unit => unit.faction === 2).length !== (lineupMission === 3 ? 2 : 1)) {
+            throw new Error("阵容战报敌方数量不符");
         }
         const steps: BattleReplayStep[] = [];
         const buffs = new Map<string, number>();

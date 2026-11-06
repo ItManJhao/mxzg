@@ -20,6 +20,11 @@ const codecModule = {exports:{}};
 const codec = esbuild.transformSync(fs.readFileSync(path.join(root,'client/assets/scripts/platform/GameProtocol.generated.ts'),'utf8'),
     {loader:'ts',format:'cjs'}).code;
 new Function('module','exports','require',codec)(codecModule,codecModule.exports,require);
+for (const level of [1, 2]) {
+    const entry = utils.skills(10105011, config).find(row => row.id === 101050113 && row.level === level);
+    assert.equal(entry.status, "规则已验证");
+    assert.equal(entry.fixture, null);
+}
 let total = 0, playable = 0;
 for (const hero of tables.HeroType.rows) {
     const entries = utils.skills(hero.type,config);
@@ -27,7 +32,7 @@ for (const hero of tables.HeroType.rows) {
     assert.equal(entries.length,tables.HeroSkill.rows.filter(row => ids.has(row.type)).length);
     for (const entry of entries) {
         total++;
-        if (!entry.fixture) { assert.ok(['未接入','部分接入'].includes(entry.status)); assert.ok(entry.reason); continue; }
+        if (!entry.fixture) { assert.ok(['未接入','部分接入','规则已验证'].includes(entry.status)); assert.ok(entry.reason); continue; }
         playable++;
         const replay = codecModule.exports.mxzg.game.BattleReplay.decode(fs.readFileSync(path.join(root,'backend/target',entry.fixture)));
         assert.ok(replay.units.some(unit => unit.templateId === hero.type), '演示不能使用其他英雄冒充');

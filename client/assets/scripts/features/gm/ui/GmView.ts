@@ -9,11 +9,13 @@ import { GmController } from "../GmController";
 import { GmOptionCellView } from "./GmOptionCellView";
 const { ccclass, property } = _decorator;
 interface Option { id: number; name: string; }
-export interface GmOpenArgs { controller: GmController; roleId: string; nickname: string; openSkillAudit?: () => void; }
+export interface GmOpenArgs { controller: GmController; roleId: string; nickname: string; openSkillAudit?: () => void; openLineupBattle?: (mission: number) => void; }
 @ccclass("GmView")
 export class GmView extends BaseView<GmOpenArgs> {
     /** 开发技能验收入口，由应用提供打开动作。 */
     @property(Button) auditButton: Button | null = null;
+    /** 前三关只读阵容试战，使用静态预制体按钮，应用负责通信与画面生命周期。 */
+    @property([Button]) battleButtons: Button[] = [];
     /** 当前角色说明。 */
     @property(Label) owner: Label | null = null;
     /** 英雄与道具分类按钮。 */
@@ -53,6 +55,10 @@ export class GmView extends BaseView<GmOpenArgs> {
         this.args = args; this.closed = false; this.owner!.string = "当前角色：" + args.nickname + "\n" + args.roleId; this.grantButton!.interactable = false;
         const bind = (b: Button, fn: () => void) => { const n = b.node; n.on(Button.EventType.CLICK, fn); this.stops.push(() => { if (n.isValid) n.off(Button.EventType.CLICK, fn); }); };
         if (this.auditButton) { this.auditButton.node.active = !!args.openSkillAudit; bind(this.auditButton, () => args.openSkillAudit?.()); }
+        this.battleButtons.forEach((button, index) => {
+            button.node.active = !!args.openLineupBattle;
+            bind(button, () => args.openLineupBattle?.(index + 1));
+        });
         bind(this.closeButton!, () => this.close()); this.kindButtons.forEach((b, i) => bind(b, () => this.chooseKind(i === 0 ? "hero" : "item")));
         bind(this.dropdownButton!, () => { this.dropdown!.active = !this.dropdown!.active; }); bind(this.grantButton!, () => { void this.grant(); });
         const search = () => this.paintOptions(); this.search!.node.on(EditBox.EventType.TEXT_CHANGED, search); this.stops.push(() => this.search?.node?.off(EditBox.EventType.TEXT_CHANGED, search));

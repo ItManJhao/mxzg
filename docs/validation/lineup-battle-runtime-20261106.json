@@ -1,0 +1,55 @@
+{
+  "results": [
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][LineupBattle]%c[info] 15:55:39 {\"mission\":3,\"assetRevision\":2,\"lineupVersion\":1,\"formationId\":1,\"pending\":[\"soul_talent_runes_awakening\",\"account_and_team_sources\",\"battle_special_attributes_and_triggers\",\"random_probability_pending_review\"]} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:55:39.681Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][LineupBattle]%c[info] 16:04:38 {\"mission\":1,\"assetRevision\":2,\"lineupVersion\":1,\"formationId\":1,\"pending\":[\"soul_talent_runes_awakening\",\"account_and_team_sources\",\"battle_special_attributes_and_triggers\",\"random_probability_pending_review\"]} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T08:04:38.116Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][LineupBattle]%c[info] 16:06:36 {\"mission\":2,\"assetRevision\":2,\"lineupVersion\":1,\"formationId\":1,\"pending\":[\"soul_talent_runes_awakening\",\"account_and_team_sources\",\"battle_special_attributes_and_triggers\",\"random_probability_pending_review\"]} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T08:06:36.220Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][LineupBattle]%c[info] 16:07:37 {\"mission\":3,\"assetRevision\":2,\"lineupVersion\":1,\"formationId\":1,\"pending\":[\"soul_talent_runes_awakening\",\"account_and_team_sources\",\"battle_special_attributes_and_triggers\",\"random_probability_pending_review\"]} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T08:07:37.920Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    }
+  ],
+  "lifecycle": [
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:57:08 {\"assets\":{\"scopes\":22,\"entries\":66,\"pending\":0,\"owners\":70,\"retained\":66},\"prefabs\":{\"pending\":0,\"cached\":4},\"ui\":{\"pages\":1,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":558} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T07:57:08.522Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 16:05:57 {\"assets\":{\"scopes\":22,\"entries\":66,\"pending\":0,\"owners\":70,\"retained\":66},\"prefabs\":{\"pending\":0,\"cached\":4},\"ui\":{\"pages\":1,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":558} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T08:05:57.004Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 16:07:25 {\"assets\":{\"scopes\":22,\"entries\":66,\"pending\":0,\"owners\":70,\"retained\":66},\"prefabs\":{\"pending\":0,\"cached\":4},\"ui\":{\"pages\":1,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":558} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T08:07:25.473Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 16:08:03 {\"assets\":{\"scopes\":22,\"entries\":66,\"pending\":0,\"owners\":70,\"retained\":66},\"prefabs\":{\"pending\":0,\"cached\":4},\"ui\":{\"pages\":1,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0},\"events\":{\"listeners\":1,\"targets\":1},\"scopedSubscriptions\":4,\"nativeTimers\":12,\"engineAssets\":558} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-06T08:08:03.514Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    }
+  ],
+  "errors": []
+}

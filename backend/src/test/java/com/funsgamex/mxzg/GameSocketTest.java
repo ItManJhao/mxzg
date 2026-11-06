@@ -145,6 +145,15 @@ class GameSocketTest {
         }
     }
 
+    /** 默认关闭开发能力时，试战也必须由服务端拒绝。 */
+    @Test void battlePreviewRequiresDevelopmentSwitch() throws Exception {
+        var player = player();
+        try (var peer = new Peer()) {
+            peer.authenticate(player.session().accessToken());
+            assertEquals("GM_DISABLED", peer.request("battle.preview", Map.of("mission", 1)).path("error").path("code").asString());
+        }
+    }
+
     @Test void authenticationAndSyncGate() throws Exception {
         var player=player();
         try(var anonymous=new Peer()) {

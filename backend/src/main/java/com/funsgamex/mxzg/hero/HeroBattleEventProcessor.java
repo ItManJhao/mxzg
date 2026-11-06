@@ -8,7 +8,7 @@ import java.util.*;
 
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
-    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004);
+    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 180);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
     /** 当前事件所属回合，行动调度或战场回合入口显式设置。 */
@@ -274,7 +274,7 @@ public final class HeroBattleEventProcessor {
 
     /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 180, 177, 176, 183, 204, 185, 207).contains(event)) {
+        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 177, 176, 183, 204, 185, 207).contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);

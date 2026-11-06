@@ -1,8 +1,8 @@
 /** 按旧G_BATTLE_ACTIONS覆盖及BattleActionUtils解析近身、远程和独立特效时序；不把life当动作时长或生成通用特效。 */
 export interface BattleAttackPlan {
-    /** true为type2近身移动；false为type3原地施法，不能瞬移到目标。 */
+    /** true为type2/11近身移动；false为type3原地施法，不能瞬移到目标。 */
     readonly melee: boolean;
-    /** 6/7/9只播放独立特效，不覆盖施法骨骼；6定位施法者，7定位各目标，9定位战场。 */
+    /** 1为空动作，6/7/9只播放独立特效，不覆盖施法骨骼；6定位施法者，7定位各目标，9定位战场。 */
     readonly effectOnly: boolean;
     readonly onSource: boolean;
     /** type9按战场宽高比例定位，仅播放一次；左右阵营按旧特效层镜像。 */
@@ -60,6 +60,25 @@ export class BattleAttackUtils {
                 type: entry.type, delay: entry.delay, dimly: entry.dimly,
                 ani_base: JSON.stringify(entry.base), file: JSON.stringify(entry.file ? [entry.file] : []), sound: "[]" }));
         }
+        // 旧魅惑之拥覆盖：普攻目标特效与11号近身并行；主动包含空动作，不额外播放骨骼。
+        if (row.idx === 1110200 || (row.idx >= 1111201 && row.idx <= 1111203)) {
+            const normal = row.idx === 1110200;
+            const entries = normal ? [
+                { type: 7, delay: 20, dimly: 0, base: { format: "skill-101050110/%d.png", anchor_y: 0.4,
+                    anchor_x: 0.35, duration: 0.08, scale_x: 1, scale_y: 1, flipped: 1 }, file: "skill-101050110" },
+                { type: 11, delay: 0, dimly: 0, base: { move_time: 0.1, move_back: 0.5,
+                    attack_delay: 0.8, offset_x: 0.6, offset_y: 0.3 }, file: "" }
+            ] : [
+                { type: 7, delay: 50, dimly: 1, base: { format: "skill-101050111/%d.png", anchor_y: 0.32,
+                    anchor_x: 0.5, duration: 0.08, scale_x: 1.3, scale_y: 1.3 }, file: "skill-101050111" },
+                { type: 3, delay: 0, dimly: 0, base: { action: "skill", attack_time: 0.6, action_time: 1.5 }, file: "" },
+                { type: 1, delay: 0, dimly: 0, base: {}, file: "" }
+            ];
+            return entries.map((entry, index) => ({ ...row, idx: row.idx * 10 + index,
+                type: entry.type, delay: entry.delay, dimly: entry.dimly,
+                ani_base: JSON.stringify(entry.base), file: JSON.stringify(entry.file ? [entry.file] : []),
+                sound: JSON.stringify(entry.file ? [entry.file] : []) }));
+        }
         const normal = row.idx === 2230100;
         const first = row.idx >= 2231101 && row.idx <= 2231103;
         const second = row.idx >= 2233101 && row.idx <= 2233103;
@@ -83,9 +102,9 @@ export class BattleAttackUtils {
             sound: JSON.stringify(entry.sound ? [entry.sound] : []) }));
     }
 
-    /** 读取同源buff行；开放type2/3/5和已核对覆盖表的type6/7/9真实帧资源，未知表现明确拒绝。 */
+    /** 读取同源buff行；开放type1/2/3/5/11和已核对覆盖表的type6/7/9真实帧资源，未知表现明确拒绝。 */
     public static plan(row: { type: number; ani_base: string; file: string; sound: string }): BattleAttackPlan {
-        if ([2, 3, 5, 6, 7, 9].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
+        if ([1, 2, 3, 5, 6, 7, 9, 11].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
         const base: unknown = JSON.parse(row.ani_base);
         const files: unknown = JSON.parse(row.file);
         const sounds: unknown = JSON.parse(row.sound);
@@ -95,8 +114,8 @@ export class BattleAttackUtils {
             throw new Error("攻击动作配置超出当前支持范围");
         }
         const values = base as Record<string, unknown>;
-        const known = ["move_time", "attack_time", "attack_delay", "action_time", "move_back", "action", "format", "duration", "scale_x", "scale_y", "anchor_x", "anchor_y"];
-        if (row.type === 9) known.push("offset_x", "offset_y");
+        const known = ["move_time", "attack_time", "attack_delay", "action_time", "move_back", "action", "format", "duration", "scale_x", "scale_y", "anchor_x", "anchor_y", "flipped"];
+        if (row.type === 9 || row.type === 11) known.push("offset_x", "offset_y");
         if (Object.keys(values).some(key => known.indexOf(key) < 0)) {
             throw new Error("攻击动作存在未支持参数");
         }
@@ -106,7 +125,7 @@ export class BattleAttackUtils {
         }
         let effect: BattleAttackPlan["effect"] = null;
         if (files.length) {
-            const counts: Record<string, number> = { "skill-105050051": 19, "skill-105050051-1": 8, "skill-101010011": 9, "skill-101040050": 7, "skill-101020021": 11, "skill-102050230": 8, "skill-102050231": 17, "skill-102050233": 22, "skill-102050233_1": 22 };
+            const counts: Record<string, number> = { "skill-101050110": 10, "skill-101050111": 10, "skill-105050051": 19, "skill-105050051-1": 8, "skill-101010011": 9, "skill-101040050": 7, "skill-101020021": 11, "skill-102050230": 8, "skill-102050231": 17, "skill-102050233": 22, "skill-102050233_1": 22 };
             const file = files[0];
             if (files.length !== 1 || typeof file !== "string" || !counts[file]
                 || values.format !== file + "/%d.png" || row.type === 2) {
@@ -114,23 +133,27 @@ export class BattleAttackUtils {
             }
             const interval = this.seconds(values, "duration", 0.05);
             if (interval <= 0) throw new Error("特效帧间隔无效");
+            if (values.flipped !== undefined && values.flipped !== 0 && values.flipped !== 1) {
+                throw new Error("特效水平翻转配置无效");
+            }
             effect = Object.freeze({
                 paths: Object.freeze(Array.from({length: counts[file]}, (_, index) =>
                     "battle/skill/" + file + "/" + file + "_" + index + "/spriteFrame")),
                 interval,
                 // 旧getAnimateCount包含首次查找失败的那一帧，7张图实际飞行8个间隔。
                 flightSeconds: (counts[file] + 1) * interval,
-                scaleX: typeof values.scale_x === "number" && Number.isFinite(values.scale_x) ? values.scale_x : 1, scaleY: this.seconds(values, "scale_y", 1),
-                anchorX: this.seconds(values, "anchor_x", 0.5), anchorY: this.seconds(values, "anchor_y", 0.5) - 0.07
+                // 旧flipped只翻图像；反转锚点配合负缩放保持原图几何边界，不修改共享SpriteFrame。
+                scaleX: (typeof values.scale_x === "number" && Number.isFinite(values.scale_x) ? values.scale_x : 1) * (values.flipped === 1 ? -1 : 1), scaleY: this.seconds(values, "scale_y", 1),
+                anchorX: values.flipped === 1 ? 1 - this.seconds(values, "anchor_x", 0.5) : this.seconds(values, "anchor_x", 0.5), anchorY: this.seconds(values, "anchor_y", 0.5) - 0.07
             });
         } else if (values.format !== undefined || row.type === 5) {
             throw new Error("投射或序列帧缺少资源");
         }
         return Object.freeze({
-            effectOnly: row.type === 6 || row.type === 7 || row.type === 9, onSource: row.type === 6 || row.type === 9,
+            effectOnly: row.type === 1 || row.type === 6 || row.type === 7 || row.type === 9, onSource: row.type === 6 || row.type === 9,
             battlefieldOffset: row.type === 9 ? Object.freeze([this.seconds(values, "offset_x", 0), this.seconds(values, "offset_y", 0)]) as readonly [number, number] : null,
-            melee: row.type === 2, projectile: row.type === 5, effect,
-            moveSeconds: row.type === 2 ? this.seconds(values, "move_time", 0.1) : 0, action: action === "skill" ? "attack2" : action === "skill2" ? "attack3" : action === "transform" ? "skill" : "attack",
+            melee: row.type === 2 || row.type === 11, projectile: row.type === 5, effect,
+            moveSeconds: row.type === 2 || row.type === 11 ? this.seconds(values, "move_time", 0.1) : 0, action: action === "skill" ? "attack2" : action === "skill2" ? "attack3" : action === "transform" ? "skill" : "attack",
             attackSeconds: this.seconds(values, "attack_time", 0),
             attackDelaySeconds: this.seconds(values, "attack_delay", 0),
             actionSeconds: this.seconds(values, "action_time", 0),

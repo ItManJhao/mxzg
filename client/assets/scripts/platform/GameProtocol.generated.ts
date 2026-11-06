@@ -2766,9 +2766,11 @@ var mxzg = $root.mxzg = (() => {
       Frame.prototype.gmStatus = null;
       Frame.prototype.formationSave = null;
       Frame.prototype.formationSaved = null;
+      Frame.prototype.battlePreview = null;
+      Frame.prototype.battlePreviewed = null;
       let $oneOfFields;
       Object.defineProperty(Frame.prototype, "payload", {
-        get: $util.oneOfGetter($oneOfFields = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved"]),
+        get: $util.oneOfGetter($oneOfFields = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed"]),
         set: $util.oneOfSetter($oneOfFields)
       });
       Frame.create = function create(properties) {
@@ -2883,6 +2885,16 @@ var mxzg = $root.mxzg = (() => {
             /* id 23, wireType 2 =*/
             186
           ).fork(), q + 1).ldelim();
+        if (message.battlePreview != null && Object.hasOwnProperty.call(message, "battlePreview"))
+          $root.mxzg.game.BattlePreviewRequest.encode(message.battlePreview, writer.uint32(
+            /* id 24, wireType 2 =*/
+            194
+          ).fork(), q + 1).ldelim();
+        if (message.battlePreviewed != null && Object.hasOwnProperty.call(message, "battlePreviewed"))
+          $root.mxzg.game.BattlePreviewResult.encode(message.battlePreviewed, writer.uint32(
+            /* id 25, wireType 2 =*/
+            202
+          ).fork(), q + 1).ldelim();
         return writer;
       };
       Frame.decode = function decode(reader, length, error, long) {
@@ -2990,6 +3002,14 @@ var mxzg = $root.mxzg = (() => {
             }
             case 23: {
               message.formationSaved = $root.mxzg.game.FormationSaved.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 24: {
+              message.battlePreview = $root.mxzg.game.BattlePreviewRequest.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 25: {
+              message.battlePreviewed = $root.mxzg.game.BattlePreviewResult.decode(reader, reader.uint32(), void 0, long + 1);
               break;
             }
             default:
@@ -3179,6 +3199,26 @@ var mxzg = $root.mxzg = (() => {
               return "formationSaved." + error;
           }
         }
+        if (message.battlePreview != null && Object.hasOwnProperty.call(message, "battlePreview")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.BattlePreviewRequest.verify(message.battlePreview, long + 1);
+            if (error)
+              return "battlePreview." + error;
+          }
+        }
+        if (message.battlePreviewed != null && Object.hasOwnProperty.call(message, "battlePreviewed")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.BattlePreviewResult.verify(message.battlePreviewed, long + 1);
+            if (error)
+              return "battlePreviewed." + error;
+          }
+        }
         return null;
       };
       Frame.fromObject = function fromObject(object, long) {
@@ -3277,6 +3317,16 @@ var mxzg = $root.mxzg = (() => {
           if (!$util.isObject(object.formationSaved))
             throw TypeError(".mxzg.game.Frame.formationSaved: object expected");
           message.formationSaved = $root.mxzg.game.FormationSaved.fromObject(object.formationSaved, long + 1);
+        }
+        if (object.battlePreview != null) {
+          if (!$util.isObject(object.battlePreview))
+            throw TypeError(".mxzg.game.Frame.battlePreview: object expected");
+          message.battlePreview = $root.mxzg.game.BattlePreviewRequest.fromObject(object.battlePreview, long + 1);
+        }
+        if (object.battlePreviewed != null) {
+          if (!$util.isObject(object.battlePreviewed))
+            throw TypeError(".mxzg.game.Frame.battlePreviewed: object expected");
+          message.battlePreviewed = $root.mxzg.game.BattlePreviewResult.fromObject(object.battlePreviewed, long + 1);
         }
         return message;
       };
@@ -3380,6 +3430,16 @@ var mxzg = $root.mxzg = (() => {
           object.formationSaved = $root.mxzg.game.FormationSaved.toObject(message.formationSaved, options, q + 1);
           if (options.oneofs)
             object.payload = "formationSaved";
+        }
+        if (message.battlePreview != null && Object.hasOwnProperty.call(message, "battlePreview")) {
+          object.battlePreview = $root.mxzg.game.BattlePreviewRequest.toObject(message.battlePreview, options, q + 1);
+          if (options.oneofs)
+            object.payload = "battlePreview";
+        }
+        if (message.battlePreviewed != null && Object.hasOwnProperty.call(message, "battlePreviewed")) {
+          object.battlePreviewed = $root.mxzg.game.BattlePreviewResult.toObject(message.battlePreviewed, options, q + 1);
+          if (options.oneofs)
+            object.payload = "battlePreviewed";
         }
         return object;
       };
@@ -10675,6 +10735,386 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.BattleReplayEvent";
       };
       return BattleReplayEvent;
+    })();
+    game.BattlePreviewRequest = (function() {
+      function BattlePreviewRequest(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      BattlePreviewRequest.prototype.mission = 0;
+      BattlePreviewRequest.create = function create(properties) {
+        return new BattlePreviewRequest(properties);
+      };
+      BattlePreviewRequest.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.mission);
+        return writer;
+      };
+      BattlePreviewRequest.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.BattlePreviewRequest();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.mission = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "mission"))
+          throw $util.ProtocolError("missing required 'mission'", { instance: message });
+        return message;
+      };
+      BattlePreviewRequest.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.mission))
+          return "mission: integer expected";
+        return null;
+      };
+      BattlePreviewRequest.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.BattlePreviewRequest)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.BattlePreviewRequest: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.BattlePreviewRequest();
+        if (object.mission != null)
+          message.mission = object.mission >>> 0;
+        return message;
+      };
+      BattlePreviewRequest.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults)
+          object.mission = 0;
+        if (message.mission != null && Object.hasOwnProperty.call(message, "mission"))
+          object.mission = message.mission;
+        return object;
+      };
+      BattlePreviewRequest.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      BattlePreviewRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.BattlePreviewRequest";
+      };
+      return BattlePreviewRequest;
+    })();
+    game.BattlePreviewResult = (function() {
+      function BattlePreviewResult(properties) {
+        this.pending = [];
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      BattlePreviewResult.prototype.mission = 0;
+      BattlePreviewResult.prototype.assetRevision = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      BattlePreviewResult.prototype.lineupVersion = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      BattlePreviewResult.prototype.formationId = 0;
+      BattlePreviewResult.prototype.pending = $util.emptyArray;
+      BattlePreviewResult.prototype.replay = null;
+      BattlePreviewResult.create = function create(properties) {
+        return new BattlePreviewResult(properties);
+      };
+      BattlePreviewResult.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.mission);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).int64(message.assetRevision);
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).int64(message.lineupVersion);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).uint32(message.formationId);
+        if (message.pending != null && message.pending.length)
+          for (let i = 0; i < message.pending.length; ++i)
+            writer.uint32(
+              /* id 5, wireType 2 =*/
+              42
+            ).string(message.pending[i]);
+        $root.mxzg.game.BattleReplay.encode(message.replay, writer.uint32(
+          /* id 6, wireType 2 =*/
+          50
+        ).fork(), q + 1).ldelim();
+        return writer;
+      };
+      BattlePreviewResult.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.BattlePreviewResult();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.mission = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.assetRevision = reader.int64();
+              break;
+            }
+            case 3: {
+              message.lineupVersion = reader.int64();
+              break;
+            }
+            case 4: {
+              message.formationId = reader.uint32();
+              break;
+            }
+            case 5: {
+              if (!(message.pending && message.pending.length))
+                message.pending = [];
+              message.pending.push(reader.string());
+              break;
+            }
+            case 6: {
+              message.replay = $root.mxzg.game.BattleReplay.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "mission"))
+          throw $util.ProtocolError("missing required 'mission'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "assetRevision"))
+          throw $util.ProtocolError("missing required 'assetRevision'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "lineupVersion"))
+          throw $util.ProtocolError("missing required 'lineupVersion'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "formationId"))
+          throw $util.ProtocolError("missing required 'formationId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "replay"))
+          throw $util.ProtocolError("missing required 'replay'", { instance: message });
+        return message;
+      };
+      BattlePreviewResult.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.mission))
+          return "mission: integer expected";
+        if (!$util.isInteger(message.assetRevision) && !(message.assetRevision && $util.isInteger(message.assetRevision.low) && $util.isInteger(message.assetRevision.high)))
+          return "assetRevision: integer|Long expected";
+        if (!$util.isInteger(message.lineupVersion) && !(message.lineupVersion && $util.isInteger(message.lineupVersion.low) && $util.isInteger(message.lineupVersion.high)))
+          return "lineupVersion: integer|Long expected";
+        if (!$util.isInteger(message.formationId))
+          return "formationId: integer expected";
+        if (message.pending != null && Object.hasOwnProperty.call(message, "pending")) {
+          if (!Array.isArray(message.pending))
+            return "pending: array expected";
+          for (let i = 0; i < message.pending.length; ++i)
+            if (!$util.isString(message.pending[i]))
+              return "pending: string[] expected";
+        }
+        {
+          let error = $root.mxzg.game.BattleReplay.verify(message.replay, long + 1);
+          if (error)
+            return "replay." + error;
+        }
+        return null;
+      };
+      BattlePreviewResult.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.BattlePreviewResult)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.BattlePreviewResult: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.BattlePreviewResult();
+        if (object.mission != null)
+          message.mission = object.mission >>> 0;
+        if (object.assetRevision != null) {
+          if ($util.Long)
+            message.assetRevision = $util.Long.fromValue(object.assetRevision, false);
+          else if (typeof object.assetRevision === "string")
+            message.assetRevision = parseInt(object.assetRevision, 10);
+          else if (typeof object.assetRevision === "number")
+            message.assetRevision = object.assetRevision;
+          else if (typeof object.assetRevision === "object")
+            message.assetRevision = new $util.LongBits(object.assetRevision.low >>> 0, object.assetRevision.high >>> 0).toNumber();
+        }
+        if (object.lineupVersion != null) {
+          if ($util.Long)
+            message.lineupVersion = $util.Long.fromValue(object.lineupVersion, false);
+          else if (typeof object.lineupVersion === "string")
+            message.lineupVersion = parseInt(object.lineupVersion, 10);
+          else if (typeof object.lineupVersion === "number")
+            message.lineupVersion = object.lineupVersion;
+          else if (typeof object.lineupVersion === "object")
+            message.lineupVersion = new $util.LongBits(object.lineupVersion.low >>> 0, object.lineupVersion.high >>> 0).toNumber();
+        }
+        if (object.formationId != null)
+          message.formationId = object.formationId >>> 0;
+        if (object.pending) {
+          if (!Array.isArray(object.pending))
+            throw TypeError(".mxzg.game.BattlePreviewResult.pending: array expected");
+          message.pending = [];
+          for (let i = 0; i < object.pending.length; ++i)
+            message.pending[i] = String(object.pending[i]);
+        }
+        if (object.replay != null) {
+          if (!$util.isObject(object.replay))
+            throw TypeError(".mxzg.game.BattlePreviewResult.replay: object expected");
+          message.replay = $root.mxzg.game.BattleReplay.fromObject(object.replay, long + 1);
+        }
+        return message;
+      };
+      BattlePreviewResult.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.arrays || options.defaults)
+          object.pending = [];
+        if (options.defaults) {
+          object.mission = 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.assetRevision = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.assetRevision = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.lineupVersion = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.lineupVersion = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          object.formationId = 0;
+          object.replay = null;
+        }
+        if (message.mission != null && Object.hasOwnProperty.call(message, "mission"))
+          object.mission = message.mission;
+        if (message.assetRevision != null && Object.hasOwnProperty.call(message, "assetRevision"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.assetRevision = typeof message.assetRevision === "number" ? BigInt(message.assetRevision) : $util.Long.fromBits(message.assetRevision.low >>> 0, message.assetRevision.high >>> 0, false).toBigInt();
+          else if (typeof message.assetRevision === "number")
+            object.assetRevision = options.longs === String ? String(message.assetRevision) : message.assetRevision;
+          else
+            object.assetRevision = options.longs === String ? $util.Long.prototype.toString.call(message.assetRevision) : options.longs === Number ? new $util.LongBits(message.assetRevision.low >>> 0, message.assetRevision.high >>> 0).toNumber() : message.assetRevision;
+        if (message.lineupVersion != null && Object.hasOwnProperty.call(message, "lineupVersion"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.lineupVersion = typeof message.lineupVersion === "number" ? BigInt(message.lineupVersion) : $util.Long.fromBits(message.lineupVersion.low >>> 0, message.lineupVersion.high >>> 0, false).toBigInt();
+          else if (typeof message.lineupVersion === "number")
+            object.lineupVersion = options.longs === String ? String(message.lineupVersion) : message.lineupVersion;
+          else
+            object.lineupVersion = options.longs === String ? $util.Long.prototype.toString.call(message.lineupVersion) : options.longs === Number ? new $util.LongBits(message.lineupVersion.low >>> 0, message.lineupVersion.high >>> 0).toNumber() : message.lineupVersion;
+        if (message.formationId != null && Object.hasOwnProperty.call(message, "formationId"))
+          object.formationId = message.formationId;
+        if (message.pending && message.pending.length) {
+          object.pending = [];
+          for (let j = 0; j < message.pending.length; ++j)
+            object.pending[j] = message.pending[j];
+        }
+        if (message.replay != null && Object.hasOwnProperty.call(message, "replay"))
+          object.replay = $root.mxzg.game.BattleReplay.toObject(message.replay, options, q + 1);
+        return object;
+      };
+      BattlePreviewResult.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      BattlePreviewResult.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.BattlePreviewResult";
+      };
+      return BattlePreviewResult;
     })();
     return game;
   })();

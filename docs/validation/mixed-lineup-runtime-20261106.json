@@ -1,0 +1,38 @@
+[
+  {
+    "mission": 1,
+    "completion": [
+      {
+        "level": "log",
+        "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 17:24:42 completed hp={\"2\":20065,\"5\":27066,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+        "timestamp": "2026-11-06T09:24:42.790Z",
+        "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+      }
+    ],
+    "warningsAndErrors": []
+  },
+  {
+    "mission": 2,
+    "completion": [
+      {
+        "level": "log",
+        "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 17:25:08 completed hp={\"2\":20065,\"5\":27066,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+        "timestamp": "2026-11-06T09:25:08.629Z",
+        "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+      }
+    ],
+    "warningsAndErrors": []
+  },
+  {
+    "mission": 3,
+    "completion": [
+      {
+        "level": "log",
+        "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 17:25:10 completed hp={\"2\":20065,\"5\":27066,\"10\":0,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+        "timestamp": "2026-11-06T09:25:10.977Z",
+        "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+      }
+    ],
+    "warningsAndErrors": []
+  }
+]

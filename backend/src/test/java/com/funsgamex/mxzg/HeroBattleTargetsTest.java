@@ -74,8 +74,33 @@ class HeroBattleTargetsTest {
         assertEquals(2, plan.count());
         assertEquals(List.of(friend, source), HeroBattleTargetUtils.select(plan,
             source, living(), List.of(enemies.getFirst()), false));
-        assertThrows(IllegalArgumentException.class, () -> new Plan(1, List.of(3, 8), 1));
+        assertThrows(IllegalArgumentException.class, () -> new Plan(1, List.of(3, 9), 1));
         assertThrows(IllegalArgumentException.class, () -> new Plan(1, List.of(4), -1));
         assertThrows(IllegalStateException.class, () -> rules.battleTargets(Integer.MAX_VALUE));
     }
+    /** 旧随机列表逐次移除被选目标；随机源收到递减上界，保留实际抽取顺序且不重复。 */
+    @Test void randomSelectionUsesShrinkingExclusiveBounds() {
+        var bounds = new ArrayList<Integer>();
+        var result = HeroBattleTargetUtils.select(new Plan(1, List.of(3, 8), 2), source,
+            living(), List.of(), false, bound -> { bounds.add(bound); return bound - 1; });
+        assertEquals(List.of(4, 3), bounds);
+        assertEquals(List.of(6, 5), result.stream().map(Unit::id).toList());
+        assertEquals(4, enemies.size());
+        assertThrows(IllegalArgumentException.class, () -> HeroBattleTargetUtils.select(
+            new Plan(1, List.of(3, 8), 1), source, living(), List.of(), false, bound -> bound));
+    }
+
+    /** 候选不足、空候选、目标数量0及反击上下文都不抽样；后排优先在随机前生效。 */
+    @Test void randomSelectionRespectsEarlierSelectorsAndNoDrawCases() {
+        java.util.function.IntUnaryOperator noDraw = bound -> { throw new AssertionError("不应抽样"); };
+        assertEquals(enemies, HeroBattleTargetUtils.select(new Plan(1, List.of(3, 8), 0),
+            source, living(), List.of(), false, noDraw));
+        assertEquals(List.of(enemies.getFirst()), HeroBattleTargetUtils.select(new Plan(1, List.of(3, 4, 7, 8), 2),
+            source, living(), List.of(), false, noDraw));
+        assertTrue(HeroBattleTargetUtils.select(new Plan(1, List.of(3, 8), 2),
+            source, List.of(source), List.of(), false, noDraw).isEmpty());
+        assertEquals(List.of(friend), HeroBattleTargetUtils.select(new Plan(1, List.of(3, 8), 1),
+            source, living(), List.of(friend), true, noDraw));
+    }
+
 }

@@ -67,7 +67,7 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
         this.ownListener(() => this.search?.node?.off(EditBox.EventType.TEXT_CHANGED, changed));
         this.owner!.string = "开发进度展示 · 不修改玩家数据\n状态按技能等级登记，演示使用固定测试战报";
         this.selection!.string = "请选择英雄";
-        this.message!.string = "选择英雄，再选择技能等级。\n未接入：尚无登记演示；部分接入：仍有明确缺项。";
+        this.message!.string = "选择英雄，再选择技能等级。\n规则已验证：通过测试，暂无独立演示。";
         this.paint();
     }
 
@@ -121,7 +121,7 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
     /** 播放已有证据场景；未支持时保留原因并飘字，失败后可重试。 */
     private async play(): Promise<void> {
         if (!this.selected?.fixture) {
-            this.showNotice(this.selected ? "此技能等级尚未接入演示" : "请先选择英雄和技能等级");
+            this.showNotice(this.selected ? this.selected.reason : "请先选择英雄和技能等级");
             return;
         }
         this.playButton!.interactable = false;

@@ -78,6 +78,9 @@ public class HeroSkillPanelRules {
     public HeroBattleEventProcessor.Definition battleTrigger(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
+        if (type == 180 && !isCharmDeathListener(buffId)) {
+            throw new IllegalArgumentException("死亡监听下游尚未核对：" + buffId);
+        }
         if (type == 171 && Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) != 0) {
             throw new IllegalArgumentException("受击事件的前置Buff条件尚未支持：" + buffId);
         }
@@ -227,7 +230,8 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 160, 1205).contains(type)) {
+        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 160, 1205).contains(type)
+            && !(type == 180 && isCharmDeathListener(buffId))) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
         if (type == 160) controlAttribute(buffId);
@@ -328,6 +332,35 @@ public class HeroSkillPanelRules {
         return true;
     }
 
+    /** 已核对的直接属性动作：奈奈子降护甲及魅惑之拥主动后的自身破甲提升。 */
+    public boolean battleDirectAttribute(int buffId) {
+        if (nanakoArmorDebuff(buffId)) {
+            return true;
+        }
+        if (buffId < 1111401 || buffId > 1111403) {
+            return false;
+        }
+        charmArmorAttribute(buffId);
+        return true;
+    }
+
+    /** 按旧111140x配置读取203破甲万分比；不泛化为任意160号增益或条件属性。 */
+    private ControlAttributeDefinition charmArmorAttribute(int buffId) {
+        var buff = row("buff", buffId);
+        var art = row("buffart", buffId);
+        if (buff.path("type").asInt() != 160 || buff.path("round").asInt() != 2
+            || buff.path("attach_percent").asInt() != 10000
+            || !buff.path("value").asString().equals("203|2500|0|0")
+            || buff.path("effecttype").asInt() != 1
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()
+            || !art.path("target").asString().equals("[1]")
+            || art.path("source_type").asInt() != 0
+            || !art.path("buff_list").asString().equals("[" + buffId + "]")) {
+            throw new IllegalArgumentException("魅惑之拥破甲增益配置变化：" + buffId);
+        }
+        return new ControlAttributeDefinition(buffId, 203, 2500, 2);
+    }
+
     /** 已核对降攻自身概率，单位为0至1的小数，不与主伤害命中率合并。 */
     public double nanakoDebuffRate(int level) {
         if (level < 1 || level > 3) throw new IllegalArgumentException("奈奈子技能等级无效");
@@ -342,7 +375,7 @@ public class HeroSkillPanelRules {
     /** 一个已预检的纯普通伤害动作，保留目标规则和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
-    /** 按真实普攻/主动技能预检100伤害、1005眩晕、201监听、1205流血及2/3/5表现；未知效果拒绝，不执行半组技能。 */
+    /** 按真实普攻/主动预检伤害、控制、监听、流血、已核对直接属性及2/3/5表现；未知目标或效果拒绝，不执行半组技能。 */
     public List<DamageArt> damageSkillArts(HeroBattleSkillUtils.Skill skill) {
         var config = skills.get(skill.skillId() + ":" + skill.level());
         if (config == null || !Set.of(1, 2).contains(config.path("active_type").asInt())) {
@@ -354,9 +387,12 @@ public class HeroSkillPanelRules {
             var ids = new ArrayList<Integer>();
             for (var buff : mapper.readTree(art.path("buff_list").asString())) {
                 if (!battleProjectile(buff.asInt())) {
+                    if (row("buff", buff.asInt()).path("type").asInt() < 100) {
+                        throw new IllegalArgumentException("技能表现动作尚未支持：" + buff.asInt());
+                    }
                     if (battleRoundListener(buff.asInt())) {
                         battleTrigger(buff.asInt());
-                    } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleBleed(buff.asInt()) && !nanakoArmorDebuff(buff.asInt())) {
+                    } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleBleed(buff.asInt()) && !battleDirectAttribute(buff.asInt())) {
                         battleOrdinaryDamageRate(buff.asInt(), true);
                     }
                 }
@@ -374,8 +410,16 @@ public class HeroSkillPanelRules {
         return artId >= 2234301 && artId <= 2234303;
     }
 
-    /** 奈奈子完整入场四组动作，保留敌方减抗及三个自身监听的配置顺序。 */
-    public List<DamageArt> controlPassiveArts(int skillId, int level) {
+    /** 识别必须在开场实际安装的已接入被动。静态面板被动已计入初始属性。 */
+    public static boolean usesOpeningBattlePassive(int skillId) {
+        return skillId == 102050234 || skillId == 101050113;
+    }
+
+    /** 解析并预检开场被动的完整动作；保持配置的动作和Buff顺序。 */
+    public List<DamageArt> openingPassiveArts(int skillId, int level) {
+        if (skillId == 101050113) {
+            return charmDeathPassiveArts(level);
+        }
         if (skillId != 102050234 || level < 1 || level > 3) {
             throw new IllegalArgumentException("未核对的控制被动");
         }
@@ -406,6 +450,58 @@ public class HeroSkillPanelRules {
         return List.copyOf(result);
     }
 
+    /** 只放行已核对下游动作的恶魔魅影监听，保留其他死亡Buff的拒绝边界。 */
+    private static boolean isCharmDeathListener(int buffId) {
+        return buffId >= 1113101 && buffId <= 1113103;
+    }
+
+    /** 预检恶魔魅影的敌方监听及死亡后施加给来源自身的暴击动作。 */
+    private List<DamageArt> charmDeathPassiveArts(int level) {
+        var skill = skills.get("101050113:" + level);
+        int listenerId = 1113100 + level;
+        if (level < 1 || level > 3 || skill == null || skill.path("active_type").asInt() != 3
+            || skill.path("count_stats").asInt() != 0
+            || !mapper.readTree(skill.path("art_list").asString()).equals(mapper.createArrayNode().add(listenerId))) {
+            throw new IllegalArgumentException("恶魔魅影技能配置变化：" + level);
+        }
+        var targets = battleTargets(listenerId);
+        var spec = battleBuff(listenerId);
+        var listener = battleTrigger(listenerId);
+        var art = row("buffart", listenerId);
+        var buff = row("buff", listenerId);
+        int bonusId = 1113200 + level;
+        if (!targets.selectors().equals(List.of(3, 4)) || targets.count() != 6
+            || art.path("source_type").asInt() != 0
+            || !mapper.readTree(art.path("target_value").asString()).isEmpty()
+            || !mapper.readTree(art.path("buff_list").asString()).equals(mapper.createArrayNode().add(listenerId))
+            || spec.type() != 180 || spec.duration() != 999 || spec.conflict() != 0 || spec.stacking() != 10
+            || buff.path("attach_percent").asInt() != 10000 || !buff.path("value").asString().equals("0|0|0|0")
+            || !listener.arts().equals(List.of(new HeroBattleEventProcessor.Art(bonusId, 0, true)))) {
+            throw new IllegalArgumentException("恶魔魅影死亡监听配置变化：" + listenerId);
+        }
+        charmDeathCriticalAttribute(bonusId);
+        return List.of(new DamageArt(targets, List.of(listenerId)));
+    }
+
+    /** 恶魔魅影只接入已核对的三个暴击动作，目标必须是监听的原施加者。 */
+    private ControlAttributeDefinition charmDeathCriticalAttribute(int buffId) {
+        var art = row("buffart", buffId);
+        var buff = row("buff", buffId);
+        var targets = battleTargets(buffId);
+        long amount = 2000L + (buffId - 1113201) * 500L;
+        if (!targets.selectors().equals(List.of(1)) || targets.count() != 0 || art.path("source_type").asInt() != 0
+            || !mapper.readTree(art.path("target_value").asString()).isEmpty()
+            || !mapper.readTree(art.path("buff_list").asString()).equals(mapper.createArrayNode().add(buffId))
+            || buff.path("type").asInt() != 160 || buff.path("round").asInt() != 999
+            || buff.path("attach_percent").asInt() != 10000 || buff.path("stacking_max").asInt() != 10
+            || buff.path("conflict_type").asInt() != 0
+            || !buff.path("value").asString().equals("207|" + amount + "|0|0")
+            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("恶魔魅影暴击属性配置变化：" + buffId);
+        }
+        return new ControlAttributeDefinition(buffId, 207, amount, 999);
+    }
+
     /** 209下游已核对的单目标冰冻动作，目标沿到期Buff携带者上下文继承。 */
     public boolean isExpiryFrozenArt(int artId) {
         if (artId < 2234801 || artId > 2234803) return false;
@@ -417,6 +513,12 @@ public class HeroSkillPanelRules {
 
     /** 查询已核对的固定属性效果，供安装和移除使用同一数值。 */
     public ControlAttributeDefinition controlAttribute(int buffId) {
+        if (buffId >= 1113201 && buffId <= 1113203) {
+            return charmDeathCriticalAttribute(buffId);
+        }
+        if (buffId >= 1111401 && buffId <= 1111403) {
+            return charmArmorAttribute(buffId);
+        }
         if ((buffId >= 2233301 && buffId <= 2233303)
             || (buffId >= 2231201 && buffId <= 2231203)) {
             var buff = row("buff", buffId);
@@ -542,10 +644,11 @@ public class HeroSkillPanelRules {
         return Integer.parseInt(row("buff", buffId).path("value").asString().split("\\|")[0]);
     }
 
-    /** 旧2/3/5近身、远程、投射表现由ClientBuffHandler处理，只记录表现，不参与服务端伤害。 */
+    /** 旧2/3/5及魅惑之拥11号近身表现由ClientBuffHandler处理，只记录表现，不参与服务端伤害。 */
     public boolean battleProjectile(int buffId) {
         var buff = row("buff", buffId);
-        if (!Set.of(2, 3, 5).contains(buff.path("type").asInt())) return false;
+        if (!Set.of(2, 3, 5).contains(buff.path("type").asInt())
+            && !(buffId == 1110200 && buff.path("type").asInt() == 11)) return false;
         if (buff.path("attach_percent").asInt() != 10000 || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
             throw new IllegalArgumentException("投射表现含未支持分支");
         }
@@ -683,6 +786,49 @@ public class HeroSkillPanelRules {
             throw new IllegalArgumentException("负攻击伤害比例尚未支持");
         }
         return rate;
+    }
+
+    /**
+     * 预检已计入初始属性的纯静态被动，不在入场时重复安装或累加。
+     * 依据旧BattleTemplate.addSkillAttribute；仅接纳自身、永久、必中的160/163属性，
+     * 混合监听、条件属性、后续动作及未核对类型仍拒绝，不能只凭count_stats放行。
+     */
+    public void validateStaticPanelSkill(HeroBattleSkillUtils.Skill reference) {
+        var skill = skills.get(reference.skillId() + ":" + reference.level());
+        if (skill == null || skill.path("active_type").asInt() != 0
+            || skill.path("count_stats").asInt() != 1 || !reference.countStats()
+            || reference.activeType() != 0 || reference.first()) {
+            throw new IllegalArgumentException("不是已核对的静态属性被动：" + reference.skillId());
+        }
+        var arts = mapper.readTree(skill.path("art_list").asString());
+        if (!arts.isArray() || arts.isEmpty()) {
+            throw new IllegalArgumentException("静态属性被动没有动作");
+        }
+        for (var artId : arts) {
+            var art = row("buffart", artId.asInt());
+            var targets = mapper.readTree(art.path("target").asString());
+            var buffs = mapper.readTree(art.path("buff_list").asString());
+            if (art.path("source_type").asInt() != 0 || targets.size() != 1
+                || targets.get(0).asInt() != 1
+                || !mapper.readTree(art.path("target_value").asString()).isEmpty()
+                || !buffs.isArray() || buffs.isEmpty()) {
+                throw new IllegalArgumentException("静态被动目标或动作尚未核对：" + artId.asInt());
+            }
+            for (var buffId : buffs) {
+                var buff = row("buff", buffId.asInt());
+                var values = buff.path("value").asString().split("\\|", -1);
+                if (values.length != 4 || !values[2].equals("0") || !values[3].equals("0")
+                    || (buff.path("type").asInt() == 163 && !values[1].equals("0"))) {
+                    throw new IllegalArgumentException("静态被动包含条件属性：" + buffId.asInt());
+                }
+                if (!Set.of(160, 163).contains(buff.path("type").asInt())
+                    || buff.path("round").asInt() != 999
+                    || buff.path("attach_percent").asInt() != 10000
+                    || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+                    throw new IllegalArgumentException("静态被动包含未核对效果：" + buffId.asInt());
+                }
+            }
+        }
     }
 
     /** 面板仅使用基础已解锁技能，进化替换在其后，不重复执行面板被动。 */

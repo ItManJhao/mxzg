@@ -10,6 +10,8 @@ import { resources, AudioClip, AudioSource } from "cc";
 import { ApplicationNotice } from "../assets/scripts/app/remake/ApplicationNotice";
 import { TrackedTimers } from "../assets/scripts/framework/TrackedTimers";
 import { Label } from "cc";
+import { DevelopmentPreview } from "../assets/scripts/app/remake/DevelopmentPreview";
+import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/BattleReplayPreview";
 import { BootChrome } from "../assets/scripts/app/remake/bootChrome";
 
 const deferred = () => {
@@ -112,6 +114,29 @@ async function main() {
   assert.equal(lateClip.refCount, 0, "迟到音频交还引擎");
   assert.equal(TrackedTimers.snapshot(), timerBaseline, "取消logo后没有遗留淡入/等待计时器");
   resources.load = originalLoad; splashParent.destroy(); audioHost.destroy();
+
+  // 第一场取消后迟到失败，不能把已被第二场隐藏的主城再次显示；不模拟战斗渲染。
+  const battleHost = new Node("BattleHost"), home = new Node("Home"); home.parent = battleHost;
+  const preview = new DevelopmentPreview(battleHost, null, () => true);
+  const originalOpen = BattleReplayPreview.open;
+  let rejectFirst!: (error: Error) => void;
+  let attempts = 0, disposed = 0;
+  BattleReplayPreview.open = async () => {
+    if (++attempts === 1) return await new Promise<() => void>((_, reject) => { rejectFirst = reject; });
+    return () => { disposed++; };
+  };
+  try {
+    const result = { mission: 1, assetRevision: 1, lineupVersion: 1, formationId: 1, pending: [], bytes: new Uint8Array() };
+    const first = preview.openLineupBattle(result);
+    assert.equal(home.active, false);
+    preview.cancelReplay(); assert.equal(home.active, true);
+    await preview.openLineupBattle(result); assert.equal(home.active, false);
+    rejectFirst(new Error("first cancelled"));
+    await assert.rejects(first, /first cancelled/);
+    assert.equal(home.active, false, "迟到失败不得恢复第二场背后的主城");
+    preview.cancelReplay(); preview.cancelReplay();
+    assert.equal(home.active, true); assert.equal(disposed, 1);
+  } finally { BattleReplayPreview.open = originalOpen; battleHost.destroy(); }
 
   const scene = JSON.parse(readFileSync("client/assets/scenes/Remake.scene", "utf8"));
   const binding = scene.find((row: any) => row.loginPrefab && row.socketUrl);
