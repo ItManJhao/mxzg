@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-09",
+  "scope": "当前主线胜利结算双方三项战斗统计；不扩展其他玩法",
+  "environment": {
+    "database": "独立内存H2",
+    "port": 62740,
+    "run": "1be2cd46290f41be922d6a057d9d19f0",
+    "account": "chapter_review",
+    "chapter": 2
+  },
+  "rules": {
+    "damage": "abs(实际血量变化+护盾吸收)，沿用已确认旧口径",
+    "taken": "实际承伤",
+    "recovery": "来源英雄累计经过治疗加成后的reported值，包含溢出并保留正负",
+    "bars": "双方共享每项最大值；负值与零值柱为零；缺失指标显示—且该项柱不推算"
+  },
+  "browser": {
+    "sizes": [
+      [
+        393,
+        852
+      ],
+      [
+        360,
+        720
+      ],
+      [
+        360,
+        840
+      ]
+    ],
+    "attackerCount": 3,
+    "defenderCount": 1,
+    "attackerDamage": [
+      0,
+      0,
+      199
+    ],
+    "defenderTaken": [
+      199
+    ],
+    "recovery": "本场双方均0",
+    "flow": "真实战斗→胜利→点击战报→双方统计→原结算倒计时关闭而统计保留→关闭统计→恢复挂机",
+    "assetsAfterSettlement": {
+      "gold": 4000,
+      "diamond": 151
+    },
+    "assetsUnchangedAfterClosing": true,
+    "warningAndErrorCount": 0
+  },
+  "tests": {
+    "backendDistinctPassed": 52,
+    "classes": {
+      "HeroBattleChapterScenarioTest": 28,
+      "HeroBattleStatisticsTest": 5,
+      "HeroBattleHealingTest": 6,
+      "MainChapterIdleTest": 3,
+      "MainChapterPersistenceTest": 8,
+      "MainChapterSocketTest": 2
+    },
+    "frontendActivePassed": 40,
+    "frontendPaused": 5,
+    "coverage": [
+      "真实治疗执行两次reported108合计216（包含溢出）",
+      "正负治疗归属与整数溢出拒绝",
+      "统计集合冻结及Protobuf缺失字段兼容",
+      "双方最大值、重复模板、零值与负值、缺字段",
+      "Java到TS前三关及挂机战报互通"
+    ]
+  },
+  "screenshots": [
+    "docs/images/battle-statistics-393-20261109.jpg",
+    "docs/images/battle-statistics-360x720-20261109.jpg",
+    "docs/images/battle-statistics-360x840-20261109.jpg",
+    "docs/images/battle-statistics-return-idle-20261109.jpg"
+  ],
+  "limits": [
+    "未扩展治疗技能播放覆盖；非零治疗画面未实测",
+    "未实测8人横向滚动、平板与真机",
+    "历史姓名、皮肤/进化外观未完整冻结",
+    "未操作Creator Inspector；画面后仅PrefabInfo根引用元数据修正并检查绑定",
+    "保留清心概率及护盾疑点",
+    "未提交、未推送"
+  ]
+}

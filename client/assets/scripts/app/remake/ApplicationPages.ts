@@ -1,6 +1,7 @@
 /** 正式页面登记：集中维护类、预制体与页面生命周期适配，业务会话由应用注入，不创建网络连接。 */
 import { MainChapterBattleView } from "../../features/battle/ui/MainChapterBattleView";
 import { MainChapterView } from "../../features/battle/ui/MainChapterView";
+import { BattleDetailLayer } from "../../features/battle/ui/BattleDetailLayer";
 import { Node, Prefab } from "cc";
 import { PREVIEW } from "cc/env";
 import { prepareHeroDetailConfig, prepareInventoryConfig } from "../../config/RemakeConfig";
@@ -56,6 +57,10 @@ export class ApplicationPages {
         let homeView: RemakeHomeView | null = null;
         const stops: Array<() => void> = [];
         stops.push(ui.setResidentHost("remake-modal", () => context.pageHost));
+        stops.push(registerView(BattleDetailLayer, {
+            id: "battle-detail", prefab: "prefabs/ui/battle/BattleDetailLayer", layer: UILayer.Popup,
+            cache: false, allowMultiple: false, hostId: "remake-modal",
+        }));
         stops.push(registerView(ServerPickerView, {
             id: "server-picker", prefab: ResourceCatalog.prefab_login.ServerPickerView.assetPath, layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",

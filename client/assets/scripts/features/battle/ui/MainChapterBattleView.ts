@@ -9,6 +9,7 @@ import { ChapterEndView } from "./ChapterEndView";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { MainChapterReplay } from "../MainChapterModel";
 import { BattleReplayPreview } from "./BattleReplayPreview";
+import { BattleReplayUtils } from "../utils/BattleReplayUtils";
 const { ccclass } = _decorator;
 /** 已校验战报及调用页面的展示清理通知，不能修改服务器资产。 */
 interface MainChapterBattleArgs {
@@ -69,6 +70,10 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         if (!this.closed) {
             await UIManager.instance.open(ChapterEndView, {
                 won, persistentChapter: true, rewards, notice,
+                roleAppearance: MainChapterController.instance.readRoleAppearance(),
+                units: BattleReplayUtils.units(this.args.report.bytes),
+                experience: model.receipt?.battleId === battleId && model.receipt.action === "SETTLED"
+                    ? model.receipt.experience : undefined,
                 onClosed: () => {
                     if (!this.closed) {
                         this.close();

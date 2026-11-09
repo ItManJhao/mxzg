@@ -1,0 +1,199 @@
+{
+  "date": "2026-11-09",
+  "scope": "旧胜利布局、最高伤害展示、经验动画、返回挂机和手机竖屏；不提交推送",
+  "environment": "Creator 3.8.8浏览器预览；SocketPreviewServer --idle-loop-fixture，独立随机端口及内存H2，不改日常数据库",
+  "crossLevelRun": {
+    "port": 51195,
+    "run": "03412daf02734af1a3baffca503d98db",
+    "mission": 3,
+    "highestHero": "黑暗切割者",
+    "highestDamage": 498,
+    "experience": {
+      "before": "Lv2 200/360",
+      "after": "Lv3 40/720",
+      "intervalSeconds": 0.1,
+      "steps": 10
+    },
+    "observedSteps": [
+      "220/360",
+      "240/360",
+      "260/360",
+      "280/360",
+      "300/360",
+      "320/360",
+      "340/360",
+      "0/720",
+      "20/720",
+      "40/720"
+    ],
+    "walletBefore": {
+      "gold": 4000,
+      "diamonds": 151
+    },
+    "walletAfter": {
+      "gold": 8200,
+      "diamonds": 161
+    },
+    "autoCloseReturnIdle": "通过",
+    "consoleWarningsOrErrors": 0
+  },
+  "portraitChecks": {
+    "actualCanvasSizes": [
+      [
+        393,
+        852
+      ],
+      [
+        360,
+        720
+      ],
+      [
+        360,
+        840
+      ]
+    ],
+    "method": "同一真实结算页在经验终值后暂停，切换Creator设备尺寸并逐帧重排截图，再恢复倒计时；未改资产或结算参数",
+    "result": "主要文字、英雄、经验、奖励和确认按钮可见，未被挂机面板覆盖",
+    "geometryOnly": [
+      [
+        768,
+        1024
+      ]
+    ],
+    "landscape": "负责人明确不需要"
+  },
+  "fixes": [
+    "最高伤害英雄缩放包含旧C++基础0.5，最终1.065",
+    "正式结算使用已有全局弹层",
+    "资源加载期间隐藏胜利主体，避免空内容闪现"
+  ],
+  "checks": {
+    "frontend": "全量39/40首跑，唯一过期Prefab报告重新生成后通过，累计40/40；最后代码修改后main-chapter与TypeScript复验通过",
+    "pausedSuites": 5,
+    "backend": "本轮未修改后端、未重跑后端；此前19项结算数据测试见settlement-data-20261109.json"
+  },
+  "screenshots": [
+    "../images/victory-reviewed-393-20261109.jpg",
+    "../images/victory-reviewed-360x720-20261109.jpg",
+    "../images/victory-reviewed-360x840-20261109.jpg",
+    "../images/victory-return-idle-20261109.jpg",
+    "../images/victory-final-393-20261109.jpg",
+    "../images/victory-confirm-return-20261109.jpg"
+  ],
+  "remaining": [
+    "治疗量等完整战斗统计",
+    "历史英雄外观完整还原与额外奖励提示",
+    "平板画面、真机及正式构建",
+    "密集气泡避让",
+    "清心概率和护盾疑点继续待审"
+  ],
+  "repository": "全部改动保留工作区；未提交、未推送",
+  "finalFixRun": {
+    "port": 55932,
+    "run": "302b56b4ef63435785228505f3ef72ff",
+    "mission": 3,
+    "loadingBlankOpacity": 0,
+    "readyFade": "0→255后播放经验",
+    "confirmReturnIdle": "通过，金币8200/钻石161，未重复增长",
+    "consoleWarningsOrErrorsAfterReload": 0,
+    "observerNote": "前一次临时观察器读取已销毁组件报错，已清除并重新加载；最终这次无新增错误",
+    "frames": [
+      {
+        "exp": "",
+        "level": "",
+        "opacity": 0,
+        "tick": 0
+      },
+      {
+        "exp": "200/360",
+        "level": "Lv 2",
+        "opacity": 0,
+        "tick": 0
+      },
+      {
+        "exp": "200/360",
+        "level": "Lv 2",
+        "opacity": 106.14375003799798,
+        "tick": 0
+      },
+      {
+        "exp": "200/360",
+        "level": "Lv 2",
+        "opacity": 159.375,
+        "tick": 0
+      },
+      {
+        "exp": "200/360",
+        "level": "Lv 2",
+        "opacity": 212.28750007599595,
+        "tick": 0
+      },
+      {
+        "exp": "200/360",
+        "level": "Lv 2",
+        "opacity": 255,
+        "tick": 0
+      },
+      {
+        "exp": "220/360",
+        "level": "Lv 2",
+        "opacity": 255,
+        "tick": 1
+      },
+      {
+        "exp": "240/360",
+        "level": "Lv 2",
+        "opacity": 255,
+        "tick": 2
+      },
+      {
+        "exp": "260/360",
+        "level": "Lv 2",
+        "opacity": 255,
+        "tick": 3
+      },
+      {
+        "exp": "280/360",
+        "level": "Lv 2",
+        "opacity": 255,
+        "tick": 4
+      },
+      {
+        "exp": "300/360",
+        "level": "Lv 2",
+        "opacity": 255,
+        "tick": 5
+      },
+      {
+        "exp": "320/360",
+        "level": "Lv 2",
+        "opacity": 255,
+        "tick": 6
+      },
+      {
+        "exp": "340/360",
+        "level": "Lv 2",
+        "opacity": 255,
+        "tick": 7
+      },
+      {
+        "exp": "0/720",
+        "level": "Lv 3",
+        "opacity": 255,
+        "tick": 8
+      },
+      {
+        "exp": "20/720",
+        "level": "Lv 3",
+        "opacity": 255,
+        "tick": 9
+      },
+      {
+        "exp": "40/720",
+        "level": "Lv 3",
+        "opacity": 255,
+        "tick": 10
+      }
+    ]
+  }
+}

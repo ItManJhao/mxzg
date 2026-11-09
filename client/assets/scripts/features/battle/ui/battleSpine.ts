@@ -1,7 +1,7 @@
 /**
  * 战斗和加载层的动态 spine。
  * 原骨架由节点资源作用域持有，转换副本随最后使用节点销毁；加载失败或取消会结束调用方等待。
- * 英雄槽没有请求的动作时留在 stand / idle。套里没有 hit 就不播受击。不播 bisha。
+ * 英雄槽没有请求的动作时留在 stand / idle；攻击、技能和受击完整播放后按旧版自动回待机。
  * effect 模式给 batch2 命名特效：按名字播，没有这个动作就跳过，不拆站场。
  * 这些套是 Spine 3.7.94。播之前在内存里收成 spine-3.8 能读的皮和曲线，不改磁盘上的 json。
  * Creator 3.8.8 仍可能加载失败，失败只回调，攻击照旧。不播 bisha。
@@ -241,6 +241,28 @@ export function mountBattleSpine(parent: Node, stem: string, onFail: () => void,
                 // 骨架挂上后再写朝向，避免缩放被组件清掉。
                 node.setScale(scale * face, scale, 1);
                 skel = view;
+                if (!effect) {
+                    // 旧BattleHeroNode在Complete事件回待机，而不是等位移/战报整段结束才回待机。
+                    view.setCompleteListener(entry => {
+                        if (!node.isValid || !view.isValid) {
+                            return;
+                        }
+                        const name = entry.animation?.name;
+                        // WASM返回的TrackEntry包装对象可能不同，按当前轨道动作核对，不能比较JS引用。
+                        if (view.getCurrent(0)?.animation?.name !== name) {
+                            return;
+                        }
+                        if (name && ["attack", "attack2", "attack3", "hit", "skill",
+                            "attack_l", "attack2_l", "attack3_l", "hit_l", "skill_l"].includes(name)) {
+                            play("stand");
+                        }
+                    });
+                    node.once(Node.EventType.NODE_DESTROYED, () => {
+                        if (view.isValid) {
+                            view.setCompleteListener(null);
+                        }
+                    });
+                }
                 if (effect) {
                     if (pending) burst(pending);
                     return;

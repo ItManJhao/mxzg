@@ -198,6 +198,14 @@ message BattleReplayUnit {
   optional uint32 faction = 7;
   // 与初始生命分开，残血入场也按真实最大生命显示血条。
   optional int64 max_hp = 8;
+  // 服务端按旧HeroFightLog累计abs(实际扣血变化+护盾吸收)，缺失表示旧战报未记录，不能当0。
+  optional int64 total_damage = 9;
+  // 实际承伤绝对值；与旧伤害输出口径不同，不按飘字累计。
+  optional int64 total_taken_damage = 10;
+  // 旧replenish记录施法者的修正后治疗量，包含溢出治疗；保留有符号值，不取绝对值。
+  optional int64 total_recovery = 11;
+  // 本场英雄星级；旧战报缺失时不从当前名册补历史外观。
+  optional uint32 star = 12;
 }
 message BattleReplayPhase {
   required uint32 round = 1;
@@ -239,7 +247,16 @@ message ChapterChallenge { required string request_id = 1; }
 message ChapterBattleId { required string battle_id = 1; }
 message ChapterReward { required uint32 item_id = 1; required int64 quantity = 2; }
 // 历史回执不覆盖统一资产快照；BATTLE需读取持久战报，SETTLED表示只补领奖。
-message ChapterReceipt { required string action = 1; required string battle_id = 2; required MainChapterState state = 3; repeated ChapterReward rewards = 4; }
+message ChapterReceipt { required string action = 1; required string battle_id = 2; required MainChapterState state = 3; repeated ChapterReward rewards = 4; optional ChapterExperience experience = 5; }
+// 发奖事务前后冻结的经验展示；历史回执缺失时不从当前余额反推，不写回角色Model。
+message ChapterExperience {
+  required uint32 before_level = 1;
+  required int64 before_exp = 2;
+  required int64 before_threshold = 3;
+  required uint32 after_level = 4;
+  required int64 after_exp = 5;
+  required int64 after_threshold = 6;
+}
 // 登录只恢复进度；玩家选择继续观看时按归属读取原战报，不重新计算。
 message ChapterReplay { required string battle_id = 1; required uint32 mission = 2; repeated string pending = 3; required BattleReplay replay = 4; }
 

@@ -10,11 +10,11 @@
       "inspector": "待负责人逐项确认"
     },
     "client/assets/prefabs/ui/battle/BattleDetailLayer.prefab": {
-      "sha256": "c8e81f981195caea258fc230ee53aa0fb12d59f5de84c740b74b92b5ebdf4993",
-      "date": "2026-11-02",
+      "sha256": "72142af989eba57c6e51c749087b27fa5c5b301d3963a129ca4861a7da7aaa6d",
+      "date": "2026-11-09",
       "status": "实际预览通过",
-      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
-      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
+      "scope": "独立H2第二关胜利页真实点击战报，双方3/1英雄伤害/承伤199、治疗0；393×852、360×720、360×840竖屏、倒计时后窗口保留及关闭返回挂机通过。非零治疗/负值/缺字段仅规则协议测试；未实测8人滚动、平板和真机。画面后仅修正PrefabInfo根引用及主体英文节点名并通过绑定检查。见docs/validation/battle-statistics-20261109.json",
+      "inspector": "未操作Creator Inspector；负责人刷新资源后浏览器验收"
     },
     "client/assets/prefabs/ui/battle/BattleEndLayer.prefab": {
       "sha256": "93003f765e12e555bcf3373ca657ea42d54ee4b369dad48aeede6ac0e63ae924",
@@ -31,10 +31,10 @@
       "inspector": "待负责人逐项确认"
     },
     "client/assets/prefabs/ui/battle/BattlePage.prefab": {
-      "sha256": "22cc50817f1c90bb29ee9dc7e810841b84032eb81dab81c452ed96a95494d146",
+      "sha256": "4ab121d60f030a6af19748d7a4abdf816be5209390f7179c8d29ded127257fab",
       "date": "2026-11-09",
       "status": "实际预览通过",
-      "scope": "本批仅393×852 Creator设置：新增主线信息栏锚点，ZDKS开场、双方出场、第二/三关结算、返回挂机及开场取消已实测。原技能台布局未移动；不表示全分辨率或Inspector全项通过。证据 docs/validation/main-chapter-talk-opening-20261109.json。",
+      "scope": "本批仅393×852 Creator设置：新增主线信息栏锚点，ZDKS开场、双方出场、第二/三关结算、返回挂机及开场取消已实测。原技能台布局未移动；不表示全分辨率或Inspector全项通过。证据 docs/validation/main-chapter-talk-opening-20261109.json。 2026-11-09负责人明确验收挂机出场连续性、攻击后待机、模型大小与独立站位；IdleLayout保存挂机锚点，挂机模型0.60、正式战斗0.48。此次确认不扩大到全英雄、全尺寸或完整结算。",
       "inspector": "自动结构复核；完整视觉待负责人确认"
     },
     "client/assets/prefabs/ui/chapter/ChapterEndLayer.prefab": {
@@ -358,6 +358,13 @@
       "status": "结构检查通过但视觉待验收",
       "scope": "本次仅复验真实布阵按钮显示层级、点击打开阵容与反复关闭返回名册；未重复巡检用户已验收的其他英雄页内容。",
       "inspector": "本批新版本待确认"
+    },
+    "client/assets/prefabs/ui/chapter/ChapterEndView.prefab": {
+      "sha256": "92ab811cb301b5122d8e446ee239892f8b44ce5fb6c781eb8c3b051d89eb797d",
+      "date": "2026-11-09",
+      "status": "实际预览通过",
+      "scope": "仅正常主线胜利：独立H2真实第三关最高伤害/跨级经验/奖励/确认及倒计时返回挂机；393×852、360×720、360×840实际画布。失败/只读分支本轮未重验，平板仅几何检查，不代表完整旧统计恢复。见docs/validation/victory-review-20261109.json",
+      "inspector": "未操作Creator Inspector"
     }
   },
   "evidenceDirectories": [

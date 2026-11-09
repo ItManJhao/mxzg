@@ -30,8 +30,36 @@ export class BattleAttackUtils {
     /** 纯配置工具不保存播放状态。 */
     private constructor() {}
 
-    /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；这里只恢复已逐项核对的独眼梦魇主动、黑暗切割者主动与奈奈子，内部索引不写回战报。 */
+    /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；恢复已核对的英雄覆盖，内部索引不写回战报。 */
     public static legacyActions<T extends { idx: number; type: number; ani_base: string; file: string; sound: string; delay: number; dimly: number }>(row: T): readonly T[] {
+        // 树精的file用于预加载；type2只做近身，type6实际按ani_base.format生成施法者特效。
+        if (row.idx >= 3011101 && row.idx <= 3011103) {
+            return [
+                { ...row, idx: row.idx * 10, type: 2, delay: 0, dimly: 0,
+                    ani_base: JSON.stringify({ move_time: 0.1, move_back: 1 }),
+                    file: "[]", sound: JSON.stringify(["skill-103010011"]) },
+                { ...row, idx: row.idx * 10 + 1, type: 6, delay: 15, dimly: 1,
+                    ani_base: JSON.stringify({ format: "skill-103010011/%d.png", anchor_x: 1,
+                        anchor_y: 0.2, duration: 0.1, scale_x: 1, scale_y: 1 }),
+                    file: JSON.stringify(["skill-103010011"]), sound: "[]" },
+            ];
+        }
+        // 布鲁普攻实际覆盖基础buff中的0.5倍/0.02秒，按旧actions.lua在目标处播放4倍水花。
+        if (row.idx === 2010100) {
+            return [{
+                ...row,
+                type: 3,
+                delay: 10,
+                dimly: 0,
+                ani_base: JSON.stringify({
+                    attack_time: 0.3, action_time: 0.5,
+                    format: "skill-102040040/%d.png", duration: 0.05,
+                    scale_x: 4, scale_y: 4, anchor_y: 0.2, anchor_x: 0.4,
+                }),
+                file: JSON.stringify(["skill-102040040"]),
+                sound: JSON.stringify(["skill-102040040"]),
+            }];
+        }
         // 独眼梦魇一级主动：近身骨骼与第20帧的施法者特效并行，音效仅由近身动作播放。
         if (row.idx === 1011101) {
             return [
@@ -125,11 +153,20 @@ export class BattleAttackUtils {
         }
         let effect: BattleAttackPlan["effect"] = null;
         if (files.length) {
-            const counts: Record<string, number> = { "skill-101050110": 10, "skill-101050111": 10, "skill-105050051": 19, "skill-105050051-1": 8, "skill-101010011": 9, "skill-101040050": 7, "skill-101020021": 11, "skill-102050230": 8, "skill-102050231": 17, "skill-102050233": 22, "skill-102050233_1": 22 };
+            // 帧数以旧plist连续帧及本地逐像素复验为依据，不能遇到未知资源就跳过表现。
+            const counts: Record<string, number> = {
+                "skill-101050110": 10, "skill-101050111": 10,
+                "skill-105050051": 19, "skill-105050051-1": 8,
+                "skill-101010011": 9, "skill-101040050": 7, "skill-101020021": 11,
+                "skill-102050230": 8, "skill-102050231": 17,
+                "skill-102050233": 22, "skill-102050233_1": 22,
+                "skill-102040040": 14, "skill-102010011": 4,
+                "skill-103010011": 7,
+            };
             const file = files[0];
             if (files.length !== 1 || typeof file !== "string" || !counts[file]
                 || values.format !== file + "/%d.png" || row.type === 2) {
-                throw new Error("战斗帧资源尚未核对");
+                throw new Error("战斗帧资源尚未核对：type=" + row.type + "，file=" + JSON.stringify(files));
             }
             const interval = this.seconds(values, "duration", 0.05);
             if (interval <= 0) throw new Error("特效帧间隔无效");

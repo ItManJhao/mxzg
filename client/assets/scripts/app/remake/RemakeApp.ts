@@ -152,7 +152,10 @@ export class RemakeApp extends Component {
             token => socket.chapter(token, name, body),
             frame => { if (this.alive) received(frame); },
             error => { if (this.alive) failed(error); },
-        ), () => model.snapshot.role?.level || 0);
+        ), () => model.snapshot.role?.level || 0, () => {
+            const basics = model.snapshot.role?.basics;
+            return basics ? { headId: basics.headId, borderId: basics.borderId } : null;
+        });
         chapter.initialize();
         const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController, HeroRosterController.instance, formation, () => {
             // 身份切换时统一关闭角色页面，页面自身无需比较角色键；取消在途打开也由UIManager负责。

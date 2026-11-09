@@ -14,6 +14,14 @@ interface WireEvent {
 interface WireUnit {
     unitId: number; faction: number; templateId: number; level: number; position: number;
     initialHp: WireLong; maxHp: WireLong; finalHp: WireLong;
+    /** 新战报的旧口径输出总量，须区分字段缺失和0。 */
+    totalDamage?: WireLong;
+    /** 新战报的实际承伤总量，须独立校验安全整数范围。 */
+    totalTakenDamage?: WireLong;
+    /** 施法者的旧口径治疗量，包含溢出治疗并保留符号。 */
+    totalRecovery?: WireLong;
+    /** 本场冻结星级，旧战报允许缺失。 */
+    star?: number;
 }
 
 /** 校验后的只读展示单位；生命为可精确显示的安全整数。 */
@@ -26,6 +34,14 @@ export interface BattleReplayUnit {
     readonly initialHp: number;
     readonly maxHp: number;
     readonly finalHp: number;
+    /** 服务端按旧护盾口径冻结的伤害输出；旧战报缺失为null，不能显示成0。 */
+    readonly totalDamage?: number | null;
+    /** 服务端冻结的实际承伤；与输出伤害口径不同。 */
+    readonly totalTakenDamage?: number | null;
+    /** 服务端冻结的治疗输出；缺失不补零，负治疗不取绝对值。 */
+    readonly totalRecovery?: number | null;
+    /** 历史星级；缺失时隐藏星级，不读取当前英雄。 */
+    readonly star?: number | null;
 }
 
 /** 仅声明本适配器使用的解码字段，不手改生成代码。 */
@@ -93,11 +109,19 @@ export class BattleReplayUtils {
             const initialHp = this.integer(unit.initialHp);
             const maxHp = this.integer(unit.maxHp);
             const finalHp = this.integer(unit.finalHp);
+            const totalDamage = Object.prototype.hasOwnProperty.call(unit, "totalDamage") ? this.integer(unit.totalDamage!) : null;
+            const totalTakenDamage = Object.prototype.hasOwnProperty.call(unit, "totalTakenDamage") ? this.integer(unit.totalTakenDamage!) : null;
+            const totalRecovery = Object.prototype.hasOwnProperty.call(unit, "totalRecovery") ? this.integer(unit.totalRecovery!, true) : null;
+            const star = Object.prototype.hasOwnProperty.call(unit, "star") ? this.integer(unit.star!) : null;
+            if (star !== null && (star < 1 || star > 15)) {
+                throw new Error("战报星级范围无效");
+            }
             if (maxHp <= 0 || initialHp <= 0 || initialHp > maxHp || finalHp > maxHp) {
                 throw new Error("战报单位生命范围无效");
             }
             return Object.freeze({unitId: unit.unitId, faction: unit.faction, templateId: unit.templateId,
-                level: unit.level, position: unit.position, initialHp, maxHp, finalHp});
+                level: unit.level, position: unit.position, initialHp, maxHp, finalHp, totalDamage, totalTakenDamage,
+                totalRecovery, star});
         });
         if (factions.size !== 2) throw new Error("战报缺少对战阵营");
         return Object.freeze(result);

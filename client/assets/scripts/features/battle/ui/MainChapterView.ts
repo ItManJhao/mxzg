@@ -266,7 +266,7 @@ export class MainChapterView extends BaseView {
         if (travelled >= width) void this.beginIdleEncounter();
     }
 
-    /** 一张地面宽度后遇敌；收到真实战报才播放，挑战或关页立即取消，不结算奖励。 */
+    /** 一张地面宽度后请求真实遇敌战报，借用现有英雄播放；结束归还，挑战或关页取消，不结算奖励。 */
     private async beginIdleEncounter(): Promise<void> {
         if (this.idleEncounterActive || this.closed || this.playing || !this.idleDisplay) return;
         this.idleEncounterActive = true;
@@ -275,20 +275,34 @@ export class MainChapterView extends BaseView {
         try {
             const bytes = await MainChapterController.instance.encounter();
             if (this.closed || this.playing || epoch !== this.idleDisplayEpoch) return;
-            if (!bytes) { this.clearIdleDisplay(false); return; }
-            this.idleDisplay!.root.active = false;
+            if (!bytes) {
+                this.finishIdleEncounter();
+                return;
+            }
             const stop = await BattleReplayPreview.open(this.battleHost!, bytes, false, undefined, undefined,
                 "挂机遇敌", true, async () => {
-                    if (!this.closed && epoch === this.idleDisplayEpoch) this.clearIdleDisplay(false);
-                }, true, () => this.closed || this.playing || epoch !== this.idleDisplayEpoch);
-            if (this.closed || this.playing || epoch !== this.idleDisplayEpoch) stop();
-            else this.stopIdleEncounter = stop;
+                    if (!this.closed && epoch === this.idleDisplayEpoch) this.finishIdleEncounter();
+                }, true, () => this.closed || this.playing || epoch !== this.idleDisplayEpoch, this.idleDisplay!);
+            if (this.closed || this.playing || epoch !== this.idleDisplayEpoch || !this.idleEncounterActive) {
+                stop();
+            } else {
+                this.stopIdleEncounter = stop;
+            }
         } catch (error) {
             if (!this.closed && epoch === this.idleDisplayEpoch) {
                 GameLog.shared.classified("MODULE", "warn", "MainChapter", "挂机遇敌暂不可用：" + String(error));
-                this.clearIdleDisplay();
+                this.finishIdleEncounter();
             }
         }
+    }
+
+    /** 结束本次遇敌并归还骨骼后恢复行军，不销毁行军显示或重置背景，避免切换空帧。 */
+    private finishIdleEncounter(): void {
+        const stop = this.stopIdleEncounter;
+        this.stopIdleEncounter = null;
+        stop?.();
+        this.idleEncounterActive = false;
+        this.idleDisplay?.resume();
     }
 
     /** 切换挑战、阵容和关页共用清理，恢复静态背景位置。 */

@@ -56,6 +56,16 @@ def check():
                 sprite = next(c for c in components if c["__type__"] == "cc.Sprite")
                 assert sprite["_type"] == 1, (node["_name"], "可拉伸底板必须使用Sliced")
     battle = read(ASSETS / "prefabs/ui/battle/BattlePage.prefab")
+    idle = next(n for n in battle if n.get("_name") == "IdleLayout")
+    anchors = {battle[r["__id__"]]["_name"]: battle[r["__id__"]] for r in idle["_children"]}
+    # 旧挂机按队内序号而非八槽位置定位，我方前一后二；显示参数留在Prefab供人工修改。
+    for index in range(1, 4):
+        expected_x = 640 * (0.7 - 0.22 * (1 + index // 2) * 1.1) - 320
+        expected_y = 637 * 0.9 * (0.5 + (0.2 if index == 2 else -0.2 if index == 3 else 0)) - 360
+        point = anchors[f"Ally{index}"]["_lpos"]
+        assert abs(point["x"] - expected_x) < 0.001
+        assert abs(point["y"] - expected_y) < 0.001
+    assert anchors["ModelScale"]["_lscale"]["x"] == 0.6
     for side in ("Ally", "Enemy"):
         for index in range(8):
             hp = next(n for n in battle if n.get("_name") == side + "Hp_" + str(index))

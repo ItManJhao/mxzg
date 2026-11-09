@@ -5,12 +5,14 @@ import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
 import { MainChapterIdleState } from "../MainChapterModel";
 import { mountBattleSpine, SpineActor } from "./battleSpine";
+import { bindVisibleRefresh, readVisibleBox } from "../../../framework/ui/visibleFit";
+import { BattleInfoUtils } from "../utils/BattleInfoUtils";
 
 export class MainChapterIdleDisplay {
     /** 行军显示的预制体根节点，销毁时释放资源。 */
     private constructor(public readonly root: Node, private readonly actors: readonly SpineActor[]) {}
 
-    /** 根据权威选择装配最多三名英雄；缺英雄拒绝显示，不擅自补默认阵容。 */
+    /** 按权威选择顺序映射IdleLayout三英雄锚点并适配窄屏；不改变协议站位，缺英雄拒绝显示，关页解除监听。 */
     public static async open(parent: Node, state: MainChapterIdleState): Promise<MainChapterIdleDisplay> {
         const scope = createAssetScope();
         let root: Node | null = null;
@@ -43,17 +45,22 @@ export class MainChapterIdleDisplay {
             const elements = [ResourceCatalog.hero.hero_icon_elem_1, ResourceCatalog.hero.hero_icon_elem_2,
                 ResourceCatalog.hero.hero_icon_elem_3, ResourceCatalog.hero.hero_icon_elem_4, ResourceCatalog.hero.hero_icon_elem_5];
             const rows = (templates.json as { rows: { type: number; elem: number }[] }).rows;
-            for (const entry of state.slots || []) {
+            const layout = root.getChildByName("IdleLayout")!;
+            const modelScale = layout.getChildByName("ModelScale")!.scale.x;
+            const hpOffset = layout.getChildByName("HpOffset")!.position.y;
+            for (const [order, entry] of (state.slots || []).entries()) {
                 const hero = HeroRosterModel.instance.snapshot.heroes.find(row => row.id === entry.heroId);
                 if (!hero) {
                     throw new Error("挂机英雄不在当前名册：" + entry.heroId);
                 }
                 const slot = root.getChildByPath("LayerField/AllySlots/Slot_A" + (entry.position - 1))!;
+                // 旧挂机按报告数组序号重新排布，不能直接用正式阵容站位号显示。
+                slot.setPosition(layout.getChildByName("Ally" + (order + 1))!.position);
                 slot.active = true;
                 for (const child of slot.children) {
                     child.active = false;
                 }
-                const actor = mountBattleSpine(slot, String(hero.templateId), () => {}, { face: 1, scale: 0.48, seatY: 0 });
+                const actor = mountBattleSpine(slot, String(hero.templateId), () => {}, { face: 1, scale: modelScale, seatY: 0 });
                 actor.gesture("run");
                 actors.push(actor);
                 const hp = hud.getChildByPath("HpBars/AllyHp_" + (entry.position - 1))!;
@@ -62,7 +69,7 @@ export class MainChapterIdleDisplay {
                 hp.getChildByName("Fill")!.getComponent(Sprite)!.fillRange = 1;
                 const world = slot.worldPosition;
                 const point = hp.parent!.getComponent(UITransform)!.convertToNodeSpaceAR(world);
-                hp.setPosition(point.x, point.y + 120, 0);
+                hp.setPosition(point.x, point.y + hpOffset, 0);
                 const elem = rows.find(row => row.type === hero.templateId)?.elem;
                 const descriptor = elem ? elements[elem - 1] : undefined;
                 const icon = hp.getChildByName("ElementIcon")!;
@@ -74,6 +81,11 @@ export class MainChapterIdleDisplay {
                     }
                 }
             }
+            const displayRoot = root;
+            bindVisibleRefresh(displayRoot, () => {
+                const scale = BattleInfoUtils.contentScale(readVisibleBox().width);
+                displayRoot.setScale(scale, scale, 1);
+            });
             return new MainChapterIdleDisplay(root, actors);
         } catch (error) {
             if (root?.isValid) {
@@ -88,6 +100,37 @@ export class MainChapterIdleDisplay {
     /** 到达遇敌点先停止跑步，等待服务端战报，不在客户端模拟攻击。 */
     public stand(): void {
         for (const actor of this.actors) actor.gesture("stand");
+    }
+
+    /** 遇敌结束恢复同一批骨骼跑步，保留节点与已加载资源，不重新请求数据。 */
+    public resume(): void {
+        this.root.active = true;
+        for (const actor of this.actors) {
+            actor.node.active = true;
+            actor.gesture("run");
+        }
+    }
+
+    /** 临时将指定站位骨骼交给遇敌播放器；归还函数幂等，关页后不复活节点。 */
+    public borrow(position: number, target: Node): { actor: SpineActor; release: () => void } {
+        const home = this.root.getChildByPath("LayerField/AllySlots/Slot_A" + (position - 1));
+        const actor = this.actors.find(value => value.node.parent === home);
+        if (!home || !actor) {
+            throw new Error("挂机遇敌保留英雄站位不一致：" + position);
+        }
+        const origin = actor.node.position.clone();
+        // 临时战场接续挂机独立站位；不改战报中的权威position字段。
+        target.setPosition(home.position);
+        actor.node.parent = target;
+        let released = false;
+        return { actor, release: () => {
+            if (released) return;
+            released = true;
+            if (home.isValid && actor.node.isValid) {
+                actor.node.parent = home;
+                actor.node.setPosition(origin);
+            }
+        } };
     }
 
     /** 关页或进入挑战销毁行军节点，迟到骨骼加载由节点作用域取消。 */

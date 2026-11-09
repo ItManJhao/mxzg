@@ -1,5 +1,11 @@
 # 战斗预制体整理与正式服对照
 
+## 挂机布局补充（2026-11-09）
+
+BattlePage的IdleLayout保存Ally1至3、Enemy1至3静态锚点，以及ModelScale、HpOffset。位置依据旧BattleUtils.getHangHeroPosition及BattleInfoFactory的队伍顺序；保留服务端position身份，仅显示时映射。正式战斗继续使用原8槽布局，不共享挂机坐标。当前实际遇敌仅一名敌方，额外锚点不代表开放多人挂机敌队。
+
+负责人已验收出场连续性、攻击完成回待机、挂机模型放大及独立站位。挂机0.60是本次反馈确认的体验调整，不宣称与旧骨骼缩放完全等价；正式战斗0.48保持。下方2026-11-06状态为历史导航，当前模块状态以development-progress.md为准。
+
 ## 当前基线（2026-11-06，覆盖下方历史判断）
 
 负责人已授权清理重复和不可用预制体，并按旧项目和正式服恢复整个战斗入口流程。保留现有服务端权威、持久战报、幂等结算；升级、穿脱和其他模块不动，推送等待通知。
@@ -152,3 +158,11 @@ https://ai.google.dev/gemini-api/docs/video-understanding
 MainChapterView 内的 HeroTalkTemplate 保存旧气泡九宫格与 RichText，运行时只实例化、填字和跟随英雄槽；旧台词颜色标签转换为 Creator 富文本。BattlePage 新增 ChapterMatchInfoAnchor / ChapterTopBarAnchor，仅正式主线使用，避免信息栏被下方面板盖住；技能演示原布局不变。ZDKS 为一次性开场特效节点，正式挑战双方出场帧与挂机仅敌方出场分开。资源 UUID 保持不变。
 
 本批通过旧资源开场、双方信息栏和返回挂机验收；跳过/倍速仍未恢复完整业务条件，不能据此称旧战斗界面全部完成。对话在密集站位下与其他单位头顶信息的避让、更多屏幕比例仍需后续复验。
+
+### 2026-11-09 旧胜利布局收口
+
+ChapterEndView保留普通失败/演示底板，新增静态MainVictoryPanel复用旧BattleEndLayer布局；最高伤害英雄挂点、头像、经验条、四列奖励、确认按钮均保存在Prefab，原资源UUID不变。经验条采用水平FILLED，不将无九宫格边距的贴图改为SLICED。奖励继续使用SuperScroll/SuperContent，不运行时另造布局。
+
+正式主线结算使用已有remake-modal宿主，防止被主页收益面板遮挡；战场仍使用main-chapter-field。最高伤害模型1.065包含旧C++创建时0.5基础缩放。胜利主体在异步加载期间隐藏，资源就绪后统一淡入。主线胜利原点为(-320,-365)乘等比缩放，普通底板仍为(-320,-200)。
+
+浏览器实际复验393×852、360×720、360×840；同一真实第三关结算暂停留图后恢复倒计时返回挂机，不算三次发奖。平板768×1024仅自动几何检查，未声明Inspector、真机或正式构建验收。详见[胜利页记录](validation/victory-review-20261109.json)。

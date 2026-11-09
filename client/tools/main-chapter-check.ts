@@ -1,12 +1,18 @@
 /** 主线客户端回归：初始化、历史回执不倒退资产、未知结果原键重试、身份切换不被旧请求复活。 */
 import { MainChapterHeroTalk } from "../assets/scripts/features/battle/ui/MainChapterHeroTalk";
+import { MainChapterIdleDisplay } from "../assets/scripts/features/battle/ui/MainChapterIdleDisplay";
 import { HeroTalkUtils } from "../assets/scripts/features/battle/utils/HeroTalkUtils";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
-import { Node, UITransform, view as screenView } from "cc";
+import { Node, Tween, UITransform, view as screenView } from "cc";
 import { MainChapterView } from "../assets/scripts/features/battle/ui/MainChapterView";
 import { BagItemView } from "../assets/scripts/features/bag/ui/BagItemView";
 import { MainChapterBattleView } from "../assets/scripts/features/battle/ui/MainChapterBattleView";
 import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/BattleReplayPreview";
+import { ChapterEndView } from "../assets/scripts/features/battle/ui/ChapterEndView";
+import { BattleInfoUtils } from "../assets/scripts/features/battle/utils/BattleInfoUtils";
+import { ChapterSettlementUtils } from "../assets/scripts/features/battle/utils/ChapterSettlementUtils";
+import { BattleStatisticsUtils } from "../assets/scripts/features/battle/utils/BattleStatisticsUtils";
+import { BattleAttackUtils } from "../assets/scripts/features/battle/utils/BattleAttackUtils";
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { MainChapterController } from "../assets/scripts/features/battle/MainChapterController";
@@ -24,6 +30,95 @@ function frame(name: string, body: unknown, kind = "response"): GameFrame {
 }
 /** 只测试当前模块；完整资产绑定另由session-state回归覆盖。 */
 async function main(): Promise<void> {
+    // 遇敌借用和归还同一节点，重复关闭不得销毁行军英雄或重新创建显示。
+    const idleRoot = new Node("Idle");
+    const field = new Node("LayerField");
+    field.parent = idleRoot;
+    const allies = new Node("AllySlots");
+    allies.parent = field;
+    const home = new Node("Slot_A0");
+    home.parent = allies;
+    const heroNode = new Node("Hero");
+    heroNode.parent = home;
+    (heroNode as any).position = { x: 0, y: 0, z: 0, clone: () => ({ x: 0, y: 0, z: 0 }) };
+    const gestures: string[] = [];
+    const idleDisplay = new (MainChapterIdleDisplay as any)(idleRoot,
+        [{ node: heroNode, gesture: (name: string) => gestures.push(name) }]);
+    const borrowedSlot = new Node("EncounterSlot");
+    const lease = idleDisplay.borrow(1, borrowedSlot);
+    assert.equal(lease.actor.node, heroNode);
+    assert.equal(heroNode.parent, borrowedSlot);
+    lease.release();
+    lease.release();
+    idleDisplay.resume();
+    assert.equal(heroNode.parent, home);
+    assert.equal(gestures.at(-1), "run");
+    const sceneView: any = new Node("IdleView").addComponent(MainChapterView);
+    let returned = 0;
+    sceneView.idleDisplay = idleDisplay;
+    sceneView.stopIdleEncounter = () => returned++;
+    sceneView.idleEncounterActive = true;
+    sceneView.finishIdleEncounter();
+    sceneView.finishIdleEncounter();
+    assert.equal(returned, 1);
+    assert.equal(sceneView.idleDisplay, idleDisplay);
+    assert.equal(sceneView.idleEncounterActive, false);
+    // 用户阵容布鲁：从实际配置经过旧覆盖到资源解析，避免只测固定验收英雄漏掉正常遇敌。
+    const buffRows = JSON.parse(readFileSync("client/assets/resources/config/buff.json", "utf8")).rows;
+    for (const id of [3011101, 3011102, 3011103]) {
+        const row = buffRows.find((value: { idx: number }) => value.idx === id);
+        const actions = BattleAttackUtils.legacyActions(row);
+        assert.equal(actions.length, 2);
+        const melee = BattleAttackUtils.plan(actions[0]);
+        const effect = BattleAttackUtils.plan(actions[1]);
+        assert.equal(melee.melee, true);
+        assert.equal(melee.effect, null);
+        assert.equal(effect.onSource, true);
+        assert.equal(effect.effect!.paths.length, 7);
+        assert.equal(BattleAttackUtils.delaySeconds(actions[1]), 0.25);
+    }
+    for (const id of [2010100, 2011101, 2011102, 2011103]) {
+        const row = buffRows.find((value: { idx: number }) => value.idx === id);
+        assert.ok(row, "布鲁表现配置必须存在");
+        const plan = BattleAttackUtils.plan(BattleAttackUtils.legacyActions(row)[0]);
+        assert.equal(plan.projectile, id !== 2010100);
+        assert.equal(plan.effect!.paths.length, id === 2010100 ? 14 : 4);
+        assert.equal(plan.effect!.interval, 0.05);
+        if (id === 2010100) {
+            assert.equal(plan.effect!.scaleX, 4, "旧actions覆盖优先于buff基础缩放");
+            assert.equal(plan.effect!.anchorX, 0.4);
+        }
+        for (const path of plan.effect!.paths) {
+            readFileSync("client/assets/resources/" + path.replace("/spriteFrame", ".png"));
+        }
+    }
+    assert.equal(BattleInfoUtils.mainChapterSkipVisible(), false, "旧主线配置禁止展示跳过，不能套用等级50条件直接开放");
+    assert.equal(BattleInfoUtils.defaultTimeScale(), 1.5, "默认档不是图标上的数学1倍");
+    assert.match(BattleInfoUtils.speedLockedNotice(), /VIP 1.*VIP 5/);
+    // 确认与定时关闭可能同帧触发：实际onClose必须只通知一次并停止两个结算音源。
+    const settlement: any = new Node("Settlement").addComponent(ChapterEndView);
+    let closedSettlements = 0;
+    let stoppedSounds = 0;
+    let unscheduled = 0;
+    settlement.released = false;
+    settlement.args = { won: true, onClosed: () => closedSettlements++ };
+    settlement.seconds = 4;
+    settlement.closeHint = { string: "4 秒后关闭" };
+    settlement.audio = { isValid: true, stop: () => stoppedSounds++ };
+    settlement.mainAudio = { isValid: true, stop: () => stoppedSounds++ };
+    settlement.unscheduleAllCallbacks = () => unscheduled++;
+    settlement.finishOpen = () => {};
+    settlement.close = () => settlement.onClose();
+    for (let second = 1; second < 4; second++) {
+        settlement.tickClose();
+        assert.equal(closedSettlements, 0);
+        assert.equal(settlement.closeHint.string, (4 - second) + " 秒后关闭");
+    }
+    settlement.tickClose();
+    settlement.onClose();
+    assert.equal(closedSettlements, 1);
+    assert.equal(stoppedSounds, 2);
+    assert.equal(unscheduled, 1);
     const talkRows = [{ level_min: 1, level_max: 300, lan: 70901 }];
     const talkLanguage = new Map([[70901, "旧文案"]]);
     assert.deepEqual(HeroTalkUtils.candidates(1, talkRows, talkLanguage), []);
@@ -82,6 +177,53 @@ async function main(): Promise<void> {
     assert.throws(() => controller.onNotify(Protocol.CHAPTER_CLAIM,
         { action: "BATTLE", battleId, state: original, rewards: [] }));
     assert.equal(model.receipt, receiptBefore);
+    const historicalExperience = { beforeLevel: 1, beforeExp: 0, beforeThreshold: 100,
+        afterLevel: 2, afterExp: 20, afterThreshold: 200 };
+    controller.onNotify(Protocol.CHAPTER_CLAIM, { action: "SETTLED", battleId, state: original,
+        rewards: [], experience: historicalExperience });
+    assert.deepEqual(model.receipt!.experience, historicalExperience);
+    assert.equal(model.state!.assetRevision, 8, "经验动画快照不能覆盖当前资产版本");
+    const acceptedReceipt = model.receipt;
+    assert.throws(() => controller.onNotify(Protocol.CHAPTER_CLAIM, { action: "SETTLED", battleId,
+        state: original, rewards: [], experience: { ...historicalExperience, afterExp: -1 } }));
+    assert.equal(model.receipt, acceptedReceipt, "非法经验必须拒绝整包，不先提交奖励");
+    const oldUnits = [
+        { unitId: 1, faction: 1, templateId: 10101001, level: 1, position: 1, initialHp: 10, maxHp: 10, finalHp: 10 },
+        { unitId: 2, faction: 2, templateId: 10101001, level: 1, position: 1, initialHp: 10, maxHp: 10, finalHp: 0 },
+    ];
+    assert.equal(BattleReplayUtils.validateUnits(oldUnits)[0].totalDamage, null, "旧战报缺失统计不能当作零");
+    assert.equal(BattleReplayUtils.validateUnits(oldUnits)[0].totalRecovery, null);
+    assert.equal(BattleReplayUtils.validateUnits([{ ...oldUnits[0], totalRecovery: -25, star: 5 }, oldUnits[1]])[0].totalRecovery, -25);
+    assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], totalRecovery: Number.MAX_SAFE_INTEGER + 1 }, oldUnits[1]]));
+    assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], star: 0 }, oldUnits[1]]));
+    assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], totalDamage: -1 }, oldUnits[1]]));
+    const ranked = [{ ...oldUnits[0], totalDamage: 70 }, { ...oldUnits[0], unitId: 3, totalDamage: 70 },
+        { ...oldUnits[1], totalDamage: 999 }];
+    assert.equal(ChapterSettlementUtils.highestDamage(ranked)!.unitId, 1, "同伤害保持名册顺序且不选敌方");
+    const statisticUnits = [
+        { ...oldUnits[0], totalDamage: 20, totalTakenDamage: 8, totalRecovery: 100 },
+        { ...oldUnits[0], unitId: 3, totalDamage: 0, totalTakenDamage: 0, totalRecovery: -5 },
+        { ...oldUnits[1], totalDamage: 40, totalTakenDamage: 4, totalRecovery: 200 },
+    ];
+    const statisticRows = BattleStatisticsUtils.rows(statisticUnits);
+    assert.equal(statisticRows.length, 3, "重复模板不能合并");
+    assert.deepEqual(statisticRows[0].damage, { value: 20, ratio: 0.5 }, "最大值跨双方计算");
+    assert.deepEqual(statisticRows[0].taken, { value: 8, ratio: 1 });
+    assert.deepEqual(statisticRows[0].recovery, { value: 100, ratio: 0.5 });
+    assert.deepEqual(statisticRows[1].recovery, { value: -5, ratio: 0 });
+    const missingRows = BattleStatisticsUtils.rows([statisticUnits[0], { ...statisticUnits[2], totalRecovery: null }]);
+    assert.deepEqual(missingRows[0].recovery, { value: 100, ratio: 0 }, "缺失一方时不伪造完整比例");
+    assert.deepEqual(missingRows[1].recovery, { value: null, ratio: 0 });
+    assert.deepEqual(BattleStatisticsUtils.rows([{ ...statisticUnits[0], totalRecovery: 0 }])[0].recovery, { value: 0, ratio: 0 });
+    assert(Object.isFrozen(statisticRows) && Object.isFrozen(statisticRows[0]));
+    assert.equal(ChapterSettlementUtils.highestDamage(oldUnits), null);
+    const multiLevel = { beforeLevel: 1, beforeExp: 100, beforeThreshold: 120, afterLevel: 3, afterExp: 120, afterThreshold: 720 };
+    assert.deepEqual(ChapterSettlementUtils.experienceFrame(multiLevel, 0, () => 360),
+        { level: 1, exp: 100, threshold: 120, ratio: 100 / 120 });
+    assert.equal(ChapterSettlementUtils.experienceFrame(multiLevel, 0.5, () => 360).level, 2);
+    assert.deepEqual(ChapterSettlementUtils.experienceFrame(multiLevel, 1, () => 360),
+        { level: 3, exp: 120, threshold: 720, ratio: 1 / 6 });
+    assert.throws(() => ChapterSettlementUtils.experienceFrame(multiLevel, 0.5, () => 0));
     controller.configure(async (_name, _body, _received, _failed) => {
         // 应用换号后不交付旧成功或失败；控制器不得在finally里恢复旧业务状态。
         controller.resetSession("test/other");
@@ -129,12 +271,20 @@ async function main(): Promise<void> {
             ProtocolRouter.instance.dispatch(live, replay);
             assert.equal(model.replay!.mission, mission);
             BattleReplayUtils.decode(model.replay!.bytes);
+            for (const unit of BattleReplayUtils.units(model.replay!.bytes)) {
+                assert.equal(typeof unit.totalDamage, "number");
+                assert.equal(typeof unit.totalTakenDamage, "number");
+                assert.equal(typeof unit.totalRecovery, "number");
+                assert.equal(typeof unit.star, "number");
+            }
             ProtocolRouter.instance.dispatch(live, read("claimed"));
             const current = model.state;
             ProtocolRouter.instance.dispatch(live, read("receipt"));
             assert.equal(model.state, current);
             assert.equal(model.state!.pendingBattleId, null);
             assert(model.receipt!.rewards.length > 0);
+            assert(model.receipt!.experience);
+            assert(model.receipt!.experience!.afterLevel >= model.receipt!.experience!.beforeLevel);
         }
         live.dispose();
         console.log("PASS 三关真实Java→TS初始化/战报/结算/快照互通");
@@ -195,6 +345,9 @@ async function main(): Promise<void> {
 
     // 三种实际屏幕比例投影至设计高度，主线纸张不越出左右安全边距，背景铺满。
     const originalVisibleSize = screenView.getVisibleSize;
+    const originalStopTween = Tween.stopAllByTarget;
+    // 此段只断言重排几何；动画中断及播放效果另在Creator实测，不把替身当作引擎验收。
+    Tween.stopAllByTarget = () => {};
     rewardView.panel = new Node("Panel");
     rewardView.panel.parent = rewardNode;
     for (const name of ["PalaceBackground", "PalaceFloor"]) {
@@ -203,19 +356,43 @@ async function main(): Promise<void> {
         background.addComponent(UITransform);
     }
     try {
-        for (const [width, height] of [[360, 720], [360, 840], [768, 1024]]) {
+        const result: any = new Node("Result").addComponent(ChapterEndView);
+        result.panel = new Node("Panel");
+        result.panel.parent = result.node;
+        result.backdrop = new Node("Backdrop");
+        result.backdrop.parent = result.node;
+        result.backdrop.addComponent(UITransform);
+        for (const [width, height] of [[360, 720], [360, 840], [393, 852], [768, 1024], [852, 393], [393, 852]]) {
             const visibleWidth = width / height * 1280;
             screenView.getVisibleSize = () => ({ width: visibleWidth, height: 1280 });
             rewardView.fitViewport();
             assert(rewardView.panel.scale.x * 620 <= visibleWidth - 24 + 0.001);
             assert.equal(rewardNode.getChildByName("PalaceFloor")!.getComponent(UITransform)!.contentSize.width, visibleWidth);
+            result.fitViewport();
+            assert(result.panel.scale.x * 640 <= visibleWidth - 24 + 0.001);
+            assert.equal(result.panel.scale.x, result.panel.scale.y, "主体不能横向挤压");
+            assert.equal(result.panel.position.x, -320 * result.panel.scale.x, "结算原点随等比缩放保持居中");
+            assert.equal(result.backdrop.getComponent(UITransform).contentSize.width, visibleWidth);
+        }
+        result.mainVictoryPanel = result.panel;
+        result.mainVictoryPanel.active = true;
+        for (const [width, height] of [[360, 720], [360, 840], [393, 852], [768, 1024], [393, 852]]) {
+            const visibleWidth = width / height * 1280;
+            screenView.getVisibleSize = () => ({ width: visibleWidth, height: 1280 });
+            result.fitViewport();
+            assert(result.panel.scale.x * 640 <= visibleWidth - 24 + 0.001);
+            assert.equal(result.panel.position.y, -365 * result.panel.scale.x, "旧胜利页使用独立高度居中，重复重排不累积偏移");
         }
     } finally {
         screenView.getVisibleSize = originalVisibleSize;
+        Tween.stopAllByTarget = originalStopTween;
     }
     // 正常战斗完成自动结算；历史重播、失败及关闭后均不发起领奖。
     const originalClaim = MainChapterController.instance.claim;
     const originalUiOpen = UIManager.instance.open;
+    const originalUnits = BattleReplayUtils.units;
+    // 此段只测试结算调度；真实二进制统计由上面的Java→TS互通检查验证。
+    BattleReplayUtils.units = () => ranked;
     const resultNode = new Node("MainChapterBattleView");
     const resultView: any = resultNode.addComponent(MainChapterBattleView);
     resultView.args = { report: { battleId, mission: 1 }, onClosed: () => {} };
@@ -262,6 +439,7 @@ async function main(): Promise<void> {
     } finally {
         MainChapterController.instance.claim = originalClaim;
         UIManager.instance.open = originalUiOpen;
+        BattleReplayUtils.units = originalUnits;
         shared.reset(null);
     }
     const chapterPrefab = JSON.parse(readFileSync("client/assets/prefabs/ui/battle/MainChapterView.prefab", "utf8"));

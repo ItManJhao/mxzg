@@ -52,17 +52,18 @@ public final class HeroBattleChapterScenario {
             trace = List.copyOf(trace);
         }
     }
-    /** 本场结果与逐单位最终生命；审计来源不能冒充真实主线，无奖励和持久状态。 */
+    /** 本场结果、逐单位最终生命及完整治疗记录；冻结展示统计，不赋予审计来源发奖权限。 */
     public record Result(String scenario, HeroBattleRoundUtils.Outcome outcome, int rounds, List<Unit> initial,
                          List<Turn> turns, List<HeroBattleHealingExecutor.Damage> damages, List<Frame> frames,
-                         Map<Integer, Long> finalHp) {
-        /** 冻结完整名册、轨迹与最终逐单位生命。 */
+                         Map<Integer, Long> finalHp, List<HeroBattleHealingExecutor.Recovery> recoveries) {
+        /** 冻结完整名册、伤害/治疗轨迹与最终逐单位生命，禁止结束后反写统计。 */
         public Result {
             initial = List.copyOf(initial);
             turns = List.copyOf(turns);
             damages = List.copyOf(damages);
             frames = List.copyOf(frames);
             finalHp = Map.copyOf(finalHp);
+            recoveries = List.copyOf(recoveries);
         }
     }
 
@@ -480,7 +481,8 @@ public final class HeroBattleChapterScenario {
             outcome = outcome(initial, snapshot(engine, initial), completed);
             if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) break;
         }
-        return new Result(scenario, outcome, completed, initial, turns, engine.damages(), frames, snapshot(engine, initial));
+        return new Result(scenario, outcome, completed, initial, turns, engine.damages(), frames,
+            snapshot(engine, initial), engine.recoveries());
     }
 
     /** 完整生命快照严格匹配名册；双方同时全灭仍由旧规则先判攻方失败。 */

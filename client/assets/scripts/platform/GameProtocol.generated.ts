@@ -10066,6 +10066,10 @@ var mxzg = $root.mxzg = (() => {
       BattleReplayUnit.prototype.level = 0;
       BattleReplayUnit.prototype.faction = 0;
       BattleReplayUnit.prototype.maxHp = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      BattleReplayUnit.prototype.totalDamage = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      BattleReplayUnit.prototype.totalTakenDamage = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      BattleReplayUnit.prototype.totalRecovery = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      BattleReplayUnit.prototype.star = 0;
       BattleReplayUnit.create = function create(properties) {
         return new BattleReplayUnit(properties);
       };
@@ -10111,6 +10115,26 @@ var mxzg = $root.mxzg = (() => {
             /* id 8, wireType 0 =*/
             64
           ).int64(message.maxHp);
+        if (message.totalDamage != null && Object.hasOwnProperty.call(message, "totalDamage"))
+          writer.uint32(
+            /* id 9, wireType 0 =*/
+            72
+          ).int64(message.totalDamage);
+        if (message.totalTakenDamage != null && Object.hasOwnProperty.call(message, "totalTakenDamage"))
+          writer.uint32(
+            /* id 10, wireType 0 =*/
+            80
+          ).int64(message.totalTakenDamage);
+        if (message.totalRecovery != null && Object.hasOwnProperty.call(message, "totalRecovery"))
+          writer.uint32(
+            /* id 11, wireType 0 =*/
+            88
+          ).int64(message.totalRecovery);
+        if (message.star != null && Object.hasOwnProperty.call(message, "star"))
+          writer.uint32(
+            /* id 12, wireType 0 =*/
+            96
+          ).uint32(message.star);
         return writer;
       };
       BattleReplayUnit.decode = function decode(reader, length, error, long) {
@@ -10168,6 +10192,22 @@ var mxzg = $root.mxzg = (() => {
               message.maxHp = reader.int64();
               break;
             }
+            case 9: {
+              message.totalDamage = reader.int64();
+              break;
+            }
+            case 10: {
+              message.totalTakenDamage = reader.int64();
+              break;
+            }
+            case 11: {
+              message.totalRecovery = reader.int64();
+              break;
+            }
+            case 12: {
+              message.star = reader.uint32();
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -10218,6 +10258,22 @@ var mxzg = $root.mxzg = (() => {
         if (message.maxHp != null && Object.hasOwnProperty.call(message, "maxHp")) {
           if (!$util.isInteger(message.maxHp) && !(message.maxHp && $util.isInteger(message.maxHp.low) && $util.isInteger(message.maxHp.high)))
             return "maxHp: integer|Long expected";
+        }
+        if (message.totalDamage != null && Object.hasOwnProperty.call(message, "totalDamage")) {
+          if (!$util.isInteger(message.totalDamage) && !(message.totalDamage && $util.isInteger(message.totalDamage.low) && $util.isInteger(message.totalDamage.high)))
+            return "totalDamage: integer|Long expected";
+        }
+        if (message.totalTakenDamage != null && Object.hasOwnProperty.call(message, "totalTakenDamage")) {
+          if (!$util.isInteger(message.totalTakenDamage) && !(message.totalTakenDamage && $util.isInteger(message.totalTakenDamage.low) && $util.isInteger(message.totalTakenDamage.high)))
+            return "totalTakenDamage: integer|Long expected";
+        }
+        if (message.totalRecovery != null && Object.hasOwnProperty.call(message, "totalRecovery")) {
+          if (!$util.isInteger(message.totalRecovery) && !(message.totalRecovery && $util.isInteger(message.totalRecovery.low) && $util.isInteger(message.totalRecovery.high)))
+            return "totalRecovery: integer|Long expected";
+        }
+        if (message.star != null && Object.hasOwnProperty.call(message, "star")) {
+          if (!$util.isInteger(message.star))
+            return "star: integer expected";
         }
         return null;
       };
@@ -10271,6 +10327,38 @@ var mxzg = $root.mxzg = (() => {
           else if (typeof object.maxHp === "object")
             message.maxHp = new $util.LongBits(object.maxHp.low >>> 0, object.maxHp.high >>> 0).toNumber();
         }
+        if (object.totalDamage != null) {
+          if ($util.Long)
+            message.totalDamage = $util.Long.fromValue(object.totalDamage, false);
+          else if (typeof object.totalDamage === "string")
+            message.totalDamage = parseInt(object.totalDamage, 10);
+          else if (typeof object.totalDamage === "number")
+            message.totalDamage = object.totalDamage;
+          else if (typeof object.totalDamage === "object")
+            message.totalDamage = new $util.LongBits(object.totalDamage.low >>> 0, object.totalDamage.high >>> 0).toNumber();
+        }
+        if (object.totalTakenDamage != null) {
+          if ($util.Long)
+            message.totalTakenDamage = $util.Long.fromValue(object.totalTakenDamage, false);
+          else if (typeof object.totalTakenDamage === "string")
+            message.totalTakenDamage = parseInt(object.totalTakenDamage, 10);
+          else if (typeof object.totalTakenDamage === "number")
+            message.totalTakenDamage = object.totalTakenDamage;
+          else if (typeof object.totalTakenDamage === "object")
+            message.totalTakenDamage = new $util.LongBits(object.totalTakenDamage.low >>> 0, object.totalTakenDamage.high >>> 0).toNumber();
+        }
+        if (object.totalRecovery != null) {
+          if ($util.Long)
+            message.totalRecovery = $util.Long.fromValue(object.totalRecovery, false);
+          else if (typeof object.totalRecovery === "string")
+            message.totalRecovery = parseInt(object.totalRecovery, 10);
+          else if (typeof object.totalRecovery === "number")
+            message.totalRecovery = object.totalRecovery;
+          else if (typeof object.totalRecovery === "object")
+            message.totalRecovery = new $util.LongBits(object.totalRecovery.low >>> 0, object.totalRecovery.high >>> 0).toNumber();
+        }
+        if (object.star != null)
+          message.star = object.star >>> 0;
         return message;
       };
       BattleReplayUnit.toObject = function toObject(message, options, q) {
@@ -10302,6 +10390,22 @@ var mxzg = $root.mxzg = (() => {
             object.maxHp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
           } else
             object.maxHp = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.totalDamage = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.totalDamage = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.totalTakenDamage = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.totalTakenDamage = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.totalRecovery = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.totalRecovery = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          object.star = 0;
         }
         if (message.unitId != null && Object.hasOwnProperty.call(message, "unitId"))
           object.unitId = message.unitId;
@@ -10334,6 +10438,29 @@ var mxzg = $root.mxzg = (() => {
             object.maxHp = options.longs === String ? String(message.maxHp) : message.maxHp;
           else
             object.maxHp = options.longs === String ? $util.Long.prototype.toString.call(message.maxHp) : options.longs === Number ? new $util.LongBits(message.maxHp.low >>> 0, message.maxHp.high >>> 0).toNumber() : message.maxHp;
+        if (message.totalDamage != null && Object.hasOwnProperty.call(message, "totalDamage"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.totalDamage = typeof message.totalDamage === "number" ? BigInt(message.totalDamage) : $util.Long.fromBits(message.totalDamage.low >>> 0, message.totalDamage.high >>> 0, false).toBigInt();
+          else if (typeof message.totalDamage === "number")
+            object.totalDamage = options.longs === String ? String(message.totalDamage) : message.totalDamage;
+          else
+            object.totalDamage = options.longs === String ? $util.Long.prototype.toString.call(message.totalDamage) : options.longs === Number ? new $util.LongBits(message.totalDamage.low >>> 0, message.totalDamage.high >>> 0).toNumber() : message.totalDamage;
+        if (message.totalTakenDamage != null && Object.hasOwnProperty.call(message, "totalTakenDamage"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.totalTakenDamage = typeof message.totalTakenDamage === "number" ? BigInt(message.totalTakenDamage) : $util.Long.fromBits(message.totalTakenDamage.low >>> 0, message.totalTakenDamage.high >>> 0, false).toBigInt();
+          else if (typeof message.totalTakenDamage === "number")
+            object.totalTakenDamage = options.longs === String ? String(message.totalTakenDamage) : message.totalTakenDamage;
+          else
+            object.totalTakenDamage = options.longs === String ? $util.Long.prototype.toString.call(message.totalTakenDamage) : options.longs === Number ? new $util.LongBits(message.totalTakenDamage.low >>> 0, message.totalTakenDamage.high >>> 0).toNumber() : message.totalTakenDamage;
+        if (message.totalRecovery != null && Object.hasOwnProperty.call(message, "totalRecovery"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.totalRecovery = typeof message.totalRecovery === "number" ? BigInt(message.totalRecovery) : $util.Long.fromBits(message.totalRecovery.low >>> 0, message.totalRecovery.high >>> 0, false).toBigInt();
+          else if (typeof message.totalRecovery === "number")
+            object.totalRecovery = options.longs === String ? String(message.totalRecovery) : message.totalRecovery;
+          else
+            object.totalRecovery = options.longs === String ? $util.Long.prototype.toString.call(message.totalRecovery) : options.longs === Number ? new $util.LongBits(message.totalRecovery.low >>> 0, message.totalRecovery.high >>> 0).toNumber() : message.totalRecovery;
+        if (message.star != null && Object.hasOwnProperty.call(message, "star"))
+          object.star = message.star;
         return object;
       };
       BattleReplayUnit.prototype.toJSON = function toJSON() {
@@ -11880,6 +12007,7 @@ var mxzg = $root.mxzg = (() => {
       ChapterReceipt.prototype.battleId = "";
       ChapterReceipt.prototype.state = null;
       ChapterReceipt.prototype.rewards = $util.emptyArray;
+      ChapterReceipt.prototype.experience = null;
       ChapterReceipt.create = function create(properties) {
         return new ChapterReceipt(properties);
       };
@@ -11908,6 +12036,11 @@ var mxzg = $root.mxzg = (() => {
               /* id 4, wireType 2 =*/
               34
             ).fork(), q + 1).ldelim();
+        if (message.experience != null && Object.hasOwnProperty.call(message, "experience"))
+          $root.mxzg.game.ChapterExperience.encode(message.experience, writer.uint32(
+            /* id 5, wireType 2 =*/
+            42
+          ).fork(), q + 1).ldelim();
         return writer;
       };
       ChapterReceipt.decode = function decode(reader, length, error, long) {
@@ -11949,6 +12082,10 @@ var mxzg = $root.mxzg = (() => {
               if (!(message.rewards && message.rewards.length))
                 message.rewards = [];
               message.rewards.push($root.mxzg.game.ChapterReward.decode(reader, reader.uint32(), void 0, long + 1));
+              break;
+            }
+            case 5: {
+              message.experience = $root.mxzg.game.ChapterExperience.decode(reader, reader.uint32(), void 0, long + 1);
               break;
             }
             default:
@@ -11994,6 +12131,11 @@ var mxzg = $root.mxzg = (() => {
               return "rewards." + error;
           }
         }
+        if (message.experience != null && Object.hasOwnProperty.call(message, "experience")) {
+          let error = $root.mxzg.game.ChapterExperience.verify(message.experience, long + 1);
+          if (error)
+            return "experience." + error;
+        }
         return null;
       };
       ChapterReceipt.fromObject = function fromObject(object, long) {
@@ -12025,6 +12167,11 @@ var mxzg = $root.mxzg = (() => {
             message.rewards[i] = $root.mxzg.game.ChapterReward.fromObject(object.rewards[i], long + 1);
           }
         }
+        if (object.experience != null) {
+          if (!$util.isObject(object.experience))
+            throw TypeError(".mxzg.game.ChapterReceipt.experience: object expected");
+          message.experience = $root.mxzg.game.ChapterExperience.fromObject(object.experience, long + 1);
+        }
         return message;
       };
       ChapterReceipt.toObject = function toObject(message, options, q) {
@@ -12041,6 +12188,7 @@ var mxzg = $root.mxzg = (() => {
           object.action = "";
           object.battleId = "";
           object.state = null;
+          object.experience = null;
         }
         if (message.action != null && Object.hasOwnProperty.call(message, "action"))
           object.action = message.action;
@@ -12053,6 +12201,8 @@ var mxzg = $root.mxzg = (() => {
           for (let j = 0; j < message.rewards.length; ++j)
             object.rewards[j] = $root.mxzg.game.ChapterReward.toObject(message.rewards[j], options, q + 1);
         }
+        if (message.experience != null && Object.hasOwnProperty.call(message, "experience"))
+          object.experience = $root.mxzg.game.ChapterExperience.toObject(message.experience, options, q + 1);
         return object;
       };
       ChapterReceipt.prototype.toJSON = function toJSON() {
@@ -12065,6 +12215,281 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.ChapterReceipt";
       };
       return ChapterReceipt;
+    })();
+    game.ChapterExperience = (function() {
+      function ChapterExperience(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      ChapterExperience.prototype.beforeLevel = 0;
+      ChapterExperience.prototype.beforeExp = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      ChapterExperience.prototype.beforeThreshold = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      ChapterExperience.prototype.afterLevel = 0;
+      ChapterExperience.prototype.afterExp = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      ChapterExperience.prototype.afterThreshold = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      ChapterExperience.create = function create(properties) {
+        return new ChapterExperience(properties);
+      };
+      ChapterExperience.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.beforeLevel);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).int64(message.beforeExp);
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).int64(message.beforeThreshold);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).uint32(message.afterLevel);
+        writer.uint32(
+          /* id 5, wireType 0 =*/
+          40
+        ).int64(message.afterExp);
+        writer.uint32(
+          /* id 6, wireType 0 =*/
+          48
+        ).int64(message.afterThreshold);
+        return writer;
+      };
+      ChapterExperience.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.ChapterExperience();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.beforeLevel = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.beforeExp = reader.int64();
+              break;
+            }
+            case 3: {
+              message.beforeThreshold = reader.int64();
+              break;
+            }
+            case 4: {
+              message.afterLevel = reader.uint32();
+              break;
+            }
+            case 5: {
+              message.afterExp = reader.int64();
+              break;
+            }
+            case 6: {
+              message.afterThreshold = reader.int64();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "beforeLevel"))
+          throw $util.ProtocolError("missing required 'beforeLevel'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "beforeExp"))
+          throw $util.ProtocolError("missing required 'beforeExp'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "beforeThreshold"))
+          throw $util.ProtocolError("missing required 'beforeThreshold'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "afterLevel"))
+          throw $util.ProtocolError("missing required 'afterLevel'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "afterExp"))
+          throw $util.ProtocolError("missing required 'afterExp'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "afterThreshold"))
+          throw $util.ProtocolError("missing required 'afterThreshold'", { instance: message });
+        return message;
+      };
+      ChapterExperience.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.beforeLevel))
+          return "beforeLevel: integer expected";
+        if (!$util.isInteger(message.beforeExp) && !(message.beforeExp && $util.isInteger(message.beforeExp.low) && $util.isInteger(message.beforeExp.high)))
+          return "beforeExp: integer|Long expected";
+        if (!$util.isInteger(message.beforeThreshold) && !(message.beforeThreshold && $util.isInteger(message.beforeThreshold.low) && $util.isInteger(message.beforeThreshold.high)))
+          return "beforeThreshold: integer|Long expected";
+        if (!$util.isInteger(message.afterLevel))
+          return "afterLevel: integer expected";
+        if (!$util.isInteger(message.afterExp) && !(message.afterExp && $util.isInteger(message.afterExp.low) && $util.isInteger(message.afterExp.high)))
+          return "afterExp: integer|Long expected";
+        if (!$util.isInteger(message.afterThreshold) && !(message.afterThreshold && $util.isInteger(message.afterThreshold.low) && $util.isInteger(message.afterThreshold.high)))
+          return "afterThreshold: integer|Long expected";
+        return null;
+      };
+      ChapterExperience.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.ChapterExperience)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.ChapterExperience: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.ChapterExperience();
+        if (object.beforeLevel != null)
+          message.beforeLevel = object.beforeLevel >>> 0;
+        if (object.beforeExp != null) {
+          if ($util.Long)
+            message.beforeExp = $util.Long.fromValue(object.beforeExp, false);
+          else if (typeof object.beforeExp === "string")
+            message.beforeExp = parseInt(object.beforeExp, 10);
+          else if (typeof object.beforeExp === "number")
+            message.beforeExp = object.beforeExp;
+          else if (typeof object.beforeExp === "object")
+            message.beforeExp = new $util.LongBits(object.beforeExp.low >>> 0, object.beforeExp.high >>> 0).toNumber();
+        }
+        if (object.beforeThreshold != null) {
+          if ($util.Long)
+            message.beforeThreshold = $util.Long.fromValue(object.beforeThreshold, false);
+          else if (typeof object.beforeThreshold === "string")
+            message.beforeThreshold = parseInt(object.beforeThreshold, 10);
+          else if (typeof object.beforeThreshold === "number")
+            message.beforeThreshold = object.beforeThreshold;
+          else if (typeof object.beforeThreshold === "object")
+            message.beforeThreshold = new $util.LongBits(object.beforeThreshold.low >>> 0, object.beforeThreshold.high >>> 0).toNumber();
+        }
+        if (object.afterLevel != null)
+          message.afterLevel = object.afterLevel >>> 0;
+        if (object.afterExp != null) {
+          if ($util.Long)
+            message.afterExp = $util.Long.fromValue(object.afterExp, false);
+          else if (typeof object.afterExp === "string")
+            message.afterExp = parseInt(object.afterExp, 10);
+          else if (typeof object.afterExp === "number")
+            message.afterExp = object.afterExp;
+          else if (typeof object.afterExp === "object")
+            message.afterExp = new $util.LongBits(object.afterExp.low >>> 0, object.afterExp.high >>> 0).toNumber();
+        }
+        if (object.afterThreshold != null) {
+          if ($util.Long)
+            message.afterThreshold = $util.Long.fromValue(object.afterThreshold, false);
+          else if (typeof object.afterThreshold === "string")
+            message.afterThreshold = parseInt(object.afterThreshold, 10);
+          else if (typeof object.afterThreshold === "number")
+            message.afterThreshold = object.afterThreshold;
+          else if (typeof object.afterThreshold === "object")
+            message.afterThreshold = new $util.LongBits(object.afterThreshold.low >>> 0, object.afterThreshold.high >>> 0).toNumber();
+        }
+        return message;
+      };
+      ChapterExperience.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.beforeLevel = 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.beforeExp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.beforeExp = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.beforeThreshold = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.beforeThreshold = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          object.afterLevel = 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.afterExp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.afterExp = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.afterThreshold = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.afterThreshold = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+        }
+        if (message.beforeLevel != null && Object.hasOwnProperty.call(message, "beforeLevel"))
+          object.beforeLevel = message.beforeLevel;
+        if (message.beforeExp != null && Object.hasOwnProperty.call(message, "beforeExp"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.beforeExp = typeof message.beforeExp === "number" ? BigInt(message.beforeExp) : $util.Long.fromBits(message.beforeExp.low >>> 0, message.beforeExp.high >>> 0, false).toBigInt();
+          else if (typeof message.beforeExp === "number")
+            object.beforeExp = options.longs === String ? String(message.beforeExp) : message.beforeExp;
+          else
+            object.beforeExp = options.longs === String ? $util.Long.prototype.toString.call(message.beforeExp) : options.longs === Number ? new $util.LongBits(message.beforeExp.low >>> 0, message.beforeExp.high >>> 0).toNumber() : message.beforeExp;
+        if (message.beforeThreshold != null && Object.hasOwnProperty.call(message, "beforeThreshold"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.beforeThreshold = typeof message.beforeThreshold === "number" ? BigInt(message.beforeThreshold) : $util.Long.fromBits(message.beforeThreshold.low >>> 0, message.beforeThreshold.high >>> 0, false).toBigInt();
+          else if (typeof message.beforeThreshold === "number")
+            object.beforeThreshold = options.longs === String ? String(message.beforeThreshold) : message.beforeThreshold;
+          else
+            object.beforeThreshold = options.longs === String ? $util.Long.prototype.toString.call(message.beforeThreshold) : options.longs === Number ? new $util.LongBits(message.beforeThreshold.low >>> 0, message.beforeThreshold.high >>> 0).toNumber() : message.beforeThreshold;
+        if (message.afterLevel != null && Object.hasOwnProperty.call(message, "afterLevel"))
+          object.afterLevel = message.afterLevel;
+        if (message.afterExp != null && Object.hasOwnProperty.call(message, "afterExp"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.afterExp = typeof message.afterExp === "number" ? BigInt(message.afterExp) : $util.Long.fromBits(message.afterExp.low >>> 0, message.afterExp.high >>> 0, false).toBigInt();
+          else if (typeof message.afterExp === "number")
+            object.afterExp = options.longs === String ? String(message.afterExp) : message.afterExp;
+          else
+            object.afterExp = options.longs === String ? $util.Long.prototype.toString.call(message.afterExp) : options.longs === Number ? new $util.LongBits(message.afterExp.low >>> 0, message.afterExp.high >>> 0).toNumber() : message.afterExp;
+        if (message.afterThreshold != null && Object.hasOwnProperty.call(message, "afterThreshold"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.afterThreshold = typeof message.afterThreshold === "number" ? BigInt(message.afterThreshold) : $util.Long.fromBits(message.afterThreshold.low >>> 0, message.afterThreshold.high >>> 0, false).toBigInt();
+          else if (typeof message.afterThreshold === "number")
+            object.afterThreshold = options.longs === String ? String(message.afterThreshold) : message.afterThreshold;
+          else
+            object.afterThreshold = options.longs === String ? $util.Long.prototype.toString.call(message.afterThreshold) : options.longs === Number ? new $util.LongBits(message.afterThreshold.low >>> 0, message.afterThreshold.high >>> 0).toNumber() : message.afterThreshold;
+        return object;
+      };
+      ChapterExperience.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      ChapterExperience.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.ChapterExperience";
+      };
+      return ChapterExperience;
     })();
     game.ChapterReplay = (function() {
       function ChapterReplay(properties) {

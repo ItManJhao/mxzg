@@ -168,7 +168,7 @@ def audit():
             assert file.stem in views, (rel, classes, '界面资源与实际类不一致')
         ui = next((c for c in components if c['__type__'] == 'cc.UITransform'), None)
         assert ui is not None, (rel, '根缺少 UITransform')
-        if file.stem in ('ChapterRewardLayer', 'ChapterPreviewLayer', 'BattleDetailLayer',
+        if file.stem in ('ChapterRewardLayer', 'ChapterPreviewLayer',
                          'HeroSuggestLayer', 'MailLayer', 'SettingLayer', 'QuickBattleLayer'):
             # 360×800 在当前固定高度策略下可见宽度为 576；静态缩放必须连同根原点一起校验。
             size, scale, anchor = ui['_contentSize'], root['_lscale'], ui['_anchorPoint']
@@ -176,6 +176,22 @@ def audit():
             for axis, dimension in [('x', 'width'), ('y', 'height')]:
                 expected = (anchor[axis] - 0.5) * size[dimension] * scale[axis]
                 assert math.isclose(root['_lpos'][axis], expected), (rel, '缩放后根位置未居中')
+        if file.stem == 'BattleDetailLayer':
+            # 统计页根负责全屏遮罩，旧600×750主体独立适配；不能再按旧根整体缩放断言。
+            view = next(c for c in components if 'attackerList' in c and 'defenderList' in c)
+            panel = data[view['panel']['__id__']]
+            assert panel['_name'] == 'StatisticsPanel'
+            assert math.isclose(panel['_lpos']['x'], -300 * panel['_lscale']['x'])
+            assert math.isclose(panel['_lpos']['y'], -375 * panel['_lscale']['y'])
+            assert 600 * panel['_lscale']['x'] <= 552
+            for field in ('attackerList', 'defenderList'):
+                scroll = data[view[field]['__id__']]
+                assert scripts.get(scroll['__type__']) == 'SuperScroll', (rel, field)
+                content = data[scroll['_content']['__id__']]
+                port = data[content['_parent']['__id__']]
+                assert port['_parent'] == scroll['node'], (rel, '统计列表层级错误')
+                assert any(data[c['__id__']]['__type__'] == 'cc.Mask' for c in port['_components'])
+                assert any(scripts.get(data[c['__id__']]['__type__']) == 'SuperContent' for c in content['_components'])
         if file.stem == 'ServerPickerView':
             # 选服已迁为两个SuperScroll；检查实际绑定，不能继续读取旧scrollHost字段。
             view = next(c for c in components if 'serverScroll' in c and 'regionScroll' in c)

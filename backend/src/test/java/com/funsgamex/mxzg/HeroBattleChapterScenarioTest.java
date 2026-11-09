@@ -89,7 +89,7 @@ class HeroBattleChapterScenarioTest {
         var frames = new ArrayList<>(report.frames());
         frames.remove(3);
         var broken = new HeroBattleChapterScenario.Result(report.scenario(), report.outcome(), report.rounds(),
-            report.initial(), report.turns(), report.damages(), frames, report.finalHp());
+            report.initial(), report.turns(), report.damages(), frames, report.finalHp(), report.recoveries());
         assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(broken));
     }
     /** 主动技能表现先于扣血，持续Buff随后安装；到期回合先伤害再移除。 */
@@ -154,10 +154,10 @@ class HeroBattleChapterScenarioTest {
             }
         }
         var result = new HeroBattleChapterScenario.Result("audit:round-limit", HeroBattleRoundUtils.Outcome.DEFENDER_WIN,
-            15, initial, turns, List.of(), frames, Map.of(1, a, 2, d));
+            15, initial, turns, List.of(), frames, Map.of(1, a, 2, d), List.of());
         assertDoesNotThrow(() -> HeroBattleReplayUtils.validate(result));
         frames.removeLast();
-        var truncated = new HeroBattleChapterScenario.Result(result.scenario(), result.outcome(), 15, initial, turns, List.of(), frames, Map.of(1, a, 2, d));
+        var truncated = new HeroBattleChapterScenario.Result(result.scenario(), result.outcome(), 15, initial, turns, List.of(), frames, Map.of(1, a, 2, d), List.of());
         assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(truncated));
     }
 
@@ -201,7 +201,7 @@ class HeroBattleChapterScenarioTest {
     private static HeroBattleChapterScenario.Result withFrames(HeroBattleChapterScenario.Result result,
         List<HeroBattleChapterScenario.Frame> frames) {
         return new HeroBattleChapterScenario.Result(result.scenario(), result.outcome(), result.rounds(), result.initial(), result.turns(),
-            result.damages(), frames, result.finalHp());
+            result.damages(), frames, result.finalHp(), result.recoveries());
     }
 
     /** 真实第二关按配置执行；零概率流血不得产生安装或后续流血伤害。 */
@@ -272,7 +272,7 @@ class HeroBattleChapterScenarioTest {
     void thirdChapterRejectsRelabeledDuel() {
         var report = new HeroBattleChapterScenario(new ObjectMapper()).run(rate -> rate == 1D);
         var forged = new HeroBattleChapterScenario.Result("main:1:1:3", report.outcome(), report.rounds(),
-            report.initial(), report.turns(), report.damages(), report.frames(), report.finalHp());
+            report.initial(), report.turns(), report.damages(), report.frames(), report.finalHp(), report.recoveries());
         assertThrows(IllegalArgumentException.class, () -> HeroBattleReplayUtils.validate(forged));
     }
 

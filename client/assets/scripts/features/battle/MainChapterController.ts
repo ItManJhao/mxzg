@@ -6,7 +6,7 @@ import { ProtocolRouter } from "../../platform/ProtocolRouter";
 import { STATE_PROTOCOLS, statePayload } from "../../platform/ProtocolState";
 import { GameFrame } from "../../platform/GameProtocolCodec";
 import { mxzg } from "../../platform/GameProtocol.generated";
-import { MainChapterModel, MainChapterState, MainChapterReplay, MainChapterIdleState } from "./MainChapterModel";
+import { MainChapterModel, MainChapterState, MainChapterReplay, MainChapterIdleState, MainChapterExperience } from "./MainChapterModel";
 import { BattleReplayUtils } from "./utils/BattleReplayUtils";
 
 declare module "../../framework/EventDispatcher" {
@@ -29,11 +29,15 @@ export class MainChapterController extends BaseController {
 
     /** 应用注入的权威角色等级只读入口，不持有账号或复制角色数据。 */
     public readRoleLevel: () => number = () => 0;
+    /** 应用提供当前角色头像只读入口；仅开结算时读取，不缓存账号或角色资料。 */
+    public readRoleAppearance: () => { headId: number; borderId: number } | null = () => null;
 
-    /** 注入当前长连接和角色等级读取口，用于旧挂机对话筛选。 */
-    public configure(send: NonNullable<MainChapterController["send"]>, readRoleLevel: () => number = () => 0): void {
+    /** 注入当前长连接、对话等级及结算头像读取口；身份仍由应用隔离，模块不保存角色副本。 */
+    public configure(send: NonNullable<MainChapterController["send"]>, readRoleLevel: () => number = () => 0,
+        readRoleAppearance: MainChapterController["readRoleAppearance"] = () => null): void {
         this.send = send;
         this.readRoleLevel = readRoleLevel;
+        this.readRoleAppearance = readRoleAppearance;
     }
 
     /** 登记明确协议清单，页面打开不再查询主线状态。 */
@@ -185,16 +189,27 @@ export class MainChapterController extends BaseController {
         });
     }
 
-    /** 校验完整奖励回执再提交；仅挑战成功清空挑战编号，结算不改变资产Model。 */
+    /** 校验奖励及历史经验整包后提交；仅挑战成功清空挑战编号，结算展示不改变资产Model。 */
     private onReceipt(protocol: ProtocolName, value: unknown): void {
-        const v = value as { action: string; battleId: string; state: unknown; rewards: { itemId: number; quantity: number }[] };
+        const v = value as { action: string; battleId: string; state: unknown; rewards: { itemId: number; quantity: number }[]; experience?: MainChapterExperience };
         const state = MainChapterController.readState(v?.state);
         if (!v || !state || (v.action !== "BATTLE" && v.action !== "SETTLED")
             || (protocol === Protocol.CHAPTER_CLAIM && v.action !== "SETTLED")
             || !MainChapterController.validId(v.battleId) || !Array.isArray(v.rewards)
             || !v.rewards.every(row => Number.isInteger(row.itemId) && row.itemId > 0
                 && Number.isSafeInteger(row.quantity) && row.quantity >= 0)) throw new Error("主线回执无效");
+        const experience = v.experience;
+        if (experience !== undefined && (v.action !== "SETTLED" || !experience
+            || ![experience.beforeLevel, experience.afterLevel].every(level => Number.isSafeInteger(level) && level > 0)
+            || experience.afterLevel < experience.beforeLevel
+            || ![experience.beforeExp, experience.afterExp, experience.beforeThreshold, experience.afterThreshold]
+                .every(amount => Number.isSafeInteger(amount) && amount >= 0)
+            || (experience.beforeThreshold > 0 && experience.beforeExp >= experience.beforeThreshold)
+            || (experience.afterThreshold > 0 && experience.afterExp >= experience.afterThreshold))) {
+            throw new Error("主线历史经验快照无效");
+        }
         this.model.receipt = Object.freeze({ action: v.action, battleId: v.battleId, state,
+            ...(experience ? { experience: Object.freeze({ ...experience }) } : {}),
             rewards: Object.freeze(v.rewards.map(row => Object.freeze({ ...row }))) });
         if (protocol === Protocol.CHAPTER_CHALLENGE) this.model.requestId = null;
         this.model.message = v.action === "BATTLE" ? "战报已保存，可观看" : "结算已确认，资产以服务器同步为准";
@@ -216,7 +231,11 @@ export class MainChapterController extends BaseController {
     }
 
     /** 应用销毁解除通信注入，避免保留失效服务闭包。 */
-    protected onDispose(): void { this.send = null; }
+    protected onDispose(): void {
+        this.send = null;
+        this.readRoleLevel = () => 0;
+        this.readRoleAppearance = () => null;
+    }
 
     /** 持久编号必须为UUID字符串，不接受数值或任意路径。 */
     private static validId(value: unknown): value is string {

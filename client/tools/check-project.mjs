@@ -18,6 +18,7 @@ const suites = [
   ["game-protocol", "ts", "client/tools/game-protocol-check.ts"],
   ["game-protocol-generated", "node", "tools/generate_game_protocol.cjs"],
   ["main-chapter", "ts", "client/tools/main-chapter-check.ts"],
+  ["battle-presentation", "ts", "client/tools/battle-presentation-audit.ts"],
   ["game-socket", "ts", "client/tools/session-state-check.ts"],
   ["hero-roster", "paused", null],
   ["hero-state", "ts", "client/tools/hero-state-check.ts"],

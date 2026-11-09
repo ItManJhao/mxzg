@@ -95,7 +95,7 @@ class MainChapterSocketTest {
     }
 
 
-    /** 真实协议跑通三关、重新鉴权恢复待领奖、幂等结算与版本事件，不访问日常库。 */
+    /** 真实协议跑通三关、冻结伤害/经验、重新鉴权恢复待领奖与幂等结算，不访问日常库。 */
     @Test void challengeRestoreReplayAndClaimThroughBinarySocket() throws Exception {
         var player = login.login("test_" + UUID.randomUUID().toString().substring(0, 12));
         String role = player.role().id();
@@ -135,10 +135,23 @@ class MainChapterSocketTest {
                 assertEquals("chapter:lineup:" + mission, replay.path("body").path("replay").path("scenario").asString());
                 assertEquals("ATTACKER_WIN", replay.path("body").path("replay").path("outcome").asString());
                 write("replay-" + mission, replay);
+                for (var unit : replay.path("body").path("replay").path("units")) {
+                    assertTrue(unit.has("totalDamage"));
+                    assertTrue(unit.has("totalTakenDamage"));
+                    assertTrue(unit.has("totalRecovery"));
+                    assertTrue(unit.path("star").asInt() > 0);
+                    assertTrue(unit.path("totalDamage").asLong() >= 0);
+                }
+                var beforeExperience = jdbc.queryForMap("SELECT role_level,role_experience FROM game_role WHERE id=?", role);
                 var claim = peer.request("chapter.claim", Map.of("battleId", battle));
                 assertTrue(claim.path("ok").asBoolean(), claim.toString());
                 assertFalse(claim.path("body").path("rewards").isEmpty());
                 var roleAfter = jdbc.queryForMap("SELECT * FROM game_role WHERE id=?", role);
+                var experience = claim.path("body").path("experience");
+                assertEquals(((Number) beforeExperience.get("role_level")).intValue(), experience.path("beforeLevel").asInt());
+                assertEquals(((Number) beforeExperience.get("role_experience")).longValue(), experience.path("beforeExp").asLong());
+                assertEquals(((Number) roleAfter.get("role_level")).intValue(), experience.path("afterLevel").asInt());
+                assertEquals(((Number) roleAfter.get("role_experience")).longValue(), experience.path("afterExp").asLong());
                 var idleReport = peer.request("chapter.idle.encounter", Map.of());
                 assertTrue(idleReport.path("ok").asBoolean(), idleReport.toString());
                 assertEquals("idle:chapter:" + mission, idleReport.path("body").path("replay").path("scenario").asString());

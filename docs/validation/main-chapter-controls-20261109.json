@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-09",
+  "scope": "主线默认倍速、跳过可见性、结算确认/倒计时/音效与竖屏收窄",
+  "environment": {"database": "独立随机内存H2", "run": "f954167dc9024c8c8e40f53359ecf486", "port": 59640, "account": "chapter_review", "gm": false},
+  "recovery": {"battleId": "92b31318-4fbc-4285-91fd-b9b364278821", "exitWallet": [0, 0], "exitRevision": 3, "settledWallet": [4000, 151], "settledRevision": 4, "pendingAfterSettlement": null, "confirmedReturnToIdle": true},
+  "runtime": {"canvas": [393, 852], "visible": [590.4225352112676, 1280], "heroTimeScale": 1.5, "skipVisible": false, "lockedSpeedNotice": "羁绊VIP 1／5条件，当前不开放切档", "victorySeconds": 4, "victoryFrames": 14, "settlementAudioSources": 2, "audioReleasedOnClose": true, "battleHudHiddenAtSettlement": true},
+  "automatedCoverage": ["胜利倒计时及重复关闭回调去重", "360×720、360×840、393×852、768×1024布局几何及反复重排", "真实Protobuf战报和挂机快照互通"],
+  "checks": {"frontendActivePassed": 39, "frontendPaused": 5, "backendTargetedPassed": 9, "typescript": "通过", "javaToTypeScriptWire": "通过", "prefabReport": "98份结构检查通过，已重新生成"},
+  "screenshots": ["../images/main-controls-battle-393-20261109.jpg", "../images/main-controls-settlement-393-20261109.jpg"],
+  "limitations": ["几何测试不等于各尺寸完整画面验收；平板和更多竖屏实机待复验", "未重跑MySQL、真机或正式构建", "音源生命周期已检查，未签署人工听感验收", "最高伤害英雄/完整统计/经验动画按负责人决定留待权威数据恢复", "测试暂停探针仅用于观察，已刷新清除；探针序列化循环对象报错不属于业务错误", "负责人明确不需要横屏，横屏观察不列为待修项", "正式服完整胜利页差异未完成逐项复验"]
+}

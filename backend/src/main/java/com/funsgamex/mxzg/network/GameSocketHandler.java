@@ -263,8 +263,15 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                     "pending", result.details().pending(), "replay", GameProtocolCodec.tree(result.replay())));
             } else {
                 var receipt = challenge ? chapters.challenge(connection.token, id) : chapters.claim(connection.token, id);
-                respond(connection, request, Map.of("action", receipt.action().name(), "battleId", receipt.battleId(),
-                    "state", receipt.state(), "rewards", receipt.rewards()));
+                var response = new LinkedHashMap<String, Object>();
+                response.put("action", receipt.action().name());
+                response.put("battleId", receipt.battleId());
+                response.put("state", receipt.state());
+                response.put("rewards", receipt.rewards());
+                if (receipt.experience() != null) {
+                    response.put("experience", receipt.experience());
+                }
+                respond(connection, request, response);
             }
         } catch (IllegalArgumentException error) {
             throw rejected("CHAPTER_UNAVAILABLE");

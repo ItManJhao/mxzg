@@ -25,7 +25,7 @@ def main():
         assert image.getpixel((2, 1)) == (100, 150, 200, 128), '偏移方向或透明度错误'
         assert image.getpixel((2, 2)) == (0, 0, 0, 0)
     total = 0
-    for name in ['skill-102050230', 'skill-102050231', 'skill-102050233', 'skill-102050233_1',
+    for name in ['skill-103010011', 'skill-102040040', 'skill-102010011', 'skill-102050230', 'skill-102050231', 'skill-102050233', 'skill-102050233_1',
                  'skill-101040050', 'skill-101020021', 'hero-skill', 'skill-101010011', 'skill-105050051', 'skill-105050051-1', 'skill-101050110', 'skill-101050111']:
         source = atlas.load_ccz_pvr(args.legacy / (name + '.pvr.ccz'))
         data = plistlib.loads((args.legacy / (name + '.plist')).read_bytes())

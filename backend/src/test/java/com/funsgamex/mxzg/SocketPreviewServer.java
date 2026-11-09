@@ -51,10 +51,16 @@ public class SocketPreviewServer {
             boolean idleLoop = Arrays.asList(args).contains("--idle-loop-fixture");
             var idleSlots = new ArrayList<com.funsgamex.mxzg.lineup.Lineup.Slot>();
             int[] templates = {10101001,10104004,10505005}, stars = {1,4,5}, positions = {2,3,5};
+            // 复现负责人反馈的树精、火系英雄、布鲁组合；仅独立内存夹具生效，不改日常玩家。
+            if (Arrays.asList(args).contains("--reported-lineup-fixture")) {
+                templates = new int[] {10301001, 10101001, 10201001};
+                stars = new int[] {1, 1, 1};
+            }
             for (int i = 0; i < (idleLoop ? 3 : 1); i++) {
                 String hero = UUID.randomUUID().toString();
-                jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,?,100,?)",
-                    hero, player.role().id(), templates[i], stars[i]);
+                int level = Arrays.asList(args).contains("--reported-lineup-fixture") ? 1 : 100;
+                jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,?,?,?)",
+                    hero, player.role().id(), templates[i], level, stars[i]);
                 idleSlots.add(new com.funsgamex.mxzg.lineup.Lineup.Slot(positions[i], hero));
             }
             // 仅本进程内存夹具准备首通状态，便于连续遇敌和第二关挑战切换，不发首通奖励。

@@ -15,7 +15,11 @@ public final class HeroBattleReplayProtocolUtils {
         for (var unit : report.initial()) {
             result.addUnits(GameProtocol.BattleReplayUnit.newBuilder().setUnitId(unit.id())
                 .setFaction(unit.faction()).setMaxHp(unit.opening().maxHp()).setTemplateId(unit.template()).setLevel(unit.level()).setPosition(unit.position()).setInitialHp(unit.opening().hp())
-                .setFinalHp(report.finalHp().get(unit.id())));
+                .setFinalHp(report.finalHp().get(unit.id()))
+                .setTotalDamage(totalDamage(report.damages(), unit.id()))
+                .setTotalTakenDamage(totalTakenDamage(report, unit.id()))
+                .setTotalRecovery(totalRecovery(report.recoveries(), unit.id()))
+                .setStar(unit.star()));
         }
         for (var frame : report.frames()) {
             var phase = GameProtocol.BattleReplayPhase.newBuilder().setRound(frame.round()).setSourceId(frame.sourceId());
@@ -41,5 +45,39 @@ public final class HeroBattleReplayProtocolUtils {
             result.addPhases(phase);
         }
         return result.build();
+    }
+
+    /** 沿旧heroHurt→HeroFightLog口径累计，包括过量伤害遇盾的反直觉结果；不改护盾规则。 */
+    public static long totalDamage(java.util.List<HeroBattleHealingExecutor.Damage> damages, int unitId) {
+        long total = 0;
+        for (var hit : damages) {
+            if (hit.sourceId() == unitId) {
+                long signed = Math.addExact(hit.actual(), hit.absorbed());
+                total = Math.addExact(total, Math.absExact(signed));
+            }
+        }
+        return total;
+    }
+
+    /** 沿旧replenish→addRecovery口径记施法者的修正后治疗量，包含溢出且保留符号；累计溢出拒绝。 */
+    public static long totalRecovery(java.util.List<HeroBattleHealingExecutor.Recovery> recoveries, int unitId) {
+        long total = 0;
+        for (var recovery : recoveries) {
+            if (recovery.sourceId() == unitId) {
+                total = Math.addExact(total, recovery.reported());
+            }
+        }
+        return total;
+    }
+
+    /** 承伤只累计本单位实际减少的血量；统计冻结到战报，不依赖客户端播放时点。 */
+    private static long totalTakenDamage(HeroBattleChapterScenario.Result report, int unitId) {
+        long total = 0;
+        for (var hit : report.damages()) {
+            if (hit.targetId() == unitId) {
+                total = Math.addExact(total, Math.negateExact(hit.actual()));
+            }
+        }
+        return total;
     }
 }

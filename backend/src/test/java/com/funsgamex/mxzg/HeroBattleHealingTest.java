@@ -25,7 +25,7 @@ class HeroBattleHealingTest {
         executor.art(new Invocation(1063201, 1063201, 1, 2));
     }
 
-    /** 50%攻击→固定治疗→治疗比例→受治疗比例，最终上限截断与战报值分开。 */
+    /** 50%攻击→治疗修正；上限只截断实际回血，统计包含两次完整治疗（第二次满血）。 */
     @Test void realActionAndCap() {
         var source = unit(1, 950, 10, 5000, 2000);
         var other = unit(2, 100, 0, 0, 0);
@@ -39,6 +39,8 @@ class HeroBattleHealingTest {
         heal(executor);
         assertEquals(0, executor.recoveries().getLast().actual());
         assertEquals(108, executor.recoveries().getLast().reported());
+        assertEquals(216, HeroBattleReplayProtocolUtils.totalRecovery(executor.recoveries(), 1));
+        assertEquals(0, HeroBattleReplayProtocolUtils.totalRecovery(executor.recoveries(), 2));
     }
 
     /** 百分比必须逐步截断，不能将比例合并后只截断一次。 */

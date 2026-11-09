@@ -13,6 +13,23 @@ export interface MainChapterReceipt {
     readonly battleId: string;
     readonly state: MainChapterState;
     readonly rewards: readonly { itemId: number; quantity: number }[];
+    /** 服务端冻结的发奖前后经验；旧回执缺失，不从当前角色状态反推。 */
+    readonly experience?: MainChapterExperience;
+}
+/** 结算动画的历史快照，不提交到角色资产Model；最高级门槛为0。 */
+export interface MainChapterExperience {
+    /** 发奖事务开始前的角色等级。 */
+    readonly beforeLevel: number;
+    /** 发奖前等级内经验，不是累计经验。 */
+    readonly beforeExp: number;
+    /** 发奖前该等级升级门槛；最高级为0。 */
+    readonly beforeThreshold: number;
+    /** 发奖完成后的角色等级，随历史回执冻结。 */
+    readonly afterLevel: number;
+    /** 发奖后等级内经验，仅供结算动画。 */
+    readonly afterExp: number;
+    /** 发奖后该等级升级门槛；最高级为0。 */
+    readonly afterThreshold: number;
 }
 /** 已验证的持久战报，仅保留当前展示所需字节。 */
 export interface MainChapterReplay {

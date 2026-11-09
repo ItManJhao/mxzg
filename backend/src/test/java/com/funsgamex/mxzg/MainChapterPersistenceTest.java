@@ -58,13 +58,14 @@ class MainChapterPersistenceTest {
     /** 每次新操作使用新ID；重试由测试显式保留原ID。 */
     private static String id() { return UUID.randomUUID().toString(); }
 
-    /** 首场胜利只推进，不发奖；完整三关结算、历史重试和最后一关边界。 */
+    /** 首场胜利只推进；完整三关结算后历史经验仍冻结，重试不使用当前等级重算。 */
     @Test void threeRealBattlesPersistAndSettleExactlyOnce() {
         var p = player(true);
         var initialRole = roles.findById(p.id()).orElseThrow();
         long revision = roles.revision(p.id());
         String firstRequest = id();
         MainChapterService.Receipt first = null;
+        MainChapterService.Receipt firstClaim = null;
         for (int mission = 1; mission <= 3; mission++) {
             var before = roles.findById(p.id()).orElseThrow();
             var request = mission == 1 ? firstRequest : id();
@@ -81,6 +82,9 @@ class MainChapterPersistenceTest {
             assertEquals("chapter:lineup:" + mission, battle.replay().getScenario());
             assertFalse(battle.details().pending().isEmpty());
             var claimed = chapters.claim(p.token(), result.battleId());
+            if (firstClaim == null) {
+                firstClaim = claimed;
+            }
             assertEquals(mission, claimed.state().maxCleared());
             assertNull(claimed.state().pendingBattleId());
             assertFalse(claimed.rewards().isEmpty());
@@ -93,10 +97,30 @@ class MainChapterPersistenceTest {
         assertEquals(120, after.basics().experience());
         assertEquals(revision + 6, roles.revision(p.id()));
         assertEquals(first, chapters.challenge(p.token(), firstRequest));
+        assertEquals(firstClaim, chapters.claim(p.token(), firstClaim.battleId()));
         assertEquals(3, chapters.current(p.token()).maxCleared());
         assertThrows(IllegalArgumentException.class, () -> chapters.challenge(p.token(), id()));
         assertEquals(3, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_battle WHERE role_id=?", Integer.class, p.id()));
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_campaign WHERE role_id=?", Integer.class, p.id()));
+    }
+
+    /** 升级前保存的旧回执没有experience；重试应保持缺失且不再次发奖或伪造前置经验。 */
+    @Test void legacyReceiptDoesNotInventExperience() {
+        var p = player(true);
+        var battle = chapters.challenge(p.token(), id());
+        var claimed = chapters.claim(p.token(), battle.battleId());
+        var mapper = new tools.jackson.databind.ObjectMapper();
+        String stored = jdbc.queryForObject("SELECT settlement_json FROM game_main_chapter_battle WHERE id=?",
+            String.class, battle.battleId());
+        var old = (tools.jackson.databind.node.ObjectNode) mapper.readTree(stored);
+        old.remove("experience");
+        jdbc.update("UPDATE game_main_chapter_battle SET settlement_json=? WHERE id=?",
+            mapper.writeValueAsString(old), battle.battleId());
+        var roleBefore = roles.findById(p.id()).orElseThrow();
+        var receipt = chapters.claim(p.token(), battle.battleId());
+        assertNull(receipt.experience());
+        assertEquals(claimed.rewards(), receipt.rewards());
+        assertEquals(roleBefore, roles.findById(p.id()).orElseThrow());
     }
 
     /** 未领奖时再次挑战只结算旧战报；同请求重试不能偷偷生成下一关。 */

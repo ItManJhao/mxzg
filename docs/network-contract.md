@@ -76,6 +76,14 @@ MainChapterIdleState新增slots（字段7）与lineup_version（字段8）。slo
 
 ## 主线挂机演出协议（2026-11-06）
 
+### 结算展示数据补充（2026-11-09）
+
+BattleReplayUnit新增可选total_damage=9、total_taken_damage=10，随不可变战报冻结。输出伤害沿旧HeroFightLog累计abs(actualHpChange+absorbed)，承伤累计实际扣血绝对值。负责人确认沿用该口径，护盾规则疑点继续保留。旧战报缺失统计时显示为缺失，禁止从飘字或当前英雄属性反推。
+
+ChapterReceipt新增可选experience=5，包含发奖事务前后的等级、等级内经验与升级门槛。成功发奖时与settlement_json同事务持久化，重复领取返回原值；历史回执缺失时不补造。客户端先校验整包再提交MainChapterModel，该快照只供结算展示，不能覆盖角色/资产Model。
+
+统计页补充可选total_recovery=11和star=12。治疗沿旧BattleContext.replenish→HeroFightLog.addRecovery，把修正后治疗量记给施法者，包含溢出治疗、保留负号，不能按实际回血或飘字另算。星级来自该场输入，不从当前名册补历史。新战报明确写入0治疗，旧战报缺字段返回null并显示—；双方任一单位缺某项时该项进度条不显示比例，已知数字仍保留。统计页没有新增业务请求，也不触发再次结算。
+
 - `chapter.idle.encounter`：鉴权后空请求，返回 `IdleEncounter`（Frame字段30），包含stage、assetRevision、lineupVersion、强类型BattleReplay。沿用WS＋Protobuf，无HTTP或JSON回退。协议名遵守小写分段规则。
 - 服务端在角色锁内读取当前已通关关卡与持久挂机选择，随机取该关卡一条非空怪物配置，首行动序号按0..2抽取后对英雄数量取模。双方只用普攻，怪物初始HP=1；挂机使用旧独立阵型1，保留原站位和元素加成。现阶段仍只支持已接入的前三关/普攻配置。
 - 场景标识 `idle:chapter:N` 与 `chapter:lineup:N` 挑战战报分开。演出不写主线战报、不领奖、不推进关卡、不增加资产版本。客户端校验完整生命事件链、最多三名我方和一名敌方、普攻类型，以及当前关卡/阵容/资产版本后才播放。

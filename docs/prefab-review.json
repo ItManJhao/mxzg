@@ -624,7 +624,9 @@
   },
   {
     "path": "client/assets/prefabs/ui/battle/BattleDetailCell.prefab",
-    "classes": [],
+    "classes": [
+      "BattleDetailCell"
+    ],
     "root": {
       "position": {
         "__type__": "cc.Vec3",
@@ -640,7 +642,7 @@
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 90,
+        "width": 100,
         "height": 160
       },
       "anchor": {
@@ -651,7 +653,7 @@
     },
     "components": {
       "Widget": 0,
-      "Layout": 0,
+      "Layout": 1,
       "Mask": 0,
       "ScrollView": 0,
       "Animation": 0,
@@ -671,126 +673,121 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "d10190ec20540af447bbf13aa9597522d0faa6e98a7f272ea10028085b05a422"
+    "sha256": "4dd64e5be2255bd1800d8b067f1a872283a9fc2128980f074f538767a8e40339"
   },
   {
     "path": "client/assets/prefabs/ui/battle/BattleDetailLayer.prefab",
-    "classes": [],
+    "classes": [
+      "BattleDetailLayer"
+    ],
     "root": {
       "position": {
         "__type__": "cc.Vec3",
-        "z": 0,
-        "y": -337.5,
-        "x": -270.0
+        "x": 0,
+        "y": 0,
+        "z": 0
       },
       "scale": {
         "__type__": "cc.Vec3",
-        "z": 1,
-        "y": 0.9,
-        "x": 0.9
+        "x": 1,
+        "y": 1,
+        "z": 1
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 600,
-        "height": 750
+        "width": 640,
+        "height": 1280
       },
       "anchor": {
         "__type__": "cc.Vec2",
-        "y": 0,
-        "x": 0
+        "x": 0.5,
+        "y": 0.5
       }
     },
     "components": {
       "Widget": 0,
       "Layout": 0,
       "Mask": 2,
-      "ScrollView": 2,
+      "ScrollView": 0,
       "Animation": 0,
       "PrefabInstance": 0
     },
     "specialAnchors": [
       {
-        "node": "BattleDetailLayer",
+        "node": "StatisticsPanel",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "node_title",
+        "node": "Title",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "spr_title_bg",
+        "node": "TitleBackground",
         "anchor": [
           0.5,
           1
         ]
       },
       {
-        "node": "CCNode_1",
+        "node": "Legend",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "lbl_tip_1",
+        "node": "DamageLegend",
         "anchor": [
           1,
           0.5
         ]
       },
       {
-        "node": "lbl_tip_2",
+        "node": "TakenLegend",
         "anchor": [
           1,
           0.5
         ]
       },
       {
-        "node": "lbl_tip_3",
+        "node": "RecoveryLegend",
         "anchor": [
           1,
           0.5
         ]
       },
       {
-        "node": "node_role_1",
+        "node": "Attacker",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "CCSprite_1",
+        "node": "TeamBackground",
         "anchor": [
           0.5,
           0
         ]
       },
       {
-        "node": "spr_result_1",
+        "node": "AttackerWin",
         "anchor": [
           0,
           0.5
         ]
       },
       {
-        "node": "scroll_view_1",
+        "node": "AttackerScroll",
         "anchor": [
           0.5,
           0
-        ]
-      },
-      {
-        "node": "view",
-        "anchor": [
-          0,
-          1
         ]
       },
       {
@@ -801,38 +798,31 @@
         ]
       },
       {
-        "node": "node_role_2",
+        "node": "Defender",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "CCSprite_1",
+        "node": "TeamBackground",
         "anchor": [
           0.5,
           0
         ]
       },
       {
-        "node": "spr_result_2",
+        "node": "DefenderWin",
         "anchor": [
           0,
           0.5
         ]
       },
       {
-        "node": "scroll_view_2",
+        "node": "DefenderScroll",
         "anchor": [
           0.5,
           0
-        ]
-      },
-      {
-        "node": "view",
-        "anchor": [
-          0,
-          1
         ]
       },
       {
@@ -843,45 +833,32 @@
         ]
       },
       {
-        "node": "UIMenu_1",
+        "node": "CloseMenu",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "alice_report_menu",
+        "node": "ReportTabs",
         "anchor": [
           0,
           0
         ]
       }
     ],
-    "scrolls": [
-      {
-        "node": "scroll_view_1",
-        "content": {
-          "__id__": 105
-        }
-      },
-      {
-        "node": "scroll_view_2",
-        "content": {
-          "__id__": 143
-        }
-      }
-    ],
+    "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "实际预览通过",
-    "visual": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
-    "sha256": "c8e81f981195caea258fc230ee53aa0fb12d59f5de84c740b74b92b5ebdf4993",
+    "visual": "独立H2第二关胜利页真实点击战报，双方3/1英雄伤害/承伤199、治疗0；393×852、360×720、360×840竖屏、倒计时后窗口保留及关闭返回挂机通过。非零治疗/负值/缺字段仅规则协议测试；未实测8人滚动、平板和真机。画面后仅修正PrefabInfo根引用及主体英文节点名并通过绑定检查。见docs/validation/battle-statistics-20261109.json",
+    "sha256": "72142af989eba57c6e51c749087b27fa5c5b301d3963a129ca4861a7da7aaa6d",
     "acceptance": {
-      "sha256": "c8e81f981195caea258fc230ee53aa0fb12d59f5de84c740b74b92b5ebdf4993",
-      "date": "2026-11-02",
+      "sha256": "72142af989eba57c6e51c749087b27fa5c5b301d3963a129ca4861a7da7aaa6d",
+      "date": "2026-11-09",
       "status": "实际预览通过",
-      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
-      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
+      "scope": "独立H2第二关胜利页真实点击战报，双方3/1英雄伤害/承伤199、治疗0；393×852、360×720、360×840竖屏、倒计时后窗口保留及关闭返回挂机通过。非零治疗/负值/缺字段仅规则协议测试；未实测8人滚动、平板和真机。画面后仅修正PrefabInfo根引用及主体英文节点名并通过绑定检查。见docs/validation/battle-statistics-20261109.json",
+      "inspector": "未操作Creator Inspector；负责人刷新资源后浏览器验收"
     }
   },
   {
@@ -1103,13 +1080,13 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "本批仅393×852 Creator设置：新增主线信息栏锚点，ZDKS开场、双方出场、第二/三关结算、返回挂机及开场取消已实测。原技能台布局未移动；不表示全分辨率或Inspector全项通过。证据 docs/validation/main-chapter-talk-opening-20261109.json。",
-    "sha256": "22cc50817f1c90bb29ee9dc7e810841b84032eb81dab81c452ed96a95494d146",
+    "visual": "本批仅393×852 Creator设置：新增主线信息栏锚点，ZDKS开场、双方出场、第二/三关结算、返回挂机及开场取消已实测。原技能台布局未移动；不表示全分辨率或Inspector全项通过。证据 docs/validation/main-chapter-talk-opening-20261109.json。 2026-11-09负责人明确验收挂机出场连续性、攻击后待机、模型大小与独立站位；IdleLayout保存挂机锚点，挂机模型0.60、正式战斗0.48。此次确认不扩大到全英雄、全尺寸或完整结算。",
+    "sha256": "4ab121d60f030a6af19748d7a4abdf816be5209390f7179c8d29ded127257fab",
     "acceptance": {
-      "sha256": "22cc50817f1c90bb29ee9dc7e810841b84032eb81dab81c452ed96a95494d146",
+      "sha256": "4ab121d60f030a6af19748d7a4abdf816be5209390f7179c8d29ded127257fab",
       "date": "2026-11-09",
       "status": "实际预览通过",
-      "scope": "本批仅393×852 Creator设置：新增主线信息栏锚点，ZDKS开场、双方出场、第二/三关结算、返回挂机及开场取消已实测。原技能台布局未移动；不表示全分辨率或Inspector全项通过。证据 docs/validation/main-chapter-talk-opening-20261109.json。",
+      "scope": "本批仅393×852 Creator设置：新增主线信息栏锚点，ZDKS开场、双方出场、第二/三关结算、返回挂机及开场取消已实测。原技能台布局未移动；不表示全分辨率或Inspector全项通过。证据 docs/validation/main-chapter-talk-opening-20261109.json。 2026-11-09负责人明确验收挂机出场连续性、攻击后待机、模型大小与独立站位；IdleLayout保存挂机锚点，挂机模型0.60、正式战斗0.48。此次确认不扩大到全英雄、全尺寸或完整结算。",
       "inspector": "自动结构复核；完整视觉待负责人确认"
     }
   },
@@ -1688,7 +1665,7 @@
     "components": {
       "Widget": 0,
       "Layout": 0,
-      "Mask": 1,
+      "Mask": 2,
       "ScrollView": 0,
       "Animation": 0,
       "PrefabInstance": 0
@@ -1735,14 +1712,91 @@
           0.5,
           1
         ]
+      },
+      {
+        "node": "MainVictoryPanel",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "VictoryBackground",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "HighestHero",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "VictoryButtons",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "RewardNotice",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "UnusedMenu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "MainVictoryRewards",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "ExperienceFill",
+        "anchor": [
+          0,
+          0.5
+        ]
       }
     ],
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "231caa6b0bc156fcf9401dfab21450e1f0adbf1d3bdf7b92558c1c9d6cfccb2a"
+    "reviewStatus": "实际预览通过",
+    "visual": "仅正常主线胜利：独立H2真实第三关最高伤害/跨级经验/奖励/确认及倒计时返回挂机；393×852、360×720、360×840实际画布。失败/只读分支本轮未重验，平板仅几何检查，不代表完整旧统计恢复。见docs/validation/victory-review-20261109.json",
+    "sha256": "92ab811cb301b5122d8e446ee239892f8b44ce5fb6c781eb8c3b051d89eb797d",
+    "acceptance": {
+      "sha256": "92ab811cb301b5122d8e446ee239892f8b44ce5fb6c781eb8c3b051d89eb797d",
+      "date": "2026-11-09",
+      "status": "实际预览通过",
+      "scope": "仅正常主线胜利：独立H2真实第三关最高伤害/跨级经验/奖励/确认及倒计时返回挂机；393×852、360×720、360×840实际画布。失败/只读分支本轮未重验，平板仅几何检查，不代表完整旧统计恢复。见docs/validation/victory-review-20261109.json",
+      "inspector": "未操作Creator Inspector"
+    }
   },
   {
     "path": "client/assets/prefabs/ui/chapter/ChapterExtraRewardCell.prefab",

@@ -49,10 +49,14 @@ public class MainChapterService {
     /** 挑战返回战报，或沿旧规则只补领奖，不在同一次请求继续打下一关。 */
     public enum Action { BATTLE, SETTLED }
     /** 可重复交付的历史操作回执；state是操作完成当时状态，最新状态通过current读取。 */
-    public record Receipt(Action action, String battleId, State state, List<MainChapterRules.Reward> rewards) {
+    public record Receipt(Action action, String battleId, State state, List<MainChapterRules.Reward> rewards,
+                          Experience experience) {
         /** 结果冻结，重复请求不重算奖励。 */
         public Receipt { rewards = List.copyOf(rewards); }
     }
+    /** 发奖事务前后经验快照，历史回执允许缺失；只能用于动画，不作为当前角色余额。 */
+    public record Experience(int beforeLevel, long beforeExp, long beforeThreshold,
+                             int afterLevel, long afterExp, long afterThreshold) {}
     /** 可恢复的战报元信息；rewardPlan和pending随生成时快照冻结。 */
     public record Details(int schemaVersion, int mission, long inputRevision, long lineupVersion,
                           int formationId, int power, List<String> pending, MainChapterRewardService.Plan rewardPlan) {
@@ -133,7 +137,7 @@ public class MainChapterService {
                 idle.snapshot(role, after.maxCleared(), java.time.Instant.now().getEpochSecond());
                 sync.changed(role);
             }
-            receipt = new Receipt(Action.BATTLE, id, state(role), List.of());
+            receipt = new Receipt(Action.BATTLE, id, state(role), List.of(), null);
         }
         jdbc.update("INSERT INTO game_main_chapter_command(role_id,request_id,result_json) VALUES (?,?,?)",
             role, requestId, mapper.writeValueAsString(receipt));
@@ -164,18 +168,22 @@ public class MainChapterService {
         }
         var before = state(role);
         if (!battle.replay().getOutcome().equals("ATTACKER_WIN")) {
-            return new Receipt(Action.SETTLED, battleId, before, List.of());
+            return new Receipt(Action.SETTLED, battleId, before, List.of(), null);
         }
         if (!battleId.equals(before.pendingBattleId()) || before.maxCleared() != battle.details().mission()) {
             throw new IllegalStateException("待领奖关卡与战报不一致");
         }
+        var beforeRole = roles.findById(role).orElseThrow();
         var processed = rewards.grantPlan(role, battle.details().rewardPlan());
+        var afterRole = roles.findById(role).orElseThrow();
         if (jdbc.update("UPDATE game_main_chapter SET pending_battle_id=NULL WHERE role_id=? AND pending_battle_id=?",
                 role, battleId) != 1) {
             throw new IllegalStateException("待领奖凭据已变化");
         }
         sync.changed(role);
-        var receipt = new Receipt(Action.SETTLED, battleId, state(role), processed);
+        var experience = new Experience(beforeRole.level(), beforeRole.basics().experience(), beforeRole.basics().experienceToNextLevel(),
+            afterRole.level(), afterRole.basics().experience(), afterRole.basics().experienceToNextLevel());
+        var receipt = new Receipt(Action.SETTLED, battleId, state(role), processed, experience);
         jdbc.update("UPDATE game_main_chapter_battle SET settlement_json=? WHERE id=? AND role_id=?",
             mapper.writeValueAsString(receipt), battleId, role);
         return receipt;

@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-09",
+  "scope": "用户已验收挂机四项修复收口；初始技能静态覆盖；结算权威展示数据第一批",
+  "acceptedByUser": ["挂机出场连续性", "攻击结束回待机", "挂机模型大小", "挂机与正式战斗独立站位", "沿用旧最高伤害口径并保留护盾待审"],
+  "authority": {
+    "damage": "sum(abs(actualHpChange + shieldAbsorbed))，按来源单位分别累计",
+    "takenDamage": "sum(-actualHpChange)，按目标单位分别累计",
+    "experience": "同一发奖事务内读取前后等级、等级内经验及门槛，与settlement_json一起提交",
+    "legacy": "旧战报统计缺失为null；旧结算回执不补造经验，不重算战报，不重复发奖",
+    "source": ["server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/BattleContext.java:377", "server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/HeroFightLog.java:31", "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua:277"],
+    "mvpRuleForNextView": "仅攻方，严格大于才替换；同值保留名册先出现者，全部0时使用首人"
+  },
+  "checks": {
+    "backend": "18项通过：HeroBattleStatisticsTest、MainChapterSocketTest、MainChapterPersistenceTest、MainChapterRewardTest、MainChapterIdleTest；日志backend/target/settlement-data-20261109.log",
+    "backendCompatibility": "补充旧回执缺失经验字段测试后，MainChapterPersistenceTest 8项通过（包含此前7项）；本轮共19项不同测试通过。日志backend/target/settlement-compatibility-20261109.log",
+    "frontend": "原39组首跑38通过，Prefab报告过期；依据用户验收更新指纹并生成报告后该项复验通过，新增battle-presentation也通过。合计40组有效检查通过，5组暂停不计入；非单次40/40运行",
+    "wire": "本次Java导出的三关战报/结算/挂机快照由TS解码、校验、提交Model通过；新统计与经验字段有断言",
+    "typecheck": "TypeScript无输出通过",
+    "protocol": "proto生成漂移检查通过，Java由Maven重新生成",
+    "layout": "12个战斗/结算Prefab与35处九宫格检查通过",
+    "coverage": "113模板初始技能直接动作中50可解析、63有缺口；反馈三英雄通过"
+  },
+  "notVerified": ["本轮未新做Creator画面验收，挂机视觉依据负责人本次验收", "完整胜利模板、最高伤害英雄展示及经验动画尚未接入", "完整治疗统计尚未接入", "更多竖屏及真机", "本轮未运行MySQL"],
+  "boundaries": ["清心概率及护盾疑点保留", "不做横屏", "未开放宝箱领取、快速战斗、英雄升级和穿脱", "未提交或推送"]
+}

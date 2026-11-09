@@ -1,5 +1,5 @@
 /** 主线及独立战报播放器：复用BattlePage及真实资源，只展示服务端战报，不请求奖励或修改资产。 */
-import { AudioClip,AudioSource,Color,director,Director,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
+import { AudioClip,AudioSource,Button,Color,director,Director,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
 import { GameLog } from "../../../core/GameLog";
 import { createAssetScope,ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
@@ -10,8 +10,11 @@ import { setText } from "../../../framework/ui/UiKit";
 import { BattleReplayPlayer } from "../BattleReplayPlayer";
 import { BattleAttackUtils } from "../utils/BattleAttackUtils";
 import { BattleReplayUtils } from "../utils/BattleReplayUtils";
+import { BattleInfoUtils } from "../utils/BattleInfoUtils";
+import { bindVisibleRefresh, readVisibleBox } from "../../../framework/ui/visibleFit";
 import { mountBattlePrefab } from "./BattlePage";
 import { ChapterEndView } from "./ChapterEndView";
+import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
 import { paintBattleFloats } from "./battlePresentView";
 import { mountBattleSpine,mountNamedSpine,SpineActor } from "./battleSpine";
 
@@ -28,8 +31,8 @@ export interface SkillReplayFocus {
 }
 
 export class BattleReplayPreview {
-    /** 装载资源及真实预制体后执行二进制战报；返回用于关场的清理函数。 */
-    public static async open(parent: Node, bytes: Uint8Array, defeatPresentation = false, onClosed?: () => void, audit?: SkillReplayFocus, lineupTitle?: string, persistentChapter = false, onCompleted?: (won: boolean) => Promise<void>, idleEncounter = false, isCancelled: () => boolean = () => false): Promise<() => void> {
+    /** 装载资源后执行二进制战报；遇敌可借用行军骨骼，返回的关场函数先归还骨骼再销毁战场。 */
+    public static async open(parent: Node, bytes: Uint8Array, defeatPresentation = false, onClosed?: () => void, audit?: SkillReplayFocus, lineupTitle?: string, persistentChapter = false, onCompleted?: (won: boolean) => Promise<void>, idleEncounter = false, isCancelled: () => boolean = () => false, retainedIdle?: MainChapterIdleDisplay): Promise<() => void> {
         const steps = BattleReplayUtils.decode(bytes);
         const units = BattleReplayUtils.units(bytes);
         const configScope = createAssetScope();
@@ -54,15 +57,18 @@ export class BattleReplayPreview {
             if (step.kind === "presentation" || step.kind === "buff.upsert" || step.kind === "damage") {
                 const row = rows.find(row => row.idx === step.configId);
                 if (!row) throw new Error("缺少战斗表现配置：" + step.configId);
-                if (step.kind === "presentation") BattleAttackUtils.plan(row);
                 if (step.kind === "damage" && row.type === 100) BattleAttackUtils.damageSounds(row);
-                selected.set(row.idx, row);
                 if (step.kind === "presentation") {
                     const actions = BattleAttackUtils.legacyActions(row);
+                    for (const action of actions) {
+                        BattleAttackUtils.plan(action);
+                        selected.set(action.idx, action);
+                    }
                     if (actions[0].idx !== row.idx) {
                         expanded.set(row.idx, actions);
-                        for (const action of actions) selected.set(action.idx, action);
                     }
+                } else {
+                    selected.set(row.idx, row);
                 }
             }
         }
@@ -70,14 +76,31 @@ export class BattleReplayPreview {
         const shell = await mountBattlePrefab(parent);
         // 正式挑战先播旧 ZDKS 开场；加载期间不提前露出英雄和血条。
         const formalOpening = persistentChapter && !idleEncounter;
+        if (idleEncounter) {
+            // 整个准备阶段不可见，不能让Prefab默认血条或异步骨骼先闪一帧。
+            shell.layerField.active = false;
+            shell.root.getChildByPath("LayerHud/HpBars")!.active = false;
+        }
+        // 只加速正式挑战的战报段；开场、挂机和结算继续使用各自的时钟。
+        let playbackScale = 1;
         if (formalOpening) {
             shell.layerField.active = false;
             shell.root.getChildByPath("LayerHud/HpBars")!.active = false;
             const hud = shell.root.getChildByName("LayerHud")!;
             hud.getChildByName("MatchInfo")!.setPosition(hud.getChildByName("ChapterMatchInfoAnchor")!.position);
             hud.getChildByName("TopBar")!.setPosition(hud.getChildByName("ChapterTopBarAnchor")!.position);
+            const speedButton = hud.getChildByPath("TopBar/BtnSpeed")!;
+            speedButton.active = true;
+            const explainSpeed = () => UIManager.instance.toast(BattleInfoUtils.speedLockedNotice());
+            speedButton.on(Button.EventType.CLICK, explainSpeed);
+            shell.root.once(Node.EventType.NODE_DESTROYED, () => speedButton.off(Button.EventType.CLICK, explainSpeed));
+            hud.getChildByName("BtnSkip")!.active = BattleInfoUtils.mainChapterSkipVisible();
         }
         if (persistentChapter) {
+            bindVisibleRefresh(shell.root, () => {
+                const scale = BattleInfoUtils.contentScale(readVisibleBox().width);
+                shell.root.setScale(scale, scale, 1);
+            });
             // 正式主线复用主页背景；测试开始/撤退/调试文字不混入玩家战场。
             for (const path of ["Bg", "CampaignFloor", "LayerHud/Log", "LayerHud/LogBg",
                 "LayerHud/BtnRetreat", "LayerHud/TopBar/BtnClose"]) {
@@ -95,9 +118,10 @@ export class BattleReplayPreview {
         }
         const unregisterEnd = idleEncounter ? () => {} : registerView(ChapterEndView, {
             id: "chapter-end", prefab: "prefabs/ui/chapter/ChapterEndView", layer: UILayer.Popup,
-            hostId: "battle-settlement", cache: false, allowMultiple: false
+            hostId: persistentChapter ? "remake-modal" : "battle-settlement", cache: false, allowMultiple: false
         });
-        const releaseEndHost = idleEncounter ? () => {} : UIManager.instance.setResidentHost("battle-settlement", () => shell.root.isValid ? shell.root : null);
+        // 正常结算必须在应用弹层，避免完整旧胜利页被挂机面板遮挡；技能台仍归本地战场清理。
+        const releaseEndHost = idleEncounter || persistentChapter ? () => {} : UIManager.instance.setResidentHost("battle-settlement", () => shell.root.isValid ? shell.root : null);
         for (const path of ["LayerAppear", "LayerHud/SkillBars"]) {
             const node = shell.root.getChildByPath(path);
             if (node) node.active = false;
@@ -105,15 +129,21 @@ export class BattleReplayPreview {
         setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, persistentChapter ? "主线挑战阵容" : lineupTitle ? "当前保存阵容·只读" : "独立测试阵容");
         setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, lineupTitle || (units.some(unit => unit.templateId === 10105011) ? "魅惑之拥·随机目标验收" : units.every(unit => unit.templateId === 10505005) ? "三级流血专项" : units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关"));
         const actors = new Map<number, SpineActor>();
+        // 借用的我方骨骼在所有退出路径先归还，不能随临时战场销毁。
+        const returnActors: (() => void)[] = [];
         const slots = new Map<number, Node>();
         /** 当前出场单位的头顶血条，随英雄槽移动；页面关闭时随预制体销毁。 */
         const hpRows = new Map<number, Node>();
+        // 挂机挂点和模型比例独立保存在Prefab；正式八槽及技能台保持各自布局。
+        const idleLayout = shell.root.getChildByName("IdleLayout")!;
+        const heroScale = idleEncounter ? idleLayout.getChildByName("ModelScale")!.scale.x : 0.48;
+        const hpOffset = idleEncounter ? idleLayout.getChildByName("HpOffset")!.position.y : 120;
         /** 血条保留HUD层，每帧跟随槽世界坐标，保证所有骨骼都绘制在血条下方。 */
         const syncHpRows = () => {
             for (const [id, row] of hpRows) {
                 const slot = slots.get(id);
                 if (!slot?.isValid || !row.isValid || !row.parent) continue;
-                const world = slot.getComponent(UITransform)!.convertToWorldSpaceAR(new Vec3(0, 120, 0));
+                const world = slot.getComponent(UITransform)!.convertToWorldSpaceAR(new Vec3(0, hpOffset, 0));
                 row.setPosition(row.parent.getComponent(UITransform)!.convertToNodeSpaceAR(world));
             }
         };
@@ -151,6 +181,11 @@ export class BattleReplayPreview {
         const stop = () => {
             if (stopped) return;
             stopped = true;
+            for (const actor of actors.values()) {
+                const opacity = actor.node.getComponent(UIOpacity);
+                if (opacity) Tween.stopAllByTarget(opacity);
+            }
+            for (const release of returnActors) release();
             director.off(Director.EVENT_AFTER_UPDATE, syncHpRows);
             Tween.stopAllByTarget(shell.root);
             effectEpoch++;
@@ -196,12 +231,12 @@ export class BattleReplayPreview {
             stop();
             releaseSettlement();
         });
-        /** 延迟使用引擎时钟，随Creator暂停；关页清理结束等待，避免遗留Promise。 */
+        /** 延迟使用本场战报倍率与引擎时钟，随Creator暂停；关页结束等待，不改变全局导演速度。 */
         const wait = (seconds: number) => new Promise<void>(resolve => {
             if (closed || isCancelled() || !shell.root.isValid) { resolve(); return; }
             const finish = () => { waits.delete(finish); resolve(); };
             waits.add(finish);
-            tween(shell.root).delay(seconds).call(finish).start();
+            tween(shell.root).delay(seconds / playbackScale).call(finish).start();
         });
         /** 只更新预制体血条，实际扣血已由整包校验确认。 */
         const hp = (id: number, value: number) => {
@@ -254,7 +289,7 @@ export class BattleReplayPreview {
                 sprite.spriteFrame = dizzyFrames[0];
                 let cycle = tween(node);
                 for (const frame of dizzyFrames) {
-                    cycle = cycle.call(() => { sprite.spriteFrame = frame; }).delay(0.05);
+                    cycle = cycle.call(() => { sprite.spriteFrame = frame; }).delay(0.05 / playbackScale);
                 }
                 tween(node).repeatForever(cycle).start();
                 effects.add(node);
@@ -314,9 +349,13 @@ export class BattleReplayPreview {
                 const side = unit.faction === 1 ? "ally" : "enemy";
                 const id = unit.unitId;
                 const index = unit.position - 1;
-                shell.slot(side, index).active = true;
-                shell.hpLabel(side, index)!.parent!.active = true;
+                shell.slot(side, index).active = !(idleEncounter && unit.faction === 2);
+                shell.hpLabel(side, index)!.parent!.active = !(idleEncounter && unit.faction === 2);
                 const slot = shell.slot(side, index);
+                if (idleEncounter && unit.faction === 2) {
+                    const order = units.filter(value => value.faction === 2).indexOf(unit) + 1;
+                    slot.setPosition(idleLayout.getChildByName("Enemy" + order)!.position);
+                }
                 const template = templateRows.find(row => row.type === unit.templateId);
                 if (!template || !elementPaths[template.elem - 1]) throw new Error("战斗英雄元素配置缺失");
                 const element = shell.hpLabel(side, index)!.parent!.getChildByName("ElementIcon")!;
@@ -332,14 +371,25 @@ export class BattleReplayPreview {
                     const node = slot.getChildByName(name);
                     if (node) node.active = false;
                 }
+                if (idleEncounter && unit.faction === 1 && retainedIdle) {
+                    // 等敌方骨骼和出场帧全部就绪再一次性移交，资源加载期间行军英雄保持可见。
+                    hp(id, unit.initialHp);
+                    paintBuffs(id);
+                    continue;
+                }
                 const actor = await new Promise<SpineActor>((resolve, reject) => {
                     const actor = mountBattleSpine(slot, String(unit.templateId), () => reject(new Error("英雄骨骼加载失败")),
-                        { face: unit.faction === 1 ? 1 : -1, scale: 0.48, seatY: 0, onReady: () => resolve(actor) });
+                        { face: unit.faction === 1 ? 1 : -1, scale: heroScale, seatY: 0, onReady: () => resolve(actor) });
                 });
                 actors.set(id, actor);
+                if (idleEncounter && unit.faction === 2) {
+                    (actor.node.getComponent(UIOpacity) || actor.node.addComponent(UIOpacity)).opacity = 0;
+                    slot.active = true;
+                }
                 const head = slot.getChildByName("HeadAnchor");
                 if (head) head.setSiblingIndex(slot.children.length - 1);
                 hp(id, unit.initialHp);
+                if (idleEncounter && unit.faction === 2) hpRow.active = false;
                 paintBuffs(id);
             }
             syncHpRows();
@@ -372,6 +422,21 @@ export class BattleReplayPreview {
                     assets.loadPath("ui/battle/battle-appear-" + side + "_" + index + "/spriteFrame", "SpriteFrame")));
                 const rightFrames = await loadEntry("right");
                 const leftFrames = formalOpening ? await loadEntry("left") : [];
+                if (closed || isCancelled()) throw new Error("战斗进场已取消");
+                if (idleEncounter) {
+                    for (const unit of units.filter(value => value.faction === 1)) {
+                        if (!retainedIdle) continue;
+                        const slot = slots.get(unit.unitId)!;
+                        const retained = retainedIdle.borrow(unit.position, slot);
+                        returnActors.push(retained.release);
+                        actors.set(unit.unitId, retained.actor);
+                        origins.set(unit.unitId, slot.position.clone());
+                    }
+                    if (retainedIdle) retainedIdle.root.active = false;
+                    shell.layerField.active = true;
+                    shell.root.getChildByPath("LayerHud/HpBars")!.active = true;
+                    syncHpRows();
+                }
                 await Promise.all(units.filter(unit => formalOpening || unit.faction === 2).map(async unit => {
                     const slot = slots.get(unit.unitId)!;
                     const node = new Node(unit.faction === 1 ? "AllyAppearEffect" : "EnemyAppearEffect");
@@ -384,20 +449,22 @@ export class BattleReplayPreview {
                     sprite.trim = false;
                     const actorNode = actors.get(unit.unitId)!.node;
                     const opacity = actorNode.getComponent(UIOpacity) || actorNode.addComponent(UIOpacity);
-                    if (formalOpening) opacity.opacity = 0;
+                    opacity.opacity = 0;
+                    // 旧版模型连续淡入1秒；帧特效按自身时长移除，不把最后一帧额外停留。
+                    tween(opacity).to(1, { opacity: 255 }).start();
                     const entryFrames = unit.faction === 1 ? leftFrames : rightFrames;
                     for (let index = 0; index < entryFrames.length; index++) {
                         if (closed || isCancelled() || !node.isValid) break;
                         sprite.spriteFrame = entryFrames[index];
-                        if (formalOpening) opacity.opacity = Math.round(255 * (index + 1) * 0.05);
                         await wait(0.05);
-                    }
-                    if (formalOpening && actorNode.isValid && !closed && !isCancelled()) {
-                        await wait(0.25);
-                        if (opacity.isValid) opacity.opacity = 255;
                     }
                     effects.delete(node);
                     if (node.isValid) node.destroy();
+                    if (actorNode.isValid && !closed && !isCancelled()) {
+                        await wait(0.25);
+                        if (opacity.isValid) opacity.opacity = 255;
+                        if (idleEncounter && hpRows.get(unit.unitId)?.isValid) hpRows.get(unit.unitId)!.active = true;
+                    }
                 }));
                 if (closed || isCancelled() || !shell.root.isValid) throw new Error("战斗进场已取消");
                 GameLog.shared.classified("MODULE", "info", "BattleReplayPreview",
@@ -445,9 +512,9 @@ export class BattleReplayPreview {
                             // 旧Lua的0..5为六次，最后幅度保持1；每组位移净值为0。
                             for (let index = 0; index <= 5; index++) {
                                 const range = Math.max(1, 5 - index);
-                                shake = shake.by(0.016, { position: new Vec3(range, range, 0) })
-                                    .by(0.032, { position: new Vec3(-2 * range, -2 * range, 0) })
-                                    .by(0.016, { position: new Vec3(range, range, 0) });
+                                shake = shake.by(0.016 / playbackScale, { position: new Vec3(range, range, 0) })
+                                    .by(0.032 / playbackScale, { position: new Vec3(-2 * range, -2 * range, 0) })
+                                    .by(0.016 / playbackScale, { position: new Vec3(range, range, 0) });
                             }
                             shake.start();
                         }
@@ -455,8 +522,8 @@ export class BattleReplayPreview {
                             Tween.stopAllByTarget(dimOpacity);
                             if (dimOpacity.isValid) dimOpacity.opacity = 0;
                             const times = BattleAttackUtils.dimly(effectRow);
-                            tween(dimOpacity).to(times[0], { opacity: 128 }, { easing: "expoOut" })
-                                .delay(times[1]).to(times[2], { opacity: 0 }, { easing: "expoOut" }).start();
+                            tween(dimOpacity).to(times[0] / playbackScale, { opacity: 128 }, { easing: "expoOut" })
+                                .delay(times[1] / playbackScale).to(times[2] / playbackScale, { opacity: 0 }, { easing: "expoOut" }).start();
                         }
                         GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
                             "effect.start " + step.configId + " delay=" + BattleAttackUtils.delaySeconds(effectRow));
@@ -480,7 +547,7 @@ export class BattleReplayPreview {
                         world.x += units.find(unit => unit.unitId === step.targetId)!.faction === 1 ? 100 : -100;
                         const point = slot.parent!.getComponent(UITransform)!.convertToNodeSpaceAR(world);
                         if (plan.melee) {
-                            tween(slot).to(plan.moveSeconds, { position: point }).start();
+                            tween(slot).to(plan.moveSeconds / playbackScale, { position: point }).start();
                             await wait(plan.moveSeconds);
                         }
                         if (cancelled()) return;
@@ -528,7 +595,7 @@ export class BattleReplayPreview {
                                 node.setPosition(plan.projectile ? from : to);
                                 if (plan.projectile) {
                                     node.angle = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI;
-                                    tween(node).to(definition.flightSeconds, {position: to}).start();
+                                    tween(node).to(definition.flightSeconds / playbackScale, {position: to}).start();
                                 }
                                 GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
                                     "effect.frames " + step.configId + " target=" + hit.targetId + " count=" + sequence.length);
@@ -546,7 +613,7 @@ export class BattleReplayPreview {
                             wait(plan.attackSeconds + plan.attackDelaySeconds + plan.actionSeconds + plan.beforeReturnSeconds)]);
                         if (cancelled()) return;
                         if (plan.melee) {
-                            tween(slot).to(plan.moveSeconds, { position: origins.get(step.sourceId)! }).start();
+                            tween(slot).to(plan.moveSeconds / playbackScale, { position: origins.get(step.sourceId)! }).start();
                             await wait(plan.moveSeconds);
                         }
                         if (!cancelled() && !plan.effectOnly) actors.get(step.sourceId)!.play("stand");
@@ -591,6 +658,7 @@ export class BattleReplayPreview {
             setText(button.getChildByName("Label")!, defeatPresentation ? "失败样式验收" : "开始");
             let started = false;
             let replayReady = false;
+            /** 启动一次已校验战报；正式主线默认档统一驱动骨骼、位移和帧等待。 */
             const startPlayback = () => {
                 if (closed) return;
                 if (replayReady && audit) {
@@ -606,6 +674,10 @@ export class BattleReplayPreview {
                 }
                 started = true;
                 button.active = false;
+                playbackScale = formalOpening ? BattleInfoUtils.defaultTimeScale() : 1;
+                for (const actor of actors.values()) {
+                    actor.node.getComponent(sp.Skeleton)!.timeScale = playbackScale;
+                }
                 void player!.play(bytes, audit && !audit.passive ? { skillId: audit.skillId, level: audit.level } : undefined).then(async completed => {
                     if (!closed && completed) {
                         paintBattleFloats(shell.present, []);
@@ -621,8 +693,9 @@ export class BattleReplayPreview {
                             setText(button.getChildByName("Label")!, "重播");
                         }
                         const won = allyHp > 0 && enemyHp === 0;
-                        if (persistentChapter) {
+                        if (persistentChapter && !idleEncounter) {
                             // 主线结束先撤下双方单位和头顶信息，再弹结算；主页背景与导航继续保留。
+                            shell.root.getChildByName("LayerHud")!.active = false;
                             for (const actor of actors.values()) {
                                 if (actor.node.isValid) {
                                     actor.node.active = false;
