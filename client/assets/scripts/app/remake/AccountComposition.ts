@@ -1,4 +1,5 @@
 /** 会话装配：创建统一账号Model、WS连接、选服与凭证服务；不打开页面、不建立模块副本。 */
+import { MainChapterController } from "../../features/battle/MainChapterController";
 import { sys } from "cc";
 import { PREVIEW } from "cc/env";
 import { GameLog } from "../../core/GameLog";
@@ -34,6 +35,7 @@ export class AccountComposition {
             validateSnapshot: value => {
                 if(!value || typeof value !== "object" || Array.isArray(value)) throw new Error("恢复数据无效");
                 const snapshot = value as Record<string, unknown>;
+                MainChapterController.readState(snapshot.mainChapter, Number(snapshot.revision));
                 readRole(snapshot.role); readBagItems(snapshot.inventory); readTimedItems(snapshot.timedInventory);
                 if(!Number.isSafeInteger(snapshot.revision) || Number(snapshot.revision) < 0) throw new Error("状态版本无效");
             },

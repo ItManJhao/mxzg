@@ -17,6 +17,7 @@ const suites = [
   ["event-target", "ts", "client/tools/event-target-check.ts"],
   ["game-protocol", "ts", "client/tools/game-protocol-check.ts"],
   ["game-protocol-generated", "node", "tools/generate_game_protocol.cjs"],
+  ["main-chapter", "ts", "client/tools/main-chapter-check.ts"],
   ["game-socket", "ts", "client/tools/session-state-check.ts"],
   ["hero-roster", "paused", null],
   ["hero-state", "ts", "client/tools/hero-state-check.ts"],

@@ -1,0 +1,82 @@
+{
+  "date": "2026-11-06",
+  "scope": "第一章前三关主线WS+Protobuf挑战、持久战报读取、结算、登录恢复与客户端入口",
+  "backend": {
+    "fullSuite": {
+      "tests": 314,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "log": "backend/target/chapter-protocol-full.log"
+    },
+    "socket": {
+      "environment": "独立H2内存库、随机端口、GM关闭",
+      "checks": [
+        "三关真实挑战",
+        "鉴权恢复待领奖",
+        "相同请求返回同一战报",
+        "重复结算不重复发奖",
+        "跨角色读战报与领奖拒绝",
+        "业务拒绝后心跳正常",
+        "提交后快照主线版本与资产版本一致"
+      ],
+      "log": "backend/target/chapter-socket-test.log"
+    }
+  },
+  "client": {
+    "activeSuitesPassed": 39,
+    "activeSuitesTotal": 39,
+    "pausedSuites": 5,
+    "log": "client/temp/chapter-project-final.log",
+    "typeCheck": "passed",
+    "wireInterop": "三关Java生成的恢复、战报、结算、推送二进制均由TS生成编码器解码并通过模块校验",
+    "lifecycle": "窗口关闭时迟到播放器释放、重复关闭只通知一次"
+  },
+  "mysql": {
+    "tests": 1,
+    "result": "passed",
+    "run": "477c36d9b0d54d079354afa13b9df4fa",
+    "database": "mxzg_it_477c36d9b0d54d079354afa13b9df4fa",
+    "port": 54081,
+    "state": "stopped",
+    "applicationContextRestarts": 2,
+    "databaseProcessRestarts": 2,
+    "note": "仅重跑主线专项，不宣称本轮完整20项执行",
+    "log": "backend/target/chapter-protocol-mysql.log"
+  },
+  "creator": {
+    "environment": "独立内存H2，random socket preview",
+    "port": 52268,
+    "run": "4754d3ef5c064b86a906a080a0e22539",
+    "account": "chapter_review",
+    "battleId": "62b3f58a-a58d-4055-a398-3a9cbb68427a",
+    "verified": [
+      "实际第一关挑战生成持久战报",
+      "重载登录恢复1/3待领奖，金币仍0",
+      "全屏战报完整播放，主城底栏不遮挡按钮",
+      "胜利动画与返回主线提示",
+      "退出播放回到待领奖",
+      "点击领取后金币4000、钻石10、角色2级、出现挑战第2关",
+      "领奖后重新登录，金币4000、钻石10、角色2级与下一关入口一致",
+      "第二关生成战报后未播放即返回，保留2/3待领奖，金币仍4000，未因退出发奖"
+    ],
+    "result": {
+      "rounds": 1,
+      "finalHp": {
+        "2": 1816,
+        "10": 0
+      },
+      "claimedRevision": 4
+    },
+    "finalLayout": "passed: CommonPanel1九宫格底板、标题和返回主线文案已刷新验收",
+    "screenshot": "C:/Users/HelloWorld/.codex/visualizations/2026/10/31/01a190dc-c785-7bd3-a4d9-9bbe637964bc/main-chapter-verified.png"
+  },
+  "boundaries": [
+    "未操作日常玩家库或重启日常后端",
+    "未提交或推送",
+    "英雄升级与穿脱关闭",
+    "其他模块不扩展",
+    "清心概率待审与护盾疑点保留",
+    "未将只读试战验收冒充正式生产发布"
+  ]
+}

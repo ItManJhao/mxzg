@@ -62,7 +62,7 @@ export class FormationController extends BaseController {
         if (!body || body.requestId !== pending.requestId || !Number.isSafeInteger(body.version) || Number(body.version) < pending.expectedVersion) {
             throw new Error("阵容保存回执无效");
         }
-        this.model.replace({ busy: true, pending: null, acknowledged: Number(body.version), message: "已保存，等待服务器同步…" });
+        this.model.replace({ busy: true, pending: null, acknowledged: Number(body.version), confirmedRequestId: pending.requestId, message: "已保存，等待服务器同步…" });
         this.synchronized();
         if (this.model.snapshot.acknowledged !== null) this.notify();
     }
@@ -73,7 +73,7 @@ export class FormationController extends BaseController {
         if (state.acknowledged === null) return;
         const current = this.heroes.snapshot.mainFormation;
         if (current && current.version >= state.acknowledged) {
-            this.model.replace({ busy: false, pending: null, acknowledged: null, message: "阵容已保存" });
+            this.model.replace({ busy: false, pending: null, acknowledged: null, confirmedRequestId: state.confirmedRequestId, message: "阵容已保存" });
             this.notify();
         }
     };

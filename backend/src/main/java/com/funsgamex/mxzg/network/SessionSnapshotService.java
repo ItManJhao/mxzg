@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.*;
 @Service
 public class SessionSnapshotService {
     /** 角色、库存与持久版本的一致读结果；英雄名册与库存处于同一角色锁事务。 */
-    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory, long revision, TimedInventoryService.State timedInventory, HeroCapacityService.State heroRoster, com.funsgamex.mxzg.lineup.MainFormationStateService.State mainFormation) {}
+    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory, long revision, TimedInventoryService.State timedInventory, HeroCapacityService.State heroRoster, com.funsgamex.mxzg.lineup.MainFormationStateService.State mainFormation, com.funsgamex.mxzg.campaign.MainChapterService.State mainChapter, com.funsgamex.mxzg.campaign.MainChapterIdleService.State mainChapterIdle) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -32,8 +32,16 @@ public class SessionSnapshotService {
     /** 与名册同事务的阵型永久解锁和站位投影。 */
     private final com.funsgamex.mxzg.lineup.MainFormationStateService formations;
 
+    /** 与角色资产同事务恢复通关与待领奖，不携带整场战报。 */
+    private final com.funsgamex.mxzg.campaign.MainChapterService chapters;
+
+    /** 新主线挂机时钟与收益配置，随同一快照恢复。 */
+    private final com.funsgamex.mxzg.campaign.MainChapterIdleService idle;
+
     /** 注入原有数据入口，不新增玩家状态副本。 */
-    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory, TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity,com.funsgamex.mxzg.lineup.MainFormationStateService formations) {
+    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory, TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity,com.funsgamex.mxzg.lineup.MainFormationStateService formations, com.funsgamex.mxzg.campaign.MainChapterService chapters, com.funsgamex.mxzg.campaign.MainChapterIdleService idle) {
+        this.idle = idle;
+        this.chapters = chapters;
         this.sessions = sessions; this.roles = roles; this.inventory = inventory; this.timed=timed; this.heroes=heroes; this.capacity=capacity;this.formations=formations;
     }
 
@@ -54,6 +62,9 @@ public class SessionSnapshotService {
         sessions.requireRole(token);
         var formation=formations.refresh(role);
         var timedState=timed.current(role,java.time.Instant.now().getEpochSecond());
-        return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role), roles.revision(role), timedState, capacity.current(role),formation);
+        var chapter = chapters.current(token);
+        var idleState = idle.snapshot(role, chapter.maxCleared(), java.time.Instant.now().getEpochSecond());
+        idleState = idle.withLineup(role, idleState, formation);
+        return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role), roles.revision(role), timedState, capacity.current(role),formation,chapter,idleState);
     }
 }

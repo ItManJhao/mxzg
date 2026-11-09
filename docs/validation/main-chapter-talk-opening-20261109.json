@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-09",
+  "scope": "挂机英雄对话及正式主线挑战开场",
+  "status": "本批通过，非完整战斗开放",
+  "oldEvidence": [
+    "BattleController.lua:1207-1286 等级开区间/随机台词/随机英雄",
+    "system:hero_talk_cd=20,hero_talk_last=10",
+    "BattleReportBaseLayer.lua:224 ZDKS/stand",
+    "BattleController.lua:63-65,279,476 开场2.5秒、出场1秒"
+  ],
+  "checks": [
+    "TypeScript noEmit通过",
+    "main-chapter通过，含等级端点/缺语言/富文本转换/跨宿主空档/重复取消",
+    "bindings通过",
+    "Java→TS三关协议/结算/快照与三英雄挂机战报通过",
+    "MainChapterIdleTest+MainChapterSocketTest+MainChapterPersistenceTest共12项通过",
+    "git diff --check通过"
+  ],
+  "environment": {
+    "database": "随机独立内存H2；未接触日常文件库或玩家MySQL",
+    "account": "chapter_review",
+    "viewport": "Creator iPhone 393x852，浏览器1280x720",
+    "previewPort": 55839,
+    "previewPid": 43744,
+    "run": "15ce45cfb7464e1c82dbc68d84b9ef6e"
+  },
+  "observed": [
+    "台词使用旧气泡与深色正文/红色强调",
+    "遇敌出现后原台词继续停留",
+    "ZDKS战斗开始动画，期间英雄隐藏",
+    "双方出场特效后开始真实战报",
+    "挑战双方信息与回合栏可见",
+    "第二关和第三关真实结算及资产同步",
+    "结算关闭后恢复三英雄跑步与遇敌循环",
+    "开场暂停/恢复后立即点击主城退出，金币钻石保持0",
+    "重新打开显示恢复战斗，同一战报播完才收到4000金币与131钻石",
+    "最终11:42后无新增运行警告/错误"
+  ],
+  "diagnosticNotes": [
+    "首份测试进程重建时产生网络恢复提示；不是最终流程错误",
+    "11:41的临时只读诊断脚本错误引用cc.sp，导致预览错误提示；已重载并改用组件读取。该脚本不在仓库，最终复验排除此诊断错误。"
+  ],
+  "remaining": [
+    "宝箱领取保持关闭",
+    "跳过/倍速完整条件后续恢复",
+    "密集站位气泡避让与更多屏幕比例待复验",
+    "清心概率待审、护盾疑点及既有表现疑点保留"
+  ],
+  "delivery": "未提交、未推送；升级穿脱与其他模块未开放",
+  "images": [
+    "../images/idle-hero-talk-20261109.png",
+    "../images/challenge-opening-20261109.png",
+    "../images/challenge-talk-settlement-20261109.png"
+  ]
+}

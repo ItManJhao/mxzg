@@ -1,7 +1,7 @@
 {
   "plan": "tools/prefab-plan.json",
-  "kept_count": 95,
-  "removed_count": 517,
+  "kept_count": 98,
+  "removed_count": 519,
   "backup": "client\\temp\\prefab-cleanup\\removed-330ebc693a804d3780f2347b49db93c0.zip",
   "kept": [
     {
@@ -79,14 +79,6 @@
       ]
     },
     {
-      "path": "prefabs/ui/battle/BattleEditLayer.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
       "path": "prefabs/ui/battle/BattleEndLayer.prefab",
       "reason": "Formation editing, mainline battle, report and settlement",
       "phases": [
@@ -111,14 +103,6 @@
       ]
     },
     {
-      "path": "prefabs/ui/battle/BattleReportLayer.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
       "path": "prefabs/ui/battle/CampaignView.prefab",
       "reason": "Formation editing, mainline battle, report and settlement",
       "phases": [
@@ -135,6 +119,38 @@
       ]
     },
     {
+      "path": "prefabs/ui/battle/MainChapterBattleView.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/MainChapterView.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/SkillAuditCellView.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/battle/SkillAuditView.prefab",
+      "reason": "Formation editing, mainline battle, report and settlement",
+      "phases": [
+        "P4",
+        "P5"
+      ]
+    },
+    {
       "path": "prefabs/ui/chapter/ChapterEndLayer.prefab",
       "reason": "Mainline stage selection and normal settlement, excluding tower mode",
       "phases": [
@@ -143,6 +159,13 @@
     },
     {
       "path": "prefabs/ui/chapter/ChapterEndLoseCell.prefab",
+      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
+      "phases": [
+        "P5"
+      ]
+    },
+    {
+      "path": "prefabs/ui/chapter/ChapterEndView.prefab",
       "reason": "Mainline stage selection and normal settlement, excluding tower mode",
       "phases": [
         "P5"
@@ -3882,6 +3905,29 @@
       "uuid": "4c4f3f37-fd35-4bc6-8c83-33717510d736",
       "source_bytes": 22945,
       "legacy_code_sites": []
+    },
+    {
+      "path": "prefabs/ui/battle/BattleReportLayer.prefab",
+      "uuid": "01a90dce-7567-4e7f-8d0b-a8bcdec84ed1",
+      "source_bytes": 1714,
+      "legacy_code_sites": [],
+      "reason": "空战报占位，无业务引用"
+    },
+    {
+      "path": "prefabs/ui/battle/BattleEditLayer.prefab",
+      "uuid": "63bafa92-a057-42a6-ba03-34a398a4d60f",
+      "source_bytes": 34962,
+      "legacy_code_sites": [],
+      "reason": "旧布阵壳无业务引用；正式布阵统一使用FormationView"
+    }
+  ],
+  "additional_backups": [
+    {
+      "path": "client/temp/prefab-cleanup/battle-retired-20261106.zip",
+      "removed": [
+        "prefabs/ui/battle/BattleReportLayer.prefab",
+        "prefabs/ui/battle/BattleEditLayer.prefab"
+      ]
     }
   ]
 }

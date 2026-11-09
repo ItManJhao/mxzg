@@ -352,6 +352,46 @@ public final class HeroBattleChapterScenario {
         return runBattle("audit:lineup:" + mission, applyElementHalo(units), decision);
     }
 
+    /** 旧3006：持久挂机三人、当前关卡单个怪物、双方仅普攻、怪物初始生命1；不修改主线资产。 */
+    public Result runIdle(int mission, HeroBattleInputService.Input input, int firstPos, int enemyIndex,
+                          DoublePredicate decision) {
+        if (input.units().isEmpty() || input.units().size() > 3 || firstPos < 0 || firstPos > 2) {
+            throw new IllegalArgumentException("挂机阵容或首行动位置无效");
+        }
+        var units = new ArrayList<Unit>();
+        int first = firstPos % input.units().size();
+        for (int index = 0; index < input.units().size(); index++) {
+            var source = input.units().get(index);
+            var hero = source.hero();
+            var opening = source.opening();
+            units.add(new Unit(source.position(), 1, hero.templateId(), hero.level(), hero.star(), hero.stage(),
+                source.position(), source.attributes(), opening, ordinary(source.skillSchedule())));
+        }
+        var enemies = initial(mission).stream().filter(unit -> unit.faction() == 2).toList();
+        if (enemyIndex < 0 || enemyIndex >= enemies.size()) throw new IllegalArgumentException("挂机怪物索引无效");
+        var enemy = enemies.get(enemyIndex);
+        var attributes = new HashMap<>(enemy.attributes());
+        attributes.put(223, 1L);
+        units.add(new Unit(8 + enemy.position(), 2, enemy.template(), enemy.level(), enemy.star(), enemy.stage(),
+            enemy.position(), attributes, HeroBattleAttributeUtils.opening(attributes), ordinary(enemy.skills())));
+        int firstId = input.units().get(first).position();
+        var prepared = applyElementHalo(units).stream().map(unit -> {
+            var opening = unit.opening();
+            if (unit.id() == firstId) opening = new HeroBattleAttributeUtils.Opening(opening.hp(), opening.maxHp(),
+                opening.attack(), opening.defense(), 999999);
+            return new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(), unit.stage(),
+                unit.position(), unit.attributes(), opening, unit.skills());
+        }).toList();
+        return runBattle("idle:chapter:" + mission, prepared, decision);
+    }
+
+    /** 旧testType=6只使用普攻；不存在普攻时拒绝，不改用主动技能。 */
+    private static List<HeroBattleSkillUtils.Skill> ordinary(List<HeroBattleSkillUtils.Skill> skills) {
+        var attacks = skills.stream().filter(skill -> skill.activeType() == 2).toList();
+        if (attacks.size() != 1) throw new IllegalArgumentException("挂机普攻配置不唯一");
+        return attacks;
+    }
+
     /** 独立多单位审计，只接受已支持技能；不能借此宣称真实主线画面已验收。 */
     public Result runIndependentTeams(List<Unit> input, DoublePredicate decision) {
         return runBattle("audit:teams", input, decision);

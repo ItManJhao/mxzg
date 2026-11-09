@@ -59,3 +59,24 @@ Creator PREVIEW 的 WS接收日志显示协议中文说明、物品种类、item
 Item 增加可选字符串 instance_id=3，item_id=1 仍为配置 ID；不得把二者混用。Snapshot 增加可选 timed_inventory=5，内含逐件 TimedItem 和服务器 Unix 秒。旧协议字段号保持不变；两个方向都使用原 WS+Protobuf v2，未引入新查询。期限清理和身份规则见[背包说明](bag-mvc-maintenance.md#配置-id记录-id-与期限基础2026-11-03)。
 
 单帧限制为256KB（262144字节），前后端编解码和服务端接收统一约束；300名英雄带四槽与当前面板数据的真实WS容量测试通过。面板目前只覆盖基础、装备与累计套装，其余旧加成通过pending_sources明确声明；详情不在前端叠加数值。
+
+## 主线挂机只读快照（2026-11-06）
+
+Snapshot.main_chapter_idle（字段9）随登录/鉴权恢复和state.changed统一下发，没有开页查询。MainChapterIdleState提供server_time、started_at（Unix秒）、max_seconds、frequency、reward_stage及rates。rates为每frequency秒的同源基础资源量，前端仅换算每分钟，不是已到账资产。
+
+首次主线胜利在角色锁和同一事务中初始化game_main_chapter_idle起点，采用IdleRules导出的initialSeconds；重连不重置。已通关但无记录的旧测试角色由统一快照补初始化，不追溯此前未知时长。未通关不创建计时记录。新表与已暂停的game_idle/game_campaign隔离。此批无领取协议、无抽奖和发奖；旧IdleService.claim不得接回。
+
+AssetStateBinding提交任何模块前校验主线与挂机快照；MainChapterController.onNotify校验后提交Model。客户端经过时间只用于显示且封顶，领奖必须以后由服务器重新计算。关卡收益使用maxCleared而非下一关，也不使用最近一次通关奖励。
+
+
+### 挂机选人快照补充（2026-11-06）
+
+MainChapterIdleState新增slots（字段7）与lineup_version（字段8）。slots最多三项，复用FormationSlot的hero_id与position；必须是同一统一快照mainFormation的子集，版本必须相同。服务端在角色锁内按主阵容版本持久化随机选择，客户端不得重新抽人或自行改站位。该快照只支持显示，不表示已下发挂机战报或允许领取收益。
+
+
+## 主线挂机演出协议（2026-11-06）
+
+- `chapter.idle.encounter`：鉴权后空请求，返回 `IdleEncounter`（Frame字段30），包含stage、assetRevision、lineupVersion、强类型BattleReplay。沿用WS＋Protobuf，无HTTP或JSON回退。协议名遵守小写分段规则。
+- 服务端在角色锁内读取当前已通关关卡与持久挂机选择，随机取该关卡一条非空怪物配置，首行动序号按0..2抽取后对英雄数量取模。双方只用普攻，怪物初始HP=1；挂机使用旧独立阵型1，保留原站位和元素加成。现阶段仍只支持已接入的前三关/普攻配置。
+- 场景标识 `idle:chapter:N` 与 `chapter:lineup:N` 挑战战报分开。演出不写主线战报、不领奖、不推进关卡、不增加资产版本。客户端校验完整生命事件链、最多三名我方和一名敌方、普攻类型，以及当前关卡/阵容/资产版本后才播放。
+- 此请求只在行军路程到达遇敌点后发出，不查询角色/背包。失败不伪造击杀；下一次行军到遇敌点才重试。页面关闭或进入挑战取消本页演出，连接切换仍由通信和应用层隔离。

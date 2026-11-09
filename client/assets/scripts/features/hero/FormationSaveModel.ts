@@ -10,6 +10,8 @@ export interface FormationSaveState {
     readonly pending: FormationSaveRequest | null;
     /** 已收到成功回执，等待统一快照达到的阵容版本。 */
     readonly acknowledged: number | null;
+    /** 本次保存成功回执的请求编号；busy为false且acknowledged为空时表示权威阵容也已确认。新请求或失败清空。 */
+    readonly confirmedRequestId?: string;
     /** 保存、重试或拒绝原因，供页面读取。 */
     readonly message: string;
 }

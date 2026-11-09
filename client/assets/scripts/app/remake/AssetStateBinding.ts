@@ -1,6 +1,7 @@
 /** 应用层统一资产提交：校验角色归属和持久版本，再把真实协议交给角色/背包/英雄 onNotify。
  * 同一通知批次完成全部 Model 更新；不查询库存、不反推玩家资产、不保存第二份资产。
  */
+import { MainChapterController } from "../../features/battle/MainChapterController";
 import type { FormationController } from "../../features/hero/FormationController";
 import type { HeroRosterController } from "../../features/hero/HeroRosterController";
 import { readOwnedHeroes, readHeroRosterInfo, readMainFormation } from "../../features/hero/data/HeroSnapshotData";
@@ -38,6 +39,7 @@ export class AssetStateBinding {
         private readonly heroes?: HeroRosterController,
         private readonly formation?: FormationController,
         private readonly identityChanged: () => void = () => {},
+        private readonly chapter?: MainChapterController,
     ) {
         this.stop = account.subscribe(state => { if (!state.role) this.clear(); });
     }
@@ -50,9 +52,15 @@ export class AssetStateBinding {
             throw new Error("资产信封无效");
         }
         const state = statePayload(frame.name as ProtocolName, frame.body);
+        const chapter = MainChapterController.readState(state.mainChapter, Number(state.revision));
+        const idle = MainChapterController.readIdle(state.mainChapterIdle, chapter);
         const role = readRole(state.role);
         const heroRows = readOwnedHeroes(state.heroes);
-        readMainFormation(state.mainFormation, heroRows);
+        const formation = readMainFormation(state.mainFormation, heroRows);
+        if (idle?.slots && (!formation || idle.lineupVersion !== formation.version
+            || idle.slots.some(slot => !formation.slots.some(main => main.heroId === slot.heroId && main.position === slot.position)))) {
+            throw new Error("挂机阵容不属于当前主线阵容");
+        }
         readHeroRosterInfo(state.heroRoster);
         readBagItems(state.inventory);
         readTimedItems(state.timedInventory);
@@ -66,6 +74,7 @@ export class AssetStateBinding {
             ProtocolRouter.instance.dispatch(this.role, frame);
             ProtocolRouter.instance.dispatch(this.bag, frame);
             if (this.heroes) ProtocolRouter.instance.dispatch(this.heroes, frame);
+            if (this.chapter) ProtocolRouter.instance.dispatch(this.chapter, frame);
             this.revision = revision;
         });
         return true;
@@ -79,6 +88,7 @@ export class AssetStateBinding {
         this.bag.resetSession(key);
         this.heroes?.resetSession(key);
         this.formation?.resetSession(key);
+        this.chapter?.resetSession(key);
     }
 
     /** 登出或登录新身份前统一清理；不查询任何模块数据。 */
@@ -93,5 +103,6 @@ export class AssetStateBinding {
         this.role.dispose();
         this.heroes?.dispose();
         this.formation?.dispose();
+        this.chapter?.dispose();
     }
 }

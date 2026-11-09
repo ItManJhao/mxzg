@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-06",
+  "scope": "旧主线前三关挂机普攻循环",
+  "environment": {
+    "database": "独立随机内存H2",
+    "port": 55394,
+    "pid": 41704,
+    "account": "chapter_review",
+    "compiledSnapshot": true
+  },
+  "automated": {
+    "backendFinal": 15,
+    "frontend": [
+      "main-chapter",
+      "bindings",
+      "game-protocol",
+      "game-socket",
+      "Java→TS idle encounter",
+      "tsc"
+    ]
+  },
+  "visual": [
+    "三英雄行军与头顶信息",
+    "右侧怪物出场",
+    "真实普攻与死亡后恢复跑步",
+    "第二关正式挑战及结算返回",
+    "第二关挂机怪物更新",
+    "退出主城无残留"
+  ],
+  "notAccepted": [
+    "全分辨率",
+    "全部英雄组合",
+    "英雄对话",
+    "宝箱领取"
+  ],
+  "pushed": false
+}

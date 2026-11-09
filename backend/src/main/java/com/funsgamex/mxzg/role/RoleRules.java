@@ -9,6 +9,8 @@ public class RoleRules {
     private final Map<String,Long> initial=new HashMap<>();
     /** 角色等级对应本级经验门槛；不是英雄等级表。 */
     private final Map<Integer,Long> thresholds=new HashMap<>();
+    /** 离开每一级时发放的钻石；旧mainlevel当前只配置900002，其他类型须先扩展发奖规则。 */
+    private final Map<Integer,Long> levelDiamonds = new HashMap<>();
     /** 角色最高等级，由 mainlevel 连续等级范围确定。 */
     private final int maxLevel;
     /** 旧规则以首抽英雄星级与类型 ID 拼接的初始形象。 */
@@ -23,6 +25,18 @@ public class RoleRules {
         for(var row:rows(mapper,"mainlevel")) {
             int level=Math.toIntExact(number(row,"level"));long exp=number(row,"exp");
             if(level<1 || exp<1 || thresholds.put(level,exp)!=null)throw new IllegalStateException("角色等级表无效");
+            long diamonds = 0;
+            var rewards = mapper.readTree(row.path("reward").asString());
+            if (rewards == null || !rewards.isArray()) {
+                throw new IllegalStateException("角色升级奖励无效");
+            }
+            for (var reward : rewards) {
+                if (number(reward, "item_type") != 900002 || number(reward, "item_num") <= 0) {
+                    throw new IllegalStateException("尚未支持的角色升级奖励");
+                }
+                diamonds = Math.addExact(diamonds, number(reward, "item_num"));
+            }
+            levelDiamonds.put(level, diamonds);
         }
         maxLevel=thresholds.size();
         for(int level=1;level<=maxLevel;level++)if(!thresholds.containsKey(level))throw new IllegalStateException("角色等级不连续");
@@ -36,6 +50,34 @@ public class RoleRules {
         if(first<=0 || image<=0)throw new IllegalStateException("初始角色形象配置缺失");
         imageId=image;
     }
+    /** 经验结算结果：剩余本级经验、最终等级及跨越各级的钻石奖励。 */
+    public record ExperienceGain(int level, long experience, long diamonds) {}
+
+    /**
+     * 复现旧RoleService.addExp：逐级扣除当前级门槛，领取离开等级的奖励，到满级清零。
+     * 已满级保持原经验且不再奖励；溢出或损坏的未满级经验拒绝，调用方整体回滚。
+     */
+    public ExperienceGain addExperience(int level, long experience, long amount) {
+        threshold(level);
+        if (experience < 0 || amount <= 0 || (level < maxLevel && experience >= threshold(level))) {
+            throw new IllegalArgumentException("角色经验或发放数量无效");
+        }
+        if (level == maxLevel) {
+            return new ExperienceGain(level, experience, 0);
+        }
+        long remaining = Math.addExact(experience, amount);
+        long diamonds = 0;
+        while (level < maxLevel && remaining >= threshold(level)) {
+            remaining -= threshold(level);
+            diamonds = Math.addExact(diamonds, levelDiamonds.get(level));
+            level++;
+            if (level == maxLevel) {
+                remaining = 0;
+            }
+        }
+        return new ExperienceGain(level, remaining, diamonds);
+    }
+
     /** 返回指定初始属性；不存在即配置错误。 */
     public long initial(String key) {var value=initial.get(key);if(value==null)throw new IllegalStateException("角色初始化键缺失："+key);return value;}
     /** 读取当前角色等级门槛；最高级没有下一级，返回 0。 */

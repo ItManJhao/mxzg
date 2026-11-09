@@ -35,6 +35,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final com.funsgamex.mxzg.lineup.MainFormationCommandService formations;
     /** 开发只读试战，鉴权及真实阵容读取均在服务端完成。 */
     private final com.funsgamex.mxzg.hero.HeroLineupBattleService battles;
+    /** 真实主线持久挑战与幂等结算，角色仅取自鉴权连接。 */
+    private final com.funsgamex.mxzg.campaign.MainChapterService chapters;
+    /** 挂机普攻演出，不进入主线结算服务。 */
+    private final com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles;
     private final SessionService sessions;
     private final SessionSnapshotService snapshots;
     private final ConcurrentMap<String, Connection> connections = new ConcurrentHashMap<>();
@@ -60,7 +64,9 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     }
 
     /** 注入共享鉴权和快照服务，创建固定数量角色锁，避免锁表无限增长。 */
-    public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots, com.funsgamex.mxzg.auth.DevelopmentLoginService login, com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm, com.funsgamex.mxzg.lineup.MainFormationCommandService formations, com.funsgamex.mxzg.hero.HeroLineupBattleService battles) {
+    public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots, com.funsgamex.mxzg.auth.DevelopmentLoginService login, com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm, com.funsgamex.mxzg.lineup.MainFormationCommandService formations, com.funsgamex.mxzg.hero.HeroLineupBattleService battles, com.funsgamex.mxzg.campaign.MainChapterService chapters, com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles) {
+        this.idleBattles = idleBattles;
+        this.chapters = chapters;
         this.battles = battles;
         this.formations = formations;
         this.gm=gm;
@@ -176,6 +182,21 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         if (online.get(connection.role) != connection) throw rejected("SESSION_REPLACED");
         if (!connection.role.equals(sessions.requireRole(connection.token))) throw rejected("UNAUTHENTICATED");
         if (!connection.socket.getId().equals(request.path("connectionId").asString(""))) throw rejected("SESSION_REPLACED");
+        if (name.equals("chapter.challenge") || name.equals("chapter.claim") || name.equals("chapter.replay")) {
+            chapter(connection, request, name);
+            return;
+        }
+        if (name.equals("chapter.idle.encounter")) {
+            fields(request.path("body"), Set.of());
+            try {
+                var result = idleBattles.encounter(connection.token);
+                respond(connection, request, Map.of("stage", result.stage(), "assetRevision", result.assetRevision(),
+                    "lineupVersion", result.lineupVersion(), "replay", GameProtocolCodec.tree(com.funsgamex.mxzg.hero.HeroBattleReplayProtocolUtils.encode(result.replay()))));
+            } catch (IllegalArgumentException error) {
+                throw rejected("CHAPTER_UNAVAILABLE");
+            }
+            return;
+        }
         if (name.equals("battle.preview")) {
             if (!gm.enabled()) throw rejected("GM_DISABLED");
             var body = request.path("body");
@@ -225,6 +246,28 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             case "session.heartbeat" -> respond(connection, request, Map.of("serverTimeMs", System.currentTimeMillis()));
 
             default -> throw rejected("UNKNOWN_MESSAGE");
+        }
+    }
+
+    /** 主线命令只接收幂等键或战报ID；业务拒绝保留连接，损坏数据仍由统一异常边界拒绝。 */
+    private void chapter(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        boolean challenge = name.equals("chapter.challenge");
+        String key = challenge ? "requestId" : "battleId";
+        fields(body, Set.of(key));
+        String id = text(body, key, UUID_PATTERN);
+        try {
+            if (name.equals("chapter.replay")) {
+                var result = chapters.replay(connection.token, id);
+                respond(connection, request, Map.of("battleId", result.id(), "mission", result.details().mission(),
+                    "pending", result.details().pending(), "replay", GameProtocolCodec.tree(result.replay())));
+            } else {
+                var receipt = challenge ? chapters.challenge(connection.token, id) : chapters.claim(connection.token, id);
+                respond(connection, request, Map.of("action", receipt.action().name(), "battleId", receipt.battleId(),
+                    "state", receipt.state(), "rewards", receipt.rewards()));
+            }
+        } catch (IllegalArgumentException error) {
+            throw rejected("CHAPTER_UNAVAILABLE");
         }
     }
 

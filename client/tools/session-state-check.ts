@@ -141,7 +141,7 @@ async function main(){
  try{
   let homeActions:any;const opened:string[]=[];const notices:string[]=[];
   const home=new HomeController(account,service,{bind:value=>{homeActions=value;return()=>{};},render:()=>{},showNotice:value=>notices.push(value)},id=>{opened.push(id);return true;});
-  home.show();homeActions.openFeature("bag");homeActions.openFeature("city");homeActions.openFeature("hero");homeActions.openFeature("battle");assert.deepEqual(opened,["bag","city","hero"]);assert.equal(notices.length,1);home.close();
+  home.show();homeActions.openFeature("bag");homeActions.openFeature("city");homeActions.openFeature("hero");homeActions.openFeature("battle");assert.deepEqual(opened,["bag","city","hero","battle"]);assert.equal(notices.length,0);home.close();
   const unwatch=account.subscribe(state=>{if(state.role&&!state.busy)assert(model.snapshot.synced,"角色通知前库存已提交");});
   assert(await service.login("player","local-1"));assert.equal(model.snapshot.synced,true);assert.deepEqual(server.requests,["session.login"]);
   server.state.role.basics={...server.state.role.basics,experience:66};

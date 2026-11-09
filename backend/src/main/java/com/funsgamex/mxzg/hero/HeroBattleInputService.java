@@ -86,6 +86,17 @@ public class HeroBattleInputService {
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Input current(String token) {
+        return read(token, false);
+    }
+
+    /** 旧LANG_UP独立阵型固定起源序列1，不把主线后续选择的阵型加成带入挂机。 */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Input currentForIdle(String token) {
+        return read(token, true);
+    }
+
+    /** 共用鉴权、持久名册与属性构造；只在挂机读取时切换阵型属性来源。 */
+    private Input read(String token, boolean idle) {
         String role = sessions.requireRole(token);
         roles.lock(role);
         sessions.requireRole(token);
@@ -106,7 +117,7 @@ public class HeroBattleInputService {
         for (var slot : validated) {
             var hero = owned.get(slot.heroId());
             var evolved = evolution.resolve(hero.templateId(), hero.evolution().type(), hero.evolution().level());
-            var position = formationRules.position(formation.formationId(), slot.position());
+            var position = formationRules.position(idle ? 1 : formation.formationId(), slot.position());
             var attributes = panels.attributes(hero.baseStats(), hero.equipment(), add -> {
                 // 旧 BattleTemplate 先设置星级基础系数，再累加其他来源的同编号属性。
                 add.accept(150, defense.coefficient(hero.star()));
@@ -120,7 +131,7 @@ public class HeroBattleInputService {
             units.add(new Unit(slot.position(), hero, attributes, selected,
                 HeroBattleAttributeUtils.opening(attributes), skills.battleSchedule(selected), elements.element(hero.templateId())));
         }
-        return new Input(roles.revision(role), formation.version(), formation.formationId(), units,
+        return new Input(roles.revision(role), formation.version(), idle ? 1 : formation.formationId(), units,
             List.of("soul_talent_runes_awakening", "account_and_team_sources",
                 "battle_special_attributes_and_triggers"));
     }

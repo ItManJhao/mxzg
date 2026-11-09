@@ -2,12 +2,12 @@
   "ver": "1.1.50",
   "importer": "prefab",
   "imported": true,
-  "uuid": "63bafa92-a057-42a6-ba03-34a398a4d60f",
+  "uuid": "cc1bc0f0-28ac-4d7a-a8e5-c4bc24a4d43b",
   "files": [
     ".json"
   ],
   "subMetas": {},
   "userData": {
-    "syncNodeName": "BattleEditLayer"
+    "syncNodeName": "MainChapterView"
   }
 }

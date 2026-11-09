@@ -1,4 +1,4 @@
-// 新版登录与背包唯一通信契约；生成 TS/Java，禁止复用已发布字段号。
+// 新版游戏业务唯一通信契约；生成 TS/Java，禁止复用已发布字段号。
 // WebSocket 使用 mxzg.protobuf.v2 子协议，线上使用 WSS；不是旧服协议兼容层。
 syntax = "proto2";
 package mxzg.game;
@@ -31,6 +31,11 @@ message Frame {
     FormationSaved formation_saved = 23;
     BattlePreviewRequest battle_preview = 24;
     BattlePreviewResult battle_previewed = 25;
+    ChapterChallenge chapter_challenge = 26;
+    ChapterBattleId chapter_battle_id = 27;
+    ChapterReceipt chapter_receipt = 28;
+    ChapterReplay chapter_replay = 29;
+    IdleEncounter idle_encounter = 30;
   }
 }
 message Empty {}
@@ -114,6 +119,8 @@ message Snapshot {
   optional TimedInventory timed_inventory = 5;
   optional HeroRoster hero_roster = 6;
   optional MainFormation main_formation = 7;
+  optional MainChapterState main_chapter = 8;
+  optional MainChapterIdleState main_chapter_idle = 9;
 }
 
 // 服务端最终容量已经包含 VIP 加成；缺失表示尚未同步，不能当作零容量。
@@ -224,3 +231,29 @@ message BattlePreviewResult {
   repeated string pending = 5;
   required BattleReplay replay = 6;
 }
+
+// 主线进度随登录及state.changed同步；缺失表示未同步，不默认未通关。
+message MainChapterState { required uint32 max_cleared = 1; optional string pending_battle_id = 2; required int64 asset_revision = 3; }
+// request_id是持久幂等键；重试同一次挑战必须复用，客户端不提交胜负和奖励。
+message ChapterChallenge { required string request_id = 1; }
+message ChapterBattleId { required string battle_id = 1; }
+message ChapterReward { required uint32 item_id = 1; required int64 quantity = 2; }
+// 历史回执不覆盖统一资产快照；BATTLE需读取持久战报，SETTLED表示只补领奖。
+message ChapterReceipt { required string action = 1; required string battle_id = 2; required MainChapterState state = 3; repeated ChapterReward rewards = 4; }
+// 登录只恢复进度；玩家选择继续观看时按归属读取原战报，不重新计算。
+message ChapterReplay { required string battle_id = 1; required uint32 mission = 2; repeated string pending = 3; required BattleReplay replay = 4; }
+
+// 主线挂机只读快照；时间为服务器Unix秒，rates为每frequency秒的基础收益，不是已到账奖励。
+message MainChapterIdleState {
+  required int64 server_time = 1;
+  required int64 started_at = 2;
+  required uint32 max_seconds = 3;
+  required uint32 frequency = 4;
+  required uint32 reward_stage = 5;
+  repeated ChapterReward rates = 6;
+  repeated FormationSlot slots = 7;
+  optional int64 lineup_version = 8;
+}
+
+// 挂机演出战报，不是挑战凭证，不产生奖励；输入版本用于避免展示已变更的阵容。
+message IdleEncounter { required uint32 stage = 1; required int64 asset_revision = 2; required int64 lineup_version = 3; required BattleReplay replay = 4; }

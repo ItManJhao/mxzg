@@ -41,11 +41,13 @@ interface GeneratedType {
 /** 唯一生成代码调用口，避免在业务模块散落生成器类型转换。 */
 const Frame = (mxzg as unknown as { game: { Frame: GeneratedType } }).game.Frame;
 /** oneof 的所有有效载荷字段，用于检查消息名与载荷类型必须对应。 */
-const payloads = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed"];
+const payloads = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed", "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter"];
 
 /** 按消息方向和名称选择强类型载荷，不允许以 JSON 字符串或任意 bytes 代替业务定义。 */
 function payloadName(frame: GameFrame): string | null {
   if (frame.kind === "response" && frame.ok === false) return null;
+  if (frame.kind === "request" && frame.name === Protocol.CHAPTER_CHALLENGE) return "chapterChallenge";
+  if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_CLAIM || frame.name === Protocol.CHAPTER_REPLAY)) return "chapterBattleId";
   if (frame.kind === "request" && frame.name === Protocol.BATTLE_PREVIEW) return "battlePreview";
   if (frame.kind === "request" && frame.name === Protocol.FORMATION_SAVE) return "formationSave";
   if (frame.kind === "request" && frame.name === Protocol.GM_GRANT) return "gmGrant";
@@ -56,6 +58,10 @@ function payloadName(frame: GameFrame): string | null {
     switch (frame.name) {
       case Protocol.SESSION_LOGIN:
       case Protocol.SESSION_AUTHENTICATE: return "accepted";
+      case Protocol.CHAPTER_CHALLENGE:
+      case Protocol.CHAPTER_CLAIM: return "chapterReceipt";
+      case Protocol.CHAPTER_REPLAY: return "chapterReplay";
+      case Protocol.CHAPTER_IDLE_ENCOUNTER: return "idleEncounter";
       case Protocol.BATTLE_PREVIEW: return "battlePreviewed";
       case Protocol.FORMATION_SAVE: return "formationSaved";
       case Protocol.GM_GRANT: return "gmResult";

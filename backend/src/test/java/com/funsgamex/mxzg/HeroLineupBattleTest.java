@@ -29,6 +29,8 @@ class HeroLineupBattleTest {
     @Autowired SessionSnapshotService snapshots;
     /** 核对输入属性只累加一次。 */
     @Autowired HeroBattleInputService inputs;
+    /** 本批主线门槛战力，只读投影。 */
+    @Autowired HeroMainPowerService powers;
     /** 仅向隔离H2准备测试英雄。 */
     @Autowired JdbcTemplate jdbc;
 
@@ -212,5 +214,45 @@ class HeroLineupBattleTest {
         save(p, List.of(new Lineup.Slot(9, p.hero())));
         var failure = assertThrows(IllegalArgumentException.class, () -> battles.preview(p.token(), 1, rate -> true));
         assertTrue(failure.getMessage().contains("助战"));
+    }
+    /** 独立H2真实阵容胜负接入原版进度决策，尚不调用资产或持久结算。 */
+    @Test void realThreeMissionResultsFollowLegacyProgressRules() {
+        var rules = new com.funsgamex.mxzg.campaign.MainChapterRules(new tools.jackson.databind.ObjectMapper());
+        var p = player(10105011, 9);
+        jdbc.update("UPDATE game_hero SET hero_level=100,stage=3 WHERE id=?", p.hero());
+        save(p, List.of(new Lineup.Slot(2, p.hero())));
+        var before = snapshots.snapshot(p.token());
+        var progress = new com.funsgamex.mxzg.campaign.MainChapterRules.Progress(0, false);
+        for (int mission = 1; mission <= 3; mission++) {
+            var decision = rules.decide(progress, 1, 1);
+            assertEquals(mission, decision.stage().mission());
+            var battle = battles.preview(p.token(), decision.stage().mission(), rate -> rate == 1D).battle();
+            assertEquals(HeroBattleRoundUtils.Outcome.ATTACKER_WIN, battle.outcome());
+            progress = rules.complete(progress, mission, battle.outcome() == HeroBattleRoundUtils.Outcome.ATTACKER_WIN);
+            assertEquals(mission, progress.maxCleared());
+            assertEquals(com.funsgamex.mxzg.campaign.MainChapterRules.Action.SETTLE_PENDING,
+                rules.decide(progress, 0, 0).action());
+            assertFalse(rules.pendingRewards(progress).isEmpty());
+            progress = rules.settled(progress);
+        }
+        assertAssetsUnchanged(before, snapshots.snapshot(p.token()));
+    }
+    /** 战力从本角色持久队伍读取，保留版本和缺口；读取不发奖、不改阵容。 */
+    @Test void mainPowerUsesOwnedSavedRosterWithoutWritingAssets() {
+        var p = player(10101001, 1);
+        var empty = powers.current(p.token());
+        assertEquals(0, empty.total());
+        save(p, List.of(new Lineup.Slot(2, p.hero())));
+        var before = snapshots.snapshot(p.token());
+        var result = powers.current(p.token());
+        assertTrue(result.total() > 0);
+        assertEquals(result.total(), result.heroes().get(p.hero()));
+        assertEquals(before.revision(), result.assetRevision());
+        assertEquals(before.mainFormation().version(), result.lineupVersion());
+        assertFalse(result.pending().isEmpty());
+        assertEquals(result, powers.current(p.token()));
+        assertAssetsUnchanged(before, snapshots.snapshot(p.token()));
+        var other = player(10101001, 1);
+        assertEquals(0, powers.current(other.token()).total());
     }
 }

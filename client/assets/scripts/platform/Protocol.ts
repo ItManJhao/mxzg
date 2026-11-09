@@ -3,6 +3,14 @@
  * 当前线上使用 Frame.name 字符串作协议标识；不是另造一套数字号，不复制游爱 Sproto 协议。
  */
 export class Protocol {
+    /** 当前角色主线挑战，使用持久幂等键。 */
+    static readonly CHAPTER_CHALLENGE = "chapter.challenge";
+    /** 领取指定战报奖励，重复领取返回历史回执。 */
+    static readonly CHAPTER_CLAIM = "chapter.claim";
+    /** 恢复当前角色的持久战报，不重新计算。 */
+    /** 旧3006挂机普攻演出，不结算资产。 */
+    static readonly CHAPTER_IDLE_ENCOUNTER = "chapter.idle.encounter";
+    static readonly CHAPTER_REPLAY = "chapter.replay";
     /** 当前已保存阵容的开发只读试战，不发奖、不记录通关。 */
     static readonly BATTLE_PREVIEW = "battle.preview";
     /** 主线阵型和站位保存；资产仍从统一状态同步。 */
@@ -39,6 +47,10 @@ export interface ProtocolDefinition {
 }
 /** 仅列出真正已接通的消息，新增协议须同步 .proto、服务端和模块处理。 */
 export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze([
+    {name:Protocol.CHAPTER_CHALLENGE,module:"主线",description:"持久挑战回执"},
+    {name:Protocol.CHAPTER_CLAIM,module:"主线",description:"幂等结算回执"},
+    {name:Protocol.CHAPTER_IDLE_ENCOUNTER,module:"主线",description:"挂机遇敌演出战报"},
+    {name:Protocol.CHAPTER_REPLAY,module:"主线",description:"恢复持久战报"},
     {name:Protocol.BATTLE_PREVIEW,module:"战斗",description:"当前阵容只读试战"},
     {name:Protocol.FORMATION_SAVE,module:"阵容",description:"主线阵容保存回执"},
     {name:Protocol.GM_STATUS,module:"开发GM",description:"GM 开关"},

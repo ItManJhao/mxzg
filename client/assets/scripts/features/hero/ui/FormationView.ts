@@ -18,7 +18,12 @@ import type { FormationState } from "../data/FormationData";
 
 const { ccclass, property } = _decorator;
 /** 应用可注入关闭结果，保存成功仍留在编辑页供核对服务端同步。 */
-export interface FormationRequest { complete(confirmed: boolean): void; }
+export interface FormationRequest {
+    /** 关闭结果；只有本次出战草稿被服务端确认后才返回true。 */
+    complete(confirmed: boolean): void;
+    /** 主线出战确认保存成功后关闭；普通布阵仍留在页面。 */
+    closeAfterSave?: boolean;
+}
 
 @ccclass("FormationView")
 export class FormationView extends BaseView<FormationRequest> {
@@ -72,11 +77,14 @@ export class FormationView extends BaseView<FormationRequest> {
     private elem = 0;
     /** 防止关闭回调重复执行。 */
     private done = false;
+    /** 本页出战确认时提交的草稿，匹配权威快照后才允许进入挑战；取消时清空。 */
+    private submitted: { version: number; formationId: number; slots: { position: number; heroId: string }[] } | null = null;
 
     /** 校验静态绑定并开始适配，不创建布局节点或查询状态。 */
     public onOpen(args?: FormationRequest): void {
         this.args = args;
         this.done = false;
+        this.submitted = null;
         this.closed = false;
         this.elem = 0;
         const fields = { closeButton: this.closeButton, confirmButton: this.confirmButton, titleLabel: this.titleLabel,
@@ -160,6 +168,16 @@ export class FormationView extends BaseView<FormationRequest> {
     private onSaveChanged(): void {
         if (this.closed) return;
         const status = this.saves.snapshot;
+        const current = this.roster.snapshot.mainFormation;
+        const draft = this.submitted;
+        if (this.args?.closeAfterSave && draft && !status.busy && !status.pending
+                && status.acknowledged === null && !!status.confirmedRequestId && current && current.version >= draft.version
+                && current.formationId === draft.formationId && current.slots.length === draft.slots.length
+                && draft.slots.every(slot => current.slots.some(saved => saved.position === slot.position && saved.heroId === slot.heroId))) {
+            this.submitted = null;
+            this.complete(true);
+            return;
+        }
         if (status.pending) {
             const request = status.pending;
             const option = this.roster.snapshot.mainFormation?.options?.find(row => row.formationId === request.formationId);
@@ -182,6 +200,10 @@ export class FormationView extends BaseView<FormationRequest> {
             this.state.message = "至少上阵一名英雄";
             this.paint();
             return;
+        }
+        if (this.args?.closeAfterSave) {
+            this.submitted = { version: this.state.lineup.version, formationId: this.state.formationId!,
+                slots: this.state.lineup.slots.map(slot => ({ ...slot })) };
         }
         void this.module.save({ expectedVersion: this.state.lineup.version,
             formationId: this.state.formationId!, slots: this.state.lineup.slots.map(slot => ({ ...slot })) });
@@ -220,14 +242,15 @@ export class FormationView extends BaseView<FormationRequest> {
     public complete(confirmed: boolean): void {
         if (this.done) return;
         this.done = true;
-        this.args?.complete(confirmed);
         this.close();
+        this.args?.complete(confirmed);
     }
 
     /** 释放视口监听和临时绘制引用；只清理本页按钮与事件，模块继续接收回执。 */
     public onClose(): void {
         view.off("canvas-resize", this.fit, this);
         this.closed = true;
+        this.submitted = null;
         EventDispatcher.instance.offTarget(this);
         this.selected = null;
         if (!this.done) {

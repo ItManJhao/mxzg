@@ -1,7 +1,9 @@
 /** 正式页面登记：集中维护类、预制体与页面生命周期适配，业务会话由应用注入，不创建网络连接。 */
+import { MainChapterBattleView } from "../../features/battle/ui/MainChapterBattleView";
+import { MainChapterView } from "../../features/battle/ui/MainChapterView";
 import { Node, Prefab } from "cc";
 import { PREVIEW } from "cc/env";
-import { prepareHeroDetailConfig } from "../../config/RemakeConfig";
+import { prepareHeroDetailConfig, prepareInventoryConfig } from "../../config/RemakeConfig";
 import { AccountController } from "../../features/account/AccountController";
 import { AccountModel } from "../../features/account/AccountModel";
 import { AccountService } from "../../features/account/AccountService";
@@ -105,6 +107,15 @@ export class ApplicationPages {
         const loadFeature = (group: "bag" | "campaign" | "formation") => {
             return resources.featurePage(group);
         };
+        stops.push(registerView(MainChapterBattleView, {
+            id: "main-chapter-battle", prefab: ResourceCatalog.prefab_battle.MainChapterBattleView.assetPath,
+            layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "main-chapter-field",
+        }));
+        stops.push(registerView(MainChapterView, {
+            id: "remake-campaign", prefab: ResourceCatalog.prefab_battle.MainChapterView.assetPath,
+            layer: UILayer.Page, cache: false, allowMultiple: false,
+            load: async () => { await prepareInventoryConfig(); return loadPrefab(ResourceCatalog.prefab_battle.MainChapterView.assetPath); },
+        }));
         stops.push(registerView(FormationView, {
             id: "remake-formation", prefab: ResourceCatalog.prefab_hero.FormationView.assetPath,
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",

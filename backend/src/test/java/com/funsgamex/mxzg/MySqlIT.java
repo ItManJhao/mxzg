@@ -214,7 +214,7 @@ class MySqlIT {
         assertEquals(0,number("SELECT evolve_type FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         assertEquals(0,number("SELECT evolve_level FROM game_hero WHERE id='00000000-0000-4000-8000-000000000002'"));
         System.out.println("[MYSQL-IT] V3 synthetic role/hero/inventory retained after V14; stage=0, evolution=0/0");
-        assertEquals(15, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(16, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         assertEquals("bigint", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_inventory' AND COLUMN_NAME='quantity'", String.class));
         assertEquals("timestamp", jdbc.queryForObject("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_session' AND COLUMN_NAME='expires_at'", String.class));
         assertEquals(1, number("SELECT COUNT(DISTINCT INDEX_NAME) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='game_role' AND INDEX_NAME='uq_role_account_server' AND NON_UNIQUE=0"));
@@ -356,11 +356,11 @@ class MySqlIT {
         assertEquals(settled.inventory(), inventory(token)); assertEquals(lineup, lineups.current(token));
         assertEquals(heroRows, heroes.list(token)); assertEquals(2, campaign.current(token).stageId());
         assertEquals(200, number("SELECT role_exp FROM game_campaign WHERE role_id=?", p.id()));
-        assertEquals(15, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        assertEquals(16, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
         var replay=campaign.claim(token,report.id());
         assertEquals(settled.battle(),replay.battle());assertEquals(settled.inventory(),replay.inventory());assertEquals(settled.stageId(),replay.stageId());
         assertEquals(current,replay.role(),"重放携带当前角色快照，登录时间不是历史奖励收据");
-        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=15");
+        System.out.println("[MYSQL-IT] application contexts restarted=2; owned mysqld restarted=1; pending/claimed persisted; migrations=16");
     }
 
     /** 通过独立 JVM 的真实 HTTP 完成业务链，在未领奖和已领奖两个阶段分别终止进程再登录核验恢复。 */
@@ -522,6 +522,51 @@ class MySqlIT {
         assertEquals(receipt,app.getBean(com.funsgamex.mxzg.lineup.MainFormationCommandService.class).save(p.token(),request));
         assertStoredState(before,snapshots.snapshot(p.token()));assertEquals(expected+1,snapshots.snapshot(p.token()).mainFormation().version());
         System.out.println("[MYSQL-IT] V15 formation receipt replay and snapshot survive application restart");
+    }
+
+    /** 全新独立MySQL验证待领奖与二进制战报跨进程恢复、并发结算及结算后重启去重。 */
+    @Test @Order(20) void mainChapterPersistenceSurvivesRestarts() throws Exception {
+        var p = player();
+        String hero = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,100,9,3)", hero, p.id());
+        var formation = app.getBean(com.funsgamex.mxzg.lineup.MainFormationCommandService.class);
+        long version = snapshots.snapshot(p.token()).mainFormation().version();
+        formation.save(p.token(), new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(
+            UUID.randomUUID().toString(), version, 1, List.of(new Lineup.Slot(2, hero))));
+        var service = app.getBean(com.funsgamex.mxzg.campaign.MainChapterService.class);
+        String request = UUID.randomUUID().toString();
+        var before = snapshots.snapshot(p.token());
+        var battle = service.challenge(p.token(), request);
+        var replay = service.replay(p.token(), battle.battleId());
+        assertEquals("ATTACKER_WIN", replay.replay().getOutcome());
+        assertEquals(before.role(), snapshots.snapshot(p.token()).role());
+        app.close(); app = null; mysql.restart(); boot();
+        var restored = app.getBean(com.funsgamex.mxzg.campaign.MainChapterService.class);
+        assertEquals(battle, restored.challenge(p.token(), request));
+        assertEquals(replay, restored.replay(p.token(), battle.battleId()));
+        assertEquals(battle.battleId(), restored.current(p.token()).pendingBattleId());
+        com.funsgamex.mxzg.campaign.MainChapterService.Receipt claimed;
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var first = pool.submit(() -> restored.claim(p.token(), battle.battleId()));
+            var second = pool.submit(() -> restored.claim(p.token(), battle.battleId()));
+            claimed = first.get(20, TimeUnit.SECONDS);
+            assertEquals(claimed, second.get(20, TimeUnit.SECONDS));
+        }
+        var awarded = snapshots.snapshot(p.token());
+        assertEquals(before.role().gold() + 4000, awarded.role().gold());
+        assertEquals(before.role().diamonds() + 10, awarded.role().diamonds());
+        assertEquals(before.revision() + 2, awarded.revision());
+        assertEquals(2, awarded.role().level());
+        assertEquals(80, awarded.role().basics().experience());
+        app.close(); app = null; mysql.restart(); boot();
+        var afterRestart = app.getBean(com.funsgamex.mxzg.campaign.MainChapterService.class);
+        assertEquals(claimed, afterRestart.claim(p.token(), battle.battleId()));
+        assertStoredState(awarded, snapshots.snapshot(p.token()));
+        assertEquals(replay, afterRestart.replay(p.token(), battle.battleId()));
+        var secondBattle = afterRestart.challenge(p.token(), UUID.randomUUID().toString());
+        assertEquals(2, secondBattle.state().maxCleared());
+        assertEquals(16, number("SELECT COUNT(*) FROM flyway_schema_history WHERE success=1"));
+        System.out.println("[MYSQL-IT] main chapter V16: pending/replay/reward receipt survive two owned database and application restarts; concurrent claim grants once");
     }
 
     /** 仅拥有本次新建数据目录的 MySQL 进程；不能配置或重用任何外部数据库。 */

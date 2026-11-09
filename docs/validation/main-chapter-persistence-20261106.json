@@ -1,0 +1,104 @@
+{
+  "date": "2026-11-06",
+  "scope": "主线服务端持久领域闭环；无新增WS协议或前端入口",
+  "backendFull": {
+    "tests": 313,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "log": "backend/target/main-chapter-persistence-full.log"
+  },
+  "suites": [
+    {
+      "name": "MainChapterPersistenceTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "threeRealBattlesPersistAndSettleExactlyOnce",
+        "ownershipAndImmutableReplayAreEnforced",
+        "concurrentRequestsAndClaimsUsePersistentReceipts",
+        "defeatPersistsWithoutProgressOrRewards",
+        "challengeRollbackLeavesNoPartialRecords",
+        "newChallengeSettlesPendingInsteadOfStartingNextBattle",
+        "failedSettlementRollsBackAndCanRetry"
+      ]
+    },
+    {
+      "name": "MainChapterRewardTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "laterRewardFailureRollsBackEarlierRewards",
+        "absentPendingRewardIsNoOpAndTransactionIsRequired",
+        "originalThreeStageRewardsUseCorrectDestinations",
+        "tavernCapDoesNotOverflowOrRemoveExistingBalance"
+      ]
+    },
+    {
+      "name": "MainChapterRulesTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "defeatLeavesProgressAndRewardStateUnchanged",
+        "admissionChecksBothServerRequirements",
+        "pendingSettlementTakesPriorityOverAnotherBattle",
+        "firstRewardsKeepOriginalTypesAndAmounts",
+        "lastSupportedVictoryCanStillSettle",
+        "rejectsStaleOrImpossibleProgress"
+      ]
+    },
+    {
+      "name": "MySqlIT",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        "startupGuardRejectsWrongServerIdentity",
+        "emptySchemaMigratesWithRealMysqlTypesAndConstraints",
+        "concurrentRoleCreationAndWorldIsolation",
+        "lineupVersionsOwnershipAndConcurrentSave",
+        "concurrentChallengesAndClaimsAreIdempotent",
+        "midAwardFailureRollsBackEveryWrite",
+        "utcTimestampRoundTripAndExpiry",
+        "applicationAndOwnedDatabaseRestartPreserveData",
+        "websocketInitializationSurvivesIndependentJvmRestarts",
+        "heroUpgradeConcurrencyAndRollback",
+        "assetRevisionCommitRollbackAndRestart",
+        "idleDomainClaimAndRestart",
+        "timedInventoryIdentityAndExpiry",
+        "roleBasicsPersistAndRollback",
+        "gmGrantsPersistAndRetrySafely",
+        "equipmentOwnershipAndRestart",
+        "evolutionSurvivesRestart",
+        "formationUnlocksSurviveRestart",
+        "formationSaveReceiptSurvivesRestart",
+        "mainChapterPersistenceSurvivesRestarts"
+      ]
+    }
+  ],
+  "mysql": {
+    "version": "8.4.13",
+    "host": "127.0.0.1",
+    "port": 63939,
+    "database": "mxzg_it_0d679abe0b964d2caf6891c69a9e2f07",
+    "state": "stopped",
+    "migration": 16,
+    "mainChapterApplicationContextRestarts": 2,
+    "mainChapterMysqlProcessRestarts": 2,
+    "mainChapterJvmRestartTested": false,
+    "log": "backend/target/main-chapter-mysql-test.log"
+  },
+  "boundaries": [
+    "没有操作玩家数据库",
+    "未修改客户端或开放入口",
+    "未提交或推送",
+    "清心概率/护盾/属性来源pending保留"
+  ]
+}

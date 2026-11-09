@@ -7,7 +7,7 @@
     "__editorExtras__": {},
     "__type__": "cc.Prefab",
     "_native": "",
-    "_name": "BattleReportLayer",
+    "_name": "MainChapterBattleView",
     "optimizationPolicy": 0,
     "persistent": false
   },
@@ -26,12 +26,12 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "z": 0,
-      "y": -480,
-      "x": -320
+      "y": 0,
+      "x": 0
     },
     "_objFlags": 0,
     "_children": [],
-    "_name": "BattleReportLayer",
+    "_name": "MainChapterBattleView",
     "_mobility": 0,
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -42,6 +42,9 @@
     "_components": [
       {
         "__id__": 2
+      },
+      {
+        "__id__": 3
       }
     ],
     "_prefab": {
@@ -59,16 +62,14 @@
   {
     "_enabled": true,
     "_name": "",
-    "__prefab": {
-      "__id__": 3
-    },
+    "__prefab": null,
     "node": {
       "__id__": 1
     },
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 640,
-      "height": 960
+      "height": 1280
     },
     "_objFlags": 0,
     "__type__": "cc.UITransform",
@@ -76,25 +77,33 @@
     "_id": "",
     "_anchorPoint": {
       "__type__": "cc.Vec2",
-      "y": 0,
-      "x": 0
+      "y": 0.5,
+      "x": 0.5
     }
   },
   {
-    "fileId": "VdoBgtPsnY0MQoFuEKO+1Q",
-    "__type__": "cc.CompPrefabInfo"
+    "__type__": "0d1c5ILVANPR4WOPx6wVgIa",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_id": ""
   },
   {
-    "instance": null,
     "__type__": "cc.PrefabInfo",
-    "nestedPrefabInstanceRoots": null,
     "root": {
       "__id__": 1
     },
-    "targetOverrides": null,
     "asset": {
       "__id__": 0
     },
-    "fileId": "8u7rlYdI8iXv5nPDxDh/6g"
+    "fileId": "a1a8cd3b9abe4424ae22c9",
+    "instance": null,
+    "targetOverrides": null,
+    "nestedPrefabInstanceRoots": null
   }
 ]

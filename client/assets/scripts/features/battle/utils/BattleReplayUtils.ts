@@ -112,9 +112,10 @@ export class BattleReplayUtils {
             game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
         }).game.BattleReplay;
         const report = codec.decode(bytes);
-        const lineupMission = /^audit:lineup:[123]$/.test(report.scenario) ? Number(report.scenario.slice(-1)) : 0;
-        if (report.schemaVersion !== 1 || (!lineupMission && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
-            || (!lineupMission && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > 15) {
+        const idleMission = /^idle:chapter:[123]$/.test(report.scenario) ? Number(report.scenario.slice(-1)) : 0;
+        const lineupMission = /^(audit|chapter):lineup:[123]$/.test(report.scenario) ? Number(report.scenario.slice(-1)) : 0;
+        if (report.schemaVersion !== 1 || (!lineupMission && !idleMission && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
+            || (!lineupMission && !idleMission && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > 15) {
             throw new Error("战报版本或场景不支持");
         }
         const roster = this.validateUnits(report.units);
@@ -134,12 +135,12 @@ export class BattleReplayUtils {
             : [[1, 1, 10101001, 2, 1], [2, 2, report.scenario === "main:1:1:2" ? 10505005 : 10101001, 2,
                 report.scenario === "main:1:1:2" ? 2 : 1]];
         for (const unit of roster) {
-            if (lineupMission) {
+            if (lineupMission || idleMission) {
                 if (unit.unitId !== unit.position + (unit.faction === 2 ? 8 : 0)) throw new Error("阵容战报身份无效");
                 if (unit.faction === 2) {
-                    const template = unit.position === 2 ? (lineupMission === 2 ? 10505005 : 10101001)
-                        : lineupMission === 3 && unit.position === 3 ? 10104004 : 0;
-                    if (unit.templateId !== template || unit.level !== (lineupMission === 1 ? 1 : 2)) {
+                    const template = unit.position === 2 ? ((lineupMission || idleMission) === 2 ? 10505005 : 10101001)
+                        : (lineupMission || idleMission) === 3 && unit.position === 3 ? 10104004 : 0;
+                    if (unit.templateId !== template || unit.level !== ((lineupMission || idleMission) === 1 ? 1 : 2)) {
                         throw new Error("阵容战报敌方与关卡不符");
                     }
                 }
@@ -154,6 +155,11 @@ export class BattleReplayUtils {
         }
         if (lineupMission && roster.filter(unit => unit.faction === 2).length !== (lineupMission === 3 ? 2 : 1)) {
             throw new Error("阵容战报敌方数量不符");
+        }
+        if (idleMission && (roster.filter(unit => unit.faction === 1).length > 3
+            || roster.filter(unit => unit.faction === 2).length !== 1
+            || roster.some(unit => unit.faction === 2 && unit.initialHp !== 1))) {
+            throw new Error("挂机战报名册不符");
         }
         const steps: BattleReplayStep[] = [];
         const buffs = new Map<string, number>();
@@ -173,6 +179,7 @@ export class BattleReplayUtils {
                 const isSkill = event.kind === "skill.begin" || event.kind === "skill.end";
                 const isDamage = event.kind === "damage";
                 const isBuff = event.kind === "buff.upsert" || event.kind === "buff.remove";
+                if (idleMission && isSkill && event.skillType !== 2) throw new Error("挂机战报只能使用普攻");
                 if (isSkill) {
                     this.required(event, ["skillLevel", "skillType"]);
                     if (!Number.isInteger(event.skillLevel) || event.skillLevel < 0

@@ -44,6 +44,31 @@ public class SocketPreviewServer {
                 new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(UUID.randomUUID().toString(),
                     snapshot.mainFormation().version(), 1, slots));
         }
+        // 真实主线协议验收：强队只在本进程随机H2创建，不开启GM或英雄升级。
+        if (Arrays.asList(args).contains("--main-chapter-fixture") || Arrays.asList(args).contains("--idle-loop-fixture")) {
+            var player = context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("chapter_review");
+            var jdbc = context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+            boolean idleLoop = Arrays.asList(args).contains("--idle-loop-fixture");
+            var idleSlots = new ArrayList<com.funsgamex.mxzg.lineup.Lineup.Slot>();
+            int[] templates = {10101001,10104004,10505005}, stars = {1,4,5}, positions = {2,3,5};
+            for (int i = 0; i < (idleLoop ? 3 : 1); i++) {
+                String hero = UUID.randomUUID().toString();
+                jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,?,100,?)",
+                    hero, player.role().id(), templates[i], stars[i]);
+                idleSlots.add(new com.funsgamex.mxzg.lineup.Lineup.Slot(positions[i], hero));
+            }
+            // 仅本进程内存夹具准备首通状态，便于连续遇敌和第二关挑战切换，不发首通奖励。
+            if (idleLoop) {
+                jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,1)", player.role().id());
+                // 旧对话排除等级1；仅独立内存夹具设为2以验证真实对话筛选。
+                jdbc.update("UPDATE game_role SET role_level=2 WHERE id=?", player.role().id());
+            }
+            String token = "Bearer " + player.session().accessToken();
+            var snapshot = context.getBean(com.funsgamex.mxzg.network.SessionSnapshotService.class).snapshot(token);
+            context.getBean(com.funsgamex.mxzg.lineup.MainFormationCommandService.class).save(token,
+                new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(UUID.randomUUID().toString(),
+                    snapshot.mainFormation().version(), 1, idleSlots));
+        }
         // 仅本次独立内存预览准备主线布阵实例，不修改日常角色或数据库。
         if(Arrays.asList(args).contains("--formation-fixture")) {
             var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("formation_review");

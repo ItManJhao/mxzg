@@ -7,6 +7,7 @@ import {clearPrefabCache} from "../../framework/assets/PrefabLoader";
 import {ResourceAssetsUtils} from "../../framework/assets/ResourceAssets";
 import {AccountComposition} from "./AccountComposition";
 import {ApplicationNotice} from "./ApplicationNotice";
+import { MainChapterController } from "../../features/battle/MainChapterController";
 import {ApplicationPages} from "./ApplicationPages";
 import {ApplicationResources} from "./ApplicationResources";
 import {DevelopmentPreview} from "./DevelopmentPreview";
@@ -146,12 +147,20 @@ export class RemakeApp extends Component {
             },
         ));
         formation.initialize();
+        const chapter = MainChapterController.instance;
+        chapter.configure((name, body, received, failed) => service.deliverAuthenticated(
+            token => socket.chapter(token, name, body),
+            frame => { if (this.alive) received(frame); },
+            error => { if (this.alive) failed(error); },
+        ), () => model.snapshot.role?.level || 0);
+        chapter.initialize();
         const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController, HeroRosterController.instance, formation, () => {
             // 身份切换时统一关闭角色页面，页面自身无需比较角色键；取消在途打开也由UIManager负责。
             this.development?.cancelReplay();
+            UIManager.instance.closeById("remake-campaign");
             UIManager.instance.closeById("bag");
             UIManager.instance.closeById("remake-formation");
-        });
+        }, chapter);
         service.onInitialized = frame => assets.apply(frame);
         socket.onState = frame => assets.apply(frame);
         let connectionNotice = "";

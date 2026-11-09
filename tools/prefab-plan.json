@@ -142,15 +142,15 @@
       "names": [
         "BattleDetailCell",
         "BattleDetailLayer",
-        "BattleEditLayer",
         "BattleEndLayer",
         "BattleInfoLayer",
         "BattlePage",
         "CampaignView",
-        "BattleReportLayer",
         "HangMissionChipView",
         "SkillAuditView",
-        "SkillAuditCellView"
+        "SkillAuditCellView",
+        "MainChapterView",
+        "MainChapterBattleView"
       ]
     },
     {

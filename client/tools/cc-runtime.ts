@@ -648,3 +648,6 @@ export class EffectAsset {}
 export class Material {}
 export class Tween { static stopAllByTarget(): never { throw new Error("测试替身不支持动画，需要 Creator 验收"); } }
 export function tween(): never { throw new Error("测试替身不支持动画，需要 Creator 验收"); }
+
+/** 主线对话测试只需保存富文本内容，不模拟 Creator 排版。 */
+export class RichText extends Component { public string = ""; }

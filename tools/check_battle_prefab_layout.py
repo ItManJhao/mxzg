@@ -36,6 +36,16 @@ def check():
                 if sprite["__type__"] != "cc.Sprite" or sprite.get("_type") != 1:
                     continue
                 ref = (sprite.get("_spriteFrame") or {}).get("__uuid__")
+                # EditBox使用独立背景节点，输入组件上的空Sprite不绘制；仍要求对应背景有效。
+                if ref is None and any(c["__type__"] == "cc.EditBox" for c in components):
+                    parent = data[node["_parent"]["__id__"]]
+                    background = next((data[r["__id__"]] for r in parent["_children"]
+                                       if data[r["__id__"]].get("_name") == node["_name"] + "Background"), None)
+                    assert background is not None, (path.name, node["_name"], "输入框缺少独立背景")
+                    background_sprite = next((data[c["__id__"]] for c in background["_components"]
+                                              if data[c["__id__"]]["__type__"] == "cc.Sprite"), None)
+                    assert background_sprite and background_sprite.get("_type") == 1, (path.name, "输入框背景必须九宫格")
+                    ref = (background_sprite.get("_spriteFrame") or {}).get("__uuid__")
                 assert ref in frames, (path.name, node["_name"], "九宫格资源缺失")
                 resource, frame = frames[ref]
                 borders = [frame.get("border" + side, 0) for side in ("Left", "Right", "Top", "Bottom")]

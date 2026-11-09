@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-06",
+  "scope": "主线领奖图标、只读物品说明及屏幕比例验收",
+  "source": "client/cocos_mxzg/client/idle/src/layer/chapterend/ChapterEndCtr.lua: vec_reward / onItem",
+  "environment": {
+    "database": "独立H2内存库",
+    "account": "chapter_review",
+    "port": 61184,
+    "pid": 30244,
+    "run": "8381d7445d3f463e8a1f2afe93a446e9",
+    "gmEnabled": false
+  },
+  "checks": {
+    "typeCheck": "passed",
+    "clientSuites": "39/39",
+    "log": "client/temp/chapter-rewards-project.log",
+    "finalTargeted": [
+      "main-chapter",
+      "battle",
+      "all-script-bindings"
+    ],
+    "backend": "本批未修改或重跑后端，未将历史结果冒充本轮"
+  },
+  "visual": {
+    "360x720": "真实第一关领奖、横向滑动至碎片与装备、金币详情关闭通过",
+    "360x840": "窄长屏面板与装备只读说明通过",
+    "768x1024": "Canvas DOM确认为768x1024；第二关领奖列表、金币说明通过",
+    "rewardSemantics": "第二关钱包累计8000金币，奖励格子与说明仍为本次4000；钻石累计161，第二关奖励151",
+    "readOnly": "只显示确定和关闭，来源入口在主线奖励中隐藏，未开放使用分解穿脱",
+    "battleBackground": "passed: 768x1024第三关背景无拼接缝，两侧不透出主城；退出仍待领奖，金币8000未变化，控制台无错误警告"
+  },
+  "screenshots": [
+    "chapter-rewards-standard.png",
+    "chapter-rewards-narrow.png",
+    "chapter-rewards-tablet.png",
+    "chapter-reward-info-tablet.png",
+    "chapter-battle-tablet.png"
+  ],
+  "artifactDirectory": "C:/Users/HelloWorld/.codex/visualizations/2026/10/31/01a190dc-c785-7bd3-a4d9-9bbe637964bc",
+  "boundaries": [
+    "未提交或推送",
+    "未操作日常后端与玩家库",
+    "未开放升级与穿脱",
+    "保留清心概率待审和护盾疑点",
+    "前三关及支持技能范围不变"
+  ]
+}
