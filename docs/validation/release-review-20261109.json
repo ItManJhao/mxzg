@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-09",
+  "scope": "47ec4c27之后累计主线/挂机功能及文档整理的提交前检查",
+  "baseCommit": "47ec4c27",
+  "branch": "main",
+  "remote": "origin/main",
+  "authorization": "负责人本次明确要求推送仓库；实际新提交号以Git与交付回执为准",
+  "checks": {
+    "backend": {
+      "tests": 336,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "log": "backend/target/release-review-20261109.log"
+    },
+    "frontend": {
+      "passed": 40,
+      "paused": 5,
+      "log": "client/temp/release-review-20261109.log"
+    },
+    "typescript": "通过",
+    "javaToTs": "本次后端测试导出后main-chapter.cjs --wire通过",
+    "statisticsPixels": 71,
+    "battleFramesPixels": 186,
+    "existingMetaUuidUnchanged": 79
+  },
+  "docs": {
+    "current": "development-progress.md",
+    "handoff": "handoff.md",
+    "plan": "restructuring-plan.md",
+    "openIssues": "battle-known-issues.md",
+    "archive": "validation/main-chapter-history-20261109.md",
+    "corrections": [
+      "历史姓名/外观及挂机展示已完成，不再列为待开始",
+      "初始直接动作报告113模板中51可解析/62缺口",
+      "850关说明、20关规则投影与前三关挑战分开",
+      "VIP列已存在但挂机权益链尚未接入",
+      "旧未提交标记归档，不覆盖本次推送授权"
+    ]
+  },
+  "limitations": [
+    "本次不重跑浏览器，视觉证据来自各批独立环境记录",
+    "本次未跑MySQL、真机或发行构建",
+    "领取、快速战斗、升级、穿脱不开放",
+    "清心/护盾及挂机三项依据缺口保留"
+  ]
+}

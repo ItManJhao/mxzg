@@ -90,7 +90,7 @@ public class MainChapterService {
 
     /**
      * 同请求ID永久复用回执；新请求遇到待领奖时仅补领奖并记回执。
-     * 否则锁内读取当前队伍、门槛和真实战斗结果，胜利记录通关与待领奖，失败不推进。
+     * 否则锁内读取当前队伍、门槛和真实战斗结果，并冻结双方名称；胜利记录通关与待领奖，失败不推进。
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt challenge(String token, String requestId) {
@@ -115,6 +115,8 @@ public class MainChapterService {
                 throw new IllegalStateException("主线输入版本在同一角色锁内发生变化");
             }
             var replay = HeroBattleReplayProtocolUtils.encode(preview.battle()).toBuilder()
+                .setAttackerName(roleData.nickname())
+                .setDefenderName(rules.opponentName(decision.stage().index()))
                 .setScenario("chapter:lineup:" + mission).build();
             boolean won = preview.battle().outcome() == HeroBattleRoundUtils.Outcome.ATTACKER_WIN;
             var after = rules.complete(new MainChapterRules.Progress(before.maxCleared(), false), mission, won);

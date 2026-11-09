@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-09",
+  "scope": "服务端完整加成输入契约草案，仅文档",
+  "artifact": "docs/idle-reward-input-contract.md",
+  "checked": [
+    "protocol/game.proto:MainChapterIdleState/IdleEncounter",
+    "V10__hero_capacity.sql:goddess_vip",
+    "HeroCapacityService:现有VIP读取点",
+    "V17__main_chapter_idle_clock.sql:新主线仅持久起点",
+    "V5__idle_rewards.sql:旧简化计时/回执隔离",
+    "MainChapterIdleService.snapshot:仅基础速率与固定上限",
+    "AssetSyncService:事务提交后通知及资产版本"
+  ],
+  "correction": "VIP字段已存在，未接入挂机权威加成链；不再描述为缺数据库字段",
+  "notImplemented": [
+    "文档中的输入/缺失状态类型",
+    "新主线领取协议、表和回执",
+    "权威加成模块接入"
+  ],
+  "verification": "源码和迁移/协议交叉核对；本批不运行数据库、浏览器或新增测试",
+  "git": "未提交未推送"
+}

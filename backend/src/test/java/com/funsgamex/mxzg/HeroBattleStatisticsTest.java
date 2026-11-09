@@ -13,6 +13,18 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HeroBattleStatisticsTest {
+    /** 星级分段与进化分支使用开战输入；后续解析另一状态不影响已经返回的头像身份。 */
+    @Test void freezesAppearanceAndRejectsUnknownEvolution() {
+        var rules = new com.funsgamex.mxzg.hero.HeroBattleAppearanceRules(new ObjectMapper());
+        int before = rules.icon(10105008, 5, 0, 0);
+        int evolved = rules.icon(10105008, 10, 1, 1);
+        assertEquals(20111008, evolved);
+        assertNotEquals(before, evolved);
+        assertEquals(before, rules.icon(10105008, 5, 0, 0));
+        assertThrows(IllegalArgumentException.class, () -> rules.icon(10105008, 10, 1, 0));
+        assertThrows(IllegalArgumentException.class, () -> rules.icon(10101001, 1, 1, 1));
+    }
+
     /** 过量伤害只算实际扣血，但护盾依旧先加到负扣血量再取绝对值，不能改成伤害相加。 */
     @Test void preservesLegacyShieldAndOverkillConvention() {
         var hits = List.of(
@@ -58,12 +70,22 @@ class HeroBattleStatisticsTest {
         var original = new HeroBattleChapterScenario(new ObjectMapper()).run(rate -> rate == 1D);
         var recoveries = new ArrayList<Recovery>();
         recoveries.add(new Recovery(1063201, 1, 1, 50, 108, 0));
+        var frames = new ArrayList<>(original.frames());
+        var firstFrame = frames.getFirst();
+        var trace = new ArrayList<>(firstFrame.trace());
+        trace.add(new com.funsgamex.mxzg.hero.HeroBattleHealingExecutor.Trace("recovery", firstFrame.round(), 1, 1,
+            1063201, null, null, null, "", recoveries.getFirst()));
+        frames.set(0, new HeroBattleChapterScenario.Frame(firstFrame.round(), firstFrame.sourceId(), firstFrame.before(),
+            firstFrame.after(), firstFrame.damages(), trace));
         var snapshot = new HeroBattleChapterScenario.Result(original.scenario(), original.outcome(), original.rounds(),
-            original.initial(), original.turns(), original.damages(), original.frames(), original.finalHp(), recoveries);
+            original.initial(), original.turns(), original.damages(), frames, original.finalHp(), recoveries);
         recoveries.clear();
         var wire = GameProtocol.BattleReplay.parseFrom(HeroBattleReplayProtocolUtils.encode(snapshot).toByteArray());
         assertEquals(108, wire.getUnits(0).getTotalRecovery());
         assertTrue(wire.getUnits(0).hasTotalRecovery());
+        assertEquals(original.initial().getFirst().portraitIconId().intValue(), wire.getUnits(0).getPortraitIconId());
+        assertFalse(GameProtocol.BattleReplayUnit.parseFrom(wire.getUnits(0).toBuilder()
+            .clearPortraitIconId().build().toByteArray()).hasPortraitIconId());
         assertEquals(original.initial().getFirst().star(), wire.getUnits(0).getStar());
         var old = GameProtocol.BattleReplayUnit.parseFrom(wire.getUnits(0).toBuilder().clearTotalRecovery().build().toByteArray());
         assertFalse(old.hasTotalRecovery(), "旧战报缺失仍须保留字段不存在，不能变成真实0");

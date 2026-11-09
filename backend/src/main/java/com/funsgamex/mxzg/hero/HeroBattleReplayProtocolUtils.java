@@ -19,7 +19,8 @@ public final class HeroBattleReplayProtocolUtils {
                 .setTotalDamage(totalDamage(report.damages(), unit.id()))
                 .setTotalTakenDamage(totalTakenDamage(report, unit.id()))
                 .setTotalRecovery(totalRecovery(report.recoveries(), unit.id()))
-                .setStar(unit.star()));
+                .setStar(unit.star())
+                .setPortraitIconId(java.util.Objects.requireNonNull(unit.portraitIconId(), "战报历史头像未冻结")));
         }
         for (var frame : report.frames()) {
             var phase = GameProtocol.BattleReplayPhase.newBuilder().setRound(frame.round()).setSourceId(frame.sourceId());
@@ -32,6 +33,10 @@ public final class HeroBattleReplayProtocolUtils {
                 if (trace.damage() != null) {
                     event.setActualHpChange(trace.damage().actual()).setReportedHpChange(trace.damage().reported())
                         .setDead(trace.damage().dead());
+                }
+                if (trace.recovery() != null) {
+                    event.setActualHpChange(trace.recovery().actual())
+                        .setReportedHpChange(trace.recovery().reported()).setDead(false);
                 }
                 if (trace.buff() != null) {
                     event.setBuffInstanceId(trace.buff().instanceId()).setExpiresAtRound(trace.buff().expiresAt())

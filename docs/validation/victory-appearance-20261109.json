@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-09",
+  "scope": "胜利页最高伤害英雄历史星级/进化骨骼映射，不开放皮肤穿戴",
+  "legacy": ["BattleEndCtr.lua:180-195", "Tools.lua:377-398", "Hero.cpp:185-201"],
+  "implementation": "portrait_icon_id通过同源skin及heroevolvelevel映射骨骼；缺失明确提示并显示基础模型，不读取当前名册",
+  "checks": {
+    "frontend": "40/40，5组暂停不计入",
+    "afterNoticeChange": "main-chapter、TypeScript通过",
+    "evolutionResources": "58种骨骼及stand动作均存在，遍历全部进化配置验证映射",
+    "backendAndMysql": "本批未运行；无协议、服务端规则或持久化变更"
+  },
+  "browser": {
+    "viewport": "360x840",
+    "environment": "独立测试环境，登录页上挂只读胜利样例，无角色资产写入",
+    "cases": ["10105008/20111008第一进化分支", "10105008/20112008第二进化分支", "10104004/20105004星级分段", "10104004/缺失头像字段基础外观及提示"],
+    "notice": "最终Creator刷新后确认换行文本，不再越过右边界",
+    "componentsAfterClose": 0,
+    "finalWarningsAndErrors": [],
+    "fixtureSetupIssue": "首次未注册临时ChapterEndView，打开被拒；按正式注册参数补齐并重新验证，最终刷新后无该错误",
+    "screenshots": ["../images/victory-evolution-one-20261109.jpg", "../images/victory-evolution-two-20261109.jpg", "../images/victory-star-appearance-20261109.jpg", "../images/victory-appearance-missing-20261109.jpg"]
+  },
+  "openIssue": "大型进化翅膀伸出左边界，需核对旧Hero内部坐标和show_hero挂点；当前保留1.065缩放，未签署完整视觉验收",
+  "remaining": ["真实进化战斗验收", "其他治疗技能实机覆盖", "清心概率待审", "护盾疑点"],
+  "git": "未提交，未推送"
+}

@@ -14,6 +14,8 @@ const paths = new Set<string>([
   "prefabs/ui/battle/BattleInfoLayer",
   "prefabs/ui/battle/BattlePage",
   "prefabs/ui/battle/CampaignView",
+  "prefabs/ui/battle/ChapterRewardInfoCell",
+  "prefabs/ui/battle/ChapterRewardInfoView",
   "prefabs/ui/battle/HangMissionChipView",
   "prefabs/ui/battle/MainChapterBattleView",
   "prefabs/ui/battle/MainChapterView",

@@ -1,0 +1,46 @@
+{
+  "date": "2026-11-09",
+  "baseCommit": "47ec4c27",
+  "decision": "负责人确认冻结开战外观，旧战报不查询当前名册补齐",
+  "implementation": [
+    "BattleReplayUnit.portrait_icon_id=13可选正整数",
+    "开战按skin星级分段/heroevolvelevel精确分支等级解析，随原战报持久化",
+    "挂机、阵型光环转换保留头像快照",
+    "仅统计头像消费该字段；缺字段/未收录资源显示基础模板并提示",
+    "静态预制体修复提示字体/颜色/缩放及根节点序列化顺序"
+  ],
+  "tests": {
+    "backend": 47,
+    "suites": {
+      "HeroBattleChapterScenarioTest": 28,
+      "HeroBattleStatisticsTest": 6,
+      "MainChapterSocketTest": 2,
+      "MainChapterIdleTest": 3,
+      "MainChapterPersistenceTest": 8
+    },
+    "frontend": "首跑39/40；修正唯一Prefab检查失败后累计40/40，5项既有暂停不计入",
+    "typeScript": "通过",
+    "protocolGenerated": "通过",
+    "persistence": "开战后在独立H2改变英雄模板/星级/进化，旧战报对象及portrait_icon_id保持不变",
+    "compatibility": "旧二进制缺字段仍不存在；TS拒绝0并对未知/非头像资源明确降级"
+  },
+  "browser": {
+    "type": "纯展示夹具，未登录/发奖/写角色资产",
+    "canvas": [
+      393,
+      852
+    ],
+    "inputs": "同一基础模板分别传入已收录其他头像ID、旧字段缺失、未收录进化头像20111008，用于证明字段优先级及降级",
+    "result": "第一格使用历史头像，后两格基础头像，深色中文提示可读；关闭后统计窗口数0",
+    "warningsAndErrors": 0,
+    "screenshot": "docs/images/battle-appearance-fallback-20261109.jpg",
+    "cleanup": "临时浏览器标签已关闭"
+  },
+  "limits": [
+    "未导入全部进化头像资源",
+    "未恢复皮肤穿戴和高星样式",
+    "未改胜利骨骼外观/历史双方姓名",
+    "本轮没有真实进化战斗画面、非零治疗真实回放、三尺寸重跑或MySQL测试",
+    "未提交推送，清心和护盾待审保留"
+  ]
+}

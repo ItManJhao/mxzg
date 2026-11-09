@@ -1,4 +1,5 @@
 /** 战斗统计投影：仅消费冻结战报名册，计算旧版双方共用的三项最大值和条形比例，不查询英雄或资产。 */
+import { BattlePortraitById } from "../../../framework/assets/IconCatalog";
 import { BattleReplayUnit } from "./BattleReplayUtils";
 
 /** 单项数值与进度；null明确表示旧战报缺失，不能用零替代。 */
@@ -18,6 +19,33 @@ export interface BattleStatisticsRow {
 export class BattleStatisticsUtils {
     /** 无状态工具不创建实例。 */
     private constructor() {}
+
+    /** 只解析历史头像ID；缺资源或旧战报缺字段返回null，由页面明确降级。 */
+    public static portrait(unit: BattleReplayUnit): string | null {
+        const path = unit.portraitIconId == null ? null : BattlePortraitById[unit.portraitIconId]?.path;
+        return path?.startsWith("ui/hero/hero-icon_") ? path : null;
+    }
+
+    /** 旧头像星级分组：1至5金星，6至9红星，10至13高星牌，14觉醒牌；缺失不补当前星级。 */
+    public static stars(star: number | null | undefined): { row: number; high: boolean; awakened: boolean; number: number; rarity: number } {
+        const value = star ?? 0;
+        if (!Number.isInteger(value) || value < 0 || value > 14) {
+            throw new Error("战报星级样式未核实");
+        }
+        return {
+            row: value > 0 && value < 10 ? value - 1 : -1,
+            high: value >= 10,
+            awakened: value === 14,
+            number: value > 10 && value < 14 ? value - 10 : 0,
+            rarity: value >= 10 ? 5 : value >= 5 ? 4 : value >= 3 ? value - 1 : value > 0 ? 1 : 0,
+        };
+    }
+
+    /** 旧effect2.speed/100为每帧秒数；13帧后保留末帧1.5秒，再开始下一轮。 */
+    public static starFrame(elapsed: number): number {
+        const local = Math.max(0, elapsed) % (13 * 0.12 + 1.5);
+        return Math.min(12, Math.floor(local / 0.12));
+    }
 
     /** 每项分别取攻守双方最大值；任一单位缺该项时保留已知文字但不绘制误导性比例。 */
     public static rows(units: readonly BattleReplayUnit[]): readonly BattleStatisticsRow[] {

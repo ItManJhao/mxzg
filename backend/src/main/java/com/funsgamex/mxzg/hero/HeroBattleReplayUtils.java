@@ -7,7 +7,7 @@ public final class HeroBattleReplayUtils {
     /** 工具类不保存跨场状态。 */
     private HeroBattleReplayUtils() {}
 
-    /** 重放完整名册生命，拒绝少帧、乱序、未知单位及提前结束；审计场景保持独立来源。 */
+    /** 按伤害/治疗原顺序重放完整名册生命，拒绝少帧、乱序、未知单位及提前结束；审计场景保持独立来源。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
         if (!Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed", "audit:round-limit", "audit:lineup:1", "audit:lineup:2", "audit:lineup:3", "idle:chapter:1", "idle:chapter:2", "idle:chapter:3").contains(report.scenario())
             || report.rounds() < 1 || report.rounds() > HeroBattleRoundUtils.MAX_ROUNDS || report.frames().isEmpty()) {
@@ -39,6 +39,7 @@ public final class HeroBattleReplayUtils {
         int cursor = 0;
         var turns = new ArrayList<HeroBattleChapterScenario.Turn>();
         var all = new ArrayList<HeroBattleHealingExecutor.Damage>();
+        var recoveries = new ArrayList<HeroBattleHealingExecutor.Recovery>();
         for (var frame : report.frames()) {
             if (HeroBattleChapterScenario.outcome(units, hp, 0) != HeroBattleRoundUtils.Outcome.ONGOING) {
                 throw new IllegalArgumentException("战斗已结束后仍有阶段");
@@ -67,14 +68,35 @@ public final class HeroBattleReplayUtils {
                     throw new IllegalArgumentException("战斗事件引用未知单位");
                 }
             }
-            for (var hit : frame.damages()) {
-                if (hit.actual() > 0 || !hp.containsKey(hit.targetId())) {
-                    throw new IllegalArgumentException("战斗伤害目标或符号无效");
+            // 治疗与伤害必须按原执行顺序重放，分开遍历会丢失同一招的中间血量。
+            for (var event : frame.trace()) {
+                if (event.kind().equals("damage")) {
+                    var hit = event.damage();
+                    if (hit == null || hit.actual() > 0 || !hp.containsKey(hit.targetId())) {
+                        throw new IllegalArgumentException("战斗伤害目标或符号无效");
+                    }
+                    long value = Math.addExact(hp.get(hit.targetId()), hit.actual());
+                    if (value < 0 || hit.dead() != (value == 0)) {
+                        throw new IllegalArgumentException("战斗死亡状态不一致");
+                    }
+                    hp.put(hit.targetId(), value);
+                    all.add(hit);
+                } else if (event.kind().equals("recovery")) {
+                    var heal = event.recovery();
+                    if (heal == null || heal.sourceId() != event.sourceId() || heal.targetId() != event.targetId()
+                        || heal.buffId() != event.configId()) {
+                        throw new IllegalArgumentException("战斗治疗事件身份不一致");
+                    }
+                    long before = hp.get(heal.targetId());
+                    long maximum = units.stream().filter(unit -> unit.id() == heal.targetId()).findFirst().orElseThrow().opening().maxHp();
+                    long value = Math.addExact(before, heal.actual());
+                    if (before <= 0 || value <= 0 || value > maximum
+                        || heal.actual() != Math.min(heal.reported(), maximum - before)) {
+                        throw new IllegalArgumentException("战斗治疗血量或溢出量不一致");
+                    }
+                    hp.put(heal.targetId(), value);
+                    recoveries.add(heal);
                 }
-                long value = Math.addExact(hp.get(hit.targetId()), hit.actual());
-                if (value < 0 || hit.dead() != (value == 0)) throw new IllegalArgumentException("战斗死亡状态不一致");
-                hp.put(hit.targetId(), value);
-                all.add(hit);
             }
             if (!hp.equals(frame.after())) throw new IllegalArgumentException("战斗阶段结束生命不一致");
             HeroBattleChapterScenario.outcome(units, hp, 0);
@@ -88,7 +110,7 @@ public final class HeroBattleReplayUtils {
             throw new IllegalArgumentException("最终回合仍缺存活单位出手");
         }
         if (!turns.equals(report.turns()) || !hp.equals(report.finalHp()) || lastRound != report.rounds()
-            || !all.equals(report.damages())
+            || !all.equals(report.damages()) || !recoveries.equals(report.recoveries())
             || HeroBattleChapterScenario.outcome(units, hp, lastRound) != report.outcome()
             || report.outcome() == HeroBattleRoundUtils.Outcome.ONGOING) {
             throw new IllegalArgumentException("战斗最终结果不一致");

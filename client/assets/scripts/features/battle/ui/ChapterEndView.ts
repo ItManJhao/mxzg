@@ -31,6 +31,8 @@ const { ccclass, property } = _decorator;
 
 /** 展示结果由调用方提供；奖励只允许使用服务端确认回执，关闭通知不修改资产。 */
 export interface ChapterEndArgs {
+    /** 本场冻结的双方名称；旧战报或只读演示可缺失，不用当前昵称补齐。 */
+    names?: Readonly<{ attacker: string | null; defender: string | null }>;
     /** 经过战报校验的我方胜负；独立失败样式验收须明确标注。 */
     won: boolean;
     /** 区分真实主线与只读技能/GM演示。 */
@@ -179,7 +181,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         if (this.released || !this.args?.units?.length) {
             return;
         }
-        void UIManager.instance.open(BattleDetailLayer, { units: this.args.units, won: this.args.won }).catch(() => {
+        void UIManager.instance.open(BattleDetailLayer, { units: this.args.units, won: this.args.won, names: this.args.names }).catch(() => {
             // UIManager已统一记录打开失败及玩家提示，不重复打印或伪装打开成功。
         });
     }
@@ -296,12 +298,14 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             + " mainSound=" + (mainClip?.name || "none") + " presentationOnly=" + !!args.presentationOnly);
     }
 
-    /** 加载当前页展示配置并挂最高伤害英雄；历史统计/经验缺失时保持明确缺口，不查资产。 */
+    /** 加载展示配置并按冻结头像映射最高伤害英雄骨骼；历史外观缺失标注基础外观，不查当前名册或资产。 */
     private async prepareMainVictory(args: ChapterEndArgs): Promise<void> {
         const assets = ResourceAssetsUtils.forNode(this.node);
-        const [heroes, levels] = await Promise.all([
+        const [heroes, levels, skins, evolutions] = await Promise.all([
             assets.loadPath("config/herotype", "JsonAsset"),
             assets.loadPath("config/mainlevel", "JsonAsset"),
+            assets.loadPath("config/skin", "JsonAsset"),
+            assets.loadPath("config/heroevolvelevel", "JsonAsset"),
         ]);
         if (this.released || !this.node.isValid) {
             return;
@@ -318,9 +322,13 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         host.active = !!best;
         if (best) {
             const template = (heroes.json as { rows: { type: number; note: string }[] }).rows.find(row => row.type === best.templateId);
-            heroName.string = template?.note || "英雄 " + best.templateId;
+            const historicalSpine = ChapterSettlementUtils.historicalSpine(best.portraitIconId,
+                (skins.json as { rows: { skin: string }[] }).rows,
+                (evolutions.json as { rows: { evolve_icon_id: number; evolve_fashion_id: number }[] }).rows);
+            heroName.string = (template?.note || "英雄 " + best.templateId)
+                + (historicalSpine === null ? "\n历史外观缺失" : "");
             damage.string = String(best.totalDamage);
-            await new Promise<void>((resolve, reject) => mountNamedSpine(host, String(best.templateId), "stand", {
+            await new Promise<void>((resolve, reject) => mountNamedSpine(host, historicalSpine || String(best.templateId), "stand", {
                 loop: true, onReady: resolve, onFail: () => reject(new Error("最高伤害英雄骨骼加载失败")),
             }));
         } else {

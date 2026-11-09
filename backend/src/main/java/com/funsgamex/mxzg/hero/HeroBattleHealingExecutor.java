@@ -50,11 +50,17 @@ public final class HeroBattleHealingExecutor implements Executor {
     /** 已支持场景的执行顺序记录；非对应类型的载荷为null，不作为网络协议。 */
     public record Trace(String kind, int round, int sourceId, int targetId, int configId,
                         HeroBattleSkillUtils.Skill skill, Damage damage,
-                        HeroBattleBuffState.Entry buff, String reason) {}
+                        HeroBattleBuffState.Entry buff, String reason, Recovery recovery) {
+        /** 非治疗事件不携带治疗记录，保留既有事件构建入口。 */
+        public Trace(String kind, int round, int sourceId, int targetId, int configId,
+                     HeroBattleSkillUtils.Skill skill, Damage damage, HeroBattleBuffState.Entry buff, String reason) {
+            this(kind, round, sourceId, targetId, configId, skill, damage, buff, reason, null);
+        }
+    }
     /** 本场顺序记录，与根事务一起回滚；不把不同类型的独立列表事后拼接。 */
     private final List<Trace> trace = new ArrayList<>();
 
-    /** 返回不可变执行记录；目前覆盖技能起止、表现、伤害和Buff安装/移除。 */
+    /** 返回不可变执行记录；覆盖技能起止、表现、伤害、治疗和Buff安装/移除。 */
     public List<Trace> trace() {
         return List.copyOf(trace);
     }
@@ -201,7 +207,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
-    /** 执行预检的伤害技能、监听、控制、流血与直接属性动作；未知效果仍拒绝。 */
+    /** 执行预检的伤害、监听、控制、流血、直接属性和冰晶女巫治疗动作；未知效果仍拒绝。 */
     @Override
     public void skill(Actor actor, HeroBattleSkillUtils.Skill skill) {
         if (attackContext == null) throw new UnsupportedOperationException("普通攻击缺少根动作上下文");
@@ -216,6 +222,10 @@ public final class HeroBattleHealingExecutor implements Executor {
             var targets = HeroBattleTargetUtils.select(art.targets(), source.target(), living,
                 List.of(require(attackContext.target).target()), attackContext.queued, random::index);
             for (int buffId : art.buffs()) {
+                if (rules.battleDirectHealing(buffId)) {
+                    applyHealingEffects(rules.battleHealing(buffId - 100).effects(), source, targets);
+                    continue;
+                }
                 if (rules.battleProjectile(buffId)) {
                     for (var target : targets) {
                         presentations.add(new Presentation(buffId, actor.id(), target.id()));
@@ -449,15 +459,21 @@ public final class HeroBattleHealingExecutor implements Executor {
         Plan plan = rules.battleHealing(invocation.artId());
         State source = require(invocation.sourceId());
         State context = require(invocation.targetContext());
-        if (source.actor().hasControl(1011) || source.actor().hasControl(1013)
-            || source.actor().hasControl(1015)) {
-            throw new UnsupportedOperationException("治疗动作尚未支持控制改选");
-        }
         var living = units.values().stream()
             .filter(unit -> unit.hp() > 0 && !unit.actor().isDead()).map(State::target).toList();
         var targets = HeroBattleTargetUtils.select(plan.targets(), source.target(), living,
             List.of(context.target()), false, random::index);
-        for (var effect : plan.effects()) {
+        applyHealingEffects(plan.effects(), source, targets);
+    }
+
+    /** 按已选目标执行治疗/护盾，记录准确事件顺序；主动和监听共用同一取整、禁疗及回滚规则。 */
+    private void applyHealingEffects(List<Effect> effects, State source, List<HeroBattleTargetUtils.Unit> targets) {
+        if (source.actor().hasControl(1011) || source.actor().hasControl(1013)
+            || source.actor().hasControl(1015)) {
+            throw new UnsupportedOperationException("治疗动作尚未支持控制改选");
+        }
+
+        for (var effect : effects) {
             for (var target : targets) {
                 State defender = require(target.id());
                 if (defender.hp() <= 0 || defender.actor().isDead()
@@ -495,7 +511,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                     throw new UnsupportedOperationException("负治疗跨越死亡边界尚未支持");
                 }
                 units.put(target.id(), defender.withHp(nextHp));
-                recoveries.add(new Recovery(effect.buffId(), source.actor().id(), target.id(), base, amount, actual));
+                recordRecovery(new Recovery(effect.buffId(), source.actor().id(), target.id(), base, amount, actual));
                 emit(311, source.actor(), defender.actor());
             }
             source.actor().restore();
@@ -627,8 +643,15 @@ public final class HeroBattleHealingExecutor implements Executor {
             throw new UnsupportedOperationException("契约负治疗死亡边界尚未支持");
         }
         units.put(contractor.actor().id(), contractor.withHp(nextHp));
-        recoveries.add(new Recovery(listener.definition().buffId(), source.actor().id(),
+        recordRecovery(new Recovery(listener.definition().buffId(), source.actor().id(),
             contractor.actor().id(), transfer, amount, actual));
+    }
+
+    /** 治疗成功时同时记录统计与顺序事件；不能在结算后由独立列表猜测治疗时点。 */
+    private void recordRecovery(Recovery recovery) {
+        recoveries.add(recovery);
+        trace.add(new Trace("recovery", round, recovery.sourceId(), recovery.targetId(), recovery.buffId(),
+            null, null, null, "", recovery));
     }
 
     /** 已成功安装的契约对，仅用于核对动作选择，不代替Buff实例本身。 */

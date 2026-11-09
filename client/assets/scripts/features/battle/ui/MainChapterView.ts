@@ -1,6 +1,6 @@
 /** 主线挂机主页：静态底板保存关卡、四项收益及三个正式入口；挑战交给页内战场，奖励仅在结算显示。
- * 挂机协议恢复前不伪造计时、收益或领取，页面关闭取消显示但保留服务端待结算状态。 */
-import { _decorator, Button, Label, Node, UITransform } from "cc";
+ * 挂机读取权威时钟与基础速率，宝箱只读；页面关闭取消显示但保留服务端待结算状态。 */
+import { _decorator, Button, Label, Node, Sprite, SpriteFrame, UITransform, sp } from "cc";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UIManager } from "../../../framework/ui/UIManager";
@@ -13,6 +13,9 @@ import { MainChapterHeroTalk } from "./MainChapterHeroTalk";
 import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
 import { GameLog } from "../../../core/GameLog";
+import { IdleChestUtils } from "../utils/IdleChestUtils";
+import { mountNamedSpine } from "./battleSpine";
+import { MainChapterIdleResources } from "./MainChapterIdleResources";
 
 const { ccclass, property } = _decorator;
 
@@ -40,7 +43,7 @@ export class MainChapterView extends BaseView {
     @property(Label) statusLabel: Label | null = null;
     /** 挑战按钮文字，避免复用固定旧文案。 */
     @property(Label) challengeLabel: Label | null = null;
-    /** 挂机时长显示，服务端挂机快照接入前显示未接入而非零秒。 */
+    /** 服务器挂机时长按旧版小时分钟显示；没有快照时显示未接入而非零秒。 */
     @property(Label) idleTimeLabel: Label | null = null;
     /** 金币每分钟收益，未同步时不从通关奖励推算。 */
     @property(Label) goldRateLabel: Label | null = null;
@@ -50,6 +53,28 @@ export class MainChapterView extends BaseView {
     @property(Label) heroExpRateLabel: Label | null = null;
     /** 挂机收益入口，尚未接通时明确提示。 */
     @property(Button) idleClaimButton: Button | null = null;
+    /** 旧中央章节图标的产物说明入口，只读配置不开放领取。 */
+    @property(Button) rewardInfoButton: Button | null = null;
+    /** 静态宝箱挂点；本页只挂载一次骨骼，跨档仅切动作。 */
+    @property(Node) idleChestHost: Node | null = null;
+    /** 超过十分钟显示的旧计时气泡，位置和图片保存在Prefab。 */
+    @property(Node) idleBubble: Node | null = null;
+    /** 气泡内时长，与底栏使用同一服务器快照。 */
+    @property(Label) idleBubbleLabel: Label | null = null;
+    /** 已应用的待机档位；0表示资源尚未就绪，关闭时清零。 */
+    private idleChestStage = 0;
+    /** 累计进度条，使用旧版整数百分比，不代表可领取资产比例。 */
+    @property(Sprite) idleProgress: Sprite | null = null;
+    /** 资源飞行独立层，不与临时战场一起销毁。 */
+    @property(Node) resourceFlightHost: Node | null = null;
+    /** 隐藏的图标模板，尺寸和Sprite样式保存在Prefab。 */
+    @property(Node) resourceFlightTemplate: Node | null = null;
+    /** 面板内旧收集终点，适配跟随面板。 */
+    @property(Node) resourceFlightTarget: Node | null = null;
+    /** 金币、钻石、角色经验、英雄经验四种静态图标，不携带数量。 */
+    @property([SpriteFrame]) resourceFlightFrames: SpriteFrame[] = [];
+    /** 当前页面的临时飞行管理，关闭时清空并释放引用。 */
+    private idleResources: MainChapterIdleResources | null = null;
     /** 页面关闭后拒绝迟到的画面加载，与网络会话隔离无关。 */
     private closed = false;
     /** 当前播放器清理口，关闭页面立即释放。 */
@@ -74,6 +99,11 @@ export class MainChapterView extends BaseView {
             || !this.stageLabel || !this.statusLabel || !this.challengeLabel || !this.idleTimeLabel
             || !this.goldRateLabel || !this.roleExpRateLabel || !this.heroExpRateLabel || !this.idleClaimButton) throw new Error("主线页面绑定缺失");
         this.closed = false;
+        if (!this.idleProgress || !this.resourceFlightHost || !this.resourceFlightTemplate || !this.resourceFlightTarget) {
+            throw new Error("挂机进度或资源飞行绑定缺失");
+        }
+        this.idleResources = new MainChapterIdleResources(this.resourceFlightHost, this.resourceFlightTemplate,
+            this.resourceFlightTarget, this.resourceFlightFrames);
         const talkTemplate = this.node.getChildByName("HeroTalkTemplate");
         if (talkTemplate) {
             this.heroTalk = new MainChapterHeroTalk(talkTemplate, this.battleHost,
@@ -85,7 +115,28 @@ export class MainChapterView extends BaseView {
         this.listen(this.challengeButton, () => { void this.prepareChallenge(); });
         this.listen(this.quickBattleButton, () => UIManager.instance.toast("快速战斗尚未恢复"));
         this.listen(this.powerButton, () => UIManager.instance.toast("战力提升建议尚未恢复"));
-        this.listen(this.idleClaimButton, () => UIManager.instance.toast("挂机领取尚未恢复，当前仅展示计时与收益配置"));
+        this.listen(this.idleClaimButton, () => UIManager.instance.toast("挂机领取尚未恢复。每分钟显示基础收益，不含随机掉落和额外加成。"));
+        if (!this.rewardInfoButton) {
+            throw new Error("主线产物说明入口绑定缺失");
+        }
+        this.listen(this.rewardInfoButton, () => {
+            void UIManager.instance.openById("chapter-reward-info").catch(() => {
+                if (!this.closed) {
+                    UIManager.instance.toast("产物说明暂不可用");
+                }
+            });
+        });
+        if (!this.idleChestHost || !this.idleBubble || !this.idleBubbleLabel) {
+            throw new Error("挂机宝箱静态绑定缺失");
+        }
+        mountNamedSpine(this.idleChestHost, "res-block", "normal-1", {
+            onReady: () => {
+                if (!this.closed) {
+                    this.idleChestStage = 0;
+                    this.renderIdle();
+                }
+            },
+        });
         this.ownListener(EventDispatcher.instance.on(MainChapterController.Updated, this, this.render));
         this.render();
     }
@@ -203,12 +254,21 @@ export class MainChapterView extends BaseView {
             return;
         }
         if (state) {
-            const since = Math.max(0, Math.floor((Date.now() - model.idleReceivedAt) / 1000));
-            const seconds = Math.max(0, Math.min(state.maxSeconds, state.serverTime - state.startedAt + since));
-            this.idleTimeLabel.string = Math.floor(seconds / 3600) + ":"
-                + String(Math.floor(seconds / 60) % 60).padStart(2, "0") + ":" + String(seconds % 60).padStart(2, "0");
+            const seconds = IdleChestUtils.elapsed(state.serverTime, state.startedAt,
+                state.maxSeconds, model.idleReceivedAt, Date.now());
+            this.idleTimeLabel.string = IdleChestUtils.time(seconds);
+            this.renderIdleChest(seconds, state.maxSeconds);
         } else {
             this.idleTimeLabel.string = model.state?.maxCleared === 0 ? "通关后开启" : "未接入";
+            if (this.idleProgress) {
+                this.idleProgress.node.active = false;
+            }
+            if (this.idleChestHost) {
+                this.idleChestHost.active = false;
+            }
+            if (this.idleBubble) {
+                this.idleBubble.active = false;
+            }
         }
         for (const [label, id] of [[this.goldRateLabel, 900001], [this.roleExpRateLabel, 900003],
             [this.heroExpRateLabel, 900101]] as const) {
@@ -216,6 +276,26 @@ export class MainChapterView extends BaseView {
                 const rate = state?.rates.find(row => row.itemId === id);
                 label.string = rate ? String(rate.quantity * 60 / state!.frequency) + "/分" : "—/分";
             }
+        }
+    }
+
+    /** 只切换跨档动作；加载期间仍刷新目标时间，资源就绪后读取最新快照，关页不再访问节点。 */
+    private renderIdleChest(seconds: number, maxSeconds: number): void {
+        if (!this.idleChestHost || !this.idleBubble || !this.idleBubbleLabel) {
+            return;
+        }
+        this.idleChestHost.active = !this.playing;
+        this.idleBubble.active = !this.playing && IdleChestUtils.showBubble(seconds);
+        this.idleBubbleLabel.string = IdleChestUtils.time(seconds);
+        if (this.idleProgress) {
+            this.idleProgress.node.active = true;
+            this.idleProgress.fillRange = IdleChestUtils.percentage(seconds, maxSeconds) / 100;
+        }
+        const skeleton = this.idleChestHost.getComponent(sp.Skeleton);
+        const stage = IdleChestUtils.stage(seconds, maxSeconds);
+        if (skeleton?.skeletonData && stage !== this.idleChestStage) {
+            skeleton.setAnimation(0, "normal-" + stage, true);
+            this.idleChestStage = stage;
         }
     }
 
@@ -282,7 +362,11 @@ export class MainChapterView extends BaseView {
             const stop = await BattleReplayPreview.open(this.battleHost!, bytes, false, undefined, undefined,
                 "挂机遇敌", true, async () => {
                     if (!this.closed && epoch === this.idleDisplayEpoch) this.finishIdleEncounter();
-                }, true, () => this.closed || this.playing || epoch !== this.idleDisplayEpoch, this.idleDisplay!);
+                }, true, () => this.closed || this.playing || epoch !== this.idleDisplayEpoch, this.idleDisplay!, world => {
+                    if (!this.closed && !this.playing && epoch === this.idleDisplayEpoch) {
+                        this.idleResources?.play(world);
+                    }
+                });
             if (this.closed || this.playing || epoch !== this.idleDisplayEpoch || !this.idleEncounterActive) {
                 stop();
             } else {
@@ -305,13 +389,14 @@ export class MainChapterView extends BaseView {
         this.idleDisplay?.resume();
     }
 
-    /** 切换挑战、阵容和关页共用清理，恢复静态背景位置。 */
+    /** 切换挑战、阵容和关页共用清理；先释放行军归还入口，再停止遇敌，避免同帧归还到待销毁站位。 */
     private clearIdleDisplay(resetBackground = true): void {
+        this.idleResources?.clear();
         this.idleDisplayEpoch++;
         this.idleEncounterActive = false;
+        this.idleDisplay?.dispose();
         this.stopIdleEncounter?.();
         this.stopIdleEncounter = null;
-        this.idleDisplay?.dispose();
         this.idleDisplay = null;
         this.idleDisplayKey = "";
         if (!resetBackground) return;
@@ -329,6 +414,7 @@ export class MainChapterView extends BaseView {
         if (this.closed || !this.panel) {
             return;
         }
+        this.idleResources?.clear();
         const box = fitVisibleRoot(this.node);
         const scale = Math.min(1, Math.max(0.1, (box.width - 24) / 640));
         this.panel.setScale(scale, scale, 1);
@@ -342,9 +428,11 @@ export class MainChapterView extends BaseView {
     /** 页面关闭只取消展示，不撤销已提交战斗；待领奖随下次登录恢复。 */
     public onClose(): void {
         this.closed = true;
+        this.idleChestStage = 0;
         this.heroTalk?.dispose();
         this.heroTalk = null;
         this.clearIdleDisplay();
+        this.idleResources = null;
         this.stopReplay?.();
         this.stopReplay = null;
         UIManager.instance.closeById("remake-formation");

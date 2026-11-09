@@ -32,6 +32,18 @@ export class BattleAttackUtils {
 
     /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；恢复已核对的英雄覆盖，内部索引不写回战报。 */
     public static legacyActions<T extends { idx: number; type: number; ani_base: string; file: string; sound: string; delay: number; dimly: number }>(row: T): readonly T[] {
+        // 冰晶女巫的file仅用于预加载；施法与第20帧的战场特效分开，不能在目标脚下重复播放。
+        if (row.idx >= 2031101 && row.idx <= 2031103) {
+            return [
+                { ...row, idx: row.idx * 10, type: 3, delay: 0, dimly: 0,
+                    ani_base: JSON.stringify({ attack_time: 0.6, action_time: 1 }),
+                    file: "[]", sound: JSON.stringify(["skill-102030031"]) },
+                { ...row, idx: row.idx * 10 + 1, type: 9, delay: 20, dimly: 1,
+                    ani_base: JSON.stringify({ format: "skill-102030031/%d.png", anchor_y: 0.35,
+                        duration: 0.1, scale_x: 1.8, scale_y: 1.8, offset_x: 0.6, offset_y: 0.4 }),
+                    file: JSON.stringify(["skill-102030031"]), sound: "[]" },
+            ];
+        }
         // 树精的file用于预加载；type2只做近身，type6实际按ani_base.format生成施法者特效。
         if (row.idx >= 3011101 && row.idx <= 3011103) {
             return [
@@ -44,8 +56,8 @@ export class BattleAttackUtils {
                     file: JSON.stringify(["skill-103010011"]), sound: "[]" },
             ];
         }
-        // 布鲁普攻实际覆盖基础buff中的0.5倍/0.02秒，按旧actions.lua在目标处播放4倍水花。
-        if (row.idx === 2010100) {
+        // 布鲁与冰晶女巫普攻按旧actions.lua在目标处播放4倍水花，不直接采用基础buff的表现参数。
+        if (row.idx === 2010100 || row.idx === 2030100) {
             return [{
                 ...row,
                 type: 3,
@@ -162,6 +174,7 @@ export class BattleAttackUtils {
                 "skill-102050233": 22, "skill-102050233_1": 22,
                 "skill-102040040": 14, "skill-102010011": 4,
                 "skill-103010011": 7,
+                "skill-102030031": 8,
             };
             const file = files[0];
             if (files.length !== 1 || typeof file !== "string" || !counts[file]

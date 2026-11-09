@@ -31,8 +31,22 @@ export interface SkillReplayFocus {
 }
 
 export class BattleReplayPreview {
-    /** 装载资源后执行二进制战报；遇敌可借用行军骨骼，返回的关场函数先归还骨骼再销毁战场。 */
-    public static async open(parent: Node, bytes: Uint8Array, defeatPresentation = false, onClosed?: () => void, audit?: SkillReplayFocus, lineupTitle?: string, persistentChapter = false, onCompleted?: (won: boolean) => Promise<void>, idleEncounter = false, isCancelled: () => boolean = () => false, retainedIdle?: MainChapterIdleDisplay): Promise<() => void> {
+    /** 装载资源后执行二进制战报；遇敌可借用行军骨骼，返回的关场函数先归还骨骼再销毁战场。
+     * onIdleDeath仅向挂机页提供真实阵亡的世界位置用于资源飞行，不是奖励事件，正式挑战不调用。 */
+    public static async open(
+        parent: Node,
+        bytes: Uint8Array,
+        defeatPresentation = false,
+        onClosed?: () => void,
+        audit?: SkillReplayFocus,
+        lineupTitle?: string,
+        persistentChapter = false,
+        onCompleted?: (won: boolean) => Promise<void>,
+        idleEncounter = false,
+        isCancelled: () => boolean = () => false,
+        retainedIdle?: MainChapterIdleDisplay,
+        onIdleDeath?: (world: Readonly<Vec3>) => void,
+    ): Promise<() => void> {
         const steps = BattleReplayUtils.decode(bytes);
         const units = BattleReplayUtils.units(bytes);
         const configScope = createAssetScope();
@@ -54,7 +68,7 @@ export class BattleReplayPreview {
         // 一个旧Buff可展开多个并行表现，索引仅供本页资源缓存使用，不修改权威事件。
         const expanded = new Map<number, readonly BuffRow[]>();
         for (const step of steps) {
-            if (step.kind === "presentation" || step.kind === "buff.upsert" || step.kind === "damage") {
+            if (step.kind === "presentation" || step.kind === "buff.upsert" || step.kind === "damage" || step.kind === "recovery") {
                 const row = rows.find(row => row.idx === step.configId);
                 if (!row) throw new Error("缺少战斗表现配置：" + step.configId);
                 if (step.kind === "damage" && row.type === 100) BattleAttackUtils.damageSounds(row);
@@ -633,11 +647,22 @@ export class BattleReplayPreview {
                         const point = shell.root.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
                         paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
                         actors.get(step.targetId)!.play(step.dead ? "die" : "hit");
+                        if (idleEncounter && step.dead && !cancelled()) {
+                            onIdleDeath?.(target.worldPosition.clone());
+                        }
                         await wait(0.35);
                         if (!cancelled()) {
                             if (step.dead) actors.get(step.targetId)!.node.active = false;
                             else actors.get(step.targetId)!.play("stand");
                         }
+                    } else if (step.kind === "recovery") {
+                        // 回血不会播放受击/死亡；飘字使用旧报告值，血条只使用实际值，包含满血溢出治疗。
+                        record("单位" + step.targetId + " 治疗" + step.reportedHpChange);
+                        hp(step.targetId, step.hpByUnit[step.targetId]);
+                        const target = slots.get(step.targetId)!;
+                        const point = shell.root.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
+                        paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
+                        await wait(0.35);
                     } else if (step.kind === "buff.upsert" || step.kind === "buff.remove") {
                         const active = activeBuffs.get(step.targetId)!;
                         if (step.kind === "buff.upsert") active.set(step.buffInstanceId!, step.configId);

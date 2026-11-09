@@ -55,6 +55,35 @@ class MainChapterPersistenceTest {
         return new Player(role, token, hero);
     }
 
+    /** 冰晶女巫真实持久阵容记录治疗及双方名称，结算重试不重复发奖，后续改名不覆盖旧战报。 */
+    @Test void healingReplayPersistsThroughSettlement() throws Exception {
+        var player = player(false);
+        jdbc.update("UPDATE game_hero SET template_id=10203003,hero_level=1,star=3 WHERE id=?", player.hero());
+        jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,1)", player.id());
+        var receipt = chapters.challenge(player.token(), id());
+        var replay = chapters.replay(player.token(), receipt.battleId()).replay();
+        var heals = replay.getPhasesList().stream().flatMap(phase -> phase.getEventsList().stream())
+            .filter(event -> event.getKind().equals("recovery")).toList();
+        assertFalse(heals.isEmpty());
+        assertTrue(heals.stream().anyMatch(event -> event.getReportedHpChange() > 0));
+        assertTrue(heals.stream().anyMatch(event -> event.getActualHpChange() > 0));
+        assertEquals(roles.findById(player.id()).orElseThrow().nickname(), replay.getAttackerName());
+        assertEquals("羽嘉森林2", replay.getDefenderName());
+        assertEquals(heals.stream().mapToLong(event -> event.getReportedHpChange()).sum(),
+            replay.getUnits(0).getTotalRecovery());
+        java.nio.file.Files.createDirectories(java.nio.file.Path.of("../client/temp/healing-review"));
+        java.nio.file.Files.write(java.nio.file.Path.of("../client/temp/healing-review/replay.bin"), replay.toByteArray());
+        System.out.println("HEALING_REVIEW " + replay.getOutcome() + " rounds=" + replay.getRounds()
+            + " healing=" + heals.stream().map(event -> event.getActualHpChange() + "/" + event.getReportedHpChange()).toList());
+        var claim = chapters.claim(player.token(), receipt.battleId());
+        var role = roles.findById(player.id()).orElseThrow();
+        assertEquals(claim, chapters.claim(player.token(), receipt.battleId()));
+        assertEquals(role, roles.findById(player.id()).orElseThrow());
+        // 仅独立测试库改名，验证回看仍保留开战姓名；不开放改名玩法。
+        jdbc.update("UPDATE game_role SET nickname=? WHERE id=?", "结算后改名", player.id());
+        assertEquals(replay, chapters.replay(player.token(), receipt.battleId()).replay());
+    }
+
     /** 每次新操作使用新ID；重试由测试显式保留原ID。 */
     private static String id() { return UUID.randomUUID().toString(); }
 
@@ -191,13 +220,17 @@ class MainChapterPersistenceTest {
         assertEquals(1, chapters.challenge(p.token(), request).state().maxCleared());
     }
 
-    /** 历史战报不受后来英雄改变影响；跨角色与损坏战报拒绝读取/发奖。 */
+    /** 历史战报头像不受后来英雄星级/进化变化影响；跨角色与损坏战报拒绝读取/发奖。 */
     @Test void ownershipAndImmutableReplayAreEnforced() {
         var p = player(true);
         var other = player(true);
         var win = chapters.challenge(p.token(), id());
         var battle = chapters.replay(p.token(), win.battleId());
-        jdbc.update("UPDATE game_hero SET hero_level=1 WHERE id=?", p.hero());
+        assertTrue(battle.replay().getUnits(0).hasPortraitIconId());
+        int portrait = battle.replay().getUnits(0).getPortraitIconId();
+        // 隔离库准备另一合法进化状态；回看只能读取原始字节，不重新查询英雄头像。
+        jdbc.update("UPDATE game_hero SET template_id=10105008,hero_level=100,star=10,stage=0,evolve_type=1,evolve_level=1 WHERE id=?", p.hero());
+        assertEquals(portrait, chapters.replay(p.token(), win.battleId()).replay().getUnits(0).getPortraitIconId());
         assertEquals(battle, chapters.replay(p.token(), win.battleId()));
         assertThrows(IllegalArgumentException.class, () -> chapters.claim(other.token(), win.battleId()));
         assertThrows(IllegalArgumentException.class, () -> chapters.replay(other.token(), win.battleId()));

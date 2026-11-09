@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-09",
+  "scope": "主线统计页冻结双方名称；不开放改名、其他玩法或历史胜利骨骼外观",
+  "legacy": {
+    "display": "BattleDetailCtr.lua:138/177读取双方日志name",
+    "freeze": "BattlerDo.java:303将开战名称写入BattlerFightLog",
+    "chapter": "BattleHandler.java:272-274使用language[43100+chapter]+chapterreward.idx；MainBattleConstant.LANGUAGE_BASE_ID=43100",
+    "chapterNames": [
+      "羽嘉森林1",
+      "羽嘉森林2",
+      "羽嘉森林3"
+    ]
+  },
+  "protocol": {
+    "attacker_name": 7,
+    "defender_name": 8,
+    "missing": "历史名称未记录",
+    "empty": "保留明确记录的空字符串"
+  },
+  "tests": {
+    "backend": "17/17，MainChapterPersistenceTest、MainChapterRulesTest、MainChapterSocketTest",
+    "persistence": "结算后测试库改名，旧战报名称及二进制内容不变",
+    "frontend": "40/40，5组暂停不计入",
+    "wire": "Java真实战报到TS；名称缺失、明确空串、控制字符拒绝",
+    "typescript": "通过",
+    "protocolDrift": "通过",
+    "prefabStructure": "通过",
+    "mysql": "本批未运行"
+  },
+  "browser": {
+    "run": "50f87aeb4c674ff58ae738390baac022",
+    "environment": "独立随机H2，chapter_review，冰晶女巫第二关",
+    "battleId": "fc0be122-579f-4899-b4e0-87f0eaab925f",
+    "viewport": "360x840",
+    "realFlow": "挂机→布阵→挑战→胜利→战报→关闭返回，通过",
+    "names": {
+      "attacker": "chapter_review",
+      "defender": "羽嘉森林2"
+    },
+    "settlement": {
+      "gold": 4000,
+      "diamond": 151,
+      "revision": 4
+    },
+    "layoutFixes": "旧150宽/0.5缩放导致昵称过小；改26字号、居中、300宽，预留胜利图标边界",
+    "finalLayout": "Creator刷新后核实双方名称UITransform宽300；360×840正常名称、长名称、缺失提示及关闭清理通过，未临时修改最终截图布局",
+    "fixtureBoundary": "正常名称使用真实战报只读重开；长名称和旧字段缺失仅为展示夹具，不写角色数据",
+    "componentsAfterClose": 0,
+    "warningsAndErrors": [],
+    "screenshots": [
+      "../images/battle-names-real-20261109.jpg",
+      "../images/battle-names-long-20261109.jpg",
+      "../images/battle-names-missing-20261109.jpg"
+    ]
+  },
+  "remaining": [
+    "胜利历史骨骼外观",
+    "其他治疗英雄及负治疗实机覆盖",
+    "清心概率待审",
+    "护盾疑点"
+  ],
+  "git": "未提交，未推送"
+}

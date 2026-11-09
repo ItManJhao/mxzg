@@ -150,7 +150,9 @@
         "SkillAuditView",
         "SkillAuditCellView",
         "MainChapterView",
-        "MainChapterBattleView"
+        "MainChapterBattleView",
+        "ChapterRewardInfoCell",
+        "ChapterRewardInfoView"
       ]
     },
     {

@@ -9815,6 +9815,8 @@ var mxzg = $root.mxzg = (() => {
       BattleReplay.prototype.rounds = 0;
       BattleReplay.prototype.units = $util.emptyArray;
       BattleReplay.prototype.phases = $util.emptyArray;
+      BattleReplay.prototype.attackerName = "";
+      BattleReplay.prototype.defenderName = "";
       BattleReplay.create = function create(properties) {
         return new BattleReplay(properties);
       };
@@ -9853,6 +9855,16 @@ var mxzg = $root.mxzg = (() => {
               /* id 6, wireType 2 =*/
               50
             ).fork(), q + 1).ldelim();
+        if (message.attackerName != null && Object.hasOwnProperty.call(message, "attackerName"))
+          writer.uint32(
+            /* id 7, wireType 2 =*/
+            58
+          ).string(message.attackerName);
+        if (message.defenderName != null && Object.hasOwnProperty.call(message, "defenderName"))
+          writer.uint32(
+            /* id 8, wireType 2 =*/
+            66
+          ).string(message.defenderName);
         return writer;
       };
       BattleReplay.decode = function decode(reader, length, error, long) {
@@ -9904,6 +9916,14 @@ var mxzg = $root.mxzg = (() => {
               if (!(message.phases && message.phases.length))
                 message.phases = [];
               message.phases.push($root.mxzg.game.BattleReplayPhase.decode(reader, reader.uint32(), void 0, long + 1));
+              break;
+            }
+            case 7: {
+              message.attackerName = reader.string();
+              break;
+            }
+            case 8: {
+              message.defenderName = reader.string();
               break;
             }
             default:
@@ -9959,6 +9979,14 @@ var mxzg = $root.mxzg = (() => {
               return "phases." + error;
           }
         }
+        if (message.attackerName != null && Object.hasOwnProperty.call(message, "attackerName")) {
+          if (!$util.isString(message.attackerName))
+            return "attackerName: string expected";
+        }
+        if (message.defenderName != null && Object.hasOwnProperty.call(message, "defenderName")) {
+          if (!$util.isString(message.defenderName))
+            return "defenderName: string expected";
+        }
         return null;
       };
       BattleReplay.fromObject = function fromObject(object, long) {
@@ -9999,6 +10027,10 @@ var mxzg = $root.mxzg = (() => {
             message.phases[i] = $root.mxzg.game.BattleReplayPhase.fromObject(object.phases[i], long + 1);
           }
         }
+        if (object.attackerName != null)
+          message.attackerName = String(object.attackerName);
+        if (object.defenderName != null)
+          message.defenderName = String(object.defenderName);
         return message;
       };
       BattleReplay.toObject = function toObject(message, options, q) {
@@ -10018,6 +10050,8 @@ var mxzg = $root.mxzg = (() => {
           object.scenario = "";
           object.outcome = "";
           object.rounds = 0;
+          object.attackerName = "";
+          object.defenderName = "";
         }
         if (message.schemaVersion != null && Object.hasOwnProperty.call(message, "schemaVersion"))
           object.schemaVersion = message.schemaVersion;
@@ -10037,6 +10071,10 @@ var mxzg = $root.mxzg = (() => {
           for (let j = 0; j < message.phases.length; ++j)
             object.phases[j] = $root.mxzg.game.BattleReplayPhase.toObject(message.phases[j], options, q + 1);
         }
+        if (message.attackerName != null && Object.hasOwnProperty.call(message, "attackerName"))
+          object.attackerName = message.attackerName;
+        if (message.defenderName != null && Object.hasOwnProperty.call(message, "defenderName"))
+          object.defenderName = message.defenderName;
         return object;
       };
       BattleReplay.prototype.toJSON = function toJSON() {
@@ -10070,6 +10108,7 @@ var mxzg = $root.mxzg = (() => {
       BattleReplayUnit.prototype.totalTakenDamage = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       BattleReplayUnit.prototype.totalRecovery = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
       BattleReplayUnit.prototype.star = 0;
+      BattleReplayUnit.prototype.portraitIconId = 0;
       BattleReplayUnit.create = function create(properties) {
         return new BattleReplayUnit(properties);
       };
@@ -10135,6 +10174,11 @@ var mxzg = $root.mxzg = (() => {
             /* id 12, wireType 0 =*/
             96
           ).uint32(message.star);
+        if (message.portraitIconId != null && Object.hasOwnProperty.call(message, "portraitIconId"))
+          writer.uint32(
+            /* id 13, wireType 0 =*/
+            104
+          ).uint32(message.portraitIconId);
         return writer;
       };
       BattleReplayUnit.decode = function decode(reader, length, error, long) {
@@ -10208,6 +10252,10 @@ var mxzg = $root.mxzg = (() => {
               message.star = reader.uint32();
               break;
             }
+            case 13: {
+              message.portraitIconId = reader.uint32();
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -10274,6 +10322,10 @@ var mxzg = $root.mxzg = (() => {
         if (message.star != null && Object.hasOwnProperty.call(message, "star")) {
           if (!$util.isInteger(message.star))
             return "star: integer expected";
+        }
+        if (message.portraitIconId != null && Object.hasOwnProperty.call(message, "portraitIconId")) {
+          if (!$util.isInteger(message.portraitIconId))
+            return "portraitIconId: integer expected";
         }
         return null;
       };
@@ -10359,6 +10411,8 @@ var mxzg = $root.mxzg = (() => {
         }
         if (object.star != null)
           message.star = object.star >>> 0;
+        if (object.portraitIconId != null)
+          message.portraitIconId = object.portraitIconId >>> 0;
         return message;
       };
       BattleReplayUnit.toObject = function toObject(message, options, q) {
@@ -10406,6 +10460,7 @@ var mxzg = $root.mxzg = (() => {
           } else
             object.totalRecovery = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
           object.star = 0;
+          object.portraitIconId = 0;
         }
         if (message.unitId != null && Object.hasOwnProperty.call(message, "unitId"))
           object.unitId = message.unitId;
@@ -10461,6 +10516,8 @@ var mxzg = $root.mxzg = (() => {
             object.totalRecovery = options.longs === String ? $util.Long.prototype.toString.call(message.totalRecovery) : options.longs === Number ? new $util.LongBits(message.totalRecovery.low >>> 0, message.totalRecovery.high >>> 0).toNumber() : message.totalRecovery;
         if (message.star != null && Object.hasOwnProperty.call(message, "star"))
           object.star = message.star;
+        if (message.portraitIconId != null && Object.hasOwnProperty.call(message, "portraitIconId"))
+          object.portraitIconId = message.portraitIconId;
         return object;
       };
       BattleReplayUnit.prototype.toJSON = function toJSON() {

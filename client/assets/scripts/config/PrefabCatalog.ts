@@ -22,6 +22,8 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "prefabs/ui/battle/BattleInfoLayer": "4ffa8f5a-144a-4e5e-98a8-d5a9b2c1e362",
   "prefabs/ui/battle/BattlePage": "733c8611-a124-4c16-bb79-6b3011dfb408",
   "prefabs/ui/battle/CampaignView": "ac146bb3-359f-4506-8fcf-32f8c56ef4d3",
+  "prefabs/ui/battle/ChapterRewardInfoCell": "fda51bbe-50ab-4c68-b475-9ad250a97b77",
+  "prefabs/ui/battle/ChapterRewardInfoView": "be077496-77e1-432a-a350-3929e9ad0040",
   "prefabs/ui/battle/HangMissionChipView": "4d270a16-c38e-45b9-f277-80e134c3b2a6",
   "prefabs/ui/battle/MainChapterBattleView": "5ef66168-57ea-46f9-9f46-00a8989ea797",
   "prefabs/ui/battle/MainChapterView": "cc1bc0f0-28ac-4d7a-a8e5-c4bc24a4d43b",

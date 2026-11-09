@@ -1,5 +1,7 @@
 /** 主线客户端回归：初始化、历史回执不倒退资产、未知结果原键重试、身份切换不被旧请求复活。 */
 import { MainChapterHeroTalk } from "../assets/scripts/features/battle/ui/MainChapterHeroTalk";
+import { IdleChestUtils } from "../assets/scripts/features/battle/utils/IdleChestUtils";
+import { ChapterRewardInfoUtils } from "../assets/scripts/features/battle/utils/ChapterRewardInfoUtils";
 import { MainChapterIdleDisplay } from "../assets/scripts/features/battle/ui/MainChapterIdleDisplay";
 import { HeroTalkUtils } from "../assets/scripts/features/battle/utils/HeroTalkUtils";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
@@ -11,6 +13,9 @@ import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/Battle
 import { ChapterEndView } from "../assets/scripts/features/battle/ui/ChapterEndView";
 import { BattleInfoUtils } from "../assets/scripts/features/battle/utils/BattleInfoUtils";
 import { ChapterSettlementUtils } from "../assets/scripts/features/battle/utils/ChapterSettlementUtils";
+import { BattleHeroStarView } from "../assets/scripts/features/battle/ui/BattleHeroStarView";
+import { Sprite } from "cc";
+import { BattlePortraitById } from "../assets/scripts/framework/assets/IconCatalog";
 import { BattleStatisticsUtils } from "../assets/scripts/features/battle/utils/BattleStatisticsUtils";
 import { BattleAttackUtils } from "../assets/scripts/features/battle/utils/BattleAttackUtils";
 import { strict as assert } from "node:assert";
@@ -21,6 +26,7 @@ import { Protocol } from "../assets/scripts/platform/Protocol";
 import { ProtocolRouter } from "../assets/scripts/platform/ProtocolRouter";
 import { encodeGameFrame, decodeGameFrame, GameFrame } from "../assets/scripts/platform/GameProtocolCodec";
 import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
+import { mxzg } from "../assets/scripts/platform/GameProtocol.generated";
 const battleId = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
 const original = { maxCleared: 1, pendingBattleId: battleId, assetRevision: 3 };
 const latest = { maxCleared: 2, assetRevision: 8 };
@@ -30,6 +36,41 @@ function frame(name: string, body: unknown, kind = "response"): GameFrame {
 }
 /** 只测试当前模块；完整资产绑定另由session-state回归覆盖。 */
 async function main(): Promise<void> {
+    const rewardInfo = ChapterRewardInfoUtils.rows(JSON.parse(readFileSync(
+        "client/assets/resources/config/chapterreward.json", "utf8")));
+    assert.equal(rewardInfo.length, 850, "说明配置投影不得静默截断旧关卡");
+    assert.deepEqual(rewardInfo[0].firstItems, [900401, 900001, 900003, 900101, 900102, 20204004, 1004001]);
+    assert.deepEqual(rewardInfo[0].idleItems, [900001, 900003, 900101, 900002, 900102, 20005000, 1001001, 2000001]);
+    const duplicateItems = { idx: 1, first_reward: '[{"item_type":1},{"item_type":1}]',
+        reward_base: '[{"item_type":2},{"item_type":1}]', reward_unique: '[{"type":1},{"type":3}]' };
+    assert.deepEqual(ChapterRewardInfoUtils.rows({ rows: [duplicateItems] })[0].idleItems, [2, 1, 3]);
+    assert.deepEqual(ChapterRewardInfoUtils.rows({ rows: [duplicateItems] })[0].firstItems, [1, 1]);
+    assert.throws(() => ChapterRewardInfoUtils.rows({ rows: [duplicateItems, duplicateItems] }));
+    assert.throws(() => ChapterRewardInfoUtils.rows({ rows: [{ ...duplicateItems, reward_unique: null }] }));
+    // 旧版先取整百分比；2.9%仍属于第一档，不能提前升级宝箱。
+    for (const [seconds, expected] of [[0, 1], [20, 1], [29, 1], [30, 2],
+        [50, 2], [59, 2], [60, 3], [100, 3], [109, 3], [110, 4], [1000, 4]]) {
+        assert.equal(IdleChestUtils.stage(seconds, 1000), expected);
+    }
+    assert.equal(IdleChestUtils.showBubble(600), false);
+    assert.equal(IdleChestUtils.showBubble(601), true);
+    assert.equal(IdleChestUtils.elapsed(1000, 900, 21600, 5000, 4000), 100);
+    assert.equal(IdleChestUtils.elapsed(1000, 900, 21600, 5000, 99999999), 21600);
+    assert.equal(IdleChestUtils.time(21600), "06:00");
+    assert.throws(() => IdleChestUtils.stage(0, 0));
+    assert.equal(IdleChestUtils.percentage(29, 1000), 2);
+    assert.equal(IdleChestUtils.percentage(-10, 1000), 0);
+    assert.equal(IdleChestUtils.percentage(2000, 1000), 100);
+    const firstFlight = IdleChestUtils.flights(() => 0);
+    const lastFlight = IdleChestUtils.flights(() => 0.999999);
+    assert.equal(firstFlight.length, 8);
+    assert.equal(lastFlight.length, 12);
+    assert.deepEqual(firstFlight[0], { icon: 0, order: 1000, scale: 0.605, x: -49, y: -49, scaleSeconds: 0.905 });
+    assert.deepEqual(lastFlight[0], { icon: 3, order: 10000, scale: 0.8, x: 50, y: 50, scaleSeconds: 1 });
+    const chestResource = JSON.parse(readFileSync("client/assets/resources/spine/res-block.json", "utf8"));
+    for (const stage of [1, 2, 3, 4]) {
+        assert(chestResource.animations["normal-" + stage], "宝箱档位必须有真实旧动画");
+    }
     // 遇敌借用和归还同一节点，重复关闭不得销毁行军英雄或重新创建显示。
     const idleRoot = new Node("Idle");
     const field = new Node("LayerField");
@@ -63,6 +104,19 @@ async function main(): Promise<void> {
     assert.equal(returned, 1);
     assert.equal(sceneView.idleDisplay, idleDisplay);
     assert.equal(sceneView.idleEncounterActive, false);
+    // 模拟Creator延迟销毁：归还时home仍有效，也不得重挂到即将销毁的行军树。
+    (heroNode as any).position = { x: 0, y: 0, z: 0, clone: () => ({ x: 0, y: 0, z: 0 }) };
+    const closingLease = idleDisplay.borrow(1, borrowedSlot);
+    const destroyIdleRoot = idleRoot.destroy.bind(idleRoot);
+    idleRoot.destroy = () => {};
+    sceneView.stopIdleEncounter = () => closingLease.release();
+    sceneView.clearIdleDisplay();
+    closingLease.release();
+    assert.equal(home.isValid, true);
+    assert.equal(heroNode.parent, borrowedSlot, "关页归还不得向待销毁站位提交引擎排序请求");
+    idleRoot.destroy = destroyIdleRoot;
+    idleRoot.destroy();
+    borrowedSlot.destroy();
     // 用户阵容布鲁：从实际配置经过旧覆盖到资源解析，避免只测固定验收英雄漏掉正常遇敌。
     const buffRows = JSON.parse(readFileSync("client/assets/resources/config/buff.json", "utf8")).rows;
     for (const id of [3011101, 3011102, 3011103]) {
@@ -193,6 +247,46 @@ async function main(): Promise<void> {
     ];
     assert.equal(BattleReplayUtils.validateUnits(oldUnits)[0].totalDamage, null, "旧战报缺失统计不能当作零");
     assert.equal(BattleReplayUtils.validateUnits(oldUnits)[0].totalRecovery, null);
+    assert.equal(BattleReplayUtils.validateUnits(oldUnits)[0].portraitIconId, null);
+    const portraitUnit = BattleReplayUtils.validateUnits([{ ...oldUnits[0], portraitIconId: 20101001 }, oldUnits[1]])[0];
+    assert.equal(portraitUnit.portraitIconId, 20101001);
+    assert.ok(BattleStatisticsUtils.portrait(portraitUnit)?.endsWith("hero-icon_20101001"));
+    assert.equal(BattleStatisticsUtils.portrait(oldUnits[0]), null);
+    const evolutionRows = JSON.parse(readFileSync("client/assets/resources/config/heroevolvelevel.json", "utf8")).rows;
+    for (const row of evolutionRows) assert.ok(BattlePortraitById[row.evolve_icon_id], "进化头像必须收录：" + row.evolve_icon_id);
+    assert.equal(BattleStatisticsUtils.stars(6).row, 5);
+    assert.equal(BattleStatisticsUtils.stars(9).row, 8);
+    assert.equal(BattleStatisticsUtils.stars(10).number, 0);
+    assert.equal(BattleStatisticsUtils.stars(13).number, 3);
+    assert.equal(BattleStatisticsUtils.stars(14).awakened, true);
+    assert.equal(BattleStatisticsUtils.stars(null).row, -1);
+    assert.throws(() => BattleStatisticsUtils.stars(15));
+    assert.equal(BattleStatisticsUtils.starFrame(0.24), 2);
+    assert.equal(BattleStatisticsUtils.starFrame(2.5), 12);
+    assert.equal(BattleStatisticsUtils.starFrame(3.061), 0);
+    const starView = new BattleHeroStarView();
+    starView.rows = Array.from({ length: 9 }, () => new Node());
+    starView.numbers = Array.from({ length: 3 }, () => new Node());
+    starView.highBadge = new Node(); starView.awakenedBadge = new Node();
+    starView.border = new Node().addComponent(Sprite); starView.effect = new Node().addComponent(Sprite);
+    starView.borders = Array.from({ length: 6 }, (_, id) => ({ id })) as any;
+    starView.frames = Array.from({ length: 13 }, (_, id) => ({ id })) as any;
+    starView.show(14); starView.update(0.24);
+    assert.equal(starView.effect.spriteFrame, starView.frames[2]);
+    assert.equal(starView.awakenedBadge.active, true);
+    starView.show(11);
+    assert.equal(starView.numbers[0].active, true);
+    assert.equal(starView.awakenedBadge.active, false);
+    starView.show(5); starView.update(1);
+    assert.equal(starView.rows[4].active, true);
+    assert.equal(starView.effect.node.active, false);
+    assert.ok(starView.numbers.every(node => !node.active));
+    starView.show(null);
+    assert.ok(starView.rows.every(node => !node.active));
+
+    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 900001 }), null);
+    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 99999999 }), null);
+    assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], portraitIconId: 0 }, oldUnits[1]]));
     assert.equal(BattleReplayUtils.validateUnits([{ ...oldUnits[0], totalRecovery: -25, star: 5 }, oldUnits[1]])[0].totalRecovery, -25);
     assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], totalRecovery: Number.MAX_SAFE_INTEGER + 1 }, oldUnits[1]]));
     assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], star: 0 }, oldUnits[1]]));
@@ -200,6 +294,19 @@ async function main(): Promise<void> {
     const ranked = [{ ...oldUnits[0], totalDamage: 70 }, { ...oldUnits[0], unitId: 3, totalDamage: 70 },
         { ...oldUnits[1], totalDamage: 999 }];
     assert.equal(ChapterSettlementUtils.highestDamage(ranked)!.unitId, 1, "同伤害保持名册顺序且不选敌方");
+    const appearanceSkins = JSON.parse(readFileSync("client/assets/resources/config/skin.json", "utf8")).rows;
+    const appearanceEvolutions = JSON.parse(readFileSync("client/assets/resources/config/heroevolvelevel.json", "utf8")).rows;
+    assert.equal(ChapterSettlementUtils.historicalSpine(null, appearanceSkins, appearanceEvolutions), null);
+    assert.equal(ChapterSettlementUtils.historicalSpine(99999999, appearanceSkins, appearanceEvolutions), null);
+    assert.equal(ChapterSettlementUtils.historicalSpine(20104004, appearanceSkins, appearanceEvolutions), "10104004");
+    assert.equal(ChapterSettlementUtils.historicalSpine(20105004, appearanceSkins, appearanceEvolutions), "10105004");
+    // 遍历真实进化配置，避免只验证两张头像；必须有对应骨骼与胜利页使用的stand动作。
+    for (const row of appearanceEvolutions) {
+        const stem = ChapterSettlementUtils.historicalSpine(row.evolve_icon_id, appearanceSkins, appearanceEvolutions);
+        assert.equal(stem, String(row.evolve_fashion_id));
+        const skeleton = JSON.parse(readFileSync("client/assets/resources/spine/" + stem + ".json", "utf8"));
+        assert(skeleton.animations.stand, "历史进化骨骼必须具备stand动作：" + stem);
+    }
     const statisticUnits = [
         { ...oldUnits[0], totalDamage: 20, totalTakenDamage: 8, totalRecovery: 100 },
         { ...oldUnits[0], unitId: 3, totalDamage: 0, totalTakenDamage: 0, totalRecovery: -5 },
@@ -234,6 +341,34 @@ async function main(): Promise<void> {
     assert.equal(model.busy, false);
     assert.equal(model.receipt, null);
     controller.dispose();
+    if (process.argv.includes("--healing-wire")) {
+        // 使用真实Java持久化战斗导出的二进制；破坏恢复量后必须拒绝，不能让错误血量进入播放。
+        const bytes = new Uint8Array(readFileSync("client/temp/healing-review/replay.bin"));
+        const steps = BattleReplayUtils.decode(bytes);
+        const heals = steps.filter(step => step.kind === "recovery");
+        assert(heals.some(step => step.actualHpChange! > 0));
+        const report = mxzg.game.BattleReplay.decode(bytes);
+        assert.equal(BattleReplayUtils.names(bytes).defender, "羽嘉森林2");
+        const oldNames = mxzg.game.BattleReplay.decode(bytes);
+        delete oldNames.attackerName;
+        delete oldNames.defenderName;
+        assert.deepEqual(BattleReplayUtils.names(mxzg.game.BattleReplay.encode(oldNames).finish()), { attacker: null, defender: null });
+        oldNames.attackerName = "";
+        assert.equal(BattleReplayUtils.names(mxzg.game.BattleReplay.encode(oldNames).finish()).attacker, "");
+        oldNames.attackerName = "非法\n名称";
+        assert.throws(() => BattleReplayUtils.names(mxzg.game.BattleReplay.encode(oldNames).finish()));
+        const event = report.phases.flatMap(phase => phase.events).find(event => event.kind === "recovery")!;
+        event.actualHpChange = 999999;
+        assert.throws(() => BattleReplayUtils.decode(mxzg.game.BattleReplay.encode(report).finish()));
+        const row = { idx: 2031101, type: 3, ani_base: "{}", file: "[]", sound: "[]", delay: 0, dimly: 0 };
+        const actions = BattleAttackUtils.legacyActions(row);
+        assert.equal(actions.length, 2);
+        assert.equal(BattleAttackUtils.plan(actions[0]).effect, null);
+        const effect = BattleAttackUtils.plan(actions[1]);
+        assert.deepEqual(effect.battlefieldOffset, [0.6, 0.4]);
+        assert.equal(effect.effect!.paths.length, 8);
+        assert.equal(effect.effect!.interval, 0.1);
+    }
     if (process.argv.includes("--wire")) {
         {
         const encounter = decodeGameFrame(new Uint8Array(readFileSync("backend/target/main-idle-encounter.pb")));
@@ -322,7 +457,7 @@ async function main(): Promise<void> {
     shared.idle = MainChapterController.readIdle(idle, shared.state);
     shared.idleReceivedAt = Date.now() - 60000;
     rewardView.renderIdle();
-    assert.equal(rewardView.idleTimeLabel.string, "0:02:00", "后台恢复显示封顶时长");
+    assert.equal(rewardView.idleTimeLabel.string, "00:02", "后台恢复显示封顶时长，沿用旧版小时分钟格式");
     assert.equal(rewardView.goldRateLabel.string, "120/分", "周期收益换算为每分钟");
     for (const invalid of [{ ...idle, frequency: 0 }, { ...idle, rewardStage: 99 },
         { ...idle, rates: [idle.rates[0], idle.rates[0]] }, { ...idle, serverTime: NaN }]) {
@@ -391,8 +526,10 @@ async function main(): Promise<void> {
     const originalClaim = MainChapterController.instance.claim;
     const originalUiOpen = UIManager.instance.open;
     const originalUnits = BattleReplayUtils.units;
+    const originalNames = BattleReplayUtils.names;
     // 此段只测试结算调度；真实二进制统计由上面的Java→TS互通检查验证。
     BattleReplayUtils.units = () => ranked;
+    BattleReplayUtils.names = () => ({ attacker: "开战昵称", defender: "羽嘉森林1" });
     const resultNode = new Node("MainChapterBattleView");
     const resultView: any = resultNode.addComponent(MainChapterBattleView);
     resultView.args = { report: { battleId, mission: 1 }, onClosed: () => {} };
@@ -410,6 +547,7 @@ async function main(): Promise<void> {
         await resultView.completeBattle(true);
         assert.equal(claimCount, 1);
         assert.equal(resultArgs.rewards[0].quantity, 4000, "结算窗口消费真实回执");
+        assert.deepEqual(resultArgs.names, { attacker: "开战昵称", defender: "羽嘉森林1" });
         await resultView.completeBattle(true);
         assert.equal(claimCount, 1, "历史重播不再次发起结算");
         assert.deepEqual(resultArgs.rewards, []);
@@ -440,6 +578,7 @@ async function main(): Promise<void> {
         MainChapterController.instance.claim = originalClaim;
         UIManager.instance.open = originalUiOpen;
         BattleReplayUtils.units = originalUnits;
+        BattleReplayUtils.names = originalNames;
         shared.reset(null);
     }
     const chapterPrefab = JSON.parse(readFileSync("client/assets/prefabs/ui/battle/MainChapterView.prefab", "utf8"));

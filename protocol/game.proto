@@ -185,6 +185,9 @@ message BattleReplay {
   required uint32 rounds = 4;
   repeated BattleReplayUnit units = 5;
   repeated BattleReplayPhase phases = 6;
+  // 开战时冻结的双方名称；旧战报缺失时不得使用当前昵称补历史。
+  optional string attacker_name = 7;
+  optional string defender_name = 8;
 }
 message BattleReplayUnit {
   required uint32 unit_id = 1;
@@ -206,6 +209,8 @@ message BattleReplayUnit {
   optional int64 total_recovery = 11;
   // 本场英雄星级；旧战报缺失时不从当前名册补历史外观。
   optional uint32 star = 12;
+  // 开战时按历史星级/进化解析的头像资源ID；缺失为旧战报，不读当前英雄补齐。
+  optional uint32 portrait_icon_id = 13;
 }
 message BattleReplayPhase {
   required uint32 round = 1;
@@ -213,6 +218,7 @@ message BattleReplayPhase {
   required uint32 source_id = 2;
   repeated BattleReplayEvent events = 3;
 }
+// recovery事件复用actual_hp_change/reported_hp_change和dead=false；实际回血与含溢出治疗量不可混用。
 message BattleReplayEvent {
   required string kind = 1;
   required uint32 source_id = 2;

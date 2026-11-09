@@ -9,6 +9,9 @@ import { bindVisibleRefresh, readVisibleBox } from "../../../framework/ui/visibl
 import { BattleInfoUtils } from "../utils/BattleInfoUtils";
 
 export class MainChapterIdleDisplay {
+    /** dispose调用时立即置为true；引擎延迟销毁期间也禁止归还英雄到旧站位。 */
+    private disposed = false;
+
     /** 行军显示的预制体根节点，销毁时释放资源。 */
     private constructor(public readonly root: Node, private readonly actors: readonly SpineActor[]) {}
 
@@ -111,7 +114,7 @@ export class MainChapterIdleDisplay {
         }
     }
 
-    /** 临时将指定站位骨骼交给遇敌播放器；归还函数幂等，关页后不复活节点。 */
+    /** 临时将指定站位骨骼交给遇敌播放器；归还函数幂等，释放中的行军显示不再接回节点。 */
     public borrow(position: number, target: Node): { actor: SpineActor; release: () => void } {
         const home = this.root.getChildByPath("LayerField/AllySlots/Slot_A" + (position - 1));
         const actor = this.actors.find(value => value.node.parent === home);
@@ -124,17 +127,21 @@ export class MainChapterIdleDisplay {
         actor.node.parent = target;
         let released = false;
         return { actor, release: () => {
-            if (released) return;
+            if (released) {
+                return;
+            }
             released = true;
-            if (home.isValid && actor.node.isValid) {
+            // destroy延迟到帧末执行，不能仅靠isValid判断站位是否仍可接收节点。
+            if (!this.disposed && home.isValid && actor.node.isValid) {
                 actor.node.parent = home;
                 actor.node.setPosition(origin);
             }
         } };
     }
 
-    /** 关页或进入挑战销毁行军节点，迟到骨骼加载由节点作用域取消。 */
+    /** 关页或进入挑战先禁止英雄归还，再销毁行军节点；仍借出的英雄随遇敌战场销毁。 */
     public dispose(): void {
+        this.disposed = true;
         if (this.root.isValid) {
             this.root.destroy();
         }

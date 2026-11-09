@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-09",
+  "scope": "战斗统计头像与高星显示，不改英雄名册/养成",
+  "source": {
+    "stars": "UIMenuItemHero.lua:setStar/getRare",
+    "awakened": "data/Player.lua:awaken_star=14",
+    "effect": "config/effect2.lua:eff_hero_star，anim/EffectFactory.lua:speed/100、delay/1000"
+  },
+  "changes": [
+    "新增BattlePortraitById：skin星级头像及58张进化头像按真实资源ID生成",
+    "58张进化头像和13帧高星效果恢复旧RGBA与完整画布；已有UUID保留",
+    "BattleHeroStarView绑定静态星行、品质边框、10至13星牌/数字及14星觉醒牌",
+    "13帧每帧0.12秒、尾帧停留1.5秒循环，关闭时不留计时器"
+  ],
+  "checks": {
+    "frontend": "40/40 active，5既有暂停不计",
+    "typeScript": "通过",
+    "bindings": "通过",
+    "resourceDrift": "通过",
+    "pixelComparison": {
+      "images": 71,
+      "evolutionPortraits": 58,
+      "effectFrames": 13,
+      "result": "全部与旧图集逐像素一致"
+    },
+    "resourceUUIDs": "71个既有主资源UUID保持；未重建meta或更换子资源身份",
+    "backend": "本批没有后端改动，不复用上批测试次数"
+  },
+  "browser": {
+    "type": "独立预览内纯展示夹具，无登录/养成/资产写入",
+    "sizes": [
+      [
+        393,
+        852
+      ],
+      [
+        360,
+        720
+      ],
+      [
+        360,
+        840
+      ]
+    ],
+    "highStars": [
+      5,
+      6,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "lowAndMissing": [
+      1,
+      2,
+      3,
+      4,
+      7,
+      8,
+      null
+    ],
+    "portraits": [
+      20111008,
+      20112008
+    ],
+    "observed": "两个进化分支正确显示；金/红星、高星数字/觉醒牌与冻结星级对应；13帧循环推进，1.63秒时保持尾帧；关闭后星级组件为0",
+    "warningsAndErrors": 0,
+    "cleanup": "关闭临时窗口与浏览器标签",
+    "screenshots": [
+      "docs/images/battle-high-stars-393-20261109.jpg",
+      "docs/images/battle-high-stars-360x720-20261109.jpg",
+      "docs/images/battle-high-stars-360x840-20261109.jpg",
+      "docs/images/battle-low-stars-legacy-20261109.jpg"
+    ]
+  },
+  "limits": [
+    "58头像均有索引与像素校验，浏览器代表性查看两个分支，未逐张截图",
+    "未验收真实进化战斗/非零治疗链路，进化与皮肤操作未开放",
+    "胜利页骨骼外观、历史双方姓名、其他模块保持原缺口",
+    "清心概率与护盾疑点保留",
+    "未提交推送"
+  ]
+}

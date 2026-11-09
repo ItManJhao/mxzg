@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-09",
+  "scope": "挂机纯规则边界回归，不开放领取或加成模块",
+  "test": "backend/src/test/java/com/funsgamex/mxzg/IdleRulesBoundaryTest.java",
+  "result": {
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "command": "backend/mvnw.cmd -Dtest=IdleRulesBoundaryTest test",
+  "environment": "仓库JDK21/Maven；直接调用IdleRules，不启动Spring或数据库",
+  "coverage": [
+    "真实配置89/90秒取整",
+    "跨关且跨掉落组的类别保底和输入不可变",
+    "上限优先于保底且不消耗随机",
+    "一次产出超过剩余额度后封顶",
+    "恰好12小时先产出再清计数",
+    "30+30秒各取整随机且基础资源只计算一次",
+    "旧窗口封顶后新窗口重新产出",
+    "概率0/满值/严格小于阈值",
+    "相对权重分界、数量上下端点",
+    "非法时段拒绝且不改输入/不抽随机"
+  ],
+  "fixtures": "一项读取真实导入投影；其他经测试ObjectMapper注入合成配置，调用同一生产roll；未修改生产代码或配置",
+  "limitations": [
+    "完整加成尚无实际新版入口，未用测试内算式声称其通过",
+    "未运行历史IdleService领取、H2、MySQL或浏览器",
+    "未验证完整领取事务及资产推送",
+    "保留世界等级接线、活动gain_chance和礼包到期秒依据缺口"
+  ],
+  "warnings": "Mockito动态加载测试代理的JDK提示保留，未为消除提示修改构建配置",
+  "git": "未提交未推送"
+}

@@ -72,6 +72,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
                 won, persistentChapter: true, rewards, notice,
                 roleAppearance: MainChapterController.instance.readRoleAppearance(),
                 units: BattleReplayUtils.units(this.args.report.bytes),
+                names: BattleReplayUtils.names(this.args.report.bytes),
                 experience: model.receipt?.battleId === battleId && model.receipt.action === "SETTLED"
                     ? model.receipt.experience : undefined,
                 onClosed: () => {

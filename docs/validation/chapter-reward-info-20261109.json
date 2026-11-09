@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-09",
+  "scope": "全部850关产物说明，仅只读，不开放挑战或领取",
+  "authority": "负责人确认展示全部850关",
+  "sources": [
+    "旧MissionRewardInfoCtr.lua",
+    "旧MissionRewardInfoLayer/Cell.ccb",
+    "旧BattlePanelLayer.ccb:btn_icon/onRewardInfo"
+  ],
+  "config": {
+    "stages": 850,
+    "uniqueItems": 41,
+    "missingItemConfigs": 0
+  },
+  "checks": {
+    "frontend": "全量首跑38/40，补测试引擎Rect导出及Prefab根信息后startup/bindings复验通过，累计40/40；5组暂停不计入",
+    "typescript": "通过",
+    "browser": {
+      "sizes": [
+        "360x840",
+        "393x852",
+        "360x720"
+      ],
+      "firstTab": {
+        "visibleRows": 4,
+        "icons": 26
+      },
+      "idleTab": {
+        "visibleRows": 4,
+        "icons": 32
+      },
+      "tail": {
+        "stages": [
+          847,
+          848,
+          849,
+          850
+        ],
+        "icons": 49
+      },
+      "openMsObserved": 1102.9,
+      "openTimingScope": "本机UIManager就绪耗时，不包含所有图片绘制，不代表真机性能指标",
+      "horizontalDrag": "通过",
+      "verticalDrag": {
+        "visibleStages": [
+          3,
+          4,
+          5,
+          6
+        ],
+        "offsetY": 325.1146
+      },
+      "detail": "最终短文案产物说明（只读）显示完整，无获取入口",
+      "closed": {
+        "views": 0,
+        "cells": 0
+      },
+      "errors": "首轮resources包路径错误已修复；最终阶段无新增警告/错误",
+      "flowScope": "真实独立H2角色从主线中央图标打开；自动重载后通过同一UIManager入口做只读展示检查，最终文案在登录背景上复验，不混算完整挑战结算链"
+    },
+    "git": "未提交未推送"
+  },
+  "corrections": [
+    "详情资源加载改为prefabs包目录引用",
+    "Mask世界矩形不合并content子树，控制可见图标数量",
+    "详情提示缩短，避免越界",
+    "两个新Prefab补根PrefabInfo，仅元数据，不改变已验布局"
+  ],
+  "remaining": [
+    "850行骨架仍由SuperContent创建，真机性能待验",
+    "完整逐关产物美术对照",
+    "挂机累计进度条与击杀资源飞行",
+    "领取事务与完整加成"
+  ],
+  "notRun": [
+    "后端测试",
+    "MySQL",
+    "本批完整挑战结算流程",
+    "Creator Inspector人工编辑"
+  ],
+  "images": [
+    "../images/chapter-reward-tail-20261109.png",
+    "../images/chapter-reward-360x720-20261109.png",
+    "../images/chapter-reward-393x852-20261109.png",
+    "../images/chapter-reward-detail-20261109.png"
+  ]
+}

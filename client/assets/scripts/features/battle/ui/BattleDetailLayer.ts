@@ -18,6 +18,8 @@ const { ccclass, property } = _decorator;
 
 /** 来自该场已校验战报，不以当前名册或资产替换历史数据。 */
 export interface BattleDetailArgs {
+    /** 已校验的开战名称；缺失时显示明确占位，不能从当前角色或关卡猜历史。 */
+    readonly names?: Readonly<{ attacker: string | null; defender: string | null }>;
     readonly units: readonly BattleReplayUnit[];
     readonly won: boolean;
 }
@@ -40,6 +42,10 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
     @property(Node) defenderWin: Node | null = null;
     /** 旧统计字段缺失时的明确提示。 */
     @property(Label) missingNotice: Label | null = null;
+    /** 本场攻方名称；由Prefab保存位置和长名称收缩方式。 */
+    @property(Label) attackerName: Label | null = null;
+    /** 本场守方名称，不使用当前关卡推算旧战报。 */
+    @property(Label) defenderName: Label | null = null;
     /** 关闭后为true，阻止迟到配置更新已销毁页面。 */
     private released = false;
 
@@ -47,15 +53,22 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
     public onOpen(args?: BattleDetailArgs): void {
         super.onOpen(args);
         if (!args || !this.panel || !this.backdrop || !this.closeButton || !this.attackerList
-            || !this.defenderList || !this.attackerWin || !this.defenderWin || !this.missingNotice) {
+            || !this.defenderList || !this.attackerWin || !this.defenderWin || !this.missingNotice
+            || !this.attackerName || !this.defenderName) {
             throw new Error("战斗统计参数或预制体绑定缺失");
         }
         this.beginOpen();
         this.released = false;
         this.attackerWin.active = args.won;
         this.defenderWin.active = !args.won;
+        this.attackerName.string = args.names?.attacker ?? "我方（历史名称未记录）";
+        this.defenderName.string = args.names?.defender ?? "敌方（历史名称未记录）";
         const missing = args.units.some(unit => unit.totalDamage == null || unit.totalTakenDamage == null || unit.totalRecovery == null);
-        this.missingNotice.string = missing ? "旧战报部分统计未记录，— 表示缺失" : "";
+        const missingPortrait = args.units.some(unit => BattleStatisticsUtils.portrait(unit) === null);
+        this.missingNotice.string = [
+            missing ? "部分统计未记录（—）" : "",
+            missingPortrait ? "历史头像缺失，显示基础头像" : "",
+        ].filter(Boolean).join("；");
         const close = () => this.close();
         this.closeButton.node.on(Button.EventType.CLICK, close);
         this.backdrop.on(Button.EventType.CLICK, close);

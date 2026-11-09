@@ -372,10 +372,15 @@ public class HeroSkillPanelRules {
         return !row("buff", buffId).path("value").asString().split("\\|", -1)[1].equals("1");
     }
 
+    /** 本批只开放冰晶女巫已核对的直接治疗，其他英雄治疗链仍按原边界拒绝。 */
+    public boolean battleDirectHealing(int buffId) {
+        return buffId >= 2031301 && buffId <= 2031303;
+    }
+
     /** 一个已预检的纯普通伤害动作，保留目标规则和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
-    /** 按真实普攻/主动预检伤害、控制、监听、流血、已核对直接属性及2/3/5表现；未知目标或效果拒绝，不执行半组技能。 */
+    /** 按真实普攻/主动预检伤害、控制、监听、流血、已核对直接属性、冰晶女巫直接治疗及2/3/5表现；未知效果拒绝，不执行半组技能。 */
     public List<DamageArt> damageSkillArts(HeroBattleSkillUtils.Skill skill) {
         var config = skills.get(skill.skillId() + ":" + skill.level());
         if (config == null || !Set.of(1, 2).contains(config.path("active_type").asInt())) {
@@ -390,7 +395,9 @@ public class HeroSkillPanelRules {
                     if (row("buff", buff.asInt()).path("type").asInt() < 100) {
                         throw new IllegalArgumentException("技能表现动作尚未支持：" + buff.asInt());
                     }
-                    if (battleRoundListener(buff.asInt())) {
+                    if (battleDirectHealing(buff.asInt())) {
+                        battleHealing(buff.asInt() - 100);
+                    } else if (battleRoundListener(buff.asInt())) {
                         battleTrigger(buff.asInt());
                     } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleBleed(buff.asInt()) && !battleDirectAttribute(buff.asInt())) {
                         battleOrdinaryDamageRate(buff.asInt(), true);

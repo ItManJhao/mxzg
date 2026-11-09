@@ -1,0 +1,92 @@
+{
+  "date": "2026-11-09",
+  "scope": "挂机累计进度与阵亡资源飞行；不开放领取",
+  "sources": [
+    "BattlePanelLayer.lua:getBattleHarvestProgress/runResCollectAction",
+    "BattleIdleLayer.lua:_heroDeadHandler",
+    "BattleController.lua:_triggerHeroData"
+  ],
+  "environment": {
+    "kind": "独立H2测试服务",
+    "port": 51746,
+    "runId": "50f87aeb4c674ff58ae738390baac022",
+    "role": "chapter_review"
+  },
+  "checks": {
+    "frontend": "本批全量40/40通过；关页修正后main-chapter、TypeScript、bindings、docs复验通过；100份Prefab结构检查通过",
+    "percentage": {
+      "seconds": [
+        0,
+        647,
+        648,
+        10800,
+        21600,
+        30000
+      ],
+      "maxSeconds": 21600,
+      "fill": [
+        0,
+        0.02,
+        0.03,
+        0.5,
+        1,
+        1
+      ],
+      "scope": "只调用显示方法后恢复真实快照，不修改Model"
+    },
+    "randomBounds": "固定随机输入0与0.999999验证8/12数量、4种图标、偏移/缩放/顺序/时长边界",
+    "browser": {
+      "sizes": [
+        "360x840",
+        "393x852",
+        "360x720"
+      ],
+      "realFlightCounts": [
+        11,
+        11,
+        10
+      ],
+      "naturalEnd": {
+        "count": 11,
+        "remaining": 0,
+        "encounter": false
+      },
+      "normalClose": {
+        "count": 11,
+        "views": 0,
+        "icons": 0
+      },
+      "pausedClose": {
+        "count": 12,
+        "views": 0,
+        "icons": 0
+      },
+      "reopen": "真实遇敌再次触发，结束后继续行军",
+      "repeatClear": "显示夹具12个图标，连续clear后0",
+      "assets": {
+        "gold": 4000,
+        "diamonds": 151,
+        "assetRevision": 5,
+        "maxCleared": 2,
+        "pendingBattleId": null,
+        "changed": false
+      },
+      "finalErrors": "最终页面自2026-11-09T10:48:25.220Z加载至10:49:58.787Z无新增warn/error；旧载入错误保留在浏览器日志中",
+      "scope": "三尺寸真实遇敌截图在关页修正前；修正只影响释放顺序，刷新后重验正常/暂停关闭及重开。未重跑本批完整挑战结算或后端/MySQL。"
+    }
+  },
+  "correction": "Cocos延迟排序错误定位到英雄归还Slot_A1；dispose先禁止归还，clearIdleDisplay先dispose再stop，避免同帧重新挂入待销毁站位；延迟销毁回归覆盖此顺序",
+  "screenshots": [
+    "../images/idle-resource-flight-20261109.png",
+    "../images/idle-resource-flight-393-20261109.png",
+    "../images/idle-resource-flight-720-20261109.png",
+    "../images/idle-resource-return-20261109.png"
+  ],
+  "remaining": [
+    "真机性能与逐帧正式服对照未完成",
+    "宝箱领取、快速战斗、升级和穿脱不开放",
+    "随机保底及完整加成待核对",
+    "清心概率、护盾统计与大型胜利翅膀裁边保留待审"
+  ],
+  "git": "未提交未推送"
+}

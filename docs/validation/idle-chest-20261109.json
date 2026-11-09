@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-09",
+  "scope": "挂机宝箱只读表现，不开放领取",
+  "environment": {
+    "run": "50f87aeb4c674ff58ae738390baac022",
+    "port": 51746,
+    "role": "chapter_review",
+    "database": "独立H2"
+  },
+  "checks": {
+    "mainChapter": "通过，新增四档取整/气泡/时钟/动画存在检查",
+    "typescript": "通过",
+    "browser": {
+      "sizes": [
+        "360x840",
+        "393x852",
+        "360x720"
+      ],
+      "finalPosition": {
+        "x": -202,
+        "y": 140.5
+      },
+      "stage": 4,
+      "assets": {
+        "gold": 4000,
+        "diamonds": 151
+      },
+      "closedChestCount": 0,
+      "reopenedChestCount": 1,
+      "warnings": [],
+      "errors": [],
+      "thresholdFixture": [
+        0,
+        647,
+        648,
+        1295,
+        1296,
+        2375,
+        2376,
+        21600,
+        600,
+        601
+      ],
+      "fixtureScope": "仅调用显示方法，不修改Model或服务端资产；下一帧恢复权威时间"
+    },
+    "screenshots": [
+      "../images/idle-chest-360x840-20261109.png",
+      "../images/idle-chest-393x852-20261109.png",
+      "../images/idle-chest-360x720-20261109.png"
+    ]
+  },
+  "correction": "首轮漏计旧menu纵向85导致覆盖收益，已保存修正并经Creator刷新重做最终画面",
+  "remaining": [
+    "完整双页产物说明",
+    "累计进度条与击杀资源飞行动画",
+    "领取事务及完整加成",
+    "真机及平板"
+  ],
+  "notRun": [
+    "后端测试",
+    "MySQL",
+    "本批完整挑战结算链"
+  ],
+  "git": "未提交未推送"
+}

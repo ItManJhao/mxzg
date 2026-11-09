@@ -23,10 +23,19 @@ public final class HeroBattleChapterScenario {
     /** 我方已选阵型1的站位属性；怪物不走玩家FormationReceivers。 */
     private final MainFormationRules formations;
 
-    /** 初始单位信息与原始属性；faction明确为1攻方/2守方，id为本场身份，模板可重复。 */
+    /** 同源星级/进化头像规则，只在本场输入构建时使用。 */
+    private final HeroBattleAppearanceRules appearance;
+
+    /** 初始单位信息；faction为1攻方/2守方，id为本场身份。portraitIconId保存开战头像；审计输入null由开战入口补齐。 */
     public record Unit(int id, int faction, int template, int level, int star, int stage, int position,
                        Map<Integer, Long> attributes, HeroBattleAttributeUtils.Opening opening,
-                       List<HeroBattleSkillUtils.Skill> skills) {
+                       List<HeroBattleSkillUtils.Skill> skills, Integer portraitIconId) {
+        /** 固定审计/怪物输入没有进化，开战入口按历史星级补齐头像。 */
+        public Unit(int id, int faction, int template, int level, int star, int stage, int position,
+                    Map<Integer, Long> attributes, HeroBattleAttributeUtils.Opening opening,
+                    List<HeroBattleSkillUtils.Skill> skills) {
+            this(id, faction, template, level, star, stage, position, attributes, opening, skills, null);
+        }
         /** 不允许测试结束后反写输入或技能计划。 */
         public Unit {
             attributes = Map.copyOf(attributes);
@@ -71,6 +80,7 @@ public final class HeroBattleChapterScenario {
     public HeroBattleChapterScenario(ObjectMapper mapper) {
         this.mapper = mapper;
         growth = new HeroGrowthRules(mapper);
+        appearance = new HeroBattleAppearanceRules(mapper);
         skills = new HeroSkillPanelRules(mapper);
         defense = new HeroBattleDefenseRules(mapper);
         elements = new HeroBattleElementRules(mapper);
@@ -155,7 +165,7 @@ public final class HeroBattleChapterScenario {
                     }
                 }
                 result.add(new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(),
-                    unit.stage(), unit.position(), attributes, HeroBattleAttributeUtils.opening(attributes), unit.skills()));
+                    unit.stage(), unit.position(), attributes, HeroBattleAttributeUtils.opening(attributes), unit.skills(), unit.portraitIconId()));
             }
         }
         return List.copyOf(result);
@@ -340,7 +350,8 @@ public final class HeroBattleChapterScenario {
             }
             units.add(new Unit(source.position(), 1, hero.templateId(), hero.level(), hero.star(), hero.stage(),
                 source.position(), source.attributes(), HeroBattleAttributeUtils.opening(source.attributes()),
-                source.skillSchedule()));
+                source.skillSchedule(), appearance.icon(hero.templateId(), hero.star(),
+                    hero.evolution().type(), hero.evolution().level())));
         }
         // 本场ID与持久英雄ID分离：攻方使用1至8，守方使用9至16，避免双方同站位碰撞。
         for (var enemy : initial(mission)) {
@@ -366,7 +377,8 @@ public final class HeroBattleChapterScenario {
             var hero = source.hero();
             var opening = source.opening();
             units.add(new Unit(source.position(), 1, hero.templateId(), hero.level(), hero.star(), hero.stage(),
-                source.position(), source.attributes(), opening, ordinary(source.skillSchedule())));
+                source.position(), source.attributes(), opening, ordinary(source.skillSchedule()),
+                appearance.icon(hero.templateId(), hero.star(), hero.evolution().type(), hero.evolution().level())));
         }
         var enemies = initial(mission).stream().filter(unit -> unit.faction() == 2).toList();
         if (enemyIndex < 0 || enemyIndex >= enemies.size()) throw new IllegalArgumentException("挂机怪物索引无效");
@@ -381,7 +393,7 @@ public final class HeroBattleChapterScenario {
             if (unit.id() == firstId) opening = new HeroBattleAttributeUtils.Opening(opening.hp(), opening.maxHp(),
                 opening.attack(), opening.defense(), 999999);
             return new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(), unit.stage(),
-                unit.position(), unit.attributes(), opening, unit.skills());
+                unit.position(), unit.attributes(), opening, unit.skills(), unit.portraitIconId());
         }).toList();
         return runBattle("idle:chapter:" + mission, prepared, decision);
     }
@@ -422,9 +434,13 @@ public final class HeroBattleChapterScenario {
         return runBattle(scenario, input, decision, new Random());
     }
 
-    /** 每场注入独立随机源，抽样算法与旧randomList一致；概率待审标记不因此移除。 */
+    /** 开战前冻结头像并注入独立随机源，抽样算法与旧randomList一致；概率待审标记不因此移除。 */
     private Result runBattle(String scenario, List<Unit> input, DoublePredicate decision, Random random) {
-        var initial = roster(input);
+        // 在战斗开始前冻结资源身份；之后的名册/配置变化不重算已持久战报。
+        var initial = roster(input).stream().map(unit -> new Unit(unit.id(), unit.faction(), unit.template(),
+            unit.level(), unit.star(), unit.stage(), unit.position(), unit.attributes(), unit.opening(),
+            unit.skills(), unit.portraitIconId() == null
+                ? appearance.icon(unit.template(), unit.star(), 0, 0) : unit.portraitIconId())).toList();
         for (var unit : initial) {
             for (var skill : unit.skills()) {
                 validateSkill(skill);

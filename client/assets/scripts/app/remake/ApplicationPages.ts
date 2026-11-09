@@ -2,6 +2,7 @@
 import { MainChapterBattleView } from "../../features/battle/ui/MainChapterBattleView";
 import { MainChapterView } from "../../features/battle/ui/MainChapterView";
 import { BattleDetailLayer } from "../../features/battle/ui/BattleDetailLayer";
+import { ChapterRewardInfoView } from "../../features/battle/ui/ChapterRewardInfoView";
 import { Node, Prefab } from "cc";
 import { PREVIEW } from "cc/env";
 import { prepareHeroDetailConfig, prepareInventoryConfig } from "../../config/RemakeConfig";
@@ -59,6 +60,10 @@ export class ApplicationPages {
         stops.push(ui.setResidentHost("remake-modal", () => context.pageHost));
         stops.push(registerView(BattleDetailLayer, {
             id: "battle-detail", prefab: "prefabs/ui/battle/BattleDetailLayer", layer: UILayer.Popup,
+            cache: false, allowMultiple: false, hostId: "remake-modal",
+        }));
+        stops.push(registerView(ChapterRewardInfoView, {
+            id: "chapter-reward-info", prefab: "prefabs/ui/battle/ChapterRewardInfoView", layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",
         }));
         stops.push(registerView(ServerPickerView, {

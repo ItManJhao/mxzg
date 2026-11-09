@@ -15,6 +15,8 @@ public final class MainChapterRules {
     private static final int LAST_SUPPORTED = 3;
     /** 全局关卡索引对应门槛、敌方定位和首通奖励，不包含挂机收益。 */
     private final Map<Integer, Stage> stages;
+    /** 同源章节语言名称，构建时读取；用于开战时冻结敌方名称，不随回看重新查表。 */
+    private final Map<Integer, String> chapterNames = new HashMap<>();
 
     /** 已通关关卡对应的酒馆冒险点上限，独立于普通物品数量。 */
     private final Map<Integer, Long> tavernLimits = new HashMap<>();
@@ -49,6 +51,19 @@ public final class MainChapterRules {
     /** 从原始导出读取前三关并验证门槛和敌人定位，不沿用简化战斗投影。 */
     public MainChapterRules(ObjectMapper mapper) {
         var result = new HashMap<Integer, Stage>();
+        for (var row : rows(mapper, "language")) {
+            String key = row.path("key").asString();
+            if (key.equals("43101")) {
+                String name = row.path("value").asString();
+                if (name == null || name.isBlank()) {
+                    throw new IllegalStateException("主线章节名称为空");
+                }
+                chapterNames.put(1, name);
+            }
+        }
+        if (!chapterNames.containsKey(1)) {
+            throw new IllegalStateException("主线章节语言43101缺失");
+        }
         var enemies = rows(mapper, "chapter");
         for (var row : rows(mapper, "chapterreward")) {
             int index = integer(row, "idx");
@@ -145,6 +160,12 @@ public final class MainChapterRules {
     /** 返回待领关卡的first_reward；无待领奖沿旧3002空操作，不凭客户端关卡发奖。 */
     public List<Reward> pendingRewards(Progress progress) {
         return progress.rewardPending() ? stage(progress.maxCleared()).firstRewards() : List.of();
+    }
+
+    /** 按旧BattleHandler的章节语言43100+chapter与全局关卡序号生成本场敌方名。 */
+    public String opponentName(int index) {
+        var stage = stage(index);
+        return chapterNames.get(stage.chapter()) + stage.index();
     }
 
     /** 发奖成功时清除待领奖，不再次推进关卡；必须与资产写入共同提交。 */

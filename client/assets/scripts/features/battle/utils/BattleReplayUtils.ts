@@ -22,6 +22,8 @@ interface WireUnit {
     totalRecovery?: WireLong;
     /** 本场冻结星级，旧战报允许缺失。 */
     star?: number;
+    /** 开战时冻结的头像资源ID，旧战报可缺失。 */
+    portraitIconId?: number;
 }
 
 /** 校验后的只读展示单位；生命为可精确显示的安全整数。 */
@@ -42,10 +44,15 @@ export interface BattleReplayUnit {
     readonly totalRecovery?: number | null;
     /** 历史星级；缺失时隐藏星级，不读取当前英雄。 */
     readonly star?: number | null;
+    /** 历史头像资源ID；缺失时不读取当前英雄外观。 */
+    readonly portraitIconId?: number | null;
 }
 
 /** 仅声明本适配器使用的解码字段，不手改生成代码。 */
 interface WireReplay {
+    /** 开战名称字段；缺失与空字符串不同，空串保留原战报语义。 */
+    attackerName?: string;
+    defenderName?: string;
     schemaVersion: number; scenario: string; rounds: number; outcome: string;
     units: WireUnit[];
     phases: Array<{ round: number; sourceId: number; events: WireEvent[] }>;
@@ -77,6 +84,17 @@ export interface BattleReplayStep {
 }
 
 export class BattleReplayUtils {
+    /** 读取已校验战报的冻结名称；缺失返回null，不读取当前角色资料。 */
+    public static names(bytes: Uint8Array): Readonly<{ attacker: string | null; defender: string | null }> {
+        this.decode(bytes);
+        const report = (mxzg as unknown as {
+            game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
+        }).game.BattleReplay.decode(bytes);
+        return Object.freeze({
+            attacker: Object.prototype.hasOwnProperty.call(report, "attackerName") ? report.attackerName! : null,
+            defender: Object.prototype.hasOwnProperty.call(report, "defenderName") ? report.defenderName! : null,
+        });
+    }
     /** 校验整包后保留服务器单位身份、模板及站位，展示层不再把所有人塞入首槽。 */
     public static units(bytes: Uint8Array): readonly BattleReplayUnit[] {
         this.decode(bytes);
@@ -112,8 +130,12 @@ export class BattleReplayUtils {
             const totalDamage = Object.prototype.hasOwnProperty.call(unit, "totalDamage") ? this.integer(unit.totalDamage!) : null;
             const totalTakenDamage = Object.prototype.hasOwnProperty.call(unit, "totalTakenDamage") ? this.integer(unit.totalTakenDamage!) : null;
             const totalRecovery = Object.prototype.hasOwnProperty.call(unit, "totalRecovery") ? this.integer(unit.totalRecovery!, true) : null;
+            const portraitIconId = Object.prototype.hasOwnProperty.call(unit, "portraitIconId") ? this.integer(unit.portraitIconId!) : null;
+            if (portraitIconId !== null && portraitIconId <= 0) {
+                throw new Error("战报历史头像ID无效");
+            }
             const star = Object.prototype.hasOwnProperty.call(unit, "star") ? this.integer(unit.star!) : null;
-            if (star !== null && (star < 1 || star > 15)) {
+            if (star !== null && (star < 1 || star > 14)) {
                 throw new Error("战报星级范围无效");
             }
             if (maxHp <= 0 || initialHp <= 0 || initialHp > maxHp || finalHp > maxHp) {
@@ -121,7 +143,7 @@ export class BattleReplayUtils {
             }
             return Object.freeze({unitId: unit.unitId, faction: unit.faction, templateId: unit.templateId,
                 level: unit.level, position: unit.position, initialHp, maxHp, finalHp, totalDamage, totalTakenDamage,
-                totalRecovery, star});
+                totalRecovery, star, portraitIconId});
         });
         if (factions.size !== 2) throw new Error("战报缺少对战阵营");
         return Object.freeze(result);
@@ -136,6 +158,13 @@ export class BattleReplayUtils {
             game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
         }).game.BattleReplay;
         const report = codec.decode(bytes);
+        for (const name of ["attackerName", "defenderName"] as const) {
+            if (Object.prototype.hasOwnProperty.call(report, name)
+                && (typeof report[name] !== "string" || report[name]!.length > 128
+                    || /[\u0000-\u001f\u007f]/.test(report[name]!))) {
+                throw new Error("战报双方名称无效");
+            }
+        }
         const idleMission = /^idle:chapter:[123]$/.test(report.scenario) ? Number(report.scenario.slice(-1)) : 0;
         const lineupMission = /^(audit|chapter):lineup:[123]$/.test(report.scenario) ? Number(report.scenario.slice(-1)) : 0;
         if (report.schemaVersion !== 1 || (!lineupMission && !idleMission && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
@@ -202,6 +231,7 @@ export class BattleReplayUtils {
                 }
                 const isSkill = event.kind === "skill.begin" || event.kind === "skill.end";
                 const isDamage = event.kind === "damage";
+                const isRecovery = event.kind === "recovery";
                 const isBuff = event.kind === "buff.upsert" || event.kind === "buff.remove";
                 if (idleMission && isSkill && event.skillType !== 2) throw new Error("挂机战报只能使用普攻");
                 if (isSkill) {
@@ -211,7 +241,7 @@ export class BattleReplayUtils {
                         throw new Error("战报技能等级或类型无效");
                     }
                 }
-                if (isDamage) this.required(event, ["actualHpChange", "reportedHpChange", "dead"]);
+                if (isDamage || isRecovery) this.required(event, ["actualHpChange", "reportedHpChange", "dead"]);
                 if (isBuff) {
                     this.required(event, ["buffInstanceId", "expiresAtRound", "buffValue"]);
                     if (!Number.isInteger(event.expiresAtRound) || event.expiresAtRound < round) {
@@ -249,6 +279,19 @@ export class BattleReplayUtils {
                         hp.set(event.targetId, next);
                         break;
                     }
+                    case "recovery": {
+                        const before = hp.get(event.targetId)!;
+                        const maximum = roster.find(unit => unit.unitId === event.targetId)!.maxHp;
+                        const change = this.integer(event.actualHpChange, true);
+                        const reported = this.integer(event.reportedHpChange, true);
+                        const next = before + change;
+                        if (before <= 0 || next <= 0 || next > maximum || !Number.isSafeInteger(next)
+                            || event.dead || change !== Math.min(reported, maximum - before)) {
+                            throw new Error("战报治疗血量或溢出量无效");
+                        }
+                        hp.set(event.targetId, next);
+                        break;
+                    }
                     case "buff.upsert": {
                         const key = event.targetId + ":" + this.instance(event.buffInstanceId);
                         buffs.set(key, event.configId);
@@ -266,9 +309,9 @@ export class BattleReplayUtils {
                     targetId: event.targetId, configId: event.configId,
                     skillLevel: isSkill ? event.skillLevel : null,
                     skillType: isSkill ? event.skillType : null,
-                    actualHpChange: isDamage ? this.integer(event.actualHpChange, true) : null,
-                    reportedHpChange: isDamage ? this.integer(event.reportedHpChange, true) : null,
-                    dead: isDamage ? event.dead : null,
+                    actualHpChange: (isDamage || isRecovery) ? this.integer(event.actualHpChange, true) : null,
+                    reportedHpChange: (isDamage || isRecovery) ? this.integer(event.reportedHpChange, true) : null,
+                    dead: (isDamage || isRecovery) ? event.dead : null,
                     buffInstanceId: isBuff ? this.instance(event.buffInstanceId) : null,
                     expiresAtRound: isBuff ? event.expiresAtRound : null,
                     buffValue: isBuff ? event.buffValue.toString() : null,

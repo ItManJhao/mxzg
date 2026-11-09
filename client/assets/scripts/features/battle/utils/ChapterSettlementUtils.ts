@@ -6,6 +6,33 @@ export class ChapterSettlementUtils {
     /** 无状态工具，不保存页面或账号状态。 */
     private constructor() {}
 
+    /** 按同源配置将冻结头像映射到开战骨骼；进化使用显式fashion字段，不按当前名册或星级反推。缺失返回null。 */
+    public static historicalSpine(portrait: number | null,
+        skins: readonly { skin: string }[],
+        evolutions: readonly { evolve_icon_id: number; evolve_fashion_id: number }[]): string | null {
+        if (portrait == null) {
+            return null;
+        }
+        const evolution = evolutions.find(row => row.evolve_icon_id === portrait);
+        if (evolution) {
+            if (!Number.isSafeInteger(evolution.evolve_fashion_id) || evolution.evolve_fashion_id <= 0) {
+                throw new Error("历史进化骨骼配置无效");
+            }
+            return String(evolution.evolve_fashion_id);
+        }
+        for (const row of skins) {
+            const values: unknown = JSON.parse(row.skin);
+            if (!Array.isArray(values) || !values.every(value => Number.isSafeInteger(value) && value > 0)) {
+                throw new Error("历史星级骨骼配置无效");
+            }
+            const skin = values.find(value => value + 10000000 === portrait);
+            if (skin !== undefined) {
+                return String(skin);
+            }
+        }
+        return null;
+    }
+
     /** 沿旧版只比较攻方且严格大于才替换；全部为0选择首人，任一统计缺失则不伪造排名。 */
     public static highestDamage(units: readonly BattleReplayUnit[]): BattleReplayUnit | null {
         const allies = units.filter(unit => unit.faction === 1);

@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-09",
+  "baseCommit": "47ec4c27",
+  "type": "浏览器纯展示夹具，不是服务器真实战斗",
+  "canvas": [
+    393,
+    852
+  ],
+  "setup": "在独立预览登录页，通过已注册UIManager打开BattleDetailLayer；传入双方各8个只读展示单位，不登录、不请求挑战、不写角色资产",
+  "values": {
+    "attackerRecovery": 216,
+    "defenderRecovery": 432,
+    "otherRecovery": 0,
+    "damage": "各方100到800",
+    "taken": "各方10到80"
+  },
+  "observations": [
+    "非零治疗216/432分别显示半条/满条",
+    "双方8个头像及数字加载完成",
+    "实际鼠标分别横向拖动两行，互不影响，末端可见第8个格子",
+    "两行各8个子节点，最大滚动270，末端偏移-270.0001（浮点误差）",
+    "遮罩裁切正常；点击关闭回到原登录页"
+  ],
+  "screenshots": [
+    "docs/images/battle-statistics-fixture-start-20261109.jpg",
+    "docs/images/battle-statistics-fixture-scroll-20261109.jpg"
+  ],
+  "limits": [
+    "纯展示输入，不证明治疗战斗回放或服务端8人阵容已开放",
+    "仅393×852，本轮未重跑其他竖屏",
+    "测试脚本曾错误传页面ID以及使用不匹配的UITransform构造引用，已更正；不计为产品错误",
+    "临时窗口和浏览器标签已关闭，无遗留页面修改"
+  ],
+  "checks": "推送前40/40前端检查通过；该展示验证未修改源码"
+}

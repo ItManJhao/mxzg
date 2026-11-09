@@ -1,0 +1,110 @@
+{
+  "date": "2026-11-09",
+  "scope": "只读源码/配置审计，无游戏代码、协议、资产操作或浏览器变更",
+  "config": {
+    "chapters": 850,
+    "groups": 17,
+    "triggers": 102,
+    "drops": 573,
+    "missingGroups": [],
+    "missingTables": [],
+    "duplicateTypes": [],
+    "triggerTimes": [
+      1
+    ]
+  },
+  "currentProjection": {
+    "stages": 20,
+    "triggers": 6,
+    "drops": 9,
+    "liveChallengeStages": 3
+  },
+  "tables": [
+    {
+      "path": "client/assets/resources/config/chapterreward.json",
+      "rows": 850,
+      "sha256": "bf7200dbceea0cf6a4b9f0366f311694b64ea148a62d481302de23f2069082be"
+    },
+    {
+      "path": "client/assets/resources/config/droptrigger.json",
+      "rows": 102,
+      "sha256": "a45d06a3d758200643785273957af371d39c31e8d6a0f50d71055de1e394f0ec"
+    },
+    {
+      "path": "client/assets/resources/config/dropgroup.json",
+      "rows": 573,
+      "sha256": "7b5303d2e8ddaa06336110b646e74db14b7cf041ea6735f9d00a7b25c33dc639"
+    },
+    {
+      "path": "client/assets/resources/config/goddessvip.json",
+      "rows": 14,
+      "sha256": "3c1b77817f16aaac2f0a7c2e651d86ca62830bedbe09beb69b090e9e02826319"
+    },
+    {
+      "path": "client/assets/resources/config/clergyprivilege.json",
+      "rows": 12,
+      "sha256": "74fbd2124242d8c65120deed5d72af4420526af20060008b04fd064a09711513"
+    },
+    {
+      "path": "client/assets/resources/config/worldlevelgainexp.json",
+      "rows": 40,
+      "sha256": "4b29573580456d50bc41f30a15851ff0461efdd39582b795d60f6286dc3aa432"
+    },
+    {
+      "path": "client/assets/resources/config/promotionprivilegegift.json",
+      "rows": 13,
+      "sha256": "65d0aa0379895716c00b3b61752c4028ee629d4f103ac93631d5cdeef1e654d9"
+    },
+    {
+      "path": "client/assets/resources/config/promotiondragonmarkdrops.json",
+      "rows": 1,
+      "sha256": "25dddcf5166a412ced593ddb9cf01b62983b510b03c018ddad3647e7c06a8504"
+    },
+    {
+      "path": "client/assets/resources/config/promotionpvedrops.json",
+      "rows": 1,
+      "sha256": "1574b79073c38a902bccb68c0bd1864919b7d15c32aa7196e7ac2c91405791e8"
+    },
+    {
+      "path": "client/assets/resources/config/promotionfiredrops.json",
+      "rows": 1,
+      "sha256": "bd68bf89556d63046900bcf46e0c3bb9f4ef8e5ab4d0bd4018e1a24ab810a44d"
+    },
+    {
+      "path": "client/assets/resources/config/system.json",
+      "rows": 450,
+      "sha256": "4f1251ce188ba7f370f35fb57478fe6f721ddf70be43f2b022736d8f2f637ad5"
+    }
+  ],
+  "activityMissingChance": [
+    {
+      "table": "promotiondragonmarkdrops",
+      "missingRows": 1
+    },
+    {
+      "table": "promotionpvedrops",
+      "missingRows": 1
+    },
+    {
+      "table": "promotionfiredrops",
+      "missingRows": 1
+    }
+  ],
+  "findings": [
+    "计数按item_group_type跨关卡共享，重置按累计收益43200秒",
+    "上限检查在抽取前，单次奖励不裁剪",
+    "普通随机用<，活动randomUpperLimit用<=，不可统一",
+    "神职逐项ceil，其他基础加成各项long截断后相加",
+    "WorldLevelManager存在算法，但RoleMissionService调用的WorldLevelService无对应方法",
+    "礼包getPrivilegeBonus不检查active且到期等于时刻仍计入，与getPrivilegeGifts到期清active边界不同"
+  ],
+  "validation": "引用闭包、有效概率/权重/数量及组内类型唯一性检查通过；不代表运行旧服或完整领取链验收",
+  "git": "未提交未推送",
+  "checks": {
+    "configReferences": "通过",
+    "idleGenerated": "通过，无投影漂移",
+    "docs": "通过",
+    "diffWhitespace": "通过",
+    "runtime": "本批未运行浏览器、后端资产测试或领取流程；仅只读审计"
+  }
+}

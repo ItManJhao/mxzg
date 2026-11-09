@@ -20,6 +20,23 @@ export class JsonAsset {
   json: object | null = null;
 }
 
+/** 只读列表裁剪测试使用的矩形，不模拟真实引擎坐标变换或绘制。 */
+export class Rect {
+  /** 保存测试矩形的原点和尺寸，单位与调用方传入坐标一致。
+   * @param x 左边界
+   * @param y 下边界
+   * @param width 矩形宽度
+   * @param height 矩形高度
+   */
+  constructor(public x = 0, public y = 0, public width = 0, public height = 0) {}
+
+  /** 两个矩形边缘接触也视为相交，与可视行保留边界一致。 */
+  intersects(other: Rect): boolean {
+    return this.x + this.width >= other.x && other.x + other.width >= this.x
+      && this.y + this.height >= other.y && other.y + other.height >= this.y;
+  }
+}
+
 export const KeyCode = { F9: 120, BACKQUOTE: 192 };
 
 export const Input = { EventType: { KEY_DOWN: "keydown" } };
