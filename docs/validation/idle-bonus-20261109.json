@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-09",
+  "scope": "已核实加成纯公式，不接权威输入、领取或资产写入",
+  "implementation": "backend/src/main/java/com/funsgamex/mxzg/campaign/IdleBonusUtils.java",
+  "tests": {
+    "newSuite": "IdleBonusUtilsTest",
+    "newTests": 10,
+    "existingSuite": "IdleRulesBoundaryTest",
+    "existingTests": 10,
+    "passed": 20,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "command": "backend/mvnw.cmd -Dtest=IdleBonusUtilsTest,IdleRulesBoundaryTest test",
+  "log": "backend/target/idle-bonus-test.log",
+  "coverage": [
+    "VIP百分比转换与系数超过100%",
+    "基础加成独立截断、不连乘、不使用随机或活动奖励做底数",
+    "神职原始重复分项分别ceil且不包含其他加成",
+    "多条神职独立追加",
+    "神职概率0/满值/阈值及每条一次抽样",
+    "旧float精度边界",
+    "输入不变与结果不可变",
+    "无加成及未匹配基础项",
+    "非法输入在抽样前拒绝",
+    "随机越界、计算及合并溢出拒绝"
+  ],
+  "limitations": [
+    "不判断实际VIP/世界/礼包/神职资格，输入已适用由未来装配层保证",
+    "不接活动掉落概率、礼包到期或世界等级接线",
+    "未运行数据库、浏览器或全量套件",
+    "缺少权威输入时不得将空列表当作无加成"
+  ],
+  "productionCallers": 0,
+  "git": "基线3dbb33f7，本批未提交未推送"
+}
