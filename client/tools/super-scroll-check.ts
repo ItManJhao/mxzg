@@ -81,6 +81,7 @@ function checkLayouts(): void {
 
 async function checkCellReuse(): Promise<void> {
     const root=node("BagItemView",96,96), cell=root.addComponent(BagItemView) as BagItemView;
+    cell.emptyFrame=new SpriteFrame();
     cell.button=root.addComponent(Button);cell.frame=node("frame",96,96,root);cell.frame.addComponent(Sprite);
     cell.icon=node("icon",64,64,root);cell.icon.addComponent(Sprite);cell.count=node("count",96,24,root).addComponent(Label);
     cell.selectMark=node("selected",96,96,root);

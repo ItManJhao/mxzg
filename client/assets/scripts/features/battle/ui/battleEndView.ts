@@ -6,6 +6,7 @@
 import { BlockInputEvents,Color,view as gameView,HorizontalTextAlignment,Label,Node,Overflow,Sprite,UITransform,VerticalTextAlignment } from "cc";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
+import { CommonUiResources } from "../../../framework/assets/CommonUiResources";
 import { bindVisibleRefresh,fitVisibleRoot } from "../../../framework/ui/visibleFit";
 
 
@@ -217,7 +218,7 @@ function paintClearRewards(view: Node, stageId: number | undefined, supplied?: {
     const shown = stacks.length;
     for (let i = 0; i < shown; i++) {
         const stack = stacks[i];
-        const icon = stack.icon || ResourceCatalog.bag.backpack_spr_default.path;
+        const icon = stack.icon || CommonUiResources.itemPlaceholder.path;
         const cell = uiNode("reward");
         const ui = cell.addComponent(UITransform);
         ui.setContentSize(64, 64);

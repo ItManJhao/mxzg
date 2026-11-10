@@ -1,6 +1,5 @@
 /** 背包物品格子：由 BagView 传入条目和显示配置，只负责绑定与展示，不拥有库存。 */
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
+import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame } from "cc";
 import type { BagItemData } from "../data/BagItemData";
 import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
 import type { BagFace } from "../data/BagItemData";
@@ -12,6 +11,9 @@ const { ccclass, property } = _decorator;
  */
 @ccclass("BagItemView")
 export class BagItemView extends Component {
+    /** 空槽底图由预制体绑定，格子复用为空槽时恢复，不再单独加载。 */
+    @property(SpriteFrame)
+    emptyFrame: SpriteFrame | null = null;
     /** Prefab 绑定的点击按钮，未绑定时为 null。 */
     @property(Button)
     button: Button | null = null;
@@ -43,7 +45,8 @@ export class BagItemView extends Component {
             frame: this.frame,
             icon: this.icon,
             count: this.count,
-            selectMark: this.selectMark
+            selectMark: this.selectMark,
+            emptyFrame: this.emptyFrame
         })) {
             if (!value) throw new Error("BagItemView.prefab [" + this.node.name + "]: 缺失绑定 " + field);
         }
@@ -65,7 +68,7 @@ export class BagItemView extends Component {
         if (!item) {
             if (this.frame) {
                 this.frame.active = true;
-                paintSpritePaths(this.frame, [SLOT_PLATE], current);
+                this.frame.getComponent(Sprite)!.spriteFrame = this.emptyFrame;
             }
             if (this.icon) this.icon.active = false;
             if (this.count) {
@@ -94,6 +97,3 @@ export class BagItemView extends Component {
         this.tap = null;
     }
 }
-
-/** 空槽和 0 稀有都用 common 的底图。稀有文字图和细金框不是格子底。 */
-const SLOT_PLATE = ResourceCatalog.common.other_rare_0.path;

@@ -1,0 +1,274 @@
+{
+  "date": "2026-11-10",
+  "scope": "背包直接绑定的14张公共图",
+  "rows": [
+    {
+      "name": "backpack_item-frame-1.png",
+      "path": "client\\assets\\resources\\ui\\common\\backpack_item-frame-1.png",
+      "uuid": "0af8f9b6-86ad-4461-8338-8d9ea52979d7@f9941",
+      "width": 106,
+      "height": 106,
+      "bytes": 1458,
+      "category": "公共静态图集候选",
+      "references": [
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoUpStarLayer.prefab"
+      ]
+    },
+    {
+      "name": "backpack_spr-default.png",
+      "path": "client\\assets\\resources\\ui\\common\\backpack_spr-default.png",
+      "uuid": "272f4650-3774-4813-aedf-02edaab9a68c@f9941",
+      "width": 34,
+      "height": 47,
+      "bytes": 1253,
+      "category": "保留动态路径",
+      "references": [
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterExtraRewardCell.prefab",
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoUpStarLayer.prefab"
+      ]
+    },
+    {
+      "name": "button_btn-close-1.png",
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-close-1.png",
+      "uuid": "545d3457-a753-4a14-a6a4-565b9c8ba9ef@f9941",
+      "width": 55,
+      "height": 58,
+      "bytes": 2459,
+      "category": "公共静态图集候选",
+      "references": [
+        "client\\assets\\prefabs\\ui\\ability\\AbilityInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\account\\RoleProfileView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\BattleDetailLayer.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\BattlePage.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\ChapterRewardInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditCellView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterMapLayer.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterPreviewLayer.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterRewardLayer.prefab",
+        "client\\assets\\prefabs\\ui\\city\\CityChromeView.prefab",
+        "client\\assets\\prefabs\\ui\\common\\CommonPanelShell.prefab",
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmOptionCellView.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\FormationView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoTipsLayer.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSkillInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSkillView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSuggestLayer.prefab",
+        "client\\assets\\prefabs\\ui\\idle-hero\\IdleHeroSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemExhibitionLayer.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\legacy-login\\UserLoginLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\CreateRolePanel.prefab",
+        "client\\assets\\prefabs\\ui\\login\\NoticeLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\ServerPickerView.prefab",
+        "client\\assets\\prefabs\\ui\\mail\\MailInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\mail\\MailLayer.prefab",
+        "client\\assets\\prefabs\\ui\\quick-battle\\QuickBattleLayer.prefab",
+        "client\\assets\\prefabs\\ui\\quick-battle\\QuickBattleTipLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\ChangeNickLayer.prefab"
+      ]
+    },
+    {
+      "name": "button_btn-green-big-1.png",
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-green-big-1.png",
+      "uuid": "8fd6c4ac-2e76-4551-b366-e545d6110f60@f9941",
+      "width": 136,
+      "height": 58,
+      "bytes": 2861,
+      "category": "公共静态图集候选",
+      "references": [
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoUpStarLayer.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroStrongInfoCell.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroStrongResourceSubCell.prefab",
+        "client\\assets\\prefabs\\ui\\legacy-login\\LoginPanel.prefab",
+        "client\\assets\\prefabs\\ui\\role\\RoleInfoLayer.prefab"
+      ]
+    },
+    {
+      "name": "button_btn-old-1.png",
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-old-1.png",
+      "uuid": "13632528-0f87-48d2-9ac7-71a27f92112a@f9941",
+      "width": 136,
+      "height": 58,
+      "bytes": 5722,
+      "category": "公共静态图集候选",
+      "references": [
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditCellView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmOptionCellView.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\ChangeNickLayer.prefab"
+      ]
+    },
+    {
+      "name": "button_btn-orange-big-1.png",
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-orange-big-1.png",
+      "uuid": "8ff1e662-8d03-4c62-afbc-c56f4719c77c@f9941",
+      "width": 136,
+      "height": 58,
+      "bytes": 5799,
+      "category": "公共静态图集候选",
+      "references": [
+        "client\\assets\\prefabs\\ui\\battle\\BattlePage.prefab",
+        "client\\assets\\prefabs\\ui\\common\\CommonBtnPrimaryShell.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroStrongResourceMainCell.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemExhibitionLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\LoadingLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\NoticeLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\UpdateLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\RoleInfoLayer.prefab"
+      ]
+    },
+    {
+      "name": "button_btn-src.png",
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-src.png",
+      "uuid": "fc1ffb2a-2d0e-4fd2-89fe-779b304fa5f3@f9941",
+      "width": 67,
+      "height": 55,
+      "bytes": 7130,
+      "category": "公共静态图集候选",
+      "references": [
+        "client\\assets\\prefabs\\ui\\ability\\AbilityInfoLayer.prefab"
+      ]
+    },
+    {
+      "name": "button_btn-tab-23.png",
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-tab-23.png",
+      "uuid": "43e87ffb-d7f8-435e-be92-3db6f918d938@f9941",
+      "width": 111,
+      "height": 43,
+      "bytes": 3910,
+      "category": "保留动态路径",
+      "references": [
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterStageChip.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroListView.prefab"
+      ]
+    },
+    {
+      "name": "button_btn-tab-24.png",
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-tab-24.png",
+      "uuid": "7c4a7018-cbbf-4184-8927-4037564d6c79@f9941",
+      "width": 111,
+      "height": 43,
+      "bytes": 3748,
+      "category": "保留动态路径",
+      "references": [
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroListView.prefab"
+      ]
+    },
+    {
+      "name": "loading_bg-white.png",
+      "path": "client\\assets\\resources\\ui\\common\\loading_bg-white.png",
+      "uuid": "4ecde7d1-af51-4d08-81aa-378d40a60954@f9941",
+      "width": 10,
+      "height": 10,
+      "bytes": 85,
+      "category": "登录共用，单独评审",
+      "references": [
+        "client\\assets\\bundles\\remake-home\\RemakeHomeView.prefab",
+        "client\\assets\\prefabs\\ui\\account\\AccountLoginView.prefab",
+        "client\\assets\\prefabs\\ui\\account\\RoleProfileView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\BattleDetailLayer.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\BattlePage.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterEndView.prefab",
+        "client\\assets\\prefabs\\ui\\common\\DimSheet.prefab",
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\FormationView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroListView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSkillView.prefab",
+        "client\\assets\\scenes\\Remake.scene"
+      ]
+    },
+    {
+      "name": "other_kuang.png",
+      "path": "client\\assets\\resources\\ui\\common\\other_kuang.png",
+      "uuid": "983a72dd-8ad6-4489-83cc-eb82bf1e92f7@f9941",
+      "width": 174,
+      "height": 91,
+      "bytes": 5129,
+      "category": "公共静态图集候选",
+      "references": [
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterExtraRewardCell.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroListView.prefab"
+      ]
+    },
+    {
+      "name": "other_rare-0.png",
+      "path": "client\\assets\\resources\\ui\\common\\other_rare-0.png",
+      "uuid": "5e56f13c-937b-4e86-a0d7-b8abb2aa05fb@f9941",
+      "width": 106,
+      "height": 106,
+      "bytes": 9061,
+      "category": "保留动态路径",
+      "references": [
+        "client\\assets\\prefabs\\ui\\battle\\BattleDetailCell.prefab"
+      ]
+    },
+    {
+      "name": "win-bg_block-bg-24.png",
+      "path": "client\\assets\\resources\\ui\\common\\win-bg_block-bg-24.png",
+      "uuid": "30f0b02c-bd19-4596-90db-f94739baf91b@f9941",
+      "width": 50,
+      "height": 50,
+      "bytes": 1408,
+      "category": "公共静态图集候选",
+      "references": [
+        "client\\assets\\prefabs\\ui\\ability\\AbilityInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSkillInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\reward\\RewardPreviewLayer.prefab"
+      ]
+    },
+    {
+      "name": "win-bg_block-bg-5.png",
+      "path": "client\\assets\\resources\\ui\\common\\win-bg_block-bg-5.png",
+      "uuid": "b41f4934-f3ca-4c26-970f-2acca88e7a5c@f9941",
+      "width": 42,
+      "height": 42,
+      "bytes": 418,
+      "category": "公共静态图集候选",
+      "references": [
+        "client\\assets\\prefabs\\ui\\battle\\BattlePage.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\ChapterRewardInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterPreviewLayer.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterRewardLayer.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\FormationView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSuggestCell.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSuggestLayer.prefab",
+        "client\\assets\\prefabs\\ui\\idle-hero\\IdleHeroSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\legacy-login\\UserLoginLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\NoticeLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\ServerPickerView.prefab",
+        "client\\assets\\prefabs\\ui\\mail\\MailInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\mail\\MailLayer.prefab",
+        "client\\assets\\prefabs\\ui\\quick-battle\\QuickBattleLayer.prefab",
+        "client\\assets\\prefabs\\ui\\quick-battle\\QuickBattleTipLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\ChangeNickLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\RoleInfoLayer.prefab"
+      ]
+    }
+  ],
+  "conclusion": "9张静态候选、4张有动态加载、1张涉及登录依赖；本批仅核对，未迁移或合图",
+  "limitations": [
+    "静态名称和生成索引引用搜索不能排除所有拼接路径，迁移前仍须复核",
+    "未估算发布后包体或draw call收益"
+  ]
+}

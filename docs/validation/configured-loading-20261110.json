@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-10",
+  "scope": "用户取消全量加载；LoadingPlan三个阶段显式配置，其余按需",
+  "defaults": {
+    "background": [
+      "BagInfoView",
+      "HeroListView",
+      "HeroInfoView",
+      "MainChapterView"
+    ]
+  },
+  "removed": [
+    "project-loading.json及meta",
+    "全目录索引生成逻辑",
+    "构建前全目录检查"
+  ],
+  "retained": [
+    "前后台共享资源池与在途请求",
+    "基础引用释放与迟到拒绝",
+    "原生资源空壳失败检查",
+    "自动图集及9张原图构建后去重"
+  ],
+  "checks": {
+    "suites": [
+      "staged-loading",
+      "creator-compat",
+      "backpack",
+      "resources",
+      "home-bundle",
+      "config-groups"
+    ],
+    "types": "passed",
+    "generator": "--check passed",
+    "buildHook": "passed"
+  },
+  "pending": [],
+  "knownGap": "缓存页面、Prefab和阶段资源仍持有至应用销毁；无统一闲置超时、容量上限或页面淘汰策略",
+  "git": "未提交推送",
+  "releaseReview": {
+    "build": "client/build/bag-atlas-review，2026-11-10 21:32:41",
+    "environment": "独立SocketPreviewServer内存H2，loading_review；检查后已停止",
+    "viewport": "393x852",
+    "background": {
+      "total": 4,
+      "completed": 4,
+      "failed": 0,
+      "running": false
+    },
+    "items": [
+      "英雄进阶石/蓝框",
+      "灵戒/紫框",
+      "火系精英碎片/橙红框",
+      "波纹精灵/绿框"
+    ],
+    "flow": "登录→主城→背包四类→详情确认/关闭按钮/遮罩→主城→重开",
+    "inventoryUnchanged": true,
+    "browserWarningsAndErrors": 0,
+    "buildDedupe": "common-atlas-check通过：9张原图副本已移除",
+    "compiledEntry": "存在getSpriteFrame/qualityFrame，不存在ItemIconById/project-loading",
+    "limitations": [
+      "按需图片短暂补齐仍可见，不视为零闪烁",
+      "共图路径与异步竞态由专项检查覆盖，浏览器夹具仅四类代表物品",
+      "日志未显示扩展1.3.0版本，不能据此确认编辑器已重载；去重结果已验证",
+      "未进行真机性能或缓存淘汰验收"
+    ],
+    "screenshot": "docs/images/bag-resource-entry-20261110.png"
+  }
+}

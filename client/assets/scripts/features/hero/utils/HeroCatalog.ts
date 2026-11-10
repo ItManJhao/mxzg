@@ -1,5 +1,8 @@
-/** 英雄名册配置投影：只生成显示信息，图标使用已验证 ID 映射，不拼接未知资源地址。 */
-import { HeroIconById, ItemIconById } from "../../../framework/assets/IconCatalog";
+/** 英雄名册配置投影：英雄专用映射保留，物品回退图标复用BagItemCatalog的配置解析。
+ * 只生成显示信息，不持有库存或发起资源加载；未知配置保留明确缺失。
+ */
+import { HeroIconById } from "../../../framework/assets/IconCatalog";
+import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 export interface HeroTemplateFace {
     readonly templateId: number;
     readonly name: string;
@@ -23,7 +26,7 @@ export class HeroCatalog {
         for (const row of items.rows) {
             if (!positive(row.idx) || typeof row.icon !== "string") continue;
             const match = /^hero-icon\/([A-Za-z0-9_-]+)$/.exec(row.icon);
-            if (match) icons.set(row.idx, ItemIconById[row.idx]?.path || "");
+            if (match) icons.set(row.idx, BagItemCatalog.iconSource(row) || "");
         }
         for (const row of herotype.rows) {
             // Exported tables contain comment rows; only positive numeric IDs are templates.

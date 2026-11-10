@@ -1,0 +1,294 @@
+{
+  "date": "2026-11-10",
+  "staticImages": 18,
+  "rows": [
+    {
+      "path": "client\\assets\\resources\\icons\\item\\backpack_900001.png",
+      "uuid": "8622cfac-731d-4f79-9965-5ae8484dd6a1@f9941",
+      "bag": [
+        "BagInfoView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\battle\\CampaignView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\MainChapterView.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterPreviewLayer.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoUpgradeLayer.prefab"
+      ]
+    },
+    {
+      "path": "client/assets/ui/common/atlas/backpack_item-frame-1.png",
+      "uuid": "0af8f9b6-86ad-4461-8338-8d9ea52979d7@f9941",
+      "bag": [
+        "BagInfoView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoUpStarLayer.prefab"
+      ]
+    },
+    {
+      "path": "client\\assets\\resources\\ui\\common\\backpack_spr-default.png",
+      "uuid": "272f4650-3774-4813-aedf-02edaab9a68c@f9941",
+      "bag": [
+        "BagItemView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterExtraRewardCell.prefab",
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoUpStarLayer.prefab"
+      ]
+    },
+    {
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-close-1.png",
+      "uuid": "545d3457-a753-4a14-a6a4-565b9c8ba9ef@f9941",
+      "bag": [
+        "BagInfoView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\ability\\AbilityInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\account\\RoleProfileView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\BattleDetailLayer.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\BattlePage.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\ChapterRewardInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditCellView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterMapLayer.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterPreviewLayer.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterRewardLayer.prefab",
+        "client\\assets\\prefabs\\ui\\city\\CityChromeView.prefab",
+        "client\\assets\\prefabs\\ui\\common\\CommonPanelShell.prefab",
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmOptionCellView.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\FormationView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoTipsLayer.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSkillInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSkillView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSuggestLayer.prefab",
+        "client\\assets\\prefabs\\ui\\idle-hero\\IdleHeroSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemExhibitionLayer.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\legacy-login\\UserLoginLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\CreateRolePanel.prefab",
+        "client\\assets\\prefabs\\ui\\login\\NoticeLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\ServerPickerView.prefab",
+        "client\\assets\\prefabs\\ui\\mail\\MailInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\mail\\MailLayer.prefab",
+        "client\\assets\\prefabs\\ui\\quick-battle\\QuickBattleLayer.prefab",
+        "client\\assets\\prefabs\\ui\\quick-battle\\QuickBattleTipLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\ChangeNickLayer.prefab"
+      ]
+    },
+    {
+      "path": "client/assets/ui/common/atlas/button_btn-green-big-1.png",
+      "uuid": "8fd6c4ac-2e76-4551-b366-e545d6110f60@f9941",
+      "bag": [
+        "BagView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoUpStarLayer.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroStrongInfoCell.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroStrongResourceSubCell.prefab",
+        "client\\assets\\prefabs\\ui\\legacy-login\\LoginPanel.prefab",
+        "client\\assets\\prefabs\\ui\\role\\RoleInfoLayer.prefab"
+      ]
+    },
+    {
+      "path": "client/assets/ui/common/atlas/button_btn-old-1.png",
+      "uuid": "13632528-0f87-48d2-9ac7-71a27f92112a@f9941",
+      "bag": [
+        "BagInfoView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditCellView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmOptionCellView.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\ChangeNickLayer.prefab"
+      ]
+    },
+    {
+      "path": "client/assets/ui/common/atlas/button_btn-orange-big-1.png",
+      "uuid": "8ff1e662-8d03-4c62-afbc-c56f4719c77c@f9941",
+      "bag": [
+        "BagView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\battle\\BattlePage.prefab",
+        "client\\assets\\prefabs\\ui\\common\\CommonBtnPrimaryShell.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroStrongResourceMainCell.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemExhibitionLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\LoadingLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\NoticeLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\UpdateLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\RoleInfoLayer.prefab"
+      ]
+    },
+    {
+      "path": "client/assets/ui/common/atlas/button_btn-src.png",
+      "uuid": "fc1ffb2a-2d0e-4fd2-89fe-779b304fa5f3@f9941",
+      "bag": [
+        "BagInfoView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\ability\\AbilityInfoLayer.prefab"
+      ]
+    },
+    {
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-tab-23.png",
+      "uuid": "43e87ffb-d7f8-435e-be92-3db6f918d938@f9941",
+      "bag": [
+        "BagTabView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterStageChip.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroListView.prefab"
+      ]
+    },
+    {
+      "path": "client\\assets\\resources\\ui\\common\\button_btn-tab-24.png",
+      "uuid": "7c4a7018-cbbf-4184-8927-4037564d6c79@f9941",
+      "bag": [
+        "BagTabView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroListView.prefab"
+      ]
+    },
+    {
+      "path": "client\\assets\\resources\\ui\\common\\loading_bg-white.png",
+      "uuid": "4ecde7d1-af51-4d08-81aa-378d40a60954@f9941",
+      "bag": [
+        "BagInfoView.prefab"
+      ],
+      "others": [
+        "client\\assets\\bundles\\remake-home\\RemakeHomeView.prefab",
+        "client\\assets\\prefabs\\ui\\account\\AccountLoginView.prefab",
+        "client\\assets\\prefabs\\ui\\account\\RoleProfileView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\BattleDetailLayer.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\BattlePage.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterEndView.prefab",
+        "client\\assets\\prefabs\\ui\\common\\DimSheet.prefab",
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\FormationView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroListView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSkillView.prefab",
+        "client\\assets\\scenes\\Remake.scene"
+      ]
+    },
+    {
+      "path": "client/assets/ui/common/atlas/other_kuang.png",
+      "uuid": "983a72dd-8ad6-4489-83cc-eb82bf1e92f7@f9941",
+      "bag": [
+        "BagView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterExtraRewardCell.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroListView.prefab"
+      ]
+    },
+    {
+      "path": "client\\assets\\resources\\ui\\common\\other_rare-0.png",
+      "uuid": "5e56f13c-937b-4e86-a0d7-b8abb2aa05fb@f9941",
+      "bag": [
+        "BagItemView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\battle\\BattleDetailCell.prefab"
+      ]
+    },
+    {
+      "path": "client/assets/ui/common/atlas/win-bg_block-bg-24.png",
+      "uuid": "30f0b02c-bd19-4596-90db-f94739baf91b@f9941",
+      "bag": [
+        "BagInfoView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\ability\\AbilityInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSkillInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\reward\\RewardPreviewLayer.prefab"
+      ]
+    },
+    {
+      "path": "client\\assets\\resources\\ui\\common\\win-bg_block-bg-5.png",
+      "uuid": "b41f4934-f3ca-4c26-970f-2acca88e7a5c@f9941",
+      "bag": [
+        "BagView.prefab"
+      ],
+      "others": [
+        "client\\assets\\prefabs\\ui\\battle\\BattlePage.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\ChapterRewardInfoView.prefab",
+        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterPreviewLayer.prefab",
+        "client\\assets\\prefabs\\ui\\chapter\\ChapterRewardLayer.prefab",
+        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\FormationView.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSuggestCell.prefab",
+        "client\\assets\\prefabs\\ui\\hero\\HeroSuggestLayer.prefab",
+        "client\\assets\\prefabs\\ui\\idle-hero\\IdleHeroSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\item\\ItemSelectLayer.prefab",
+        "client\\assets\\prefabs\\ui\\legacy-login\\UserLoginLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\NoticeLayer.prefab",
+        "client\\assets\\prefabs\\ui\\login\\ServerPickerView.prefab",
+        "client\\assets\\prefabs\\ui\\mail\\MailInfoLayer.prefab",
+        "client\\assets\\prefabs\\ui\\mail\\MailLayer.prefab",
+        "client\\assets\\prefabs\\ui\\quick-battle\\QuickBattleLayer.prefab",
+        "client\\assets\\prefabs\\ui\\quick-battle\\QuickBattleTipLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\ChangeNickLayer.prefab",
+        "client\\assets\\prefabs\\ui\\role\\RoleInfoLayer.prefab"
+      ]
+    },
+    {
+      "path": "client\\assets\\ui\\bag\\atlas\\backpack-info_spr-line.png",
+      "uuid": "c6234db7-ebbd-43bb-863f-6c99505dbdc3@f9941",
+      "bag": [
+        "BagInfoView.prefab"
+      ],
+      "others": []
+    },
+    {
+      "path": "client\\assets\\ui\\bag\\atlas\\backpack_spr-select.png",
+      "uuid": "6c69245c-edfa-463d-a6a4-c897ba93ac12@f9941",
+      "bag": [
+        "BagItemView.prefab"
+      ],
+      "others": []
+    },
+    {
+      "path": "client/assets/ui/bag/background/map-bg-backpack-1.jpg",
+      "uuid": "93839820-644d-46de-9cf5-c2029669b85e@f9941",
+      "bag": [
+        "BagView.prefab"
+      ],
+      "others": []
+    }
+  ],
+  "preview": {
+    "run": "10c568182daf4e1cb3502f8a29f813c0",
+    "fixture": "独立内存H2 loading_review",
+    "passed": [
+      "背景显示及原UUID",
+      "道具详情",
+      "关闭返回主城",
+      "重开背包"
+    ],
+    "additionalResourceRequests": 0,
+    "inventoryUnchanged": true,
+    "warningsAndErrors": 0,
+    "screenshot": "docs/images/bag-background-20261110.jpg",
+    "cleanup": "测试页关闭、视口恢复、独立服务按归属核对后停止",
+    "limitation": "未重建发布包，未重跑全部四分类"
+  }
+}

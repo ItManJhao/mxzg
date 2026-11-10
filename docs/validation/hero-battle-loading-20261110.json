@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-10",
+  "status": "当前范围加载接入及详情图片补充复验通过",
+  "scope": "仅英雄和当前主线战斗资源加载，不改玩法/协议/资产",
+  "committed": false,
+  "pushed": false,
+  "plan": {
+    "login": [
+      "login"
+    ],
+    "enterGame": [
+      "home",
+      "bag",
+      "hero",
+      "battle"
+    ],
+    "background": [
+      "bagIcons",
+      "heroDetail",
+      "heroIcons"
+    ]
+  },
+  "checks": {
+    "passed": [
+      "staged-loading",
+      "startup",
+      "resources",
+      "home-bundle",
+      "hero",
+      "hero-detail",
+      "main-chapter",
+      "formation-view",
+      "feature-navigation",
+      "bindings",
+      "TypeScript --noEmit",
+      "git diff --check"
+    ]
+  },
+  "browser": {
+    "environment": "SocketPreviewServer 独立随机H2/回环随机端口，chapter_review，GM关闭",
+    "viewport": "Creator iPhone 14 Pro 393×852 竖屏",
+    "realProgress": {
+      "samples": 276,
+      "monotonic": true,
+      "last": 1
+    },
+    "heroListAdditionalRequests": 0,
+    "heroDetail": "Creator刷新后新任务清单生效；独立新会话后台准备完成后，首次英雄列表→树精详情→技能窗口→返回列表全程新增资源请求0，无error/warn；返回主城正常。此前6张遗漏图片已补齐。",
+    "battle": "挂机→布阵→第二关挑战结束后返回挂机并显示第三关；第三关挑战结束后返回挂机。未捕获本次结算页完整画面，不以此声明结算视觉重新验收",
+    "backgroundPromotion": "测试临时暂停后台英雄任务，点击英雄后只有同一hero任务且foreground=1；放行后打开hero且jobs为空。刷新已清除临时钩子与配置",
+    "errors": "首轮相关流程未见error/warn",
+    "detailRecheck": {
+      "run": "3743c081f7664fceb9bbc863a66294e5",
+      "firstListRequests": 0,
+      "firstDetailRequests": 0,
+      "firstSkillRequests": 0,
+      "returnListRequests": 0,
+      "screenshot": "docs/images/hero-detail-loading-20261110.jpg",
+      "note": "测试角色三名英雄在当前阵容中，不能推广为所有英雄/实际装备/战报资源零请求；资源请求计数来自清空后的Performance Resource Timing，容量10000。"
+    }
+  },
+  "limits": [
+    "敌方、真实技能帧、历史冻结外观仍按真实战报加载",
+    "非当前主线阵容的英雄详情骨骼和实际装备图片仍按需加载",
+    "当前阵容模型预热缺失警告后由原页面重试",
+    "未做图集、微信分包和真机性能验收",
+    "宝箱领取、快速战斗、英雄升级和穿脱未开放"
+  ],
+  "next": "按计划后续开展背包图集构建试点；本批未实施图集或微信分包。",
+  "cleanup": "浏览器临时页面关闭、尺寸恢复；独立测试服务按进程归属核验后停止。"
+}

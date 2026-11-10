@@ -10,6 +10,7 @@ import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { HeroCatalog } from "../utils/HeroCatalog";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
+import { CommonUiResources } from "../../../framework/assets/CommonUiResources";
 import { _decorator, Button, director, Director, HorizontalTextAlignment, Label, Node, Overflow, Prefab, UITransform, VerticalTextAlignment } from "cc";
 import { messageOf } from "../../../core/errors";
 import { GameLog } from "../../../core/GameLog";
@@ -29,8 +30,6 @@ import type { HeroRosterSource, HeroRosterView } from "../data/HeroRosterData";
 
 const { ccclass, property } = _decorator;
 
-const TAB_ON = ResourceCatalog.common.button_btn_tab_24.path;
-const TAB_OFF = ResourceCatalog.common.button_btn_tab_23.path;
 const BOARD_PREFAB = ResourceCatalog.prefab_hero.HeroListBoardView.assetPath;
 
 /**
@@ -422,10 +421,13 @@ read: elem => HeroRosterUtils.present(model.snapshot, catalog, elem),
         this.paintTab(this.btnDragon, false);
     }
 
+    /** 使用与预加载共用的公共页签图片绘制选中态；未绑定按钮时不操作。 */
     private paintTab(button: Button | null, on: boolean): void {
-        if (!button || !button.node) return;
+        if (!button || !button.node) {
+            return;
+        }
         button.transition = Button.Transition.NONE;
-        paintSpritePaths(button.node, [on ? TAB_ON : TAB_OFF]);
+        paintSpritePaths(button.node, [(on ? CommonUiResources.tabs.selected : CommonUiResources.tabs.normal).path]);
     }
 
     private fitTitles(): void {

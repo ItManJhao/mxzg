@@ -1,11 +1,11 @@
 {
   "note": "扫描范围：Common 独立图片、有效源码静态依赖清单、保留 Prefab 及当前配置的英雄/道具图标。新增静态资源在此声明，生成器不扫描全部美术。",
+  "itemIconDirectory": "icons/item",
   "staticPaths": [
     "audio/bgm-logo",
     "spine/jiemian",
     "spine/jindutiao",
-    "ui/bag/backpack_spr-default",
-    "ui/bag/map-bg-backpack-1",
+    "ui/common/backpack_spr-default",
     "ui/battle/battle-end-lang_lbl-result-0",
     "ui/battle/battle-end-lang_lbl-result-1",
     "ui/battle/battle-scene_btn-speed-1",

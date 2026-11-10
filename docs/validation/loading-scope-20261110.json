@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-10",
+  "scope": "页面主体预加载，物品图标、英雄头像/技能图标与详情立绘按需；不改变玩法",
+  "changes": [
+    "删除bagIcons/heroIcons阶段及库存/名册预取循环",
+    "删除ResourcePreparation.dynamicImages回调",
+    "保留现有公共小图共用定义，无新增管理器或清单",
+    "合并当前进度与交接顶部历史状态，重写加载策略和人工入口"
+  ],
+  "checks": {
+    "staged-loading": "通过",
+    "creator-compat": "通过",
+    "backpack": "通过",
+    "hero-detail": "通过",
+    "typescript": "通过",
+    "docs": "未运行成功：系统python指向不可执行的WindowsApps占位程序；已人工核对本批修改文档",
+    "commonAtlas": "新包检查通过，9张名单原图副本已自动去重"
+  },
+  "pending": [],
+  "committed": false,
+  "pushed": false,
+  "build": {
+    "path": "client/build/bag-atlas-review",
+    "mainScriptTime": "2026-11-10 19:44:17 +08:00",
+    "removedIconStagesConfirmed": true
+  },
+  "browser": {
+    "environment": "独立H2内存测试服，393×852竖屏，HTTP缓存禁用，部分步骤增加700毫秒网络延迟；完成后恢复网络与视口、关闭测试页及独立进程",
+    "bag": "主城时4种测试库存图标未缓存；打开后页面背景、店员、边框先显示，图标按需补齐。四分类与详情、装备→碎片快速切换、精灵加载时返回主城、重新打开均正常；库存快照不变。",
+    "hero": "列表主体先显示，头像随后补齐；详情背景、属性、品质框先显示，技能图标、装备和立绘随后补齐；返回列表切换两名英雄未观察到串图，最后返回主城。",
+    "warningsAndErrors": 0,
+    "limitations": [
+      "本地发布包与模拟延迟，非真机或真实CDN测试。",
+      "未量化帧耗时，不宣称绝对零卡顿；不要求动态图标零请求。"
+    ],
+    "screenshots": [
+      "docs/images/loading-scope-bag-20261110.jpg",
+      "docs/images/loading-scope-hero-pending-20261110.jpg",
+      "docs/images/loading-scope-hero-ready-20261110.jpg"
+    ]
+  }
+}

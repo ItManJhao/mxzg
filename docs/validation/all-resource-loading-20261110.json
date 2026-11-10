@@ -1,0 +1,73 @@
+{
+  "date": "2026-11-10",
+  "scope": "LoadingPlan配置前两阶段，项目全部运行时资源第三段后台加载；不开放玩法、不提交推送",
+  "inventory": 21699,
+  "checks": {
+    "types": "passed",
+    "suites": [
+      "staged-loading",
+      "creator-compat",
+      "backpack",
+      "home-bundle",
+      "resources",
+      "config-groups",
+      "hero-detail",
+      "startup"
+    ],
+    "generator": "--check passed",
+    "buildHook": "Node环境构建前索引检查及构建后9张去重夹具通过"
+  },
+  "pending": [],
+  "limitations": [
+    "测试替身不代表21700项已在真实引擎中加载",
+    "旧19:44发布包不覆盖本批策略",
+    "不操作桌面或Creator"
+  ],
+  "browserReview": {
+    "build": "bag-atlas-review / 2026-11-10 20:46:08",
+    "environment": "独立回环SocketPreviewServer / 内存H2 / loading_review",
+    "viewport": "393x852",
+    "passed": [
+      "登录与主城进入",
+      "背包四分类及各自详情",
+      "返回主城与重开",
+      "库存快照不变",
+      "原21,700索引项在发布Bundle路径或UUID均存在",
+      "9张原图副本去重"
+    ],
+    "background": {
+      "total": 21684,
+      "completedSample": 11209,
+      "engineError": "16351：零字节legacy-hd/splice.ss原生资源缺失，旧包未拒绝空壳"
+    },
+    "memorySample": {
+      "jsHeapMiB": 308,
+      "textureRgbaEstimateMiB": 2706,
+      "note": "纹理宽高×4折算，非进程实际内存"
+    },
+    "frameSample": {
+      "samples": 180,
+      "medianMs": 16.7,
+      "p95Ms": 16.9,
+      "maxMs": 17,
+      "note": "加载中局部requestAnimationFrame采样，不是真机或整段性能结论"
+    },
+    "screenshot": "docs/images/all-resource-bag-review-20261110.png"
+  },
+  "fix": {
+    "emptyNativePlaceholder": "仅排除零字节原生占位，不删除源文件",
+    "nativePayloadValidation": "原生Asset缺内容时拒绝而非报成功",
+    "checks": [
+      "staged-loading passed",
+      "creator-compat passed",
+      "tsc passed"
+    ]
+  },
+  "status": "cancelled-by-user",
+  "finalBackground": {
+    "completed": 18276,
+    "total": 21684,
+    "running": false
+  },
+  "note": "用户取消全量加载；测试页关闭、独立服务停止。历史结果不代表当前配置第三段验收。"
+}

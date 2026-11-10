@@ -1,0 +1,116 @@
+/** 显式三段加载行为回归：目标配置、前后台共享、失败重试与取消；不代替Creator实机验收。 */
+import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
+import { Asset, JsonAsset, Prefab, assetManager, resources } from "cc";
+import { ApplicationResources } from "../assets/scripts/app/remake/ApplicationResources";
+import { LOADING_PLAN } from "../assets/scripts/app/remake/LoadingPlan";
+import { ResourceCatalog, ResourceDescriptor } from "../assets/scripts/framework/assets/ResourceCatalog";
+import { createAssetScope, ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
+import { clearPrefabCache } from "../assets/scripts/framework/assets/PrefabLoader";
+import { GConfig } from "../assets/scripts/config/GConfig";
+
+/** 通过受控完成回调验证进度，不使用延时伪造网络完成。 */
+async function main(): Promise<void> {
+    const bag = ResourceCatalog.prefab_bag.BagView;
+    const detail = ResourceCatalog.prefab_bag.BagInfoView;
+    const spine = ResourceCatalog.spine.jiemian;
+    const icon = ResourceCatalog.common.other_rare_4;
+    const uuid: ResourceDescriptor = {
+        bundle: "main", path: "fixture-frame", assetPath: "fixture-frame",
+        loadPath: "", type: "SpriteFrame", uuid: "fixture-frame-uuid",
+    };
+    const raw: ResourceDescriptor = {
+        bundle: "main", path: "fixture-native", assetPath: "fixture-native",
+        loadPath: "", type: "Asset", uuid: "fixture-native-uuid",
+    };
+    let nativeMissing = true;
+    const requests: string[] = [];
+    let finish!: () => void;
+    const gate = new Promise<void>(resolve => { finish = resolve; });
+    let failDetail = true;
+    const load = (bundle: string, path: string, type: any, done: Function) => {
+        requests.push(bundle + ":" + path);
+        if (type === JsonAsset) {
+            const value = new JsonAsset();
+            value.json = JSON.parse(readFileSync("client/assets/resources/" + path + ".json", "utf8"));
+            done(null, value);
+        } else if (path === detail.loadPath && failDetail) {
+            done(new Error("fixture retry"));
+        } else if (path === bag.loadPath) {
+            void gate.then(() => done(null, new Prefab()));
+        } else {
+            done(null, type === Prefab ? new Prefab() : new Asset());
+        }
+    };
+    resources.load = ((path: string, type: any, done: Function) => load("resources", path, type, done)) as any;
+    Object.assign(assetManager, {
+        getBundle: (name: string) => ({ load: (path: string, type: any, done: Function) => load(name, path, type, done) }),
+        loadAny: (options: { uuid: string }, done: Function) => {
+            requests.push("uuid:" + options.uuid);
+            done(null, options.uuid === raw.uuid
+                ? Object.assign(new Asset(), { nativeUrl: "fixture.csv", nativeAsset: nativeMissing ? null : "content" })
+                : new Asset());
+        },
+    });
+    const old = { login: LOADING_PLAN.login, enterGame: LOADING_PLAN.enterGame, background: LOADING_PLAN.background };
+    const app = new ApplicationResources();
+    const scope = createAssetScope();
+    try {
+        await assert.rejects(scope.load(raw), /原生资源内容缺失/, "引擎只返回空壳不能记为成功");
+        nativeMissing = false;
+        await scope.load(raw);
+        LOADING_PLAN.login = [{ config: GConfig.Language }];
+        await app.prepareStage("login", () => {}, () => true);
+        LOADING_PLAN.enterGame = [bag, { bundle: spine.bundle, path: spine.loadPath, type: spine.type }];
+        LOADING_PLAN.background = [bag, detail, icon, uuid, { config: GConfig.Language }];
+        const ratios: number[] = [];
+        const pending = app.prepareStage("enterGame", (_label, ratio) => ratios.push(ratio), () => true);
+        for (let i = 0; i < 20; i++) { await Promise.resolve(); }
+        assert.deepEqual(ratios, [0]);
+        const foreground = app.preparedPage(bag.assetPath);
+        for (let i = 0; i < 20; i++) { await Promise.resolve(); }
+        assert.equal(requests.filter(value => value === bag.bundle + ":" + bag.loadPath).length, 1);
+        finish();
+        await Promise.all([pending, foreground]);
+        assert.equal(ratios[ratios.length - 1], 1);
+        assert(!requests.includes(detail.bundle + ":" + detail.loadPath), "阶段不扩大到详情");
+        let yields = 0;
+        await app.prepareBackground(async () => { yields++; }, () => true);
+        assert.equal(yields, 3);
+        assert.deepEqual(app.backgroundStatus(), { total: 3, completed: 2, failed: 1, running: false });
+        assert(requests.includes("uuid:" + uuid.uuid), "合图帧按UUID加载");
+        const before = requests.length;
+        await scope.load(icon);
+        assert.equal(requests.length, before, "前台复用后台图片");
+        failDetail = false;
+        await app.prepareBackground(async () => {}, () => true);
+        assert.deepEqual(app.backgroundStatus(), { total: 1, completed: 1, failed: 0, running: false });
+        await app.prepareBackground(async () => {}, () => true);
+        assert.equal(app.backgroundStatus().total, 0);
+        LOADING_PLAN.login = [{ bundle: "", path: "missing", type: "SpriteFrame" }];
+        await assert.rejects(app.prepareStage("login", () => {}, () => true), /必须指定Bundle/);
+        await assert.rejects(app.prepareStage("enterGame", () => {}, () => false), /取消/);
+    } finally {
+        LOADING_PLAN.login = old.login;
+        LOADING_PLAN.enterGame = old.enterGame;
+        LOADING_PLAN.background = old.background;
+        scope.dispose();
+        app.dispose();
+        clearPrefabCache();
+        ResourceAssetsUtils.releaseResidents();
+    }
+    const stopped = new ApplicationResources();
+    const before = requests.length;
+    await stopped.prepareBackground(async () => { stopped.stopBackground(); }, () => true);
+    assert.equal(requests.length, before, "停止后不继续排队，也不读取全目录索引");
+    const deferredImage = ResourceCatalog.common.other_rare_6;
+    assert(!requests.includes(deferredImage.bundle + ":" + deferredImage.loadPath), "未配置资源不提前加载");
+    const demand = createAssetScope();
+    await demand.load(deferredImage);
+    assert(requests.includes(deferredImage.bundle + ":" + deferredImage.loadPath), "未配置资源仍可在实际使用时加载");
+    demand.dispose();
+    stopped.dispose();
+    assert.equal(ResourceAssetsUtils.snapshot().owners, 0);
+    console.log("staged-loading-check passed: explicit phases, on-demand boundary, real progress, sharing, retry, atlas UUID and cancellation");
+}
+void main().catch(error => { console.error(error); process.exitCode = 1; });

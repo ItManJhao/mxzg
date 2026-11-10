@@ -19,6 +19,15 @@ public class SocketPreviewServer {
             "--spring.datasource.username=sa", "--spring.datasource.password=", "--mxzg.websocket.enabled=true",
             "--mxzg.gm.enabled=" + Arrays.asList(args).contains("--lineup-battle-fixture")
         });
+        // 加载体验专用：仅本进程随机内存库准备四类库存，不开启GM或任何领取入口。
+        if (Arrays.asList(args).contains("--bag-loading-fixture")) {
+            var player = context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("loading_review");
+            var jdbc = context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+            for (int itemId : new int[] {908101, 900102, 950001, 2000001}) {
+                jdbc.update("INSERT INTO game_inventory(role_id,item_id,quantity,instance_id) VALUES (?,?,?,?)",
+                    player.role().id(), itemId, 3, UUID.randomUUID().toString());
+            }
+        }
                 if(Arrays.asList(args).contains("--equipment-fixture")) {
             var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("equipment_review");
             var jdbc=context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);

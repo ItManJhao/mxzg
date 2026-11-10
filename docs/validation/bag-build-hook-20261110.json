@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-10",
+  "scope": "背包两张原图构建后去重自动化",
+  "implementation": "client/extensions/mxzg-bag-build",
+  "checks": [
+    {
+      "command": "node client/tools/bag-build-hook-check.cjs",
+      "result": "通过：隔离产物直接调用钩子，2张5974字节、逐字节备份、重复运行0、只检查不删除、损坏及原图依赖拒绝、平台/路径/选项边界"
+    },
+    {
+      "command": "node client/tools/ui-atlas-check.cjs --build-output client/build/bag-atlas-review",
+      "result": "通过：现有此前手动清理产物，无新构建"
+    }
+  ],
+  "pending": [
+    "发布包完整登录、四分类、详情及返回交互：现有隔离测试入口仅PREVIEW可用，未连接日常服"
+  ],
+  "limits": [
+    "仅Web且关闭调试和MD5缓存",
+    "仅client/build下独立目录",
+    "仅已核实两张原图，不扩展其他模块或小游戏"
+  ],
+  "committed": false,
+  "creatorBuild": {
+    "time": "2026-11-10 17:50:18",
+    "log": "client/temp/builder/log/web-mobile2026-11-10 16-52.log",
+    "files": 2,
+    "bytes": 5974,
+    "backup": "client/temp/bag-build-dedupe/build-BWkmRs",
+    "staticCheck": "新产物检查通过，原图副本已不存在",
+    "logLocation": "构建任务日志，主控制台未显示"
+  },
+  "browser": {
+    "url": "http://localhost:7456/web-mobile/bag-atlas-review/index.html",
+    "cacheDisabled": true,
+    "loginPage": true,
+    "prefabs": [
+      "BagView",
+      "BagItemView",
+      "BagInfoView"
+    ],
+    "atlas": {
+      "texture": "1d629baea@6c48a",
+      "width": 126,
+      "height": 474
+    },
+    "background": {
+      "texture": "93839820-644d-46de-9cf5-c2029669b85e@6c48a",
+      "width": 640,
+      "height": 960
+    },
+    "failedResourceRequests": [],
+    "note": "首次诊断在引擎初始化完成前主动加载导致反序列化异常；重新加载并等待Remake场景就绪后检查通过，未修改游戏代码。"
+  }
+}

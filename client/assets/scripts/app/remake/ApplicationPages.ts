@@ -5,7 +5,6 @@ import { BattleDetailLayer } from "../../features/battle/ui/BattleDetailLayer";
 import { ChapterRewardInfoView } from "../../features/battle/ui/ChapterRewardInfoView";
 import { Node, Prefab } from "cc";
 import { PREVIEW } from "cc/env";
-import { prepareHeroDetailConfig, prepareInventoryConfig } from "../../config/RemakeConfig";
 import { AccountController } from "../../features/account/AccountController";
 import { AccountModel } from "../../features/account/AccountModel";
 import { AccountService } from "../../features/account/AccountService";
@@ -13,8 +12,9 @@ import { ServerSelection } from "../../features/account/ServerSelection";
 import { AccountLoginView } from "../../features/account/ui/AccountLoginView";
 import { RoleProfileView } from "../../features/account/ui/RoleProfileView";
 import { ServerPickerView } from "../../features/account/ui/ServerPickerView";
-import { mountBagPage } from "../../features/bag/ui/BagMount";
 import { BagView } from "../../features/bag/ui/BagView";
+import { BagInfoView } from "../../features/bag/ui/BagInfoView";
+import { prepareInventoryConfig } from "../../config/RemakeConfig";
 import { FormationView } from "../../features/hero/ui/FormationView";
 import { HeroInfoView } from "../../features/hero/ui/HeroInfoView";
 import { HeroListView } from "../../features/hero/ui/HeroListView";
@@ -22,11 +22,10 @@ import { HeroSkillView } from "../../features/hero/ui/HeroSkillView";
 import { mountHeroListPage } from "../../features/hero/ui/heroMount";
 import { HomeController } from "../../features/home/HomeController";
 import { RemakeHomeView } from "../../features/home/ui/RemakeHomeView";
-import { loadPrefab } from "../../framework/assets/PrefabLoader";
 import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { UILayer } from "../../framework/ui/UILayer";
 import { UIManager, isOpenCancelled } from "../../framework/ui/UIManager";
-import { registerView } from "../../framework/ui/UIRegistry";
+import { registerView, viewSpecOf } from "../../framework/ui/UIRegistry";
 import { ApplicationResources } from "./ApplicationResources";
 import { HomeFeatureNavigation } from "./HomeFeatureNavigation";
 import { LoginEntry } from "./LoginEntry";
@@ -59,6 +58,7 @@ export class ApplicationPages {
         const stops: Array<() => void> = [];
         stops.push(ui.setResidentHost("remake-modal", () => context.pageHost));
         stops.push(registerView(BattleDetailLayer, {
+            load: () => resources.battlePage("detail"),
             id: "battle-detail", prefab: "prefabs/ui/battle/BattleDetailLayer", layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",
         }));
@@ -114,27 +114,40 @@ export class ApplicationPages {
                 });
             },
         }));
-        const loadFeature = (group: "bag" | "campaign" | "formation") => {
+        const loadFeature = (group: "campaign" | "formation") => {
             return resources.featurePage(group);
         };
         stops.push(registerView(MainChapterBattleView, {
+            load: () => resources.battlePage("field"),
             id: "main-chapter-battle", prefab: ResourceCatalog.prefab_battle.MainChapterBattleView.assetPath,
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "main-chapter-field",
         }));
         stops.push(registerView(MainChapterView, {
             id: "remake-campaign", prefab: ResourceCatalog.prefab_battle.MainChapterView.assetPath,
             layer: UILayer.Page, cache: false, allowMultiple: false,
-            load: async () => { await prepareInventoryConfig(); return loadPrefab(ResourceCatalog.prefab_battle.MainChapterView.assetPath); },
+            load: () => resources.battlePage(),
         }));
         stops.push(registerView(FormationView, {
             id: "remake-formation", prefab: ResourceCatalog.prefab_hero.FormationView.assetPath,
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
             load: () => loadFeature("formation"),
         }));
-        stops.push(registerView(BagView, {
-            id: "bag", prefab: ResourceCatalog.prefab_bag.BagView.assetPath, layer: UILayer.Page, cache: false, allowMultiple: false,
-            mount: mountBagPage, load: () => loadFeature("bag"),
-        }));
+        // 页面注册仅负责点击时的配置前置条件，不参与LoadingPlan的资源选择。
+        for (const view of [BagView, BagInfoView]) {
+            const spec = viewSpecOf(view)!;
+            const load = async () => {
+                await prepareInventoryConfig();
+                return resources.preparedPage(spec.prefab);
+            };
+            const unregister = registerView(view, { ...spec, load });
+            stops.push(() => {
+                if (viewSpecOf(view)?.load !== load) {
+                    return;
+                }
+                unregister();
+                registerView(view, spec);
+            });
+        }
         stops.push(registerView(HeroListView, {
             id: "hero", prefab: ResourceCatalog.prefab_hero.HeroListView.assetPath, layer: UILayer.Page, cache: false, allowMultiple: false,
             mount: mountHeroListPage, load: () => {
@@ -147,7 +160,7 @@ export class ApplicationPages {
         }));
         stops.push(registerView(HeroSkillView, {
             id: "hero-skill", prefab: ResourceCatalog.prefab_hero.HeroSkillView.assetPath, layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
-            load: async () => { await prepareHeroDetailConfig(); return loadPrefab(ResourceCatalog.prefab_hero.HeroSkillView.assetPath); }
+            load: () => resources.heroSkillPage(),
         }));
         return stops;
     }

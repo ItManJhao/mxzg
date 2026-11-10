@@ -1,12 +1,28 @@
 /** 背包显示投影：读取已校验配置，生成分类、文案与图标，不保存角色库存。 */
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { ItemIconById } from "../../../framework/assets/IconCatalog";
+import { CommonUiResources } from "../../../framework/assets/CommonUiResources";
+import { ItemIconRules } from "../../../framework/assets/IconCatalog";
 import type { ItemRow, LanguageRow, TimeLimitItemRow } from "../../../config/GConfig";
 import type { BagTabKind } from "../data/BagTabKind";
 import type { BagItemData, BagItemDisplayData, BagListItem, BagTimedItem } from "../data/BagItemData";
 
 
 export class BagItemCatalog {
+    /** 按物品配置定位图标；允许多物品共图，未知格式或已核实缺图返回null供页面显示占位。 */
+    public static iconSource(row: Pick<ItemRow, "idx" | "icon"> | undefined): string | null {
+        if (!row || !Number.isSafeInteger(row.idx) || row.idx <= 0 || (ItemIconRules.missingIds as readonly number[]).includes(row.idx)) {
+            return null;
+        }
+        if (typeof row.icon === "string" && row.icon.length > 0) {
+            const match = /^(backpack|hero-icon)\/([A-Za-z0-9_-]+)$/.exec(row.icon);
+            if (!match) {
+                return null;
+            }
+            return match[1] === "hero-icon" ? "ui/hero/hero-icon_" + match[2]
+                : ItemIconRules.directory + "/backpack_" + match[2];
+        }
+        return ItemIconRules.directory + "/backpack_" + row.idx;
+    }
+
     /** 物品配置 ID 对应的静态配置行；构造时建立，不保存玩家数量。 */
     private items = new Map<number, ItemRow>();
     /** 语言键对应的中文文案；随当前配置快照建立。 */
@@ -63,13 +79,18 @@ export class BagItemCatalog {
         const place = row?.place;
         const category: BagTabKind = place === 1 ? "equip" : place === 3 ? "shard" : place === 4 ? "spirit" : "item";
         const name = this.words.get(Number(row?.name)) || "未知道具（" + id + "）";
-        const icon = ItemIconById[id]?.path || ResourceCatalog.bag.backpack_spr_default.path;
+        const icon = BagItemCatalog.iconSource(row) || CommonUiResources.itemPlaceholder.path;
         const rare = typeof row?.rare_mark === "number" ? Math.min(6, Math.max(0, row.rare_mark)) : 0;
         const description = (this.words.get(Number(row?.content)) || "道具说明尚未配置").replace(/<[^>]+>/g, "").replace(/\\n/g, "\n");
         return {
-            title: name, typeLine: `数量：${quantity}`, body: description, icon,
-            fallback: ResourceCatalog.bag.backpack_spr_default.path, frame: [ResourceCatalog.common.other_rare_0, ResourceCatalog.common.other_rare_1, ResourceCatalog.common.other_rare_2, ResourceCatalog.common.other_rare_3, ResourceCatalog.common.other_rare_4, ResourceCatalog.common.other_rare_5, ResourceCatalog.common.other_rare_6][rare].path,
-            category, hiddenInBag: place === 0
+            title: name,
+            typeLine: `数量：${quantity}`,
+            body: description,
+            icon,
+            fallback: CommonUiResources.itemPlaceholder.path,
+            frame: CommonUiResources.qualityFrame(rare).path,
+            category,
+            hiddenInBag: place === 0
         };
     }
 }

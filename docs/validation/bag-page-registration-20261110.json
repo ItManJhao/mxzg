@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-10",
+  "scope": "背包预制体地址只在页面注册定义",
+  "changes": [
+    "BagView/BagInfoView @view拥有唯一地址与页面属性",
+    "BagPagesUtils为显示和预加载复用登记，退出恢复原登记",
+    "移除BagDefinition及未被资源绑定的meta，店员名回到BagView",
+    "结算/产物说明关闭详情改读注册信息"
+  ],
+  "checks": [
+    "staged-loading通过（地址变更跟随、退出恢复与重新登记）",
+    "backpack通过",
+    "creator-compat通过",
+    "bindings通过",
+    "TypeScript通过",
+    "源码及工具无BagDefinition引用"
+  ],
+  "pending": [
+    "Creator刷新、bag-atlas-review新构建后的独立浏览器复验"
+  ],
+  "committed": false,
+  "pushed": false
+}

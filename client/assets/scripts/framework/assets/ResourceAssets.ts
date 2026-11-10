@@ -1,6 +1,7 @@
 /** 类型化资源加载适配：描述与加载分开，缓存、去重和持有计数全部交给现有 ResourcePool。 */
 import {
     Asset,
+    Texture2D, TTFFont, TextAsset, ParticleAsset,
     assetManager,
     AudioClip,
     BitmapFont,
@@ -25,6 +26,11 @@ export interface ResourceAssetMap {
     JsonAsset: JsonAsset;
     BitmapFont: BitmapFont;
     EffectAsset: EffectAsset;
+    Texture2D: Texture2D;
+    TTFFont: TTFFont;
+    TextAsset: TextAsset;
+    ParticleAsset: ParticleAsset;
+    Asset: Asset;
 }
 
 export interface AssetScope {
@@ -44,26 +50,53 @@ const types = {
     SkeletonData: sp.SkeletonData,
     JsonAsset,
     BitmapFont,
-    EffectAsset
+    EffectAsset, Texture2D, TTFFont, TextAsset, ParticleAsset, Asset
 };
+
+/** 按引擎Bundle依赖元数据准备共享包；不另维护模块依赖清单。 */
+async function readyBundle(name: string, ancestors: readonly string[] = []): Promise<typeof resources> {
+    if (ancestors.includes(name)) {
+        throw new Error("Bundle循环依赖：" + ancestors.concat(name).join(" → "));
+    }
+    const bundle = assetManager.getBundle(name) || await new Promise<typeof resources>((resolve, reject) => {
+        assetManager.loadBundle(name, (error, value) => {
+            if (error || !value) {
+                reject(error || new Error("Bundle缺失：" + name));
+            } else {
+                resolve(value);
+            }
+        });
+    });
+    for (const dependency of bundle.deps || []) {
+        await readyBundle(dependency, ancestors.concat(name));
+    }
+    return bundle;
+}
 const pool = new ResourcePool<Asset>({
     load: key => {
-        const spec = JSON.parse(key) as { bundle: string; loadPath: string; type: keyof ResourceAssetMap };
+        const spec = JSON.parse(key) as { bundle: string; loadPath: string; type: keyof ResourceAssetMap; uuid?: string };
         const type = types[spec.type];
         if (!type) return Promise.reject(new Error("未知资源类型：" + spec.type));
         return new Promise((resolve, reject) => {
+            // 普通目录发布帧及原生附件按UUID取，避免同名Spine数据/附件路径歧义。
+            if (!spec.loadPath && spec.uuid) {
+                assetManager.loadAny({ uuid: spec.uuid }, (error, asset) => {
+                    if (error || !asset) reject(error || new Error("UUID资源缺失：" + spec.uuid));
+                    // Creator可能只打印原生缺失而仍返回Asset；此时不能把空壳记为准备成功。
+                    else if (spec.type === "Asset" && asset.nativeUrl && asset.nativeAsset == null) {
+                        reject(new Error("原生资源内容缺失：" + spec.uuid));
+                    }
+                    else resolve(asset);
+                });
+                return;
+            }
             const load = (bundle: typeof resources) => bundle.load(spec.loadPath, type as typeof Asset, (error, asset) => {
                 if (error || !asset) reject(error || new Error("资源加载失败：" + spec.bundle + "/" + spec.loadPath));
                 else resolve(asset);
             });
             if (spec.bundle === "resources") load(resources);
             else {
-                const ready = assetManager.getBundle(spec.bundle);
-                if (ready) load(ready);
-                else assetManager.loadBundle(spec.bundle, (error, bundle) => {
-                    if (error || !bundle) reject(error || new Error("Bundle 缺失：" + spec.bundle));
-                    else load(bundle);
-                });
+                void readyBundle(spec.bundle).then(load, reject);
             }
         });
     },
@@ -87,7 +120,8 @@ export function createAssetScope(): AssetScope {
         load: <K extends ResourceKind>(descriptor: ResourceDescriptor<K>) => scope.load(JSON.stringify({
             bundle: descriptor.bundle,
             loadPath: descriptor.loadPath,
-            type: descriptor.type
+            type: descriptor.type,
+            ...(!descriptor.loadPath ? { uuid: descriptor.uuid } : {})
         })) as Promise<ResourceAssetMap[K]>,
         loadPath: <K extends keyof ResourceAssetMap>(path: string, type: K) =>
             scope.load(JSON.stringify({bundle: "resources", loadPath: path, type})) as Promise<ResourceAssetMap[K]>,
@@ -97,12 +131,32 @@ export function createAssetScope(): AssetScope {
 
 /** 节点拥有者索引使用弱引用；销毁时解除动态图片/序列帧引用。 */
 const nodeScopes = new WeakMap<Node, AssetScope>();
-/** 旧主城底板缓存的应用级作用域；与节点资源分开统计，应用结束后清理。 */
+/** 配置与主城底板的应用级作用域；与节点资源分开统计，应用结束后清理。 */
 let residentScope: AssetScope | null = null;
 
 /** 资源生命周期入口：动态旧路径统一转换描述，禁止业务直接调用引擎加载器。 */
 export class ResourceAssetsUtils {
     private constructor() {
+    }
+
+    /** 统一图片获取：复用预加载缓存及在途请求，由owner节点持有，销毁后拒绝迟到结果。
+     * 字符串为resources内不带/spriteFrame的图片路径；描述可指定其他Bundle或UUID。
+     * 失败保留拒绝，由显示层决定占位与提示；本方法不直接赋图。
+     */
+    public static getSpriteFrame(owner: Node, source: string | ResourceDescriptor<"SpriteFrame">): Promise<SpriteFrame> {
+        return this.forNode(owner).load(typeof source === "string" ? this.sprite(source) : source);
+    }
+
+    /** 配置仓库与后台复用同一JSON请求；现有应用常驻作用域在退出时统一释放。 */
+    public static async loadConfig(path: string): Promise<unknown> {
+        if (!residentScope) {
+            residentScope = createAssetScope();
+        }
+        const asset = await residentScope.loadPath(path, "JsonAsset");
+        if (asset.json == null) {
+            throw new Error("配置资源缺失：" + path);
+        }
+        return asset.json;
     }
 
     /** 返回唯一类型化池统计；不把资源数冒充纹理显存或JS堆大小。 */

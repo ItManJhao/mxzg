@@ -1,0 +1,84 @@
+{
+  "date": "2026-11-10",
+  "baseline": "6c4d3788",
+  "committed": false,
+  "pushed": false,
+  "scope": "登录、主城、背包的资源清单与三段加载；玩法范围不变",
+  "configuration": {
+    "login": [
+      "login"
+    ],
+    "enterGame": [
+      "home",
+      "bag"
+    ],
+    "background": [
+      "bagIcons"
+    ]
+  },
+  "automated": {
+    "suites": [
+      "staged-loading",
+      "startup",
+      "resources",
+      "home-bundle",
+      "backpack",
+      "feature-navigation",
+      "bindings",
+      "home-presentation",
+      "remake-navigation"
+    ],
+    "status": "9/9专项检查通过；TypeScript --noEmit通过；git diff --check通过",
+    "typescript": "passed",
+    "previewFixture": "SocketPreviewServer.java 在独立复制的测试类目录编译并实际启动成功"
+  },
+  "browser": {
+    "environment": {
+      "kind": "mxzg-owned-socket-it",
+      "storage": "随机内存H2",
+      "port": 59989,
+      "run": "fcff2d3a0fac44acb1327c76d37f6c49",
+      "fixture": "--bag-loading-fixture",
+      "gm": false,
+      "viewport": "Creator Sony Xperia 5 (360x840)"
+    },
+    "verified": [
+      "刷新后确认prepareStage存在且最终玩家文案生效",
+      "真实第二段进度从0逐任务单调增加到0.9，开主城后到1",
+      "空背包首次打开、主城与背包切换",
+      "loading_review四类库存各3件：道具、装备、碎片、精灵",
+      "只读详情打开、关闭、返回主城、再次打开背包",
+      "库存快照含版本与条目在上述操作前后一致",
+      "退出登录返回登录页，库存状态idle，加载任务数0，路由pending最终false",
+      "临时把bag移到background并受控暂停首次后台让帧，点击后foreground由0到1，模块任务工厂仍只调用1次",
+      "释放受控等待后实际加载完成并打开背包，任务数归0",
+      "重新加载页面，默认计划恢复，临时探针已不存在"
+    ],
+    "network": {
+      "method": "四类库存角色的主城预热完成后，扩展ResourceTiming容量到10000并清空计数；同时读取CDP Network.requestWillBeSent游标",
+      "firstBagOpenRequests": 0,
+      "firstBagOpenCdpEvents": 0,
+      "cdpTruncated": false,
+      "categoriesDetailsReturnReopenResourceRequests": 0,
+      "note": "首次空背包样本达到默认250条资源计数上限，不作为请求数证据；上述0来自之后独立重新计数的四类库存复验"
+    },
+    "timingSample": {
+      "homeModuleMs": 1700.2,
+      "bagModuleMs": 988.3,
+      "cachedBagPreparationMs": 3.4,
+      "note": "首轮本机Creator预览的模块准备耗时；不是首帧时间、冷网络基准或设备性能承诺；最终仅调整加载文案与等价排版"
+    },
+    "screenshot": "docs/images/staged-loading-bag-20261110.jpg"
+  },
+  "limits": [
+    "没有正式构建、自动图集、微信分包或真机性能测试",
+    "主城特效运行器和角色头像仍保留原显示生命周期；不声称所有动画已预热",
+    "背包详情与遮罩仍直接绑定在入口Prefab，未完全延后",
+    "后台接管浏览器检查使用临时计划和受控帧等待，不作为真实耗时样本",
+    "本批无业务服务端修改；新增的测试库存夹具不是正式发放玩法"
+  ],
+  "cleanup": {
+    "temporaryBrowserChanges": "已通过重载移除",
+    "previewProcesses": "30928和38732均经JDK命令行核对独立复制目录与SocketPreviewServer身份后停止"
+  }
+}

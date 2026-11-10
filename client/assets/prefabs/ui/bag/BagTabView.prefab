@@ -399,6 +399,14 @@
     },
     "button": {
       "__id__": 7
+    },
+    "normalFrame": {
+      "__uuid__": "43e87ffb-d7f8-435e-be92-3db6f918d938@f9941",
+      "__expectedType__": "cc.SpriteFrame"
+    },
+    "selectedFrame": {
+      "__uuid__": "7c4a7018-cbbf-4184-8927-4037564d6c79@f9941",
+      "__expectedType__": "cc.SpriteFrame"
     }
   }
 ]

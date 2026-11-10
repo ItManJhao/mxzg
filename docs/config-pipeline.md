@@ -54,11 +54,12 @@ prepare 的 version 参数隔离不同版本：新组全部成功才切换并清
     const scope = createAssetScope();
     const frame = await scope.load(descriptor); // 推导为 SpriteFrame
     scope.dispose(); // 释放持有，迟到结果拒绝
-    const icon = ItemIconById[itemId]; // 未登记 ID 为 undefined
+    const path = BagItemCatalog.iconSource(itemConfig); // 配置解析，缺图返回null
+    const image = await ResourceAssetsUtils.getSpriteFrame(ownerNode, path || CommonUiResources.itemPlaceholder.path); // 复用原池，调用方检查显示代次
 
 描述包含 bundle、Bundle 内 path、完整 assetPath、loadPath、资源类型和 UUID。独立图片使用 meta 的 SpriteFrame 子资源；图集及子图采用可区分命名。规范化重名与同路径不同类型默认报错，须显式设置键或扩展名，不能覆盖。
 
-Common、启动和页面静态地址使用目录；动态图标放在独立 IconCatalog，缺失时选择明确占位图，不拼接未知路径。缺图记录见 [resource-missing.json](../config/resource-missing.json)，不代表本轮新增丢图。合理的 Prefab 序列化资源引用保留。
+Common、启动和页面静态地址使用目录。2026-11-10背包样板已改为直接解析item.icon，IconCatalog仅保留物品目录、已核实缺图例外以及暂未迁移的英雄/技能/历史头像等专用映射；不再生成ItemIconById。缺图显示明确占位，取图统一复用ResourceAssetsUtils.getSpriteFrame。以下早期验收中的ItemIconById和旧目录仅代表当时版本。缺图记录见 [resource-missing.json](../config/resource-missing.json)，不代表本轮新增丢图。合理的 Prefab 序列化资源引用保留。
 
 2026-11-02 此前批次复核发现旧 1172 条缺图记录大部分来自生成器误用物品 ID 拼接路径，忽略 item.icon 的 backpack/ 共享图片声明。现已按显式配置生成 IconCatalog，缺图降为 16 个引用、8 个不同路径；这是复用正确的现有图片，不是补造图片。当前三名初始英雄、初始库存及前 20 关奖励范围未发现必需缺图；保留配置引用仍有效，不能以未开放为由删除。
 

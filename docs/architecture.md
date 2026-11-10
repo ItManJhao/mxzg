@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新：2026-11-03。当前范围与进度见[开发进度](development-progress.md)，字段与时序见[通信契约](network-contract.md)。
+更新：2026-11-10。当前范围与进度见[开发进度](development-progress.md)，字段与时序见[通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -21,7 +21,7 @@ Model 保存唯一状态，Controller 明确处理业务协议并更新 Model，
 
 ## 基类与监听归属
 
-BaseModel 管角色会话和本地界面版本；BaseController 管显式模块初始化、会话代次和模块监听。BaseView 负责页面开关清理。关页不销毁业务模块，应用销毁才解除模块协议登记。事件监听按目标或 EventScope 清理，避免重复绑定。
+BaseModel 管角色会话和本地界面版本；BaseController 管显式模块初始化和模块监听；连接与旧回包隔离归 GameSocketClient 及应用认证交付。BaseView 负责页面开关清理。关页不销毁业务模块，应用销毁才解除模块协议登记。事件监听按目标或 EventScope 清理，避免重复绑定。
 
 ## 单一全局事件与数据顺序
 
@@ -35,7 +35,9 @@ Prefab 保存静态结构、布局、样式和绑定；业务列表使用 SuperS
 
 ## 当前入口与职责
 
-RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。AccountApi 只调用 WS 登录/恢复；角色/背包初始化在接纳账号的同批通知中交付。背包打开、切分类、同角色再次开始不查询库存。英雄已装配只读列表，按需加载旧 Prefab 与配置；升级、阵容、战斗、挂机仍未开放。
+RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。AccountApi 只调用 WS 登录/恢复；角色/背包初始化在接纳账号的同批通知中交付。背包打开、切分类、同角色再次开始不查询库存。英雄只读列表/详情、阵容编辑、前三关挑战与结算及挂机演出已按后续授权接入；升级、穿脱、宝箱领取和快速战斗仍关闭。资源采用可配置三段加载，实际范围以进度页为准。
+
+背包地址与页面属性定义在BagView/BagInfoView的@view，ApplicationPages只注入开页前置条件。LoadingPlan是三个阶段唯一人工资源配置入口；第三阶段只准备显式常用目标，其余按需，不维护模块预加载清单或全目录队列。ApplicationResources调度，ResourceAssets/ResourcePool共享缓存、请求和引用；Prefab绑定依赖不抄写清单。
 
 目录：app 负责装配，features 负责功能 Model/Controller/View，framework 负责通用事件/页面/资源，platform 负责 WS/Protobuf/协议路由，config 负责生成配置。通用层不得反向依赖具体业务 UI。
 

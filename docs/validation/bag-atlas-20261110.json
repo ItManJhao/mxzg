@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-10",
+  "status": "Creator预览通过，实际构建包待验证；未提交推送",
+  "scope": "背包实体图集试点及物品图标归档，保留三段加载和玩法范围",
+  "atlas": {
+    "path": "ui/bag/BagAtlas",
+    "size": [512, 128],
+    "frames": ["backpack-info_spr-line", "backpack_spr-select"],
+    "uuid": "39e3d2ed-c2c0-439c-bc51-39aef6543ba5",
+    "source": "art/ui/bag",
+    "pixelAndExtrusionCheck": "通过；所有原像素和2像素挤边一致",
+    "creatorMetaAndPrefabReferences": "通过；正式帧矩形、纹理归属和预制体引用一致"
+  },
+  "itemMigration": {
+    "count": 773,
+    "destination": "client/assets/resources/icons/item",
+    "imageAndMetaSha256UnchangedAfterImport": true,
+    "existingMissingDynamicIcons": 4
+  },
+  "checks": ["ui-atlas", "staged-loading", "backpack", "super-scroll", "bindings", "resource-catalog", "generate_resources --check", "TypeScript --noEmit"],
+  "browser": {
+    "run": "2429c31491014ac4b016149f4c146452",
+    "fixture": "独立内存H2，loading_review，四类物品各3件，GM关闭",
+    "viewport": "Creator iPhone 14 Pro 393×852竖屏",
+    "observations": ["登录实际准备进度显示2%和86%后进入主城", "装备、道具、碎片、精灵详情均显示正常", "选中框与分隔线使用正式图集帧", "两帧运行时共享纹理", "关闭详情、返回主城、重开背包通过"],
+    "resourceRequestsAfterPrewarming": 0,
+    "inventorySnapshotUnchanged": true,
+    "warningsAndErrors": 0,
+    "screenshot": "docs/images/bag-atlas-20261110.jpg",
+    "cleanup": "测试页关闭、视口恢复、独立服务核对归属后停止"
+  },
+  "remaining": ["负责人本地构建Web Mobile后核验实际打包资源和浏览器效果", "公共图集、其他模块图集、微信分包未在本批实施", "本批未重跑真实挑战结算奖励详情"]
+}

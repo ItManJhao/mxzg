@@ -1,3 +1,6 @@
+/** 通用等尺寸列表布局：由 SuperScroll 和业务列表使用，Cell 位置交给原生 Layout。
+ * 本组件管理内容尺寸、格子复用与编辑器预览，不读取库存或发起资源请求。
+ */
 import { _decorator, CCObject, Enum, instantiate, Layout, Node, Prefab, Size, UITransform, Widget } from "cc";
 import { EDITOR, PREVIEW } from "cc/env";
 
@@ -23,25 +26,67 @@ export class SuperContent extends Layout {
     @property({ displayName: "行数", group: "布局", min: 1, step: 1, visible(this: SuperContent) { return this.layoutType === SuperLayout.Grid && this.gridAxis === SuperAxis.Horizontal; } })
     rows = 2;
 
-    // Re-label the native properties instead of keeping a second copy of spacing/padding.
+    // 保留中文检查器属性并显式指定访问器接收者，避免发布版 loose 编译将 super 属性错误绑定到原型。
     @property({ override: true, displayName: "横向间距", group: "间距与边距", min: 0 })
-    get spacingX() { return super.spacingX; }
-    set spacingX(value: number) { super.spacingX = value; }
+    /** 读取当前组件的横向间距，单位为设计像素，沿用原生 Layout 状态。 */
+    get spacingX(): number {
+        return Reflect.get(Layout.prototype, "spacingX", this);
+    }
+
+    /** 写入横向间距并执行原生布局失效通知，不产生第二份状态。 */
+    set spacingX(value: number) {
+        Reflect.set(Layout.prototype, "spacingX", value, this);
+    }
     @property({ override: true, displayName: "纵向间距", group: "间距与边距", min: 0 })
-    get spacingY() { return super.spacingY; }
-    set spacingY(value: number) { super.spacingY = value; }
+    /** 读取当前组件的纵向间距，单位为设计像素，沿用原生 Layout 状态。 */
+    get spacingY(): number {
+        return Reflect.get(Layout.prototype, "spacingY", this);
+    }
+
+    /** 写入纵向间距并执行原生布局失效通知，不产生第二份状态。 */
+    set spacingY(value: number) {
+        Reflect.set(Layout.prototype, "spacingY", value, this);
+    }
     @property({ override: true, displayName: "上边距", group: "间距与边距", min: 0 })
-    get paddingTop() { return super.paddingTop; }
-    set paddingTop(value: number) { super.paddingTop = value; }
+    /** 读取当前组件的上边距，单位为设计像素，沿用原生 Layout 状态。 */
+    get paddingTop(): number {
+        return Reflect.get(Layout.prototype, "paddingTop", this);
+    }
+
+    /** 写入上边距并执行原生布局失效通知，不产生第二份状态。 */
+    set paddingTop(value: number) {
+        Reflect.set(Layout.prototype, "paddingTop", value, this);
+    }
     @property({ override: true, displayName: "下边距", group: "间距与边距", min: 0 })
-    get paddingBottom() { return super.paddingBottom; }
-    set paddingBottom(value: number) { super.paddingBottom = value; }
+    /** 读取当前组件的下边距，单位为设计像素，沿用原生 Layout 状态。 */
+    get paddingBottom(): number {
+        return Reflect.get(Layout.prototype, "paddingBottom", this);
+    }
+
+    /** 写入下边距并执行原生布局失效通知，不产生第二份状态。 */
+    set paddingBottom(value: number) {
+        Reflect.set(Layout.prototype, "paddingBottom", value, this);
+    }
     @property({ override: true, displayName: "左边距", group: "间距与边距", min: 0 })
-    get paddingLeft() { return super.paddingLeft; }
-    set paddingLeft(value: number) { super.paddingLeft = value; }
+    /** 读取当前组件的左边距，单位为设计像素，沿用原生 Layout 状态。 */
+    get paddingLeft(): number {
+        return Reflect.get(Layout.prototype, "paddingLeft", this);
+    }
+
+    /** 写入左边距并执行原生布局失效通知，不产生第二份状态。 */
+    set paddingLeft(value: number) {
+        Reflect.set(Layout.prototype, "paddingLeft", value, this);
+    }
     @property({ override: true, displayName: "右边距", group: "间距与边距", min: 0 })
-    get paddingRight() { return super.paddingRight; }
-    set paddingRight(value: number) { super.paddingRight = value; }
+    /** 读取当前组件的右边距，单位为设计像素，沿用原生 Layout 状态。 */
+    get paddingRight(): number {
+        return Reflect.get(Layout.prototype, "paddingRight", this);
+    }
+
+    /** 写入右边距并执行原生布局失效通知，不产生第二份状态。 */
+    set paddingRight(value: number) {
+        Reflect.set(Layout.prototype, "paddingRight", value, this);
+    }
 
     @property({ type: Prefab, displayName: "Cell Prefab", group: "Cell", tooltip: "根节点必须有 UITransform；保留原始缩放，不自动压缩格子" })
     cellPrefab: Prefab | null = null;
@@ -53,34 +98,97 @@ export class SuperContent extends Layout {
     @property({ editorOnly: true, displayName: "编辑器预览数量", group: "编辑器预览", min: 0, max: 50, step: 1, tooltip: "仅编辑模式生成无业务数据的 Cell。设 0 清理；预览节点不保存、不进入运行/构建" })
     previewCount = 0;
 
-    // These native implementation details are derived, never a second Inspector entry.
+    // 原生布局参数由列表计算，隐藏重复的检查器入口；读写仍作用于当前组件。
     @property({ override: true, visible: false })
-    get type() { return super.type; }
-    set type(value) { super.type = value; }
+    /** 读取当前组件的原生 type，不访问父类原型上的默认值。 */
+    get type(): Layout["type"] {
+        return Reflect.get(Layout.prototype, "type", this);
+    }
+
+    /** 转交原生 type 写入及失效通知，避免发布编译产生自递归赋值。 */
+    set type(value: Layout["type"]) {
+        Reflect.set(Layout.prototype, "type", value, this);
+    }
     @property({ override: true, visible: false })
-    get resizeMode() { return super.resizeMode; }
-    set resizeMode(value) { super.resizeMode = value; }
+    /** 读取当前组件的原生 resizeMode，不访问父类原型上的默认值。 */
+    get resizeMode(): Layout["resizeMode"] {
+        return Reflect.get(Layout.prototype, "resizeMode", this);
+    }
+
+    /** 转交原生 resizeMode 写入及失效通知，避免发布编译产生自递归赋值。 */
+    set resizeMode(value: Layout["resizeMode"]) {
+        Reflect.set(Layout.prototype, "resizeMode", value, this);
+    }
     @property({ override: true, visible: false })
-    get startAxis() { return super.startAxis; }
-    set startAxis(value) { super.startAxis = value; }
+    /** 读取当前组件的原生 startAxis，不访问父类原型上的默认值。 */
+    get startAxis(): Layout["startAxis"] {
+        return Reflect.get(Layout.prototype, "startAxis", this);
+    }
+
+    /** 转交原生 startAxis 写入及失效通知，避免发布编译产生自递归赋值。 */
+    set startAxis(value: Layout["startAxis"]) {
+        Reflect.set(Layout.prototype, "startAxis", value, this);
+    }
     @property({ override: true, visible: false })
-    get constraint() { return super.constraint; }
-    set constraint(value) { super.constraint = value; }
+    /** 读取当前组件的原生 constraint，不访问父类原型上的默认值。 */
+    get constraint(): Layout["constraint"] {
+        return Reflect.get(Layout.prototype, "constraint", this);
+    }
+
+    /** 转交原生 constraint 写入及失效通知，避免发布编译产生自递归赋值。 */
+    set constraint(value: Layout["constraint"]) {
+        Reflect.set(Layout.prototype, "constraint", value, this);
+    }
     @property({ override: true, visible: false })
-    get constraintNum() { return super.constraintNum; }
-    set constraintNum(value) { super.constraintNum = value; }
+    /** 读取当前组件的原生 constraintNum，不访问父类原型上的默认值。 */
+    get constraintNum(): Layout["constraintNum"] {
+        return Reflect.get(Layout.prototype, "constraintNum", this);
+    }
+
+    /** 转交原生 constraintNum 写入及失效通知，避免发布编译产生自递归赋值。 */
+    set constraintNum(value: Layout["constraintNum"]) {
+        Reflect.set(Layout.prototype, "constraintNum", value, this);
+    }
     @property({ override: true, visible: false })
-    get cellSize() { return super.cellSize; }
-    set cellSize(value) { super.cellSize = value; }
+    /** 读取当前组件的原生 cellSize，不访问父类原型上的默认值。 */
+    get cellSize(): Layout["cellSize"] {
+        return Reflect.get(Layout.prototype, "cellSize", this);
+    }
+
+    /** 转交原生 cellSize 写入及失效通知，避免发布编译产生自递归赋值。 */
+    set cellSize(value: Layout["cellSize"]) {
+        Reflect.set(Layout.prototype, "cellSize", value, this);
+    }
     @property({ override: true, visible: false })
-    get affectedByScale() { return super.affectedByScale; }
-    set affectedByScale(value) { super.affectedByScale = value; }
+    /** 读取当前组件的原生 affectedByScale，不访问父类原型上的默认值。 */
+    get affectedByScale(): Layout["affectedByScale"] {
+        return Reflect.get(Layout.prototype, "affectedByScale", this);
+    }
+
+    /** 转交原生 affectedByScale 写入及失效通知，避免发布编译产生自递归赋值。 */
+    set affectedByScale(value: Layout["affectedByScale"]) {
+        Reflect.set(Layout.prototype, "affectedByScale", value, this);
+    }
     @property({ override: true, visible: false })
-    get horizontalDirection() { return super.horizontalDirection; }
-    set horizontalDirection(value) { super.horizontalDirection = value; }
+    /** 读取当前组件的原生 horizontalDirection，不访问父类原型上的默认值。 */
+    get horizontalDirection(): Layout["horizontalDirection"] {
+        return Reflect.get(Layout.prototype, "horizontalDirection", this);
+    }
+
+    /** 转交原生 horizontalDirection 写入及失效通知，避免发布编译产生自递归赋值。 */
+    set horizontalDirection(value: Layout["horizontalDirection"]) {
+        Reflect.set(Layout.prototype, "horizontalDirection", value, this);
+    }
     @property({ override: true, visible: false })
-    get verticalDirection() { return super.verticalDirection; }
-    set verticalDirection(value) { super.verticalDirection = value; }
+    /** 读取当前组件的原生 verticalDirection，不访问父类原型上的默认值。 */
+    get verticalDirection(): Layout["verticalDirection"] {
+        return Reflect.get(Layout.prototype, "verticalDirection", this);
+    }
+
+    /** 转交原生 verticalDirection 写入及失效通知，避免发布编译产生自递归赋值。 */
+    set verticalDirection(value: Layout["verticalDirection"]) {
+        Reflect.set(Layout.prototype, "verticalDirection", value, this);
+    }
 
     private cells: Node[] = [];
     private renderedPrefab: Prefab | null = null;

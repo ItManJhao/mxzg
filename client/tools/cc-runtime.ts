@@ -16,7 +16,21 @@ export const sys = {
   },
 };
 
-export class JsonAsset {
+/** 模拟资源引用拥有关系，不模拟引擎内存和依赖卸载。 */
+export class Asset {
+  /** 测试中当前持有者数量。 */
+  refCount = 0;
+  /** 添加测试持有者并返回资源。 */
+  addRef(): this { this.refCount++; return this; }
+  /** 释放一个测试持有者。 */
+  decRef(): this { this.refCount--; return this; }
+}
+
+export class Texture2D extends Asset {}
+export class TextAsset extends Asset {}
+export class ParticleAsset extends Asset {}
+
+export class JsonAsset extends Asset {
   json: object | null = null;
 }
 
@@ -496,8 +510,8 @@ export class Prefab {
   decRef(): this { this.refCount = Math.max(0, this.refCount - 1); return this; }
 }
 
-export class TTFFont {}
-export class BitmapFont {}
+export class TTFFont extends Asset {}
+export class BitmapFont extends Asset {}
 export class AudioClip { refCount = 0; addRef(): this { this.refCount++; return this; } decRef(): this { this.refCount--; return this; } }
 
 export class AudioSource extends Component {
@@ -608,6 +622,8 @@ export function instantiate(original: Prefab | Node | { _instantiate?: () => Nod
 }
 
 export const assetManager = {
+  /** 默认没有已加载Bundle，具体测试可覆盖为实际依赖夹具。 */
+  getBundle(_name: string): any { return null; },
   loadBundle(_name: string, cb: (err: Error | null, bundle: null) => void): void {
     cb(new Error("backpack-view-check 不读 bundle"), null);
   },

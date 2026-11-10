@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-10",
+  "scope": "仅明确名单中的bag2张与common7张原图副本",
+  "allowlist": "config/ui-atlas-dedupe.json",
+  "checks": [
+    "9张隔离构建钩子：备份、幂等、跨包帧共享/重定向、嵌套原图引用拒绝、动态路径拒绝、混合批次损坏不删除、跨包不一致及非法重定向拒绝",
+    "common图片/meta/原UUID检查",
+    "现有18:28实际产物只读引用检查及备份清理"
+  ],
+  "applied": {
+    "commonFiles": 7,
+    "commonBytes": 29507,
+    "backup": "client/temp/bag-build-dedupe/build-xQMXrj",
+    "fullBuildFiles": 9,
+    "fullBuildBytes": 35481
+  },
+  "browser": {
+    "coldCache": true,
+    "isolatedH2": true,
+    "allFourCategoriesAndDetails": true,
+    "returnAndReopen": true,
+    "inventoryAndRevisionUnchanged": true,
+    "heroAndBattlePrefabLoad": true,
+    "sharedTexture": "1c3a54300@6c48a",
+    "warnings": 0,
+    "errors": 0,
+    "failedResources": 0,
+    "screenshot": "docs/images/common-dedupe-20261110.jpg"
+  },
+  "pending": [],
+  "limits": [
+    "未开放新玩法",
+    "仅本地Web且关闭MD5及调试模式",
+    "当前保留未使用的ImageAsset索引，不支持按原图UUID直接加载",
+    "英雄养成及挑战交互不属于本次复验"
+  ],
+  "committed": false,
+  "creatorBuild": {
+    "completed": "2026-11-10 18:47:51",
+    "hookTime": "2026-11-10 18:47:45",
+    "files": 9,
+    "bytes": 35481,
+    "bag": {
+      "files": 2,
+      "bytes": 5974
+    },
+    "common": {
+      "files": 7,
+      "bytes": 29507
+    },
+    "backup": "client/temp/bag-build-dedupe/build-RHx09B",
+    "backupHashesVerified": true,
+    "outputCheck": "common-atlas-check --build-output通过",
+    "logPrefix": "[UI图集构建去重]",
+    "versionNote": "已自动运行9张新版逻辑；实际日志尚未含随后新增的v1.1.0文字，不据此声称版本号已生效"
+  },
+  "browserNote": "浏览器结果来自此前同一清理逻辑处理的18:28包；本轮18:47自动构建完成后核对引用和备份，未重复登录交互。"
+}

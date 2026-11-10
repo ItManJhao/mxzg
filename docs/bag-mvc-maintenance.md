@@ -1,13 +1,36 @@
 # 背包标准模块：维护与验收入口
 
-更新：2026-11-03。当前采用登录统一初始化与服务端资产同步，保留现有 Prefab、只读详情、SuperScroll 和唯一 BagModel。其他玩法暂停；旧查询模板已经退役。
+更新：2026-11-10。当前采用登录统一初始化与服务端资产同步，保留现有 Prefab、只读详情、SuperScroll 和唯一 BagModel。其他玩法暂停；旧查询模板已经退役。
+
+图片放置、自动图集及构建日志操作见[背包自动图集](bag-auto-atlas.md)，具体归属见[资源清单](bag-resource-inventory.md)。
+
+## 页面和资源：人工修改入口（2026-11-10）
+
+页面地址与页面属性在 BagView/BagInfoView 的 @view 注册中定义；ApplicationPages 仅注入配置前置条件及共享预制体加载。BagDefinition、BagPagesUtils、BagResourcesUtils均已移除。
+
+| 修改内容 | 人工入口 |
+|---|---|
+| 背包结构、背景、Cell、页签 | assets/prefabs/ui/bag/BagView.prefab |
+| 独立详情遮罩与面板 | 同目录BagInfoView.prefab |
+| 店员外观 | BagView.shopkeeperSkeleton |
+| 物品到图标/品质的显示规则 | features/bag/utils/BagItemCatalog.ts |
+| 第一、二阶段准备什么 | app/remake/LoadingPlan.ts直接列资源 |
+| 新增资源纳入后台 | 在LoadingPlan.background中列目标，不维护模块清单 |
+
+打开BagView只取得自身预制体及必要配置，直接绑定依赖随引擎加载。BagInfoView是独立窗口，默认在LoadingPlan.background准备，也可以在LoadingPlan中明确提前加载。动态显示继续使用原节点作用域和迟到回调保护；后台与前台共享缓存。详细策略见[分阶段加载](staged-resource-loading.md)。
+
+统一取图入口为ResourceAssetsUtils.getSpriteFrame(owner, source)：source可传resources相对图片路径（不带/spriteFrame）或生成资源描述，owner决定引用生命周期。已加载直接复用，在途请求合并，失败交给显示层处理。SpritePaint只负责赋图、回退和刷新代次，不再自建图片作用域。直接使用此Promise时，调用方同样需要检查当前显示代次；背包已通过SpritePaint统一处理。
+
+物品配置→图片地址由BagItemCatalog.iconSource(row)处理：遵循item.icon共图声明，支持backpack/和hero-icon/，无显式图标时沿用原ID规则。IconCatalog不再生成2,172条ItemIconById描述，仅保留物品目录和4项已核实缺图例外；改动源配置或补图后仍运行原生成器，不手改生成结果。品质框通过CommonUiResources.qualityFrame(quality)取得，取消七项重复数组。其他英雄/技能/历史头像映射继续保留，未在本批全部迁移。
+
+库存详情调用 `UIManager.instance.open(BagInfoView, { source: "inventory", key: item.key, tab })`；窗口自己读取 Model 并监听数量变化、删除和到期。结算/产物说明调用同一窗口的 description 参数，保留“本次获得”或“产物说明（只读）”，不冒充库存。父页面关闭通过 UIManager 关闭详情，也取消尚未完成的打开。
 
 ## 固定目录与文件职责
 
 - features/bag/BagController.ts：声明协议，onNotify → onInventoryState → Model → BagEvent。
 - features/bag/BagModel.ts：唯一库存状态、全量校验与界面 revision，不联网。
 - features/bag/utils/BagEvent.ts、data/：界面事件、状态、变更集和物品类型。
-- features/bag/ui/：BagView、BagItemView、BagInfoView、BagTabView 和挂载辅助。
+- features/bag/ui/：BagView、BagItemView、BagInfoView、BagTabView 和页面登记；BagMount 已退役。
 - features/account/RoleController.ts：角色协议入口，提交 AccountModel 中唯一角色资料，不处理登录。
 - app/remake/AssetStateBinding.ts：应用协调身份、持久版本、角色与背包原子通知。
 - platform/Protocol.ts / ProtocolRouter.ts：统一消息目录与真实消息定向分发，不保存玩家资产。
@@ -76,7 +99,7 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 
 [SuperScroll Inspector 指南](super-scroll-authoring.md) 的布局规则和无业务编辑器预览继续有效。本批没改源 Prefab、SuperScroll、SuperContent、资源路径与加载边界；10 个移动脚本 UUID 均逐一核对保留，BagView 仍是 `7b14e0a2-3c58-4d1f-8e6a-9f0b2c4d5e61`。Prefab 内稳定的 CompPrefabInfo.fileId 不是脚本路径，不因改名替换。目录实际名及导入统一为 `features/Bag`，旧 backpack 脚本目录已移除。
 
-尺寸/位置仍由以下入口控制，不宣称整页静态 UI 已全部整改：SuperContent 算 content/Cell 根尺寸，原生 Layout 排动态 Cell，ScrollView 管滚动；BagView 仅提供条目/渲染回调，保留同分类滚动、分类回起点和缩短限制。空槽至少 20/按四补齐是背包规则。`BagMount.mountBagPage` 只装配共享壳与可见区域；PrefabLayout 不再补偿静态文字/九宫格位置。BagView 保留动态分类排列，BagMount.openBagInfo/seatCenter 只按宿主尺寸居中详情。
+尺寸/位置仍由以下入口控制，不宣称整页静态 UI 已全部整改：SuperContent 算 content/Cell 根尺寸，原生 Layout 排动态 Cell，ScrollView 管滚动；BagView 仅提供条目/渲染回调，保留同分类滚动、分类回起点和缩短限制。空槽至少 20/按四补齐是背包规则。BagMount 已删除。BagView 直接加载完整预制体，背景通过预制体 Widget 铺满根节点；根节点继续复用通用可见区域适配，内部原背包内容保留通用等比收窄。BagView 仍有动态分类排列，这不是本批已整改项。BagInfoView 作为独立 BaseView 打开，遮罩和居中面板均在预制体内，不再运行时组装或调整背景尺寸。
 
 ## 旧协议还原清单
 
@@ -129,3 +152,8 @@ Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItem
 背包不发送查询，BagController原本就没有异步换号保护；本批移除BagView的lastRoleKey及换号分支。身份改变时由AssetStateBinding调用应用关闭背包/布阵，再通知模块清空业务数据。BagModel的roleKey仅描述数据归属，“初始化前不接收库存”的检查仍是提交前置条件，不是旧回包隔离。
 
 通信层拒绝旧连接消息；应用统一校验身份、资产版本及整包内容后才调用onNotify。布阵写操作同样由应用的AccountService.deliverAuthenticated交付结果，模块不判断账号。BaseController不再维护captureSession/isCurrent或会话代次。业务回执匹配、幂等重试与页面自身关闭清理继续保留。
+
+
+## 背包自动图集维护入口
+
+界面专用原图放在 client/assets/ui/bag/atlas，直接绑定预制体，由同目录 BagAtlas.pac 在构建时自动合图。页面注册不登记图集路径或逐图 images。物品图标保留在 icons/item，公共图片保留在 ui/common。完整步骤见 [背包自动图集](bag-auto-atlas.md)。

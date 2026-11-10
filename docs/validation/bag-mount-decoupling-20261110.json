@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-10",
+  "scope": "BagMount 解耦：完整背包预制体、独立物品详情，保持三段加载与只读玩法范围；不提交推送",
+  "implementation": [
+    "删除 BagMount.ts 及 meta，无替代组装类",
+    "BagView.prefab 自带背景，Widget 保存背景尺寸规则；原内容通用竖屏收窄保留",
+    "BagInfoView.prefab 自带遮罩、居中面板和阻挡事件；作为独立 Popup 打开",
+    "库存详情自己监听唯一 Model，数量刷新不重建窗口；删除和到期关闭",
+    "结算和产物说明调用独立详情，保留只读文案",
+    "预热 bag 模块包含两个独立窗口，不再预热页面壳/底板/独立遮罩"
+  ],
+  "checks": {
+    "passed": [
+      "backpack",
+      "staged-loading",
+      "bindings",
+      "feature-navigation",
+      "battle",
+      "TypeScript --noEmit",
+      "git diff --check"
+    ],
+    "backpackCoverage": [
+      "连续点击共享一次加载并显示最后选中条目",
+      "库存变化刷新同一详情实例",
+      "遮罩关闭不关闭背包",
+      "背包关闭取消迟到弹窗",
+      "取消后重新打开",
+      "删除和期限到期关闭",
+      "监听清理与重复打开"
+    ],
+    "browser": {
+      "environment": "SocketPreviewServer，随机内存 H2，回环随机端口；loading_review 四分类各3件，GM关闭",
+      "run": "e7654e12fb964574bbfdfa3f582dfbcf",
+      "viewports": [
+        "393x852",
+        "360x840",
+        "360x720"
+      ],
+      "passed": [
+        "背包直接挂在 LiveShell 下，子节点为预制体已有 Background/BagView，无 PagePrefabShell/ListBackdrop",
+        "详情挂在 PageHost，独立于背包",
+        "道具/装备/碎片/精灵详情",
+        "确认/关闭按钮/点击遮罩",
+        "三种竖屏的背景覆盖、卡片居中、遮罩覆盖",
+        "返回主城和背包重开",
+        "主线产物说明→独立详情→关闭返回"
+      ],
+      "resourceRequestsDuringWarmBagAndFourDetails": 0,
+      "inventory": "四分类浏览前后快照相同；最终四种物品仍各3件",
+      "logs": "应用 warn/error 未发现；调试查询曾产生两次探针错误（读取组件类型、页面重载后读取已消失的临时基线），不计作应用通过证据",
+      "note": "Creator 后续自动重载清除了临时快照变量；重载后的 undefined 比较不作为资产变化证据，最终重读库存核对4种各3件。",
+      "screenshot": "docs/images/bag-independent-detail-20261110.jpg"
+    }
+  },
+  "limits": [
+    "本批未重新跑真实挑战/结算后的奖励详情画面，结算调用通过类型和战斗专项检查；不把只读产物详情当真实结算验收",
+    "未做横屏与真机微信包",
+    "BagDefinition 与 ResourceCatalog 的后续简化不在本步展开",
+    "保留动态页签排列与通用竖屏内容适配，并非取消全部运行时适配"
+  ],
+  "cleanup": "浏览器测试标签关闭、视口覆盖恢复；独立后端按进程身份核对后停止"
+}

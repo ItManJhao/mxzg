@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-10",
+  "status": "背包样板代码及独立浏览器复验通过，未提交推送",
+  "scope": "仅背包页面与资源组织；三段加载与当前玩法范围保持",
+  "changes": [
+    "BagDefinition统一页面信息、挂载路径、动态图片及店员名称",
+    "BagPagesUtils集中模块页面登记；应用不再复制背包ViewSpec",
+    "BagResourcesUtils迁入模块并保留meta UUID，仅声明资源需求和计算图标",
+    "ResourcePreparationUtils执行声明式任务，复用现有协调器和资源缓存",
+    "移除4项已由入口Prefab绑定的重复预热条目，独立预制体清单从7项降为入口/页面壳/底板3项"
+  ],
+  "checks": [
+    "staged-loading",
+    "backpack",
+    "bindings",
+    "feature-navigation",
+    "home-bundle",
+    "startup",
+    "resources",
+    "TypeScript --noEmit",
+    "git diff --check"
+  ],
+  "browser": {
+    "run": "8a744b23785a4c57824e6c8a9d8ae38b",
+    "fixture": "独立随机内存H2，loading_review，四类物品各3件，GM关闭",
+    "viewport": "iPhone 14 Pro 393×852竖屏",
+    "passed": [
+      "主城进入背包",
+      "道具详情及遮罩",
+      "装备/道具/碎片/精灵四分类",
+      "返回主城、重新打开",
+      "后台bag任务暂停后点击只有同一任务foreground=1，放行后打开且jobs为空"
+    ],
+    "additionalResourceRequests": 0,
+    "inventorySnapshotUnchanged": true,
+    "consoleWarningsAndErrors": 0,
+    "note": "计数在主城及后台准备完成后清空Resource Timing，容量10000；不代表所有未来新增物品均无需加载。后台接管使用临时可控帧暂停，结束恢复配置并关闭页面。",
+    "screenshot": "docs/images/bag-definition-20261110.jpg"
+  },
+  "preserved": [
+    "Prefab/Scene及绑定UUID未修改",
+    "协议与唯一Model写入链未修改",
+    "其他模块资源组织未迁移",
+    "图集和微信分包未实施"
+  ],
+  "manualGuide": "docs/bag-mvc-maintenance.md",
+  "cleanup": "临时预览关闭、尺寸恢复；独立服务按进程身份核对后停止"
+}

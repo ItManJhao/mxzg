@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-10",
+  "status": "限定背包两张原图副本的构建后去重通过；未提交推送",
+  "buildTime": "2026-11-10 17:19:09 Asia/Shanghai",
+  "finding": "所有剔除选项已开启；迁至普通目录后原图随预制体进入prefabs包，仍然重复。只有SpriteFrame引用，构建import依赖无原图或原纹理使用者，config无原图动态路径。与公开3.8.8问题19184表现相符，不能宣称引擎已确认根因。",
+  "solution": "限定两张原图白名单，校验所属包、合图帧依赖、合图PNG、全部import依赖及原图SHA256后，备份并清理native原图；不修改源码/meta/config及生成协议",
+  "removedFiles": 2,
+  "removedBytes": 5974,
+  "backup": "client/temp/bag-build-dedupe/1794302586814",
+  "checks": ["清理前检查2份5974字节", "执行后原图副本检查通过", "重复运行清理0份", "npm入口运行通过"],
+  "browser": {
+    "cacheDisabledDuringVerification": true,
+    "startup": "正常进入登录页",
+    "loadedPrefabs": ["BagView", "BagItemView", "BagInfoView"],
+    "sharedTexture": "1d629baea@6c48a",
+    "textureSize": [126, 474],
+    "warningsAndErrors": 0,
+    "screenshot": "docs/images/bag-atlas-dedupe-20261110.jpg",
+    "cleanup": "恢复缓存设置及视口，关闭测试页"
+  },
+  "limits": ["每次Creator重新构建后需运行npm --prefix client run build:dedupe-bag，未增加编辑器自动钩子", "资源索引仍保留不可按路径加载且无使用者的原ImageAsset登记；不支持按其UUID直接加载", "发布包未登录日常服务器，完整背包交互沿用上一批独立预览结果", "仅处理当前背包两张图片，未扩到其他模块"]
+}

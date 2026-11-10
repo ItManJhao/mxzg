@@ -1,13 +1,18 @@
 /** 背包分类页签：由 BagView 传入选中状态与点击回调，Prefab 保存外观。 */
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { _decorator, Button, Component, Label } from "cc";
-import { paintSpriteResources } from "../../../framework/kit/SpritePaint";
+import { _decorator, Button, Component, Label, Sprite, SpriteFrame } from "cc";
 
 const { ccclass, property } = _decorator;
 
 /** BagTabButton。标题和按钮在预制上，选中只换图。 */
 @ccclass("BagTabView")
 export class BagTabView extends Component {
+    /** 未选中图片直接由预制体绑定，随预制体准备，无须手列预加载路径。 */
+    @property(SpriteFrame)
+    normalFrame: SpriteFrame | null = null;
+
+    /** 选中图片直接由预制体绑定，切换页签时同步替换。 */
+    @property(SpriteFrame)
+    selectedFrame: SpriteFrame | null = null;
     /** 页签标题标签，由 Prefab 绑定。 */
     @property(Label)
     title: Label | null = null;
@@ -36,11 +41,18 @@ export class BagTabView extends Component {
         this.setSelected(on);
     }
 
-    /** 切换已登记的页签贴图；资源作用域随节点销毁释放。 */
+    /** 同步切换预制体绑定的图片，不在点击页签时发起图片加载。 */
     setSelected(on: boolean): void {
         this.selected = on;
-        if (this.button) this.button.transition = Button.Transition.NONE;
-        paintSpriteResources(this.node, [on ? ResourceCatalog.common.button_btn_tab_24 : ResourceCatalog.common.button_btn_tab_23]);
+        if (this.button) {
+            this.button.transition = Button.Transition.NONE;
+        }
+        const sprite = this.node.getComponent(Sprite);
+        const frame = on ? this.selectedFrame : this.normalFrame;
+        if (!sprite || !frame) {
+            throw new Error("BagTabView 缺少 Sprite 或页签图片绑定");
+        }
+        sprite.spriteFrame = frame;
     }
 
     /** 返回当前页签的选中状态。 */

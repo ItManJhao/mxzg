@@ -1,18 +1,17 @@
 /** 主线产物双页说明，展示全部旧配置关卡；由主线收益说明按钮打开。
  * 仅加载配置和详情资源，不请求资产/领取，不改变挑战开放范围；关闭丢弃迟到加载。 */
-import { _decorator, Button, Node, Prefab, Rect, ScrollView, Sprite, SpriteFrame, UITransform, Vec3 } from "cc";
+import { _decorator, Button, Node, Rect, ScrollView, Sprite, SpriteFrame, UITransform, Vec3 } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { prepareInventoryConfig } from "../../../config/RemakeConfig";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
-import { BagInfoView } from "../../bag/ui/BagInfoView";
-import { openBagInfo } from "../../bag/ui/BagMount";
+import { BagInfoArgs, BagInfoView } from "../../bag/ui/BagInfoView";
+import { viewSpecOf } from "../../../framework/ui/UIRegistry";
 import { ChapterRewardInfoRow, ChapterRewardInfoUtils } from "../utils/ChapterRewardInfoUtils";
 import { ChapterRewardInfoCell } from "./ChapterRewardInfoCell";
 const { ccclass, property } = _decorator;
@@ -45,12 +44,6 @@ export class ChapterRewardInfoView extends BaseView {
     private cells: ChapterRewardInfoCell[] = [];
     /** 关闭后拒绝迟到配置及详情操作。 */
     private released = false;
-    /** 详情预制体，加载就绪后使用。 */
-    private infoPrefab: Prefab | null = null;
-    /** 详情遮罩预制体，不参与资产同步。 */
-    private dimPrefab: Prefab | null = null;
-    /** 当前详情节点，换物品时销毁旧节点。 */
-    private infoSheet: Node | null = null;
 
     /** 登记本页按钮和滚动监听，准备资源期间隐藏主体，失败交UIManager处理。 */
     public onOpen(): void {
@@ -85,10 +78,8 @@ export class ChapterRewardInfoView extends BaseView {
     /** 加载同源关卡与共享物品配置；节点资源作用域负责关闭后的释放。 */
     private async prepare(): Promise<void> {
         const assets = ResourceAssetsUtils.forNode(this.node);
-        const [table, info, dim] = await Promise.all([
+        const [table] = await Promise.all([
             assets.loadPath("config/chapterreward", "JsonAsset"),
-            assets.load(ResourceCatalog.prefab_bag.BagInfoView),
-            assets.load(ResourceCatalog.prefab_common.DimSheet),
             prepareInventoryConfig(),
         ]);
         if (this.released) {
@@ -96,8 +87,6 @@ export class ChapterRewardInfoView extends BaseView {
         }
         this.rows = ChapterRewardInfoUtils.rows(table.json);
         this.catalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item), GameConfig.instance.getFile(GConfig.Language));
-        this.infoPrefab = info;
-        this.dimPrefab = dim;
     }
 
     /** 选中旧页签并按配置顺序绑定所有关卡；不增加任何挑战/领取入口。 */
@@ -137,16 +126,18 @@ export class ChapterRewardInfoView extends BaseView {
 
     /** 打开只读物品详情，隐藏获取跳转，数量明确为产物说明而非库存。 */
     private showItem(id: number): void {
-        if (this.released || !this.catalog || !this.infoPrefab || !this.dimPrefab) {
+        if (this.released || !this.catalog) {
             return;
         }
-        this.infoSheet?.destroy();
-        this.infoSheet = openBagInfo(this.node, this.dimPrefab, this.infoPrefab,
-            { ...this.catalog.face(id, 0), typeLine: "产物说明（只读）" }, text => UIManager.instance.toast(text));
-        const info = this.infoSheet.getChildByName("BagInfoView")?.getComponent(BagInfoView);
-        if (info?.btnSrc) {
-            info.btnSrc.node.active = false;
-        }
+        const args: BagInfoArgs = {
+            source: "description",
+            face: { ...this.catalog.face(id, 0), typeLine: "产物说明（只读）" },
+        };
+        void UIManager.instance.open(BagInfoView, args).then(info => {
+            if (!this.released) {
+                info.runOpen(args);
+            }
+        }).catch(() => { /* 加载失败或取消由 UIManager 统一处理。 */ });
     }
 
     /** 主体按旧尺寸等比适配，缩放后重新判断可视行。 */
@@ -167,7 +158,7 @@ export class ChapterRewardInfoView extends BaseView {
         this.released = true;
         this.cells = [];
         this.rows = [];
-        this.infoSheet = null;
+        UIManager.instance.closeById(viewSpecOf(BagInfoView)!.id);
         this.finishOpen();
     }
 }

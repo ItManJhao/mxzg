@@ -7,12 +7,18 @@ import {prefabInPlan} from "../../config/PrefabPlan";
 
 /**
  * 保留旧 UI 的 Prefab 在 assets/prefabs，不在 resources。
- * 先检查当前计划清单；新主城 Bundle 入口由 HomeResources 单独加载。
+ * 打开页面先检查当前玩法准入；后台预加载资源不代表页面已开放。
  * assets/prefabs 是名为 prefabs 的 Asset Bundle。
  * 路径相对 assets，例如 prefabs/ui/legacy-login/LoginPanel。
- * 先 loadBundle，再用 bundle.load。编辑器还没刷出 bundle 时，用 .meta uuid 走 assetManager.loadAny。
- * 不要 resources.load。
+ * 复用ResourceAssets资源池及Bundle依赖元数据；编辑器导入未完成时保留原UUID回退。
  */
+
+import { ResourceCatalog, ResourceDescriptor } from "./ResourceCatalog";
+import { createAssetScope } from "./ResourceAssets";
+import { ResourceScopeClosed } from "./ResourcePool";
+
+/** 预制体与后台目录加载共用类型化资源池；清理缓存时撤回本作用域。 */
+let prefabScope: ReturnType<typeof createAssetScope> | null = null;
 
 import {PREFAB_UUID} from "../../config/PrefabCatalog";
 
@@ -31,6 +37,8 @@ export function clearPrefabCache(): void {
     prefabPending.clear();
     for (const prefab of prefabLoaded.values()) prefab.decRef();
     prefabLoaded.clear();
+    prefabScope?.dispose();
+    prefabScope = null;
 }
 
 /** 仅输出明确缓存和在途计数，不把缓存保留描述为内存泄漏。 */
@@ -66,8 +74,23 @@ export function loadPrefab(assetPath: string): Promise<Prefab> {
 
 /** 按计划Bundle加载，编辑器导入尚未完成时保留原UUID回退。 */
 function loadPrefabOnce(assetPath: string): Promise<Prefab> {
+    let registered: ResourceDescriptor<"Prefab"> | null = null;
+    for (const group of Object.values(ResourceCatalog)) {
+        for (const row of Object.values(group) as ResourceDescriptor[]) {
+            if (row.type === "Prefab" && row.assetPath === assetPath) {
+                registered = row as ResourceDescriptor<"Prefab">;
+            }
+        }
+    }
     const parsed = splitAssetPath(assetPath);
-    return loadBundlePrefab(parsed.bundle, parsed.inner).catch((bundleErr: unknown) => {
+    const descriptor = registered || { bundle: parsed.bundle, path: parsed.inner, assetPath, loadPath: parsed.inner, type: "Prefab" as const, uuid: PREFAB_UUID[assetPath] || "" };
+    if (!prefabScope) {
+        prefabScope = createAssetScope();
+    }
+    return (prefabScope.load(descriptor) as Promise<Prefab>).catch((bundleErr: unknown) => {
+        if (bundleErr instanceof ResourceScopeClosed) {
+            throw new Error("Prefab所属应用已关闭");
+        }
         const uuid = PREFAB_UUID[assetPath];
         if (!uuid) return Promise.reject(bundleErr);
         return loadUuidPrefab(uuid).catch((uuidErr: unknown) => {
@@ -134,24 +157,6 @@ function splitAssetPath(assetPath: string): { bundle: string; inner: string } {
         throw new Error("Prefab 路径要相对 assets，例如 prefabs/ui/legacy-login/LoginPanel");
     }
     return {bundle: assetPath.slice(0, slash), inner: assetPath.slice(slash + 1)};
-}
-
-function loadBundlePrefab(bundleName: string, inner: string): Promise<Prefab> {
-    return new Promise((resolve, reject) => {
-        assetManager.loadBundle(bundleName, (err, bundle) => {
-            if (err || !bundle) {
-                reject(err || new Error("没有 bundle " + bundleName));
-                return;
-            }
-            bundle.load(inner, Prefab, (loadErr, asset) => {
-                if (loadErr || !asset) {
-                    reject(loadErr || new Error("bundle 里没有 " + inner));
-                    return;
-                }
-                resolve(asset);
-            });
-        });
-    });
 }
 
 function loadUuidPrefab(uuid: string): Promise<Prefab> {

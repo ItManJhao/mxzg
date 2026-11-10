@@ -1,11 +1,11 @@
-/** 从明确资源范围和 Creator meta 生成类型化描述、动态 ID 映射及 Prefab UUID；不加载资源或推断缺失图片。 */
+/** 生成类型化描述、动态ID映射、Prefab UUID；不加载资源或推断缺失图片。 */
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '..');
 const assets = path.join(root, 'client/assets');
 const check = process.argv.includes('--check');
 const input = JSON.parse(fs.readFileSync(path.join(root, 'config/resource-catalog.json'), 'utf8'));
-/** 稳定遍历指定范围；不扫描无关美术目录。 */
+/** 稳定遍历指定目录；显示映射按生成输入选取，不生成全量加载任务。 */
 function files(dir) { return fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en')).flatMap(e => e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)]); }
 /** 读取相对仓库的 JSON。 */
 function json(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
@@ -84,10 +84,11 @@ function icon(map, id, relative) {
 for (const row of json(path.join(assets, 'resources/config/item.json')).rows) {
     // 配置允许多种道具共用一张图，不能用物品 ID 代替显式 icon 而制造缺图或显示错误图片。
     const relative = typeof row.icon === 'string' && row.icon.startsWith('hero-icon/') ? 'ui/hero/hero-icon_' + row.icon.slice(10)
-        : typeof row.icon === 'string' && row.icon.startsWith('backpack/') ? 'ui/bag/backpack_' + row.icon.slice(9)
-        : 'ui/bag/backpack_' + row.idx;
+        : typeof row.icon === 'string' && row.icon.startsWith('backpack/') ? input.itemIconDirectory + '/backpack_' + row.icon.slice(9)
+        : input.itemIconDirectory + '/backpack_' + row.idx;
     icon(itemIcons, row.idx, relative);
 }
+const missingItemIconIds = missing.map(row => row.id);
 for (const row of json(path.join(assets, 'resources/config/herotype.json')).rows) if (row.item_id) icon(heroIcons, row.type, 'ui/hero/hero-icon_' + row.item_id);
 // 战报头像按资源ID登记：覆盖星级分段与全部进化分支，不混用物品ID或模板ID。
 for (const row of json(path.join(assets, 'resources/config/skin.json')).rows) {
@@ -101,12 +102,12 @@ for (const file of files(path.join(assets, 'resources/ui/hero'))) {
     const match = path.basename(file).match(/^head-icon_(\d+)\.png$/);
     if (match) icon(headIcons, Number(match[1]), 'ui/hero/' + path.basename(file, '.png'));
 }
-for (const row of json(path.join(assets, 'resources/config/border.json')).rows) icon(borderIcons, row.icon, row.icon === 0 ? 'ui/bag/backpack_border-default' : 'ui/bag/backpack_' + (1005000 + row.icon));
+for (const row of json(path.join(assets, 'resources/config/border.json')).rows) icon(borderIcons, row.icon, row.icon === 0 ? 'ui/bag/backpack_border-default' : input.itemIconDirectory + '/backpack_' + (1005000 + row.icon));
 // 只登记英雄模板四个展示技能的真实图片，不扫描战斗特效或杜撰地址。
 for (const row of json(path.join(assets, 'resources/config/herotype.json')).rows) for(let slot=1;slot<=4;slot++) {const id=row['skill_'+slot];if(id && !skillIcons[id])icon(skillIcons,id,'ui/hero/skill-icon_'+id);}
-for(const row of json(path.join(assets, 'resources/config/equipmenttype.json')).rows) icon(equipmentIcons,row.equipment_type,'ui/bag/backpack_'+row.equipment_type);
+for(const row of json(path.join(assets, 'resources/config/equipmenttype.json')).rows) icon(equipmentIcons,row.equipment_type,input.itemIconDirectory+'/backpack_'+row.equipment_type);
 const output = ['/** 由 tools/generate_resources.cjs 生成；只登记资源描述，不预加载。修改扫描输入后重新生成。 */',
-    'export type ResourceKind = "SpriteFrame" | "SpriteAtlas" | "Prefab" | "AudioClip" | "SkeletonData" | "JsonAsset";',
+    'export type ResourceKind = "SpriteFrame" | "SpriteAtlas" | "Prefab" | "AudioClip" | "SkeletonData" | "JsonAsset" | "Texture2D" | "BitmapFont" | "TTFFont" | "TextAsset" | "EffectAsset" | "ParticleAsset" | "Asset";',
     'export interface ResourceDescriptor<K extends ResourceKind = ResourceKind> { readonly bundle: string; readonly path: string; readonly assetPath: string; readonly loadPath: string; readonly type: K; readonly uuid: string; }',
     'export const ResourceCatalog = {'];
 for (const group of Object.keys(staticKeys).sort()) {
@@ -116,7 +117,10 @@ for (const group of Object.keys(staticKeys).sort()) {
 }
 output.push('} as const;');
 const icons = ['/** 由资源生成器按当前道具和英雄配置生成的实际图标映射；缺失 ID 不拼接未知地址。 */', 'import type { ResourceDescriptor } from "./ResourceCatalog";'];
-for (const [name, map] of [['BattlePortraitById', portraitIcons], ['ItemIconById', itemIcons], ['HeroIconById', heroIcons], ['HeadIconById', headIcons], ['BorderIconById', borderIcons], ['SkillIconById', skillIcons], ['EquipmentIconById', equipmentIcons]]) {
+// 物品使用配置icon直接定位，只生成目录与已核实缺图例外，不再逐ID复制完整描述。
+icons.push('/** 物品图标目录及当前缺图ID；完整路径由物品配置解析，不维护逐物品映射。 */');
+icons.push('export const ItemIconRules = ' + JSON.stringify({ directory: input.itemIconDirectory, missingIds: missingItemIconIds }) + ' as const;');
+for (const [name, map] of [['BattlePortraitById', portraitIcons], ['HeroIconById', heroIcons], ['HeadIconById', headIcons], ['BorderIconById', borderIcons], ['SkillIconById', skillIcons], ['EquipmentIconById', equipmentIcons]]) {
     icons.push('export const ' + name + ': Readonly<Partial<Record<number, ResourceDescriptor<"SpriteFrame">>>> = {');
     for (const id of Object.keys(map).sort((a, b) => Number(a) - Number(b))) icons.push('  ' + id + ': ' + JSON.stringify(map[id].descriptor) + ',');
     icons.push('};');

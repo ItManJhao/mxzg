@@ -1,5 +1,5 @@
 /** 应用配置分组与 Creator 读取装配；数据仅存于 GameConfig，不建立第二份配置仓库。 */
-import { JsonAsset, resources } from "cc";
+import { ResourceAssetsUtils } from "../framework/assets/ResourceAssets";
 import { GameConfig } from "./GameConfig";
 import { GConfig } from "./GConfig";
 import type { GateSnapshot } from "./nav";
@@ -7,10 +7,7 @@ import type { GateSnapshot } from "./nav";
 /** Creator 读取 JSON；版本标识由发布资源选择器处理，当前仅支持本机同版本资源。 */
 function loadConfigJson(path: string, version: string): Promise<unknown> {
     if (version !== "initial") return Promise.reject(new Error("本机配置未提供资源版本：" + version));
-    return new Promise((resolve, reject) => resources.load(path, JsonAsset, (error, asset) => {
-        if (error || !asset || asset.json == null) reject(error || new Error("配置资源缺失：" + path));
-        else resolve(asset.json);
-    }));
+    return ResourceAssetsUtils.loadConfig(path);
 }
 GameConfig.instance.initialize(loadConfigJson);
 export const REMAKE_CONFIG_GROUPS = {

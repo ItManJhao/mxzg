@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-10",
+  "build": "client/build/bag-atlas-review",
+  "mainScriptTime": "2026-11-10 18:57:28 +08:00",
+  "environment": "独立随机端口H2内存测试服，393×852竖屏，浏览器禁用HTTP缓存；已关闭测试页并停止本次进程",
+  "checks": {
+    "commonAtlasAndDedupe": "通过：9张名单原图副本均已移除",
+    "bag": "四分类、四类详情、返回主城及重开通过；库存快照不变；打开后新增请求0",
+    "hero": "两名真实测试英雄；空槽4张、装备4槽、品质0与1显示正确；返回列表及重开通过",
+    "cachedQualityFrames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "warningsAndErrors": 0
+  },
+  "limitations": [
+    "英雄详情立绘与已穿戴装备图标尚未纳入预加载，首次打开会下载。",
+    "禁用HTTP缓存下重开装备英雄仍有11个JSON请求，含立绘、装备和纹理合并描述；不能宣称详情重开零请求。",
+    "七档品质框确认均已缓存，实际装备夹具只覆盖品质0和1；不把缓存检查当作七档逐一画面验收。",
+    "本批没有迁移动态图片图集、变更玩法、提交或推送。"
+  ],
+  "network": {
+    "bag": [],
+    "heroFirst": [
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/b5/b51c0f9d-157b-4b03-9b3c-c2b53b547bdc.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/c6/c65d3a83-5b62-400b-8c0e-9239e8c1181a.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/native/c6/c65d3a83-5b62-400b-8c0e-9239e8c1181a.png"
+    ],
+    "equippedFirst": [
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/be/be302429-1e4b-40d4-ab71-2bd7ce05e461.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/aa/aaf67505-2d11-4ce2-8584-eff92bc68ca0@f9941.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/1c/1c85f671-b17b-4336-966f-8ba8faeb77ba@f9941.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/24/2418f007-aac8-496f-8c01-96db8e34c753@f9941.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/1f/1f34e56b-7a14-4365-82ec-226866fcd0a1@f9941.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/4f/4f3a4422-3c06-4c3e-b633-053b072fbe2e.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/1c/1c85f671-b17b-4336-966f-8ba8faeb77ba.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/aa/aaf67505-2d11-4ce2-8584-eff92bc68ca0.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/24/2418f007-aac8-496f-8c01-96db8e34c753.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/1f/1f34e56b-7a14-4365-82ec-226866fcd0a1.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/native/4f/4f3a4422-3c06-4c3e-b633-053b072fbe2e.png",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/native/1c/1c85f671-b17b-4336-966f-8ba8faeb77ba.png",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/native/24/2418f007-aac8-496f-8c01-96db8e34c753.png",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/native/1f/1f34e56b-7a14-4365-82ec-226866fcd0a1.png",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/native/aa/aaf67505-2d11-4ce2-8584-eff92bc68ca0.png"
+    ],
+    "equippedReopen": [
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/be/be302429-1e4b-40d4-ab71-2bd7ce05e461.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/aa/aaf67505-2d11-4ce2-8584-eff92bc68ca0@f9941.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/1c/1c85f671-b17b-4336-966f-8ba8faeb77ba@f9941.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/24/2418f007-aac8-496f-8c01-96db8e34c753@f9941.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/1f/1f34e56b-7a14-4365-82ec-226866fcd0a1@f9941.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/01/018504e1a.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/aa/aaf67505-2d11-4ce2-8584-eff92bc68ca0.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/4f/4f3a4422-3c06-4c3e-b633-053b072fbe2e.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/1c/1c85f671-b17b-4336-966f-8ba8faeb77ba.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/1f/1f34e56b-7a14-4365-82ec-226866fcd0a1.json",
+      "http://localhost:7456/web-mobile/bag-atlas-review/assets/resources/import/24/2418f007-aac8-496f-8c01-96db8e34c753.json"
+    ]
+  },
+  "screenshots": [
+    "docs/images/common-dynamic-empty-20261110.jpg",
+    "docs/images/common-dynamic-hero-20261110.jpg"
+  ]
+}

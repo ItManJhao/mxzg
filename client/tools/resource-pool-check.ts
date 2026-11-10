@@ -65,7 +65,7 @@ async function main() {
   assert.equal(await loadPrefab("prefabs/ui/login/LoadingLayer"), planned);
   assert.equal(bundleRequests, 1, "planned core Prefabs still load normally");
   assert.deepEqual(prefabCacheSnapshot(), { pending: 0, cached: 1 });
-  assert.equal(planned.refCount, 1);
+  assert.equal(planned.refCount, 2, "共享资源池和页面缓存分别持有，清理时必须全部撤回");
   clearPrefabCache();
   assert.equal(planned.refCount, 0);
   let lateCallback!: (error: unknown, asset: Prefab) => void;
@@ -73,6 +73,8 @@ async function main() {
     load: (_path: string, _type: unknown, callback: typeof lateCallback) => { lateCallback = callback; }
   }) });
   const obsolete = assert.rejects(loadPrefab("prefabs/ui/login/LoadingLayer"), /应用已关闭/);
+  // 统一资源池和Bundle依赖查询是异步流程，等待请求进入引擎后再模拟迟到。
+  for (let i = 0; i < 20; i++) { await Promise.resolve(); }
   clearPrefabCache();
   const latePrefab = new Prefab(); lateCallback(null, latePrefab); await obsolete;
   assert.equal(latePrefab.refCount, 0, "关闭应用后的迟到预制体不重新占用缓存");

@@ -53,7 +53,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
         void this.openCity();
     }
 
-    /** 加载原主城及顶栏，并绑定统一资料弹窗入口；关闭中断时不再创建节点。 */
+    /** 加载原主城及顶栏，绑定统一资料入口；关闭中断不再创建节点，失败交给应用加载层重试。 */
     private async openCity(): Promise<void> {
         try {
             if (!this.cityPrefab || !this.chromePrefab || !this.cityHost || !this.chromeHost) throw new Error("RemakeHome 未绑定主城 Prefab 或宿主");
@@ -103,9 +103,8 @@ export class RemakeHomeView extends BaseView implements HomeView {
             if (!this.closed) {
                 GameLog.shared.classified("MODULE", "error", "RemakeHomeView", "主城初始化失败：" + String(error));
                 this.disposeChildren();
-                this.showNotice("主城加载失败，请退出登录后重试");
-                // 保留错误提示，不将资源失败显示成资料加载成功。
-                this.finishOpen();
+                // 不能把失败报告为就绪，否则第二段进度会显示成功并撤去加载层。
+                this.failOpen(error instanceof Error ? error : new Error(String(error)));
             }
         }
     }

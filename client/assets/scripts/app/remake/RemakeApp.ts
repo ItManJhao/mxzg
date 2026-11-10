@@ -27,7 +27,6 @@ import {ResourceCatalog} from "../../framework/assets/ResourceCatalog";
 
 import {_decorator, Component, director, Director, game, Game, Label, Node, Prefab} from "cc";
 import {PREVIEW} from "cc/env";
-import {prepareStartupConfig} from "../../config/RemakeConfig";
 import {GameLog} from "../../core/GameLog";
 import {BagController} from "../../features/bag/BagController";
 import {HeroRosterController} from "../../features/hero/HeroRosterController";
@@ -257,6 +256,7 @@ export class RemakeApp extends Component {
         syncRoute = () => {
             if (!this.alive || !this.started) return;
             if (model.snapshot.busy || !model.snapshot.role) {
+                this.resources.stopBackground();
                 ui.closeById("remake-formation");
                 ui.closeById("hero-level");
                 ui.closeById("role-profile");
@@ -264,6 +264,11 @@ export class RemakeApp extends Component {
                 gm.reset();
             }
             if (model.snapshot.busy) {
+                if (this.routePending) {
+                    this.routeEpoch++;
+                    this.routePending = false;
+                    this.requestedRoute = "";
+                }
                 this.chrome?.show();
                 this.chrome?.setStage("同步角色资料");
                 this.chrome?.setRatio(0);
@@ -285,15 +290,22 @@ export class RemakeApp extends Component {
             this.chrome?.show();
             this.chrome?.setStage(route === "remake-home" ? "准备主城" : "准备登录界面");
             this.chrome?.setRatio(0);
-            void ui.openById(route).then(async () => {
+            void this.openRootPage(route, epoch).then(async () => {
                 if (!this.alive || epoch !== this.routeEpoch) return;
                 this.chrome?.setRatio(1);
                 await this.reveal(epoch, route === "remake-home");
                 if (epoch === this.routeEpoch) this.routePending = false;
+                if (route === "remake-home" && epoch === this.routeEpoch && this.alive) {
+                    void this.resources.prepareBackground(() => this.afterPaint(), () => this.alive && epoch === this.routeEpoch && !model.snapshot.busy && !!model.snapshot.role).catch(error => {
+                        if (this.alive && epoch === this.routeEpoch) {
+                            GameLog.shared.classified("APP", "warn", "RemakeApp", "后台资源准备失败，返回主城时可重试：" + String(error));
+                        }
+                    });
+                }
             }).catch(async error => {
                 if (!this.alive || epoch !== this.routeEpoch) return;
                 this.routePending = false;
-                if (isOpenCancelled(error)) {
+                if (isOpenCancelled(error) || error instanceof StartupCancelled) {
                     // A login -> home -> login change can cancel an earlier load of the same route.
                     if (this.requestedRoute === route) {
                         this.requestedRoute = "";
@@ -324,6 +336,21 @@ export class RemakeApp extends Component {
         });
     }
 
+    /** 第二段完成可配置模块准备后才开主城；路由取消时不再打开旧页面或更新进度。 */
+    private async openRootPage(route: string, epoch: number): Promise<void> {
+        const active = () => this.alive && epoch === this.routeEpoch;
+        if (route === "remake-home") {
+            await this.resources.prepareStage("enterGame", (label, ratio) => {
+                if (!active()) return;
+                this.chrome?.setStage(label);
+                this.chrome?.setRatio(ratio * 0.9);
+            }, active);
+        }
+        if (!active()) throw new StartupCancelled("页面准备已取消");
+        this.chrome?.setStage(route === "remake-home" ? "显示主城" : "显示登录界面");
+        await UIManager.instance.openById(route);
+    }
+
     /** 顺序执行配置、资源、会话恢复与开页，失败时保留可重试的加载画面。 */
     private async boot(restore: () => Promise<void>, openPage: () => Promise<void>): Promise<void> {
         const chrome = this.chrome = new BootChrome(this.startupHost!, async () => this.loadingPrefab!);
@@ -342,15 +369,10 @@ export class RemakeApp extends Component {
                 chrome.show();
                 await runStartup([
                     {
-                        label: "加载游戏配置", weight: 50, run: async progress => {
-                            await prepareStartupConfig(progress);
+                        label: "准备登录资源", weight: 70, run: async progress => {
+                            await this.resources.prepareStage("login", (_label, ratio) => progress(ratio, 1), () => this.alive);
                             const copy = await loadBootCopy();
                             if (this.alive) chrome.setTips(copy.tips);
-                        }
-                    },
-                    {
-                        label: "加载界面资源", weight: 20, run: async progress => {
-                            await this.resources.prepareStartup(progress);
                         }
                     },
                     {label: "准备账号信息", weight: 10, run: async () => restore()},

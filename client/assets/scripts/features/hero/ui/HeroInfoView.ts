@@ -14,6 +14,7 @@ import { HeroCatalog } from "../utils/HeroCatalog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
+import { CommonUiResources } from "../../../framework/assets/CommonUiResources";
 import { _decorator, Button, Label, Node, Sprite, Overflow, UITransform } from "cc";
 import { GameLog } from "../../../core/GameLog";
 interface HeroPortraitData { templateId: number; name: string; level: number; }
@@ -151,22 +152,44 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
             if (this.skillButtons[i]) this.skillButtons[i].interactable = skill.id > 0 && skill.available;
         });
     }
-    /** 从已校验的统一名册绘制四槽；空槽沿用旧资源，不从背包库存推测穿戴。 */
+    /** 从已校验的统一名册绘制四槽，按显示需要取得空槽和品质框；不从背包库存推测穿戴。 */
     private refreshEquipment(hero: import("../data/HeroSnapshotData").OwnedHero, version: number): void {
-        if (!this.equipmentIcons.length) return;
+        if (!this.equipmentIcons.length) {
+            return;
+        }
         const config = GameConfig.instance;
         const items = hero.equipment ? readHeroEquipment(hero.equipment.items, config) : undefined;
-        const empty = [ResourceCatalog.common.other_spr_equip_1, ResourceCatalog.common.other_spr_equip_2, ResourceCatalog.common.other_spr_equip_3, ResourceCatalog.common.other_spr_equip_4];
-        const rare = [ResourceCatalog.common.other_rare_0, ResourceCatalog.common.other_rare_1, ResourceCatalog.common.other_rare_2, ResourceCatalog.common.other_rare_3, ResourceCatalog.common.other_rare_4, ResourceCatalog.common.other_rare_5, ResourceCatalog.common.other_rare_6];
+        const empty = CommonUiResources.equipmentEmptySlots;
         this.equipmentIcons.forEach((icon, index) => {
-            const item = items?.find(row => row.slot === index + 1), frame = this.equipmentFrames[index];
-            const sprite = icon.getComponent(Sprite); if (sprite) sprite.spriteFrame = null;
-            let path: string = empty[index].path, quality = 0, status = items ? "" : "待同步";
-            if (item) { const template = config.requireConfig(GConfig.EquipmentType, item.templateId); const itemConfig = config.requireConfig(GConfig.Item, item.templateId); path = EquipmentIconById[item.templateId]?.path || path; quality = itemConfig.rare_mark || 0; status = "★" + template.star + (item.soulLevel ? " · 附魂" + item.soulLevel : ""); }
+            const item = items?.find(row => row.slot === index + 1);
+            const frame = this.equipmentFrames[index];
+            const sprite = icon.getComponent(Sprite);
+            if (sprite) {
+                sprite.spriteFrame = null;
+            }
+            let path: string = empty[index].path;
+            let quality = 0;
+            let status = items ? "" : "待同步";
+            if (item) {
+                const template = config.requireConfig(GConfig.EquipmentType, item.templateId);
+                const itemConfig = config.requireConfig(GConfig.Item, item.templateId);
+                path = EquipmentIconById[item.templateId]?.path || path;
+                quality = itemConfig.rare_mark || 0;
+                status = "★" + template.star + (item.soulLevel ? " · 附魂" + item.soulLevel : "");
+            }
             const current = () => this.paintVersion === version && this.selectedId === hero.id;
             paintSpritePaths(icon, [path], current);
-            if (frame) { frame.active = true; const border = frame.getComponent(Sprite); if (border) border.spriteFrame = null; paintSpritePaths(frame, [rare[quality]?.path || rare[0].path], current); }
-            if (this.equipmentLabels[index]) this.equipmentLabels[index].string = status;
+            if (frame) {
+                frame.active = true;
+                const border = frame.getComponent(Sprite);
+                if (border) {
+                    border.spriteFrame = null;
+                }
+                paintSpritePaths(frame, [CommonUiResources.qualityFrame(quality).path], current);
+            }
+            if (this.equipmentLabels[index]) {
+                this.equipmentLabels[index].string = status;
+            }
         });
     }
     /** 返回已有列表，不触发升级、穿戴或扩容。 */

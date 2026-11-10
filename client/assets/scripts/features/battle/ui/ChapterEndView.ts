@@ -4,13 +4,13 @@
  * 最高伤害、经验动画和统计入口只消费冻结快照；旧战报缺数据时明确显示缺失。
  */
 import {
-    _decorator, AudioSource, Button, Label, Node, Prefab, Sprite, SpriteFrame,
+    _decorator, AudioSource, Button, Label, Node, Sprite, SpriteFrame,
     tween, Tween, UIOpacity, UITransform, Vec3,
 } from "cc";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import { BagItemView } from "../../bag/ui/BagItemView";
-import { BagInfoView } from "../../bag/ui/BagInfoView";
-import { openBagInfo } from "../../bag/ui/BagMount";
+import { BagInfoArgs, BagInfoView } from "../../bag/ui/BagInfoView";
+import { viewSpecOf } from "../../../framework/ui/UIRegistry";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
@@ -77,12 +77,6 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
     @property(Sprite) confetti: Sprite | null = null;
     /** 真实奖励列表；普通底板横排、主线胜利四列，布局与格子预制体由Prefab维护。 */
     @property(SuperScroll) rewardScroll: SuperScroll | null = null;
-    /** 复用背包只读详情，不开放物品操作。 */
-    @property(Prefab) infoPrefab: Prefab | null = null;
-    /** 物品详情遮罩预制体。 */
-    @property(Prefab) dimPrefab: Prefab | null = null;
-    /** 当前奖励说明，结果关闭前销毁。 */
-    private infoSheet: Node | null = null;
     /** 本窗口音源；关闭立即停止，不影响战场背景音。 */
     private audio: AudioSource | null = null;
     /** 主线胜利额外音效，独立音源便于关页立即停止，不修改全局音乐。 */
@@ -220,18 +214,18 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             }
             const face = catalog.face(reward.itemId, reward.quantity);
             cell.show(reward, false, () => {
-                if (this.released || !this.infoPrefab || !this.dimPrefab) {
+                if (this.released) {
                     return;
                 }
-                if (this.infoSheet?.isValid) {
-                    this.infoSheet.destroy();
-                }
-                this.infoSheet = openBagInfo(this.node, this.dimPrefab, this.infoPrefab,
-                    { ...face, typeLine: "本次获得：" + reward.quantity }, text => UIManager.instance.toast(text));
-                const info = this.infoSheet?.getChildByName("BagInfoView")?.getComponent(BagInfoView);
-                if (info?.btnSrc) {
-                    info.btnSrc.node.active = false;
-                }
+                const args: BagInfoArgs = {
+                    source: "description",
+                    face: { ...face, typeLine: "本次获得：" + reward.quantity },
+                };
+                void UIManager.instance.open(BagInfoView, args).then(info => {
+                    if (!this.released) {
+                        info.runOpen(args);
+                    }
+                }).catch(() => { /* 加载失败或取消由 UIManager 统一处理。 */ });
             }, face);
         });
         this.rewardScroll.toStart();
@@ -401,10 +395,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             return;
         }
         this.released = true;
-        if (this.infoSheet?.isValid) {
-            this.infoSheet.destroy();
-        }
-        this.infoSheet = null;
+        UIManager.instance.closeById(viewSpecOf(BagInfoView)!.id);
         this.unscheduleAllCallbacks();
         this.audio?.stop();
         if (this.audio?.isValid) {

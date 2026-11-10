@@ -1,7 +1,11 @@
+/** 顺序加载任务与真实完成份数；不使用耗时推算进度。 */
 export interface StartupTask {
+  /** 当前任务的玩家可读说明。 */
   label: string;
+  /** 在本轮进度中所占任务权重，不代表字节数。 */
   weight: number;
-  run(progress: (completed: number, total: number) => void): Promise<void>;
+  /** 完成实际准备；checkpoint 供后台资源循环在任务之间让出帧并检查取消。 */
+  run(progress: (completed: number, total: number) => void, checkpoint?: () => Promise<void>): Promise<void>;
 }
 
 export class StartupCancelled extends Error {}

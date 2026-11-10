@@ -6,7 +6,8 @@
   },
   "scripts": {
     "check": "node tools/check-project.mjs",
-    "check:architecture": "node tools/check-project.mjs --suite architecture"
+    "check:architecture": "node tools/check-project.mjs --suite architecture",
+    "build:dedupe-bag": "node tools/dedupe-bag-build.cjs client/build/bag-atlas-review --apply"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

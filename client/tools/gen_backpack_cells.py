@@ -15,8 +15,8 @@ TAB_UUID = "d5f9b2c3-8e44-4072-ab31-7c6f1e5d9022"
 
 SPRITES = {
     "frame": "ui/common/other_rare-0.png",
-    "select": "ui/bag/backpack_spr-select.png",
-    "icon": "ui/bag/backpack_spr-default.png",
+    "select": "../ui/bag/atlas/backpack_spr-select.png",
+    "icon": "ui/common/backpack_spr-default.png",
     "tab": "ui/common/button_btn-tab-23.png",
 }
 
@@ -34,12 +34,13 @@ def base64_url(digest):
 
 
 def sprite_uuid(rel):
+    """读取原图的正式帧标识；构建时由 Creator 自动图集处理引用。"""
     meta = os.path.join(RES, rel + ".meta")
     with open(meta, encoding="utf-8") as handle:
         data = json.load(handle)
     sub = data.get("subMetas", {}).get("f9941") or {}
     value = sub.get("uuid") or ""
-    if not value.endswith("@f9941"):
+    if not value:
         raise SystemExit("missing spriteFrame " + meta)
     return value
 

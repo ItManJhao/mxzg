@@ -2,8 +2,8 @@
  * 背包新视图的行为检查。不进 Creator，不读 resources。
  * 预制绑定看 JSON。格子、页签、详情用假实例把 @property 填上，相当于反序列化之后。
  */
-import { readFileSync } from "fs";
-import { _decorator, assetManager, Button, createdNodes, director, Director, Label, Layers, Mask, Node, Prefab, ScrollView, Sprite, UITransform } from "cc";
+import { existsSync, readFileSync } from "fs";
+import { _decorator, assetManager, Button, createdNodes, director, Director, Label, Layers, Mask, Node, Prefab, ScrollView, Sprite, SpriteFrame, UITransform } from "cc";
 import { clearPrefabCache } from "../assets/scripts/framework/assets/PrefabLoader";
 import { ConfigTableFile } from "../assets/scripts/config/types";
 import { GameLog } from "../assets/scripts/core/GameLog";
@@ -24,7 +24,7 @@ import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { BagView } from "../assets/scripts/features/bag/ui/BagView";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { isOpenCancelled, UIManager } from "../assets/scripts/framework/ui/UIManager";
-import { view, viewCtorById, viewSpecOf } from "../assets/scripts/framework/ui/UIRegistry";
+import { registerView, view, viewCtorById, viewSpecOf } from "../assets/scripts/framework/ui/UIRegistry";
 
 const { ccclass } = _decorator;
 
@@ -217,8 +217,8 @@ function checkPrefabBindings(): void {
   assert(view.comp.btnClose === null, "BagView 没有关闭按钮，btnClose 应是 null");
   assert(uuidOf(layer.find(row => "overrideCellSize" in row)!.cellPrefab) === CELL_UUID, "SuperContent.cellPrefab uuid");
   assert(uuidOf(view.comp.tabPrefab) === TAB_UUID, "tabPrefab uuid");
-  assert(uuidOf(view.comp.infoPrefab) === INFO_UUID, "infoPrefab uuid");
-  assert(uuidOf(view.comp.dimPrefab) === DIM_UUID, "dimPrefab uuid");
+  assert(!view.comp.infoPrefab && !view.comp.dimPrefab, "背包不再绑定并组装详情与遮罩");
+  assert(layer.some(row => row._name === "Background"), "完整背包预制体自带背景");
 
   const cellData = prefabAt("client/assets/prefabs/ui/bag/BagItemView.prefab");
   const cell = componentOn(cellData, CELL_TYPE);
@@ -228,7 +228,8 @@ function checkPrefabBindings(): void {
   assertCompRef(cellData, cell.comp, "count", 27, "cc.Label");
   assertNodeRef(cellData, cell.comp, "selectMark", 11, "spr_select");
   const slotPlate = "5e56f13c-937b-4e86-a0d7-b8abb2aa05fb@f9941";
-  const selectFrame = "6c69245c-edfa-463d-a6a4-c897ba93ac12@f9941";
+  const selectMeta = JSON.parse(read("client/assets/ui/bag/atlas/backpack_spr-select.png.meta"));
+  const selectFrame = selectMeta.subMetas.f9941.uuid;
   assert(spriteFrameOf(cellData, 5) === slotPlate, "spr_frame 底图应是 common/other_rare-0");
   assert(spriteFrameOf(cellData, 11) === selectFrame, "spr_select 仍是选中框");
   assert(spriteFrameOf(cellData, 5) !== spriteFrameOf(cellData, 11), "底图不能和选中框同一张");
@@ -236,7 +237,7 @@ function checkPrefabBindings(): void {
   const portrait = layer[idOf(view.comp.portrait)!];
   assert(portrait._lscale.x > 0 && portrait._lscale.x === portrait._lscale.y, "店员立绘保持正向等比缩放，具体尺寸由 Prefab 编辑");
   assert(Number.isFinite(portrait._lpos.x) && Number.isFinite(portrait._lpos.y), "店员位置由 Prefab 保存");
-  const order = (layer[1]._children || []).map((row) => row.__id__);
+  const order = (layer[idOf(view.comp.content)!]._children || []).map((row) => row.__id__);
   assert(order[0] === idOf(view.comp.portrait), "node_portrait 画在羊皮纸和 spr_bg 下面");
 
   const tabData = prefabAt("client/assets/prefabs/ui/bag/BagTabView.prefab");
@@ -279,17 +280,15 @@ function checkSources(): void {
     assert(text.indexOf("findNamed") < 0, views[i] + " 不应 findNamed");
   }
   const cellSrc = read("client/assets/scripts/features/bag/ui/BagItemView.ts");
-  assert(cellSrc.indexOf("ResourceCatalog.common.other_rare_0") >= 0, "运行时格子底图走 other_rare");
+  assert(cellSrc.includes("spriteFrame = this.emptyFrame"), "空槽同步恢复预制体绑定图片，不重复加载");
   assert(cellSrc.indexOf("backpack_item-frame-1") < 0, "运行时不再把细金框刷进 spr_frame");
   assert(cellSrc.indexOf("backpack_spr-rare-") < 0, "运行时不再把稀有文字图刷进 spr_frame");
   assert(cellSrc.indexOf("other_spr-null") < 0, "空槽不再换成菱形空图");
-  const mount = read("client/assets/scripts/features/bag/ui/BagMount.ts");
-  assert(mount.indexOf("findNamed") < 0, "backpackMount 不应整树搜索");
+  assert(!existsSync("client/assets/scripts/features/bag/ui/BagMount.ts"), "删除运行时背包组装入口");
   const layout = read("client/assets/scripts/framework/ui/PrefabLayout.ts");
   assert(!/WireSession|GameStore|fillPageShell/.test(layout), "shared layout has no retired business entry");
   assert(read("client/assets/scripts/framework/ui/UIManager.ts").includes("noteOpened("), "UIManager records page readiness");
   const detail =
-    read("client/assets/scripts/features/bag/ui/BagMount.ts") +
     read("client/assets/scripts/features/bag/ui/BagInfoView.ts");
   assert(detail.indexOf("195, 148") < 0, "详情底不再写死 195,148");
   assert(detail.indexOf("125, 330") < 0, "详情卡不再写死 125,330");
@@ -309,8 +308,8 @@ function checkSources(): void {
   const bagView = read("client/assets/scripts/features/bag/ui/BagView.ts");
   assert(bagView.indexOf("failOpen") >= 0, "背包挂载失败要拒绝 whenReady");
   assert(bagView.indexOf("finally") < 0, "不能 catch 之后仍 finishOpen");
-  assert(bagView.indexOf("mount: mountBagPage") >= 0, "挂载策略写在背包 ViewSpec 上");
-  assert(bagView.indexOf("cache: false") >= 0 && bagView.indexOf("allowMultiple: false") >= 0, "背包不缓存、不叠两份");
+  assert(!viewSpecOf(BagView)!.mount, "背包直接加载完整预制体");
+  // cache/allowMultiple 定义在页面注册中，下方按实际登记结果检查，不再要求 View 重复常量。
 
 }
 
@@ -322,7 +321,8 @@ function checkRegistry(): void {
   assert(spec.layer === UILayer.Page, "层应是 Page");
   assert(spec.cache === false, "背包不缓存");
   assert(spec.allowMultiple === false, "背包不叠两份");
-  assert(typeof spec.mount === "function", "背包挂载在 ViewSpec 上");
+  assert(!spec.mount, "背包无需组装策略");
+  assert(viewSpecOf(BagInfoView)?.layer === UILayer.Popup, "详情登记为独立弹窗");
   assert(viewCtorById("bag") === BagView, "id bag 应对回 BagView");
   assert(viewCtorById("hero") === null, "这一阶段不登记别的页");
   assert(UIManager.instance.createPageHost("bag") === null, "没 open 时 presentPage 继续走旧壳");
@@ -356,6 +356,9 @@ function fakePrefab(build: (node: Node) => void): Prefab {
   return prefab;
 }
 
+/** 独立详情宿主，刻意不放在背包节点下，检验真正的窗口生命周期。 */
+const detailHost = new Node("DetailHost");
+
 function makeView(): BagView {
   const scene = new Node("scene");
   const host = new Node("BagView");
@@ -364,6 +367,10 @@ function makeView(): BagView {
   hostUi.setContentSize(640, 960);
   hostUi.setAnchorPoint(0, 0);
   const view = host.addComponent(BagView);
+  view.content = sized("BagView", 640, 960);
+  view.content.parent = host;
+  const paper = sized("CommonPanel1", 640, 830);
+  paper.parent = view.content;
   view.sprBox = sized("spr_box", 560, 520);
   view.sprBox.parent = host;
   const scrollNode = sized("BagScroll",520,555); scrollNode.parent=view.sprBox;
@@ -390,6 +397,7 @@ function makeView(): BagView {
   list.cellPrefab = fakePrefab((node) => {
     node.addComponent(UITransform).setContentSize(96,96);
     const cell = node.addComponent(BagItemView);
+    cell.emptyFrame = new SpriteFrame();
     cell.button = node.addComponent(Button);
     cell.frame = new Node("spr_frame");
     cell.frame.addComponent(Sprite);
@@ -405,12 +413,14 @@ function makeView(): BagView {
   view.tabPrefab = fakePrefab((node) => {
     node.addComponent(Sprite);
     const tab = node.addComponent(BagTabView);
+    tab.normalFrame = new SpriteFrame();
+    tab.selectedFrame = new SpriteFrame();
     tab.title = labelOn(new Node("lbl_title"));
     if (tab.title.node) tab.title.node.parent = node;
     tab.button = buttonOn("btn");
     if (tab.button.node) tab.button.node.parent = node;
   });
-  view.infoPrefab = fakePrefab((node) => {
+  const detailPrefab = fakePrefab((node) => {
     const cardUi = node.addComponent(UITransform);
     cardUi.setContentSize(390, 300);
     cardUi.setAnchorPoint(0, 0);
@@ -432,15 +442,13 @@ function makeView(): BagView {
     info.btnSrc = buttonOn("btn_src");
     info.btnDetail = new Node("btn_detail");
     info.btnDecompose = new Node("btn_decompose");
-    info.hitMenu = sized("menu", 640, 960);
-    info.hitMenuClose = sized("menu_close", 640, 960);
+    info.dimButton = buttonOn("DimButton");
+    info.dimButton.node.parent = node;
+    info.hitMenu = sized("menu", 0, 0);
+    info.hitMenuClose = sized("menu_close", 0, 0);
   });
-  view.dimPrefab = fakePrefab((node) => {
-    const dim = sized("dim", 720, 1280);
-    const dimUi = dim.getComponent(UITransform) as UITransform;
-    dimUi.setAnchorPoint(0.5, 0.5);
-    dim.parent = node;
-  });
+  registerView(BagInfoView, { ...viewSpecOf(BagInfoView)!, load: async () => detailPrefab });
+  UIManager.instance.setResidentHost(viewSpecOf(BagInfoView)!.hostId!, () => detailHost);
   view.bagScroll.onEnable();
   return view;
 }
@@ -480,14 +488,65 @@ function activeIcons(list: BagItemView[]): BagItemView[] {
 }
 
 function infoCard(view: BagView): BagInfoView {
-  const sheet = view.node.getChildByName("InfoCard");
-  assert(sheet !== null, "详情没有盖上来");
-  const kids = sheet.children;
-  for (let i = 0; i < kids.length; i++) {
-    const info = kids[i].getComponent(BagInfoView) as BagInfoView | null;
-    if (info) return info;
-  }
-  throw new Error("InfoCard 上没有 BagInfoView");
+  const info = detailHost.children.filter(node => node.isValid).map(node => node.getComponent(BagInfoView)).find(Boolean);
+  assert(info, "独立详情窗口应已打开");
+  assert(info!.node.parent !== view.node, "详情不能组装在背包内部");
+  return info!;
+}
+
+/** 等待页面管理器完成加载、挂载和打开承诺，不用帧回调代替微任务。 */
+async function flushDetail(): Promise<void> {
+  for (let i = 0; i < 20; i++) await Promise.resolve();
+}
+
+/** 验证独立详情的合并加载、最新点击、库存刷新、关闭取消与重试，不依赖同步实例化。 */
+async function checkIndependentDetails(): Promise<void> {
+  bindTables();
+  installNav();
+  noteBag([{ itemId: 20, quantity: 2 }, { itemId: 902025, quantity: 7 }]);
+  const page = await openView();
+  const spec = viewSpecOf(BagInfoView)!;
+  const prefab = await spec.load!();
+  let release!: () => void;
+  let requests = 0;
+  registerView(BagInfoView, {
+    ...spec,
+    load: async () => {
+      requests += 1;
+      await new Promise<void>(resolve => { release = resolve; });
+      return prefab;
+    },
+  });
+  cells(page)[0].node.emit(Button.EventType.CLICK);
+  cells(page)[1].node.emit(Button.EventType.CLICK);
+  assert(requests === 1, "连续点击共用一次详情加载");
+  release();
+  await flushDetail();
+  const selected = page.visibleItems()[1];
+  const card = infoCard(page);
+  assert(card.propType!.string.includes(String(selected.quantity)), "加载完成展示最后点击的条目");
+  const items = BagModel.instance.items.map(item => ({ ...item, quantity: 11 }));
+  BagModel.instance.replaceAll(items);
+  EventDispatcher.instance.emit(BagEvent.BagUpdate);
+  assert(infoCard(page) === card && card.propType!.string.includes("11"), "数量变化刷新同一独立窗口");
+  card.dimButton!.node.emit(Button.EventType.CLICK);
+  assert(!UIManager.instance.isOpen(BagInfoView), "点击遮罩只关闭详情");
+  assert(page.node.isValid, "关闭详情保留背包");
+  cells(page)[0].node.emit(Button.EventType.CLICK);
+  page.runClose();
+  release();
+  await flushDetail();
+  assert(!UIManager.instance.isOpen(BagInfoView), "背包关闭后迟到加载不能弹出详情");
+  registerView(BagInfoView, spec);
+  page.runOpen();
+  cells(page)[0].node.emit(Button.EventType.CLICK);
+  await flushDetail();
+  assert(UIManager.instance.isOpen(BagInfoView), "取消后重新进入可以正常打开详情");
+  BagModel.instance.replaceAll([]);
+  EventDispatcher.instance.emit(BagEvent.BagUpdate);
+  assert(!UIManager.instance.isOpen(BagInfoView), "库存删除关闭详情");
+  page.runDispose();
+  page.node.destroy();
 }
 
 function noteBag(items: readonly {itemId:number;quantity:number}[] | null): void {
@@ -589,7 +648,7 @@ async function checkBehavior(): Promise<void> {
     tabRow[index].node.emit(Button.EventType.CLICK);
     assert(activeIcons(cells(view)).length===1,"category uses config and current Model items");
   }
-  const cell=activeIcons(cells(view))[0];cell.node.emit(Button.EventType.CLICK);
+  const cell=activeIcons(cells(view))[0];cell.node.emit(Button.EventType.CLICK);await flushDetail();
   assert(infoCard(view).propName.string==="红药","details use configuration");
   assert(infoCard(view).enterLabel.string==="确定","current API bag is read-only, no legacy use protocol");
   for(let i=0;i<5;i++)view.refreshFromModel();
@@ -1040,7 +1099,7 @@ function checkInfoLifecycle(): void {
     (button as unknown as { node: Node | null }).node = null;
   }
   info.onDestroy();
-  assert((info as any).onClose === null && (info as any).toast === null, "子按钮已销毁时仍完成回调释放");
+  assert((info as any).closeAction === null && (info as any).toast === null, "子按钮已销毁时仍完成回调释放");
 }
 
 /** 用实际导出配置验证首通奖励的分类，避免测试夹具与错误实现一起漂移。 */
@@ -1077,7 +1136,8 @@ async function checkInfoMaskCoverage(): Promise<void> {
     page.node.setScale(0.75, 0.75, 1);
     cells(page)[0].node.emit(Button.EventType.CLICK);
     pump(1);
-    const dim = page.node.getChildByName("InfoCard")!.getChildByName("dim")!;
+    await flushDetail();
+    const dim = infoCard(page).node;
     const ui = dim.getComponent(UITransform)!;
     assert(Math.abs(ui.width * ancestorScale(dim) - 960) < 0.01, "遮罩覆盖宽屏左右边缘");
     assert(Math.abs(ui.height * ancestorScale(dim) - 1280) < 0.01, "遮罩覆盖完整可见高度");
@@ -1101,16 +1161,16 @@ async function checkTimedItems(): Promise<void> {
   try {
     page=await openView();assert(page.visibleItems().length===2,"同配置期限物品逐件显示");
     assert(page.visibleItems()[0].key!==page.visibleItems()[1].key,"不同实例具有不同选中键");
-    cells(page)[0].node.emit(Button.EventType.CLICK);pump(1);
+    cells(page)[0].node.emit(Button.EventType.CLICK);await flushDetail();pump(1);
     const info=infoCard(page);assert(info.countdown!.string==="剩余：0小时0分2秒","首件显示自己的到期时间");
     assert(info.enterLabel!.string==="确定"&&!info.btnDecompose!.active,"只读详情不开放使用分解");
     now=1001;info.update();assert(info.countdown!.string==="剩余：0小时0分1秒","每秒更新剩余时间");
     now=1002;page.update(1);assert(page.visibleItems().length===1,"到期实例从格子隐藏");
     assert(model.snapshot.timedItems.length===2,"本地到期不删服务器库存");
-    assert(!(page as any).infoSheet,"到期详情随对应实例关闭");
-    cells(page)[0].node.emit(Button.EventType.CLICK);pump(1);assert(infoCard(page).countdown!.string==="剩余：0小时0分3秒","另一个实例仍可独立查看");
+    assert(!UIManager.instance.isOpen(BagInfoView),"到期详情随对应实例关闭");
+    cells(page)[0].node.emit(Button.EventType.CLICK);await flushDetail();pump(1);assert(infoCard(page).countdown!.string==="剩余：0小时0分3秒","另一个实例仍可独立查看");
     page.runDispose();page.node.destroy();page=null;now=1004;
-    page=await openView();cells(page)[0].node.emit(Button.EventType.CLICK);pump(1);
+    page=await openView();cells(page)[0].node.emit(Button.EventType.CLICK);await flushDetail();pump(1);
     assert(infoCard(page).countdown!.string==="剩余：0小时0分1秒","重新打开不重置期限");
     now=1005;page.update(1);assert(page.visibleItems().length===0,"所有实例到期后显示空槽");
   } finally {page?.runDispose();page?.node.destroy();model.serverTimeSeconds=original;noteBag(null);}
@@ -1125,6 +1185,7 @@ async function main(): Promise<void> {
   checkInfoLifecycle();
   checkRealItemCategories();
   await checkBehavior();
+  await checkIndependentDetails();
   await checkTimedItems();
   await checkInfoMaskCoverage();
   await checkOpenFailure();

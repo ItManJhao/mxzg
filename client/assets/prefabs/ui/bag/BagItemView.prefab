@@ -713,6 +713,10 @@
     },
     "button": {
       "__id__": 32
+    },
+    "emptyFrame": {
+      "__uuid__": "5e56f13c-937b-4e86-a0d7-b8abb2aa05fb@f9941",
+      "__expectedType__": "cc.SpriteFrame"
     }
   },
   {

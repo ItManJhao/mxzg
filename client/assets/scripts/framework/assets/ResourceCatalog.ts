@@ -1,5 +1,5 @@
 /** 由 tools/generate_resources.cjs 生成；只登记资源描述，不预加载。修改扫描输入后重新生成。 */
-export type ResourceKind = "SpriteFrame" | "SpriteAtlas" | "Prefab" | "AudioClip" | "SkeletonData" | "JsonAsset";
+export type ResourceKind = "SpriteFrame" | "SpriteAtlas" | "Prefab" | "AudioClip" | "SkeletonData" | "JsonAsset" | "Texture2D" | "BitmapFont" | "TTFFont" | "TextAsset" | "EffectAsset" | "ParticleAsset" | "Asset";
 export interface ResourceDescriptor<K extends ResourceKind = ResourceKind> { readonly bundle: string; readonly path: string; readonly assetPath: string; readonly loadPath: string; readonly type: K; readonly uuid: string; }
 export const ResourceCatalog = {
   audio: {
@@ -7,8 +7,6 @@ export const ResourceCatalog = {
   },
   bag: {
     backpack_border_default: {"bundle":"resources","path":"ui/bag/backpack_border-default","assetPath":"resources/ui/bag/backpack_border-default","loadPath":"ui/bag/backpack_border-default/spriteFrame","type":"SpriteFrame","uuid":"d7dd0d2f-daf9-462f-b061-d5ac9e3646d6@f9941"},
-    backpack_spr_default: {"bundle":"resources","path":"ui/bag/backpack_spr-default","assetPath":"resources/ui/bag/backpack_spr-default","loadPath":"ui/bag/backpack_spr-default/spriteFrame","type":"SpriteFrame","uuid":"272f4650-3774-4813-aedf-02edaab9a68c@f9941"},
-    map_bg_backpack_1: {"bundle":"resources","path":"ui/bag/map-bg-backpack-1","assetPath":"resources/ui/bag/map-bg-backpack-1","loadPath":"ui/bag/map-bg-backpack-1/spriteFrame","type":"SpriteFrame","uuid":"93839820-644d-46de-9cf5-c2029669b85e@f9941"},
   },
   battle: {
     battle_end_lang_lbl_result_0: {"bundle":"resources","path":"ui/battle/battle-end-lang_lbl-result-0","assetPath":"resources/ui/battle/battle-end-lang_lbl-result-0","loadPath":"ui/battle/battle-end-lang_lbl-result-0/spriteFrame","type":"SpriteFrame","uuid":"7622a5f2-d788-4b75-bc8d-92896fd6e478@f9941"},
@@ -32,6 +30,7 @@ export const ResourceCatalog = {
     main_scene_spr_fetters_unlock: {"bundle":"resources","path":"ui/city/main-scene_spr-fetters-unlock","assetPath":"resources/ui/city/main-scene_spr-fetters-unlock","loadPath":"ui/city/main-scene_spr-fetters-unlock/spriteFrame","type":"SpriteFrame","uuid":"e7c4c986-adc1-45d9-a0d4-543d7e560024@f9941"},
   },
   common: {
+    backpack_spr_default: {"bundle":"resources","path":"ui/common/backpack_spr-default","assetPath":"resources/ui/common/backpack_spr-default","loadPath":"ui/common/backpack_spr-default/spriteFrame","type":"SpriteFrame","uuid":"272f4650-3774-4813-aedf-02edaab9a68c@f9941"},
     button_btn_tab_23: {"bundle":"resources","path":"ui/common/button_btn-tab-23","assetPath":"resources/ui/common/button_btn-tab-23","loadPath":"ui/common/button_btn-tab-23/spriteFrame","type":"SpriteFrame","uuid":"43e87ffb-d7f8-435e-be92-3db6f918d938@f9941"},
     button_btn_tab_24: {"bundle":"resources","path":"ui/common/button_btn-tab-24","assetPath":"resources/ui/common/button_btn-tab-24","loadPath":"ui/common/button_btn-tab-24/spriteFrame","type":"SpriteFrame","uuid":"7c4a7018-cbbf-4184-8927-4037564d6c79@f9941"},
     other_rare_0: {"bundle":"resources","path":"ui/common/other_rare-0","assetPath":"resources/ui/common/other_rare-0","loadPath":"ui/common/other_rare-0/spriteFrame","type":"SpriteFrame","uuid":"5e56f13c-937b-4e86-a0d7-b8abb2aa05fb@f9941"},

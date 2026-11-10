@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-10",
+  "status": "自动合图、独立预览背包流程及发布启动修正复验通过；发布完整登录背包流程未执行，未提交推送",
+  "build": {
+    "directory": "client/build/bag-atlas-review",
+    "platform": "web-mobile",
+    "observedOutputTime": "2026-11-10 17:07:53 Asia/Shanghai",
+    "atlasTexture": "1d629baea@6c48a",
+    "atlasSize": [
+      126,
+      474
+    ],
+    "frames": [
+      "6c69245c-edfa-463d-a6a4-c897ba93ac12@f9941",
+      "c6234db7-ebbd-43bb-863f-6c99505dbdc3@f9941"
+    ],
+    "sameTextureObservedInEngine": true,
+    "prefabsLoaded": [
+      "BagItemView",
+      "BagInfoView"
+    ],
+    "retainedSourceImages": true,
+    "sizeNote": "图集7765字节，原图5477及497字节仍在包内；不宣称包体缩小或绘制调用改善",
+    "startupFailure": "发布编译将 [...new Set(...)] 转为 [].concat(new Set(...))，导致登录阶段清单校验失败",
+    "fix": "ApplicationResources、BattleLoadingUtils、HeroLoadingUtils、BagResourcesUtils 改用 Array.from；保留原校验",
+    "pending": "发布启动已正常进入登录页；BagItemView和BagInfoView在新包运行时共享126×474纹理，无警告或错误。未登录日常服务器。",
+    "startupVerified": true,
+    "screenshot": "docs/images/bag-auto-atlas-build-20261110.jpg"
+  },
+  "preview": {
+    "run": "5ae631f6d97e4bb293268f4cef8ab524",
+    "environment": "独立内存H2，loading_review，四类各3件，GM关闭",
+    "passed": [
+      "道具详情",
+      "装备详情",
+      "碎片详情",
+      "精灵详情",
+      "确认及关闭详情",
+      "返回主城",
+      "重开背包"
+    ],
+    "additionalResourceRequestsAfterPrewarm": 0,
+    "inventoryUnchanged": true,
+    "warningsAndErrors": 0,
+    "screenshot": "docs/images/bag-auto-atlas-20261110.jpg",
+    "cleanup": "测试页关闭、视口恢复、核对进程归属后停止独立服务"
+  },
+  "checksAfterStartupFix": [
+    "creator-compat（新增三段加载真实调用链，经发布相同 Babel 展开转换）",
+    "staged-loading",
+    "TypeScript --noEmit",
+    "git diff --check"
+  ],
+  "limits": [
+    "发布包未完成登录到背包完整流程",
+    "公共图集及微信分包不在本批范围",
+    "真实挑战结算奖励详情未重跑"
+  ]
+}

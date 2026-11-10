@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-10",
+  "scope": "发布包独立验收及common静态迁移前置",
+  "isolation": {
+    "status": "18:20修复后实际发布包完整背包流程通过",
+    "server": "随机回环端口H2内存测试实例",
+    "account": "loading_review",
+    "dailyServerUsed": false
+  },
+  "found": {
+    "issue": "SuperContent覆写访问器中的super属性在Creator loose编译后丢失接收者，间距读成undefined且部分setter自递归",
+    "evidence": "原生Layout访问器读回22/22/8/38/35/35，覆写访问器均undefined",
+    "fix": "通过Reflect.get/set显式传入当前组件，保留原生状态、失效通知和Inspector设置",
+    "source": "client/assets/scripts/framework/ui/SuperContent.ts"
+  },
+  "checks": [
+    "isolated-build：PREVIEW真/假编译边界及存储隔离通过",
+    "game-socket通过",
+    "super-scroll通过",
+    "creator-compat加入super访问器反例和真实列表回归后通过",
+    "Creator TypeScript noEmit通过"
+  ],
+  "pending": [],
+  "temporaryDiagnostic": "仅临时浏览器修补用于排查后续窗口，不作为修复验收；页签已关闭，临时修改已丢弃",
+  "committed": false,
+  "browser": {
+    "buildFinished": "2026-11-10 18:20:49",
+    "viewport": "393x852",
+    "temporaryPatch": false,
+    "account": "loading_review",
+    "tabs": [
+      "装备/灵戒",
+      "道具/英雄进阶石",
+      "碎片/火系精英碎片",
+      "精灵/波纹精灵"
+    ],
+    "quantityEach": 3,
+    "detailsClosed": true,
+    "returnToCity": true,
+    "reopenBag": true,
+    "inventoryAndRevisionUnchanged": true,
+    "newResourceRequestsAfterBagOpen": 0,
+    "warnings": 0,
+    "errors": 0,
+    "screenshot": "docs/images/bag-release-isolated-20261110.jpg"
+  },
+  "commonValidation": "common-static-migration-20261110.json"
+}
