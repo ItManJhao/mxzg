@@ -1,0 +1,36 @@
+{
+  "source": "G:/work/FsGame/Project/mxzg-h5-jp/客户端/web-jpn/jp-overlay/res/jpn/ccbi-res/jp-login-static.png",
+  "target": "client/assets/resources/ui/login/jp-login-static.png",
+  "sha256": "255df396829f2ed8bd4960ccead7f2f1500a0239328b282c5a910b733d8256c5",
+  "width": 1080,
+  "height": 2340,
+  "uuid": "67059de4-fc98-4c8f-9e4f-88a490aabc8e",
+  "scope": "仅登录页静态背景；加载页人物动画及进度条保持",
+  "pending": [
+    "整批收口发布包"
+  ],
+  "preview": {
+    "status": "通过本机预览",
+    "run": "4672e9045e204ef1959569ee5bea7a1c",
+    "environment": "Creator本机预览＋独立H2内存测试服",
+    "checks": [
+      "静态背景帧jp-login-static",
+      "顶部对齐代码编译生效，y=-162.5920471281296与计算值一致",
+      "登录主城成功，后台目标4/4完成",
+      "背包四分类/品质框/详情确认关闭",
+      "英雄列表、四槽装备及技能说明",
+      "挂机行军、对话及返回主城重开"
+    ],
+    "warnings": 0,
+    "errors": 0,
+    "notCovered": [
+      "本轮挑战结算",
+      "发布包"
+    ],
+    "notes": "期间用户刷新Creator使预览返回登录页，一次诊断操作因页面已切换未找到TabCity；确认新状态后正常继续，无产品错误。",
+    "screenshots": [
+      "docs/images/login-static-top-preview-20261111.png",
+      "docs/images/resource-cleanup-idle-preview-20261111.png"
+    ]
+  }
+}

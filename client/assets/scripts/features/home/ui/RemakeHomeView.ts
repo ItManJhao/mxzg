@@ -5,7 +5,7 @@ import { GameLog } from "../../../core/GameLog";
 import { _decorator, Button, instantiate, Label, Node, Prefab } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UIManager } from "../../../framework/ui/UIManager";
-import { paintRolePortrait } from "../../account/utils/RolePortrait";
+import { RolePortraitUtils } from "../../account/utils/RolePortraitUtils";
 import { CityChromeView } from "../../city/ui/CityChromeView";
 import { CityHubView } from "../../city/ui/CityHubView";
 import { CityChromeShell } from "../../city/ui/CityChromeShell";
@@ -136,7 +136,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
         this.chrome.setExperience(role.basics?.experience, role.basics?.experienceToNextLevel);
         this.chrome.setCurrencies(String(role.gold), String(role.diamonds));
         this.chrome.setPower(""); // 战力尚未接入，不将未知值伪装为零。
-        paintRolePortrait(this.chrome.avatarFace, this.chrome.avatarBorder, role.basics?.headId, role.basics?.borderId);
+        RolePortraitUtils.paint(this.chrome.avatarFace, this.chrome.avatarBorder, role.basics?.headId, role.basics?.borderId);
         this.chrome.setCityExtras(false);
         this.chrome.setTabs(["city", "hero", "bag", "battle", "dungeon", "clan", "fetter"].map(id => ({
             id, text: "", state: id === this.currentFeature ? "selected" :

@@ -3,10 +3,9 @@
  * 确认交回调用方：战斗触发领取，挂机已到账收据仅翻页或关闭；本文件不发奖或推算掉落。
  * 弹层随页面关闭销毁；无评分规则的服务端结算不显示星级评价。
  */
+import { ResManager } from "../../../framework/assets/ResManager";
 import { BlockInputEvents,Color,view as gameView,HorizontalTextAlignment,Label,Node,Overflow,Sprite,UITransform,VerticalTextAlignment } from "cc";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { CommonUiResources } from "../../../framework/assets/CommonUiResources";
 import { bindVisibleRefresh,fitVisibleRoot } from "../../../framework/ui/visibleFit";
 
 
@@ -16,10 +15,10 @@ import { loadPrefab,spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { bindTap,findDescendant,liftNode,mountCcbiView } from "../../../framework/ui/PrefabLayout";
 import { createButton,createLabel,createRect,paintRect,place,setText,uiNode } from "../../../framework/ui/UiKit";
 
-const RESULT_WIN = ResourceCatalog.battle.battle_end_lang_lbl_result_1.path;
-const RESULT_LOSE = ResourceCatalog.battle.battle_end_lang_lbl_result_0.path;
+const RESULT_WIN = "ui/battle/battle-end-lang_lbl-result-1";
+const RESULT_LOSE = "ui/battle/battle-end-lang_lbl-result-0";
 
-export const BATTLE_END_PREFAB = ResourceCatalog.prefab_battle.BattleEndLayer.assetPath;
+export const BATTLE_END_PREFAB = "prefabs/ui/battle/BattleEndLayer";
 
 export interface BattleEndOptions {
     stageId?: number;
@@ -165,7 +164,7 @@ function paintStars(view: Node, win: boolean): void {
         const sprite = star.addComponent(Sprite);
         sprite.sizeMode = Sprite.SizeMode.CUSTOM;
         place(star, row, (i - 1) * 34, 0);
-        paintFrame(star, ResourceCatalog.hero.hero_info_spr_star_1.path);
+        paintFrame(star, "ui/hero/hero-info_spr-star-1");
     }
 }
 
@@ -218,7 +217,7 @@ function paintClearRewards(view: Node, stageId: number | undefined, supplied?: {
     const shown = stacks.length;
     for (let i = 0; i < shown; i++) {
         const stack = stacks[i];
-        const icon = stack.icon || CommonUiResources.itemPlaceholder.path;
+        const icon = stack.icon || ResManager.ui("common", "backpack_spr-default");
         const cell = uiNode("reward");
         const ui = cell.addComponent(UITransform);
         ui.setContentSize(64, 64);

@@ -24,7 +24,7 @@ import { BattleInfoUtils } from "../utils/BattleInfoUtils";
 import { ChapterSettlementUtils } from "../utils/ChapterSettlementUtils";
 import { BattleReplayUnit } from "../utils/BattleReplayUtils";
 import { MainChapterExperience } from "../MainChapterModel";
-import { paintRolePortrait } from "../../account/utils/RolePortrait";
+import { RolePortraitUtils } from "../../account/utils/RolePortraitUtils";
 import { BattleDetailLayer } from "./BattleDetailLayer";
 
 const { ccclass, property } = _decorator;
@@ -307,7 +307,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         const best = ChapterSettlementUtils.highestDamage(args.units || []);
         const panel = this.panel!;
         if (args.roleAppearance) {
-            paintRolePortrait(panel.getChildByName("RolePortrait"), panel.getChildByName("RolePortraitBorder"),
+            RolePortraitUtils.paint(panel.getChildByName("RolePortrait"), panel.getChildByName("RolePortraitBorder"),
                 args.roleAppearance.headId, args.roleAppearance.borderId);
         }
         const heroName = panel.getChildByName("HeroName")!.getComponent(Label)!;

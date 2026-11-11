@@ -1,8 +1,7 @@
 /** 主线及独立战报播放器：复用BattlePage及真实资源，只展示服务端战报，不请求奖励或修改资产。 */
 import { AudioClip,AudioSource,Button,Color,director,Director,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
 import { GameLog } from "../../../core/GameLog";
-import { createAssetScope,ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
+import { createAssetScope, ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { registerView } from "../../../framework/ui/UIRegistry";
@@ -61,9 +60,9 @@ export class BattleReplayPreview {
             // 后续只读取普通配置对象，释放JsonAsset持有，不保留引擎资产缓存。
             configScope.dispose();
         }
-        const elementPaths = [ResourceCatalog.hero.hero_icon_elem_1.loadPath, ResourceCatalog.hero.hero_icon_elem_2.loadPath,
-            ResourceCatalog.hero.hero_icon_elem_3.loadPath, ResourceCatalog.hero.hero_icon_elem_4.loadPath,
-            ResourceCatalog.hero.hero_icon_elem_5.loadPath];
+        const elementPaths = ["ui/hero/hero-icon_elem-1/spriteFrame", "ui/hero/hero-icon_elem-2/spriteFrame",
+            "ui/hero/hero-icon_elem-3/spriteFrame", "ui/hero/hero-icon_elem-4/spriteFrame",
+            "ui/hero/hero-icon_elem-5/spriteFrame"];
         const selected = new Map<number, BuffRow>();
         // 一个旧Buff可展开多个并行表现，索引仅供本页资源缓存使用，不修改权威事件。
         const expanded = new Map<number, readonly BuffRow[]>();

@@ -2,6 +2,7 @@
  * 只读英雄详情页：由 UIManager 传入实例 ID，读取唯一英雄 Model 并订阅服务端同步后的事件。
  * 复用旧详情预制体与立绘；展示服务器基础属性，关闭时释放监听和立绘，不触发养成写操作。
  */
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
@@ -9,16 +10,13 @@ import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroSkillUtils } from "../utils/HeroSkillUtils";
 import { readHeroEquipment } from "../utils/HeroEquipment";
-import { EquipmentIconById } from "../../../framework/assets/IconCatalog";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { HeroCatalog } from "../utils/HeroCatalog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { CommonUiResources } from "../../../framework/assets/CommonUiResources";
 import { _decorator, Button, Label, Node, Sprite, Overflow, UITransform } from "cc";
 import { GameLog } from "../../../core/GameLog";
 interface HeroPortraitData { templateId: number; name: string; level: number; }
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
 import { mountBattleSpine } from "../../battle/ui/battleSpine";
 import { HERO_DETAIL_SPINE_SEAT_Y } from "../utils/HeroDetailLayout";
 import { assignContentSize, positiveUiSize } from "../../../framework/ui/visibleFit";
@@ -34,7 +32,7 @@ import {
 
 const { ccclass, property } = _decorator;
 
-const TALK_BUBBLE = ResourceCatalog.common.other_spr_bubble_5.path;
+const TALK_BUBBLE = "ui/common/other_spr-bubble-5";
 
 /**
  * HeroInfoLayer。立绘挂在 node_equip 圆心，台词在 lbl_talk。
@@ -136,8 +134,8 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         if (!hero || model.roleKey !== this.owner) { this.goBack(); return; }
         const catalog = new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
         const elem = catalog.find(hero.templateId)?.elem;
-        const icons = [ResourceCatalog.hero.hero_icon_elem_0, ResourceCatalog.hero.hero_icon_elem_1, ResourceCatalog.hero.hero_icon_elem_2, ResourceCatalog.hero.hero_icon_elem_3, ResourceCatalog.hero.hero_icon_elem_4, ResourceCatalog.hero.hero_icon_elem_5];
-        if (this.elementIcon) { this.elementIcon.active = !!elem; if (elem) paintSpritePaths(this.elementIcon, [icons[elem].path]); }
+        const icons = [ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-5", "SpriteFrame")];
+        if (this.elementIcon) { this.elementIcon.active = !!elem; if (elem) ResManager.setSprite(this.elementIcon, [icons[elem].path]); }
         this.show({ templateId: hero.templateId, name: catalog.find(hero.templateId)?.name || "未知英雄", level: hero.level });
         if (this.summary) this.summary.string = "等级：" + hero.level + "    星级：" + hero.star + "    强化：" + (hero.stage ?? "—") + "\n" + (hero.panelStats ? (hero.panelStats.complete ? "英雄属性" : "当前属性（部分加成待恢复）") : "属性待同步");
         const stats = hero.panelStats?.values; const names = ["攻击", "生命", "防御", "速度"], values = stats ? [stats.atk, stats.hp, stats.def, stats.spd] : [];
@@ -146,7 +144,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         this.refreshEquipment(hero, version);
         if (this.skillIcons.length) HeroSkillUtils.present(hero).forEach((skill, i) => {
             const icon = this.skillIcons[i], sprite = icon?.getComponent(Sprite); if (sprite) { sprite.spriteFrame = null; sprite.grayscale = skill.id > 0 && skill.level === 0; }
-            if (icon) paintSpritePaths(icon, [skill.icon || ResourceCatalog.hero.hero_info_spr_new_9.path], () => this.paintVersion === version && this.selectedId === hero.id);
+            if (icon) ResManager.setSprite(icon, [skill.icon || "ui/hero/hero-info_spr-new-9"], () => this.paintVersion === version && this.selectedId === hero.id);
             if (this.skillNames[i]) this.skillNames[i].string = skill.name;
             if (this.skillLevels[i]) this.skillLevels[i].string = skill.id ? HeroSkillUtils.status(skill) : "";
             if (this.skillButtons[i]) this.skillButtons[i].interactable = skill.id > 0 && skill.available;
@@ -159,7 +157,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         }
         const config = GameConfig.instance;
         const items = hero.equipment ? readHeroEquipment(hero.equipment.items, config) : undefined;
-        const empty = CommonUiResources.equipmentEmptySlots;
+        const empty = [1, 2, 3, 4].map(slot => ResManager.ui("common", "other_spr-equip-" + slot));
         this.equipmentIcons.forEach((icon, index) => {
             const item = items?.find(row => row.slot === index + 1);
             const frame = this.equipmentFrames[index];
@@ -167,25 +165,25 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
             if (sprite) {
                 sprite.spriteFrame = null;
             }
-            let path: string = empty[index].path;
+            let path: string = empty[index];
             let quality = 0;
             let status = items ? "" : "待同步";
             if (item) {
                 const template = config.requireConfig(GConfig.EquipmentType, item.templateId);
                 const itemConfig = config.requireConfig(GConfig.Item, item.templateId);
-                path = EquipmentIconById[item.templateId]?.path || path;
+                path = ResManager.equipment(item.templateId) || path;
                 quality = itemConfig.rare_mark || 0;
                 status = "★" + template.star + (item.soulLevel ? " · 附魂" + item.soulLevel : "");
             }
             const current = () => this.paintVersion === version && this.selectedId === hero.id;
-            paintSpritePaths(icon, [path], current);
+            ResManager.setSprite(icon, [path], current);
             if (frame) {
                 frame.active = true;
                 const border = frame.getComponent(Sprite);
                 if (border) {
                     border.spriteFrame = null;
                 }
-                paintSpritePaths(frame, [CommonUiResources.qualityFrame(quality).path], current);
+                ResManager.setSprite(frame, [ResManager.qualityFrame(quality)], current);
             }
             if (this.equipmentLabels[index]) {
                 this.equipmentLabels[index].string = status;
@@ -237,7 +235,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         const line = heroDetailTalk(hero.level);
         if (this.talkBubble) {
             this.talkBubble.active = true;
-            paintSpritePaths(this.talkBubble, [TALK_BUBBLE]);
+            ResManager.setSprite(this.talkBubble, [TALK_BUBBLE]);
         }
         if (!this.talk) {
             GameLog.shared.classified("MODULE", "warn", "Hero", "HeroInfoLayer 没有 lbl_talk");

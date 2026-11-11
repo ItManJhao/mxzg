@@ -1,8 +1,10 @@
+/** 应用导航回归：检查替换、缓存复用、注销清空及异步取消，不连接游戏服务器。 */
 import { strict as assert } from "node:assert";
 import { Node, Prefab } from "cc";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
 import { UIManager, isOpenCancelled } from "../assets/scripts/framework/ui/UIManager";
 import { registerView, viewCtorById } from "../assets/scripts/framework/ui/UIRegistry";
+import { monoNow } from "../assets/scripts/core/GameLog";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { RemakeNavigation } from "../assets/scripts/app/remake/RemakeNavigation";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
@@ -26,10 +28,10 @@ async function main() {
   ui.install(nav, { showToast: () => {} });
   const counters = new Map<string, { created: number; shown: number; closed: number }>();
   const hosts = new Map<string, Node>();
-  function register(ctor: new () => BaseView, id: string, load: () => Promise<Prefab> = async () => new Prefab(), throwOnShow = false, resident = false) {
+  function register(ctor: new () => BaseView, id: string, load: () => Promise<Prefab> = async () => new Prefab(), throwOnShow = false, resident = false, cache = false) {
     const count = { created: 0, shown: 0, closed: 0 }; counters.set(id, count);
     registerView(ctor, { id, prefab: "prefabs/test/" + id, layer: resident ? UILayer.Popup : UILayer.Page,
-      cache: false, allowMultiple: false, hostId: resident ? "popup" : undefined, load,
+      cache, allowMultiple: false, hostId: resident ? "popup" : undefined, load,
       mount: shell => { const node = new Node(id); node.parent = shell; node.addComponent(ctor); hosts.set(id, node); return node; },
       createController: () => { count.created++; return {
         show: () => { count.shown++; if (throwOnShow) throw new Error("Controller initialization failed"); },
@@ -97,7 +99,7 @@ async function main() {
   });
   ui.install(featureNav, { showToast: () => {} });
   const keptHome = register(HomeFixture, "test-remake-home");
-  const feature = register(FeatureFixture, "test-remake-feature");
+  const feature = register(FeatureFixture, "test-remake-feature", undefined, false, false, true);
   register(LoginFixture, "test-remake-login");
   await ui.open(HomeFixture);
   const keptHomeNode = hosts.get("test-remake-home")!;
@@ -106,12 +108,19 @@ async function main() {
   assert.equal(hosts.get("test-remake-feature")!.parent!.parent, slot);
   assert(ui.isOpen("test-remake-home") && keptHomeNode.isValid);
   assert.equal(keptHome.closed, 0, "feature keeps the shared home and HUD controller alive");
+  const cachedFeature = hosts.get("test-remake-feature")!;
   assert.equal(featureNav.back(), true);
+  assert(cachedFeature.isValid, "实际导航不能销毁已缓存功能页");
+  assert.equal(ui.snapshot().cached, 1);
   assert.equal(feature.closed, 1); assert.equal(keptHome.closed, 0);
   assert.equal(featureNav.current, "test-remake-home");
   assert.equal(featureNav.back(), false, "home cannot return to a previous session");
   await ui.open(FeatureFixture);
+  assert.equal(hosts.get("test-remake-feature"), cachedFeature, "重新打开复用原实例");
+  assert.equal(cachedFeature.parent!.active, true, "缓存宿主重开恢复激活");
   await ui.open(LoginFixture);
+  assert.equal(ui.snapshot().cached, 0, "根页面替换清空旧会话缓存");
+  assert.equal(cachedFeature.isValid, false);
   assert.equal(feature.closed, 2); assert.equal(keptHome.closed, 1, "logout disposes both feature and home");
   assert.equal(featureNav.current, "test-remake-login");
   assert.equal(parent.children.length, 1);
@@ -127,6 +136,39 @@ async function main() {
   register(FeatureFixture, "test-remake-feature");
   await ui.open(FeatureFixture); featureNav.dispose();
   assert.equal(parent.children.length, 0, "application disposal removes feature and root hosts");
+
+  // 独立导航验证闲置时长和数量上限，不等待真实两分钟。
+  const cacheUi = new UIManager();
+  const cacheRoot = new Node("CacheRoot");
+  const cacheNav = new RemakeNavigation(cacheUi, cacheRoot, {
+    parent: id => id.startsWith("cache-") ? cacheRoot : null,
+    changed: () => {},
+  });
+  cacheUi.install(cacheNav, { showToast: () => {} });
+  class CacheRootView extends BaseView {}
+  registerView(CacheRootView, { id: "cache-root", prefab: "test", layer: UILayer.Page,
+    cache: false, allowMultiple: false, load: async () => new Prefab(),
+    mount: host => { const n = new Node("Root"); n.parent = host; n.addComponent(CacheRootView); return n; } });
+  await cacheUi.open(CacheRootView);
+  const instances: BaseView[] = [];
+  for (let i = 0; i < 3; i++) {
+    class CachedView extends BaseView {}
+    registerView(CachedView, { id: "cache-" + i, prefab: "test", layer: UILayer.Page,
+      cache: true, allowMultiple: false, load: async () => new Prefab(),
+      mount: host => { const n = new Node("Cached"); n.parent = host; n.addComponent(CachedView); return n; } });
+    const instance = await cacheUi.open(CachedView);
+    instances.push(instance);
+    if (i === 0) assert.equal(cacheUi.collectCached(monoNow() + UIManager.cacheIdleMs), 0);
+    assert(instance.node.isValid, "在屏幕上的实例不受闲置清理影响");
+    cacheNav.back();
+  }
+  assert.equal(cacheUi.snapshot().cached, UIManager.maxCachedPages, "闲置页面不超过数量上限");
+  assert(!instances[0].node.isValid, "超过上限先淘汰最早关闭的页面");
+  assert(instances[1].node.isValid && instances[2].node.isValid);
+  assert.equal(cacheUi.collectCached(monoNow() + UIManager.cacheIdleMs), 2);
+  assert.equal(cacheUi.snapshot().cached, 0);
+  for (const instance of instances) assert(!instance.node.isValid, "过期界面节点被销毁");
+  cacheNav.dispose();
 
   const model = new AccountModel();
   const service = new AccountService(model, { developmentLogin: async () => { throw new Error("not used"); }, currentRole: async () => { throw new Error("not used"); } }, { read: () => null, write: () => {}, clear: () => {} });

@@ -1,8 +1,8 @@
 /**
  * 背包页面：展示 BagModel 当前角色库存；分类与只读详情由页面处理，库存由 BagController 接收协议更新。
  * Prefab 保存静态布局；页面关闭清理目标事件和按钮，模块库存独立存活。
+ * 短期缓存实例由UIManager限时、限量保留；重开重新读取Model，静态资源不随实例淘汰。
  */
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
@@ -42,9 +42,9 @@ export interface BagOpenArgs {
 /** 背包数据与选中态展示；通用 SuperContent 负责列表布局。 */
 @view({
     id: "bag",
-    prefab: ResourceCatalog.prefab_bag.BagView.assetPath,
+    prefab: "prefabs/ui/bag/BagView",
     layer: UILayer.Page,
-    cache: false,
+    cache: true,
     allowMultiple: false,
 })
 @ccclass("BagView")
@@ -126,14 +126,14 @@ export class BagView extends BaseView<BagOpenArgs> {
         if (!this.closed && this.catalog) this.writeTalk();
     }
 
-    /** 打开先登记目标监听，再读取当前库存，保证关闭期间的奖励更新可见。 */
+    /** 每次打开重新登记监听并读取最新库存；无参数仍默认道具分类，不沿用旧实例的分类。 */
     onOpen(args?: BagOpenArgs): void {
         this.closed = false;
         this.args = args;
         EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refreshFromModel);
         EventDispatcher.instance.on(BagEvent.BagSyncStateChanged, this, this.onSyncStateChanged);
         this.bindClose();
-        if (args && args.tab) this.tab = args.tab;
+        this.tab = args?.tab || "item";
         if (this.opened) {
             this.refreshGrid();
             return;
@@ -157,7 +157,12 @@ export class BagView extends BaseView<BagOpenArgs> {
     private async initialize(): Promise<void> {
         try {
             this.validateBindings();
-            bindVisibleRefresh(this.node, () => fitVisibleRoot(this.node));
+            bindVisibleRefresh(this.node, () => {
+                // 闲置缓存仍保留节点；屏幕变化时不布局隐藏页，重新显示再适配。
+                if (!this.closed && this.node.activeInHierarchy) {
+                    fitVisibleRoot(this.node);
+                }
+            });
             mountCcbiView(this.content!);
             this.catalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
                 GameConfig.instance.getFile(GConfig.Language), GameConfig.instance.getFile(GConfig.TimeLimitItem));
@@ -174,7 +179,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
     }
 
-    /** 挂载且激活后刷新分类与格子；未激活则等待，不重建遮罩或预制层级。 */
+    /** 挂载且激活后按当前屏幕适配并刷新最新库存；闲置重开也重新计算布局。 */
     private refreshGrid(): void {
         if (this.closed) return;
         if (!this.node || !this.node.isValid || !this.bagScroll || !this.tabPrefab) return;
@@ -182,6 +187,7 @@ export class BagView extends BaseView<BagOpenArgs> {
             this.watchShown();
             return;
         }
+        fitVisibleRoot(this.node);
         this.buildTabs();
         this.paint();
     }

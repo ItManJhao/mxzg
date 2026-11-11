@@ -319,7 +319,7 @@ function checkRegistry(): void {
   assert(spec.id === "bag", "页面 id 应是 bag");
   assert(spec.prefab === "prefabs/ui/bag/BagView", "预制路径");
   assert(spec.layer === UILayer.Page, "层应是 Page");
-  assert(spec.cache === false, "背包不缓存");
+  assert(spec.cache === true, "背包启用有界实例缓存");
   assert(spec.allowMultiple === false, "背包不叠两份");
   assert(!spec.mount, "背包无需组装策略");
   assert(viewSpecOf(BagInfoView)?.layer === UILayer.Popup, "详情登记为独立弹窗");
@@ -1061,6 +1061,7 @@ async function checkOpenRaces(): Promise<void> {
   assert(LifeView.creates === 1 && LifeView.binds === 1 && LifeView.opens === 1, "第一次打开走 create/bind/open");
   assert(UIManager.instance.close(lifeOpen) === true, "缓存页可以关");
   assert(lifeOpen.node.isValid, "cache 关掉后节点还在");
+  assert(UIManager.instance.snapshot().cached === 1, "关闭后登记一个闲置页面");
   assert(LifeView.closes === 1 && LifeView.unbinds === 0 && LifeView.disposes === 0, "cache 只 onClose，不 unbind/dispose");
   const loadsAfter = gateLife.loads.n;
   clearPrefabCache();
@@ -1070,6 +1071,11 @@ async function checkOpenRaces(): Promise<void> {
   assert(LifeView.creates === 1 && LifeView.binds === 1 && LifeView.opens === 2, "cache 再次打开只再 onOpen");
   assert(cachedNav.highlights.length === 2, "cache 再次进栈也通知底栏");
   assert(UIManager.instance.close(lifeAgain) === true, "缓存页第二次也能关");
+  UIManager.instance.clearCached();
+  assert(!lifeAgain.node.isValid, "清空缓存销毁实际节点");
+  assert(LifeView.disposes === 1 && LifeView.unbinds === 1, "清空只解绑和释放一次");
+  UIManager.instance.clearCached();
+  assert(UIManager.instance.snapshot().cached === 0, "重复清空安全");
   clearPrefabCache();
 }
 

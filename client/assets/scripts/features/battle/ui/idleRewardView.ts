@@ -3,7 +3,6 @@
  * 由 CampaignView 挂载并随页面销毁；点击只关闭显示，不请求领取或修改资产。
  */
 import { BlockInputEvents, Color, Node, UITransform, view } from "cc";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { loadPrefab, spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { bindTap } from "../../../framework/ui/PrefabLayout";
@@ -15,7 +14,7 @@ import type { IdleReward } from "../IdleApi";
 
 /** 加载已配置 SuperContent/Cell 的窗口，呈现全部真实奖励；父页面在加载期间关闭时不挂载。 */
 export async function mountIdleRewards(parent: Node, rewards: readonly IdleReward[], catalog: BagItemCatalog, close: () => void, isCurrent: () => boolean): Promise<Node | null> {
-    const panelPrefab = await loadPrefab(ResourceCatalog.prefab_item.ItemRewardLayer.assetPath);
+    const panelPrefab = await loadPrefab("prefabs/ui/item/ItemRewardLayer");
     if (!parent.isValid || !isCurrent()) return null;
     const hold = new Node("IdleRewardHold");
     hold.addComponent(UITransform);

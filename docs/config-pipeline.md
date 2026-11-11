@@ -1,6 +1,6 @@
 # 配置与资源维护
 
-运行时入口为 GameConfig 和 ResourceCatalog，不保存玩家数据，不因 import 预加载美术。开发约束只维护在 [AGENTS.md](../AGENTS.md)。
+运行时入口为 GameConfig 和 ResManager，不保存玩家数据，不因 import 预加载美术。开发约束只维护在 [AGENTS.md](../AGENTS.md)。
 
 ## 配置来源与生成
 
@@ -47,19 +47,19 @@ prepare 的 version 参数隔离不同版本：新组全部成功才切换并清
 
 ## 类型化资源
 
-[resource-catalog.json](../config/resource-catalog.json) 声明静态范围和冲突覆盖。node tools/generate_resources.cjs 生成目录，--check 核验稳定结果；另扫描全部保留 Prefab（含 Bundle）及 item/herotype 指定的实际图标，不扫描全部美术。
+图片统一经ResManager按目录和原始文件名获取；不维护资源名或可用ID清单。CommonUiResources、ResourceCatalog和config/resource-catalog.json已删除。ResourceTypes只保存类型契约，ResourceAssets/ResourcePool负责请求合并与持有释放。
 
-    const descriptor = ResourceCatalog.common.button_btn_tab_24;
-    const path = descriptor.path; // 只取得描述中的地址
-    const scope = createAssetScope();
-    const frame = await scope.load(descriptor); // 推导为 SpriteFrame
-    scope.dispose(); // 释放持有，迟到结果拒绝
-    const path = BagItemCatalog.iconSource(itemConfig); // 配置解析，缺图返回null
-    const image = await ResourceAssetsUtils.getSpriteFrame(ownerNode, path || CommonUiResources.itemPlaceholder.path); // 复用原池，调用方检查显示代次
+```ts
+ResManager.setSprite(iconNode, ResManager.ui("common", "other_rare-4"));
+const frame = await ResManager.getSpriteFrame(ownerNode, ResManager.ui("hero", "hero-icon_elem-1"));
+const target = ResourceAssetsUtils.describe("resources", "spine/jiemian", "SkeletonData");
+```
 
-描述包含 bundle、Bundle 内 path、完整 assetPath、loadPath、资源类型和 UUID。独立图片使用 meta 的 SpriteFrame 子资源；图集及子图采用可区分命名。规范化重名与同路径不同类型默认报错，须显式设置键或扩展名，不能覆盖。
+静态图片优先直接绑定Prefab。动态缺图在实际加载失败时记录路径/原因，候选默认图由调用方指定。直接getSpriteFrame返回Promise，失败交给调用方处理；不承诺未加载资源同步可取。
 
-Common、启动和页面静态地址使用目录。2026-11-10背包样板已改为直接解析item.icon，IconCatalog仅保留物品目录、已核实缺图例外以及暂未迁移的英雄/技能/历史头像等专用映射；不再生成ItemIconById。缺图显示明确占位，取图统一复用ResourceAssetsUtils.getSpriteFrame。以下早期验收中的ItemIconById和旧目录仅代表当时版本。缺图记录见 [resource-missing.json](../config/resource-missing.json)，不代表本轮新增丢图。合理的 Prefab 序列化资源引用保留。
+LoadingPlan显式配置三个阶段。tools/generate_resources.cjs只生成Prefab UUID回退和既有玩法准入，不再扫描图片、生成模块资源描述。保留Prefab序列化引用和原UUID。[resource-missing.json](../config/resource-missing.json)仅为历史审计。
+
+以下为历史查缺记录，不代表当前资源入口：
 
 2026-11-02 此前批次复核发现旧 1172 条缺图记录大部分来自生成器误用物品 ID 拼接路径，忽略 item.icon 的 backpack/ 共享图片声明。现已按显式配置生成 IconCatalog，缺图降为 16 个引用、8 个不同路径；这是复用正确的现有图片，不是补造图片。当前三名初始英雄、初始库存及前 20 关奖励范围未发现必需缺图；保留配置引用仍有效，不能以未开放为由删除。
 

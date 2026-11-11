@@ -1,0 +1,82 @@
+{
+  "date": "2026-11-11",
+  "build": "client/build/bag-atlas-review",
+  "buildTime": "15:23:13 +08:00",
+  "runId": "2199ea24ee6641c597dd8cff983ba239",
+  "environment": "独立内存测试服",
+  "viewport": [
+    393,
+    852
+  ],
+  "dedupe": {
+    "extension": "1.3.0",
+    "count": 9,
+    "bytes": 35481,
+    "remaining": 0
+  },
+  "passed": [
+    "静态登录",
+    "主城与后台4/4",
+    "背包四分类、详情及关闭",
+    "第二和第三关布阵、挑战、结算、战报及返回挂机"
+  ],
+  "final": {
+    "challenge": "战斗",
+    "playing": false,
+    "receipt": {
+      "action": "SETTLED",
+      "battleId": "a9e8a7e2-4b68-43ff-aeca-d2ccc3105689",
+      "experience": {
+        "afterExp": 40,
+        "afterLevel": 3,
+        "afterThreshold": 720,
+        "beforeExp": 200,
+        "beforeLevel": 2,
+        "beforeThreshold": 360
+      },
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4200
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 700
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1003001,
+          "quantity": 1
+        }
+      ],
+      "state": {
+        "assetRevision": 6,
+        "maxCleared": 3,
+        "pendingBattleId": null
+      }
+    },
+    "state": {
+      "assetRevision": 6,
+      "maxCleared": 3,
+      "pendingBattleId": null
+    }
+  },
+  "warningsErrorsAtAllowedReleaseUrl": 0,
+  "harnessNote": "临时静态端口被隔离保护拒绝，改用允许的Creator发布入口，未修改保护规则。",
+  "limits": [
+    "不替代真机验收",
+    "不替代并发幂等测试",
+    "缓存机制尚未实施"
+  ]
+}

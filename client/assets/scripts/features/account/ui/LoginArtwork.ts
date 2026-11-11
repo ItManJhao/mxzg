@@ -1,9 +1,8 @@
 /**
  * 登录页美术适配组件：按可见尺寸适配已有控件，静态样式和结构仍由 Prefab 保存。
  */
-import { _decorator, Component, Node, UITransform, view } from "cc";
+import { _decorator, Component, Node, Sprite, UITransform, view } from "cc";
 import { fitVisibleRoot } from "../../../framework/ui/visibleFit";
-import { LoginLayoutUtils } from "../utils/LoginLayoutUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -12,8 +11,6 @@ const { ccclass, property } = _decorator;
 export class LoginArtwork extends Component {
     /** 登录背景尺寸绑定。 */
     @property(UITransform) backdrop: UITransform | null = null;
-    /** 登录角色美术容器。 */
-    @property(Node) cast: Node | null = null;
     /** 底部选服及开始按钮容器。 */
     @property(Node) controls: Node | null = null;
     /** 开发账号设置容器。 */
@@ -27,15 +24,17 @@ export class LoginArtwork extends Component {
     /** 页面隐藏时解除窗口监听。 */
     onDisable(): void { view.off("canvas-resize", this.fit, this); }
 
-    /** 按可见区域缩放背景、人物和控件，不改变登录业务状态。 */
+    /** 按原图比例铺满并顶部对齐，短竖屏只裁切下方风景，避免裁掉标题；不改变登录状态。 */
     private fit(): void {
         const { width, height } = view.getVisibleSize();
         if (!(width > 0 && height > 0)) return;
         fitVisibleRoot(this.node);
-        const layout = LoginLayoutUtils.calculate(width, height);
-        this.backdrop?.setContentSize(layout.backgroundWidth, layout.backgroundHeight);
-        this.cast?.setScale(layout.castScale, layout.castScale, 1);
-        this.cast?.setPosition(0, layout.castY, 0);
+        const imageSize = this.backdrop?.node.getComponent(Sprite)?.spriteFrame?.originalSize;
+        if (imageSize && imageSize.width > 0 && imageSize.height > 0) {
+            const cover = Math.max(width / imageSize.width, height / imageSize.height);
+            this.backdrop?.setContentSize(imageSize.width * cover, imageSize.height * cover);
+            this.backdrop?.node.setPosition(0, (height - imageSize.height * cover) / 2, 0);
+        }
         const scale = Math.min(1, width / 640);
         this.controls?.setScale(scale, scale, 1);
         this.controls?.setPosition(0, -height / 2, 0);

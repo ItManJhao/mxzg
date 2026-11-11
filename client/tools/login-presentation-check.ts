@@ -1,15 +1,30 @@
+/** 登录展示回归：验证静态背景、已移除组件无残留、登录控件和预制体引用；独立保留骨骼转换回归。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { upgradeSpine37Json, SPINE_RUNTIME_VERSION } from "../assets/scripts/framework/assets/SpineJson";
 import { upgradeSpine37Json as legacyUpgrade } from "../assets/scripts/framework/ui/spineUpgrade";
-import { CompatibleSpine } from "../assets/scripts/framework/assets/CompatibleSpine";
-import { Node, sp } from "cc";
 
 const assets = join(process.cwd(), "client/assets");
 const read = (path: string): any => JSON.parse(readFileSync(join(assets, path), "utf8"));
 const prefab = read("prefabs/ui/account/AccountLoginView.prefab") as any[];
 const original = read("prefabs/ui/legacy-login/LoginPanel.prefab") as any[];
+/** Creator脚本类ID支持保留UUID前2位或前5位的压缩格式；两种均纳入绑定核对。 */
+function scriptClassIds(uuid: string): string[] {
+  const hex = uuid.replace(/-/g, "");
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  return [2, 5].map(prefix => {
+    let value = hex.slice(0, prefix);
+    for (let offset = prefix; offset < hex.length; offset += 3) {
+      const block = parseInt(hex.slice(offset, offset + 3), 16);
+      value += alphabet[block >> 6] + alphabet[block & 63];
+    }
+    return value;
+  });
+}
+const compatibleIds = scriptClassIds("2c34e9e9-f2b4-47bf-8e49-4470b984b6f9");
+assert(!prefab.some(row => compatibleIds.includes(row.__type__)), "静态登录页不可遗留已删除动画组件绑定");
+assert(!prefab.some(row => row._name === "LoginCast"), "移除旧人物节点，避免静态背景上重复叠加");
 const node = (rows: any[], name: string) => {
   const found = rows.find(row => row.__type__ === "cc.Node" && row._name === name);
   assert(found, "missing node " + name);
@@ -34,7 +49,7 @@ for (const key of ["_normalSprite", "_pressedSprite", "_hoverSprite", "_disabled
 assert.equal(component(prefab, node(prefab, "ServerBg"), "cc.Sprite")._spriteFrame.__uuid__,
   component(original, node(original, "ServerBg"), "cc.Sprite")._spriteFrame.__uuid__);
 const background = component(prefab, node(prefab, "Background"), "cc.Sprite");
-assert.equal(background._spriteFrame.__uuid__.split("@")[0], read("resources/ui/maps/map-bg-loading.jpg.meta").uuid);
+assert.equal(background._spriteFrame.__uuid__.split("@")[0], read("resources/ui/login/jp-login-static.png.meta").uuid);
 
 const edit = component(prefab, node(prefab, "AccountInput"), "cc.EditBox");
 for (const key of ["_textLabel", "_placeholderLabel"]) {
@@ -68,7 +83,10 @@ function withoutCurves(value: any): any {
 }
 assert.deepEqual(withoutCurves(converted.animations.stand), withoutCurves(character.animations.stand), "preserve all animation content apart from the required curve encoding change");
 assert.equal(upgradeSpine37Json(converted), converted, "conversion is idempotent");
-assert(prefab.some(row => row.source?.__uuid__ === read("resources/spine/jiemian.json.meta").uuid));
+assert(!prefab.some(row => row.source?.__uuid__ === read("resources/spine/jiemian.json.meta").uuid), "登录页不再依赖人物骨骼；加载页独立保留");
+const png = readFileSync(join(assets, "resources/ui/login/jp-login-static.png"));
+assert.equal(png.readUInt32BE(16), 1080);
+assert.equal(png.readUInt32BE(20), 2340);
 
 // Catch broken references when moving existing Prefab subtrees between assets.
 function validateRefs(value: any): void {
@@ -80,52 +98,4 @@ validateRefs(prefab);
 for (const host of prefab.filter(row => row.__type__ === "cc.Node")) {
   for (const child of host._children) assert.equal(prefab[prefab[child.__id__]._parent.__id__], host);
 }
-async function checkSpineTeardown(): Promise<void> {
-  const released: string[] = [];
-  const renderersDisposed = new Set<string>();
-  // Simulate Creator's order: UITransform is torn down before this component,
-  // while the Skeleton still reports isValid. Setting data at that point must fail.
-  Object.assign(sp.SkeletonData.prototype, {
-    isValid: true,
-    destroy(this: any) {
-      assert(renderersDisposed.has(this._uuid), "data must outlive its renderer teardown");
-      assert(!released.includes(this._uuid), "data released only once");
-      released.push(this._uuid);
-      this.isValid = false;
-    },
-  });
-  const make = () => {
-    const host = new Node("LoginCast");
-    const player: any = host.addComponent(sp.Skeleton);
-    let transformAlive = true;
-    let data: any;
-    player.setSkin = () => {};
-    Object.defineProperty(player, "skeletonData", {
-      get: () => data,
-      set: value => { assert(transformAlive, "cannot update a destroyed UITransform"); data = value; },
-    });
-    const owner = host.addComponent(CompatibleSpine);
-    owner.source = { uuid: "same-source", skeletonJson: character, atlasText: "atlas", textures: [], textureNames: [], scale: 1 } as any;
-    owner.onLoad();
-    assert(data, "renderer initialized with converted data");
-    return { owner, player, runtime: data, removeTransform: () => { transformAlive = false; } };
-  };
-  const first = make();
-  first.removeTransform();
-  assert.equal(first.player.isValid, true, "isValid alone does not protect teardown");
-  first.owner.onDestroy();
-  first.owner.onDestroy();
-  assert.equal(released.length, 0, "release waits for the complete node teardown");
-  renderersDisposed.add(first.runtime._uuid);
-  // Reopening before the release callback must not share the old runtime/cache UUID.
-  const reopened = make();
-  assert.notEqual(reopened.runtime._uuid, first.runtime._uuid);
-  reopened.removeTransform();
-  reopened.owner.onDestroy();
-  renderersDisposed.add(reopened.runtime._uuid);
-  await new Promise(resolve => setTimeout(resolve, 10));
-  assert.equal(released.length, 2, "both runtime copies released once");
-}
-void checkSpineTeardown().then(() => {
-  console.log("login-presentation-check passed: reused artwork, input anchors, real Spine conversion, Prefab graph, teardown order, reopen cache isolation and one-time release (rendering requires Creator preview)");
-}).catch(error => { console.error(error); process.exitCode = 1; });
+console.log("login-presentation-check passed: static background, no stale script binding, login controls, Spine converter and Prefab graph");

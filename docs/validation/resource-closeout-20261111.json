@@ -1,0 +1,42 @@
+{
+  "environment": "Creator本机预览＋独立H2内存",
+  "run": "c3f1a0707e98434497a3ca6eb5925fbc",
+  "steps": [
+    "挂机行军与遇敌",
+    "出战布阵三英雄保存确认",
+    "第二、第三关真实挑战",
+    "第三关最高伤害/奖励图标/经验展示",
+    "双方战报与关闭返回挂机"
+  ],
+  "state": {
+    "maxCleared": 3,
+    "pendingBattleId": null,
+    "assetRevision": 6
+  },
+  "receipt": "SETTLED",
+  "experience": {
+    "beforeLevel": 2,
+    "beforeExp": 200,
+    "beforeThreshold": 360,
+    "afterLevel": 3,
+    "afterExp": 40,
+    "afterThreshold": 720
+  },
+  "names": [
+    "chapter_review",
+    "羽嘉森林3"
+  ],
+  "missingNotice": "",
+  "warnings": 0,
+  "errors": 0,
+  "limitations": [
+    "本轮未重跑并发和重放幂等专项",
+    "清心/护盾规则仍待审",
+    "发布包尚待构建"
+  ],
+  "screenshots": [
+    "docs/images/resource-closeout-report-20261111.png",
+    "docs/images/resource-closeout-return-20261111.png"
+  ],
+  "git": "未提交推送"
+}

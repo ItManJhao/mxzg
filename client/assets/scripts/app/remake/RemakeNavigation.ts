@@ -1,3 +1,7 @@
+/**
+ * 应用页面导航：保留主城根页并切换功能页，根页替换时清理上一会话的闲置界面。
+ * 功能页是否保留由 UIManager 的页面注册决定；不拥有业务 Model 或资源池。
+ */
 import type { Node } from "cc";
 import { UIManager } from "../../framework/ui/UIManager";
 import type { PageNav } from "../../framework/ui/UIManager";
@@ -18,6 +22,7 @@ export class RemakeNavigation implements PageNav {
   constructor(private readonly ui: UIManager, private readonly parent: Node,
     private readonly features?: FeaturePageHost, private readonly transition?: PageTransition) {}
 
+  /** 将准备好的页面挂入导航；更换登录/主城根时清空旧页面缓存。 */
   openChild(id: string): void {
     this.finishTransition();
     const featureParent = this.features?.parent(id);
@@ -51,6 +56,7 @@ export class RemakeNavigation implements PageNav {
       if (this.root.host.isValid) this.root.host.destroy();
       this.root = null;
     }
+    this.ui.clearCached();
     this.features?.changed(null);
   }
 
@@ -86,9 +92,13 @@ export class RemakeNavigation implements PageNav {
     this.currentHost = null;
     this.ui.uninstall(this);
   }
+  /** 过渡结束后关闭功能页；缓存页交回管理器，其他页面销毁并释放节点作用域。 */
   private closePage(id: string, host: Node): void {
+    const retained = this.ui.retainOnClose(host);
     this.ui.noteClosed(id);
-    if (host.isValid) host.destroy();
+    if (!retained && host.isValid) {
+      host.destroy();
+    }
   }
   private finishTransition(): void {
     const stop = this.stopTransition; this.stopTransition = null; stop?.();

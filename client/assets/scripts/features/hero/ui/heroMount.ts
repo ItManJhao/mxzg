@@ -2,14 +2,13 @@
  * 英雄列表的页面容器、背景及窗口挂载。
  * 由 Remake 注册入口调用，只装配现有 Prefab，不创建旧详情或旧业务入口。
  */
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { Node, Prefab, Sprite, UITransform } from "cc";
 
 import { messageOf } from "../../../core/errors";
 
 import { GameLog } from "../../../core/GameLog";
 
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 
 import { loadPrefab, spawnPrefab } from "../../../framework/assets/PrefabLoader";
 
@@ -17,11 +16,11 @@ import { mountCcbiView } from "../../../framework/ui/PrefabLayout";
 
 import { assignContentSize, bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 
-const PAGE_SHELL = ResourceCatalog.prefab_common.PagePrefabShell.assetPath;
+const PAGE_SHELL = "prefabs/ui/common/PagePrefabShell";
 
-const LIST_BACKDROP = ResourceCatalog.prefab_common.ListBackdrop.assetPath;
+const LIST_BACKDROP = "prefabs/ui/common/ListBackdrop";
 
-const HERO_BACKDROP = [ResourceCatalog.maps.map_bg_role_1.path];
+const HERO_BACKDROP = ["ui/maps/map-bg-role-1"];
 
 export async function mountHeroListPage(host: Node, layer: Prefab): Promise<Node> {
     let shell: Node | null = null;
@@ -62,7 +61,7 @@ function paintBackdrop(pack: Node): void {
     }
     const sprite = art.getComponent(Sprite);
     if (sprite) sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-    paintSpritePaths(art, HERO_BACKDROP);
+    ResManager.setSprite(art, HERO_BACKDROP);
 }
 
 function stretchBackdrop(root: Node, width: number, height: number): void {

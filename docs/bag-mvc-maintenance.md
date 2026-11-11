@@ -19,9 +19,9 @@
 
 打开BagView只取得自身预制体及必要配置，直接绑定依赖随引擎加载。BagInfoView是独立窗口，默认在LoadingPlan.background准备，也可以在LoadingPlan中明确提前加载。动态显示继续使用原节点作用域和迟到回调保护；后台与前台共享缓存。详细策略见[分阶段加载](staged-resource-loading.md)。
 
-统一取图入口为ResourceAssetsUtils.getSpriteFrame(owner, source)：source可传resources相对图片路径（不带/spriteFrame）或生成资源描述，owner决定引用生命周期。已加载直接复用，在途请求合并，失败交给显示层处理。SpritePaint只负责赋图、回退和刷新代次，不再自建图片作用域。直接使用此Promise时，调用方同样需要检查当前显示代次；背包已通过SpritePaint统一处理。
+统一取图入口为ResManager.getSpriteFrame(owner, source)：source可传resources相对图片路径（不带/spriteFrame）或生成资源描述，owner决定引用生命周期。已加载直接复用，在途请求合并，失败交给显示层处理。ResManager只负责赋图、回退和刷新代次，不再自建图片作用域。直接使用此Promise时，调用方同样需要检查当前显示代次；背包已通过ResManager统一处理。
 
-物品配置→图片地址由BagItemCatalog.iconSource(row)处理：遵循item.icon共图声明，支持backpack/和hero-icon/，无显式图标时沿用原ID规则。IconCatalog不再生成2,172条ItemIconById描述，仅保留物品目录和4项已核实缺图例外；改动源配置或补图后仍运行原生成器，不手改生成结果。品质框通过CommonUiResources.qualityFrame(quality)取得，取消七项重复数组。其他英雄/技能/历史头像映射继续保留，未在本批全部迁移。
+物品配置→图片地址由BagItemCatalog.iconSource(row)处理：遵循item.icon共图声明，支持backpack/和hero-icon/，无显式图标时沿用原ID规则。ResManager仅提供目录规则，不维护逐ID映射或缺图例外；按命名规则补图后无需更新可用清单，实际加载失败由ResManager记录路径和原因。品质框通过ResManager.qualityFrame(quality)取得，取消七项重复数组。英雄、技能和历史头像同样通过ResManager路径规则取图。
 
 库存详情调用 `UIManager.instance.open(BagInfoView, { source: "inventory", key: item.key, tab })`；窗口自己读取 Model 并监听数量变化、删除和到期。结算/产物说明调用同一窗口的 description 参数，保留“本次获得”或“产物说明（只读）”，不冒充库存。父页面关闭通过 UIManager 关闭详情，也取消尚未完成的打开。
 
@@ -157,3 +157,17 @@ Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItem
 ## 背包自动图集维护入口
 
 界面专用原图放在 client/assets/ui/bag/atlas，直接绑定预制体，由同目录 BagAtlas.pac 在构建时自动合图。页面注册不登记图集路径或逐图 images。物品图标保留在 icons/item，公共图片保留在 ui/common。完整步骤见 [背包自动图集](bag-auto-atlas.md)。
+
+
+### 图片入口合并（2026-11-11）
+
+人工入口为client/assets/scripts/framework/assets/ResManager.ts。它是手写的路径与显示逻辑，不再由生成器生成整份图标索引；物品目录规则直接保存在ResManager。旧IconCatalog和SpritePaint文件已删除，无兼容转发。底层ResourceAssets/ResourcePool继续管理作用域、缓存和请求。
+
+```ts
+ResManager.setSprite(iconNode, ResManager.skill(skillId));
+ResManager.setSprite(faceNode, [ResManager.head(headId) || defaultPath, defaultPath]);
+const frame = await ResManager.getSpriteFrame(ownerNode, imagePath);
+ResManager.setSprite(iconNode, null); // 清空并阻止旧请求再次赋图
+```
+
+setSprite支持单个路径/描述或候选数组，第三参数可传页面有效性判断。缺图按路径去重记录；直接getSpriteFrame失败保留Promise拒绝，由调用者处理。三段预加载仍只配置LoadingPlan，未接入定时清理或页面缓存策略。

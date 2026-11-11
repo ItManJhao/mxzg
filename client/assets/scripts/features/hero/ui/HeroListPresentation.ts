@@ -3,7 +3,7 @@
  * HeroRosterUtils 提供当前角色数据；本文件不访问网络、旧名册或本地模拟状态。
  */
 export const HERO_ELEM_COUNT = 6;
-export const HERO_FACE_FALLBACK = ResourceCatalog.hero.hero_icon_spr_default.path;
+export const HERO_FACE_FALLBACK = "ui/hero/hero-icon_spr-default";
 export const HERO_LIST_UNCONFIGURED = "这一页还没有配置";
 
 export type HeroListTab = "hero" | "book";
@@ -41,5 +41,3 @@ export function heroCellLine(cell: HeroCellModel): string {
     if (cell.level === null) return name;
     return name + " Lv" + cell.level;
 }
-
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";

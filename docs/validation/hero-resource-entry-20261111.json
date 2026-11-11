@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-11",
+  "baseline": "ca39f9ba",
+  "scope": "英雄、技能、装备及战报取图入口，三段配置和缓存策略不变",
+  "oldMappingParity": {
+    "hero": 109,
+    "portrait": 290,
+    "skill": 397,
+    "equipment": 68,
+    "total": 864
+  },
+  "catalogBytes": {
+    "before": 295080,
+    "after": 87449
+  },
+  "checks": [
+    "resource-catalog",
+    "hero-detail",
+    "hero",
+    "hero-equipment",
+    "main-chapter",
+    "creator-compat",
+    "tsc",
+    "generate_resources --check"
+  ],
+  "pending": [
+    "本批整体收口后集中验发布包，不逐项构建"
+  ],
+  "preserved": [
+    "冻结头像ID与进化范围",
+    "未知ID返回null和历史缺失提示",
+    "原资源UUID与预制体",
+    "既有资源池及异步迟到保护"
+  ],
+  "git": "未提交推送",
+  "previewAttempt": {
+    "date": "2026-11-11",
+    "status": "刷新并点击预览后恢复，本机预览复验通过",
+    "accepted": true
+  },
+  "previewReview": {
+    "environment": "Creator 3.8.8本机预览＋独立内存H2 SocketPreviewServer；不连接日常数据库",
+    "compiled": "实际模块导出IconCatalog新查询入口，旧四份完整描述已移除",
+    "viewport": "Creator Apple iPhone 14 Pro 393×852",
+    "hero": "equipment_review：列表两个头像；独眼梦魇详情四件装备、技能图标、烈焰之锤说明正常",
+    "mainline": "chapter_review：挂机遇敌→布阵出阵→第2关胜利自动返回→第3关胜利→双方战报→关闭返回挂机",
+    "report": "真实冻结头像20101001/20104004/20505005、双方名称及统计正确显示",
+    "diagnostic": "使用真实战报的临时展示副本，验证20111008/20112008两个进化分支、10/14星，以及缺头像/星级/名称的历史提示；未写入Model或服务端战报",
+    "background": {
+      "total": 4,
+      "completed": 4,
+      "failed": 0,
+      "running": false
+    },
+    "warningsAndErrors": 0,
+    "limits": [
+      "本次未构建发布包",
+      "按需图片可短暂补齐，不代表零闪烁或真机性能验收",
+      "进化和旧字段缺失使用展示参数检查，不冒充真实进化获取流程"
+    ],
+    "screenshots": [
+      "docs/images/hero-resource-preview-20261111.png",
+      "docs/images/battle-resource-preview-20261111.png",
+      "docs/images/evolution-resource-preview-20261111.png",
+      "docs/images/history-fallback-preview-20261111.png"
+    ]
+  }
+}

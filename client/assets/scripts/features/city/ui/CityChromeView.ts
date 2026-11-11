@@ -1,9 +1,8 @@
 /**
  * 主城顶底栏 View：绑定导航与资产显示，由主城页面提供数据和操作，不读取网络或全局角色仓库。
  */
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Color, Label, Node, Overflow, resources, Sprite, SpriteFrame, UITransform } from "cc";
 import { CITY_BAR } from "../../../config/nav";
 import { messageOf } from "../../../core/errors";
@@ -32,17 +31,17 @@ const BOTTOM_BG_WIDTH = 724;
  * 最右一格用日服 VIP 字，不用国服「羁绊」。
  */
 const TAB_CAPTION: { [id: string]: string } = {
-    city: ResourceCatalog.city.main_scene_lang_lbl_city.path,
-    hero: ResourceCatalog.city.main_scene_lang_lbl_hero.path,
-    bag: ResourceCatalog.city.main_scene_lang_lbl_backpack.path,
-    battle: ResourceCatalog.city.main_scene_lang_lbl_battle.path,
-    dungeon: ResourceCatalog.city.main_scene_lang_lbl_skin.path,
-    clan: ResourceCatalog.city.main_scene_lang_lbl_clan.path,
-    fetter: ResourceCatalog.city.main_scene_lang_lbl_fetters_unlock.path,
+    city: "ui/city/main-scene-lang_lbl-city",
+    hero: "ui/city/main-scene-lang_lbl-hero",
+    bag: "ui/city/main-scene-lang_lbl-backpack",
+    battle: "ui/city/main-scene-lang_lbl-battle",
+    dungeon: "ui/city/main-scene-lang_lbl-skin",
+    clan: "ui/city/main-scene-lang_lbl-clan",
+    fetter: "ui/city/main-scene-lang_lbl-fetters-unlock",
 };
 
 const TAB_ICON: { [id: string]: string } = {
-    fetter: ResourceCatalog.city.main_scene_spr_fetters_unlock.path,
+    fetter: "ui/city/main-scene_spr-fetters-unlock",
 };
 
 const ACTIVITY_NAMES = [
@@ -385,7 +384,7 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
         const sprite = face.getComponent(Sprite);
         if (!sprite) return;
         const wanted = icon;
-        paintSpritePaths(face, [wanted], () => mark.mxzgIcon === wanted);
+        ResManager.setSprite(face, [wanted], () => mark.mxzgIcon === wanted);
     }
 }
 
@@ -400,7 +399,7 @@ function mountTabCaption(button: Node, path: string): void {
     sprite.sizeMode = Sprite.SizeMode.CUSTOM;
     node.setPosition(0, plate >= 90 ? -46 : -36, 0);
     node.parent = button;
-    paintSpritePaths(sprite.node, [path]);
+    ResManager.setSprite(sprite.node, [path]);
 }
 
 function mountTabIcon(button: Node, path: string): void {
@@ -408,7 +407,7 @@ function mountTabIcon(button: Node, path: string): void {
     const icon = button.getChildByName("Icon");
     const sprite = icon ? icon.getComponent(Sprite) : null;
     if (!sprite) return;
-    paintSpritePaths(sprite.node, [path]);
+    ResManager.setSprite(sprite.node, [path]);
 }
 
 function paintLockLevel(lock: Node, level: number): void {

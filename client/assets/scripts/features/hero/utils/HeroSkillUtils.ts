@@ -5,7 +5,7 @@
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { GameLog } from "../../../core/GameLog";
-import { SkillIconById } from "../../../framework/assets/IconCatalog";
+import { ResManager } from "../../../framework/assets/ResManager";
 import type { OwnedHero } from "../data/HeroSnapshotData";
 
 export interface HeroSkillFace {
@@ -65,7 +65,7 @@ export class HeroSkillUtils {
                 .reduce((min, row) => Math.min(min, row.grade), Infinity);
             return Object.freeze({
                 slot, id, available, level, unlockStage: Number.isFinite(unlock) ? unlock : null,
-                name: name ?? "技能配置缺失", description: description ?? "技能说明暂不可用", icon: SkillIconById[id]?.path || null
+                name: name ?? "技能配置缺失", description: description ?? "技能说明暂不可用", icon: ResManager.skill(id) || null
             });
         }));
     }

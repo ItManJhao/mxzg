@@ -1,5 +1,5 @@
 /** 战斗统计投影：仅消费冻结战报名册，计算旧版双方共用的三项最大值和条形比例，不查询英雄或资产。 */
-import { BattlePortraitById } from "../../../framework/assets/IconCatalog";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { BattleReplayUnit } from "./BattleReplayUtils";
 
 /** 单项数值与进度；null明确表示旧战报缺失，不能用零替代。 */
@@ -20,9 +20,9 @@ export class BattleStatisticsUtils {
     /** 无状态工具不创建实例。 */
     private constructor() {}
 
-    /** 只解析历史头像ID；缺资源或旧战报缺字段返回null，由页面明确降级。 */
+    /** 只解析历史头像ID；旧战报缺字段返回null，实际缺图由统一加载记录并回退。 */
     public static portrait(unit: BattleReplayUnit): string | null {
-        const path = unit.portraitIconId == null ? null : BattlePortraitById[unit.portraitIconId]?.path;
+        const path = unit.portraitIconId == null ? null : ResManager.portrait(unit.portraitIconId);
         return path?.startsWith("ui/hero/hero-icon_") ? path : null;
     }
 

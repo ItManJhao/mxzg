@@ -2,10 +2,11 @@
  * 未列入任何阶段的资源在实际使用时加载，不扫描全目录、不全量常驻。
  * 预制体的直接绑定依赖由Creator自动带入；加载资源不等于开放对应玩法。
  */
-import { ResourceCatalog, ResourceDescriptor, ResourceKind } from "../../framework/assets/ResourceCatalog";
+import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssets";
+import { ResourceDescriptor, ResourceKind } from "../../framework/assets/ResourceTypes";
 import { ConfigName, GConfig } from "../../config/GConfig";
 
-/** 使用生成描述、Bundle内实际加载路径与类型，或需要解析的游戏配置。 */
+/** 使用明确的资源描述、Bundle内实际加载路径与类型，或需要解析的游戏配置。 */
 export type LoadingTarget = ResourceDescriptor | { bundle: string; path: string; type: ResourceKind } | { config: ConfigName };
 
 /** 三个数组分别决定加载时机；空数组表示该阶段不准备额外资源。 */
@@ -20,11 +21,11 @@ export const LOADING_PLAN: {
     login: [
         { config: GConfig.Language },
         { config: GConfig.LoadingTips },
-        ResourceCatalog.spine.jiemian,
-        ResourceCatalog.spine.jindutiao,
-        ResourceCatalog.maps.map_bg_loading,
-        ResourceCatalog.audio.bgm_logo,
-        ResourceCatalog.prefab_login.ServerPickerView,
+        ResourceAssetsUtils.describe("resources", "spine/jiemian", "SkeletonData"),
+        ResourceAssetsUtils.describe("resources", "spine/jindutiao", "SkeletonData"),
+        ResourceAssetsUtils.describe("resources", "ui/maps/map-bg-loading", "SpriteFrame"),
+        ResourceAssetsUtils.describe("resources", "audio/bgm-logo", "AudioClip"),
+        ResourceAssetsUtils.describe("prefabs", "ui/login/ServerPickerView", "Prefab"),
     ],
     enterGame: [
         { config: GConfig.OpenCondition },
@@ -35,14 +36,14 @@ export const LOADING_PLAN: {
         { config: GConfig.Item },
         { config: GConfig.Language },
         { config: GConfig.TimeLimitItem },
-        ResourceCatalog.prefab_remake_home.RemakeHomeView,
-        ResourceCatalog.prefab_bag.BagView,
+        ResourceAssetsUtils.describe("remake-home", "RemakeHomeView", "Prefab", "bundles/remake-home/RemakeHomeView"),
+        ResourceAssetsUtils.describe("prefabs", "ui/bag/BagView", "Prefab"),
     ],
     background: [
-        ResourceCatalog.prefab_bag.BagInfoView,
-        ResourceCatalog.prefab_hero.HeroListView,
-        ResourceCatalog.prefab_hero.HeroInfoView,
-        ResourceCatalog.prefab_battle.MainChapterView,
+        ResourceAssetsUtils.describe("prefabs", "ui/bag/BagInfoView", "Prefab"),
+        ResourceAssetsUtils.describe("prefabs", "ui/hero/HeroListView", "Prefab"),
+        ResourceAssetsUtils.describe("prefabs", "ui/hero/HeroInfoView", "Prefab"),
+        ResourceAssetsUtils.describe("prefabs", "ui/battle/MainChapterView", "Prefab"),
         // 自定义资源示例：{ bundle: "resources", path: "spine/shangcheng", type: "SkeletonData" }
         // 图片路径须指向SpriteFrame，例如：ui/common/other_rare-4/spriteFrame。
     ],

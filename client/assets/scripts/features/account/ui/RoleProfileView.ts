@@ -3,7 +3,7 @@ import { _decorator, Button, Label, Node, UITransform, view } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import type { AccountModel } from "../AccountModel";
 import type { RoleProfile } from "../AccountModel";
-import { paintRolePortrait } from "../utils/RolePortrait";
+import { RolePortraitUtils } from "../utils/RolePortraitUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -84,7 +84,7 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
         this.nickname.string = role.nickname;
         this.roleId.string = "角色 ID：" + role.id;
         this.level.string = String(role.level);
-        paintRolePortrait(this.face, this.border, role.basics?.headId, role.basics?.borderId);
+        RolePortraitUtils.paint(this.face, this.border, role.basics?.headId, role.basics?.borderId);
     }
 
     /** UIManager 打开弹窗，绑定按钮并订阅唯一状态；不追加角色查询。 */

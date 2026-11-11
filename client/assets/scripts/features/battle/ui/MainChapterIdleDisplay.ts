@@ -1,7 +1,6 @@
 /** 挂机行军显示：复用BattlePage静态英雄槽与血条，仅读取服务端选人和唯一英雄名册，不生成伤害或发奖。 */
+import { ResourceAssetsUtils, createAssetScope, AssetScope } from "../../../framework/assets/ResourceAssets";
 import { instantiate, Label, Node, Sprite, UITransform } from "cc";
-import { createAssetScope, AssetScope } from "../../../framework/assets/ResourceAssets";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
 import { MainChapterIdleState } from "../MainChapterModel";
 import { mountBattleSpine, SpineActor } from "./battleSpine";
@@ -21,7 +20,7 @@ export class MainChapterIdleDisplay {
         let root: Node | null = null;
         const actors: SpineActor[] = [];
         try {
-            const prefab = await scope.load(ResourceCatalog.prefab_battle.BattlePage);
+            const prefab = await scope.load(ResourceAssetsUtils.describe("prefabs", "ui/battle/BattlePage", "Prefab"));
             const templates = await scope.loadPath("config/herotype", "JsonAsset");
             if (!parent.isValid) {
                 throw new Error("挂机页面已关闭");
@@ -45,8 +44,8 @@ export class MainChapterIdleDisplay {
             for (const hp of hud.getChildByName("HpBars")!.children) {
                 hp.active = false;
             }
-            const elements = [ResourceCatalog.hero.hero_icon_elem_1, ResourceCatalog.hero.hero_icon_elem_2,
-                ResourceCatalog.hero.hero_icon_elem_3, ResourceCatalog.hero.hero_icon_elem_4, ResourceCatalog.hero.hero_icon_elem_5];
+            const elements = [ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-2", "SpriteFrame"),
+                ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-5", "SpriteFrame")];
             const rows = (templates.json as { rows: { type: number; elem: number }[] }).rows;
             const layout = root.getChildByName("IdleLayout")!;
             const modelScale = layout.getChildByName("ModelScale")!.scale.x;

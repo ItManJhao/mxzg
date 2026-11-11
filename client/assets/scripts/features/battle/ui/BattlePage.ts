@@ -5,8 +5,7 @@
  */
 import { Node,Sprite,UITransform } from "cc";
 import { bindClick,loadPrefab,requireNode,spawnPrefab } from "../../../framework/assets/PrefabLoader";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { setText } from "../../../framework/ui/UiKit";
 import {
 BATTLE_PREFAB_PATH,
@@ -27,15 +26,15 @@ export { BATTLE_PREFAB_PATH };
 
 /** 顶栏加速钮。1 / 2 / 3 对 battle-scene_btn-speed-1 / 2 / 3。 */
 export const BATTLE_SPEED_ICON = [
-    ResourceCatalog.battle.battle_scene_btn_speed_1.path,
-    ResourceCatalog.battle.battle_scene_btn_speed_2.path,
-    ResourceCatalog.battle.battle_scene_btn_speed_3.path,
+    "ui/battle/battle-scene_btn-speed-1",
+    "ui/battle/battle-scene_btn-speed-2",
+    "ui/battle/battle-scene_btn-speed-3",
 ];
 
 /** 加速图标随按钮节点持有，不留下无所有者的加载缓存。 */
 export function paintSpeedIcon(node: Node, speed: number): void {
     const index = speed === 2 ? 1 : speed === 3 ? 2 : 0;
-    paintSpritePaths(node, [BATTLE_SPEED_ICON[index]]);
+    ResManager.setSprite(node, [BATTLE_SPEED_ICON[index]]);
 }
 
 export interface BattlePrefabShell {

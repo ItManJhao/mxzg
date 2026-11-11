@@ -1,5 +1,6 @@
+/** 阵容槽位视图：显示草稿中的英雄和槽位选择状态，图片复用ResManager，不发送保存协议。 */
 import { _decorator, Button, Component, Label, Node } from "cc";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 const { ccclass, property } = _decorator;
 
 /** One authored slot: only data, lock visibility and interaction change at runtime. */
@@ -24,7 +25,7 @@ export class FormationSlotView extends Component {
         this.button!.interactable = allowed && !busy;
         this.lock!.active = !allowed;
         this.portrait!.active = name !== null;
-        if (name && icon) paintSpritePaths(this.portrait, [icon]);
+        if (name && icon) ResManager.setSprite(this.portrait, [icon]);
         this.caption!.string = allowed ? name || "空位" : "未开放";
     }
 }

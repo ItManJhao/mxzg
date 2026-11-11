@@ -1,7 +1,10 @@
+/** 资源所有权回归：覆盖共享、迟到取消、预制体实例保护及预加载与闲置淘汰的独立持有。 */
 import { strict as assert } from "node:assert";
 import { ResourcePool, ResourceScopeClosed } from "../assets/scripts/framework/assets/ResourcePool";
-import { assetManager, Prefab } from "cc";
-import { loadPrefab, clearPrefabCache, prefabCacheSnapshot } from "../assets/scripts/framework/assets/PrefabLoader";
+import { assetManager, Prefab, Node } from "cc";
+import { loadPrefab, clearPrefabCache, prefabCacheSnapshot, retainPrefabForNode, collectPrefabCache, PREFAB_IDLE_MS } from "../assets/scripts/framework/assets/PrefabLoader";
+import { monoNow } from "../assets/scripts/core/GameLog";
+import { createAssetScope, ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
 import { readFileSync } from "node:fs";
 
 function deferred<T>() {
@@ -66,7 +69,34 @@ async function main() {
   assert.equal(bundleRequests, 1, "planned core Prefabs still load normally");
   assert.deepEqual(prefabCacheSnapshot(), { pending: 0, cached: 1 });
   assert.equal(planned.refCount, 2, "共享资源池和页面缓存分别持有，清理时必须全部撤回");
+  const instance = new Node("PrefabOwner");
+  retainPrefabForNode(planned, instance);
+  retainPrefabForNode(planned, instance);
+  assert.equal(planned.refCount, 3, "同节点重复保护不重复引用");
+  assert.equal(collectPrefabCache(monoNow() + PREFAB_IDLE_MS), 0, "活动/缓存实例仍持有时不得淘汰");
+  instance.destroy();
+  assert.equal(planned.refCount, 2);
+  const preload = createAssetScope();
+  await preload.load(ResourceAssetsUtils.describe("prefabs", "ui/login/LoadingLayer", "Prefab"));
+  assert.equal(collectPrefabCache(monoNow() + PREFAB_IDLE_MS), 1);
+  assert.deepEqual(prefabCacheSnapshot(), { pending: 0, cached: 0 });
+  assert.equal(planned.refCount, 1, "预加载仍通过共享池持有，闲置淘汰不得释放它");
+  assert.equal(await loadPrefab("prefabs/ui/login/LoadingLayer"), planned);
+  assert.equal(bundleRequests, 1, "预加载仍在时重开复用资源池，不重新请求");
+  preload.dispose();
   clearPrefabCache();
+  assert.equal(planned.refCount, 0);
+  assert.equal(await loadPrefab("prefabs/ui/login/LoadingLayer"), planned);
+  assert.equal(bundleRequests, 2, "全部拥有者释放后允许重新加载");
+  assert.equal(collectPrefabCache(monoNow() + PREFAB_IDLE_MS), 1);
+  assert.equal(planned.refCount, 0, "未预加载资源在到期后真正撤回全部加载器持有");
+
+  await loadPrefab("prefabs/ui/login/LoadingLayer");
+  const survivingNode = new Node("SurvivingOwner");
+  retainPrefabForNode(planned, survivingNode);
+  clearPrefabCache();
+  assert.equal(planned.refCount, 1, "撤回加载器缓存不能撤回活着的实例持有");
+  survivingNode.destroy();
   assert.equal(planned.refCount, 0);
   let lateCallback!: (error: unknown, asset: Prefab) => void;
   Object.assign(assetManager, { loadBundle: (_name: string, done: Function) => done(null, {
@@ -75,6 +105,7 @@ async function main() {
   const obsolete = assert.rejects(loadPrefab("prefabs/ui/login/LoadingLayer"), /应用已关闭/);
   // 统一资源池和Bundle依赖查询是异步流程，等待请求进入引擎后再模拟迟到。
   for (let i = 0; i < 20; i++) { await Promise.resolve(); }
+  assert.equal(collectPrefabCache(monoNow() + PREFAB_IDLE_MS), 0, "在途加载不能被闲置淘汰");
   clearPrefabCache();
   const latePrefab = new Prefab(); lateCallback(null, latePrefab); await obsolete;
   assert.equal(latePrefab.refCount, 0, "关闭应用后的迟到预制体不重新占用缓存");

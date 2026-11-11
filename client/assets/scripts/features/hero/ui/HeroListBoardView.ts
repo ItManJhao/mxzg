@@ -1,17 +1,17 @@
 /**
  * 英雄列表板：管理筛选按钮和滚动容器显示，名册数据由外部注入，不维护角色状态。
  */
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { _decorator, Button, Component, Label, Mask, Node, UITransform } from "cc";
 import { GameLog } from "../../../core/GameLog";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 
 
 
 const { ccclass, property } = _decorator;
 
-const ELEMENT_FRAMES = [ResourceCatalog.hero.hero_icon_elem_0, ResourceCatalog.hero.hero_icon_elem_1, ResourceCatalog.hero.hero_icon_elem_2, ResourceCatalog.hero.hero_icon_elem_3, ResourceCatalog.hero.hero_icon_elem_4, ResourceCatalog.hero.hero_icon_elem_5] as const;
+const ELEMENT_FRAMES = [ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-5", "SpriteFrame")] as const;
 
 /**
  * HeroListBoardView。羊皮纸、滚动、元素筛选和空间字绑在这一层上。
@@ -99,7 +99,7 @@ export class HeroListBoardView extends Component {
             button.node.active = true;
             button.transition = Button.Transition.NONE;
             button.interactable = true;
-            paintSpritePaths(button.node, [ELEMENT_FRAMES[id].path]);
+            ResManager.setSprite(button.node, [ELEMENT_FRAMES[id].path]);
             button.node.on(Button.EventType.CLICK, () => pick(id));
         }
     }

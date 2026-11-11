@@ -1,14 +1,13 @@
 /**
  * 主线战报显示：消费服务端单位与命中事件，管理骨骼、动画及演武的显示生命周期，不计算奖励。
  */
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { Label, Node, Sprite, UITransform, view } from "cc";
 import { mountBattlePrefab } from "./BattlePage";
 import type { BattlePrefabShell } from "./BattlePage";
 import { mountBattleSpine, mountNamedSpine } from "./battleSpine";
 import type { SpineActor } from "./battleSpine";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { setText } from "../../../framework/ui/UiKit";
 import { paintBattleFloats, paintBattleSkillName, clearBattleOverhead } from "./battlePresentView";
 import { hangFormationPoint, hangStageScale } from "./idleHangSkirmishPlan";
@@ -51,7 +50,7 @@ export class CampaignField {
             node.getComponent(UITransform)?.setContentSize(640 * cover, 1280 * cover);
         }
         if (bg)
-            paintSpritePaths(bg, [ResourceCatalog.chapter.map01_B.path]);
+            ResManager.setSprite(bg, ["ui/chapter/hang/map01_B"]);
         // Match the retained idle hall: the sky is a short distant layer, while
         // the transparent foreground/floor covers the entire portrait viewport.
         if (bg) { bg.name = "IdleSky"; bg.setPosition(0, 430, 0); bg.getComponent(UITransform)?.setContentSize(Math.max(640, view.getVisibleSize().width), 420); }

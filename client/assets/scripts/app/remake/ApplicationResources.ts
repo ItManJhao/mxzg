@@ -2,9 +2,9 @@
  * 类型化资源池拥有引用与在途请求，页面前台加载复用同一池；应用销毁释放持有。
  * 预加载不实例化页面、不查询角色、不开放玩法；失败项记录后继续，下一轮允许重试。
  */
+import { ResourceAssetsUtils, createAssetScope } from "../../framework/assets/ResourceAssets";
 import { Prefab } from "cc";
-import { createAssetScope } from "../../framework/assets/ResourceAssets";
-import { ResourceDescriptor, ResourceCatalog } from "../../framework/assets/ResourceCatalog";
+import { ResourceDescriptor } from "../../framework/assets/ResourceTypes";
 import { loadPrefab } from "../../framework/assets/PrefabLoader";
 import { GameConfig } from "../../config/GameConfig";
 import { CONFIG_SCHEMA, ConfigName } from "../../config/GConfig";
@@ -151,7 +151,7 @@ export class ApplicationResources {
     /** 主城打开时保障展示配置可读，预制体与后台共享资源池。 */
     public async homePage(): Promise<Prefab> {
         await prepareCityConfig();
-        return this.preparedPage(ResourceCatalog.prefab_remake_home.RemakeHomeView.assetPath);
+        return this.preparedPage("bundles/remake-home/RemakeHomeView");
     }
 
     /** 旧功能入口仅加载当前页面；配置是显示前置条件，不属于额外预加载清单。 */
@@ -162,29 +162,29 @@ export class ApplicationResources {
         if (group === "formation") {
             await prepareHeroConfig();
         }
-        const page = group === "servers" ? ResourceCatalog.prefab_login.ServerPickerView
-            : group === "formation" ? ResourceCatalog.prefab_hero.FormationView : ResourceCatalog.prefab_battle.CampaignView;
+        const page = group === "servers" ? ResourceAssetsUtils.describe("prefabs", "ui/login/ServerPickerView", "Prefab")
+            : group === "formation" ? ResourceAssetsUtils.describe("prefabs", "ui/hero/FormationView", "Prefab") : ResourceAssetsUtils.describe("prefabs", "ui/battle/CampaignView", "Prefab");
         return this.preparedPage(page.assetPath);
     }
 
     /** 英雄页面按点击保障配置，只取得选中的页面，其他资源按LoadingPlan或实际使用时加载。 */
     public async heroPage(detail = false): Promise<Prefab> {
         await (detail ? prepareHeroDetailConfig() : prepareHeroConfig());
-        return this.preparedPage((detail ? ResourceCatalog.prefab_hero.HeroInfoView : ResourceCatalog.prefab_hero.HeroListView).assetPath);
+        return this.preparedPage((detail ? ResourceAssetsUtils.describe("prefabs", "ui/hero/HeroInfoView", "Prefab") : ResourceAssetsUtils.describe("prefabs", "ui/hero/HeroListView", "Prefab")).assetPath);
     }
 
     /** 技能弹窗只准备自己的配置与预制体，不扩展阶段清单。 */
     public async heroSkillPage(): Promise<Prefab> {
         await prepareHeroDetailConfig();
-        return this.preparedPage(ResourceCatalog.prefab_hero.HeroSkillView.assetPath);
+        return this.preparedPage("prefabs/ui/hero/HeroSkillView");
     }
 
     /** 战斗页面保持当前配置前置条件，演出资源依然由播放器取得并复用后台缓存。 */
     public async battlePage(page: "main" | "field" | "detail" = "main"): Promise<Prefab> {
         await prepareInventoryConfig();
         await prepareHeroDetailConfig();
-        const descriptor = page === "field" ? ResourceCatalog.prefab_battle.MainChapterBattleView
-            : page === "detail" ? ResourceCatalog.prefab_battle.BattleDetailLayer : ResourceCatalog.prefab_battle.MainChapterView;
+        const descriptor = page === "field" ? ResourceAssetsUtils.describe("prefabs", "ui/battle/MainChapterBattleView", "Prefab")
+            : page === "detail" ? ResourceAssetsUtils.describe("prefabs", "ui/battle/BattleDetailLayer", "Prefab") : ResourceAssetsUtils.describe("prefabs", "ui/battle/MainChapterView", "Prefab");
         return this.preparedPage(descriptor.assetPath);
     }
 

@@ -1,4 +1,5 @@
 /** Display-only helpers retained for the Remake flow. */
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
 /**
  * 主城竖切的静态检查。不启动 Creator。
  * 核对开关、预制上的节点引用，以及框架没有写死主城。
@@ -153,7 +154,7 @@ function checkSources(): void {
   }
   const leftPlate = findCityNode(buildCityMapLayout(null, null, null, { viewW: 590, viewH: 1280 }), "spr_map_bg1_1");
   assert(leftPlate !== null && leftPlate.x === 0 && leftPlate.ax === 0, "left foreground plate stays on the content left");
-  assert(chrome.indexOf("ResourceCatalog.city.main_scene_lang_lbl_fetters_unlock") >= 0, "chrome keeps the VIP caption");
+  assert(chrome.includes("ui/city/main-scene-lang_lbl-fetters-unlock"), "chrome keeps the VIP caption");
   assert(Math.abs(TAB_SELECTED_SCALE - 1.5) < 1e-6, "selected tab matches MainSceneCtr 1.5x checked size");
   assert(CityTabUtils.tabVisualScale(true) > CityTabUtils.tabVisualScale(false) * 1.2 && CityTabUtils.tabVisualScale(false) === 1, "only the selected tab grows");
   assert(chrome.indexOf('setCityTabSelected(button, state === "selected")') >= 0, "new chrome scales the selected tab");

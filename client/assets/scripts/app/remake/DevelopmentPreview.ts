@@ -8,7 +8,6 @@ import { BattleReplayPreview } from "../../features/battle/ui/BattleReplayPrevie
 import { SkillAuditView } from "../../features/battle/ui/SkillAuditView";
 import { SkillAuditEntry } from "../../features/battle/utils/SkillAuditUtils";
 import { loadPrefab } from "../../framework/assets/PrefabLoader";
-import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { UILayer } from "../../framework/ui/UILayer";
 import { UIManager } from "../../framework/ui/UIManager";
 import { registerView } from "../../framework/ui/UIRegistry";
@@ -42,11 +41,11 @@ export class DevelopmentPreview {
         if(PREVIEW && this.pageHost) {
             this.unregister.push(UIManager.instance.setResidentHost("skill-audit-host", () => this.pageHost));
             this.unregister.push(registerView(SkillAuditView, {
-                id: "skill-audit", prefab: ResourceCatalog.prefab_battle.SkillAuditView.assetPath,
+                id: "skill-audit", prefab: "prefabs/ui/battle/SkillAuditView",
                 layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "skill-audit-host",
                 load: async () => {
                     await GameConfig.instance.prepare([GConfig.HeroType, GConfig.HeroSkill, GConfig.Language]);
-                    return loadPrefab(ResourceCatalog.prefab_battle.SkillAuditView.assetPath);
+                    return loadPrefab("prefabs/ui/battle/SkillAuditView");
                 }
             }));
             if(typeof location !== "undefined" && new URLSearchParams(location.search).get("skillAudit") === "1") {

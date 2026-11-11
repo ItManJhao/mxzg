@@ -1,0 +1,45 @@
+{
+  "scope": "合并图标路径与赋图入口，不重建资源池",
+  "entry": "framework/assets/ResManager.ts",
+  "removed": [
+    "framework/assets/IconCatalog.ts",
+    "framework/kit/SpritePaint.ts",
+    "ResourceAssetsUtils.getSpriteFrame"
+  ],
+  "preservedUuid": "fb143fd7-40a9-4e44-bbd8-131b03d63ab6",
+  "checks": [
+    "resource-catalog：共享缓存、失败路径/去重/回退、迟到、清空、销毁",
+    "backpack",
+    "hero-detail",
+    "hero",
+    "main-chapter",
+    "staged-loading",
+    "creator-compat",
+    "generate_resources --check",
+    "tsc",
+    "旧脚本UUID引用核对：仅迁移后的ResManager meta保留赋图脚本UUID"
+  ],
+  "pending": [
+    "整批收口发布验收"
+  ],
+  "git": "未提交推送",
+  "preview": {
+    "environment": "Creator本机预览＋独立H2内存测试服",
+    "run": "6a410c51a23f4877aceef9f9cee0c326",
+    "checks": [
+      "ResManager已生效，旧IconCatalog/SpritePaint导出不存在",
+      "背包四分类图标、品质框及物品详情",
+      "英雄列表、四槽装备、技能图标及说明",
+      "缺图精确路径和原因：2条警告，重复请求仍为2条",
+      "默认head-icon_0/backpack_border-default回退，恢复ID1成功",
+      "背景任务4/4完成"
+    ],
+    "normalWarnings": 0,
+    "diagnosticWarnings": 2,
+    "notes": "缺图仅临时修改显示节点，不改变角色数据；两次检查脚本选择未就绪/错误组件产生诊断异常，调整选择后完成，无产品运行错误。",
+    "screenshots": [
+      "docs/images/res-manager-bag-preview-20261111.png",
+      "docs/images/res-manager-hero-preview-20261111.png"
+    ]
+  }
+}

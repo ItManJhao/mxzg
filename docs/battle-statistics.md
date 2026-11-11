@@ -34,7 +34,7 @@
 
 ## 进化头像与高星样式（本批）
 
-核对发现58张进化头像原已在资源目录，上一批缺的是资源ID索引而非图片文件；本批增加由skin与heroevolvelevel生成的BattlePortraitById，战报不再借用物品ID映射。58张进化头像及13帧高星光效按旧图集恢复半透明像素/完整画布，71张逐像素检查通过，既有资源与子资源UUID保留。
+核对发现58张进化头像原已在资源目录，上一批缺的是资源ID索引而非图片文件；当时增加由skin与heroevolvelevel生成的BattlePortraitById（2026-11-11已收敛为IconCatalog.portrait冻结ID查询，可用范围保持），战报不再借用物品ID映射。58张进化头像及13帧高星光效按旧图集恢复半透明像素/完整画布，71张逐像素检查通过，既有资源与子资源UUID保留。
 
 旧UIMenuItemHero.setStar及Player.awaken_star=14确认：1至5星显示对应金星，6至9星显示1至4红星；10至13星使用高星牌，11至13叠数字1至3；14星使用觉醒牌。品质边框按旧getRare选择，10星以上为5档。eff_hero_star来自effect2，13帧、每帧0.12秒、尾帧停留1.5秒循环。本批BattleHeroStarView只挂战斗统计Prefab；静态星行、牌、数字及帧引用归Prefab，运行时只切换可见性与帧，不影响英雄名册。
 

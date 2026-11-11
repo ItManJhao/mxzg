@@ -1,0 +1,48 @@
+{
+  "scope": "取消图标可用性清单，实际加载失败记录并回退",
+  "removed": [
+    "六类图标ID集合",
+    "物品missingIds",
+    "动态图标存在性扫描与缺图报告生成"
+  ],
+  "preserved": [
+    "非法ID基本校验",
+    "旧头像框编号偏移",
+    "资源池及迟到保护",
+    "历史战报缺字段提示"
+  ],
+  "checks": [
+    "resource-catalog含失败路径和去重",
+    "backpack",
+    "main-chapter",
+    "creator-compat",
+    "tsc",
+    "generate_resources --check"
+  ],
+  "pending": [
+    "整批收口后发布验收"
+  ],
+  "git": "未提交推送",
+  "preview": {
+    "status": "本机预览通过，独立内存测试服",
+    "hasAvailabilityList": false,
+    "missingPaths": [
+      "resources/ui/hero/head-icon_999999999",
+      "resources/icons/item/backpack_1001004999"
+    ],
+    "warningCountBeforeRepeat": 2,
+    "warningCountAfterRepeat": 2,
+    "fallback": [
+      "head-icon_0",
+      "backpack_border-default"
+    ],
+    "recovered": [
+      "head-icon_1",
+      "backpack_1005001"
+    ],
+    "reopen": "正常恢复服务器默认头像",
+    "scope": "只调用显示工具，不提交角色修改；测试页已关闭",
+    "diagnosticError": "首次状态快照探针字段不匹配产生一次工具求值异常，未执行显示修改；随后仅显示探针完成，不计为游戏错误",
+    "screenshot": "docs/images/icon-direct-path-preview-20261111.png"
+  }
+}

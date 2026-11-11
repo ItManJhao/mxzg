@@ -1,0 +1,61 @@
+{
+  "date": "2026-11-11",
+  "mode": "Creator本机预览，独立随机内存H2",
+  "runId": "07a651f4638546c1b13ecbdd59fce914",
+  "policy": {
+    "idleMs": 120000,
+    "maxPages": 2
+  },
+  "browser": {
+    "firstId": "Comp.1651",
+    "reopenedSameInstance": 10,
+    "recreatedId": "Comp.1945",
+    "openMs": {
+      "first": 6,
+      "cached": 0,
+      "recreated": 6
+    },
+    "hiddenBusinessListeners": 0,
+    "realTimerExpired": true,
+    "logout": {
+      "cached": 0,
+      "timer": false,
+      "loginVisible": true
+    },
+    "warningsErrors": 0
+  },
+  "resources": {
+    "before": {
+      "scopes": 25,
+      "entries": 85,
+      "owners": 89
+    },
+    "after": {
+      "scopes": 22,
+      "entries": 82,
+      "owners": 86
+    },
+    "prefabsBefore": 2,
+    "prefabsAfter": 2
+  },
+  "heap": {
+    "api": "CDP Runtime.getHeapUsage",
+    "usedBefore": 74499856,
+    "usedAfter": 69509104,
+    "forcedGC": false,
+    "caveat": "单次JS堆快照包含其他对象及自然GC，不代表GPU/进程内存或背包净释放量"
+  },
+  "tests": [
+    "backpack：最新Model、重复监听和详情生命周期",
+    "remake-navigation：期限、容量、活动实例、注销",
+    "staged-loading",
+    "resources"
+  ],
+  "limitations": [
+    "最新库存变化由自动专项覆盖，本轮浏览器未发放库存",
+    "预览途中发生重载，注销用重新建立的缓存场景复验",
+    "非真机，不包含长期内存趋势",
+    "资源闲置淘汰及按需Prefab长期持有未处理"
+  ],
+  "screenshot": "docs/images/bag-cache-recreated-20261111.png"
+}

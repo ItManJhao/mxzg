@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-11",
+  "environment": "Creator本机预览，独立内存H2",
+  "runId": "c1772fe8ee77496991751b54e96bcebf",
+  "policy": {
+    "idleMs": 120000,
+    "checkIntervalSeconds": 30
+  },
+  "browser": {
+    "activeRefs": 3,
+    "closedRefs": 2,
+    "beforeObservationSeconds": 113,
+    "afterObservationSeconds": 169,
+    "afterRefs": 1,
+    "cacheBefore": 3,
+    "cacheAfter": 2,
+    "reopenRefs": 3,
+    "reopenCache": 3,
+    "preloadedAssetValid": true,
+    "activeProtectedFromForcedAgeCheck": true,
+    "warningErrors": 0
+  },
+  "tests": [
+    "resources",
+    "home-bundle",
+    "staged-loading",
+    "creator-compat",
+    "backpack",
+    "remake-navigation",
+    "hero",
+    "main-chapter",
+    "startup",
+    "city",
+    "Creator tsc"
+  ],
+  "limits": [
+    "观察时间不等于实际定时回收触发时间",
+    "背包详情本身已预加载，本轮保留LoadingPlan",
+    "无预加载引用归零/重新加载由自动测试覆盖",
+    "未进行GPU/真机/长期内存测量",
+    "普通动态图资源仍按最后拥有者退出释放，未添加另一套资源池"
+  ],
+  "screenshot": "docs/images/prefab-cache-detail-20261111.png"
+}

@@ -1,0 +1,60 @@
+{
+  "scope": "删除重复资源清单和无调用占位，保持玩法及加载范围",
+  "removed": [
+    "CommonUiResources",
+    "ResourceCatalog",
+    "config/resource-catalog.json",
+    "LineupApi",
+    "CompatibleSpine（用户改为静态登录背景后，已移除真实Prefab绑定）"
+  ],
+  "retained": [
+    "SpineJson战斗转换",
+    "ResourcePool",
+    "Prefab UUID回退与玩法准入",
+    "三段显式配置"
+  ],
+  "checks": [
+    "resource-catalog",
+    "staged-loading",
+    "login-presentation",
+    "home-bundle（含实际PrefabLoader独立包路径与重开缓存）",
+    "main-chapter",
+    "hero-detail",
+    "backpack",
+    "creator-compat",
+    "startup",
+    "city",
+    "formation-view",
+    "hero",
+    "Creator tsc",
+    "generate_resources --check"
+  ],
+  "pending": [
+    "整批收口发布包"
+  ],
+  "git": "未提交推送",
+  "preview": {
+    "status": "通过本机预览",
+    "run": "4672e9045e204ef1959569ee5bea7a1c",
+    "environment": "Creator本机预览＋独立H2内存测试服",
+    "checks": [
+      "静态背景帧jp-login-static",
+      "顶部对齐代码编译生效，y=-162.5920471281296与计算值一致",
+      "登录主城成功，后台目标4/4完成",
+      "背包四分类/品质框/详情确认关闭",
+      "英雄列表、四槽装备及技能说明",
+      "挂机行军、对话及返回主城重开"
+    ],
+    "warnings": 0,
+    "errors": 0,
+    "notCovered": [
+      "本轮挑战结算",
+      "发布包"
+    ],
+    "notes": "期间用户刷新Creator使预览返回登录页，一次诊断操作因页面已切换未找到TabCity；确认新状态后正常继续，无产品错误。",
+    "screenshots": [
+      "docs/images/login-static-top-preview-20261111.png",
+      "docs/images/resource-cleanup-idle-preview-20261111.png"
+    ]
+  }
+}

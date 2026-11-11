@@ -5,7 +5,7 @@
 
 /** HeroInfoUpStarLayer：图标在 (-70, 0)，等级底在 (-90, 20)。 */
 export const HERO_SKILL_BADGE_OFFSET = { x: -20, y: 20 };
-export const HERO_SKILL_BADGE_ART = ResourceCatalog.hero.hero_info_spr_skill_level_bg.path;
+export const HERO_SKILL_BADGE_ART = "ui/hero/hero-info_spr-skill-level-bg";
 
 /**
  * 立绘挂在 node_equip 圆心。
@@ -22,4 +22,4 @@ export const HERO_EMPTY_RING_NAMES = [
     "btn_runes_2",
     "btn_artifact_1",
     "btn_artifact_2",
-];import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
+];

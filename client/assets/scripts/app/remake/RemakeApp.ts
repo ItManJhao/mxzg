@@ -3,7 +3,7 @@
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
 import {clearCitySpriteCache} from "../../features/city/ui/CityMap";
-import {clearPrefabCache} from "../../framework/assets/PrefabLoader";
+import {clearPrefabCache, collectPrefabCache} from "../../framework/assets/PrefabLoader";
 import {ResourceAssetsUtils} from "../../framework/assets/ResourceAssets";
 import {AccountComposition} from "./AccountComposition";
 import {ApplicationNotice} from "./ApplicationNotice";
@@ -23,7 +23,6 @@ import {Protocol} from "../../platform/Protocol";
 
 import {GameConfig} from "../../config/GameConfig";
 import {GConfig} from "../../config/GConfig";
-import {ResourceCatalog} from "../../framework/assets/ResourceCatalog";
 
 import {_decorator, Component, director, Director, game, Game, Label, Node, Prefab} from "cc";
 import {PREVIEW} from "cc/env";
@@ -202,14 +201,14 @@ export class RemakeApp extends Component {
             body => service.authenticated(async token => (await socket.gmGrant(token, body)).body));
         if (PREVIEW) this.unregisterViews.push(registerView(GmView, {
             id: "gm",
-            prefab: ResourceCatalog.prefab_gm.GmView.assetPath,
+            prefab: "prefabs/ui/gm/GmView",
             layer: UILayer.Popup,
             cache: false,
             allowMultiple: false,
             hostId: "remake-modal",
             load: async () => {
                 await GameConfig.instance.prepare([GConfig.HeroType, GConfig.Item, GConfig.Language]);
-                return loadPrefab(ResourceCatalog.prefab_gm.GmView.assetPath);
+                return loadPrefab("prefabs/ui/gm/GmView");
             }
         }));
         const openGm = () => {
@@ -472,9 +471,17 @@ export class RemakeApp extends Component {
         clearPrefabCache();
     }
 
-    /** 无单调时钟的平台持续累计背包时间，不随背包窗口关闭停止。 */
+    /** 距离上次闲置预制体检查的秒数；只随当前应用update推进，销毁后不再运行。 */
+    private prefabCollectionSeconds = 0;
+
+    /** 推进服务器时钟估算，每30秒检查无人使用的预制体缓存，不清理预加载持有。 */
     update(dt: number): void {
         BagModel.instance.advanceClock(dt);
+        this.prefabCollectionSeconds += dt;
+        if (this.prefabCollectionSeconds >= 30) {
+            this.prefabCollectionSeconds = 0;
+            collectPrefabCache();
+        }
     }
 
 }

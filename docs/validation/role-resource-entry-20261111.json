@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-11",
+  "scope": "角色头像/边框剩余映射收口",
+  "parity": {
+    "head": 286,
+    "border": 33
+  },
+  "catalogBytes": 13341,
+  "scriptUuid": "791dafd8-0199-4ce5-be6a-b8fdb825f66e",
+  "checks": [
+    "resource-catalog",
+    "creator-compat",
+    "tsc",
+    "generate_resources --check",
+    "git diff --check"
+  ],
+  "preview": {
+    "environment": "独立内存H2，本机Creator预览",
+    "result": "默认顶栏/资料页、头像1/框1临时展示、未知ID回退默认、关闭重开通过",
+    "warningsAndErrors": 0,
+    "screenshot": "docs/images/role-resource-preview-20261111.png"
+  },
+  "pending": [
+    "发布包留到本批收口集中验收，覆盖胜利页共用角色头像调用"
+  ],
+  "git": "未提交推送"
+}

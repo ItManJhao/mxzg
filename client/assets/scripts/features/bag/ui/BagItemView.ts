@@ -1,7 +1,7 @@
 /** 背包物品格子：由 BagView 传入条目和显示配置，只负责绑定与展示，不拥有库存。 */
 import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame } from "cc";
 import type { BagItemData } from "../data/BagItemData";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 import type { BagFace } from "../data/BagItemData";
 
 const { ccclass, property } = _decorator;
@@ -76,11 +76,11 @@ export class BagItemView extends Component {
                 this.count.string = "";
             }
         } else {
-            if (this.frame) paintSpritePaths(this.frame, [face!.frame], current);
+            if (this.frame) ResManager.setSprite(this.frame, [face!.frame], current);
             if (this.icon) {
                 this.icon.active = true;
                 this.icon.getComponent(Sprite)!.spriteFrame = null;
-                paintSpritePaths(this.icon, [face!.icon, face!.fallback], current);
+                ResManager.setSprite(this.icon, [face!.icon, face!.fallback], current);
             }
             if (this.count) {
                 const text = String(item.quantity);

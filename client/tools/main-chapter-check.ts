@@ -15,7 +15,7 @@ import { BattleInfoUtils } from "../assets/scripts/features/battle/utils/BattleI
 import { ChapterSettlementUtils } from "../assets/scripts/features/battle/utils/ChapterSettlementUtils";
 import { BattleHeroStarView } from "../assets/scripts/features/battle/ui/BattleHeroStarView";
 import { Sprite } from "cc";
-import { BattlePortraitById } from "../assets/scripts/framework/assets/IconCatalog";
+import { ResManager } from "../assets/scripts/framework/assets/ResManager";
 import { BattleStatisticsUtils } from "../assets/scripts/features/battle/utils/BattleStatisticsUtils";
 import { BattleAttackUtils } from "../assets/scripts/features/battle/utils/BattleAttackUtils";
 import { strict as assert } from "node:assert";
@@ -253,7 +253,7 @@ async function main(): Promise<void> {
     assert.ok(BattleStatisticsUtils.portrait(portraitUnit)?.endsWith("hero-icon_20101001"));
     assert.equal(BattleStatisticsUtils.portrait(oldUnits[0]), null);
     const evolutionRows = JSON.parse(readFileSync("client/assets/resources/config/heroevolvelevel.json", "utf8")).rows;
-    for (const row of evolutionRows) assert.ok(BattlePortraitById[row.evolve_icon_id], "进化头像必须收录：" + row.evolve_icon_id);
+    for (const row of evolutionRows) assert.ok(ResManager.portrait(row.evolve_icon_id), "进化头像必须收录：" + row.evolve_icon_id);
     assert.equal(BattleStatisticsUtils.stars(6).row, 5);
     assert.equal(BattleStatisticsUtils.stars(9).row, 8);
     assert.equal(BattleStatisticsUtils.stars(10).number, 0);
@@ -284,8 +284,8 @@ async function main(): Promise<void> {
     starView.show(null);
     assert.ok(starView.rows.every(node => !node.active));
 
-    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 900001 }), null);
-    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 99999999 }), null);
+    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 900001 }), "ui/hero/hero-icon_900001");
+    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 99999999 }), "ui/hero/hero-icon_99999999");
     assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], portraitIconId: 0 }, oldUnits[1]]));
     assert.equal(BattleReplayUtils.validateUnits([{ ...oldUnits[0], totalRecovery: -25, star: 5 }, oldUnits[1]])[0].totalRecovery, -25);
     assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], totalRecovery: Number.MAX_SAFE_INTEGER + 1 }, oldUnits[1]]));

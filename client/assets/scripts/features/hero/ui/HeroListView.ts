@@ -9,8 +9,6 @@ import { HeroRosterUtils } from "../utils/HeroRosterUtils";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { HeroCatalog } from "../utils/HeroCatalog";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
-import { CommonUiResources } from "../../../framework/assets/CommonUiResources";
 import { _decorator, Button, director, Director, HorizontalTextAlignment, Label, Node, Overflow, Prefab, UITransform, VerticalTextAlignment } from "cc";
 import { messageOf } from "../../../core/errors";
 import { GameLog } from "../../../core/GameLog";
@@ -18,7 +16,7 @@ import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { view } from "../../../framework/ui/UIRegistry";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { heroCellLine, HeroListTab } from "./HeroListPresentation";
 import { loadPrefab, spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { assignContentSize, positiveUiSize } from "../../../framework/ui/visibleFit";
@@ -30,7 +28,7 @@ import type { HeroRosterSource, HeroRosterView } from "../data/HeroRosterData";
 
 const { ccclass, property } = _decorator;
 
-const BOARD_PREFAB = ResourceCatalog.prefab_hero.HeroListBoardView.assetPath;
+const BOARD_PREFAB = "prefabs/ui/hero/HeroListBoardView";
 
 /**
  * 英雄列表。页签、羊皮纸和筛选都绑在 HeroListLayer / HeroListHeroLayer 上。
@@ -39,7 +37,7 @@ const BOARD_PREFAB = ResourceCatalog.prefab_hero.HeroListBoardView.assetPath;
  */
 @view({
     id: "hero",
-    prefab: ResourceCatalog.prefab_hero.HeroListView.assetPath,
+    prefab: "prefabs/ui/hero/HeroListView",
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
@@ -427,7 +425,7 @@ read: elem => HeroRosterUtils.present(model.snapshot, catalog, elem),
             return;
         }
         button.transition = Button.Transition.NONE;
-        paintSpritePaths(button.node, [(on ? CommonUiResources.tabs.selected : CommonUiResources.tabs.normal).path]);
+        ResManager.setSprite(button.node, [ResManager.ui("common", on ? "button_btn-tab-24" : "button_btn-tab-23")]);
     }
 
     private fitTitles(): void {

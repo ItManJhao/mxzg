@@ -14,7 +14,7 @@ import {
     SpriteAtlas,
     SpriteFrame
 } from "cc";
-import type {ResourceDescriptor, ResourceKind} from "./ResourceCatalog";
+import type {ResourceDescriptor, ResourceKind} from "./ResourceTypes";
 import {ResourcePool} from "./ResourcePool";
 
 export interface ResourceAssetMap {
@@ -136,15 +136,23 @@ let residentScope: AssetScope | null = null;
 
 /** 资源生命周期入口：动态旧路径统一转换描述，禁止业务直接调用引擎加载器。 */
 export class ResourceAssetsUtils {
-    private constructor() {
+    /** 从明确的包名、路径和类型创建加载目标，不查询资源目录或维护存在性清单。
+     * 图片路径不含spriteFrame后缀；特殊Bundle可显式提供相对assets的源路径。
+     */
+    public static describe<K extends ResourceKind>(
+        bundle: string, path: string, type: K, assetPath = bundle + "/" + path,
+    ): ResourceDescriptor<K> {
+        return {
+            bundle,
+            path,
+            assetPath,
+            loadPath: type === "SpriteFrame" ? path + "/spriteFrame" : path,
+            type,
+            uuid: "",
+        };
     }
 
-    /** 统一图片获取：复用预加载缓存及在途请求，由owner节点持有，销毁后拒绝迟到结果。
-     * 字符串为resources内不带/spriteFrame的图片路径；描述可指定其他Bundle或UUID。
-     * 失败保留拒绝，由显示层决定占位与提示；本方法不直接赋图。
-     */
-    public static getSpriteFrame(owner: Node, source: string | ResourceDescriptor<"SpriteFrame">): Promise<SpriteFrame> {
-        return this.forNode(owner).load(typeof source === "string" ? this.sprite(source) : source);
+    private constructor() {
     }
 
     /** 配置仓库与后台复用同一JSON请求；现有应用常驻作用域在退出时统一释放。 */

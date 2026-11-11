@@ -13,12 +13,20 @@ import {prefabInPlan} from "../../config/PrefabPlan";
  * 复用ResourceAssets资源池及Bundle依赖元数据；编辑器导入未完成时保留原UUID回退。
  */
 
-import { ResourceCatalog, ResourceDescriptor } from "./ResourceCatalog";
-import { createAssetScope } from "./ResourceAssets";
+import { createAssetScope, ResourceAssetsUtils } from "./ResourceAssets";
+import { monoNow } from "../../core/GameLog";
 import { ResourceScopeClosed } from "./ResourcePool";
 
-/** 预制体与后台目录加载共用类型化资源池；清理缓存时撤回本作用域。 */
-let prefabScope: ReturnType<typeof createAssetScope> | null = null;
+/** 每个路径独立拥有资源池作用域，允许单项回收；加载失败、到期或应用关闭时撤回。 */
+const prefabScopes = new Map<string, ReturnType<typeof createAssetScope>>();
+/** 最近加载或最后一个实例销毁的单调时钟毫秒；不记录角色状态。 */
+const prefabUsedAt = new Map<string, number>();
+/** 活着的实例对预制体的持有数，销毁回调归零后重新开始闲置计时。 */
+const prefabInstances = new Map<Prefab, number>();
+/** 实例节点已持有的预制体集合，避免同一页面重复加引用；节点销毁后自动退出。 */
+const nodePrefabs = new WeakMap<Node, Set<Prefab>>();
+/** 无实例使用的加载器缓存初始保留120秒；LoadingPlan另有应用持有，不受此值影响。 */
+export const PREFAB_IDLE_MS = 120_000;
 
 import {PREFAB_UUID} from "../../config/PrefabCatalog";
 
@@ -26,7 +34,7 @@ import {PREFAB_UUID} from "../../config/PrefabCatalog";
 /** 只保存正在加载的Promise，成功后移入显式应用缓存。 */
 const prefabPending = new Map<string, Promise<Prefab>>();
 
-/** 应用常驻Prefab缓存：每份保留一次引擎引用，只有应用关闭后清理。 */
+/** 加载器Prefab缓存：每份保留一次引用，无实例使用且超时后撤回；预加载拥有者独立。 */
 const prefabLoaded = new Map<string, Prefab>();
 /** 清缓存递增代次，禁止清理前的迟到请求重新填充缓存。 */
 let cacheEpoch = 0;
@@ -37,8 +45,9 @@ export function clearPrefabCache(): void {
     prefabPending.clear();
     for (const prefab of prefabLoaded.values()) prefab.decRef();
     prefabLoaded.clear();
-    prefabScope?.dispose();
-    prefabScope = null;
+    for (const scope of prefabScopes.values()) scope.dispose();
+    prefabScopes.clear();
+    prefabUsedAt.clear();
 }
 
 /** 仅输出明确缓存和在途计数，不把缓存保留描述为内存泄漏。 */
@@ -50,11 +59,16 @@ export function prefabCacheSnapshot(): { pending: number; cached: number } {
 export function loadPrefab(assetPath: string): Promise<Prefab> {
     if (!prefabInPlan(assetPath)) return Promise.reject(new Error("该界面不在当前重做计划内：" + assetPath));
     const loaded = prefabLoaded.get(assetPath);
-    if (loaded && loaded.isValid !== false) return Promise.resolve(loaded);
+    if (loaded && loaded.isValid !== false) {
+        prefabUsedAt.set(assetPath, monoNow());
+        return Promise.resolve(loaded);
+    }
     const cached = prefabPending.get(assetPath);
     if (cached) return cached;
     const epoch = cacheEpoch;
-    const pending = loadPrefabOnce(assetPath).then(prefab => {
+    const scope = createAssetScope();
+    prefabScopes.set(assetPath, scope);
+    const pending = loadPrefabOnce(assetPath, scope).then(prefab => {
         if (epoch !== cacheEpoch) {
             prefab.addRef();
             prefab.decRef();
@@ -62,9 +76,12 @@ export function loadPrefab(assetPath: string): Promise<Prefab> {
         }
         prefab.addRef();
         prefabLoaded.set(assetPath, prefab);
+        prefabUsedAt.set(assetPath, monoNow());
         if (prefabPending.get(assetPath) === pending) prefabPending.delete(assetPath);
         return prefab;
     }, error => {
+        scope.dispose();
+        if (prefabScopes.get(assetPath) === scope) prefabScopes.delete(assetPath);
         if (prefabPending.get(assetPath) === pending) prefabPending.delete(assetPath);
         throw error;
     });
@@ -72,22 +89,59 @@ export function loadPrefab(assetPath: string): Promise<Prefab> {
     return pending;
 }
 
-/** 按计划Bundle加载，编辑器导入尚未完成时保留原UUID回退。 */
-function loadPrefabOnce(assetPath: string): Promise<Prefab> {
-    let registered: ResourceDescriptor<"Prefab"> | null = null;
-    for (const group of Object.values(ResourceCatalog)) {
-        for (const row of Object.values(group) as ResourceDescriptor[]) {
-            if (row.type === "Prefab" && row.assetPath === assetPath) {
-                registered = row as ResourceDescriptor<"Prefab">;
+/** 绑定一个真实使用者；自定义异步挂载也应在等待前绑定宿主，避免准备期间依赖被回收。 */
+export function retainPrefabForNode(prefab: Prefab, owner: Node): void {
+    if (!owner.isValid) {
+        throw new Error("预制体拥有者已销毁");
+    }
+    let held = nodePrefabs.get(owner);
+    if (!held) {
+        held = new Set<Prefab>();
+        nodePrefabs.set(owner, held);
+    }
+    if (held.has(prefab)) {
+        return;
+    }
+    held.add(prefab);
+    prefab.addRef();
+    prefabInstances.set(prefab, (prefabInstances.get(prefab) || 0) + 1);
+    owner.once(Node.EventType.NODE_DESTROYED, () => {
+        const count = (prefabInstances.get(prefab) || 1) - 1;
+        if (count > 0) {
+            prefabInstances.set(prefab, count);
+        } else {
+            prefabInstances.delete(prefab);
+            for (const [path, asset] of prefabLoaded) {
+                if (asset === prefab) prefabUsedAt.set(path, monoNow());
             }
         }
+        held!.delete(prefab);
+        prefab.decRef();
+    });
+}
+
+/** 应用定期调用：只撤回无人实例使用的到期缓存，保留在途请求及其他作用域持有。 */
+export function collectPrefabCache(now = monoNow()): number {
+    let removed = 0;
+    for (const [path, prefab] of prefabLoaded) {
+        if ((prefabInstances.get(prefab) || 0) > 0 || now - (prefabUsedAt.get(path) || 0) < PREFAB_IDLE_MS) {
+            continue;
+        }
+        prefabLoaded.delete(path);
+        prefabUsedAt.delete(path);
+        prefab.decRef();
+        prefabScopes.get(path)?.dispose();
+        prefabScopes.delete(path);
+        removed++;
     }
+    return removed;
+}
+
+/** 按计划Bundle加载，编辑器导入尚未完成时保留原UUID回退。 */
+function loadPrefabOnce(assetPath: string, scope: ReturnType<typeof createAssetScope>): Promise<Prefab> {
     const parsed = splitAssetPath(assetPath);
-    const descriptor = registered || { bundle: parsed.bundle, path: parsed.inner, assetPath, loadPath: parsed.inner, type: "Prefab" as const, uuid: PREFAB_UUID[assetPath] || "" };
-    if (!prefabScope) {
-        prefabScope = createAssetScope();
-    }
-    return (prefabScope.load(descriptor) as Promise<Prefab>).catch((bundleErr: unknown) => {
+    const descriptor = ResourceAssetsUtils.describe(parsed.bundle, parsed.inner, "Prefab", assetPath);
+    return (scope.load(descriptor) as Promise<Prefab>).catch((bundleErr: unknown) => {
         if (bundleErr instanceof ResourceScopeClosed) {
             throw new Error("Prefab所属应用已关闭");
         }
@@ -99,8 +153,10 @@ function loadPrefabOnce(assetPath: string): Promise<Prefab> {
     });
 }
 
+/** 实例化并让节点持有预制体依赖；节点销毁才撤回，不受加载器闲置淘汰影响。 */
 export function spawnPrefab(prefab: Prefab, parent: Node): Node {
     const root = instantiate(prefab);
+    retainPrefabForNode(prefab, root);
     root.parent = parent;
     return root;
 }
@@ -152,6 +208,14 @@ export function tintSprite(node: Node, color: Color): void {
 }
 
 function splitAssetPath(assetPath: string): { bundle: string; inner: string } {
+    // 独立包目录采用bundles/<包名>/<资源>；普通prefabs目录本身就是包名。
+    if (assetPath.startsWith("bundles/")) {
+        const parts = assetPath.split("/");
+        if (parts.length < 3 || !parts[1] || !parts.slice(2).join("/")) {
+            throw new Error("独立Bundle路径缺少资源：" + assetPath);
+        }
+        return { bundle: parts[1], inner: parts.slice(2).join("/") };
+    }
     const slash = assetPath.indexOf("/");
     if (slash <= 0 || slash >= assetPath.length - 1) {
         throw new Error("Prefab 路径要相对 assets，例如 prefabs/ui/legacy-login/LoginPanel");

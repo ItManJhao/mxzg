@@ -4,17 +4,17 @@ import { readFileSync } from "node:fs";
 import { Asset, JsonAsset, Prefab, assetManager, resources } from "cc";
 import { ApplicationResources } from "../assets/scripts/app/remake/ApplicationResources";
 import { LOADING_PLAN } from "../assets/scripts/app/remake/LoadingPlan";
-import { ResourceCatalog, ResourceDescriptor } from "../assets/scripts/framework/assets/ResourceCatalog";
+import { ResourceDescriptor } from "../assets/scripts/framework/assets/ResourceTypes";
 import { createAssetScope, ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
 import { clearPrefabCache } from "../assets/scripts/framework/assets/PrefabLoader";
 import { GConfig } from "../assets/scripts/config/GConfig";
 
 /** 通过受控完成回调验证进度，不使用延时伪造网络完成。 */
 async function main(): Promise<void> {
-    const bag = ResourceCatalog.prefab_bag.BagView;
-    const detail = ResourceCatalog.prefab_bag.BagInfoView;
-    const spine = ResourceCatalog.spine.jiemian;
-    const icon = ResourceCatalog.common.other_rare_4;
+    const bag = ResourceAssetsUtils.describe("prefabs", "ui/bag/BagView", "Prefab");
+    const detail = ResourceAssetsUtils.describe("prefabs", "ui/bag/BagInfoView", "Prefab");
+    const spine = ResourceAssetsUtils.describe("resources", "spine/jiemian", "SkeletonData");
+    const icon = ResourceAssetsUtils.describe("resources", "ui/common/other_rare-4", "SpriteFrame");
     const uuid: ResourceDescriptor = {
         bundle: "main", path: "fixture-frame", assetPath: "fixture-frame",
         loadPath: "", type: "SpriteFrame", uuid: "fixture-frame-uuid",
@@ -103,7 +103,7 @@ async function main(): Promise<void> {
     const before = requests.length;
     await stopped.prepareBackground(async () => { stopped.stopBackground(); }, () => true);
     assert.equal(requests.length, before, "停止后不继续排队，也不读取全目录索引");
-    const deferredImage = ResourceCatalog.common.other_rare_6;
+    const deferredImage = ResourceAssetsUtils.describe("resources", "ui/common/other_rare-6", "SpriteFrame");
     assert(!requests.includes(deferredImage.bundle + ":" + deferredImage.loadPath), "未配置资源不提前加载");
     const demand = createAssetScope();
     await demand.load(deferredImage);

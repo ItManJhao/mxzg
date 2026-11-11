@@ -7,11 +7,10 @@ import { BagUtils } from "../utils/BagUtils";
 import { GameLog } from "../../../core/GameLog";
 import { BagFace } from "../data/BagItemData";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { view, viewSpecOf } from "../../../framework/ui/UIRegistry";
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { BagTabKind } from "../data/BagTabKind";
 import { BagModel } from "../BagModel";
@@ -34,7 +33,7 @@ const { ccclass, property } = _decorator;
  */
 @view({
     id: "bag-info",
-    prefab: ResourceCatalog.prefab_bag.BagInfoView.assetPath,
+    prefab: "prefabs/ui/bag/BagInfoView",
     layer: UILayer.Popup,
     hostId: "remake-modal",
     cache: false,
@@ -193,9 +192,9 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
             this.desc.node.active = true;
             this.desc.string = face.body || " ";
         }
-        paintSpritePaths(this.icon, [face.icon, face.fallback], current);
+        ResManager.setSprite(this.icon, [face.icon, face.fallback], current);
         if (this.rare) {
-            paintSpritePaths(this.rare, [face.frame], current);
+            ResManager.setSprite(this.rare, [face.frame], current);
         } else {
             GameLog.shared.classified("MODULE", "warn", "Bag", "BagInfoView 下没有 spr_rare");
         }

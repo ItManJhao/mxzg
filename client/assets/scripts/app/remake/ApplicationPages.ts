@@ -22,7 +22,6 @@ import { HeroSkillView } from "../../features/hero/ui/HeroSkillView";
 import { mountHeroListPage } from "../../features/hero/ui/heroMount";
 import { HomeController } from "../../features/home/HomeController";
 import { RemakeHomeView } from "../../features/home/ui/RemakeHomeView";
-import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { UILayer } from "../../framework/ui/UILayer";
 import { UIManager, isOpenCancelled } from "../../framework/ui/UIManager";
 import { registerView, viewSpecOf } from "../../framework/ui/UIRegistry";
@@ -67,19 +66,19 @@ export class ApplicationPages {
             cache: false, allowMultiple: false, hostId: "remake-modal",
         }));
         stops.push(registerView(ServerPickerView, {
-            id: "server-picker", prefab: ResourceCatalog.prefab_login.ServerPickerView.assetPath, layer: UILayer.Popup,
+            id: "server-picker", prefab: "prefabs/ui/login/ServerPickerView", layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",
             load: () => {
                 return resources.featurePage("servers");
             },
         }));
         stops.push(registerView(RoleProfileView, {
-            id: "role-profile", prefab: ResourceCatalog.prefab_account.RoleProfileView.assetPath,
+            id: "role-profile", prefab: "prefabs/ui/account/RoleProfileView",
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
         }));
         // All business composition lives here. The UI framework imports no account/home classes.
         stops.push(registerView(AccountLoginView, {
-            id: "remake-login", prefab: ResourceCatalog.prefab_account.AccountLoginView.assetPath, layer: UILayer.Page,
+            id: "remake-login", prefab: "prefabs/ui/account/AccountLoginView", layer: UILayer.Page,
             cache: false, allowMultiple: false, load: async () => context.loginPrefab,
             createController: view => new AccountController(model, service, view as AccountLoginView, () => {
                 ui.closeById("server-picker");
@@ -95,7 +94,7 @@ export class ApplicationPages {
             }),
         }));
         stops.push(registerView(RemakeHomeView, {
-            id: "remake-home", prefab: ResourceCatalog.prefab_remake_home.RemakeHomeView.assetPath, layer: UILayer.Page,
+            id: "remake-home", prefab: "bundles/remake-home/RemakeHomeView", layer: UILayer.Page,
             cache: false, allowMultiple: false, load: async () => {
                 return resources.homePage();
             },
@@ -119,16 +118,16 @@ export class ApplicationPages {
         };
         stops.push(registerView(MainChapterBattleView, {
             load: () => resources.battlePage("field"),
-            id: "main-chapter-battle", prefab: ResourceCatalog.prefab_battle.MainChapterBattleView.assetPath,
+            id: "main-chapter-battle", prefab: "prefabs/ui/battle/MainChapterBattleView",
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "main-chapter-field",
         }));
         stops.push(registerView(MainChapterView, {
-            id: "remake-campaign", prefab: ResourceCatalog.prefab_battle.MainChapterView.assetPath,
+            id: "remake-campaign", prefab: "prefabs/ui/battle/MainChapterView",
             layer: UILayer.Page, cache: false, allowMultiple: false,
             load: () => resources.battlePage(),
         }));
         stops.push(registerView(FormationView, {
-            id: "remake-formation", prefab: ResourceCatalog.prefab_hero.FormationView.assetPath,
+            id: "remake-formation", prefab: "prefabs/ui/hero/FormationView",
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
             load: () => loadFeature("formation"),
         }));
@@ -149,17 +148,17 @@ export class ApplicationPages {
             });
         }
         stops.push(registerView(HeroListView, {
-            id: "hero", prefab: ResourceCatalog.prefab_hero.HeroListView.assetPath, layer: UILayer.Page, cache: false, allowMultiple: false,
+            id: "hero", prefab: "prefabs/ui/hero/HeroListView", layer: UILayer.Page, cache: false, allowMultiple: false,
             mount: mountHeroListPage, load: () => {
                 return resources.heroPage();
             },
         }));
         stops.push(registerView(HeroInfoView, {
-            id: "hero-info", prefab: ResourceCatalog.prefab_hero.HeroInfoView.assetPath, layer: UILayer.Page, cache: false, allowMultiple: false,
+            id: "hero-info", prefab: "prefabs/ui/hero/HeroInfoView", layer: UILayer.Page, cache: false, allowMultiple: false,
             mount: mountHeroListPage, load: () => resources.heroPage(true),
         }));
         stops.push(registerView(HeroSkillView, {
-            id: "hero-skill", prefab: ResourceCatalog.prefab_hero.HeroSkillView.assetPath, layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
+            id: "hero-skill", prefab: "prefabs/ui/hero/HeroSkillView", layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
             load: () => resources.heroSkillPage(),
         }));
         return stops;

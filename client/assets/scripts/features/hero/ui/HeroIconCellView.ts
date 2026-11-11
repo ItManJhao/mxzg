@@ -1,14 +1,14 @@
 /**
  * 英雄头像格子：按传入展示数据更新图片、等级和星级，保持 Prefab 结构和绑定可编辑。
  */
-import { ResourceCatalog } from "../../../framework/assets/ResourceCatalog";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
-import { paintSpritePaths } from "../../../framework/kit/SpritePaint";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { HERO_FACE_FALLBACK, HeroCellModel } from "./HeroListPresentation";
 
 const { ccclass, property } = _decorator;
 
-const ELEMENT_FRAMES = [ResourceCatalog.hero.hero_icon_elem_0, ResourceCatalog.hero.hero_icon_elem_1, ResourceCatalog.hero.hero_icon_elem_2, ResourceCatalog.hero.hero_icon_elem_3, ResourceCatalog.hero.hero_icon_elem_4, ResourceCatalog.hero.hero_icon_elem_5] as const;
+const ELEMENT_FRAMES = [ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-5", "SpriteFrame")] as const;
 
 /**
  * HeroIconCell 上的一格。脸、名字、元素、星、等级、锁和出战标都绑在预制上。
@@ -98,7 +98,7 @@ export class HeroIconCellView extends Component {
         }
         this.face.active = true;
         if (image) image.spriteFrame = null;
-        paintSpritePaths(this.face, [cell.face, HERO_FACE_FALLBACK], () => this.isValid && revision === this.revision);
+        ResManager.setSprite(this.face, [cell.face, HERO_FACE_FALLBACK], () => this.isValid && revision === this.revision);
     }
 
     private paintName(cell: HeroCellModel, empty: boolean): void {
@@ -113,7 +113,7 @@ export class HeroIconCellView extends Component {
         if (!this.elem) return;
         const show = !empty && cell.elem !== null && !!ELEMENT_FRAMES[cell.elem];
         this.elem.active = show;
-        if (show && cell.elem !== null) paintSpritePaths(this.elem, [ELEMENT_FRAMES[cell.elem].path], () => this.isValid && revision === this.revision);
+        if (show && cell.elem !== null) ResManager.setSprite(this.elem, [ELEMENT_FRAMES[cell.elem].path], () => this.isValid && revision === this.revision);
     }
 
     private paintStars(count: number): void {

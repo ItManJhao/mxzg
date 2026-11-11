@@ -1,7 +1,7 @@
-/** 英雄名册配置投影：英雄专用映射保留，物品回退图标复用BagItemCatalog的配置解析。
+/** 英雄名册配置投影：直接使用英雄配置item_id，物品回退图标复用BagItemCatalog的配置解析。
  * 只生成显示信息，不持有库存或发起资源加载；未知配置保留明确缺失。
  */
-import { HeroIconById } from "../../../framework/assets/IconCatalog";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 export interface HeroTemplateFace {
     readonly templateId: number;
@@ -18,6 +18,7 @@ function positive(value: unknown): value is number {
 
 /** Local display projection only; does not own role data. */
 export class HeroCatalog {
+    /** 按模板ID索引只读展示信息，随本配置投影实例释放。 */
     private readonly templates = new Map<number, HeroTemplateFace>();
     /** 对已校验的配置建立显示索引，不修改源表或角色名册。 */
     constructor(herotype: { readonly rows: readonly HeroTypeRow[] }, items: { readonly rows: readonly ItemRow[] }) {
@@ -29,14 +30,14 @@ export class HeroCatalog {
             if (match) icons.set(row.idx, BagItemCatalog.iconSource(row) || "");
         }
         for (const row of herotype.rows) {
-            // Exported tables contain comment rows; only positive numeric IDs are templates.
+            // 配置包含说明行，只有正整数ID作为有效英雄模板。
             if (!positive(row.type)) continue;
             if (this.templates.has(row.type)) throw new Error("英雄模板 ID 重复：" + row.type);
             this.templates.set(row.type, Object.freeze({
                 templateId: row.type,
                 name: typeof row.note === "string" && row.note.trim() ? row.note.trim() : "英雄 " + row.type,
                 elem: positive(row.elem) && row.elem <= 5 ? row.elem : null,
-                icon: HeroIconById[row.type]?.path || icons.get(row.type) || null,
+                icon: ResManager.hero(row.item_id) || icons.get(row.type) || null,
             }));
         }
     }

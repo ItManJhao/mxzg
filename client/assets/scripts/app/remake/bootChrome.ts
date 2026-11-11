@@ -11,7 +11,6 @@ import { LoginLayoutUtils } from "../../features/account/utils/LoginLayoutUtils"
 import { mountNamedSpine } from "../../features/battle/ui/battleSpine";
 import { findNode,loadPrefab,spawnPrefab } from "../../framework/assets/PrefabLoader";
 import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssets";
-import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
 import { place,setText,uiNode } from "../../framework/ui/UiKit";
 import { bindVisibleRefresh,fitVisibleRoot } from "../../framework/ui/visibleFit";
 
@@ -20,7 +19,7 @@ const BOOT_CAST_STEM = "jiemian";
 const BOOT_CAST_CLIP = "stand";
 
 /** LoadingLayer / UpdateLayer 的底图。logo 阶段用同一张，不再另铺黑底。 */
-export const LOADING_BG_FRAME = ResourceCatalog.maps.map_bg_loading.path;
+export const LOADING_BG_FRAME = "ui/maps/map-bg-loading";
 /**
  * 和登录页共用 768×1300 底图与 cover 规则，人物也走同一套宽度适配。
  * 和 LoadingLayer 预制里 Bg 的 contentSize 一致。
@@ -28,8 +27,8 @@ export const LOADING_BG_FRAME = ResourceCatalog.maps.map_bg_loading.path;
 export const LOADING_BG_DRAW_W = 768;
 export const LOADING_BG_DRAW_H = 1300;
 
-export const LOADING_PREFAB_PATH = ResourceCatalog.prefab_login.LoadingLayer.assetPath;
-export const UPDATE_PREFAB_PATH = ResourceCatalog.prefab_login.UpdateLayer.assetPath;
+export const LOADING_PREFAB_PATH = "prefabs/ui/login/LoadingLayer";
+export const UPDATE_PREFAB_PATH = "prefabs/ui/login/UpdateLayer";
 
 const FILL_W = 524;
 const FILL_LEFT = -FILL_W / 2;

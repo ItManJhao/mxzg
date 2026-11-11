@@ -8,8 +8,7 @@
  */
 import { AudioSource,BlockInputEvents,Node,Sprite,SpriteFrame,UIOpacity,UITransform } from "cc";
 import { GameLog } from "../../core/GameLog";
-import { createAssetScope,ResourceAssetsUtils } from "../../framework/assets/ResourceAssets";
-import { ResourceCatalog } from "../../framework/assets/ResourceCatalog";
+import { createAssetScope, ResourceAssetsUtils } from "../../framework/assets/ResourceAssets";
 import { TrackedTimers } from "../../framework/TrackedTimers";
 import { place,uiNode } from "../../framework/ui/UiKit";
 import { bindVisibleRefresh } from "../../framework/ui/visibleFit";
@@ -18,8 +17,8 @@ import { fitLoadingBackdrop,LOADING_BG_DRAW_H,LOADING_BG_DRAW_W,LOADING_BG_FRAME
 export const LOGO_FADE_IN_SEC = 1;
 export const LOGO_HOLD_SEC = 1;
 export const LOGO_FADE_OUT_SEC = 0.5;
-export const LOGO_SPRITE = ResourceCatalog.login.logo_scene_spr_logo.path;
-export const LOGO_BGM = ResourceCatalog.audio.bgm_logo.loadPath;
+export const LOGO_SPRITE = "ui/login/logo-scene_spr-logo";
+export const LOGO_BGM = "audio/bgm-logo";
 /** 宽或高不超过这个数，当成失败抽出，不拿来当开机图。 */
 export const LOGO_SPECK_MAX = 8;
 const SKIP_FADE_SEC = 0.15;
