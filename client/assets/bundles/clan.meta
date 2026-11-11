@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "6ce9a7c9-e677-4970-a055-3e06ed7d2a73",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "clan",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

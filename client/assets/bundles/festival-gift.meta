@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "ebfa5613-d0c4-4a3d-b49a-154e531ab60e",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "festival-gift",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

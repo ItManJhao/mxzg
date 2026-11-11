@@ -37,7 +37,7 @@ def main():
             assert (w, h) == (pw, ph)
             expected = Image.new('RGBA', (sw, sh))
             expected.paste(source.crop((x, y, x + w, y + h)), (px, py))
-            actual = Image.open(ROOT / 'client/assets/resources/battle/skill' / name / key.replace('/', '_')).convert('RGBA')
+            actual = Image.open(ROOT / 'client/assets/bundles/battle/effects/skill' / name / key.replace('/', '_')).convert('RGBA')
             assert actual.size == expected.size and actual.tobytes() == expected.tobytes(), key
             total += 1
     print(f'PASS {total}帧与旧图集sourceColorRect逐像素一致；Y偏移、半像素及alpha不重复叠加')

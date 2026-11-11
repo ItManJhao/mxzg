@@ -1,0 +1,348 @@
+{
+  "date": "2026-11-11",
+  "status": "release-passed",
+  "atlas": "client/assets/bundles/battle/atlas/BattleAtlas.pac",
+  "rows": [
+    {
+      "name": "battle-detail-lang_spr-result-win.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail-lang_spr-result-win.png",
+      "path": "client/assets/bundles/battle/atlas/battle-detail-lang_spr-result-win.png",
+      "uuid": "5f0ef8fa-52e0-4e5d-a32f-43bb8d501d44",
+      "imageSha256": "ddbbec71e3a573e67a9a1a7f7fef8189dcaf7ecda180dc2b16755ce3073fdb42",
+      "metaSha256": "ac73176fb986136b216ff224100d9647ec2cc9c74e984559a1a62ef69efac2e7",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab"
+      ],
+      "width": 127,
+      "height": 58
+    },
+    {
+      "name": "battle-detail_progress-bg.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail_progress-bg.png",
+      "path": "client/assets/bundles/battle/atlas/battle-detail_progress-bg.png",
+      "uuid": "8715b72e-8fb9-4f3f-b97e-b8d6969df1e9",
+      "imageSha256": "afa5a4dbbf1b4a69caa69f7ef1788a1de632f702467169c99382af115254d602",
+      "metaSha256": "a9714b88201b5dd227e0534f2ba409b4a1eaf2598449ad4553b6de2fe2f69082",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailCell.prefab"
+      ],
+      "width": 84,
+      "height": 14
+    },
+    {
+      "name": "battle-detail_progress-green-tip.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail_progress-green-tip.png",
+      "path": "client/assets/bundles/battle/atlas/battle-detail_progress-green-tip.png",
+      "uuid": "f185269f-9e58-4071-a85c-572dcc1e79e6",
+      "imageSha256": "61fc75177e87ae32b443ed8c958a726e70dcff774dd0598fbc53b8e633ef4a86",
+      "metaSha256": "a399743737265c6966d6520f192f8afa04982a4395b92a8323704ef3b6f9b9f0",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab"
+      ],
+      "width": 48,
+      "height": 14
+    },
+    {
+      "name": "battle-detail_progress-green.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail_progress-green.png",
+      "path": "client/assets/bundles/battle/atlas/battle-detail_progress-green.png",
+      "uuid": "c6655af7-384b-41db-9835-b89db92ce3c6",
+      "imageSha256": "62bdaf2bef98ccc0d5f5c4ab899551e71fc2704994cc6401e2a10f369479bce0",
+      "metaSha256": "d9c07eb9e2ea37562d407c09a25ffe25e16f52806aa678c8cec719cf89e79b74",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailCell.prefab"
+      ],
+      "width": 84,
+      "height": 14
+    },
+    {
+      "name": "battle-detail_progress-red-tip.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail_progress-red-tip.png",
+      "path": "client/assets/bundles/battle/atlas/battle-detail_progress-red-tip.png",
+      "uuid": "e34a8e79-3dbb-4f70-add8-d6c07a088c8e",
+      "imageSha256": "556857ddf16302c04a62aee9f456488819d83a0273856b5e3f4c0e6dc2523733",
+      "metaSha256": "842188db40db826717dd56d03f7ee72ce9f100b59add410ab89e692a48e12824",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab"
+      ],
+      "width": 48,
+      "height": 14
+    },
+    {
+      "name": "battle-detail_progress-red.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail_progress-red.png",
+      "path": "client/assets/bundles/battle/atlas/battle-detail_progress-red.png",
+      "uuid": "d89fd7f9-fa34-486d-9270-280dfda0fcef",
+      "imageSha256": "cb2d5b304e1b66822de1b1fb54c32e983e0ef6ce25e2370e4be8b2c6569034aa",
+      "metaSha256": "a9a2dd7d215620ba9dec6b5705657e225952a96319959fbf10fea517bce142d6",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailCell.prefab"
+      ],
+      "width": 84,
+      "height": 14
+    },
+    {
+      "name": "battle-detail_progress-yellow-tip.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail_progress-yellow-tip.png",
+      "path": "client/assets/bundles/battle/atlas/battle-detail_progress-yellow-tip.png",
+      "uuid": "79d7afb3-c30e-43f7-b19b-132d627c55d9",
+      "imageSha256": "8dd9d1b93c43369eb73e35bf5e7f1d7a68698a1a8d9d52dbc99a135513605e9f",
+      "metaSha256": "79a27d3514ef96111fa5b58c818daafb0964cddb6f8b60b0be11d8cf83a1c05c",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab"
+      ],
+      "width": 48,
+      "height": 14
+    },
+    {
+      "name": "battle-detail_progress-yellow.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail_progress-yellow.png",
+      "path": "client/assets/bundles/battle/atlas/battle-detail_progress-yellow.png",
+      "uuid": "5d9f4a65-8c6e-4723-8791-4849a6e0ad0c",
+      "imageSha256": "ecbf01e3776eaa66382d2b7a932977103b4b9cb0678166badcdb7140c0195ac8",
+      "metaSha256": "51d94a376c1afa88ac9faa1922849a97800625d9c4a5372686bf902265352da9",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailCell.prefab"
+      ],
+      "width": 84,
+      "height": 14
+    },
+    {
+      "name": "battle-detail_spr-cell-bg-4.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail_spr-cell-bg-4.png",
+      "path": "client/assets/bundles/battle/atlas/battle-detail_spr-cell-bg-4.png",
+      "uuid": "dd90fd22-d9f8-403f-bca4-23c2ab10beb0",
+      "imageSha256": "8cee80434e43037f10ff4483fd7bf3cc7e3ab57b68951cc34fd1f7033daf3c15",
+      "metaSha256": "0e8e84f0c9a76454b019c2a73777a33ebf25830fc5821e047d8538d4b203810d",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailCell.prefab"
+      ],
+      "width": 88,
+      "height": 160
+    },
+    {
+      "name": "battle-detail_spr-cell-bg.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-detail_spr-cell-bg.png",
+      "path": "client/assets/bundles/battle/background/battle-detail_spr-cell-bg.png",
+      "uuid": "d056587b-51b3-44a9-98aa-00d4fcf22789",
+      "imageSha256": "324a968a05b83268e55c7e05417e0c34ccccaa997b275dfc513c1f98fc2d8778",
+      "metaSha256": "7f9f257eb1c989f928e9a40c29e30fbaa45347d653d6f892435fa3a0d7d2d3e4",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab"
+      ],
+      "width": 546,
+      "height": 242
+    },
+    {
+      "name": "battle-end-lang_spr-hdwp.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-end-lang_spr-hdwp.png",
+      "path": "client/assets/bundles/battle/atlas/battle-end-lang_spr-hdwp.png",
+      "uuid": "6aa1cf34-13c9-4bee-bd1b-fe6ac72a3c39",
+      "imageSha256": "d6a5849c00d22bcca10335c8d4cc4e503165a9583a5a89042f966c4139e11056",
+      "metaSha256": "a0476fb9fb15fd4b80c945f271d9fd54e9a435b495072e859b2dd741e154ebd6",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleEndLayer.prefab",
+        "client/assets/bundles/battle/prefabs/ChapterEndView.prefab"
+      ],
+      "width": 112,
+      "height": 40
+    },
+    {
+      "name": "battle-end-lang_spr-zjms.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-end-lang_spr-zjms.png",
+      "path": "client/assets/bundles/battle/atlas/battle-end-lang_spr-zjms.png",
+      "uuid": "9fa6bc10-5bb3-4826-aab5-12abd604e5d3",
+      "imageSha256": "fca1497802f5507fc14c8f7aac5a0dab3ce0f1aed1ec44ae1b9573463d3e7102",
+      "metaSha256": "34c09647fce991456b256064d615845730f7d788cb377cef911f85f8b74bd14e",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleEndLayer.prefab",
+        "client/assets/bundles/battle/prefabs/ChapterEndView.prefab"
+      ],
+      "width": 459,
+      "height": 180
+    },
+    {
+      "name": "battle-end_spr-jdt2.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-end_spr-jdt2.png",
+      "path": "client/assets/bundles/battle/atlas/battle-end_spr-jdt2.png",
+      "uuid": "f467a2c6-84d6-4674-9c09-954cbadfed22",
+      "imageSha256": "511496ed335953ee69050ca935e7d9b8700b6872802a9f626ebd15d84b5fac48",
+      "metaSha256": "c62b42c7a0e676237233cf4fcb871fd71d34895e43f501232cfb1b6e6e528466",
+      "references": [
+        "client/assets/bundles/battle/prefabs/ChapterEndView.prefab"
+      ],
+      "width": 40,
+      "height": 18
+    },
+    {
+      "name": "battle-end_spr-k1.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-end_spr-k1.png",
+      "path": "client/assets/bundles/battle/atlas/battle-end_spr-k1.png",
+      "uuid": "f034ab78-d1e8-4a31-85d6-3dfa34a9a551",
+      "imageSha256": "2cac80164a8caaf7ea42f6a2f505db6bc760ed5dd0563afa68804bebed9cc846",
+      "metaSha256": "28e2cfcffbbc4dc53edfde1dedbe9da19e5946cf1f404742da840563332a0aaa",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleEndLayer.prefab",
+        "client/assets/bundles/battle/prefabs/ChapterEndView.prefab"
+      ],
+      "width": 309,
+      "height": 154
+    },
+    {
+      "name": "battle-end_spr-result-0.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-end_spr-result-0.png",
+      "path": "client/assets/bundles/battle/atlas/battle-end_spr-result-0.png",
+      "uuid": "e2539eea-b259-414a-a0fe-60ed0188daf3",
+      "imageSha256": "02bac372474ef7473aa4d9809d9625250e24f433f7c7c2d0d3461dfd3836d50e",
+      "metaSha256": "0cf8f12a06b1f037c1c7a6b448ef7c0228742cda3552a95c6c20ca03112596f8",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleEndLayer.prefab",
+        "client/assets/bundles/battle/prefabs/ChapterEndView.prefab"
+      ],
+      "width": 378,
+      "height": 195
+    },
+    {
+      "name": "battle-end_spr-round-bg.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-end_spr-round-bg.png",
+      "path": "client/assets/bundles/battle/atlas/battle-end_spr-round-bg.png",
+      "uuid": "d5081199-0b7c-43ca-b0a4-92d13e067c22",
+      "imageSha256": "e790796996dcbfb0e2aef8d9ea58fb8765a7a554a76e3b10ee4fff1e635187b9",
+      "metaSha256": "a1974c7997d057298e21a483cd2aeb96513cbefce80b80ba08a96746422fd136",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleInfoLayer.prefab",
+        "client/assets/bundles/battle/prefabs/BattlePage.prefab"
+      ],
+      "width": 160,
+      "height": 36
+    },
+    {
+      "name": "battle-end_spr-vs.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-end_spr-vs.png",
+      "path": "client/assets/bundles/battle/atlas/battle-end_spr-vs.png",
+      "uuid": "456deb3a-395d-4198-b4b0-392905533433",
+      "imageSha256": "772a2cb817876ee54b1024ed9d98cd2baa0bf66fb90c5cae0a828c2db5b2acf5",
+      "metaSha256": "e7b36ea678daf5f134a39c264a7bd978cb2b5b162bb20ad403b60e93baafd6e2",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleInfoLayer.prefab",
+        "client/assets/bundles/battle/prefabs/BattlePage.prefab"
+      ],
+      "width": 80,
+      "height": 46
+    },
+    {
+      "name": "battle-end_spr-wing-0.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-end_spr-wing-0.png",
+      "path": "client/assets/bundles/battle/atlas/battle-end_spr-wing-0.png",
+      "uuid": "631699e5-abed-46c6-8e62-7db778c3eb15",
+      "imageSha256": "d3d4a5061a284ca6a12e87db80466166e8ba6b9746f979ad1dc7716bbcfa572f",
+      "metaSha256": "2156d6d67648683b391852100ed59f446013b649c40ff6e3c3a23042f5fcc375",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattleEndLayer.prefab",
+        "client/assets/bundles/battle/prefabs/ChapterEndLayer.prefab",
+        "client/assets/bundles/battle/prefabs/ChapterEndView.prefab"
+      ],
+      "width": 360,
+      "height": 200
+    },
+    {
+      "name": "battle-scene_prog-1.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-scene_prog-1.png",
+      "path": "client/assets/bundles/battle/atlas/battle-scene_prog-1.png",
+      "uuid": "92b3cb79-3d60-4c9e-9902-76cc8c03f234",
+      "imageSha256": "c35d8929e14fa884c58a2ce8db6b031fc648bdd537cf46c6da9d383c1576a342",
+      "metaSha256": "a6a9670e9a4521cd58a6d62b222faa38b57301e1c5f7034c14a30e4031416d41",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattlePage.prefab"
+      ],
+      "width": 82,
+      "height": 18
+    },
+    {
+      "name": "battle-scene_prog-bg-1.png",
+      "oldPath": "client/assets/resources/ui/battle/battle-scene_prog-bg-1.png",
+      "path": "client/assets/bundles/battle/atlas/battle-scene_prog-bg-1.png",
+      "uuid": "b059f562-14be-4d16-a54a-5bedbde84877",
+      "imageSha256": "de14d26996ac137934542bdc5966cc7906dbb53e17285282725baf879a2a0a36",
+      "metaSha256": "d0f33f179b88afbdd7728b4a04d7b77d376bd1e47f02922d123469fc8cadd624",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattlePage.prefab"
+      ],
+      "width": 82,
+      "height": 18
+    },
+    {
+      "name": "hero_progress-hp-bg.png",
+      "oldPath": "client/assets/resources/ui/battle/hero_progress-hp-bg.png",
+      "path": "client/assets/bundles/battle/atlas/hero_progress-hp-bg.png",
+      "uuid": "ca48c9a8-4fec-4148-a4bb-6e1ac24f4ed4",
+      "imageSha256": "e1d3669057becfb29c9ccd1c203d645e62aea78fb8526f4048f1a3198d483432",
+      "metaSha256": "097869164571153b004803c16f2744555196b120d923cfb0b48f34d2bdf8fcae",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattlePage.prefab"
+      ],
+      "width": 180,
+      "height": 24
+    },
+    {
+      "name": "hero_progress-hp-green.png",
+      "oldPath": "client/assets/resources/ui/battle/hero_progress-hp-green.png",
+      "path": "client/assets/bundles/battle/atlas/hero_progress-hp-green.png",
+      "uuid": "43f8606e-142f-496c-9a40-6e2d02168d89",
+      "imageSha256": "0f3b89f59b2eb1c9fa20933ba59ce74a6f51ab648c6dffb98ac5b075c34ae1d4",
+      "metaSha256": "eee1fb1a1287e4712665d02ade41c7f950ec3dbc31162695fb852446edfbaa49",
+      "references": [
+        "client/assets/bundles/battle/prefabs/BattlePage.prefab"
+      ],
+      "width": 156,
+      "height": 8
+    },
+    {
+      "name": "hero_talk-tips.png",
+      "oldPath": "client/assets/resources/ui/battle/hero_talk-tips.png",
+      "path": "client/assets/bundles/battle/atlas/hero_talk-tips.png",
+      "uuid": "62ccc506-5267-418d-af68-cafb66138337",
+      "imageSha256": "14a3b5bec904cf6ba8de7777d5e03c5af2190e23aa915f3030ed05f5afd9e642",
+      "metaSha256": "a2f6bc58321505d0ee3865f9b7c469293362da9233f6b7a8855f2bd644c95ed3",
+      "references": [
+        "client/assets/bundles/battle/prefabs/MainChapterView.prefab"
+      ],
+      "width": 122,
+      "height": 68
+    }
+  ],
+  "remaining": [
+    "倍速图和动态结算标题保留resources路径",
+    "地图、角色骨骼、技能特效、高星动画和公共图片不迁移"
+  ],
+  "preview": {
+    "runId": "6ba7584fc4df4aa1a44795ee11dd11a8",
+    "account": "chapter_review",
+    "missions": [
+      2,
+      3
+    ],
+    "secondReturn": "倒计时返回挂机",
+    "thirdReturn": "战报关闭返回挂机",
+    "state": {
+      "maxCleared": 3,
+      "pendingBattleId": null,
+      "assetRevision": 6
+    },
+    "report": {
+      "attacker": "chapter_review",
+      "defender": "羽嘉森林3",
+      "missingNotice": ""
+    },
+    "warningsErrors": 0,
+    "screenshots": [
+      "../images/battle-atlas-victory-20261111.png",
+      "../images/battle-atlas-report-20261111.png"
+    ],
+    "limits": [
+      "本机预览按散图验证，不能证明发布合图及包体去重完成",
+      "未开放页面和隐藏旧节点仅做绑定校验，不冒充实际画面验收"
+    ]
+  },
+  "releaseRecord": "ui-atlas-release-20261111.json"
+}

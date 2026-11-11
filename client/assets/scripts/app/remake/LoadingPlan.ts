@@ -21,11 +21,11 @@ export const LOADING_PLAN: {
     login: [
         { config: GConfig.Language },
         { config: GConfig.LoadingTips },
-        ResourceAssetsUtils.describe("resources", "spine/jiemian", "SkeletonData"),
-        ResourceAssetsUtils.describe("resources", "spine/jindutiao", "SkeletonData"),
-        ResourceAssetsUtils.describe("resources", "ui/maps/map-bg-loading", "SpriteFrame"),
-        ResourceAssetsUtils.describe("resources", "audio/bgm-logo", "AudioClip"),
-        ResourceAssetsUtils.describe("prefabs", "ui/login/ServerPickerView", "Prefab"),
+        ResourceAssetsUtils.describe("spine", "jiemian", "SkeletonData"),
+        ResourceAssetsUtils.describe("spine", "jindutiao", "SkeletonData"),
+        ResourceAssetsUtils.describe("maps", "ui/map-bg-loading", "SpriteFrame"),
+        ResourceAssetsUtils.describe("audio", "bgm-logo", "AudioClip"),
+        ResourceAssetsUtils.describe("login", "prefabs/ServerPickerView", "Prefab"),
     ],
     enterGame: [
         { config: GConfig.OpenCondition },
@@ -36,15 +36,15 @@ export const LOADING_PLAN: {
         { config: GConfig.Item },
         { config: GConfig.Language },
         { config: GConfig.TimeLimitItem },
-        ResourceAssetsUtils.describe("remake-home", "RemakeHomeView", "Prefab", "bundles/remake-home/RemakeHomeView"),
-        ResourceAssetsUtils.describe("prefabs", "ui/bag/BagView", "Prefab"),
+        ResourceAssetsUtils.describe("home", "prefabs/RemakeHomeView", "Prefab", "bundles/home/prefabs/RemakeHomeView"),
+        ResourceAssetsUtils.describe("bag", "prefabs/BagView", "Prefab", "bundles/bag/prefabs/BagView"),
     ],
     background: [
-        ResourceAssetsUtils.describe("prefabs", "ui/bag/BagInfoView", "Prefab"),
-        ResourceAssetsUtils.describe("prefabs", "ui/hero/HeroListView", "Prefab"),
-        ResourceAssetsUtils.describe("prefabs", "ui/hero/HeroInfoView", "Prefab"),
-        ResourceAssetsUtils.describe("prefabs", "ui/battle/MainChapterView", "Prefab"),
-        // 自定义资源示例：{ bundle: "resources", path: "spine/shangcheng", type: "SkeletonData" }
-        // 图片路径须指向SpriteFrame，例如：ui/common/other_rare-4/spriteFrame。
+        ResourceAssetsUtils.describe("bag", "prefabs/BagInfoView", "Prefab", "bundles/bag/prefabs/BagInfoView"),
+        ResourceAssetsUtils.describe("hero", "prefabs/HeroListView", "Prefab"),
+        ResourceAssetsUtils.describe("hero", "prefabs/HeroInfoView", "Prefab"),
+        ResourceAssetsUtils.describe("battle", "prefabs/MainChapterView", "Prefab"),
+        // 自定义资源示例：{ bundle: "spine", path: "shangcheng", type: "SkeletonData" }
+        // 图片路径须指向SpriteFrame，例如：common包内ui/other_rare-4/spriteFrame。
     ],
 };

@@ -2,15 +2,14 @@
  * 通用 Prefab 加载和实例化：由 UIManager 与功能资源入口调用。
  * 资源范围和 UUID 由配置目录提供；缓存不保存角色业务状态。
  */
-import {assetManager, Button, Color, EditBox, instantiate, Node, Prefab, Sprite} from "cc";
+import {Button, Color, EditBox, instantiate, Node, Prefab, Sprite} from "cc";
 import {prefabInPlan} from "../../config/PrefabPlan";
 
 /**
- * 保留旧 UI 的 Prefab 在 assets/prefabs，不在 resources。
+ * 所有页面位于 assets/bundles/<包名>/prefabs，按模块归档。
  * 打开页面先检查当前玩法准入；后台预加载资源不代表页面已开放。
- * assets/prefabs 是名为 prefabs 的 Asset Bundle。
- * 路径相对 assets，例如 prefabs/ui/legacy-login/LoginPanel。
- * 复用ResourceAssets资源池及Bundle依赖元数据；编辑器导入未完成时保留原UUID回退。
+ * 路径相对 assets，例如 bundles/legacy-login/prefabs/LoginPanel。
+ * 复用ResourceAssets资源池及Bundle依赖元数据；失败保留原始原因，不按UUID绕过远程下载。
  */
 
 import { createAssetScope, ResourceAssetsUtils } from "./ResourceAssets";
@@ -30,7 +29,6 @@ export const PREFAB_IDLE_MS = 120_000;
 /** 每次维护最多保留16份无实例使用的预制体缓存，不限制活动实例或应用预加载资源。 */
 export const MAX_IDLE_PREFABS = 16;
 
-import {PREFAB_UUID} from "../../config/PrefabCatalog";
 
 
 /** 只保存正在加载的Promise，成功后移入显式应用缓存。 */
@@ -144,19 +142,15 @@ export function collectPrefabCache(now = monoNow()): number {
     return removed;
 }
 
-/** 按计划Bundle加载，编辑器导入尚未完成时保留原UUID回退。 */
+/** 按登记的Bundle加载预制体；失败不按UUID绕过远程下载，关闭后拒绝迟到结果。 */
 function loadPrefabOnce(assetPath: string, scope: ReturnType<typeof createAssetScope>): Promise<Prefab> {
     const parsed = splitAssetPath(assetPath);
     const descriptor = ResourceAssetsUtils.describe(parsed.bundle, parsed.inner, "Prefab", assetPath);
-    return (scope.load(descriptor) as Promise<Prefab>).catch((bundleErr: unknown) => {
-        if (bundleErr instanceof ResourceScopeClosed) {
+    return (scope.load(descriptor) as Promise<Prefab>).catch((error: unknown) => {
+        if (error instanceof ResourceScopeClosed) {
             throw new Error("Prefab所属应用已关闭");
         }
-        const uuid = PREFAB_UUID[assetPath];
-        if (!uuid) return Promise.reject(bundleErr);
-        return loadUuidPrefab(uuid).catch((uuidErr: unknown) => {
-            throw new Error(assetPath + " " + errText(bundleErr) + "；loadAny " + errText(uuidErr));
-        });
+        throw error;
     });
 }
 
@@ -225,24 +219,7 @@ function splitAssetPath(assetPath: string): { bundle: string; inner: string } {
     }
     const slash = assetPath.indexOf("/");
     if (slash <= 0 || slash >= assetPath.length - 1) {
-        throw new Error("Prefab 路径要相对 assets，例如 prefabs/ui/legacy-login/LoginPanel");
+        throw new Error("Prefab 路径要相对 assets，例如 bundles/legacy-login/prefabs/LoginPanel");
     }
     return {bundle: assetPath.slice(0, slash), inner: assetPath.slice(slash + 1)};
-}
-
-function loadUuidPrefab(uuid: string): Promise<Prefab> {
-    return new Promise((resolve, reject) => {
-        assetManager.loadAny({uuid}, (err, asset) => {
-            if (err || !asset) {
-                reject(err || new Error("loadAny 没有 " + uuid));
-                return;
-            }
-            resolve(asset);
-        });
-    });
-}
-
-function errText(err: unknown): string {
-    if (err instanceof Error && err.message) return err.message;
-    return "加载失败";
 }

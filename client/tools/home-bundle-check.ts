@@ -6,7 +6,7 @@ import { loadPrefab, clearPrefabCache } from "../assets/scripts/framework/assets
 
 /** 验证依赖先加载、失败重试及作用域引用释放。 */
 async function main(): Promise<void> {
-    const descriptor = ResourceAssetsUtils.describe("remake-home", "RemakeHomeView", "Prefab", "bundles/remake-home/RemakeHomeView");
+    const descriptor = ResourceAssetsUtils.describe("home", "prefabs/RemakeHomeView", "Prefab", "bundles/home/prefabs/RemakeHomeView");
     const ready = new Map<string, object>();
     const order: string[] = [];
     const prefab = new Prefab();

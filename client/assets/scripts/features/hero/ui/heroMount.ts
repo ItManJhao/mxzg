@@ -16,11 +16,11 @@ import { mountCcbiView } from "../../../framework/ui/PrefabLayout";
 
 import { assignContentSize, bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 
-const PAGE_SHELL = "prefabs/ui/common/PagePrefabShell";
+const PAGE_SHELL = "bundles/common/prefabs/PagePrefabShell";
 
-const LIST_BACKDROP = "prefabs/ui/common/ListBackdrop";
+const LIST_BACKDROP = "bundles/common/prefabs/ListBackdrop";
 
-const HERO_BACKDROP = ["ui/maps/map-bg-role-1"];
+const HERO_BACKDROP = ["maps/ui/map-bg-role-1"];
 
 export async function mountHeroListPage(host: Node, layer: Prefab): Promise<Node> {
     let shell: Node | null = null;

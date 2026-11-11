@@ -54,7 +54,7 @@ async function main(): Promise<void> {
   const requested: string[] = [];
   resources.load = (path: string, _type: unknown, done: Function) => {
     requested.push(path); const asset = new JsonAsset();
-    asset.json = JSON.parse(readFileSync("client/assets/resources/" + path + ".json", "utf8")); done(null, asset);
+    asset.json = JSON.parse(readFileSync("client/assets/bundles/" + path + ".json", "utf8")); done(null, asset);
   };
   await prepareStartupConfig();
   assert.deepEqual(requested.sort(), ["config/language", "config/loadingtips"]);

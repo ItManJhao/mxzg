@@ -200,7 +200,7 @@ function assertRootOwns(data: PrefabObj[], compIndex: number): void {
 }
 
 function checkPrefabBindings(): void {
-  const layer = prefabAt("client/assets/prefabs/ui/bag/BagView.prefab");
+  const layer = prefabAt("client/assets/bundles/bag/prefabs/BagView.prefab");
   const view = componentOn(layer, VIEW_TYPE);
   assertRootOwns(layer, view.index);
   assertNodeRef(layer, view.comp, "sprBox", 10, "spr_box");
@@ -220,7 +220,7 @@ function checkPrefabBindings(): void {
   assert(!view.comp.infoPrefab && !view.comp.dimPrefab, "背包不再绑定并组装详情与遮罩");
   assert(layer.some(row => row._name === "Background"), "完整背包预制体自带背景");
 
-  const cellData = prefabAt("client/assets/prefabs/ui/bag/BagItemView.prefab");
+  const cellData = prefabAt("client/assets/bundles/common/prefabs/BagItemView.prefab");
   const cell = componentOn(cellData, CELL_TYPE);
   assertRootOwns(cellData, cell.index);
   assertNodeRef(cellData, cell.comp, "frame", 5, "spr_frame");
@@ -228,7 +228,7 @@ function checkPrefabBindings(): void {
   assertCompRef(cellData, cell.comp, "count", 27, "cc.Label");
   assertNodeRef(cellData, cell.comp, "selectMark", 11, "spr_select");
   const slotPlate = "5e56f13c-937b-4e86-a0d7-b8abb2aa05fb@f9941";
-  const selectMeta = JSON.parse(read("client/assets/ui/bag/atlas/backpack_spr-select.png.meta"));
+  const selectMeta = JSON.parse(read("client/assets/bundles/common/item-atlas/backpack_spr-select.png.meta"));
   const selectFrame = selectMeta.subMetas.f9941.uuid;
   assert(spriteFrameOf(cellData, 5) === slotPlate, "spr_frame 底图应是 common/other_rare-0");
   assert(spriteFrameOf(cellData, 11) === selectFrame, "spr_select 仍是选中框");
@@ -240,13 +240,13 @@ function checkPrefabBindings(): void {
   const order = (layer[idOf(view.comp.content)!]._children || []).map((row) => row.__id__);
   assert(order[0] === idOf(view.comp.portrait), "node_portrait 画在羊皮纸和 spr_bg 下面");
 
-  const tabData = prefabAt("client/assets/prefabs/ui/bag/BagTabView.prefab");
+  const tabData = prefabAt("client/assets/bundles/bag/prefabs/BagTabView.prefab");
   const tab = componentOn(tabData, TAB_TYPE);
   assertRootOwns(tabData, tab.index);
   assertCompRef(tabData, tab.comp, "title", 13, "cc.Label");
   assertCompRef(tabData, tab.comp, "button", 7, "cc.Button");
 
-  const infoData = prefabAt("client/assets/prefabs/ui/bag/BagInfoView.prefab");
+  const infoData = prefabAt("client/assets/bundles/bag/prefabs/BagInfoView.prefab");
   const info = componentOn(infoData, INFO_TYPE);
   assertRootOwns(infoData, info.index);
   assertNodeRef(infoData, info.comp, "bg", 4, "spr_bg");
@@ -317,7 +317,7 @@ function checkRegistry(): void {
   const spec = viewSpecOf(BagView);
   assert(spec !== null, "BagView 未注册");
   assert(spec.id === "bag", "页面 id 应是 bag");
-  assert(spec.prefab === "prefabs/ui/bag/BagView", "预制路径");
+  assert(spec.prefab === "bundles/bag/prefabs/BagView", "预制路径");
   assert(spec.layer === UILayer.Page, "层应是 Page");
   assert(spec.cache === true, "背包启用有界实例缓存");
   assert(spec.allowMultiple === false, "背包不叠两份");
@@ -1111,8 +1111,8 @@ function checkInfoLifecycle(): void {
 /** 用实际导出配置验证首通奖励的分类，避免测试夹具与错误实现一起漂移。 */
 function checkRealItemCategories(): void {
   const catalog = new BagItemCatalog(
-    JSON.parse(readFileSync("client/assets/resources/config/item.json", "utf8")),
-    JSON.parse(readFileSync("client/assets/resources/config/language.json", "utf8")));
+    JSON.parse(readFileSync("client/assets/bundles/config/item.json", "utf8")),
+    JSON.parse(readFileSync("client/assets/bundles/config/language.json", "utf8")));
   assert(catalog.face(1004001, 1).category === "equip", "真实首通装备进入装备标签");
   assert(catalog.face(20204004, 30).category === "shard", "真实首通英雄碎片进入碎片标签");
   assert(catalog.face(900102, 4).category === "item" && !catalog.face(900102, 4).hiddenInBag, "真实道具可见");

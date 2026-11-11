@@ -1,5 +1,7 @@
 # 背包标准模块：维护与验收入口
 
+当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准（2026-11-11）：顶层ui/resources/prefabs已整合；旧构建去重数字仅是历史记录，1.6.0不再删除具有Bundle路径的原图。
+
 更新：2026-11-10。当前采用登录统一初始化与服务端资产同步，保留现有 Prefab、只读详情、SuperScroll 和唯一 BagModel。其他玩法暂停；旧查询模板已经退役。
 
 图片放置、自动图集及构建日志操作见[背包自动图集](bag-auto-atlas.md)，具体归属见[资源清单](bag-resource-inventory.md)。

@@ -1,0 +1,41 @@
+{
+  "status": "local-remote-release-sample-passed",
+  "buildTime": "2026-11-11 18:26:17",
+  "branch": "hao",
+  "committed": false,
+  "remoteBundles": [
+    "bag"
+  ],
+  "resourceServer": "http://127.0.0.1:7460/",
+  "environment": "独立H2内存测试服，GM关闭，loading_review夹具",
+  "result": "18:26:17新发布包已通过本地远程样板验收：remoteBundles=[bag]，从http://127.0.0.1:7460/真实下载配置、预制体和112020字节背景。独立内存测试服完成登录、背包四分类及详情、返回主城和重开。阻断背景请求时停在81%并显示重试；解除阻断后原页重试成功。正常流程无警告/错误，故障注入的预期错误单独记录。",
+  "categories": [
+    {
+      "id": 908101,
+      "count": 3
+    },
+    {
+      "id": 900102,
+      "count": 3
+    },
+    {
+      "id": 950001,
+      "count": 3
+    },
+    {
+      "id": 2000001,
+      "count": 3
+    }
+  ],
+  "normalFlowWarningsAndErrors": 0,
+  "backgroundBytes": 112020,
+  "dedupeRemainingFiles": 0,
+  "limits": [
+    "样板仍有本地依赖：BagItemView被结算页复用，选中图仍在prefabs包；公共资源、动态图标与店员骨骼未迁。下一步先梳理共用格子及公共资源归属，再决定推广范围。正式CDN、App/微信和真机内存尚未验收，不宣称全部资源远程化。",
+    "关闭重开通过，不据本次记录宣称同一实例复用或内存下降"
+  ],
+  "screenshots": [
+    "../images/bag-remote-release-20261111.png",
+    "../images/bag-remote-retry-20261111.png"
+  ]
+}

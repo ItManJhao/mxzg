@@ -624,8 +624,9 @@ export function instantiate(original: Prefab | Node | { _instantiate?: () => Nod
 export const assetManager = {
   /** 默认没有已加载Bundle，具体测试可覆盖为实际依赖夹具。 */
   getBundle(_name: string): any { return null; },
-  loadBundle(_name: string, cb: (err: Error | null, bundle: null) => void): void {
-    cb(new Error("backpack-view-check 不读 bundle"), null);
+  loadBundle(name: string, cb: (err: Error | null, bundle: any) => void): void {
+    // 测试适配保留完整包路径，不读取旧resources目录。
+    cb(null, { load: (path: string, type: any, done: any) => resources.load(name + "/" + path, type, done) });
   },
   loadAny(_request: unknown, cb: (err: Error | null, asset: null) => void): void {
     cb(new Error("backpack-view-check 不读 uuid"), null);

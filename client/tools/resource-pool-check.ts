@@ -57,15 +57,15 @@ async function main() {
   const planned = new Prefab();
   Object.assign(assetManager, { loadBundle: (name: string, done: Function) => {
     bundleRequests++;
-    assert.equal(name, "prefabs");
+    assert.equal(name, "bootstrap");
     done(null, { load: (path: string, type: unknown, callback: Function) => {
-      assert.equal(path, "ui/login/LoadingLayer"); assert.equal(type, Prefab); callback(null, planned);
+      assert.equal(path, "prefabs/LoadingLayer"); assert.equal(type, Prefab); callback(null, planned);
     } });
   } });
   const manifest = JSON.parse(readFileSync("docs/prefab-cleanup-manifest.json", "utf8"));
   await assert.rejects(loadPrefab(manifest.removed[0].path.slice(0, -7)), /不在当前重做计划/);
   assert.equal(bundleRequests, 0, "retired Prefabs are rejected before any engine request");
-  assert.equal(await loadPrefab("prefabs/ui/login/LoadingLayer"), planned);
+  assert.equal(await loadPrefab("bundles/bootstrap/prefabs/LoadingLayer"), planned);
   assert.equal(bundleRequests, 1, "planned core Prefabs still load normally");
   assert.deepEqual(prefabCacheSnapshot(), { pending: 0, cached: 1 });
   assert.equal(planned.refCount, 2, "共享资源池和页面缓存分别持有，清理时必须全部撤回");
@@ -77,21 +77,21 @@ async function main() {
   instance.destroy();
   assert.equal(planned.refCount, 2);
   const preload = createAssetScope();
-  await preload.load(ResourceAssetsUtils.describe("prefabs", "ui/login/LoadingLayer", "Prefab"));
+  await preload.load(ResourceAssetsUtils.describe("bootstrap", "prefabs/LoadingLayer", "Prefab"));
   assert.equal(collectPrefabCache(monoNow() + PREFAB_IDLE_MS), 1);
   assert.deepEqual(prefabCacheSnapshot(), { pending: 0, cached: 0 });
   assert.equal(planned.refCount, 1, "预加载仍通过共享池持有，闲置淘汰不得释放它");
-  assert.equal(await loadPrefab("prefabs/ui/login/LoadingLayer"), planned);
+  assert.equal(await loadPrefab("bundles/bootstrap/prefabs/LoadingLayer"), planned);
   assert.equal(bundleRequests, 1, "预加载仍在时重开复用资源池，不重新请求");
   preload.dispose();
   clearPrefabCache();
   assert.equal(planned.refCount, 0);
-  assert.equal(await loadPrefab("prefabs/ui/login/LoadingLayer"), planned);
+  assert.equal(await loadPrefab("bundles/bootstrap/prefabs/LoadingLayer"), planned);
   assert.equal(bundleRequests, 2, "全部拥有者释放后允许重新加载");
   assert.equal(collectPrefabCache(monoNow() + PREFAB_IDLE_MS), 1);
   assert.equal(planned.refCount, 0, "未预加载资源在到期后真正撤回全部加载器持有");
 
-  await loadPrefab("prefabs/ui/login/LoadingLayer");
+  await loadPrefab("bundles/bootstrap/prefabs/LoadingLayer");
   const survivingNode = new Node("SurvivingOwner");
   retainPrefabForNode(planned, survivingNode);
   clearPrefabCache();
@@ -102,7 +102,7 @@ async function main() {
   Object.assign(assetManager, { loadBundle: (_name: string, done: Function) => done(null, {
     load: (_path: string, _type: unknown, callback: typeof lateCallback) => { lateCallback = callback; }
   }) });
-  const obsolete = assert.rejects(loadPrefab("prefabs/ui/login/LoadingLayer"), /应用已关闭/);
+  const obsolete = assert.rejects(loadPrefab("bundles/bootstrap/prefabs/LoadingLayer"), /应用已关闭/);
   // 统一资源池和Bundle依赖查询是异步流程，等待请求进入引擎后再模拟迟到。
   for (let i = 0; i < 20; i++) { await Promise.resolve(); }
   assert.equal(collectPrefabCache(monoNow() + PREFAB_IDLE_MS), 0, "在途加载不能被闲置淘汰");
@@ -130,13 +130,13 @@ async function main() {
   Object.assign(assetManager, { loadBundle: (_name: string, done: Function) => done(null, {
     load: (path: string, _type: unknown, callback: Function) => {
       const prefab = new Prefab();
-      capacityAssets.set("prefabs/" + path, prefab);
+      capacityAssets.set("bundles/" + _name + "/" + path, prefab);
       callback(null, prefab);
     },
   }) });
   const capacityPaths = Array.from(readFileSync("client/assets/scripts/config/PrefabPlan.ts", "utf8")
     .matchAll(/"([^"]+)"/g), match => match[1])
-    .filter(path => path.startsWith("prefabs/")).slice(0, MAX_IDLE_PREFABS + 3);
+    .filter(path => path.startsWith("bundles/")).slice(0, MAX_IDLE_PREFABS + 3);
   for (const path of capacityPaths) await loadPrefab(path);
   const protectedNode = new Node("CapacityProtected");
   retainPrefabForNode(capacityAssets.get(capacityPaths[0])!, protectedNode);

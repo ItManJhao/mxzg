@@ -42,7 +42,7 @@ export interface BagOpenArgs {
 /** 背包数据与选中态展示；通用 SuperContent 负责列表布局。 */
 @view({
     id: "bag",
-    prefab: "prefabs/ui/bag/BagView",
+    prefab: "bundles/bag/prefabs/BagView",
     layer: UILayer.Page,
     cache: true,
     allowMultiple: false,
@@ -218,7 +218,7 @@ export class BagView extends BaseView<BagOpenArgs> {
 
     /** 校验 BagView 和格子资源绑定，缺失时报告资源路径与字段。 */
     private validateBindings(): void {
-        const path = "assets/prefabs/ui/bag/BagView.prefab / BagView: ";
+        const path = "assets/bundles/bag/prefabs/BagView.prefab / BagView: ";
         for (const [field, value] of Object.entries({
             bagScroll: this.bagScroll, tabContent: this.tabContent,
             tabPrefab: this.tabPrefab, content: this.content

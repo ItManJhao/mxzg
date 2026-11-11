@@ -52,9 +52,7 @@ const {ccclass, property} = _decorator;
 /** 应用生命周期入口：协调会话、页面和启动流程，具体装配交给独立组件。 */
 @ccclass("RemakeApp")
 export class RemakeApp extends Component {
-    /** 场景指定的登录预制体，不随会话切换重建配置。 */
-    @property(Prefab) loginPrefab: Prefab | null = null;
-    /** 启动加载画面，复用项目原有资源。 */
+    /** 场景持有本地bootstrap加载画面；远程资源失败时保留进度及重试入口。 */
     @property(Prefab) loadingPrefab: Prefab | null = null;
     /** 正式页面的场景宿主。 */
     @property(Node) pageHost: Node | null = null;
@@ -117,11 +115,11 @@ export class RemakeApp extends Component {
         }
     }
 
-    /** 开发分流完成后，装配正式会话、业务模块与页面。 */
+    /** 开发分流完成后装配会话与页面；场景只持有本地加载层，登录页通过页面注册异步下载。 */
     private async initialize(): Promise<void> {
         this.development = new DevelopmentPreview(this.pageHost, this.startupHost, () => this.isValid);
         if (await this.development.start()) return;
-        if (!this.loginPrefab || !this.loadingPrefab || !this.pageHost || !this.startupHost) throw new Error("Remake 场景未绑定页面/加载 Prefab 或启动宿主，请重新打开已更新的 Remake.scene");
+        if (!this.loadingPrefab || !this.pageHost || !this.startupHost) throw new Error("Remake 场景未绑定本地加载 Prefab 或启动宿主，请重新打开已更新的 Remake.scene");
         const {model, socket, service, servers} = await AccountComposition.create(this.socketUrl);
         if (!this.isValid) {
             socket.disconnect();
@@ -201,14 +199,14 @@ export class RemakeApp extends Component {
             body => service.authenticated(async token => (await socket.gmGrant(token, body)).body));
         if (PREVIEW) this.unregisterViews.push(registerView(GmView, {
             id: "gm",
-            prefab: "prefabs/ui/gm/GmView",
+            prefab: "bundles/gm/prefabs/GmView",
             layer: UILayer.Popup,
             cache: false,
             allowMultiple: false,
             hostId: "remake-modal",
             load: async () => {
                 await GameConfig.instance.prepare([GConfig.HeroType, GConfig.Item, GConfig.Language]);
-                return loadPrefab("prefabs/ui/gm/GmView");
+                return loadPrefab("bundles/gm/prefabs/GmView");
             }
         }));
         const openGm = () => {
@@ -237,7 +235,6 @@ export class RemakeApp extends Component {
         ui.install(this.navigation, {showToast: (text, duration) => this.notices?.show(text, duration)});
         this.unregisterViews.push(...ApplicationPages.register({
             pageHost: this.pageHost,
-            loginPrefab: this.loginPrefab!,
             valid: () => this.alive,
             model,
             service,

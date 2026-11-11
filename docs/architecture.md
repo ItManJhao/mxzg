@@ -39,6 +39,8 @@ RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。A
 
 背包地址与页面属性定义在BagView/BagInfoView的@view，ApplicationPages只注入开页前置条件。LoadingPlan是三个阶段唯一人工资源配置入口；第三阶段只准备显式常用目标，其余按需，不维护模块预加载清单或全目录队列。ApplicationResources调度，ResourceAssets/ResourcePool共享缓存、请求和引用；Prefab绑定依赖不抄写清单。
 
+所有资源目录统一到assets/bundles，旧顶层resources/ui/prefabs已移除。页面、图片按模块归属，骨骼/音频/配置等按素材类别归包；ResManager和ResourceAssets只解析包名/包内路径，复用原ResourcePool。bootstrap本地，其余远程，新包验收状态以当前进度为准。
+
 目录：app 负责装配，features 负责功能 Model/Controller/View，framework 负责通用事件/页面/资源，platform 负责 WS/Protobuf/协议路由，config 负责生成配置。通用层不得反向依赖具体业务 UI。
 
 ## 后端决定

@@ -1,13 +1,23 @@
 {
   "date": "2026-11-09",
   "scope": "用户已验收挂机四项修复收口；初始技能静态覆盖；结算权威展示数据第一批",
-  "acceptedByUser": ["挂机出场连续性", "攻击结束回待机", "挂机模型大小", "挂机与正式战斗独立站位", "沿用旧最高伤害口径并保留护盾待审"],
+  "acceptedByUser": [
+    "挂机出场连续性",
+    "攻击结束回待机",
+    "挂机模型大小",
+    "挂机与正式战斗独立站位",
+    "沿用旧最高伤害口径并保留护盾待审"
+  ],
   "authority": {
     "damage": "sum(abs(actualHpChange + shieldAbsorbed))，按来源单位分别累计",
     "takenDamage": "sum(-actualHpChange)，按目标单位分别累计",
     "experience": "同一发奖事务内读取前后等级、等级内经验及门槛，与settlement_json一起提交",
     "legacy": "旧战报统计缺失为null；旧结算回执不补造经验，不重算战报，不重复发奖",
-    "source": ["server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/BattleContext.java:377", "server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/HeroFightLog.java:31", "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua:277"],
+    "source": [
+      "server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/BattleContext.java:377",
+      "server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/HeroFightLog.java:31",
+      "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua:277"
+    ],
     "mvpRuleForNextView": "仅攻方，严格大于才替换；同值保留名册先出现者，全部0时使用首人"
   },
   "checks": {
@@ -20,6 +30,17 @@
     "layout": "12个战斗/结算Prefab与35处九宫格检查通过",
     "coverage": "113模板初始技能直接动作中50可解析、63有缺口；反馈三英雄通过"
   },
-  "notVerified": ["本轮未新做Creator画面验收，挂机视觉依据负责人本次验收", "完整胜利模板、最高伤害英雄展示及经验动画尚未接入", "完整治疗统计尚未接入", "更多竖屏及真机", "本轮未运行MySQL"],
-  "boundaries": ["清心概率及护盾疑点保留", "不做横屏", "未开放宝箱领取、快速战斗、英雄升级和穿脱", "未提交或推送"]
+  "notVerified": [
+    "本轮未新做Creator画面验收，挂机视觉依据负责人本次验收",
+    "完整胜利模板、最高伤害英雄展示及经验动画尚未接入",
+    "完整治疗统计尚未接入",
+    "更多竖屏及真机",
+    "本轮未运行MySQL"
+  ],
+  "boundaries": [
+    "清心概率及护盾疑点保留",
+    "不做横屏",
+    "未开放宝箱领取、快速战斗、英雄升级和穿脱",
+    "未提交或推送"
+  ]
 }

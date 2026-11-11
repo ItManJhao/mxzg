@@ -21,6 +21,7 @@ __pycache__/
 !/config/client-schema.json
 !/config/resource-catalog.json
 !/config/resource-missing.json
+!/config/ui-atlas-dedupe.json
 !/config/prefab-renames.json
 !/config/prefab-layout-changes.json
 !/config/prefab-acceptance.json

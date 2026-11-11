@@ -32,7 +32,7 @@ import {
 
 const { ccclass, property } = _decorator;
 
-const TALK_BUBBLE = "ui/common/other_spr-bubble-5";
+const TALK_BUBBLE = "common/ui/other_spr-bubble-5";
 
 /**
  * HeroInfoLayer。立绘挂在 node_equip 圆心，台词在 lbl_talk。
@@ -127,15 +127,20 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         this.skillButtons.forEach((button, slot) => { const click = () => { void UIManager.instance.openById("hero-skill", { heroId: this.selectedId, slot }).catch(error => GameLog.shared.classified("MODULE", "warn", "Hero", String(error))); }; button.node.on(Button.EventType.CLICK, click); this.skillStops.push(() => button.node.off(Button.EventType.CLICK, click)); });
         this.refresh();
     }
-    /** 读取最新实例和服务器基础属性；角色变化或实例删除即返回列表。 */
+    /** 读取最新实例与服务器属性，元素图标保留Bundle描述；角色变化或实例删除即返回列表。 */
     private refresh(): void {
         const model = HeroRosterModel.instance;
         const hero = model.snapshot.heroes.find(row => row.id === this.selectedId);
         if (!hero || model.roleKey !== this.owner) { this.goBack(); return; }
         const catalog = new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
         const elem = catalog.find(hero.templateId)?.elem;
-        const icons = [ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-5", "SpriteFrame")];
-        if (this.elementIcon) { this.elementIcon.active = !!elem; if (elem) ResManager.setSprite(this.elementIcon, [icons[elem].path]); }
+        const icons = [ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-5", "SpriteFrame")];
+        if (this.elementIcon) {
+            this.elementIcon.active = !!elem;
+            if (elem) {
+                ResManager.setSprite(this.elementIcon, icons[elem]);
+            }
+        }
         this.show({ templateId: hero.templateId, name: catalog.find(hero.templateId)?.name || "未知英雄", level: hero.level });
         if (this.summary) this.summary.string = "等级：" + hero.level + "    星级：" + hero.star + "    强化：" + (hero.stage ?? "—") + "\n" + (hero.panelStats ? (hero.panelStats.complete ? "英雄属性" : "当前属性（部分加成待恢复）") : "属性待同步");
         const stats = hero.panelStats?.values; const names = ["攻击", "生命", "防御", "速度"], values = stats ? [stats.atk, stats.hp, stats.def, stats.spd] : [];
@@ -144,7 +149,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         this.refreshEquipment(hero, version);
         if (this.skillIcons.length) HeroSkillUtils.present(hero).forEach((skill, i) => {
             const icon = this.skillIcons[i], sprite = icon?.getComponent(Sprite); if (sprite) { sprite.spriteFrame = null; sprite.grayscale = skill.id > 0 && skill.level === 0; }
-            if (icon) ResManager.setSprite(icon, [skill.icon || "ui/hero/hero-info_spr-new-9"], () => this.paintVersion === version && this.selectedId === hero.id);
+            if (icon) ResManager.setSprite(icon, [skill.icon || "hero/ui/hero-info_spr-new-9"], () => this.paintVersion === version && this.selectedId === hero.id);
             if (this.skillNames[i]) this.skillNames[i].string = skill.name;
             if (this.skillLevels[i]) this.skillLevels[i].string = skill.id ? HeroSkillUtils.status(skill) : "";
             if (this.skillButtons[i]) this.skillButtons[i].interactable = skill.id > 0 && skill.available;

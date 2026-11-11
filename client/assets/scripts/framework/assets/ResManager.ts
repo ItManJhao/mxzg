@@ -10,9 +10,9 @@ import { ResourceDescriptor } from "./ResourceTypes";
 export type SpriteSource = string | ResourceDescriptor<"SpriteFrame">;
 
 export class ResManager {
-    /** 按模块目录和原始文件名取得resources内图片路径，不查询名称清单。 */
+    /** 按模块目录和原始文件名取得Bundle内图片路径，不查询名称清单。 */
     public static ui(module: string, name: string): string {
-        return "ui/" + module + "/" + name;
+        return module + "/ui/" + name;
     }
 
     /** 品质0至6对应公共品质框；非法品质回退0，不维护逐项映射。 */
@@ -28,7 +28,7 @@ export class ResManager {
     private constructor() {}
 
     /** 获取图片并由owner节点持有；共享缓存和在途请求，销毁后拒绝迟到结果。
-     * 字符串为resources内不带/spriteFrame的路径；描述支持其他Bundle或UUID。
+     * 字符串为包名/包内不带/spriteFrame的路径；描述支持其他Bundle或UUID。
      * 失败向调用方拒绝，由setSprite处理日志和候选图回退。
      */
     public static getSpriteFrame(owner: Node, source: SpriteSource): Promise<SpriteFrame> {
@@ -74,7 +74,7 @@ export class ResManager {
                     return;
                 } catch (error) {
                     if (current()) {
-                        const path = typeof source === "string" ? "resources/" + source
+                        const path = typeof source === "string" ? "bundles/" + source
                             : source.bundle + "/" + source.loadPath;
                         GameLog.shared.warnOnce("FRAMEWORK", "ResManager", "IMAGE_LOAD_FAILED:" + path,
                             "图片加载失败：" + path + "；原因：" + String(error));
@@ -96,22 +96,22 @@ export class ResManager {
 
     /** 按英雄配置item_id生成基础头像路径；不以模板ID或当前星级替代。 */
     public static hero(id: number): string | null {
-        return Number.isSafeInteger(id) && id >= 1 ? "ui/hero/hero-icon_" + id : null;
+        return Number.isSafeInteger(id) && id >= 1 ? "hero/ui/hero-icon_" + id : null;
     }
 
     /** 按战报冻结portraitIconId生成头像路径，不查询当前英雄外观。 */
     public static portrait(id: number): string | null {
-        return Number.isSafeInteger(id) && id >= 1 ? "ui/hero/hero-icon_" + id : null;
+        return Number.isSafeInteger(id) && id >= 1 ? "hero/ui/hero-icon_" + id : null;
     }
 
     /** 按配置ID生成路径，不检查图片是否存在；非法ID返回null。 */
     public static head(id: number): string | null {
-        return Number.isSafeInteger(id) && id >= 0 ? "ui/hero/head-icon_" + id : null;
+        return Number.isSafeInteger(id) && id >= 0 ? "hero/ui/head-icon_" + id : null;
     }
 
     /** 按配置ID生成路径，不检查图片是否存在；非法ID返回null。 */
     public static skill(id: number): string | null {
-        return Number.isSafeInteger(id) && id >= 1 ? "ui/hero/skill-icon_" + id : null;
+        return Number.isSafeInteger(id) && id >= 1 ? "hero/ui/skill-icon_" + id : null;
     }
 
     /** 按配置ID生成路径，不检查图片是否存在；非法ID返回null。 */
@@ -124,6 +124,6 @@ export class ResManager {
         if (!Number.isSafeInteger(id) || id < 0 || !Number.isSafeInteger(id + 1005000)) {
             return null;
         }
-        return id === 0 ? "ui/bag/backpack_border-default" : "icons/item/backpack_" + (1005000 + id);
+        return id === 0 ? "bag/ui/backpack_border-default" : "icons/item/backpack_" + (1005000 + id);
     }
 }

@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "5fc34d1c-f2ef-4b0f-8f83-9b206c887dac",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "icons",
+    "priority": 8,
+    "bundleConfigID": "remote-assets"
+  }
+}

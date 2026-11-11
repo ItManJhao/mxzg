@@ -2,8 +2,8 @@
 """Generate the boot loading and hot-update prefabs.
 
 Writes:
-  client/assets/prefabs/ui/login/LoadingLayer.prefab
-  client/assets/prefabs/ui/login/UpdateLayer.prefab
+  client/assets/bundles/bootstrap/prefabs/LoadingLayer.prefab
+  client/assets/bundles/login/prefabs/UpdateLayer.prefab
 
 Sprites point at resources sprite-frame uuids (@f9941). No PNG is copied.
 There is no loading/update ccbi in the inventory, so the layout follows the
@@ -17,8 +17,8 @@ import os
 import uuid
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT_DIR = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "login")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "login", "prefabs")
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 
 LAYER_UI = 33554432
@@ -47,14 +47,14 @@ SPINE_NATIVE_W = 275
 SPINE_SCALE_X = round(FILL_W / float(SPINE_NATIVE_W), 4)
 
 SPRITES = {
-    "bg": "ui/login/bg-loading.jpg",
-    "frame": "ui/common/loading_spr-bg-2.png",
-    "track": "ui/common/loading_progress-bg.png",
-    "fill": "ui/common/loading_progress.png",
-    "head": "ui/common/loading_spr-progress-1.png",
-    "plate": "ui/common/loading_text-bg.png",
-    "retry": "ui/common/button_btn-orange-big-1.png",
-    "retry_p": "ui/common/button_btn-orange-big-2.png",
+    "bg": "login/ui/bg-loading.jpg",
+    "frame": "common/ui/loading_spr-bg-2.png",
+    "track": "common/ui/loading_progress-bg.png",
+    "fill": "common/ui/loading_progress.png",
+    "head": "common/ui/loading_spr-progress-1.png",
+    "plate": "common/ui/loading_text-bg.png",
+    "retry": "common/atlas/button_btn-orange-big-1.png",
+    "retry_p": "common/ui/button_btn-orange-big-2.png",
 }
 
 
@@ -436,7 +436,10 @@ def existing_uuid(meta_path):
 
 
 def write_prefab(builder):
-    path = os.path.join(OUT_DIR, builder.name + ".prefab")
+    """写入对应本地或远程目录，保留已有预制体UUID；不运行构建。"""
+    # 启动加载层单独留在本地包；更新页仍属于远程界面包。
+    output = os.path.join(ROOT, "client", "assets", "bundles", "bootstrap", "prefabs") if builder.name == "LoadingLayer" else OUT_DIR
+    path = os.path.join(output, builder.name + ".prefab")
     meta_path = path + ".meta"
     text = json.dumps(builder.objs, ensure_ascii=False, indent=2) + "\n"
     for banned in (".png", "resources/", "lbl-"):

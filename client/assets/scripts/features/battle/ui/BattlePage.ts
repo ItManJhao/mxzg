@@ -26,9 +26,9 @@ export { BATTLE_PREFAB_PATH };
 
 /** 顶栏加速钮。1 / 2 / 3 对 battle-scene_btn-speed-1 / 2 / 3。 */
 export const BATTLE_SPEED_ICON = [
-    "ui/battle/battle-scene_btn-speed-1",
-    "ui/battle/battle-scene_btn-speed-2",
-    "ui/battle/battle-scene_btn-speed-3",
+    "battle/ui/battle-scene_btn-speed-1",
+    "battle/ui/battle-scene_btn-speed-2",
+    "battle/ui/battle-scene_btn-speed-3",
 ];
 
 /** 加速图标随按钮节点持有，不留下无所有者的加载缓存。 */

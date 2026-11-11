@@ -11,7 +11,7 @@ import { ResManager } from "../../../framework/assets/ResManager";
 
 const { ccclass, property } = _decorator;
 
-const ELEMENT_FRAMES = [ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-5", "SpriteFrame")] as const;
+const ELEMENT_FRAMES = [ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-5", "SpriteFrame")] as const;
 
 /**
  * HeroListBoardView。羊皮纸、滚动、元素筛选和空间字绑在这一层上。
@@ -79,7 +79,7 @@ export class HeroListBoardView extends Component {
         return this.node.activeInHierarchy;
     }
 
-    /** 绑定一次元素筛选交互，并使用目录中明确登记的元素图标。 */
+    /** 绑定一次元素筛选交互，直接传入完整资源描述，防止包内ui路径被误认成Bundle名。 */
     bindElem(pick: (id: number) => void): void {
         if (this.elemBound) return;
         this.elemBound = true;
@@ -99,7 +99,7 @@ export class HeroListBoardView extends Component {
             button.node.active = true;
             button.transition = Button.Transition.NONE;
             button.interactable = true;
-            ResManager.setSprite(button.node, [ELEMENT_FRAMES[id].path]);
+            ResManager.setSprite(button.node, ELEMENT_FRAMES[id]);
             button.node.on(Button.EventType.CLICK, () => pick(id));
         }
     }

@@ -50,7 +50,7 @@ export class CampaignField {
             node.getComponent(UITransform)?.setContentSize(640 * cover, 1280 * cover);
         }
         if (bg)
-            ResManager.setSprite(bg, ["ui/chapter/hang/map01_B"]);
+            ResManager.setSprite(bg, ["chapter/ui/hang/map01_B"]);
         // Match the retained idle hall: the sky is a short distant layer, while
         // the transparent foreground/floor covers the entire portrait viewport.
         if (bg) { bg.name = "IdleSky"; bg.setPosition(0, 430, 0); bg.getComponent(UITransform)?.setContentSize(Math.max(640, view.getVisibleSize().width), 420); }

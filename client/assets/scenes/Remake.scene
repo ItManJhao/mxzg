@@ -293,10 +293,6 @@
     "_enabled": true,
     "__prefab": null,
     "_id": "177f81e0-69d0-546d-a35a-b2e0c3abac3b",
-    "loginPrefab": {
-      "__uuid__": "61d32fd8-b35a-5ddc-bf5f-ea5026c8c23b",
-      "__expectedType__": "cc.Prefab"
-    },
     "socketUrl": "ws://127.0.0.1:18080/api/v1/game/socket",
     "pageHost": {
       "__id__": 18

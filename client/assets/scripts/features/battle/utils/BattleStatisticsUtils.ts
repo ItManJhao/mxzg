@@ -23,7 +23,7 @@ export class BattleStatisticsUtils {
     /** 只解析历史头像ID；旧战报缺字段返回null，实际缺图由统一加载记录并回退。 */
     public static portrait(unit: BattleReplayUnit): string | null {
         const path = unit.portraitIconId == null ? null : ResManager.portrait(unit.portraitIconId);
-        return path?.startsWith("ui/hero/hero-icon_") ? path : null;
+        return path?.startsWith("hero/ui/hero-icon_") ? path : null;
     }
 
     /** 旧头像星级分组：1至5金星，6至9红星，10至13高星牌，14觉醒牌；缺失不补当前星级。 */

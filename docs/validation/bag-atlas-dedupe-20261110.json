@@ -7,16 +7,33 @@
   "removedFiles": 2,
   "removedBytes": 5974,
   "backup": "client/temp/bag-build-dedupe/1794302586814",
-  "checks": ["清理前检查2份5974字节", "执行后原图副本检查通过", "重复运行清理0份", "npm入口运行通过"],
+  "checks": [
+    "清理前检查2份5974字节",
+    "执行后原图副本检查通过",
+    "重复运行清理0份",
+    "npm入口运行通过"
+  ],
   "browser": {
     "cacheDisabledDuringVerification": true,
     "startup": "正常进入登录页",
-    "loadedPrefabs": ["BagView", "BagItemView", "BagInfoView"],
+    "loadedPrefabs": [
+      "BagView",
+      "BagItemView",
+      "BagInfoView"
+    ],
     "sharedTexture": "1d629baea@6c48a",
-    "textureSize": [126, 474],
+    "textureSize": [
+      126,
+      474
+    ],
     "warningsAndErrors": 0,
     "screenshot": "docs/images/bag-atlas-dedupe-20261110.jpg",
     "cleanup": "恢复缓存设置及视口，关闭测试页"
   },
-  "limits": ["每次Creator重新构建后需运行npm --prefix client run build:dedupe-bag，未增加编辑器自动钩子", "资源索引仍保留不可按路径加载且无使用者的原ImageAsset登记；不支持按其UUID直接加载", "发布包未登录日常服务器，完整背包交互沿用上一批独立预览结果", "仅处理当前背包两张图片，未扩到其他模块"]
+  "limits": [
+    "每次Creator重新构建后需运行npm --prefix client run build:dedupe-bag，未增加编辑器自动钩子",
+    "资源索引仍保留不可按路径加载且无使用者的原ImageAsset登记；不支持按其UUID直接加载",
+    "发布包未登录日常服务器，完整背包交互沿用上一批独立预览结果",
+    "仅处理当前背包两张图片，未扩到其他模块"
+  ]
 }

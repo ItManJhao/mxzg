@@ -8,7 +8,7 @@ import { HeroSkillUtils } from "../assets/scripts/features/hero/utils/HeroSkillU
 import { GameLog, consoleParts } from "../assets/scripts/core/GameLog";
 /** 从仓库真实导出表验证阶段解锁、星级等级、同等级语言和无技能位置。 */
 async function main(){
- const config=new GameConfig(async path=>JSON.parse(readFileSync("client/assets/resources/"+path+".json","utf8")));
+ const config=new GameConfig(async path=>JSON.parse(readFileSync("client/assets/bundles/"+path+".json","utf8")));
  await config.prepare([GConfig.HeroType,GConfig.HeroUpgrade,GConfig.HeroStar,GConfig.HeroSkill,GConfig.Language]);
  const hero={id:"00000000-0000-4000-8000-000000000001",templateId:10102002,level:1,star:2,stage:0};
  let skills=HeroSkillUtils.present(hero,config);assert.deepEqual(skills.map(s=>s.id),[101020021,101020022,0,0]);

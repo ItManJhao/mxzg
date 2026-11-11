@@ -1,0 +1,50 @@
+{
+  "status": "local-web-remote-migration-accepted",
+  "date": "2026-11-11",
+  "branch": "hao",
+  "oldTopLevelDirectoriesRemoved": [
+    "ui",
+    "resources",
+    "prefabs"
+  ],
+  "prefabs": 100,
+  "originalNonDirectoryUuids": 21902,
+  "missingOriginalUuids": 0,
+  "currentUniqueUuids": 21905,
+  "bundleCount": 105,
+  "checks": [
+    "startup",
+    "resources",
+    "staged-loading",
+    "resource-catalog",
+    "backpack",
+    "hero",
+    "hero-detail",
+    "hero-equipment",
+    "formation-view",
+    "battle",
+    "battle-presentation",
+    "main-chapter",
+    "home-presentation",
+    "home-bundle",
+    "login-presentation",
+    "super-scroll",
+    "remake-navigation",
+    "bindings",
+    "common-atlas",
+    "ui-atlas",
+    "ui-static-migration",
+    "resource-generated",
+    "Creator tsc",
+    "skill-audit",
+    "isolated-build"
+  ],
+  "notRun": [
+    "Python专项：当前python命令不可执行",
+    "Creator集中构建与浏览器实机"
+  ],
+  "dedupe": "1.6.0删除名单为空，保护所有可寻址原图",
+  "committed": false,
+  "autoBuildEvidence": "bundles-auto-build-20261111.json",
+  "runtimeEvidence": "bundles-final-review-20261111.json"
+}

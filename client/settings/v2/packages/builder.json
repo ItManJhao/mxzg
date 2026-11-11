@@ -1,3 +1,30 @@
 {
-  "__version__": "1.3.9"
+  "__version__": "1.3.9",
+  "bundleConfig": {
+    "custom": {
+      "remote-assets": {
+        "displayName": "远程游戏资源",
+        "configs": {
+          "web": {
+            "preferredOptions": {
+              "isRemote": true,
+              "compressionType": "merge_dep"
+            }
+          },
+          "native": {
+            "preferredOptions": {
+              "isRemote": true,
+              "compressionType": "merge_dep"
+            }
+          },
+          "miniGame": {
+            "preferredOptions": {
+              "isRemote": true,
+              "compressionType": "merge_dep"
+            }
+          }
+        }
+      }
+    }
+  }
 }

@@ -1,5 +1,7 @@
 # 背包当前界面资源归属清单
 
+当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准（2026-11-11）：顶层ui/resources/prefabs已整合；旧构建去重数字仅是历史记录，1.6.0不再删除具有Bundle路径的原图。
+
 核对日期：2026-11-10。覆盖 BagView、BagItemView、BagTabView、BagInfoView 的直接图片绑定，并扫描全项目 Prefab/Scene 的同 UUID 引用。保留预制体中的引用不等于对应玩法已开放。
 
 ## 静态绑定（18张）
@@ -38,9 +40,9 @@
 assets/ui/bag/
   atlas/       BagAtlas.pac、选中框、详情分隔线
   background/  map-bg-backpack-1.jpg
-assets/resources/ui/common/  共用按钮、页签、底框、占位图
-assets/resources/icons/item/  物品内容图标
-assets/resources/spine/shangcheng...  店员骨骼
+assets/bundles/common/ui/  共用按钮、页签、底框、占位图
+assets/bundles/icons/item/  物品内容图标
+assets/bundles/spine/shangcheng...  店员骨骼
 ```
 
 原 resources/ui/bag 的其余旧资源不是这四个当前页面的静态依赖，不能按目录名全合进背包。存在账号头像边框的动态使用，以及旧页面/效果资源，本批不删除、不重新分类其他模块。动态配置还可能组合资源名，本清单不宣称这些存量资源都未使用。
@@ -83,4 +85,4 @@ assets/resources/spine/shangcheng...  店员骨骼
 
 ### 当前执行状态
 
-18:20发布包已通过独立登录、四分类详情和返回重开，库存及版本未变。随后已迁移7张公共静态候选至assets/ui/common/atlas，并增加CommonAtlas.pac；原图片、meta、UUID和九宫格数据保持。当前跨模块Prefab绑定、生成一致性及类型检查通过，18:28新包已确认7张共用252×281图集，背包四分类详情、返回、英雄空列表通过，英雄详情及战斗预制体资源加载通过；7张公共原图副本随后已校验备份清理，完整英雄/战斗交互未重跑。
+18:20发布包已通过独立登录、四分类详情和返回重开，库存及版本未变。随后已迁移7张公共静态候选至assets/bundles/common/atlas，并增加CommonAtlas.pac；原图片、meta、UUID和九宫格数据保持。当前跨模块Prefab绑定、生成一致性及类型检查通过，18:28新包已确认7张共用252×281图集，背包四分类详情、返回、英雄空列表通过，英雄详情及战斗预制体资源加载通过；7张公共原图副本随后已校验备份清理，完整英雄/战斗交互未重跑。

@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "a7fbd302-d6db-4753-95e3-fb6021d127b3",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "maps",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

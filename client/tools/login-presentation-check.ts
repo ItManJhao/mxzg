@@ -7,8 +7,8 @@ import { upgradeSpine37Json as legacyUpgrade } from "../assets/scripts/framework
 
 const assets = join(process.cwd(), "client/assets");
 const read = (path: string): any => JSON.parse(readFileSync(join(assets, path), "utf8"));
-const prefab = read("prefabs/ui/account/AccountLoginView.prefab") as any[];
-const original = read("prefabs/ui/legacy-login/LoginPanel.prefab") as any[];
+const prefab = read("bundles/login/prefabs/AccountLoginView.prefab") as any[];
+const original = read("bundles/legacy-login/prefabs/LoginPanel.prefab") as any[];
 /** Creator脚本类ID支持保留UUID前2位或前5位的压缩格式；两种均纳入绑定核对。 */
 function scriptClassIds(uuid: string): string[] {
   const hex = uuid.replace(/-/g, "");
@@ -49,7 +49,7 @@ for (const key of ["_normalSprite", "_pressedSprite", "_hoverSprite", "_disabled
 assert.equal(component(prefab, node(prefab, "ServerBg"), "cc.Sprite")._spriteFrame.__uuid__,
   component(original, node(original, "ServerBg"), "cc.Sprite")._spriteFrame.__uuid__);
 const background = component(prefab, node(prefab, "Background"), "cc.Sprite");
-assert.equal(background._spriteFrame.__uuid__.split("@")[0], read("resources/ui/login/jp-login-static.png.meta").uuid);
+assert.equal(background._spriteFrame.__uuid__.split("@")[0], read("bundles/login/ui/jp-login-static.png.meta").uuid);
 
 const edit = component(prefab, node(prefab, "AccountInput"), "cc.EditBox");
 for (const key of ["_textLabel", "_placeholderLabel"]) {
@@ -67,7 +67,7 @@ assert.equal(prefab[view.loginButton.__id__], start);
 
 // Exercise the real old character data through the same converter used by both paths.
 assert.equal(legacyUpgrade, upgradeSpine37Json, "one shared compatibility implementation");
-const character = read("resources/spine/jiemian.json");
+const character = read("bundles/spine/jiemian.json");
 const untouched = JSON.stringify(character);
 const converted: any = upgradeSpine37Json(character);
 assert.equal(JSON.stringify(character), untouched, "source animation remains unchanged");
@@ -83,8 +83,8 @@ function withoutCurves(value: any): any {
 }
 assert.deepEqual(withoutCurves(converted.animations.stand), withoutCurves(character.animations.stand), "preserve all animation content apart from the required curve encoding change");
 assert.equal(upgradeSpine37Json(converted), converted, "conversion is idempotent");
-assert(!prefab.some(row => row.source?.__uuid__ === read("resources/spine/jiemian.json.meta").uuid), "登录页不再依赖人物骨骼；加载页独立保留");
-const png = readFileSync(join(assets, "resources/ui/login/jp-login-static.png"));
+assert(!prefab.some(row => row.source?.__uuid__ === read("bundles/spine/jiemian.json.meta").uuid), "登录页不再依赖人物骨骼；加载页独立保留");
+const png = readFileSync(join(assets, "bundles/login/ui/jp-login-static.png"));
 assert.equal(png.readUInt32BE(16), 1080);
 assert.equal(png.readUInt32BE(20), 2340);
 

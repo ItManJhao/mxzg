@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "d673c0fc-08a3-4978-bd0d-4ec70e1ee1f0",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "slzm",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

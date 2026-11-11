@@ -1,0 +1,257 @@
+{
+  "date": "2026-11-11",
+  "status": "release-passed",
+  "atlas": "client/assets/bundles/hero/atlas/HeroAtlas.pac",
+  "scope": "仅现有英雄页面预制体静态绑定，未开放任何按钮功能",
+  "rows": [
+    {
+      "name": "hero-info-2_btn_reset.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info-2_btn_reset.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info-2_btn_reset.png",
+      "uuid": "bf1172ae-91bf-45fc-ac5c-615994a5d7d0",
+      "imageSha256": "9a7cb1c9c86f416c0e448dfde21d0afd56f7ec2af50c7284848be6dd1c8be675",
+      "metaSha256": "e9680b16b0369597a4f27a76cdea1e8a1eacda4de23f4e97a5192a4186369094",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 54,
+      "height": 54
+    },
+    {
+      "name": "hero-info-lang_btn-astrolabe.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info-lang_btn-astrolabe.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info-lang_btn-astrolabe.png",
+      "uuid": "f9462bfb-bb65-4d44-8fec-da042b1b0cd4",
+      "imageSha256": "92a92141c3ff53e21299712d7165c8958b65849400bf85520e5f843a08a996d2",
+      "metaSha256": "b49aeaa6818ed773a793c257912a77fbb77c8c3bff663882a80afae2f04d255c",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroListView.prefab"
+      ],
+      "width": 84,
+      "height": 91
+    },
+    {
+      "name": "hero-info-lang_spr-evolve.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info-lang_spr-evolve.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info-lang_spr-evolve.png",
+      "uuid": "7b349315-4cb4-4654-b817-51c47b328df8",
+      "imageSha256": "c7dff59ef81630314d1aebc37026d39c62341c56f1caa5e7b6e036acd55567ac",
+      "metaSha256": "a9b9b3f1a1bad2e5cabf9e732f4f335a12e2bc59d7a5c5c3e5d0d5cfb31cdf77",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroListBoardView.prefab"
+      ],
+      "width": 182,
+      "height": 69
+    },
+    {
+      "name": "hero-info-lang_spr-hero-image-1.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info-lang_spr-hero-image-1.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info-lang_spr-hero-image-1.png",
+      "uuid": "8ce0ab1b-e4a8-4df9-bfd9-e9d996ec0fca",
+      "imageSha256": "51c67056fd2e46ee27893675add42a4c53ebde56334db7afcb964eb3e6794a0c",
+      "metaSha256": "05e1e680384f3b1d8a566420768d2d474c90e49cc675a83d9a526c5cbcd238d8",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroListView.prefab"
+      ],
+      "width": 84,
+      "height": 91
+    },
+    {
+      "name": "hero-info_btn-add.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_btn-add.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_btn-add.png",
+      "uuid": "c1f32621-90fc-4267-9bfb-ccf59884ccda",
+      "imageSha256": "3ea5942c9ba70e35bdc3305c650c3c7e7695e3c060d03c35be5b7ad55dcac2f6",
+      "metaSha256": "a1379af977a6bff765f9689dd3513766b673cf5641960b8b29ef9a9f094ce967",
+      "references": [
+        "client/assets/bundles/hero/prefabs/FormationView.prefab"
+      ],
+      "width": 93,
+      "height": 93
+    },
+    {
+      "name": "hero-info_btn-blue-8.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_btn-blue-8.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_btn-blue-8.png",
+      "uuid": "b38e7576-89a7-40aa-8dd1-57e032fdf8d5",
+      "imageSha256": "644d129c6d472da3153641b4c42d13d6cec68019d9d56a82df8f336078d6f85c",
+      "metaSha256": "56d97cae50e325ef11f7c6028b61e8031f5fd45430f776fd5e6113c09fabea20",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 150,
+      "height": 58
+    },
+    {
+      "name": "hero-info_btn-left.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_btn-left.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_btn-left.png",
+      "uuid": "f2ced75b-1ad6-4ac1-ae86-7213d9b14540",
+      "imageSha256": "219c551502181b0a9d80bb03ed63a9d86b23bb9bf2a6a479bfda29cf47d5b4b1",
+      "metaSha256": "c4337be302cefe8abf534f49d4facf15eb03104a03e95a874e58b89407e20308",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 40,
+      "height": 80
+    },
+    {
+      "name": "hero-info_btn-shezhi.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_btn-shezhi.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_btn-shezhi.png",
+      "uuid": "26ccc317-3977-4641-87aa-973412328c0c",
+      "imageSha256": "760505df39b0a154ca566499bd7141809529258cf58070af80dcba86537232cc",
+      "metaSha256": "2d5cbed9e06c1b10595ea23d33b49ef2e894eb9112c969f5116f1bad789abf7c",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 52,
+      "height": 52
+    },
+    {
+      "name": "hero-info_btn-zhankai.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_btn-zhankai.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_btn-zhankai.png",
+      "uuid": "4d2f87da-5065-41a2-8eae-f5da6232e6d1",
+      "imageSha256": "bba769c837f3d5ce6217d4173629932d520996990161aa4b61231437b1f9b8db",
+      "metaSha256": "f43125e0d1590faf53590404b0d3b1b80d0dcdf62557c7bcaffc014e95f82482",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 52,
+      "height": 52
+    },
+    {
+      "name": "hero-info_spr-circle.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_spr-circle.png",
+      "path": "client/assets/bundles/hero/background/hero-info_spr-circle.png",
+      "uuid": "c70f3f6e-fde3-4924-9821-0db68071497e",
+      "imageSha256": "d0478bc746c45a92a59b4e8a26b99b0063434ef2542a9cb4506cc2004b806b06",
+      "metaSha256": "10949cae7305de31f956b780c71b37386212458417bca9fdc1ca661c502033fa",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 520,
+      "height": 520
+    },
+    {
+      "name": "hero-info_spr-equip-bg-1.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_spr-equip-bg-1.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_spr-equip-bg-1.png",
+      "uuid": "15607bc9-086d-4f27-a41d-0dff7d898922",
+      "imageSha256": "667623f045674e337ecd2c2e10bead95460ff0aeb3d4e03524c189fc0c9b20cb",
+      "metaSha256": "9a790027fd5a1d387cd51d50b03b1b5145fe58dc4caa5074fa4c575ad1be2edd",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 106,
+      "height": 106
+    },
+    {
+      "name": "hero-info_spr-frame-artifact.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_spr-frame-artifact.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_spr-frame-artifact.png",
+      "uuid": "eb494376-af7f-4c95-b787-135bfc7b8b52",
+      "imageSha256": "2492ce1294d691bf4ddd11bbdb39e4f8b6fbd16a7c0c78c0bb19b1e922333703",
+      "metaSha256": "af8fefae8de3454385dbf51c2599f2cc7c42da4ab04bb35b4dcfa00a46ff526b",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 126,
+      "height": 126
+    },
+    {
+      "name": "hero-info_spr-frame-runes.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_spr-frame-runes.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_spr-frame-runes.png",
+      "uuid": "d686a6cf-8a52-47fb-914d-95c94cdfae81",
+      "imageSha256": "a35e80d39556b8700bf5117ce09ab4915fdb7e7895584d03988e1d7c762f68b4",
+      "metaSha256": "251a669c57f96f9cf75cbdc7db5d2d11b74a977c7041c5ef679f8909677f6c88",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 108,
+      "height": 118
+    },
+    {
+      "name": "hero-info_spr-hero-image-3.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_spr-hero-image-3.png",
+      "path": "client/assets/bundles/hero/background/hero-info_spr-hero-image-3.png",
+      "uuid": "5c7106c3-ccd1-4430-9c9e-5f6f231c6ad3",
+      "imageSha256": "4e1b03b70ebae1edec8ab05285f63f7aac9b170565d1637a947c903a2fcc332e",
+      "metaSha256": "32579461354ee27ddad93447687be8618419a09fcf64e74dd45ea179caac6e91",
+      "references": [
+        "client/assets/bundles/hero/prefabs/FormationView.prefab",
+        "client/assets/bundles/hero/prefabs/HeroListBoardView.prefab",
+        "client/assets/bundles/hero/prefabs/HeroSuggestLayer.prefab"
+      ],
+      "width": 578,
+      "height": 758
+    },
+    {
+      "name": "hero-info_spr-magic.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_spr-magic.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_spr-magic.png",
+      "uuid": "b32adef7-1063-48bd-88d2-a2c35402bb47",
+      "imageSha256": "e0c093ca44eaabf938de6bd12ae6cc8034b7fc62c60aae85094a586adb094c4a",
+      "metaSha256": "8fe92c15a394d638f82cce126a0e4710a64870314fb58f9462b3af02552f70c9",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 365,
+      "height": 102
+    },
+    {
+      "name": "hero-info_spr-name-bg-1.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_spr-name-bg-1.png",
+      "path": "client/assets/bundles/hero/atlas/hero-info_spr-name-bg-1.png",
+      "uuid": "31834a17-4e93-4fac-8dd6-74cff10c6fbd",
+      "imageSha256": "122af4916ae11ca60a1234ea85e784372cf56e5ff34d12343ea677d74dc890a9",
+      "metaSha256": "93c2ad79ad13e881f42a5731a66df74463ad3eb7945b9a7027560aedd9bc7907",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 282,
+      "height": 87
+    },
+    {
+      "name": "hero-info_spr-new-7.png",
+      "oldPath": "client/assets/resources/ui/hero/hero-info_spr-new-7.png",
+      "path": "client/assets/bundles/hero/background/hero-info_spr-new-7.png",
+      "uuid": "9e279cb8-a44a-48b9-9a67-34c7fd9ec97b",
+      "imageSha256": "6a66779cfff76e448eed006c6a17f92cf0709cc0d8654bbc92cd3890b50dc272",
+      "metaSha256": "d09b06ba6d3621307fda91f650f0115e21440ee592b6953ad5fad9a5372a849a",
+      "references": [
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab"
+      ],
+      "width": 622,
+      "height": 393
+    }
+  ],
+  "remaining": [
+    "动态背景map-bg-role-1仍由heroMount按路径加载",
+    "头像、技能、元素、星星与跨模块图片保留原路径"
+  ],
+  "preview": {
+    "runId": "a2949e5736934c798bd431c243b9d0d9",
+    "account": "equipment_review",
+    "heroes": [
+      "树精",
+      "独眼梦魇"
+    ],
+    "equipmentFrames": [
+      "backpack_1001001",
+      "backpack_1002001",
+      "backpack_1003001",
+      "backpack_1004001"
+    ],
+    "formationFaces": [
+      "hero-icon_20101001",
+      "hero-icon_20301001"
+    ],
+    "warningsErrors": 0,
+    "screenshot": "../images/hero-atlas-detail-20261111.png",
+    "note": "部分旧按钮当前隐藏，不把静态绑定检查等同于已开放画面验收"
+  },
+  "releaseRecord": "ui-atlas-release-20261111.json"
+}

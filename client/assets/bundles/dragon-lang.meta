@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "8c892b87-05b9-4a70-8ef4-eeef31ef4ed8",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "dragon-lang",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

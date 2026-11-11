@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "b925a412-77d5-4b83-83d1-4ac5ac2b3e27",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "countrywar-map-architecture",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

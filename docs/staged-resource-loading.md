@@ -1,78 +1,63 @@
-# 分阶段资源加载
+# Bundle目录与三段加载维护
 
-更新：2026-11-10。负责人已取消全量后台加载，三个阶段均通过LoadingPlan显式配置，未配置资源按需加载。不按模块另建预加载清单。
+## 当前批次已完成：Bundle目录整合与本地远程验收
 
-## 唯一配置入口
+2026-11-11 19:56集中构建已确认自动链路生效。before/after均执行bootstrap-preload-v1 v1.6.2，最终预载包含main、bootstrap，startupPreloadRepaired=false；本轮检查没有修改构建配置。104个远程包输出、循环依赖、本地启动依赖及背包共用资源归属均通过。本地资源6,220,784字节，远程资源665,636,594字节；字体仍是本地资源主要来源，未裁剪。见[自动构建证据](validation/bundles-auto-build-20261111.json)。
 
-client/assets/scripts/app/remake/LoadingPlan.ts 中：
-- login：登录界面出现前必须完成。
-- enterGame：登录成功、主城出现前必须完成。
-- background：主城显示后准备的常用目标；空数组表示不做额外后台准备。
+资源已实际从顶层ui/resources/prefabs整合到assets/bundles，assets下仅保留bundles、scenes、scripts。原有21,902个非目录资源UUID全部保留，100个Prefab索引已重生成。页面、图片、图集和背景按模块归属；图标、骨骼、音频、字体、配置按素材类别归包。未开放模块的旧素材保留所属类别。加载统一为包名/包内路径，沿用原ResourcePool及LoadingPlan三段显式配置，其余按需；原图进入Bundle后有动态地址，旧副本删除名单为空。
 
-支持按实际路径创建资源描述、明确Bundle内加载路径和类型，以及游戏配置：
-```ts
-ResourceAssetsUtils.describe("prefabs", "ui/bag/BagView", "Prefab")
-{ bundle: "resources", path: "spine/shangcheng", type: "SkeletonData" }
-{ config: GConfig.Item }
-```
-图片使用SpriteFrame的实际加载路径（带/spriteFrame）。预制体直接绑定依赖由Creator加载，不重复抄写。
+运行验收使用独立内存测试环境：背包四分类详情、英雄六元素/详情/技能、布阵、真实主线胜利/失败、奖励、经验动画、双方战报及返回挂机均已检查。经验实测80/360逐步增至280/360，与服务器回执一致；正常流程无资源警告/错误。19:42包运行证据与19:56包自动链路证据分开保存，不把之前手工补启动配置当成自动构建成功。见[运行证据](validation/bundles-final-review-20261111.json)。
 
-当前第二段保持主城、背包主体及必要配置；第三段默认仅BagInfoView、HeroListView、HeroInfoView、MainChapterView四个预制体。可以在同一个数组增减图片、动画、预制体或配置。店员、物品图标、英雄立绘等未配置资源使用时加载，不扫描资产目录。
+本批可以收口，不再重复要求构建。真实CDN、原生/微信/真机及长期内存仍待后续授权；Python工具路径已调整但专项尚未运行。字体裁剪仅记录为体积来源，不在本批改变表现。玩法范围、WS＋Protobuf、服务端权威与幂等结算保持；宝箱领取、快速战斗、升级及穿脱继续关闭。
 
-## 页面与资源获取
+在hao开发，未提交推送，main合并由负责人决定；独立测试服务已关闭。后续工作由负责人选择，不自动恢复暂停玩法。
 
-页面地址和属性仍在@view注册中定义。ApplicationPages只注入打开前置条件；ApplicationResources执行阶段任务，不自动带入同模块其他窗口。
+## 人工修改入口
 
-已加载资源直接复用；在途资源共享请求；尚未加载的资源在点击或显示时立即请求。PrefabLoader、配置读取与图片复用ResourceAssets/ResourcePool。统一图片获取入口是ResManager.getSpriteFrame(owner, source)，ResManager仅管理赋图和迟到保护。物品图标直接解析配置，ResManager仅提供目录与路径规则，不维护图标存在性清单；合法ID直接生成地址，ResManager在实际加载失败时按路径去重记录原因，页面继续按候选图回退。角色头像和边框包含默认图候选；ResManager品质框按品质查询，均不决定预加载范围。
+- 页面：assets/bundles/模块/prefabs，与View的@view地址一致，例如bundles/bag/prefabs/BagView。修改页面布局直接编辑Prefab。
+- 动态图：assets/bundles/模块/ui，取图使用ResManager.ui(模块, 文件名)，例如common/ui/other_rare-4。ui只是模块内图片子目录，不是旧顶层目录。
+- 图集：模块atlas（共用物品选中图位于common/item-atlas），由Creator自动合图。
+- 大图：模块background或共用maps/ui；不为合图强行缩小大图。
+- 动态素材：icons、spine、audio、font、config各按类别归包，保留原文件名与UUID。
+- 阶段：LoadingPlan.ts是唯一人工时机配置，不把同模块全部资源自动加入预加载。
 
-project-loading.json、全目录生成逻辑及构建前索引检查已移除。自动图集、原UUID及构建后9张原图去重保留。ResourceCatalog和CommonUiResources已删除。生成器只保留Prefab UUID回退和玩法准入，不生成图片清单。
+示例：ResourceAssetsUtils.describe("hero", "prefabs/HeroListView", "Prefab")；其源地址自动为bundles/hero/prefabs/HeroListView。直接图片路径为包名/包内路径，ResManager负责SpriteFrame后缀，底层按Bundle加载。没有旧resources别名或运行时文件存在性清单。
 
-## 生命周期和缓存缺口
+## 集中构建
 
-已有节点/作用域引用释放、迟到响应拒绝；节点销毁时撤回持有，最后拥有者释放后交给引擎回收。缓存页面关闭可能只隐藏，因此继续持有资源。阶段预加载、Prefab缓存和部分公共资源目前保留至应用销毁。
+首次使用固定钩子入口需完整退出Creator并重新打开工程。扩展重载可能保留旧构建工作进程，包版本号不能证明代码已更新。必须看到before、after两行bootstrap-preload-v1 v1.6.2；稳定hooks.js会每次重读build-hooks.cjs，after读取最终settings并在缺失时补齐bootstrap，再复读校验。19:56真实自动钩子已通过；日志及最终配置见[证据](validation/bundles-auto-build-20261111.json)。
 
-尚无统一闲置超时清理、容量上限及页面缓存淘汰策略。后续清理必须保护正在显示、播放及在途资源，区分常驻与可回收资源，不能定时清空全部缓存。本批没有声称完成长期内存管理。
+扩展1.6.2在写settings前将bootstrap加入assets.preloadBundles（只准备元数据，不预载远程整包），构建后复读最终文件并补齐缺失。main有deps不代表引擎会自动预载这些包，不能等RemakeApp启动后再补。19:22初包曾因此失败，详细复验见[记录](validation/bundles-release-20261111.json)。
 
-## 验证
+重新打开Creator让它导入迁移并识别所有Bundle。沿用Web手机端、竖屏、Remake场景；“包含的Bundles”选全部，bootstrap本地，其余沿用远程游戏资源配置；主包不要勾远程。资源服务器地址保持http://127.0.0.1:7460/。当前检查按关闭MD5缓存和调试模式的产物验证。
 
-进度取实际完成目标数，失败不算成功；后台逐项让帧、停止后不再排队、失败可重试。专项覆盖三个显式数组、未配置目标按需、共享请求、取消、重试及释放。
+    node client/tools/remote-bundles-check.cjs client/build/bag-atlas-review
+    node client/tools/ui-atlas-check.cjs --build-output client/build/bag-atlas-review
+    node client/tools/serve-remote-bundles.cjs client/build/bag-atlas-review 7460
 
-20:46旧包已验证登录、主城、背包四分类和详情、返回重开、库存不变；全量试验在负责人取消后停止于18,276/21,684，不宣称全量完成。发现旧零字节splice.ss会使引擎报原生缺失；全量链已删除，保留原生空壳拒绝检查。该旧包不能代替当前配置第三段的新包验收。
+第一个命令检查源码/构建包一致、循环依赖、本地启动依赖和产物大小。第二个验证背包与共用格子归属。第三个只提供本机远程资源，不提供游戏API。浏览器仍使用独立测试服WS＋Protobuf。
 
-日常使用Creator本机预览复验；发布包留待整批收口，不为每项脚本修改重复构建。玩法范围不变，先不提交推送。
+远程包不等于整包立即下载，也不等于常驻内存；加载元数据后只加载目标及依赖。离线启动、真实下载重试及首包体积以新构建实测为准。105个目录包含未开放模块的旧素材分类，不等于105个已开放功能。
 
+## 自动图集与旧删除扩展
 
-### 图片入口合并（2026-11-11）
+图集继续构建；所有源图迁入Bundle后具有动态加载路径，config/ui-atlas-dedupe.json的删除名单为空。UI资源构建检查1.6.2因此应报告0项，不再按历史43项删图。构建体积仍需检查，不以合图等同于去重。
 
-人工入口为client/assets/scripts/framework/assets/ResManager.ts。它是手写的路径与显示逻辑，不再由生成器生成整份图标索引；物品目录规则直接保存在ResManager。旧IconCatalog和SpritePaint文件已删除，无兼容转发。底层ResourceAssets/ResourcePool继续管理作用域、缓存和请求。
+## 人工维护入口与缓存边界
 
-```ts
-ResManager.setSprite(iconNode, ResManager.skill(skillId));
-ResManager.setSprite(faceNode, [ResManager.head(headId) || defaultPath, defaultPath]);
-const frame = await ResManager.getSpriteFrame(ownerNode, imagePath);
-ResManager.setSprite(iconNode, null); // 清空并阻止旧请求再次赋图
-```
+| 修改目标 | 代码入口 | 当前参数或规则 |
+|---|---|---|
+| 三阶段准备目标 | app/remake/LoadingPlan.ts | login、enterGame、background三个数组 |
+| 页面地址与实例缓存 | 对应View的@view注册 | 背包启用cache:true，英雄/战斗不启用 |
+| 统一取图 | framework/assets/ResManager.ts | 路径规则、获取、赋图及迟到保护 |
+| 页面闲置回收 | framework/ui/UIManager.ts | cacheIdleMs=120000毫秒，maxCachedPages=2 |
+| 预制体闲置回收 | framework/assets/PrefabLoader.ts | PREFAB_IDLE_MS=120000毫秒，MAX_IDLE_PREFABS=16 |
+| 预制体维护频率 | app/remake/RemakeApp.ts | 前台累计每30秒检查 |
 
-setSprite支持单个路径/描述或候选数组，第三参数可传页面有效性判断。缺图按路径去重记录；直接getSpriteFrame失败保留Promise拒绝，由调用者处理。三段预加载仍只配置LoadingPlan，未接入定时清理或页面缓存策略。
+以上路径相对client/assets/scripts。参数只在代码入口维护，不增加模块清单。
 
-## 背包界面缓存当前状态（2026-11-11）
+阶段预加载由ApplicationResources持有至应用销毁。背包关闭后保留实例120秒，隐藏期间清理业务监听，重开读取最新Model；根页面替换和卸载清空闲置页面。当前显示与在途打开不参与淘汰。
 
-背包已启用有界实例缓存：关闭后保留120秒，全局最多2个闲置页面；参数在UIManager集中定义。重开读取最新Model，无参数默认道具分类，重新适配屏幕。定时检查只处理闲置实例，当前显示与在途打开不参与淘汰；根页面替换和卸载清空缓存。
+PrefabLoader保护实际实例，最后一个实例退出后开始闲置计时。维护时淘汰超时或最久未使用的超额项；16份仅指闲置条目，不是内存预算或全部资源上限。前台通常120–150秒回收，后台暂停会推迟。页面实例和预制体计时独立，背包可能先等待实例120秒，再开始预制体120秒。
 
-Creator本机独立环境复验通过：连续切换10次复用同一实例，关闭后业务监听归零；真实等待120秒后缓存归零且计时器停止，重新打开创建新实例；注销后旧缓存清空。首次及淘汰后打开约6ms，缓存重开日志为0ms（整数精度，不是绝对零耗时）。专项测试覆盖最新库存重读、容量上限、活动实例保护、取消和注销清理。
-
-资源边界：阶段预加载由ApplicationResources持有，预制体由PrefabLoader应用缓存持有，本轮不清理这些基础资源。到期前后预制体缓存均2份，资源池作用域25→22、条目85→82。CDP JavaScript堆快照约74.5MB→69.5MB，未强制GC，不能据此认定下降全部来自背包，也不代表GPU纹理或进程总内存；真机和长时间趋势待验。按需Prefab长期持有已在后续本轮收敛，见预制体闲置回收章节；通用资源容量策略仍待实施。见[缓存验收记录](validation/bag-cache-20261111.json)。未提交推送。
-
-## 预制体闲置回收当前实现（2026-11-11）
-
-PrefabLoader按路径分别持有资源池作用域，成功缓存另持有一份引用。spawnPrefab由实例节点持有依赖，UIManager保护异步页面挂载与弹窗实例；节点销毁时撤回自身引用。最后一个实例退出后开始闲置计时，初始120秒；RemakeApp每30秒检查一次，因此前台运行通常在120–150秒内撤回加载器缓存。后台暂停会推迟检查，重回前台后继续，不承诺后台精确计时。
-
-LoadingPlan不变：显式目标继续由ApplicationResources持有。背包详情在第三阶段内，清理加载器缓存不等于卸载预加载资源。页面实例缓存与资源缓存计时分开：背包实例先保留120秒，节点销毁后才开始其预制体的闲置计时。普通动态资源仍按现有ResourcePool拥有者归零释放，本批没有新增第二套图片缓存或通用闲置纹理池。
-
-自动专项已覆盖共享池复用、在途请求保护、实例持有、重复绑定不加引用、预加载独立持有、无预加载资源归零、重新加载及应用关闭后的迟到回包。本机预览已通过：详情显示引用3，关闭后2，关闭113秒观察尚未回收，169秒观察加载器缓存3→2、详情引用2→1，预加载资源仍有效；重开详情引用恢复3、画面正常、无警告错误。观察时间不是精确触发时间。未预加载资源归零及重新请求由自动专项覆盖，本轮没有移除LoadingPlan目标。见[验收记录](validation/prefab-cache-20261111.json)。真机/GPU内存、长期压力及容量策略仍待验。未提交推送。
-
-## 保存点与容量收口（2026-11-11）
-
-负责人要求的当前成果已提交并推送origin/main：00f6b084，包含资源入口收敛、静态登录、背包实例缓存及预制体闲置回收与既有本地修改。之后继续开发的容量上限尚未提交推送。
-
-PrefabLoader新增MAX_IDLE_PREFABS=16：每次维护按最近访问/最后实例退出时间排序，将无实例使用的缓存控制在16份，超时项仍回收；活动实例不计入这个闲置上限，预加载拥有者不受影响。上限是条目数，不是显存或总内存预算，也不是加载完成即强制限制；沿用应用每30秒维护。容量、最近访问保护、实例退出后纳入限额的回归通过，资源/背包/编译兼容与类型检查通过。Creator六轮切页和结算返回已通过；16份超限分支由自动回归覆盖，发布包仍待集中验收。
+加载器只撤回自己的引用，阶段预加载或其他实例仍持有时资源继续有效。普通动态图沿用ResourcePool最后拥有者退出即撤回引用；部分公共资源有独立常驻拥有者。未新增通用图片闲置池或强制GC，引用释放不等于进程内存立即下降，JavaScript堆也不代表GPU内存。

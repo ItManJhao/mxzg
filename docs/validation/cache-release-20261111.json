@@ -1,0 +1,107 @@
+{
+  "date": "2026-11-11",
+  "status": "release-passed",
+  "branch": "hao",
+  "build": "client/build/bag-atlas-review",
+  "buildTime": "2026-11-11 16:41:57",
+  "runId": "c6e6655dc228474c8b412726e8930a18",
+  "isolation": "随机回环端口62224、独立H2内存库，GM关闭",
+  "dedupe": {
+    "manifest": "build-oJ6UCl",
+    "files": 9,
+    "bytes": 35481,
+    "remainingFiles": 0
+  },
+  "cache": {
+    "idlePageMs": 120000,
+    "maxIdlePages": 2,
+    "maxIdlePrefabs": 16,
+    "firstBag": "Comp.1838",
+    "reusedAfterSettlement": "Comp.1838",
+    "closedAtMonotonicMs": 115706.1,
+    "expiredObservedMonotonicMs": 235758.5,
+    "cachedAfterExpiry": 0,
+    "reopenedBag": "Comp.14575",
+    "detailRefsAfterClose": 2,
+    "detailRefsAfterMaintenance": 1,
+    "detailRefsAfterReopen": 3,
+    "logoutCached": 0
+  },
+  "battle": {
+    "missions": [
+      2,
+      3
+    ],
+    "secondReturn": "胜利倒计时返回挂机",
+    "thirdReturn": "胜利页打开双方战报，关闭返回挂机",
+    "report": {
+      "attacker": "chapter_review",
+      "defender": "羽嘉森林3",
+      "missingNotice": ""
+    },
+    "finalState": {
+      "assetRevision": 6,
+      "maxCleared": 3,
+      "pendingBattleId": null
+    },
+    "newEquipmentAfterSecond": 1004001
+  },
+  "bag": {
+    "account": "loading_review",
+    "categories": [
+      "装备",
+      "道具",
+      "碎片",
+      "精灵"
+    ],
+    "details": [
+      "灵戒",
+      "英雄进阶石",
+      "火系精英碎片",
+      "波纹精灵"
+    ],
+    "finalItems": [
+      {
+        "id": 900102,
+        "quantity": 3
+      },
+      {
+        "id": 908101,
+        "quantity": 3
+      },
+      {
+        "id": 950001,
+        "quantity": 3
+      },
+      {
+        "id": 2000001,
+        "quantity": 3
+      }
+    ],
+    "routes": [
+      "hero",
+      "remake-campaign",
+      "remake-home",
+      "bag"
+    ],
+    "portrait": [
+      393,
+      852
+    ],
+    "screenshot": "../images/cache-release-bag-20261111.png"
+  },
+  "warningsErrors": 0,
+  "checks": [
+    "resources",
+    "main-chapter",
+    "backpack",
+    "staged-loading",
+    "git diff --check"
+  ],
+  "limits": [
+    "浏览器验收，不代替手机真机、GPU内存及长期压力测量",
+    "16份容量超限由自动回归覆盖，本次未刻意加载超过16份闲置预制体",
+    "失效子节点先销毁由回归覆盖，发布包检查实际胜利关闭流程",
+    "引用计数减少不等于全部纹理或进程内存立即释放"
+  ]
+}

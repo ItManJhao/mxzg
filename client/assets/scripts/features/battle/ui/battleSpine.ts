@@ -17,7 +17,7 @@ import { BattleAnimationClip } from "../utils/BattleAnimationCatalog";
 export interface SpineActor {
     /** 骨架节点。挂机行军不挪父格，父格留在地砖槽上。 */
     readonly node: Node;
-    /** resources/spine 下的套名。演武用它找技能帧。 */
+    /** bundles/spine 下的套名。演武用它找技能帧。 */
     readonly stem: string;
     /** 查询已加载骨架是否含指定动作；未加载或已销毁返回 false，不改变当前动作。 */
     hasGesture(name: string): boolean;

@@ -19,7 +19,7 @@ const BOOT_CAST_STEM = "jiemian";
 const BOOT_CAST_CLIP = "stand";
 
 /** LoadingLayer / UpdateLayer 的底图。logo 阶段用同一张，不再另铺黑底。 */
-export const LOADING_BG_FRAME = "ui/maps/map-bg-loading";
+export const LOADING_BG_FRAME = "maps/ui/map-bg-loading";
 /**
  * 和登录页共用 768×1300 底图与 cover 规则，人物也走同一套宽度适配。
  * 和 LoadingLayer 预制里 Bg 的 contentSize 一致。
@@ -27,8 +27,8 @@ export const LOADING_BG_FRAME = "ui/maps/map-bg-loading";
 export const LOADING_BG_DRAW_W = 768;
 export const LOADING_BG_DRAW_H = 1300;
 
-export const LOADING_PREFAB_PATH = "prefabs/ui/login/LoadingLayer";
-export const UPDATE_PREFAB_PATH = "prefabs/ui/login/UpdateLayer";
+export const LOADING_PREFAB_PATH = "bundles/bootstrap/prefabs/LoadingLayer";
+export const UPDATE_PREFAB_PATH = "bundles/login/prefabs/UpdateLayer";
 
 const FILL_W = 524;
 const FILL_LEFT = -FILL_W / 2;

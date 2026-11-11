@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "2091e10c-34b4-4e0c-886c-61165f7a1eb1",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "exotic-adventure",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

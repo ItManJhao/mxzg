@@ -44,7 +44,7 @@ foreach ($name in @('package.json', 'tsconfig.json')) {
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'remake-h5.build.json') -Destination (Join-Path $workspace 'remake-h5.build.json') -Force
 $sourceSha256 = [ordered]@{}
-foreach ($inputPath in @('assets/prefabs/ui/hero/HeroSelectLayer.prefab', 'assets/prefabs/ui/hero/HeroIconCell.prefab', 'assets/scripts/features/hero/ui/FormationView.ts', 'assets/scripts/features/hero/ui/FormationSlotView.ts')) {
+foreach ($inputPath in @('assets/bundles/hero/prefabs/HeroSelectLayer.prefab', 'assets/bundles/hero/prefabs/HeroIconCell.prefab', 'assets/scripts/features/hero/ui/FormationView.ts', 'assets/scripts/features/hero/ui/FormationSlotView.ts')) {
     $sourceSha256[$inputPath] = (Get-FileHash -LiteralPath (Join-Path $workspace $inputPath) -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 $stdout = Join-Path $logs 'creator.stdout.log'

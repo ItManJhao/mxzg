@@ -1,3 +1,4 @@
+/** 英雄页面专项：验证真实名册、页面生命周期、资源Bundle路由与异步格子复用，不连接游戏服务器。 */
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { HeroInfoView } from "../assets/scripts/features/hero/ui/HeroInfoView";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
@@ -21,7 +22,7 @@ import { readFileSync } from "fs";
 
 import { join } from "path";
 
-import { Button, director, Director, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UITransform } from "cc";
+import { assetManager, Button, director, Director, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UITransform } from "cc";
 
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
 
@@ -119,7 +120,7 @@ function checkPrefab(): void {
   const viewType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroListView.ts.meta"));
   const boardType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroListBoardView.ts.meta"));
   const cellType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroIconCellView.ts.meta"));
-  const layer = loadPrefab("client/assets/prefabs/ui/hero/HeroListView.prefab");
+  const layer = loadPrefab("client/assets/bundles/hero/prefabs/HeroListView.prefab");
   const view = component(layer, viewType);
   assert((layer[1]._components || []).some((row) => row.__id__ === view.index), "HeroListLayer 根上有 HeroListView");
   assertComp(layer, view.comp, "btnHero", 38, "cc.Button");
@@ -144,7 +145,7 @@ function checkPrefab(): void {
   assert(uiHeight(layer, idOf(layer[idOf(view.comp.bookTitle)].node)) === 32, "图鉴页签字有高度");
   assert(uiHeight(layer, idOf(layer[idOf(view.comp.dragonTitle)].node)) === 32, "圣龙页签字有高度");
 
-  const boardData = loadPrefab("client/assets/prefabs/ui/hero/HeroListBoardView.prefab");
+  const boardData = loadPrefab("client/assets/bundles/hero/prefabs/HeroListBoardView.prefab");
   const listConfig=boardData.find((row:any)=>row.columns!==undefined) as any;
   assert(listConfig.columns===4 && listConfig.cellPrefab.__uuid__==="e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40","SuperContent 四列及格子资源绑定");
   const rootPos = boardData[1]._lpos as { x?: number; y?: number };
@@ -177,7 +178,7 @@ function checkPrefab(): void {
     assert(boardData[elemIds[i]].__type__ === "cc.Button", "btn_elem" + i + " 是 Button");
   }
 
-  const cellData = loadPrefab("client/assets/prefabs/ui/hero/HeroIconCellView.prefab");
+  const cellData = loadPrefab("client/assets/bundles/hero/prefabs/HeroIconCellView.prefab");
   const cell = component(cellData, cellType);
   assertNode(cellData, cell.comp, "face", 19, "spr_face");
   assertComp(cellData, cell.comp, "nameLabel", 29, "cc.Label");
@@ -189,7 +190,7 @@ function checkPrefab(): void {
   assert(stars.map((row) => row.__id__).join(",") === "37,43,49,55,61", "五颗星按 star0 到 star4");
 
   const infoType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroInfoView.ts.meta"));
-  const infoData = loadPrefab("client/assets/prefabs/ui/hero/HeroInfoView.prefab");
+  const infoData = loadPrefab("client/assets/bundles/hero/prefabs/HeroInfoView.prefab");
   const info = component(infoData, infoType);
   assert((infoData[1]._components || []).some((row) => row.__id__ === info.index), "HeroInfoLayer 根上有 HeroInfoView");
   assert(infoData[idOf(info.comp.portrait)]._name === "node_equip", "立绘挂在 node_equip");
@@ -386,7 +387,7 @@ async function checkRemakeRoster(): Promise<void> {
   service.initialize();service.resetSession("local-1/hero-ui");
   /** 模拟已由应用验收的统一回包，不再模拟已删除的查询接口。 */
   const sync=(heroes:OwnedHero[])=>service.onNotify(Protocol.STATE_CHANGED,{heroes,role:{},inventory:[],revision:1});
-  const catalog = new HeroCatalog(JSON.parse(read("client/assets/resources/config/herotype.json")), JSON.parse(read("client/assets/resources/config/item.json")));
+  const catalog = new HeroCatalog(JSON.parse(read("client/assets/bundles/config/herotype.json")), JSON.parse(read("client/assets/bundles/config/item.json")));
   const samples = [
     {id:"reserve",templateId:10101001,level:99,star:9,deployed:false},
     {id:"lower",templateId:10101001,level:1,star:3,deployed:true},
@@ -449,21 +450,21 @@ async function checkHeroCellReuse():Promise<void> {
  resources.load=((path:any,type:any,done:any)=>{pending.push({path,done});}) as any;
  try {
   const face=(path:string)=>({kind:"owned" as const,name:path,showName:true,face:path,elem:null,stars:1,level:1,locked:false,deployed:false});
-  let old=0,current=0;cell.show(face("A"),()=>old++);cell.show(face("B"),()=>current++);cell.show(face("B"),()=>current++);
+  let old=0,current=0;cell.show(face("fixture/A"),()=>old++);cell.show(face("fixture/B"),()=>current++);cell.show(face("fixture/B"),()=>current++);
   root.emit(Button.EventType.CLICK);assert(old===0 && current===1,"只保留最新点击");
   await new Promise(resolve => setImmediate(resolve));
-  const a=new SpriteFrame(),b=new SpriteFrame();pending.filter(x=>x.path==="B/spriteFrame").forEach(x=>x.done(null,b));
-  pending.filter(x=>x.path==="A/spriteFrame").forEach(x=>x.done(null,a));
+  const a=new SpriteFrame(),b=new SpriteFrame();pending.filter(x=>x.path==="fixture/B/spriteFrame").forEach(x=>x.done(null,b));
+  pending.filter(x=>x.path==="fixture/A/spriteFrame").forEach(x=>x.done(null,a));
   await new Promise(resolve => setImmediate(resolve));
   assert(cell.face!.getComponent(Sprite)!.spriteFrame===b,"迟到旧头像不能覆盖新英雄");
-  cell.show(face("C"),null);cell.onDestroy();pending.filter(x=>x.path==="C/spriteFrame").forEach(x=>x.done(null,a));
+  cell.show(face("fixture/C"),null);cell.onDestroy();pending.filter(x=>x.path==="fixture/C/spriteFrame").forEach(x=>x.done(null,a));
   assert(cell.face!.getComponent(Sprite)!.spriteFrame===null,"销毁后不写回头像");
  }finally{resources.load=original;root.destroy();}
 }
 /** 使用真实英雄列表布局配置验证长列表末行可达、刷新保位以及过滤缩短后归位。 */
 function checkHeroScrollBounds():void {
  const root=new Node("long-list"),board=makeBoard(root),scroll=board.scroll,list=scroll.list;
- const source=JSON.parse(read("client/assets/prefabs/ui/hero/HeroListBoardView.prefab"));const config=source.find((row:any)=>row.columns!==undefined);
+ const source=JSON.parse(read("client/assets/bundles/hero/prefabs/HeroListBoardView.prefab"));const config=source.find((row:any)=>row.columns!==undefined);
  for(const key of ["columns","rows","layoutType","gridAxis"] as const)list[key]=config[key];
  for(const key of ["spacingX","spacingY","paddingLeft","paddingRight","paddingTop","paddingBottom"] as const)list[key]=config["_"+key];
  list.setData(Array.from({length:20},(_,i)=>i),()=>{});
@@ -475,7 +476,7 @@ function checkHeroScrollBounds():void {
 
 /** 验证应用实际开页无需测试注入，使用唯一模块和已准备配置。 */
 async function checkDefaultRoster():Promise<void> {
- GameConfig.instance.initialize(async path=>JSON.parse(read("client/assets/resources/"+path+".json")));
+ GameConfig.instance.initialize(async path=>JSON.parse(read("client/assets/bundles/"+path+".json")));
  await GameConfig.instance.prepare([GConfig.HeroType,GConfig.Item]);
  const service=HeroRosterController.instance;service.initialize();service.resetSession("local-1/default");
  service.onNotify(Protocol.STATE_CHANGED,{revision:1,heroes:[],heroRoster:{capacity:300,buySpaceTimes:0}});
@@ -493,10 +494,75 @@ async function checkReadonlyInfo():Promise<void> {
  const before=EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
  try {page.onOpen({heroId:hero.id});assert(page.attributes[0].string==="攻击：30","展示服务器面板属性");sync([{...hero,level:2,panelStats:{...hero.panelStats,values:{...hero.panelStats.values,atk:35}},baseStats:{...hero.baseStats,atk:35}}]);assert(page.attributes[0].string==="攻击：35","同步后详情更新");(page as any).goBack();assert(lists===1,"返回按钮打开列表而非主城");sync([]);assert(lists===2,"实例删除返回列表");controller.resetSession(null);assert(backs===1,"退出账号返回根页面");page.onClose();assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===before,"关页释放详情监听");}
  finally {page.onClose();ui.back=original;ui.openById=originalOpen;controller.dispose();root.destroy();}
- const data=loadPrefab("client/assets/prefabs/ui/hero/HeroInfoView.prefab");const buttons=data.filter((x:any)=>x.__type__==="cc.Button"&&x._interactable);
+ const data=loadPrefab("client/assets/bundles/hero/prefabs/HeroInfoView.prefab");const buttons=data.filter((x:any)=>x.__type__==="cc.Button"&&x._interactable);
   const detail=data.find((row:any)=>row.equipmentIcons);
  assert(detail?.equipmentIcons.length===4&&detail.equipmentFrames.length===4&&detail.equipmentLabels.length===4,"四槽图标、品质框和状态文字必须静态绑定");
  for(let i=1;i<=4;i++){const slot=data.find((row:any)=>row._name==="EquipmentSlot"+i);assert(slot&&slot._components.every((ref:any)=>data[ref.__id__].__type__!=="cc.Button"||!data[ref.__id__]._interactable),"四槽没有穿脱操作入口");}
  assert(buttons.length===5,"详情仅返回和四个技能说明按钮可操作，不开放升级/扩容");
 }
-async function main() { await checkDefaultRoster();await checkReadonlyInfo(); await checkHeroCellReuse();checkHeroScrollBounds();checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/sync/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });
+/** 三个实际元素图标消费点必须从hero包加载并共享帧；包内ui不能被当成独立Bundle。 */
+async function checkElementBundleRoutes(): Promise<void> {
+    // 前一页面的资源请求由异步池收尾，先等待其失败/释放，避免复用旧测试替身的在途请求。
+    await new Promise(resolve => setImmediate(resolve));
+    const original = assetManager.loadBundle;
+    const frames = new Map<string, SpriteFrame>();
+    const requestedBundles: string[] = [];
+    assetManager.loadBundle = ((name: string, done: Function) => {
+        requestedBundles.push(name);
+        done(null, {
+            load: (path: string, _type: unknown, callback: Function) => {
+                const frame = frames.get(path) || new SpriteFrame();
+                frames.set(path, frame);
+                callback(null, frame);
+            },
+        });
+    }) as typeof assetManager.loadBundle;
+    const controller = HeroRosterController.instance;
+    controller.initialize();
+    controller.resetSession("local-1/elements");
+    const hero = {
+        id: "00000000-0000-4000-8000-000000000002", templateId: 10101001,
+        level: 1, star: 1, stage: 0, baseStats: { hp: 120, atk: 30, def: 10, spd: 100 },
+    };
+    controller.onNotify(Protocol.STATE_CHANGED, { revision: 1, heroes: [hero] });
+    const boardRoot = new Node("ElementBoard");
+    const board = makeBoard(boardRoot);
+    const cellRoot = new Node("ElementCell");
+    makeCell(cellRoot);
+    const cell = cellRoot.getComponent(HeroIconCellView)!;
+    const detailRoot = new Node("ElementDetail");
+    const detail = detailRoot.addComponent(HeroInfoView);
+    detail.elementIcon = new Node("ElementIcon");
+    detail.elementIcon.parent = detailRoot;
+    detail.elementIcon.addComponent(Sprite);
+    (detail as any).mountPortrait = () => {};
+    try {
+        board.bindElem(() => {});
+        cell.show({
+            kind: "owned", name: "测试英雄", showName: true, face: "hero/ui/hero-icon_10101001",
+            elem: 5, stars: 1, level: 1, locked: false, deployed: false,
+        }, null);
+        detail.onOpen({ heroId: hero.id });
+        await new Promise(resolve => setImmediate(resolve));
+        assert(requestedBundles.length > 0 && requestedBundles.every(name => name === "hero"),
+            "所有英雄元素消费点保留hero包名，不请求ui包");
+        for (let index = 0; index < 6; index++) {
+            assert(board.elemButtons[index].node.getComponent(Sprite)!.spriteFrame === frames.get("ui/hero-icon_elem-" + index + "/spriteFrame"),
+                "筛选按钮显示hero包的第" + index + "张元素图");
+        }
+        assert(cell.elem!.getComponent(Sprite)!.spriteFrame === frames.get("ui/hero-icon_elem-5/spriteFrame"),
+            "英雄格子保留完整资源描述");
+        assert(detail.elementIcon.getComponent(Sprite)!.spriteFrame === frames.get("ui/hero-icon_elem-1/spriteFrame"),
+            "英雄详情按模板元素使用同一hero包资源");
+    } finally {
+        detail.onClose();
+        boardRoot.destroy();
+        cellRoot.destroy();
+        detailRoot.destroy();
+        controller.dispose();
+        assetManager.loadBundle = original;
+    }
+}
+
+/** 顺序执行英雄页面和数据回归，最后报告全部检查结果。 */
+async function main() { await checkDefaultRoster();await checkReadonlyInfo(); await checkElementBundleRoutes(); await checkHeroCellReuse();checkHeroScrollBounds();checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/sync/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });

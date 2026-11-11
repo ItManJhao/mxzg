@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "520b5a77-6d2b-44f2-830f-69cc3a6a0749",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "pub-effect-1",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

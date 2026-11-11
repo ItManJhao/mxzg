@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "c120bee2-ccfa-4de6-8689-1ebc223e4174",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "reward-effect2",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

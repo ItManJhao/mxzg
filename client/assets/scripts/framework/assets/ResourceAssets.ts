@@ -9,11 +9,11 @@ import {
     JsonAsset,
     Node,
     Prefab,
-    resources,
     sp,
     SpriteAtlas,
     SpriteFrame
 } from "cc";
+import type { AssetManager } from "cc";
 import type {ResourceDescriptor, ResourceKind} from "./ResourceTypes";
 import {ResourcePool} from "./ResourcePool";
 
@@ -36,7 +36,7 @@ export interface ResourceAssetMap {
 export interface AssetScope {
     load<K extends ResourceKind>(descriptor: ResourceDescriptor<K>): Promise<ResourceAssetMap[K]>;
 
-    /** 动态路径已由配置解析时使用，类型仍受约束；路径不含扩展名。 */
+    /** 按包名/包内路径加载，类型仍受约束；路径不含扩展名，不访问内置resources。 */
     loadPath<K extends keyof ResourceAssetMap>(path: string, type: K): Promise<ResourceAssetMap[K]>;
 
     dispose(): void;
@@ -54,11 +54,11 @@ const types = {
 };
 
 /** 按引擎Bundle依赖元数据准备共享包；不另维护模块依赖清单。 */
-async function readyBundle(name: string, ancestors: readonly string[] = []): Promise<typeof resources> {
+async function readyBundle(name: string, ancestors: readonly string[] = []): Promise<AssetManager.Bundle> {
     if (ancestors.includes(name)) {
         throw new Error("Bundle循环依赖：" + ancestors.concat(name).join(" → "));
     }
-    const bundle = assetManager.getBundle(name) || await new Promise<typeof resources>((resolve, reject) => {
+    const bundle = assetManager.getBundle(name) || await new Promise<AssetManager.Bundle>((resolve, reject) => {
         assetManager.loadBundle(name, (error, value) => {
             if (error || !value) {
                 reject(error || new Error("Bundle缺失：" + name));
@@ -90,14 +90,11 @@ const pool = new ResourcePool<Asset>({
                 });
                 return;
             }
-            const load = (bundle: typeof resources) => bundle.load(spec.loadPath, type as typeof Asset, (error, asset) => {
+            const load = (bundle: AssetManager.Bundle) => bundle.load(spec.loadPath, type as typeof Asset, (error, asset) => {
                 if (error || !asset) reject(error || new Error("资源加载失败：" + spec.bundle + "/" + spec.loadPath));
                 else resolve(asset);
             });
-            if (spec.bundle === "resources") load(resources);
-            else {
-                void readyBundle(spec.bundle).then(load, reject);
-            }
+            void readyBundle(spec.bundle).then(load, reject);
         });
     },
     retain: asset => {
@@ -124,7 +121,7 @@ export function createAssetScope(): AssetScope {
             ...(!descriptor.loadPath ? { uuid: descriptor.uuid } : {})
         })) as Promise<ResourceAssetMap[K]>,
         loadPath: <K extends keyof ResourceAssetMap>(path: string, type: K) =>
-            scope.load(JSON.stringify({bundle: "resources", loadPath: path, type})) as Promise<ResourceAssetMap[K]>,
+            scope.load(JSON.stringify(ResourceAssetsUtils.address(path, type))) as Promise<ResourceAssetMap[K]>,
         dispose: () => scope.dispose(),
     };
 }
@@ -140,7 +137,7 @@ export class ResourceAssetsUtils {
      * 图片路径不含spriteFrame后缀；特殊Bundle可显式提供相对assets的源路径。
      */
     public static describe<K extends ResourceKind>(
-        bundle: string, path: string, type: K, assetPath = bundle + "/" + path,
+        bundle: string, path: string, type: K, assetPath = "bundles/" + bundle + "/" + path,
     ): ResourceDescriptor<K> {
         return {
             bundle,
@@ -172,12 +169,19 @@ export class ResourceAssetsUtils {
         return pool.snapshot();
     }
 
-    /** 将已有resources动态路径转为明确SpriteFrame描述，不猜测或替换资源名。 */
+    /** 将“包名/包内路径”解析为加载键；拒绝无包名和目录穿越，不维护图片映射清单。 */
+    public static address<K extends ResourceKind>(path: string, type: K): { bundle: string; loadPath: string; type: K } {
+        const slash = path.indexOf("/");
+        if (slash <= 0 || slash === path.length - 1 || path.split("/").some(part => !part || part === "." || part === "..")) {
+            throw new Error("资源地址必须为包名/包内路径：" + path);
+        }
+        return { bundle: path.slice(0, slash), loadPath: path.slice(slash + 1), type };
+    }
+
+    /** 图片地址统一为“包名/包内路径”；补齐SpriteFrame后缀，共享现有资源池。 */
     public static sprite(path: string): ResourceDescriptor<"SpriteFrame"> {
-        return {
-            bundle: "resources", path, assetPath: "resources/" + path,
-            loadPath: path + "/spriteFrame", type: "SpriteFrame", uuid: ""
-        };
+        const address = this.address(path, "SpriteFrame");
+        return this.describe(address.bundle, address.loadPath, "SpriteFrame");
     }
 
     /** 取得节点拥有的作用域；节点销毁前资源始终有引用，销毁后迟到结果拒绝交付。 */

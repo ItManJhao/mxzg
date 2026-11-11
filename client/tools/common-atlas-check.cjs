@@ -24,8 +24,8 @@ for (const row of manifest.rows) {
         assert(fs.readFileSync(path.join(root, prefab), 'utf8').includes(row.uuid), prefab + ' 原绑定丢失');
     }
 }
-for (const name of ['button_btn-close-1', 'win-bg_block-bg-5', 'loading_bg-white', 'backpack_spr-default', 'button_btn-tab-23', 'button_btn-tab-24', ...Array.from({ length: 7 }, (_, index) => 'other_rare-' + index)]) {
-    assert(fs.existsSync(path.join(root, 'client/assets/resources/ui/common', name + '.png')), name + ' 动态或登录路径被改动');
+for (const name of ['button_btn-close-1', 'win-bg_block-bg-5', 'backpack_spr-default', 'button_btn-tab-23', 'button_btn-tab-24', ...Array.from({ length: 7 }, (_, index) => 'other_rare-' + index)]) {
+    assert(fs.existsSync(path.join(root, 'client/assets/bundles/common/ui', name + '.png')), name + ' 动态或登录路径被改动');
 }
 const atlas = JSON.parse(fs.readFileSync(path.join(root, manifest.atlas + '.meta')));
 assert.equal(atlas.importer, 'auto-atlas');
@@ -39,5 +39,5 @@ if (buildArgument >= 0) {
     const { dedupeBagBuild } = require('./dedupe-bag-build.cjs');
     const report = dedupeBagBuild(process.argv[buildArgument + 1]);
     assert.equal(report.files, 0, '构建包仍有已核实的原图副本，请核对构建钩子');
-    console.log('UI构建包引用核验通过，9张名单原图副本均已移除。');
+    console.log('旧删除名单为空，不对可寻址的Bundle原图做删除；合图需检查实际产物。');
 }

@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "ee35d12b-7dec-4811-9644-a721eb0d63c8",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "rainbow",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

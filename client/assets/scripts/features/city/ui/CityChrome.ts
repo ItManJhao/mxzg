@@ -109,25 +109,25 @@ const BOTTOM_BG_WIDTH = 724;
  * 最右一格用日服 VIP 字，不用国服「羁绊」。
  */
 const TAB_CAPTION: { [id: string]: string } = {
-    city: "ui/city/main-scene-lang_lbl-city",
-    hero: "ui/city/main-scene-lang_lbl-hero",
-    bag: "ui/city/main-scene-lang_lbl-backpack",
-    battle: "ui/city/main-scene-lang_lbl-battle",
-    dungeon: "ui/city/main-scene-lang_lbl-skin",
-    clan: "ui/city/main-scene-lang_lbl-clan",
-    fetter: "ui/city/main-scene-lang_lbl-fetters-unlock",
+    city: "home/ui/main-scene-lang_lbl-city",
+    hero: "home/ui/main-scene-lang_lbl-hero",
+    bag: "home/ui/main-scene-lang_lbl-backpack",
+    battle: "home/ui/main-scene-lang_lbl-battle",
+    dungeon: "home/ui/main-scene-lang_lbl-skin",
+    clan: "home/ui/main-scene-lang_lbl-clan",
+    fetter: "home/ui/main-scene-lang_lbl-fetters-unlock",
 };
 
 /** 最右一格的图标。Prefab 里可能还是粉钻，这里换成同套皇冠。 */
 const TAB_ICON: { [id: string]: string } = {
-    fetter: "ui/city/main-scene_spr-fetters-unlock",
+    fetter: "home/ui/main-scene_spr-fetters-unlock",
 };
 
 /**
  * 绑定 CityChrome.prefab。
  * TopBar 下是 LblName、LblSub、CurrencyGold/Value、CurrencyGem/Value。
  * BottomBar 下是 TabCity、TabHero、TabBag、TabBattle、TabDungeon、TabClan、TabFetter，子节点 Label、Lock。
- * 路径相对 assets：prefabs/ui/city/CityChromeView。Prefab 不走 resources.load。
+ * 路径相对 assets：bundles/home/prefabs/CityChromeView。Prefab 不走 resources.load。
  * 七个底栏字是 resources 里的字图（副本文件名 lbl-skin，最右是 VIP）。
  * 不改 USE_CITY_CHROME_PREFAB，也不改 Boot。
  * ActGroup / UtilityRow 仍绑预制上的按钮。没有列表预制时只打日志，不手搓按钮页。BtnMail 打开原来的邮件页。

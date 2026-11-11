@@ -154,7 +154,7 @@ function checkSources(): void {
   }
   const leftPlate = findCityNode(buildCityMapLayout(null, null, null, { viewW: 590, viewH: 1280 }), "spr_map_bg1_1");
   assert(leftPlate !== null && leftPlate.x === 0 && leftPlate.ax === 0, "left foreground plate stays on the content left");
-  assert(chrome.includes("ui/city/main-scene-lang_lbl-fetters-unlock"), "chrome keeps the VIP caption");
+  assert(chrome.includes("home/ui/main-scene-lang_lbl-fetters-unlock"), "chrome keeps the VIP caption");
   assert(Math.abs(TAB_SELECTED_SCALE - 1.5) < 1e-6, "selected tab matches MainSceneCtr 1.5x checked size");
   assert(CityTabUtils.tabVisualScale(true) > CityTabUtils.tabVisualScale(false) * 1.2 && CityTabUtils.tabVisualScale(false) === 1, "only the selected tab grows");
   assert(chrome.indexOf('setCityTabSelected(button, state === "selected")') >= 0, "new chrome scales the selected tab");
@@ -164,7 +164,7 @@ function checkSources(): void {
 
 function checkHubPrefab(): void {
   const uuid = metaUuid("client/assets/scripts/features/city/ui/CityHubView.ts.meta");
-  const data = loadPrefab("client/assets/prefabs/ui/city/CityHubView.prefab");
+  const data = loadPrefab("client/assets/bundles/home/prefabs/CityHubView.prefab");
   const comp = component(data, classId(uuid)) as {
     parallax?: { __id__?: number };
     mapNodes?: { __id__?: number }[];
@@ -185,7 +185,7 @@ function checkHubPrefab(): void {
 
 function checkChromePrefab(): void {
   const uuid = metaUuid("client/assets/scripts/features/city/ui/CityChromeView.ts.meta");
-  const data = loadPrefab("client/assets/prefabs/ui/city/CityChromeView.prefab");
+  const data = loadPrefab("client/assets/bundles/home/prefabs/CityChromeView.prefab");
   const comp = component(data, classId(uuid)) as { [key: string]: { __id__?: number } | { __id__?: number }[] };
   const one = (key: string, name: string) => {
     const ref = comp[key];
@@ -220,7 +220,7 @@ function checkChromePrefab(): void {
   const names = activity.map((ref) => nodeName(data, ref));
   assert(names.indexOf("ActRecommend") >= 0 && names.indexOf("BtnActExpand") >= 0, "activity row is bound");
   const shell = "c4e8aHSe2NOkI8Vai2cC0fj";
-  const text = read("client/assets/prefabs/ui/city/CityChromeView.prefab");
+  const text = read("client/assets/bundles/home/prefabs/CityChromeView.prefab");
   assert(text.split(shell).length === 2, "CityChromeShell class id stays once");
 }
 

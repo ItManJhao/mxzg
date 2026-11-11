@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "52960da6-5284-49e4-9c74-11508e901704",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "touch-effect",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

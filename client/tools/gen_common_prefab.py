@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """Generate Creator 3.8.8 common UI prefabs (not wired).
 
-Writes under client/assets/prefabs/ui/common/:
+Writes under client/assets/bundles/common/prefabs/:
   CommonPanel.prefab
   CommonBtnPrimary.prefab
   CommonBtnSecondary.prefab
   CommonListRow.prefab
   CommonRedDot.prefab
-and their .meta files, plus ui/common.meta if it is missing.
+and their .meta files, plus bundles/common.meta if it is missing.
 
-SpriteFrame uuids are read from client/assets/resources/**/*.meta (@f9941).
+SpriteFrame uuids are read from client/assets/bundles/**/*.meta (@f9941).
 No PNG is copied into prefabs/. The five #66 nine-slice metas are read-only.
 
-Shell scripts under client/assets/scripts/framework/ui/common/ are not generated here.
+Shell scripts under client/assets/scripts/framework/bundles/common/ are not generated here.
 This script only binds the @property node refs already declared on those shells.
 It does not touch Boot, prefabLoad, USE_* flags, or protocol scripts.
 
@@ -32,8 +32,8 @@ import uuid
 from check_citychrome_shell_id import class_id, legacy_min_id
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT_DIR = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "common")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "common", "prefabs")
 DIR_META = OUT_DIR + ".meta"
 SCRIPT_DIR = os.path.join(ROOT, "client", "assets", "scripts", "ui", "common")
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
@@ -75,24 +75,24 @@ DOT_SIZE = 16
 DOT_POS = -9
 
 SPRITE_FILES = {
-    "frame": "ui/common/win-bg_win-bg-12.png",
-    "title_bar": "ui/common/win-bg_title-bar.png",
-    "close": "ui/common/button_btn-close-1.png",
-    "btn_primary": "ui/common/button_btn-orange-big-1.png",
-    "btn_primary_p": "ui/common/button_btn-orange-big-2.png",
-    "btn_secondary": "ui/common/button_btn-blue-big-1.png",
-    "btn_secondary_p": "ui/common/button_btn-blue-big-2.png",
-    "icon": "ui/common/res-icon_res-bg.png",
-    "dot": "ui/common/win-bg_spot-white.png",
+    "frame": "common/ui/win-bg_win-bg-12.png",
+    "title_bar": "common/ui/win-bg_title-bar.png",
+    "close": "common/ui/button_btn-close-1.png",
+    "btn_primary": "common/atlas/button_btn-orange-big-1.png",
+    "btn_primary_p": "common/ui/button_btn-orange-big-2.png",
+    "btn_secondary": "common/ui/button_btn-blue-big-1.png",
+    "btn_secondary_p": "common/ui/button_btn-blue-big-2.png",
+    "icon": "common/ui/res-icon_res-bg.png",
+    "dot": "common/ui/win-bg_spot-white.png",
 }
 
 # Read-only. PR #66 already set these borders. This script must not write them.
 PROTECTED = {
-    "ui/common/button_btn-blue-big-1.png.meta": (0, 0, 61, 57),
-    "ui/common/button_btn-blue.png.meta": (0, 0, 97, 97),
-    "ui/common/button_btn-green-big-1.png.meta": (0, 0, 63, 57),
-    "ui/common/button_btn-orange-big-1.png.meta": (0, 0, 64, 59),
-    "ui/common/win-bg_win-bg-12.png.meta": (20, 20, 15, 18),
+    "common/ui/button_btn-blue-big-1.png.meta": (0, 0, 61, 57),
+    "common/ui/button_btn-blue.png.meta": (0, 0, 97, 97),
+    "common/ui/button_btn-green-big-1.png.meta": (0, 0, 63, 57),
+    "common/ui/button_btn-orange-big-1.png.meta": (0, 0, 64, 59),
+    "common/ui/win-bg_win-bg-12.png.meta": (20, 20, 15, 18),
 }
 
 SHELLS = {
@@ -921,7 +921,7 @@ def main():
         write_prefab(page, shells[page.prefab_name])
     pngs = [name for name in os.listdir(OUT_DIR) if name.lower().endswith(".png")]
     if pngs:
-        raise SystemExit("png landed in prefabs/ui/common: %s" % pngs)
+        raise SystemExit("png landed in bundles/common/prefabs: %s" % pngs)
     assert_protected_unchanged(before)
     print("OK")
 

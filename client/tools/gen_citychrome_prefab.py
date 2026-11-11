@@ -8,7 +8,7 @@ previous CityChrome. Source frames are about 640 wide and are stretched to
 the canvas the same way the old bottom bar was.
 
 The script:
-  - copies ui/city and ui/common PNGs out of the chrome zip when it is present
+  - copies ui/city and bundles/common PNGs out of the chrome zip when it is present
   - writes Creator 3.8 image metas for new files, and refreshes trim on
     overwritten files without changing their uuid
   - never writes the five #66 nine-slice metas
@@ -30,8 +30,8 @@ from PIL import Image, ImageDraw, ImageFont
 from check_citychrome_shell_id import class_id
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT_DIR = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "city")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "home", "prefabs")
 PREFAB_PATH = os.path.join(OUT_DIR, "CityChromeView.prefab")
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 FONT_FILE = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf")
@@ -44,11 +44,11 @@ SIMPLE = 0
 TRANSITION_SCALE = 3
 
 PROTECTED = {
-    "ui/common/button_btn-blue-big-1.png.meta": (0, 0, 61, 57),
-    "ui/common/button_btn-blue.png.meta": (0, 0, 97, 97),
-    "ui/common/button_btn-green-big-1.png.meta": (0, 0, 63, 57),
-    "ui/common/button_btn-orange-big-1.png.meta": (0, 0, 64, 59),
-    "ui/common/win-bg_win-bg-12.png.meta": (20, 20, 15, 18),
+    "common/ui/button_btn-blue-big-1.png.meta": (0, 0, 61, 57),
+    "common/ui/button_btn-blue.png.meta": (0, 0, 97, 97),
+    "common/ui/button_btn-green-big-1.png.meta": (0, 0, 63, 57),
+    "common/ui/button_btn-orange-big-1.png.meta": (0, 0, 64, 59),
+    "common/ui/win-bg_win-bg-12.png.meta": (20, 20, 15, 18),
 }
 
 ZIP_CANDIDATES = [
@@ -887,13 +887,13 @@ def check(b):
     if battle_w <= city:
         raise SystemExit("TabBattle should be the emphasized slot")
     battle = b.comp_sprite("CityChrome/BottomBar/TabBattle/Icon")
-    if battle["rel"] != "ui/city/main-scene-lang_spr-battle.png":
+    if battle["rel"] != "home/ui/main-scene-lang_spr-battle.png":
         raise SystemExit("TabBattle icon is not the battle art")
     dungeon = b.comp_sprite("CityChrome/BottomBar/TabDungeon/Icon")
-    if dungeon["rel"] != "ui/city/main-scene-lang_spr-skin.png":
+    if dungeon["rel"] != "home/ui/main-scene-lang_spr-skin.png":
         raise SystemExit("TabDungeon icon is not the cn dungeon art")
     fetter = b.comp_sprite("CityChrome/BottomBar/TabFetter/Icon")
-    if fetter["rel"] != "ui/city/main-scene_spr-fetters-unlock.png":
+    if fetter["rel"] != "home/ui/main-scene_spr-fetters-unlock.png":
         raise SystemExit("TabFetter icon is not the crown")
     names_expect = ["主城", "英雄", "背包", "战斗", "副本", "公会", "VIP"]
     tab_nodes = ["TabCity", "TabHero", "TabBag", "TabBattle", "TabDungeon", "TabClan", "TabFetter"]
@@ -1039,39 +1039,39 @@ def main():
     assert_protected_unchanged(before)
 
     sprite_files = {
-        "top": "ui/city/main-scene_spr-up-bg.png",
-        "bottom": "ui/city/main-scene_spr-bottom-bg.png",
-        "head": "ui/city/main-scene_spr-head-frame-1.png",
-        "name_bg": "ui/city/main-scene_spr-name-bg-1.png",
-        "level_bg": "ui/city/main-scene_spr-level-bg.png",
-        "pill": "ui/city/main-scene_spr-res-bg.png",
-        "city": "ui/city/main-scene-lang_spr-city.png",
-        "hero": "ui/city/main-scene-lang_spr-hero.png",
-        "battle": "ui/city/main-scene-lang_spr-battle.png",
-        "bag": "ui/city/main-scene-lang_spr-backpack.png",
-        "dungeon": "ui/city/main-scene-lang_spr-skin.png",
-        "clan": "ui/city/main-scene-lang_spr-clan.png",
-        "fetter": "ui/city/main-scene_spr-fetters-unlock.png",
-        "lock": "ui/city/main-scene_spr-lock.png",
-        "power": "ui/common/other_spr-power.png",
-        "coin": "ui/common/res-icon_res-1.png",
-        "gem": "ui/common/res-icon_res-2.png",
-        "add": "ui/common/button_btn-add-4.png",
-        "plate": "ui/common/button_btn-circle-blue-1.png",
-        "plate_hot": "ui/common/button_btn-circle-blue-2.png",
-        "down": "ui/common/button_btn-down.png",
-        "recommend": "ui/city/main-city_btn-hero-recommend-1.png",
-        "seven": "ui/city/main-city_icon-act_sevent_day_target.png",
-        "arrive": "ui/city/main-city_icon-act_hero_arrive.png",
-        "privilege": "ui/city/main-city_icon-act_privilege.png",
-        "welfare": "ui/city/main-city_icon-act_welfare.png",
-        "limit_gift": "ui/city/main-city_icon-act_limit_gift.png",
-        "limit_time": "ui/city/main-city_icon-act_limit_time_activity.png",
-        "replay": "ui/city/main-city_btn-main-video-studio.png",
-        "friend": "ui/city/main-city_btn-friend-1.png",
-        "mail": "ui/city/main-city_btn-mail-1.png",
-        "rank": "ui/city/main-city_btn-rank-1.png",
-        "more": "ui/city/main-city_btn-unfold-1.png",
+        "top": "home/ui/main-scene_spr-up-bg.png",
+        "bottom": "home/ui/main-scene_spr-bottom-bg.png",
+        "head": "home/ui/main-scene_spr-head-frame-1.png",
+        "name_bg": "home/ui/main-scene_spr-name-bg-1.png",
+        "level_bg": "home/ui/main-scene_spr-level-bg.png",
+        "pill": "home/ui/main-scene_spr-res-bg.png",
+        "city": "home/ui/main-scene-lang_spr-city.png",
+        "hero": "home/ui/main-scene-lang_spr-hero.png",
+        "battle": "home/ui/main-scene-lang_spr-battle.png",
+        "bag": "home/ui/main-scene-lang_spr-backpack.png",
+        "dungeon": "home/ui/main-scene-lang_spr-skin.png",
+        "clan": "home/ui/main-scene-lang_spr-clan.png",
+        "fetter": "home/ui/main-scene_spr-fetters-unlock.png",
+        "lock": "home/ui/main-scene_spr-lock.png",
+        "power": "common/ui/other_spr-power.png",
+        "coin": "common/ui/res-icon_res-1.png",
+        "gem": "common/ui/res-icon_res-2.png",
+        "add": "common/ui/button_btn-add-4.png",
+        "plate": "common/ui/button_btn-circle-blue-1.png",
+        "plate_hot": "common/ui/button_btn-circle-blue-2.png",
+        "down": "common/ui/button_btn-down.png",
+        "recommend": "home/ui/main-city_btn-hero-recommend-1.png",
+        "seven": "home/ui/main-city_icon-act_sevent_day_target.png",
+        "arrive": "home/ui/main-city_icon-act_hero_arrive.png",
+        "privilege": "home/ui/main-city_icon-act_privilege.png",
+        "welfare": "home/ui/main-city_icon-act_welfare.png",
+        "limit_gift": "home/ui/main-city_icon-act_limit_gift.png",
+        "limit_time": "home/ui/main-city_icon-act_limit_time_activity.png",
+        "replay": "home/ui/main-city_btn-main-video-studio.png",
+        "friend": "home/ui/main-city_btn-friend-1.png",
+        "mail": "home/ui/main-city_btn-mail-1.png",
+        "rank": "home/ui/main-city_btn-rank-1.png",
+        "more": "home/ui/main-city_btn-unfold-1.png",
     }
     global FONT
     FONT = load_font_uuid()

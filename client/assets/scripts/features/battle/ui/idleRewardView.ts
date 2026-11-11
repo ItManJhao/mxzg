@@ -14,7 +14,7 @@ import type { IdleReward } from "../IdleApi";
 
 /** 加载已配置 SuperContent/Cell 的窗口，呈现全部真实奖励；父页面在加载期间关闭时不挂载。 */
 export async function mountIdleRewards(parent: Node, rewards: readonly IdleReward[], catalog: BagItemCatalog, close: () => void, isCurrent: () => boolean): Promise<Node | null> {
-    const panelPrefab = await loadPrefab("prefabs/ui/item/ItemRewardLayer");
+    const panelPrefab = await loadPrefab("bundles/item/prefabs/ItemRewardLayer");
     if (!parent.isValid || !isCurrent()) return null;
     const hold = new Node("IdleRewardHold");
     hold.addComponent(UITransform);

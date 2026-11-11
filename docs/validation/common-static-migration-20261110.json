@@ -4,105 +4,105 @@
     {
       "name": "backpack_item-frame-1.png",
       "oldPath": "client/assets/resources/ui/common/backpack_item-frame-1.png",
-      "path": "client/assets/ui/common/atlas/backpack_item-frame-1.png",
+      "path": "client/assets/bundles/common/atlas/backpack_item-frame-1.png",
       "uuid": "0af8f9b6-86ad-4461-8338-8d9ea52979d7@f9941",
       "imageSha256": "7294472fccc415939b0a35ecd426b39860014b9c18a167f5ac7da12e2ab2f867",
       "metaSha256": "b0d86dc7e18e736ffc6379c10ec4da7d765a83619079d7cec6b5b8ceee8003cb",
       "references": [
-        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
-        "client\\assets\\prefabs\\ui\\hero\\HeroInfoUpStarLayer.prefab"
+        "client/assets/bundles/common/prefabs/InfoCard.prefab",
+        "client/assets/bundles/hero/prefabs/HeroInfoUpStarLayer.prefab"
       ]
     },
     {
       "name": "button_btn-green-big-1.png",
       "oldPath": "client/assets/resources/ui/common/button_btn-green-big-1.png",
-      "path": "client/assets/ui/common/atlas/button_btn-green-big-1.png",
+      "path": "client/assets/bundles/common/atlas/button_btn-green-big-1.png",
       "uuid": "8fd6c4ac-2e76-4551-b366-e545d6110f60@f9941",
       "imageSha256": "0c3f93cff52816614c655bb4e38e0c0543ab1bc1641294e06a020471dbee0324",
       "metaSha256": "8f6df46f931d5279acc2ea53324f6a9e5d16d266869ef7c77585156017fa661f",
       "references": [
-        "client\\assets\\prefabs\\ui\\hero\\HeroInfoUpStarLayer.prefab",
-        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
-        "client\\assets\\prefabs\\ui\\hero\\HeroStrongInfoCell.prefab",
-        "client\\assets\\prefabs\\ui\\hero\\HeroStrongResourceSubCell.prefab",
-        "client\\assets\\prefabs\\ui\\legacy-login\\LoginPanel.prefab",
-        "client\\assets\\prefabs\\ui\\role\\RoleInfoLayer.prefab"
+        "client/assets/bundles/hero/prefabs/HeroInfoUpStarLayer.prefab",
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab",
+        "client/assets/bundles/hero/prefabs/HeroStrongInfoCell.prefab",
+        "client/assets/bundles/hero/prefabs/HeroStrongResourceSubCell.prefab",
+        "client/assets/bundles/legacy-login/prefabs/LoginPanel.prefab",
+        "client/assets/bundles/role/prefabs/RoleInfoLayer.prefab"
       ]
     },
     {
       "name": "button_btn-old-1.png",
       "oldPath": "client/assets/resources/ui/common/button_btn-old-1.png",
-      "path": "client/assets/ui/common/atlas/button_btn-old-1.png",
+      "path": "client/assets/bundles/common/atlas/button_btn-old-1.png",
       "uuid": "13632528-0f87-48d2-9ac7-71a27f92112a@f9941",
       "imageSha256": "23a43c0fde3c1bdecfc644791101d3f9de94439a8fed042b3ca8da5e1173f028",
       "metaSha256": "cfe5596ad542f25aaacfe48ee1423086c513c934c4cc491e55e108195b9a06fe",
       "references": [
-        "client\\assets\\prefabs\\ui\\battle\\SkillAuditCellView.prefab",
-        "client\\assets\\prefabs\\ui\\battle\\SkillAuditView.prefab",
-        "client\\assets\\prefabs\\ui\\gm\\GmOptionCellView.prefab",
-        "client\\assets\\prefabs\\ui\\gm\\GmView.prefab",
-        "client\\assets\\prefabs\\ui\\item\\ItemSelectLayer.prefab",
-        "client\\assets\\prefabs\\ui\\role\\ChangeNickLayer.prefab"
+        "client/assets/bundles/battle/prefabs/SkillAuditCellView.prefab",
+        "client/assets/bundles/battle/prefabs/SkillAuditView.prefab",
+        "client/assets/bundles/gm/prefabs/GmOptionCellView.prefab",
+        "client/assets/bundles/gm/prefabs/GmView.prefab",
+        "client/assets/bundles/item/prefabs/ItemSelectLayer.prefab",
+        "client/assets/bundles/role/prefabs/ChangeNickLayer.prefab"
       ]
     },
     {
       "name": "button_btn-orange-big-1.png",
       "oldPath": "client/assets/resources/ui/common/button_btn-orange-big-1.png",
-      "path": "client/assets/ui/common/atlas/button_btn-orange-big-1.png",
+      "path": "client/assets/bundles/common/atlas/button_btn-orange-big-1.png",
       "uuid": "8ff1e662-8d03-4c62-afbc-c56f4719c77c@f9941",
       "imageSha256": "130b67f2e73ec8e4cc8427267f3ec5484c3305dd243d829b6701c0a5575bf634",
       "metaSha256": "5fa38cfad62ccdbcd2e7cf69768e33756ffeaa8fe718698753a2743ab24600b7",
       "references": [
-        "client\\assets\\prefabs\\ui\\battle\\BattlePage.prefab",
-        "client\\assets\\prefabs\\ui\\common\\CommonBtnPrimaryShell.prefab",
-        "client\\assets\\prefabs\\ui\\hero\\HeroInfoView.prefab",
-        "client\\assets\\prefabs\\ui\\hero\\HeroStrongResourceMainCell.prefab",
-        "client\\assets\\prefabs\\ui\\item\\ItemExhibitionLayer.prefab",
-        "client\\assets\\prefabs\\ui\\login\\LoadingLayer.prefab",
-        "client\\assets\\prefabs\\ui\\login\\NoticeLayer.prefab",
-        "client\\assets\\prefabs\\ui\\login\\UpdateLayer.prefab",
-        "client\\assets\\prefabs\\ui\\role\\RoleInfoLayer.prefab"
+        "client/assets/bundles/battle/prefabs/BattlePage.prefab",
+        "client/assets/bundles/common/prefabs/CommonBtnPrimaryShell.prefab",
+        "client/assets/bundles/hero/prefabs/HeroInfoView.prefab",
+        "client/assets/bundles/hero/prefabs/HeroStrongResourceMainCell.prefab",
+        "client/assets/bundles/item/prefabs/ItemExhibitionLayer.prefab",
+        "client/assets/bundles/bootstrap/prefabs/LoadingLayer.prefab",
+        "client/assets/bundles/login/prefabs/NoticeLayer.prefab",
+        "client/assets/bundles/login/prefabs/UpdateLayer.prefab",
+        "client/assets/bundles/role/prefabs/RoleInfoLayer.prefab"
       ]
     },
     {
       "name": "button_btn-src.png",
       "oldPath": "client/assets/resources/ui/common/button_btn-src.png",
-      "path": "client/assets/ui/common/atlas/button_btn-src.png",
+      "path": "client/assets/bundles/common/atlas/button_btn-src.png",
       "uuid": "fc1ffb2a-2d0e-4fd2-89fe-779b304fa5f3@f9941",
       "imageSha256": "31eeb03ecbff36eb164da7339ac21b277a48335e313318f267eb5e33b1def851",
       "metaSha256": "76a8d8a5a7e13717f3e3166abecea4c2ce4fb075a89ab0c12c13cb2c829e8b4d",
       "references": [
-        "client\\assets\\prefabs\\ui\\ability\\AbilityInfoLayer.prefab"
+        "client/assets/bundles/hero/prefabs/AbilityInfoLayer.prefab"
       ]
     },
     {
       "name": "other_kuang.png",
       "oldPath": "client/assets/resources/ui/common/other_kuang.png",
-      "path": "client/assets/ui/common/atlas/other_kuang.png",
+      "path": "client/assets/bundles/common/atlas/other_kuang.png",
       "uuid": "983a72dd-8ad6-4489-83cc-eb82bf1e92f7@f9941",
       "imageSha256": "e333dbc1cb8e5e074ab213cf15825f76bcafc5a9ac5540870d7c6203b8f2bb73",
       "metaSha256": "3557190ffd3a104fb0a07189b1596c39c77e74f18fb8a9624af2dbcab5c1aa6b",
       "references": [
-        "client\\assets\\prefabs\\ui\\chapter\\ChapterExtraRewardCell.prefab",
-        "client\\assets\\prefabs\\ui\\hero\\HeroListView.prefab"
+        "client/assets/bundles/battle/prefabs/ChapterExtraRewardCell.prefab",
+        "client/assets/bundles/hero/prefabs/HeroListView.prefab"
       ]
     },
     {
       "name": "win-bg_block-bg-24.png",
       "oldPath": "client/assets/resources/ui/common/win-bg_block-bg-24.png",
-      "path": "client/assets/ui/common/atlas/win-bg_block-bg-24.png",
+      "path": "client/assets/bundles/common/atlas/win-bg_block-bg-24.png",
       "uuid": "30f0b02c-bd19-4596-90db-f94739baf91b@f9941",
       "imageSha256": "171f0106c4be6ca66d669a9c0e8ec181deec36b0fbe3cf4cbd712a13aef487b0",
       "metaSha256": "bd69456d15df6db6db86d38303c31d758eae042ed237704867a93b812fcddb96",
       "references": [
-        "client\\assets\\prefabs\\ui\\ability\\AbilityInfoLayer.prefab",
-        "client\\assets\\prefabs\\ui\\common\\InfoCard.prefab",
-        "client\\assets\\prefabs\\ui\\hero\\HeroSkillInfoLayer.prefab",
-        "client\\assets\\prefabs\\ui\\reward\\RewardPreviewLayer.prefab"
+        "client/assets/bundles/hero/prefabs/AbilityInfoLayer.prefab",
+        "client/assets/bundles/common/prefabs/InfoCard.prefab",
+        "client/assets/bundles/hero/prefabs/HeroSkillInfoLayer.prefab",
+        "client/assets/bundles/reward/prefabs/RewardPreviewLayer.prefab"
       ]
     }
   ],
-  "atlas": "client/assets/ui/common/atlas/CommonAtlas.pac",
+  "atlas": "client/assets/bundles/common/atlas/CommonAtlas.pac",
   "note": "7张原图/meta字节及九宫格保留；18:28实际发布包合图与浏览器复验通过",
   "pending": [
     "7张common原图副本仍保留，尚未扩展去重",

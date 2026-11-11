@@ -89,21 +89,21 @@ async function checkCellReuse(): Promise<void> {
     resources.load=(path,type,done)=>{pending.push({path,done});};
     try {
         let old=0,current=0;
-        const face=(icon:string)=>({icon,frame:"frame/"+icon,title:icon,typeLine:"",body:"",fallback:""});
-        cell.show({itemId:1,quantity:1},false,()=>old++,face("A"));
-        for(let i=0;i<5;i++) cell.show({itemId:2,quantity:2},true,()=>current++,face("B"));
+        const face=(icon:string)=>({icon,frame:"frame/"+icon,title:icon,typeLine:"",body:"",fallback:"fixture/fallback"});
+        cell.show({itemId:1,quantity:1},false,()=>old++,face("fixture/A"));
+        for(let i=0;i<5;i++) cell.show({itemId:2,quantity:2},true,()=>current++,face("fixture/B"));
         root.emit(Button.EventType.CLICK);assert.equal(old,0);assert.equal(current,1,"a refresh cannot duplicate click callbacks");
         await new Promise(resolve => setImmediate(resolve));
         const b=new SpriteFrame(),a=new SpriteFrame();
-        pending.filter(row=>row.path==="B/spriteFrame").forEach(row=>row.done(null,b));
-        pending.filter(row=>row.path==="A/spriteFrame").forEach(row=>row.done(null,a));
+        pending.filter(row=>row.path==="fixture/B/spriteFrame").forEach(row=>row.done(null,b));
+        pending.filter(row=>row.path==="fixture/A/spriteFrame").forEach(row=>row.done(null,a));
         await new Promise(resolve => setImmediate(resolve));
         assert.equal((cell.icon.getComponent(Sprite) as Sprite).spriteFrame,b,"late A must not overwrite B");
         cell.show(null,false,null);root.emit(Button.EventType.CLICK);assert.equal(current,1);assert.equal(cell.button.interactable,false);
-        pending.filter(row=>row.path==="B/spriteFrame").forEach(row=>row.done(null,b));
+        pending.filter(row=>row.path==="fixture/B/spriteFrame").forEach(row=>row.done(null,b));
         assert.equal(cell.icon.active,false,"late responses cannot revive an empty cell");
-        cell.show({itemId:3,quantity:1},false,null,face("C"));cell.onDestroy();
-        pending.filter(row=>row.path==="C/spriteFrame").forEach(row=>row.done(null,a));
+        cell.show({itemId:3,quantity:1},false,null,face("fixture/C"));cell.onDestroy();
+        pending.filter(row=>row.path==="fixture/C/spriteFrame").forEach(row=>row.done(null,a));
         assert.equal((cell.icon.getComponent(Sprite) as Sprite).spriteFrame,null,"destroy cancels pending paints");
     } finally {resources.load=original;}
 }
@@ -117,7 +117,7 @@ function checkEditorPreview(): void {
         assert.equal(list.length,0,"editor samples are not runtime data");
         list.previewCount=0;(list as any).update();assert.equal(list.node.children.length,0);
         setEditorContext(false,true);list.previewCount=6;(list as any).update();assert.equal(list.node.children.length,0,"preview samples cannot become player inventory");
-        const source=JSON.parse(readFileSync("client/assets/prefabs/ui/bag/BagView.prefab","utf8"));
+        const source=JSON.parse(readFileSync("client/assets/bundles/bag/prefabs/BagView.prefab","utf8"));
         assert.equal(source.find((row:any)=>"previewCount"in row).previewCount,0);
         assert(!source.some((row:any)=>row._name?.startsWith("__SuperContentPreview__")));
     } finally {setEditorContext(false,true);}
@@ -125,7 +125,7 @@ function checkEditorPreview(): void {
 
 /** 使用奖励窗口的实际序列化布局，验证二十格末行可达、刷新保位与缩短后归位。 */
 function checkRewardLayout(): void {
-    const source=JSON.parse(readFileSync("client/assets/prefabs/ui/item/ItemRewardLayer.prefab","utf8"));
+    const source=JSON.parse(readFileSync("client/assets/bundles/item/prefabs/ItemRewardLayer.prefab","utf8"));
     const config=source.find((row:any)=>row.columns!==undefined);
     const {list,scroll}=fixture();
     list.node.parent!.getComponent(UITransform)!.setContentSize(580,250);

@@ -2,7 +2,7 @@
   "scope": "Current P0-P9 first playable/release roadmap. No speculative advanced systems.",
   "groups": [
     {
-      "directory": "prefabs/ui/account",
+      "directory": "bundles/login/prefabs",
       "phases": [
         "P1"
       ],
@@ -13,7 +13,7 @@
       ]
     },
     {
-      "directory": "bundles/remake-home",
+      "directory": "bundles/home/prefabs",
       "phases": [
         "P1",
         "P2"
@@ -24,7 +24,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/login",
+      "directory": "bundles/login/prefabs",
       "phases": [
         "P1",
         "P6",
@@ -37,13 +37,12 @@
         "ChooseServerRoleCell",
         "CreateRolePanel",
         "ErrorLayer",
-        "LoadingLayer",
         "NoticeLayer",
         "UpdateLayer"
       ]
     },
     {
-      "directory": "prefabs/ui/city",
+      "directory": "bundles/home/prefabs",
       "phases": [
         "P1"
       ],
@@ -54,7 +53,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/common",
+      "directory": "bundles/common/prefabs",
       "phases": [
         "P1",
         "P6"
@@ -76,7 +75,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/hero",
+      "directory": "bundles/hero/prefabs",
       "phases": [
         "P4"
       ],
@@ -109,20 +108,19 @@
       ]
     },
     {
-      "directory": "prefabs/ui/bag",
+      "directory": "bundles/bag/prefabs",
       "phases": [
         "P4"
       ],
       "reason": "Inventory list, tabs, cell and detail",
       "names": [
         "BagInfoView",
-        "BagItemView",
         "BagView",
         "BagTabView"
       ]
     },
     {
-      "directory": "prefabs/ui/ability",
+      "directory": "bundles/hero/prefabs",
       "phases": [
         "P4",
         "P5"
@@ -133,7 +131,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/battle",
+      "directory": "bundles/battle/prefabs",
       "phases": [
         "P4",
         "P5"
@@ -156,7 +154,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/chapter",
+      "directory": "bundles/battle/prefabs",
       "phases": [
         "P5"
       ],
@@ -174,7 +172,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/quick-battle",
+      "directory": "bundles/quick-battle/prefabs",
       "phases": [
         "P5"
       ],
@@ -186,7 +184,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/idle-hero",
+      "directory": "bundles/hero/prefabs",
       "phases": [
         "P4",
         "P5"
@@ -197,7 +195,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/summon",
+      "directory": "bundles/summon/prefabs",
       "phases": [
         "P4"
       ],
@@ -208,7 +206,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/mail",
+      "directory": "bundles/mail/prefabs",
       "phases": [
         "P6",
         "P8"
@@ -221,7 +219,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/role",
+      "directory": "bundles/role/prefabs",
       "phases": [
         "P6"
       ],
@@ -233,7 +231,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/item",
+      "directory": "bundles/item/prefabs",
       "phases": [
         "P4",
         "P5"
@@ -247,7 +245,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/reward",
+      "directory": "bundles/reward/prefabs",
       "phases": [
         "P4",
         "P5"
@@ -261,7 +259,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/legacy-login",
+      "directory": "bundles/legacy-login/prefabs",
       "phases": [
         "P1",
         "P9"
@@ -273,7 +271,7 @@
       ]
     },
     {
-      "directory": "prefabs/ui/gm",
+      "directory": "bundles/gm/prefabs",
       "phases": [
         "P8"
       ],
@@ -281,6 +279,26 @@
       "names": [
         "GmView",
         "GmOptionCellView"
+      ]
+    },
+    {
+      "directory": "bundles/common/prefabs",
+      "phases": [
+        "P4"
+      ],
+      "reason": "Shared inventory and reward cell",
+      "names": [
+        "BagItemView"
+      ]
+    },
+    {
+      "directory": "bundles/bootstrap/prefabs",
+      "phases": [
+        "P1"
+      ],
+      "reason": "Local startup progress and retry",
+      "names": [
+        "LoadingLayer"
       ]
     }
   ]

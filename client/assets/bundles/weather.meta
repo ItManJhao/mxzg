@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "53445bb8-1538-480b-ae15-d017e2bb67e1",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "weather",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

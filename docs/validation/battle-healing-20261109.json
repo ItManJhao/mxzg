@@ -4,13 +4,32 @@
   "legacy": {
     "actions": "client/cocos_mxzg/client/idle/src/battle/actions.lua:4423-4506",
     "skill": 102030031,
-    "directHealingBuffs": [2031301, 2031302, 2031303],
+    "directHealingBuffs": [
+      2031301,
+      2031302,
+      2031303
+    ],
     "presentation": "type3施法0.6/1秒，type9延迟20帧、8张图、0.1秒间隔、1.8倍、战场偏移0.6/0.4",
     "resourceCheck": "186帧与旧图集逐像素一致；本批恢复8张，保留UUID"
   },
   "checks": {
-    "backend": {"passed": 49, "failed": 0, "skipped": 0, "suites": ["HeroBattleHealingTest", "HeroBattleStatisticsTest", "HeroBattleChapterScenarioTest", "MainChapterPersistenceTest"]},
-    "frontend": {"firstPass": "39/40", "failure": "冰晶女巫已支持，表现覆盖报告过期", "resolution": "核对单项变化并重新生成报告，battle-presentation复验通过，累计40/40", "pausedSuites": 5},
+    "backend": {
+      "passed": 49,
+      "failed": 0,
+      "skipped": 0,
+      "suites": [
+        "HeroBattleHealingTest",
+        "HeroBattleStatisticsTest",
+        "HeroBattleChapterScenarioTest",
+        "MainChapterPersistenceTest"
+      ]
+    },
+    "frontend": {
+      "firstPass": "39/40",
+      "failure": "冰晶女巫已支持，表现覆盖报告过期",
+      "resolution": "核对单项变化并重新生成报告，battle-presentation复验通过，累计40/40",
+      "pausedSuites": 5
+    },
     "typescript": "passed",
     "protocolDrift": "passed",
     "javaToTypescriptHealing": "真实二进制战报解码通过，伪造实际治疗量拒绝",
@@ -21,18 +40,68 @@
     "run": "9c39465e3d6643eeaf6b586debe0b6ed",
     "viewport": "360x840",
     "account": "chapter_review",
-    "hero": {"template": 10203003, "level": 1, "star": 3},
+    "hero": {
+      "template": 10203003,
+      "level": 1,
+      "star": 3
+    },
     "battleId": "a85a8c2c-4e07-4e55-a186-e6c3aa3a785a",
-    "flow": ["挂机", "布阵", "挑战第二关", "绿色+26治疗飘字", "胜利和经验动画", "战报双方统计", "关闭返回挂机"],
-    "healing": {"round": 1, "actual": 26, "reported": 26, "beforeHp": 303, "afterHp": 329, "finalHp": 221},
-    "statistics": {"ally": {"damage": 199, "taken": 169, "recovery": 26}, "enemy": {"damage": 169, "taken": 199, "recovery": 0}},
-    "experience": {"level": 2, "before": 0, "after": 200, "threshold": 360},
-    "assetsAfterSettlementAndClose": {"gold": 4000, "diamond": 151, "revision": 4},
+    "flow": [
+      "挂机",
+      "布阵",
+      "挑战第二关",
+      "绿色+26治疗飘字",
+      "胜利和经验动画",
+      "战报双方统计",
+      "关闭返回挂机"
+    ],
+    "healing": {
+      "round": 1,
+      "actual": 26,
+      "reported": 26,
+      "beforeHp": 303,
+      "afterHp": 329,
+      "finalHp": 221
+    },
+    "statistics": {
+      "ally": {
+        "damage": 199,
+        "taken": 169,
+        "recovery": 26
+      },
+      "enemy": {
+        "damage": 169,
+        "taken": 199,
+        "recovery": 0
+      }
+    },
+    "experience": {
+      "level": 2,
+      "before": 0,
+      "after": 200,
+      "threshold": 360
+    },
+    "assetsAfterSettlementAndClose": {
+      "gold": 4000,
+      "diamond": 151,
+      "revision": 4
+    },
     "statisticsComponentsAfterClose": 0,
     "warningsAndErrors": [],
     "observation": "短暂暂停引擎截取治疗及胜利画面，随后恢复并清除观察器；未替换战报或修改资产",
-    "screenshots": ["../images/battle-healing-float-20261109.jpg", "../images/battle-healing-victory-20261109.jpg", "../images/battle-healing-statistics-20261109.jpg", "../images/battle-healing-return-20261109.jpg"]
+    "screenshots": [
+      "../images/battle-healing-float-20261109.jpg",
+      "../images/battle-healing-victory-20261109.jpg",
+      "../images/battle-healing-statistics-20261109.jpg",
+      "../images/battle-healing-return-20261109.jpg"
+    ]
   },
-  "remaining": ["其他治疗英雄和负治疗实机覆盖", "历史双方姓名", "胜利历史外观", "清心概率待审", "护盾疑点"],
+  "remaining": [
+    "其他治疗英雄和负治疗实机覆盖",
+    "历史双方姓名",
+    "胜利历史外观",
+    "清心概率待审",
+    "护盾疑点"
+  ],
   "git": "未提交，未推送"
 }

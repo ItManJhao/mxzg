@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "0dd54a65-028b-40d0-8dd6-46001f133c4e",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "audio",
+    "priority": 8,
+    "bundleConfigID": "remote-assets"
+  }
+}

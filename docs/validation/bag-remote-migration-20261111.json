@@ -1,0 +1,108 @@
+{
+  "status": "shared-common-source-updated-build-pending",
+  "rows": [
+    {
+      "oldPath": "client/assets/prefabs/ui/bag/BagInfoView.prefab",
+      "path": "client/assets/bundles/bag/prefabs/BagInfoView.prefab",
+      "sha256": "9d1ff85753e1569714b3c30b1f74f7564a76822d78743dde737f8f8a6ebbcfc0"
+    },
+    {
+      "oldPath": "client/assets/prefabs/ui/bag/BagInfoView.prefab.meta",
+      "path": "client/assets/bundles/bag/prefabs/BagInfoView.prefab.meta",
+      "sha256": "e799ca1a9dd1772e7b71c949719eeed9189f5e3421e25b0a9ed12fde0c1a245f"
+    },
+    {
+      "oldPath": "client/assets/prefabs/ui/bag/BagItemView.prefab",
+      "path": "client/assets/bundles/common/prefabs/BagItemView.prefab",
+      "sha256": "4908fac142e25f22d6e32696d6d76ecc1870fccd8fe40c04a004e806cf85660c"
+    },
+    {
+      "oldPath": "client/assets/prefabs/ui/bag/BagItemView.prefab.meta",
+      "path": "client/assets/bundles/common/prefabs/BagItemView.prefab.meta",
+      "sha256": "bede670930b44c9953383beba27093880e7b66412ed565e8fa0a2cb374dcab0b"
+    },
+    {
+      "oldPath": "client/assets/prefabs/ui/bag/BagTabView.prefab",
+      "path": "client/assets/bundles/bag/prefabs/BagTabView.prefab",
+      "sha256": "be84ea099f8db0eaa12d04c34563176a523072a4251ae24d658e8c96933306d2"
+    },
+    {
+      "oldPath": "client/assets/prefabs/ui/bag/BagTabView.prefab.meta",
+      "path": "client/assets/bundles/bag/prefabs/BagTabView.prefab.meta",
+      "sha256": "ce9ad661af997d3aab6e9ba3e3fd70def113e425953a32f2dd3511dd0db663ce"
+    },
+    {
+      "oldPath": "client/assets/prefabs/ui/bag/BagView.prefab",
+      "path": "client/assets/bundles/bag/prefabs/BagView.prefab",
+      "sha256": "f9307fb81a1ff32e8eca0b1ca0d7e5695b8c5711a9db2eec30de5e335e7c23f2"
+    },
+    {
+      "oldPath": "client/assets/prefabs/ui/bag/BagView.prefab.meta",
+      "path": "client/assets/bundles/bag/prefabs/BagView.prefab.meta",
+      "sha256": "e67efe143d9e8c87378b51fac313a87118d4b3ed16e2ac580d4aefd8c800277f"
+    },
+    {
+      "oldPath": "client/assets/ui/bag/atlas/backpack-info_spr-line.png",
+      "path": "client/assets/bundles/bag/atlas/backpack-info_spr-line.png",
+      "sha256": "9548a42c05d44f7713a3579e52c2b6cbaf7595bd0cab747a7f2527832b7cafe8"
+    },
+    {
+      "oldPath": "client/assets/ui/bag/atlas/backpack-info_spr-line.png.meta",
+      "path": "client/assets/bundles/bag/atlas/backpack-info_spr-line.png.meta",
+      "sha256": "5bd79450fabd4e1f199bc79577d1b46e48105fd09b607c144100ad90f1f68cfb"
+    },
+    {
+      "oldPath": "client/assets/ui/bag/atlas/backpack_spr-select.png",
+      "path": "client/assets/bundles/common/item-atlas/backpack_spr-select.png",
+      "sha256": "d73973c3da35d39521917dd1082b462ab9125507f120d08c0045ec725a7ff07d"
+    },
+    {
+      "oldPath": "client/assets/ui/bag/atlas/backpack_spr-select.png.meta",
+      "path": "client/assets/bundles/common/item-atlas/backpack_spr-select.png.meta",
+      "sha256": "de2da1d2d8269fc1e17623ede6bff9a40fcfe7ad03e270bd5fd71a0d1a575c4b"
+    },
+    {
+      "oldPath": "client/assets/ui/bag/atlas/BagAtlas.pac",
+      "path": "client/assets/bundles/bag/atlas/BagAtlas.pac",
+      "sha256": "099cd2a3b925864f6de886503071fa4a7dfb2352f527c87323c934e23fff5ccf"
+    },
+    {
+      "oldPath": "client/assets/ui/bag/atlas/BagAtlas.pac.meta",
+      "path": "client/assets/bundles/bag/atlas/BagAtlas.pac.meta",
+      "sha256": "dcf7bd8792658be99e9d9f60d4a4dfbdd1e146cf6e533e90423f059ea39a6419"
+    },
+    {
+      "oldPath": "client/assets/ui/bag/background/map-bg-backpack-1.jpg",
+      "path": "client/assets/bundles/bag/background/map-bg-backpack-1.jpg",
+      "sha256": "242be79ec43347e0de8ca6076e40bc108e17fbbdbd904a7bf0cdecb915f5b912"
+    },
+    {
+      "oldPath": "client/assets/ui/bag/background/map-bg-backpack-1.jpg.meta",
+      "path": "client/assets/bundles/bag/background/map-bg-backpack-1.jpg.meta",
+      "sha256": "e25e0680c0c74d4a39c2ea18c8f3a933463e5e634881623b4169173310ee77ab"
+    }
+  ],
+  "checks": [
+    "backpack",
+    "staged-loading（跨阶段复用、失败不走UUID回退、重试）",
+    "resources",
+    "bindings",
+    "bag-build-hook-check（assets及remote）",
+    "Creator tsc"
+  ],
+  "limits": [
+    "共用格子与选中图迁入common，18:26旧包不覆盖本次归属调整",
+    "18:26发布包本地远程样板已通过，正式CDN未验收",
+    "本批只迁背包专用资源，公共资源、动态图标和店员骨骼仍在原包",
+    "正式CDN未配置，负责人确认先本地样板"
+  ],
+  "buildFailure": {
+    "time": "2026-11-11 18:10",
+    "cause": "Creator缓存旧去重模块，引用已迁移目录",
+    "fix": "1.5.1构建入口重读工具，回归模拟旧模块缓存",
+    "remoteStatus": "remoteBundles为空，assets/bag为本地输出；远程未验收",
+    "retainedBagOriginalBytes": 5974,
+    "next": "已由18:26新构建验证解决"
+  },
+  "releaseEvidence": "bag-remote-release-20261111.json"
+}

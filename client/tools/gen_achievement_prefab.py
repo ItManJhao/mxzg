@@ -2,7 +2,7 @@
 """Generate the Creator 3.8.8 Achievement prefab (Wire only, not wired).
 
 Writes:
-  client/assets/prefabs/ui/achievement/WireAchievementPage.prefab
+  client/assets/bundles/achievement/prefabs/WireAchievementPage.prefab
 and its .meta file, plus ui/achievement.meta if it is missing.
 
 WireAchievementPage is the readonly real-server page. Layout matches
@@ -12,7 +12,7 @@ WireAchievementPage, the same name uiNode() uses.
 
 There is no Mock Achievement page in the repo. This script does not invent one.
 
-SpriteFrame uuids come from client/assets/resources/**/*.meta (@f9941).
+SpriteFrame uuids come from client/assets/bundles/**/*.meta (@f9941).
 Does not touch Boot, MainApp, page scripts, protocol, or USE_*_PREFAB flags.
 No achievement atlas: page chrome is common win-bg and the blue button.
 
@@ -30,8 +30,8 @@ import uuid
 import base64
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT_DIR = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "achievement")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "achievement", "prefabs")
 DIR_META = OUT_DIR + ".meta"
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 
@@ -39,9 +39,9 @@ WIRE_TS = os.path.join(ROOT, "client", "assets", "scripts", "ui", "WireAchieveme
 WIRE_PROTO = os.path.join(ROOT, "client", "assets", "scripts", "net", "protocol", "wireAchievement.ts")
 
 SPRITE_FILES = {
-    "win_bg": "ui/common/win-bg_win-bg-12.png",
-    "btn_blue": "ui/common/button_btn-blue-big-1.png",
-    "btn_blue_p": "ui/common/button_btn-blue-big-2.png",
+    "win_bg": "common/ui/win-bg_win-bg-12.png",
+    "btn_blue": "common/ui/button_btn-blue-big-1.png",
+    "btn_blue_p": "common/ui/button_btn-blue-big-2.png",
 }
 
 LAYER_UI = 33554432

@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "f9af82ae-d7b3-4122-a98a-5ddd076fb41c",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "crusade-group-map",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

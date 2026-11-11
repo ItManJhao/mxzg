@@ -4,7 +4,7 @@ import { ResManager } from "../../../framework/assets/ResManager";
 
 const { ccclass, property } = _decorator;
 
-const CHIP_ICON = "ui/city/main-city_icon-main_mission";
+const CHIP_ICON = "home/ui/main-city_icon-main_mission";
 
 /**
  * 挂机左上角关卡标。字绑在 HangMissionChip 上。

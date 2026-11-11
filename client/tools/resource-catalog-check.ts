@@ -10,7 +10,7 @@ import { readFileSync, existsSync, readdirSync } from "node:fs";
 
 /** 核对源配置明确复用的图标，防止生成器再次按物品 ID 错报缺图或选错图。 */
 function checkSharedItemIcons(): void {
-    const rows = JSON.parse(readFileSync("client/assets/resources/config/item.json", "utf8")).rows;
+    const rows = JSON.parse(readFileSync("client/assets/bundles/config/item.json", "utf8")).rows;
     const source = (id: number) => BagItemCatalog.iconSource(rows.find((row: { idx: number }) => row.idx === id));
     assert.equal(source(900508), "icons/item/backpack_900505");
     assert.equal(source(901825), "icons/item/backpack_905311");
@@ -20,60 +20,60 @@ function checkSharedItemIcons(): void {
     for (const row of rows) {
         const path = BagItemCatalog.iconSource(row);
         if (path && ![900006, 900303, 902038, 10505021].includes(row.idx)) {
-            assert(existsSync("client/assets/resources/" + path + ".png"), "当前配置实际图片存在：" + row.idx);
+            assert(existsSync("client/assets/bundles/" + path + ".png"), "当前配置实际图片存在：" + row.idx);
         }
     }
     assert.equal(BagItemCatalog.iconSource(undefined), null);
     assert.equal(BagItemCatalog.iconSource({ idx: 1, icon: "../unknown" } as any), null);
     for (let quality = 0; quality <= 6; quality++) {
-        assert.equal(ResManager.qualityFrame(quality), "ui/common/other_rare-" + quality);
+        assert.equal(ResManager.qualityFrame(quality), "common/ui/other_rare-" + quality);
     }
     assert.equal(ResManager.qualityFrame(NaN), ResManager.qualityFrame(0));
 }
 
 /** 从真实配置验证英雄、四槽技能、全部进化头像和装备路径；未知ID不猜图。 */
 function checkHeroIconSources(): void {
-    const rows = (name: string) => JSON.parse(readFileSync("client/assets/resources/config/" + name + ".json", "utf8")).rows;
+    const rows = (name: string) => JSON.parse(readFileSync("client/assets/bundles/config/" + name + ".json", "utf8")).rows;
     const verify = (source: string | null, expected: string) => {
         assert.equal(source, expected);
-        assert(existsSync("client/assets/resources/" + expected + ".png"), expected);
+        assert(existsSync("client/assets/bundles/" + expected + ".png"), expected);
     };
     for (const row of rows("herotype")) {
         if (row.item_id) {
-            verify(ResManager.hero(row.item_id), "ui/hero/hero-icon_" + row.item_id);
+            verify(ResManager.hero(row.item_id), "hero/ui/hero-icon_" + row.item_id);
         }
         for (let slot = 1; slot <= 4; slot++) {
             const id = row["skill_" + slot];
             if (id) {
-                verify(ResManager.skill(id), "ui/hero/skill-icon_" + id);
+                verify(ResManager.skill(id), "hero/ui/skill-icon_" + id);
             }
         }
     }
     for (const row of rows("skin")) {
         for (const skin of JSON.parse(row.skin)) {
-            verify(ResManager.portrait(skin + 10000000), "ui/hero/hero-icon_" + (skin + 10000000));
+            verify(ResManager.portrait(skin + 10000000), "hero/ui/hero-icon_" + (skin + 10000000));
         }
     }
     for (const row of rows("heroevolvelevel")) {
-        verify(ResManager.portrait(row.evolve_icon_id), "ui/hero/hero-icon_" + row.evolve_icon_id);
+        verify(ResManager.portrait(row.evolve_icon_id), "hero/ui/hero-icon_" + row.evolve_icon_id);
     }
     for (const row of rows("equipmenttype")) {
         verify(ResManager.equipment(row.equipment_type), "icons/item/backpack_" + row.equipment_type);
     }
-    for (const file of readdirSync("client/assets/resources/ui/hero")) {
+    for (const file of readdirSync("client/assets/bundles/hero/ui")) {
         const match = /^head-icon_(\d+)\.png$/.exec(file);
         if (match) {
-            verify(ResManager.head(Number(match[1])), "ui/hero/head-icon_" + match[1]);
+            verify(ResManager.head(Number(match[1])), "hero/ui/head-icon_" + match[1]);
         }
     }
     for (const row of rows("border")) {
         verify(ResManager.border(row.icon), row.icon === 0
-            ? "ui/bag/backpack_border-default" : "icons/item/backpack_" + (1005000 + row.icon));
+            ? "bag/ui/backpack_border-default" : "icons/item/backpack_" + (1005000 + row.icon));
     }
-    assert.equal(ResManager.head(999999999), "ui/hero/head-icon_999999999");
-    assert.equal(ResManager.portrait(999999999), "ui/hero/hero-icon_999999999");
-    assert.equal(ResManager.head(0), "ui/hero/head-icon_0");
-    assert.equal(ResManager.border(0), "ui/bag/backpack_border-default");
+    assert.equal(ResManager.head(999999999), "hero/ui/head-icon_999999999");
+    assert.equal(ResManager.portrait(999999999), "hero/ui/hero-icon_999999999");
+    assert.equal(ResManager.head(0), "hero/ui/head-icon_0");
+    assert.equal(ResManager.border(0), "bag/ui/backpack_border-default");
     for (const id of [-1, NaN, 1.5]) {
         assert.equal(ResManager.head(id), null);
         assert.equal(ResManager.border(id), null);
@@ -104,13 +104,13 @@ async function checkUnifiedSpriteEntry(): Promise<void> {
     const owner = new Node("ImageOwner");
     const image = owner.addComponent(Sprite);
     const prepared = createAssetScope();
-    const descriptor = ResourceAssetsUtils.describe("resources", "ui/common/other_rare-4", "SpriteFrame");
+    const descriptor = ResourceAssetsUtils.describe("common", "ui/other_rare-4", "SpriteFrame");
     const preload = prepared.load(descriptor);
-    const displayed = ResManager.getSpriteFrame(owner, descriptor.path);
+    const displayed = ResManager.getSpriteFrame(owner, descriptor.bundle + "/" + descriptor.path);
     await flush();
     assert.equal(count, 1, "阶段描述与统一路径取图共用一次请求");
     const shared = new SpriteFrame();
-    waiting.get(descriptor.loadPath)!(null, shared);
+    waiting.get(descriptor.bundle + "/" + descriptor.loadPath)!(null, shared);
     assert.equal(await preload, await displayed);
     ResManager.setSprite(owner, ["fixture/old"]);
     await flush();
@@ -139,12 +139,12 @@ async function checkUnifiedSpriteEntry(): Promise<void> {
     waiting.get("fixture/fallback/spriteFrame")!(null, fallback);
     await flush();
     assert.equal(image.spriteFrame, fallback);
-    assert.equal(warnings.filter(text => text.includes("resources/fixture/missing") && text.includes("missing")).length, 1);
+    assert.equal(warnings.filter(text => text.includes("bundles/fixture/missing") && text.includes("missing")).length, 1);
     ResManager.setSprite(owner, ["fixture/missing", "fixture/fallback"]);
     await flush();
     waiting.get("fixture/missing/spriteFrame")!(new Error("missing"));
     await flush();
-    assert.equal(warnings.filter(text => text.includes("resources/fixture/missing")).length, 1, "同一路径失败只记录一次，即使回退成功也保留原因");
+    assert.equal(warnings.filter(text => text.includes("bundles/fixture/missing")).length, 1, "同一路径失败只记录一次，即使回退成功也保留原因");
     stopWarnings();
     ResManager.setSprite(owner, "fixture/single");
     await flush();
@@ -165,23 +165,23 @@ async function main(): Promise<void> {
     let requests = 0, retained = 0, released = 0;
     const callbacks: Array<(error: Error | null, asset?: unknown) => void> = [];
     resources.load = (path: string, _type: unknown, callback: (error: Error | null, asset?: unknown) => void) => {
-        assert.equal(path, "ui/common/button_btn-tab-24/spriteFrame");
+        assert.equal(path, "common/ui/button_btn-tab-24/spriteFrame");
         requests++; callbacks.push(callback);
     };
     const asset = { addRef: () => { retained++; }, decRef: () => { released++; } };
-    const a = createAssetScope(), b = createAssetScope(), descriptor = ResourceAssetsUtils.describe("resources", "ui/common/button_btn-tab-24", "SpriteFrame");
-    const first = a.load(descriptor), shared = b.loadPath(descriptor.loadPath, "SpriteFrame");
-    await Promise.resolve(); assert.equal(requests, 1, "目录UUID与动态路径解析为同一类型/路径，不重复持有");
+    const a = createAssetScope(), b = createAssetScope(), descriptor = ResourceAssetsUtils.describe("common", "ui/button_btn-tab-24", "SpriteFrame");
+    const first = a.load(descriptor), shared = b.loadPath(descriptor.bundle + "/" + descriptor.loadPath, "SpriteFrame");
+    await flush(); assert.equal(requests, 1, "目录UUID与动态路径解析为同一类型/路径，不重复持有");
     a.dispose(); const cancelled = assert.rejects(first, ResourceScopeClosed);
     callbacks.shift()!(null, asset);
     await cancelled; assert.equal(await shared, asset); assert.equal(retained, 1);
     b.dispose(); b.dispose(); assert.equal(released, 1);
     await assert.rejects(b.load(descriptor), ResourceScopeClosed);
     const retry = createAssetScope(), failure = retry.load(descriptor);
-    await Promise.resolve(); callbacks.shift()!(new Error("missing"));
+    await flush(); callbacks.shift()!(new Error("missing"));
     await assert.rejects(failure, /missing/);
     const recovered = retry.load(descriptor);
-    await Promise.resolve(); callbacks.shift()!(null, asset); await recovered;
+    await flush(); callbacks.shift()!(null, asset); await recovered;
     retry.dispose(); assert.equal(retained, 2); assert.equal(released, 2);
     await checkUnifiedSpriteEntry();
     console.log("resource-catalog-check passed: item config mapping, unified sprite entry, cache sharing, fallback and late-response guards");

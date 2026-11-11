@@ -8,17 +8,35 @@
     "victory": "BattleEndCtr.lua:192-194，外层scale=1.5×1.42=2.13，position=(0,0)",
     "formula": "((70,0)-(70,60))*2.13=(0,-127.8)，0.5*2.13=1.065"
   },
-  "before": {"x": 110, "y": 735, "scale": 1.065},
-  "after": {"x": 110, "y": 607.2, "scale": 1.065},
-  "checks": {"prefabReview": "通过", "mainChapter": "通过", "backendMysqlFullFrontend": "本批未重跑"},
+  "before": {
+    "x": 110,
+    "y": 735,
+    "scale": 1.065
+  },
+  "after": {
+    "x": 110,
+    "y": 607.2,
+    "scale": 1.065
+  },
+  "checks": {
+    "prefabReview": "通过",
+    "mainChapter": "通过",
+    "backendMysqlFullFrontend": "本批未重跑"
+  },
   "browser": {
     "viewport": "360x840",
     "boundary": "独立测试环境只读胜利样例，无战斗或资产写入，不代替真实进化战斗",
     "compiledPositionAndScale": "Creator刷新后运行时确认与after一致",
-    "cases": ["10105008第二进化分支20112008", "10104004基础外观及历史缺失提示"],
+    "cases": [
+      "10105008第二进化分支20112008",
+      "10104004基础外观及历史缺失提示"
+    ],
     "closeComponents": 0,
     "warningsAndErrors": [],
-    "screenshots": ["../images/victory-anchor-evolution-20261109.jpg", "../images/victory-anchor-base-20261109.jpg"]
+    "screenshots": [
+      "../images/victory-anchor-evolution-20261109.jpg",
+      "../images/victory-anchor-base-20261109.jpg"
+    ]
   },
   "remaining": "大型翅膀仍有左侧裁边，已排除遗漏横向补偿；保留旧缩放并继续表现复验，不签署完整旧视觉还原",
   "git": "未提交，未推送"

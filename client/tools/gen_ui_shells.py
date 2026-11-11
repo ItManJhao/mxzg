@@ -5,30 +5,30 @@ import json
 import os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-UI = os.path.join(ROOT, "client", "assets", "prefabs", "ui")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+UI = os.path.join(ROOT, "client", "assets", "bundles")
 FONT = "4ff55f31-773f-4ef9-99b6-466b5deeecb9"
 LAYER = 33554432
 
 SPRITES = {
-    "hero_bg": "ui/hero/hero-icon_icon-bg-2.png",
-    "hero_frame": "ui/hero/hero-icon_icon-frame-1.png",
-    "hero_face": "ui/hero/hero-icon_spr-default.png",
-    "hero_elem": "ui/hero/hero-icon_elem-0.png",
-    "hero_star": "ui/hero/hero-info_spr-star-1.png",
-    "hero_lock": "ui/hero/hero-icon_spr-lock.png",
-    "hero_battle": "ui/hero/hero-icon_spr-battle.png",
-    "skill_badge": "ui/hero/hero-info_spr-skill-level-bg.png",
-    "bag_frame": "ui/common/backpack_item-frame-1.png",
-    "bag_icon": "ui/common/backpack_spr-default.png",
-    "dragon": "ui/dragon/dragon_btn-illustration.png",
-    "dragon_lock": "ui/dragon/dragon_spr-lock.png",
-    "tab": "ui/common/button_btn-tab-23.png",
-    "close": "ui/common/button_btn-close-1.png",
-    "reward": "ui/chapter-reward-lang/chapter-reward-lang_btn-reward-1.png",
-    "mission": "ui/city/main-city_icon-main_mission.png",
-    "white": "ui/common/loading_bg-white.png",
-    "card": "ui/common/win-bg_block-bg-24.png",
+    "hero_bg": "hero/ui/hero-icon_icon-bg-2.png",
+    "hero_frame": "hero/ui/hero-icon_icon-frame-1.png",
+    "hero_face": "hero/ui/hero-icon_spr-default.png",
+    "hero_elem": "hero/ui/hero-icon_elem-0.png",
+    "hero_star": "hero/ui/hero-info_spr-star-1.png",
+    "hero_lock": "hero/ui/hero-icon_spr-lock.png",
+    "hero_battle": "hero/ui/hero-icon_spr-battle.png",
+    "skill_badge": "hero/ui/hero-info_spr-skill-level-bg.png",
+    "bag_frame": "common/atlas/backpack_item-frame-1.png",
+    "bag_icon": "common/ui/backpack_spr-default.png",
+    "dragon": "dragon/ui/dragon_btn-illustration.png",
+    "dragon_lock": "dragon/ui/dragon_spr-lock.png",
+    "tab": "common/ui/button_btn-tab-23.png",
+    "close": "common/ui/button_btn-close-1.png",
+    "reward": "chapter-reward-lang/ui/chapter-reward-lang_btn-reward-1.png",
+    "mission": "home/ui/main-city_icon-main_mission.png",
+    "white": "common/ui/loading_bg-white.png",
+    "card": "common/atlas/win-bg_block-bg-24.png",
 }
 
 
@@ -41,7 +41,9 @@ def fid(seed):
 
 
 def sprite_uuid(rel):
-    meta = os.path.join(RES, rel + ".meta")
+    """从实际Bundle图片meta取得原帧UUID；提示遮罩由本地启动包共用。"""
+    # 提示遮罩白图属于本地启动资源，保持原UUID供所有页面共用。
+    meta = os.path.join(ROOT, "client", "assets", "bundles", "bootstrap", "images", "loading_bg-white.png.meta") if rel == SPRITES["white"] else os.path.join(RES, rel + ".meta")
     with open(meta, encoding="utf-8") as handle:
         data = json.load(handle)
     sub = data.get("subMetas", {}).get("f9941") or {}
@@ -365,7 +367,10 @@ def write_prefab(folder, name, objs, meta_uuid):
 
 
 def load_prefab(rel):
-    path = os.path.join(UI, rel)
+    # 模块下只从prefabs读取界面，避免重新生成旧顶层目录。
+    module, relative = rel.split("/", 1)
+    module = {"city": "home", "chapter": "battle", "account": "login"}.get(module, module)
+    path = os.path.join(UI, module, "prefabs", relative)
     with open(path, encoding="utf-8") as handle:
         return path, json.load(handle)
 
@@ -656,7 +661,7 @@ frames = {}
 
 
 def build_cells():
-    folder = os.path.join(UI, "hero")
+    folder = os.path.join(UI, "hero", "prefabs")
     hero = Builder("HeroIconCellView")
     root = hero.node("HeroIconCellView", None, 0, 0, 96, 104)
     hero.button(root, None)
@@ -709,7 +714,7 @@ def build_cells():
     dragon.label(tag, "图鉴", 12, 122, 71, 45, 80)
     write_prefab(folder, "DragonCard", dragon.dump(), "09e3c6d2-8f4a-4175-be33-4cad908f7e62")
 
-    common = os.path.join(UI, "common")
+    common = os.path.join(UI, "common", "prefabs")
     text = Builder("TextChip")
     root = text.node("TextChip", None, 0, 0, 200, 28)
     text.label(root, "", 18, 122, 71, 45, 200)
@@ -771,7 +776,7 @@ def build_cells():
     chip.sprite(icon, frames["mission"])
     label = chip.node("HangMissionLabel", root, 24, 0, 120, 40)
     chip.label(label, "", 16, 255, 236, 190, 120)
-    write_prefab(os.path.join(UI, "battle"), "HangMissionChipView", chip.dump(), "4d270a16-c38e-45b9-f277-80e134c3b2a6")
+    write_prefab(os.path.join(UI, "battle", "prefabs"), "HangMissionChipView", chip.dump(), "4d270a16-c38e-45b9-f277-80e134c3b2a6")
 
     stage = Builder("ChapterStageChip")
     root = stage.node("ChapterStageChip", None, 0, 0, 80, 40)
@@ -779,7 +784,7 @@ def build_cells():
     stage.button(root, frames["tab"])
     label = stage.node("lbl_title", root, 0, 0, 76, 24)
     stage.label(label, "", 14, 122, 71, 45, 76)
-    write_prefab(os.path.join(UI, "chapter"), "ChapterStageChip", stage.dump(), "6f492c38-e5a0-47db-b499-a20356e5d4c8")
+    write_prefab(os.path.join(UI, "battle", "prefabs"), "ChapterStageChip", stage.dump(), "6f492c38-e5a0-47db-b499-a20356e5d4c8")
 
     # Close sits 73.889 in from the right, 35.47 down from the top of a 640×1280 map.
     chapter = Builder("ChapterMapLayer")
@@ -796,7 +801,7 @@ def build_cells():
     strip, _content = chapter.scroll(root, "StageStrip", 0, -580, 600, 52, 0.5, 0.5, False, 0, 0.5, -300, 0)
     empty = chapter.node("lbl_empty", strip, 0, 0, 280, 28, active=False)
     chapter.label(empty, "", 16, 255, 236, 190, 280)
-    write_prefab(os.path.join(UI, "chapter"), "ChapterMapLayer", chapter.dump(), "8a6b4e50-17c2-49fd-96bb-c42578a7f6ea")
+    write_prefab(os.path.join(UI, "battle", "prefabs"), "ChapterMapLayer", chapter.dump(), "8a6b4e50-17c2-49fd-96bb-c42578a7f6ea")
 
 
 def ensure_parchment(rel, before_name):

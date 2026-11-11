@@ -2,7 +2,7 @@
 """Generate the Creator 3.8.8 Arena prefab (Wire only, not wired).
 
 Writes:
-  client/assets/prefabs/ui/arena/WireArenaPage.prefab
+  client/assets/bundles/arena/prefabs/WireArenaPage.prefab
 and its .meta file, plus ui/arena.meta if it is missing.
 
 WireArenaPage is the readonly real-server page. Layout matches
@@ -13,7 +13,7 @@ root is WireArenaPage, the manager name.
 ArenaPage.ts is a different Mock challenge page. This script does not
 invent a Mock Arena prefab and does not write ArenaPage.prefab.
 
-SpriteFrame uuids come from client/assets/resources/**/*.meta (@f9941).
+SpriteFrame uuids come from client/assets/bundles/**/*.meta (@f9941).
 Does not touch Boot, MainApp, page scripts, protocol, or USE_*_PREFAB flags.
 Does not wire fight (18002) or refresh (18003).
 No arena atlas: page chrome is common win-bg and the blue button.
@@ -33,8 +33,8 @@ import uuid
 import base64
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT_DIR = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "arena")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "arena", "prefabs")
 DIR_META = OUT_DIR + ".meta"
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 
@@ -43,9 +43,9 @@ WIRE_PROTO = os.path.join(ROOT, "client", "assets", "scripts", "net", "protocol"
 MOCK_TS = os.path.join(ROOT, "client", "assets", "scripts", "ui", "ArenaPage.ts")
 
 SPRITE_FILES = {
-    "win_bg": "ui/common/win-bg_win-bg-12.png",
-    "btn_blue": "ui/common/button_btn-blue-big-1.png",
-    "btn_blue_p": "ui/common/button_btn-blue-big-2.png",
+    "win_bg": "common/ui/win-bg_win-bg-12.png",
+    "btn_blue": "common/ui/button_btn-blue-big-1.png",
+    "btn_blue_p": "common/ui/button_btn-blue-big-2.png",
 }
 
 LAYER_UI = 33554432

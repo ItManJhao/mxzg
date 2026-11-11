@@ -2,14 +2,14 @@
 """Generate Creator 3.8.8 Mainline prefabs (P1, not wired).
 
 Writes:
-  client/assets/prefabs/ui/mainline/MainlinePage.prefab
-  client/assets/prefabs/ui/mainline/WireMainlinePage.prefab
+  client/assets/bundles/mainline/prefabs/MainlinePage.prefab
+  client/assets/bundles/mainline/prefabs/WireMainlinePage.prefab
 and their .meta files, plus ui/mainline.meta if it is missing.
 
 Mock MainlinePage is three panels (list / battle / settle).
 WireMainlinePage is a separate readonly screen. They do not share a root.
 
-SpriteFrame uuids come from client/assets/resources/**/*.meta (@f9941).
+SpriteFrame uuids come from client/assets/bundles/**/*.meta (@f9941).
 Does not touch Boot, MainApp, page scripts, or USE_*_PREFAB flags.
 """
 import hashlib
@@ -20,8 +20,8 @@ import uuid
 import base64
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT_DIR = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "mainline")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "mainline", "prefabs")
 DIR_META = OUT_DIR + ".meta"
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 
@@ -31,14 +31,14 @@ BATTLE_TS = os.path.join(ROOT, "client", "assets", "scripts", "module", "mainlin
 CHAPTER_TS = os.path.join(ROOT, "client", "assets", "scripts", "net", "protocol", "wireChapter.ts")
 
 SPRITE_FILES = {
-    "win_bg": "ui/common/win-bg_win-bg-12.png",
-    "block": "ui/common/win-bg_block-bg-5.png",
-    "msg_bg": "ui/common/win-bg_msg-bg.png",
-    "num_bg": "ui/common/win-bg_num-bg.png",
-    "btn_blue": "ui/common/button_btn-blue-big-1.png",
-    "btn_blue_p": "ui/common/button_btn-blue-big-2.png",
-    "btn_orange": "ui/common/button_btn-orange-big-1.png",
-    "btn_orange_p": "ui/common/button_btn-orange-big-2.png",
+    "win_bg": "common/ui/win-bg_win-bg-12.png",
+    "block": "common/ui/win-bg_block-bg-5.png",
+    "msg_bg": "common/ui/win-bg_msg-bg.png",
+    "num_bg": "common/ui/win-bg_num-bg.png",
+    "btn_blue": "common/ui/button_btn-blue-big-1.png",
+    "btn_blue_p": "common/ui/button_btn-blue-big-2.png",
+    "btn_orange": "common/atlas/button_btn-orange-big-1.png",
+    "btn_orange_p": "common/ui/button_btn-orange-big-2.png",
 }
 
 LAYER_UI = 33554432

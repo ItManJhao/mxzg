@@ -1,11 +1,75 @@
 {
   "date": "2026-11-09",
-  "issues": ["遇敌开始和结束英雄闪现", "敌方模型提前完整显示", "树精type2帧资源校验阻塞挑战"],
-  "fixes": ["临时借用并幂等归还行军骨骼，不重新创建英雄", "旧版1秒淡入及延迟显示敌方血条", "先展开旧actions覆盖再校验和预载；树精近身与施法者特效分别执行"],
-  "idleRuntime": {"run": "f954167dc9024c8c8e40f53359ecf486", "nodeIds": ["Node.1223", "Node.1230", "Node.1231"], "observedStateTransitions": 11, "nodeIdsUnchanged": true, "entryOpacitySamples": [13, 26, 38], "consoleErrors": 0},
-  "reportedLineupFixture": {"run": "df0de110197e484f8d879f3721f84dff", "port": 53262, "account": "chapter_review", "templates": [10301001, 10101001, 10201001], "heroLevel": 1, "database": "独立随机内存H2", "gm": false},
-  "reportedLineupResult": {"battleId": "639d6077-b002-4b99-a3dd-81113ff3915d", "presentationIds": [5051101, 5051101, 1011101, 3011101, 2011101], "receipt": "SETTLED", "pendingBattleId": null, "assetRevision": 4, "gold": 4000, "diamond": 151, "returnedToIdle": true, "consoleErrorsOrWarnings": 0},
-  "screenshots": ["../images/idle-retained-20261109.jpg", "../images/reported-lineup-settled-20261109.jpg"],
-  "checks": {"frontendActive": "39/39通过，随后最终取消边界改动专项复跑通过", "backendTargeted": "9项通过；最终一级夹具test-compile通过", "typescript": "通过", "atlasPixels": "178帧通过", "wire": "Java到TS三关及挂机互通通过"},
-  "limits": ["不修改日常player_1或其待结算战报", "不代表所有英雄技能表现已完整覆盖", "未做真机及MySQL复验"]
+  "issues": [
+    "遇敌开始和结束英雄闪现",
+    "敌方模型提前完整显示",
+    "树精type2帧资源校验阻塞挑战"
+  ],
+  "fixes": [
+    "临时借用并幂等归还行军骨骼，不重新创建英雄",
+    "旧版1秒淡入及延迟显示敌方血条",
+    "先展开旧actions覆盖再校验和预载；树精近身与施法者特效分别执行"
+  ],
+  "idleRuntime": {
+    "run": "f954167dc9024c8c8e40f53359ecf486",
+    "nodeIds": [
+      "Node.1223",
+      "Node.1230",
+      "Node.1231"
+    ],
+    "observedStateTransitions": 11,
+    "nodeIdsUnchanged": true,
+    "entryOpacitySamples": [
+      13,
+      26,
+      38
+    ],
+    "consoleErrors": 0
+  },
+  "reportedLineupFixture": {
+    "run": "df0de110197e484f8d879f3721f84dff",
+    "port": 53262,
+    "account": "chapter_review",
+    "templates": [
+      10301001,
+      10101001,
+      10201001
+    ],
+    "heroLevel": 1,
+    "database": "独立随机内存H2",
+    "gm": false
+  },
+  "reportedLineupResult": {
+    "battleId": "639d6077-b002-4b99-a3dd-81113ff3915d",
+    "presentationIds": [
+      5051101,
+      5051101,
+      1011101,
+      3011101,
+      2011101
+    ],
+    "receipt": "SETTLED",
+    "pendingBattleId": null,
+    "assetRevision": 4,
+    "gold": 4000,
+    "diamond": 151,
+    "returnedToIdle": true,
+    "consoleErrorsOrWarnings": 0
+  },
+  "screenshots": [
+    "../images/idle-retained-20261109.jpg",
+    "../images/reported-lineup-settled-20261109.jpg"
+  ],
+  "checks": {
+    "frontendActive": "39/39通过，随后最终取消边界改动专项复跑通过",
+    "backendTargeted": "9项通过；最终一级夹具test-compile通过",
+    "typescript": "通过",
+    "atlasPixels": "178帧通过",
+    "wire": "Java到TS三关及挂机互通通过"
+  },
+  "limits": [
+    "不修改日常player_1或其待结算战报",
+    "不代表所有英雄技能表现已完整覆盖",
+    "未做真机及MySQL复验"
+  ]
 }

@@ -11,10 +11,10 @@ import { GConfig } from "../assets/scripts/config/GConfig";
 
 /** 通过受控完成回调验证进度，不使用延时伪造网络完成。 */
 async function main(): Promise<void> {
-    const bag = ResourceAssetsUtils.describe("prefabs", "ui/bag/BagView", "Prefab");
-    const detail = ResourceAssetsUtils.describe("prefabs", "ui/bag/BagInfoView", "Prefab");
-    const spine = ResourceAssetsUtils.describe("resources", "spine/jiemian", "SkeletonData");
-    const icon = ResourceAssetsUtils.describe("resources", "ui/common/other_rare-4", "SpriteFrame");
+    const bag = ResourceAssetsUtils.describe("bag", "prefabs/BagView", "Prefab", "bundles/bag/prefabs/BagView");
+    const detail = ResourceAssetsUtils.describe("bag", "prefabs/BagInfoView", "Prefab", "bundles/bag/prefabs/BagInfoView");
+    const spine = ResourceAssetsUtils.describe("spine", "jiemian", "SkeletonData");
+    const icon = ResourceAssetsUtils.describe("common", "ui/other_rare-4", "SpriteFrame");
     const uuid: ResourceDescriptor = {
         bundle: "main", path: "fixture-frame", assetPath: "fixture-frame",
         loadPath: "", type: "SpriteFrame", uuid: "fixture-frame-uuid",
@@ -32,7 +32,7 @@ async function main(): Promise<void> {
         requests.push(bundle + ":" + path);
         if (type === JsonAsset) {
             const value = new JsonAsset();
-            value.json = JSON.parse(readFileSync("client/assets/resources/" + path + ".json", "utf8"));
+            value.json = JSON.parse(readFileSync("client/assets/bundles/" + bundle + "/" + path + ".json", "utf8"));
             done(null, value);
         } else if (path === detail.loadPath && failDetail) {
             done(new Error("fixture retry"));
@@ -82,6 +82,10 @@ async function main(): Promise<void> {
         const before = requests.length;
         await scope.load(icon);
         assert.equal(requests.length, before, "前台复用后台图片");
+        const uuidRequests = requests.filter(value => value.startsWith("uuid:")).length;
+        await assert.rejects(app.preparedPage(detail.assetPath), /fixture retry/, "远程页面失败必须保留失败状态");
+        assert.equal(requests.filter(value => value.startsWith("uuid:")).length, uuidRequests,
+            "远程Bundle失败不能绕过下载路径按UUID加载");
         failDetail = false;
         await app.prepareBackground(async () => {}, () => true);
         assert.deepEqual(app.backgroundStatus(), { total: 1, completed: 1, failed: 0, running: false });
@@ -103,7 +107,7 @@ async function main(): Promise<void> {
     const before = requests.length;
     await stopped.prepareBackground(async () => { stopped.stopBackground(); }, () => true);
     assert.equal(requests.length, before, "停止后不继续排队，也不读取全目录索引");
-    const deferredImage = ResourceAssetsUtils.describe("resources", "ui/common/other_rare-6", "SpriteFrame");
+    const deferredImage = ResourceAssetsUtils.describe("common", "ui/other_rare-6", "SpriteFrame");
     assert(!requests.includes(deferredImage.bundle + ":" + deferredImage.loadPath), "未配置资源不提前加载");
     const demand = createAssetScope();
     await demand.load(deferredImage);

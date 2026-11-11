@@ -1,0 +1,92 @@
+{
+  "status": "issues-fixed-awaiting-fresh-build",
+  "buildTime": "2026-11-11 19:22:18",
+  "branch": "hao",
+  "localAssetBytes": 6220805,
+  "localWebBytes": 9450211,
+  "remoteAssetBytes": 665636594,
+  "bootstrapFontBytes": 4599224,
+  "remoteBundles": 104,
+  "startup": {
+    "original": "缺少bootstrap预载，场景启动失败",
+    "sourceFix": "构建扩展1.6.1 onBeforeCompressSettings追加本地bootstrap，保留原包和版本，构建后拒绝漏配",
+    "currentReview": "由相同构建钩子逻辑修正验收包settings.json后继续验证；尚未由Creator完整重建自动执行"
+  },
+  "runtime": [
+    "登录及主城",
+    "背包装备/道具/碎片/精灵各3件，四类详情打开关闭",
+    "切换独立测试账号",
+    "英雄列表、详情、技能说明及布阵打开",
+    "主线前两关真实胜利SETTLED并自动返回挂机，第三关失败返回",
+    "阻断bag/native请求停在81%并显示重试，恢复后进入主城，8000金币及161钻石不变"
+  ],
+  "remaining": [
+    "旧客户端脚本在元素描述中丢失hero包名，三个消费点已修正且通过相关专项；需新构建确认",
+    "新构建复验胜利完整画面、经验动画、战报及返回",
+    "真实CDN、真机/App/微信尚未验收"
+  ],
+  "sourceChecks": [
+    "构建钩子保留版本/幂等/漏配拒绝/零删除/平台限制",
+    "hero含实际消费点6元素回归",
+    "hero-detail",
+    "hero-equipment",
+    "formation-view",
+    "battle",
+    "Creator tsc"
+  ],
+  "environment": "回环随机端口独立H2内存测试服，显式bag/lineup/equipment夹具；lineup夹具GM仅此测试进程开启",
+  "downloads": {
+    "login": {
+      "requests": 59,
+      "bytes": 1944535
+    },
+    "audio": {
+      "requests": 48,
+      "bytes": 1853271
+    },
+    "maps": {
+      "requests": 4,
+      "bytes": 40112
+    },
+    "common": {
+      "requests": 240,
+      "bytes": 1725096
+    },
+    "font": {
+      "requests": 30,
+      "bytes": 21622786
+    },
+    "spine": {
+      "requests": 153,
+      "bytes": 11559089
+    },
+    "config": {
+      "requests": 55,
+      "bytes": 56549722
+    },
+    "home": {
+      "requests": 719,
+      "bytes": 8209138
+    },
+    "bag": {
+      "requests": 20,
+      "bytes": 347616
+    },
+    "icons": {
+      "requests": 62,
+      "bytes": 664703
+    },
+    "hero": {
+      "requests": 192,
+      "bytes": 3829818
+    },
+    "battle": {
+      "requests": 1712,
+      "bytes": 23943367
+    }
+  },
+  "screenshots": [
+    "../images/bundles-release-bag-20261111.png"
+  ],
+  "committed": false
+}

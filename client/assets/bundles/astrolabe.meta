@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "062385d8-91bc-4b8c-b7d2-2a2894f1b355",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "astrolabe",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

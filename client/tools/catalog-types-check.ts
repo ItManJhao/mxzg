@@ -17,7 +17,7 @@ function verifyCatalogTypes(): void {
     // @ts-expect-error 行字段不可写。
     if (row) row.idx = 2;
     const scope = createAssetScope();
-    const sprite = scope.load(ResourceAssetsUtils.describe("resources", "ui/common/button_btn-tab-24", "SpriteFrame"));
+    const sprite = scope.load(ResourceAssetsUtils.describe("common", "ui/button_btn-tab-24", "SpriteFrame"));
     sprite.then(frame => { frame.originalSize; });
     // @ts-expect-error SpriteFrame 加载结果不能当成 Prefab。
     sprite.then(frame => { frame.data; });

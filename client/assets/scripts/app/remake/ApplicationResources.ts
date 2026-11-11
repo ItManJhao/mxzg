@@ -41,7 +41,7 @@ export class ApplicationResources {
         return {
             bundle: target.bundle,
             path: target.path,
-            assetPath: target.bundle + "/" + target.path,
+            assetPath: "bundles/" + target.bundle + "/" + target.path,
             loadPath: target.path,
             type: target.type,
             uuid: "",
@@ -50,7 +50,7 @@ export class ApplicationResources {
 
     /** 配置表与显式JSON目标使用相同资源键，跨阶段的重复目标只准备一次。 */
     private key(target: ResourceDescriptor | { config: ConfigName }): string {
-        return "config" in target ? JSON.stringify(["resources", CONFIG_SCHEMA[target.config].path, "JsonAsset"])
+        return "config" in target ? JSON.stringify(["config", CONFIG_SCHEMA[target.config].path.slice("config/".length), "JsonAsset"])
             : JSON.stringify([target.bundle, target.loadPath || target.uuid, target.type]);
     }
 
@@ -68,7 +68,7 @@ export class ApplicationResources {
             await this.assets.load(resolved);
             // 显式配置JSON同步交给唯一配置仓库校验解析，普通JSON只加载资源。
             const name = (Object.keys(CONFIG_SCHEMA) as ConfigName[]).find(name =>
-                resolved.type === "JsonAsset" && resolved.bundle === "resources" && CONFIG_SCHEMA[name].path === resolved.path);
+                resolved.type === "JsonAsset" && resolved.bundle === "config" && CONFIG_SCHEMA[name].path === "config/" + resolved.path);
             if (name) {
                 await GameConfig.instance.prepare([name]);
                 this.completed.add(this.key({ config: name }));
@@ -151,7 +151,7 @@ export class ApplicationResources {
     /** 主城打开时保障展示配置可读，预制体与后台共享资源池。 */
     public async homePage(): Promise<Prefab> {
         await prepareCityConfig();
-        return this.preparedPage("bundles/remake-home/RemakeHomeView");
+        return this.preparedPage("bundles/home/prefabs/RemakeHomeView");
     }
 
     /** 旧功能入口仅加载当前页面；配置是显示前置条件，不属于额外预加载清单。 */
@@ -162,29 +162,29 @@ export class ApplicationResources {
         if (group === "formation") {
             await prepareHeroConfig();
         }
-        const page = group === "servers" ? ResourceAssetsUtils.describe("prefabs", "ui/login/ServerPickerView", "Prefab")
-            : group === "formation" ? ResourceAssetsUtils.describe("prefabs", "ui/hero/FormationView", "Prefab") : ResourceAssetsUtils.describe("prefabs", "ui/battle/CampaignView", "Prefab");
+        const page = group === "servers" ? ResourceAssetsUtils.describe("login", "prefabs/ServerPickerView", "Prefab")
+            : group === "formation" ? ResourceAssetsUtils.describe("hero", "prefabs/FormationView", "Prefab") : ResourceAssetsUtils.describe("battle", "prefabs/CampaignView", "Prefab");
         return this.preparedPage(page.assetPath);
     }
 
     /** 英雄页面按点击保障配置，只取得选中的页面，其他资源按LoadingPlan或实际使用时加载。 */
     public async heroPage(detail = false): Promise<Prefab> {
         await (detail ? prepareHeroDetailConfig() : prepareHeroConfig());
-        return this.preparedPage((detail ? ResourceAssetsUtils.describe("prefabs", "ui/hero/HeroInfoView", "Prefab") : ResourceAssetsUtils.describe("prefabs", "ui/hero/HeroListView", "Prefab")).assetPath);
+        return this.preparedPage((detail ? ResourceAssetsUtils.describe("hero", "prefabs/HeroInfoView", "Prefab") : ResourceAssetsUtils.describe("hero", "prefabs/HeroListView", "Prefab")).assetPath);
     }
 
     /** 技能弹窗只准备自己的配置与预制体，不扩展阶段清单。 */
     public async heroSkillPage(): Promise<Prefab> {
         await prepareHeroDetailConfig();
-        return this.preparedPage("prefabs/ui/hero/HeroSkillView");
+        return this.preparedPage("bundles/hero/prefabs/HeroSkillView");
     }
 
     /** 战斗页面保持当前配置前置条件，演出资源依然由播放器取得并复用后台缓存。 */
     public async battlePage(page: "main" | "field" | "detail" = "main"): Promise<Prefab> {
         await prepareInventoryConfig();
         await prepareHeroDetailConfig();
-        const descriptor = page === "field" ? ResourceAssetsUtils.describe("prefabs", "ui/battle/MainChapterBattleView", "Prefab")
-            : page === "detail" ? ResourceAssetsUtils.describe("prefabs", "ui/battle/BattleDetailLayer", "Prefab") : ResourceAssetsUtils.describe("prefabs", "ui/battle/MainChapterView", "Prefab");
+        const descriptor = page === "field" ? ResourceAssetsUtils.describe("battle", "prefabs/MainChapterBattleView", "Prefab")
+            : page === "detail" ? ResourceAssetsUtils.describe("battle", "prefabs/BattleDetailLayer", "Prefab") : ResourceAssetsUtils.describe("battle", "prefabs/MainChapterView", "Prefab");
         return this.preparedPage(descriptor.assetPath);
     }
 

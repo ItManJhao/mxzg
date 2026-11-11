@@ -60,9 +60,9 @@ export class BattleReplayPreview {
             // 后续只读取普通配置对象，释放JsonAsset持有，不保留引擎资产缓存。
             configScope.dispose();
         }
-        const elementPaths = ["ui/hero/hero-icon_elem-1/spriteFrame", "ui/hero/hero-icon_elem-2/spriteFrame",
-            "ui/hero/hero-icon_elem-3/spriteFrame", "ui/hero/hero-icon_elem-4/spriteFrame",
-            "ui/hero/hero-icon_elem-5/spriteFrame"];
+        const elementPaths = ["hero/ui/hero-icon_elem-1/spriteFrame", "hero/ui/hero-icon_elem-2/spriteFrame",
+            "hero/ui/hero-icon_elem-3/spriteFrame", "hero/ui/hero-icon_elem-4/spriteFrame",
+            "hero/ui/hero-icon_elem-5/spriteFrame"];
         const selected = new Map<number, BuffRow>();
         // 一个旧Buff可展开多个并行表现，索引仅供本页资源缓存使用，不修改权威事件。
         const expanded = new Map<number, readonly BuffRow[]>();
@@ -130,7 +130,7 @@ export class BattleReplayPreview {
             }
         }
         const unregisterEnd = idleEncounter ? () => {} : registerView(ChapterEndView, {
-            id: "chapter-end", prefab: "prefabs/ui/chapter/ChapterEndView", layer: UILayer.Popup,
+            id: "chapter-end", prefab: "bundles/battle/prefabs/ChapterEndView", layer: UILayer.Popup,
             hostId: persistentChapter ? "remake-modal" : "battle-settlement", cache: false, allowMultiple: false
         });
         // 正常结算必须在应用弹层，避免完整旧胜利页被挂机面板遮挡；技能台仍归本地战场清理。
@@ -323,7 +323,7 @@ export class BattleReplayPreview {
         const assets = ResourceAssetsUtils.forNode(shell.root);
         try {
             if (Array.from(selected.values()).some(row => row.type === 1004)) {
-                const effect = await assets.loadPath("battle/legacy-frozen", "EffectAsset");
+                const effect = await assets.loadPath("battle/effects/legacy-frozen", "EffectAsset");
                 frozenMaterial = new Material();
                 frozenMaterial.initialize({ effectAsset: effect });
                 if (!units.every(unit => unit.templateId === 10205023)) {
@@ -347,7 +347,7 @@ export class BattleReplayPreview {
                     }
                 } else if (row.buff_icon) {
                     icons.set(row.idx, await assets.loadPath(
-                        "ui/hero/skill-icon_" + row.buff_icon + "/spriteFrame", "SpriteFrame"));
+                        "hero/ui/skill-icon_" + row.buff_icon + "/spriteFrame", "SpriteFrame"));
                 }
             }
             for (const side of ["ally", "enemy"] as const) {
@@ -432,7 +432,7 @@ export class BattleReplayPreview {
             }
             if (idleEncounter || formalOpening) {
                 const loadEntry = (side: string) => Promise.all(Array.from({ length: 15 }, (_, index) =>
-                    assets.loadPath("ui/battle/battle-appear-" + side + "_" + index + "/spriteFrame", "SpriteFrame")));
+                    assets.loadPath("battle/ui/battle-appear-" + side + "_" + index + "/spriteFrame", "SpriteFrame")));
                 const rightFrames = await loadEntry("right");
                 const leftFrames = formalOpening ? await loadEntry("left") : [];
                 if (closed || isCancelled()) throw new Error("战斗进场已取消");

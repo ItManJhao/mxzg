@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "client/assets/resources/config"
+SOURCE = ROOT / "client/assets/bundles/config"
 OUTPUT = ROOT / "backend/src/main/resources/gameplay/campaign-rules.json"
 
 

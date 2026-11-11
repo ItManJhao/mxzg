@@ -1,8 +1,11 @@
+/** 页面注册契约：统一记录预制体路径与页面生命周期选项，由UIManager读取。
+ * 支持本地及远程Bundle路径；资源持有和下载仍由统一加载器管理。
+ */
 import { Node, Prefab } from "cc";
 import { UILayer } from "./UILayer";
 import type { BaseView } from "./BaseView";
 
-/** 把预制挂进页面宿主。背包的店内底图放在自己的挂载里，不写进 UIManager。 */
+/** 将已有预制体挂入宿主，静态背景和布局由预制体保存。 */
 export type ViewMount = (host: Node, prefab: Prefab) => Node | Promise<Node>;
 
 /** Existing page-lifetime adapter for unmigrated features. Module BaseController is application-owned. */
@@ -14,7 +17,7 @@ export interface ViewController {
 /** 一个正式界面：视图类、Prefab、页面 id 绑在一起。 */
 export interface ViewSpec {
   id: string;
-  /** 相对 assets，例如 prefabs/ui/bag/BagView。 */
+  /** 相对 assets，例如 bundles/bag/prefabs/BagView。 */
   prefab: string;
   layer: UILayer;
   /** 关掉后如果节点还在，留着实例，下次不再加载。 */

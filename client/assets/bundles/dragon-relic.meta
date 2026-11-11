@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "b93b9be4-dafa-4337-85e9-bc8621cd2d2a",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "dragon-relic",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

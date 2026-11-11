@@ -7,7 +7,7 @@ import { mountCcbiView } from "../../../framework/ui/PrefabLayout";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 /** 将已有战斗预制体挂载到共享页面壳，保持静态布局与业务逻辑分离。 */
 export async function mountCampaignPage(host: Node, prefab: Prefab): Promise<Node> {
-    const shellPrefab = await loadPrefab("prefabs/ui/common/PagePrefabShell");
+    const shellPrefab = await loadPrefab("bundles/common/prefabs/PagePrefabShell");
     if (!host.isValid)
         throw new Error("战斗页面已关闭");
     const shell = spawnPrefab(shellPrefab, host);

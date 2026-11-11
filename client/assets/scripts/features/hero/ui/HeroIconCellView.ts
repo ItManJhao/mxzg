@@ -8,7 +8,7 @@ import { HERO_FACE_FALLBACK, HeroCellModel } from "./HeroListPresentation";
 
 const { ccclass, property } = _decorator;
 
-const ELEMENT_FRAMES = [ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-5", "SpriteFrame")] as const;
+const ELEMENT_FRAMES = [ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-5", "SpriteFrame")] as const;
 
 /**
  * HeroIconCell 上的一格。脸、名字、元素、星、等级、锁和出战标都绑在预制上。
@@ -47,12 +47,12 @@ export class HeroIconCellView extends Component {
             levelLabel: this.levelLabel, lock: this.lock, battle: this.battle
         };
         for (const [field, value] of Object.entries(fields)) {
-            if (!value) throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab / HeroIconCellView: 缺失绑定 " + field);
+            if (!value) throw new Error("assets/bundles/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: 缺失绑定 " + field);
         }
         if (this.stars.length !== 5 || this.stars.some(star => !star))
-            throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab / HeroIconCellView: stars 必须绑定五颗星");
+            throw new Error("assets/bundles/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: stars 必须绑定五颗星");
         if (!this.face!.getComponent(Sprite))
-            throw new Error("assets/prefabs/ui/hero/HeroIconCellView.prefab / HeroIconCellView: face 缺少 Sprite");
+            throw new Error("assets/bundles/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: face 缺少 Sprite");
     }
 
     /** 复用格子时替换显示和点击，并使旧图标加载结果失效。 */
@@ -108,12 +108,14 @@ export class HeroIconCellView extends Component {
         this.nameLabel.string = show ? cell.name : "";
     }
 
-    /** 显示合法元素对应的静态图标；未知元素隐藏，禁止拼接不存在的路径。 */
+    /** 显示合法元素图标并保留完整Bundle描述；未知元素隐藏，复用后拒绝旧结果。 */
     private paintElem(cell: HeroCellModel, empty: boolean, revision: number): void {
         if (!this.elem) return;
         const show = !empty && cell.elem !== null && !!ELEMENT_FRAMES[cell.elem];
         this.elem.active = show;
-        if (show && cell.elem !== null) ResManager.setSprite(this.elem, [ELEMENT_FRAMES[cell.elem].path], () => this.isValid && revision === this.revision);
+        if (show && cell.elem !== null) {
+            ResManager.setSprite(this.elem, ELEMENT_FRAMES[cell.elem], () => this.isValid && revision === this.revision);
+        }
     }
 
     private paintStars(count: number): void {

@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "a12b4014-36fa-4281-a09c-ba80121dad42",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "chapter-reward",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

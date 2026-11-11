@@ -3,7 +3,7 @@
  * HeroRosterUtils 提供当前角色数据；本文件不访问网络、旧名册或本地模拟状态。
  */
 export const HERO_ELEM_COUNT = 6;
-export const HERO_FACE_FALLBACK = "ui/hero/hero-icon_spr-default";
+export const HERO_FACE_FALLBACK = "hero/ui/hero-icon_spr-default";
 export const HERO_LIST_UNCONFIGURED = "这一页还没有配置";
 
 export type HeroListTab = "hero" | "book";

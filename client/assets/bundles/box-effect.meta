@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "15b1afff-06cb-482c-9720-ea4a8b63c926",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "box-effect",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

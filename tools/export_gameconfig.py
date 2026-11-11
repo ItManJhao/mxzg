@@ -3,7 +3,7 @@
 
 Source of truth is the in-repo directory config/gameconfig (override with
 --src or GAMECONFIG_SRC). Runtime client code only reads the JSON written to
-client/assets/resources/config. xlsx is not loaded by Creator.
+client/assets/bundles/config. xlsx is not loaded by Creator.
 
 Header rows match the old ExcelReader layout:
   row 1  Chinese note
@@ -41,7 +41,7 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SRC = ROOT / "config" / "gameconfig"
-DEFAULT_OUT = ROOT / "client" / "assets" / "resources" / "config"
+DEFAULT_OUT = ROOT / "client" / "assets" / "bundles" / "config"
 FIELD_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 INT_RE = re.compile(r"^-?\d+$")
 

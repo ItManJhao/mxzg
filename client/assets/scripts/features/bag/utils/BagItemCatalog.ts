@@ -16,7 +16,7 @@ export class BagItemCatalog {
             if (!match) {
                 return null;
             }
-            return match[1] === "hero-icon" ? "ui/hero/hero-icon_" + match[2]
+            return match[1] === "hero-icon" ? "hero/ui/hero-icon_" + match[2]
                 : ResManager.item(match[2]);
         }
         return ResManager.item(row.idx);

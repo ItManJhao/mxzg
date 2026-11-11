@@ -1,0 +1,60 @@
+{
+  "status": "runtime-passed-automatic-hook-confirmed-by-later-build",
+  "buildTime": "2026-11-11 19:42:18",
+  "branch": "hao",
+  "reviewSettingsPatched": true,
+  "reviewSettingsBackup": "client/temp/bundles-1942-original-settings.json",
+  "startupIssue": {
+    "evidence": "client/temp/builder/log/web-mobile2026-11-10 16-52.log，19:42构建未执行mxzg-bag-build.before，after仍为旧函数前缀却读取新package版本",
+    "fix": "1.6.2固定hooks.js每次重读build-hooks.cjs；before登记，after核验实际文件并兜底补齐",
+    "pending": "已由19:56真实自动构建验证解决，见bundles-auto-build-20261111.json"
+  },
+  "passed": [
+    "104远程包归属、无循环依赖和本地启动依赖检查",
+    "六个英雄元素筛选图正确加载",
+    "英雄详情和布阵元素均保留hero包",
+    "真实主线前两关保存/回放/SETTLED/返回挂机",
+    "胜利英雄、最高伤害73、奖励及结算音效",
+    "双方战报姓名/头像/元素/伤害与承伤展示、关闭返回",
+    "第二关经验逐帧80/360到280/360，最终Lv2与权威回执一致",
+    "结算后背包进阶石4件，与两次奖励相符，切回挂机3个活动骨骼"
+  ],
+  "normalFlowWarningsAndErrors": 0,
+  "experienceSamples": [
+    "80/360",
+    "100/360",
+    "120/360",
+    "140/360",
+    "160/360",
+    "180/360",
+    "200/360",
+    "220/360",
+    "240/360",
+    "260/360",
+    "280/360"
+  ],
+  "state": {
+    "assetRevision": 6,
+    "maxCleared": 2,
+    "pendingBattleId": null
+  },
+  "assets": {
+    "gold": 8000,
+    "diamond": 161
+  },
+  "localAssetBytes": 6220784,
+  "remoteAssetBytes": 665636594,
+  "screenshots": [
+    "../images/bundles-final-hero-20261111.png",
+    "../images/bundles-final-victory-20261111.png",
+    "../images/bundles-final-report-20261111.png",
+    "../images/bundles-final-experience-20261111.png",
+    "../images/bundles-final-bag-20261111.png"
+  ],
+  "environment": "随机端口H2内存夹具，仅此进程GM开启；测试服务和浏览器已关闭",
+  "limits": [
+    "正式CDN/原生/微信及真机未验收"
+  ],
+  "committed": false,
+  "automaticBuildEvidence": "bundles-auto-build-20261111.json"
+}

@@ -1,6 +1,6 @@
 /** Reversible source Inspector fixture, not player data or an asset generator. */
 const fs=require('node:fs');const path=require('node:path');const {createHash}=require('node:crypto');
-const file=path.resolve(__dirname,'../assets/prefabs/ui/bag/BagView.prefab');
+const file=path.resolve(__dirname,'../assets/bundles/bag/prefabs/BagView.prefab');
 const output=path.resolve(__dirname,'../temp/project-checks');fs.mkdirSync(output,{recursive:true});
 const recordFile=path.join(output,'backpack-authoring-probe.json'),backup=path.join(output,'backpack-authoring-original.prefab');
 const parse=bytes=>JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/,''));

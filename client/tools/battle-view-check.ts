@@ -29,7 +29,7 @@ async function checkOptionalClips(): Promise<void> {
   resources.load=(_path,_type,done)=>done(null,new sp.SkeletonData());
   sp.Skeleton.prototype.findAnimation=function(name){return clips[name]?{name}:null;};
   for(const stem of ["10101001","10201001","10301001"]){
-   clips=JSON.parse(readFileSync(`client/assets/resources/spine/${stem}.json`,"utf8")).animations;
+   clips=JSON.parse(readFileSync(`client/assets/bundles/spine/${stem}.json`,"utf8")).animations;
    const host=new Node("actor-test");let failed=0;const actor=mountBattleSpine(host,stem,()=>failed++);
    for (let flush=0;flush<10;flush++) await Promise.resolve();
    assert(actor.hasGesture("attack"));assert(!actor.hasGesture("attack2"));assert(!actor.hasGesture("die"));
@@ -42,7 +42,7 @@ async function checkOptionalClips(): Promise<void> {
 async function checkSharedSkeleton(): Promise<void> {
  const original = resources.load;
  const asset = new sp.SkeletonData();
- Object.assign(asset, { uuid: "shared-copy", skeletonJson: JSON.parse(readFileSync("client/assets/resources/spine/10101001.json", "utf8")), atlasText: "fixture", textures: [], textureNames: [] });
+ Object.assign(asset, { uuid: "shared-copy", skeletonJson: JSON.parse(readFileSync("client/assets/bundles/spine/10101001.json", "utf8")), atlasText: "fixture", textures: [], textureNames: [] });
  resources.load = (_path, _type, done) => done(null, asset);
  const a = new Node("one"), b = new Node("two");
  try {

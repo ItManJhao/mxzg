@@ -14,9 +14,9 @@ spec.loader.exec_module(atlas)
 
 def verify(legacy):
     """只核对本批进化头像和光效，不把通用素材或全英雄表现算入本次验收。"""
-    rows = json.loads((ROOT / 'client/assets/resources/config/heroevolvelevel.json').read_text(encoding='utf-8'))['rows']
-    wanted = {f'hero-icon/{row["evolve_icon_id"]}.png': ROOT / f'client/assets/resources/ui/hero/hero-icon_{row["evolve_icon_id"]}.png' for row in rows}
-    wanted.update({f'backpack-effect/effect-star-{i}.png': ROOT / f'client/assets/resources/ui/bag/backpack-effect_effect-star-{i}.png' for i in range(13)})
+    rows = json.loads((ROOT / 'client/assets/bundles/config/heroevolvelevel.json').read_text(encoding='utf-8'))['rows']
+    wanted = {f'hero-icon/{row["evolve_icon_id"]}.png': ROOT / f'client/assets/bundles/hero/bundles/hero-icon_{row["evolve_icon_id"]}.png' for row in rows}
+    wanted.update({f'backpack-effect/effect-star-{i}.png': ROOT / f'client/assets/bundles/bag/ui/backpack-effect_effect-star-{i}.png' for i in range(13)})
     found = set()
     with tempfile.TemporaryDirectory() as temp:
         for file in sorted(legacy.glob('*.plist')):

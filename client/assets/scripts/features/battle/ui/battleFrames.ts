@@ -1,5 +1,5 @@
 /**
- * 回放用的帧路径。都在 resources/battle 下，给 resources.load 的是不带扩展名的路径。
+ * 回放用的帧路径。都在 bundles/battle/effects 下，给 resources.load 的是不带扩展名的路径。
  * hero-beattack 跳过只有一张小图的第 0 套。skill-101050201-3 只播编号帧，不播那张无序号底图。
  * hero-skill 的文件名是 hero-skill_effect-1-0 … 9，不是 stem_序号。
  * skill_id 对得上 resources 里的套时播那套。对不上仍用下面 49 套取模，所以 0 仍是 hero-skill。
@@ -105,14 +105,14 @@ export function hitFramePaths(skillId: number | null): string[] {
     const paths: string[] = [];
     for (let i = 0; i < run[1]; i++) {
         const n = i < 10 ? "0" + String(i) : String(i);
-        paths.push("battle/hero-beattack/hero-beattack_" + set + "-" + n);
+        paths.push("battle/effects/hero-beattack/hero-beattack_" + set + "-" + n);
     }
     return paths;
 }
 
 export function effectFramePaths(skillId: number | null): string[] {
     const run = EFFECT_RUNS[pickIndex(skillId, EFFECT_RUNS.length)];
-    return numbered("battle/skill-effect/" + run[0] + "/" + run[0] + "_", run[1]);
+    return numbered("battle/effects/skill-effect/" + run[0] + "/" + run[0] + "_", run[1]);
 }
 
 export function skillFramePaths(skillId: number | null): string[] {
@@ -120,9 +120,9 @@ export function skillFramePaths(skillId: number | null): string[] {
     if (exact) return exact;
     const run = SKILL_RUNS[pickIndex(skillId, SKILL_RUNS.length)];
     if (run[0] === "hero-skill") {
-        return numbered("battle/skill/hero-skill/hero-skill_effect-1-", run[1]);
+        return numbered("battle/effects/skill/hero-skill/hero-skill_effect-1-", run[1]);
     }
-    return numbered("battle/skill/" + run[0] + "/" + run[0] + "_", run[1]);
+    return numbered("battle/effects/skill/" + run[0] + "/" + run[0] + "_", run[1]);
 }
 
 /**

@@ -100,7 +100,7 @@ export interface CityEffectSpot {
     frame: string | null;
     /** anim | spine */
     kind: string;
-    /** spine 资源 stem（resources/spine/<stem>），仅 kind=spine */
+    /** spine 资源 stem（bundles/spine/<stem>），仅 kind=spine */
     spine: string | null;
 }
 
@@ -250,28 +250,28 @@ export function cityAtomLocked(atom: string, level: number, openDay: number, db:
 }
 
 export function buildingIconCandidates(atom: string): string[] {
-    return ["ui/city/main-city_icon-" + atom];
+    return ["home/ui/main-city_icon-" + atom];
 }
 
 /** config path 是老 plist 名。解帧文件是 main-city_<文件名>；没有就改用 icon-<atom>。 */
 export function activityIconCandidates(atom: string, configPath: string | undefined): string[] {
     const out: string[] = [];
     const base = fileBase(configPath || "");
-    if (base) out.push("ui/city/main-city_" + base);
-    const byAtom = "ui/city/main-city_icon-" + atom;
+    if (base) out.push("home/ui/main-city_" + base);
+    const byAtom = "home/ui/main-city_icon-" + atom;
     if (out.indexOf(byAtom) < 0) out.push(byAtom);
     return out;
 }
 
 export function mapFramePath(layer: number, piece: number, variant: number): string {
-    return "ui/maps/map-bg-city-" + layer + "-" + piece + "-" + variant;
+    return "maps/ui/map-bg-city-" + layer + "-" + piece + "-" + variant;
 }
 
 /** eff_main_city_summon → ui/city/main-city-effect_summon（无帧号）。 */
 export function effectFrameStem(para: string | undefined): string | null {
     const prefix = "eff_main_city_";
     if (!para || para.indexOf(prefix) !== 0) return null;
-    return "ui/city/main-city-effect_" + para.slice(prefix.length);
+    return "home/ui/main-city-effect_" + para.slice(prefix.length);
 }
 
 /**
@@ -280,7 +280,7 @@ export function effectFrameStem(para: string | undefined): string | null {
  * spr-cloud、main-city-effect_6、main-city-effect_15 不在 maincityeffect 表里，不另摆位置。
  */
 export const CITY_SPINE_FRAME_FALLBACK: { [stem: string]: string } = {
-    dx: "ui/city/main-city-effect_portrait",
+    dx: "home/ui/main-city-effect_portrait",
 };
 
 /**

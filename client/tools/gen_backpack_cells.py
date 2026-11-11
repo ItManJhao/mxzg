@@ -5,8 +5,8 @@ import json
 import os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "Bag")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+OUT = os.path.join(ROOT, "client", "assets", "bundles", "bag", "prefabs")
 FONT = "4ff55f31-773f-4ef9-99b6-466b5deeecb9"
 LAYER = 33554432
 
@@ -14,10 +14,10 @@ CELL_UUID = "c4e8a1b2-7d33-4f61-9a20-6b5e0d4c8f11"
 TAB_UUID = "d5f9b2c3-8e44-4072-ab31-7c6f1e5d9022"
 
 SPRITES = {
-    "frame": "ui/common/other_rare-0.png",
+    "frame": "common/ui/other_rare-0.png",
     "select": "../ui/bag/atlas/backpack_spr-select.png",
-    "icon": "ui/common/backpack_spr-default.png",
-    "tab": "ui/common/button_btn-tab-23.png",
+    "icon": "common/ui/backpack_spr-default.png",
+    "tab": "common/ui/button_btn-tab-23.png",
 }
 
 

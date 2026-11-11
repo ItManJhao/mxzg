@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "b605edcb-f25f-48eb-8d70-bdd261eb4119",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "permanent-skin",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

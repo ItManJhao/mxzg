@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "03bc14e7-4970-427f-8df0-274d20ec941b",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "shenyu",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

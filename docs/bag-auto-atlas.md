@@ -1,5 +1,7 @@
 # 背包自动图集：人工维护步骤
 
+当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准（2026-11-11）：顶层ui/resources/prefabs已整合；旧构建去重数字仅是历史记录，1.6.0不再删除具有Bundle路径的原图。
+
 当前背包界面采用 Creator 自动图集。预览直接使用原图，构建时自动合图；不再执行外部打包命令。
 
 ## 日常修改
@@ -14,10 +16,10 @@
 ## 资源归属与加载
 
 - `assets/ui/bag/atlas`：当前背包专用选中框、详情分隔线；后续同类小图可继续放入。
-- `assets/ui/common/atlas`：7张公共静态图片及CommonAtlas.pac，依靠Prefab绑定加载；18:28新构建已确认共用252×281纹理。
-- `assets/resources/ui/common`：动态页签、品质框、占位图及登录依赖仍保留原路径。
-- `assets/resources/icons/item`：物品图标，保持独立、根据实际库存加载，不混入界面图集。
-- `assets/resources/ui/bag` 其余旧资源：尚未逐项整理，不因本批切换自动图集而扩大合图范围。
+- `assets/bundles/common/atlas`：7张公共静态图片及CommonAtlas.pac，依靠Prefab绑定加载；18:28新构建已确认共用252×281纹理。
+- `assets/bundles/common/ui`：动态页签、品质框、占位图及登录依赖仍保留原路径。
+- `assets/bundles/icons/item`：物品图标，保持独立、根据实际库存加载，不混入界面图集。
+- `assets/bundles/bag/ui` 其余旧资源：尚未逐项整理，不因本批切换自动图集而扩大合图范围。
 
 BagDefinition 已移除；页面地址只在各View的@view注册中定义，店员骨骼名由BagView共用。三段加载继续准备两个窗口的预制体，Creator 负责加载其图片依赖；动态图标由格子按库存展示需求加载，不纳入页面准备。代码不加载 pac，也不按自动生成的图集文件名取帧。
 
@@ -64,7 +66,7 @@ BagDefinition 已移除；页面地址只在各View的@view注册中定义，店
 | 替换现有图片内容 | 保留文件名与meta，在Creator刷新后预览、构建验证。两张去重原图若内容变化，同步复核ui-atlas检查中的迁移基线。 |
 | 新增背包专用小图 | 放入assets/ui/bag/atlas，绑定到对应Prefab。无需逐张添加地址或逐图加载数组。去重工具只处理明确名单，不会自动删除新图副本。 |
 | 新增大背景 | 放入assets/ui/bag/background并绑定Prefab，不放入小图图集。 |
-| 新增物品图标 | 放入assets/resources/icons/item，按现有物品配置及命名约定关联，再运行node tools/generate_resources.cjs生成索引；不手改IconCatalog。 |
+| 新增物品图标 | 放入assets/bundles/icons/item，按现有物品配置及命名约定关联，再运行node tools/generate_resources.cjs生成索引；不手改IconCatalog。 |
 | 调整预加载时机 | 修改client/assets/scripts/app/remake/LoadingPlan.ts，直接指定第一、二阶段资源；第三段也明确配置，未配置的资源按需加载，无模块清单。 |
 | 构建结果排查 | 在构建任务日志查“UI图集构建去重”，从输出的备份目录查看manifest.json；不要只看编辑器主控制台。 |
 
@@ -80,7 +82,7 @@ ResourceCatalog是生成的动态资源路径索引，不是图集或包体清�
 
 ## 公共静态图集首批迁移
 
-7张图片已归assets/ui/common/atlas，原图片和meta字节均保留，不修改Prefab布局或UUID。CommonAtlas禁用旋转，保留原九宫格数据。新增检查：node client/tools/check-project.mjs --suite common-atlas。源码与绑定检查通过，18:28实际构建和浏览器确认7张共用252×281图集；背包四类详情、返回和英雄空列表正常，英雄详情/战斗预制体加载正常。7张common原图副本已通过统一工具备份清理29507字节，清理后的冷加载四分类详情/返回重开及跨页预制体加载通过；英雄详情/战斗完整交互不属于本轮已验项目。钩子已扩展到上述common7张，仍沿用mxzg-bag-build扩展ID与build:dedupe-bag命令，避免重建另一条清理链。完整新包预计清理9张35481字节；18:47 Creator实际构建已自动执行9张35481字节清理，备份摘要和产物引用检查通过。
+7张图片已归assets/bundles/common/atlas，原图片和meta字节均保留，不修改Prefab布局或UUID。CommonAtlas禁用旋转，保留原九宫格数据。新增检查：node client/tools/check-project.mjs --suite common-atlas。源码与绑定检查通过，18:28实际构建和浏览器确认7张共用252×281图集；背包四类详情、返回和英雄空列表正常，英雄详情/战斗预制体加载正常。7张common原图副本已通过统一工具备份清理29507字节，清理后的冷加载四分类详情/返回重开及跨页预制体加载通过；英雄详情/战斗完整交互不属于本轮已验项目。钩子已扩展到上述common7张，仍沿用mxzg-bag-build扩展ID与build:dedupe-bag命令，避免重建另一条清理链。完整新包预计清理9张35481字节；18:47 Creator实际构建已自动执行9张35481字节清理，备份摘要和产物引用检查通过。
 
 修改去重名单或工具后，先运行node client/tools/bag-build-hook-check.cjs，再重载Creator项目扩展并构建。普通改图不需要每次重载扩展。构建结果可执行node client/tools/common-atlas-check.cjs --build-output client/build/bag-atlas-review复核，仍需实际画面检查。记录见[common去重验证](validation/common-dedupe-20261110.json)。
 

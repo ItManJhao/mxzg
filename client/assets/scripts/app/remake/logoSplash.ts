@@ -17,7 +17,7 @@ import { fitLoadingBackdrop,LOADING_BG_DRAW_H,LOADING_BG_DRAW_W,LOADING_BG_FRAME
 export const LOGO_FADE_IN_SEC = 1;
 export const LOGO_HOLD_SEC = 1;
 export const LOGO_FADE_OUT_SEC = 0.5;
-export const LOGO_SPRITE = "ui/login/logo-scene_spr-logo";
+export const LOGO_SPRITE = "login/ui/logo-scene_spr-logo";
 export const LOGO_BGM = "audio/bgm-logo";
 /** 宽或高不超过这个数，当成失败抽出，不拿来当开机图。 */
 export const LOGO_SPECK_MAX = 8;

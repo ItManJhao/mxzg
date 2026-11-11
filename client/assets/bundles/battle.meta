@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "17ddc531-cd66-45ef-a50d-b9d4fb1cab8d",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "battle",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

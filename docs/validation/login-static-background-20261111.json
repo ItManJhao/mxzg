@@ -1,6 +1,6 @@
 {
   "source": "G:/work/FsGame/Project/mxzg-h5-jp/客户端/web-jpn/jp-overlay/res/jpn/ccbi-res/jp-login-static.png",
-  "target": "client/assets/resources/ui/login/jp-login-static.png",
+  "target": "client/assets/bundles/login/ui/jp-login-static.png",
   "sha256": "255df396829f2ed8bd4960ccead7f2f1500a0239328b282c5a910b733d8256c5",
   "width": 1080,
   "height": 2340,

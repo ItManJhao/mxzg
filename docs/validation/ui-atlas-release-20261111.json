@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-11",
+  "status": "release-passed",
+  "build": "client/build/bag-atlas-review",
+  "buildTime": "2026-11-11 17:11:14",
+  "runId": "ee056effc7da4fbabe12fb99f5b8bcb2",
+  "isolation": "随机回环端口53934，H2内存库，GM关闭",
+  "atlas": {
+    "hero": "assets/prefabs/native/13/13589ca94.png",
+    "battle": "assets/prefabs/native/18/187d680fb.png",
+    "largeImages": "4张大图保持独立纹理，不并入图集"
+  },
+  "dedupe": {
+    "originalHookFiles": 9,
+    "originalHookBytes": 35481,
+    "addedFiles": 36,
+    "addedBytes": 358365,
+    "totalFiles": 45,
+    "totalBytes": 393846,
+    "addedBackup": "client/temp/bag-build-dedupe/build-zPPdBP",
+    "remainingFiles": 0,
+    "execution": "此包原Creator钩子清理旧9张；扩展1.4.0的新范围由同一onAfterBuild入口在本地实际产物补执行，非新Creator进程自动触发"
+  },
+  "browser": {
+    "portrait": [
+      393,
+      700
+    ],
+    "hero": "独眼梦魇详情及四槽装备正常，静态小图使用HeroAtlas，动态装备图维持独立路径",
+    "missions": [
+      2,
+      3
+    ],
+    "report": "双方名称、红黄绿统计条及独立背景正常",
+    "return": "第二关战报关闭返回，第三关倒计时返回挂机",
+    "finalState": {
+      "maxCleared": 3,
+      "pendingBattleId": null,
+      "assetRevision": 6
+    },
+    "warningsErrors": 0,
+    "screenshots": [
+      "../images/ui-atlas-release-hero-20261111.png",
+      "../images/ui-atlas-release-battle-20261111.png",
+      "../images/ui-atlas-release-victory-20261111.png"
+    ]
+  },
+  "checks": [
+    "bag-build-hook-check：45张备份清理、幂等、损坏/引用/路径拒绝",
+    "ui-static-migration-check：40张原图/meta/绑定",
+    "实际产物去重复查0张"
+  ],
+  "limits": [
+    "新扩展需Creator重载1.4.0后用于下一次自动构建；本次不声称已观测新Creator自动触发",
+    "393×852截图超出当前截图表面出现重复，未作为验收证据；最终使用393×700完整截图",
+    "未覆盖隐藏旧页面、真机及全部英雄技能"
+  ]
+}

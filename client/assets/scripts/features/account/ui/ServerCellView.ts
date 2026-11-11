@@ -51,7 +51,7 @@ export class ServerCellView extends Component {
         if (this.status) {
             this.status.active = !region;
             if (!region)
-                ResManager.setSprite(this.status, ["ui/login/choose-server_spot-" + (server.enabled ? "normal" : "disabled")]);
+                ResManager.setSprite(this.status, ["login/ui/choose-server_spot-" + (server.enabled ? "normal" : "disabled")]);
         }
         if (this.tap)
             this.node.off(Button.EventType.CLICK, this.tap);

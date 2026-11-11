@@ -2,14 +2,14 @@
 """Generate Creator 3.8.8 Idle prefabs (not wired).
 
 Writes:
-  client/assets/prefabs/ui/idle/WireIdlePage.prefab
-  client/assets/prefabs/ui/idle/IdlePage.prefab
+  client/assets/bundles/idle/prefabs/WireIdlePage.prefab
+  client/assets/bundles/idle/prefabs/IdlePage.prefab
 and their .meta files, plus ui/idle.meta if it is missing.
 
 WireIdlePage is the real-server page (WireIdlePage.ts / wireIdle.ts, cmds 3004/3005).
 IdlePage is the Mock page (IdlePage.ts). They do not share a root.
 
-SpriteFrame uuids come from client/assets/resources/**/*.meta (@f9941).
+SpriteFrame uuids come from client/assets/bundles/**/*.meta (@f9941).
 Does not touch Boot, MainApp, page scripts, protocol, or USE_*_PREFAB flags.
 No idle atlas: page chrome is common win-bg and button art.
 """
@@ -21,8 +21,8 @@ import uuid
 import base64
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT_DIR = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "idle")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "idle", "prefabs")
 DIR_META = OUT_DIR + ".meta"
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 
@@ -33,14 +33,14 @@ REWARDS_TS = os.path.join(ROOT, "client", "assets", "scripts", "module", "idle",
 BATTLE_TS = os.path.join(ROOT, "client", "assets", "scripts", "module", "mainline", "battle.ts")
 
 SPRITE_FILES = {
-    "win_bg": "ui/common/win-bg_win-bg-12.png",
-    "block": "ui/common/win-bg_block-bg-5.png",
-    "btn_blue": "ui/common/button_btn-blue-big-1.png",
-    "btn_blue_p": "ui/common/button_btn-blue-big-2.png",
-    "btn_orange": "ui/common/button_btn-orange-big-1.png",
-    "btn_orange_p": "ui/common/button_btn-orange-big-2.png",
-    "btn_green": "ui/common/button_btn-green-big-1.png",
-    "btn_green_p": "ui/common/button_btn-green-big-2.png",
+    "win_bg": "common/ui/win-bg_win-bg-12.png",
+    "block": "common/ui/win-bg_block-bg-5.png",
+    "btn_blue": "common/ui/button_btn-blue-big-1.png",
+    "btn_blue_p": "common/ui/button_btn-blue-big-2.png",
+    "btn_orange": "common/atlas/button_btn-orange-big-1.png",
+    "btn_orange_p": "common/ui/button_btn-orange-big-2.png",
+    "btn_green": "common/atlas/button_btn-green-big-1.png",
+    "btn_green_p": "common/ui/button_btn-green-big-2.png",
 }
 
 LAYER_UI = 33554432

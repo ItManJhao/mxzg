@@ -1,20 +1,24 @@
-/** Creator 构建后处理：复用背包及common清理工具，不生成或检查加载阶段清单。
- * 校验失败交给 Creator 标记构建失败，不能将未完成去重的产物当作处理成功。
+/** Creator固定构建钩子入口：注册稳定的前置/后置导出，并在每次执行时重新读取实现。
+ * Creator可长期缓存本文件；具体规则放在build-hooks.cjs，避免包版本更新后仍调用旧函数。
+ * 不读取角色数据，不参与运行时加载；钩子异常交给Creator标记本次构建失败。
  */
-const assert = require('node:assert/strict');
-// 直接读取扩展版本，构建日志与扩展管理器使用同一版本来源。
-const { version } = require('./package.json');
-const { dedupeBagBuild } = require('../../tools/dedupe-bag-build.cjs');
 
-// 去重失败必须阻止本次构建报告成功，原图在校验失败时保持原样。
+/** 构建失败必须向Creator抛出，不能将未准备的启动配置记为成功。 */
 exports.throwError = true;
 
-/** Creator 写完 Web 产物后执行；使用真实输出路径，不依赖任务名称或固定目录。 */
+/** 丢弃实现模块缓存并读取当前代码；保留固定入口本身，供Creator已登记的回调复用。 */
+function currentImplementation() {
+    const file = require.resolve('./build-hooks.cjs');
+    delete require.cache[file];
+    return require(file);
+}
+
+/** settings写入前分发到当前实现，确保本地bootstrap元数据先于启动场景就绪。 */
+exports.onBeforeCompressSettings = async function onBeforeCompressSettings(options, result) {
+    return currentImplementation().onBeforeCompressSettings(options, result);
+};
+
+/** 写完产物后分发到当前实现，核对启动配置及保留资源的边界。 */
 exports.onAfterBuild = async function onAfterBuild(options, result) {
-    assert(['web-mobile', 'web-desktop'].includes(options.platform), '背包去重只支持 Web 构建');
-    assert(!options.md5Cache && !options.debug, '背包去重目前要求关闭 MD5 缓存和调试模式');
-    assert(typeof result?.dest === 'string' && result.dest.length > 0, 'Creator 未提供构建输出目录');
-    const summary = dedupeBagBuild(result.dest, true);
-    console.log('[UI图集构建去重 v' + version + '] 完成：' + JSON.stringify(summary));
-    return summary;
+    return currentImplementation().onAfterBuild(options, result);
 };

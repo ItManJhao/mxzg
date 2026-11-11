@@ -20,7 +20,7 @@ export class MainChapterIdleDisplay {
         let root: Node | null = null;
         const actors: SpineActor[] = [];
         try {
-            const prefab = await scope.load(ResourceAssetsUtils.describe("prefabs", "ui/battle/BattlePage", "Prefab"));
+            const prefab = await scope.load(ResourceAssetsUtils.describe("battle", "prefabs/BattlePage", "Prefab"));
             const templates = await scope.loadPath("config/herotype", "JsonAsset");
             if (!parent.isValid) {
                 throw new Error("挂机页面已关闭");
@@ -44,8 +44,8 @@ export class MainChapterIdleDisplay {
             for (const hp of hud.getChildByName("HpBars")!.children) {
                 hp.active = false;
             }
-            const elements = [ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-2", "SpriteFrame"),
-                ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("resources", "ui/hero/hero-icon_elem-5", "SpriteFrame")];
+            const elements = [ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-2", "SpriteFrame"),
+                ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-5", "SpriteFrame")];
             const rows = (templates.json as { rows: { type: number; elem: number }[] }).rows;
             const layout = root.getChildByName("IdleLayout")!;
             const modelScale = layout.getChildByName("ModelScale")!.scale.x;

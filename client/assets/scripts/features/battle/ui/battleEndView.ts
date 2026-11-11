@@ -15,10 +15,10 @@ import { loadPrefab,spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { bindTap,findDescendant,liftNode,mountCcbiView } from "../../../framework/ui/PrefabLayout";
 import { createButton,createLabel,createRect,paintRect,place,setText,uiNode } from "../../../framework/ui/UiKit";
 
-const RESULT_WIN = "ui/battle/battle-end-lang_lbl-result-1";
-const RESULT_LOSE = "ui/battle/battle-end-lang_lbl-result-0";
+const RESULT_WIN = "battle/ui/battle-end-lang_lbl-result-1";
+const RESULT_LOSE = "battle/ui/battle-end-lang_lbl-result-0";
 
-export const BATTLE_END_PREFAB = "prefabs/ui/battle/BattleEndLayer";
+export const BATTLE_END_PREFAB = "bundles/battle/prefabs/BattleEndLayer";
 
 export interface BattleEndOptions {
     stageId?: number;
@@ -164,7 +164,7 @@ function paintStars(view: Node, win: boolean): void {
         const sprite = star.addComponent(Sprite);
         sprite.sizeMode = Sprite.SizeMode.CUSTOM;
         place(star, row, (i - 1) * 34, 0);
-        paintFrame(star, "ui/hero/hero-info_spr-star-1");
+        paintFrame(star, "hero/ui/hero-info_spr-star-1");
     }
 }
 

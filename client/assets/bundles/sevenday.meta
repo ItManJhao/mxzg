@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "d766c45f-5b7d-4770-b499-d3acc116ea7f",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "sevenday",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

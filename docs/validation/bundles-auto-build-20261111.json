@@ -1,0 +1,44 @@
+{
+  "status": "automatic-build-passed",
+  "buildTime": "2026-11-11 19:56:16",
+  "branch": "hao",
+  "build": "client/build/bag-atlas-review",
+  "settingsSha256": "58ffa95909007f01ba312f879ec27d26edf312618ce5404640296ae2a33867a3",
+  "preloadBundles": [
+    {
+      "bundle": "main"
+    },
+    {
+      "bundle": "bootstrap"
+    }
+  ],
+  "remoteBundles": 104,
+  "localAssetBytes": 6220784,
+  "remoteAssetBytes": 665636594,
+  "implementation": "bootstrap-preload-v1 v1.6.2",
+  "startupPreloadRepaired": false,
+  "settingsModifiedByReview": false,
+  "logFile": "client/temp/builder/log/web-mobile2026-11-10 16-52.log",
+  "logRows": [
+    {
+      "line": 22992,
+      "text": "2026-11-11 19:56:15 - log: [UI资源构建检查 bootstrap-preload-v1 v1.6.2] onBeforeCompressSettings：本地bootstrap预载已登记"
+    },
+    {
+      "line": 23027,
+      "text": "2026-11-11 19:56:20 - log: [UI资源构建检查 bootstrap-preload-v1 v1.6.2] onAfterBuild：{\"applied\":true,\"files\":0,\"bytes\":0,\"groups\":[],\"backup\":null,\"startupPreloadRepaired\":false}"
+    }
+  ],
+  "checks": [
+    "remote-bundles-check：104远程输出、循环依赖、本地启动依赖及预载通过",
+    "ui-atlas-check：原UUID、绑定、背包/共用格子远程归属通过"
+  ],
+  "runtimeEvidence": "bundles-final-review-20261111.json",
+  "runtimeScope": "19:42客户端经启动配置后处理完成界面闭环，19:56新构建仅复验自动钩子及包体配置，不重复运行长流程",
+  "limits": [
+    "本地资源服务替代CDN，真实CDN未接入",
+    "原生/微信/真机及长期内存尚未验收",
+    "Python专项未执行"
+  ],
+  "committed": false
+}

@@ -41,11 +41,11 @@ export class DevelopmentPreview {
         if(PREVIEW && this.pageHost) {
             this.unregister.push(UIManager.instance.setResidentHost("skill-audit-host", () => this.pageHost));
             this.unregister.push(registerView(SkillAuditView, {
-                id: "skill-audit", prefab: "prefabs/ui/battle/SkillAuditView",
+                id: "skill-audit", prefab: "bundles/battle/prefabs/SkillAuditView",
                 layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "skill-audit-host",
                 load: async () => {
                     await GameConfig.instance.prepare([GConfig.HeroType, GConfig.HeroSkill, GConfig.Language]);
-                    return loadPrefab("prefabs/ui/battle/SkillAuditView");
+                    return loadPrefab("bundles/battle/prefabs/SkillAuditView");
                 }
             }));
             if(typeof location !== "undefined" && new URLSearchParams(location.search).get("skillAudit") === "1") {

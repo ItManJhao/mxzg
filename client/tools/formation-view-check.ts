@@ -16,8 +16,8 @@ import { FormationSlotView } from "../assets/scripts/features/hero/ui/FormationS
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
 import { HeroCatalog } from "../assets/scripts/features/hero/utils/HeroCatalog";
 
-const PAGE = "client/assets/prefabs/ui/hero/FormationView.prefab";
-const CELL = "client/assets/prefabs/ui/hero/FormationHeroCellView.prefab";
+const PAGE = "client/assets/bundles/hero/prefabs/FormationView.prefab";
+const CELL = "client/assets/bundles/hero/prefabs/FormationHeroCellView.prefab";
 const read = (path: string) => JSON.parse(readFileSync(path, "utf8"));
 function classId(path: string): string {
     const hex = read(path).uuid.replace(/-/g, ""), alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

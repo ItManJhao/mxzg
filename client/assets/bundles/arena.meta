@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "5d909f09-b798-4c3f-a879-f5a6f31d23f0",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "arena",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

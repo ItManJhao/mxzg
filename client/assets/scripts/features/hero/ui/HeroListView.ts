@@ -28,7 +28,7 @@ import type { HeroRosterSource, HeroRosterView } from "../data/HeroRosterData";
 
 const { ccclass, property } = _decorator;
 
-const BOARD_PREFAB = "prefabs/ui/hero/HeroListBoardView";
+const BOARD_PREFAB = "bundles/hero/prefabs/HeroListBoardView";
 
 /**
  * 英雄列表。页签、羊皮纸和筛选都绑在 HeroListLayer / HeroListHeroLayer 上。
@@ -37,7 +37,7 @@ const BOARD_PREFAB = "prefabs/ui/hero/HeroListBoardView";
  */
 @view({
     id: "hero",
-    prefab: "prefabs/ui/hero/HeroListView",
+    prefab: "bundles/hero/prefabs/HeroListView",
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,

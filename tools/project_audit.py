@@ -54,7 +54,7 @@ def inventory():
     current = {(v["from"], v["to"]) for v in violations}
     new = [v for v in violations if (v["from"], v["to"]) not in allowed]
     stale = [v for v in accepted if (v["from"], v["to"]) not in current]
-    assets = ROOT / "client/assets/resources"
+    assets = ROOT / "client/assets/bundles"
     resource_bytes, resource_files = 0, 0
     for path in assets.rglob("*"):
         if path.is_file() and path.suffix != ".meta":
@@ -64,7 +64,7 @@ def inventory():
         "scope": "static relative TypeScript imports; source assets excluding .meta; not build output",
         "script_files": len(files), "import_edges": len(set(edges)),
         "largest_files": sorted(sizes, key=lambda v: (-v["lines"], v["file"]))[:12],
-        "prefabs": len(list((ROOT / "client/assets/prefabs").rglob("*.prefab"))),
+        "prefabs": len(list((ROOT / "client/assets/bundles").rglob("*.prefab"))),
         "resources": {"files": resource_files, "bytes": resource_bytes,
                       "mib": round(resource_bytes / 1024 / 1024, 2)},
         "boundary_exceptions": violations, "new_violations": new,

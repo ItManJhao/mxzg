@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "da0cd2a5-e132-4f0c-9088-c474f27ee2c0",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "mission-cell-bg-lang",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

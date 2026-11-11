@@ -5,7 +5,7 @@ The hub middle is the old city: map-bg-city plates, building icons at
 maincitypos, and a screen-fixed mainline entry. It is not the debug
 button matrix (BtnIdle / BtnBag / …).
 
-Reads spriteFrame uuids from client/assets/resources/**/*.meta (@f9941).
+Reads spriteFrame uuids from client/assets/bundles/**/*.meta (@f9941).
 Does not invent art. Missing frames are listed and skipped.
 Keeps the existing prefab uuid so loadAny fallback stays valid.
 """
@@ -15,8 +15,8 @@ import os
 import base64
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-RES = os.path.join(ROOT, "client", "assets", "resources")
-OUT_PREFAB = os.path.join(ROOT, "client", "assets", "prefabs", "ui", "city", "CityHubView.prefab")
+RES = os.path.join(ROOT, "client", "assets", "bundles")
+OUT_PREFAB = os.path.join(ROOT, "client", "assets", "bundles", "home", "prefabs", "CityHubView.prefab")
 OUT_META = OUT_PREFAB + ".meta"
 PREFAB_UUID = "118c08f7-43eb-477d-ab62-50f3ec65294f"
 
@@ -333,14 +333,14 @@ def parent_for_z(zorder):
 
 
 def map_frame(layer, piece):
-    return "ui/maps/map-bg-city-%d-%d-1" % (layer, piece)
+    return "maps/ui/map-bg-city-%d-%d-1" % (layer, piece)
 
 
 def effect_frame(para):
     prefix = "eff_main_city_"
     if not para or not para.startswith(prefix):
         return None
-    return "ui/city/main-city-effect_" + para[len(prefix):] + "-0"
+    return "home/ui/main-city-effect_" + para[len(prefix):] + "-0"
 
 
 # --- layout, same numbers as cityMapLayout.ts at variant 1 ---
@@ -440,7 +440,7 @@ for row in pos_file.get("main") or []:
     if not atom:
         continue
     parent_name = parent_for_z(int(row.get("zorder") or 2))
-    rel = "ui/city/main-city_icon-" + atom
+    rel = "home/ui/main-city_icon-" + atom
     loaded = load_sprite(rel)
     if not loaded:
         GAPS.append("building icon missing: " + rel + ".png")
@@ -462,7 +462,7 @@ for row in pos_file.get("main") or []:
 
 # Screen-fixed, parented on the root so a full-screen host does not eat map touches.
 # Bottom bar covers about y < -505. Utility row is on the right.
-mission = load_sprite("ui/city/main-city_icon-main_mission")
+mission = load_sprite("home/ui/main-city_icon-main_mission")
 if not mission:
     GAPS.append("mainline icon missing: ui/city/main-city_icon-main_mission.png")
 else:
@@ -476,7 +476,7 @@ else:
 
 # 33 act icons stay off this prefab. CityChrome ActGroup already draws the
 # visible set, and a full strip covers the buildings. createmaincitybtn
-# btn-login-2..7 and 9..14 are not in resources/ui/city.
+# btn-login-2..7 and 9..14 are not in bundles/home/ui.
 GAPS.append("activity strip (33 createmaincitybtn icons) is not painted on CityHub; CityChrome ActGroup keeps the visible set, and 活动 still opens the full list")
 GAPS.append("map variant 2 plates exist (map-bg-city-*-2) and are unused; hub uses variant 1, same as CityMap")
 GAPS.append("bg-main-scene.jpg is not the scrolling city; hub uses map-bg-city plates")

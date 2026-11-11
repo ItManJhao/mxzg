@@ -250,7 +250,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         const mainVictory = !!args.persistentChapter && args.won;
         const mainClipPromise = mainVictory ? assets.loadPath("audio/battle-main-end-1", "AudioClip") : Promise.resolve(null);
         const framesPromise = Promise.all(Array.from({ length: args.won ? (mainVictory ? 14 : 11) : 0 }, (_, index) =>
-            assets.loadPath((mainVictory ? "ui/battle/battle-end_effect-" : "ui/common/item-reward-effect-2_effect-bomb-")
+            assets.loadPath((mainVictory ? "battle/ui/battle-end_effect-" : "common/ui/item-reward-effect-2_effect-bomb-")
                 + index + "/spriteFrame", "SpriteFrame")));
         const [clip, frames, mainClip] = await Promise.all([clipPromise, framesPromise, mainClipPromise]);
         if (this.released || !this.node.isValid) {

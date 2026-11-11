@@ -31,17 +31,17 @@ const BOTTOM_BG_WIDTH = 724;
  * 最右一格用日服 VIP 字，不用国服「羁绊」。
  */
 const TAB_CAPTION: { [id: string]: string } = {
-    city: "ui/city/main-scene-lang_lbl-city",
-    hero: "ui/city/main-scene-lang_lbl-hero",
-    bag: "ui/city/main-scene-lang_lbl-backpack",
-    battle: "ui/city/main-scene-lang_lbl-battle",
-    dungeon: "ui/city/main-scene-lang_lbl-skin",
-    clan: "ui/city/main-scene-lang_lbl-clan",
-    fetter: "ui/city/main-scene-lang_lbl-fetters-unlock",
+    city: "home/ui/main-scene-lang_lbl-city",
+    hero: "home/ui/main-scene-lang_lbl-hero",
+    bag: "home/ui/main-scene-lang_lbl-backpack",
+    battle: "home/ui/main-scene-lang_lbl-battle",
+    dungeon: "home/ui/main-scene-lang_lbl-skin",
+    clan: "home/ui/main-scene-lang_lbl-clan",
+    fetter: "home/ui/main-scene-lang_lbl-fetters-unlock",
 };
 
 const TAB_ICON: { [id: string]: string } = {
-    fetter: "ui/city/main-scene_spr-fetters-unlock",
+    fetter: "home/ui/main-scene_spr-fetters-unlock",
 };
 
 const ACTIVITY_NAMES = [

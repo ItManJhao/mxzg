@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "7d8678a4-7737-4737-8e77-f10c34124041",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "particle",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

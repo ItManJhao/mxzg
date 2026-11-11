@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "dd947466-edd3-4e32-b362-1ce1016aa64e",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "dream-lang",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

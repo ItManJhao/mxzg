@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "feb7a5e1-7bcf-4bde-915e-f3b41a5361b1",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "championship",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

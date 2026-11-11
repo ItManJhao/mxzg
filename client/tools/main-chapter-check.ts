@@ -37,7 +37,7 @@ function frame(name: string, body: unknown, kind = "response"): GameFrame {
 /** 只测试当前模块；完整资产绑定另由session-state回归覆盖。 */
 async function main(): Promise<void> {
     const rewardInfo = ChapterRewardInfoUtils.rows(JSON.parse(readFileSync(
-        "client/assets/resources/config/chapterreward.json", "utf8")));
+        "client/assets/bundles/config/chapterreward.json", "utf8")));
     assert.equal(rewardInfo.length, 850, "说明配置投影不得静默截断旧关卡");
     assert.deepEqual(rewardInfo[0].firstItems, [900401, 900001, 900003, 900101, 900102, 20204004, 1004001]);
     assert.deepEqual(rewardInfo[0].idleItems, [900001, 900003, 900101, 900002, 900102, 20005000, 1001001, 2000001]);
@@ -67,7 +67,7 @@ async function main(): Promise<void> {
     assert.equal(lastFlight.length, 12);
     assert.deepEqual(firstFlight[0], { icon: 0, order: 1000, scale: 0.605, x: -49, y: -49, scaleSeconds: 0.905 });
     assert.deepEqual(lastFlight[0], { icon: 3, order: 10000, scale: 0.8, x: 50, y: 50, scaleSeconds: 1 });
-    const chestResource = JSON.parse(readFileSync("client/assets/resources/spine/res-block.json", "utf8"));
+    const chestResource = JSON.parse(readFileSync("client/assets/bundles/spine/res-block.json", "utf8"));
     for (const stage of [1, 2, 3, 4]) {
         assert(chestResource.animations["normal-" + stage], "宝箱档位必须有真实旧动画");
     }
@@ -118,7 +118,7 @@ async function main(): Promise<void> {
     idleRoot.destroy();
     borrowedSlot.destroy();
     // 用户阵容布鲁：从实际配置经过旧覆盖到资源解析，避免只测固定验收英雄漏掉正常遇敌。
-    const buffRows = JSON.parse(readFileSync("client/assets/resources/config/buff.json", "utf8")).rows;
+    const buffRows = JSON.parse(readFileSync("client/assets/bundles/config/buff.json", "utf8")).rows;
     for (const id of [3011101, 3011102, 3011103]) {
         const row = buffRows.find((value: { idx: number }) => value.idx === id);
         const actions = BattleAttackUtils.legacyActions(row);
@@ -143,7 +143,7 @@ async function main(): Promise<void> {
             assert.equal(plan.effect!.anchorX, 0.4);
         }
         for (const path of plan.effect!.paths) {
-            readFileSync("client/assets/resources/" + path.replace("/spriteFrame", ".png"));
+            readFileSync("client/assets/bundles/" + path.replace("/spriteFrame", ".png"));
         }
     }
     assert.equal(BattleInfoUtils.mainChapterSkipVisible(), false, "旧主线配置禁止展示跳过，不能套用等级50条件直接开放");
@@ -263,7 +263,7 @@ async function main(): Promise<void> {
     assert.equal(portraitUnit.portraitIconId, 20101001);
     assert.ok(BattleStatisticsUtils.portrait(portraitUnit)?.endsWith("hero-icon_20101001"));
     assert.equal(BattleStatisticsUtils.portrait(oldUnits[0]), null);
-    const evolutionRows = JSON.parse(readFileSync("client/assets/resources/config/heroevolvelevel.json", "utf8")).rows;
+    const evolutionRows = JSON.parse(readFileSync("client/assets/bundles/config/heroevolvelevel.json", "utf8")).rows;
     for (const row of evolutionRows) assert.ok(ResManager.portrait(row.evolve_icon_id), "进化头像必须收录：" + row.evolve_icon_id);
     assert.equal(BattleStatisticsUtils.stars(6).row, 5);
     assert.equal(BattleStatisticsUtils.stars(9).row, 8);
@@ -295,8 +295,8 @@ async function main(): Promise<void> {
     starView.show(null);
     assert.ok(starView.rows.every(node => !node.active));
 
-    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 900001 }), "ui/hero/hero-icon_900001");
-    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 99999999 }), "ui/hero/hero-icon_99999999");
+    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 900001 }), "hero/ui/hero-icon_900001");
+    assert.equal(BattleStatisticsUtils.portrait({ ...portraitUnit, portraitIconId: 99999999 }), "hero/ui/hero-icon_99999999");
     assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], portraitIconId: 0 }, oldUnits[1]]));
     assert.equal(BattleReplayUtils.validateUnits([{ ...oldUnits[0], totalRecovery: -25, star: 5 }, oldUnits[1]])[0].totalRecovery, -25);
     assert.throws(() => BattleReplayUtils.validateUnits([{ ...oldUnits[0], totalRecovery: Number.MAX_SAFE_INTEGER + 1 }, oldUnits[1]]));
@@ -305,8 +305,8 @@ async function main(): Promise<void> {
     const ranked = [{ ...oldUnits[0], totalDamage: 70 }, { ...oldUnits[0], unitId: 3, totalDamage: 70 },
         { ...oldUnits[1], totalDamage: 999 }];
     assert.equal(ChapterSettlementUtils.highestDamage(ranked)!.unitId, 1, "同伤害保持名册顺序且不选敌方");
-    const appearanceSkins = JSON.parse(readFileSync("client/assets/resources/config/skin.json", "utf8")).rows;
-    const appearanceEvolutions = JSON.parse(readFileSync("client/assets/resources/config/heroevolvelevel.json", "utf8")).rows;
+    const appearanceSkins = JSON.parse(readFileSync("client/assets/bundles/config/skin.json", "utf8")).rows;
+    const appearanceEvolutions = JSON.parse(readFileSync("client/assets/bundles/config/heroevolvelevel.json", "utf8")).rows;
     assert.equal(ChapterSettlementUtils.historicalSpine(null, appearanceSkins, appearanceEvolutions), null);
     assert.equal(ChapterSettlementUtils.historicalSpine(99999999, appearanceSkins, appearanceEvolutions), null);
     assert.equal(ChapterSettlementUtils.historicalSpine(20104004, appearanceSkins, appearanceEvolutions), "10104004");
@@ -315,7 +315,7 @@ async function main(): Promise<void> {
     for (const row of appearanceEvolutions) {
         const stem = ChapterSettlementUtils.historicalSpine(row.evolve_icon_id, appearanceSkins, appearanceEvolutions);
         assert.equal(stem, String(row.evolve_fashion_id));
-        const skeleton = JSON.parse(readFileSync("client/assets/resources/spine/" + stem + ".json", "utf8"));
+        const skeleton = JSON.parse(readFileSync("client/assets/bundles/spine/" + stem + ".json", "utf8"));
         assert(skeleton.animations.stand, "历史进化骨骼必须具备stand动作：" + stem);
     }
     const statisticUnits = [
@@ -592,12 +592,12 @@ async function main(): Promise<void> {
         BattleReplayUtils.names = originalNames;
         shared.reset(null);
     }
-    const chapterPrefab = JSON.parse(readFileSync("client/assets/prefabs/ui/battle/MainChapterView.prefab", "utf8"));
+    const chapterPrefab = JSON.parse(readFileSync("client/assets/bundles/battle/prefabs/MainChapterView.prefab", "utf8"));
     const chapterRoot = chapterPrefab[chapterPrefab[0].data.__id__];
     const children = chapterRoot._children.map((ref: any) => chapterPrefab[ref.__id__]._name);
     assert(children.indexOf("BattleHost") > children.indexOf("PalaceFloor"));
     assert(children.indexOf("BattleHost") < children.indexOf("Panel"), "战场必须位于底部面板之下");
-    const fieldPrefab = JSON.parse(readFileSync("client/assets/prefabs/ui/battle/MainChapterBattleView.prefab", "utf8"));
+    const fieldPrefab = JSON.parse(readFileSync("client/assets/bundles/battle/prefabs/MainChapterBattleView.prefab", "utf8"));
     assert(!fieldPrefab.some((row: any) => row.__type__ === "cc.BlockInputEvents"), "页内战场不能阻断共享导航");
     assert(!fieldPrefab.some((row: any) => row._name === "PalaceBackground"), "全屏重复背景应退役");
     const realEncounter = MainChapterController.instance.encounter;

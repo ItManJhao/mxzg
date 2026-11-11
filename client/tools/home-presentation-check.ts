@@ -56,7 +56,7 @@ function fixture() {
 async function main() {
   resources.load = (path: string, _type: unknown, done: Function) => {
     const asset = new JsonAsset();
-    asset.json = JSON.parse(readFileSync(`client/assets/resources/${path}.json`, "utf8"));
+    asset.json = JSON.parse(readFileSync(`client/assets/bundles/${path}.json`, "utf8"));
     done(null, asset);
   };
   const { home, city, chrome, profile } = fixture();
@@ -90,7 +90,7 @@ async function main() {
   model.replace({busy:false,error:"",role:{id:"role-id",nickname:"玩家甲",level:7,gold:0,diamonds:123}});
   const ui = UIManager.instance;
   const releaseHost = ui.setResidentHost("test-role-modal",()=>new Node("ModalHost"));
-  const unregister = registerView(RoleProfileView,{id:"role-profile",prefab:"prefabs/ui/account/RoleProfileView",layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"test-role-modal",load:async()=>({_instantiate:()=>profile.node} as unknown as Prefab)});
+  const unregister = registerView(RoleProfileView,{id:"role-profile",prefab:"bundles/login/prefabs/RoleProfileView",layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"test-role-modal",load:async()=>Object.assign(new Prefab(), {_instantiate:()=>profile.node})});
   let opening: Promise<unknown> | undefined;
   const rebound=home.bind({logout:()=>{logouts++;},openFeature:id=>{assert.equal(id,"role-profile");opening=ui.openById(id,{model,logout:()=>{logouts++;},notice:()=>{}});}});
   chrome.avatar!.emit(Button.EventType.CLICK); await opening;
@@ -126,7 +126,7 @@ async function main() {
   await selection.load();
   const picker=new Node("Picker").addComponent(ServerPickerView);
   picker.closeButton=new Node("Close").addComponent(Button);
-  picker.dimPrefab={_instantiate:()=>new Node("Dim")} as unknown as Prefab;
+  picker.dimPrefab=Object.assign(new Prefab(), {_instantiate:()=>new Node("Dim")});
   const groups: Array<{row:any,tap:()=>void}> = [], entries: Array<{row:any,tap:()=>void}> = [];
   class CellFixture extends ServerCellView { destination:any[]=[]; show(row:any,_chosen:boolean,tap:()=>void):void{this.destination.push({row,tap});} }
   const makeList=(destination:any[])=>({validateBindings:()=>{},toStart:()=>{},list:{setData:(rows:any[],render:Function)=>{destination.length=0;for(const row of rows){const n=new Node("Cell");const c=n.addComponent(CellFixture);c.destination=destination;render(n,row);}}}});
@@ -134,7 +134,7 @@ async function main() {
   picker.runOpen(selection);assert.equal(groups.length,2);assert.equal(entries[0].row.id,"a1");
   groups[1].tap();assert.equal(entries[0].row.id,"b1");entries[0].tap();assert.equal(selection.selected?.id,"b1");
   picker.runClose();const oldRow=entries[0];await selection.load();assert.equal(entries[0],oldRow,"关闭选服后不再渲染");
-  const serverPrefab=JSON.parse(readFileSync("client/assets/prefabs/ui/login/ServerPickerView.prefab","utf8"));
+  const serverPrefab=JSON.parse(readFileSync("client/assets/bundles/login/prefabs/ServerPickerView.prefab","utf8"));
   assert(!serverPrefab.some((r:any)=>r.__type__==="cc.ScrollView"),"选服不再使用原生 ScrollView");
   const pickerBinding=serverPrefab.find((r:any)=>r.serverScroll&&r.regionScroll);
   for(const field of ["serverScroll","regionScroll"]){
@@ -144,20 +144,20 @@ async function main() {
     assert(port._components.some((r:any)=>serverPrefab[r.__id__].__type__==="cc.Mask"));
     assert(content._components.some((r:any)=>serverPrefab[r.__id__].cellPrefab));
   }
-  const hud = JSON.parse(readFileSync("client/assets/prefabs/ui/city/CityChromeView.prefab","utf8"));
+  const hud = JSON.parse(readFileSync("client/assets/bundles/home/prefabs/CityChromeView.prefab","utf8"));
   const top = hud.find((row:any)=>row._name==="TopBar");
   const order = top._children.map((ref:any)=>hud[ref.__id__]._name);
   assert(order.indexOf("ExperienceBg")>order.indexOf("Bg"),"经验条不能被背景盖住");
   assert(order.indexOf("ExperienceFill")>order.indexOf("ExperienceBg"),"填充绘制在经验底图之上");
-  const prefab = JSON.parse(readFileSync("client/assets/bundles/remake-home/RemakeHomeView.prefab", "utf8"));
+  const prefab = JSON.parse(readFileSync("client/assets/bundles/home/prefabs/RemakeHomeView.prefab", "utf8"));
   const binding = prefab.find((row: any) => row.cityPrefab && row.chromePrefab);
   assert(binding, "existing city Prefabs are serialized references, not copied layouts");
   for (const [key, name] of [["cityPrefab", "CityHubView"], ["chromePrefab", "CityChromeView"]]) {
-    const meta = JSON.parse(readFileSync(`client/assets/prefabs/ui/city/${name}.prefab.meta`, "utf8"));
+    const meta = JSON.parse(readFileSync(`client/assets/bundles/home/prefabs/${name}.prefab.meta`, "utf8"));
     assert.equal(binding[key].__uuid__, meta.uuid);
   }
   assert(!prefab.some((row:any)=>row._name==="AccountButton"||row._name==="AccountPanel"),"临时账号框已从预制移除");
-  const profileMeta=JSON.parse(readFileSync("client/assets/prefabs/ui/account/RoleProfileView.prefab.meta","utf8"));
+  const profileMeta=JSON.parse(readFileSync("client/assets/bundles/login/prefabs/RoleProfileView.prefab.meta","utf8"));
   assert.equal(profileMeta.uuid,"1aedb5a3-4e33-552f-843c-c419fd8174a4");
   assert.equal(binding.profilePrefab,undefined,"主城不能再私自持有资料预制体");
   const config = JSON.parse(readFileSync("client/settings/v2/packages/project.json", "utf8"));

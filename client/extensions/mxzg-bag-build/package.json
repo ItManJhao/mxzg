@@ -1,10 +1,10 @@
 {
-    "name": "mxzg-bag-build",
-    "title": "UI图集构建去重",
-    "package_version": 2,
-    "version": "1.3.0",
-    "description": "构建后校验、备份并清理已核实的UI原图副本；加载阶段仅由LoadingPlan配置",
-    "contributions": {
-        "builder": "./builder.js"
-    }
+  "name": "mxzg-bag-build",
+  "title": "UI资源构建检查",
+  "package_version": 2,
+  "version": "1.6.2",
+  "description": "固定钩子入口重读当前实现，准备bootstrap启动包并核验资源。",
+  "contributions": {
+    "builder": "./builder.js"
+  }
 }

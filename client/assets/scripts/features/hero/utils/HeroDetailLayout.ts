@@ -5,7 +5,7 @@
 
 /** HeroInfoUpStarLayer：图标在 (-70, 0)，等级底在 (-90, 20)。 */
 export const HERO_SKILL_BADGE_OFFSET = { x: -20, y: 20 };
-export const HERO_SKILL_BADGE_ART = "ui/hero/hero-info_spr-skill-level-bg";
+export const HERO_SKILL_BADGE_ART = "hero/ui/hero-info_spr-skill-level-bg";
 
 /**
  * 立绘挂在 node_equip 圆心。

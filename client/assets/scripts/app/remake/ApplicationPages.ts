@@ -3,7 +3,7 @@ import { MainChapterBattleView } from "../../features/battle/ui/MainChapterBattl
 import { MainChapterView } from "../../features/battle/ui/MainChapterView";
 import { BattleDetailLayer } from "../../features/battle/ui/BattleDetailLayer";
 import { ChapterRewardInfoView } from "../../features/battle/ui/ChapterRewardInfoView";
-import { Node, Prefab } from "cc";
+import { Node } from "cc";
 import { PREVIEW } from "cc/env";
 import { AccountController } from "../../features/account/AccountController";
 import { AccountModel } from "../../features/account/AccountModel";
@@ -32,7 +32,6 @@ import { LoginEntry } from "./LoginEntry";
 /** 页面登记需要的应用边界，回调读取当前路由而非复制账号状态。 */
 export interface ApplicationPageContext {
     pageHost: Node;
-    loginPrefab: Prefab;
     valid(): boolean;
     model: AccountModel;
     service: AccountService;
@@ -48,7 +47,7 @@ export interface ApplicationPageContext {
 export class ApplicationPages {
     private constructor() { }
 
-    /** 返回全部登记的撤销函数，应用关闭时逐个撤销，不影响其他所有者。 */
+    /** 登记页面的异步资源入口并返回撤销函数；登录页不再由场景提前持有，下载失败由启动流程提供重试。 */
     public static register(context: ApplicationPageContext): Array<() => void> {
         const { model, service, servers, entry, resources, features, openGm } = context;
         const ui = UIManager.instance;
@@ -58,28 +57,28 @@ export class ApplicationPages {
         stops.push(ui.setResidentHost("remake-modal", () => context.pageHost));
         stops.push(registerView(BattleDetailLayer, {
             load: () => resources.battlePage("detail"),
-            id: "battle-detail", prefab: "prefabs/ui/battle/BattleDetailLayer", layer: UILayer.Popup,
+            id: "battle-detail", prefab: "bundles/battle/prefabs/BattleDetailLayer", layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",
         }));
         stops.push(registerView(ChapterRewardInfoView, {
-            id: "chapter-reward-info", prefab: "prefabs/ui/battle/ChapterRewardInfoView", layer: UILayer.Popup,
+            id: "chapter-reward-info", prefab: "bundles/battle/prefabs/ChapterRewardInfoView", layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",
         }));
         stops.push(registerView(ServerPickerView, {
-            id: "server-picker", prefab: "prefabs/ui/login/ServerPickerView", layer: UILayer.Popup,
+            id: "server-picker", prefab: "bundles/login/prefabs/ServerPickerView", layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",
             load: () => {
                 return resources.featurePage("servers");
             },
         }));
         stops.push(registerView(RoleProfileView, {
-            id: "role-profile", prefab: "prefabs/ui/account/RoleProfileView",
+            id: "role-profile", prefab: "bundles/login/prefabs/RoleProfileView",
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
         }));
         // All business composition lives here. The UI framework imports no account/home classes.
         stops.push(registerView(AccountLoginView, {
-            id: "remake-login", prefab: "prefabs/ui/account/AccountLoginView", layer: UILayer.Page,
-            cache: false, allowMultiple: false, load: async () => context.loginPrefab,
+            id: "remake-login", prefab: "bundles/login/prefabs/AccountLoginView", layer: UILayer.Page,
+            cache: false, allowMultiple: false,
             createController: view => new AccountController(model, service, view as AccountLoginView, () => {
                 ui.closeById("server-picker");
                 entry.confirm();
@@ -94,7 +93,7 @@ export class ApplicationPages {
             }),
         }));
         stops.push(registerView(RemakeHomeView, {
-            id: "remake-home", prefab: "bundles/remake-home/RemakeHomeView", layer: UILayer.Page,
+            id: "remake-home", prefab: "bundles/home/prefabs/RemakeHomeView", layer: UILayer.Page,
             cache: false, allowMultiple: false, load: async () => {
                 return resources.homePage();
             },
@@ -118,16 +117,16 @@ export class ApplicationPages {
         };
         stops.push(registerView(MainChapterBattleView, {
             load: () => resources.battlePage("field"),
-            id: "main-chapter-battle", prefab: "prefabs/ui/battle/MainChapterBattleView",
+            id: "main-chapter-battle", prefab: "bundles/battle/prefabs/MainChapterBattleView",
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "main-chapter-field",
         }));
         stops.push(registerView(MainChapterView, {
-            id: "remake-campaign", prefab: "prefabs/ui/battle/MainChapterView",
+            id: "remake-campaign", prefab: "bundles/battle/prefabs/MainChapterView",
             layer: UILayer.Page, cache: false, allowMultiple: false,
             load: () => resources.battlePage(),
         }));
         stops.push(registerView(FormationView, {
-            id: "remake-formation", prefab: "prefabs/ui/hero/FormationView",
+            id: "remake-formation", prefab: "bundles/hero/prefabs/FormationView",
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
             load: () => loadFeature("formation"),
         }));
@@ -148,17 +147,17 @@ export class ApplicationPages {
             });
         }
         stops.push(registerView(HeroListView, {
-            id: "hero", prefab: "prefabs/ui/hero/HeroListView", layer: UILayer.Page, cache: false, allowMultiple: false,
+            id: "hero", prefab: "bundles/hero/prefabs/HeroListView", layer: UILayer.Page, cache: false, allowMultiple: false,
             mount: mountHeroListPage, load: () => {
                 return resources.heroPage();
             },
         }));
         stops.push(registerView(HeroInfoView, {
-            id: "hero-info", prefab: "prefabs/ui/hero/HeroInfoView", layer: UILayer.Page, cache: false, allowMultiple: false,
+            id: "hero-info", prefab: "bundles/hero/prefabs/HeroInfoView", layer: UILayer.Page, cache: false, allowMultiple: false,
             mount: mountHeroListPage, load: () => resources.heroPage(true),
         }));
         stops.push(registerView(HeroSkillView, {
-            id: "hero-skill", prefab: "prefabs/ui/hero/HeroSkillView", layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
+            id: "hero-skill", prefab: "bundles/hero/prefabs/HeroSkillView", layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
             load: () => resources.heroSkillPage(),
         }));
         return stops;

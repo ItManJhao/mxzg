@@ -11,15 +11,15 @@ export class RolePortraitUtils {
         if (face) {
             face.active = true;
             ResManager.setSprite(face, Array.from(new Set([
-                ResManager.head(headId) || "ui/hero/head-icon_0",
-                "ui/hero/head-icon_0",
+                ResManager.head(headId) || "hero/ui/head-icon_0",
+                "hero/ui/head-icon_0",
             ])));
         }
         if (border) {
             border.active = true;
             ResManager.setSprite(border, Array.from(new Set([
-                ResManager.border(borderId) || "ui/bag/backpack_border-default",
-                "ui/bag/backpack_border-default",
+                ResManager.border(borderId) || "bag/ui/backpack_border-default",
+                "bag/ui/backpack_border-default",
             ])));
         }
     }

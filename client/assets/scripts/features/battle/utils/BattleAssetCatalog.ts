@@ -439,7 +439,7 @@ export const SKILL_FRAME_INDEX: { [stem: string]: readonly number[] } = {
 };
 
 function framePaths(stem: string): string[] | null {
-    const prefix = "battle/skill/" + stem + "/" + stem + "_";
+    const prefix = "battle/effects/skill/" + stem + "/" + stem + "_";
     const indexed = SKILL_FRAME_INDEX[stem];
     if (indexed) {
         const paths: string[] = [];
@@ -524,7 +524,7 @@ export function skillArrowFrames(skillId: number | null): string[] {
         const stem = order[i];
         const count = SKILL_ARROW_COUNT[stem];
         if (!count || !framePaths(stem)) continue;
-        const prefix = "battle/skill/" + stem + "/" + stem + "_arrow-";
+        const prefix = "battle/effects/skill/" + stem + "/" + stem + "_arrow-";
         const paths: string[] = [];
         for (let n = 0; n < count; n++) paths.push(prefix + String(n));
         return paths;

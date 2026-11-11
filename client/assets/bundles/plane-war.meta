@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "1ca8245a-6a1c-495f-8915-1bbe3ae96515",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "plane-war",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

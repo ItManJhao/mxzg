@@ -1,4 +1,4 @@
-/** UI自动图集构建副本清理：只处理配置中已核实的背包及common原图，不改源码、meta 或资源索引。
+/** UI自动图集构建副本清理：只处理配置中已核实的模块原图，不改源码、meta 或资源索引。
  * Creator 3.8.8 仍输出无使用者的原始 ImageAsset；先证明帧已合图、原图无路径及引用，再备份清理。
  * 默认只检查；--apply 才修改指定 Web 构建，备份位于 client/temp/bag-build-dedupe。
  */
@@ -7,8 +7,6 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
-// 保留原命令入口；范围唯一登记在配置中，不扫描目录猜测哪些图片可删。
-const candidates = JSON.parse(fs.readFileSync(path.join(root, 'config/ui-atlas-dedupe.json'), 'utf8')).images;
 
 /** Creator资源UUID的22字符压缩形式：前两位十六进制保留，其余15字节用Base64表示。 */
 function compressedUuid(uuid) {
@@ -43,11 +41,15 @@ function stringsIn(value) {
 }
 
 /** 逐项校验并生成清理计划；任一不变量失败时不写入、不删除。 */
-function plan(build) {
+function plan(build, candidates) {
     assert(build.startsWith(path.join(root, 'client/build') + path.sep), '只允许项目 client/build 内的独立构建');
     assert.equal(fs.realpathSync(build), build, '构建路径不能通过链接跳转');
     assert(fs.existsSync(path.join(build, 'index.html')), '必须先完成 Web 构建');
-    const files = filesIn(path.join(build, 'assets'));
+    // 远程Bundle输出在remote；与本地包一并核对引用，不能遗漏远程使用者。
+    const files = ['assets', 'remote'].flatMap(directory => {
+        const target = path.join(build, directory);
+        return fs.existsSync(target) ? filesIn(target) : [];
+    });
     const imports = files.filter(file => file.includes(path.sep + 'import' + path.sep) && file.endsWith('.json'));
     const bundles = files.filter(file => path.basename(file) === 'config.json').map(file => ({
         directory: path.dirname(file), config: JSON.parse(fs.readFileSync(file, 'utf8')),
@@ -62,7 +64,9 @@ function plan(build) {
     for (const { group, source, uuid } of candidates) {
         const name = path.basename(source);
         const sourceFile = path.resolve(root, source);
-        assert(sourceFile.startsWith(path.join(root, 'client/assets/ui') + path.sep), '原图必须属于项目UI目录');
+        const sourceRoots = ['client/assets/bundles'];
+        assert(sourceRoots.some(directory => sourceFile.startsWith(path.join(root, directory) + path.sep)),
+            '原图必须属于项目UI或Bundle目录');
         assert.equal(JSON.parse(fs.readFileSync(sourceFile + '.meta', 'utf8')).uuid, uuid, '原图UUID与清理名单不符');
         const compressed = compressedUuid(uuid);
         const owners = bundles.filter(bundle => bundle.config.uuids?.includes(compressed + '@f9941'));
@@ -121,7 +125,9 @@ function plan(build) {
 /** 对指定构建先完整校验，再备份清理；返回数量与备份位置，重复执行可安全跳过。 */
 function dedupeBagBuild(buildDirectory, apply = false) {
     const build = path.resolve(root, buildDirectory);
-    const rows = plan(build);
+    // 每次构建读取最新范围，避免Creator常驻进程沿用旧名单；不扫描目录猜测可删资源。
+    const candidates = JSON.parse(fs.readFileSync(path.join(root, 'config/ui-atlas-dedupe.json'), 'utf8')).images;
+    const rows = plan(build, candidates);
     let backup = null;
     if (apply && rows.length) {
         const backupRoot = path.join(root, 'client/temp/bag-build-dedupe');
@@ -140,7 +146,7 @@ function dedupeBagBuild(buildDirectory, apply = false) {
         applied: apply,
         files: rows.length,
         bytes: rows.reduce((sum, row) => sum + row.bytes, 0),
-        groups: ['bag', 'common'].map(group => ({
+        groups: Array.from(new Set(candidates.map(image => image.group))).map(group => ({
             group,
             files: rows.filter(row => row.group === group).length,
             bytes: rows.filter(row => row.group === group).reduce((sum, row) => sum + row.bytes, 0),

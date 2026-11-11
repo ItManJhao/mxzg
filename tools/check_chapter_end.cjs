@@ -48,7 +48,7 @@ function create() {
 }
 (async () => {
     const win = create(); win.onOpen({won: true}); await win.ready;
-    const effect = JSON.parse(fs.readFileSync(path.join(root, "client/assets/resources/config/effect2.json"))).rows.find(row => row.name === "eff_reward_bomb");
+    const effect = JSON.parse(fs.readFileSync(path.join(root, "client/assets/bundles/config/effect2.json"))).rows.find(row => row.name === "eff_reward_bomb");
     assert.equal(win.intervals.get(win.advanceConfetti), effect.speed / 100);
     assert.equal(spineCalls, 1); assert.equal(win.audio.clip.name, "audio/battle-end-1");
     assert.equal(win.defeatContent.active, false); assert.equal(win.scheduled.has(win.tickClose), false);
@@ -65,7 +65,7 @@ function create() {
     autoLoad = false; const cancelled = create(); cancelled.onOpen({won: true}); cancelled.close();
     pending.forEach(done => done()); await cancelled.ready; await Promise.resolve(); await Promise.resolve();
     assert.equal(cancelled.audio, null); assert.equal(spineCalls, 1);
-    const prefab = JSON.parse(fs.readFileSync(path.join(root, "client/assets/prefabs/ui/chapter/ChapterEndView.prefab")));
+    const prefab = JSON.parse(fs.readFileSync(path.join(root, "client/assets/bundles/battle/prefabs/ChapterEndView.prefab")));
     const nodes = prefab.filter(value => value.__type__ === "cc.Node");
     assert.equal(nodes[0]._name, "ChapterEndView");
     assert.ok(nodes.every(n => !/[\u4e00-\u9fff]/.test(n._name)));

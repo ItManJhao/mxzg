@@ -33,7 +33,7 @@ const { ccclass, property } = _decorator;
  */
 @view({
     id: "bag-info",
-    prefab: "prefabs/ui/bag/BagInfoView",
+    prefab: "bundles/bag/prefabs/BagInfoView",
     layer: UILayer.Popup,
     hostId: "remake-modal",
     cache: false,

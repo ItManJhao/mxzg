@@ -29,7 +29,7 @@ import re
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-PREFAB_ROOT = os.path.join(ROOT, "client", "assets", "prefabs")
+PREFAB_ROOT = os.path.join(ROOT, "client", "assets", "bundles")
 DESIGN_W = 720.0
 DESIGN_H = 1280.0
 CANVAS_X = DESIGN_W / 2.0
@@ -37,33 +37,33 @@ CANVAS_Y = DESIGN_H / 2.0
 
 # 已接线、会在登录 / 主城 / 主线路径上打开的壳。战斗结算壳另按文件名纳入。
 WIRED = [
-    "ui/login/UserLoginLayer.prefab",
-    "ui/login/ServerPickerView.prefab",
-    "ui/login/NoticeLayer.prefab",
-    "ui/login/LanguageSelectLayer.prefab",
-    "ui/login/ErrorLayer.prefab",
-    "ui/battle/CampaignView.prefab",
-    "ui/hero/HeroListView.prefab",
-    "ui/hero/HeroInfoView.prefab",
-    "ui/hero/HeroPalaceLayer.prefab",
-    "ui/hero/HeroPernuteLayer.prefab",
-    "ui/summon/SummonLayer.prefab",
-    "ui/smith/SmithLayer.prefab",
-    "ui/bag/BagView.prefab",
-    "ui/mail/MailLayer.prefab",
-    "ui/pvp/PvpLayer.prefab",
-    "ui/fantasy-tower/FantasyTowerLayer.prefab",
-    "ui/quick-battle/QuickBattleLayer.prefab",
-    "ui/achievement/AchievementLayer.prefab",
-    "ui/role/WorldLevelLayer.prefab",
-    "ui/pet/PetInfoLayer.prefab",
-    "ui/main-task/MainTaskLayer.prefab",
-    "ui/ancient/AncientLayer.prefab",
-    "ui/hero-creat/HeroCreatLayer.prefab",
-    "ui/altar/AltarLayer.prefab",
-    "ui/fantasy-land/FantasyLandMainLayer.prefab",
-    "ui/exotic-adventure/ExoticAdventureLayer.prefab",
-    "ui/magic-cube/MagicCubeLayer.prefab",
+    "login/ui/UserLoginLayer.prefab",
+    "login/ui/ServerPickerView.prefab",
+    "login/ui/NoticeLayer.prefab",
+    "login/ui/LanguageSelectLayer.prefab",
+    "login/ui/ErrorLayer.prefab",
+    "battle/ui/CampaignView.prefab",
+    "hero/ui/HeroListView.prefab",
+    "hero/ui/HeroInfoView.prefab",
+    "hero/ui/HeroPalaceLayer.prefab",
+    "hero/ui/HeroPernuteLayer.prefab",
+    "summon/ui/SummonLayer.prefab",
+    "smith/ui/SmithLayer.prefab",
+    # 背包已迁入独立Bundle并保存完整布局，不再参与旧壳批量修正。
+    "mail/ui/MailLayer.prefab",
+    "pvp/ui/PvpLayer.prefab",
+    "fantasy-tower/ui/FantasyTowerLayer.prefab",
+    "quick-battle/ui/QuickBattleLayer.prefab",
+    "achievement/ui/AchievementLayer.prefab",
+    "role/ui/WorldLevelLayer.prefab",
+    "pet/ui/PetInfoLayer.prefab",
+    "main-task/ui/MainTaskLayer.prefab",
+    "ancient/ui/AncientLayer.prefab",
+    "bundles/hero-creat/HeroCreatLayer.prefab",
+    "altar/ui/AltarLayer.prefab",
+    "fantasy-land/ui/FantasyLandMainLayer.prefab",
+    "exotic-adventure/ui/ExoticAdventureLayer.prefab",
+    "magic-cube/ui/MagicCubeLayer.prefab",
 ]
 
 
@@ -436,7 +436,7 @@ def apply_rows(rows):
 
 
 def check_battle_end():
-    path = os.path.join(PREFAB_ROOT, "ui/battle/BattleEndLayer.prefab")
+    path = os.path.join(PREFAB_ROOT, "battle/ui/BattleEndLayer.prefab")
     row = classify(path)
     box = row["box"]
     shift = center_shift(box)
