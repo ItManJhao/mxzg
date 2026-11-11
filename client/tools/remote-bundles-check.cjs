@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
+const { bundleEntries, resolveBundleFile } = require('../../tools/bundle-paths.cjs');
 
 /** 遍历已有文件，用于发现Bundle与统计产物，不扫描网络或修改目录。 */
 function files(directory) {
@@ -28,12 +29,9 @@ for (const old of ['ui', 'resources', 'prefabs']) {
     assert(!fs.existsSync(path.join(root, 'client/assets', old)), '旧顶层目录仍存在：' + old);
 }
 const settings = JSON.parse(fs.readFileSync(path.join(root, 'client/settings/v2/packages/builder.json')));
-const bundles = files(path.join(root, 'client/assets')).filter(file => file.endsWith('.meta')).map(file => {
-    const meta = JSON.parse(fs.readFileSync(file));
-    return { file, meta };
-}).filter(({ meta }) => meta.importer === 'directory' && meta.userData?.isBundle);
+const bundles = bundleEntries();
 const remoteNames = [];
-for (const { file, meta } of bundles) {
+for (const { metaFile: file, meta } of bundles) {
     const name = meta.userData.bundleName;
     if (name === 'bootstrap') {
         assert.equal(meta.userData.bundleConfigID, 'default');
@@ -49,9 +47,9 @@ for (const { file, meta } of bundles) {
 const scene = JSON.parse(fs.readFileSync(path.join(root, 'client/assets/scenes/Remake.scene')));
 const app = scene.find(row => row.loadingPrefab && row.socketUrl);
 assert(app && !app.loginPrefab, '启动场景不得绑定完整登录页');
-const bootMeta = JSON.parse(fs.readFileSync(path.join(root, 'client/assets/bundles/bootstrap/prefabs/LoadingLayer.prefab.meta')));
+const bootMeta = JSON.parse(fs.readFileSync(resolveBundleFile('bootstrap/prefabs/LoadingLayer.prefab.meta')));
 assert.equal(app.loadingPrefab.__uuid__, bootMeta.uuid);
-assert(!fs.existsSync(path.join(root, 'client/assets/bundles/login/prefabs/LoadingLayer.prefab')), '旧加载层副本仍存在');
+assert.equal(resolveBundleFile('login/prefabs/LoadingLayer.prefab', { optional: true }), null, '旧加载层副本仍存在');
 console.log('源码远程包：' + remoteNames.length + '个；本地仅bootstrap和引擎/场景，旧顶层资源目录已移除。');
 
 if (process.argv[2]) {

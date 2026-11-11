@@ -6,7 +6,7 @@
  * VfxSkill / VfxHit 的页面原点是 (0, 180) / (0, 120)。子节点本地坐标从这里减。
  */
 
-export const BATTLE_PREFAB_PATH = "bundles/battle/prefabs/BattlePage";
+export const BATTLE_PREFAB_PATH = "bundles/module/battle/prefabs/BattlePage";
 
 export const HP_FILL_FULL = 112;
 export const HP_FILL_HEIGHT = 14;

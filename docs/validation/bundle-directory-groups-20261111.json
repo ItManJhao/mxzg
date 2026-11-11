@@ -1,0 +1,1095 @@
+{
+  "date": "2026-11-11",
+  "branch": "hao",
+  "baseline": "8cb60507",
+  "committedOrPushed": false,
+  "scope": "仅增加resources/module两个普通父目录，移动完整15个Bundle及原meta。",
+  "bundleInventory": [
+    {
+      "name": "audio",
+      "from": "client/assets/bundles/audio",
+      "to": "client/assets/bundles/resources/audio",
+      "uuid": "0dd54a65-028b-40d0-8dd6-46001f133c4e",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "audio",
+        "priority": 8,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "config",
+      "from": "client/assets/bundles/config",
+      "to": "client/assets/bundles/resources/config",
+      "uuid": "054a727b-1b66-4d85-8b28-58996fc5a9e9",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "config",
+        "priority": 8,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "font",
+      "from": "client/assets/bundles/font",
+      "to": "client/assets/bundles/resources/font",
+      "uuid": "45d96d1f-1bcf-4fc5-951c-0531a9bf16dd",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "font",
+        "priority": 12,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "icons",
+      "from": "client/assets/bundles/icons",
+      "to": "client/assets/bundles/resources/icons",
+      "uuid": "5fc34d1c-f2ef-4b0f-8f83-9b206c887dac",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "icons",
+        "priority": 8,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "maps",
+      "from": "client/assets/bundles/maps",
+      "to": "client/assets/bundles/resources/maps",
+      "uuid": "a7fbd302-d6db-4753-95e3-fb6021d127b3",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "maps",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "spine",
+      "from": "client/assets/bundles/spine",
+      "to": "client/assets/bundles/resources/spine",
+      "uuid": "d7d43176-8a50-418b-a18a-6e264da74d33",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "spine",
+        "priority": 8,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "bag",
+      "from": "client/assets/bundles/bag",
+      "to": "client/assets/bundles/module/bag",
+      "uuid": "9d9253d1-1e49-4608-aa85-c2847a264642",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "bag",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "battle",
+      "from": "client/assets/bundles/battle",
+      "to": "client/assets/bundles/module/battle",
+      "uuid": "17ddc531-cd66-45ef-a50d-b9d4fb1cab8d",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "battle",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "bootstrap",
+      "from": "client/assets/bundles/bootstrap",
+      "to": "client/assets/bundles/module/bootstrap",
+      "uuid": "417ec40a-fd9c-446e-965d-009be4622479",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "bootstrap",
+        "priority": 19,
+        "bundleConfigID": "default"
+      }
+    },
+    {
+      "name": "chapter",
+      "from": "client/assets/bundles/chapter",
+      "to": "client/assets/bundles/module/chapter",
+      "uuid": "42868ea7-193e-4509-a778-6b6f34f8196f",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "chapter",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "common",
+      "from": "client/assets/bundles/common",
+      "to": "client/assets/bundles/module/common",
+      "uuid": "ac2c88d7-bd76-4b6a-8310-e8238e6ecb7c",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "common",
+        "priority": 10,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "gm",
+      "from": "client/assets/bundles/gm",
+      "to": "client/assets/bundles/module/gm",
+      "uuid": "737f5af2-8933-489d-92ca-81c373b09e80",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "gm",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "hero",
+      "from": "client/assets/bundles/hero",
+      "to": "client/assets/bundles/module/hero",
+      "uuid": "6340da6e-fab4-4aa3-b1b6-4dfec7f3a26e",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "hero",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "home",
+      "from": "client/assets/bundles/home",
+      "to": "client/assets/bundles/module/home",
+      "uuid": "b1f3ef36-c4c3-4dae-89ec-560f16e9d64c",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "home",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    {
+      "name": "login",
+      "from": "client/assets/bundles/login",
+      "to": "client/assets/bundles/module/login",
+      "uuid": "c2a4baf7-f38c-4f47-8498-118cc214db59",
+      "userData": {
+        "isBundle": true,
+        "bundleName": "login",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    }
+  ],
+  "preservedFiles": 26410,
+  "preservedBytes": 498214067,
+  "originalBytesVerified": true,
+  "preservedByteDigest": "f5195c072d6485956bdc09913469f2f74b948cce27cfb9fc080ac7f40fcfa06b",
+  "newDirectoryMetas": [
+    "resources.meta",
+    "module.meta"
+  ],
+  "autoAtlases": "common两份、bag、hero、battle全部保留原pac/meta、原源图与UUID，不修改合图设置。",
+  "runtime": "15个Bundle名字、优先级及远程配置原字节保留；bootstrap继续本地。加载资源池键、CDN remote/<Bundle名>不加分组层。",
+  "validation": "本次52项有效专项与Creator类型检查通过；5组旧检查保持暂停。完整原资源/meta在Creator重新导入后仍逐字节复核通过；新目录393x852独立环境预览已通过，未构建发布包。",
+  "completedSourceChecksDate": "2026-11-12",
+  "checks": {
+    "activePassed": 52,
+    "paused": [
+      "hero-roster",
+      "hero-level",
+      "formation",
+      "remake-playable",
+      "idle"
+    ],
+    "suites": [
+      {
+        "id": "gm",
+        "passed": true,
+        "elapsedMs": 3201,
+        "log": "client/temp/project-checks/gm.log"
+      },
+      {
+        "id": "docs",
+        "passed": true,
+        "elapsedMs": 128,
+        "log": "client/temp/project-checks/docs.log"
+      },
+      {
+        "id": "resource-catalog",
+        "passed": true,
+        "elapsedMs": 3213,
+        "log": "client/temp/project-checks/resource-catalog.log"
+      },
+      {
+        "id": "current-resource-scope",
+        "passed": true,
+        "elapsedMs": 4576,
+        "log": "client/temp/project-checks/current-resource-scope.log"
+      },
+      {
+        "id": "bundle-paths",
+        "passed": true,
+        "elapsedMs": 144,
+        "log": "client/temp/project-checks/bundle-paths.log"
+      },
+      {
+        "id": "ui-atlas",
+        "passed": true,
+        "elapsedMs": 507,
+        "log": "client/temp/project-checks/ui-atlas.log"
+      },
+      {
+        "id": "common-atlas",
+        "passed": true,
+        "elapsedMs": 841,
+        "log": "client/temp/project-checks/common-atlas.log"
+      },
+      {
+        "id": "ui-static",
+        "passed": true,
+        "elapsedMs": 5711,
+        "log": "client/temp/project-checks/ui-static.log"
+      },
+      {
+        "id": "resource-generated",
+        "passed": true,
+        "elapsedMs": 787,
+        "log": "client/temp/project-checks/resource-generated.log"
+      },
+      {
+        "id": "config-generated",
+        "passed": true,
+        "elapsedMs": 16070,
+        "log": "client/temp/project-checks/config-generated.log"
+      },
+      {
+        "id": "client-config-scope",
+        "passed": true,
+        "elapsedMs": 41312,
+        "log": "client/temp/project-checks/client-config-scope.log"
+      },
+      {
+        "id": "prefab-review",
+        "passed": true,
+        "elapsedMs": 4693,
+        "log": "client/temp/project-checks/prefab-review.log"
+      },
+      {
+        "id": "event-target",
+        "passed": true,
+        "elapsedMs": 656,
+        "log": "client/temp/project-checks/event-target.log"
+      },
+      {
+        "id": "game-protocol",
+        "passed": true,
+        "elapsedMs": 3832,
+        "log": "client/temp/project-checks/game-protocol.log"
+      },
+      {
+        "id": "game-protocol-generated",
+        "passed": true,
+        "elapsedMs": 1506,
+        "log": "client/temp/project-checks/game-protocol-generated.log"
+      },
+      {
+        "id": "main-chapter",
+        "passed": true,
+        "elapsedMs": 4599,
+        "log": "client/temp/project-checks/main-chapter.log"
+      },
+      {
+        "id": "battle-presentation",
+        "passed": true,
+        "elapsedMs": 1124,
+        "log": "client/temp/project-checks/battle-presentation.log"
+      },
+      {
+        "id": "battle-layout",
+        "passed": true,
+        "elapsedMs": 10583,
+        "log": "client/temp/project-checks/battle-layout.log"
+      },
+      {
+        "id": "battle-layout-rules",
+        "passed": true,
+        "elapsedMs": 285,
+        "log": "client/temp/project-checks/battle-layout-rules.log"
+      },
+      {
+        "id": "game-socket",
+        "passed": true,
+        "elapsedMs": 293,
+        "log": "client/temp/project-checks/game-socket.log"
+      },
+      {
+        "id": "isolated-build",
+        "passed": true,
+        "elapsedMs": 326,
+        "log": "client/temp/project-checks/isolated-build.log"
+      },
+      {
+        "id": "hero-state",
+        "passed": true,
+        "elapsedMs": 403,
+        "log": "client/temp/project-checks/hero-state.log"
+      },
+      {
+        "id": "formation-state",
+        "passed": true,
+        "elapsedMs": 667,
+        "log": "client/temp/project-checks/formation-state.log"
+      },
+      {
+        "id": "formation-view",
+        "passed": true,
+        "elapsedMs": 263,
+        "log": "client/temp/project-checks/formation-view.log"
+      },
+      {
+        "id": "hero-growth-generated",
+        "passed": true,
+        "elapsedMs": 1200,
+        "log": "client/temp/project-checks/hero-growth-generated.log"
+      },
+      {
+        "id": "idle-generated",
+        "passed": true,
+        "elapsedMs": 2817,
+        "log": "client/temp/project-checks/idle-generated.log"
+      },
+      {
+        "id": "campaign-rules",
+        "passed": true,
+        "elapsedMs": 1928,
+        "log": "client/temp/project-checks/campaign-rules.log"
+      },
+      {
+        "id": "remake-navigation",
+        "passed": true,
+        "elapsedMs": 290,
+        "log": "client/temp/project-checks/remake-navigation.log"
+      },
+      {
+        "id": "feature-navigation",
+        "passed": true,
+        "elapsedMs": 128,
+        "log": "client/temp/project-checks/feature-navigation.log"
+      },
+      {
+        "id": "login-presentation",
+        "passed": true,
+        "elapsedMs": 101,
+        "log": "client/temp/project-checks/login-presentation.log"
+      },
+      {
+        "id": "home-presentation",
+        "passed": true,
+        "elapsedMs": 527,
+        "log": "client/temp/project-checks/home-presentation.log"
+      },
+      {
+        "id": "startup",
+        "passed": true,
+        "elapsedMs": 232,
+        "log": "client/temp/project-checks/startup.log"
+      },
+      {
+        "id": "staged-loading",
+        "passed": true,
+        "elapsedMs": 681,
+        "log": "client/temp/project-checks/staged-loading.log"
+      },
+      {
+        "id": "resources",
+        "passed": true,
+        "elapsedMs": 67,
+        "log": "client/temp/project-checks/resources.log"
+      },
+      {
+        "id": "home-bundle",
+        "passed": true,
+        "elapsedMs": 63,
+        "log": "client/temp/project-checks/home-bundle.log"
+      },
+      {
+        "id": "resource-audit",
+        "passed": true,
+        "elapsedMs": 194,
+        "log": "client/temp/project-checks/resource-audit.log"
+      },
+      {
+        "id": "config-groups",
+        "passed": true,
+        "elapsedMs": 574,
+        "log": "client/temp/project-checks/config-groups.log"
+      },
+      {
+        "id": "backend-launcher",
+        "passed": true,
+        "elapsedMs": 11685,
+        "log": "client/temp/project-checks/backend-launcher.log"
+      },
+      {
+        "id": "creator-compat",
+        "passed": true,
+        "elapsedMs": 11241,
+        "log": "client/temp/project-checks/creator-compat.log"
+      },
+      {
+        "id": "prefab-plan",
+        "passed": true,
+        "elapsedMs": 3806,
+        "log": "client/temp/project-checks/prefab-plan.log"
+      },
+      {
+        "id": "architecture",
+        "passed": true,
+        "elapsedMs": 3314,
+        "log": "client/temp/project-checks/architecture.log"
+      },
+      {
+        "id": "bindings",
+        "passed": true,
+        "elapsedMs": 363,
+        "log": "client/temp/project-checks/bindings.log"
+      },
+      {
+        "id": "backpack",
+        "passed": true,
+        "elapsedMs": 1222,
+        "log": "client/temp/project-checks/backpack.log"
+      },
+      {
+        "id": "modal-layer",
+        "passed": true,
+        "elapsedMs": 537,
+        "log": "client/temp/project-checks/modal-layer.log"
+      },
+      {
+        "id": "viewport-scale",
+        "passed": true,
+        "elapsedMs": 241,
+        "log": "client/temp/project-checks/viewport-scale.log"
+      },
+      {
+        "id": "super-scroll",
+        "passed": true,
+        "elapsedMs": 2992,
+        "log": "client/temp/project-checks/super-scroll.log"
+      },
+      {
+        "id": "hero-detail",
+        "passed": true,
+        "elapsedMs": 1739,
+        "log": "client/temp/project-checks/hero-detail.log"
+      },
+      {
+        "id": "hero-equipment",
+        "passed": true,
+        "elapsedMs": 1486,
+        "log": "client/temp/project-checks/hero-equipment.log"
+      },
+      {
+        "id": "hero",
+        "passed": true,
+        "elapsedMs": 635,
+        "log": "client/temp/project-checks/hero.log"
+      },
+      {
+        "id": "city",
+        "passed": true,
+        "elapsedMs": 169,
+        "log": "client/temp/project-checks/city.log"
+      },
+      {
+        "id": "battle",
+        "passed": true,
+        "elapsedMs": 192,
+        "log": "client/temp/project-checks/battle.log"
+      },
+      {
+        "id": "retirement",
+        "passed": true,
+        "elapsedMs": 816,
+        "log": "client/temp/project-checks/retirement.log"
+      }
+    ]
+  },
+  "sourceSha256": {
+    "client/assets/scripts/framework/assets/ResourceAssets.ts": "7fcacfc145ab60d545cc97190bb63eeecb02b010e0f8e64ebba2f8de0c06c8b3",
+    "client/assets/scripts/framework/assets/ResourceTypes.ts": "d97dfdaa40d04b0d96c37ef515b1923cda4ec381294a72c3336bd057cb6f0ae1",
+    "client/assets/scripts/framework/assets/PrefabLoader.ts": "2eceadfb660983a499c0a6b0eb9ad936e82e2e06b2a1fbe83246b024dfbeaa80",
+    "client/assets/scripts/framework/assets/ResManager.ts": "f84893b1358e996be418207a97bc93f9901e72dcf090daf72aa08e3d91c62550",
+    "client/assets/scripts/app/remake/ApplicationResources.ts": "c1cce1886d49738a711b40bade500d218207b7af05a2cef72308f5f21e9079b5",
+    "client/assets/scripts/config/PrefabCatalog.ts": "3c015502a69b0c9c3cbdb04f7893751cea4e606ffba127ac85a76868f06d9b9b",
+    "client/assets/scripts/config/PrefabPlan.ts": "8b386b0bba205578734d64e81c73ffb9ebb0de11ebca450af454003eac859ae7",
+    "tools/bundle-paths.cjs": "3e7e15be8f3f7348b54661834305e5077573858da7f58ee22876da4b17c0b3ce",
+    "tools/bundle_paths.py": "f434c56013f8287d69f232e3b4d46ecb57a8347362f388f702a3704fe82b6a07",
+    "tools/generate_resources.cjs": "7ff306362a9b0cbdd8a708842d40b00ceed4e819da10d83b2da5ae0c0ca34c2d",
+    "tools/generate_config.py": "78a6c3ec644ab844c65d659ba0bdf7dd7b95ad4455118ff38fc19c737cafee97",
+    "tools/export_gameconfig.py": "a624542305c278225807319f1e8761dd5a9e4682bcf52c414d27cb3df6163a5e",
+    "tools/prefab-plan.json": "0106ff05998996df8deb5dbee92bf5347b9b34f563390f65897b708cc53d1166",
+    "client/extensions/mxzg-bag-build/build-hooks.cjs": "1e430cc0eaed6822649fa86ad44076b227f094d043dc40f2e5367a397f5f23db"
+  },
+  "creatorTypescript": "本次全量之后使用Creator3.8.8 tsc --project client/tsconfig.json --noEmit，退出0。",
+  "scriptBindings": {
+    "scripts": 180,
+    "prefabAndScene": 33,
+    "bindings": 71
+  },
+  "assetVerification": {
+    "originalFiles": 26410,
+    "byteIdentical": true,
+    "newDirectoryMetasOnly": 2,
+    "currentOriginalFileByteDigest": "f5195c072d6485956bdc09913469f2f74b948cce27cfb9fc080ac7f40fcfa06b"
+  },
+  "toolNotes": [
+    "CJS与Python离线工具按目录meta.isBundle/bundleName递归发现真实Bundle；没有新增运行时模块/资源分组清单。",
+    "统一入口增加bundle-paths负例专项；Python31表范围检查合入4项路径边界，共9项，不重复计入52主专项数量。",
+    "17个View唯一源路径、Prefab生成输入/结果及现用文档更新；历史docs/validation文件原文未改，离线验证时定位到当前地址。",
+    "扩展UI资源构建检查1.6.3重读实现及源目录索引；隔离产物的启动/缓存钩子检查通过，不代表真实Creator构建已执行。"
+  ],
+  "pending": [
+    "后续按节奏集中构建检查实际15Bundle归属、自动图集、bootstrap启动、本包与远程下载体量；本次未运行发布构建。",
+    "真实CDN、真机触摸/嵌套方向接管和长期GPU/内存结论继续待验，不扩大玩法范围。"
+  ],
+  "browser": {
+    "date": "2026-11-12",
+    "scope": "Creator新目录393x852本机预览，独立内存H2、WS+Protobuf，无GM、无日常数据",
+    "cases": [
+      {
+        "case": "新目录编译确认",
+        "prefabs": [
+          "bundles/module/bag/prefabs/BagView",
+          "bundles/module/battle/prefabs/MainChapterView",
+          "bundles/module/hero/prefabs/HeroListView"
+        ],
+        "loginReady": true
+      },
+      {
+        "case": "登录后三段目标完成",
+        "result": {
+          "background": {
+            "completed": 4,
+            "failed": 0,
+            "running": false,
+            "total": 4
+          },
+          "labels": [
+            "主线",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "plannedCompleted": 20,
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 0,
+            "opening": 0,
+            "pages": 1,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "新目录背包初次打开",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "item",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 0,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包分类0",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "equip",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 0,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包分类1",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "item",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 0,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包分类2",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "shard",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 0,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包分类3",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "spirit",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 0,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "实际点击精灵详情",
+        "title": "波纹精灵",
+        "quantity": 3,
+        "activeModal": 1,
+        "resident": 1
+      },
+      {
+        "case": "背包详情关闭及短期重开",
+        "result": {
+          "sameInstance": false,
+          "ui": {
+            "cached": 1,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "英雄列表选择与详情",
+        "result": {
+          "labels": [
+            "黑暗切割者",
+            "等级：100    星级：5    强化：0\n当前属性（部分加成待恢复）",
+            "攻击：1243",
+            "生命：5972",
+            "防御：772",
+            "速度：650",
+            "黑暗切割",
+            "Lv.1",
+            "黑暗桎梏",
+            "强化1解锁",
+            "邪能刃舞",
+            "强化3解锁",
+            "杀怒之心",
+            "强化5解锁",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "logical": 3,
+          "pool": 3,
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "850关说明新目录加载",
+        "result": {
+          "actual": 5,
+          "innerLists": [
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            }
+          ],
+          "logical": 850,
+          "max": {
+            "x": 0,
+            "y": 131255
+          },
+          "offset": {
+            "x": 0,
+            "y": 131255
+          },
+          "pooled": 5,
+          "rowNames": [
+            "关卡850",
+            "关卡849",
+            "关卡848",
+            "关卡847",
+            "关卡846"
+          ],
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "新目录真实第二关胜利结算",
+        "result": {
+          "labels": [
+            "结算已确认，资产以服务器同步为准",
+            "chapter_review",
+            "4000",
+            "151",
+            "2",
+            "确定",
+            "4 秒后关闭",
+            "最高伤害",
+            "本次获得",
+            "100",
+            "4000",
+            "151",
+            "200",
+            "500",
+            "2",
+            "1"
+          ],
+          "rewards": {
+            "logical": 7,
+            "pool": 7
+          },
+          "state": {
+            "assetRevision": 4,
+            "maxCleared": 2,
+            "pendingBattleId": null
+          },
+          "won": true
+        }
+      },
+      {
+        "case": "结算倒计时返回挂机及包身份",
+        "result": {
+          "bundles": [
+            {
+              "base": "assets/bag/",
+              "loaded": true,
+              "name": "bag"
+            },
+            {
+              "base": "assets/common/",
+              "loaded": true,
+              "name": "common"
+            },
+            {
+              "base": "assets/hero/",
+              "loaded": true,
+              "name": "hero"
+            },
+            {
+              "base": "assets/battle/",
+              "loaded": true,
+              "name": "battle"
+            },
+            {
+              "base": "assets/config/",
+              "loaded": true,
+              "name": "config"
+            },
+            {
+              "base": "assets/icons/",
+              "loaded": true,
+              "name": "icons"
+            },
+            {
+              "base": "assets/maps/",
+              "loaded": true,
+              "name": "maps"
+            },
+            {
+              "base": "assets/spine/",
+              "loaded": true,
+              "name": "spine"
+            },
+            {
+              "loaded": false,
+              "name": "bootstrap"
+            }
+          ],
+          "playing": false,
+          "stage": "3",
+          "state": {
+            "assetRevision": 4,
+            "maxCleared": 2,
+            "pendingBattleId": null
+          },
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      }
+    ],
+    "warningsAndErrors": [],
+    "limits": [
+      "未构建发布包、真实CDN或真机",
+      "背包立即关闭重开sameInstance=false如实保留；本轮不签短期复用或TTL，仅验证可重开与数量保持"
+    ]
+  },
+  "screenshot": {
+    "path": "docs/validation/bundle-groups-bag-detail-20261112.png",
+    "scope": "393x852设备设置；新目录背包精灵详情实际点击，title=波纹精灵、数量3，保留浏览器上下文。"
+  },
+  "previewBundleNote": "预览中bag/common/hero/battle/config/icons/maps/spine的已加载Bundle base仍为assets/<原包名>/；bootstrap未显式登记getBundle，本次启动正常，不以预览缓存登记状态代替发布包启动预载检查。",
+  "cleanup": "已清除浏览器尺寸覆盖并关闭本批临时标签；本批独立测试服随后按完整进程命令行归属核对后停止。"
+}

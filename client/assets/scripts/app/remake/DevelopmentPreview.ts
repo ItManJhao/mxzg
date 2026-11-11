@@ -2,15 +2,10 @@
 import { Node } from "cc";
 import { BattlePreviewResult } from "../../features/battle/BattlePreviewModel";
 import { PREVIEW } from "cc/env";
-import { GameConfig } from "../../config/GameConfig";
-import { GConfig } from "../../config/GConfig";
 import { BattleReplayPreview } from "../../features/battle/ui/BattleReplayPreview";
 import { SkillAuditView } from "../../features/battle/ui/SkillAuditView";
 import { SkillAuditEntry } from "../../features/battle/utils/SkillAuditUtils";
-import { loadPrefab } from "../../framework/assets/PrefabLoader";
-import { UILayer } from "../../framework/ui/UILayer";
 import { UIManager } from "../../framework/ui/UIManager";
-import { registerView } from "../../framework/ui/UIRegistry";
 
 import { assetManager } from "cc";
 import { GameLog } from "../../core/GameLog";
@@ -40,15 +35,6 @@ export class DevelopmentPreview {
         if(PREVIEW && typeof window !== "undefined") window.addEventListener("keydown", this.diagnosticKey, true);
         if(PREVIEW && this.pageHost) {
             this.unregister.push(UIManager.instance.setResidentHost("skill-audit-host", () => this.pageHost));
-            this.unregister.push(registerView(SkillAuditView, {
-                id: "skill-audit", prefab: "bundles/battle/prefabs/SkillAuditView",
-                layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "skill-audit-host",
-                modal: { mask: true, closeOnOutside: false },
-                load: async () => {
-                    await GameConfig.instance.prepare([GConfig.HeroType, GConfig.HeroSkill, GConfig.Language]);
-                    return loadPrefab("bundles/battle/prefabs/SkillAuditView");
-                }
-            }));
             if(typeof location !== "undefined" && new URLSearchParams(location.search).get("skillAudit") === "1") {
                 if(this.startupHost) this.startupHost.active = false;
                 await this.openSkillAudit();

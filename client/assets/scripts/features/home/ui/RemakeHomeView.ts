@@ -4,6 +4,8 @@
 import { GameLog } from "../../../core/GameLog";
 import { _decorator, Button, instantiate, Label, Node, Prefab } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { RolePortraitUtils } from "../../account/utils/RolePortraitUtils";
 import { CityChromeView } from "../../city/ui/CityChromeView";
@@ -15,6 +17,14 @@ import type { HomeActions, HomeView } from "../HomeController";
 
 const { ccclass, property } = _decorator;
 
+@view({
+    id: "remake-home",
+    prefab: "bundles/module/home/prefabs/RemakeHomeView",
+    layer: UILayer.Page,
+    cache: false,
+    allowMultiple: false,
+    prepare: prepareCityConfig,
+})
 @ccclass("RemakeHomeView")
 export class RemakeHomeView extends BaseView implements HomeView {
     @property(Prefab) cityPrefab: Prefab | null = null;

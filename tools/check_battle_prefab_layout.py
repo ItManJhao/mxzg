@@ -2,6 +2,7 @@
 import json
 import math
 from pathlib import Path
+from bundle_paths import bundle_asset_path, bundle_directory
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "client/assets"
@@ -35,7 +36,7 @@ def check():
             if sub.get("importer") == "sprite-frame":
                 frames[meta["uuid"] + "@" + key] = (path, sub["userData"])
     count = 0
-    paths = sorted((ASSETS / "bundles/battle/prefabs").glob("*.prefab"))
+    paths = sorted((bundle_directory("battle") / "prefabs").glob("*.prefab"))
     assert paths, "战斗预制体目录为空，不能以零扫描结果通过"
     for path in paths:
         data = read(path)
@@ -68,7 +69,7 @@ def check():
             if path.stem == "BattlePage" and node["_name"] in ("BannerBg", "LogBg"):
                 sprite = next(c for c in components if c["__type__"] == "cc.Sprite")
                 assert sprite["_type"] == 1, (node["_name"], "可拉伸底板必须使用Sliced")
-    battle = read(ASSETS / "bundles/battle/prefabs/BattlePage.prefab")
+    battle = read(bundle_asset_path("battle", "prefabs/BattlePage.prefab"))
     idle = next(n for n in battle if n.get("_name") == "IdleLayout")
     anchors = {battle[r["__id__"]]["_name"]: battle[r["__id__"]] for r in idle["_children"]}
     # 旧挂机按队内序号而非八槽位置定位，我方前一后二；显示参数留在Prefab供人工修改。

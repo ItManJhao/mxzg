@@ -1,748 +1,231 @@
 {
   "plan": "tools/prefab-plan.json",
-  "kept_count": 98,
-  "removed_count": 519,
-  "backup": "client\\temp\\prefab-cleanup\\removed-330ebc693a804d3780f2347b49db93c0.zip",
+  "kept_count": 32,
+  "removed_count": 583,
+  "scope": "2026-11-11按当前实际入口裁减，历史删除条目合并以继续检查悬空引用",
   "kept": [
     {
-      "path": "bundles/remake-home/RemakeHomeView.prefab",
-      "reason": "Lazy home composition",
-      "phases": [
-        "P1",
-        "P2"
-      ]
-    },
-    {
-      "path": "prefabs/ui/ability/AbilityInfoLayer.prefab",
-      "reason": "Skill detail",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/account/AccountLoginView.prefab",
-      "reason": "New login MVC",
-      "phases": [
-        "P1"
-      ]
-    },
-    {
-      "path": "prefabs/ui/account/RoleProfileView.prefab",
-      "reason": "New login MVC",
-      "phases": [
-        "P1"
-      ]
-    },
-    {
-      "path": "prefabs/ui/bag/BagInfoView.prefab",
-      "reason": "Inventory list, tabs, cell and detail",
-      "phases": [
-        "P4"
-      ]
-    },
-    {
-      "path": "prefabs/ui/bag/BagItemView.prefab",
-      "reason": "Inventory list, tabs, cell and detail",
-      "phases": [
-        "P4"
-      ]
-    },
-    {
-      "path": "prefabs/ui/bag/BagTabView.prefab",
-      "reason": "Inventory list, tabs, cell and detail",
-      "phases": [
-        "P4"
-      ]
-    },
-    {
-      "path": "prefabs/ui/bag/BagView.prefab",
-      "reason": "Inventory list, tabs, cell and detail",
-      "phases": [
-        "P4"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/BattleDetailCell.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/BattleDetailLayer.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/BattleEndLayer.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/BattleInfoLayer.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/BattlePage.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/CampaignView.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/HangMissionChipView.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/MainChapterBattleView.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/MainChapterView.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/SkillAuditCellView.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/battle/SkillAuditView.prefab",
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/chapter/ChapterEndLayer.prefab",
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/chapter/ChapterEndLoseCell.prefab",
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/chapter/ChapterEndView.prefab",
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/chapter/ChapterExtraRewardCell.prefab",
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/chapter/ChapterMapLayer.prefab",
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/chapter/ChapterPreviewLayer.prefab",
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/chapter/ChapterRewardCell.prefab",
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/chapter/ChapterRewardLayer.prefab",
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/chapter/ChapterStageChip.prefab",
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/city/CityChromeView.prefab",
-      "reason": "Canonical city map and HUD",
-      "phases": [
-        "P1"
-      ]
-    },
-    {
-      "path": "prefabs/ui/city/CityHubView.prefab",
-      "reason": "Canonical city map and HUD",
-      "phases": [
-        "P1"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/CommonBtnPrimaryShell.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/CommonBtnSecondaryShell.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/CommonListRowShell.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/CommonPanel1.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/CommonPanelShell.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/CommonRedDotShell.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/DimSheet.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/InfoCard.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/ListBackdrop.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/NpcTalkLayer.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/PagePrefabShell.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/common/TextChip.prefab",
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "phases": [
-        "P1",
-        "P6"
-      ]
-    },
-    {
-      "path": "prefabs/ui/gm/GmOptionCellView.prefab",
-      "reason": "游戏内本机开发 GM 与可搜索下拉选项",
-      "phases": [
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/gm/GmView.prefab",
-      "reason": "游戏内本机开发 GM 与可搜索下拉选项",
-      "phases": [
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/hero/FormationHeroCellView.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/bag/prefabs/BagInfoView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/FormationView.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/bag/prefabs/BagTabView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroIconCellView.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/bag/prefabs/BagView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroInfoAttrLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/BattleDetailCell.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroInfoTipsLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/BattleDetailLayer.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroInfoUpLevelLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/BattlePage.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroInfoUpStarLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/ChapterEndView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroInfoUpgradeLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/ChapterRewardInfoCell.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroInfoView.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/ChapterRewardInfoView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroListBoardView.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/MainChapterBattleView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroListItemCell.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/MainChapterView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroListView.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/SkillAuditCellView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroSkillInfoLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/battle/prefabs/SkillAuditView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroSkillOpenInfoLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/bootstrap/prefabs/LoadingLayer.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroSkillView.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/common/prefabs/BagItemView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroStrongInfoCell.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/common/prefabs/CommonPanel1.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroStrongResourceMainCell.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/gm/prefabs/GmOptionCellView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroStrongResourceSubCell.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/gm/prefabs/GmView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroSuggestCell.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/hero/prefabs/FormationHeroCellView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroSuggestLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/hero/prefabs/FormationView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroUpStarSelectItemCell.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/hero/prefabs/HeroIconCellView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroUpStarSelectLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/hero/prefabs/HeroInfoView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroXSelectItemCell.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/hero/prefabs/HeroListView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/hero/HeroXSelectLayer.prefab",
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "path": "bundles/module/hero/prefabs/HeroSkillView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
-      ]
-    },
-    {
-      "path": "prefabs/ui/idle-hero/IdleHeroSelectLayer.prefab",
-      "reason": "Reusable idle hero selection",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/item/ItemExhibitionLayer.prefab",
-      "reason": "Item quantity/selection and rewards",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/item/ItemRewardLayer.prefab",
-      "reason": "Item quantity/selection and rewards",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/item/ItemScelectNumLayer.prefab",
-      "reason": "Item quantity/selection and rewards",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/item/ItemSelectLayer.prefab",
-      "reason": "Item quantity/selection and rewards",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/legacy-login/LoginPanel.prefab",
-      "reason": "Old Boot login compatibility and original artwork reference; never used by RemakeApp",
-      "phases": [
-        "P1",
-        "P9"
-      ]
-    },
-    {
-      "path": "prefabs/ui/legacy-login/UserLoginLayer.prefab",
-      "reason": "Old Boot login compatibility and original artwork reference; never used by RemakeApp",
-      "phases": [
-        "P1",
-        "P9"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/ChooseServerRoleCell.prefab",
-      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/CreateRolePanel.prefab",
-      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/ErrorLayer.prefab",
-      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/LoadingLayer.prefab",
-      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/NoticeLayer.prefab",
-      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/ServerCellView.prefab",
-      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/ServerPickerView.prefab",
-      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/login/UpdateLayer.prefab",
-      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
-      "phases": [
-        "P1",
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/mail/MailCell.prefab",
-      "reason": "Basic mail and rewards",
-      "phases": [
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/mail/MailInfoLayer.prefab",
-      "reason": "Basic mail and rewards",
-      "phases": [
-        "P6",
-        "P8"
-      ]
-    },
-    {
-      "path": "prefabs/ui/mail/MailLayer.prefab",
-      "reason": "Basic mail and rewards",
-      "phases": [
-        "P6",
-        "P8"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/quick-battle/QuickBattleEndLayer.prefab",
-      "reason": "Idle claim and quick battle",
+      "path": "bundles/module/home/prefabs/CityChromeView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P5"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/quick-battle/QuickBattleLayer.prefab",
-      "reason": "Idle claim and quick battle",
+      "path": "bundles/module/home/prefabs/CityHubView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P5"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/quick-battle/QuickBattleTipLayer.prefab",
-      "reason": "Idle claim and quick battle",
+      "path": "bundles/module/home/prefabs/RemakeHomeView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/reward/RewardCell.prefab",
-      "reason": "Basic reward preview and growth result",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/reward/RewardPreviewLayer.prefab",
-      "reason": "Basic reward preview and growth result",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/reward/UpStarSuccessLayer.prefab",
-      "reason": "Basic reward preview and growth result",
-      "phases": [
-        "P4",
-        "P5"
-      ]
-    },
-    {
-      "path": "prefabs/ui/reward/UpgradeSuccessLayer.prefab",
-      "reason": "Basic reward preview and growth result",
-      "phases": [
-        "P4",
-        "P5"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/role/ChangeNickLayer.prefab",
-      "reason": "Basic profile, rename and role level feedback",
+      "path": "bundles/module/login/prefabs/AccountLoginView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P6"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/role/RoleInfoLayer.prefab",
-      "reason": "Basic profile, rename and role level feedback",
+      "path": "bundles/module/login/prefabs/RoleProfileView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P6"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/role/RoleUpgradeLayer.prefab",
-      "reason": "Basic profile, rename and role level feedback",
+      "path": "bundles/module/login/prefabs/ServerCellView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P6"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/summon/SummonCell.prefab",
-      "reason": "Basic summon, excluding shops and prayer modes",
+      "path": "bundles/module/login/prefabs/ServerPickerView.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     },
     {
-      "path": "prefabs/ui/summon/SummonLayer.prefab",
-      "reason": "Basic summon, excluding shops and prayer modes",
+      "path": "bundles/module/login/prefabs/UpdateLayer.prefab",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "phases": [
-        "P4"
+        "当前已实现"
       ]
     }
   ],
@@ -3919,15 +3402,518 @@
       "source_bytes": 34962,
       "legacy_code_sites": [],
       "reason": "旧布阵壳无业务引用；正式布阵统一使用FormationView"
-    }
-  ],
-  "additional_backups": [
+    },
     {
-      "path": "client/temp/prefab-cleanup/battle-retired-20261106.zip",
-      "removed": [
-        "prefabs/ui/battle/BattleReportLayer.prefab",
-        "prefabs/ui/battle/BattleEditLayer.prefab"
-      ]
+      "path": "bundles/battle/prefabs/BattleEndLayer.prefab",
+      "uuid": "20fbcf65-e7c1-4d82-8b20-59a1c93372bc",
+      "source_bytes": 69663,
+      "sha256": "93003f765e12e555bcf3373ca657ea42d54ee4b369dad48aeede6ac0e63ae924",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/BattleInfoLayer.prefab",
+      "uuid": "4ffa8f5a-144a-4e5e-98a8-d5a9b2c1e362",
+      "source_bytes": 48325,
+      "sha256": "97da390718f2a4b29a8c8463e79aea4bcc43e14c6a592e8542a8185151715716",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/CampaignView.prefab",
+      "uuid": "ac146bb3-359f-4506-8fcf-32f8c56ef4d3",
+      "source_bytes": 90883,
+      "sha256": "302b00821da1f77cc230d79581d2a2ec1365ddac755c5e2abf3ff35a6c03214d",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/ChapterEndLayer.prefab",
+      "uuid": "f67629be-903e-4f42-bca0-bdc14685a22c",
+      "source_bytes": 23591,
+      "sha256": "2698a8d19c886a51de00eb204e188a0ce61c5df09fcf26968db9675472760de2",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/ChapterEndLoseCell.prefab",
+      "uuid": "7ee49873-d250-4cbd-afb8-e173948a84c4",
+      "source_bytes": 55340,
+      "sha256": "0fca42fcbde7088df6cd6982abd35b836638490ee423e3fb1e03a6c6f1cc01ad",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/ChapterExtraRewardCell.prefab",
+      "uuid": "82856eb9-fd9b-4e2e-9c8d-dcd371227229",
+      "source_bytes": 36550,
+      "sha256": "97db2d50c3922ad1584fdc0663802963eb5e4aeb653a4518d9d0903872d379b2",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/ChapterMapLayer.prefab",
+      "uuid": "8a6b4e50-17c2-49fd-96bb-c42578a7f6ea",
+      "source_bytes": 22719,
+      "sha256": "bbb0345d76319d884807e0e72ce042e3b9ffd75d86623a9ee69659a576948eaa",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/ChapterPreviewLayer.prefab",
+      "uuid": "9b27aa5f-aed6-4237-be28-f887c7269fd8",
+      "source_bytes": 87089,
+      "sha256": "a0a46cf9d992bbe54267aa1ceeb120ea1e3c502c44678bb5e28118595929e084",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/ChapterRewardCell.prefab",
+      "uuid": "a32ff178-f35d-415c-a51f-6b5eaeb567b4",
+      "source_bytes": 16234,
+      "sha256": "694db908f030ce4df0ef6b40c11e03f291402aaf8a43865d6180e5aaaa65208e",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/ChapterRewardLayer.prefab",
+      "uuid": "c78ade68-b8b1-474a-992b-5f8a5b84ae50",
+      "source_bytes": 40095,
+      "sha256": "c60f0256dda50dd85a3e1f18ed1e5c791c6ae0851d5333b813f5564a1442059c",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/ChapterStageChip.prefab",
+      "uuid": "6f492c38-e5a0-47db-b499-a20356e5d4c8",
+      "source_bytes": 7174,
+      "sha256": "670cbdab6ae4b5cf48f06ca5f5cc47911e7f961190a26c183b40b7c7ca3acac0",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/battle/prefabs/HangMissionChipView.prefab",
+      "uuid": "4d270a16-c38e-45b9-f277-80e134c3b2a6",
+      "source_bytes": 8651,
+      "sha256": "b9dbcd9c9c497e87ee8896b0c76c3c758062d9721045c1a1c7d673b2720800d5",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/common/prefabs/CommonBtnPrimaryShell.prefab",
+      "uuid": "0cfeebba-f0fc-4027-8db5-d76c7fc999e2",
+      "source_bytes": 7349,
+      "sha256": "29d691dbbf45ccbf5ae1664df815d0f4c7e9a4c2e1c952f3b83f20008da4ac91",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/common/prefabs/CommonBtnSecondaryShell.prefab",
+      "uuid": "a09db064-547d-4821-b6cc-239926d54c4a",
+      "source_bytes": 7353,
+      "sha256": "adca6fb1f45f441844ef03b898c186342f3f2af5307f226fa82d986a8c6e98cf",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/common/prefabs/CommonListRowShell.prefab",
+      "uuid": "074ae72e-69c8-4bc1-8ea5-f9311210b849",
+      "source_bytes": 14566,
+      "sha256": "a1c9dddb3cdae07361b07b0722bcd5874071e970132bae5ca9798e4a9c9c2e74",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/common/prefabs/CommonPanelShell.prefab",
+      "uuid": "03989589-fea0-441f-a57e-1abd51df09ff",
+      "source_bytes": 15787,
+      "sha256": "1066778b366ac7162f3471f779558e48a973fa98aa75efc80e6cb0c972cc52ea",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/common/prefabs/CommonRedDotShell.prefab",
+      "uuid": "9f129813-104d-4842-a449-710156b5a743",
+      "source_bytes": 4518,
+      "sha256": "e0e95c8896d5f0655b148fd00923da80c4d1e5c1402cbbf015989cdefebee826",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/common/prefabs/InfoCard.prefab",
+      "uuid": "3c16f905-b27d-44a8-e166-7fd023b2a195",
+      "source_bytes": 28619,
+      "sha256": "4a729f6077f94f075e6d8094e78e97a3e6f99ae7818149f64d1a587e06ba3515",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/common/prefabs/NpcTalkLayer.prefab",
+      "uuid": "85ab48b1-b37f-583f-a385-46c6baec094b",
+      "source_bytes": 15540,
+      "sha256": "4c9dec1b56a6486a8056e683c9023ee6ddef05991c13348567c772ce853f5d36",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/common/prefabs/TextChip.prefab",
+      "uuid": "1af4d7e3-905b-4286-cf44-5dbe01908f73",
+      "source_bytes": 3297,
+      "sha256": "f9a84b448f1c6e82d1db450242ddb1f59d939de4e43fc619afef937da0c52f84",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/AbilityInfoLayer.prefab",
+      "uuid": "3a767955-166a-4395-a9cf-28428a581864",
+      "source_bytes": 32437,
+      "sha256": "d416b6926aff3efa94962b86f4d7f68db21cdb6d7fba81d5d4d6b89523a6460a",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroInfoAttrLayer.prefab",
+      "uuid": "65f0e985-d8ec-4f76-92bb-57b980e4b132",
+      "source_bytes": 26088,
+      "sha256": "ca99bc6f9106a57bd6b6f18d8865b16a52362b9ef28b18724a4956b882694d5a",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroInfoTipsLayer.prefab",
+      "uuid": "589f6492-0427-47ed-88b1-4153ef16bf81",
+      "source_bytes": 77027,
+      "sha256": "f04297db66f99f69c3e2ab6f325eb47409c260fa23b3eb8dbaf2e0116e47e56f",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroInfoUpgradeLayer.prefab",
+      "uuid": "6df9a274-5386-42fe-9803-8c4c54b0ac3f",
+      "source_bytes": 168657,
+      "sha256": "60c09418227c633b2a1eba8ea2159afdd265412ca20b6a275a4b897c448ff4dc",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroInfoUpLevelLayer.prefab",
+      "uuid": "723c0b26-52e0-47a6-ad0f-30d22af54f92",
+      "source_bytes": 154202,
+      "sha256": "7e7593b755546090887c9cff1cb8d62a435f88a5bafc569c600c93cad48cb8a5",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroInfoUpStarLayer.prefab",
+      "uuid": "0b07b4af-4619-4794-bd0a-a72efd375367",
+      "source_bytes": 178416,
+      "sha256": "5ff93430a812c804651dff8ffb17a68cb45d34ee1062f30d108b25354e960e1f",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroListItemCell.prefab",
+      "uuid": "1f14e8b0-2021-48c9-9d3c-d53c16e28c9f",
+      "source_bytes": 5997,
+      "sha256": "71441387678c0b082294b0560e44dcb7e145c36b721b0ff4c880200057d4ed1c",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroSkillInfoLayer.prefab",
+      "uuid": "c403f3e0-51d9-447d-978b-81f90b52fe69",
+      "source_bytes": 35612,
+      "sha256": "05cc56c52035d46c2d42a83ae480daaa75b82bbe3ad2a8dfefcda185676afe5a",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroSkillOpenInfoLayer.prefab",
+      "uuid": "baf42908-5ca4-4151-a680-130cb8556d15",
+      "source_bytes": 20593,
+      "sha256": "7ccf1191f2e4f72035d4ec19a11ac9cae885a89e3ad498491a93ee80012dab46",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroStrongInfoCell.prefab",
+      "uuid": "68538b03-ae51-47b1-a655-cf2141d14294",
+      "source_bytes": 26469,
+      "sha256": "45f793215d5e1a0e6af1278578a7d73e93a009c27eb94db85aa96236f45b4aa3",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroStrongResourceMainCell.prefab",
+      "uuid": "19191c8d-9aed-4f17-aef1-cd3609b18dc7",
+      "source_bytes": 25030,
+      "sha256": "b725c3426b1c0c66d96b30379123da9cab471c497edd715b6e1c9b4abc9ab12d",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroStrongResourceSubCell.prefab",
+      "uuid": "5a6285d3-4efe-4d64-b00a-c321546ac49e",
+      "source_bytes": 23401,
+      "sha256": "9b7de5d85e021a8b26ef2764466fe75b00ec1b0b43844caf8906dc4074a8a14c",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroSuggestCell.prefab",
+      "uuid": "328c3753-2ab0-4163-bb35-d396389c305e",
+      "source_bytes": 11715,
+      "sha256": "04f8279c032ea0031288add86e3204ab561f97d40e22c8cd0209cf167b2c0c22",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroSuggestLayer.prefab",
+      "uuid": "985faa05-ddbb-4f27-8d0f-9a6d5b709750",
+      "source_bytes": 182893,
+      "sha256": "788151f0f89cd54d63503793e380afe397348dd10e0c36de066fcb00145dca52",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroUpStarSelectItemCell.prefab",
+      "uuid": "1cf12219-2622-45f3-9659-39cf191525f0",
+      "source_bytes": 18914,
+      "sha256": "95741622798227f9212beac95157b5866029a282c456454a556f88f29de979b8",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroUpStarSelectLayer.prefab",
+      "uuid": "dd43e175-21f0-4156-a10e-21c0da15b946",
+      "source_bytes": 30239,
+      "sha256": "785e3a472480c5bfe1c34d34cb432b74652fd090f84bb425f0a07b5729d3e451",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroXSelectItemCell.prefab",
+      "uuid": "c862d789-47f9-46ea-9d0e-dc44b6734f93",
+      "source_bytes": 18904,
+      "sha256": "0c125a57a00ac3da2b9fabbbda60451adf9ec3641346b31e2aa04cc89a0f461b",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/HeroXSelectLayer.prefab",
+      "uuid": "8a8573d5-0eb3-4cb8-8da3-72354cb7fe7c",
+      "source_bytes": 17743,
+      "sha256": "db1dffbfb2fdcc7d409e2d6cdf6cbac6837a5eb35358e82ad038880b2691bd09",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/hero/prefabs/IdleHeroSelectLayer.prefab",
+      "uuid": "c5f747fb-70ba-46b3-92d3-03610afbeb57",
+      "source_bytes": 73634,
+      "sha256": "9e907c0e70e7e69798ec228714782f70ed0fba5e2eaebd21084ac79a2a3bd596",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/item/prefabs/ItemExhibitionLayer.prefab",
+      "uuid": "a67c5719-2bc0-419d-9374-b36a5a5411f1",
+      "source_bytes": 27007,
+      "sha256": "c19dedc595bf48b52f32ee8a19f586f4aa81b21e69c21a2b4ff2607471a608ff",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/item/prefabs/ItemRewardLayer.prefab",
+      "uuid": "b3ecb8ac-da00-4a04-91b9-db07a541032c",
+      "source_bytes": 15853,
+      "sha256": "870ca892265977f6bdba5df3508d3e800f78506b4422f26de806d2a9f42d76ed",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/item/prefabs/ItemScelectNumLayer.prefab",
+      "uuid": "d1d1078d-4f9e-42d5-84f0-a6b6f71c1797",
+      "source_bytes": 24083,
+      "sha256": "0179789b6a81ef3a5c1e58b138e4f3824fd2937464e920c38cb19f9508234f02",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/item/prefabs/ItemSelectLayer.prefab",
+      "uuid": "bed507ea-4458-4fd6-8b7e-cf73b5c1433f",
+      "source_bytes": 78879,
+      "sha256": "e4aa9a04f4888e930f5d58ac0798124c3bdf4f631b785b83eec968b5d1ca8657",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/legacy-login/prefabs/LoginPanel.prefab",
+      "uuid": "196fd024-dd83-4ee7-9783-1617ce3279a8",
+      "source_bytes": 120288,
+      "sha256": "14a5d5458a7746a751da0f0d85c1c379250f73544bc81beb9d5a6b2b5486f938",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/legacy-login/prefabs/UserLoginLayer.prefab",
+      "uuid": "9a634cfd-fdca-586f-827a-0a4b3212ca49",
+      "source_bytes": 65504,
+      "sha256": "743c115040c2875da4a8893a74c5ed719d3c35b453b41432e4a63fce4412528c",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/login/prefabs/ChooseServerRoleCell.prefab",
+      "uuid": "804c0213-bf0e-55cb-bb7e-df3f24bb3299",
+      "source_bytes": 15817,
+      "sha256": "677ad2d1b44fe61464e20a06f3b672d1b344da5a423bac5380a76dbcb3ad7ddb",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/login/prefabs/CreateRolePanel.prefab",
+      "uuid": "d2eb0e48-bc58-4e09-b95f-ce45350461b1",
+      "source_bytes": 56753,
+      "sha256": "4158603db77f0ab32138053a2364406c97b9fc5c9e274c83cac2386c473fccec",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/login/prefabs/ErrorLayer.prefab",
+      "uuid": "3e52626e-44c3-5af9-9627-63a243e2f0ad",
+      "source_bytes": 18090,
+      "sha256": "0f90e8e71b78f29d2b376f7d40fff556cfeb13f071594e9d8c2b733c79b3c2cf",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/login/prefabs/NoticeLayer.prefab",
+      "uuid": "2140fe91-ad3d-514a-96f1-265cf2b063bc",
+      "source_bytes": 38160,
+      "sha256": "f3f07b4646cbdb71449a458c326dbabd411d467e04b83c899f5b03f090efd777",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/mail/prefabs/MailCell.prefab",
+      "uuid": "2769888e-8ae0-4fb3-8a92-e59966fe494d",
+      "source_bytes": 16358,
+      "sha256": "99cc3bb12dbf17f1d5fa160ff500b91123efa6dde226ac29cbc75162c17ed5b0",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/mail/prefabs/MailInfoLayer.prefab",
+      "uuid": "bc8d58d4-99a8-46f4-b8f6-56c28b63d889",
+      "source_bytes": 50864,
+      "sha256": "ac370e51aee07daa1486d6134b52f22d8ed321e5db9da650afe966bd952b00dc",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/mail/prefabs/MailLayer.prefab",
+      "uuid": "42a4160b-5cca-41b5-beb4-520375f560e0",
+      "source_bytes": 39799,
+      "sha256": "a2f61c92bd7573b9fc84ac3a262791237277f9cb7dd584000c20b7f8ca73d3cc",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/quick-battle/prefabs/QuickBattleEndLayer.prefab",
+      "uuid": "e6a4e6a8-6ff1-4455-acb5-6700e92794bd",
+      "source_bytes": 106227,
+      "sha256": "ff4328b88ca567f4ed5da8dcb369287ae764841a330f6b44324f2326ecc01ca5",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/quick-battle/prefabs/QuickBattleLayer.prefab",
+      "uuid": "9a050b3e-fbe8-4ee8-827c-5eba14ceb8ae",
+      "source_bytes": 65876,
+      "sha256": "3583aed57a505a7723aa67b6a36e70707f6c61e1a6161a873cec95a0aa4ec7fe",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/quick-battle/prefabs/QuickBattleTipLayer.prefab",
+      "uuid": "bc24244a-3562-4807-85c7-f06ba75087c2",
+      "source_bytes": 37879,
+      "sha256": "c1c9cfa180f1ddb03b5e0484af9f9aaed85e32fc0013586fae39cc7ee6b4060c",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/reward/prefabs/RewardCell.prefab",
+      "uuid": "403d5157-d0ee-4bd2-b4d8-35b76c80abba",
+      "source_bytes": 57590,
+      "sha256": "383acd6a0ae51f894ee5908b2d4a7dab67085567d45892587d071c79605a2614",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/reward/prefabs/RewardPreviewLayer.prefab",
+      "uuid": "619c3d34-b335-486d-a437-d015ae7e6b80",
+      "source_bytes": 10376,
+      "sha256": "c716a99bc5c7825d5ca1f08053971790511e64a0bb82ec5688e9603b86076493",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/reward/prefabs/UpgradeSuccessLayer.prefab",
+      "uuid": "8e56c15f-5328-473e-94b0-d7104c89b0fd",
+      "source_bytes": 145079,
+      "sha256": "b63c4fb17a302760eadc59b1e23333c813b4289bf1609d77f385ddafc901eb7b",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/reward/prefabs/UpStarSuccessLayer.prefab",
+      "uuid": "6ae2bb4c-e714-487a-a607-fccd414c7d54",
+      "source_bytes": 115854,
+      "sha256": "c9582cc96b39e708df38126a87edd214771c3fe91f93b099192e6c78c967a45b",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/role/prefabs/ChangeNickLayer.prefab",
+      "uuid": "2759019b-9ad6-52ef-b337-1e52fc3f1d83",
+      "source_bytes": 29361,
+      "sha256": "7e3f1e46fe73106b22cbc4cb6f188413eb7b8215840ca1b273738dd05011186f",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/role/prefabs/RoleInfoLayer.prefab",
+      "uuid": "687dc47b-989e-58ca-8409-c21aafc9ab71",
+      "source_bytes": 178827,
+      "sha256": "b6b2ed7c910e3619f16a832b4c6533722be96504113292c2a5d7f3926d4fcb22",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/role/prefabs/RoleUpgradeLayer.prefab",
+      "uuid": "2f2236f9-769b-5a3a-b4ff-33ab50f0d54d",
+      "source_bytes": 44993,
+      "sha256": "df69415b976c483604beae832a3c02c1e96251e25b2c3d66e0210c1578fc48d8",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/summon/prefabs/SummonCell.prefab",
+      "uuid": "cba7a46f-c6dd-495d-b457-c0ff5404ab91",
+      "source_bytes": 42271,
+      "sha256": "1e6279ab4b7d9bfb80a69de4b519061b8efef356cd2a02149c8395ba7c70d9ad",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
+    },
+    {
+      "path": "bundles/summon/prefabs/SummonLayer.prefab",
+      "uuid": "c046c79b-a2a4-4bf1-b93a-966094c105b8",
+      "source_bytes": 42935,
+      "sha256": "be4ac8b42193feefb7b5af331933fcf4914595888d9c2620a981d7c181af1ce8",
+      "legacy_code_sites": [],
+      "reason": "用户要求仅保留当前已实现功能，未来接入时重新从旧项目迁入"
     }
   ]
 }

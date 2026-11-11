@@ -1,9 +1,11 @@
 /** 主线产物双页说明，展示全部旧配置关卡；由主线收益说明按钮打开。
  * 仅加载配置和详情资源，不请求资产/领取，不改变挑战开放范围；关闭丢弃迟到加载。 */
-import { _decorator, Button, Node, Rect, ScrollView, Sprite, SpriteFrame, UITransform, Vec3 } from "cc";
+import { _decorator, Button, Node, Sprite, SpriteFrame } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
+import { SuperContent } from "../../../framework/ui/SuperContent";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { prepareInventoryConfig } from "../../../config/RemakeConfig";
@@ -11,11 +13,20 @@ import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import { BagInfoArgs, BagInfoView } from "../../bag/ui/BagInfoView";
-import { viewSpecOf } from "../../../framework/ui/UIRegistry";
+import { view, viewSpecOf } from "../../../framework/ui/UIRegistry";
 import { ChapterRewardInfoRow, ChapterRewardInfoUtils } from "../utils/ChapterRewardInfoUtils";
 import { ChapterRewardInfoCell } from "./ChapterRewardInfoCell";
 const { ccclass, property } = _decorator;
 
+@view({
+    id: "chapter-reward-info",
+    prefab: "bundles/module/battle/prefabs/ChapterRewardInfoView",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "remake-modal",
+    modal: { mask: true, closeOnOutside: true },
+})
 @ccclass("ChapterRewardInfoView")
 export class ChapterRewardInfoView extends BaseView {
     /** 旧560×700说明主体，竖屏等比适配。 */
@@ -38,12 +49,12 @@ export class ChapterRewardInfoView extends BaseView {
     private rows: readonly ChapterRewardInfoRow[] = [];
     /** 本页物品显示配置，不保存库存。 */
     private catalog: BagItemCatalog | null = null;
-    /** 当前列表行组件，滚动时只更新可见图标。 */
-    private cells: ChapterRewardInfoCell[] = [];
+    /** 当前页签，true展示挂机产物；每次开页默认首通，行复用时读取当前值。 */
+    private idle = false;
     /** 关闭后拒绝迟到配置及详情操作。 */
     private released = false;
 
-    /** 登记本页按钮和滚动监听，准备资源期间隐藏主体，失败交UIManager处理。 */
+    /** 登记本页按钮、行渲染和物品选择，准备期间隐藏主体，失败交UIManager处理。 */
     public onOpen(): void {
         if (!this.panel || !this.closeButton || !this.firstTab || !this.idleTab || !this.stages) {
             throw new Error("产物说明页面绑定缺失");
@@ -57,8 +68,15 @@ export class ChapterRewardInfoView extends BaseView {
             button.node.on(Button.EventType.CLICK, action);
             this.ownListener(() => button.node.off(Button.EventType.CLICK, action));
         }
-        this.stages.node.on(ScrollView.EventType.SCROLLING, this.refreshVisible, this);
-        this.ownListener(() => this.stages?.node.off(ScrollView.EventType.SCROLLING, this.refreshVisible, this));
+        const content = this.stages.list.node;
+        content.on(SuperContent.RENDER_ITEM, this.onRender, this);
+        content.on(ChapterRewardInfoCell.ITEM_SELECTED, this.showItem, this);
+        this.ownListener(() => {
+            if (content.isValid) {
+                content.off(SuperContent.RENDER_ITEM, this.onRender, this);
+                content.off(ChapterRewardInfoCell.ITEM_SELECTED, this.showItem, this);
+            }
+        });
         bindVisibleRefresh(this.node, () => this.fitViewport());
         void this.prepare().then(() => {
             if (!this.released) {
@@ -94,32 +112,21 @@ export class ChapterRewardInfoView extends BaseView {
         }
         this.firstTab!.node.getComponent(Sprite)!.spriteFrame = idle ? this.normalTabs[0] : this.firstSelected;
         this.idleTab!.node.getComponent(Sprite)!.spriteFrame = idle ? this.idleSelected : this.normalTabs[1];
-        this.cells = [];
-        this.stages.list.setData(this.rows, (node, row) => {
-            const cell = node.getComponent(ChapterRewardInfoCell);
-            if (!cell) {
-                throw new Error("产物说明关卡预制体缺组件");
-            }
-            cell.bind(row.stage, idle ? row.idleItems : row.firstItems, this.catalog!, id => this.showItem(id));
-            this.cells.push(cell);
-        });
+        this.idle = idle;
+        this.stages.list.setData(this.rows);
         this.stages.toStart();
-        this.refreshVisible();
     }
 
-    /** 使用纵向Mask的世界矩形判可见，不自行布局或修改内容高度。 */
-    private refreshVisible(): void {
-        if (this.released || !this.stages?.content?.parent) {
+    /** 外层列表创建或复用可视行时绑定当前页签；不保留850个行组件或手工判可见。 */
+    private onRender(node: Node, row: ChapterRewardInfoRow): void {
+        const cell = node.getComponent(ChapterRewardInfoCell);
+        if (this.released) {
             return;
         }
-        const ui = this.stages.content.parent.getComponent(UITransform)!;
-        // getBoundingBoxToWorld会合并子节点，包含850行content，不能用它作为Mask裁剪区域。
-        const lower = ui.convertToWorldSpaceAR(new Vec3(-ui.width * ui.anchorX, -ui.height * ui.anchorY));
-        const upper = ui.convertToWorldSpaceAR(new Vec3(ui.width * (1 - ui.anchorX), ui.height * (1 - ui.anchorY)));
-        const port = new Rect(lower.x, lower.y, upper.x - lower.x, upper.y - lower.y);
-        for (const cell of this.cells) {
-            cell.refreshVisible(port);
+        if (!cell || !this.catalog) {
+            throw new Error("产物说明关卡预制体或显示索引缺失");
         }
+        cell.bind(row.stage, this.idle ? row.idleItems : row.firstItems, this.catalog);
     }
 
     /** 打开只读物品详情，隐藏获取跳转，数量明确为产物说明而非库存。 */
@@ -138,7 +145,7 @@ export class ChapterRewardInfoView extends BaseView {
         }).catch(() => { /* 加载失败或取消由 UIManager 统一处理。 */ });
     }
 
-    /** 主体按旧尺寸等比适配并重新判断可视行；遮罩尺寸和空白关闭统一归ModalLayer。 */
+    /** 主体按旧尺寸等比适配；列表自行处理视口变化，遮罩尺寸和空白关闭统一归ModalLayer。 */
     private fitViewport(): void {
         if (this.released || !this.panel) {
             return;
@@ -147,14 +154,13 @@ export class ChapterRewardInfoView extends BaseView {
         const scale = Math.min(1, (box.width - 24) / 580, (box.height - 24) / 720);
         this.panel.setScale(scale, scale, 1);
         this.panel.setPosition(-280 * scale, -350 * scale, 0);
-        this.refreshVisible();
     }
 
     /** 释放本页引用并取消迟到更新；关闭说明不改动挂机时钟和资产。 */
     public onClose(): void {
         this.released = true;
-        this.cells = [];
         this.rows = [];
+        this.catalog = null;
         UIManager.instance.closeById(viewSpecOf(BagInfoView)!.id);
         this.finishOpen();
     }

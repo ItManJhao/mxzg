@@ -127,7 +127,7 @@ const TAB_ICON: { [id: string]: string } = {
  * 绑定 CityChrome.prefab。
  * TopBar 下是 LblName、LblSub、CurrencyGold/Value、CurrencyGem/Value。
  * BottomBar 下是 TabCity、TabHero、TabBag、TabBattle、TabDungeon、TabClan、TabFetter，子节点 Label、Lock。
- * 路径相对 assets：bundles/home/prefabs/CityChromeView。Prefab 不走 resources.load。
+ * 路径相对 assets：bundles/module/home/prefabs/CityChromeView。Prefab 不走 resources.load。
  * 七个底栏字是 resources 里的字图（副本文件名 lbl-skin，最右是 VIP）。
  * 不改 USE_CITY_CHROME_PREFAB，也不改 Boot。
  * ActGroup / UtilityRow 仍绑预制上的按钮。没有列表预制时只打日志，不手搓按钮页。BtnMail 打开原来的邮件页。

@@ -73,6 +73,16 @@ export const resources = {
 
 type Listener = (...args: unknown[]) => void;
 
+/** 节点测试替身保存原回调及接收者；与Creator的on/off第三参保持一致，不在业务代码补bind。 */
+interface NodeListener {
+  /** 登记时的原函数，用于准确撤销，不使用丢失原函数身份的包装器。 */
+  callback: Listener;
+  /** 回调执行时的this，undefined表示未指定接收者。 */
+  target: unknown;
+  /** true在本次派发前移除，重入emit时也只调用一次。 */
+  once: boolean;
+}
+
 /** 检查里核对失败打开有没有留下壳。游戏包不引用这个文件。 */
 export const createdNodes: Node[] = [];
 
@@ -123,6 +133,7 @@ export class Node {
     CHILD_ADDED: "child-added",
     ACTIVE_IN_HIERARCHY_CHANGED: "active-in-hierarchy-changed",
     SIZE_CHANGED: "size-changed",
+    TRANSFORM_CHANGED: "transform-changed",
   };
 
   name: string;
@@ -138,7 +149,8 @@ export class Node {
   private parentNode: Node | null = null;
   private childNodes: Node[] = [];
   private components: Component[] = [];
-  private listeners = new Map<string, Listener[]>();
+  /** 事件名到节点监听；按原函数及target去重，关闭时只解除对应页面的监听。 */
+  private listeners = new Map<string, NodeListener[]>();
 
   constructor(name?: string) {
     this.name = name || "";
@@ -209,8 +221,10 @@ export class Node {
     if (index >= 0) this.components.splice(index, 1);
   }
 
+  /** 模拟节点位移及变换通知，供虚拟列表覆盖原生滚动和程序跳转。 */
   setPosition(x: number, y?: number, z?: number): void {
     this.position = { x, y: y || 0, z: z || 0 };
+    this.emit(Node.EventType.TRANSFORM_CHANGED);
   }
 
   setScale(x: number, y?: number, z?: number): void {
@@ -234,30 +248,49 @@ export class Node {
     return index < 0 ? 0 : index;
   }
 
-  on(type: string, callback: Listener): void {
+  /** 模拟Creator节点登记，保留target并按函数/接收者去重。 */
+  on(type: string, callback: Listener, target?: unknown): void {
     const list = this.listeners.get(type) || [];
-    list.push(callback);
+    if (list.some(row => row.callback === callback && row.target === target)) {
+      return;
+    }
+    list.push({ callback, target, once: false });
     this.listeners.set(type, list);
   }
 
-  once(type: string, callback: Listener): void {
-    const wrap: Listener = (...args) => {
-      this.off(type, wrap);
-      callback(...args);
-    };
-    this.on(type, wrap);
+  /** 登记一次性节点回调，仍可用原函数及target在触发前撤销。 */
+  once(type: string, callback: Listener, target?: unknown): void {
+    const list = this.listeners.get(type) || [];
+    if (!list.some(row => row.callback === callback && row.target === target)) {
+      list.push({ callback, target, once: true });
+      this.listeners.set(type, list);
+    }
   }
 
-  off(type: string, callback: Listener): void {
+  /** 仅移除匹配函数及target；不传函数时移除该节点对应事件的全部监听。 */
+  off(type: string, callback?: Listener, target?: unknown): void {
+    if (!callback) {
+      this.listeners.delete(type);
+      return;
+    }
     const list = this.listeners.get(type);
     if (!list) return;
-    const index = list.indexOf(callback);
+    const index = list.findIndex(row => row.callback === callback && row.target === target);
     if (index >= 0) list.splice(index, 1);
   }
 
+  /** 对本轮监听快照派发并恢复this；一次性及派发中已撤销的监听不重复调用。 */
   emit(type: string, ...args: unknown[]): void {
     const list = (this.listeners.get(type) || []).slice();
-    for (let i = 0; i < list.length; i++) list[i](...args);
+    for (const row of list) {
+      if (!this.listeners.get(type)?.includes(row)) {
+        continue;
+      }
+      if (row.once) {
+        this.off(type, row.callback, row.target);
+      }
+      row.callback.apply(row.target, args);
+    }
   }
 
   removeFromParent(): void {
@@ -291,13 +324,18 @@ export class UITransform extends Component {
     this._contentSize = this.contentSize;
   }
 
+  /** 模拟尺寸改变通知；虚拟列表依赖真实引擎的SIZE_CHANGED，尺寸不变时不重复派发。 */
   setContentSize(width: number | { width: number; height: number }, height?: number): void {
     if (typeof width === "object") { height = width.height; width = width.width; }
+    const changed = this.contentSize.width !== width || this.contentSize.height !== height;
     this.contentSize.width = width;
     this.contentSize.height = height;
     if (!this._contentSize) this._contentSize = this.contentSize;
     this._contentSize.width = width;
     this._contentSize.height = height;
+    if (changed) {
+      this.node?.emit(Node.EventType.SIZE_CHANGED);
+    }
   }
 
   setAnchorPoint(x: number, y: number): void {
@@ -396,6 +434,8 @@ export class ScrollView extends Component {
 
 /** Only the fixed-grid subset exercised by component checks. Real engine acceptance is separate. */
 export class Layout extends Component {
+  /** 列表覆写updateLayout时仍使用原生布局的失效标记，测试不模拟完整引擎帧循环。 */
+  protected _layoutDirty = true;
   static Type={NONE:0,HORIZONTAL:1,VERTICAL:2,GRID:3};
   static ResizeMode={NONE:0,CONTAINER:1,CHILDREN:2};
   static AxisDirection={HORIZONTAL:0,VERTICAL:1};

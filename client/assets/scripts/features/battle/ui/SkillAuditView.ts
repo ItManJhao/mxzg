@@ -1,6 +1,8 @@
 /** 技能验收台：完整Prefab展示配置与开发证据，共享遮罩由UIManager提供；不修改玩家状态。 */
-import { _decorator, Button, EditBox, Label, Sprite, SpriteFrame, view, tween, Tween, Vec3 } from "cc";
+import { _decorator, Button, EditBox, Label, Sprite, SpriteFrame, view as ccView, tween, Tween, Vec3 } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { ancestorScale } from "../../../framework/ui/visibleFit";
 import { GameConfig } from "../../../config/GameConfig";
@@ -10,6 +12,16 @@ import { SkillAuditCellView } from "./SkillAuditCellView";
 const { ccclass, property } = _decorator;
 /** 应用提供受限本机战报播放入口，不携带角色令牌。 */
 export interface SkillAuditOpenArgs { play: (skill: SkillAuditEntry, returned: () => void) => Promise<void>; }
+@view({
+    id: "skill-audit",
+    prefab: "bundles/module/battle/prefabs/SkillAuditView",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "skill-audit-host",
+    modal: { mask: true, closeOnOutside: false },
+    prepare: () => GameConfig.instance.prepare([GConfig.HeroType, GConfig.HeroSkill, GConfig.Language]),
+})
 @ccclass("SkillAuditView")
 export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
     /** Prefab内的浮动提示，不依赖登录页面安装全局toast宿主。 */
@@ -50,7 +62,7 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
         this.heroes = true;
         this.tabFrames = this.kindButtons.map(button => button.getComponent(Sprite)?.spriteFrame || null);
         this.search!.string = "";
-        const size = view.getVisibleSize();
+        const size = ccView.getVisibleSize();
         const scale = Math.min(size.width * .94 / 600, size.height * .9 / 820) / ancestorScale(this.node);
         this.node.setScale(scale, scale, 1);
         this.bind(this.closeButton!, () => this.close());

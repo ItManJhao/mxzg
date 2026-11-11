@@ -11,9 +11,11 @@ import os
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+from bundle_paths import bundle_asset_path
 SHELL_META = os.path.join(ROOT, "client", "assets", "scripts", "features", "city", "ui", "CityChromeShell.ts.meta")
 SHELL_TS = os.path.join(ROOT, "client", "assets", "scripts", "features", "city", "ui", "CityChromeShell.ts")
-PREFAB = os.path.join(ROOT, "client", "assets", "bundles", "home", "prefabs", "CityChromeView.prefab")
+PREFAB = str(bundle_asset_path("home", "prefabs/CityChromeView.prefab"))
 ASSETS = os.path.join(ROOT, "client", "assets")
 
 BASE64_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"

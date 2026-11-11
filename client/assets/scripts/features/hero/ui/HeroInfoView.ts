@@ -4,6 +4,9 @@
  */
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
+import { prepareHeroDetailConfig } from "../../../config/RemakeConfig";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
@@ -26,6 +29,14 @@ const { ccclass, property } = _decorator;
  * 详情字段直接绑定到完整Prefab；动态立绘挂在node_equip，固定结构无需运行组装。
  * 只读阶段隐藏养成入口和引导台词，不发送穿戴或升级操作。
  */
+@view({
+    id: "hero-info",
+    prefab: "bundles/module/hero/prefabs/HeroInfoView",
+    layer: UILayer.Page,
+    cache: false,
+    allowMultiple: false,
+    prepare: prepareHeroDetailConfig,
+})
 @ccclass("HeroInfoView")
 export class HeroInfoView extends BaseView<{ heroId: string }> {
     /** 立绘挂载点，由预制体绑定。 */

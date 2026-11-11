@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Generate the boot loading and hot-update prefabs.
+"""此历史Prefab写入器已退役，下面保留原算法供阅读追溯；当前资源由Creator人工维护。
+
+Generate the boot loading and hot-update prefabs.
 
 Writes:
-  client/assets/bundles/bootstrap/prefabs/LoadingLayer.prefab
-  client/assets/bundles/login/prefabs/UpdateLayer.prefab
+  client/assets/bundles/module/bootstrap/prefabs/LoadingLayer.prefab
+  client/assets/bundles/module/login/prefabs/UpdateLayer.prefab
 
 Sprites point at resources sprite-frame uuids (@f9941). No PNG is copied.
 There is no loading/update ccbi in the inventory, so the layout follows the
 asset sizes (640-wide bar frames on a 720x1280 design) and is documented in
 docs/prefab-1to1-deviations.md. An existing .meta uuid is kept.
 """
+raise SystemExit("历史Prefab写入器已退役：请在Creator编辑当前Prefab，不得重建旧模块、覆盖人工布局或生成新UUID。")
+
 import base64
 import hashlib
 import json
@@ -18,7 +22,7 @@ import uuid
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RES = os.path.join(ROOT, "client", "assets", "bundles")
-OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "login", "prefabs")
+OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "module", "login", "prefabs")
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 
 LAYER_UI = 33554432
@@ -438,7 +442,7 @@ def existing_uuid(meta_path):
 def write_prefab(builder):
     """写入对应本地或远程目录，保留已有预制体UUID；不运行构建。"""
     # 启动加载层单独留在本地包；更新页仍属于远程界面包。
-    output = os.path.join(ROOT, "client", "assets", "bundles", "bootstrap", "prefabs") if builder.name == "LoadingLayer" else OUT_DIR
+    output = os.path.join(ROOT, "client", "assets", "bundles", "module", "bootstrap", "prefabs") if builder.name == "LoadingLayer" else OUT_DIR
     path = os.path.join(output, builder.name + ".prefab")
     meta_path = path + ".meta"
     text = json.dumps(builder.objs, ensure_ascii=False, indent=2) + "\n"

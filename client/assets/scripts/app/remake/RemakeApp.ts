@@ -17,12 +17,9 @@ import {FormationController} from "../../features/hero/FormationController";
 
 import {BagModel} from "../../features/bag/BagModel";
 import {GmController} from "../../features/gm/GmController";
-import {GmView} from "../../features/gm/ui/GmView";
-import {loadPrefab} from "../../framework/assets/PrefabLoader";
+import "../../features/gm/ui/GmView";
 import {Protocol} from "../../platform/Protocol";
 
-import {GameConfig} from "../../config/GameConfig";
-import {GConfig} from "../../config/GConfig";
 
 import {_decorator, Component, director, Director, game, Game, Label, Node, Prefab} from "cc";
 import {PREVIEW} from "cc/env";
@@ -30,9 +27,7 @@ import {GameLog} from "../../core/GameLog";
 import {BagController} from "../../features/bag/BagController";
 import {HeroRosterController} from "../../features/hero/HeroRosterController";
 import {RemakeHomeView} from "../../features/home/ui/RemakeHomeView";
-import {UILayer} from "../../framework/ui/UILayer";
 import {isOpenCancelled, UIManager} from "../../framework/ui/UIManager";
-import {registerView} from "../../framework/ui/UIRegistry";
 import {GameSocketClient} from "../../platform/GameSocketClient";
 import {BootChrome, loadBootCopy} from "./bootChrome";
 import {HomeFeatureNavigation, REMAKE_FEATURE_ROUTES} from "./HomeFeatureNavigation";
@@ -197,19 +192,6 @@ export class RemakeApp extends Component {
         const gm = new GmController(
             () => service.authenticated(token => socket.request(token, Protocol.GM_STATUS)),
             body => service.authenticated(async token => (await socket.gmGrant(token, body)).body));
-        if (PREVIEW) this.unregisterViews.push(registerView(GmView, {
-            id: "gm",
-            prefab: "bundles/gm/prefabs/GmView",
-            layer: UILayer.Popup,
-            cache: false,
-            allowMultiple: false,
-            hostId: "remake-modal",
-            modal: { mask: true, closeOnOutside: false },
-            load: async () => {
-                await GameConfig.instance.prepare([GConfig.HeroType, GConfig.Item, GConfig.Language]);
-                return loadPrefab("bundles/gm/prefabs/GmView");
-            }
-        }));
         const openGm = () => {
             const role = model.snapshot.role;
             if (!PREVIEW || !role || model.snapshot.busy) return;
@@ -242,7 +224,6 @@ export class RemakeApp extends Component {
             servers,
             entry,
             features,
-            resources: this.resources,
             openGm,
             syncRoute: () => syncRoute(),
             onHome: view => {

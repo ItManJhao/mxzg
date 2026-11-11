@@ -8,17 +8,17 @@
 
 ## 页面和资源：人工修改入口
 
-页面地址与页面属性在 BagView/BagInfoView 的 @view 注册中定义；ApplicationPages 仅注入配置前置条件及共享预制体加载。BagDefinition、BagPagesUtils、BagResourcesUtils均已移除。
+页面地址、页面属性及prepare配置前置在BagView/BagInfoView各自@view定义，UIManager实际打开时执行前置并通过统一加载器取得Prefab，不在ApplicationPages再登记地址或注入资源包装。LoadingPlan仅决定提前准备哪些资源；预载Prefab不执行prepare，不创建页面。BagDefinition、BagPagesUtils、BagResourcesUtils均已移除。
 
 | 修改内容 | 人工入口 |
 |---|---|
-| 背包结构、背景和列表绑定 | assets/bundles/bag/prefabs/BagView.prefab |
-| 共用物品格子与选中样式 | assets/bundles/common/prefabs/BagItemView.prefab、common/item-atlas |
-| 页签 | assets/bundles/bag/prefabs/BagTabView.prefab |
-| 独立详情遮罩与面板 | 同目录BagInfoView.prefab |
+| 背包结构、背景和列表绑定 | assets/bundles/module/bag/prefabs/BagView.prefab |
+| 共用物品格子与选中样式 | assets/bundles/module/common/prefabs/BagItemView.prefab、common/item-atlas |
+| 页签 | assets/bundles/module/bag/prefabs/BagTabView.prefab |
+| 独立详情面板与内容阻挡 | 同目录BagInfoView.prefab；共享模态参数在BagInfoView的@view |
 | 店员外观 | BagView.shopkeeperSkeleton |
 | 物品到图标/品质的显示规则 | features/bag/utils/BagItemCatalog.ts |
-| 第一、二阶段准备什么 | app/remake/LoadingPlan.ts直接列资源 |
+| 第一、二阶段准备什么 | app/remake/LoadingPlan.ts：页面写{page:BagView}等类引用，其他资源/配置显式列目标 |
 | 新增资源纳入后台 | 在LoadingPlan.background中列目标，不维护模块清单 |
 
 打开BagView只取得自身预制体及必要配置，直接绑定依赖随引擎加载。BagInfoView是独立窗口，默认在LoadingPlan.background准备，也可以在LoadingPlan中明确提前加载。动态显示继续使用原节点作用域和迟到回调保护；后台与前台共享缓存。详细策略见[分阶段加载](staged-resource-loading.md)。
@@ -93,17 +93,19 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 
 ## 在 Creator 修改 UI
 
-页面：[client/assets/bundles/bag/prefabs/BagView.prefab](../client/assets/bundles/bag/prefabs/BagView.prefab)。列表节点路径不变：
+页面：[client/assets/bundles/module/bag/prefabs/BagView.prefab](../client/assets/bundles/module/bag/prefabs/BagView.prefab)。列表在完整页面的Content内：
 
-- `BagView/spr_box/BagScroll`：SuperScroll，Content 只绑定一次。
-- `BagView/spr_box/BagScroll/view`：UITransform/Mask，手动调整裁剪范围。
-- `BagView/spr_box/BagScroll/view/content`：SuperContent，修改布局、列/行、方向、间距、四边距、Cell Prefab 与明确的尺寸覆盖开关。
-- Cell：[BagItemView.prefab](../client/assets/bundles/common/prefabs/BagItemView.prefab)，组件现名 BagItemView；外观/数量字/选中图片在 Cell 内编辑。
-- 详情：[BagInfoView.prefab](../client/assets/bundles/bag/prefabs/BagInfoView.prefab)，组件 BagInfoView；页签：[BagTabView.prefab](../client/assets/bundles/bag/prefabs/BagTabView.prefab)，组件 BagTabView。
+- `BagView/Content/spr_box/BagScroll`：SuperScroll，Content只绑定一次。
+- `BagView/Content/spr_box/BagScroll/view`：UITransform/Mask，手动调整裁剪范围。
+- `BagView/Content/spr_box/BagScroll/view/content`：SuperContent，修改布局、列/行、方向、间距、四边距、Cell Prefab与明确的尺寸覆盖开关。
+- Cell：[BagItemView.prefab](../client/assets/bundles/module/common/prefabs/BagItemView.prefab)，组件现名 BagItemView；外观/数量字/选中图片在 Cell 内编辑。
+- 详情：[BagInfoView.prefab](../client/assets/bundles/module/bag/prefabs/BagInfoView.prefab)，组件 BagInfoView；页签：[BagTabView.prefab](../client/assets/bundles/module/bag/prefabs/BagTabView.prefab)，组件 BagTabView。
 
-[SuperScroll Inspector 指南](super-scroll-authoring.md)的布局规则和无业务编辑器预览继续有效。当前脚本目录为features/bag，资源目录为bundles/bag/prefabs；共用格子归bundles/common/prefabs。BagView当前meta UUID为6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb。Prefab内的CompPrefabInfo.fileId不是脚本路径，不因改目录替换；迁移保留UUID的证据见Bundle维护说明。
+[SuperScroll Inspector 指南](super-scroll-authoring.md)的布局规则和无业务编辑器预览继续有效。当前脚本目录为features/bag，资源目录为bundles/module/bag/prefabs；共用格子归bundles/module/common/prefabs。BagView当前meta UUID为6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb。Prefab内的CompPrefabInfo.fileId不是脚本路径，不因改目录替换；迁移保留UUID的证据见Bundle维护说明。
 
-尺寸/位置仍由以下入口控制，不宣称整页静态 UI 已全部整改：SuperContent 算 content/Cell 根尺寸，原生 Layout 排动态 Cell，ScrollView 管滚动；BagView 仅提供条目/渲染回调，保留同分类滚动、分类回起点和缩短限制。空槽至少 20/按四补齐是背包规则。BagMount 已删除。BagView 直接加载完整预制体，背景通过预制体 Widget 铺满根节点；根节点继续复用通用可见区域适配，内部原背包内容保留通用等比收窄。BagView 仍有动态分类排列，这不是本批已整改项。BagInfoView 作为独立 BaseView 打开，遮罩和居中面板均在预制体内，不再运行时组装或调整背景尺寸。
+SuperContent默认启用虚拟化、bufferLines=1，按完整库存投影计算content逻辑尺寸，只给视口和缓冲行分配有限Cell；ScrollView仍管理滚动、惯性与回弹。BagView监听RENDER_ITEM/SELECT_ITEM，onRender调用BagItemView.show只绘制，onSelect处理选中与独立详情，Cell不再保存页面回调。分类回起点、同分类保位及至少20槽/按四补齐仍是背包规则，虚拟池不修改库存。
+
+BagInfoView作为独立BaseView打开，Prefab只保留面板与实际内容背景的BlockInputEvents；共享模态在@view配置，UIManager只用一份节点。BagView布局归Widget与ViewportScale，外根fitVisibleRoot只桥接视口；列表view/content局部缩放须1，原Cell锚点与正缩放保留。refresh(index)只立即刷新可见条目，离屏条目进入视口时再画。本批51项、类型与四分类/独立详情/重开库存保持已通过，见[限定复验](validation/virtual-list-resource-review-20261111.json)；20逻辑格少于可见容量，实际20节点，长列表上限另有千/万条夹具及850关配置覆盖，不冒充大库存实测。
 
 ## 旧协议还原清单
 
@@ -160,7 +162,7 @@ Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItem
 
 ## 背包自动图集维护入口
 
-背包详情分隔线放在client/assets/bundles/bag/atlas；共用格子选中图在common/item-atlas，共用静态图在common/atlas。原图直接绑定Prefab，由同目录pac在构建时自动合图。页面注册不登记逐图清单；物品图标位于icons/item，动态共用图位于common/ui。完整步骤见[背包自动图集](bag-auto-atlas.md)。
+背包详情分隔线放在client/assets/bundles/module/bag/atlas；共用格子选中图在common/item-atlas，共用静态图在common/atlas。原图直接绑定Prefab，由同目录pac在构建时自动合图。页面注册不登记逐图清单；物品图标位于icons/item，动态共用图位于common/ui。完整步骤见[背包自动图集](bag-auto-atlas.md)。
 
 
 ### 图片入口合并（2026-11-11）
@@ -174,4 +176,4 @@ const frame = await ResManager.getSpriteFrame(ownerNode, imagePath);
 ResManager.setSprite(iconNode, null); // 清空并阻止旧请求再次赋图
 ```
 
-setSprite支持单个路径/描述或候选数组，第三参数可传页面有效性判断。缺图按路径去重记录；直接getSpriteFrame失败保留Promise拒绝，由调用者处理。三段预加载只配置LoadingPlan；页面短期缓存归UIManager，预制体闲置维护归PrefabLoader，节点图片仍由原ResourcePool作用域管理。参数及实测边界见[Bundle维护说明](staged-resource-loading.md)。
+setSprite支持单路径/描述或有序候选，第三参数可传页面有效性判断；每个图片节点只持有当前显示与本次在途候选，旧图受保护至新图接替，同图和相同在途请求复用，不累积滚动过的历史图片。null/失效/销毁清理赋图拥有者；getSpriteFrame(owner)显式节点持有语义不变。缺图仍按路径记录并回退；TTL、UIManager实例缓存、PrefabLoader及三段配置均未改变，参数及实测边界见[Bundle维护](staged-resource-loading.md)。

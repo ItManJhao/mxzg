@@ -2,8 +2,11 @@
  * 英雄技能只读说明窗口：由 UIManager 打开，读取当前英雄实例与共享配置。
  * 不发送查询、不修改资产；英雄删除或切换角色时关闭，关窗释放事件。
  */
-import { _decorator, Button, Label, view } from "cc";
+import { _decorator, Button, Label, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
+import { prepareHeroDetailConfig } from "../../../config/RemakeConfig";
 import { ancestorScale } from "../../../framework/ui/visibleFit";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
@@ -12,6 +15,16 @@ import { HeroSkillUtils } from "../utils/HeroSkillUtils";
 
 const { ccclass, property } = _decorator;
 
+@view({
+    id: "hero-skill",
+    prefab: "bundles/module/hero/prefabs/HeroSkillView",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "remake-modal",
+    modal: { mask: true, closeOnOutside: true },
+    prepare: prepareHeroDetailConfig,
+})
 @ccclass("HeroSkillView")
 export class HeroSkillView extends BaseView<{ heroId: string; slot: number }> {
     /** 技能名称，由同等级语言配置提供。 */
@@ -29,7 +42,7 @@ export class HeroSkillView extends BaseView<{ heroId: string; slot: number }> {
     onOpen(args: { heroId: string; slot: number }): void {
         this.args = args;
         this.owner = HeroRosterModel.instance.roleKey;
-        const size = view.getVisibleSize();
+        const size = ccView.getVisibleSize();
         const scale = Math.min(1, size.width * .92 / 560, size.height * .85 / 520) / ancestorScale(this.node);
         this.node.setScale(scale, scale, 1);
         this.closeButton?.node.on(Button.EventType.CLICK, this.close, this);

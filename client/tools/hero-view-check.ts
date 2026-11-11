@@ -1,5 +1,8 @@
 /** 英雄页面专项：验证真实名册、页面生命周期、资源Bundle路由与异步格子复用，不连接游戏服务器。 */
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
+
+/** 离线读取分组后的真实配置源文件，原config逻辑地址不变。 */
+const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
 import { HeroInfoView } from "../assets/scripts/features/hero/ui/HeroInfoView";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";
@@ -7,6 +10,7 @@ import { HeroRosterUtils } from "../assets/scripts/features/hero/utils/HeroRoste
 import { Protocol } from "../assets/scripts/platform/Protocol";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { HeroRosterEvent } from "../assets/scripts/features/hero/utils/HeroRosterEvent";
 /** 英雄模块回归：核对显式初始化、唯一状态、事件清理和异步会话隔离。 */
@@ -25,8 +29,6 @@ import { join } from "path";
 import { assetManager, Button, director, Director, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UITransform } from "cc";
 
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
-
-import { HeroListBoardView } from "../assets/scripts/features/hero/ui/HeroListBoardView";
 
 import { HeroListView } from "../assets/scripts/features/hero/ui/HeroListView";
 
@@ -119,15 +121,15 @@ function assertComp(data: PrefabObj[], comp: PrefabObj, field: string, compId: n
 
 function checkPrefab(): void {
   const viewType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroListView.ts.meta"));
-  const boardType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroListBoardView.ts.meta"));
   const cellType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroIconCellView.ts.meta"));
-  const layer = loadPrefab("client/assets/bundles/hero/prefabs/HeroListView.prefab");
+  const layer = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroListView.prefab");
   const view = component(layer, viewType);
   assert((layer[1]._components || []).some((row) => row.__id__ === view.index), "HeroListLayer 根上有 HeroListView");
   assertComp(layer, view.comp, "btnHero", 38, "cc.Button");
   assert(!["btnBook", "btnDragon", "heroTitle", "bookTitle", "dragonTitle", "tabMenu"].some(key => key in view.comp),
     "纯静态标题及未开放页签不需要View脚本绑定");
-  assertNode(layer, view.comp, "boardRoot", 0, "HeroBoard");
+  assert(!("boardRoot" in view.comp) && layer.some(row => row._name === "HeroBoard"),
+    "静态HeroBoard只是容器，不再另绑列表板组件");
   assert(!("boardPrefab" in view.comp) && !("sprBg" in view.comp) && !("parchment" in view.comp),
     "完整页面直接绑定静态列表板，不再加载板子或调整旧羊皮纸");
   assert(!("cellPrefab" in view.comp), "Cell资源只在SuperContent维护");
@@ -145,20 +147,20 @@ function checkPrefab(): void {
   const boardData = layer;
   const listConfig=boardData.find((row:any)=>row.columns!==undefined) as any;
   assert(listConfig.columns===4 && listConfig.cellPrefab.__uuid__==="e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40","SuperContent 四列及格子资源绑定");
-  const board = component(boardData, boardType);
-  assertNode(boardData, board.comp, "heroScroll", 119, "HeroScroll");
-  assertNode(boardData, board.comp, "heroPort", 123, "view");
-  assertNode(boardData, board.comp, "heroContent", 127, "content");
+  const board = view;
+  assertComp(boardData, board.comp, "heroScroll", 119, classId(metaUuid("client/assets/scripts/framework/ui/SuperScroll.ts.meta")));
+  const scroll = boardData[idOf(board.comp.heroScroll)];
+  const content = boardData[idOf(scroll._content)];
+  assert(content._name === "content" && boardData[idOf(content._parent)]._name === "view", "滚动内容与Mask视口保留静态层级");
   assertComp(boardData, board.comp, "emptyLabel", 139, "cc.Label");
   const emptyLabel = boardData[idOf(board.comp.emptyLabel)];
   assert(Number(emptyLabel._fontSize) >= 24 && Number(emptyLabel._lineHeight) >= 32, "空态文字在手机宽度下可读");
   assert(uiHeight(boardData, idOf(emptyLabel.node)) >= Number(emptyLabel._lineHeight) * 3,
     "错误原因和两行操作提示不能压进单行文本框后自动缩小");
   assertComp(boardData, board.comp, "capacityLabel", 88, "cc.Label");
-  assert(uiHeight(boardData, idOf(board.comp.heroScroll)) === HERO_PORT_H, "滚动视口延伸至容量栏上方");
-  assert(uiHeight(boardData, idOf(board.comp.heroPort)) === HERO_PORT_H, "view 跟滚动视口一样高");
-  assert(uiHeight(boardData, idOf(board.comp.heroScroll)) + 88 < uiHeight(boardData, boardData.findIndex(row => row._name === "spr_box")), "滚动视口与顶部偏移不超过装饰底板");
-  assert(JSON.stringify(boardData).indexOf("永久皮肤") >= 0, "永久皮肤用简体");
+  assert(uiHeight(boardData, idOf(scroll.node)) === HERO_PORT_H, "滚动视口延伸至容量栏上方");
+  assert(uiHeight(boardData, idOf(content._parent)) === HERO_PORT_H, "view 跟滚动视口一样高");
+  assert(uiHeight(boardData, idOf(scroll.node)) + 88 < uiHeight(boardData, boardData.findIndex(row => row._name === "spr_box")), "滚动视口与顶部偏移不超过装饰底板");
   const elems = board.comp.elemButtons as { __id__?: number }[];
   assert(elems.length === 6, "六个元素钮");
   for (let i = 0; i < elems.length; i++) {
@@ -166,7 +168,7 @@ function checkPrefab(): void {
     assert(button.__type__ === "cc.Button", "第" + i + "个元素仍绑定Button");
   }
 
-  const cellData = loadPrefab("client/assets/bundles/hero/prefabs/HeroIconCellView.prefab");
+  const cellData = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroIconCellView.prefab");
   const cell = component(cellData, cellType);
   assertNode(cellData, cell.comp, "face", 19, "spr_face");
   assertComp(cellData, cell.comp, "nameLabel", 29, "cc.Label");
@@ -178,7 +180,7 @@ function checkPrefab(): void {
   assert(stars.map((row) => row.__id__).join(",") === "37,43,49,55,61", "五颗星按 star0 到 star4");
 
   const infoType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroInfoView.ts.meta"));
-  const infoData = loadPrefab("client/assets/bundles/hero/prefabs/HeroInfoView.prefab");
+  const infoData = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab");
   const info = component(infoData, infoType);
   assert((infoData[1]._components || []).some((row) => row.__id__ === info.index), "HeroInfoLayer 根上有 HeroInfoView");
   assert(infoData[idOf(info.comp.portrait)]._name === "node_equip", "立绘挂在 node_equip");
@@ -257,19 +259,22 @@ function makeCell(node: Node): void {
   cell.battle.parent = node;
 }
 
-function makeBoard(node: Node): HeroListBoardView {
-  node.name = "HeroListBoardView";
+/** 构造真实静态层级的行为替身，业务控件直接注入HeroListView。 */
+function makeBoard(node: Node) {
+  node.name = "HeroBoard";
   node.setPosition(-320, -480, 0);
   const rootUi = node.getComponent(UITransform) || node.addComponent(UITransform);
   rootUi.setAnchorPoint(0.5, 0.5);
   rootUi.setContentSize(640, 960);
-  const board = node.addComponent(HeroListBoardView);
+  const board = { node, heroScroll: null as unknown as Node, heroPort: null as unknown as Node,
+    heroContent: null as unknown as Node, emptyLabel: null as unknown as Label,
+    capacityLabel: null as unknown as Label, elemButtons: [] as Button[], scroll: null as unknown as SuperScroll };
   const box = sized("spr_box", 580, 450);
   box.parent = node;
   board.heroScroll = sized("HeroScroll", 540, HERO_PORT_H);
   board.heroScroll.parent = box;
 
-  board.heroScroll.addComponent(SuperScroll);
+  board.scroll = board.heroScroll.addComponent(SuperScroll);
   board.heroPort = sized("view", 540, HERO_PORT_H);
   board.heroPort.parent = board.heroScroll;
   board.heroContent = sized("content", 540, 320);
@@ -297,9 +302,6 @@ function makeBoard(node: Node): HeroListBoardView {
     button.node.parent = elemRow;
     board.elemButtons.push(button);
   }
-  const skin = new Node("btn_permanent_skin");
-  skin.parent = node;
-  skin.active = false;
   const evolve = new Node("btn_evolve");
   evolve.parent = node;
   evolve.active = false;
@@ -314,20 +316,21 @@ function makeView(): HeroListView {
   const view = host.addComponent(HeroListView);
   view.btnHero = buttonOn("btn_hero");
   if (view.btnHero.node) view.btnHero.node.parent = host;
-  view.boardRoot = new Node("HeroBoard");
-  view.boardRoot.parent = host;
-  makeBoard(view.boardRoot);
+  const boardRoot = new Node("HeroBoard");
+  boardRoot.parent = host;
+  const board = makeBoard(boardRoot);
+  view.heroScroll = board.scroll;
+  view.emptyLabel = board.emptyLabel;
+  view.capacityLabel = board.capacityLabel;
+  view.elemButtons = board.elemButtons;
 
   return view;
 }
 
-function boardOf(view: HeroListView): HeroListBoardView {
-  const kids = view.node.children;
-  for (let i = 0; i < kids.length; i++) {
-    const board = kids[i].getComponent(HeroListBoardView) as HeroListBoardView | null;
-    if (board) return board;
-  }
-  throw new Error("没有挂上 HeroListHeroLayer");
+/** 从页面直接绑定取得控件，不再读取已删除的列表板组件。 */
+function boardOf(view: HeroListView) {
+  return { node: view.node.getChildByName("HeroBoard")!, heroContent: view.heroScroll!.content,
+    emptyLabel: view.emptyLabel, capacityLabel: view.capacityLabel, elemButtons: view.elemButtons };
 }
 
 function cellsOf(view: HeroListView): HeroIconCellView[] {
@@ -351,7 +354,7 @@ async function checkRemakeRoster(): Promise<void> {
   service.initialize();service.resetSession("local-1/hero-ui");
   /** 模拟已由应用验收的统一回包，不再模拟已删除的查询接口。 */
   const sync=(heroes:OwnedHero[])=>service.onNotify(Protocol.STATE_CHANGED,{heroes,role:{},inventory:[],revision:1});
-  const catalog = new HeroCatalog(JSON.parse(read("client/assets/bundles/config/herotype.json")), JSON.parse(read("client/assets/bundles/config/item.json")));
+  const catalog = new HeroCatalog(JSON.parse(read("client/assets/bundles/resources/config/herotype.json")), JSON.parse(read("client/assets/bundles/resources/config/item.json")));
   const samples = [
     {id:"reserve",templateId:10101001,level:99,star:9,deployed:false},
     {id:"lower",templateId:10101001,level:1,star:3,deployed:true},
@@ -365,7 +368,15 @@ async function checkRemakeRoster(): Promise<void> {
   assert(samples[0].id==="reserve","展示排序不修改唯一名册");
   const view = makeView();
   let notice = "";
-  view.configureRoster(model,service,catalog,text=>{notice=text;});
+  view.configure(model, catalog);
+  const ui = UIManager.instance, originalOpen = ui.open, originalToast = ui.toast;
+  const selectedIds: string[] = [];
+  ui.toast = text => { notice = text; };
+  ui.open = (async (ctor: unknown, args: { heroId: string }) => {
+    assert(ctor === HeroInfoView, "选择直接打开英雄详情类");
+    selectedIds.push(args.heroId);
+    return view;
+  }) as typeof ui.open;
   const baseline=EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
   try {
     // Deliberately contaminate the legacy store; the injected source must ignore it.
@@ -380,7 +391,7 @@ async function checkRemakeRoster(): Promise<void> {
 
     assert(cellsOf(view).length === 0, "加载时不读旧名册或图鉴");
     assert(board.emptyLabel!.string === "正在加载英雄…", "绘制加载状态");
-    assert(!board.node.getChildByName("btn_permanent_skin")!.active && !board.node.getChildByName("btn_evolve")!.active, "隐藏未接入养成按钮");
+    assert(!board.node.getChildByName("btn_evolve")!.active, "隐藏尚未接入的进化入口");
     sync([]); pump(1);
     assert(board.emptyLabel!.string === "尚未获得英雄" && cellsOf(view).length === 0, "真实空名册不回退图鉴");
     assert(board.capacityLabel!.string === "英雄：0/—", "不显示旧协议容量");
@@ -391,16 +402,28 @@ async function checkRemakeRoster(): Promise<void> {
     assert(cells.length === 1 && !cells[0].nameLabel!.node.active, "正式列表不在头像上叠名称");
     assert(cells[0].levelLabel!.string === "7" && cells[0].stars.filter(node => node.active).length === 4, "等级和星级来自实例");
     cells[0].node.emit(Button.EventType.CLICK);
-    assert(notice.indexOf("详情暂未开放") >= 0 && !view.node.parent!.getChildByName("HeroDetailSheet"), "不打开旧详情");
+    assert(selectedIds.join() === "f45747b7-f032-4d00-9546-3504b9a967e5", "选择直接传入真实实例ID，不经过roster回调");
     board.elemButtons[2].node.emit(Button.EventType.CLICK); pump(1);
     assert(cellsOf(view).length === 0 && board.emptyLabel!.string === "没有符合筛选条件的英雄", "筛选空态");
     board.elemButtons[0].node.emit(Button.EventType.CLICK); pump(1);
     assert(cellsOf(view).length === 1, "切回全部显示英雄");
     assert(cells[0].lock!.active && cells[0].battle!.active,"自身锁定与上阵可同时显示");
     assert(!cells[0].face!.getComponent(Sprite)!.grayscale,"已拥有的锁定英雄不能灰显为未获得");
+    view.runClose();
+    const closedCount = selectedIds.length;
+    view.heroScroll!.list.node.emit(SuperContent.SELECT_ITEM, {kind:"owned",instanceId:"closed"});
+    assert(selectedIds.length === closedCount, "关闭期间解除列表选择，不打开详情");
+    view.runOpen();
+    view.runOpen();
+    cellsOf(view)[0].node.emit(Button.EventType.CLICK);
+    assert(selectedIds.length === closedCount + 1, "关闭重开及重复打开后一次点击仍只选择一次");
     view.runDispose();sync([]);
     assert(model.snapshot.status === "ready" && model.snapshot.heroes.length === 0,"页面关闭后模块继续接收同步");
+    view.heroScroll!.list.node.emit(SuperContent.SELECT_ITEM, {kind:"owned",instanceId:"closed"});
+    assert(selectedIds.length === closedCount + 1, "释放后列表选择不再导航");
   } finally {
+    ui.open = originalOpen;
+    ui.toast = originalToast;
     view.runDispose();
     assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===baseline,"关页只清理本页名册监听");
     service.dispose(); view.node.destroy();
@@ -408,28 +431,28 @@ async function checkRemakeRoster(): Promise<void> {
   }
 }
 
-/** 英雄格子复用后旧头像不能覆盖新英雄，点击只触发最新回调，销毁后迟到结果失效。 */
+/** 英雄格子只负责绘制；复用后旧头像不能覆盖新英雄，销毁后迟到结果失效。 */
 async function checkHeroCellReuse():Promise<void> {
  const root=new Node("reuse");makeCell(root);const cell=root.getComponent(HeroIconCellView)!;
  const original=resources.load;const pending:Array<{path:string;done:(err:any,asset:any)=>void}>=[];
  resources.load=((path:any,type:any,done:any)=>{pending.push({path,done});}) as any;
  try {
   const face=(path:string)=>({kind:"owned" as const,name:path,showName:true,face:path,elem:null,stars:1,level:1,locked:false,deployed:false});
-  let old=0,current=0;cell.show(face("fixture/A"),()=>old++);cell.show(face("fixture/B"),()=>current++);cell.show(face("fixture/B"),()=>current++);
-  root.emit(Button.EventType.CLICK);assert(old===0 && current===1,"只保留最新点击");
+  cell.show(face("fixture/A"));cell.show(face("fixture/B"));cell.show(face("fixture/B"));
+  assert(!read("client/assets/scripts/features/hero/ui/HeroIconCellView.ts").includes("Button.EventType.CLICK"), "格子不持有页面点击回调");
   await new Promise(resolve => setImmediate(resolve));
   const a=new SpriteFrame(),b=new SpriteFrame();pending.filter(x=>x.path==="fixture/B/spriteFrame").forEach(x=>x.done(null,b));
   pending.filter(x=>x.path==="fixture/A/spriteFrame").forEach(x=>x.done(null,a));
   await new Promise(resolve => setImmediate(resolve));
   assert(cell.face!.getComponent(Sprite)!.spriteFrame===b,"迟到旧头像不能覆盖新英雄");
-  cell.show(face("fixture/C"),null);cell.onDestroy();pending.filter(x=>x.path==="fixture/C/spriteFrame").forEach(x=>x.done(null,a));
+  cell.show(face("fixture/C"));cell.onDestroy();pending.filter(x=>x.path==="fixture/C/spriteFrame").forEach(x=>x.done(null,a));
   assert(cell.face!.getComponent(Sprite)!.spriteFrame===null,"销毁后不写回头像");
  }finally{resources.load=original;root.destroy();}
 }
 /** 使用真实英雄列表布局配置验证长列表末行可达、刷新保位以及过滤缩短后归位。 */
 function checkHeroScrollBounds():void {
  const root=new Node("long-list"),board=makeBoard(root),scroll=board.scroll,list=scroll.list;
- const source=JSON.parse(read("client/assets/bundles/hero/prefabs/HeroListView.prefab"));const config=source.find((row:any)=>row.columns!==undefined);
+ const source=JSON.parse(read("client/assets/bundles/module/hero/prefabs/HeroListView.prefab"));const config=source.find((row:any)=>row.columns!==undefined);
  for(const key of ["columns","rows","layoutType","gridAxis"] as const)list[key]=config[key];
  for(const key of ["spacingX","spacingY","paddingLeft","paddingRight","paddingTop","paddingBottom"] as const)list[key]=config["_"+key];
  list.setData(Array.from({length:20},(_,i)=>i),()=>{});
@@ -441,7 +464,6 @@ function checkHeroScrollBounds():void {
 
 /** 验证应用实际开页无需测试注入，使用唯一模块和已准备配置。 */
 async function checkDefaultRoster():Promise<void> {
- GameConfig.instance.initialize(async path=>JSON.parse(read("client/assets/bundles/"+path+".json")));
  await GameConfig.instance.prepare([GConfig.HeroType,GConfig.Item]);
  const service=HeroRosterController.instance;service.initialize();service.resetSession("local-1/default");
  service.onNotify(Protocol.STATE_CHANGED,{revision:1,heroes:[],heroRoster:{capacity:300,buySpaceTimes:0}});
@@ -459,7 +481,7 @@ async function checkReadonlyInfo():Promise<void> {
  const before=EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
  try {page.onOpen({heroId:hero.id});assert(page.attributes[0].string==="攻击：30","展示服务器面板属性");sync([{...hero,level:2,panelStats:{...hero.panelStats,values:{...hero.panelStats.values,atk:35}},baseStats:{...hero.baseStats,atk:35}}]);assert(page.attributes[0].string==="攻击：35","同步后详情更新");(page as any).goBack();assert(lists===1,"返回按钮打开列表而非主城");sync([]);assert(lists===2,"实例删除返回列表");controller.resetSession(null);assert(backs===1,"退出账号返回根页面");page.onClose();assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===before,"关页释放详情监听");}
  finally {page.onClose();ui.back=original;ui.openById=originalOpen;controller.dispose();root.destroy();}
- const data=loadPrefab("client/assets/bundles/hero/prefabs/HeroInfoView.prefab");const buttons=data.filter((x:any)=>x.__type__==="cc.Button"&&x._interactable);
+ const data=loadPrefab("client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab");const buttons=data.filter((x:any)=>x.__type__==="cc.Button"&&x._interactable);
   const detail=data.find((row:any)=>row.equipmentIcons);
  assert(detail?.equipmentIcons.length===4&&detail.equipmentFrames.length===4&&detail.equipmentLabels.length===4,"四槽图标、品质框和状态文字必须静态绑定");
  for(let i=1;i<=4;i++){const slot=data.find((row:any)=>row._name==="EquipmentSlot"+i);assert(slot&&slot._components.every((ref:any)=>data[ref.__id__].__type__!=="cc.Button"||!data[ref.__id__]._interactable),"四槽没有穿脱操作入口");}
@@ -502,23 +524,22 @@ async function checkElementBundleRoutes(): Promise<void> {
     detail.elementIcon.addComponent(Sprite);
     (detail as any).mountPortrait = () => {};
     try {
-        board.bindElem(() => {});
         cell.show({
             kind: "owned", name: "测试英雄", showName: true, face: "hero/ui/hero-icon_10101001",
             elem: 5, stars: 1, level: 1, locked: false, deployed: false,
-        }, null);
+        });
         detail.onOpen({ heroId: hero.id });
         await new Promise(resolve => setImmediate(resolve));
         assert(requestedBundles.length > 0 && requestedBundles.every(name => name === "hero"),
             "所有英雄元素消费点保留hero包名，不请求ui包");
-        const pagePrefab = loadPrefab("client/assets/bundles/hero/prefabs/HeroListView.prefab");
-        const boardType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroListBoardView.ts.meta"));
-        const staticBoard = component(pagePrefab, boardType).comp;
+        const pagePrefab = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroListView.prefab");
+        const viewType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroListView.ts.meta"));
+        const staticBoard = component(pagePrefab, viewType).comp;
         for (let index = 0; index < 6; index++) {
             const button = pagePrefab[(staticBoard.elemButtons as {__id__:number}[])[index].__id__];
             const host = pagePrefab[idOf(button.node)];
             const sprite = (host._components as {__id__:number}[]).map(ref => pagePrefab[ref.__id__]).find(row => row.__type__ === "cc.Sprite")!;
-            const uuid = metaUuid("client/assets/bundles/hero/ui/hero-icon_elem-" + index + ".png.meta");
+            const uuid = metaUuid("client/assets/bundles/module/hero/ui/hero-icon_elem-" + index + ".png.meta");
             assert((sprite._spriteFrame as {__uuid__:string}).__uuid__ === uuid + "@f9941", "六个筛选图标由完整Prefab静态持有");
         }
         assert(cell.elem!.getComponent(Sprite)!.spriteFrame === frames.get("ui/hero-icon_elem-5/spriteFrame"),
@@ -536,4 +557,20 @@ async function checkElementBundleRoutes(): Promise<void> {
 }
 
 /** 顺序执行英雄页面和数据回归，最后报告全部检查结果。 */
-async function main() { await checkDefaultRoster();await checkReadonlyInfo(); await checkElementBundleRoutes(); await checkHeroCellReuse();checkHeroScrollBounds();checkPrefab(); await checkRemakeRoster(); console.log("hero-view-check passed: preserved Prefab bindings, current roster, empty/sync/filter, actual instance values and late response isolation"); } main().catch(error => { console.error(error); process.exitCode=1; });
+async function main() {
+  const original = ResourceAssetsUtils.loadConfig;
+  ResourceAssetsUtils.loadConfig = async path => JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8"));
+  try {
+    await checkDefaultRoster();
+    await checkReadonlyInfo();
+    await checkElementBundleRoutes();
+    await checkHeroCellReuse();
+    checkHeroScrollBounds();
+    checkPrefab();
+    await checkRemakeRoster();
+    console.log("hero-view-check passed: direct page bindings, roster rendering and selection, filter, current instance and late image isolation");
+  } finally {
+    ResourceAssetsUtils.loadConfig = original;
+  }
+}
+main().catch(error => { console.error(error); process.exitCode = 1; });

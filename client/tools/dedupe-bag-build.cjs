@@ -7,6 +7,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
+const { resolveAssetPath } = require('../../tools/bundle-paths.cjs');
 
 /** Creator资源UUID的22字符压缩形式：前两位十六进制保留，其余15字节用Base64表示。 */
 function compressedUuid(uuid) {
@@ -63,7 +64,7 @@ function plan(build, candidates) {
     assert.equal(new Set(candidates.map(image => image.uuid)).size, candidates.length, '清理名单有重复UUID');
     for (const { group, source, uuid } of candidates) {
         const name = path.basename(source);
-        const sourceFile = path.resolve(root, source);
+        const sourceFile = resolveAssetPath(source);
         const sourceRoots = ['client/assets/bundles'];
         assert(sourceRoots.some(directory => sourceFile.startsWith(path.join(root, directory) + path.sep)),
             '原图必须属于项目UI或Bundle目录');

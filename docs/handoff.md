@@ -1,16 +1,24 @@
 # 新聊天交接文档
 
-更新：2026-11-11。已推送基线hao/f3cd64a3，main未合并。上一批加载与缓存已通过；本批共享模态、完整英雄Prefab与布局清理已完成专项和本机限定预览，修改暂留本地，未提交推送。
+更新：2026-11-12。负责人已授权将本轮成果推送hao并合入main，提交与远端同步结果以Git记录为准；后续开发仍在hao、跟踪origin/hao，8cb60507为本轮之前的基线。本轮15个Bundle归档到resources/module两个普通父目录，26,410份原资源/meta在Creator重新导入后仍逐字节保留；52/52项有效检查、类型和全库绑定通过。新目录393×852独立环境完成登录、三段配置、背包四类详情、三英雄及详情、850关与真实第二关结算返回，无新警告/错误；本轮不签缓存TTL或立即重开同实例。扩展1.6.3隔离钩子已验，真实发布构建尚未进行。见[当前目录记录](validation/bundle-directory-groups-20261111.json)和[资源维护入口](staged-resource-loading.md)。
 
-先看[当前进度](development-progress.md)，这里仅保留接手入口。本批48/48项有效检查及类型检查通过，5组旧检查暂停；共享层三模式/叠窗、英雄和背包相关竖屏、真实挑战结算返回的限定结果见[本批证据](validation/shared-modal-widget-20261111.json)。[前次框架审计](validation/framework-cleanup-20261111.json)和[旧模态证据](validation/modal-layer-20261111.json)保留历史依据；旧逐窗蒙版已被共享方案取代。本批未重新构建发布包，也未代签负责人Inspector或全页面验收。
+上一批统一列表事件、资源清理和虚拟列表的51项、类型及本机限定复验见[前批证据](validation/virtual-list-resource-review-20261111.json)，不能当作本次新目录路径的验收。当前资源在bundles/resources/{audio,config,font,icons,maps,spine}和bundles/module/{bag,battle,bootstrap,chapter,common,gm,hero,home,login}；父层不是Bundle，原15个包名与CDN remote/<包名>不变，bootstrap仍本地，自动图集全部保留。
 
-上一批46项统一检查、Python17组以及加载/缓存自然回收已通过，见[工具证据](validation/migration-tools-review-20261111.json)和[加载与缓存证据](validation/loading-cache-review-20261111.json)。这和本批共享模态/布局复验分开，不代表真实CDN、真机、长期内存或完整玩法新验收。
+先看[当前进度](development-progress.md)，这里仅保留接手入口。各View的@view统一静态定义与prepare；ApplicationPages只装配登录/主城Controller及宿主，bindViewRuntime只注入createController/动态hostId，ApplicationResources只调度三段。LoadingPlan页面目标改用`{page:BagView}`类引用，预载只读取Prefab、不执行prepare或创建页面，其余图片/骨骼/配置继续显式配置。
 
-顶层资源已归入assets/bundles，104远程包及本地bootstrap自动构建已收口。21,902个非目录UUID全部保留是f3cd64a3目录迁移时的历史基线；本批主动退役旧壳、蒙版片段及独立英雄列表板后，当前96份Prefab（含场景共97份），仍用资源UUID不变。三段显式配置与其余按需保持；预加载Prefab不会因背包实例到期而失效，迟到角色骨骼等按需资源重开仍可能下载。
+英雄、背包、产物说明外层/内层及胜利奖励统一监听RENDER_ITEM/SELECT_ITEM，Cell只绘制，选择归所属页面；名册/库存仍归唯一Model。SuperContent默认virtual=true、bufferLines=1，逻辑总量与节点量分开，仅建立视口及缓冲行有限池；原锚点/Cell正缩放保留，view/content局部缩放须1，祖先适配可用。滚动不停止惯性，几何/数据改变完整保位，离屏refresh延迟渲染。
 
-背包、英雄列表和详情已是完整Prefab；固定布局归Widget，ViewportScale只对target按designWidth/maxScale等比缩放，外根fitVisibleRoot仅桥接LiveShell视口。ParchmentLayout、ccbiPlace、heroMount、heroChrome及PagePrefabShell/ListBackdrop/DimSheet、独立HeroListBoardView Prefab已退役；列表板直接保存于HeroListView，HeroRosterModel仍是唯一名册状态。PrefabLayout仅留旧战斗结果显示的实际辅助。
+本批千/万条六布局、锚点/缩放、resize、惯性和单图拥有者专项通过；当前51项全量、180脚本/33份PrefabScene/71绑定通过。本机850关首屏5节点，多次拖动/跳转后池保持7，末关点击正确；背包四分类及详情数量保持，最终资源重载后三英雄列表和真实第二关结算返回通过。ResManager.setSprite只保留当前/在途作用域，同图复用，新图接替后撤回旧图；getSpriteFrame(owner)显式持有及TTL不变。本轮不签TTL、GPU或真机，前批48项与旧数量见[历史入口证据](validation/view-registration-list-review-20261111.json)。
 
-模态只在ViewSpec配置`{mask,closeOnOutside}`，两个开关独立；省略则不拦截。多个弹窗只共用一个动态节点，Prefab仅保留实际内容背景的BlockInputEvents。普通弹窗及原有布阵/结算沿用各自关闭流程，GM/技能台mask=true、closeOnOutside=false。本机限定复验已完成，下一步按负责人节奏集中构建，检查新Prefab、共享层和当前编译结果；真实CDN/平台/长期内存仍列计划，不恢复暂停玩法。
+8cb60507基线的48项与共享层限定预览见[上一批证据](validation/shared-modal-widget-20261111.json)，不能冒充本批新入口结果。[前次框架审计](validation/framework-cleanup-20261111.json)和[旧模态证据](validation/modal-layer-20261111.json)保留历史依据，旧逐窗蒙版已被共享方案取代。尚未重建对应发布包，也未代签负责人Inspector或全页面验收。
+
+更早46项统一检查、Python17组以及加载/缓存自然回收已通过，见[工具证据](validation/migration-tools-review-20261111.json)和[加载与缓存证据](validation/loading-cache-review-20261111.json)。各批证据分别记录，不代表真实CDN、真机、长期内存或完整玩法新验收。
+
+资源统一到assets/bundles，本批保留15包、32份Prefab、31张实际依赖表；清理90未实现包、64旧Prefab及未使用配置，源资源减少约203.30MiB，详见[清理记录](validation/current-resource-scope-cleanup-20261111.json)。buffart遗漏已原字节恢复并补闭包反例；三份主城现用表与XLSX差异另存[生成输入说明](../config/client-maincity/README.md)，后续核对，不在清理时改规则。原105包/96Prefab与21,902个UUID是历史基线；源目录减少不是新发布/下载包体。三段显式配置、其余按需与缓存规则保持，暂停领域代码不接回导航。
+
+背包、英雄列表和详情均是完整Prefab；固定布局归Widget，ViewportScale仅统一缩放，fitVisibleRoot只桥接LiveShell视口。旧羊皮纸/英雄组装链、页面壳及独立列表板已退役，本批继续删除旧Campaign四份UI、PrefabLayout及Common*Shell样板链；不因保留暂停领域代码重建旧入口。
+
+模态只在ViewSpec配置`{mask,closeOnOutside}`，两个开关独立；省略则不拦截。多个弹窗共用一个动态节点，Prefab仅保留实际内容背景的BlockInputEvents。普通弹窗及原有布阵/结算沿用各自关闭流程，GM/技能台mask=true、closeOnOutside=false；前批限定复验不自动覆盖本批新入口。真实CDN/平台/长期内存仍列计划，不恢复暂停玩法。
 
 ## 项目与边界
 
@@ -32,7 +40,7 @@
 
 ## 代码入口
 
-人工入口和资源生命周期见[加载与远程资源](staged-resource-loading.md)。当前Bundle整合与自动构建已验收，本轮工具、加载和缓存实测也已完成；耗时及适用边界统一见进度页，不将历史玩法视觉记录作为本批新验收。
+人工入口和资源生命周期见[加载与远程资源](staged-resource-loading.md)。此前Bundle整合、自动构建及工具/加载/缓存实测保留各自批次结论；耗时及适用边界统一见进度页，不将历史结果作为本批页面入口与列表事件的新验收。
 
 | 流程 | 入口 |
 |---|---|

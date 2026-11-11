@@ -6,6 +6,7 @@
 import { UILayer } from "../../../framework/ui/UILayer";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
+import { prepareInventoryConfig } from "../../../config/RemakeConfig";
 
 import { _decorator, Button, director, Director, Label, Layers, Node, Prefab, UITransform } from "cc";
 import { BagTabKind } from "../data/BagTabKind";
@@ -21,6 +22,7 @@ import { BagItemCatalog } from "../utils/BagItemCatalog";
 import { spawnPrefab } from "../../../framework/assets/PrefabLoader";
 import { mountNamedSpine } from "../../battle/ui/battleSpine";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
+import { SuperContent } from "../../../framework/ui/SuperContent";
 import { BagItemView } from "./BagItemView";
 import { BagTabView } from "./BagTabView";
 import { BaseView } from "../../../framework/ui/BaseView";
@@ -41,10 +43,11 @@ export interface BagOpenArgs {
 /** 背包数据与选中态展示；通用 SuperContent 负责列表布局。 */
 @view({
     id: "bag",
-    prefab: "bundles/bag/prefabs/BagView",
+    prefab: "bundles/module/bag/prefabs/BagView",
     layer: UILayer.Page,
     cache: true,
     allowMultiple: false,
+    prepare: prepareInventoryConfig,
 })
 @ccclass("BagView")
 export class BagView extends BaseView<BagOpenArgs> {
@@ -103,6 +106,10 @@ export class BagView extends BaseView<BagOpenArgs> {
     private closed = false;
     /** 关闭按钮是否已绑定；监听释放时重置。 */
     private closeBound = false;
+    /** 当前打开周期是否已登记列表事件；关闭统一释放后恢复false，防止缓存重开重复登记。 */
+    private listBound = false;
+    /** 当前分类没有可见物品时为true，空槽允许点击显示原空包提示；每次绘制重新计算。 */
+    private emptyTab = true;
 
     /** 收到库存汇总通知后读取当前 Model；已关闭界面不再刷新。 */
     refreshFromModel(): void {
@@ -121,6 +128,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refreshFromModel);
         EventDispatcher.instance.on(BagEvent.BagSyncStateChanged, this, this.onSyncStateChanged);
         this.bindClose();
+        this.bindList();
         this.tab = args?.tab || "item";
         if (this.opened) {
             this.refreshGrid();
@@ -205,7 +213,7 @@ export class BagView extends BaseView<BagOpenArgs> {
 
     /** 校验 BagView 和格子资源绑定，缺失时报告资源路径与字段。 */
     private validateBindings(): void {
-        const path = "assets/bundles/bag/prefabs/BagView.prefab / BagView: ";
+        const path = "assets/bundles/module/bag/prefabs/BagView.prefab / BagView: ";
         for (const [field, value] of Object.entries({
             bagScroll: this.bagScroll, tabContent: this.tabContent,
             tabPrefab: this.tabPrefab
@@ -228,6 +236,24 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.ownListener(() => {
             this.btnClose?.node.off(Button.EventType.CLICK, close);
             this.closeBound = false;
+        });
+    }
+
+    /** 每个打开周期登记渲染和选择；复用格子只替换数据，不持有本页回调。 */
+    private bindList(): void {
+        if (!this.bagScroll || this.listBound) {
+            return;
+        }
+        this.listBound = true;
+        const content = this.bagScroll.list.node;
+        content.on(SuperContent.RENDER_ITEM, this.onRender, this);
+        content.on(SuperContent.SELECT_ITEM, this.onSelect, this);
+        this.ownListener(() => {
+            if (content.isValid) {
+                content.off(SuperContent.RENDER_ITEM, this.onRender, this);
+                content.off(SuperContent.SELECT_ITEM, this.onSelect, this);
+            }
+            this.listBound = false;
         });
     }
 
@@ -285,6 +311,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
         const list = this.bagScroll!.list;
         const rows = this.visibleItems();
+        this.emptyTab = rows.length === 0;
         const picked = rows.find(item => item.key === this.pickedId);
         this.nextExpiry = rows.reduce((next, item) => Math.min(next, item.expiresAtSeconds ?? Infinity), Infinity);
         if (!picked) {
@@ -293,29 +320,46 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
         // 空槽补齐属于背包展示规则，通用列表只接收条目，不决定业务槽数。
         const entries = Array.from({ length: BagUtils.slotCount(rows.length) }, (_, index) => rows[index] || null);
-        list.setData(entries, (node, item) => {
-            const cell = node.getComponent(BagItemView)!;
-            const selected = item !== null && item.key === this.pickedId;
-            const onTap = item
-                ? () => {
-                    if (this.closed) return;
-                    const current = this.visibleItems().find(row => row.key === item.key);
-                    if (!current) return;
-                    this.pickedId = current.key;
-                    this.showInfo(current);
-                    this.refreshGrid();
-                }
-                : rows.length === 0
-                    ? () => {
-                        this.toast(BagModel.instance.snapshot.status === "ready" ? BagUtils.emptyToast() : "背包尚未同步");
-                    }
-                    : null;
-            cell.show(item, selected, onTap, item ? this.catalog!.face(item.itemId, item.quantity) : undefined);
-        });
+        list.setData(entries);
         if (this.resetScroll) {
             this.bagScroll!.toStart();
             this.resetScroll = false;
         }
+    }
+
+    /** 列表创建或复用格子时只绘制当前条目，空分类保留20个可提示的空槽。 */
+    private onRender(node: Node, item: BagListItem | null): void {
+        if (this.closed) {
+            return;
+        }
+        const cell = node.getComponent(BagItemView);
+        if (!cell) {
+            throw new Error("BagItemView预制体缺少物品格组件");
+        }
+        const selected = item !== null && item.key === this.pickedId;
+        cell.show(item, selected, item ? this.catalog!.face(item.itemId, item.quantity) : undefined,
+            item !== null || this.emptyTab);
+    }
+
+    /** 选择当前条目后再次核对最新库存键；过期或已移除物品不打开详情。 */
+    private onSelect(item: BagListItem | null): void {
+        if (this.closed) {
+            return;
+        }
+        const rows = this.visibleItems();
+        if (!item) {
+            if (!rows.length) {
+                this.toast(BagModel.instance.snapshot.status === "ready" ? BagUtils.emptyToast() : "背包尚未同步");
+            }
+            return;
+        }
+        const current = rows.find(row => row.key === item.key);
+        if (!current) {
+            return;
+        }
+        this.pickedId = current.key;
+        this.showInfo(current);
+        this.refreshGrid();
     }
 
     /** 按配置筛选库存并恢复普通道具排序；隐藏条目与服务器原始顺序仍由 Model 完整持有。 */

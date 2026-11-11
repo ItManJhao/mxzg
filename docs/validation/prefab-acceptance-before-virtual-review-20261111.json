@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-11",
+  "purpose": "仅归档本批更新前的四条证据，当前验收以config/prefab-acceptance.json为准。",
+  "entries": {
+    "client/assets/bundles/hero/prefabs/HeroListView.prefab": {
+      "sha256": "448e7fdda02a07442c810995e1fc6e0b682c12befdf7da20a999e1c2714d127e",
+      "date": "2026-11-11",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "本批只移除静态隐藏且无代码绑定的旧皮肤商店按钮子树；其余布局与Widget保留。资源清理后的本机画面仍待本批复验。",
+      "inspector": "未操作Creator Inspector"
+    },
+    "client/assets/bundles/bag/prefabs/BagView.prefab": {
+      "sha256": "21def30c18e1cdd10d702bd57eb0671106991affbafe241d7c08285ad0824bfe",
+      "date": "2026-11-11",
+      "status": "实际预览通过",
+      "scope": "360×720及428×926完整背包、四分类数量3、独立详情关闭与短期实例复用；页面内容按Widget和统一比例布局。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
+      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+    },
+    "client/assets/bundles/battle/prefabs/ChapterRewardInfoView.prefab": {
+      "sha256": "78891fcd31025faeab9d2b0a2ce0ecdc159c06aa40dc3ac6fa744691f2f12072",
+      "date": "2026-11-11",
+      "status": "实际预览通过",
+      "scope": "428×926真实主线入口打开850关只读产物说明，首屏内容与共享蒙版正常；本次未重滚全部850关或双页全部内容。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
+      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+    },
+    "client/assets/bundles/battle/prefabs/ChapterEndView.prefab": {
+      "sha256": "aaab063110e15a9b43f777f371bd98658256091039af167e9c9ab0ab8eb235b5",
+      "date": "2026-11-11",
+      "status": "实际预览通过",
+      "scope": "428×926独立服务器真实第二、三关挑战；第三关胜利画面、外部关闭与返回挂机，第二关倒计时返回。不是全奖励/经验动画或全屏幕重新验收。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
+      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+    }
+  }
+}

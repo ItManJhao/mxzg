@@ -31,15 +31,19 @@ BaseModel 管角色会话和本地界面版本；BaseController 管显式模块�
 
 ## Prefab 与通用列表
 
-Prefab 保存静态结构、布局、样式和绑定；业务列表使用 SuperScroll + SuperContent，View 绑定数据，不手排 Cell 坐标。保留资源 meta UUID 与人工编辑，不用运行时代码造替代界面。存量其他窗口与原生 ScrollView 仍待分类整改，不宣称已全部统一。
+Prefab保存静态结构、布局、样式和绑定；业务列表使用SuperScroll + SuperContent，View不手排Cell坐标。英雄、背包、产物说明外层/内层及胜利奖励统一监听RENDER_ITEM/SELECT_ITEM，Cell只画图，选择归所属页面或展示组件。SuperContent默认virtual=true、bufferLines=1，逻辑content尺寸按完整数据计算，只为可见范围及缓冲行创建有限节点；Mask继续裁剪，不承担节点回收。
 
 ## 当前入口与职责
 
 RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。AccountApi 只调用 WS 登录/恢复；角色/背包初始化在接纳账号的同批通知中交付。背包打开、切分类、同角色再次开始不查询库存。英雄只读列表/详情、阵容编辑、前三关挑战与结算及挂机演出已按后续授权接入；升级、穿脱、宝箱领取和快速战斗仍关闭。资源采用可配置三段加载，实际范围以进度页为准。
 
-背包地址与页面属性定义在BagView/BagInfoView的@view，ApplicationPages只注入开页前置条件。LoadingPlan是三个阶段唯一人工资源配置入口；第三阶段只准备显式常用目标，其余按需，不维护模块预加载清单或全目录队列。ApplicationResources调度，ResourceAssets/ResourcePool共享缓存、请求和引用；Prefab绑定依赖不抄写清单。
+页面类通过自身@view定义唯一Prefab地址、层级、缓存、模态和prepare配置前置，UIManager打开时先执行prepare，再复用统一加载器取得Prefab；预加载只准备资源，不执行页面业务前置或创建页面。应用通过UIRegistry.bindViewRuntime只注入createController或确需变化的hostId，不重复登记静态页面定义。ApplicationPages只保留登录/主城的Controller与宿主装配，不再转发英雄选择或包装各页资源地址。
 
-所有资源目录统一到assets/bundles，旧顶层resources/ui/prefabs已移除。页面、图片按模块归属，骨骼/音频/配置等按素材类别归包；ResManager和ResourceAssets只解析包名/包内路径，复用原ResourcePool。bootstrap本地，其余远程，新包验收状态以当前进度为准。
+LoadingPlan是三个阶段唯一人工资源配置入口，页面目标使用`{page:BagView}`等View类引用，从@view读取唯一Prefab地址；图片、骨骼和配置继续显式列目标。ApplicationResources只调度计划及持有阶段目标，实际开页配置归prepare。ResourceAssets/ResourcePool共享缓存和请求，Prefab依赖不抄写清单。[前批入口证据](validation/view-registration-list-review-20261111.json)属于虚拟化与资源精简前的调用链，不能替代本批画面验收。
+
+资源统一到assets/bundles，本批保留当前实现模块依赖：15包、32份Prefab、31张配置表；已清理90个未实现资源包和64份旧Prefab。配置导出从实际源码、规则与检查入口求读取闭包，默认不再生成未用旧表；三份主城现用投影与XLSX的版本差异保存在[生成输入说明](../config/client-maincity/README.md)，清理不替换规则。详见[资源清理记录](validation/current-resource-scope-cleanup-20261111.json)。bootstrap本地，其余保留包按远程规则构建；源目录精简不等于已测得新App/CDN下载体积。暂停领域代码保留，恢复模块时按旧项目补回资源，不改变完整还原目标。
+
+2026-11-12只增加两层物理分组：bundles/resources收纳audio/config/font/icons/maps/spine；bundles/module收纳页面模块及common、bootstrap。两个父目录不是Bundle；15个原包名、UUID、优先级和远程规则保持。物理源地址由View定义，运行时仍用“包名/包内路径”，ResourcePool键及CDN地址不增加分组层。自动图集和原图继续保留，目录树与人工步骤见[资源维护](staged-resource-loading.md)。
 
 目录：app 负责装配，features 负责功能 Model/Controller/View，framework 负责通用事件/页面/资源，platform 负责 WS/Protobuf/协议路由，config 负责生成配置。通用层不得反向依赖具体业务 UI。
 
@@ -50,13 +54,13 @@ RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。A
 | features/account | AccountService 处理会话；AccountController 绑定登录页；RoleController 更新 AccountModel 内唯一角色资料；ui 放登录、选服、资料页 | 正式渠道登录待接入，不新增第二份角色资产 |
 | features/bag | BagController → BagModel → BagEvent；BagView/BagInfoView 展示库存与独立只读详情，utils 提供配置与显示查询 | 关闭页面不清库存；使用、分解未开放 |
 | features/hero | HeroRosterController/Model 保存名册及权威阵容；FormationController/FormationSaveModel 保存提交进度；FormationView 持有未保存草稿 | 详情/技能/四槽/进化状态只读；HeroLevel 旧链未装配，不能当作当前升级实现 |
-| features/battle | MainChapterController/Model 处理主线与挂机快照；MainChapterView 组织行军；BattleReplayPreview、ChapterEndView、BattleDetailLayer 展示战报、结算与统计 | Campaign/Idle 旧链未注册到正常导航；BattlePreviewController 是开发只读试战，不结算奖励 |
+| features/battle | MainChapterController/Model处理主线与挂机快照；MainChapterView组织行军；BattleReplayPreview、ChapterEndView、BattleDetailLayer展示战报、结算与统计 | 旧Campaign四份UI已退役，暂停领域代码不接回导航；BattlePreviewController只供开发试战，不结算奖励 |
 | features/home、features/city | HomeController 与 RemakeHomeView 绑定根页；city 提供地图、顶底栏与导航显示 | 地图中旧入口和资源不代表对应玩法已恢复 |
 | features/gm | GmController 与 GmView 仅处理显式启用的开发数据准备 | 默认关闭、仅当前登录测试角色，不能替代正式获取玩法 |
-| app/remake | RemakeApp 装配模块；AccountComposition、AssetStateBinding 处理身份/状态；ApplicationPages、HomeFeatureNavigation 处理页面；LoadingPlan、ApplicationResources 处理加载 | 不把业务规则搬入应用装配，也不为目录数量新增 Manager |
+| app/remake | RemakeApp装配模块；AccountComposition、AssetStateBinding处理身份/状态；ApplicationPages只装配登录/主城Controller和宿主，HomeFeatureNavigation处理主城入口；LoadingPlan、ApplicationResources处理三段加载 | 页面静态定义与配置前置归各View，不增加模块取址包装或资源清单 |
 | platform、core | platform 提供单连接、二进制编解码、真实协议目录与路由；core 提供日志和错误含义 | 不保存另一份业务状态，生成协议禁止手改 |
 
-以上路径相对 client/assets/scripts。实际阅读从 ApplicationPages 的页面注册或 Protocol 的协议名进入所属 Controller，再看唯一 Model 与 View；不需要先遍历整个框架目录。
+以上路径相对client/assets/scripts。修改页面先看对应View的@view与Prefab，查业务从Protocol协议名进入Controller及唯一Model；登录/主城的应用依赖再看ApplicationPages，不需要先遍历整个框架目录。
 
 ### framework/ui 人工阅读入口
 
@@ -65,24 +69,24 @@ RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。A
 | 文件 | 负责什么 | 修改与保留边界 |
 |---|---|---|
 | UIManager、BaseView、UIRegistry、UILayer、ViewClose | 页面注册、分层、异步打开、关闭、取消、缓存与生命周期；ViewClose连接BaseView的关闭动作 | 核心开关入口，不保存角色资产；页面静态节点不在这里另造 |
-| SuperScroll、SuperContent | 滚动手势、等尺寸格子复用与内容排版 | 方向、间距、边距、Cell绑定在Prefab编辑；View传入数据 |
+| SuperScroll、SuperContent | 原生滚动手势与等尺寸虚拟列表：完整逻辑尺寸、视口范围、缓冲行及有限节点池 | virtual默认true、bufferLines默认1；原锚点/Cell正缩放保留，view/content局部缩放为1，业务只提交数据和监听事件 |
 | visibleFit、visibleChrome | 读取当前可见区域，处理全屏根、背景和顶底栏在不同视口中的尺寸关系 | 运行时可见尺寸与固定布局分开；不能把逐个子节点坐标修补都归为必要适配 |
 | barSlide | 现有底栏切页的方向、缓动与位移计算 | 由应用PageTransition调用，不负责页面栈或业务操作 |
-| PrefabLayout | 旧战斗结果显示链仍用到的点击、查找、按钮抬层及底栏避让辅助 | 背包与英雄不再经过这里装配或按页面名修改布局；保留实际仍用的方法 |
 | ViewportScale | 按外根可用宽度与设计宽度，对一个内容容器等比缩放 | 在Prefab绑定target、designWidth、maxScale；位置、纵向留白与拉伸交给Widget，不识别模块名或机型 |
 | UiKit | 现有演出、飘字、动态挂点及旧显示回退使用的节点构造辅助 | 无人使用的输入框链已删除；新页面主体与固定控件继续写在Prefab |
 | spineUpgrade | 转交旧骨骼数据转换，并处理挂机行走动作的身体位移 | 通用数据转换实现在framework/assets/SpineJson；不是页面布局代码 |
 | UIOpenLog | UIManager成功打开后的耗时日志 | 只格式化当前完成结果，旧页面计时Map与重复计时链已删除 |
-| common下的Common*Shell | 对应通用组件样板Prefab的Inspector节点引用 | 五份脚本各有Prefab绑定，当前未被业务Prefab嵌套使用；若弃用须连同Prefab、生成器和索引成套处理 |
 | ModalLayer | UIManager内部的一份动态共享输入层，按当前最上方模态窗口配置绘制蒙版或透明拦截 | 不挂业务Prefab；关闭或隐藏窗口后向下寻找仍显示的模态窗口，最后一窗关闭后脱离场景复用 |
 
 弹窗只在页面注册的ViewSpec设置modal，不再在各Prefab添加蒙版或ModalLayer绑定。省略modal表示不拦截外部；`{mask:false,closeOnOutside:true}`使用透明拦截；`{mask:true,closeOnOutside:true}`显示共享蒙版并点击空白关闭。closeOnOutside可独立设为false，只阻挡外部点击。实际面板背景保留BlockInputEvents，不能给只承载坐标的大节点盲加阻挡。叠窗始终共用一份节点，颜色不叠加。
 
-物品详情、资料、选服、技能、战报、产物说明及原有布阵/结算均使用共享层；关闭仍走各自既有生命周期，布阵空白关闭取消未保存草稿，结算释放和返回回调保持。GM与技能台为`{mask:true,closeOnOutside:false}`，继续只由原按钮关闭。本批专项、类型与本机限定预览已通过，三模式/叠窗、实际检查页面及边界见[当前证据](validation/shared-modal-widget-20261111.json)。[旧模态证据](validation/modal-layer-20261111.json)属于被取代的逐窗蒙版实现；本批未重建发布包，未实测窗口不沿用旧画面签收。
+物品详情、资料、选服、技能、战报、产物说明及原有布阵/结算均使用共享层；关闭仍走各自既有生命周期，布阵空白关闭取消未保存草稿，结算释放和返回回调保持。GM与技能台为`{mask:true,closeOnOutside:false}`，继续只由原按钮关闭。8cb60507基线的专项、类型与本机限定预览见[共享层证据](validation/shared-modal-widget-20261111.json)，不作为本批页面注册和列表事件改造的新验收。[旧模态证据](validation/modal-layer-20261111.json)属于被取代的逐窗蒙版实现；未实测窗口不沿用旧画面签收。
 
 framework/kit为空目录的残留meta已清理。safeAreaLayout目前只保留实际使用的640×1280设计坐标常量；旧安全区计算和调试函数没有调用，已删除，文件名不代表仍有另一套运行布局。
 
-背包、英雄列表及英雄详情现在都是完整Prefab，背景、纸面、页签和列表板直接保存于页面；HeroListView中的HeroBoard是静态子节点，HeroListBoardView组件仍负责绑定列表，数据继续读取唯一HeroRosterModel。ParchmentLayout、ccbiPlace、heroMount、heroChrome，以及PagePrefabShell、ListBackdrop、DimSheet和独立HeroListBoardView Prefab已退役，不再运行组装页面。当前保留96份Prefab（含场景共97份）；保留资产的原UUID不变，主动删除的废弃资产不再计入。
+背包、英雄列表及英雄详情都是完整Prefab，背景、纸面、页签和列表容器直接保存于页面；HeroBoard只保留静态容器与Widget，HeroListView直接处理列表事件并读取唯一HeroRosterModel。ParchmentLayout、ccbiPlace、heroMount/heroChrome及旧页面壳已退役；本批继续删除旧Campaign四份UI和PrefabLayout，以及失去资源绑定的Common*Shell样板链，不将暂停领域代码重新接回导航。仍用资产保留原UUID。
+
+虚拟列表已实现：滚动时根据Node到当前数据索引映射换绑，仅新进入或刷新条目派发渲染，不停止惯性；数据、视口、模板或几何变化才完整重排并保留合法位置。refresh(index)离屏时延迟到可见再画。1000/10000条六布局、锚点/缩放、resize及51项全量通过；本机850关首屏5节点、拖动和多次跳转后池保持7，背包、三英雄及真实第二关胜利奖励返回通过，见[本批限定证据](validation/virtual-list-resource-review-20261111.json)。不含变高或无限循环，不把节点池约束等同真机帧率或长期内存验收。
 
 固定布局和拉伸由Prefab的Widget维护；ViewportScale只计算`min(maxScale, 可用宽度/designWidth)`并缩放target，默认designWidth=640、maxScale=1。外根fitVisibleRoot仅把没有UITransform的LiveShell视口桥接到完整页面根，避免另加一套竞争根位置的全屏Widget；它不重排纸面、页签或列表，也不保存机型表。
 

@@ -138,7 +138,7 @@ export class UIManager {
     }
 
     /**
-     * 打开已注册视图；Page准备成功且意图有效后才交给导航，其他层挂到对应宿主。
+     * 打开已注册视图；先等@view.prepare的配置，再按唯一地址取得Prefab，Page意图有效后才交给导航。
      * Popup按ViewSpec共享模态。失败会清理本次实例并提示；取消仅清理，保留当前页面。
      */
     async open<T>(ctor: ViewClass<T>, args?: T): Promise<BaseView<T>> {
@@ -153,6 +153,12 @@ export class UIManager {
             const existing = this.top(spec.id);
             if (existing && this.nav.current === spec.id) {
                 const started = monoNow();
+                if (spec.prepare) {
+                    await spec.prepare();
+                }
+                if (!existing.host.isValid || this.top(spec.id) !== existing || this.nav?.current !== spec.id) {
+                    throw new OpenCancelled();
+                }
                 existing.view.runOpen(args);
                 await existing.view.whenReady();
                 this.noteOpened(existing.view, spec, started);
@@ -411,6 +417,12 @@ export class UIManager {
                 alive.spec = spec;
                 this.raiseResident(alive);
                 try {
+                    if (spec.prepare) {
+                        await spec.prepare();
+                    }
+                    if (alive.cancelled || !alive.host.isValid) {
+                        throw new OpenCancelled();
+                    }
                     alive.view.runOpen(args);
                     await alive.view.whenReady();
                     if (alive.cancelled || !alive.host.isValid) {
@@ -457,12 +469,7 @@ export class UIManager {
         let viewNode: Node | null = null;
         let page: ResidentPage | null = null;
         try {
-            let prefab: Prefab;
-            try {
-                prefab = spec.load ? await spec.load() : await loadPrefab(spec.prefab);
-            } catch (error) {
-                throw new Error(spec.prefab + " " + messageOf(error));
-            }
+            const prefab = await this.loadViewPrefab(spec, () => this.ensureResident(spec.id, epoch));
             this.ensureResident(spec.id, epoch);
             if (!parent.isValid) {
                 throw new Error("页面已关");
@@ -714,7 +721,7 @@ export class UIManager {
         const token = this.issue(spec.id);
         let view: BaseView<unknown> | null = null;
         try {
-            view = await this.mount(shell, ctor, spec, args);
+            view = await this.mount(shell, ctor, spec, args, () => this.ensureCurrent(token, spec.id, origin));
             this.noteOpened(view, spec, started);
             this.ensureCurrent(token, spec.id, origin);
             if (!shell.isValid || !view.node || !view.node.isValid) throw new Error("页面已关");
@@ -732,6 +739,10 @@ export class UIManager {
         const token = this.issue(spec.id);
         const started = monoNow();
         try {
+            if (spec.prepare) {
+                await spec.prepare();
+            }
+            this.ensureCurrent(token, spec.id, origin);
             page.host.active = true;
             page.view.runOpen(args);
             await page.view.whenReady();
@@ -799,14 +810,25 @@ export class UIManager {
         return err instanceof Error ? err : new Error(messageOf(err));
     }
 
-    /** 挂载前由页面宿主持有预制体；异步准备、显示和实例缓存期间均保护依赖。 */
-    private async mount(shell: Node, ctor: ViewClass<unknown>, spec: ViewSpec, args: unknown): Promise<BaseView<unknown>> {
-        let prefab: Prefab;
+    /** 先准备页面配置，再按唯一地址加载Prefab；配置等待期间取消则不继续下载或挂载。 */
+    private async loadViewPrefab(spec: ViewSpec, validate: () => void): Promise<Prefab> {
         try {
-            prefab = spec.load ? await spec.load() : await loadPrefab(spec.prefab);
-        } catch (err) {
-            throw new Error(spec.prefab + " " + messageOf(err));
+            if (spec.prepare) {
+                await spec.prepare();
+            }
+            validate();
+            return spec.load ? await spec.load() : await loadPrefab(spec.prefab);
+        } catch (error) {
+            if (isOpenCancelled(error)) {
+                throw error;
+            }
+            throw new Error(spec.prefab + " " + messageOf(error));
         }
+    }
+
+    /** 挂载前由页面宿主持有预制体；配置前置条件由@view声明，异步准备、显示和实例缓存期间均保护依赖。 */
+    private async mount(shell: Node, ctor: ViewClass<unknown>, spec: ViewSpec, args: unknown, validate: () => void): Promise<BaseView<unknown>> {
+        const prefab = await this.loadViewPrefab(spec, validate);
         if (!shell.isValid) throw new Error("页面已关");
         retainPrefabForNode(prefab, shell);
         const viewNode = spec.mount ? await spec.mount(shell, prefab) : spawnPrefab(prefab, shell);
@@ -826,7 +848,7 @@ export class UIManager {
 
     /**
      * whenReady 已经兑现（finishOpen）才打打开行。
-     * 新开从 openNew 进入，含预制加载和 runOpen。再次打开从 runOpen 量到 whenReady。
+     * 新开从openNew进入，含配置准备、预制加载和runOpen；再次打开同样从配置准备量到whenReady。
      * 加载失败、取消、whenReady 拒绝都不打这行。
      */
     private noteOpened(view: BaseView<unknown>, spec: ViewSpec, started: number): void {

@@ -1,11 +1,22 @@
 /** 选服弹窗：UIManager 管理生命周期，SuperScroll 管理区域和服务器列表；只转交选择，不发登录协议。 */
-import { _decorator, Button, Node, view } from "cc";
+import { _decorator, Button, Node, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { ancestorScale } from "../../../framework/ui/visibleFit";
 import type { ServerSelection, GameServer } from "../ServerSelection";
 import { ServerCellView } from "./ServerCellView";
 const { ccclass, property } = _decorator;
+@view({
+    id: "server-picker",
+    prefab: "bundles/module/login/prefabs/ServerPickerView",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "remake-modal",
+    modal: { mask: true, closeOnOutside: true },
+})
 @ccclass("ServerPickerView")
 export class ServerPickerView extends BaseView<ServerSelection> {
     /** 关闭按钮，由统一窗口管理器关闭弹窗。 */
@@ -37,8 +48,8 @@ export class ServerPickerView extends BaseView<ServerSelection> {
                 closeNode.off(Button.EventType.CLICK, dismiss);
             }
         });
-        view.on("canvas-resize", this.fit, this);
-        this.stops.push(() => view.off("canvas-resize", this.fit, this));
+        ccView.on("canvas-resize", this.fit, this);
+        this.stops.push(() => ccView.off("canvas-resize", this.fit, this));
         this.stops.push(selection.subscribe(() => this.paint()));
         this.fit();
         this.paint();
@@ -46,7 +57,7 @@ export class ServerPickerView extends BaseView<ServerSelection> {
 
     /** 适配窗口整体比例与位置，列表格子交给SuperScroll，共享模态由UIManager独立适配。 */
     private fit(): void {
-        const { width, height } = view.getVisibleSize();
+        const { width, height } = ccView.getVisibleSize();
         const scale = Math.min(width * 0.94 / 614, height * 0.86 / 798);
         this.node.setScale(scale / ancestorScale(this.node), scale / ancestorScale(this.node), 1);
         this.node.setPosition(-307 * scale, -399 * scale, 0);

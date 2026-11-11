@@ -36,7 +36,8 @@ export class BattleDetailCell extends Component {
             kind: "owned", name: template?.name || "英雄 " + row.unit.templateId,
             showName: false, face: BattleStatisticsUtils.portrait(row.unit) ?? template?.icon ?? null, elem: template?.elem || null,
             stars: 0, level: row.unit.level, locked: false, deployed: false,
-        }, null);
+        });
+        this.hero.button!.interactable = false;
         this.starView.show(row.unit.star);
         this.paint(this.damageText, this.damageFill, row.damage);
         this.paint(this.takenText, this.takenFill, row.taken);

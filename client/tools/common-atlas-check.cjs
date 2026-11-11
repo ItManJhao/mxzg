@@ -6,7 +6,11 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
+const { resolveAssetPath, resolveBundleFile } = require('../../tools/bundle-paths.cjs');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/common-static-migration-20261110.json')));
+/** 历史迁移证据中的旧页面已按当前范围退役；只允许跳过本批有明确删除记录的引用。 */
+const cleanup = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/current-resource-scope-cleanup-20261111.json')));
+const retiredPrefabs = new Set(cleanup.removed.prefabs.map(row => row.path));
 
 /** 读取文件摘要，检测迁移期间像素和九宫格等meta设置是否改变。 */
 function hash(file) {
@@ -15,19 +19,24 @@ function hash(file) {
 
 assert.equal(manifest.rows.length, 7);
 for (const row of manifest.rows) {
-    const file = path.join(root, row.path);
+    const file = resolveAssetPath(row.path);
     assert.equal(hash(file), row.imageSha256, row.name + ' 图片变化');
     assert.equal(hash(file + '.meta'), row.metaSha256, row.name + ' meta变化');
     assert(!fs.existsSync(path.join(root, row.oldPath)), row.name + ' 旧路径仍留副本');
     assert(!fs.existsSync(path.join(root, row.oldPath + '.meta')), row.name + ' 旧meta仍留副本');
     for (const prefab of row.references) {
-        assert(fs.readFileSync(path.join(root, prefab), 'utf8').includes(row.uuid), prefab + ' 原绑定丢失');
+        const target = resolveAssetPath(prefab, { optional: true });
+        if (!target) {
+            assert(retiredPrefabs.has(prefab), prefab + ' 既未保留也没有明确退役证据');
+            continue;
+        }
+        assert(fs.readFileSync(target, 'utf8').includes(row.uuid), prefab + ' 原绑定丢失');
     }
 }
 for (const name of ['button_btn-close-1', 'win-bg_block-bg-5', 'backpack_spr-default', 'button_btn-tab-23', 'button_btn-tab-24', ...Array.from({ length: 7 }, (_, index) => 'other_rare-' + index)]) {
-    assert(fs.existsSync(path.join(root, 'client/assets/bundles/common/ui', name + '.png')), name + ' 动态或登录路径被改动');
+    resolveBundleFile('common/ui/' + name + '.png');
 }
-const atlas = JSON.parse(fs.readFileSync(path.join(root, manifest.atlas + '.meta')));
+const atlas = JSON.parse(fs.readFileSync(resolveAssetPath(manifest.atlas + '.meta')));
 assert.equal(atlas.importer, 'auto-atlas');
 assert.equal(atlas.userData.allowRotation, false);
 console.log('common静态迁移通过：7张原图/meta、跨模块原UUID绑定、登录和动态路径保留。');

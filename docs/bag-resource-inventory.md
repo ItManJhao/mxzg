@@ -1,10 +1,10 @@
 # 背包当前界面资源归属清单
 
-核对：2026-11-11。覆盖 BagView、BagInfoView、BagTabView 和共用 BagItemView 的18张直接图片绑定。表中目录相对 client/assets/bundles，描述当前 Prefab 指向；同名资源不能据文件名直接替换或删除。原始图片/引用扫描见[历史清单](validation/bag-resource-inventory-20261110.json)，当前 Bundle 验收见[构建证据](validation/bundles-auto-build-20261111.json)。
+目录更新：2026-11-12。覆盖 BagView、BagInfoView、BagTabView 和共用 BagItemView 的18张直接图片绑定。表中“归属”使用Bundle名/包内路径，物理目录另见下方resources/module树；两者不混用。同名资源不能据文件名直接替换或删除。“其他预制体”来自[原始引用扫描](validation/bag-resource-inventory-20261110.json)，部分已退役，仅供追溯；[旧构建证据](validation/bundles-auto-build-20261111.json)不能充当本次分组后的构建验收。
 
 ## 静态绑定（18张）
 
-| 图片 | 背包使用位置 | 归属 | 其他预制体引用举例 |
+| 图片 | 背包使用位置 | Bundle逻辑归属 | 历史其他预制体引用举例 |
 |---|---|---|---|
 | backpack_900001.png | BagInfoView | icons/item | CampaignView、MainChapterView、ChapterPreviewLayer |
 | backpack_item-frame-1.png | BagInfoView | common/atlas | InfoCard、HeroInfoUpStarLayer |
@@ -34,15 +34,15 @@
 
 ## 当前目录与维护边界
 
-    assets/bundles/bag/prefabs/       BagView、BagInfoView、BagTabView
-    assets/bundles/bag/atlas/         详情分隔线、BagAtlas.pac
-    assets/bundles/bag/background/    当前背包背景
-    assets/bundles/common/prefabs/    共用BagItemView
-    assets/bundles/common/item-atlas/ 共用选中图、CommonAtlas.pac
-    assets/bundles/common/atlas/      7张共用静态图、CommonAtlas.pac
-    assets/bundles/common/ui/         动态共用图
-    assets/bundles/icons/item/        物品内容图标
-    assets/bundles/spine/             骨骼与附件
+    assets/bundles/module/bag/prefabs/       BagView、BagInfoView、BagTabView
+    assets/bundles/module/bag/atlas/         详情分隔线、BagAtlas.pac
+    assets/bundles/module/bag/background/    当前背包背景
+    assets/bundles/module/common/prefabs/    共用BagItemView
+    assets/bundles/module/common/item-atlas/ 共用选中图、CommonAtlas.pac
+    assets/bundles/module/common/atlas/      7张共用静态图、CommonAtlas.pac
+    assets/bundles/module/common/ui/         动态共用图
+    assets/bundles/resources/icons/item/        物品内容图标
+    assets/bundles/resources/spine/             骨骼与附件
 
 原顶层 ui、resources、prefabs 已整合并移除。bag/ui 中仍保留旧背包分类素材，它们不全是当前四个资源预制体的直接依赖；没有静态引用也不能据此认定未使用，动态配置可能组合资源名。本页不是运行时加载或删除名单。
 

@@ -1,6 +1,6 @@
 [
   {
-    "path": "client/assets/bundles/hero/prefabs/AbilityInfoLayer.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/AbilityInfoLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -16,7 +16,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab",
+    "path": "client/assets/bundles/module/battle/prefabs/BattleDetailLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -55,7 +55,7 @@
     }
   },
   {
-    "path": "client/assets/bundles/battle/prefabs/BattleEditLayer.prefab",
+    "path": "client/assets/bundles/module/battle/prefabs/BattleEditLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -130,7 +130,7 @@
     }
   },
   {
-    "path": "client/assets/bundles/battle/prefabs/BattleReportLayer.prefab",
+    "path": "client/assets/bundles/module/battle/prefabs/BattleReportLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -146,7 +146,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/battle/prefabs/ChapterPreviewLayer.prefab",
+    "path": "client/assets/bundles/module/battle/prefabs/ChapterPreviewLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -185,7 +185,7 @@
     }
   },
   {
-    "path": "client/assets/bundles/battle/prefabs/ChapterRewardLayer.prefab",
+    "path": "client/assets/bundles/module/battle/prefabs/ChapterRewardLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y",
@@ -205,7 +205,7 @@
     "reason": "独立预览发现 360×800 的逻辑宽度 576 下原宽 640 裁切；根等比缩为 544 宽并按缩放后的尺寸居中，保留子节点、Mask 和 UUID。原点首次修正为 (-320,-520)，本轮再同步缩放与位置"
   },
   {
-    "path": "client/assets/bundles/common/prefabs/NpcTalkLayer.prefab",
+    "path": "client/assets/bundles/module/common/prefabs/NpcTalkLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -221,7 +221,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/HeroInfoTipsLayer.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/HeroInfoTipsLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -237,7 +237,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/HeroInfoUpgradeLayer.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/HeroInfoUpgradeLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -316,7 +316,7 @@
     }
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/HeroInfoUpStarLayer.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/HeroInfoUpStarLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -332,7 +332,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/HeroListView.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/HeroListView.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -348,7 +348,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/FormationView.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/FormationView.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -364,7 +364,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/HeroSkillInfoLayer.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/HeroSkillInfoLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -380,7 +380,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/HeroSuggestLayer.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/HeroSuggestLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -419,7 +419,7 @@
     }
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/HeroUpStarSelectLayer.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/HeroUpStarSelectLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -435,7 +435,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/HeroXSelectLayer.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/HeroXSelectLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -451,7 +451,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/IdleHeroSelectLayer.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/IdleHeroSelectLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -535,7 +535,7 @@
     }
   },
   {
-    "path": "client/assets/bundles/login/prefabs/ServerPickerView.prefab",
+    "path": "client/assets/bundles/module/login/prefabs/ServerPickerView.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -551,7 +551,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/login/prefabs/NoticeLayer.prefab",
+    "path": "client/assets/bundles/module/login/prefabs/NoticeLayer.prefab",
     "fields": [
       "root._lpos.x",
       "root._lpos.y"
@@ -859,7 +859,7 @@
     "reason": "页面根位置与 Bag 样板采用相同居中挂载约定，保留全部子节点锚点和局部坐标"
   },
   {
-    "path": "client/assets/bundles/login/prefabs/ServerPickerView.prefab",
+    "path": "client/assets/bundles/module/login/prefabs/ServerPickerView.prefab",
     "fields": [
       "scrollHost._components",
       "scrollPort._components",
@@ -868,7 +868,7 @@
     "reason": "把原运行时移动的 Mask 固定绑定到 ScrollView 视口，避免裁剪宿主位置错误"
   },
   {
-    "path": "client/assets/bundles/hero/prefabs/HeroListBoardView.prefab",
+    "path": "client/assets/bundles/module/hero/prefabs/HeroListBoardView.prefab",
     "fields": [
       "HeroScroll._components",
       "view._components",

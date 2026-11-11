@@ -8,16 +8,19 @@ import {
     tween, Tween, UIOpacity, UITransform, Vec3,
 } from "cc";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
+import type { BagItemData } from "../../bag/data/BagItemData";
 import { BagItemView } from "../../bag/ui/BagItemView";
 import { BagInfoArgs, BagInfoView } from "../../bag/ui/BagInfoView";
-import { viewSpecOf } from "../../../framework/ui/UIRegistry";
+import { view, viewSpecOf } from "../../../framework/ui/UIRegistry";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
+import { SuperContent } from "../../../framework/ui/SuperContent";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { GameLog } from "../../../core/GameLog";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
 import { mountNamedSpine } from "./battleSpine";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { BattleInfoUtils } from "../utils/BattleInfoUtils";
@@ -53,6 +56,15 @@ export interface ChapterEndArgs {
     onClosed?: () => void;
 }
 
+@view({
+    id: "chapter-end",
+    prefab: "bundles/module/battle/prefabs/ChapterEndView",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "remake-modal",
+    modal: { mask: true, closeOnOutside: true },
+})
 @ccclass("ChapterEndView")
 export class ChapterEndView extends BaseView<ChapterEndArgs> {
     /** 旧 640×400 主体，负责入场缩放与淡入。 */
@@ -95,6 +107,8 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
     private experienceTick = 0;
     /** 本页加载的同源等级门槛，键为等级、值为升级所需经验；仅跨级动画读取。 */
     private experienceThresholds = new Map<number, number>();
+    /** 本窗口奖励的只读显示索引，打开有奖励时创建，关闭清空；不持有库存。 */
+    private rewardCatalog: BagItemCatalog | null = null;
 
     /** 绑定确认关闭并异步准备表现；原空白关闭由ViewSpec共享模态转交，不请求结算。 */
     public onOpen(args?: ChapterEndArgs): void {
@@ -107,6 +121,17 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.released = false;
         if (args.persistentChapter && args.won) {
             this.bindMainVictory();
+        }
+        if (this.rewardScroll) {
+            const content = this.rewardScroll.list.node;
+            content.on(SuperContent.RENDER_ITEM, this.onRewardRender, this);
+            content.on(SuperContent.SELECT_ITEM, this.onRewardSelect, this);
+            this.ownListener(() => {
+                if (content.isValid) {
+                    content.off(SuperContent.RENDER_ITEM, this.onRewardRender, this);
+                    content.off(SuperContent.SELECT_ITEM, this.onRewardSelect, this);
+                }
+            });
         }
         bindVisibleRefresh(this.node, () => this.fitViewport());
         this.victoryCountdown = !!args.persistentChapter && args.won && (args.rewards?.length || 0) > 0;
@@ -208,30 +233,37 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             return;
         }
         this.rewardScroll.validateBindings();
-        const catalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item), GameConfig.instance.getFile(GConfig.Language));
-        this.rewardScroll.list.setData(rewards, (node, reward) => {
-            const cell = node.getComponent(BagItemView);
-            if (!cell) {
-                GameLog.shared.classified("MODULE", "error", "ChapterEndView", "奖励格子缺少BagItemView");
-                return;
-            }
-            const face = catalog.face(reward.itemId, reward.quantity);
-            cell.show(reward, false, () => {
-                if (this.released) {
-                    return;
-                }
-                const args: BagInfoArgs = {
-                    source: "description",
-                    face: { ...face, typeLine: "本次获得：" + reward.quantity },
-                };
-                void UIManager.instance.open(BagInfoView, args).then(info => {
-                    if (!this.released) {
-                        info.runOpen(args);
-                    }
-                }).catch(() => { /* 加载失败或取消由 UIManager 统一处理。 */ });
-            }, face);
-        });
+        this.rewardCatalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item), GameConfig.instance.getFile(GConfig.Language));
+        this.rewardScroll.list.setData(rewards);
         this.rewardScroll.toStart();
+    }
+
+    /** 奖励列表创建或复用格子时只绘制当前回执条目，不传页面回调。 */
+    private onRewardRender(node: Node, reward: Readonly<BagItemData>): void {
+        if (this.released) {
+            return;
+        }
+        const cell = node.getComponent(BagItemView);
+        if (!cell || !this.rewardCatalog) {
+            throw new Error("奖励格子组件或显示配置缺失");
+        }
+        cell.show(reward, false, this.rewardCatalog.face(reward.itemId, reward.quantity));
+    }
+
+    /** 选择本次回执中的当前奖励打开只读说明，展示本次数量，不读取或修改库存。 */
+    private onRewardSelect(reward: Readonly<BagItemData>): void {
+        if (this.released || !this.rewardCatalog) {
+            return;
+        }
+        const args: BagInfoArgs = {
+            source: "description",
+            face: { ...this.rewardCatalog.face(reward.itemId, reward.quantity), typeLine: "本次获得：" + reward.quantity },
+        };
+        void UIManager.instance.open(BagInfoView, args).then(info => {
+            if (!this.released) {
+                info.runOpen(args);
+            }
+        }).catch(() => { /* 加载失败或取消由UIManager统一处理。 */ });
     }
 
     /** 预载胜负音频；真实主线胜利使用旧14帧光效与双音源，失败不播放胜利光效。 */
@@ -417,6 +449,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         }
         this.frames = [];
         this.experienceThresholds.clear();
+        this.rewardCatalog = null;
         if (this.panel?.isValid) {
             Tween.stopAllByTarget(this.panel);
             const opacity = this.panel.getComponent(UIOpacity);

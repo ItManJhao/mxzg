@@ -6,6 +6,7 @@ import re
 import tempfile
 from pathlib import Path
 from PIL import Image
+from bundle_paths import bundle_asset_path
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('atlas', ROOT / 'client/tools/extract_pvr_atlas.py')
@@ -37,7 +38,7 @@ def main():
             assert (w, h) == (pw, ph)
             expected = Image.new('RGBA', (sw, sh))
             expected.paste(source.crop((x, y, x + w, y + h)), (px, py))
-            actual = Image.open(ROOT / 'client/assets/bundles/battle/effects/skill' / name / key.replace('/', '_')).convert('RGBA')
+            actual = Image.open(bundle_asset_path('battle', 'effects/skill/' + name + '/' + key.replace('/', '_'))).convert('RGBA')
             assert actual.size == expected.size and actual.tobytes() == expected.tobytes(), key
             total += 1
     print(f'PASS {total}帧与旧图集sourceColorRect逐像素一致；Y偏移、半像素及alpha不重复叠加')

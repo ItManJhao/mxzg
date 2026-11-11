@@ -1,16 +1,16 @@
 # Prefab 编辑与审查
 
-更新：2026-11-11。当前保留96份Prefab，含Remake场景共97份；资源统一位于assets/bundles，各模块页面放在模块内prefabs目录。当前功能与本批共享模态/布局复验状态见[开发进度](development-progress.md)，结构审查见[prefab-review.json](prefab-review.json)。保留资源及静态检查通过不等于对应玩法开放或负责人Inspector签收。
+更新：2026-11-11。本批保留32份Prefab，已清理64份旧Prefab；15个Bundle与31张配置依赖审计完成，见[prefab-review.json](prefab-review.json)及[资源清理记录](validation/current-resource-scope-cleanup-20261111.json)。前批96份是历史基线。本批51项、类型及本机限定复验通过，4份Prefab按实际范围更新记录，旧证据归档；未操作Inspector，尚未重建新发布包。详见[本批复验](validation/virtual-list-resource-review-20261111.json)。
 
-修改静态布局直接编辑对应完整Prefab，保留仍用资产的meta UUID与组件绑定；列表使用SuperScroll/SuperContent的Inspector参数。背包、英雄列表及英雄详情已静态保存背景、纸面、页签和列表板，不再运行组装；HeroBoard是HeroListView内的静态节点，HeroListBoardView组件继续绑定列表，独立同名Prefab已退役。
+修改静态布局直接编辑对应完整Prefab，保留仍用资产UUID与绑定；背包、英雄及详情的背景/纸面/列表容器保存为静态节点，HeroBoard只保留容器和Widget。英雄、背包、产物说明及胜利奖励已统一列表事件；本批又精简未实现按钮及旧资源，不能沿用[前批页面证据](validation/view-registration-list-review-20261111.json)的哈希或截图签收新实现。
 
-固定布局由Widget维护，ViewportScale仅对target按`min(maxScale, 可用宽度/designWidth)`等比缩放，默认designWidth=640、maxScale=1。外根fitVisibleRoot只桥接没有UITransform的LiveShell视口，内容位置和纵向拉伸仍在Prefab编辑，不再按页面名或机型表重排。ParchmentLayout、ccbiPlace、heroMount/heroChrome及PagePrefabShell/ListBackdrop/DimSheet均已退役；旧战斗结果仍用的PrefabLayout辅助不扩大到这些完整页面。
+固定布局由Widget维护，ViewportScale按可用宽度统一缩放target，外根fitVisibleRoot只桥接LiveShell视口，不按页面或机型重排。SuperContent默认virtual=true、bufferLines=1，运行时逻辑总量与有限Cell节点池分开，原锚点/Cell正缩放保留；view/content局部缩放须1，祖先适配可用。数据/几何变化完整保位，滚动只换绑且不停止惯性；编辑器样板仍用原生Layout。旧ParchmentLayout、英雄组装链、页面壳及本批旧Campaign四份UI/PrefabLayout/Common*Shell样板链均退役。
 
-弹窗模态只在ViewSpec配置`{mask,closeOnOutside}`：省略不拦截、mask=false透明拦截、mask=true显示蒙版，是否空白关闭由closeOnOutside独立控制。UIManager动态共用一份节点，关闭后向下恢复；各Prefab不再放独立蒙版或绑定ModalLayer，只在实际内容背景保留BlockInputEvents。布阵/结算维持原关闭流程，GM/技能台mask=true、closeOnOutside=false。旧逐窗蒙版画面证据只作历史，本批三模式及相关页面限定预览见[当前证据](validation/shared-modal-widget-20261111.json)，不代表全机型或发布包验收。
+弹窗模态只在ViewSpec配置`{mask,closeOnOutside}`：省略不拦截、mask=false透明拦截、mask=true显示蒙版，是否空白关闭由closeOnOutside独立控制。UIManager共用一份动态节点，Prefab只在实际内容背景保留BlockInputEvents；布阵/结算原关闭流程、GM/技能台仅按钮关闭保持。三模式及相关页面的[8cb60507基线证据](validation/shared-modal-widget-20261111.json)保留原限定范围，不作为本批资源精简与虚拟化的画面验收。
 
 ## 历史画面与结构记录
 
-以下保留2026-11-02的局部验收、旧目录和阶段方案，仅供追溯。记录中的“当前”“本批”及后续安排只针对当时；旧Campaign/Idle/普通升级链后来已暂停，不能据此恢复HTTP、领取或养成入口，也不把当时90份资源数量写成当前96份的验收范围。
+以下保留2026-11-02的局部验收、旧目录和阶段方案，仅供追溯。记录中的“当前”“本批”、资源数量与后续安排只针对当时；部分资源已在本批清理，旧Campaign/Idle/普通升级链仍暂停，不能据旧证据恢复HTTP、领取或养成入口，也不能将历史画面算作当前保留范围的新验收。
 
 ## 历史：2026-11-02 战场窄屏显示复验
 

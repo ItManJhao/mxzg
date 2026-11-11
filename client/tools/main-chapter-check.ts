@@ -1,11 +1,18 @@
 /** 主线客户端回归：初始化、历史回执不倒退资产、未知结果原键重试、身份切换不被旧请求复活。 */
 import { MainChapterHeroTalk } from "../assets/scripts/features/battle/ui/MainChapterHeroTalk";
+
+/** 离线展示帧按Bundle的实际meta目录读取，客户端仍用原包名/包内路径。 */
+const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
 import { IdleChestUtils } from "../assets/scripts/features/battle/utils/IdleChestUtils";
 import { ChapterRewardInfoUtils } from "../assets/scripts/features/battle/utils/ChapterRewardInfoUtils";
+import { ChapterRewardInfoCell } from "../assets/scripts/features/battle/ui/ChapterRewardInfoCell";
+import { BagItemCatalog } from "../assets/scripts/features/bag/utils/BagItemCatalog";
+import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
+import { SuperContent, SuperLayout } from "../assets/scripts/framework/ui/SuperContent";
 import { MainChapterIdleDisplay } from "../assets/scripts/features/battle/ui/MainChapterIdleDisplay";
 import { HeroTalkUtils } from "../assets/scripts/features/battle/utils/HeroTalkUtils";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
-import { Node, Tween, UITransform, view as screenView } from "cc";
+import { Button, Label, Mask, Node, Prefab, SpriteFrame, Tween, UITransform, view as screenView } from "cc";
 import { MainChapterView } from "../assets/scripts/features/battle/ui/MainChapterView";
 import { BagItemView } from "../assets/scripts/features/bag/ui/BagItemView";
 import { MainChapterBattleView } from "../assets/scripts/features/battle/ui/MainChapterBattleView";
@@ -34,10 +41,90 @@ const latest = { maxCleared: 2, assetRevision: 8 };
 function frame(name: string, body: unknown, kind = "response"): GameFrame {
     return decodeGameFrame(encodeGameFrame({ version: 1, name, kind, ...(kind === "response" ? {ok: true} : {}), body }));
 }
+
+/** 构造物品格行为替身，真实页面布局及资源绑定另由Prefab专项检查。 */
+function rewardItemNode(): Node {
+    const node = new Node("RewardItem");
+    node.addComponent(UITransform).setContentSize(96, 96);
+    const cell = node.addComponent(BagItemView);
+    cell.emptyFrame = new SpriteFrame();
+    cell.button = node.addComponent(Button);
+    cell.frame = new Node("Frame");
+    cell.frame.parent = node;
+    cell.frame.addComponent(Sprite);
+    cell.icon = new Node("Icon");
+    cell.icon.parent = node;
+    cell.icon.addComponent(Sprite);
+    cell.count = new Node("Count").addComponent(Label);
+    cell.count.node.parent = node;
+    cell.selectMark = new Node("Selected");
+    cell.selectMark.parent = node;
+    return node;
+}
+
+/** 产物行复用后选择当前关卡物品，停用解除内部事件，重新显示不叠加详情入口。 */
+function checkRewardRowEvents(): void {
+    const owner = new Node("StageContent");
+    const node = new Node("RewardRow");
+    node.parent = owner;
+    const row = node.addComponent(ChapterRewardInfoCell);
+    row.title = new Node("StageTitle").addComponent(Label);
+    row.title.node.parent = node;
+    const scrollNode = new Node("Items");
+    scrollNode.parent = node;
+    scrollNode.addComponent(UITransform).setContentSize(192, 96);
+    row.items = scrollNode.addComponent(SuperScroll);
+    const port = new Node("view");
+    port.parent = scrollNode;
+    port.addComponent(UITransform).setContentSize(192, 96);
+    port.addComponent(Mask);
+    const content = new Node("content");
+    content.parent = port;
+    content.addComponent(UITransform).setContentSize(192, 96);
+    row.items.content = content;
+    const list = content.addComponent(SuperContent);
+    list.layoutType = SuperLayout.Horizontal;
+    const prefab = new Prefab() as Prefab & { _instantiate: () => Node };
+    prefab.data = rewardItemNode();
+    prefab._instantiate = rewardItemNode;
+    list.cellPrefab = prefab;
+    row.items.onEnable();
+    const catalog = new BagItemCatalog(JSON.parse(readFileSync("client/assets/bundles/resources/config/item.json", "utf8")),
+        JSON.parse(readFileSync("client/assets/bundles/resources/config/language.json", "utf8")));
+    const picked: number[] = [];
+    owner.on(ChapterRewardInfoCell.ITEM_SELECTED, (id: number) => picked.push(id));
+    const original = ResManager.setSprite;
+    ResManager.setSprite = () => {};
+    try {
+        row.bind(1, [900401, 900001], catalog);
+        content.children[0].emit(Button.EventType.CLICK);
+        assert.deepEqual(picked, [900401]);
+        row.items.restorePosition({ x: 96, y: 0 } as any);
+        row.bind(850, [900001], catalog);
+        assert.equal(row.title.string, "关卡850");
+        assert.equal(row.items.readPosition().x, 0, "行复用重置横向起点");
+        content.children[0].emit(Button.EventType.CLICK);
+        assert.deepEqual(picked, [900401, 900001], "复用后的点击只读取当前物品");
+        (row as any).onDisable();
+        content.emit(SuperContent.SELECT_ITEM, 900401);
+        assert.equal(picked.length, 2, "隐藏行不再向页面报告物品选择");
+        row.bind(2, [900401], catalog);
+        content.children[0].emit(Button.EventType.CLICK);
+        assert.deepEqual(picked, [900401, 900001, 900401], "重新显示只登记一次选择");
+        (row as any).onDisable();
+        (row as any).onEnable();
+        content.children[0].emit(Button.EventType.CLICK);
+        assert.deepEqual(picked, [900401, 900001, 900401, 900401], "同一行临时停用后恢复当前数据和单次选择");
+    } finally {
+        (row as any).onDisable();
+        ResManager.setSprite = original;
+        owner.destroy();
+    }
+}
 /** 只测试当前模块；完整资产绑定另由session-state回归覆盖。 */
 async function main(): Promise<void> {
     const rewardInfo = ChapterRewardInfoUtils.rows(JSON.parse(readFileSync(
-        "client/assets/bundles/config/chapterreward.json", "utf8")));
+        "client/assets/bundles/resources/config/chapterreward.json", "utf8")));
     assert.equal(rewardInfo.length, 850, "说明配置投影不得静默截断旧关卡");
     assert.deepEqual(rewardInfo[0].firstItems, [900401, 900001, 900003, 900101, 900102, 20204004, 1004001]);
     assert.deepEqual(rewardInfo[0].idleItems, [900001, 900003, 900101, 900002, 900102, 20005000, 1001001, 2000001]);
@@ -47,6 +134,7 @@ async function main(): Promise<void> {
     assert.deepEqual(ChapterRewardInfoUtils.rows({ rows: [duplicateItems] })[0].firstItems, [1, 1]);
     assert.throws(() => ChapterRewardInfoUtils.rows({ rows: [duplicateItems, duplicateItems] }));
     assert.throws(() => ChapterRewardInfoUtils.rows({ rows: [{ ...duplicateItems, reward_unique: null }] }));
+    checkRewardRowEvents();
     // 旧版先取整百分比；2.9%仍属于第一档，不能提前升级宝箱。
     for (const [seconds, expected] of [[0, 1], [20, 1], [29, 1], [30, 2],
         [50, 2], [59, 2], [60, 3], [100, 3], [109, 3], [110, 4], [1000, 4]]) {
@@ -67,7 +155,7 @@ async function main(): Promise<void> {
     assert.equal(lastFlight.length, 12);
     assert.deepEqual(firstFlight[0], { icon: 0, order: 1000, scale: 0.605, x: -49, y: -49, scaleSeconds: 0.905 });
     assert.deepEqual(lastFlight[0], { icon: 3, order: 10000, scale: 0.8, x: 50, y: 50, scaleSeconds: 1 });
-    const chestResource = JSON.parse(readFileSync("client/assets/bundles/spine/res-block.json", "utf8"));
+    const chestResource = JSON.parse(readFileSync("client/assets/bundles/resources/spine/res-block.json", "utf8"));
     for (const stage of [1, 2, 3, 4]) {
         assert(chestResource.animations["normal-" + stage], "宝箱档位必须有真实旧动画");
     }
@@ -118,7 +206,7 @@ async function main(): Promise<void> {
     idleRoot.destroy();
     borrowedSlot.destroy();
     // 用户阵容布鲁：从实际配置经过旧覆盖到资源解析，避免只测固定验收英雄漏掉正常遇敌。
-    const buffRows = JSON.parse(readFileSync("client/assets/bundles/config/buff.json", "utf8")).rows;
+    const buffRows = JSON.parse(readFileSync("client/assets/bundles/resources/config/buff.json", "utf8")).rows;
     for (const id of [3011101, 3011102, 3011103]) {
         const row = buffRows.find((value: { idx: number }) => value.idx === id);
         const actions = BattleAttackUtils.legacyActions(row);
@@ -143,7 +231,7 @@ async function main(): Promise<void> {
             assert.equal(plan.effect!.anchorX, 0.4);
         }
         for (const path of plan.effect!.paths) {
-            readFileSync("client/assets/bundles/" + path.replace("/spriteFrame", ".png"));
+            readFileSync(resolveBundleFile(path.replace("/spriteFrame", ".png")));
         }
     }
     assert.equal(BattleInfoUtils.mainChapterSkipVisible(), false, "旧主线配置禁止展示跳过，不能套用等级50条件直接开放");
@@ -263,7 +351,7 @@ async function main(): Promise<void> {
     assert.equal(portraitUnit.portraitIconId, 20101001);
     assert.ok(BattleStatisticsUtils.portrait(portraitUnit)?.endsWith("hero-icon_20101001"));
     assert.equal(BattleStatisticsUtils.portrait(oldUnits[0]), null);
-    const evolutionRows = JSON.parse(readFileSync("client/assets/bundles/config/heroevolvelevel.json", "utf8")).rows;
+    const evolutionRows = JSON.parse(readFileSync("client/assets/bundles/resources/config/heroevolvelevel.json", "utf8")).rows;
     for (const row of evolutionRows) assert.ok(ResManager.portrait(row.evolve_icon_id), "进化头像必须收录：" + row.evolve_icon_id);
     assert.equal(BattleStatisticsUtils.stars(6).row, 5);
     assert.equal(BattleStatisticsUtils.stars(9).row, 8);
@@ -305,8 +393,8 @@ async function main(): Promise<void> {
     const ranked = [{ ...oldUnits[0], totalDamage: 70 }, { ...oldUnits[0], unitId: 3, totalDamage: 70 },
         { ...oldUnits[1], totalDamage: 999 }];
     assert.equal(ChapterSettlementUtils.highestDamage(ranked)!.unitId, 1, "同伤害保持名册顺序且不选敌方");
-    const appearanceSkins = JSON.parse(readFileSync("client/assets/bundles/config/skin.json", "utf8")).rows;
-    const appearanceEvolutions = JSON.parse(readFileSync("client/assets/bundles/config/heroevolvelevel.json", "utf8")).rows;
+    const appearanceSkins = JSON.parse(readFileSync("client/assets/bundles/resources/config/skin.json", "utf8")).rows;
+    const appearanceEvolutions = JSON.parse(readFileSync("client/assets/bundles/resources/config/heroevolvelevel.json", "utf8")).rows;
     assert.equal(ChapterSettlementUtils.historicalSpine(null, appearanceSkins, appearanceEvolutions), null);
     assert.equal(ChapterSettlementUtils.historicalSpine(99999999, appearanceSkins, appearanceEvolutions), null);
     assert.equal(ChapterSettlementUtils.historicalSpine(20104004, appearanceSkins, appearanceEvolutions), "10104004");
@@ -315,7 +403,7 @@ async function main(): Promise<void> {
     for (const row of appearanceEvolutions) {
         const stem = ChapterSettlementUtils.historicalSpine(row.evolve_icon_id, appearanceSkins, appearanceEvolutions);
         assert.equal(stem, String(row.evolve_fashion_id));
-        const skeleton = JSON.parse(readFileSync("client/assets/bundles/spine/" + stem + ".json", "utf8"));
+        const skeleton = JSON.parse(readFileSync("client/assets/bundles/resources/spine/" + stem + ".json", "utf8"));
         assert(skeleton.animations.stand, "历史进化骨骼必须具备stand动作：" + stem);
     }
     const statisticUnits = [
@@ -588,12 +676,12 @@ async function main(): Promise<void> {
         BattleReplayUtils.names = originalNames;
         shared.reset(null);
     }
-    const chapterPrefab = JSON.parse(readFileSync("client/assets/bundles/battle/prefabs/MainChapterView.prefab", "utf8"));
+    const chapterPrefab = JSON.parse(readFileSync("client/assets/bundles/module/battle/prefabs/MainChapterView.prefab", "utf8"));
     const chapterRoot = chapterPrefab[chapterPrefab[0].data.__id__];
     const children = chapterRoot._children.map((ref: any) => chapterPrefab[ref.__id__]._name);
     assert(children.indexOf("BattleHost") > children.indexOf("PalaceFloor"));
     assert(children.indexOf("BattleHost") < children.indexOf("Panel"), "战场必须位于底部面板之下");
-    const fieldPrefab = JSON.parse(readFileSync("client/assets/bundles/battle/prefabs/MainChapterBattleView.prefab", "utf8"));
+    const fieldPrefab = JSON.parse(readFileSync("client/assets/bundles/module/battle/prefabs/MainChapterBattleView.prefab", "utf8"));
     assert(!fieldPrefab.some((row: any) => row.__type__ === "cc.BlockInputEvents"), "页内战场不能阻断共享导航");
     assert(!fieldPrefab.some((row: any) => row._name === "PalaceBackground"), "全屏重复背景应退役");
     const realEncounter = MainChapterController.instance.encounter;

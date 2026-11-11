@@ -1,8 +1,12 @@
 /** 主线阵容页面：复用旧阵位和美术，SuperScroll绘制名册，所有写操作交给FormationController。 */
-import { _decorator, Button, Label, Node, UITransform, view } from "cc";
+import { _decorator, Button, Label, Node, UITransform, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
+import { prepareHeroConfig, prepareInventoryConfig } from "../../../config/RemakeConfig";
 import { ancestorScale } from "../../../framework/ui/visibleFit";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
+import { SuperContent } from "../../../framework/ui/SuperContent";
 import { HeroIconCellView } from "./HeroIconCellView";
 import { FormationSlotView } from "./FormationSlotView";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
@@ -25,6 +29,19 @@ export interface FormationRequest {
     closeAfterSave?: boolean;
 }
 
+@view({
+    id: "remake-formation",
+    prefab: "bundles/module/hero/prefabs/FormationView",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "remake-modal",
+    modal: { mask: true, closeOnOutside: true },
+    prepare: async () => {
+        await prepareInventoryConfig();
+        await prepareHeroConfig();
+    },
+})
 @ccclass("FormationView")
 export class FormationView extends BaseView<FormationRequest> {
     /** 关闭按钮，丢弃未保存草稿。 */
@@ -98,9 +115,12 @@ export class FormationView extends BaseView<FormationRequest> {
         if (!cell) throw new Error("FormationHeroCellView.prefab 缺少HeroIconCellView");
         cell.validateBindings();
         this.fit();
-        view.on("canvas-resize", this.fit, this);
+        ccView.on("canvas-resize", this.fit, this);
         this.catalog ??= new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
         this.bindControls();
+        const list = this.heroScroll!.list;
+        list.node.on(SuperContent.SELECT_ITEM, this.onSelect, this);
+        this.ownListener(() => list.node.off(SuperContent.SELECT_ITEM, this.onSelect, this));
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.onAssetsChanged);
         EventDispatcher.instance.on(FormationEvent.SaveChanged, this, this.onSaveChanged);
         this.reload();
@@ -109,7 +129,7 @@ export class FormationView extends BaseView<FormationRequest> {
 
     /** 只适配根窗口，列表尺寸归静态布局；共享遮罩由UIManager提供。 */
     private fit(): void {
-        const visible = view.getVisibleSize(), panel = this.panelBounds!;
+        const visible = ccView.getVisibleSize(), panel = this.panelBounds!;
         const scale = Math.min(visible.width * this.maxWidthRatio / panel.width, visible.height * this.maxHeightRatio / panel.height);
         const local = scale / ancestorScale(this.node);
         this.node.setScale(local, local, 1);
@@ -216,11 +236,13 @@ export class FormationView extends BaseView<FormationRequest> {
         const heroes = state.heroes.filter(hero => !this.elem || this.catalog!.find(hero.templateId)?.elem === this.elem);
         this.heroScroll!.list.setData(heroes, (node, hero) => {
             const face = this.catalog!.find(hero.templateId);
-            node.getComponent(HeroIconCellView)!.show({ kind: "owned", instanceId: hero.id,
+            const cell = node.getComponent(HeroIconCellView)!;
+            cell.show({ kind: "owned", instanceId: hero.id,
                 name: face?.name || String(hero.templateId), showName: false,
                 face: face?.icon || null, elem: face?.elem || null, level: hero.level, stars: hero.star, locked: false,
                 deployed: state.lineup.slots.some(slot => slot.heroId === hero.id),
-            }, state.busy ? null : () => this.toggle(hero.id));
+            });
+            cell.button!.interactable = !state.busy;
         });
         this.slots.forEach(slot => {
             const heroId = state.lineup.slots.find(row => row.position === slot.position)?.heroId;
@@ -229,6 +251,11 @@ export class FormationView extends BaseView<FormationRequest> {
             slot.show(state.openPositions?.includes(slot.position) === true, state.busy,
                 hero ? face?.name || String(hero.templateId) : null, face?.icon || null);
         });
+    }
+
+    /** 列表派发当前英雄实例；草稿可编辑性仍由toggle统一判断。 */
+    private onSelect(hero: FormationState["heroes"][number]): void {
+        this.toggle(hero.id);
     }
 
     /** 通知应用关闭，避免重复回调；不代表任何战斗或挑战已经启动。 */
@@ -241,7 +268,7 @@ export class FormationView extends BaseView<FormationRequest> {
 
     /** 释放视口监听和临时绘制引用；只清理本页按钮与事件，模块继续接收回执。 */
     public onClose(): void {
-        view.off("canvas-resize", this.fit, this);
+        ccView.off("canvas-resize", this.fit, this);
         this.closed = true;
         this.submitted = null;
         EventDispatcher.instance.offTarget(this);

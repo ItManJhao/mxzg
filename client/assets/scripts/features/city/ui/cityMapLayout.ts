@@ -100,7 +100,7 @@ export interface CityEffectSpot {
     frame: string | null;
     /** anim | spine */
     kind: string;
-    /** spine 资源 stem（bundles/spine/<stem>），仅 kind=spine */
+    /** spine 资源 stem（bundles/resources/spine/<stem>），仅 kind=spine */
     spine: string | null;
 }
 

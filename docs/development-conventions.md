@@ -1,6 +1,6 @@
 # 开发写法与阅读约定
 
-当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准（2026-11-11）：顶层ui/resources/prefabs已整合；旧构建去重数字仅是历史记录，1.6.2不再删除具有Bundle路径的原图。
+当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准（2026-11-11）：顶层ui/resources/prefabs已整合，本批仅保留当前实现模块依赖，未实现旧资源及无用途UI退役；源目录清理不等于新构建包体。旧构建去重数字仅是历史记录，1.6.2不删除具有Bundle路径的原图。
 
 本指南落实用户 2026-11-02 的要求：用现代技术使人能维护，完整还原 mxzg 旧游戏。游爱项目只提供写法和阅读习惯参考，不是内容来源。本文件定义代码阅读方式；职责和生命周期以 [架构](architecture.md) 为准，注释硬性要求以 [AGENTS.md](../AGENTS.md) 为准。
 
@@ -44,7 +44,7 @@
 | client/assets/scripts/platform | WebSocket、Protobuf 编解码与协议目录；不反向依赖功能 UI |
 | client/assets/scripts/core | 现有 GameLog 与通用错误辅助；不向此处堆业务 |
 | client/assets/scripts/config | 配置查询、生成类型及资源登记相关入口 |
-| client/assets/bundles | 静态界面和资源按模块/素材类别归包；bootstrap本地，其余远程，修改保留meta和引用 |
+| client/assets/bundles | resources父层放audio/config/font/icons/maps/spine，module父层放业务页面、common与bootstrap；父层不是Bundle，bootstrap本地，其余原包远程，修改保留meta和引用 |
 | backend/src/main/java/com/funsgamex/mxzg | auth、role、hero、inventory、lineup、campaign、server 等服务端功能包 |
 | config、tools | 根目录的配置来源/规范与生成审查工具；不与客户端运行时 config 混淆 |
 | client/tools、backend/src/test | 客户端与后端验证入口，不能把测试夹具接入玩家流程 |
@@ -87,7 +87,7 @@ View 的点击方法
 | XxxApi | 有实际需要时承载消息契约和边界校验 | 为一次调用叠加无用途 Service/Manager/Adapter |
 | XxxEvent | 有业务含义的事件名称与类型 | 散落字符串、无含义的通用 change/data 事件 |
 | ui/XxxView | 属性绑定、点击转交、显示状态、成对监听清理 | 直接读 token、修改钱包/库存、实现服务器规则 |
-| ui/XxxCellView | Cell 显示和点击、复用时清理/迟到资源隔离 | 持有整个模块业务流程 |
+| ui/XxxCellView | 只绘制Cell与处理异步图片有效性；列表选择事件交所属页面 | 保存页面导航回调、整个模块业务流程或第二份状态 |
 | data/ | 有独立用途的数据类型/校验 | 每个简单字段都拆一份文件 |
 
 采用完整名称，例如 HeroRosterController，而不是为模仿 SGCtrl 把现有类改成 HeroC、HeroM、HeroV。文件、类、Prefab 保持含义一致；更名必须同时检查 meta/UUID、动态路径、注册和工具引用。背包是本项目已落地的模块样板，游爱是阅读习惯参考，两者不构成两套冲突标准。
@@ -163,8 +163,9 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 ## 账号界面与窗口打开规范（2026-11-03 整理）
 
 - 独立业务窗口必须使用 BaseView、同名 Prefab、UIManager 注册与打开/关闭。不得在主城手动 instantiate 角色弹窗、维护第二套 show/hide 和销毁逻辑。
+- 页面静态参数集中在各View的@view：id、Prefab地址、层级、缓存、模态及prepare配置前置不在ApplicationPages重复登记。prepare由UIManager实际开页时执行，阶段预加载只准备目标资源，不调用页面前置或实例化页面。UIRegistry.bindViewRuntime仅注入createController和确需变化的hostId，撤销后恢复页面定义；ApplicationPages只装配登录/主城Controller及宿主，ApplicationResources只调度LoadingPlan，不增加各页取址包装。
 - 模态在页面注册的ViewSpec设置`modal:{mask,closeOnOutside}`，仅用于Popup。省略表示不拦截外部；mask=false使用透明拦截，mask=true显示统一蒙版；closeOnOutside独立控制空白是否关闭。UIManager动态共用一份节点，关窗或隐藏后向下恢复仍显示窗口的模态，禁止在每份Prefab再放独立蒙版或挂ModalLayer。实际面板背景保留BlockInputEvents，避免内容点击触发外部关闭；只承载坐标的大节点不要盲加阻挡。布阵草稿与结算沿既有关闭生命周期处理，GM/技能台使用mask=true、closeOnOutside=false。
-- RoleProfileView 的 Prefab 位于 bundles/login/prefabs，保留原 SettingLayer UUID。RemakeApp 注册 role-profile；头像点击经 HomeController 交回应用，UIManager 打开，窗口订阅唯一 AccountModel，关闭时退订。重复打开不累积监听；账号清空或忙于切换时关闭并取消未完成的打开。
+- RoleProfileView 的 Prefab 位于 bundles/module/login/prefabs，保留原 SettingLayer UUID。RemakeApp 注册 role-profile；头像点击经 HomeController 交回应用，UIManager 打开，窗口订阅唯一 AccountModel，关闭时退订。重复打开不累积监听；账号清空或忙于切换时关闭并取消未完成的打开。
 - AccountLoginView 是登录页面，ServerPickerView 是选服弹窗，两者都由 UIManager 管理。ServerCellView 是列表子组件；LoginArtwork 是登录页面适配组件；LoginLayoutUtils 和 RolePortraitUtils 是无状态辅助，不要求一一对应独立窗口。
 - 服务器和区域两列均为 SuperScroll → view/Mask → content/SuperContent。Prefab 保存 cellPrefab、尺寸、间距和方向；View 只 setData，不销毁重建所有格子、不计算格子坐标或 content 高度。
 - LoadingLayer/BootChrome 是启动加载流程，用于资源准备、进度和提示；AccountLoginView 负责账号、选服与进入。共享背景或尺寸计算不代表同一界面。启动层独立管理不构成业务弹窗绕过 UIManager 的例外。
@@ -176,11 +177,15 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 
 ### 完整页面、Widget与统一比例
 
-背包、英雄列表及英雄详情直接打开完整Prefab，背景、纸面、标题、页签和英雄列表板已保存为页面内的静态节点，不再通过CommonPanel1嵌套或运行加载页面壳组装。日常直接在对应页面Prefab修改；CommonPanel1保留为独立资源，不作为这些页面的当前布局来源。
+背包、英雄列表及英雄详情直接打开完整Prefab，背景、纸面、标题、页签和列表容器保存为页面内静态节点，不再通过CommonPanel1嵌套或运行加载壳组装。日常直接修改对应页面；未使用的CommonPanel1及Common*Shell样板资源/脚本链本批退役，不再作为人工维护入口。
 
 固定尺寸、定位、上下留白和拉伸优先使用Widget。需要窄屏整体缩小时，在完整页面外根绑定ViewportScale的target内容容器、designWidth=640、maxScale=1；它只按可用宽度计算统一比例，不按页面名称修补坐标或维护机型表。外根fitVisibleRoot仅把LiveShell的视口尺寸桥接到页面根，不与另一份全屏Widget竞争根位置。动态列表的content仍由SuperContent排版，不加竞争尺寸或位置的Widget。
 
-ParchmentLayout、ccbiPlace、heroMount/heroChrome和PagePrefabShell/ListBackdrop/DimSheet、独立HeroListBoardView Prefab已退役；HeroListView中的HeroBoard仍绑定HeroListBoardView组件，读取唯一HeroRosterModel。不得以恢复旧辅助或新增模块组装入口替代完整Prefab编辑。
+ParchmentLayout、ccbiPlace、heroMount/heroChrome和PagePrefabShell/ListBackdrop/DimSheet、独立HeroListBoardView Prefab已退役；本批继续移除HeroListBoardView脚本，HeroBoard只保留静态容器与Widget。HeroListView直接绑定SuperScroll，打开时监听SuperContent.RENDER_ITEM/SELECT_ITEM，onRender只画Cell，onSelect按实例ID打开HeroInfoView；关闭清理本页监听，名册仍归唯一HeroRosterModel，不把页面导航回调下传到Cell。
+
+当前英雄、背包、产物说明外层/内层及胜利奖励统一用SuperContent.RENDER_ITEM/SELECT_ITEM；onRender只画Cell，onSelect由所属页面处理，关闭解除自己的监听，setData只交数据。可选第二渲染参数保留给未迁移调用，不能与事件重复绘制。
+
+SuperContent默认virtual=true、bufferLines=1，逻辑总量与池节点量分开；保留原Cell锚点/正缩放，view/content局部缩放须1且无旋转，祖先适配可用。滚动只换绑范围、不停止惯性；数据/视口/几何改变才完整保位，refresh(index)离屏延迟绘制。编辑器样板仍用原生Layout。千/万条夹具与相关专项通过不等于浏览器、真机帧率或长期GPU内存验收。
 
 ## 格式化与工具类静态入口
 
@@ -252,7 +257,7 @@ UIManager打印“打开HeroInfoView”仍是框架层蓝色；HeroInfoView打�
 
 以用户整理的bag为准：模块目录小写，根目录保留业务Controller/Model及有生命周期的入口；data保存数据和交互类型；ui保存页面与格子组件；utils保存事件名、配置索引及展示工具。目录归档不强制将有缓存/订阅的对象变成静态类。
 
-本批Bag已改为bag；HeroRosterUtils以public static present投影名册，HeroRosterSource/View归入data/HeroRosterData。英雄技能、配置索引、装备读取、事件和详情尺寸归入hero/utils；账号头像/布局归入account/utils；主城导航归入city/utils；战斗字体/只读资源目录归入battle/utils；GM两个View归入gm/ui。所有移动脚本保留原meta，背包展示工具的孤立meta已归位并恢复原UUID。
+Bag目录已改为bag，HeroRosterUtils以public static present投影名册；HeroListView直接读取唯一Model并处理列表事件后，HeroRosterSource/View旧交互契约及data/HeroRosterData已删除，不为目录规范保留空壳。英雄技能、配置索引、装备读取、事件和详情尺寸归入hero/utils；账号头像/布局归入account/utils；主城导航归入city/utils；战斗字体/只读资源目录归入battle/utils；GM两个View归入gm/ui。移动的仍用脚本保留原meta，背包展示工具的孤立meta已归位并恢复原UUID。
 
 三个模块Controller对于非自身协议的直接通知改为MODULE去重告警后忽略，未更新Model；ProtocolRouter仍拒绝未登记/非法回包，应用仍原子校验整包资产。这不表示允许未知协议或错误数据入库。
 
@@ -661,10 +666,10 @@ SkillAuditUtils按技能ID＋等级登记演示证据；禁止将一个等级的
 
 ## 应用装配与资源生命周期（2026-11-06）
 
-- RemakeApp 保留应用生命周期和会话到页面的协调；AccountComposition 创建会话依赖，ApplicationPages 登记正式页面，ApplicationResources 持有预热作用域，DevelopmentPreview 管理只读开发入口。不得把开发战报逻辑重新塞回正式启动链路。
+- RemakeApp保留应用生命周期和会话到页面的协调；AccountComposition创建会话依赖，页面通过各自@view登记，ApplicationPages只装配登录/主城Controller和宿主，ApplicationResources调度三段LoadingPlan并持有阶段资源，DevelopmentPreview管理只读开发入口。不得把开发战报逻辑重新塞回正式启动链路。
 - RemakeHomeView 唯一持有 CityHubView / CityChromeView 子节点，负责打开、关闭、失败清理；子视图不再单独登记为 Hud。
 - 普通提示由 Remake.scene 的 ApplicationNotice 静态节点承载，不能要求主城存在；连接状态等主城持续提示仍归所属界面。
-- 动态 SpriteFrame 通过 ResourceAssetsUtils.forNode 或显示工具的作用域加载；节点销毁时撤回引用。共享资源按拥有者计数，禁止直接 releaseAll、强行归零或释放其他页面的引用。
+- 动态图片复用原ResourcePool。ResManager.setSprite只保留当前显示及本轮在途候选作用域；同图/相同在途请求复用，新图赋值后释放旧显示，null、失效与销毁撤回拥有者，失败按候选回退。getSpriteFrame(owner)仍显式持有至owner销毁，不能用setSprite(null)撤回该引用；不直接releaseAll或释放其他页面引用。
 - ResourcePool 成功结果只持有一次引擎引用；最后拥有者退出时 decRef，全部拥有者离开后才完成的加载也须回收。在途 Promise 与已加载缓存分开，失败可重试。
 - PrefabLoader 是显式应用级缓存，每个 Prefab 一次 addRef，应用关闭页面后 clearPrefabCache。应用预热范围和主城底板缓存可保持到应用退出；不能将这种预期保留直接判为泄漏，也不能未经使用者审计就按低内存通知强制清空。
 - 开发预览 F8 输出 Lifecycle：通用资源池、Prefab 缓存、UI、框架事件、EventScope、已登记原生计时器和引擎资产数。计数不是 JS 堆或 GPU 显存；Home/Hero/Feature 的预热池未逐项汇入通用池计数，Cocos Scheduler/Tween 及未迁移的旧加载器也不在该计时器统计范围内。

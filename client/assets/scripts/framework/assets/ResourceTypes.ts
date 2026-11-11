@@ -5,7 +5,7 @@ export interface ResourceDescriptor<K extends ResourceKind = ResourceKind> {
     readonly bundle: string;
     /** 包内资源路径，不包含图片的spriteFrame子资源后缀。 */
     readonly path: string;
-    /** 相对assets的源路径，供页面注册与错误定位。 */
+    /** 页面可提供相对assets的真实源路径；未指定来源时为包名/包内逻辑地址，仅供登记与诊断。 */
     readonly assetPath: string;
     /** 传给引擎的实际加载路径；空字符串表示按UUID加载。 */
     readonly loadPath: string;

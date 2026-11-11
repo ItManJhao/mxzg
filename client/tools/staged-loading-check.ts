@@ -6,13 +6,25 @@ import { ApplicationResources } from "../assets/scripts/app/remake/ApplicationRe
 import { LOADING_PLAN } from "../assets/scripts/app/remake/LoadingPlan";
 import { ResourceDescriptor } from "../assets/scripts/framework/assets/ResourceTypes";
 import { createAssetScope, ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
-import { clearPrefabCache } from "../assets/scripts/framework/assets/PrefabLoader";
+import { clearPrefabCache, loadPrefab } from "../assets/scripts/framework/assets/PrefabLoader";
 import { GConfig } from "../assets/scripts/config/GConfig";
+import { BaseView } from "../assets/scripts/framework/ui/BaseView";
+import { registerView } from "../assets/scripts/framework/ui/UIRegistry";
+import { UILayer } from "../assets/scripts/framework/ui/UILayer";
+
+/** 仅离线测试解析源文件位置，运行时始终按原Bundle名加载。 */
+const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs") as {
+    resolveBundleFile(path: string): string;
+};
+
+/** 仅声明页面地址，预载检查不实例化此测试窗口。 */
+class PlannedPage extends BaseView { }
+class UnregisteredPage extends BaseView { }
 
 /** 通过受控完成回调验证进度，不使用延时伪造网络完成。 */
 async function main(): Promise<void> {
-    const bag = ResourceAssetsUtils.describe("bag", "prefabs/BagView", "Prefab", "bundles/bag/prefabs/BagView");
-    const detail = ResourceAssetsUtils.describe("bag", "prefabs/BagInfoView", "Prefab", "bundles/bag/prefabs/BagInfoView");
+    const bag = ResourceAssetsUtils.describe("bag", "prefabs/BagView", "Prefab", "bundles/module/bag/prefabs/BagView");
+    const detail = ResourceAssetsUtils.describe("bag", "prefabs/BagInfoView", "Prefab", "bundles/module/bag/prefabs/BagInfoView");
     const spine = ResourceAssetsUtils.describe("spine", "jiemian", "SkeletonData");
     const icon = ResourceAssetsUtils.describe("common", "ui/other_rare-4", "SpriteFrame");
     const uuid: ResourceDescriptor = {
@@ -32,7 +44,7 @@ async function main(): Promise<void> {
         requests.push(bundle + ":" + path);
         if (type === JsonAsset) {
             const value = new JsonAsset();
-            value.json = JSON.parse(readFileSync("client/assets/bundles/" + bundle + "/" + path + ".json", "utf8"));
+            value.json = JSON.parse(readFileSync(resolveBundleFile(bundle + "/" + path + ".json"), "utf8"));
             done(null, value);
         } else if (path === detail.loadPath && failDetail) {
             done(new Error("fixture retry"));
@@ -55,24 +67,35 @@ async function main(): Promise<void> {
     const old = { login: LOADING_PLAN.login, enterGame: LOADING_PLAN.enterGame, background: LOADING_PLAN.background };
     const app = new ApplicationResources();
     const scope = createAssetScope();
+    let pagePrepares = 0;
+    let customPageLoads = 0;
+    const unregisterPage = registerView(PlannedPage, {
+        id: "planned-page", prefab: bag.assetPath, layer: UILayer.Page, cache: false, allowMultiple: false,
+        prepare: async () => { pagePrepares++; },
+        load: async () => { customPageLoads++; return new Prefab(); },
+    });
     try {
         await assert.rejects(scope.load(raw), /原生资源内容缺失/, "引擎只返回空壳不能记为成功");
         nativeMissing = false;
         await scope.load(raw);
         LOADING_PLAN.login = [{ config: GConfig.Language }];
         await app.prepareStage("login", () => {}, () => true);
-        LOADING_PLAN.enterGame = [bag, { bundle: spine.bundle, path: spine.loadPath, type: spine.type }];
+        LOADING_PLAN.enterGame = [{ page: PlannedPage }, { bundle: spine.bundle, path: spine.loadPath, type: spine.type }];
         LOADING_PLAN.background = [bag, detail, icon, uuid, { config: GConfig.Language }];
         const ratios: number[] = [];
         const pending = app.prepareStage("enterGame", (_label, ratio) => ratios.push(ratio), () => true);
         for (let i = 0; i < 20; i++) { await Promise.resolve(); }
         assert.deepEqual(ratios, [0]);
-        const foreground = app.preparedPage(bag.assetPath);
+        const foreground = loadPrefab(bag.assetPath);
         for (let i = 0; i < 20; i++) { await Promise.resolve(); }
         assert.equal(requests.filter(value => value === bag.bundle + ":" + bag.loadPath).length, 1);
         finish();
         await Promise.all([pending, foreground]);
         assert.equal(ratios[ratios.length - 1], 1);
+        assert.equal(pagePrepares, 0, "页面预载只读取@view.prefab，不执行配置前置条件");
+        assert.equal(customPageLoads, 0, "预载不调用开页load或实例化窗口");
+        assert(!requests.some(value => value.startsWith("module:") || value.startsWith("resources:")),
+            "物理父目录不参与前后台Bundle加载键");
         assert(!requests.includes(detail.bundle + ":" + detail.loadPath), "阶段不扩大到详情");
         let yields = 0;
         await app.prepareBackground(async () => { yields++; }, () => true);
@@ -83,7 +106,7 @@ async function main(): Promise<void> {
         await scope.load(icon);
         assert.equal(requests.length, before, "前台复用后台图片");
         const uuidRequests = requests.filter(value => value.startsWith("uuid:")).length;
-        await assert.rejects(app.preparedPage(detail.assetPath), /fixture retry/, "远程页面失败必须保留失败状态");
+        await assert.rejects(loadPrefab(detail.assetPath), /fixture retry/, "远程页面失败必须保留失败状态");
         assert.equal(requests.filter(value => value.startsWith("uuid:")).length, uuidRequests,
             "远程Bundle失败不能绕过下载路径按UUID加载");
         failDetail = false;
@@ -93,12 +116,15 @@ async function main(): Promise<void> {
         assert.equal(app.backgroundStatus().total, 0);
         LOADING_PLAN.login = [{ bundle: "", path: "missing", type: "SpriteFrame" }];
         await assert.rejects(app.prepareStage("login", () => {}, () => true), /必须指定Bundle/);
+        LOADING_PLAN.login = [{ page: UnregisteredPage }];
+        await assert.rejects(app.prepareStage("login", () => {}, () => true), /未通过@view登记/);
         await assert.rejects(app.prepareStage("enterGame", () => {}, () => false), /取消/);
     } finally {
         LOADING_PLAN.login = old.login;
         LOADING_PLAN.enterGame = old.enterGame;
         LOADING_PLAN.background = old.background;
         scope.dispose();
+        unregisterPage();
         app.dispose();
         clearPrefabCache();
         ResourceAssetsUtils.releaseResidents();

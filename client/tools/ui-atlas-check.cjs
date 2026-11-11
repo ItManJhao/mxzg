@@ -6,10 +6,11 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
 const root = path.resolve(__dirname, '../..');
-const directory = path.join(root, 'client/assets/bundles/bag/atlas');
+const { bundleRoot, resolveBundleFile } = require('../../tools/bundle-paths.cjs');
+const directory = path.join(bundleRoot('bag'), 'atlas');
 const pac = JSON.parse(fs.readFileSync(path.join(directory, 'BagAtlas.pac'), 'utf8'));
 assert.equal(pac.__type__, 'cc.SpriteAtlas');
-assert(!fs.existsSync(path.join(root, 'client/assets/bundles/bag/ui/atlas')),
+assert(!fs.existsSync(path.join(root, 'client/assets/bundles/module/bag/ui/atlas')),
     '静态界面图不应同时保留在 resources 中');
 for (const [name, prefab, originalUuid, originalHash] of [
     ['backpack-info_spr-line', 'BagInfoView', 'c6234db7-ebbd-43bb-863f-6c99505dbdc3',
@@ -18,21 +19,21 @@ for (const [name, prefab, originalUuid, originalHash] of [
         'd73973c3da35d39521917dd1082b462ab9125507f120d08c0045ec725a7ff07d'],
 ]) {
     const owner = prefab === 'BagItemView' ? 'common' : 'bag';
-    const imageDirectory = path.join(root, 'client/assets/bundles', owner, owner === 'common' ? 'item-atlas' : 'atlas');
+    const imageDirectory = path.join(bundleRoot(owner), owner === 'common' ? 'item-atlas' : 'atlas');
     const meta = JSON.parse(fs.readFileSync(path.join(imageDirectory, name + '.png.meta'), 'utf8'));
     assert.equal(meta.uuid, originalUuid, '保留图片 UUID');
     assert.equal(meta.subMetas.f9941.uuid, originalUuid + '@f9941', '保留帧 UUID');
     assert.equal(createHash('sha256').update(fs.readFileSync(path.join(imageDirectory, name + '.png'))).digest('hex'),
         originalHash, '迁移原图保持不变；以后主动换图时同步审核此基线');
-    const view = fs.readFileSync(path.join(root, 'client/assets/bundles', owner, 'prefabs', prefab + '.prefab'), 'utf8');
+    const view = fs.readFileSync(resolveBundleFile(owner + '/prefabs/' + prefab + '.prefab'), 'utf8');
     assert(view.includes(meta.subMetas.f9941.uuid), '预制体直接绑定原图帧');
 }
 assert(!fs.readdirSync(directory).some(name => /^backpack_\d+\.png$/.test(name)), '物品图标不得进入界面图集');
 assert(!fs.existsSync(path.join(directory, '../BagAtlas.plist')), '不保留实体图集重复链');
-const background = path.join(root, 'client/assets/bundles/bag/background/map-bg-backpack-1.jpg');
+const background = path.join(root, 'client/assets/bundles/module/bag/background/map-bg-backpack-1.jpg');
 const backgroundMeta = JSON.parse(fs.readFileSync(background + '.meta', 'utf8'));
 assert.equal(backgroundMeta.uuid, '93839820-644d-46de-9cf5-c2029669b85e', '背景归档保留原 UUID');
-assert(fs.readFileSync(path.join(root, 'client/assets/bundles/bag/prefabs/BagView.prefab'), 'utf8')
+assert(fs.readFileSync(path.join(root, 'client/assets/bundles/module/bag/prefabs/BagView.prefab'), 'utf8')
     .includes(backgroundMeta.subMetas.f9941.uuid), '背包背景依然由预制体绑定加载');
 console.log('自动图集原图、UUID、预制体绑定及物品边界检查通过；构建合图另验');
 

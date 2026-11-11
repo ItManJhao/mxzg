@@ -27,8 +27,8 @@ export const LOADING_BG_FRAME = "maps/ui/map-bg-loading";
 export const LOADING_BG_DRAW_W = 768;
 export const LOADING_BG_DRAW_H = 1300;
 
-export const LOADING_PREFAB_PATH = "bundles/bootstrap/prefabs/LoadingLayer";
-export const UPDATE_PREFAB_PATH = "bundles/login/prefabs/UpdateLayer";
+export const LOADING_PREFAB_PATH = "bundles/module/bootstrap/prefabs/LoadingLayer";
+export const UPDATE_PREFAB_PATH = "bundles/module/login/prefabs/UpdateLayer";
 
 const FILL_W = 524;
 const FILL_LEFT = -FILL_W / 2;

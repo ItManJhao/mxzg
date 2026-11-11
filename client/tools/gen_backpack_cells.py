@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-"""背包静态组合资源的历史生成工具；已有 SuperContent 手工布局时拒绝覆写，当前编辑入口为 BagView.prefab。"""
+"""此历史Prefab写入器已退役，下面保留原算法供阅读追溯；当前资源由Creator人工维护。
+
+背包静态组合资源的历史生成工具；已有 SuperContent 手工布局时拒绝覆写，当前编辑入口为 BagView.prefab。"""
+raise SystemExit("历史Prefab写入器已退役：请在Creator编辑当前Prefab，不得重建旧模块、覆盖人工布局或生成新UUID。")
+
 import hashlib
 import json
 import os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RES = os.path.join(ROOT, "client", "assets", "bundles")
-OUT = os.path.join(ROOT, "client", "assets", "bundles", "bag", "prefabs")
+OUT = os.path.join(ROOT, "client", "assets", "bundles", "module", "bag", "prefabs")
 FONT = "4ff55f31-773f-4ef9-99b6-466b5deeecb9"
 LAYER = 33554432
 

@@ -2,6 +2,7 @@
 import re
 from pathlib import Path
 from urllib.parse import unquote
+from bundle_paths import resolve_asset_path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -18,7 +19,11 @@ def check():
             if not target or re.match(r'^[a-zA-Z][\w+.-]*:', target):
                 continue
             target = unquote(target)
-            if not (file.parent / target).exists():
+            candidate = file.parent / target
+            if not candidate.exists() and file.is_relative_to(ROOT / 'docs/validation'):
+                # 历史记录不改原路径；仅按真实Bundle声明解析移动后的同一文件，缺失仍报错。
+                candidate = resolve_asset_path(candidate)
+            if not candidate.exists():
                 failures.append(f'{file.relative_to(ROOT)} -> {target}')
     if failures:
         raise SystemExit('\n'.join(failures))

@@ -1,7 +1,8 @@
 /**
- * 已退役旧业务链的明确失败边界，供仍绑定旧资源的 Campaign/Idle/普通升级代码编译使用。
+ * 尚未恢复的Campaign/Idle/普通升级API及协调器的明确失败边界，不装配为当前游戏入口。
  * 当前主线、挂机演出与英雄只读展示使用各自已恢复的 Controller，不经过本文件。
- * 本文件不发送旧请求、不执行资产提交回调；对应旧链与绑定整体退役后再删除。
+ * 旧Campaign界面、战场和两套结算展示已删除；本文件只保留旧服务/DTO恢复时所需的拒绝边界。
+ * 不发送旧请求、不执行资产提交回调，后续按实际模块恢复范围逐项退役。
  */
 import type { BagItemData } from "./bag/data/BagItemData";
 import type { BagChangeReason } from "./bag/data/BagEventData";

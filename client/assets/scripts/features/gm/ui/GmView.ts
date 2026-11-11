@@ -1,6 +1,8 @@
 /** 游戏内开发GM弹窗：完整Prefab保存内容，UIManager按ViewSpec提供共享遮罩；发放仍交给GmController。 */
-import { _decorator, Button, EditBox, Label, Node, Sprite, SpriteFrame, view } from "cc";
+import { _decorator, Button, EditBox, Label, Node, Sprite, SpriteFrame, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { ancestorScale } from "../../../framework/ui/visibleFit";
 import { GameConfig } from "../../../config/GameConfig";
@@ -10,6 +12,16 @@ import { GmOptionCellView } from "./GmOptionCellView";
 const { ccclass, property } = _decorator;
 interface Option { id: number; name: string; }
 export interface GmOpenArgs { controller: GmController; roleId: string; nickname: string; openSkillAudit?: () => void; openLineupBattle?: (mission: number) => void; }
+@view({
+    id: "gm",
+    prefab: "bundles/module/gm/prefabs/GmView",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "remake-modal",
+    modal: { mask: true, closeOnOutside: false },
+    prepare: () => GameConfig.instance.prepare([GConfig.HeroType, GConfig.Item, GConfig.Language]),
+})
 @ccclass("GmView")
 export class GmView extends BaseView<GmOpenArgs> {
     /** 开发技能验收入口，由应用提供打开动作。 */
@@ -62,7 +74,7 @@ export class GmView extends BaseView<GmOpenArgs> {
         bind(this.closeButton!, () => this.close()); this.kindButtons.forEach((b, i) => bind(b, () => this.chooseKind(i === 0 ? "hero" : "item")));
         bind(this.dropdownButton!, () => { this.dropdown!.active = !this.dropdown!.active; }); bind(this.grantButton!, () => { void this.grant(); });
         const search = () => this.paintOptions(); this.search!.node.on(EditBox.EventType.TEXT_CHANGED, search); this.stops.push(() => this.search?.node?.off(EditBox.EventType.TEXT_CHANGED, search));
-        const size = view.getVisibleSize(), scale = Math.min(size.width * .94 / 600, size.height * .9 / 820) / ancestorScale(this.node); this.node.setScale(scale, scale, 1);
+        const size = ccView.getVisibleSize(), scale = Math.min(size.width * .94 / 600, size.height * .9 / 820) / ancestorScale(this.node); this.node.setScale(scale, scale, 1);
         this.tabFrames = this.kindButtons.map(b => b.getComponent(Sprite)?.spriteFrame || null);
         this.quantity!.string = "1"; this.chooseKind("hero"); this.message!.string = "正在检查服务端 GM 开关…";
         void args.controller.enabled().then(enabled => { if (!this.closed) { this.grantButton!.interactable = enabled; this.message!.string = enabled ? "仅开发测试：英雄每次最多20个；期限道具最多100件" : "服务端 GM 未开启（MXZG_GM_ENABLED=true）"; } }).catch(e => { if (!this.closed) this.message!.string = e instanceof Error ? e.message : String(e); });

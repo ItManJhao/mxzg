@@ -1,19 +1,18 @@
-/** Real Creator preview acceptance. Starts an isolated headless browser, clicks
- * the actual UI, and creates one normal development account in local-2.
- * Requires backend 18080; MXZG_PREVIEW_URL selects Creator or the standalone H5.
- * Screenshots/logs belong under ignored client/temp/project-checks.
+/** 当前登录、主城、英雄列表与背包的浏览器检查。
+ * 旧Campaign战斗/领取流程已退役，不再以不存在的界面作为验收目标。
+ * 使用独立测试后端；截图和日志写入忽略的client/temp/project-checks。
  */
 const { resolve } = require('node:path');
 const { mkdirSync, readFileSync, writeFileSync } = require('node:fs');
 const assert = require('node:assert/strict');
 process.chdir(resolve(__dirname, '../..'));
+if (process.argv.includes('--direct-battle')) throw Error('旧Campaign验收入口已退役；当前主线请使用MainChapter独立环境流程。');
 mkdirSync('client/temp/project-checks', { recursive: true });
 const { chromium } = require(process.env.MXZG_PLAYWRIGHT_MODULE || 'playwright');
 const previewUrl = process.env.MXZG_PREVIEW_URL || 'http://localhost:7456/';
 const shotPrefix = process.env.MXZG_SCREENSHOT_PREFIX || 'night';
 if (!/^[a-z0-9-]+$/i.test(shotPrefix)) throw Error('Invalid screenshot prefix');
 const standalone = new URL(previewUrl).port === '18081';
-const formationExpected = process.env.MXZG_FORMATION_EXPECT ? JSON.parse(readFileSync(process.env.MXZG_FORMATION_EXPECT, 'utf8')) : null;
 (async () => {
     const browser = await chromium.launch({ headless: true, channel: 'chrome' });
     let page;
@@ -25,8 +24,6 @@ const formationExpected = process.env.MXZG_FORMATION_EXPECT ? JSON.parse(readFil
             const identity = await response.json();
             identity.captureMode = process.env.MXZG_CAPTURE_CLEAN === '1' ? 'engine profiler hidden for screenshots' : 'default debug HUD';
             writeFileSync('client/temp/project-checks/' + shotPrefix + '-build.json', JSON.stringify(identity,null,2));
-            if (formationExpected?.prefabSha256) assert.equal(identity.build.sourceSha256?.['assets/bundles/hero/prefabs/FormationView.prefab'], formationExpected.prefabSha256, 'wrong formation source in H5 build');
-            if (formationExpected?.cellSha256) assert.equal(identity.build.sourceSha256?.['assets/bundles/hero/prefabs/HeroIconCellView.prefab'], formationExpected.cellSha256, 'wrong Cell source in H5 build');
         }
         page = await browser.newPage({ viewport: standalone ? { width: 393, height: 852 } : { width: 1280, height: 1024 } });
         if (standalone) {
@@ -160,25 +157,6 @@ const formationExpected = process.env.MXZG_FORMATION_EXPECT ? JSON.parse(readFil
                 return found;
             }, className, { timeout: 30000 });
         }
-        async function waitForCampaign(stage, phase) {
-            await page.waitForFunction(({ stage, phase }) => {
-                let ready = false;
-                function walk(node) {
-                    if (!node?.activeInHierarchy)
-                        return;
-                    for (const component of node._components || []) {
-                        if (component.constructor?.name === 'CampaignView' &&
-                            (stage === null || component.last?.state?.stageId === stage) &&
-                            component.last?.phase === phase)
-                            ready = true;
-                    }
-                    for (const child of node.children)
-                        walk(child);
-                }
-                walk(window.cc?.director?.getScene());
-                return ready;
-            }, { stage, phase }, { timeout: 30000 });
-        }
         await snap('login');
         await clickTarget('AccountLoginView', 'serverButton');
         await snap('servers');
@@ -200,7 +178,6 @@ const formationExpected = process.env.MXZG_FORMATION_EXPECT ? JSON.parse(readFil
             console.log('PASS bag-mvc preview; runtime errors: 0');
             return;
         }
-        if (!process.argv.includes('--direct-battle')) {
         await clickTarget('CityChromeShell', 'tabHero');
         await waitForView('HeroListView');
         if (!(await state()).some(v => v.view === 'HeroListView'))
@@ -217,149 +194,8 @@ const formationExpected = process.env.MXZG_FORMATION_EXPECT ? JSON.parse(readFil
             console.log('PASS backpack-list preview; runtime errors: 0');
             return;
         }
-        }
-        await clickTarget('CityChromeShell', 'tabBattle');
-        await page.waitForTimeout(3500);
-        await waitForCampaign(1, 'idle');
-        await page.waitForFunction(() => {
-            let moving = false;
-            function walk(n) { if (!n?.activeInHierarchy)
-                return; if (n.name === 'IdleSky' && n.getChildByName('LoopA')?.position.x < 0)
-                moving = true; for (const c of n.children)
-                walk(c); }
-            walk(window.cc?.director?.getScene());
-            return moving;
-        }, null, { timeout: 30000 });
-        await snap('idle-march');
-        await snap('battle');
-        await clickTarget('CampaignView', 'fightButton');
-        async function waitForFormation() {
-            await page.waitForFunction(() => {
-                let ready = false;
-                function walk(n) { if (!n?.activeInHierarchy) return; for (const c of n._components || []) if (c.constructor?.name === 'FormationView' && c.state && !c.state.busy && c.grid?.children.length) ready = true; for (const child of n.children) walk(child); }
-                walk(window.cc?.director?.getScene()); return ready;
-            }, null, {timeout:30000});
-        }
-        async function formationSnapshot() {
-            return page.evaluate(() => {
-                let component;
-                function walk(n) { if (!n?.activeInHierarchy) return; for (const c of n._components || []) if (c.constructor?.name === 'FormationView') component = c; for (const child of n.children) walk(child); }
-                walk(window.cc.director.getScene());
-                if (!component) throw Error('FormationView absent');
-                const node = value => { const n = value?.node || value; const ui = n?.getComponent('cc.UITransform'); return n ? { name: n.name, parent: n.parent?.name, position: {x:n.position.x,y:n.position.y}, scale:{x:n.scale.x,y:n.scale.y}, size:ui ? {width:ui.width,height:ui.height}:null, anchor:ui ? {x:ui.anchorX,y:ui.anchorY}:null } : null; };
-                return { root:node(component.node), title:{...node(component.titleLabel),text:component.titleLabel?.string,fontSize:component.titleLabel?.fontSize}, confirm:node(component.confirmButton),
-                    content:node(component.scrollContent), port:node(component.scrollPort), grid:node(component.grid), cells:component.grid?.children.map(node),
-                    visibleStarCount:component.grid?.children[0]?._components.find(c=>c.constructor?.name==='HeroIconCellView')?.stars.filter(star=>star.activeInHierarchy).length,
-                    columns:component.columns,cellStep:component.cellStep,firstCellPosition:component.firstCellPosition,cellScale:component.cellScale,lineup:component.state?.lineup };
-            });
-        }
-        function assertAuthored(layout) {
-            if (!formationExpected) return;
-            if (formationExpected.requireVisibleStars) assert.equal(layout.visibleStarCount,1,'new account one-star heroes must show their star');
-            assert.equal(layout.title.fontSize, formationExpected.titleFontSize);
-            assert.equal(layout.confirm.position.x, formationExpected.confirmX);
-            assert.equal(layout.confirm.position.y, formationExpected.confirmY);
-            assert.equal(layout.columns, formationExpected.columns);
-            assert.equal(layout.cellStep.x, formationExpected.stepX);
-            assert.equal(layout.cellStep.y, formationExpected.stepY);
-            assert.equal(layout.cells[1].position.x - layout.cells[0].position.x, formationExpected.stepX);
-            if (layout.columns === 2) assert.equal(layout.cells[0].position.y - layout.cells[2].position.y, formationExpected.stepY);
-        }
-        await waitForFormation();
-        const firstFormation = await formationSnapshot();
-        assertAuthored(firstFormation);
-        await clickTarget('HeroIconCellView');
-        assert.notDeepEqual((await formationSnapshot()).lineup.slots, firstFormation.lineup.slots, 'draft must change before Cancel');
-        await clickTarget('FormationView', 'closeButton');
-        await waitForCampaign(1, 'idle');
-        await clickTarget('CityChromeShell', 'tabHero');
-        await page.waitForTimeout(2000);
-        if (!(await state()).some(v => v.view === 'HeroListView')) throw Error('hero absent after formation Cancel');
-        await clickTarget('CityChromeShell', 'tabBattle');
-        await waitForCampaign(1, 'idle');
-        await clickTarget('CampaignView', 'fightButton');
-        await waitForFormation();
-        const reopenedFormation = await formationSnapshot();
-        assert.deepEqual(reopenedFormation.lineup, firstFormation.lineup, 'Cancel must discard the draft');
-        assertAuthored(reopenedFormation);
-        writeFileSync('client/temp/project-checks/' + shotPrefix + '-formation-layout.json', JSON.stringify(reopenedFormation,null,2));
-        await clickTarget('HeroIconCellView');
-        await snap('formation');
-        await clickTarget('FormationView', 'confirmButton');
-        await page.waitForTimeout(1800);
-        await snap('fight');
-        // Click the existing Skip button by the visible label in the battle prefab.
-        const skip = await page.evaluate(() => {
-            const cc = window.cc;
-            let point;
-            function walk(n) {
-                if (!n?.activeInHierarchy)
-                    return;
-                if (n.name === 'BtnSkip') {
-                    const b = n.getComponent('cc.UITransform').getBoundingBoxToWorld();
-                    point = { x: b.x + b.width / 2, y: b.y + b.height / 2, size: cc.view.getVisibleSize() };
-                }
-                for (const child of n.children)
-                    walk(child);
-            }
-            walk(cc.director.getScene());
-            return point;
-        });
-        if (skip) {
-            const box = await page.locator('canvas').boundingBox();
-            await page.mouse.click(box.x + skip.x * box.width / skip.size.width, box.y + box.height - skip.y * box.height / skip.size.height);
-        }
-        await page.waitForTimeout(2000);
-        await waitForCampaign(1, 'result');
-        await snap('result');
-        const resultState = await state();
-        if (!resultState.some(v => v.view === 'CampaignView' && v.phase === 'result'))
-            throw Error('no result modal');
-        const confirm = await page.evaluate(() => {
-            const cc = window.cc;
-            let found;
-            function walk(n) {
-                if (!n?.activeInHierarchy)
-                    return;
-                if (n.name === 'btn_confirm') {
-                    const b = n.getComponent('cc.UITransform').getBoundingBoxToWorld();
-                    found = { x: b.x + b.width / 2, y: b.y + b.height / 2, size: cc.view.getVisibleSize() };
-                }
-                for (const child of n.children)
-                    walk(child);
-            }
-            walk(cc.director.getScene());
-            return found;
-        });
-        if (!confirm)
-            throw Error('claim button absent');
-        const box = await page.locator('canvas').boundingBox();
-        await page.mouse.click(box.x + confirm.x * box.width / confirm.size.width, box.y + box.height - confirm.y * box.height / confirm.size.height);
-        await page.waitForTimeout(2000);
-        await waitForCampaign(2, 'idle');
-        await snap('claimed');
-        if (!(await state()).some(v => v.view === 'CampaignView' && v.phase === 'idle' && v.stage === 2))
-            throw Error('claim did not advance');
-        await clickTarget('CityChromeShell', 'tabBag');
-        await page.waitForTimeout(1000);
-        await clickTarget('BagItemView');
-        await page.waitForTimeout(600);
-        await snap('item-detail');
-        await page.reload();
-        await connectEngine();
-        if (!(await state()).some(v => v.view === 'AccountLoginView') || (await state()).some(v => v.view === 'RemakeHomeView'))
-            throw Error('restore did not stop at Login before Start');
-        await snap('restored-login');
-        await clickTarget('AccountLoginView', 'loginButton');
-        await clickTarget('CityChromeShell', 'tabBattle');
-        await page.waitForTimeout(2000);
-        await waitForCampaign(2, 'idle');
-        if (!(await state()).some(v => v.view === 'CampaignView' && v.stage === 2))
-            throw Error('stage not retained after reload');
-        await snap('restored-battle');
-        if (errors.length)
-            throw Error('browser runtime errors');
-        console.log('PASS preview: server picker, explicit Start, heroes, inventory detail, idle march, formation cancel/save, battle/skip/claim, stage 2 and restore gate; runtime errors:', errors.length);
+        if (errors.length) throw Error('browser runtime errors');
+        console.log('PASS preview: login, server picker, home, hero list and inventory; retired Campaign flow is excluded.');
     }
     catch (e) {
         if (page)

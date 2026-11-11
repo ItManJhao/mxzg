@@ -3,9 +3,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const assert = require("node:assert/strict");
 const root = path.resolve(__dirname, "..");
+const { resolveBundleFile } = require("./bundle-paths.cjs");
 const esbuild = require(path.join(root, "client/node_modules/esbuild"));
 const tables = Object.fromEntries([['HeroType','herotype'],['HeroSkill','heroskill'],['Language','language']]
-    .map(([name,file]) => [name,JSON.parse(fs.readFileSync(path.join(root, `client/assets/bundles/config/${file}.json`),'utf8'))]));
+    .map(([name,file]) => [name,JSON.parse(fs.readFileSync(path.join(root, `client/assets/bundles/resources/config/${file}.json`),'utf8'))]));
 const config = {
     requireConfig(name,id) { return tables[name].rows.find(row => row.type === id); },
     getFile(name) { return tables[name]; },
@@ -52,7 +53,7 @@ console.log(`PASS 技能验收目录：${tables.HeroType.rows.length}英雄，${
 
 // 克隆静态按钮/提示节点必须生成各自fileId，防止Creator编辑预制体时报parameter error。
 for (const name of ['gm/GmView','battle/SkillAuditView','battle/SkillAuditCellView']) {
-    const objects = JSON.parse(fs.readFileSync(path.join(root, `client/assets/bundles/${name.split("/")[0]}/prefabs/${name.split("/")[1]}.prefab`),'utf8'));
+    const objects = JSON.parse(fs.readFileSync(resolveBundleFile(name.split("/")[0]+"/prefabs/"+name.split("/")[1]+".prefab"),'utf8'));
     const ids = objects.filter(value => value.fileId).map(value => value.fileId);
     assert.equal(new Set(ids).size, ids.length, `${name} 内部fileId重复`);
 }

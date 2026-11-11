@@ -3,6 +3,9 @@ import { _decorator } from "cc";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
+import { prepareHeroDetailConfig, prepareInventoryConfig } from "../../../config/RemakeConfig";
 import { MainChapterController } from "../MainChapterController";
 import { MainChapterModel } from "../MainChapterModel";
 import { ChapterEndView } from "./ChapterEndView";
@@ -16,6 +19,18 @@ interface MainChapterBattleArgs {
     report: MainChapterReplay;
     onClosed(): void;
 }
+@view({
+    id: "main-chapter-battle",
+    prefab: "bundles/module/battle/prefabs/MainChapterBattleView",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "main-chapter-field",
+    prepare: async () => {
+        await prepareInventoryConfig();
+        await prepareHeroDetailConfig();
+    },
+})
 @ccclass("MainChapterBattleView")
 export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
     /** 本窗口播放器清理口，关闭立即释放动画、资源和结算弹层。 */

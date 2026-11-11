@@ -1,6 +1,8 @@
 /** 自身角色资料只读 View：复用旧 SettingLayer，UIManager 统一开关并订阅唯一账号状态；不查询角色、不修改资产。 */
-import { _decorator, Button, Label, Node, view } from "cc";
+import { _decorator, Button, Label, Node, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
 import type { AccountModel } from "../AccountModel";
 import type { RoleProfile } from "../AccountModel";
 import { RolePortraitUtils } from "../utils/RolePortraitUtils";
@@ -18,6 +20,15 @@ export interface RoleProfileOpenArgs {
     /** 只读入口的提示出口。 */
     notice: (text: string) => void;
 }
+@view({
+    id: "role-profile",
+    prefab: "bundles/module/login/prefabs/RoleProfileView",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "remake-modal",
+    modal: { mask: true, closeOnOutside: true },
+})
 @ccclass("RoleProfileView")
 export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
     /** 服务器昵称，长昵称按预制区域收缩。 */
@@ -98,13 +109,13 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
         this.render(args.model.snapshot.role);
         if (this.settingsPanel) this.settingsPanel.active = false;
         this.fit();
-        view.off("canvas-resize", this.fit, this);
-        view.on("canvas-resize", this.fit, this);
+        ccView.off("canvas-resize", this.fit, this);
+        ccView.on("canvas-resize", this.fit, this);
     }
 
     /** 统一关闭时清理按钮、模型订阅和视口适配。 */
     onClose(): void {
-        view.off("canvas-resize", this.fit, this);
+        ccView.off("canvas-resize", this.fit, this);
         this.release();
         this.stopModel?.();
         this.stopModel = null;
@@ -113,7 +124,7 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
 
     /** 只适配资料面板的整体比例；遮罩尺寸与空白关闭统一归ModalLayer，不重排旧节点。 */
     private fit(): void {
-        const size = view.getVisibleSize();
+        const size = ccView.getVisibleSize();
         const scale = Math.min(1, size.width / 640, size.height / 880);
         this.node.setScale(scale, scale, 1);
     }
@@ -125,7 +136,7 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
 
     /** 引擎直接销毁节点时，同样交由 BaseView 结束窗口生命周期。 */
     onDestroy(): void {
-        view.off("canvas-resize", this.fit, this);
+        ccView.off("canvas-resize", this.fit, this);
         this.release();
     }
 }

@@ -6,9 +6,12 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { strict as assert } from "node:assert";
 import { BattleAttackUtils } from "../assets/scripts/features/battle/utils/BattleAttackUtils";
 
+/** 离线按Bundle自身meta发现源目录，分组父目录不进入运行时加载键。 */
+const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
+
 /** 读取客户端同源表；缺表或非法JSON直接失败，不能输出假通过。 */
 function rows(name: string): any[] {
-    return JSON.parse(readFileSync(`client/assets/bundles/config/${name}.json`, "utf8")).rows;
+    return JSON.parse(readFileSync(`client/assets/bundles/resources/config/${name}.json`, "utf8")).rows;
 }
 
 /** 沿模板→技能→动作→表现检查；完整目录用于发现缺口，已验收反馈阵容必须持续通过。 */
@@ -45,7 +48,7 @@ function main(): void {
                         for (const action of BattleAttackUtils.legacyActions(buff)) {
                             const plan = BattleAttackUtils.plan(action);
                             for (const path of plan.effect?.paths || []) {
-                                assert.ok(existsSync("client/assets/bundles/" + path.replace("/spriteFrame", ".png")),
+                                assert.ok(existsSync(resolveBundleFile(path.replace("/spriteFrame", ".png"))),
                                     `缺少帧资源 ${path}`);
                             }
                         }

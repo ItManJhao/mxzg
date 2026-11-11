@@ -8,7 +8,7 @@ const path = require('node:path');
 /** 实际实现身份；与包版本共同打印，区分旧入口缓存和当前执行代码。 */
 const IMPLEMENTATION_ID = 'bootstrap-preload-v1';
 /** 实际实现版本；升级时与package.json同步，禁止旧函数仅打印新包版本冒充更新。 */
-const IMPLEMENTATION_VERSION = '1.6.2';
+const IMPLEMENTATION_VERSION = '1.6.3';
 
 /** 输出实际执行的实现身份，不将package.json版本当成代码已更新的证据。 */
 function logImplementation(stage, detail) {
@@ -55,6 +55,9 @@ exports.onAfterBuild = async function onAfterBuild(options, result) {
         '最终启动配置缺少bootstrap预载');
     // Creator构建工作进程可长期保留require缓存；每轮重读清理工具，避免迁移后沿用旧路径；实现身份由上方固定常量输出。
     const tool = require.resolve('../../tools/dedupe-bag-build.cjs');
+    // 源目录分组可调整；与工具一起重读离线路径索引，避免Creator保留迁移前的绝对目录。
+    const sourcePaths = require.resolve('../../../tools/bundle-paths.cjs');
+    delete require.cache[sourcePaths];
     delete require.cache[tool];
     const { dedupeBagBuild } = require(tool);
     const summary = dedupeBagBuild(result.dest, true);

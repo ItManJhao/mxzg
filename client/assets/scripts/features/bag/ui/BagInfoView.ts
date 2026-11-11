@@ -20,6 +20,7 @@ import { BagEvent } from "../utils/BagEvent";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
+import { prepareInventoryConfig } from "../../../config/RemakeConfig";
 
 /** 库存只传条目键与分类；奖励和产物只传只读内容，不能冒充当前库存。 */
 export type BagInfoArgs =
@@ -34,12 +35,13 @@ const { ccclass, property } = _decorator;
  */
 @view({
     id: "bag-info",
-    prefab: "bundles/bag/prefabs/BagInfoView",
+    prefab: "bundles/module/bag/prefabs/BagInfoView",
     layer: UILayer.Popup,
     hostId: "remake-modal",
     cache: false,
     allowMultiple: false,
     modal: { mask: true, closeOnOutside: true },
+    prepare: prepareInventoryConfig,
 })
 @ccclass("BagInfoView")
 export class BagInfoView extends BaseView<BagInfoArgs> {

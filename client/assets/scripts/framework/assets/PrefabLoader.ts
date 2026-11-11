@@ -6,9 +6,9 @@ import {Button, Color, instantiate, Node, Prefab, Sprite} from "cc";
 import {prefabInPlan} from "../../config/PrefabPlan";
 
 /**
- * 所有页面位于 assets/bundles/<包名>/prefabs，按模块归档。
+ * 页面位于 assets/bundles/module/<包名>/prefabs，父分组不是Bundle。
  * 打开页面先检查当前玩法准入；后台预加载资源不代表页面已开放。
- * 路径相对 assets，例如 bundles/legacy-login/prefabs/LoginPanel。
+ * 路径相对assets，例如bundles/module/login/prefabs/AccountLoginView。
  * 复用ResourceAssets资源池及Bundle依赖元数据；失败保留原始原因，不按UUID绕过远程下载。
  */
 
@@ -144,8 +144,8 @@ export function collectPrefabCache(now = monoNow()): number {
 
 /** 按登记的Bundle加载预制体；失败不按UUID绕过远程下载，关闭后拒绝迟到结果。 */
 function loadPrefabOnce(assetPath: string, scope: ReturnType<typeof createAssetScope>): Promise<Prefab> {
-    const parsed = splitAssetPath(assetPath);
-    const descriptor = ResourceAssetsUtils.describe(parsed.bundle, parsed.inner, "Prefab", assetPath);
+    const parsed = ResourceAssetsUtils.address(assetPath, "Prefab");
+    const descriptor = ResourceAssetsUtils.describe(parsed.bundle, parsed.loadPath, "Prefab", assetPath);
     return (scope.load(descriptor) as Promise<Prefab>).catch((error: unknown) => {
         if (error instanceof ResourceScopeClosed) {
             throw new Error("Prefab所属应用已关闭");
@@ -189,20 +189,4 @@ export function bindClick(node: Node, fn: () => void): void {
 export function tintSprite(node: Node, color: Color): void {
     const sprite = node.getComponent(Sprite);
     if (sprite) sprite.color = color;
-}
-
-function splitAssetPath(assetPath: string): { bundle: string; inner: string } {
-    // 独立包目录采用bundles/<包名>/<资源>；普通prefabs目录本身就是包名。
-    if (assetPath.startsWith("bundles/")) {
-        const parts = assetPath.split("/");
-        if (parts.length < 3 || !parts[1] || !parts.slice(2).join("/")) {
-            throw new Error("独立Bundle路径缺少资源：" + assetPath);
-        }
-        return { bundle: parts[1], inner: parts.slice(2).join("/") };
-    }
-    const slash = assetPath.indexOf("/");
-    if (slash <= 0 || slash >= assetPath.length - 1) {
-        throw new Error("Prefab 路径要相对 assets，例如 bundles/legacy-login/prefabs/LoginPanel");
-    }
-    return {bundle: assetPath.slice(0, slash), inner: assetPath.slice(slash + 1)};
 }

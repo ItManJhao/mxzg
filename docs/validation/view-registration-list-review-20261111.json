@@ -1,0 +1,461 @@
+{
+  "date": "2026-11-11",
+  "branch": "hao",
+  "pushedBaseline": "8cb60507",
+  "delivery": "先提交推送原成果到origin/hao且未合并main；本轮页面/列表修改留本地，未再次提交推送。",
+  "checks": {
+    "passed": 48,
+    "failed": 0,
+    "paused": 5,
+    "creatorTypes": "通过",
+    "binding": "190脚本/97PrefabScene/81绑定"
+  },
+  "independentViews": [
+    "client/assets/scripts/features/account/ui/AccountLoginView.ts",
+    "client/assets/scripts/features/account/ui/RoleProfileView.ts",
+    "client/assets/scripts/features/account/ui/ServerPickerView.ts",
+    "client/assets/scripts/features/bag/ui/BagInfoView.ts",
+    "client/assets/scripts/features/bag/ui/BagView.ts",
+    "client/assets/scripts/features/battle/ui/BattleDetailLayer.ts",
+    "client/assets/scripts/features/battle/ui/ChapterEndView.ts",
+    "client/assets/scripts/features/battle/ui/ChapterRewardInfoView.ts",
+    "client/assets/scripts/features/battle/ui/MainChapterBattleView.ts",
+    "client/assets/scripts/features/battle/ui/MainChapterView.ts",
+    "client/assets/scripts/features/battle/ui/SkillAuditView.ts",
+    "client/assets/scripts/features/gm/ui/GmView.ts",
+    "client/assets/scripts/features/hero/ui/FormationView.ts",
+    "client/assets/scripts/features/hero/ui/HeroInfoView.ts",
+    "client/assets/scripts/features/hero/ui/HeroListView.ts",
+    "client/assets/scripts/features/hero/ui/HeroSkillView.ts",
+    "client/assets/scripts/features/home/ui/RemakeHomeView.ts"
+  ],
+  "sourceHashes": [
+    {
+      "path": "client/assets/scripts/framework/ui/UIRegistry.ts",
+      "sha256": "9d7bfb78e87391b71bcc393ea05f105c94cd6a2ea56d8c21f0a847c94b0568b3"
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/UIManager.ts",
+      "sha256": "1080d9551825b2871c0a6c700831eb836faf6c1fca6ea3d25beea77663cd1e86"
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/SuperContent.ts",
+      "sha256": "1aceace4727faead6c08aab9bf36a2af85defcace10287c41f4536daefc1b219"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/ApplicationPages.ts",
+      "sha256": "1fc20e023c42c5cbe2641816a8a6d924ae9d0bea866713124bbb71aaf6958284"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/ApplicationResources.ts",
+      "sha256": "f82e7cc43100434e89d5606f93a1f144118201b1226ea669794ab4f47fb82054"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/LoadingPlan.ts",
+      "sha256": "2fa592273b514342684db77a957d72374837aced3504a0b1347596b1b89e7ca9"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/ui/HeroListView.ts",
+      "sha256": "a0b4fab965f808b429c8b13e9824d3c25daa0a1510fbb448a50aaccb4acfd8af"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/ui/HeroInfoView.ts",
+      "sha256": "7bed0cf838e2888b799523bd6ff793195944c35d6b373d6a1428f8ca7d915589"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/ui/HeroIconCellView.ts",
+      "sha256": "ff55391e5887ab1c13dc8a671dc6b9d7128b9b6527a5aa3d8424eb968339e1f5"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/ui/FormationView.ts",
+      "sha256": "b86695597802147eed3452ffff2523565bb010b8152498e964e80c2cf5a69210"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/BattleDetailCell.ts",
+      "sha256": "fbc8d5475299634d63150a5042740cbd97791b7b311a74e65efd13161b72ec5c"
+    }
+  ],
+  "browser": {
+    "date": "2026-11-11",
+    "preview": "Creator本机预览393x852，独立内存服务器",
+    "fixedNavigationStart": "2026-11-11T14:48:10.073Z",
+    "checks": [
+      {
+        "case": "修正后三名英雄列表",
+        "result": {
+          "actualNodes": 3,
+          "dataCount": 3,
+          "element": 0,
+          "labels": [
+            "英雄",
+            "100",
+            "100",
+            "100",
+            "英雄：3/300",
+            "英  雄",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "newDirectBindings": true,
+          "oldBoardComponent": false,
+          "route": "hero",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 0,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "实际鼠标筛选",
+        "result": {
+          "actualNodes": 2,
+          "dataCount": 2,
+          "element": 1,
+          "labels": [
+            "英雄",
+            "100",
+            "100",
+            "英雄：3/300",
+            "英  雄",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "newDirectBindings": true,
+          "oldBoardComponent": false,
+          "route": "hero",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 0,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "修正后详情实际显示",
+        "result": {
+          "labels": [
+            "赛西莉",
+            "等级：100    星级：4    强化：0\n当前属性（部分加成待恢复）",
+            "攻击：715",
+            "生命：4041",
+            "防御：504",
+            "速度：442",
+            "恶魔桎梏",
+            "Lv.1",
+            "恶魔之心",
+            "强化1解锁",
+            "邪火诅咒",
+            "强化3解锁",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "newDirectBindings": false,
+          "oldBoardComponent": false,
+          "route": "hero-info",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 0,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "技能外部关闭不影响详情",
+        "result": {
+          "labels": [
+            "赛西莉",
+            "等级：100    星级：4    强化：0\n当前属性（部分加成待恢复）",
+            "攻击：715",
+            "生命：4041",
+            "防御：504",
+            "速度：442",
+            "恶魔桎梏",
+            "Lv.1",
+            "恶魔之心",
+            "强化1解锁",
+            "邪火诅咒",
+            "强化3解锁",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "newDirectBindings": false,
+          "oldBoardComponent": false,
+          "route": "hero-info",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "详情销毁后返回列表",
+        "result": {
+          "actualNodes": 3,
+          "dataCount": 3,
+          "element": 0,
+          "labels": [
+            "英雄",
+            "100",
+            "100",
+            "100",
+            "英雄：3/300",
+            "英  雄",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "newDirectBindings": true,
+          "oldBoardComponent": false,
+          "route": "hero",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "布阵列表选择仍更新当前草稿",
+        "result": {
+          "rosterUnchanged": 3,
+          "selectedPresent": true,
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          }
+        }
+      },
+      {
+        "case": "取消布阵后再次点击英雄只打开一页详情",
+        "result": {
+          "labels": [
+            "黑暗切割者",
+            "等级：100    星级：5    强化：0\n当前属性（部分加成待恢复）",
+            "攻击：1243",
+            "生命：5972",
+            "防御：772",
+            "速度：650",
+            "黑暗切割",
+            "Lv.1",
+            "黑暗桎梏",
+            "强化1解锁",
+            "邪能刃舞",
+            "强化3解锁",
+            "杀怒之心",
+            "强化5解锁",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "newDirectBindings": false,
+          "oldBoardComponent": false,
+          "route": "hero-info",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "第三次格子打开详情仍单实例",
+        "result": {
+          "labels": [
+            "黑暗切割者",
+            "等级：100    星级：5    强化：0\n当前属性（部分加成待恢复）",
+            "攻击：1243",
+            "生命：5972",
+            "防御：772",
+            "速度：650",
+            "黑暗切割",
+            "Lv.1",
+            "黑暗桎梏",
+            "强化1解锁",
+            "邪能刃舞",
+            "强化3解锁",
+            "杀怒之心",
+            "强化5解锁",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "newDirectBindings": false,
+          "oldBoardComponent": false,
+          "route": "hero-info",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "背包新页面参数正常打开",
+        "result": {
+          "labels": [
+            "背包",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "背包为空",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "newDirectBindings": false,
+          "oldBoardComponent": false,
+          "route": "bag",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "挂机入口仍正常打开",
+        "result": {
+          "labels": [
+            "100",
+            "100",
+            "100",
+            "战斗",
+            "战力提升",
+            "快速战斗",
+            "2",
+            "00:11",
+            "200/分",
+            "25/分",
+            "10/分",
+            "00:11",
+            "不够别人打的话，英雄升级能快",
+            "速提升战斗力哦~",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "newDirectBindings": false,
+          "oldBoardComponent": false,
+          "route": "remake-campaign",
+          "ui": {
+            "cached": 1,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      }
+    ],
+    "background": {
+      "total": 4,
+      "completed": 4,
+      "failed": 0,
+      "running": false
+    },
+    "warningsAfterReload": [],
+    "fix": "实际复验发现SuperContent销毁时子节点输入处理器已释放；已改为只解绑有效子节点，补先销毁子节点回归，并刷新后从登录重新复验。",
+    "limits": [
+      "只验证少量真实英雄和当前页交互，不是虚拟列表性能测试",
+      "未重新构建发布包，不重跑全机型/缓存TTL/全部挑战结算",
+      "本次列表补拍截图失败，保留详情实际截图；列表以实际鼠标选择、运行绑定/渲染状态和原几何不变作限定交互记录"
+    ]
+  },
+  "virtualList": {
+    "implemented": false,
+    "actual": "SuperContent按总条目创建等量节点，索引复用和Mask裁剪不等于虚拟化。",
+    "planned": "沿用SuperScroll/SuperContent：可见范围、缓冲行、有限节点池；1000/10000条夹具和横竖网格、拖动取消、筛选、异步图、关闭边界。"
+  },
+  "screenshot": {
+    "path": "docs/validation/view-registration-hero-detail-20261111.png",
+    "sha256": "76d1fd6769eb165c1e77fc77356585764cdc59c46826b3f16c813304ff146498"
+  },
+  "limits": [
+    "仅393×852本机预览，未构建新发布包",
+    "没有做虚拟化或性能/长期内存测量",
+    "未逐一打开全部17页或重新跑完整主线结算",
+    "列表截图补拍失败，详情实际截图已保存；本批不签全屏幕视觉验收"
+  ],
+  "unchanged": [
+    "当前玩法范围和未开放入口",
+    "WS＋Protobuf与服务端权威/幂等结算",
+    "三段显式选择和其余按需",
+    "资源池、页面缓存及资源回收策略"
+  ],
+  "cleanup": "已恢复浏览器临时尺寸并关闭测试标签；只停止本轮已核对身份的独立内存测试服44456。"
+}

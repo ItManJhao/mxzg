@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Generate the Creator 3.8.8 Arena prefab (Wire only, not wired).
+"""此历史Prefab写入器已退役，下面保留原算法供阅读追溯；当前资源由Creator人工维护。
+
+Generate the Creator 3.8.8 Arena prefab (Wire only, not wired).
 
 Writes:
   client/assets/bundles/arena/prefabs/WireArenaPage.prefab
@@ -25,6 +27,8 @@ Font sizes still come from place() / render().
 File ids are hashed from node paths, so the prefab body is stable.
 An existing .meta uuid is kept, so a second run rewrites the same files.
 """
+raise SystemExit("历史Prefab写入器已退役：请在Creator编辑当前Prefab，不得重建旧模块、覆盖人工布局或生成新UUID。")
+
 import hashlib
 import json
 import os

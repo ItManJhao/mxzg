@@ -4,12 +4,12 @@
 
 ## 文件与节点
 
-英雄列表也采用同一规范：[HeroListView.prefab](../client/assets/bundles/hero/prefabs/HeroListView.prefab)内静态节点`Content/HeroBoard/spr_box/HeroScroll`的SuperScroll绑定`view/content`，view保存Mask，content保存SuperContent与HeroIconCellView Prefab。HeroBoard保留HeroListBoardView组件，独立HeroListBoardView Prefab已退役，页面不再运行创建列表板。默认四列、Cell自然尺寸96×104、间距12/8、左右边距60、上下边距0；保留原四列中心与纵向步长。HeroListView只setData并绑定格子显示，普通刷新保留位置，切换元素筛选回到起点；名册仍归唯一HeroRosterModel。本批少量/空名册、筛选与详情返回限定复验已通过，实际范围见[当前证据](validation/shared-modal-widget-20261111.json)，不沿用早期长列表结果冒充本批检查。
+英雄列表也采用同一规范：[HeroListView.prefab](../client/assets/bundles/module/hero/prefabs/HeroListView.prefab)内静态节点`Content/HeroBoard/spr_box/HeroScroll`的SuperScroll绑定`view/content`，view保存Mask，content保存SuperContent与HeroIconCellView Prefab。HeroBoard只保留静态容器和Widget；HeroListView直接读取唯一HeroRosterModel，默认四列、Cell自然尺寸96×104、间距12/8、左右边距60。普通刷新保留位置，元素筛选回到起点。[前批页面入口证据](validation/view-registration-list-review-20261111.json)属于虚拟化前的限定复验；本批51项、类型及三英雄/背包/850关/胜利奖励限定复验见[新证据](validation/virtual-list-resource-review-20261111.json)。
 
 - 滚动组件：[SuperScroll.ts](../client/assets/scripts/framework/ui/SuperScroll.ts)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\scripts\framework\ui\SuperScroll.ts`。
-- 内容组件：[SuperContent.ts](../client/assets/scripts/framework/ui/SuperContent.ts)，同目录。两个组件分别继承原生 ScrollView、Layout，没有另建拖动/惯性/回弹或列表框架。
-- 页面：[BagView.prefab](../client/assets/bundles/bag/prefabs/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\bundles\bag\prefabs\BagView.prefab`。
-- Cell：[BagItemView.prefab](../client/assets/bundles/common/prefabs/BagItemView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\bundles\common\prefabs\BagItemView.prefab`。
+- 内容组件：[SuperContent.ts](../client/assets/scripts/framework/ui/SuperContent.ts)，同目录。两个组件分别继承原生ScrollView、Layout；运行时虚拟模式由SuperContent按逻辑索引定位有限节点，手势、惯性和回弹继续用原生ScrollView，编辑器样板沿用原生Layout。
+- 页面：[BagView.prefab](../client/assets/bundles/module/bag/prefabs/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\bundles\module\bag\prefabs\BagView.prefab`。
+- Cell：[BagItemView.prefab](../client/assets/bundles/module/common/prefabs/BagItemView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\bundles\module\common\prefabs\BagItemView.prefab`。
 - 背包业务展示：[BagView.ts](../client/assets/scripts/features/bag/ui/BagView.ts)；格子展示：[BagItemView.ts](../client/assets/scripts/features/bag/ui/BagItemView.ts)；真实库存同步：[BagController.ts](../client/assets/scripts/features/bag/BagController.ts)、[BagModel.ts](../client/assets/scripts/features/bag/BagModel.ts)。当前通信模板见背包维护指南。
 
 以下均相对BagView完整Prefab内的Content节点：
@@ -29,7 +29,8 @@
 - **布局**：`布局类型 / layoutType` 为 Vertical（单列竖向）、Horizontal（单行横向）或 Grid。单列和单行由布局决定滚动方向；网格使用 `网格滚动方向 / gridAxis`。
 - 网格竖滚只显示 `列数 / columns`；横滚只显示 `行数 / rows`。另一个参数保留在序列化中，但不控制当前排布。
 - **间距与边距**：`spacingX/spacingY` 为格子外缘之间的空隙；`paddingLeft/Right/Top/Bottom` 为内容四边留白。它们直接使用原生 Layout 的同一份属性，不另存一套同名参数。
-- **Cell**：拖 `Cell Prefab / cellPrefab`。默认读取其根 UITransform 的尺寸，保留原始缩放，不自动把格子挤小。开启 `覆盖 Cell 尺寸 / overrideCellSize` 后，才使用 `explicitCellSize` 覆盖实例的根尺寸；内部图片、字体和位置仍由 Cell Prefab 决定。
+- **Cell**：拖`Cell Prefab / cellPrefab`。默认读取根UITransform尺寸并保留正缩放；开启overrideCellSize才使用explicitCellSize覆盖根尺寸，不缩放内部美术。
+- **虚拟列表**：virtual默认true，bufferLines默认1、范围0–10；竖滚按行、横滚按列缓冲。关闭virtual时按全部条目创建节点；编辑器样板始终使用原生布局。
 
 交付默认：Grid、竖滚、4 列；横纵间距均 22；左/右/上/下边距为 **35/35/8/38**；Cell 自然尺寸为 **96×96**，覆盖开关关闭。因此相邻格子中心距离为 118。这都是可编辑的默认值，没有保存在 BagView 的坐标公式里。
 
@@ -41,13 +42,13 @@
 
 - **你调整**：BagScroll 的 UITransform 是滚动输入区域；view 的 UITransform 是裁剪区域，当前均为 520×555。它们是不同用途的区域，通常保持一致；viewport 可以在输入区域内缩小。扩展 view 超出输入范围时，也相应扩大 BagScroll 的输入区域。Mask 的类型/范围承载节点都在 view 可见。
 - **SuperContent 自动计算**：content 宽高取“排列所需范围”和“viewport 尺寸”的较大值，空列表也不会产生负尺寸。当前默认 20 个槽的 content 为 520×614。Cell 根尺寸来自自然尺寸或显式覆盖。
-- **原生 Layout 控制**：每个动态 Cell 的 Position。SuperContent 内部将单行/单列也表达成原生固定行/列网格，保证四边距一致；底层 Type、Start Axis、Constraint、Resize Mode 等为派生值，不提供第二个 Inspector 维护入口。
+- **SuperContent控制运行时Cell位置**：根据完整逻辑条目、原锚点和Cell正缩放计算格子位置，只给视口及缓冲行分配节点；逻辑content尺寸不随池节点数缩短。关闭virtual或编辑器样板时才由原生Layout排列。底层Type、Start Axis、Constraint、Resize Mode仍是派生值，不提供第二个Inspector入口。
 - **原生 ScrollView 控制**：content 的滚动 Position、拖动、惯性、回弹。不要用 content.position 当成列表内边距。
 - **你调整 Cell Prefab**：`spr_frame`、`spr_icon`、`lbl_count`、`spr_select` 的图片、字体、局部尺寸、位置和样式；动态代码只更新对应数据/可见状态与点击回调。
 
-content 不要挂启用的 Widget，也不要另挂 Layout；Cell 根 Widget 或会调整根尺寸的 Layout 也会与等尺寸布局冲突，组件会明确报错。Widget 可以用于 Cell 内部。不要把手工样例 Cell 保存为 content 的静态子节点；请使用下面的编辑器预览。
+content不要挂启用的Widget，也不要另挂Layout；Cell根Widget或会调整根尺寸的Layout会与等尺寸布局冲突，组件会明确报错。虚拟模式下view/content的局部X/Y缩放须为1且无旋转；共同祖先的ViewportScale适配仍可使用，Cell自身的正缩放和原锚点保留。Widget可用于Cell内部。不要把手工样例Cell保存为content静态子节点，请使用编辑器预览。
 
-横滚网格通过转置动态 Cell 的兄弟顺序实现按列向下填充，位置仍完全交给原生 Layout 的同一排列路径，从而让不同 Cell 根锚点使用一致的边距。业务刷新索引始终是数据索引，不应通过 content.children 的兄弟索引反查物品。分类按钮条保留原有实现，本批 SuperContent 仅管理物品区。
+虚拟竖滚网格按行填充、横滚网格按列向下填充。Node到当前数据索引的映射由SuperContent持有，不能用content.children或池节点下标反查业务条目。content位置变化（含惯性和零时长程序跳转）只更新范围和重绑，不触发完整重排或停止惯性；数据、视口、模板和几何参数改变才完整重排并恢复合法滚动位。分类按钮条保留独立实现。
 
 ## 不启动游戏也能看排列
 
@@ -64,16 +65,28 @@ content 不要挂启用的 Widget，也不要另挂 Layout；Cell 根 Widget 或
 
 ## 业务接口
 
-泛型数据与回调仅由 TypeScript 传入，不序列化到 Prefab：
+业务数据只由TypeScript传入，不序列化到Prefab。英雄、背包、产物说明外层/内层及胜利奖励均由页面或所属展示组件监听列表事件；在onOpen等显示入口绑定并登记关闭清理，再提交数据：
+
+```ts
+const list = this.heroScroll.list;
+list.node.on(SuperContent.RENDER_ITEM, this.onRender, this);
+list.node.on(SuperContent.SELECT_ITEM, this.onSelect, this);
+this.ownListener(() => {
+    list.node.off(SuperContent.RENDER_ITEM, this.onRender, this);
+    list.node.off(SuperContent.SELECT_ITEM, this.onSelect, this);
+});
+list.setData(entries);
+```
+
+RENDER_ITEM参数依次是Cell节点、当前条目、数据索引；onRender只调用Cell.show绘制。SELECT_ITEM参数依次是当前条目、数据索引；页面处理导航，例如按英雄实例ID打开HeroInfoView，背包空槽不打开详情，产物说明只打开只读说明。Cell不保存选择回调或页面导航。节点重绑先重置旧按压状态，拖动取消点击继续沿用SuperScroll和Button。
+
+事件绑定后只提交数据；可选第二渲染参数仍供未迁移调用使用，但当前页面不同时用回调和事件重复画同一格：
 
 ```ts
 const list = this.bagScroll.list;
-list.setData(entries, (node, entry, index) => {
-    const cell = node.getComponent(BagItemView)!;
-    cell.show(entry.item, entry.selected, entry.onTap, entry.face);
-});
-list.refresh(3); // 重新渲染第 4 条；越界会明确报错
-list.refresh();  // 刷新全部，复用已有节点
+list.setData(entries);
+list.refresh(3); // 第4条可见时刷新，离屏时延迟到进入视口；越界报错
+list.refresh();  // 刷新当前可见条目并复用节点
 list.clear();
 
 this.bagScroll.toStart();
@@ -81,13 +94,13 @@ const position = this.bagScroll.readPosition();
 this.bagScroll.restorePosition(position);
 ```
 
-`setData<T>(readonly T[], render)` 保存数组的浅拷贝；`refresh` 使用上次数据和回调，替换数据请再次 setData。滚动位置为距左上起点的正数设计单位，不是百分比；横向符号已适配原生 getScrollOffset 与 scrollToOffset 的差别。普通刷新默认保留位置，内容缩短后自动限制到合法范围，不要求业务手动保存/恢复坐标。
+`setData<T>(readonly T[], render?)`保存数组浅拷贝；refresh使用上次数据及显示入口，替换数据请再次setData。页面关闭解除自己的RENDER_ITEM/SELECT_ITEM监听，不解除其他页面的监听。滚动位置为距左上起点的正数设计单位，不是百分比；横向符号适配原生getScrollOffset与scrollToOffset差别。普通刷新默认保留位置，内容缩短后限制到合法范围，不要求业务手动保存/恢复坐标。
 
 背包最少 20 个槽、超出后每 4 个补齐，是 [BagUtils.ts](../client/assets/scripts/features/bag/utils/BagUtils.ts) 的展示条目规则，与列数独立。修改为三列后，20 个槽可以留下不满的一行，不会为凑行数修改玩家库存。SuperContent 不知道这些空槽规则、物品 ID、分类、协议或奖励。
 
 背包分类切换回到起点，同分类刷新保留位置。库存请求期间保留上次已接受的真实数据；失败时明确提示显示上次库存，换号/退出/关闭立即清空，迟到回包不会恢复前一角色的数据。
 
-Cell 按索引复用，换 Prefab 时重建。BagItemView 每次 show 先解绑上次点击，空槽也会正确清除回调；图标/边框加载带展示版本，旧请求的迟到结果不能盖回新物品或重新亮起空槽。
+Cell在有限池内重绑到当前数据索引，换Prefab时重建。BagItemView.show只更新物品、选中态、图片和可选状态，选择由列表转交页面；异步图片保留展示代次，旧请求不得盖回新条目或亮起空槽。ResManager.setSprite只持有当前图与本次在途候选，新图赋值后撤回旧拥有者；同图和相同在途请求复用，不随Cell滚动积累历史图片。
 
 ## 换一个兼容的 Cell
 
@@ -101,11 +114,15 @@ Cell 按索引复用，换 Prefab 时重建。BagItemView 每次 show 先解绑�
 
 启动本机后端，在 Creator 打开 `assets/scenes/Remake.scene` 预览；加载 → 登录/选服 → 明确开始 → 底栏背包。编辑源 Prefab 后 Ctrl+S，等待导入再刷新预览。外部工具修改源码时，Creator 尚未导入会继续显示旧资源，本批曾因此读到旧列数，不能据此声称新配置已运行。
 
-技术结果与截图见 [开发进度](development-progress.md)，原生引擎和 Node 检查分开记录。真实流程包含分类、库存、拖动抑制详情、重复刷新、选中与详情、切页重开；独立夹具覆盖横向、竖向、网格竖滚/横滚，以及 0/1/3/18 条、缩短和兼容 Cell 替换。夹具仅存在于独立测试浏览器，不写入玩家数据或项目资产。
+各批结果统一见[开发进度](development-progress.md)，原生引擎、Node专项与浏览器分开记录。早期分类/库存/拖动/详情/切页及0/1/3/18条夹具属于虚拟化前证据；本批千/万条有限池专项与850关真实配置另记。数据准备仅使用独立内存测试服，不写日常数据库或项目资产。
 
-第一版只支持等尺寸列表，不含不等高、无限循环或虚拟列表。目前验证的是新账号少量真实道具、20 个背包展示槽和最多 18 条的通用夹具；节点按索引复用已有实测，不将这些结果当成大库存帧率或内存预算。将来有实际大列表数据和性能证据后再决定虚拟化。
+当前已实现等尺寸虚拟列表，默认启用；不含不等高或无限循环。Mask仍只是裁剪，实际节点减少来自可见范围与有限节点池；逻辑数据和content总尺寸保持完整。关闭virtual时仍按总条目创建节点。
 
-本节下方截图和最初SuperScroll技术结果属于早期列表迁移，不能作为2026-11-11完整页面整合的新画面验收。本批专项及类型检查通过，完整英雄列表已完成393×852和360×720少量名册/空名册、筛选和详情返回检查，未构造长列表；见[当前证据](validation/shared-modal-widget-20261111.json)。发布包状态与后续集中构建以[当前进度](development-progress.md)为准，不沿用历史端口或旧包推断当前状态。
+嵌套列表继续沿用Creator原生ScrollView手势处理；本批分别实测纵向行区拖动与横向产物区拖动。由横向图标区域起手竖拖时，父子列表是否按角度接管尚未签收，当前未实现额外角度仲裁；后续触摸/真机检查需覆盖，不把两条独立拖动结果算作完整嵌套手势验收。
+
+本批1000/10000条六种布局、锚点/Cell缩放、视口resize及滚动不重置惯性的专项和51项全量通过。本机850关首屏5个外层节点，真实纵向拖动、8次大跨度跳转后池保持7；横向拖动不误开，末关复用格选中正确物品，两页签重绑、关页正常；最终资源重载后再次到达850。背包四分类及独立详情、三英雄列表、真实第二关7项胜利奖励返回通过。后续集中验发布包；节点数约束不代表真机帧率或GPU内存结论，不恢复任何玩法。
+
+本节下方截图及[页面事件证据](validation/view-registration-list-review-20261111.json)、[8cb60507共享层证据](validation/shared-modal-widget-20261111.json)均属于本批虚拟化前的实现，保留历史范围，不作新节点池画面验收。当前结果与集中构建安排以[进度](development-progress.md)为准。
 
 交付后请你亲手修改三列/间距/边距、打开/清理编辑器样例、换兼容 Cell，再保存预览、切页重开，确认字段易找且修改不被恢复。收到你的确认前，“人工维护体验”保持待验收。
 

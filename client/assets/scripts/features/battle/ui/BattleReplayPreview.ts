@@ -2,9 +2,8 @@
 import { AudioClip,AudioSource,Button,Color,director,Director,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
 import { GameLog } from "../../../core/GameLog";
 import { createAssetScope, ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
-import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
-import { registerView } from "../../../framework/ui/UIRegistry";
+import { bindViewRuntime } from "../../../framework/ui/UIRegistry";
 import { setText } from "../../../framework/ui/UiKit";
 import { BattleReplayPlayer } from "../BattleReplayPlayer";
 import { BattleAttackUtils } from "../utils/BattleAttackUtils";
@@ -129,10 +128,8 @@ export class BattleReplayPreview {
                 if (node) node.active = false;
             }
         }
-        const unregisterEnd = idleEncounter ? () => {} : registerView(ChapterEndView, {
-            id: "chapter-end", prefab: "bundles/battle/prefabs/ChapterEndView", layer: UILayer.Popup,
-            modal: { mask: true, closeOnOutside: true },
-            hostId: persistentChapter ? "remake-modal" : "battle-settlement", cache: false, allowMultiple: false
+        const unregisterEnd = idleEncounter ? () => {} : bindViewRuntime(ChapterEndView, {
+            hostId: persistentChapter ? "remake-modal" : "battle-settlement",
         });
         // 正常结算必须在应用弹层，避免完整旧胜利页被挂机面板遮挡；技能台仍归本地战场清理。
         const releaseEndHost = idleEncounter || persistentChapter ? () => {} : UIManager.instance.setResidentHost("battle-settlement", () => shell.root.isValid ? shell.root : null);

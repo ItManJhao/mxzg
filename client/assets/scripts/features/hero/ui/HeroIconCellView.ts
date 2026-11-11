@@ -1,5 +1,6 @@
 /**
- * 英雄头像格子：按传入展示数据更新图片、等级和星级，保持 Prefab 结构和绑定可编辑。
+ * 英雄头像格子：按传入展示数据更新图片、等级和星级，保持Prefab结构和绑定可编辑。
+ * 点击由列表派发给所属页面；本组件不持有选择回调、页面导航或名册状态。
  */
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
@@ -38,8 +39,8 @@ export class HeroIconCellView extends Component {
     @property(Node)
     battle: Node | null = null;
 
+    /** 图片绘制代次，复用和销毁时递增，拒绝旧图片覆盖当前格子。 */
     private revision = 0;
-    private tap: (() => void) | null = null;
 
     validateBindings(): void {
         const fields = {
@@ -47,16 +48,16 @@ export class HeroIconCellView extends Component {
             levelLabel: this.levelLabel, lock: this.lock, battle: this.battle
         };
         for (const [field, value] of Object.entries(fields)) {
-            if (!value) throw new Error("assets/bundles/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: 缺失绑定 " + field);
+            if (!value) throw new Error("assets/bundles/module/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: 缺失绑定 " + field);
         }
         if (this.stars.length !== 5 || this.stars.some(star => !star))
-            throw new Error("assets/bundles/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: stars 必须绑定五颗星");
+            throw new Error("assets/bundles/module/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: stars 必须绑定五颗星");
         if (!this.face!.getComponent(Sprite))
-            throw new Error("assets/bundles/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: face 缺少 Sprite");
+            throw new Error("assets/bundles/module/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: face 缺少 Sprite");
     }
 
-    /** 复用格子时替换显示和点击，并使旧图标加载结果失效。 */
-    show(cell: HeroCellModel, onTap: (() => void) | null): void {
+    /** 复用格子时更新显示和可选状态，并使旧图标加载结果失效；不绑定点击。 */
+    show(cell: HeroCellModel): void {
         this.validateBindings();
         const revision = ++this.revision;
         const empty = cell.kind === "empty";
@@ -67,24 +68,7 @@ export class HeroIconCellView extends Component {
         this.paintLevel(empty ? null : cell.level);
         if (this.lock) this.lock.active = !empty && cell.locked;
         if (this.battle) this.battle.active = !empty && cell.deployed && cell.kind === "owned";
-        this.bindTap(empty || !onTap ? null : onTap);
-    }
-
-    /** 空槽跟日服一样不提示。有英雄或未获得才回一句。 */
-    private bindTap(onTap: (() => void) | null): void {
-        if (this.tap) {
-            this.node.off(Button.EventType.CLICK, this.tap);
-            this.tap = null;
-        }
-        const button = this.button!;
-        if (!onTap) {
-            if (button) button.interactable = false;
-            return;
-        }
-        button.interactable = true;
-        const run = () => onTap();
-        this.tap = run;
-        this.node.on(Button.EventType.CLICK, run);
+        this.button!.interactable = !empty;
     }
 
     /** 头像仅接受本轮显示请求，空格或后续英雄不能被旧回包覆盖。 */
@@ -127,8 +111,10 @@ export class HeroIconCellView extends Component {
         }
     }
 
-    /** 销毁时废弃异步图标并清理本格点击。 */
-    onDestroy(): void { this.revision++; if (this.tap) this.node.off(Button.EventType.CLICK, this.tap); this.tap = null; }
+    /** 销毁时废弃全部在途图片；列表选择监听由所属列表释放。 */
+    onDestroy(): void {
+        this.revision++;
+    }
 
     private paintLevel(level: number | null): void {
         if (!this.levelLabel) return;

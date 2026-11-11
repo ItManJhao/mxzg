@@ -6,7 +6,7 @@ import { loadPrefab, clearPrefabCache } from "../assets/scripts/framework/assets
 
 /** 验证依赖先加载、失败重试及作用域引用释放。 */
 async function main(): Promise<void> {
-    const descriptor = ResourceAssetsUtils.describe("home", "prefabs/RemakeHomeView", "Prefab", "bundles/home/prefabs/RemakeHomeView");
+    const descriptor = ResourceAssetsUtils.describe("home", "prefabs/RemakeHomeView", "Prefab", "bundles/module/home/prefabs/RemakeHomeView");
     const ready = new Map<string, object>();
     const order: string[] = [];
     const prefab = new Prefab();
@@ -16,11 +16,11 @@ async function main(): Promise<void> {
         loadBundle: (name: string, done: Function) => {
             order.push(name);
             const bundle = {
-                deps: name === descriptor.bundle ? ["resources", "prefabs"] : [],
+                deps: name === descriptor.bundle ? ["common", "maps"] : [],
                 load: (path: string, type: unknown, callback: Function) => {
                     assert.equal(path, descriptor.loadPath);
                     assert.equal(type, Prefab);
-                    assert(ready.has("resources") && ready.has("prefabs"));
+                    assert(ready.has("common") && ready.has("maps"));
                     attempts++;
                     callback(attempts === 1 ? new Error("fixture missing") : null, attempts === 1 ? null : prefab);
                 },
@@ -37,6 +37,7 @@ async function main(): Promise<void> {
     assert.equal(results[0], prefab);
     assert.equal(results[1], prefab);
     assert.equal(attempts, 2);
+    assert.deepEqual(order, ["home", "common", "maps"], "源目录分组不改变远程包名及依赖顺序");
     assert.equal(prefab.refCount, 1);
     first.dispose();
     assert.equal(prefab.refCount, 1);

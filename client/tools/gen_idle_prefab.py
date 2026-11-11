@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Generate Creator 3.8.8 Idle prefabs (not wired).
+"""此历史Prefab写入器已退役，下面保留原算法供阅读追溯；当前资源由Creator人工维护。
+
+Generate Creator 3.8.8 Idle prefabs (not wired).
 
 Writes:
   client/assets/bundles/idle/prefabs/WireIdlePage.prefab
@@ -13,6 +15,8 @@ SpriteFrame uuids come from client/assets/bundles/**/*.meta (@f9941).
 Does not touch Boot, MainApp, page scripts, protocol, or USE_*_PREFAB flags.
 No idle atlas: page chrome is common win-bg and button art.
 """
+raise SystemExit("历史Prefab写入器已退役：请在Creator编辑当前Prefab，不得重建旧模块、覆盖人工布局或生成新UUID。")
+
 import hashlib
 import json
 import os

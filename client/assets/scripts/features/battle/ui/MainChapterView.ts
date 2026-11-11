@@ -3,6 +3,9 @@
 import { _decorator, Button, Label, Node, Sprite, SpriteFrame, UITransform, sp } from "cc";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
+import { prepareHeroDetailConfig, prepareInventoryConfig } from "../../../config/RemakeConfig";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { MainChapterController } from "../MainChapterController";
@@ -19,6 +22,17 @@ import { MainChapterIdleResources } from "./MainChapterIdleResources";
 
 const { ccclass, property } = _decorator;
 
+@view({
+    id: "remake-campaign",
+    prefab: "bundles/module/battle/prefabs/MainChapterView",
+    layer: UILayer.Page,
+    cache: false,
+    allowMultiple: false,
+    prepare: async () => {
+        await prepareInventoryConfig();
+        await prepareHeroDetailConfig();
+    },
+})
 @ccclass("MainChapterView")
 export class MainChapterView extends BaseView {
     /** 对话由本页持有，跨遇敌保留冷却，挑战与关闭时隐藏。 */

@@ -1,0 +1,1385 @@
+{
+  "date": "2026-11-11",
+  "branch": "hao",
+  "pushedBaseline": "8cb60507",
+  "committedOrPushedThisBatch": false,
+  "scope": "统一背包/产物说明/胜利奖励的列表事件；仅保留当前实现资源依赖；等尺寸有限节点虚拟列表。未变更玩法、协议或资产规则。",
+  "sourceSha256": {
+    "client/assets/scripts/framework/ui/SuperContent.ts": "3a87c53d00159f9d06cf3416b5f8d96d7daa50485bfc4020b917b950cf7abb17",
+    "client/assets/scripts/framework/ui/SuperScroll.ts": "f3f215f62fb695e041e00de78b904e49fbc0910cf89654da511f17e5c68a6e79",
+    "client/assets/scripts/framework/assets/ResManager.ts": "5458af3f6e3d60dff608a5fc32b9bbcfdd17a23471abc77badd06655ec7b8f39",
+    "client/assets/scripts/features/bag/ui/BagView.ts": "0052ee8f2b652050ab69a64b8431e5de5ae5b9fed98eb5491a70350cc87dec4c",
+    "client/assets/scripts/features/bag/ui/BagItemView.ts": "c52040b9facf77e7de96f8f42bf076ed01f48792f48d50e898e0c0959c544c36",
+    "client/assets/scripts/features/battle/ui/ChapterRewardInfoView.ts": "9749f16818d26eba0c8b20f5cadf0c960b5d8a3cae2f9c573960f2f3c5177d9b",
+    "client/assets/scripts/features/battle/ui/ChapterRewardInfoCell.ts": "1aa6755bf303dce2f59f9532d8d1df34acb1760eb0c6af14f0faaf11d03306c3",
+    "client/assets/scripts/features/battle/ui/ChapterEndView.ts": "802cc5eca9e0cd85a272b7fd60ef2a402144cb22cef70117cf6e5b2a6aa79bba"
+  },
+  "checks": {
+    "activePassed": 51,
+    "paused": [
+      "hero-roster",
+      "hero-level",
+      "formation",
+      "remake-playable",
+      "idle"
+    ],
+    "suites": [
+      {
+        "id": "gm",
+        "passed": true,
+        "elapsedMs": 141,
+        "log": "client/temp/project-checks/gm.log"
+      },
+      {
+        "id": "docs",
+        "passed": true,
+        "elapsedMs": 120,
+        "log": "client/temp/project-checks/docs.log"
+      },
+      {
+        "id": "resource-catalog",
+        "passed": true,
+        "elapsedMs": 244,
+        "log": "client/temp/project-checks/resource-catalog.log"
+      },
+      {
+        "id": "current-resource-scope",
+        "passed": true,
+        "elapsedMs": 1771,
+        "log": "client/temp/project-checks/current-resource-scope.log"
+      },
+      {
+        "id": "ui-atlas",
+        "passed": true,
+        "elapsedMs": 57,
+        "log": "client/temp/project-checks/ui-atlas.log"
+      },
+      {
+        "id": "common-atlas",
+        "passed": true,
+        "elapsedMs": 121,
+        "log": "client/temp/project-checks/common-atlas.log"
+      },
+      {
+        "id": "ui-static",
+        "passed": true,
+        "elapsedMs": 1996,
+        "log": "client/temp/project-checks/ui-static.log"
+      },
+      {
+        "id": "resource-generated",
+        "passed": true,
+        "elapsedMs": 222,
+        "log": "client/temp/project-checks/resource-generated.log"
+      },
+      {
+        "id": "config-generated",
+        "passed": true,
+        "elapsedMs": 12322,
+        "log": "client/temp/project-checks/config-generated.log"
+      },
+      {
+        "id": "client-config-scope",
+        "passed": true,
+        "elapsedMs": 19894,
+        "log": "client/temp/project-checks/client-config-scope.log"
+      },
+      {
+        "id": "prefab-review",
+        "passed": true,
+        "elapsedMs": 2930,
+        "log": "client/temp/project-checks/prefab-review.log"
+      },
+      {
+        "id": "event-target",
+        "passed": true,
+        "elapsedMs": 62,
+        "log": "client/temp/project-checks/event-target.log"
+      },
+      {
+        "id": "game-protocol",
+        "passed": true,
+        "elapsedMs": 231,
+        "log": "client/temp/project-checks/game-protocol.log"
+      },
+      {
+        "id": "game-protocol-generated",
+        "passed": true,
+        "elapsedMs": 762,
+        "log": "client/temp/project-checks/game-protocol-generated.log"
+      },
+      {
+        "id": "main-chapter",
+        "passed": true,
+        "elapsedMs": 802,
+        "log": "client/temp/project-checks/main-chapter.log"
+      },
+      {
+        "id": "battle-presentation",
+        "passed": true,
+        "elapsedMs": 100,
+        "log": "client/temp/project-checks/battle-presentation.log"
+      },
+      {
+        "id": "battle-layout",
+        "passed": true,
+        "elapsedMs": 2316,
+        "log": "client/temp/project-checks/battle-layout.log"
+      },
+      {
+        "id": "battle-layout-rules",
+        "passed": true,
+        "elapsedMs": 317,
+        "log": "client/temp/project-checks/battle-layout-rules.log"
+      },
+      {
+        "id": "game-socket",
+        "passed": true,
+        "elapsedMs": 517,
+        "log": "client/temp/project-checks/game-socket.log"
+      },
+      {
+        "id": "isolated-build",
+        "passed": true,
+        "elapsedMs": 297,
+        "log": "client/temp/project-checks/isolated-build.log"
+      },
+      {
+        "id": "hero-state",
+        "passed": true,
+        "elapsedMs": 205,
+        "log": "client/temp/project-checks/hero-state.log"
+      },
+      {
+        "id": "formation-state",
+        "passed": true,
+        "elapsedMs": 190,
+        "log": "client/temp/project-checks/formation-state.log"
+      },
+      {
+        "id": "formation-view",
+        "passed": true,
+        "elapsedMs": 203,
+        "log": "client/temp/project-checks/formation-view.log"
+      },
+      {
+        "id": "hero-growth-generated",
+        "passed": true,
+        "elapsedMs": 175,
+        "log": "client/temp/project-checks/hero-growth-generated.log"
+      },
+      {
+        "id": "idle-generated",
+        "passed": true,
+        "elapsedMs": 190,
+        "log": "client/temp/project-checks/idle-generated.log"
+      },
+      {
+        "id": "campaign-rules",
+        "passed": true,
+        "elapsedMs": 181,
+        "log": "client/temp/project-checks/campaign-rules.log"
+      },
+      {
+        "id": "remake-navigation",
+        "passed": true,
+        "elapsedMs": 194,
+        "log": "client/temp/project-checks/remake-navigation.log"
+      },
+      {
+        "id": "feature-navigation",
+        "passed": true,
+        "elapsedMs": 253,
+        "log": "client/temp/project-checks/feature-navigation.log"
+      },
+      {
+        "id": "login-presentation",
+        "passed": true,
+        "elapsedMs": 118,
+        "log": "client/temp/project-checks/login-presentation.log"
+      },
+      {
+        "id": "home-presentation",
+        "passed": true,
+        "elapsedMs": 159,
+        "log": "client/temp/project-checks/home-presentation.log"
+      },
+      {
+        "id": "startup",
+        "passed": true,
+        "elapsedMs": 468,
+        "log": "client/temp/project-checks/startup.log"
+      },
+      {
+        "id": "staged-loading",
+        "passed": true,
+        "elapsedMs": 328,
+        "log": "client/temp/project-checks/staged-loading.log"
+      },
+      {
+        "id": "resources",
+        "passed": true,
+        "elapsedMs": 96,
+        "log": "client/temp/project-checks/resources.log"
+      },
+      {
+        "id": "home-bundle",
+        "passed": true,
+        "elapsedMs": 73,
+        "log": "client/temp/project-checks/home-bundle.log"
+      },
+      {
+        "id": "resource-audit",
+        "passed": true,
+        "elapsedMs": 205,
+        "log": "client/temp/project-checks/resource-audit.log"
+      },
+      {
+        "id": "config-groups",
+        "passed": true,
+        "elapsedMs": 177,
+        "log": "client/temp/project-checks/config-groups.log"
+      },
+      {
+        "id": "backend-launcher",
+        "passed": true,
+        "elapsedMs": 7369,
+        "log": "client/temp/project-checks/backend-launcher.log"
+      },
+      {
+        "id": "creator-compat",
+        "passed": true,
+        "elapsedMs": 3253,
+        "log": "client/temp/project-checks/creator-compat.log"
+      },
+      {
+        "id": "prefab-plan",
+        "passed": true,
+        "elapsedMs": 790,
+        "log": "client/temp/project-checks/prefab-plan.log"
+      },
+      {
+        "id": "architecture",
+        "passed": true,
+        "elapsedMs": 2884,
+        "log": "client/temp/project-checks/architecture.log"
+      },
+      {
+        "id": "bindings",
+        "passed": true,
+        "elapsedMs": 333,
+        "log": "client/temp/project-checks/bindings.log"
+      },
+      {
+        "id": "backpack",
+        "passed": true,
+        "elapsedMs": 281,
+        "log": "client/temp/project-checks/backpack.log"
+      },
+      {
+        "id": "modal-layer",
+        "passed": true,
+        "elapsedMs": 90,
+        "log": "client/temp/project-checks/modal-layer.log"
+      },
+      {
+        "id": "viewport-scale",
+        "passed": true,
+        "elapsedMs": 72,
+        "log": "client/temp/project-checks/viewport-scale.log"
+      },
+      {
+        "id": "super-scroll",
+        "passed": true,
+        "elapsedMs": 108,
+        "log": "client/temp/project-checks/super-scroll.log"
+      },
+      {
+        "id": "hero-detail",
+        "passed": true,
+        "elapsedMs": 170,
+        "log": "client/temp/project-checks/hero-detail.log"
+      },
+      {
+        "id": "hero-equipment",
+        "passed": true,
+        "elapsedMs": 227,
+        "log": "client/temp/project-checks/hero-equipment.log"
+      },
+      {
+        "id": "hero",
+        "passed": true,
+        "elapsedMs": 347,
+        "log": "client/temp/project-checks/hero.log"
+      },
+      {
+        "id": "city",
+        "passed": true,
+        "elapsedMs": 82,
+        "log": "client/temp/project-checks/city.log"
+      },
+      {
+        "id": "battle",
+        "passed": true,
+        "elapsedMs": 90,
+        "log": "client/temp/project-checks/battle.log"
+      },
+      {
+        "id": "retirement",
+        "passed": true,
+        "elapsedMs": 388,
+        "log": "client/temp/project-checks/retirement.log"
+      }
+    ]
+  },
+  "creatorTypescript": "本批51项全量后运行Creator 3.8.8 tsc --project client/tsconfig.json --noEmit，退出0。",
+  "scriptBindings": {
+    "scripts": 180,
+    "prefabAndScene": 33,
+    "bindings": 71,
+    "result": "无未知类、无效按钮目标或旧格式，检查器反例通过"
+  },
+  "unitMetrics": {
+    "source": "通用列表隔离夹具，不是真机或发布包性能测量",
+    "samples": [
+      {
+        "layout": 0,
+        "axis": 0,
+        "data": 1000,
+        "nodes": 5,
+        "renders": 5
+      },
+      {
+        "layout": 0,
+        "axis": 0,
+        "data": 10000,
+        "nodes": 7,
+        "renders": 22
+      },
+      {
+        "layout": 0,
+        "axis": 1,
+        "data": 1000,
+        "nodes": 5,
+        "renders": 5
+      },
+      {
+        "layout": 0,
+        "axis": 1,
+        "data": 10000,
+        "nodes": 7,
+        "renders": 22
+      },
+      {
+        "layout": 1,
+        "axis": 0,
+        "data": 1000,
+        "nodes": 6,
+        "renders": 6
+      },
+      {
+        "layout": 1,
+        "axis": 0,
+        "data": 10000,
+        "nodes": 8,
+        "renders": 26
+      },
+      {
+        "layout": 1,
+        "axis": 1,
+        "data": 1000,
+        "nodes": 6,
+        "renders": 6
+      },
+      {
+        "layout": 1,
+        "axis": 1,
+        "data": 10000,
+        "nodes": 8,
+        "renders": 26
+      },
+      {
+        "layout": 2,
+        "axis": 0,
+        "data": 1000,
+        "nodes": 15,
+        "renders": 15
+      },
+      {
+        "layout": 2,
+        "axis": 0,
+        "data": 10000,
+        "nodes": 21,
+        "renders": 62
+      },
+      {
+        "layout": 2,
+        "axis": 1,
+        "data": 1000,
+        "nodes": 12,
+        "renders": 12
+      },
+      {
+        "layout": 2,
+        "axis": 1,
+        "data": 10000,
+        "nodes": 16,
+        "renders": 52
+      }
+    ]
+  },
+  "resourceCleanup": {
+    "evidence": "docs/validation/current-resource-scope-cleanup-20261111.json",
+    "after": {
+      "bundles": 15,
+      "remoteBundles": 14,
+      "prefabs": 32,
+      "files": 26410,
+      "bytes": 498214067
+    },
+    "removedSourceBytes": 213172798,
+    "note": "源资源约减少203.30MiB；没有重建发布包，不能用此数字表示App大小或CDN下载量。31表按实际读取闭包导出，三份主城投影保留现用版本并记录与XLSX差异。"
+  },
+  "browser": {
+    "status": "completed",
+    "finalPreviewTimeOrigin": 1794411487731.4,
+    "scope": "独立H2内存测试服；先393x852及360x720列表测试，最终31表重载后360x720英雄、850关和真实第二关闭环；未操作Creator或日常数据库",
+    "cases": [
+      {
+        "case": "最终资源：850关首屏",
+        "result": {
+          "actual": 5,
+          "innerLists": [
+            {
+              "logical": 7,
+              "pooled": 6
+            },
+            {
+              "logical": 7,
+              "pooled": 6
+            },
+            {
+              "logical": 6,
+              "pooled": 6
+            },
+            {
+              "logical": 6,
+              "pooled": 6
+            },
+            {
+              "logical": 6,
+              "pooled": 6
+            }
+          ],
+          "logical": 850,
+          "max": {
+            "x": 0,
+            "y": 131255
+          },
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "pooled": 5,
+          "rowNames": [
+            "关卡1",
+            "关卡2",
+            "关卡3",
+            "关卡4",
+            "关卡5"
+          ],
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "横向实际拖动不误开详情",
+        "result": {
+          "inner": [
+            {
+              "count": 7,
+              "offset": {
+                "x": 282,
+                "y": 0
+              },
+              "title": "关卡1"
+            },
+            {
+              "count": 6,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "title": "关卡2"
+            },
+            {
+              "count": 6,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "title": "关卡3"
+            },
+            {
+              "count": 6,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "title": "关卡4"
+            },
+            {
+              "count": 6,
+              "offset": {
+                "x": 0,
+                "y": 0
+              },
+              "title": "关卡5"
+            }
+          ],
+          "outer": {
+            "x": 0,
+            "y": 0
+          },
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          }
+        }
+      },
+      {
+        "case": "真实纵向拖动后的池量",
+        "result": {
+          "actual": 7,
+          "innerLists": [
+            {
+              "logical": 6,
+              "pooled": 6
+            },
+            {
+              "logical": 6,
+              "pooled": 6
+            },
+            {
+              "logical": 6,
+              "pooled": 6
+            },
+            {
+              "logical": 6,
+              "pooled": 6
+            },
+            {
+              "logical": 6,
+              "pooled": 6
+            },
+            {
+              "logical": 6,
+              "pooled": 6
+            }
+          ],
+          "logical": 850,
+          "max": {
+            "x": 0,
+            "y": 131255
+          },
+          "offset": {
+            "x": 0,
+            "y": 1560.013300000006
+          },
+          "pooled": 7,
+          "rowNames": [
+            "关卡15",
+            "关卡10",
+            "关卡11",
+            "关卡12",
+            "关卡13",
+            "关卡14"
+          ],
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "第850关到达与池复用",
+        "result": {
+          "actual": 7,
+          "innerLists": [
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            }
+          ],
+          "logical": 850,
+          "max": {
+            "x": 0,
+            "y": 131255
+          },
+          "offset": {
+            "x": 0,
+            "y": 131255
+          },
+          "pooled": 7,
+          "rowNames": [
+            "关卡850",
+            "关卡849",
+            "关卡848",
+            "关卡847",
+            "关卡846"
+          ],
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "第850关复用节点实际点击",
+        "expected": "雷鸣之足",
+        "result": {
+          "title": "雷鸣之足",
+          "type": "产物说明（只读）",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 2
+          }
+        }
+      },
+      {
+        "case": "切换挂机页回到首关并重绑",
+        "result": {
+          "actual": 7,
+          "innerLists": [
+            {
+              "logical": 11,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            }
+          ],
+          "logical": 850,
+          "max": {
+            "x": 0,
+            "y": 131255
+          },
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "pooled": 7,
+          "rowNames": [
+            "关卡5",
+            "关卡4",
+            "关卡3",
+            "关卡2",
+            "关卡1"
+          ],
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "八次大跨度跳转后池不增长",
+        "result": {
+          "actual": 7,
+          "innerLists": [
+            {
+              "logical": 11,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            }
+          ],
+          "logical": 850,
+          "max": {
+            "x": 0,
+            "y": 131255
+          },
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "pooled": 7,
+          "rowNames": [
+            "关卡5",
+            "关卡4",
+            "关卡3",
+            "关卡2",
+            "关卡1"
+          ],
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "360x720下动态适配保持有限池",
+        "result": {
+          "actual": 7,
+          "innerLists": [
+            {
+              "logical": 11,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            },
+            {
+              "logical": 8,
+              "pooled": 6
+            }
+          ],
+          "logical": 850,
+          "max": {
+            "x": 0,
+            "y": 131255
+          },
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "pooled": 7,
+          "rowNames": [
+            "关卡5",
+            "关卡4",
+            "关卡3",
+            "关卡2",
+            "关卡1"
+          ],
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包真实数据与虚拟格子",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "item",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包分类0",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "equip",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包分类1",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "item",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包分类2",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "shard",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包分类3",
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "spirit",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "背包实际点击独立详情",
+        "result": {
+          "quantity": "数量：3",
+          "title": "波纹精灵",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          }
+        }
+      },
+      {
+        "case": "背包关闭重开与数量保持",
+        "sameInstance": false,
+        "result": {
+          "items": [
+            {
+              "id": 900102,
+              "quantity": 3
+            },
+            {
+              "id": 908101,
+              "quantity": 3
+            },
+            {
+              "id": 950001,
+              "quantity": 3
+            },
+            {
+              "id": 2000001,
+              "quantity": 3
+            }
+          ],
+          "labels": [
+            "英雄",
+            "尚未获得英雄",
+            "英雄：0/300",
+            "英  雄",
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "logical": 20,
+          "pool": 20,
+          "tab": "item",
+          "ui": {
+            "cached": 1,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 3,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "最终31表资源重载后英雄入口",
+        "result": {
+          "heroReady": true,
+          "labels": [
+            "英雄",
+            "100",
+            "100",
+            "100",
+            "英雄：3/300",
+            "英  雄",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "lists": [
+            {
+              "logical": 3,
+              "pool": 3,
+              "virtual": true
+            }
+          ],
+          "skinButtonPresent": false,
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "最终31表资源重载后第850关",
+        "result": {
+          "actual": 5,
+          "innerLists": [
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            },
+            {
+              "logical": 5,
+              "pooled": 5
+            }
+          ],
+          "logical": 850,
+          "max": {
+            "x": 0,
+            "y": 131255
+          },
+          "offset": {
+            "x": 0,
+            "y": 131255
+          },
+          "pooled": 5,
+          "rowNames": [
+            "关卡850",
+            "关卡849",
+            "关卡848",
+            "关卡847",
+            "关卡846"
+          ],
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          },
+          "virtual": true
+        }
+      },
+      {
+        "case": "最终资源真实第二关结算",
+        "result": {
+          "won": true,
+          "mainVictory": true,
+          "rewardList": {
+            "logical": 7,
+            "pool": 7,
+            "virtual": true
+          },
+          "state": {
+            "assetRevision": 5,
+            "maxCleared": 2,
+            "pendingBattleId": null
+          },
+          "labels": [
+            "确定",
+            "4 秒后关闭",
+            "结算已确认，资产以服务器同步为准"
+          ]
+        }
+      },
+      {
+        "case": "第二关倒计时返回挂机",
+        "result": {
+          "challenge": "战斗",
+          "endPresent": false,
+          "playing": false,
+          "stage": "3",
+          "state": {
+            "assetRevision": 5,
+            "maxCleared": 2,
+            "pendingBattleId": null
+          },
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      }
+    ],
+    "warningsAndErrors": [],
+    "cacheLimit": "背包重开库存保持；本轮不签短期同实例或TTL，运行记录sameInstance=false如实保留。"
+  },
+  "browserSourceSha256": {
+    "client/assets/scripts/framework/ui/SuperContent.ts": "d66a7953c409674c958fa7ca35f4daba95ad770c9cf5e87fccfe414cb5f429da",
+    "client/assets/scripts/framework/ui/SuperScroll.ts": "b8896c275d0d50ae63cf5385e52558f25b1f41559030a1b0721a01210c6ff1b8",
+    "client/assets/scripts/framework/assets/ResManager.ts": "64dc8ab1c06db6baa86bf45c01b75430cf8178ac48dd9ee12940432eb1ab2a1c",
+    "client/assets/scripts/features/bag/ui/BagView.ts": "0052ee8f2b652050ab69a64b8431e5de5ae5b9fed98eb5491a70350cc87dec4c",
+    "client/assets/scripts/features/bag/ui/BagItemView.ts": "c52040b9facf77e7de96f8f42bf076ed01f48792f48d50e898e0c0959c544c36",
+    "client/assets/scripts/features/battle/ui/ChapterRewardInfoView.ts": "9749f16818d26eba0c8b20f5cadf0c960b5d8a3cae2f9c573960f2f3c5177d9b",
+    "client/assets/scripts/features/battle/ui/ChapterRewardInfoCell.ts": "1aa6755bf303dce2f59f9532d8d1df34acb1760eb0c6af14f0faaf11d03306c3",
+    "client/assets/scripts/features/battle/ui/ChapterEndView.ts": "802cc5eca9e0cd85a272b7fd60ef2a402144cb22cef70117cf6e5b2a6aa79bba"
+  },
+  "postBrowserCorrection": "浏览器完整复验后，仅补同图重绑同步恢复已有帧，防止Cell先清空Sprite产生空图瞬间；新增针对性回归并重跑资源与全量检查，不将此前浏览器画面冒充此补丁的新画面。SuperContent修正文档注释，SuperScroll补中文说明并展开排版，滚动逻辑未变。",
+  "screenshots": [
+    {
+      "path": "docs/validation/virtual-chapter-first-20261111.png",
+      "scope": "393x852首通产物首屏；850逻辑行仅5个外层节点。截图早于最后buffart原字节恢复，最终重载另有同端点运行复验。"
+    },
+    {
+      "path": "docs/validation/virtual-chapter-last-20261111.png",
+      "scope": "393x852第850关及相邻末尾关卡；保持完整数据，不以节点池缩小裁关。截图早于最后buffart原字节恢复。"
+    }
+  ],
+  "corrections": [
+    "全量发现漏保留buffart，原JSON/meta按清理前字节和UUID恢复；闭包解析增加rows(name)间接读取及缺表/空表反例，然后全量重跑通过。",
+    "英雄旧检查仍要求已删除的隐藏皮肤商店入口，修正该过期断言；当前英雄、进化只读入口断言保留。",
+    "背包截图裁切错误，已删除，未当作画面证据。背包详情只登记实际点击、文字和库存状态。"
+  ],
+  "limits": [
+    "本机Creator预览与隔离列表夹具；没有新发布包、真实CDN、App/小游戏真机、GPU或长期内存结果。",
+    "虚拟列表支持等尺寸Cell，不含变高列表和无限循环；view/content局部比例1且无旋转，祖先统一适配可用。",
+    "背包重开数据保持，本轮不签同实例复用或TTL自然回收；对应历史测量另见loading-cache-review。",
+    "英雄名册本轮3条，长列表覆盖来自1000/10000条通用夹具及850关真实配置，不冒充万英雄真实名册。",
+    "主城现用三表与XLSX版本差异、清心概率、护盾统计及大型进化翅膀问题继续待审。",
+    "嵌套产物横列表从图标区域起手竖拖的父子手势接管未签收；沿用Creator原生ScrollView嵌套行为，尚无触摸角度仲裁实现。纵向行区实际拖动和横向列表实际拖动已分别通过。"
+  ],
+  "cleanup": "已恢复浏览器Apple iPhone14 Pro预览设置，关闭临时标签；核对命令行后停止本批独立H2测试服。"
+}

@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const assert = require("node:assert/strict");
 const root = path.resolve(__dirname, "..");
+const { resolveBundleFile } = require("./bundle-paths.cjs");
 const esbuild = require(path.join(root, "client/node_modules/esbuild"));
 const source = fs.readFileSync(path.join(root, "client/assets/scripts/platform/GameProtocol.generated.ts"), "utf8");
 const code = esbuild.transformSync(source, { loader: "ts", format: "cjs" }).code;
@@ -102,7 +103,7 @@ const meleeCode = esbuild.buildSync({entryPoints: [path.join(root,
 const melee = {exports: {}};
 new Function("module", "exports", "require", meleeCode)(melee, melee.exports, require);
 const buffRows = JSON.parse(fs.readFileSync(path.join(root,
-    "client/assets/bundles/config/buff.json"), "utf8")).rows;
+    "client/assets/bundles/resources/config/buff.json"), "utf8")).rows;
 for (const id of [1010100, 1011101]) {
     const row = buffRows.find(row => row.idx === id);
     const plan = melee.exports.BattleAttackUtils.plan(row);
@@ -137,7 +138,7 @@ for (let position = 1; position <= 8; position++) {
 }
 assert.throws(() => stage.position(0, 640, 637, true), /站位/);
 assert.throws(() => stage.position(9, 640, 637, true), /站位/);
-const serialized = JSON.parse(fs.readFileSync(path.join(root, "client/assets/bundles/battle/prefabs/BattlePage.prefab"), "utf8"));
+const serialized = JSON.parse(fs.readFileSync(path.join(root, "client/assets/bundles/module/battle/prefabs/BattlePage.prefab"), "utf8"));
 for (const side of ["A", "E"]) {
     for (let index = 0; index < 8; index++) {
         const slots = serialized.filter(node => node.__type__ === "cc.Node" && node._name === "Slot_" + side + index);
@@ -172,7 +173,7 @@ assert.equal(ranged.action, "attack2");
 for (const [configured, clip] of [["attack", "attack"], ["skill", "attack2"], ["skill2", "attack3"], ["transform", "skill"]]) {
     assert.equal(melee.exports.BattleAttackUtils.plan({type: 3, ani_base: JSON.stringify({action: configured}), file: "[]", sound: "[]"}).action, clip);
 }
-assert.ok(Object.hasOwn(JSON.parse(fs.readFileSync(path.join(root, "client/assets/bundles/spine/10505005.json"), "utf8")).animations, ranged.action));
+assert.ok(Object.hasOwn(JSON.parse(fs.readFileSync(path.join(root, "client/assets/bundles/resources/spine/10505005.json"), "utf8")).animations, ranged.action));
 assert.equal(ranged.attackSeconds, 0.6);
 assert.equal(ranged.actionSeconds, 1.8);
 assert.equal(ranged.beforeReturnSeconds, 0);
@@ -321,7 +322,7 @@ for (const [id, count, interval] of [[1040100, 7, .05], [1041101, 11, .1]]) {
     near(plan.effect.flightSeconds, (count + 1) * interval);
     near(plan.effect.anchorY, id === 1040100 ? .43 : .28);
     for (const resource of plan.effect.paths) {
-        assert.ok(fs.existsSync(path.join(root, "client/assets/bundles", resource.replace("/spriteFrame", ".png"))));
+        assert.ok(fs.existsSync(resolveBundleFile(resource.replace("/spriteFrame", ".png"))));
     }
 }
 console.log("PASS third chapter real frame resources and legacy projectile timing");
@@ -370,7 +371,7 @@ async function checkControlTeamPlayback() {
     console.log("PASS real four-unit multi-target casting, independent HP and stun removal");
 }
 for (const resource of melee.exports.BattleAttackUtils.dizzyFrames()) {
-    assert.ok(fs.existsSync(path.join(root, "client/assets/bundles", resource.replace("/spriteFrame", ".png"))));
+    assert.ok(fs.existsSync(resolveBundleFile(resource.replace("/spriteFrame", ".png"))));
 }
 checkControlTeamPlayback().catch(error => { console.error(error); process.exitCode = 1; });
 
@@ -486,7 +487,7 @@ cleanupFactory(true, () => assert.fail('已退出不可再次释放'), null,
     () => assert.fail('已退出不可操作节点'), null)();
 console.log('PASS preview cleanup is idempotent after exit and application switching');
 // 旧actions覆盖表含独立特效，不能因基础Buff.file为空就判定无特效。
-const nanakoActionRows = JSON.parse(fs.readFileSync(path.join(root, 'client/assets/bundles/config/buff.json'), 'utf8')).rows;
+const nanakoActionRows = JSON.parse(fs.readFileSync(path.join(root, 'client/assets/bundles/resources/config/buff.json'), 'utf8')).rows;
 for (const id of [2230100,2231101,2231102,2231103,2233101,2233102,2233103]) {
     const row = nanakoActionRows.find(row => row.idx === id);
     const actions = melee.exports.BattleAttackUtils.legacyActions(row);
@@ -500,7 +501,7 @@ for (const id of [2230100,2231101,2231102,2231103,2233101,2233102,2233103]) {
         assert.ok(plan.effectOnly);
         assert.equal(plan.onSource, effect.type === 6);
         for (const resource of plan.effect.paths) {
-            assert.ok(fs.existsSync(path.join(root,'client/assets/bundles',resource.replace('/spriteFrame','.png'))));
+            assert.ok(fs.existsSync(resolveBundleFile(resource.replace('/spriteFrame','.png'))));
         }
     }
     if (id >= 2233101) assert.equal(melee.exports.BattleAttackUtils.plan(actions[2]).effect.scaleX,-1);
@@ -537,7 +538,7 @@ for (const action of darkActions) {
     const plan = melee.exports.BattleAttackUtils.plan(action);
     assert.deepEqual(plan.sounds, []);
     for (const resource of plan.effect?.paths || []) {
-        assert.ok(fs.existsSync(path.join(root, 'client/assets/bundles', resource.replace('/spriteFrame', '.png'))));
+        assert.ok(fs.existsSync(resolveBundleFile(resource.replace('/spriteFrame', '.png'))));
     }
 }
 assert.throws(() => melee.exports.BattleAttackUtils.plan({...darkActions[1], ani_base: '{"offset_x":-1}'}));
@@ -602,7 +603,7 @@ for (const id of [1111201, 1111202, 1111203]) {
     for (const part of parts) {
         const plan = melee.exports.BattleAttackUtils.plan(part);
         for (const resource of plan.effect?.paths || []) {
-            assert.ok(fs.existsSync(path.join(root, "client/assets/bundles", resource.replace("/spriteFrame", ".png"))));
+            assert.ok(fs.existsSync(resolveBundleFile(resource.replace("/spriteFrame", ".png"))));
         }
     }
 }

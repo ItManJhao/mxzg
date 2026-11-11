@@ -1,4 +1,5 @@
-/** 页面注册契约：统一记录预制体路径与页面生命周期选项，由UIManager读取。
+/** 页面注册契约：各View用@view保存唯一预制体地址和静态参数，UIManager统一读取。
+ * 应用只绑定当前Controller工厂和确有变化的宿主；撤销绑定恢复页面自身定义。
  * 支持本地及远程Bundle路径；资源持有和下载仍由统一加载器管理。
  */
 import { Node, Prefab } from "cc";
@@ -17,7 +18,7 @@ export interface ViewController {
 /** 一个正式界面：视图类、Prefab、页面 id 绑在一起。 */
 export interface ViewSpec {
   id: string;
-  /** 相对 assets，例如 bundles/bag/prefabs/BagView。 */
+  /** 相对 assets，例如 bundles/module/bag/prefabs/BagView。 */
   prefab: string;
   layer: UILayer;
   /** 仅Page启用限时实例缓存；Popup关闭释放实例，资源缓存仍由共享资源池管理。 */
@@ -33,9 +34,19 @@ export interface ViewSpec {
   hostId?: string;
   /** 不写就直接生成在宿主下。 */
   mount?: ViewMount;
-  /** 应用注入的资源准备入口，复用统一加载器，不另维护业务UUID加载回退。 */
+  /** 打开前只准备页面必需的配置；预加载仅取得Prefab，不调用此业务前置入口。 */
+  prepare?: () => Promise<void>;
+  /** 确需自定义Prefab取得方式时使用；复用统一加载器，不重复固定页面地址或增加UUID回退。 */
   load?: () => Promise<Prefab>;
   /** 仅注入页面生命周期适配器；模块Controller归应用持有，背包页面无需此工厂。 */
+  createController?: (view: BaseView<unknown>) => ViewController;
+}
+
+/** 应用运行期只能注入会话相关装配，不能重写页面地址、缓存和模态等静态定义。 */
+export interface ViewRuntime {
+  /** 独立战报等场景临时采用的宿主；省略则使用@view保存的宿主。 */
+  hostId?: string;
+  /** 当前应用提供的页面生命周期适配器；撤销后不保留旧应用闭包。 */
   createController?: (view: BaseView<unknown>) => ViewController;
 }
 
@@ -49,7 +60,19 @@ export interface ModalOptions {
 
 export type ViewClass<T> = new () => BaseView<T>;
 
-const byCtor = new Map<Function, ViewSpec>();
+/** 同一类当前生效的定义或运行期绑定；previous只用于撤销恢复，不形成第二份资源清单。 */
+interface ViewEntry {
+  /** 当前生效的页面参数副本，调用方不能通过原对象修改它。 */
+  spec: ViewSpec;
+  /** 临时绑定覆盖前的登记；普通@view登记没有前项。 */
+  previous: ViewEntry | null;
+  /** true表示此登记已撤销，后续恢复时跳过，防止迟到关闭复活旧应用闭包。 */
+  released: boolean;
+}
+
+/** 视图类到唯一当前登记，运行期装配也复用该表。 */
+const byCtor = new Map<Function, ViewEntry>();
+/** 页面id到视图类，供按id打开和LoadingPlan解析页面使用。 */
 const byId = new Map<string, Function>();
 
 /** 类装饰器。和 @ccclass 一起写在视图上。 */
@@ -72,26 +95,65 @@ export function registerView(ctor: Function, spec: ViewSpec): () => void {
     modal: spec.modal ? { mask: spec.modal.mask, closeOnOutside: spec.modal.closeOnOutside } : undefined,
     hostId: spec.hostId,
     mount: spec.mount,
+    prepare: spec.prepare,
     load: spec.load,
     createController: spec.createController,
   };
   const previous = byId.get(stored.id);
   if (previous && previous !== ctor) throw new Error("页面 id 重复 " + stored.id);
   const oldSpec = byCtor.get(ctor);
-  if (oldSpec && oldSpec.id !== stored.id) throw new Error("同一 View 不能登记多个页面 id");
-  byCtor.set(ctor, stored);
+  if (oldSpec && oldSpec.spec.id !== stored.id) throw new Error("同一 View 不能登记多个页面 id");
+  const entry: ViewEntry = { spec: stored, previous: null, released: false };
+  byCtor.set(ctor, entry);
   byId.set(stored.id, ctor);
-  return () => {
-    if (byCtor.get(ctor) !== stored) return;
-    byCtor.delete(ctor);
-    if (byId.get(stored.id) === ctor) byId.delete(stored.id);
+  return () => releaseEntry(ctor, entry);
+}
+
+/** 为当前应用绑定依赖；只接受窄运行参数，撤销时恢复@view，乱序撤销不会复活已释放绑定。 */
+export function bindViewRuntime(ctor: Function, runtime: ViewRuntime): () => void {
+  const previous = byCtor.get(ctor);
+  if (!previous) {
+    throw new Error("运行期绑定前必须由@view登记界面");
+  }
+  const entry: ViewEntry = {
+    spec: {
+      ...previous.spec,
+      hostId: runtime.hostId === undefined ? previous.spec.hostId : runtime.hostId,
+      createController: runtime.createController === undefined ? previous.spec.createController : runtime.createController,
+    },
+    previous,
+    released: false,
   };
+  byCtor.set(ctor, entry);
+  return () => releaseEntry(ctor, entry);
 }
 
+/** 撤销自己持有的登记；若上层仍生效只做失效标记，等它撤销时一起跳过。 */
+function releaseEntry(ctor: Function, entry: ViewEntry): void {
+  entry.released = true;
+  if (byCtor.get(ctor) !== entry) {
+    return;
+  }
+  let previous = entry.previous;
+  while (previous?.released) {
+    previous = previous.previous;
+  }
+  if (previous) {
+    byCtor.set(ctor, previous);
+    return;
+  }
+  byCtor.delete(ctor);
+  if (byId.get(entry.spec.id) === ctor) {
+    byId.delete(entry.spec.id);
+  }
+}
+
+/** 取得页面当前定义，含该应用有效的运行期绑定；未登记返回null。 */
 export function viewSpecOf(ctor: Function): ViewSpec | null {
-  return byCtor.get(ctor) || null;
+  return byCtor.get(ctor)?.spec || null;
 }
 
+/** 按唯一页面id取得已导入的View类；装饰器不会扫描或自动导入目录。 */
 export function viewCtorById(id: string): Function | null {
   return byId.get(id) || null;
 }

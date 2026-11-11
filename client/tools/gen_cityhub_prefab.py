@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Generate Creator 3.8.8 CityHub.prefab.
+"""此历史Prefab写入器已退役，下面保留原算法供阅读追溯；当前资源由Creator人工维护。
+
+Generate Creator 3.8.8 CityHub.prefab.
 
 The hub middle is the old city: map-bg-city plates, building icons at
 maincitypos, and a screen-fixed mainline entry. It is not the debug
@@ -9,6 +11,8 @@ Reads spriteFrame uuids from client/assets/bundles/**/*.meta (@f9941).
 Does not invent art. Missing frames are listed and skipped.
 Keeps the existing prefab uuid so loadAny fallback stays valid.
 """
+raise SystemExit("历史Prefab写入器已退役：请在Creator编辑当前Prefab，不得重建旧模块、覆盖人工布局或生成新UUID。")
+
 import hashlib
 import json
 import os
@@ -16,7 +20,7 @@ import base64
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RES = os.path.join(ROOT, "client", "assets", "bundles")
-OUT_PREFAB = os.path.join(ROOT, "client", "assets", "bundles", "home", "prefabs", "CityHubView.prefab")
+OUT_PREFAB = os.path.join(ROOT, "client", "assets", "bundles", "module", "home", "prefabs", "CityHubView.prefab")
 OUT_META = OUT_PREFAB + ".meta"
 PREFAB_UUID = "118c08f7-43eb-477d-ab62-50f3ec65294f"
 
@@ -476,7 +480,7 @@ else:
 
 # 33 act icons stay off this prefab. CityChrome ActGroup already draws the
 # visible set, and a full strip covers the buildings. createmaincitybtn
-# btn-login-2..7 and 9..14 are not in bundles/home/ui.
+# btn-login-2..7 and 9..14 are not in bundles/module/home/ui.
 GAPS.append("activity strip (33 createmaincitybtn icons) is not painted on CityHub; CityChrome ActGroup keeps the visible set, and 活动 still opens the full list")
 GAPS.append("map variant 2 plates exist (map-bg-city-*-2) and are unused; hub uses variant 1, same as CityMap")
 GAPS.append("bg-main-scene.jpg is not the scrolling city; hub uses map-bg-city plates")

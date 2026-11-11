@@ -1,300 +1,108 @@
 {
-  "scope": "Current P0-P9 first playable/release roadmap. No speculative advanced systems.",
+  "scope": "仅保留当前已实现入口、嵌入组件和动态战场/启动模板；不为后续路线预留未实现页面。",
   "groups": [
     {
-      "directory": "bundles/login/prefabs",
+      "directory": "bundles/module/bag/prefabs",
       "phases": [
-        "P1"
+        "当前已实现"
       ],
-      "reason": "New login MVC",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
-        "AccountLoginView",
-        "RoleProfileView"
+        "BagInfoView",
+        "BagTabView",
+        "BagView"
       ]
     },
     {
-      "directory": "bundles/home/prefabs",
+      "directory": "bundles/module/battle/prefabs",
       "phases": [
-        "P1",
-        "P2"
+        "当前已实现"
       ],
-      "reason": "Lazy home composition",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
-        "RemakeHomeView"
+        "BattleDetailCell",
+        "BattleDetailLayer",
+        "BattlePage",
+        "ChapterEndView",
+        "ChapterRewardInfoCell",
+        "ChapterRewardInfoView",
+        "MainChapterBattleView",
+        "MainChapterView",
+        "SkillAuditCellView",
+        "SkillAuditView"
       ]
     },
     {
-      "directory": "bundles/login/prefabs",
+      "directory": "bundles/module/bootstrap/prefabs",
       "phases": [
-        "P1",
-        "P6",
-        "P8"
+        "当前已实现"
       ],
-      "reason": "Shared startup, notices, server selection and role initialization; not the remake login page",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
-        "ServerCellView",
-        "ServerPickerView",
-        "ChooseServerRoleCell",
-        "CreateRolePanel",
-        "ErrorLayer",
-        "NoticeLayer",
-        "UpdateLayer"
+        "LoadingLayer"
       ]
     },
     {
-      "directory": "bundles/home/prefabs",
+      "directory": "bundles/module/common/prefabs",
       "phases": [
-        "P1"
+        "当前已实现"
       ],
-      "reason": "Canonical city map and HUD",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
-        "CityChromeView",
-        "CityHubView"
-      ]
-    },
-    {
-      "directory": "bundles/common/prefabs",
-      "phases": [
-        "P1",
-        "P6"
-      ],
-      "reason": "Canonical framework controls, page mounting and guide dialogue",
-      "names": [
-        "CommonBtnPrimaryShell",
-        "CommonBtnSecondaryShell",
-        "CommonListRowShell",
-        "CommonPanelShell",
-        "CommonRedDotShell",
-        "InfoCard",
-        "NpcTalkLayer",
-        "TextChip",
+        "BagItemView",
         "CommonPanel1"
       ]
     },
     {
-      "directory": "bundles/hero/prefabs",
+      "directory": "bundles/module/gm/prefabs",
       "phases": [
-        "P4"
+        "当前已实现"
       ],
-      "reason": "Hero list, detail, skill, basic progression and formation selection; no advanced systems",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
+        "GmOptionCellView",
+        "GmView"
+      ]
+    },
+    {
+      "directory": "bundles/module/hero/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "names": [
+        "FormationHeroCellView",
+        "FormationView",
         "HeroIconCellView",
         "HeroInfoView",
-        "HeroInfoAttrLayer",
-        "HeroInfoTipsLayer",
-        "HeroInfoUpgradeLayer",
-        "HeroInfoUpLevelLayer",
-        "HeroInfoUpStarLayer",
         "HeroListView",
-        "HeroListItemCell",
-        "FormationView",
-        "HeroSkillInfoLayer",
-        "HeroSkillOpenInfoLayer",
-        "HeroUpStarSelectLayer",
-        "HeroUpStarSelectItemCell",
-        "HeroXSelectLayer",
-        "HeroXSelectItemCell",
-        "HeroSuggestLayer",
-        "HeroSuggestCell",
-        "HeroStrongInfoCell",
-        "HeroStrongResourceMainCell",
-        "HeroStrongResourceSubCell",
-        "HeroSkillView",
-        "FormationHeroCellView"
+        "HeroSkillView"
       ]
     },
     {
-      "directory": "bundles/bag/prefabs",
+      "directory": "bundles/module/home/prefabs",
       "phases": [
-        "P4"
+        "当前已实现"
       ],
-      "reason": "Inventory list, tabs, cell and detail",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
-        "BagInfoView",
-        "BagView",
-        "BagTabView"
+        "CityChromeView",
+        "CityHubView",
+        "RemakeHomeView"
       ]
     },
     {
-      "directory": "bundles/hero/prefabs",
+      "directory": "bundles/module/login/prefabs",
       "phases": [
-        "P4",
-        "P5"
+        "当前已实现"
       ],
-      "reason": "Skill detail",
+      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
-        "AbilityInfoLayer"
-      ]
-    },
-    {
-      "directory": "bundles/battle/prefabs",
-      "phases": [
-        "P4",
-        "P5"
-      ],
-      "reason": "Formation editing, mainline battle, report and settlement",
-      "names": [
-        "BattleDetailCell",
-        "BattleDetailLayer",
-        "BattleEndLayer",
-        "BattleInfoLayer",
-        "BattlePage",
-        "CampaignView",
-        "HangMissionChipView",
-        "SkillAuditView",
-        "SkillAuditCellView",
-        "MainChapterView",
-        "MainChapterBattleView",
-        "ChapterRewardInfoCell",
-        "ChapterRewardInfoView"
-      ]
-    },
-    {
-      "directory": "bundles/battle/prefabs",
-      "phases": [
-        "P5"
-      ],
-      "reason": "Mainline stage selection and normal settlement, excluding tower mode",
-      "names": [
-        "ChapterEndLayer",
-        "ChapterEndLoseCell",
-        "ChapterExtraRewardCell",
-        "ChapterMapLayer",
-        "ChapterPreviewLayer",
-        "ChapterRewardCell",
-        "ChapterRewardLayer",
-        "ChapterStageChip",
-        "ChapterEndView"
-      ]
-    },
-    {
-      "directory": "bundles/quick-battle/prefabs",
-      "phases": [
-        "P5"
-      ],
-      "reason": "Idle claim and quick battle",
-      "names": [
-        "QuickBattleEndLayer",
-        "QuickBattleLayer",
-        "QuickBattleTipLayer"
-      ]
-    },
-    {
-      "directory": "bundles/hero/prefabs",
-      "phases": [
-        "P4",
-        "P5"
-      ],
-      "reason": "Reusable idle hero selection",
-      "names": [
-        "IdleHeroSelectLayer"
-      ]
-    },
-    {
-      "directory": "bundles/summon/prefabs",
-      "phases": [
-        "P4"
-      ],
-      "reason": "Basic summon, excluding shops and prayer modes",
-      "names": [
-        "SummonCell",
-        "SummonLayer"
-      ]
-    },
-    {
-      "directory": "bundles/mail/prefabs",
-      "phases": [
-        "P6",
-        "P8"
-      ],
-      "reason": "Basic mail and rewards",
-      "names": [
-        "MailCell",
-        "MailInfoLayer",
-        "MailLayer"
-      ]
-    },
-    {
-      "directory": "bundles/role/prefabs",
-      "phases": [
-        "P6"
-      ],
-      "reason": "Basic profile, rename and role level feedback",
-      "names": [
-        "ChangeNickLayer",
-        "RoleInfoLayer",
-        "RoleUpgradeLayer"
-      ]
-    },
-    {
-      "directory": "bundles/item/prefabs",
-      "phases": [
-        "P4",
-        "P5"
-      ],
-      "reason": "Item quantity/selection and rewards",
-      "names": [
-        "ItemExhibitionLayer",
-        "ItemRewardLayer",
-        "ItemScelectNumLayer",
-        "ItemSelectLayer"
-      ]
-    },
-    {
-      "directory": "bundles/reward/prefabs",
-      "phases": [
-        "P4",
-        "P5"
-      ],
-      "reason": "Basic reward preview and growth result",
-      "names": [
-        "RewardCell",
-        "RewardPreviewLayer",
-        "UpgradeSuccessLayer",
-        "UpStarSuccessLayer"
-      ]
-    },
-    {
-      "directory": "bundles/legacy-login/prefabs",
-      "phases": [
-        "P1",
-        "P9"
-      ],
-      "reason": "Old Boot login compatibility and original artwork reference; never used by RemakeApp",
-      "names": [
-        "LoginPanel",
-        "UserLoginLayer"
-      ]
-    },
-    {
-      "directory": "bundles/gm/prefabs",
-      "phases": [
-        "P8"
-      ],
-      "reason": "游戏内本机开发 GM 与可搜索下拉选项",
-      "names": [
-        "GmView",
-        "GmOptionCellView"
-      ]
-    },
-    {
-      "directory": "bundles/common/prefabs",
-      "phases": [
-        "P4"
-      ],
-      "reason": "Shared inventory and reward cell",
-      "names": [
-        "BagItemView"
-      ]
-    },
-    {
-      "directory": "bundles/bootstrap/prefabs",
-      "phases": [
-        "P1"
-      ],
-      "reason": "Local startup progress and retry",
-      "names": [
-        "LoadingLayer"
+        "AccountLoginView",
+        "RoleProfileView",
+        "ServerCellView",
+        "ServerPickerView",
+        "UpdateLayer"
       ]
     }
   ]

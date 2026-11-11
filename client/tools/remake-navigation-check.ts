@@ -20,6 +20,8 @@ class SlowFixture extends BaseView {}
 class ThrowingFixture extends BaseView {}
 class ResidentFixture extends BaseView {}
 class FeatureFixture extends BaseView {}
+class PreparedFixture extends BaseView {}
+class PreparingFixture extends BaseView {}
 
 async function main() {
   const ui = new UIManager();
@@ -28,10 +30,11 @@ async function main() {
   ui.install(nav, { showToast: () => {} });
   const counters = new Map<string, { created: number; shown: number; closed: number }>();
   const hosts = new Map<string, Node>();
-  function register(ctor: new () => BaseView, id: string, load: () => Promise<Prefab> = async () => new Prefab(), throwOnShow = false, resident = false, cache = false) {
+  function register(ctor: new () => BaseView, id: string, load: () => Promise<Prefab> = async () => new Prefab(), throwOnShow = false, resident = false, cache = false,
+    prepare?: () => Promise<void>) {
     const count = { created: 0, shown: 0, closed: 0 }; counters.set(id, count);
     registerView(ctor, { id, prefab: "prefabs/test/" + id, layer: resident ? UILayer.Popup : UILayer.Page,
-      cache, allowMultiple: false, hostId: resident ? "popup" : undefined, load,
+      cache, allowMultiple: false, hostId: resident ? "popup" : undefined, load, prepare,
       mount: shell => { const node = new Node(id); node.parent = shell; node.addComponent(ctor); hosts.set(id, node); return node; },
       createController: () => { count.created++; return {
         show: () => { count.shown++; if (throwOnShow) throw new Error("Controller initialization failed"); },
@@ -57,6 +60,27 @@ async function main() {
   await assert.rejects(ui.open(FailedFixture), /Prefab load failed/);
   assert.equal(nav.current, "test-remake-home");
   assert(originalHomeHost.isValid, "a failed next page preserves the existing visible page");
+
+  let preparedLoads = 0;
+  register(PreparedFixture, "test-config-failed", async () => { preparedLoads++; return new Prefab(); },
+    false, false, false, async () => { throw new Error("page configuration failed"); });
+  await assert.rejects(ui.open(PreparedFixture), /page configuration failed/);
+  assert.equal(preparedLoads, 0, "页面配置失败不下载Prefab，不实例化Controller");
+  assert.equal(counters.get("test-config-failed")!.created, 0);
+  assert.equal(nav.current, "test-remake-home");
+  assert(originalHomeHost.isValid, "配置失败保留当前页");
+
+  let finishConfiguration!: () => void;
+  register(PreparingFixture, "test-config-cancelled", async () => { preparedLoads++; return new Prefab(); },
+    false, false, false, () => new Promise(resolve => { finishConfiguration = resolve; }));
+  const preparing = ui.open(PreparingFixture);
+  const cancelledPreparation = assert.rejects(preparing, isOpenCancelled);
+  ui.keepOnly("test-remake-home");
+  finishConfiguration();
+  await cancelledPreparation;
+  assert.equal(preparedLoads, 0, "配置等待期间取消后不继续下载页面");
+  assert.equal(counters.get("test-config-cancelled")!.created, 0);
+  assert.equal(nav.current, "test-remake-home");
 
   let finish!: (prefab: Prefab) => void;
   register(SlowFixture, "test-remake-slow", () => new Promise(resolve => { finish = resolve; }));
@@ -198,7 +222,7 @@ async function main() {
   enabled.close();
 
   const assets = join(process.cwd(), "client/assets");
-  const prefab = JSON.parse(readFileSync(join(assets, "bundles/home/prefabs/RemakeHomeView.prefab"), "utf8"));
+  const prefab = JSON.parse(readFileSync(join(assets, "bundles/module/home/prefabs/RemakeHomeView.prefab"), "utf8"));
   const view = prefab.find((row: Record<string, unknown>) => row.cityHost && row.noticeLabel);
   assert.equal(prefab[view.noticeLabel.__id__].__type__, "cc.Label");
   assert.equal(prefab[view.cityHost.__id__].__type__, "cc.Node");

@@ -1,5 +1,5 @@
 /**
- * 回放用的帧路径。都在 bundles/battle/effects 下，给 resources.load 的是不带扩展名的路径。
+ * 回放用的帧路径。都在 bundles/module/battle/effects 下，给 resources.load 的是不带扩展名的路径。
  * hero-beattack 跳过只有一张小图的第 0 套。skill-101050201-3 只播编号帧，不播那张无序号底图。
  * hero-skill 的文件名是 hero-skill_effect-1-0 … 9，不是 stem_序号。
  * skill_id 对得上 resources 里的套时播那套。对不上仍用下面 49 套取模，所以 0 仍是 hero-skill。

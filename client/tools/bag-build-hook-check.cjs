@@ -9,6 +9,7 @@ const builder = require('../extensions/mxzg-bag-build/builder');
 const { dedupeBagBuild } = require('./dedupe-bag-build.cjs');
 const buildRoot = path.resolve(__dirname, '../build');
 const root = path.resolve(__dirname, '../..');
+const { resolveAssetPath } = require('../../tools/bundle-paths.cjs');
 const images = JSON.parse(fs.readFileSync(path.join(root, 'config/ui-atlas-dedupe.json'))).images.map(image => {
     const hex = image.uuid.replace(/-/g, '');
     return [image.source, image.uuid, hex.slice(0, 2) + Buffer.from(hex.slice(2), 'hex').toString('base64')];
@@ -16,6 +17,15 @@ const images = JSON.parse(fs.readFileSync(path.join(root, 'config/ui-atlas-dedup
 const source = path.join(root, 'client/assets/bundles');
 /** 固定入口保持在require缓存中；仅污染实现模块，模拟Creator长驻进程持有旧代码。 */
 const implementationPath = require.resolve('../extensions/mxzg-bag-build/build-hooks.cjs');
+const sourcePathsPath = require.resolve('../../tools/bundle-paths.cjs');
+
+/** 模拟迁移前被Creator缓存的旧目录索引；实际钩子必须重新载入定位工具。 */
+function poisonSourcePaths() {
+    const stale = { resolveAssetPath: () => { throw new Error('不应调用迁移前的源目录索引'); } };
+    require(sourcePathsPath);
+    require.cache[sourcePathsPath].exports = stale;
+    return stale;
+}
 
 /** 注入会抛错的旧实现；后续调用若没有重新读取模块，专项会直接失败。 */
 function poisonImplementation() {
@@ -57,7 +67,7 @@ function fixture(directory) {
         paths: {}, packs: { abpack: images.map((_, index) => index * 2 + 1) },
     }));
     write(path.join(bundle, 'import/ab/abpack.json'), JSON.stringify([1, ['cdatlas@6c48a']]));
-    write(path.join(directory, 'assets/main/native/cd/cdatlas.png'), fs.readFileSync(path.join(root, images[0][0])));
+    write(path.join(directory, 'assets/main/native/cd/cdatlas.png'), fs.readFileSync(resolveAssetPath(images[0][0])));
     // 第二包保留同一帧数据，第三包只登记重定向；共享纹理仅存在于main。
     write(path.join(directory, 'assets/main/config.json'), fs.readFileSync(path.join(bundle, 'config.json')));
     write(path.join(directory, 'assets/main/import/ab/abpack.json'), JSON.stringify([1, ['cdatlas@6c48a']]));
@@ -66,7 +76,7 @@ function fixture(directory) {
     }));
     return images.map(([name, uuid]) => {
         const file = path.join(bundle, 'native', uuid.slice(0, 2), uuid + '.png');
-        write(file, fs.readFileSync(path.join(root, name)));
+        write(file, fs.readFileSync(resolveAssetPath(name)));
         return file;
     });
 }
@@ -79,7 +89,7 @@ async function main() {
     const cachedEntry = require.cache[require.resolve('../extensions/mxzg-bag-build/hooks')].exports;
     poisonImplementation();
     const before = await captureLogs(() => hook.onBeforeCompressSettings({}, launch));
-    assert(before.lines.some(line => line.includes('bootstrap-preload-v1 v1.6.2') && line.includes('onBeforeCompressSettings')),
+    assert(before.lines.some(line => line.includes('bootstrap-preload-v1 v1.6.3') && line.includes('onBeforeCompressSettings')),
         '必须打印实际before实现标识和版本');
     poisonImplementation();
     await hook.onBeforeCompressSettings({}, launch);
@@ -90,7 +100,7 @@ async function main() {
     await hook.onBeforeCompressSettings({}, existing);
     assert.equal(existing.settings.assets.preloadBundles[1].version, 'boot-kept', '已有bootstrap版本不得被覆盖');
     const packageVersion = JSON.parse(fs.readFileSync(path.join(root, 'client/extensions/mxzg-bag-build/package.json'), 'utf8')).version;
-    assert.equal(packageVersion, '1.6.2', '实际实现版本与包版本必须同步');
+    assert.equal(packageVersion, '1.6.3', '实际实现版本与包版本必须同步');
     await assert.rejects(hook.onBeforeCompressSettings({}, {}), /启动配置/);
     await assert.rejects(hook.onBeforeCompressSettings({}, { settings: { assets: { preloadBundles: {} } } }), /数组/);
     if (!images.length) {
@@ -102,8 +112,10 @@ async function main() {
             const finalSettings = { assets: { preloadBundles: [{ bundle: 'main', version: 'file-kept' }] }, custom: { keep: true } };
             write(file, JSON.stringify(finalSettings));
             poisonImplementation();
+            const stalePaths = poisonSourcePaths();
             const repaired = await captureLogs(() => hook.onAfterBuild({ platform: 'web-mobile' }, { dest: directory }));
-            assert(repaired.lines.some(line => line.includes('bootstrap-preload-v1 v1.6.2') && line.includes('after-build repaired')),
+            assert.notEqual(require.cache[sourcePathsPath].exports, stalePaths, '构建后检查必须重新发现当前源目录');
+            assert(repaired.lines.some(line => line.includes('bootstrap-preload-v1 v1.6.3') && line.includes('after-build repaired')),
                 '最终文件修正必须打印实际实现与repaired标识');
             assert.equal(repaired.value.startupPreloadRepaired, true);
             const written = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -112,7 +124,7 @@ async function main() {
             const once = fs.readFileSync(file, 'utf8');
             poisonImplementation();
             const after = await captureLogs(() => hook.onAfterBuild({ platform: 'web-mobile' }, { dest: directory }));
-            assert(after.lines.some(line => line.includes('bootstrap-preload-v1 v1.6.2') && line.includes('onAfterBuild')),
+            assert(after.lines.some(line => line.includes('bootstrap-preload-v1 v1.6.3') && line.includes('onAfterBuild')),
                 '必须打印实际after实现标识和版本');
             assert.equal(after.value.startupPreloadRepaired, false);
             assert.equal(fs.readFileSync(file, 'utf8'), once, '再次执行不重写已有启动配置');
@@ -147,7 +159,7 @@ async function main() {
         };
         const result = await hook.onAfterBuild({ platform: 'web-mobile' }, { dest: directory });
         assert.equal(result.files, images.length);
-        assert.equal(result.bytes, images.reduce((sum, image) => sum + fs.statSync(path.join(root, image[0])).size, 0));
+        assert.equal(result.bytes, images.reduce((sum, image) => sum + fs.statSync(resolveAssetPath(image[0])).size, 0));
         assert.deepEqual(result.groups.map(row => row.group), ['common', 'hero', 'battle']);
         const manifest = JSON.parse(fs.readFileSync(path.join(result.backup, 'manifest.json')));
         assert.equal(manifest.build, directory);
@@ -155,7 +167,7 @@ async function main() {
             assert(!fs.existsSync(row.file));
             const original = images.find(([, uuid]) => path.basename(row.file) === uuid + '.png');
             assert.deepEqual(fs.readFileSync(path.join(result.backup, path.basename(row.file))),
-                fs.readFileSync(path.join(root, original[0])));
+                fs.readFileSync(resolveAssetPath(original[0])));
         }
         assert.equal((await hook.onAfterBuild({ platform: 'web-desktop' }, { dest: directory })).files, 0);
         fixture(directory);

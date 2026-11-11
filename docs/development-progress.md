@@ -1,25 +1,69 @@
 # 当前项目进度
 
-更新：2026-11-11。已推送基线为hao分支f3cd64a3，main未合并。上一批加载/缓存检查已完成。本批共享模态、完整英雄Prefab与布局清理已完成专项和本机预览；修改暂留本地，未提交推送，尚未重建本批发布包。
+更新：2026-11-12。页面定义、列表事件、虚拟列表及resources/module目录归档纳入本轮交付；负责人已授权推送hao并合入main，实际提交与远端同步结果以Git记录为准。后续开发继续在hao，跟踪origin/hao；8cb60507是本轮之前的已推送基线。52项、类型及新目录本机限定复验通过，新发布包仍待集中构建。上一批51项与本机结论另见[独立证据](validation/virtual-list-resource-review-20261111.json)，不混作本次结果。
 
-## 本批已完成本机复验：共享模态与完整页面布局
+## 本批已完成目录归档：resources与module
+
+已将6个通用资源Bundle归到assets/bundles/resources（audio/config/font/icons/maps/spine），9个界面或模块包归到assets/bundles/module（bag/battle/bootstrap/chapter/common/gm/hero/home/login）。两个父目录是普通目录，15个Bundle原名、meta UUID、优先级及远程配置不变，bootstrap继续本地。原26,410份资源/meta逐字节一致，仅新增2份父目录meta；common两份、bag、hero、battle自动图集均保留。
+
+View唯一Prefab源地址同步新物理路径，运行时仍加载原Bundle名/包内路径；配置schema和ResManager逻辑地址保持，三段配置与现有资源池不变。离线工具按目录meta递归发现Bundle，不新增运行时分类清单。52/52项有效检查、Creator类型、180脚本/33份PrefabScene/71绑定及原文件字节复核通过，5组旧检查保持暂停。新增Bundle路径负例接入统一检查，31表与Python路径边界合计9项通过；构建扩展1.6.3的隔离钩子检查通过，不能冒充真实Creator构建。负责人已重新打开Creator并导入；之后26,410份原文件/meta仍逐字节一致，见[本批目录记录](validation/bundle-directory-groups-20261111.json)。人工操作入口见[资源维护说明](staged-resource-loading.md)。
+
+本次393×852设备设置、独立H2测试服完成登录、进城与后台4/4目标（失败0）、背包四分类及“波纹精灵/数量3”实际点击、三英雄列表与黑暗切割者详情、850关说明及真实第二关布阵→挑战→7项胜利奖励→倒计时返回挂机。最终maxCleared=2、pendingBattleId=null、playing=false，活动模态和常驻窗口归零，无新警告/错误。背包关闭重开可用；立即重开的sameInstance=false如实记录，本轮不签同实例或TTL。实际加载包名及base保持assets/bag、assets/common等旧名；不把预览登记状态代替发布bootstrap启动检查。临时标签和独立测试服已关闭。
+
+本次不改自动图集参数：common主图集7张小图保留；bag及common/item-atlas各1张，合图收益有限，可后续单独精简pac，不是模块功能必需。未运行新发布构建，真实合图/包归属、本包与下载体量、CDN和真机仍待后续验收。
+
+## 上一批已完成：统一列表、当前资源范围与虚拟化
+
+背包、产物说明外层/内层及胜利奖励已统一RENDER_ITEM/SELECT_ITEM：onRender只绘制，onSelect由所属页面或展示组件处理详情与选中，Cell不保存页面回调。原Model、协议、库存和只读边界保持。
+
+SuperContent默认virtual=true、bufferLines=1，content逻辑尺寸按总条目计算，仅为视口及缓冲行创建有限节点；Node映射到当前数据索引。保留原锚点与Cell正缩放，view/content局部缩放须1，祖先适配可用。滚动及零时长跳转只更新范围，不停止惯性；数据、视口或几何改变才完整保位，refresh(index)离屏延迟到可见再画，编辑器样板仍用原生Layout。
+
+当前源资源保留15包（14远程＋本地bootstrap）、32份Prefab和31张实际读取依赖表；清理90个未实现包、64份旧Prefab、509张旧JSON配置和41份旧原生配置，旧审查记录归档。26,410份资源文件共498,214,067字节，比整理前减少约203.30MiB；这是源目录减量，尚未重建验包。保留图标、英雄、骨骼、战斗资源和850关完整说明，不按前三关或三名测试英雄裁内容。旧Campaign四份UI、PrefabLayout及无资源绑定的Common*Shell样板链退役，暂停领域代码保留，后续功能按旧项目逐模块迁回。见[清理依据与原字节核对](validation/current-resource-scope-cleanup-20261111.json)。
+
+配置导出按现有源码、协议投影和检查工具的实际读取闭包收敛，不另设模块清单；默认导出31表，显式全量归档必须写到assets外。全量检查发现漏保留buffart，已恢复原文件/meta/UUID并补齐间接rows(name)解析及缺表、空表反例，重跑通过。三份主城现用投影与仓库XLSX版本不同，已保留为[明确生成输入](../config/client-maincity/README.md)，没有在清理时替换规则；差异仍需后续专项核对。
+
+ResManager.setSprite复用原ResourcePool，每节点只保留当前显示与本次在途候选；新图赋值后释放旧显示，同图/相同在途任务复用，清空、失效和销毁清理。浏览器复验后补齐同图同步恢复：Cell先把Sprite清空再绑定相同资源时，立即恢复仍持有的帧，不增加请求或拥有者，针对性与全量回归通过；该小补丁未另签浏览器画面。getSpriteFrame(owner)显式节点持有仍到owner销毁；未改TTL、三段配置或实例/Prefab缓存策略。
+
+51/51项有效检查、Creator类型和全库绑定检查通过；5组旧检查保持暂停。当前180个脚本、33份Prefab/Scene、71处绑定。1000/10000条六布局、锚点/Cell缩放、resize及滚动不重置惯性通过；64轮换图验证拥有者不累积。4份Prefab只登记本轮实际限定范围，更新前记录另行归档。
+
+- 本机393×852及360×720：850关首屏仅5个外层节点，真实拖动及8次大跨度跳转后池保持7；第850关复用格实际打开“雷鸣之足”，横向拖动不误开详情，双页签重新绑定正常。最终31表重载后再次到达850，外层5个节点。
+- 背包四分类及独立精灵详情实际点击正常，各类数量3；20逻辑格仅20节点。关闭重开数据保持，本轮未签同实例复用或TTL，相关历史测量另存，不强行把sameInstance=false记录改成通过。
+- 最终资源重载后360×720：三英雄列表正常；真实第二关布阵确认→挑战→胜利页7项奖励列表→倒计时返回挂机。maxCleared=2、pendingBattleId=null、playing=false，活动模态及常驻窗口均归零，控制台无新警告/错误。经验动画、全部奖励详情和全技能不在此次重签范围。
+
+本批支持等尺寸Cell，不含变高列表或无限循环；节点数量及拥有者回收不代表GPU、帧率或长期内存结论。横向产物图标区起手竖拖的父子接管尚未签收，当前沿用原生行为，未实现角度仲裁。尚未重建发布包或复验真实CDN/真机，后续集中验证编译与打包差异，保持现有玩法范围。
+
+## 前批限定复验：页面定义与列表交互收敛
+
+17个实际独立View以@view保存id、Prefab地址、层级、缓存、模态和prepare配置前置，嵌入组件与未开放旧View不补登记。UIManager实际开页时执行prepare，三段预载只读取页面的Prefab地址、不执行prepare/load或实例化。LoadingPlan页面目标改为`{page:BagView}`等View类引用，图片、骨骼和配置仍可显式列目标；不重复维护页面路径或模块资源清单。
+
+ApplicationPages收窄为登录/主城Controller及公共宿主装配；UIRegistry.bindViewRuntime只注入createController或动态hostId，撤销后恢复静态定义。ApplicationResources只负责三段调度和阶段资源持有，删除preparedPage/homePage/heroPage等各页取址包装，继续复用现有资源池。
+
+英雄移除HeroListBoardView脚本及HeroRosterData旧交互契约，保留HeroBoard静态容器和Widget；HeroListView直接绑定SuperScroll，onOpen登记RENDER_ITEM/SELECT_ITEM，onRender调用Cell显示，onSelect按英雄实例ID直接打开HeroInfoView。Cell只画图，不持有导航回调；关闭清理本页监听，名册仍归唯一HeroRosterModel。布阵选人同步采用列表选择事件，战报头像保持只读。
+
+该批修正后48/48项有效专项、Creator类型与全库绑定检查通过，5组旧检查暂停；当时190脚本、97份Prefab/Scene、81处绑定。393×852独立环境完成登录/主城、后台4/4、少量英雄筛选/详情/技能、布阵取消及背包/挂机入口限定复验，修正列表销毁访问无效子节点后无新警告/错误；见[前批页面事件证据](validation/view-registration-list-review-20261111.json)。这些数量和结果不代表当前资源精简与虚拟化范围。
+
+实测发现列表组件销毁时子节点可能已先被引擎销毁，解绑其输入处理器会中断切页；已只解绑仍有效节点，补上先销毁子节点回归，并刷新后从登录重新复验。HeroListView原几何、14个Widget和UUID保留；本轮列表补拍截图失败，保存了详情实际截图，只登记交互与相关运行状态，不签全机型视觉。未逐页打开全部17页、未重建发布包、未重跑完整结算或缓存TTL/长期内存。
+
+该批列表尚按总条目创建节点，仅索引复用和Mask裁剪；本批已改为真正有限节点池，进展及限制见页首，旧少量名册画面不作为本批虚拟化验收。
+
+## 上一批已推送：共享模态与完整页面布局（8cb60507）
 
 模态改为ViewSpec的`modal:{mask,closeOnOutside}`，UIManager只持有一份动态共享节点。省略配置不拦截；mask=false透明拦截，mask=true显示蒙版；closeOnOutside独立控制空白是否关闭。叠窗不叠加颜色，关窗或隐藏后向下恢复仍显示窗口的模态。各Prefab已移除独立蒙版及ModalLayer绑定，只保留实际面板的BlockInputEvents。
 
 普通详情、资料、选服、战报和产物说明使用空白关闭；原有布阵的草稿取消、结算的关闭释放与返回流程保持。GM与技能台配置mask=true、closeOnOutside=false，继续由原按钮关闭，不改工具功能。
 
-BagView、HeroListView、HeroInfoView均直接打开完整Prefab。英雄背景、纸面、页签和HeroBoard列表板已静态整合；HeroListBoardView组件继续绑定SuperScroll，名册仍归唯一HeroRosterModel。固定尺寸、位置及纵向拉伸由Widget保存，ViewportScale只按外根可用宽度缩放target（designWidth=640、maxScale=1）；外根fitVisibleRoot仅桥接LiveShell视口，不再按页面名修补内容。
+该批BagView、HeroListView、HeroInfoView均改为直接打开完整Prefab，英雄背景、纸面、页签和HeroBoard列表板静态整合；当时仍由HeroListBoardView组件绑定SuperScroll，本批继续移除该脚本。固定尺寸、位置及纵向拉伸由Widget保存，ViewportScale只按外根可用宽度缩放target（designWidth=640、maxScale=1）；外根fitVisibleRoot仅桥接LiveShell视口。
 
-已退役ParchmentLayout、ccbiPlace、heroMount、heroChrome及无用途生成器；PagePrefabShell、ListBackdrop、DimSheet和独立HeroListBoardView Prefab成套删除并更新索引、路径和工具。当前96份Prefab，含场景共97份；仍使用的资源和脚本保持原UUID。PrefabLayout仅保留旧战斗结果显示实际使用的辅助，不再负责背包或英雄装配。
+该批退役ParchmentLayout、ccbiPlace、heroMount/heroChrome、旧页面壳和独立英雄列表板，当时保留96份Prefab、含场景97份，仍用资产保留UUID；PrefabLayout当时仍留旧结果辅助，本批继续退役。现有源资源范围以页首及当前报告为准。
 
-本批48/48项有效专项及类型检查通过，5组旧检查暂停。负责人刷新后，Creator本机预览连接独立内存测试服完成以下限定范围，见[本批共享模态与页面证据](validation/shared-modal-widget-20261111.json)：
+该批48/48项有效专项及类型检查通过，5组旧检查暂停。负责人刷新后，Creator本机预览连接独立内存测试服完成以下限定范围，见[基线共享模态与页面证据](validation/shared-modal-widget-20261111.json)：
 
 - 实际鼠标验证显示蒙版且外部关闭、透明且外部关闭、显示蒙版但不外部关闭；窗口内容点击保持，原关闭按钮正常。非默认两种模式只临时覆盖只读详情配置，检查后恢复正式登记。
 - 资料和物品详情叠窗共用一个节点，透明度固定150；关闭或隐藏上层后恢复下层，最后关闭后模态不再活动。底层导航未被外部点击误触。
 - 英雄列表和详情检查393×852、360×720；三名/零名名册、元素筛选、容量、详情及返回正常。背包检查360×720、428×926，四分类数量均为3，详情关闭后不变；短期重开复用同一实例。未构造长列表，也未重跑TTL或长期内存。
 - 独立角色真实完成第二、三关阵容确认→挑战→结算→返回挂机；第二关倒计时返回，第三关实际点击外部关闭胜利页。最终maxCleared=3、pendingBattleId=null、playing=false，常驻窗口/准备窗口/活动模态均为0；控制台无新警告或错误。
 
-8份Prefab只登记上述实际范围及当前哈希，未检查的选服、技能、战报、GM和技能台等窗口继续保留结构/专项结论，不借用历史画面签收。19:56发布包不含本批改动，后续按负责人节奏集中构建验证编译和打包差异。未改玩法、WS＋Protobuf、服务端权威、幂等结算、三段配置或缓存策略，不提交推送。
+8份Prefab只登记该批实际范围及当时哈希，未检查的选服、技能、战报、GM和技能台等窗口保留结构/专项结论，不借用历史画面签收。19:56发布包不含该批共享模态与布局改动，后续按负责人节奏集中构建验证编译和打包差异。该批已随8cb60507推送hao，未合并main；没有改变玩法、WS＋Protobuf、服务端权威、幂等结算、三段配置或缓存策略。
 
 此前逐窗蒙版实现的47/47检查和[旧模态证据](validation/modal-layer-20261111.json)仅作历史记录，已被本批共享方案取代，不作为当前验收结论。[前次框架审计](validation/framework-cleanup-20261111.json)保留当时删除与保留依据，当前职责见[架构入口](architecture.md#frameworkui-人工阅读入口)。
 
@@ -46,11 +90,11 @@ BagView、HeroListView、HeroInfoView均直接打开完整Prefab。英雄背景�
 
 ## 已推送基础：Bundle目录整合与本地远程验收
 
-顶层ui/resources/prefabs已整合到assets/bundles，assets下仅有bundles、scenes、scripts。f3cd64a3目录迁移基线保留当时21,902个非目录资源UUID并更新100个Prefab索引；该数字是历史迁移基线，本批主动删除的废弃资产另见页首。104个远程包和本地bootstrap分离，沿用ResourcePool、ResManager及三段显式配置，其余按需。原图进Bundle后有动态地址，旧副本删除名单为空。
+顶层ui/resources/prefabs已整合到assets/bundles，assets下仅有bundles、scenes、scripts。f3cd64a3目录迁移基线保留当时21,902个非目录资源UUID并更新100个Prefab索引；该数字是历史迁移基线，后续主动退役的废弃资产另见各批记录。104个远程包和本地bootstrap分离，沿用ResourcePool、ResManager及三段显式配置，其余按需。原图进Bundle后有动态地址，旧副本删除名单为空。
 
 19:56集中构建before/after均执行bootstrap-preload-v1 v1.6.2，最终包含main/bootstrap预载且startupPreloadRepaired=false；本地资源6,220,784字节、远程665,636,594字节。字体仍是本地主要来源，未裁剪。见[自动构建证据](validation/bundles-auto-build-20261111.json)。
 
-此前独立环境已完成背包四分类详情、英雄/布阵、主线胜利/失败、奖励、经验动画、战报及返回挂机；经验80/360逐步至280/360。19:42运行证据与19:56自动构建证据分开保存，见[既有运行证据](validation/bundles-final-review-20261111.json)。更早合图与去重证据见[图集验收](validation/ui-atlas-release-20261111.json)。这些资源迁移成果已在f3cd64a3，本轮工具和实测记录未推送，不再为相同结果重复构建。
+此前独立环境已完成背包四分类详情、英雄/布阵、主线胜利/失败、奖励、经验动画、战报及返回挂机；经验80/360逐步至280/360。19:42运行证据与19:56自动构建证据分开保存，见[既有运行证据](validation/bundles-final-review-20261111.json)。更早合图与去重证据见[图集验收](validation/ui-atlas-release-20261111.json)。目录迁移基线为f3cd64a3，后续工具与实测记录已随8cb60507推送；不为相同结果重复构建，也不将其当作本批新方案验收。
 
 ## 当前结论
 
@@ -92,11 +136,12 @@ BagView、HeroListView、HeroInfoView均直接打开完整Prefab。英雄背景�
 
 LoadingPlan配置login、enterGame、background三个数组，未配置资源在实际使用时加载。第三段默认仅背包详情、英雄列表/详情、挂机入口四个预制体，直接依赖随引擎加载；不另维护模块清单。统一取图由ResManager提供，CommonUiResources、IconCatalog、ResourceCatalog已移除；原图进入Bundle后具有可加载地址，旧副本删除名单为空。
 
-页面缓存与预制体闲置回收已接入：背包页面cache:true，UIManager默认闲置120秒、最多2页；PrefabLoader默认闲置120秒、最多16项，RemakeApp前台约每30秒维护。阶段目标由应用持有，实际实例和其他拥有者仍引用时不得回收。本轮自然到期与重开实测已通过，具体耗时和边界见页首；不表示所有按需素材常驻。
+页面缓存与预制体闲置回收已接入：背包页面cache:true，UIManager默认闲置120秒、最多2页；PrefabLoader默认闲置120秒、最多16项，RemakeApp前台约每30秒维护。阶段目标由应用持有，实际实例和其他拥有者仍引用时不得回收。此前自然到期与重开实测见对应批次记录，不代表本批新调用链已复验，也不表示所有按需素材常驻。
 
 ## 后续计划与验证限制
 
-- 先完成共享模态的三种模式、叠窗恢复、布阵/结算原关闭流程，以及背包和英雄完整Prefab的竖屏浏览器复验；按负责人集中构建节奏验证发布包，不逐项要求构建。
+- 页面@view/prepare、窄运行绑定和三段预载沿用已收敛入口；本批复验应覆盖资源精简后的启动/开页、业务列表选择、取消/关页与筛选重绑，不能以之前少量名册结果代替有限池验证。
+- 先完成本批资源配置审计、全量检查及浏览器复验，确认有限池、惯性、筛选重绑、异步图、嵌套产物说明和关页；节点数专项不代替真机帧率或长期GPU内存。按负责人节奏集中构建新包核对资源归属与体积。
 - 后续获得授权并有可用地址后，再验证真实CDN HTTPS、弱网/重试/离线及版本切换；当前只有本地独立资源服务样板。
 - 真机、原生/微信和长时间切页的内存、GPU纹理、帧率仍待验证，尚未开始。先据实际测量决定LoadingPlan或缓存参数，不新增模块清单。
 - 本轮保持现有玩法范围与WS＋Protobuf、服务端权威、幂等结算，不提交推送。宝箱领取、快速战斗、升级及穿脱继续关闭。
@@ -111,6 +156,6 @@ LoadingPlan配置login、enterGame、background三个数组，未配置资源在
 
 ## 仓库与文档状态
 
-当前已推送基线为hao分支f3cd64a3，包含Bundle目录整合、加载入口、构建工具和对应验收文档；main仍由负责人决定何时合并。本地包含前批检查记录及本批共享模态、完整页面布局与清理修改，均未提交推送。
+负责人于2026-11-12授权将本轮页面定义/列表事件、资源精简、虚拟化、单图拥有者和目录归档一并交付hao并同步main；提交与推送结果以Git为准。验证记录中的“未提交推送”是当时的验收快照，不表示当前分支状态。后续开发仍在hao；本次合并授权不代表持续获得main推送授权。
 
 状态只在本页维护；交接文档提供导航，路线文档提供执行顺序，规则/协议/规范文档保存稳定约束，validation保存各次证据。新增批次不要再把长过程追加为本页的另一个“当前结论”。

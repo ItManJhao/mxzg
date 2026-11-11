@@ -133,11 +133,11 @@ let residentScope: AssetScope | null = null;
 
 /** 资源生命周期入口：动态旧路径统一转换描述，禁止业务直接调用引擎加载器。 */
 export class ResourceAssetsUtils {
-    /** 从明确的包名、路径和类型创建加载目标，不查询资源目录或维护存在性清单。
-     * 图片路径不含spriteFrame后缀；特殊Bundle可显式提供相对assets的源路径。
+    /** 从包名、包内路径和类型创建加载目标，不推测包的物理分组或维护资源清单。
+     * 图片路径不含spriteFrame后缀；未提供源路径时保留逻辑地址，页面可传相对assets的真实路径。
      */
     public static describe<K extends ResourceKind>(
-        bundle: string, path: string, type: K, assetPath = "bundles/" + bundle + "/" + path,
+        bundle: string, path: string, type: K, assetPath = bundle + "/" + path,
     ): ResourceDescriptor<K> {
         return {
             bundle,
@@ -169,19 +169,31 @@ export class ResourceAssetsUtils {
         return pool.snapshot();
     }
 
-    /** 将“包名/包内路径”解析为加载键；拒绝无包名和目录穿越，不维护图片映射清单。 */
+    /**
+     * 将逻辑地址或bundles/module、bundles/resources下的源路径统一解析为原Bundle加载键。
+     * 两个父分组不参与包名、远程地址或缓存身份；拒绝空段、目录穿越及未迁移的旧物理路径。
+     */
     public static address<K extends ResourceKind>(path: string, type: K): { bundle: string; loadPath: string; type: K } {
-        const slash = path.indexOf("/");
-        if (slash <= 0 || slash === path.length - 1 || path.split("/").some(part => !part || part === "." || part === "..")) {
-            throw new Error("资源地址必须为包名/包内路径：" + path);
+        const parts = path.split("/");
+        if (path.includes("\\") || parts.some(part => !part || part === "." || part === "..")) {
+            throw new Error("资源地址须使用正斜线，且不能含空段或目录穿越：" + path);
         }
-        return { bundle: path.slice(0, slash), loadPath: path.slice(slash + 1), type };
+        if (parts[0] === "bundles") {
+            if (parts[1] !== "module" && parts[1] !== "resources") {
+                throw new Error("资源源路径须使用bundles/module或bundles/resources：" + path);
+            }
+            parts.splice(0, 2);
+        }
+        if (parts.length < 2) {
+            throw new Error("资源地址必须包含包名和包内路径：" + path);
+        }
+        return { bundle: parts[0], loadPath: parts.slice(1).join("/"), type };
     }
 
     /** 图片地址统一为“包名/包内路径”；补齐SpriteFrame后缀，共享现有资源池。 */
     public static sprite(path: string): ResourceDescriptor<"SpriteFrame"> {
         const address = this.address(path, "SpriteFrame");
-        return this.describe(address.bundle, address.loadPath, "SpriteFrame");
+        return this.describe(address.bundle, address.loadPath, "SpriteFrame", path);
     }
 
     /** 取得节点拥有的作用域；节点销毁前资源始终有引用，销毁后迟到结果拒绝交付。 */

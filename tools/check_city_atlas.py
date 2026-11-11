@@ -5,6 +5,7 @@ import plistlib
 import re
 from pathlib import Path
 from PIL import Image
+from bundle_paths import bundle_asset_path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,7 +30,7 @@ def main():
             sw, sh = map(int, re.findall(r'\d+', frame['spriteSourceSize']))
             ox, oy = map(float, re.findall(r'-?\d+(?:\.\d+)?', frame['spriteOffset']))
             assert (sw, sh) == size
-            actual = Image.open(ROOT / 'client/assets/bundles/home/ui' / key.replace('/', '_')).convert('RGBA')
+            actual = Image.open(bundle_asset_path('home', 'ui/' + key.replace('/', '_'))).convert('RGBA')
             assert actual.size == size, key + ': 原始画布丢失'
             left = (sw - w) / 2 + ox
             top = (sh - h) / 2 - oy

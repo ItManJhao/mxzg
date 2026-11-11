@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { BlockInputEvents, Button, createdNodes, director, Director, Graphics, Node, Prefab, UITransform } from "cc";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
 import { UIManager, isOpenCancelled, PageNav } from "../assets/scripts/framework/ui/UIManager";
-import { ModalOptions, registerView, ViewClass } from "../assets/scripts/framework/ui/UIRegistry";
+import { bindViewRuntime, ModalOptions, registerView, ViewClass, viewCtorById, viewSpecOf } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 
 /** 记录关闭次数，不发业务请求。 */
@@ -23,6 +23,8 @@ class PlainDialog extends DialogFixture { }
 class MultipleDialog extends DialogFixture { }
 class DelayedDialog extends DialogFixture { }
 class HiddenDialog extends DialogFixture { }
+class ConfiguredDialog extends DialogFixture { }
+class ConfigCancelledDialog extends DialogFixture { }
 /** 内容尚未准备好时也允许共享模态取消。 */
 class WaitingDialog extends DialogFixture {
     /** 建立未兑现的ready，故意不在onClose中完成，检查框架自己的取消。 */
@@ -58,10 +60,11 @@ async function main(): Promise<void> {
     const mounted: DialogFixture[] = [];
     /** 注入实际实例挂载，沿用UIManager统一生命周期。 */
     function register(ctor: ViewClass<unknown>, id: string, modal?: ModalOptions,
-        multiple = false, load: () => Promise<Prefab> = async () => new Prefab(), hostId = "popup"): void {
+        multiple = false, load: () => Promise<Prefab> = async () => new Prefab(), hostId = "popup",
+        prepare?: () => Promise<void>): void {
         registerView(ctor, {
             id, prefab: "test/" + id, layer: UILayer.Popup, cache: false, allowMultiple: multiple,
-            hostId, modal, load,
+            hostId, modal, load, prepare,
             mount: parent => {
                 const node = new Node(id);
                 node.parent = parent;
@@ -79,6 +82,47 @@ async function main(): Promise<void> {
     register(MultipleDialog, "shared-multiple", { mask: true, closeOnOutside: true }, true);
     register(WaitingDialog, "shared-waiting", { mask: true, closeOnOutside: true });
     register(FailedDialog, "shared-failed", { mask: true, closeOnOutside: true });
+
+    const ownSpec = viewSpecOf(PlainDialog)!;
+    const firstBinding = bindViewRuntime(PlainDialog, { hostId: "first-runtime-host" });
+    const secondBinding = bindViewRuntime(PlainDialog, { hostId: "second-runtime-host" });
+    assert.equal(viewSpecOf(PlainDialog)!.prefab, ownSpec.prefab, "应用绑定不能改变页面唯一地址");
+    firstBinding();
+    assert.equal(viewSpecOf(PlainDialog)!.hostId, "second-runtime-host", "旧应用迟到撤销不能覆盖新绑定");
+    secondBinding();
+    assert.equal(viewSpecOf(PlainDialog), ownSpec, "按登记链恢复View自身定义，不复活已撤销绑定");
+    assert.equal(viewCtorById(ownSpec.id), PlainDialog);
+    secondBinding();
+    assert.equal(viewSpecOf(PlainDialog), ownSpec, "重复撤销不删除静态登记");
+
+    let configurationFails = true;
+    let configuredLoads = 0;
+    register(ConfiguredDialog, "configured-dialog", undefined, false, async () => {
+        configuredLoads++;
+        return new Prefab();
+    }, "popup", async () => {
+        if (configurationFails) throw new Error("fixture configuration failed");
+    });
+    await assert.rejects(ui.open(ConfiguredDialog), /fixture configuration failed/);
+    assert.equal(configuredLoads, 0, "配置失败不能下载Prefab或留下假成功实例");
+    assert.equal(ui.snapshot().pendingResident, 0);
+    configurationFails = false;
+    const configured = await ui.open(ConfiguredDialog);
+    assert.equal(configuredLoads, 1, "配置失败后下一次开窗可重试");
+    ui.close(configured);
+
+    let finishConfiguration!: () => void;
+    let cancelledLoads = 0;
+    register(ConfigCancelledDialog, "config-cancelled", undefined, false, async () => {
+        cancelledLoads++;
+        return new Prefab();
+    }, "popup", () => new Promise(resolve => { finishConfiguration = resolve; }));
+    const configurationPending = ui.open(ConfigCancelledDialog);
+    const configurationCancelled = assert.rejects(configurationPending, isOpenCancelled);
+    ui.closeById("config-cancelled");
+    finishConfiguration();
+    await configurationCancelled;
+    assert.equal(cancelledLoads, 0, "配置等待期间关闭后不再下载或挂回页面");
 
     const masked = await ui.open(MaskedDialog) as DialogFixture;
     const shade = root.getChildByName("SharedModalLayer")!;

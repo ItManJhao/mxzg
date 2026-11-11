@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""历史主城资源生成器：用于原始素材重建，不作为当前人工 Prefab 的日常修改入口。
+"""此历史Prefab写入器已退役，下面保留原算法供阅读追溯；当前资源由Creator人工维护。
+
+历史主城资源生成器：用于原始素材重建，不作为当前人工 Prefab 的日常修改入口。
 
 当前 CityChromeView 已经人工维护；本脚本仅保留迁入算法供追溯，直接执行会拒绝覆盖。
 
@@ -17,6 +19,8 @@ The script:
 
 It does not touch Boot, prefabLoad flags, or protocol scripts.
 """
+raise SystemExit("历史Prefab写入器已退役：请在Creator编辑当前Prefab，不得重建旧模块、覆盖人工布局或生成新UUID。")
+
 import base64
 import hashlib
 import json
@@ -31,7 +35,7 @@ from check_citychrome_shell_id import class_id
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RES = os.path.join(ROOT, "client", "assets", "bundles")
-OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "home", "prefabs")
+OUT_DIR = os.path.join(ROOT, "client", "assets", "bundles", "module", "home", "prefabs")
 PREFAB_PATH = os.path.join(OUT_DIR, "CityChromeView.prefab")
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 FONT_FILE = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf")

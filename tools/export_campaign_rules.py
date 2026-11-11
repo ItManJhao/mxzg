@@ -2,9 +2,10 @@
 import argparse
 import json
 from pathlib import Path
+from bundle_paths import bundle_directory
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "client/assets/bundles/config"
+SOURCE = bundle_directory("config")
 OUTPUT = ROOT / "backend/src/main/resources/gameplay/campaign-rules.json"
 
 

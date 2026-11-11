@@ -1,4 +1,4 @@
-/** 背包物品格子：由 BagView 传入条目和显示配置，只负责绑定与展示，不拥有库存。 */
+/** 背包物品格子：由所属页面传入条目、显示配置和可选状态，不拥有库存或页面点击回调。 */
 import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame } from "cc";
 import type { BagItemData } from "../data/BagItemData";
 import { ResManager } from "../../../framework/assets/ResManager";
@@ -33,8 +33,6 @@ export class BagItemView extends Component {
     @property(Node)
     selectMark: Node | null = null;
 
-    /** 当前点击回调；复用时解绑旧回调，销毁时清空。 */
-    private tap: (() => void) | null = null;
     /** 格子绘制代次，show 和销毁时递增，使异步旧图片失效；与库存版本无关。 */
     private revision = 0;
 
@@ -54,16 +52,13 @@ export class BagItemView extends Component {
             throw new Error("BagItemView.prefab [" + this.node.name + "]: frame/icon 缺少 Sprite");
     }
 
-    /** 绘制物品或空槽，替换点击回调并保护异步贴图；有物品必须提供 face，否则抛错。 */
-    show(item: Readonly<BagItemData> | null, selected: boolean, onTap: (() => void) | null, face?: BagFace): void {
+    /** 绘制物品或空槽并保护异步贴图；选择统一交给列表，有物品时必须提供face。 */
+    show(item: Readonly<BagItemData> | null, selected: boolean, face?: BagFace, selectable = item !== null): void {
         this.validateBindings();
         if (item && !face) throw new Error("BagItemView: 有物品时必须提供配置展示数据 face");
         const revision = ++this.revision;
         const current = () => this.isValid && this.revision === revision;
-        if (this.tap) this.node.off(Button.EventType.CLICK, this.tap);
-        this.tap = onTap;
-        this.button!.interactable = !!onTap;
-        if (onTap) this.node.on(Button.EventType.CLICK, onTap);
+        this.button!.interactable = selectable;
         if (this.selectMark) this.selectMark.active = selected;
         if (!item) {
             if (this.frame) {
@@ -90,10 +85,8 @@ export class BagItemView extends Component {
         }
     }
 
-    /** 使未完成贴图失效，解除点击监听并释放页面回调。 */
+    /** 销毁时使未完成贴图失效；列表选择监听由所属列表解除。 */
     onDestroy(): void {
         this.revision++;
-        if (this.tap) this.node.off(Button.EventType.CLICK, this.tap);
-        this.tap = null;
     }
 }

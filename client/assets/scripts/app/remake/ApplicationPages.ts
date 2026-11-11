@@ -1,170 +1,103 @@
-/** 正式页面登记：集中维护类、预制体与页面生命周期适配，业务会话由应用注入，不创建网络连接。 */
-import { MainChapterBattleView } from "../../features/battle/ui/MainChapterBattleView";
-import { MainChapterView } from "../../features/battle/ui/MainChapterView";
-import { BattleDetailLayer } from "../../features/battle/ui/BattleDetailLayer";
-import { ChapterRewardInfoView } from "../../features/battle/ui/ChapterRewardInfoView";
+/**
+ * 应用页面依赖装配：只绑定登录/主城Controller与当前场景宿主，不重复保存页面地址或展示参数。
+ * 各View的@view负责静态登记；普通页面导入只让装饰器执行，不下载资源、不属于LoadingPlan。
+ * 当前应用撤销时解除自己的依赖绑定，恢复View自身定义，不持有第二份业务状态。
+ */
 import { Node } from "cc";
 import { PREVIEW } from "cc/env";
+import "../../features/battle/ui/MainChapterBattleView";
+import "../../features/battle/ui/MainChapterView";
+import "../../features/battle/ui/BattleDetailLayer";
+import "../../features/battle/ui/ChapterRewardInfoView";
+import "../../features/account/ui/RoleProfileView";
+import "../../features/account/ui/ServerPickerView";
+import "../../features/bag/ui/BagView";
+import "../../features/bag/ui/BagInfoView";
+import "../../features/hero/ui/FormationView";
+import "../../features/hero/ui/HeroInfoView";
+import "../../features/hero/ui/HeroListView";
+import "../../features/hero/ui/HeroSkillView";
 import { AccountController } from "../../features/account/AccountController";
 import { AccountModel } from "../../features/account/AccountModel";
 import { AccountService } from "../../features/account/AccountService";
 import { ServerSelection } from "../../features/account/ServerSelection";
 import { AccountLoginView } from "../../features/account/ui/AccountLoginView";
-import { RoleProfileView } from "../../features/account/ui/RoleProfileView";
-import { ServerPickerView } from "../../features/account/ui/ServerPickerView";
-import { BagView } from "../../features/bag/ui/BagView";
-import { BagInfoView } from "../../features/bag/ui/BagInfoView";
-import { prepareInventoryConfig } from "../../config/RemakeConfig";
-import { FormationView } from "../../features/hero/ui/FormationView";
-import { HeroInfoView } from "../../features/hero/ui/HeroInfoView";
-import { HeroListView } from "../../features/hero/ui/HeroListView";
-import { HeroSkillView } from "../../features/hero/ui/HeroSkillView";
 import { HomeController } from "../../features/home/HomeController";
 import { RemakeHomeView } from "../../features/home/ui/RemakeHomeView";
-import { UILayer } from "../../framework/ui/UILayer";
 import { UIManager, isOpenCancelled } from "../../framework/ui/UIManager";
-import { registerView, viewSpecOf } from "../../framework/ui/UIRegistry";
-import { ApplicationResources } from "./ApplicationResources";
+import { bindViewRuntime } from "../../framework/ui/UIRegistry";
 import { HomeFeatureNavigation } from "./HomeFeatureNavigation";
 import { LoginEntry } from "./LoginEntry";
 
-/** 页面登记需要的应用边界，回调读取当前路由而非复制账号状态。 */
+/** 应用拥有的依赖和动作；View参数不保存账号凭证或复制模块状态。 */
 export interface ApplicationPageContext {
+    /** 当前场景的公共弹窗宿主，应用销毁时解除绑定。 */
     pageHost: Node;
+    /** true表示本应用仍存活，异步打开失败时据此拒绝旧提示。 */
     valid(): boolean;
+    /** 统一登录和角色状态，Controller与资料页读取同一实例。 */
     model: AccountModel;
+    /** 当前应用账号服务，负责登录、退出和WS鉴权。 */
     service: AccountService;
+    /** 唯一选服状态，弹窗只修改选择，不发登录请求。 */
     servers: ServerSelection;
+    /** 登录成功后显式进入游戏的路由状态。 */
     entry: LoginEntry;
-    resources: ApplicationResources;
+    /** 主城导航操作，页面只转交玩家意图。 */
     features: HomeFeatureNavigation;
+    /** 账号动作结束后由应用重新核对当前路由。 */
     syncRoute(): void;
+    /** 主城创建完成时让应用取得其内容宿主。 */
     onHome(view: RemakeHomeView): void;
+    /** 应用受限开发入口，发布版本不交给玩家页面。 */
     openGm(): void;
 }
 
+/** 无状态装配入口；页面资源时机只在LoadingPlan配置。 */
 export class ApplicationPages {
     private constructor() { }
 
-    /** 登记页面的异步资源入口并返回撤销函数；登录页不再由场景提前持有，下载失败由启动流程提供重试。 */
+    /** 为当前应用绑定两个Controller和公共宿主，返回仅撤销本次装配的清理函数。 */
     public static register(context: ApplicationPageContext): Array<() => void> {
-        const { model, service, servers, entry, resources, features, openGm } = context;
+        const { model, service, servers, entry, features, openGm } = context;
         const ui = UIManager.instance;
-        const syncRoute = () => context.syncRoute();
         let homeView: RemakeHomeView | null = null;
-        const stops: Array<() => void> = [];
-        stops.push(ui.setResidentHost("remake-modal", () => context.pageHost));
-        stops.push(registerView(BattleDetailLayer, {
-            load: () => resources.battlePage("detail"),
-            id: "battle-detail", prefab: "bundles/battle/prefabs/BattleDetailLayer", layer: UILayer.Popup,
-            cache: false, allowMultiple: false, hostId: "remake-modal",
-            modal: { mask: true, closeOnOutside: true },
-        }));
-        stops.push(registerView(ChapterRewardInfoView, {
-            id: "chapter-reward-info", prefab: "bundles/battle/prefabs/ChapterRewardInfoView", layer: UILayer.Popup,
-            cache: false, allowMultiple: false, hostId: "remake-modal",
-            modal: { mask: true, closeOnOutside: true },
-        }));
-        stops.push(registerView(ServerPickerView, {
-            id: "server-picker", prefab: "bundles/login/prefabs/ServerPickerView", layer: UILayer.Popup,
-            cache: false, allowMultiple: false, hostId: "remake-modal",
-            modal: { mask: true, closeOnOutside: true },
-            load: () => {
-                return resources.featurePage("servers");
-            },
-        }));
-        stops.push(registerView(RoleProfileView, {
-            id: "role-profile", prefab: "bundles/login/prefabs/RoleProfileView",
-            layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
-            modal: { mask: true, closeOnOutside: true },
-        }));
-        // All business composition lives here. The UI framework imports no account/home classes.
-        stops.push(registerView(AccountLoginView, {
-            id: "remake-login", prefab: "bundles/login/prefabs/AccountLoginView", layer: UILayer.Page,
-            cache: false, allowMultiple: false,
-            createController: view => new AccountController(model, service, view as AccountLoginView, () => {
-                ui.closeById("server-picker");
-                entry.confirm();
-                syncRoute();
-            }, {
-                selection: servers, openPicker: () => {
-                    void ui.openById("server-picker", servers).catch(error => {
-                        if(!context.valid() || isOpenCancelled(error)) return;
-                        model.replace({ ...model.snapshot, error: error instanceof Error ? error.message : "选服界面加载失败" });
-                    });
-                }
+        return [
+            ui.setResidentHost("remake-modal", () => context.pageHost),
+            bindViewRuntime(AccountLoginView, {
+                createController: view => new AccountController(model, service, view as AccountLoginView, () => {
+                    ui.closeById("server-picker");
+                    entry.confirm();
+                    context.syncRoute();
+                }, {
+                    selection: servers,
+                    openPicker: () => {
+                        void ui.openById("server-picker", servers).catch(error => {
+                            if (!context.valid() || isOpenCancelled(error)) return;
+                            model.replace({ ...model.snapshot, error: error instanceof Error ? error.message : "选服界面加载失败" });
+                        });
+                    },
+                }),
             }),
-        }));
-        stops.push(registerView(RemakeHomeView, {
-            id: "remake-home", prefab: "bundles/home/prefabs/RemakeHomeView", layer: UILayer.Page,
-            cache: false, allowMultiple: false, load: async () => {
-                return resources.homePage();
-            },
-            createController: view => {
-                homeView = view as RemakeHomeView;
-                context.onHome(homeView);
-                return new HomeController(model, service, homeView, id => {
-                    if(id !== "role-profile") return features.open(id);
-                    if(!model.snapshot.role || model.snapshot.busy) return false;
-                    void ui.openById("role-profile", {
-                        model, openGm: PREVIEW ? openGm : undefined, logout: () => service.logout(), notice: (text: string) => ui.toast(text),
-                    }).catch(error => {
-                        if(!isOpenCancelled(error)) homeView?.showNotice("角色详情打开失败，请重试");
+            bindViewRuntime(RemakeHomeView, {
+                createController: view => {
+                    homeView = view as RemakeHomeView;
+                    context.onHome(homeView);
+                    return new HomeController(model, service, homeView, id => {
+                        if (id !== "role-profile") return features.open(id);
+                        if (!model.snapshot.role || model.snapshot.busy) return false;
+                        void ui.openById("role-profile", {
+                            model,
+                            openGm: PREVIEW ? openGm : undefined,
+                            logout: () => service.logout(),
+                            notice: (text: string) => ui.toast(text),
+                        }).catch(error => {
+                            if (!isOpenCancelled(error)) homeView?.showNotice("角色详情打开失败，请重试");
+                        });
+                        return true;
                     });
-                    return true;
-                });
-            },
-        }));
-        const loadFeature = (group: "campaign" | "formation") => {
-            return resources.featurePage(group);
-        };
-        stops.push(registerView(MainChapterBattleView, {
-            load: () => resources.battlePage("field"),
-            id: "main-chapter-battle", prefab: "bundles/battle/prefabs/MainChapterBattleView",
-            layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "main-chapter-field",
-        }));
-        stops.push(registerView(MainChapterView, {
-            id: "remake-campaign", prefab: "bundles/battle/prefabs/MainChapterView",
-            layer: UILayer.Page, cache: false, allowMultiple: false,
-            load: () => resources.battlePage(),
-        }));
-        stops.push(registerView(FormationView, {
-            id: "remake-formation", prefab: "bundles/hero/prefabs/FormationView",
-            layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
-            modal: { mask: true, closeOnOutside: true },
-            load: () => loadFeature("formation"),
-        }));
-        // 页面注册仅负责点击时的配置前置条件，不参与LoadingPlan的资源选择。
-        for (const view of [BagView, BagInfoView]) {
-            const spec = viewSpecOf(view)!;
-            const load = async () => {
-                await prepareInventoryConfig();
-                return resources.preparedPage(spec.prefab);
-            };
-            const unregister = registerView(view, { ...spec, load });
-            stops.push(() => {
-                if (viewSpecOf(view)?.load !== load) {
-                    return;
-                }
-                unregister();
-                registerView(view, spec);
-            });
-        }
-        stops.push(registerView(HeroListView, {
-            id: "hero", prefab: "bundles/hero/prefabs/HeroListView", layer: UILayer.Page, cache: false, allowMultiple: false,
-            load: () => {
-                return resources.heroPage();
-            },
-        }));
-        stops.push(registerView(HeroInfoView, {
-            id: "hero-info", prefab: "bundles/hero/prefabs/HeroInfoView", layer: UILayer.Page, cache: false, allowMultiple: false,
-            load: () => resources.heroPage(true),
-        }));
-        stops.push(registerView(HeroSkillView, {
-            id: "hero-skill", prefab: "bundles/hero/prefabs/HeroSkillView", layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
-            modal: { mask: true, closeOnOutside: true },
-            load: () => resources.heroSkillPage(),
-        }));
-        return stops;
+                },
+            }),
+        ];
     }
 }

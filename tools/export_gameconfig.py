@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Export config/gameconfig/*.xlsx to client JSON.
+"""客户端配置导出：默认只输出当前读取闭包，--all只允许在assets外归档旧项目全表。
 
 Source of truth is the in-repo directory config/gameconfig (override with
 --src or GAMECONFIG_SRC). Runtime client code only reads the JSON written to
-client/assets/bundles/config. xlsx is not loaded by Creator.
+client/assets/bundles/resources/config. xlsx is not loaded by Creator.
 
 Header rows match the old ExcelReader layout:
   row 1  Chinese note
@@ -22,6 +22,7 @@ a level-1 row is added for that id. Existing gate ids still resolve.
 from __future__ import annotations
 
 import argparse
+import ast
 import io
 import json
 import math
@@ -32,6 +33,7 @@ import uuid
 import zipfile
 from datetime import date, datetime, time
 from pathlib import Path
+from bundle_paths import bundle_directory
 
 try:
     import openpyxl
@@ -41,9 +43,20 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SRC = ROOT / "config" / "gameconfig"
-DEFAULT_OUT = ROOT / "client" / "assets" / "bundles" / "config"
+DEFAULT_OUT = bundle_directory("config")
 FIELD_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 INT_RE = re.compile(r"^-?\d+$")
+# 保留既有导出说明，默认窄范围与显式全量归档使用同一描述，不因整理范围改变JSON字节。
+PRIMARY_NOTE = "exported from config/gameconfig/%s sheet %s. flag 1/2/3 columns only."
+SYSTEM_GATE_NOTE = (
+    "derived from config/gameconfig/system.xlsx. integer keys containing open_day or ending with _days. "
+    "open_server_day is that value. remark is note."
+)
+OPEN_CONDITION_NOTE = (
+    "exported from config/gameconfig/opencondition.xlsx. id=atom, name=note, level=condition_value, "
+    "open_server_day from system *_open_day when the key is {atom}_open_day. main_cafe aliases main_pub_task. "
+    "mail aliases main_mail. bag is a level-1 nav row because the sheet has no bag atom. raw columns kept."
+)
 
 META_TEMPLATE = """{{
   "ver": "2.0.1",
@@ -59,13 +72,160 @@ META_TEMPLATE = """{{
 """
 
 
+def check_table_reads(text: str) -> set[str]:
+    """提取配置专项的直接路径及rows(name)辅助调用；变量模板本身不能代替实际调用表名。"""
+    prefixes = {DEFAULT_OUT.relative_to(ROOT).as_posix(), "client/assets/bundles/config"}
+    names = set()
+    for prefix in prefixes:
+        names.update(re.findall(r'''["'`]''' + re.escape(prefix) + r'''/([A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*)\.json["'`]''', text))
+    names.update(re.findall(r'''bundle_asset_path\(\s*["']config["']\s*,\s*["']([A-Za-z0-9_/-]+)\.json["']''', text))
+    defines_rows = re.search(r"\b(?:function\s+rows\s*\(|(?:const|let)\s+rows\s*=|def\s+rows\s*\()", text)
+    config_reader = any(prefix in text for prefix in prefixes) or re.search(r'''bundle_(?:directory|asset_path)\(\s*["']config["']''', text)
+    if config_reader and defines_rows:
+        names.update(re.findall(r'''\brows\s*\(\s*["']([A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*)["']\s*\)''', text))
+    return names
+
+
+def current_client_tables() -> dict[str, list[str]]:
+    """从当前schema、页面原始读取和现用规则/资源核对工具求导出范围，不维护另一份模块表清单。"""
+    tables: dict[str, list[str]] = {}
+
+    def add(name: str, reason: str) -> None:
+        """登记明确表路径及审计来源，拒绝目录穿越和空路径。"""
+        if not re.fullmatch(r"[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*", name):
+            raise ValueError("非法客户端配置路径：" + name)
+        tables.setdefault(name, []).append(reason)
+
+    schema = json.loads((ROOT / "config/client-schema.json").read_text(encoding="utf-8-sig"))
+    for key, spec in schema["tables"].items():
+        if not spec["path"].startswith("config/"):
+            raise ValueError("schema配置缺少config包前缀：" + key)
+        add(spec["path"][len("config/"):], "client-schema:" + key)
+    # GConfig由schema生成，不能用旧生成结果反过来保活已经从schema删除的表。
+    for source in sorted((ROOT / "client/assets/scripts").rglob("*.ts")):
+        if source.name == "GConfig.ts":
+            continue
+        text = source.read_text(encoding="utf-8-sig")
+        for name in re.findall(r'''["']config/([A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*)["']''', text):
+            add(name, source.relative_to(ROOT).as_posix())
+
+    # 当前主线/挂机/英雄规则投影仍以原始导出为输入；不因玩法入口暂停而破坏规则校验。
+    readers = {"tools/export_idle_rules.py", "tools/export_campaign_rules.py", "tools/check_chapter_end.cjs"}
+    registered = (ROOT / "client/tools/check-project.mjs").read_text(encoding="utf-8-sig")
+    readers.update(re.findall(r'''["']((?:client/tools|tools)/[A-Za-z0-9_/-]+\.(?:ts|cjs))["']''', registered))
+    for relative in sorted(readers):
+        source = ROOT / relative
+        for name in check_table_reads(source.read_text(encoding="utf-8-sig")):
+            add(name, relative)
+    growth = ROOT / "tools/export_hero_growth.py"
+    for entry in ast.parse(growth.read_text(encoding="utf-8-sig")).body:
+        if isinstance(entry, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "FIELDS" for target in entry.targets):
+            for name in ast.literal_eval(entry.value):
+                add(name, "tools/export_hero_growth.py:FIELDS")
+    # 语言表不裁行，语言元数据连同原字体归属保留，避免本批资源整理删掉多语言依赖。
+    add("languagetype", "完整语言元数据；本批不裁语言依赖")
+    return dict(sorted((name, sorted(set(reasons))) for name, reasons in tables.items()))
+
+
+def validate_current_scope(out: Path) -> dict[str, int]:
+    """检查所有必需表都存在且非空、无未实现旧表；缺失或非法JSON不能用空数组冒充通过。"""
+    expected = current_client_tables()
+    actual = {file.relative_to(out).as_posix()[:-5] for file in out.rglob("*.json")}
+    missing, extra = set(expected) - actual, actual - set(expected)
+    if missing or extra:
+        raise ValueError("客户端配置范围不符；缺失=" + repr(sorted(missing)) + "；多余=" + repr(sorted(extra)))
+    schema = json.loads((ROOT / "config/client-schema.json").read_text(encoding="utf-8-sig"))
+    containers = {spec["path"][len("config/"):]: spec["container"] for spec in schema["tables"].values()}
+    counts = {}
+    for name in expected:
+        data = json.loads((out / (name + ".json")).read_text(encoding="utf-8-sig"))
+        container = containers.get(name, "rows")
+        rows = data[container]
+        if not isinstance(rows, (list, dict)) or not rows:
+            raise ValueError("必需配置内容为空或结构非法：" + name + ":" + container)
+        counts[name] = len(rows)
+    return counts
+
+
+def require_output_mode(out: Path, export_all: bool) -> None:
+    """全量旧表仅可显式归档到assets之外，禁止再把未实现模块导回运行资源。"""
+    if export_all and out.resolve().is_relative_to((ROOT / "client/assets").resolve()):
+        raise ValueError("--all全量归档必须输出到client/assets之外")
+
+
+def export_current(src: Path, out: Path) -> int:
+    """只导出当前读取闭包；主城沿用已核对的既有投影源，不用不同版本XLSX暗改现状。"""
+    targets = current_client_tables()
+    schema = json.loads((ROOT / "config/client-schema.json").read_text(encoding="utf-8-sig"))
+    specs = {spec["path"][len("config/"):]: spec for spec in schema["tables"].values()}
+    books: dict[str, dict] = {}
+
+    def primary(stem: str) -> dict:
+        """按实际源表读一次主sheet，缺少源表或有效内容时拒绝导出。"""
+        if stem not in books:
+            file = src / (stem + ".xlsx")
+            sheets = read_book(file)
+            if not sheets:
+                raise ValueError("必需源表没有有效sheet：" + str(file))
+            books[stem] = pick_primary(stem, sheets)
+        return books[stem]
+
+    system = primary("system")
+    gates = build_system_gate(loose_rows(src / "system.xlsx", system["sheet"]))
+    for name in targets:
+        stem = name.split("/")[-1]
+        if name.startswith("maincity/"):
+            # 这三份当前页面输入与现存XLSX存在已记录差异，完整规则专项前保持原容器和字节。
+            source = ROOT / "config/client-maincity" / (stem + ".json")
+            content = source.read_bytes()
+            target = out / (name + ".json")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists() or target.read_bytes() != content:
+                target.write_bytes(content)
+            ensure_meta(Path(str(target) + ".meta"))
+            continue
+        if name == "system_gate":
+            rows = gates
+            note = SYSTEM_GATE_NOTE
+        else:
+            rows = primary(stem)["rows"]
+            note = PRIMARY_NOTE % (stem + ".xlsx", primary(stem)["sheet"])
+        if name == "opencondition":
+            rows = project_opencondition(rows, gates)
+            note = OPEN_CONDITION_NOTE
+        spec = specs.get(name)
+        if spec and spec["container"] != "rows":
+            projected = [{key: value for key, value in row.items() if key in spec["fields"]} for row in rows]
+            # 主城活动表旧格式以atom为字典键，另外两个容器仍是数组。
+            payload = {row[spec["key"]]: row for row in projected} if spec["container"] == "act" else projected
+            target = out / (name + ".json")
+            write_json(target, {spec["container"]: payload})
+            ensure_meta(Path(str(target) + ".meta"))
+        else:
+            write_table(out, name, note, rows)
+    counts = validate_current_scope(out)
+    print("当前客户端配置导出：%d表；完整原始行保留，不导出未实现模块或旧manifest" % len(counts))
+    return 0
+
+
 def main() -> int:
+    """默认只导出当前读取闭包；只读范围检查和全量离线归档均须显式选择。"""
     parser = argparse.ArgumentParser(description="Export gameconfig xlsx to client JSON")
     parser.add_argument("--src", default=os.environ.get("GAMECONFIG_SRC", str(DEFAULT_SRC)))
     parser.add_argument("--out", default=os.environ.get("GAMECONFIG_OUT", str(DEFAULT_OUT)))
+    parser.add_argument("--all", action="store_true", help="全量旧表离线归档，只能输出到assets之外")
+    parser.add_argument("--check-scope", action="store_true", help="只核对当前配置闭包，不导出或删除")
+    parser.add_argument("--list", action="store_true", help="列出当前配置闭包与源码读取证据，不写文件")
     args = parser.parse_args()
     src = Path(args.src)
     out = Path(args.out)
+    require_output_mode(out, args.all)
+    if args.list:
+        print(json.dumps(current_client_tables(), ensure_ascii=False, indent=2))
+        return 0
+    if args.check_scope:
+        print("当前客户端配置范围通过：%d表" % len(validate_current_scope(out)))
+        return 0
     if not src.is_dir():
         sys.stderr.write("gameconfig directory not found: %s\n" % src)
         return 2
@@ -74,6 +234,8 @@ def main() -> int:
         sys.stderr.write("no xlsx in %s\n" % src)
         return 2
     out.mkdir(parents=True, exist_ok=True)
+    if not args.all:
+        return export_current(src, out)
 
     written: list[str] = []
     failed: list[str] = []
@@ -92,7 +254,7 @@ def main() -> int:
             failed.append("%s: no header" % path.name)
             continue
         primary = pick_primary(path.stem, sheets)
-        note = "exported from config/gameconfig/%s sheet %s. flag 1/2/3 columns only." % (
+        note = PRIMARY_NOTE % (
             path.name,
             primary["sheet"],
         )
@@ -124,7 +286,7 @@ def main() -> int:
     write_table(
         out,
         "system_gate",
-        "derived from config/gameconfig/system.xlsx. integer keys containing open_day or ending with _days. open_server_day is that value. remark is note.",
+        SYSTEM_GATE_NOTE,
         gates,
     )
     if "system_gate" not in written:
@@ -134,7 +296,7 @@ def main() -> int:
     write_table(
         out,
         "opencondition",
-        "exported from config/gameconfig/opencondition.xlsx. id=atom, name=note, level=condition_value, open_server_day from system *_open_day when the key is {atom}_open_day. main_cafe aliases main_pub_task. mail aliases main_mail. bag is a level-1 nav row because the sheet has no bag atom. raw columns kept.",
+        OPEN_CONDITION_NOTE,
         projected,
     )
 
@@ -354,8 +516,12 @@ def write_table(out: Path, name: str, note: str, rows: list[dict]) -> None:
 
 
 def write_json(path: Path, payload: dict) -> None:
+    """写入指定导出路径，创建必要容器目录；相同内容不重写，避免无意义Creator导入。"""
     text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    path.write_text(text + "\n", encoding="utf-8")
+    text += "\n"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists() or path.read_text(encoding="utf-8") != text:
+        path.write_text(text, encoding="utf-8")
 
 
 def ensure_meta(path: Path) -> None:

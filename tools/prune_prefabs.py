@@ -1,11 +1,13 @@
-"""Explicit-plan Prefab cleanup. Default is read-only; --apply deletes only audited asset pairs."""
+"""当前已实现Prefab范围检查；默认只读，--apply只删除明确计划外的资源与meta并备份。"""
 import argparse
 import hashlib
 import json
 import re
+import subprocess
 import uuid
 import zipfile
 from pathlib import Path
+from bundle_paths import resolve_asset_path
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / 'client/assets'
@@ -21,6 +23,7 @@ def tokens(value):
         for child in value: yield from tokens(child)
 
 def inventory():
+    """根据当前入口计划及序列化依赖计算保留范围，场景不得绕过计划增加未开放页面。"""
     files = {p.relative_to(ASSETS).as_posix()[:-7]: p for p in ASSETS.rglob('*.prefab')}
     ids = {read(Path(str(p)+'.meta'))['uuid']: name for name,p in files.items()}
     groups = read(PLAN)['groups']
@@ -46,25 +49,28 @@ def inventory():
     sites = {key:[] for key in files if key not in keep}
     for script in (ASSETS/'scripts').rglob('*.ts'):
         for number,line in enumerate(script.read_text(encoding='utf-8-sig').splitlines(),1):
-            for path in re.findall(r'[\"\'](prefabs/ui/[\w/-]+)[\"\']',line):
-                if path in sites: sites[path].append(str(script.relative_to(ASSETS))+':'+str(number))
+            for path in re.findall(r'[\"\'](bundles/(?:[\w-]+/)+prefabs/[\w-]+)[\"\']',line):
+                current = resolve_asset_path(path).relative_to(ASSETS).as_posix()
+                if current in sites: sites[current].append(str(script.relative_to(ASSETS))+':'+str(number))
     removed = [{'path':key+'.prefab','uuid':read(Path(str(p)+'.meta'))['uuid'],
                 'source_bytes':p.stat().st_size,'legacy_code_sites':sites[key]}
                for key,p in sorted(files.items()) if key not in keep]
     return files, keep, removed
 
 def write_runtime(keep):
-    path=ASSETS/'scripts/config/PrefabPlan.ts'
-    text='/** Generated from tools/prefab-plan.json by tools/prune_prefabs.py. */\n'
-    text+='const paths = new Set<string>('+json.dumps(sorted(keep),indent=2)+');\n'
-    text+='export function prefabInPlan(path: string): boolean { return paths.has(path); }\n'
-    path.write_text(text,encoding='utf-8')
-    meta=Path(str(path)+'.meta')
-    if not meta.exists():
-        meta.write_text(json.dumps(dict(ver='4.0.24',importer='typescript',imported=True,
-            uuid=str(uuid.uuid5(uuid.NAMESPACE_URL,'mxzg/PrefabPlan.ts')),files=[],subMetas={},userData={}),indent=2)+'\n',encoding='utf-8')
+    """复用唯一生成器刷新身份索引与准入，不另写输出格式或重建脚本UUID。"""
+    subprocess.run(['node', str(ROOT/'tools/generate_resources.cjs')], cwd=ROOT, check=True)
+
+
+def write_current_report(keep):
+    """仅刷新保留项的现有地址，保留历史删除路径、UUID及备份记录；不修改assets。"""
+    report = read(REPORT)
+    report['kept_count'] = len(keep)
+    report['kept'] = [{'path': key + '.prefab', **value} for key, value in sorted(keep.items())]
+    REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 def apply(files,keep,removed):
+    """先备份待删资源，保留文件按摘要保护；删除范围限定bundles，不触碰脚本与场景。"""
     if not removed:
         write_runtime(keep)
         print('Already matches plan; previous deletion manifest preserved.')
@@ -77,7 +83,7 @@ def apply(files,keep,removed):
     targets=[]
     for item in removed:
         path=(ASSETS/item['path']).resolve()
-        if not path.is_relative_to(ASSETS.resolve()) or path.suffix!='.prefab': raise ValueError('Unsafe deletion '+str(path))
+        if not path.is_relative_to((ASSETS/'bundles').resolve()) or path.suffix!='.prefab': raise ValueError('Unsafe deletion '+str(path))
         targets.extend([path,Path(str(path)+'.meta')])
     backup_targets=set(targets)
     for path in targets:
@@ -92,17 +98,14 @@ def apply(files,keep,removed):
     for path in targets:
         if path.exists(): path.unlink()
     # Only empty folders are removed; never recursively delete arbitrary contents.
-    for folder in sorted((p for p in (ASSETS/'prefabs').rglob('*') if p.is_dir()),key=lambda p:len(p.parts),reverse=True):
+    for folder in sorted((p for p in (ASSETS/'bundles').rglob('*') if p.is_dir()),key=lambda p:len(p.parts),reverse=True):
         resolved=folder.resolve()
-        if not resolved.is_relative_to((ASSETS/'prefabs').resolve()): raise ValueError('Unsafe directory '+str(folder))
+        if not resolved.is_relative_to((ASSETS/'bundles').resolve()): raise ValueError('Unsafe directory '+str(folder))
         if not any(folder.iterdir()):
             folder.rmdir()
             meta=Path(str(folder)+'.meta')
             if meta.exists(): meta.unlink()
-    # Remove retired entries from UUID fallback and shell registration, not game data.
-    loader=ASSETS/'scripts/config/PrefabCatalog.ts'
-    loader.write_text('\n'.join(line for line in loader.read_text(encoding='utf-8-sig').splitlines()
-        if not any('"'+item['path'][:-7]+'":' in line for item in removed))+'\n',encoding='utf-8')
+    # 按实际资源重新生成身份索引与准入，不手工编辑生成文件或修改业务配置。
     write_runtime(keep)
     for path,digest in fingerprints.items():
         if hashlib.sha256(Path(path).read_bytes()).hexdigest()!=digest:raise ValueError('Retained asset changed: '+path)
@@ -113,10 +116,18 @@ def apply(files,keep,removed):
     print('Backup:',backup)
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--apply',action='store_true')
+    """默认只读检查；--report只更新当前报告，--apply才允许执行原有备份删除流程。"""
+    parser=argparse.ArgumentParser(description=__doc__)
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--apply',action='store_true')
+    modes.add_argument('--report',action='store_true')
     args=parser.parse_args();files,keep,removed=inventory()
     print('Prefab plan: total',len(files),'keep',len(keep),'remove',len(removed))
     print('Removed source bytes:',sum(row['source_bytes'] for row in removed))
     if args.apply: apply(files,keep,removed)
+    if args.report:
+        if removed:
+            raise ValueError('存在计划外Prefab，不能只刷新报告来跳过资源审查')
+        write_current_report(keep)
     return 0
 if __name__=='__main__':raise SystemExit(main())

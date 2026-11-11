@@ -2,7 +2,7 @@
   "name": "mxzg-bag-build",
   "title": "UI资源构建检查",
   "package_version": 2,
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "固定钩子入口重读当前实现，准备bootstrap启动包并核验资源。",
   "contributions": {
     "builder": "./builder.js"

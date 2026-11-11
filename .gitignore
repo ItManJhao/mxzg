@@ -27,6 +27,8 @@ __pycache__/
 !/config/prefab-acceptance.json
 !/config/gameconfig/
 !/config/gameconfig/**
+!/config/client-maincity/
+!/config/client-maincity/**
 /server/
 CONFIG_LINK.txt
 SERVER_LINK.txt

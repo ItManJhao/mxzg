@@ -2,411 +2,124 @@
   "purpose": "人工真实预览证据；SHA256 绑定实际 Prefab，修改后必须重新核对，结构检查不自动签署视觉或 Inspector。",
   "evidenceDirectory": "client/temp/prefab-acceptance-20261102（本机临时截图，不随 Git 交付）",
   "entries": {
-    "client/assets/bundles/hero/prefabs/AbilityInfoLayer.prefab": {
-      "sha256": "d416b6926aff3efa94962b86f4d7f68db21cdb6d7fba81d5d4d6b89523a6460a",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab": {
+    "client/assets/bundles/module/battle/prefabs/BattleDetailLayer.prefab": {
       "sha256": "0c428ee04299719a5c84d1d01af4389b66f166a06b0854a1e769cae67a49d928",
       "date": "2026-11-11",
       "status": "结构检查通过但视觉待验收",
       "scope": "本批共享模态、Widget布局或完整英雄页面重构，已校验绑定与原资源UUID；正在Creator本机复验，不沿用旧视觉签收。",
       "inspector": "未操作Creator Inspector"
     },
-    "client/assets/bundles/battle/prefabs/BattleEndLayer.prefab": {
-      "sha256": "93003f765e12e555bcf3373ca657ea42d54ee4b369dad48aeede6ac0e63ae924",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "2026-11-02 普通挂机真实领取局部复验：640×1280、360×800、960×1280 实际绘制/CSS 尺寸一致；标题锚点修复后居中，最多五类奖励及确认按钮可见，宽屏关闭成功。超过六类翻页、完整美术对照和 Inspector 未验收；证据 client/temp/idle-20261102。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/battle/prefabs/BattleInfoLayer.prefab": {
-      "sha256": "97da390718f2a4b29a8c8463e79aea4bcc43e14c6a592e8542a8185151715716",
-      "date": "2026-11-02",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/battle/prefabs/BattlePage.prefab": {
+    "client/assets/bundles/module/battle/prefabs/BattlePage.prefab": {
       "sha256": "4ab121d60f030a6af19748d7a4abdf816be5209390f7179c8d29ded127257fab",
       "date": "2026-11-09",
       "status": "实际预览通过",
       "scope": "本批仅393×852 Creator设置：新增主线信息栏锚点，ZDKS开场、双方出场、第二/三关结算、返回挂机及开场取消已实测。原技能台布局未移动；不表示全分辨率或Inspector全项通过。证据 docs/validation/main-chapter-talk-opening-20261109.json。 2026-11-09负责人明确验收挂机出场连续性、攻击后待机、模型大小与独立站位；IdleLayout保存挂机锚点，挂机模型0.60、正式战斗0.48。此次确认不扩大到全英雄、全尺寸或完整结算。",
       "inspector": "自动结构复核；完整视觉待负责人确认"
     },
-    "client/assets/bundles/battle/prefabs/ChapterEndLayer.prefab": {
-      "sha256": "2698a8d19c886a51de00eb204e188a0ce61c5df09fcf26968db9675472760de2",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/battle/prefabs/ChapterMapLayer.prefab": {
-      "sha256": "bbb0345d76319d884807e0e72ce042e3b9ffd75d86623a9ee69659a576948eaa",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/battle/prefabs/ChapterPreviewLayer.prefab": {
-      "sha256": "a0a46cf9d992bbe54267aa1ceeb120ea1e3c502c44678bb5e28118595929e084",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
-      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
-    },
-    "client/assets/bundles/common/prefabs/InfoCard.prefab": {
-      "sha256": "4a729f6077f94f075e6d8094e78e97a3e6f99ae7818149f64d1a587e06ba3515",
-      "date": "2026-11-02",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/common/prefabs/NpcTalkLayer.prefab": {
-      "sha256": "4c9dec1b56a6486a8056e683c9023ee6ddef05991c13348567c772ce853f5d36",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/hero/prefabs/HeroInfoAttrLayer.prefab": {
-      "sha256": "ca99bc6f9106a57bd6b6f18d8865b16a52362b9ef28b18724a4956b882694d5a",
-      "date": "2026-11-02",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/hero/prefabs/HeroInfoTipsLayer.prefab": {
-      "sha256": "f04297db66f99f69c3e2ab6f325eb47409c260fa23b3eb8dbaf2e0116e47e56f",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/hero/prefabs/HeroInfoUpgradeLayer.prefab": {
-      "sha256": "60c09418227c633b2a1eba8ea2159afdd265412ca20b6a275a4b897c448ff4dc",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态布局修复已通过 640×1280、360×800、960×1280 真实预览，各三轮按钮命中与开关。BattleEditLayer 点击关闭，两个升级窗口点击原有主按钮，临时验收回调仅移除节点，不执行发送、升级或发奖。保留原始序列化文字，未注入玩家数据。",
-      "inspector": "负责人回复三份均已实际操作并认可：定位修改节点、临时改值保存、恢复保存并重开，无 Missing Script；文件已核对恢复值。"
-    },
-    "client/assets/bundles/hero/prefabs/HeroInfoUpLevelLayer.prefab": {
-      "sha256": "7e7593b755546090887c9cff1cb8d62a435f88a5bafc569c600c93cad48cb8a5",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "普通升级真实业务：640×1280、360×800、960×1280，引擎 FrameSize 与 canvas 实际尺寸核对，各三轮关闭重开。正确四属性/成本/余额、底板、返回和单次按钮、底层点击拦截；正常奖励后升级、双击仅一请求、关闭后真实响应提交、换号迟到隔离、重登恢复。只覆盖普通升级，不代表突破/升星。截图 client/temp/hero-level-20261102。",
-      "inspector": "待负责人明确确认。已提供 panel_background X 临时 0→1→0 保存重开步骤；负责人只回复“已刷新”，不能当作编辑体验认可。最终文件已核对 X=0、Y=150、640×540。"
-    },
-    "client/assets/bundles/hero/prefabs/HeroInfoUpStarLayer.prefab": {
-      "sha256": "5ff93430a812c804651dff8ffb17a68cb45d34ee1062f30d108b25354e960e1f",
-      "date": "2026-11-02",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/hero/prefabs/HeroSkillInfoLayer.prefab": {
-      "sha256": "05cc56c52035d46c2d42a83ae480daaa75b82bbe3ad2a8dfefcda185676afe5a",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/hero/prefabs/HeroSkillOpenInfoLayer.prefab": {
-      "sha256": "7ccf1191f2e4f72035d4ec19a11ac9cae885a89e3ad498491a93ee80012dab46",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/hero/prefabs/HeroSuggestLayer.prefab": {
-      "sha256": "788151f0f89cd54d63503793e380afe397348dd10e0c36de066fcb00145dca52",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
-      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
-    },
-    "client/assets/bundles/hero/prefabs/HeroUpStarSelectLayer.prefab": {
-      "sha256": "785e3a472480c5bfe1c34d34cb432b74652fd090f84bb425f0a07b5729d3e451",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/hero/prefabs/HeroXSelectLayer.prefab": {
-      "sha256": "db1dffbfb2fdcc7d409e2d6cdf6cbac6837a5eb35358e82ad038880b2691bd09",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/hero/prefabs/IdleHeroSelectLayer.prefab": {
-      "sha256": "9e907c0e70e7e69798ec228714782f70ed0fba5e2eaebd21084ac79a2a3bd596",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/item/prefabs/ItemExhibitionLayer.prefab": {
-      "sha256": "c19dedc595bf48b52f32ee8a19f586f4aa81b21e69c21a2b4ff2607471a608ff",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/item/prefabs/ItemRewardLayer.prefab": {
-      "sha256": "870ca892265977f6bdba5df3508d3e800f78506b4422f26de806d2a9f42d76ed",
-      "date": "2026-11-04",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "4ae4a156已将奖励列表改为SuperScroll，旧壳层指纹不再覆盖当前预制体。 本次仅核对迁移提交、静态滚动绑定和全库结构，不重新签署画面或领取业务验收。",
-      "inspector": "当前版本待重新确认"
-    },
-    "client/assets/bundles/item/prefabs/ItemScelectNumLayer.prefab": {
-      "sha256": "0179789b6a81ef3a5c1e58b138e4f3824fd2937464e920c38cb19f9508234f02",
-      "date": "2026-11-02",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/item/prefabs/ItemSelectLayer.prefab": {
-      "sha256": "e4aa9a04f4888e930f5d58ac0798124c3bdf4f631b785b83eec968b5d1ca8657",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
-      "inspector": "2026-11-02 收尾批负责人明确回复两份均已实际操作并认可：临时微调、保存、恢复原值、保存并重开，无 Missing Script 或意外布局变化；最终文件指纹一致。"
-    },
-    "client/assets/bundles/legacy-login/prefabs/LoginPanel.prefab": {
-      "sha256": "14a5d5458a7746a751da0f0d85c1c379250f73544bc81beb9d5a6b2b5486f938",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/legacy-login/prefabs/UserLoginLayer.prefab": {
-      "sha256": "743c115040c2875da4a8893a74c5ed719d3c35b453b41432e4a63fce4412528c",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/login/prefabs/CreateRolePanel.prefab": {
-      "sha256": "4158603db77f0ab32138053a2364406c97b9fc5c9e274c83cac2386c473fccec",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/login/prefabs/ErrorLayer.prefab": {
-      "sha256": "0f90e8e71b78f29d2b376f7d40fff556cfeb13f071594e9d8c2b733c79b3c2cf",
-      "date": "2026-11-02",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/bootstrap/prefabs/LoadingLayer.prefab": {
+    "client/assets/bundles/module/bootstrap/prefabs/LoadingLayer.prefab": {
       "sha256": "aa7e7d4d239c76cec2df2c7bf9836b671f0387c131c97889d4e1beb2c4bc9096",
       "date": "2026-11-02",
       "status": "结构检查通过但视觉待验收",
       "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
       "inspector": "待负责人逐项确认"
     },
-    "client/assets/bundles/login/prefabs/NoticeLayer.prefab": {
-      "sha256": "f3f07b4646cbdb71449a458c326dbabd411d467e04b83c899f5b03f090efd777",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/login/prefabs/UpdateLayer.prefab": {
+    "client/assets/bundles/module/login/prefabs/UpdateLayer.prefab": {
       "sha256": "add1a68a395546d8f0c224c16753c4e2b8491e6061d4de941c19e0da850fed70",
       "date": "2026-11-02",
       "status": "结构检查通过但视觉待验收",
       "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
       "inspector": "待负责人逐项确认"
     },
-    "client/assets/bundles/mail/prefabs/MailInfoLayer.prefab": {
-      "sha256": "ac370e51aee07daa1486d6134b52f22d8ed321e5db9da650afe966bd952b00dc",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
-      "inspector": "2026-11-02 收尾批负责人明确回复两份均已实际操作并认可：临时微调、保存、恢复原值、保存并重开，无 Missing Script 或意外布局变化；最终文件指纹一致。"
-    },
-    "client/assets/bundles/mail/prefabs/MailLayer.prefab": {
-      "sha256": "a2f61c92bd7573b9fc84ac3a262791237277f9cb7dd584000c20b7f8ca73d3cc",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。",
-      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
-    },
-    "client/assets/bundles/quick-battle/prefabs/QuickBattleEndLayer.prefab": {
-      "sha256": "ff4328b88ca567f4ed5da8dcb369287ae764841a330f6b44324f2326ecc01ca5",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/quick-battle/prefabs/QuickBattleLayer.prefab": {
-      "sha256": "3583aed57a505a7723aa67b6a36e70707f6c61e1a6161a873cec95a0aa4ec7fe",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "静态壳层：640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮，缩放与原点从引擎读取确认。临时关闭回调仅销毁节点；不含业务数据、动态滚动、遮罩拦截的全项签收。 窄屏关闭按钮已完整，左侧装饰光效贴边；完整视觉仍待确认。",
-      "inspector": "负责人明确回复已逐项完成并认可：定位底板/关闭按钮、根 X 临时加 1 保存后恢复、保存并重开，无 Missing Script；最终文件指纹与验收值一致。"
-    },
-    "client/assets/bundles/quick-battle/prefabs/QuickBattleTipLayer.prefab": {
-      "sha256": "c1c9cfa180f1ddb03b5e0484af9f9aaed85e32fc0013586fae39cc7ee6b4060c",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/reward/prefabs/RewardPreviewLayer.prefab": {
-      "sha256": "c716a99bc5c7825d5ca1f08053971790511e64a0bb82ec5688e9603b86076493",
-      "date": "2026-11-02",
-      "status": "依赖所属页面检查的组合资源",
-      "scope": "真实独立加载仅用于检查原始壳层；该资源为局部展示/承载节点，需要所属页面提供位置、尺寸或数据，不按独立全屏窗口签收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/reward/prefabs/UpgradeSuccessLayer.prefab": {
-      "sha256": "b63c4fb17a302760eadc59b1e23333c813b4289bf1609d77f385ddafc901eb7b",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态布局修复已通过 640×1280、360×800、960×1280 真实预览，各三轮按钮命中与开关。BattleEditLayer 点击关闭，两个升级窗口点击原有主按钮，临时验收回调仅移除节点，不执行发送、升级或发奖。保留原始序列化文字，未注入玩家数据。",
-      "inspector": "负责人回复三份均已实际操作并认可：定位修改节点、临时改值保存、恢复保存并重开，无 Missing Script；文件已核对恢复值。"
-    },
-    "client/assets/bundles/reward/prefabs/UpStarSuccessLayer.prefab": {
-      "sha256": "c9582cc96b39e708df38126a87edd214771c3fe91f93b099192e6c78c967a45b",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/role/prefabs/ChangeNickLayer.prefab": {
-      "sha256": "7e3f1e46fe73106b22cbc4cb6f188413eb7b8215840ca1b273738dd05011186f",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "本轮静态壳层已完成 640×1280、360×800、960×1280 真实预览，各实际点击关闭三轮。窗口、文字、关闭区完整；临时回调只移除节点，不执行购买、改名、领奖或使用道具；动态内容/业务遮罩仍须在所属页面验收。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/role/prefabs/RoleInfoLayer.prefab": {
-      "sha256": "b6b2ed7c910e3619f16a832b4c6533722be96504113292c2a5d7f3926d4fcb22",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/role/prefabs/RoleUpgradeLayer.prefab": {
-      "sha256": "df69415b976c483604beae832a3c02c1e96251e25b2c3d66e0210c1578fc48d8",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/summon/prefabs/SummonLayer.prefab": {
-      "sha256": "be4ac8b42193feefb7b5af331933fcf4914595888d9c2620a981d7c181af1ce8",
-      "date": "2026-11-02",
-      "status": "结构检查通过但视觉待验收",
-      "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
-      "inspector": "待负责人逐项确认"
-    },
-    "client/assets/bundles/battle/prefabs/ChapterRewardLayer.prefab": {
-      "sha256": "c60f0256dda50dd85a3e1f18ed1e5c791c6ae0851d5333b813f5564a1442059c",
-      "date": "2026-11-02",
-      "status": "实际预览通过",
-      "scope": "静态空壳：640×1280、360×800、960×1280 均显示完整，各实际点击关闭三轮。关闭临时回调只销毁节点；不含领奖业务及有内容滚动验收。",
-      "inspector": "负责人明确回复已完成改值、保存、恢复 X=-272、重开检查并认可编辑体验；源码最终位置(-272,-442)、缩放0.85。"
-    },
-    "client/assets/bundles/hero/prefabs/HeroInfoView.prefab": {
+    "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab": {
       "sha256": "a2a44d93f2cdfe71517c0b3827f4131269a55210a8e8758da08fee160ce76036",
       "date": "2026-11-11",
       "status": "实际预览通过",
-      "scope": "393×852及360×720真实只读详情；背景、英雄与属性区域、技能入口和返回按钮布局。未复验全英雄或所有技能内容。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "仅393×852实际格子选择传入实例ID后的详情显示及截图、技能窗口开关、返回与重复进入。页面自带@view/prepare，不借用8cb60507开页链路结果。 docs/validation/view-registration-list-review-20261111.json",
+      "inspector": "未操作Creator，自动编译的新版本在浏览器连接独立内存测试服复验；不是负责人Inspector签收"
     },
-    "client/assets/bundles/login/prefabs/RoleProfileView.prefab": {
+    "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab": {
       "sha256": "a99fe0307a2033caf7e57369a45e890a3b4d6c16fa7b10874fd583e404c0702c",
       "date": "2026-11-11",
       "status": "实际预览通过",
       "scope": "393×852、360×720及428×926普通资料窗；实际内容/外部点击，叠窗关闭与隐藏后恢复共享层，设置和注销。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
       "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
     },
-    "client/assets/bundles/hero/prefabs/FormationView.prefab": {
+    "client/assets/bundles/module/hero/prefabs/FormationView.prefab": {
       "sha256": "e49063646a9a17df8c6eb36b1d167a2d03ce9c441cca61b2539d5a5d766f45a6",
       "date": "2026-11-11",
       "status": "实际预览通过",
       "scope": "360×720从英雄页打开、外部关闭取消；428×926主线确认已有权威阵容并进入真实挑战。未新改草稿或重新验证所有保存失败路径。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
       "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
     },
-    "client/assets/bundles/hero/prefabs/HeroListView.prefab": {
-      "sha256": "8f110a53b75df1cfd89fc9435144de11f0db8ffc863bfa824f91cb08befe6158",
+    "client/assets/bundles/module/hero/prefabs/HeroListView.prefab": {
+      "sha256": "448e7fdda02a07442c810995e1fc6e0b682c12befdf7da20a999e1c2714d127e",
       "date": "2026-11-11",
       "status": "实际预览通过",
-      "scope": "393×852及360×720完整页面；三英雄/零英雄名册、实际鼠标元素筛选、详情进入返回及容量位置。未构造长列表。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "最终31表资源重载后360x720真实3英雄名册、等级100、容量3/300和虚拟池3节点正常；已移除旧隐藏皮肤商店按钮。未重新检查详情全部机型或长名册画面。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
+      "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
     },
-    "client/assets/bundles/battle/prefabs/ChapterEndView.prefab": {
+    "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab": {
       "sha256": "aaab063110e15a9b43f777f371bd98658256091039af167e9c9ab0ab8eb235b5",
       "date": "2026-11-11",
       "status": "实际预览通过",
-      "scope": "428×926独立服务器真实第二、三关挑战；第三关胜利画面、外部关闭与返回挂机，第二关倒计时返回。不是全奖励/经验动画或全屏幕重新验收。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "最终31表资源重载后360x720独立服务器真实第二关布阵确认、挑战、胜利与7项奖励列表（virtual=true，7节点）；倒计时返回挂机，maxCleared=2、pendingBattleId=null、playing=false。未重新签完整经验动画或所有奖励详情。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
+      "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
     },
-    "client/assets/bundles/battle/prefabs/BattleDetailCell.prefab": {
+    "client/assets/bundles/module/battle/prefabs/BattleDetailCell.prefab": {
       "sha256": "b11753a2d55f18fc69ad11d58acb9239078172542799ca393b281a2a85ae79b5",
       "date": "2026-11-09",
       "status": "依赖所属页面检查的组合资源",
       "scope": "BattleDetailLayer纯展示夹具：两个进化分支、1至14星及缺失星级；393×852/360×720/360×840高星画面，低星/缺失在360×840复验；循环光效、关闭组件清零。静态边框/星行/数字/帧引用，无运行时造节点。见docs/validation/battle-high-stars-20261109.json",
       "inspector": "负责人刷新资源后浏览器验收；未操作Inspector"
     },
-    "client/assets/bundles/battle/prefabs/MainChapterView.prefab": {
+    "client/assets/bundles/module/battle/prefabs/MainChapterView.prefab": {
       "sha256": "96ac31d2eff66554751b46c6b915d2dd95c802575ef53927ed602ef57ca9dc5d",
       "date": "2026-11-09",
       "status": "实际预览通过",
       "scope": "既有宝箱与850关说明证据保留。本批累计进度条与阵亡资源飞行：360×840、393×852、360×720真实遇敌画面通过；修正英雄归还清理顺序并刷新后，正常/暂停中关闭页面与图标均0，重开与自然结束通过，资产未变。见docs/validation/idle-resources-20261109.json。",
       "inspector": "未操作Creator Inspector；负责人刷新资源后浏览器验收"
     },
-    "client/assets/bundles/battle/prefabs/ChapterRewardInfoView.prefab": {
+    "client/assets/bundles/module/battle/prefabs/ChapterRewardInfoView.prefab": {
       "sha256": "78891fcd31025faeab9d2b0a2ce0ecdc159c06aa40dc3ac6fa744691f2f12072",
       "date": "2026-11-11",
       "status": "实际预览通过",
-      "scope": "428×926真实主线入口打开850关只读产物说明，首屏内容与共享蒙版正常；本次未重滚全部850关或双页全部内容。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "393x852及360x720完整850关；首屏5行节点，多次实际拖动及8次大跨度跳转后池保持7；横向拖动不误开，末关复用格实际选中雷鸣之足，两页签重绑和关闭返回正常。最终31表重载后再次到达850，5节点。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
+      "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
     },
-    "client/assets/bundles/battle/prefabs/ChapterRewardInfoCell.prefab": {
+    "client/assets/bundles/module/battle/prefabs/ChapterRewardInfoCell.prefab": {
       "sha256": "904428f7334420f4059ddf6b41a97224f724ea996316b50c264948fac06319cf",
       "date": "2026-11-09",
       "status": "实际预览通过",
       "scope": "产物说明850关双页、横向产物拖动、纵向关卡滚动、末关850和只读详情已检查；360×840、393×852、360×720画面通过。关闭View/Cell为0。首轮资源包路径及可见区域误算已修正。浏览器后仅补根PrefabInfo，未改画面，绑定检查通过。见docs/validation/chapter-reward-info-20261109.json。",
       "inspector": "未操作Creator Inspector；由负责人刷新，根PrefabInfo经静态绑定检查"
     },
-    "client/assets/bundles/bag/prefabs/BagInfoView.prefab": {
+    "client/assets/bundles/module/bag/prefabs/BagInfoView.prefab": {
       "sha256": "b77ad9c41e211d2c6f08c4287e4e2c12650850d0e2f1bc9bfb2a4b3dd943e6c6",
       "date": "2026-11-11",
       "status": "实际预览通过",
       "scope": "实际库存详情、内容点击保持、外部关闭、叠窗归属；临时只读配置验证透明拦截和禁外部关闭，随后恢复正式ViewSpec。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
       "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
     },
-    "client/assets/bundles/login/prefabs/ServerPickerView.prefab": {
+    "client/assets/bundles/module/login/prefabs/ServerPickerView.prefab": {
       "sha256": "b2ee4532f7c8c0683fb48de8d9fa93899b0bf59893f2dca59c8030d50ef46b05",
       "date": "2026-11-11",
       "status": "结构检查通过但视觉待验收",
       "scope": "本批共享模态、Widget布局或完整英雄页面重构，已校验绑定与原资源UUID；正在Creator本机复验，不沿用旧视觉签收。",
       "inspector": "未操作Creator Inspector"
     },
-    "client/assets/bundles/hero/prefabs/HeroSkillView.prefab": {
+    "client/assets/bundles/module/hero/prefabs/HeroSkillView.prefab": {
       "sha256": "f69af1436e0ba75da28c8a4dddcc671e3775236c50c279068ebb91866ceceacd",
       "date": "2026-11-11",
       "status": "结构检查通过但视觉待验收",
       "scope": "本批共享模态、Widget布局或完整英雄页面重构，已校验绑定与原资源UUID；正在Creator本机复验，不沿用旧视觉签收。",
       "inspector": "未操作Creator Inspector"
     },
-    "client/assets/bundles/bag/prefabs/BagView.prefab": {
+    "client/assets/bundles/module/bag/prefabs/BagView.prefab": {
       "sha256": "21def30c18e1cdd10d702bd57eb0671106991affbafe241d7c08285ad0824bfe",
       "date": "2026-11-11",
       "status": "实际预览通过",
-      "scope": "360×720及428×926完整背包、四分类数量3、独立详情关闭与短期实例复用；页面内容按Widget和统一比例布局。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "393x852及360x720独立库存四分类与独立精灵详情实际点击、每类数量3；20逻辑格与20节点（数据少于可见容量）。关闭重开数据保持，不签本轮实例复用/TTL；未保存有效背包截图。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
+      "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
     }
   },
   "evidenceDirectories": [
@@ -415,7 +128,7 @@
   ],
   "supersededEntries": [
     {
-      "path": "client/assets/bundles/hero/prefabs/HeroInfoView.prefab",
+      "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
       "supersededOn": "2026-11-04",
       "reason": "旧壳层在5c95c7a6接入四槽装备后已变化，旧画面证据不能覆盖当前版本。",
       "record": {
@@ -451,7 +164,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/battle/prefabs/ChapterEndView.prefab",
+      "path": "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "目录整合检查补跑时发现旧哈希未随既有11/11独立运行验收登记；保留11/09挂点证据及适用边界。",
       "record": {
@@ -463,7 +176,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/login/prefabs/RoleProfileView.prefab",
+      "path": "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批普通弹窗新增ModalLayer与内容输入阻挡，原节点几何与资源UUID保留；旧视觉只对应旧hash，新交互须本机复验。",
       "record": {
@@ -475,7 +188,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab",
+      "path": "client/assets/bundles/module/battle/prefabs/BattleDetailLayer.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批普通弹窗新增ModalLayer与内容输入阻挡，原节点几何与资源UUID保留；旧视觉只对应旧hash，新交互须本机复验。",
       "record": {
@@ -487,7 +200,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/battle/prefabs/ChapterRewardInfoView.prefab",
+      "path": "client/assets/bundles/module/battle/prefabs/ChapterRewardInfoView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批普通弹窗新增ModalLayer与内容输入阻挡，原节点几何与资源UUID保留；旧视觉只对应旧hash，新交互须本机复验。",
       "record": {
@@ -499,7 +212,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab",
+      "path": "client/assets/bundles/module/battle/prefabs/BattleDetailLayer.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -511,7 +224,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/common/prefabs/DimSheet.prefab",
+      "path": "client/assets/bundles/module/common/prefabs/DimSheet.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批完整页面与共享模态重构后，孤立页面壳/重复列表板资产退役。",
       "record": {
@@ -523,7 +236,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/common/prefabs/ListBackdrop.prefab",
+      "path": "client/assets/bundles/module/common/prefabs/ListBackdrop.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批完整页面与共享模态重构后，孤立页面壳/重复列表板资产退役。",
       "record": {
@@ -535,7 +248,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/hero/prefabs/HeroInfoView.prefab",
+      "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -547,7 +260,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/login/prefabs/RoleProfileView.prefab",
+      "path": "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -559,7 +272,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/hero/prefabs/FormationView.prefab",
+      "path": "client/assets/bundles/module/hero/prefabs/FormationView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -571,7 +284,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/hero/prefabs/HeroListView.prefab",
+      "path": "client/assets/bundles/module/hero/prefabs/HeroListView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -583,7 +296,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/battle/prefabs/ChapterEndView.prefab",
+      "path": "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -595,7 +308,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/battle/prefabs/ChapterRewardInfoView.prefab",
+      "path": "client/assets/bundles/module/battle/prefabs/ChapterRewardInfoView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -607,7 +320,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/bag/prefabs/BagInfoView.prefab",
+      "path": "client/assets/bundles/module/bag/prefabs/BagInfoView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -619,7 +332,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/login/prefabs/ServerPickerView.prefab",
+      "path": "client/assets/bundles/module/login/prefabs/ServerPickerView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -631,7 +344,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/hero/prefabs/HeroSkillView.prefab",
+      "path": "client/assets/bundles/module/hero/prefabs/HeroSkillView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "ViewSpec共享模态与Widget完整页面替代旧实现；旧画面证据不覆盖本批新交互/布局。",
       "record": {
@@ -643,7 +356,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/bag/prefabs/BagInfoView.prefab",
+      "path": "client/assets/bundles/module/bag/prefabs/BagInfoView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批实际预览已完成限定范围检查，保留此前结构/历史记录。",
       "record": {
@@ -655,7 +368,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/hero/prefabs/HeroListView.prefab",
+      "path": "client/assets/bundles/module/hero/prefabs/HeroListView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批实际预览已完成限定范围检查，保留此前结构/历史记录。",
       "record": {
@@ -667,7 +380,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/hero/prefabs/HeroInfoView.prefab",
+      "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批实际预览已完成限定范围检查，保留此前结构/历史记录。",
       "record": {
@@ -679,7 +392,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/hero/prefabs/FormationView.prefab",
+      "path": "client/assets/bundles/module/hero/prefabs/FormationView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批实际预览已完成限定范围检查，保留此前结构/历史记录。",
       "record": {
@@ -691,7 +404,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/login/prefabs/RoleProfileView.prefab",
+      "path": "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批实际预览已完成限定范围检查，保留此前结构/历史记录。",
       "record": {
@@ -703,7 +416,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/battle/prefabs/ChapterRewardInfoView.prefab",
+      "path": "client/assets/bundles/module/battle/prefabs/ChapterRewardInfoView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批实际预览已完成限定范围检查，保留此前结构/历史记录。",
       "record": {
@@ -715,7 +428,7 @@
       }
     },
     {
-      "path": "client/assets/bundles/battle/prefabs/ChapterEndView.prefab",
+      "path": "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab",
       "supersededOn": "2026-11-11",
       "reason": "本批实际预览已完成限定范围检查，保留此前结构/历史记录。",
       "record": {
@@ -724,6 +437,42 @@
         "status": "结构检查通过但视觉待验收",
         "scope": "本批共享模态、Widget布局或完整英雄页面重构，已校验绑定与原资源UUID；正在Creator本机复验，不沿用旧视觉签收。",
         "inspector": "未操作Creator Inspector"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/HeroListView.prefab",
+      "supersededOn": "2026-11-11",
+      "reason": "8cb60507之后删除列表板脚本并迁移页面控件绑定，旧预览不覆盖新的列表渲染/选择链。",
+      "record": {
+        "sha256": "8f110a53b75df1cfd89fc9435144de11f0db8ffc863bfa824f91cb08befe6158",
+        "date": "2026-11-11",
+        "status": "实际预览通过",
+        "scope": "393×852及360×720完整页面；三英雄/零英雄名册、实际鼠标元素筛选、详情进入返回及容量位置。未构造长列表。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
+        "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/HeroListView.prefab",
+      "supersededOn": "2026-11-11",
+      "reason": "本批独立页面定义与列表选择新链路已完成限定本机复验，保留此前记录。",
+      "record": {
+        "sha256": "b1c918a4d9df59eddde8f5eb1e93719ecb9ec508a4d6686e23694786ecedc166",
+        "date": "2026-11-11",
+        "status": "结构检查通过但视觉待验收",
+        "scope": "HeroListView直接绑定SuperScroll等控件，列表板组件已删除，原节点几何、Widget及meta UUID保留；新onRender/onSelect及@view打开路径尚需本机预览，不沿用8cb60507画面证据。",
+        "inspector": "未操作Creator，等待负责人刷新后本机预览"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
+      "supersededOn": "2026-11-11",
+      "reason": "本批独立页面定义与列表选择新链路已完成限定本机复验，保留此前记录。",
+      "record": {
+        "sha256": "a2a44d93f2cdfe71517c0b3827f4131269a55210a8e8758da08fee160ce76036",
+        "date": "2026-11-11",
+        "status": "实际预览通过",
+        "scope": "393×852及360×720真实只读详情；背景、英雄与属性区域、技能入口和返回按钮布局。未复验全英雄或所有技能内容。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
+        "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
       }
     }
   ]

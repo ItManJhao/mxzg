@@ -1,6 +1,9 @@
 /** 用真实旧装备配置验证实例/槽位边界；不启动服务器、不修改数据库。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
+
+/** 离线按Bundle身份读取源文件，不维护额外分类清单。 */
+const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
 import { readOwnedHeroes } from "../assets/scripts/features/hero/data/HeroSnapshotData";
 import { encodeGameFrame, decodeGameFrame } from "../assets/scripts/platform/GameProtocolCodec";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
@@ -9,7 +12,7 @@ import { readHeroEquipment } from "../assets/scripts/features/hero/utils/HeroEqu
 
 /** 验证四槽配置、长整数字符串、错误装备与缺失同步不能被静默接受。 */
 async function main(): Promise<void> {
-    const config = new GameConfig(async path => JSON.parse(readFileSync("client/assets/bundles/" + path + ".json", "utf8")));
+    const config = new GameConfig(async path => JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8")));
     await config.prepare([GConfig.EquipmentType]);
     assert.deepEqual([...new Set(config.getConfig(GConfig.EquipmentType).map(row => row.place))].sort(), [1, 2, 3, 4]);
     const rows = [1, 2, 3, 4].map(slot => ({ instanceId: "922337203685477580" + slot, templateId: config.getConfig(GConfig.EquipmentType).find(row => row.place === slot)!.equipment_type, slot, soulLevel: 0 }));

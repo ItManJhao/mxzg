@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 from prune_prefabs import ASSETS, ROOT, REPORT, inventory, read, tokens
+from bundle_paths import resolve_asset_path
 
 files, keep, removed = inventory()
 if removed: raise SystemExit('Out-of-plan Prefabs reintroduced: '+', '.join(row['path'] for row in removed))
@@ -14,7 +15,8 @@ loader=(ASSETS/'scripts/config/PrefabCatalog.ts').read_text(encoding='utf-8-sig'
 shell=(ASSETS/'scripts/app/remake/RemakeApp.ts').read_text(encoding='utf-8-sig')
 for row in report['removed']:
     path=row['path'][:-7]
-    if '"'+path+'":' in loader or json.dumps(path) in shell:
+    current = resolve_asset_path(path).relative_to(ASSETS).as_posix() if path.startswith('bundles/') else path
+    if any('"'+name+'":' in loader or json.dumps(name) in shell for name in {path, current}):
         raise SystemExit('Retired prefab still registered: '+path)
 runtime=(ASSETS/'scripts/config/PrefabPlan.ts').read_text(encoding='utf-8-sig')
 for path in keep:

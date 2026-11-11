@@ -7,6 +7,9 @@ import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { prepareHeroDetailConfig } from "../../../config/RemakeConfig";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { UILayer } from "../../../framework/ui/UILayer";
+import { view } from "../../../framework/ui/UIRegistry";
+import { prepareInventoryConfig } from "../../../config/RemakeConfig";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 import { HeroCatalog } from "../../hero/utils/HeroCatalog";
@@ -24,6 +27,19 @@ export interface BattleDetailArgs {
     readonly won: boolean;
 }
 
+@view({
+    id: "battle-detail",
+    prefab: "bundles/module/battle/prefabs/BattleDetailLayer",
+    layer: UILayer.Popup,
+    cache: false,
+    allowMultiple: false,
+    hostId: "remake-modal",
+    modal: { mask: true, closeOnOutside: true },
+    prepare: async () => {
+        await prepareInventoryConfig();
+        await prepareHeroDetailConfig();
+    },
+})
 @ccclass("BattleDetailLayer")
 export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
     /** 旧600×750主体，竖屏等比收窄。 */

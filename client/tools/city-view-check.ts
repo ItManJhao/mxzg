@@ -164,7 +164,7 @@ function checkSources(): void {
 
 function checkHubPrefab(): void {
   const uuid = metaUuid("client/assets/scripts/features/city/ui/CityHubView.ts.meta");
-  const data = loadPrefab("client/assets/bundles/home/prefabs/CityHubView.prefab");
+  const data = loadPrefab("client/assets/bundles/module/home/prefabs/CityHubView.prefab");
   const comp = component(data, classId(uuid)) as {
     parallax?: { __id__?: number };
     mapNodes?: { __id__?: number }[];
@@ -185,7 +185,7 @@ function checkHubPrefab(): void {
 
 function checkChromePrefab(): void {
   const uuid = metaUuid("client/assets/scripts/features/city/ui/CityChromeView.ts.meta");
-  const data = loadPrefab("client/assets/bundles/home/prefabs/CityChromeView.prefab");
+  const data = loadPrefab("client/assets/bundles/module/home/prefabs/CityChromeView.prefab");
   const comp = component(data, classId(uuid)) as { [key: string]: { __id__?: number } | { __id__?: number }[] };
   const one = (key: string, name: string) => {
     const ref = comp[key];
@@ -220,7 +220,7 @@ function checkChromePrefab(): void {
   const names = activity.map((ref) => nodeName(data, ref));
   assert(names.indexOf("ActRecommend") >= 0 && names.indexOf("BtnActExpand") >= 0, "activity row is bound");
   const shell = "c4e8aHSe2NOkI8Vai2cC0fj";
-  const text = read("client/assets/bundles/home/prefabs/CityChromeView.prefab");
+  const text = read("client/assets/bundles/module/home/prefabs/CityChromeView.prefab");
   assert(text.split(shell).length === 2, "CityChromeShell class id stays once");
 }
 

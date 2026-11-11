@@ -7,6 +7,9 @@ import { GConfig } from "../assets/scripts/config/GConfig";
 import { prepareStartupConfig, prepareCityConfig, prepareHeroConfig, readCityGates } from "../assets/scripts/config/RemakeConfig";
 import { loadBootCopy } from "../assets/scripts/app/remake/bootChrome";
 
+/** 离线加载实际配置文件，schema仍保留config开头的Bundle逻辑键。 */
+const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
+
 /** 验证所有异常与成功边界，不借助旧配置仓库或放宽实际数据校验。 */
 async function main(): Promise<void> {
   const calls: string[] = []; let fail = true;
@@ -54,7 +57,7 @@ async function main(): Promise<void> {
   const requested: string[] = [];
   resources.load = (path: string, _type: unknown, done: Function) => {
     requested.push(path); const asset = new JsonAsset();
-    asset.json = JSON.parse(readFileSync("client/assets/bundles/" + path + ".json", "utf8")); done(null, asset);
+    asset.json = JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8")); done(null, asset);
   };
   await prepareStartupConfig();
   assert.deepEqual(requested.sort(), ["config/language", "config/loadingtips"]);

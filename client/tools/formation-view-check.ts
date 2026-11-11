@@ -16,8 +16,8 @@ import { FormationSlotView } from "../assets/scripts/features/hero/ui/FormationS
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
 import { HeroCatalog } from "../assets/scripts/features/hero/utils/HeroCatalog";
 
-const PAGE = "client/assets/bundles/hero/prefabs/FormationView.prefab";
-const CELL = "client/assets/bundles/hero/prefabs/FormationHeroCellView.prefab";
+const PAGE = "client/assets/bundles/module/hero/prefabs/FormationView.prefab";
+const CELL = "client/assets/bundles/module/hero/prefabs/FormationHeroCellView.prefab";
 const read = (path: string) => JSON.parse(readFileSync(path, "utf8"));
 function classId(path: string): string {
     const hex = read(path).uuid.replace(/-/g, ""), alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -168,7 +168,7 @@ async function main(): Promise<void> {
     assert.throws(()=>badCellPage.runOpen({complete:()=>{}}),/button/);
     const brokenCell=instantiateData(read(CELL)).getComponent(HeroIconCellView) as HeroIconCellView;
     brokenCell.button=null;
-    assert.throws(()=>brokenCell.show({} as any,null),/button/);
+    assert.throws(()=>brokenCell.show({} as any),/button/);
     const cellData=read(CELL);
     assert.equal(cellData.find((row:any)=>row.__type__==="cc.Node"&&row._name==="Stars")._active,true,"the star Layout container must remain visible when individual stars toggle");
     assert(cellData.some((row:any)=>row.__type__==="cc.Layout"&&row._layoutType===1),"stars use an authored horizontal Layout");

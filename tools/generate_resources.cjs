@@ -1,10 +1,11 @@
-/** 生成预制体UUID回退与玩法准入；资源按实际路径加载，不生成图片或模块资源清单。 */
+/** 生成当前实际Prefab的身份索引与玩法准入；资源按实际路径加载，不生成图片或模块资源清单。 */
 const fs = require('fs');
 const path = require('path');
+const { bundleEntries, resolveAssetPath } = require('./bundle-paths.cjs');
 const root = path.resolve(__dirname, '..');
 const assets = path.join(root, 'client/assets');
 const check = process.argv.includes('--check');
-/** 按稳定顺序收集文件；只为预制体导入回退读取meta。 */
+/** 按稳定顺序收集文件；只为Prefab身份校验读取meta，不生成UUID加载回退。 */
 function files(dir) {
     return fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en'))
         .flatMap(entry => entry.isDirectory() ? files(path.join(dir, entry.name)) : [path.join(dir, entry.name)]);
@@ -21,7 +22,11 @@ function write(relative, text) {
     }
 }
 const prefabIds = {};
+const sources = bundleEntries();
 for (const file of files(assets).filter(file => file.endsWith('.prefab'))) {
+    if (!sources.some(source => file.startsWith(source.directory + path.sep))) {
+        throw Error('Prefab没有实际Bundle归属：' + file);
+    }
     const relative = path.relative(assets, file).split(path.sep).join('/').replace(/\.prefab$/, '');
     prefabIds[relative] = JSON.parse(fs.readFileSync(file + '.meta', 'utf8')).uuid;
 }
@@ -34,5 +39,8 @@ console.log("预制体索引验证：" + Object.keys(prefabIds).length + " Prefa
 
 // GM 等新增资源登记后同步运行时准入清单；只生成索引，不删除资源。
 const prefabPlan = JSON.parse(fs.readFileSync(path.join(root, 'tools/prefab-plan.json'), 'utf8'));
-const plannedPaths = [...new Set(prefabPlan.groups.flatMap(group => group.names.map(name => group.directory + '/' + name)))].sort();
+const plannedPaths = [...new Set(prefabPlan.groups.flatMap(group => group.names.map(name => {
+    const file = resolveAssetPath(group.directory + '/' + name + '.prefab');
+    return path.relative(assets, file).split(path.sep).join('/').replace(/\.prefab$/, '');
+})))].sort();
 write('client/assets/scripts/config/PrefabPlan.ts', '/** Generated from tools/prefab-plan.json by tools/generate_resources.cjs. */\nconst paths = new Set<string>([\n' + plannedPaths.map(value => '  ' + JSON.stringify(value)).join(',\n') + '\n]);\nexport function prefabInPlan(assetPath: string): boolean { return paths.has(assetPath); }\n');

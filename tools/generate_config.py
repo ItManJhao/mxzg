@@ -3,6 +3,7 @@ import argparse
 import json
 from pathlib import Path
 from export_gameconfig import open_book
+from bundle_paths import bundle_asset_path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -64,7 +65,8 @@ def generate(check):
     out = ['/** 由 tools/generate_config.py 生成；字段规范在 config/client-schema.json，业务注释来自本项目表头。 */']
     for name, spec in sorted(schema.items()):
         notes = field_notes(spec['path'])
-        data = json.loads((ROOT / 'client/assets/bundles' / (spec['path'] + '.json')).read_text(encoding='utf-8'))
+        bundle, relative = spec['path'].split('/', 1)
+        data = json.loads(bundle_asset_path(bundle, relative + '.json').read_text(encoding='utf-8'))
         rows = data[spec['container']]
         rows = list(rows.values()) if isinstance(rows, dict) else rows
         seen = set()

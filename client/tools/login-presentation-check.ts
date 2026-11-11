@@ -1,14 +1,16 @@
 /** 登录展示回归：验证静态背景、已移除组件无残留、登录控件和预制体引用；独立保留骨骼转换回归。 */
 import { strict as assert } from "node:assert";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { upgradeSpine37Json, SPINE_RUNTIME_VERSION } from "../assets/scripts/framework/assets/SpineJson";
 import { upgradeSpine37Json as legacyUpgrade } from "../assets/scripts/framework/ui/spineUpgrade";
 
 const assets = join(process.cwd(), "client/assets");
 const read = (path: string): any => JSON.parse(readFileSync(join(assets, path), "utf8"));
-const prefab = read("bundles/login/prefabs/AccountLoginView.prefab") as any[];
-const original = read("bundles/legacy-login/prefabs/LoginPanel.prefab") as any[];
+const prefab = read("bundles/module/login/prefabs/AccountLoginView.prefab") as any[];
+const cleanup = JSON.parse(readFileSync("docs/validation/current-resource-scope-cleanup-20261111.json", "utf8"));
+const artwork = cleanup.legacyLoginArtworkBaseline;
+assert(!existsSync(join(assets, "bundles/legacy-login")), "未使用的旧登录兼容资源不再随项目保留");
 /** Creator脚本类ID支持保留UUID前2位或前5位的压缩格式；两种均纳入绑定核对。 */
 function scriptClassIds(uuid: string): string[] {
   const hex = uuid.replace(/-/g, "");
@@ -36,9 +38,9 @@ const component = (rows: any[], host: any, type: string) => {
   return found;
 };
 
-// Preserve the authored artwork and pressed state, rather than another generic button.
+// 原美术按钮与按压态在资源清理前冻结为证据，不为测试继续保留未使用旧页面。
 const start = component(prefab, node(prefab, "StartGame"), "cc.Button");
-const oldStart = component(original, node(original, "BtnEnter"), "cc.Button");
+const oldStart = artwork.startButton;
 for (const key of ["_normalSprite", "_pressedSprite", "_hoverSprite", "_disabledSprite", "_transition"]) {
   if (key === "_transition") assert.equal(start[key], oldStart[key]);
   else {
@@ -47,9 +49,9 @@ for (const key of ["_normalSprite", "_pressedSprite", "_hoverSprite", "_disabled
   }
 }
 assert.equal(component(prefab, node(prefab, "ServerBg"), "cc.Sprite")._spriteFrame.__uuid__,
-  component(original, node(original, "ServerBg"), "cc.Sprite")._spriteFrame.__uuid__);
+  artwork.serverFrame.__uuid__);
 const background = component(prefab, node(prefab, "Background"), "cc.Sprite");
-assert.equal(background._spriteFrame.__uuid__.split("@")[0], read("bundles/login/ui/jp-login-static.png.meta").uuid);
+assert.equal(background._spriteFrame.__uuid__.split("@")[0], read("bundles/module/login/ui/jp-login-static.png.meta").uuid);
 
 const edit = component(prefab, node(prefab, "AccountInput"), "cc.EditBox");
 for (const key of ["_textLabel", "_placeholderLabel"]) {
@@ -67,7 +69,7 @@ assert.equal(prefab[view.loginButton.__id__], start);
 
 // Exercise the real old character data through the same converter used by both paths.
 assert.equal(legacyUpgrade, upgradeSpine37Json, "one shared compatibility implementation");
-const character = read("bundles/spine/jiemian.json");
+const character = read("bundles/resources/spine/jiemian.json");
 const untouched = JSON.stringify(character);
 const converted: any = upgradeSpine37Json(character);
 assert.equal(JSON.stringify(character), untouched, "source animation remains unchanged");
@@ -83,8 +85,8 @@ function withoutCurves(value: any): any {
 }
 assert.deepEqual(withoutCurves(converted.animations.stand), withoutCurves(character.animations.stand), "preserve all animation content apart from the required curve encoding change");
 assert.equal(upgradeSpine37Json(converted), converted, "conversion is idempotent");
-assert(!prefab.some(row => row.source?.__uuid__ === read("bundles/spine/jiemian.json.meta").uuid), "登录页不再依赖人物骨骼；加载页独立保留");
-const png = readFileSync(join(assets, "bundles/login/ui/jp-login-static.png"));
+assert(!prefab.some(row => row.source?.__uuid__ === read("bundles/resources/spine/jiemian.json.meta").uuid), "登录页不再依赖人物骨骼；加载页独立保留");
+const png = readFileSync(join(assets, "bundles/module/login/ui/jp-login-static.png"));
 assert.equal(png.readUInt32BE(16), 1080);
 assert.equal(png.readUInt32BE(20), 2340);
 

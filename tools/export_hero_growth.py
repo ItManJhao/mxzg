@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from bundle_paths import bundle_asset_path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'backend/src/main/resources/gameplay/hero-growth.json'
@@ -19,7 +20,7 @@ def project():
     """只取普通升级用到的列，拒绝缺字段、重复主键和非法数值，内容哈希作为配置版本。"""
     result = {}
     for name, fields in FIELDS.items():
-        rows = json.loads((ROOT / 'client/assets/bundles/config' / (name + '.json')).read_text(encoding='utf-8'))['rows']
+        rows = json.loads(bundle_asset_path('config', name + '.json').read_text(encoding='utf-8'))['rows']
         selected = [{field: row[field] for field in fields} for row in rows]
         if len({row[fields[0]] for row in selected}) != len(selected):
             raise ValueError('重复配置主键：' + name)
