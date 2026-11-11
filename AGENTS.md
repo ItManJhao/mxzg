@@ -2,6 +2,12 @@
 
 本文件适用于本仓库内的开发 Chat 和代码修改。目标是让项目负责人能读懂代码、找到修改入口并追踪功能流程。修改前阅读本文件；具体架构以 `docs/architecture.md` 为依据，任务范围以用户当前要求为准。
 
+## 开发分支约定（2026-11-11负责人确认）
+
+- 后续开发统一在 `hao` 分支进行，跟踪 `origin/hao`；开始修改前检查当前分支。
+- `main` 由负责人决定何时合并；没有明确指令，不自行合并或将后续开发提交推送到 `main`。
+- 提交、推送仍遵循当次用户授权，使用 `hao` 不代表自动获得持续推送授权。
+
 ## 0. 项目目标与参考边界
 
 - 旧项目源码地址为 G:/work/FsGame/Demo/mj/program。用户已将原裸 Git 仓库转换为正常工作目录；后续优先直接读取 client/cocos_mxzg、server/mxzg-server、server/mxzg-common 和 mxzg-protofiles 内的源码/协议，不再默认用 git --git-dir 提取文件。历史架构索引中的裸仓库路径只代表当时快照；查历史版本时再使用 Git。新版项目地址仍为 G:/work/FsGame/Project/mxzg。

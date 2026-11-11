@@ -4,6 +4,10 @@
 
 资源入口现为LoadingPlan、ResManager、ResourceAssets/ResourcePool；旧资源清单及旧LineupApi已删除。登录使用指定静态背景，CompatibleSpine的真实绑定已移除。日常使用本机预览；本批15:23新发布包已集中验收，详见发布记录。背包缓存已通过本机复验，资源闲置清理仍待实施；先不提交推送。
 
+## 当前分支与保存点（2026-11-11）
+
+容量上限与胜利页清理修复已提交并推送main：5f39c427。随后按负责人要求创建开发分支hao，后续开发在hao进行，main合并由负责人决定。此前记录中的“未提交/待推送”属于当时状态，不覆盖此保存点；发布包集中验收仍待完成。
+
 ## 保存点与容量收口（2026-11-11）
 
 负责人要求的当前成果已提交并推送origin/main：00f6b084，包含资源入口收敛、静态登录、背包实例缓存及预制体闲置回收与既有本地修改。之后继续开发的容量上限尚未提交推送。
@@ -32,7 +36,7 @@ Creator本机独立环境复验通过：连续切换10次复用同一实例，�
 
 ## 项目与边界
 
-- 新项目G:/work/FsGame/Project/mxzg，client为Creator客户端，backend为Java服务端；分支main，origin为https://github.com/ItManJhao/mxzg.git。
+- 新项目G:/work/FsGame/Project/mxzg，client为Creator客户端，backend为Java服务端；开发分支hao，origin为https://github.com/ItManJhao/mxzg.git。
 - 旧项目G:/work/FsGame/Demo/mj/program是正常工作目录，直接读取client/cocos_mxzg/client/idle及server源码；G:/游爱/trunk只参考人工阅读习惯，不引入玩法或框架。
 - 目标是现代技术1:1恢复旧玩法、规则、内容和流程；独立新版，不兼容旧客户端或迁移旧玩家。正式服https://mxzg-test.funsgamex.com/jp/主要对照界面与交互，技能规则/资源以旧源码为依据。
 - 当前主线挑战前三关；850关仅产物说明范围，20关是现有挂机规则投影。宝箱领取、快速战斗、英雄升级和穿脱仍关闭，其他模块不顺带恢复。
