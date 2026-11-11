@@ -129,7 +129,11 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         }
         const close = () => this.close();
         this.backdrop.on(Button.EventType.CLICK, close);
-        this.ownListener(() => this.backdrop?.off(Button.EventType.CLICK, close));
+        this.ownListener(() => {
+            if (this.backdrop?.isValid) {
+                this.backdrop.off(Button.EventType.CLICK, close);
+            }
+        });
         const confirm = this.mainVictoryPanel?.active
             ? this.panel.getChildByPath("VictoryButtons/ConfirmButton")! : this.panel.getChildByName("ConfirmButton")!;
         confirm.active = !!args.persistentChapter && args.won;
@@ -138,7 +142,11 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             this.closeHint.node.setPosition(anchor.position);
         }
         confirm.on(Button.EventType.CLICK, close);
-        this.ownListener(() => confirm.off(Button.EventType.CLICK, close));
+        this.ownListener(() => {
+            if (confirm.isValid) {
+                confirm.off(Button.EventType.CLICK, close);
+            }
+        });
         void this.prepare(args).then(() => {
             if (!this.released) {
                 this.finishOpen();
@@ -167,7 +175,11 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.rewardScroll = this.panel.getChildByName("MainVictoryRewards")!.getComponent(SuperScroll);
         const reportButton = this.panel.getChildByPath("VictoryButtons/ReportButton")!;
         reportButton.on(Button.EventType.CLICK, this.openStatistics, this);
-        this.ownListener(() => reportButton.off(Button.EventType.CLICK, this.openStatistics, this));
+        this.ownListener(() => {
+            if (reportButton.isValid) {
+                reportButton.off(Button.EventType.CLICK, this.openStatistics, this);
+            }
+        });
     }
 
     /** 打开本场冻结统计；沿旧版独立弹层，结算倒计时继续，已打开统计不会随其关闭。 */
@@ -277,7 +289,11 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.audio.clip = clip;
         const onAudioStarted = () => GameLog.shared.classified("MODULE", "info", "ChapterEndView", "audio.started " + clip.name);
         this.node.on(AudioSource.EventType.STARTED, onAudioStarted);
-        this.ownListener(() => this.node.off(AudioSource.EventType.STARTED, onAudioStarted));
+        this.ownListener(() => {
+            if (this.node?.isValid) {
+                this.node.off(AudioSource.EventType.STARTED, onAudioStarted);
+            }
+        });
         this.audio.play();
         if (mainClip) {
             this.mainAudio = this.node.addComponent(AudioSource);
@@ -389,7 +405,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.closeHint!.string = (this.args?.presentationOnly ? "失败样式验收 · " : "") + this.seconds + " 秒后关闭";
     }
 
-    /** 统一关闭释放动画、音频与定时器，取消未完成打开，避免关场后响起结算声。 */
+    /** 统一关闭释放动画、音频与定时器；兼容引擎先销毁子节点再调用父组件onDestroy，不访问失效节点。 */
     public onClose(): void {
         if (this.released) {
             return;
@@ -397,12 +413,12 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.released = true;
         UIManager.instance.closeById(viewSpecOf(BagInfoView)!.id);
         this.unscheduleAllCallbacks();
-        this.audio?.stop();
         if (this.audio?.isValid) {
+            this.audio.stop();
             this.audio.clip = null;
         }
-        this.mainAudio?.stop();
         if (this.mainAudio?.isValid) {
+            this.mainAudio.stop();
             this.mainAudio.clip = null;
         }
         if (this.confetti?.isValid) {
@@ -410,7 +426,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         }
         this.frames = [];
         this.experienceThresholds.clear();
-        if (this.panel) {
+        if (this.panel?.isValid) {
             Tween.stopAllByTarget(this.panel);
             const opacity = this.panel.getComponent(UIOpacity);
             if (opacity) {

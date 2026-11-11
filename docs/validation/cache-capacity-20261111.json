@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-11",
+  "runId": "b0e1f3b85a4b4cb587373445c91c2ce4",
+  "status": "local-preview-passed",
+  "compiledMaxIdlePrefabs": 16,
+  "discovered": "ChapterEndView.onClose在引擎销毁子节点后查询组件，以及解绑已销毁按钮触发异常",
+  "fixed": "关闭时仅访问有效节点及音源，保留幂等关闭通知；新增子节点先销毁回归",
+  "checks": [
+    "resources",
+    "main-chapter",
+    "Creator tsc"
+  ],
+  "limits": [
+    "16份超限淘汰由自动测试覆盖，本机流程最高11份",
+    "子节点先销毁边界由新增回归覆盖，浏览器复验正常倒计时关闭",
+    "不等于真机或长时间内存压力验收",
+    "发布包仍待集中构建验证"
+  ],
+  "browser": {
+    "rounds": 6,
+    "groups": [
+      {
+        "rounds": 3,
+        "entries": 92,
+        "owners": 99,
+        "scopes": 31,
+        "prefabs": 7
+      },
+      {
+        "rounds": 3,
+        "entries": 99,
+        "owners": 107,
+        "scopes": 37,
+        "prefabs": 11
+      }
+    ],
+    "groupNote": "两组之间新增第三关结算及装备图片；各组内部三轮计数一致，不跨组声称资源不变",
+    "cachedBagId": "Comp.1575",
+    "receiptNewEquipment": 1003001,
+    "displayedEquipment": [
+      1003001,
+      1004001
+    ],
+    "finalState": {
+      "maxCleared": 3,
+      "pendingBattleId": null,
+      "assetRevision": 6
+    },
+    "bagListenersAfterClose": 0,
+    "warningErrorsAfterFix": 0,
+    "victoryClose": "倒计时关闭返回挂机",
+    "compiledGuard": true
+  },
+  "screenshot": "docs/images/cache-capacity-equipment-20261111.png"
+}

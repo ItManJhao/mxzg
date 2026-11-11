@@ -2,7 +2,7 @@
 import { strict as assert } from "node:assert";
 import { ResourcePool, ResourceScopeClosed } from "../assets/scripts/framework/assets/ResourcePool";
 import { assetManager, Prefab, Node } from "cc";
-import { loadPrefab, clearPrefabCache, prefabCacheSnapshot, retainPrefabForNode, collectPrefabCache, PREFAB_IDLE_MS } from "../assets/scripts/framework/assets/PrefabLoader";
+import { loadPrefab, clearPrefabCache, prefabCacheSnapshot, retainPrefabForNode, collectPrefabCache, PREFAB_IDLE_MS, MAX_IDLE_PREFABS } from "../assets/scripts/framework/assets/PrefabLoader";
 import { monoNow } from "../assets/scripts/core/GameLog";
 import { createAssetScope, ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
 import { readFileSync } from "node:fs";
@@ -125,6 +125,32 @@ async function main() {
     await scope.load("cycle"); scope.dispose();
   }
   assert.deepEqual(retryPool.snapshot(), { scopes: 0, entries: 0, pending: 0, owners: 0, retained: 0 });
+  clearPrefabCache();
+  const capacityAssets = new Map<string, Prefab>();
+  Object.assign(assetManager, { loadBundle: (_name: string, done: Function) => done(null, {
+    load: (path: string, _type: unknown, callback: Function) => {
+      const prefab = new Prefab();
+      capacityAssets.set("prefabs/" + path, prefab);
+      callback(null, prefab);
+    },
+  }) });
+  const capacityPaths = Array.from(readFileSync("client/assets/scripts/config/PrefabPlan.ts", "utf8")
+    .matchAll(/"([^"]+)"/g), match => match[1])
+    .filter(path => path.startsWith("prefabs/")).slice(0, MAX_IDLE_PREFABS + 3);
+  for (const path of capacityPaths) await loadPrefab(path);
+  const protectedNode = new Node("CapacityProtected");
+  retainPrefabForNode(capacityAssets.get(capacityPaths[0])!, protectedNode);
+  await loadPrefab(capacityPaths[1]);
+  assert.equal(collectPrefabCache(), 2, "只按闲置数量淘汰到上限，活动资源不计入");
+  assert.equal(capacityAssets.get(capacityPaths[2])!.refCount, 0, "最久未使用资源先释放");
+  assert.equal(capacityAssets.get(capacityPaths[3])!.refCount, 0);
+  assert.equal(capacityAssets.get(capacityPaths[1])!.refCount, 2, "最近再次获取的资源保留");
+  assert.equal(capacityAssets.get(capacityPaths[0])!.refCount, 3, "活动实例及缓存引用均受保护");
+  assert.equal(prefabCacheSnapshot().cached, MAX_IDLE_PREFABS + 1);
+  protectedNode.destroy();
+  assert.equal(collectPrefabCache(), 1, "实例退出后纳入闲置数量限制");
+  clearPrefabCache();
+  for (const prefab of capacityAssets.values()) assert.equal(prefab.refCount, 0);
   console.log("resource-pool-check passed: shared ownership, retry/cancel/reopen and Prefab plan runtime guard");
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -27,6 +27,8 @@ const prefabInstances = new Map<Prefab, number>();
 const nodePrefabs = new WeakMap<Node, Set<Prefab>>();
 /** 无实例使用的加载器缓存初始保留120秒；LoadingPlan另有应用持有，不受此值影响。 */
 export const PREFAB_IDLE_MS = 120_000;
+/** 每次维护最多保留16份无实例使用的预制体缓存，不限制活动实例或应用预加载资源。 */
+export const MAX_IDLE_PREFABS = 16;
 
 import {PREFAB_UUID} from "../../config/PrefabCatalog";
 
@@ -120,11 +122,15 @@ export function retainPrefabForNode(prefab: Prefab, owner: Node): void {
     });
 }
 
-/** 应用定期调用：只撤回无人实例使用的到期缓存，保留在途请求及其他作用域持有。 */
+/** 应用定期调用：优先淘汰最久未使用的闲置项，同时处理超时；不撤回实例及预加载拥有者。 */
 export function collectPrefabCache(now = monoNow()): number {
+    const idle = Array.from(prefabLoaded.entries())
+        .filter(([, prefab]) => (prefabInstances.get(prefab) || 0) === 0)
+        .sort(([left], [right]) => (prefabUsedAt.get(left) || 0) - (prefabUsedAt.get(right) || 0));
+    let remaining = idle.length;
     let removed = 0;
-    for (const [path, prefab] of prefabLoaded) {
-        if ((prefabInstances.get(prefab) || 0) > 0 || now - (prefabUsedAt.get(path) || 0) < PREFAB_IDLE_MS) {
+    for (const [path, prefab] of idle) {
+        if (remaining <= MAX_IDLE_PREFABS && now - (prefabUsedAt.get(path) || 0) < PREFAB_IDLE_MS) {
             continue;
         }
         prefabLoaded.delete(path);
@@ -132,6 +138,7 @@ export function collectPrefabCache(now = monoNow()): number {
         prefab.decRef();
         prefabScopes.get(path)?.dispose();
         prefabScopes.delete(path);
+        remaining--;
         removed++;
     }
     return removed;

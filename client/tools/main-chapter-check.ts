@@ -173,6 +173,17 @@ async function main(): Promise<void> {
     assert.equal(closedSettlements, 1);
     assert.equal(stoppedSounds, 2);
     assert.equal(unscheduled, 1);
+    const destroyedSettlement: any = new Node("DestroyedSettlement").addComponent(ChapterEndView);
+    destroyedSettlement.released = false;
+    destroyedSettlement.unscheduleAllCallbacks = () => {};
+    destroyedSettlement.panel = { isValid: false, getComponent: () => { throw new Error("已销毁子节点不能查询组件"); } };
+    destroyedSettlement.audio = { isValid: false, stop: () => { throw new Error("已销毁音源不能停止"); } };
+    destroyedSettlement.mainAudio = destroyedSettlement.audio;
+    let destroyedClosed = 0;
+    destroyedSettlement.args = { onClosed: () => destroyedClosed++ };
+    destroyedSettlement.onClose();
+    destroyedSettlement.onClose();
+    assert.equal(destroyedClosed, 1, "子节点先销毁时仍安全且只通知关闭一次");
     const talkRows = [{ level_min: 1, level_max: 300, lan: 70901 }];
     const talkLanguage = new Map([[70901, "旧文案"]]);
     assert.deepEqual(HeroTalkUtils.candidates(1, talkRows, talkLanguage), []);
