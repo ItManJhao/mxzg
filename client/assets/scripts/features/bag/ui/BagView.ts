@@ -26,7 +26,6 @@ import { BagTabView } from "./BagTabView";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { BagInfoView } from "./BagInfoView";
 import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
-import { mountCcbiView } from "../../../framework/ui/PrefabLayout";
 import { isOpenCancelled, UIManager } from "../../../framework/ui/UIManager";
 import { view, viewSpecOf } from "../../../framework/ui/UIRegistry";
 
@@ -52,13 +51,6 @@ export class BagView extends BaseView<BagOpenArgs> {
     /** 店员骨骼名，页面显示和模块准备共用；不属于玩家英雄立绘。 */
     public static readonly shopkeeperSkeleton = "shangcheng";
 
-    /** 预制体内已有的背包内容；通用竖屏适配只缩放它，不创建页面壳或背景。 */
-    @property(Node)
-    content: Node | null = null;
-    /** 旧纸张背景的 Prefab 绑定，当前页面不运行时重建其布局。 */
-    @property(Node)
-    sprBox: Node | null = null;
-
     /** Prefab 绑定的 SuperScroll，负责格子复用与滚动；缺失时拒绝打开。 */
     @property(SuperScroll)
     bagScroll: SuperScroll | null = null;
@@ -78,10 +70,6 @@ export class BagView extends BaseView<BagOpenArgs> {
     /** 店员 Spine 挂载节点，每个页面实例只装配一次。 */
     @property(Node)
     portrait: Node | null = null;
-
-    /** 保留旧 Prefab 交互节点绑定，当前页面逻辑不使用。 */
-    @property(Node)
-    hitMenu: Node | null = null;
 
     /** 页面关闭按钮，打开时绑定，页面监听释放时解绑。 */
     @property(Button)
@@ -153,7 +141,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.clearShownWatch();
     }
 
-    /** 校验绑定并读取统一配置快照，失败通过页面打开 Promise 报告。 */
+    /** 校验业务控件并读取配置；固定布局、内容比例和居中由Prefab及通用组件维护。 */
     private async initialize(): Promise<void> {
         try {
             this.validateBindings();
@@ -163,7 +151,6 @@ export class BagView extends BaseView<BagOpenArgs> {
                     fitVisibleRoot(this.node);
                 }
             });
-            mountCcbiView(this.content!);
             this.catalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
                 GameConfig.instance.getFile(GConfig.Language), GameConfig.instance.getFile(GConfig.TimeLimitItem));
             this.dressPortrait();
@@ -221,7 +208,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         const path = "assets/bundles/bag/prefabs/BagView.prefab / BagView: ";
         for (const [field, value] of Object.entries({
             bagScroll: this.bagScroll, tabContent: this.tabContent,
-            tabPrefab: this.tabPrefab, content: this.content
+            tabPrefab: this.tabPrefab
         })) {
             if (!value) throw new Error(path + "缺失绑定 " + field);
         }

@@ -1,5 +1,5 @@
 /**
- * 重做版应用装配入口，装配选服、登录、角色和背包；其他玩法入口暂停。
+ * 重做版应用装配入口，装配登录、角色、背包、英雄只读状态、主线阵容和当前主线闭环。
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
 import {clearCitySpriteCache} from "../../features/city/ui/CityMap";
@@ -204,6 +204,7 @@ export class RemakeApp extends Component {
             cache: false,
             allowMultiple: false,
             hostId: "remake-modal",
+            modal: { mask: true, closeOnOutside: false },
             load: async () => {
                 await GameConfig.instance.prepare([GConfig.HeroType, GConfig.Item, GConfig.Language]);
                 return loadPrefab("bundles/gm/prefabs/GmView");
@@ -463,6 +464,7 @@ export class RemakeApp extends Component {
         this.bagModule = null;
         this.resources.dispose();
         for (const unregister of this.unregisterViews.splice(0)) unregister();
+        UIManager.instance.releaseUnusedModal();
         clearCitySpriteCache();
         ResourceAssetsUtils.releaseResidents();
         clearPrefabCache();

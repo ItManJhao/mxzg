@@ -1,12 +1,27 @@
-> 当前主线阵容保存已使用WS＋Protobuf接入。下方早期HTTP合同仅为历史参考，不得恢复；英雄升级、战斗、挂机及其他阵容模式仍暂停。
+# 英雄与主线阵容维护契约
 
-# 英雄与主阵容：第一批接口与复用边界
+更新：2026-11-11。当前事实以本节、[英雄数据契约](hero-data-contract.md)、[通信契约](network-contract.md)和[开发进度](development-progress.md)为准。下方按日期保留旧规则核查和实现过程；旧 HTTP、普通升级与初始化赠送合同均不是当前可调用入口。
 
-> 当前这些玩法入口已暂停，旧 HTTP 合同不再提供；本文保留原规则/资源参考，恢复时采用新的 WS＋Protobuf 模板。
+## 当前代码与开放范围
 
-## 2026-11-02 普通升级（当前契约）
+| 功能 | 当前调用链 | 当前范围 |
+|---|---|---|
+| 名册与基础详情 | 登录/恢复/state.changed → AssetStateBinding → HeroRosterController → HeroRosterModel → HeroRosterEvent → HeroListView/HeroInfoView | 唯一权威名册，含基础技能、普通四槽、进化状态的只读展示；不在列表开页查询或自行发英雄 |
+| 主线布阵 | FormationView 草稿 → FormationController → formation.save → FormationSaveModel；权威阵容仍随统一快照写 HeroRosterModel | 持久幂等保存及版本等待已接入；页面关闭不销毁模块，草稿不提前写 Model |
+| 主线战斗 | MainChapterController → chapter.challenge/claim/replay/idle.encounter | 前三关挑战、幂等结算及挂机演出已接入；不由旧 CampaignController/IdleController 发起 |
+| 英雄养成 | 未注册正常页面入口 | 升级、穿脱、扩容等仍未开放；HeroLevelApi/Controller、HeroInfoUpLevelLayer 是待退役或后续恢复时重审的旧链，不代表升级可用 |
 
-本节优先于后文历史“仅只读英雄/养成未接入”。只开放实例单次普通升级，不含突破、升星、装备或技能。客户端英雄列表点击自己的英雄进入已有 HeroInfoUpLevelLayer；HeroInfoUpgradeLayer 是突破窗口，本批不接入。英雄和资产仍归原名册、AccountModel、BagModel 所有。
+HeroInfoView 是当前列表点击后打开的只读详情；HeroInfoUpLevelLayer 与 HeroInfoUpgradeLayer 均不在正常导航中。保留旧预制体、脚本绑定和领域测试不等于玩法恢复，也不据旧文档重接 HTTP 或资产回调。
+
+人工修改先看 client/assets/scripts/app/remake/ApplicationPages.ts 的注册，再进入 features/hero 的 Controller、Model 和 ui。FormationController 不持有 View、账号或角色键；身份隔离由 GameSocketClient 与应用 AccountService.deliverAuthenticated 统一负责。原 LineupApi 已删除，不再维护另一套查询与保存入口。
+
+## 历史合同与规则核查
+
+以下日期记录只说明当时实现及依据，保留用于追溯，不覆盖本页当前范围。记录中的“当前”“下一批”、旧检查通过数和未提交状态均只针对对应日期，不应作为新的执行指令。
+
+## 2026-11-02 普通升级旧 HTTP 合同（历史，已退役）
+
+以下记录当时的实例单次普通升级，不含突破、升星、装备或技能；后来旧客户端业务链暂停、HTTP 入口删除。历史上列表曾打开 HeroInfoUpLevelLayer，当前已改为只读 HeroInfoView，普通升级不再开放。
 
 ### 规则与来源
 
@@ -50,9 +65,9 @@
 - 基础主线结果领取后返回挂机，挂机人数与当前服务器阵容一致。完整解锁/阵法/助阵、技能与养成尚未完成；独立 MySQL 已有历史验证，三端仍待验收。
 - Formation 检查覆盖 PUT 契约、草稿不提前写、空阵容、防重复提交、保存中取消与版本冲突；实际 H5 点击已验证取消/保存、主线和返回。下方“出阵未接入”描述为 10 月 29 日历史批次状态。
 
-客户端分层以 [模块级 MVC 基线](architecture.md) 为准。英雄名册已迁移 HeroRosterController/HeroRosterModel，列表已使用 SuperScroll；阵容仍待迁移。下列 HTTP 接口是当前实现契约，WebSocket 迁移前继续有效，不能先删接口破坏可运行基线。
+当时英雄名册已迁移 HeroRosterController/HeroRosterModel，列表使用 SuperScroll，阵容职责尚待迁移。下列 HTTP 接口属于旧实现记录，已经退役；当前模块职责以[架构](architecture.md)为准。
 
-## 原英雄/阵容接口（继续有效）
+## 原英雄/阵容 HTTP 接口（历史，已退役）
 
 四个接口都需要 `Authorization: Bearer <accessToken>`。角色从服务端会话确定，不接受客户端指定别人的 roleId。
 
@@ -86,7 +101,7 @@ HeroProfile 字段为 id（英雄实例 UUID 字符串）、templateId（配置�
 - 超时后先 GET 确认当前快照；409 后重新读取并让用户确认，不盲目重试旧请求。当前没有单独的幂等请求键。
 - 保存先完成结构、版本和拥有权检查，再在同一事务中替换槽位和更新版本。数据库同时约束一个英雄不能占两个位置、不能跨角色引用英雄。
 
-## 当前站位政策与旧规则证据
+## 历史最小站位政策与旧规则证据
 
 当前最小主阵容接受 2、3、5、6、7、8、9，对齐已有真服路径 wireLineUpSave.ts 的阵法 1 映射；最多七项。旧 Mock 的 localLineup 有“最多八个”的另一套行为，不作为新服务端规则来源。
 
@@ -104,7 +119,7 @@ HeroProfile 字段为 id（英雄实例 UUID 字符串）、templateId（配置�
 
 H2 验证不能替代 MySQL。独立 MySQL 已覆盖阵容并发、升级/领奖回滚和进程重启，证据见 [开发进度](development-progress.md)；正式身份和生产容量仍待验收。
 
-## 当前客户端数据与界面
+## 历史客户端数据与界面（2026-10-30～11-02）
 
 - HeroSnapshotData：校验统一快照中的英雄列表/详情数据，区分实例 UUID 和模板 ID。
 - HeroRosterModel：模块唯一不可变名册及同步状态，不持有 token 或派发事件。

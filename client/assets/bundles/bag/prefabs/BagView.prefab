@@ -35,6 +35,9 @@
       },
       {
         "__id__": 124
+      },
+      {
+        "__id__": 128
       }
     ],
     "_prefab": {
@@ -2488,9 +2491,6 @@
     "__prefab": {
       "__id__": 110
     },
-    "sprBox": {
-      "__id__": 15
-    },
     "bagScroll": {
       "__id__": 33
     },
@@ -2506,18 +2506,12 @@
     "portrait": {
       "__id__": 2
     },
-    "hitMenu": {
-      "__id__": 59
-    },
     "btnClose": null,
     "tabPrefab": {
       "__uuid__": "d5f9b2c3-8e44-4072-ab31-7c6f1e5d9022",
       "__expectedType__": "cc.Prefab"
     },
-    "_id": "",
-    "content": {
-      "__id__": 112
-    }
+    "_id": ""
   },
   {
     "__type__": "cc.CompPrefabInfo",
@@ -2542,7 +2536,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "BagView",
+    "_name": "Content",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
@@ -2572,6 +2566,9 @@
     "_components": [
       {
         "__id__": 114
+      },
+      {
+        "__id__": 126
       }
     ],
     "_prefab": {
@@ -2833,5 +2830,64 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "3ca8eb76-e7c0-4172-8c6a-bd13b49a2828"
+  },
+  {
+    "__type__": "cc.Widget",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "_enabled": true,
+    "_alignFlags": 18,
+    "_target": null,
+    "_left": 0,
+    "_right": 0,
+    "_top": 0,
+    "_bottom": 0,
+    "_horizontalCenter": 0,
+    "_verticalCenter": 0,
+    "_isAbsLeft": true,
+    "_isAbsRight": true,
+    "_isAbsTop": true,
+    "_isAbsBottom": true,
+    "_isAbsHorizontalCenter": true,
+    "_isAbsVerticalCenter": true,
+    "_originalWidth": 640,
+    "_originalHeight": 960,
+    "_alignMode": 2,
+    "_lockFlags": 0,
+    "_id": "",
+    "node": {
+      "__id__": 112
+    },
+    "__prefab": {
+      "__id__": 127
+    }
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "1f5a700f-e4e8-43fa-b94c-2004f16ae19a"
+  },
+  {
+    "__type__": "b1717x10KxEaZM0E/9VbOly",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 129
+    },
+    "target": {
+      "__id__": 112
+    },
+    "designWidth": 640,
+    "maxScale": 1,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "3872f4a5-b684-4abf-b103-ee9ddbde9b4b"
   }
 ]

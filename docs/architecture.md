@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新：2026-11-10。当前范围与进度见[开发进度](development-progress.md)，字段与时序见[通信契约](network-contract.md)。
+更新：2026-11-11。当前范围与进度见[开发进度](development-progress.md)，字段与时序见[通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -8,7 +8,7 @@
 
 ## 客户端统一采用模块级 MVC
 
-Model 保存唯一状态，Controller 明确处理业务协议并更新 Model，View 展示和转交操作。背包作为标准模块；账号、角色、背包先完善，其他玩法入口暂停，后续按原项目逐模块重做，不能把暂停解释为删减功能。
+Model 保存唯一状态，Controller 明确处理业务协议并更新 Model，View 展示和转交操作。背包作为标准模块；当前维护登录、角色、背包、英雄只读展示、主线阵容保存、前三关挑战/结算及挂机演出。英雄升级、穿脱、宝箱领取、快速战斗及其他未恢复入口仍关闭，不能把暂停解释为删减功能。
 
 - BagController：初始化时登记三个实际消息，onNotify → onInventoryState → BagModel → BagEvent，不持有凭证、查询接口或资产写队列。
 - BagModel：唯一角色库存，整批校验、冻结快照、计算界面差异；不联网、不依赖 View。
@@ -17,7 +17,7 @@ Model 保存唯一状态，Controller 明确处理业务协议并更新 Model，
 - AssetStateBinding：应用层身份/持久版本校验、完整角色与库存批量提交，不保存第二份库存。
 - Protocol / ProtocolRouter：消息目录、模块登记与按真实消息定向交付，不保存资产或伪造模块消息。
 
-旧 BagApi、BagUpdateCoordinator、bindBagSession 与游戏 HTTP 传输已删除。暂停模块的 PausedFeatures 仅拒绝旧调用，绝不执行请求/资产提交回调，后续恢复对应模块时移除。
+旧 BagApi、BagUpdateCoordinator、bindBagSession 与游戏 HTTP 传输已删除。PausedFeatures 只供尚未整体退役的旧 Campaign/Idle/普通升级链编译，拒绝旧请求与资产回调；当前已恢复入口不经过它。不能将它和旧领域测试的存在解释为玩法开放。
 
 ## 基类与监听归属
 
@@ -42,6 +42,49 @@ RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。A
 所有资源目录统一到assets/bundles，旧顶层resources/ui/prefabs已移除。页面、图片按模块归属，骨骼/音频/配置等按素材类别归包；ResManager和ResourceAssets只解析包名/包内路径，复用原ResourcePool。bootstrap本地，其余远程，新包验收状态以当前进度为准。
 
 目录：app 负责装配，features 负责功能 Model/Controller/View，framework 负责通用事件/页面/资源，platform 负责 WS/Protobuf/协议路由，config 负责生成配置。通用层不得反向依赖具体业务 UI。
+
+### 按模块查找当前代码
+
+| 目录 | 当前入口与职责 | 保留边界 |
+|---|---|---|
+| features/account | AccountService 处理会话；AccountController 绑定登录页；RoleController 更新 AccountModel 内唯一角色资料；ui 放登录、选服、资料页 | 正式渠道登录待接入，不新增第二份角色资产 |
+| features/bag | BagController → BagModel → BagEvent；BagView/BagInfoView 展示库存与独立只读详情，utils 提供配置与显示查询 | 关闭页面不清库存；使用、分解未开放 |
+| features/hero | HeroRosterController/Model 保存名册及权威阵容；FormationController/FormationSaveModel 保存提交进度；FormationView 持有未保存草稿 | 详情/技能/四槽/进化状态只读；HeroLevel 旧链未装配，不能当作当前升级实现 |
+| features/battle | MainChapterController/Model 处理主线与挂机快照；MainChapterView 组织行军；BattleReplayPreview、ChapterEndView、BattleDetailLayer 展示战报、结算与统计 | Campaign/Idle 旧链未注册到正常导航；BattlePreviewController 是开发只读试战，不结算奖励 |
+| features/home、features/city | HomeController 与 RemakeHomeView 绑定根页；city 提供地图、顶底栏与导航显示 | 地图中旧入口和资源不代表对应玩法已恢复 |
+| features/gm | GmController 与 GmView 仅处理显式启用的开发数据准备 | 默认关闭、仅当前登录测试角色，不能替代正式获取玩法 |
+| app/remake | RemakeApp 装配模块；AccountComposition、AssetStateBinding 处理身份/状态；ApplicationPages、HomeFeatureNavigation 处理页面；LoadingPlan、ApplicationResources 处理加载 | 不把业务规则搬入应用装配，也不为目录数量新增 Manager |
+| platform、core | platform 提供单连接、二进制编解码、真实协议目录与路由；core 提供日志和错误含义 | 不保存另一份业务状态，生成协议禁止手改 |
+
+以上路径相对 client/assets/scripts。实际阅读从 ApplicationPages 的页面注册或 Protocol 的协议名进入所属 Controller，再看唯一 Model 与 View；不需要先遍历整个框架目录。
+
+### framework/ui 人工阅读入口
+
+以下是现有文件的职责导航，不是新增框架层或模块加载清单。修改页面先看对应 View 的注册与 Prefab；只有改变多个页面共用的开关、列表或视口行为时，才进入这里。
+
+| 文件 | 负责什么 | 修改与保留边界 |
+|---|---|---|
+| UIManager、BaseView、UIRegistry、UILayer、ViewClose | 页面注册、分层、异步打开、关闭、取消、缓存与生命周期；ViewClose连接BaseView的关闭动作 | 核心开关入口，不保存角色资产；页面静态节点不在这里另造 |
+| SuperScroll、SuperContent | 滚动手势、等尺寸格子复用与内容排版 | 方向、间距、边距、Cell绑定在Prefab编辑；View传入数据 |
+| visibleFit、visibleChrome | 读取当前可见区域，处理全屏根、背景和顶底栏在不同视口中的尺寸关系 | 运行时可见尺寸与固定布局分开；不能把逐个子节点坐标修补都归为必要适配 |
+| barSlide | 现有底栏切页的方向、缓动与位移计算 | 由应用PageTransition调用，不负责页面栈或业务操作 |
+| PrefabLayout | 旧战斗结果显示链仍用到的点击、查找、按钮抬层及底栏避让辅助 | 背包与英雄不再经过这里装配或按页面名修改布局；保留实际仍用的方法 |
+| ViewportScale | 按外根可用宽度与设计宽度，对一个内容容器等比缩放 | 在Prefab绑定target、designWidth、maxScale；位置、纵向留白与拉伸交给Widget，不识别模块名或机型 |
+| UiKit | 现有演出、飘字、动态挂点及旧显示回退使用的节点构造辅助 | 无人使用的输入框链已删除；新页面主体与固定控件继续写在Prefab |
+| spineUpgrade | 转交旧骨骼数据转换，并处理挂机行走动作的身体位移 | 通用数据转换实现在framework/assets/SpineJson；不是页面布局代码 |
+| UIOpenLog | UIManager成功打开后的耗时日志 | 只格式化当前完成结果，旧页面计时Map与重复计时链已删除 |
+| common下的Common*Shell | 对应通用组件样板Prefab的Inspector节点引用 | 五份脚本各有Prefab绑定，当前未被业务Prefab嵌套使用；若弃用须连同Prefab、生成器和索引成套处理 |
+| ModalLayer | UIManager内部的一份动态共享输入层，按当前最上方模态窗口配置绘制蒙版或透明拦截 | 不挂业务Prefab；关闭或隐藏窗口后向下寻找仍显示的模态窗口，最后一窗关闭后脱离场景复用 |
+
+弹窗只在页面注册的ViewSpec设置modal，不再在各Prefab添加蒙版或ModalLayer绑定。省略modal表示不拦截外部；`{mask:false,closeOnOutside:true}`使用透明拦截；`{mask:true,closeOnOutside:true}`显示共享蒙版并点击空白关闭。closeOnOutside可独立设为false，只阻挡外部点击。实际面板背景保留BlockInputEvents，不能给只承载坐标的大节点盲加阻挡。叠窗始终共用一份节点，颜色不叠加。
+
+物品详情、资料、选服、技能、战报、产物说明及原有布阵/结算均使用共享层；关闭仍走各自既有生命周期，布阵空白关闭取消未保存草稿，结算释放和返回回调保持。GM与技能台为`{mask:true,closeOnOutside:false}`，继续只由原按钮关闭。本批专项、类型与本机限定预览已通过，三模式/叠窗、实际检查页面及边界见[当前证据](validation/shared-modal-widget-20261111.json)。[旧模态证据](validation/modal-layer-20261111.json)属于被取代的逐窗蒙版实现；本批未重建发布包，未实测窗口不沿用旧画面签收。
+
+framework/kit为空目录的残留meta已清理。safeAreaLayout目前只保留实际使用的640×1280设计坐标常量；旧安全区计算和调试函数没有调用，已删除，文件名不代表仍有另一套运行布局。
+
+背包、英雄列表及英雄详情现在都是完整Prefab，背景、纸面、页签和列表板直接保存于页面；HeroListView中的HeroBoard是静态子节点，HeroListBoardView组件仍负责绑定列表，数据继续读取唯一HeroRosterModel。ParchmentLayout、ccbiPlace、heroMount、heroChrome，以及PagePrefabShell、ListBackdrop、DimSheet和独立HeroListBoardView Prefab已退役，不再运行组装页面。当前保留96份Prefab（含场景共97份）；保留资产的原UUID不变，主动删除的废弃资产不再计入。
+
+固定布局和拉伸由Prefab的Widget维护；ViewportScale只计算`min(maxScale, 可用宽度/designWidth)`并缩放target，默认designWidth=640、maxScale=1。外根fitVisibleRoot仅把没有UITransform的LiveShell视口桥接到完整页面根，避免另加一套竞争根位置的全屏Widget；它不重排纸面、页签或列表，也不保存机型表。
 
 ## 后端决定
 

@@ -1,16 +1,10 @@
 # Bundle目录与三段加载维护
 
-## 当前批次已完成：Bundle目录整合与本地远程验收
+当前资源已从顶层ui/resources/prefabs整合到assets/bundles；104远程包和本地bootstrap已完成集中构建验收。LoadingPlan仍是唯一三段显式配置，其余按需，沿用ResManager和ResourcePool，不另维护模块清单。目录迁移时21,902个非目录UUID保留是历史基线；本批主动退役旧布局资产后，当前96份Prefab（含场景共97份），仍用资源UUID保持不变。
 
-2026-11-11 19:56集中构建已确认自动链路生效。before/after均执行bootstrap-preload-v1 v1.6.2，最终预载包含main、bootstrap，startupPreloadRepaired=false；本轮检查没有修改构建配置。104个远程包输出、循环依赖、本地启动依赖及背包共用资源归属均通过。本地资源6,220,784字节，远程资源665,636,594字节；字体仍是本地资源主要来源，未裁剪。见[自动构建证据](validation/bundles-auto-build-20261111.json)。
+已推送基线hao/f3cd64a3，main未合并；上一批工具及文档收尾、加载/开页/缓存实测已通过，见[工具证据](validation/migration-tools-review-20261111.json)。本批只改变共享模态和完整页面布局，不改三段配置或资源池；专项和本机限定预览通过，未提交推送、未重建发布包。当前状态与下一步集中验包统一见[进度页](development-progress.md)。
 
-资源已实际从顶层ui/resources/prefabs整合到assets/bundles，assets下仅保留bundles、scenes、scripts。原有21,902个非目录资源UUID全部保留，100个Prefab索引已重生成。页面、图片、图集和背景按模块归属；图标、骨骼、音频、字体、配置按素材类别归包。未开放模块的旧素材保留所属类别。加载统一为包名/包内路径，沿用原ResourcePool及LoadingPlan三段显式配置，其余按需；原图进入Bundle后有动态地址，旧副本删除名单为空。
-
-运行验收使用独立内存测试环境：背包四分类详情、英雄六元素/详情/技能、布阵、真实主线胜利/失败、奖励、经验动画、双方战报及返回挂机均已检查。经验实测80/360逐步增至280/360，与服务器回执一致；正常流程无资源警告/错误。19:42包运行证据与19:56包自动链路证据分开保存，不把之前手工补启动配置当成自动构建成功。见[运行证据](validation/bundles-final-review-20261111.json)。
-
-本批可以收口，不再重复要求构建。真实CDN、原生/微信/真机及长期内存仍待后续授权；Python工具路径已调整但专项尚未运行。字体裁剪仅记录为体积来源，不在本批改变表现。玩法范围、WS＋Protobuf、服务端权威与幂等结算保持；宝箱领取、快速战斗、升级及穿脱继续关闭。
-
-在hao开发，未提交推送，main合并由负责人决定；独立测试服务已关闭。后续工作由负责人选择，不自动恢复暂停玩法。
+本机单轮配置目标准备：login 368.2ms、enterGame 547.5ms、background 470.6ms（4/4）；页面Promise不含过渡及按需图/骨骼。此测量没有重跑完整主线，不能代替正式CDN、真机或长期内存验证。见[测量边界与请求记录](validation/loading-cache-review-20261111.json)。后续仅列计划，未开始实施。
 
 ## 人工修改入口
 
@@ -20,6 +14,8 @@
 - 大图：模块background或共用maps/ui；不为合图强行缩小大图。
 - 动态素材：icons、spine、audio、font、config各按类别归包，保留原文件名与UUID。
 - 阶段：LoadingPlan.ts是唯一人工时机配置，不把同模块全部资源自动加入预加载。
+
+背包、英雄列表与英雄详情均直接加载对应完整页面Prefab，背景、纸面及英雄列表板是静态引用，不再额外加载PagePrefabShell或HeroListBoardView片段。Widget保存布局，ViewportScale只负责一个目标容器的统一比例；弹窗模态由ViewSpec配置，UIManager动态共用一份节点，不再加载各窗蒙版。它们不增加阶段资源清单。
 
 示例：ResourceAssetsUtils.describe("hero", "prefabs/HeroListView", "Prefab")；其源地址自动为bundles/hero/prefabs/HeroListView。直接图片路径为包名/包内路径，ResManager负责SpriteFrame后缀，底层按Bundle加载。没有旧resources别名或运行时文件存在性清单。
 
@@ -61,3 +57,10 @@
 PrefabLoader保护实际实例，最后一个实例退出后开始闲置计时。维护时淘汰超时或最久未使用的超额项；16份仅指闲置条目，不是内存预算或全部资源上限。前台通常120–150秒回收，后台暂停会推迟。页面实例和预制体计时独立，背包可能先等待实例120秒，再开始预制体120秒。
 
 加载器只撤回自己的引用，阶段预加载或其他实例仍持有时资源继续有效。普通动态图沿用ResourcePool最后拥有者退出即撤回引用；部分公共资源有独立常驻拥有者。未新增通用图片闲置池或强制GC，引用释放不等于进程内存立即下降，JavaScript堆也不代表GPU内存。
+
+
+## 前批自然回收实测边界
+
+背包首开10.5ms、短期重开3.7ms复用同一实例；关闭120001ms后实例自然销毁，再开7.3ms为新实例，预加载Prefab仍由应用持有。未预加载资料页的Prefab约141.8秒后在维护周期回收，再开88.5ms完成重载。没有缩短TTL、手动强制回收或强制GC。
+
+上述时间是UIManager打开Promise；背包实例到期重开仍有按需角色骨骼等后续请求，英雄/挂机重开也不保证零下载。资源拥有者退出后可撤回引用，缓存条目消失不等于GPU或进程内存已立即降低；不能据此认定长期无泄漏。

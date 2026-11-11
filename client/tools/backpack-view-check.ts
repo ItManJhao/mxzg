@@ -203,7 +203,8 @@ function checkPrefabBindings(): void {
   const layer = prefabAt("client/assets/bundles/bag/prefabs/BagView.prefab");
   const view = componentOn(layer, VIEW_TYPE);
   assertRootOwns(layer, view.index);
-  assertNodeRef(layer, view.comp, "sprBox", 10, "spr_box");
+  assert(!("sprBox" in view.comp) && !("hitMenu" in view.comp) && !("content" in view.comp),
+    "背包View不再绑定只有布局职责的旧节点");
   const scroll=layer[idOf(view.comp.bagScroll)!],scrollNode=layer[idOf(scroll.node)!];
   assert(scrollNode._name==="BagScroll"&&scroll.__type__!=="cc.ScrollView","BagView binds the one SuperScroll");
   const content=layer[idOf(scroll._content)!],port=layer[idOf(content._parent)!];
@@ -213,7 +214,6 @@ function checkPrefabBindings(): void {
   assertNodeRef(layer, view.comp, "bubble", 83, "spr_bubble_bg");
   assertCompRef(layer, view.comp, "talk", 99, "cc.Label");
   assertNodeRef(layer, view.comp, "portrait", 91, "node_portrait");
-  assertNodeRef(layer, view.comp, "hitMenu", 48, "UIMenu_1");
   assert(view.comp.btnClose === null, "BagView 没有关闭按钮，btnClose 应是 null");
   assert(uuidOf(layer.find(row => "overrideCellSize" in row)!.cellPrefab) === CELL_UUID, "SuperContent.cellPrefab uuid");
   assert(uuidOf(view.comp.tabPrefab) === TAB_UUID, "tabPrefab uuid");
@@ -237,7 +237,18 @@ function checkPrefabBindings(): void {
   const portrait = layer[idOf(view.comp.portrait)!];
   assert(portrait._lscale.x > 0 && portrait._lscale.x === portrait._lscale.y, "店员立绘保持正向等比缩放，具体尺寸由 Prefab 编辑");
   assert(Number.isFinite(portrait._lpos.x) && Number.isFinite(portrait._lpos.y), "店员位置由 Prefab 保存");
-  const order = (layer[idOf(view.comp.content)!]._children || []).map((row) => row.__id__);
+  const authoredContent = layer.find(row => row.__type__ === "cc.Node" && row._name === "Content");
+  assert(authoredContent, "完整背包Prefab保留可编辑Content容器");
+  const authoredContentId = layer.indexOf(authoredContent);
+  const contentWidget = (authoredContent._components || []).map(ref => layer[ref.__id__])
+    .find(row => row.__type__ === "cc.Widget");
+  assert(contentWidget && contentWidget._alignFlags === 18 && contentWidget._horizontalCenter === 0
+    && contentWidget._verticalCenter === 0, "内容居中由Prefab中的Widget维护");
+  const viewportScale = layer.find(row => row.__type__ === "b1717x10KxEaZM0E/9VbOly");
+  assert(viewportScale && idOf(viewportScale.target) === authoredContentId
+    && viewportScale.designWidth === 640 && viewportScale.maxScale === 1,
+    "统一ViewportScale只按640设计宽缩小完整Content，不再运行羊皮纸名称补丁");
+  const order = (authoredContent._children || []).map((row) => row.__id__);
   assert(order[0] === idOf(view.comp.portrait), "node_portrait 画在羊皮纸和 spr_bg 下面");
 
   const tabData = prefabAt("client/assets/bundles/bag/prefabs/BagTabView.prefab");
@@ -367,13 +378,13 @@ function makeView(): BagView {
   hostUi.setContentSize(640, 960);
   hostUi.setAnchorPoint(0, 0);
   const view = host.addComponent(BagView);
-  view.content = sized("BagView", 640, 960);
-  view.content.parent = host;
+  const pageContent = sized("Content", 640, 960);
+  pageContent.parent = host;
   const paper = sized("CommonPanel1", 640, 830);
-  paper.parent = view.content;
-  view.sprBox = sized("spr_box", 560, 520);
-  view.sprBox.parent = host;
-  const scrollNode = sized("BagScroll",520,555); scrollNode.parent=view.sprBox;
+  paper.parent = pageContent;
+  const gridBackground = sized("spr_box", 560, 520);
+  gridBackground.parent = host;
+  const scrollNode = sized("BagScroll",520,555); scrollNode.parent=gridBackground;
   const port=sized("view",520,555); port.parent=scrollNode;
   (port.getComponent(UITransform) as UITransform).setAnchorPoint(0.5,1); port.addComponent(Mask);
   const content=sized("content",520,555); content.parent=port; content.setPosition(-260,0,0);
@@ -391,8 +402,6 @@ function makeView(): BagView {
   if (view.talk.node) view.talk.node.parent = host;
   view.portrait = new Node("node_portrait");
   view.portrait.parent = host;
-  view.hitMenu = sized("UIMenu_1", 0, 0);
-  view.hitMenu.parent = host;
   view.btnClose = null;
   list.cellPrefab = fakePrefab((node) => {
     node.addComponent(UITransform).setContentSize(96,96);
@@ -442,8 +451,6 @@ function makeView(): BagView {
     info.btnSrc = buttonOn("btn_src");
     info.btnDetail = new Node("btn_detail");
     info.btnDecompose = new Node("btn_decompose");
-    info.dimButton = buttonOn("DimButton");
-    info.dimButton.node.parent = node;
     info.hitMenu = sized("menu", 0, 0);
     info.hitMenuClose = sized("menu_close", 0, 0);
   });
@@ -529,8 +536,8 @@ async function checkIndependentDetails(): Promise<void> {
   BagModel.instance.replaceAll(items);
   EventDispatcher.instance.emit(BagEvent.BagUpdate);
   assert(infoCard(page) === card && card.propType!.string.includes("11"), "数量变化刷新同一独立窗口");
-  card.dimButton!.node.emit(Button.EventType.CLICK);
-  assert(!UIManager.instance.isOpen(BagInfoView), "点击遮罩只关闭详情");
+  card.btnClose!.node.emit(Button.EventType.CLICK);
+  assert(!UIManager.instance.isOpen(BagInfoView), "关闭按钮只关闭详情；遮罩交互由modal-layer专项验证");
   assert(page.node.isValid, "关闭详情保留背包");
   cells(page)[0].node.emit(Button.EventType.CLICK);
   page.runClose();

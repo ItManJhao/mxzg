@@ -1,0 +1,441 @@
+{
+  "status": "migration-tool-checks-passed",
+  "date": "2026-11-11",
+  "branch": "hao",
+  "baseline": "f3cd64a3",
+  "scope": "本批补齐目录整合后的工具、文档和静态校验；不修改资源内容、UUID、预制体布局或玩法。加载与缓存的本批浏览器实测由独立证据记录，不从本文件推定通过。",
+  "committed": false,
+  "pushed": false,
+  "unifiedChecks": {
+    "source": "client/temp/project-checks/results.json",
+    "command": "node client/tools/check-project.mjs",
+    "active": 46,
+    "passed": 46,
+    "failed": 0,
+    "paused": 5,
+    "pausedSuiteIds": [
+      "hero-roster",
+      "hero-level",
+      "formation",
+      "remake-playable",
+      "idle"
+    ],
+    "pausedMeaning": "继承检查入口的暂停标识，不计入46项通过；不表示本批恢复或开放这些玩法。",
+    "results": [
+      {
+        "id": "gm",
+        "passed": true,
+        "elapsedMs": 1928,
+        "log": "client/temp/project-checks/gm.log"
+      },
+      {
+        "id": "docs",
+        "passed": true,
+        "elapsedMs": 116,
+        "log": "client/temp/project-checks/docs.log"
+      },
+      {
+        "id": "resource-catalog",
+        "passed": true,
+        "elapsedMs": 259,
+        "log": "client/temp/project-checks/resource-catalog.log"
+      },
+      {
+        "id": "ui-atlas",
+        "passed": true,
+        "elapsedMs": 76,
+        "log": "client/temp/project-checks/ui-atlas.log"
+      },
+      {
+        "id": "common-atlas",
+        "passed": true,
+        "elapsedMs": 93,
+        "log": "client/temp/project-checks/common-atlas.log"
+      },
+      {
+        "id": "resource-generated",
+        "passed": true,
+        "elapsedMs": 341,
+        "log": "client/temp/project-checks/resource-generated.log"
+      },
+      {
+        "id": "config-generated",
+        "passed": true,
+        "elapsedMs": 11232,
+        "log": "client/temp/project-checks/config-generated.log"
+      },
+      {
+        "id": "prefab-review",
+        "passed": true,
+        "elapsedMs": 4506,
+        "log": "client/temp/project-checks/prefab-review.log"
+      },
+      {
+        "id": "event-target",
+        "passed": true,
+        "elapsedMs": 63,
+        "log": "client/temp/project-checks/event-target.log"
+      },
+      {
+        "id": "game-protocol",
+        "passed": true,
+        "elapsedMs": 272,
+        "log": "client/temp/project-checks/game-protocol.log"
+      },
+      {
+        "id": "game-protocol-generated",
+        "passed": true,
+        "elapsedMs": 1696,
+        "log": "client/temp/project-checks/game-protocol-generated.log"
+      },
+      {
+        "id": "main-chapter",
+        "passed": true,
+        "elapsedMs": 699,
+        "log": "client/temp/project-checks/main-chapter.log"
+      },
+      {
+        "id": "battle-presentation",
+        "passed": true,
+        "elapsedMs": 137,
+        "log": "client/temp/project-checks/battle-presentation.log"
+      },
+      {
+        "id": "battle-layout",
+        "passed": true,
+        "elapsedMs": 3969,
+        "log": "client/temp/project-checks/battle-layout.log"
+      },
+      {
+        "id": "battle-layout-rules",
+        "passed": true,
+        "elapsedMs": 166,
+        "log": "client/temp/project-checks/battle-layout-rules.log"
+      },
+      {
+        "id": "game-socket",
+        "passed": true,
+        "elapsedMs": 266,
+        "log": "client/temp/project-checks/game-socket.log"
+      },
+      {
+        "id": "isolated-build",
+        "passed": true,
+        "elapsedMs": 99,
+        "log": "client/temp/project-checks/isolated-build.log"
+      },
+      {
+        "id": "hero-roster",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "hero-state",
+        "passed": true,
+        "elapsedMs": 121,
+        "log": "client/temp/project-checks/hero-state.log"
+      },
+      {
+        "id": "hero-level",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "formation",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "formation-state",
+        "passed": true,
+        "elapsedMs": 121,
+        "log": "client/temp/project-checks/formation-state.log"
+      },
+      {
+        "id": "formation-view",
+        "passed": true,
+        "elapsedMs": 132,
+        "log": "client/temp/project-checks/formation-view.log"
+      },
+      {
+        "id": "remake-playable",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "hero-growth-generated",
+        "passed": true,
+        "elapsedMs": 121,
+        "log": "client/temp/project-checks/hero-growth-generated.log"
+      },
+      {
+        "id": "idle-generated",
+        "passed": true,
+        "elapsedMs": 103,
+        "log": "client/temp/project-checks/idle-generated.log"
+      },
+      {
+        "id": "idle",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "campaign-rules",
+        "passed": true,
+        "elapsedMs": 144,
+        "log": "client/temp/project-checks/campaign-rules.log"
+      },
+      {
+        "id": "remake-navigation",
+        "passed": true,
+        "elapsedMs": 120,
+        "log": "client/temp/project-checks/remake-navigation.log"
+      },
+      {
+        "id": "feature-navigation",
+        "passed": true,
+        "elapsedMs": 117,
+        "log": "client/temp/project-checks/feature-navigation.log"
+      },
+      {
+        "id": "login-presentation",
+        "passed": true,
+        "elapsedMs": 76,
+        "log": "client/temp/project-checks/login-presentation.log"
+      },
+      {
+        "id": "home-presentation",
+        "passed": true,
+        "elapsedMs": 97,
+        "log": "client/temp/project-checks/home-presentation.log"
+      },
+      {
+        "id": "startup",
+        "passed": true,
+        "elapsedMs": 157,
+        "log": "client/temp/project-checks/startup.log"
+      },
+      {
+        "id": "staged-loading",
+        "passed": true,
+        "elapsedMs": 129,
+        "log": "client/temp/project-checks/staged-loading.log"
+      },
+      {
+        "id": "resources",
+        "passed": true,
+        "elapsedMs": 72,
+        "log": "client/temp/project-checks/resources.log"
+      },
+      {
+        "id": "home-bundle",
+        "passed": true,
+        "elapsedMs": 66,
+        "log": "client/temp/project-checks/home-bundle.log"
+      },
+      {
+        "id": "resource-audit",
+        "passed": true,
+        "elapsedMs": 188,
+        "log": "client/temp/project-checks/resource-audit.log"
+      },
+      {
+        "id": "config-groups",
+        "passed": true,
+        "elapsedMs": 174,
+        "log": "client/temp/project-checks/config-groups.log"
+      },
+      {
+        "id": "backend-launcher",
+        "passed": true,
+        "elapsedMs": 7853,
+        "log": "client/temp/project-checks/backend-launcher.log"
+      },
+      {
+        "id": "creator-compat",
+        "passed": true,
+        "elapsedMs": 1555,
+        "log": "client/temp/project-checks/creator-compat.log"
+      },
+      {
+        "id": "prefab-plan",
+        "passed": true,
+        "elapsedMs": 1225,
+        "log": "client/temp/project-checks/prefab-plan.log"
+      },
+      {
+        "id": "architecture",
+        "passed": true,
+        "elapsedMs": 3969,
+        "log": "client/temp/project-checks/architecture.log"
+      },
+      {
+        "id": "bindings",
+        "passed": true,
+        "elapsedMs": 457,
+        "log": "client/temp/project-checks/bindings.log"
+      },
+      {
+        "id": "backpack",
+        "passed": true,
+        "elapsedMs": 159,
+        "log": "client/temp/project-checks/backpack.log"
+      },
+      {
+        "id": "super-scroll",
+        "passed": true,
+        "elapsedMs": 87,
+        "log": "client/temp/project-checks/super-scroll.log"
+      },
+      {
+        "id": "hero-detail",
+        "passed": true,
+        "elapsedMs": 184,
+        "log": "client/temp/project-checks/hero-detail.log"
+      },
+      {
+        "id": "hero-equipment",
+        "passed": true,
+        "elapsedMs": 195,
+        "log": "client/temp/project-checks/hero-equipment.log"
+      },
+      {
+        "id": "hero",
+        "passed": true,
+        "elapsedMs": 178,
+        "log": "client/temp/project-checks/hero.log"
+      },
+      {
+        "id": "city",
+        "passed": true,
+        "elapsedMs": 71,
+        "log": "client/temp/project-checks/city.log"
+      },
+      {
+        "id": "battle",
+        "passed": true,
+        "elapsedMs": 91,
+        "log": "client/temp/project-checks/battle.log"
+      },
+      {
+        "id": "retirement",
+        "passed": true,
+        "elapsedMs": 600,
+        "log": "client/temp/project-checks/retirement.log"
+      }
+    ]
+  },
+  "pythonMigrationChecks": {
+    "source": "client/temp/project-checks/python-migration-results.json",
+    "interpreter": "C:/Users/HelloWorld/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe",
+    "pythonVersion": "3.12.14",
+    "openpyxlVersion": "3.1.5",
+    "passedGroups": 17,
+    "passed": [
+      "config-generated:16张有效表",
+      "prefab-plan:100份",
+      "architecture:边界债0",
+      "resource-audit:2 tests",
+      "hero-growth-generated",
+      "idle-generated",
+      "campaign-rules:20关投影",
+      "h5-artifact:本地19:56发布包全部登记Bundle",
+      "local-tools:9 tests",
+      "city-atlas:20帧",
+      "battle-atlas:186帧",
+      "statistics-art:71张",
+      "Python AST syntax:38脚本",
+      "battle-layout:22份Prefab、50处Sliced",
+      "battle-layout-rules:3 tests（含四向尺寸边界、负边距及越界）",
+      "docs:42份链接检查",
+      "prefab-review:100份结构及记录漂移检查"
+    ],
+    "pending": [],
+    "relationshipToUnifiedChecks": "17组与统一入口46项存在重叠，不能相加解释为63个互不重复的测试。"
+  },
+  "changes": [
+    {
+      "path": "tools/check_h5_artifact.py",
+      "result": "按构建settings登记的包名定位assets或remote；要求main/bootstrap保留本地并登记启动预载，拒绝缺包、重复包名、非法包名和错误重定向。没有新增人工模块清单。"
+    },
+    {
+      "path": "tools/test_remake_local_tools.py",
+      "result": "夹具改为本地main/bootstrap与远程home；补远程包缺失、bootstrap缺预载回归，连同路径隔离和进程归属共9项通过。"
+    },
+    {
+      "path": "tools/check_battle_prefab_layout.py",
+      "result": "扫描真实bundles/battle/prefabs与bundles图片meta；拒绝零扫描，22份Prefab/50处Sliced通过。零边距仅允许原尺寸绘制。"
+    },
+    {
+      "path": "tools/test_battle_prefab_layout.py",
+      "result": "新增3项纯数据回归，覆盖184×67原尺寸、放大/缩小四向边界、合法拉伸及负/越界边距。"
+    },
+    {
+      "path": "tools/check_battle_statistics_art.py",
+      "result": "修正迁移后进化头像路径为bundles/hero/ui，71张头像与高星光效逐像素核对通过。"
+    },
+    {
+      "path": "client/tools/check-project.mjs",
+      "result": "统一入口登记battle-layout与battle-layout-rules；保留现有检查和暂停范围。"
+    },
+    {
+      "path": "docs/prefab-review.json",
+      "result": "在修正既有验收记录哈希后重生成，并通过100份结构与记录漂移检查；没有据静态扫描新增视觉验收。"
+    }
+  ],
+  "zeroBorderEvidence": {
+    "legacySource": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/ccb-hd/Resources/MissionRewardInfoLayer.ccb",
+    "node": "nodeGraph.children[1].children[0]",
+    "member": "spr_title_bg",
+    "baseClass": "CCScale9Sprite",
+    "preferredSize": [
+      184,
+      67
+    ],
+    "scale": 1,
+    "insets": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "currentPrefab": "client/assets/bundles/battle/prefabs/ChapterRewardInfoView.prefab",
+    "currentNode": "TitleBackground",
+    "currentImage": "client/assets/bundles/common/ui/win-bg_title-bar-3.png",
+    "currentSize": [
+      184,
+      67
+    ],
+    "rule": "四边为0时仅允许UITransform尺寸与原图尺寸一致；放大和缩小均拒绝；非零边距仍检查负数及超出原图。此例外来自旧源码，未改Prefab或图片meta以迁就检查。"
+  },
+  "chapterEndAcceptance": {
+    "change": "config/prefab-acceptance.json登记既有11/11视觉证据对应的当前哈希，旧11/09记录保留在supersededEntries。",
+    "prefab": "client/assets/bundles/battle/prefabs/ChapterEndView.prefab",
+    "sha256": "7e4f9e4acef4710c84198355c59c2f618c9f9594d2e7368b1f0c7ad475616bd9",
+    "historicalVisualEvidence": "docs/validation/bundles-final-review-20261111.json",
+    "evidenceType": "本轮工具补跑之前已完成的真实运行视觉证据；本批哈希和文档登记不等于重新执行一遍战斗视觉验收。",
+    "environment": "独立H2内存测试服，Web发布包393×700竖屏",
+    "covered": [
+      "真实胜利主体、最高伤害与奖励格子",
+      "确认与倒计时",
+      "经验80/360逐步到280/360",
+      "战报开关及返回挂机"
+    ],
+    "images": [
+      "docs/images/bundles-final-victory-20261111.png",
+      "docs/images/bundles-final-experience-20261111.png",
+      "docs/images/bundles-final-report-20261111.png"
+    ],
+    "notCovered": [
+      "本批未操作Creator Inspector",
+      "不扩大为所有屏幕或所有进化外观验收",
+      "大型翅膀裁边仍待表现复验"
+    ]
+  },
+  "limits": [
+    "静态与纯数据测试不能代替真实三段下载、界面打开及缓存到期实测。",
+    "本地19:56产物检查只证明登记包表、输出归属和启动配置有效，不证明正式CDN网络、原生或微信平台通过。",
+    "没有因静态检查通过开放宝箱领取、快速战斗、英雄升级或穿脱；规则与待审项保持原范围。",
+    "client/temp中的日志是本机临时输出，本文件保留结果快照；本轮未提交或推送。"
+  ]
+}

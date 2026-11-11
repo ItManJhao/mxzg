@@ -33,7 +33,7 @@ export interface BattleEndOptions {
 /**
  * 盖在战斗页上。胜负换 spr_result 的横幅，不写进最佳萌神的名字格。
  * 「5秒后关闭」藏起来，不自动关。战斗确定回挂机，下一关走 btn_report；收据使用调用方标题与回调。
- * 挂机壳在页面最上层时，结算改挂到壳里面，避免被壳挡住。
+ * 旧暂停业务恢复前仍使用调用方提供的展示宿主；不再查找已退役的页面壳。
  */
 export async function mountBattleEnd(
     parent: Node,
@@ -102,10 +102,8 @@ export async function mountBattleEnd(
                 next.active = false;
             }
         }
-        const shell = parent.getChildByName("PagePrefabShell");
-        const host = shell && shell.isValid && shell.active ? shell : parent;
-        hold.parent = host;
-        hold.setSiblingIndex(Math.max(0, host.children.length - 1));
+        hold.parent = parent;
+        hold.setSiblingIndex(Math.max(0, parent.children.length - 1));
         if (options?.rewards !== undefined) bindVisibleRefresh(hold, () => {
             if (hold.isValid && view.isValid) layoutServerResult(hold, view, win === true);
         });

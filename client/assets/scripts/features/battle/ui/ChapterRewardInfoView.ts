@@ -20,8 +20,6 @@ const { ccclass, property } = _decorator;
 export class ChapterRewardInfoView extends BaseView {
     /** 旧560×700说明主体，竖屏等比适配。 */
     @property(Node) panel: Node | null = null;
-    /** 遮罩静态节点，适配到当前视口。 */
-    @property(Node) backdrop: Node | null = null;
     /** 关闭说明入口。 */
     @property(Button) closeButton: Button | null = null;
     /** 首通产物页签，默认选中。 */
@@ -47,7 +45,7 @@ export class ChapterRewardInfoView extends BaseView {
 
     /** 登记本页按钮和滚动监听，准备资源期间隐藏主体，失败交UIManager处理。 */
     public onOpen(): void {
-        if (!this.panel || !this.backdrop || !this.closeButton || !this.firstTab || !this.idleTab || !this.stages) {
+        if (!this.panel || !this.closeButton || !this.firstTab || !this.idleTab || !this.stages) {
             throw new Error("产物说明页面绑定缺失");
         }
         this.beginOpen();
@@ -140,14 +138,13 @@ export class ChapterRewardInfoView extends BaseView {
         }).catch(() => { /* 加载失败或取消由 UIManager 统一处理。 */ });
     }
 
-    /** 主体按旧尺寸等比适配，缩放后重新判断可视行。 */
+    /** 主体按旧尺寸等比适配并重新判断可视行；遮罩尺寸和空白关闭统一归ModalLayer。 */
     private fitViewport(): void {
-        if (this.released || !this.panel || !this.backdrop) {
+        if (this.released || !this.panel) {
             return;
         }
         const box = fitVisibleRoot(this.node);
         const scale = Math.min(1, (box.width - 24) / 580, (box.height - 24) / 720);
-        this.backdrop.getComponent(UITransform)!.setContentSize(box.width, box.height);
         this.panel.setScale(scale, scale, 1);
         this.panel.setPosition(-280 * scale, -350 * scale, 0);
         this.refreshVisible();

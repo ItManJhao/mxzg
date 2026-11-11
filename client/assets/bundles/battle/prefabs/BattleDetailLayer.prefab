@@ -19,9 +19,6 @@
     "_parent": null,
     "_children": [
       {
-        "__id__": 209
-      },
-      {
         "__id__": 207
       }
     ],
@@ -31,11 +28,11 @@
         "__id__": 208
       },
       {
-        "__id__": 217
+        "__id__": 212
       }
     ],
     "_prefab": {
-      "__id__": 218
+      "__id__": 213
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -2565,7 +2562,7 @@
         "__id__": 106
       },
       {
-        "__id__": 215
+        "__id__": 210
       }
     ],
     "_prefab": {
@@ -3431,7 +3428,7 @@
         "__id__": 144
       },
       {
-        "__id__": 216
+        "__id__": 211
       }
     ],
     "_prefab": {
@@ -5071,7 +5068,7 @@
         "__id__": 2
       },
       {
-        "__id__": 214
+        "__id__": 209
       }
     ],
     "_prefab": {
@@ -5107,144 +5104,6 @@
       "x": 0.5,
       "y": 0.5
     }
-  },
-  {
-    "__type__": "cc.Node",
-    "_active": true,
-    "_layer": 33554432,
-    "_parent": {
-      "__id__": 1
-    },
-    "_euler": {
-      "__type__": "cc.Vec3",
-      "z": 0,
-      "y": 0,
-      "x": 0
-    },
-    "_id": "",
-    "_lpos": {
-      "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
-      "z": 0
-    },
-    "_objFlags": 0,
-    "_children": [],
-    "_name": "Backdrop",
-    "_mobility": 0,
-    "_lscale": {
-      "__type__": "cc.Vec3",
-      "z": 1,
-      "y": 1,
-      "x": 1
-    },
-    "_components": [
-      {
-        "__id__": 210
-      },
-      {
-        "__id__": 211
-      },
-      {
-        "__id__": 212
-      },
-      {
-        "__id__": 213
-      }
-    ],
-    "_prefab": null,
-    "__editorExtras__": {},
-    "_lrot": {
-      "__type__": "cc.Quat",
-      "z": 0,
-      "w": 1,
-      "y": 0,
-      "x": 0
-    }
-  },
-  {
-    "_enabled": true,
-    "_name": "",
-    "__prefab": null,
-    "node": {
-      "__id__": 209
-    },
-    "_contentSize": {
-      "__type__": "cc.Size",
-      "width": 640,
-      "height": 1280
-    },
-    "_objFlags": 0,
-    "__type__": "cc.UITransform",
-    "__editorExtras__": {},
-    "_id": "",
-    "_anchorPoint": {
-      "__type__": "cc.Vec2",
-      "x": 0.5,
-      "y": 0.5
-    }
-  },
-  {
-    "__type__": "cc.Sprite",
-    "_name": "",
-    "_objFlags": 0,
-    "__editorExtras__": {},
-    "node": {
-      "__id__": 209
-    },
-    "_enabled": true,
-    "__prefab": null,
-    "_customMaterial": null,
-    "_srcBlendFactor": 2,
-    "_dstBlendFactor": 4,
-    "_color": {
-      "__type__": "cc.Color",
-      "r": 0,
-      "g": 0,
-      "b": 0,
-      "a": 150
-    },
-    "_spriteFrame": {
-      "__uuid__": "4ecde7d1-af51-4d08-81aa-378d40a60954@f9941",
-      "__expectedType__": "cc.SpriteFrame"
-    },
-    "_type": 0,
-    "_fillType": 0,
-    "_sizeMode": 0,
-    "_fillCenter": {
-      "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
-    },
-    "_fillStart": 0,
-    "_fillRange": 0,
-    "_isTrimmedMode": false,
-    "_useGrayscale": false,
-    "_atlas": null,
-    "_id": ""
-  },
-  {
-    "__type__": "cc.BlockInputEvents",
-    "_name": "",
-    "_objFlags": 0,
-    "__editorExtras__": {},
-    "node": {
-      "__id__": 209
-    },
-    "_enabled": true,
-    "__prefab": null,
-    "_id": ""
-  },
-  {
-    "__type__": "cc.Button",
-    "_enabled": true,
-    "_interactable": true,
-    "_transition": 0,
-    "clickEvents": [],
-    "node": {
-      "__id__": 209
-    },
-    "__prefab": null
   },
   {
     "__type__": "cc.BlockInputEvents",
@@ -5377,9 +5236,6 @@
     "_id": "",
     "panel": {
       "__id__": 207
-    },
-    "backdrop": {
-      "__id__": 209
     },
     "closeButton": {
       "__id__": 160

@@ -1,0 +1,724 @@
+{
+  "date": "2026-11-11",
+  "branch": "hao",
+  "baseline": "f3cd64a3",
+  "committed": false,
+  "pushed": false,
+  "mainMerged": false,
+  "scope": "框架与模块审计、已核实死链删除、当前文档校正；普通弹窗模态仅在本文件保存结构与专项检查证据，不记浏览器画面通过。上一批迁移工具/加载缓存的未提交修改完整保留。",
+  "removed": [
+    {
+      "path": "client/assets/scripts/framework/kit",
+      "withMeta": true,
+      "reason": "空目录，未承载业务或组件；meta无外部UUID引用。"
+    },
+    {
+      "path": "client/assets/scripts/ui",
+      "withMeta": true,
+      "reason": "空目录且目录UUID d27be112-5db9-43de-93bf-ac9159a3c0c9 无脚本/资源/工具引用。删除前核验绝对路径处于项目、目录为空，非递归删除。"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/CampaignMount.ts",
+      "withMeta": true,
+      "reason": "mountCampaignPage无运行脚本或工具调用，无动态入口；完整UUID 1e506a27-35b3-561f-898a-4e5e90a7f458 及压缩类ID 1e506onNbNWH4mKTl6Qp/RY 均无Prefab/Scene/anim绑定。仅docs/validation/module-cleanup-20261031/source-sha256.json历史哈希留存。"
+    },
+    {
+      "path": "client/tools/fix_ccbi_root_place.py",
+      "withMeta": false,
+      "reason": "一次性旧根坐标写入器无外部调用/当前文档入口（全库排除生成缓存搜索仅自身docstring四处）。仍使用720设计宽、旧/ui地址；--all可遍历当前bundles并在检查失败前写_lpos，不应留作人工入口。两个审计独立复核后删除，未运行--apply，历史修改依据继续在Git及日期记录中保留。"
+    }
+  ],
+  "trimmed": [
+    {
+      "path": "client/assets/scripts/framework/ui/UIOpenLog.ts",
+      "reason": "UIManager仅调用logViewReady；旧页面计时Map、重复计时与类名推断链无调用，删除。prefabBaseName仍作为私有格式化方法保留。"
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/ccbiPlace.ts",
+      "reason": "只保留ParchmentLayout使用的listWindowSpread、边距常量及输入/输出类型；旧锚点/九宫格/标签修正算法无当前调用。"
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/safeAreaLayout.ts",
+      "reason": "visibleChrome与旧挂机站位只读取640×1280设计常量；未接入的安全区算法、调试参数解析与格式化链无调用。"
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/UiKit.ts",
+      "reason": "TextField/createField输入框链没有当前调用；保留飘字、动态挂点和旧显示回退仍调用的节点/标签/按钮构造。"
+    },
+    {
+      "path": "client/assets/scripts/framework/assets/PrefabLoader.ts",
+      "reason": "setInteractable/readEditBox/writeEditBox无当前调用，移除同时清理EditBox导入；加载、资源池、实例保护与闲置回收策略不变。"
+    }
+  ],
+  "exportSurfaceChanges": [
+    {
+      "path": "client/assets/scripts/framework/ui/UIOpenLog.ts",
+      "removedPublicExports": [
+        "beginPageOpen",
+        "cancelPageOpen",
+        "componentClassName",
+        "logOpenedPrefab",
+        "markPageContent",
+        "markPageShown",
+        "notePrefabReady",
+        "pageOpenToken",
+        "prefabBaseName"
+      ],
+      "remainingPublicExports": [
+        "logViewReady"
+      ]
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/ccbiPlace.ts",
+      "removedPublicExports": [
+        "CcbiBox",
+        "CcbiFrame",
+        "LIST_WINDOW_BOTTOM",
+        "LIST_WINDOW_SIDE",
+        "LIST_WINDOW_TOP",
+        "PARCHMENT_PANEL_W",
+        "growAnchorDelta",
+        "labelCenterInParent",
+        "parchmentFitScale",
+        "sliceAnchorShift"
+      ],
+      "remainingPublicExports": [
+        "ListWindowInput",
+        "ListWindowSpread",
+        "PARCHMENT_FIT_SIDE",
+        "listWindowSpread"
+      ]
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/safeAreaLayout.ts",
+      "removedPublicExports": [
+        "AdaptMetrics",
+        "SafeFrame",
+        "SafeInsets",
+        "SafeRect",
+        "Transformable",
+        "applySafeFrame",
+        "clampInsets",
+        "formatAdapt",
+        "formatAdaptShort",
+        "insetsFromSafeRect",
+        "layoutSafeFrame",
+        "metricsFrom",
+        "parseInsetOverride",
+        "wantsSafeDebug"
+      ],
+      "remainingPublicExports": [
+        "DESIGN_HEIGHT",
+        "DESIGN_WIDTH"
+      ]
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/UiKit.ts",
+      "removedPublicExports": [
+        "TextField",
+        "createField"
+      ],
+      "remainingPublicExports": [
+        "createButton",
+        "createLabel",
+        "createRect",
+        "paintRect",
+        "place",
+        "setText",
+        "uiNode"
+      ]
+    },
+    {
+      "path": "client/assets/scripts/framework/assets/PrefabLoader.ts",
+      "removedPublicExports": [
+        "readEditBox",
+        "setInteractable",
+        "writeEditBox"
+      ],
+      "remainingPublicExports": [
+        "MAX_IDLE_PREFABS",
+        "PREFAB_IDLE_MS",
+        "bindClick",
+        "clearPrefabCache",
+        "collectPrefabCache",
+        "findNode",
+        "loadPrefab",
+        "prefabCacheSnapshot",
+        "requireNode",
+        "retainPrefabForNode",
+        "spawnPrefab",
+        "tintSprite"
+      ]
+    }
+  ],
+  "referenceAudit": {
+    "scope": [
+      "client/assets/scripts imports and dynamic resource addresses",
+      "all assets Prefab/Scene/anim full UUID and compressed script type",
+      "client/tools and root tools",
+      "config and current docs; historical evidence kept"
+    ],
+    "notSufficientAlone": "无import不等于无引用；Cocos序列化组件绑定和动态地址必须一并核对。",
+    "existingModifiedFrameworkScripts": 5,
+    "existingCommentOnlyModuleScripts": 2,
+    "totalExistingMetasVerified": 7,
+    "metaComparison": "Git基线与当前内容按LF/CRLF归一化比较，并单独核对UUID；未改meta字段或重铸UUID。新增ModalLayer不计入既有meta保护数。",
+    "metas": [
+      {
+        "script": "client/assets/scripts/framework/ui/UIOpenLog.ts",
+        "uuid": "5003da82-34d8-491c-878c-60e08fa96d5c",
+        "trackedMetaUnchanged": true
+      },
+      {
+        "script": "client/assets/scripts/framework/ui/ccbiPlace.ts",
+        "uuid": "416631e4-ca56-42ec-8b0a-4777ff83676c",
+        "trackedMetaUnchanged": true
+      },
+      {
+        "script": "client/assets/scripts/framework/ui/safeAreaLayout.ts",
+        "uuid": "e4e4c089-8176-4798-80b1-90811770aa4b",
+        "trackedMetaUnchanged": true
+      },
+      {
+        "script": "client/assets/scripts/framework/ui/UiKit.ts",
+        "uuid": "5c5ef1df-f0b3-4d95-8f40-f08c84463233",
+        "trackedMetaUnchanged": true
+      },
+      {
+        "script": "client/assets/scripts/framework/assets/PrefabLoader.ts",
+        "uuid": "a4e7c1d2-8b36-4f90-9c15-2d6a0e8b4f73",
+        "trackedMetaUnchanged": true
+      },
+      {
+        "script": "client/assets/scripts/features/PausedFeatures.ts",
+        "uuid": "ebc1eaec-17d8-4caf-ae74-db77f1174cfe",
+        "trackedMetaUnchanged": true
+      },
+      {
+        "script": "client/assets/scripts/features/hero/ui/HeroListView.ts",
+        "uuid": "28f2247e-bc39-492f-881b-3ec5e2a22d57",
+        "trackedMetaUnchanged": true
+      }
+    ]
+  },
+  "retained": [
+    {
+      "paths": [
+        "client/assets/scripts/framework/ui/ParchmentLayout.ts",
+        "client/assets/scripts/framework/ui/PrefabLayout.ts"
+      ],
+      "actualChain": "BagView.initialize / heroMount -> mountCcbiView -> seatParchmentList -> listWindowSpread",
+      "reason": "窄屏仍有实际适配依赖，不能盲删。不是永久保留理由。",
+      "remainingWork": "英雄HeroListView.fitCityMiddle仍改变纸面高度、页签和列表位置；旧固定布局应先迁回可编辑Prefab并复验，再移除对应代码。少量依赖当前可见视口的信息另行保留。"
+    },
+    {
+      "script": "client/assets/scripts/features/account/ui/LoginArtwork.ts",
+      "type": "deecckuiPlBS5cQlnu414ty",
+      "binding": "client/assets/bundles/login/prefabs/AccountLoginView.prefab"
+    },
+    {
+      "script": "client/assets/scripts/features/battle/ui/HangMissionChipView.ts",
+      "type": "2b8e0hVvmZHxrpqdXrdz7kT",
+      "binding": "client/assets/bundles/battle/prefabs/HangMissionChipView.prefab"
+    },
+    {
+      "script": "client/assets/scripts/features/hero/ui/HeroInfoUpLevelLayer.ts",
+      "type": "c9752csxyhHeaVlUHeB1Kmz",
+      "binding": "client/assets/bundles/hero/prefabs/HeroInfoUpLevelLayer.prefab",
+      "note": "绑定存在但正常升级入口未注册，保留不表示玩法开放。"
+    },
+    {
+      "paths": [
+        "client/assets/scripts/framework/ui/common/CommonBtnPrimaryShell.ts",
+        "client/assets/scripts/framework/ui/common/CommonBtnSecondaryShell.ts",
+        "client/assets/scripts/framework/ui/common/CommonListRowShell.ts",
+        "client/assets/scripts/framework/ui/common/CommonPanelShell.ts",
+        "client/assets/scripts/framework/ui/common/CommonRedDotShell.ts"
+      ],
+      "reason": "五份脚本各有同名样板Prefab绑定；当前未在业务Prefab嵌套使用，若弃用需连同Prefab、生成器和索引成套处理。",
+      "distinctFrom": "CommonPanel1是背包/英雄当前嵌套使用的公共纸面，不等于未使用的CommonPanelShell样板。"
+    },
+    {
+      "paths": [
+        "client/assets/scripts/features/battle/CampaignApi.ts",
+        "client/assets/scripts/features/battle/CampaignController.ts",
+        "client/assets/scripts/features/battle/IdleApi.ts",
+        "client/assets/scripts/features/battle/IdleController.ts",
+        "client/assets/scripts/features/hero/HeroLevelApi.ts",
+        "client/assets/scripts/features/hero/HeroLevelController.ts",
+        "client/assets/scripts/features/PausedFeatures.ts"
+      ],
+      "reason": "旧链没有接正常导航，但仍有旧预制体/旧显示/检查依赖；后续专项整体退役或恢复时按新模板重审，本批不机械按import图整批删除。"
+    }
+  ],
+  "documents": {
+    "corrected": [
+      "docs/architecture.md: 当前开放范围、模块和framework/ui职责入口",
+      "docs/hero-lineup-contract.md: 当前英雄只读与阵容保存链，旧HTTP/升级合同明确历史",
+      "docs/network-contract.md: 实际已登记协议、完整Snapshot及四个Controller批量提交",
+      "docs/prefab-layout.md: 当前100份Prefab，11/02普通升级/旧挂机等明确历史"
+    ],
+    "sourceCommentCorrections": [
+      "client/assets/scripts/features/PausedFeatures.ts",
+      "client/assets/scripts/features/hero/ui/HeroListView.ts"
+    ],
+    "truth": "以当前代码、进度和分批证据为准；历史通过数与玩法开放状态不搬成新事实。"
+  },
+  "checks": {
+    "typeCheck": {
+      "status": "passed",
+      "command": "node C:/ProgramData/cocos/editors/Creator/3.8.8/resources/resources/3d/engine/node_modules/typescript/lib/tsc.js --project client/tsconfig.json --noEmit",
+      "exitCode": 0,
+      "observedThisBatch": true
+    },
+    "bindings": {
+      "status": "passed",
+      "command": "node client/tools/check-script-bindings.cjs",
+      "scripts": 195,
+      "prefabAndSceneFiles": 101,
+      "bindings": 85,
+      "note": "含新增6处ModalLayer绑定；检查器反例通过，不等同画面验收。"
+    },
+    "docs": {
+      "status": "passed",
+      "command": "tools/check_docs.py",
+      "files": 42,
+      "note": "新增本证据前后均检查42份README/指南/验证记录链接；最终root仍可按文档收尾重查。"
+    },
+    "modalUnit": {
+      "status": "passed",
+      "source": "client/temp/project-checks/modal-layer.log",
+      "output": "PASS modal layer: 6 prefabs, scoped close, repeat enable, cleanup and excluded flows",
+      "meaning": "静态绑定和生命周期回归，不是浏览器实际点击通过。"
+    },
+    "fullCheckSnapshot": {
+      "source": "client/temp/modal-full-check-results.json",
+      "active": 47,
+      "passed": 46,
+      "paused": 5,
+      "failed": [
+        "prefab-review"
+      ],
+      "note": "当时prefab-review因新Prefab哈希尚未复验失败；保留该事实，不宣称47/47全绿。后续结果由root收尾记录。"
+    }
+  },
+  "modalStructureOnly": {
+    "source": "client/temp/modal-prefab-binding-review.json",
+    "scriptUuid": "df21b55c-480c-4bfc-a58a-fc0b32644e99",
+    "prefabs": [
+      {
+        "path": "client/assets/bundles/bag/prefabs/BagInfoView.prefab",
+        "uuid": "f151a2c1-a24a-4e5d-9d67-2096089cde82",
+        "beforeSha256": "9d1ff85753e1569714b3c30b1f74f7564a76822d78743dde737f8f8a6ebbcfc0",
+        "afterSha256": "716c3d53505b6d23ef0be1c9098b5551fe105a77b8226131dafcc1d6e3efbea0",
+        "backdrop": "DimButton",
+        "panelInputBlockers": [
+          "DetailPanel"
+        ],
+        "originalNodeLayoutUnchanged": true,
+        "originalMetaUnchanged": true,
+        "removedWidgets": 1
+      },
+      {
+        "path": "client/assets/bundles/login/prefabs/RoleProfileView.prefab",
+        "uuid": "1aedb5a3-4e33-552f-843c-c419fd8174a4",
+        "beforeSha256": "9433651d05ec664dcfbacf796cda83364f05a8495ba4da6f62f36947699e5b61",
+        "afterSha256": "b2be233122c1061e837d85df3aeeb720cf3e48ad5fa2b501872fba9976f2a1c9",
+        "backdrop": "Backdrop",
+        "panelInputBlockers": [
+          "CCSprite_1"
+        ],
+        "originalNodeLayoutUnchanged": true,
+        "originalMetaUnchanged": true,
+        "removedWidgets": 0,
+        "viewBackdropBindingRemoved": true
+      },
+      {
+        "path": "client/assets/bundles/login/prefabs/ServerPickerView.prefab",
+        "uuid": "46c73fed-68c2-5589-8720-d11645528009",
+        "beforeSha256": "9c7d13fc642a4dff55a44069b6505a3f7525400255196fe22eb35beae58033a3",
+        "afterSha256": "cbabe66c40bfe72df0203a4a2e15b2e948bc7ce2c2ee46f763bb873eaffd9ad4",
+        "backdrop": "ModalBackdrop",
+        "panelInputBlockers": [
+          "CCScale9Sprite_1"
+        ],
+        "originalNodeLayoutUnchanged": true,
+        "originalMetaUnchanged": true,
+        "removedWidgets": 0
+      },
+      {
+        "path": "client/assets/bundles/hero/prefabs/HeroSkillView.prefab",
+        "uuid": "65ad86c3-aeb9-4df2-9bc5-cff830b678b0",
+        "beforeSha256": "b6936762b35e11dbe84098159344a2d29093aa5b1a719f6383f8599c31bd5fd9",
+        "afterSha256": "4c4c1fae696c3deb723d106fd43a40ae491c94a698b34d7d185606a6f110aee4",
+        "backdrop": "Dim",
+        "panelInputBlockers": [
+          "Panel"
+        ],
+        "originalNodeLayoutUnchanged": true,
+        "originalMetaUnchanged": true,
+        "removedWidgets": 0
+      },
+      {
+        "path": "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab",
+        "uuid": "8d8bc954-91e3-4cd3-a7a3-45f6ebb12ca5",
+        "beforeSha256": "fe26a56d1765298ae2d534d80047366b0e674a4fd1d5c61dfe94860cb54027c0",
+        "afterSha256": "ec790908f80651158a2e2d175fbb8fe0f37974862640837124eab67b46ab80f2",
+        "backdrop": "Backdrop",
+        "panelInputBlockers": [
+          "StatisticsPanel"
+        ],
+        "originalNodeLayoutUnchanged": true,
+        "originalMetaUnchanged": true,
+        "removedWidgets": 0,
+        "viewBackdropBindingRemoved": true
+      },
+      {
+        "path": "client/assets/bundles/battle/prefabs/ChapterRewardInfoView.prefab",
+        "uuid": "be077496-77e1-432a-a350-3929e9ad0040",
+        "beforeSha256": "881cbacf2567862e2619f0ee055caf5bd3eb60570ef824807d0d06161191d9e9",
+        "afterSha256": "016ad6245a8f1e9482f89440e23b41f6721e551fc8c5b4cbe7a3bae29dabde30",
+        "backdrop": "Backdrop",
+        "panelInputBlockers": [
+          "Background"
+        ],
+        "originalNodeLayoutUnchanged": true,
+        "originalMetaUnchanged": true,
+        "removedWidgets": 0,
+        "viewBackdropBindingRemoved": true,
+        "removedMisalignedPanelBlocker": true,
+        "inputRegionNote": "Panel使用中心锚点和左下偏移，仅其子Background对应实际显示区域；阻挡只绑定Background。"
+      }
+    ],
+    "browserStatus": "not-recorded-here; root owns final browser verification",
+    "meaning": "只证明序列化绑定、输入阻挡与原布局/meta保护，不证明空白点击/下层隔离/叠窗/尺寸画面全部通过。"
+  },
+  "unchangedGameplay": [
+    "WS + Protobuf only",
+    "server-authoritative data and idempotent settlement",
+    "three explicit LoadingPlan stages plus on-demand remainder",
+    "existing ResourcePool and prefab/page cache policy",
+    "hero upgrade, equipment editing, chest claim and quick fight remain closed"
+  ],
+  "limits": [
+    "本文件不签收任何浏览器模态画面结果。",
+    "ParchmentLayout/PrefabLayout与英雄旧固定布局仍待后续迁移，不称已完全Prefab化。",
+    "有资源绑定的旧脚本或领域服务保留不代表玩法开放。"
+  ],
+  "finalChecks": {
+    "activePassed": 47,
+    "activeTotal": 47,
+    "paused": 5,
+    "typeCheck": "Creator3.8.8 engine tsc --project client/tsconfig.json --noEmit passed",
+    "prefabReview": "100份结构及证据漂移检查通过；此前待复验哈希已按本批限定模态证据更新",
+    "results": [
+      {
+        "id": "gm",
+        "passed": true,
+        "elapsedMs": 170,
+        "log": "client/temp/project-checks/gm.log"
+      },
+      {
+        "id": "docs",
+        "passed": true,
+        "elapsedMs": 96,
+        "log": "client/temp/project-checks/docs.log"
+      },
+      {
+        "id": "resource-catalog",
+        "passed": true,
+        "elapsedMs": 240,
+        "log": "client/temp/project-checks/resource-catalog.log"
+      },
+      {
+        "id": "ui-atlas",
+        "passed": true,
+        "elapsedMs": 72,
+        "log": "client/temp/project-checks/ui-atlas.log"
+      },
+      {
+        "id": "common-atlas",
+        "passed": true,
+        "elapsedMs": 106,
+        "log": "client/temp/project-checks/common-atlas.log"
+      },
+      {
+        "id": "resource-generated",
+        "passed": true,
+        "elapsedMs": 320,
+        "log": "client/temp/project-checks/resource-generated.log"
+      },
+      {
+        "id": "config-generated",
+        "passed": true,
+        "elapsedMs": 10678,
+        "log": "client/temp/project-checks/config-generated.log"
+      },
+      {
+        "id": "prefab-review",
+        "passed": true,
+        "elapsedMs": 4613,
+        "log": "client/temp/project-checks/prefab-review.log"
+      },
+      {
+        "id": "event-target",
+        "passed": true,
+        "elapsedMs": 64,
+        "log": "client/temp/project-checks/event-target.log"
+      },
+      {
+        "id": "game-protocol",
+        "passed": true,
+        "elapsedMs": 223,
+        "log": "client/temp/project-checks/game-protocol.log"
+      },
+      {
+        "id": "game-protocol-generated",
+        "passed": true,
+        "elapsedMs": 657,
+        "log": "client/temp/project-checks/game-protocol-generated.log"
+      },
+      {
+        "id": "main-chapter",
+        "passed": true,
+        "elapsedMs": 672,
+        "log": "client/temp/project-checks/main-chapter.log"
+      },
+      {
+        "id": "battle-presentation",
+        "passed": true,
+        "elapsedMs": 101,
+        "log": "client/temp/project-checks/battle-presentation.log"
+      },
+      {
+        "id": "battle-layout",
+        "passed": true,
+        "elapsedMs": 3389,
+        "log": "client/temp/project-checks/battle-layout.log"
+      },
+      {
+        "id": "battle-layout-rules",
+        "passed": true,
+        "elapsedMs": 151,
+        "log": "client/temp/project-checks/battle-layout-rules.log"
+      },
+      {
+        "id": "game-socket",
+        "passed": true,
+        "elapsedMs": 267,
+        "log": "client/temp/project-checks/game-socket.log"
+      },
+      {
+        "id": "isolated-build",
+        "passed": true,
+        "elapsedMs": 105,
+        "log": "client/temp/project-checks/isolated-build.log"
+      },
+      {
+        "id": "hero-roster",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "hero-state",
+        "passed": true,
+        "elapsedMs": 121,
+        "log": "client/temp/project-checks/hero-state.log"
+      },
+      {
+        "id": "hero-level",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "formation",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "formation-state",
+        "passed": true,
+        "elapsedMs": 105,
+        "log": "client/temp/project-checks/formation-state.log"
+      },
+      {
+        "id": "formation-view",
+        "passed": true,
+        "elapsedMs": 105,
+        "log": "client/temp/project-checks/formation-view.log"
+      },
+      {
+        "id": "remake-playable",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "hero-growth-generated",
+        "passed": true,
+        "elapsedMs": 122,
+        "log": "client/temp/project-checks/hero-growth-generated.log"
+      },
+      {
+        "id": "idle-generated",
+        "passed": true,
+        "elapsedMs": 103,
+        "log": "client/temp/project-checks/idle-generated.log"
+      },
+      {
+        "id": "idle",
+        "paused": true,
+        "passed": null
+      },
+      {
+        "id": "campaign-rules",
+        "passed": true,
+        "elapsedMs": 126,
+        "log": "client/temp/project-checks/campaign-rules.log"
+      },
+      {
+        "id": "remake-navigation",
+        "passed": true,
+        "elapsedMs": 115,
+        "log": "client/temp/project-checks/remake-navigation.log"
+      },
+      {
+        "id": "feature-navigation",
+        "passed": true,
+        "elapsedMs": 125,
+        "log": "client/temp/project-checks/feature-navigation.log"
+      },
+      {
+        "id": "login-presentation",
+        "passed": true,
+        "elapsedMs": 84,
+        "log": "client/temp/project-checks/login-presentation.log"
+      },
+      {
+        "id": "home-presentation",
+        "passed": true,
+        "elapsedMs": 129,
+        "log": "client/temp/project-checks/home-presentation.log"
+      },
+      {
+        "id": "startup",
+        "passed": true,
+        "elapsedMs": 152,
+        "log": "client/temp/project-checks/startup.log"
+      },
+      {
+        "id": "staged-loading",
+        "passed": true,
+        "elapsedMs": 162,
+        "log": "client/temp/project-checks/staged-loading.log"
+      },
+      {
+        "id": "resources",
+        "passed": true,
+        "elapsedMs": 66,
+        "log": "client/temp/project-checks/resources.log"
+      },
+      {
+        "id": "home-bundle",
+        "passed": true,
+        "elapsedMs": 60,
+        "log": "client/temp/project-checks/home-bundle.log"
+      },
+      {
+        "id": "resource-audit",
+        "passed": true,
+        "elapsedMs": 185,
+        "log": "client/temp/project-checks/resource-audit.log"
+      },
+      {
+        "id": "config-groups",
+        "passed": true,
+        "elapsedMs": 166,
+        "log": "client/temp/project-checks/config-groups.log"
+      },
+      {
+        "id": "backend-launcher",
+        "passed": true,
+        "elapsedMs": 7544,
+        "log": "client/temp/project-checks/backend-launcher.log"
+      },
+      {
+        "id": "creator-compat",
+        "passed": true,
+        "elapsedMs": 2170,
+        "log": "client/temp/project-checks/creator-compat.log"
+      },
+      {
+        "id": "prefab-plan",
+        "passed": true,
+        "elapsedMs": 1258,
+        "log": "client/temp/project-checks/prefab-plan.log"
+      },
+      {
+        "id": "architecture",
+        "passed": true,
+        "elapsedMs": 4585,
+        "log": "client/temp/project-checks/architecture.log"
+      },
+      {
+        "id": "bindings",
+        "passed": true,
+        "elapsedMs": 608,
+        "log": "client/temp/project-checks/bindings.log"
+      },
+      {
+        "id": "backpack",
+        "passed": true,
+        "elapsedMs": 159,
+        "log": "client/temp/project-checks/backpack.log"
+      },
+      {
+        "id": "modal-layer",
+        "passed": true,
+        "elapsedMs": 75,
+        "log": "client/temp/project-checks/modal-layer.log"
+      },
+      {
+        "id": "super-scroll",
+        "passed": true,
+        "elapsedMs": 90,
+        "log": "client/temp/project-checks/super-scroll.log"
+      },
+      {
+        "id": "hero-detail",
+        "passed": true,
+        "elapsedMs": 159,
+        "log": "client/temp/project-checks/hero-detail.log"
+      },
+      {
+        "id": "hero-equipment",
+        "passed": true,
+        "elapsedMs": 127,
+        "log": "client/temp/project-checks/hero-equipment.log"
+      },
+      {
+        "id": "hero",
+        "passed": true,
+        "elapsedMs": 237,
+        "log": "client/temp/project-checks/hero.log"
+      },
+      {
+        "id": "city",
+        "passed": true,
+        "elapsedMs": 165,
+        "log": "client/temp/project-checks/city.log"
+      },
+      {
+        "id": "battle",
+        "passed": true,
+        "elapsedMs": 159,
+        "log": "client/temp/project-checks/battle.log"
+      },
+      {
+        "id": "retirement",
+        "passed": true,
+        "elapsedMs": 556,
+        "log": "client/temp/project-checks/retirement.log"
+      }
+    ]
+  }
+}

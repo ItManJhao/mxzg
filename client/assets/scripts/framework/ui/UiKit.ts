@@ -1,10 +1,10 @@
 /**
- * 基础显示节点构造与控件辅助，仅供现有显示装配使用；核心静态界面仍在 Prefab 维护。
+ * 现有战斗演出、飘字和主城动态挂点使用的节点与显示辅助。
+ * 这里只保留实际使用的构造方法；页面静态结构、布局和控件优先在 Prefab 中维护。
  */
 import {
   Button,
   Color,
-  EditBox,
   Graphics,
   HorizontalTextAlignment,
   Label,
@@ -15,24 +15,27 @@ import {
   VerticalTextAlignment,
 } from "cc";
 
-/** 代码里搭 UI，不依赖贴图。场景可以保持空白。 */
+/** 为动态演出创建UI层节点；调用方负责挂载和销毁。 */
 export function uiNode(name: string): Node {
   const node = new Node(name);
   node.layer = Layers.Enum.UI_2D;
   return node;
 }
 
+/** 将动态节点挂到指定父节点，并设置父级局部坐标。 */
 export function place(node: Node, parent: Node, x: number, y: number): Node {
   node.setPosition(x, y, 0);
   node.parent = parent;
   return node;
 }
 
+/** 更新已有Label文字；节点没有Label时不修改其他组件。 */
 export function setText(node: Node, text: string): void {
   const label = node.getComponent(Label);
   if (label) label.string = text;
 }
 
+/** 创建系统字体Label，供飘字等动态内容使用；调用方负责生命周期。 */
 export function createLabel(
   text: string,
   fontSize: number,
@@ -56,6 +59,7 @@ export function createLabel(
   return node;
 }
 
+/** 创建纯色Graphics矩形，供现有动态遮罩和演出底板使用。 */
 export function createRect(name: string, width: number, height: number, color: Color): Node {
   const node = uiNode(name);
   const ui = node.addComponent(UITransform);
@@ -67,6 +71,7 @@ export function createRect(name: string, width: number, height: number, color: C
   return node;
 }
 
+/** 按已有节点尺寸重绘Graphics颜色；缺少绘制或尺寸组件时跳过。 */
 export function paintRect(node: Node, color: Color): void {
   const g = node.getComponent(Graphics);
   const ui = node.getComponent(UITransform);
@@ -80,84 +85,7 @@ export function paintRect(node: Node, color: Color): void {
   g.fill();
 }
 
-export interface TextField {
-  node: Node;
-  getValue(): string;
-  setValue(value: string): void;
-}
-
-/** 单行输入。密码只影响显示，调用方决定要不要把值发出去。 */
-export function createField(
-  placeholder: string,
-  width: number,
-  height: number,
-  options?: { password?: boolean; text?: string; maxLength?: number }
-): TextField {
-  const root = uiNode("Field");
-  const ui = root.addComponent(UITransform);
-  ui.setContentSize(width, height);
-  const bg = createRect("bg", width, height, new Color(32, 48, 78, 255));
-  bg.parent = root;
-
-  const initial = options?.text ?? "";
-  const text = createLabel(initial, 22, {
-    color: new Color(255, 255, 255, 255),
-    width: width - 28,
-    align: "left",
-  });
-  place(text, root, 0, 0);
-  const hint = createLabel(placeholder, 22, {
-    color: new Color(150, 166, 186, 255),
-    width: width - 28,
-    align: "left",
-  });
-  place(hint, root, 0, 0);
-  if (initial) hint.active = false;
-
-  seatFieldLine(text, width, height);
-  seatFieldLine(hint, width, height);
-
-  const edit = root.addComponent(EditBox);
-  edit.textLabel = text.getComponent(Label);
-  edit.placeholderLabel = hint.getComponent(Label);
-  edit.placeholder = placeholder;
-  edit.maxLength = options?.maxLength ?? 16;
-  edit.inputMode = EditBox.InputMode.SINGLE_LINE;
-  edit.inputFlag = options?.password ? EditBox.InputFlag.PASSWORD : EditBox.InputFlag.DEFAULT;
-  edit.string = initial;
-  // EditBox 按左上锚点把字摆到格子左缘。中心锚点会让「正整数，可空」只剩后半截。
-  seatFieldLine(text, width, height);
-  seatFieldLine(hint, width, height);
-
-  return {
-    node: root,
-    getValue(): string {
-      return typeof edit.string === "string" ? edit.string : "";
-    },
-    setValue(value: string): void {
-      edit.string = value;
-      hint.active = !value;
-    },
-  };
-}
-
-/** 单行输入的字从格子左缘排起，收进格子宽度。 */
-function seatFieldLine(node: Node, width: number, height: number): void {
-  const ui = node.getComponent(UITransform);
-  if (ui) {
-    ui.anchorX = 0;
-    ui.anchorY = 1;
-    ui.setContentSize(Math.max(8, width - 16), height);
-  }
-  const label = node.getComponent(Label);
-  if (label) {
-    label.overflow = Overflow.SHRINK;
-    label.horizontalAlign = HorizontalTextAlignment.LEFT;
-    label.verticalAlign = VerticalTextAlignment.CENTER;
-  }
-  node.setPosition(-width / 2 + 8, height / 2, 0);
-}
-
+/** 为现有演出回退入口创建按钮并绑定点击；节点销毁时结束监听。 */
 export function createButton(
   text: string,
   onClick: () => void,

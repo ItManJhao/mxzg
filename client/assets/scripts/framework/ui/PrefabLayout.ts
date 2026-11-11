@@ -1,13 +1,14 @@
-/** 通用页面挂载与节点交互辅助：静态坐标由 Prefab 维护，仅保留可见窗口和导航留白适配。 */
-import { Button, Label, Node, UITransform } from "cc";
-import { seatParchmentList } from "./ParchmentLayout";
+/**
+ * 旧战斗结果显示仍在使用的节点交互辅助：查找、点击、按钮抬层及导航下沿避让。
+ * 正式背包与英雄页面直接打开完整Prefab，不再经这里装配或按页面名称修改布局。
+ */
+import { Button, Node, UITransform } from "cc";
 import { positiveUiSize } from "./visibleFit";
 const PAGE_DESIGN_HEIGHT = 1280;
 const PAGE_BOTTOM_INSET = 140;
-/** 根坐标、九宫格与文本位置已写入 Prefab；这里只适配可见窗口和底部导航。 */
+/** 仅供旧战斗结果局部窗口避开底栏；不缩放纸面或重排页面内容。 */
 export function mountCcbiView(node: Node): void {
   seatAboveChrome(node);
-  seatParchmentList(node);
 }
 
 /** 仅在页面下沿进入底部导航留白时上移页面。 */

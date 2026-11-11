@@ -19,7 +19,6 @@ import { FormationView } from "../../features/hero/ui/FormationView";
 import { HeroInfoView } from "../../features/hero/ui/HeroInfoView";
 import { HeroListView } from "../../features/hero/ui/HeroListView";
 import { HeroSkillView } from "../../features/hero/ui/HeroSkillView";
-import { mountHeroListPage } from "../../features/hero/ui/heroMount";
 import { HomeController } from "../../features/home/HomeController";
 import { RemakeHomeView } from "../../features/home/ui/RemakeHomeView";
 import { UILayer } from "../../framework/ui/UILayer";
@@ -59,14 +58,17 @@ export class ApplicationPages {
             load: () => resources.battlePage("detail"),
             id: "battle-detail", prefab: "bundles/battle/prefabs/BattleDetailLayer", layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",
+            modal: { mask: true, closeOnOutside: true },
         }));
         stops.push(registerView(ChapterRewardInfoView, {
             id: "chapter-reward-info", prefab: "bundles/battle/prefabs/ChapterRewardInfoView", layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",
+            modal: { mask: true, closeOnOutside: true },
         }));
         stops.push(registerView(ServerPickerView, {
             id: "server-picker", prefab: "bundles/login/prefabs/ServerPickerView", layer: UILayer.Popup,
             cache: false, allowMultiple: false, hostId: "remake-modal",
+            modal: { mask: true, closeOnOutside: true },
             load: () => {
                 return resources.featurePage("servers");
             },
@@ -74,6 +76,7 @@ export class ApplicationPages {
         stops.push(registerView(RoleProfileView, {
             id: "role-profile", prefab: "bundles/login/prefabs/RoleProfileView",
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
+            modal: { mask: true, closeOnOutside: true },
         }));
         // All business composition lives here. The UI framework imports no account/home classes.
         stops.push(registerView(AccountLoginView, {
@@ -128,6 +131,7 @@ export class ApplicationPages {
         stops.push(registerView(FormationView, {
             id: "remake-formation", prefab: "bundles/hero/prefabs/FormationView",
             layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
+            modal: { mask: true, closeOnOutside: true },
             load: () => loadFeature("formation"),
         }));
         // 页面注册仅负责点击时的配置前置条件，不参与LoadingPlan的资源选择。
@@ -148,16 +152,17 @@ export class ApplicationPages {
         }
         stops.push(registerView(HeroListView, {
             id: "hero", prefab: "bundles/hero/prefabs/HeroListView", layer: UILayer.Page, cache: false, allowMultiple: false,
-            mount: mountHeroListPage, load: () => {
+            load: () => {
                 return resources.heroPage();
             },
         }));
         stops.push(registerView(HeroInfoView, {
             id: "hero-info", prefab: "bundles/hero/prefabs/HeroInfoView", layer: UILayer.Page, cache: false, allowMultiple: false,
-            mount: mountHeroListPage, load: () => resources.heroPage(true),
+            load: () => resources.heroPage(true),
         }));
         stops.push(registerView(HeroSkillView, {
             id: "hero-skill", prefab: "bundles/hero/prefabs/HeroSkillView", layer: UILayer.Popup, cache: false, allowMultiple: false, hostId: "remake-modal",
+            modal: { mask: true, closeOnOutside: true },
             load: () => resources.heroSkillPage(),
         }));
         return stops;

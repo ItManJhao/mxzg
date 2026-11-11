@@ -1,24 +1,26 @@
 # 背包列表：SuperScroll / SuperContent 维护入口
 
-2026-11-02 起，业务滚动列表统一采用本规范，背包是维护样板。历史首批仅迁移背包；其他存量列表按已开放功能逐批整改，未开放窗口不因此接入玩法。日常使用 Creator 3.8.8 本机预览；按用户要求不构建 H5、App、微信或其他包。技术验证与用户亲手编辑体验分开，**人工体验仍待用户验收**。
+2026-11-02 起，业务滚动列表统一采用本规范，背包是维护样板。历史首批仅迁移背包；其他存量列表按已开放功能逐批整改，未开放窗口不因此接入玩法。日常使用 Creator 3.8.8 本机预览；批次集中构建按负责人授权进行。技术验证与用户亲手编辑体验分开，**人工体验仍待用户验收**。
 
 ## 文件与节点
 
-英雄列表也采用同一规范：`HeroListBoardView/spr_box/HeroScroll` 的 SuperScroll 绑定 `view/content`，view 保存 Mask，content 保存 SuperContent 与 HeroIconCellView Prefab。默认四列、Cell 自然尺寸 96×104、间距 12/8、左右边距 60、上下边距 0；保留原四列的中心坐标与纵向步长。HeroListView 只 setData 并绑定格子显示，普通刷新保留滚动位置，切换元素筛选回到起点；Cell 资源不再在页面重复配置。格子按索引复用，头像/元素图标加载带显示版本保护，销毁会解除点击。当前真实角色仅三名英雄，二十格末行、刷新保位与缩短归位由隔离回归验证，不等同于真实长名册拖动或 Inspector 人工签收。
+英雄列表也采用同一规范：[HeroListView.prefab](../client/assets/bundles/hero/prefabs/HeroListView.prefab)内静态节点`Content/HeroBoard/spr_box/HeroScroll`的SuperScroll绑定`view/content`，view保存Mask，content保存SuperContent与HeroIconCellView Prefab。HeroBoard保留HeroListBoardView组件，独立HeroListBoardView Prefab已退役，页面不再运行创建列表板。默认四列、Cell自然尺寸96×104、间距12/8、左右边距60、上下边距0；保留原四列中心与纵向步长。HeroListView只setData并绑定格子显示，普通刷新保留位置，切换元素筛选回到起点；名册仍归唯一HeroRosterModel。本批少量/空名册、筛选与详情返回限定复验已通过，实际范围见[当前证据](validation/shared-modal-widget-20261111.json)，不沿用早期长列表结果冒充本批检查。
 
 - 滚动组件：[SuperScroll.ts](../client/assets/scripts/framework/ui/SuperScroll.ts)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\scripts\framework\ui\SuperScroll.ts`。
 - 内容组件：[SuperContent.ts](../client/assets/scripts/framework/ui/SuperContent.ts)，同目录。两个组件分别继承原生 ScrollView、Layout，没有另建拖动/惯性/回弹或列表框架。
-- 页面：[BagView.prefab](../client/assets/prefabs/ui/bag/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\bag\BagView.prefab`。
-- Cell：[BagItemView.prefab](../client/assets/prefabs/ui/bag/BagItemView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\prefabs\ui\bag\BagItemView.prefab`。
+- 页面：[BagView.prefab](../client/assets/bundles/bag/prefabs/BagView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\bundles\bag\prefabs\BagView.prefab`。
+- Cell：[BagItemView.prefab](../client/assets/bundles/common/prefabs/BagItemView.prefab)，磁盘位置 `G:\work\FsGame\Project\mxzg\client\assets\bundles\common\prefabs\BagItemView.prefab`。
 - 背包业务展示：[BagView.ts](../client/assets/scripts/features/bag/ui/BagView.ts)；格子展示：[BagItemView.ts](../client/assets/scripts/features/bag/ui/BagItemView.ts)；真实库存同步：[BagController.ts](../client/assets/scripts/features/bag/BagController.ts)、[BagModel.ts](../client/assets/scripts/features/bag/BagModel.ts)。当前通信模板见背包维护指南。
 
-以下均相对 BagView 根节点：
+以下均相对BagView完整Prefab内的Content节点：
 
 1. `spr_box/BagScroll`：SuperScroll，**Content 只需拖一次**，指向下面的 content。BagView.bagScroll 已绑定这个组件，不再重复填写 content、viewport 或 Cell Prefab。
 2. `spr_box/BagScroll/view`：UITransform 与矩形 Mask，决定裁剪范围，配置保存在 Prefab。
 3. `spr_box/BagScroll/view/content`：SuperContent。它本身就是原生 Layout 的子类，**不应再额外挂一份 Layout**；Cell Prefab 和全部排列参数在这里填。
 
 层级迁移、Mask 移动和 ScrollView.content 已保存在源 Prefab，打开页面时不再改父子关系、补 Mask、关闭裁剪或生成替代界面。原页面和 Cell UUID 保留，资源仍按原有背包功能边界加载；图标仍按资源路径加载，没有直接引用全量道具图片。
+
+页面固定布局在Prefab编辑Widget；外根fitVisibleRoot仅桥接LiveShell视口，ViewportScale绑定Content并按designWidth=640、maxScale=1等比缩放。ParchmentLayout、heroMount/heroChrome及旧页面壳已退役，不再按页面名覆盖纸面、页签或列表坐标。SuperContent仍独占动态Cell排列，不能在列表content加竞争位置/尺寸的Widget。
 
 ## 修改布局
 
@@ -103,7 +105,7 @@ Cell 按索引复用，换 Prefab 时重建。BagItemView 每次 show 先解绑�
 
 第一版只支持等尺寸列表，不含不等高、无限循环或虚拟列表。目前验证的是新账号少量真实道具、20 个背包展示槽和最多 18 条的通用夹具；节点按索引复用已有实测，不将这些结果当成大库存帧率或内存预算。将来有实际大列表数据和性能证据后再决定虚拟化。
 
-本批按指示未构建任何包，不能以本机结果代替最新独立 H5/App/小游戏验收。18081 仍是上一批旧产物，与本批 SuperScroll 源码不对应；这是用户暂停构建，不是本批确认了新的 H5 阻塞。
+本节下方截图和最初SuperScroll技术结果属于早期列表迁移，不能作为2026-11-11完整页面整合的新画面验收。本批专项及类型检查通过，完整英雄列表已完成393×852和360×720少量名册/空名册、筛选和详情返回检查，未构造长列表；见[当前证据](validation/shared-modal-widget-20261111.json)。发布包状态与后续集中构建以[当前进度](development-progress.md)为准，不沿用历史端口或旧包推断当前状态。
 
 交付后请你亲手修改三列/间距/边距、打开/清理编辑器样例、换兼容 Cell，再保存预览、切页重开，确认字段易找且修改不被恢复。收到你的确认前，“人工维护体验”保持待验收。
 

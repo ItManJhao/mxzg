@@ -2,7 +2,7 @@
  * 通用 Prefab 加载和实例化：由 UIManager 与功能资源入口调用。
  * 资源范围和 UUID 由配置目录提供；缓存不保存角色业务状态。
  */
-import {Button, Color, EditBox, instantiate, Node, Prefab, Sprite} from "cc";
+import {Button, Color, instantiate, Node, Prefab, Sprite} from "cc";
 import {prefabInPlan} from "../../config/PrefabPlan";
 
 /**
@@ -184,23 +184,6 @@ export function bindClick(node: Node, fn: () => void): void {
     const button = node.getComponent(Button);
     if (!button) throw new Error(node.name + " 缺少 Button");
     node.on(Button.EventType.CLICK, fn);
-}
-
-export function setInteractable(node: Node, on: boolean): void {
-    const button = node.getComponent(Button);
-    if (button) button.interactable = on;
-}
-
-export function readEditBox(node: Node): string {
-    const edit = node.getComponent(EditBox);
-    if (!edit) throw new Error(node.name + " 缺少 EditBox");
-    return typeof edit.string === "string" ? edit.string : "";
-}
-
-export function writeEditBox(node: Node, value: string): void {
-    const edit = node.getComponent(EditBox);
-    if (!edit) throw new Error(node.name + " 缺少 EditBox");
-    edit.string = value;
 }
 
 export function tintSprite(node: Node, color: Color): void {

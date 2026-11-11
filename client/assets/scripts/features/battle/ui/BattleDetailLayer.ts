@@ -2,7 +2,7 @@
  * 只读战斗统计弹层：由结算战报按钮打开，复用旧BattleDetail布局和双方横向SuperScroll。
  * 持有该场冻结展示参数，不联网、不重算战斗、不发奖；独立于结算倒计时，关闭时释放本页监听。
  */
-import { _decorator, Button, Label, Node, UITransform } from "cc";
+import { _decorator, Button, Label, Node } from "cc";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { prepareHeroDetailConfig } from "../../../config/RemakeConfig";
@@ -28,8 +28,6 @@ export interface BattleDetailArgs {
 export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
     /** 旧600×750主体，竖屏等比收窄。 */
     @property(Node) panel: Node | null = null;
-    /** 全屏遮罩，只阻挡穿透并关闭本页。 */
-    @property(Node) backdrop: Node | null = null;
     /** 右上角关闭按钮，不影响已完成的结算。 */
     @property(Button) closeButton: Button | null = null;
     /** 攻方名册横向列表，单元与间距由Prefab维护。 */
@@ -49,10 +47,10 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
     /** 关闭后为true，阻止迟到配置更新已销毁页面。 */
     private released = false;
 
-    /** 绑定关闭并加载显示配置；不发送业务请求，异步失败交UIManager统一处理。 */
+    /** 绑定内容关闭按钮并加载配置；遮罩由ModalLayer处理，异步失败交UIManager统一处理。 */
     public onOpen(args?: BattleDetailArgs): void {
         super.onOpen(args);
-        if (!args || !this.panel || !this.backdrop || !this.closeButton || !this.attackerList
+        if (!args || !this.panel || !this.closeButton || !this.attackerList
             || !this.defenderList || !this.attackerWin || !this.defenderWin || !this.missingNotice
             || !this.attackerName || !this.defenderName) {
             throw new Error("战斗统计参数或预制体绑定缺失");
@@ -71,9 +69,7 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
         ].filter(Boolean).join("；");
         const close = () => this.close();
         this.closeButton.node.on(Button.EventType.CLICK, close);
-        this.backdrop.on(Button.EventType.CLICK, close);
         this.ownListener(() => this.closeButton?.node.off(Button.EventType.CLICK, close));
-        this.ownListener(() => this.backdrop?.off(Button.EventType.CLICK, close));
         bindVisibleRefresh(this.node, () => this.fitViewport());
         void this.prepare(args).then(() => {
             if (!this.released) {
@@ -107,14 +103,13 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
         }
     }
 
-    /** 遮罩铺满可见区域；只缩放静态主体，不修改单元布局或服务器站位。 */
+    /** 只缩放和定位统计主体；遮罩适配归ModalLayer，不修改单元布局或服务器站位。 */
     private fitViewport(): void {
-        if (this.released || !this.panel || !this.backdrop) {
+        if (this.released || !this.panel) {
             return;
         }
         const box = fitVisibleRoot(this.node);
         const scale = Math.min(1, (box.width - 24) / 600);
-        this.backdrop.getComponent(UITransform)!.setContentSize(box.width, box.height);
         this.panel.setScale(scale, scale, 1);
         this.panel.setPosition(-300 * scale, -375 * scale, 0);
     }

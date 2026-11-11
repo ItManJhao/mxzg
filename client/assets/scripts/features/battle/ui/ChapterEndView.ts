@@ -59,8 +59,6 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
     @property(Node) panel: Node | null = null;
     /** 旧BattleEnd静态胜利布局；仅正常主线胜利启用，失败布局独立保留。 */
     @property(Node) mainVictoryPanel: Node | null = null;
-    /** 全屏遮罩，点击只关闭结算，不执行奖励或导航。 */
-    @property(Node) backdrop: Node | null = null;
     /** 胜利 chibang 骨骼挂点，随窗口销毁。 */
     @property(Node) victory: Node | null = null;
     /** 失败翅膀静态资源，旧版失败分支没有胜利骨骼。 */
@@ -98,10 +96,10 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
     /** 本页加载的同源等级门槛，键为等级、值为升级所需经验；仅跨级动画读取。 */
     private experienceThresholds = new Map<number, number>();
 
-    /** 绑定只读关闭操作，异步加载完成后再开始音效和动画。 */
+    /** 绑定确认关闭并异步准备表现；原空白关闭由ViewSpec共享模态转交，不请求结算。 */
     public onOpen(args?: ChapterEndArgs): void {
         super.onOpen(args);
-        if (!args || !this.panel || !this.backdrop || !this.victory || !this.defeatWing || !this.defeatTitle
+        if (!args || !this.panel || !this.victory || !this.defeatWing || !this.defeatTitle
             || !this.defeatContent || !this.readonlyNotice || !this.closeHint || !this.confetti) {
             throw new Error("主线结算参数或预制体绑定缺失");
         }
@@ -128,12 +126,6 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             this.closeHint.string = "失败样式验收 · 5 秒后关闭";
         }
         const close = () => this.close();
-        this.backdrop.on(Button.EventType.CLICK, close);
-        this.ownListener(() => {
-            if (this.backdrop?.isValid) {
-                this.backdrop.off(Button.EventType.CLICK, close);
-            }
-        });
         const confirm = this.mainVictoryPanel?.active
             ? this.panel.getChildByPath("VictoryButtons/ConfirmButton")! : this.panel.getChildByName("ConfirmButton")!;
         confirm.active = !!args.persistentChapter && args.won;
@@ -192,13 +184,12 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         });
     }
 
-    /** 遮罩覆盖实际视口，主体保留Prefab布局等比收窄；旋转和重复刷新不累计缩放。 */
+    /** 主体按视口等比收窄，不累计缩放；全屏遮罩由UIManager统一持有。 */
     private fitViewport(): void {
-        if (this.released || !this.panel || !this.backdrop) {
+        if (this.released || !this.panel) {
             return;
         }
         const box = fitVisibleRoot(this.node);
-        this.backdrop.getComponent(UITransform)!.setContentSize(box.width, box.height);
         this.panelScale = BattleInfoUtils.contentScale(box.width);
         Tween.stopAllByTarget(this.panel);
         this.panel.setScale(this.panelScale, this.panelScale, 1);

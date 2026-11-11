@@ -1,5 +1,6 @@
 """检查战斗预制体的设计宽、九宫格资源边距及血条模式，防止导入时退回旧显示参数。"""
 import json
+import math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -11,18 +12,31 @@ def read(path):
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
 
+def validate_sliced_frame(frame, size, source=""):
+    """验证九宫格边距；零边距仅允许原尺寸绘制，真实拉伸仍须有有效边距。"""
+    borders = [frame.get("border" + side, 0) for side in ("Left", "Right", "Top", "Bottom")]
+    assert all(value >= 0 for value in borders), (source, "九宫格边距不能为负")
+    assert sum(borders[:2]) <= frame["rawWidth"] and sum(borders[2:]) <= frame["rawHeight"], (source, "边距超出原图")
+    if not any(borders):
+        # 旧MissionRewardInfoLayer.spr_title_bg就是184×67、四边0的Scale9；原尺寸无拉伸。
+        # 只允许尺寸完全一致，避免新布局放大/缩小时用零边距破坏应保护的边缘。
+        assert (math.isclose(size["width"], frame["rawWidth"], abs_tol=1e-6)
+                and math.isclose(size["height"], frame["rawHeight"], abs_tol=1e-6)), (source, "零边距九宫格不得拉伸")
+
+
 def check():
-    """扫描战斗目录；资源缺失、零边距九宫格或旧设计宽均终止检查。"""
+    """扫描战斗Bundle；资源缺失、非法拉伸九宫格或旧设计宽均终止检查，不改源资源。"""
     design = read(ROOT / "client/settings/v2/packages/project.json")["general"]["designResolution"]
     assert (design["width"], design["height"]) == (640, 1280), "设计分辨率必须为640×1280"
     frames = {}
-    for path in (ASSETS / "resources/ui").rglob("*.meta"):
+    for path in (ASSETS / "bundles").rglob("*.meta"):
         meta = read(path)
         for key, sub in meta.get("subMetas", {}).items():
             if sub.get("importer") == "sprite-frame":
                 frames[meta["uuid"] + "@" + key] = (path, sub["userData"])
     count = 0
-    paths = [*(ASSETS / "battle/ui/prefabs").glob("*.prefab"), ASSETS / "bundles/battle/prefabs/ChapterEndView.prefab"]
+    paths = sorted((ASSETS / "bundles/battle/prefabs").glob("*.prefab"))
+    assert paths, "战斗预制体目录为空，不能以零扫描结果通过"
     for path in paths:
         data = read(path)
         for node in data:
@@ -48,9 +62,8 @@ def check():
                     ref = (background_sprite.get("_spriteFrame") or {}).get("__uuid__")
                 assert ref in frames, (path.name, node["_name"], "九宫格资源缺失")
                 resource, frame = frames[ref]
-                borders = [frame.get("border" + side, 0) for side in ("Left", "Right", "Top", "Bottom")]
-                assert all(v >= 0 for v in borders) and any(borders), (resource, "九宫格边距无效")
-                assert sum(borders[:2]) <= frame["rawWidth"] and sum(borders[2:]) <= frame["rawHeight"], (resource, "边距超出原图")
+                assert ui is not None, (path.name, node["_name"], "九宫格节点缺少尺寸")
+                validate_sliced_frame(frame, ui["_contentSize"], (resource, path.name, node["_name"]))
                 count += 1
             if path.stem == "BattlePage" and node["_name"] in ("BannerBg", "LogBg"):
                 sprite = next(c for c in components if c["__type__"] == "cc.Sprite")
@@ -71,7 +84,7 @@ def check():
             hp = next(n for n in battle if n.get("_name") == side + "Hp_" + str(index))
             names = {battle[r["__id__"]]["_name"] for r in hp["_children"]}
             assert {"Fill", "Label", "ElementIcon"} <= names, (side, index, "头顶挂点缺失")
-    print(f"PASS {len(paths)} battle/settlement prefabs: 640 design width; {count} sliced sprites with valid margins")
+    print(f"PASS {len(paths)} battle/settlement prefabs: 640 design width; {count} sliced sprites with valid borders or native-size zero borders")
 
 
 if __name__ == "__main__":

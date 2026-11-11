@@ -121,6 +121,7 @@ export class Node {
     TOUCH_CANCEL: "touch-cancel",
     NODE_DESTROYED: "node-destroyed",
     CHILD_ADDED: "child-added",
+    ACTIVE_IN_HIERARCHY_CHANGED: "active-in-hierarchy-changed",
     SIZE_CHANGED: "size-changed",
   };
 

@@ -1,22 +1,16 @@
 # 新聊天交接文档
 
-更新：2026-11-11。负责人已授权本批提交并推送到hao；不合并main，main合并由负责人决定。
+更新：2026-11-11。已推送基线hao/f3cd64a3，main未合并。上一批加载与缓存已通过；本批共享模态、完整英雄Prefab与布局清理已完成专项和本机限定预览，修改暂留本地，未提交推送。
 
-## 当前批次已完成：Bundle目录整合与本地远程验收
+先看[当前进度](development-progress.md)，这里仅保留接手入口。本批48/48项有效检查及类型检查通过，5组旧检查暂停；共享层三模式/叠窗、英雄和背包相关竖屏、真实挑战结算返回的限定结果见[本批证据](validation/shared-modal-widget-20261111.json)。[前次框架审计](validation/framework-cleanup-20261111.json)和[旧模态证据](validation/modal-layer-20261111.json)保留历史依据；旧逐窗蒙版已被共享方案取代。本批未重新构建发布包，也未代签负责人Inspector或全页面验收。
 
-2026-11-11 19:56集中构建已确认自动链路生效。before/after均执行bootstrap-preload-v1 v1.6.2，最终预载包含main、bootstrap，startupPreloadRepaired=false；本轮检查没有修改构建配置。104个远程包输出、循环依赖、本地启动依赖及背包共用资源归属均通过。本地资源6,220,784字节，远程资源665,636,594字节；字体仍是本地资源主要来源，未裁剪。见[自动构建证据](validation/bundles-auto-build-20261111.json)。
+上一批46项统一检查、Python17组以及加载/缓存自然回收已通过，见[工具证据](validation/migration-tools-review-20261111.json)和[加载与缓存证据](validation/loading-cache-review-20261111.json)。这和本批共享模态/布局复验分开，不代表真实CDN、真机、长期内存或完整玩法新验收。
 
-资源已实际从顶层ui/resources/prefabs整合到assets/bundles，assets下仅保留bundles、scenes、scripts。原有21,902个非目录资源UUID全部保留，100个Prefab索引已重生成。页面、图片、图集和背景按模块归属；图标、骨骼、音频、字体、配置按素材类别归包。未开放模块的旧素材保留所属类别。加载统一为包名/包内路径，沿用原ResourcePool及LoadingPlan三段显式配置，其余按需；原图进入Bundle后有动态地址，旧副本删除名单为空。
+顶层资源已归入assets/bundles，104远程包及本地bootstrap自动构建已收口。21,902个非目录UUID全部保留是f3cd64a3目录迁移时的历史基线；本批主动退役旧壳、蒙版片段及独立英雄列表板后，当前96份Prefab（含场景共97份），仍用资源UUID不变。三段显式配置与其余按需保持；预加载Prefab不会因背包实例到期而失效，迟到角色骨骼等按需资源重开仍可能下载。
 
-运行验收使用独立内存测试环境：背包四分类详情、英雄六元素/详情/技能、布阵、真实主线胜利/失败、奖励、经验动画、双方战报及返回挂机均已检查。经验实测80/360逐步增至280/360，与服务器回执一致；正常流程无资源警告/错误。19:42包运行证据与19:56包自动链路证据分开保存，不把之前手工补启动配置当成自动构建成功。见[运行证据](validation/bundles-final-review-20261111.json)。
+背包、英雄列表和详情已是完整Prefab；固定布局归Widget，ViewportScale只对target按designWidth/maxScale等比缩放，外根fitVisibleRoot仅桥接LiveShell视口。ParchmentLayout、ccbiPlace、heroMount、heroChrome及PagePrefabShell/ListBackdrop/DimSheet、独立HeroListBoardView Prefab已退役；列表板直接保存于HeroListView，HeroRosterModel仍是唯一名册状态。PrefabLayout仅留旧战斗结果显示的实际辅助。
 
-本批可以收口，不再重复要求构建。真实CDN、原生/微信/真机及长期内存仍待后续授权；Python工具路径已调整但专项尚未运行。字体裁剪仅记录为体积来源，不在本批改变表现。玩法范围、WS＋Protobuf、服务端权威与幂等结算保持；宝箱领取、快速战斗、升级及穿脱继续关闭。
-
-本批提交推送仅面向hao，main合并由负责人决定；独立测试服务已关闭。后续工作由负责人选择，不自动恢复暂停玩法。
-
-## 上一批已完成的基础
-
-统一ResManager、三段配置、背包实例缓存及预制体闲置回收已验证。17:11包已完成英雄/战斗首批合图及45张原图副本去重，发布画面通过；见[图集验收](validation/ui-atlas-release-20261111.json)。这些历史包不覆盖本轮远程目录迁移。真机/GPU内存与长期压力仍待验。
+模态只在ViewSpec配置`{mask,closeOnOutside}`，两个开关独立；省略则不拦截。多个弹窗只共用一个动态节点，Prefab仅保留实际内容背景的BlockInputEvents。普通弹窗及原有布阵/结算沿用各自关闭流程，GM/技能台mask=true、closeOnOutside=false。本机限定复验已完成，下一步按负责人节奏集中构建，检查新Prefab、共享层和当前编译结果；真实CDN/平台/长期内存仍列计划，不恢复暂停玩法。
 
 ## 项目与边界
 
@@ -38,7 +32,7 @@
 
 ## 代码入口
 
-人工入口和资源生命周期见[加载与远程资源](staged-resource-loading.md)。当前背包迁移至独立远程Bundle，真实下载仍待新包验证。
+人工入口和资源生命周期见[加载与远程资源](staged-resource-loading.md)。当前Bundle整合与自动构建已验收，本轮工具、加载和缓存实测也已完成；耗时及适用边界统一见进度页，不将历史玩法视觉记录作为本批新验收。
 
 | 流程 | 入口 |
 |---|---|

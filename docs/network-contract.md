@@ -1,6 +1,6 @@
-# 登录、角色与背包通信契约
+# 游戏通信与统一状态契约
 
-更新：2026-11-03。本批范围经用户确认：去掉全部游戏业务 HTTP，先完善登录、角色、背包；其他玩法入口暂停，后续依旧项目重做。资源下载、WS 握手及测试实例身份探针不属于游戏业务 API。
+更新：2026-11-11。全部游戏业务只走 WS＋Protobuf。当前已接入登录、角色、背包、英雄只读状态、主线阵容保存、前三关挑战/结算及挂机演出；升级、穿脱、宝箱领取、快速战斗仍关闭。资源下载、WS 握手及测试实例身份探针不属于游戏业务 API。后文按日期记录字段演进，完整状态以[开发进度](development-progress.md)为准。
 
 ## 原项目初始化依据
 
@@ -21,25 +21,34 @@
 |---|---|---|
 | servers.list | 请求/响应 | 匿名读取 Servers.items 开放区服，读取后关闭目录连接 |
 | session.login | 请求/响应 | local 开发身份交换；account/serverId/clientInstanceId → Accepted，其中 session 是凭证、initial 是统一状态 |
-| session.authenticate | 请求/响应 | 有效令牌恢复连接；Accepted.initial 已包含完整角色与背包，无额外同步请求 |
+| session.authenticate | 请求/响应 | 有效令牌恢复连接；Accepted.initial 已包含统一状态，无额外同步请求 |
 | session.heartbeat | 请求/响应 | 已鉴权连接保活，不更新资产，默认不打印 |
 | session.kicked | 服务端事件 | 清理对应账号，停止自动重连，回登录 |
-| state.changed | 服务端事件 | 事务提交后的完整 Snapshot，角色和背包共用 revision |
+| state.changed | 服务端事件 | 事务提交后的完整 Snapshot；角色、库存、英雄、阵容、主线共用持久 revision |
+| formation.save | 请求/响应 | 当前角色主线阵容保存；requestId 持久幂等，回执不代替统一快照 |
+| chapter.challenge | 请求/响应 | 前三关主线挑战，服务端权威输入与持久战报 |
+| chapter.claim | 请求/响应 | 指定主线战报的幂等结算；不是挂机宝箱领取 |
+| chapter.replay | 请求/响应 | 恢复既有持久战报，不重新计算或发奖 |
+| chapter.idle.encounter | 请求/响应 | 已通关主线的挂机遇敌演出战报，不结算资产 |
+| battle.preview | 请求/响应 | 当前已保存阵容的开发只读试战，不推进通关或发奖 |
+| gm.status、gm.grant | 请求/响应 | 默认关闭的开发开关与当前测试角色数据准备；不等同玩法获取入口 |
 
-inventory.list、session.sync 已删除业务处理，鉴权后请求返回 UNKNOWN_MESSAGE；英雄升级/阵容/战斗/挂机尚无新网络协议或入口。
+inventory.list、session.sync 已删除业务处理，鉴权后请求返回 UNKNOWN_MESSAGE。未恢复玩法不得借旧 CampaignApi、IdleApi、HeroLevelApi 发请求或通过回调更新资产；这里只列 Protocol.ts 实际登记的消息。
 
 ## 信封和业务载荷
 
 Frame 的 version=1，kind=request/response/event，name 是 Protocol.ts 统一登记的消息标识。id 关联单次请求，不是持久幂等键。成功响应含 ok=true/body，无 error；失败 ok=false/body=null/error。connectionId 标识当前连接，不是资产版本。令牌只在消息体，不放 URL、不打印。
 
-Accepted={connectionId,roleId,serverTimeMs,initial,session?}。Snapshot={role,inventory,revision,heroes:[]}；heroes 字段暂留字段号，不在当前范围加载英雄。role 包含身份、区服、等级、金币、钻石，以及基础资料 basics（经验、奖杯、头像/形象/头像框、语言、创建/登录秒和当前级经验门槛）；字段依据及缺口见[角色基础契约](role-data-contract.md)。inventory 为 Item{itemId,quantity}[]，数量是正整数绝对值，空数组表示已确认没有库存。revision 来自 game_role.state_revision（V6），是安全整数；不与 BagModel 本地界面 revision 混用。
+Accepted={connectionId,roleId,serverTimeMs,initial,session?}。统一 Snapshot 包含 role、heroes、inventory、revision，并扩展 timedInventory、heroRoster、mainFormation、mainChapter、mainChapterIdle。协议字段名及是否可选以 game.proto 为准；Codec 向应用提供 camelCase，不把缺失可选状态当作全零或已同步。heroes 是真实名册，空数组表示没有英雄，不是预留字段。
+
+role 包含身份、区服、等级、金币、钻石，以及基础资料 basics（经验、奖杯、头像/形象/头像框、语言、创建/登录秒和当前级经验门槛）；字段依据及缺口见[角色基础契约](role-data-contract.md)。inventory 为 Item{itemId,quantity,instanceId?}[]，数量是正整数绝对值，空数组表示已确认没有库存。期限物品使用独立 timedInventory；配置 ID 与持久实例 ID 不混用，实例 ID 保留字符串。revision 来自 game_role.state_revision（V6），是安全整数；不与 BagModel 本地界面 revision、阵容 version 或连接 connectionId 混用。
 
 ## 初始化与同步调用链
 
 1. 选服目录走匿名 WS；登录在游戏连接发送 session.login，恢复发送 session.authenticate。
 2. 服务端解析身份，持有角色串行锁完成接管；旧凭证撤销，旧连接收到 kicked。读取数据库一致快照，随成功响应一次返回。
 3. GameSocketClient 校验关联、连接、角色与完整数据；AccountService 接纳账号时在同一通知批次调用 AssetStateBinding。
-4. 应用先校验角色、库存、持久版本与当前身份，再将原始帧定向交给 RoleController 和 BagController 的 onNotify。二者更新唯一 Model 后通知界面。
+4. AssetStateBinding 在任何模块提交前校验完整角色、普通/期限库存、英雄、阵型、主线/挂机状态、持久版本与当前身份。通过后在同一通知批次把原始帧定向交给 RoleController、BagController、HeroRosterController、MainChapterController 的 onNotify；模块更新唯一 Model 后通知界面，非法整包不得先提交部分资产。
 5. 背包打开、切页签、再次开始游戏均不查库存。断线保留已同步数据，重连鉴权首包整体恢复；登出或切服清理旧状态。重复/较旧版本被应用丢弃。
 
 ## 服务端提交边界

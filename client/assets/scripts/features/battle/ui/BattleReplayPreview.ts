@@ -131,6 +131,7 @@ export class BattleReplayPreview {
         }
         const unregisterEnd = idleEncounter ? () => {} : registerView(ChapterEndView, {
             id: "chapter-end", prefab: "bundles/battle/prefabs/ChapterEndView", layer: UILayer.Popup,
+            modal: { mask: true, closeOnOutside: true },
             hostId: persistentChapter ? "remake-modal" : "battle-settlement", cache: false, allowMultiple: false
         });
         // 正常结算必须在应用弹层，避免完整旧胜利页被挂机面板遮挡；技能台仍归本地战场清理。

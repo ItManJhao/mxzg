@@ -12,7 +12,7 @@ import { BagItemView } from "../../bag/ui/BagItemView";
 import type { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import type { IdleReward } from "../IdleApi";
 
-/** 加载已配置 SuperContent/Cell 的窗口，呈现全部真实奖励；父页面在加载期间关闭时不挂载。 */
+/** 在调用方宿主加载已有奖励窗口；不查找旧页面壳，父页面关闭后不挂载迟到结果。 */
 export async function mountIdleRewards(parent: Node, rewards: readonly IdleReward[], catalog: BagItemCatalog, close: () => void, isCurrent: () => boolean): Promise<Node | null> {
     const panelPrefab = await loadPrefab("bundles/item/prefabs/ItemRewardLayer");
     if (!parent.isValid || !isCurrent()) return null;
@@ -33,8 +33,7 @@ export async function mountIdleRewards(parent: Node, rewards: readonly IdleRewar
         scroll.list.setData(rewards, (cell, reward) => {
             cell.getComponent(BagItemView)!.show(reward, false, null, catalog.face(reward.itemId, reward.quantity));
         });
-        const shell = parent.getChildByName("PagePrefabShell");
-        hold.parent = shell?.active ? shell : parent;
+        hold.parent = parent;
         bindVisibleRefresh(hold, () => {
             fitVisibleRoot(hold);
             const size = view.getVisibleSize();

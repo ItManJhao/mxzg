@@ -51,10 +51,6 @@ export class FormationView extends BaseView<FormationRequest> {
     @property(Label) formationLabel: Label | null = null;
     /** 面板设计尺寸与锚点。 */
     @property(UITransform) panelBounds: UITransform | null = null;
-    /** 背景拦截按钮，只关闭当前弹窗。 */
-    @property(Button) backdropButton: Button | null = null;
-    /** 背景可点击区域，跟随可见尺寸。 */
-    @property(UITransform) backdropBounds: UITransform | null = null;
     /** 最大屏宽占比。 */
     @property maxWidthRatio = 0.94;
     /** 最大屏高占比。 */
@@ -90,7 +86,7 @@ export class FormationView extends BaseView<FormationRequest> {
         const fields = { closeButton: this.closeButton, confirmButton: this.confirmButton, titleLabel: this.titleLabel,
             tipLabel: this.tipLabel, countLabel: this.countLabel, heroScroll: this.heroScroll,
             formationButton: this.formationButton, formationLabel: this.formationLabel, filterMark: this.filterMark,
-            panelBounds: this.panelBounds, backdropButton: this.backdropButton, backdropBounds: this.backdropBounds };
+            panelBounds: this.panelBounds };
         for (const [name, value] of Object.entries(fields)) {
             if (!value) throw new Error("FormationView.prefab 缺失绑定：" + name);
         }
@@ -111,15 +107,13 @@ export class FormationView extends BaseView<FormationRequest> {
         this.onSaveChanged();
     }
 
-    /** 只适配根窗口和背景命中区域，列表尺寸由静态布局维护。 */
+    /** 只适配根窗口，列表尺寸归静态布局；共享遮罩由UIManager提供。 */
     private fit(): void {
         const visible = view.getVisibleSize(), panel = this.panelBounds!;
         const scale = Math.min(visible.width * this.maxWidthRatio / panel.width, visible.height * this.maxHeightRatio / panel.height);
         const local = scale / ancestorScale(this.node);
         this.node.setScale(local, local, 1);
         this.node.setPosition((panel.anchorX - 0.5) * panel.width * local, (panel.anchorY - 0.5) * panel.height * local, 0);
-        this.backdropBounds!.node.setPosition((0.5 - panel.anchorX) * panel.width, (0.5 - panel.anchorY) * panel.height, 0);
-        this.backdropBounds!.setContentSize(visible.width / scale, visible.height / scale);
     }
 
     /** 注入可测试依赖；生产默认使用应用持有的唯一模块与Model，不创建页面控制器。 */
@@ -130,14 +124,13 @@ export class FormationView extends BaseView<FormationRequest> {
         this.catalog = catalog;
     }
 
-    /** 页面自己绑定交互，关闭仅清理自身按钮监听。 */
+    /** 绑定内容按钮；共享模态空白关闭走onClose的草稿取消回调，不重复绑定背景。 */
     private bindControls(): void {
         const bind = (button: Button, run: () => void) => {
             button.node.on(Button.EventType.CLICK, run);
             this.ownListener(() => button.node.off(Button.EventType.CLICK, run));
         };
         bind(this.closeButton!, () => this.complete(false));
-        bind(this.backdropButton!, () => this.complete(false));
         bind(this.confirmButton!, () => this.saveDraft());
         bind(this.formationButton!, () => this.cycleFormation());
         this.elementButtons.forEach((button, index) => bind(button, () => {

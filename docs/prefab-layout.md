@@ -1,10 +1,22 @@
 # Prefab 编辑与审查
 
-## 2026-11-02 战场窄屏显示复验
+更新：2026-11-11。当前保留96份Prefab，含Remake场景共97份；资源统一位于assets/bundles，各模块页面放在模块内prefabs目录。当前功能与本批共享模态/布局复验状态见[开发进度](development-progress.md)，结构审查见[prefab-review.json](prefab-review.json)。保留资源及静态检查通过不等于对应玩法开放或负责人Inspector签收。
+
+修改静态布局直接编辑对应完整Prefab，保留仍用资产的meta UUID与组件绑定；列表使用SuperScroll/SuperContent的Inspector参数。背包、英雄列表及英雄详情已静态保存背景、纸面、页签和列表板，不再运行组装；HeroBoard是HeroListView内的静态节点，HeroListBoardView组件继续绑定列表，独立同名Prefab已退役。
+
+固定布局由Widget维护，ViewportScale仅对target按`min(maxScale, 可用宽度/designWidth)`等比缩放，默认designWidth=640、maxScale=1。外根fitVisibleRoot只桥接没有UITransform的LiveShell视口，内容位置和纵向拉伸仍在Prefab编辑，不再按页面名或机型表重排。ParchmentLayout、ccbiPlace、heroMount/heroChrome及PagePrefabShell/ListBackdrop/DimSheet均已退役；旧战斗结果仍用的PrefabLayout辅助不扩大到这些完整页面。
+
+弹窗模态只在ViewSpec配置`{mask,closeOnOutside}`：省略不拦截、mask=false透明拦截、mask=true显示蒙版，是否空白关闭由closeOnOutside独立控制。UIManager动态共用一份节点，关闭后向下恢复；各Prefab不再放独立蒙版或绑定ModalLayer，只在实际内容背景保留BlockInputEvents。布阵/结算维持原关闭流程，GM/技能台mask=true、closeOnOutside=false。旧逐窗蒙版画面证据只作历史，本批三模式及相关页面限定预览见[当前证据](validation/shared-modal-widget-20261111.json)，不代表全机型或发布包验收。
+
+## 历史画面与结构记录
+
+以下保留2026-11-02的局部验收、旧目录和阶段方案，仅供追溯。记录中的“当前”“本批”及后续安排只针对当时；旧Campaign/Idle/普通升级链后来已暂停，不能据此恢复HTTP、领取或养成入口，也不把当时90份资源数量写成当前96份的验收范围。
+
+## 历史：2026-11-02 战场窄屏显示复验
 
 CampaignField 对单位、血条、特效和飘字的既有父层统一按视口宽度缩放，保留最外侧阵位的等级/血条边距，不改 Prefab 静态结构或背景。实际验证 393×852、360×800，canvas 绘制与 CSS 尺寸一致；窄屏挂机、真实出阵到失败结算、返回挂机均可见外侧单位和血条。截图保留 client/temp/field-20261102。本次不代替标准/宽屏新一轮复验，也不宣称所有英雄模型或整个战斗界面通过；战斗日志左侧裁切仍待处理。
 
-当前普通挂机收据已迁至 ItemRewardLayer 的 SuperScroll 四列列表，见 [列表维护](super-scroll-authoring.md)。下方 BattleEndLayer 六格分页是迁移前的历史验证；碎片标识与宝箱/掉落堆反馈仍待补齐，不把旧截图当作当前效果一致的证据。
+该历史批次的普通挂机收据曾迁至ItemRewardLayer的SuperScroll四列列表；该旧业务链现已暂停。下方BattleEndLayer六格分页属于更早验证，不把旧截图当作当前效果或领取入口已恢复的证据。当前列表规范见[列表维护](super-scroll-authoring.md)。
 
 ## 历史：2026-11-02 普通挂机领取局部复验（六格分页已替换）
 
@@ -12,16 +24,16 @@ CampaignView 在已有时间背景节点增加静态 Button 并绑定 idleClaimB
 
 本批真实普通角色测试：640×1280、360×800、960×1280，画布绘制及 CSS 尺寸均核对；时间格可领取，奖励图标/数量/标题/确定按钮可见，钱包同步与重登恢复正常，宽屏确认关闭成功。保留 client/temp/idle-20261102/claim-*.png。宽屏初次动态切换时绘制高度仍为 1270，重新初始化后达到实际 1280，再重新领取截图；旧截图已由最终证据替换。超过六类奖励的翻页尚无真实随机收据实测；不冒称全项通过。窄屏战场左侧角色/血条裁切仍待正式服专项修补，结算壳完整美术对照和 Inspector 编辑体验也未签收。
 
-## 2026-11-02 普通升级窗口（本批新增验收）
+## 历史：2026-11-02 普通升级窗口局部验收
 
-仅 HeroInfoUpLevelLayer 接入正常升级，不重做历史三个布局问题，也不扩展窗口巡检。保留 Prefab UUID 723c0b26-52e0-47a6-ad0f-30d22af54f92。真实首验发现原资源只是嵌入式内容块，底板仅覆盖消耗、状态节点原本隐藏；现静态复用已有 win-bg-12 底板覆盖标题/四属性/消耗/按钮，并启用 lbl_max_tips。根 Scale=0.85；根 UITransform 2048×2048 与 BlockInputEvents 只负责拦截底层点击；node_all=(0,-180)，panel_background=(0,150)、640×540。不新增运行时自动排版或另一升级窗口。
+当时仅HeroInfoUpLevelLayer接入普通升级，后续该入口与旧HTTP已暂停；当前列表打开只读HeroInfoView。以下仅保留旧布局调整证据：Prefab UUID为723c0b26-52e0-47a6-ad0f-30d22af54f92，首验发现原资源只是嵌入式内容块，底板仅覆盖消耗、状态节点原本隐藏；当时静态复用win-bg-12覆盖标题/四属性/消耗/按钮，并启用lbl_max_tips。根Scale=0.85；根UITransform 2048×2048与BlockInputEvents只负责拦截底层点击；node_all=(0,-180)，panel_background=(0,150)、640×540。不据此开放普通升级或新建另一套窗口。
 
 本轮已用隔离 MySQL/测试服务实际通过 640×1280、360×800、960×1280，各三轮开关；引擎和画布实际尺寸均核对（不是只看预览下拉文字）。默认尺寸验证正常奖励后的升级、再战斗及重登；首胜奖励取得时原画布为 640×870，未混作本窗口三尺寸证据。窄/宽检查本窗口。截图在 client/temp/hero-level-20261102，准确指纹和范围见 config/prefab-acceptance.json。无新脚本/缺资源告警；调试期间两次检查表达式报错不属于应用异常。
 
 Inspector：待负责人明确认可。已给出底板 X 0→1 保存→0 保存重开步骤，目前收到的仅“已刷新”；不代签。最终文件已核对恢复值。HeroInfoUpgradeLayer 仍是突破展示，不因本次普通升级而开放。
 
 
-保留 90 份 Prefab，含 remake-home Bundle。保留策略见 [prefab-plan.json](../tools/prefab-plan.json)，逐项结构、特殊锚点、ScrollView 和视觉状态见 [prefab-review.json](prefab-review.json)。保留资源不等于开放相应玩法。
+2026-11-02当时保留90份Prefab，含旧remake-home Bundle；后续目录迁移基线曾为100份，本批退役废弃资产后的数量及目录以页首为准。保留策略输入见[prefab-plan.json](../tools/prefab-plan.json)，逐项结构、特殊锚点、ScrollView和视觉状态见[prefab-review.json](prefab-review.json)。保留资源不等于开放相应玩法。
 
 ## 本批收尾范围（2026-11-02）
 
@@ -81,4 +93,4 @@ python tools/audit_prefabs.py 更新报告，--check 校验与源码一致；综
 
 ## 继续有效的美术与安全区约定
 
-羊皮纸窗口不因 720 宽背景而放大至 1.069；宽度足够时比例为 1，窄屏只缩小，背景独立铺满。背包列表使用静态 view/Mask/content 关系，禁止重新采用运行时重挂 content 或移除 Mask 的旧方案。九宫格与保留界面的原美术偏差记录于 asset-provenance.json，未因本轮原点修复宣称 1:1。安全区由 framework/ui/safeAreaLayout 读取，safeDebug=1 仅用于调试显示；不要用旧 Boot 日志作为当前入口证据。
+羊皮纸窗口不因720宽背景而放大至1.069；当前ViewportScale默认宽度足够时比例为1，窄屏只缩小，背景通过Prefab的Widget独立铺满。背包列表使用静态view/Mask/content关系，禁止重新采用运行时重挂content或移除Mask的旧方案。九宫格与保留界面的原美术偏差记录于asset-provenance.json，未因布局整理宣称1:1。framework/ui/safeAreaLayout现在只保留640×1280设计常量，实际可见尺寸由visibleFit读取；旧safeDebug已退役，不能把它或旧Boot日志当作当前适配证据。

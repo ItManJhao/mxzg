@@ -505,9 +505,6 @@ async function main(): Promise<void> {
         const result: any = new Node("Result").addComponent(ChapterEndView);
         result.panel = new Node("Panel");
         result.panel.parent = result.node;
-        result.backdrop = new Node("Backdrop");
-        result.backdrop.parent = result.node;
-        result.backdrop.addComponent(UITransform);
         for (const [width, height] of [[360, 720], [360, 840], [393, 852], [768, 1024], [852, 393], [393, 852]]) {
             const visibleWidth = width / height * 1280;
             screenView.getVisibleSize = () => ({ width: visibleWidth, height: 1280 });
@@ -518,7 +515,6 @@ async function main(): Promise<void> {
             assert(result.panel.scale.x * 640 <= visibleWidth - 24 + 0.001);
             assert.equal(result.panel.scale.x, result.panel.scale.y, "主体不能横向挤压");
             assert.equal(result.panel.position.x, -320 * result.panel.scale.x, "结算原点随等比缩放保持居中");
-            assert.equal(result.backdrop.getComponent(UITransform).contentSize.width, visibleWidth);
         }
         result.mainVictoryPanel = result.panel;
         result.mainVictoryPanel.active = true;

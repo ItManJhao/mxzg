@@ -1,6 +1,6 @@
 /**
  * 只读英雄详情页：由 UIManager 传入实例 ID，读取唯一英雄 Model 并订阅服务端同步后的事件。
- * 复用旧详情预制体与立绘；展示服务器基础属性，关闭时释放监听和立绘，不触发养成写操作。
+ * 完整Prefab保存背景与固定布局，Widget和统一比例组件负责视口适配；关闭释放监听和立绘，不触发养成写操作。
  */
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
 import { BaseView } from "../../../framework/ui/BaseView";
@@ -14,29 +14,17 @@ import { ResManager } from "../../../framework/assets/ResManager";
 import { HeroCatalog } from "../utils/HeroCatalog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { _decorator, Button, Label, Node, Sprite, Overflow, UITransform } from "cc";
+import { _decorator, Button, Label, Node, Sprite } from "cc";
 import { GameLog } from "../../../core/GameLog";
 interface HeroPortraitData { templateId: number; name: string; level: number; }
 import { mountBattleSpine } from "../../battle/ui/battleSpine";
-import { HERO_DETAIL_SPINE_SEAT_Y } from "../utils/HeroDetailLayout";
-import { assignContentSize, positiveUiSize } from "../../../framework/ui/visibleFit";
-import {
-    HERO_DETAIL_BOOK,
-    HERO_DETAIL_GRADE,
-    HERO_DETAIL_OFF,
-    HERO_DETAIL_SETTING,
-    HERO_DETAIL_UNFOLD,
-    HERO_DETAIL_WEAR,
-    heroDetailTalk,
-} from "./heroChrome";
+import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
 
 const { ccclass, property } = _decorator;
 
-const TALK_BUBBLE = "common/ui/other_spr-bubble-5";
-
 /**
- * HeroInfoLayer。立绘挂在 node_equip 圆心，台词在 lbl_talk。
- * 底栏字绑在按钮上的 Label。不搜整棵树，不发穿戴和升级。
+ * 详情字段直接绑定到完整Prefab；动态立绘挂在node_equip，固定结构无需运行组装。
+ * 只读阶段隐藏养成入口和引导台词，不发送穿戴或升级操作。
  */
 @ccclass("HeroInfoView")
 export class HeroInfoView extends BaseView<{ heroId: string }> {
@@ -44,45 +32,9 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
     @property(Node)
     portrait: Node | null = null;
 
-    /** 旧对话背景，只读阶段隐藏。 */
-    @property(Node)
-    talkBubble: Node | null = null;
-
-    /** 旧升级引导台词，只读阶段不写入。 */
-    @property(Label)
-    talk: Label | null = null;
-
     /** 英雄名称标题，按配置刷新。 */
     @property(Label)
     nameLabel: Label | null = null;
-
-    /** 旧穿戴标题，入口保持关闭。 */
-    @property(Label)
-    wearTitle: Label | null = null;
-
-    /** 旧卸下标题，入口保持关闭。 */
-    @property(Label)
-    offTitle: Label | null = null;
-
-    /** 旧升级标题，入口保持关闭。 */
-    @property(Label)
-    gradeTitle: Label | null = null;
-
-    /** 旧设置标题，入口保持关闭。 */
-    @property(Label)
-    settingTitle: Label | null = null;
-
-    /** 旧展开标题，入口保持关闭。 */
-    @property(Label)
-    unfoldTitle: Label | null = null;
-
-    /** 旧图鉴标题，入口保持关闭。 */
-    @property(Label)
-    bookTitle: Label | null = null;
-
-    /** 旧菜单容器，展示时清理整屏命中区域。 */
-    @property([Node])
-    hitMenus: Node[] = [];
 
     /** 由详情预制体绑定的返回按钮。 */
     @property(Button) backButton: Button | null = null;
@@ -118,6 +70,11 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
     private spineNode: Node | null = null;
     /** 已加载立绘的模板 ID，仅用于资源复用。 */
     private heroId = 0;
+    /** 仅将完整外根铺到画布，固定内容由Prefab Widget和ViewportScale处理。 */
+    public onCreate(): void {
+        bindVisibleRefresh(this.node, () => fitVisibleRoot(this.node));
+    }
+
     /** 统一入口只传实例 ID；资料来自唯一名册，不额外发送详情查询。 */
     onOpen(args: { heroId: string }): void {
         if (!args?.heroId) throw new Error("缺少英雄实例 ID");
@@ -210,7 +167,6 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
 
     /** 显示显式传入的英雄资料，不读取其他角色仓库。 */
     show(hero: HeroPortraitData): void {
-        this.silenceHits();
         this.writeName(hero);
         // 只读版本的写操作节点已在 Prefab 中关闭。
         // 旧升级引导台词不属于只读详情，不显示。
@@ -223,38 +179,6 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         const name = hero.name && hero.name.length > 0 ? hero.name : "英雄";
         this.nameLabel.string = name;
         this.nameLabel.node.active = true;
-    }
-
-    /** 为保留的旧养成按钮设置标题；只读页面不调用。 */
-    private writeActions(): void {
-        this.fitAction(this.wearTitle, HERO_DETAIL_WEAR, 22);
-        this.fitAction(this.offTitle, HERO_DETAIL_OFF, 22);
-        this.fitAction(this.gradeTitle, HERO_DETAIL_GRADE, 22);
-        this.fitAction(this.settingTitle, HERO_DETAIL_SETTING, 16);
-        this.fitAction(this.unfoldTitle, HERO_DETAIL_UNFOLD, 16);
-        this.fitAction(this.bookTitle, HERO_DETAIL_BOOK, 16);
-    }
-
-    /** 按传入等级选择展示文案，不推断角色养成状态。 */
-    private writeTalk(hero: HeroPortraitData): void {
-        const line = heroDetailTalk(hero.level);
-        if (this.talkBubble) {
-            this.talkBubble.active = true;
-            ResManager.setSprite(this.talkBubble, [TALK_BUBBLE]);
-        }
-        if (!this.talk) {
-            GameLog.shared.classified("MODULE", "warn", "Hero", "HeroInfoLayer 没有 lbl_talk");
-            return;
-        }
-        this.talk.node.active = true;
-        this.talk.string = line;
-        this.talk.fontSize = 18;
-        this.talk.lineHeight = 22;
-        let ui = this.talk.node.getComponent(UITransform);
-        if (!ui) ui = this.talk.node.addComponent(UITransform);
-        const size = positiveUiSize(ui);
-        if (!size || size.width < 8 || size.height < 8) assignContentSize(ui, 200, 56);
-        this.talk.overflow = Overflow.SHRINK;
     }
 
     /** 动态立绘。加载失败只打日志，节点留着，不退回头像贴图。 */
@@ -278,34 +202,4 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         if (this.spineNode.parent === host) this.spineNode.setSiblingIndex(1);
     }
 
-    /** 按旧按钮尺寸缩放标题，供后续恢复养成入口时使用。 */
-    private fitAction(label: Label | null, text: string, size: number): void {
-        if (!label) return;
-        label.string = text;
-        label.fontSize = size;
-        label.lineHeight = size + 4;
-        label.node.active = true;
-        let ui = label.node.getComponent(UITransform);
-        if (!ui) ui = label.node.addComponent(UITransform);
-        const parent = label.node.parent ? label.node.parent.getComponent(UITransform) : null;
-        const parentSize = positiveUiSize(parent);
-        const width = parentSize && parentSize.width > 8 ? Math.max(8, parentSize.width - 8) : 96;
-        const height = parentSize && parentSize.height > 8 ? Math.max(8, Math.min(28, parentSize.height)) : 24;
-        assignContentSize(ui, width, height);
-        label.overflow = Overflow.SHRINK;
-    }
-
-    /** 清除旧菜单的整屏命中区域，避免挡住返回按钮。 */
-    private silenceHits(): void {
-        for (let i = 0; i < this.hitMenus.length; i++) this.zeroIfHuge(this.hitMenus[i]);
-    }
-
-    /** 仅清空异常大的菜单命中尺寸，保留正常局部控件。 */
-    private zeroIfHuge(node: Node | null): void {
-        if (!node) return;
-        const ui = node.getComponent(UITransform);
-        const size = positiveUiSize(ui);
-        if (!ui || !size || size.width < 500 || size.height < 500) return;
-        ui.setContentSize(0, 0);
-    }
 }

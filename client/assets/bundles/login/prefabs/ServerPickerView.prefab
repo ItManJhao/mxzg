@@ -176,6 +176,9 @@
       },
       {
         "__id__": 10
+      },
+      {
+        "__id__": 114
       }
     ],
     "_prefab": {
@@ -2535,9 +2538,6 @@
     "closeButton": {
       "__id__": 50
     },
-    "dimPrefab": {
-      "__uuid__": "2b05e8f4-a16c-4397-d055-6ecf12a19084"
-    },
     "_id": "",
     "serverScroll": {
       "__id__": 94
@@ -2826,5 +2826,13 @@
     },
     "previewCount": 0,
     "_id": ""
+  },
+  {
+    "__type__": "cc.BlockInputEvents",
+    "_enabled": true,
+    "node": {
+      "__id__": 5
+    },
+    "__prefab": null
   }
 ]

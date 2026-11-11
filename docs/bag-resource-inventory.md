@@ -1,88 +1,53 @@
 # 背包当前界面资源归属清单
 
-当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准（2026-11-11）：顶层ui/resources/prefabs已整合；旧构建去重数字仅是历史记录，1.6.0不再删除具有Bundle路径的原图。
-
-核对日期：2026-11-10。覆盖 BagView、BagItemView、BagTabView、BagInfoView 的直接图片绑定，并扫描全项目 Prefab/Scene 的同 UUID 引用。保留预制体中的引用不等于对应玩法已开放。
+核对：2026-11-11。覆盖 BagView、BagInfoView、BagTabView 和共用 BagItemView 的18张直接图片绑定。表中目录相对 client/assets/bundles，描述当前 Prefab 指向；同名资源不能据文件名直接替换或删除。原始图片/引用扫描见[历史清单](validation/bag-resource-inventory-20261110.json)，当前 Bundle 验收见[构建证据](validation/bundles-auto-build-20261111.json)。
 
 ## 静态绑定（18张）
 
 | 图片 | 背包使用位置 | 归属 | 其他预制体引用举例 |
 |---|---|---|---|
-| backpack_900001.png | BagInfoView | icons/item（物品内容） | CampaignView、MainChapterView、ChapterPreviewLayer |
-| backpack_item-frame-1.png | BagInfoView | common（共用） | InfoCard、HeroInfoUpStarLayer |
-| backpack_spr-default.png | BagItemView | common（共用） | ChapterExtraRewardCell、InfoCard、HeroInfoUpStarLayer |
-| button_btn-close-1.png | BagInfoView | common（共用） | AbilityInfoLayer、RoleProfileView、BattleDetailLayer |
-| button_btn-green-big-1.png | BagView | common（共用） | HeroInfoUpStarLayer、HeroInfoView、HeroStrongInfoCell |
-| button_btn-old-1.png | BagInfoView | common（共用） | SkillAuditCellView、SkillAuditView、GmOptionCellView |
-| button_btn-orange-big-1.png | BagView | common（共用） | BattlePage、CommonBtnPrimaryShell、HeroInfoView |
-| button_btn-src.png | BagInfoView | common（共用） | AbilityInfoLayer |
-| button_btn-tab-23.png | BagTabView | common（共用） | SkillAuditView、ChapterStageChip、GmView |
-| button_btn-tab-24.png | BagTabView | common（共用） | SkillAuditView、GmView、HeroListView |
-| loading_bg-white.png | BagInfoView | common（共用） | RemakeHomeView、AccountLoginView、RoleProfileView |
-| other_kuang.png | BagView | common（共用） | ChapterExtraRewardCell、HeroListView |
-| other_rare-0.png | BagItemView | common（共用） | BattleDetailCell |
-| win-bg_block-bg-24.png | BagInfoView | common（共用） | AbilityInfoLayer、InfoCard、HeroSkillInfoLayer |
-| win-bg_block-bg-5.png | BagView | common（共用） | BattlePage、ChapterRewardInfoView、SkillAuditView |
-| backpack-info_spr-line.png | BagInfoView | ui/bag/atlas（专用小图） | 无 |
-| backpack_spr-select.png | BagItemView | ui/bag/atlas（专用小图） | 无 |
-| map-bg-backpack-1.jpg | BagView | ui/bag/background（专用大图） | 无 |
+| backpack_900001.png | BagInfoView | icons/item | CampaignView、MainChapterView、ChapterPreviewLayer |
+| backpack_item-frame-1.png | BagInfoView | common/atlas | InfoCard、HeroInfoUpStarLayer |
+| backpack_spr-default.png | BagItemView | common/ui | ChapterExtraRewardCell、InfoCard、HeroInfoUpStarLayer |
+| button_btn-close-1.png | BagInfoView | common/ui | AbilityInfoLayer、RoleProfileView、BattleDetailLayer |
+| button_btn-green-big-1.png | BagView | common/atlas | HeroInfoUpStarLayer、HeroInfoView、HeroStrongInfoCell |
+| button_btn-old-1.png | BagInfoView | common/atlas | SkillAuditCellView、SkillAuditView、GmOptionCellView |
+| button_btn-orange-big-1.png | BagView | common/atlas | BattlePage、CommonBtnPrimaryShell、HeroInfoView |
+| button_btn-src.png | BagInfoView | common/atlas | AbilityInfoLayer |
+| button_btn-tab-23.png | BagTabView | common/ui | SkillAuditView、ChapterStageChip、GmView |
+| button_btn-tab-24.png | BagTabView | common/ui | SkillAuditView、GmView、HeroListView |
+| loading_bg-white.png | BagInfoView | bootstrap/images | RemakeHomeView、AccountLoginView、RoleProfileView |
+| other_kuang.png | BagView | common/atlas | ChapterExtraRewardCell、HeroListView |
+| other_rare-0.png | BagItemView | common/ui | BattleDetailCell |
+| win-bg_block-bg-24.png | BagInfoView | common/atlas | AbilityInfoLayer、InfoCard、HeroSkillInfoLayer |
+| win-bg_block-bg-5.png | BagView | common/ui | BattlePage、ChapterRewardInfoView、SkillAuditView |
+| backpack-info_spr-line.png | BagInfoView | bag/atlas | 无 |
+| backpack_spr-select.png | BagItemView | common/item-atlas | 随共用BagItemView用于结算、奖励和产物说明 |
+| map-bg-backpack-1.jpg | BagView | bag/background | 无 |
 
 ## 动态资源
 
-- 库存物品图片由BagItemCatalog.iconSource读取item.icon定位，通常归icons/item；英雄图标按配置指向ui/hero。已移除逐物品ItemIconById映射，不是界面图集成员。
-- 品质框 other_rare-0 至 other_rare-6 和缺图占位归 common，按物品展示需要准备。
-- 店员使用 resources/spine/shangcheng 骨骼，由 BagView.shopkeeperSkeleton 声明；骨骼及其纹理保持专有格式。
-- 文字使用原有字体及 Label，背包当前标题不是待合图的独立标题 PNG。
+- 库存图由 BagItemCatalog.iconSource 读取 item.icon，通常定位 icons/item；配置指定的英雄图标位于 hero/ui。ResManager 解析路径，不维护逐ID存在性清单。
+- 品质框 other_rare-0 至 other_rare-6、缺图占位和页签位于 common/ui，按展示需求加载。
+- 店员为 spine/shangcheng，由 BagView.shopkeeperSkeleton 声明；骨骼和附件保持原格式。
+- 字体按现有 Prefab 绑定加载，属于 font 或本地 bootstrap 依赖，不因背包打开另建字体清单。
 
-## 当前目录与边界
+## 当前目录与维护边界
 
-```text
-assets/ui/bag/
-  atlas/       BagAtlas.pac、选中框、详情分隔线
-  background/  map-bg-backpack-1.jpg
-assets/bundles/common/ui/  共用按钮、页签、底框、占位图
-assets/bundles/icons/item/  物品内容图标
-assets/bundles/spine/shangcheng...  店员骨骼
-```
+    assets/bundles/bag/prefabs/       BagView、BagInfoView、BagTabView
+    assets/bundles/bag/atlas/         详情分隔线、BagAtlas.pac
+    assets/bundles/bag/background/    当前背包背景
+    assets/bundles/common/prefabs/    共用BagItemView
+    assets/bundles/common/item-atlas/ 共用选中图、CommonAtlas.pac
+    assets/bundles/common/atlas/      7张共用静态图、CommonAtlas.pac
+    assets/bundles/common/ui/         动态共用图
+    assets/bundles/icons/item/        物品内容图标
+    assets/bundles/spine/             骨骼与附件
 
-原 resources/ui/bag 的其余旧资源不是这四个当前页面的静态依赖，不能按目录名全合进背包。存在账号头像边框的动态使用，以及旧页面/效果资源，本批不删除、不重新分类其他模块。动态配置还可能组合资源名，本清单不宣称这些存量资源都未使用。
+原顶层 ui、resources、prefabs 已整合并移除。bag/ui 中仍保留旧背包分类素材，它们不全是当前四个资源预制体的直接依赖；没有静态引用也不能据此认定未使用，动态配置可能组合资源名。本页不是运行时加载或删除名单。
 
-结论：两张专用小图已经覆盖当前背包页面的专用小图范围；公共图片不复制到背包图集。专用大背景已归档但不合图，保持原文件和 UUID，页面预加载依赖仍由预制体负责。
+页面地址只在 View 的 @view 注册中维护；三段准备目标只在 LoadingPlan 配置。准备页面包含其直接依赖，动态图标按需取得；加载一个 Bundle 的元数据不等于下载全部包内资源。完整操作见[自动图集维护](bag-auto-atlas.md)和[Bundle维护说明](staged-resource-loading.md)。
 
-只读明细见 validation/bag-resource-inventory-20261110.json。背景归档后独立预览已通过：背包背景、道具详情、返回重开正常，新增资源请求0、库存不变，无警告错误；本批未重新构建发布包。
+## 历史 common 迁移边界
 
-## common 下一批边界（2026-11-10复核）
-
-14张共用图不能整体搬进普通目录。源码中仍有按路径加载页签、品质框和缺图占位的调用；这些路径应先保留。
-
-| 图片 | 原图尺寸 | 处理判断 |
-|---|---|---|
-| backpack_item-frame-1.png | 106×106 | 公共静态图集候选 |
-| backpack_spr-default.png | 34×47 | 保留动态路径 |
-| button_btn-close-1.png | 55×58 | 公共静态图集候选 |
-| button_btn-green-big-1.png | 136×58 | 公共静态图集候选 |
-| button_btn-old-1.png | 136×58 | 公共静态图集候选 |
-| button_btn-orange-big-1.png | 136×58 | 公共静态图集候选 |
-| button_btn-src.png | 67×55 | 公共静态图集候选 |
-| button_btn-tab-23.png | 111×43 | 保留动态路径 |
-| button_btn-tab-24.png | 111×43 | 保留动态路径 |
-| loading_bg-white.png | 10×10 | 登录共用，单独评审 |
-| other_kuang.png | 174×91 | 公共静态图集候选 |
-| other_rare-0.png | 106×106 | 保留动态路径 |
-| win-bg_block-bg-24.png | 50×50 | 公共静态图集候选 |
-| win-bg_block-bg-5.png | 42×42 | 公共静态图集候选 |
-
-- 9张公共静态图作为首批 common 自动图集候选，后续迁移必须保留图片、SpriteFrame、九宫格边距和 meta UUID，再检查所有受影响页面。候选中的7张现已迁移，2张选服依赖保留原位。
-- 两张页签由 HeroListView 使用；缺图占位由 BagItemCatalog、battleEndView 使用；品质框0至6由 BagItemCatalog、HeroInfoView 使用。不能直接移动并删除旧动态路径。
-- loading_bg-white 同时属于登录及多页依赖，虽只有10×10，也不宜让登录因它提前加载整张主城公共图集。先保留独立。
-- 现已为7张静态图片新增 CommonAtlas.pac；没有改变加载阶段；后续去重名单已明确扩至背包2张与common7张，也没有宣称合图必然缩小包体。
-
-复核明细见 [common核对记录](validation/bag-common-audit-20261110.json)。
-
-### 迁移前进一步复核
-
-当前ServerPickerView直接绑定button_btn-close-1与win-bg_block-bg-5。为保持登录加载范围，首批实际迁移范围由9张候选收为其余7张，上述两张仍留resources/ui/common。此判断来自当前使用页面，不仅依据旧登录预制体命名。修正后的发布包完整背包验收已通过，7张迁移已执行，18:28新包合图已通过，7张原图副本随后已校验备份清理。
-
-### 当前执行状态
-
-18:20发布包已通过独立登录、四分类详情和返回重开，库存及版本未变。随后已迁移7张公共静态候选至assets/bundles/common/atlas，并增加CommonAtlas.pac；原图片、meta、UUID和九宫格数据保持。当前跨模块Prefab绑定、生成一致性及类型检查通过，18:28新包已确认7张共用252×281图集，背包四分类详情、返回、英雄空列表通过，英雄详情及战斗预制体资源加载通过；7张公共原图副本随后已校验备份清理，完整英雄/战斗交互未重跑。
+2026-11-10最初核对14张共用图，其中9张是静态合图候选，首批最终迁移7张；选服依赖、品质框、页签和占位图当时保留原动态路径。随后整体 Bundle 迁移已统一修改加载路径，提示白图归本地 bootstrap，共用格子和选中图归 common。历史“仍留resources”与“清理9张”不能作为当前目录或删除依据。核对原始依据见[common历史审计](validation/bag-common-audit-20261110.json)。

@@ -8,7 +8,7 @@ import type { BaseView } from "./BaseView";
 /** 将已有预制体挂入宿主，静态背景和布局由预制体保存。 */
 export type ViewMount = (host: Node, prefab: Prefab) => Node | Promise<Node>;
 
-/** Existing page-lifetime adapter for unmigrated features. Module BaseController is application-owned. */
+/** 页面生命周期适配器；模块BaseController由应用持有，不能交给窗口关闭流程销毁。 */
 export interface ViewController {
   show(): void;
   close(): void;
@@ -20,10 +20,12 @@ export interface ViewSpec {
   /** 相对 assets，例如 bundles/bag/prefabs/BagView。 */
   prefab: string;
   layer: UILayer;
-  /** 关掉后如果节点还在，留着实例，下次不再加载。 */
+  /** 仅Page启用限时实例缓存；Popup关闭释放实例，资源缓存仍由共享资源池管理。 */
   cache: boolean;
   /** 同一页面能否叠两份。不能时，进行中的打开共用一次，只压一层。 */
   allowMultiple: boolean;
+  /** 弹窗需要模态拦截时配置；省略表示不拦截窗口外部。 */
+  modal?: ModalOptions;
   /**
    * 非 Page 挂到哪一个常驻宿主。
    * 宿主由 UIManager.setResidentHost 登记，注册表只存字符串。
@@ -31,10 +33,18 @@ export interface ViewSpec {
   hostId?: string;
   /** 不写就直接生成在宿主下。 */
   mount?: ViewMount;
-  /** Application-supplied loader; scene-bound Prefabs need no business UUID fallback. */
+  /** 应用注入的资源准备入口，复用统一加载器，不另维护业务UUID加载回退。 */
   load?: () => Promise<Prefab>;
-  /** Page-lifetime adapter only. Never supply a module BaseController here. BagView has no factory. */
+  /** 仅注入页面生命周期适配器；模块Controller归应用持有，背包页面无需此工厂。 */
   createController?: (view: BaseView<unknown>) => ViewController;
+}
+
+/** 模态的两个独立开关；透明拦截同样阻止点击穿透，不创建第二份遮罩。 */
+export interface ModalOptions {
+  /** true显示半透明蒙版；false保留透明的外部点击拦截。 */
+  mask: boolean;
+  /** true点击外部关闭所属窗口；false只拦截，继续使用窗口原确认/取消流程。 */
+  closeOnOutside: boolean;
 }
 
 export type ViewClass<T> = new () => BaseView<T>;
@@ -47,14 +57,19 @@ export function view(spec: ViewSpec): ClassDecorator {
   return ctor => { registerView(ctor, spec); };
 }
 
-/** New applications register their pages in one readable composition module. */
+/** 登记页面地址与开关契约；模态参数只用于Popup，复制配置避免调用方随后修改已登记行为。 */
 export function registerView(ctor: Function, spec: ViewSpec): () => void {
+  if (spec.modal !== undefined && (!spec.modal || spec.layer !== UILayer.Popup || typeof spec.modal.mask !== "boolean"
+      || typeof spec.modal.closeOnOutside !== "boolean")) {
+    throw new Error("模态配置仅支持Popup，并须明确mask和closeOnOutside " + spec.id);
+  }
   const stored: ViewSpec = {
     id: spec.id,
     prefab: spec.prefab,
     layer: spec.layer,
     cache: spec.cache === true,
     allowMultiple: spec.allowMultiple === true,
+    modal: spec.modal ? { mask: spec.modal.mask, closeOnOutside: spec.modal.closeOnOutside } : undefined,
     hostId: spec.hostId,
     mount: spec.mount,
     load: spec.load,

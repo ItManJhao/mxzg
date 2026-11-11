@@ -10,7 +10,7 @@ import { join } from "path";
 
 import { buildCityMapLayout, CITY_EDGE_BLEED, findCityNode, layerAnchorX, layerCoverX } from "../assets/scripts/features/city/ui/cityMapLayout";
 
-import { BAR_SLIDE_MS, barIndex, barPageId, barSlideDir, expoOut, pageContentReady, selectedBarId, slideOffset, slideTravel, SlideCapture } from "../assets/scripts/framework/ui/barSlide";
+import { barSlideDir, expoOut } from "../assets/scripts/framework/ui/barSlide";
 
 import { TAB_SELECTED_SCALE, CityTabUtils } from "../assets/scripts/features/city/utils/CityTabUtils";
 
@@ -224,55 +224,12 @@ function checkChromePrefab(): void {
   assert(text.split(shell).length === 2, "CityChromeShell class id stays once");
 }
 
+/** 当前切页只使用方向与指数曲线；旧页面壳和栈捕获已退役。 */
 function checkBarSlide(): void {
-  assert(barIndex("city") === 0 && barIndex("hero") === 1 && barIndex("battle") === 3, "bar order matches the seven tabs");
-  assert(barPageId("city") === null, "city slide reveals the resident page");
-  assert(barPageId("battle") === "mainline" && barPageId("dungeon") === "daily", "battle and dungeon map onto their pages");
-  assert(barSlideDir(0, 1) === 1 && barSlideDir(4, 1) === -1 && barSlideDir(2, 2) === 0, "higher tab enters from the right");
-  assert(selectedBarId("bag", "hero") === "bag", "bag on top of hero selects only bag");
-  assert(selectedBarId("hero", "hero") === "hero" && selectedBarId("hero-detail", "hero") === "hero", "hero list and detail select hero");
-  assert(selectedBarId("mail", "hero") === "hero", "a hero subpage still selects hero");
-  assert(selectedBarId("mail", "city") === null, "a city subpage does not light another tab");
-  assert(selectedBarId("mainline", "hero") === "battle", "mainline selects battle even if hero is the root");
-  assert(selectedBarId("city", "city") === "city" && selectedBarId("daily", "city") === "dungeon", "city and daily map to their own tabs");
-  assert(selectedBarId("fetterData", "fetter") === "fetter", "fetter subpages select fetter");
+  assert(barSlideDir(0, 1) === 1 && barSlideDir(4, 1) === -1 && barSlideDir(2, 2) === 0);
+  assert(expoOut(0) === 0 && expoOut(1) === 1 && expoOut(0.5) > 0.9);
   const paint = CityTabUtils.tabPaintState(["selected", "selected", "open", "locked"]);
-  assert(paint.join(",") === "open,selected,open,locked", "two selected states collapse to the later tab");
-  assert(pageContentReady([]) === false && pageContentReady(["ListBackdrop"]) === false, "backdrop alone is not a ready page");
-  assert(pageContentReady(["ListBackdrop", "PagePrefabShell"]) && pageContentReady(["bg"]), "shell or city content can slide");
-  assert(expoOut(0) === 0 && expoOut(1) === 1 && expoOut(0.5) > 0.9, "exponential out eases ahead of linear");
-  assert(BAR_SLIDE_MS === 280, "bar slide lasts 280ms");
-  const travel = slideTravel(640, 720, 720);
-  assert(travel === 680, "wider pages travel far enough to clear");
-  assert(travel <= (720 + 720) / 2, "two full pages do not leave a gap");
-  assert(slideTravel(640, 0, 0) === 640, "unknown page size slides one viewport");
-  const fromRight = slideOffset(1, 680, 0);
-  const landed = slideOffset(1, 680, 1);
-  assert(fromRight.outX === 0 && fromRight.inX === 680, "incoming starts on the right");
-  assert(landed.outX === -680 && landed.inX === 0, "outgoing leaves to the left");
-  assert(slideOffset(-1, 680, 1).outX === 680, "lower tab leaves to the right");
-
-  const open = new SlideCapture<string>(1, "hero");
-  open.hide("city");
-  open.show("hero");
-  assert(open.outgoing === "city" && open.incoming() === "hero", "city to hero slides those two pages");
-
-  const back = new SlideCapture<string>(-1, null);
-  back.drop("hero");
-  back.show("city");
-  assert(back.outgoing === "hero" && back.incoming() === "city" && !back.wasDropped("city"), "back to city reveals the resident page");
-
-  const stacked = new SlideCapture<string>(1, "hero");
-  stacked.drop("bag");
-  stacked.show("old-hero");
-  stacked.drop("old-hero");
-  stacked.show("city");
-  stacked.hide("city");
-  stacked.show("hero");
-  assert(stacked.outgoing === "bag" && stacked.incoming() === "hero", "stacked switch slides the visible top, not the pages under it");
-  assert(stacked.immediateDrops().indexOf("old-hero") >= 0, "covered pages are dropped without a slide");
-  assert(stacked.nodesToHide("hero").indexOf("city") >= 0, "city stays hidden when a new tab covers it");
-
+  assert(paint.join(",") === "open,selected,open,locked");
 }
 /** 宽屏只增加导航间距，选中图标不能越长越高而挡住主线挑战按钮。 */
 function checkWideTabSize(): void {

@@ -1,5 +1,6 @@
 /**
- * 独立物品详情窗口，由 UIManager 打开完整预制体，遮罩、背景与布局由预制体保存。
+ * 独立物品详情窗口，由UIManager打开完整预制体；背景、内容布局及面板内输入阻挡保存在Prefab。
+ * 共享模态由UIManager按ViewSpec配置提供，窗口不持有独立蒙版节点。
  * 库存入口读取唯一 BagModel；结算与产物说明入口展示调用方传入的只读内容，不查询或修改资产。
  */
 import { _decorator, Button, Label, Node, Sprite } from "cc";
@@ -38,12 +39,10 @@ const { ccclass, property } = _decorator;
     hostId: "remake-modal",
     cache: false,
     allowMultiple: false,
+    modal: { mask: true, closeOnOutside: true },
 })
 @ccclass("BagInfoView")
 export class BagInfoView extends BaseView<BagInfoArgs> {
-    /** 完整预制体自带的遮罩按钮，点击窗口外部关闭本窗口。 */
-    @property(Button)
-    dimButton: Button | null = null;
     /** 物品配置查询器，仅库存详情使用；关闭释放，不缓存服务器数量。 */
     private catalog: BagItemCatalog | null = null;
     /** 每次展示或关页递增，拒绝上一件物品及已关闭窗口的迟到图片。 */
@@ -125,8 +124,8 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
 
     /** 打开独立详情；库存变化只重画本窗口，奖励说明不订阅库存。 */
     public onOpen(args?: BagInfoArgs): void {
-        if (!args || !this.dimButton) {
-            throw new Error("物品详情缺少参数或遮罩按钮绑定");
+        if (!args) {
+            throw new Error("物品详情缺少参数");
         }
         this.args = args;
         EventDispatcher.instance.offTarget(this);
@@ -262,7 +261,7 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         this.toast?.("物品来源暂未开放");
     };
 
-    /** 每个详情实例只登记一次交互，回调读取最新展示数据。 */
+    /** 每个详情实例只登记内容按钮；外部点击由UIManager共享模态按ViewSpec处理。 */
     private wire(): void {
         if (this.wired) {
             return;
@@ -271,7 +270,6 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         this.btnClose?.node.on(Button.EventType.CLICK, this.closeInfo);
         this.btnEnter?.node.on(Button.EventType.CLICK, this.closeInfo);
         this.btnSrc?.node.on(Button.EventType.CLICK, this.showSourceNotice);
-        this.dimButton?.node.on(Button.EventType.CLICK, this.closeInfo);
     }
 
     /** 来源入口维持当前未开放的灰色展示。 */
@@ -286,12 +284,11 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         this.releaseBindings();
     }
 
-    /** 关闭和销毁共用清理，允许重复调用；不保留旧页面按钮或计时引用。 */
+    /** 解除本窗内容按钮和计时引用；共享模态监听及窗口归属由UIManager统一管理。 */
     private releaseBindings(): void {
         this.btnClose?.node?.off(Button.EventType.CLICK, this.closeInfo);
         this.btnEnter?.node?.off(Button.EventType.CLICK, this.closeInfo);
         this.btnSrc?.node?.off(Button.EventType.CLICK, this.showSourceNotice);
-        this.dimButton?.node?.off(Button.EventType.CLICK, this.closeInfo);
         this.timing = null;
         this.lastRemaining = null;
         this.closeAction = null;

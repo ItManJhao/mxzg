@@ -1,5 +1,5 @@
-/** 游戏内开发 GM 弹窗：静态 Prefab 和 SuperScroll 下拉选择，发放交给 GmController。 */
-import { _decorator, Button, EditBox, Label, Node, Sprite, SpriteFrame, UITransform, view } from "cc";
+/** 游戏内开发GM弹窗：完整Prefab保存内容，UIManager按ViewSpec提供共享遮罩；发放仍交给GmController。 */
+import { _decorator, Button, EditBox, Label, Node, Sprite, SpriteFrame, view } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { ancestorScale } from "../../../framework/ui/visibleFit";
@@ -50,7 +50,7 @@ export class GmView extends BaseView<GmOpenArgs> {
     private closed = true;
     /** 本次打开的事件清理函数。 */
     private stops: Array<() => void> = [];
-    /** 初始化角色、分类与事件，查询服务端开关后允许发放。 */
+    /** 初始化角色、分类与事件并适配面板比例；共享遮罩归UIManager，服务端开关决定能否发放。 */
     onOpen(args: GmOpenArgs): void {
         this.args = args; this.closed = false; this.owner!.string = "当前角色：" + args.nickname + "\n" + args.roleId; this.grantButton!.interactable = false;
         const bind = (b: Button, fn: () => void) => { const n = b.node; n.on(Button.EventType.CLICK, fn); this.stops.push(() => { if (n.isValid) n.off(Button.EventType.CLICK, fn); }); };
@@ -64,7 +64,6 @@ export class GmView extends BaseView<GmOpenArgs> {
         const search = () => this.paintOptions(); this.search!.node.on(EditBox.EventType.TEXT_CHANGED, search); this.stops.push(() => this.search?.node?.off(EditBox.EventType.TEXT_CHANGED, search));
         const size = view.getVisibleSize(), scale = Math.min(size.width * .94 / 600, size.height * .9 / 820) / ancestorScale(this.node); this.node.setScale(scale, scale, 1);
         this.tabFrames = this.kindButtons.map(b => b.getComponent(Sprite)?.spriteFrame || null);
-        const dim = this.node.getChildByName("Dim")?.getComponent(UITransform); if (dim) dim.setContentSize(size.width / (scale * ancestorScale(this.node)), size.height / (scale * ancestorScale(this.node)));
         this.quantity!.string = "1"; this.chooseKind("hero"); this.message!.string = "正在检查服务端 GM 开关…";
         void args.controller.enabled().then(enabled => { if (!this.closed) { this.grantButton!.interactable = enabled; this.message!.string = enabled ? "仅开发测试：英雄每次最多20个；期限道具最多100件" : "服务端 GM 未开启（MXZG_GM_ENABLED=true）"; } }).catch(e => { if (!this.closed) this.message!.string = e instanceof Error ? e.message : String(e); });
     }

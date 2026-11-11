@@ -1,5 +1,5 @@
 /** 自身角色资料只读 View：复用旧 SettingLayer，UIManager 统一开关并订阅唯一账号状态；不查询角色、不修改资产。 */
-import { _decorator, Button, Label, Node, UITransform, view } from "cc";
+import { _decorator, Button, Label, Node, view } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import type { AccountModel } from "../AccountModel";
 import type { RoleProfile } from "../AccountModel";
@@ -30,8 +30,6 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
     @property(Node) face: Node | null = null;
     /** 独立头像框资源节点。 */
     @property(Node) border: Node | null = null;
-    /** 全屏遮罩，拦截点击以防操作底下的背包。 */
-    @property(Node) backdrop: Node | null = null;
     /** 关闭资料页按钮。 */
     @property(Button) closeButton: Button | null = null;
     /** 只读保留入口：头像、改名、形象及称号，点击仅说明未开放。 */
@@ -113,12 +111,11 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
         this.args = undefined;
     }
 
-    /** 只做整体适配，不在运行时生成界面或重排旧节点。 */
+    /** 只适配资料面板的整体比例；遮罩尺寸与空白关闭统一归ModalLayer，不重排旧节点。 */
     private fit(): void {
         const size = view.getVisibleSize();
         const scale = Math.min(1, size.width / 640, size.height / 880);
         this.node.setScale(scale, scale, 1);
-        this.backdrop?.getComponent(UITransform)?.setContentSize(size.width / scale, size.height / scale);
     }
 
     /** 释放当前实例绑定，防止重复开关累计回调。 */

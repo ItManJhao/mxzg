@@ -65,11 +65,8 @@
         "CommonListRowShell",
         "CommonPanelShell",
         "CommonRedDotShell",
-        "DimSheet",
         "InfoCard",
-        "ListBackdrop",
         "NpcTalkLayer",
-        "PagePrefabShell",
         "TextChip",
         "CommonPanel1"
       ]
@@ -89,7 +86,6 @@
         "HeroInfoUpLevelLayer",
         "HeroInfoUpStarLayer",
         "HeroListView",
-        "HeroListBoardView",
         "HeroListItemCell",
         "FormationView",
         "HeroSkillInfoLayer",

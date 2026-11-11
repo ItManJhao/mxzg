@@ -20,6 +20,8 @@ const mime = { '.json': 'application/json', '.js': 'application/javascript', '.p
 /** 提供remote内普通文件；失败返回真实状态，不将缺失资源替换为首页或空成功。 */
 function serve(request, response) {
     response.setHeader('Access-Control-Allow-Origin', '*');
+    // 本地跨端口验收可读取Resource Timing字节数和耗时；不改变产品CDN配置。
+    response.setHeader('Timing-Allow-Origin', '*');
     response.setHeader('Cache-Control', 'no-store');
     if (request.method !== 'GET' && request.method !== 'HEAD') {
         response.writeHead(405).end();

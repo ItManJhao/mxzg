@@ -1,0 +1,310 @@
+{
+  "date": "2026-11-11",
+  "branch": "hao",
+  "baseline": "f3cd64a3",
+  "committed": false,
+  "status": "local-remote-loading-pages-cache-passed",
+  "build": "client/build/bag-atlas-review (19:56:16, accepted v1.6.2 build)",
+  "runtimeSourceChanged": false,
+  "environment": {
+    "browser": "Chromium in-app browser",
+    "viewport": [
+      393,
+      700
+    ],
+    "remote": "loopback independent resource server port7460, Timing-Allow-Origin enabled for measurement",
+    "game": "isolated random H2 SocketPreviewServer, loopback WS + Protobuf; no normal database",
+    "fixture": "battle_review: 2 heroes + saved formation, empty bag; loading_review: 4 inventory categories",
+    "httpCache": "disabled for measured run; restored afterward",
+    "diskCache": "server disk/OS warm; not a cold machine/CDN test"
+  },
+  "method": {
+    "clock": "performance.now",
+    "entryToLoginReadyMs": 6012.6,
+    "entryBoundary": "Install read-only result observers before normal System entry execution. index.js deliberately blocked during setup then unblocked and replayed. Excludes HTML/System-library setup and operator pause; includes engine/logo/normal startup. All normal-run requests succeed.",
+    "stages": "ApplicationResources prepareStage/prepareBackground promise durations; time for configured tasks only, not whole launch. Requests grouped by startTime within the task window.",
+    "pageBoundary": "UIManager.openById promise completion, includes view enter; excludes page transition and late on-demand artwork. Two-second request windows include concurrent UI work, not exclusive prefab bytes.",
+    "cache": "Real elapsed foreground time; no shortened TTL, manual collection, forced GC or runtime policy changes. Watcher stores counts/validity, not retained asset objects.",
+    "network": "Resource Timing encodedBodySize and transferSize; cross-port body sizes available through test server Timing-Allow-Origin. 604/604 remote requests have readable nonzero bodies.",
+    "observer": "Null export guard fixed, clean run observerErrors empty. Earlier diagnostic pilot discarded from timings."
+  },
+  "stages": [
+    {
+      "stage": "login",
+      "durationMs": 368.2,
+      "completed": true,
+      "networkDuringTask": {
+        "requests": 39,
+        "encodedBodyBytes": 12556757,
+        "transferBytes": 12568457,
+        "remoteRequests": 39
+      }
+    },
+    {
+      "stage": "enterGame",
+      "durationMs": 547.5,
+      "completed": true,
+      "networkDuringTask": {
+        "requests": 176,
+        "encodedBodyBytes": 4442278,
+        "transferBytes": 4495078,
+        "remoteRequests": 176
+      }
+    },
+    {
+      "stage": "background",
+      "durationMs": 470.6,
+      "completed": true,
+      "networkDuringTask": {
+        "requests": 129,
+        "encodedBodyBytes": 4837236,
+        "transferBytes": 4875936,
+        "remoteRequests": 129
+      },
+      "status": {
+        "total": 4,
+        "completed": 4,
+        "failed": 0,
+        "running": false
+      }
+    }
+  ],
+  "pageOpenings": [
+    {
+      "page": "remake-login",
+      "instance": "Comp.996",
+      "durationMs": 76.3,
+      "networkWithinTwoSeconds": {
+        "requests": 8,
+        "encodedBodyBytes": 914728,
+        "transferBytes": 917128,
+        "remoteRequests": 8
+      }
+    },
+    {
+      "page": "remake-home",
+      "instance": "Comp.1347",
+      "durationMs": 16.4,
+      "networkWithinTwoSeconds": {
+        "requests": 276,
+        "encodedBodyBytes": 5848638,
+        "transferBytes": 5931438,
+        "remoteRequests": 276
+      }
+    },
+    {
+      "page": "bag",
+      "instance": "Comp.2198",
+      "durationMs": 10.5,
+      "networkWithinTwoSeconds": {
+        "requests": 3,
+        "encodedBodyBytes": 1012043,
+        "transferBytes": 1012943,
+        "remoteRequests": 3
+      }
+    },
+    {
+      "page": "bag",
+      "instance": "Comp.2198",
+      "durationMs": 3.7,
+      "networkWithinTwoSeconds": {
+        "requests": 0,
+        "encodedBodyBytes": 0,
+        "transferBytes": 0,
+        "remoteRequests": 0
+      }
+    },
+    {
+      "page": "role-profile",
+      "instance": "Comp.2610",
+      "durationMs": 88.9,
+      "networkWithinTwoSeconds": {
+        "requests": 21,
+        "encodedBodyBytes": 520817,
+        "transferBytes": 527117,
+        "remoteRequests": 21
+      }
+    },
+    {
+      "page": "hero",
+      "instance": "Comp.2689",
+      "durationMs": 62.4,
+      "networkWithinTwoSeconds": {
+        "requests": 9,
+        "encodedBodyBytes": 153867,
+        "transferBytes": 156567,
+        "remoteRequests": 9
+      }
+    },
+    {
+      "page": "remake-campaign",
+      "instance": "Comp.2887",
+      "durationMs": 43.9,
+      "networkWithinTwoSeconds": {
+        "requests": 9,
+        "encodedBodyBytes": 815397,
+        "transferBytes": 818097,
+        "remoteRequests": 9
+      }
+    },
+    {
+      "page": "hero",
+      "instance": "Comp.2956",
+      "durationMs": 10.6,
+      "networkWithinTwoSeconds": {
+        "requests": 7,
+        "encodedBodyBytes": 127905,
+        "transferBytes": 130005,
+        "remoteRequests": 7
+      }
+    },
+    {
+      "page": "remake-campaign",
+      "instance": "Comp.3154",
+      "durationMs": 3.6,
+      "networkWithinTwoSeconds": {
+        "requests": 6,
+        "encodedBodyBytes": 303494,
+        "transferBytes": 305294,
+        "remoteRequests": 6
+      }
+    },
+    {
+      "page": "bag",
+      "instance": "Comp.3203",
+      "durationMs": 7.3,
+      "networkWithinTwoSeconds": {
+        "requests": 3,
+        "encodedBodyBytes": 1012043,
+        "transferBytes": 1012943,
+        "remoteRequests": 3
+      }
+    },
+    {
+      "page": "role-profile",
+      "instance": "Comp.3615",
+      "durationMs": 88.5,
+      "networkWithinTwoSeconds": {
+        "requests": 22,
+        "encodedBodyBytes": 564009,
+        "transferBytes": 570609,
+        "remoteRequests": 22
+      }
+    }
+  ],
+  "cache": {
+    "bag": {
+      "configuredIdleMs": 120000,
+      "actualClosedAt": 65983.20000004768,
+      "collectAt": 185984.30000007153,
+      "elapsedMs": 120001.1,
+      "firstInstance": "Comp.2198",
+      "shortReopenInstance": "Comp.2198",
+      "afterExpiryInstance": "Comp.3203",
+      "preloadedPrefabRemainedPresent": true,
+      "refCountAfterInstanceExpiry": 2,
+      "result": "Instance naturally destroyed; application preload still owns asset; reopened with new instance. Late character artwork may download again, no all-resource/no-request claim."
+    },
+    "profile": {
+      "preloaded": false,
+      "closeClickAt": 79706,
+      "firstAssetMissingAt": 221513.40000009537,
+      "elapsedFromCloseClickMs": 141807.4,
+      "observationResolutionMs": 1000,
+      "configuredIdleMs": 120000,
+      "maintenancePeriodMs": 30000,
+      "firstInstance": "Comp.2610",
+      "reloadedInstance": "Comp.3615",
+      "result": "No instance cache. Prefab disappears after idle timeout at foreground maintenance, then downloads and opens successfully."
+    }
+  },
+  "normalFlowWarningsAndErrors": [],
+  "observerErrors": [],
+  "networkOverall": {
+    "requests": 646,
+    "encodedBodyBytes": 34438290,
+    "transferBytes": 34631790,
+    "remoteRequests": 604
+  },
+  "screenshots": [
+    "docs/validation/loading-cache-bag-20261111.png",
+    "docs/validation/loading-cache-battle-20261111.png",
+    "docs/validation/loading-cache-bag-inventory-20261111.png"
+  ],
+  "scope": "No gameplay changes, asset mutations, release source edits, commits or pushes. No forced GC. Closed chest claim, quick fight, hero upgrade and equipment editing remain closed.",
+  "limits": [
+    "One loopback run, not percentile/performance SLA or real CDN benchmark.",
+    "Assets count/refCount and disappearance prove ownership/cache behavior, not GPU memory, process memory reduction or absence of long-term leaks.",
+    "Mainline challenge/rewards were not replayed in this measurement; previous accepted runtime evidence remains separately dated.",
+    "Network errors/retry/offline, real CDN HTTPS, native/WeChat and physical devices remain future work."
+  ],
+  "bagInventoryFlow": {
+    "flow": {
+      "categories": [
+        {
+          "count": "3",
+          "iconPresent": true,
+          "tab": "equip",
+          "title": "装备"
+        },
+        {
+          "count": "3",
+          "iconPresent": true,
+          "tab": "item",
+          "title": "道具"
+        },
+        {
+          "count": "3",
+          "iconPresent": true,
+          "tab": "shard",
+          "title": "碎片"
+        },
+        {
+          "count": "3",
+          "iconPresent": true,
+          "tab": "spirit",
+          "title": "精灵"
+        }
+      ],
+      "counts": [],
+      "details": [
+        {
+          "confirm": "确定",
+          "iconPresent": true,
+          "name": "灵戒",
+          "title": "装备",
+          "type": "数量：3"
+        },
+        {
+          "confirm": "确定",
+          "iconPresent": true,
+          "name": "英雄进阶石",
+          "title": "道具",
+          "type": "数量：3"
+        },
+        {
+          "confirm": "确定",
+          "iconPresent": true,
+          "name": "火系精英碎片",
+          "title": "碎片",
+          "type": "数量：3"
+        },
+        {
+          "confirm": "确定",
+          "iconPresent": true,
+          "name": "波纹精灵",
+          "title": "精灵",
+          "type": "数量：3"
+        }
+      ],
+      "inventoryUnchanged": true,
+      "reopen": {
+        "quantity": "3",
+        "sameInstance": true,
+        "tab": "item"
+      }
+    },
+    "warningsAndErrors": [],
+    "method": "After measured cache run, explicitly logged out and signed in to loading_review through AccountLoginView buttons. Read inventory Model before/after, clicked each category/item/detail close and returned/reopened bag. No inventory queries or mutations introduced."
+  }
+}

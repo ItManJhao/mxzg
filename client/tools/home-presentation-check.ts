@@ -126,7 +126,6 @@ async function main() {
   await selection.load();
   const picker=new Node("Picker").addComponent(ServerPickerView);
   picker.closeButton=new Node("Close").addComponent(Button);
-  picker.dimPrefab=Object.assign(new Prefab(), {_instantiate:()=>new Node("Dim")});
   const groups: Array<{row:any,tap:()=>void}> = [], entries: Array<{row:any,tap:()=>void}> = [];
   class CellFixture extends ServerCellView { destination:any[]=[]; show(row:any,_chosen:boolean,tap:()=>void):void{this.destination.push({row,tap});} }
   const makeList=(destination:any[])=>({validateBindings:()=>{},toStart:()=>{},list:{setData:(rows:any[],render:Function)=>{destination.length=0;for(const row of rows){const n=new Node("Cell");const c=n.addComponent(CellFixture);c.destination=destination;render(n,row);}}}});

@@ -30,7 +30,8 @@ import { HeroListBoardView } from "../assets/scripts/features/hero/ui/HeroListBo
 
 import { HeroListView } from "../assets/scripts/features/hero/ui/HeroListView";
 
-import { HERO_PORT_H } from "../assets/scripts/features/hero/ui/heroChrome";
+/** 行为替身的视口高度，真实布局从完整HeroListView的SuperContent与Widget读取。 */
+const HERO_PORT_H = 720;
 
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 
@@ -124,34 +125,27 @@ function checkPrefab(): void {
   const view = component(layer, viewType);
   assert((layer[1]._components || []).some((row) => row.__id__ === view.index), "HeroListLayer 根上有 HeroListView");
   assertComp(layer, view.comp, "btnHero", 38, "cc.Button");
-  assertComp(layer, view.comp, "btnBook", 52, "cc.Button");
-  assertComp(layer, view.comp, "btnDragon", 66, "cc.Button");
-  assertComp(layer, view.comp, "heroTitle", 44, "cc.Label");
-  assertComp(layer, view.comp, "bookTitle", 58, "cc.Label");
-  assertComp(layer, view.comp, "dragonTitle", 72, "cc.Label");
-  assertNode(layer, view.comp, "tabMenu", 27, "UIMenu_1");
-  assertNode(layer, view.comp, "hitLineup", 73, "UIMenu_2");
-  assertNode(layer, view.comp, "hitBubbleMenu", 143, "CCMenu_1");
-  assertNode(layer, view.comp, "bubble", 121, "node_bubble");
-  assertNode(layer, view.comp, "layerCapacity", 105, "node_capacity");
-  const boardPrefab = view.comp.boardPrefab as { __uuid__?: string };
-  assert(boardPrefab.__uuid__ === "d3a470c0-fa13-47fa-811e-f38c7317e9d8", "boardPrefab 是 HeroListHeroLayer");
-  assert(!("cellPrefab" in view.comp),"Cell 资源只在 SuperContent 维护");
-  assertNode(layer, view.comp, "sprBg", 5, "CommonPanel1");
-  assertNode(layer, view.comp, "parchment", 155, "ParchmentPlate");
-  assert(!("titleRoot" in view.comp), "标题归 CommonPanel1 维护");
-  assert(!("infoPrefab" in view.comp), "英雄列表不得保留未使用的旧详情资源绑定");
-  assert(uiHeight(layer, idOf(layer[idOf(view.comp.heroTitle)].node)) === 32, "英雄页签字有高度");
-  assert(uiHeight(layer, idOf(layer[idOf(view.comp.bookTitle)].node)) === 32, "图鉴页签字有高度");
-  assert(uiHeight(layer, idOf(layer[idOf(view.comp.dragonTitle)].node)) === 32, "圣龙页签字有高度");
+  assert(!["btnBook", "btnDragon", "heroTitle", "bookTitle", "dragonTitle", "tabMenu"].some(key => key in view.comp),
+    "纯静态标题及未开放页签不需要View脚本绑定");
+  assertNode(layer, view.comp, "boardRoot", 0, "HeroBoard");
+  assert(!("boardPrefab" in view.comp) && !("sprBg" in view.comp) && !("parchment" in view.comp),
+    "完整页面直接绑定静态列表板，不再加载板子或调整旧羊皮纸");
+  assert(!("cellPrefab" in view.comp), "Cell资源只在SuperContent维护");
+  const background = layer.find(row => row._name === "Background")!;
+  assert(background && (background._components as {__id__:number}[]).some(ref => layer[ref.__id__].__type__ === "cc.Widget"),
+    "完整预制体已有四边Widget背景，不再组装PagePrefabShell");
+  assert(layer.some(row => row.__type__ === "b1717x10KxEaZM0E/9VbOly"), "通过统一ViewportScale适配内容容器");
+  for (const name of ["btn_hero", "btn_illustrat", "btn_dragon"]) {
+    const node = layer.find(row => row._name === name)!;
+    const title = layer.find(row => row.__type__ === "cc.Node" && row._name === "Label" && idOf(row._parent) === layer.indexOf(node))!;
+    assert(uiHeight(layer, layer.indexOf(title)) === 32, name + "页签文字在Prefab保存可读高度");
+    assert(name === "btn_hero" || node._active === false, "未开放页签在Prefab默认隐藏");
+  }
 
-  const boardData = loadPrefab("client/assets/bundles/hero/prefabs/HeroListBoardView.prefab");
+  const boardData = layer;
   const listConfig=boardData.find((row:any)=>row.columns!==undefined) as any;
   assert(listConfig.columns===4 && listConfig.cellPrefab.__uuid__==="e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40","SuperContent 四列及格子资源绑定");
-  const rootPos = boardData[1]._lpos as { x?: number; y?: number };
-  assert(rootPos.x === 0 && rootPos.y === 0, "HeroListHeroLayer 根在底左，不再写居中偏移");
   const board = component(boardData, boardType);
-  assertNode(boardData, board.comp, "sprBox", 5, "spr_box");
   assertNode(boardData, board.comp, "heroScroll", 119, "HeroScroll");
   assertNode(boardData, board.comp, "heroPort", 123, "view");
   assertNode(boardData, board.comp, "heroContent", 127, "content");
@@ -161,21 +155,15 @@ function checkPrefab(): void {
   assert(uiHeight(boardData, idOf(emptyLabel.node)) >= Number(emptyLabel._lineHeight) * 3,
     "错误原因和两行操作提示不能压进单行文本框后自动缩小");
   assertComp(boardData, board.comp, "capacityLabel", 88, "cc.Label");
-  assertNode(boardData, board.comp, "elemRow", 17, "node_elem");
-  assertNode(boardData, board.comp, "hitMenu", 89, "UIMenu_1");
-  assertNode(boardData, board.comp, "skin", 93, "btn_permanent_skin");
-  assertNode(boardData, board.comp, "evolve", 111, "btn_evolve");
-  assertNode(boardData, board.comp, "pattern", 11, "CCSprite_1");
-  assert(uiHeight(boardData, 119) === HERO_PORT_H, "滚动视口延伸至容量栏上方");
-  assert(uiHeight(boardData, 123) === HERO_PORT_H, "view 跟滚动视口一样高");
-  assert(uiHeight(boardData, 119) + 88 < uiHeight(boardData, 5), "滚动视口与顶部偏移不超过装饰底板");
+  assert(uiHeight(boardData, idOf(board.comp.heroScroll)) === HERO_PORT_H, "滚动视口延伸至容量栏上方");
+  assert(uiHeight(boardData, idOf(board.comp.heroPort)) === HERO_PORT_H, "view 跟滚动视口一样高");
+  assert(uiHeight(boardData, idOf(board.comp.heroScroll)) + 88 < uiHeight(boardData, boardData.findIndex(row => row._name === "spr_box")), "滚动视口与顶部偏移不超过装饰底板");
   assert(JSON.stringify(boardData).indexOf("永久皮肤") >= 0, "永久皮肤用简体");
   const elems = board.comp.elemButtons as { __id__?: number }[];
   assert(elems.length === 6, "六个元素钮");
-  const elemIds = [32, 40, 48, 56, 64, 72];
-  for (let i = 0; i < elemIds.length; i++) {
-    assert(elems[i].__id__ === elemIds[i], "btn_elem" + i + " 绑定");
-    assert(boardData[elemIds[i]].__type__ === "cc.Button", "btn_elem" + i + " 是 Button");
+  for (let i = 0; i < elems.length; i++) {
+    const button = boardData[elems[i].__id__!];
+    assert(button.__type__ === "cc.Button", "第" + i + "个元素仍绑定Button");
   }
 
   const cellData = loadPrefab("client/assets/bundles/hero/prefabs/HeroIconCellView.prefab");
@@ -194,9 +182,8 @@ function checkPrefab(): void {
   const info = component(infoData, infoType);
   assert((infoData[1]._components || []).some((row) => row.__id__ === info.index), "HeroInfoLayer 根上有 HeroInfoView");
   assert(infoData[idOf(info.comp.portrait)]._name === "node_equip", "立绘挂在 node_equip");
-  const talkLabel = infoData[idOf(info.comp.talk)];
-  assert(talkLabel.__type__ === "cc.Label", "台词是 Label");
-  assert(infoData[idOf(talkLabel.node)]._name === "lbl_talk", "台词节点是 lbl_talk");
+  assert(!("talk" in info.comp) && !("hitMenus" in info.comp), "只读详情不保留无用旧布局与养成台词绑定");
+  assert(infoData.some(row => row._name === "Background"), "详情背景保存在完整Prefab");
   const infoText = JSON.stringify(infoData);
   assert(infoText.indexOf("图鉴") >= 0, "详情底栏有图鉴");
   assert(infoText.indexOf("穿上") >= 0 && infoText.indexOf("卸下") >= 0 && infoText.indexOf("升级") >= 0, "详情有穿上卸下升级");
@@ -277,10 +264,10 @@ function makeBoard(node: Node): HeroListBoardView {
   rootUi.setAnchorPoint(0.5, 0.5);
   rootUi.setContentSize(640, 960);
   const board = node.addComponent(HeroListBoardView);
-  board.sprBox = sized("spr_box", 580, 450);
-  board.sprBox.parent = node;
+  const box = sized("spr_box", 580, 450);
+  box.parent = node;
   board.heroScroll = sized("HeroScroll", 540, HERO_PORT_H);
-  board.heroScroll.parent = board.sprBox;
+  board.heroScroll.parent = box;
 
   board.heroScroll.addComponent(SuperScroll);
   board.heroPort = sized("view", 540, HERO_PORT_H);
@@ -302,26 +289,20 @@ function makeBoard(node: Node): HeroListBoardView {
   capHost.setPosition(605, 71.889, 0);
   capHost.parent = node;
   cap.parent = capHost;
-  board.elemRow = new Node("node_elem");
-  board.elemRow.parent = node;
+  const elemRow = new Node("node_elem");
+  elemRow.parent = node;
   board.elemButtons = [];
   for (let i = 0; i < 6; i++) {
     const button = buttonOn("btn_elem" + i);
-    if (button.node) button.node.parent = board.elemRow;
+    button.node.parent = elemRow;
     board.elemButtons.push(button);
   }
-  board.hitMenu = sized("UIMenu_1", 640, 960);
-  board.hitMenu.parent = node;
-  board.skin = new Node("btn_permanent_skin");
-  board.skin.parent = node;
-  const lower = new Node("bottom_menu");
-  lower.setPosition(0, 31.6, 0);
-  lower.parent = node;
-  board.evolve = new Node("btn_evolve");
-  board.evolve.parent = lower;
-  board.pattern = new Node("CCSprite_1");
-  board.pattern.setPosition(320, 47.5, 0);
-  board.pattern.parent = node;
+  const skin = new Node("btn_permanent_skin");
+  skin.parent = node;
+  skin.active = false;
+  const evolve = new Node("btn_evolve");
+  evolve.parent = node;
+  evolve.active = false;
   return board;
 }
 
@@ -332,27 +313,10 @@ function makeView(): HeroListView {
   host.addComponent(UITransform).setContentSize(640, 960);
   const view = host.addComponent(HeroListView);
   view.btnHero = buttonOn("btn_hero");
-  view.btnBook = buttonOn("btn_illustrat");
-  view.btnDragon = buttonOn("btn_dragon");
   if (view.btnHero.node) view.btnHero.node.parent = host;
-  if (view.btnBook.node) view.btnBook.node.parent = host;
-  if (view.btnDragon.node) view.btnDragon.node.parent = host;
-  view.heroTitle = labelOn(new Node("heroTitle"), "英  雄");
-  view.bookTitle = labelOn(new Node("bookTitle"), "图  鉴");
-  view.dragonTitle = labelOn(new Node("dragonTitle"), "圣 龙");
-  view.tabMenu = sized("UIMenu_1", 640, 960);
-  view.tabMenu.parent = host;
-  view.hitLineup = sized("UIMenu_2", 640, 960);
-  view.hitLineup.parent = host;
-  view.hitBubbleMenu = sized("CCMenu_1", 640, 960);
-  view.hitBubbleMenu.parent = host;
-  view.bubble = new Node("node_bubble");
-  view.bubble.parent = host;
-  view.layerCapacity = new Node("node_capacity");
-  view.layerCapacity.parent = host;
-  view.boardPrefab = fakePrefab((node) => {
-    makeBoard(node);
-  });
+  view.boardRoot = new Node("HeroBoard");
+  view.boardRoot.parent = host;
+  makeBoard(view.boardRoot);
 
   return view;
 }
@@ -405,7 +369,9 @@ async function checkRemakeRoster(): Promise<void> {
   const baseline=EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
   try {
     // Deliberately contaminate the legacy store; the injected source must ignore it.
-    assert(!read("client/assets/scripts/features/hero/ui/HeroListView.ts").includes("WireSession"), "no retired network source");
+    const sourceText = read("client/assets/scripts/features/hero/ui/HeroListView.ts");
+    assert(!sourceText.includes("WireSession"), "no retired network source");
+    assert(!/loadPrefab|spawnPrefab|fitCityMiddle|seatHeroParchment/.test(sourceText), "完整页面不保留壳装配或纸面布局补丁");
     view.runOpen(); await view.whenReady(); pump(2);
     assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===baseline+1,"开页只增加一个名册监听");
     view.runOpen();
@@ -414,8 +380,7 @@ async function checkRemakeRoster(): Promise<void> {
 
     assert(cellsOf(view).length === 0, "加载时不读旧名册或图鉴");
     assert(board.emptyLabel!.string === "正在加载英雄…", "绘制加载状态");
-    assert(!view.btnBook!.node.active && !view.btnDragon!.node.active, "隐藏未接入页签");
-    assert(!board.skin!.active && !board.evolve!.active, "隐藏未接入养成按钮");
+    assert(!board.node.getChildByName("btn_permanent_skin")!.active && !board.node.getChildByName("btn_evolve")!.active, "隐藏未接入养成按钮");
     sync([]); pump(1);
     assert(board.emptyLabel!.string === "尚未获得英雄" && cellsOf(view).length === 0, "真实空名册不回退图鉴");
     assert(board.capacityLabel!.string === "英雄：0/—", "不显示旧协议容量");
@@ -464,7 +429,7 @@ async function checkHeroCellReuse():Promise<void> {
 /** 使用真实英雄列表布局配置验证长列表末行可达、刷新保位以及过滤缩短后归位。 */
 function checkHeroScrollBounds():void {
  const root=new Node("long-list"),board=makeBoard(root),scroll=board.scroll,list=scroll.list;
- const source=JSON.parse(read("client/assets/bundles/hero/prefabs/HeroListBoardView.prefab"));const config=source.find((row:any)=>row.columns!==undefined);
+ const source=JSON.parse(read("client/assets/bundles/hero/prefabs/HeroListView.prefab"));const config=source.find((row:any)=>row.columns!==undefined);
  for(const key of ["columns","rows","layoutType","gridAxis"] as const)list[key]=config[key];
  for(const key of ["spacingX","spacingY","paddingLeft","paddingRight","paddingTop","paddingBottom"] as const)list[key]=config["_"+key];
  list.setData(Array.from({length:20},(_,i)=>i),()=>{});
@@ -546,9 +511,15 @@ async function checkElementBundleRoutes(): Promise<void> {
         await new Promise(resolve => setImmediate(resolve));
         assert(requestedBundles.length > 0 && requestedBundles.every(name => name === "hero"),
             "所有英雄元素消费点保留hero包名，不请求ui包");
+        const pagePrefab = loadPrefab("client/assets/bundles/hero/prefabs/HeroListView.prefab");
+        const boardType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroListBoardView.ts.meta"));
+        const staticBoard = component(pagePrefab, boardType).comp;
         for (let index = 0; index < 6; index++) {
-            assert(board.elemButtons[index].node.getComponent(Sprite)!.spriteFrame === frames.get("ui/hero-icon_elem-" + index + "/spriteFrame"),
-                "筛选按钮显示hero包的第" + index + "张元素图");
+            const button = pagePrefab[(staticBoard.elemButtons as {__id__:number}[])[index].__id__];
+            const host = pagePrefab[idOf(button.node)];
+            const sprite = (host._components as {__id__:number}[]).map(ref => pagePrefab[ref.__id__]).find(row => row.__type__ === "cc.Sprite")!;
+            const uuid = metaUuid("client/assets/bundles/hero/ui/hero-icon_elem-" + index + ".png.meta");
+            assert((sprite._spriteFrame as {__uuid__:string}).__uuid__ === uuid + "@f9941", "六个筛选图标由完整Prefab静态持有");
         }
         assert(cell.elem!.getComponent(Sprite)!.spriteFrame === frames.get("ui/hero-icon_elem-5/spriteFrame"),
             "英雄格子保留完整资源描述");

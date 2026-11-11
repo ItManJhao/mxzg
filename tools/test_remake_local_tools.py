@@ -1,4 +1,4 @@
-"""Local preview isolation and Windows backend process ownership regression checks."""
+"""本地预览与远程Bundle产物校验回归；隔离临时静态服务并检查Windows后端进程归属。"""
 import json
 import os
 from pathlib import Path
@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 from urllib.request import urlopen
 
 from serve_remake_h5 import PreviewServer, handler_for, read_build
-from check_h5_artifact import validate_bundle
+from check_h5_artifact import validate_build, validate_bundle
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,6 +26,7 @@ class StaticPreviewTest(unittest.TestCase):
             validate_bundle({"uuids": ["root"], "redirect": ["root", 1], "deps": []}, "home")
 
     def setUp(self):
+        """创建独立的本地启动包和远程主城包夹具，测试退出时关闭仅本用例的静态服务。"""
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.parent = Path(self.temp.name)
@@ -37,13 +38,14 @@ class StaticPreviewTest(unittest.TestCase):
         (self.directory / "index.html").write_text("<html>Remake</html>")
         (self.directory / "assets").mkdir()
         (self.directory / "src").mkdir()
-        bundles = ["resources", "main", "prefabs", "remake-home"]
+        bundles = ["main", "bootstrap", "home"]
         (self.directory / "src/settings.json").write_text(json.dumps({
             "launch": {"launchScene": "db://assets/scenes/Remake.scene"},
-            "assets": {"projectBundles": bundles}}))
+            "assets": {"projectBundles": bundles, "remoteBundles": ["home"],
+                       "preloadBundles": [{"bundle": "main"}, {"bundle": "bootstrap"}]}}))
         for name in bundles:
-            bundle = self.directory / "assets" / name
-            bundle.mkdir()
+            bundle = self.directory / ("remote" if name == "home" else "assets") / name
+            bundle.mkdir(parents=True)
             (bundle / "config.json").write_text(json.dumps({"uuids": ["root"], "packs": {}}))
         (self.parent / "private.txt").write_text("outside the build")
         self.server = PreviewServer(("127.0.0.1", 0), handler_for(self.directory))
@@ -51,6 +53,22 @@ class StaticPreviewTest(unittest.TestCase):
         self.worker.start()
         self.base = f"http://127.0.0.1:{self.server.server_port}"
         self.addCleanup(self.stop)
+
+    def test_remote_bundle_configuration_is_required(self):
+        """远程包必须实际输出在remote，不能以旧本地目录或成功首页掩盖缺包。"""
+        validate_build(self.directory)
+        (self.directory / "remote/home/config.json").unlink()
+        with self.assertRaisesRegex(ValueError, "home: expected one"):
+            validate_build(self.directory)
+
+    def test_bootstrap_preload_is_required(self):
+        """场景直接依赖的本地bootstrap必须提前登记，不把包已存在当作启动已准备。"""
+        settings_file = self.directory / "src/settings.json"
+        settings = json.loads(settings_file.read_text())
+        settings["assets"]["preloadBundles"] = [{"bundle": "main"}]
+        settings_file.write_text(json.dumps(settings))
+        with self.assertRaisesRegex(ValueError, "preload main and bootstrap"):
+            validate_build(self.directory)
 
     def stop(self):
         self.server.shutdown()

@@ -1,5 +1,5 @@
-/** 技能验收台：仅展示配置与开发证据，使用真实Prefab和SuperScroll；演示资源由应用层读取，不修改玩家状态。 */
-import { _decorator, Button, EditBox, Label, Sprite, SpriteFrame, UITransform, view, tween, Tween, Vec3 } from "cc";
+/** 技能验收台：完整Prefab展示配置与开发证据，共享遮罩由UIManager提供；不修改玩家状态。 */
+import { _decorator, Button, EditBox, Label, Sprite, SpriteFrame, view, tween, Tween, Vec3 } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { ancestorScale } from "../../../framework/ui/visibleFit";
@@ -41,7 +41,7 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
     /** 关闭后不再写入异步播放结果。 */
     private closed = true;
 
-    /** 打开目录并绑定本页事件，默认展示全部英雄。 */
+    /** 打开目录、绑定本页事件并适配内容比例；遮罩归UIManager，默认展示全部英雄。 */
     onOpen(args: SkillAuditOpenArgs): void {
         this.args = args;
         this.closed = false;
@@ -53,8 +53,6 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
         const size = view.getVisibleSize();
         const scale = Math.min(size.width * .94 / 600, size.height * .9 / 820) / ancestorScale(this.node);
         this.node.setScale(scale, scale, 1);
-        this.node.getChildByName("Dim")!.getComponent(UITransform)!.setContentSize(
-            size.width / (scale * ancestorScale(this.node)), size.height / (scale * ancestorScale(this.node)));
         this.bind(this.closeButton!, () => this.close());
         this.bind(this.kindButtons[0], () => { this.heroes = true; this.search!.string = ""; this.paint(); });
         this.bind(this.kindButtons[1], () => {

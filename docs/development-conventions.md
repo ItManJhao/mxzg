@@ -1,6 +1,6 @@
 # 开发写法与阅读约定
 
-当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准（2026-11-11）：顶层ui/resources/prefabs已整合；旧构建去重数字仅是历史记录，1.6.0不再删除具有Bundle路径的原图。
+当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准（2026-11-11）：顶层ui/resources/prefabs已整合；旧构建去重数字仅是历史记录，1.6.2不再删除具有Bundle路径的原图。
 
 本指南落实用户 2026-11-02 的要求：用现代技术使人能维护，完整还原 mxzg 旧游戏。游爱项目只提供写法和阅读习惯参考，不是内容来源。本文件定义代码阅读方式；职责和生命周期以 [架构](architecture.md) 为准，注释硬性要求以 [AGENTS.md](../AGENTS.md) 为准。
 
@@ -39,12 +39,12 @@
 | 位置 | 内容与维护范围 |
 |---|---|
 | client/assets/scripts/app/remake | 启动、模块装配、页面入口和功能资源作用域 |
-| client/assets/scripts/features | account、Bag、battle、city、hero、home 等模块；功能 UI 放本模块 ui |
+| client/assets/scripts/features | account、bag、battle、city、hero、home 等模块；功能 UI 放本模块 ui |
 | client/assets/scripts/framework | 事件、基础 Model/Controller、UIManager、资源作用域、SuperScroll 等公共能力 |
 | client/assets/scripts/platform | WebSocket、Protobuf 编解码与协议目录；不反向依赖功能 UI |
 | client/assets/scripts/core | 现有 GameLog 与通用错误辅助；不向此处堆业务 |
 | client/assets/scripts/config | 配置查询、生成类型及资源登记相关入口 |
-| client/assets/prefabs、resources、bundles | 静态界面、资源及按需加载包；修改保留对应 meta 和引用 |
+| client/assets/bundles | 静态界面和资源按模块/素材类别归包；bootstrap本地，其余远程，修改保留meta和引用 |
 | backend/src/main/java/com/funsgamex/mxzg | auth、role、hero、inventory、lineup、campaign、server 等服务端功能包 |
 | config、tools | 根目录的配置来源/规范与生成审查工具；不与客户端运行时 config 混淆 |
 | client/tools、backend/src/test | 客户端与后端验证入口，不能把测试夹具接入玩家流程 |
@@ -163,8 +163,9 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 ## 账号界面与窗口打开规范（2026-11-03 整理）
 
 - 独立业务窗口必须使用 BaseView、同名 Prefab、UIManager 注册与打开/关闭。不得在主城手动 instantiate 角色弹窗、维护第二套 show/hide 和销毁逻辑。
-- RoleProfileView 的 Prefab 位于 prefabs/ui/account，保留原 SettingLayer UUID。RemakeApp 注册 role-profile；头像点击经 HomeController 交回应用，UIManager 打开，窗口订阅唯一 AccountModel，关闭时退订。重复打开不累积监听；账号清空或忙于切换时关闭并取消未完成的打开。
-- AccountLoginView 是登录页面，ServerPickerView 是选服弹窗，两者都由 UIManager 管理。ServerCellView 是列表子组件；LoginArtwork 是登录页面适配组件；LoginLayout 和 RolePortrait 是辅助函数，不要求一一对应独立窗口。
+- 模态在页面注册的ViewSpec设置`modal:{mask,closeOnOutside}`，仅用于Popup。省略表示不拦截外部；mask=false使用透明拦截，mask=true显示统一蒙版；closeOnOutside独立控制空白是否关闭。UIManager动态共用一份节点，关窗或隐藏后向下恢复仍显示窗口的模态，禁止在每份Prefab再放独立蒙版或挂ModalLayer。实际面板背景保留BlockInputEvents，避免内容点击触发外部关闭；只承载坐标的大节点不要盲加阻挡。布阵草稿与结算沿既有关闭生命周期处理，GM/技能台使用mask=true、closeOnOutside=false。
+- RoleProfileView 的 Prefab 位于 bundles/login/prefabs，保留原 SettingLayer UUID。RemakeApp 注册 role-profile；头像点击经 HomeController 交回应用，UIManager 打开，窗口订阅唯一 AccountModel，关闭时退订。重复打开不累积监听；账号清空或忙于切换时关闭并取消未完成的打开。
+- AccountLoginView 是登录页面，ServerPickerView 是选服弹窗，两者都由 UIManager 管理。ServerCellView 是列表子组件；LoginArtwork 是登录页面适配组件；LoginLayoutUtils 和 RolePortraitUtils 是无状态辅助，不要求一一对应独立窗口。
 - 服务器和区域两列均为 SuperScroll → view/Mask → content/SuperContent。Prefab 保存 cellPrefab、尺寸、间距和方向；View 只 setData，不销毁重建所有格子、不计算格子坐标或 content 高度。
 - LoadingLayer/BootChrome 是启动加载流程，用于资源准备、进度和提示；AccountLoginView 负责账号、选服与进入。共享背景或尺寸计算不代表同一界面。启动层独立管理不构成业务弹窗绕过 UIManager 的例外。
 - 验收分别记录结构/自动检查与 Creator 实际效果；未实际打开不能声称完成视觉验收。
@@ -173,9 +174,13 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 
 - 新增或修改的 Prefab/Scene 节点使用有业务含义的英文名称，禁止中文节点名；例如 CloseButton、HeroTabButton、SearchInput、StatusLabel。界面展示文字和源码注释仍使用中文。重命名时检查节点路径、动画轨道与代码查找，保留资源 UUID 和组件绑定；旧模块在涉及修改时逐步整改，不批量改动无关模块。
 
-### 通用纸面面板 CommonPanel1
+### 完整页面、Widget与统一比例
 
-背包和英雄列表通过静态嵌套引用 assets/bundles/common/prefabs/CommonPanel1.prefab，共享背景和标题，不复制独立节点。面板根 UITransform 尺寸就是可见纸面尺寸，背景填满根；标题由面板内部 Widget 居中并跟随上沿。页面只覆盖实例的位置、尺寸和标题文字；修改共用样式应编辑源预制体。不要解除嵌套关联，也不要在页面脚本重复移动内部标题。
+背包、英雄列表及英雄详情直接打开完整Prefab，背景、纸面、标题、页签和英雄列表板已保存为页面内的静态节点，不再通过CommonPanel1嵌套或运行加载页面壳组装。日常直接在对应页面Prefab修改；CommonPanel1保留为独立资源，不作为这些页面的当前布局来源。
+
+固定尺寸、定位、上下留白和拉伸优先使用Widget。需要窄屏整体缩小时，在完整页面外根绑定ViewportScale的target内容容器、designWidth=640、maxScale=1；它只按可用宽度计算统一比例，不按页面名称修补坐标或维护机型表。外根fitVisibleRoot仅把LiveShell的视口尺寸桥接到页面根，不与另一份全屏Widget竞争根位置。动态列表的content仍由SuperContent排版，不加竞争尺寸或位置的Widget。
+
+ParchmentLayout、ccbiPlace、heroMount/heroChrome和PagePrefabShell/ListBackdrop/DimSheet、独立HeroListBoardView Prefab已退役；HeroListView中的HeroBoard仍绑定HeroListBoardView组件，读取唯一HeroRosterModel。不得以恢复旧辅助或新增模块组装入口替代完整Prefab编辑。
 
 ## 格式化与工具类静态入口
 

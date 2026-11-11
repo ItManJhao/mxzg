@@ -1,0 +1,1268 @@
+{
+  "date": "2026-11-11",
+  "branch": "hao",
+  "baseline": "f3cd64a3",
+  "delivery": "本地修改，未提交/推送/合并main；本机预览通过限定范围，本批未重建发布包。",
+  "change": "ViewSpec两个独立模态开关和一份UIManager共享节点；Prefab Widget配合ViewportScale；背包及英雄完整页面，退役旧壳和Parchment组装。",
+  "checks": {
+    "activePassed": 48,
+    "activeFailed": 0,
+    "paused": 5,
+    "creatorTypeCheck": "通过",
+    "binding": "192脚本/97份Prefab与Scene/82脚本绑定"
+  },
+  "browser": {
+    "date": "2026-11-11",
+    "kind": "Creator本机预览，独立内存WebSocket测试服",
+    "testServer": {
+      "pid": 38080,
+      "loopback": true,
+      "inMemory": true,
+      "productionDatabase": false
+    },
+    "modalCases": [
+      {
+        "case": "内容点击不关闭",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "RoleProfileView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 1,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          }
+        }
+      },
+      {
+        "case": "蒙版点击关闭且不切入底层英雄页",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 0,
+            "masked": 0,
+            "nodes": 1
+          },
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 1,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "两个叠窗只有一份150透明度蒙版",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "BagInfoView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 2
+          }
+        }
+      },
+      {
+        "case": "关闭顶窗恢复资料窗蒙版",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "RoleProfileView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          }
+        }
+      },
+      {
+        "case": "透明拦截模式",
+        "observation": {
+          "alpha": 0,
+          "modal": {
+            "active": 1,
+            "masked": 0,
+            "nodes": 1
+          },
+          "owner": "BagInfoView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 2
+          }
+        }
+      },
+      {
+        "case": "透明外部点击仅关闭顶窗且恢复下层可见蒙版",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "RoleProfileView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          }
+        }
+      },
+      {
+        "case": "蒙版禁止外部关闭",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "BagInfoView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 2
+          }
+        }
+      },
+      {
+        "case": "禁外部关闭模式仍可使用窗口关闭按钮",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "RoleProfileView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 1
+          }
+        }
+      },
+      {
+        "case": "顶窗隐藏恢复下层模态",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "RoleProfileView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 2
+          }
+        }
+      },
+      {
+        "case": "顶窗恢复接回唯一模态",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "BagInfoView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 2
+          }
+        }
+      },
+      {
+        "case": "布阵外部关闭沿用旧取消流程",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 0,
+            "masked": 0,
+            "nodes": 1
+          },
+          "ui": {
+            "cached": 1,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "恢复正式配置后的叠窗",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "BagInfoView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 2
+          }
+        }
+      }
+    ],
+    "layouts": [
+      {
+        "case": "393x852英雄列表",
+        "observation": {
+          "labels": [
+            "英雄",
+            "100",
+            "100",
+            "100",
+            "英雄：3/300",
+            "英  雄",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "HeroListView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 590.4225352112676,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 1063.3740458015268,
+              "name": "Content",
+              "scale": {
+                "x": 0.9225352112676056,
+                "y": 0.9225352112676056
+              },
+              "width": 640,
+              "x": -295.2112676056338,
+              "y": -499
+            },
+            {
+              "height": 960,
+              "name": "HeroBoard",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": 0,
+              "y": 203.25
+            },
+            {
+              "height": 801.9316150800942,
+              "name": "HeroScroll",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 572,
+              "x": 0,
+              "y": -88
+            }
+          ],
+          "ratio": 0.9225352112676056,
+          "route": "hero",
+          "ui": {
+            "cached": 1,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "393x852英雄详情",
+        "observation": {
+          "labels": [
+            "赛西莉",
+            "等级：100    星级：4    强化：0\n当前属性（部分加成待恢复）",
+            "攻击：715",
+            "生命：4041",
+            "防御：504",
+            "速度：442",
+            "恶魔桎梏",
+            "Lv.1",
+            "恶魔之心",
+            "强化1解锁",
+            "邪火诅咒",
+            "强化3解锁",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "HeroInfoView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 590.4225352112676,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 960,
+              "name": "Content",
+              "scale": {
+                "x": 0.9225352112676056,
+                "y": 0.9225352112676056
+              },
+              "width": 640,
+              "x": -295.2112676056338,
+              "y": -442.8169014084507
+            }
+          ],
+          "ratio": 0.9225352112676056,
+          "route": "hero-info",
+          "ui": {
+            "cached": 1,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "360x720英雄详情",
+        "observation": {
+          "labels": [
+            "赛西莉",
+            "等级：100    星级：4    强化：0\n当前属性（部分加成待恢复）",
+            "攻击：715",
+            "生命：4041",
+            "防御：504",
+            "速度：442",
+            "恶魔桎梏",
+            "Lv.1",
+            "恶魔之心",
+            "强化1解锁",
+            "邪火诅咒",
+            "强化3解锁",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "HeroInfoView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 960,
+              "name": "Content",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": -320,
+              "y": -480
+            }
+          ],
+          "ratio": 1,
+          "route": "hero-info",
+          "ui": {
+            "cached": 1,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "360x720英雄列表返回",
+        "observation": {
+          "labels": [
+            "英雄",
+            "100",
+            "100",
+            "100",
+            "英雄：3/300",
+            "英  雄",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "HeroListView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 981,
+              "name": "Content",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": -320,
+              "y": -499
+            },
+            {
+              "height": 960,
+              "name": "HeroBoard",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": 0,
+              "y": 203.25
+            },
+            {
+              "height": 719.9999999999999,
+              "name": "HeroScroll",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 572,
+              "x": 0,
+              "y": -88
+            }
+          ],
+          "ratio": 1,
+          "route": "hero",
+          "ui": {
+            "cached": 1,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "360x720背包稳定布局",
+        "observation": {
+          "labels": [
+            "背包",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "背包为空",
+            "chapter_review",
+            "0",
+            "0",
+            "2"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "BagView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 960,
+              "name": "Content",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": -320,
+              "y": -480
+            }
+          ],
+          "ratio": 1,
+          "route": "bag",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "428x926背包",
+        "observation": {
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "BagView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 591.6198704103672,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 960,
+              "name": "Content",
+              "scale": {
+                "x": 0.9244060475161988,
+                "y": 0.9244060475161988
+              },
+              "width": 640,
+              "x": -295.8099352051836,
+              "y": -443.7149028077754
+            }
+          ],
+          "ratio": 0.9244060475161988,
+          "route": "bag",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      }
+    ],
+    "bagCases": [
+      {
+        "tabIndex": 0,
+        "observation": {
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "BagView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 960,
+              "name": "Content",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": -320,
+              "y": -480
+            }
+          ],
+          "ratio": 1,
+          "route": "bag",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "tabIndex": 1,
+        "observation": {
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "BagView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 960,
+              "name": "Content",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": -320,
+              "y": -480
+            }
+          ],
+          "ratio": 1,
+          "route": "bag",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "tabIndex": 2,
+        "observation": {
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "BagView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 960,
+              "name": "Content",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": -320,
+              "y": -480
+            }
+          ],
+          "ratio": 1,
+          "route": "bag",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "tabIndex": 3,
+        "observation": {
+          "labels": [
+            "背包",
+            "3",
+            "装备",
+            "道具",
+            "碎片",
+            "精灵",
+            "欢迎光临～",
+            "loading_review",
+            "0",
+            "0",
+            "1"
+          ],
+          "nodes": [
+            {
+              "height": 1280,
+              "name": "BagView",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "height": 960,
+              "name": "Content",
+              "scale": {
+                "x": 1,
+                "y": 1
+              },
+              "width": 640,
+              "x": -320,
+              "y": -480
+            }
+          ],
+          "ratio": 1,
+          "route": "bag",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "详情外部关闭只返回背包",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 0,
+            "masked": 0,
+            "nodes": 1
+          },
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "缓存重开复用实例",
+        "before": "Node.2532",
+        "after": {
+          "tab": "item",
+          "uuid": "Node.2532"
+        },
+        "same": true
+      }
+    ],
+    "battleCases": [
+      {
+        "case": "第二关真实挑战与倒计时返回后状态",
+        "observation": {
+          "state": {
+            "assetRevision": 5,
+            "maxCleared": 2,
+            "pendingBattleId": null
+          },
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "第三关胜利模态",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 1,
+            "masked": 1,
+            "nodes": 1
+          },
+          "owner": "ChapterEndView",
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 1,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 2
+          }
+        }
+      },
+      {
+        "case": "胜利页外部关闭后",
+        "observation": {
+          "alpha": 150,
+          "modal": {
+            "active": 0,
+            "masked": 0,
+            "nodes": 1
+          },
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      },
+      {
+        "case": "第三关结算返回挂机最终状态",
+        "observation": {
+          "modal": {
+            "active": 0,
+            "masked": 0,
+            "nodes": 1
+          },
+          "state": {
+            "assetRevision": 7,
+            "maxCleared": 3,
+            "pendingBattleId": null
+          },
+          "ui": {
+            "cached": 0,
+            "intents": 0,
+            "modalActive": 0,
+            "modalNodes": 1,
+            "opening": 0,
+            "pages": 2,
+            "pendingResident": 0,
+            "prepared": 0,
+            "residents": 0
+          }
+        }
+      }
+    ],
+    "warnings": [],
+    "notes": [
+      "三模式的两种非默认配置只临时覆盖只读详情ViewSpec；已恢复正式登记并删除临时引用。",
+      "英雄三名/零名、元素筛选和详情返回均检查；未构造长列表或重验所有英雄资源。",
+      "背包四分类显示数量3，详情关闭及短期实例复用正常；未重跑完整TTL/长期内存。",
+      "第三关外部点击关闭后无待结算编号，residents/pendingResident/modalActive为0，playing=false。",
+      "本次未重新构建发布包、未做真机或CDN测试。"
+    ]
+  },
+  "assetsWithCurrentLimitedPreview": [
+    {
+      "path": "client/assets/bundles/bag/prefabs/BagView.prefab",
+      "sha256": "21def30c18e1cdd10d702bd57eb0671106991affbafe241d7c08285ad0824bfe",
+      "uuid": "6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb",
+      "originalUuidPreserved": true
+    },
+    {
+      "path": "client/assets/bundles/bag/prefabs/BagInfoView.prefab",
+      "sha256": "b77ad9c41e211d2c6f08c4287e4e2c12650850d0e2f1bc9bfb2a4b3dd943e6c6",
+      "uuid": "f151a2c1-a24a-4e5d-9d67-2096089cde82",
+      "originalUuidPreserved": true
+    },
+    {
+      "path": "client/assets/bundles/hero/prefabs/HeroListView.prefab",
+      "sha256": "8f110a53b75df1cfd89fc9435144de11f0db8ffc863bfa824f91cb08befe6158",
+      "uuid": "95a097b8-9964-4ac3-8b3d-b4f568b1eb53",
+      "originalUuidPreserved": true
+    },
+    {
+      "path": "client/assets/bundles/hero/prefabs/HeroInfoView.prefab",
+      "sha256": "a2a44d93f2cdfe71517c0b3827f4131269a55210a8e8758da08fee160ce76036",
+      "uuid": "fa5d3f0c-1441-479b-a182-48d374c7dc6c",
+      "originalUuidPreserved": true
+    },
+    {
+      "path": "client/assets/bundles/hero/prefabs/FormationView.prefab",
+      "sha256": "e49063646a9a17df8c6eb36b1d167a2d03ce9c441cca61b2539d5a5d766f45a6",
+      "uuid": "c75bff2b-0944-4809-9b5f-1eb8c09107f8",
+      "originalUuidPreserved": true
+    },
+    {
+      "path": "client/assets/bundles/login/prefabs/RoleProfileView.prefab",
+      "sha256": "a99fe0307a2033caf7e57369a45e890a3b4d6c16fa7b10874fd583e404c0702c",
+      "uuid": "1aedb5a3-4e33-552f-843c-c419fd8174a4",
+      "originalUuidPreserved": true
+    },
+    {
+      "path": "client/assets/bundles/battle/prefabs/ChapterRewardInfoView.prefab",
+      "sha256": "78891fcd31025faeab9d2b0a2ce0ecdc159c06aa40dc3ac6fa744691f2f12072",
+      "uuid": "be077496-77e1-432a-a350-3929e9ad0040",
+      "originalUuidPreserved": true
+    },
+    {
+      "path": "client/assets/bundles/battle/prefabs/ChapterEndView.prefab",
+      "sha256": "aaab063110e15a9b43f777f371bd98658256091039af167e9c9ab0ab8eb235b5",
+      "uuid": "87487742-8794-4b8b-824c-ef1c009cdf27",
+      "originalUuidPreserved": true
+    }
+  ],
+  "prefabMaskMigration": [
+    {
+      "path": "client/assets/bundles/bag/prefabs/BagInfoView.prefab",
+      "beforeSha256": "716c3d53505b6d23ef0be1c9098b5551fe105a77b8226131dafcc1d6e3efbea0",
+      "afterSha256": "b77ad9c41e211d2c6f08c4287e4e2c12650850d0e2f1bc9bfb2a4b3dd943e6c6",
+      "removedNode": "DimButton",
+      "removedObjects": 10,
+      "originalGeometryUnchanged": true,
+      "metaSha256": "e799ca1a9dd1772e7b71c949719eeed9189f5e3421e25b0a9ed12fde0c1a245f"
+    },
+    {
+      "path": "client/assets/bundles/login/prefabs/RoleProfileView.prefab",
+      "beforeSha256": "b2be233122c1061e837d85df3aeeb720cf3e48ad5fa2b501872fba9976f2a1c9",
+      "afterSha256": "a99fe0307a2033caf7e57369a45e890a3b4d6c16fa7b10874fd583e404c0702c",
+      "removedNode": "Backdrop",
+      "removedObjects": 6,
+      "originalGeometryUnchanged": true,
+      "metaSha256": "5b93c3564b2a08a67353062bc061a4160869822a17e05f0b44810ca1e28633cb"
+    },
+    {
+      "path": "client/assets/bundles/login/prefabs/ServerPickerView.prefab",
+      "beforeSha256": "cbabe66c40bfe72df0203a4a2e15b2e948bc7ce2c2ee46f763bb873eaffd9ad4",
+      "afterSha256": "b2ee4532f7c8c0683fb48de8d9fa93899b0bf59893f2dca59c8030d50ef46b05",
+      "removedNode": "ModalBackdrop",
+      "removedObjects": 6,
+      "originalGeometryUnchanged": true,
+      "metaSha256": "6261f49de4075bb4f2aae5c16f0ceab4dc101843bb54adda881232c039bbb6b8"
+    },
+    {
+      "path": "client/assets/bundles/hero/prefabs/HeroSkillView.prefab",
+      "beforeSha256": "4c4c1fae696c3deb723d106fd43a40ae491c94a698b34d7d185606a6f110aee4",
+      "afterSha256": "f69af1436e0ba75da28c8a4dddcc671e3775236c50c279068ebb91866ceceacd",
+      "removedNode": "Dim",
+      "removedObjects": 10,
+      "originalGeometryUnchanged": true,
+      "metaSha256": "5815eab6a26858102ff24d42d51212589cf21a9209a2815c61cf6b3a59c88553"
+    },
+    {
+      "path": "client/assets/bundles/battle/prefabs/BattleDetailLayer.prefab",
+      "beforeSha256": "ec790908f80651158a2e2d175fbb8fe0f37974862640837124eab67b46ab80f2",
+      "afterSha256": "0c428ee04299719a5c84d1d01af4389b66f166a06b0854a1e769cae67a49d928",
+      "removedNode": "Backdrop",
+      "removedObjects": 6,
+      "originalGeometryUnchanged": true,
+      "metaSha256": "38d081c50be774a568e3cedf815cbab60ea2968b35b4671e79233037a186564e"
+    },
+    {
+      "path": "client/assets/bundles/battle/prefabs/ChapterRewardInfoView.prefab",
+      "beforeSha256": "016ad6245a8f1e9482f89440e23b41f6721e551fc8c5b4cbe7a3bae29dabde30",
+      "afterSha256": "78891fcd31025faeab9d2b0a2ce0ecdc159c06aa40dc3ac6fa744691f2f12072",
+      "removedNode": "Backdrop",
+      "removedObjects": 6,
+      "originalGeometryUnchanged": true,
+      "metaSha256": "ee77470710632a717982c7121ebc40970157761650d09c7f38958ff276da5fea"
+    },
+    {
+      "path": "client/assets/bundles/gm/prefabs/GmView.prefab",
+      "beforeSha256": "b387c838625f5bc7d60c114994c30d798ad988b3d2e9168061f24c91d50777a9",
+      "afterSha256": "56d847582a0b3e5abfbae4c2bb43a5f62deeef925cfae914aa899292b1e09d2d",
+      "removedNode": "Dim",
+      "removedObjects": 8,
+      "originalGeometryUnchanged": true,
+      "contentBlockNode": "Panel",
+      "modalPolicy": "root registers closeOnOutside:false",
+      "metaSha256": "691f43dc7143ad4b4740492d6fe2db1d897813f06b9675e0c19b0a565623ff06"
+    },
+    {
+      "path": "client/assets/bundles/battle/prefabs/SkillAuditView.prefab",
+      "beforeSha256": "4d219bf8f24368656db5271b82eef626811e4ebd2fc32c45baf4a79010f1f56e",
+      "afterSha256": "077d7f504ceeee481ff28ab850f859182dac106eb422e72a1bf7670886258cc0",
+      "removedNode": "Dim",
+      "removedObjects": 8,
+      "originalGeometryUnchanged": true,
+      "contentBlockNode": "Panel",
+      "modalPolicy": "root registers closeOnOutside:false",
+      "metaSha256": "90630a662402fa8d8dbc21e3316da1b4992d272dc212d31dfb69ea50f27fa65d"
+    }
+  ],
+  "protectedWindowMigration": [
+    {
+      "path": "client/assets/bundles/hero/prefabs/FormationView.prefab",
+      "removed": "Backdrop",
+      "beforeSha": "3f961c500e5bada9c938892c0d2825f635e7a9d1c647814cae89aec0010e67e6",
+      "afterSha": "e49063646a9a17df8c6eb36b1d167a2d03ce9c441cca61b2539d5a5d766f45a6",
+      "removedRows": 8
+    },
+    {
+      "path": "client/assets/bundles/battle/prefabs/ChapterEndView.prefab",
+      "removed": "Backdrop",
+      "beforeSha": "7e4f9e4acef4710c84198355c59c2f618c9f9594d2e7368b1f0c7ad475616bd9",
+      "afterSha": "aaab063110e15a9b43f777f371bd98658256091039af167e9c9ab0ab8eb235b5",
+      "removedRows": 10
+    }
+  ],
+  "bagWidgetMigration": {
+    "path": "client/assets/bundles/bag/prefabs/BagView.prefab",
+    "beforeSha256": "f9307fb81a1ff32e8eca0b1ca0d7e5695b8c5711a9db2eec30de5e335e7c23f2",
+    "afterSha256": "21def30c18e1cdd10d702bd57eb0671106991affbafe241d7c08285ad0824bfe",
+    "contentId": 112,
+    "contentDesignSize": [
+      640,
+      960
+    ],
+    "contentAnchor": [
+      0,
+      0
+    ],
+    "contentPositionAtDesignWidth": [
+      -320,
+      -480
+    ],
+    "widget": {
+      "alignFlags": 18,
+      "horizontalCenter": 0,
+      "verticalCenter": 0,
+      "alignMode": "ON_WINDOW_RESIZE"
+    },
+    "scale": {
+      "type": "ViewportScale",
+      "target": "Content",
+      "designWidth": 640,
+      "maxScale": 1
+    },
+    "removedViewBindings": [
+      "content",
+      "sprBox",
+      "hitMenu"
+    ],
+    "originalContentDescendantGeometryUnchanged": true,
+    "metaSha256": "e67efe143d9e8c87378b51fac313a87118d4b3ed16e2ac580d4aefd8c800277f"
+  },
+  "screenshots": [
+    {
+      "path": "docs/validation/shared-modal-stack-20261111.png",
+      "sha256": "93e15f465b1c0434e08144b93b2eb6733fdb6610608ae7ab9a05f8229974ae4d"
+    },
+    {
+      "path": "docs/validation/hero-widget-long-20261111.png",
+      "sha256": "9db391ef8197761592a0fcc84ece720d71acfe43a5dfa45c7c31d250dc4e8d88"
+    },
+    {
+      "path": "docs/validation/hero-widget-short-20261111.png",
+      "sha256": "8bb555516b8fbf4fd192a167df4ccf1bfbff3d76c9b4cee4611b34967bb04157"
+    },
+    {
+      "path": "docs/validation/hero-detail-widget-20261111.png",
+      "sha256": "34e713bd8372973dbf145b2b15a5a880b8addee628d5b985a52451f59e1e499e"
+    },
+    {
+      "path": "docs/validation/hero-detail-widget-short-20261111.png",
+      "sha256": "b53a22c2a9e5b8fba668018e63fb05ca579eccfac94781d84af7d50879209e10"
+    },
+    {
+      "path": "docs/validation/bag-widget-short-20261111.png",
+      "sha256": "1a8d5c78d223b7ec7ffe357df5cd90ae0583f9a2c3c6146fb061ea949878ce3a"
+    },
+    {
+      "path": "docs/validation/bag-widget-long-20261111.png",
+      "sha256": "ceef4431348857820be7c1f25b93e2eb85ac59ef8b35595fa3695c2f2bbc4b93"
+    },
+    {
+      "path": "docs/validation/shared-modal-victory-20261111.png",
+      "sha256": "4d2357bd980417f6f9c60f1e59e2a802380972b4cd17f77d536a23d2bfa5e7a3"
+    }
+  ],
+  "notRepeated": [
+    "完整发布包及构建图集去重",
+    "真实CDN和真机",
+    "长列表和全部英雄/技能资源",
+    "缓存TTL及长期GPU/进程内存",
+    "幂等/回滚等完整后端测试矩阵"
+  ],
+  "unchangedBoundaries": [
+    "当前玩法范围",
+    "WS＋Protobuf及服务端权威/幂等结算",
+    "LoadingPlan三段显式配置和其余按需",
+    "现有资源池及缓存策略",
+    "领取/快速战斗/升级/穿脱仍关闭"
+  ],
+  "cleanup": "浏览器测试配置已恢复、临时标签已关闭；仅停止本次核对身份的独立内存测试服38080。最终42份文档链接、类型、全库绑定及git diff --check通过。"
+}
