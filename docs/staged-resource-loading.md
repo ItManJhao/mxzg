@@ -34,13 +34,13 @@ common、bag、hero、battle的自动图集全部保留：目录分类负责人�
 
 保留不表示每个图集都是功能必需：common/atlas当前有7张小图，common/item-atlas和bag/atlas各只有1张，后两者当前合图收益有限，可以后续单独精简pac而保留原图。本次只迁目录，未删除或重建图集及UUID。
 
-本次目录归档的52项、类型、原文件字节和新目录独立环境预览已通过，见[本次记录](validation/bundle-directory-groups-20261111.json)。背包、英雄、850关和真实第二关结算返回正常；未构建发布包，实际合图/包归属和下载体量仍须集中验收。
+2026-11-11的15包目录分组批次通过52项、类型、原文件字节及新目录独立环境预览检查，见[当批记录](validation/bundle-directory-groups-20261111.json)；当时背包、英雄、850关和真实第二关结算返回正常。该批预览不包含2026-11-13的chapter迁移、effects拆包和脚本整理。本轮按负责人要求不重复预览或构建，下一次集中发布验收仍须检查当前16包的实际归属、合图和下载体量。
 
 资源统一在assets/bundles，当前16包（15远程＋bootstrap）、32份Prefab及31张实际依赖配置表。此前90未实现包和64旧Prefab清理的[15包历史记录](validation/current-resource-scope-cleanup-20261111.json)保持原样，当前范围检查合并本次effects拆包增量；拆包不新增玩法或Prefab。历史104远程包＋bootstrap、96Prefab及21,902个UUID不能写成当前范围；此前源目录减少约203.30MiB，不是新构建或下载体积。LoadingPlan仍是唯一三段显式配置，其余按需，复用ResManager和ResourcePool，不维护模块清单。
 
-负责人于2026-11-12授权本轮成果推送hao并同步main，实际提交以Git为准，后续开发继续hao。目录归档前的51项、类型和本机背包/英雄/850关/真实第二关闭环见[前批证据](validation/virtual-list-resource-review-20261111.json)。新目录检查见[本次归档记录](validation/bundle-directory-groups-20261111.json)，不能以旧预览或构建包代替新路径的重新导入验证；验证记录中的未提交状态是当时快照，真实CDN和真机尚待完成。
+目录分组之前的51项、类型和本机背包/英雄/850关/真实第二关闭环见[前批证据](validation/virtual-list-resource-review-20261111.json)。上述记录中的未提交状态、包数量和路径均是当时快照，当前交付状态统一见[开发进度](development-progress.md)。历史预览或构建包不能替代新路径的发布验证；真实CDN和真机仍待完成。
 
-本机单轮配置目标准备：login 368.2ms、enterGame 547.5ms、background 470.6ms（4/4）；页面Promise不含过渡及按需图/骨骼。此测量没有重跑完整主线，不能代替正式CDN、真机或长期内存验证。见[测量边界与请求记录](validation/loading-cache-review-20261111.json)。后续仅列计划，未开始实施。
+2026-11-11使用当时发布包测得单轮配置目标准备：login 368.2ms、enterGame 547.5ms、background 470.6ms（4/4）；页面Promise不含过渡及按需图/骨骼。此测量没有重跑完整主线，不代表当前源码的耗时，也不能代替正式CDN、真机或长期内存验证。见[测量边界与请求记录](validation/loading-cache-review-20261111.json)。
 
 ## 人工修改入口
 

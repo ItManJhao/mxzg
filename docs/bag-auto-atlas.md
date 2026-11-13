@@ -1,6 +1,6 @@
 # 背包自动图集：人工维护步骤
 
-更新：2026-11-12。物理目录已按resources/module分组，当前目录和加载策略见[Bundle维护说明](staged-resource-loading.md)。负责人已授权本轮交付hao并同步main，具体提交以Git为准；后续开发仍在hao。目录归类不替代自动图集，现有pac、原图及meta全部保留。
+更新：2026-11-13。物理目录已按resources/module分组，当前目录和加载策略见[Bundle维护说明](staged-resource-loading.md)，交付状态统一见[开发进度](development-progress.md)。目录归类不替代自动图集，现有pac、原图及meta全部保留。
 
 ## 当前资源放置
 
@@ -28,7 +28,7 @@
 4. 调整图集参数时选中 pac；图集预览只展示打包方案，不代表游戏预览改为加载构建图集。
 5. 大背景独立存放并绑定 Prefab；物品图标仍按库存按需加载，不因模块归属而全部塞入界面图集。
 
-页面地址和属性在 View 的 @view 注册中定义。LoadingPlan 只决定三个阶段的准备时机；Prefab 的直接依赖由引擎加载。代码不加载 pac，不按自动生成的图集文件名取帧。
+页面地址和属性在View的@UIRegistry.view注册中定义。LoadingPlan只决定三个阶段的准备时机；Prefab的直接依赖由引擎加载。代码不加载pac，不按自动生成的图集文件名取帧。
 
 动态图统一通过 ResManager。新增 icons/item/backpack_编号.png 后遵循物品配置的共图/命名规则即可；不生成 IconCatalog 或 ResourceCatalog，也不添加图片存在性清单。只有新增/移动 Prefab 等实际索引输入变化时，才运行 node tools/generate_resources.cjs。
 

@@ -121,7 +121,7 @@ https://ai.google.dev/gemini-api/docs/video-understanding
 
 - BattleStageUtils逐项还原旧BattleUtils.getHeroPosition的高度档位、两列四行及左右镜像；主线按BattlePanelLayer的300底部高度、BattleLayer的637战场高度换算到640×1280中心坐标。
 - Slot_A0..7、Slot_E0..7及独立血条/元素/HeadAnchor均保存于预制体。预览根据战报position=2选索引1，不再固定使用索引0。当前单位和血条容器统一0.9缩放以保留窄屏外侧头顶信息边距，此适配不是旧公式的一部分，完整多人密度仍待录像比对。
-- Hero模板元素从同源herotype读取，经ResourceCatalog加载完整元素图标；不以元素图标冒充团队光环。血条与元素在独立播放时挂到对应英雄槽，跟随近身移动。
+- Hero模板元素从同源herotype读取，加载完整元素图标，不以元素图标冒充团队光环。2026-11-05当时使用ResourceCatalog；当前BattleReplayPreview通过既有资源作用域加载`hero/ui/hero-icon_elem-N/spriteFrame`，ResourceCatalog已退役。血条与元素在独立播放时挂到对应英雄槽，跟随近身移动。
 - MatchInfo复用BattleInfoLayer的蓝红底条与VS，纠正旧蓝底条锚点；独立测试名字明确标“独立测试阵容/主线第1关”，不冒充真实账号名。契约和光环没有权威数据，暂不显示。
 - ChapterEndCtr核实：主线胜利用chibang骨骼动画，胜负音效battle-end-1/0；旧奖励使用scroll_view；ChapterEndCtr自身倒计时需startTimer调用，但默认失败ChapterEndLoseCell.reset会独立启动5秒关闭。战报按钮依detail存在显示。只读恢复见下节，不使用通用BattleEndLayer或伪造奖励。
 - 旧client/tools/gen_battle_prefab.py会重建720森林与已退役WireBattlePage，已停止生成，改为明确失败提示；现有资源保留人工编辑和UUID。

@@ -10,7 +10,7 @@
 2. [client-schema.json](../config/client-schema.json) 维护明确字段、主键、必需性与结构规范。
 3. python tools/generate_config.py 生成 GConfig.ts；--check 只核验，不写入。
 
-当前覆盖 11 张有效或保留能力表，原九张按组加载，HeroTalk 仅提供保留详情的描述；新增 HeroLevel 在打开普通升级窗口时单独按组加载，不随英雄列表预载。不是对全部历史 536 张表猜类型。新增表先声明规范再加入分组。数组必须声明 items，对象必须声明 fields，空对象禁止额外字段；原 JSON 中数组文本仍为 string，不擅自改变格式。字段注释优先来自本项目表头，派生及 JSON-only 字段在规范维护。生成顺序稳定，不写本机绝对路径。
+截至2026-11-13，client-schema.json定义16张类型化表；assets/bundles/resources/config保留31张实际依赖JSON表，二者统计范围不同。保留表或类型不表示对应玩法已开放：普通升级入口已关闭，旧升级窗口与客户端请求链已删除；HeroLevel等规则投影仍供后续恢复与检查使用。不是对全部历史536张表猜类型。新增类型化表先声明规范，再接入实际需要的加载入口。数组必须声明items，对象必须声明fields，空对象禁止额外字段；原JSON中数组文本仍为string，不擅自改变格式。字段注释优先来自本项目表头，派生及JSON-only字段在规范维护。生成顺序稳定，不写本机绝对路径。
 
 语言表 key=# 为注释行，规范显式排除；数字文本语言键可用数字查询。所有有效配置主键均必须唯一；生成器和 GameConfig 同时拒绝重复键，失败不提交整组。
 
@@ -25,19 +25,19 @@
 
 背包标签使用 item.xlsx 的 place：0 不在背包显示、1 装备、2 道具、3 碎片、4 特殊（当前页签美术为精灵）。type 是效用类型，不代表背包标签；隐藏显示不删除 Model 中库存，也不影响结算发奖。
 
-## 普通升级最小投影
+## 普通升级最小投影（保留规则，入口关闭）
 
-herolevel.xlsx → 导出 herolevel.json → client-schema 的 HeroLevel（level、exp_need、gold_need）→ generate_config.py。服务端由 `python tools/export_hero_growth.py --write` 从现有五张导出表生成 gameplay/hero-growth.json，只保留消耗、阶/星上限和四属性所需字段；默认调用只检查稳定性，统一检查已接入。版本为内容哈希，收据和新战报记录实际成长版本；历史已保存战报不重算。客户端不重复计算属性，展示服务端 current/next，并校验成本与 GameConfig 一致。配置缺失拒绝操作，不免费升级。规则出处见 [英雄契约](hero-lineup-contract.md)。
+herolevel.xlsx → 导出 herolevel.json → client-schema 的 HeroLevel（level、exp_need、gold_need）→ generate_config.py。服务端由 `python tools/export_hero_growth.py --write` 从现有五张导出表生成 gameplay/hero-growth.json，只保留消耗、阶/星上限和四属性所需字段；默认调用只检查稳定性，统一检查已接入。版本为内容哈希，收据和新战报记录实际成长版本；历史已保存战报不重算。历史普通升级窗口曾展示服务端current/next并校验成本，该窗口现已退役，不属于当前开页流程。后续恢复仍须保持服务端权威，配置缺失拒绝操作，不免费升级。规则出处见[英雄契约](hero-lineup-contract.md)。
 
 ## 加载与查询
 
-    await prepareInventoryConfig();
+    await RemakeConfigUtils.prepareInventoryConfig();
     const item = GameConfig.instance.getConfig(GConfig.Item, itemId); // ItemRow | undefined
     const rows = GameConfig.instance.getConfig(GConfig.Item);        // 稳定只读数组
     const required = GameConfig.instance.requireConfig(GConfig.Item, itemId);
     const state = GameConfig.instance.status(GConfig.Item);
 
-RemakeConfigUtils 的 startup 只读 Language/LoadingTips；city 再读五张主城表；hero 再读 HeroType/Item；inventory 复用 Item/Language。表未加载或首次加载失败抛 ConfigUnavailable，status 区分 unloaded/failed；已加载空表返回空数组，缺行返回 undefined，requireConfig 缺行抛 ConfigRowMissing。
+RemakeConfigUtils当前按页面实际需要提供四组配置：city读取五张主城表；hero读取HeroType/Item；heroDetail读取EquipmentType、HeroType、HeroSkill、HeroStar、HeroUpgrade、Language、Item；inventory读取Item、Language、TimeLimitItem。阶段中需要提前准备的表在LoadingPlan显式配置，不另保留startup分组。表未加载或首次加载失败抛ConfigUnavailable，status区分unloaded/failed；已加载空表返回空数组，缺行返回undefined，requireConfig缺行抛ConfigRowMissing。
 
 加载先复制、逐字段校验、建索引并递归冻结，再原子提交整组；失败保留此前有效数据，status.error 记录最近失败。整表和嵌套数据不可写，不暴露内部 Map。并发同版本请求去重，失败可重试，成功复用。
 
@@ -59,7 +59,11 @@ const target = ResourceAssetsUtils.describe("spine", "jiemian", "SkeletonData");
 
 LoadingPlan显式配置三个阶段。tools/generate_resources.cjs只生成Prefab UUID身份索引和PrefabPlanUtils准入，不扫描图片、不生成模块资源描述；运行加载没有UUID地址回退。保留Prefab序列化引用和原UUID。[resource-missing.json](../config/resource-missing.json)仅为历史审计。
 
-以下为历史查缺记录，不代表当前资源入口：
+ResourceAssetsUtils复用ResourcePool的请求去重、失败重试、持有计数与关闭隔离。decRef(false)只撤回作用域持有，避免破坏仍由其他页面或序列化依赖共享的资源。页面实例与闲置Prefab回收已实现，阶段预加载和活动实例继续受保护；完整纹理内存预算、真实CDN下载和长期性能测量尚待完成，具体参数见[加载与缓存维护](staged-resource-loading.md)。
+
+## 历史查缺记录（2026-11-02）
+
+以下保留当时的入口、路径、数量和验证结论，不代表当前资源结构；IconCatalog、ItemIconById等旧入口现已退役。
 
 2026-11-02 此前批次复核发现旧 1172 条缺图记录大部分来自生成器误用物品 ID 拼接路径，忽略 item.icon 的 backpack/ 共享图片声明。现已按显式配置生成 IconCatalog，缺图降为 16 个引用、8 个不同路径；这是复用正确的现有图片，不是补造图片。当前三名初始英雄、初始库存及前 20 关奖励范围未发现必需缺图；保留配置引用仍有效，不能以未开放为由删除。
 
@@ -79,8 +83,6 @@ LoadingPlan显式配置三个阶段。tools/generate_resources.cjs只生成Prefa
 三张源图按 plist 的 frame/sourceColorRect/sourceSize 从 RGBA8888 PVR 无损还原为 102×102 PNG，未改像素风格、未导入整套图集。906411/906431 源提交 `1d0ea5dc5b28201963cfb007305d5e80fb16faeb`（bucket/TW/日本），目录 `client/idle/res/jpn/ccbi-res/`；3010001 源提交 `71902442d3e832417892f2ac607ee930de3b2f37`（bucket/TW/魔兽梦境），目录 `client/idle/res/hd/ccbi-res/`。源配置分别确认相同 icon、物品类型和使用规则；完整来源条目已合入 asset-provenance.json。
 
 重新生成后剩 **4 个引用 / 4 张图**，均保留为待补美术，未判为可删除历史引用。异空间碎片另核对日本/多语言/魔兽梦境配置使用 backpack/1300004（名称键 710404、说明键 870004、用途一致），当前中国简体来源遗留的 1100507 在已查图集无对应帧。只改源表 J1493 并通过现有导出器重新生成 item.json；未改变用途或活动规则。当前 1300004 原图与日本同名图集帧美术一致，但像素版本不同，保留现有图片与 UUID，不用另一分支像素覆盖。三张新图未由本批正常首胜发放，不把资源加载验证算作对应皮肤/充值玩法验收。三张新增图片已通过真实 Creator 的既有资源作用域加载，尺寸 102×102，共享礼包 ID 指向同一 UUID。异空间碎片运行时复核已于 2026-11-02 后续独立验证批完成：当前 Creator 预览的 GameConfig 返回 backpack/1300004，ItemIconById[1300004] 指向 resources/ui/bag/backpack_1300004，既有资源作用域加载为 102×102 SpriteFrame，UUID 为 ad66e79b-695c-4c69-8a0a-18ae4e7adf8b@f9941。实际加载的原生 PNG 与仓库图片 SHA256 同为 5ac2f5035672f3fc7bf64e94d0a85ba5c34b14698f92ea4ddede624597c8d6a8，目视为蓝色晶体碎片，未回退旧地址或通用占位图。源表 item!J1493、导出、目录与 meta 再次一致；作用域已释放。证据保留在忽略目录 client/temp/mysql-phase-20261102。此次仅验证配置与资源加载，未写库存、伪造领奖或验收未开放玩法。全部保留 Prefab 序列化 UUID 另由结构审查验证。
-
-ResourceAssetsUtils 复用 ResourcePool 的去重、失败重试、持有计数与关闭隔离。decRef(false) 只解除作用域持有，避免破坏序列化和既有显示加载器共享资源；全面主动淘汰、内存预算、下载与性能测量仍待完成。
 
 ## 美术追溯
 

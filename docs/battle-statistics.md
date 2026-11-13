@@ -32,13 +32,13 @@
 
 后续展示验证已完成双方各8格的真实拖动、遮罩、非零治疗216/432比例和关闭清理，见[展示夹具记录](validation/battle-statistics-followup-20261109.json)。夹具仅在页面内提供展示输入，没有写角色资产，不能替代真实治疗战斗或8人阵容玩法验收。
 
-## 进化头像与高星样式（本批）
+## 进化头像与高星样式（2026-11-09）
 
-核对发现58张进化头像原已在资源目录，上一批缺的是资源ID索引而非图片文件；当时增加由skin与heroevolvelevel生成的BattlePortraitById（2026-11-11已收敛为IconCatalog.portrait冻结ID查询，可用范围保持），战报不再借用物品ID映射。58张进化头像及13帧高星光效按旧图集恢复半透明像素/完整画布，71张逐像素检查通过，既有资源与子资源UUID保留。
+核对发现58张进化头像原已在资源目录，上一批缺的是资源ID索引而非图片文件；当时增加由skin与heroevolvelevel生成的BattlePortraitById，后续曾收敛为IconCatalog.portrait查询。当前统一入口为ResManager.portrait，BattleStatisticsUtils读取战报冻结的portraitIconId后调用该入口，不再使用上述旧索引或物品ID映射。58张进化头像及13帧高星光效按旧图集恢复半透明像素/完整画布，71张逐像素检查通过，既有资源与子资源UUID保留。
 
 旧UIMenuItemHero.setStar及Player.awaken_star=14确认：1至5星显示对应金星，6至9星显示1至4红星；10至13星使用高星牌，11至13叠数字1至3；14星使用觉醒牌。品质边框按旧getRare选择，10星以上为5档。eff_hero_star来自effect2，13帧、每帧0.12秒、尾帧停留1.5秒循环。本批BattleHeroStarView只挂战斗统计Prefab；静态星行、牌、数字及帧引用归Prefab，运行时只切换可见性与帧，不影响英雄名册。
 
-相关入口：BattleStatisticsUtils.stars/starFrame、BattleHeroStarView、BattleDetailCell、tools/generate_resources.cjs；原图验证使用tools/check_battle_statistics_art.py --legacy 指向旧项目res/hd/ccbi-res。40/40前端检查、类型和绑定检查通过；本批未修改服务端规则，不把上批47项后端结果算作本次重跑。浏览器两个进化分支与全部1至14星/缺失星级均已用纯展示夹具复验，高星三种竖屏通过，详见[高星记录](validation/battle-high-stars-20261109.json)，皮肤穿戴、胜利骨骼外观与历史双方姓名仍不在完成范围。
+当前展示入口为ResManager.portrait、BattleStatisticsUtils.stars/starFrame、BattleHeroStarView和BattleDetailCell；tools/generate_resources.cjs已不再生成头像索引。原图验证使用tools/check_battle_statistics_art.py --legacy指向旧项目res/hd/ccbi-res。2026-11-09当批40/40前端检查、类型和绑定检查通过；当批未修改服务端规则，不把前批47项后端结果算作重跑。浏览器两个进化分支与全部1至14星/缺失星级均已用纯展示夹具复验，高星三种竖屏通过，详见[高星记录](validation/battle-high-stars-20261109.json)。皮肤穿戴、胜利骨骼外观与历史双方姓名不在该次验证范围；后两项的后续进展见下文对应章节。
 
 ## 真实治疗回放（2026-11-09）
 

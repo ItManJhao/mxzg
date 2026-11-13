@@ -12,7 +12,7 @@
 
 ## 文档入口
 
-最终目标：完整重做旧游戏，分批恢复玩法与社交；独立新版，不要求旧客户端兼容或旧玩家迁移。全部游戏业务 HTTP 已移除，登录、角色、背包采用 WS＋Protobuf；统一登录初始化、资产事务提交后同步。角色、背包模板已接通，当前重点为主线挂机主页与正式挑战流程还原；当前范围与缺口见进度和交接文档。
+最终目标：完整重做旧游戏，分批恢复玩法与社交；独立新版，不要求旧客户端兼容或旧玩家迁移。全部游戏业务 HTTP 已移除，登录、角色、背包采用 WS＋Protobuf；统一登录初始化、资产事务提交后同步。本轮框架、目录与旧代码整理已收口；当前玩法范围、验证限制和后续顺序分别见进度、实施路线，不从历史批次推断。后续开发在 hao，main 仅按负责人明确指令合并。
 
 阅读顺序：产品需求（要做什么）→ 开发进度（现在做到哪）→ 实施计划（接下来做什么）→ 架构（怎样做及证据）。同一事实只在对应主文档维护，不让历史批次覆盖当前结论。
 
@@ -20,15 +20,16 @@
 - [产品需求](docs/product-requirements.md)：有效需求与首测范围。
 - [架构与职责](docs/architecture.md)：MVC、状态、事件、生命周期及后端边界。
 - [开发写法与阅读约定](docs/development-conventions.md)：游爱写法的借鉴范围、方法/注释、明确调用链和还原流程。
-- [交接文档](docs/handoff.md)：新聊天先读，包含路径、约束、代码入口、验证与下一步。
+- [交接文档](docs/handoff.md)：新聊天先读，包含接手步骤、边界、代码入口和独立环境操作。
 - [文档索引](docs/README.md)：按用途查阅，区分当前约束和历史证据。
 - [首批通信契约](docs/network-contract.md)：登录、重连、幂等、迁移顺序与试点门槛；含独立预览入口。
 - [运行维护](docs/local-remake-workflow.md)：本机启停、日志和排错。
-- [配置与资源](docs/config-pipeline.md)：生成、分组查询、资源目录与作用域。
+- [加载与远程资源](docs/staged-resource-loading.md)：Bundle目录、三段配置、资源池与缓存。
+- [配置与资源](docs/config-pipeline.md)：生成、分组查询及统一资源入口。
 - [Prefab 编辑](docs/prefab-layout.md)：命名、坐标、逐项审查及视觉待验收。
 - [当前计划](docs/restructuring-plan.md) / [实际进度](docs/development-progress.md)。
 
-历史记录：[11月3–4日批次快照](docs/validation/development-history-20261104.md)；[截至 2026-11-02 的开发过程](docs/validation/development-history-20261102.md)。[开服规则参考](docs/day60-open-server.md)只用于核对配置，不再作为另一套删减玩法/排期方案。
+历史记录：[本次文档收口快照](docs/validation/development-history-20261113.md)；[11月3–4日批次快照](docs/validation/development-history-20261104.md)；[截至 2026-11-02 的开发过程](docs/validation/development-history-20261102.md)。[开服规则参考](docs/day60-open-server.md)只用于核对配置，不再作为另一套删减玩法/排期方案。
 
 文档目录的 JSON 是资源来源、Prefab 保留清单和审查数据，供工具/追溯使用；validation 保存历史证据。它们不作为当前计划，也不因文件多而删除。
 

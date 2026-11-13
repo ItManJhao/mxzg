@@ -1,8 +1,8 @@
 # Prefab 编辑与审查
 
-更新：2026-11-11。本批保留32份Prefab，已清理64份旧Prefab；15个Bundle与31张配置依赖审计完成，见[prefab-review.json](prefab-review.json)及[资源清理记录](validation/current-resource-scope-cleanup-20261111.json)。前批96份是历史基线。本批51项、类型及本机限定复验通过，4份Prefab按实际范围更新记录，旧证据归档；未操作Inspector，尚未重建新发布包。详见[本批复验](validation/virtual-list-resource-review-20261111.json)。
+更新：2026-11-13。当前保留32份Prefab、16个Bundle和31张配置依赖；最新脚本整理、chapter迁移与effects拆包没有改变Prefab数量。当前结构见[prefab-review.json](prefab-review.json)，资源目录与发布检查入口见[Bundle维护说明](staged-resource-loading.md)。此前15包批次清理64份旧Prefab，并通过51项、类型及本机限定复验，见[当批资源清理](validation/current-resource-scope-cleanup-20261111.json)与[虚拟列表复验](validation/virtual-list-resource-review-20261111.json)；96份是更早的历史基线。本轮按负责人要求未重复Creator预览或构建，旧画面不替代最新源码的发布验收。
 
-修改静态布局直接编辑对应完整Prefab，保留仍用资产UUID与绑定；背包、英雄及详情的背景/纸面/列表容器保存为静态节点，HeroBoard只保留容器和Widget。英雄、背包、产物说明及胜利奖励已统一列表事件；本批又精简未实现按钮及旧资源，不能沿用[前批页面证据](validation/view-registration-list-review-20261111.json)的哈希或截图签收新实现。
+修改静态布局直接编辑对应完整Prefab，保留仍用资产UUID与绑定；背包、英雄及详情的背景/纸面/列表容器保存为静态节点，HeroBoard只保留容器和Widget。英雄、背包、产物说明及胜利奖励已统一列表事件；此前已精简未实现按钮及旧资源，不能沿用[更早页面证据](validation/view-registration-list-review-20261111.json)的哈希或截图签收后续实现。
 
 固定布局由Widget维护，ViewportScale按可用宽度统一缩放target，外根fitVisibleRoot只桥接LiveShell视口，不按页面或机型重排。SuperContent默认virtual=true、bufferLines=1，运行时逻辑总量与有限Cell节点池分开，原锚点/Cell正缩放保留；view/content局部缩放须1，祖先适配可用。数据/几何变化完整保位，滚动只换绑且不停止惯性；编辑器样板仍用原生Layout。旧ParchmentLayout、英雄组装链、页面壳及本批旧Campaign四份UI/PrefabLayout/Common*Shell样板链均退役。
 
@@ -10,7 +10,7 @@
 
 ## 历史画面与结构记录
 
-以下保留2026-11-02的局部验收、旧目录和阶段方案，仅供追溯。记录中的“当前”“本批”、资源数量与后续安排只针对当时；部分资源已在本批清理，旧Campaign/Idle/普通升级链仍暂停，不能据旧证据恢复HTTP、领取或养成入口，也不能将历史画面算作当前保留范围的新验收。
+以下保留2026-11-02及前后批次的局部验收、旧目录和阶段方案，仅供追溯。记录中的“当前”“本批”、资源数量与后续安排只针对当时；后续已清理部分资源及旧Campaign/Idle/普通升级客户端链，后端领域规则保留。不能据旧证据恢复HTTP、领取或养成入口，也不能将历史画面算作当前保留范围的新验收。下文的坐标、命名及静态修正同属历史记录，包括已退役的CommonRedDotShell和PrefabLayout；当前布局职责以本文开头及维护指南为准。
 
 ## 历史：2026-11-02 战场窄屏显示复验
 
