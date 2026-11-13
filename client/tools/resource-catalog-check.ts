@@ -4,7 +4,7 @@
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { strict as assert } from "node:assert";
 import { resources, Node, Sprite, SpriteFrame } from "cc";
-import { createAssetScope, ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { ResourceScopeClosed } from "../assets/scripts/framework/assets/ResourcePool";
 import { BagItemCatalog } from "../assets/scripts/features/bag/utils/BagItemCatalog";
 import { ResManager } from "../assets/scripts/framework/assets/ResManager";
@@ -128,8 +128,8 @@ async function checkUnifiedSpriteEntry(): Promise<void> {
     }) as any;
     const owner = new Node("ImageOwner");
     const image = owner.addComponent(Sprite);
-    const prepared = createAssetScope();
-    const physical = createAssetScope();
+    const prepared = ResourceAssetsUtils.createAssetScope();
+    const physical = ResourceAssetsUtils.createAssetScope();
     const descriptor = ResourceAssetsUtils.describe("common", "ui/other_rare-4", "SpriteFrame");
     const preload = prepared.load(descriptor);
     const displayed = ResManager.getSpriteFrame(owner, "bundles/module/common/" + descriptor.path);
@@ -332,7 +332,7 @@ async function main(): Promise<void> {
         requests++; callbacks.push(callback);
     };
     const asset = { addRef: () => { retained++; }, decRef: () => { released++; } };
-    const a = createAssetScope(), b = createAssetScope(), descriptor = ResourceAssetsUtils.describe("common", "ui/button_btn-tab-24", "SpriteFrame");
+    const a = ResourceAssetsUtils.createAssetScope(), b = ResourceAssetsUtils.createAssetScope(), descriptor = ResourceAssetsUtils.describe("common", "ui/button_btn-tab-24", "SpriteFrame");
     const first = a.load(descriptor), shared = b.loadPath(descriptor.bundle + "/" + descriptor.loadPath, "SpriteFrame");
     await flush(); assert.equal(requests, 1, "目录UUID与动态路径解析为同一类型/路径，不重复持有");
     a.dispose(); const cancelled = assert.rejects(first, ResourceScopeClosed);
@@ -340,7 +340,7 @@ async function main(): Promise<void> {
     await cancelled; assert.equal(await shared, asset); assert.equal(retained, 1);
     b.dispose(); b.dispose(); assert.equal(released, 1);
     await assert.rejects(b.load(descriptor), ResourceScopeClosed);
-    const retry = createAssetScope(), failure = retry.load(descriptor);
+    const retry = ResourceAssetsUtils.createAssetScope(), failure = retry.load(descriptor);
     await flush(); callbacks.shift()!(new Error("missing"));
     await assert.rejects(failure, /missing/);
     const recovered = retry.load(descriptor);

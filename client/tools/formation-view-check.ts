@@ -64,7 +64,7 @@ function instantiateData(data: any[]): Node {
     const screen = root.getComponent(FormationView) as FormationView | null;
     if (screen) {
         const roster = new HeroRosterModel(), saves = new FormationSaveModel();
-        roster.reset("role-test"); saves.reset("role-test");
+        roster.reset(); saves.reset();
         roster.replace({ status: "ready", heroes: [], error: "", mainFormation: { formationId: 1,
             unlockedIds: [1, 2], assistanceUnlocked: false, version: 0, slots: [],
             options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }, { formationId: 2, openPositions: [1, 2, 3, 5, 6, 7] }] } });
@@ -111,11 +111,11 @@ async function main(): Promise<void> {
     assert.equal(cancels,3);
     // 用真实按钮事件验证草稿属于View；模块回执只经事件刷新，关闭不销毁模块。
     const editRoot=instantiateData(read(PAGE)), editor=editRoot.getComponent(FormationView) as FormationView;
-    const roster=new HeroRosterModel(), saves=new FormationSaveModel(); roster.reset("edit-role");
+    const roster=new HeroRosterModel(), saves=new FormationSaveModel(); roster.reset();
     const asset={formationId:1,unlockedIds:[1,2],assistanceUnlocked:false,version:0,slots:[],
         options:[{formationId:1,openPositions:[2,3,5,6,7,8]},{formationId:2,openPositions:[1,2,3,5,6,7]}]};
     roster.replace({status:"ready",heroes,error:"",mainFormation:asset});
-    const module=new FormationController(saves,roster);module.initialize();module.resetSession("edit-role");
+    const module=new FormationController(saves,roster);module.initialize();module.resetSession();
     let request:any,resolveSave!: (value:any)=>void;
     module.configure(async (body,received,failed)=>{
         request=body;
@@ -132,7 +132,7 @@ async function main(): Promise<void> {
     await Promise.resolve();await Promise.resolve();
     assert.equal(saves.snapshot.acknowledged,1,"关闭窗口不销毁保存回执处理");
     roster.replace({status:"ready",heroes,error:"",mainFormation:{...asset,version:1,slots:request.slots}});
-    EventDispatcher.instance.emit(HeroRosterEvent.Updated,{roleKey:roster.roleKey,revision:roster.version});
+    EventDispatcher.instance.emit(HeroRosterEvent.Updated,{revision:roster.version});
     editor.runOpen({complete:()=>{}});assert(editor.tipLabel!.string.includes("已保存"));assert(editor.countLabel!.string.includes("1 / 6"));
     editor.heroScroll!.content!.children[0].getComponent(HeroIconCellView)!.button!.node.emit(Button.EventType.CLICK);
     editor.slots.find(slot=>slot.position===2)!.button!.node.emit(Button.EventType.CLICK);
@@ -148,9 +148,9 @@ async function main(): Promise<void> {
     await Promise.resolve();await Promise.resolve();
     assert.equal(confirmed,0,"仅回执未同步权威阵容不能开始挑战");
     roster.replace({status:"ready",heroes,error:"",mainFormation:{...asset,version:2,slots:request.slots}});
-    EventDispatcher.instance.emit(HeroRosterEvent.Updated,{roleKey:roster.roleKey,revision:roster.version});
+    EventDispatcher.instance.emit(HeroRosterEvent.Updated,{revision:roster.version});
     assert.equal(confirmed,1,"回执与权威阵容都确认后只通知一次出战");
-    EventDispatcher.instance.emit(HeroRosterEvent.Updated,{roleKey:roster.roleKey,revision:roster.version});
+    EventDispatcher.instance.emit(HeroRosterEvent.Updated,{revision:roster.version});
     assert.equal(confirmed,1);
     editor.runClose();
     editor.runOpen({closeAfterSave:true, complete:ok=>{if(ok)confirmed++;}});

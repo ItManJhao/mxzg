@@ -1,5 +1,5 @@
 /** 仅编译的契约断言：表名推导、主键类型、只读配置及资源分组/类型不能退化为任意字符串。 */
-import { ResourceAssetsUtils, createAssetScope } from "../assets/scripts/framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";
 
@@ -16,7 +16,7 @@ function verifyCatalogTypes(): void {
     GameConfig.instance.getConfig(GConfig.Item).push({ idx: 1 });
     // @ts-expect-error 行字段不可写。
     if (row) row.idx = 2;
-    const scope = createAssetScope();
+    const scope = ResourceAssetsUtils.createAssetScope();
     const sprite = scope.load(ResourceAssetsUtils.describe("common", "ui/button_btn-tab-24", "SpriteFrame"));
     sprite.then(frame => { frame.originalSize; });
     // @ts-expect-error SpriteFrame 加载结果不能当成 Prefab。

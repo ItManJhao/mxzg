@@ -5,13 +5,12 @@
 import { _decorator, Button, Label, Node } from "cc";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { prepareHeroDetailConfig } from "../../../config/RemakeConfig";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
-import { prepareInventoryConfig } from "../../../config/RemakeConfig";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { HeroCatalog } from "../../hero/utils/HeroCatalog";
 import { BattleReplayUnit } from "../utils/BattleReplayUtils";
 import { BattleStatisticsUtils } from "../utils/BattleStatisticsUtils";
@@ -27,7 +26,7 @@ export interface BattleDetailArgs {
     readonly won: boolean;
 }
 
-@view({
+@UIRegistry.view({
     id: "battle-detail",
     prefab: "bundles/module/battle/prefabs/BattleDetailLayer",
     layer: UILayer.Popup,
@@ -36,8 +35,8 @@ export interface BattleDetailArgs {
     hostId: "remake-modal",
     modal: { mask: true, closeOnOutside: true },
     prepare: async () => {
-        await prepareInventoryConfig();
-        await prepareHeroDetailConfig();
+        await RemakeConfigUtils.prepareInventoryConfig();
+        await RemakeConfigUtils.prepareHeroDetailConfig();
     },
 })
 @ccclass("BattleDetailLayer")
@@ -86,7 +85,7 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
         const close = () => this.close();
         this.closeButton.node.on(Button.EventType.CLICK, close);
         this.ownListener(() => this.closeButton?.node.off(Button.EventType.CLICK, close));
-        bindVisibleRefresh(this.node, () => this.fitViewport());
+        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
         void this.prepare(args).then(() => {
             if (!this.released) {
                 this.finishOpen();
@@ -100,7 +99,7 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
 
     /** 同源配置仅用于名称和图标；双方最大值取同一战报名册，顺序不按伤害重排。 */
     private async prepare(args: BattleDetailArgs): Promise<void> {
-        await prepareHeroDetailConfig();
+        await RemakeConfigUtils.prepareHeroDetailConfig();
         if (this.released || !this.node.isValid) {
             return;
         }
@@ -124,7 +123,7 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
         if (this.released || !this.panel) {
             return;
         }
-        const box = fitVisibleRoot(this.node);
+        const box = ViewportLayoutUtils.fitVisibleRoot(this.node);
         const scale = Math.min(1, (box.width - 24) / 600);
         this.panel.setScale(scale, scale, 1);
         this.panel.setPosition(-300 * scale, -375 * scale, 0);

@@ -1,20 +1,21 @@
 /** 应用层统一资产提交：校验角色归属和持久版本，再把真实协议交给角色/背包/英雄 onNotify。
  * 同一通知批次完成全部 Model 更新；不查询库存、不反推玩家资产、不保存第二份资产。
  */
-import { MainChapterController } from "../../features/battle/MainChapterController";
-import type { FormationController } from "../../features/hero/FormationController";
-import type { HeroRosterController } from "../../features/hero/HeroRosterController";
-import { readOwnedHeroes, readHeroRosterInfo, readMainFormation } from "../../features/hero/data/HeroSnapshotData";
-import type { AccountModel } from "../../features/account/AccountModel";
-import type { BagController } from "../../features/bag/BagController";
-import type { RoleController } from "../../features/account/RoleController";
-import { readRole } from "../../features/account/AccountApi";
-import { readBagItems, readTimedItems } from "../../features/bag/data/BagItemData";
-import { statePayload } from "../../platform/ProtocolState";
+import {MainChapterController} from "../../features/battle/MainChapterController";
+import type {FormationController} from "../../features/hero/FormationController";
+import type {HeroRosterController} from "../../features/hero/HeroRosterController";
+import { HeroSnapshotUtils } from "../../features/hero/data/HeroSnapshotUtils";
+import type {AccountModel} from "../../features/account/AccountModel";
+import type {BagController} from "../../features/bag/BagController";
+import type {RoleController} from "../../features/account/RoleController";
+import { AccountApi } from "../../features/account/AccountApi";
+import { BagItemDataUtils } from "../../features/bag/data/BagItemDataUtils";
+import { ProtocolStateUtils } from "../../platform/ProtocolStateUtils";
 import type { ProtocolName } from "../../platform/Protocol";
-import type { GameFrame } from "../../platform/GameProtocolCodec";
-import { ProtocolRouter } from "../../platform/ProtocolRouter";
-import { batchNotifications } from "../../framework/EventDispatcher";
+import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
+import {ProtocolRouter} from "../../platform/ProtocolRouter";
+import { EventDispatcher } from "../../framework/EventDispatcher";
+
 export class AssetStateBinding {
     /** 已接纳的区服/角色键；空值表示尚未接收初始化。 */
     private key: string | null = null;
@@ -38,10 +39,13 @@ export class AssetStateBinding {
         private readonly role: RoleController,
         private readonly heroes?: HeroRosterController,
         private readonly formation?: FormationController,
-        private readonly identityChanged: () => void = () => {},
+        private readonly identityChanged: () => void = () => {
+        },
         private readonly chapter?: MainChapterController,
     ) {
-        this.stop = account.subscribe(state => { if (!state.role) this.clear(); });
+        this.stop = account.subscribe(state => {
+            if (!state.role) this.clear();
+        });
     }
 
     /** 完整校验后提交真实协议；重复及低版本不通知，同版本鉴权首包仍校准时间。 */
@@ -51,25 +55,25 @@ export class AssetStateBinding {
         if (frame.version !== 1 || (frame.kind !== "event" && (frame.kind !== "response" || frame.ok !== true)) || frame.error !== undefined) {
             throw new Error("资产信封无效");
         }
-        const state = statePayload(frame.name as ProtocolName, frame.body);
+        const state = ProtocolStateUtils.statePayload(frame.name as ProtocolName, frame.body);
         const chapter = MainChapterController.readState(state.mainChapter, Number(state.revision));
         const idle = MainChapterController.readIdle(state.mainChapterIdle, chapter);
-        const role = readRole(state.role);
-        const heroRows = readOwnedHeroes(state.heroes);
-        const formation = readMainFormation(state.mainFormation, heroRows);
+        const role = AccountApi.readRole(state.role);
+        const heroRows = HeroSnapshotUtils.readOwnedHeroes(state.heroes);
+        const formation = HeroSnapshotUtils.readMainFormation(state.mainFormation, heroRows);
         if (idle?.slots && (!formation || idle.lineupVersion !== formation.version
             || idle.slots.some(slot => !formation.slots.some(main => main.heroId === slot.heroId && main.position === slot.position)))) {
             throw new Error("挂机阵容不属于当前主线阵容");
         }
-        readHeroRosterInfo(state.heroRoster);
-        readBagItems(state.inventory);
-        readTimedItems(state.timedInventory);
+        HeroSnapshotUtils.readHeroRosterInfo(state.heroRoster);
+        BagItemDataUtils.readBagItems(state.inventory);
+        BagItemDataUtils.readTimedItems(state.timedInventory);
         if (role.id !== current.role.id || role.serverId !== current.role.serverId) throw new Error("资产不属于当前角色");
         const key = (role.serverId || "") + "/" + role.id;
         const revision = Number(state.revision);
         // 恢复首包即使资产未变化，也要重新校准服务器时间；重复推送则丢弃。
         if (this.key === key && (revision < this.revision || (revision === this.revision && frame.name !== "session.authenticate"))) return false;
-        batchNotifications(() => {
+        EventDispatcher.batchNotifications(() => {
             if (this.key !== key) this.changeIdentity(key);
             ProtocolRouter.instance.dispatch(this.role, frame);
             ProtocolRouter.instance.dispatch(this.bag, frame);
@@ -85,10 +89,10 @@ export class AssetStateBinding {
         this.identityChanged();
         this.key = key;
         this.revision = -1;
-        this.bag.resetSession(key);
-        this.heroes?.resetSession(key);
-        this.formation?.resetSession(key);
-        this.chapter?.resetSession(key);
+        this.bag.resetSession();
+        this.heroes?.resetSession();
+        this.formation?.resetSession();
+        this.chapter?.resetSession();
     }
 
     /** 登出或登录新身份前统一清理；不查询任何模块数据。 */

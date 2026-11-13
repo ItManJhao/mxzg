@@ -1,11 +1,11 @@
 /** 主线页内战场：由UIManager挂载到MainChapterView的BattleHost，保留共享导航与底部面板，播放完成后转交主线控制器结算，资产仍由服务端统一同步。 */
 import { _decorator } from "cc";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
-import { prepareHeroDetailConfig, prepareInventoryConfig } from "../../../config/RemakeConfig";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { MainChapterController } from "../MainChapterController";
 import { MainChapterModel } from "../MainChapterModel";
 import { ChapterEndView } from "./ChapterEndView";
@@ -19,7 +19,7 @@ interface MainChapterBattleArgs {
     report: MainChapterReplay;
     onClosed(): void;
 }
-@view({
+@UIRegistry.view({
     id: "main-chapter-battle",
     prefab: "bundles/module/battle/prefabs/MainChapterBattleView",
     layer: UILayer.Popup,
@@ -27,8 +27,8 @@ interface MainChapterBattleArgs {
     allowMultiple: false,
     hostId: "main-chapter-field",
     prepare: async () => {
-        await prepareInventoryConfig();
-        await prepareHeroDetailConfig();
+        await RemakeConfigUtils.prepareInventoryConfig();
+        await RemakeConfigUtils.prepareHeroDetailConfig();
     },
 })
 @ccclass("MainChapterBattleView")
@@ -43,7 +43,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         super.onOpen(args);
         if (!args?.report) throw new Error("主线战报窗口参数缺失");
         this.closed = false;
-        bindVisibleRefresh(this.node, () => this.fitViewport());
+        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
         this.beginOpen();
         void BattleReplayPreview.open(this.node, args.report.bytes, false, () => this.close(),
             undefined, "主线第" + args.report.mission + "关", true, won => this.completeBattle(won), false, () => this.closed).then(stop => {
@@ -102,7 +102,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
     /** 根节点随视口变化，背景统一由主线主页持有，不再另造全屏背景。 */
     private fitViewport(): void {
         if (!this.closed) {
-            fitVisibleRoot(this.node);
+            ViewportLayoutUtils.fitVisibleRoot(this.node);
         }
     }
 

@@ -38,7 +38,20 @@ new Function("module", "exports", "require", output)(moduleView, moduleView.expo
     if (name === "cc") return cc;
     if (name.endsWith("BaseView")) return {BaseView};
     if (name.endsWith("GameLog")) return {GameLog: {shared: {classified() {}}}};
-    if (name.endsWith("battleSpine")) return {mountNamedSpine(host, stem, clip, options) { spineCalls++; assert.equal(stem, "chibang"); assert.equal(clip, "idle"); assert.equal(options.loop, true); options.onReady(); }};
+    if (name.endsWith("BattleSpineService")) return {
+        BattleSpineService: {
+            instance: {
+                /** 记录结算骨骼调用，保持真实服务实例入口及原动作参数断言。 */
+                mountNamedSpine(host, stem, clip, options) {
+                    spineCalls++;
+                    assert.equal(stem, "chibang");
+                    assert.equal(clip, "idle");
+                    assert.equal(options.loop, true);
+                    options.onReady();
+                },
+            },
+        },
+    };
     throw Error("unexpected dependency " + name);
 });
 function create() {

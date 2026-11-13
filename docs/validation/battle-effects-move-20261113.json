@@ -1,0 +1,123 @@
+{
+  "date": "2026-11-13",
+  "scope": "按用户授权将当前战斗帧特效素材从battle子目录分离为独立远程effects Bundle。仅移动原资源和meta，根目录meta新增Bundle声明；不改像素、帧索引或玩法。",
+  "creatorClosed": true,
+  "committed": false,
+  "pushed": false,
+  "from": "client/assets/bundles/module/battle/effects",
+  "to": "client/assets/bundles/resources/effects",
+  "uuid": "cf1ce3cb-5d16-4959-a8c2-34babbf5d4df",
+  "counts": {
+    "files": 12841,
+    "bytes": 172226243,
+    "images": 6237,
+    "metas": 6603,
+    "data": 1
+  },
+  "byteIdenticalInside": true,
+  "rootMeta": {
+    "from": "client/assets/bundles/module/battle/effects.meta",
+    "to": "client/assets/bundles/resources/effects.meta",
+    "uuid": "cf1ce3cb-5d16-4959-a8c2-34babbf5d4df",
+    "before": {
+      "ver": "1.2.0",
+      "importer": "directory",
+      "imported": true,
+      "uuid": "cf1ce3cb-5d16-4959-a8c2-34babbf5d4df",
+      "files": [],
+      "subMetas": {},
+      "userData": {}
+    },
+    "beforeSha256": "b670cca3ce50b5492419fc97cd90133ec2fd6a21a1190769fd645fb053c0b70b",
+    "after": {
+      "ver": "1.2.0",
+      "importer": "directory",
+      "imported": true,
+      "uuid": "cf1ce3cb-5d16-4959-a8c2-34babbf5d4df",
+      "files": [],
+      "subMetas": {},
+      "userData": {
+        "isBundle": true,
+        "bundleName": "effects",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    },
+    "afterSha256": "24b4151df1b9e5f99ffb5fcb87fc5263b242b99e344750b778787b09488891fe",
+    "allowedChangedFields": [
+      "userData"
+    ]
+  },
+  "bundleInventory": {
+    "before": {
+      "bundles": 15,
+      "remoteBundles": 14
+    },
+    "after": {
+      "bundles": 16,
+      "remoteBundles": 15
+    },
+    "added": [
+      {
+        "name": "effects",
+        "uuid": "cf1ce3cb-5d16-4959-a8c2-34babbf5d4df",
+        "path": "client/assets/bundles/resources/effects",
+        "priority": 2,
+        "bundleConfigID": "remote-assets"
+      }
+    ]
+  },
+  "checks": {
+    "fileHashes": "本次已执行12841/12841逐文件字节和SHA256比对；后续专项按同一完整目录确定性摘要重新验证",
+    "rootUuid": "preserved",
+    "pixelReencoding": false,
+    "creatorPreview": "not-run-user-stopped",
+    "creatorBuild": "not-run-user-stopped",
+    "tools": {
+      "nodeBundlePaths": "passed: meta discovery, scoped historical effects paths, old runtime key rejected",
+      "pythonBundlePaths": "passed: 5 tests",
+      "currentResourceScope": "passed: 16 bundles, 32 Prefabs, 17 views; all 12841 file records and 19078 meta UUIDs rehashed into deterministic snapshots",
+      "documentationLinks": "passed: 42 guides and records",
+      "diffWhitespace": "passed",
+      "historicalEvidence": "unchanged against HEAD after normalizing Git checkout line endings",
+      "rootMetaSemanticChange": "userData only"
+    }
+  },
+  "notes": [
+    "旧battle/effects物理路径仅由离线工具定位历史证据；运行时必须使用effects/包内路径，不添加旧运行时别名。",
+    "旧15包清理记录保持原样，本次范围检查将合并新增effects批准记录。",
+    "该源目录约164.25MiB，不代表构建包体或实际下载大小。"
+  ],
+  "snapshot": {
+    "format": "effects-tree-sha256-v1",
+    "order": "relativePath按UTF-8字节序升序，目录分隔符固定为/",
+    "fileRecord": "逐行UTF-8 JSON.stringify([relativePath,bytes,sha256]) + LF，SHA256汇总全部行",
+    "uuidRecord": "全部meta主/子UUID及根meta UUID去重后按UTF-8字节序逐行JSON.stringify(uuid) + LF，再作SHA256",
+    "before": {
+      "files": 12841,
+      "bytes": 172226243,
+      "images": 6237,
+      "metas": 6603,
+      "data": 1,
+      "sha256": "d31ab5e87df31de27ed6329d108a4448bf5291049dc8bda1a772a79a75857151",
+      "metaUuidCount": 19078,
+      "metaUuidSha256": "1ca9c78f1b6af27d3d3ed5b5ce5bf2948e602e73936f6d97e96342ccbbcd3c37"
+    },
+    "after": {
+      "files": 12841,
+      "bytes": 172226243,
+      "images": 6237,
+      "metas": 6603,
+      "data": 1,
+      "sha256": "d31ab5e87df31de27ed6329d108a4448bf5291049dc8bda1a772a79a75857151",
+      "metaUuidCount": 19078,
+      "metaUuidSha256": "1ca9c78f1b6af27d3d3ed5b5ce5bf2948e602e73936f6d97e96342ccbbcd3c37"
+    }
+  },
+  "localArchive": {
+    "path": "client/temp/battle-effects-full-record-20261113.json",
+    "sha256": "9d5b7f02276cd336025217cccb1e443a56dd14d9689ebe56ef94867252faeab5",
+    "tracked": false,
+    "purpose": "本次已执行逐文件原图/meta哈希比对的原始明细，仅保存在本机temp，不作为运行资源清单"
+  }
+}

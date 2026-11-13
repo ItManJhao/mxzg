@@ -1,8 +1,8 @@
 /** 背包物品格子：由所属页面传入条目、显示配置和可选状态，不拥有库存或页面点击回调。 */
 import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame } from "cc";
-import type { BagItemData } from "../data/BagItemData";
+import type { BagItemData } from "../data/BagItemDataUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
-import type { BagFace } from "../data/BagItemData";
+import type { BagFace } from "../data/BagItemDataUtils";
 
 const { ccclass, property } = _decorator;
 

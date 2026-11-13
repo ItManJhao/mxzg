@@ -6,19 +6,19 @@ import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { SuperContent } from "../../../framework/ui/SuperContent";
-import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
-import { prepareInventoryConfig } from "../../../config/RemakeConfig";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import { BagInfoArgs, BagInfoView } from "../../bag/ui/BagInfoView";
-import { view, viewSpecOf } from "../../../framework/ui/UIRegistry";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { ChapterRewardInfoRow, ChapterRewardInfoUtils } from "../utils/ChapterRewardInfoUtils";
 import { ChapterRewardInfoCell } from "./ChapterRewardInfoCell";
 const { ccclass, property } = _decorator;
 
-@view({
+@UIRegistry.view({
     id: "chapter-reward-info",
     prefab: "bundles/module/battle/prefabs/ChapterRewardInfoView",
     layer: UILayer.Popup,
@@ -77,7 +77,7 @@ export class ChapterRewardInfoView extends BaseView {
                 content.off(ChapterRewardInfoCell.ITEM_SELECTED, this.showItem, this);
             }
         });
-        bindVisibleRefresh(this.node, () => this.fitViewport());
+        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
         void this.prepare().then(() => {
             if (!this.released) {
                 this.panel!.active = true;
@@ -96,7 +96,7 @@ export class ChapterRewardInfoView extends BaseView {
         const assets = ResourceAssetsUtils.forNode(this.node);
         const [table] = await Promise.all([
             assets.loadPath("config/chapterreward", "JsonAsset"),
-            prepareInventoryConfig(),
+            RemakeConfigUtils.prepareInventoryConfig(),
         ]);
         if (this.released) {
             return;
@@ -150,7 +150,7 @@ export class ChapterRewardInfoView extends BaseView {
         if (this.released || !this.panel) {
             return;
         }
-        const box = fitVisibleRoot(this.node);
+        const box = ViewportLayoutUtils.fitVisibleRoot(this.node);
         const scale = Math.min(1, (box.width - 24) / 580, (box.height - 24) / 720);
         this.panel.setScale(scale, scale, 1);
         this.panel.setPosition(-280 * scale, -350 * scale, 0);
@@ -161,7 +161,7 @@ export class ChapterRewardInfoView extends BaseView {
         this.released = true;
         this.rows = [];
         this.catalog = null;
-        UIManager.instance.closeById(viewSpecOf(BagInfoView)!.id);
+        UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
         this.finishOpen();
     }
 }

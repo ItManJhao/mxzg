@@ -1,20 +1,20 @@
 /** 主线及独立战报播放器：复用BattlePage及真实资源，只展示服务端战报，不请求奖励或修改资产。 */
 import { AudioClip,AudioSource,Button,Color,director,Director,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
 import { GameLog } from "../../../core/GameLog";
-import { createAssetScope, ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { UIManager } from "../../../framework/ui/UIManager";
-import { bindViewRuntime } from "../../../framework/ui/UIRegistry";
-import { setText } from "../../../framework/ui/UiKit";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
+import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { BattleReplayPlayer } from "../BattleReplayPlayer";
 import { BattleAttackUtils } from "../utils/BattleAttackUtils";
 import { BattleReplayUtils } from "../utils/BattleReplayUtils";
 import { BattleInfoUtils } from "../utils/BattleInfoUtils";
-import { bindVisibleRefresh, readVisibleBox } from "../../../framework/ui/visibleFit";
-import { mountBattlePrefab } from "./BattlePage";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
+import { BattlePageUtils } from "./BattlePageUtils";
 import { ChapterEndView } from "./ChapterEndView";
 import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
-import { paintBattleFloats } from "./battlePresentView";
-import { mountBattleSpine,mountNamedSpine,SpineActor } from "./battleSpine";
+import { BattlePresentViewUtils } from "./BattlePresentViewUtils";
+import { BattleSpineService, SpineActor } from "./BattleSpineService";
 
 /** 同源配置行，只消费当前已核对的近身/远程、伤害音效和201图标字段。 */
 interface BuffRow { idx: number; type: number; ani_base: string; file: string; sound: string; buff_icon: number; delay: number; shake: number; dimly: number; }
@@ -47,7 +47,7 @@ export class BattleReplayPreview {
     ): Promise<() => void> {
         const steps = BattleReplayUtils.decode(bytes);
         const units = BattleReplayUtils.units(bytes);
-        const configScope = createAssetScope();
+        const configScope = ResourceAssetsUtils.createAssetScope();
         let templateRows: { type: number; elem: number }[];
         let rows: BuffRow[];
         try {
@@ -85,7 +85,7 @@ export class BattleReplayPreview {
             }
         }
         if (isCancelled() || !parent.isValid) throw new Error("战场打开已取消");
-        const shell = await mountBattlePrefab(parent);
+        const shell = await BattlePageUtils.mountBattlePrefab(parent);
         // 正式挑战先播旧 ZDKS 开场；加载期间不提前露出英雄和血条。
         const formalOpening = persistentChapter && !idleEncounter;
         if (idleEncounter) {
@@ -109,8 +109,8 @@ export class BattleReplayPreview {
             hud.getChildByName("BtnSkip")!.active = BattleInfoUtils.mainChapterSkipVisible();
         }
         if (persistentChapter) {
-            bindVisibleRefresh(shell.root, () => {
-                const scale = BattleInfoUtils.contentScale(readVisibleBox().width);
+            ViewportLayoutUtils.bindVisibleRefresh(shell.root, () => {
+                const scale = BattleInfoUtils.contentScale(ViewportLayoutUtils.readVisibleBox().width);
                 shell.root.setScale(scale, scale, 1);
             });
             // 正式主线复用主页背景；测试开始/撤退/调试文字不混入玩家战场。
@@ -128,7 +128,7 @@ export class BattleReplayPreview {
                 if (node) node.active = false;
             }
         }
-        const unregisterEnd = idleEncounter ? () => {} : bindViewRuntime(ChapterEndView, {
+        const unregisterEnd = idleEncounter ? () => {} : UIRegistry.bindViewRuntime(ChapterEndView, {
             hostId: persistentChapter ? "remake-modal" : "battle-settlement",
         });
         // 正常结算必须在应用弹层，避免完整旧胜利页被挂机面板遮挡；技能台仍归本地战场清理。
@@ -137,8 +137,8 @@ export class BattleReplayPreview {
             const node = shell.root.getChildByPath(path);
             if (node) node.active = false;
         }
-        setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, persistentChapter ? "主线挑战阵容" : lineupTitle ? "当前保存阵容·只读" : "独立测试阵容");
-        setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, lineupTitle || (units.some(unit => unit.templateId === 10105011) ? "魅惑之拥·随机目标验收" : units.every(unit => unit.templateId === 10505005) ? "三级流血专项" : units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关"));
+        UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, persistentChapter ? "主线挑战阵容" : lineupTitle ? "当前保存阵容·只读" : "独立测试阵容");
+        UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, lineupTitle || (units.some(unit => unit.templateId === 10105011) ? "魅惑之拥·随机目标验收" : units.every(unit => unit.templateId === 10505005) ? "三级流血专项" : units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关"));
         const actors = new Map<number, SpineActor>();
         // 借用的我方骨骼在所有退出路径先归还，不能随临时战场销毁。
         const returnActors: (() => void)[] = [];
@@ -255,7 +255,7 @@ export class BattleReplayPreview {
             if (!label?.parent) throw new Error("战斗血条挂点缺失");
             label.parent.active = value > 0;
             // 等级来自整包校验后的服务器快照，不按关卡或模板猜测。
-            setText(label, String(units.find(unit => unit.unitId === id)!.level));
+            UiKitUtils.setText(label, String(units.find(unit => unit.unitId === id)!.level));
             const fill = label.parent.getChildByName("Fill")!;
             const max = units.find(unit => unit.unitId === id)!.maxHp;
             fill.active = value > 0;
@@ -321,11 +321,11 @@ export class BattleReplayPreview {
         const assets = ResourceAssetsUtils.forNode(shell.root);
         try {
             if (Array.from(selected.values()).some(row => row.type === 1004)) {
-                const effect = await assets.loadPath("battle/effects/legacy-frozen", "EffectAsset");
+                const effect = await assets.loadPath("effects/legacy-frozen", "EffectAsset");
                 frozenMaterial = new Material();
                 frozenMaterial.initialize({ effectAsset: effect });
                 if (!units.every(unit => unit.templateId === 10205023)) {
-                    setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, "独立冰冻验收");
+                    UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, "独立冰冻验收");
                 }
             }
             if (Array.from(selected.values()).some(row => row.type === 1005)) {
@@ -389,7 +389,7 @@ export class BattleReplayPreview {
                     continue;
                 }
                 const actor = await new Promise<SpineActor>((resolve, reject) => {
-                    const actor = mountBattleSpine(slot, String(unit.templateId), () => reject(new Error("英雄骨骼加载失败")),
+                    const actor = BattleSpineService.instance.mountBattleSpine(slot, String(unit.templateId), () => reject(new Error("英雄骨骼加载失败")),
                         { face: unit.faction === 1 ? 1 : -1, scale: heroScale, seatY: 0, onReady: () => resolve(actor) });
                 });
                 actors.set(id, actor);
@@ -416,7 +416,7 @@ export class BattleReplayPreview {
                 await new Promise<void>((resolve, reject) => {
                     const ready = () => { waits.delete(ready); resolve(); };
                     waits.add(ready);
-                    mountNamedSpine(opening, "ZDKS", "stand", {
+                    BattleSpineService.instance.mountNamedSpine(opening, "ZDKS", "stand", {
                         loop: false, onReady: ready,
                         onFail: () => { waits.delete(ready); reject(new Error("挑战开场骨骼加载失败")); },
                     });
@@ -500,7 +500,7 @@ export class BattleReplayPreview {
             const record = (text: string) => {
                 process.push(text);
                 if (process.length > 3) process.shift();
-                setText(shell.logLabel, (audit ? audit.name + " Lv." + audit.level + " · " : "") + process.join(" → "));
+                UiKitUtils.setText(shell.logLabel, (audit ? audit.name + " Lv." + audit.level + " · " : "") + process.join(" → "));
             };
             player = new BattleReplayPlayer({
                 stop,
@@ -539,7 +539,7 @@ export class BattleReplayPreview {
                         GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
                             "effect.start " + step.configId + " delay=" + BattleAttackUtils.delaySeconds(effectRow));
                     }
-                    setText(shell.roundLabel, "第" + step.round + "/15回合");
+                    UiKitUtils.setText(shell.roundLabel, "第" + step.round + "/15回合");
                     if (step.kind === "skill.begin") record(step.skillType === 2 ? "普攻" : "释放技能");
                     else if (step.kind === "round.ready") record("第" + step.round + "回合");
                     if (step.kind === "round.ready") {
@@ -642,7 +642,7 @@ export class BattleReplayPreview {
                         hp(step.targetId, step.hpByUnit[step.targetId]);
                         const target = slots.get(step.targetId)!;
                         const point = shell.root.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
-                        paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
+                        BattlePresentViewUtils.paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
                         actors.get(step.targetId)!.play(step.dead ? "die" : "hit");
                         if (idleEncounter && step.dead && !cancelled()) {
                             onIdleDeath?.(target.worldPosition.clone());
@@ -658,7 +658,7 @@ export class BattleReplayPreview {
                         hp(step.targetId, step.hpByUnit[step.targetId]);
                         const target = slots.get(step.targetId)!;
                         const point = shell.root.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
-                        paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
+                        BattlePresentViewUtils.paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
                         await wait(0.35);
                     } else if (step.kind === "buff.upsert" || step.kind === "buff.remove") {
                         const active = activeBuffs.get(step.targetId)!;
@@ -675,9 +675,9 @@ export class BattleReplayPreview {
                 }
             });
             // 复用已有按钮启动，确保浏览器用户手势允许音频，不自动绕过音频策略。
-            setText(shell.logLabel, audit ? audit.name + " Lv." + audit.level + (audit.passive ? " · 播放完整触发过程" : " · 从首次施法开始") : persistentChapter ? "战斗准备完成" : lineupTitle ? "属性尚未完整；只读试战，不发奖励" : "测试已就绪，请点击开始");
+            UiKitUtils.setText(shell.logLabel, audit ? audit.name + " Lv." + audit.level + (audit.passive ? " · 播放完整触发过程" : " · 从首次施法开始") : persistentChapter ? "战斗准备完成" : lineupTitle ? "属性尚未完整；只读试战，不发奖励" : "测试已就绪，请点击开始");
             const button = shell.root.getChildByPath("LayerHud/BtnSkip")!;
-            setText(button.getChildByName("Label")!, defeatPresentation ? "失败样式验收" : "开始");
+            UiKitUtils.setText(button.getChildByName("Label")!, defeatPresentation ? "失败样式验收" : "开始");
             let started = false;
             let replayReady = false;
             /** 启动一次已校验战报；正式主线默认档统一驱动骨骼、位移和帧等待。 */
@@ -702,17 +702,17 @@ export class BattleReplayPreview {
                 }
                 void player!.play(bytes, audit && !audit.passive ? { skillId: audit.skillId, level: audit.level } : undefined).then(async completed => {
                     if (!closed && completed) {
-                        paintBattleFloats(shell.present, []);
+                        BattlePresentViewUtils.paintBattleFloats(shell.present, []);
                         const last = steps[steps.length - 1];
                         const allyHp = units.filter(unit => unit.faction === 1)
                             .reduce((total, unit) => total + last.hpByUnit[unit.unitId], 0);
                         const enemyHp = units.filter(unit => unit.faction === 2)
                             .reduce((total, unit) => total + last.hpByUnit[unit.unitId], 0);
-                        setText(shell.logLabel, "战报结束 · 剩余生命 " + allyHp);
+                        UiKitUtils.setText(shell.logLabel, "战报结束 · 剩余生命 " + allyHp);
                         if (audit) {
                             replayReady = true;
                             button.active = true;
-                            setText(button.getChildByName("Label")!, "重播");
+                            UiKitUtils.setText(button.getChildByName("Label")!, "重播");
                         }
                         const won = allyHp > 0 && enemyHp === 0;
                         if (persistentChapter && !idleEncounter) {
@@ -743,7 +743,7 @@ export class BattleReplayPreview {
                             "completed hp=" + JSON.stringify(last.hpByUnit) + " round=" + last.round);
                     }
                 }).catch(error => {
-                    if (!closed) setText(shell.logLabel, "战报播放失败，请查看日志");
+                    if (!closed) UiKitUtils.setText(shell.logLabel, "战报播放失败，请查看日志");
                     GameLog.shared.classified("MODULE", "error", "BattleReplayPreview", "播放失败：" + String(error));
                 });
             };

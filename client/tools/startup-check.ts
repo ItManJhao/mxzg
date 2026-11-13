@@ -2,17 +2,17 @@
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { director, Director, Node, UIOpacity } from "cc";
-import { runStartup, StartupCancelled } from "../assets/scripts/app/remake/StartupFlow";
+import { StartupFlowUtils, StartupCancelled } from "../assets/scripts/app/remake/StartupFlowUtils";
 import { RemakeApp } from "../assets/scripts/app/remake/RemakeApp";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
-import { playLogoSplash, LOGO_BGM } from "../assets/scripts/app/remake/logoSplash";
+import { LogoSplashUtils, LOGO_BGM } from "../assets/scripts/app/remake/LogoSplashUtils";
 import { resources, AudioClip, AudioSource } from "cc";
 import { ApplicationNotice } from "../assets/scripts/app/remake/ApplicationNotice";
 import { TrackedTimers } from "../assets/scripts/framework/TrackedTimers";
 import { Label } from "cc";
 import { DevelopmentPreview } from "../assets/scripts/app/remake/DevelopmentPreview";
 import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/BattleReplayPreview";
-import { BootChrome } from "../assets/scripts/app/remake/bootChrome";
+import { BootChrome } from "../assets/scripts/app/remake/BootChrome";
 
 const deferred = () => {
   let resolve!: () => void;
@@ -23,7 +23,7 @@ async function main() {
   const restore = deferred();
   const events: string[] = []; const ratios: number[] = [];
   let lateProgress!: (done: number, total: number) => void;
-  const startup = runStartup([
+  const startup = StartupFlowUtils.runStartup([
     { label: "config", weight: 50, run: async progress => {
       events.push("config"); lateProgress = progress;
       progress(1, 2); progress(0, 2); progress(2, 2);
@@ -41,13 +41,13 @@ async function main() {
   assert(ratios.every((ratio, i) => i === 0 || ratio >= ratios[i - 1]), "progress never moves backwards");
 
   let opened = false;
-  await assert.rejects(runStartup([
+  await assert.rejects(StartupFlowUtils.runStartup([
     { label: "required-config", weight: 1, run: async () => { throw new Error("missing core config"); } },
     { label: "page", weight: 1, run: async () => { opened = true; } },
   ], () => {}, () => true), /missing core config/);
   assert.equal(opened, false);
   let alive = true;
-  await assert.rejects(runStartup([
+  await assert.rejects(StartupFlowUtils.runStartup([
     { label: "config", weight: 1, run: async () => { alive = false; } },
     { label: "page", weight: 1, run: async () => { opened = true; } },
   ], () => {}, () => alive), StartupCancelled);
@@ -104,7 +104,7 @@ async function main() {
   const pendingAssets: Array<{ path: string; done: Function }> = [];
   resources.load = ((path: string, _type: unknown, done: Function) => pendingAssets.push({ path, done })) as typeof resources.load;
   const splashParent = new Node("SplashHost"), audioHost = new Node("AudioHost");
-  const splash = playLogoSplash(splashParent, audioHost);
+  const splash = LogoSplashUtils.playLogoSplash(splashParent, audioHost);
   for (let i = 0; i < 10; i++) await Promise.resolve();
   splash.stopMusic(); splash.stop(); splash.stopMusic();
   const lateClip = new AudioClip();

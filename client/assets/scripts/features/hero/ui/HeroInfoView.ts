@@ -2,17 +2,17 @@
  * 只读英雄详情页：由 UIManager 传入实例 ID，读取唯一英雄 Model 并订阅服务端同步后的事件。
  * 完整Prefab保存背景与固定布局，Widget和统一比例组件负责视口适配；关闭释放监听和立绘，不触发养成写操作。
  */
-import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
-import { prepareHeroDetailConfig } from "../../../config/RemakeConfig";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroSkillUtils } from "../utils/HeroSkillUtils";
-import { readHeroEquipment } from "../utils/HeroEquipment";
+import { HeroEquipmentUtils } from "../utils/HeroEquipmentUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { HeroCatalog } from "../utils/HeroCatalog";
 import { GameConfig } from "../../../config/GameConfig";
@@ -20,8 +20,8 @@ import { GConfig } from "../../../config/GConfig";
 import { _decorator, Button, Label, Node, Sprite } from "cc";
 import { GameLog } from "../../../core/GameLog";
 interface HeroPortraitData { templateId: number; name: string; level: number; }
-import { mountBattleSpine } from "../../battle/ui/battleSpine";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { BattleSpineService } from "../../battle/ui/BattleSpineService";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -29,13 +29,13 @@ const { ccclass, property } = _decorator;
  * 详情字段直接绑定到完整Prefab；动态立绘挂在node_equip，固定结构无需运行组装。
  * 只读阶段隐藏养成入口和引导台词，不发送穿戴或升级操作。
  */
-@view({
+@UIRegistry.view({
     id: "hero-info",
     prefab: "bundles/module/hero/prefabs/HeroInfoView",
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
-    prepare: prepareHeroDetailConfig,
+    prepare: RemakeConfigUtils.prepareHeroDetailConfig,
 })
 @ccclass("HeroInfoView")
 export class HeroInfoView extends BaseView<{ heroId: string }> {
@@ -75,31 +75,55 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
     private skillStops: Array<() => void> = [];
     /** 本次打开的实例 ID；关闭清空，不能误用模板 ID 查找。 */
     private selectedId = "";
-    /** 当前角色归属；换号后关闭，不能继续显示旧角色详情。 */
-    private owner: string | null = null;
+    /** 页面关闭后为true，阻止迟到的展示刷新和导航；账号变化由应用统一关闭页面。 */
+    private closed = true;
     /** 页面持有的动态立绘节点，切换或关闭时销毁。 */
     private spineNode: Node | null = null;
     /** 已加载立绘的模板 ID，仅用于资源复用。 */
     private heroId = 0;
     /** 仅将完整外根铺到画布，固定内容由Prefab Widget和ViewportScale处理。 */
     public onCreate(): void {
-        bindVisibleRefresh(this.node, () => fitVisibleRoot(this.node));
+        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => ViewportLayoutUtils.fitVisibleRoot(this.node));
     }
 
     /** 统一入口只传实例 ID；资料来自唯一名册，不额外发送详情查询。 */
     onOpen(args: { heroId: string }): void {
-        if (!args?.heroId) throw new Error("缺少英雄实例 ID");
-        this.selectedId = args.heroId; this.owner = HeroRosterModel.instance.roleKey;
+        if (!args?.heroId) {
+            throw new Error("缺少英雄实例 ID");
+        }
+        this.clearListeners();
+        this.closed = false;
+        this.selectedId = args.heroId;
         this.backButton?.node.on(Button.EventType.CLICK, this.goBack, this);
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.refresh);
-        this.skillButtons.forEach((button, slot) => { const click = () => { void UIManager.instance.openById("hero-skill", { heroId: this.selectedId, slot }).catch(error => GameLog.shared.classified("MODULE", "warn", "Hero", String(error))); }; button.node.on(Button.EventType.CLICK, click); this.skillStops.push(() => button.node.off(Button.EventType.CLICK, click)); });
+        this.skillButtons.forEach((button, slot) => {
+            const click = () => {
+                if (this.closed) {
+                    return;
+                }
+                void UIManager.instance.openById("hero-skill", { heroId: this.selectedId, slot })
+                    .catch(error => GameLog.shared.classified("MODULE", "warn", "Hero", String(error)));
+            };
+            button.node.on(Button.EventType.CLICK, click);
+            this.skillStops.push(() => button.node.off(Button.EventType.CLICK, click));
+        });
         this.refresh();
     }
-    /** 读取最新实例与服务器属性，元素图标保留Bundle描述；角色变化或实例删除即返回列表。 */
+    /** 读取最新实例与服务器属性；业务重置时关闭，已同步的实例删除才返回列表。 */
     private refresh(): void {
-        const model = HeroRosterModel.instance;
-        const hero = model.snapshot.heroes.find(row => row.id === this.selectedId);
-        if (!hero || model.roleKey !== this.owner) { this.goBack(); return; }
+        if (this.closed) {
+            return;
+        }
+        const state = HeroRosterModel.instance.snapshot;
+        const hero = state.heroes.find(row => row.id === this.selectedId);
+        if (!hero) {
+            if (state.status === "ready") {
+                this.goBack();
+            } else {
+                this.close();
+            }
+            return;
+        }
         const catalog = new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
         const elem = catalog.find(hero.templateId)?.elem;
         const icons = [ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-5", "SpriteFrame")];
@@ -124,12 +148,12 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         });
     }
     /** 从已校验的统一名册绘制四槽，按显示需要取得空槽和品质框；不从背包库存推测穿戴。 */
-    private refreshEquipment(hero: import("../data/HeroSnapshotData").OwnedHero, version: number): void {
+    private refreshEquipment(hero: import("../data/HeroSnapshotUtils").OwnedHero, version: number): void {
         if (!this.equipmentIcons.length) {
             return;
         }
         const config = GameConfig.instance;
-        const items = hero.equipment ? readHeroEquipment(hero.equipment.items, config) : undefined;
+        const items = hero.equipment ? HeroEquipmentUtils.readHeroEquipment(hero.equipment.items, config) : undefined;
         const empty = [1, 2, 3, 4].map(slot => ResManager.ui("common", "other_spr-equip-" + slot));
         this.equipmentIcons.forEach((icon, index) => {
             const item = items?.find(row => row.slot === index + 1);
@@ -165,15 +189,33 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
     }
     /** 返回已有列表，不触发升级、穿戴或扩容。 */
     private goBack(): void {
-        if (HeroRosterModel.instance.roleKey !== this.owner) { UIManager.instance.back(); return; }
+        if (this.closed) {
+            return;
+        }
         // 当前导航只保留主城根页面，详情必须显式打开列表，不能直接调用 back 回主城。
         void UIManager.instance.openById("hero").catch(error => GameLog.shared.classified("MODULE", "warn", "Hero", "返回英雄列表失败：" + String(error)));
     }
-    /** 关页释放订阅和立绘；异步加载由无效节点检查阻止回写。 */
+    /** 关页释放订阅和立绘；绘制代次阻止异步图片回写，关闭状态阻止再次导航。 */
     onClose(): void {
-        EventDispatcher.instance.offTarget(this); this.backButton?.node?.off(Button.EventType.CLICK, this.goBack, this);
-        this.paintVersion++; for (const stop of this.skillStops.splice(0)) stop(); UIManager.instance.closeById("hero-skill");
-        this.selectedId = ""; this.owner = null; if (this.spineNode?.isValid) this.spineNode.destroy(); this.spineNode = null; this.heroId = 0;
+        this.closed = true;
+        this.clearListeners();
+        this.paintVersion++;
+        UIManager.instance.closeById("hero-skill");
+        this.selectedId = "";
+        if (this.spineNode?.isValid) {
+            this.spineNode.destroy();
+        }
+        this.spineNode = null;
+        this.heroId = 0;
+    }
+
+    /** 清理本次打开绑定的事件和技能按钮，重复打开不叠加回调。 */
+    private clearListeners(): void {
+        EventDispatcher.instance.offTarget(this);
+        this.backButton?.node?.off(Button.EventType.CLICK, this.goBack, this);
+        for (const stop of this.skillStops.splice(0)) {
+            stop();
+        }
     }
 
     /** 显示显式传入的英雄资料，不读取其他角色仓库。 */
@@ -206,7 +248,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         this.spineNode = null;
         this.heroId = id;
         if (!id) return;
-        const actor = mountBattleSpine(host, String(id), () => {
+        const actor = BattleSpineService.instance.mountBattleSpine(host, String(id), () => {
             GameLog.shared.classified("MODULE", "warn", "Hero", "详情立绘没有挂上");
         }, { seatY: -160, scale: 2.13 });
         this.spineNode = actor.node;

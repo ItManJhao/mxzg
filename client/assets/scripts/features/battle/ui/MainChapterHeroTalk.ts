@@ -1,12 +1,12 @@
 /** 挂机对话显示：页面持有计时与气泡，沿用旧配置，跨遇敌/跑步保留冷却；挑战和关页清理。 */
 import { instantiate, Node, RichText, UITransform } from "cc";
-import { createAssetScope } from "../../../framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { GameLog } from "../../../core/GameLog";
 import { HeroTalkRow, HeroTalkUtils } from "../utils/HeroTalkUtils";
 
 export class MainChapterHeroTalk {
     /** 配置资源归本页面，销毁时释放。 */
-    private readonly assets = createAssetScope();
+    private readonly assets = ResourceAssetsUtils.createAssetScope();
     /** 等级筛选表，加载失败时保持空，不编造台词。 */
     private rows: HeroTalkRow[] = [];
     /** 旧语言编号对应正式中文内容。 */

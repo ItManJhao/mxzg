@@ -5,9 +5,9 @@
 import { _decorator, Button, Label, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
-import { prepareHeroDetailConfig } from "../../../config/RemakeConfig";
-import { ancestorScale } from "../../../framework/ui/visibleFit";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
@@ -15,7 +15,7 @@ import { HeroSkillUtils } from "../utils/HeroSkillUtils";
 
 const { ccclass, property } = _decorator;
 
-@view({
+@UIRegistry.view({
     id: "hero-skill",
     prefab: "bundles/module/hero/prefabs/HeroSkillView",
     layer: UILayer.Popup,
@@ -23,7 +23,7 @@ const { ccclass, property } = _decorator;
     allowMultiple: false,
     hostId: "remake-modal",
     modal: { mask: true, closeOnOutside: true },
-    prepare: prepareHeroDetailConfig,
+    prepare: RemakeConfigUtils.prepareHeroDetailConfig,
 })
 @ccclass("HeroSkillView")
 export class HeroSkillView extends BaseView<{ heroId: string; slot: number }> {
@@ -35,15 +35,15 @@ export class HeroSkillView extends BaseView<{ heroId: string; slot: number }> {
     @property(Label) description: Label | null = null;
     /** 关闭按钮，只关闭技能窗口。 */
     @property(Button) closeButton: Button | null = null;
-    /** 打开时的角色归属，换号不显示旧实例技能。 */
-    private owner: string | null = null;
+    /** 页面关闭后为true，忽略关闭后迟到的展示刷新；账号变化由应用统一关闭页面。 */
+    private closed = true;
 
     /** 绑定只读更新并缩放已有面板；不发送技能查询。 */
     onOpen(args: { heroId: string; slot: number }): void {
         this.args = args;
-        this.owner = HeroRosterModel.instance.roleKey;
+        this.closed = false;
         const size = ccView.getVisibleSize();
-        const scale = Math.min(1, size.width * .92 / 560, size.height * .85 / 520) / ancestorScale(this.node);
+        const scale = Math.min(1, size.width * .92 / 560, size.height * .85 / 520) / ViewportLayoutUtils.ancestorScale(this.node);
         this.node.setScale(scale, scale, 1);
         this.closeButton?.node.on(Button.EventType.CLICK, this.close, this);
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.refresh);
@@ -52,9 +52,12 @@ export class HeroSkillView extends BaseView<{ heroId: string; slot: number }> {
 
     /** 同步后重新读取同一技能；英雄删除或换号立即关闭。 */
     private refresh(): void {
+        if (this.closed) {
+            return;
+        }
         const model = HeroRosterModel.instance;
         const hero = model.snapshot.heroes.find(row => row.id === this.args?.heroId);
-        if (!hero || model.roleKey !== this.owner) {
+        if (!hero) {
             this.close();
             return;
         }
@@ -74,9 +77,9 @@ export class HeroSkillView extends BaseView<{ heroId: string; slot: number }> {
 
     /** 清理订阅及按钮，避免关窗后收到旧角色更新。 */
     onClose(): void {
+        this.closed = true;
         EventDispatcher.instance.offTarget(this);
         this.closeButton?.node.off(Button.EventType.CLICK, this.close, this);
         this.args = undefined;
-        this.owner = null;
     }
 }

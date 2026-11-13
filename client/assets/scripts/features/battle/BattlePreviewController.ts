@@ -1,7 +1,7 @@
 /** 只读试战控制器：发送关卡意图，经onNotify校验后更新结果Model，不持有账号或View。 */
 import { Protocol, ProtocolName } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
-import { GameFrame } from "../../platform/GameProtocolCodec";
+import { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { mxzg } from "../../platform/GameProtocol.generated";
 import { BattleReplayUtils } from "./utils/BattleReplayUtils";
 import { BattlePreviewModel, BattlePreviewResult } from "./BattlePreviewModel";

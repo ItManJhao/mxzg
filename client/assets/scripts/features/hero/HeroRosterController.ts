@@ -1,11 +1,11 @@
 /** 英雄名册控制器：统一登录/恢复和服务端同步 → 唯一 Model → 列表刷新事件；不持有账号、凭证或查询接口。 */
 import { GameLog } from "../../core/GameLog";
 import { BaseController } from "../../framework/BaseController";
-import { publishNotification } from "../../framework/EventDispatcher";
+import { EventDispatcher } from "../../framework/EventDispatcher";
 import { Protocol, ProtocolName } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
-import { statePayload, STATE_PROTOCOLS } from "../../platform/ProtocolState";
-import { readOwnedHeroes, readHeroRosterInfo, readMainFormation } from "./data/HeroSnapshotData";
+import { ProtocolStateUtils, STATE_PROTOCOLS } from "../../platform/ProtocolStateUtils";
+import { HeroSnapshotUtils } from "./data/HeroSnapshotUtils";
 import { HeroRosterModel } from "./HeroRosterModel";
 import { HeroRosterEvent } from "./utils/HeroRosterEvent";
 
@@ -21,12 +21,12 @@ export class HeroRosterController extends BaseController {
     /** 登记真实统一状态协议，身份协调由应用层处理。 */
     protected onInitialize(): void {
         this.ownListener(ProtocolRouter.instance.register(this, STATE_PROTOCOLS));
-        this.resetSession(null);
+        this.resetSession();
     }
 
     /** 换号或退出清空上一角色数据，禁止额外查询。 */
-    protected onResetSession(roleKey: string | null): void {
-        this.model.reset(roleKey);
+    protected onResetSession(): void {
+        this.model.reset();
         this.notify();
     }
 
@@ -48,17 +48,17 @@ export class HeroRosterController extends BaseController {
 
     /** 提交服务端完整名册，空数组表示没有英雄；不推算升级或增减英雄。 */
     private onHeroState(protocol: ProtocolName, data: unknown): void {
-        const heroes = readOwnedHeroes(statePayload(protocol, data).heroes);
-        const rosterInfo = readHeroRosterInfo(statePayload(protocol, data).heroRoster);
-        const mainFormation = readMainFormation(statePayload(protocol, data).mainFormation, heroes);
+        const heroes = HeroSnapshotUtils.readOwnedHeroes(ProtocolStateUtils.statePayload(protocol, data).heroes);
+        const rosterInfo = HeroSnapshotUtils.readHeroRosterInfo(ProtocolStateUtils.statePayload(protocol, data).heroRoster);
+        const mainFormation = HeroSnapshotUtils.readMainFormation(ProtocolStateUtils.statePayload(protocol, data).mainFormation, heroes);
         this.model.replace({ status: "ready", heroes, rosterInfo, mainFormation, error: "" });
         this.notify();
     }
 
     /** 延后通知，确保同一快照的角色、背包和名册已全部提交。 */
     private notify(): void {
-        publishNotification(() => this.emit(HeroRosterEvent.Updated, {
-            roleKey: this.model.roleKey, revision: this.model.version,
+        EventDispatcher.publishNotification(() => this.emit(HeroRosterEvent.Updated, {
+            revision: this.model.version,
         }));
     }
 }

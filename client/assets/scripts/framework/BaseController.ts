@@ -2,8 +2,8 @@
  * 模块生命周期基类：管理显式初始化、应用通知的数据重置和模块自有监听。
  * 不持有界面或协议状态，页面关闭不释放模块。
  */
-import {EventDispatcher} from "./EventDispatcher";
-import type {EventPayloads} from "./EventDispatcher";
+import { EventDispatcher } from "./EventDispatcher";
+import type { EventPayloads } from "./EventDispatcher";
 import {EventScope} from "./EventScope";
 import type {Unsubscribe} from "./EventScope";
 
@@ -32,8 +32,8 @@ export abstract class BaseController {
     }
 
     /** 应用要求模块重置业务数据，不在此维护第二套会话代次。 */
-    resetSession(roleKey: string | null): void {
-        this.onResetSession(roleKey);
+    resetSession(): void {
+        this.onResetSession();
     }
 
     /** 释放模块监听和业务状态，不操作连接或凭证。 */
@@ -42,7 +42,7 @@ export abstract class BaseController {
         this.initialized = false;
         EventDispatcher.instance.offTarget(this);
         this.eventScope.clear();
-        this.resetSession(null);
+        this.resetSession();
         this.onDispose();
     }
 
@@ -60,7 +60,7 @@ export abstract class BaseController {
     protected abstract onInitialize(): void;
 
     /** 子类按应用指令清空业务数据。 */
-    protected abstract onResetSession(roleKey: string | null): void;
+    protected abstract onResetSession(): void;
 
     /** 子类释放注入的业务能力。 */
     protected onDispose(): void {

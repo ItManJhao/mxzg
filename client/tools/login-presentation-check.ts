@@ -2,8 +2,7 @@
 import { strict as assert } from "node:assert";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { upgradeSpine37Json, SPINE_RUNTIME_VERSION } from "../assets/scripts/framework/assets/SpineJson";
-import { upgradeSpine37Json as legacyUpgrade } from "../assets/scripts/framework/ui/spineUpgrade";
+import { SpineJsonUtils, SPINE_RUNTIME_VERSION } from "../assets/scripts/framework/assets/SpineJsonUtils";
 
 const assets = join(process.cwd(), "client/assets");
 const read = (path: string): any => JSON.parse(readFileSync(join(assets, path), "utf8"));
@@ -68,10 +67,9 @@ assert(view && view.developerPanel && view.developerButton, "all login controls 
 assert.equal(prefab[view.loginButton.__id__], start);
 
 // Exercise the real old character data through the same converter used by both paths.
-assert.equal(legacyUpgrade, upgradeSpine37Json, "one shared compatibility implementation");
 const character = read("bundles/resources/spine/jiemian.json");
 const untouched = JSON.stringify(character);
-const converted: any = upgradeSpine37Json(character);
+const converted: any = SpineJsonUtils.upgradeSpine37Json(character);
 assert.equal(JSON.stringify(character), untouched, "source animation remains unchanged");
 assert.equal(converted.skeleton.spine, SPINE_RUNTIME_VERSION);
 assert(Array.isArray(converted.skins));
@@ -84,7 +82,7 @@ function withoutCurves(value: any): any {
     .map(([key, child]) => [key, withoutCurves(child)]));
 }
 assert.deepEqual(withoutCurves(converted.animations.stand), withoutCurves(character.animations.stand), "preserve all animation content apart from the required curve encoding change");
-assert.equal(upgradeSpine37Json(converted), converted, "conversion is idempotent");
+assert.equal(SpineJsonUtils.upgradeSpine37Json(converted), converted, "conversion is idempotent");
 assert(!prefab.some(row => row.source?.__uuid__ === read("bundles/resources/spine/jiemian.json.meta").uuid), "登录页不再依赖人物骨骼；加载页独立保留");
 const png = readFileSync(join(assets, "bundles/module/login/ui/jp-login-static.png"));
 assert.equal(png.readUInt32BE(16), 1080);

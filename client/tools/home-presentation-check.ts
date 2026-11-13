@@ -13,7 +13,7 @@ import { ServerCellView } from "../assets/scripts/features/account/ui/ServerCell
 import { ServerSelection } from "../assets/scripts/features/account/ServerSelection";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
-import { registerView } from "../assets/scripts/framework/ui/UIRegistry";
+import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { CityChromeView } from "../assets/scripts/features/city/ui/CityChromeView";
 
@@ -93,7 +93,7 @@ async function main() {
   model.replace({busy:false,error:"",role:{id:"role-id",nickname:"玩家甲",level:7,gold:0,diamonds:123}});
   const ui = UIManager.instance;
   const releaseHost = ui.setResidentHost("test-role-modal",()=>new Node("ModalHost"));
-  const unregister = registerView(RoleProfileView,{id:"role-profile",prefab:"bundles/module/login/prefabs/RoleProfileView",layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"test-role-modal",load:async()=>Object.assign(new Prefab(), {_instantiate:()=>profile.node})});
+  const unregister = UIRegistry.registerView(RoleProfileView,{id:"role-profile",prefab:"bundles/module/login/prefabs/RoleProfileView",layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"test-role-modal",load:async()=>Object.assign(new Prefab(), {_instantiate:()=>profile.node})});
   let opening: Promise<unknown> | undefined;
   const rebound=home.bind({logout:()=>{logouts++;},openFeature:id=>{assert.equal(id,"role-profile");opening=ui.openById(id,{model,logout:()=>{logouts++;},notice:()=>{}});}});
   chrome.avatar!.emit(Button.EventType.CLICK); await opening;

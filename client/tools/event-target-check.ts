@@ -1,7 +1,7 @@
 /** 验证目标事件去重、批次解除及界面异常清理，不访问网络或玩家数据库。 */
 import { strict as assert } from "node:assert";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
-import { EventDispatcher, batchNotifications } from "../assets/scripts/framework/EventDispatcher";
+import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 declare module "../assets/scripts/framework/EventDispatcher" {
     interface EventPayloads { "check.target": number; }
 }
@@ -27,7 +27,7 @@ bus.emit("check.target", 1);
 assert.equal(onceCalls, 1);
 assert.equal(bus.targetListenerCount(owner), 0);
 bus.on("check.target", owner, owner.update);
-batchNotifications(() => { bus.emit("check.target", 7); bus.offTarget(owner); });
+EventDispatcher.batchNotifications(() => { bus.emit("check.target", 7); bus.offTarget(owner); });
 assert.equal(owner.count, 2);
 bus.on("check.target", other, () => bus.offTarget(owner));
 bus.on("check.target", owner, owner.update);

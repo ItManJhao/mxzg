@@ -11,13 +11,13 @@ export interface BagUpdateData extends BagChangeSet {
     readonly reason: BagChangeReason;
 }
 /** 新增条目的事件载荷。 */
-export type BagAddData = Pick<BagUpdateData, "roleKey" | "revision" | "reason" | "added">;
+export type BagAddData = Pick<BagUpdateData, "revision" | "reason" | "added">;
 /** 删除条目的事件载荷。 */
-export type BagRemoveData = Pick<BagUpdateData, "roleKey" | "revision" | "reason" | "removed">;
+export type BagRemoveData = Pick<BagUpdateData, "revision" | "reason" | "removed">;
 /** 已有条目数量变化的事件载荷。 */
-export type BagQuantityChangedData = Pick<BagUpdateData, "roleKey" | "revision" | "reason" | "quantityChanged">;
+export type BagQuantityChangedData = Pick<BagUpdateData, "revision" | "reason" | "quantityChanged">;
 /** 不携带库存列表的同步状态通知。 */
-export type BagSyncStateChangedData = Pick<BagState, "roleKey" | "revision" | "status" | "synced">;
+export type BagSyncStateChangedData = Pick<BagState, "revision" | "status" | "synced">;
 
 declare module "../../../framework/EventDispatcher" {
     interface EventPayloads {
@@ -29,7 +29,7 @@ declare module "../../../framework/EventDispatcher" {
         [BagEvent.BagRemove]: Readonly<BagRemoveData>;
         /** 已有条目的数量变化通知。 */
         [BagEvent.BagQuantityChanged]: Readonly<BagQuantityChangedData>;
-        /** 角色归属或同步状态变化通知。 */
+        /** 应用清空数据或完成同步后的状态通知。 */
         [BagEvent.BagSyncStateChanged]: Readonly<BagSyncStateChangedData>;
     }
 }

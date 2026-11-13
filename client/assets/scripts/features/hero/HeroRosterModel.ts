@@ -1,5 +1,5 @@
 /** 英雄名册唯一状态：保存只读英雄与同步状态，由模块 Controller 提交，不持有网络或监听。 */
-import type { OwnedHero, HeroRosterInfo, MainFormation } from "./data/HeroSnapshotData";
+import type { OwnedHero, HeroRosterInfo, MainFormation } from "./data/HeroSnapshotUtils";
 import { BaseModel } from "../../framework/BaseModel";
 
 export interface HeroRosterState {
@@ -17,8 +17,8 @@ export class HeroRosterModel extends BaseModel {
     private state: HeroRosterState = Object.freeze({ status: "idle", heroes: Object.freeze([]), error: "" });
 
     /** 返回当前角色只读状态与基类版本，不另存版本计数。 */
-    get snapshot(): HeroRosterState & { readonly roleKey: string | null; readonly revision: number } {
-        return Object.freeze({ ...this.state, roleKey: this.roleKey, revision: this.version });
+    get snapshot(): HeroRosterState & { readonly revision: number } {
+        return Object.freeze({ ...this.state, revision: this.version });
     }
 
     /** 提交整批状态；输入由 Controller 校验，复制英雄避免外部后续修改。 */

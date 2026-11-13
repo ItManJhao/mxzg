@@ -18,7 +18,7 @@ for row in report['removed']:
     current = resolve_asset_path(path).relative_to(ASSETS).as_posix() if path.startswith('bundles/') else path
     if any('"'+name+'":' in loader or json.dumps(name) in shell for name in {path, current}):
         raise SystemExit('Retired prefab still registered: '+path)
-runtime=(ASSETS/'scripts/config/PrefabPlan.ts').read_text(encoding='utf-8-sig')
+runtime=(ASSETS/'scripts/config/PrefabPlanUtils.ts').read_text(encoding='utf-8-sig')
 for path in keep:
     if json.dumps(path) not in runtime:raise SystemExit('Runtime plan missing '+path)
 print(f'Prefab plan passed: {len(keep)} retained; deleted UUID references/registrations absent.')

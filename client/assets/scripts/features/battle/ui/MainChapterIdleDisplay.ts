@@ -1,10 +1,10 @@
 /** 挂机行军显示：复用BattlePage静态英雄槽与血条，仅读取服务端选人和唯一英雄名册，不生成伤害或发奖。 */
-import { ResourceAssetsUtils, createAssetScope, AssetScope } from "../../../framework/assets/ResourceAssets";
+import { ResourceAssetsUtils, AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
 import { instantiate, Label, Node, Sprite, UITransform } from "cc";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
 import { MainChapterIdleState } from "../MainChapterModel";
-import { mountBattleSpine, SpineActor } from "./battleSpine";
-import { bindVisibleRefresh, readVisibleBox } from "../../../framework/ui/visibleFit";
+import { BattleSpineService, SpineActor } from "./BattleSpineService";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BattleInfoUtils } from "../utils/BattleInfoUtils";
 
 export class MainChapterIdleDisplay {
@@ -16,7 +16,7 @@ export class MainChapterIdleDisplay {
 
     /** 按权威选择顺序映射IdleLayout三英雄锚点并适配窄屏；不改变协议站位，缺英雄拒绝显示，关页解除监听。 */
     public static async open(parent: Node, state: MainChapterIdleState): Promise<MainChapterIdleDisplay> {
-        const scope = createAssetScope();
+        const scope = ResourceAssetsUtils.createAssetScope();
         let root: Node | null = null;
         const actors: SpineActor[] = [];
         try {
@@ -62,7 +62,7 @@ export class MainChapterIdleDisplay {
                 for (const child of slot.children) {
                     child.active = false;
                 }
-                const actor = mountBattleSpine(slot, String(hero.templateId), () => {}, { face: 1, scale: modelScale, seatY: 0 });
+                const actor = BattleSpineService.instance.mountBattleSpine(slot, String(hero.templateId), () => {}, { face: 1, scale: modelScale, seatY: 0 });
                 actor.gesture("run");
                 actors.push(actor);
                 const hp = hud.getChildByPath("HpBars/AllyHp_" + (entry.position - 1))!;
@@ -84,8 +84,8 @@ export class MainChapterIdleDisplay {
                 }
             }
             const displayRoot = root;
-            bindVisibleRefresh(displayRoot, () => {
-                const scale = BattleInfoUtils.contentScale(readVisibleBox().width);
+            ViewportLayoutUtils.bindVisibleRefresh(displayRoot, () => {
+                const scale = BattleInfoUtils.contentScale(ViewportLayoutUtils.readVisibleBox().width);
                 displayRoot.setScale(scale, scale, 1);
             });
             return new MainChapterIdleDisplay(root, actors);

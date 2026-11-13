@@ -3,14 +3,14 @@
  */
 import { GameLog } from "../../core/GameLog";
 import { BaseController } from "../../framework/BaseController";
-import { batchNotifications } from "../../framework/EventDispatcher";
+import { EventDispatcher } from "../../framework/EventDispatcher";
 import { Protocol } from "../../platform/Protocol";
 import type { ProtocolName } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
-import { statePayload, STATE_PROTOCOLS } from "../../platform/ProtocolState";
+import { ProtocolStateUtils, STATE_PROTOCOLS } from "../../platform/ProtocolStateUtils";
 import { BagModel } from "./BagModel";
 import { BagEvent } from "./utils/BagEvent";
-import { readBagItems } from "./data/BagItemData";
+import { BagItemDataUtils } from "./data/BagItemDataUtils";
 import type { BagChangeReason } from "./data/BagEventData";
 import type { BagChangeSet } from "./data/BagChangeSet";
 import type { BagState } from "./data/BagState";
@@ -28,13 +28,13 @@ export class BagController extends BaseController {
     /** 只声明模块处理的真实消息；网络身份与版本由应用统一检查。 */
     protected onInitialize(): void {
         this.ownListener(ProtocolRouter.instance.register(this, STATE_PROTOCOLS));
-        this.resetSession(null);
+        this.resetSession();
     }
 
     /** 换号或退出时清空旧库存，不触发查询。 */
-    protected onResetSession(roleKey: string | null): void {
+    protected onResetSession(): void {
         const previous = this.model.snapshot;
-        const changes = this.isInitialized ? this.model.reset(roleKey) : this.model.dispose();
+        const changes = this.isInitialized ? this.model.reset() : this.model.dispose();
         this.notify(changes, "session-reset", previous);
     }
 
@@ -56,26 +56,26 @@ export class BagController extends BaseController {
 
     /** 同帧提交普通库存与逐件期限库存，首次不播放获得演出；空列表也是有效初始化。 */
     private onInventoryState(protocol: ProtocolName, data: unknown): void {
-        const state = statePayload(protocol, data);
-        const items = readBagItems(state.inventory), previous = this.model.snapshot;
+        const state = ProtocolStateUtils.statePayload(protocol, data);
+        const items = BagItemDataUtils.readBagItems(state.inventory), previous = this.model.snapshot;
         const changes = this.model.replaceAll(items, state.timedInventory);
         this.notify(changes, protocol === Protocol.STATE_CHANGED ? "unknown" : "initial-sync", previous);
     }
 
     /** Model 完成提交后通知状态/增删改及汇总；首次同步不触发获得物品演出。 */
     private notify(changes: BagChangeSet | null, reason: BagChangeReason, previous: BagState): void {
-        batchNotifications(() => {
+        EventDispatcher.batchNotifications(() => {
             const state = this.model.snapshot;
-            if (previous.roleKey !== state.roleKey || previous.status !== state.status || previous.synced !== state.synced) {
+            if (reason === "session-reset" || previous.status !== state.status || previous.synced !== state.synced) {
                 this.emit(BagEvent.BagSyncStateChanged, Object.freeze({
-                    roleKey: state.roleKey, revision: state.revision,
+                    revision: state.revision,
                     status: state.status, synced: state.synced
                 }));
             }
             // 每个已接纳版本均刷新汇总，期限列表或实例身份变化也必须可见。
             if (changes) {
                 const update = Object.freeze({ ...changes, reason: changes.initialSync ? "initial-sync" : reason });
-                const header = { roleKey: update.roleKey, revision: update.revision, reason: update.reason };
+                const header = { revision: update.revision, reason: update.reason };
                 if (update.added.length) this.emit(BagEvent.BagAdd, Object.freeze({ ...header, added: update.added }));
                 if (update.removed.length) this.emit(BagEvent.BagRemove, Object.freeze({
                     ...header,

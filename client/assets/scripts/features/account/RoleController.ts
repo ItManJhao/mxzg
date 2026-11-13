@@ -1,11 +1,11 @@
 /** 角色协议控制器：按实际协议更新唯一 AccountModel 中的角色资料，不处理登录或签发凭证。 */
 import { GameLog } from "../../core/GameLog";
-import { readRole } from "./AccountApi";
+import { AccountApi } from "./AccountApi";
 import type { RoleProfile } from "./AccountModel";
 import type { ProtocolName } from "../../platform/Protocol";
 import { Protocol } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
-import { statePayload, STATE_PROTOCOLS } from "../../platform/ProtocolState";
+import { ProtocolStateUtils, STATE_PROTOCOLS } from "../../platform/ProtocolStateUtils";
 
 export class RoleController {
     /** 模块的协议登记，销毁应用时释放。 */
@@ -34,7 +34,7 @@ export class RoleController {
 
     /** 提交经过整体校验的权威角色，账号 Model 负责资料变更通知。 */
     private onRoleState(protocol: ProtocolName, data: unknown): void {
-        this.accept(readRole(statePayload(protocol, data).role));
+        this.accept(AccountApi.readRole(ProtocolStateUtils.statePayload(protocol, data).role));
     }
 
     /** 应用销毁时解除登记，关闭页面不调用。 */

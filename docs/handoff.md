@@ -1,24 +1,12 @@
 # 新聊天交接文档
 
-更新：2026-11-12。负责人已授权将本轮成果推送hao并合入main，提交与远端同步结果以Git记录为准；后续开发仍在hao、跟踪origin/hao，8cb60507为本轮之前的基线。本轮15个Bundle归档到resources/module两个普通父目录，26,410份原资源/meta在Creator重新导入后仍逐字节保留；52/52项有效检查、类型和全库绑定通过。新目录393×852独立环境完成登录、三段配置、背包四类详情、三英雄及详情、850关与真实第二关结算返回，无新警告/错误；本轮不签缓存TTL或立即重开同实例。扩展1.6.3隔离钩子已验，真实发布构建尚未进行。见[当前目录记录](validation/bundle-directory-groups-20261111.json)和[资源维护入口](staged-resource-loading.md)。
+更新：2026-11-13。当前分支hao，跟踪origin/hao；最近已推送基线为a2ea3e43。main与该基线相同，本批修改只留本地，未提交、推送或合并。开始接手仍须检查Git，保留现有修改。
 
-上一批统一列表事件、资源清理和虚拟列表的51项、类型及本机限定复验见[前批证据](validation/virtual-list-resource-review-20261111.json)，不能当作本次新目录路径的验收。当前资源在bundles/resources/{audio,config,font,icons,maps,spine}和bundles/module/{bag,battle,bootstrap,chapter,common,gm,hero,home,login}；父层不是Bundle，原15个包名与CDN remote/<包名>不变，bootstrap仍本地，自动图集全部保留。
+本批整理了旧客户端链、状态归属、脚本命名与工具入口：BaseModel不再保存角色键，换号由AssetStateBinding统一关闭页面、重置唯一Model；英雄详情不再另设owner。有调用的脚本改为与职责一致的名称，自由导出入口并入所属工具或现有类，资源服务保留实例及原生命周期。删除无调用的旧主城装配与挂机演武链，脚本及meta一起处理。具体入口见[架构导航](architecture.md)，逐项记录见[本批整理证据](validation/script-cleanup-20261113.json)。
 
-先看[当前进度](development-progress.md)，这里仅保留接手入口。各View的@view统一静态定义与prepare；ApplicationPages只装配登录/主城Controller及宿主，bindViewRuntime只注入createController/动态hostId，ApplicationResources只调度三段。LoadingPlan页面目标改用`{page:BagView}`类引用，预载只读取Prefab、不执行prepare或创建页面，其余图片/骨骼/配置继续显式配置。
+资源当前为bundles/resources的8包和bundles/module的8包，共16包、15远程；bootstrap本地。chapter已归resources，战斗帧特效也已拆到resources/effects；旧UUID保留，特效运行键改为effects/包内路径。见[目录与加载维护](staged-resource-loading.md)、[chapter记录](validation/chapter-resource-move-20261113.json)和[特效迁移记录](validation/battle-effects-move-20261113.json)。三段显式配置、其余按需、原资源池及缓存策略保持。
 
-英雄、背包、产物说明外层/内层及胜利奖励统一监听RENDER_ITEM/SELECT_ITEM，Cell只绘制，选择归所属页面；名册/库存仍归唯一Model。SuperContent默认virtual=true、bufferLines=1，逻辑总量与节点量分开，仅建立视口及缓冲行有限池；原锚点/Cell正缩放保留，view/content局部缩放须1，祖先适配可用。滚动不停止惯性，几何/数据改变完整保位，离屏refresh延迟渲染。
-
-本批千/万条六布局、锚点/缩放、resize、惯性和单图拥有者专项通过；当前51项全量、180脚本/33份PrefabScene/71绑定通过。本机850关首屏5节点，多次拖动/跳转后池保持7，末关点击正确；背包四分类及详情数量保持，最终资源重载后三英雄列表和真实第二关结算返回通过。ResManager.setSprite只保留当前/在途作用域，同图复用，新图接替后撤回旧图；getSpriteFrame(owner)显式持有及TTL不变。本轮不签TTL、GPU或真机，前批48项与旧数量见[历史入口证据](validation/view-registration-list-review-20261111.json)。
-
-8cb60507基线的48项与共享层限定预览见[上一批证据](validation/shared-modal-widget-20261111.json)，不能冒充本批新入口结果。[前次框架审计](validation/framework-cleanup-20261111.json)和[旧模态证据](validation/modal-layer-20261111.json)保留历史依据，旧逐窗蒙版已被共享方案取代。尚未重建对应发布包，也未代签负责人Inspector或全页面验收。
-
-更早46项统一检查、Python17组以及加载/缓存自然回收已通过，见[工具证据](validation/migration-tools-review-20261111.json)和[加载与缓存证据](validation/loading-cache-review-20261111.json)。各批证据分别记录，不代表真实CDN、真机、长期内存或完整玩法新验收。
-
-资源统一到assets/bundles，本批保留15包、32份Prefab、31张实际依赖表；清理90未实现包、64旧Prefab及未使用配置，源资源减少约203.30MiB，详见[清理记录](validation/current-resource-scope-cleanup-20261111.json)。buffart遗漏已原字节恢复并补闭包反例；三份主城现用表与XLSX差异另存[生成输入说明](../config/client-maincity/README.md)，后续核对，不在清理时改规则。原105包/96Prefab与21,902个UUID是历史基线；源目录减少不是新发布/下载包体。三段显式配置、其余按需与缓存规则保持，暂停领域代码不接回导航。
-
-背包、英雄列表和详情均是完整Prefab；固定布局归Widget，ViewportScale仅统一缩放，fitVisibleRoot只桥接LiveShell视口。旧羊皮纸/英雄组装链、页面壳及独立列表板已退役，本批继续删除旧Campaign四份UI、PrefabLayout及Common*Shell样板链；不因保留暂停领域代码重建旧入口。
-
-模态只在ViewSpec配置`{mask,closeOnOutside}`，两个开关独立；省略则不拦截。多个弹窗共用一个动态节点，Prefab仅保留实际内容背景的BlockInputEvents。普通弹窗及原有布阵/结算沿用各自关闭流程，GM/技能台mask=true、closeOnOutside=false；前批限定复验不自动覆盖本批新入口。真实CDN/平台/长期内存仍列计划，不恢复暂停玩法。
+本批52/52项有效检查、两套类型和全库绑定通过：162脚本、33份Prefab/Scene、71处绑定。负责人已验收此前功能，并明确本批停止重复画面验收；本批未重新预览或构建，不把旧构建包当作本次迁移结果。Creator按要求关闭后完成迁移。当前进度与下一步统一看[进度页](development-progress.md)，历史验收记录只作各批证据。
 
 ## 项目与边界
 
@@ -27,7 +15,7 @@
 - 目标是现代技术1:1恢复旧玩法、规则、内容和流程；独立新版，不兼容旧客户端或迁移旧玩家。正式服https://mxzg-test.funsgamex.com/jp/主要对照界面与交互，技能规则/资源以旧源码为依据。
 - 当前主线挑战前三关；850关仅产物说明范围，20关是现有挂机规则投影。宝箱领取、快速战斗、英雄升级和穿脱仍关闭，其他模块不顺带恢复。
 - 当前保存点见页首；接手检查Git并保留本地修改，不以历史记录推断提交状态。
-- 浏览器复验允许；不操作桌面或Creator。需要编译刷新时请负责人刷新资源，相关Prefab若正在编辑先关闭且不保存旧内容。无需横屏，不再安排单独拆RemakeApp启动装配。
+- 本批按负责人要求停止重复画面验收，不再安排浏览器、Creator预览或构建。后续如另有验收授权，再集中验证新包；无需横屏，不安排单独拆RemakeApp启动装配。
 - WS＋Protobuf、服务端权威、持久幂等、Controller→唯一Model→事件刷新View保持。静态布局保存在Prefab，列表SuperScroll，保留资源UUID；中文文件头/方法/属性注释及模块目录规范见AGENTS.md。
 
 ## 接手时最重要的状态

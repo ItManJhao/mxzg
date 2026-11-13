@@ -7,7 +7,7 @@ const path = require('node:path');
 /** 编译真实入口并验证允许地址、拒绝边界和跨运行存储隔离。 */
 async function check(preview) {
     const built = await esbuild.build({
-        entryPoints: [path.resolve(__dirname, '../assets/scripts/app/remake/IsolatedSocketPreview.ts')],
+        entryPoints: [path.resolve(__dirname, '../assets/scripts/app/remake/IsolatedSocketPreviewUtils.ts')],
         bundle: true, write: false, platform: 'node', format: 'cjs',
         plugins: [{
             name: 'creator-environment',
@@ -36,7 +36,7 @@ async function check(preview) {
         return { ok: true, json: async () => ({ kind: 'mxzg-owned-socket-it', run }) };
     };
     vm.runInContext(built.outputFiles[0].text, context);
-    const connect = () => context.module.exports.isolatedSocketPreview(daily, storage);
+    const connect = () => context.module.exports.IsolatedSocketPreviewUtils.isolatedSocketPreview(daily, storage);
     context.location = { href: 'https://example.com/' };
     assert.equal((await connect()).socketUrl, daily);
     assert.equal(calls, 0);

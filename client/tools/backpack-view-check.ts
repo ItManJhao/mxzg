@@ -7,13 +7,12 @@ import { existsSync, readFileSync } from "fs";
 /** 夹具按Bundle真实源目录读取配置，游戏加载键仍保持config/物品等原值。 */
 const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
 import { _decorator, assetManager, Button, createdNodes, director, Director, Label, Layers, Mask, Node, Prefab, ScrollView, Sprite, SpriteFrame, UITransform } from "cc";
-import { clearPrefabCache } from "../assets/scripts/framework/assets/PrefabLoader";
-import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
-import { ConfigTableFile } from "../assets/scripts/config/types";
+import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { BagItemCatalog } from "../assets/scripts/features/bag/utils/BagItemCatalog";
-import { ancestorScale } from "../assets/scripts/framework/ui/visibleFit";
+import { ViewportLayoutUtils } from "../assets/scripts/framework/ui/ViewportLayoutUtils";
 import { CONFIG_SCHEMA, ConfigName } from "../assets/scripts/config/GConfig";
 import { BagModel } from "../assets/scripts/features/bag/BagModel";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
@@ -27,12 +26,22 @@ import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { BagView } from "../assets/scripts/features/bag/ui/BagView";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
-import { isOpenCancelled, UIManager } from "../assets/scripts/framework/ui/UIManager";
-import { registerView, view, viewCtorById, viewSpecOf } from "../assets/scripts/framework/ui/UIRegistry";
+import { UIManager } from "../assets/scripts/framework/ui/UIManager";
+import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
+
+/** 背包配置夹具的可写源容器，仅用于构造测试JSON；生产查询类型由GConfig生成。 */
+interface ConfigTableFile<T> {
+  /** 夹具原表名，仅用于标识输入，不参与运行时取表。 */
+  table: string;
+  /** 可选的源数据说明。 */
+  note?: string;
+  /** 本测试构造的行集合，加载后由GameConfig复制校验并冻结。 */
+  rows: T[];
+}
 
 const { ccclass } = _decorator;
 
-@view({
+@UIRegistry.view({
   id: "life",
   prefab: "prefabs/test/Life",
   load: () => loadTestPrefab("test/Life"),
@@ -74,7 +83,7 @@ class LifeView extends BaseView {
   }
 }
 
-@view({
+@UIRegistry.view({
   id: "multi",
   prefab: "prefabs/test/Multi",
   load: () => loadTestPrefab("test/Multi"),
@@ -321,23 +330,21 @@ function checkSources(): void {
   const bagView = read("client/assets/scripts/features/bag/ui/BagView.ts");
   assert(bagView.indexOf("failOpen") >= 0, "背包挂载失败要拒绝 whenReady");
   assert(bagView.indexOf("finally") < 0, "不能 catch 之后仍 finishOpen");
-  assert(!viewSpecOf(BagView)!.mount, "背包直接加载完整预制体");
   // cache/allowMultiple 定义在页面注册中，下方按实际登记结果检查，不再要求 View 重复常量。
 
 }
 
 function checkRegistry(): void {
-  const spec = viewSpecOf(BagView);
+  const spec = UIRegistry.viewSpecOf(BagView);
   assert(spec !== null, "BagView 未注册");
   assert(spec.id === "bag", "页面 id 应是 bag");
   assert(spec.prefab === "bundles/module/bag/prefabs/BagView", "预制路径");
   assert(spec.layer === UILayer.Page, "层应是 Page");
   assert(spec.cache === true, "背包启用有界实例缓存");
   assert(spec.allowMultiple === false, "背包不叠两份");
-  assert(!spec.mount, "背包无需组装策略");
-  assert(viewSpecOf(BagInfoView)?.layer === UILayer.Popup, "详情登记为独立弹窗");
-  assert(viewCtorById("bag") === BagView, "id bag 应对回 BagView");
-  assert(viewCtorById("hero") === null, "这一阶段不登记别的页");
+  assert(UIRegistry.viewSpecOf(BagInfoView)?.layer === UILayer.Popup, "详情登记为独立弹窗");
+  assert(UIRegistry.viewCtorById("bag") === BagView, "id bag 应对回 BagView");
+  assert(UIRegistry.viewCtorById("hero") === null, "这一阶段不登记别的页");
   assert(UIManager.instance.createPageHost("bag") === null, "没 open 时 presentPage 继续走旧壳");
   assert(UIManager.instance.createPageHost("hero") === null, "未迁移页面不进 UIManager");
 }
@@ -456,8 +463,8 @@ function makeView(): BagView {
     info.hitMenu = sized("menu", 0, 0);
     info.hitMenuClose = sized("menu_close", 0, 0);
   });
-  registerView(BagInfoView, { ...viewSpecOf(BagInfoView)!, load: async () => detailPrefab });
-  UIManager.instance.setResidentHost(viewSpecOf(BagInfoView)!.hostId!, () => detailHost);
+  UIRegistry.registerView(BagInfoView, { ...UIRegistry.viewSpecOf(BagInfoView)!, load: async () => detailPrefab });
+  UIManager.instance.setResidentHost(UIRegistry.viewSpecOf(BagInfoView)!.hostId!, () => detailHost);
   view.bagScroll.onEnable();
   return view;
 }
@@ -514,11 +521,11 @@ async function checkIndependentDetails(): Promise<void> {
   installNav();
   noteBag([{ itemId: 20, quantity: 2 }, { itemId: 902025, quantity: 7 }]);
   const page = await openView();
-  const spec = viewSpecOf(BagInfoView)!;
+  const spec = UIRegistry.viewSpecOf(BagInfoView)!;
   const prefab = await spec.load!();
   let release!: () => void;
   let requests = 0;
-  registerView(BagInfoView, {
+  UIRegistry.registerView(BagInfoView, {
     ...spec,
     load: async () => {
       requests += 1;
@@ -547,7 +554,7 @@ async function checkIndependentDetails(): Promise<void> {
   release();
   await flushDetail();
   assert(!UIManager.instance.isOpen(BagInfoView), "背包关闭后迟到加载不能弹出详情");
-  registerView(BagInfoView, spec);
+  UIRegistry.registerView(BagInfoView, spec);
   page.runOpen();
   cells(page)[0].node.emit(Button.EventType.CLICK);
   await flushDetail();
@@ -560,13 +567,13 @@ async function checkIndependentDetails(): Promise<void> {
 }
 
 function noteBag(items: readonly {itemId:number;quantity:number}[] | null): void {
-  BagModel.instance.reset("local/test-role");
+  BagModel.instance.reset();
   if (items) BagModel.instance.replaceAll(items);
 }
 
 /** 提供与源表 place 标签规则一致的测试配置；故意让不同标签共用 type=6，防止误用效用类型分类。 */
 function bindTables(): void {
-  // 页面@view的配置前置条件仍走真实校验；展示夹具只替换读取结果，不重新初始化唯一仓库。
+  // 页面@UIRegistry.view的配置前置条件仍走真实校验；展示夹具只替换读取结果，不重新初始化唯一仓库。
   ResourceAssetsUtils.loadConfig = async path => JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8"));
   const language: ConfigTableFile<Record<string, unknown>> = {
     table: "language",
@@ -732,7 +739,7 @@ async function checkOpenFailure(): Promise<void> {
   };
   assetManager.loadBundle = failBundle;
   assetManager.loadAny = failAny;
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
 
   const mark = createdNodes.length;
   const toastAt = toasts.length;
@@ -756,7 +763,7 @@ async function checkOpenFailure(): Promise<void> {
   assert(shells[0].isValid === false && shells[0].parent === null, "失败的 LiveShell 不能留在场景里挡点击");
   assert(UIManager.instance.createPageHost("bag") === null, "失败后不能再交出空壳");
 
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   const bare = new Prefab() as Prefab & { _instantiate: () => Node };
   bare._instantiate = () => new Node("bare");
   assetManager.loadBundle = (_name: string, cb: (err: Error | null, bundle: object | null) => void) => {
@@ -782,7 +789,7 @@ async function checkOpenFailure(): Promise<void> {
   assert(bareShells.length === 1 && bareShells[0].isValid === false && bareShells[0].parent === null, "缺组件的壳也要销毁");
   assert(root.children.length === 0, "缺组件时页面层仍是空的");
 
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   assetManager.loadBundle = (_name: string, cb: (err: Error | null, bundle: object | null) => void) => {
     cb(null, {
       load(inner: string, _type: unknown, done: (err: Error | null, asset: Prefab | null) => void) {
@@ -806,7 +813,7 @@ async function checkOpenFailure(): Promise<void> {
   assert(UIManager.instance.close(opened) === true, "装好的背包可以关");
   assert(backs === 1 && stack[stack.length - 1] === "city", "关闭后回到原来的页");
   assert(root.getChildByName("LiveShell") === null, "关闭后壳不留在页面层");
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
 }
 
 interface Harness {
@@ -929,7 +936,7 @@ async function checkOpenRaces(): Promise<void> {
   node.destroy();
 
   const nav = installHarness(false);
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   const gate = holdLoads((inner) => bagNode(inner, true));
   const toastAt = toasts.length;
   const mark = createdNodes.length;
@@ -939,7 +946,7 @@ async function checkOpenRaces(): Promise<void> {
       throw new Error("切走之后不应打开成功");
     },
     (err) => {
-      switched = isOpenCancelled(err);
+      switched = UIManager.isOpenCancelled(err);
       if (!switched) throw err;
     }
   );
@@ -955,7 +962,7 @@ async function checkOpenRaces(): Promise<void> {
   assert(switchedShells.length === 1 && switchedShells[0].isValid === false, "取消的 LiveShell 要销毁");
   nav.stack.pop();
 
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   const gateOnly = holdLoads((inner) => bagNode(inner, true));
   const toastOnly = toasts.length;
   let dropped = false;
@@ -964,7 +971,7 @@ async function checkOpenRaces(): Promise<void> {
       throw new Error("意图作废后不应打开成功");
     },
     (err) => {
-      dropped = isOpenCancelled(err);
+      dropped = UIManager.isOpenCancelled(err);
       if (!dropped) throw err;
     }
   );
@@ -976,7 +983,7 @@ async function checkOpenRaces(): Promise<void> {
   assert(toasts.length === toastOnly, "意图作废不 Toast");
   assert(nav.highlights.length === 0, "意图作废不改高亮");
 
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   const gateSame = holdLoads((inner) => bagNode(inner, true));
   const kept = UIManager.instance.open(BagView);
   UIManager.instance.keepOnly("bag");
@@ -987,7 +994,7 @@ async function checkOpenRaces(): Promise<void> {
   assert(UIManager.instance.close(keptView) === true, "打开成功的背包能关");
   assert(nav.stack[nav.stack.length - 1] === "city", "关掉后回到原来的页");
 
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   const gateDup = holdLoads((inner) => bagNode(inner, true));
   const proto = BagView.prototype as unknown as { onOpen(args?: unknown): void };
   const origOpen = proto.onOpen;
@@ -1012,7 +1019,7 @@ async function checkOpenRaces(): Promise<void> {
     proto.onOpen = origOpen;
   }
 
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   assetManager.loadBundle = (_name: string, cb: (err: Error | null, bundle: object | null) => void) => {
     cb(null, {
       load(inner: string, _type: unknown, done: (err: Error | null, asset: Prefab | null) => void) {
@@ -1033,7 +1040,7 @@ async function checkOpenRaces(): Promise<void> {
   try {
     await UIManager.instance.open(BagView);
   } catch (err) {
-    cellFailed = !isOpenCancelled(err);
+    cellFailed = !UIManager.isOpenCancelled(err);
   }
   assert(cellFailed, "start 失败要拒绝 whenReady");
   assert(nav.opens === opensBeforeCell, "start 失败不能压栈");
@@ -1041,7 +1048,7 @@ async function checkOpenRaces(): Promise<void> {
   assert(toasts[toastCell] === "背包没有打开", "start 失败要 Toast");
   assert(nav.root.children.length === 0, "start 失败不留空壳");
 
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   MultiView.opens = 0;
   const gateMulti = holdLoads((inner) => {
     const made = new Node(inner);
@@ -1058,7 +1065,7 @@ async function checkOpenRaces(): Promise<void> {
   assert(UIManager.instance.close() === true, "先关上面一份");
   assert(UIManager.instance.close() === true, "再关下面一份");
 
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   resetLife();
   const cachedNav = installHarness(true);
   const gateLife = holdLoads((inner) => {
@@ -1076,7 +1083,7 @@ async function checkOpenRaces(): Promise<void> {
   assert(UIManager.instance.snapshot().cached === 1, "关闭后登记一个闲置页面");
   assert(LifeView.closes === 1 && LifeView.unbinds === 0 && LifeView.disposes === 0, "cache 只 onClose，不 unbind/dispose");
   const loadsAfter = gateLife.loads.n;
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
   const lifeAgain = await UIManager.instance.open(LifeView);
   assert(lifeAgain === lifeOpen, "cache 第二次还是同一个实例");
   assert(gateLife.loads.n === loadsAfter, "cache 第二次不再加载");
@@ -1088,7 +1095,7 @@ async function checkOpenRaces(): Promise<void> {
   assert(LifeView.disposes === 1 && LifeView.unbinds === 1, "清空只解绑和释放一次");
   UIManager.instance.clearCached();
   assert(UIManager.instance.snapshot().cached === 0, "重复清空安全");
-  clearPrefabCache();
+  PrefabLoader.clearPrefabCache();
 }
 
 /** 详情重复展示不累计回调；销毁只解除自身监听，并兼容引擎先销毁子按钮的顺序。 */
@@ -1157,8 +1164,8 @@ async function checkInfoMaskCoverage(): Promise<void> {
     await flushDetail();
     const dim = infoCard(page).node;
     const ui = dim.getComponent(UITransform)!;
-    assert(Math.abs(ui.width * ancestorScale(dim) - 960) < 0.01, "遮罩覆盖宽屏左右边缘");
-    assert(Math.abs(ui.height * ancestorScale(dim) - 1280) < 0.01, "遮罩覆盖完整可见高度");
+    assert(Math.abs(ui.width * ViewportLayoutUtils.ancestorScale(dim) - 960) < 0.01, "遮罩覆盖宽屏左右边缘");
+    assert(Math.abs(ui.height * ViewportLayoutUtils.ancestorScale(dim) - 1280) < 0.01, "遮罩覆盖完整可见高度");
   } finally {
     page?.runDispose();
     page?.node.destroy();
@@ -1208,7 +1215,7 @@ async function main(): Promise<void> {
   await checkInfoMaskCoverage();
   await checkOpenFailure();
   await checkOpenRaces();
-  BagModel.instance.reset(null);
+  BagModel.instance.reset();
   console.log("backpack-view-check ok");
 }
 

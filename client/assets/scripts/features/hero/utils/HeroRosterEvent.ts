@@ -2,6 +2,6 @@
 export const HeroRosterEvent = { Updated: "hero-roster:updated" } as const;
 declare module "../../../framework/EventDispatcher" {
     interface EventPayloads {
-        [HeroRosterEvent.Updated]: { readonly roleKey: string | null; readonly revision: number };
+        [HeroRosterEvent.Updated]: { readonly revision: number };
     }
 }

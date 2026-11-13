@@ -2,9 +2,9 @@
 import { strict as assert } from "node:assert";
 import { Node, Prefab } from "cc";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
-import { UIManager, isOpenCancelled } from "../assets/scripts/framework/ui/UIManager";
-import { registerView, viewCtorById } from "../assets/scripts/framework/ui/UIRegistry";
-import { monoNow } from "../assets/scripts/core/GameLog";
+import { UIManager } from "../assets/scripts/framework/ui/UIManager";
+import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
+import { GameLog } from "../assets/scripts/core/GameLog";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { RemakeNavigation } from "../assets/scripts/app/remake/RemakeNavigation";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
@@ -23,19 +23,94 @@ class FeatureFixture extends BaseView {}
 class PreparedFixture extends BaseView {}
 class PreparingFixture extends BaseView {}
 
+/** 换号先关页的真实导航回归：动画中的功能页立即退订，缓存及迟到开窗不得保留旧页面。 */
+async function checkIdentityCleanup(): Promise<void> {
+  const ui = new UIManager();
+  const root = new Node("IdentityCanvas");
+  const content = new Node("HomeContent");
+  let listening = false;
+  let animations = 0;
+  let stopped = 0;
+  class IdentityHome extends BaseView {}
+  class IdentityFeature extends BaseView {
+    /** 模拟页面已经订阅Model，关闭必须在下一次数据重置前解除。 */
+    onOpen(): void { listening = true; }
+    /** 用可观察的订阅状态验证同步关页，不检查框架内部实现。 */
+    onClose(): void { listening = false; }
+  }
+  class IdentityPopup extends BaseView {}
+  const nav = new RemakeNavigation(ui, root, {
+    parent: id => id === "identity-feature" ? root : null,
+    content: () => content,
+    changed: () => {},
+  }, (_from, _to, _fromId, _toId, done) => {
+    animations++;
+    return () => { stopped++; done(); };
+  });
+  ui.install(nav, { showToast: () => {} });
+  const prefab = (ctor: new () => BaseView) => Object.assign(new Prefab(), {
+    _instantiate: () => { const node = new Node("IdentityPage"); node.addComponent(ctor); return node; },
+  });
+  const unregister = [
+    UIRegistry.registerView(IdentityHome, { id: "identity-home", prefab: "test", layer: UILayer.Page,
+      cache: false, allowMultiple: false, load: async () => prefab(IdentityHome) }),
+    UIRegistry.registerView(IdentityFeature, { id: "identity-feature", prefab: "test", layer: UILayer.Page,
+      cache: true, allowMultiple: false, load: async () => prefab(IdentityFeature) }),
+  ];
+  await ui.open(IdentityHome);
+  const feature = await ui.open(IdentityFeature);
+  assert.equal(listening, true);
+  assert.equal(animations, 1, "普通切页仍播放动画");
+  ui.invalidatePending();
+  assert.equal(nav.back(false), true);
+  assert.equal(stopped, 1, "身份变化先结束上一段动画");
+  assert.equal(animations, 1, "身份变化不再启动返回动画");
+  assert.equal(listening, false, "Model清空之前页面已经退订");
+  assert.equal(content.active, true, "立即返回恢复主城内容");
+  ui.clearCached();
+  assert.equal(feature.node.isValid, false, "旧身份闲置实例同步销毁");
+  let finishPopup!: (value: Prefab) => void;
+  ui.setResidentHost("identity-modal", () => root);
+  unregister.push(UIRegistry.registerView(IdentityPopup, { id: "identity-popup", prefab: "test", layer: UILayer.Popup,
+    hostId: "identity-modal", cache: false, allowMultiple: false,
+    load: () => new Promise(resolve => { finishPopup = resolve; }) }));
+  const opening = ui.open(IdentityPopup);
+  ui.closeById("identity-popup");
+  finishPopup(prefab(IdentityPopup));
+  await assert.rejects(opening, UIManager.isOpenCancelled);
+  assert.equal(ui.snapshot().residents, 0, "迟到的旧身份弹窗不得重新出现");
+  nav.dispose();
+  for (const stop of unregister) stop();
+  content.destroy();
+  root.destroy();
+}
+
 async function main() {
+  await checkIdentityCleanup();
   const ui = new UIManager();
   const parent = new Node("Canvas");
   const nav = new RemakeNavigation(ui, parent);
   ui.install(nav, { showToast: () => {} });
   const counters = new Map<string, { created: number; shown: number; closed: number }>();
   const hosts = new Map<string, Node>();
+  /** 返回生命周期计数；夹具只提供可实例化Prefab，挂载与拥有者保护走生产spawn路径。 */
   function register(ctor: new () => BaseView, id: string, load: () => Promise<Prefab> = async () => new Prefab(), throwOnShow = false, resident = false, cache = false,
     prepare?: () => Promise<void>) {
     const count = { created: 0, shown: 0, closed: 0 }; counters.set(id, count);
-    registerView(ctor, { id, prefab: "prefabs/test/" + id, layer: resident ? UILayer.Popup : UILayer.Page,
-      cache, allowMultiple: false, hostId: resident ? "popup" : undefined, load, prepare,
-      mount: shell => { const node = new Node(id); node.parent = shell; node.addComponent(ctor); hosts.set(id, node); return node; },
+    /** 保留注入加载器的失败/取消时序，成功时由引擎替身实例化真实View节点。 */
+    async function loadFixturePrefab(): Promise<Prefab> {
+      const prefab = await load();
+      return Object.assign(prefab, {
+        _instantiate: () => {
+          const node = new Node(id);
+          node.addComponent(ctor);
+          hosts.set(id, node);
+          return node;
+        },
+      });
+    }
+    UIRegistry.registerView(ctor, { id, prefab: "prefabs/test/" + id, layer: resident ? UILayer.Popup : UILayer.Page,
+      cache, allowMultiple: false, hostId: resident ? "popup" : undefined, load: loadFixturePrefab, prepare,
       createController: () => { count.created++; return {
         show: () => { count.shown++; if (throwOnShow) throw new Error("Controller initialization failed"); },
         close: () => { count.closed++; },
@@ -74,7 +149,7 @@ async function main() {
   register(PreparingFixture, "test-config-cancelled", async () => { preparedLoads++; return new Prefab(); },
     false, false, false, () => new Promise(resolve => { finishConfiguration = resolve; }));
   const preparing = ui.open(PreparingFixture);
-  const cancelledPreparation = assert.rejects(preparing, isOpenCancelled);
+  const cancelledPreparation = assert.rejects(preparing, UIManager.isOpenCancelled);
   ui.keepOnly("test-remake-home");
   finishConfiguration();
   await cancelledPreparation;
@@ -87,7 +162,7 @@ async function main() {
   const pending = ui.open(SlowFixture);
   ui.keepOnly("test-remake-home");
   finish(new Prefab());
-  await assert.rejects(pending, isOpenCancelled);
+  await assert.rejects(pending, UIManager.isOpenCancelled);
   assert.equal(counters.get("test-remake-slow")!.closed, 1, "cancelled controller unsubscribes");
   assert.equal(hosts.get("test-remake-slow")!.isValid, false);
   assert.equal(nav.current, "test-remake-home");
@@ -109,11 +184,11 @@ async function main() {
   assert.equal(home.closed, 1);
   assert.equal(parent.children.length, 0);
   await assert.rejects(ui.open(LoginFixture), /页面栈/);
-  assert.throws(() => registerView(LoginFixture, { id: "second-id", prefab: "unused", layer: UILayer.Page, cache: false, allowMultiple: false }), /多个页面/);
-  const unregisterOld = registerView(LoginFixture, { id: "test-remake-login", prefab: "old", layer: UILayer.Page, cache: false, allowMultiple: false });
-  const unregisterCurrent = registerView(LoginFixture, { id: "test-remake-login", prefab: "current", layer: UILayer.Page, cache: false, allowMultiple: false });
-  unregisterOld(); assert.equal(viewCtorById("test-remake-login"), LoginFixture, "old application cleanup must not unregister the new owner");
-  unregisterCurrent(); assert.equal(viewCtorById("test-remake-login"), null);
+  assert.throws(() => UIRegistry.registerView(LoginFixture, { id: "second-id", prefab: "unused", layer: UILayer.Page, cache: false, allowMultiple: false }), /多个页面/);
+  const unregisterOld = UIRegistry.registerView(LoginFixture, { id: "test-remake-login", prefab: "old", layer: UILayer.Page, cache: false, allowMultiple: false });
+  const unregisterCurrent = UIRegistry.registerView(LoginFixture, { id: "test-remake-login", prefab: "current", layer: UILayer.Page, cache: false, allowMultiple: false });
+  unregisterOld(); assert.equal(UIRegistry.viewCtorById("test-remake-login"), LoginFixture, "old application cleanup must not unregister the new owner");
+  unregisterCurrent(); assert.equal(UIRegistry.viewCtorById("test-remake-login"), null);
 
   let slot: Node | null = null;
   const changes: Array<string | null> = [];
@@ -155,7 +230,7 @@ async function main() {
   const slowFeature = register(FeatureFixture, "test-remake-feature", () => new Promise(resolve => { finishFeature = resolve; }));
   const cancelledFeature = ui.open(FeatureFixture);
   ui.keepOnly("test-remake-home"); finishFeature(new Prefab());
-  await assert.rejects(cancelledFeature, isOpenCancelled);
+  await assert.rejects(cancelledFeature, UIManager.isOpenCancelled);
   assert.equal(featureNav.current, "test-remake-home"); assert.equal(slowFeature.closed, 1);
   register(FeatureFixture, "test-remake-feature");
   await ui.open(FeatureFixture); featureNav.dispose();
@@ -170,26 +245,40 @@ async function main() {
   });
   cacheUi.install(cacheNav, { showToast: () => {} });
   class CacheRootView extends BaseView {}
-  registerView(CacheRootView, { id: "cache-root", prefab: "test", layer: UILayer.Page,
-    cache: false, allowMultiple: false, load: async () => new Prefab(),
-    mount: host => { const n = new Node("Root"); n.parent = host; n.addComponent(CacheRootView); return n; } });
+  UIRegistry.registerView(CacheRootView, { id: "cache-root", prefab: "test", layer: UILayer.Page,
+    cache: false, allowMultiple: false,
+    load: async () => Object.assign(new Prefab(), {
+      _instantiate: () => {
+        const node = new Node("Root");
+        node.addComponent(CacheRootView);
+        return node;
+      },
+    }),
+  });
   await cacheUi.open(CacheRootView);
   const instances: BaseView[] = [];
   for (let i = 0; i < 3; i++) {
     class CachedView extends BaseView {}
-    registerView(CachedView, { id: "cache-" + i, prefab: "test", layer: UILayer.Page,
-      cache: true, allowMultiple: false, load: async () => new Prefab(),
-      mount: host => { const n = new Node("Cached"); n.parent = host; n.addComponent(CachedView); return n; } });
+    UIRegistry.registerView(CachedView, { id: "cache-" + i, prefab: "test", layer: UILayer.Page,
+      cache: true, allowMultiple: false,
+      load: async () => Object.assign(new Prefab(), {
+        _instantiate: () => {
+          const node = new Node("Cached");
+          node.addComponent(CachedView);
+          return node;
+        },
+      }),
+    });
     const instance = await cacheUi.open(CachedView);
     instances.push(instance);
-    if (i === 0) assert.equal(cacheUi.collectCached(monoNow() + UIManager.cacheIdleMs), 0);
+    if (i === 0) assert.equal(cacheUi.collectCached(GameLog.monoNow() + UIManager.cacheIdleMs), 0);
     assert(instance.node.isValid, "在屏幕上的实例不受闲置清理影响");
     cacheNav.back();
   }
   assert.equal(cacheUi.snapshot().cached, UIManager.maxCachedPages, "闲置页面不超过数量上限");
   assert(!instances[0].node.isValid, "超过上限先淘汰最早关闭的页面");
   assert(instances[1].node.isValid && instances[2].node.isValid);
-  assert.equal(cacheUi.collectCached(monoNow() + UIManager.cacheIdleMs), 2);
+  assert.equal(cacheUi.collectCached(GameLog.monoNow() + UIManager.cacheIdleMs), 2);
   assert.equal(cacheUi.snapshot().cached, 0);
   for (const instance of instances) assert(!instance.node.isValid, "过期界面节点被销毁");
   cacheNav.dispose();

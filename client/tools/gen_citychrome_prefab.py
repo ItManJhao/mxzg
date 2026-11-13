@@ -40,7 +40,7 @@ PREFAB_PATH = os.path.join(OUT_DIR, "CityChromeView.prefab")
 FONT_META = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf.meta")
 FONT_FILE = os.path.join(RES, "font", "FZCSJW-GB1-0.ttf")
 SHELL_TS = os.path.join(ROOT, "client", "assets", "scripts", "ui", "CityChromeShell.ts")
-BIND_TS = os.path.join(ROOT, "client", "assets", "scripts", "ui", "CityChrome.ts")
+BIND_TS = os.path.join(ROOT, "client", "assets", "scripts", "ui", "CityChromeUtils.ts")
 PREVIEW = "/tmp/city-chrome-preview.png"
 
 LAYER_UI = 33554432
@@ -916,7 +916,7 @@ def check(b):
         binder = handle.read()
     for path in BIND_PATHS:
         if path not in binder:
-            raise SystemExit("CityChrome.ts no longer binds " + path)
+            raise SystemExit("CityChromeUtils.ts no longer binds " + path)
     # Five tabs, labels, and the live currency nodes exist.
     for path, text_expect in (
         ("CityChrome/TopBar/LblName", "未登录"),

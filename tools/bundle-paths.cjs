@@ -115,7 +115,14 @@ function createBundlePaths(projectRoot = PROJECT_ROOT) {
         if (!inside(absolute, sourceRoot)) return missing('历史资源不存在：' + recorded, options);
         const relative = path.relative(sourceRoot, absolute).replaceAll('\\', '/');
         const parts = partsOf(relative);
-        // 只兼容旧的bundles/<包名>层级；新层级由真实meta发现，不能猜任意中间目录。
+        // 历史记录可来自扁平根或两个已约定分组；实际目标仍由meta发现，不猜任意中间目录。
+        if (parts[0] === 'module' || parts[0] === 'resources') parts.shift();
+        // 特效已从battle拆为独立effects包；这里只定位旧物理证据，不兼容旧运行时加载键。
+        if (parts[0] === 'battle' && (parts[1] === 'effects' || (parts.length === 2 && parts[1] === 'effects.meta'))) {
+            const effects = info('effects', options);
+            if (!effects) return null;
+            return existing(parts[1] === 'effects.meta' ? effects.metaFile : path.join(effects.directory, ...parts.slice(2)), options);
+        }
         const first = parts[0];
         const isRootMeta = parts.length === 1 && first.endsWith('.meta');
         const name = isRootMeta ? first.slice(0, -'.meta'.length) : first;

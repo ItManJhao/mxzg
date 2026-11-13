@@ -6,17 +6,17 @@ const root = path.resolve(__dirname, "..");
 const esbuild = require(path.join(root, "client/node_modules/esbuild"));
 /** 在同一打包模块中加载通信边界与业务控制器，保持协议路由唯一。 */
 const code = esbuild.buildSync({stdin:{contents:`
-export { decodeGameFrame } from './client/assets/scripts/platform/GameProtocolCodec';
+export { GameProtocolCodecUtils } from './client/assets/scripts/platform/GameProtocolCodecUtils';
 export { BattlePreviewController } from './client/assets/scripts/features/battle/BattlePreviewController';
 export { BattleReplayPlayer } from './client/assets/scripts/features/battle/BattleReplayPlayer';
 `,resolveDir:root,loader:"ts"},bundle:true,platform:"node",format:"cjs",write:false}).outputFiles[0].text;
 const loaded = {exports:{}};
 new Function("module","exports","require",code)(loaded,loaded.exports,require);
-const {decodeGameFrame,BattlePreviewController,BattleReplayPlayer} = loaded.exports;
+const {GameProtocolCodecUtils,BattlePreviewController,BattleReplayPlayer} = loaded.exports;
 /** 完整播放控制器已校验的真实混合阵容回包，逐单位与服务端最终生命核对，再导出原样播放数据。 */
 async function checkMixedLineup() {
     for (const mission of [1, 2, 3]) {
-        const frame = decodeGameFrame(fs.readFileSync(path.join(root, `backend/target/lineup-mixed-${mission}.pb`)));
+        const frame = GameProtocolCodecUtils.decodeGameFrame(fs.readFileSync(path.join(root, `backend/target/lineup-mixed-${mission}.pb`)));
         const controller = new BattlePreviewController(async (selected, received) => {
             assert.equal(selected, mission);
             received(frame);
@@ -62,7 +62,7 @@ async function checkMixedLineup() {
 /** 真实回包逐关进入onNotify，不在测试里重写客户端校验算法。 */
 async function main() {
     for (let mission = 1; mission <= 3; mission++) {
-        const frame = decodeGameFrame(fs.readFileSync(path.join(root,`backend/target/lineup-preview-${mission}.pb`)));
+        const frame = GameProtocolCodecUtils.decodeGameFrame(fs.readFileSync(path.join(root,`backend/target/lineup-preview-${mission}.pb`)));
         const ctrl = new BattlePreviewController(async (selected,received) => {
             assert.equal(selected,mission);received(frame);
         });
@@ -84,7 +84,7 @@ async function main() {
             await assert.rejects(reject.preview(mission));reject.dispose();
         }
     }
-    const charm = decodeGameFrame(fs.readFileSync(path.join(root, "backend/target/lineup-preview-charm.pb")));
+    const charm = GameProtocolCodecUtils.decodeGameFrame(fs.readFileSync(path.join(root, "backend/target/lineup-preview-charm.pb")));
     const charmController = new BattlePreviewController(async (_, received) => received(charm));
     const charmResult = await charmController.preview(3);
     assert.ok(charmResult.bytes.length);

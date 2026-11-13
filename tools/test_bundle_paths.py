@@ -35,6 +35,8 @@ class BundlePathTests(unittest.TestCase):
         old = self.assets / "bundles/fixture/ui/icon.png"
         self.assertEqual(resolve_asset_path(old, self.assets), self.image.resolve())
         self.assertFalse(old.exists())
+        self.assertEqual(resolve_asset_path("bundles/module/fixture/ui/icon.png", self.assets), self.image.resolve())
+        self.assertEqual(resolve_asset_path("bundles/resources/fixture/ui/icon.png", self.assets), self.image.resolve())
         self.assertFalse(resolve_asset_path("bundles/fixture/ui/missing.png", self.assets).exists())
         self.assertEqual(resolve_asset_path(self.image, self.assets), self.image.resolve())
 
@@ -43,6 +45,27 @@ class BundlePathTests(unittest.TestCase):
         for relative in ("../outside", "/outside", "C:/outside"):
             with self.subTest(relative=relative), self.assertRaisesRegex(ValueError, "安全相对路径"):
                 bundle_asset_path("fixture", relative, self.assets)
+
+    def test_effects_history_resolves_to_new_bundle_only(self):
+        """旧特效物理证据按meta迁移，正常包内定位不接受battle/effects旧运行键。"""
+        battle = self.assets / "bundles/module/battle"
+        effects = self.assets / "bundles/resources/renamed-effects"
+        for directory, name in ((battle, "battle"), (effects, "effects")):
+            directory.mkdir(parents=True)
+            Path(str(directory) + ".meta").write_text(json.dumps({
+                "userData": {"isBundle": True, "bundleName": name}}), encoding="utf-8")
+        frame = effects / "skill/frame.png"
+        frame.parent.mkdir()
+        frame.write_bytes(b"original effect frame")
+        for old in ("bundles/battle/effects/skill/frame.png", "bundles/module/battle/effects/skill/frame.png",
+                    self.assets / "bundles/module/battle/effects/skill/frame.png"):
+            with self.subTest(old=old):
+                self.assertEqual(resolve_asset_path(old, self.assets), frame.resolve())
+        self.assertEqual(resolve_asset_path("bundles/battle/effects.meta", self.assets), Path(str(effects) + ".meta"))
+        self.assertEqual(resolve_asset_path("bundles/module/battle/effects", self.assets), effects.resolve())
+        self.assertFalse(resolve_asset_path("bundles/module/battle/effects/missing.png", self.assets).exists())
+        self.assertEqual(bundle_asset_path("effects", "skill/frame.png", self.assets), frame.resolve())
+        self.assertFalse(bundle_asset_path("battle", "effects/skill/frame.png", self.assets).exists())
 
     def test_duplicate_names_fail(self):
         """同一次发现中的重名包必须失败，不能任取一个目录遮盖问题。"""

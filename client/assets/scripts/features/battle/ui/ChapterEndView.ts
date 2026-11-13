@@ -8,21 +8,21 @@ import {
     tween, Tween, UIOpacity, UITransform, Vec3,
 } from "cc";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
-import type { BagItemData } from "../../bag/data/BagItemData";
+import type { BagItemData } from "../../bag/data/BagItemDataUtils";
 import { BagItemView } from "../../bag/ui/BagItemView";
 import { BagInfoArgs, BagInfoView } from "../../bag/ui/BagInfoView";
-import { view, viewSpecOf } from "../../../framework/ui/UIRegistry";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { SuperContent } from "../../../framework/ui/SuperContent";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { GameLog } from "../../../core/GameLog";
-import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { mountNamedSpine } from "./battleSpine";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { BattleSpineService } from "./BattleSpineService";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BattleInfoUtils } from "../utils/BattleInfoUtils";
 import { ChapterSettlementUtils } from "../utils/ChapterSettlementUtils";
 import { BattleReplayUnit } from "../utils/BattleReplayUtils";
@@ -56,7 +56,7 @@ export interface ChapterEndArgs {
     onClosed?: () => void;
 }
 
-@view({
+@UIRegistry.view({
     id: "chapter-end",
     prefab: "bundles/module/battle/prefabs/ChapterEndView",
     layer: UILayer.Popup,
@@ -133,7 +133,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
                 }
             });
         }
-        bindVisibleRefresh(this.node, () => this.fitViewport());
+        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
         this.victoryCountdown = !!args.persistentChapter && args.won && (args.rewards?.length || 0) > 0;
         this.victory.active = args.won;
         this.defeatWing.active = !args.won;
@@ -214,7 +214,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         if (this.released || !this.panel) {
             return;
         }
-        const box = fitVisibleRoot(this.node);
+        const box = ViewportLayoutUtils.fitVisibleRoot(this.node);
         this.panelScale = BattleInfoUtils.contentScale(box.width);
         Tween.stopAllByTarget(this.panel);
         this.panel.setScale(this.panelScale, this.panelScale, 1);
@@ -280,7 +280,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             return;
         }
         if (args.won) {
-            await new Promise<void>((resolve, reject) => mountNamedSpine(this.victory!, "chibang", "idle", {
+            await new Promise<void>((resolve, reject) => BattleSpineService.instance.mountNamedSpine(this.victory!, "chibang", "idle", {
                 loop: true, onReady: resolve, onFail: () => reject(new Error("主线胜利翅膀加载失败"))
             }));
         }
@@ -355,13 +355,13 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         host.active = !!best;
         if (best) {
             const template = (heroes.json as { rows: { type: number; note: string }[] }).rows.find(row => row.type === best.templateId);
-            const historicalSpine = ChapterSettlementUtils.historicalSpine(best.portraitIconId,
+            const historicalSpine = ChapterSettlementUtils.historicalSpine(best.portraitIconId ?? null,
                 (skins.json as { rows: { skin: string }[] }).rows,
                 (evolutions.json as { rows: { evolve_icon_id: number; evolve_fashion_id: number }[] }).rows);
             heroName.string = (template?.note || "英雄 " + best.templateId)
                 + (historicalSpine === null ? "\n历史外观缺失" : "");
             damage.string = String(best.totalDamage);
-            await new Promise<void>((resolve, reject) => mountNamedSpine(host, historicalSpine || String(best.templateId), "stand", {
+            await new Promise<void>((resolve, reject) => BattleSpineService.instance.mountNamedSpine(host, historicalSpine || String(best.templateId), "stand", {
                 loop: true, onReady: resolve, onFail: () => reject(new Error("最高伤害英雄骨骼加载失败")),
             }));
         } else {
@@ -434,7 +434,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             return;
         }
         this.released = true;
-        UIManager.instance.closeById(viewSpecOf(BagInfoView)!.id);
+        UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
         this.unscheduleAllCallbacks();
         if (this.audio?.isValid) {
             this.audio.stop();

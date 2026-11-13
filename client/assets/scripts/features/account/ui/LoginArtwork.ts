@@ -2,7 +2,7 @@
  * 登录页美术适配组件：按可见尺寸适配已有控件，静态样式和结构仍由 Prefab 保存。
  */
 import { _decorator, Component, Node, Sprite, UITransform, view } from "cc";
-import { fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -28,7 +28,7 @@ export class LoginArtwork extends Component {
     private fit(): void {
         const { width, height } = view.getVisibleSize();
         if (!(width > 0 && height > 0)) return;
-        fitVisibleRoot(this.node);
+        ViewportLayoutUtils.fitVisibleRoot(this.node);
         const imageSize = this.backdrop?.node.getComponent(Sprite)?.spriteFrame?.originalSize;
         if (imageSize && imageSize.width > 0 && imageSize.height > 0) {
             const cover = Math.max(width / imageSize.width, height / imageSize.height);

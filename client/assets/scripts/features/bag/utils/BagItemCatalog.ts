@@ -2,7 +2,7 @@
 import { ResManager } from "../../../framework/assets/ResManager";
 import type { ItemRow, LanguageRow, TimeLimitItemRow } from "../../../config/GConfig";
 import type { BagTabKind } from "../data/BagTabKind";
-import type { BagItemData, BagItemDisplayData, BagListItem, BagTimedItem } from "../data/BagItemData";
+import type { BagItemData, BagItemDisplayData, BagListItem, BagTimedItem } from "../data/BagItemDataUtils";
 
 
 export class BagItemCatalog {

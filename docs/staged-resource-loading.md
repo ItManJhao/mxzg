@@ -1,12 +1,14 @@
 # Bundle目录与三段加载维护
 
-当前目录于2026-11-12整理为两层普通分组：
+当前目录采用两层普通分组；2026-11-13将章节地图归入resources，并将战斗帧特效拆为独立effects包：
 
 ```text
 assets/bundles/
 ├─ resources/                 通用素材分类；不是Bundle
 │  ├─ audio/
+│  ├─ chapter/                章节地图及挂机场景素材
 │  ├─ config/
+│  ├─ effects/                战斗帧特效，独立远程Bundle
 │  ├─ font/
 │  ├─ icons/
 │  ├─ maps/
@@ -18,14 +20,15 @@ assets/bundles/
    ├─ bag/
    ├─ hero/
    ├─ battle/
-   ├─ chapter/
    ├─ common/                 跨页面共用格子、底板与界面图片
    └─ gm/                     当前已有开发入口，默认关闭
 ```
 
-只有上述15个原目录仍是Bundle，名称、优先级与远程配置不变；两个父目录均不勾选“配置为Bundle”。这里的resources在assets/bundles内，是普通分组，不是Creator内置的顶层assets/resources目录，也不合并成一个大包。新增模块时在module内建立自己的Bundle，不需要另维护包名到目录的资源清单。
+上述16个子目录是Bundle，其中15个远程、bootstrap本地；两个父目录均不勾选“配置为Bundle”。原15包的名称、优先级与远程配置不变，新增effects沿用原特效目录UUID并声明为远程包。这里的resources在assets/bundles内，是普通分组，不是Creator内置的顶层assets/resources目录，也不合并成一个大包。新增模块时在module内建立自己的Bundle，不需要另维护包名到目录的资源清单。
 
 物理源路径与运行时加载键分开。例如背包页面的唯一注册源路径为`bundles/module/bag/prefabs/BagView`，加载器交给引擎的仍是Bundle `bag`内的`prefabs/BagView`；品质框仍用`common/ui/other_rare-4`。CDN输出继续是`remote/bag`、`remote/common`等，不因为分组而多加resources/module。三段配置、缓存和按需加载规则保持。
+
+战斗特效现位于`assets/bundles/resources/effects`，运行时使用`effects/包内路径`，不再使用`battle/effects/包内路径`。该目录内12,841份原文件（含6,237张图片、6,603份meta及1份效果文件）哈希全部保持；只有原根目录meta新增effects包声明，UUID不变。旧`battle/effects`物理地址只供离线工具定位历史证据，不是运行时兼容入口。见[特效拆包记录](validation/battle-effects-move-20261113.json)。本轮按指令未运行Creator预览或构建，不以源目录检查代替新包下载验收。
 
 common、bag、hero、battle的自动图集全部保留：目录分类负责人工查找，pac负责构建合并小图。common两份图集服务跨模块公共UI，bag图集保留背包专用分隔线；背景、立绘、物品图标和骨骼仍独立存放。代码不加载pac，也不为这次目录整理改为实体图集。
 
@@ -33,7 +36,7 @@ common、bag、hero、battle的自动图集全部保留：目录分类负责人�
 
 本次目录归档的52项、类型、原文件字节和新目录独立环境预览已通过，见[本次记录](validation/bundle-directory-groups-20261111.json)。背包、英雄、850关和真实第二关结算返回正常；未构建发布包，实际合图/包归属和下载体量仍须集中验收。
 
-资源统一在assets/bundles，本批保留15包（14远程＋bootstrap）、32份Prefab及31张实际依赖配置表；90未实现包和64旧Prefab已清理，详见[清理记录](validation/current-resource-scope-cleanup-20261111.json)。历史104远程包＋bootstrap、96Prefab及21,902个UUID不能写成当前范围；源目录减少约203.30MiB，不是新构建或下载体积。LoadingPlan仍是唯一三段显式配置，其余按需，复用ResManager和ResourcePool，不维护模块清单。
+资源统一在assets/bundles，当前16包（15远程＋bootstrap）、32份Prefab及31张实际依赖配置表。此前90未实现包和64旧Prefab清理的[15包历史记录](validation/current-resource-scope-cleanup-20261111.json)保持原样，当前范围检查合并本次effects拆包增量；拆包不新增玩法或Prefab。历史104远程包＋bootstrap、96Prefab及21,902个UUID不能写成当前范围；此前源目录减少约203.30MiB，不是新构建或下载体积。LoadingPlan仍是唯一三段显式配置，其余按需，复用ResManager和ResourcePool，不维护模块清单。
 
 负责人于2026-11-12授权本轮成果推送hao并同步main，实际提交以Git为准，后续开发继续hao。目录归档前的51项、类型和本机背包/英雄/850关/真实第二关闭环见[前批证据](validation/virtual-list-resource-review-20261111.json)。新目录检查见[本次归档记录](validation/bundle-directory-groups-20261111.json)，不能以旧预览或构建包代替新路径的重新导入验证；验证记录中的未提交状态是当时快照，真实CDN和真机尚待完成。
 
@@ -41,18 +44,18 @@ common、bag、hero、battle的自动图集全部保留：目录分类负责人�
 
 ## 人工修改入口
 
-- 页面：assets/bundles/module/模块/prefabs。对应View的@view保存唯一注册地址、缓存/模态及prepare配置前置；修改布局直接编辑Prefab，不到ApplicationPages重复登记地址。
+- 页面：assets/bundles/module/模块/prefabs。对应View的@UIRegistry.view保存唯一注册地址、缓存/模态及prepare配置前置；修改布局直接编辑Prefab，不到ApplicationPages重复登记地址。
 - 动态图：assets/bundles/module/模块/ui，取图使用ResManager.ui(模块, 文件名)，例如common/ui/other_rare-4。ui只是模块内图片子目录，不是旧顶层目录。
 - 图集：模块atlas（共用物品选中图位于common/item-atlas），由Creator自动合图。
 - 大图：模块background或共用maps/ui；不为合图强行缩小大图。
-- 动态素材：icons、spine、audio、font、config各按类别归包，保留原文件名与UUID。
+- 动态素材：icons、spine、audio、font、config、chapter、effects各按类别归包，保留原文件名与UUID；effects内的帧图不为拆包重新合图或重编码。
 - 阶段：LoadingPlan.ts是唯一人工时机配置，页面写`{page:BagView}`等View类引用，其余资源/配置直接列目标；不把同模块全部资源自动加入预加载。
 
 背包、英雄列表与英雄详情均直接加载对应完整页面Prefab，背景、纸面及英雄列表板是静态引用，不再额外加载PagePrefabShell或HeroListBoardView片段。Widget保存布局，ViewportScale只负责一个目标容器的统一比例；弹窗模态由ViewSpec配置，UIManager动态共用一份节点，不再加载各窗蒙版。它们不增加阶段资源清单。
 
-实际打开页面时，UIManager先执行@view的prepare准备页面必需配置，再按同一注册取得Prefab；阶段预加载只读取页面spec.prefab，统一经资源池准备目标，不调用prepare/load，不创建界面或查询玩家状态。ApplicationResources只负责三段调度和目标持有，移除preparedPage/homePage/heroPage等各页取址包装。应用依赖通过bindViewRuntime窄绑定createController或动态hostId，不能借此另写页面路径或加载清单。
+实际打开页面时，UIManager先执行@UIRegistry.view的prepare准备页面必需配置，再按同一注册取得Prefab；阶段预加载只读取页面spec.prefab，统一经资源池准备目标，不调用prepare/load，不创建界面或查询玩家状态。ApplicationResources只负责三段调度和目标持有，移除preparedPage/homePage/heroPage等各页取址包装。应用依赖通过bindViewRuntime窄绑定createController或动态hostId，不能借此另写页面路径或加载清单。
 
-例如在LoadingPlan导入BagView后，将`{page:BagView}`放入enterGame；改页面Prefab路径只改BagView的@view，加载计划自动读取同一地址。需要提前准备的道具配置可在同一数组显式写`{config:GConfig.Item}`，不因预载页面自动扩大为模块全量准备。装饰器只登记已导入的View，不扫描目录。
+例如在LoadingPlan导入BagView后，将`{page:BagView}`放入enterGame；改页面Prefab路径只改BagView的@UIRegistry.view，加载计划自动读取同一地址。需要提前准备的道具配置可在同一数组显式写`{config:GConfig.Item}`，不因预载页面自动扩大为模块全量准备。装饰器只登记已导入的View，不扫描目录。
 
 直接图片仍使用包名/包内路径，例如ResManager.ui("common", "other_rare-4")；ResManager负责SpriteFrame后缀，底层按Bundle加载。没有旧resources别名或运行时文件存在性清单。
 
@@ -81,8 +84,8 @@ common、bag、hero、battle的自动图集全部保留：目录分类负责人�
 | 修改目标 | 代码入口 | 当前参数或规则 |
 |---|---|---|
 | 三阶段准备目标 | app/remake/LoadingPlan.ts | login、enterGame、background三个数组 |
-| 页面地址与实例缓存 | 对应View的@view注册 | 背包启用cache:true，英雄/战斗不启用 |
-| 实际开页前配置 | 同一@view的prepare | 仅准备该页必要配置；阶段预加载不执行 |
+| 页面地址与实例缓存 | 对应View的@UIRegistry.view注册 | 背包启用cache:true，英雄/战斗不启用 |
+| 实际开页前配置 | 同一@UIRegistry.view的prepare | 仅准备该页必要配置；阶段预加载不执行 |
 | 当前应用装配 | UIRegistry.bindViewRuntime、app/remake/ApplicationPages.ts | 仅注入Controller工厂或动态宿主，不覆盖页面静态定义 |
 | 统一取图 | framework/assets/ResManager.ts | 路径规则、获取、赋图及迟到保护 |
 | 页面闲置回收 | framework/ui/UIManager.ts | cacheIdleMs=120000毫秒，maxCachedPages=2 |

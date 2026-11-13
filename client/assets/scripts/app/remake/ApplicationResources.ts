@@ -2,20 +2,20 @@
  * 类型化资源池拥有引用与在途请求，页面前台加载复用同一池；应用销毁释放持有。
  * 预加载不实例化页面、不调用View.prepare、不开放玩法；前两段失败交启动重试，后台失败记录后继续。
  */
-import { createAssetScope, ResourceAssetsUtils } from "../../framework/assets/ResourceAssets";
-import { ResourceDescriptor } from "../../framework/assets/ResourceTypes";
-import { GameConfig } from "../../config/GameConfig";
-import { CONFIG_SCHEMA, ConfigName } from "../../config/GConfig";
-// 初始化唯一配置仓库的资源读取器；页面配置前置条件由各自@view声明。
-import "../../config/RemakeConfig";
-import { LOADING_PLAN, LoadingTarget } from "./LoadingPlan";
-import { StartupCancelled } from "./StartupFlow";
+import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssetsUtils";
+import {ResourceDescriptor} from "../../framework/assets/ResourceTypes";
+import {GameConfig} from "../../config/GameConfig";
+import {CONFIG_SCHEMA, ConfigName} from "../../config/GConfig";
+// 初始化唯一配置仓库的资源读取器；页面配置前置条件由各自@UIRegistry.view声明。
+import "../../config/RemakeConfigUtils";
+import {LOADING_PLAN, LoadingTarget} from "./LoadingPlan";
+import { StartupCancelled } from "./StartupFlowUtils";
 import { GameLog } from "../../core/GameLog";
-import { viewSpecOf } from "../../framework/ui/UIRegistry";
+import { UIRegistry } from "../../framework/ui/UIRegistry";
 
 export class ApplicationResources {
     /** 所有已准备图片、动画、音频等持有至应用销毁；不保存玩家业务数据。 */
-    private readonly assets = createAssetScope();
+    private readonly assets = ResourceAssetsUtils.createAssetScope();
     /** 已成功完成的目标键；仅用于跳过重复阶段任务，不替代资源池缓存。 */
     private readonly completed = new Set<string>();
     /** 后台代次，退出登录或重新开始时递增，阻止旧循环继续。 */
@@ -23,19 +23,19 @@ export class ApplicationResources {
     /** 应用关闭后拒绝新的准备与迟到完成。 */
     private closed = false;
     /** 本轮后台实际完成/失败数量；停止后保留统计，开始新一轮时重置。 */
-    private progress = { total: 0, completed: 0, failed: 0, running: false };
+    private progress = {total: 0, completed: 0, failed: 0, running: false};
 
     /** 返回后台真实任务统计副本；failed不算成功，统计不是下载字节或内存。 */
     public backgroundStatus(): Readonly<typeof this.progress> {
-        return { ...this.progress };
+        return {...this.progress};
     }
 
-    /** 页面引用只读取@view的唯一Prefab地址；其他目标保留显式路径，不执行prepare或补入同模块资源。 */
+    /** 页面引用只读取@UIRegistry.view的唯一Prefab地址；其他目标保留显式路径，不执行prepare或补入同模块资源。 */
     private resolve(target: LoadingTarget): ResourceDescriptor | { config: ConfigName } {
         if ("page" in target) {
-            const spec = viewSpecOf(target.page);
+            const spec = UIRegistry.viewSpecOf(target.page);
             if (!spec) {
-                throw new Error("LoadingPlan页面未通过@view登记：" + target.page.name);
+                throw new Error("LoadingPlan页面未通过@UIRegistry.view登记：" + target.page.name);
             }
             const address = ResourceAssetsUtils.address(spec.prefab, "Prefab");
             return ResourceAssetsUtils.describe(address.bundle, address.loadPath, "Prefab", spec.prefab);
@@ -79,7 +79,7 @@ export class ApplicationResources {
                 resolved.type === "JsonAsset" && resolved.bundle === "config" && CONFIG_SCHEMA[name].path === "config/" + resolved.path);
             if (name) {
                 await GameConfig.instance.prepare([name]);
-                this.completed.add(this.key({ config: name }));
+                this.completed.add(this.key({config: name}));
             }
         }
         this.checkOpen();
@@ -114,7 +114,12 @@ export class ApplicationResources {
             return;
         }
         const pending = rows.filter(row => !this.completed.has(this.key(row)));
-        const progress: { total: number; completed: number; failed: number; running: boolean } = this.progress = { total: pending.length, completed: 0, failed: 0, running: true };
+        const progress: {
+            total: number;
+            completed: number;
+            failed: number;
+            running: boolean
+        } = this.progress = {total: pending.length, completed: 0, failed: 0, running: true};
         try {
             for (const row of pending) {
                 await yieldFrame();

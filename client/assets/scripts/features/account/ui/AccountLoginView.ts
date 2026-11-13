@@ -2,14 +2,14 @@
 import { _decorator, Button, EditBox, Label, Node } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import type { AccountActions, AccountView } from "../AccountController";
 import type { AccountState } from "../AccountModel";
 import type { GameServer } from "../ServerSelection";
 
 const { ccclass, property } = _decorator;
 
-@view({
+@UIRegistry.view({
     id: "remake-login",
     prefab: "bundles/module/login/prefabs/AccountLoginView",
     layer: UILayer.Page,

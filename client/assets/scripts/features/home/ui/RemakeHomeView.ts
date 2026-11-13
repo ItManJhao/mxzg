@@ -5,25 +5,25 @@ import { GameLog } from "../../../core/GameLog";
 import { _decorator, Button, instantiate, Label, Node, Prefab } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { RolePortraitUtils } from "../../account/utils/RolePortraitUtils";
 import { CityChromeView } from "../../city/ui/CityChromeView";
 import { CityHubView } from "../../city/ui/CityHubView";
 import { CityChromeShell } from "../../city/ui/CityChromeShell";
-import { prepareCityConfig, readCityGates } from "../../../config/RemakeConfig";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import type { AccountState } from "../../account/AccountModel";
 import type { HomeActions, HomeView } from "../HomeController";
 
 const { ccclass, property } = _decorator;
 
-@view({
+@UIRegistry.view({
     id: "remake-home",
     prefab: "bundles/module/home/prefabs/RemakeHomeView",
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
-    prepare: prepareCityConfig,
+    prepare: RemakeConfigUtils.prepareCityConfig,
 })
 @ccclass("RemakeHomeView")
 export class RemakeHomeView extends BaseView implements HomeView {
@@ -67,7 +67,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
     private async openCity(): Promise<void> {
         try {
             if (!this.cityPrefab || !this.chromePrefab || !this.cityHost || !this.chromeHost) throw new Error("RemakeHome 未绑定主城 Prefab 或宿主");
-            await prepareCityConfig();
+            await RemakeConfigUtils.prepareCityConfig();
             if (this.closed) return;
             const cityNode = instantiate(this.cityPrefab);
             this.childNodes.push(cityNode);
@@ -82,7 +82,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
             this.city.runOpen({
                 onAtom: id => this.actions?.openFeature(id),
                 onMainline: () => this.actions?.openFeature("mainline"),
-                query: { level: () => this.role?.level || 1, openDay: () => 0, db: readCityGates },
+                query: { level: () => this.role?.level || 1, openDay: () => 0, db: RemakeConfigUtils.readCityGates },
             });
             this.chrome.runOpen({
                 onTab: id => this.actions?.openFeature(id),

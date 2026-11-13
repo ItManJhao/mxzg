@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-13",
+  "files": 184,
+  "note": "原meta及全部资源逐字节一致；历史验证记录通过离线路径定位，不改写历史。",
+  "to": "client/assets/bundles/resources/chapter",
+  "from": "client/assets/bundles/module/chapter",
+  "uuid": "42868ea7-193e-4509-a778-6b6f34f8196f",
+  "bundleName": "chapter",
+  "byteIdentical": true,
+  "checks": [
+    "bundle-paths",
+    "current-resource-scope",
+    "ui-static",
+    "main-chapter",
+    "resource-catalog",
+    "client-config-scope",
+    "docs",
+    "Creator tsc --noEmit",
+    "git diff --check"
+  ],
+  "result": "本次7项相关专项、类型及差异检查通过；未重跑Creator预览或发布构建，未提交推送。"
+}

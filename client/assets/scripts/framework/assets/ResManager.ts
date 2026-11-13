@@ -4,11 +4,9 @@
  */
 import { Node, Sprite, SpriteFrame } from "cc";
 import { GameLog } from "../../core/GameLog";
-import { AssetScope, createAssetScope, ResourceAssetsUtils } from "./ResourceAssets";
+import { AssetScope, ResourceAssetsUtils } from "./ResourceAssetsUtils";
 import { ResourceDescriptor } from "./ResourceTypes";
-
 export type SpriteSource = string | ResourceDescriptor<"SpriteFrame">;
-
 /** 本次赋图的规范资源地址；键只用于合并同节点请求，不缓存图片。 */
 interface SpriteTarget {
     /** 与资源池一致的包、路径或UUID及类型身份。 */
@@ -16,7 +14,6 @@ interface SpriteTarget {
     /** 加载时交给现有资源池的描述副本。 */
     descriptor: ResourceDescriptor<"SpriteFrame">;
 }
-
 /** 已显示图片的唯一赋图拥有者，等新图接替或明确清空后释放。 */
 interface DisplayedSprite {
     /** 当前显示资源的规范身份。 */
@@ -28,7 +25,6 @@ interface DisplayedSprite {
     /** 当前显示仍属本轮业务的判断，同图重绑时更新。 */
     isCurrent: () => boolean;
 }
-
 /** 本次候选加载；对象身份隔离迟到结果，相同候选只保留一份请求。 */
 interface SpriteRequest {
     /** 有序候选键，重复赋图时据此合并在途任务。 */
@@ -38,7 +34,6 @@ interface SpriteRequest {
     /** 最新调用方的有效性判断，重复在途请求时替换旧闭包。 */
     isCurrent: () => boolean;
 }
-
 /** 单图片节点的赋图生命周期，不包含按资源地址索引的缓存。 */
 interface SpriteBinding {
     /** 当前节点上的Sprite组件，组件被替换时清理旧拥有者。 */
@@ -48,7 +43,6 @@ interface SpriteBinding {
     /** 当前在途候选，成功、失败、取消或清空后为null。 */
     pending: SpriteRequest | null;
 }
-
 export class ResManager {
     /** 按模块目录和原始文件名取得Bundle内图片路径，不查询名称清单。 */
     public static ui(module: string, name: string): string {
@@ -58,95 +52,88 @@ export class ResManager {
     /** 品质0至6对应公共品质框；非法品质回退0，不维护逐项映射。 */
     public static qualityFrame(quality: number): string {
         const value = Number.isInteger(quality) && quality >= 0 && quality <= 6 ? quality : 0;
-        return this.ui("common", "other_rare-" + value);
+        return ResManager.ui("common", "other_rare-" + value);
     }
 
     /** 每个图片节点当前显示及在途拥有者；弱引用不延长节点寿命，不保存历史图片。 */
     private static readonly bindings = new WeakMap<Node, SpriteBinding>();
-
     /** 统一入口无需创建实例。 */
-    private constructor() {}
-
+    private constructor() { }
     /** 获取图片并由owner节点持有；共享缓存和在途请求，销毁后拒绝迟到结果。
      * 字符串为包名/包内不带/spriteFrame的路径；描述支持其他Bundle或UUID。
      * 本入口显式持有至owner销毁，独立于setSprite的单张显示生命周期；失败向调用方拒绝。
      */
     public static getSpriteFrame(owner: Node, source: SpriteSource): Promise<SpriteFrame> {
-        return ResourceAssetsUtils.forNode(owner).load(
-            typeof source === "string" ? ResourceAssetsUtils.sprite(source) : source,
-        );
+        return ResourceAssetsUtils.forNode(owner).load(typeof source === "string" ? ResourceAssetsUtils.sprite(source) : source);
     }
 
     /** 显示单张图片或有序候选；同图与相同在途任务复用，旧图持有至新图真正接替。
      * null清空并释放赋图拥有者；失效/销毁不交付迟到结果，失败记录后继续回退。
      */
-    public static setSprite(
-        node: Node | null,
-        source: SpriteSource | readonly SpriteSource[] | null,
-        isCurrent: () => boolean = () => true,
-    ): void {
+    public static setSprite(node: Node | null, source: SpriteSource | readonly SpriteSource[] | null, isCurrent: () => boolean = () => true): void {
         if (!node?.isValid) {
             if (node) {
-                const binding = this.bindings.get(node);
+                const binding = ResManager.bindings.get(node);
                 if (binding) {
-                    this.clearBinding(binding);
+                    ResManager.clearBinding(binding);
                 }
             }
             return;
         }
         const image = node.getComponent(Sprite);
         if (!image) {
-            const binding = this.bindings.get(node);
+            const binding = ResManager.bindings.get(node);
             if (binding) {
-                this.clearBinding(binding);
+                ResManager.clearBinding(binding);
             }
             return;
         }
-        const binding = this.bindingFor(node, image);
+        const binding = ResManager.bindingFor(node, image);
         const sources: readonly SpriteSource[] = source === null ? []
             : typeof source === "string" || !Array.isArray(source) ? [source as SpriteSource] : source;
         if (!sources.length) {
-            this.clearBinding(binding);
+            ResManager.clearBinding(binding);
             return;
         }
         if (!isCurrent()) {
-            this.cancelPending(binding);
-            this.releaseInvalidDisplay(binding);
+            ResManager.cancelPending(binding);
+            ResManager.releaseInvalidDisplay(binding);
             return;
         }
-        const targets = sources.map(value => this.spriteTarget(value));
+        const targets = sources.map(value => ResManager.spriteTarget(value));
         const signature = JSON.stringify(targets.map(target => target.key));
         if (binding.pending?.signature === signature) {
             binding.pending.isCurrent = isCurrent;
             return;
         }
-        this.cancelPending(binding);
+        ResManager.cancelPending(binding);
         if (binding.displayed?.key === targets[0].key) {
             // Cell可能先清空旧图；相同资源仍由当前作用域持有，直接恢复以免等待Promise闪空。
             image.spriteFrame = binding.displayed.frame;
             binding.displayed.isCurrent = isCurrent;
             return;
         }
-        const request: SpriteRequest = { signature, scope: createAssetScope(), isCurrent };
+        const request: SpriteRequest = { signature, scope: ResourceAssetsUtils.createAssetScope(), isCurrent };
         binding.pending = request;
-        void this.loadSprite(node, binding, request, targets);
+        void ResManager.loadSprite(node, binding, request, targets);
     }
 
     /** 为节点登记一次销毁清理；同节点更换Sprite组件时不保留旧显示与在途拥有者。 */
     private static bindingFor(node: Node, image: Sprite): SpriteBinding {
-        let binding = this.bindings.get(node);
+        let binding = ResManager.bindings.get(node);
         if (!binding) {
             binding = { image, displayed: null, pending: null };
-            this.bindings.set(node, binding);
+            ResManager.bindings.set(node, binding);
             node.once(Node.EventType.NODE_DESTROYED, () => {
-                const current = this.bindings.get(node);
+                const current = ResManager.bindings.get(node);
                 if (current) {
-                    this.clearBinding(current);
+                    ResManager.clearBinding(current);
                 }
-                this.bindings.delete(node);
+                ResManager.bindings.delete(node);
             });
-        } else if (binding.image !== image) {
-            this.clearBinding(binding);
+        }
+        else if (binding.image !== image) {
+            ResManager.clearBinding(binding);
             binding.image = image;
         }
         return binding;
@@ -162,12 +149,7 @@ export class ResManager {
     }
 
     /** 依次加载本轮候选；成功先交付新图再释放旧图，取消与失败始终撤回本轮作用域。 */
-    private static async loadSprite(
-        node: Node,
-        binding: SpriteBinding,
-        request: SpriteRequest,
-        targets: readonly SpriteTarget[],
-    ): Promise<void> {
+    private static async loadSprite(node: Node, binding: SpriteBinding, request: SpriteRequest, targets: readonly SpriteTarget[]): Promise<void> {
         const current = () => node.isValid && binding.image.isValid && binding.pending === request && request.isCurrent();
         try {
             for (const target of targets) {
@@ -190,21 +172,22 @@ export class ResManager {
                     binding.pending = null;
                     previous?.scope.dispose();
                     return;
-                } catch (error) {
+                }
+                catch (error) {
                     if (!current()) {
                         return;
                     }
                     const descriptor = target.descriptor;
                     const path = descriptor.assetPath || descriptor.bundle + "/" + (descriptor.loadPath || descriptor.uuid);
-                    GameLog.shared.warnOnce("FRAMEWORK", "ResManager", "IMAGE_LOAD_FAILED:" + target.key,
-                        "图片加载失败：" + path + "；原因：" + String(error));
+                    GameLog.shared.warnOnce("FRAMEWORK", "ResManager", "IMAGE_LOAD_FAILED:" + target.key, "图片加载失败：" + path + "；原因：" + String(error));
                 }
             }
-        } finally {
+        }
+        finally {
             if (binding.pending === request) {
                 binding.pending = null;
                 request.scope.dispose();
-                this.releaseInvalidDisplay(binding);
+                ResManager.releaseInvalidDisplay(binding);
             }
         }
     }
@@ -231,7 +214,7 @@ export class ResManager {
 
     /** 清空图片后撤回赋图拥有者；不影响getSpriteFrame显式取得的节点作用域。 */
     private static clearBinding(binding: SpriteBinding): void {
-        this.cancelPending(binding);
+        ResManager.cancelPending(binding);
         if (binding.image.isValid) {
             binding.image.spriteFrame = null;
         }

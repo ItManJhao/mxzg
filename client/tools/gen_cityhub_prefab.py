@@ -347,7 +347,7 @@ def effect_frame(para):
     return "home/ui/main-city-effect_" + para[len(prefix):] + "-0"
 
 
-# --- layout, same numbers as cityMapLayout.ts at variant 1 ---
+# --- layout, same numbers as CityMapLayoutUtils.ts at variant 1 ---
 map_scale = CITY_VIEW_H / CITY_MAP_H
 content_w = CITY_MAP_W * map_scale
 speeds = CITY_PARALLAX_SPEEDS

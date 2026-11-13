@@ -4,13 +4,15 @@ import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 /** 离线读取分组后的真实配置源文件，原config逻辑地址不变。 */
 const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
 import { HeroInfoView } from "../assets/scripts/features/hero/ui/HeroInfoView";
+import { HeroSkillView } from "../assets/scripts/features/hero/ui/HeroSkillView";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";
+import { RemakeConfigUtils } from "../assets/scripts/config/RemakeConfigUtils";
 import { HeroRosterUtils } from "../assets/scripts/features/hero/utils/HeroRosterUtils";
 import { Protocol } from "../assets/scripts/platform/Protocol";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
-import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { HeroRosterEvent } from "../assets/scripts/features/hero/utils/HeroRosterEvent";
 /** 英雄模块回归：核对显式初始化、唯一状态、事件清理和异步会话隔离。 */
@@ -45,7 +47,7 @@ import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel
 
 
 
-import type { OwnedHero } from "../assets/scripts/features/hero/data/HeroSnapshotData";
+import type { OwnedHero } from "../assets/scripts/features/hero/data/HeroSnapshotUtils";
 
 const root = process.cwd();
 
@@ -351,7 +353,7 @@ function pump(frames: number): void {
 async function checkRemakeRoster(): Promise<void> {
   const model = new HeroRosterModel();
   const service = new HeroRosterController(model);
-  service.initialize();service.resetSession("local-1/hero-ui");
+  service.initialize();service.resetSession();
   /** 模拟已由应用验收的统一回包，不再模拟已删除的查询接口。 */
   const sync=(heroes:OwnedHero[])=>service.onNotify(Protocol.STATE_CHANGED,{heroes,role:{},inventory:[],revision:1});
   const catalog = new HeroCatalog(JSON.parse(read("client/assets/bundles/resources/config/herotype.json")), JSON.parse(read("client/assets/bundles/resources/config/item.json")));
@@ -465,28 +467,117 @@ function checkHeroScrollBounds():void {
 /** 验证应用实际开页无需测试注入，使用唯一模块和已准备配置。 */
 async function checkDefaultRoster():Promise<void> {
  await GameConfig.instance.prepare([GConfig.HeroType,GConfig.Item]);
- const service=HeroRosterController.instance;service.initialize();service.resetSession("local-1/default");
+ const service=HeroRosterController.instance;service.initialize();service.resetSession();
  service.onNotify(Protocol.STATE_CHANGED,{revision:1,heroes:[],heroRoster:{capacity:300,buySpaceTimes:0}});
  const page=makeView();try {page.runOpen();await page.whenReady();pump(2);assert(boardOf(page).capacityLabel!.string==="英雄：0/300","实际默认装配显示容量");}
  finally {page.runDispose();page.node.destroy();service.dispose();}
 }
-/** 只读详情随统一快照刷新，删除与换号返回，关闭后解除监听。 */
-async function checkReadonlyInfo():Promise<void> {
- const controller=HeroRosterController.instance;controller.initialize();controller.resetSession("local-1/info");
- const hero={id:"00000000-0000-4000-8000-000000000001",templateId:10101001,level:1,star:1,stage:0,panelStats:{values:{hp:120,atk:30,def:10,spd:100},includedSources:["base","equipment","equipment_set"],pendingSources:["skill_panel"],complete:false},baseStats:{hp:120,atk:30,def:10,spd:100}};
- const sync=(rows:any[])=>controller.onNotify(Protocol.STATE_CHANGED,{revision:1,heroes:rows});sync([hero]);
- const root=new Node("info"),page=root.addComponent(HeroInfoView);page.summary=new Node("summary").addComponent(Label);page.attributes=Array.from({length:4},()=>new Node("attr").addComponent(Label));
- (page as any).mountPortrait=()=>{};
- const ui=UIManager.instance,original=ui.back,originalOpen=ui.openById;let backs=0,lists=0;ui.back=()=>{backs++;return true;};ui.openById=(async(id:string)=>{assert(id==="hero","详情明确返回英雄列表");lists++;return page;}) as typeof ui.openById;
- const before=EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
- try {page.onOpen({heroId:hero.id});assert(page.attributes[0].string==="攻击：30","展示服务器面板属性");sync([{...hero,level:2,panelStats:{...hero.panelStats,values:{...hero.panelStats.values,atk:35}},baseStats:{...hero.baseStats,atk:35}}]);assert(page.attributes[0].string==="攻击：35","同步后详情更新");(page as any).goBack();assert(lists===1,"返回按钮打开列表而非主城");sync([]);assert(lists===2,"实例删除返回列表");controller.resetSession(null);assert(backs===1,"退出账号返回根页面");page.onClose();assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===before,"关页释放详情监听");}
- finally {page.onClose();ui.back=original;ui.openById=originalOpen;controller.dispose();root.destroy();}
+/** 只读详情随快照刷新；应用重置只关闭页面，关闭后的同ID同步不能重新导航。 */
+async function checkReadonlyInfo(): Promise<void> {
+    const controller = HeroRosterController.instance;
+    controller.initialize();
+    controller.resetSession();
+    const hero = {
+        id: "00000000-0000-4000-8000-000000000001", templateId: 10101001,
+        level: 1, star: 1, stage: 0,
+        panelStats: {
+            values: { hp: 120, atk: 30, def: 10, spd: 100 },
+            includedSources: ["base", "equipment", "equipment_set"],
+            pendingSources: ["skill_panel"], complete: false,
+        },
+        baseStats: { hp: 120, atk: 30, def: 10, spd: 100 },
+    };
+    const sync = (rows: any[]) => controller.onNotify(Protocol.STATE_CHANGED, { revision: 1, heroes: rows });
+    sync([hero]);
+    const root = new Node("info"), page = root.addComponent(HeroInfoView);
+    page.summary = new Node("summary").addComponent(Label);
+    page.attributes = Array.from({ length: 4 }, () => new Node("attr").addComponent(Label));
+    (page as any).mountPortrait = () => {};
+    const ui = UIManager.instance, originalOpen = ui.openById;
+    let lists = 0, closes = 0;
+    ui.openById = (async (id: string) => {
+        assert(id === "hero", "详情明确返回英雄列表");
+        lists++;
+        return page;
+    }) as typeof ui.openById;
+    page.close = () => {
+        closes++;
+        page.onClose();
+    };
+    const before = EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
+    try {
+        page.onOpen({ heroId: hero.id });
+        assert(page.attributes[0].string === "攻击：30", "展示服务器面板属性");
+        sync([{ ...hero, level: 2, panelStats: { ...hero.panelStats, values: { ...hero.panelStats.values, atk: 35 } } }]);
+        assert(page.attributes[0].string === "攻击：35", "同步后详情更新");
+        (page as any).goBack();
+        assert(lists === 1, "返回按钮打开列表而非主城");
+        sync([]);
+        assert(lists === 2, "已同步的实例删除返回列表");
+        controller.resetSession();
+        assert(closes === 1 && lists === 2, "应用重置只关闭详情，不重新打开英雄列表");
+        sync([hero]);
+        (page as any).goBack();
+        assert(lists === 2, "关闭后同实例ID同步和迟到导航均无效");
+        page.onOpen({ heroId: hero.id });
+        page.onOpen({ heroId: hero.id });
+        assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated) === before + 1, "重复打开只保留一份详情订阅");
+        page.onClose();
+        assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated) === before, "关页释放详情监听");
+        controller.resetSession();
+        assert(lists === 2, "应用先关闭页面后重置Model，不触发列表导航");
+    } finally {
+        page.onClose();
+        ui.openById = originalOpen;
+        controller.dispose();
+        root.destroy();
+    }
  const data=loadPrefab("client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab");const buttons=data.filter((x:any)=>x.__type__==="cc.Button"&&x._interactable);
   const detail=data.find((row:any)=>row.equipmentIcons);
  assert(detail?.equipmentIcons.length===4&&detail.equipmentFrames.length===4&&detail.equipmentLabels.length===4,"四槽图标、品质框和状态文字必须静态绑定");
  for(let i=1;i<=4;i++){const slot=data.find((row:any)=>row._name==="EquipmentSlot"+i);assert(slot&&slot._components.every((ref:any)=>data[ref.__id__].__type__!=="cc.Button"||!data[ref.__id__]._interactable),"四槽没有穿脱操作入口");}
  assert(buttons.length===5,"详情仅返回和四个技能说明按钮可操作，不开放升级/扩容");
 }
+/** 技能窗口关闭后不响应同实例ID的新快照，重开读取当前状态。 */
+async function checkReadonlySkillLifecycle(): Promise<void> {
+    await RemakeConfigUtils.prepareHeroDetailConfig();
+    const controller = HeroRosterController.instance;
+    controller.initialize();
+    controller.resetSession();
+    const hero = {
+        id: "00000000-0000-4000-8000-000000000003", templateId: 10101001,
+        level: 1, star: 1, stage: 0, baseStats: { hp: 120, atk: 30, def: 10, spd: 100 },
+    };
+    const sync = (rows: any[]) => controller.onNotify(Protocol.STATE_CHANGED, { revision: 1, heroes: rows });
+    sync([hero]);
+    const root = new Node("skill"), page = root.addComponent(HeroSkillView);
+    page.title = new Node("title").addComponent(Label);
+    let closes = 0;
+    page.close = () => {
+        closes++;
+        page.onClose();
+    };
+    const before = EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated);
+    try {
+        page.onOpen({ heroId: hero.id, slot: 0 });
+        assert(page.title.string.length > 0, "技能窗口读取已同步实例");
+        page.onClose();
+        const title = page.title.string;
+        controller.resetSession();
+        sync([hero]);
+        (page as any).refresh();
+        assert(closes === 0 && page.title.string === title, "关闭后重置和同ID回包不能触发窗口行为");
+        page.onOpen({ heroId: hero.id, slot: 0 });
+        controller.resetSession();
+        assert(closes === 1, "打开状态下数据重置关闭技能窗口");
+        assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated) === before, "技能关闭释放自己的订阅");
+    } finally {
+        page.onClose();
+        controller.dispose();
+        root.destroy();
+    }
+}
+
 /** 三个实际元素图标消费点必须从hero包加载并共享帧；包内ui不能被当成独立Bundle。 */
 async function checkElementBundleRoutes(): Promise<void> {
     // 前一页面的资源请求由异步池收尾，先等待其失败/释放，避免复用旧测试替身的在途请求。
@@ -506,7 +597,7 @@ async function checkElementBundleRoutes(): Promise<void> {
     }) as typeof assetManager.loadBundle;
     const controller = HeroRosterController.instance;
     controller.initialize();
-    controller.resetSession("local-1/elements");
+    controller.resetSession();
     const hero = {
         id: "00000000-0000-4000-8000-000000000002", templateId: 10101001,
         level: 1, star: 1, stage: 0, baseStats: { hp: 120, atk: 30, def: 10, spd: 100 },
@@ -563,6 +654,7 @@ async function main() {
   try {
     await checkDefaultRoster();
     await checkReadonlyInfo();
+    await checkReadonlySkillLifecycle();
     await checkElementBundleRoutes();
     await checkHeroCellReuse();
     checkHeroScrollBounds();

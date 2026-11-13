@@ -11,6 +11,8 @@ const { bundleEntries, resolveAssetPath, resolveBundleFile } = require('../../to
 const root = path.resolve(__dirname, '../..');
 const assets = path.join(root, 'client/assets');
 const evidence = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/current-resource-scope-cleanup-20261111.json'), 'utf8'));
+// 旧15包清理证据保持历史原样，本次仅合并负责人批准的effects独立包增量。
+const effectsMove = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/battle-effects-move-20261113.json'), 'utf8'));
 
 /** 收集当前目录普通文件；资源审查不允许通过链接访问工作区外的文件。 */
 function files(directory) {
@@ -47,8 +49,48 @@ function hash(file) {
     return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
+/** 使用固定UTF-8字节顺序，避免系统语言或目录枚举顺序改变整体摘要。 */
+function compareUtf8(left, right) {
+    return Buffer.compare(Buffer.from(left, 'utf8'), Buffer.from(right, 'utf8'));
+}
+
+/** 重新哈希全部特效文件和meta UUID集合；摘要含相对路径、长度及原字节哈希，不只统计数量。 */
+function effectsSnapshot(directory, rootMeta) {
+    const rows = files(directory).map(file => ({
+        file,
+        relative: path.relative(directory, file).replaceAll('\\', '/'),
+        bytes: fs.statSync(file).size,
+        sha256: hash(file),
+    })).sort((left, right) => compareUtf8(left.relative, right.relative));
+    const digest = crypto.createHash('sha256');
+    const uuids = new Set();
+    collectUuids(rootMeta, uuids);
+    const snapshot = { files: rows.length, bytes: 0, images: 0, metas: 0, data: 0 };
+    for (const row of rows) {
+        digest.update(JSON.stringify([row.relative, row.bytes, row.sha256]) + '\n', 'utf8');
+        snapshot.bytes += row.bytes;
+        if (row.relative.endsWith('.meta')) {
+            snapshot.metas++;
+            collectUuids(read(row.file), uuids);
+        } else if (/\.(png|jpg|jpeg|webp)$/i.test(row.relative)) {
+            snapshot.images++;
+        } else {
+            snapshot.data++;
+        }
+    }
+    const uuidDigest = crypto.createHash('sha256');
+    for (const uuid of [...uuids].sort(compareUtf8)) {
+        uuidDigest.update(JSON.stringify(uuid) + '\n', 'utf8');
+    }
+    return { ...snapshot, sha256: digest.digest('hex'), metaUuidCount: uuids.size, metaUuidSha256: uuidDigest.digest('hex') };
+}
+
 const actualBundles = bundleEntries().map(entry => entry.name).sort();
-assert.deepEqual(actualBundles, evidence.bundleInventory.after.map(row => row.name).sort(), '未实现包重生或当前包被误删');
+assert.deepEqual(effectsMove.bundleInventory.added.map(row => row.name), ['effects'], '本次仅新增effects素材包');
+const approvedBundles = [...evidence.bundleInventory.after, ...effectsMove.bundleInventory.added].map(row => row.name).sort();
+assert.equal(new Set(approvedBundles).size, approvedBundles.length, '范围证据中的Bundle名称重复');
+assert.deepEqual(actualBundles, approvedBundles, '未实现包重生或当前包被误删');
+assert.equal(actualBundles.length, effectsMove.bundleInventory.after.bundles, '拆包后的范围数量须与本次证据一致');
 const resourceFiles = files(assets);
 const actualPrefabs = resourceFiles.filter(file => file.endsWith('.prefab')).map(file => path.relative(root, file).replaceAll('\\', '/')).sort();
 assert.deepEqual(actualPrefabs, evidence.retainedPrefabs.map(row => path.relative(root, resolveAssetPath(row.path)).replaceAll('\\', '/')).sort(),
@@ -65,9 +107,9 @@ for (const row of evidence.retainedPrefabs) {
 let views = 0;
 for (const file of resourceFiles.filter(file => file.endsWith('.ts'))) {
     const source = fs.readFileSync(file, 'utf8');
-    if (source.includes('@view({')) {
-        const match = source.match(/@view\(\{[\s\S]*?prefab:\s*["']([^"']+)["']/);
-        assert(match, '页面@view没有明确Prefab地址：' + file);
+    if (source.includes('@UIRegistry.view({')) {
+        const match = source.match(/@UIRegistry\.view\(\{[\s\S]*?prefab:\s*["']([^"']+)["']/);
+        assert(match, '页面@UIRegistry.view没有明确Prefab地址：' + file);
         resolveAssetPath(match[1] + '.prefab');
         views++;
     }
@@ -82,6 +124,20 @@ for (const row of evidence.moved) {
     assert.equal(hash(resolveAssetPath(row.to + '.meta')), row.metaSha256);
     assert.equal(read(resolveAssetPath(row.to + '.meta')).uuid, row.uuid);
 }
+assert(!fs.existsSync(path.join(root, effectsMove.from)), '特效拆包后仍保留旧目录副本');
+assert(!fs.existsSync(path.join(root, effectsMove.rootMeta.from)), '特效拆包后仍保留旧根meta');
+const effectsRoot = resolveAssetPath(effectsMove.to);
+const effectsMetaFile = resolveAssetPath(effectsMove.rootMeta.to);
+const effectsMeta = read(effectsMetaFile);
+assert.equal(effectsMove.snapshot.format, 'effects-tree-sha256-v1', '特效摘要格式变更必须重新审核');
+assert.deepEqual(effectsMove.snapshot.before, effectsMove.snapshot.after, '迁移前后特效文件或UUID集合摘要必须完全一致');
+assert.deepEqual(effectsSnapshot(effectsRoot, effectsMeta), effectsMove.snapshot.after,
+    '特效文件路径、字节、内容哈希或meta UUID集合与原始快照不一致');
+assert.equal(hash(effectsMetaFile), effectsMove.rootMeta.afterSha256, 'effects根meta与批准配置不一致');
+assert.equal(effectsMeta.uuid, effectsMove.uuid, 'effects根UUID必须保留');
+assert.deepEqual(effectsMeta.userData, { isBundle: true, bundleName: 'effects', priority: 2, bundleConfigID: 'remote-assets' });
+assert.equal(bundleEntries().filter(entry => entry.meta.userData.bundleConfigID === 'remote-assets').length,
+    effectsMove.bundleInventory.after.remoteBundles, '拆包后的远程范围数量须与证据一致');
 const roster = read(resolveBundleFile('hero/prefabs/HeroListView.prefab'));
 assert(!roster.some(row => row._name === 'btn_permanent_skin'), '未实现皮肤商店的隐藏资源依赖不可恢复');
-console.log('当前资源范围通过：15包/32Prefab/17独立View、原UUID、全部序列化引用与迁移原图。实际下载和构建另验。');
+console.log(`当前资源范围通过：${actualBundles.length}包/${actualPrefabs.length}Prefab/${views}独立View、原UUID、全部序列化引用与${effectsMove.snapshot.after.files}份特效文件/UUID集合摘要。实际下载和构建另验。`);

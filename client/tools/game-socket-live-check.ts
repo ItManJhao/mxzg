@@ -2,14 +2,14 @@
 import {strict as assert} from "node:assert";
 import {randomUUID} from "node:crypto";
 import {GameSocketClient} from "../assets/scripts/platform/GameSocketClient";
-import {GAME_SOCKET_PROTOCOL} from "../assets/scripts/platform/GameProtocolCodec";
-import {AccountApi,readRole} from "../assets/scripts/features/account/AccountApi";
+import { GAME_SOCKET_PROTOCOL } from "../assets/scripts/platform/GameProtocolCodecUtils";
+import { AccountApi } from "../assets/scripts/features/account/AccountApi";
 import {AccountModel} from "../assets/scripts/features/account/AccountModel";
 import {AccountService} from "../assets/scripts/features/account/AccountService";
 import {RoleController} from "../assets/scripts/features/account/RoleController";
 import {BagController} from "../assets/scripts/features/bag/BagController";
 import {BagModel} from "../assets/scripts/features/bag/BagModel";
-import {readBagItems} from "../assets/scripts/features/bag/data/BagItemData";
+import { BagItemDataUtils } from "../assets/scripts/features/bag/data/BagItemDataUtils";
 import {AssetStateBinding} from "../assets/scripts/app/remake/AssetStateBinding";
 /** 等待真实连接状态，超时明确失败。 */
 async function until(check:()=>boolean):Promise<void>{for(let i=0;i<300;i++){if(check())return;await new Promise(r=>setTimeout(r,10));}assert.fail("真实客户端状态超时");}
@@ -18,7 +18,7 @@ function fixture(port:string){
  const account=new AccountModel(),model=new BagModel(),bag=new BagController(model),wires:WebSocket[]=[];
  const socket=new GameSocketClient("ws://127.0.0.1:"+port+"/api/v1/game/socket",{
   create:url=>{const wire=new WebSocket(url,GAME_SOCKET_PROTOCOL);wires.push(wire);return wire;},retryDelay:()=>20,
-  validateSnapshot:value=>{const row=value as any;readRole(row.role);readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},
+  validateSnapshot:value=>{const row=value as any;AccountApi.readRole(row.role);BagItemDataUtils.readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},
  });
  const service=new AccountService(account,new AccountApi(socket),{read:()=>null,write:()=>{},clear:()=>{}});
  bag.initialize();const role=new RoleController(value=>service.acceptRole(value)),assets=new AssetStateBinding(account,bag,role);
@@ -46,7 +46,7 @@ async function main(){
   assert(await two.service.login(account,"local-1"),two.account.snapshot.error);await until(()=>!one.service.hasSession);
   assert.equal(one.model.items.length,0);assert.equal(two.account.snapshot.role!.id,role);
   assert(await two.service.login(account,"local-2"),two.account.snapshot.error);assert.notEqual(two.account.snapshot.role!.id,role);assert.equal(two.model.snapshot.synced,true);
-  two.service.logout();assert.equal(two.model.snapshot.roleKey,null);
+  two.service.logout();assert.equal(two.model.snapshot.status,"idle");assert.equal(two.model.snapshot.synced,false);assert.equal(two.model.items.length,0);
   console.log("PASS real TS client → isolated H2: WS catalog/login, unified empty bag, reconnect, kick, world isolation, logout");
  }finally{one.stop();two.stop();}
 }

@@ -3,7 +3,7 @@ import { BaseController } from "../../framework/BaseController";
 import { EventDispatcher } from "../../framework/EventDispatcher";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
 import { Protocol, ProtocolName } from "../../platform/Protocol";
-import type { GameFrame } from "../../platform/GameProtocolCodec";
+import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { GameLog } from "../../core/GameLog";
 import { HeroRosterEvent } from "./utils/HeroRosterEvent";
 import { FormationEvent } from "./utils/FormationEvent";
@@ -40,8 +40,8 @@ export class FormationController extends BaseController {
     }
 
     /** 应用通知清空业务过程状态；请求结果的身份隔离已在应用交付口完成。 */
-    protected onResetSession(roleKey: string | null): void {
-        this.model.reset(roleKey);
+    protected onResetSession(): void {
+        this.model.reset();
         this.notify();
     }
 
@@ -108,7 +108,9 @@ export class FormationController extends BaseController {
     private update(state: FormationSaveState): void { this.model.replace(state); this.notify(); }
 
     /** 页面按目标监听本事件，关闭时只清理自身监听。 */
-    private notify(): void { this.emit(FormationEvent.SaveChanged, { roleKey: this.model.roleKey, revision: this.model.version }); }
+    private notify(): void {
+        this.emit(FormationEvent.SaveChanged, { revision: this.model.version });
+    }
 
     /** 应用销毁后释放请求入口，禁止复用旧鉴权闭包。 */
     protected onDispose(): void { this.send = null; }

@@ -5,11 +5,11 @@ import { Asset, JsonAsset, Prefab, assetManager, resources } from "cc";
 import { ApplicationResources } from "../assets/scripts/app/remake/ApplicationResources";
 import { LOADING_PLAN } from "../assets/scripts/app/remake/LoadingPlan";
 import { ResourceDescriptor } from "../assets/scripts/framework/assets/ResourceTypes";
-import { createAssetScope, ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
-import { clearPrefabCache, loadPrefab } from "../assets/scripts/framework/assets/PrefabLoader";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
+import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { GConfig } from "../assets/scripts/config/GConfig";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
-import { registerView } from "../assets/scripts/framework/ui/UIRegistry";
+import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 
 /** 仅离线测试解析源文件位置，运行时始终按原Bundle名加载。 */
@@ -66,10 +66,10 @@ async function main(): Promise<void> {
     });
     const old = { login: LOADING_PLAN.login, enterGame: LOADING_PLAN.enterGame, background: LOADING_PLAN.background };
     const app = new ApplicationResources();
-    const scope = createAssetScope();
+    const scope = ResourceAssetsUtils.createAssetScope();
     let pagePrepares = 0;
     let customPageLoads = 0;
-    const unregisterPage = registerView(PlannedPage, {
+    const unregisterPage = UIRegistry.registerView(PlannedPage, {
         id: "planned-page", prefab: bag.assetPath, layer: UILayer.Page, cache: false, allowMultiple: false,
         prepare: async () => { pagePrepares++; },
         load: async () => { customPageLoads++; return new Prefab(); },
@@ -86,13 +86,13 @@ async function main(): Promise<void> {
         const pending = app.prepareStage("enterGame", (_label, ratio) => ratios.push(ratio), () => true);
         for (let i = 0; i < 20; i++) { await Promise.resolve(); }
         assert.deepEqual(ratios, [0]);
-        const foreground = loadPrefab(bag.assetPath);
+        const foreground = PrefabLoader.loadPrefab(bag.assetPath);
         for (let i = 0; i < 20; i++) { await Promise.resolve(); }
         assert.equal(requests.filter(value => value === bag.bundle + ":" + bag.loadPath).length, 1);
         finish();
         await Promise.all([pending, foreground]);
         assert.equal(ratios[ratios.length - 1], 1);
-        assert.equal(pagePrepares, 0, "页面预载只读取@view.prefab，不执行配置前置条件");
+        assert.equal(pagePrepares, 0, "页面预载只读取@UIRegistry.view.prefab，不执行配置前置条件");
         assert.equal(customPageLoads, 0, "预载不调用开页load或实例化窗口");
         assert(!requests.some(value => value.startsWith("module:") || value.startsWith("resources:")),
             "物理父目录不参与前后台Bundle加载键");
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
         await scope.load(icon);
         assert.equal(requests.length, before, "前台复用后台图片");
         const uuidRequests = requests.filter(value => value.startsWith("uuid:")).length;
-        await assert.rejects(loadPrefab(detail.assetPath), /fixture retry/, "远程页面失败必须保留失败状态");
+        await assert.rejects(PrefabLoader.loadPrefab(detail.assetPath), /fixture retry/, "远程页面失败必须保留失败状态");
         assert.equal(requests.filter(value => value.startsWith("uuid:")).length, uuidRequests,
             "远程Bundle失败不能绕过下载路径按UUID加载");
         failDetail = false;
@@ -117,7 +117,7 @@ async function main(): Promise<void> {
         LOADING_PLAN.login = [{ bundle: "", path: "missing", type: "SpriteFrame" }];
         await assert.rejects(app.prepareStage("login", () => {}, () => true), /必须指定Bundle/);
         LOADING_PLAN.login = [{ page: UnregisteredPage }];
-        await assert.rejects(app.prepareStage("login", () => {}, () => true), /未通过@view登记/);
+        await assert.rejects(app.prepareStage("login", () => {}, () => true), /未通过@UIRegistry.view登记/);
         await assert.rejects(app.prepareStage("enterGame", () => {}, () => false), /取消/);
     } finally {
         LOADING_PLAN.login = old.login;
@@ -126,7 +126,7 @@ async function main(): Promise<void> {
         scope.dispose();
         unregisterPage();
         app.dispose();
-        clearPrefabCache();
+        PrefabLoader.clearPrefabCache();
         ResourceAssetsUtils.releaseResidents();
     }
     const stopped = new ApplicationResources();
@@ -135,7 +135,7 @@ async function main(): Promise<void> {
     assert.equal(requests.length, before, "停止后不继续排队，也不读取全目录索引");
     const deferredImage = ResourceAssetsUtils.describe("common", "ui/other_rare-6", "SpriteFrame");
     assert(!requests.includes(deferredImage.bundle + ":" + deferredImage.loadPath), "未配置资源不提前加载");
-    const demand = createAssetScope();
+    const demand = ResourceAssetsUtils.createAssetScope();
     await demand.load(deferredImage);
     assert(requests.includes(deferredImage.bundle + ":" + deferredImage.loadPath), "未配置资源仍可在实际使用时加载");
     demand.dispose();

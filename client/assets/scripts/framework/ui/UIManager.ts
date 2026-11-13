@@ -1,38 +1,31 @@
 /**
  * 统一界面管理：协调异步加载、打开取消、返回、缓存和释放，具体业务由应用注册的页面适配器提供。
  */
-import {director, Director, Node, Prefab} from "cc";
-import {messageOf} from "../../core/errors";
-import {GameLog, monoNow} from "../../core/GameLog";
-import {loadPrefab, spawnPrefab, retainPrefabForNode} from "../assets/PrefabLoader";
-import {logViewReady} from "./UIOpenLog";
-import {BaseView} from "./BaseView";
-import {UILayer} from "./UILayer";
-import {ViewClass, ViewSpec, viewCtorById, viewSpecOf} from "./UIRegistry";
-import {bindViewCloser} from "./ViewClose";
-import {ModalLayer} from "./ModalLayer";
-
+import { director, Director, Node, Prefab } from "cc";
+import { ErrorUtils } from "../../core/ErrorUtils";
+import { GameLog } from "../../core/GameLog";
+import { PrefabLoader } from "../assets/PrefabLoader";
+import { UIOpenLogUtils } from "./UIOpenLogUtils";
+import { BaseView } from "./BaseView";
+import { UILayer } from "./UILayer";
+import { ViewClass, ViewSpec, UIRegistry } from "./UIRegistry";
+import { ViewCloseUtils } from "./ViewCloseUtils";
+import { ModalLayer } from "./ModalLayer";
 export interface PageNav {
     readonly current: string | null;
-
     openChild(id: string): void;
-
     back(): boolean;
 }
-
 export interface UIManagerHost {
     showToast(text: string, durationMs?: number): void;
-
     /** 页面已经进栈之后才调用。失败和取消不调用。 */
     onPageOpened?(id: string): void;
 }
-
 interface OpenPage {
     id: string;
     host: Node;
     view: BaseView<unknown>;
 }
-
 /** 一个真实弹窗实例；准备中的窗口也参与模态归属，不以页面id覆盖另一份实例。 */
 interface ResidentPage extends OpenPage {
     /** 本次打开的注册配置，包含当前实例的模态和关闭模式。 */
@@ -48,7 +41,6 @@ interface ResidentPage extends OpenPage {
     /** 层级激活状态监听；宿主或祖先隐藏/恢复时重新决定共享模态归属。 */
     onActiveChanged: (() => void) | null;
 }
-
 /** 加载还没进栈，玩家已经去了别的页。不 Toast，不改底栏。 */
 export class OpenCancelled extends Error {
     constructor() {
@@ -56,11 +48,6 @@ export class OpenCancelled extends Error {
         this.name = "OpenCancelled";
     }
 }
-
-export function isOpenCancelled(err: unknown): boolean {
-    return err instanceof OpenCancelled;
-}
-
 /**
  * 正式界面的统一开关，Page走应用注入的导航，其他层挂到登记的宿主。
  * 预制没装上之前不进页面栈，避免留下可点的空壳。
@@ -68,6 +55,11 @@ export function isOpenCancelled(err: unknown): boolean {
  * Popup根据ViewSpec共享一份模态节点；实例关闭后恢复下层配置，不叠加多份颜色。
  */
 export class UIManager {
+    /** 识别界面打开被替换或取消的正常退出，不把其他异常误当取消。 */
+    public static isOpenCancelled(err: unknown): boolean {
+        return err instanceof OpenCancelled;
+    }
+
     /** 返回页面管理计数；缓存页面与活动页面分开，不能以缓存数非零认定泄漏。 */
     public snapshot(): Record<string, number> {
         return {
@@ -77,17 +69,16 @@ export class UIManager {
             modalNodes: this.modalLayer.snapshot().nodes, modalActive: this.modalLayer.snapshot().active
         };
     }
-
     static readonly instance = new UIManager();
-
     /** 应用提示独立于正式导航，开发预览和登录前也可使用。 */
     private notice: ((text: string, durationMs: number) => void) | null = null;
-
     /** 由场景应用绑定提示，返回只撤销本次绑定的句柄。 */
     public bindNotice(show: (text: string, durationMs: number) => void): () => void {
         this.notice = show;
         return () => {
-            if (this.notice === show) this.notice = null;
+            if (this.notice === show) {
+                this.notice = null;
+            }
         };
     }
 
@@ -97,11 +88,13 @@ export class UIManager {
     private prepared = new Map<string, OpenPage>();
     private pages = new Map<string, OpenPage[]>();
     /** 已关闭的页面按最近关闭顺序保存；取出重开或淘汰时移除。 */
-    private cached = new Map<string, OpenPage & { closedAt: number }>();
+    private cached = new Map<string, OpenPage & {
+        closedAt: number;
+    }>();
     /** 闲置页面最多保留两份；只限制界面实例，不淘汰预加载资源。 */
     public static readonly maxCachedPages = 2;
     /** 页面关闭后最多保留120秒，重新打开后不受闲置清理影响。 */
-    public static readonly cacheIdleMs = 120_000;
+    public static readonly cacheIdleMs = 120000;
     /** 只在存在闲置页面时等待最近到期时间；清空、取完和卸载时取消。 */
     private cacheTimer: ReturnType<typeof setTimeout> | null = null;
     /** 已完成打开的弹窗按实际宿主保存；同一页面可以有多份实例。 */
@@ -119,7 +112,6 @@ export class UIManager {
     private opening = new Map<string, Promise<BaseView<unknown>>>();
     private tokens = new Map<number, string>();
     private nextToken = 1;
-
     install(nav: PageNav, host: UIManagerHost): void {
         this.nav = nav;
         this.host = host;
@@ -127,7 +119,9 @@ export class UIManager {
 
     /** 卸载匹配的导航：取消在途意图，清理闲置页面、全部弹窗及共享模态；活动Page宿主由导航先关闭。 */
     uninstall(nav: PageNav): void {
-        if (this.nav !== nav) return;
+        if (this.nav !== nav) {
+            return;
+        }
         this.invalidatePending();
         this.clearCached();
         this.closeAllResidents();
@@ -138,21 +132,27 @@ export class UIManager {
     }
 
     /**
-     * 打开已注册视图；先等@view.prepare的配置，再按唯一地址取得Prefab，Page意图有效后才交给导航。
+     * 打开已注册视图；先等@UIRegistry.view.prepare的配置，再按唯一地址取得Prefab，Page意图有效后才交给导航。
      * Popup按ViewSpec共享模态。失败会清理本次实例并提示；取消仅清理，保留当前页面。
      */
     async open<T>(ctor: ViewClass<T>, args?: T): Promise<BaseView<T>> {
-        const spec = viewSpecOf(ctor);
-        if (!spec) throw new Error("视图未注册");
+        const spec = UIRegistry.viewSpecOf(ctor);
+        if (!spec) {
+            throw new Error("视图未注册");
+        }
         if (spec.layer !== UILayer.Page) {
-            if (!spec.hostId) throw new Error("常驻界面缺少 hostId " + spec.id);
+            if (!spec.hostId) {
+                throw new Error("常驻界面缺少 hostId " + spec.id);
+            }
             return this.openResident(ctor, spec, args);
         }
-        if (!this.nav) throw new Error("UIManager 还没接上页面栈");
+        if (!this.nav) {
+            throw new Error("UIManager 还没接上页面栈");
+        }
         if (!spec.allowMultiple) {
             const existing = this.top(spec.id);
             if (existing && this.nav.current === spec.id) {
-                const started = monoNow();
+                const started = GameLog.monoNow();
                 if (spec.prepare) {
                     await spec.prepare();
                 }
@@ -165,15 +165,22 @@ export class UIManager {
                 return existing.view as BaseView<T>;
             }
             const pending = this.opening.get(spec.id);
-            if (pending) return (await pending) as BaseView<T>;
+            if (pending) {
+                return (await pending) as BaseView<T>;
+            }
         }
         const reused = spec.allowMultiple ? null : this.takeCache(spec.id);
         const job = reused ? this.reopen(reused, spec, args) : this.openNew(ctor, spec, args);
-        if (!spec.allowMultiple) this.opening.set(spec.id, job);
+        if (!spec.allowMultiple) {
+            this.opening.set(spec.id, job);
+        }
         try {
             return (await job) as BaseView<T>;
-        } finally {
-            if (this.opening.get(spec.id) === job) this.opening.delete(spec.id);
+        }
+        finally {
+            if (this.opening.get(spec.id) === job) {
+                this.opening.delete(spec.id);
+            }
         }
     }
 
@@ -182,11 +189,15 @@ export class UIManager {
      * 没有对应准备记录时返回null，由导航拒绝未准备好的页面。
      */
     createPageHost(id: string): Node | null {
-        if (!this.armed.has(id)) return null;
+        if (!this.armed.has(id)) {
+            return null;
+        }
         this.armed.delete(id);
         const ready = this.prepared.get(id);
         this.prepared.delete(id);
-        if (!ready) return null;
+        if (!ready) {
+            return null;
+        }
         const list = this.pages.get(id) || [];
         list.push(ready);
         this.pages.set(id, list);
@@ -197,20 +208,26 @@ export class UIManager {
     setResidentHost(id: string, provider: () => Node | null): () => void {
         this.residentHosts.set(id, provider);
         return () => {
-            if (this.residentHosts.get(id) === provider) this.residentHosts.delete(id);
+            if (this.residentHosts.get(id) === provider) {
+                this.residentHosts.delete(id);
+            }
         };
     }
 
     /** 按注册 id 打开。没登记就失败。 */
     async openById<T = unknown>(id: string, args?: T): Promise<BaseView<T>> {
-        const ctor = viewCtorById(id);
-        if (!ctor) throw new Error("视图未注册 " + id);
+        const ctor = UIRegistry.viewCtorById(id);
+        if (!ctor) {
+            throw new Error("视图未注册 " + id);
+        }
         return this.open(ctor as ViewClass<T>, args);
     }
 
     /** 页面栈往回退一层。已经在根上时返回 false。常驻层不跟着关。 */
     back(): boolean {
-        if (!this.nav) return false;
+        if (!this.nav) {
+            return false;
+        }
         return this.nav.back();
     }
 
@@ -221,8 +238,12 @@ export class UIManager {
                 || Array.from(this.pages.values()).some(group => group.some(page => page.view === target && page.host.isValid));
         }
         const id = this.idOf(target);
-        if (!id) return false;
-        if (Array.from(this.residents.values()).some(page => page.id === id && page.host.isValid)) return true;
+        if (!id) {
+            return false;
+        }
+        if (Array.from(this.residents.values()).some(page => page.id === id && page.host.isValid)) {
+            return true;
+        }
         return !!this.top(id);
     }
 
@@ -234,27 +255,42 @@ export class UIManager {
                 this.disposeResident(resident);
                 return true;
             }
-            const spec = viewSpecOf(view.constructor);
-            if (spec && spec.layer !== UILayer.Page) return false;
-            if (!this.nav) return false;
-            if (!spec || this.nav.current !== spec.id) return false;
+            const spec = UIRegistry.viewSpecOf(view.constructor);
+            if (spec && spec.layer !== UILayer.Page) {
+                return false;
+            }
+            if (!this.nav) {
+                return false;
+            }
+            if (!spec || this.nav.current !== spec.id) {
+                return false;
+            }
         }
         return this.back();
     }
 
     /** 按id关闭该类所有弹窗及在途打开；实例关闭使用close(view)，不波及同id的其他窗口。 */
     closeById(id: string): boolean {
-        if (this.residentEpoch.has(id)) return this.closeResident(id);
-        const ctor = viewCtorById(id);
-        const spec = ctor ? viewSpecOf(ctor) : null;
-        if (spec && spec.layer !== UILayer.Page) return this.closeResident(spec.id);
-        if (this.nav && this.nav.current === id) return this.nav.back();
+        if (this.residentEpoch.has(id)) {
+            return this.closeResident(id);
+        }
+        const ctor = UIRegistry.viewCtorById(id);
+        const spec = ctor ? UIRegistry.viewSpecOf(ctor) : null;
+        if (spec && spec.layer !== UILayer.Page) {
+            return this.closeResident(spec.id);
+        }
+        if (this.nav && this.nav.current === id) {
+            return this.nav.back();
+        }
         return false;
     }
-
     toast(text: string): void {
-        if (this.notice) this.notice(text, 1600);
-        else if (this.host) this.host.showToast(text, 1600);
+        if (this.notice) {
+            this.notice(text, 1600);
+        }
+        else if (this.host) {
+            this.host.showToast(text, 1600);
+        }
     }
 
     /**
@@ -263,7 +299,9 @@ export class UIManager {
      */
     keepOnly(id: string): void {
         for (const [token, page] of this.tokens) {
-            if (page !== id) this.tokens.delete(token);
+            if (page !== id) {
+                this.tokens.delete(token);
+            }
         }
     }
 
@@ -300,9 +338,11 @@ export class UIManager {
     private disposeCachedPage(page: OpenPage): void {
         try {
             page.view.runDispose();
-        } catch (error) {
-            GameLog.shared.classified("FRAMEWORK", "error", "UIManager", "缓存页面清理失败 " + page.id + " " + messageOf(error));
-        } finally {
+        }
+        catch (error) {
+            GameLog.shared.classified("FRAMEWORK", "error", "UIManager", "缓存页面清理失败 " + page.id + " " + ErrorUtils.messageOf(error));
+        }
+        finally {
             if (page.host.isValid) {
                 page.host.destroy();
             }
@@ -310,7 +350,7 @@ export class UIManager {
     }
 
     /** 回收过期或超过数量上限的闲置页；时间为单调时钟毫秒，仅用于缓存年龄。 */
-    public collectCached(now = monoNow()): number {
+    public collectCached(now = GameLog.monoNow()): number {
         let removed = 0;
         for (const [id, page] of this.cached) {
             if (now - page.closedAt < UIManager.cacheIdleMs && this.cached.size <= UIManager.maxCachedPages) {
@@ -339,7 +379,7 @@ export class UIManager {
         if (!oldest) {
             return;
         }
-        const delay = Math.max(1, oldest.closedAt + UIManager.cacheIdleMs - monoNow());
+        const delay = Math.max(1, oldest.closedAt + UIManager.cacheIdleMs - GameLog.monoNow());
         this.cacheTimer = setTimeout(() => {
             this.cacheTimer = null;
             this.collectCached();
@@ -354,9 +394,11 @@ export class UIManager {
         for (const list of this.pages.values()) {
             for (let i = 0; i < list.length; i++) {
                 const page = list[i];
-                if (page.host !== node) continue;
-                const ctor = viewCtorById(page.id);
-                const spec = ctor ? viewSpecOf(ctor) : null;
+                if (page.host !== node) {
+                    continue;
+                }
+                const ctor = UIRegistry.viewCtorById(page.id);
+                const spec = ctor ? UIRegistry.viewSpecOf(ctor) : null;
                 return !!(spec && spec.cache && node.isValid);
             }
         }
@@ -366,13 +408,19 @@ export class UIManager {
     /** RemakeNavigation关闭Page时调用；缓存页仅关闭展示和监听，其他页面继续解绑与释放。 */
     noteClosed(id: string): void {
         const list = this.pages.get(id);
-        if (!list || list.length === 0) return;
+        if (!list || list.length === 0) {
+            return;
+        }
         const page = list.pop();
-        if (!page) return;
-        if (list.length === 0) this.pages.delete(id);
+        if (!page) {
+            return;
+        }
+        if (list.length === 0) {
+            this.pages.delete(id);
+        }
         page.view.runClose();
-        const ctor = viewCtorById(id);
-        const spec = ctor ? viewSpecOf(ctor) : null;
+        const ctor = UIRegistry.viewCtorById(id);
+        const spec = ctor ? UIRegistry.viewSpecOf(ctor) : null;
         if (spec && spec.cache && page.host.isValid && page.view.node && page.view.node.isValid) {
             page.host.active = false;
             page.host.removeFromParent();
@@ -381,7 +429,7 @@ export class UIManager {
                 this.disposeCachedPage(previous);
             }
             this.cached.delete(id);
-            this.cached.set(id, { ...page, closedAt: monoNow() });
+            this.cached.set(id, { ...page, closedAt: GameLog.monoNow() });
             this.collectCached();
             return;
         }
@@ -389,22 +437,31 @@ export class UIManager {
         page.view.runDispose();
     }
 
+    /** 将页面ID、View类或实例解析到已注册ID；未注册对象返回null，不创建页面。 */
     private idOf(target: Function | string | object): string | null {
-        if (typeof target === "string") return target;
+        if (typeof target === "string") {
+            return target;
+        }
         if (typeof target === "function") {
-            const spec = viewSpecOf(target);
+            const spec = UIRegistry.viewSpecOf(target);
             return spec ? spec.id : null;
         }
-        const spec = viewSpecOf(target.constructor);
+        const spec = UIRegistry.viewSpecOf(target.constructor);
         return spec ? spec.id : null;
     }
 
     private residentParent(spec: ViewSpec): Node | null {
-        if (!spec.hostId) return null;
+        if (!spec.hostId) {
+            return null;
+        }
         const provider = this.residentHosts.get(spec.hostId);
-        if (!provider) return null;
+        if (!provider) {
+            return null;
+        }
         const node = provider();
-        if (!node || !node.isValid) return null;
+        if (!node || !node.isValid) {
+            return null;
+        }
         return node;
     }
 
@@ -413,7 +470,7 @@ export class UIManager {
         if (!spec.allowMultiple) {
             const alive = Array.from(this.residents.values()).find(page => page.id === spec.id && page.host.isValid);
             if (alive) {
-                const started = monoNow();
+                const started = GameLog.monoNow();
                 alive.spec = spec;
                 this.raiseResident(alive);
                 try {
@@ -430,8 +487,9 @@ export class UIManager {
                     }
                     this.noteOpened(alive.view, spec, started);
                     return alive.view as BaseView<T>;
-                } catch (error) {
-                    const cancelled = alive.cancelled || isOpenCancelled(error);
+                }
+                catch (error) {
+                    const cancelled = alive.cancelled || UIManager.isOpenCancelled(error);
                     this.disposeResident(alive);
                     if (!cancelled) {
                         this.reportOpenFailed(spec.id, error);
@@ -450,7 +508,8 @@ export class UIManager {
         }
         try {
             return (await job) as BaseView<T>;
-        } finally {
+        }
+        finally {
             if (this.opening.get(spec.id) === job) {
                 this.opening.delete(spec.id);
             }
@@ -459,7 +518,7 @@ export class UIManager {
 
     /** 挂载后的准备期也接入共享模态；关闭本实例即可取消，不等待业务页面兑现ready。 */
     private async openResidentNew<T>(ctor: ViewClass<T>, spec: ViewSpec, args: unknown): Promise<BaseView<T>> {
-        const started = monoNow();
+        const started = GameLog.monoNow();
         const epoch = this.residentEpoch.get(spec.id) || 0;
         this.residentEpoch.set(spec.id, epoch);
         const parent = this.residentParent(spec);
@@ -474,16 +533,10 @@ export class UIManager {
             if (!parent.isValid) {
                 throw new Error("页面已关");
             }
-            // 临时引用跨过自定义挂载的await，成功后资源交给实例宿主。
-            prefab.addRef();
-            try {
-                viewNode = spec.mount ? await spec.mount(parent, prefab) : spawnPrefab(prefab, parent);
-                if (!viewNode || !viewNode.isValid) {
-                    throw new Error("页面已关");
-                }
-                retainPrefabForNode(prefab, viewNode);
-            } finally {
-                prefab.decRef();
+            // 所有页面直接实例化完整Prefab，spawnPrefab将资源引用交给实际节点。
+            viewNode = PrefabLoader.spawnPrefab(prefab, parent);
+            if (!viewNode.isValid) {
+                throw new Error("页面已关");
             }
             this.ensureResident(spec.id, epoch);
             const found = viewNode.getComponent(ctor);
@@ -515,22 +568,24 @@ export class UIManager {
             this.refreshModal();
             this.noteOpened(found, spec, started);
             return found as BaseView<T>;
-        } catch (error) {
-            const cancelled = isOpenCancelled(error) || !!page?.cancelled
+        }
+        catch (error) {
+            const cancelled = UIManager.isOpenCancelled(error) || !!page?.cancelled
                 || (this.residentEpoch.get(spec.id) || 0) !== epoch;
             if (page) {
                 this.disposeResident(page);
-            } else if (viewNode?.isValid) {
+            }
+            else if (viewNode?.isValid) {
                 viewNode.active = false;
                 viewNode.destroy();
             }
             if (!cancelled) {
                 this.reportOpenFailed(spec.id, error);
             }
-            if (cancelled && !isOpenCancelled(error)) {
+            if (cancelled && !UIManager.isOpenCancelled(error)) {
                 throw new OpenCancelled();
             }
-            throw error instanceof Error ? error : new Error(messageOf(error));
+            throw error instanceof Error ? error : new Error(ErrorUtils.messageOf(error));
         }
     }
 
@@ -539,7 +594,8 @@ export class UIManager {
         const cancelled = new Promise<void>((_resolve, reject) => { page.rejectOpening = reject; });
         try {
             await Promise.race([page.view.whenReady(), cancelled]);
-        } finally {
+        }
+        finally {
             page.rejectOpening = null;
         }
     }
@@ -611,9 +667,11 @@ export class UIManager {
         this.refreshModal();
         try {
             page.view.runDispose();
-        } catch (error) {
-            GameLog.shared.classified("FRAMEWORK", "error", "UIManager", "弹窗清理失败 " + page.id + " " + messageOf(error));
-        } finally {
+        }
+        catch (error) {
+            GameLog.shared.classified("FRAMEWORK", "error", "UIManager", "弹窗清理失败 " + page.id + " " + ErrorUtils.messageOf(error));
+        }
+        finally {
             if (page.host.isValid) {
                 page.host.destroy();
             }
@@ -643,7 +701,8 @@ export class UIManager {
         const owner = candidates[candidates.length - 1];
         if (owner) {
             this.modalLayer.showBefore(owner.host, owner.spec.modal!, () => this.close(owner.view));
-        } else {
+        }
+        else {
             this.modalLayer.hide();
         }
     }
@@ -655,13 +714,11 @@ export class UIManager {
             director.on(Director.EVENT_AFTER_UPDATE, this.onModalFrame);
         }
     };
-
     /** 等引擎完成节点激活遍历后恢复正确模态，不要求业务View手动刷新。 */
     private readonly onModalFrame = (): void => {
         this.cancelModalRefresh();
         this.refreshModal();
     };
-
     /** 撤销本管理器尚未执行的模态刷新；卸载后不能由迟到帧重新创建节点。 */
     private cancelModalRefresh(): void {
         this.modalRefreshPending = false;
@@ -692,7 +749,9 @@ export class UIManager {
 
     private top(id: string): OpenPage | null {
         const list = this.pages.get(id);
-        if (!list || list.length === 0) return null;
+        if (!list || list.length === 0) {
+            return null;
+        }
         return list[list.length - 1];
     }
 
@@ -700,10 +759,14 @@ export class UIManager {
     private takeCache(id: string): OpenPage | null {
         this.collectCached();
         const page = this.cached.get(id);
-        if (!page) return null;
+        if (!page) {
+            return null;
+        }
         this.cached.delete(id);
         this.scheduleCacheCollection();
-        if (!page.host.isValid || !page.view.node || !page.view.node.isValid) return null;
+        if (!page.host.isValid || !page.view.node || !page.view.node.isValid) {
+            return null;
+        }
         return page;
     }
 
@@ -714,8 +777,9 @@ export class UIManager {
         return token;
     }
 
+    /** 打开新的常驻界面或弹窗；准备期间保持令牌有效，失败或取消时撤销实例与在途登记。 */
     private async openNew(ctor: ViewClass<unknown>, spec: ViewSpec, args: unknown): Promise<BaseView<unknown>> {
-        const started = monoNow();
+        const started = GameLog.monoNow();
         const shell = new Node("LiveShell");
         const origin = this.nav ? this.nav.current : null;
         const token = this.issue(spec.id);
@@ -724,9 +788,12 @@ export class UIManager {
             view = await this.mount(shell, ctor, spec, args, () => this.ensureCurrent(token, spec.id, origin));
             this.noteOpened(view, spec, started);
             this.ensureCurrent(token, spec.id, origin);
-            if (!shell.isValid || !view.node || !view.node.isValid) throw new Error("页面已关");
+            if (!shell.isValid || !view.node || !view.node.isValid) {
+                throw new Error("页面已关");
+            }
             this.stage(spec, shell, view, token);
-        } catch (err) {
+        }
+        catch (err) {
             throw this.abandon(spec, shell, view, token, err);
         }
         this.notify(spec.id);
@@ -737,7 +804,7 @@ export class UIManager {
     private async reopen(page: OpenPage, spec: ViewSpec, args: unknown): Promise<BaseView<unknown>> {
         const origin = this.nav ? this.nav.current : null;
         const token = this.issue(spec.id);
-        const started = monoNow();
+        const started = GameLog.monoNow();
         try {
             if (spec.prepare) {
                 await spec.prepare();
@@ -748,20 +815,25 @@ export class UIManager {
             await page.view.whenReady();
             this.noteOpened(page.view, spec, started);
             this.ensureCurrent(token, spec.id, origin);
-            if (!page.host.isValid || !page.view.node || !page.view.node.isValid) throw new Error("页面已关");
+            if (!page.host.isValid || !page.view.node || !page.view.node.isValid) {
+                throw new Error("页面已关");
+            }
             this.stage(spec, page.host, page.view, token);
-        } catch (err) {
-            const cancelled = isOpenCancelled(err) || !this.tokens.has(token);
+        }
+        catch (err) {
+            const cancelled = UIManager.isOpenCancelled(err) || !this.tokens.has(token);
             this.tokens.delete(token);
             this.armed.delete(spec.id);
             this.prepared.delete(spec.id);
             this.disposeCachedPage(page);
-            if (!cancelled) this.reportOpenFailed(spec.id, err);
-            if (cancelled && !isOpenCancelled(err)) {
-                GameLog.shared.classified("FRAMEWORK", "info", "UI", "打开已取消 " + spec.id + " " + messageOf(err));
+            if (!cancelled) {
+                this.reportOpenFailed(spec.id, err);
+            }
+            if (cancelled && !UIManager.isOpenCancelled(err)) {
+                GameLog.shared.classified("FRAMEWORK", "info", "UI", "打开已取消 " + spec.id + " " + ErrorUtils.messageOf(err));
                 throw new OpenCancelled();
             }
-            throw err instanceof Error ? err : new Error(messageOf(err));
+            throw err instanceof Error ? err : new Error(ErrorUtils.messageOf(err));
         }
         this.notify(spec.id);
         return page.view;
@@ -769,28 +841,43 @@ export class UIManager {
 
     /** 意图还在，而且玩家没有切到别的页。 */
     private ensureCurrent(token: number, id: string, origin: string | null): void {
-        if (!this.tokens.has(token)) throw new OpenCancelled();
-        if (!this.nav) throw new Error("UIManager 还没接上页面栈");
-        if (this.nav.current !== origin && this.nav.current !== id) throw new OpenCancelled();
+        if (!this.tokens.has(token)) {
+            throw new OpenCancelled();
+        }
+        if (!this.nav) {
+            throw new Error("UIManager 还没接上页面栈");
+        }
+        if (this.nav.current !== origin && this.nav.current !== id) {
+            throw new OpenCancelled();
+        }
     }
 
     /** 装好了才登记进栈。只清掉这一次的意图，别的打开还留着。 */
     private stage(spec: ViewSpec, shell: Node, view: BaseView<unknown>, token: number): void {
-        if (!this.nav) throw new Error("UIManager 还没接上页面栈");
-        this.prepared.set(spec.id, {id: spec.id, host: shell, view});
+        if (!this.nav) {
+            throw new Error("UIManager 还没接上页面栈");
+        }
+        this.prepared.set(spec.id, { id: spec.id, host: shell, view });
         this.armed.add(spec.id);
-        if (spec.allowMultiple || this.nav.current !== spec.id) this.nav.openChild(spec.id);
-        if (!this.top(spec.id)) throw new Error("页面没有挂上 " + spec.id);
+        if (spec.allowMultiple || this.nav.current !== spec.id) {
+            this.nav.openChild(spec.id);
+        }
+        if (!this.top(spec.id)) {
+            throw new Error("页面没有挂上 " + spec.id);
+        }
         this.tokens.delete(token);
     }
 
     /** 已经在栈上才刷新底栏。 */
     private notify(id: string): void {
-        if (this.host && this.host.onPageOpened) this.host.onPageOpened(id);
+        if (this.host && this.host.onPageOpened) {
+            this.host.onPageOpened(id);
+        }
     }
 
+    /** 终止尚未完成的打开，关闭View并销毁外壳；主动取消不作为加载失败重复报告。 */
     private abandon(spec: ViewSpec, shell: Node, view: BaseView<unknown> | null, token: number, err: unknown): Error {
-        const cancelled = isOpenCancelled(err) || !this.tokens.has(token);
+        const cancelled = UIManager.isOpenCancelled(err) || !this.tokens.has(token);
         this.tokens.delete(token);
         this.armed.delete(spec.id);
         this.prepared.delete(spec.id);
@@ -801,13 +888,17 @@ export class UIManager {
                 view.runDispose();
             }
         }
-        if (shell.isValid) shell.destroy();
-        if (!cancelled) this.reportOpenFailed(spec.id, err);
-        if (cancelled && !isOpenCancelled(err)) {
-            GameLog.shared.classified("FRAMEWORK", "info", "UI", "打开已取消 " + spec.id + " " + messageOf(err));
+        if (shell.isValid) {
+            shell.destroy();
+        }
+        if (!cancelled) {
+            this.reportOpenFailed(spec.id, err);
+        }
+        if (cancelled && !UIManager.isOpenCancelled(err)) {
+            GameLog.shared.classified("FRAMEWORK", "info", "UI", "打开已取消 " + spec.id + " " + ErrorUtils.messageOf(err));
             return new OpenCancelled();
         }
-        return err instanceof Error ? err : new Error(messageOf(err));
+        return err instanceof Error ? err : new Error(ErrorUtils.messageOf(err));
     }
 
     /** 先准备页面配置，再按唯一地址加载Prefab；配置等待期间取消则不继续下载或挂载。 */
@@ -817,29 +908,39 @@ export class UIManager {
                 await spec.prepare();
             }
             validate();
-            return spec.load ? await spec.load() : await loadPrefab(spec.prefab);
-        } catch (error) {
-            if (isOpenCancelled(error)) {
+            return spec.load ? await spec.load() : await PrefabLoader.loadPrefab(spec.prefab);
+        }
+        catch (error) {
+            if (UIManager.isOpenCancelled(error)) {
                 throw error;
             }
-            throw new Error(spec.prefab + " " + messageOf(error));
+            throw new Error(spec.prefab + " " + ErrorUtils.messageOf(error));
         }
     }
 
-    /** 挂载前由页面宿主持有预制体；配置前置条件由@view声明，异步准备、显示和实例缓存期间均保护依赖。 */
+    /** 挂载前由页面宿主持有预制体；配置前置条件由@UIRegistry.view声明，异步准备、显示和实例缓存期间均保护依赖。 */
     private async mount(shell: Node, ctor: ViewClass<unknown>, spec: ViewSpec, args: unknown, validate: () => void): Promise<BaseView<unknown>> {
         const prefab = await this.loadViewPrefab(spec, validate);
-        if (!shell.isValid) throw new Error("页面已关");
-        retainPrefabForNode(prefab, shell);
-        const viewNode = spec.mount ? await spec.mount(shell, prefab) : spawnPrefab(prefab, shell);
-        if (!shell.isValid || !viewNode.isValid) throw new Error("页面已关");
+        if (!shell.isValid) {
+            throw new Error("页面已关");
+        }
+        PrefabLoader.retainPrefabForNode(prefab, shell);
+        const viewNode = PrefabLoader.spawnPrefab(prefab, shell);
+        if (!shell.isValid || !viewNode.isValid) {
+            throw new Error("页面已关");
+        }
         const found = viewNode.getComponent(ctor);
-        if (!found) throw new Error(spec.prefab + " 上没有视图组件");
+        if (!found) {
+            throw new Error(spec.prefab + " 上没有视图组件");
+        }
         try {
-            if (spec.createController) found.attachController(spec.createController(found));
+            if (spec.createController) {
+                found.attachController(spec.createController(found));
+            }
             found.runOpen(args);
             await found.whenReady();
-        } catch (error) {
+        }
+        catch (error) {
             found.runDispose();
             throw error;
         }
@@ -852,20 +953,21 @@ export class UIManager {
      * 加载失败、取消、whenReady 拒绝都不打这行。
      */
     private noteOpened(view: BaseView<unknown>, spec: ViewSpec, started: number): void {
-        const ctor = view.constructor as { name?: string };
+        const ctor = view.constructor as {
+            name?: string;
+        };
         const raw = ctor && typeof ctor.name === "string" ? ctor.name : "";
         const viewName = raw && raw.length > 2 && raw !== "Component" ? raw : spec.id;
-        logViewReady(viewName, spec.prefab, started, "UIManager");
+        UIOpenLogUtils.logViewReady(viewName, spec.prefab, started, "UIManager");
     }
 
     /** 页面还没进栈。Toast 给玩家看，日志留给排查。取消不走这里。 */
     private reportOpenFailed(id: string, err: unknown): void {
         const text = id === "bag" ? "背包没有打开" : "页面没有打开";
-        GameLog.shared.classified("FRAMEWORK", "error", "UI", text + " " + messageOf(err));
+        GameLog.shared.classified("FRAMEWORK", "error", "UI", text + " " + ErrorUtils.messageOf(err));
         this.toast(text);
     }
 }
-
-bindViewCloser((view) => {
+ViewCloseUtils.bindViewCloser((view) => {
     UIManager.instance.close(view);
 });

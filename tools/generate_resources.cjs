@@ -43,4 +43,4 @@ const plannedPaths = [...new Set(prefabPlan.groups.flatMap(group => group.names.
     const file = resolveAssetPath(group.directory + '/' + name + '.prefab');
     return path.relative(assets, file).split(path.sep).join('/').replace(/\.prefab$/, '');
 })))].sort();
-write('client/assets/scripts/config/PrefabPlan.ts', '/** Generated from tools/prefab-plan.json by tools/generate_resources.cjs. */\nconst paths = new Set<string>([\n' + plannedPaths.map(value => '  ' + JSON.stringify(value)).join(',\n') + '\n]);\nexport function prefabInPlan(assetPath: string): boolean { return paths.has(assetPath); }\n');
+write('client/assets/scripts/config/PrefabPlanUtils.ts', '/** 由tools/prefab-plan.json和generate_resources.cjs生成的Prefab准入查询，不手工修改。 */\nconst paths = new Set<string>([\n' + plannedPaths.map(value => '    ' + JSON.stringify(value)).join(',\n') + '\n]);\n\n/** 当前阶段允许加载的Prefab地址查询，不表示玩法全部开放。 */\nexport class PrefabPlanUtils {\n    private constructor() { }\n\n    /** 地址存在于当前生成计划时返回true，供统一加载器拒绝退役页面。 */\n    public static prefabInPlan(assetPath: string): boolean {\n        return paths.has(assetPath);\n    }\n}\n');

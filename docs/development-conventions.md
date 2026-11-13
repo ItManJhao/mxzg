@@ -163,7 +163,7 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 ## 账号界面与窗口打开规范（2026-11-03 整理）
 
 - 独立业务窗口必须使用 BaseView、同名 Prefab、UIManager 注册与打开/关闭。不得在主城手动 instantiate 角色弹窗、维护第二套 show/hide 和销毁逻辑。
-- 页面静态参数集中在各View的@view：id、Prefab地址、层级、缓存、模态及prepare配置前置不在ApplicationPages重复登记。prepare由UIManager实际开页时执行，阶段预加载只准备目标资源，不调用页面前置或实例化页面。UIRegistry.bindViewRuntime仅注入createController和确需变化的hostId，撤销后恢复页面定义；ApplicationPages只装配登录/主城Controller及宿主，ApplicationResources只调度LoadingPlan，不增加各页取址包装。
+- 页面静态参数集中在各View的@UIRegistry.view：id、Prefab地址、层级、缓存、模态及prepare配置前置不在ApplicationPages重复登记。prepare由UIManager实际开页时执行，阶段预加载只准备目标资源，不调用页面前置或实例化页面。UIRegistry.bindViewRuntime仅注入createController和确需变化的hostId，撤销后恢复页面定义；ApplicationPages只装配登录/主城Controller及宿主，ApplicationResources只调度LoadingPlan，不增加各页取址包装。
 - 模态在页面注册的ViewSpec设置`modal:{mask,closeOnOutside}`，仅用于Popup。省略表示不拦截外部；mask=false使用透明拦截，mask=true显示统一蒙版；closeOnOutside独立控制空白是否关闭。UIManager动态共用一份节点，关窗或隐藏后向下恢复仍显示窗口的模态，禁止在每份Prefab再放独立蒙版或挂ModalLayer。实际面板背景保留BlockInputEvents，避免内容点击触发外部关闭；只承载坐标的大节点不要盲加阻挡。布阵草稿与结算沿既有关闭生命周期处理，GM/技能台使用mask=true、closeOnOutside=false。
 - RoleProfileView 的 Prefab 位于 bundles/module/login/prefabs，保留原 SettingLayer UUID。RemakeApp 注册 role-profile；头像点击经 HomeController 交回应用，UIManager 打开，窗口订阅唯一 AccountModel，关闭时退订。重复打开不累积监听；账号清空或忙于切换时关闭并取消未完成的打开。
 - AccountLoginView 是登录页面，ServerPickerView 是选服弹窗，两者都由 UIManager 管理。ServerCellView 是列表子组件；LoginArtwork 是登录页面适配组件；LoginLayoutUtils 和 RolePortraitUtils 是无状态辅助，不要求一一对应独立窗口。
@@ -217,7 +217,7 @@ export class HeroSkillUtils {
 
 ## 日志分层、颜色和失败处理
 
-现状：core/GameLog保留环形缓冲及旧入口，新增LogLayer、classified和warnOnce，集中管理职责层颜色。openView归框架层，默认蓝色#4ea1ff；framework/ui/UIOpenLog由UIManager等调用。业务模块原有GameLog日志已显式分类，应用装配和框架调用也已迁移；少量底层直接console异常入口仍待逐一核对后迁移。
+现状：core/GameLog保留环形缓冲及旧入口，新增LogLayer、classified和warnOnce，集中管理职责层颜色。openView归框架层，默认蓝色#4ea1ff；framework/ui/UIOpenLogUtils由UIManager等调用。业务模块原有GameLog日志已显式分类，应用装配和框架调用也已迁移；少量底层直接console异常入口仍待逐一核对后迁移。
 
 ### 分类按职责，不按页面名称
 
@@ -275,7 +275,7 @@ FormationView维护选中英雄、未保存站位/阵型、元素筛选与按钮
 - 通信层GameSocketClient持有连接代次、连接ID与请求关联；旧连接的回调不交付，切换连接统一结束在途请求。
 - 应用通过AccountService.deliverAuthenticated装配写请求。它使用账号服务已有身份周期，在返回成功及失败前均检查当前身份；换号、退出、重新登录同一角色后都不向旧请求交付业务结果。不能只隔离成功而把旧失败交给模块恢复待重试状态。
 - AssetStateBinding整包校验角色归属及服务器revision，身份改变时先调用应用页面清理入口，再统一重置模块，最后提交新身份的快照。恢复同一角色只提交快照，不关闭页面、不清空未确认请求。
-- Controller只登记onNotify、校验业务回执、更新唯一Model和发布事件；不捕获会话代次、不比较角色键、不监听账号。Model/事件保留roleKey作为数据归属描述及应用重置参数，不据此建立第二套请求防护。
+- Controller登记onNotify、校验业务回执、更新唯一Model和发布事件；不捕获会话代次、不比较角色键、不监听账号。Model与模块事件不保存roleKey，应用通知模块无参重置；归属与持久版本只在AssetStateBinding校验，不再分散到页面owner比较。
 - View只管理页面草稿、选中、滚动和自身监听；应用关闭旧角色页面。closed、节点有效性和异步贴图代次属于页面/资源生命周期，应保留。
 - 请求幂等键、重复点击保护、回执requestId匹配及服务器版本校验属于业务正确性，应保留。断网失败允许原请求显式重试；关窗不取消模块保存；客户端隔离不撤销旧角色已提交的服务端事务。
 
@@ -547,7 +547,7 @@ BattleMeleeUtils从同源行解析时序并拒绝未覆盖的动作参数或非�
 - 对已核对的死亡触发，保留同招表现和多目标伤害的并行播放。恶魔魅影的增益等待战报中对应的致死伤害播完，并按战报顺序显示叠层。取消后跳过仍在等待的增益。
 - 并行等待使用集合保存全部完成回调；页面停止统一停止Tween、释放全部等待、递增播放代次。每次await之后检查取消，任一效果异常必须终止同组其他效果，禁止迟到扣血或结算。
 - 延迟、移动、震屏和暗屏使用引擎时钟，不使用墙钟setTimeout推进战斗。血条只更新本事件目标，避免并行事件携带的整场快照覆盖另一目标。
-- 暗屏静态挂点保存在BattlePage预制体，复用项目白底资源并保留既有UUID；震屏参数依据旧BattleActionFactory，Lua 0..5循环包含6组，不误改为5组。
+- 暗屏静态挂点保存在BattlePageUtils预制体，复用项目白底资源并保留既有UUID；震屏参数依据旧BattleActionFactory，Lua 0..5循环包含6组，不误改为5组。
 
 - 战斗配置动作名与骨骼剪辑名不是同一层：按旧BattleHeroNode.Action映射skill→attack2、skill2→attack3、transform→skill；禁止直接用配置名调用骨骼或随意回退普攻。映射回归同时检查真实资源动画列表。
 
@@ -666,7 +666,7 @@ SkillAuditUtils按技能ID＋等级登记演示证据；禁止将一个等级的
 
 ## 应用装配与资源生命周期（2026-11-06）
 
-- RemakeApp保留应用生命周期和会话到页面的协调；AccountComposition创建会话依赖，页面通过各自@view登记，ApplicationPages只装配登录/主城Controller和宿主，ApplicationResources调度三段LoadingPlan并持有阶段资源，DevelopmentPreview管理只读开发入口。不得把开发战报逻辑重新塞回正式启动链路。
+- RemakeApp保留应用生命周期和会话到页面的协调；AccountComposition创建会话依赖，页面通过各自@UIRegistry.view登记，ApplicationPages只装配登录/主城Controller和宿主，ApplicationResources调度三段LoadingPlan并持有阶段资源，DevelopmentPreview管理只读开发入口。不得把开发战报逻辑重新塞回正式启动链路。
 - RemakeHomeView 唯一持有 CityHubView / CityChromeView 子节点，负责打开、关闭、失败清理；子视图不再单独登记为 Hud。
 - 普通提示由 Remake.scene 的 ApplicationNotice 静态节点承载，不能要求主城存在；连接状态等主城持续提示仍归所属界面。
 - 动态图片复用原ResourcePool。ResManager.setSprite只保留当前显示及本轮在途候选作用域；同图/相同在途请求复用，新图赋值后释放旧显示，null、失效与销毁撤回拥有者，失败按候选回退。getSpriteFrame(owner)仍显式持有至owner销毁，不能用setSprite(null)撤回该引用；不直接releaseAll或释放其他页面引用。
@@ -674,7 +674,7 @@ SkillAuditUtils按技能ID＋等级登记演示证据；禁止将一个等级的
 - PrefabLoader 是显式应用级缓存，每个 Prefab 一次 addRef，应用关闭页面后 clearPrefabCache。应用预热范围和主城底板缓存可保持到应用退出；不能将这种预期保留直接判为泄漏，也不能未经使用者审计就按低内存通知强制清空。
 - 开发预览 F8 输出 Lifecycle：通用资源池、Prefab 缓存、UI、框架事件、EventScope、已登记原生计时器和引擎资产数。计数不是 JS 堆或 GPU 显存；Home/Hero/Feature 的预热池未逐项汇入通用池计数，Cocos Scheduler/Tween 及未迁移的旧加载器也不在该计时器统计范围内。
 - 验收先预热页面，再重复打开/返回同一基线页面，比较作用域、监听、在途打开和计时器；资源数首次上涨不算泄漏，持续上涨须查明。模拟测试通过不代替 Creator 真机内存验收。
-- HeroSnapshotData 只做有效快照校验；已删除 HeroApi 中无调用的暂停 list 壳。其他暂停模块错误码仍标明兼容用途，不冒充当前 WS 服务端协议。
+- HeroSnapshotUtils 只做有效快照校验；已删除 HeroApi 中无调用的暂停 list 壳。其他暂停模块错误码仍标明兼容用途，不冒充当前 WS 服务端协议。
 
 - 启动音乐使用独立作用域，寿命可以长于logo节点；stopMusic必须停止音源、解除clip并拒绝迟到加载。播放节点上的图片/字库/音效/效果资产使用loadPath或loadForNode，禁止新增无拥有者的全局成功/失败缓存。
 - 目录描述与动态路径按bundle、loadPath、资源类型去重，uuid只用于定位元数据，不能造成同一资源重复池记录。Spine原包由节点持有，运行时转换副本按使用节点共享，最后使用节点销毁才销毁副本；关闭加载中的节点必须结束调用方等待。

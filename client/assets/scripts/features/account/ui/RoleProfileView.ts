@@ -2,7 +2,7 @@
 import { _decorator, Button, Label, Node, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import type { AccountModel } from "../AccountModel";
 import type { RoleProfile } from "../AccountModel";
 import { RolePortraitUtils } from "../utils/RolePortraitUtils";
@@ -20,7 +20,7 @@ export interface RoleProfileOpenArgs {
     /** 只读入口的提示出口。 */
     notice: (text: string) => void;
 }
-@view({
+@UIRegistry.view({
     id: "role-profile",
     prefab: "bundles/module/login/prefabs/RoleProfileView",
     layer: UILayer.Popup,

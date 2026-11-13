@@ -1,12 +1,12 @@
 /** 背包唯一库存状态：由 Controller 提交服务端快照，View 只读；本地版本仅用于界面通知。 */
 import { BaseModel } from "../../framework/BaseModel";
-import { readBagItems, readTimedItems } from "./data/BagItemData";
-import type { BagItemData } from "./data/BagItemData";
+import { BagItemDataUtils } from "./data/BagItemDataUtils";
+import type { BagItemData } from "./data/BagItemDataUtils";
 import type { BagChangeSet, BagQuantityChange } from "./data/BagChangeSet";
 import type { BagState } from "./data/BagState";
 
-/** Model 内部内容，角色归属和本地版本由 BaseModel 维护。 */
-type BagContents = Omit<BagState, "roleKey" | "revision">;
+/** Model 内部内容；本地展示版本由 BaseModel 维护，角色归属由应用层校验。 */
+type BagContents = Omit<BagState, "revision">;
 
 /** 当前角色唯一库存 Model，负责校验和保存；协议处理与事件由 Controller 负责。 */
 export class BagModel extends BaseModel {
@@ -36,10 +36,10 @@ export class BagModel extends BaseModel {
         return this.data.timedServerTimeSeconds + Math.max(0, Math.floor(((this.elapsedMs ? this.elapsedMs() : this.frameElapsedMs) - this.timedAnchorMs) / 1000));
     }
 
-    /** 返回带角色归属、本地版本的只读快照，同一次提交复用同一对象。 */
+    /** 返回带本地版本的只读快照，同一次提交复用同一对象。 */
     get snapshot(): BagState {
         if (!this.cachedSnapshot) {
-            this.cachedSnapshot = Object.freeze({ ...this.data, roleKey: this.roleKey, revision: this.version });
+            this.cachedSnapshot = Object.freeze({ ...this.data, revision: this.version });
         }
         return this.cachedSnapshot;
     }
@@ -59,13 +59,13 @@ export class BagModel extends BaseModel {
         return this.getItem(itemId)?.quantity || 0;
     }
 
-    /** 切换角色归属并清空库存，返回空变更集；由 Controller 发事件。 */
-    reset(roleKey: string | null): BagChangeSet {
-        super.reset(roleKey);
+    /** 按应用指令清空库存，返回空变更集；由 Controller 发事件。 */
+    reset(): BagChangeSet {
+        super.reset();
         return this.changeSet(false, [], [], []);
     }
 
-    /** 释放角色归属和库存，返回清空后的变更集，不发送请求。 */
+    /** 释放库存，返回清空后的变更集，不发送请求。 */
     dispose(): BagChangeSet {
         super.dispose();
         return this.changeSet(false, [], [], []);
@@ -74,9 +74,8 @@ export class BagModel extends BaseModel {
     /** 整批校验后替换绝对数量并计算增删改；首次同步不生成获得条目，空数组为合法空背包。校验失败不修改状态。
      * @param timedInventory 同帧逐件期限列表及服务器秒；与普通库存一起校验后提交。 */
     replaceAll(items: readonly BagItemData[], timedInventory?: unknown): BagChangeSet {
-        this.requireRole();
-        const rows = readBagItems(items);
-        const timedItems = readTimedItems(timedInventory);
+        const rows = BagItemDataUtils.readBagItems(items);
+        const timedItems = BagItemDataUtils.readTimedItems(timedInventory);
         const timedServerTimeSeconds = timedInventory === undefined ? null : (timedInventory as { serverTimeSeconds: number }).serverTimeSeconds;
         const initialSync = !this.data.synced;
         const added: BagItemData[] = [], removed: BagItemData[] = [], quantityChanged: BagQuantityChange[] = [];
@@ -108,10 +107,9 @@ export class BagModel extends BaseModel {
         this.cachedSnapshot = null;
     }
 
-    /** 封装已提交状态的只读差异，关联角色和本地版本，不派发事件。 */
+    /** 封装已提交状态的只读差异，关联本地版本，不派发事件。 */
     private changeSet(initialSync: boolean, added: BagItemData[], quantityChanged: BagQuantityChange[], removed: BagItemData[]): BagChangeSet {
         return Object.freeze({
-            roleKey: this.roleKey,
             revision: this.version,
             initialSync,
             added: Object.freeze(added),
@@ -123,11 +121,6 @@ export class BagModel extends BaseModel {
     /** 创建未同步的空状态；idle 与已同步空背包 ready 含义不同。 */
     private emptyData(): BagContents {
         return Object.freeze({ status: "idle", synced: false, items: Object.freeze([]), timedItems: Object.freeze([]), timedServerTimeSeconds: null });
-    }
-
-    /** 检查应用是否设置角色归属，缺失时抛错，拒绝接收无所属库存。 */
-    private requireRole(): void {
-        if (!this.roleKey) throw new Error("背包没有当前角色");
     }
 
     /** 整体保存状态、递增本地版本并清除快照缓存；不修改服务端资产版本。 */

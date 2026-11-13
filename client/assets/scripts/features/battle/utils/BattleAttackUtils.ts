@@ -188,7 +188,7 @@ export class BattleAttackUtils {
             }
             effect = Object.freeze({
                 paths: Object.freeze(Array.from({length: counts[file]}, (_, index) =>
-                    "battle/effects/skill/" + file + "/" + file + "_" + index + "/spriteFrame")),
+                    "effects/skill/" + file + "/" + file + "_" + index + "/spriteFrame")),
                 interval,
                 // 旧getAnimateCount包含首次查找失败的那一帧，7张图实际飞行8个间隔。
                 flightSeconds: (counts[file] + 1) * interval,
@@ -215,7 +215,7 @@ export class BattleAttackUtils {
     /** 旧1005固定头顶循环眩晕帧，与技能图标分别加载；实例移除不能删除同类型剩余实例的装饰。 */
     public static dizzyFrames(): readonly string[] {
         return Object.freeze(Array.from({length: 10}, (_, index) =>
-            "battle/effects/skill/hero-skill/hero-skill_effect-1-" + index + "/spriteFrame"));
+            "effects/skill/hero-skill/hero-skill_effect-1-" + index + "/spriteFrame"));
     }
 
     /** 旧SkillController每个效果从技能起点延迟delay帧，按60帧换算，不叠加攻击动作耗时。 */

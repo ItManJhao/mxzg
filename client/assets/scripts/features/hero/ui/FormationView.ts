@@ -2,9 +2,9 @@
 import { _decorator, Button, Label, Node, UITransform, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
-import { prepareHeroConfig, prepareInventoryConfig } from "../../../config/RemakeConfig";
-import { ancestorScale } from "../../../framework/ui/visibleFit";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { SuperContent } from "../../../framework/ui/SuperContent";
 import { HeroIconCellView } from "./HeroIconCellView";
@@ -29,7 +29,7 @@ export interface FormationRequest {
     closeAfterSave?: boolean;
 }
 
-@view({
+@UIRegistry.view({
     id: "remake-formation",
     prefab: "bundles/module/hero/prefabs/FormationView",
     layer: UILayer.Popup,
@@ -38,8 +38,8 @@ export interface FormationRequest {
     hostId: "remake-modal",
     modal: { mask: true, closeOnOutside: true },
     prepare: async () => {
-        await prepareInventoryConfig();
-        await prepareHeroConfig();
+        await RemakeConfigUtils.prepareInventoryConfig();
+        await RemakeConfigUtils.prepareHeroConfig();
     },
 })
 @ccclass("FormationView")
@@ -131,7 +131,7 @@ export class FormationView extends BaseView<FormationRequest> {
     private fit(): void {
         const visible = ccView.getVisibleSize(), panel = this.panelBounds!;
         const scale = Math.min(visible.width * this.maxWidthRatio / panel.width, visible.height * this.maxHeightRatio / panel.height);
-        const local = scale / ancestorScale(this.node);
+        const local = scale / ViewportLayoutUtils.ancestorScale(this.node);
         this.node.setScale(local, local, 1);
         this.node.setPosition((panel.anchorX - 0.5) * panel.width * local, (panel.anchorY - 0.5) * panel.height * local, 0);
     }

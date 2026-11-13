@@ -4,8 +4,9 @@ import { readFileSync } from "node:fs";
 import { JsonAsset, resources } from "cc";
 import { GameConfig, ConfigUnavailable, ConfigRowMissing, ConfigVersionSuperseded } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";
-import { prepareStartupConfig, prepareCityConfig, prepareHeroConfig, readCityGates } from "../assets/scripts/config/RemakeConfig";
-import { loadBootCopy } from "../assets/scripts/app/remake/bootChrome";
+import { RemakeConfigUtils } from "../assets/scripts/config/RemakeConfigUtils";
+import { LOADING_PLAN } from "../assets/scripts/app/remake/LoadingPlan";
+import { BootChrome } from "../assets/scripts/app/remake/BootChrome";
 
 /** 离线加载实际配置文件，schema仍保留config开头的Bundle逻辑键。 */
 const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
@@ -59,18 +60,19 @@ async function main(): Promise<void> {
     requested.push(path); const asset = new JsonAsset();
     asset.json = JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8")); done(null, asset);
   };
-  await prepareStartupConfig();
+  const loginConfigs = LOADING_PLAN.login.flatMap(target => "config" in target ? [target.config] : []);
+  await GameConfig.instance.prepare(loginConfigs);
   assert.deepEqual(requested.sort(), ["config/language", "config/loadingtips"]);
-  assert((await loadBootCopy()).tips.length > 0); assert.equal(requested.length, 2);
-  assert.equal(readCityGates(), null);
-  await prepareCityConfig(); assert.equal(requested.length, 7); assert(readCityGates()!.opencondition.length > 0);
+  assert((await BootChrome.readLoadingTips()).length > 0); assert.equal(requested.length, 2);
+  assert.equal(RemakeConfigUtils.readCityGates(), null);
+  await RemakeConfigUtils.prepareCityConfig(); assert.equal(requested.length, 7); assert(RemakeConfigUtils.readCityGates()!.opencondition.length > 0);
   const welfare = GameConfig.instance.requireConfig(GConfig.OpenCondition, "act_recharge_day_reward");
   const accumulated = GameConfig.instance.requireConfig(GConfig.OpenCondition, "act_recharge_accumulated_days");
   assert.equal(welfare.level, 6); assert.equal(accumulated.level, 13);
   const duplicate = new GameConfig(async () => ({ rows: [welfare, welfare] }));
   await assert.rejects(duplicate.prepare([GConfig.OpenCondition]), /重复主键/);
   assert.throws(() => duplicate.getConfig(GConfig.OpenCondition), ConfigUnavailable, "重复键整组不能提交");
-  await Promise.all([prepareHeroConfig(), prepareHeroConfig()]); assert.equal(requested.length, 9);
+  await Promise.all([RemakeConfigUtils.prepareHeroConfig(), RemakeConfigUtils.prepareHeroConfig()]); assert.equal(requested.length, 9);
   assert(GameConfig.instance.getConfig(GConfig.HeroType).length > 0);
   assert.equal(GameConfig.instance.requireConfig(GConfig.Language, 11).value, "确 定", "数字文本主键统一索引");
   await GameConfig.instance.prepare([GConfig.TimeLimitItem]);

@@ -2,7 +2,7 @@
  * 英雄头像格子：按传入展示数据更新图片、等级和星级，保持Prefab结构和绑定可编辑。
  * 点击由列表派发给所属页面；本组件不持有选择回调、页面导航或名册状态。
  */
-import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { HERO_FACE_FALLBACK, HeroCellModel } from "./HeroListPresentation";

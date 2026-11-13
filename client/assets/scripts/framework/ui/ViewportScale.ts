@@ -21,19 +21,11 @@ export class ViewportScale extends Component {
     @property({ min: 0.01, displayName: "最大比例" })
     maxScale = 1;
 
-    /** 最近应用的比例，初始为1；仅属于本实例，不保存任何机型映射。 */
-    private appliedScale = 1;
-
     /** 最近处理的可用宽度，重新启用时失效，用来跳过尺寸未变化的帧。 */
     private lastWidth = -1;
 
     /** 最近处理的可用高度；仅高度变化时也须让纵向Widget重新对齐。 */
     private lastHeight = -1;
-
-    /** 返回当前已应用的统一比例，供确有需要的动态表现读取。 */
-    public get scaleRatio(): number {
-        return this.appliedScale;
-    }
 
     /** 校验Prefab设置；无效设计值或把根节点当目标会造成反馈缩放，直接拒绝。 */
     public onLoad(): void {
@@ -64,7 +56,6 @@ export class ViewportScale extends Component {
         }
         this.lastWidth = bounds.width;
         this.lastHeight = bounds.height;
-        this.appliedScale = ratio;
         target.setScale(ratio, ratio, 1);
         this.alignWidgets(target);
     }

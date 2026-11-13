@@ -2,7 +2,7 @@
  * 未列入任何阶段的资源在实际使用时加载，不扫描全目录、不全量常驻。
  * 预制体的直接绑定依赖由Creator自动带入；加载资源不等于开放对应玩法。
  */
-import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssetsUtils";
 import { ResourceDescriptor, ResourceKind } from "../../framework/assets/ResourceTypes";
 import { ConfigName, GConfig } from "../../config/GConfig";
 import type { ViewClass } from "../../framework/ui/UIRegistry";

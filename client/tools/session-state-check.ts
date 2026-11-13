@@ -1,8 +1,8 @@
 /** 统一登录与资产同步回归：只使用受控二进制连接和内存 Model，不访问任何数据库。 */
 import {strict as assert} from "node:assert";
 import {GameSocketClient,SocketPort,SocketFailure} from "../assets/scripts/platform/GameSocketClient";
-import {encodeGameFrame,decodeGameFrame,GAME_SOCKET_PROTOCOL,GameFrame} from "../assets/scripts/platform/GameProtocolCodec";
-import {AccountApi,readRole} from "../assets/scripts/features/account/AccountApi";
+import { GameProtocolCodecUtils, GAME_SOCKET_PROTOCOL, GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
+import { AccountApi } from "../assets/scripts/features/account/AccountApi";
 import {AccountModel} from "../assets/scripts/features/account/AccountModel";
 import {AccountService} from "../assets/scripts/features/account/AccountService";
 import {HomeController} from "../assets/scripts/features/home/HomeController";
@@ -11,10 +11,10 @@ import {RoleController} from "../assets/scripts/features/account/RoleController"
 import {BagController} from "../assets/scripts/features/bag/BagController";
 import {BagModel} from "../assets/scripts/features/bag/BagModel";
 import {BagEvent} from "../assets/scripts/features/bag/utils/BagEvent";
-import {readBagItems,readTimedItems} from "../assets/scripts/features/bag/data/BagItemData";
-import {isolatedSocketPreview} from "../assets/scripts/app/remake/IsolatedSocketPreview";
+import { BagItemDataUtils } from "../assets/scripts/features/bag/data/BagItemDataUtils";
+import { IsolatedSocketPreviewUtils } from "../assets/scripts/app/remake/IsolatedSocketPreviewUtils";
 import {AssetStateBinding} from "../assets/scripts/app/remake/AssetStateBinding";
-import {EventDispatcher} from "../assets/scripts/framework/EventDispatcher";
+import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import {FormationController} from "../assets/scripts/features/hero/FormationController";
 import {FormationSaveModel} from "../assets/scripts/features/hero/FormationSaveModel";
 import {HeroRosterModel} from "../assets/scripts/features/hero/HeroRosterModel";
@@ -23,9 +23,9 @@ import type {FormationSaveRequest} from "../assets/scripts/features/hero/data/Fo
 class Wire {
  onopen:any=null;onmessage:any=null;onerror:any=null;onclose:any=null;readyState=0;binaryType="";protocol=GAME_SOCKET_PROTOCOL;
  constructor(readonly server:Server,readonly connection:string){queueMicrotask(()=>{this.readyState=1;this.onopen?.({});});}
- send(data:unknown){this.server.receive(this,decodeGameFrame(data));}
+ send(data:unknown){this.server.receive(this,GameProtocolCodecUtils.decodeGameFrame(data));}
  close(){this.readyState=3;}
- push(frame:GameFrame){this.onmessage?.({data:encodeGameFrame({...frame,connectionId:this.connection})});}
+ push(frame:GameFrame){this.onmessage?.({data:GameProtocolCodecUtils.encodeGameFrame({...frame,connectionId:this.connection})});}
  drop(){this.readyState=3;this.onclose?.({});}
 }
 class Server {
@@ -54,37 +54,37 @@ async function checkPreviewIsolation(){
  context.fetch=async()=>{calls++;return {ok:true,json:async()=>({kind:"mxzg-owned-mysql-it",run})};};
  const address=(value:string)=>Object.defineProperty(context,"location",{value:{href:value},configurable:true});
  try {
-  address("http://localhost:7456/");const normal=await isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage);assert.equal(normal.storage,storage);assert.equal(calls,0);
-  address("http://localhost:7456/?mxzgTestRun="+run);await assert.rejects(isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage));assert.equal(calls,0);
+  address("http://localhost:7456/");const normal=await IsolatedSocketPreviewUtils.isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage);assert.equal(normal.storage,storage);assert.equal(calls,0);
+  address("http://localhost:7456/?mxzgTestRun="+run);await assert.rejects(IsolatedSocketPreviewUtils.isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage));assert.equal(calls,0);
   address("http://localhost:7456/?mxzgTestRun="+run+"&mxzgTestApi="+encodeURIComponent("http://127.0.0.1:39001"));
-  const isolated=await isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage);assert.equal(isolated.socketUrl,"ws://127.0.0.1:39001/api/v1/game/socket");isolated.storage.setItem("session","test");assert.equal(storage.getItem("session"),null);assert.equal(isolated.storage.getItem("session"),"test");
-  context.fetch=async()=>({ok:true,json:async()=>({kind:"mxzg-owned-mysql-it",run:"wrong"})});await assert.rejects(isolatedSocketPreview(normal.socketUrl,storage));
-  address("http://localhost:7456/?mxzgTestRun="+run+"&mxzgTestApi="+encodeURIComponent("http://127.0.0.1:18080"));await assert.rejects(isolatedSocketPreview(normal.socketUrl,storage));
+  const isolated=await IsolatedSocketPreviewUtils.isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage);assert.equal(isolated.socketUrl,"ws://127.0.0.1:39001/api/v1/game/socket");isolated.storage.setItem("session","test");assert.equal(storage.getItem("session"),null);assert.equal(isolated.storage.getItem("session"),"test");
+  context.fetch=async()=>({ok:true,json:async()=>({kind:"mxzg-owned-mysql-it",run:"wrong"})});await assert.rejects(IsolatedSocketPreviewUtils.isolatedSocketPreview(normal.socketUrl,storage));
+  address("http://localhost:7456/?mxzgTestRun="+run+"&mxzgTestApi="+encodeURIComponent("http://127.0.0.1:18080"));await assert.rejects(IsolatedSocketPreviewUtils.isolatedSocketPreview(normal.socketUrl,storage));
  }finally{context.fetch=fetchBefore;if(previous)Object.defineProperty(context,"location",previous);else delete context.location;}
 }
 /** 逐件期限数据不按配置合并；字符串 ID 无精度损失，非法数据不污染整包。 */
 function checkInventoryIdentity(){
  const id="9223372036854775807",timed={serverTimeSeconds:100,items:[{instanceId:id,itemId:123,activeAtSeconds:50,expiresAtSeconds:200},{instanceId:"second",itemId:123,activeAtSeconds:60,expiresAtSeconds:300}]};
- assert.equal(readBagItems([{itemId:900102,quantity:1,instanceId:id}])[0].instanceId,id);
- assert.equal(readTimedItems(timed).length,2);
- assert.throws(()=>readTimedItems({...timed,serverTimeSeconds:200}));
- assert.throws(()=>readTimedItems({...timed,items:[timed.items[0],timed.items[0]]}));
- let elapsed=1000;const model=new BagModel(()=>elapsed);model.reset("role");model.replaceAll([],timed);assert.equal(model.snapshot.timedItems.length,2);assert.equal(model.snapshot.timedServerTimeSeconds,100);elapsed+=2500;assert.equal(model.serverTimeSeconds(),102);
+ assert.equal(BagItemDataUtils.readBagItems([{itemId:900102,quantity:1,instanceId:id}])[0].instanceId,id);
+ assert.equal(BagItemDataUtils.readTimedItems(timed).length,2);
+ assert.throws(()=>BagItemDataUtils.readTimedItems({...timed,serverTimeSeconds:200}));
+ assert.throws(()=>BagItemDataUtils.readTimedItems({...timed,items:[timed.items[0],timed.items[0]]}));
+ let elapsed=1000;const model=new BagModel(()=>elapsed);model.reset();model.replaceAll([],timed);assert.equal(model.snapshot.timedItems.length,2);assert.equal(model.snapshot.timedServerTimeSeconds,100);elapsed+=2500;assert.equal(model.serverTimeSeconds(),102);
  model.suspendClock();elapsed+=100000;assert.equal(model.serverTimeSeconds(),null,"后台不能沿用旧时钟");
  model.replaceAll([], {...timed,serverTimeSeconds:150});assert.equal(model.serverTimeSeconds(),150,"单调时钟暂停后按服务器首包校准");
- const fallback=new BagModel(null);fallback.reset("role");fallback.replaceAll([],timed);fallback.advanceClock(2);assert.equal(fallback.serverTimeSeconds(),102);
+ const fallback=new BagModel(null);fallback.reset();fallback.replaceAll([],timed);fallback.advanceClock(2);assert.equal(fallback.serverTimeSeconds(),102);
  fallback.suspendClock();fallback.advanceClock(30);assert.equal(fallback.serverTimeSeconds(),null);fallback.replaceAll([], {...timed,serverTimeSeconds:150});assert.equal(fallback.serverTimeSeconds(),150,"无单调时钟也以恢复首包校准");
  const before=model.snapshot;assert.throws(()=>model.replaceAll([{itemId:900102,quantity:9}],{...timed,serverTimeSeconds:300}));assert.equal(model.snapshot,before);
- model.reset(null);assert.equal(model.snapshot.timedItems.length,0);
+ model.reset();assert.equal(model.snapshot.timedItems.length,0);
 }
 /** 基础角色资料不可缺字段、取负数或混淆时间顺序；唯一 Model 深层只读。 */
 function checkRoleBasics(){
  const basics={experience:66,cup:1000,headId:0,imageId:410304012,borderId:0,language:1,createdAtSeconds:100,lastLoginAtSeconds:120,experienceToNextLevel:120};
  const raw={id:"role-basic",nickname:"测试",serverId:"local-1",level:1,gold:0,diamonds:0,basics};
- const role=readRole(raw);assert.deepEqual(role.basics,basics);assert(Object.isFrozen(role.basics));
- for(const key of Object.keys(basics)){assert.throws(()=>readRole({...raw,basics:{...basics,[key]:-1}}));const incomplete:any={...basics};delete incomplete[key];assert.throws(()=>readRole({...raw,basics:incomplete}));}
- assert.throws(()=>readRole({...raw,basics:{...basics,lastLoginAtSeconds:99}}));assert.throws(()=>readRole({...raw,basics:{...basics,experience:120}}));
- assert.throws(()=>readRole({...raw,basics:null}));assert.throws(()=>readRole([]));
+ const role=AccountApi.readRole(raw);assert.deepEqual(role.basics,basics);assert(Object.isFrozen(role.basics));
+ for(const key of Object.keys(basics)){assert.throws(()=>AccountApi.readRole({...raw,basics:{...basics,[key]:-1}}));const incomplete:any={...basics};delete incomplete[key];assert.throws(()=>AccountApi.readRole({...raw,basics:incomplete}));}
+ assert.throws(()=>AccountApi.readRole({...raw,basics:{...basics,lastLoginAtSeconds:99}}));assert.throws(()=>AccountApi.readRole({...raw,basics:{...basics,experience:120}}));
+ assert.throws(()=>AccountApi.readRole({...raw,basics:null}));assert.throws(()=>AccountApi.readRole([]));
  const account=new AccountModel();account.replace({busy:false,role:raw,error:""});basics.experience=99;assert.equal(account.snapshot.role!.basics!.experience,66);assert(Object.isFrozen(account.snapshot.role!.basics));
 }
 /** 应用统一隔离成功与失败；业务模块不比较账号、令牌或会话代次。 */
@@ -110,7 +110,7 @@ async function checkApplicationDelivery(): Promise<void> {
   const switched=saves.snapshot, pages=closePages;
   resolve(receipt());await done;
   assert.equal(saves.snapshot,switched,"旧成功结果不进入模块");
-  assert.equal(inventory.snapshot.roleKey,"local-2/role-other");
+  assert.equal(account.snapshot.role!.id,"role-other");assert.equal(inventory.snapshot.synced,true);
   server.state={...server.state,revision:1};socket.onState=frame=>assets.apply(frame);
   server.push(1,0,0);assert.equal(closePages,pages,"同角色状态同步不关页");
   done=formation.save(draft);
@@ -133,7 +133,7 @@ async function main(){
  checkInventoryIdentity();
  await checkPreviewIsolation();
  const server=new Server(),account=new AccountModel(),model=new BagModel(),bag=new BagController(model);
- const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:value=>{const row=value as any;readRole(row.role);readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},retryDelay:()=>1,heartbeatMs:100000});
+ const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:value=>{const row=value as any;AccountApi.readRole(row.role);BagItemDataUtils.readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},retryDelay:()=>1,heartbeatMs:100000});
  const service=new AccountService(account,new AccountApi(socket),{read:()=>null,write:()=>{},clear:()=>{}});bag.initialize();
  const assets=new AssetStateBinding(account,bag,new RoleController(value=>service.acceptRole(value)));
  service.onInitialized=frame=>assets.apply(frame);socket.onState=frame=>assets.apply(frame);socket.onReady=()=>{if(account.snapshot.role&&socket.latestState)assets.apply(socket.latestState);};
@@ -160,19 +160,19 @@ async function main(){
   server.state={...server.state,timedInventory:{...timed,serverTimeSeconds:150}};
   server.busyAuthentications=1;socket.setBackground(false);socket.setBackground(false);
   await until(()=>model.serverTimeSeconds()===150);assert.deepEqual(server.requests.slice(requestsBefore),["session.authenticate","session.authenticate"],"BUSY 只重试鉴权，不补查库存");
-  lateMessage({data:encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:oldWire.connection,body:{...server.state,revision:999,timedInventory:timed}})});assert.equal(model.serverTimeSeconds(),150,"后台旧连接回包不能倒退时钟");
+  lateMessage({data:GameProtocolCodecUtils.encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:oldWire.connection,body:{...server.state,revision:999,timedInventory:timed}})});assert.equal(model.serverTimeSeconds(),150,"后台旧连接回包不能倒退时钟");
   model.suspendClock();socket.setBackground(true);
   server.state={...server.state,revision:4,timedInventory:{serverTimeSeconds:250,items:[]}};
   socket.setBackground(false);await until(()=>model.serverTimeSeconds()===250);assert.equal(model.snapshot.timedItems.length,0,"后台跨过期限后恢复到服务器有效列表");
-  unwatch();assert(await service.login("other","local-2"));assert.equal(model.quantity(900101),0);assert.equal(model.snapshot.roleKey,"local-2/role-other");
-  oldMessage({data:encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:"connection-0",body:{revision:999,role:{id:"role-player",nickname:"old",level:1,gold:999,diamonds:0,serverId:"local-1"},inventory:[{itemId:900101,quantity:999}],heroes:[]}})});
+  unwatch();assert(await service.login("other","local-2"));assert.equal(model.quantity(900101),0);assert.equal(account.snapshot.role!.id,"role-other");assert.equal(model.snapshot.synced,true);
+  oldMessage({data:GameProtocolCodecUtils.encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:"connection-0",body:{revision:999,role:{id:"role-player",nickname:"old",level:1,gold:999,diamonds:0,serverId:"local-1"},inventory:[{itemId:900101,quantity:999}],heroes:[]}})});
   assert.equal(model.quantity(900101),0);assert.equal(account.snapshot.role!.id,"role-other");
   const before=model.snapshot;const validBasics=server.state.role.basics;server.state.role.basics={...validBasics,experience:120};
   server.push(1,3,9);assert.equal(model.snapshot,before,"非法角色资料不得部分写入合法库存");assert.equal(account.snapshot.role!.basics!.experience,0);
   server.state.role.basics=validBasics;server.push(1,3,-1);assert.equal(model.snapshot,before,"非法整包不得部分更新角色或背包");assert.equal(account.snapshot.role!.gold,0);
-  socket.setBackground(true);service.logout();assert.equal(model.snapshot.roleKey,null);assert.equal(model.items.length,0);
+  socket.setBackground(true);service.logout();assert.equal(model.snapshot.status,"idle");assert.equal(model.snapshot.synced,false);assert.equal(model.items.length,0);
   const loggedOutWires=server.wires.length;socket.setBackground(false);await new Promise(r=>setTimeout(r,20));assert.equal(server.wires.length,loggedOutWires,"后台退出后不能恢复旧账号");
-  assert.equal(await service.login("player","missing-world"),false);assert(account.snapshot.error.includes("服务器暂未开放"));assert.equal(model.snapshot.roleKey,null);
+  assert.equal(await service.login("player","missing-world"),false);assert(account.snapshot.error.includes("服务器暂未开放"));assert.equal(model.snapshot.status,"idle");assert.equal(model.snapshot.synced,false);
   console.log("PASS unified initialization, no duplicate requests, atomic role/bag events, monotonic revision, reconnect, old-wire isolation, invalid payload, logout");
  }finally{stop();socket.onReady=socket.onState=null;socket.disconnect();assets.dispose();bag.dispose();EventDispatcher.instance.offTarget(target);}
 }

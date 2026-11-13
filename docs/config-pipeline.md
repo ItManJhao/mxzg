@@ -37,7 +37,7 @@ herolevel.xlsx → 导出 herolevel.json → client-schema 的 HeroLevel（level
     const required = GameConfig.instance.requireConfig(GConfig.Item, itemId);
     const state = GameConfig.instance.status(GConfig.Item);
 
-RemakeConfig 的 startup 只读 Language/LoadingTips；city 再读五张主城表；hero 再读 HeroType/Item；inventory 复用 Item/Language。表未加载或首次加载失败抛 ConfigUnavailable，status 区分 unloaded/failed；已加载空表返回空数组，缺行返回 undefined，requireConfig 缺行抛 ConfigRowMissing。
+RemakeConfigUtils 的 startup 只读 Language/LoadingTips；city 再读五张主城表；hero 再读 HeroType/Item；inventory 复用 Item/Language。表未加载或首次加载失败抛 ConfigUnavailable，status 区分 unloaded/failed；已加载空表返回空数组，缺行返回 undefined，requireConfig 缺行抛 ConfigRowMissing。
 
 加载先复制、逐字段校验、建索引并递归冻结，再原子提交整组；失败保留此前有效数据，status.error 记录最近失败。整表和嵌套数据不可写，不暴露内部 Map。并发同版本请求去重，失败可重试，成功复用。
 
@@ -47,17 +47,17 @@ prepare 的 version 参数隔离不同版本：新组全部成功才切换并清
 
 ## 类型化资源
 
-图片统一经ResManager按目录和原始文件名获取；不维护资源名或可用ID清单。CommonUiResources、ResourceCatalog和config/resource-catalog.json已删除。ResourceTypes只保存类型契约，ResourceAssets/ResourcePool负责请求合并与持有释放。
+图片统一经ResManager按目录和原始文件名获取；不维护资源名或可用ID清单。CommonUiResources、ResourceCatalog和config/resource-catalog.json已删除。ResourceTypes只保存类型契约，ResourceAssetsUtils/ResourcePool负责请求合并与持有释放。
 
 ```ts
 ResManager.setSprite(iconNode, ResManager.ui("common", "other_rare-4"));
 const frame = await ResManager.getSpriteFrame(ownerNode, ResManager.ui("hero", "hero-icon_elem-1"));
-const target = ResourceAssetsUtils.describe("resources", "spine/jiemian", "SkeletonData");
+const target = ResourceAssetsUtils.describe("spine", "jiemian", "SkeletonData");
 ```
 
 静态图片优先直接绑定Prefab。动态缺图在实际加载失败时记录路径/原因，候选默认图由调用方指定。直接getSpriteFrame返回Promise，失败交给调用方处理；不承诺未加载资源同步可取。
 
-LoadingPlan显式配置三个阶段。tools/generate_resources.cjs只生成Prefab UUID回退和既有玩法准入，不再扫描图片、生成模块资源描述。保留Prefab序列化引用和原UUID。[resource-missing.json](../config/resource-missing.json)仅为历史审计。
+LoadingPlan显式配置三个阶段。tools/generate_resources.cjs只生成Prefab UUID身份索引和PrefabPlanUtils准入，不扫描图片、不生成模块资源描述；运行加载没有UUID地址回退。保留Prefab序列化引用和原UUID。[resource-missing.json](../config/resource-missing.json)仅为历史审计。
 
 以下为历史查缺记录，不代表当前资源入口：
 
@@ -80,7 +80,7 @@ LoadingPlan显式配置三个阶段。tools/generate_resources.cjs只生成Prefa
 
 重新生成后剩 **4 个引用 / 4 张图**，均保留为待补美术，未判为可删除历史引用。异空间碎片另核对日本/多语言/魔兽梦境配置使用 backpack/1300004（名称键 710404、说明键 870004、用途一致），当前中国简体来源遗留的 1100507 在已查图集无对应帧。只改源表 J1493 并通过现有导出器重新生成 item.json；未改变用途或活动规则。当前 1300004 原图与日本同名图集帧美术一致，但像素版本不同，保留现有图片与 UUID，不用另一分支像素覆盖。三张新图未由本批正常首胜发放，不把资源加载验证算作对应皮肤/充值玩法验收。三张新增图片已通过真实 Creator 的既有资源作用域加载，尺寸 102×102，共享礼包 ID 指向同一 UUID。异空间碎片运行时复核已于 2026-11-02 后续独立验证批完成：当前 Creator 预览的 GameConfig 返回 backpack/1300004，ItemIconById[1300004] 指向 resources/ui/bag/backpack_1300004，既有资源作用域加载为 102×102 SpriteFrame，UUID 为 ad66e79b-695c-4c69-8a0a-18ae4e7adf8b@f9941。实际加载的原生 PNG 与仓库图片 SHA256 同为 5ac2f5035672f3fc7bf64e94d0a85ba5c34b14698f92ea4ddede624597c8d6a8，目视为蓝色晶体碎片，未回退旧地址或通用占位图。源表 item!J1493、导出、目录与 meta 再次一致；作用域已释放。证据保留在忽略目录 client/temp/mysql-phase-20261102。此次仅验证配置与资源加载，未写库存、伪造领奖或验收未开放玩法。全部保留 Prefab 序列化 UUID 另由结构审查验证。
 
-ResourceAssets 复用 ResourcePool 的去重、失败重试、持有计数与关闭隔离。decRef(false) 只解除作用域持有，避免破坏序列化和既有显示加载器共享资源；全面主动淘汰、内存预算、下载与性能测量仍待完成。
+ResourceAssetsUtils 复用 ResourcePool 的去重、失败重试、持有计数与关闭隔离。decRef(false) 只解除作用域持有，避免破坏序列化和既有显示加载器共享资源；全面主动淘汰、内存预算、下载与性能测量仍待完成。
 
 ## 美术追溯
 

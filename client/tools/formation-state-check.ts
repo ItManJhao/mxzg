@@ -7,7 +7,7 @@ import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { HeroRosterEvent } from "../assets/scripts/features/hero/utils/HeroRosterEvent";
 import { FormationEvent } from "../assets/scripts/features/hero/utils/FormationEvent";
 import { Protocol } from "../assets/scripts/platform/Protocol";
-import { encodeGameFrame, decodeGameFrame, GameFrame } from "../assets/scripts/platform/GameProtocolCodec";
+import { GameProtocolCodecUtils, GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import type { FormationSaveRequest } from "../assets/scripts/features/hero/data/FormationData";
 
 const hero = { id: "00000000-0000-4000-8000-000000000001", templateId: 10105008, level: 1, star: 5 };
@@ -18,21 +18,21 @@ function sync(model: HeroRosterModel, version: number): void {
         slots: version ? draft.slots : [], formationId: 1, unlockedIds: [1], assistanceUnlocked: false,
         options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }],
     } });
-    EventDispatcher.instance.emit(HeroRosterEvent.Updated, { roleKey: model.roleKey, revision: model.version });
+    EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: model.version });
 }
 /** 通过真实二进制编码生成回执，模块仍须校验关联。 */
 function receipt(body: FormationSaveRequest): GameFrame {
-    return decodeGameFrame(encodeGameFrame({ version: 1, kind: "response", name: Protocol.FORMATION_SAVE,
+    return GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({ version: 1, kind: "response", name: Protocol.FORMATION_SAVE,
         id: "response", ok: true, body: { requestId: body.requestId, version: 1 } }));
 }
 /** 每个用例使用独立模块和Model，不依赖账号或UI。 */
 function setup(send: (body: FormationSaveRequest) => Promise<GameFrame>) {
     const heroes = new HeroRosterModel(), saves = new FormationSaveModel();
-    heroes.reset("role-one"); sync(heroes, 0);
+    heroes.reset(); sync(heroes, 0);
     const controller = new FormationController(saves, heroes);
     controller.configure(async (body, received, failed) => {
         try { received(await send(body)); } catch (error) { failed(error); }
-    }); controller.initialize(); controller.resetSession("role-one");
+    }); controller.initialize(); controller.resetSession();
     return { heroes, saves, controller };
 }
 /** 正常同步、未确认重试和并发业务边界分别检查。 */

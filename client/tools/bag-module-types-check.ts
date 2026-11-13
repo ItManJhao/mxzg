@@ -9,7 +9,7 @@ function checkEventAndLifecycleTypes(data: BagUpdateData): void {
     const events = EventDispatcher.instance;
     events.emit(BagEvent.BagUpdate, data);
     events.on(BagEvent.BagUpdate, value => { const revision: number = value.revision; return revision; });
-    events.once(BagEvent.BagUpdate, value => { const role: string | null = value.roleKey; return role; });
+    events.once(BagEvent.BagUpdate, value => { const revision: number = value.revision; return revision; });
     // @ts-expect-error Event names must be declared by a module.
     events.emit("bag.typo", data);
     // @ts-expect-error Wrong event payload cannot compile.

@@ -5,8 +5,8 @@
 import assert from "node:assert/strict";
 import { BlockInputEvents, Button, createdNodes, director, Director, Graphics, Node, Prefab, UITransform } from "cc";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
-import { UIManager, isOpenCancelled, PageNav } from "../assets/scripts/framework/ui/UIManager";
-import { bindViewRuntime, ModalOptions, registerView, ViewClass, viewCtorById, viewSpecOf } from "../assets/scripts/framework/ui/UIRegistry";
+import { UIManager, PageNav } from "../assets/scripts/framework/ui/UIManager";
+import { UIRegistry, ModalOptions, ViewClass } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 
 /** 记录关闭次数，不发业务请求。 */
@@ -41,7 +41,7 @@ class FailedDialog extends DialogFixture {
     }
 }
 
-/** 等待固定数量微任务，覆盖load/mount/whenReady，不替代真实帧或计时器。 */
+/** 等待固定数量微任务，覆盖加载/实例化/whenReady，不替代真实帧或计时器。 */
 async function flush(): Promise<void> {
     for (let index = 0; index < 8; index++) {
         await Promise.resolve();
@@ -58,21 +58,26 @@ async function main(): Promise<void> {
     ui.setResidentHost("popup", () => root);
     const createdAt = createdNodes.length;
     const mounted: DialogFixture[] = [];
-    /** 注入实际实例挂载，沿用UIManager统一生命周期。 */
+    /** 注入可实例化的Prefab，沿用UIManager的统一实例化与拥有者生命周期。 */
     function register(ctor: ViewClass<unknown>, id: string, modal?: ModalOptions,
         multiple = false, load: () => Promise<Prefab> = async () => new Prefab(), hostId = "popup",
         prepare?: () => Promise<void>): void {
-        registerView(ctor, {
+        /** 保留加载失败/取消时序，只由Prefab实例化回调构造测试节点。 */
+        async function loadFixturePrefab(): Promise<Prefab> {
+            const prefab = await load();
+            return Object.assign(prefab, {
+                _instantiate: () => {
+                    const node = new Node(id);
+                    node.addComponent(UITransform);
+                    const view = node.addComponent(ctor) as DialogFixture;
+                    mounted.push(view);
+                    return node;
+                },
+            });
+        }
+        UIRegistry.registerView(ctor, {
             id, prefab: "test/" + id, layer: UILayer.Popup, cache: false, allowMultiple: multiple,
-            hostId, modal, load, prepare,
-            mount: parent => {
-                const node = new Node(id);
-                node.parent = parent;
-                node.addComponent(UITransform);
-                const view = node.addComponent(ctor) as DialogFixture;
-                mounted.push(view);
-                return node;
-            },
+            hostId, modal, load: loadFixturePrefab, prepare,
         });
     }
     register(MaskedDialog, "shared-masked", { mask: true, closeOnOutside: true });
@@ -83,17 +88,17 @@ async function main(): Promise<void> {
     register(WaitingDialog, "shared-waiting", { mask: true, closeOnOutside: true });
     register(FailedDialog, "shared-failed", { mask: true, closeOnOutside: true });
 
-    const ownSpec = viewSpecOf(PlainDialog)!;
-    const firstBinding = bindViewRuntime(PlainDialog, { hostId: "first-runtime-host" });
-    const secondBinding = bindViewRuntime(PlainDialog, { hostId: "second-runtime-host" });
-    assert.equal(viewSpecOf(PlainDialog)!.prefab, ownSpec.prefab, "应用绑定不能改变页面唯一地址");
+    const ownSpec = UIRegistry.viewSpecOf(PlainDialog)!;
+    const firstBinding = UIRegistry.bindViewRuntime(PlainDialog, { hostId: "first-runtime-host" });
+    const secondBinding = UIRegistry.bindViewRuntime(PlainDialog, { hostId: "second-runtime-host" });
+    assert.equal(UIRegistry.viewSpecOf(PlainDialog)!.prefab, ownSpec.prefab, "应用绑定不能改变页面唯一地址");
     firstBinding();
-    assert.equal(viewSpecOf(PlainDialog)!.hostId, "second-runtime-host", "旧应用迟到撤销不能覆盖新绑定");
+    assert.equal(UIRegistry.viewSpecOf(PlainDialog)!.hostId, "second-runtime-host", "旧应用迟到撤销不能覆盖新绑定");
     secondBinding();
-    assert.equal(viewSpecOf(PlainDialog), ownSpec, "按登记链恢复View自身定义，不复活已撤销绑定");
-    assert.equal(viewCtorById(ownSpec.id), PlainDialog);
+    assert.equal(UIRegistry.viewSpecOf(PlainDialog), ownSpec, "按登记链恢复View自身定义，不复活已撤销绑定");
+    assert.equal(UIRegistry.viewCtorById(ownSpec.id), PlainDialog);
     secondBinding();
-    assert.equal(viewSpecOf(PlainDialog), ownSpec, "重复撤销不删除静态登记");
+    assert.equal(UIRegistry.viewSpecOf(PlainDialog), ownSpec, "重复撤销不删除静态登记");
 
     let configurationFails = true;
     let configuredLoads = 0;
@@ -118,7 +123,7 @@ async function main(): Promise<void> {
         return new Prefab();
     }, "popup", () => new Promise(resolve => { finishConfiguration = resolve; }));
     const configurationPending = ui.open(ConfigCancelledDialog);
-    const configurationCancelled = assert.rejects(configurationPending, isOpenCancelled);
+    const configurationCancelled = assert.rejects(configurationPending, UIManager.isOpenCancelled);
     ui.closeById("config-cancelled");
     finishConfiguration();
     await configurationCancelled;
@@ -170,7 +175,7 @@ async function main(): Promise<void> {
     ui.close(upper);
 
     const cancelled = ui.open(WaitingDialog);
-    const cancelledResult = assert.rejects(cancelled, isOpenCancelled);
+    const cancelledResult = assert.rejects(cancelled, UIManager.isOpenCancelled);
     await flush();
     assert.equal(ui.snapshot().pendingResident, 1);
     ui.closeById("shared-waiting");
@@ -187,7 +192,7 @@ async function main(): Promise<void> {
     register(DelayedDialog, "shared-delayed", { mask: true, closeOnOutside: true }, false,
         () => new Promise(resolve => { finishLoad = resolve; }));
     const delayed = ui.open(DelayedDialog);
-    const delayedResult = assert.rejects(delayed, isOpenCancelled);
+    const delayedResult = assert.rejects(delayed, UIManager.isOpenCancelled);
     ui.closeById("shared-delayed");
     finishLoad(new Prefab());
     await delayedResult;
@@ -221,7 +226,7 @@ async function main(): Promise<void> {
     assert.equal(shade.parent, root, "外部销毁也向下恢复");
 
     const pendingAtUnload = ui.open(WaitingDialog);
-    const pendingAtUnloadResult = assert.rejects(pendingAtUnload, isOpenCancelled);
+    const pendingAtUnloadResult = assert.rejects(pendingAtUnload, UIManager.isOpenCancelled);
     await flush();
     ui.uninstall(nav);
     await pendingAtUnloadResult;
@@ -233,7 +238,7 @@ async function main(): Promise<void> {
     assert.equal(ui.releaseUnusedModal(), false, "重复释放无节点时安全返回false");
     assert.equal(createdNodes.slice(createdAt).filter(node => node.name === "SharedModalLayer").length, 1,
         "整个堆叠与恢复过程只创建过一份节点");
-    assert.throws(() => registerView(PlainDialog, { id: "bad-modal", prefab: "test", layer: UILayer.Page,
+    assert.throws(() => UIRegistry.registerView(PlainDialog, { id: "bad-modal", prefab: "test", layer: UILayer.Page,
         cache: false, allowMultiple: false, modal: { mask: true, closeOnOutside: true } }), /仅支持Popup/);
     const standalone = new UIManager();
     standalone.setResidentHost("popup", () => root);

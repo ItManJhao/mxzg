@@ -1,11 +1,11 @@
 /** 主线挂机主页：静态底板保存关卡、四项收益及三个正式入口；挑战交给页内战场，奖励仅在结算显示。
  * 挂机读取权威时钟与基础速率，宝箱只读；页面关闭取消显示但保留服务端待结算状态。 */
 import { _decorator, Button, Label, Node, Sprite, SpriteFrame, UITransform, sp } from "cc";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
-import { prepareHeroDetailConfig, prepareInventoryConfig } from "../../../config/RemakeConfig";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { MainChapterController } from "../MainChapterController";
@@ -17,20 +17,20 @@ import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
 import { GameLog } from "../../../core/GameLog";
 import { IdleChestUtils } from "../utils/IdleChestUtils";
-import { mountNamedSpine } from "./battleSpine";
+import { BattleSpineService } from "./BattleSpineService";
 import { MainChapterIdleResources } from "./MainChapterIdleResources";
 
 const { ccclass, property } = _decorator;
 
-@view({
+@UIRegistry.view({
     id: "remake-campaign",
     prefab: "bundles/module/battle/prefabs/MainChapterView",
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
     prepare: async () => {
-        await prepareInventoryConfig();
-        await prepareHeroDetailConfig();
+        await RemakeConfigUtils.prepareInventoryConfig();
+        await RemakeConfigUtils.prepareHeroDetailConfig();
     },
 })
 @ccclass("MainChapterView")
@@ -125,7 +125,7 @@ export class MainChapterView extends BaseView {
         }
         this.ownListener(UIManager.instance.setResidentHost("main-chapter-field",
             () => !this.closed && this.battleHost?.isValid ? this.battleHost : null));
-        bindVisibleRefresh(this.node, () => this.fitViewport());
+        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
         this.listen(this.challengeButton, () => { void this.prepareChallenge(); });
         this.listen(this.quickBattleButton, () => UIManager.instance.toast("快速战斗尚未恢复"));
         this.listen(this.powerButton, () => UIManager.instance.toast("战力提升建议尚未恢复"));
@@ -143,7 +143,7 @@ export class MainChapterView extends BaseView {
         if (!this.idleChestHost || !this.idleBubble || !this.idleBubbleLabel) {
             throw new Error("挂机宝箱静态绑定缺失");
         }
-        mountNamedSpine(this.idleChestHost, "res-block", "normal-1", {
+        BattleSpineService.instance.mountNamedSpine(this.idleChestHost, "res-block", "normal-1", {
             onReady: () => {
                 if (!this.closed) {
                     this.idleChestStage = 0;
@@ -429,7 +429,7 @@ export class MainChapterView extends BaseView {
             return;
         }
         this.idleResources?.clear();
-        const box = fitVisibleRoot(this.node);
+        const box = ViewportLayoutUtils.fitVisibleRoot(this.node);
         const scale = Math.min(1, Math.max(0.1, (box.width - 24) / 640));
         this.panel.setScale(scale, scale, 1);
         this.panel.setPosition(0, -box.height / 2 + 150 + 84 * scale, 0);

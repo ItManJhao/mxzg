@@ -31,7 +31,7 @@ import { MainChapterController } from "../assets/scripts/features/battle/MainCha
 import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterModel";
 import { Protocol } from "../assets/scripts/platform/Protocol";
 import { ProtocolRouter } from "../assets/scripts/platform/ProtocolRouter";
-import { encodeGameFrame, decodeGameFrame, GameFrame } from "../assets/scripts/platform/GameProtocolCodec";
+import { GameProtocolCodecUtils, GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
 import { mxzg } from "../assets/scripts/platform/GameProtocol.generated";
 const battleId = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
@@ -39,7 +39,7 @@ const original = { maxCleared: 1, pendingBattleId: battleId, assetRevision: 3 };
 const latest = { maxCleared: 2, assetRevision: 8 };
 /** 构造真实方向信封，经生成编码往返，不直接绕过协议约束。 */
 function frame(name: string, body: unknown, kind = "response"): GameFrame {
-    return decodeGameFrame(encodeGameFrame({ version: 1, name, kind, ...(kind === "response" ? {ok: true} : {}), body }));
+    return GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({ version: 1, name, kind, ...(kind === "response" ? {ok: true} : {}), body }));
 }
 
 /** 构造物品格行为替身，真实页面布局及资源绑定另由Prefab专项检查。 */
@@ -299,7 +299,7 @@ async function main(): Promise<void> {
     const model = new MainChapterModel();
     const controller = new MainChapterController(model);
     controller.initialize();
-    controller.resetSession("test/role");
+    controller.resetSession();
     controller.onNotify(Protocol.STATE_CHANGED, { revision: 3, mainChapter: original });
     assert.deepEqual(model.state, original);
     assert.equal(MainChapterController.readState(undefined), null);
@@ -432,7 +432,7 @@ async function main(): Promise<void> {
     assert.throws(() => ChapterSettlementUtils.experienceFrame(multiLevel, 0.5, () => 0));
     controller.configure(async (_name, _body, _received, _failed) => {
         // 应用换号后不交付旧成功或失败；控制器不得在finally里恢复旧业务状态。
-        controller.resetSession("test/other");
+        controller.resetSession();
     });
     await controller.challenge();
     assert.equal(model.state, null);
@@ -470,7 +470,7 @@ async function main(): Promise<void> {
     }
     if (process.argv.includes("--wire")) {
         {
-        const encounter = decodeGameFrame(new Uint8Array(readFileSync("backend/target/main-idle-encounter.pb")));
+        const encounter = GameProtocolCodecUtils.decodeGameFrame(new Uint8Array(readFileSync("backend/target/main-idle-encounter.pb")));
         assert.equal(encounter.name, Protocol.CHAPTER_IDLE_ENCOUNTER);
         const body = encounter.body as any;
         const idleModel = new MainChapterModel();
@@ -496,7 +496,7 @@ async function main(): Promise<void> {
         const live = new MainChapterController(model);
         live.initialize();
         for (let mission = 1; mission <= 3; mission++) {
-            const read = (kind: string) => decodeGameFrame(new Uint8Array(readFileSync("backend/target/chapter-" + kind + "-" + mission + ".pb")));
+            const read = (kind: string) => GameProtocolCodecUtils.decodeGameFrame(new Uint8Array(readFileSync("backend/target/chapter-" + kind + "-" + mission + ".pb")));
             const restored = read("restore");
             ProtocolRouter.instance.dispatch(live, restored);
             assert.equal(model.state!.maxCleared, mission);
@@ -563,7 +563,7 @@ async function main(): Promise<void> {
         assert.throws(() => MainChapterController.readIdle(invalid, shared.state));
     }
     if (process.argv.includes("--wire")) {
-        const frame = decodeGameFrame(new Uint8Array(readFileSync("backend/target/main-idle-snapshot.pb")));
+        const frame = GameProtocolCodecUtils.decodeGameFrame(new Uint8Array(readFileSync("backend/target/main-idle-snapshot.pb")));
         const body = frame.body as any;
         const chapter = MainChapterController.readState(body.mainChapter, body.revision);
         assert.equal(MainChapterController.readIdle(body.mainChapterIdle, chapter)!.rewardStage, 2);
@@ -674,7 +674,7 @@ async function main(): Promise<void> {
         UIManager.instance.open = originalUiOpen;
         BattleReplayUtils.units = originalUnits;
         BattleReplayUtils.names = originalNames;
-        shared.reset(null);
+        shared.reset();
     }
     const chapterPrefab = JSON.parse(readFileSync("client/assets/bundles/module/battle/prefabs/MainChapterView.prefab", "utf8"));
     const chapterRoot = chapterPrefab[chapterPrefab[0].data.__id__];

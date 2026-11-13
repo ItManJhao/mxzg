@@ -1,10 +1,10 @@
 /** 账号会话服务：统一登录、恢复和失效处理；失效后仅保留本次应用内的账号提示，不保留授权。 */
-import { batchNotifications } from "../../framework/EventDispatcher";
-import type { GameFrame } from "../../platform/GameProtocolCodec";
+import { EventDispatcher } from "../../framework/EventDispatcher";
+import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { SessionChanged } from "../../framework/SessionChanged";
 import { AccountModel } from "./AccountModel";
 import type { RoleProfile } from "./AccountModel";
-import { readSession } from "./AccountApi";
+import { AccountApi } from "./AccountApi";
 import type { AccountGateway, AccountSession, LoginResult } from "./AccountApi";
 import { SocketFailure } from "../../platform/GameSocketClient";
 
@@ -71,7 +71,7 @@ export class AccountService implements AccountAuthorization {
         let session = this.session;
         try {
             session = session || this.store.read();
-            if (session) session = readSession(session);
+            if (session) session = AccountApi.readSession(session);
         } catch {
             this.safely(() => this.store.clear());
             session = null;
@@ -187,10 +187,11 @@ export class AccountService implements AccountAuthorization {
         this.invalidate("登录已失效，请重新登录");
     }
 
+    /** 接收已校验的登录结果、保存凭证，并批量发布账号及统一初始化状态；仅当前操作会进入此处。 */
     private accept(result: LoginResult): void {
         this.session = result.session;
         this.safely(() => this.store.write(result.session));
-        batchNotifications(() => {
+        EventDispatcher.batchNotifications(() => {
             this.model.replace({ busy: false, role: result.role, error: "" });
             const frame = this.api.initialization?.();
             if (frame) this.onInitialized?.(frame);

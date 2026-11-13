@@ -5,7 +5,7 @@
  */
 import { BlockInputEvents, Button, Color, director, Director, Graphics, Layers, Node } from "cc";
 import { ModalOptions } from "./UIRegistry";
-import { ancestorScale, fitVisibleRoot, readVisibleBox } from "./visibleFit";
+import { ViewportLayoutUtils } from "./ViewportLayoutUtils";
 
 /** 共享蒙版的不透明度，0到255；叠窗只改变所属目标，不叠加多份颜色。 */
 const MASK_ALPHA = 150;
@@ -149,15 +149,15 @@ export class ModalLayer {
         if (!node?.isValid || !node.parent) {
             return;
         }
-        const size = readVisibleBox();
+        const size = ViewportLayoutUtils.readVisibleBox();
         const parent = node.parent as Node & { worldPosition?: { x: number; y: number; z: number } };
         const position = parent.worldPosition || parent.position;
-        const key = [size.width, size.height, ancestorScale(node), position.x, position.y, this.mask].join("/");
+        const key = [size.width, size.height, ViewportLayoutUtils.ancestorScale(node), position.x, position.y, this.mask].join("/");
         if (key === this.boundsKey) {
             return;
         }
         this.boundsKey = key;
-        fitVisibleRoot(node, size);
+        ViewportLayoutUtils.fitVisibleRoot(node, size);
         const graphics = node.getComponent(Graphics)!;
         graphics.clear();
         graphics.fillColor = new Color(0, 0, 0, this.mask ? MASK_ALPHA : 0);

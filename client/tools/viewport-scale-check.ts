@@ -29,14 +29,14 @@ function fixture(): { root: Node; bounds: UITransform; content: Node; adapter: V
 const sample = fixture();
 sample.bounds.setContentSize(590.4, 1280);
 sample.adapter.lateUpdate();
-assert.equal(sample.adapter.scaleRatio, 590.4 / 640);
+assert.equal(sample.content.scale.x, 590.4 / 640);
 assert.equal(sample.content.scale.x, sample.content.scale.y, "内容必须等比，不横向压缩人物与图标");
 assert.deepEqual(sample.order, ["Content", "Panel"], "先更新父约束，再更新子约束");
 sample.adapter.lateUpdate();
 assert.equal(sample.order.length, 2, "尺寸未变时不每帧遍历Widget");
 sample.bounds.setContentSize(820, 1280);
 sample.adapter.lateUpdate();
-assert.equal(sample.adapter.scaleRatio, 1, "默认宽屏不超过设计大小");
+assert.equal(sample.content.scale.x, 1, "默认宽屏不超过设计大小");
 const count = sample.order.length;
 sample.bounds.setContentSize(820, 960);
 sample.adapter.lateUpdate();
@@ -46,7 +46,7 @@ sample.adapter.lateUpdate();
 assert.equal(sample.order.length, count + 4, "缓存页重开重新按当前视口对齐");
 sample.adapter.maxScale = 1.2;
 sample.adapter.lateUpdate();
-assert.equal(sample.adapter.scaleRatio, 1.2, "显式最大比例由Prefab参数控制");
+assert.equal(sample.content.scale.x, 1.2, "显式最大比例由Prefab参数控制");
 sample.root.destroy();
 
 const invalid = new ViewportScale();

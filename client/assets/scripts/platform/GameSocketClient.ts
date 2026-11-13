@@ -4,8 +4,8 @@
  */
 import type { ReadProtocol } from "./Protocol";
 import { Protocol } from "./Protocol";
-import type { GameFrame } from "./GameProtocolCodec";
-import { decodeGameFrame, encodeGameFrame, GAME_SOCKET_PROTOCOL } from "./GameProtocolCodec";
+import type { GameFrame } from "./GameProtocolCodecUtils";
+import { GameProtocolCodecUtils, GAME_SOCKET_PROTOCOL } from "./GameProtocolCodecUtils";
 
 export type SocketPort = Pick<WebSocket, "onopen" | "onmessage" | "onerror" | "onclose" | "send" | "close" | "readyState" | "binaryType" | "protocol">;
 export class SocketFailure extends Error {
@@ -105,11 +105,11 @@ export class GameSocketClient {
       const timer=setTimeout(()=>finish(new SocketFailure("TIMEOUT")),this.options.timeoutMs||15000);
       socket.onopen=()=>{
         if(socket.protocol!==GAME_SOCKET_PROTOCOL){finish(new SocketFailure("INVALID_MESSAGE","服务端协议版本不匹配，请重启后端"));return;}
-        try {socket.send(encodeGameFrame({version:1,kind:"request",name:Protocol.SERVERS_LIST,id,body:{}}));}catch{finish(new SocketFailure("DISCONNECTED"));}
+        try {socket.send(GameProtocolCodecUtils.encodeGameFrame({version:1,kind:"request",name:Protocol.SERVERS_LIST,id,body:{}}));}catch{finish(new SocketFailure("DISCONNECTED"));}
       };
       socket.onmessage=event=>{
         try {
-          const frame=decodeGameFrame(event.data);
+          const frame=GameProtocolCodecUtils.decodeGameFrame(event.data);
           if(frame.version!==1 || frame.kind!=="response" || frame.name!==Protocol.SERVERS_LIST || frame.id!==id || frame.ok!==true || frame.error!==undefined) throw new SocketFailure("INVALID_MESSAGE");
           this.traceReceived(frame);finish(null,this.object(frame.body).items);
         }catch{finish(new SocketFailure("INVALID_MESSAGE"));}
@@ -256,7 +256,7 @@ export class GameSocketClient {
       const timer = setTimeout(() => this.drop(new SocketFailure("TIMEOUT"), this.maintain), this.options.timeoutMs || 15000);
       this.pending.set(id, { name, resolve, reject, timer });
       try {
-        this.socket!.send(encodeGameFrame({ version: 1, kind: "request", name, id, body,
+        this.socket!.send(GameProtocolCodecUtils.encodeGameFrame({ version: 1, kind: "request", name, id, body,
           ...(this.connectionId ? { connectionId: this.connectionId } : {}) }));
       } catch { this.drop(new SocketFailure("DISCONNECTED"), this.maintain); }
     });
@@ -265,7 +265,7 @@ export class GameSocketClient {
   /** 严格关联请求和连接标识；重复回包无副作用，顶号立即阻止自动重连。 */
   private receive(raw: unknown): void {
     try {
-      const frame = decodeGameFrame(raw);
+      const frame = GameProtocolCodecUtils.decodeGameFrame(raw);
       if (frame.version !== 1 || typeof frame.name !== "string") throw new SocketFailure("INVALID_MESSAGE");
       if (this.connectionId && frame.connectionId !== this.connectionId) throw new SocketFailure("INVALID_MESSAGE");
       if (frame.kind === "event" && frame.name === Protocol.STATE_CHANGED && this.connectionId && this.ready) {

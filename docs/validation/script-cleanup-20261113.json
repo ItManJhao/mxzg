@@ -1,0 +1,554 @@
+{
+  "date": "2026-11-13",
+  "branch": "hao",
+  "baseline": "a2ea3e43",
+  "commitPushOrMergePerformed": false,
+  "scope": "仅客户端代码职责、命名、工具入口、资源目录与文档整理；保持已授权玩法与三段配置/其余按需/资源池。",
+  "summary": {
+    "definitionFiles": 50,
+    "renamedScripts": 40,
+    "convertedFreeExports": 130
+  },
+  "retainedDefinitions": [
+    {
+      "from": "client/assets/scripts/app/remake/bootChrome.ts",
+      "to": "client/assets/scripts/app/remake/BootChrome.ts",
+      "uuid": "59f3c9e6-5261-43bf-a2bf-08039c9749e2",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2
+    },
+    {
+      "from": "client/assets/scripts/app/remake/logoSplash.ts",
+      "to": "client/assets/scripts/app/remake/LogoSplashUtils.ts",
+      "uuid": "8792fe9c-f107-4087-9f02-e16318dd5833",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/app/remake/StartupFlow.ts",
+      "to": "client/assets/scripts/app/remake/StartupFlowUtils.ts",
+      "uuid": "abbf05a2-3428-5cd5-aad7-792b484561f6",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/app/remake/IsolatedSocketPreview.ts",
+      "to": "client/assets/scripts/app/remake/IsolatedSocketPreviewUtils.ts",
+      "uuid": "996495d7-2b28-4ff3-a998-78438fc97d19",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/app/remake/PageTransition.ts",
+      "to": "client/assets/scripts/app/remake/PageTransitionUtils.ts",
+      "uuid": "48e06781-c44b-57fb-930c-6b6e4f470b7d",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/features/account/AccountApi.ts",
+      "to": "client/assets/scripts/features/account/AccountApi.ts",
+      "uuid": "ed24e457-0630-5b64-a872-8c5650d3d564",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2
+    },
+    {
+      "from": "client/assets/scripts/features/bag/data/BagItemData.ts",
+      "to": "client/assets/scripts/features/bag/data/BagItemDataUtils.ts",
+      "uuid": "e5de5173-5d4e-4fe5-86a0-87bad9bcd0e7",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2
+    },
+    {
+      "from": "client/assets/scripts/features/battle/ui/battleClock.ts",
+      "to": "client/assets/scripts/features/battle/ui/BattleClockUtils.ts",
+      "uuid": "b7e2c4a1-6d58-4f93-9a10-3c8e5b71d2f6",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/features/battle/ui/battleNumberPaint.ts",
+      "to": "client/assets/scripts/features/battle/ui/BattleNumberPaintUtils.ts",
+      "uuid": "faeb8d4c-5c7d-411b-979d-5bf3b45f772e",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/features/battle/ui/BattlePage.ts",
+      "to": "client/assets/scripts/features/battle/ui/BattlePageUtils.ts",
+      "uuid": "68d424b0-ae0d-4ad0-93b5-72d7d1d6039b",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1,
+      "retiredUnusedExports": [
+        "paintSpeedIcon"
+      ]
+    },
+    {
+      "from": "client/assets/scripts/features/battle/ui/battlePrefabLayout.ts",
+      "to": "client/assets/scripts/features/battle/ui/BattlePrefabLayoutUtils.ts",
+      "uuid": "eb92241c-b2dc-403f-97a1-46caf965f8eb",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 12,
+      "retiredUnusedExports": [
+        "battleSlotPage"
+      ]
+    },
+    {
+      "from": "client/assets/scripts/features/battle/ui/battlePresentation.ts",
+      "to": "client/assets/scripts/features/battle/ui/BattlePresentationUtils.ts",
+      "uuid": "4c8e1a72-9b35-4d60-8f17-2a6d0e5c8b41",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 5
+    },
+    {
+      "from": "client/assets/scripts/features/battle/ui/battlePresentView.ts",
+      "to": "client/assets/scripts/features/battle/ui/BattlePresentViewUtils.ts",
+      "uuid": "9a1f6c30-2d84-4e7b-b519-7c3e8a0d6f25",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2,
+      "retiredUnusedExports": [
+        "paintBattleSkillName",
+        "paintBattleOverhead",
+        "clearBattleOverhead"
+      ]
+    },
+    {
+      "from": "client/assets/scripts/features/battle/ui/battleSpine.ts",
+      "to": "client/assets/scripts/features/battle/ui/BattleSpineService.ts",
+      "uuid": "8059023f-f389-49cb-a383-a920c518f020",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2
+    },
+    {
+      "from": "client/assets/scripts/features/battle/ui/idleHangSkirmishPlan.ts",
+      "to": "client/assets/scripts/features/battle/ui/IdleHangSkirmishPlanUtils.ts",
+      "uuid": "c9a4e13f-6d81-405a-be55-3f71c02a8d49",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2,
+      "retiredUnusedExports": [
+        "jpHangHeroPosition",
+        "hangAllyFloorPoint",
+        "hangEnemyFloorPoint",
+        "hangLinePosition",
+        "hangStandPoint",
+        "hangAllyVisibleShift",
+        "idleSpotsOnFloor",
+        "idleHangLoopOffset",
+        "idleFoeEnterX",
+        "idleSkirmishMayStrike",
+        "idleSkirmishSwingClip",
+        "idleSkirmishStageIdx",
+        "idleSkirmishSwings",
+        "idleSkirmishHurt",
+        "idleSkirmishKillClip",
+        "planIdleFoe",
+        "planIdleWave",
+        "hangFightStageId",
+        "hangAppearAnchor",
+        "planHangFightLine"
+      ]
+    },
+    {
+      "from": "client/assets/scripts/features/battle/utils/BattleAnimationCatalog.ts",
+      "to": "client/assets/scripts/features/battle/data/BattleAnimationData.ts",
+      "uuid": "c3001a01-b90b-4000-a001-3001b90b0001",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 0,
+      "retiredUnusedExports": [
+        "hasBattleAnimationClip",
+        "battleEffectClip"
+      ]
+    },
+    {
+      "from": "client/assets/scripts/features/city/config/cityIds.ts",
+      "to": "client/assets/scripts/features/city/config/CityIds.ts",
+      "uuid": "e1a8da3a-11eb-41d6-9bd2-103b651698d7",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 0
+    },
+    {
+      "from": "client/assets/scripts/features/city/ui/CityChrome.ts",
+      "to": "client/assets/scripts/features/city/ui/CityChromeUtils.ts",
+      "uuid": "4064e97a-79b2-4875-a7e2-19f97d874ee7",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 5,
+      "retiredUnusedExports": [
+        "mountCityChrome",
+        "mountCityChromePrefab"
+      ]
+    },
+    {
+      "from": "client/assets/scripts/features/city/ui/CityChromeView.ts",
+      "to": "client/assets/scripts/features/city/ui/CityChromeView.ts",
+      "uuid": "2674f414-2b4a-4b0c-abaf-02d17d3f2b0f",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 0
+    },
+    {
+      "from": "client/assets/scripts/features/city/ui/cityEffectPlay.ts",
+      "to": "client/assets/scripts/features/city/ui/CityEffectPlayUtils.ts",
+      "uuid": "c7f5b0ed-e357-462b-a2ce-7beffa150740",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/features/city/ui/CityHubView.ts",
+      "to": "client/assets/scripts/features/city/ui/CityHubView.ts",
+      "uuid": "98279c88-b9c7-43b9-a89c-8d7b3c1c341f",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 0
+    },
+    {
+      "from": "client/assets/scripts/features/city/ui/CityMap.ts",
+      "to": "client/assets/scripts/features/city/ui/CityMapService.ts",
+      "uuid": "064194a4-3d02-433d-8667-0ac5f8e8b015",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 4,
+      "retiredUnusedExports": [
+        "mountCityMap"
+      ]
+    },
+    {
+      "from": "client/assets/scripts/features/city/ui/cityMapLayout.ts",
+      "to": "client/assets/scripts/features/city/ui/CityMapLayoutUtils.ts",
+      "uuid": "055b7694-d86b-4e56-be69-2aa8ceb551c5",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 15,
+      "retiredUnusedExports": [
+        "harvestCollectClip",
+        "layerWindowX",
+        "contentLeftX",
+        "buildingScreen"
+      ]
+    },
+    {
+      "from": "client/assets/scripts/features/hero/data/HeroSnapshotData.ts",
+      "to": "client/assets/scripts/features/hero/data/HeroSnapshotUtils.ts",
+      "uuid": "9cb73878-3888-5ed4-aab3-fcf08829a478",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 4
+    },
+    {
+      "from": "client/assets/scripts/features/hero/utils/HeroCatalog.ts",
+      "to": "client/assets/scripts/features/hero/utils/HeroCatalog.ts",
+      "uuid": "317faf26-0149-5b28-a765-8e8139169a1a",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 0
+    },
+    {
+      "from": "client/assets/scripts/features/hero/utils/HeroEquipment.ts",
+      "to": "client/assets/scripts/features/hero/utils/HeroEquipmentUtils.ts",
+      "uuid": "fc680f28-2352-4fbb-8448-0d7781a5b91a",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/core/errors.ts",
+      "to": "client/assets/scripts/core/ErrorUtils.ts",
+      "uuid": "a65187e0-90dd-40a9-8607-97e0571359b9",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1,
+      "retiredUnusedExports": [
+        "errorText",
+        "failureCode",
+        "logErrorCode",
+        "ErrorCode",
+        "ErrorCodeValue",
+        "GameError"
+      ]
+    },
+    {
+      "from": "client/assets/scripts/core/GameLog.ts",
+      "to": "client/assets/scripts/core/GameLog.ts",
+      "uuid": "56c5cda9-5a18-442c-9be1-38ccaf9bf621",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 3
+    },
+    {
+      "from": "client/assets/scripts/config/nav.ts",
+      "to": "client/assets/scripts/config/CityNavigationUtils.ts",
+      "uuid": "cffb15db-4b47-4b88-b73c-7e4120eccaee",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 3
+    },
+    {
+      "from": "client/assets/scripts/config/gates.ts",
+      "to": "client/assets/scripts/config/EntryGateUtils.ts",
+      "uuid": "f90a63b5-e81d-4f6a-9cce-addfbd8a09a2",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2
+    },
+    {
+      "from": "client/assets/scripts/config/battleTiming.ts",
+      "to": "client/assets/scripts/config/BattleTimingUtils.ts",
+      "uuid": "50585f44-6e07-4b0d-9bc3-88eb1341fa2f",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/config/RemakeConfig.ts",
+      "to": "client/assets/scripts/config/RemakeConfigUtils.ts",
+      "uuid": "5dff50e8-963e-55c3-9b45-50647544d52b",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 5
+    },
+    {
+      "from": "client/assets/scripts/framework/EventDispatcher.ts",
+      "to": "client/assets/scripts/framework/EventDispatcher.ts",
+      "uuid": "9d2adcb3-d062-441d-a0af-b510b1c88ac7",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2
+    },
+    {
+      "from": "client/assets/scripts/framework/assets/PrefabLoader.ts",
+      "to": "client/assets/scripts/framework/assets/PrefabLoader.ts",
+      "uuid": "a4e7c1d2-8b36-4f90-9c15-2d6a0e8b4f73",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 10
+    },
+    {
+      "from": "client/assets/scripts/framework/assets/SpineJson.ts",
+      "to": "client/assets/scripts/framework/assets/SpineJsonUtils.ts",
+      "uuid": "213bc793-2461-485b-a86a-54d1d8df1c22",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/framework/assets/ResourceAssets.ts",
+      "to": "client/assets/scripts/framework/assets/ResourceAssetsUtils.ts",
+      "uuid": "8c6aa5f9-64d7-4301-97c5-a5d6b7d5be60",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/framework/ui/barSlide.ts",
+      "to": "client/assets/scripts/framework/ui/PageSlideUtils.ts",
+      "uuid": "c91e4b70-2a58-4d6f-8b13-7f0e6a9d45c2",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2
+    },
+    {
+      "from": "client/assets/scripts/framework/ui/visibleFit.ts",
+      "to": "client/assets/scripts/framework/ui/ViewportLayoutUtils.ts",
+      "uuid": "b8d4f2c5-7e39-4a01-8d26-3c9f5b7e1042",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 11
+    },
+    {
+      "from": "client/assets/scripts/framework/ui/visibleChrome.ts",
+      "to": "client/assets/scripts/framework/ui/ChromeLayoutUtils.ts",
+      "uuid": "a7c3e1b4-6d28-4f90-9c15-2b8e4a6d0f31",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 3
+    },
+    {
+      "from": "client/assets/scripts/framework/ui/ViewClose.ts",
+      "to": "client/assets/scripts/framework/ui/ViewCloseUtils.ts",
+      "uuid": "55024747-ebc9-4ede-9246-cfb0f4099cce",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2
+    },
+    {
+      "from": "client/assets/scripts/framework/ui/UiKit.ts",
+      "to": "client/assets/scripts/framework/ui/UiKitUtils.ts",
+      "uuid": "5c5ef1df-f0b3-4d95-8f40-f08c84463233",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 4
+    },
+    {
+      "from": "client/assets/scripts/framework/ui/UIOpenLog.ts",
+      "to": "client/assets/scripts/framework/ui/UIOpenLogUtils.ts",
+      "uuid": "5003da82-34d8-491c-878c-60e08fa96d5c",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/framework/ui/UIRegistry.ts",
+      "to": "client/assets/scripts/framework/ui/UIRegistry.ts",
+      "uuid": "a666a4e1-0cd6-464a-94a2-3781d75ad5ba",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 5
+    },
+    {
+      "from": "client/assets/scripts/framework/ui/UIManager.ts",
+      "to": "client/assets/scripts/framework/ui/UIManager.ts",
+      "uuid": "bcb5d749-bb78-4198-a7fc-d3cdacb24720",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/framework/ui/safeAreaLayout.ts",
+      "to": "client/assets/scripts/framework/ui/DesignResolution.ts",
+      "uuid": "e4e4c089-8176-4798-80b1-90811770aa4b",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 0
+    },
+    {
+      "from": "client/assets/scripts/config/PrefabPlan.ts",
+      "to": "client/assets/scripts/config/PrefabPlanUtils.ts",
+      "uuid": "1dfc9d34-781e-5a7d-b5fc-3cc9f5893364",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/platform/ProtocolState.ts",
+      "to": "client/assets/scripts/platform/ProtocolStateUtils.ts",
+      "uuid": "0ab661ef-a023-407c-bfeb-ab55aec7d5d4",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/platform/GameProtocolLog.ts",
+      "to": "client/assets/scripts/platform/GameProtocolLogUtils.ts",
+      "uuid": "3a938108-9d5e-467b-a91a-a260c9611c47",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    },
+    {
+      "from": "client/assets/scripts/platform/GameProtocolCodec.ts",
+      "to": "client/assets/scripts/platform/GameProtocolCodecUtils.ts",
+      "uuid": "b5b37016-8350-4dcc-97b2-38fa48fe8064",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 2
+    },
+    {
+      "from": "client/assets/scripts/platform/Protocol.ts",
+      "to": "client/assets/scripts/platform/Protocol.ts",
+      "uuid": "ba7e4d8d-a3c3-4688-b7fb-8759d8d30e91",
+      "metaSemanticUnchanged": true,
+      "convertedExports": 1
+    }
+  ],
+  "deletedScripts": [
+    {
+      "path": "client/assets/scripts/features/battle/CampaignApi.ts",
+      "uuid": "118c5273-38e1-4f4b-924c-06e7f3a01d34",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/CampaignController.ts",
+      "uuid": "3b4a3286-e205-5254-b423-3c15a5c78764",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/IdleApi.ts",
+      "uuid": "70569063-3c53-4016-af4f-a1f7ebf73590",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/IdleController.ts",
+      "uuid": "1964827d-e552-4084-9ce8-22421e70e9d5",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/HeroLevelApi.ts",
+      "uuid": "df12439d-6c8d-48fc-a0f6-ef4ef15f06ca",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/HeroLevelController.ts",
+      "uuid": "3955e83b-173b-49ea-89bb-7781ca79e3ca",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/ui/HeroInfoUpLevelLayer.ts",
+      "uuid": "c975272c-c728-4779-a565-507781d4a9b3",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/PausedFeatures.ts",
+      "uuid": "ebc1eaec-17d8-4caf-ae74-db77f1174cfe",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/config/types.ts",
+      "uuid": "78755739-2585-4f49-b1c9-fa476c5d4e2e",
+      "reason": "重复表类型改为直接使用GConfig"
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/spineUpgrade.ts",
+      "uuid": "c4e8a1b2-7f30-4d6e-9b55-2a6c8e91d047",
+      "reason": "删除兼容转发，纯转换归SpineJsonUtils，挂机处理归BattleSpineService"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/battleFramePlay.ts",
+      "uuid": "f03a5b11-c148-440a-8b34-ae822e1018e9",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/battleFrames.ts",
+      "uuid": "51ddd32e-0c0c-4ff3-ae5f-4acc2a876b2f",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/hangFloat.ts",
+      "uuid": "a7e2c91d-4b6f-4e18-9c33-1d5f8a0e6b27",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/idleHangSkirmish.ts",
+      "uuid": "b8f3d02e-5c70-4f29-ad44-2e60b91f7c38",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/idleHangTalkPlan.ts",
+      "uuid": "e1e38d41-dbbc-456e-87b0-75cb082635a3",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/utils/BattleAssetCatalog.ts",
+      "uuid": "27b5bfd5-4e72-455d-8c67-01377d8a71b8",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/city/ui/cityStage.ts",
+      "uuid": "f865d21a-b4b5-4854-ba79-d068a83d972d",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    },
+    {
+      "path": "client/assets/scripts/features/city/ui/cityMount.ts",
+      "uuid": "432c1bb0-dd18-42ce-be4b-b83a3107bdd9",
+      "reason": "无生产调用、工具消费者或序列化绑定的旧客户端链；未删除服务端领域规则"
+    }
+  ],
+  "stateBoundary": {
+    "baseModel": "仅本地版本及生命周期，不持有角色键",
+    "identityCoordination": "AssetStateBinding校验整包/角色/服务端revision后提交唯一Model，并先清理旧页面；连接及回包隔离仍由应用和传输负责",
+    "views": "HeroInfoView/HeroSkillView不保存owner；关闭、绘制代次和迟到结果隔离保留",
+    "resources": "BattleSpineService/CityMapService保留唯一实例及原资源释放语义"
+  },
+  "resources": {
+    "bundles": 16,
+    "remoteBundles": 15,
+    "localBundle": "bootstrap",
+    "prefabs": 32,
+    "configTables": 31,
+    "chapterEvidence": "chapter-resource-move-20261113.json",
+    "effectsEvidence": "battle-effects-move-20261113.json",
+    "runtimeEffectPrefix": "effects/",
+    "legacyRuntimeAliasRetained": false
+  },
+  "validation": {
+    "creatorTypes": "passed",
+    "strictTypes": "passed",
+    "unifiedChecks": {
+      "passed": 52,
+      "total": 52,
+      "paused": 5
+    },
+    "bindings": {
+      "scripts": 162,
+      "prefabAndScene": 33,
+      "bindings": 71
+    },
+    "interactive": "负责人已验收此前功能；本批按指令不运行浏览器、预览或构建，不把历史结果作为本批改名与新包验收。",
+    "nameAndExportGuard": "现有architecture专项验证手写运行脚本PascalCase及无自由函数导出，含反例；第三方/生成/声明/构建入口按职责排除。",
+    "errorCleanup": "旧数字ErrorCode/GameError/errorText/failureCode/logErrorCode无消费者已删除；现行proto失败code是string，SocketFailure与整包校验保留。"
+  },
+  "limitations": [
+    "新effects包需后续经负责人另行授权的集中构建确认真实输出/下载，本批没有新构建包。",
+    "真实CDN、真机、长期内存/GPU结果未新增验证。",
+    "宝箱领取、快速战斗、英雄升级与穿脱仍未开放；清心与护盾疑点保留。"
+  ],
+  "versionControlNote": "当前未暂存提交；后续授权提交时须以区分大小写的Git检查/加入命令记录BootChrome等仅大小写的改名，避免Windows忽略文件名变化。"
+}

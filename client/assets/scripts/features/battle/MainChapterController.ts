@@ -1,10 +1,10 @@
 /** 主线控制器：协议onNotify提交Model，负责挑战幂等、战报读取与结算，不持有View、token或账号。 */
 import { BaseController } from "../../framework/BaseController";
-import { EventDispatcher, publishNotification } from "../../framework/EventDispatcher";
+import { EventDispatcher } from "../../framework/EventDispatcher";
 import { Protocol, ProtocolName } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
-import { STATE_PROTOCOLS, statePayload } from "../../platform/ProtocolState";
-import { GameFrame } from "../../platform/GameProtocolCodec";
+import { STATE_PROTOCOLS, ProtocolStateUtils } from "../../platform/ProtocolStateUtils";
+import { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { mxzg } from "../../platform/GameProtocol.generated";
 import { MainChapterModel, MainChapterState, MainChapterReplay, MainChapterIdleState, MainChapterExperience } from "./MainChapterModel";
 import { BattleReplayUtils } from "./utils/BattleReplayUtils";
@@ -94,7 +94,7 @@ export class MainChapterController extends BaseController {
             case Protocol.SESSION_LOGIN:
             case Protocol.SESSION_AUTHENTICATE:
             case Protocol.STATE_CHANGED: {
-                const state = statePayload(protocol, value);
+                const state = ProtocolStateUtils.statePayload(protocol, value);
                 const chapter = MainChapterController.readState(state.mainChapter, Number(state.revision));
                 const idle = MainChapterController.readIdle(state.mainChapterIdle, chapter);
                 this.model.state = chapter;
@@ -243,8 +243,11 @@ export class MainChapterController extends BaseController {
     }
 
     /** 仅应用身份协调调用，页面关闭不丢失待确认请求。 */
-    protected onResetSession(key: string | null): void { this.model.reset(key); this.notify(); }
+    protected onResetSession(): void {
+        this.model.reset();
+        this.notify();
+    }
 
     /** 通知页面读取唯一Model，不把状态副本塞入事件。 */
-    private notify(): void { publishNotification(() => EventDispatcher.instance.emit(MainChapterController.Updated, undefined)); }
+    private notify(): void { EventDispatcher.publishNotification(() => EventDispatcher.instance.emit(MainChapterController.Updated, undefined)); }
 }

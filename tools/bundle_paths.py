@@ -75,8 +75,21 @@ def resolve_asset_path(value: str | Path, assets_root: Path = ASSETS) -> Path:
     if path.exists() or len(relative.parts) < 2 or relative.parts[0] != "bundles":
         return path
     bundles = discover_bundles(base)
-    # 只有旧物理根bundles/包名需要重定位；普通父目录不被假装成Bundle。
-    name = relative.parts[1]
+    # 历史扁平地址及两种约定分组均按meta身份重定位，分组本身不是Bundle。
+    parts = list(relative.parts[1:])
+    if parts[0] in ("module", "resources"):
+        parts = parts[1:]
+    if not parts:
+        return path
+    # 旧战斗特效的物理证据按独立effects身份重定位；运行时逻辑加载键不经过本入口。
+    if parts[0] == "battle" and len(parts) > 1 and (parts[1] == "effects" or parts[1:] == ["effects.meta"]):
+        effects = bundles.get("effects")
+        if effects is None:
+            return path
+        if parts[1] == "effects.meta":
+            return Path(str(effects) + ".meta")
+        return bundle_asset_path("effects", Path(*parts[2:]), base)
+    name = parts[0]
     if name in bundles:
-        return bundle_asset_path(name, Path(*relative.parts[2:]), base)
+        return bundle_asset_path(name, Path(*parts[1:]), base)
     return path

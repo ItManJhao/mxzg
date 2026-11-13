@@ -2,12 +2,12 @@
  * 重做版应用装配入口，装配登录、角色、背包、英雄只读状态、主线阵容和当前主线闭环。
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
-import {clearCitySpriteCache} from "../../features/city/ui/CityMap";
-import {clearPrefabCache, collectPrefabCache} from "../../framework/assets/PrefabLoader";
-import {ResourceAssetsUtils} from "../../framework/assets/ResourceAssets";
+import { CityMapService } from "../../features/city/ui/CityMapService";
+import { PrefabLoader } from "../../framework/assets/PrefabLoader";
+import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssetsUtils";
 import {AccountComposition} from "./AccountComposition";
 import {ApplicationNotice} from "./ApplicationNotice";
-import { MainChapterController } from "../../features/battle/MainChapterController";
+import {MainChapterController} from "../../features/battle/MainChapterController";
 import {ApplicationPages} from "./ApplicationPages";
 import {ApplicationResources} from "./ApplicationResources";
 import {DevelopmentPreview} from "./DevelopmentPreview";
@@ -18,25 +18,25 @@ import {FormationController} from "../../features/hero/FormationController";
 import {BagModel} from "../../features/bag/BagModel";
 import {GmController} from "../../features/gm/GmController";
 import "../../features/gm/ui/GmView";
-import {Protocol} from "../../platform/Protocol";
+import { Protocol } from "../../platform/Protocol";
 
 
 import {_decorator, Component, director, Director, game, Game, Label, Node, Prefab} from "cc";
 import {PREVIEW} from "cc/env";
-import {GameLog} from "../../core/GameLog";
+import { GameLog } from "../../core/GameLog";
 import {BagController} from "../../features/bag/BagController";
 import {HeroRosterController} from "../../features/hero/HeroRosterController";
 import {RemakeHomeView} from "../../features/home/ui/RemakeHomeView";
-import {isOpenCancelled, UIManager} from "../../framework/ui/UIManager";
+import { UIManager } from "../../framework/ui/UIManager";
 import {GameSocketClient} from "../../platform/GameSocketClient";
-import {BootChrome, loadBootCopy} from "./bootChrome";
+import { BootChrome } from "./BootChrome";
 import {HomeFeatureNavigation, REMAKE_FEATURE_ROUTES} from "./HomeFeatureNavigation";
 import {LoginEntry} from "./LoginEntry";
-import type {LogoSplashHandle} from "./logoSplash";
-import {playLogoSplash} from "./logoSplash";
-import {slideFeaturePage} from "./PageTransition";
+import type { LogoSplashHandle } from "./LogoSplashUtils";
+import { LogoSplashUtils } from "./LogoSplashUtils";
+import { PageTransitionUtils } from "./PageTransitionUtils";
 import {RemakeNavigation} from "./RemakeNavigation";
-import {runStartup, StartupCancelled} from "./StartupFlow";
+import { StartupFlowUtils, StartupCancelled } from "./StartupFlowUtils";
 
 import {RoleController} from "../../features/account/RoleController";
 import {AssetStateBinding} from "./AssetStateBinding";
@@ -141,20 +141,19 @@ export class RemakeApp extends Component {
         const chapter = MainChapterController.instance;
         chapter.configure((name, body, received, failed) => service.deliverAuthenticated(
             token => socket.chapter(token, name, body),
-            frame => { if (this.alive) received(frame); },
-            error => { if (this.alive) failed(error); },
+            frame => {
+                if (this.alive) received(frame);
+            },
+            error => {
+                if (this.alive) failed(error);
+            },
         ), () => model.snapshot.role?.level || 0, () => {
             const basics = model.snapshot.role?.basics;
-            return basics ? { headId: basics.headId, borderId: basics.borderId } : null;
+            return basics ? {headId: basics.headId, borderId: basics.borderId} : null;
         });
         chapter.initialize();
-        const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController, HeroRosterController.instance, formation, () => {
-            // 身份切换时统一关闭角色页面，页面自身无需比较角色键；取消在途打开也由UIManager负责。
-            this.development?.cancelReplay();
-            UIManager.instance.closeById("remake-campaign");
-            UIManager.instance.closeById("bag");
-            UIManager.instance.closeById("remake-formation");
-        }, chapter);
+        const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController,
+            HeroRosterController.instance, formation, () => this.clearRolePages(), chapter);
         service.onInitialized = frame => assets.apply(frame);
         socket.onState = frame => assets.apply(frame);
         let connectionNotice = "";
@@ -181,11 +180,15 @@ export class RemakeApp extends Component {
             parent: id => Object.values(REMAKE_FEATURE_ROUTES).includes(id) ? homeView?.featureHost || null : null,
             content: () => homeView?.cityContent || null,
             changed: id => homeView?.showFeature(id === "remake-campaign" ? "battle" : id === "hero-info" ? "hero" : id === "hero" || id === "bag" ? id : "city"),
-        }, slideFeaturePage);
+        }, PageTransitionUtils.slideFeaturePage);
         const battlePreview = new BattlePreviewController(async (mission, received) => {
             let failure: unknown = null;
             await service.deliverAuthenticated(token => socket.previewBattle(token, mission),
-                frame => { if (this.alive) received(frame); }, error => { failure = error; });
+                frame => {
+                    if (this.alive) received(frame);
+                }, error => {
+                    failure = error;
+                });
             if (failure) throw failure;
         });
         this.unregisterViews.push(() => battlePreview.dispose());
@@ -236,7 +239,6 @@ export class RemakeApp extends Component {
             if (model.snapshot.busy || !model.snapshot.role) {
                 this.resources.stopBackground();
                 ui.closeById("remake-formation");
-                ui.closeById("hero-level");
                 ui.closeById("role-profile");
                 ui.closeById("gm");
                 gm.reset();
@@ -283,7 +285,7 @@ export class RemakeApp extends Component {
             }).catch(async error => {
                 if (!this.alive || epoch !== this.routeEpoch) return;
                 this.routePending = false;
-                if (isOpenCancelled(error) || error instanceof StartupCancelled) {
+                if (UIManager.isOpenCancelled(error) || error instanceof StartupCancelled) {
                     // A login -> home -> login change can cancel an earlier load of the same route.
                     if (this.requestedRoute === route) {
                         this.requestedRoute = "";
@@ -332,10 +334,10 @@ export class RemakeApp extends Component {
     /** 顺序执行配置、资源、会话恢复与开页，失败时保留可重试的加载画面。 */
     private async boot(restore: () => Promise<void>, openPage: () => Promise<void>): Promise<void> {
         const chrome = this.chrome = new BootChrome(this.startupHost!, async () => this.loadingPrefab!);
-        const logo = this.logo = playLogoSplash(this.startupHost!, this.node);
+        const logo = this.logo = LogoSplashUtils.playLogoSplash(this.startupHost!, this.node);
         await logo.fadedIn;
         if (!this.alive) return;
-        await chrome.open("loading", logo.node);
+        await chrome.open(logo.node);
         if (!this.alive) return;
         if (!chrome.isReady) throw new Error("已有 LoadingLayer 加载失败");
         await logo.held;
@@ -345,12 +347,12 @@ export class RemakeApp extends Component {
         while (this.alive) {
             try {
                 chrome.show();
-                await runStartup([
+                await StartupFlowUtils.runStartup([
                     {
                         label: "准备登录资源", weight: 70, run: async progress => {
                             await this.resources.prepareStage("login", (_label, ratio) => progress(ratio, 1), () => this.alive);
-                            const copy = await loadBootCopy();
-                            if (this.alive) chrome.setTips(copy.tips);
+                            const tips = await BootChrome.readLoadingTips();
+                            if (this.alive) chrome.setTips(tips);
                         }
                     },
                     {label: "准备账号信息", weight: 10, run: async () => restore()},
@@ -392,6 +394,23 @@ export class RemakeApp extends Component {
             this.paintWaiters.add(done);
             director.once(Director.EVENT_AFTER_DRAW, done);
         });
+    }
+
+    /**
+     * 统一状态入口确认身份改变后，先同步关闭旧角色界面，再允许它重置Model。
+     * 取消页面意图、弹窗准备及切页动画，不让页面通过旧账号键或清空事件触发返回导航。
+     */
+    private clearRolePages(): void {
+        const ui = UIManager.instance;
+        this.features?.reset();
+        this.development?.cancelReplay();
+        ui.invalidatePending();
+        this.navigation?.back(false);
+        for (const id of ["hero-skill", "bag-info", "role-profile", "remake-formation", "battle-detail",
+            "chapter-end", "chapter-reward-info", "main-chapter-battle", "skill-audit", "gm"]) {
+            ui.closeById(id);
+        }
+        ui.clearCached();
     }
 
     /** 平台进入后台时由应用统一暂停通信及背包计时，不让背包控制器依赖账号。 */
@@ -446,9 +465,9 @@ export class RemakeApp extends Component {
         this.resources.dispose();
         for (const unregister of this.unregisterViews.splice(0)) unregister();
         UIManager.instance.releaseUnusedModal();
-        clearCitySpriteCache();
+        CityMapService.instance.clearCitySpriteCache();
         ResourceAssetsUtils.releaseResidents();
-        clearPrefabCache();
+        PrefabLoader.clearPrefabCache();
     }
 
     /** 距离上次闲置预制体检查的秒数；只随当前应用update推进，销毁后不再运行。 */
@@ -460,7 +479,7 @@ export class RemakeApp extends Component {
         this.prefabCollectionSeconds += dt;
         if (this.prefabCollectionSeconds >= 30) {
             this.prefabCollectionSeconds = 0;
-            collectPrefabCache();
+            PrefabLoader.collectPrefabCache();
         }
     }
 

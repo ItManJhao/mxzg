@@ -3,7 +3,7 @@
  * 关闭及异常退出时清理本页监听；业务 Model 和模块请求不随窗口释放。
  */
 import { _decorator, Component } from "cc";
-import { requestViewClose } from "./ViewClose";
+import { ViewCloseUtils } from "./ViewCloseUtils";
 import type { ViewController } from "./UIRegistry";
 import { EventScope } from "../EventScope";
 import { EventDispatcher } from "../EventDispatcher";
@@ -65,7 +65,7 @@ export class BaseView<TArgs = unknown> extends Component {
 
   /** 关掉自己这一页。不是最上面一层时 UIManager 不会拆下面的页。 */
   close(): void {
-    requestViewClose(this);
+    ViewCloseUtils.requestViewClose(this);
   }
 
   whenReady(): Promise<void> {

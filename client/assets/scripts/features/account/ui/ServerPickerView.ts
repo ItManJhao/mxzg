@@ -2,13 +2,13 @@
 import { _decorator, Button, Node, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
-import { ancestorScale } from "../../../framework/ui/visibleFit";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import type { ServerSelection, GameServer } from "../ServerSelection";
 import { ServerCellView } from "./ServerCellView";
 const { ccclass, property } = _decorator;
-@view({
+@UIRegistry.view({
     id: "server-picker",
     prefab: "bundles/module/login/prefabs/ServerPickerView",
     layer: UILayer.Popup,
@@ -59,7 +59,7 @@ export class ServerPickerView extends BaseView<ServerSelection> {
     private fit(): void {
         const { width, height } = ccView.getVisibleSize();
         const scale = Math.min(width * 0.94 / 614, height * 0.86 / 798);
-        this.node.setScale(scale / ancestorScale(this.node), scale / ancestorScale(this.node), 1);
+        this.node.setScale(scale / ViewportLayoutUtils.ancestorScale(this.node), scale / ViewportLayoutUtils.ancestorScale(this.node), 1);
         this.node.setPosition(-307 * scale, -399 * scale, 0);
     }
 

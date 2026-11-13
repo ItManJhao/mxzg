@@ -10,13 +10,13 @@ import { SuperContent } from "../../../framework/ui/SuperContent";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
-import { view } from "../../../framework/ui/UIRegistry";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { prepareHeroConfig } from "../../../config/RemakeConfig";
-import { messageOf } from "../../../core/errors";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
+import { ErrorUtils } from "../../../core/ErrorUtils";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroRosterUtils } from "../utils/HeroRosterUtils";
@@ -27,13 +27,13 @@ import type { HeroCellModel } from "./HeroListPresentation";
 
 const { ccclass, property } = _decorator;
 
-@view({
+@UIRegistry.view({
     id: "hero",
     prefab: "bundles/module/hero/prefabs/HeroListView",
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
-    prepare: prepareHeroConfig,
+    prepare: RemakeConfigUtils.prepareHeroConfig,
 })
 @ccclass("HeroListView")
 export class HeroListView extends BaseView {
@@ -63,7 +63,7 @@ export class HeroListView extends BaseView {
 
     /** 只将完整外根铺到可见画布；固定布局由Prefab组件处理。 */
     public onCreate(): void {
-        bindVisibleRefresh(this.node, () => fitVisibleRoot(this.node));
+        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => ViewportLayoutUtils.fitVisibleRoot(this.node));
     }
 
     /** 开页前注入只读状态与模板索引；不接收选择回调或页面控制器。 */
@@ -151,7 +151,7 @@ export class HeroListView extends BaseView {
             return;
         }
         void UIManager.instance.open(HeroInfoView, { heroId: hero.instanceId })
-            .catch(error => UIManager.instance.toast(messageOf(error)));
+            .catch(error => UIManager.instance.toast(ErrorUtils.messageOf(error)));
     }
 
     /** 只保留一份等待激活的帧回调，实际显示后立即解除并绘制。 */
@@ -199,7 +199,7 @@ export class HeroListView extends BaseView {
         };
         bind(this.lineupButton, () => {
             void UIManager.instance.openById("remake-formation", { complete: () => {} })
-                .catch(error => UIManager.instance.toast(messageOf(error)));
+                .catch(error => UIManager.instance.toast(ErrorUtils.messageOf(error)));
         });
         bind(this.btnHero, () => UIManager.instance.toast("英雄数据随登录和重连自动同步，请等待连接恢复"));
         this.elemButtons.forEach((button, index) => bind(button, () => this.pickElem(index)));

@@ -8,14 +8,14 @@
 
 ## 页面和资源：人工修改入口
 
-页面地址、页面属性及prepare配置前置在BagView/BagInfoView各自@view定义，UIManager实际打开时执行前置并通过统一加载器取得Prefab，不在ApplicationPages再登记地址或注入资源包装。LoadingPlan仅决定提前准备哪些资源；预载Prefab不执行prepare，不创建页面。BagDefinition、BagPagesUtils、BagResourcesUtils均已移除。
+页面地址、页面属性及prepare配置前置在BagView/BagInfoView各自@UIRegistry.view定义，UIManager实际打开时执行前置并通过统一加载器取得Prefab，不在ApplicationPages再登记地址或注入资源包装。LoadingPlan仅决定提前准备哪些资源；预载Prefab不执行prepare，不创建页面。BagDefinition、BagPagesUtils、BagResourcesUtils均已移除。
 
 | 修改内容 | 人工入口 |
 |---|---|
 | 背包结构、背景和列表绑定 | assets/bundles/module/bag/prefabs/BagView.prefab |
 | 共用物品格子与选中样式 | assets/bundles/module/common/prefabs/BagItemView.prefab、common/item-atlas |
 | 页签 | assets/bundles/module/bag/prefabs/BagTabView.prefab |
-| 独立详情面板与内容阻挡 | 同目录BagInfoView.prefab；共享模态参数在BagInfoView的@view |
+| 独立详情面板与内容阻挡 | 同目录BagInfoView.prefab；共享模态参数在BagInfoView的@UIRegistry.view |
 | 店员外观 | BagView.shopkeeperSkeleton |
 | 物品到图标/品质的显示规则 | features/bag/utils/BagItemCatalog.ts |
 | 第一、二阶段准备什么 | app/remake/LoadingPlan.ts：页面写{page:BagView}等类引用，其他资源/配置显式列目标 |
@@ -39,7 +39,7 @@
 - app/remake/AssetStateBinding.ts：应用协调身份、持久版本、角色与背包原子通知。
 - platform/Protocol.ts / ProtocolRouter.ts：统一消息目录与真实消息定向分发，不保存玩家资产。
 
-BagApi、BagUpdateCoordinator、bindBagSession 已删除；不再保留背包查询、其他玩法回包写库存或无版本资产增量入口。暂停模块的 PausedFeatures 只明确报错，不执行请求回调，不提供假成功或第二条通信链；对应模块重做时删除其暂停边界。
+BagApi、BagUpdateCoordinator、bindBagSession已删除；不保留背包查询、其他玩法回包写库存或无版本资产增量入口。2026-11-13将无入口的旧Campaign/Idle/HeroLevel客户端链和PausedFeatures一并退役，后续恢复以真实WS协议与权威状态为准，不能复活旧资产回调。
 
 ## 代码阅读与注释约定
 
@@ -105,7 +105,7 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 
 SuperContent默认启用虚拟化、bufferLines=1，按完整库存投影计算content逻辑尺寸，只给视口和缓冲行分配有限Cell；ScrollView仍管理滚动、惯性与回弹。BagView监听RENDER_ITEM/SELECT_ITEM，onRender调用BagItemView.show只绘制，onSelect处理选中与独立详情，Cell不再保存页面回调。分类回起点、同分类保位及至少20槽/按四补齐仍是背包规则，虚拟池不修改库存。
 
-BagInfoView作为独立BaseView打开，Prefab只保留面板与实际内容背景的BlockInputEvents；共享模态在@view配置，UIManager只用一份节点。BagView布局归Widget与ViewportScale，外根fitVisibleRoot只桥接视口；列表view/content局部缩放须1，原Cell锚点与正缩放保留。refresh(index)只立即刷新可见条目，离屏条目进入视口时再画。本批51项、类型与四分类/独立详情/重开库存保持已通过，见[限定复验](validation/virtual-list-resource-review-20261111.json)；20逻辑格少于可见容量，实际20节点，长列表上限另有千/万条夹具及850关配置覆盖，不冒充大库存实测。
+BagInfoView作为独立BaseView打开，Prefab只保留面板与实际内容背景的BlockInputEvents；共享模态在@UIRegistry.view配置，UIManager只用一份节点。BagView布局归Widget与ViewportScale，外根fitVisibleRoot只桥接视口；列表view/content局部缩放须1，原Cell锚点与正缩放保留。refresh(index)只立即刷新可见条目，离屏条目进入视口时再画。本批51项、类型与四分类/独立详情/重开库存保持已通过，见[限定复验](validation/virtual-list-resource-review-20261111.json)；20逻辑格少于可见容量，实际20节点，长列表上限另有千/万条夹具及850关配置覆盖，不冒充大库存实测。
 
 ## 旧协议还原清单
 
@@ -155,7 +155,7 @@ Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItem
 
 ## 2026-11-04 统一隔离边界
 
-背包不发送查询，BagController原本就没有异步换号保护；本批移除BagView的lastRoleKey及换号分支。身份改变时由AssetStateBinding调用应用关闭背包/布阵，再通知模块清空业务数据。BagModel的roleKey仅描述数据归属，“初始化前不接收库存”的检查仍是提交前置条件，不是旧回包隔离。
+背包不发送查询。2026-11-13进一步移除BaseModel、BagModel快照和事件的roleKey；BagModel只校验并保存库存数据，不判断登录身份。AssetStateBinding先校验完整角色归属与持久版本，身份变化时由应用同步关闭旧功能页、弹窗和缓存，再无参重置模块。旧成功/失败回包在连接及账号交付边界被丢弃，不把这项职责转交页面或新增本地身份副本。
 
 通信层拒绝旧连接消息；应用统一校验身份、资产版本及整包内容后才调用onNotify。布阵写操作同样由应用的AccountService.deliverAuthenticated交付结果，模块不判断账号。BaseController不再维护captureSession/isCurrent或会话代次。业务回执匹配、幂等重试与页面自身关闭清理继续保留。
 
@@ -167,7 +167,7 @@ Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItem
 
 ### 图片入口合并（2026-11-11）
 
-人工入口为client/assets/scripts/framework/assets/ResManager.ts。它是手写的路径与显示逻辑，不再由生成器生成整份图标索引；物品目录规则直接保存在ResManager。旧IconCatalog和SpritePaint文件已删除，无兼容转发。底层ResourceAssets/ResourcePool继续管理作用域、缓存和请求。
+人工入口为client/assets/scripts/framework/assets/ResManager.ts。它是手写的路径与显示逻辑，不再由生成器生成整份图标索引；物品目录规则直接保存在ResManager。旧IconCatalog和SpritePaint文件已删除，无兼容转发。底层ResourceAssetsUtils/ResourcePool继续管理作用域、缓存和请求。
 
 ```ts
 ResManager.setSprite(iconNode, ResManager.skill(skillId));

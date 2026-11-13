@@ -1,5 +1,5 @@
 /** 账号与角色唯一只读状态：凭证由 AccountService 持有，RoleController 提交权威角色，订阅者刷新界面。 */
-import { publishNotification } from "../../framework/EventDispatcher";
+import { EventDispatcher } from "../../framework/EventDispatcher";
 
 /** 对照旧 2001 的本批基础字段；不存在表示尚未同步，不用全零数据伪装。 */
 export interface RoleBasics {
@@ -68,7 +68,7 @@ export class AccountModel {
             ...state,
             role: state.role ? Object.freeze({ ...state.role, ...(state.role.basics ? { basics: Object.freeze({ ...state.role.basics }) } : {}) }) : null
         });
-        publishNotification(this.notify);
+        EventDispatcher.publishNotification(this.notify);
     }
 
     private notify = (): void => {

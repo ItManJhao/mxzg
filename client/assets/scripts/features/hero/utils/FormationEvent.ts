@@ -2,6 +2,6 @@
 export const FormationEvent = { SaveChanged: "formation:save-changed" } as const;
 declare module "../../../framework/EventDispatcher" {
     interface EventPayloads {
-        [FormationEvent.SaveChanged]: { readonly roleKey: string | null; readonly revision: number };
+        [FormationEvent.SaveChanged]: { readonly revision: number };
     }
 }

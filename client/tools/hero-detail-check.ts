@@ -4,11 +4,11 @@ import {readFileSync} from "node:fs";
 
 /** 离线按Bundle身份读取源文件，不把物理父层写入游戏配置地址。 */
 const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
-import {readOwnedHero} from "../assets/scripts/features/hero/data/HeroSnapshotData";
+import { HeroSnapshotUtils } from "../assets/scripts/features/hero/data/HeroSnapshotUtils";
 import {GameConfig} from "../assets/scripts/config/GameConfig";
 import {GConfig} from "../assets/scripts/config/GConfig";
 import { HeroSkillUtils } from "../assets/scripts/features/hero/utils/HeroSkillUtils";
-import { GameLog, consoleParts } from "../assets/scripts/core/GameLog";
+import { GameLog } from "../assets/scripts/core/GameLog";
 /** 从仓库真实导出表验证阶段解锁、星级等级、同等级语言和无技能位置。 */
 async function main(){
  const config=new GameConfig(async path=>JSON.parse(readFileSync(resolveBundleFile(path+".json"),"utf8")));
@@ -26,13 +26,13 @@ async function main(){
  assert(Object.isFrozen(skills)&&Object.isFrozen(skills[0]));
  const base={...hero,templateId:10105008,star:5};
  const evolution={type:1,level:2,skill:{skillId:101050081,level:5}};
- const evolved=readOwnedHero({...base,evolution});
+ const evolved=HeroSnapshotUtils.readOwnedHero({...base,evolution});
  const face=HeroSkillUtils.present(evolved,config)[0];assert.equal(face.id,101050081);assert.equal(face.level,5);
  assert.notEqual(face.description,HeroSkillUtils.present(base,config)[0].description);
  assert(Object.isFrozen(evolved.evolution)&&Object.isFrozen(evolved.evolution!.skill));
- assert.equal(readOwnedHero(base).evolution,undefined);
- assert.equal(readOwnedHero({...base,evolution:{type:0,level:0}}).evolution!.type,0);
- for(const invalid of [{type:1,level:0},{type:0,level:1},{type:-1,level:1},{type:1,level:1},{type:0,level:0,skill:evolution.skill},{...evolution,skill:{skillId:101050081,level:0}}])assert.throws(()=>readOwnedHero({...base,evolution:invalid}));
+ assert.equal(HeroSnapshotUtils.readOwnedHero(base).evolution,undefined);
+ assert.equal(HeroSnapshotUtils.readOwnedHero({...base,evolution:{type:0,level:0}}).evolution!.type,0);
+ for(const invalid of [{type:1,level:0},{type:0,level:1},{type:-1,level:1},{type:1,level:1},{type:0,level:0,skill:evolution.skill},{...evolution,skill:{skillId:101050081,level:0}}])assert.throws(()=>HeroSnapshotUtils.readOwnedHero({...base,evolution:invalid}));
  // 模拟导出表漏行，验证展示降级及重复刷新不会刷屏；基础身份错误仍由上面的断言拒绝。
  // 通过同一配置入口覆盖技能表，避免修改仓库资源。
  const original = config.getConfig.bind(config);
@@ -47,10 +47,10 @@ async function main(){
  assert.equal(HeroSkillUtils.status(unavailable[0]), "配置缺失");
  assert.equal(log.recent().length, 2);
  assert.equal(log.recent()[0].layer, "MODULE");
- const parts = consoleParts(log.recent()[0], { window: {} })!;
+ const parts = GameLog.consoleParts(log.recent()[0], { window: {} })!;
  assert.equal(parts.css.length, 2);
  assert(parts.css[1].includes("#FFB74D"));
- assert.equal(consoleParts(log.recent()[0], {}), null);
+ assert.equal(GameLog.consoleParts(log.recent()[0], {}), null);
  log.openView("HeroInfoView", "HeroInfoView", { tag: "UIManager" });
  assert.equal(log.recent().slice(-1)[0].layer, "FRAMEWORK");
  log.subscribe(() => { throw new Error("测试日志订阅异常隔离"); });

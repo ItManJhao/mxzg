@@ -6,30 +6,30 @@
 import { UILayer } from "../../../framework/ui/UILayer";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { prepareInventoryConfig } from "../../../config/RemakeConfig";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 
 import { _decorator, Button, director, Director, Label, Layers, Node, Prefab, UITransform } from "cc";
 import { BagTabKind } from "../data/BagTabKind";
-import { messageOf } from "../../../core/errors";
+import { ErrorUtils } from "../../../core/ErrorUtils";
 import { GameLog } from "../../../core/GameLog";
 import { BAG_TABS, BagUtils } from "../utils/BagUtils";
 import { BagModel } from "../BagModel";
-import type { BagListItem } from "../data/BagItemData";
+import type { BagListItem } from "../data/BagItemDataUtils";
 import { BagEvent } from "../utils/BagEvent";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { BagItemCatalog } from "../utils/BagItemCatalog";
 
-import { spawnPrefab } from "../../../framework/assets/PrefabLoader";
-import { mountNamedSpine } from "../../battle/ui/battleSpine";
+import { PrefabLoader } from "../../../framework/assets/PrefabLoader";
+import { BattleSpineService } from "../../battle/ui/BattleSpineService";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { SuperContent } from "../../../framework/ui/SuperContent";
 import { BagItemView } from "./BagItemView";
 import { BagTabView } from "./BagTabView";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { BagInfoView } from "./BagInfoView";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
-import { isOpenCancelled, UIManager } from "../../../framework/ui/UIManager";
-import { view, viewSpecOf } from "../../../framework/ui/UIRegistry";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
+import { UIManager } from "../../../framework/ui/UIManager";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 
 const { ccclass, property } = _decorator;
 
@@ -41,13 +41,13 @@ export interface BagOpenArgs {
 }
 
 /** 背包数据与选中态展示；通用 SuperContent 负责列表布局。 */
-@view({
+@UIRegistry.view({
     id: "bag",
     prefab: "bundles/module/bag/prefabs/BagView",
     layer: UILayer.Page,
     cache: true,
     allowMultiple: false,
-    prepare: prepareInventoryConfig,
+    prepare: RemakeConfigUtils.prepareInventoryConfig,
 })
 @ccclass("BagView")
 export class BagView extends BaseView<BagOpenArgs> {
@@ -153,10 +153,10 @@ export class BagView extends BaseView<BagOpenArgs> {
     private async initialize(): Promise<void> {
         try {
             this.validateBindings();
-            bindVisibleRefresh(this.node, () => {
+            ViewportLayoutUtils.bindVisibleRefresh(this.node, () => {
                 // 闲置缓存仍保留节点；屏幕变化时不布局隐藏页，重新显示再适配。
                 if (!this.closed && this.node.activeInHierarchy) {
-                    fitVisibleRoot(this.node);
+                    ViewportLayoutUtils.fitVisibleRoot(this.node);
                 }
             });
             this.catalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
@@ -169,8 +169,8 @@ export class BagView extends BaseView<BagOpenArgs> {
             this.refreshGrid();
             this.finishOpen();
         } catch (err) {
-            GameLog.shared.classified("MODULE", "warn", "Bag", "背包没有挂上 " + messageOf(err));
-            this.failOpen(err instanceof Error ? err : new Error(messageOf(err)));
+            GameLog.shared.classified("MODULE", "warn", "Bag", "背包没有挂上 " + ErrorUtils.messageOf(err));
+            this.failOpen(err instanceof Error ? err : new Error(ErrorUtils.messageOf(err)));
         }
     }
 
@@ -182,7 +182,7 @@ export class BagView extends BaseView<BagOpenArgs> {
             this.watchShown();
             return;
         }
-        fitVisibleRoot(this.node);
+        ViewportLayoutUtils.fitVisibleRoot(this.node);
         this.buildTabs();
         this.paint();
     }
@@ -266,7 +266,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         if (this.portraitOn) return;
         this.portraitOn = true;
         this.portrait.active = true;
-        mountNamedSpine(this.portrait, BagView.shopkeeperSkeleton, "act");
+        BattleSpineService.instance.mountNamedSpine(this.portrait, BagView.shopkeeperSkeleton, "act");
     }
 
     /** 显示同步结果及缓存库存提示；重连由传输层自动处理，不诱导重复查询。 */
@@ -285,7 +285,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.tabsBuilt = true;
         for (let i = 0; i < BAG_TABS.length; i++) {
             const spec = BAG_TABS[i];
-            const node = spawnPrefab(this.tabPrefab, this.tabContent);
+            const node = PrefabLoader.spawnPrefab(this.tabPrefab, this.tabContent);
             const tab = node.getComponent(BagTabView);
             if (!tab) {
                 GameLog.shared.classified("MODULE", "warn", "Bag", "BagTabButton 上没有 BagTabView");
@@ -378,7 +378,7 @@ export class BagView extends BaseView<BagOpenArgs> {
             }
         }).catch(error => {
             // 取消由页面管理器处理；真实加载失败也已在该边界统一记录和提示。
-            if (!isOpenCancelled(error) && !this.closed) {
+            if (!UIManager.isOpenCancelled(error) && !this.closed) {
                 this.pickedId = null;
             }
         });
@@ -394,7 +394,7 @@ export class BagView extends BaseView<BagOpenArgs> {
 
     /** 关闭独立详情，连同尚未完成的打开一起取消；不直接销毁其他窗口节点。 */
     private dismissInfo(): void {
-        UIManager.instance.closeById(viewSpecOf(BagInfoView)!.id);
+        UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
     }
 
     /** 写入页面提示日志并交由 UIManager 展示。 */

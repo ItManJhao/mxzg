@@ -6,12 +6,12 @@
 import { _decorator, Button, Label, Node, Sprite } from "cc";
 import { BagUtils } from "../utils/BagUtils";
 import { GameLog } from "../../../core/GameLog";
-import { BagFace } from "../data/BagItemData";
-import { bindVisibleRefresh, fitVisibleRoot } from "../../../framework/ui/visibleFit";
+import { BagFace } from "../data/BagItemDataUtils";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UIManager } from "../../../framework/ui/UIManager";
-import { view, viewSpecOf } from "../../../framework/ui/UIRegistry";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { BagTabKind } from "../data/BagTabKind";
 import { BagModel } from "../BagModel";
@@ -20,7 +20,7 @@ import { BagEvent } from "../utils/BagEvent";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { prepareInventoryConfig } from "../../../config/RemakeConfig";
+import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 
 /** 库存只传条目键与分类；奖励和产物只传只读内容，不能冒充当前库存。 */
 export type BagInfoArgs =
@@ -33,7 +33,7 @@ const { ccclass, property } = _decorator;
  * BagInfoView 只展示当前库存详情，确认关闭，不承担道具使用业务。
  * 关闭只收起这张详情，不关背包页。
  */
-@view({
+@UIRegistry.view({
     id: "bag-info",
     prefab: "bundles/module/bag/prefabs/BagInfoView",
     layer: UILayer.Popup,
@@ -41,7 +41,7 @@ const { ccclass, property } = _decorator;
     cache: false,
     allowMultiple: false,
     modal: { mask: true, closeOnOutside: true },
-    prepare: prepareInventoryConfig,
+    prepare: RemakeConfigUtils.prepareInventoryConfig,
 })
 @ccclass("BagInfoView")
 export class BagInfoView extends BaseView<BagInfoArgs> {
@@ -121,7 +121,7 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
 
     /** 对齐窗口根到可见区域；子节点尺寸和居中由预制体 Widget 控制。 */
     public onCreate(): void {
-        bindVisibleRefresh(this.node, () => fitVisibleRoot(this.node));
+        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => ViewportLayoutUtils.fitVisibleRoot(this.node));
     }
 
     /** 打开独立详情；库存变化只重画本窗口，奖励说明不订阅库存。 */

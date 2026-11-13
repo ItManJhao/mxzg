@@ -2,9 +2,9 @@
 import { _decorator, Button, EditBox, Label, Sprite, SpriteFrame, view as ccView, tween, Tween, Vec3 } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { view } from "../../../framework/ui/UIRegistry";
+import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
-import { ancestorScale } from "../../../framework/ui/visibleFit";
+import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { SkillAuditEntry, SkillAuditUtils } from "../utils/SkillAuditUtils";
@@ -12,7 +12,7 @@ import { SkillAuditCellView } from "./SkillAuditCellView";
 const { ccclass, property } = _decorator;
 /** 应用提供受限本机战报播放入口，不携带角色令牌。 */
 export interface SkillAuditOpenArgs { play: (skill: SkillAuditEntry, returned: () => void) => Promise<void>; }
-@view({
+@UIRegistry.view({
     id: "skill-audit",
     prefab: "bundles/module/battle/prefabs/SkillAuditView",
     layer: UILayer.Popup,
@@ -63,7 +63,7 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
         this.tabFrames = this.kindButtons.map(button => button.getComponent(Sprite)?.spriteFrame || null);
         this.search!.string = "";
         const size = ccView.getVisibleSize();
-        const scale = Math.min(size.width * .94 / 600, size.height * .9 / 820) / ancestorScale(this.node);
+        const scale = Math.min(size.width * .94 / 600, size.height * .9 / 820) / ViewportLayoutUtils.ancestorScale(this.node);
         this.node.setScale(scale, scale, 1);
         this.bind(this.closeButton!, () => this.close());
         this.bind(this.kindButtons[0], () => { this.heroes = true; this.search!.string = ""; this.paint(); });

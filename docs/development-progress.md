@@ -1,10 +1,20 @@
 # 当前项目进度
 
-更新：2026-11-12。页面定义、列表事件、虚拟列表及resources/module目录归档纳入本轮交付；负责人已授权推送hao并合入main，实际提交与远端同步结果以Git记录为准。后续开发继续在hao，跟踪origin/hao；8cb60507是本轮之前的已推送基线。52项、类型及新目录本机限定复验通过，新发布包仍待集中构建。上一批51项与本机结论另见[独立证据](validation/virtual-list-resource-review-20261111.json)，不混作本次结果。
+更新：2026-11-13。开发分支hao，最近已推送基线a2ea3e43；以下新修改未提交推送，未合并main。
 
-## 本批已完成目录归档：resources与module
+## 本批：旧代码、统一类入口与资源职责整理
 
-已将6个通用资源Bundle归到assets/bundles/resources（audio/config/font/icons/maps/spine），9个界面或模块包归到assets/bundles/module（bag/battle/bootstrap/chapter/common/gm/hero/home/login）。两个父目录是普通目录，15个Bundle原名、meta UUID、优先级及远程配置不变，bootstrap继续本地。原26,410份资源/meta逐字节一致，仅新增2份父目录meta；common两份、bag、hero、battle自动图集均保留。
+- 退出和换号统一由应用层隔离连接及回包、关闭页面并重置模块。BaseModel只保存本地版本与生命周期，不保存角色键；HeroInfoView/HeroSkillView移除owner判断，保留关闭与绘制代次，防止关页后的资源结果继续绘制。
+- 清理未装配的Campaign/Idle/HeroLevel客户端链、重复配置类型、Spine转发和旧数字错误码兼容链；继续删除无调用的cityStage、cityMount和旧idleHangSkirmish装配。服务端领域与规则未删除，宝箱领取、快速战斗、升级和穿脱仍关闭。
+- 保留代码统一命名，自由导出入口归入显式静态方法或已有类；回调仍使用稳定接收者。BattleSpineService、CityMapService保留唯一实例管理原缓存和节点生命周期，不把有状态服务变成纯静态工具。Cocos原meta与UUID保留；生成的PrefabPlanUtils修改生成器后再生成。
+- chapter整包归入resources，184份资源/meta逐字节保持。effects从battle模块移入resources并声明独立远程包；12,841份原文件的数量、字节和内容摘要保持，原根UUID保留，仅新增Bundle声明。当前16包（15远程＋bootstrap），32份Prefab、31张配置表；三段配置、其余按需与现有资源池不变。
+- 页面参数用各View的UIRegistry.view；工具、测试及当前文档已同步新类名和资源键。架构检查加入手写运行脚本PascalCase和自由函数导出约束，生成文件与构建入口按职责保留例外，不改图片原文件名或协议生成物。
+
+本轮52/52项有效检查、两套类型检查通过，5组旧检查继续暂停；全库162脚本、33份Prefab/Scene、71处绑定无缺失。最终40份脚本改名，保留130个转换后的类方法入口，共退役18份无用旧脚本及对应meta；50份保留定义的原meta逐项一致。详细依据见[本批整理记录](validation/script-cleanup-20261113.json)，资源完整性见[chapter记录](validation/chapter-resource-move-20261113.json)与[effects记录](validation/battle-effects-move-20261113.json)。负责人已验收此前功能并要求停止重复验收；本轮未运行浏览器或Creator构建，新资源路径尚未在新发布包中验证。下方记录是历史批次，不代表本批重新验收。
+
+## 上一批目录归档：resources与module（a2ea3e43）
+
+已将7个通用资源Bundle归到assets/bundles/resources（audio/chapter/config/font/icons/maps/spine），8个界面或模块包归到assets/bundles/module（bag/battle/bootstrap/common/gm/hero/home/login）。两个父目录是普通目录，15个Bundle原名、meta UUID、优先级及远程配置不变，bootstrap继续本地。原26,410份资源/meta逐字节一致，仅新增2份父目录meta；common两份、bag、hero、battle自动图集均保留。
 
 View唯一Prefab源地址同步新物理路径，运行时仍加载原Bundle名/包内路径；配置schema和ResManager逻辑地址保持，三段配置与现有资源池不变。离线工具按目录meta递归发现Bundle，不新增运行时分类清单。52/52项有效检查、Creator类型、180脚本/33份PrefabScene/71绑定及原文件字节复核通过，5组旧检查保持暂停。新增Bundle路径负例接入统一检查，31表与Python路径边界合计9项通过；构建扩展1.6.3的隔离钩子检查通过，不能冒充真实Creator构建。负责人已重新打开Creator并导入；之后26,410份原文件/meta仍逐字节一致，见[本批目录记录](validation/bundle-directory-groups-20261111.json)。人工操作入口见[资源维护说明](staged-resource-loading.md)。
 
@@ -34,7 +44,7 @@ ResManager.setSprite复用原ResourcePool，每节点只保留当前显示与本
 
 ## 前批限定复验：页面定义与列表交互收敛
 
-17个实际独立View以@view保存id、Prefab地址、层级、缓存、模态和prepare配置前置，嵌入组件与未开放旧View不补登记。UIManager实际开页时执行prepare，三段预载只读取页面的Prefab地址、不执行prepare/load或实例化。LoadingPlan页面目标改为`{page:BagView}`等View类引用，图片、骨骼和配置仍可显式列目标；不重复维护页面路径或模块资源清单。
+17个实际独立View以@UIRegistry.view保存id、Prefab地址、层级、缓存、模态和prepare配置前置，嵌入组件与未开放旧View不补登记。UIManager实际开页时执行prepare，三段预载只读取页面的Prefab地址、不执行prepare/load或实例化。LoadingPlan页面目标改为`{page:BagView}`等View类引用，图片、骨骼和配置仍可显式列目标；不重复维护页面路径或模块资源清单。
 
 ApplicationPages收窄为登录/主城Controller及公共宿主装配；UIRegistry.bindViewRuntime只注入createController或动态hostId，撤销后恢复静态定义。ApplicationResources只负责三段调度和阶段资源持有，删除preparedPage/homePage/heroPage等各页取址包装，继续复用现有资源池。
 
@@ -140,8 +150,8 @@ LoadingPlan配置login、enterGame、background三个数组，未配置资源在
 
 ## 后续计划与验证限制
 
-- 页面@view/prepare、窄运行绑定和三段预载沿用已收敛入口；本批复验应覆盖资源精简后的启动/开页、业务列表选择、取消/关页与筛选重绑，不能以之前少量名册结果代替有限池验证。
-- 先完成本批资源配置审计、全量检查及浏览器复验，确认有限池、惯性、筛选重绑、异步图、嵌套产物说明和关页；节点数专项不代替真机帧率或长期GPU内存。按负责人节奏集中构建新包核对资源归属与体积。
+- 页面UIRegistry.view/prepare、窄运行绑定、三段预载及现有缓存沿用已收敛入口，不新增模块资源清单。后续代码整理仍以可读职责和真实调用为依据，不因改名增加转发层。
+- 本批按负责人要求不重复画面验收。后续另行授权集中构建时，核对新effects包归属与实际下载，并复查启动、三段加载、页面打开和关闭；旧包与节点数专项不能代替新包或真机结果。
 - 后续获得授权并有可用地址后，再验证真实CDN HTTPS、弱网/重试/离线及版本切换；当前只有本地独立资源服务样板。
 - 真机、原生/微信和长时间切页的内存、GPU纹理、帧率仍待验证，尚未开始。先据实际测量决定LoadingPlan或缓存参数，不新增模块清单。
 - 本轮保持现有玩法范围与WS＋Protobuf、服务端权威、幂等结算，不提交推送。宝箱领取、快速战斗、升级及穿脱继续关闭。
@@ -156,6 +166,6 @@ LoadingPlan配置login、enterGame、background三个数组，未配置资源在
 
 ## 仓库与文档状态
 
-负责人于2026-11-12授权将本轮页面定义/列表事件、资源精简、虚拟化、单图拥有者和目录归档一并交付hao并同步main；提交与推送结果以Git为准。验证记录中的“未提交推送”是当时的验收快照，不表示当前分支状态。后续开发仍在hao；本次合并授权不代表持续获得main推送授权。
+a2ea3e43已将上一轮页面定义/列表事件、资源精简、虚拟化、单图拥有者和目录归档交付hao并同步main；2026-11-13新增整理仍仅本地。验证记录中的“未提交推送”是当时的验收快照，不表示当前分支状态。后续开发仍在hao；本次合并授权不代表持续获得main推送授权。
 
 状态只在本页维护；交接文档提供导航，路线文档提供执行顺序，规则/协议/规范文档保存稳定约束，validation保存各次证据。新增批次不要再把长过程追加为本页的另一个“当前结论”。

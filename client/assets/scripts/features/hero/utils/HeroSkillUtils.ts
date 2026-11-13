@@ -6,7 +6,7 @@ import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { GameLog } from "../../../core/GameLog";
 import { ResManager } from "../../../framework/assets/ResManager";
-import type { OwnedHero } from "../data/HeroSnapshotData";
+import type { OwnedHero } from "../data/HeroSnapshotUtils";
 
 export interface HeroSkillFace {
     /** false 表示展示配置缺失，不允许打开技能说明。 */

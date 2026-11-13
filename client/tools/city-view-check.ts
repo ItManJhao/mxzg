@@ -1,5 +1,5 @@
 /** Display-only helpers retained for the Remake flow. */
-import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssets";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 /**
  * 主城竖切的静态检查。不启动 Creator。
  * 核对开关、预制上的节点引用，以及框架没有写死主城。
@@ -8,9 +8,9 @@ import { readFileSync } from "fs";
 
 import { join } from "path";
 
-import { buildCityMapLayout, CITY_EDGE_BLEED, findCityNode, layerAnchorX, layerCoverX } from "../assets/scripts/features/city/ui/cityMapLayout";
+import { CityMapLayoutUtils, CITY_EDGE_BLEED } from "../assets/scripts/features/city/ui/CityMapLayoutUtils";
 
-import { barSlideDir, expoOut } from "../assets/scripts/framework/ui/barSlide";
+import { PageSlideUtils } from "../assets/scripts/framework/ui/PageSlideUtils";
 
 import { TAB_SELECTED_SCALE, CityTabUtils } from "../assets/scripts/features/city/utils/CityTabUtils";
 
@@ -88,7 +88,7 @@ function checkFramework(): void {
     "client/assets/scripts/framework/ui/UIRegistry.ts",
     "client/assets/scripts/framework/ui/UILayer.ts",
     "client/assets/scripts/framework/ui/BaseView.ts",
-    "client/assets/scripts/framework/ui/ViewClose.ts",
+    "client/assets/scripts/framework/ui/ViewCloseUtils.ts",
   ];
   const banned = ["CityHubView", "CityChromeView", "features/city", "BackpackView"];
   for (let i = 0; i < files.length; i++) {
@@ -108,51 +108,51 @@ function checkFramework(): void {
 const NARROW_VIEWS = [576, 590, 640, 720, 996];
 
 function rightTreeOverhang(viewW: number): number {
-  const layout = buildCityMapLayout(null, null, null, { viewW, viewH: 1280 });
-  const plate = findCityNode(layout, "spr_map_bg1_2");
-  const layer = findCityNode(layout, "spr_map_bg1");
+  const layout = CityMapLayoutUtils.buildCityMapLayout(null, null, null, { viewW, viewH: 1280 });
+  const plate = CityMapLayoutUtils.findCityNode(layout, "spr_map_bg1_2");
+  const layer = CityMapLayoutUtils.findCityNode(layout, "spr_map_bg1");
   assert(plate !== null && layer !== null && layer.parallax, "right foreground plate is on the near layer");
   const scroll = layout.minScroll;
-  const layerX = layerAnchorX(scroll, layer.parallax.ratio, layer.parallax.ox);
+  const layerX = CityMapLayoutUtils.layerAnchorX(scroll, layer.parallax.ratio, layer.parallax.ox);
   const right = layerX + plate.x * layer.scale;
   return right - (-scroll + viewW);
 }
 
+/** 核对当前主城View与显示工具的分工，不再要求已退役工厂持有导航选中状态。 */
 function checkSources(): void {
   const hub = read("client/assets/scripts/features/city/ui/CityHubView.ts");
   const chrome = read("client/assets/scripts/features/city/ui/CityChromeView.ts");
   assert(hub.indexOf("findNode") < 0 && chrome.indexOf("findNode") < 0, "new city views do not findNode");
   assert(hub.indexOf("indexByName") < 0 && chrome.indexOf("indexByName") < 0, "new city views do not index the tree");
-  assert(!hub.includes("@view(") && !chrome.includes("@view("), "主城子视图只由组合页面持有，不重复登记");
+  assert(!hub.includes("@UIRegistry.view(") && !chrome.includes("@UIRegistry.view("), "主城子视图只由组合页面持有，不重复登记");
   assert(hub.indexOf("onCityAtom") < 0, "hub does not reimplement routing");
   assert(hub.indexOf("cityAtomLocked") >= 0, "hub still locks buildings from the query");
   assert(chrome.indexOf("setCityExtras") >= 0, "chrome still hides the activity row");
   assert(chrome.indexOf('createRect("BgPad"') < 0, "new chrome does not paint a BgPad");
   assert(chrome.indexOf('getChildByName("BgPad")') >= 0, "new chrome turns an existing BgPad off");
-  const oldChrome = read("client/assets/scripts/features/city/ui/CityChrome.ts");
-  assert(oldChrome.indexOf('createRect("BgPad"') < 0, "old chrome does not paint a BgPad");
-  assert(oldChrome.indexOf('setCityTabSelected(button, state === "selected")') >= 0, "old chrome scales the selected tab");
-  assert(oldChrome.indexOf("tabPaintState") >= 0, "old chrome keeps a single selected tab");
-  assert(oldChrome.indexOf("layoutCityTab") >= 0 && oldChrome.indexOf("prepareCityTab") >= 0, "old chrome normalizes battle then scales the selection");
+  const chromeTools = read("client/assets/scripts/features/city/ui/CityChromeUtils.ts");
+  assert(chromeTools.indexOf('createRect("BgPad"') < 0, "显示工具不重建固定背景");
+  assert(!chromeTools.includes("mountCityChromePrefab") && !chromeTools.includes("mountCityChrome("), "旧主城工厂已退役");
+  assert(chromeTools.indexOf("layoutCityTab") >= 0 && chromeTools.indexOf("prepareCityTab") >= 0, "显示工具保留导航尺寸规范化与选中缩放");
   assert(hub.indexOf("layerCoverX") >= 0, "hub keeps far layers over the viewport");
-  const skyLeft = layerCoverX(0, 0.63, 750, 0.5, 1200, 1.2, 640);
+  const skyLeft = CityMapLayoutUtils.layerCoverX(0, 0.63, 750, 0.5, 1200, 1.2, 640);
   const skyLeftEdge = skyLeft - 0.5 * 1200 * 1.2;
   assert(skyLeftEdge <= 0, "sky covers the left edge at scroll 0");
   assert(skyLeftEdge + 1200 * 1.2 >= 640, "sky still covers the view when pulled left");
-  const skyMid = layerCoverX(-430, 0.63, 750, 0.5, 1200, 1.2, 640);
-  assert(Math.abs(skyMid - layerAnchorX(-430, 0.63, 750)) < 0.001, "sky stays put while the view is covered");
-  const farLeft = layerCoverX(0, 0.82, 750, 0.5, 1428, 1, 640);
+  const skyMid = CityMapLayoutUtils.layerCoverX(-430, 0.63, 750, 0.5, 1200, 1.2, 640);
+  assert(Math.abs(skyMid - CityMapLayoutUtils.layerAnchorX(-430, 0.63, 750)) < 0.001, "sky stays put while the view is covered");
+  const farLeft = CityMapLayoutUtils.layerCoverX(0, 0.82, 750, 0.5, 1428, 1, 640);
   assert(farLeft - 0.5 * 1428 <= 0, "far city covers the left edge");
-  const near = layerCoverX(-860, 1.3, 0, 0, 1500, 1, 640);
-  assert(near === layerAnchorX(-860, 1.3, 0), "near layer is not dragged to hide its box");
-  const ground = layerCoverX(0, 1, 750, 0.5, 1500, 1, 640);
-  assert(ground === layerAnchorX(0, 1, 750), "ground anchor stays when it already fills the content");
+  const near = CityMapLayoutUtils.layerCoverX(-860, 1.3, 0, 0, 1500, 1, 640);
+  assert(near === CityMapLayoutUtils.layerAnchorX(-860, 1.3, 0), "near layer is not dragged to hide its box");
+  const ground = CityMapLayoutUtils.layerCoverX(0, 1, 750, 0.5, 1500, 1, 640);
+  assert(ground === CityMapLayoutUtils.layerAnchorX(0, 1, 750), "ground anchor stays when it already fills the content");
   for (let i = 0; i < NARROW_VIEWS.length; i++) {
     const overhang = rightTreeOverhang(NARROW_VIEWS[i]);
     assert(overhang >= CITY_EDGE_BLEED - 0.01, "right tree passes the viewport at width " + NARROW_VIEWS[i]);
     assert(overhang < 64, "right tree stays on the cut building at width " + NARROW_VIEWS[i]);
   }
-  const leftPlate = findCityNode(buildCityMapLayout(null, null, null, { viewW: 590, viewH: 1280 }), "spr_map_bg1_1");
+  const leftPlate = CityMapLayoutUtils.findCityNode(CityMapLayoutUtils.buildCityMapLayout(null, null, null, { viewW: 590, viewH: 1280 }), "spr_map_bg1_1");
   assert(leftPlate !== null && leftPlate.x === 0 && leftPlate.ax === 0, "left foreground plate stays on the content left");
   assert(chrome.includes("home/ui/main-scene-lang_lbl-fetters-unlock"), "chrome keeps the VIP caption");
   assert(Math.abs(TAB_SELECTED_SCALE - 1.5) < 1e-6, "selected tab matches MainSceneCtr 1.5x checked size");
@@ -226,8 +226,8 @@ function checkChromePrefab(): void {
 
 /** 当前切页只使用方向与指数曲线；旧页面壳和栈捕获已退役。 */
 function checkBarSlide(): void {
-  assert(barSlideDir(0, 1) === 1 && barSlideDir(4, 1) === -1 && barSlideDir(2, 2) === 0);
-  assert(expoOut(0) === 0 && expoOut(1) === 1 && expoOut(0.5) > 0.9);
+  assert(PageSlideUtils.barSlideDir(0, 1) === 1 && PageSlideUtils.barSlideDir(4, 1) === -1 && PageSlideUtils.barSlideDir(2, 2) === 0);
+  assert(PageSlideUtils.expoOut(0) === 0 && PageSlideUtils.expoOut(1) === 1 && PageSlideUtils.expoOut(0.5) > 0.9);
   const paint = CityTabUtils.tabPaintState(["selected", "selected", "open", "locked"]);
   assert(paint.join(",") === "open,selected,open,locked");
 }
