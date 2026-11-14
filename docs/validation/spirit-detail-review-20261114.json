@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-14",
+  "branch": "hao",
+  "baseline": "c23b53ed及此前全部未提交修改，未回退或覆盖",
+  "scope": "按正式服调整2000002精灵背包无数量格子及专用只读详情，不开放领取、养成、合成、重生、分解或穿戴",
+  "reference": {
+    "officialUrl": "https://mxzg-test.funsgamex.com/jp/",
+    "observed": "浏览器通过已有hao1角色只读查看精灵背包及详情，确认格子无数量、独立蓝色标题/基础属性/技能图文/2×2按钮；未点正式服资产操作",
+    "screenshot": "docs/images/spirit-official-reference-20261114.jpg",
+    "source": "旧RunesTipsCtr.lua及RunesTipsLayer/RunesTipsCell.ccb，具体原图来源和像素证据见spirit-detail-assets-20261114.json"
+  },
+  "implementation": {
+    "list": "BagItemView仅真实BagListItem.spirit隐藏并清空count；普通物品数量1/多件、空槽及Cell复用均检查",
+    "detail": "BagView按实例key分路到SpiritInfoView；普通物品仍BagInfoView；View自行登记唯一Prefab，按需加载，不改LoadingPlan、不添模块资源清单",
+    "data": "BagItemCatalog.spiritDetail共用唯一配置投影，精确能力及技能等级；缺行明确提示，不借用其他等级/实例或客户端重抽",
+    "layout": "完整静态Prefab/Widget/ViewportScale，UIManager单共享模态；基础属性、数值、技能名称/全文及原图分开展示；四操作灰色，只提示未开放",
+    "lifecycle": "事件解除、删除实例关闭、账号重置/迟到加载、绘制代次及ResManager资源拥有者清理沿现框架；不写资产/不新发协议",
+    "assets": "复用109张现有图片，106张按旧图集直接RGBA复制修正透明边缘；原UUID保留，Creator正确裁切变化单列证据",
+    "scopeCount": {
+      "bundles": 16,
+      "prefabs": 33,
+      "views": 18,
+      "scripts": 163,
+      "prefabSceneFiles": 34,
+      "scriptBindings": 73,
+      "sharedJson": 48,
+      "typedConfig": 17,
+      "mavenShared": 32
+    }
+  },
+  "validation": {
+    "backend": {
+      "log": "backend/target/spirit-detail-review-20261114.log",
+      "classes": [
+        "SpiritInventoryServiceTest",
+        "SpiritSocketTest"
+      ],
+      "tests": 13,
+      "failures": 0,
+      "errors": 0
+    },
+    "frontendSuites": [
+      "backpack",
+      "current-resource-scope",
+      "bindings",
+      "modal-layer",
+      "resources",
+      "config-groups",
+      "staged-loading",
+      "ui-static",
+      "creator-compat"
+    ],
+    "otherChecks": [
+      "Creator项目tsc --noEmit",
+      "generate_resources.cjs --check",
+      "check_prefab_plan.py（33保留项）",
+      "audit_prefabs.py（33结构记录）",
+      "check_docs.py（46份当前指南/记录）",
+      "git diff --check"
+    ],
+    "presentationCases": {
+      "abilitySkillCombinations": 392,
+      "skills": 98,
+      "abilityTypes": 4,
+      "assertions": "全部真实特性/技能全文及精确等级图路径；缺等级不回退；技能图依赖实际存在"
+    },
+    "regressionFoundAndFixed": "实机发现nameLabel误序列化为EquipButton字符串，现绑定NameLabel的cc.Label对象38；新增17个属性类型专项，先复现失败、修正后通过",
+    "browser": {
+      "mode": "Creator本机预览，不构建；独立随机H2与WS，GM关闭",
+      "port": 58055,
+      "run": "5c12346b67654f3890f2e24ac32a96a6",
+      "account": "spirit_review",
+      "device": "Apple iPhone 14 Pro (393×852)，预览页可见画布393×801",
+      "passed": [
+        "8只真实实例各占一格且均无数量",
+        "攻击146/低级生机与护甲21/低级荣光分开显示",
+        "原技能图、技能全文、蓝色标题及四灰色按钮可见",
+        "合成点击仅提示暂未开放",
+        "关闭按钮返回列表",
+        "空白关闭返回列表，不穿透选中其他格子",
+        "返回主城正常"
+      ],
+      "consoleNote": "预览历史日志留有已修正的nameLabel首次失败；不把整段历史日志称为零错误，也未另行声明最终全历史日志清空",
+      "screenshots": [
+        "docs/images/spirit-list-20261114.jpg",
+        "docs/images/spirit-detail-20261114.jpg",
+        "docs/images/spirit-detail-second-20261114.jpg"
+      ],
+      "ownedTestProcess": {
+        "pid": 20148,
+        "stopped": true,
+        "verification": "停止前核对CIM完整命令行含本次唯一复制目录及SocketPreviewServer，只结束本批进程"
+      }
+    },
+    "notRun": [
+      "未构建新发布包",
+      "未逐项展示98种技能画面",
+      "未做真机/原生/微信验收",
+      "未重跑前批88项Java或32项Python",
+      "工具专用tsconfig的旧Creator编译兼容问题未列为通过"
+    ]
+  },
+  "next": "继续收敛共享可信发奖结果，随后按既有方案恢复新挂机累计/回执/事务；领取按钮继续关闭。本批视觉修正不构成新写入口授权。",
+  "git": "hao本地保留，未提交/推送/合并main"
+}

@@ -1,6 +1,6 @@
 # 游戏通信与统一状态契约
 
-更新：2026-11-11。全部游戏业务只走 WS＋Protobuf。当前已接入登录、角色、背包、英雄只读状态、主线阵容保存、前三关挑战/结算及挂机演出；升级、穿脱、宝箱领取、快速战斗仍关闭。资源下载、WS 握手及测试实例身份探针不属于游戏业务 API。后文按日期记录字段演进，完整状态以[开发进度](development-progress.md)为准。
+更新：2026-11-14。全部游戏业务只走 WS＋Protobuf。当前已接入登录、角色、背包、英雄只读状态、主线阵容保存、前三关挑战/结算及挂机演出；新挂机领取/status服务端事务已实现但默认关闭，客户端尚未接发包/持久待确认；升级、穿脱、宝箱按钮、快速战斗仍关闭。资源下载、WS握手及测试实例身份探针不属于游戏业务API。后文按日期记录字段演进，完整状态以[开发进度](development-progress.md)为准。
 
 ## 原项目初始化依据
 
@@ -30,8 +30,10 @@
 | chapter.claim | 请求/响应 | 指定主线战报的幂等结算；不是挂机宝箱领取 |
 | chapter.replay | 请求/响应 | 恢复既有持久战报，不重新计算或发奖 |
 | chapter.idle.encounter | 请求/响应 | 已通关主线的挂机遇敌演出战报，不结算资产 |
+| chapter.idle.claim | 请求/响应 | requestId＋expectedOperationVersion → 冻结历史到账；服务端默认关闭，当前客户端无发包入口 |
+| chapter.idle.claim.status | 请求/响应 | 只查指定requestId的COMMITTED/NOT_FOUND，不查库存、不抽样或创建计时；锁忙不能返回NOT_FOUND |
 | battle.preview | 请求/响应 | 当前已保存阵容的开发只读试战，不推进通关或发奖 |
-| gm.status、gm.grant | 请求/响应 | 默认关闭的开发开关与当前测试角色数据准备；不等同玩法获取入口 |
+| gm.status、gm.grant | 请求/响应 | local按负责人要求默认开启，production不装配的开发数据准备；不等同玩法获取入口 |
 
 inventory.list、session.sync 已删除业务处理，鉴权后请求返回 UNKNOWN_MESSAGE。未恢复玩法不得借旧 CampaignApi、IdleApi、HeroLevelApi 发请求或通过回调更新资产；这里只列 Protocol.ts 实际登记的消息。
 
@@ -73,7 +75,17 @@ Item 增加可选字符串 instance_id=3，item_id=1 仍为配置 ID；不得把
 
 Snapshot.main_chapter_idle（字段9）随登录/鉴权恢复和state.changed统一下发，没有开页查询。MainChapterIdleState提供server_time、started_at（Unix秒）、max_seconds、frequency、reward_stage及rates。rates为每frequency秒的同源基础资源量，前端仅换算每分钟，不是已到账资产。
 
-首次主线胜利在角色锁和同一事务中初始化game_main_chapter_idle起点，采用IdleRules导出的initialSeconds；重连不重置。已通关但无记录的旧测试角色由统一快照补初始化，不追溯此前未知时长。未通关不创建计时记录。新表与已暂停的game_idle/game_campaign隔离。此批无领取协议、无抽奖和发奖；旧IdleService.claim不得接回。
+11-14已替换早期“首次胜利/快照补建”生命周期：首次真正受理主线挑战在角色锁和同一事务中初始化game_main_chapter_idle起点为now-initialSeconds，失败战斗正常提交也保留；已有起点、重连、挑战胜利与结算均不重置。已通关却缺累计明确拒绝，不由快照补免费起点。新表与已暂停的game_idle/game_campaign隔离；旧IdleService.claim不得接回。服务端新领取能力及关闭边界见下节。
+
+### 新挂机领取与持久回执（2026-11-14）
+
+Frame oneof新增31～34，MainChapterIdleState新增可选claim_state=9；不复用已有字段号。领取请求只收规范UUID request_id与显式正expected_operation_version；操作版本沿int64安全整数，实例ID继续字符串。request_id跨超时/重连不变，Frame.id仍只关联一次传输。
+
+Receipt schema1带请求/回执ID、消费版本前后、统一计算秒/原起点/实际秒数/VIP上限/关卡、提交asset_revision、理论量、完整强类型实际到账及经验动画。实际结果明确分开满级/封顶忽略、升级附赠、钱包/库存前后、酒馆上限及真实期限/精灵实例；不塞JSON载荷或当前Snapshot。数据库另存AuditV1完整输入/候选/累计及摘要，未知格式或损坏不重算。
+
+claim_state提供schema_version、operation_version和READ_ONLY/ENABLED，默认只读；它不是完整收益ready预报，不因登录展示而读取全部权益。缺字段/未知schema不能允许领取；客户端未知schema仅丢弃这项能力并限频记录，旧挂机演出继续。日常开关`mxzg.main-chapter.idle-claim-enabled`默认false，仅独立测试开启；当前没有新增客户端发包、journal或按钮交互。
+
+服务器在角色锁内再次鉴权，先恢复成功回执再判断新请求开关、版本和输入；指定status查询与重放不抽样、不推进任何版本。历史receipt只用于命令确认/展示；最新资产及累计仍由统一Snapshot提交Model，确认应满足snapshot.revision≥receipt.assetRevision且operationVersion≥after。客户端持久待确认和双向确认尚未实现，详细依据见[领取事务](main-chapter-idle-settlement.md)。
 
 AssetStateBinding提交任何模块前校验主线与挂机快照；MainChapterController.onNotify校验后提交Model。客户端经过时间只用于显示且封顶，领奖必须以后由服务器重新计算。关卡收益使用maxCleared而非下一关，也不使用最近一次通关奖励。
 

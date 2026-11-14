@@ -68,6 +68,7 @@ export class AssetStateBinding {
         HeroSnapshotUtils.readHeroRosterInfo(state.heroRoster);
         BagItemDataUtils.readBagItems(state.inventory);
         BagItemDataUtils.readTimedItems(state.timedInventory);
+        BagItemDataUtils.readSpiritItems(state.spiritInventory);
         if (role.id !== current.role.id || role.serverId !== current.role.serverId) throw new Error("资产不属于当前角色");
         const key = (role.serverId || "") + "/" + role.id;
         const revision = Number(state.revision);

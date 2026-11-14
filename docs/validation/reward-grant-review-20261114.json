@@ -1,0 +1,168 @@
+{
+  "date": "2026-11-14",
+  "recordedAt": "2026-11-14T09:21:49.401673+00:00",
+  "branch": "hao",
+  "committed": false,
+  "pushed": false,
+  "scope": "共享可信发奖及实际到账明细；前三关首通内部复用；新挂机领取保持关闭",
+  "environment": "独立H2真实V23迁移、生产领域服务/角色行锁/AssetSync；既有业务回归另使用随机端口真实WS＋Protobuf；不连接日常库",
+  "results": {
+    "classes": 12,
+    "distinctTests": 101,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "reports": [
+      {
+        "class": "RoleExperienceTest",
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "RoleCurrencyCreditTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "InventoryCreditTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "InventoryIdentityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterRewardTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "SpiritInventoryServiceTest",
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "AssetSyncTransactionTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterPersistenceTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterSocketTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "GmTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "GameSocketTest",
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "RewardGrantServiceTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "runs": [
+    {
+      "log": "backend/target/reward-prerequisites-tests.log",
+      "tests": 45,
+      "result": "通过；首通专项随后增加1例并单独复验"
+    },
+    {
+      "log": "backend/target/reward-business-tests.log",
+      "tests": 42,
+      "result": "首次1项旧异常类型断言失败，其他通过；失败项所在Persistence全9例已在下一次重跑通过"
+    },
+    {
+      "log": "backend/target/reward-grant-tests.log",
+      "tests": 22,
+      "result": "13项共享新专项＋9项Persistence通过"
+    },
+    {
+      "log": "backend/target/reward-chapter-adapter-tests.log",
+      "tests": 5,
+      "result": "首通专项5项通过，含新增满级实际经验回归"
+    }
+  ],
+  "checks": [
+    "理论与实际/忽略原因分开，保留经验前后、升级赠钻、钱包/库存/酒馆前后及真实实例",
+    "同ID精确合并；酒馆封顶和已超上限不倒扣；零到账不创建空记录或推进revision",
+    "精灵及期限拆行与跨期限ID超1000整单预检拒绝，随机消费为0，不裁剪奖励",
+    "普通装备保持堆叠和稳定字符串ID；Long溢出在SQL写入前拒绝",
+    "后项领域失败/外层回执SQL失败整笔回滚；随机已消费不宣称可回滚",
+    "真实角色锁并发串行；同事务同角色一次revision及提交后通知",
+    "实际结果JSON持久化恢复、集合不可变；后续资产变化不改历史，测试外层回执重放不再发放",
+    "原首通Plan及协议形状保留；原主线持久幂等与真实WS业务往返通过"
+  ],
+  "currentIdleCandidateIds": [
+    900001,
+    900002,
+    900003,
+    900101,
+    900102,
+    900401,
+    900502,
+    901701,
+    901702,
+    1001001,
+    1002001,
+    1003001,
+    1004001,
+    2000002,
+    20003000
+  ],
+  "tavernInitializationGap": "旧服务从system.tavern_initial_item初始化，当前共享表2000；旧常量默认3000会被覆盖。新版缺记录仍按0，本批不补发。",
+  "limitations": [
+    "共享服务不拥有业务幂等，直接重复调用会再次发放；测试回执表仅存在于独占H2，不是新生产领取实现",
+    "新挂机累计/回执/领取协议事务、客户端持久待确认尚未实施；候选预检尚未连接新领取",
+    "当前主线协议没有新增完整实际结果，升级附赠不混入基础奖励清单",
+    "未运行本批MySQL、Creator浏览器、发布构建或真机；未重启日常后端；养成/穿脱等入口仍关闭"
+  ],
+  "sourceSha256": {
+    "backend/src/main/java/com/funsgamex/mxzg/reward/RewardGrantService.java": "e3ec0ec83b7a2a0f7fea01a746e2e0b5276dc57f7d9171051ce9d1ed9d633649",
+    "backend/src/main/java/com/funsgamex/mxzg/reward/RewardGrantResult.java": "45b8a06b4f4503a093fbfc60326e6745ef6f1a5b4c307ef7bb2f4592b2ec752e",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterRewardService.java": "7c1d758e3462dfdef55f53816a3615f67f44208793e81f646a33cb3e512c1740",
+    "backend/src/main/java/com/funsgamex/mxzg/inventory/InventoryService.java": "903501899dbf7cc9ec871af4549025f79196692ee5f5a7528f30890b8f8936a9",
+    "backend/src/main/java/com/funsgamex/mxzg/role/RoleRepository.java": "65a4378225fa09f1bc309557e4b2f340789daf8b8051b63693b68f0f834a0c26",
+    "backend/src/main/java/com/funsgamex/mxzg/role/RoleExperienceService.java": "83d3e027271643af1f6aa5fe39a8c85e0627ff8e5e448522b343f09fd81cd2dd",
+    "backend/src/main/java/com/funsgamex/mxzg/role/RoleRules.java": "d25bb294c6c25b37c8a4544ef5e486cceac1c3f60f75a406326d5b1e14af64ef",
+    "backend/src/main/java/com/funsgamex/mxzg/spirit/SpiritInventoryService.java": "775df0e49eba07dadb1588524323a733ff3f1003ce3c0335cef01a4f7cdd1fcb"
+  }
+}

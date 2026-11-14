@@ -4,7 +4,6 @@
  * 当前应用撤销时解除自己的依赖绑定，恢复View自身定义，不持有第二份业务状态。
  */
 import {Node} from "cc";
-import {PREVIEW} from "cc/env";
 import "../../features/battle/ui/MainChapterBattleView";
 import "../../features/battle/ui/MainChapterView";
 import "../../features/battle/ui/BattleDetailLayer";
@@ -54,8 +53,6 @@ export interface ApplicationPageContext {
     /** 主城创建完成时让应用取得其内容宿主。 */
     onHome(view: RemakeHomeView): void;
 
-    /** 应用受限开发入口，发布版本不交给玩家页面。 */
-    openGm(): void;
 }
 
 /** 无状态装配入口；页面资源时机只在LoadingPlan配置。 */
@@ -65,7 +62,7 @@ export class ApplicationPages {
 
     /** 为当前应用绑定两个Controller和公共宿主，返回仅撤销本次装配的清理函数。 */
     public static register(context: ApplicationPageContext): Array<() => void> {
-        const {model, service, servers, entry, features, openGm} = context;
+        const {model, service, servers, entry, features} = context;
         const ui = UIManager.instance;
         let homeView: RemakeHomeView | null = null;
         return [
@@ -97,7 +94,6 @@ export class ApplicationPages {
                         if (!model.snapshot.role || model.snapshot.busy) return false;
                         void ui.openById("role-profile", {
                             model,
-                            openGm: PREVIEW ? openGm : undefined,
                             logout: () => service.logout(),
                             notice: (text: string) => ui.toast(text),
                         }).catch(error => {

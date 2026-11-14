@@ -7,6 +7,7 @@ import { GConfig } from "../assets/scripts/config/GConfig";
 import { RemakeConfigUtils } from "../assets/scripts/config/RemakeConfigUtils";
 import { LOADING_PLAN } from "../assets/scripts/app/remake/LoadingPlan";
 import { BootChrome } from "../assets/scripts/app/remake/BootChrome";
+import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 
 /** 离线加载实际配置文件，schema仍保留config开头的Bundle逻辑键。 */
 const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
@@ -61,23 +62,30 @@ async function main(): Promise<void> {
     asset.json = JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8")); done(null, asset);
   };
   const loginConfigs = LOADING_PLAN.login.flatMap(target => "config" in target ? [target.config] : []);
+  RemakeConfigUtils.initialize();
   await GameConfig.instance.prepare(loginConfigs);
   assert.deepEqual(requested.sort(), ["config/language", "config/loadingtips"]);
   assert((await BootChrome.readLoadingTips()).length > 0); assert.equal(requested.length, 2);
   assert.equal(RemakeConfigUtils.readCityGates(), null);
-  await RemakeConfigUtils.prepareCityConfig(); assert.equal(requested.length, 7); assert(RemakeConfigUtils.readCityGates()!.opencondition.length > 0);
+  await ConfigFixtureUtils.installReal();
+  assert.equal(requested.length, loginConfigs.length, "游戏配置统一安装，不恢复模块级逐张JSON加载");
+  assert(RemakeConfigUtils.readCityGates()!.opencondition.length > 0);
   const welfare = GameConfig.instance.requireConfig(GConfig.OpenCondition, "act_recharge_day_reward");
   const accumulated = GameConfig.instance.requireConfig(GConfig.OpenCondition, "act_recharge_accumulated_days");
   assert.equal(welfare.level, 6); assert.equal(accumulated.level, 13);
   const duplicate = new GameConfig(async () => ({ rows: [welfare, welfare] }));
   await assert.rejects(duplicate.prepare([GConfig.OpenCondition]), /重复主键/);
   assert.throws(() => duplicate.getConfig(GConfig.OpenCondition), ConfigUnavailable, "重复键整组不能提交");
-  await Promise.all([RemakeConfigUtils.prepareHeroConfig(), RemakeConfigUtils.prepareHeroConfig()]); assert.equal(requested.length, 9);
   assert(GameConfig.instance.getConfig(GConfig.HeroType).length > 0);
   assert.equal(GameConfig.instance.requireConfig(GConfig.Language, 11).value, "确 定", "数字文本主键统一索引");
-  await GameConfig.instance.prepare([GConfig.TimeLimitItem]);
   assert.equal(GameConfig.instance.requireConfig(GConfig.TimeLimitItem,902025).valid_time,7);
   assert.equal(GameConfig.instance.getConfig(GConfig.TimeLimitItem).length,3);
+  const spirit=GameConfig.instance.requireConfig(GConfig.SpiritDisplay,2000002);
+  assert(spirit.abilities.length>0&&spirit.skills.length>0,"精灵文案来自统一安装后的唯一配置仓库");
+  assert(Object.isFrozen(spirit.abilities)&&Object.isFrozen(spirit.skills[0]),"精灵嵌套显示配置同样冻结");
+  const brokenSpirit=new GameConfig(async()=>({schema:1,rows:[{...spirit,skills:[{skillId:1,level:1,name:"缺少说明"}]}]}));
+  await assert.rejects(brokenSpirit.prepare([GConfig.SpiritDisplay]),/SpiritDisplay.rows\[0\].skills\[0\]/);
+  assert.equal(brokenSpirit.status(GConfig.SpiritDisplay).state,"failed");
   console.log("config-groups-check passed");
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

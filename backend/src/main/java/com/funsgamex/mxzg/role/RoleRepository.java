@@ -1,4 +1,8 @@
-/** 角色持久化入口，提供当前身份读取、写事务角色锁与受余额保护的金币扣除。 */
+/**
+ * 角色持久化入口：提供身份读取、写事务角色锁和钱包余额保护。
+ * 可信奖励调用方提供外层事务；金币/钻石入账在真实角色行锁内分别精确相加后一次保存。
+ * 所有钱包写入继续复用AssetSyncService的同事务版本及提交后通知，不创建独立发奖事务。
+ */
 package com.funsgamex.mxzg.role;
 
 import java.util.Optional;
@@ -8,6 +12,14 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class RoleRepository {
+    /**
+     * 一次钱包写入或整笔可信发奖的真实前后余额，不将升级赠钻混入直接奖励数量。
+     * @param goldBefore 写入前的金币余额
+     * @param diamondsBefore 写入前的钻石余额
+     * @param goldAfter 写入后的金币余额
+     * @param diamondsAfter 写入后的钻石余额，整笔发奖时包含升级附赠
+     */
+    public record CurrencyCredit(long goldBefore, long diamondsBefore, long goldAfter, long diamondsAfter) {}
     /** 共享数据库连接，所有角色字段只有这一处持久化读取。 */
     private final JdbcTemplate jdbc;
     /** 初始值与当前等级经验门槛，由原配置决定。 */
@@ -39,11 +51,37 @@ public class RoleRepository {
     public RoleRepository(JdbcTemplate jdbc, com.funsgamex.mxzg.network.AssetSyncService sync, RoleRules rules, com.funsgamex.mxzg.hero.HeroCapacityService heroCapacity) { this.jdbc=jdbc; this.sync=sync; this.rules=rules; this.heroCapacity=heroCapacity; }
     /** 持有角色锁时读取持久状态版本；同一提交的角色与背包共用此值。 */
     public long revision(String role) { return jdbc.queryForObject("SELECT state_revision FROM game_role WHERE id=?",Long.class,role); }
-    /** 已验证奖励事务调用；只允许正数，金币和钻石共享提交同步。 */
-    public void creditCurrency(String role, long gold, long diamonds) {
-        if(gold<0 || diamonds<0 || gold+diamonds<=0) throw new IllegalArgumentException("无效奖励");
+    /**
+     * 在调用方事务内锁定真实钱包，分别校验金币和钻石精确加法后一次保存。
+     * 两币种各自允许0但不能同时为0，不把跨币种相加当成余额或奖励有效性条件。
+     * 缺角色由持久查询异常拒绝，不创建钱包或发送资产变更通知。
+     * @return 本次写入的真实前后余额；仅外层事务提交后才代表持久到账。
+     * @throws IllegalArgumentException 奖励为负或两者均为0时拒绝，不执行写入
+     * @throws ArithmeticException 任一新余额超出long范围时拒绝，两币种和同步版本都不改写
+     * @throws IllegalStateException 缺外层事务、旧余额损坏或写入行数异常时拒绝，由外层整体回滚
+     */
+    public CurrencyCredit creditCurrency(String role, long gold, long diamonds) {
+        if (gold < 0 || diamonds < 0 || (gold == 0 && diamonds == 0)) {
+            throw new IllegalArgumentException("无效奖励");
+        }
         sync.requireTransaction();
-        jdbc.update("UPDATE game_role SET gold=gold+?,diamonds=diamonds+? WHERE id=?",gold,diamonds,role); sync.changed(role);
+        var current = jdbc.queryForObject("SELECT gold,diamonds FROM game_role WHERE id=? FOR UPDATE", (row, index) -> {
+            long currentGold = row.getLong("gold");
+            boolean missingGold = row.wasNull();
+            long currentDiamonds = row.getLong("diamonds");
+            boolean missingDiamonds = row.wasNull();
+            if (missingGold || missingDiamonds || currentGold < 0 || currentDiamonds < 0) {
+                throw new IllegalStateException("角色持久钱包余额非法");
+            }
+            return new long[]{currentGold, currentDiamonds};
+        }, role);
+        long nextGold = Math.addExact(current[0], gold);
+        long nextDiamonds = Math.addExact(current[1], diamonds);
+        if (jdbc.update("UPDATE game_role SET gold=?,diamonds=? WHERE id=?", nextGold, nextDiamonds, role) != 1) {
+            throw new IllegalStateException("角色钱包写入行数异常");
+        }
+        sync.changed(role);
+        return new CurrencyCredit(current[0], current[1], nextGold, nextDiamonds);
     }
 
     /** 查询默认区服的账号角色，不创建资料。 */

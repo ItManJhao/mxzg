@@ -1,4 +1,4 @@
-/** UI构建钩子回归：用隔离的 Web 产物检查备份、幂等及失败前不删除。
+/** UI构建钩子回归：检查配置包只读前置入口，并用隔离 Web 产物检查备份、幂等及失败前不删除。
  * 夹具使用当前名单的真实原图及跨包共享纹理，不能代替 Creator 实际构建和浏览器验收。
  */
 const fs = require('node:fs');
@@ -7,6 +7,7 @@ const assert = require('node:assert/strict');
 const hook = require('../extensions/mxzg-bag-build/hooks');
 const builder = require('../extensions/mxzg-bag-build/builder');
 const { dedupeBagBuild } = require('./dedupe-bag-build.cjs');
+const { createConfigBuildFixture } = require('./config-package-build-check.test.cjs');
 const buildRoot = path.resolve(__dirname, '../build');
 const root = path.resolve(__dirname, '../..');
 const { resolveAssetPath } = require('../../tools/bundle-paths.cjs');
@@ -18,6 +19,51 @@ const source = path.join(root, 'client/assets/bundles');
 /** 固定入口保持在require缓存中；仅污染实现模块，模拟Creator长驻进程持有旧代码。 */
 const implementationPath = require.resolve('../extensions/mxzg-bag-build/build-hooks.cjs');
 const sourcePathsPath = require.resolve('../../tools/bundle-paths.cjs');
+
+/**
+ * 用复制配置验证受限宿主会委托普通Node；父进程生成器故意不可用，子进程仍须真验并拒绝坏源。
+ * 只复制本专项依赖的配置及脚本，不能修改当前工程源或依赖目录。
+ */
+async function checkRestrictedBuildHost() {
+    const tempRoot = path.join(root, 'client/temp');
+    fs.mkdirSync(tempRoot, { recursive: true });
+    const directory = fs.mkdtempSync(path.join(tempRoot, 'config-hook-node-'));
+    const configDirectory = path.join(root, 'client/assets/bundles/resources/config');
+    const copiedConfig = path.join(directory, 'client/assets/bundles/resources/config');
+    const generatorFile = require.resolve('../../tools/generate_config_package.cjs');
+    const generator = require(generatorFile);
+    const originalGenerate = generator.generateConfigPackage;
+    const implementationFile = path.join(directory, 'client/extensions/mxzg-bag-build/build-hooks.cjs');
+    try {
+        fs.mkdirSync(path.dirname(copiedConfig), { recursive: true });
+        fs.cpSync(configDirectory, copiedConfig, { recursive: true });
+        fs.copyFileSync(configDirectory + '.meta', copiedConfig + '.meta');
+        for (const relative of [
+            'config/client-schema.json', 'client/assets/scripts/app/remake/LoadingPlan.ts',
+            'client/assets/scripts/config/ConfigZip.generated.ts', 'client/assets/scripts/config/ConfigZip.generated.ts.meta',
+        ]) {
+            write(path.join(directory, relative), fs.readFileSync(path.join(root, relative)));
+        }
+        write(implementationFile, fs.readFileSync(implementationPath));
+        write(path.join(directory, 'tools/generate_config_package.cjs'),
+            'exports.generateConfigPackage=()=>require(' + JSON.stringify(generatorFile)
+            + ').generateConfigPackage({projectRoot:' + JSON.stringify(directory) + ',check:true});');
+        generator.generateConfigPackage = () => { throw new Error('受限宿主不能创建Worker'); };
+        const restricted = require(implementationFile);
+        const good = await restricted.onBeforeBuild();
+        assert.equal(good.changed.length, 0, '普通Node子进程成功只读检查真实配置');
+        const sourceFile = path.join(copiedConfig, 'system.json');
+        write(sourceFile, JSON.stringify({ rows: [] }));
+        await assert.rejects(restricted.onBeforeBuild(), /配置包过期或缺失/);
+        assert.deepEqual(JSON.parse(fs.readFileSync(sourceFile, 'utf8')), { rows: [] }, '失败不能自动覆写坏源或补生成包');
+    } finally {
+        generator.generateConfigPackage = originalGenerate;
+        delete require.cache[implementationFile];
+        assert(directory.startsWith(tempRoot + path.sep + 'config-hook-node-'));
+        assert.equal(fs.realpathSync(directory), directory, '只清理本专项创建的真实目录');
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+}
 
 /** 模拟迁移前被Creator缓存的旧目录索引；实际钩子必须重新载入定位工具。 */
 function poisonSourcePaths() {
@@ -31,6 +77,7 @@ function poisonSourcePaths() {
 function poisonImplementation() {
     require(implementationPath);
     require.cache[implementationPath].exports = {
+        onBeforeBuild: () => { throw new Error('不应调用缓存中的旧配置包核验'); },
         onBeforeCompressSettings: () => { throw new Error('不应调用缓存中的旧启动实现'); },
         onAfterBuild: () => { throw new Error('不应调用缓存中的旧完成实现'); },
     };
@@ -74,6 +121,7 @@ function fixture(directory) {
     write(path.join(directory, 'assets/redirected/config.json'), JSON.stringify({
         uuids: [images[2][2] + '@f9941'], paths: {}, packs: {}, redirect: [0, '0'], deps: ['main'],
     }));
+    createConfigBuildFixture(directory);
     return images.map(([name, uuid]) => {
         const file = path.join(bundle, 'native', uuid.slice(0, 2), uuid + '.png');
         write(file, fs.readFileSync(resolveAssetPath(name)));
@@ -81,15 +129,21 @@ function fixture(directory) {
     });
 }
 
-/** 实际调用钩子，检查成功和拒绝路径；仅清理由本测试创建的独立目录。 */
+/** 实际调用配置包与启动钩子，检查成功和拒绝路径；仅清理由本测试创建的独立目录。 */
 async function main() {
+    await checkRestrictedBuildHost();
     const launch = { settings: { assets: { preloadBundles: [{ bundle: 'main', version: 'kept' }] } } };
     assert.deepEqual(Object.keys(builder.configs).sort(), ['web-desktop', 'web-mobile']);
     assert.equal(hook.throwError, true);
     const cachedEntry = require.cache[require.resolve('../extensions/mxzg-bag-build/hooks')].exports;
     poisonImplementation();
+    const packageBefore = await captureLogs(() => hook.onBeforeBuild({}, {}));
+    assert.equal(packageBefore.value.changed.length, 0, '配置包构建前检查只能读取');
+    assert(packageBefore.lines.some(line => line.includes('config-package-artifact-v1 v1.8.0') && line.includes('onBeforeBuild')),
+        '必须打印实际配置包前置实现标识和版本');
+    poisonImplementation();
     const before = await captureLogs(() => hook.onBeforeCompressSettings({}, launch));
-    assert(before.lines.some(line => line.includes('bootstrap-preload-v1 v1.6.3') && line.includes('onBeforeCompressSettings')),
+    assert(before.lines.some(line => line.includes('config-package-artifact-v1 v1.8.0') && line.includes('onBeforeCompressSettings')),
         '必须打印实际before实现标识和版本');
     poisonImplementation();
     await hook.onBeforeCompressSettings({}, launch);
@@ -100,7 +154,7 @@ async function main() {
     await hook.onBeforeCompressSettings({}, existing);
     assert.equal(existing.settings.assets.preloadBundles[1].version, 'boot-kept', '已有bootstrap版本不得被覆盖');
     const packageVersion = JSON.parse(fs.readFileSync(path.join(root, 'client/extensions/mxzg-bag-build/package.json'), 'utf8')).version;
-    assert.equal(packageVersion, '1.6.3', '实际实现版本与包版本必须同步');
+    assert.equal(packageVersion, '1.8.0', '实际实现版本与包版本必须同步');
     await assert.rejects(hook.onBeforeCompressSettings({}, {}), /启动配置/);
     await assert.rejects(hook.onBeforeCompressSettings({}, { settings: { assets: { preloadBundles: {} } } }), /数组/);
     if (!images.length) {
@@ -111,11 +165,12 @@ async function main() {
             const file = path.join(directory, 'src/settings.json');
             const finalSettings = { assets: { preloadBundles: [{ bundle: 'main', version: 'file-kept' }] }, custom: { keep: true } };
             write(file, JSON.stringify(finalSettings));
+            createConfigBuildFixture(directory);
             poisonImplementation();
             const stalePaths = poisonSourcePaths();
             const repaired = await captureLogs(() => hook.onAfterBuild({ platform: 'web-mobile' }, { dest: directory }));
             assert.notEqual(require.cache[sourcePathsPath].exports, stalePaths, '构建后检查必须重新发现当前源目录');
-            assert(repaired.lines.some(line => line.includes('bootstrap-preload-v1 v1.6.3') && line.includes('after-build repaired')),
+            assert(repaired.lines.some(line => line.includes('config-package-artifact-v1 v1.8.0') && line.includes('after-build repaired')),
                 '最终文件修正必须打印实际实现与repaired标识');
             assert.equal(repaired.value.startupPreloadRepaired, true);
             const written = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -124,13 +179,20 @@ async function main() {
             const once = fs.readFileSync(file, 'utf8');
             poisonImplementation();
             const after = await captureLogs(() => hook.onAfterBuild({ platform: 'web-mobile' }, { dest: directory }));
-            assert(after.lines.some(line => line.includes('bootstrap-preload-v1 v1.6.3') && line.includes('onAfterBuild')),
+            assert(after.lines.some(line => line.includes('config-package-artifact-v1 v1.8.0') && line.includes('onAfterBuild')),
                 '必须打印实际after实现标识和版本');
             assert.equal(after.value.startupPreloadRepaired, false);
             assert.equal(fs.readFileSync(file, 'utf8'), once, '再次执行不重写已有启动配置');
             const summary = after.value;
             assert.equal(summary.files, 0, '具有动态路径的原图不得删除');
             assert.equal(summary.backup, null);
+            const configFixture = createConfigBuildFixture(directory);
+            const foreignConfig = path.join(directory, 'assets/foreign/config.json');
+            write(foreignConfig, JSON.stringify({ uuids: [configFixture.source.excluded[0]], paths: {}, packs: {} }));
+            const beforeInvalidPackage = fs.readFileSync(file, 'utf8');
+            await assert.rejects(hook.onAfterBuild({ platform: 'web-mobile' }, { dest: directory }), /非启动散表/);
+            assert.equal(fs.readFileSync(file, 'utf8'), beforeInvalidPackage, '配置核验失败不能先改写启动文件');
+            fs.unlinkSync(foreignConfig);
             write(file, JSON.stringify({ assets: { preloadBundles: {} } }));
             const invalid = fs.readFileSync(file, 'utf8');
             await assert.rejects(hook.onAfterBuild({ platform: 'web-mobile' }, { dest: directory }), /数组/);

@@ -846,6 +846,129 @@
         }
       },
       "container": "rows"
+    },
+    "ScoreCount": {
+      "path": "config/scorecount",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "装备评分与显示排序编号"
+        },
+        "type": {
+          "type": "string",
+          "required": true,
+          "note": "评分属性英文名"
+        },
+        "note1": {
+          "type": "string",
+          "required": true,
+          "note": "属性中文业务说明"
+        },
+        "ratio": {
+          "type": "number",
+          "required": true,
+          "note": "装备评分万分比系数"
+        },
+        "mapping": {
+          "type": "number",
+          "required": true,
+          "note": "对应属性编号"
+        }
+      }
+    },
+    "EquipmentSetType": {
+      "path": "config/equipmentsettype",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "套装阈值配置编号"
+        },
+        "type": {
+          "type": "string",
+          "required": true,
+          "note": "套装类型编号，源表保留数字文本"
+        },
+        "num": {
+          "type": "number",
+          "required": true,
+          "note": "激活所需同套装件数"
+        },
+        "attr": {
+          "type": "string",
+          "required": true,
+          "note": "套装属性原始JSON文本；只读详情不激活玩家效果"
+        }
+      }
+    },
+    "AttributeShow": {
+      "path": "config/attrshow",
+      "container": "rows",
+      "key": "attr",
+      "fields": {
+        "attr": {
+          "type": "number",
+          "required": true,
+          "note": "属性编号"
+        },
+        "icon": {
+          "type": "number",
+          "required": true,
+          "note": "旧属性图标编号，不等同属性编号"
+        },
+        "description": {
+          "type": "string",
+          "required": true,
+          "note": "属性策划说明；展示名称仍读语言表"
+        }
+      }
+    },
+    "SpiritDisplay": {
+      "path": "config/spirit-display",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "本批已恢复精灵的物品配置ID"
+        },
+        "abilities": {
+          "type": "array",
+          "required": true,
+          "note": "同源导出的精灵特性文案，不参与客户端抽样或属性计算",
+          "items": {
+            "type": "object",
+            "fields": {
+              "id": { "type": "number", "required": true, "note": "特性配置ID" },
+              "attributeId": { "type": "number", "required": true, "note": "旧属性配置ID，仅便于定位来源" },
+              "value": { "type": "number", "required": true, "note": "源特性值，不代表当前角色已生效属性" },
+              "name": { "type": "string", "required": true, "note": "旧语言表特性名" },
+              "description": { "type": "string", "required": true, "note": "已按源规则格式化的只读特性说明" }
+            }
+          }
+        },
+        "skills": {
+          "type": "array",
+          "required": true,
+          "note": "已恢复精灵可能生成的技能显示投影，由服务端实例决定选中项",
+          "items": {
+            "type": "object",
+            "fields": {
+              "skillId": { "type": "number", "required": true, "note": "精灵技能配置ID" },
+              "level": { "type": "number", "required": true, "note": "该技能显示行的等级" },
+              "name": { "type": "string", "required": true, "note": "旧语言表技能名" },
+              "description": { "type": "string", "required": true, "note": "旧语言表技能说明" },
+              "icon": { "type": "string", "required": true, "note": "旧技能图标标识，本批详情仅展示文本" }
+            }
+          }
+        }
+      }
     }
   }
 }

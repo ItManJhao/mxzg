@@ -1,0 +1,141 @@
+{
+  "date": "2026-11-13",
+  "baseline": "c23b53ed及前批未提交修改",
+  "scope": "礼包持有只读来源、续购期限纯计算与挂机输入，不开购买/激活/充值/领取",
+  "legacySources": [
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/promotionNew/domain/PrivilegeGift.java",
+      "sha256": "9ddb93c1568ac92e20aaa99e47295bef98d54bb6dfea45d5fedea8763ca361f9"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/promotionNew/service/Promotion010PrivilegeGiftService.java",
+      "sha256": "f544dd670f79414b0ee8ff0c6b2c3c6eb24e79b5d6e055cf26329ea36a3fdacd"
+    }
+  ],
+  "state": {
+    "table": "game_privilege_gift",
+    "migration": "V20__idle_privilege_gifts.sql",
+    "initialHolding": "独立新版无旧玩家迁移；未实现购买/充值卡使用/礼包写入链，新表从真实空持有开始",
+    "identity": "独立字符串id，角色普通索引；不加角色+配置唯一约束，重复配置记录独立保留",
+    "fields": [
+      "role_id",
+      "gift_id",
+      "purchased_at_seconds",
+      "ends_at_seconds",
+      "purchase_count",
+      "active"
+    ],
+    "limits": "不从库存推导权益，不限制ends>=purchased（旧永久分支可保留旧有限期限），读查询不清active/count"
+  },
+  "rules": {
+    "time": "计算入口传入同一nowSeconds；end0永久，now<=end有效，忽略active及购买计数",
+    "renewal": "纯函数：限时以当前秒或上海当天零点+天数*86400覆盖，不叠剩余；0天保留previousEnd，新记录传0",
+    "purchaseWorkflow": "未恢复；旧过期计数维护、资格、商品/订单及同事务幂等另行恢复，纯期限函数不证明允许续购",
+    "benefits": "仅3个IDLE effect；按ROLE/GOLD/HERO顺序及每条记录/配置列表独立追加，不受show_level过滤",
+    "missing": "先期限后查配置，过期未知配置保留原记录并跳过；有效/永久缺配置拒绝，缺表不得返回空"
+  },
+  "input": {
+    "method": "IdleRewardInputService.current(roleId,nowSeconds)",
+    "read": "同角色锁事务一次角色上下文、一次世界和一次持有快照；返回Input冻结时间、原始gifts及两种加成列表",
+    "version": "组合IdleRewardRules和PrivilegeGiftRules内容摘要",
+    "remaining": "活动记录期/开服条件/轮次尚未恢复，不能用四来源直接领取完整收益"
+  },
+  "config": {
+    "tables": 47,
+    "mavenSharedIncludes": 32,
+    "source": "client/assets/bundles/resources/config/promotionprivilegegift.json",
+    "rows": 13,
+    "sha256": "65d0aa0379895716c00b3b61752c4028ee629d4f103ac93631d5cdeef1e654d9",
+    "uuid": "a4de119c-deb0-4cf7-aa1a-a7226b3d4c5f",
+    "originalMetaBytePreserved": true,
+    "allSharedSourcesEqualPackaged": true
+  },
+  "checks": {
+    "java": {
+      "PrivilegeGiftRulesTest": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "PrivilegeGiftServiceTest": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "ClergyInputRulesTest": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "ClergyStateMigrationTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "WorldLevelServiceTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardRulesTest": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardInputServiceTest": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "MainChapterIdleTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRulesBoundaryTest": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleBonusUtilsTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleTest": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "total": 104,
+    "failures": 0,
+    "log": "backend/target/idle-gift-review-20261113.log",
+    "configScope": {
+      "tests": 14,
+      "passed": 14
+    },
+    "resolvedTestCompatibility": "首轮4项持有测试触发H2常量IN集合绑定已关闭会话；active整数校验改为等价BETWEEN0/1后整组104项通过，未移除约束",
+    "resourceScope": "16 Bundle/32 Prefab/17独立View、全部序列化引用与12841份特效文件/UUID集合通过",
+    "resourceGenerated": "32 Prefab索引通过",
+    "docs": "44份文档文件链接与git diff --check通过"
+  },
+  "limitations": [
+    "只运行独立H2，未连接日常玩家库或独立MySQL",
+    "无浏览器/Creator/新发布包/真机验收",
+    "没有礼包购买或权益写入接口，当前正常流程没有生成持有权益的开放入口",
+    "没有活动权威状态或新主线完整领取事务"
+  ],
+  "git": "hao本地，未提交推送；保留HeroRosterController既有排版改动"
+}

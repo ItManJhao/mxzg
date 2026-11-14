@@ -1,0 +1,249 @@
+{
+  "date": "2026-11-14",
+  "branch": "hao",
+  "scope": "统一H5构建与产物检查入口；复核页面同步使用配置包；独立发布包运行验收，不扩大玩法",
+  "delivery": {
+    "committed": false,
+    "pushed": false,
+    "mergedMain": false,
+    "releaseBuild": true,
+    "productionDeployment": false
+  },
+  "build": {
+    "entry": "scripts/build-remake-h5.bat",
+    "implementation": "client/tools/build-remake-h5.ps1",
+    "options": "client/tools/remake-h5.build.json",
+    "output": "client/build/remake-h5",
+    "identityEvidence": "config-package-release-20261114/build.json",
+    "creator": "3.8.8",
+    "platform": "web-mobile",
+    "debug": false,
+    "md5Cache": false,
+    "entryScene": "db://assets/scenes/Remake.scene",
+    "builtAt": "2026-11-14T11:54:53.0380559Z",
+    "sourceCommit": "c23b53ed9ec44f2a7c555ec5531b77303528bfd9",
+    "sourceDirty": true,
+    "copiedTypeScriptSha256Count": 172,
+    "creatorExitCode": 36,
+    "entryExitCode": 0,
+    "isolatedProject": "client/temp/remake-h5-project/client",
+    "logs": "client/temp/remake-h5-build",
+    "resourceServer": "http://127.0.0.1:7460/",
+    "hook": {
+      "id": "config-package-artifact-v1",
+      "version": "1.8.0",
+      "actualStages": [
+        "onBeforeBuild",
+        "onBeforeCompressSettings",
+        "onAfterBuild"
+      ]
+    },
+    "observedAndFixed": [
+      "首轮受限Creator无法访问自身AppData缓存，未发布产物；授权隔离CLI构建后继续",
+      "真实Creator构建线程不能运行esbuild.buildSync所需Worker；before核验改为固定普通Node子进程，只读检查失败仍中止",
+      "新CLI任务不由Creator7456自动托管；18081独立H5新增严格前端build身份核验，再核验随机测试后端kind/run，不回退日常账号"
+    ],
+    "limitation": "SHA记录覆盖复制的172份TS，未声明全部美术或Prefab具有逐文件摘要；源码有未提交内容，不能把包等同于sourceCommit。构建旧原图警告和缓存日志保留，不声称构建日志零警告。",
+    "sourceComparisonAtFirstReview": {
+      "copiedTypeScript": 172,
+      "mismatches": 0,
+      "beforeFinalRefinement": true
+    }
+  },
+  "configuration": {
+    "version": "config-v1:94380d76c4204fe90737ea7cd81888cd4a6c91a6997a3ecea8014a1a457ab1fd",
+    "sourceFiles": 49,
+    "startup": [
+      "Language",
+      "LoadingTips"
+    ],
+    "packedFiles": 47,
+    "binaryBytes": 408367,
+    "sha256": "fe902d3c1133ad037628ff2ca0505b2b4a25663ec637172efa0639f4b7ebfc54",
+    "sourceBundleCount": 16,
+    "outputBundleCountIncludingEngine": 18,
+    "allBundlesChecked": true,
+    "packedSourceCopies": 0,
+    "binaryFiles": 1,
+    "codecStaticRegistration": true,
+    "codecStaticDependency": true,
+    "codecRuntimeVerified": true,
+    "runtimeVerificationNote": "build.json中的codecRuntimeVerified=false是只读静态构建检查的正确边界；本记录另用真实发布包登录、解压及页面数据显示证明运行，未回写构建记录伪造静态结果。",
+    "progress": "47为同一包内部解析/索引任务数，不是47份下载；玩家文字已改为加载游戏数据、整理游戏数据、准备游戏数据，比例仍按真实任务推进。",
+    "implementation": [
+      "LoadingPlan保留唯一启动归属及三段配置，非启动JSON自动打包和官方UUID过滤，无模块配置清单",
+      "ApplicationResources不再把普通JsonAsset隐式映射为GameConfig.prepare；启动config目标与整包安装目标各自显式处理",
+      "主城同步读取GameConfig，缺必需表明确失败；挂机对话直接查询同一Language索引，不再复制整张语言Map",
+      "features内无页面配置prepare、JsonAsset或直接fetch；已有美术prepare、资源池和页面生命周期保留",
+      "最终复核补齐原始JsonAsset与显式config的不同完成键；资源池仍合并同地址下载，专项证明先原始JSON再配置只请求一次且成功解析"
+    ]
+  },
+  "runtime": {
+    "host": "http://127.0.0.1:18081/",
+    "remote": "http://127.0.0.1:7460/",
+    "frontendIdentity": "__mxzg_preview__: mxzg-remake-preview，并核对本轮build和配置产物",
+    "backend": {
+      "kind": "mxzg-owned-socket-it",
+      "run": "78cc8534510b4217bd852c014b61627e",
+      "port": 61639,
+      "pid": 4548,
+      "database": "独立随机内存H2，业务WS＋Protobuf；未连接或重启日常后端",
+      "accounts": [
+        "loading_review",
+        "chapter_review"
+      ],
+      "fixtureChange": "测试宿主增加1001001普通装备，现有实例/库存服务真实写入；不通过玩家入口开放写玩法"
+    },
+    "viewport": "IAB 430×932竖屏；非真机",
+    "passed": [
+      "首次登录进入主城；冷恢复仍停登录，点击开始执行配置安装；随后清除独立会话并切换chapter_review",
+      "装备1001001专用详情显示银制利剑、评分33、攻击33；关闭返回",
+      "道具900102英雄进阶石、碎片950001火系精英碎片和2000002独立精灵详情正常；精灵格不显示数量，样本攻击146和低级生机",
+      "英雄列表三名100级；黑暗切割者5星基础详情及黑暗切割Lv1、170%物理伤害说明正常",
+      "挂机模型、遇敌回放及英雄对话正常；进入布阵3/6并挑战第二关，胜利结算自动确认返回挂机",
+      "继续第三关挑战，胜利页入场、战报双方真实头像/名称/等级/统计正常；关闭战报返回已通关挂机",
+      "完整流程配置请求仍为6个，不出现47份源表追加下载；唯一GameConfig为49份文件、20张类型化表且版本匹配",
+      "安装后的压缩BufferAsset不在引擎资产缓存中，不宣称浏览器整个JS堆立即下降",
+      "当前捕获的116条console记录无warn/error；关闭测试页并恢复浏览器临时尺寸"
+    ],
+    "network": {
+      "bag": "config-package-release-20261114/bag-runtime.json",
+      "restoredSession": "config-package-release-20261114/restore-runtime.json",
+      "chapter": "config-package-release-20261114/chapter-runtime.json",
+      "console": "config-package-release-20261114/console.json",
+      "binaryRequestsPerDocument": 1,
+      "sourceJsonRequests": 0,
+      "configurationRequests": 6,
+      "requestBreakdown": "Bundle config/index两项＋两份启动JsonAsset＋bin元数据＋唯一bin；启动Language导入正文1599387字节、LoadingTips329字节另计，不能把所有配置请求描述为仅一个HTTP请求。",
+      "limitation": "本地跨端口no-store下载、Resource Timing长度与耗时只证明当前样板；不代表正式CDN、弱网或目标手机性能。"
+    },
+    "cleanup": {
+      "backendStopped": true,
+      "h5Stopped": true,
+      "remoteStopped": true,
+      "stoppedAt": "2026-11-14T12:05:25.6919967Z",
+      "ownershipLog": "client/temp/config-package-release/stopped.json"
+    },
+    "screenshots": [
+      "config-package-release-20261114/first-login-home.jpg",
+      "config-package-release-20261114/restored-home.jpg",
+      "config-package-release-20261114/equipment.jpg",
+      "config-package-release-20261114/item.jpg",
+      "config-package-release-20261114/shard.jpg",
+      "config-package-release-20261114/spirit.jpg",
+      "config-package-release-20261114/hero.jpg",
+      "config-package-release-20261114/skill.jpg",
+      "config-package-release-20261114/idle.jpg",
+      "config-package-release-20261114/formation.jpg",
+      "config-package-release-20261114/second-returned-idle.jpg",
+      "config-package-release-20261114/victory-entry.jpg",
+      "config-package-release-20261114/battle-report.jpg",
+      "config-package-release-20261114/returned-idle.jpg"
+    ],
+    "notClaimed": [
+      "完整经验动画及全部统计边界本批重新逐项验收",
+      "全部背包详情UI矩阵重新穷举或98种精灵技能逐项画面",
+      "真实CDN HTTPS、版本签名/回滚、原生App、微信小游戏或目标真机内存帧率",
+      "本批重验MySQL或新挂机领取事务；宝箱领取、快速战斗和养成继续关闭"
+    ]
+  },
+  "checks": {
+    "newOrChangedSuites": [
+      "config-package-loading",
+      "staged-loading",
+      "config-package-build",
+      "build-entry",
+      "isolated-build（PREVIEW真/假）",
+      "home-presentation",
+      "main-chapter",
+      "city",
+      "battle",
+      "bindings",
+      "creator-compat"
+    ],
+    "other": [
+      "bag-build-hook-check含真实普通Node子进程及坏源包拒绝",
+      "配置生成--check及Creator工程类型检查",
+      "真实Creator三阶段钩子、配置产物检查、18包引用校验及源TS摘要一致",
+      "测试宿主javac定向编译；未重复Java业务测试",
+      "46份文档链接、交付范围diff检查及证据文件/版本/单包请求交叉校验"
+    ],
+    "historical": "先前34项共享Python、完整配置store/ZIP边界及旧预览按config-package-review-20261114.json独立保留，不与本批重复累加"
+  },
+  "next": [
+    "配置包技术收尾已完成；后续正常开发继续本机预览、按批集中构建",
+    "按后续授权补客户端领取持久journal与回执/快照双向确认，先维持按钮关闭",
+    "真实CDN签名发布、回滚及真机资源/内存预算单独验证"
+  ],
+  "finalRefinement": {
+    "buildEvidence": "config-package-release-20261114/final-build.json",
+    "builtAt": "2026-11-14T12:14:38.3209196Z",
+    "reason": "Separate raw JsonAsset loaded state from explicit GameConfig validated state; keep one ResourcePool download.",
+    "scope": "ApplicationResources and staged-loading regression only; LoadingPlan and config package content unchanged.",
+    "sourceTypeScriptCount": 172,
+    "currentSourceMismatchCount": 0,
+    "artifact": {
+      "version": "config-v1:94380d76c4204fe90737ea7cd81888cd4a6c91a6997a3ecea8014a1a457ab1fd",
+      "bundles": 18,
+      "startup": 2,
+      "excluded": 47,
+      "packedSourceCopies": 0,
+      "binaryFiles": 1,
+      "packageBytes": 408367,
+      "sha256": "fe902d3c1133ad037628ff2ca0505b2b4a25663ec637172efa0639f4b7ebfc54",
+      "codecStaticRegistration": true,
+      "codecStaticDependency": true,
+      "codecRuntimeVerified": false
+    },
+    "hooks": {
+      "id": "config-package-artifact-v1",
+      "version": "1.8.0",
+      "stages": [
+        "onBeforeBuild",
+        "onBeforeCompressSettings",
+        "onAfterBuild"
+      ]
+    },
+    "runtime": "config-package-release-20261114/final-runtime.json",
+    "console": "config-package-release-20261114/final-console.json",
+    "screenshots": [
+      "config-package-release-20261114/final-home.jpg",
+      "config-package-release-20261114/final-equipment.jpg"
+    ],
+    "backend": {
+      "run": "72b3a63ba2284c5996c0c929434e1144",
+      "port": 63276,
+      "pid": 16504,
+      "stopped": true
+    },
+    "passed": [
+      "staged-loading: raw Language JsonAsset -> explicit config ready; one actual file load",
+      "config-package-loading and Creator TypeScript",
+      "real Creator build, same three hook stages and all 18 bundles",
+      "fresh release login -> one bin -> GameConfig 49 files / 20 typed tables -> Bag -> equipment score and attack 33 -> close"
+    ],
+    "runtimeWarningErrorCount": 0,
+    "binaryRequests": 1,
+    "packedSourceJsonRequests": 0,
+    "cleanup": {
+      "backend": {
+        "run": "72b3a63ba2284c5996c0c929434e1144",
+        "port": 63276,
+        "pid": 16504,
+        "stopped": true
+      },
+      "h5": {
+        "port": 18081,
+        "pid": 8476,
+        "stopped": true
+      },
+      "remote": {
+        "port": 7460,
+        "pid": 21680,
+        "stopped": true
+      },
+      "stoppedAt": "2026-11-14T12:17:00.4498613Z"
+    },
+    "notRepeated": "Full hero, battle, report, restore and switch-account checks above belong to the 19:54 build; final refinement repeated the changed entry/config/Bag boundary only."
+  }
+}

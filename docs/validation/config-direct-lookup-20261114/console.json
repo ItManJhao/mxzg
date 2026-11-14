@@ -1,0 +1,1466 @@
+[
+  {
+    "level": "log",
+    "message": "Init Base: 0.1328125 ms",
+    "timestamp": "2026-11-14T12:39:40.272Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "Init Infrastructure: 13.700927734375 ms",
+    "timestamp": "2026-11-14T12:39:40.285Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "Init SubSystem: 146.910888671875 ms",
+    "timestamp": "2026-11-14T12:39:40.493Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "Init Project: 360.77392578125 ms",
+    "timestamp": "2026-11-14T12:39:40.842Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:39:44 服务端 → 客户端｜选服｜servers.list｜开放区服｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"items\": [\n    {\n      \"id\": \"local-1\",\n      \"regionId\": \"local\",\n      \"regionName\": \"本地开发区\",\n      \"name\": \"开发一服\",\n      \"enabled\": true\n    },\n    {\n      \"id\": \"local-2\",\n      \"regionId\": \"local\",\n      \"regionName\": \"本地开发区\",\n      \"name\": \"开发二服\",\n      \"enabled\": true\n    }\n  ]\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:39:44.542Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:39:44 打开界面 AccountLoginView ui AccountLoginView 耗时 87ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:39:44.631Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:40:00 服务端 → 客户端｜登录｜session.login｜统一初始化角色和背包｜成功\n物品种类数：4（不是背包格子数，也不是单个物品数量）\n结构：Snapshot { revision, role, inventory: Item[] }；Item { itemId, quantity }\nitemId = 策划物品 ID；quantity = 该物品当前持有数量（绝对值，不是新增数量）\n实际数据（Protobuf 解码后）：\n{\n  \"heroes\": [],\n  \"inventory\": [\n    {\n      \"itemId\": 900102,\n      \"quantity\": 3,\n      \"instanceId\": \"5ba1ec0c-f93c-438d-94c4-9ee2df2b5b25\"\n    },\n    {\n      \"itemId\": 908101,\n      \"quantity\": 3,\n      \"instanceId\": \"94ce1e5a-3172-46e2-bafa-6a7d4c30c4c1\"\n    },\n    {\n      \"itemId\": 950001,\n      \"quantity\": 3,\n      \"instanceId\": \"354ba7d6-66d9-4c0c-8386-a0f355673bca\"\n    },\n    {\n      \"itemId\": 1001001,\n      \"quantity\": 3,\n      \"instanceId\": \"1a83b6f6-df19-448c-a044-89f0315f2320\"\n    }\n  ],\n  \"role\": {\n    \"id\": \"ea0c766b-3008-4f39-a5fd-b01c8c2338f1\",\n    \"nickname\": \"loading_review\",\n    \"level\": 1,\n    \"gold\": 0,\n    \"diamonds\": 0,\n    \"serverId\": \"local-1\",\n    \"basics\": {\n      \"experience\": 0,\n      \"cup\": 1000,\n      \"headId\": 0,\n      \"imageId\": 410304012,\n      \"borderId\": 0,\n      \"language\": 1,\n      \"createdAtSeconds\": 1794659934,\n      \"lastLoginAtSeconds\": 1794660000,\n      \"experienceToNextLevel\": 120\n    }\n  },\n  \"revision\": 2,\n  \"timedInventory\": {\n    \"items\": [],\n    \"serverTimeSeconds\": 1794660000\n  },\n  \"heroRoster\": {\n    \"capacity\": 300,\n    \"buySpaceTimes\": 0\n  },\n  \"mainFormation\": {\n    \"unlockedIds\": [\n      1\n    ],\n    \"slots\": [],\n    \"options\": [\n      {\n        \"openPositions\": [\n          2,\n          3,\n          5,\n          6,\n          7,\n          8\n        ],\n        \"formationId\": 1\n      }\n    ],\n    \"formationId\": 1,\n    \"assistanceUnlocked\": false,\n    \"version\": 0\n  },\n  \"mainChapter\": {\n    \"maxCleared\": 0,\n    \"assetRevision\": 2\n  },\n  \"spiritInventory\": {\n    \"items\": [\n      {\n        \"skills\": [\n          {\n            \"sort\": 1,\n            \"skillId\": 150400001,\n            \"level\": 1\n          }\n        ],\n        \"instanceId\": \"7fd8440e-d058-4ee4-9e3e-d692b03b7e3e\",\n        \"itemId\": 2000002,\n        \"abilityId\": 3\n      },\n      {\n        \"skills\": [\n          {\n            \"sort\": 1,\n            \"skillId\": 150210001,\n            \"level\": 1\n          }\n        ],\n        \"instanceId\": \"ba7a3587-4118-47ef-8b52-48cd1d6b1d43\",\n        \"itemId\": 2000002,\n        \"abilityId\": 2\n      },\n      {\n        \"skills\": [\n          {\n            \"sort\": 1,\n            \"skillId\": 150130001,\n            \"level\": 1\n          }\n        ],\n        \"instanceId\": \"cf0affb1-7c7d-4371-9226-bc77ea68094e\",\n        \"itemId\": 2000002,\n        \"abilityId\": 3\n      }\n    ],\n    \"schemaVersion\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:40:00.587Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:40:02 started effects=7 runners=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:40:02.375Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityHubView]%c[info] 20:40:02 view buildings=19 scroll=-454.7887323943662 bundles/module/home/prefabs/CityHubView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:40:02.378Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityChromeView]%c[info] 20:40:02 view bundles/module/home/prefabs/CityChromeView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:40:02.391Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:40:02 打开界面 RemakeHomeView ui RemakeHomeView 耗时 57ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:40:02.404Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:40:03 anim loop home/ui/main-city-effect_rivers2 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:40:03.111Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:40:03 anim loop home/ui/main-city-effect_photosphere frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:40:03.112Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:40:03 anim loop home/ui/main-city-effect_rivers1 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:40:03.112Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:40:03 anim loop home/ui/main-city-effect_summon frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:40:03.112Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:40:03 anim loop home/ui/main-city-effect_crack frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:40:03.126Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][ApplicationResources]%c[info] 20:40:03 后台资源处理结束：成功4，失败0，总数4 color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:40:03.957Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:40:24 打开界面 BagView ui BagView 耗时 3ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:40:24.291Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:40:35 打开界面 EquipmentInfoView ui EquipmentInfoView 耗时 246ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:40:35.966Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:40:51 打开界面 SpiritInfoView ui SpiritInfoView 耗时 122ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:40:51.437Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:41:09 打开界面 BagInfoView ui BagInfoView 耗时 8ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:41:09.559Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:41:16 打开界面 BagInfoView ui BagInfoView 耗时 6ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:41:16.907Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "Init Base: 0.132080078125 ms",
+    "timestamp": "2026-11-14T12:41:48.904Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "Init Infrastructure: 13.400146484375 ms",
+    "timestamp": "2026-11-14T12:41:48.917Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "Init SubSystem: 165.13916015625 ms",
+    "timestamp": "2026-11-14T12:41:49.132Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "Init Project: 299.928955078125 ms",
+    "timestamp": "2026-11-14T12:41:49.428Z",
+    "url": "http://localhost:7456/scripting/engine/bin/.cache/dev/preview/bundled/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:41:52 服务端 → 客户端｜选服｜servers.list｜开放区服｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"items\": [\n    {\n      \"id\": \"local-1\",\n      \"regionId\": \"local\",\n      \"regionName\": \"本地开发区\",\n      \"name\": \"开发一服\",\n      \"enabled\": true\n    },\n    {\n      \"id\": \"local-2\",\n      \"regionId\": \"local\",\n      \"regionName\": \"本地开发区\",\n      \"name\": \"开发二服\",\n      \"enabled\": true\n    }\n  ]\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:41:52.593Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:41:52 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功\n物品种类数：4（不是背包格子数，也不是单个物品数量）\n结构：Snapshot { revision, role, inventory: Item[] }；Item { itemId, quantity }\nitemId = 策划物品 ID；quantity = 该物品当前持有数量（绝对值，不是新增数量）\n实际数据（Protobuf 解码后）：\n{\n  \"heroes\": [],\n  \"inventory\": [\n    {\n      \"itemId\": 900102,\n      \"quantity\": 3,\n      \"instanceId\": \"5ba1ec0c-f93c-438d-94c4-9ee2df2b5b25\"\n    },\n    {\n      \"itemId\": 908101,\n      \"quantity\": 3,\n      \"instanceId\": \"94ce1e5a-3172-46e2-bafa-6a7d4c30c4c1\"\n    },\n    {\n      \"itemId\": 950001,\n      \"quantity\": 3,\n      \"instanceId\": \"354ba7d6-66d9-4c0c-8386-a0f355673bca\"\n    },\n    {\n      \"itemId\": 1001001,\n      \"quantity\": 3,\n      \"instanceId\": \"1a83b6f6-df19-448c-a044-89f0315f2320\"\n    }\n  ],\n  \"role\": {\n    \"id\": \"ea0c766b-3008-4f39-a5fd-b01c8c2338f1\",\n    \"nickname\": \"loading_review\",\n    \"level\": 1,\n    \"gold\": 0,\n    \"diamonds\": 0,\n    \"serverId\": \"local-1\",\n    \"basics\": {\n      \"experience\": 0,\n      \"cup\": 1000,\n      \"headId\": 0,\n      \"imageId\": 410304012,\n      \"borderId\": 0,\n      \"language\": 1,\n      \"createdAtSeconds\": 1794659934,\n      \"lastLoginAtSeconds\": 1794660000,\n      \"experienceToNextLevel\": 120\n    }\n  },\n  \"revision\": 2,\n  \"timedInventory\": {\n    \"items\": [],\n    \"serverTimeSeconds\": 1794660112\n  },\n  \"heroRoster\": {\n    \"capacity\": 300,\n    \"buySpaceTimes\": 0\n  },\n  \"mainFormation\": {\n    \"unlockedIds\": [\n      1\n    ],\n    \"slots\": [],\n    \"options\": [\n      {\n        \"openPositions\": [\n          2,\n          3,\n          5,\n          6,\n          7,\n          8\n        ],\n        \"formationId\": 1\n      }\n    ],\n    \"formationId\": 1,\n    \"assistanceUnlocked\": false,\n    \"version\": 0\n  },\n  \"mainChapter\": {\n    \"maxCleared\": 0,\n    \"assetRevision\": 2\n  },\n  \"spiritInventory\": {\n    \"items\": [\n      {\n        \"skills\": [\n          {\n            \"sort\": 1,\n            \"skillId\": 150400001,\n            \"level\": 1\n          }\n        ],\n        \"instanceId\": \"7fd8440e-d058-4ee4-9e3e-d692b03b7e3e\",\n        \"itemId\": 2000002,\n        \"abilityId\": 3\n      },\n      {\n        \"skills\": [\n          {\n            \"sort\": 1,\n            \"skillId\": 150210001,\n            \"level\": 1\n          }\n        ],\n        \"instanceId\": \"ba7a3587-4118-47ef-8b52-48cd1d6b1d43\",\n        \"itemId\": 2000002,\n        \"abilityId\": 2\n      },\n      {\n        \"skills\": [\n          {\n            \"sort\": 1,\n            \"skillId\": 150130001,\n            \"level\": 1\n          }\n        ],\n        \"instanceId\": \"cf0affb1-7c7d-4371-9226-bc77ea68094e\",\n        \"itemId\": 2000002,\n        \"abilityId\": 3\n      }\n    ],\n    \"schemaVersion\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:41:52.620Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:41:52 打开界面 AccountLoginView ui AccountLoginView 耗时 74ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:41:52.697Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:42:21 服务端 → 客户端｜登录｜session.login｜统一初始化角色和背包｜成功\n物品种类数：0（不是背包格子数，也不是单个物品数量）\n结构：Snapshot { revision, role, inventory: Item[] }；Item { itemId, quantity }\nitemId = 策划物品 ID；quantity = 该物品当前持有数量（绝对值，不是新增数量）\n实际数据（Protobuf 解码后）：\n{\n  \"heroes\": [\n    {\n      \"id\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\",\n      \"templateId\": 10101001,\n      \"level\": 100,\n      \"star\": 1,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 1816,\n        \"atk\": 401,\n        \"def\": 214,\n        \"spd\": 218\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 1816,\n          \"atk\": 401,\n          \"def\": 214,\n          \"spd\": 218\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\",\n      \"templateId\": 10104004,\n      \"level\": 100,\n      \"star\": 4,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 4041,\n        \"atk\": 715,\n        \"def\": 504,\n        \"spd\": 442\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 4041,\n          \"atk\": 715,\n          \"def\": 504,\n          \"spd\": 442\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"ea859927-188f-4cea-93fa-e0088505facd\",\n      \"templateId\": 10505005,\n      \"level\": 100,\n      \"star\": 5,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 5972,\n        \"atk\": 1243,\n        \"def\": 772,\n        \"spd\": 650\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 5972,\n          \"atk\": 1243,\n          \"def\": 772,\n          \"spd\": 650\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    }\n  ],\n  \"inventory\": [],\n  \"role\": {\n    \"id\": \"375043ee-9c60-47ef-926d-6cf94b676883\",\n    \"nickname\": \"chapter_review\",\n    \"level\": 2,\n    \"gold\": 0,\n    \"diamonds\": 0,\n    \"serverId\": \"local-1\",\n    \"basics\": {\n      \"experience\": 0,\n      \"cup\": 1000,\n      \"headId\": 0,\n      \"imageId\": 410304012,\n      \"borderId\": 0,\n      \"language\": 1,\n      \"createdAtSeconds\": 1794659934,\n      \"lastLoginAtSeconds\": 1794660141,\n      \"experienceToNextLevel\": 360\n    }\n  },\n  \"revision\": 2,\n  \"timedInventory\": {\n    \"items\": [],\n    \"serverTimeSeconds\": 1794660141\n  },\n  \"heroRoster\": {\n    \"capacity\": 300,\n    \"buySpaceTimes\": 0\n  },\n  \"mainFormation\": {\n    \"unlockedIds\": [\n      1\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"options\": [\n      {\n        \"openPositions\": [\n          2,\n          3,\n          5,\n          6,\n          7,\n          8\n        ],\n        \"formationId\": 1\n      }\n    ],\n    \"formationId\": 1,\n    \"assistanceUnlocked\": false,\n    \"version\": 1\n  },\n  \"mainChapter\": {\n    \"maxCleared\": 1,\n    \"assetRevision\": 2\n  },\n  \"mainChapterIdle\": {\n    \"rates\": [\n      {\n        \"itemId\": 900001,\n        \"quantity\": 200\n      },\n      {\n        \"itemId\": 900003,\n        \"quantity\": 10\n      },\n      {\n        \"itemId\": 900101,\n        \"quantity\": 25\n      }\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"serverTime\": 1794660141,\n    \"startedAt\": 1794659874,\n    \"maxSeconds\": 21600,\n    \"frequency\": 60,\n    \"rewardStage\": 1,\n    \"lineupVersion\": 1,\n    \"claimState\": {\n      \"schemaVersion\": 1,\n      \"operationVersion\": 1,\n      \"requestMode\": \"READ_ONLY\"\n    }\n  },\n  \"spiritInventory\": {\n    \"items\": [],\n    \"schemaVersion\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:42:21.627Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:42:23 started effects=7 runners=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:42:23.350Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityHubView]%c[info] 20:42:23 view buildings=19 scroll=-454.7887323943662 bundles/module/home/prefabs/CityHubView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:42:23.351Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityChromeView]%c[info] 20:42:23 view bundles/module/home/prefabs/CityChromeView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:42:23.354Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:42:23 打开界面 RemakeHomeView ui RemakeHomeView 耗时 12ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:42:23.357Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:42:24 anim loop home/ui/main-city-effect_crack frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:42:24.011Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:42:24 anim loop home/ui/main-city-effect_summon frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:42:24.012Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:42:24 anim loop home/ui/main-city-effect_rivers1 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:42:24.047Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:42:24 anim loop home/ui/main-city-effect_photosphere frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:42:24.047Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:42:24 anim loop home/ui/main-city-effect_rivers2 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:42:24.047Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][ApplicationResources]%c[info] 20:42:24 后台资源处理结束：成功4，失败0，总数4 color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:42:24.692Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:43:51 打开界面 HeroListView ui HeroListView 耗时 2ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:43:51.845Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:43:57 打开界面 HeroInfoView ui HeroInfoView 耗时 6ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:43:57.500Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:44:02 打开界面 HeroSkillView ui HeroSkillView 耗时 25ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:44:02.248Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:44:07 打开界面 MainChapterView ui MainChapterView 耗时 2ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:44:07.158Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:44:12 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010300,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -394,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 2\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:44:12.403Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:13 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:13.915Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:14 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:14.965Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:15 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:15.449Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:16 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:16.225Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:44:21 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010300,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -394,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 2\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:44:21.164Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:22 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:22.619Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:23 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:23.684Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:24 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:24.180Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:24 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:24.983Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:44:29 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010300,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -394,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 2\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:44:29.950Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:31 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:31.383Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:32 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:32.447Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:32 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:32.934Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:33 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:33.714Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:44:38 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -1221,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:44:38.659Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:40 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:40.064Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:41 effect.start 5050100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:41.115Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:41 effect.start 5050200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:41.780Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:43 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:43.483Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:44:48 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010300,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -394,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 2\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:44:48.441Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:49 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:49.885Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:50 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:50.935Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:51 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:51.432Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:52 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:52.215Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:44:57 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -1221,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:44:57.163Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:44:58 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:58.634Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:44:59 effect.start 5050100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:44:59.697Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:00 effect.start 5050200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:00.351Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:02 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:02.065Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:45:07 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010300,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -394,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 2\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:45:07.024Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:08 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:08.533Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:09 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:09.583Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:10 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:10.082Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:10 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:10.850Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:45:13 打开界面 ChapterRewardInfoView ui ChapterRewardInfoView 耗时 113ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:45:13.423Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:45:15 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -702,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 3\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:45:15.792Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:17 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:17.352Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:18 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:18.420Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:18 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:18.420Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:18 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:18.421Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:18 effect.frames 1040100 target=10 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:18.840Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:19 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:19.082Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:19 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:19.453Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:45:23 打开界面 BagInfoView ui BagInfoView 耗时 5ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:45:23.996Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:45:24 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -702,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 3\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:45:24.395Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:25 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:25.950Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:26 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:26.998Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:26 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:26.999Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:26 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:26.999Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:27 effect.frames 1040100 target=10 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:27.416Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:27 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:27.649Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:28 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:28.016Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:45:32 打开界面 FormationView ui FormationView 耗时 214ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:45:32.738Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:45:33 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -1221,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:45:33.015Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:34 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:34.465Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:35 effect.start 5050100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:35.515Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:36 effect.start 5050200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:36.166Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:37 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:37.884Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:45:42 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -1221,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:45:42.825Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:44 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:44.299Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:45 effect.start 5050100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:45.368Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:46 effect.start 5050200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:46.018Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:47 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:47.753Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:45:52 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -1221,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:45:52.696Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:54 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:54.133Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:55 effect.start 5050100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:55.199Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:45:55 effect.start 5050200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:55.853Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:45:57 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:45:57.553Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:02 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 1,\n  \"assetRevision\": 2,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 1,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -702,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 3\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:1\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:02.502Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:04 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:04.067Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:05 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:05.116Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:05 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:05.116Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:05 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:05.116Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:05 effect.frames 1040100 target=10 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:05.533Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:05 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:05.787Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:06 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:06.168Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:07 服务端 → 客户端｜阵容｜formation.save｜主线阵容保存回执｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"requestId\": \"3bf4b5d2-3f33-42b0-9c68-e5df0edaaa57\",\n  \"version\": 1\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:07.673Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:07 服务端 → 客户端｜资产｜state.changed｜提交后的角色与背包同步｜通知\n物品种类数：0（不是背包格子数，也不是单个物品数量）\n结构：Snapshot { revision, role, inventory: Item[] }；Item { itemId, quantity }\nitemId = 策划物品 ID；quantity = 该物品当前持有数量（绝对值，不是新增数量）\n实际数据（Protobuf 解码后）：\n{\n  \"heroes\": [\n    {\n      \"id\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\",\n      \"templateId\": 10101001,\n      \"level\": 100,\n      \"star\": 1,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 1816,\n        \"atk\": 401,\n        \"def\": 214,\n        \"spd\": 218\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 1816,\n          \"atk\": 401,\n          \"def\": 214,\n          \"spd\": 218\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\",\n      \"templateId\": 10104004,\n      \"level\": 100,\n      \"star\": 4,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 4041,\n        \"atk\": 715,\n        \"def\": 504,\n        \"spd\": 442\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 4041,\n          \"atk\": 715,\n          \"def\": 504,\n          \"spd\": 442\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"ea859927-188f-4cea-93fa-e0088505facd\",\n      \"templateId\": 10505005,\n      \"level\": 100,\n      \"star\": 5,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 5972,\n        \"atk\": 1243,\n        \"def\": 772,\n        \"spd\": 650\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 5972,\n          \"atk\": 1243,\n          \"def\": 772,\n          \"spd\": 650\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    }\n  ],\n  \"inventory\": [],\n  \"role\": {\n    \"id\": \"375043ee-9c60-47ef-926d-6cf94b676883\",\n    \"nickname\": \"chapter_review\",\n    \"level\": 2,\n    \"gold\": 0,\n    \"diamonds\": 0,\n    \"serverId\": \"local-1\",\n    \"basics\": {\n      \"experience\": 0,\n      \"cup\": 1000,\n      \"headId\": 0,\n      \"imageId\": 410304012,\n      \"borderId\": 0,\n      \"language\": 1,\n      \"createdAtSeconds\": 1794659934,\n      \"lastLoginAtSeconds\": 1794660141,\n      \"experienceToNextLevel\": 360\n    }\n  },\n  \"revision\": 3,\n  \"timedInventory\": {\n    \"items\": [],\n    \"serverTimeSeconds\": 1794660367\n  },\n  \"heroRoster\": {\n    \"capacity\": 300,\n    \"buySpaceTimes\": 0\n  },\n  \"mainFormation\": {\n    \"unlockedIds\": [\n      1\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"options\": [\n      {\n        \"openPositions\": [\n          2,\n          3,\n          5,\n          6,\n          7,\n          8\n        ],\n        \"formationId\": 1\n      }\n    ],\n    \"formationId\": 1,\n    \"assistanceUnlocked\": false,\n    \"version\": 1\n  },\n  \"mainChapter\": {\n    \"maxCleared\": 2,\n    \"pendingBattleId\": \"feacf46f-3b56-4eb3-a7f1-87e7d75f94f3\",\n    \"assetRevision\": 3\n  },\n  \"mainChapterIdle\": {\n    \"rates\": [\n      {\n        \"itemId\": 900001,\n        \"quantity\": 200\n      },\n      {\n        \"itemId\": 900003,\n        \"quantity\": 10\n      },\n      {\n        \"itemId\": 900101,\n        \"quantity\": 25\n      }\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"serverTime\": 1794660367,\n    \"startedAt\": 1794659874,\n    \"maxSeconds\": 21600,\n    \"frequency\": 60,\n    \"rewardStage\": 2,\n    \"lineupVersion\": 1,\n    \"claimState\": {\n      \"schemaVersion\": 1,\n      \"operationVersion\": 1,\n      \"requestMode\": \"READ_ONLY\"\n    }\n  },\n  \"spiritInventory\": {\n    \"items\": [],\n    \"schemaVersion\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:07.724Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:07 服务端 → 客户端｜主线｜chapter.challenge｜持久挑战回执｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"rewards\": [],\n  \"action\": \"BATTLE\",\n  \"battleId\": \"feacf46f-3b56-4eb3-a7f1-87e7d75f94f3\",\n  \"state\": {\n    \"maxCleared\": 2,\n    \"pendingBattleId\": \"feacf46f-3b56-4eb3-a7f1-87e7d75f94f3\",\n    \"assetRevision\": 3\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:07.726Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:07 服务端 → 客户端｜主线｜chapter.replay｜恢复持久战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"pending\": [\n    \"soul_talent_runes_awakening\",\n    \"account_and_team_sources\",\n    \"battle_special_attributes_and_triggers\",\n    \"soul_skill\",\n    \"talent\",\n    \"runes\",\n    \"awakening\",\n    \"account_and_other_hero_sources\",\n    \"random_probability_pending_review\"\n  ],\n  \"battleId\": \"feacf46f-3b56-4eb3-a7f1-87e7d75f94f3\",\n  \"mission\": 2,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 199,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10505005,\n        \"position\": 2,\n        \"initialHp\": 199,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 199,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 199,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050051,\n            \"skillLevel\": 1,\n            \"skillType\": 1\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5051101\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5051201,\n            \"actualHpChange\": -199,\n            \"reportedHpChange\": -1987,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050051,\n            \"skillLevel\": 1,\n            \"skillType\": 1\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"chapter:lineup:2\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1,\n    \"attackerName\": \"chapter_review\",\n    \"defenderName\": \"羽嘉森林2\"\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:07.738Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:12 opening.completed ZDKS; both teams ready color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:12.570Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:46:12 打开界面 MainChapterBattleView ui MainChapterBattleView 耗时 4832ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:46:12.573Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:13 effect.start 50511010 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:13.301Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:14 effect.start 50511011 delay=2.4166666666666665 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:14.899Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:14 effect.start 50511012 delay=2.4166666666666665 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:14.900Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:14 effect.frames 50511011 target=10 count=19 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:14.938Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:14 effect.frames 50511012 target=10 count=8 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:14.939Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:14 effect.start 5051201 delay=2.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:14.958Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:14 damage.sound skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:14.958Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:14 audio.started skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:14.959Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:16 服务端 → 客户端｜资产｜state.changed｜提交后的角色与背包同步｜通知\n物品种类数：4（不是背包格子数，也不是单个物品数量）\n结构：Snapshot { revision, role, inventory: Item[] }；Item { itemId, quantity }\nitemId = 策划物品 ID；quantity = 该物品当前持有数量（绝对值，不是新增数量）\n实际数据（Protobuf 解码后）：\n{\n  \"heroes\": [\n    {\n      \"id\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\",\n      \"templateId\": 10101001,\n      \"level\": 100,\n      \"star\": 1,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 1816,\n        \"atk\": 401,\n        \"def\": 214,\n        \"spd\": 218\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 1816,\n          \"atk\": 401,\n          \"def\": 214,\n          \"spd\": 218\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\",\n      \"templateId\": 10104004,\n      \"level\": 100,\n      \"star\": 4,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 4041,\n        \"atk\": 715,\n        \"def\": 504,\n        \"spd\": 442\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 4041,\n          \"atk\": 715,\n          \"def\": 504,\n          \"spd\": 442\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"ea859927-188f-4cea-93fa-e0088505facd\",\n      \"templateId\": 10505005,\n      \"level\": 100,\n      \"star\": 5,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 5972,\n        \"atk\": 1243,\n        \"def\": 772,\n        \"spd\": 650\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 5972,\n          \"atk\": 1243,\n          \"def\": 772,\n          \"spd\": 650\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    }\n  ],\n  \"inventory\": [\n    {\n      \"itemId\": 900101,\n      \"quantity\": 500,\n      \"instanceId\": \"aea5a85c-7dc7-4312-b684-5a1df30a2416\"\n    },\n    {\n      \"itemId\": 900102,\n      \"quantity\": 2,\n      \"instanceId\": \"f00553ef-b4b8-4525-aa4c-0969c8b03644\"\n    },\n    {\n      \"itemId\": 900401,\n      \"quantity\": 100,\n      \"instanceId\": \"46b4c877-173a-4d81-9023-c1985ff41fe0\"\n    },\n    {\n      \"itemId\": 1004001,\n      \"quantity\": 1,\n      \"instanceId\": \"76a6126b-3d8a-4cb2-a336-7e30660017fe\"\n    }\n  ],\n  \"role\": {\n    \"id\": \"375043ee-9c60-47ef-926d-6cf94b676883\",\n    \"nickname\": \"chapter_review\",\n    \"level\": 2,\n    \"gold\": 4000,\n    \"diamonds\": 151,\n    \"serverId\": \"local-1\",\n    \"basics\": {\n      \"experience\": 200,\n      \"cup\": 1000,\n      \"headId\": 0,\n      \"imageId\": 410304012,\n      \"borderId\": 0,\n      \"language\": 1,\n      \"createdAtSeconds\": 1794659934,\n      \"lastLoginAtSeconds\": 1794660141,\n      \"experienceToNextLevel\": 360\n    }\n  },\n  \"revision\": 4,\n  \"timedInventory\": {\n    \"items\": [],\n    \"serverTimeSeconds\": 1794660376\n  },\n  \"heroRoster\": {\n    \"capacity\": 300,\n    \"buySpaceTimes\": 0\n  },\n  \"mainFormation\": {\n    \"unlockedIds\": [\n      1\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"options\": [\n      {\n        \"openPositions\": [\n          2,\n          3,\n          5,\n          6,\n          7,\n          8\n        ],\n        \"formationId\": 1\n      }\n    ],\n    \"formationId\": 1,\n    \"assistanceUnlocked\": false,\n    \"version\": 1\n  },\n  \"mainChapter\": {\n    \"maxCleared\": 2,\n    \"assetRevision\": 4\n  },\n  \"mainChapterIdle\": {\n    \"rates\": [\n      {\n        \"itemId\": 900001,\n        \"quantity\": 200\n      },\n      {\n        \"itemId\": 900003,\n        \"quantity\": 10\n      },\n      {\n        \"itemId\": 900101,\n        \"quantity\": 25\n      }\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"serverTime\": 1794660376,\n    \"startedAt\": 1794659874,\n    \"maxSeconds\": 21600,\n    \"frequency\": 60,\n    \"rewardStage\": 2,\n    \"lineupVersion\": 1,\n    \"claimState\": {\n      \"schemaVersion\": 1,\n      \"operationVersion\": 1,\n      \"requestMode\": \"READ_ONLY\"\n    }\n  },\n  \"spiritInventory\": {\n    \"items\": [],\n    \"schemaVersion\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:16.225Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:16 服务端 → 客户端｜主线｜chapter.claim｜幂等结算回执｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"rewards\": [\n    {\n      \"itemId\": 900401,\n      \"quantity\": 100\n    },\n    {\n      \"itemId\": 900001,\n      \"quantity\": 4000\n    },\n    {\n      \"itemId\": 900002,\n      \"quantity\": 151\n    },\n    {\n      \"itemId\": 900003,\n      \"quantity\": 200\n    },\n    {\n      \"itemId\": 900101,\n      \"quantity\": 500\n    },\n    {\n      \"itemId\": 900102,\n      \"quantity\": 2\n    },\n    {\n      \"itemId\": 1004001,\n      \"quantity\": 1\n    }\n  ],\n  \"action\": \"SETTLED\",\n  \"battleId\": \"feacf46f-3b56-4eb3-a7f1-87e7d75f94f3\",\n  \"state\": {\n    \"maxCleared\": 2,\n    \"assetRevision\": 4\n  },\n  \"experience\": {\n    \"beforeLevel\": 2,\n    \"beforeExp\": 0,\n    \"beforeThreshold\": 360,\n    \"afterLevel\": 2,\n    \"afterExp\": 200,\n    \"afterThreshold\": 360\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:16.228Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:46:16 结算展示 胜利 sound=battle-end-1 mainSound=battle-main-end-1 presentationOnly=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:16.625Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:46:16 打开界面 ChapterEndView ui ChapterEndView 耗时 394ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:46:16.627Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:46:16 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:16.630Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:46:16 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:16.630Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:16 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:16.632Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:25 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 2,\n  \"assetRevision\": 4,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10505005,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -672,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 3\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:2\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:25.675Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:27 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:27.183Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:28 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:28.233Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:28 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:28.233Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:28 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:28.233Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:28 effect.frames 1040100 target=10 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:28.666Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:28 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:28.900Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:29 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:29.286Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:34 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 2,\n  \"assetRevision\": 4,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10505005,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 1010300,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -377,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 2,\n            \"targetId\": 10,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 2\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:2\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:34.241Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:35 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:35.716Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:36 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:36.767Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:37 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:37.251Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:38 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:38.053Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:46:38 打开界面 FormationView ui FormationView 耗时 6ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:46:38.600Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:42 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 2,\n  \"assetRevision\": 4,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10505005,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5050200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -1168,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:2\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:42.992Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:44 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:44.484Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:45 effect.start 5050100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:45.534Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:46 effect.start 5050200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:46.183Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:46 服务端 → 客户端｜阵容｜formation.save｜主线阵容保存回执｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"requestId\": \"ba26718e-3d7a-4bab-9b91-c72de5389b6b\",\n  \"version\": 1\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:46.768Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:46 服务端 → 客户端｜资产｜state.changed｜提交后的角色与背包同步｜通知\n物品种类数：4（不是背包格子数，也不是单个物品数量）\n结构：Snapshot { revision, role, inventory: Item[] }；Item { itemId, quantity }\nitemId = 策划物品 ID；quantity = 该物品当前持有数量（绝对值，不是新增数量）\n实际数据（Protobuf 解码后）：\n{\n  \"heroes\": [\n    {\n      \"id\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\",\n      \"templateId\": 10101001,\n      \"level\": 100,\n      \"star\": 1,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 1816,\n        \"atk\": 401,\n        \"def\": 214,\n        \"spd\": 218\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 1816,\n          \"atk\": 401,\n          \"def\": 214,\n          \"spd\": 218\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\",\n      \"templateId\": 10104004,\n      \"level\": 100,\n      \"star\": 4,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 4041,\n        \"atk\": 715,\n        \"def\": 504,\n        \"spd\": 442\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 4041,\n          \"atk\": 715,\n          \"def\": 504,\n          \"spd\": 442\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"ea859927-188f-4cea-93fa-e0088505facd\",\n      \"templateId\": 10505005,\n      \"level\": 100,\n      \"star\": 5,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 5972,\n        \"atk\": 1243,\n        \"def\": 772,\n        \"spd\": 650\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 5972,\n          \"atk\": 1243,\n          \"def\": 772,\n          \"spd\": 650\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    }\n  ],\n  \"inventory\": [\n    {\n      \"itemId\": 900101,\n      \"quantity\": 500,\n      \"instanceId\": \"aea5a85c-7dc7-4312-b684-5a1df30a2416\"\n    },\n    {\n      \"itemId\": 900102,\n      \"quantity\": 2,\n      \"instanceId\": \"f00553ef-b4b8-4525-aa4c-0969c8b03644\"\n    },\n    {\n      \"itemId\": 900401,\n      \"quantity\": 100,\n      \"instanceId\": \"46b4c877-173a-4d81-9023-c1985ff41fe0\"\n    },\n    {\n      \"itemId\": 1004001,\n      \"quantity\": 1,\n      \"instanceId\": \"76a6126b-3d8a-4cb2-a336-7e30660017fe\"\n    }\n  ],\n  \"role\": {\n    \"id\": \"375043ee-9c60-47ef-926d-6cf94b676883\",\n    \"nickname\": \"chapter_review\",\n    \"level\": 2,\n    \"gold\": 4000,\n    \"diamonds\": 151,\n    \"serverId\": \"local-1\",\n    \"basics\": {\n      \"experience\": 200,\n      \"cup\": 1000,\n      \"headId\": 0,\n      \"imageId\": 410304012,\n      \"borderId\": 0,\n      \"language\": 1,\n      \"createdAtSeconds\": 1794659934,\n      \"lastLoginAtSeconds\": 1794660141,\n      \"experienceToNextLevel\": 360\n    }\n  },\n  \"revision\": 5,\n  \"timedInventory\": {\n    \"items\": [],\n    \"serverTimeSeconds\": 1794660406\n  },\n  \"heroRoster\": {\n    \"capacity\": 300,\n    \"buySpaceTimes\": 0\n  },\n  \"mainFormation\": {\n    \"unlockedIds\": [\n      1\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"options\": [\n      {\n        \"openPositions\": [\n          2,\n          3,\n          5,\n          6,\n          7,\n          8\n        ],\n        \"formationId\": 1\n      }\n    ],\n    \"formationId\": 1,\n    \"assistanceUnlocked\": false,\n    \"version\": 1\n  },\n  \"mainChapter\": {\n    \"maxCleared\": 3,\n    \"pendingBattleId\": \"1bad601b-1842-4231-8c5f-ae68273a404a\",\n    \"assetRevision\": 5\n  },\n  \"mainChapterIdle\": {\n    \"rates\": [\n      {\n        \"itemId\": 900001,\n        \"quantity\": 210\n      },\n      {\n        \"itemId\": 900003,\n        \"quantity\": 10\n      },\n      {\n        \"itemId\": 900101,\n        \"quantity\": 35\n      }\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"serverTime\": 1794660406,\n    \"startedAt\": 1794659874,\n    \"maxSeconds\": 21600,\n    \"frequency\": 60,\n    \"rewardStage\": 3,\n    \"lineupVersion\": 1,\n    \"claimState\": {\n      \"schemaVersion\": 1,\n      \"operationVersion\": 1,\n      \"requestMode\": \"READ_ONLY\"\n    }\n  },\n  \"spiritInventory\": {\n    \"items\": [],\n    \"schemaVersion\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:46.795Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:46 服务端 → 客户端｜主线｜chapter.challenge｜持久挑战回执｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"rewards\": [],\n  \"action\": \"BATTLE\",\n  \"battleId\": \"1bad601b-1842-4231-8c5f-ae68273a404a\",\n  \"state\": {\n    \"maxCleared\": 3,\n    \"pendingBattleId\": \"1bad601b-1842-4231-8c5f-ae68273a404a\",\n    \"assetRevision\": 5\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:46.795Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:46 服务端 → 客户端｜主线｜chapter.replay｜恢复持久战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"pending\": [\n    \"soul_talent_runes_awakening\",\n    \"account_and_team_sources\",\n    \"battle_special_attributes_and_triggers\",\n    \"soul_skill\",\n    \"talent\",\n    \"runes\",\n    \"awakening\",\n    \"account_and_other_hero_sources\",\n    \"random_probability_pending_review\"\n  ],\n  \"battleId\": \"1bad601b-1842-4231-8c5f-ae68273a404a\",\n  \"mission\": 3,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 498,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 187,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 187,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 187,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 11,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 311,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 311,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 311,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050051,\n            \"skillLevel\": 1,\n            \"skillType\": 1\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5051101\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 5051101\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 5051201,\n            \"actualHpChange\": -187,\n            \"reportedHpChange\": -2072,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 5051201,\n            \"actualHpChange\": -311,\n            \"reportedHpChange\": -2024,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 10,\n            \"configId\": 105050051,\n            \"skillLevel\": 1,\n            \"skillType\": 1\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"chapter:lineup:3\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1,\n    \"attackerName\": \"chapter_review\",\n    \"defenderName\": \"羽嘉森林3\"\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:46.799Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:51 opening.completed ZDKS; both teams ready color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:51.304Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:46:51 打开界面 MainChapterBattleView ui MainChapterBattleView 耗时 4505ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:46:51.306Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:52 effect.start 50511010 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:52.035Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:53 effect.start 50511011 delay=2.4166666666666665 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.635Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:53 effect.start 50511012 delay=2.4166666666666665 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.635Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:53 effect.frames 50511011 target=10 count=19 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.668Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:53 effect.frames 50511012 target=10 count=8 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.668Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:53 effect.start 5051201 delay=2.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.702Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:53 damage.sound skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.703Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:46:53 effect.start 5051201 delay=2.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.703Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:53 damage.sound skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.704Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:53 audio.started skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.704Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:53 audio.started skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:53.706Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:54 服务端 → 客户端｜资产｜state.changed｜提交后的角色与背包同步｜通知\n物品种类数：6（不是背包格子数，也不是单个物品数量）\n结构：Snapshot { revision, role, inventory: Item[] }；Item { itemId, quantity }\nitemId = 策划物品 ID；quantity = 该物品当前持有数量（绝对值，不是新增数量）\n实际数据（Protobuf 解码后）：\n{\n  \"heroes\": [\n    {\n      \"id\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\",\n      \"templateId\": 10101001,\n      \"level\": 100,\n      \"star\": 1,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 1816,\n        \"atk\": 401,\n        \"def\": 214,\n        \"spd\": 218\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 1816,\n          \"atk\": 401,\n          \"def\": 214,\n          \"spd\": 218\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\",\n      \"templateId\": 10104004,\n      \"level\": 100,\n      \"star\": 4,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 4041,\n        \"atk\": 715,\n        \"def\": 504,\n        \"spd\": 442\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 4041,\n          \"atk\": 715,\n          \"def\": 504,\n          \"spd\": 442\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    },\n    {\n      \"id\": \"ea859927-188f-4cea-93fa-e0088505facd\",\n      \"templateId\": 10505005,\n      \"level\": 100,\n      \"star\": 5,\n      \"locked\": false,\n      \"deployed\": true,\n      \"stage\": 0,\n      \"baseStats\": {\n        \"hp\": 5972,\n        \"atk\": 1243,\n        \"def\": 772,\n        \"spd\": 650\n      },\n      \"equipment\": {\n        \"items\": []\n      },\n      \"panelStats\": {\n        \"includedSources\": [\n          \"base\",\n          \"equipment\",\n          \"equipment_set\",\n          \"skill_panel\",\n          \"evolution\"\n        ],\n        \"pendingSources\": [\n          \"soul_skill\",\n          \"talent\",\n          \"runes\",\n          \"awakening\",\n          \"account_and_other_hero_sources\"\n        ],\n        \"values\": {\n          \"hp\": 5972,\n          \"atk\": 1243,\n          \"def\": 772,\n          \"spd\": 650\n        },\n        \"complete\": false\n      },\n      \"evolution\": {\n        \"type\": 0,\n        \"level\": 0\n      }\n    }\n  ],\n  \"inventory\": [\n    {\n      \"itemId\": 900101,\n      \"quantity\": 1200,\n      \"instanceId\": \"aea5a85c-7dc7-4312-b684-5a1df30a2416\"\n    },\n    {\n      \"itemId\": 900102,\n      \"quantity\": 2,\n      \"instanceId\": \"f00553ef-b4b8-4525-aa4c-0969c8b03644\"\n    },\n    {\n      \"itemId\": 900401,\n      \"quantity\": 200,\n      \"instanceId\": \"46b4c877-173a-4d81-9023-c1985ff41fe0\"\n    },\n    {\n      \"itemId\": 1003001,\n      \"quantity\": 1,\n      \"instanceId\": \"fddc0e00-762b-45c7-b5e7-445258679da2\"\n    },\n    {\n      \"itemId\": 1004001,\n      \"quantity\": 1,\n      \"instanceId\": \"76a6126b-3d8a-4cb2-a336-7e30660017fe\"\n    },\n    {\n      \"itemId\": 20005000,\n      \"quantity\": 1,\n      \"instanceId\": \"3cbce515-838b-4ace-b66f-06d9222057db\"\n    }\n  ],\n  \"role\": {\n    \"id\": \"375043ee-9c60-47ef-926d-6cf94b676883\",\n    \"nickname\": \"chapter_review\",\n    \"level\": 3,\n    \"gold\": 8200,\n    \"diamonds\": 161,\n    \"serverId\": \"local-1\",\n    \"basics\": {\n      \"experience\": 40,\n      \"cup\": 1000,\n      \"headId\": 0,\n      \"imageId\": 410304012,\n      \"borderId\": 0,\n      \"language\": 1,\n      \"createdAtSeconds\": 1794659934,\n      \"lastLoginAtSeconds\": 1794660141,\n      \"experienceToNextLevel\": 720\n    }\n  },\n  \"revision\": 6,\n  \"timedInventory\": {\n    \"items\": [],\n    \"serverTimeSeconds\": 1794660414\n  },\n  \"heroRoster\": {\n    \"capacity\": 300,\n    \"buySpaceTimes\": 0\n  },\n  \"mainFormation\": {\n    \"unlockedIds\": [\n      1\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"options\": [\n      {\n        \"openPositions\": [\n          2,\n          3,\n          5,\n          6,\n          7,\n          8\n        ],\n        \"formationId\": 1\n      }\n    ],\n    \"formationId\": 1,\n    \"assistanceUnlocked\": false,\n    \"version\": 1\n  },\n  \"mainChapter\": {\n    \"maxCleared\": 3,\n    \"assetRevision\": 6\n  },\n  \"mainChapterIdle\": {\n    \"rates\": [\n      {\n        \"itemId\": 900001,\n        \"quantity\": 210\n      },\n      {\n        \"itemId\": 900003,\n        \"quantity\": 10\n      },\n      {\n        \"itemId\": 900101,\n        \"quantity\": 35\n      }\n    ],\n    \"slots\": [\n      {\n        \"position\": 2,\n        \"heroId\": \"1ac81e03-4511-4ce8-8419-d1e0013cdf78\"\n      },\n      {\n        \"position\": 3,\n        \"heroId\": \"64cf65ac-019d-4a68-8ff6-b4ea1b655b2a\"\n      },\n      {\n        \"position\": 5,\n        \"heroId\": \"ea859927-188f-4cea-93fa-e0088505facd\"\n      }\n    ],\n    \"serverTime\": 1794660414,\n    \"startedAt\": 1794659874,\n    \"maxSeconds\": 21600,\n    \"frequency\": 60,\n    \"rewardStage\": 3,\n    \"lineupVersion\": 1,\n    \"claimState\": {\n      \"schemaVersion\": 1,\n      \"operationVersion\": 1,\n      \"requestMode\": \"READ_ONLY\"\n    }\n  },\n  \"spiritInventory\": {\n    \"items\": [],\n    \"schemaVersion\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:54.947Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:46:54 服务端 → 客户端｜主线｜chapter.claim｜幂等结算回执｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"rewards\": [\n    {\n      \"itemId\": 900401,\n      \"quantity\": 100\n    },\n    {\n      \"itemId\": 900001,\n      \"quantity\": 4200\n    },\n    {\n      \"itemId\": 900003,\n      \"quantity\": 200\n    },\n    {\n      \"itemId\": 900101,\n      \"quantity\": 700\n    },\n    {\n      \"itemId\": 20005000,\n      \"quantity\": 1\n    },\n    {\n      \"itemId\": 1003001,\n      \"quantity\": 1\n    }\n  ],\n  \"action\": \"SETTLED\",\n  \"battleId\": \"1bad601b-1842-4231-8c5f-ae68273a404a\",\n  \"state\": {\n    \"maxCleared\": 3,\n    \"assetRevision\": 6\n  },\n  \"experience\": {\n    \"beforeLevel\": 2,\n    \"beforeExp\": 200,\n    \"beforeThreshold\": 360,\n    \"afterLevel\": 3,\n    \"afterExp\": 40,\n    \"afterThreshold\": 720\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:46:54.947Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:46:55 结算展示 胜利 sound=battle-end-1 mainSound=battle-main-end-1 presentationOnly=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:55.121Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:46:55 打开界面 ChapterEndView ui ChapterEndView 耗时 173ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:46:55.122Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:46:55 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:55.122Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:46:55 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:55.122Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:46:55 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:46:55.122Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:46:56 打开界面 BattleDetailLayer ui BattleDetailLayer 耗时 998ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:46:56.312Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:47:04 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 3,\n  \"assetRevision\": 6,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 11,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 1040100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 1040200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -684,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 3\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:3\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:47:04.124Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:05 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:05.652Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:06 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:06.702Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:06 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:06.702Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:06 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:06.702Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:07 effect.frames 1040100 target=11 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:07.135Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:07 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:07.369Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:07 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:07.737Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:47:12 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 3,\n  \"assetRevision\": 6,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 11,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 1040100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 1040200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -684,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 3\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:3\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:47:12.696Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:14 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:14.252Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:15 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:15.304Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:15 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:15.304Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:15 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:15.305Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:15 effect.frames 1040100 target=11 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:15.737Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:15 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:15.973Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:16 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:16.356Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:47:21 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 3,\n  \"assetRevision\": 6,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 11,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 5050100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 5050200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -1190,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:3\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:47:21.292Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:47:21 打开界面 GmView ui GmView 耗时 70ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:47:21.738Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:47:21 服务端 → 客户端｜开发GM｜gm.status｜GM 开关｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"enabled\": false\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:47:21.741Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:22 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:22.751Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:23 effect.start 5050100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:23.817Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:24 effect.start 5050200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:24.484Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:26 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:26.186Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:47:29 打开界面 GmGrantView ui GmGrantView 耗时 29ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:47:29.041Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:47:29 服务端 → 客户端｜开发GM｜gm.status｜GM 开关｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"enabled\": false\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:47:29.042Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:47:31 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 3,\n  \"assetRevision\": 6,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 11,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 1040100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 1040200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -684,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 3\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:3\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:47:31.143Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:32 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:32.724Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:33 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:33.784Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:33 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:33.785Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:33 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:33.785Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:34 effect.frames 1040100 target=11 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:34.218Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:34 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:34.451Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:34 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:34.819Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:47:39 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 3,\n  \"assetRevision\": 6,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 10,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 1040200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -700,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 3,\n            \"targetId\": 10,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 3\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:3\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:47:39.777Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:41 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:41.426Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:42 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:42.485Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:42 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:42.485Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:42 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:42.485Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:42 effect.frames 1040100 target=10 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:42.919Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:43 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:43.139Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:43 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:43.527Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:47:48 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 3,\n  \"assetRevision\": 6,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 11,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 2,\n            \"targetId\": 11,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 2,\n            \"targetId\": 11,\n            \"configId\": 1010100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 2,\n            \"targetId\": 11,\n            \"configId\": 1010300,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -384,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 2,\n            \"targetId\": 11,\n            \"configId\": 101010010,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 2\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:3\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:47:48.485Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:49 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:49.969Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:51 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:51.020Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:51 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:51.518Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:52 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:52.303Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:47:57 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 3,\n  \"assetRevision\": 6,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 11,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 1040100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 1040200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -684,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 3,\n            \"targetId\": 11,\n            \"configId\": 101040040,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 3\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:3\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:47:57.253Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:58 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:58.803Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:47:59 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:59.856Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:59 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:59.861Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:47:59 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:47:59.861Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:48:00 effect.frames 1040100 target=11 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:48:00.270Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:48:00 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:48:00.518Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:48:00 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:48:00.889Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][WS接收]%c[debug] 20:48:05 服务端 → 客户端｜主线｜chapter.idle.encounter｜挂机遇敌演出战报｜成功\n实际数据（Protobuf 解码后）：\n{\n  \"stage\": 3,\n  \"assetRevision\": 6,\n  \"lineupVersion\": 1,\n  \"replay\": {\n    \"units\": [\n      {\n        \"unitId\": 2,\n        \"templateId\": 10101001,\n        \"position\": 2,\n        \"initialHp\": 1870,\n        \"finalHp\": 1870,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 1870,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 1,\n        \"portraitIconId\": 20101001\n      },\n      {\n        \"unitId\": 3,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 4162,\n        \"finalHp\": 4162,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 4162,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      },\n      {\n        \"unitId\": 5,\n        \"templateId\": 10505005,\n        \"position\": 5,\n        \"initialHp\": 6330,\n        \"finalHp\": 6330,\n        \"level\": 100,\n        \"faction\": 1,\n        \"maxHp\": 6330,\n        \"totalDamage\": 1,\n        \"totalTakenDamage\": 0,\n        \"totalRecovery\": 0,\n        \"star\": 5,\n        \"portraitIconId\": 20505005\n      },\n      {\n        \"unitId\": 11,\n        \"templateId\": 10104004,\n        \"position\": 3,\n        \"initialHp\": 1,\n        \"finalHp\": 0,\n        \"level\": 2,\n        \"faction\": 2,\n        \"maxHp\": 1,\n        \"totalDamage\": 0,\n        \"totalTakenDamage\": 1,\n        \"totalRecovery\": 0,\n        \"star\": 4,\n        \"portraitIconId\": 20104004\n      }\n    ],\n    \"phases\": [\n      {\n        \"events\": [],\n        \"round\": 1,\n        \"sourceId\": 0\n      },\n      {\n        \"events\": [\n          {\n            \"kind\": \"skill.begin\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          },\n          {\n            \"kind\": \"presentation\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 5050100\n          },\n          {\n            \"kind\": \"damage\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 5050200,\n            \"actualHpChange\": -1,\n            \"reportedHpChange\": -1190,\n            \"dead\": true\n          },\n          {\n            \"kind\": \"skill.end\",\n            \"sourceId\": 5,\n            \"targetId\": 11,\n            \"configId\": 105050050,\n            \"skillLevel\": 0,\n            \"skillType\": 2\n          }\n        ],\n        \"round\": 1,\n        \"sourceId\": 5\n      }\n    ],\n    \"schemaVersion\": 1,\n    \"scenario\": \"idle:chapter:3\",\n    \"outcome\": \"ATTACKER_WIN\",\n    \"rounds\": 1\n  }\n} color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:48:05.824Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:48:07 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:48:07.403Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:48:08 effect.start 5050100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:48:08.469Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:48:09 effect.start 5050200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:48:09.119Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:48:10 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:48:10.842Z",
+    "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+  }
+]

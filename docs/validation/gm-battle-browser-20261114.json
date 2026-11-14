@@ -1,0 +1,55 @@
+{
+  "run": "ae70f02f2eed4fc6bf477518319d5f97",
+  "account": "chapter_review",
+  "receipts": [
+    {
+      "timestamp": "2026-11-14T06:14:37.234Z",
+      "body": {
+        "requestId": "70d71f7d-35a3-4e1e-81f2-4b695334c863",
+        "kind": "hero",
+        "configId": 10101001,
+        "quantity": 1
+      }
+    },
+    {
+      "timestamp": "2026-11-14T06:16:01.566Z",
+      "body": {
+        "requestId": "ca037aef-9fd2-4d7f-bf38-58cebb38c112",
+        "kind": "item",
+        "configId": 900101,
+        "quantity": 1
+      }
+    }
+  ],
+  "states": [
+    {
+      "timestamp": "2026-11-14T06:13:08.240Z",
+      "revision": 3,
+      "heroCount": 3,
+      "maxCleared": 3
+    },
+    {
+      "timestamp": "2026-11-14T06:13:17.135Z",
+      "revision": 4,
+      "heroCount": 3,
+      "heroExperience": 700,
+      "maxCleared": 3
+    },
+    {
+      "timestamp": "2026-11-14T06:14:37.220Z",
+      "revision": 5,
+      "heroCount": 4,
+      "heroExperience": 700,
+      "maxCleared": 3
+    },
+    {
+      "timestamp": "2026-11-14T06:16:01.566Z",
+      "revision": 6,
+      "heroCount": 4,
+      "heroExperience": 701,
+      "maxCleared": 3
+    }
+  ],
+  "warningsAndErrors": [],
+  "closedWindows": true
+}

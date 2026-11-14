@@ -1,0 +1,164 @@
+{
+  "date": "2026-11-14",
+  "branch": "hao",
+  "baseline": "保留c23b53ed之后全部既有未提交内容，含普通装备、精灵、GM和挂机规则批次，不回退其他修改",
+  "scope": "补普通道具与精英碎片的只读显示，复用BagInfoView和BagItemView；使用、分解、合成、来源跳转和未拥有英雄图鉴均未开放",
+  "reference": {
+    "oldRoot": "G:/work/FsGame/Demo/mj/program",
+    "oldSources": [
+      "client/cocos_mxzg/client/idle/src/data/BackpackData.lua",
+      "client/cocos_mxzg/client/idle/src/layer/BackpackLayer.lua",
+      "client/cocos_mxzg/client/idle/src/layer/BackpackInfoCtr.lua",
+      "client/cocos_mxzg/client/idle/src/comp/menu/UIMenuItemHeroPiece.lua",
+      "client/cocos_mxzg/client/ccb-hd/Resources/BackpackInfoLayer.ccb"
+    ],
+    "officialUrl": "https://mxzg-test.funsgamex.com/jp/",
+    "officialObserved": "已有角色只读查看召唤点的来源单按钮、诸神挑战券无按钮、随机3星碎片28/20进度及详情的星级/拼图角标/来源与使用；未点击正式服使用、来源、分解或领取",
+    "officialScreenshots": [
+      "docs/images/item-official-source-20261114.jpg",
+      "docs/images/item-official-no-actions-20261114.jpg",
+      "docs/images/shard-official-list-20261114.jpg",
+      "docs/images/shard-official-detail-20261114.jpg"
+    ],
+    "limit": "正式服本轮并非逐584项或全部按钮组合对照；本机900102实际为英雄进阶石，不将旧强化石截图强配这个ID"
+  },
+  "implementation": {
+    "projection": "ItemDetailUtils无状态读取同源Item/Language，具体英雄仅查现有HeroType.type；mode决定详情，不以页签或type猜测",
+    "configCoverage": {
+      "mode2": 422,
+      "mode8": 136,
+      "mode9": 23,
+      "mode17": 3,
+      "total": 584,
+      "specificHeroShards": 109
+    },
+    "buttons": "按旧use_type/source/decomposition、真实库存或期限上下文显示；具体英雄碎片首按钮为详情且有来源才显示头部来源图标；随机碎片不伪造英雄详情。所有动作仅UIManager.toast，奖励/产物只保留确定",
+    "shard": "仅旧isPiece类型附加星级/角标，现有真实配置为mode8。背包显式第五参数启用数量/需求进度，文字保留超额值，条形比例最多1；奖励保留本次数量，产物quantity0隐藏数字，不冒库存完成度",
+    "mode9": "英雄材料虽在碎片页且配置star=5，仍为类型特殊，无碎片星角或进度。23条同源正文均缺失，显示物品说明缺失并逐物品限频记录，保留真实名称/类型/图标",
+    "layout": "沿用两个既有Prefab，静态星位、拼图、大图标、水平进度及条件按钮；原生Grid/Widget排布，NoActionSpacer保留旧底部留白，不手排坐标",
+    "description": "原位RichText保留旧br/转义换行和合法font颜色，未知交互标记剥除；maxWidth350、字号20/行高25和60至300视口上下限保存在Prefab。string setter同步测量后仅夹取视口高度，原生ScrollView/Mask承载完整长文，非业务Cell列表",
+    "richTextSource": { "taggedDescriptions": 151, "brTags": 545, "fontPairs": 345 },
+    "lifecycle": "按稳定库存键重读唯一BagModel；换记录、删除、重置与关窗失效在途加载和图片。注销统一清理；Node.off前检查节点存活，避免引擎先销毁子输入处理器时异常",
+    "loading": "维持LoadingPlan三段显式配置和原资源池；HeroType只在详情prepare按需准备，不预加载英雄立绘，不新增模块清单",
+    "assets": "3张现有拼图/进度图片恢复旧RGBA，UUID和meta原字节不变。另以精确旧摘要/修复证据/导入差异链认可前批分隔线裁切变化，未放宽未列出资源的保护，见item-shard-assets-20261114.json",
+    "scopeCount": {
+      "bundles": 16,
+      "remoteBundles": 15,
+      "prefabs": 36,
+      "views": 21,
+      "scripts": 170,
+      "prefabSceneFiles": 37,
+      "scriptBindings": 86,
+      "sharedJson": 49,
+      "typedConfig": 20,
+      "mavenShared": 32
+    }
+  },
+  "validation": {
+    "frontendSuites": [
+      "item-detail", "item-info-view", "backpack", "bindings", "current-resource-scope",
+      "main-chapter", "super-scroll", "staged-loading", "equipment-info-view", "config-groups",
+      "creator-compat", "ui-atlas", "common-atlas", "ui-static"
+    ],
+    "suiteLogDirectory": "client/temp/project-checks",
+    "otherChecks": [
+      "Creator工程tsc --noEmit",
+      "generate_resources.cjs --check（36Prefab）",
+      "check_prefab_plan.py",
+      "audit_prefabs.py及--check",
+      "check_docs.py",
+      "git diff --check"
+    ],
+    "regressions": [
+      "先复现并修正已销毁操作节点调用Node.off异常，新增输入处理器失效反例且实际关窗通过",
+      "无动作详情补回静态底部留白，单/双按钮布局不重复占位",
+      "旧font/br被直接剥除会丢逐项内容，补保留换行/颜色、584条纯文富文等值及未知标记反例，实际礼包重新预览"
+    ],
+    "browserCommon": {
+      "mode": "Creator本机预览，回环随机端口独立H2/真实WS＋Protobuf",
+      "deviceSetting": "Apple iPhone 14 Pro (393×852)",
+      "browserViewport": "1280×720；不等同真机或全尺寸验收",
+      "dailyBackend": "未重启、改配置或连接日常玩家库"
+    },
+    "browserMatrix": {
+      "pid": 11136,
+      "port": 53301,
+      "run": "a9d76879ed884355806a0f00f35ca6eb",
+      "account": "item_shard_review",
+      "preparation": "12种样本沿真实gm.grant发放并逐条等state.changed，同12业务requestId重放未再发放；准备记录revision13，最终浏览器鉴权另读14，不将准备与多次登录阶段称为同一版本基线",
+      "finalBaseline": { "protocol": "session.authenticate", "timeUtc": "2026-11-14T08:33:43.184Z", "revision": 14 },
+      "inventory": [
+        { "itemId": 900102, "quantity": 4 }, { "itemId": 900504, "quantity": 2 },
+        { "itemId": 900505, "quantity": 3 }, { "itemId": 901819, "quantity": 1 },
+        { "itemId": 901820, "quantity": 1 }, { "itemId": 900402, "quantity": 1 },
+        { "itemId": 3010007, "quantity": 1 }, { "itemId": 20003000, "quantity": 28 },
+        { "itemId": 20101001, "quantity": 2 }, { "itemId": 30104004, "quantity": 3 },
+        { "itemId": 1001001, "quantity": 1 }
+      ],
+      "spiritInstances": 1,
+      "passed": [
+        "来源/使用/来源加使用/仅分解/来源加分解/无按钮各条件显示；点击只飘字不写资产",
+        "随机3星28/20满条、具体1星2/5未满条，详情无数量/进度",
+        "具体英雄详情只提示图鉴未开放，随机碎片不误开已有英雄详情",
+        "英雄材料类型特殊，无星角/进度，缺正文明确提示",
+        "切换精灵无数量或碎片残留；普通装备仍独立详情",
+        "主线产物说明保留只读副标题/确定，候选无0数字，叠窗确认与关闭返回正常",
+        "长文首末滚动、短文收缩、无操作留白、X/空白关闭、主城返回和注销"
+      ],
+      "stateChangedAfterFinalBaseline": 0,
+      "errorsAfterFinalBaseline": 0,
+      "expectedWarningsAfterFinalBaseline": 1,
+      "warning": "30104004物品正文确实缺失，按物品限频记录",
+      "consoleNote": "历史日志保留已修Node.off异常，不称全历史日志清空；本阶段较早正文Label画面不作为最终富文本样式证明",
+      "ownedProcessStopped": true
+    },
+    "browserRichText": {
+      "pid": 2960,
+      "port": 54423,
+      "run": "c1e2ffc2989842d28602f42c87757764",
+      "account": "item_rich_review",
+      "preparation": "独立新内存服真实发放4样本，各收到state.changed，准备版本4；浏览器登录首包版本5，以首包为本阶段只读基线",
+      "finalBaseline": { "protocol": "session.login", "timeUtc": "2026-11-14T08:47:24.375Z", "revision": 5 },
+      "inventory": [
+        { "itemId": 900504, "quantity": 2 }, { "itemId": 900505, "quantity": 3 },
+        { "itemId": 3010007, "quantity": 1 }, { "itemId": 20003000, "quantity": 28 }
+      ],
+      "passed": [
+        "900504真实正文11行，十条橙色选项清晰分开",
+        "900505三行，两条橙色选项；来源/使用双按钮正常，使用仅未开放飘字",
+        "3010007完整长文由首行滚动到末行航线超选68元定制礼包，不越过视口",
+        "关闭后切换随机碎片正常，返回主城与注销无残留"
+      ],
+      "stateChangedAfterBaseline": 0,
+      "newWarningsOrErrors": 0,
+      "ownedProcessStopped": true,
+      "limit": "追加阶段针对富文本与关闭，不假称将第一阶段全部条件矩阵重新逐项跑了一遍"
+    },
+    "processCleanup": "两次停止前均核CIM完整命令行包含各自唯一复制目录及SocketPreviewServer，只结束本批PID；全部浏览器测试页已关闭",
+    "screenshots": [
+      "docs/images/shard-preview-list-20261114.jpg",
+      "docs/images/shard-preview-random-20261114.jpg",
+      "docs/images/shard-preview-specific-20261114.jpg",
+      "docs/images/item-preview-material-20261114.jpg",
+      "docs/images/item-preview-source-20261114.jpg",
+      "docs/images/item-preview-use-20261114.jpg",
+      "docs/images/item-preview-two-actions-20261114.jpg",
+      "docs/images/item-preview-decompose-toast-20261114.jpg",
+      "docs/images/item-preview-no-actions-20261114.jpg",
+      "docs/images/item-preview-long-top-20261114.jpg",
+      "docs/images/item-preview-long-bottom-20261114.jpg",
+      "docs/images/item-preview-description-context-20261114.jpg",
+      "docs/images/shard-preview-reuse-spirit-20261114.jpg",
+      "docs/images/item-preview-logout-20261114.jpg",
+      "docs/images/item-preview-rich-logout-20261114.jpg"
+    ],
+    "notRun": [
+      "未构建新发布包、CDN包或做真机/原生/微信检查",
+      "本批未新跑Java/MySQL或配置导出测试，不沿用前批Java/Python数量",
+      "未手测全部584项画面、期限实例或新结算战斗全闭环",
+      "未开放玩家使用、分解、合成、来源、图鉴、穿脱、挂机领取或快速战斗"
+    ]
+  },
+  "remaining": "mode18灵器专用详情和未拥有英雄的完整图鉴仍待恢复；23种mode9原正文缺失保留明确缺口。共享可信发奖与新挂机累计/幂等回执按后续授权推进，领取继续关闭",
+  "git": "hao本地保留，无提交、推送或合并main"
+}

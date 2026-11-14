@@ -1,4 +1,7 @@
 /** 登录展示回归：验证静态背景、已移除组件无残留、登录控件和预制体引用；独立保留骨骼转换回归。 */
+import { Button, EditBox, Label, Node } from "cc";
+import { AccountLoginView } from "../assets/scripts/features/account/ui/AccountLoginView";
+import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { strict as assert } from "node:assert";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -99,3 +102,27 @@ for (const host of prefab.filter(row => row.__type__ === "cc.Node")) {
   for (const child of host._children) assert.equal(prefab[prefab[child.__id__]._parent.__id__], host);
 }
 console.log("login-presentation-check passed: static background, no stale script binding, login controls, Spine converter and Prefab graph");
+
+// 真实View状态刷新只报告一次失败；新一次操作仍允许反馈相同原因。
+const loginView = new AccountLoginView();
+for (const field of ["loginButton", "restoreButton", "logoutButton"]) {
+  (loginView as any)[field] = new Node(field).addComponent(Button);
+}
+loginView.accountInput = new Node("AccountInput").addComponent(EditBox);
+loginView.statusLabel = new Node("StatusLabel").addComponent(Label);
+loginView.profileLabel = new Node("ProfileLabel").addComponent(Label);
+const feedback: string[] = [];
+const stopFeedback = UIManager.instance.bindNotice(text => feedback.push(text));
+try {
+  const state: any = { role: null, busy: false, error: "服务器暂未开放，请重新选择" };
+  loginView.render(state);
+  loginView.render(state);
+  assert.deepEqual(feedback, [state.error], "同一错误不随渲染重复提示");
+  assert.equal(loginView.statusLabel.string, "", "失败不留在界面固定提示区");
+  loginView.render({ ...state, busy: true, error: "" });
+  assert.equal(loginView.statusLabel.string, "正在连接服务器…", "加载进度仍留在界面");
+  loginView.render(state);
+  assert.equal(feedback.length, 2, "下一次操作失败可再次反馈");
+} finally {
+  stopFeedback();
+}

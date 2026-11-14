@@ -1,4 +1,4 @@
-/** 三阶段唯一人工配置入口：直接列页面、资源或配置，不使用模块预热清单。
+/** 三阶段唯一人工配置入口：登录仅列启动表，登录后统一配置包，其余目标按页面或资源声明。
  * 未列入任何阶段的资源在实际使用时加载，不扫描全目录、不全量常驻。
  * 预制体的直接绑定依赖由Creator自动带入；加载资源不等于开放对应玩法。
  */
@@ -16,7 +16,7 @@ import { MainChapterView } from "../../features/battle/ui/MainChapterView";
 
 /** 页面只引用View类的唯一Prefab定义；预载不调用prepare。其他目标直接写资源或需要解析的配置。 */
 export type LoadingTarget = ResourceDescriptor | { bundle: string; path: string; type: ResourceKind }
-    | { config: ConfigName } | { page: ViewClass<unknown> };
+    | { config: ConfigName } | { configPackage: true } | { page: ViewClass<unknown> };
 
 /** 三个数组分别决定加载时机；空数组表示该阶段不准备额外资源。 */
 export const LOADING_PLAN: {
@@ -37,14 +37,8 @@ export const LOADING_PLAN: {
         { page: ServerPickerView },
     ],
     enterGame: [
-        { config: GConfig.OpenCondition },
-        { config: GConfig.SystemGate },
-        { config: GConfig.CityPosition },
-        { config: GConfig.CityButton },
-        { config: GConfig.CityEffect },
-        { config: GConfig.Item },
-        { config: GConfig.Language },
-        { config: GConfig.TimeLimitItem },
+        // 工具自动打包login启动表以外的全部配置，不在此逐张或逐模块重复列出。
+        { configPackage: true },
         { page: RemakeHomeView },
         { page: BagView },
     ],

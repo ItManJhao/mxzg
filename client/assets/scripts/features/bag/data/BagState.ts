@@ -1,5 +1,5 @@
 /** 背包只读状态契约，区分未同步与空背包，角色归属由应用层协调。 */
-import type { BagItemData, BagTimedItem } from "./BagItemDataUtils";
+import type { BagItemData, BagSpiritItem, BagTimedItem } from "./BagItemDataUtils";
 
 /** 本地展示同步状态；不表示 WebSocket 连接是否在线。 */
 export type BagStatus = "idle" | "ready";
@@ -18,4 +18,8 @@ export interface BagState {
     readonly timedItems: readonly BagTimedItem[];
     /** 期限列表对应的服务器 Unix 秒；旧快照未携带时为 null，不以本机时间代替。 */
     readonly timedServerTimeSeconds: number | null;
+    /** 服务端确认的独立精灵实例；同物品ID的多件实例保持各自特性和技能，不合并数量。 */
+    readonly spiritItems: readonly BagSpiritItem[];
+    /** true表示完整精灵快照已提供（包括真实空列表）；false表示旧快照未提供，不能当作已知空库存。 */
+    readonly spiritSynced: boolean;
 }

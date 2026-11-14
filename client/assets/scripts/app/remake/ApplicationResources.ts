@@ -1,13 +1,13 @@
-/** 应用三段资源调度：三个阶段只执行LoadingPlan显式目标，其余资源实际使用时加载。
+/** 应用三段资源调度：启动小表、登录后一个完整配置包，其余美术按LoadingPlan或实际使用加载。
  * 类型化资源池拥有引用与在途请求，页面前台加载复用同一池；应用销毁释放持有。
  * 预加载不实例化页面、不调用View.prepare、不开放玩法；前两段失败交启动重试，后台失败记录后继续。
  */
 import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssetsUtils";
 import {ResourceDescriptor} from "../../framework/assets/ResourceTypes";
 import {GameConfig} from "../../config/GameConfig";
-import {CONFIG_SCHEMA, ConfigName} from "../../config/GConfig";
-// 初始化唯一配置仓库的资源读取器；页面配置前置条件由各自@UIRegistry.view声明。
-import "../../config/RemakeConfigUtils";
+import {ConfigName} from "../../config/GConfig";
+import { RemakeConfigUtils } from "../../config/RemakeConfigUtils";
+import { ConfigPackageCancelled } from "../../config/ConfigPackageUtils";
 import {LOADING_PLAN, LoadingTarget} from "./LoadingPlan";
 import { StartupCancelled } from "./StartupFlowUtils";
 import { GameLog } from "../../core/GameLog";
@@ -16,7 +16,7 @@ import { UIRegistry } from "../../framework/ui/UIRegistry";
 export class ApplicationResources {
     /** 所有已准备图片、动画、音频等持有至应用销毁；不保存玩家业务数据。 */
     private readonly assets = ResourceAssetsUtils.createAssetScope();
-    /** 已成功完成的目标键；仅用于跳过重复阶段任务，不替代资源池缓存。 */
+    /** 已成功完成的语义目标键；配置提交和普通资源就绪分别记录，不替代资源池缓存。 */
     private readonly completed = new Set<string>();
     /** 后台代次，退出登录或重新开始时递增，阻止旧循环继续。 */
     private backgroundEpoch = 0;
@@ -25,13 +25,18 @@ export class ApplicationResources {
     /** 本轮后台实际完成/失败数量；停止后保留统计，开始新一轮时重置。 */
     private progress = {total: 0, completed: 0, failed: 0, running: false};
 
+    /** 应用建立时装配启动读取器；配置不会因导入页面脚本而自动读取。 */
+    public constructor() {
+        RemakeConfigUtils.initialize();
+    }
+
     /** 返回后台真实任务统计副本；failed不算成功，统计不是下载字节或内存。 */
     public backgroundStatus(): Readonly<typeof this.progress> {
         return {...this.progress};
     }
 
     /** 页面引用只读取@UIRegistry.view的唯一Prefab地址；其他目标保留显式路径，不执行prepare或补入同模块资源。 */
-    private resolve(target: LoadingTarget): ResourceDescriptor | { config: ConfigName } {
+    private resolve(target: LoadingTarget): ResourceDescriptor | { config: ConfigName } | { configPackage: true } {
         if ("page" in target) {
             const spec = UIRegistry.viewSpecOf(target.page);
             if (!spec) {
@@ -40,7 +45,7 @@ export class ApplicationResources {
             const address = ResourceAssetsUtils.address(spec.prefab, "Prefab");
             return ResourceAssetsUtils.describe(address.bundle, address.loadPath, "Prefab", spec.prefab);
         }
-        if ("config" in target || "loadPath" in target) {
+        if ("configPackage" in target || "config" in target || "loadPath" in target) {
             return target;
         }
         if (!target.bundle || !target.path) {
@@ -56,31 +61,37 @@ export class ApplicationResources {
         };
     }
 
-    /** 配置表与显式JSON目标使用相同资源键，跨阶段的重复目标只准备一次。 */
-    private key(target: ResourceDescriptor | { config: ConfigName }): string {
-        return "config" in target ? JSON.stringify(["config", CONFIG_SCHEMA[target.config].path.slice("config/".length), "JsonAsset"])
+    /** 配置提交与原始JSON就绪使用不同完成键；实际下载仍由资源池按同一资源地址去重。 */
+    private key(target: ResourceDescriptor | { config: ConfigName } | { configPackage: true }): string {
+        if ("configPackage" in target) {
+            return "game-config-package";
+        }
+        return "config" in target ? "game-config-table:" + target.config
             : JSON.stringify([target.bundle, target.loadPath || target.uuid, target.type]);
     }
 
-    /** 真正完成一个目标后才登记成功；共享池合并前后台请求，失败不留下成功标记。 */
-    private async prepare(target: LoadingTarget): Promise<void> {
+    /** 真正完成目标才登记成功；配置内部进度来自实际读取/整理任务，失败和取消不留下成功标记。 */
+    private async prepare(target: LoadingTarget, update?: (label: string, ratio: number) => void,
+        active: () => boolean = () => !this.closed): Promise<void> {
         this.checkOpen();
         const resolved = await this.resolve(target);
         const key = this.key(resolved);
-        if (this.completed.has(key)) {
+        if (this.completed.has(key) && (!("configPackage" in resolved) || GameConfig.instance.getPackageVersion())) {
             return;
         }
-        if ("config" in resolved) {
+        if ("configPackage" in resolved) {
+            try {
+                await RemakeConfigUtils.prepareGameConfig(update || (() => {}), () => !this.closed && active());
+            } catch (error) {
+                if (error instanceof ConfigPackageCancelled) {
+                    throw new StartupCancelled("配置准备阶段已取消");
+                }
+                throw error;
+            }
+        } else if ("config" in resolved) {
             await GameConfig.instance.prepare([resolved.config]);
         } else {
             await this.assets.load(resolved);
-            // 显式配置JSON同步交给唯一配置仓库校验解析，普通JSON只加载资源。
-            const name = (Object.keys(CONFIG_SCHEMA) as ConfigName[]).find(name =>
-                resolved.type === "JsonAsset" && resolved.bundle === "config" && CONFIG_SCHEMA[name].path === "config/" + resolved.path);
-            if (name) {
-                await GameConfig.instance.prepare([name]);
-                this.completed.add(this.key({config: name}));
-            }
         }
         this.checkOpen();
         this.completed.add(key);
@@ -94,7 +105,11 @@ export class ApplicationResources {
             if (!active()) {
                 throw new StartupCancelled("阶段准备已取消");
             }
-            await this.prepare(targets[index]);
+            await this.prepare(targets[index], (label, ratio) => {
+                if (active()) {
+                    update(label, (index + ratio) / targets.length);
+                }
+            }, active);
             if (!active()) {
                 throw new StartupCancelled("阶段准备已取消");
             }
@@ -138,7 +153,8 @@ export class ApplicationResources {
                     }
                     progress.failed++;
                     if (progress.failed <= 5) {
-                        GameLog.shared.classified("APP", "warn", "ApplicationResources", "后台资源失败，可再次加载：" + ("config" in row ? row.config : row.assetPath) + " " + String(error));
+                        const targetName = "configPackage" in row ? "游戏数据" : "config" in row ? row.config : row.assetPath;
+                        GameLog.shared.classified("APP", "warn", "ApplicationResources", "后台资源失败，可再次加载：" + targetName + " " + String(error));
                     }
                 }
             }

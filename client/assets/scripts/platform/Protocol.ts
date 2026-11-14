@@ -17,6 +17,10 @@ export class Protocol {
     public static readonly CHAPTER_CLAIM = "chapter.claim";
     /** 旧3006挂机普攻演出，不结算资产。 */
     public static readonly CHAPTER_IDLE_ENCOUNTER = "chapter.idle.encounter";
+    /** 挂机消费事务；默认只读，原业务请求键用于持久幂等恢复。 */
+    public static readonly CHAPTER_IDLE_CLAIM = "chapter.idle.claim";
+    /** 只查询指定挂机请求的已提交回执，不查询库存或重算奖励。 */
+    public static readonly CHAPTER_IDLE_CLAIM_STATUS = "chapter.idle.claim.status";
     /** 恢复当前角色的持久战报，不重新计算。 */
     public static readonly CHAPTER_REPLAY = "chapter.replay";
     /** 当前已保存阵容的开发只读试战，不发奖、不记录通关。 */
@@ -58,6 +62,8 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.CHAPTER_CHALLENGE, module: "主线", description: "持久挑战回执" },
     { name: Protocol.CHAPTER_CLAIM, module: "主线", description: "幂等结算回执" },
     { name: Protocol.CHAPTER_IDLE_ENCOUNTER, module: "主线", description: "挂机遇敌演出战报" },
+    { name: Protocol.CHAPTER_IDLE_CLAIM, module: "主线", description: "挂机领取历史回执" },
+    { name: Protocol.CHAPTER_IDLE_CLAIM_STATUS, module: "主线", description: "指定挂机领取结果查询" },
     { name: Protocol.CHAPTER_REPLAY, module: "主线", description: "恢复持久战报" },
     { name: Protocol.BATTLE_PREVIEW, module: "战斗", description: "当前阵容只读试战" },
     { name: Protocol.FORMATION_SAVE, module: "阵容", description: "主线阵容保存回执" },

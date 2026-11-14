@@ -236,12 +236,25 @@ function checkListEvents(): void {
     assert.doesNotThrow(() => (destroyed as any).onDestroy(), "引擎先销毁子节点时仍能清理列表");
 }
 
+/** 使用完整物品格绑定核对复用、迟到图片和销毁边界，保留原有异步行为断言。 */
 async function checkCellReuse(): Promise<void> {
-    const root=node("BagItemView",96,96), cell=root.addComponent(BagItemView) as BagItemView;
-    cell.emptyFrame=new SpriteFrame();
-    cell.button=root.addComponent(Button);cell.frame=node("frame",96,96,root);cell.frame.addComponent(Sprite);
-    cell.icon=node("icon",64,64,root);cell.icon.addComponent(Sprite);cell.count=node("count",96,24,root).addComponent(Label);
-    cell.selectMark=node("selected",96,96,root);
+    const root = node("BagItemView", 96, 96);
+    const cell = root.addComponent(BagItemView) as BagItemView;
+    cell.emptyFrame = new SpriteFrame();
+    cell.button = root.addComponent(Button);
+    cell.frame = node("frame", 96, 96, root);
+    cell.frame.addComponent(Sprite);
+    cell.icon = node("icon", 64, 64, root);
+    cell.icon.addComponent(Sprite);
+    cell.shardIcon = node("ShardIcon", 90, 90, root);
+    cell.shardIcon.addComponent(Sprite);
+    cell.shardCorner = node("ShardCorner", 30, 30, root);
+    cell.shardStars = Array.from({ length: 5 }, (_, index) => node("ShardStar" + (index + 1), 12, 12, root));
+    cell.shardProgress = node("ShardProgress", 96, 16, root);
+    cell.shardProgressFill = node("ShardProgressFill", 96, 16, cell.shardProgress).addComponent(Sprite);
+    cell.shardProgressLabel = node("ShardProgressLabel", 96, 16, cell.shardProgress).addComponent(Label);
+    cell.count = node("count", 96, 24, root).addComponent(Label);
+    cell.selectMark = node("selected", 96, 96, root);
     const pending:Array<{path:string;done:(error:any,asset:any)=>void}>=[];const original=resources.load;
     resources.load=(path,type,done)=>{pending.push({path,done});};
     try {

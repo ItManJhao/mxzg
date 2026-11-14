@@ -1,0 +1,139 @@
+{
+  "date": "2026-11-14",
+  "branch": "hao",
+  "scope": "少量启动配置；其余配置登录后统一压缩包，页面直接查询唯一GameConfig，玩法范围保持",
+  "delivery": {
+    "committed": false,
+    "pushed": false,
+    "releaseBuild": false
+  },
+  "sources": {
+    "directory": "client/assets/bundles/resources/config",
+    "jsonFiles": 49,
+    "startupOrigin": "LoadingPlan.login中的config目标；生成工具和GameConfig均不维护第二份启动清单",
+    "startupFiles": 2,
+    "packageFiles": 47,
+    "originalJsonMetaPreserved": true,
+    "rawSourceBytes": 8609352,
+    "packageSourceBytes": 7009813,
+    "packageBytes": 408367,
+    "version": "config-v1:94380d76c4204fe90737ea7cd81888cd4a6c91a6997a3ecea8014a1a457ab1fd",
+    "archiveUuid": "298c2202-eb35-4d3f-b35b-185fe934e089",
+    "decoderBytes": 13659,
+    "decoderUuid": "a9a7ee3e-a89a-465c-9540-638965bbd858"
+  },
+  "implementation": [
+    "ZIP格式game-config.bin由固定fflate生成；可再生ConfigZip.generated.ts避免Creator误判npm ESM入口",
+    "临时BufferAsset复用现有资源池，解码及安装后撤回持有；不新建配置缓存",
+    "启动源CRC、manifest路径/数量/大小/CRC、类型规范及主键全部通过后原子安装",
+    "取消、失败及迟到不提交半包，raw与类型索引引用同一文件，重登复用已安装版本",
+    "页面配置prepare和直接JSON请求已移除；页面美术和装配prepare继续保留",
+    "生成过滤自动排除47份源JSON；真实发布包过滤结果仍待后续构建验收"
+  ],
+  "passedChecks": {
+    "frontendSuites": [
+      "config-package-store",
+      "config-package-loading",
+      "config-groups",
+      "staged-loading",
+      "hero",
+      "home-presentation",
+      "backpack",
+      "main-chapter",
+      "formation-view",
+      "equipment-info-view",
+      "item-info-view",
+      "hero-detail",
+      "hero-equipment",
+      "gm",
+      "startup",
+      "resources",
+      "bindings",
+      "creator-compat",
+      "client-config-scope",
+      "docs"
+    ],
+    "generator": [
+      "tools/test_config_package.cjs",
+      "tools/generate_config_package.cjs --check",
+      "client/tools/bag-build-hook-check.cjs"
+    ],
+    "creatorProjectTypecheck": true,
+    "sharedConfigPythonTests": 34,
+    "isolatedH5PowerShellSyntax": true,
+    "integrationCases": [
+      "真实47表ZIP及中文UTF8互通；无manifest、CRC损坏、重复路径、额外文件、启动不同版拒绝",
+      "同一单例启动两表→解析中取消→坏包失败→成功重试；所有短期资产ref归零",
+      "解析与安装分别报告真实0..47任务，阶段进度单调完成至1",
+      "背包/英雄/战斗/产物查询不新增JSON请求；重登不重新下载或解压",
+      "动态增加启动表无需修改GameConfig；版本更替、并发取消、深冻结与原子失败保持",
+      "生成产物漂移拒绝及原meta保留；Creator发布Babel转换模式集成通过"
+    ]
+  },
+  "localPreview": {
+    "status": "本机Creator预览及独立H2/WS限定复验通过；未运行发布构建",
+    "observedAndFixed": "首次预览触发fflate browser.js被识别为CJS；已改为可再生TypeScript ESM解码器，默认专项及工程类型检查通过",
+    "importResolution": "ConfigZip已导入后，旧调用者仍缓存unresolved；重新导入ConfigPackageUtils后resolution-detail-map为空，真实登录成功",
+    "testBackend": {
+      "kind": "mxzg-owned-socket-it",
+      "run": "ab2a893fa6c94856a5abaf063d4f9a06",
+      "port": 59158,
+      "pid": 15924,
+      "database": "随机内存H2，仅本批夹具；没有连接日常账号数据库",
+      "accounts": [
+        "loading_review",
+        "chapter_review"
+      ],
+      "stoppedAfterVerification": true
+    },
+    "viewport": "Creator设备选项iPhone14Pro 393×852，浏览器截图1150×848；本机预览不代表真机",
+    "passed": [
+      "首次登录实际显示整理游戏数据9/47，恢复账号点击开始实际显示20/47，随后进入主城",
+      "恢复凭证后仍停登录页；LoginEntry.confirmed默认false，点击开始才执行enterGame，未改变该行为",
+      "GameConfig实际49份文件、20张类型表，版本与生成包一致",
+      "背包装备分类灵戒908101的现有通用说明、道具900102、碎片950001及2000002精灵独立实例详情打开/关闭",
+      "精灵无数量；样本护甲21、低级追击；英雄列表3名、黑暗切割者100级5星详情及黑暗切割Lv1说明",
+      "真实挂机遇敌→布阵→第二关挑战→自动结算返回；继续第三关挑战→胜利页入场→自动确认返回已通关挂机",
+      "主城后后台4个目标成功、0失败；配置bin不再位于引擎资产缓存，未宣称整个JS堆立即释放",
+      "当前页面11:02:05.174Z启动后至最后检查无新warn/error；早期旧编译错误保留，不混为本轮失败"
+    ],
+    "configurationRequests": {
+      "details": "config-package-20261114/runtime.json",
+      "coldPage": "config-package-20261114/cold-config.json",
+      "payload": "两份启动JSON＋一个408367字节bin；另外包括Bundle配置/脚本与BufferAsset元数据",
+      "pageConfigRequestCountBefore": 6,
+      "pageConfigRequestCountAfter": 6,
+      "packedSourceJsonRequests": 0,
+      "binaryRequests": 1,
+      "limitation": "本机HTTP缓存有命中；encodedBodySize为内容长度，不能将其当成实际新增网络流量或正式CDN耗时"
+    },
+    "screenshots": [
+      "config-package-20261114/home.png",
+      "config-package-20261114/item.png",
+      "config-package-20261114/shard.png",
+      "config-package-20261114/spirit.png",
+      "config-package-20261114/hero.png",
+      "config-package-20261114/skill.png",
+      "config-package-20261114/idle.png",
+      "config-package-20261114/returned-idle.png"
+    ],
+    "notClaimed": [
+      "普通mode1装备专用详情本批重新实机验收",
+      "完整统计页和经验动画边界重新逐项实机验收",
+      "真实CDN速度、真机或发布包去重"
+    ]
+  },
+  "remaining": [
+    "后续集中构建验证47源JSON过滤、解压代码发布及实际包体",
+    "真实CDN HTTPS、可信版本/签名/回滚及真机内存性能不在本批完成范围",
+    "新挂机领取客户端持久journal与按钮仍未接，领取及养成保持关闭"
+  ],
+  "sourceSha256": {
+    "client/assets/scripts/config/GameConfig.ts": "96fa08cd9820a374e3c2168f9187a3b964915a84dc69353bbda738a8c4ec5b7d",
+    "client/assets/scripts/app/remake/ApplicationResources.ts": "5878a470f34f85e6e19f021de21128217380c4cae9bd1ff41dc7a17e4e7567e4",
+    "client/assets/scripts/config/ConfigZip.generated.ts": "a970b87c2266bca889d8479ebd383c7fc13399c3169436a40d44bfabbaf62dc4",
+    "client/assets/scripts/config/RemakeConfigUtils.ts": "ca3ac2bf43a717f44fda75ad57e307a7a0d907ef1cae9f50d83fa67462dadb59",
+    "client/assets/scripts/app/remake/LoadingPlan.ts": "2710277c0d204694baa79a3717a9e81d0ed19bd6c7e227acf2062807acc1aabb",
+    "client/assets/scripts/config/ConfigPackageUtils.ts": "0deb5d1cc703b993ea012fe926616830cabe552a6fe7dd66386636ae34dbc4be"
+  }
+}

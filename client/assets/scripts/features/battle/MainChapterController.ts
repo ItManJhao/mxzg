@@ -6,7 +6,9 @@ import { ProtocolRouter } from "../../platform/ProtocolRouter";
 import { STATE_PROTOCOLS, ProtocolStateUtils } from "../../platform/ProtocolStateUtils";
 import { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { mxzg } from "../../platform/GameProtocol.generated";
-import { MainChapterModel, MainChapterState, MainChapterReplay, MainChapterIdleState, MainChapterExperience } from "./MainChapterModel";
+import { GameLog } from "../../core/GameLog";
+import { MainChapterModel, MainChapterState, MainChapterReplay, MainChapterIdleState, MainChapterExperience,
+    MainChapterIdleClaimState } from "./MainChapterModel";
 import { BattleReplayUtils } from "./utils/BattleReplayUtils";
 
 declare module "../../framework/EventDispatcher" {
@@ -59,7 +61,10 @@ export class MainChapterController extends BaseController {
             assetRevision: v.assetRevision });
     }
 
-    /** 校验挂机时间与对应关卡，整包拒绝非法数据；空快照不代表零收益。 */
+    /**
+     * 校验挂机时间与对应关卡，整包拒绝已知格式的非法数据；空快照不代表零收益。
+     * 可选领取状态另行冻结，未来未知格式只丢弃领取能力，保留旧挂机时钟和演出。
+     */
     public static readIdle(value: unknown, chapter: MainChapterState | null): MainChapterIdleState | null {
         if (value == null) {
             return null;
@@ -84,8 +89,46 @@ export class MainChapterController extends BaseController {
             || new Set(v.slots.map(slot => slot.position)).size !== v.slots.length)) {
             throw new Error("挂机阵容无效");
         }
-        return Object.freeze({ ...v, rates: Object.freeze(v.rates.map(row => Object.freeze({ ...row }))),
-            slots: v.slots ? Object.freeze(v.slots.map(row => Object.freeze({ ...row }))) : undefined });
+        const claimState = MainChapterController.readIdleClaimState(v.claimState);
+        return Object.freeze({
+            ...v,
+            rates: Object.freeze(v.rates.map(row => Object.freeze({ ...row }))),
+            slots: v.slots ? Object.freeze(v.slots.map(row => Object.freeze({ ...row }))) : undefined,
+            claimState,
+        });
+    }
+
+    /**
+     * 读取服务端可选领取能力；已知格式的坏版本/模式拒绝，未知格式按日志来源和格式去重后保持只读。
+     * 返回对象为独立冻结副本，不持有解码树引用，不推导ready或修改按钮状态。
+     */
+    private static readIdleClaimState(value: unknown): MainChapterIdleClaimState | undefined {
+        if (value === undefined) {
+            return undefined;
+        }
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            throw new Error("主线挂机领取状态无效");
+        }
+        const claim = value as Record<string, unknown>;
+        if (typeof claim.schemaVersion !== "number" || !Number.isSafeInteger(claim.schemaVersion)
+            || claim.schemaVersion < 0 || claim.schemaVersion > 0xffffffff) {
+            throw new Error("主线挂机领取状态格式无效");
+        }
+        if (claim.schemaVersion !== 1) {
+            GameLog.shared.warnOnce("MODULE", "MainChapterController", "IDLE_CLAIM_SCHEMA:" + claim.schemaVersion,
+                "挂机领取状态格式未支持，保持只读；schemaVersion=" + claim.schemaVersion);
+            return undefined;
+        }
+        if (typeof claim.operationVersion !== "number" || !Number.isSafeInteger(claim.operationVersion)
+            || claim.operationVersion <= 0
+            || (claim.requestMode !== "READ_ONLY" && claim.requestMode !== "ENABLED")) {
+            throw new Error("主线挂机领取状态版本或模式无效");
+        }
+        return Object.freeze({
+            schemaVersion: 1,
+            operationVersion: claim.operationVersion,
+            requestMode: claim.requestMode,
+        });
     }
 
     /** 统一初始化、操作回执、战报各自有清晰入口；历史回执绝不覆盖最新进度。 */

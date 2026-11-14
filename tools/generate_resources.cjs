@@ -10,14 +10,16 @@ function files(dir) {
     return fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en'))
         .flatMap(entry => entry.isDirectory() ? files(path.join(dir, entry.name)) : [path.join(dir, entry.name)]);
 }
-/** 检查生成结果；正常模式只写变化文件，避免重复触发Creator导入。 */
+/** 检查生成文本内容，兼容Git在Windows检出时转换的换行；正常模式只写内容变化文件。 */
 function write(relative, text) {
     const file = path.join(root, relative);
+    const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n') : null;
+    const expected = text.replace(/\r\n/g, '\n');
     if (check) {
-        if (!fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== text) {
+        if (current !== expected) {
             throw Error('生成结果已过期：' + relative);
         }
-    } else if (!fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== text) {
+    } else if (current !== expected) {
         fs.writeFileSync(file, text);
     }
 }

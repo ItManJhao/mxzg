@@ -1,5 +1,5 @@
 /** 类型化资源加载适配：描述与加载分开，缓存、去重和持有计数全部交给现有 ResourcePool。 */
-import { Asset, Texture2D, TTFFont, TextAsset, ParticleAsset, assetManager, AudioClip, BitmapFont, EffectAsset, JsonAsset, Node, Prefab, sp, SpriteAtlas, SpriteFrame } from "cc";
+import { Asset, BufferAsset, Texture2D, TTFFont, TextAsset, ParticleAsset, assetManager, AudioClip, BitmapFont, EffectAsset, JsonAsset, Node, Prefab, sp, SpriteAtlas, SpriteFrame } from "cc";
 import type { AssetManager } from "cc";
 import type { ResourceDescriptor, ResourceKind } from "./ResourceTypes";
 import { ResourcePool } from "./ResourcePool";
@@ -10,6 +10,8 @@ export interface ResourceAssetMap {
     AudioClip: AudioClip;
     SkeletonData: sp.SkeletonData;
     JsonAsset: JsonAsset;
+    /** 压缩配置等二进制源，调用方处理后撤回临时持有。 */
+    BufferAsset: BufferAsset;
     BitmapFont: BitmapFont;
     EffectAsset: EffectAsset;
     Texture2D: Texture2D;
@@ -31,6 +33,7 @@ const types = {
     AudioClip,
     SkeletonData: sp.SkeletonData,
     JsonAsset,
+    BufferAsset,
     BitmapFont,
     EffectAsset, Texture2D, TTFFont, TextAsset, ParticleAsset, Asset
 };
@@ -107,7 +110,7 @@ const pool = new ResourcePool<Asset>({
 });
 /** 节点拥有者索引使用弱引用；销毁时解除动态图片/序列帧引用。 */
 const nodeScopes = new WeakMap<Node, AssetScope>();
-/** 配置与主城底板的应用级作用域；与节点资源分开统计，应用结束后清理。 */
+/** 主城底板的应用级作用域；配置源使用短期作用域，避免重复持有整份JSON或压缩字节。 */
 let residentScope: AssetScope | null = null;
 /** 资源生命周期入口：动态旧路径统一转换描述，禁止业务直接调用引擎加载器。 */
 export class ResourceAssetsUtils {
@@ -143,16 +146,18 @@ export class ResourceAssetsUtils {
     private constructor() {
     }
 
-    /** 配置仓库与后台复用同一JSON请求；现有应用常驻作用域在退出时统一释放。 */
+    /** 启动表经共享池读取，返回数据后撤回JsonAsset持有；GameConfig拥有校验后的只读内容。 */
     public static async loadConfig(path: string): Promise<unknown> {
-        if (!residentScope) {
-            residentScope = ResourceAssetsUtils.createAssetScope();
+        const scope = ResourceAssetsUtils.createAssetScope();
+        try {
+            const asset = await scope.loadPath(path, "JsonAsset");
+            if (asset.json == null) {
+                throw new Error("配置资源缺失：" + path);
+            }
+            return asset.json;
+        } finally {
+            scope.dispose();
         }
-        const asset = await residentScope.loadPath(path, "JsonAsset");
-        if (asset.json == null) {
-            throw new Error("配置资源缺失：" + path);
-        }
-        return asset.json;
     }
 
     /** 返回唯一类型化池统计；不把资源数冒充纹理显存或JS堆大小。 */

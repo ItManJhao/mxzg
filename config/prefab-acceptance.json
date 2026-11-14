@@ -2,6 +2,13 @@
   "purpose": "人工真实预览证据；SHA256 绑定实际 Prefab，修改后必须重新核对，结构检查不自动签署视觉或 Inspector。",
   "evidenceDirectory": "client/temp/prefab-acceptance-20261102（本机临时截图，不随 Git 交付）",
   "entries": {
+    "client/assets/bundles/module/bag/prefabs/EquipmentInfoView.prefab": {
+      "sha256": "72a5e95f314072883a2fc3a7a878453babbeaac5cc389138bc54dd91e8ac202b",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）：独立H2真实库存的绿1星银制利剑、紫3星雷鸣套装、红6星双属性装备；来源/装备只读飘字、X/空白关闭、套装后重开收缩、返回英雄和注销清理。正式服仅只读对照银制利剑；套装及六星以旧源码/配置和本机样本核对。详见docs/validation/equipment-detail-review-20261114.json，不代表全机型或新发布包。",
+      "inspector": "未操作Creator原生窗口或Inspector；负责人刷新后用浏览器复验，不代签负责人Inspector。"
+    },
     "client/assets/bundles/module/battle/prefabs/BattleDetailLayer.prefab": {
       "sha256": "0c428ee04299719a5c84d1d01af4389b66f166a06b0854a1e769cae67a49d928",
       "date": "2026-11-11",
@@ -38,11 +45,11 @@
       "inspector": "未操作Creator，自动编译的新版本在浏览器连接独立内存测试服复验；不是负责人Inspector签收"
     },
     "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab": {
-      "sha256": "a99fe0307a2033caf7e57369a45e890a3b4d6c16fa7b10874fd583e404c0702c",
-      "date": "2026-11-11",
+      "sha256": "5e4bb3cbd507cb7d760ff0b428ec2bb138625d91bf960313796e478ddbe82073",
+      "date": "2026-11-14",
       "status": "实际预览通过",
-      "scope": "393×852、360×720及428×926普通资料窗；实际内容/外部点击，叠窗关闭与隐藏后恢复共享层，设置和注销。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。角色资料与设置正常、旧GM按钮移除，退出返回登录；不继承旧三尺寸。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
     },
     "client/assets/bundles/module/hero/prefabs/FormationView.prefab": {
       "sha256": "e49063646a9a17df8c6eb36b1d167a2d03ce9c441cca61b2539d5a5d766f45a6",
@@ -94,11 +101,18 @@
       "inspector": "未操作Creator Inspector；由负责人刷新，根PrefabInfo经静态绑定检查"
     },
     "client/assets/bundles/module/bag/prefabs/BagInfoView.prefab": {
-      "sha256": "b77ad9c41e211d2c6f08c4287e4e2c12650850d0e2f1bc9bfb2a4b3dd943e6c6",
-      "date": "2026-11-11",
+      "sha256": "695a86268302959121af6048793a8bf647dc1c671980cbf553e45b103be1c9bb",
+      "date": "2026-11-14",
       "status": "实际预览通过",
-      "scope": "实际库存详情、内容点击保持、外部关闭、叠窗归属；临时只读配置验证透明拦截和禁外部关闭，随后恢复正式ViewSpec。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "仅本批设备选项393×852、浏览器1280×720的Creator本机预览：普通道具条件按钮、随机/指定碎片、英雄材料缺正文、长文滚动、无操作留白、只读产物副标题与双窗返回；追加RichText后实测两种礼包逐项换行/橙色、长文首尾、随机碎片及关闭注销。均用独立H2/WS真实库存；不沿用旧多尺寸签收，不代表真机或发布包。详见docs/validation/item-shard-review-20261114.json。",
+      "inspector": "未操作Creator原生窗口或Inspector；不代签负责人Inspector。"
+    },
+    "client/assets/bundles/module/common/prefabs/BagItemView.prefab": {
+      "sha256": "bdd3c97734e0cc4e739d620b263132b31d82be09baad840e0a4b8011073b6644",
+      "date": "2026-11-14",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "本批同一竖屏预览中，真实随机3星碎片28/20封顶、指定1星碎片2/5、mode9无碎片样式；切换精灵隐藏数量且无残留，普通装备分流正常，产物候选不显示0。奖励本次数量与库存完成度的隔离另有实际Prefab专项，不称新结算战斗全流程复验。详见docs/validation/item-shard-review-20261114.json。",
+      "inspector": "所属背包及产物页面的本机浏览器检查；未操作Creator Inspector。"
     },
     "client/assets/bundles/module/login/prefabs/ServerPickerView.prefab": {
       "sha256": "b2ee4532f7c8c0683fb48de8d9fa93899b0bf59893f2dca59c8030d50ef46b05",
@@ -120,6 +134,41 @@
       "status": "实际预览通过",
       "scope": "393x852及360x720独立库存四分类与独立精灵详情实际点击、每类数量3；20逻辑格与20节点（数据少于可见容量）。关闭重开数据保持，不签本轮实例复用/TTL；未保存有效背包截图。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
       "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
+    },
+    "client/assets/bundles/module/gm/prefabs/GmView.prefab": {
+      "sha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。F9总菜单四入口及开关、关闭子窗返回菜单。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+    },
+    "client/assets/bundles/module/gm/prefabs/GmGrantView.prefab": {
+      "sha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。英雄与道具搜索/选择、英雄与真实精灵发放成功、超量明确飘字、关闭和F9关闭。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+    },
+    "client/assets/bundles/module/gm/prefabs/GmBattleView.prefab": {
+      "sha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。三关按钮显示、第一关真实阵容只读试战至胜利并返回。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+    },
+    "client/assets/bundles/module/home/prefabs/RemakeHomeView.prefab": {
+      "sha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，导航与全局反馈正常，资料页与GM打开不依赖旧主城提示层。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+    },
+    "client/assets/bundles/module/battle/prefabs/SkillAuditView.prefab": {
+      "sha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，目录正常，未选技能的播放操作由全局飘字反馈；未逐技能演示。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
     }
   },
   "evidenceDirectories": [

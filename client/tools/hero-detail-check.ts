@@ -1,9 +1,7 @@
 /** 按旧 HeroData 的具体规则验证基础技能，不启动服务或访问玩家数据库。 */
+import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import {strict as assert} from "node:assert";
-import {readFileSync} from "node:fs";
 
-/** 离线按Bundle身份读取源文件，不把物理父层写入游戏配置地址。 */
-const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
 import { HeroSnapshotUtils } from "../assets/scripts/features/hero/data/HeroSnapshotUtils";
 import {GameConfig} from "../assets/scripts/config/GameConfig";
 import {GConfig} from "../assets/scripts/config/GConfig";
@@ -11,8 +9,7 @@ import { HeroSkillUtils } from "../assets/scripts/features/hero/utils/HeroSkillU
 import { GameLog } from "../assets/scripts/core/GameLog";
 /** 从仓库真实导出表验证阶段解锁、星级等级、同等级语言和无技能位置。 */
 async function main(){
- const config=new GameConfig(async path=>JSON.parse(readFileSync(resolveBundleFile(path+".json"),"utf8")));
- await config.prepare([GConfig.HeroType,GConfig.HeroUpgrade,GConfig.HeroStar,GConfig.HeroSkill,GConfig.Language]);
+ const config = await ConfigFixtureUtils.installReal(new GameConfig());
  const hero={id:"00000000-0000-4000-8000-000000000001",templateId:10102002,level:1,star:2,stage:0};
  let skills=HeroSkillUtils.present(hero,config);assert.deepEqual(skills.map(s=>s.id),[101020021,101020022,0,0]);
  assert.deepEqual(skills.map(s=>s.level),[1,0,0,0]);assert.equal(skills[0].name,"痛苦收割");assert(skills[0].description.includes("65%"));assert(skills[0].icon);

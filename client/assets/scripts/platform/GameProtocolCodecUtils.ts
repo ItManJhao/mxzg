@@ -46,7 +46,12 @@ const Frame = (mxzg as unknown as {
     };
 }).game.Frame;
 /** oneof 的所有有效载荷字段，用于检查消息名与载荷类型必须对应。 */
-const payloads = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed", "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter"];
+const payloads = [
+    "authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers",
+    "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
+    "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
+    "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
+];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
 export class GameProtocolCodecUtils {
     /** 仅通过静态方法使用，禁止创建实例。 */
@@ -59,6 +64,12 @@ export class GameProtocolCodecUtils {
         }
         if (frame.kind === "request" && frame.name === Protocol.CHAPTER_CHALLENGE) {
             return "chapterChallenge";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.CHAPTER_IDLE_CLAIM) {
+            return "chapterIdleClaim";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.CHAPTER_IDLE_CLAIM_STATUS) {
+            return "chapterIdleClaimStatusRequest";
         }
         if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_CLAIM || frame.name === Protocol.CHAPTER_REPLAY)) {
             return "chapterBattleId";
@@ -89,6 +100,8 @@ export class GameProtocolCodecUtils {
                 case Protocol.CHAPTER_CLAIM: return "chapterReceipt";
                 case Protocol.CHAPTER_REPLAY: return "chapterReplay";
                 case Protocol.CHAPTER_IDLE_ENCOUNTER: return "idleEncounter";
+                case Protocol.CHAPTER_IDLE_CLAIM: return "chapterIdleClaimReceipt";
+                case Protocol.CHAPTER_IDLE_CLAIM_STATUS: return "chapterIdleClaimStatus";
                 case Protocol.BATTLE_PREVIEW: return "battlePreviewed";
                 case Protocol.FORMATION_SAVE: return "formationSaved";
                 case Protocol.GM_GRANT: return "gmResult";
@@ -112,9 +125,85 @@ export class GameProtocolCodecUtils {
         }
     }
 
+    /** 读取挂机协议对象；不接受数组、空值或使用字符串包装的业务结果。 */
+    private static idleObject(value: unknown): Record<string, unknown> {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            throw new Error("挂机协议对象无效");
+        }
+        return value as Record<string, unknown>;
+    }
+
+    /** 验证领取意图及回执的UUID；实例ID不使用此约束，保留其真实字符串格式。 */
+    private static validateIdleRequestId(value: unknown): void {
+        if (typeof value !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(value)) {
+            throw new Error("挂机请求标识无效");
+        }
+    }
+
+    /** 消费版本必须显式存在且为安全正整数，不能将proto默认0或字符串当作可领版本。 */
+    private static validateIdleVersion(value: unknown): asserts value is number {
+        if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
+            throw new Error("挂机消费版本无效");
+        }
+    }
+
+    /** 验证可恢复历史回执的格式及消费版本关系；不会将历史余额或起点提交给当前状态。 */
+    private static validateIdleReceipt(value: unknown): Record<string, unknown> {
+        const receipt = GameProtocolCodecUtils.idleObject(value);
+        if (receipt.schemaVersion !== 1) {
+            throw new Error("挂机回执格式未支持");
+        }
+        GameProtocolCodecUtils.validateIdleRequestId(receipt.requestId);
+        GameProtocolCodecUtils.validateIdleRequestId(receipt.receiptId);
+        GameProtocolCodecUtils.validateIdleVersion(receipt.expectedOperationVersion);
+        GameProtocolCodecUtils.validateIdleVersion(receipt.beforeOperationVersion);
+        GameProtocolCodecUtils.validateIdleVersion(receipt.afterOperationVersion);
+        GameProtocolCodecUtils.validateIdleVersion(receipt.assetRevision);
+        if (receipt.expectedOperationVersion !== receipt.beforeOperationVersion
+            || receipt.afterOperationVersion !== receipt.beforeOperationVersion + 1) {
+            throw new Error("挂机回执消费版本不一致");
+        }
+        return receipt;
+    }
+
+    /**
+     * 挂机命令校验确定的请求/回执格式，不推导可领资格或执行恢复重试。
+     * status的NOT_FOUND仅代表锁内查询时尚未提交，不能解释为取消成功；未知状态明确拒绝。
+     */
+    private static validateIdleClaim(frame: GameFrame): void {
+        if (frame.name !== Protocol.CHAPTER_IDLE_CLAIM && frame.name !== Protocol.CHAPTER_IDLE_CLAIM_STATUS) {
+            return;
+        }
+        if (frame.kind === "response" && frame.ok === false) {
+            return;
+        }
+        const body = GameProtocolCodecUtils.idleObject(frame.body);
+        if (frame.kind === "request") {
+            GameProtocolCodecUtils.validateIdleRequestId(body.requestId);
+            if (frame.name === Protocol.CHAPTER_IDLE_CLAIM) {
+                GameProtocolCodecUtils.validateIdleVersion(body.expectedOperationVersion);
+            }
+            return;
+        }
+        if (frame.name === Protocol.CHAPTER_IDLE_CLAIM) {
+            GameProtocolCodecUtils.validateIdleReceipt(body);
+            return;
+        }
+        GameProtocolCodecUtils.validateIdleRequestId(body.requestId);
+        if (body.status === "COMMITTED") {
+            const receipt = GameProtocolCodecUtils.validateIdleReceipt(body.receipt);
+            if (receipt.requestId !== body.requestId) {
+                throw new Error("挂机查询回执与请求不一致");
+            }
+        } else if (body.status !== "NOT_FOUND" || body.receipt != null) {
+            throw new Error("挂机查询状态无效");
+        }
+    }
+
     /** 编码完整帧并限制大小；返回独立 ArrayBuffer，微信小游戏可直接发送，不使用 Base64 包装。 */
     public static encodeGameFrame(frame: GameFrame): ArrayBuffer {
         GameProtocolCodecUtils.validateIntegers(frame);
+        GameProtocolCodecUtils.validateIdleClaim(frame);
         const { body, ...envelope } = frame;
         const payload = GameProtocolCodecUtils.payloadName(frame);
         const message: Record<string, unknown> = { ...envelope };
@@ -161,6 +250,7 @@ export class GameProtocolCodecUtils {
         for (const key of payloads) {
             delete value[key];
         }
+        GameProtocolCodecUtils.validateIdleClaim(frame);
         return frame;
     }
 }

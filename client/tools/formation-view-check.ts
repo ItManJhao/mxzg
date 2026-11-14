@@ -1,7 +1,9 @@
 /** 出阵 Prefab 绑定与编辑参数回归；同时拒绝头像空按钮截获阵位点击。 */
+import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { Button, Color, Label, Mask, Node, Prefab, ScrollView, Sprite, UITransform } from "cc";
+import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { FormationHeroCellView } from "../assets/scripts/features/hero/ui/FormationHeroCellView";
@@ -14,7 +16,6 @@ import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel
 import { FormationView } from "../assets/scripts/features/hero/ui/FormationView";
 import { FormationSlotView } from "../assets/scripts/features/hero/ui/FormationSlotView";
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
-import { HeroCatalog } from "../assets/scripts/features/hero/utils/HeroCatalog";
 
 const PAGE = "client/assets/bundles/module/hero/prefabs/FormationView.prefab";
 const CELL = "client/assets/bundles/module/hero/prefabs/FormationHeroCellView.prefab";
@@ -34,7 +35,7 @@ const classes: Record<string, any> = { "cc.Button": Button, "cc.Label": Label, "
     "cc.UITransform": UITransform, "cc.Mask": Mask, "cc.ScrollView": ScrollView,
     [scrollType]: SuperScroll, [contentType]: SuperContent, [viewType]: FormationView, [slotType]: FormationSlotView, [cellType]: FormationHeroCellView };
 
-/** Read authoring data rather than a second hand-built layout fixture. Not an engine replacement. */
+/** 从真实Prefab恢复专项所需节点与组件；不另造布局，模块注入只包含Model和保存控制器。 */
 function instantiateData(data: any[]): Node {
     const objects = new Map<number, any>();
     data.forEach((row, id) => { if (row.__type__ === "cc.Node") { const node = new Node(row._name); node.active = row._active; node.setPosition(row._lpos.x,row._lpos.y,row._lpos.z); node.setScale(row._lscale.x,row._lscale.y,row._lscale.z); objects.set(id,node); } });
@@ -68,14 +69,14 @@ function instantiateData(data: any[]): Node {
         roster.replace({ status: "ready", heroes: [], error: "", mainFormation: { formationId: 1,
             unlockedIds: [1, 2], assistanceUnlocked: false, version: 0, slots: [],
             options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }, { formationId: 2, openPositions: [1, 2, 3, 5, 6, 7] }] } });
-        screen.configure(new FormationController(saves, roster), roster, saves,
-            new HeroCatalog({rows:[{type:10101001,note:"Test",elem:1}]},{rows:[]}));
+        screen.configure(new FormationController(saves, roster), roster, saves);
     }
     return root;
 }
 
 /** 核对真实序列化绑定、阵位点击归属及现有编辑参数行为。 */
 async function main(): Promise<void> {
+    await ConfigFixtureUtils.installReal();
     const data = read(PAGE), authored = data.find((row: any) => row.__type__ === viewType);
     for (const slot of data.filter((row: any) => row.__type__ === slotType)) {
         const portrait = data[slot.portrait.__id__];
@@ -90,7 +91,6 @@ async function main(): Promise<void> {
     const listData=data.find((row:any)=>row.__type__===contentType);listData.columns=2;listData.spacingX=18;listData.spacingY=14;
     const root=instantiateData(data), view=root.getComponent(FormationView) as FormationView;
     const fixedChildren=root.children.map(node=>node.name);
-    const catalog=new HeroCatalog({rows:[{type:10101001,note:"Test",elem:1}]},{rows:[]});
     const heroes=[1,2,3].map(id=>({id:"00000000-0000-4000-8000-"+String(id).padStart(12,"0"),templateId:10101001,level:1,star:1}));
     const state={heroes,formationId:1,unlockedIds:[1],openPositions:[2,3,5,6,7,8],lineup:{version:1,slots:[{position:2,heroId:heroes[0].id}]},busy:false,message:"已加载"};
     let cancels=0;
@@ -110,6 +110,8 @@ async function main(): Promise<void> {
     }
     assert.equal(cancels,3);
     // 用真实按钮事件验证草稿属于View；模块回执只经事件刷新，关闭不销毁模块。
+    const feedback: string[] = [];
+    const offFeedback = UIManager.instance.bindNotice(text => feedback.push(text));
     const editRoot=instantiateData(read(PAGE)), editor=editRoot.getComponent(FormationView) as FormationView;
     const roster=new HeroRosterModel(), saves=new FormationSaveModel(); roster.reset();
     const asset={formationId:1,unlockedIds:[1,2],assistanceUnlocked:false,version:0,slots:[],
@@ -121,7 +123,7 @@ async function main(): Promise<void> {
         request=body;
         try { received(await new Promise(resolve=>{resolveSave=resolve;})); } catch(error) { failed(error); }
     });
-    editor.configure(module,roster,saves,catalog);editor.runOpen({complete:()=>{}});
+    editor.configure(module,roster,saves);editor.runOpen({complete:()=>{}});
     editor.heroScroll!.content!.children[0].getComponent(HeroIconCellView)!.button!.node.emit(Button.EventType.CLICK);
     editor.slots.find(slot=>slot.position===3)!.button!.node.emit(Button.EventType.CLICK);
     assert.equal(roster.snapshot.mainFormation!.slots.length,0,"选位不能提前修改资产");
@@ -133,7 +135,10 @@ async function main(): Promise<void> {
     assert.equal(saves.snapshot.acknowledged,1,"关闭窗口不销毁保存回执处理");
     roster.replace({status:"ready",heroes,error:"",mainFormation:{...asset,version:1,slots:request.slots}});
     EventDispatcher.instance.emit(HeroRosterEvent.Updated,{revision:roster.version});
-    editor.runOpen({complete:()=>{}});assert(editor.tipLabel!.string.includes("已保存"));assert(editor.countLabel!.string.includes("1 / 6"));
+    editor.runOpen({complete:()=>{}});
+    assert.equal(feedback.length, 0, "重开页面不重播历史保存结果");
+    assert(!editor.tipLabel!.string.includes("已保存"), "固定操作说明不再充当结果提示区");
+    assert(editor.countLabel!.string.includes("1 / 6"));
     editor.heroScroll!.content!.children[0].getComponent(HeroIconCellView)!.button!.node.emit(Button.EventType.CLICK);
     editor.slots.find(slot=>slot.position===2)!.button!.node.emit(Button.EventType.CLICK);
     assert.equal(roster.snapshot.mainFormation!.slots[0].position,3,"再次编辑仍只修改页面草稿");
@@ -150,6 +155,7 @@ async function main(): Promise<void> {
     roster.replace({status:"ready",heroes,error:"",mainFormation:{...asset,version:2,slots:request.slots}});
     EventDispatcher.instance.emit(HeroRosterEvent.Updated,{revision:roster.version});
     assert.equal(confirmed,1,"回执与权威阵容都确认后只通知一次出战");
+    assert(feedback.some(text => text.includes("已保存")), "本次实际保存结果通过全局飘字反馈");
     EventDispatcher.instance.emit(HeroRosterEvent.Updated,{revision:roster.version});
     assert.equal(confirmed,1);
     editor.runClose();
@@ -158,7 +164,7 @@ async function main(): Promise<void> {
     resolveSave({version:1,kind:"response",name:Protocol.FORMATION_SAVE,ok:true,body:{requestId:request.requestId,version:2}});
     await Promise.resolve();await Promise.resolve();
     assert.equal(confirmed,2,"阵容不变时成功回执允许相同版本出战");
-    editor.runClose();module.dispose();
+    editor.runClose();module.dispose();offFeedback();
     const broken=instantiateData(read(PAGE)).getComponent(FormationView) as FormationView;
     broken.confirmButton=null;
     assert.throws(()=>broken.runOpen({complete:()=>{throw Error("binding failure must not be swallowed as Cancel");}}),/FormationView.prefab.*confirmButton/);

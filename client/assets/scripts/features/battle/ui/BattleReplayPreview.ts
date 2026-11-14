@@ -1,6 +1,8 @@
 /** 主线及独立战报播放器：复用BattlePage及真实资源，只展示服务端战报，不请求奖励或修改资产。 */
 import { AudioClip,AudioSource,Button,Color,director,Director,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
 import { GameLog } from "../../../core/GameLog";
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
@@ -29,7 +31,7 @@ export interface SkillReplayFocus {
 }
 
 export class BattleReplayPreview {
-    /** 装载资源后执行二进制战报；遇敌可借用行军骨骼，返回的关场函数先归还骨骼再销毁战场。
+    /** 同步读取GameConfig的已安装配置，再装载美术资源并执行二进制战报；遇敌可借用行军骨骼，关场先归还骨骼再销毁战场。
      * onIdleDeath仅向挂机页提供真实阵亡的世界位置用于资源飞行，不是奖励事件，正式挑战不调用。 */
     public static async open(
         parent: Node,
@@ -47,18 +49,8 @@ export class BattleReplayPreview {
     ): Promise<() => void> {
         const steps = BattleReplayUtils.decode(bytes);
         const units = BattleReplayUtils.units(bytes);
-        const configScope = ResourceAssetsUtils.createAssetScope();
-        let templateRows: { type: number; elem: number }[];
-        let rows: BuffRow[];
-        try {
-            const templates = await configScope.loadPath("config/herotype", "JsonAsset");
-            const config = await configScope.loadPath("config/buff", "JsonAsset");
-            templateRows = (templates.json as { rows: { type: number; elem: number }[] }).rows;
-            rows = (config.json as { rows: BuffRow[] }).rows;
-        } finally {
-            // 后续只读取普通配置对象，释放JsonAsset持有，不保留引擎资产缓存。
-            configScope.dispose();
-        }
+        const config = GameConfig.instance.getFileByPath("config/buff");
+        const rows = (config as { rows: BuffRow[] }).rows;
         const elementPaths = ["hero/ui/hero-icon_elem-1/spriteFrame", "hero/ui/hero-icon_elem-2/spriteFrame",
             "hero/ui/hero-icon_elem-3/spriteFrame", "hero/ui/hero-icon_elem-4/spriteFrame",
             "hero/ui/hero-icon_elem-5/spriteFrame"];
@@ -367,11 +359,15 @@ export class BattleReplayPreview {
                     const order = units.filter(value => value.faction === 2).indexOf(unit) + 1;
                     slot.setPosition(idleLayout.getChildByName("Enemy" + order)!.position);
                 }
-                const template = templateRows.find(row => row.type === unit.templateId);
-                if (!template || !elementPaths[template.elem - 1]) throw new Error("战斗英雄元素配置缺失");
+                const template = GameConfig.instance.getConfig(GConfig.HeroType, unit.templateId);
+                const elem = template?.elem;
+                // 模板允许说明行省略元素，但真实战斗单位必须有1～5的已知元素，不能猜默认图标。
+                if (typeof elem !== "number" || !Number.isInteger(elem) || elem < 1 || elem > 5) {
+                    throw new Error("战斗英雄元素配置缺失");
+                }
                 const element = shell.hpLabel(side, index)!.parent!.getChildByName("ElementIcon")!;
                 element.getComponent(Sprite)!.spriteFrame = await assets.loadPath(
-                    elementPaths[template.elem - 1], "SpriteFrame");
+                    elementPaths[elem - 1], "SpriteFrame");
                 element.active = true;
                 const hpRow = element.parent!;
                 hpRows.set(id, hpRow);

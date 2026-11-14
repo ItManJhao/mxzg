@@ -2,7 +2,8 @@
   {
     "path": "client/assets/bundles/module/bag/prefabs/BagInfoView.prefab",
     "classes": [
-      "BagInfoView"
+      "BagInfoView",
+      "ViewportScale"
     ],
     "root": {
       "position": {
@@ -29,90 +30,118 @@
       }
     },
     "components": {
-      "Widget": 1,
-      "Layout": 0,
-      "Mask": 0,
-      "ScrollView": 0,
+      "Widget": 5,
+      "Layout": 6,
+      "Mask": 1,
+      "ScrollView": 1,
       "Animation": 0,
       "PrefabInstance": 0
     },
     "specialAnchors": [
       {
-        "node": "node",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "lbl_prop_name",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "lbl_prop_type",
-        "anchor": [
-          0,
-          0.5
-        ]
-      },
-      {
-        "node": "lbl_desc",
+        "node": "DetailBackground",
         "anchor": [
           0.5,
           1
         ]
       },
       {
-        "node": "lbl_content_node",
+        "node": "Header",
         "anchor": [
           0.5,
           1
         ]
       },
       {
-        "node": "menu",
+        "node": "NameLabel",
         "anchor": [
           0,
-          0
+          0.5
         ]
       },
       {
-        "node": "menu_close",
+        "node": "TypeLabel",
         "anchor": [
           0,
-          0
+          0.5
         ]
       },
       {
-        "node": "lbl_countdown",
+        "node": "DescriptionDivider",
         "anchor": [
-          0,
-          0
+          0.5,
+          1
         ]
       },
       {
-        "node": "DetailPanel",
+        "node": "DescriptionLabel",
         "anchor": [
-          0,
-          0
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "DescriptionScroll",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "ActionGrid",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "CloseControls",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "CountdownLabel",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "DescriptionViewport",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "DescriptionContent",
+        "anchor": [
+          0.5,
+          1
         ]
       }
     ],
-    "scrolls": [],
+    "scrolls": [
+      {
+        "node": "DescriptionScroll",
+        "content": {
+          "__id__": 207
+        }
+      }
+    ],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "实际库存详情、内容点击保持、外部关闭、叠窗归属；临时只读配置验证透明拦截和禁外部关闭，随后恢复正式ViewSpec。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-    "sha256": "b77ad9c41e211d2c6f08c4287e4e2c12650850d0e2f1bc9bfb2a4b3dd943e6c6",
+    "visual": "仅本批设备选项393×852、浏览器1280×720的Creator本机预览：普通道具条件按钮、随机/指定碎片、英雄材料缺正文、长文滚动、无操作留白、只读产物副标题与双窗返回；追加RichText后实测两种礼包逐项换行/橙色、长文首尾、随机碎片及关闭注销。均用独立H2/WS真实库存；不沿用旧多尺寸签收，不代表真机或发布包。详见docs/validation/item-shard-review-20261114.json。",
+    "sha256": "695a86268302959121af6048793a8bf647dc1c671980cbf553e45b103be1c9bb",
     "acceptance": {
-      "sha256": "b77ad9c41e211d2c6f08c4287e4e2c12650850d0e2f1bc9bfb2a4b3dd943e6c6",
-      "date": "2026-11-11",
+      "sha256": "695a86268302959121af6048793a8bf647dc1c671980cbf553e45b103be1c9bb",
+      "date": "2026-11-14",
       "status": "实际预览通过",
-      "scope": "实际库存详情、内容点击保持、外部关闭、叠窗归属；临时只读配置验证透明拦截和禁外部关闭，随后恢复正式ViewSpec。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "仅本批设备选项393×852、浏览器1280×720的Creator本机预览：普通道具条件按钮、随机/指定碎片、英雄材料缺正文、长文滚动、无操作留白、只读产物副标题与双窗返回；追加RichText后实测两种礼包逐项换行/橙色、长文首尾、随机碎片及关闭注销。均用独立H2/WS真实库存；不沿用旧多尺寸签收，不代表真机或发布包。详见docs/validation/item-shard-review-20261114.json。",
+      "inspector": "未操作Creator原生窗口或Inspector；不代签负责人Inspector。"
     }
   },
   {
@@ -304,6 +333,492 @@
       "scope": "393x852及360x720独立库存四分类与独立精灵详情实际点击、每类数量3；20逻辑格与20节点（数据少于可见容量）。关闭重开数据保持，不签本轮实例复用/TTL；未保存有效背包截图。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
       "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/bag/prefabs/EquipmentInfoView.prefab",
+    "classes": [
+      "ViewportScale",
+      "EquipmentInfoView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 11,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Header",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "NameLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "TypeLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ScoreTitle",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ScoreLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributesSection",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "AttributesTitle",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "AttributeRow1",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "ValueLine",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributeIcon",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "NameLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ValueLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ConditionLabel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributeRow2",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "ValueLine",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributeIcon",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "NameLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ValueLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ConditionLabel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "SetSection",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "SetDivider",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "SetName",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "SetBonusRow2",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "ValueLine",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributeIcon",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "NameLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ValueLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ConditionLabel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "SetBonusRow3",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "ValueLine",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributeIcon",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "NameLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ValueLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ConditionLabel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "SetBonusRow4",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "ValueLine",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributeIcon",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "NameLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ValueLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ConditionLabel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "DescriptionSection",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "DescriptionDivider",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "DescriptionTextBox",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "MinimumTextHeight",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "DescriptionLabel",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "DescriptionBook",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "ButtonsSection",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）：独立H2真实库存的绿1星银制利剑、紫3星雷鸣套装、红6星双属性装备；来源/装备只读飘字、X/空白关闭、套装后重开收缩、返回英雄和注销清理。正式服仅只读对照银制利剑；套装及六星以旧源码/配置和本机样本核对。详见docs/validation/equipment-detail-review-20261114.json，不代表全机型或新发布包。",
+    "sha256": "72a5e95f314072883a2fc3a7a878453babbeaac5cc389138bc54dd91e8ac202b",
+    "acceptance": {
+      "sha256": "72a5e95f314072883a2fc3a7a878453babbeaac5cc389138bc54dd91e8ac202b",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）：独立H2真实库存的绿1星银制利剑、紫3星雷鸣套装、红6星双属性装备；来源/装备只读飘字、X/空白关闭、套装后重开收缩、返回英雄和注销清理。正式服仅只读对照银制利剑；套装及六星以旧源码/配置和本机样本核对。详见docs/validation/equipment-detail-review-20261114.json，不代表全机型或新发布包。",
+      "inspector": "未操作Creator原生窗口或Inspector；负责人刷新后用浏览器复验，不代签负责人Inspector。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/bag/prefabs/SpiritInfoView.prefab",
+    "classes": [
+      "ViewportScale",
+      "SpiritInfoView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "NameLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "TypeLabel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributesTitle",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributeName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "AttributeValue",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "SkillsTitle",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "SkillName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "SkillDescription",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "51dd3e722561ad165a35ad3fb641fe06667497ed08ebac877483862aba3bf90d"
   },
   {
     "path": "client/assets/bundles/module/battle/prefabs/BattleDetailCell.prefab",
@@ -1127,9 +1642,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "077d7f504ceeee481ff28ab850f859182dac106eb422e72a1bf7670886258cc0"
+    "reviewStatus": "实际预览通过",
+    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，目录正常，未选技能的播放操作由全局飘字反馈；未逐技能演示。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+    "sha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
+    "acceptance": {
+      "sha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，目录正常，未选技能的播放操作由全局飘字反馈；未逐技能演示。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+    }
   },
   {
     "path": "client/assets/bundles/module/bootstrap/prefabs/LoadingLayer.prefab",
@@ -1219,8 +1741,8 @@
       }
     },
     "components": {
-      "Widget": 0,
-      "Layout": 0,
+      "Widget": 1,
+      "Layout": 1,
       "Mask": 0,
       "ScrollView": 0,
       "Animation": 0,
@@ -1231,8 +1753,15 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "4908fac142e25f22d6e32696d6d76ecc1870fccd8fe40c04a004e806cf85660c"
+    "visual": "本批同一竖屏预览中，真实随机3星碎片28/20封顶、指定1星碎片2/5、mode9无碎片样式；切换精灵隐藏数量且无残留，普通装备分流正常，产物候选不显示0。奖励本次数量与库存完成度的隔离另有实际Prefab专项，不称新结算战斗全流程复验。详见docs/validation/item-shard-review-20261114.json。",
+    "sha256": "bdd3c97734e0cc4e739d620b263132b31d82be09baad840e0a4b8011073b6644",
+    "acceptance": {
+      "sha256": "bdd3c97734e0cc4e739d620b263132b31d82be09baad840e0a4b8011073b6644",
+      "date": "2026-11-14",
+      "status": "依赖所属页面检查的组合资源",
+      "scope": "本批同一竖屏预览中，真实随机3星碎片28/20封顶、指定1星碎片2/5、mode9无碎片样式；切换精灵隐藏数量且无残留，普通装备分流正常，产物候选不显示0。奖励本次数量与库存完成度的隔离另有实际Prefab专项，不称新结算战斗全流程复验。详见docs/validation/item-shard-review-20261114.json。",
+      "inspector": "所属背包及产物页面的本机浏览器检查；未操作Creator Inspector。"
+    }
   },
   {
     "path": "client/assets/bundles/module/common/prefabs/CommonPanel1.prefab",
@@ -1278,9 +1807,10 @@
     "sha256": "ca502e6e5494a54da6a5a150f183cd1b1b841682d6ca15fec20ab21d3f16332d"
   },
   {
-    "path": "client/assets/bundles/module/gm/prefabs/GmOptionCellView.prefab",
+    "path": "client/assets/bundles/module/gm/prefabs/GmBattleView.prefab",
     "classes": [
-      "GmOptionCellView"
+      "GmBattleView",
+      "ViewportScale"
     ],
     "root": {
       "position": {
@@ -1297,8 +1827,8 @@
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 488,
-        "height": 54
+        "width": 640,
+        "height": 1280
       },
       "anchor": {
         "__type__": "cc.Vec2",
@@ -1307,7 +1837,7 @@
       }
     },
     "components": {
-      "Widget": 0,
+      "Widget": 1,
       "Layout": 0,
       "Mask": 0,
       "ScrollView": 0,
@@ -1318,14 +1848,22 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "264a01ce62e923b88fc11c5d8b8773703271830787b64ba47f54b6d07282fc29"
+    "reviewStatus": "实际预览通过",
+    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。三关按钮显示、第一关真实阵容只读试战至胜利并返回。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+    "sha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616",
+    "acceptance": {
+      "sha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。三关按钮显示、第一关真实阵容只读试战至胜利并返回。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+    }
   },
   {
-    "path": "client/assets/bundles/module/gm/prefabs/GmView.prefab",
+    "path": "client/assets/bundles/module/gm/prefabs/GmGrantView.prefab",
     "classes": [
-      "GmView"
+      "GmGrantView",
+      "ViewportScale"
     ],
     "root": {
       "position": {
@@ -1342,8 +1880,8 @@
       },
       "size": {
         "__type__": "cc.Size",
-        "width": 600,
-        "height": 820
+        "width": 640,
+        "height": 1280
       },
       "anchor": {
         "__type__": "cc.Vec2",
@@ -1352,7 +1890,7 @@
       }
     },
     "components": {
-      "Widget": 0,
+      "Widget": 1,
       "Layout": 0,
       "Mask": 1,
       "ScrollView": 0,
@@ -1413,9 +1951,114 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
+    "reviewStatus": "实际预览通过",
+    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。英雄与道具搜索/选择、英雄与真实精灵发放成功、超量明确飘字、关闭和F9关闭。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+    "sha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509",
+    "acceptance": {
+      "sha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。英雄与道具搜索/选择、英雄与真实精灵发放成功、超量明确飘字、关闭和F9关闭。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/gm/prefabs/GmOptionCellView.prefab",
+    "classes": [
+      "GmOptionCellView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 488,
+        "height": 54
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "56d847582a0b3e5abfbae4c2bb43a5f62deeef925cfae914aa899292b1e09d2d"
+    "sha256": "264a01ce62e923b88fc11c5d8b8773703271830787b64ba47f54b6d07282fc29"
+  },
+  {
+    "path": "client/assets/bundles/module/gm/prefabs/GmView.prefab",
+    "classes": [
+      "GmView",
+      "ViewportScale"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。F9总菜单四入口及开关、关闭子窗返回菜单。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+    "sha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729",
+    "acceptance": {
+      "sha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。F9总菜单四入口及开关、关闭子窗返回菜单。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+    }
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/FormationHeroCellView.prefab",
@@ -2391,9 +3034,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "0fde43ff6d912ef1f0c0c4e5489651325d6a2660127851eee87e8c60bba7c66b"
+    "reviewStatus": "实际预览通过",
+    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，导航与全局反馈正常，资料页与GM打开不依赖旧主城提示层。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+    "sha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
+    "acceptance": {
+      "sha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
+      "date": "2026-11-14",
+      "status": "实际预览通过",
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，导航与全局反馈正常，资料页与GM打开不依赖旧主城提示层。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+    }
   },
   {
     "path": "client/assets/bundles/module/login/prefabs/AccountLoginView.prefab",
@@ -2527,14 +3177,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "393×852、360×720及428×926普通资料窗；实际内容/外部点击，叠窗关闭与隐藏后恢复共享层，设置和注销。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-    "sha256": "a99fe0307a2033caf7e57369a45e890a3b4d6c16fa7b10874fd583e404c0702c",
+    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。角色资料与设置正常、旧GM按钮移除，退出返回登录；不继承旧三尺寸。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+    "sha256": "5e4bb3cbd507cb7d760ff0b428ec2bb138625d91bf960313796e478ddbe82073",
     "acceptance": {
-      "sha256": "a99fe0307a2033caf7e57369a45e890a3b4d6c16fa7b10874fd583e404c0702c",
-      "date": "2026-11-11",
+      "sha256": "5e4bb3cbd507cb7d760ff0b428ec2bb138625d91bf960313796e478ddbe82073",
+      "date": "2026-11-14",
       "status": "实际预览通过",
-      "scope": "393×852、360×720及428×926普通资料窗；实际内容/外部点击，叠窗关闭与隐藏后恢复共享层，设置和注销。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。角色资料与设置正常、旧GM按钮移除，退出返回登录；不继承旧三尺寸。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
     }
   },
   {

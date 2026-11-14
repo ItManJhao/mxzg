@@ -1,6 +1,6 @@
 /**
  * 已核实挂机加成的无状态计算：基础资源加成独立截断，神职按原始奖励分项向上取整。
- * 未来由服务端奖励装配层传入已确认适用的条目；当前没有生产调用，不判断VIP、活动或礼包权益。
+ * 由服务端奖励装配层传入已确认适用的条目；当前calculate没有生产领取调用，不判断VIP、活动或礼包权益。
  * 不读取数据库、不更新计时/保底、不发奖；随机源由调用方提供，结果供测试及后续事务冻结使用。
  */
 package com.funsgamex.mxzg.campaign;
@@ -63,6 +63,19 @@ public final class IdleBonusUtils {
     }
 
     /**
+     * 按已确认的旧奖励链判断礼包期限：0为永久，到期秒仍有效，不使用active过滤加成。
+     * 只判断传入持有记录的期限，不证明角色拥有礼包，也不执行旧查询中的过期写入。
+     * @param endTime 服务端持久记录的Unix秒，0表示永久，负数非法
+     * @param nowSeconds 本次计算开始时统一捕获的服务器Unix秒，不逐条重读时钟
+     */
+    public static boolean giftAppliesAt(long endTime, long nowSeconds) {
+        if (endTime < 0 || nowSeconds < 0) {
+            throw new IllegalArgumentException("礼包期限或计算时刻不能为负");
+        }
+        return endTime == 0 || nowSeconds <= endTime;
+    }
+
+    /**
      * 计算已确认适用的全部加成；神职先抽样，其他加成只读取基础资源，不连乘。
      * @param base 原始基础奖励，同配置ID必须唯一；不会修改输入
      * @param other 原始随机及活动奖励分项，允许重复物品，禁止调用前跨来源提前合并
@@ -83,27 +96,10 @@ public final class IdleBonusUtils {
         var baseRules = List.copyOf(bonuses);
         var clergyRules = List.copyOf(clergy);
         Objects.requireNonNull(randomIndex, "挂机加成随机源缺失");
+        validateInputs(baseItems, otherItems, baseRules, clergyRules);
         var byId = new HashMap<Integer, CampaignRules.Reward>();
         for (var reward : baseItems) {
-            validateReward(reward);
-            if (byId.putIfAbsent(reward.itemId(), reward) != null) {
-                throw new IllegalArgumentException("挂机基础奖励配置ID重复");
-            }
-        }
-        for (var reward : otherItems) {
-            validateReward(reward);
-        }
-        for (var bonus : baseRules) {
-            validateRule(bonus.key(), bonus.basisPoints());
-            if (bonus.itemId() <= 0) {
-                throw new IllegalArgumentException("挂机加成物品ID非法");
-            }
-        }
-        for (var bonus : clergyRules) {
-            validateRule(bonus.key(), bonus.basisPoints());
-            if (bonus.chance() < 0 || bonus.chance() > BASIS) {
-                throw new IllegalArgumentException("神职概率超出万分比范围");
-            }
+            byId.put(reward.itemId(), reward);
         }
 
         var original = new ArrayList<>(baseItems);
@@ -148,6 +144,37 @@ public final class IdleBonusUtils {
         }
         return new Result(baseAdded, clergyAdded, merged.entrySet().stream()
                 .map(entry -> new CampaignRules.Reward(entry.getKey(), entry.getValue())).toList());
+    }
+
+    /**
+     * 检查奖励与加成的结构和值域，不抽样、不计算追加量或修改列表。
+     * 完整装配在活动和普通随机前调用，避免最后一条坏加成在前序抽样后才被发现；
+     * 不按来源key去重，同一VIP的三资源及配置内重复条目均可合法共用key。
+     */
+    public static void validateInputs(List<CampaignRules.Reward> base, List<CampaignRules.Reward> other,
+                                      List<BaseBonus> bonuses, List<ClergyBonus> clergy) {
+        var seen = new java.util.HashSet<Integer>();
+        for (var reward : base) {
+            validateReward(reward);
+            if (!seen.add(reward.itemId())) {
+                throw new IllegalArgumentException("挂机基础奖励配置ID重复");
+            }
+        }
+        for (var reward : other) {
+            validateReward(reward);
+        }
+        for (var bonus : bonuses) {
+            validateRule(bonus.key(), bonus.basisPoints());
+            if (bonus.itemId() <= 0) {
+                throw new IllegalArgumentException("挂机加成物品ID非法");
+            }
+        }
+        for (var bonus : clergy) {
+            validateRule(bonus.key(), bonus.basisPoints());
+            if (bonus.chance() < 0 || bonus.chance() > BASIS) {
+                throw new IllegalArgumentException("神职概率超出万分比范围");
+            }
+        }
     }
 
     /** 拒绝无效ID和负奖励，避免用错误分项抵消其他收益。 */

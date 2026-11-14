@@ -103,7 +103,7 @@ declare module "cc" {
     anchorPoint: { x: number; y: number };
   }
 
-  export class Label {
+  export class Label extends Component {
     string: string;
     fontSize: number;
     lineHeight: number;
@@ -111,10 +111,14 @@ declare module "cc" {
     font: TTFFont | null;
     fontFamily: string;
     overflow: number;
+    /** 是否允许按场景文字区域宽度自动换行。 */
+    enableWrapText: boolean;
     isBold: boolean;
     horizontalAlign: number;
     verticalAlign: number;
     color: Color;
+    /** 请求引擎按当前文字和宽度更新布局。 */
+    updateRenderData(force?: boolean): void;
   }
 
   export class Graphics {
@@ -148,6 +152,11 @@ declare module "cc" {
 
   export class JsonAsset {
     json: object | null;
+  }
+  /** 配置包离线检查使用的引擎二进制资源契约。 */
+  export class BufferAsset {
+    /** 读取包的二进制源内容。 */
+    buffer(): ArrayBuffer;
   }
 
   export const Layers: { Enum: { UI_2D: number } };
@@ -264,7 +273,7 @@ declare module "cc" {
 
   export const KeyCode: { F9: number; BACKQUOTE: number };
 
-  export const Input: { EventType: { KEY_DOWN: string } };
+  export const Input: { EventType: { KEY_DOWN: string; KEY_UP: string } };
 
   export const input: {
     on(type: string, callback: (event: EventKeyboard) => void, target?: unknown): void;

@@ -1,6 +1,6 @@
 # Prefab 编辑与审查
 
-更新：2026-11-13。当前保留32份Prefab、16个Bundle和31张配置依赖；最新脚本整理、chapter迁移与effects拆包没有改变Prefab数量。当前结构见[prefab-review.json](prefab-review.json)，资源目录与发布检查入口见[Bundle维护说明](staged-resource-loading.md)。此前15包批次清理64份旧Prefab，并通过51项、类型及本机限定复验，见[当批资源清理](validation/current-resource-scope-cleanup-20261111.json)与[虚拟列表复验](validation/virtual-list-resource-review-20261111.json)；96份是更早的历史基线。本轮按负责人要求未重复Creator预览或构建，旧画面不替代最新源码的发布验收。
+更新：2026-11-14。当前保留33份Prefab、16个Bundle和48份共享目录JSON（47份既有依赖＋spirit-display派生表）；精灵专用SpiritInfoView是本次新增的完整静态Prefab，原32份身份保持。当前结构见[prefab-review.json](prefab-review.json)，资源目录与发布检查入口见[Bundle维护说明](staged-resource-loading.md)。此前15包批次清理64份旧Prefab，并通过51项、类型及本机限定复验，见[当批资源清理](validation/current-resource-scope-cleanup-20261111.json)与[虚拟列表复验](validation/virtual-list-resource-review-20261111.json)；96份是更早的历史基线。前批按负责人要求未重复Creator预览或构建；本批精灵详情使用本机独立预览，旧画面不替代最新源码的发布验收。
 
 修改静态布局直接编辑对应完整Prefab，保留仍用资产UUID与绑定；背包、英雄及详情的背景/纸面/列表容器保存为静态节点，HeroBoard只保留容器和Widget。英雄、背包、产物说明及胜利奖励已统一列表事件；此前已精简未实现按钮及旧资源，不能沿用[更早页面证据](validation/view-registration-list-review-20261111.json)的哈希或截图签收后续实现。
 

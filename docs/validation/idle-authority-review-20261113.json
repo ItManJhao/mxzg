@@ -1,0 +1,107 @@
+{
+  "date": "2026-11-13",
+  "baseline": "c23b53ed（包含前批未提交输入核查与构建源修正）",
+  "scope": "VIP/世界等级服务端输入及主线只读时长，无新领取/协议/资产写入",
+  "implementation": [
+    "backend/src/main/java/com/funsgamex/mxzg/world/WorldLevelService.java",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/IdleRewardRules.java",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/IdleRewardInputService.java"
+  ],
+  "worldSnapshot": {
+    "group": "各server_id独立，合服范围另议",
+    "sample": "本区role_level降序前system.world_level_people名；空集合1，不足按实际分母，整数截断",
+    "refresh": "首次使用及后台每5分钟；仅已使用区服；失败使本区失效并保留重试入口",
+    "isolation": "REQUIRES_NEW + READ_COMMITTED只读事务成功后发布；不会缓存外层未提交等级",
+    "version": "generation仅当前进程发布代次，不是持久资产revision或跨进程唯一ID"
+  },
+  "vip": {
+    "authority": "同一角色锁事务读取game_role.goddess_vip，与server_id/role_level同次查询",
+    "zero": "明确无额外时长/加成，未知正VIP拒绝",
+    "maxSeconds": {
+      "vip0": 21600,
+      "vip2": 25200,
+      "vip13": 64800
+    },
+    "wiring": "MainChapterIdleService.snapshot读取VIP最大秒数；rates仍为基础速率，其他权益不伪装已完整"
+  },
+  "partialInput": "BaseInput只包含VIP/世界已恢复来源，不能据此直接领取完整收益；神职、礼包、活动尚未接入",
+  "config": {
+    "tables": 45,
+    "mavenSharedIncludes": 30,
+    "restoredTable": "client/assets/bundles/resources/config/worldlevelgainexp.json",
+    "rows": 40,
+    "sha256": "4b29573580456d50bc41f30a15851ff0461efdd39582b795d60f6286dc3aa432",
+    "uuid": "43436aab-7ed1-4d69-ad49-7808756e5331",
+    "metaByteEqualToOriginal": true,
+    "sourceEqualsPackaged": true
+  },
+  "checks": {
+    "java": {
+      "WorldLevelServiceTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardRulesTest": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardInputServiceTest": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "MainChapterIdleTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRulesBoundaryTest": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleBonusUtilsTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleTest": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "total": 63,
+    "failures": 0,
+    "log": "backend/target/idle-authority-review-20261113.log",
+    "configScope": {
+      "tests": 14,
+      "passed": 14,
+      "tables": 45
+    },
+    "mainChapterClient": {
+      "activeSuites": 1,
+      "passed": 1,
+      "note": "仅主线协议/模型专项，不是浏览器效果验收"
+    },
+    "resourceScope": "16 Bundle/32 Prefab/17 View及12841份特效文件/UUID集合通过",
+    "resourceGenerated": "32 Prefab索引检查通过",
+    "docs": "44份文档文件链接通过；git diff --check通过"
+  },
+  "limitations": [
+    "没有新挂机领取或完整加成协议",
+    "没有恢复羁绊升级/神职/礼包/活动持有状态",
+    "没有浏览器/Creator/发布包/真机复验",
+    "统计组当前仅独立区服；合服、跨节点共享快照与故障容量尚未验收"
+  ],
+  "git": "hao本地修改，未提交未推送；此前HeroRosterController本地排版改动保持原样"
+}

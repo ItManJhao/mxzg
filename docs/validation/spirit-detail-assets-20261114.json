@@ -1,0 +1,2157 @@
+{
+  "date": "2026-11-14",
+  "scope": "精灵专用详情静态Prefab及本页原图RGBA修复；无精灵养成/领取开放",
+  "sources": [
+    "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\ccb-hd\\Resources\\RunesTipsLayer.ccb",
+    "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\ccb-hd\\Resources\\RunesTipsCell.ccb",
+    "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\src\\layer\\runes\\RunesTipsCtr.lua"
+  ],
+  "addedPrefabs": [
+    {
+      "path": "client/assets/bundles/module/bag/prefabs/SpiritInfoView.prefab",
+      "uuid": "0fd523fc-a296-57eb-ada9-e5b8b4c19422",
+      "scriptUuid": "d103fbf6-ea32-47a6-b1c9-64dfb764a233"
+    }
+  ],
+  "layout": {
+    "panelWidth": 390,
+    "panelHeight": 580,
+    "scaleDesignWidth": 600,
+    "descriptionWidth": 245,
+    "descriptionHeight": 155,
+    "descriptionFontSize": 20,
+    "descriptionLineHeight": 24,
+    "maxEstimatedLines": 6,
+    "skillDescriptionsChecked": 98,
+    "note": "PIL按同字体逐字宽估算，Creator实际换行仍须预览复验"
+  },
+  "pixelCheck": {
+    "count": 109,
+    "skillIconAndFrameCount": 99,
+    "changedCount": 106,
+    "method": "旧PVR图集按plist旋转/offset/sourceSize取样；RGBA直接paste，不使用自身alpha作mask；最终RGBA逐像素相等",
+    "uuidUnchanged": true,
+    "pixelCopyDidNotWriteMeta": true,
+    "creatorUpdatedTrim": [
+      "client/assets/bundles/module/hero/ui/skill-icon_spr-skill-runes-bg-1.png"
+    ],
+    "creatorImportNote": "Creator导入原始透明边缘后允许更新裁切/UV；原文件UUID及SpriteFrame子UUID保留，不能回退到错误透明度下的旧裁边。"
+  },
+  "resources": [
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150010001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150010001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "ae17a810979d36f7ae35fb3ba1d7c28c3580bc2fe759bc9fb5c30004e79b459a",
+      "beforeFileSha256": "ef2ee54d4fecf455842d5a3db3e56e585d41e89acc110249f909c005c04e66fc",
+      "afterFileSha256": "db473acb0bc4d9fd8d1f7819c387b022a4450198516bf35a9079cb35cf42124e",
+      "metaSha256": "d478ae3411bcacf7ff6b44f128151b74fc5cf6b0d1cd54f3bfce95d323166dab",
+      "uuid": "82ef76c9-2ba9-4f96-9ab4-0e3b4b48a7de",
+      "importedMetaSha256": "d478ae3411bcacf7ff6b44f128151b74fc5cf6b0d1cd54f3bfce95d323166dab",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "d478ae3411bcacf7ff6b44f128151b74fc5cf6b0d1cd54f3bfce95d323166dab"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150010002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150010002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "0b7e10b9f93e2d3bc0038d82dd09916afe6201e4b2345e0fe2ceb2961d095baa",
+      "beforeFileSha256": "92dc133291b2868ebffe226edaee4c6501253e3d7778ddd5bb0a02214a11252c",
+      "afterFileSha256": "1817149b33ee93bf3aaec061a7e7c5f8d80a16f2cb8f71a36784908f152b3177",
+      "metaSha256": "dfcd054fdd01e3501d851606321b43413893ffdea45be178b64d47d0e0c6cdb1",
+      "uuid": "8b2916f1-805f-4859-9482-ca964930b786",
+      "importedMetaSha256": "dfcd054fdd01e3501d851606321b43413893ffdea45be178b64d47d0e0c6cdb1",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "dfcd054fdd01e3501d851606321b43413893ffdea45be178b64d47d0e0c6cdb1"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150020001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150020001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "68312cc36af07f40bb4e363bd64991bd6aae4e82cf8c756cb47e39615ab92900",
+      "beforeFileSha256": "8c8c23d2e77f4e24aeea03dabd6f20d390aeb4fa90f9af916899d7084baee6cd",
+      "afterFileSha256": "61b831db796a6de60165a8c7606c054d0b45079fdd4bc9635a1636caff45b5f6",
+      "metaSha256": "d5f8520ae85c07814dbd626cc3010e79046fa6463022789a1efe4b61c9cb63d8",
+      "uuid": "ea55fe1f-c5a5-4908-bfba-93d1e7f17ac3",
+      "importedMetaSha256": "d5f8520ae85c07814dbd626cc3010e79046fa6463022789a1efe4b61c9cb63d8",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "d5f8520ae85c07814dbd626cc3010e79046fa6463022789a1efe4b61c9cb63d8"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150020002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150020002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "11eb511b70955b9f24b92892480abee7ee60c106132ae3cd8582acb464747f19",
+      "beforeFileSha256": "c96eb0d8991822657de379743a14080c8cf602ebac91ce9168366ef79edb08cf",
+      "afterFileSha256": "73c9c6f61df8a86017081dae05d1212878b86c9965c7266ed2c1c1f8e43eb728",
+      "metaSha256": "963e66b0c4ecdcd39b0cd4cdeb48775682abbcf6db959173203fa0f319d55d37",
+      "uuid": "2f57dce6-a453-4839-ac6c-1372fddb51b9",
+      "importedMetaSha256": "963e66b0c4ecdcd39b0cd4cdeb48775682abbcf6db959173203fa0f319d55d37",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "963e66b0c4ecdcd39b0cd4cdeb48775682abbcf6db959173203fa0f319d55d37"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150030001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150030001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "17d1d94f21e463b040e6abdb048f3090ce09bab1ce15d7001ceea83a12762d79",
+      "beforeFileSha256": "4d97b445ac24f52ce077e57ef70d66e93628835bc6a8f44a2ddfb4e2e0c1aa57",
+      "afterFileSha256": "80856ac7027c17b459ad616e3cc7bf877162833963b01b895eead49c13d8a597",
+      "metaSha256": "3e90f0502135fffe3c192f0bb2efba61c63eb0498f9eefc163e854cc10aa995e",
+      "uuid": "29a9e058-c2cf-4e84-8598-fb4808c48fb8",
+      "importedMetaSha256": "3e90f0502135fffe3c192f0bb2efba61c63eb0498f9eefc163e854cc10aa995e",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "3e90f0502135fffe3c192f0bb2efba61c63eb0498f9eefc163e854cc10aa995e"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150030002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150030002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "dfb0aa18bb40c8f5a592535842c7faf3098967a15aa2d96fc7c023b689ca6c30",
+      "beforeFileSha256": "a87a914f82a87ce7a6ea2e9c11d1cb691ecd22900d7e50a1154ad75160a0049c",
+      "afterFileSha256": "dbb59003046dca08ff5ad4fc9d6c649f1b5c11649748c2c67ba3f856394ccb8f",
+      "metaSha256": "c706e603b4c49f0437a8316be8cda439fd3f026d84113e95bab3309867ef59be",
+      "uuid": "59c09057-b765-4041-b6b1-5a1c50d6de6b",
+      "importedMetaSha256": "c706e603b4c49f0437a8316be8cda439fd3f026d84113e95bab3309867ef59be",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "c706e603b4c49f0437a8316be8cda439fd3f026d84113e95bab3309867ef59be"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150040001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150040001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "6c461deab34e923cc1ce521d7bc9dfe72c1baca7c4da9b66632c4ada02eeaef8",
+      "beforeFileSha256": "c596abb579b6f5db1a831c3e5a48116a9990f7513a1ec8bc776e428379b34cc2",
+      "afterFileSha256": "d9a0f2d28d7ace53f5a51e65e8f0e49a604eb16dd195efd3b0aa41589520e1e8",
+      "metaSha256": "5010e424e8c80d19e047efa7a290117e7458a252bdc34fa20cd10cb89bd09b98",
+      "uuid": "dfc12047-9d36-4aa1-b65c-c3a390d5dcec",
+      "importedMetaSha256": "5010e424e8c80d19e047efa7a290117e7458a252bdc34fa20cd10cb89bd09b98",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "5010e424e8c80d19e047efa7a290117e7458a252bdc34fa20cd10cb89bd09b98"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150040002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150040002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "70f5b872128de37fe764f2aca3f5351a17187d1a6742645d8cd0f78a1e83d56e",
+      "beforeFileSha256": "1e8610150c64c959cd44ed4a2c52e63e5b77477c34c66c1144706f6e859f96cf",
+      "afterFileSha256": "a9a3c1095badc9e56388fd81c155c9b8d7cef3a3bd73713a7f3c1501af40738c",
+      "metaSha256": "42c7d7fc25dd581160f0dbde113ae9acef5dd057405023d55cc58b67f1b8d4ff",
+      "uuid": "67145021-ccb1-46cd-804b-cab9a1a483ad",
+      "importedMetaSha256": "42c7d7fc25dd581160f0dbde113ae9acef5dd057405023d55cc58b67f1b8d4ff",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "42c7d7fc25dd581160f0dbde113ae9acef5dd057405023d55cc58b67f1b8d4ff"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150050001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150050001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "8c1c01446e7169964467fca42b387772463efedea1186931a6afb4b01e815247",
+      "beforeFileSha256": "851f2e4b072af07ec57ec8285c8099e2b97eb53826633bb808de20663e00761e",
+      "afterFileSha256": "055ba3853f53ca916c0e26b95ed81f2a35c40aad01396f23251d4498869b821b",
+      "metaSha256": "b12f820e27b1ba95812ac09e34d641f7e57f43fd8d97053f270e5fed0e1e0512",
+      "uuid": "1e38f15b-9f99-4494-8a1f-e458dba2edc6",
+      "importedMetaSha256": "b12f820e27b1ba95812ac09e34d641f7e57f43fd8d97053f270e5fed0e1e0512",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "b12f820e27b1ba95812ac09e34d641f7e57f43fd8d97053f270e5fed0e1e0512"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150050002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150050002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "fab575ef5c1e02b0b2cd3d5a19774ea0281e1f7ec5512333ad04587b4067c9ef",
+      "beforeFileSha256": "49120cfacceed916c4ea0af44d441eb8b1b21e6a8401f59b29e1840ee7f28304",
+      "afterFileSha256": "1acb49d6f586fc97c6115f5050839ef6615d564167544320366db1fa20d6a9d7",
+      "metaSha256": "342ead073aea3d2a5e13569c4493b1e96ce3b537898aef17dfb34f4bc09d9a4f",
+      "uuid": "7789afa2-0d6a-4756-8405-6f0e5db244e1",
+      "importedMetaSha256": "342ead073aea3d2a5e13569c4493b1e96ce3b537898aef17dfb34f4bc09d9a4f",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "342ead073aea3d2a5e13569c4493b1e96ce3b537898aef17dfb34f4bc09d9a4f"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150060001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150060001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "176cb5fa20e1f7310364bb40f983931afa6188dd1c955bbbde9f6220669d14e5",
+      "beforeFileSha256": "fb0829598d3bf3389d4098edcab4e75d0c01ad472f9d6934fabcc84ea3c73ad1",
+      "afterFileSha256": "05600eaf163b0279456e1609277ee3f99ad963fb650f13d2133e2148cd55eee7",
+      "metaSha256": "065c92e3f3d9b0585208a5385d38561e5670657e6e37fad1bca6c3da35bb59cc",
+      "uuid": "6b946cc4-3882-43b9-8d79-9e34c632d3fc",
+      "importedMetaSha256": "065c92e3f3d9b0585208a5385d38561e5670657e6e37fad1bca6c3da35bb59cc",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "065c92e3f3d9b0585208a5385d38561e5670657e6e37fad1bca6c3da35bb59cc"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150060002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150060002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "2829bffab83d13afdac2550928247c4c5224b53673e4b0f27b961d384e393306",
+      "beforeFileSha256": "876834bb05536ca46363ebc9549a6f596a1ad398919860f08d83347a4cdf3a6c",
+      "afterFileSha256": "452dc9211d138c3644c6a1fbd98da857f53eca0ade590fbe139b1ca9763ce60c",
+      "metaSha256": "0a612bc18a09d6e2df22206138b89088e757facbedafd77cfafc2b5301adca36",
+      "uuid": "b142989c-a7c1-4614-8cb3-7a774ab02367",
+      "importedMetaSha256": "0a612bc18a09d6e2df22206138b89088e757facbedafd77cfafc2b5301adca36",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "0a612bc18a09d6e2df22206138b89088e757facbedafd77cfafc2b5301adca36"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150070001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150070001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "ead0a925047d1352bb41f1f6fbdae7f50d30356c63fae29eb9d0a0cefd88317b",
+      "beforeFileSha256": "d6c566eedde465a083ba783831e9a8024435003424d9062d290b2a01a708deff",
+      "afterFileSha256": "59d52217e0df57e192b254a3657bcb38ef13ec0ce53b9f6e3f7abb7eda769466",
+      "metaSha256": "52cc8365803c3310b9028767a6b6ae5ed9dab57a4a4b3323178178567c35923f",
+      "uuid": "d9dd709d-90c2-4e2e-8d7e-dd584bf7347f",
+      "importedMetaSha256": "52cc8365803c3310b9028767a6b6ae5ed9dab57a4a4b3323178178567c35923f",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "52cc8365803c3310b9028767a6b6ae5ed9dab57a4a4b3323178178567c35923f"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150070002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150070002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "9c992a3b6d2f98fe55b8920bf36e26880cd8ff5f20e267a4a0214ea98f2adc97",
+      "beforeFileSha256": "52de17b743aabec0cdd04225e1a7ae07a92774247d19eecace44c65f6f3d7f0c",
+      "afterFileSha256": "113a4361ddad5259755b88c1feb24b670e124f6cb79d2de89bc4c478b346ee3c",
+      "metaSha256": "3bb583de11720eae27715109e6556d5502045ca2a76cbd258deccfc36fddbae4",
+      "uuid": "38ef10fc-5eef-40f3-b3e1-11c5acf49720",
+      "importedMetaSha256": "3bb583de11720eae27715109e6556d5502045ca2a76cbd258deccfc36fddbae4",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "3bb583de11720eae27715109e6556d5502045ca2a76cbd258deccfc36fddbae4"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150080001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150080001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "ae2e82199eca1c915e7e14cbe5cf47a1a8e300ea69d56c82f9057c5e6535439b",
+      "beforeFileSha256": "6b8e285e767b1dae8664795617493992d2328df7f2ed70769c0606aecafe7605",
+      "afterFileSha256": "9381727d4625d7c285b1c91ecb16caaea1a3584779669b74d07be8f0101149b8",
+      "metaSha256": "63f4d1c32652cd97942108b653132b996a32d7ffcb341b147264f1146e2da110",
+      "uuid": "cd974247-27b0-4808-9fef-832264da58e7",
+      "importedMetaSha256": "63f4d1c32652cd97942108b653132b996a32d7ffcb341b147264f1146e2da110",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "63f4d1c32652cd97942108b653132b996a32d7ffcb341b147264f1146e2da110"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150080002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150080002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "d9224bffd1b8d964a78ccb4941241ddca63fb10635cffdea66c3c1a5932d1e29",
+      "beforeFileSha256": "c1761afb106f89bc65aa874990940963806e8e4a7087f5d263ee60050386444e",
+      "afterFileSha256": "5ede36390d761d2342810b8d349cd1ce6c7a296605762eb1272246423c46970e",
+      "metaSha256": "bdc6c2d3847a71db8124839f8f8ebc1a50c35e90968fb609c9c2c4a880271c7d",
+      "uuid": "2235b17b-e837-488c-8c47-1ddc7e3f3c4b",
+      "importedMetaSha256": "bdc6c2d3847a71db8124839f8f8ebc1a50c35e90968fb609c9c2c4a880271c7d",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "bdc6c2d3847a71db8124839f8f8ebc1a50c35e90968fb609c9c2c4a880271c7d"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150090001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150090001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "dfe46ed0edbfc0a33fb0e0e356613d598afc6aaa999609f3003ddbfa39bb41be",
+      "beforeFileSha256": "4392a8fea23d3fe3b00fa55a007216aa9487292dffff452983e363b019737d76",
+      "afterFileSha256": "a0e82659eafaba2e6a658f4af18b0a05ffb13ab5476a27049fcd571374bb7420",
+      "metaSha256": "4098754f4b49df4bd3ef1ea1c50a4e84b060082df14816b80d749958efab88a7",
+      "uuid": "fb666d97-8279-48df-876b-9c0c9454641e",
+      "importedMetaSha256": "4098754f4b49df4bd3ef1ea1c50a4e84b060082df14816b80d749958efab88a7",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "4098754f4b49df4bd3ef1ea1c50a4e84b060082df14816b80d749958efab88a7"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150090002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150090002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "57b5f361f71d5824487a0f6e8b779fcf2f6b2dfab883af226e36a2a29367be2f",
+      "beforeFileSha256": "ccf02aed1af57dc7a6b39b71996cd0162dfda3c0850306f56fc8c902c406a714",
+      "afterFileSha256": "834249a3ffaa05ce016d3706e7e787c98a7a47325571de2188f15c841e70a79c",
+      "metaSha256": "8376fb63f6fbe429688c88a6c7c1c3fb1ca70e5878d09f2173c066e0d1ac7391",
+      "uuid": "3aaa10b3-d145-44ec-8bd7-29bbb8cb1372",
+      "importedMetaSha256": "8376fb63f6fbe429688c88a6c7c1c3fb1ca70e5878d09f2173c066e0d1ac7391",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "8376fb63f6fbe429688c88a6c7c1c3fb1ca70e5878d09f2173c066e0d1ac7391"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150100001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150100001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "f3161c5ae1fc5d4e4ed30ed4544b6dbfd0a0b52654a50f39f4100c61b25e0a7c",
+      "beforeFileSha256": "4a9df1c5929a2b97454d1cbd124d0ebb67cf9268f2d1fd4ecc9a851cb376f9ef",
+      "afterFileSha256": "313200e8eefd022958feb3398c95f35fd630e67858e3930f36e4ea6c6a1ba23d",
+      "metaSha256": "1f83728e11c90b7107efe3cadc46efc3f69db6a2e83768d326758244b988c838",
+      "uuid": "dc2cacca-74e8-4fa0-8548-ebf233963827",
+      "importedMetaSha256": "1f83728e11c90b7107efe3cadc46efc3f69db6a2e83768d326758244b988c838",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "1f83728e11c90b7107efe3cadc46efc3f69db6a2e83768d326758244b988c838"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150100002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150100002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "c96d6751770f53e187b7b30b75e4976dfa1cbf36c3612fdcf433d4ce738ec956",
+      "beforeFileSha256": "00f2090535087ea011fb54714f879597f07f57fd252b4fcec07815596f3f1279",
+      "afterFileSha256": "68b28822967b68b03c8deb7661852772c494653824a4a1c604189c06e4780451",
+      "metaSha256": "862e3b46c268ac40178a107b0580db917b7cfb1b658723542020de6ed4ca6234",
+      "uuid": "5669c6e1-6b84-483b-aa99-db59074652fe",
+      "importedMetaSha256": "862e3b46c268ac40178a107b0580db917b7cfb1b658723542020de6ed4ca6234",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "862e3b46c268ac40178a107b0580db917b7cfb1b658723542020de6ed4ca6234"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150110001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150110001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "b2236962a197fe2588b76a611c3fe758151155afacfabd914c0c3125af60a585",
+      "beforeFileSha256": "38a9e1c93302736954dbf4c0536aa4c943f9f97b370c3baabbc18626bc22446a",
+      "afterFileSha256": "3fa80d83287a4c1e448652a44dcb9e786a23a02f65bfc862cc07ae6596cd2004",
+      "metaSha256": "b3550c1a4ec06d9c1eb277f9b9989b3568b1de0cba61b3a90b2dd6c1fad1f45b",
+      "uuid": "bf6aeae9-29e9-444b-8647-f453e78f2a5b",
+      "importedMetaSha256": "b3550c1a4ec06d9c1eb277f9b9989b3568b1de0cba61b3a90b2dd6c1fad1f45b",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "b3550c1a4ec06d9c1eb277f9b9989b3568b1de0cba61b3a90b2dd6c1fad1f45b"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150110002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150110002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "e9bc8b06674519e03e610ac56d9be27cd8450762d22aef4cc60c519e88938a5d",
+      "beforeFileSha256": "b187d13f86ff656229dc7f6157cb78fcba560214bf577a1e5f532df847acd0f1",
+      "afterFileSha256": "ae1b6ccb85043b9aa492083df150bafe6edfb98eae1f1e9a110321fc1c1f3bb8",
+      "metaSha256": "712463f9bfa3b55e3ba6be79d6ac2a1fc6be52d0a051948fd3bb49fbcebb93d4",
+      "uuid": "a3d52ff4-77e6-4997-be23-40c26e0115a1",
+      "importedMetaSha256": "712463f9bfa3b55e3ba6be79d6ac2a1fc6be52d0a051948fd3bb49fbcebb93d4",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "712463f9bfa3b55e3ba6be79d6ac2a1fc6be52d0a051948fd3bb49fbcebb93d4"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150120001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150120001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "2b0df9abd698ed4b6edbe1e688232eac47b2f21020462d2e03afce36e2c6e32b",
+      "beforeFileSha256": "b6797da94b89f00697a2d96a92290f3e1ff542149a2203b0e6f7ab025f2614e9",
+      "afterFileSha256": "434be4c58392dd07c2c5d262010751f47bb01854ae623c1ebe2d1939d4800df3",
+      "metaSha256": "343c220f1ad77f1c554cf672e17ece11e1df8445c5e560ebd6f1b3b7c3291b35",
+      "uuid": "78dfec6c-4b0e-4558-869f-f6d98d9b7348",
+      "importedMetaSha256": "343c220f1ad77f1c554cf672e17ece11e1df8445c5e560ebd6f1b3b7c3291b35",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "343c220f1ad77f1c554cf672e17ece11e1df8445c5e560ebd6f1b3b7c3291b35"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150120002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150120002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "3efa9f64ffc04204b9f097f1f716ac5e908b21f9a8eb344e66fb7195e9a59abb",
+      "beforeFileSha256": "ac05ce9704ced76e77ab500c2adf61a784f488ac2cb0022e504b5037cd18fd58",
+      "afterFileSha256": "d09eed9ebdd864b87ee027cb36ac6b29de0d7462289881e60c565c3820b807b4",
+      "metaSha256": "f342cc1a2bf42ccc032314a94dfbea61f2fd2a099ca3fd5f33faeb15383b5711",
+      "uuid": "1ecf878f-a607-4108-89aa-584d8b6565d3",
+      "importedMetaSha256": "f342cc1a2bf42ccc032314a94dfbea61f2fd2a099ca3fd5f33faeb15383b5711",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "f342cc1a2bf42ccc032314a94dfbea61f2fd2a099ca3fd5f33faeb15383b5711"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150130001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150130001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "1f3fdba6dfcf2b8ebc62ded3c21900513808efc3a9d7a70a71c96031eb3aa0f0",
+      "beforeFileSha256": "67c69b31d2459c7589cc9925a9d26a23c968f67d02c2d946f657d62bc60496db",
+      "afterFileSha256": "134ad6116eaaf54651a66b631b8174c78758f890ee702f97f9979f703d301ea1",
+      "metaSha256": "0977d6790d10c4c6fa17f2d460849dad10de5eb2e91c9b2e200f166e17a0bcae",
+      "uuid": "bcc898ca-5f01-4a8f-a700-73834f04416d",
+      "importedMetaSha256": "0977d6790d10c4c6fa17f2d460849dad10de5eb2e91c9b2e200f166e17a0bcae",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "0977d6790d10c4c6fa17f2d460849dad10de5eb2e91c9b2e200f166e17a0bcae"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150130002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150130002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "29681087bbdd779ab3ff800c8c12903ff173e172e442fdd2c52f73780a8646ea",
+      "beforeFileSha256": "877bd43b3e97bc6b1b7b046c71b2b111da2084a275a25f692771232816d73c54",
+      "afterFileSha256": "b541d52777338840677be46543cfcb64ecf43602dac3e1f68c62809bdd03c628",
+      "metaSha256": "12b49262c540651322ab961c91c0d0eddc876ee8a639cfe57872796c3fde3b77",
+      "uuid": "0d982997-2a03-4b7c-9843-ac72927bc4e8",
+      "importedMetaSha256": "12b49262c540651322ab961c91c0d0eddc876ee8a639cfe57872796c3fde3b77",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "12b49262c540651322ab961c91c0d0eddc876ee8a639cfe57872796c3fde3b77"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150140001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150140001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "2736a3f777432e91f97a8fb8a1d3de062e85774199486a27cbc7f3b57307d5b4",
+      "beforeFileSha256": "29cd67b505efc8fb62968e9a5989bf53fd89fad7881141547d10f6e07a1014e4",
+      "afterFileSha256": "715f3ac81d0777e7974077969fddd88d4a4ec7f7899538676ce1a7246e48189f",
+      "metaSha256": "2bbd32678ba8d0d3c6ef10308dff9db4e3e8beabe6e39831f597fd7472867688",
+      "uuid": "fea02d92-f651-4aec-b635-461f9c9cdf93",
+      "importedMetaSha256": "2bbd32678ba8d0d3c6ef10308dff9db4e3e8beabe6e39831f597fd7472867688",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "2bbd32678ba8d0d3c6ef10308dff9db4e3e8beabe6e39831f597fd7472867688"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150140002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150140002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "bc18eec81881c225f18d520aff1391b923c695d4b8cd048a5225d27976ba7598",
+      "beforeFileSha256": "5583830fb43324b3c692252e6b68b86bda729eb9560c867252d599d3b83ff1b9",
+      "afterFileSha256": "eaec2ddbf6447c37173a3a8d5765e730cc544ed38db6a3e0a72d2a1856c2a70b",
+      "metaSha256": "719afaf68e5764e79116693e3986c451533dc24e5698a63bbc67fb5e521fb771",
+      "uuid": "6602f804-5d06-4322-99a3-5056e561cdf1",
+      "importedMetaSha256": "719afaf68e5764e79116693e3986c451533dc24e5698a63bbc67fb5e521fb771",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "719afaf68e5764e79116693e3986c451533dc24e5698a63bbc67fb5e521fb771"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150150001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150150001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "71a3e99b56276a9a35d1b2c3223725280ec620dc4c065f4acfaebb009ed756d6",
+      "beforeFileSha256": "37dbd37c428fc4f8c48f5ce0c27b4d70627c4e4f99acc8ddf9da3b888b78ca3e",
+      "afterFileSha256": "81b210b7093432eff2d00af00b81c887a545d63eb29843d1c8dd89ba96416644",
+      "metaSha256": "02a936c498e9f67e3a989c35c71118f0e41cc19a52f7fd41f549d99d315a490f",
+      "uuid": "deda6b10-6af7-49b8-9778-1ae00e6b4dd9",
+      "importedMetaSha256": "02a936c498e9f67e3a989c35c71118f0e41cc19a52f7fd41f549d99d315a490f",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "02a936c498e9f67e3a989c35c71118f0e41cc19a52f7fd41f549d99d315a490f"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150150002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150150002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "c209e8886ea688aa9f0eb36bc6be845ad001b3a3277e1e19b9f1f70023bccc12",
+      "beforeFileSha256": "2a22dcad05d4dc1ef0990a20a855c952b69b1d920d0aacc04ecd5337323883a9",
+      "afterFileSha256": "7963feea6fa6eb7e836ab66c7f9d8db0d85bf32efebcf7a52a9ba29205ee2cb1",
+      "metaSha256": "05adbe7af7ebd35451115845baca145d7a68d1f19415cfd6662b97494c50ef06",
+      "uuid": "43cf3141-97d1-4f80-9d83-e4ed6cbf53f1",
+      "importedMetaSha256": "05adbe7af7ebd35451115845baca145d7a68d1f19415cfd6662b97494c50ef06",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "05adbe7af7ebd35451115845baca145d7a68d1f19415cfd6662b97494c50ef06"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150160001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150160001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "8aff3448031bf73431dc1d53d3592ce3ffcff75a44e1e7e1571b8dce322ccff3",
+      "beforeFileSha256": "955bd848d459d214e7c58358df3d2d7081ff344234843a54d01d6be2c3c1a5c0",
+      "afterFileSha256": "a5fc6613e0e3719c3307f604f02b7975f10dc57b1df674fadf3b067d8bdfdf27",
+      "metaSha256": "364ca16308a3a96d4dd34e66bad8ce18b37c389ce7caf473d2458e34a4d6c630",
+      "uuid": "8c455a14-d9a3-424e-b465-7772308bef43",
+      "importedMetaSha256": "364ca16308a3a96d4dd34e66bad8ce18b37c389ce7caf473d2458e34a4d6c630",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "364ca16308a3a96d4dd34e66bad8ce18b37c389ce7caf473d2458e34a4d6c630"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150160002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150160002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "2b7e66b676b274ff544f3d6d000ab821b518ef4733da5f902e74e6628220fabe",
+      "beforeFileSha256": "cf2c1f3102a78578f78ce322b555413b08dc19258382801e877300d852c88f16",
+      "afterFileSha256": "060653495a15e9c27bb93ab8923fa5bdccfcfb0a61b124da2087c670f0e3bf36",
+      "metaSha256": "d310f48779adb306e308441c78d0b7c963b10747c11901e10d6c3baa5db66a0f",
+      "uuid": "38ebe036-fc96-4d4e-8f90-10da21498505",
+      "importedMetaSha256": "d310f48779adb306e308441c78d0b7c963b10747c11901e10d6c3baa5db66a0f",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "d310f48779adb306e308441c78d0b7c963b10747c11901e10d6c3baa5db66a0f"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150170001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150170001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "336bc846043fc625442a24dd0cbec2dccbde131ae7f9c7eee6acaf50423cc21e",
+      "beforeFileSha256": "4877af6d1ae6f10262dbb1c834c60e10c4282e013cea7e79bd1af160ee087b79",
+      "afterFileSha256": "c84220ec78ea31f1fcd1620c3337ef4db8920fea31938f9ea2db1d399ac0d519",
+      "metaSha256": "ffdd53f14394dd9d653f2f7847630557f6f9f3ce1bed5b78219e943b04421fa8",
+      "uuid": "fcce4ca6-0715-4a46-ab2d-4f328524d2ca",
+      "importedMetaSha256": "ffdd53f14394dd9d653f2f7847630557f6f9f3ce1bed5b78219e943b04421fa8",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "ffdd53f14394dd9d653f2f7847630557f6f9f3ce1bed5b78219e943b04421fa8"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150170002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150170002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "7bcf832c0853e10f2c70097b1c027f9c8a45c8c5007ed1c1601a84801b4a0d93",
+      "beforeFileSha256": "18e224acf9751e19c6521b055c15f378aa3b93a3024995549e0821fd45046c90",
+      "afterFileSha256": "0648e6f16dd140a5c8ea13bf4bf37177d6fbc49ba28efd6cbb41a819e7799944",
+      "metaSha256": "cc51eba0cb788ad6e0dcdf173c76f9c2259a47b8f7a3fce54173f4fa50e9d7da",
+      "uuid": "e1091b72-08d4-4d85-9793-3750e6f2ad8e",
+      "importedMetaSha256": "cc51eba0cb788ad6e0dcdf173c76f9c2259a47b8f7a3fce54173f4fa50e9d7da",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "cc51eba0cb788ad6e0dcdf173c76f9c2259a47b8f7a3fce54173f4fa50e9d7da"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150180001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150180001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "f914caaf769a10682287dc47988f4540455b88f9ba50badf4805216042fa711f",
+      "beforeFileSha256": "a1f631fb95a431ae5d00790ed0f056f030fbab4905d0193ecd82844dc6cd98d9",
+      "afterFileSha256": "9bfdd767862aa1b405aeabc013d6da20dd283e863dfc1b0760e786d8fb6b5331",
+      "metaSha256": "d4ab4395ba5598eae074e5bdb8602ef370255c728382eb99e86de1fbdf0b92ff",
+      "uuid": "61cd5469-08cf-4860-83b2-5462ad4a6c2c",
+      "importedMetaSha256": "d4ab4395ba5598eae074e5bdb8602ef370255c728382eb99e86de1fbdf0b92ff",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "d4ab4395ba5598eae074e5bdb8602ef370255c728382eb99e86de1fbdf0b92ff"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150180002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150180002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "0708a1617e81bec3a8cc270d71599ba77abaec07b8bcbbf4a30928fdc4a8d4ee",
+      "beforeFileSha256": "288068da9b556b54a7e7fb57865738a5fc6f300b21c6fa32b5e69e4044bc3663",
+      "afterFileSha256": "d623e81d974c651d2c025169e7cedc8e34ad65146fb82931c1cf797194d52680",
+      "metaSha256": "27229de5467e0d10d47a342e64ad02583fa77963bb0f48704d59593d4a92b7c7",
+      "uuid": "24d3c662-e699-46a7-ae53-614d8a2a40d3",
+      "importedMetaSha256": "27229de5467e0d10d47a342e64ad02583fa77963bb0f48704d59593d4a92b7c7",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "27229de5467e0d10d47a342e64ad02583fa77963bb0f48704d59593d4a92b7c7"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150190001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150190001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "b97429126792652b6cd2c710fc2dde559fe82ed09fd3c8cd248531256f67d2cb",
+      "beforeFileSha256": "98143b18e7fe13724a1ff92708dca9c55035671d8f86f8e8e923f940355453dd",
+      "afterFileSha256": "7417f503105a64a284006d7be63471cd60321bbf16d676e2785c1eb667ccc048",
+      "metaSha256": "262ad98c8c3f0270efaa3885be91a13ce571e14bdc8a2ac24b7e03b22036051b",
+      "uuid": "6a8087bc-f2f4-452d-aeaa-edd290efe11f",
+      "importedMetaSha256": "262ad98c8c3f0270efaa3885be91a13ce571e14bdc8a2ac24b7e03b22036051b",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "262ad98c8c3f0270efaa3885be91a13ce571e14bdc8a2ac24b7e03b22036051b"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150190002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150190002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "7d7ce2be800427e825ea1c0a672518755d2e095ff562756c62aa3d91ed4b6633",
+      "beforeFileSha256": "a76fe371a871d0d1c5f2495e2c9f5f2d6aab95c51420d73d4ae00a6315b37bd7",
+      "afterFileSha256": "d9808e24407ee034cd9a6c7fd60cc3f3016e417eea18451ec4809c0ddcf1e864",
+      "metaSha256": "5f9f7323f64fed656b1c1f1fa5677bded3b940e245c0668a7a4b061f82e35942",
+      "uuid": "dd0156f1-90d4-40b9-a782-ee363f33ac4a",
+      "importedMetaSha256": "5f9f7323f64fed656b1c1f1fa5677bded3b940e245c0668a7a4b061f82e35942",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "5f9f7323f64fed656b1c1f1fa5677bded3b940e245c0668a7a4b061f82e35942"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150200001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150200001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "0419a6e4ee44fc09ad4ebb545116544ebe8e11eb78e1323c8629e7f65af024de",
+      "beforeFileSha256": "a9c124d6b679cd1f43cedf2df4d6ae73576e49d8e1c788fdc62c5403de82c33b",
+      "afterFileSha256": "6b3964133f092f03c7be7fd7ebb92e8c98c876c3133b932855de4322bc7f0e1a",
+      "metaSha256": "f2544226cb5b8edc14b02347be81194f4305b045250724fd8d2adb4f1d81afd4",
+      "uuid": "8d52dcf1-cb7e-4070-8243-6e8cd83b4247",
+      "importedMetaSha256": "f2544226cb5b8edc14b02347be81194f4305b045250724fd8d2adb4f1d81afd4",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "f2544226cb5b8edc14b02347be81194f4305b045250724fd8d2adb4f1d81afd4"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150200002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150200002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "18acd1a81b0d3621f54d5b10069d66d4fff5f2fe041887933aa32bd13827264d",
+      "beforeFileSha256": "5a9a4d8691c7c23dd24a0a347eafc57ffb132065bf462b1ad7821f08159f1feb",
+      "afterFileSha256": "ecd03beabe56536e319975391fbbd98cdeac885cf3eb0601dcd9d8676df7ed24",
+      "metaSha256": "467066f422f9be991d221ef16d18db5eb2443241451b2d8e6082a4959f2f38ac",
+      "uuid": "e388e170-6a1d-46f0-a314-b1b28693a469",
+      "importedMetaSha256": "467066f422f9be991d221ef16d18db5eb2443241451b2d8e6082a4959f2f38ac",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "467066f422f9be991d221ef16d18db5eb2443241451b2d8e6082a4959f2f38ac"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150210001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150210001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "f0a7ac82e030908b8eedaaf890ec6478016be59dd380b88a341e5fafaaba1687",
+      "beforeFileSha256": "e3a91bd89f30936d20ce8d42c11165beb198614bea34a30cb196a1af0223e1cf",
+      "afterFileSha256": "ee2d9ae4b475c7231b0667ae56a63315701bf2b8879189405d43ac2ec20d56de",
+      "metaSha256": "6206bde40b130eef62684945a50d6a01e61ba16c005742f79294b48572c6a38c",
+      "uuid": "a249a649-e9d7-491b-8429-b760ac94a2c8",
+      "importedMetaSha256": "6206bde40b130eef62684945a50d6a01e61ba16c005742f79294b48572c6a38c",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "6206bde40b130eef62684945a50d6a01e61ba16c005742f79294b48572c6a38c"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150210002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150210002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "a71b7d241f3b0475347eaffc8332ca0553bc5cad40801ee7fbba28401e5e1a3d",
+      "beforeFileSha256": "e839021013537987576b711a375b9829e33c0f8291a672d00f693ac0b0456c99",
+      "afterFileSha256": "243dd819c62ac6e0dc1ecdc8b41b8bbc94241c8cb0cf5c67aa8df4393cdd84db",
+      "metaSha256": "0a08029bb2863cc36c83b99122748aaa4e6e7d64ada799eb1e4cd6c78e700c4c",
+      "uuid": "ebc65590-8fff-49bc-a9d7-a611d3cc650c",
+      "importedMetaSha256": "0a08029bb2863cc36c83b99122748aaa4e6e7d64ada799eb1e4cd6c78e700c4c",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "0a08029bb2863cc36c83b99122748aaa4e6e7d64ada799eb1e4cd6c78e700c4c"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150220001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150220001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "f2b8b24dc65591ea06e7080b8d9236240d9d45afd5aed9cf0c7282b62109efc9",
+      "beforeFileSha256": "570e57b217421ef959e568745dc2008d0e4675e42a1fe024330d8aae1d5afb00",
+      "afterFileSha256": "d30f96cd1a9daaaf8819596f6d6d34e1b2727ea939f516fbf3486d0cf0530f07",
+      "metaSha256": "e0e431ba1850b365df00b94139a85b2879f3a5380f2baa7d20e11ae7f32d1f5d",
+      "uuid": "281129b3-37fc-4e45-b6be-150b24d62bf4",
+      "importedMetaSha256": "e0e431ba1850b365df00b94139a85b2879f3a5380f2baa7d20e11ae7f32d1f5d",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "e0e431ba1850b365df00b94139a85b2879f3a5380f2baa7d20e11ae7f32d1f5d"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150220002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150220002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "ab2b87d030479e881de25c733ea86e1d4bfd3e5b763e2b004799873900b845df",
+      "beforeFileSha256": "d5b2b222f3534ab7e7ae315b123855f293ddacd6a301a0b0564ab705e6e6927e",
+      "afterFileSha256": "51ae45c78a92df14f80d1a10aa8ca10c921ede18ecf564a43c7d2f36b354e493",
+      "metaSha256": "843b81f561460268b2601194acc98e127d7fce9a842d48479ffdf9663b9b10c1",
+      "uuid": "ff130860-3de2-4b10-bee9-a28ba469244e",
+      "importedMetaSha256": "843b81f561460268b2601194acc98e127d7fce9a842d48479ffdf9663b9b10c1",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "843b81f561460268b2601194acc98e127d7fce9a842d48479ffdf9663b9b10c1"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150230001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150230001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "45d52425d00d51a1c3075487ede8b6160bfc23966b8b9ced9de6ad49a40f4054",
+      "beforeFileSha256": "0d3ac8d0a6b82d002a0bfaf44e8c9c17b5a3c38c270c194c46b12a1a7dc83c38",
+      "afterFileSha256": "82a3a80dee7ca9412f811dc893609de4d55002a7ed1bb52f905ab86f15b59585",
+      "metaSha256": "fecf82ad702913aead1779d0df5fd03f1bbcef4d177b8d7c2d8af0e6d131738b",
+      "uuid": "b270d81a-a862-4591-8be7-e223c6e7b24f",
+      "importedMetaSha256": "fecf82ad702913aead1779d0df5fd03f1bbcef4d177b8d7c2d8af0e6d131738b",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "fecf82ad702913aead1779d0df5fd03f1bbcef4d177b8d7c2d8af0e6d131738b"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150230002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150230002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "4488c07df2c9c4315bb17b2f91fa1edc309083e0bf8c3db0ea541722d953c62b",
+      "beforeFileSha256": "2fbee30a30361ff5ffb5c4514c75123f40dbfa6c138b9d82740fbb6296208ee8",
+      "afterFileSha256": "9b10a64e1a993fa7e3186af80525f86a849ebf4afa5e030c6ff647ea932989f2",
+      "metaSha256": "b15dd9b4fa5b593f00a7753088e5629f8a206efed4dd45ecb51a207f27d9e837",
+      "uuid": "51500541-9eae-422e-81cb-ede66e54c8aa",
+      "importedMetaSha256": "b15dd9b4fa5b593f00a7753088e5629f8a206efed4dd45ecb51a207f27d9e837",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "b15dd9b4fa5b593f00a7753088e5629f8a206efed4dd45ecb51a207f27d9e837"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150240001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150240001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "81b765e1e919f9c74f75439a9548572d5a441721b58231b27c7fcd07a398213d",
+      "beforeFileSha256": "4f7be36af952d8b2bee11eda1badea3b999923bf61fdde75620489f3ffd5ab59",
+      "afterFileSha256": "5620793c1933af8565048d94ca3d0809cc482aab7fcd6f6e1b6fe6718b9d1ec7",
+      "metaSha256": "17f629fb6ca5303c14a142f590d2a227269c95530c378b857dd78c721ec384ae",
+      "uuid": "95ea1b5c-a06e-48b1-be9d-f658a7d90612",
+      "importedMetaSha256": "17f629fb6ca5303c14a142f590d2a227269c95530c378b857dd78c721ec384ae",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "17f629fb6ca5303c14a142f590d2a227269c95530c378b857dd78c721ec384ae"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150240002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150240002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "e4458a3289aa0ab3c556f8516bea249da9c35e13b9110a0c294accf07c6522cd",
+      "beforeFileSha256": "c28471f3626e868a4fda80324fe64cab7c66e9dada1a947207c322ed2f6287da",
+      "afterFileSha256": "2d2395d86be65e3002eb2acf3085beb62f23ad7ffdc6f4a4ee2543f21535dac7",
+      "metaSha256": "d54311dd4e552f3140472c346c18041df7975f928bbe0dfd17b12df987c81929",
+      "uuid": "a8931224-2148-4f87-8acf-94fc06ae86b5",
+      "importedMetaSha256": "d54311dd4e552f3140472c346c18041df7975f928bbe0dfd17b12df987c81929",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "d54311dd4e552f3140472c346c18041df7975f928bbe0dfd17b12df987c81929"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150250001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150250001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "ea0336ff472abfa526bdea26dca667b284c263d0d8bfb12610e8495fef3bde1f",
+      "beforeFileSha256": "83b0abab75b4c6cd5ac90066f672f6ceebe188dd044216c2c0d77db0a2ffd30d",
+      "afterFileSha256": "4330576d4a12052fda759a952600e42eace94c3edccc2891be1d6addd5f0fab0",
+      "metaSha256": "0cde1148c76ae6a65df8ff9f8726f46439e78d18c45647618b889161d323683b",
+      "uuid": "87791c66-2ccd-4f82-9196-c91199d8b2d8",
+      "importedMetaSha256": "0cde1148c76ae6a65df8ff9f8726f46439e78d18c45647618b889161d323683b",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "0cde1148c76ae6a65df8ff9f8726f46439e78d18c45647618b889161d323683b"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150250002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150250002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "41020c702226dbf29bd33713ce004085b011e3099ae434c97f531cd606b257f4",
+      "beforeFileSha256": "e30e29f6e4471cefae0732abed8af0420043afd064338aafb2b7ea6f563a1f09",
+      "afterFileSha256": "f708a5b8ac0aa87c951b2d3548144ce9dc3c9271fa9e9daaeebe065409d4c809",
+      "metaSha256": "fdbef3f40bab573103e3018ea37db45c64750c4232de3571eb39a7adbf73b9d4",
+      "uuid": "b538077b-53b4-4168-be89-ae3bdd191d7b",
+      "importedMetaSha256": "fdbef3f40bab573103e3018ea37db45c64750c4232de3571eb39a7adbf73b9d4",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "fdbef3f40bab573103e3018ea37db45c64750c4232de3571eb39a7adbf73b9d4"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150260001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150260001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "93029b7c9ee46238b23874ff0b944e3b3b2f48811b5c83c7ea1288892f63b469",
+      "beforeFileSha256": "43872624da0d5b1f485f87d5bff2e1c422809a962d5348c2b36b478b1f75e860",
+      "afterFileSha256": "78bb6fe4136a4706d049b261eafea1c5388479d938ac997c3640a0ac541036ed",
+      "metaSha256": "4ceae34e811df3f19ec265573a9e669b21848856fb6d1d7891d21912c8cdedd0",
+      "uuid": "8222794d-572c-47ae-add7-51a88ec815a2",
+      "importedMetaSha256": "4ceae34e811df3f19ec265573a9e669b21848856fb6d1d7891d21912c8cdedd0",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "4ceae34e811df3f19ec265573a9e669b21848856fb6d1d7891d21912c8cdedd0"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150260002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150260002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "674003dba084dcddb0eece12f422aaf586106196bf4838e51ed54e26c6c3b01f",
+      "beforeFileSha256": "61ad01b5440369d273d965cb03575ca2007fa0e766b6c3a12098a55ee02be81d",
+      "afterFileSha256": "8f1355f41dbc599f6e43d5bf79e77c192667702a3ba2d0c23ffc6ee0379eb415",
+      "metaSha256": "4e7d79a5f7856313bb324c895dfaafbe00400fb503dcce7efbf8483dc5212e0b",
+      "uuid": "2ffabead-03ed-4145-bbb7-26541094679c",
+      "importedMetaSha256": "4e7d79a5f7856313bb324c895dfaafbe00400fb503dcce7efbf8483dc5212e0b",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "4e7d79a5f7856313bb324c895dfaafbe00400fb503dcce7efbf8483dc5212e0b"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150270001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150270001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "ed94c54beb26dc83927dfa6ea71f537e3b50e6c17d5ab60b8fd34b0a7cb6b6e0",
+      "beforeFileSha256": "09e477e429f53f1e7da6f3164d576e2ea028876505fd92649e8778b3b612baaf",
+      "afterFileSha256": "90f52e500ba62519a688ce3a7c710096831bb7152262f547a3152f2c30c87191",
+      "metaSha256": "5b1c8a8c78f6480b54143ecb742c7387f3475704da5516948cf3c2e4b88f991b",
+      "uuid": "0a825f43-8649-4547-b8d2-54c396806b15",
+      "importedMetaSha256": "5b1c8a8c78f6480b54143ecb742c7387f3475704da5516948cf3c2e4b88f991b",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "5b1c8a8c78f6480b54143ecb742c7387f3475704da5516948cf3c2e4b88f991b"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150270002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150270002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "f9a76a9066e626aec41d49c134c08298131ec6cf854709367b61d5afe30f2779",
+      "beforeFileSha256": "f0f9d6c2cbe092ff398625425624d48cc64487a0c609fc17166c55d0723a0bd0",
+      "afterFileSha256": "44d29285d664d58fdb5977a4fcc290c406c728b1fc098fc1b943ac0a3ac2101b",
+      "metaSha256": "92a57390429ed161c194d57d44f49634718478c3664e0bb0494b6b9c60f4c941",
+      "uuid": "89e243cf-b06d-476e-9843-93b3bdb363cd",
+      "importedMetaSha256": "92a57390429ed161c194d57d44f49634718478c3664e0bb0494b6b9c60f4c941",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "92a57390429ed161c194d57d44f49634718478c3664e0bb0494b6b9c60f4c941"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150280001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150280001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "6ff28f2b8f1cd49987c59853146343487a4f15e1c6b2343747c23ef5a49ce9fc",
+      "beforeFileSha256": "a71a947e061aefacd426a49153a99e7afc0c9722b5c704a4ece6af061d8a792a",
+      "afterFileSha256": "21f7e2425ade171697d513f51b41831926f534698d384461ccb240804d8a4eaf",
+      "metaSha256": "a0a4bf98cec5295a386616e26062e87e97d1852905739b6eb4dbbf916d5a14de",
+      "uuid": "d84a616e-7eac-4fe3-b69c-9811ce97d94a",
+      "importedMetaSha256": "a0a4bf98cec5295a386616e26062e87e97d1852905739b6eb4dbbf916d5a14de",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "a0a4bf98cec5295a386616e26062e87e97d1852905739b6eb4dbbf916d5a14de"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150280002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150280002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "27a7243befa9b4d4ac26ac06a4556bd5656be054d4571ad0d38e4c7ec0cbe245",
+      "beforeFileSha256": "9f45a9641660c6b5ec6f1ae62b18d6adce395b72e1041141b8d87af794c5eaed",
+      "afterFileSha256": "4eb8b070ff3b98f2d6f6a3815f8cb50ab3b89213511a6b8ba260814adfa647e0",
+      "metaSha256": "8437b96f462e2f06cddeec351a476eee55dd82c9adab88962451d55493abbd97",
+      "uuid": "75646fdd-dcb8-4851-b336-20352c8e96d3",
+      "importedMetaSha256": "8437b96f462e2f06cddeec351a476eee55dd82c9adab88962451d55493abbd97",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "8437b96f462e2f06cddeec351a476eee55dd82c9adab88962451d55493abbd97"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150290001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150290001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "51f36f989155cc1c57c0f5d536c4617cfb4e2d893ccafedc19302e2f3f508e81",
+      "beforeFileSha256": "b7e7c7f4e5ce50c19bd16676579b6b65a424041c58a711003e76be0769f39e55",
+      "afterFileSha256": "82664fab6070ee43e4c283f661a29c54818a22f57fae6c4d2cee29d75aa7db8e",
+      "metaSha256": "1f5561221ad35f4528499f6cd03e50bcdfe0bd096062fff386987e10561d65f4",
+      "uuid": "fc3278fa-f086-4a72-a735-b61766dafe55",
+      "importedMetaSha256": "1f5561221ad35f4528499f6cd03e50bcdfe0bd096062fff386987e10561d65f4",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "1f5561221ad35f4528499f6cd03e50bcdfe0bd096062fff386987e10561d65f4"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150290002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150290002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "edd7506b4d08da7a87d751362b8901e048d67455f03baa29e5e0c2f81cf637d5",
+      "beforeFileSha256": "0f7a6c5fd2cc4c24c252cfabcb7c23726105c59ca634ae4739bb008ac3a13dfb",
+      "afterFileSha256": "df8f897b2baff5e4ed969d57b0ae46c35ae6ecb2451fc0ee48c50d8b74152641",
+      "metaSha256": "e61fbb5d55ad9033ff11c85860816e915bc43f4a2315db499b7b80afae2dba49",
+      "uuid": "d5594986-14b3-47e8-bd71-45e7787a7db1",
+      "importedMetaSha256": "e61fbb5d55ad9033ff11c85860816e915bc43f4a2315db499b7b80afae2dba49",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "e61fbb5d55ad9033ff11c85860816e915bc43f4a2315db499b7b80afae2dba49"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150300001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150300001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "986ba54414d9d2b7cbb4b70e28fe37122321536b3287739b0a704379ddcceb2b",
+      "beforeFileSha256": "ecf25a440a401f99d6d0823d0587ed99a603c17a835cf440101bb37677b1564f",
+      "afterFileSha256": "cf89783ff82859c495adb23b5bf2543e63519d42ce7154868e68e8b5ab6ff6f1",
+      "metaSha256": "6366fb5e0e86803530e5ca41083ff3e334985d103274197e66d412d1e596dbfe",
+      "uuid": "36f5f536-9be2-4fcc-9c07-dd4f6aea8e7a",
+      "importedMetaSha256": "6366fb5e0e86803530e5ca41083ff3e334985d103274197e66d412d1e596dbfe",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "6366fb5e0e86803530e5ca41083ff3e334985d103274197e66d412d1e596dbfe"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150300002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150300002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "fc908c6edb0bdecd88ac65e52e43557c5ce127efcd43b9c3792ebbb201766cac",
+      "beforeFileSha256": "e35c46c53b332e6a8ea41da6136092a8120781a28132b2bf58608a2d05d2960a",
+      "afterFileSha256": "63d0a9808c1a3b5aa378ce84bf6b39a0f4db32149ff00c89e123a8be9389d15f",
+      "metaSha256": "e3c6515f40bc1fce51ed94549eaf4f172d3bde8a7b4b6ba67a1ecfdaaf3f14d1",
+      "uuid": "0eef0139-f67a-487e-bddb-2bc4766e47e1",
+      "importedMetaSha256": "e3c6515f40bc1fce51ed94549eaf4f172d3bde8a7b4b6ba67a1ecfdaaf3f14d1",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "e3c6515f40bc1fce51ed94549eaf4f172d3bde8a7b4b6ba67a1ecfdaaf3f14d1"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150310001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150310001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "0ccf86fd91106bca7f1ac527748955b81cdcd2dc0247e98c048e17bde78ed100",
+      "beforeFileSha256": "5f42ddde177ec4734a80e5a05f18ed7321c8858497f6da84b1ad8135459d526e",
+      "afterFileSha256": "bdedea5c2c937b5d098d4fca9d539b232a48672259cc7c4de353e6bb565deb62",
+      "metaSha256": "7d29ef7baa1d11861312e9ffb5f26093d2066a8b1694dde90c9ab94e508094a3",
+      "uuid": "b5f15114-6f52-456c-93ea-ab78475dd531",
+      "importedMetaSha256": "7d29ef7baa1d11861312e9ffb5f26093d2066a8b1694dde90c9ab94e508094a3",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "7d29ef7baa1d11861312e9ffb5f26093d2066a8b1694dde90c9ab94e508094a3"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150310002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150310002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "f0578091710500d2e89268a38214d1836c27e3b0ed71cfd32161a4f8cc6c3c9d",
+      "beforeFileSha256": "967785a78453c8e8ae6f2ec21de42eb98b5049b976935cd82c03989df9bf01f2",
+      "afterFileSha256": "87f1a7a14e035d7a94fb3e8c3c506802ccc33a2c3b093666e00334ffc5efe33d",
+      "metaSha256": "2686d59b523d4e04cbfe495bca20e3fe566d1f663a82aff9f5f8593ea1477ba0",
+      "uuid": "94d56d59-e011-4b60-8cce-a6c6e1c342c9",
+      "importedMetaSha256": "2686d59b523d4e04cbfe495bca20e3fe566d1f663a82aff9f5f8593ea1477ba0",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "2686d59b523d4e04cbfe495bca20e3fe566d1f663a82aff9f5f8593ea1477ba0"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150320001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150320001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "5f9ec5ab54fcfb8a630d1831b7a11d572279e0abd7eafa5b1c8fc8e17bff07de",
+      "beforeFileSha256": "514a43600d9cb904a2968af94864207e2d8d3cb084630ea7e18ffde71e8e9430",
+      "afterFileSha256": "0b5bee643e7d6fc26e576fd581e6e62c0560dd80e171b87cfa11fc1ef2dcf908",
+      "metaSha256": "9c3e387d7029a9b186ddd843a5b8e9044677d600ec167cea4fe3637fc618e548",
+      "uuid": "c473f602-51b9-4329-8974-db8570dc8058",
+      "importedMetaSha256": "9c3e387d7029a9b186ddd843a5b8e9044677d600ec167cea4fe3637fc618e548",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "9c3e387d7029a9b186ddd843a5b8e9044677d600ec167cea4fe3637fc618e548"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150320002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150320002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "2bf0948c20e4c0a015191d1cd2b5f93289800d6f470c0a4ee2489d569c7ce924",
+      "beforeFileSha256": "9fbde685f203a651cbf95e298d694a4a50db3f85c19981b291e716132e807e2c",
+      "afterFileSha256": "8e6a9012c0769708fbf0ea55a30c68d9e9369ed176e9c15255a8180bf502a634",
+      "metaSha256": "72878dadd1fd42919f7a9bc77e4dde06e8011e61e2cd71695386dc9f29b79cd5",
+      "uuid": "81dd1726-2505-4bf9-b29a-0eef3246bf0d",
+      "importedMetaSha256": "72878dadd1fd42919f7a9bc77e4dde06e8011e61e2cd71695386dc9f29b79cd5",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "72878dadd1fd42919f7a9bc77e4dde06e8011e61e2cd71695386dc9f29b79cd5"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150330001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150330001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "101dfb287314fa62c23bc1c5eb0d5ccf51be729606f08590d9c855bce9cfff53",
+      "beforeFileSha256": "f579dda45205dbbdc4af6bea9bfb4a15e857806ac3cade53d24615cb02253730",
+      "afterFileSha256": "01e107547992a3cdb04624118389a195d3295772f55d1dfd7ad1653f074fcaf9",
+      "metaSha256": "9bc4dd165bf600ff1cc14b2edb4cdc2630c553788e64c4831f7b78bfa273bb20",
+      "uuid": "ec7cff76-5c55-40c4-9c02-604b0c3898d8",
+      "importedMetaSha256": "9bc4dd165bf600ff1cc14b2edb4cdc2630c553788e64c4831f7b78bfa273bb20",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "9bc4dd165bf600ff1cc14b2edb4cdc2630c553788e64c4831f7b78bfa273bb20"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150330002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150330002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "bb660dbfe97cdee5ef51e4899a27224631c9714fc67731d5063776bb4971b1e0",
+      "beforeFileSha256": "a8c90c18a11b9a560a059958e39edc7fd7dcb1f76aa20c3766c7bbe230f527b3",
+      "afterFileSha256": "20f76c4cf957566b351d95ae457d77f7955a32fb0988c7eed7a1fec50404deac",
+      "metaSha256": "939cf338a12a7ba91f7f9a7261e305058a692f23a80add4461a0837439dac65e",
+      "uuid": "a0c08508-a4b3-418b-90e2-345e00f74e6f",
+      "importedMetaSha256": "939cf338a12a7ba91f7f9a7261e305058a692f23a80add4461a0837439dac65e",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "939cf338a12a7ba91f7f9a7261e305058a692f23a80add4461a0837439dac65e"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150340001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150340001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "440f2b0b6ee3f0dfaef70ca58df8926813e3acc1747950d4b4c905adb15f169f",
+      "beforeFileSha256": "472bdfa40f1b3c78e036dff81273a19df3c465c2a9c88edde26a9f94fb734368",
+      "afterFileSha256": "b60a8a9808f4d37c3068623db6aca30ce15b425a3d8e478658b0b335eb5070a9",
+      "metaSha256": "41fc121aa6e731c8e2988bab89c5824e2cd258253fec4be260bde9571131c115",
+      "uuid": "23d5a45f-d57e-44c6-8386-6143caf451dc",
+      "importedMetaSha256": "41fc121aa6e731c8e2988bab89c5824e2cd258253fec4be260bde9571131c115",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "41fc121aa6e731c8e2988bab89c5824e2cd258253fec4be260bde9571131c115"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150340002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150340002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "9d43c43e5d8c439078c86346149b8ec153e8feb78624899f20ba9dc8883509fe",
+      "beforeFileSha256": "13b5138374d369e2dbb8e6655278763a09412a16b3b0ed31df8a7faeafc93526",
+      "afterFileSha256": "a45ec1fb992fb92ee9c1c12005fb065c06c9fcc4b338bc0e3bd4e021a84af525",
+      "metaSha256": "ea29b16ef742988adf88d5ed64bb6129d78cdc660744e8e327e74ecc73746a6d",
+      "uuid": "6d9ce67e-749f-48c1-a98b-5986740f13f5",
+      "importedMetaSha256": "ea29b16ef742988adf88d5ed64bb6129d78cdc660744e8e327e74ecc73746a6d",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "ea29b16ef742988adf88d5ed64bb6129d78cdc660744e8e327e74ecc73746a6d"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150350001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150350001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "dfa2743a3f1da2ffe5fa4e6ce6631fe4d4733c6bfe6663b312b91a851383b57f",
+      "beforeFileSha256": "10150fa279e68f2bd9f0dc65f7f2db6d4be7e4d8378cd0805724b6f57533a13a",
+      "afterFileSha256": "3f41b2603fa4df947c74b5e46e8b5bc369f02f0b3b76ad520fd1105251991688",
+      "metaSha256": "556409843bf427287392b1c1050f87e4dadaa2d18d52b67cbdf63ae55f3f7a98",
+      "uuid": "cae83343-e0d4-49fe-98d6-523d1eddc004",
+      "importedMetaSha256": "556409843bf427287392b1c1050f87e4dadaa2d18d52b67cbdf63ae55f3f7a98",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "556409843bf427287392b1c1050f87e4dadaa2d18d52b67cbdf63ae55f3f7a98"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150350002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150350002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "49243883beea9bd966d8031d0cb6af0747c186217378744fed6e0a0d68b1dd73",
+      "beforeFileSha256": "113af695c294d90f8841ec82da90ed366d65bc82c1ee0eb06f9cb99144781094",
+      "afterFileSha256": "b395748b4c4265fb0858b90466690a93f8d29f18d1db6f7c15e5d4a0da48aab6",
+      "metaSha256": "a7d2f94c1f81781ba7d5d5e00df3098c6bf72dde0378150634fa9f1ab302e073",
+      "uuid": "74ded1b5-2dcf-4380-b292-73fc261c48c9",
+      "importedMetaSha256": "a7d2f94c1f81781ba7d5d5e00df3098c6bf72dde0378150634fa9f1ab302e073",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "a7d2f94c1f81781ba7d5d5e00df3098c6bf72dde0378150634fa9f1ab302e073"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150360001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150360001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "54b446a1a843a3eaab20c49bca5d49db7a418cda94fa5dfbdf4ebc00aa5a9c7f",
+      "beforeFileSha256": "f8a50e0d01de0086bfc17a3951b8c2accc0c7d4233c4b4cdc2cad7b8259412b7",
+      "afterFileSha256": "e416cfe4572cf4d2eb67e24548bd157fa0b80be8b30fd18d946fd6a84bf8b17a",
+      "metaSha256": "b5165702c2483614aeafbbf16987539baf6f72f8e0fe32311a6a611fab0d0810",
+      "uuid": "09331983-6fed-49ad-9af7-a0a227d128ce",
+      "importedMetaSha256": "b5165702c2483614aeafbbf16987539baf6f72f8e0fe32311a6a611fab0d0810",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "b5165702c2483614aeafbbf16987539baf6f72f8e0fe32311a6a611fab0d0810"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150360002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150360002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "906aade977f0595797b55ab88a66facf57cd84bd856d28c5013f0ae67d758b14",
+      "beforeFileSha256": "d41203a1f6241ee4a91dc0c3d12bc2cc5e864abb0c2b9eb09f20a0237b67d257",
+      "afterFileSha256": "9244742062cf7e07bcc9f5d08f2e8622b45926650bdc107a7abeb45dd8519b53",
+      "metaSha256": "3ae567c8858a3e5a79086a15f795f3515e6d0ae971142efe4241a982f8de7950",
+      "uuid": "8461a113-7190-41fd-bd83-72a9a6348bcc",
+      "importedMetaSha256": "3ae567c8858a3e5a79086a15f795f3515e6d0ae971142efe4241a982f8de7950",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "3ae567c8858a3e5a79086a15f795f3515e6d0ae971142efe4241a982f8de7950"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150370001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150370001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "f4281cbab3ce88539e67502a77be2929b2d462cba45432236f1557d6e16e7017",
+      "beforeFileSha256": "88d5b7dbd7e2dcdd52ef9d4dd7b19c031f3c6ad1d2750cb657ed42f980e3b6de",
+      "afterFileSha256": "1fabfe8b881382cd6167697e1286031fa2ee94f85c3e01a0ca0e86a306a5e530",
+      "metaSha256": "6698710adef4c7b8b2d7eaced08441998873ec1f1c8d8568cab3168fd9319021",
+      "uuid": "83043e1e-1c29-4e04-a44c-d2f3616c3a5f",
+      "importedMetaSha256": "6698710adef4c7b8b2d7eaced08441998873ec1f1c8d8568cab3168fd9319021",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "6698710adef4c7b8b2d7eaced08441998873ec1f1c8d8568cab3168fd9319021"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150370002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150370002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "4f7ccce74e8eaeb49478882ba61df2d9bf5a514c9d7c31a7561b48b94a563e92",
+      "beforeFileSha256": "f68ce0c2d13f800cde58beb5dd65256eb160fffe0062992967210a8cc943347a",
+      "afterFileSha256": "7e6882f65b17e7e96e2af8f004f62c258986e02808aa6b0c63df7fbd485f2024",
+      "metaSha256": "870bdf6425428abce8c028e1ec1a987f071b59861b7c89b06ee6198e88f16edb",
+      "uuid": "83079698-4722-4c32-ab95-3cf4ba11dc0e",
+      "importedMetaSha256": "870bdf6425428abce8c028e1ec1a987f071b59861b7c89b06ee6198e88f16edb",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "870bdf6425428abce8c028e1ec1a987f071b59861b7c89b06ee6198e88f16edb"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150380001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150380001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "ad8c64a506446257435c506d999ec539f32a5eeee701d78772b7d10ff37a55dd",
+      "beforeFileSha256": "afed61f29485bc4cb02920dd2ae2ca91520919820ea590556b9e6e76486c62da",
+      "afterFileSha256": "890f78596c721a6a7f355efee4fe12cc409e2f21e6b69b822b9cfeb3fe54e7c0",
+      "metaSha256": "cc43564fcca8f55e62cc96b0f33b1a28efec0f1aeff286a25eaa163e730761a3",
+      "uuid": "a19d0fa6-9ccc-462a-a8a3-ed5239494ac7",
+      "importedMetaSha256": "cc43564fcca8f55e62cc96b0f33b1a28efec0f1aeff286a25eaa163e730761a3",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "cc43564fcca8f55e62cc96b0f33b1a28efec0f1aeff286a25eaa163e730761a3"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150380002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150380002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "ab8bdc7db3697a238f1cd9ec45b463aaee816e041bc4df6599e13cf7043547aa",
+      "beforeFileSha256": "11f41b5d87cda40efdc4e657449873d76d3a3376ca3f8c115f0007e022f0aae4",
+      "afterFileSha256": "39f6bacdf7441cd89bd4d1c0ce6839c6d65e143271f660c82ccdf8130cd02ac6",
+      "metaSha256": "ee80d5a5bf1258715c177916e21841cfe6d298a54dcb6da510048ff8f6622223",
+      "uuid": "91385f72-7742-46bd-9d68-e6ed0f597f0b",
+      "importedMetaSha256": "ee80d5a5bf1258715c177916e21841cfe6d298a54dcb6da510048ff8f6622223",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "ee80d5a5bf1258715c177916e21841cfe6d298a54dcb6da510048ff8f6622223"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150390001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150390001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "c4f805d0431c5678334385bbb5fb0fff231cd8ea1bacee226a9b383fc2c132aa",
+      "beforeFileSha256": "529368f6ca9a4ec4d299c2d12115bfc86a573e097be0686056cceaaab4dc0896",
+      "afterFileSha256": "646087007e50ad5ab799807c488cf2ac886ff51fa1fc273f727b5ce0128bdde7",
+      "metaSha256": "f9802bcde5a1d6d3fa376b42e10146982a8caba7040fb21575d2a9766e3e2ead",
+      "uuid": "b2a2dbcd-e6b7-4e37-9573-869d2926e2b9",
+      "importedMetaSha256": "f9802bcde5a1d6d3fa376b42e10146982a8caba7040fb21575d2a9766e3e2ead",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "f9802bcde5a1d6d3fa376b42e10146982a8caba7040fb21575d2a9766e3e2ead"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150390002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150390002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "d362b48a54430e0010cf40f59e98df4d6fde4924cc5ad2adb0a8d70d203c3f3a",
+      "beforeFileSha256": "b2ca51a36f72cd6e253b7d50e17bb2b6ea1ceda90b0471ec23900ad15f03d5f2",
+      "afterFileSha256": "cce60a2ebb575ee2439c137b57ef8c8766c09325feed1251ffe5610783f21239",
+      "metaSha256": "fd1558ad83358c59d3492a3d2d8373bf50ae1b7f1310e8ec831f2981552562cc",
+      "uuid": "8941c4a8-84d8-4cbb-90cf-34ce68863b77",
+      "importedMetaSha256": "fd1558ad83358c59d3492a3d2d8373bf50ae1b7f1310e8ec831f2981552562cc",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "fd1558ad83358c59d3492a3d2d8373bf50ae1b7f1310e8ec831f2981552562cc"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150400001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150400001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "2b4013753669a5199904ea7d0121df2abd4a54b267434fb1c38220b47494367e",
+      "beforeFileSha256": "5795cae05105fb4b1dd3bffa5c5e7d28e28b41b205e7a2441ef18eba88e859cb",
+      "afterFileSha256": "ef4f594b9b4cecc65c71de54111a6c9c73984760a374e9a35ba622cb4d35372a",
+      "metaSha256": "5fc06abaaaa832b9a2a9bc5877a2e9d51bc761b3baf24e3cc1fedb2f17e5b808",
+      "uuid": "345ac064-8db0-46b8-ad27-4d14d2897ccc",
+      "importedMetaSha256": "5fc06abaaaa832b9a2a9bc5877a2e9d51bc761b3baf24e3cc1fedb2f17e5b808",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "5fc06abaaaa832b9a2a9bc5877a2e9d51bc761b3baf24e3cc1fedb2f17e5b808"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150400002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150400002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "0798b16cb1f634bbd9569f7c34c32a67c3c545474440e478ef12f46d55468b94",
+      "beforeFileSha256": "d1018bc8c3778369ee601e2b308563f5634703e508cc17bb311bbbb44ba625c7",
+      "afterFileSha256": "4a01a0654b7516cadb03b2117ab559deaae781e289ce34662c86f63616359111",
+      "metaSha256": "7ac9b5b5883cf0025d2e80991dc015b6bf58f92f0e807aa7edfabeb0d3fb0dd3",
+      "uuid": "0748a174-a61c-47f8-bbf2-eb22c9ad6cd7",
+      "importedMetaSha256": "7ac9b5b5883cf0025d2e80991dc015b6bf58f92f0e807aa7edfabeb0d3fb0dd3",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "7ac9b5b5883cf0025d2e80991dc015b6bf58f92f0e807aa7edfabeb0d3fb0dd3"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150410001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150410001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "7d2a5fb3646ed6c80855229bad9bd6344f92d253d5d4418c3d8284df58daa7e7",
+      "beforeFileSha256": "39f9b5ba57593f33994ef22f2ffbc54bfa36de3b2a44b266046a5aee79b1ed16",
+      "afterFileSha256": "4e837b55743d97a14e7e608be5b87647033e8fc74511b4587f07b3199a248545",
+      "metaSha256": "e6b24e3ee3cbd43ea10fa0e837c5a6c03aa2181ca103f22283bc1df9d2e8d082",
+      "uuid": "f4fe9d9b-3658-4be1-843d-5d10028a98d2",
+      "importedMetaSha256": "e6b24e3ee3cbd43ea10fa0e837c5a6c03aa2181ca103f22283bc1df9d2e8d082",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "e6b24e3ee3cbd43ea10fa0e837c5a6c03aa2181ca103f22283bc1df9d2e8d082"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150410002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150410002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "6f5eaa71cec3079f477e59ce36c6b8b8b1c1b070db49e8eacf2f89cf60ae6abe",
+      "beforeFileSha256": "1e67946b22ed30ac98a4f504a3468321f5d632f6b36c99e1f0a7fc3cb757d7c6",
+      "afterFileSha256": "0b38c0bc3eaced37e49cb60d123558b0152c91142b2dc7e7e0cd4ff338a624f0",
+      "metaSha256": "fb8d50ac2f927474beba82f6278c94e900bb6dd4841e8f5409c51a170e54c0b0",
+      "uuid": "1d3e396e-8a74-4054-a3b4-aade0b79b871",
+      "importedMetaSha256": "fb8d50ac2f927474beba82f6278c94e900bb6dd4841e8f5409c51a170e54c0b0",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "fb8d50ac2f927474beba82f6278c94e900bb6dd4841e8f5409c51a170e54c0b0"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150420001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150420001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "b5cd18aec3d003f527c78f6ebeca2ad9f9db0ab04e526bc2970debb250c2856a",
+      "beforeFileSha256": "bcd57d474f1090e7d3b17ad85dcc451d3710e94e3aca0c170723bfd4c5602903",
+      "afterFileSha256": "74a93b784806f5563fa54b7fe05792bd1153b6a25f1aa359c40d45ad9b67b3a7",
+      "metaSha256": "ca64f5490310ec36e55e385581274574fab1fc7f8a982e3f2955b674897a0de4",
+      "uuid": "6c239fca-1950-4e16-a6c8-cbf0d51b399e",
+      "importedMetaSha256": "ca64f5490310ec36e55e385581274574fab1fc7f8a982e3f2955b674897a0de4",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "ca64f5490310ec36e55e385581274574fab1fc7f8a982e3f2955b674897a0de4"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150420002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150420002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "da2c0e6d73030f354dd94daf1d072d3ae3559e0c196b3e87669998b9b4144528",
+      "beforeFileSha256": "6da8cf70ee1e978f68758fd50fcc8a2d67bd170bfbbb9f862ac08651264c9b95",
+      "afterFileSha256": "b085201aa1f5d16795b54d86c0e23ced55d439c2fafb7b1fad28512d6e9fd67c",
+      "metaSha256": "d30a738a71554101f4c4078a653c9b73a464bf1c655da806f2f7e4d8263dbcf3",
+      "uuid": "6b1ce6dc-199b-4dd2-9104-ad8aea31320b",
+      "importedMetaSha256": "d30a738a71554101f4c4078a653c9b73a464bf1c655da806f2f7e4d8263dbcf3",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "d30a738a71554101f4c4078a653c9b73a464bf1c655da806f2f7e4d8263dbcf3"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150430001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150430001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "a49898ac9b209d785f9a773e847fc78908f89c50168841688c8dd646e2738a99",
+      "beforeFileSha256": "371cf9992e73abbb407418c98a4aca3c0bca71e06ac7e53df3e18d0dff84b7bd",
+      "afterFileSha256": "6853039a54fec9a823395c0ba2ca11ed0149bbc748391f5cea36f65a24814f74",
+      "metaSha256": "f909929dc98754c48083e2672cb69e19384a3d97ed06cb8f35a9d8ee30002af1",
+      "uuid": "6abaa391-840e-4e1f-8539-ce00f8c448e2",
+      "importedMetaSha256": "f909929dc98754c48083e2672cb69e19384a3d97ed06cb8f35a9d8ee30002af1",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "f909929dc98754c48083e2672cb69e19384a3d97ed06cb8f35a9d8ee30002af1"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150430002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150430002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "04725490a14cc70cbb82254dac5ab6bd71f341dc96cdef8e5c063c5a84542fad",
+      "beforeFileSha256": "05cdefc2eb923b02c34bc9b773787c7598ec58745bb1e75b88fd954b8c88d7e0",
+      "afterFileSha256": "378287e171f039274f161292eb5d95ed9c92e24f2630b1cd9a0eec81727e5a89",
+      "metaSha256": "760293f2d5c537f5d13710b2090c3111033a9394848f925264a2030806059e1e",
+      "uuid": "e70ada8e-bea3-4fd5-8401-4a587571fe7a",
+      "importedMetaSha256": "760293f2d5c537f5d13710b2090c3111033a9394848f925264a2030806059e1e",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "760293f2d5c537f5d13710b2090c3111033a9394848f925264a2030806059e1e"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150440001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150440001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "fddeb0b7aff233ead952b10a98b961c57ff81f88c7c685f6ef6ffc662e7ece5c",
+      "beforeFileSha256": "4c9641166c636cd4a6928fca8f3c22ef3bc351535a9c94f37a1113806ecdc1b4",
+      "afterFileSha256": "ca68248e0becc19ad28bf02898db9f2ee114780348755a15f7e8651f28297237",
+      "metaSha256": "465dc79bdc3938a70d2ee32b31246a8c3df20488f02fb53bf04624843df3d972",
+      "uuid": "92fd6b9b-bb9f-4ff7-92d7-c62fdf47308c",
+      "importedMetaSha256": "465dc79bdc3938a70d2ee32b31246a8c3df20488f02fb53bf04624843df3d972",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "465dc79bdc3938a70d2ee32b31246a8c3df20488f02fb53bf04624843df3d972"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150440002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150440002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "3339beb2ce0d10204fc621564a3e2d9d24d98580aca257f645896c06c66facd3",
+      "beforeFileSha256": "bd33c1b8593b2e589954d885504b6f211be7de01df333bcf4cc9dc0e7514d2b5",
+      "afterFileSha256": "6f6b85d050331578b290b645153ada505d5aa0f286bc1e03c6e54331eb6ae753",
+      "metaSha256": "97f435a89bfac77a6add161ccb26cea84ec22c6aeaf7f8a39205f77f2f31b7cd",
+      "uuid": "0e697d78-1433-4555-9f9a-e27e1b529172",
+      "importedMetaSha256": "97f435a89bfac77a6add161ccb26cea84ec22c6aeaf7f8a39205f77f2f31b7cd",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "97f435a89bfac77a6add161ccb26cea84ec22c6aeaf7f8a39205f77f2f31b7cd"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150450001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150450001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "d4f5de550a12d58f1a44f28bb0e101507f94eabc84bb9b5d168e1d64d83e0a1e",
+      "beforeFileSha256": "c753223c2b83ab56d2b6f7723d36e77d09dcb710ed4bae34acb8fe2fe3fa6784",
+      "afterFileSha256": "34665347e5b26ac492905235a7f6ce4d5febd834bbabe238b2ea5787f7a8bab6",
+      "metaSha256": "acb3c53b116b02dbecf785d555e8e6327fd820e7259b8b6a92c8b08fab5cc347",
+      "uuid": "d181abba-93aa-44a9-8a1e-021e9119adda",
+      "importedMetaSha256": "acb3c53b116b02dbecf785d555e8e6327fd820e7259b8b6a92c8b08fab5cc347",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "acb3c53b116b02dbecf785d555e8e6327fd820e7259b8b6a92c8b08fab5cc347"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150450002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150450002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "f7bb4171f1e5e1af5d5f5088886cc3c453ed94a80f7661ef2db9d0357d7f3c35",
+      "beforeFileSha256": "e674dba351d34d042d30ae27fc13e8ddc45339ac54dd9697c7d068cbc56e1958",
+      "afterFileSha256": "856fe75a463ee4ce8d6aa6555a96e80b12d0fec9adeb152a2e0a45b4b82c7cef",
+      "metaSha256": "7f89475927c1d603a6135b19b7720ad6fd400fc051d3e1b7c3f976d41ac76f46",
+      "uuid": "08944278-7350-4fbd-b716-5c702ddcfa85",
+      "importedMetaSha256": "7f89475927c1d603a6135b19b7720ad6fd400fc051d3e1b7c3f976d41ac76f46",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "7f89475927c1d603a6135b19b7720ad6fd400fc051d3e1b7c3f976d41ac76f46"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150460001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150460001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "2a0c0a782795d04918bf3b412263fce9e70a4dc1b8846ed5aec43cfe7c3777eb",
+      "beforeFileSha256": "82c3935cd1657ba2ac4b72ec5bdd73ad03ca86b1488a5f9d06df0ea21f5ea012",
+      "afterFileSha256": "b69955a16f4e5d201d9d0d00b14eafbd251b622509d8a50b0777a02b85791685",
+      "metaSha256": "4aeb74eaf850a1fb66dabf22b5cc9939998c4d37553e0586a4ebd6907b436702",
+      "uuid": "d9d7dec4-a22e-4017-a09e-a1fd6a910165",
+      "importedMetaSha256": "4aeb74eaf850a1fb66dabf22b5cc9939998c4d37553e0586a4ebd6907b436702",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "4aeb74eaf850a1fb66dabf22b5cc9939998c4d37553e0586a4ebd6907b436702"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150460002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150460002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "0d3403f3589263e28aa42339423ffd18f98205b1a59eb67d579950328aa05865",
+      "beforeFileSha256": "b2c4333d0ef79b4be6a4937867ed8b00c08d053bd72808627c1cfda2c8956975",
+      "afterFileSha256": "07a53eab93c11ac57c747ae18c72085f868d37dba77227e6e6166934d0e42699",
+      "metaSha256": "9c42d79eb406ce64f39c56fb4b12912e8c9343f3ea09823650345f740d82f73e",
+      "uuid": "c25345a7-11ea-408f-aa92-d476d4b20269",
+      "importedMetaSha256": "9c42d79eb406ce64f39c56fb4b12912e8c9343f3ea09823650345f740d82f73e",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "9c42d79eb406ce64f39c56fb4b12912e8c9343f3ea09823650345f740d82f73e"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150470001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150470001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "ef96b31af1de34a21844b86f22e38a3eb0c5b0fb324f47b562b51728ba909e17",
+      "beforeFileSha256": "9d9c3500868fc40a77336f4e082ba3e41eb841cfa4e40c89fc721ed96dfcfb72",
+      "afterFileSha256": "2fa63c58cfcb426b1edea88ae4d05611d059416be5eafb7f610976dd85785167",
+      "metaSha256": "905c46338147fb40d373146e190c8f2a9b9b0be7e713596ac6339487949ea169",
+      "uuid": "672b8cc0-c8a1-41b8-a5b3-3528eee6856c",
+      "importedMetaSha256": "905c46338147fb40d373146e190c8f2a9b9b0be7e713596ac6339487949ea169",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "905c46338147fb40d373146e190c8f2a9b9b0be7e713596ac6339487949ea169"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150470002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150470002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "b05a9c3f2b09e603a4fd055295e282a8e0c81c3fb879a08e59abc7b658e9c007",
+      "beforeFileSha256": "42025ba59581c34b531e2485184dd9ebe0a7eaf4d1c1cddb84c64981f1607888",
+      "afterFileSha256": "2e404621bb2c229c5e341754b42328ceeb81c5d10ed9d3f1ade3be0340d7592b",
+      "metaSha256": "8309d4b97009030198533e742c3a465017c55eb70229041c2c86629cbdb2d539",
+      "uuid": "99dc98f3-3434-4e80-8a0a-1ed0d16a0f24",
+      "importedMetaSha256": "8309d4b97009030198533e742c3a465017c55eb70229041c2c86629cbdb2d539",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "8309d4b97009030198533e742c3a465017c55eb70229041c2c86629cbdb2d539"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150480001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150480001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "e0f6439f411492e2f5c8121671ab74af1bddb877592d09d59ac9d989cb479c2b",
+      "beforeFileSha256": "da29fe271f975ecf1186ea2fb2dcee2116e61c6ece2a9d3bb3652156edf5b40b",
+      "afterFileSha256": "b5aa65d969bb5f7cafa0335a399cfac5c9ed15fc75ad1b9ac83afcc06e5a6049",
+      "metaSha256": "5a4cdd81deeb2fae5ae03dfed7a1cbb92e10c8a6423fc9fd38b5b516c18f8f8d",
+      "uuid": "3de6bd13-ff73-43ef-bd43-dcdb02f6a4a2",
+      "importedMetaSha256": "5a4cdd81deeb2fae5ae03dfed7a1cbb92e10c8a6423fc9fd38b5b516c18f8f8d",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "5a4cdd81deeb2fae5ae03dfed7a1cbb92e10c8a6423fc9fd38b5b516c18f8f8d"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150480002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150480002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "fd6c1c88b65e8820911503009113a49e7455aeeb30a4c8b205c918f6d9b94e86",
+      "beforeFileSha256": "da4fff554eda922414d12c28e7ab4a5f6445abf56ba4e739a87393be95b9e9ff",
+      "afterFileSha256": "5a785168301e131561d3cd4db3f6bb487c1cc27a4da5bed74f94f53197e6585d",
+      "metaSha256": "95b8e16aeefbb5d5c9897d284dd9eb4d67811b2821628f6ed6b40393a768fcbd",
+      "uuid": "492c5b6d-7fbf-40af-89fd-9ecc259439af",
+      "importedMetaSha256": "95b8e16aeefbb5d5c9897d284dd9eb4d67811b2821628f6ed6b40393a768fcbd",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "95b8e16aeefbb5d5c9897d284dd9eb4d67811b2821628f6ed6b40393a768fcbd"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150490001.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150490001.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "509534240b527ce0a41379e8ce452d2df2fe53f0800e50cb29b12a7de946719e",
+      "beforeFileSha256": "f64ef194c1f561e885ce71aff8e41b846fd0e61873f229e8f22b683e6ecab5c5",
+      "afterFileSha256": "697eae9e8dd256666804e5f2b7b8b131d88fe62c31926b3dcf30882916f5a315",
+      "metaSha256": "8d8144e7a7f4e60ba6652d3e0508358108ca0ae3bc429aa1e42f0099bc5f35f3",
+      "uuid": "33a84334-ec4b-4cb4-bd14-3bce9e3c9a1f",
+      "importedMetaSha256": "8d8144e7a7f4e60ba6652d3e0508358108ca0ae3bc429aa1e42f0099bc5f35f3",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "8d8144e7a7f4e60ba6652d3e0508358108ca0ae3bc429aa1e42f0099bc5f35f3"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_150490002.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/150490002.png",
+      "changed": true,
+      "size": [
+        64,
+        64
+      ],
+      "pixelSha256": "73d914e213f2c2f1f5f8bb5546b58a64de652073646991d449e28fb28fa37ced",
+      "beforeFileSha256": "1fe22c7a5be7d16d2577152c591fad252716fdf4183397f630ef459011dffbe3",
+      "afterFileSha256": "f492d8c442b5ae06d12e101ea923004e2b24ae08c25764504ea004354cb04eb7",
+      "metaSha256": "6271f1fd60abef25f0e8dc035344d84fb1bcd9d9e8eb4d2e66e53f30d4be33e7",
+      "uuid": "651dbed6-103b-4473-90ef-b6e9779659fc",
+      "importedMetaSha256": "6271f1fd60abef25f0e8dc035344d84fb1bcd9d9e8eb4d2e66e53f30d4be33e7",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "6271f1fd60abef25f0e8dc035344d84fb1bcd9d9e8eb4d2e66e53f30d4be33e7"
+    },
+    {
+      "path": "client/assets/bundles/module/hero/ui/skill-icon_spr-skill-runes-bg-1.png",
+      "sourceAtlas": "skill-icon",
+      "sourceFrame": "skill-icon/spr-skill-runes-bg-1.png",
+      "changed": true,
+      "size": [
+        102,
+        102
+      ],
+      "pixelSha256": "f327fcd6812f992e466f2e6e1cfaa7f6bb014ce4d72a2544955b096183e3497d",
+      "beforeFileSha256": "76626faaf9dd6ebd9ab023a84025722533865c07818248d8f73de40586e8779e",
+      "afterFileSha256": "d24fbba6cee581c2f7742306edcec68a12c420fc39cddf10ea9c3ee4445f391a",
+      "metaSha256": "33f2a1cecd15b7505ce8ba8298a29472ef615b0b58120d96b08e120cf179b1da",
+      "uuid": "1e2130a2-263c-4fc6-b57e-a18c6096c15a",
+      "importedMetaSha256": "33f2a1cecd15b7505ce8ba8298a29472ef615b0b58120d96b08e120cf179b1da",
+      "creatorUpdatedTrim": true,
+      "baseMetaSha256": "7fd459cb327eec7e21ced9cc2b9ece0315e0d12b72e1a033d803a6425deee7b0"
+    },
+    {
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-banner-backpack-2.png",
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-banner-backpack-2.png",
+      "changed": true,
+      "size": [
+        380,
+        127
+      ],
+      "pixelSha256": "c8d07d8948301747be79b0ed59e7a247cdd14a8d44c711ea58947bc4e28a979c",
+      "beforeFileSha256": "70f4d244e3f55ee6ac00339e7ba7fff06b503c401dc659ba15d725bde00fe164",
+      "afterFileSha256": "e61d6b61024c932c1ffb0e10d32734abd827e00c0e96a3d2a3287d6845b2eb5b",
+      "metaSha256": "238dc33ad29a828f48b0cf900cda13c0bdec5e1428519a82bc96e78d322078d9",
+      "uuid": "76d7ee0c-42c3-436c-b340-45f1648721f9",
+      "importedMetaSha256": "238dc33ad29a828f48b0cf900cda13c0bdec5e1428519a82bc96e78d322078d9",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "238dc33ad29a828f48b0cf900cda13c0bdec5e1428519a82bc96e78d322078d9"
+    },
+    {
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-attr-101.png",
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-attr-101.png",
+      "changed": true,
+      "size": [
+        46,
+        46
+      ],
+      "pixelSha256": "7579b3aad5a46340dfe7049adb6cb50c391492de63ce0470c95b0ee7c7351b27",
+      "beforeFileSha256": "a9686f60c616a895b89981d21740db5b7a9bda8a933cb15e4f108edf36ad6fa6",
+      "afterFileSha256": "2dfff3e9dfed7b06465eb9fded76efa415e9c73173e73963e3e3181c43028249",
+      "metaSha256": "104a09a111aa79c23b798eab3e912ff7f33657d06ad7adbb5eb5d0a75b42e2b6",
+      "uuid": "1775ba05-9826-455e-a182-1c046105be63",
+      "importedMetaSha256": "104a09a111aa79c23b798eab3e912ff7f33657d06ad7adbb5eb5d0a75b42e2b6",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "104a09a111aa79c23b798eab3e912ff7f33657d06ad7adbb5eb5d0a75b42e2b6"
+    },
+    {
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-attr-220.png",
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-attr-220.png",
+      "changed": true,
+      "size": [
+        46,
+        46
+      ],
+      "pixelSha256": "526cb060de0ba2d2c07010272bed19927dcffbbb4c2418f4358a2eca82014515",
+      "beforeFileSha256": "a5415eaebda0235a357f7efa708770861bcf42c5f5ddc6642d8ecf3e18c759cf",
+      "afterFileSha256": "66cba8b0169a598a39a0dcda1868bf146b2f5d9dc14bb24a2818c86ca10e39b5",
+      "metaSha256": "9208b813c1ca03f46079df95d678f31eed534411e4a977aedf3c5a2cb8e52aaf",
+      "uuid": "deae56dd-dfd2-479a-a0e9-d89b0cc41a14",
+      "importedMetaSha256": "9208b813c1ca03f46079df95d678f31eed534411e4a977aedf3c5a2cb8e52aaf",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "9208b813c1ca03f46079df95d678f31eed534411e4a977aedf3c5a2cb8e52aaf"
+    },
+    {
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-attr-223.png",
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-attr-223.png",
+      "changed": true,
+      "size": [
+        46,
+        46
+      ],
+      "pixelSha256": "7dd54348ba7e522eb324b490a1ead17a85f67233bc2652952ea67e89a7e7c147",
+      "beforeFileSha256": "c8252d3693638cfb7c986c4e831301ba05350fe6fbe1f2d229650d8aded30662",
+      "afterFileSha256": "7b4ba514434885c2264302a57dac242cc554b8ad9b56993ae511defdc49945c9",
+      "metaSha256": "658c6cbccd1997af4ce91a6f5446def5e63fa21c531b0de590572a00e514e725",
+      "uuid": "ff125a68-1ad2-49a6-8188-8ce1a9b7edc7",
+      "importedMetaSha256": "658c6cbccd1997af4ce91a6f5446def5e63fa21c531b0de590572a00e514e725",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "658c6cbccd1997af4ce91a6f5446def5e63fa21c531b0de590572a00e514e725"
+    },
+    {
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-attr-224.png",
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-attr-224.png",
+      "changed": true,
+      "size": [
+        46,
+        46
+      ],
+      "pixelSha256": "495a61877cc37a91c8a7d9ab1ab42f825cf6448739d9e1f83d727899e7cc0ed9",
+      "beforeFileSha256": "1b26d2a953d2aeafb5f1c81bd2c08cdac7643fd60131ea1df2a18da0ebd6edd1",
+      "afterFileSha256": "e3accbbe26d38728307d5ed1907072736e65c1402e113a4dc4bf1fecda357194",
+      "metaSha256": "873953f3712a6eac9fcc21e74ec10e954a8f64134e0e6af3d025a67d02bfabb3",
+      "uuid": "174d3d74-7504-48f2-9db5-4f5aebc5de3c",
+      "importedMetaSha256": "873953f3712a6eac9fcc21e74ec10e954a8f64134e0e6af3d025a67d02bfabb3",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "873953f3712a6eac9fcc21e74ec10e954a8f64134e0e6af3d025a67d02bfabb3"
+    },
+    {
+      "path": "client/assets/bundles/resources/icons/item/backpack_2000002.png",
+      "sourceAtlas": "backpack-4",
+      "sourceFrame": "backpack/2000002.png",
+      "changed": true,
+      "size": [
+        100,
+        100
+      ],
+      "pixelSha256": "f3d6b69a9ee8c7088f423972a334aa2682107617139c61c5cc8d3ba0868f1873",
+      "beforeFileSha256": "4caca97cc09a9b0ccf7f94bc04a852a4050f476180801edf6c2926954b757f27",
+      "afterFileSha256": "ce0f6d54a3658cc6f60a000281d882880631edf69d2aed8b748e0d4a012009ad",
+      "metaSha256": "810a76e30cfd6077363c4527862d047d23364a91c10fe325a742d590e89776d8",
+      "uuid": "9843ae2f-8121-473f-86b4-380bb46f5fe2",
+      "importedMetaSha256": "810a76e30cfd6077363c4527862d047d23364a91c10fe325a742d590e89776d8",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "810a76e30cfd6077363c4527862d047d23364a91c10fe325a742d590e89776d8"
+    },
+    {
+      "path": "client/assets/bundles/module/common/atlas/win-bg_block-bg-24.png",
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "win-bg/block-bg-24.png",
+      "changed": false,
+      "size": [
+        50,
+        50
+      ],
+      "pixelSha256": "6cabb545c0a142640ec614fa05cec57c9cfcb361c766952a546cd29bc4a56e2b",
+      "beforeFileSha256": "171f0106c4be6ca66d669a9c0e8ec181deec36b0fbe3cf4cbd712a13aef487b0",
+      "afterFileSha256": "171f0106c4be6ca66d669a9c0e8ec181deec36b0fbe3cf4cbd712a13aef487b0",
+      "metaSha256": "bd69456d15df6db6db86d38303c31d758eae042ed237704867a93b812fcddb96",
+      "uuid": "30f0b02c-bd19-4596-90db-f94739baf91b",
+      "importedMetaSha256": "bd69456d15df6db6db86d38303c31d758eae042ed237704867a93b812fcddb96",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "bd69456d15df6db6db86d38303c31d758eae042ed237704867a93b812fcddb96"
+    },
+    {
+      "path": "client/assets/bundles/module/common/atlas/button_btn-old-1.png",
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "button/btn-old-1.png",
+      "changed": true,
+      "size": [
+        136,
+        58
+      ],
+      "pixelSha256": "993647316a16b1e2ee4d978193c583ef1090f59d60999a3e6631f94801b9cd5b",
+      "beforeFileSha256": "23a43c0fde3c1bdecfc644791101d3f9de94439a8fed042b3ca8da5e1173f028",
+      "afterFileSha256": "c646d37d07961244ee974abde17c811bcf9a602f5fcd170bbba53dce6ac18e18",
+      "metaSha256": "cfe5596ad542f25aaacfe48ee1423086c513c934c4cc491e55e108195b9a06fe",
+      "uuid": "13632528-0f87-48d2-9ac7-71a27f92112a",
+      "importedMetaSha256": "cfe5596ad542f25aaacfe48ee1423086c513c934c4cc491e55e108195b9a06fe",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "cfe5596ad542f25aaacfe48ee1423086c513c934c4cc491e55e108195b9a06fe"
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/button_btn-close-1.png",
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "button/btn-close-1.png",
+      "changed": false,
+      "size": [
+        55,
+        58
+      ],
+      "pixelSha256": "68ee3bbd3449c6757e0e06a990f2ec277d5f13781b84e7749e54833c28dde634",
+      "beforeFileSha256": "e4a5af06282151064277f2f2579f08b288154d4a17d0f6e284b80ae869c4be03",
+      "afterFileSha256": "e4a5af06282151064277f2f2579f08b288154d4a17d0f6e284b80ae869c4be03",
+      "metaSha256": "7099277d25e7be44debbc320f9110c27fbab7387c8523c235b0087932ec9dcc0",
+      "uuid": "545d3457-a753-4a14-a6a4-565b9c8ba9ef",
+      "importedMetaSha256": "7099277d25e7be44debbc320f9110c27fbab7387c8523c235b0087932ec9dcc0",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "7099277d25e7be44debbc320f9110c27fbab7387c8523c235b0087932ec9dcc0"
+    },
+    {
+      "path": "client/assets/bundles/module/common/atlas/button_btn-src.png",
+      "sourceAtlas": "common-ui",
+      "sourceFrame": "button/btn-src.png",
+      "changed": false,
+      "size": [
+        67,
+        55
+      ],
+      "pixelSha256": "ee8b887ef88bafd702415b473d2848c7a4af85de6b43463a6211a7c479274cb3",
+      "beforeFileSha256": "31eeb03ecbff36eb164da7339ac21b277a48335e313318f267eb5e33b1def851",
+      "afterFileSha256": "31eeb03ecbff36eb164da7339ac21b277a48335e313318f267eb5e33b1def851",
+      "metaSha256": "76a8d8a5a7e13717f3e3166abecea4c2ce4fb075a89ab0c12c13cb2c829e8b4d",
+      "uuid": "fc1ffb2a-2d0e-4fd2-89fe-779b304fa5f3",
+      "importedMetaSha256": "76a8d8a5a7e13717f3e3166abecea4c2ce4fb075a89ab0c12c13cb2c829e8b4d",
+      "creatorUpdatedTrim": false,
+      "baseMetaSha256": "76a8d8a5a7e13717f3e3166abecea4c2ce4fb075a89ab0c12c13cb2c829e8b4d"
+    }
+  ],
+  "sourceAtlases": [
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\backpack-4.plist",
+      "sha256": "ad8c0c8bddfc029e568631d0d3902f0cb2abc86b8f186ee09a738fa905c2f9ea"
+    },
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\backpack-4.pvr.ccz",
+      "sha256": "7fe0b58967c4e5b139d80773bb0e49c22a090e936507428d27254c2574573a84"
+    },
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\backpack-info.plist",
+      "sha256": "a96b890e3c9510ee08bd19318bb2c3004de6f1bbda6282a7972b277f209117d8"
+    },
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\backpack-info.pvr.ccz",
+      "sha256": "4a6cb62bb5a578c95b5e7167a5bca45349b3cb69dd23bcc5214a40656cf9f069"
+    },
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\common-ui.plist",
+      "sha256": "17176a45c023b4ef2790e5c3fee75e059d8ac5ca741b25cf2748624a7498d3bb"
+    },
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\common-ui.pvr.ccz",
+      "sha256": "ff677943d6a4dfb1301c2fab94e9a287e1e05234217a563d7c350d94bdfa96d9"
+    },
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\common-ui-2.plist",
+      "sha256": "6d4e96f3965407ce33c2e89b86fa4cc8055cc15d250d04cccf05d7b6c61a0d9c"
+    },
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\common-ui-2.pvr.ccz",
+      "sha256": "3dc740936bdd8db5ec7cf76b32a821f18a8b41bfb5f09c519793ff11106030f6"
+    },
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\skill-icon.plist",
+      "sha256": "862773f50facb71cba48946ea1a2135cd7eb094130824b4d29e421d2bbe32a4c"
+    },
+    {
+      "path": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\skill-icon.pvr.ccz",
+      "sha256": "f02d729cb769630f2795401bf24faa1c99fc1ff7f382b6862d2c6f6e1d51b177"
+    }
+  ],
+  "prefabBindingCheck": {
+    "properties": [
+      {
+        "field": "panel",
+        "type": "cc.Node",
+        "node": "SpiritPanel",
+        "objectId": 5
+      },
+      {
+        "field": "icon",
+        "type": "cc.Sprite",
+        "node": "SpiritIcon",
+        "objectId": 32
+      },
+      {
+        "field": "banner",
+        "type": "cc.Sprite",
+        "node": "QualityBanner",
+        "objectId": 26
+      },
+      {
+        "field": "attributeIcon",
+        "type": "cc.Sprite",
+        "node": "AttributeIcon",
+        "objectId": 72
+      },
+      {
+        "field": "skillIcon",
+        "type": "cc.Sprite",
+        "node": "SkillIcon",
+        "objectId": 102
+      },
+      {
+        "field": "nameLabel",
+        "type": "cc.Label",
+        "node": "NameLabel",
+        "objectId": 38
+      },
+      {
+        "field": "typeLabel",
+        "type": "cc.Label",
+        "node": "TypeLabel",
+        "objectId": 44
+      },
+      {
+        "field": "attributeName",
+        "type": "cc.Label",
+        "node": "AttributeName",
+        "objectId": 78
+      },
+      {
+        "field": "attributeValue",
+        "type": "cc.Label",
+        "node": "AttributeValue",
+        "objectId": 84
+      },
+      {
+        "field": "skillName",
+        "type": "cc.Label",
+        "node": "SkillName",
+        "objectId": 108
+      },
+      {
+        "field": "skillDescription",
+        "type": "cc.Label",
+        "node": "SkillDescription",
+        "objectId": 114
+      },
+      {
+        "field": "closeButton",
+        "type": "cc.Button",
+        "node": "CloseButton",
+        "objectId": 52
+      },
+      {
+        "field": "sourceButton",
+        "type": "cc.Button",
+        "node": "SourceButton",
+        "objectId": 60
+      },
+      {
+        "field": "combineButton",
+        "type": "cc.Button",
+        "node": "CombineButton",
+        "objectId": 122
+      },
+      {
+        "field": "rebirthButton",
+        "type": "cc.Button",
+        "node": "RebirthButton",
+        "objectId": 136
+      },
+      {
+        "field": "decomposeButton",
+        "type": "cc.Button",
+        "node": "DecomposeButton",
+        "objectId": 150
+      },
+      {
+        "field": "equipButton",
+        "type": "cc.Button",
+        "node": "EquipButton",
+        "objectId": 164
+      }
+    ],
+    "widget": "SpiritPanel居中父根；alignFlags18",
+    "scale": "根ViewportScale -> SpiritPanel，designWidth600",
+    "panelInputBlock": true,
+    "result": "17个属性类型与组件所属节点逐项检查通过；修正nameLabel误写字符串，绑定NameLabel上的cc.Label对象38",
+    "prefabSha256": "51dd3e722561ad165a35ad3fb641fe06667497ed08ebac877483862aba3bf90d"
+  }
+}

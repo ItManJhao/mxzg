@@ -1,6 +1,7 @@
 /**
  * 本机登录、角色、英雄与背包 Protobuf 二进制长连接：匿名选服、登录统一初始化、同角色连接替换和提交后资产同步。
- * 请求按连接及角色串行处理，业务尚未同步时拒绝访问；开放主线阵容保存和受开关保护的开发GM发放，英雄升级等玩法写操作仍暂停。
+ * 请求按连接及角色串行处理，业务尚未同步时拒绝访问；挂机领取由默认关闭的事务入口控制，历史回执可独立恢复。
+ * 主线阵容保存和开发GM沿现有边界，英雄升级等玩法写操作仍暂停。
  */
 package com.funsgamex.mxzg.network;
 
@@ -39,6 +40,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final com.funsgamex.mxzg.campaign.MainChapterService chapters;
     /** 挂机普攻演出，不进入主线结算服务。 */
     private final com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles;
+    /** 挂机消费及持久回执入口；数据库锁、幂等和实际发放均归该事务服务。 */
+    private final com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims;
     private final SessionService sessions;
     private final SessionSnapshotService snapshots;
     private final ConcurrentMap<String, Connection> connections = new ConcurrentHashMap<>();
@@ -64,13 +67,24 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     }
 
     /** 注入共享鉴权和快照服务，创建固定数量角色锁，避免锁表无限增长。 */
-    public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots, com.funsgamex.mxzg.auth.DevelopmentLoginService login, com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm, com.funsgamex.mxzg.lineup.MainFormationCommandService formations, com.funsgamex.mxzg.hero.HeroLineupBattleService battles, com.funsgamex.mxzg.campaign.MainChapterService chapters, com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles) {
+    public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots,
+            com.funsgamex.mxzg.auth.DevelopmentLoginService login,
+            com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm,
+            com.funsgamex.mxzg.lineup.MainFormationCommandService formations,
+            com.funsgamex.mxzg.hero.HeroLineupBattleService battles,
+            com.funsgamex.mxzg.campaign.MainChapterService chapters,
+            com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles,
+            com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims) {
+        this.idleClaims = idleClaims;
         this.idleBattles = idleBattles;
         this.chapters = chapters;
         this.battles = battles;
         this.formations = formations;
-        this.gm=gm;
-        this.sessions = sessions; this.snapshots = snapshots; this.login=login; this.servers=servers;
+        this.gm = gm;
+        this.sessions = sessions;
+        this.snapshots = snapshots;
+        this.login = login;
+        this.servers = servers;
         Arrays.setAll(roleLocks, index -> new ReentrantLock());
     }
 
@@ -120,6 +134,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 finally { roleLock.unlock(); }
             }
             connection.lastActivity = now;
+        } catch (com.funsgamex.mxzg.campaign.MainChapterIdleClaimService.Rejected error) {
+            fail(connection, request, error.code(), error.getMessage(), error.retryable());
         } catch (ResponseStatusException error) {
             String code = error.getStatusCode().value() == 401 ? "UNAUTHENTICATED" : error.getReason();
             fail(connection, request, code == null ? "REQUEST_REJECTED" : code);
@@ -186,6 +202,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             chapter(connection, request, name);
             return;
         }
+        if (name.equals("chapter.idle.claim") || name.equals("chapter.idle.claim.status")) {
+            idleClaim(connection, request, name);
+            return;
+        }
         if (name.equals("chapter.idle.encounter")) {
             fields(request.path("body"), Set.of());
             try {
@@ -246,6 +266,35 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             case "session.heartbeat" -> respond(connection, request, Map.of("serverTimeMs", System.currentTimeMillis()));
 
             default -> throw rejected("UNKNOWN_MESSAGE");
+        }
+    }
+
+    /**
+     * 挂机命令仅接收业务请求键和显式安全消费版本，角色和收益由锁内事务决定。
+     * status只读指定回执；数据库锁超时明确返回忙，其他存储故障交统一异常边界，不伪装成未提交。
+     */
+    private void idleClaim(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        boolean claim = name.equals("chapter.idle.claim");
+        fields(body, claim ? Set.of("requestId", "expectedOperationVersion") : Set.of("requestId"));
+        String requestId = text(body, "requestId", UUID_PATTERN);
+        long expectedVersion = 0;
+        if (claim) {
+            var version = body.path("expectedOperationVersion");
+            if (!version.isIntegralNumber() || !version.canConvertToLong()
+                    || version.asLong() <= 0 || version.asLong() > 9_007_199_254_740_991L) {
+                throw rejected("IDLE_INVALID");
+            }
+            expectedVersion = version.asLong();
+        }
+        try {
+            Object result = claim
+                ? idleClaims.claim(connection.token, requestId, expectedVersion)
+                : idleClaims.status(connection.token, requestId);
+            respond(connection, request, result);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "IDLE_BUSY", "角色数据正忙，请稍后重试", true);
         }
     }
 
@@ -337,14 +386,29 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
 
     /** 有效请求才回关联错误，无法安全关联的畸形数据直接关闭，不回显原始内容。 */
     private void fail(Connection connection, JsonNode request, String code) {
+        fail(connection, request, code, code, code.equals("BUSY"));
+    }
+
+    /** 返回领域明确给出的失败原因及可重试标记；仅发送已知消息，不回显原请求或存储异常。 */
+    private void fail(Connection connection, JsonNode request, String code, String message, boolean retryable) {
         if (request == null || !request.path("id").isString() || !request.path("id").asString().matches(UUID_PATTERN)
-            || !request.path("name").isString() || request.path("name").asString().length() > 64) return;
+                || !request.path("name").isString() || request.path("name").asString().length() > 64) {
+            return;
+        }
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("version", 1); response.put("kind", "response"); response.put("name", request.path("name").asString());
-        response.put("id", request.path("id").asString()); response.put("connectionId", connection.socket.getId());
-        response.put("ok", false); response.put("body", null);
-        response.put("error", Map.of("code", code, "message", code, "retryable", code.equals("BUSY")));
-        try { send(connection, response); } catch (Exception ignored) { close(connection, CloseStatus.SERVER_ERROR); }
+        response.put("version", 1);
+        response.put("kind", "response");
+        response.put("name", request.path("name").asString());
+        response.put("id", request.path("id").asString());
+        response.put("connectionId", connection.socket.getId());
+        response.put("ok", false);
+        response.put("body", null);
+        response.put("error", Map.of("code", code, "message", message, "retryable", retryable));
+        try {
+            send(connection, response);
+        } catch (Exception ignored) {
+            close(connection, CloseStatus.SERVER_ERROR);
+        }
     }
 
     /** 限制输出帧，发送失败不重做业务，由恢复同步确认状态。 */

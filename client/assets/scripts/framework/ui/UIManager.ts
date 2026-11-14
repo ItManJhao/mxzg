@@ -60,6 +60,14 @@ export class UIManager {
         return err instanceof OpenCancelled;
     }
 
+    /** 已反馈的开窗异常按对象身份记录；不持有异常，避免调用方再次弹出同一失败。 */
+    private static readonly reportedFailures = new WeakSet<object>();
+
+    /** true表示框架已通过全局飘字报告该异常，调用方仍可处理自己的恢复逻辑。 */
+    public static isFailureReported(error: unknown): boolean {
+        return typeof error === "object" && error !== null && UIManager.reportedFailures.has(error);
+    }
+
     /** 返回页面管理计数；缓存页面与活动页面分开，不能以缓存数非零认定泄漏。 */
     public snapshot(): Record<string, number> {
         return {
@@ -963,8 +971,14 @@ export class UIManager {
 
     /** 页面还没进栈。Toast 给玩家看，日志留给排查。取消不走这里。 */
     private reportOpenFailed(id: string, err: unknown): void {
+        if (UIManager.isFailureReported(err)) {
+            return;
+        }
+        if (typeof err === "object" && err !== null) {
+            UIManager.reportedFailures.add(err);
+        }
         const text = id === "bag" ? "背包没有打开" : "页面没有打开";
-        GameLog.shared.classified("FRAMEWORK", "error", "UI", text + " " + ErrorUtils.messageOf(err));
+        GameLog.shared.classified("FRAMEWORK", "error", "UIManager", text + " " + ErrorUtils.messageOf(err));
         this.toast(text);
     }
 }

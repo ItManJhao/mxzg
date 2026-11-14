@@ -11,6 +11,9 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/com
 /** 历史迁移证据中的旧页面已按当前范围退役；只允许跳过本批有明确删除记录的引用。 */
 const cleanup = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/current-resource-scope-cleanup-20261111.json')));
 const retiredPrefabs = new Set(cleanup.removed.prefabs.map(row => row.path));
+// 精灵详情批已核实公共按钮原RGBA修正；历史迁移记录不覆盖为新哈希。
+const restoredImages = JSON.parse(fs.readFileSync(path.join(root,
+    'docs/validation/spirit-detail-assets-20261114.json'), 'utf8')).resources;
 
 /** 读取文件摘要，检测迁移期间像素和九宫格等meta设置是否改变。 */
 function hash(file) {
@@ -20,7 +23,14 @@ function hash(file) {
 assert.equal(manifest.rows.length, 7);
 for (const row of manifest.rows) {
     const file = resolveAssetPath(row.path);
-    assert.equal(hash(file), row.imageSha256, row.name + ' 图片变化');
+    const restored = restoredImages.find(image => path.resolve(root, image.path) === file && image.changed);
+    if (restored) {
+        assert.equal(restored.beforeFileSha256, row.imageSha256, '公共图像素修正必须承接原迁移基线');
+        assert.equal(restored.uuid, row.uuid.split('@')[0], '公共图像素修正保持原图片UUID');
+        const meta = JSON.parse(fs.readFileSync(file + '.meta', 'utf8'));
+        assert.equal(meta.subMetas.f9941.uuid, row.uuid, '公共图像素修正保持原SpriteFrame UUID');
+    }
+    assert.equal(hash(file), restored ? restored.afterFileSha256 : row.imageSha256, row.name + ' 图片变化');
     assert.equal(hash(file + '.meta'), row.metaSha256, row.name + ' meta变化');
     assert(!fs.existsSync(path.join(root, row.oldPath)), row.name + ' 旧路径仍留副本');
     assert(!fs.existsSync(path.join(root, row.oldPath + '.meta')), row.name + ' 旧meta仍留副本');

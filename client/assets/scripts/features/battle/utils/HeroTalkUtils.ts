@@ -4,10 +4,10 @@ export class HeroTalkUtils {
     /** 纯规则工具不持有页面。 */
     private constructor() {}
 
-    /** 旧版两个等级端点都不包含；缺少语言时跳过，不把策划备注当正式文案。 */
-    public static candidates(level: number, rows: readonly HeroTalkRow[], language: ReadonlyMap<number, string>): string[] {
+    /** 旧版两个等级端点都不包含；按编号查询原语言，缺失时跳过，不保存第二份语言索引或把策划备注当文案。 */
+    public static candidates(level: number, rows: readonly HeroTalkRow[], readLanguage: (id: number) => string | undefined): string[] {
         return rows.filter(row => level > row.level_min && level < row.level_max)
-            .map(row => language.get(row.lan)).filter((value): value is string => !!value);
+            .map(row => readLanguage(row.lan)).filter((value): value is string => !!value);
     }
 
     /** 将旧 XML 字色标签转换为 Creator RichText 支持的颜色标签。 */

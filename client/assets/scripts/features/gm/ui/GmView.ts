@@ -1,17 +1,20 @@
-/** 游戏内开发GM弹窗：完整Prefab保存内容，UIManager按ViewSpec提供共享遮罩；发放仍交给GmController。 */
-import { _decorator, Button, EditBox, Label, Node, Sprite, SpriteFrame, view as ccView } from "cc";
-import { BaseView } from "../../../framework/ui/BaseView";
-import { UILayer } from "../../../framework/ui/UILayer";
-import { UIRegistry } from "../../../framework/ui/UIRegistry";
-import { SuperScroll } from "../../../framework/ui/SuperScroll";
-import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
-import { GameConfig } from "../../../config/GameConfig";
-import { GConfig } from "../../../config/GConfig";
-import { GmController } from "../GmController";
-import { GmOptionCellView } from "./GmOptionCellView";
-const { ccclass, property } = _decorator;
-interface Option { id: number; name: string; }
-export interface GmOpenArgs { controller: GmController; roleId: string; nickname: string; openSkillAudit?: () => void; openLineupBattle?: (mission: number) => void; }
+/**
+ * 开发 GM 总入口：从完整 Prefab 打开英雄、道具、技能和阵容试战独立窗口。
+ * 子窗复用应用提供的唯一控制器，模态由 UIManager 共享；关窗取消迟到的子窗加载。
+ */
+import {_decorator, Button, Label} from "cc";
+import {ErrorUtils} from "../../../core/ErrorUtils";
+import {BaseView} from "../../../framework/ui/BaseView";
+import {UILayer} from "../../../framework/ui/UILayer";
+import {UIManager} from "../../../framework/ui/UIManager";
+import {UIRegistry} from "../../../framework/ui/UIRegistry";
+import {ViewportLayoutUtils} from "../../../framework/ui/ViewportLayoutUtils";
+import {GmOpenArgs} from "../data/GmViewArgs";
+import {GmGrantView} from "./GmGrantView";
+import {GmBattleView} from "./GmBattleView";
+
+const {ccclass, property} = _decorator;
+
 @UIRegistry.view({
     id: "gm",
     prefab: "bundles/module/gm/prefabs/GmView",
@@ -19,86 +22,170 @@ export interface GmOpenArgs { controller: GmController; roleId: string; nickname
     cache: false,
     allowMultiple: false,
     hostId: "remake-modal",
-    modal: { mask: true, closeOnOutside: false },
-    prepare: () => GameConfig.instance.prepare([GConfig.HeroType, GConfig.Item, GConfig.Language]),
+    modal: {mask: true, closeOnOutside: false},
 })
 @ccclass("GmView")
 export class GmView extends BaseView<GmOpenArgs> {
-    /** 开发技能验收入口，由应用提供打开动作。 */
-    @property(Button) auditButton: Button | null = null;
-    /** 前三关只读阵容试战，使用静态预制体按钮，应用负责通信与画面生命周期。 */
-    @property([Button]) battleButtons: Button[] = [];
-    /** 当前角色说明。 */
+    /** 当前测试角色说明，不保存或修改资产。 */
     @property(Label) owner: Label | null = null;
-    /** 英雄与道具分类按钮。 */
-    @property([Button]) kindButtons: Button[] = [];
-    /** 打开或收起下拉选择。 */
-    @property(Button) dropdownButton: Button | null = null;
-    /** 当前选择文字。 */
-    @property(Label) selection: Label | null = null;
-    /** 名称或 ID 搜索输入。 */
-    @property(EditBox) search: EditBox | null = null;
-    /** 发放数量输入。 */
-    @property(EditBox) quantity: EditBox | null = null;
-    /** 下拉列表区域；布局已序列化。 */
-    @property(Node) dropdown: Node | null = null;
-    /** 下拉滚动列表，由 SuperContent 复用格子。 */
-    @property(SuperScroll) options: SuperScroll | null = null;
-    /** 发放按钮，服务端关闭或请求中不可点击。 */
-    @property(Button) grantButton: Button | null = null;
-    /** 关闭按钮，不注销登录。 */
+    /** 打开英雄发放独立窗口。 */
+    @property(Button) heroButton: Button | null = null;
+    /** 打开道具发放独立窗口。 */
+    @property(Button) itemButton: Button | null = null;
+    /** 调用应用提供的技能验收入口。 */
+    @property(Button) skillButton: Button | null = null;
+    /** 打开前三关只读阵容试战窗口。 */
+    @property(Button) battleButton: Button | null = null;
+    /** 关闭整个 GM 窗口链，不注销角色。 */
     @property(Button) closeButton: Button | null = null;
-    /** 结果与错误提示。 */
+    /** 固定使用说明及开关状态；操作结果统一用全局飘字。 */
     @property(Label) message: Label | null = null;
-    /** 两种页签原图，打开时从预制体读取；切换分类仅交换展示资源。 */
-    private tabFrames: Array<SpriteFrame | null> = [];
-    /** 当前分类，切换后清空已选配置。 */
-    private kind = "hero";
-    /** 当前分类的配置投影，不保存玩家资产。 */
-    private rows: Option[] = [];
-    /** 当前选中配置，搜索输入本身不能当作选择。 */
-    private selected: Option | null = null;
-    /** 关闭后忽略异步结果。 */
+    /** 关闭后不展示迟到的异步结果。 */
     private closed = true;
-    /** 本次打开的事件清理函数。 */
+    /** 子入口准备期间阻止重复打开。 */
+    private openingChild = false;
+    /** 本次打开登记的事件清理函数。 */
     private stops: Array<() => void> = [];
-    /** 初始化角色、分类与事件并适配面板比例；共享遮罩归UIManager，服务端开关决定能否发放。 */
+
+    /** 绑定四类入口并查询真实开关；布局和比例由 Prefab、Widget 与 ViewportScale 保存。 */
     onOpen(args: GmOpenArgs): void {
-        this.args = args; this.closed = false; this.owner!.string = "当前角色：" + args.nickname + "\n" + args.roleId; this.grantButton!.interactable = false;
-        const bind = (b: Button, fn: () => void) => { const n = b.node; n.on(Button.EventType.CLICK, fn); this.stops.push(() => { if (n.isValid) n.off(Button.EventType.CLICK, fn); }); };
-        if (this.auditButton) { this.auditButton.node.active = !!args.openSkillAudit; bind(this.auditButton, () => args.openSkillAudit?.()); }
-        this.battleButtons.forEach((button, index) => {
-            button.node.active = !!args.openLineupBattle;
-            bind(button, () => args.openLineupBattle?.(index + 1));
+        this.releaseBindings();
+        this.args = args;
+        this.closed = false;
+        this.openingChild = false;
+        this.owner!.string = "当前角色：" + args.nickname + "\n" + args.roleId;
+        this.message!.string = "正在检查服务端 GM 开关…";
+        ViewportLayoutUtils.fitVisibleRoot(this.node);
+        this.bindButton(this.heroButton!, () => void this.openGrant("hero"));
+        this.bindButton(this.itemButton!, () => void this.openGrant("item"));
+        this.bindButton(this.skillButton!, () => void this.openSkill());
+        this.bindButton(this.battleButton!, () => void this.openBattle());
+        this.bindButton(this.closeButton!, () => this.close());
+        this.refreshButtons();
+        void this.readStatus(args);
+    }
+
+    /** 查询真实开关；失败保留不可确认状态并通过统一飘字报告，不伪装为开启。 */
+    private async readStatus(args: GmOpenArgs): Promise<void> {
+        try {
+            const enabled = await args.controller.enabled();
+            if (!this.closed && this.args === args) {
+                this.message!.string = enabled
+                    ? "仅用于当前测试角色。选择功能进入对应 GM 窗口。"
+                    : "服务端 GM 已关闭，发放不可用；只读测试仍可打开。";
+            }
+        } catch (error) {
+            if (!this.closed && this.args === args) {
+                this.message!.string = "服务端 GM 状态暂不可用，请重新打开检查。";
+                UIManager.instance.toast("GM 状态检查失败：" + ErrorUtils.messageOf(error));
+            }
+        }
+    }
+
+    /** 按固定类别打开独立发放窗，实际加载失败已由 UIManager 报告，不重复飘字。 */
+    private async openGrant(kind: "hero" | "item"): Promise<void> {
+        const args = this.args;
+        if (this.closed || this.openingChild || !args) {
+            return;
+        }
+        this.openingChild = true;
+        this.refreshButtons();
+        try {
+            await UIManager.instance.open(GmGrantView, {
+                controller: args.controller,
+                roleId: args.roleId,
+                nickname: args.nickname,
+                kind,
+            });
+        } catch (_error) {
+            // UIManager 已报告实际加载失败；取消打开不提示。
+        } finally {
+            this.finishChildOpening(args);
+        }
+    }
+
+    /** 技能验收由应用组织；业务失败在仍打开的本窗边界通过全局飘字报告。 */
+    private async openSkill(): Promise<void> {
+        const args = this.args;
+        if (this.closed || this.openingChild || !args?.openSkillAudit) {
+            return;
+        }
+        this.openingChild = true;
+        this.refreshButtons();
+        try {
+            await args.openSkillAudit();
+        } catch (error) {
+            if (!this.closed && this.args === args && !UIManager.isOpenCancelled(error)
+                && !UIManager.isFailureReported(error)) {
+                UIManager.instance.toast("技能测试没有打开：" + ErrorUtils.messageOf(error));
+            }
+        } finally {
+            this.finishChildOpening(args);
+        }
+    }
+
+    /** 打开独立试战选择窗，应用继续负责通信和演示生命周期。 */
+    private async openBattle(): Promise<void> {
+        const args = this.args;
+        if (this.closed || this.openingChild || !args?.openLineupBattle) {
+            return;
+        }
+        this.openingChild = true;
+        this.refreshButtons();
+        try {
+            await UIManager.instance.open(GmBattleView, {
+                nickname: args.nickname,
+                openLineupBattle: args.openLineupBattle,
+            });
+        } catch (_error) {
+            // 窗口加载失败由 UIManager 统一提示，菜单保留重试入口。
+        } finally {
+            this.finishChildOpening(args);
+        }
+    }
+
+    /** 仅恢复发起这次打开的菜单，旧承诺不能改写重新打开后的状态。 */
+    private finishChildOpening(args: GmOpenArgs): void {
+        if (!this.closed && this.args === args) {
+            this.openingChild = false;
+            this.refreshButtons();
+        }
+    }
+
+    /** 同步忙碌与应用能力；未装配的测试入口保留可见但不可点击。 */
+    private refreshButtons(): void {
+        const ready = !this.closed && !this.openingChild;
+        this.heroButton!.interactable = ready;
+        this.itemButton!.interactable = ready;
+        this.skillButton!.interactable = ready && !!this.args?.openSkillAudit;
+        this.battleButton!.interactable = ready && !!this.args?.openLineupBattle;
+    }
+
+    /** 登记本窗按钮动作及清理，重复打开不累积监听。 */
+    private bindButton(button: Button, action: () => void): void {
+        const node = button.node;
+        node.on(Button.EventType.CLICK, action);
+        this.stops.push(() => {
+            if (node.isValid) {
+                node.off(Button.EventType.CLICK, action);
+            }
         });
-        bind(this.closeButton!, () => this.close()); this.kindButtons.forEach((b, i) => bind(b, () => this.chooseKind(i === 0 ? "hero" : "item")));
-        bind(this.dropdownButton!, () => { this.dropdown!.active = !this.dropdown!.active; }); bind(this.grantButton!, () => { void this.grant(); });
-        const search = () => this.paintOptions(); this.search!.node.on(EditBox.EventType.TEXT_CHANGED, search); this.stops.push(() => this.search?.node?.off(EditBox.EventType.TEXT_CHANGED, search));
-        const size = ccView.getVisibleSize(), scale = Math.min(size.width * .94 / 600, size.height * .9 / 820) / ViewportLayoutUtils.ancestorScale(this.node); this.node.setScale(scale, scale, 1);
-        this.tabFrames = this.kindButtons.map(b => b.getComponent(Sprite)?.spriteFrame || null);
-        this.quantity!.string = "1"; this.chooseKind("hero"); this.message!.string = "正在检查服务端 GM 开关…";
-        void args.controller.enabled().then(enabled => { if (!this.closed) { this.grantButton!.interactable = enabled; this.message!.string = enabled ? "仅开发测试：英雄每次最多20个；期限道具最多100件" : "服务端 GM 未开启（MXZG_GM_ENABLED=true）"; } }).catch(e => { if (!this.closed) this.message!.string = e instanceof Error ? e.message : String(e); });
     }
-    /** 切换类别时按共享表创建展示索引，不创建英雄或库存假数据。 */
-    private chooseKind(kind: string): void {
-        this.kind = kind; this.kindButtons.forEach((b, i) => { const sprite = b.getComponent(Sprite); if (sprite) sprite.spriteFrame = this.tabFrames[(kind === "hero") === (i === 0) ? 0 : 1]; }); this.selected = null; this.selection!.string = (kind === "hero" ? "英雄" : "道具") + "：请选择 ▼"; this.search!.string = "";
-        const db = GameConfig.instance; const language = new Map(db.getFile(GConfig.Language).rows.map(r => [String(r.key), String(r.value)]));
-        this.rows = kind === "hero" ? db.getFile(GConfig.HeroType).rows.filter(r => typeof r.type === "number" && r.type > 0).map(r => ({ id: r.type as number, name: String(r.note || r.type) })) : db.getFile(GConfig.Item).rows.filter(r => typeof r.idx === "number" && r.idx > 0).map(r => ({ id: r.idx as number, name: language.get(String(r.name)) || String(r.idx) }));
-        this.dropdown!.active = true; this.paintOptions();
+
+    /** 关闭时取消发放、试战子窗及在途打开，控制器仍保留结果未明的幂等请求。 */
+    onClose(): void {
+        this.closed = true;
+        this.openingChild = false;
+        this.releaseBindings();
+        this.args = undefined;
+        UIManager.instance.closeById("gm-grant");
+        UIManager.instance.closeById("gm-battle");
     }
-    /** 搜索所有配置，最多显示100条，列表尺寸和位置完全交给 SuperScroll。 */
-    private paintOptions(): void {
-        const word = this.search!.string.trim().toLowerCase(); const rows = this.rows.filter(r => (r.name + " " + r.id).toLowerCase().includes(word)).slice(0, 100);
-        this.options!.list.setData(rows, (node, row) => node.getComponent(GmOptionCellView)!.show(row.name + "  [" + row.id + "]", () => { this.selected = row; this.selection!.string = row.name + " [" + row.id + "] ▼"; this.dropdown!.active = false; })); this.options!.toStart();
+
+    /** 解除本次登记的监听，不影响其他窗口。 */
+    private releaseBindings(): void {
+        for (const stop of this.stops.splice(0)) {
+            stop();
+        }
     }
-    /** 只转交发放意图；成功不直接修改资产，等待服务器统一同步。 */
-    private async grant(): Promise<void> {
-        if (!this.selected || !/^\d+$/.test(this.quantity!.string.trim())) { this.message!.string = "请先选择配置并输入整数数量"; return; }
-        this.grantButton!.interactable = false; this.message!.string = "正在发放…";
-        try { await this.args!.controller.grant(this.args!.roleId, this.kind, this.selected.id, Number(this.quantity!.string)); if (!this.closed) this.message!.string = "发放成功，资产由服务端同步。"; }
-        catch (e) { if (!this.closed) this.message!.string = "发放失败：" + (e instanceof Error ? e.message : String(e)); }
-        finally { if (!this.closed) this.grantButton!.interactable = true; }
-    }
-    /** 关闭清理事件，控制器保留未确认请求供安全重试。 */
-    onClose(): void { this.closed = true; for (const stop of this.stops.splice(0)) stop(); this.args = undefined; }
 }

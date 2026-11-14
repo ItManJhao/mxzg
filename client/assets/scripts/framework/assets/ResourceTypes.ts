@@ -1,5 +1,5 @@
 /** 资源加载契约：只声明类型和加载地址，由资源池与加载计划共用；不登记资源清单。 */
-export type ResourceKind = "SpriteFrame" | "SpriteAtlas" | "Prefab" | "AudioClip" | "SkeletonData" | "JsonAsset" | "Texture2D" | "BitmapFont" | "TTFFont" | "TextAsset" | "EffectAsset" | "ParticleAsset" | "Asset";
+export type ResourceKind = "SpriteFrame" | "SpriteAtlas" | "Prefab" | "AudioClip" | "SkeletonData" | "JsonAsset" | "BufferAsset" | "Texture2D" | "BitmapFont" | "TTFFont" | "TextAsset" | "EffectAsset" | "ParticleAsset" | "Asset";
 export interface ResourceDescriptor<K extends ResourceKind = ResourceKind> {
     /** Creator资源包名称，不等同于业务模块名。 */
     readonly bundle: string;

@@ -1,0 +1,245 @@
+{
+  "date": "2026-11-14",
+  "scope": "普通道具及精英碎片只读表现；共用既有BagInfoView，不开放使用/合成/分解/图鉴",
+  "sources": [
+    "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/ccb-hd/Resources/BackpackInfoLayer.ccb",
+    "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/layer/BackpackInfoCtr.lua",
+    "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/comp/menu/UIMenuItemHeroPiece.lua"
+  ],
+  "addedPrefabs": [],
+  "modifiedPrefabs": [
+    {
+      "path": "client/assets/bundles/module/common/prefabs/BagItemView.prefab",
+      "uuid": "c4e8a1b2-7d33-4f61-9a20-6b5e0d4c8f11",
+      "metaSha256": "bede670930b44c9953383beba27093880e7b66412ed565e8fa0a2cb374dcab0b",
+      "objectCount": 101
+    },
+    {
+      "path": "client/assets/bundles/module/bag/prefabs/BagInfoView.prefab",
+      "uuid": "f151a2c1-a24a-4e5d-9d67-2096089cde82",
+      "metaSha256": "e799ca1a9dd1772e7b71c949719eeed9189f5e3421e25b0a9ed12fde0c1a245f",
+      "objectCount": 221
+    }
+  ],
+  "resources": [
+    {
+      "sourceAtlas": "backpack-4",
+      "sourceFrame": "backpack/shop-sp.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack_shop-sp.png",
+      "uuid": "1de53cc3-42e9-417a-a231-ede9bdb63c9a",
+      "size": [
+        26,
+        30
+      ],
+      "pixelsCorrected": true,
+      "rgbaMatched": true,
+      "beforeSha256": "2757555b489adbba0fbb6e460092d6dfef62638f38b4318b9bf1c5dcfc034d1e",
+      "afterSha256": "2e3bc165e272a6932f3ed5600613ec742de0efe9defb44b2cc251a3ee90eea2f",
+      "metaSha256": "a40c39543268e08adfe054c26914468af2fc0813cff46a3dcf69fcaaec3fb0f4"
+    },
+    {
+      "sourceAtlas": "hero-icon-other",
+      "sourceFrame": "hero-icon/spr-bg-1.png",
+      "path": "client/assets/bundles/module/hero/ui/hero-icon_spr-bg-1.png",
+      "uuid": "64912d55-eb8a-49ae-91df-d61dc9b7a0bb",
+      "size": [
+        102,
+        16
+      ],
+      "pixelsCorrected": true,
+      "rgbaMatched": true,
+      "beforeSha256": "7198ec1963d45c87f5c745ae8eaafd25dcf1d92cb616207996ddbf38aca2cc65",
+      "afterSha256": "a9c85b77a18562992fbd749def85b35859ef76f4eda9f0f3ab982be6520e87b0",
+      "metaSha256": "b525fa3fcb591432d5741b7cb5608543638db8b513dcf3b9c2e5bdb46320e33a"
+    },
+    {
+      "sourceAtlas": "hero-icon-other",
+      "sourceFrame": "hero-icon/spr-bg-2.png",
+      "path": "client/assets/bundles/module/hero/ui/hero-icon_spr-bg-2.png",
+      "uuid": "7a847c98-56c4-42e1-9180-fcd9af890bb7",
+      "size": [
+        102,
+        16
+      ],
+      "pixelsCorrected": true,
+      "rgbaMatched": true,
+      "beforeSha256": "8dd9e61fd689e5d12f46ffcba89a1995ddc7b9e64ff70b1f9083f85c130421f2",
+      "afterSha256": "75410c8c8f83f8423a5e293a0fbdb2b91ea4c70c4d167a404cf572f3107d3693",
+      "metaSha256": "251a980d40e8fcf57384c0e65616ca60b45dcf16b4d1b2c0b1c755ab41ff28cd"
+    }
+  ],
+  "imagesChecked": 3,
+  "imagesCorrected": 3,
+  "layout": {
+    "cellIcon": {
+      "ordinary": [
+        72,
+        72
+      ],
+      "shard": [
+        82,
+        82
+      ]
+    },
+    "shardStars": 5,
+    "progress": "仅背包碎片库存显示水平FILLED进度与持有/所需；详情无进度",
+    "panelWidth": 410,
+    "contentWidth": 390,
+    "descriptionWidth": 350,
+    "descriptionHeightRange": [
+      60,
+      300
+    ],
+    "description": "原生ScrollView/Mask/cc.RichText（maxWidth350、fontSize20、lineHeight25），保留原字体与棕色；View仅按实际RichText排版高度夹取Prefab60..300上下限，内外原生Layout负责排列；正文不是业务Cell列表。",
+    "actions": "固定两列Grid，单按钮由预置水平居中Widget启用；三按钮第三个左下；无运行时坐标",
+    "viewportDesignWidth": 600,
+    "modal": "复用UIManager共享模态，正文Mask仅用于裁剪",
+    "emptyActions": "ActionGrid内静态NoActionSpacer 136×58，仅在所有操作隐藏时启用，保留旧base210中的单行底部留白；无运行时坐标或高度计算。",
+    "richTextEngineEvidence": {
+      "engineFile": "C:/ProgramData/cocos/editors/Creator/3.8.8/resources/resources/3d/engine/cocos/2d/components/rich-text.ts",
+      "stringSetter": "string setter同步调用_updateRichTextStatus；构造时绑定_updateRichText，启用后同一调用内更新UITransform尺寸，触发SIZE_CHANGED；禁用时于onEnable排版。",
+      "publicUsage": "写RichText.string后读取节点UITransform.height；无需调用受保护更新方法。",
+      "serializedFields": "_lineHeight/_string/_horizontalAlign/_verticalAlign/_fontSize/_fontColor/_maxWidth/_fontFamily/_font/_isSystemFontUsed/_userDefinedFont/_cacheMode/_imageAtlas/_handleTouchEvent",
+      "componentIdPreserved": 40,
+      "nodeIdPreserved": 37,
+      "fontUuid": "4ff55f31-773f-4ef9-99b6-466b5deeecb9",
+      "shadow": "RichText无全局阴影序列化字段；原Label阴影未启用，不保留无效字段。"
+    }
+  },
+  "checks": {
+    "serializedReferences": "有效",
+    "originalFieldTargets": "保留",
+    "originalPrefabAndImageUuid": "保留",
+    "imageMetaBytes": "未改",
+    "visualStatus": "已完成本批设备选项393×852、浏览器1280×720的独立本机矩阵复验；追加RichText后核对两礼包换行/颜色、长文首末及关闭，限定范围详见item-shard-review-20261114.json，不代签真机/发布包或Inspector"
+  },
+  "priorRepairImports": [
+    {
+      "path": "client/assets/bundles/module/bag/atlas/backpack-info_spr-line.png",
+      "repairEvidence": "docs/validation/equipment-detail-assets-20261114.json",
+      "reason": "前批装备详情已按旧图集恢复原RGBA；Creator随后重新计算该图自动裁剪与顶点/UV，原主UUID、子UUID、九宫格和其余导入设置保持不变。历史迁移及修复证据保留原文。",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"c6234db7-ebbd-43bb-863f-6c99505dbdc3\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"c6234db7-ebbd-43bb-863f-6c99505dbdc3@6c48a\",\r\n      \"displayName\": \"backpack-info_spr-line\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"c6234db7-ebbd-43bb-863f-6c99505dbdc3\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"c6234db7-ebbd-43bb-863f-6c99505dbdc3@f9941\",\r\n      \"displayName\": \"backpack-info_spr-line\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": 0,\r\n        \"offsetY\": 0,\r\n        \"trimX\": 19,\r\n        \"trimY\": 0,\r\n        \"width\": 342,\r\n        \"height\": 2,\r\n        \"rawWidth\": 380,\r\n        \"rawHeight\": 2,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -171,\r\n            -1,\r\n            0,\r\n            171,\r\n            -1,\r\n            0,\r\n            -171,\r\n            1,\r\n            0,\r\n            171,\r\n            1,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            19,\r\n            2,\r\n            361,\r\n            2,\r\n            19,\r\n            0,\r\n            361,\r\n            0\r\n          ],\r\n          \"nuv\": [\r\n            0.05,\r\n            0.0,\r\n            0.95,\r\n            0.0,\r\n            0.05,\r\n            1.0,\r\n            0.95,\r\n            1.0\r\n          ],\r\n          \"minPos\": [\r\n            -171,\r\n            -1,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            171,\r\n            1,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"c6234db7-ebbd-43bb-863f-6c99505dbdc3@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"c6234db7-ebbd-43bb-863f-6c99505dbdc3@6c48a\"\r\n  }\r\n}\r\n",
+      "afterMetaSha256": "45ac7b1ce933c182f8a3dcc0d3ea11d350dbcbfdabe19b999afac31fcd11c363",
+      "mainUuid": "c6234db7-ebbd-43bb-863f-6c99505dbdc3",
+      "subUuids": {
+        "6c48a": "c6234db7-ebbd-43bb-863f-6c99505dbdc3@6c48a",
+        "f9941": "c6234db7-ebbd-43bb-863f-6c99505dbdc3@f9941"
+      },
+      "creatorChanges": [
+        {
+          "path": "subMetas.f9941.userData.trimX",
+          "before": 19,
+          "after": 0
+        },
+        {
+          "path": "subMetas.f9941.userData.width",
+          "before": 342,
+          "after": 380
+        },
+        {
+          "path": "subMetas.f9941.userData.vertices.rawPosition",
+          "before": [
+            -171,
+            -1,
+            0,
+            171,
+            -1,
+            0,
+            -171,
+            1,
+            0,
+            171,
+            1,
+            0
+          ],
+          "after": [
+            -190,
+            -1,
+            0,
+            190,
+            -1,
+            0,
+            -190,
+            1,
+            0,
+            190,
+            1,
+            0
+          ]
+        },
+        {
+          "path": "subMetas.f9941.userData.vertices.uv",
+          "before": [
+            19,
+            2,
+            361,
+            2,
+            19,
+            0,
+            361,
+            0
+          ],
+          "after": [
+            0,
+            2,
+            380,
+            2,
+            0,
+            0,
+            380,
+            0
+          ]
+        },
+        {
+          "path": "subMetas.f9941.userData.vertices.nuv",
+          "before": [
+            0.05,
+            0.0,
+            0.95,
+            0.0,
+            0.05,
+            1.0,
+            0.95,
+            1.0
+          ],
+          "after": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "path": "subMetas.f9941.userData.vertices.minPos",
+          "before": [
+            -171,
+            -1,
+            0
+          ],
+          "after": [
+            -190,
+            -1,
+            0
+          ]
+        },
+        {
+          "path": "subMetas.f9941.userData.vertices.maxPos",
+          "before": [
+            171,
+            1,
+            0
+          ],
+          "after": [
+            190,
+            1,
+            0
+          ]
+        }
+      ]
+    }
+  ]
+}

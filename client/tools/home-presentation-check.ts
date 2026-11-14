@@ -1,10 +1,9 @@
-/** 主城与角色详情回归：验证唯一实例、真实资料刷新、头像入口和关闭清理，不连接数据库。 */
+/** 主城与角色详情回归：验证真实资料、头像入口、全局操作反馈和关闭清理，不连接数据库。 */
+import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 
-/** 离线读取主城配置，资源分组父目录不参与游戏加载键。 */
-const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
-import { Button, JsonAsset, Label, Node, Prefab, Sprite, resources } from "cc";
+import { Button, EditBox, Label, Node, Prefab, Sprite } from "cc";
 import { RemakeHomeView } from "../assets/scripts/features/home/ui/RemakeHomeView";
 import { RoleProfileView } from "../assets/scripts/features/account/ui/RoleProfileView";
 import { CityHubView } from "../assets/scripts/features/city/ui/CityHubView";
@@ -16,6 +15,8 @@ import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { CityChromeView } from "../assets/scripts/features/city/ui/CityChromeView";
+import { SkillAuditView } from "../assets/scripts/features/battle/ui/SkillAuditView";
+import { ConfigUnavailable } from "../assets/scripts/config/GameConfig";
 
 class CityFixture extends CityHubView {
   closedCount = 0; disposedCount = 0; refreshCount = 0;
@@ -52,16 +53,100 @@ function fixture() {
   profile.logoutButton=new Node("Logout").addComponent(Button);profile.settingsClose=new Node("Back").addComponent(Button);profile.settingsPanel=new Node("SettingsPanel");
   chrome.experienceFill = new Node("ExperienceFill").addComponent(Sprite);
   chrome.avatar=new Node("Avatar");chrome.avatar.addComponent(Button);
-  home.noticeLabel = new Node("Notice").addComponent(Label);
-  home.noticePanel = new Node("NoticePanel"); home.noticePanel.active = false;
   return { home, city, chrome, profile };
 }
+
+/** 两种存量入口共用全局反馈；切页空串、异步迟到失败和重复播放均不能覆盖其他窗口提示。 */
+async function checkGlobalFeedback(): Promise<void> {
+    const notices: string[] = [];
+    const releaseNotice = UIManager.instance.bindNotice(text => notices.push(text));
+    const home = new Node("FeedbackHome").addComponent(RemakeHomeView);
+    const audit = new Node("FeedbackAudit").addComponent(SkillAuditView);
+    try {
+        home.showNotice("该模块暂未开放");
+        home.showNotice("");
+        assert.deepEqual(notices, ["该模块暂未开放"], "主城提示转入全局，空串不清全局队列");
+        home.onClose();
+        home.showNotice("已关闭页面的迟到提示");
+        assert.equal(notices.length, 1, "关闭后的主城不再追加操作反馈");
+
+        audit.owner = new Node("Owner").addComponent(Label);
+        audit.selection = new Node("Selection").addComponent(Label);
+        audit.message = new Node("Status").addComponent(Label);
+        // 离线替身只补此窗口需要的引擎事件，不改实际 Creator 组件行为。
+        (EditBox as any).EventType ||= { TEXT_CHANGED: "text-changed" };
+        audit.search = new Node("Search").addComponent(EditBox);
+        audit.kindButtons = [new Node("HeroTab").addComponent(Button), new Node("SkillTab").addComponent(Button)];
+        for (const button of audit.kindButtons) {
+            (button as any).getComponent = (type: any) => button.node.getComponent(type);
+        }
+        audit.playButton = new Node("Play").addComponent(Button);
+        audit.closeButton = new Node("Close").addComponent(Button);
+        audit.options = { list: { setData: () => {} }, toStart: () => {} } as any;
+        let calls = 0;
+        let rejectLate!: (error: Error) => void;
+        audit.runOpen({ play: async () => {
+            calls++;
+            if (calls === 1) {
+                throw new Error("演示资源测试失败");
+            }
+            await new Promise<void>((_resolve, reject) => { rejectLate = reject; });
+        } });
+        await (audit as any).play();
+        assert.equal(notices[notices.length - 1], "请先选择英雄和技能等级");
+        assert.equal(calls, 0, "未选择时只提示，不发起播放");
+        (audit as any).selected = { fixture: null, reason: "该等级尚未接入演示" };
+        await (audit as any).play();
+        assert.equal(notices[notices.length - 1], "该等级尚未接入演示");
+        audit.message.string = "当前等级的规则状态与说明";
+        (audit as any).selected = { fixture: "feedback-fixture" };
+        await (audit as any).play();
+        assert.equal(notices[notices.length - 1], "演示打开失败：演示资源测试失败");
+        assert.equal(audit.message.string, "当前等级的规则状态与说明", "失败反馈不占用技能状态区域");
+        const late = (audit as any).play();
+        await (audit as any).play();
+        assert.equal(calls, 2, "播放在途时不重复发起或追加提示");
+        const noticeCount = notices.length;
+        audit.runClose();
+        rejectLate(new Error("关闭后的迟到失败"));
+        await late;
+        assert.equal(notices.length, noticeCount, "关闭不清全局队列，迟到失败不追加提示");
+
+        for (const file of ["module/home/prefabs/RemakeHomeView", "module/battle/prefabs/SkillAuditView"]) {
+            const prefab = JSON.parse(readFileSync("client/assets/bundles/" + file + ".prefab", "utf8"));
+            assert(!prefab.some((row: any) => row.noticeLabel || row.noticePanel), "页面不残留旧提示属性绑定");
+            assert(!prefab.some((row: any) => ["Notice", "NoticePanel", "NoticeLabel"].includes(row._name)), "页面不另存旧提示节点");
+        }
+    } finally {
+        audit.runDispose();
+        home.runDispose();
+        releaseNotice();
+    }
+}
+
+/** 未安装配置包时主城必须明确开页失败，不能吞掉缺表后使用默认位置继续展示。 */
+async function checkCityConfigGate(): Promise<void> {
+  const node = new Node("CityBeforeConfiguration");
+  const city: any = node.addComponent(CityHubView);
+  // 此例只验证配置就绪门槛，节点绑定由下方既有Prefab检查覆盖。
+  city.collect = () => {};
+  city.requireBound = () => {};
+  city.runOpen({
+    onAtom: () => {},
+    onMainline: () => {},
+    query: { level: () => 1, openDay: () => 0, db: () => null },
+  });
+  await assert.rejects(city.whenReady(), ConfigUnavailable);
+  city.runClose();
+  city.runDispose();
+  node.destroy();
+}
+
+/** 先验证配置就绪门槛，再安装真实配置并检查主城子视图、资料与关闭生命周期。 */
 async function main() {
-  resources.load = (path: string, _type: unknown, done: Function) => {
-    const asset = new JsonAsset();
-    asset.json = JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8"));
-    done(null, asset);
-  };
+  await checkCityConfigGate();
+  await ConfigFixtureUtils.installReal();
+  await checkGlobalFeedback();
   const { home, city, chrome, profile } = fixture();
   // 验证正常经验、升级清零、满级及缺失数据，避免沿用上一角色比例。
   chrome.setExperience(66,120); assert.equal(chrome.experienceFill!.fillRange,0.55);
@@ -112,11 +197,15 @@ async function main() {
   assert.equal(city.closedCount, 1); assert.equal(city.disposedCount, 1);
   assert.equal(chrome.closedCount, 1); assert.equal(chrome.disposedCount, 1);
 
+  // 配置已在进入页面前安装；关闭时释放已创建但尚未就绪的子View，并忽略其迟到完成。
   const slow = fixture(); slow.home.runOpen();
   const cancelled = assert.rejects(slow.home.whenReady(), /页面已关/);
   slow.home.runDispose(); await cancelled;
   await new Promise(resolve => setTimeout(resolve, 0));
-  assert.equal(slow.city.disposedCount, 0, "closing during config loading prevents child instantiation entirely");
+  assert.equal(slow.city.disposedCount, 1, "等待主城子View就绪期间关闭，必须释放已创建页面");
+  assert.equal(slow.chrome.disposedCount, 1, "关闭同时释放顶栏子View");
+  slow.city.completeLoading();
+  await Promise.resolve();
   assert.equal(slow.home.cityHost!.children.length, 0);
 
   // 引擎先销毁按钮组件时其 node 会被清空，资料页稍后释放也不应抛错。

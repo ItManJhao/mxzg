@@ -1,0 +1,86 @@
+[
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/scenes/Remake.scene: 66.01611328125 ms",
+    "timestamp": "2026-11-14T12:15:32.026Z",
+    "url": "http://127.0.0.1:18081/cocos-js/_virtual_cc-C6aOtQS_.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:15:35 打开界面 remake-login ui AccountLoginView 耗时 76ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:15:35.460Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:15:54 started effects=7 runners=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:15:54.495Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityHubView]%c[info] 20:15:54 view buildings=19 scroll=-454.72103004291847 bundles/module/home/prefabs/CityHubView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:15:54.498Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityChromeView]%c[info] 20:15:54 view bundles/module/home/prefabs/CityChromeView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:15:54.504Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:15:54 打开界面 remake-home ui RemakeHomeView 耗时 36ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:15:54.514Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:15:55 anim loop home/ui/main-city-effect_rivers1 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:15:55.083Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:15:55 anim loop home/ui/main-city-effect_crack frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:15:55.092Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:15:55 anim loop home/ui/main-city-effect_rivers2 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:15:55.176Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:15:55 anim loop home/ui/main-city-effect_summon frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:15:55.193Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:15:55 anim loop home/ui/main-city-effect_photosphere frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:15:55.209Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][ApplicationResources]%c[info] 20:15:55 后台资源处理结束：成功4，失败0，总数4 color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:15:55.381Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:16:02 打开界面 bag ui BagView 耗时 6ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:16:02.816Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:16:22 打开界面 equipment-info ui EquipmentInfoView 耗时 182ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:16:22.857Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  }
+]

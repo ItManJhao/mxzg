@@ -11,8 +11,17 @@ const { bundleEntries, resolveAssetPath, resolveBundleFile } = require('../../to
 const root = path.resolve(__dirname, '../..');
 const assets = path.join(root, 'client/assets');
 const evidence = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/current-resource-scope-cleanup-20261111.json'), 'utf8'));
-// 旧15包清理证据保持历史原样，本次仅合并负责人批准的effects独立包增量。
+// 旧15包清理证据保持历史原样；Bundle范围合并此前获准的effects独立包增量。
 const effectsMove = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/battle-effects-move-20261113.json'), 'utf8'));
+// 精灵专用只读详情是本次获准新增入口；历史清理证据仍保留当时的32份Prefab范围。
+const spiritDetail = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/spirit-detail-assets-20261114.json'), 'utf8'));
+// GM总入口拆为发放与试战子窗；新增范围单独留证，不修改旧清理记录。
+const gmSplit = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/gm-prefab-split-20261114.json'), 'utf8'));
+// 普通装备只读详情另列增量，原历史范围与资源修正记录保留。
+const equipmentDetail = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/equipment-detail-assets-20261114.json'), 'utf8'));
+// 道具/碎片复用既有页面，只核对明确恢复的三张原图，不扩大Prefab或Bundle范围。
+const itemShard = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/item-shard-assets-20261114.json'), 'utf8'));
+const approvedPrefabs = [...evidence.retainedPrefabs, ...spiritDetail.addedPrefabs, ...gmSplit.addedPrefabs, ...equipmentDetail.addedPrefabs];
 
 /** 收集当前目录普通文件；资源审查不允许通过链接访问工作区外的文件。 */
 function files(directory) {
@@ -93,7 +102,7 @@ assert.deepEqual(actualBundles, approvedBundles, '未实现包重生或当前包
 assert.equal(actualBundles.length, effectsMove.bundleInventory.after.bundles, '拆包后的范围数量须与本次证据一致');
 const resourceFiles = files(assets);
 const actualPrefabs = resourceFiles.filter(file => file.endsWith('.prefab')).map(file => path.relative(root, file).replaceAll('\\', '/')).sort();
-assert.deepEqual(actualPrefabs, evidence.retainedPrefabs.map(row => path.relative(root, resolveAssetPath(row.path)).replaceAll('\\', '/')).sort(),
+assert.deepEqual(actualPrefabs, approvedPrefabs.map(row => path.relative(root, resolveAssetPath(row.path)).replaceAll('\\', '/')).sort(),
     'Prefab必须对应已实现入口及其依赖，不预留未实现页面');
 const knownUuids = new Set();
 for (const file of resourceFiles.filter(file => file.endsWith('.meta'))) {
@@ -101,7 +110,7 @@ for (const file of resourceFiles.filter(file => file.endsWith('.meta'))) {
     collectUuids(read(file), knownUuids);
 }
 for (const file of resourceFiles.filter(file => /\.(prefab|scene|anim|mtl)$/.test(file))) inspect(read(file), file, knownUuids);
-for (const row of evidence.retainedPrefabs) {
+for (const row of approvedPrefabs) {
     assert.equal(read(resolveAssetPath(row.path + '.meta')).uuid, row.uuid, '当前Prefab身份变化：' + row.path);
 }
 let views = 0;
@@ -117,7 +126,14 @@ for (const file of resourceFiles.filter(file => file.endsWith('.ts'))) {
         resolveAssetPath(match[1] + '.prefab');
     }
 }
-assert.equal(views, 17, '当前独立View数量改变时须同步核对入口与资源闭包');
+assert.equal(views, 21, '当前独立View数量改变时须同步核对入口与资源闭包');
+// 原图像素恢复有单独旧图集证据；仅接受明确列出的最终图片摘要，继续核对原UUID和meta。
+for (const row of [...equipmentDetail.resources, ...itemShard.resources]) {
+    const file = path.resolve(root, row.path);
+    assert.equal(hash(file), row.afterSha256, '详情依赖图片与RGBA复原证据不一致：' + row.path);
+    assert.equal(read(file + '.meta').uuid, row.uuid, '详情依赖原UUID变化：' + row.path);
+    assert.equal(row.rgbaMatched, true, '详情依赖没有完成旧图集像素核对：' + row.path);
+}
 for (const row of evidence.moved) {
     assert(!fs.existsSync(path.join(root, row.from)), '迁移后仍保留旧图副本');
     assert.equal(hash(resolveAssetPath(row.to)), row.imageSha256);
@@ -133,7 +149,11 @@ assert.equal(effectsMove.snapshot.format, 'effects-tree-sha256-v1', '特效摘�
 assert.deepEqual(effectsMove.snapshot.before, effectsMove.snapshot.after, '迁移前后特效文件或UUID集合摘要必须完全一致');
 assert.deepEqual(effectsSnapshot(effectsRoot, effectsMeta), effectsMove.snapshot.after,
     '特效文件路径、字节、内容哈希或meta UUID集合与原始快照不一致');
-assert.equal(hash(effectsMetaFile), effectsMove.rootMeta.afterSha256, 'effects根meta与批准配置不一致');
+// 此根meta在拆包时新增Bundle声明并以LF保存，Git在Windows重新检出可能变为CRLF。
+// 只规范这份声明的文本换行；上方全部原特效文件仍逐字节核对，不放宽图片或原meta摘要。
+const effectsMetaText = fs.readFileSync(effectsMetaFile, 'utf8').replace(/\r\n/g, '\n');
+assert.equal(crypto.createHash('sha256').update(effectsMetaText).digest('hex'),
+    effectsMove.rootMeta.afterSha256, 'effects根meta与批准配置不一致');
 assert.equal(effectsMeta.uuid, effectsMove.uuid, 'effects根UUID必须保留');
 assert.deepEqual(effectsMeta.userData, { isBundle: true, bundleName: 'effects', priority: 2, bundleConfigID: 'remote-assets' });
 assert.equal(bundleEntries().filter(entry => entry.meta.userData.bundleConfigID === 'remote-assets').length,

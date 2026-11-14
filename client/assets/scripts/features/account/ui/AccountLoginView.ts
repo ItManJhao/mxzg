@@ -2,6 +2,7 @@
 import { _decorator, Button, EditBox, Label, Node } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
+import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import type { AccountActions, AccountView } from "../AccountController";
 import type { AccountState } from "../AccountModel";
@@ -26,7 +27,7 @@ export class AccountLoginView extends BaseView implements AccountView {
     @property(Button) restoreButton: Button | null = null;
     /** 清除本机会话入口。 */
     @property(Button) logoutButton: Button | null = null;
-    /** 连接进度或失败原因。 */
+    /** 连接进度；操作失败统一交全局飘字，不留在固定说明区。 */
     @property(Label) statusLabel: Label | null = null;
     /** 开发渠道说明，不作为角色资料窗口。 */
     @property(Label) profileLabel: Label | null = null;
@@ -38,6 +39,9 @@ export class AccountLoginView extends BaseView implements AccountView {
     @property(Button) serverButton: Button | null = null;
     /** 当前区服名称，由选服状态刷新。 */
     @property(Label) serverLabel: Label | null = null;
+
+    /** 本页最近已反馈的账号错误，清空错误后允许同一操作再次反馈。 */
+    private lastError = "";
 
     /** 绑定本页操作并返回解绑函数，页面关闭后不保留点击回调。 */
     bind(actions: AccountActions): () => void {
@@ -66,7 +70,7 @@ export class AccountLoginView extends BaseView implements AccountView {
         return () => { for (const stop of stops.splice(0)) stop(); };
     }
 
-    /** 根据账号状态更新可操作状态和错误文字，不发请求。 */
+    /** 根据账号状态更新操作及进度；新失败只通过全局飘字报告一次，不发请求。 */
     render(state: AccountState): void {
         this.loginButton!.interactable = !state.busy;
         this.restoreButton!.interactable = !state.busy;
@@ -75,7 +79,12 @@ export class AccountLoginView extends BaseView implements AccountView {
         this.logoutButton!.interactable = !state.busy;
         if (this.developerButton) this.developerButton.interactable = !state.busy;
         if (this.serverButton) this.serverButton.interactable = !state.busy;
-        this.statusLabel!.string = state.busy ? "正在连接服务器…" : state.error || "";
+        this.statusLabel!.string = state.busy ? "正在连接服务器…" : "";
+        const error = state.error || "";
+        if (error && error !== this.lastError) {
+            UIManager.instance.toast(error);
+        }
+        this.lastError = error;
         this.profileLabel!.string = state.role ? `当前角色：${state.role.nickname}` : "仅供本机联调 · 暂未接入正式渠道账号";
     }
     /** 更新服务器名称，未同步时显示等待提示。 */

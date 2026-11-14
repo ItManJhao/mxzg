@@ -1,0 +1,251 @@
+{
+  "date": "2026-11-13",
+  "branch": "hao",
+  "baseline": "c23b53ed及此前未提交修改，全部保留",
+  "scope": "领取前置：修正AssetSync事务资源隔离和钱包精确加法；核清2000002最小精灵发放范围，未实施该领域",
+  "assetSync": {
+    "reproduced": "原实现下，期限删除提交但内层revision从预期2停在1；内层B通知混入外层；通知异常把已提交操作报失败",
+    "fix": "同步器suspend/resume隔离并恢复集合，afterCompletion按对象身份解绑；逐角色通知异常及日志失败不改变提交结果",
+    "runtime": "项目隔离JDK21；本地Spring Boot4.1.2/Framework7.0.10；真实DataSourceTransactionManager与独立H2",
+    "noNewQueue": "不缓存离线推送，不重新发奖，仍从统一鉴权快照恢复"
+  },
+  "wallet": {
+    "fix": "先验事务，FOR UPDATE读两余额，分别Math.addExact全部通过后一次UPDATE并沿用AssetSync",
+    "rejected": "负/全零奖励、坏旧余额、任一币种溢出、无事务；失败不写另一币种或revision",
+    "concurrency": "竞争角色锁后才读余额；外层回滚和同事务重复登记有真实数据库覆盖"
+  },
+  "validation": {
+    "before": {
+      "log": "backend/target/asset-sync-before-20261113.log",
+      "tests": 3,
+      "failures": 3,
+      "errors": 0,
+      "expectedFailure": true,
+      "meaning": "原实现定向复现，不计为通过"
+    },
+    "syncAfter": {
+      "log": "backend/target/asset-sync-after-20261113.log",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0
+    },
+    "related": {
+      "log": "backend/target/idle-settlement-prerequisites-20261113.log",
+      "tests": 75,
+      "classes": 13,
+      "failures": 0,
+      "errors": 0,
+      "results": [
+        {
+          "class": "com.funsgamex.mxzg.AssetSyncTransactionTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.GameSocketActivationTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.GameSocketTest",
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.GmTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.InventoryIdentityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainChapterIdleTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainChapterPersistenceTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainChapterRewardTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainChapterSocketTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainFormationCommandTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainFormationStateTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.RoleCurrencyCreditTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.RoleExperienceTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "final": {
+      "log": "backend/target/idle-prerequisites-final-20261113.log",
+      "tests": 16,
+      "classes": 2,
+      "failures": 0,
+      "errors": 0,
+      "meaning": "日志隔离收口后重跑同步9项与钱包7项，属于75项内的相同用例，不相加为91项不同测试"
+    },
+    "environment": "新建内存H2、真实Spring事务、本机回环随机端口WS，不访问日常角色或数据库",
+    "notRun": [
+      "MySQL",
+      "日常库",
+      "浏览器/Creator",
+      "发布构建",
+      "新精灵发放",
+      "新挂机领取协议/事务"
+    ]
+  },
+  "spiritScope": {
+    "itemId": 2000002,
+    "name": "月兔精灵·蓝",
+    "legacyType": "RUNE/8",
+    "bagPlace": 4,
+    "proposed": "真实生成、独立实例持久化、统一资产快照、现有背包精灵分类只读列表/详情，范围确认后实施",
+    "current": "无对应独立实例领域、快照字段或三表定向投影；本批未修改proto、迁移或页面",
+    "randomOrder": [
+      "4种能力类型均匀抽",
+      "固定1技能数量仍抽样",
+      "等级1/2权重8000/2000",
+      "按等级抽49个技能ID，分别含权重1/3与1/5"
+    ],
+    "abilityValuesAtRare2": {
+      "hp": 1476,
+      "attack": 146,
+      "defense": 21,
+      "speed": 5
+    },
+    "identity": "字符串实例ID；同配置同属性不合并，不按itemId去重；保存未穿戴、位置0、经验0、洗练能力0/技能空的旧新建默认值",
+    "capacity": "所核真实发放链无容量限制，分页大小不是容量",
+    "notOpened": [
+      "领取",
+      "升级",
+      "穿脱",
+      "洗练",
+      "合成",
+      "分解"
+    ],
+    "sourceDifference": "Java实际生成/持久/回包单能力；旧Lua描述符repeated保留数组，详情却按标量查，显示实现不一致；不是多能力规则依据，旧实际画面未核"
+  },
+  "sourceChanges": [
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/network/AssetSyncService.java",
+      "sha256": "e9bfd4c870f707acad9b23758166702e35f400195acb81d7acd7141b6bba4335"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/role/RoleRepository.java",
+      "sha256": "39c3f03ef069bd2b9a9539d95914bb5c9560c2c5f8dfd5020c93aba41de220a0"
+    },
+    {
+      "path": "backend/src/test/java/com/funsgamex/mxzg/AssetSyncTransactionTest.java",
+      "sha256": "9a892c1081400a288585712be196ebcfdbad7e0f1cf5bed726a3b2492bf31036"
+    },
+    {
+      "path": "backend/src/test/java/com/funsgamex/mxzg/RoleCurrencyCreditTest.java",
+      "sha256": "c3249be1baf6ad464ca8179625f76dcae2a3c3dbc247fe69a13d7786ba4d14a9"
+    }
+  ],
+  "legacySources": [
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/processor/RuneProcessor.java",
+      "sha256": "83a50e1851f7e372d21c0d827f80eef1103c09223c297c8a8b8ca7fd37798b9b"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/rune/domain/RuneInfo.java",
+      "sha256": "2d74f3519c8b424c75c21c1d77705ba65bc96057788d9d2b337a5f4b205d82fb"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/rune/service/RuneInfoService.java",
+      "sha256": "5fc9bb7cc3c2cbd893608b194b3fcbf71048b21b74816cfe0d5e5297a96e08e5"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/RunesTypeSysCache.java",
+      "sha256": "a08234e18bcd015ea703605f6824c56521f31d4cc9f224073a3f0f04b6f29461"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/RunesAbilitySysCache.java",
+      "sha256": "5fa0b69cc6f1ec84490765fc0a0a17165db6ecd2379d18681f15d43598009322"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/RuneSkillTypeSysCache.java",
+      "sha256": "982b10454df8d01ae035bb78086d4cc60c49c4ff3f88506396ecdfbd12c2b64a"
+    }
+  ],
+  "sourceConfiguration": [
+    {
+      "path": "config/gameconfig/item.xlsx",
+      "sha256": "a0814fdbbb49d375e4c9ed293183643cb7a12f2a8d5b4024dd8f4ec0b6c5d6f7"
+    },
+    {
+      "path": "config/gameconfig/runestype.xlsx",
+      "sha256": "8b6e4dd3b13e592d2139cb93f3caf5038a659bbea5db30243846b31cb56e5c73"
+    },
+    {
+      "path": "config/gameconfig/runesability.xlsx",
+      "sha256": "ccb866da03475dae50306aae0df7a4c7479e572831afe66d0f7f7e824244ee39"
+    },
+    {
+      "path": "config/gameconfig/runeskilltype.xlsx",
+      "sha256": "e32d2f6db4a1cd1a4b7cb0bf2152be185024e31d1ce7131b5c50a977c02f2191"
+    }
+  ],
+  "remaining": [
+    "精灵最小领域范围待确认并实施",
+    "新主线累计/回执/领取协议/事务仍未实施",
+    "首次挑战前起点及65/60秒双门槛已确认但未接线",
+    "宝箱领取/快速战斗/英雄升级/穿脱关闭",
+    "清心概率与护盾待审保留"
+  ],
+  "git": "未提交、未推送、未合并main"
+}

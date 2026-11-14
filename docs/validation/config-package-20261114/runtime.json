@@ -1,0 +1,77 @@
+{
+  "runtime": {
+    "binaryInEngine": false,
+    "configurationRequests": [
+      {
+        "duration": 7.100000008940697,
+        "encodedBodySize": 581,
+        "transferSize": 300,
+        "url": "http://localhost:7456/assets/config/config.json"
+      },
+      {
+        "duration": 6.799999997019768,
+        "encodedBodySize": 0,
+        "transferSize": 300,
+        "url": "http://localhost:7456/assets/config/index.js"
+      },
+      {
+        "duration": 6.0999999940395355,
+        "encodedBodySize": 267453,
+        "transferSize": 300,
+        "url": "http://localhost:7456/assets/config/import/18/187bad19-058b-4955-8928-c44168a8e60b.json"
+      },
+      {
+        "duration": 3,
+        "encodedBodySize": 564,
+        "transferSize": 300,
+        "url": "http://localhost:7456/assets/config/import/b0/b0e751d2-f973-4bd6-9a7e-731ae17c4fbd.json"
+      },
+      {
+        "duration": 4.699999988079071,
+        "encodedBodySize": 125,
+        "transferSize": 300,
+        "url": "http://localhost:7456/assets/config/import/29/298c2202-eb35-4d3f-b35b-185fe934e089.json"
+      },
+      {
+        "duration": 4.0999999940395355,
+        "encodedBodySize": 408367,
+        "transferSize": 300,
+        "url": "http://localhost:7456/assets/config/native/29/298c2202-eb35-4d3f-b35b-185fe934e089.bin"
+      }
+    ],
+    "engineFound": true,
+    "files": 49,
+    "pageStarted": "2026-11-14T11:02:05.174Z",
+    "typedTables": 20,
+    "version": "config-v1:94380d76c4204fe90737ea7cd81888cd4a6c91a6997a3ecea8014a1a457ab1fd"
+  },
+  "issues": [],
+  "background": [
+    {
+      "level": "log",
+      "message": "%c[mxzg][APP][ApplicationResources]%c[info] 18:56:32 后台资源处理结束：成功4，失败0，总数4 color:#B388FF color:#B388FF",
+      "timestamp": "2026-11-14T10:56:32.818Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][APP][ApplicationResources]%c[info] 19:00:36 后台资源处理结束：成功4，失败0，总数4 color:#B388FF color:#B388FF",
+      "timestamp": "2026-11-14T11:00:36.288Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][APP][ApplicationResources]%c[info] 19:02:43 后台资源处理结束：成功4，失败0，总数4 color:#B388FF color:#B388FF",
+      "timestamp": "2026-11-14T11:02:43.413Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    }
+  ],
+  "initialConfigurationRequests": [
+    "http://localhost:7456/assets/config/config.json",
+    "http://localhost:7456/assets/config/index.js",
+    "http://localhost:7456/assets/config/import/18/187bad19-058b-4955-8928-c44168a8e60b.json",
+    "http://localhost:7456/assets/config/import/b0/b0e751d2-f973-4bd6-9a7e-731ae17c4fbd.json",
+    "http://localhost:7456/assets/config/import/29/298c2202-eb35-4d3f-b35b-185fe934e089.json",
+    "http://localhost:7456/assets/config/native/29/298c2202-eb35-4d3f-b35b-185fe934e089.bin"
+  ]
+}

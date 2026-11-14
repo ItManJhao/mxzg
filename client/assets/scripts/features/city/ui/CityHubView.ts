@@ -1,9 +1,9 @@
 /**
- * 主城地图 View：加载地图和建筑显示，按注入的等级及配置处理开放状态，并转交入口点击。
+ * 主城地图View：同步读取登录后已安装的GameConfig，装配地图、建筑和特效显示并转交入口点击。
+ * 本页不准备或下载配置；页面只持有仓库中只读表的引用，美术资源仍由现有服务按需提供。
  */
 import { _decorator, Button, Color, EventTouch, Node, Sprite, UITransform } from "cc";
 import { GameConfig } from "../../../config/GameConfig";
-import { ConfigName, ConfigFileMap } from "../../../config/GConfig";
 import { ErrorUtils } from "../../../core/ErrorUtils";
 import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
@@ -42,9 +42,11 @@ const CITY_PLATES: {
 ];
 const plateMisses = new Set<string>();
 export interface CityHubOpenArgs {
-    loadConfig?: <N extends ConfigName>(name: N) => Promise<ConfigFileMap[N]>;
+    /** 建筑入口点击交回主城宿主处理，不在地图中组织业务请求。 */
     onAtom: (atom: string) => void;
+    /** 主线入口点击交回主城宿主，沿既有主线页面流程打开。 */
     onMainline: () => void;
+    /** 宿主提供当前角色等级及开放条件查询，不复制角色状态。 */
     query: CityMapQuery;
 }
 /**
@@ -70,11 +72,11 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
     /** 预制体绑定的主线入口按钮，点击操作由主城宿主注入。 */
     @property(Node)
     btnMainline: Node | null = null;
-    /** 当前实例已读取的位置配置，首次异步准备完成前为null。 */
+    /** 已安装位置表的只读引用，地图首次初始化前为null，不另存配置副本。 */
     private pos: MainCityPosFile | null = null;
-    /** 当前实例已读取的建筑按钮配置，首次异步准备完成前为null。 */
+    /** 已安装建筑按钮表的只读引用，地图首次初始化前为null。 */
     private btn: MainCityBtnFile | null = null;
-    /** 当前实例已读取的主城特效配置，首次异步准备完成前为null。 */
+    /** 已安装主城特效表的只读引用，地图首次初始化前为null。 */
     private effect: MainCityEffectFile | null = null;
     /** 当前视口与配置生成的布局描述，配置就绪或视口变化时整体重算。 */
     private layout: CityMapLayout = CityMapLayoutUtils.buildCityMapLayout(null, null, null);
@@ -98,7 +100,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
     private started = false;
     /** 建筑按钮已开始绑定时为true，同一实例后续刷新不重复登记点击。 */
     private clicksBound = false;
-    /** 关闭或释放后为true，重复清理直接返回，异步配置完成时据此拒绝继续写页面。 */
+    /** 关闭或释放后为true，重复清理直接返回，动态显示由各自资源作用域结束迟到交付。 */
     private cleaned = false;
     /** 返回主城地图根节点，由RemakeHomeView统一持有其显示和生命周期。 */
     get root(): Node {
@@ -109,7 +111,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
     get mainButton(): Node | null {
         return this.btnMainline;
     }
-    /** 接收主城配置和入口操作，首次异步初始化；已开始的实例只刷新建筑锁态。 */
+    /** 接收主城入口操作并同步读取已安装配置；已开始的实例只刷新建筑锁态。 */
     onOpen(args?: CityHubOpenArgs): void {
         if (args) {
             this.args = args;
@@ -120,7 +122,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         }
         this.started = true;
         this.beginOpen();
-        void this.initializeCity();
+        this.initializeCity();
     }
     /** 关闭主城地图时停止特效并解除触摸监听，不释放应用持有的资源缓存。 */
     onClose(): void {
@@ -148,30 +150,20 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         });
     }
 
-    /** 收集已绑定节点、读取三张主城表并完成入口和特效装配；关闭后丢弃迟到结果，初始化异常使开页等待失败。 */
-    private async initializeCity(): Promise<void> {
+    /** 同步读取三张已安装主城表并完成入口和特效装配；缺配置直接使开页等待失败，不补加载或退回空表。 */
+    private initializeCity(): void {
         try {
             if (!this.args) {
                 throw new Error("主城没有打开参数");
             }
             this.collect();
             this.requireBound();
+            this.pos = GameConfig.instance.getFile(CITY_CFG_POS);
+            this.btn = GameConfig.instance.getFile(CITY_CFG_BTN);
+            this.effect = GameConfig.instance.getFile(CITY_CFG_EFFECT);
             this.layout = CityMapLayoutUtils.buildCityMapLayout(this.pos, this.btn, this.effect);
             ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.applyVisible());
             this.ensurePlates();
-            const loaded = await Promise.all([
-                this.loadCfg(CITY_CFG_POS),
-                this.loadCfg(CITY_CFG_BTN),
-                this.loadCfg(CITY_CFG_EFFECT),
-            ]);
-            if (this.cleaned || !this.node || !this.node.isValid) {
-                this.failOpen(new Error("页面已关"));
-                return;
-            }
-            this.pos = loaded[0];
-            this.btn = loaded[1];
-            this.effect = loaded[2];
-            this.applyVisible();
             this.bindSpots();
             if (this.spotViews.size < 1 || !this.views.has("spot-main_summon")) {
                 throw new Error("CityHub 没有建筑按钮");
@@ -458,18 +450,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         });
     }
 
-    /** 读取已提交的类型化主城表；失败记录表名并返回null，由页面统一处理初始化结果，不绕过加载器。 */
-    private async loadCfg<N extends ConfigName>(path: N): Promise<ConfigFileMap[N] | null> {
-        try {
-            return this.args?.loadConfig ? await this.args.loadConfig(path) : GameConfig.instance.getFile(path);
-        }
-        catch (err) {
-            GameLog.shared.classified("MODULE", "error", "CityHubView", path + " " + (err instanceof Error ? err.message : "load failed"));
-            return null;
-        }
-    }
-
-    /** 幂等标记页面关闭，停止特效并解除地图触摸监听；迟到配置通过该标记拒绝继续装配。 */
+    /** 幂等标记页面关闭，停止特效并解除地图触摸监听；动态美术由对应停止入口撤回持有。 */
     private cleanup(): void {
         if (this.cleaned) {
             return;

@@ -47,11 +47,11 @@ export class SkillAuditUtils {
         "102050234:2": ["independent-nanako-replay.pb", "部分接入", "控制触发链可演示；208全零配置疑点保留，不能视为所有分支验收。"]
     };
 
-    /** 列出英雄全部配置技能等级，保留未接入条目与明确原因。 */
+    /** 从统一配置的只读行列出英雄全部技能等级；此处是列表筛选，不再读取文件或复制索引。 */
     public static skills(heroId: number, config = GameConfig.instance): readonly SkillAuditEntry[] {
         const hero = config.requireConfig(GConfig.HeroType, heroId);
         const ids = [hero.skill_5, hero.skill_1, hero.skill_2, hero.skill_3, hero.skill_4];
-        const rows = config.getFile(GConfig.HeroSkill).rows;
+        const rows = config.getConfig(GConfig.HeroSkill);
         const text = (id: number) => String(config.getConfig(GConfig.Language, id)?.value || "");
         return ids.filter((id): id is number => typeof id === "number" && id > 0).reduce<SkillAuditEntry[]>((all, id) => all.concat(rows.filter(row => row.type === id)
             .sort((a, b) => a.level - b.level).map(row => {

@@ -1,0 +1,138 @@
+{
+  "date": "2026-11-14",
+  "branch": "hao",
+  "scope": "配置包就绪后直接查询唯一GameConfig，清理页面及显示工具的重复配置索引和整表参数",
+  "delivery": {
+    "committed": false,
+    "pushed": false,
+    "mergedMain": false,
+    "newReleaseBuild": false,
+    "prefabChanged": false,
+    "uuidChanged": false,
+    "gameplayExpanded": false
+  },
+  "implementation": [
+    "BagItemCatalog移除items/words/timed/spirits四份Map和公开构造，只保留无状态静态显示计算",
+    "SpiritInfoView、BagView、BagInfoView、装备详情及产物窗口/行组件不再new、保存或传递Catalog；简单mode/欢迎语直接getConfig",
+    "HeroCatalog按HeroType/Item主键计算当前一行显示，移除templates及临时icons全量Map；英雄列表/详情/布阵/战报不保存Catalog",
+    "EquipmentDetailSource六表参数及窗口source已删除；装备工具直接查询统一配置，不再复制Language/ScoreCount Map",
+    "ItemDetailUtils.read(row,context,config)直接查语言主键，不传整张语言表；GM同样直接查语言，保留真实搜索选项投影",
+    "ChapterEndView不再创建经验门槛Map或奖励Catalog；挂机模型、战斗元素及胜利英雄按模板主键查询",
+    "文件路径、类名、meta和Prefab保持；不为改名增加兼容层，不增加索引Manager或模块配置清单"
+  ],
+  "boundaries": [
+    "GameConfig当前49份文件、20张类型化表；主键查询不触发请求，raw文件与索引仍共用一份数据",
+    "ScoreCount.mapping不是idx主键，套装按type/num组合匹配，mainlevel尚未类型化；直接在同一只读行匹配，不冒用主键或新增页面Map",
+    "分类、期限隐藏、碎片上下文、富文本、精灵实例技能、评分逐条ceil、套装0/4和头像回退等真实显示规则保留",
+    "虚拟列表当前ID、GM搜索结果、布阵草稿、库存差异以及本场血量/Buff/资源映射属于运行状态，继续保留",
+    "WS＋Protobuf、服务端权威与幂等、三段配置和原资源池未改变；领取、快速战斗、养成等仍未开放"
+  ],
+  "checks": {
+    "frontendSuites": [
+      "backpack",
+      "item-info-view",
+      "item-detail",
+      "equipment-detail",
+      "equipment-info-view",
+      "hero",
+      "formation-view",
+      "hero-detail",
+      "hero-equipment",
+      "battle",
+      "main-chapter",
+      "gm",
+      "staged-loading",
+      "battle-presentation",
+      "bindings",
+      "creator-compat"
+    ],
+    "strictTypecheck": "Creator3.8.8 TypeScript -p client/tools/tsconfig.remake.json --noEmit通过",
+    "generatorCheck": "配置包--check通过，changed=[]，版本与408367字节正文不变",
+    "meaningfulCases": [
+      "独立真实GameConfig拒绝背包/英雄显示取得整张文件和无键整表查询；同ID再次查询读取当前行而不是旧Catalog快照",
+      "392种精灵特性/技能组合、584条物品投影、109种具体英雄碎片及富文本/缺失/损坏语义保留",
+      "68条普通装备、浮点评分边界、重复mapping及配置缺失拒绝；两份仓库同ID语言不串缓存",
+      "英雄item_id/elem可缺失时仍沿原头像回退且元素为null；真实战斗缺元素仍拒绝，不填默认",
+      "结算经验查询读取当前已安装mainlevel；列表复用、关闭/注销、迟到资源与订阅清理回归保留",
+      "详情缺类型语言的反例改在实际getConfig入口模拟，仍拒绝开窗并清理监听；不再通过旧getFile替身制造假失败"
+    ],
+    "docsAndDiff": "46份文档链接及修改范围diff检查通过"
+  },
+  "localPreview": {
+    "host": "http://localhost:7456/",
+    "creatorDevice": "Apple iPhone 14 Pro 393×852；浏览器430×932，含Creator工具栏，非真机",
+    "backend": {
+      "kind": "mxzg-owned-socket-it",
+      "port": 64557,
+      "run": "1a59cccf7d884eacbc15f8068a4f68d7",
+      "pid": 9732,
+      "database": "随机内存H2，仅本批独立角色；未连接或重启日常后端",
+      "gmEnabled": false,
+      "stopped": true,
+      "stoppedAt": "2026-11-14T12:48:39.2211894Z"
+    },
+    "newCodeVerified": "运行时BagItemCatalog.face与HeroCatalog.find为静态函数，旧prototype.face/find均undefined；已确认不是旧编译内容",
+    "passed": [
+      "独立loading_review登录、安装配置包后进入主城；背包欢迎语正常",
+      "普通装备1001001专用详情评分/攻击33，普通道具900102及950001精英碎片详情正常，关闭返回",
+      "2000002独立精灵无数量，样本护甲21、低级追击和精确说明正常；不借同模板其他实例属性",
+      "刷新后通过开发账号设置清除独立会话并换chapter_review；英雄三名100级，黑暗切割者5星详情及170%物理伤害说明正常",
+      "挂机模型、元素图、遇敌和英雄对话正常；产物首通/挂机两页首屏及只读角色经验详情、双窗关闭通过",
+      "布阵3/6→真实第二关挑战→胜利结算→自动返回挂机；继续第三关挑战，胜利最高伤害、经验条及奖励显示正常",
+      "第三关战报双方头像、名称、等级、统计正常；关闭返回已通关挂机",
+      "F9总入口及道具GM列表显示金币、钻石、角色经验等真实名称；服务端GM关闭，未点击发放或改变权限",
+      "配置请求始终6项，其中唯一bin为408367字节；各开页没有追加47份散表，GameConfig49文件/20类型表且版本不变",
+      "共捕获244条浏览器日志，无warn/error；测试页关闭并恢复浏览器临时尺寸，独立后端核对身份后已停止"
+    ],
+    "evidence": {
+      "bag": "config-direct-lookup-20261114/bag-runtime.json",
+      "chapter": "config-direct-lookup-20261114/chapter-runtime.json",
+      "console": "config-direct-lookup-20261114/console.json"
+    },
+    "screenshots": [
+      "config-direct-lookup-20261114/home.jpg",
+      "config-direct-lookup-20261114/equipment.jpg",
+      "config-direct-lookup-20261114/spirit.jpg",
+      "config-direct-lookup-20261114/item.jpg",
+      "config-direct-lookup-20261114/shard.jpg",
+      "config-direct-lookup-20261114/hero.jpg",
+      "config-direct-lookup-20261114/skill.jpg",
+      "config-direct-lookup-20261114/rewards.jpg",
+      "config-direct-lookup-20261114/reward-detail.jpg",
+      "config-direct-lookup-20261114/formation.jpg",
+      "config-direct-lookup-20261114/battle-report.jpg",
+      "config-direct-lookup-20261114/third-returned-idle.jpg",
+      "config-direct-lookup-20261114/gm-items.jpg",
+      "config-direct-lookup-20261114/final-idle.jpg"
+    ],
+    "limitations": [
+      "预览中有HTTP缓存/压缩，不把内容长度当新增下载流量或正式CDN速度",
+      "未重验850末关滚动、全部详情UI矩阵、完整经验动画边界或98种精灵技能逐项画面",
+      "无本批新发布包、真机、MySQL或长期内存/GC测量，不以删Map承诺具体内存下降",
+      "此前19:54/20:14发布记录独立保留，不能替代本轮源码的发布验证"
+    ]
+  },
+  "sourceSha256": {
+    "client/assets/scripts/features/bag/utils/BagItemCatalog.ts": "4d67190d84bc71947b300d08b8f189b4fe753aa014e7b5d79d5c125a24cb1524",
+    "client/assets/scripts/features/bag/utils/ItemDetailUtils.ts": "123799fe431541bb39d8b233691b1f2e707779b2427656d5befb36a418b2475c",
+    "client/assets/scripts/features/bag/utils/EquipmentDetailUtils.ts": "8c897e4831fa5a4dd78e7100e8abfa0ae651bcd01c989e3f86f2068096db55ad",
+    "client/assets/scripts/features/bag/ui/BagView.ts": "4c156fbd991727c556a1653e062b2aa640f1adb2d59bf23403b8ce245db4092f",
+    "client/assets/scripts/features/bag/ui/BagInfoView.ts": "a04dbc8e8e57515e1b6b9d65f265a5a3c28ecab42ee5fb29110f6802acf48184",
+    "client/assets/scripts/features/bag/ui/SpiritInfoView.ts": "83410c224740e07ed3a6fe9a1ecdb71193dcd698da2205677fede9eced467231",
+    "client/assets/scripts/features/bag/ui/EquipmentInfoView.ts": "7ccf250907cff838ce530fcadf3713001fa7cdf97ddc94e2c54cd987002f3dcc",
+    "client/assets/scripts/features/hero/utils/HeroCatalog.ts": "8f1d090b82008a80b88313936a22d2ba158672deebac6e200d0d31cab7d3a38b",
+    "client/assets/scripts/features/hero/utils/HeroRosterUtils.ts": "b31b8afdeeb6183cc1976e5c3da7b5fe137ca44c90b0af2b134bfe26b1d7f0e8",
+    "client/assets/scripts/features/hero/ui/HeroListView.ts": "2fe88fd83a4fd2a64cb833c3ee9d299fea79df3d8b00e90adc5679bd21efa30f",
+    "client/assets/scripts/features/hero/ui/HeroInfoView.ts": "2007f5ce9d2c4f5e0953312bed160c28829d90791382847f04eca87c174b9f9e",
+    "client/assets/scripts/features/hero/ui/FormationView.ts": "25777a8e673ff8f03eaa1acf9a504465006bf17cc2814814ea7af3167d02aea0",
+    "client/assets/scripts/features/battle/ui/BattleDetailLayer.ts": "72587de66ed9b104cac194625b44e466067ffd894c0521301acbd296f2ce6598",
+    "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts": "26236e045fbcab82822fa945519d9c031970aa77b1a41228c2f957b0eac16ade",
+    "client/assets/scripts/features/battle/ui/ChapterRewardInfoCell.ts": "432a1af67cb9c4c4825fe262f521ab0af34c4cfc2661b03c236cf14515082bc2",
+    "client/assets/scripts/features/battle/ui/ChapterRewardInfoView.ts": "b62e5b8f6772de5145496e5d07f4b52d97ede467b5b4ee8f9272a51bcb74d16e",
+    "client/assets/scripts/features/battle/ui/ChapterEndView.ts": "d403afd5f70fca7d24c17c902c2a05afe83ef6cb5f59b9903bd82e8e20413b99",
+    "client/assets/scripts/features/battle/ui/MainChapterIdleDisplay.ts": "b68eec73553bc03a1b0760f61525aadf37867baf3210f925d9e0c04f4a1334f7",
+    "client/assets/scripts/features/battle/ui/SkillAuditView.ts": "235ff2cd5a09e21d5e969c0e2dcdbd7424de47759ffc034fe15f79c41b268727",
+    "client/assets/scripts/features/battle/utils/SkillAuditUtils.ts": "771d485373971b0e36c371617350c67fb5c1591774c0d8128fe40fecd630d963",
+    "client/assets/scripts/features/gm/ui/GmGrantView.ts": "6456d545631862ed0d9e51346f635c0537446f1ced48061075c8713e9156e246"
+  }
+}

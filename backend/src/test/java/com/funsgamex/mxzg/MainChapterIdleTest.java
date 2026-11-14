@@ -29,6 +29,16 @@ class MainChapterIdleTest {
     @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
     /** 角色行锁。 */
     @Autowired com.funsgamex.mxzg.role.RoleRepository roles;
+    /** 显式挑战累计入口，夹具不再依赖快照悄悄补建起点。 */
+    @Autowired com.funsgamex.mxzg.campaign.MainChapterIdleStateRepository idleStates;
+
+    /** 在隔离角色锁事务中模拟已受理挑战的累计初始化，不生成战斗或发奖。 */
+    private void initializeIdle(String role, long nowSeconds) {
+        new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status -> {
+            roles.lock(role);
+            idleStates.initializeForChallenge(role, nowSeconds);
+        });
+    }
 
     /** 三人内全部保留；多人抽样不重复且重连稳定，阵容版本变化才更新。 */
     @Test void selectedRosterIsBoundToFormationVersion() {
@@ -39,6 +49,7 @@ class MainChapterIdleTest {
         var tx=new org.springframework.transaction.support.TransactionTemplate(transactions);
         tx.executeWithoutResult(status -> {
             roles.lock(role);
+            idleStates.initializeForChallenge(role, 2000);
             var state=idle.snapshot(role,1,2000);
             var formation=new com.funsgamex.mxzg.lineup.MainFormationStateService.State(1,List.of(1),false,10,slots,List.of());
             var selected=idle.withLineup(role,state,formation);
@@ -51,18 +62,23 @@ class MainChapterIdleTest {
         });
     }
 
-    /** 未通关不初始化；通关后持久起点不因重连改变，快照读取不发奖。 */
+    /** 未通关不展示；挑战显式创建后持久起点不因胜利、重连或换关改变，快照不发奖。 */
     @Test void clockPersistsAndRatesFollowMainChapterWithoutGranting() throws Exception {
         var session=login.login("idle_"+UUID.randomUUID().toString().substring(0,12));
         String role=session.role().id();
         String token="Bearer "+session.session().accessToken();
         var initial=snapshots.snapshot(token);
         assertNull(initial.mainChapterIdle());
+        long initializedAt = java.time.Instant.now().getEpochSecond();
+        initializeIdle(role, initializedAt);
         jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,?)",role,1);
         var first=snapshots.snapshot(token);
         assertEquals(1,first.mainChapterIdle().rewardStage());
         assertEquals(rules.stage(1).base(),first.mainChapterIdle().rates());
-        assertEquals(rules.data().initialSeconds(),first.mainChapterIdle().serverTime()-first.mainChapterIdle().startedAt());
+        assertEquals(initializedAt-rules.data().initialSeconds(),first.mainChapterIdle().startedAt());
+        assertEquals(1,first.mainChapterIdle().claimState().schemaVersion());
+        assertEquals(1,first.mainChapterIdle().claimState().operationVersion());
+        assertEquals("READ_ONLY",first.mainChapterIdle().claimState().requestMode());
         var restored=snapshots.snapshot(token);
         assertEquals(first.mainChapterIdle().startedAt(),restored.mainChapterIdle().startedAt());
         assertEquals(first.revision(),restored.revision());
@@ -78,6 +94,16 @@ class MainChapterIdleTest {
         assertEquals(next.mainChapterIdle().startedAt(),decoded.path("startedAt").asLong());
         java.nio.file.Files.write(java.nio.file.Path.of("target/main-idle-snapshot.pb"),bytes);
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM game_idle_receipt WHERE role_id=?",Integer.class,role));
+    }
+
+    /** 已通关但缺累计记录时拒绝快照，不能通过重连补建免费领取起点。 */
+    @Test void clearedRoleWithoutClockRejectsSnapshotInsteadOfInitializing() {
+        var session = login.login("idle_missing_" + UUID.randomUUID().toString().substring(0, 8));
+        String role = session.role().id();
+        String token = "Bearer " + session.session().accessToken();
+        jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,1)", role);
+        assertThrows(IllegalStateException.class, () -> snapshots.snapshot(token));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_idle WHERE role_id=?", Integer.class, role));
     }
 
     /** 本场只读演出服务，不调用领奖或修改主线。 */
@@ -101,6 +127,7 @@ class MainChapterIdleTest {
         var beforeSave = snapshots.snapshot(token);
         formations.save(token, new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(
             UUID.randomUUID().toString(), beforeSave.mainFormation().version(), 1, slots));
+        initializeIdle(role, java.time.Instant.now().getEpochSecond());
         jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,3)", role);
         var before = snapshots.snapshot(token);
         for (int i = 0; i < 6; i++) {

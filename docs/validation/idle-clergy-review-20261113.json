@@ -1,0 +1,160 @@
+{
+  "date": "2026-11-13",
+  "baseline": "c23b53ed及前批未提交修改",
+  "scope": "神职持久等级与已解锁挂机条目只读输入，不恢复升级/充值/任务/领取",
+  "legacySources": [
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/role/domain/Role.java",
+      "sha256": "ed442a54c18eefe6be6f935ebce2d993c1fed67726c521221a9c5d1823194119"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/role/handler/LoginHandler.java",
+      "sha256": "d6056f39500f68f31c523fe2b27249ae2b83a2109ccbcf7b53a86e1ac3ac1073"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/clergy/handle/ClergyHandle.java",
+      "sha256": "123c673a52205b63802c42ddf8a1316880b089f9cd2889b02cc818e958f85f74"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/clergy/service/ClergyService.java",
+      "sha256": "15468fa9be09be8a4f280c6cd7dda200f7cb4e67c94549e5b8f41e8d44a33f29"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/entity/CClergyPrivilege.java",
+      "sha256": "17d7c3015a3c247bd1b33c25e385f06e8507214c553cf731ed3cfc171d279c30"
+    }
+  ],
+  "initialState": {
+    "level": 0,
+    "basis": "旧Role原始0；LoginHandler不设神职值；源表0行{}无特权。新版此前没有等级写入或46001，独立新版无旧玩家迁移。",
+    "inventory900007": "库存物品不是累计经验或已解锁等级；不转换、不删除",
+    "limit": "审计仅覆盖仓库正常写入链，不推断外部手工数据库改动"
+  },
+  "migration": {
+    "path": "backend/src/main/resources/db/migration/V19__idle_clergy_input.sql",
+    "schemaVersion": 19,
+    "column": "game_role.clergy_level INT NOT NULL DEFAULT 0 CHECK >=0",
+    "writes": "V18旧新版角色补已知零级；新角色使用同初值；未添加未使用经验列",
+    "validation": "独立H2 V18->V19保留全部旧字段、资产revision、挂机起点及900007库存，拒绝null/负值"
+  },
+  "rules": {
+    "legalLevels": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "matching": "先按clergy_level升序筛已解锁且type=IDLE_AWARD，再校验value/chance；6/10分别保留",
+    "entries": [
+      {
+        "level": 6,
+        "cell": "C10",
+        "basisPoints": 5000,
+        "chance": 10000
+      },
+      {
+        "level": 10,
+        "cell": "C14",
+        "basisPoints": 5000,
+        "chance": 10000
+      }
+    ],
+    "empty": "缺失/null/空白/JSON null/{}沿旧加载器表示该行无特权，未知等级仍拒绝",
+    "unrelated": "PET_DUNGEON未识别类型、STALL_SHOP缺概率等不阻塞挂机解析，不修改整表",
+    "random": "输入查询不抽样；calculate对已解锁每条各抽一次，逐原始分项float乘法后ceil"
+  },
+  "input": "IdleRewardInputService.current返回Input；角色/VIP/神职同次锁内SELECT，baseBonuses与clergyBonuses分开且冻结。仅三种已恢复来源，礼包/活动仍缺失。",
+  "config": {
+    "tables": 46,
+    "mavenSharedIncludes": 31,
+    "source": "client/assets/bundles/resources/config/clergyprivilege.json",
+    "rows": 12,
+    "sha256": "74fbd2124242d8c65120deed5d72af4420526af20060008b04fd064a09711513",
+    "uuid": "35468586-a718-4180-bf58-7a4f41eae89b",
+    "originalMetaBytePreserved": true,
+    "allSharedSourcesEqualPackaged": true
+  },
+  "checks": {
+    "java": {
+      "ClergyInputRulesTest": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "ClergyStateMigrationTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardInputServiceTest": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "WorldLevelServiceTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardRulesTest": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "MainChapterIdleTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRulesBoundaryTest": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleBonusUtilsTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleTest": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "total": 78,
+    "failures": 0,
+    "log": "backend/target/idle-clergy-review-20261113.log",
+    "configScope": {
+      "tests": 14,
+      "passed": 14
+    },
+    "resourceScope": "16 Bundle/32 Prefab/17独立View、全部序列化引用与12841份特效文件/UUID集合通过",
+    "resourceGenerated": "32 Prefab索引通过",
+    "docs": "44份文档文件链接与git diff --check通过"
+  },
+  "limitations": [
+    "仅独立H2和源配置检查，无日常玩家库或独立MySQL运行",
+    "未运行浏览器/Creator/发布包/真机",
+    "没有神职升级/经验累积/充值或客户端神职字段",
+    "完整领取与其他模块仍未开放"
+  ],
+  "git": "hao本地，未提交推送；保留此前HeroRosterController排版本地修改"
+}

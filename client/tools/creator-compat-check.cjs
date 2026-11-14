@@ -31,7 +31,7 @@ function publishedTransform(code) {
         "class Parent { get gap() { return this.value; } } class Child extends Parent { get gap() { return super.gap; } } const child = new Child(); child.value = 22; result = child.gap;"
     ), accessor);
     assert.equal(accessor.result, undefined, '发布转换应复现父类访问器丢失接收者');
-    for (const suite of ['config-groups', 'staged-loading', 'resource-catalog', 'super-scroll']) {
+    for (const suite of ['config-groups', 'config-package-loading', 'staged-loading', 'resource-catalog', 'super-scroll']) {
         const bundle = await esbuild.build({ absWorkingDir: root,
             entryPoints: ['client/tools/' + suite + '-check.ts'], bundle: true, platform: 'node',
             format: 'cjs', target: 'es2015', tsconfig: 'client/tools/tsconfig.check.json', write: false, logLevel: 'silent' });

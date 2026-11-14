@@ -2,8 +2,8 @@
 import { _decorator, Button, Label, Node, UITransform, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
+import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { SuperContent } from "../../../framework/ui/SuperContent";
@@ -15,8 +15,6 @@ import { FormationSaveModel } from "../FormationSaveModel";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { FormationEvent } from "../utils/FormationEvent";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
-import { GameConfig } from "../../../config/GameConfig";
-import { GConfig } from "../../../config/GConfig";
 import { HeroCatalog } from "../utils/HeroCatalog";
 import type { FormationState } from "../data/FormationData";
 
@@ -37,10 +35,6 @@ export interface FormationRequest {
     allowMultiple: false,
     hostId: "remake-modal",
     modal: { mask: true, closeOnOutside: true },
-    prepare: async () => {
-        await RemakeConfigUtils.prepareInventoryConfig();
-        await RemakeConfigUtils.prepareHeroConfig();
-    },
 })
 @ccclass("FormationView")
 export class FormationView extends BaseView<FormationRequest> {
@@ -82,10 +76,10 @@ export class FormationView extends BaseView<FormationRequest> {
     private selected: string | null = null;
     /** 页面关闭后不再绘制。 */
     private closed = true;
-    /** 只读模板显示索引。 */
-    private catalog: HeroCatalog | null = null;
     /** 当前页面草稿，绝不回写权威Model。 */
     private state: FormationState = { heroes: [], lineup: { version: 0, slots: [] }, busy: true, message: "等待阵容同步…" };
+    /** 当前保存轮次已反馈的结果文字；进入下一次发送时清空，避免资产事件重复提示。 */
+    private lastSaveMessage = "";
     /** 当前筛选元素，0表示全部，关闭清理。 */
     private elem = 0;
     /** 防止关闭回调重复执行。 */
@@ -98,6 +92,7 @@ export class FormationView extends BaseView<FormationRequest> {
         this.args = args;
         this.done = false;
         this.submitted = null;
+        this.lastSaveMessage = this.saves.snapshot.message;
         this.closed = false;
         this.elem = 0;
         const fields = { closeButton: this.closeButton, confirmButton: this.confirmButton, titleLabel: this.titleLabel,
@@ -116,7 +111,6 @@ export class FormationView extends BaseView<FormationRequest> {
         cell.validateBindings();
         this.fit();
         ccView.on("canvas-resize", this.fit, this);
-        this.catalog ??= new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
         this.bindControls();
         const list = this.heroScroll!.list;
         list.node.on(SuperContent.SELECT_ITEM, this.onSelect, this);
@@ -136,12 +130,11 @@ export class FormationView extends BaseView<FormationRequest> {
         this.node.setPosition((panel.anchorX - 0.5) * panel.width * local, (panel.anchorY - 0.5) * panel.height * local, 0);
     }
 
-    /** 注入可测试依赖；生产默认使用应用持有的唯一模块与Model，不创建页面控制器。 */
-    public configure(module: FormationController, roster: HeroRosterModel, saves: FormationSaveModel, catalog: HeroCatalog): void {
+    /** 注入可测试模块与Model；模板显示直接查询唯一GameConfig，不保存配置索引。 */
+    public configure(module: FormationController, roster: HeroRosterModel, saves: FormationSaveModel): void {
         this.module = module;
         this.roster = roster;
         this.saves = saves;
-        this.catalog = catalog;
     }
 
     /** 绑定内容按钮；共享模态空白关闭走onClose的草稿取消回调，不重复绑定背景。 */
@@ -177,10 +170,16 @@ export class FormationView extends BaseView<FormationRequest> {
         }
     }
 
-    /** 保存过程事件只驱动当前页；未确认请求由模块保留，重开仍显示原请求并允许重试。 */
+    /** 保存过程驱动当前页；结果交全局飘字，未确认请求仍保留原草稿供重试。 */
     private onSaveChanged(): void {
         if (this.closed) return;
         const status = this.saves.snapshot;
+        if (status.busy) {
+            this.lastSaveMessage = "";
+        } else if (status.message && status.message !== this.lastSaveMessage) {
+            UIManager.instance.toast(status.message);
+            this.lastSaveMessage = status.message;
+        }
         const current = this.roster.snapshot.mainFormation;
         const draft = this.submitted;
         if (this.args?.closeAfterSave && draft && !status.busy && !status.pending
@@ -196,13 +195,13 @@ export class FormationView extends BaseView<FormationRequest> {
             const option = this.roster.snapshot.mainFormation?.options?.find(row => row.formationId === request.formationId);
             this.state = { ...this.state, formationId: request.formationId, openPositions: option?.openPositions,
                 lineup: { version: request.expectedVersion, slots: request.slots.map(slot => ({ ...slot })) },
-                busy: status.busy, message: status.message };
+                busy: status.busy, message: status.busy ? status.message : "保存结果待确认，请用原草稿重试" };
             this.paint();
         } else if (status.busy) {
             this.state = { ...this.state, busy: true, message: status.message };
             this.paint();
         } else if (status.message) {
-            this.reload(status.message);
+            this.reload();
         }
     }
 
@@ -210,8 +209,7 @@ export class FormationView extends BaseView<FormationRequest> {
     private saveDraft(): void {
         if (this.closed || this.state.busy) return;
         if (!this.saves.snapshot.pending && !this.state.lineup.slots.length) {
-            this.state.message = "至少上阵一名英雄";
-            this.paint();
+            UIManager.instance.toast("至少上阵一名英雄");
             return;
         }
         if (this.args?.closeAfterSave) {
@@ -222,7 +220,7 @@ export class FormationView extends BaseView<FormationRequest> {
             formationId: this.state.formationId!, slots: this.state.lineup.slots.map(slot => ({ ...slot })) });
     }
 
-    /** 根据草稿绘制；统一列表只setData，不计算格子坐标或内容高度。 */
+    /** 根据草稿与当前模板行绘制；不建立全量配置索引，列表只setData。 */
     public render(state: FormationState): void {
         this.state = state;
         this.tipLabel!.string = state.message;
@@ -233,9 +231,9 @@ export class FormationView extends BaseView<FormationRequest> {
         const selected = this.elementButtons[this.elem].node;
         this.filterMark!.setPosition(selected.position.x, selected.position.y, 0);
         this.elementButtons.forEach(button => { button.interactable = !state.busy; });
-        const heroes = state.heroes.filter(hero => !this.elem || this.catalog!.find(hero.templateId)?.elem === this.elem);
+        const heroes = state.heroes.filter(hero => !this.elem || HeroCatalog.find(hero.templateId)?.elem === this.elem);
         this.heroScroll!.list.setData(heroes, (node, hero) => {
-            const face = this.catalog!.find(hero.templateId);
+            const face = HeroCatalog.find(hero.templateId);
             const cell = node.getComponent(HeroIconCellView)!;
             cell.show({ kind: "owned", instanceId: hero.id,
                 name: face?.name || String(hero.templateId), showName: false,
@@ -247,7 +245,7 @@ export class FormationView extends BaseView<FormationRequest> {
         this.slots.forEach(slot => {
             const heroId = state.lineup.slots.find(row => row.position === slot.position)?.heroId;
             const hero = state.heroes.find(row => row.id === heroId);
-            const face = hero ? this.catalog!.find(hero.templateId) : null;
+            const face = hero ? HeroCatalog.find(hero.templateId) : null;
             slot.show(state.openPositions?.includes(slot.position) === true, state.busy,
                 hero ? face?.name || String(hero.templateId) : null, face?.icon || null);
         });

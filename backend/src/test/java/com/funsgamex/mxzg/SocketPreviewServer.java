@@ -23,10 +23,16 @@ public class SocketPreviewServer {
         if (Arrays.asList(args).contains("--bag-loading-fixture")) {
             var player = context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("loading_review");
             var jdbc = context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
-            for (int itemId : new int[] {908101, 900102, 950001, 2000001}) {
+            // 普通装备同时覆盖配置包中的评分/属性显示表；只准备本进程库存，不开放穿脱。
+            for (int itemId : new int[] {1001001, 908101, 900102, 950001}) {
                 jdbc.update("INSERT INTO game_inventory(role_id,item_id,quantity,instance_id) VALUES (?,?,?,?)",
                     player.role().id(), itemId, 3, UUID.randomUUID().toString());
             }
+            prepareSpirits(context, player.role().id(), 3);
+        }
+        if (Arrays.asList(args).contains("--spirit-fixture")) {
+            var player = context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("spirit_review");
+            prepareSpirits(context, player.role().id(), 8);
         }
                 if(Arrays.asList(args).contains("--equipment-fixture")) {
             var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("equipment_review");
@@ -79,9 +85,13 @@ public class SocketPreviewServer {
                     hero, player.role().id(), templates[i], level, stars[i]);
                 idleSlots.add(new com.funsgamex.mxzg.lineup.Lineup.Slot(positions[i], hero));
             }
-            // 仅本进程内存夹具准备首通状态，便于连续遇敌和第二关挑战切换，不发首通奖励。
+            // 仅本进程随机内存库准备进度，第三关按钮专项保留两关已通状态，不伪造挑战或发首通奖励。
             if (idleLoop) {
-                jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,1)", player.role().id());
+                int cleared = Arrays.asList(args).contains("--chapter-third-fixture") ? 2 : 1;
+                jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,?)", player.role().id(), cleared);
+                // 已通关的独立测试数据同时建立计时，生产快照不再替缺行补免费起点。
+                jdbc.update("INSERT INTO game_main_chapter_idle(role_id,started_at) VALUES (?,?)",
+                    player.role().id(), java.time.Instant.now().getEpochSecond() - 60);
                 // 旧对话排除等级1；仅独立内存夹具设为2以验证真实对话筛选。
                 jdbc.update("UPDATE game_role SET role_level=2 WHERE id=?", player.role().id());
             }
@@ -115,6 +125,15 @@ public class SocketPreviewServer {
         System.out.println("[SOCKET-PREVIEW] isolated instance ready at port " + port);
         System.out.println("http://localhost:7456/?mxzgTestApi=http%3A%2F%2F127.0.0.1%3A" + port
             + "&mxzgTestRun=" + RUN);
+    }
+
+    /** 仅在强制内存预览内用真实领域服务生成精灵，固定种子便于画面对照，不写普通堆叠或开放GM。 */
+    private static void prepareSpirits(org.springframework.context.ConfigurableApplicationContext context,
+            String role, int quantity) {
+        var transactions = context.getBean(org.springframework.transaction.PlatformTransactionManager.class);
+        var spirits = context.getBean(com.funsgamex.mxzg.spirit.SpiritInventoryService.class);
+        new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status ->
+                spirits.grant(role, 2000002, quantity, new Random(20261113)));
     }
 
     /** 只在显式导入的预览上下文提供身份接口，不进入普通测试或产品包组件扫描。 */

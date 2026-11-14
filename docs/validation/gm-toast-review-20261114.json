@@ -1,0 +1,116 @@
+{
+  "date": "2026-11-14",
+  "branch": "hao",
+  "scope": "修复GM真实精灵发放，F9开发入口，GM独立窗口及统一操作飘字；不开放领取、养成或其他玩法，不提交推送。",
+  "backend": {
+    "tests": {
+      "GmTest": 9,
+      "SpiritInventoryServiceTest": 10,
+      "SpiritSocketTest": 3,
+      "GameSocketTest": 22,
+      "GameSocketActivationTest": 4
+    },
+    "total": 48,
+    "failures": 0,
+    "errors": 0,
+    "log": "backend/target/gm-hub-tests.log",
+    "covered": [
+      "2000002真实独立实例、同角色回执重放不重抽/不增版本/不推送",
+      "跨角色隔离、1000边界及1001/9999整笔拒绝",
+      "回执SQL失败实例/版本全部回滚且无通知",
+      "真实Protobuf完整快照；local显式开关与production隔离"
+    ],
+    "finalGmRecheck": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "log": "backend/target/gm-final-tests.log",
+      "reason": "整理所改构造与grant方法的多行排版后复验；不叠加为57个不同测试。"
+    }
+  },
+  "frontend": {
+    "suitesPassed": [
+      "gm",
+      "startup",
+      "game-socket",
+      "main-chapter",
+      "formation-view",
+      "login-presentation",
+      "home-presentation",
+      "remake-navigation",
+      "backpack",
+      "hero-detail",
+      "modal-layer",
+      "bindings",
+      "current-resource-scope",
+      "staged-loading",
+      "creator-compat"
+    ],
+    "creatorProjectTsc": "通过",
+    "resourceGeneratedCheck": "通过",
+    "prefabPlanCheck": "通过",
+    "prefabStructureCheck": "35份，通过；不是完整视觉签收",
+    "bindings": {
+      "scripts": 166,
+      "prefabAndScene": 36,
+      "scriptBindings": 78
+    },
+    "retainedResources": {
+      "bundles": 16,
+      "remoteBundles": 15,
+      "prefabs": 35,
+      "registeredViews": 20
+    }
+  },
+  "notice": {
+    "entry": "UIManager.toast",
+    "owner": "RemakeApp -> ToastManager",
+    "originalScriptUuid": "a5bdaadb-7ebd-45a9-aa3a-455af26ac47e",
+    "sceneNodeReused": "ApplicationNotice",
+    "maxEntriesIncludingCurrent": 8,
+    "behavior": [
+      "同文去重，有界顺序播放，无新增节点或定时器",
+      "淡入、上浮和淡出，完整文字换行撑高背景",
+      "换号clear后可继续显示；dispose后迟到展示无效",
+      "开窗失败已报告标记避免重复反馈",
+      "固定进度/玩法状态/操作说明仍留页面，不重播历史保存结果"
+    ]
+  },
+  "browser": {
+    "environment": {
+      "kind": "独立随机H2内存库",
+      "run": "5392dc4810d74befad66f796d3d4c538",
+      "port": 49152,
+      "pid": 20096,
+      "stoppedAfterReview": true,
+      "dailyDatabaseTouched": false,
+      "dailyBackendRestarted": false,
+      "creatorNativeUiOperated": false
+    },
+    "display": "本机Creator浏览器竖屏预览；设备选择393×852，浏览器截图1280×720，不等同真机尺寸验收。",
+    "checks": [
+      "F9松键打开四入口GM总菜单，F9关闭总入口和子窗；未登录时F9不打开GM",
+      "道具独立窗口搜索2000002并真实发放2只，成功飘字；权威快照spiritInventory含2个不同instanceId，revision=3",
+      "同配置1001只返回GM_SPIRIT_LIMIT，明确中文飘字；背包仍为2格，不显示数量，专用详情展示真实速度5及低级锐利技能",
+      "英雄独立窗口发放10101001一名成功并飘字；关闭子窗回到总菜单",
+      "技能按钮打开旧只读技能台，未选技能点击播放由全局飘字反馈，正文说明保留",
+      "战斗测试打开独立三关选择窗，第一关使用保存阵容播放至只读胜利并退出返回原背包；输入assetRevision=4、lineupVersion=1，不调用主线领取",
+      "角色资料/设置显示正常，旧GM入口已移除，退出登录返回登录页",
+      "真实第三关从挂机点击战斗，确认布阵，播放、chapter.claim成功并返回挂机，显示已通关；未开放第四关"
+    ],
+    "diagnostics": "只读试战后与第三关布阵打开前采集warn/error均为空；结算后未另行全量采集日志，不将此表述为最终全量日志审计。",
+    "images": [
+      "docs/images/gm-hub-20261114.jpg",
+      "docs/images/gm-spirit-limit-toast-20261114.jpg",
+      "docs/images/gm-spirit-detail-20261114.jpg",
+      "docs/images/gm-readonly-victory-20261114.jpg",
+      "docs/images/gm-settings-retired-entry-20261114.jpg"
+    ]
+  },
+  "remaining": [
+    "日常Java后端须负责人使用scripts/restart-remake-backend.bat重启一次才能加载新GM逻辑",
+    "未做新发布构建、MySQL、真机或98技能逐项画面检查",
+    "其他精灵类型、养成/穿戴/洗练/合成、挂机领取和快速战斗仍关闭",
+    "清心概率、护盾规则与旧背包详情差异继续保留待审"
+  ]
+}

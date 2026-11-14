@@ -1,0 +1,698 @@
+[
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/scenes/Remake.scene: 117.385986328125 ms",
+    "timestamp": "2026-11-14T11:58:21.570Z",
+    "url": "http://127.0.0.1:18081/cocos-js/_virtual_cc-C6aOtQS_.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 19:58:24 打开界面 remake-login ui AccountLoginView 耗时 74ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T11:58:24.951Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/scenes/Remake.scene: 101.547119140625 ms",
+    "timestamp": "2026-11-14T11:58:49.268Z",
+    "url": "http://127.0.0.1:18081/cocos-js/_virtual_cc-C6aOtQS_.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 19:58:52 打开界面 remake-login ui AccountLoginView 耗时 70ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T11:58:52.334Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 19:59:19 started effects=7 runners=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T11:59:19.128Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityHubView]%c[info] 19:59:19 view buildings=19 scroll=-454.72103004291847 bundles/module/home/prefabs/CityHubView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T11:59:19.129Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityChromeView]%c[info] 19:59:19 view bundles/module/home/prefabs/CityChromeView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T11:59:19.142Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 19:59:19 打开界面 remake-home ui RemakeHomeView 耗时 51ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T11:59:19.175Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 19:59:19 anim loop home/ui/main-city-effect_rivers2 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T11:59:19.781Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 19:59:19 anim loop home/ui/main-city-effect_summon frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T11:59:19.904Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 19:59:19 anim loop home/ui/main-city-effect_photosphere frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T11:59:19.925Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 19:59:19 anim loop home/ui/main-city-effect_rivers1 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T11:59:19.957Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 19:59:19 anim loop home/ui/main-city-effect_crack frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T11:59:19.970Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][ApplicationResources]%c[info] 19:59:20 后台资源处理结束：成功4，失败0，总数4 color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T11:59:20.602Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 19:59:31 打开界面 bag ui BagView 耗时 5ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T11:59:31.131Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 19:59:40 打开界面 equipment-info ui EquipmentInfoView 耗时 119ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T11:59:40.802Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 19:59:45 打开界面 bag-info ui BagInfoView 耗时 10ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T11:59:45.956Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 19:59:52 打开界面 bag-info ui BagInfoView 耗时 12ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T11:59:52.291Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 19:59:59 打开界面 spirit-info ui SpiritInfoView 耗时 45ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T11:59:59.774Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/scenes/Remake.scene: 116.55615234375 ms",
+    "timestamp": "2026-11-14T12:00:13.219Z",
+    "url": "http://127.0.0.1:18081/cocos-js/_virtual_cc-C6aOtQS_.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:00:16 打开界面 remake-login ui AccountLoginView 耗时 59ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:00:16.221Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:00:25 started effects=7 runners=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:00:25.640Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityHubView]%c[info] 20:00:25 view buildings=19 scroll=-454.72103004291847 bundles/module/home/prefabs/CityHubView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:00:25.640Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityChromeView]%c[info] 20:00:25 view bundles/module/home/prefabs/CityChromeView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:00:25.640Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:00:25 打开界面 remake-home ui RemakeHomeView 耗时 6ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:00:25.644Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:00:26 anim loop home/ui/main-city-effect_photosphere frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:00:26.122Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:00:26 anim loop home/ui/main-city-effect_summon frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:00:26.142Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:00:26 anim loop home/ui/main-city-effect_rivers1 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:00:26.142Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:00:26 anim loop home/ui/main-city-effect_rivers2 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:00:26.158Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:00:26 anim loop home/ui/main-city-effect_crack frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:00:26.158Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][ApplicationResources]%c[info] 20:00:26 后台资源处理结束：成功4，失败0，总数4 color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:00:26.620Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/scenes/Remake.scene: 99.892822265625 ms",
+    "timestamp": "2026-11-14T12:00:34.586Z",
+    "url": "http://127.0.0.1:18081/cocos-js/_virtual_cc-C6aOtQS_.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:00:37 打开界面 remake-login ui AccountLoginView 耗时 76ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:00:37.637Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:01:03 started effects=7 runners=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:03.225Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityHubView]%c[info] 20:01:03 view buildings=19 scroll=-454.72103004291847 bundles/module/home/prefabs/CityHubView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:03.225Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityChromeView]%c[info] 20:01:03 view bundles/module/home/prefabs/CityChromeView color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:03.226Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:01:03 打开界面 remake-home ui RemakeHomeView 耗时 8ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:01:03.231Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:01:03 anim loop home/ui/main-city-effect_crack frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:03.829Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:01:03 anim loop home/ui/main-city-effect_summon frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:03.830Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:01:03 anim loop home/ui/main-city-effect_photosphere frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:03.830Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:01:03 anim loop home/ui/main-city-effect_rivers2 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:03.830Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][CityFx]%c[info] 20:01:03 anim loop home/ui/main-city-effect_rivers1 frames=10 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:03.840Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][APP][ApplicationResources]%c[info] 20:01:04 后台资源处理结束：成功4，失败0，总数4 color:#B388FF color:#B388FF",
+    "timestamp": "2026-11-14T12:01:04.544Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:01:16 打开界面 hero ui HeroListView 耗时 4ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:01:16.340Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:01:20 打开界面 hero-info ui HeroInfoView 耗时 5ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:01:20.058Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:01:24 打开界面 hero-skill ui HeroSkillView 耗时 26ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:01:24.173Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:01:29 打开界面 remake-campaign ui MainChapterView 耗时 2ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:01:29.517Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:01:36 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:36.822Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:01:37 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:37.905Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:01:37 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:37.905Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:01:37 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:37.906Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:01:38 effect.frames 1040100 target=10 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:38.372Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:01:38 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:38.555Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:01:39 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:39.040Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:01:40 打开界面 remake-formation ui FormationView 耗时 267ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:01:40.282Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:01:45 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:45.492Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:01:46 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:46.539Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:01:47 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:47.023Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:01:47 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:47.807Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:01:58 opening.completed ZDKS; both teams ready color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:58.041Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:01:58 打开界面 main-chapter-battle ui MainChapterBattleView 耗时 5139ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:01:58.042Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:01:58 effect.start 50511010 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:01:58.772Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:00 effect.start 50511011 delay=2.4166666666666665 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:00.374Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:00 effect.start 50511012 delay=2.4166666666666665 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:00.375Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:00 effect.frames 50511011 target=10 count=19 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:00.406Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:00 effect.frames 50511012 target=10 count=8 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:00.406Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:00 effect.start 5051201 delay=2.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:00.439Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:00 damage.sound skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:00.440Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:00 audio.started skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:00.441Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:02:02 结算展示 胜利 sound=battle-end-1 mainSound=battle-main-end-1 presentationOnly=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:02.243Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:02:02 打开界面 chapter-end ui ChapterEndView 耗时 549ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:02:02.245Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:02:02 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:02.246Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:02:02 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:02.246Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:02 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:02.246Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:12 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:12.840Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:13 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:13.894Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:13 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:13.895Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:13 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:13.896Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:14 effect.frames 1040100 target=10 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:14.327Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:14 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:14.552Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:14 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:14.932Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:02:20 打开界面 remake-formation ui FormationView 耗时 6ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:02:20.910Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:21 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:21.379Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:22 effect.start 5050100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:22.424Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:23 effect.start 5050200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:23.090Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:24 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:24.791Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:33 opening.completed ZDKS; both teams ready color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:33.412Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:02:33 打开界面 main-chapter-battle ui MainChapterBattleView 耗时 4752ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:02:33.415Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:34 effect.start 50511010 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:34.129Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:35 effect.start 50511011 delay=2.4166666666666665 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.728Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:35 effect.start 50511012 delay=2.4166666666666665 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.730Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:35 effect.frames 50511011 target=10 count=19 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.764Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:35 effect.frames 50511012 target=10 count=8 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.764Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:35 effect.start 5051201 delay=2.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.794Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:35 damage.sound skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.796Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:35 effect.start 5051201 delay=2.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.796Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:35 damage.sound skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.797Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:35 audio.started skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.797Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:35 audio.started skill-105050051 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:35.797Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:02:37 结算展示 胜利 sound=battle-end-1 mainSound=battle-main-end-1 presentationOnly=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:37.281Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:02:37 打开界面 chapter-end ui ChapterEndView 耗时 215ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:02:37.281Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:02:37 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:37.282Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][ChapterEndView]%c[info] 20:02:37 audio.started battle-end-1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:37.282Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:37 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"10\":0,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:37.282Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 20:02:37 打开界面 battle-detail ui BattleDetailLayer 耗时 134ms color:#4ea1ff color:#4ea1ff",
+    "timestamp": "2026-11-14T12:02:37.668Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:47 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:47.874Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:48 effect.start 1040100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:48.940Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:48 sound skill-101040050 playing=false color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:48.941Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:48 audio.started skill-101040050 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:48.941Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:49 effect.frames 1040100 target=11 count=7 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:49.359Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:49 effect.start 1040200 delay=0.6666666666666666 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:49.608Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:49 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:49.991Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:56 idle.entry.completed color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:56.466Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:57 effect.start 1010100 delay=0 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:57.529Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[debug] 20:02:58 effect.start 1010300 delay=0.5 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:58.027Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  },
+  {
+    "level": "log",
+    "message": "%c[mxzg][MODULE][BattleReplayPreview]%c[info] 20:02:58 completed hp={\"2\":1870,\"3\":4162,\"5\":6330,\"11\":0} round=1 color:#66BB6A color:#66BB6A",
+    "timestamp": "2026-11-14T12:02:58.809Z",
+    "url": "http://127.0.0.1:18081/assets/main/index.js"
+  }
+]

@@ -13,14 +13,10 @@ import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
-import { GameConfig } from "../../../config/GameConfig";
-import { GConfig } from "../../../config/GConfig";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { ErrorUtils } from "../../../core/ErrorUtils";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroRosterUtils } from "../utils/HeroRosterUtils";
-import { HeroCatalog } from "../utils/HeroCatalog";
 import { HeroIconCellView } from "./HeroIconCellView";
 import { HeroInfoView } from "./HeroInfoView";
 import type { HeroCellModel } from "./HeroListPresentation";
@@ -33,7 +29,6 @@ const { ccclass, property } = _decorator;
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
-    prepare: RemakeConfigUtils.prepareHeroConfig,
 })
 @ccclass("HeroListView")
 export class HeroListView extends BaseView {
@@ -52,8 +47,6 @@ export class HeroListView extends BaseView {
 
     /** 唯一名册状态；生产使用模块实例，专项检查可在开页前注入独立Model。 */
     private roster = HeroRosterModel.instance;
-    /** 只读模板索引，首次打开从已准备配置创建，不拥有玩家状态。 */
-    private catalog: HeroCatalog | null = null;
     /** 当前元素筛选，0表示全部；新实例默认全部。 */
     private elem = 0;
     /** 关闭后阻止迟到刷新和选择，重开时恢复。 */
@@ -66,13 +59,12 @@ export class HeroListView extends BaseView {
         ViewportLayoutUtils.bindVisibleRefresh(this.node, () => ViewportLayoutUtils.fitVisibleRoot(this.node));
     }
 
-    /** 开页前注入只读状态与模板索引；不接收选择回调或页面控制器。 */
-    public configure(roster: HeroRosterModel, catalog: HeroCatalog): void {
+    /** 开页前注入只读名册；配置由显示工具直接查询GameConfig，不保存页面副本。 */
+    public configure(roster: HeroRosterModel): void {
         if (!this.closed) {
             throw new Error("英雄名册依赖必须在开页前注入");
         }
         this.roster = roster;
-        this.catalog = catalog;
     }
 
     /** 每次打开登记一份列表渲染、选择和筛选监听，再显示最新名册。 */
@@ -82,7 +74,6 @@ export class HeroListView extends BaseView {
             return;
         }
         this.validateBindings();
-        this.catalog ??= new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
         this.closed = false;
         const list = this.heroScroll!.list;
         list.node.on(SuperContent.RENDER_ITEM, this.onRender, this);
@@ -116,16 +107,16 @@ export class HeroListView extends BaseView {
         this.heroScroll.validateBindings();
     }
 
-    /** 只把当前筛选的数据交给列表，不创建列表板或计算格子坐标。 */
+    /** 直接查询当前模板显示并将筛选结果交给列表，不创建模板索引或计算格子坐标。 */
     private refresh(): void {
-        if (this.closed || !this.node?.isValid || !this.heroScroll || !this.catalog) {
+        if (this.closed || !this.node?.isValid || !this.heroScroll) {
             return;
         }
         if (!this.node.activeInHierarchy) {
             this.watchShown();
             return;
         }
-        const model = HeroRosterUtils.present(this.roster.snapshot, this.catalog, this.elem);
+        const model = HeroRosterUtils.present(this.roster.snapshot, this.elem);
         this.capacityLabel!.string = model.capacityLine;
         this.emptyLabel!.string = model.emptyText;
         this.emptyLabel!.node.active = model.emptyText.length > 0;

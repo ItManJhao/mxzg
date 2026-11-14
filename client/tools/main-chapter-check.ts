@@ -1,4 +1,6 @@
 /** 主线客户端回归：初始化、历史回执不倒退资产、未知结果原键重试、身份切换不被旧请求复活。 */
+import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
+import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { MainChapterHeroTalk } from "../assets/scripts/features/battle/ui/MainChapterHeroTalk";
 
 /** 离线展示帧按Bundle的实际meta目录读取，客户端仍用原包名/包内路径。 */
@@ -34,6 +36,7 @@ import { ProtocolRouter } from "../assets/scripts/platform/ProtocolRouter";
 import { GameProtocolCodecUtils, GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
 import { mxzg } from "../assets/scripts/platform/GameProtocol.generated";
+import { GameLog } from "../assets/scripts/core/GameLog";
 const battleId = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
 const original = { maxCleared: 1, pendingBattleId: battleId, assetRevision: 3 };
 const latest = { maxCleared: 2, assetRevision: 8 };
@@ -42,7 +45,7 @@ function frame(name: string, body: unknown, kind = "response"): GameFrame {
     return GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({ version: 1, name, kind, ...(kind === "response" ? {ok: true} : {}), body }));
 }
 
-/** 构造物品格行为替身，真实页面布局及资源绑定另由Prefab专项检查。 */
+/** 构造包含普通与碎片必需绑定的物品格替身，真实布局及资源绑定另由Prefab专项检查。 */
 function rewardItemNode(): Node {
     const node = new Node("RewardItem");
     node.addComponent(UITransform).setContentSize(96, 96);
@@ -55,6 +58,22 @@ function rewardItemNode(): Node {
     cell.icon = new Node("Icon");
     cell.icon.parent = node;
     cell.icon.addComponent(Sprite);
+    cell.shardIcon = new Node("ShardIcon");
+    cell.shardIcon.parent = node;
+    cell.shardIcon.addComponent(Sprite);
+    cell.shardCorner = new Node("ShardCorner");
+    cell.shardCorner.parent = node;
+    cell.shardStars = Array.from({ length: 5 }, (_, index) => {
+        const star = new Node("ShardStar" + (index + 1));
+        star.parent = node;
+        return star;
+    });
+    cell.shardProgress = new Node("ShardProgress");
+    cell.shardProgress.parent = node;
+    cell.shardProgressFill = new Node("ShardProgressFill").addComponent(Sprite);
+    cell.shardProgressFill.node.parent = cell.shardProgress;
+    cell.shardProgressLabel = new Node("ShardProgressLabel").addComponent(Label);
+    cell.shardProgressLabel.node.parent = cell.shardProgress;
     cell.count = new Node("Count").addComponent(Label);
     cell.count.node.parent = node;
     cell.selectMark = new Node("Selected");
@@ -89,18 +108,16 @@ function checkRewardRowEvents(): void {
     prefab._instantiate = rewardItemNode;
     list.cellPrefab = prefab;
     row.items.onEnable();
-    const catalog = new BagItemCatalog(JSON.parse(readFileSync("client/assets/bundles/resources/config/item.json", "utf8")),
-        JSON.parse(readFileSync("client/assets/bundles/resources/config/language.json", "utf8")));
     const picked: number[] = [];
     owner.on(ChapterRewardInfoCell.ITEM_SELECTED, (id: number) => picked.push(id));
     const original = ResManager.setSprite;
     ResManager.setSprite = () => {};
     try {
-        row.bind(1, [900401, 900001], catalog);
+        row.bind(1, [900401, 900001]);
         content.children[0].emit(Button.EventType.CLICK);
         assert.deepEqual(picked, [900401]);
         row.items.restorePosition({ x: 96, y: 0 } as any);
-        row.bind(850, [900001], catalog);
+        row.bind(850, [900001]);
         assert.equal(row.title.string, "关卡850");
         assert.equal(row.items.readPosition().x, 0, "行复用重置横向起点");
         content.children[0].emit(Button.EventType.CLICK);
@@ -108,7 +125,7 @@ function checkRewardRowEvents(): void {
         (row as any).onDisable();
         content.emit(SuperContent.SELECT_ITEM, 900401);
         assert.equal(picked.length, 2, "隐藏行不再向页面报告物品选择");
-        row.bind(2, [900401], catalog);
+        row.bind(2, [900401]);
         content.children[0].emit(Button.EventType.CLICK);
         assert.deepEqual(picked, [900401, 900001, 900401], "重新显示只登记一次选择");
         (row as any).onDisable();
@@ -121,8 +138,161 @@ function checkRewardRowEvents(): void {
         owner.destroy();
     }
 }
-/** 只测试当前模块；完整资产绑定另由session-state回归覆盖。 */
+/** 核对战斗按钮每种不可操作状态有清晰文案；阶段上限不影响旧请求/待结算恢复，也不误开第四关布阵。 */
+async function checkChallengeButtonAvailability(page: any): Promise<void> {
+    const model = MainChapterModel.instance;
+    const before = { state: model.state, requestId: model.requestId, busy: model.busy,
+        message: model.message, playing: page.playing, closed: page.closed };
+    const originalOpen = UIManager.instance.openById;
+    const originalToast = UIManager.instance.toast;
+    const originalChallenge = page.challenge;
+    const openings: { id: string; args: any }[] = [];
+    const notices: string[] = [];
+    let recoveries = 0;
+    try {
+        UIManager.instance.openById = (async (id: string, args: unknown) => {
+            openings.push({ id, args });
+        }) as typeof UIManager.instance.openById;
+        UIManager.instance.toast = text => notices.push(text);
+        page.challenge = async () => { recoveries++; };
+        page.closed = false;
+        page.playing = false;
+        model.busy = false;
+        model.message = "";
+        model.requestId = null;
+        for (const maxCleared of [0, 2]) {
+            model.state = { maxCleared, pendingBattleId: null, assetRevision: 1 };
+            page.render();
+            assert.equal(page.challengeButton.interactable, true, "开放范围内仍允许出战确认");
+            assert.equal(page.challengeLabel.string, "战斗");
+            await page.prepareChallenge();
+        }
+        assert.equal(openings.length, 2);
+        assert(openings.every(row => row.id === "remake-formation" && row.args.closeAfterSave
+            && typeof row.args.complete === "function"), "正常挑战进入实际阵容确认流程");
+        model.state = { maxCleared: 3, pendingBattleId: null, assetRevision: 1 };
+        page.render();
+        assert.equal(page.challengeLabel.string, "已通关", "封顶不能仍显示普通战斗文案而无响应");
+        assert.equal(page.challengeButton.interactable, false, "不因修复点击体验而开放第四关");
+        assert.equal(page.statusLabel.string, "当前开放的前三关已全部通关");
+        await page.prepareChallenge();
+        assert.equal(openings.length, 2, "迟到点击也不误开已超范围的布阵");
+        assert.deepEqual(notices, ["当前开放的前三关已全部通关"]);
+        model.state = { ...model.state, pendingBattleId: "11111111-1111-4111-8111-111111111111" };
+        page.render();
+        assert.equal(page.challengeLabel.string, "恢复战斗");
+        assert.equal(page.challengeButton.interactable, true, "第三关待结算仍可恢复");
+        await page.prepareChallenge();
+        model.state = { ...model.state, pendingBattleId: null };
+        model.requestId = "22222222-2222-4222-8222-222222222222";
+        page.render();
+        assert.equal(page.challengeLabel.string, "确认挑战");
+        assert.equal(page.challengeButton.interactable, true, "结果未知时仍保留原编号确认入口");
+        await page.prepareChallenge();
+        assert.equal(recoveries, 2, "恢复原操作，不再开启新阵容确认或第四关");
+        model.busy = true;
+        page.render();
+        assert.equal(page.challengeLabel.string, "处理中");
+        assert.equal(page.challengeButton.interactable, false);
+        await page.prepareChallenge();
+        model.busy = false;
+        model.requestId = null;
+        model.state = null;
+        page.render();
+        assert.equal(page.challengeLabel.string, "等待同步");
+        assert.equal(page.challengeButton.interactable, false);
+        await page.prepareChallenge();
+        model.state = { maxCleared: 2, pendingBattleId: null, assetRevision: 1 };
+        page.playing = true;
+        page.render();
+        assert.equal(page.challengeLabel.string, "战斗中");
+        assert.equal(page.challengeButton.interactable, false);
+        await page.prepareChallenge();
+        assert.equal(openings.length, 2);
+        assert.equal(recoveries, 2, "同步/忙碌/播放期均不重复发起操作");
+        page.playing = false;
+        model.message = "当前阵容技能尚未支持，请调整阵容";
+        page.render();
+        page.render();
+        assert.equal(notices.filter(text => text === model.message).length, 1, "主线失败只飘字一次");
+        assert(!page.statusLabel.string.includes(model.message), "固定主线状态不承载操作错误");
+        model.busy = true;
+        page.render();
+        model.busy = false;
+        page.render();
+        assert.equal(notices.filter(text => text === model.message).length, 2, "新操作允许反馈同一失败");
+    } finally {
+        UIManager.instance.openById = originalOpen;
+        UIManager.instance.toast = originalToast;
+        page.challenge = originalChallenge;
+        model.state = before.state;
+        model.requestId = before.requestId;
+        model.busy = before.busy;
+        model.message = before.message;
+        page.playing = before.playing;
+        page.closed = before.closed;
+    }
+}
+
+/** 验证可选领取能力的严格已知格式、未来格式降级、深冻结及整包失败不覆盖当前主线状态。 */
+function checkIdleClaimStateProjection(): void {
+    const chapter = { maxCleared: 1, pendingBattleId: null, assetRevision: 7 };
+    const idle = { serverTime: 1000, startedAt: 900, maxSeconds: 43200, frequency: 60,
+        rewardStage: 1, rates: [{ itemId: 900001, quantity: 10 }] };
+    const beforeLog = GameLog.shared;
+    const log = new GameLog();
+    log.mirrorConsole = false;
+    GameLog.shared = log;
+    try {
+        assert.equal(MainChapterController.readIdle(idle, chapter)!.claimState, undefined);
+        for (const requestMode of ["READ_ONLY", "ENABLED"]) {
+            const claimState = { schemaVersion: 1, operationVersion: Number.MAX_SAFE_INTEGER, requestMode };
+            const projected = MainChapterController.readIdle({ ...idle, claimState }, chapter)!;
+            assert.deepEqual(projected.claimState, claimState);
+            assert(Object.isFrozen(projected.claimState));
+            assert.notEqual(projected.claimState, claimState);
+            claimState.operationVersion = 1;
+            assert.equal(projected.claimState!.operationVersion, Number.MAX_SAFE_INTEGER);
+        }
+        for (const claimState of [null, [], {},
+            { schemaVersion: 1, operationVersion: 0, requestMode: "READ_ONLY" },
+            { schemaVersion: 1, operationVersion: "1", requestMode: "READ_ONLY" },
+            { schemaVersion: 1, operationVersion: Number.MAX_SAFE_INTEGER + 1, requestMode: "READ_ONLY" },
+            { schemaVersion: 1, operationVersion: 1, requestMode: "UNSPECIFIED" },
+            { schemaVersion: 1, operationVersion: 1 },
+        ]) {
+            assert.throws(() => MainChapterController.readIdle({ ...idle, claimState }, chapter));
+        }
+        for (const schemaVersion of [0, 2, 2]) {
+            const projected = MainChapterController.readIdle({ ...idle,
+                claimState: { schemaVersion, operationVersion: 1, requestMode: "ENABLED" } }, chapter)!;
+            assert.equal(projected.claimState, undefined, "未来未知领取格式只能保持只读");
+            assert.equal(projected.startedAt, idle.startedAt, "领取能力降级不能抹掉原有挂机时钟");
+        }
+        const warnings = log.recent().filter(line => line.tag === "MainChapterController");
+        assert.equal(warnings.length, 2, "同来源同未知格式只记录一次");
+        assert(warnings.every(line => line.layer === "MODULE" && line.level === "warn"));
+
+        const model = new MainChapterModel();
+        const controller = new MainChapterController(model);
+        controller.onNotify(Protocol.STATE_CHANGED, { revision: 7, mainChapter: chapter,
+            mainChapterIdle: { ...idle, claimState: { schemaVersion: 1, operationVersion: 3, requestMode: "READ_ONLY" } } });
+        const acceptedIdle = model.idle;
+        const acceptedState = model.state;
+        assert.throws(() => controller.onNotify(Protocol.STATE_CHANGED, { revision: 8,
+            mainChapter: { ...chapter, assetRevision: 8 }, mainChapterIdle: { ...idle,
+                claimState: { schemaVersion: 1, operationVersion: 0, requestMode: "ENABLED" } } }));
+        assert.equal(model.idle, acceptedIdle);
+        assert.equal(model.state, acceptedState);
+    } finally {
+        GameLog.shared = beforeLog;
+    }
+}
+
+/** 只测试当前模块的状态、领取能力只读投影、按钮边界和展示；完整资产绑定另由session-state回归覆盖。 */
 async function main(): Promise<void> {
+    await ConfigFixtureUtils.installReal();
+    checkIdleClaimStateProjection();
     const rewardInfo = ChapterRewardInfoUtils.rows(JSON.parse(readFileSync(
         "client/assets/bundles/resources/config/chapterreward.json", "utf8")));
     assert.equal(rewardInfo.length, 850, "说明配置投影不得静默截断旧关卡");
@@ -261,6 +431,39 @@ async function main(): Promise<void> {
     assert.equal(closedSettlements, 1);
     assert.equal(stoppedSounds, 2);
     assert.equal(unscheduled, 1);
+    // 跨级动画直接查当前已安装的等级行，不依赖开窗时复制的等级Map。
+    const experienceView: any = new Node("ExperienceResult").addComponent(ChapterEndView);
+    experienceView.panel = new Node("ExperiencePanel");
+    for (const name of ["RoleLevel", "RoleExperience", "ExperienceFill"]) {
+        const child = new Node(name);
+        child.parent = experienceView.panel;
+        child.addComponent(name === "ExperienceFill" ? Sprite : Label);
+    }
+    experienceView.args = {
+        experience: { beforeLevel: 1, beforeExp: 100, beforeThreshold: 120,
+            afterLevel: 3, afterExp: 40, afterThreshold: 720 },
+    };
+    const readFile = GameConfig.instance.getFileByPath;
+    let middleThreshold = 360;
+    let thresholdReads = 0;
+    GameConfig.instance.getFileByPath = path => {
+        assert.equal(path, "config/mainlevel");
+        thresholdReads++;
+        return { rows: [{ level: 2, exp: middleThreshold }] };
+    };
+    try {
+        experienceView.paintExperience(0.5);
+        assert.equal(experienceView.panel.getChildByName("RoleLevel").getComponent(Label).string, "Lv 2");
+        assert.equal(experienceView.panel.getChildByName("RoleExperience").getComponent(Label).string, "190/360");
+        middleThreshold = 600;
+        experienceView.paintExperience(0.5);
+        assert.equal(experienceView.panel.getChildByName("RoleExperience").getComponent(Label).string, "310/600",
+            "后续绘制使用唯一仓库当前结果，不读取旧页面索引");
+        assert.equal(thresholdReads, 2);
+    } finally {
+        GameConfig.instance.getFileByPath = readFile;
+        experienceView.node.destroy();
+    }
     const destroyedSettlement: any = new Node("DestroyedSettlement").addComponent(ChapterEndView);
     destroyedSettlement.released = false;
     destroyedSettlement.unscheduleAllCallbacks = () => {};
@@ -274,10 +477,11 @@ async function main(): Promise<void> {
     assert.equal(destroyedClosed, 1, "子节点先销毁时仍安全且只通知关闭一次");
     const talkRows = [{ level_min: 1, level_max: 300, lan: 70901 }];
     const talkLanguage = new Map([[70901, "旧文案"]]);
-    assert.deepEqual(HeroTalkUtils.candidates(1, talkRows, talkLanguage), []);
-    assert.deepEqual(HeroTalkUtils.candidates(300, talkRows, talkLanguage), []);
-    assert.deepEqual(HeroTalkUtils.candidates(2, talkRows, talkLanguage), ["旧文案"]);
-    assert.deepEqual(HeroTalkUtils.candidates(2, talkRows, new Map()), []);
+    const readTalkLanguage = (id: number) => talkLanguage.get(id);
+    assert.deepEqual(HeroTalkUtils.candidates(1, talkRows, readTalkLanguage), []);
+    assert.deepEqual(HeroTalkUtils.candidates(300, talkRows, readTalkLanguage), []);
+    assert.deepEqual(HeroTalkUtils.candidates(2, talkRows, readTalkLanguage), ["旧文案"]);
+    assert.deepEqual(HeroTalkUtils.candidates(2, talkRows, () => undefined), []);
     assert.equal(HeroTalkUtils.richText("<font color='#ec4529'>五星</font>"), "<color=#ec4529>五星</color>");
     // 用最小节点替身验证跨宿主空档不提前清除台词；不模拟引擎排版。
     const talk = Object.create(MainChapterHeroTalk.prototype) as any;
@@ -549,6 +753,7 @@ async function main(): Promise<void> {
     await rewardView.challenge();
     assert.equal(restored, battleId, "待结算从战斗按钮恢复，不依赖已移除的重播按钮");
     rewardView.play = realPlay;
+    await checkChallengeButtonAvailability(rewardView);
     shared.receipt = null;
     const idle = { serverTime: 1000, startedAt: 900, maxSeconds: 120, frequency: 5,
         rewardStage: shared.state!.maxCleared, rates: [{ itemId: 900001, quantity: 10 },

@@ -6,7 +6,6 @@ import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUti
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
@@ -35,7 +34,6 @@ const { ccclass, property } = _decorator;
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
-    prepare: RemakeConfigUtils.prepareHeroDetailConfig,
 })
 @ccclass("HeroInfoView")
 export class HeroInfoView extends BaseView<{ heroId: string }> {
@@ -109,7 +107,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         });
         this.refresh();
     }
-    /** 读取最新实例与服务器属性；业务重置时关闭，已同步的实例删除才返回列表。 */
+    /** 读取最新实例、服务器属性和当前模板行；不为刷新建立配置索引，实例移除时关闭或返回。 */
     private refresh(): void {
         if (this.closed) {
             return;
@@ -124,8 +122,8 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
             }
             return;
         }
-        const catalog = new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
-        const elem = catalog.find(hero.templateId)?.elem;
+        const template = HeroCatalog.find(hero.templateId);
+        const elem = template?.elem;
         const icons = [ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-0", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-2", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-5", "SpriteFrame")];
         if (this.elementIcon) {
             this.elementIcon.active = !!elem;
@@ -133,7 +131,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
                 ResManager.setSprite(this.elementIcon, icons[elem]);
             }
         }
-        this.show({ templateId: hero.templateId, name: catalog.find(hero.templateId)?.name || "未知英雄", level: hero.level });
+        this.show({ templateId: hero.templateId, name: template?.name || "未知英雄", level: hero.level });
         if (this.summary) this.summary.string = "等级：" + hero.level + "    星级：" + hero.star + "    强化：" + (hero.stage ?? "—") + "\n" + (hero.panelStats ? (hero.panelStats.complete ? "英雄属性" : "当前属性（部分加成待恢复）") : "属性待同步");
         const stats = hero.panelStats?.values; const names = ["攻击", "生命", "防御", "速度"], values = stats ? [stats.atk, stats.hp, stats.def, stats.spd] : [];
         this.attributes.forEach((label, i) => { label.string = names[i] + "：" + (values[i] ?? "待同步"); });

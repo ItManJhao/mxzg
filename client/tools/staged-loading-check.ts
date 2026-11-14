@@ -8,6 +8,7 @@ import { ResourceDescriptor } from "../assets/scripts/framework/assets/ResourceT
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { GConfig } from "../assets/scripts/config/GConfig";
+import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
@@ -78,8 +79,19 @@ async function main(): Promise<void> {
         await assert.rejects(scope.load(raw), /原生资源内容缺失/, "引擎只返回空壳不能记为成功");
         nativeMissing = false;
         await scope.load(raw);
+        const rawLanguage = ResourceAssetsUtils.describe("config", "language", "JsonAsset");
+        assert.equal(GameConfig.instance.status(GConfig.Language).state, "unloaded");
+        LOADING_PLAN.login = [rawLanguage];
+        await app.prepareStage("login", () => {}, () => true);
+        assert.equal(GameConfig.instance.status(GConfig.Language).state, "unloaded",
+            "原始JSON资源准备不隐式安装配置");
         LOADING_PLAN.login = [{ config: GConfig.Language }];
         await app.prepareStage("login", () => {}, () => true);
+        assert.equal(GameConfig.instance.status(GConfig.Language).state, "ready",
+            "先准备同路径JsonAsset不能让后续配置提交被提前跳过");
+        assert(GameConfig.instance.getConfig(GConfig.Language).length > 0);
+        assert.equal(requests.filter(value => value === "config:language").length, 1,
+            "完成语义分开仍复用资源池，只下载同一张启动源一次");
         LOADING_PLAN.enterGame = [{ page: PlannedPage }, { bundle: spine.bundle, path: spine.loadPath, type: spine.type }];
         LOADING_PLAN.background = [bag, detail, icon, uuid, { config: GConfig.Language }];
         const ratios: number[] = [];
@@ -141,6 +153,6 @@ async function main(): Promise<void> {
     demand.dispose();
     stopped.dispose();
     assert.equal(ResourceAssetsUtils.snapshot().owners, 0);
-    console.log("staged-loading-check passed: explicit phases, on-demand boundary, real progress, sharing, retry, atlas UUID and cancellation");
+    console.log("staged-loading-check passed: explicit phases, raw JSON versus config commit, shared download, on-demand boundary, real progress, retry, atlas UUID and cancellation");
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

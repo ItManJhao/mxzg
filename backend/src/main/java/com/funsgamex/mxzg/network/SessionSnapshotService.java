@@ -1,4 +1,7 @@
-/** 长连接鉴权接管与恢复快照；复用原角色锁，保持会话撤销和角色/背包快照的事务边界。 */
+/**
+ * 长连接鉴权接管与恢复快照：在同一角色锁内读取钱包、普通/期限/精灵实例及主线状态。
+ * 登录首包和提交后state.changed共用本入口；不为背包开页另行查询或创建精灵实例。
+ */
 package com.funsgamex.mxzg.network;
 
 import com.funsgamex.mxzg.auth.SessionService;
@@ -6,6 +9,7 @@ import com.funsgamex.mxzg.hero.*;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.inventory.TimedInventoryService;
 import com.funsgamex.mxzg.role.*;
+import com.funsgamex.mxzg.spirit.SpiritInventoryService;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
@@ -13,7 +17,12 @@ import org.springframework.transaction.annotation.*;
 @Service
 public class SessionSnapshotService {
     /** 角色、库存与持久版本的一致读结果；英雄名册与库存处于同一角色锁事务。 */
-    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory, long revision, TimedInventoryService.State timedInventory, HeroCapacityService.State heroRoster, com.funsgamex.mxzg.lineup.MainFormationStateService.State mainFormation, com.funsgamex.mxzg.campaign.MainChapterService.State mainChapter, com.funsgamex.mxzg.campaign.MainChapterIdleService.State mainChapterIdle) {}
+    public record Snapshot(RoleProfile role, List<HeroProfile> heroes, List<InventoryService.Item> inventory,
+                           long revision, TimedInventoryService.State timedInventory, HeroCapacityService.State heroRoster,
+                           com.funsgamex.mxzg.lineup.MainFormationStateService.State mainFormation,
+                           com.funsgamex.mxzg.campaign.MainChapterService.State mainChapter,
+                           com.funsgamex.mxzg.campaign.MainChapterIdleService.State mainChapterIdle,
+                           SpiritInventoryService.State spiritInventory) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -23,6 +32,8 @@ public class SessionSnapshotService {
 
     /** 逐件期限库存，在同一角色事务内回收过期记录。 */
     private final TimedInventoryService timed;
+    /** 独立精灵实例的唯一持久读取入口；同配置不合并、不从普通库存推断。 */
+    private final SpiritInventoryService spirits;
     /** 按角色读取持久英雄实例，不在客户端生成或跨角色查询。 */
     private final HeroRepository heroes;
 
@@ -39,10 +50,21 @@ public class SessionSnapshotService {
     private final com.funsgamex.mxzg.campaign.MainChapterIdleService idle;
 
     /** 注入原有数据入口，不新增玩家状态副本。 */
-    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory, TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity,com.funsgamex.mxzg.lineup.MainFormationStateService formations, com.funsgamex.mxzg.campaign.MainChapterService chapters, com.funsgamex.mxzg.campaign.MainChapterIdleService idle) {
+    public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory,
+            TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity,
+            com.funsgamex.mxzg.lineup.MainFormationStateService formations,
+            com.funsgamex.mxzg.campaign.MainChapterService chapters,
+            com.funsgamex.mxzg.campaign.MainChapterIdleService idle, SpiritInventoryService spirits) {
         this.idle = idle;
         this.chapters = chapters;
-        this.sessions = sessions; this.roles = roles; this.inventory = inventory; this.timed=timed; this.heroes=heroes; this.capacity=capacity;this.formations=formations;
+        this.sessions = sessions;
+        this.roles = roles;
+        this.inventory = inventory;
+        this.timed = timed;
+        this.spirits = spirits;
+        this.heroes = heroes;
+        this.capacity = capacity;
+        this.formations = formations;
     }
 
     /** 锁内再次校验，撤销同角色其他令牌；并发接管中已失效的令牌不能复活。 */
@@ -54,17 +76,19 @@ public class SessionSnapshotService {
         return role;
     }
 
-    /** 在同一角色锁中读取钱包、持久版本、背包和英雄名册，避免升级中间状态被恢复到前端。 */
+    /** 在同一角色锁中读取完整资产和精灵集合，全部成功才返回；缺表或坏实例不降级为空背包。 */
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Snapshot snapshot(String token) {
         String role = sessions.requireRole(token);
         roles.lock(role);
         sessions.requireRole(token);
-        var formation=formations.refresh(role);
-        var timedState=timed.current(role,java.time.Instant.now().getEpochSecond());
+        var formation = formations.refresh(role);
+        var timedState = timed.current(role, java.time.Instant.now().getEpochSecond());
+        var spiritState = spirits.current(role);
         var chapter = chapters.current(token);
         var idleState = idle.snapshot(role, chapter.maxCleared(), java.time.Instant.now().getEpochSecond());
         idleState = idle.withLineup(role, idleState, formation);
-        return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role), roles.revision(role), timedState, capacity.current(role),formation,chapter,idleState);
+        return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role),
+                roles.revision(role), timedState, capacity.current(role), formation, chapter, idleState, spiritState);
     }
 }

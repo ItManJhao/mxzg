@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新：2026-11-11。当前范围与进度见[开发进度](development-progress.md)，字段与时序见[通信契约](network-contract.md)。
+更新：2026-11-14。当前范围与进度见[开发进度](development-progress.md)，字段与时序见[通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -11,7 +11,7 @@
 Model 保存唯一状态，Controller 明确处理业务协议并更新 Model，View 展示和转交操作。背包作为标准模块；当前维护登录、角色、背包、英雄只读展示、主线阵容保存、前三关挑战/结算及挂机演出。英雄升级、穿脱、宝箱领取、快速战斗及其他未恢复入口仍关闭，不能把暂停解释为删减功能。
 
 - BagController：初始化时登记三个实际消息，onNotify → onInventoryState → BagModel → BagEvent，不持有凭证、查询接口或资产写队列。
-- BagModel：唯一角色库存，整批校验、冻结快照、计算界面差异；不联网、不依赖 View。
+- BagModel：唯一背包状态，分别保存普通堆叠、期限物品和精灵独立实例，整批校验/冻结后计算差异；不联网、不依赖View，不按itemId合并精灵。
 - RoleController：onNotify → onRoleState → 账号 Model 中唯一角色资料，不处理登录签发。
 - AccountService：登录、凭证保存、恢复与失效处理，不拥有第二份角色资产。
 - AssetStateBinding：应用层身份/持久版本校验、完整角色与库存批量提交，不保存第二份库存。
@@ -29,6 +29,60 @@ BaseModel只管理本地展示版本和业务清空，不保存roleKey、凭证�
 
 服务器 game_role.state_revision 是资产提交版本，与 BagModel/基类本地 revision、连接 connectionId、单次请求 id 均不同。重复/较旧持久版本不提交，旧连接回调由连接代次隔离。非法整包不允许先改钱包；回滚不发送成功状态。
 
+## 共享可信发奖
+
+共享奖励入口为RewardGrantService：只接服务端可信最终理论量，按item.type明确分发、最终合并、实例批量预检后加入外层角色锁事务；RewardGrantResult冻结真实到账、减少原因、前后余额/经验、升级附赠与独立实例。MainChapterRewardService只适配原首通Plan，不维护另一份类型分发表；当前首通协议仍只返回基础实际量与原经验动画。资格、请求幂等和持久回执归调用业务，统一版本/提交后通知复用AssetSyncService，不以共享方法返回代表已经提交。详细边界见[共享发奖](main-chapter-idle-settlement.md#已实现的共享发奖与实际明细11-14)，本批MainChapterIdleClaimService已接共享发奖及真实结果，日常新领取默认关闭。
+
+## 挂机已恢复输入与世界快照
+
+IdleRewardRules只保存不可变配置，IdleRewardInputService在当前角色锁事务中单次读取server_id/role_level/goddess_vip/clergy_level，current(roleId,nowSeconds)显式接收统一服务器时刻。Input冻结VIP、世界、神职、礼包及活动控制/适用结果，同时保存组合rulesVersion与普通idleRulesVersion。主线只读计时上限只使用VIP规则，不因活动未初始化阻断主页。基础rates不混入完整权益，输入准备不等于已接生产领取。
+
+神职复用game_role持久已解锁等级，V19按旧创建/配置的已知零级初始化；不按经验或900007库存推导。IdleRewardRules先筛IDLE_AWARD再校验value/chance，按等级升序累计所有已解锁条目；未知等级拒绝，合法零级明确为空。完整神职升级/经验模块仍未开放。
+
+WorldLevelService是各区服已提交角色等级的公共只读快照：首次及后台每5分钟刷新前50名平均，空服1；独立只读事务成功后发布，失败失效并重试。generation是进程内快照代次，与持久资产revision不同。定时调度在GameApplication启用，合服/跨节点共享另行确认。
+
+礼包由privilege/PrivilegeGiftService读取V20原始持有记录，PrivilegeGiftRules管理配置及纯期限公式。读取不清active/count，过期未知配置先跳过、有效缺配置拒绝；重复配置记录和条目分别追加，原始持有快照及服务器时刻保留在Input。持有表与库存不同，购买/续购/充值流程尚未开放。
+
+活动由campaign/IdleActivityService从V21区服开服元数据及game_idle_activity_control一次联合查询冻结。16/34/44控制必须齐全，空/缺行不能算明确未发布；迁移不seed或默认当前开服时间。Input按同次时刻、上海旧ceil日数、角色门槛准备适用结果，只有全部适用时才查询掉落行；clear不延长记录期。IdleActivityRules读取独立服务端投影并保留旧<=百万纯掉落规则，查询不调用drop。
+
+IdleActivityMaintenanceService是该控制的唯一写入口；IdleActivityMaintenance实际接入启动和定时，可信配置默认关闭，只维护明确列出的区服。每服先锁区服行再锁控制，configure把初始化和可选044发布合成一个事务。ControlRules计算上海首期和单步周期，保留034第9999天及真实maxTurns来源；V22持久next，不在收益读取里换期或用当前时间兜底。PublicationUtils存验旧兑换结构及独立摘要；运营版本、控制revision和期次身份分开，同版本重放不重置。仍不创建角色活动记录或调用回收钩子，不开放兑换/领取；实际配置步骤及边界见[维护指南](idle-activity-maintenance.md)。
+
+IdleRewardUtils是唯一完整纯装配入口，显式传入当前普通规则、冻结Input、奖励关卡/秒数、旧累计窗口/计数和随机源，不注入数据库/时钟或维护玩家状态。先校验完整性、投影版本及冻结状态的一致性，再按三活动→普通随机→神职消费同一随机源；使用冻结Drop，不重新查询活动。神职前拼接基础→普通分窗→三活动，最终才合并；不重复加入ordinary.rewards。Result保留计数前后及各来源，晚期失败无候选、previous不变，不能声称随机源回滚。本批已由MainChapterIdleClaimService在唯一角色锁事务中调用并冻结候选；重放分支不再调用纯装配。
+
+V24累计状态与类别计数、V25成功回执及领取/status强类型WS消息已按[事务说明](main-chapter-idle-settlement.md)接入。MainChapterIdleStateRepository唯一拥有累计，首次挑战创建、消费带旧操作版本条件；快照只读。MainChapterIdleClaimService先查回执再检查开关/版本和前置，冻结同次时间/输入，经完整候选预检→纯计算→真实发奖→累计消费→revision→AuditV1同事务保存；历史回执不依赖当前权益且不能覆盖最新Model。请求默认关闭，客户端仅接claimState只读投影，持久待确认/双向确认与按钮仍待后续接入。
+
+本批通用AssetSync已处理自定义事务资源的suspend/resume，REQUIRES_NEW与外层分别去重，afterCompletion按集合身份解除；提交后通知及日志异常不改变已提交结果。RoleRepository.creditCurrency在真实角色行锁内分别校验两币种精确加法后一次更新，继续使用相同同步出口。独立事务/期限回收及钱包回归见[前置证据](validation/idle-settlement-prerequisites-review-20261113.json)，不表示新领取协议/回执已实现。
+
+## 最小精灵实例与统一背包
+
+SpiritRules读取同源`gameplay/spirit-rules.json`，当前仅为2000002生成一个能力和一个技能，返回不含身份的不可变Generation。SpiritInventoryService加入外层事务并锁真实角色行，逐件生成UUID，写V23的`game_spirit`，通过原AssetSyncService提交版本。每次可信内部发放最多1000件是技术批量保护，不是持有容量；超限整次拒绝，不裁剪奖励。同属性实例仍独立保存，current只读完整持有；缺表、坏技能、未知配置或非默认未开放状态拒绝整包，不从普通堆叠猜补。
+
+SessionSnapshotService在原角色锁事务内读取精灵，Snapshot可选字段10 `SpiritInventory`携带格式1、实例ID、配置ID、能力及技能列表；缺失与已同步空列表分开。首包、state.changed和重连共用同一来源。InventoryService拒绝全部item.type=8的堆叠读写，GM仅允许2000002沿SpiritInventoryService生成真实实例，单次1～1000只，与GM回执及资产版本同事务；当前没有精灵发放/养成/穿脱/洗练/合成玩家协议。
+
+客户端沿原AssetStateBinding→BagController→BagModel链提交整包，精灵用`spirit:instanceId`作为列表/选择身份。BagView按真实实例将精灵格分路到SpiritInfoView，普通mode=1装备打开EquipmentInfoView，其余普通物品仍打开BagInfoView。BagItemCatalog.spiritDetail从唯一`spirit-display`派生表读取精确特性和技能等级；专用完整Prefab保存标题、基础属性、技能图文及旧按钮位置，格子不显示数量，不另建玩家属性。新建的hero_id保持NULL、place/exp/wash_ability_id为0、wash_skills_json为`[]`，未来玩法需另行恢复。领域/WS及393×852独立预览的8格、真实详情和关闭返回已通过，392种全文组合检查通过，见[本批证据](validation/spirit-instance-review-20261113.json)；11-14专用详情和原技能图修正见[11-14专用详情复验](validation/spirit-detail-review-20261114.json)及[资源证据](validation/spirit-detail-assets-20261114.json)；98技能逐项画面和新发布包仍未验收。
+
+## 普通道具与精英碎片只读展示
+
+BagInfoView继续承接普通道具、精英碎片、mode9材料与期限物品，不另造页面。ItemDetailUtils为无状态同源配置投影，读取现有Item/Language；指定英雄碎片通过已准备的HeroType检查itemId减10000000是否命中，不从当前已拥有英雄猜测。mode2/8/9/17共584条配置的类型、正文和按钮条件已接入；缺少必要显示条件拒绝开窗，23条mode9缺正文保留明确提示并限频记录。库存详情只接收原key，从BagModel重读；删除、重置和窗口关闭结束展示，不查询或写资产。
+
+BagItemView的mode8样式来自BagItemCatalog.face中的同源星级/需求数，使用已有Prefab保存的星位和拼图角标。完成度是显式展示上下文：只有BagView启用，文字保存实际持有数，填充比例最多为1；奖励格保留本次数量，产物候选数量0隐藏，详情图标不带进度。mode9的use_value是英雄配置标识，不能当作碎片需求数，也不套mode8样式；真实精灵仍无数量，普通装备仍由EquipmentInfoView分流。
+
+BagInfoView的description来源保留调用方的奖励/产物副标题及确定关闭，不显示库存操作。inventory来源按旧use_type、source、decomposition和具体英雄条件显示按钮，来源、使用、分解、图鉴均仅全局飘字，未恢复写协议或图鉴页面。正文由cc.RichText显示：ItemDetailUtils.richText统一保留旧br/字面量`\n`换行，并把合法font颜色转换为Cocos标记，普通库存和奖励/产物Face都提供richBody，View不再单纯剥标签或二次转换。584条纯投影及文字等值专项通过。单段长说明使用原生ScrollView，60～300高度界限由Prefab参数维护，Layout/Widget管理位置；它没有业务数据Cell，不替代业务列表的SuperScroll规范。本批复用既有View/Prefab/Bundle、LoadingPlan三段及资源池，不维护额外清单；3张原图恢复记录见[资源证据](validation/item-shard-assets-20261114.json)，本机限定复验已完成。
+
+普通无操作详情以Prefab中的NoActionSpacer保留底部留白，留白和注销均已完成本机复验；按钮/输入监听解除前检查节点有效性，关闭时保留绘制代次失效与资源撤回。第一阶段已核道具/碎片、精灵、普通装备和产物说明的共享入口隔离，富文本追加阶段另核换行/颜色、长文首末、随机碎片及关闭注销，不宣称整套矩阵重跑，不表示开放使用、分解、图鉴或领取。第一阶段准备13/鉴权14与富文本阶段准备4/初始化5分别记录，范围见[本批证据](validation/item-shard-review-20261114.json)。
+
+## 普通装备只读详情
+
+BagView以item.mode=1选择EquipmentInfoView，不以装备页签判断类型，mode=18灵器保留独立缺口。窗口只接收当前库存key，通过BagModel和BagEvent重读当前物品；删除、类型改变或换号结束展示，关闭清理监听与赋图作用域。完整Prefab中的有限属性槽、Layout、Widget与统一比例负责布局，View只填值和切换可见分区，模态复用UIManager。
+
+EquipmentDetailUtils是无状态配置投影，读取Item、Language、EquipmentType及新增类型ScoreCount、EquipmentSetType、AttributeShow。装备评分沿旧Lua先将ratio除10000，再乘原值并逐项ceil；没有评分mapping的合法属性贡献0，整张评分配置缺失则拒绝展示。属性图读取attrshow.icon；套装按旧背包传空穿戴列表显示0/4，不从当前英雄猜激活状态。来源与装备按钮仅全局飘字，不发业务请求、不生成玩家实例。独立H2/WS本机限定复验已通过普通、套装及六星双属性样本和关闭/返回/注销；设备选项393×852、浏览器1280×720，正式服只对照银剑，不代表真机或新发布包。范围见[本批记录](validation/equipment-detail-review-20261114.json)。
+
+## 全局反馈与开发入口
+
+RemakeApp持有唯一ToastManager，UIManager.toast是业务反馈出口；登录前和独立技能台也使用Remake.scene已有的ApplicationNotice面板。管理器不创建另一套节点，以应用update推进有界队列、文字去重和上浮淡入淡出，长中文按原宽度换行并撑高背景。页面正文只保留加载进度、玩法状态和固定操作说明；成功、拒绝和网络失败走全局飘字，框架开窗失败只报告一次。换号clear清空当前和排队项，应用销毁dispose终止所有迟到展示。
+
+Creator预览F9松键开关GmView，不再由角色资料设置打开。总菜单只分流，GmGrantView按hero/item固定类别读取配置和发放，GmBattleView选择前三关只读演示，技能入口复用SkillAuditView。应用注入唯一GmController及异步测试动作，View不持有连接或修改Model；关闭子窗返回总菜单，F9/换号清理整条GM窗链。发布版不登记快捷键，production不装配GM服务。详见[开发GM](gm-development.md)。
+
 ## Prefab 与通用列表
 
 Prefab保存静态结构、布局、样式和绑定；业务列表使用SuperScroll + SuperContent，View不手排Cell坐标。英雄、背包、产物说明外层/内层及胜利奖励统一监听RENDER_ITEM/SELECT_ITEM，Cell只画图，选择归所属页面或展示组件。SuperContent默认virtual=true、bufferLines=1，逻辑content尺寸按完整数据计算，只为可见范围及缓冲行创建有限节点；Mask继续裁剪，不承担节点回收。
@@ -37,11 +91,17 @@ Prefab保存静态结构、布局、样式和绑定；业务列表使用SuperScr
 
 RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。AccountApi 只调用 WS 登录/恢复；角色/背包初始化在接纳账号的同批通知中交付。背包打开、切分类、同角色再次开始不查询库存。英雄只读列表/详情、阵容编辑、前三关挑战与结算及挂机演出已按后续授权接入；升级、穿脱、宝箱领取和快速战斗仍关闭。资源采用可配置三段加载，实际范围以进度页为准。
 
-页面类通过自身@UIRegistry.view定义唯一Prefab地址、层级、缓存、模态和prepare配置前置，UIManager打开时先执行prepare，再复用统一加载器取得Prefab；预加载只准备资源，不执行页面业务前置或创建页面。应用通过UIRegistry.bindViewRuntime只注入createController或确需变化的hostId，不重复登记静态页面定义。ApplicationPages只保留登录/主城的Controller与宿主装配，不再转发英雄选择或包装各页资源地址。
+页面类通过自身@UIRegistry.view定义唯一Prefab地址、层级、缓存、模态和必要的页面装配prepare，UIManager打开时先执行prepare，再复用统一加载器取得Prefab；预加载只准备资源，不执行页面业务前置或创建页面。配置已在登录后统一准备，页面不再逐表prepare。应用通过UIRegistry.bindViewRuntime只注入createController或确需变化的hostId，不重复登记静态页面定义。ApplicationPages只保留登录/主城的Controller与宿主装配，不再转发英雄选择或包装各页资源地址。
 
-LoadingPlan是三个阶段唯一人工资源配置入口，页面目标使用`{page:BagView}`等View类引用，从@UIRegistry.view读取唯一Prefab地址；图片、骨骼和配置继续显式列目标。ApplicationResources只调度计划及持有阶段目标，实际开页配置归prepare。ResourceAssetsUtils/ResourcePool共享缓存和请求，Prefab依赖不抄写清单。[前批入口证据](validation/view-registration-list-review-20261111.json)属于虚拟化与资源精简前的调用链，不能替代本批画面验收。
+LoadingPlan是三个阶段唯一人工资源配置入口，页面目标使用`{page:BagView}`等View类引用，从@UIRegistry.view读取唯一Prefab地址；图片、骨骼继续显式列目标。login中的配置目标决定启动散表，enterGame的`{configPackage:true}`准备其余配置，background仍仅加载显式目标；不恢复全目录后台加载。已有凭证恢复后仍先停登录页，由LoginEntry记录本次“开始游戏”意图，再通过原路由完成enterGame后开主城；主城显示后启动background，不另增自动进入主城的分支。ApplicationResources调度并报告真实任务进度，ResourceAssetsUtils/ResourcePool共享缓存和请求，Prefab依赖不抄写清单。[前批入口证据](validation/view-registration-list-review-20261111.json)属于虚拟化与资源精简前的调用链，不能替代本批画面验收。
 
-资源统一到assets/bundles，当前实现模块依赖为16包、32份Prefab、31张配置表；此前已清理90个未实现资源包和64份旧Prefab。2026-11-13从battle拆出独立effects资源包，不新增玩法或页面。配置导出从实际源码、规则与检查入口求读取闭包，默认不再生成未用旧表；三份主城现用投影与XLSX的版本差异保存在[生成输入说明](../config/client-maincity/README.md)，清理不替换规则。详见[原15包清理记录](validation/current-resource-scope-cleanup-20261111.json)与[effects迁移增量](validation/battle-effects-move-20261113.json)。bootstrap本地，其余15包按远程规则构建；源目录精简不等于已测得新App/CDN下载体积。
+CityHubView与其他页面一样同步查询GameConfig，旧loadConfig异步注入和缺表回退null已移除；缺表使开页等待明确失败。挂机对话通过纯查询回调复用GameConfig的语言主键索引，不在每个页面复制语言Map。必要的美术资源prepare、布局投影与页面资源作用域仍保留。
+
+GameConfig是配置文件和类型化主键索引的唯一所有者。简单字段由使用处直接getConfig；BagItemCatalog、HeroCatalog仅保留无状态静态显示计算，View不new、不保存Catalog，也不把整张Item/Language等表传给它们建索引。SpiritInfoView按当前实例键读取BagModel，再调用BagItemCatalog.spiritDetail；英雄列表、详情、布阵和战报按所需模板调用HeroCatalog.find，不复制全模板Map。原文件名、路径和meta保持，不为改名增加转发层。
+
+EquipmentDetailSource六表传参已删除；EquipmentDetailUtils.read(itemId)直接查询GameConfig并保留旧评分取整、属性顺序和套装显示口径。ItemDetailUtils.read(item, context)直接按语言主键取文字，仍负责mode、上下文、富文本及按钮条件。非主键ScoreCount.mapping、套装type/num组合和未类型化mainlevel.level直接在同一只读行中匹配，不误用主键或新建页面Map。UI筛选结果、库存差异、布阵草稿及战斗单位/血量/Buff、表现资源映射属于运行状态，不按“存在Map”机械删除。
+
+资源统一到assets/bundles，当前16包、36份Prefab、172份脚本；共享目录49份JSON，前批新增attrshow，类型规范20表，Maven共享32表。此前清理90个未实现资源包和64份旧Prefab，并从battle拆出effects；11-14新增精灵专用只读View、两份独立GM窗口和普通装备详情，当前21个独立View。本批只增加ItemDetailUtils、调整既有道具/碎片View与Prefab，37份Prefab/Scene共86处绑定，未新增Bundle或玩法写入口。配置闭包从源码、规则与检查入口求得；三份主城投影差异见[输入说明](../config/client-maincity/README.md)，旧迁移见[清理记录](validation/current-resource-scope-cleanup-20261111.json)与[effects增量](validation/battle-effects-move-20261113.json)。bootstrap本地、其余15包远程；这些数量不等于已验证的新App/CDN下载体积。
 
 bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bundles/module收纳页面模块及common、bootstrap。两个父目录不是Bundle；既有包名、UUID、优先级和远程规则保持，effects原目录UUID保留并新增远程Bundle声明。物理源地址由View定义，运行时仍用“包名/包内路径”；特效地址现为effects/技能目录，旧battle/effects运行地址不保留别名。自动图集和原图继续保留，目录树与人工步骤见[资源维护](staged-resource-loading.md)。
 
@@ -52,12 +112,12 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 | 目录 | 当前入口与职责 | 保留边界 |
 |---|---|---|
 | features/account | AccountService 处理会话；AccountController 绑定登录页；RoleController 更新 AccountModel 内唯一角色资料；ui 放登录、选服、资料页 | 正式渠道登录待接入，不新增第二份角色资产 |
-| features/bag | BagController → BagModel → BagEvent；BagView/BagInfoView 展示库存与独立只读详情，utils 提供配置与显示查询 | 关闭页面不清库存；使用、分解未开放 |
+| features/bag | BagController→BagModel→BagEvent；普通/期限/精灵快照分开保存，BagView按实例key选择，普通道具/碎片归BagInfoView和ItemDetailUtils，普通装备归EquipmentInfoView、精灵归SpiritInfoView | 关闭不清持有；来源跳转、使用、分解、英雄图鉴和精灵养成穿脱/洗练合成未开放 |
 | features/hero | HeroRosterController/Model 保存名册及权威阵容；FormationController/FormationSaveModel 保存提交进度；FormationView 持有未保存草稿 | 详情/技能/四槽/进化状态只读；HeroLevel旧客户端链已退役，升级仍未开放 |
 | features/battle | MainChapterController/Model处理主线与挂机快照；MainChapterView组织行军；BattleReplayPreview、ChapterEndView、BattleDetailLayer展示战报、结算与统计 | 旧Campaign四份UI已退役，暂停领域代码不接回导航；BattlePreviewController只供开发试战，不结算奖励 |
 | features/home、features/city | HomeController 与 RemakeHomeView 绑定根页；city 提供地图、顶底栏与导航显示 | 地图中旧入口和资源不代表对应玩法已恢复 |
-| features/gm | GmController 与 GmView 仅处理显式启用的开发数据准备 | 默认关闭、仅当前登录测试角色，不能替代正式获取玩法 |
-| app/remake | RemakeApp装配模块；AccountComposition、AssetStateBinding处理身份/状态；ApplicationPages只装配登录/主城Controller和宿主，HomeFeatureNavigation处理主城入口；LoadingPlan、ApplicationResources处理三段加载 | 页面静态定义与配置前置归各View，不增加模块取址包装或资源清单 |
+| features/gm | GmController 与 GmView 仅处理显式启用的开发数据准备 | local默认开启、production不装配，仅当前登录测试角色，不能替代正式获取玩法 |
+| app/remake | RemakeApp装配模块；AccountComposition、AssetStateBinding处理身份/状态；ApplicationPages只装配登录/主城Controller和宿主，HomeFeatureNavigation处理主城入口；LoadingPlan、ApplicationResources处理三段加载 | 页面静态定义和必要装配归View；配置包由应用统一准备，页面不列配置前置或模块资源清单 |
 | platform、core | platform 提供单连接、二进制编解码、真实协议目录与路由；core 提供日志和错误含义 | 不保存另一份业务状态，生成协议禁止手改 |
 
 以上路径相对client/assets/scripts。修改页面先看对应View的@UIRegistry.view与Prefab，查业务从Protocol协议名进入Controller及唯一Model；登录/主城的应用依赖再看ApplicationPages，不需要先遍历整个框架目录。
@@ -80,7 +140,7 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 
 弹窗只在页面注册的ViewSpec设置modal，不再在各Prefab添加蒙版或ModalLayer绑定。省略modal表示不拦截外部；`{mask:false,closeOnOutside:true}`使用透明拦截；`{mask:true,closeOnOutside:true}`显示共享蒙版并点击空白关闭。closeOnOutside可独立设为false，只阻挡外部点击。实际面板背景保留BlockInputEvents，不能给只承载坐标的大节点盲加阻挡。叠窗始终共用一份节点，颜色不叠加。
 
-物品详情、资料、选服、技能、战报、产物说明及原有布阵/结算均使用共享层；关闭仍走各自既有生命周期，布阵空白关闭取消未保存草稿，结算释放和返回回调保持。GM与技能台为`{mask:true,closeOnOutside:false}`，继续只由原按钮关闭。8cb60507基线的专项、类型与本机限定预览见[共享层证据](validation/shared-modal-widget-20261111.json)，不作为本批页面注册和列表事件改造的新验收。[旧模态证据](validation/modal-layer-20261111.json)属于被取代的逐窗蒙版实现；未实测窗口不沿用旧画面签收。
+物品详情、资料、选服、技能、战报、产物说明及原有布阵/结算均使用共享层；关闭仍走各自既有生命周期，布阵空白关闭取消未保存草稿，结算释放和返回回调保持。GM与技能台为`{mask:true,closeOnOutside:false}`，由各自按钮关闭，GM另支持F9开关。8cb60507基线的专项、类型与本机限定预览见[共享层证据](validation/shared-modal-widget-20261111.json)，不作为本批页面注册和列表事件改造的新验收。[旧模态证据](validation/modal-layer-20261111.json)属于被取代的逐窗蒙版实现；未实测窗口不沿用旧画面签收。
 
 framework/kit为空目录的残留meta已清理。DesignResolution只保留实际使用的640×1280设计坐标常量；旧安全区计算和调试函数没有调用，已删除，当前视口读取统一归ViewportLayoutUtils。
 
@@ -122,7 +182,11 @@ SessionSnapshotService 在数据库角色锁内读取完整钱包、背包和版
 
 ## 配置、资源与静态布局
 
-配置以生成 GConfig 与 GameConfig 查询，资源通过统一目录与作用域管理；界面布局以 Prefab 和 SuperScroll Inspector 为准，不用字符串散落或运行时兜底掩盖缺资源。
+配置以生成GConfig与唯一GameConfig查询。49份源JSON供人工与导出工具维护，当前Language/LoadingTips按LoadingPlan.login独立准备，其余47份自动生成ZIP格式的game-config.bin。RemakeConfigUtils在登录后下载、校验启动同版、逐表解析，由GameConfig原子安装，类型索引和按路径读取共用文件引用。页面不再加载JSON或维护配置组；临时压缩资源持有归还现有资源池，配置对象应用期驻留，不随界面缓存到期删除。生成、版本和构建前检查见[配置管线](config-pipeline.md)。配置包接入批次的真实去重和解压运行已有[发布证据](validation/config-package-release-review-20261114.json)；本轮Catalog/查询整理是之后的源码，不将旧20:14包冒充当前版本，新增预览与发布结果依[开发进度](development-progress.md)分开记录。
+
+包内47份表只对应一个bin正文请求；解析、校验和索引初始化仍逐表计真实完成量。玩家文案不再显示9/47等容易被误认为文件下载的数字，而显示下载配置包、解析配置包、初始化配置；进度不按时间模拟。发布入口统一到scripts/build-remake-h5.bat及其PowerShell/JSON选项，隔离工程复制同一扩展和工具；config-package-artifact-v1 v1.8.0在before核验源，在after对全部Bundle检查两份启动JSON、唯一bin、散表排除及解码模块静态登记。该机制和自动检查不等于实际发布运行通过，真实结果由本批最终证据记录。
+
+资源通过统一目录与作用域管理；界面布局以Prefab和SuperScroll Inspector为准，不用字符串散落或运行时兜底掩盖缺资源。
 
 ## 原项目架构核查（2026-11-02）
 

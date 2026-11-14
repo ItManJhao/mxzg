@@ -1,0 +1,430 @@
+{
+  "date": "2026-11-14",
+  "scope": "GM入口拆成总菜单、英雄/道具发放窗和三关阵容试战窗；不修改资产协议或玩法开放范围。",
+  "addedPrefabs": [
+    {
+      "path": "client/assets/bundles/module/gm/prefabs/GmGrantView.prefab",
+      "uuid": "bb17e366-2157-40ce-8902-96b0af1c43d9",
+      "scriptUuid": "4bdbf628-3f1c-4783-a831-bd7d8f240182"
+    },
+    {
+      "path": "client/assets/bundles/module/gm/prefabs/GmBattleView.prefab",
+      "uuid": "cc3da575-12f4-4198-9832-c68fb455475e",
+      "scriptUuid": "b8c7a92f-30cf-45c9-a1bc-7224b969238f"
+    }
+  ],
+  "retainedPrefabs": [
+    {
+      "path": "client/assets/bundles/module/gm/prefabs/GmView.prefab",
+      "uuid": "76ebb0c2-3e4e-48b1-ae9c-291a56089c8e",
+      "scriptUuid": "60de37ec-facb-4c87-afa5-9e340d9e848d"
+    }
+  ],
+  "validations": [
+    {
+      "name": "GmView",
+      "objectCount": 113,
+      "referenceCount": 212,
+      "nodeCount": 16,
+      "rootSize": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "panelSize": {
+        "__type__": "cc.Size",
+        "width": 600,
+        "height": 700
+      },
+      "scale": {
+        "designWidth": 640,
+        "maxScale": 1,
+        "target": "Panel"
+      },
+      "widgetAlignFlags": 18,
+      "panelBlocksInput": true,
+      "viewComponentOnRoot": true,
+      "sharedModal": true,
+      "prefabMaskNodes": [],
+      "bindings": [
+        {
+          "field": "owner",
+          "expectedType": "cc.Label",
+          "targets": [
+            {
+              "objectId": 32,
+              "type": "cc.Label",
+              "node": "CurrentRole"
+            }
+          ]
+        },
+        {
+          "field": "heroButton",
+          "expectedType": "cc.Button",
+          "targets": [
+            {
+              "objectId": 46,
+              "type": "cc.Button",
+              "node": "HeroMenuButton"
+            }
+          ]
+        },
+        {
+          "field": "itemButton",
+          "expectedType": "cc.Button",
+          "targets": [
+            {
+              "objectId": 60,
+              "type": "cc.Button",
+              "node": "ItemMenuButton"
+            }
+          ]
+        },
+        {
+          "field": "skillButton",
+          "expectedType": "cc.Button",
+          "targets": [
+            {
+              "objectId": 90,
+              "type": "cc.Button",
+              "node": "SkillMenuButton"
+            }
+          ]
+        },
+        {
+          "field": "battleButton",
+          "expectedType": "cc.Button",
+          "targets": [
+            {
+              "objectId": 104,
+              "type": "cc.Button",
+              "node": "BattleMenuButton"
+            }
+          ]
+        },
+        {
+          "field": "closeButton",
+          "expectedType": "cc.Button",
+          "targets": [
+            {
+              "objectId": 26,
+              "type": "cc.Button",
+              "node": "CloseButton"
+            }
+          ]
+        },
+        {
+          "field": "message",
+          "expectedType": "cc.Label",
+          "targets": [
+            {
+              "objectId": 66,
+              "type": "cc.Label",
+              "node": "StatusLabel"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GmGrantView",
+      "objectCount": 163,
+      "referenceCount": 310,
+      "nodeCount": 24,
+      "rootSize": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "panelSize": {
+        "__type__": "cc.Size",
+        "width": 600,
+        "height": 820
+      },
+      "scale": {
+        "designWidth": 640,
+        "maxScale": 1,
+        "target": "Panel"
+      },
+      "widgetAlignFlags": 18,
+      "panelBlocksInput": true,
+      "viewComponentOnRoot": true,
+      "sharedModal": true,
+      "prefabMaskNodes": [
+        "view"
+      ],
+      "bindings": [
+        {
+          "field": "title",
+          "expectedType": "cc.Label",
+          "targets": [
+            {
+              "objectId": 12,
+              "type": "cc.Label",
+              "node": "TitleLabel"
+            }
+          ]
+        },
+        {
+          "field": "owner",
+          "expectedType": "cc.Label",
+          "targets": [
+            {
+              "objectId": 32,
+              "type": "cc.Label",
+              "node": "CurrentRole"
+            }
+          ]
+        },
+        {
+          "field": "dropdownButton",
+          "expectedType": "cc.Button",
+          "targets": [
+            {
+              "objectId": 46,
+              "type": "cc.Button",
+              "node": "ConfigSelector"
+            }
+          ]
+        },
+        {
+          "field": "selection",
+          "expectedType": "cc.Label",
+          "targets": [
+            {
+              "objectId": 39,
+              "type": "cc.Label",
+              "node": "SelectionLabel"
+            }
+          ]
+        },
+        {
+          "field": "search",
+          "expectedType": "cc.EditBox",
+          "targets": [
+            {
+              "objectId": 119,
+              "type": "cc.EditBox",
+              "node": "SearchInput"
+            }
+          ]
+        },
+        {
+          "field": "quantity",
+          "expectedType": "cc.EditBox",
+          "targets": [
+            {
+              "objectId": 72,
+              "type": "cc.EditBox",
+              "node": "QuantityInput"
+            }
+          ]
+        },
+        {
+          "field": "dropdown",
+          "expectedType": "cc.Node",
+          "targets": [
+            {
+              "objectId": 95,
+              "type": "cc.Node",
+              "node": "Dropdown"
+            }
+          ]
+        },
+        {
+          "field": "options",
+          "expectedType": "eed84/fAPdIqoL8eDBpgRdQ",
+          "targets": [
+            {
+              "objectId": 139,
+              "type": "eed84/fAPdIqoL8eDBpgRdQ",
+              "node": "Options"
+            }
+          ]
+        },
+        {
+          "field": "grantButton",
+          "expectedType": "cc.Button",
+          "targets": [
+            {
+              "objectId": 86,
+              "type": "cc.Button",
+              "node": "GrantButton"
+            }
+          ]
+        },
+        {
+          "field": "closeButton",
+          "expectedType": "cc.Button",
+          "targets": [
+            {
+              "objectId": 26,
+              "type": "cc.Button",
+              "node": "CloseButton"
+            }
+          ]
+        },
+        {
+          "field": "message",
+          "expectedType": "cc.Label",
+          "targets": [
+            {
+              "objectId": 92,
+              "type": "cc.Label",
+              "node": "StatusLabel"
+            }
+          ]
+        }
+      ],
+      "list": {
+        "hierarchy": "Options/view (Mask)/content",
+        "contentComponent": "SuperContent",
+        "cellPrefabUuid": "ac4b58d6-8086-44b6-9701-4997d58d6b13",
+        "cellSize": {
+          "__type__": "cc.Size",
+          "width": 488,
+          "height": 54
+        },
+        "columns": 1
+      }
+    },
+    {
+      "name": "GmBattleView",
+      "objectCount": 99,
+      "referenceCount": 185,
+      "nodeCount": 14,
+      "rootSize": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "panelSize": {
+        "__type__": "cc.Size",
+        "width": 600,
+        "height": 620
+      },
+      "scale": {
+        "designWidth": 640,
+        "maxScale": 1,
+        "target": "Panel"
+      },
+      "widgetAlignFlags": 18,
+      "panelBlocksInput": true,
+      "viewComponentOnRoot": true,
+      "sharedModal": true,
+      "prefabMaskNodes": [],
+      "bindings": [
+        {
+          "field": "owner",
+          "expectedType": "cc.Label",
+          "targets": [
+            {
+              "objectId": 32,
+              "type": "cc.Label",
+              "node": "CurrentRole"
+            }
+          ]
+        },
+        {
+          "field": "battleButtons",
+          "expectedType": "cc.Button[]",
+          "targets": [
+            {
+              "objectId": 62,
+              "type": "cc.Button",
+              "node": "ChapterOneBattleButton"
+            },
+            {
+              "objectId": 76,
+              "type": "cc.Button",
+              "node": "ChapterTwoBattleButton"
+            },
+            {
+              "objectId": 90,
+              "type": "cc.Button",
+              "node": "ChapterThreeBattleButton"
+            }
+          ]
+        },
+        {
+          "field": "closeButton",
+          "expectedType": "cc.Button",
+          "targets": [
+            {
+              "objectId": 26,
+              "type": "cc.Button",
+              "node": "CloseButton"
+            }
+          ]
+        },
+        {
+          "field": "message",
+          "expectedType": "cc.Label",
+          "targets": [
+            {
+              "objectId": 38,
+              "type": "cc.Label",
+              "node": "StatusLabel"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "globalFeedbackCleanup": {
+    "entry": "UIManager.toast",
+    "clearQueueOnEmpty": false,
+    "closeClearsGlobalQueue": false,
+    "sceneApplicationNoticeUnchanged": true,
+    "prefabs": [
+      {
+        "path": "client/assets/bundles/module/home/prefabs/RemakeHomeView.prefab",
+        "uuid": "bd1203e8-e72a-5d44-bc5c-ab68a868898a",
+        "removedNodes": [
+          "NoticePanel",
+          "Notice"
+        ],
+        "retainedRoot": "RemakeHomeView",
+        "retainedObjectCount": 14
+      },
+      {
+        "path": "client/assets/bundles/module/battle/prefabs/SkillAuditView.prefab",
+        "uuid": "34d5372d-d0b5-43b0-965f-db66c446f775",
+        "removedNodes": [
+          "NoticeLabel"
+        ],
+        "retainedRoot": "SkillAuditView",
+        "retainedObjectCount": 187
+      }
+    ],
+    "checks": [
+      {
+        "name": "home-presentation",
+        "passed": true,
+        "cases": [
+          "主城提示统一入口",
+          "空串不清全局队列",
+          "已关闭主城不追加提示",
+          "技能未选/未开放提示",
+          "技能演示失败不占用模块状态",
+          "在途播放防重复",
+          "关页后迟到失败不追加提示",
+          "两个页面旧提示节点与绑定已删除"
+        ]
+      },
+      {
+        "name": "remake-navigation",
+        "passed": true,
+        "cases": [
+          "导航与关闭回归",
+          "主城Prefab不再持有提示面板绑定"
+        ]
+      },
+      {
+        "name": "check-script-bindings",
+        "passed": true,
+        "scope": "全库脚本及Prefab/Scene序列化绑定"
+      }
+    ]
+  }
+}

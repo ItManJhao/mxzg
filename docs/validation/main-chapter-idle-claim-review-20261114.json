@@ -1,0 +1,223 @@
+{
+  "date": "2026-11-14",
+  "recordedAt": "2026-11-14T09:55:09.940623+00:00",
+  "branch": "hao",
+  "committed": false,
+  "pushed": false,
+  "mergedToMain": false,
+  "scope": "新主线挂机V24累计/V25成功回执、默认关闭的服务端领取/status事务、强类型双端协议及客户端只读投影；无领取发包/按钮/journal",
+  "environment": "独立H2真实V23→24迁移及最新V25、生产角色行锁/事务/领域服务；随机端口真实WebSocket与Protobuf；未操作日常库",
+  "results": {
+    "classes": 13,
+    "distinctTests": 135,
+    "newDomainStateProtocolSocketTests": 43,
+    "reports": [
+      {
+        "class": "MainChapterIdleClaimServiceTest",
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterIdleStateRepositoryTest",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterIdleClaimProtocolTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterIdleClaimSocketTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterIdleTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "IdleRewardInputServiceTest",
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterPersistenceTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterSocketTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "MainChapterRewardTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "RewardGrantServiceTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "AssetSyncTransactionTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "GameSocketTest",
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "GameSocketActivationTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "runs": [
+    {
+      "log": "backend/target/idle-claim-compile.log",
+      "result": "初次编译发现Jackson3没有isContainerNode，改为isObject/isArray；后续编译及测试成功"
+    },
+    {
+      "log": "backend/target/idle-claim-domain-tests.log",
+      "tests": 36,
+      "result": "首轮领域21/累计12/协议3通过"
+    },
+    {
+      "log": "backend/target/idle-claim-regression-tests.log",
+      "tests": 92,
+      "result": "9类关联回归通过"
+    },
+    {
+      "log": "backend/target/idle-claim-socket-tests.log",
+      "tests": 27,
+      "result": "加固后的领域23＋真实WS4通过"
+    },
+    {
+      "log": "backend/target/idle-claim-final-tests.log",
+      "tests": 24,
+      "result": "最终领域24通过，包含缺前置保留原因且零消费；不将重复用例累加"
+    }
+  ],
+  "frontend": [
+    {
+      "command": "node client/tools/check-project.mjs --suite main-chapter-idle-protocol",
+      "result": "通过"
+    },
+    {
+      "command": "node client/tools/check-project.mjs --suite game-protocol",
+      "result": "通过"
+    },
+    {
+      "command": "node client/tools/check-project.mjs --suite main-chapter",
+      "result": "通过；可选claimState深冻结、未知格式只读降级/限频、不部分提交"
+    },
+    {
+      "command": "node client/tools/check-project.mjs --suite game-socket",
+      "result": "通过"
+    },
+    {
+      "command": "node tools/generate_game_protocol.cjs --check",
+      "result": "生成无漂移"
+    },
+    {
+      "command": "node client/temp/project-checks/main-chapter-idle-protocol.cjs --idle-claim-wire --idle-claim-socket-wire",
+      "result": "纯Codec实际Java帧＋真实WS两组帧由TS解码并确认"
+    },
+    {
+      "command": "Creator 3.8.8内置TypeScript tsc --noEmit -p client/tsconfig.json",
+      "result": "通过，无需构建发布"
+    }
+  ],
+  "checks": [
+    "旧started_at原值保留，操作version1/窗口0/空计数；未知语义、格式或类别拒绝，不自动取模清零",
+    "首次挑战前创建now-60，同事务登记revision；已有通关缺行不自愈，快照不创建或重置",
+    "服务端60秒门槛；119秒基础只一轮但随机累计119秒；VIP截顶、精确满窗及跨窗保持旧粒度",
+    "锁内再鉴权；同请求同内容重放、异内容拒绝；同版本不同ID和相同ID并发只成功发奖一次",
+    "回执恢复先于关闭开关、当前权益/时长/版本；重建服务后仍恢复原结果，不重算或抽样",
+    "真实Input和计算分项/加成/理论/实际/实例/累计前后以AuditV1及摘要冻结，关键列交叉校验",
+    "缺完整活动控制、候选未支持/缺正权重/总权重溢出在抽样前拒绝；无资产、累计、回执、版本或通知变化",
+    "后段发奖/累计保存/回执保存任一失败整笔回滚；零到账仍消费时钟并推一次revision",
+    "真实WS提交/事件/重放/指纹冲突/重连/角色隔离通过；恢复首包与历史receipt按至少版本确认",
+    "Frame31～34及claim_state=9；int64安全整数、实例字符串；无JSON/Base64网络回退"
+  ],
+  "actualWirePairs": {
+    "A": [
+      "main-idle-claim-receipt",
+      "main-idle-claim-event"
+    ],
+    "B": [
+      "main-idle-claim-status",
+      "main-idle-claim-restored"
+    ],
+    "note": "A和B来自不同测试角色/请求，各自核对，不能把四份直接当同一业务结果比较；恢复首包无session凭证"
+  },
+  "wireSha256": {
+    "idle-claim-receipt": "9ca08f4ab120387c417472a2d1e726b46bfd0841ee0424d2c26f2b64ea58f85b",
+    "idle-claim-status": "43769973855b4697e03ba962787c224fd534673839455ce1ecc37bd616de6d40",
+    "main-idle-claim-receipt": "eee5113d230b869b76c96d807347437084ae45c6f7b2d351fb9372832c3dbf99",
+    "main-idle-claim-event": "a4e641554505adcd4a5cce0ab24050d61607325a074bc4d8c483852789a2f399",
+    "main-idle-claim-status": "57f2f96910992fac4c26055febbb08bf53c35173d25e4339bf268628971c3dc7",
+    "main-idle-claim-restored": "a1bed20961f76e9c300377ee4f61150ae89e17d4df09e315fe9515755294bd20"
+  },
+  "sourceSha256": {
+    "protocol/game.proto": "8911304eb10772bb119dd17e3c02c00767f0f454bcd533c08fd758a3b1596f2c",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterIdleClaimService.java": "23a7756c9ef61eff0a57136f2dfc25585d0e2fff332552916a5bbb6278d03c79",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterIdleClaimConfiguration.java": "ab61e8700c520e706ea70d553f9c69ae43a38dc89c8269cc114ed2bf70f15866",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterIdleStateRepository.java": "9911a71f5b6fe63ec3654b0e67cb26bdbc091650f44ef94ffb920eb70902533b",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterService.java": "87279d9832a49747d46fa31827e7d1579f6e868e926a27aa04e45a718b405f58",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterIdleService.java": "44bf6cb65c4807dda14dcb4e16d9aed479dd0e792c60e631ed68b4d2e004358b",
+    "backend/src/main/java/com/funsgamex/mxzg/network/GameProtocolCodec.java": "4424bb00ff815326d8e76e70d4a3e24464af1fca54d190d38783d7285e49509f",
+    "backend/src/main/java/com/funsgamex/mxzg/network/GameSocketHandler.java": "0c6f4b8f7f25ab447e198f022d96ae19a06f2220c23eeb87b9d8567031b45b7c",
+    "backend/src/main/resources/db/migration/V24__main_chapter_idle_accumulation.sql": "3637cc3591808e7a6c133c39a70bdf11cd85ae331761ed6fb7db941e194d935e",
+    "backend/src/main/resources/db/migration/V25__main_chapter_idle_receipt.sql": "332ba1e23afa1a3a8c4022900c049565679866b796f4d90a5d84680e47df5f69",
+    "backend/src/main/resources/application.yml": "723f82c1ec323dc51379fd9a8ae247f52d5018fb0d821ed31786f6c3c37e9c1b",
+    "client/assets/scripts/platform/Protocol.ts": "dfde6438b359a2569f82b6bd5fe3e54146fc7e4437a100bee4fdb8b9a9dbbc54",
+    "client/assets/scripts/platform/GameProtocolCodecUtils.ts": "23dd6eee6182069d803291bb64dc8045830d025edbfb7ddcb4dc16cffc52f574",
+    "client/assets/scripts/platform/GameProtocol.generated.ts": "4b260e5ec9c7d7a389347d5782f6ff55a31120d7e26fa9b1b0ccbe94f8b55ce9",
+    "client/assets/scripts/features/battle/MainChapterController.ts": "5c5a8a0edf7201a36a30332f75e9104500f6e38b7403b0461d4df53b40475c25",
+    "client/assets/scripts/features/battle/MainChapterModel.ts": "a4f4d21274ae1f92906a5114dbb9fd86d032e4fc23fc87e210518ad71694da67",
+    "client/tools/main-chapter-idle-protocol-check.ts": "ff1849eefbfed407fa905f18e5adec4db3b3e7831d2e6d61cbc64ae7fb6b7c9b"
+  },
+  "limitations": [
+    "日常mxzg.main-chapter.idle-claim-enabled默认false；只有独立测试显式开启，当前客户端没有领取发包、持久journal或按钮交互",
+    "服务重建恢复在同一独立数据库验证；未单独执行跨进程重启、客户端持久待确认、多实例存储隔离、通知/回包交错的完整客户端流程",
+    "未运行本批MySQL、Creator浏览器/发布构建、真机或CDN；未重启日常后端",
+    "每日/活动维护仍需真实开服配置，不以未初始化当无活动；酒馆旧初始化差异仍保留",
+    "未开放快速战斗、升级、穿脱或其他玩法；清心概率/护盾等旧疑点保留"
+  ],
+  "next": "维持按钮关闭，补应用层按认证身份激活的持久待确认与receipt/最新Snapshot双向确认；随后另获授权再接按钮。",
+  "documentationLinks": "tools/check_docs.py通过46份README/指南/验证记录链接"
+}

@@ -3,7 +3,7 @@
  * 共享模态由UIManager按ViewSpec配置提供，窗口不持有独立蒙版节点。
  * 库存入口读取唯一 BagModel；结算与产物说明入口展示调用方传入的只读内容，不查询或修改资产。
  */
-import { _decorator, Button, Label, Node, Sprite } from "cc";
+import { _decorator, Button, Label, Layout, Node, RichText, ScrollView, Sprite, UITransform, Widget } from "cc";
 import { BagUtils } from "../utils/BagUtils";
 import { GameLog } from "../../../core/GameLog";
 import { BagFace } from "../data/BagItemDataUtils";
@@ -20,7 +20,7 @@ import { BagEvent } from "../utils/BagEvent";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
+import { ItemDetailDisplay, ItemDetailUtils } from "../utils/ItemDetailUtils";
 
 /** 库存只传条目键与分类；奖励和产物只传只读内容，不能冒充当前库存。 */
 export type BagInfoArgs =
@@ -30,7 +30,7 @@ export type BagInfoArgs =
 const { ccclass, property } = _decorator;
 
 /**
- * BagInfoView 只展示当前库存详情，确认关闭，不承担道具使用业务。
+ * BagInfoView共用普通道具与碎片的旧基础详情，按真实mode展示条件按钮，不承担使用或分解业务。
  * 关闭只收起这张详情，不关背包页。
  */
 @UIRegistry.view({
@@ -41,12 +41,9 @@ const { ccclass, property } = _decorator;
     cache: false,
     allowMultiple: false,
     modal: { mask: true, closeOnOutside: true },
-    prepare: RemakeConfigUtils.prepareInventoryConfig,
 })
 @ccclass("BagInfoView")
 export class BagInfoView extends BaseView<BagInfoArgs> {
-    /** 物品配置查询器，仅库存详情使用；关闭释放，不缓存服务器数量。 */
-    private catalog: BagItemCatalog | null = null;
     /** 每次展示或关页递增，拒绝上一件物品及已关闭窗口的迟到图片。 */
     private paintVersion = 0;
     /** 详情背景的 Prefab 绑定，当前代码不修改。 */
@@ -57,17 +54,45 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
     @property(Label)
     propName: Label | null = null;
 
-    /** 数量说明文本，由 Prefab 绑定。 */
+    /** 库存按真实mode显示类型；奖励和产物入口保留调用方的只读副标题。 */
     @property(Label)
     propType: Label | null = null;
 
-    /** 配置说明文本，由 Prefab 绑定。 */
-    @property(Label)
-    desc: Label | null = null;
+    /** 配置说明富文本，保留同源换行和颜色；宽度、字体与行高由Prefab保存。 */
+    @property(RichText)
+    desc: RichText | null = null;
 
     /** Prefab 绑定的图标节点，未绑定时为 null。 */
     @property(Node)
     icon: Node | null = null;
+
+    /** 碎片独立图标槽，尺寸在Prefab保存，不改变普通道具图标大小。 */
+    @property(Node)
+    shardIcon: Node | null = null;
+
+    /** 仅精英碎片显示的拼图角标，详情不显示持有量进度。 */
+    @property(Node)
+    shardCorner: Node | null = null;
+
+    /** 旧碎片1至5颗黄星，位置及原图由Prefab维护。 */
+    @property([Node])
+    shardStars: Node[] = [];
+
+    /** 正文遮罩视口，只根据真实文字高度在Prefab声明的上下限内调整。 */
+    @property(Node)
+    descriptionViewport: Node | null = null;
+
+    /** 长正文的单文本滚动容器，不是业务Cell列表，不创建另一份内容。 */
+    @property(ScrollView)
+    descriptionScroll: ScrollView | null = null;
+
+    /** 正文最小高度，单位设计像素；由Prefab保存旧版60像素下限。 */
+    @property
+    minDescriptionHeight = 60;
+
+    /** 正文最大可见高度，单位设计像素；超出后在原视口内滚动。 */
+    @property
+    maxDescriptionHeight = 300;
 
     /** 稀有度底框节点，由 Prefab 绑定。 */
     @property(Node)
@@ -77,29 +102,41 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
     @property(Button)
     btnClose: Button | null = null;
 
-    /** 当前仅作确认关闭按钮，尚未接入使用道具。 */
+    /** 库存按旧条件显示使用入口，点击只提示未开放；说明入口显示确定并关闭。 */
     @property(Button)
     btnEnter: Button | null = null;
 
-    /** 确认按钮文案，当前显示“确定”。 */
+    /** 库存使用或只读说明确认文案，不按use_type自行改成其他功能名。 */
     @property(Label)
     enterLabel: Label | null = null;
 
-    /** 物品来源按钮，当前置灰并提示尚未开放。 */
+    /** 具体英雄碎片有来源时显示的头部圆形入口，点击只提示未开放。 */
     @property(Button)
     btnSrc: Button | null = null;
 
-    /** 旧详情操作节点，目前隐藏，保留序列化绑定。 */
+    /** 旧底部首按钮，按配置显示详情或来源；不开放英雄图鉴或来源跳转。 */
     @property(Node)
     btnDetail: Node | null = null;
 
-    /** 旧分解操作节点，目前隐藏，尚未恢复分解业务。 */
+    /** 旧分解入口，仅真实非期限库存且配置允许时显示，点击只提示未开放。 */
     @property(Node)
     btnDecompose: Node | null = null;
+
+    /** 底部首按钮的旧语言文案，具体碎片为详情，其他为来源。 */
+    @property(Label)
+    detailLabel: Label | null = null;
+
+    /** 分解按钮文案，采用旧CCB的同源语言键。 */
+    @property(Label)
+    decomposeLabel: Label | null = null;
 
     /** 旧按钮容器，其尺寸已固定在预制体，不在运行时改布局。 */
     @property(Node)
     hitMenu: Node | null = null;
+
+    /** 没有任何操作时保留旧版底部留白；有按钮时隐藏，由Prefab Grid统一占位。 */
+    @property(Node)
+    emptyActionSpacer: Node | null = null;
 
     /** 关闭按钮容器，布局由预制体维护。 */
     @property(Node)
@@ -118,6 +155,10 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
     private toast: ((text: string) => void) | null = null;
     /** 按钮是否已经绑定；重复 show 不重复注册，销毁时重置。 */
     private wired = false;
+    /** 当前库存详情的纯显示结果；说明入口和关闭后为null，不保存玩家数量。 */
+    private detail: ItemDetailDisplay | null = null;
+    /** 上次完整正文，用于库存数量刷新时保留长文滚动位置，关窗清空。 */
+    private lastBody = "";
 
     /** 对齐窗口根到可见区域；子节点尺寸和居中由预制体 Widget 控制。 */
     public onCreate(): void {
@@ -129,11 +170,10 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         if (!args) {
             throw new Error("物品详情缺少参数");
         }
+        this.validateBindings();
         this.args = args;
         EventDispatcher.instance.offTarget(this);
         if (args.source === "inventory") {
-            this.catalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
-                GameConfig.instance.getFile(GConfig.Language), GameConfig.instance.getFile(GConfig.TimeLimitItem));
             EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refreshInventory);
             this.refreshInventory();
         } else {
@@ -144,24 +184,36 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         }
     }
 
-    /** 从唯一 Model 重读当前条目；删除、换号或到期后关闭详情，不修改库存。 */
+    /** 按原实例键重读库存和真实mode；已恢复的道具/碎片取配置投影，删除、换号或到期关窗。 */
     private refreshInventory(): void {
         const args = this.args;
-        if (args?.source !== "inventory" || !this.catalog) {
+        if (args?.source !== "inventory") {
             return;
         }
         const model = BagModel.instance;
         const state = model.snapshot;
-        const item = this.catalog.list(state.items, state.timedItems, args.tab, model.serverTimeSeconds())
+        const item = BagItemCatalog.list(state.items, state.timedItems, args.tab, model.serverTimeSeconds(), state.spiritItems)
             .find(row => row.key === args.key);
         if (!item) {
             this.close();
             return;
         }
-        this.show(this.catalog.face(item.itemId, item.quantity), () => this.close(), text => UIManager.instance.toast(text));
-        if (this.btnSrc) {
-            this.btnSrc.node.active = true;
+        const db = GameConfig.instance;
+        const row = db.getConfig(GConfig.Item, item.itemId);
+        const supported = row && [2, 8, 9, 17].includes(row.mode!);
+        const detail = supported ? ItemDetailUtils.read(row, {
+            inventory: true,
+            timed: item.expiresAtSeconds !== undefined,
+            specificHero: !!db.getConfig(GConfig.HeroType, item.itemId - 10000000),
+        }) : null;
+        if (supported && !detail) {
+            UIManager.instance.toast("物品详情暂不可用，请检查显示配置");
+            this.close();
+            return;
         }
+        const face = item.spirit ? BagItemCatalog.spiritFace(item.spirit) : BagItemCatalog.face(item.itemId, item.quantity);
+        this.show(detail ? { ...face, typeLine: detail.typeLine, body: detail.description, richBody: detail.richDescription } : face,
+            () => this.close(), text => UIManager.instance.toast(text), detail);
         this.setCountdown(item.expiresAtSeconds === undefined ? undefined : {
             expiresAtSeconds: item.expiresAtSeconds,
             now: () => BagModel.instance.serverTimeSeconds(),
@@ -172,15 +224,21 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
     public onClose(): void {
         this.paintVersion++;
         this.releaseBindings();
-        this.catalog = null;
+        this.detail = null;
+        this.lastBody = "";
+        ResManager.setSprite(this.icon, null);
+        ResManager.setSprite(this.shardIcon, null);
+        ResManager.setSprite(this.rare, null);
         this.args = undefined;
     }
 
-    /** 展示配置与数量；重复展示只替换回调，不重复绑定按钮。 */
-    show(face: BagFace, onClose: () => void, toast: (text: string) => void): void {
+    /** 展示同一基础详情；库存传真实条件投影，奖励/产物保持自己的副标题和唯一确定按钮。 */
+    public show(face: BagFace, onClose: () => void, toast: (text: string) => void,
+        detail: ItemDetailDisplay | null = null): void {
         const version = ++this.paintVersion;
-        const current = () => version === this.paintVersion;
+        const current = () => this.node.isValid && version === this.paintVersion;
         this.setCountdown();
+        this.detail = detail;
         this.closeAction = onClose;
         this.toast = toast;
         if (this.propName) {
@@ -191,36 +249,133 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         }
         if (this.desc) {
             this.desc.node.active = true;
-            this.desc.string = face.body || " ";
+            this.desc.string = face.richBody || face.body || " ";
         }
-        ResManager.setSprite(this.icon, [face.icon, face.fallback], current);
+        const shard = face.shard;
+        if (this.shardCorner) {
+            this.shardCorner.active = !!shard;
+        }
+        this.shardStars.forEach((star, index) => { star.active = !!shard && index < shard.star; });
+        if (this.icon) {
+            this.icon.active = !shard;
+        }
+        if (this.shardIcon) {
+            this.shardIcon.active = !!shard;
+        }
+        ResManager.setSprite(shard ? this.icon : this.shardIcon, null);
+        ResManager.setSprite(shard ? this.shardIcon : this.icon, [face.icon, face.fallback], current);
         if (this.rare) {
             ResManager.setSprite(this.rare, [face.frame], current);
         } else {
             GameLog.shared.classified("MODULE", "warn", "Bag", "BagInfoView 下没有 spr_rare");
         }
         if (this.btnDetail) {
-            this.btnDetail.active = false;
+            this.btnDetail.active = !!detail?.bottomAction;
         }
         if (this.btnDecompose) {
-            this.btnDecompose.active = false;
+            this.btnDecompose.active = detail?.showDecompose === true;
         }
         const confirmImage = this.btnEnter?.node.getComponent(Sprite);
         if (confirmImage) {
             confirmImage.grayscale = false;
         }
-        this.gray(this.btnSrc);
+        if (this.btnSrc) {
+            this.btnSrc.node.active = detail?.showSourceIcon === true;
+            const image = this.btnSrc.node.getComponent(Sprite);
+            if (image) {
+                image.grayscale = false;
+            }
+        }
         if (this.enterLabel) {
-            this.enterLabel.string = "确定";
+            this.enterLabel.string = detail ? detail.useLabel : "确定";
         }
         if (this.btnEnter) {
-            this.btnEnter.node.active = true;
+            this.btnEnter.node.active = detail ? detail.showUse : true;
         }
+        if (this.detailLabel) {
+            this.detailLabel.string = detail?.detailLabel || "";
+        }
+        if (this.decomposeLabel) {
+            this.decomposeLabel.string = detail?.decomposeLabel || "";
+        }
+        const body = face.richBody || face.body;
+        this.refreshDescriptionLayout(body !== this.lastBody);
+        this.lastBody = body;
+        this.refreshActionLayout();
         this.wire();
     }
 
+    /** 核对本窗新增的静态碎片槽与正文边界，配置损坏交给统一开窗边界，不静默漏画。 */
+    private validateBindings(): void {
+        for (const [field, value] of Object.entries({
+            shardIcon: this.shardIcon,
+            shardCorner: this.shardCorner,
+            descriptionViewport: this.descriptionViewport,
+            descriptionScroll: this.descriptionScroll,
+            detailLabel: this.detailLabel,
+            decomposeLabel: this.decomposeLabel,
+            emptyActionSpacer: this.emptyActionSpacer,
+        })) {
+            if (!value) {
+                throw new Error("BagInfoView.prefab缺少绑定：" + field);
+            }
+        }
+        if (this.shardStars.length !== 5 || this.shardStars.some(star => !star)
+            || !this.descriptionViewport!.getComponent(UITransform)
+            || !Number.isFinite(this.minDescriptionHeight) || this.minDescriptionHeight <= 0
+            || !Number.isFinite(this.maxDescriptionHeight) || this.maxDescriptionHeight < this.minDescriptionHeight) {
+            throw new Error("BagInfoView.prefab碎片星级或正文高度参数无效");
+        }
+    }
+
+    /** 读取RichText.string同步排版后的实际高度，视口上下限来自Prefab，其余位置由已有Layout处理。 */
+    private refreshDescriptionLayout(resetPosition: boolean): void {
+        if (!this.desc || !this.descriptionViewport || !this.descriptionScroll) {
+            return;
+        }
+        const textHeight = this.desc.node.getComponent(UITransform)!.height;
+        const height = Math.min(this.maxDescriptionHeight, Math.max(this.minDescriptionHeight, textHeight));
+        const viewport = this.descriptionViewport.getComponent(UITransform)!;
+        viewport.setContentSize(viewport.width, height);
+        this.descriptionScroll.vertical = textHeight > height;
+        this.descriptionScroll.content?.getComponent(Layout)?.updateLayout();
+        for (let parent = this.descriptionViewport.parent; parent && parent !== this.node; parent = parent.parent) {
+            parent.getComponent(Layout)?.updateLayout();
+        }
+        if (resetPosition) {
+            this.descriptionScroll.stopAutoScroll();
+            this.descriptionScroll.scrollToTop(0);
+        }
+    }
+
+    /** 切换Prefab已有的单按钮居中Widget，多按钮仍交给固定两列Grid，不手算位置。 */
+    private refreshActionLayout(): void {
+        const buttons = [this.btnDetail, this.btnEnter?.node, this.btnDecompose].filter(Boolean) as Node[];
+        const activeCount = buttons.filter(button => button.active).length;
+        const single = activeCount === 1;
+        if (this.emptyActionSpacer) {
+            this.emptyActionSpacer.active = activeCount === 0;
+        }
+        for (const button of buttons) {
+            const widget = button.getComponent(Widget);
+            if (widget) {
+                widget.enabled = single && button.active;
+            }
+        }
+        this.hitMenu?.getComponent(Layout)?.updateLayout();
+        for (const button of buttons) {
+            const widget = button.getComponent(Widget);
+            if (widget?.enabled) {
+                widget.updateAlignment();
+            }
+        }
+        for (let parent = this.hitMenu?.parent; parent && parent !== this.node; parent = parent.parent) {
+            parent.getComponent(Layout)?.updateLayout();
+        }
+    }
+
     /** 设置只读倒计时，不发请求、不修改库存；普通详情传空值以隐藏标签。 */
-    setCountdown(timing?: { expiresAtSeconds: number; now: () => number | null }): void {
+    public setCountdown(timing?: { expiresAtSeconds: number; now: () => number | null }): void {
         this.timing = timing || null;
         this.lastRemaining = null;
         if (this.countdown) {
@@ -232,7 +387,7 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         this.update();
     }
     /** 每秒更新一次标签；未知服务器时刻显示同步提示，详情随节点销毁停止更新。 */
-    update(): void {
+    public update(): void {
         if (!this.timing || !this.countdown) {
             return;
         }
@@ -263,6 +418,33 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         this.toast?.("物品来源暂未开放");
     };
 
+    /** 库存使用只反馈未开放；产物或奖励说明的确定按钮仍只关闭当前窗口。 */
+    private readonly showUseNotice = (): void => {
+        if (this.detail) {
+            if (this.detail.showUse) {
+                this.toast?.("物品使用暂未开放");
+            }
+            return;
+        }
+        this.closeAction?.();
+    };
+
+    /** 底部按钮按真实配置说明来源或图鉴未开放，不借用已拥有英雄的详情。 */
+    private readonly showDetailNotice = (): void => {
+        if (this.detail?.bottomAction === "detail") {
+            this.toast?.("英雄图鉴暂未开放");
+        } else if (this.detail?.bottomAction === "source") {
+            this.showSourceNotice();
+        }
+    };
+
+    /** 只反馈旧条件允许显示的分解入口，不提交资产请求或改库存。 */
+    private readonly showDecomposeNotice = (): void => {
+        if (this.detail?.showDecompose) {
+            this.toast?.("物品分解暂未开放");
+        }
+    };
+
     /** 每个详情实例只登记内容按钮；外部点击由UIManager共享模态按ViewSpec处理。 */
     private wire(): void {
         if (this.wired) {
@@ -270,27 +452,38 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         }
         this.wired = true;
         this.btnClose?.node.on(Button.EventType.CLICK, this.closeInfo);
-        this.btnEnter?.node.on(Button.EventType.CLICK, this.closeInfo);
+        this.btnEnter?.node.on(Button.EventType.CLICK, this.showUseNotice);
         this.btnSrc?.node.on(Button.EventType.CLICK, this.showSourceNotice);
+        this.btnDetail?.on(Button.EventType.CLICK, this.showDetailNotice);
+        this.btnDecompose?.on(Button.EventType.CLICK, this.showDecomposeNotice);
     }
 
-    /** 来源入口维持当前未开放的灰色展示。 */
-    private gray(button: Button | null): void {
-        if (!button) return;
-        const image = button.node.getComponent(Sprite);
-        if (image) image.grayscale = true;
-    }
-
-    /** 销毁时解除仍存活按钮的回调并释放页面引用；Creator 可能已先销毁子按钮并清空其 node。 */
-    onDestroy(): void {
+    /** 直接销毁时同样失效图片和监听；引擎可能已先销毁子按钮，因此清理允许空节点。 */
+    public onDestroy(): void {
+        this.paintVersion++;
         this.releaseBindings();
+        this.detail = null;
+        this.lastBody = "";
     }
 
-    /** 解除本窗内容按钮和计时引用；共享模态监听及窗口归属由UIManager统一管理。 */
+    /** 解除仍存活按钮与计时引用；子节点可能已销毁内部输入处理器，此时不再调用Node.off。 */
     private releaseBindings(): void {
-        this.btnClose?.node?.off(Button.EventType.CLICK, this.closeInfo);
-        this.btnEnter?.node?.off(Button.EventType.CLICK, this.closeInfo);
-        this.btnSrc?.node?.off(Button.EventType.CLICK, this.showSourceNotice);
+        EventDispatcher.instance.offTarget(this);
+        const bindings: readonly (readonly [Node | null | undefined, () => void])[] = [
+            [this.btnClose?.node, this.closeInfo],
+            [this.btnEnter?.node, this.showUseNotice],
+            [this.btnSrc?.node, this.showSourceNotice],
+            [this.btnDetail, this.showDetailNotice],
+            [this.btnDecompose, this.showDecomposeNotice],
+        ];
+        for (const [node, listener] of bindings) {
+            if (node?.isValid) {
+                node.off(Button.EventType.CLICK, listener);
+            }
+        }
+        if (this.descriptionScroll?.isValid) {
+            this.descriptionScroll.stopAutoScroll();
+        }
         this.timing = null;
         this.lastRemaining = null;
         this.closeAction = null;

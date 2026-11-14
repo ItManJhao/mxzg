@@ -15,7 +15,7 @@
 - 通信与状态：[网络契约](network-contract.md)、[角色](role-data-contract.md)、[背包通信/MVC样板](bag-mvc-maintenance.md)、[库存事件](bag-inventory-events.md)、[英雄](hero-data-contract.md)、[阵容](hero-lineup-contract.md)。
 - 页面与交互：[Prefab规范](prefab-layout.md)、[战斗布局](battle-prefab-layout.md)、[阵容编辑](formation-ui-authoring.md)、[虚拟列表](super-scroll-authoring.md)。
 - 资源与构建：[三段加载、Bundle与缓存](staged-resource-loading.md)、[自动图集与构建工具](bag-auto-atlas.md)、[配置生成与查询](config-pipeline.md)。
-- 玩法恢复：[挂机规则审计](idle-reward-rules.md)、[挂机输入契约草案](idle-reward-input-contract.md)、[战斗统计](battle-statistics.md)、[战斗待复验问题](battle-known-issues.md)。
+- 玩法恢复：[挂机规则审计](idle-reward-rules.md)、[挂机输入契约](idle-reward-input-contract.md)、[新挂机累计与领取方案](main-chapter-idle-settlement.md)、[活动控制维护](idle-activity-maintenance.md)、[战斗统计](battle-statistics.md)、[战斗待复验问题](battle-known-issues.md)。
 - 运行与排错：[本机启停](local-remake-workflow.md)、[开发GM](gm-development.md)。
 
 ## 历史与证据

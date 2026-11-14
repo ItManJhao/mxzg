@@ -104,14 +104,34 @@ class MainChapterRewardTest {
             () -> rewards.grant(role, new MainChapterRules.Progress(1, true)));
     }
 
-    /** 中途库存溢出时，已经执行的金币、经验、升级奖和酒馆点也全部回滚。 */
+    /** 首通适配不能把满级忽略的理论经验返回为到账奖励，其他原奖励仍正常入账。 */
+    @Test
+    void maximumLevelDoesNotReportIgnoredExperienceAsAReceivedReward() {
+        String role = player();
+        jdbc.update("UPDATE game_role SET role_level=300,role_experience=7 WHERE id=?", role);
+        var before = roles.findById(role).orElseThrow();
+        long revision = roles.revision(role);
+        var received = new TransactionTemplate(transactions).execute(status ->
+                rewards.grant(role, new MainChapterRules.Progress(1, true)));
+        assertEquals(rules.stage(1).firstRewards().stream().filter(reward -> reward.itemId() != 900003).toList(),
+                received);
+        var after = roles.findById(role).orElseThrow();
+        assertEquals(300, after.level());
+        assertEquals(7, after.basics().experience());
+        long directDiamonds = rules.stage(1).firstRewards().stream().filter(reward -> reward.itemId() == 900002)
+                .mapToLong(MainChapterRules.Reward::quantity).sum();
+        assertEquals(before.diamonds() + directDiamonds, after.diamonds());
+        assertEquals(revision + 1, roles.revision(role));
+    }
+
+    /** 中途库存精确加法溢出时，已经执行的金币、经验、升级奖和酒馆点也全部回滚。 */
     @Test void laterRewardFailureRollsBackEarlierRewards() {
         String role = player();
         new TransactionTemplate(transactions).executeWithoutResult(status -> inventory.credit(role, 900101, Long.MAX_VALUE));
         var before = roles.findById(role).orElseThrow();
         var bag = inventory.list(role);
         long revision = roles.revision(role);
-        assertThrows(org.springframework.dao.DataAccessException.class,
+        assertThrows(ArithmeticException.class,
             () -> new TransactionTemplate(transactions).executeWithoutResult(status ->
                 rewards.grant(role, new MainChapterRules.Progress(1, true))));
         assertEquals(before, roles.findById(role).orElseThrow());

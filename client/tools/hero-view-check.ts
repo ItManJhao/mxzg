@@ -1,18 +1,13 @@
 /** 英雄页面专项：验证真实名册、页面生命周期、资源Bundle路由与异步格子复用，不连接游戏服务器。 */
+import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 
-/** 离线读取分组后的真实配置源文件，原config逻辑地址不变。 */
-const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
 import { HeroInfoView } from "../assets/scripts/features/hero/ui/HeroInfoView";
 import { HeroSkillView } from "../assets/scripts/features/hero/ui/HeroSkillView";
-import { GameConfig } from "../assets/scripts/config/GameConfig";
-import { GConfig } from "../assets/scripts/config/GConfig";
-import { RemakeConfigUtils } from "../assets/scripts/config/RemakeConfigUtils";
 import { HeroRosterUtils } from "../assets/scripts/features/hero/utils/HeroRosterUtils";
 import { Protocol } from "../assets/scripts/platform/Protocol";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
-import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { HeroRosterEvent } from "../assets/scripts/features/hero/utils/HeroRosterEvent";
 /** 英雄模块回归：核对显式初始化、唯一状态、事件清理和异步会话隔离。 */
@@ -42,6 +37,8 @@ import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 import { AccountService } from "../assets/scripts/features/account/AccountService";
 
 import { HeroCatalog } from "../assets/scripts/features/hero/utils/HeroCatalog";
+import { GameConfig } from "../assets/scripts/config/GameConfig";
+import { GConfig } from "../assets/scripts/config/GConfig";
 
 import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
 
@@ -350,13 +347,13 @@ function pump(frames: number): void {
   for (let i = 0; i < frames; i++) director.emit(Director.EVENT_AFTER_UPDATE);
 }
 
+/** 用已安装的唯一配置仓库投影真实名册，并检查页面开关和筛选事件。 */
 async function checkRemakeRoster(): Promise<void> {
   const model = new HeroRosterModel();
   const service = new HeroRosterController(model);
   service.initialize();service.resetSession();
   /** 模拟已由应用验收的统一回包，不再模拟已删除的查询接口。 */
   const sync=(heroes:OwnedHero[])=>service.onNotify(Protocol.STATE_CHANGED,{heroes,role:{},inventory:[],revision:1});
-  const catalog = new HeroCatalog(JSON.parse(read("client/assets/bundles/resources/config/herotype.json")), JSON.parse(read("client/assets/bundles/resources/config/item.json")));
   const samples = [
     {id:"reserve",templateId:10101001,level:99,star:9,deployed:false},
     {id:"lower",templateId:10101001,level:1,star:3,deployed:true},
@@ -364,13 +361,13 @@ async function checkRemakeRoster(): Promise<void> {
     {id:"level",templateId:10101001,level:2,star:4,deployed:true},
     {id:"template",templateId:10101002,level:2,star:4,deployed:true},
   ];
-  const sorted=HeroRosterUtils.present({status:"ready",heroes:samples,error:"",rosterInfo:{capacity:326,buySpaceTimes:1}},catalog,0);
+  const sorted=HeroRosterUtils.present({status:"ready",heroes:samples,error:"",rosterInfo:{capacity:326,buySpaceTimes:1}},0);
   assert(sorted.capacityLine==="英雄：5/326","直接显示服务端总容量，不重复叠加 VIP");
   assert(sorted.cells.map(cell=>cell.instanceId).join(",")==="template,level,higher,lower,reserve","旧版上阵、星级、等级、模板优先级");
   assert(samples[0].id==="reserve","展示排序不修改唯一名册");
   const view = makeView();
   let notice = "";
-  view.configure(model, catalog);
+  view.configure(model);
   const ui = UIManager.instance, originalOpen = ui.open, originalToast = ui.toast;
   const selectedIds: string[] = [];
   ui.toast = text => { notice = text; };
@@ -466,7 +463,6 @@ function checkHeroScrollBounds():void {
 
 /** 验证应用实际开页无需测试注入，使用唯一模块和已准备配置。 */
 async function checkDefaultRoster():Promise<void> {
- await GameConfig.instance.prepare([GConfig.HeroType,GConfig.Item]);
  const service=HeroRosterController.instance;service.initialize();service.resetSession();
  service.onNotify(Protocol.STATE_CHANGED,{revision:1,heroes:[],heroRoster:{capacity:300,buySpaceTimes:0}});
  const page=makeView();try {page.runOpen();await page.whenReady();pump(2);assert(boardOf(page).capacityLabel!.string==="英雄：0/300","实际默认装配显示容量");}
@@ -540,7 +536,6 @@ async function checkReadonlyInfo(): Promise<void> {
 }
 /** 技能窗口关闭后不响应同实例ID的新快照，重开读取当前状态。 */
 async function checkReadonlySkillLifecycle(): Promise<void> {
-    await RemakeConfigUtils.prepareHeroDetailConfig();
     const controller = HeroRosterController.instance;
     controller.initialize();
     controller.resetSession();
@@ -647,22 +642,64 @@ async function checkElementBundleRoutes(): Promise<void> {
     }
 }
 
+/** 证明模板显示只按需查询当前主键，既不读取整表，也不保留上次显示副本。 */
+async function checkDirectTemplateLookup(): Promise<void> {
+    const config = await ConfigFixtureUtils.installReal(new GameConfig());
+    const direct = Object.create(config) as GameConfig;
+    const get = config.getConfig.bind(config);
+    let title = "首次模板名称";
+    let fallback = false;
+    let omittedIcon = false;
+    let omittedElement = false;
+    const calls: Array<{ name: string; key: unknown }> = [];
+    direct.getFile = (() => {
+        throw new Error("模板查询不应读取整张配置表");
+    }) as typeof direct.getFile;
+    direct.getConfig = ((name: typeof GConfig.HeroType | typeof GConfig.Item, key: number) => {
+        assert(key !== undefined, "模板投影必须使用主键，不取整表");
+        calls.push({ name, key });
+        const row = get(name, key);
+        return row && name === GConfig.HeroType ? {
+            ...row,
+            note: title,
+            item_id: omittedIcon ? undefined : fallback ? 0 : (row as any).item_id,
+            elem: omittedElement ? undefined : (row as any).elem,
+        } : row;
+    }) as typeof direct.getConfig;
+    const first = HeroCatalog.find(10101001, direct)!;
+    assert(first.name === title && first.elem === 1 && first.icon === "hero/ui/hero-icon_20101001",
+        "当前模板保留名称、元素和配置item_id头像规则");
+    title = "更新后的模板名称";
+    assert(HeroCatalog.find(10101001, direct)?.name === title && first.name === "首次模板名称",
+        "再次查询取得当前行，不读页面旧索引；返回值不修改以前的投影");
+    assert(calls.length === 2 && calls.every(call => call.name === GConfig.HeroType && call.key === 10101001),
+        "正常头像只查询所需英雄行，不扫描全英雄或物品表");
+    fallback = true;
+    assert(HeroCatalog.find(10101001, direct)?.icon === "hero/ui/hero-icon_20101001",
+        "缺item_id时保留原有同模板物品hero-icon回退");
+    assert(calls[calls.length - 1].name === GConfig.Item && calls[calls.length - 1].key === 10101001,
+        "物品回退也只查询目标主键");
+    omittedIcon = true;
+    omittedElement = true;
+    const incomplete = HeroCatalog.find(10101001, direct)!;
+    assert(incomplete.icon === "hero/ui/hero-icon_20101001" && incomplete.elem === null,
+        "可选item_id缺失仍走同源物品头像，缺元素明确为null，不猜默认元素");
+    assert(HeroCatalog.find(999999999, direct) === null && HeroCatalog.find(0, direct) === null,
+        "未知或非法模板保留明确缺失");
+}
+
 /** 顺序执行英雄页面和数据回归，最后报告全部检查结果。 */
 async function main() {
-  const original = ResourceAssetsUtils.loadConfig;
-  ResourceAssetsUtils.loadConfig = async path => JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8"));
-  try {
-    await checkDefaultRoster();
-    await checkReadonlyInfo();
-    await checkReadonlySkillLifecycle();
-    await checkElementBundleRoutes();
-    await checkHeroCellReuse();
-    checkHeroScrollBounds();
-    checkPrefab();
-    await checkRemakeRoster();
-    console.log("hero-view-check passed: direct page bindings, roster rendering and selection, filter, current instance and late image isolation");
-  } finally {
-    ResourceAssetsUtils.loadConfig = original;
-  }
+  await ConfigFixtureUtils.installReal();
+  await checkDirectTemplateLookup();
+  await checkDefaultRoster();
+  await checkReadonlyInfo();
+  await checkReadonlySkillLifecycle();
+  await checkElementBundleRoutes();
+  await checkHeroCellReuse();
+  checkHeroScrollBounds();
+  checkPrefab();
+  await checkRemakeRoster();
+  console.log("hero-view-check passed: direct page bindings, roster rendering and selection, filter, current instance and late image isolation");
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

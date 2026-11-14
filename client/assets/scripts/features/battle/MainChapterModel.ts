@@ -1,4 +1,7 @@
-/** 主线唯一Model：权威进度来自统一快照，回执只描述已执行命令，不反写角色或背包。 */
+/**
+ * 主线唯一Model：权威进度、挂机时钟及可选领取能力来自应用统一快照，页面关闭仍保留。
+ * 命令回执只描述历史操作，不反写当前角色、背包或挂机状态；应用换号时统一清空。
+ */
 import { BaseModel } from "../../framework/BaseModel";
 
 /** 服务端权威进度；空待领奖表示没有未领取战报。 */
@@ -38,6 +41,15 @@ export interface MainChapterReplay {
     readonly pending: readonly string[];
     readonly bytes: Uint8Array;
 }
+/** 已知格式的挂机消费能力投影；保留版本用于未来领取意图，当前仍没有发包或按钮入口。 */
+export interface MainChapterIdleClaimState {
+    /** 当前已验证的协议格式，未来未知格式保持只读，不猜测其字段含义。 */
+    readonly schemaVersion: 1;
+    /** 仅成功消费或明确修正时递增的持久正版本，不等同于统一资产版本。 */
+    readonly operationVersion: number;
+    /** READ_ONLY表示服务端入口关闭；ENABLED不保证本次权益及最低周期已满足。 */
+    readonly requestMode: "READ_ONLY" | "ENABLED";
+}
 /** 服务端挂机时钟及每个收益周期的配置；不表示已经领取。 */
 export interface MainChapterIdleState {
     readonly serverTime: number;
@@ -50,6 +62,8 @@ export interface MainChapterIdleState {
     readonly slots?: readonly { heroId: string; position: number }[];
     /** 选人依据的持久阵容版本；旧后端缺失时不自行代选。 */
     readonly lineupVersion?: number;
+    /** 已验证的可选消费状态；缺失或未知格式时为undefined，不据此开放当前按钮。 */
+    readonly claimState?: MainChapterIdleClaimState;
 }
 export class MainChapterModel extends BaseModel {
     /** 同应用生命周期的唯一主线数据入口。 */

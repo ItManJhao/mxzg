@@ -27,8 +27,8 @@ public class MainChapterService {
     private final SessionService sessions;
     /** 角色锁、等级与资产版本。 */
     private final RoleRepository roles;
-    /** 首次通关同事务启动挂机时钟，断网不会丢失起点。 */
-    private final MainChapterIdleService idle;
+    /** 首次挑战同事务创建累计起点；正常失败战斗保留，已通关缺行不自愈。 */
+    private final MainChapterIdleStateRepository idleStates;
     /** 唯一主线持久化连接。 */
     private final JdbcTemplate jdbc;
     /** 同源关卡门槛及进度转换。 */
@@ -69,8 +69,9 @@ public class MainChapterService {
     /** 注入现有服务，持久化与资产修改共享同一个Spring事务。 */
     public MainChapterService(SessionService sessions, RoleRepository roles, JdbcTemplate jdbc,
             MainChapterRules rules, HeroMainPowerService powers, HeroLineupBattleService battles,
-            MainChapterRewardService rewards, AssetSyncService sync, ObjectMapper mapper, MainChapterIdleService idle) {
-        this.idle = idle;
+            MainChapterRewardService rewards, AssetSyncService sync, ObjectMapper mapper,
+            MainChapterIdleStateRepository idleStates) {
+        this.idleStates = idleStates;
         this.sessions = sessions;
         this.roles = roles;
         this.jdbc = jdbc;
@@ -90,7 +91,9 @@ public class MainChapterService {
 
     /**
      * 同请求ID永久复用回执；新请求遇到待领奖时仅补领奖并记回执。
-     * 否则锁内读取当前队伍、门槛和真实战斗结果，并冻结双方名称；胜利记录通关与待领奖，失败不推进。
+     * 否则未通关角色在锁内创建一次累计；已有通关必须具备原累计，不补建免费起点。
+     * 随后读取队伍、门槛和真实战斗并冻结双方名称。
+     * 失败战斗保留累计起点但不推进通关；任何受理异常均随事务整体回滚。
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt challenge(String token, String requestId) {
@@ -106,6 +109,14 @@ public class MainChapterService {
         if (before.pendingBattleId() != null) {
             receipt = settle(role, before.pendingBattleId());
         } else {
+            // 战力读取携带资产版本；首次累计的版本通知必须先登记，避免同场输入版本不一致。
+            if (before.maxCleared() == 0) {
+                if (idleStates.initializeForChallenge(role, java.time.Instant.now().getEpochSecond())) {
+                    sync.changed(role);
+                }
+            } else {
+                idleStates.require(role);
+            }
             var power = powers.current(token);
             var roleData = roles.findById(role).orElseThrow();
             var decision = rules.decide(new MainChapterRules.Progress(before.maxCleared(), false), roleData.level(), power.total());
@@ -136,7 +147,6 @@ public class MainChapterService {
                         after.maxCleared(), id, role) == 0) {
                     jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared,pending_battle_id) VALUES (?,?,?)", role, after.maxCleared(), id);
                 }
-                idle.snapshot(role, after.maxCleared(), java.time.Instant.now().getEpochSecond());
                 sync.changed(role);
             }
             receipt = new Receipt(Action.BATTLE, id, state(role), List.of(), null);

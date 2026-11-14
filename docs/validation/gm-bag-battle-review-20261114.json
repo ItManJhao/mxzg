@@ -1,0 +1,124 @@
+{
+  "date": "2026-11-14",
+  "branch": "hao",
+  "scope": "GM关闭排查、背包分类详情只读审计、当前前三关战斗按钮状态修正；不提交推送、不开放其他玩法",
+  "gm": {
+    "reportedState": "负责人断点确认enabled=false；此值来自真实gm.status，当前按钮禁用符合服务端关闭状态",
+    "default": "application-local.yml ${MXZG_GM_ENABLED:false}，GmService默认false，保持不变；刷新Creator不会改变运行后端配置",
+    "manualEnable": "在后端启动PowerShell设置$env:MXZG_GM_ENABLED=\"true\"后执行backend/control.ps1 -Action restart；启动器若只复用旧进程不会应用新变量",
+    "fixes": [
+      "GmView重复onOpen先解除本次旧监听",
+      "收到GM_DISABLED后按钮保持禁用，其他业务错误保留幂等重试",
+      "旧打开的异步结果只更新仍使用同一args的当前窗口"
+    ],
+    "unchanged": "未启用日常GM、未改生产配置、未开放精灵GM/升级/穿戴；仅独立随机H2显式启用测试GM",
+    "browser": "真实发放英雄10101001×1、物品900101×1，收两份不同幂等回执；revision4→5→6，英雄3→4，英雄经验700→701"
+  },
+  "battle": {
+    "causeBoundary": "旧stageLabel在maxCleared=2和3都显示3；只有已通3关且无待结算/旧请求时禁用。用户说第三关本身不足以区分这两状态，不凭此断言其实际已通关",
+    "fixes": [
+      "已完成开放范围显示已通关及原因",
+      "等待同步/忙碌/播放中使用对应按钮文案",
+      "prepareChallenge补范围守卫，旧请求/待结算优先恢复"
+    ],
+    "browser": "仅本次内存夹具maxCleared=2；实际点战斗→布阵→出阵第三关→战斗并自动返回挂机，最终maxCleared=3、已通关按钮；无第四关开放",
+    "fixture": "SocketPreviewServer增加仅测试--chapter-third-fixture，与--idle-loop-fixture一起使用，不改日常角色或生产进度"
+  },
+  "bagAudit": {
+    "result": "确认当前非精灵详情错误统一复用通用BagInfoView；本轮只读核对，没有把装备/碎片详情虚报已恢复",
+    "inventory": "docs/bag-resource-inventory.md#详情还原差异",
+    "differences": [
+      {
+        "kind": "普通装备mode1",
+        "old": "独立AbilityInfoCtr：品质、星、位置/评分、基础属性、套装及装备入口",
+        "current": "普通BagInfoView，专用分区缺失",
+        "dependencies": "EquipmentType、attrshow、scorecount、equipmentsettype；背包原直接传配置与空穿戴列表，不需伪造独立装备属性"
+      },
+      {
+        "kind": "普通道具",
+        "old": "BackpackInfoCtr按配置显示类型、说明与来源/使用等",
+        "current": "数量副标题和固定确认；条件按钮未恢复"
+      },
+      {
+        "kind": "精英碎片mode8",
+        "old": "与道具共用基础窗口但专用拼图头像/星、格子持有数/需求进度和条件按钮",
+        "current": "普通图标与数量；图鉴及完成度缺失"
+      },
+      {
+        "kind": "精灵mode6",
+        "old": "RunesTipsCtr实例详情",
+        "current": "此前已独立SpiritInfoView，本轮不重做"
+      },
+      {
+        "kind": "灵器mode18及英雄材料mode9",
+        "old": "不同业务类型，不可按页签统一套普通装备/精英碎片",
+        "current": "领域或专用表现缺口，保持未开放"
+      }
+    ],
+    "officialReadOnly": "已有hao1角色实际查看普通装备银制利剑（评分33/攻击33）、强化石和随机3星碎片；未点击正式服使用、装备、来源按钮",
+    "screenshots": [
+      "docs/images/bag-official-equipment-20261114.jpg",
+      "docs/images/bag-official-item-20261114.jpg",
+      "docs/images/bag-official-shard-20261114.jpg"
+    ]
+  },
+  "validation": {
+    "backend": {
+      "log": "backend/target/gm-battle-review-20261114.log",
+      "results": [
+        {
+          "class": "GmTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "GameSocketTest",
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "MainChapterSocketTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "tests": 29
+    },
+    "frontend": [
+      "gm",
+      "main-chapter",
+      "game-socket",
+      "bindings"
+    ],
+    "typeCheck": "Creator项目tsc --noEmit",
+    "browser": "docs/validation/gm-battle-browser-20261114.json",
+    "screenshots": [
+      "docs/images/chapter-third-formation-20261114.jpg",
+      "docs/images/chapter-third-completed-20261114.jpg",
+      "docs/images/gm-hero-grant-20261114.jpg",
+      "docs/images/gm-item-grant-20261114.jpg"
+    ],
+    "notRun": [
+      "未操作日常库或修改其GM开关",
+      "未恢复装备/道具/碎片专用UI",
+      "未做新发布构建或真机验收"
+    ],
+    "ownedPreview": {
+      "pid": 22064,
+      "port": 63187,
+      "run": "ae70f02f2eed4fc6bf477518319d5f97",
+      "stopped": true,
+      "ownership": "停止前核对完整命令行含本次唯一复制目录及SocketPreviewServer"
+    },
+    "otherChecks": [
+      "文档链接46份通过",
+      "git diff --check通过"
+    ]
+  }
+}

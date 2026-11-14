@@ -6,11 +6,13 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "21个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
         "BagInfoView",
         "BagTabView",
-        "BagView"
+        "BagView",
+        "EquipmentInfoView",
+        "SpiritInfoView"
       ]
     },
     {
@@ -18,7 +20,7 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "21个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
         "BattleDetailCell",
         "BattleDetailLayer",
@@ -37,7 +39,7 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "21个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
         "LoadingLayer"
       ]
@@ -47,7 +49,7 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "21个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
         "BagItemView",
         "CommonPanel1"
@@ -58,8 +60,10 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "21个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
+        "GmBattleView",
+        "GmGrantView",
         "GmOptionCellView",
         "GmView"
       ]
@@ -69,7 +73,7 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "21个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
         "FormationHeroCellView",
         "FormationView",
@@ -84,7 +88,7 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "21个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
         "CityChromeView",
         "CityHubView",
@@ -96,7 +100,7 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "17个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
+      "reason": "21个独立View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
         "AccountLoginView",
         "RoleProfileView",

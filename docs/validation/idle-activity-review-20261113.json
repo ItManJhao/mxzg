@@ -1,0 +1,222 @@
+{
+  "date": "2026-11-13",
+  "baseline": "hao c23b53ed及此前未提交修改",
+  "scope": "三类挂机活动只读输入、适用判断和纯掉落，不开放活动维护或领取",
+  "legacySources": [
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/service/RoleMissionService.java",
+      "sha256": "7f03358bfdec11db91fa5a34a0c6c875eb50efe104d92da877294fdb5ea95740"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/promotionNew/service/PromotionControlService.java",
+      "sha256": "8d02bb930b3d66ff63276dcb697808e00bc4c8e3cdcfa803f72b4005bee610af"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/promotionNew/service/BasePromotionService.java",
+      "sha256": "e53682405fecb590839ee9280adeefce7cb8c2fea3d57908d424798e94bf3f9c"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/promotionNew/service/Promotion016DragonInfoService.java",
+      "sha256": "0fc048773499505c5ee305222d958643d9750a4ca1273cf823934d9263500c11"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/promotionNew/service/Promotion034ZhuShenService.java",
+      "sha256": "dc237a73f8cfd869ff7b09d8114c16c27316e51f273aa44d48c6bc78e874eb53"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/promotionNew/service/Promotion044FiresShopService.java",
+      "sha256": "e905b389d8cc0460f68f50d516b2ef5d140523fc5961d1c0dc4e44e0a492c062"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/server/service/ServerParamService.java",
+      "sha256": "0a37071834d5b3a128332b8627b8a73cf1c75ce223574186cd9fc6ea9ac693e1"
+    },
+    {
+      "path": "server/mxzg-common/src/main/java/com/ayjs/mxzg/common/excel/BaseExcelCache.java",
+      "sha256": "b3b29f4d4171b7ccf6112d17a9edb7b62b27c003e19c92a48f73d36f54abbfec"
+    },
+    {
+      "path": "server/mxzg-common/src/main/java/com/ayjs/mxzg/common/util/RandomUtil.java",
+      "sha256": "dca456ace2b8012f66990b50be4b7d2a2dad3b98382e901639e5480095a5fffe"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/web/api/ActivityApi.java",
+      "sha256": "5150a78feb31e878fd3b8e8d7c17f8174288b3b0d024154b7681fa90a90219ce"
+    }
+  ],
+  "configSources": [
+    {
+      "path": "config/gameconfig/promotioncontrol.xlsx",
+      "sha256": "0310f0dfa606113245bb7b1746932dcd697a6e682591ed19c6eba7cb7721022b"
+    },
+    {
+      "path": "config/gameconfig/promotiondragonmarkdrops.xlsx",
+      "sha256": "85fc2bfd110120bfec0d35e2bf7ae8d8f7041b9516186f89a7e33ce6fcd2b6ea"
+    },
+    {
+      "path": "config/gameconfig/promotionpvedrops.xlsx",
+      "sha256": "af07eb5030a4f1a04c7081d08578d5f39503a80275a801b19011fbc9bb95d9dc"
+    },
+    {
+      "path": "config/gameconfig/promotionfiredrops.xlsx",
+      "sha256": "66091ac866c0d66b430e4a663d50643c9a28c8480cbf372f3f4ed3d4321f41b5"
+    },
+    {
+      "path": "config/gameconfig/system.xlsx",
+      "sha256": "12f4536a6c483a355b63c5debbecb0f112b16df63afc34fb68e8ac11e349db12"
+    }
+  ],
+  "confirmed": {
+    "zone": "Asia/Shanghai",
+    "openDays": "ceil((now-开服当天上海零点)/86400)，保留零点整秒属于前日",
+    "recordPeriod": "start<=now<=end；clear不延长掉落",
+    "roleLevels": "016严格>1，034严格>10，044无活动等级门槛"
+  },
+  "state": {
+    "migration": "V21__idle_activity_inputs.sql",
+    "openedAt": "game_server.opened_at_seconds可空，不默认当前时刻",
+    "control": "game_idle_activity_control按server_id/activity_id持久；16/34/44全齐、revision>=1",
+    "missing": "无生产seed；空表/缺行未知拒绝，三项显式未发布才不适用",
+    "roleCycles": "旧角色轮次只投影global control；不创建三套角色任务/兑换/掉落状态",
+    "read": "MANDATORY readonly一次SELECT，不清过期、不推进轮次、不改资产",
+    "remaining": "真实开服配置写维护、016/034初始化与周期推进、044发布尚未恢复"
+  },
+  "rules": {
+    "projection": "backend/src/main/resources/gameplay/idle-activities.json",
+    "sha256": "bbb22e62b8f8eafaf3e3219e0f7490ba07bdc03c98522f486be2680070b48dcd",
+    "gainChance": [
+      6936,
+      0,
+      6936
+    ],
+    "fixedFrequencySeconds": [
+      1234,
+      3600,
+      1234
+    ],
+    "randomFrequencySeconds": 60,
+    "probability": "nextInt(1000000)<=gainChance；0仍抽样且点0可中",
+    "counts": "固定整除次数+随机成功次数后统一倍乘原奖励，保留重复项",
+    "selection": "016/034精确turns，相同turns最大idx；044最小idx",
+    "legacyOrder": "016->034->044->普通随机->神职，完整纯装配尚未接入",
+    "commentMismatch": "源表每5秒与实际主线60秒差异保留",
+    "controlTurns": "016/034配置循环从1开始；044运营控制可保留0，掉落忽略该轮次字段"
+  },
+  "input": {
+    "method": "IdleRewardInputService.current(roleId,nowSeconds)",
+    "frozen": "角色上下文、一次服务器秒、世界/神职/礼包及活动开服原值/实际日数/控制期次和revision/状态/选中行",
+    "gates": "未发布/记录期外/等级不足提前排除，适用时缺开服或轮次行拒绝；查询不抽奖",
+    "version": "组合IdleRewardRules、PrivilegeGiftRules和IdleActivityRules实际内容摘要",
+    "home": "maximumSeconds不读活动；未初始化不妨碍现有挂机主页"
+  },
+  "config": {
+    "sharedTables": 47,
+    "mavenSharedIncludes": 32,
+    "typedSchemaTables": 16,
+    "activityProjectionServerOnly": true,
+    "packagedSharedAndActivityBytesMatch": true,
+    "baseProjectionUnchanged": true
+  },
+  "checks": {
+    "java": {
+      "IdleActivityRulesTest": {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleActivityServiceTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardInputServiceTest": {
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardRulesTest": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "ClergyInputRulesTest": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "ClergyStateMigrationTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "WorldLevelServiceTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "PrivilegeGiftRulesTest": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "PrivilegeGiftServiceTest": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "MainChapterIdleTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRulesBoundaryTest": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleBonusUtilsTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleTest": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "total": 139,
+    "failures": 0,
+    "errors": 0,
+    "log": "backend/target/idle-activity-review-20261113.log",
+    "configScope": {
+      "tests": 23,
+      "passed": 23
+    },
+    "resolvedTestCompatibility": "首轮8项独立H2迁移触发IN常量集合保留已关闭会话；保留约束改为等价CASE/BETWEEN；最终复核修正044运营活动允许轮次0后整组139项通过",
+    "resourceScope": "16包/32Prefab/17独立View及12841份特效文件/UUID摘要通过",
+    "resourceGenerated": "32份Prefab索引通过",
+    "docs": "44份文档文件链接及git diff --check通过"
+  },
+  "limitations": [
+    "只运行独立H2，不连接日常库或MySQL",
+    "没有浏览器/Creator/新发布包/真机验收",
+    "活动控制写维护尚未恢复，未初始化区服拒绝完整输入",
+    "尚无完整纯计算装配及新挂机领取协议/计数/回执/资产同事务",
+    "宝箱领取、快速战斗、英雄升级和穿脱保持关闭，清心和护盾待审不变"
+  ],
+  "git": "hao本地未提交推送；保留既有HeroRosterController排版修改"
+}

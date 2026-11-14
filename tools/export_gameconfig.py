@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""客户端配置导出：默认只输出当前读取闭包，--all只允许在assets外归档旧项目全表。
+"""客户端配置导出：默认输出当前读取闭包并更新压缩包，--all只允许在assets外归档旧项目全表。
 
 Source of truth is the in-repo directory config/gameconfig (override with
---src or GAMECONFIG_SRC). Runtime client code only reads the JSON written to
-client/assets/bundles/resources/config. xlsx is not loaded by Creator.
+--src or GAMECONFIG_SRC). Shared JSON remains in the config Bundle directory
+for the backend and export checks. The client reads startup JSON and the
+generated BufferAsset package. xlsx is not loaded by Creator.
 
 Header rows match the old ExcelReader layout:
   row 1  Chinese note
@@ -11,7 +12,8 @@ Header rows match the old ExcelReader layout:
   row 3  field name
   row 4+ data
 
-Columns without a 1/2/3 flag are designer comments and are not exported.
+当前共享JSON只输出1/2/3标记列；未标记不等于服务端无用字段。
+旧服务端还读取活动gain_chance等未标记列，恢复对应功能时须定向投影，不能全局放开导出。
 system_gate.json is derived from system.xlsx integer *_open_day / *_days keys.
 opencondition.json keeps the client fields id/name/condition_type/level/
 open_server_day and also keeps the raw columns. main_cafe is an alias of
@@ -28,8 +30,10 @@ import json
 import math
 import os
 import re
+import subprocess
 import sys
 import uuid
+import xml.etree.ElementTree as ET
 import zipfile
 from datetime import date, datetime, time
 from pathlib import Path
@@ -87,7 +91,7 @@ def check_table_reads(text: str) -> set[str]:
 
 
 def current_client_tables() -> dict[str, list[str]]:
-    """从当前schema、页面原始读取和现用规则/资源核对工具求导出范围，不维护另一份模块表清单。"""
+    """从schema、客户端读取、后端实际打包依赖及现用检查求共享导出范围，不另建模块清单。"""
     tables: dict[str, list[str]] = {}
 
     def add(name: str, reason: str) -> None:
@@ -101,6 +105,19 @@ def current_client_tables() -> dict[str, list[str]]:
         if not spec["path"].startswith("config/"):
             raise ValueError("schema配置缺少config包前缀：" + key)
         add(spec["path"][len("config/"):], "client-schema:" + key)
+    # 后端从同一配置包打包gameplay输入，不能被客户端零调用误判成未实现资源。
+    # 直接读取现有POM，避免再维护一份服务端表名列表；目录及实际文件另由配置专项检查。
+    namespace = {"m": "http://maven.apache.org/POM/4.0.0"}
+    pom = ROOT / "backend/pom.xml"
+    for resource in ET.parse(pom).getroot().findall("m:build/m:resources/m:resource", namespace):
+        directory = resource.findtext("m:directory", default="", namespaces=namespace)
+        if (pom.parent / directory).resolve() != DEFAULT_OUT.resolve():
+            continue
+        for include in resource.findall("m:includes/m:include", namespace):
+            name = (include.text or "").strip()
+            if not name.endswith(".json"):
+                raise ValueError("共享配置POM必须明确引用JSON表：" + name)
+            add(name[:-5], "backend/pom.xml:gameplay")
     # GConfig由schema生成，不能用旧生成结果反过来保活已经从schema删除的表。
     for source in sorted((ROOT / "client/assets/scripts").rglob("*.ts")):
         if source.name == "GConfig.ts":
@@ -153,8 +170,23 @@ def require_output_mode(out: Path, export_all: bool) -> None:
         raise ValueError("--all全量归档必须输出到client/assets之外")
 
 
+def project_attrshow(rows: list[dict]) -> list[dict]:
+    """按旧Lua主键语义合并完全相同的attrshow重复行；同键异内容拒绝，不猜覆盖次序。"""
+    seen: dict[int, dict] = {}
+    result: list[dict] = []
+    for row in rows:
+        key = row.get("attr")
+        if key in seen:
+            if seen[key] != row:
+                raise ValueError("attrshow同属性存在不同显示配置：" + str(key))
+            continue
+        seen[key] = row
+        result.append(row)
+    return result
+
+
 def export_current(src: Path, out: Path) -> int:
-    """只导出当前读取闭包；主城沿用已核对的既有投影源，不用不同版本XLSX暗改现状。"""
+    """导出当前读取闭包并在默认目录更新配置包；隔离导出不改项目包，主城保留已核对投影。"""
     targets = current_client_tables()
     schema = json.loads((ROOT / "config/client-schema.json").read_text(encoding="utf-8-sig"))
     specs = {spec["path"][len("config/"):]: spec for spec in schema["tables"].values()}
@@ -174,6 +206,14 @@ def export_current(src: Path, out: Path) -> int:
     gates = build_system_gate(loose_rows(src / "system.xlsx", system["sheet"]))
     for name in targets:
         stem = name.split("/")[-1]
+        if name == "spirit-display":
+            # 该表由真实精灵随机/显示闭包派生，不存在同名XLSX；与专项导出共用唯一算法。
+            from export_spirit_rules import build_display, build_projection
+
+            target = out / (name + ".json")
+            write_json(target, build_display(build_projection(src)))
+            ensure_meta(Path(str(target) + ".meta"))
+            continue
         if name.startswith("maincity/"):
             # 这三份当前页面输入与现存XLSX存在已记录差异，完整规则专项前保持原容器和字节。
             source = ROOT / "config/client-maincity" / (stem + ".json")
@@ -190,6 +230,9 @@ def export_current(src: Path, out: Path) -> int:
         else:
             rows = primary(stem)["rows"]
             note = PRIMARY_NOTE % (stem + ".xlsx", primary(stem)["sheet"])
+        if name == "attrshow":
+            rows = project_attrshow(rows)
+            note += " Identical duplicate attribute keys merged with legacy Lua key semantics."
         if name == "opencondition":
             rows = project_opencondition(rows, gates)
             note = OPEN_CONDITION_NOTE
@@ -204,8 +247,20 @@ def export_current(src: Path, out: Path) -> int:
         else:
             write_table(out, name, note, rows)
     counts = validate_current_scope(out)
+    refresh_config_package(out)
     print("当前客户端配置导出：%d表；完整原始行保留，不导出未实现模块或旧manifest" % len(counts))
     return 0
+
+
+def refresh_config_package(out: Path) -> None:
+    """默认共享目录导出成功后调用唯一 Node 生成器；临时范围验证与离线归档不修改运行包。"""
+    if out.resolve() != DEFAULT_OUT.resolve():
+        return
+    subprocess.run(
+        ["node", str(ROOT / "tools/generate_config_package.cjs"), "--write"],
+        cwd=ROOT,
+        check=True,
+    )
 
 
 def main() -> int:

@@ -14,6 +14,17 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class IdleBonusUtilsTest {
+    /** 已确认沿旧奖励期限：到期前及等号有效，下一秒失效，永久不受时刻影响。 */
+    @Test
+    void giftExpiryIncludesTheExactEndSecond() {
+        assertTrue(IdleBonusUtils.giftAppliesAt(100, 99));
+        assertTrue(IdleBonusUtils.giftAppliesAt(100, 100));
+        assertFalse(IdleBonusUtils.giftAppliesAt(100, 101));
+        assertTrue(IdleBonusUtils.giftAppliesAt(0, Long.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> IdleBonusUtils.giftAppliesAt(-1, 100));
+        assertThrows(IllegalArgumentException.class, () -> IdleBonusUtils.giftAppliesAt(100, -1));
+    }
+
     /** 空权益输入保留原奖励、合并重复项且跳过零项，不调用随机源。 */
     @Test
     void noBonusKeepsOriginalRewards() {

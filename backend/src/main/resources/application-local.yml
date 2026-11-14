@@ -1,4 +1,5 @@
-# Deliberately isolated from the legacy MySQL databases and game ports.
+# 本机开发配置：与旧项目数据库及端口隔离，GM默认开启方便准备当前测试角色。
+# 只由local环境加载；可显式设置MXZG_GM_ENABLED=false关闭，production仍不装配GM服务。
 spring:
   datasource:
     url: jdbc:h2:file:./.local/game;MODE=MySQL;DATABASE_TO_LOWER=TRUE;WRITE_DELAY=0
@@ -8,6 +9,6 @@ server:
   address: 127.0.0.1
 mxzg:
   gm:
-    enabled: ${MXZG_GM_ENABLED:false}
+    enabled: ${MXZG_GM_ENABLED:true}
   websocket:
     enabled: true

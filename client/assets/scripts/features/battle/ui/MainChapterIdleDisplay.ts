@@ -1,5 +1,7 @@
 /** 挂机行军显示：复用BattlePage静态英雄槽与血条，仅读取服务端选人和唯一英雄名册，不生成伤害或发奖。 */
-import { ResourceAssetsUtils, AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
 import { instantiate, Label, Node, Sprite, UITransform } from "cc";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
 import { MainChapterIdleState } from "../MainChapterModel";
@@ -14,14 +16,13 @@ export class MainChapterIdleDisplay {
     /** 行军显示的预制体根节点，销毁时释放资源。 */
     private constructor(public readonly root: Node, private readonly actors: readonly SpineActor[]) {}
 
-    /** 按权威选择顺序映射IdleLayout三英雄锚点并适配窄屏；不改变协议站位，缺英雄拒绝显示，关页解除监听。 */
+    /** 按当前英雄主键查询GameConfig并依权威顺序映射挂机锚点；不重建模板索引，缺英雄拒绝显示。 */
     public static async open(parent: Node, state: MainChapterIdleState): Promise<MainChapterIdleDisplay> {
         const scope = ResourceAssetsUtils.createAssetScope();
         let root: Node | null = null;
         const actors: SpineActor[] = [];
         try {
             const prefab = await scope.load(ResourceAssetsUtils.describe("battle", "prefabs/BattlePage", "Prefab"));
-            const templates = await scope.loadPath("config/herotype", "JsonAsset");
             if (!parent.isValid) {
                 throw new Error("挂机页面已关闭");
             }
@@ -46,7 +47,6 @@ export class MainChapterIdleDisplay {
             }
             const elements = [ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-1", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-2", "SpriteFrame"),
                 ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-3", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-4", "SpriteFrame"), ResourceAssetsUtils.describe("hero", "ui/hero-icon_elem-5", "SpriteFrame")];
-            const rows = (templates.json as { rows: { type: number; elem: number }[] }).rows;
             const layout = root.getChildByName("IdleLayout")!;
             const modelScale = layout.getChildByName("ModelScale")!.scale.x;
             const hpOffset = layout.getChildByName("HpOffset")!.position.y;
@@ -72,7 +72,7 @@ export class MainChapterIdleDisplay {
                 const world = slot.worldPosition;
                 const point = hp.parent!.getComponent(UITransform)!.convertToNodeSpaceAR(world);
                 hp.setPosition(point.x, point.y + hpOffset, 0);
-                const elem = rows.find(row => row.type === hero.templateId)?.elem;
+                const elem = GameConfig.instance.getConfig(GConfig.HeroType, hero.templateId)?.elem;
                 const descriptor = elem ? elements[elem - 1] : undefined;
                 const icon = hp.getChildByName("ElementIcon")!;
                 icon.active = !!descriptor;

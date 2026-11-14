@@ -1,25 +1,27 @@
 /**
- * 背包新视图的行为检查。不进 Creator，不读 resources。
- * 预制绑定看 JSON。格子、页签、详情用假实例把 @property 填上，相当于反序列化之后。
+ * 背包、页面缓存与独立详情的行为回归，不启动Creator或访问玩家服务器。
+ * 读取真实Prefab及配置核对绑定；格子、页签和详情的生命周期用引擎替身验证，几何显示另由本机预览检查。
  */
+import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { existsSync, readFileSync } from "fs";
 
 /** 夹具按Bundle真实源目录读取配置，游戏加载键仍保持config/物品等原值。 */
 const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
-import { _decorator, assetManager, Button, createdNodes, director, Director, Label, Layers, Mask, Node, Prefab, ScrollView, Sprite, SpriteFrame, UITransform } from "cc";
+import { _decorator, assetManager, Button, createdNodes, director, Director, Label, Layers, Mask, Node, Prefab, RichText, ScrollView, Sprite, SpriteFrame, UITransform } from "cc";
 import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { BagItemCatalog } from "../assets/scripts/features/bag/utils/BagItemCatalog";
 import { ViewportLayoutUtils } from "../assets/scripts/framework/ui/ViewportLayoutUtils";
-import { CONFIG_SCHEMA, ConfigName } from "../assets/scripts/config/GConfig";
+import { CONFIG_SCHEMA, ConfigName, GConfig, SpiritDisplayRow } from "../assets/scripts/config/GConfig";
 import { BagModel } from "../assets/scripts/features/bag/BagModel";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { BagController } from "../assets/scripts/features/bag/BagController";
 import { BagEvent } from "../assets/scripts/features/bag/utils/BagEvent";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
 import { BagInfoView } from "../assets/scripts/features/bag/ui/BagInfoView";
+import { SpiritInfoView } from "../assets/scripts/features/bag/ui/SpiritInfoView";
 import { BagItemView } from "../assets/scripts/features/bag/ui/BagItemView";
 import { BagTabView } from "../assets/scripts/features/bag/ui/BagTabView";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
@@ -40,6 +42,8 @@ interface ConfigTableFile<T> {
 }
 
 const { ccclass } = _decorator;
+/** 保留统一配置的原始查行入口，旧页面几何夹具只替换自身使用的表，不污染其他配置。 */
+const originalConfigLookup = GameConfig.instance.getConfig.bind(GameConfig.instance);
 
 @UIRegistry.view({
   id: "life",
@@ -212,6 +216,7 @@ function assertRootOwns(data: PrefabObj[], compIndex: number): void {
   assert(comp && idOf(comp.node) === 1, "组件 node 应是根节点");
 }
 
+/** 核对完整背包和共用格/详情的原UUID及字段目标，节点英文命名与真实Prefab保持一致。 */
 function checkPrefabBindings(): void {
   const layer = prefabAt("client/assets/bundles/module/bag/prefabs/BagView.prefab");
   const view = componentOn(layer, VIEW_TYPE);
@@ -273,20 +278,20 @@ function checkPrefabBindings(): void {
   const infoData = prefabAt("client/assets/bundles/module/bag/prefabs/BagInfoView.prefab");
   const info = componentOn(infoData, INFO_TYPE);
   assertRootOwns(infoData, info.index);
-  assertNodeRef(infoData, info.comp, "bg", 4, "spr_bg");
+  assertNodeRef(infoData, info.comp, "bg", 4, "DetailBackground");
   assertCompRef(infoData, info.comp, "propName", 22, "cc.Label");
   assertCompRef(infoData, info.comp, "propType", 28, "cc.Label");
-  assertCompRef(infoData, info.comp, "desc", 40, "cc.Label");
-  assertNodeRef(infoData, info.comp, "icon", 13, "spr_icon");
-  assertNodeRef(infoData, info.comp, "rare", 115, "spr_rare");
+  assertCompRef(infoData, info.comp, "desc", 40, "cc.RichText");
+  assertNodeRef(infoData, info.comp, "icon", 13, "ItemIcon");
+  assertNodeRef(infoData, info.comp, "rare", 115, "QualityFrame");
   assertCompRef(infoData, info.comp, "btnClose", 109, "cc.Button");
   assertCompRef(infoData, info.comp, "btnEnter", 77, "cc.Button");
   assertCompRef(infoData, info.comp, "enterLabel", 82, "cc.Label");
   assertCompRef(infoData, info.comp, "btnSrc", 55, "cc.Button");
-  assertNodeRef(infoData, info.comp, "btnDetail", 58, "btn_detail");
-  assertNodeRef(infoData, info.comp, "btnDecompose", 86, "btn_decompose");
-  assertNodeRef(infoData, info.comp, "hitMenu", 47, "menu");
-  assertNodeRef(infoData, info.comp, "hitMenuClose", 101, "menu_close");
+  assertNodeRef(infoData, info.comp, "btnDetail", 58, "DetailButton");
+  assertNodeRef(infoData, info.comp, "btnDecompose", 86, "DecomposeButton");
+  assertNodeRef(infoData, info.comp, "hitMenu", 47, "ActionGrid");
+  assertNodeRef(infoData, info.comp, "hitMenuClose", 101, "CloseControls");
   const countdownIndex=idOf(info.comp.countdown);
   assert(countdownIndex!==null && infoData[countdownIndex].__type__==="cc.Label", "倒计时必须绑定静态 Prefab 标签");
 }
@@ -334,6 +339,7 @@ function checkSources(): void {
 
 }
 
+/** 核对背包独立登记、缓存和未打开前的宿主，不限制加载方案已登记的其他页面。 */
 function checkRegistry(): void {
   const spec = UIRegistry.viewSpecOf(BagView);
   assert(spec !== null, "BagView 未注册");
@@ -344,7 +350,6 @@ function checkRegistry(): void {
   assert(spec.allowMultiple === false, "背包不叠两份");
   assert(UIRegistry.viewSpecOf(BagInfoView)?.layer === UILayer.Popup, "详情登记为独立弹窗");
   assert(UIRegistry.viewCtorById("bag") === BagView, "id bag 应对回 BagView");
-  assert(UIRegistry.viewCtorById("hero") === null, "这一阶段不登记别的页");
   assert(UIManager.instance.createPageHost("bag") === null, "没 open 时 presentPage 继续走旧壳");
   assert(UIManager.instance.createPageHost("hero") === null, "未迁移页面不进 UIManager");
 }
@@ -379,6 +384,7 @@ function fakePrefab(build: (node: Node) => void): Prefab {
 /** 独立详情宿主，刻意不放在背包节点下，检验真正的窗口生命周期。 */
 const detailHost = new Node("DetailHost");
 
+/** 构造包含实际必需绑定的页面替身，隔离异步加载、列表复用及独立详情生命周期。 */
 function makeView(): BagView {
   const scene = new Node("scene");
   const host = new Node("BagView");
@@ -423,6 +429,22 @@ function makeView(): BagView {
     cell.icon = new Node("spr_icon");
     cell.icon.addComponent(Sprite);
     cell.icon.parent = node;
+    cell.shardIcon = new Node("ShardIcon");
+    cell.shardIcon.addComponent(Sprite);
+    cell.shardIcon.parent = node;
+    cell.shardCorner = new Node("ShardCorner");
+    cell.shardCorner.parent = node;
+    cell.shardStars = Array.from({ length: 5 }, (_, index) => {
+      const star = new Node("ShardStar" + index);
+      star.parent = node;
+      return star;
+    });
+    cell.shardProgress = new Node("ShardProgress");
+    cell.shardProgress.parent = node;
+    cell.shardProgressFill = new Node("ShardProgressFill").addComponent(Sprite);
+    cell.shardProgressFill.node.parent = cell.shardProgress;
+    cell.shardProgressLabel = labelOn(new Node("ShardProgressLabel"));
+    cell.shardProgressLabel.node.parent = cell.shardProgress;
     cell.selectMark = new Node("spr_select");
     cell.selectMark.parent = node;
     cell.count = labelOn(new Node("lbl_count"));
@@ -448,10 +470,20 @@ function makeView(): BagView {
     info.bg.parent = node;
     info.propName = labelOn(new Node("lbl_prop_name"));
     info.propType = labelOn(new Node("lbl_prop_type"));
-    info.desc = labelOn(new Node("lbl_desc"));
+    info.desc = new Node("DescriptionText").addComponent(RichText);
+    info.desc.node.addComponent(UITransform).setContentSize(350, 60);
     info.countdown = labelOn(new Node("lbl_countdown"));
     info.icon = new Node("spr_icon");
     info.icon.addComponent(Sprite);
+    info.shardIcon = new Node("ShardIcon");
+    info.shardIcon.addComponent(Sprite);
+    info.shardCorner = new Node("ShardCorner");
+    info.shardStars = Array.from({ length: 5 }, (_, index) => new Node("ShardStar" + index));
+    info.descriptionViewport = sized("DescriptionViewport", 350, 60);
+    info.descriptionScroll = new Node("DescriptionScroll").addComponent(ScrollView);
+    info.descriptionScroll.content = sized("DescriptionContent", 350, 60);
+    info.descriptionScroll.content.parent = info.descriptionViewport;
+    info.desc.node.parent = info.descriptionScroll.content;
     info.rare = new Node("spr_rare");
     info.rare.addComponent(Sprite);
     info.btnClose = buttonOn("btn_close");
@@ -460,10 +492,29 @@ function makeView(): BagView {
     info.btnSrc = buttonOn("btn_src");
     info.btnDetail = new Node("btn_detail");
     info.btnDecompose = new Node("btn_decompose");
+    info.detailLabel = labelOn(new Node("DetailLabel"));
+    info.decomposeLabel = labelOn(new Node("DecomposeLabel"));
     info.hitMenu = sized("menu", 0, 0);
+    info.emptyActionSpacer = sized("NoActionSpacer", 136, 58);
     info.hitMenuClose = sized("menu_close", 0, 0);
   });
   UIRegistry.registerView(BagInfoView, { ...UIRegistry.viewSpecOf(BagInfoView)!, load: async () => detailPrefab });
+  const spiritPrefab = fakePrefab((node) => {
+    node.addComponent(UITransform).setContentSize(390, 580);
+    const info = node.addComponent(SpiritInfoView);
+    for (const key of ["nameLabel", "typeLabel", "attributeName", "attributeValue", "skillName", "skillDescription"] as const) {
+      const child = new Node(key); child.parent = node;
+      info[key] = labelOn(child);
+    }
+    for (const key of ["icon", "banner", "attributeIcon", "skillIcon"] as const) {
+      const child = new Node(key); child.parent = node;
+      info[key] = child.addComponent(Sprite);
+    }
+    for (const key of ["closeButton", "sourceButton", "combineButton", "rebirthButton", "decomposeButton", "equipButton"] as const) {
+      info[key] = buttonOn(key); info[key]!.node.parent = node;
+    }
+  });
+  UIRegistry.registerView(SpiritInfoView, { ...UIRegistry.viewSpecOf(SpiritInfoView)!, load: async () => spiritPrefab });
   UIManager.instance.setResidentHost(UIRegistry.viewSpecOf(BagInfoView)!.hostId!, () => detailHost);
   view.bagScroll.onEnable();
   return view;
@@ -508,6 +559,36 @@ function infoCard(view: BagView): BagInfoView {
   assert(info, "独立详情窗口应已打开");
   assert(info!.node.parent !== view.node, "详情不能组装在背包内部");
   return info!;
+}
+
+/** 精灵格必须打开专用详情，不能落回通用道具窗口。 */
+function spiritCard(): SpiritInfoView {
+  const info = detailHost.children.filter(node => node.isValid).map(node => node.getComponent(SpiritInfoView)).find(Boolean);
+  assert(info, "精灵专用详情应已打开");
+  assert(!UIManager.instance.isOpen(BagInfoView), "精灵详情与普通详情不能重叠");
+  return info!;
+}
+
+/** 检查专用精灵Prefab的属性目标类型；只验证脚本UUID会漏过Label被误写为普通字符串的绑定错误。 */
+function checkSpiritPrefabBindings(): void {
+  const rows=prefabAt("client/assets/bundles/module/bag/prefabs/SpiritInfoView.prefab");
+  const component=rows.find(row=>row.attributeValue&&row.skillDescription&&row.equipButton);
+  assert(component,"专用精灵Prefab必须绑定实际SpiritInfoView");
+  const expected:Record<string,string>={
+    panel:"cc.Node",icon:"cc.Sprite",banner:"cc.Sprite",attributeIcon:"cc.Sprite",skillIcon:"cc.Sprite",
+    nameLabel:"cc.Label",typeLabel:"cc.Label",attributeName:"cc.Label",attributeValue:"cc.Label",
+    skillName:"cc.Label",skillDescription:"cc.Label",closeButton:"cc.Button",sourceButton:"cc.Button",
+    combineButton:"cc.Button",rebirthButton:"cc.Button",decomposeButton:"cc.Button",equipButton:"cc.Button",
+  };
+  for(const [field,type] of Object.entries(expected)) {
+    const reference=component[field];
+    assert(reference&&Number.isInteger(reference.__id__)&&rows[reference.__id__]?.__type__===type,
+      "SpiritInfoView."+field+"必须指向"+type+"，不能是名称字符串或其他组件");
+  }
+  const panel=rows[component.panel.__id__];
+  assert(panel._components.some((reference:{__id__:number})=>rows[reference.__id__].__type__==="cc.BlockInputEvents"),
+    "内容面板拦截内部空白，外部由共享模态关闭");
+  assert(!rows.some(row=>row._name==="ModalMask"),"精灵详情不能另外创建蒙版导致叠色");
 }
 
 /** 等待页面管理器完成加载、挂载和打开承诺，不用帧回调代替微任务。 */
@@ -572,9 +653,9 @@ function noteBag(items: readonly {itemId:number;quantity:number}[] | null): void
 }
 
 /** 提供与源表 place 标签规则一致的测试配置；故意让不同标签共用 type=6，防止误用效用类型分类。 */
+/** 用独立展示表替换夹具读取，按schema主键查询同一份表；真实配置统一由专项入口安装。 */
 function bindTables(): void {
-  // 页面@UIRegistry.view的配置前置条件仍走真实校验；展示夹具只替换读取结果，不重新初始化唯一仓库。
-  ResourceAssetsUtils.loadConfig = async path => JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8"));
+  // 真实配置已统一安装；展示夹具只替换读取结果，不重新初始化唯一仓库。
   const language: ConfigTableFile<Record<string, unknown>> = {
     table: "language",
     rows: [
@@ -597,6 +678,7 @@ function bindTables(): void {
       { idx: 20, type: 6, place: 2, name: 10020, rare_mark: 1, icon: "backpack/potion", content: 20020 },
       { idx: 7, type: 6, place: 3, name: 10007, rare_mark: 1, icon: "backpack/shard" },
       { idx: 8, type: 8, place: 4, name: 10008, rare_mark: 3, icon: "backpack/spirit" },
+      { idx: 2000002, type: 8, place: 4, name: 10008, rare_mark: 2, icon: "backpack/spirit" },
       { idx: 1, type: 5, place: 0, name: 10001, rare_mark: 1, icon: "backpack/gold" },
       { idx: 21, type: 3, name: 10021, rare_mark: 1, icon: "backpack/empty" },
       { idx: 22, type: 3, name: 10022, rare_mark: 1, icon: "backpack/unknown", content: 20022 },
@@ -607,7 +689,26 @@ function bindTables(): void {
   tables.set("item", item);
   item.rows.push({idx:902025,type:6,place:2,name:10020,rare_mark:1,sort:100});
   tables.set("timelimititem", {table:"timelimititem",rows:[{item_id:902025,type:1,valid_time:7,reward:"[]"}]});
+  tables.set("spirit-display", {table:"spirit-display",rows:[{
+    idx:2000002,
+    abilities:[
+      {id:1,attributeId:1,value:1476,name:"生命",description:"生命+1476"},
+      {id:2,attributeId:2,value:200,name:"攻击",description:"攻击+200"},
+    ],
+    skills:[
+      {skillId:301,level:1,name:"生命祝福",description:"增加生命",icon:"skill-icon/test-301"},
+      {skillId:302,level:2,name:"攻击祝福",description:"增加攻击",icon:"skill-icon/test-303"},
+    ],
+  }]});
   GameConfig.instance.getFile = ((name: ConfigName) => tables.get(CONFIG_SCHEMA[name].path.replace("config/", ""))) as typeof GameConfig.instance.getFile;
+  GameConfig.instance.getConfig = ((name: ConfigName, key?: number | string) => {
+    const schema = CONFIG_SCHEMA[name];
+    const table = tables.get(schema.path.replace("config/", ""));
+    if (table) {
+      return key === undefined ? table.rows : table.rows.find(row => String(row[schema.key]) === String(key));
+    }
+    return originalConfigLookup(name, key as never);
+  }) as typeof GameConfig.instance.getConfig;
 }
 
 const toasts: string[] = [];
@@ -1099,6 +1200,7 @@ async function checkOpenRaces(): Promise<void> {
 }
 
 /** 详情重复展示不累计回调；销毁只解除自身监听，并兼容引擎先销毁子按钮的顺序。 */
+/** 检查重复显示、外部监听保留及Creator先销毁子节点/输入处理器时的幂等清理。 */
 function checkInfoLifecycle(): void {
   const info = new Node("BagInfoView").addComponent(BagInfoView);
   info.btnClose = buttonOn("close");
@@ -1125,13 +1227,44 @@ function checkInfoLifecycle(): void {
   }
   info.onDestroy();
   assert((info as any).closeAction === null && (info as any).toast === null, "子按钮已销毁时仍完成回调释放");
+  const deadAction = new Node("DestroyedAction");
+  deadAction.destroy();
+  deadAction.off = () => { throw new Error("已销毁节点的输入处理器不可访问"); };
+  info.btnDetail = deadAction;
+  info.btnDecompose = deadAction;
+  info.onDestroy();
+  assert((info as any).closeAction === null, "失效操作节点不再调用off且重复清理安全");
+}
+
+/** 显示只按主键查询当前GameConfig，不读取整表或保留语言副本；重复调用必须看到当前行。 */
+async function checkDirectConfigProjection(): Promise<void> {
+  const config = await ConfigFixtureUtils.installReal(new GameConfig());
+  const query = config.getConfig.bind(config);
+  const item = config.requireConfig(GConfig.Item, 900102);
+  const originalTitle = config.requireConfig(GConfig.Language, Number(item.name)).value;
+  let revised = false;
+  config.getFile = (() => { throw new Error("背包显示不能重新取得整张配置表"); }) as typeof config.getFile;
+  config.getConfig = ((name: ConfigName, key?: number | string) => {
+    assert(key !== undefined, "当前物品显示必须按主键获取配置，不遍历或重建整表索引");
+    const row = query(name, key as never);
+    return revised && name === GConfig.Language && String(key) === String(item.name)
+      ? { ...row, value: "当前映射名称" } : row;
+  }) as typeof config.getConfig;
+  assert(BagItemCatalog.face(900102, 2, config).title === originalTitle, "名称来自唯一配置仓库");
+  revised = true;
+  assert(BagItemCatalog.face(900102, 2, config).title === "当前映射名称", "不读取旧Catalog快照");
+  assert(config.getConfig(GConfig.Item, 1001001)?.mode === 1, "普通装备模式直接来自物品主键");
+  const display = query(GConfig.SpiritDisplay, 2000002)!;
+  const skill = display.skills[0];
+  const detail = BagItemCatalog.spiritDetail({ instanceId: "direct-config", itemId: 2000002,
+    abilityId: display.abilities[0].id, skills: [{ sort: 1, skillId: skill.skillId, level: skill.level }] }, config);
+  assert(detail.skillName === skill.name && detail.attributeName === display.abilities[0].name,
+    "精灵保留实例关联与精确技能等级，但不创建配置索引");
 }
 
 /** 用实际导出配置验证首通奖励的分类，避免测试夹具与错误实现一起漂移。 */
 function checkRealItemCategories(): void {
-  const catalog = new BagItemCatalog(
-    JSON.parse(readFileSync("client/assets/bundles/resources/config/item.json", "utf8")),
-    JSON.parse(readFileSync("client/assets/bundles/resources/config/language.json", "utf8")));
+  const catalog = BagItemCatalog;
   assert(catalog.face(1004001, 1).category === "equip", "真实首通装备进入装备标签");
   assert(catalog.face(20204004, 30).category === "shard", "真实首通英雄碎片进入碎片标签");
   assert(catalog.face(900102, 4).category === "item" && !catalog.face(900102, 4).hiddenInBag, "真实道具可见");
@@ -1201,17 +1334,147 @@ async function checkTimedItems(): Promise<void> {
   } finally {page?.runDispose();page?.node.destroy();model.serverTimeSeconds=original;noteBag(null);}
 }
 
+/** 虚拟格子在普通物品、真实精灵和空槽间复用时，数量不能闪回上一件，也不能误隐藏普通单件物品。 */
+async function checkSpiritCellQuantity(): Promise<void> {
+  bindTables();
+  installNav();
+  noteBag([{ itemId: 14, quantity: 1 }]);
+  const page = await openView();
+  try {
+    const cell = cells(page)[0];
+    const face = {
+      title: "数量显示检查",
+      typeLine: "",
+      body: "",
+      icon: "icons/item/backpack_2000002",
+      fallback: "icons/item/backpack_2000002",
+      frame: "bag/ui/backpack_rare-2",
+    };
+    cell.show({ itemId: 14, quantity: 1 }, false, face);
+    assert(cell.count!.node.active && cell.count!.string === "1", "普通单件物品仍显示数量1");
+    cell.show({
+      itemId: 2000002,
+      instanceId: "quantity-spirit",
+      key: "spirit:quantity-spirit",
+      quantity: 1,
+      spirit: {
+        instanceId: "quantity-spirit",
+        itemId: 2000002,
+        abilityId: 1,
+        skills: [{ sort: 1, skillId: 301, level: 1 }],
+      },
+    }, false, face);
+    assert(!cell.count!.node.active && cell.count!.string === "", "精灵以真实实例各占一格，不显示数量并清除上件文字");
+    cell.show({ itemId: 20, quantity: 7 }, false, face);
+    assert(cell.count!.node.active && cell.count!.string === "7", "格子复用为普通物品时恢复最新数量");
+    cell.show(null, false);
+    assert(!cell.count!.node.active && cell.count!.string === "", "格子复用为空槽后隐藏并清空数量");
+  } finally {
+    page.runDispose();
+    page.node.destroy();
+    noteBag(null);
+  }
+}
+
+/** 同配置精灵按实例独立选中，详情随权威生成结果刷新；删除、换号与迟到加载都不能串件。 */
+async function checkSpiritItems(): Promise<void> {
+  bindTables();installNav();noteBag([]);
+  const first={instanceId:"9223372036854775807",itemId:2000002,abilityId:1,skills:[{sort:1,skillId:301,level:1}]};
+  const second={instanceId:"spirit-b",itemId:2000002,abilityId:2,skills:[{sort:1,skillId:302,level:2}]};
+  const model=BagModel.instance;
+  model.replaceAll([],undefined,{schemaVersion:1,items:[first,second]});
+  let page:BagView|null=null;
+  try {
+    page=await openView();
+    tabs(page)[3].node.emit(Button.EventType.CLICK);
+    const rows=page.visibleItems();
+    assert(rows.length===2&&rows[0].key!==rows[1].key,"同物品精灵各占一格，以实例键区分");
+    assert(rows.every(row=>row.quantity===1)&&model.items.length===0,"精灵不加入普通数量库存");
+    cells(page)[0].node.emit(Button.EventType.CLICK);await flushDetail();pump(1);
+    let detail=spiritCard();
+    assert(detail.attributeName!.string==="生命："&&detail.attributeValue!.string==="1476"&&detail.skillName!.string==="生命祝福"&&detail.skillDescription!.string==="增加生命","专用详情分开显示真实基础属性和精确等级技能");
+    assert(detail.typeLabel!.string==="类型：精灵","精灵详情不显示道具数量");
+    const before=model.snapshot.revision, notices=toasts.length;
+    for(const button of [detail.sourceButton,detail.combineButton,detail.rebirthButton,detail.decomposeButton,detail.equipButton]) button!.node.emit(Button.EventType.CLICK);
+    assert(toasts.length===notices+5&&toasts.slice(notices).every(text=>text.includes("暂未开放")),"来源与四项操作仅说明未开放");
+    assert(model.snapshot.revision===before,"点击未开放操作不能修改资产");
+    cells(page)[1].node.emit(Button.EventType.CLICK);await flushDetail();pump(1);
+    detail=spiritCard();
+    assert(detail.attributeName!.string==="攻击："&&detail.attributeValue!.string==="200"&&detail.skillName!.string==="攻击祝福","相同物品配置的第二件不会借用第一件属性");
+    model.replaceAll([],undefined,{schemaVersion:1,items:[first,{...second,abilityId:1}]});
+    EventDispatcher.instance.emit(BagEvent.BagUpdate);
+    assert(spiritCard().attributeName!.string==="生命："&&spiritCard().attributeValue!.string==="1476","实例属性变化刷新同一详情");
+    model.replaceAll([],undefined,{schemaVersion:1,items:[first]});
+    EventDispatcher.instance.emit(BagEvent.BagUpdate);
+    assert(page.visibleItems().length===1&&!UIManager.instance.isOpen(SpiritInfoView),"选中实例删除即关详情，不按物品ID选中剩余件");
+    const spec=UIRegistry.viewSpecOf(SpiritInfoView)!, prefab=await spec.load!();
+    let release!:()=>void;
+    UIRegistry.registerView(SpiritInfoView,{...spec,load:async()=>{
+      await new Promise<void>(resolve=>{release=resolve;});return prefab;
+    }});
+    try {
+      cells(page)[0].node.emit(Button.EventType.CLICK);await flushDetail();
+      model.reset();EventDispatcher.instance.emit(BagEvent.BagUpdate);
+      release();await flushDetail();
+      assert(!UIManager.instance.isOpen(SpiritInfoView),"换号重置后迟到详情不能重建旧精灵");
+    } finally {UIRegistry.registerView(SpiritInfoView,spec);}
+    assert(page.visibleItems().length===0,"重置清空精灵投影");
+    model.replaceAll([]);EventDispatcher.instance.emit(BagEvent.BagUpdate);
+    assert(page.talk!.string==="精灵库存尚未同步","旧快照缺字段明确显示能力未提供");
+    model.replaceAll([],undefined,{schemaVersion:1,items:[]});EventDispatcher.instance.emit(BagEvent.BagUpdate);
+    assert(page.talk!.string==="背包为空","完整空精灵列表与未知分开显示");
+  } finally {page?.runDispose();page?.node.destroy();noteBag(null);}
+}
+
+/** 用全部真实特性/技能核对专用详情的分区和精确等级图标，缺配置明确提示且不借用相邻等级。 */
+function checkAllSpiritDescriptions(): void {
+  const display=JSON.parse(readFileSync(resolveBundleFile("config/spirit-display.json"),"utf8")) as {rows:SpiritDisplayRow[]};
+  const catalog=BagItemCatalog;
+  const source=display.rows.find(row=>row.idx===2000002)!;
+  assert(source.abilities.length===4&&source.skills.length===98,"覆盖本批精灵全部四种特性和98项技能显示行");
+  const generic=catalog.face(2000002,1).body;
+  let checked=0;
+  for(const ability of source.abilities){
+    for(const skill of source.skills){
+      const spirit = {instanceId:"description-test",itemId:2000002,abilityId:ability.id,
+        skills:[{sort:1,skillId:skill.skillId,level:skill.level}]};
+      const detail = catalog.spiritDetail(spirit);
+      assert(detail.attributeName===ability.name&&detail.attributeValue===String(ability.value),"基础属性来自当前实例的精确特性");
+      assert(detail.skillName===skill.name&&detail.skillDescription===skill.description,"专用详情保留精确等级全文");
+      assert(detail.skillIcon==="hero/ui/"+skill.icon.replace("/","_"),"图标读取配置的精确等级地址");
+      assert(existsSync(resolveBundleFile(detail.skillIcon!+".png")),"当前已恢复的精灵技能实际图片依赖有效");
+      const face=catalog.spiritFace({instanceId:"description-test",itemId:2000002,abilityId:ability.id,
+        skills:[{sort:1,skillId:skill.skillId,level:skill.level}]});
+      assert(face.body==="特性："+ability.description+"\n"+skill.name+" Lv."+skill.level+"："+skill.description,
+        "完整保留真实技能说明："+skill.skillId+"/"+skill.level);
+      assert(!face.body.includes(generic)&&!face.body.includes("\n\n"),"不拼通用精灵使用说明，也不另占空行");
+      checked++;
+    }
+  }
+  assert(checked===392,"全部98项技能均经过四种实例特性组合检查，不截断长说明");
+  const missing=catalog.spiritDetail({instanceId:"missing",itemId:2000002,abilityId:1,
+    skills:[{sort:1,skillId:source.skills[0].skillId,level:99}]});
+  assert(missing.skillName==="技能配置缺失"&&missing.skillIcon===null&&missing.skillDescription.includes("等级99"),
+    "缺失等级不回退其他等级名称、数值或图标");
+}
+
 /** 执行绑定、真实配置、页面行为与关闭/迟到加载回归；不连接服务器。 */
 async function main(): Promise<void> {
+  await ConfigFixtureUtils.installReal();
   GameLog.shared.mirrorConsole = false;
   checkPrefabBindings();
+  checkSpiritPrefabBindings();
   checkSources();
   checkRegistry();
   checkInfoLifecycle();
+  await checkDirectConfigProjection();
   checkRealItemCategories();
+  checkAllSpiritDescriptions();
   await checkBehavior();
   await checkIndependentDetails();
   await checkTimedItems();
+  await checkSpiritCellQuantity();
+  await checkSpiritItems();
   await checkInfoMaskCoverage();
   await checkOpenFailure();
   await checkOpenRaces();

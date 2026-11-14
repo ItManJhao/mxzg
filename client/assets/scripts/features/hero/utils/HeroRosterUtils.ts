@@ -1,7 +1,8 @@
 /** 英雄名册展示工具：把唯一Model和静态配置投影为列表，不查询服务器、不修改英雄数据。 */
 import { GameLog } from "../../../core/GameLog";
+import { GameConfig } from "../../../config/GameConfig";
 import type { HeroCellModel, HeroListModel } from "../ui/HeroListPresentation";
-import type { HeroCatalog } from "./HeroCatalog";
+import { HeroCatalog } from "./HeroCatalog";
 import type { HeroRosterState } from "../HeroRosterModel";
 
 /** 只负责名册展示规则；实例身份、顺序和服务器容量均从真实数据读取。 */
@@ -9,15 +10,15 @@ export class HeroRosterUtils {
     /** 纯工具类不创建实例。 */
     private constructor() {}
 
-    /** 按元素筛选列表，依次按上阵、星级、等级、配置ID降序；复制后排序，不修改Model。 */
-    public static present(state: HeroRosterState, catalog: HeroCatalog, elem: number): HeroListModel {
+    /** 按元素筛选并排序名册；模板按需读取同一配置仓库，只复制当前列表投影，不保存配置索引。 */
+    public static present(state: HeroRosterState, elem: number, config: GameConfig = GameConfig.instance): HeroListModel {
         const cells: HeroCellModel[] = [];
         if (state.status === "ready") {
             const sorted = state.heroes.slice().sort((a, b) =>
                 Number(b.deployed === true) - Number(a.deployed === true) ||
                 b.star - a.star || b.level - a.level || b.templateId - a.templateId);
             for (const hero of sorted) {
-                const template = catalog.find(hero.templateId);
+                const template = HeroCatalog.find(hero.templateId, config);
                 if (!template) {
                     GameLog.shared.warnOnce("MODULE", "HeroRosterUtils", "TEMPLATE_MISSING:" + hero.templateId,
                         "英雄列表缺少展示模板：" + hero.templateId + "；保留实例并显示缺失占位");

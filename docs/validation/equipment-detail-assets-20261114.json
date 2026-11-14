@@ -1,0 +1,404 @@
+{
+  "date": "2026-11-14",
+  "scope": "普通mode=1装备专用只读详情静态Prefab、旧图RGBA与保留UUID；不开放穿脱/合成/分解",
+  "sources": [
+    "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/ccb-hd/Resources/AbilityInfoLayer.ccb",
+    "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/layer/AbilityInfoCtr.lua",
+    "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/comp/menu/UIMenuItemBackpack.lua"
+  ],
+  "officialReference": "docs/images/equipment-official-sword-20261114.jpg",
+  "addedPrefabs": [
+    {
+      "path": "client/assets/bundles/module/bag/prefabs/EquipmentInfoView.prefab",
+      "uuid": "bd783dbf-a60a-4e41-a616-6f8bf7d8153f",
+      "scriptUuid": "7ec83b95-4ab5-4ba4-a3b8-62c74f8a4c51"
+    }
+  ],
+  "layout": {
+    "panelWidth": 390,
+    "ordinaryOneAttributeHeight": 377,
+    "staticAttributeSlots": 2,
+    "staticSetBonusSlots": 3,
+    "stars": "最多5颗黄星；6星为1颗红星，沿旧setStar规则",
+    "layoutOwner": "原生Layout与Widget，View仅切换静态槽和填值，不运行时排坐标",
+    "viewportDesignWidth": 600,
+    "modal": "复用UIManager共享层，Prefab不自带蒙版",
+    "description": "原生单行Grid以50像素静态占位保留旧最小高度，实际Label换行可撑高",
+    "descriptionWidth": 312,
+    "iconSize": 100,
+    "iconFrameSize": 104,
+    "attributeIconSize": 27.6,
+    "attributeIconBasis": "旧46像素原图×0.6，保持行高35和原位置"
+  },
+  "imagesChecked": 24,
+  "imagesCorrected": 17,
+  "resources": [
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-attr-220.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-attr-220.png",
+      "uuid": "deae56dd-dfd2-479a-a0e9-d89b0cc41a14",
+      "size": [
+        46,
+        46
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": false,
+      "beforeSha256": "66cba8b0169a598a39a0dcda1868bf146b2f5d9dc14bb24a2818c86ca10e39b5",
+      "afterSha256": "66cba8b0169a598a39a0dcda1868bf146b2f5d9dc14bb24a2818c86ca10e39b5",
+      "metaSha256": "9208b813c1ca03f46079df95d678f31eed534411e4a977aedf3c5a2cb8e52aaf"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-attr-223.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-attr-223.png",
+      "uuid": "ff125a68-1ad2-49a6-8188-8ce1a9b7edc7",
+      "size": [
+        46,
+        46
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": false,
+      "beforeSha256": "7b4ba514434885c2264302a57dac242cc554b8ad9b56993ae511defdc49945c9",
+      "afterSha256": "7b4ba514434885c2264302a57dac242cc554b8ad9b56993ae511defdc49945c9",
+      "metaSha256": "658c6cbccd1997af4ce91a6f5446def5e63fa21c531b0de590572a00e514e725"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-attr-224.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-attr-224.png",
+      "uuid": "174d3d74-7504-48f2-9db5-4f5aebc5de3c",
+      "size": [
+        46,
+        46
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": false,
+      "beforeSha256": "e3accbbe26d38728307d5ed1907072736e65c1402e113a4dc4bf1fecda357194",
+      "afterSha256": "e3accbbe26d38728307d5ed1907072736e65c1402e113a4dc4bf1fecda357194",
+      "metaSha256": "873953f3712a6eac9fcc21e74ec10e954a8f64134e0e6af3d025a67d02bfabb3"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-banner-equip-1.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-banner-equip-1.png",
+      "uuid": "9bb90892-a88f-487a-b59d-00a8ebd79fb8",
+      "size": [
+        380,
+        127
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "196b0e2aeb03e6d9fc09fe6981183d3a322adf501bc396fbcce5f5ea8718dfce",
+      "afterSha256": "0d71b0326b71faf2639daebeb580820d29424c9683a4ed68df44dc38acef52cf",
+      "metaSha256": "2a3f08439e78a7dc28d6f5b8a66be280819f77b0fa9654e961c5856e4667d70f"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-banner-equip-2.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-banner-equip-2.png",
+      "uuid": "fee78613-fe91-47a8-bd42-6b50119718fd",
+      "size": [
+        380,
+        127
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "293d48d4b904385d1993b58679901f3a24f86a07e5f313d46bd5952c151c7c9e",
+      "afterSha256": "05efe29d75f0b74ac3c825d87256c962ce1bc4dae0dae28c7a152c90e8c9c424",
+      "metaSha256": "3cad66066efe745be9c2a3cdf3c59fe40d1520b7fd68f1c2f9c9cff50cd95e03"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-banner-equip-3.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-banner-equip-3.png",
+      "uuid": "d8968e22-aae2-4b22-bf4e-4ffd39cc97df",
+      "size": [
+        380,
+        127
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "b7d3dbae334f8d1b2710ca717ef16d3ab84c6f129cc6a88457794a23c20eb31b",
+      "afterSha256": "e497a6d9dc71d54a573981176753a86e2616f16c0c7d9c247f3dea84a6c9f3a7",
+      "metaSha256": "ed3dbe5c784f60c04fae439e6f9acd4412ab12341d9d19209ed76f17e0ef445b"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-banner-equip-4.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-banner-equip-4.png",
+      "uuid": "6107515c-c2e5-4c02-ac57-f43ea3de5d8f",
+      "size": [
+        380,
+        127
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "e1f88b11bf1598a869ecf9418acf466426537360a488e3198db749f745faad21",
+      "afterSha256": "932f2eb927eae639b48d7445e172bb71dff6e02ac6925fab7815b9cb2e1ab597",
+      "metaSha256": "39befd3593a630c9053bd80cba2c45f75f27b61723ffbc386ffc3e9bb2f31d1d"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-banner-equip-5.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-banner-equip-5.png",
+      "uuid": "ce73698f-db61-4c59-ae4b-66b9c4bc0f23",
+      "size": [
+        380,
+        127
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "ec474b904bb30561ff1b25e075d73f97c44da5aba53c7551d3953ad5f1f263a5",
+      "afterSha256": "562c5beb91562f126a7c752391a48cb4f0f199161310baf1e755b0eb343d0412",
+      "metaSha256": "27886e722218a140bb9ad0d1c6f740c3173cf46f49f96a835f7c44ec77541871"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-banner-equip-6.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-banner-equip-6.png",
+      "uuid": "9eddcbd0-cd47-4553-b466-b826660386b6",
+      "size": [
+        380,
+        127
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "51f5ca5d09894ff558d66d4691d8bda93bc2a0767c12142f2e792e454a8e6f58",
+      "afterSha256": "beeea624614c8f384c313d1e6e0c9301462842c8d37fdd44bef2d5e13f467e92",
+      "metaSha256": "4f355bdc8adf27a3d6986ab5fbc061519c5d397c18436b357208df6faaa27929"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-book.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack-info_spr-book.png",
+      "uuid": "2fadcd7a-612f-4a19-ac57-11e5d88dad94",
+      "size": [
+        32,
+        22
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "d5db6911015c2825f8a71a0bde77ff05e673635f3d13f5e5ebdb540f7ba74321",
+      "afterSha256": "58d65bdd437a273ee39bd7789f2cb4164c7e5560864fcf3c0d1f882e72aec362",
+      "metaSha256": "2dd14f59de97afd838732faf411fce558a28a35e2cdd405a7484c0ec652d0b9f"
+    },
+    {
+      "sourceAtlas": "backpack-info",
+      "sourceFrame": "backpack-info/spr-line.png",
+      "path": "client/assets/bundles/module/bag/atlas/backpack-info_spr-line.png",
+      "uuid": "c6234db7-ebbd-43bb-863f-6c99505dbdc3",
+      "size": [
+        380,
+        2
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "9548a42c05d44f7713a3579e52c2b6cbaf7595bd0cab747a7f2527832b7cafe8",
+      "afterSha256": "807be1660e002976905be34975dbac89df31c109b81558699760cce654b3de4c",
+      "metaSha256": "5bd79450fabd4e1f199bc79577d1b46e48105fd09b607c144100ad90f1f68cfb"
+    },
+    {
+      "sourceAtlas": "common-ui",
+      "sourceFrame": "button/btn-src.png",
+      "path": "client/assets/bundles/module/common/atlas/button_btn-src.png",
+      "uuid": "fc1ffb2a-2d0e-4fd2-89fe-779b304fa5f3",
+      "size": [
+        67,
+        55
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": false,
+      "beforeSha256": "31eeb03ecbff36eb164da7339ac21b277a48335e313318f267eb5e33b1def851",
+      "afterSha256": "31eeb03ecbff36eb164da7339ac21b277a48335e313318f267eb5e33b1def851",
+      "metaSha256": "76a8d8a5a7e13717f3e3166abecea4c2ce4fb075a89ab0c12c13cb2c829e8b4d"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "button/btn-close-1.png",
+      "path": "client/assets/bundles/module/common/ui/button_btn-close-1.png",
+      "uuid": "545d3457-a753-4a14-a6a4-565b9c8ba9ef",
+      "size": [
+        55,
+        58
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": false,
+      "beforeSha256": "e4a5af06282151064277f2f2579f08b288154d4a17d0f6e284b80ae869c4be03",
+      "afterSha256": "e4a5af06282151064277f2f2579f08b288154d4a17d0f6e284b80ae869c4be03",
+      "metaSha256": "7099277d25e7be44debbc320f9110c27fbab7387c8523c235b0087932ec9dcc0"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "button/btn-old-1.png",
+      "path": "client/assets/bundles/module/common/atlas/button_btn-old-1.png",
+      "uuid": "13632528-0f87-48d2-9ac7-71a27f92112a",
+      "size": [
+        136,
+        58
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": false,
+      "beforeSha256": "c646d37d07961244ee974abde17c811bcf9a602f5fcd170bbba53dce6ac18e18",
+      "afterSha256": "c646d37d07961244ee974abde17c811bcf9a602f5fcd170bbba53dce6ac18e18",
+      "metaSha256": "cfe5596ad542f25aaacfe48ee1423086c513c934c4cc491e55e108195b9a06fe"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "other/rare-1.png",
+      "path": "client/assets/bundles/module/common/ui/other_rare-1.png",
+      "uuid": "b9193a61-e364-4403-b4f4-3b4dd7de1a6b",
+      "size": [
+        106,
+        106
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "4795d56be8c5d861cecd73b69b4992fb78cdc815c94c41ca28adb4dc65b7e260",
+      "afterSha256": "35e0cfbadff92c087749ad000304330846711e73df92c75a5e67d09df4bffeda",
+      "metaSha256": "54445c8c4481b1b4b355f4823f9f73c2ac58daf35795450322146913c4e10743"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "other/rare-2.png",
+      "path": "client/assets/bundles/module/common/ui/other_rare-2.png",
+      "uuid": "232ee573-3af3-4385-a782-ea68a2d22e27",
+      "size": [
+        106,
+        106
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "cdab1bc3a611e650f7047610b02497832d5ff599c9a0451ced4bf306d311c065",
+      "afterSha256": "7c2432a9004ef55b422b94545d0414fc163b656b78831f427d0b75d2e18a43cb",
+      "metaSha256": "c0833a327d1560c1e773e4ebd9eb3a395b5bdf5837159d27bae16f450cba920c"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "other/rare-3.png",
+      "path": "client/assets/bundles/module/common/ui/other_rare-3.png",
+      "uuid": "b1d05454-bd71-4635-a582-ecadf6776cd7",
+      "size": [
+        106,
+        106
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "25d74f9038c5f301be44b0e36b03611816397569952e2120bd93fd53daf1dc30",
+      "afterSha256": "1bfae2364608a56a8c404a81f37f3a20c8d5b6fbb6dfefdc5aee174fda2a4056",
+      "metaSha256": "938ef1df49d486c77d8e34fac18ab5bfb9551c64c0630d702eb4de19e707b092"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "other/rare-4.png",
+      "path": "client/assets/bundles/module/common/ui/other_rare-4.png",
+      "uuid": "6d663621-c82d-41df-8560-bec52a34ed2c",
+      "size": [
+        106,
+        106
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "ce4c31c040d71fa595c3cd490860c0e54cfeb22cd1e0278c4734660ab0bc6f2b",
+      "afterSha256": "591ef75104bbe238cadf25056072ea8cdecfab4679fea675773c7d76b2e87cce",
+      "metaSha256": "ef5f49daa305b4452aaa1455d86eec5b2abb907f41d3a3caf00ee5ec84dfebe6"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "other/rare-5.png",
+      "path": "client/assets/bundles/module/common/ui/other_rare-5.png",
+      "uuid": "c5c4ed09-8247-4846-9ec2-450de4618e03",
+      "size": [
+        106,
+        106
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "147413cdf65cee3c97f5e2e8d86066f8d6ce9f615b16c3097d848447753f2d01",
+      "afterSha256": "70f5cfe19557eb60640c3ae09285fb3f4a47b9cba2630b9da7a4081f2debaaac",
+      "metaSha256": "6f2b081cc84f3c3c110dd8d9cf85acc97fdea12fd8ae6b686f7de61ab605a4c1"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "other/rare-6.png",
+      "path": "client/assets/bundles/module/common/ui/other_rare-6.png",
+      "uuid": "bb63dc3b-8489-4f68-ba78-62d209170e6d",
+      "size": [
+        106,
+        106
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "75892a4958343ea9657e2264ff444652f0daa346eb32d676dd354fda286ea89c",
+      "afterSha256": "fbaacfc5025f4f776eb9aa88f688e7c3fa269ba31f99f728e0f27a1237ae65ac",
+      "metaSha256": "ac59e77dac01fa4485c50e22fee24658b18cb8e99c5fb7b0091f211f8bcf7082"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "other/star-0.png",
+      "path": "client/assets/bundles/module/common/ui/other_star-0.png",
+      "uuid": "ec98ecb3-9e40-4d17-bd7d-b5c42a67e731",
+      "size": [
+        38,
+        38
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "85ce18710d6b20bf1582fb1c5c165a61cdf69bbcabac60cd92b9ab1790450688",
+      "afterSha256": "9c0139d7384b9285134bcdf7bc02c2eafc28bea5b3a0085792234c368d44429c",
+      "metaSha256": "730f8023c0d79948670058c9072cec091654391142da0712ce138902bd56301b"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "other/star-1.png",
+      "path": "client/assets/bundles/module/common/ui/other_star-1.png",
+      "uuid": "ff03da3d-eedf-4ea6-8a21-5a0ebf02dd05",
+      "size": [
+        38,
+        38
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "28debee850b8200625ef9106eddbaff5d9358d5349bdca2baa30d46f486cf614",
+      "afterSha256": "6cdc2edca41ec2c93f21942d8efe8e7546e1487ab00817335fcedcdfc9ead815",
+      "metaSha256": "83e0b821ce375e2fbeaa7528363fa1aef2065ee45ed6ed5c0230b32aa419bbea"
+    },
+    {
+      "sourceAtlas": "common-ui-2",
+      "sourceFrame": "win-bg/block-bg-24.png",
+      "path": "client/assets/bundles/module/common/atlas/win-bg_block-bg-24.png",
+      "uuid": "30f0b02c-bd19-4596-90db-f94739baf91b",
+      "size": [
+        50,
+        50
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": false,
+      "beforeSha256": "171f0106c4be6ca66d669a9c0e8ec181deec36b0fbe3cf4cbd712a13aef487b0",
+      "afterSha256": "171f0106c4be6ca66d669a9c0e8ec181deec36b0fbe3cf4cbd712a13aef487b0",
+      "metaSha256": "bd69456d15df6db6db86d38303c31d758eae042ed237704867a93b812fcddb96"
+    },
+    {
+      "sourceAtlas": "backpack-4",
+      "sourceFrame": "backpack/spr-frame.png",
+      "path": "client/assets/bundles/module/bag/ui/backpack_spr-frame.png",
+      "uuid": "6f1b2735-648d-4399-821d-ec551127dba3",
+      "size": [
+        104,
+        104
+      ],
+      "rgbaMatched": true,
+      "pixelsCorrected": true,
+      "beforeSha256": "b47b1ee8f7defb08aa9ceb10b1fd4999edfa74fe518b92f68fb80d24197d088c",
+      "afterSha256": "9df330408eb444af3182b5f0c8487fe9f7eab38908d6f4548ea27e393e974a68",
+      "metaSha256": "1ddcdff6274a0ab1977cf2fb7f3ce2c597c807fe8bb91a19da5c58fb38d56f57"
+    }
+  ],
+  "prefabCheck": {
+    "objectCount": 393,
+    "serializedReferences": "有效",
+    "fieldTypes": "View及静态Cell字段目标类型已核对",
+    "englishNodeNames": true
+  },
+  "visualStatus": "待Creator本机预览，结构/像素校验不作为视觉验收"
+}

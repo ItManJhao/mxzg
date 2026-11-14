@@ -195,6 +195,9 @@ class MainChapterSocketTest {
         jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10104004,1,1)", second, role);
         // 独立夹具直接准备第三关进度，战斗和后续重试全部经过真实二进制协议。
         jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,2)", role);
+        // 已通关夹具必须具有已存在的计时；登录和挑战均不能替缺行猜补免费起点。
+        jdbc.update("INSERT INTO game_main_chapter_idle(role_id,started_at) VALUES (?,?)",
+                role, java.time.Instant.now().getEpochSecond() - 60);
         String command = UUID.randomUUID().toString();
         JsonNode original;
         JsonNode replay;

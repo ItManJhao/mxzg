@@ -105,10 +105,6 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
     private victoryCountdown = false;
     /** 本页经验动画已推进的0.1秒步数，关闭停止调度。 */
     private experienceTick = 0;
-    /** 本页加载的同源等级门槛，键为等级、值为升级所需经验；仅跨级动画读取。 */
-    private experienceThresholds = new Map<number, number>();
-    /** 本窗口奖励的只读显示索引，打开有奖励时创建，关闭清空；不持有库存。 */
-    private rewardCatalog: BagItemCatalog | null = null;
 
     /** 绑定确认关闭并异步准备表现；原空白关闭由ViewSpec共享模态转交，不请求结算。 */
     public onOpen(args?: ChapterEndArgs): void {
@@ -233,7 +229,6 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             return;
         }
         this.rewardScroll.validateBindings();
-        this.rewardCatalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item), GameConfig.instance.getFile(GConfig.Language));
         this.rewardScroll.list.setData(rewards);
         this.rewardScroll.toStart();
     }
@@ -244,20 +239,20 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             return;
         }
         const cell = node.getComponent(BagItemView);
-        if (!cell || !this.rewardCatalog) {
-            throw new Error("奖励格子组件或显示配置缺失");
+        if (!cell) {
+            throw new Error("奖励格子组件缺失");
         }
-        cell.show(reward, false, this.rewardCatalog.face(reward.itemId, reward.quantity));
+        cell.show(reward, false, BagItemCatalog.face(reward.itemId, reward.quantity));
     }
 
     /** 选择本次回执中的当前奖励打开只读说明，展示本次数量，不读取或修改库存。 */
     private onRewardSelect(reward: Readonly<BagItemData>): void {
-        if (this.released || !this.rewardCatalog) {
+        if (this.released) {
             return;
         }
         const args: BagInfoArgs = {
             source: "description",
-            face: { ...this.rewardCatalog.face(reward.itemId, reward.quantity), typeLine: "本次获得：" + reward.quantity },
+            face: { ...BagItemCatalog.face(reward.itemId, reward.quantity), typeLine: "本次获得：" + reward.quantity },
         };
         void UIManager.instance.open(BagInfoView, args).then(info => {
             if (!this.released) {
@@ -331,15 +326,11 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             + " mainSound=" + (mainClip?.name || "none") + " presentationOnly=" + !!args.presentationOnly);
     }
 
-    /** 加载展示配置并按冻结头像映射最高伤害英雄骨骼；历史外观缺失标注基础外观，不查当前名册或资产。 */
+    /** 从GameConfig读取已安装配置并按冻结头像加载最高伤害英雄骨骼；历史外观缺失标注基础外观，不查当前名册或资产。 */
     private async prepareMainVictory(args: ChapterEndArgs): Promise<void> {
-        const assets = ResourceAssetsUtils.forNode(this.node);
-        const [heroes, levels, skins, evolutions] = await Promise.all([
-            assets.loadPath("config/herotype", "JsonAsset"),
-            assets.loadPath("config/mainlevel", "JsonAsset"),
-            assets.loadPath("config/skin", "JsonAsset"),
-            assets.loadPath("config/heroevolvelevel", "JsonAsset"),
-        ]);
+        const config = GameConfig.instance;
+        const skins = config.getFileByPath("config/skin");
+        const evolutions = config.getFileByPath("config/heroevolvelevel");
         if (this.released || !this.node.isValid) {
             return;
         }
@@ -354,10 +345,10 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         const host = panel.getChildByName("HighestHero")!;
         host.active = !!best;
         if (best) {
-            const template = (heroes.json as { rows: { type: number; note: string }[] }).rows.find(row => row.type === best.templateId);
+            const template = config.getConfig(GConfig.HeroType, best.templateId);
             const historicalSpine = ChapterSettlementUtils.historicalSpine(best.portraitIconId ?? null,
-                (skins.json as { rows: { skin: string }[] }).rows,
-                (evolutions.json as { rows: { evolve_icon_id: number; evolve_fashion_id: number }[] }).rows);
+                (skins as { rows: { skin: string }[] }).rows,
+                (evolutions as { rows: { evolve_icon_id: number; evolve_fashion_id: number }[] }).rows);
             heroName.string = (template?.note || "英雄 " + best.templateId)
                 + (historicalSpine === null ? "\n历史外观缺失" : "");
             damage.string = String(best.totalDamage);
@@ -371,7 +362,6 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         if (this.released || !this.node.isValid) {
             return;
         }
-        this.experienceThresholds = new Map((levels.json as { rows: { level: number; exp: number }[] }).rows.map(row => [row.level, row.exp]));
         this.experienceTick = 0;
         this.paintExperience(0);
         if (args.experience) {
@@ -388,7 +378,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         }
     }
 
-    /** 仅更新静态经验条填充比例及文字，终值严格来自历史结算回执。 */
+    /** 仅更新静态经验条及文字；中间门槛直接查询已安装配置，不在开窗时复制整表索引。 */
     private paintExperience(progress: number): void {
         const panel = this.panel!;
         const level = panel.getChildByName("RoleLevel")!.getComponent(Label)!;
@@ -401,7 +391,11 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             text.string = "—";
             return;
         }
-        const frame = ChapterSettlementUtils.experienceFrame(snapshot, progress, value => this.experienceThresholds.get(value) || 0);
+        const levels = GameConfig.instance.getFileByPath("config/mainlevel") as {
+            readonly rows: readonly { readonly level: number; readonly exp: number }[];
+        };
+        const frame = ChapterSettlementUtils.experienceFrame(snapshot, progress,
+            value => levels.rows.find(row => row.level === value)?.exp || 0);
         level.string = "Lv " + frame.level;
         text.string = frame.threshold ? frame.exp + "/" + frame.threshold : "等级已满";
         fill.getComponent(Sprite)!.fillRange = frame.ratio;
@@ -448,8 +442,6 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             this.confetti.spriteFrame = null;
         }
         this.frames = [];
-        this.experienceThresholds.clear();
-        this.rewardCatalog = null;
         if (this.panel?.isValid) {
             Tween.stopAllByTarget(this.panel);
             const opacity = this.panel.getComponent(UIOpacity);

@@ -1,0 +1,304 @@
+{
+  "date": "2026-11-13",
+  "branch": "hao",
+  "baseline": "c23b53ed及此前未提交修改，保留全部已有内容",
+  "authorizedScope": "负责人确认恢复2000002月兔精灵·蓝的真实生成、独立实例保存、统一快照和现有背包只读详情",
+  "implementation": {
+    "rules": "SpiritRules仅2000002；单能力/单技能，四次整数随机依次能力4、技能数10000、等级10000、技能ID141/233，固定数量仍抽样",
+    "generation": "1/2级权重8000/2000，各49个技能ID，4种能力；名称说明来自真实语言闭包",
+    "storage": "V23 game_spirit；UUID字符串PK、角色FK、item/ability/skills以及未穿戴/位置0/经验0/洗练0/空列表默认值；按角色锁与外层事务提交",
+    "technicalBatch": "每次grant最多1000是技术批量保护，超限整次拒绝；非持有容量，已验证1000后再发1持有1001，不裁剪",
+    "synchronization": "Snapshot optional spirit_inventory=10，schemaVersion=1与items完整集合；登录/恢复/state.changed复用，BagModel唯一持有，缺字段spiritSynced=false",
+    "guards": "普通InventoryService按item.type8拒绝credit/debit及错误堆叠读取；GM通用item拒type8，不新增GM精灵生成能力",
+    "ui": "按spirit:instanceId选择每件；复用BagInfoView两段文字显示真实特性和完整技能，未改Prefab、未新增TS/页面",
+    "limits": "仅内部可信领域发放；尚无玩家精灵写协议或新挂机领取累计/回执/事务，不能声称新领取具备幂等结算"
+  },
+  "configuration": {
+    "tool": "tools/export_spirit_rules.py，默认检查、--write更新，公开build_projection/build_display",
+    "backend": "backend/src/main/resources/gameplay/spirit-rules.json",
+    "client": "client/assets/bundles/resources/config/spirit-display.json",
+    "integration": "统一export_gameconfig派生分支与GameConfig.SpiritDisplay共用；32项配置专项合并精灵5项，不新增模块资源清单或LoadingPlan目标",
+    "sharedTables": 48,
+    "typedTables": 17,
+    "mavenSharedTables": 32,
+    "bundles": 16,
+    "prefabs": 32,
+    "sourceScripts": 162
+  },
+  "validation": {
+    "backend": {
+      "log": "backend/target/spirit-scope-review-20261113.log",
+      "classes": 13,
+      "tests": 88,
+      "failures": 0,
+      "errors": 0,
+      "results": [
+        {
+          "class": "com.funsgamex.mxzg.AssetSyncTransactionTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.GameSocketTest",
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.GmTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.InventoryIdentityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainChapterIdleTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainChapterPersistenceTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainChapterRewardTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.MainFormationCommandTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.RoleCurrencyCreditTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.RoleExperienceTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.spirit.SpiritRulesTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.SpiritInventoryServiceTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "class": "com.funsgamex.mxzg.SpiritSocketTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "python": {
+      "log": "client/temp/spirit-config-scope-20261113.log",
+      "tests": 32,
+      "failures": 0,
+      "scope": "配置范围、Bundle路径、活动投影和精灵导出5项"
+    },
+    "frontend": {
+      "suites": [
+        "backpack",
+        "game-socket",
+        "config-groups",
+        "staged-loading",
+        "creator-compat",
+        "game-protocol"
+      ],
+      "passed": true,
+      "finalTextCombinations": 392,
+      "projectTypecheck": "Creator内置TypeScript，client/tsconfig.json --noEmit通过",
+      "toolTypecheck": "client/tools/tsconfig.check.json与Creator旧TS不兼容，未通过，未改工具配置伪装成功"
+    },
+    "protocol": {
+      "generatedCheck": true,
+      "wire": "Java实际WS spirit-event.pb/spirit-restored.pb → TS GameProtocolCodecUtils：实例身份/能力/技能/版本一致，恢复首包无凭证",
+      "noNewPlayerCommands": [
+        "chapter.idle.claim",
+        "spirit.grant",
+        "spirit.upgrade",
+        "spirit.equip"
+      ]
+    },
+    "resources": {
+      "generatedPrefabs": 32,
+      "bundles": 16,
+      "views": 17,
+      "sourceScripts": 162,
+      "prefabOrSceneFiles": 33,
+      "scriptBindings": 71,
+      "effectFiles": 12841,
+      "uuidAndSerializedReferences": "专项通过，未重铸既有UUID"
+    },
+    "browser": {
+      "mode": "Creator本机预览，独立内存H2，回环随机端口，393×852竖屏",
+      "instance": {
+        "port": 54119,
+        "run": "3111da390ad642bf926b2b368a500609",
+        "pid": 22044,
+        "stoppedAfterReview": true,
+        "account": "spirit_review"
+      },
+      "compile": "首次实测为旧脚本，负责人刷新后8个实例可见；真实详情初版裁切，精简正文后负责人再次刷新，最终显示通过",
+      "passed": [
+        "8只实例分别占格且数量各1",
+        "图标/品质框显示正常",
+        "第1只生命+1476及低级回音Lv1完整技能说明",
+        "第2只护甲+21及低级神佑Lv1独立说明",
+        "空白关闭回到原列表",
+        "确认关闭保持选中实例",
+        "返回主城正常",
+        "最终浏览器warn/error均空"
+      ],
+      "screenshots": [
+        "docs/images/spirit-list-20261113.jpg",
+        "docs/images/spirit-detail-20261113.jpg",
+        "docs/images/spirit-detail-second-20261113.jpg"
+      ],
+      "notClaimed": [
+        "不是全部98技能的逐项画面验收",
+        "未恢复旧专用精灵详情版式/98个技能图标",
+        "没有发布包、MySQL或真机验收"
+      ]
+    }
+  },
+  "sources": [
+    {
+      "path": "protocol/game.proto",
+      "sha256": "bf3763667f41b8e6daca62589c7250743b07814549a01449616a33363168f6cb"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/spirit/SpiritRules.java",
+      "sha256": "ec7ba2c1e378e25c74a4a60a18c30b1f8cfffe617626489b537271039a198359"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/spirit/SpiritInventoryService.java",
+      "sha256": "7ee77b7416a178636bd658bf4f8f7438d874738b0262a5e1b1b8601800301868"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/network/SessionSnapshotService.java",
+      "sha256": "e9b53dbafda7a6ab871da2df36ce3da737cab709e095dcb418c4d69636075e6c"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/inventory/InventoryService.java",
+      "sha256": "516444b8ffdc8836dc714c91971037d7844e7811d4da1cdf9300b0a9cb46b9f4"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/gm/GmService.java",
+      "sha256": "76296a317a3dd1b1ba6dfd951e1681cbc15003e4824b63f9af6986dd2c11f6a1"
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V23__spirit_instances.sql",
+      "sha256": "9174e3f13994fbca2e54df44a9c45c6f7a64063439f3631e4809d68f91e19f51"
+    },
+    {
+      "path": "backend/src/main/resources/gameplay/spirit-rules.json",
+      "sha256": "fd08a987daf0405db498dac43fdaf471d01f6ce04c7dfe0a41bd483d0ef8bb60"
+    },
+    {
+      "path": "backend/src/test/java/com/funsgamex/mxzg/SpiritInventoryServiceTest.java",
+      "sha256": "a4e8315391e09b7207169ec3be4a5f63d8da1c4512e154a0d8eccf1034a262c6"
+    },
+    {
+      "path": "backend/src/test/java/com/funsgamex/mxzg/spirit/SpiritRulesTest.java",
+      "sha256": "7b24da105a514023ad431b0c368bc774573b77a300ea1cd337c34013844a3dfe"
+    },
+    {
+      "path": "backend/src/test/java/com/funsgamex/mxzg/SpiritSocketTest.java",
+      "sha256": "68b956d66b11d28bf1097d0ad70a3dddc4e7c6b4276979a39b6e364593559e5d"
+    },
+    {
+      "path": "tools/export_spirit_rules.py",
+      "sha256": "2fccffb5a504b7ebc8963ea93a525e64aa2086e1e498e46e4c2d605e35d01d56"
+    },
+    {
+      "path": "tools/test_spirit_export.py",
+      "sha256": "8494fe6402bd19f3fc1f6717656666904e0b721fa3d1c45d9d591a9367c60e4f"
+    },
+    {
+      "path": "client/assets/bundles/resources/config/spirit-display.json",
+      "sha256": "05f42b04b4c523acb2355d9551d641a1dacdea772b8996334815870cd530a732"
+    },
+    {
+      "path": "client/assets/scripts/features/bag/data/BagItemDataUtils.ts",
+      "sha256": "f1d521e3525c40a780bb930591beddd1a04caf3dbe6c5cbdae494799efcf4d89"
+    },
+    {
+      "path": "client/assets/scripts/features/bag/BagModel.ts",
+      "sha256": "ee39f7982fb77e5ae1fcc64cdea64c2d40bded6bbaf336da3b44ce44c0b60f9e"
+    },
+    {
+      "path": "client/assets/scripts/features/bag/ui/BagInfoView.ts",
+      "sha256": "b88fe8ba8640054ced2a91092c9ea0777089ba3b46324ce91a5798afbed6349a"
+    },
+    {
+      "path": "client/assets/scripts/features/bag/utils/BagItemCatalog.ts",
+      "sha256": "cbacb8f41ad6c6104294eadda4844d41de9f041c85f9b7362dda23903a35f1cb"
+    },
+    {
+      "path": "docs/images/spirit-list-20261113.jpg",
+      "sha256": "e182d1c30d1cc2db4c6b34afb7a996acab4cd714eef04a35ba02020bb0a1d4ad"
+    },
+    {
+      "path": "docs/images/spirit-detail-20261113.jpg",
+      "sha256": "6434c1f8e0c815b29f244f66b645f02dc07780b7c54f2c4c4b9838173048bd10"
+    },
+    {
+      "path": "docs/images/spirit-detail-second-20261113.jpg",
+      "sha256": "4ecac2d42365ae3b61ca106fb8baa7f55afd779c08018e94cde8d6724709bd6a"
+    }
+  ],
+  "legacyEvidence": "docs/validation/idle-settlement-prerequisites-review-20261113.json保存真实旧生成、实例及三表来源哈希，未改历史记录",
+  "notOpened": [
+    "宝箱领取",
+    "快速战斗",
+    "英雄升级",
+    "穿脱",
+    "精灵升级/洗练/合成/分解",
+    "精灵GM写入",
+    "其他玩法"
+  ],
+  "remaining": [
+    "共享可信发奖计划与实际到账明细",
+    "新主线累计/保底/回执/领取协议事务",
+    "已确认首次挑战前起点及65/60秒双门槛尚未接线",
+    "清心概率与护盾待审保留"
+  ],
+  "git": "未提交、未推送、未合并main"
+}

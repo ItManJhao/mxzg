@@ -36,6 +36,10 @@ message Frame {
     ChapterReceipt chapter_receipt = 28;
     ChapterReplay chapter_replay = 29;
     IdleEncounter idle_encounter = 30;
+    ChapterIdleClaim chapter_idle_claim = 31;
+    ChapterIdleClaimStatusRequest chapter_idle_claim_status_request = 32;
+    ChapterIdleClaimReceipt chapter_idle_claim_receipt = 33;
+    ChapterIdleClaimStatus chapter_idle_claim_status = 34;
   }
 }
 message Empty {}
@@ -121,6 +125,8 @@ message Snapshot {
   optional MainFormation main_formation = 7;
   optional MainChapterState main_chapter = 8;
   optional MainChapterIdleState main_chapter_idle = 9;
+  // 精灵独立实例；缺失表示未同步，不能混入按item_id唯一的普通库存。
+  optional SpiritInventory spirit_inventory = 10;
 }
 
 // 服务端最终容量已经包含 VIP 加成；缺失表示尚未同步，不能当作零容量。
@@ -139,6 +145,25 @@ message TimedItem {
 message TimedInventory {
  repeated TimedItem items = 1;
  required int64 server_time_seconds = 2;
+}
+
+// 当前只恢复2000002的真实实例和只读背包展示，不开放养成或穿脱协议。
+message SpiritInventory {
+  required uint32 schema_version = 1;
+  repeated SpiritItem items = 2;
+}
+message SpiritItem {
+  // 与配置ID分开；同配置同属性的实例也不能合并，字符串保留持久身份。
+  required string instance_id = 1;
+  required uint32 item_id = 2;
+  // 旧实际生成和持久链只有一个能力，不沿旧Lua描述符改成多能力。
+  required uint32 ability_id = 3;
+  repeated SpiritSkill skills = 4;
+}
+message SpiritSkill {
+  required uint32 sort = 1;
+  required uint32 skill_id = 2;
+  required uint32 level = 3;
 }
 
 // 本机开发 GM；目标角色只从鉴权连接获取。
@@ -276,6 +301,117 @@ message MainChapterIdleState {
   repeated ChapterReward rates = 6;
   repeated FormationSlot slots = 7;
   optional int64 lineup_version = 8;
+  // 领取状态缺失、未知格式或非ENABLED均只读；不为展示查询完整收益输入。
+  optional MainChapterIdleClaimState claim_state = 9;
+}
+
+// 独立挂机消费版本，不等同于资产revision；全部int64须在JS安全整数范围内。
+message MainChapterIdleClaimState {
+  required uint32 schema_version = 1;
+  required int64 operation_version = 2;
+  // READ_ONLY保持按钮关闭；ENABLED只表示入口启用，不保证本次权益输入可用。
+  required string request_mode = 3;
+}
+
+// 业务request_id跨超时、重连不变；角色、时长、收益和随机源由服务端决定。
+message ChapterIdleClaim {
+  required string request_id = 1;
+  required int64 expected_operation_version = 2;
+}
+
+// 只查询当前认证角色指定请求的已提交结果，不查询库存、不重算收益。
+message ChapterIdleClaimStatusRequest { required string request_id = 1; }
+
+// 历史领取回执只供操作确认与展示，不能覆盖统一Snapshot中的当前资产和挂机起点。
+message ChapterIdleClaimReceipt {
+  required uint32 schema_version = 1;
+  required string request_id = 2;
+  required string receipt_id = 3;
+  required int64 expected_operation_version = 4;
+  required int64 before_operation_version = 5;
+  required int64 after_operation_version = 6;
+  required int64 committed_at_seconds = 7;
+  required int64 previous_started_at_seconds = 8;
+  required uint32 seconds = 9;
+  required uint32 max_seconds = 10;
+  required uint32 reward_stage = 11;
+  required int64 asset_revision = 12;
+  repeated ChapterReward theoretical_rewards = 13;
+  required RewardGrantResult actual = 14;
+  optional ChapterExperience experience = 15;
+}
+
+// COMMITTED必须携带原receipt，NOT_FOUND禁止携带；没有持久处理中记录，不定义PENDING。
+message ChapterIdleClaimStatus {
+  required string request_id = 1;
+  required string status = 2;
+  optional ChapterIdleClaimReceipt receipt = 3;
+}
+
+// 同次可信发放的实际明细，不是客户端请求、完整持有快照或可重新执行的发奖计划。
+message RewardGrantResult {
+  required string role_id = 1;
+  repeated RewardOutcome items = 2;
+  required RewardWallet wallet = 3;
+  repeated RewardStackCredit stacks = 4;
+  repeated RewardExperienceGain experience = 5;
+  repeated RewardTavernChange tavern = 6;
+  repeated RewardBonus bonuses = 7;
+  repeated TimedItem timed_items = 8;
+  required SpiritInventory spirits = 9;
+}
+
+// requested等于credited加ignored；零到账仍保留真实减少原因。
+message RewardOutcome {
+  required uint32 item_id = 1;
+  required int64 requested = 2;
+  required int64 credited = 3;
+  required int64 ignored = 4;
+  // NONE、ROLE_MAX_LEVEL或TAVERN_CAP，与服务端实际规则一致。
+  required string reason = 5;
+}
+
+// 冻结发放前后钱包，含直接奖励及升级附赠；历史余额不写当前Model。
+message RewardWallet {
+  required int64 gold_before = 1;
+  required int64 diamonds_before = 2;
+  required int64 gold_after = 3;
+  required int64 diamonds_after = 4;
+}
+
+// 稳定记录ID保留stack:等真实格式，不能转成数字或统一改为UUID。
+message RewardStackCredit {
+  required uint32 item_id = 1;
+  required string instance_id = 2;
+  required int64 before_quantity = 3;
+  required int64 quantity = 4;
+  required int64 after_quantity = 5;
+}
+
+// 接纳经验包含跨级消耗；diamonds仅记录本次升级附赠，不混入理论直接奖励。
+message RewardExperienceGain {
+  required uint32 before_level = 1;
+  required int64 before_experience = 2;
+  required int64 requested = 3;
+  required int64 accepted = 4;
+  required int64 ignored = 5;
+  required uint32 level = 6;
+  required int64 experience = 7;
+  required int64 diamonds = 8;
+}
+
+// 领取时冻结的酒馆上限；已有余额超过上限时不倒扣。
+message RewardTavernChange {
+  required int64 before_quantity = 1;
+  required int64 limit = 2;
+  required int64 after_quantity = 3;
+}
+
+// 附赠与理论基础奖励分开；当前source仅为ROLE_LEVEL_UP。
+message RewardBonus {
+  required string source = 1;
+  required uint32 item_id = 2;
+  required int64 quantity = 3;
 }
 
 // 挂机演出战报，不是挑战凭证，不产生奖励；输入版本用于避免展示已变更的阵容。

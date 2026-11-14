@@ -1,4 +1,8 @@
-/** 角色初始规则与等级经验门槛：直接读取旧策划表的共享导出，不引用英雄升级消耗。 */
+/**
+ * 角色初始规则与等级经验门槛，直接读取旧策划表的共享导出，不引用英雄升级消耗。
+ * 由角色创建与可信经验发放调用，只计算配置和经验结果，不持有玩家状态或写入资产。
+ * 经验结果区分跨级实际接纳、满级忽略与升级附赠，供外层事务冻结真实发放明细。
+ */
 package com.funsgamex.mxzg.role;
 import java.util.*;
 import org.springframework.stereotype.Component;
@@ -50,32 +54,54 @@ public class RoleRules {
         if(first<=0 || image<=0)throw new IllegalStateException("初始角色形象配置缺失");
         imageId=image;
     }
-    /** 经验结算结果：剩余本级经验、最终等级及跨越各级的钻石奖励。 */
-    public record ExperienceGain(int level, long experience, long diamonds) {}
+    /**
+     * 本次经验发放的不可变计算结果；实际接纳量包含用于跨级的经验，不能以本级经验差推算。
+     * @param beforeLevel 发放前的角色等级
+     * @param beforeExperience 发放前保留的本级经验，已满级时允许保留历史非零值
+     * @param requested 本次可信奖励申请的正经验数量
+     * @param accepted 本次用于跨级或保留为本级经验的数量，不包含发放前经验
+     * @param ignored 因发放前已满级或本次到达满级而忽略的数量，requested等于accepted加ignored
+     * @param level 发放后的角色等级
+     * @param experience 发放后保留的本级经验；本次到达满级时清零，原已满级则保持历史值
+     * @param diamonds 本次跨越各级附赠的钻石总数，不包含调用方其他钻石奖励
+     */
+    public record ExperienceGain(int beforeLevel, long beforeExperience, long requested, long accepted,
+                                 long ignored, int level, long experience, long diamonds) {}
 
     /**
      * 复现旧RoleService.addExp：逐级扣除当前级门槛，领取离开等级的奖励，到满级清零。
-     * 已满级保持原经验且不再奖励；溢出或损坏的未满级经验拒绝，调用方整体回滚。
+     * 已满级保持原经验且不再奖励；本次到顶多出的经验作为忽略量，不计入实际接纳量。
+     * @param level 服务端持久角色等级，必须存在于当前等级配置
+     * @param experience 非负本级经验；未满级时必须低于当前级门槛
+     * @param amount 本次可信奖励申请的正经验数量
+     * @return 经验前后、申请及实际数量与升级附赠；本方法不修改任何持久状态
+     * @throws IllegalArgumentException 等级、经验或发放数量非法时拒绝
+     * @throws ArithmeticException 经验相加或升级赠钻累计溢出时拒绝，由调用方整体回滚
      */
     public ExperienceGain addExperience(int level, long experience, long amount) {
         threshold(level);
         if (experience < 0 || amount <= 0 || (level < maxLevel && experience >= threshold(level))) {
             throw new IllegalArgumentException("角色经验或发放数量无效");
         }
+        int beforeLevel = level;
         if (level == maxLevel) {
-            return new ExperienceGain(level, experience, 0);
+            return new ExperienceGain(beforeLevel, experience, amount, 0, amount, level, experience, 0);
         }
         long remaining = Math.addExact(experience, amount);
         long diamonds = 0;
+        long ignored = 0;
         while (level < maxLevel && remaining >= threshold(level)) {
             remaining -= threshold(level);
             diamonds = Math.addExact(diamonds, levelDiamonds.get(level));
             level++;
             if (level == maxLevel) {
+                // 扣完进入满级所需门槛后，余量只来自本次新增经验，旧经验不会被计为忽略。
+                ignored = remaining;
                 remaining = 0;
             }
         }
-        return new ExperienceGain(level, remaining, diamonds);
+        return new ExperienceGain(beforeLevel, experience, amount, amount - ignored, ignored,
+            level, remaining, diamonds);
     }
 
     /** 返回指定初始属性；不存在即配置错误。 */

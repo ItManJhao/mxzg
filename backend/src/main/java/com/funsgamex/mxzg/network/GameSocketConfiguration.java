@@ -3,7 +3,6 @@ package com.funsgamex.mxzg.network;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.*;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
@@ -11,7 +10,6 @@ import org.springframework.web.socket.config.annotation.*;
 @Profile("local & !production")
 @ConditionalOnProperty(name = "mxzg.websocket.enabled", havingValue = "true")
 @EnableWebSocket
-@EnableScheduling
 public class GameSocketConfiguration implements WebSocketConfigurer {
     private final GameSocketHandler handler;
 

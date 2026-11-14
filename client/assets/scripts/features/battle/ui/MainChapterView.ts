@@ -5,7 +5,6 @@ import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { MainChapterController } from "../MainChapterController";
@@ -28,13 +27,13 @@ const { ccclass, property } = _decorator;
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
-    prepare: async () => {
-        await RemakeConfigUtils.prepareInventoryConfig();
-        await RemakeConfigUtils.prepareHeroDetailConfig();
-    },
 })
 @ccclass("MainChapterView")
 export class MainChapterView extends BaseView {
+    /** 当前操作已反馈的结果，开始新请求后清空，防止时钟刷新重复飘字。 */
+    private lastResultMessage = "";
+    /** 当前已接通的主线最后一关；仅用于说明阶段边界，实际挑战仍由服务端核验。 */
+    private static readonly LAST_SUPPORTED_STAGE = 3;
     /** 对话由本页持有，跨遇敌保留冷却，挑战与关闭时隐藏。 */
     private heroTalk: MainChapterHeroTalk | null = null;
     /** 到达行军路程后等待/播放挂机战报，期间停止背景。 */
@@ -113,6 +112,7 @@ export class MainChapterView extends BaseView {
             || !this.stageLabel || !this.statusLabel || !this.challengeLabel || !this.idleTimeLabel
             || !this.goldRateLabel || !this.roleExpRateLabel || !this.heroExpRateLabel || !this.idleClaimButton) throw new Error("主线页面绑定缺失");
         this.closed = false;
+        this.lastResultMessage = MainChapterModel.instance.message;
         if (!this.idleProgress || !this.resourceFlightHost || !this.resourceFlightTemplate || !this.resourceFlightTarget) {
             throw new Error("挂机进度或资源飞行绑定缺失");
         }
@@ -134,8 +134,8 @@ export class MainChapterView extends BaseView {
             throw new Error("主线产物说明入口绑定缺失");
         }
         this.listen(this.rewardInfoButton, () => {
-            void UIManager.instance.openById("chapter-reward-info").catch(() => {
-                if (!this.closed) {
+            void UIManager.instance.openById("chapter-reward-info").catch(error => {
+                if (!this.closed && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
                     UIManager.instance.toast("产物说明暂不可用");
                 }
             });
@@ -161,7 +161,7 @@ export class MainChapterView extends BaseView {
         this.ownListener(() => { if (button.isValid) button.node.off(Button.EventType.CLICK, callback); });
     }
 
-    /** 正常挑战先确认阵容；未确认挑战及待领奖直接恢复原操作，不另建战斗。 */
+    /** 正常挑战先确认阵容；未确认挑战及待领奖优先恢复，已完成开放范围时明确说明而不误开布阵。 */
     private async prepareChallenge(): Promise<void> {
         const model = MainChapterModel.instance;
         if (this.closed || this.playing || model.busy || !model.state) {
@@ -169,6 +169,10 @@ export class MainChapterView extends BaseView {
         }
         if (model.requestId || model.state.pendingBattleId) {
             await this.challenge();
+            return;
+        }
+        if (this.isChapterRangeComplete()) {
+            UIManager.instance.toast("当前开放的前三关已全部通关");
             return;
         }
         try {
@@ -181,7 +185,7 @@ export class MainChapterView extends BaseView {
                 },
             });
         } catch (error) {
-            if (!this.closed) {
+            if (!this.closed && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
                 UIManager.instance.toast(String(error));
             }
         }
@@ -202,7 +206,7 @@ export class MainChapterView extends BaseView {
                 }
             }
         } catch (error) {
-            if (!this.closed) UIManager.instance.toast(String(error));
+            if (!this.closed && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) UIManager.instance.toast(String(error));
         }
     }
 
@@ -225,7 +229,7 @@ export class MainChapterView extends BaseView {
             if (this.closed) UIManager.instance.closeById("main-chapter-battle");
         } catch (error) {
             this.stopReplay = null;
-            if (!this.closed) UIManager.instance.toast("战报恢复失败：" + String(error));
+            if (!this.closed && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) UIManager.instance.toast("战报恢复失败：" + String(error));
         } finally {
             if (!this.stopReplay) {
                 this.playing = false;
@@ -234,21 +238,36 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 页面仅读取Model，历史回执不会倒退主线进度或本地增加奖励。 */
+    /** 页面仅读取Model；明确显示阶段上限，避免已通关后的禁用按钮仍写着“战斗”而看似失灵。 */
     private render = (): void => {
         if (this.closed) return;
         const model = MainChapterModel.instance;
         const state = model.state;
-        this.stageLabel!.string = state ? String(Math.min(state.maxCleared + 1, 3)) : "等待主线同步";
-        this.statusLabel!.string = model.message || (state?.pendingBattleId ? "上次战斗待结算，点击战斗恢复" : "");
-        this.challengeLabel!.string = this.playing ? "战斗中" : model.requestId ? "确认挑战"
-            : state?.pendingBattleId ? "恢复战斗" : "战斗";
+        const completed = this.isChapterRangeComplete();
+        this.stageLabel!.string = state ? String(Math.min(state.maxCleared + 1, MainChapterView.LAST_SUPPORTED_STAGE)) : "等待主线同步";
+        if (model.busy) {
+            this.lastResultMessage = "";
+        } else if (model.message && model.message !== this.lastResultMessage) {
+            UIManager.instance.toast(model.message);
+            this.lastResultMessage = model.message;
+        }
+        this.statusLabel!.string = completed ? "当前开放的前三关已全部通关"
+            : model.busy ? "正在处理…" : state?.pendingBattleId ? "上次战斗待结算，点击战斗恢复" : "";
+        this.challengeLabel!.string = this.playing ? "战斗中" : model.busy ? "处理中" : !state ? "等待同步" : model.requestId ? "确认挑战"
+            : state?.pendingBattleId ? "恢复战斗" : completed ? "已通关" : "战斗";
         this.renderIdle();
         const enabled = !!state && !model.busy && !this.playing;
-        this.challengeButton!.interactable = enabled && (!!model.requestId || !!state?.pendingBattleId || state!.maxCleared < 3);
+        this.challengeButton!.interactable = enabled && !completed;
         this.quickBattleButton!.interactable = enabled;
         this.powerButton!.interactable = enabled;
     };
+
+    /** 没有旧请求或待结算战报，且已到当前服务端支持末关时返回true；恢复操作不受阶段上限拦截。 */
+    private isChapterRangeComplete(): boolean {
+        const model = MainChapterModel.instance;
+        return !!model.state && model.state.maxCleared >= MainChapterView.LAST_SUPPORTED_STAGE
+            && !model.requestId && !model.state.pendingBattleId;
+    }
 
     /** 引擎帧只更新计时显示；后台恢复按已接纳服务器时间推算，不自行发奖。 */
     public update(dt: number): void {

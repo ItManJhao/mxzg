@@ -668,7 +668,7 @@ SkillAuditUtils按技能ID＋等级登记演示证据；禁止将一个等级的
 
 - RemakeApp保留应用生命周期和会话到页面的协调；AccountComposition创建会话依赖，页面通过各自@UIRegistry.view登记，ApplicationPages只装配登录/主城Controller和宿主，ApplicationResources调度三段LoadingPlan并持有阶段资源，DevelopmentPreview管理只读开发入口。不得把开发战报逻辑重新塞回正式启动链路。
 - RemakeHomeView 唯一持有 CityHubView / CityChromeView 子节点，负责打开、关闭、失败清理；子视图不再单独登记为 Hud。
-- 普通提示由 Remake.scene 的 ApplicationNotice 静态节点承载，不能要求主城存在；连接状态等主城持续提示仍归所属界面。
+- 操作反馈统一调用UIManager.toast，由ToastManager复用Remake.scene的ApplicationNotice静态节点；登录前和独立技能台也可用，不另造页面提示节点。结果按有界队列去重、上浮和自动消失，页面保留加载进度/玩法状态/固定说明，不用正文承载成功或失败。换号clear，应用销毁dispose；已由UIManager报告的开窗异常不再次提示。
 - 动态图片复用原ResourcePool。ResManager.setSprite只保留当前显示及本轮在途候选作用域；同图/相同在途请求复用，新图赋值后释放旧显示，null、失效与销毁撤回拥有者，失败按候选回退。getSpriteFrame(owner)仍显式持有至owner销毁，不能用setSprite(null)撤回该引用；不直接releaseAll或释放其他页面引用。
 - ResourcePool 成功结果只持有一次引擎引用；最后拥有者退出时 decRef，全部拥有者离开后才完成的加载也须回收。在途 Promise 与已加载缓存分开，失败可重试。
 - PrefabLoader 是显式应用级缓存，每个 Prefab 一次 addRef，应用关闭页面后 clearPrefabCache。应用预热范围和主城底板缓存可保持到应用退出；不能将这种预期保留直接判为泄漏，也不能未经使用者审计就按低内存通知强制清空。

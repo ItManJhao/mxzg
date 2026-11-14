@@ -1,0 +1,48 @@
+{
+  "files": 49,
+  "resources": [
+    {
+      "duration": 3.700000002980232,
+      "encodedBodySize": 581,
+      "name": "http://localhost:7456/assets/config/config.json",
+      "transferSize": 300
+    },
+    {
+      "duration": 3.199999988079071,
+      "encodedBodySize": 0,
+      "name": "http://localhost:7456/assets/config/index.js",
+      "transferSize": 300
+    },
+    {
+      "duration": 6.200000002980232,
+      "encodedBodySize": 267453,
+      "name": "http://localhost:7456/assets/config/import/18/187bad19-058b-4955-8928-c44168a8e60b.json",
+      "transferSize": 300
+    },
+    {
+      "duration": 4,
+      "encodedBodySize": 564,
+      "name": "http://localhost:7456/assets/config/import/b0/b0e751d2-f973-4bd6-9a7e-731ae17c4fbd.json",
+      "transferSize": 300
+    },
+    {
+      "duration": 5.800000011920929,
+      "encodedBodySize": 0,
+      "name": "http://localhost:7456/query-extname/298c2202-eb35-4d3f-b35b-185fe934e089",
+      "transferSize": 300
+    },
+    {
+      "duration": 4,
+      "encodedBodySize": 125,
+      "name": "http://localhost:7456/assets/config/import/29/298c2202-eb35-4d3f-b35b-185fe934e089.json",
+      "transferSize": 300
+    },
+    {
+      "duration": 5.199999988079071,
+      "encodedBodySize": 408367,
+      "name": "http://localhost:7456/assets/config/native/29/298c2202-eb35-4d3f-b35b-185fe934e089.bin",
+      "transferSize": 300
+    }
+  ],
+  "version": "config-v1:94380d76c4204fe90737ea7cd81888cd4a6c91a6997a3ecea8014a1a457ab1fd"
+}

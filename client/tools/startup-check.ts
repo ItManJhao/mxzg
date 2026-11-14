@@ -1,13 +1,13 @@
 /** 启动、取消、独立提示与资源结束后的行为检查；渲染仍由Creator验收。 */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
-import { director, Director, Node, UIOpacity } from "cc";
+import { createdNodes, director, Director, Node, Overflow, UIOpacity, UITransform } from "cc";
 import { StartupFlowUtils, StartupCancelled } from "../assets/scripts/app/remake/StartupFlowUtils";
 import { RemakeApp } from "../assets/scripts/app/remake/RemakeApp";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { LogoSplashUtils, LOGO_BGM } from "../assets/scripts/app/remake/LogoSplashUtils";
 import { resources, AudioClip, AudioSource } from "cc";
-import { ApplicationNotice } from "../assets/scripts/app/remake/ApplicationNotice";
+import { ToastManager } from "../assets/scripts/framework/ui/ToastManager";
 import { TrackedTimers } from "../assets/scripts/framework/TrackedTimers";
 import { Label } from "cc";
 import { DevelopmentPreview } from "../assets/scripts/app/remake/DevelopmentPreview";
@@ -84,21 +84,104 @@ async function main() {
   assert.equal(delivered, "无导航也能提示"); newNotice();
   const timerBaseline = TrackedTimers.snapshot();
   const noticeNode = new Node("ApplicationNotice");
-  const noticeLabel = noticeNode.addComponent(Label);
-  const notices = new ApplicationNotice(noticeNode, noticeLabel);
+  noticeNode.setPosition(0, -435, 0);
+  const noticeBox = noticeNode.addComponent(UITransform);
+  noticeBox.setContentSize(540, 54);
+  const textNode = new Node("Notice");
+  textNode.parent = noticeNode;
+  const textBox = textNode.addComponent(UITransform);
+  textBox.setContentSize(520, 50);
+  const noticeLabel = textNode.addComponent(Label);
+  // 用明确的引擎测量结果夹具验证背景撑高，不用字符估算冒充实际字体换行。
+  noticeLabel.updateRenderData = (force = false) => {
+    assert.equal(force, true);
+    textBox.setContentSize(520, noticeLabel.string.includes("\n") ? 100 : 50);
+  };
+  const nodesBeforeToast = createdNodes.length;
+  const notices = new ToastManager(noticeNode, noticeLabel);
+  const opacity = noticeNode.getComponent(UIOpacity)!;
   for (let cycle = 0; cycle < 20; cycle++) {
-    notices.show("登录前可见");
+    notices.show("登录前可见", 1000);
     assert.equal(noticeNode.active, true);
     assert.equal(noticeLabel.string, "登录前可见");
-    assert.equal(TrackedTimers.snapshot(), timerBaseline + 1);
-    notices.show("替换提示");
-    assert.equal(TrackedTimers.snapshot(), timerBaseline + 1, "替换提示不叠加计时器");
-    notices.dispose(); notices.dispose();
-    assert.equal(TrackedTimers.snapshot(), timerBaseline);
+    assert.equal(opacity.opacity, 0, "首帧从透明开始淡入");
+    notices.show("登录前可见", 1000);
+    notices.show("后续提示", 1000);
+    notices.show("后续提示", 1000);
+    notices.update(0.18);
+    assert.equal(opacity.opacity, 255);
+    assert(noticeNode.position.y > -435, "淡入期间从场景原位置上浮");
+    notices.update(0.72);
+    assert(opacity.opacity > 0 && opacity.opacity < 255, "结束前逐步淡出");
+    notices.update(0.11);
+    assert.equal(noticeLabel.string, "后续提示", "当前和待播重复文字均不延长或重复播放");
+    notices.update(2);
+    assert.equal(noticeNode.active, false);
+    assert.equal(noticeNode.position.y, -435);
+    assert.equal(TrackedTimers.snapshot(), timerBaseline, "飘字仅由update推进，不创建计时器");
   }
+  notices.show("当前提示", 1000);
+  for (let index = 1; index <= 10; index++) {
+    notices.show("排队" + index, 1000);
+  }
+  notices.update(1.01);
+  assert.equal(noticeLabel.string, "排队4", "队列总上限八条，满时保留当前及最近七条");
+  for (let index = 5; index <= 10; index++) {
+    notices.update(1);
+    assert.equal(noticeLabel.string, "排队" + index);
+  }
+  notices.update(1);
+  assert.equal(noticeNode.active, false);
+  notices.show("先前有限提示", 1000);
+  notices.show("排队中的常驻错误", 0);
+  notices.show("已进入队列的新结果", 1000);
+  notices.update(1.01);
+  assert.equal(noticeLabel.string, "已进入队列的新结果", "入队的常驻项也不能堵住更新结果");
+  notices.update(1);
+  const fullReason = "发放失败：精灵单次最多1000件。\n请减少数量后重试，原请求未写入任何实例。";
+  notices.show(fullReason, 1000);
+  assert.equal(noticeLabel.string, fullReason, "完整原因不截断、不被统一失败文案替换");
+  assert.equal(noticeLabel.enableWrapText, true);
+  assert.equal(noticeLabel.overflow, Overflow.RESIZE_HEIGHT);
+  assert.equal(noticeBox.contentSize.width, 540, "宽度继续由场景控制");
+  assert.equal(noticeBox.contentSize.height, 104, "背景按引擎测出的多行高度保留场景留白");
+  notices.update(1.01);
   notices.show("常驻错误", 0);
+  notices.update(100);
+  assert.equal(noticeNode.active, true);
+  notices.show("恢复成功", 1000);
+  assert.equal(noticeLabel.string, "恢复成功", "新结果可替换常驻错误，不堵塞队列");
+  assert.equal(noticeBox.contentSize.height, 54, "短文字恢复场景最小高度");
+  notices.show("旧角色待播结果", 1000);
+  notices.clear();
+  notices.update(10);
+  assert.equal(noticeNode.active, false, "换号清空旧角色当前和待播文字");
+  assert.equal(noticeLabel.string, "");
+  assert.equal(noticeNode.position.y, -435);
+  assert.equal(opacity.opacity, 255);
+  notices.show("新角色提示", 1000);
+  assert.equal(noticeLabel.string, "新角色提示", "clear后下一角色仍可使用同一场景提示");
+  notices.show("销毁前待播", 1000);
+  notices.dispose();
+  notices.dispose();
+  notices.update(100);
+  notices.show("销毁后迟到结果");
+  assert.equal(noticeNode.active, false);
+  assert.equal(noticeLabel.string, "");
+  assert.equal(noticeBox.contentSize.height, 54);
   assert.equal(TrackedTimers.snapshot(), timerBaseline);
-  notices.dispose(); noticeNode.destroy();
+  assert.equal(createdNodes.length, nodesBeforeToast, "所有提示复用唯一场景节点，不能另造面板");
+  noticeNode.destroy();
+  const destroyedNotice = new Node("DestroyedNotice");
+  const destroyedToast = new ToastManager(destroyedNotice, destroyedNotice.addComponent(Label));
+  destroyedToast.show("宿主销毁前提示");
+  destroyedNotice.destroy();
+  assert.doesNotThrow(() => {
+    destroyedToast.update(1);
+    destroyedToast.dispose();
+    destroyedToast.show("宿主销毁后迟到结果");
+    assert.equal(TrackedTimers.snapshot(), timerBaseline);
+  });
 
   const originalLoad = resources.load;
   const pendingAssets: Array<{ path: string; done: Function }> = [];

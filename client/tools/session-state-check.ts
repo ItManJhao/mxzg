@@ -31,11 +31,13 @@ class Wire {
 class Server {
  /** 可控制的鉴权繁忙次数，用于验证后台恢复遇到 BUSY 后仍自动重连。 */
  busyAuthentications=0;
+ /** 当前GM拒绝码，由真实二进制回包路径验证错误反馈。 */
+ gmFailure="UNKNOWN_MESSAGE";
  readonly wires:Wire[]=[];readonly requests:string[]=[];state:any=null;
  create=()=>{const wire=new Wire(this,"connection-"+this.wires.length);this.wires.push(wire);return wire as unknown as SocketPort;};
  receive(wire:Wire,frame:GameFrame){
   this.requests.push(frame.name);const data=frame.body as any;
-  if(frame.name==="gm.status"){queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"UNKNOWN_MESSAGE",message:"UNKNOWN_MESSAGE",retryable:false}}));return;}
+  if(frame.name==="gm.status"){queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:this.gmFailure,message:this.gmFailure,retryable:false}}));return;}
   if(frame.name==="session.authenticate" && this.busyAuthentications>0){this.busyAuthentications--;queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"BUSY",message:"BUSY",retryable:true}}));return;}
   if(frame.name==="session.login" && data.serverId==="missing-world") {queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"SERVER_UNAVAILABLE",message:"SERVER_UNAVAILABLE",retryable:false}}));return;}
   if(frame.name==="session.login")this.state={role:{id:"role-"+data.account,nickname:data.account,serverId:data.serverId,level:1,gold:0,diamonds:0,basics:{experience:0,cup:1000,headId:0,imageId:410304012,borderId:0,language:1,createdAtSeconds:100,lastLoginAtSeconds:100,experienceToNextLevel:120}},inventory:[],heroes:[],revision:0};
@@ -76,6 +78,84 @@ function checkInventoryIdentity(){
  fallback.suspendClock();fallback.advanceClock(30);assert.equal(fallback.serverTimeSeconds(),null);fallback.replaceAll([], {...timed,serverTimeSeconds:150});assert.equal(fallback.serverTimeSeconds(),150,"无单调时钟也以恢复首包校准");
  const before=model.snapshot;assert.throws(()=>model.replaceAll([{itemId:900102,quantity:9}],{...timed,serverTimeSeconds:300}));assert.equal(model.snapshot,before);
  model.reset();assert.equal(model.snapshot.timedItems.length,0);
+}
+
+/** 精灵逐件保存生成结果；能力缺失与真实空列表不同，任一非法实例不得部分提交普通库存。 */
+function checkSpiritInventory(): void {
+ const items = [
+  {instanceId:"9223372036854775807",itemId:2000002,abilityId:1,skills:[{sort:1,skillId:301,level:1}]},
+  {instanceId:"spirit-second",itemId:2000002,abilityId:2,skills:[{sort:1,skillId:302,level:2}]},
+ ];
+ const inventory={schemaVersion:1,items}, model=new BagModel();
+ model.replaceAll([]);
+ assert.equal(model.snapshot.spiritSynced,false,"旧快照缺字段不能冒充精灵已同步");
+ model.replaceAll([],undefined,{schemaVersion:1,items:[]});
+ assert.equal(model.snapshot.spiritSynced,true);assert.equal(model.snapshot.spiritItems.length,0);
+ model.replaceAll([{itemId:900102,quantity:2}],undefined,inventory);
+ const before=model.snapshot;
+ assert.equal(before.spiritItems.length,2,"同物品ID精灵不合并");
+ assert.equal(before.spiritItems[0].instanceId,"9223372036854775807","实例字符串保留全部精度");
+ assert(Object.isFrozen(before.spiritItems)&&Object.isFrozen(before.spiritItems[0])
+  &&Object.isFrozen(before.spiritItems[0].skills)&&Object.isFrozen(before.spiritItems[0].skills[0]));
+ items[0].skills[0].level=9;items[0].abilityId=999;
+ assert.equal(before.spiritItems[0].skills[0].level,1);assert.equal(before.spiritItems[0].abilityId,1);
+ const valid=before.spiritItems[0];
+ const invalid:unknown[]=[null,{items:[]},{schemaVersion:0,items:[]},{schemaVersion:2,items:[]},
+  {schemaVersion:1,items:[valid,valid]},
+  ...[
+   {instanceId:""},{instanceId:123},{itemId:2000003},{abilityId:0},{abilityId:5},{abilityId:0x100000000},
+   {skills:[]},{skills:[valid.skills[0],valid.skills[0]]},{skills:[{sort:0,skillId:301,level:1}]},
+   {skills:[{sort:1,skillId:0,level:1}]},{skills:[{sort:1,skillId:301,level:0}]},
+   {skills:[{sort:1,skillId:301,level:1.5}]},{skills:[{sort:2,skillId:301,level:1}]},
+   {skills:[{sort:1,skillId:301,level:3}]},
+  ].map(fields=>({schemaVersion:1,items:[{...valid,...fields}]}))];
+ for(const value of invalid){
+  assert.throws(()=>model.replaceAll([{itemId:900102,quantity:99}],undefined,value));
+  assert.equal(model.snapshot,before,"精灵非法时整批保持原状态");
+ }
+ assert.throws(()=>model.replaceAll([{itemId:2000002,quantity:1}],undefined,inventory),/独立精灵/);
+ assert.equal(model.snapshot,before);
+ model.reset();assert.equal(model.snapshot.spiritItems.length,0);assert.equal(model.snapshot.spiritSynced,false);
+}
+
+/** 初始化、推送和恢复共用完整校验；精灵错误不污染角色，旧版本/换号回包不能恢复旧实例。 */
+function checkSpiritAssetDelivery(): void {
+ const account=new AccountModel(), model=new BagModel(), bag=new BagController(model);
+ const role={id:"spirit-owner",nickname:"精灵测试",serverId:"local-1",level:1,gold:0,diamonds:0};
+ const spirit={instanceId:"spirit-a",itemId:2000002,abilityId:1,skills:[{sort:1,skillId:301,level:1}]};
+ account.replace({busy:false,role,error:""});bag.initialize();
+ let roleCommits=0, updates=0;
+ const assets=new AssetStateBinding(account,bag,new RoleController(value=>{
+  roleCommits++;account.replace({...account.snapshot,role:value});
+ }));
+ const target={}, stop=EventDispatcher.instance.on(BagEvent.BagUpdate,target,()=>{
+  updates++;
+  if(model.snapshot.synced){
+   assert.equal(account.snapshot.role!.gold,model.quantity(900102),"事件可见时角色与背包已同批提交");
+  }
+ });
+ const state=(revision:number,gold:number,spiritInventory:unknown):any=>({
+  revision,role:{...role,gold},inventory:gold?[{itemId:900102,quantity:gold}]:[],heroes:[],spiritInventory,
+ });
+ const changed=(body:unknown):GameFrame=>({version:1,kind:"event",name:"state.changed",body});
+ try {
+  const initial=state(1,1,{schemaVersion:1,items:[spirit]});
+  assert(assets.apply({version:1,kind:"response",name:"session.login",ok:true,body:{initial}}));
+  assert.equal(model.snapshot.spiritItems[0].instanceId,"spirit-a");
+  const before=model.snapshot, committed=roleCommits;
+  assert.throws(()=>assets.apply(changed(state(2,99,{schemaVersion:1,items:[{...spirit,abilityId:0}]}))));
+  assert.equal(model.snapshot,before);assert.equal(roleCommits,committed);assert.equal(account.snapshot.role!.gold,1);
+  const replacement=state(2,2,{schemaVersion:1,items:[{...spirit,abilityId:2}]});
+  assert(assets.apply(changed(replacement)));assert.equal(model.snapshot.spiritItems[0].abilityId,2);
+  const seen=updates;
+  assert(!assets.apply(changed(initial)));assert.equal(updates,seen);assert.equal(model.snapshot.spiritItems[0].abilityId,2);
+  assert(assets.apply({version:1,kind:"response",name:"session.authenticate",ok:true,body:{initial:replacement}}));
+  account.replace({busy:false,role:null,error:""});assert.equal(model.snapshot.spiritItems.length,0);
+  assert.equal(model.snapshot.spiritSynced,false);
+  account.replace({busy:false,role:{...role,id:"other-owner"},error:""});
+  assert.throws(()=>assets.apply(changed({...initial,revision:999})));
+  assert.equal(model.snapshot.spiritItems.length,0,"旧角色迟到资产不能重建精灵实例");
+ } finally {stop();assets.dispose();bag.dispose();EventDispatcher.instance.offTarget(target);}
 }
 /** 基础角色资料不可缺字段、取负数或混淆时间顺序；唯一 Model 深层只读。 */
 function checkRoleBasics(){
@@ -128,9 +208,29 @@ async function checkApplicationDelivery(): Promise<void> {
 async function main(){
  await checkApplicationDelivery();
  const oldServer=new Server(),oldSocket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:oldServer.create,validateSnapshot:()=>{},heartbeatMs:100000});
- try{await oldSocket.login("player","local-1");await assert.rejects(oldSocket.request("a".repeat(43),"gm.status"), (error:any)=>error.code==="UNKNOWN_MESSAGE" && error.message.includes("更新并重启后端"));}finally{oldSocket.disconnect();}
+ try {
+  await oldSocket.login("player","local-1");
+  const failures = [
+   ["UNKNOWN_MESSAGE", "更新并重启后端"],
+   ["GM_UNSUPPORTED_ITEM_TYPE", "真实实例生成"],
+   ["GM_SPIRIT_LIMIT", "1000"],
+   ["GM_CAPACITY_FULL", "容量不足"],
+   ["GM_TIMED_LIMIT", "100"],
+   ["GM_REQUEST_CONFLICT", "参数发生变化"],
+   ["NEW_BUSINESS_ERROR", "NEW_BUSINESS_ERROR"],
+  ];
+  for (const [code, expected] of failures) {
+   oldServer.gmFailure = code;
+   await assert.rejects(oldSocket.request("a".repeat(43), "gm.status"), (error: any) =>
+    error.code === code && error.message.includes(expected) && !error.message.includes("连接请求失败"));
+  }
+ } finally {
+  oldSocket.disconnect();
+ }
  checkRoleBasics();
  checkInventoryIdentity();
+ checkSpiritInventory();
+ checkSpiritAssetDelivery();
  await checkPreviewIsolation();
  const server=new Server(),account=new AccountModel(),model=new BagModel(),bag=new BagController(model);
  const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:value=>{const row=value as any;AccountApi.readRole(row.role);BagItemDataUtils.readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},retryDelay:()=>1,heartbeatMs:100000});

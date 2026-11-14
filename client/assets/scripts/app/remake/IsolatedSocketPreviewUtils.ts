@@ -1,6 +1,6 @@
-/** 独立验收的目标与存储隔离：支持本机 Creator 预览及其托管的 Web 构建。
- * 随机实例身份核验通过前不登录，不允许测试参数回退到日常服。
- * HTTP 仅访问测试 classpath 的实例身份探针，游戏业务仍全部使用 WS＋Protobuf。
+/** 独立验收的目标与存储隔离：支持Creator预览、托管Web包及固定18081的独立H5验收入口。
+ * 独立H5先核对同源构建身份，再核对随机后端实例；通过前不登录，不回退到日常服。
+ * HTTP仅访问只读构建/测试实例身份探针，游戏业务仍全部使用WS＋Protobuf。
  */
 import { PREVIEW } from "cc/env";
 /** 启动需要的存储操作；测试会话采用独立 run 前缀，不读取日常凭证。 */
@@ -29,13 +29,16 @@ export class IsolatedSocketPreviewUtils {
         if (!query?.has("mxzgTestApi") && !query?.has("mxzgTestRun")) {
             return { socketUrl, storage };
         }
-        // 发布包只允许 Creator 托管的本机 Web 输出路径，不开放公网或任意站点切换后端。
-        const localPage = page?.protocol === "http:"
+        // 端口与路径明确限定；独立入口还须证明自己服务的是本项目实际验收包。
+        const loopbackPage = page?.protocol === "http:"
             && ["localhost", "127.0.0.1"].includes(page.hostname)
-            && page.port === "7456" && !page.username && !page.password;
+            && !page.username && !page.password;
+        const creatorPage = loopbackPage && page.port === "7456";
+        const standalonePage = loopbackPage && page.port === "18081"
+            && ["/", "/index.html"].includes(page.pathname);
         const localBuild = /^\/web-(mobile|desktop)\/[A-Za-z0-9_-]+\/index\.html$/.test(page?.pathname || "");
-        if (!localPage || (!PREVIEW && !localBuild)) {
-            throw new Error("测试目标只允许本机 Creator 预览或 Web 构建验收页");
+        if (!(creatorPage && (PREVIEW || localBuild)) && !standalonePage) {
+            throw new Error("测试目标只允许本机Creator验收页或固定端口的独立H5验收页");
         }
         const target = query?.get("mxzgTestApi") || "";
         const run = query?.get("mxzgTestRun") || "";
@@ -53,14 +56,13 @@ export class IsolatedSocketPreviewUtils {
             run?: string;
         } | null;
         try {
-            // 身份响应内容也受超时控制；禁止重定向将核验请求带到其他地址。
-            const response = await fetch(target + "/api/v1/test-identity", {
-                signal: abort.signal, redirect: "error", credentials: "omit",
-            });
-            if (!response.ok) {
-                throw new Error("独立测试后端不可用，禁止回退日常服");
+            if (standalonePage) {
+                const frontend = await this.readIdentity(page.origin + "/__mxzg_preview__", abort.signal,
+                    "独立H5前端不可用，禁止连接测试后端");
+                this.requireStandaloneBuild(frontend);
             }
-            identity = await response.json();
+            identity = await this.readIdentity(target + "/api/v1/test-identity", abort.signal,
+                "独立测试后端不可用，禁止回退日常服") as typeof identity;
         }
         finally {
             clearTimeout(timer);
@@ -77,5 +79,36 @@ export class IsolatedSocketPreviewUtils {
                 removeItem: key => storage.removeItem(prefix + key),
             },
         };
+    }
+
+    /** 两个只读探针共用整次核验超时；拒绝重定向和凭证传输，失败不尝试日常服。 */
+    private static async readIdentity(url: string, signal: AbortSignal, unavailable: string): Promise<unknown> {
+        const response = await fetch(url, { signal, redirect: "error", credentials: "omit" });
+        if (!response.ok) {
+            throw new Error(unavailable);
+        }
+        return response.json();
+    }
+
+    /** 核对独立H5宿主的真实构建记录；缺证据、混版、散表残留或非单包产物都不接纳。 */
+    private static requireStandaloneBuild(value: unknown): void {
+        const identity = value as Record<string, unknown> | null;
+        const build = identity?.build as Record<string, unknown> | undefined;
+        const config = build?.configPackage as Record<string, unknown> | undefined;
+        const artifact = build?.configArtifact as Record<string, unknown> | undefined;
+        if (!identity || identity.application !== "mxzg-remake-preview" || !build
+            || build.application !== "mxzg-remake-h5" || build.entryScene !== "db://assets/scenes/Remake.scene"
+            || !config || !artifact || config.format !== 1
+            || typeof config.version !== "string" || !/^config-v1:[0-9a-f]{64}$/.test(config.version)
+            || artifact.version !== config.version
+            || !Number.isSafeInteger(config.startup) || (config.startup as number) <= 0
+            || !Number.isSafeInteger(config.packed) || (config.packed as number) <= 0
+            || !Number.isSafeInteger(config.packageBytes) || (config.packageBytes as number) <= 0
+            || artifact.startup !== config.startup || artifact.excluded !== config.packed
+            || artifact.packageBytes !== config.packageBytes
+            || artifact.binaryFiles !== 1 || artifact.packedSourceCopies !== 0
+            || artifact.codecStaticRegistration !== true || artifact.codecStaticDependency !== true) {
+            throw new Error("独立H5前端身份或配置包验收记录不匹配，禁止连接测试后端");
+        }
     }
 }

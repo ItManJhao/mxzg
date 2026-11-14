@@ -1,40 +1,59 @@
 # 背包标准模块：维护与验收入口
 
-当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准（2026-11-11）：顶层ui/resources/prefabs已整合，共用格子归common；1.6.2构建钩子不删除具有Bundle路径的原图。
+当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准：顶层ui/resources/prefabs已整合，共用格子归common；当前1.8.0构建钩子不删除具有Bundle路径的原图。
 
-更新：2026-11-11。当前采用登录统一初始化与服务端资产同步，保留现有 Prefab、只读详情、SuperScroll 和唯一 BagModel。其他玩法暂停；旧查询模板已经退役。
+更新：2026-11-14。当前采用登录统一初始化与服务端资产同步，保留SuperScroll和唯一BagModel；普通道具/碎片使用BagInfoView，普通装备使用EquipmentInfoView，真实精灵实例使用SpiritInfoView，均只读。精灵专用详情此前已完成独立本机限定复验，见[11-14专用详情复验](validation/spirit-detail-review-20261114.json)；本轮只整理配置使用方式，不把旧截图或配置检查当作当前源码或98技能逐项画面验收。
 
 图片放置、自动图集及构建日志操作见[背包自动图集](bag-auto-atlas.md)，具体归属见[资源清单](bag-resource-inventory.md)。
 
 ## 页面和资源：人工修改入口
 
-页面地址、页面属性及prepare配置前置在BagView/BagInfoView各自@UIRegistry.view定义，UIManager实际打开时执行前置并通过统一加载器取得Prefab，不在ApplicationPages再登记地址或注入资源包装。LoadingPlan仅决定提前准备哪些资源；预载Prefab不执行prepare，不创建页面。BagDefinition、BagPagesUtils、BagResourcesUtils均已移除。
+页面地址、层级、缓存和模态在BagView、BagInfoView、EquipmentInfoView、SpiritInfoView各自@UIRegistry.view定义，UIManager通过统一加载器取得Prefab，不在ApplicationPages再登记地址或注入资源包装。配置包由应用登录后统一安装，页面不再声明配置prepare；确有美术资源或装配前置仍按原生命周期处理。LoadingPlan仅决定提前准备哪些资源；预载Prefab不执行页面prepare、不创建页面。BagDefinition、BagPagesUtils、BagResourcesUtils均已移除。
 
 | 修改内容 | 人工入口 |
 |---|---|
 | 背包结构、背景和列表绑定 | assets/bundles/module/bag/prefabs/BagView.prefab |
 | 共用物品格子与选中样式 | assets/bundles/module/common/prefabs/BagItemView.prefab、common/item-atlas |
 | 页签 | assets/bundles/module/bag/prefabs/BagTabView.prefab |
-| 独立详情面板与内容阻挡 | 同目录BagInfoView.prefab；共享模态参数在BagInfoView的@UIRegistry.view |
+| 普通道具详情面板与内容阻挡 | 同目录BagInfoView.prefab；共享模态参数在BagInfoView的@UIRegistry.view |
+| 精灵详情分区、技能圆框与操作按钮外观 | 同目录SpiritInfoView.prefab；共享模态参数在SpiritInfoView的@UIRegistry.view，按钮只提示未开放 |
 | 店员外观 | BagView.shopkeeperSkeleton |
 | 物品到图标/品质的显示规则 | features/bag/utils/BagItemCatalog.ts |
 | 第一、二阶段准备什么 | app/remake/LoadingPlan.ts：页面写{page:BagView}等类引用，其他资源/配置显式列目标 |
 | 新增资源纳入后台 | 在LoadingPlan.background中列目标，不维护模块清单 |
 
-打开BagView只取得自身预制体及必要配置，直接绑定依赖随引擎加载。BagInfoView是独立窗口，默认在LoadingPlan.background准备，也可以在LoadingPlan中明确提前加载。动态显示继续使用原节点作用域和迟到回调保护；后台与前台共享缓存。详细策略见[分阶段加载](staged-resource-loading.md)。
+打开BagView只取得自身预制体及美术依赖，配置同步读取已安装GameConfig，不在此加载或重建索引。BagInfoView是独立窗口，当前在LoadingPlan.background准备，也可以在LoadingPlan中明确提前加载。SpiritInfoView未加入三段目标，在点击精灵时按需加载其完整Prefab；技能图和属性图通过ResManager按实际实例取得，不额外维护模块资源清单。加载同一个bag包的元数据不等于提前下载专用详情。动态显示继续使用原节点作用域和迟到回调保护；后台与前台共享缓存。详细策略见[分阶段加载](staged-resource-loading.md)。
 
 统一取图入口为ResManager.getSpriteFrame(owner, source)：source可传包名/包内图片路径（不带/spriteFrame）或完整资源描述，owner决定引用生命周期。已加载直接复用，在途请求合并，失败交给显示层处理。ResManager只负责赋图、回退和刷新代次，不再自建图片作用域。直接使用此Promise时，调用方同样需要检查当前显示代次；背包已通过ResManager统一处理。
 
 物品配置→图片地址由BagItemCatalog.iconSource(row)处理：遵循item.icon共图声明，支持backpack/和hero-icon/，无显式图标时沿用原ID规则。ResManager仅提供目录规则，不维护逐ID映射或缺图例外；按命名规则补图后无需更新可用清单，实际加载失败由ResManager记录路径和原因。品质框通过ResManager.qualityFrame(quality)取得，取消七项重复数组。英雄、技能和历史头像同样通过ResManager路径规则取图。
 
-库存详情调用 `UIManager.instance.open(BagInfoView, { source: "inventory", key: item.key, tab })`；窗口自己读取 Model 并监听数量变化、删除和到期。结算/产物说明调用同一窗口的 description 参数，保留“本次获得”或“产物说明（只读）”，不冒充库存。父页面关闭通过 UIManager 关闭详情，也取消尚未完成的打开。
+BagView选中最新列表键后按真实实例和物品mode分路：真实精灵调用`UIManager.instance.open(SpiritInfoView, { key: item.key })`，普通mode=1装备调用`UIManager.instance.open(EquipmentInfoView, { key: item.key })`，其余当前支持的普通或期限物品调用`UIManager.instance.open(BagInfoView, { source: "inventory", key: item.key, tab })`。窗口自己按稳定实例键读取Model并监听变化，不由格子传递可过期的属性副本。精灵格子按真实spirit投影隐藏数量并清空旧文字，普通单件物品仍显示数量1；同配置的不同精灵继续各占一格。
+
+SpiritInfoView通过BagItemCatalog.spiritDetail读取精确特性、技能ID及等级，分区显示基础属性、技能名、全文和原技能图；缺配置明确提示，不借用其他实例或相邻等级。来源、合成、重生、分解和装备按钮保留旧位置，当前只显示未开放说明，不发请求。普通BagInfoView继续用于库存普通道具及结算/产物说明的description参数，保留“本次获得”或“产物说明（只读）”，不冒充库存。父页面关闭或切换详情类型时通过UIManager关闭旧详情，也取消尚未完成的打开；实例删除或账号重置后详情关闭。
+
+## 已安装配置：直接查询与显示计算
+
+GameConfig是配置文件和类型化主键索引的唯一所有者。BagItemCatalog保留原文件名与meta，但已改为静态无缓存工具：页面不new、不保存catalog字段，不把四张整表传给构造函数。只取item.mode、语言正文等字段时直接getConfig；需要列表排序、期限显示、精灵属性/技能组合、图标回退等规则时再使用静态显示计算。
+
+```ts
+const item = GameConfig.instance.getConfig(GConfig.Item, itemId);
+const face = BagItemCatalog.face(itemId, quantity);
+const spiritDetail = BagItemCatalog.spiritDetail(spirit);
+const equipmentDetail = EquipmentDetailUtils.read(itemId);
+const itemDetail = item ? ItemDetailUtils.read(item, { inventory: true }) : null;
+```
+
+SpiritInfoView打开时只记录实例key和监听；刷新时从BagModel取得该实例，再生成显示结果，不加载表或持有第二份配置索引。EquipmentDetailSource已经删除，EquipmentInfoView不再保存六表source；ItemDetailUtils.read直接从GameConfig查询Language，不接语言整表。评分逐条取整、碎片库存进度、富文本、条件按钮及缺失反馈仍保留，真实库存始终归Model。
+
+ScoreCount.mapping不是其主键idx，套装需要type/num组合；当前按唯一仓库中的只读行匹配，不把属性编号当主键，也不另存页面Map。等价地，结算mainlevel门槛按只读level行查询。搜索列表、当前库存列表、选择和排序结果属于页面投影，战斗单位/血量/Buff映射属于本场运行状态，不能因出现Map或数组就删除。静态查询与加载范围见[配置管线](config-pipeline.md#加载与查询)，本轮画面和发布范围以[开发进度](development-progress.md)为准。
 
 ## 固定目录与文件职责
 
 - features/bag/BagController.ts：声明协议，onNotify → onInventoryState → Model → BagEvent。
 - features/bag/BagModel.ts：唯一库存状态、全量校验与界面 revision，不联网。
 - features/bag/utils/BagEvent.ts、data/：界面事件、状态、变更集和物品类型。
-- features/bag/ui/：BagView、BagItemView、BagInfoView、BagTabView 和页面登记；BagMount 已退役。
+- features/bag/ui/：BagView、BagItemView、BagInfoView、SpiritInfoView、BagTabView 和页面登记；BagMount 已退役。
 - features/account/RoleController.ts：角色协议入口，提交 AccountModel 中唯一角色资料，不处理登录。
 - app/remake/AssetStateBinding.ts：应用协调身份、持久版本、角色与背包原子通知。
 - platform/Protocol.ts / ProtocolRouter.ts：统一消息目录与真实消息定向分发，不保存玩家资产。
@@ -51,7 +70,7 @@ BagApi、BagUpdateCoordinator、bindBagSession已删除；不保留背包查询�
 - BagAdd 表示“新增库存种类”，不能代替旧 5002 的获得弹窗/文字提示；首次同步不播放奖励。
 - 当前 itemId 是配置 ID；instanceId 与期限数据基础已补齐，逐件展示、倒计时和全部物品操作仍待还原。
 - 已删除无人调用的 BagModel.beginSync/fail/applyDelta 和 BagItemDelta，以及无人使用的 query 原因、loading/error 状态与错误字段、BagView 未使用的 Controller 导入。断线提示继续归应用层。库存唯一更新入口为 replaceAll。事件 reason 的 reward/consume 仍被暂停模块签名引用，暂不跨模块删除。
-- 详情当前只读，“确定”是关闭，来源/分解/使用尚未恢复；注释不能写成已实现操作。
+- 详情当前只读：普通道具“确定”是关闭，精灵通过关闭按钮或面板外空白关闭；来源、使用、合成、重生、分解和穿戴尚未恢复，注释不能写成已实现操作。
 
 ## 游爱式背包流程与接入前提
 
@@ -99,13 +118,15 @@ Creator 控制台筛选 WS接收。日志显示协议含义、物品种类和 It
 - `BagView/Content/spr_box/BagScroll/view`：UITransform/Mask，手动调整裁剪范围。
 - `BagView/Content/spr_box/BagScroll/view/content`：SuperContent，修改布局、列/行、方向、间距、四边距、Cell Prefab与明确的尺寸覆盖开关。
 - Cell：[BagItemView.prefab](../client/assets/bundles/module/common/prefabs/BagItemView.prefab)，组件现名 BagItemView；外观/数量字/选中图片在 Cell 内编辑。
-- 详情：[BagInfoView.prefab](../client/assets/bundles/module/bag/prefabs/BagInfoView.prefab)，组件 BagInfoView；页签：[BagTabView.prefab](../client/assets/bundles/module/bag/prefabs/BagTabView.prefab)，组件 BagTabView。
+- 普通道具详情：[BagInfoView.prefab](../client/assets/bundles/module/bag/prefabs/BagInfoView.prefab)，组件 BagInfoView。
+- 精灵详情：[SpiritInfoView.prefab](../client/assets/bundles/module/bag/prefabs/SpiritInfoView.prefab)，组件 SpiritInfoView；标题底图、属性区、技能圆框、文字区域和两行按钮均直接在Prefab编辑，禁止运行时重建布局。
+- 页签：[BagTabView.prefab](../client/assets/bundles/module/bag/prefabs/BagTabView.prefab)，组件 BagTabView。
 
 [SuperScroll Inspector 指南](super-scroll-authoring.md)的布局规则和无业务编辑器预览继续有效。当前脚本目录为features/bag，资源目录为bundles/module/bag/prefabs；共用格子归bundles/module/common/prefabs。BagView当前meta UUID为6bfdfd78-65e9-403c-b7c8-7e6cd94ffebb。Prefab内的CompPrefabInfo.fileId不是脚本路径，不因改目录替换；迁移保留UUID的证据见Bundle维护说明。
 
 SuperContent默认启用虚拟化、bufferLines=1，按完整库存投影计算content逻辑尺寸，只给视口和缓冲行分配有限Cell；ScrollView仍管理滚动、惯性与回弹。BagView监听RENDER_ITEM/SELECT_ITEM，onRender调用BagItemView.show只绘制，onSelect处理选中与独立详情，Cell不再保存页面回调。分类回起点、同分类保位及至少20槽/按四补齐仍是背包规则，虚拟池不修改库存。
 
-BagInfoView作为独立BaseView打开，Prefab只保留面板与实际内容背景的BlockInputEvents；共享模态在@UIRegistry.view配置，UIManager只用一份节点。BagView布局归Widget与ViewportScale，外根fitVisibleRoot只桥接视口；列表view/content局部缩放须1，原Cell锚点与正缩放保留。refresh(index)只立即刷新可见条目，离屏条目进入视口时再画。本批51项、类型与四分类/独立详情/重开库存保持已通过，见[限定复验](validation/virtual-list-resource-review-20261111.json)；20逻辑格少于可见容量，实际20节点，长列表上限另有千/万条夹具及850关配置覆盖，不冒充大库存实测。
+BagInfoView和SpiritInfoView均作为独立BaseView打开，Prefab只在实际面板内容保留BlockInputEvents；共享模态在各自@UIRegistry.view配置，UIManager只用一份节点。SpiritInfoView配置蒙版和空白关闭，不在Prefab另加全屏蒙版。BagView及专用详情布局归Widget与ViewportScale，外根fitVisibleRoot只桥接视口；列表view/content局部缩放须1，原Cell锚点与正缩放保留。refresh(index)只立即刷新可见条目，离屏条目进入视口时再画。前批51项、类型与四分类/独立详情/重开库存记录见[限定复验](validation/virtual-list-resource-review-20261111.json)，不能代替本轮专用精灵详情画面复验；当时20逻辑格少于可见容量，实际20节点，长列表上限另有千/万条夹具及850关配置覆盖，不冒充大库存实测。
 
 ## 旧协议还原清单
 
@@ -163,6 +184,8 @@ Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItem
 ## 背包自动图集维护入口
 
 背包详情分隔线放在client/assets/bundles/module/bag/atlas；共用格子选中图在common/item-atlas，共用静态图在common/atlas。原图直接绑定Prefab，由同目录pac在构建时自动合图。页面注册不登记逐图清单；物品图标位于icons/item，动态共用图位于common/ui。完整步骤见[背包自动图集](bag-auto-atlas.md)。
+
+精灵详情复用原有bag/ui标题与属性图、hero/ui技能图和圆框、icons/item精灵图标，不另建重复图标映射。本轮按旧PVR/plist恢复本页所用RGBA像素，保留已有UUID及SpriteFrame子UUID；Creator可据正确透明边缘更新裁切和UV，不能把错误透明度下的旧裁边写回。来源及逐像素记录见[精灵详情资源证据](validation/spirit-detail-assets-20261114.json)，该记录不等于最终浏览器或发布包验收。
 
 
 ### 图片入口合并（2026-11-11）

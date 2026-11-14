@@ -1,16 +1,13 @@
 /** 主线产物双页说明，展示全部旧配置关卡；由主线收益说明按钮打开。
- * 仅加载配置和详情资源，不请求资产/领取，不改变挑战开放范围；关闭丢弃迟到加载。 */
+ * 配置读取统一GameConfig，详情美术仍按资源池加载；不请求资产/领取，不改变挑战开放范围。 */
 import { _decorator, Button, Node, Sprite, SpriteFrame } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { SuperContent } from "../../../framework/ui/SuperContent";
-import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { GameConfig } from "../../../config/GameConfig";
-import { GConfig } from "../../../config/GConfig";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import { BagInfoArgs, BagInfoView } from "../../bag/ui/BagInfoView";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
@@ -45,16 +42,14 @@ export class ChapterRewardInfoView extends BaseView {
     @property(SpriteFrame) idleSelected: SpriteFrame | null = null;
     /** 左右未选中图片来自Prefab，切页时恢复。 */
     private normalTabs: (SpriteFrame | null)[] = [];
-    /** 页面只读配置投影，加载完成后设置。 */
+    /** 页面只读配置投影，打开时从已安装配置建立，关闭清空引用。 */
     private rows: readonly ChapterRewardInfoRow[] = [];
-    /** 本页物品显示配置，不保存库存。 */
-    private catalog: BagItemCatalog | null = null;
     /** 当前页签，true展示挂机产物；每次开页默认首通，行复用时读取当前值。 */
     private idle = false;
-    /** 关闭后拒绝迟到配置及详情操作。 */
+    /** 关闭后拒绝迟到详情操作。 */
     private released = false;
 
-    /** 登记本页按钮、行渲染和物品选择，准备期间隐藏主体，失败交UIManager处理。 */
+    /** 登记本页交互并读取已安装配置，投影完成后显示主体；失败交UIManager处理。 */
     public onOpen(): void {
         if (!this.panel || !this.closeButton || !this.firstTab || !this.idleTab || !this.stages) {
             throw new Error("产物说明页面绑定缺失");
@@ -78,36 +73,24 @@ export class ChapterRewardInfoView extends BaseView {
             }
         });
         ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
-        void this.prepare().then(() => {
-            if (!this.released) {
-                this.panel!.active = true;
-                this.select(false);
-                this.finishOpen();
-            }
-        }).catch(error => {
-            if (!this.released) {
-                this.failOpen(error instanceof Error ? error : new Error(String(error)));
-            }
-        });
+        try {
+            this.readConfig();
+            this.panel.active = true;
+            this.select(false);
+            this.finishOpen();
+        } catch (error) {
+            this.failOpen(error instanceof Error ? error : new Error(String(error)));
+        }
     }
 
-    /** 加载同源关卡与共享物品配置；节点资源作用域负责关闭后的释放。 */
-    private async prepare(): Promise<void> {
-        const assets = ResourceAssetsUtils.forNode(this.node);
-        const [table] = await Promise.all([
-            assets.loadPath("config/chapterreward", "JsonAsset"),
-            RemakeConfigUtils.prepareInventoryConfig(),
-        ]);
-        if (this.released) {
-            return;
-        }
-        this.rows = ChapterRewardInfoUtils.rows(table.json);
-        this.catalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item), GameConfig.instance.getFile(GConfig.Language));
+    /** 从GameConfig唯一快照投影关卡列表；物品按当前ID直接查询，不建立整表索引。 */
+    private readConfig(): void {
+        this.rows = ChapterRewardInfoUtils.rows(GameConfig.instance.getFileByPath("config/chapterreward"));
     }
 
     /** 选中旧页签并按配置顺序绑定所有关卡；不增加任何挑战/领取入口。 */
     private select(idle: boolean): void {
-        if (this.released || !this.catalog || !this.stages) {
+        if (this.released || !this.stages) {
             return;
         }
         this.firstTab!.node.getComponent(Sprite)!.spriteFrame = idle ? this.normalTabs[0] : this.firstSelected;
@@ -123,20 +106,20 @@ export class ChapterRewardInfoView extends BaseView {
         if (this.released) {
             return;
         }
-        if (!cell || !this.catalog) {
-            throw new Error("产物说明关卡预制体或显示索引缺失");
+        if (!cell) {
+            throw new Error("产物说明关卡预制体缺失");
         }
-        cell.bind(row.stage, this.idle ? row.idleItems : row.firstItems, this.catalog);
+        cell.bind(row.stage, this.idle ? row.idleItems : row.firstItems);
     }
 
     /** 打开只读物品详情，隐藏获取跳转，数量明确为产物说明而非库存。 */
     private showItem(id: number): void {
-        if (this.released || !this.catalog) {
+        if (this.released) {
             return;
         }
         const args: BagInfoArgs = {
             source: "description",
-            face: { ...this.catalog.face(id, 0), typeLine: "产物说明（只读）" },
+            face: { ...BagItemCatalog.face(id, 0), typeLine: "产物说明（只读）" },
         };
         void UIManager.instance.open(BagInfoView, args).then(info => {
             if (!this.released) {
@@ -160,7 +143,6 @@ export class ChapterRewardInfoView extends BaseView {
     public onClose(): void {
         this.released = true;
         this.rows = [];
-        this.catalog = null;
         UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
         this.finishOpen();
     }

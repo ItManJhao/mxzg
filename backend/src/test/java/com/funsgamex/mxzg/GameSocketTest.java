@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "spring.datasource.url=jdbc:h2:mem:socket_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
-    "spring.datasource.username=sa", "spring.datasource.password="})
+    "spring.datasource.username=sa", "spring.datasource.password=", "mxzg.gm.enabled=false"})
 @ActiveProfiles("local")
 @Import(GameSocketTest.IdentityProbe.class)
 class GameSocketTest {
@@ -145,7 +145,7 @@ class GameSocketTest {
         }
     }
 
-    /** 默认关闭开发能力时，试战也必须由服务端拒绝。 */
+    /** 本测试显式关闭GM开发能力，试战也必须由服务端拒绝，不依赖本机local默认值。 */
     @Test void battlePreviewRequiresDevelopmentSwitch() throws Exception {
         var player = player();
         try (var peer = new Peer()) {
@@ -397,7 +397,7 @@ class GameSocketTest {
         assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.decode(new byte[GameProtocolCodec.FRAME_LIMIT+1]));
         assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.encode(Map.of("version",1,"kind","request","name","session.login","body",Map.of("account","x".repeat(GameProtocolCodec.FRAME_LIMIT+1),"serverId","local-1","clientInstanceId","frame-limit-test"))));
     }
-    /** 默认关闭的本机服务拒绝 GM 发放，即使客户端伪造开发入口。 */
+    /** 显式关闭GM时服务端拒绝发放，即使客户端伪造开发入口；不依赖本机local默认值。 */
     @Test void gmDisabledIsEnforced() throws Exception {var p=player();try(var peer=new Peer()){peer.authenticate(p.session().accessToken());assertFalse(peer.request("gm.status",Map.of()).path("body").path("enabled").asBoolean());assertEquals("GM_DISABLED",peer.request("gm.grant",Map.of("requestId",UUID.randomUUID().toString(),"kind","item","configId",900101,"quantity",1)).path("error").path("code").asString());}}
 
     /** 原库存 HTTP 路由已退役，默认客户端不能再通过它回退读取。 */

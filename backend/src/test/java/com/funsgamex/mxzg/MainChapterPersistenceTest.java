@@ -55,11 +55,13 @@ class MainChapterPersistenceTest {
         return new Player(role, token, hero);
     }
 
-    /** 冰晶女巫真实持久阵容记录治疗及双方名称，结算重试不重复发奖，后续改名不覆盖旧战报。 */
+    /** 冰晶女巫使用已通关且具有既有时钟的真实夹具，治疗及冻结名称不因结算/改名重写。 */
     @Test void healingReplayPersistsThroughSettlement() throws Exception {
         var player = player(false);
         jdbc.update("UPDATE game_hero SET template_id=10203003,hero_level=1,star=3 WHERE id=?", player.hero());
         jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,1)", player.id());
+        jdbc.update("INSERT INTO game_main_chapter_idle(role_id,started_at) VALUES (?,?)",
+                player.id(), java.time.Instant.now().getEpochSecond() - 60);
         var receipt = chapters.challenge(player.token(), id());
         var replay = chapters.replay(player.token(), receipt.battleId()).replay();
         var heals = replay.getPhasesList().stream().flatMap(phase -> phase.getEventsList().stream())
@@ -186,7 +188,7 @@ class MainChapterPersistenceTest {
         }
     }
 
-    /** 发奖中途失败保留待领奖和战报，奖励及回执一起回滚；恢复后可安全重试。 */
+    /** 库存精确加法溢出保留待领奖和战报，奖励及回执一起回滚；恢复后可安全重试。 */
     @Test void failedSettlementRollsBackAndCanRetry() {
         var p = player(true);
         var win = chapters.challenge(p.token(), id());
@@ -194,7 +196,7 @@ class MainChapterPersistenceTest {
         var before = roles.findById(p.id()).orElseThrow();
         var bag = inventory.list(p.id());
         var state = chapters.current(p.token());
-        assertThrows(org.springframework.dao.DataAccessException.class, () -> chapters.claim(p.token(), win.battleId()));
+        assertThrows(ArithmeticException.class, () -> chapters.claim(p.token(), win.battleId()));
         assertEquals(before, roles.findById(p.id()).orElseThrow());
         assertEquals(bag, inventory.list(p.id()));
         assertEquals(state, chapters.current(p.token()));
@@ -240,10 +242,12 @@ class MainChapterPersistenceTest {
         assertEquals(state, chapters.current(p.token()));
     }
 
-    /** 弱队真实第三关失败：保存战报但不推进、不发奖励，新请求可再战。 */
+    /** 已有通关时钟的弱队第三关失败：保留起点，不推进通关或发奖励，新请求可再战。 */
     @Test void defeatPersistsWithoutProgressOrRewards() {
         var p = player(false);
         jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,2)", p.id());
+        jdbc.update("INSERT INTO game_main_chapter_idle(role_id,started_at) VALUES (?,?)",
+                p.id(), java.time.Instant.now().getEpochSecond() - 60);
         var state = chapters.current(p.token());
         var before = roles.findById(p.id()).orElseThrow();
         String request = id();

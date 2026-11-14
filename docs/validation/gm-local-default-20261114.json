@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-14",
+  "branch": "hao",
+  "authorization": "负责人要求本机GM永久开启；本批将local默认值持久化，同时保留production服务端隔离，不采用仅隐藏前端作为授权控制",
+  "configuration": {
+    "path": "backend/src/main/resources/application-local.yml",
+    "gmEnabled": "${MXZG_GM_ENABLED:true}",
+    "explicitDisable": "MXZG_GM_ENABLED=false",
+    "unconfiguredServiceFallback": false,
+    "production": "GmService与本机GameSocket配置均受local & !production约束，生产不装配"
+  },
+  "startup": {
+    "restart": "scripts/restart-remake-backend.bat",
+    "executionPolicy": "既有入口仅对PowerShell子进程使用Bypass，不修改系统策略",
+    "currentProcess": "未重启或修改正在运行的日常后端；旧进程需由负责人双击restart入口重启一次"
+  },
+  "validation": {
+    "log": "backend/target/gm-local-default-20261114.log",
+    "results": [
+      {
+        "class": "GameSocketActivationTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "GameSocketTest",
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "GmTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "tests": 31,
+    "configCases": [
+      "读取真实local YAML，隔离机器环境变量验证默认true",
+      "显式MXZG_GM_ENABLED=false解析为false",
+      "production与local同时开启且gm配置true时，GM服务与本机WS处理器均不装配"
+    ],
+    "integration": "GameSocketTest显式gm=false验证真实拒绝，GmTest显式true验证事务、容量、回执和WS推送；不连接日常库",
+    "other": [
+      "文档链接46份检查通过",
+      "git diff --check通过"
+    ]
+  },
+  "limits": [
+    "不新增GM种类或开放精灵GM",
+    "不开放宝箱领取、快速战斗或养成",
+    "未构建/未重复浏览器验收，本次不改客户端",
+    "保留已有全部本地修改，不提交推送/合并"
+  ]
+}

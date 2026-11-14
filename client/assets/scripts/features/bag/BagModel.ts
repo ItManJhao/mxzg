@@ -71,11 +71,13 @@ export class BagModel extends BaseModel {
         return this.changeSet(false, [], [], []);
     }
 
-    /** 整批校验后替换绝对数量并计算增删改；首次同步不生成获得条目，空数组为合法空背包。校验失败不修改状态。
-     * @param timedInventory 同帧逐件期限列表及服务器秒；与普通库存一起校验后提交。 */
-    replaceAll(items: readonly BagItemData[], timedInventory?: unknown): BagChangeSet {
+    /** 整批校验后替换绝对数量及独立实例；首次同步不生成获得条目，任何一类非法均不修改状态。
+     * @param timedInventory 同帧逐件期限列表及服务器秒；与普通库存一起校验后提交。
+     * @param spiritInventory 同帧精灵完整快照；缺失保留明确未提供状态，不伪造已同步空列表。 */
+    replaceAll(items: readonly BagItemData[], timedInventory?: unknown, spiritInventory?: unknown): BagChangeSet {
         const rows = BagItemDataUtils.readBagItems(items);
         const timedItems = BagItemDataUtils.readTimedItems(timedInventory);
+        const spiritItems = BagItemDataUtils.readSpiritItems(spiritInventory);
         const timedServerTimeSeconds = timedInventory === undefined ? null : (timedInventory as { serverTimeSeconds: number }).serverTimeSeconds;
         const initialSync = !this.data.synced;
         const added: BagItemData[] = [], removed: BagItemData[] = [], quantityChanged: BagQuantityChange[] = [];
@@ -94,7 +96,8 @@ export class BagModel extends BaseModel {
         }
         this.clockValid = true;
         this.timedAnchorMs = this.elapsedMs ? this.elapsedMs() : this.frameElapsedMs;
-        this.commit({ status: "ready", synced: true, items: rows, timedItems, timedServerTimeSeconds });
+        this.commit({ status: "ready", synced: true, items: rows, timedItems, timedServerTimeSeconds,
+            spiritItems, spiritSynced: spiritInventory !== undefined });
         return this.changeSet(initialSync, added, quantityChanged, removed);
     }
 
@@ -120,7 +123,8 @@ export class BagModel extends BaseModel {
 
     /** 创建未同步的空状态；idle 与已同步空背包 ready 含义不同。 */
     private emptyData(): BagContents {
-        return Object.freeze({ status: "idle", synced: false, items: Object.freeze([]), timedItems: Object.freeze([]), timedServerTimeSeconds: null });
+        return Object.freeze({ status: "idle", synced: false, items: Object.freeze([]), timedItems: Object.freeze([]),
+            timedServerTimeSeconds: null, spiritItems: Object.freeze([]), spiritSynced: false });
     }
 
     /** 整体保存状态、递增本地版本并清除快照缓存；不修改服务端资产版本。 */

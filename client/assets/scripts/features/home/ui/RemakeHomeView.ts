@@ -1,8 +1,9 @@
 /**
  * 主城组合页面：实例化已有地图和导航栏，使用新账号资料显示资产，并管理子 View 生命周期。
+ * 操作反馈转交 UIManager 的全局飘字，不在主城内另存提示节点或提示计时器。
  */
 import { GameLog } from "../../../core/GameLog";
-import { _decorator, Button, instantiate, Label, Node, Prefab } from "cc";
+import { _decorator, Button, instantiate, Node, Prefab } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
@@ -23,7 +24,6 @@ const { ccclass, property } = _decorator;
     layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
-    prepare: RemakeConfigUtils.prepareCityConfig,
 })
 @ccclass("RemakeHomeView")
 export class RemakeHomeView extends BaseView implements HomeView {
@@ -31,8 +31,6 @@ export class RemakeHomeView extends BaseView implements HomeView {
     @property(Prefab) chromePrefab: Prefab | null = null;
     @property(Node) cityHost: Node | null = null;
     @property(Node) chromeHost: Node | null = null;
-    @property(Label) noticeLabel: Label | null = null;
-    @property(Node) noticePanel: Node | null = null;
     /** 当前组合页面拥有的子节点，失败或关闭时销毁，避免残留半初始化界面。 */
     private childNodes: Node[] = [];
     private city: CityHubView | null = null;
@@ -67,7 +65,6 @@ export class RemakeHomeView extends BaseView implements HomeView {
     private async openCity(): Promise<void> {
         try {
             if (!this.cityPrefab || !this.chromePrefab || !this.cityHost || !this.chromeHost) throw new Error("RemakeHome 未绑定主城 Prefab 或宿主");
-            await RemakeConfigUtils.prepareCityConfig();
             if (this.closed) return;
             const cityNode = instantiate(this.cityPrefab);
             this.childNodes.push(cityNode);
@@ -132,9 +129,11 @@ export class RemakeHomeView extends BaseView implements HomeView {
         this.paintRole();
     }
 
+    /** 转交当前页面的操作反馈；空串与已关闭页面不改变其他页面的全局提示队列。 */
     showNotice(text: string): void {
-        if (this.noticeLabel) this.noticeLabel.string = text;
-        if (this.noticePanel) this.noticePanel.active = !!text;
+        if (!this.closed && text.trim()) {
+            UIManager.instance.toast(text);
+        }
     }
 
     /** 只显示服务器资料；头像与头像框分别解析，未知战力不伪造为零。 */

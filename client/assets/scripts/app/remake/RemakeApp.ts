@@ -6,7 +6,7 @@ import { CityMapService } from "../../features/city/ui/CityMapService";
 import { PrefabLoader } from "../../framework/assets/PrefabLoader";
 import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssetsUtils";
 import {AccountComposition} from "./AccountComposition";
-import {ApplicationNotice} from "./ApplicationNotice";
+import {ToastManager} from "../../framework/ui/ToastManager";
 import {MainChapterController} from "../../features/battle/MainChapterController";
 import {ApplicationPages} from "./ApplicationPages";
 import {ApplicationResources} from "./ApplicationResources";
@@ -21,13 +21,13 @@ import "../../features/gm/ui/GmView";
 import { Protocol } from "../../platform/Protocol";
 
 
-import {_decorator, Component, director, Director, game, Game, Label, Node, Prefab} from "cc";
+import {_decorator, Component, director, Director, EventKeyboard, game, Game, input, Input, KeyCode, Label, Node, Prefab} from "cc";
 import {PREVIEW} from "cc/env";
 import { GameLog } from "../../core/GameLog";
 import {BagController} from "../../features/bag/BagController";
 import {HeroRosterController} from "../../features/hero/HeroRosterController";
 import {RemakeHomeView} from "../../features/home/ui/RemakeHomeView";
-import { UIManager } from "../../framework/ui/UIManager";
+import { OpenCancelled, UIManager } from "../../framework/ui/UIManager";
 import {GameSocketClient} from "../../platform/GameSocketClient";
 import { BootChrome } from "./BootChrome";
 import {HomeFeatureNavigation, REMAKE_FEATURE_ROUTES} from "./HomeFeatureNavigation";
@@ -58,7 +58,7 @@ export class RemakeApp extends Component {
     /** 独立只读战报验收页的清理函数，不影响正常登录流程。 */
     private development: DevelopmentPreview | null = null;
     /** 应用提示独立于主城生命周期。 */
-    private notices: ApplicationNotice | null = null;
+    private notices: ToastManager | null = null;
     /** 独立提示与UIManager的绑定，销毁时只移除本应用句柄。 */
     private offNotice: (() => void) | null = null;
     /** 场景保存提示布局，启动失败也能显示。 */
@@ -100,7 +100,7 @@ export class RemakeApp extends Component {
 
     /** 编辑器启动应用时装配唯一会话服务和页面注册，并执行新链路启动流程。 */
     async start(): Promise<void> {
-        this.notices = new ApplicationNotice(this.noticePanel, this.noticeLabel);
+        this.notices = new ToastManager(this.noticePanel, this.noticeLabel);
         this.offNotice = UIManager.instance.bindNotice((text, duration) => this.notices?.show(text, duration));
         try {
             await this.initialize();
@@ -195,24 +195,59 @@ export class RemakeApp extends Component {
         const gm = new GmController(
             () => service.authenticated(token => socket.request(token, Protocol.GM_STATUS)),
             body => service.authenticated(async token => (await socket.gmGrant(token, body)).body));
-        const openGm = () => {
+        // F9只切换开发菜单；准备中的打开也可取消，不保留角色资料页中的第二入口。
+        let gmRequested = false;
+        let gmIntent = 0;
+        const openGm = async (): Promise<void> => {
             const role = model.snapshot.role;
-            if (!PREVIEW || !role || model.snapshot.busy) return;
-            void ui.openById("gm", {
-                controller: gm, roleId: role.id, nickname: role.nickname,
-                openLineupBattle: (mission: number) => {
-                    ui.toast("正在读取保存阵容，仅试战、不发奖…");
-                    void battlePreview.preview(mission).then(async result => {
-                        if (!result || !this.alive) return;
-                        ui.closeById("gm");
+            if (!PREVIEW || !this.alive || !this.started || !role || model.snapshot.busy
+                || entry.route(true) !== "remake-home") {
+                return;
+            }
+            gmRequested = true;
+            const intent = ++gmIntent;
+            try {
+                await ui.openById("gm", {
+                    controller: gm,
+                    roleId: role.id,
+                    nickname: role.nickname,
+                    openLineupBattle: async (mission: number) => {
+                        ui.toast("正在读取保存阵容，仅试战、不发奖…");
+                        const result = await battlePreview.preview(mission);
+                        if (!result || !this.alive || intent !== gmIntent || !ui.isOpen("gm-battle")) {
+                            throw new OpenCancelled();
+                        }
                         await this.development?.openLineupBattle(result);
-                    }).catch(error => ui.toast("试战失败：" + String(error)));
-                }, openSkillAudit: () => {
-                    ui.closeById("gm");
-                    void this.development!.openSkillAudit().catch(error => ui.toast("技能验收打开失败：" + String(error)));
+                        this.closeGmViews();
+                    },
+                    openSkillAudit: async () => {
+                        await this.development?.openSkillAudit();
+                        if (!this.alive || intent !== gmIntent || !ui.isOpen("gm")) {
+                            ui.closeById("skill-audit");
+                            throw new OpenCancelled();
+                        }
+                        this.closeGmViews();
+                    },
+                });
+            } catch (error) {
+                if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                    ui.toast("GM 打开失败：" + String(error));
                 }
-            }).catch(error => ui.toast("GM 打开失败：" + String(error)));
+            } finally {
+                if (intent === gmIntent) {
+                    gmRequested = false;
+                }
+            }
         };
+        this.bindGmShortcut(() => {
+            if (gmRequested || ui.isOpen("gm") || ui.isOpen("gm-grant") || ui.isOpen("gm-battle")) {
+                gmRequested = false;
+                gmIntent++;
+                this.closeGmViews();
+            } else {
+                void openGm();
+            }
+        });
         const features = this.features = new HomeFeatureNavigation(ui, {
             current: () => this.navigation?.current || null,
             authorized: () => this.alive && this.started && !model.snapshot.busy && !!model.snapshot.role && entry.route(true) === "remake-home",
@@ -227,7 +262,6 @@ export class RemakeApp extends Component {
             servers,
             entry,
             features,
-            openGm,
             syncRoute: () => syncRoute(),
             onHome: view => {
                 homeView = view;
@@ -240,7 +274,7 @@ export class RemakeApp extends Component {
                 this.resources.stopBackground();
                 ui.closeById("remake-formation");
                 ui.closeById("role-profile");
-                ui.closeById("gm");
+                this.closeGmViews();
                 gm.reset();
             }
             if (model.snapshot.busy) {
@@ -406,11 +440,34 @@ export class RemakeApp extends Component {
         this.development?.cancelReplay();
         ui.invalidatePending();
         this.navigation?.back(false);
-        for (const id of ["hero-skill", "bag-info", "role-profile", "remake-formation", "battle-detail",
-            "chapter-end", "chapter-reward-info", "main-chapter-battle", "skill-audit", "gm"]) {
+        for (const id of ["hero-skill", "bag-info", "spirit-info", "equipment-info", "role-profile", "remake-formation", "battle-detail",
+            "chapter-end", "chapter-reward-info", "main-chapter-battle", "skill-audit"]) {
             ui.closeById(id);
         }
+        this.closeGmViews();
+        this.notices?.clear();
         ui.clearCached();
+    }
+
+    /** 仅Creator预览监听F9松键，避免长按重复打开；应用退出时撤销本次监听。 */
+    private bindGmShortcut(toggle: () => void): void {
+        if (!PREVIEW) {
+            return;
+        }
+        const released = (event: EventKeyboard) => {
+            if (event.keyCode === KeyCode.F9) {
+                toggle();
+            }
+        };
+        input.on(Input.EventType.KEY_UP, released);
+        this.unregisterViews.push(() => input.off(Input.EventType.KEY_UP, released));
+    }
+
+    /** 从子窗到总入口统一关闭，包括尚在准备的窗口，不影响实际主线战场。 */
+    private closeGmViews(): void {
+        for (const id of ["gm-grant", "gm-battle", "gm"]) {
+            UIManager.instance.closeById(id);
+        }
     }
 
     /** 平台进入后台时由应用统一暂停通信及背包计时，不让背包控制器依赖账号。 */
@@ -454,7 +511,7 @@ export class RemakeApp extends Component {
         this.offAccount = null;
         this.features?.dispose();
         this.features = null;
-        UIManager.instance.closeById("gm");
+        this.closeGmViews();
         UIManager.instance.closeById("role-profile");
         UIManager.instance.closeById("server-picker");
         UIManager.instance.closeById("remake-formation");
@@ -473,8 +530,9 @@ export class RemakeApp extends Component {
     /** 距离上次闲置预制体检查的秒数；只随当前应用update推进，销毁后不再运行。 */
     private prefabCollectionSeconds = 0;
 
-    /** 推进服务器时钟估算，每30秒检查无人使用的预制体缓存，不清理预加载持有。 */
+    /** 推进飘字和服务器时钟，每30秒检查无人使用的预制体缓存，不清理预加载持有。 */
     update(dt: number): void {
+        this.notices?.update(dt);
         BagModel.instance.advanceClock(dt);
         this.prefabCollectionSeconds += dt;
         if (this.prefabCollectionSeconds >= 30) {

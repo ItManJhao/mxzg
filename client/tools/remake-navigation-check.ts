@@ -312,8 +312,9 @@ async function main() {
 
   const assets = join(process.cwd(), "client/assets");
   const prefab = JSON.parse(readFileSync(join(assets, "bundles/module/home/prefabs/RemakeHomeView.prefab"), "utf8"));
-  const view = prefab.find((row: Record<string, unknown>) => row.cityHost && row.noticeLabel);
-  assert.equal(prefab[view.noticeLabel.__id__].__type__, "cc.Label");
+  const view = prefab.find((row: Record<string, unknown>) => row.cityHost && row.chromeHost);
+  assert.equal(view.noticeLabel, undefined, "主城操作反馈统一使用全局飘字");
+  assert.equal(view.noticePanel, undefined, "主城不再保留独立提示面板");
   assert.equal(prefab[view.cityHost.__id__].__type__, "cc.Node");
   const scene = JSON.parse(readFileSync(join(assets, "scenes/Remake.scene"), "utf8"));
   assert(scene.some((row: Record<string, unknown>) => row.loadingPrefab && row.socketUrl));

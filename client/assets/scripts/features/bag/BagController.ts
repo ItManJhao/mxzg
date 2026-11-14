@@ -54,11 +54,11 @@ export class BagController extends BaseController {
         }
     }
 
-    /** 同帧提交普通库存与逐件期限库存，首次不播放获得演出；空列表也是有效初始化。 */
+    /** 同帧提交普通库存、期限及精灵实例；首次不播放获得演出，未知精灵能力不伪装成空库存。 */
     private onInventoryState(protocol: ProtocolName, data: unknown): void {
         const state = ProtocolStateUtils.statePayload(protocol, data);
         const items = BagItemDataUtils.readBagItems(state.inventory), previous = this.model.snapshot;
-        const changes = this.model.replaceAll(items, state.timedInventory);
+        const changes = this.model.replaceAll(items, state.timedInventory, state.spiritInventory);
         this.notify(changes, protocol === Protocol.STATE_CHANGED ? "unknown" : "initial-sync", previous);
     }
 

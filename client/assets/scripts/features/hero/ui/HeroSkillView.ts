@@ -6,7 +6,6 @@ import { _decorator, Button, Label, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
@@ -23,7 +22,6 @@ const { ccclass, property } = _decorator;
     allowMultiple: false,
     hostId: "remake-modal",
     modal: { mask: true, closeOnOutside: true },
-    prepare: RemakeConfigUtils.prepareHeroDetailConfig,
 })
 @ccclass("HeroSkillView")
 export class HeroSkillView extends BaseView<{ heroId: string; slot: number }> {

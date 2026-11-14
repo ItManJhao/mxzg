@@ -1,4 +1,12 @@
 /** 由 tools/generate_config.py 生成；字段规范在 config/client-schema.json，业务注释来自本项目表头。 */
+export interface AttributeShowRow {
+  /** 唯一ID */
+  readonly attr: number;
+  /** 注释 */
+  readonly description: string;
+  /** 图标（101速度220攻击223生命224防御） */
+  readonly icon: number;
+}
 export interface CityButtonRow {
   /** 未知 */
   readonly atom: string;
@@ -50,6 +58,16 @@ export interface CityPositionRow {
   readonly y: number;
   /** 所处场景层级 */
   readonly zorder: number;
+}
+export interface EquipmentSetTypeRow {
+  /** 属性 */
+  readonly attr: string;
+  /** 唯一序号 */
+  readonly idx: number;
+  /** 套装件数 */
+  readonly num: number;
+  /** 套装类型 */
+  readonly type: string;
 }
 export interface EquipmentTypeRow {
   /** 基础属性 */
@@ -303,6 +321,26 @@ export interface OpenConditionRow {
   /** 世界等级条件 */
   readonly world_level?: number;
 }
+export interface ScoreCountRow {
+  /** 战力计算类型 */
+  readonly idx: number;
+  /** 未知 */
+  readonly mapping: number;
+  /** 策划备注 */
+  readonly note1: string;
+  /** 系数 */
+  readonly ratio: number;
+  /** 属性类型 */
+  readonly type: string;
+}
+export interface SpiritDisplayRow {
+  /** 同源导出的精灵特性文案，不参与客户端抽样或属性计算 */
+  readonly abilities: ReadonlyArray<{ readonly "attributeId": number; readonly "description": string; readonly "id": number; readonly "name": string; readonly "value": number }>;
+  /** 本批已恢复精灵的物品配置ID */
+  readonly idx: number;
+  /** 已恢复精灵可能生成的技能显示投影，由服务端实例决定选中项 */
+  readonly skills: ReadonlyArray<{ readonly "description": string; readonly "icon": string; readonly "level": number; readonly "name": string; readonly "skillId": number }>;
+}
 export interface SystemGateRow {
   /** 配置查询键 */
   readonly key: string;
@@ -324,9 +362,11 @@ export interface TimeLimitItemRow {
   readonly valid_time: number;
 }
 export const GConfig = {
+  AttributeShow: "AttributeShow",
   CityButton: "CityButton",
   CityEffect: "CityEffect",
   CityPosition: "CityPosition",
+  EquipmentSetType: "EquipmentSetType",
   EquipmentType: "EquipmentType",
   HeroLevel: "HeroLevel",
   HeroSkill: "HeroSkill",
@@ -338,13 +378,17 @@ export const GConfig = {
   Language: "Language",
   LoadingTips: "LoadingTips",
   OpenCondition: "OpenCondition",
+  ScoreCount: "ScoreCount",
+  SpiritDisplay: "SpiritDisplay",
   SystemGate: "SystemGate",
   TimeLimitItem: "TimeLimitItem",
 } as const;
 export interface ConfigRowMap {
+  AttributeShow: AttributeShowRow;
   CityButton: CityButtonRow;
   CityEffect: CityEffectRow;
   CityPosition: CityPositionRow;
+  EquipmentSetType: EquipmentSetTypeRow;
   EquipmentType: EquipmentTypeRow;
   HeroLevel: HeroLevelRow;
   HeroSkill: HeroSkillRow;
@@ -356,13 +400,17 @@ export interface ConfigRowMap {
   Language: LanguageRow;
   LoadingTips: LoadingTipsRow;
   OpenCondition: OpenConditionRow;
+  ScoreCount: ScoreCountRow;
+  SpiritDisplay: SpiritDisplayRow;
   SystemGate: SystemGateRow;
   TimeLimitItem: TimeLimitItemRow;
 }
 export interface ConfigKeyMap {
+  AttributeShow: number;
   CityButton: string;
   CityEffect: number;
   CityPosition: number;
+  EquipmentSetType: number;
   EquipmentType: number;
   HeroLevel: number;
   HeroSkill: number;
@@ -374,13 +422,17 @@ export interface ConfigKeyMap {
   Language: number | string;
   LoadingTips: number;
   OpenCondition: string;
+  ScoreCount: number;
+  SpiritDisplay: number;
   SystemGate: string;
   TimeLimitItem: number;
 }
 export interface ConfigFileMap {
+  AttributeShow: { readonly rows: readonly AttributeShowRow[] };
   CityButton: { readonly act: Readonly<Record<string, CityButtonRow>> };
   CityEffect: { readonly maincityeffect: readonly CityEffectRow[] };
   CityPosition: { readonly main: readonly CityPositionRow[] };
+  EquipmentSetType: { readonly rows: readonly EquipmentSetTypeRow[] };
   EquipmentType: { readonly rows: readonly EquipmentTypeRow[] };
   HeroLevel: { readonly rows: readonly HeroLevelRow[] };
   HeroSkill: { readonly rows: readonly HeroSkillRow[] };
@@ -392,11 +444,35 @@ export interface ConfigFileMap {
   Language: { readonly rows: readonly LanguageRow[] };
   LoadingTips: { readonly rows: readonly LoadingTipsRow[] };
   OpenCondition: { readonly rows: readonly OpenConditionRow[] };
+  ScoreCount: { readonly rows: readonly ScoreCountRow[] };
+  SpiritDisplay: { readonly rows: readonly SpiritDisplayRow[] };
   SystemGate: { readonly rows: readonly SystemGateRow[] };
   TimeLimitItem: { readonly rows: readonly TimeLimitItemRow[] };
 }
 export type ConfigName = keyof ConfigRowMap;
 export const CONFIG_SCHEMA = {
+  "AttributeShow": {
+    "container": "rows",
+    "fields": {
+      "attr": {
+        "note": "属性编号",
+        "required": true,
+        "type": "number"
+      },
+      "description": {
+        "note": "属性策划说明；展示名称仍读语言表",
+        "required": true,
+        "type": "string"
+      },
+      "icon": {
+        "note": "旧属性图标编号，不等同属性编号",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "attr",
+    "path": "config/attrshow"
+  },
   "CityButton": {
     "container": "act",
     "fields": {
@@ -532,6 +608,33 @@ export const CONFIG_SCHEMA = {
     },
     "key": "idx",
     "path": "config/maincity/maincitypos"
+  },
+  "EquipmentSetType": {
+    "container": "rows",
+    "fields": {
+      "attr": {
+        "note": "套装属性原始JSON文本；只读详情不激活玩家效果",
+        "required": true,
+        "type": "string"
+      },
+      "idx": {
+        "note": "套装阈值配置编号",
+        "required": true,
+        "type": "number"
+      },
+      "num": {
+        "note": "激活所需同套装件数",
+        "required": true,
+        "type": "number"
+      },
+      "type": {
+        "note": "套装类型编号，源表保留数字文本",
+        "required": true,
+        "type": "string"
+      }
+    },
+    "key": "idx",
+    "path": "config/equipmentsettype"
   },
   "EquipmentType": {
     "container": "rows",
@@ -1187,6 +1290,120 @@ export const CONFIG_SCHEMA = {
     },
     "key": "id",
     "path": "config/opencondition"
+  },
+  "ScoreCount": {
+    "container": "rows",
+    "fields": {
+      "idx": {
+        "note": "装备评分与显示排序编号",
+        "required": true,
+        "type": "number"
+      },
+      "mapping": {
+        "note": "对应属性编号",
+        "required": true,
+        "type": "number"
+      },
+      "note1": {
+        "note": "属性中文业务说明",
+        "required": true,
+        "type": "string"
+      },
+      "ratio": {
+        "note": "装备评分万分比系数",
+        "required": true,
+        "type": "number"
+      },
+      "type": {
+        "note": "评分属性英文名",
+        "required": true,
+        "type": "string"
+      }
+    },
+    "key": "idx",
+    "path": "config/scorecount"
+  },
+  "SpiritDisplay": {
+    "container": "rows",
+    "fields": {
+      "abilities": {
+        "items": {
+          "fields": {
+            "attributeId": {
+              "note": "旧属性配置ID，仅便于定位来源",
+              "required": true,
+              "type": "number"
+            },
+            "description": {
+              "note": "已按源规则格式化的只读特性说明",
+              "required": true,
+              "type": "string"
+            },
+            "id": {
+              "note": "特性配置ID",
+              "required": true,
+              "type": "number"
+            },
+            "name": {
+              "note": "旧语言表特性名",
+              "required": true,
+              "type": "string"
+            },
+            "value": {
+              "note": "源特性值，不代表当前角色已生效属性",
+              "required": true,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "note": "同源导出的精灵特性文案，不参与客户端抽样或属性计算",
+        "required": true,
+        "type": "array"
+      },
+      "idx": {
+        "note": "本批已恢复精灵的物品配置ID",
+        "required": true,
+        "type": "number"
+      },
+      "skills": {
+        "items": {
+          "fields": {
+            "description": {
+              "note": "旧语言表技能说明",
+              "required": true,
+              "type": "string"
+            },
+            "icon": {
+              "note": "旧技能图标标识，本批详情仅展示文本",
+              "required": true,
+              "type": "string"
+            },
+            "level": {
+              "note": "该技能显示行的等级",
+              "required": true,
+              "type": "number"
+            },
+            "name": {
+              "note": "旧语言表技能名",
+              "required": true,
+              "type": "string"
+            },
+            "skillId": {
+              "note": "精灵技能配置ID",
+              "required": true,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "note": "已恢复精灵可能生成的技能显示投影，由服务端实例决定选中项",
+        "required": true,
+        "type": "array"
+      }
+    },
+    "key": "idx",
+    "path": "config/spirit-display"
   },
   "SystemGate": {
     "container": "rows",

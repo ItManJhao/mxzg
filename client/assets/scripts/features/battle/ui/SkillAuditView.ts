@@ -1,8 +1,9 @@
-/** 技能验收台：完整Prefab展示配置与开发证据，共享遮罩由UIManager提供；不修改玩家状态。 */
-import { _decorator, Button, EditBox, Label, Sprite, SpriteFrame, view as ccView, tween, Tween, Vec3 } from "cc";
+/** 技能验收台：完整Prefab展示配置与开发证据，共享遮罩和操作飘字由UIManager提供；不修改玩家状态。 */
+import { _decorator, Button, EditBox, Label, Sprite, SpriteFrame, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
+import { UIManager } from "../../../framework/ui/UIManager";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { GameConfig } from "../../../config/GameConfig";
@@ -20,12 +21,9 @@ export interface SkillAuditOpenArgs { play: (skill: SkillAuditEntry, returned: (
     allowMultiple: false,
     hostId: "skill-audit-host",
     modal: { mask: true, closeOnOutside: false },
-    prepare: () => GameConfig.instance.prepare([GConfig.HeroType, GConfig.HeroSkill, GConfig.Language]),
 })
 @ccclass("SkillAuditView")
 export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
-    /** Prefab内的浮动提示，不依赖登录页面安装全局toast宿主。 */
-    @property(Label) noticeLabel: Label | null = null;
     /** 顶部目录范围说明。 */
     @property(Label) owner: Label | null = null;
     /** 英雄和技能列表切换按钮。 */
@@ -87,7 +85,7 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
         this.ownListener(() => { if (button.node.isValid) button.node.off(Button.EventType.CLICK, action); });
     }
 
-    /** 搜索完整目录，不截断前100条；列表复用格子并滚回顶部。 */
+    /** 从统一配置的只读行筛选完整目录，不复制配置索引；搜索后列表复用格子并回到顶部。 */
     private paint(): void {
         this.kindButtons.forEach((button, index) => {
             const sprite = button.getComponent(Sprite);
@@ -95,7 +93,7 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
         });
         const word = this.search!.string.trim().toLowerCase();
         const rows: Array<{ caption: string; tap: () => void }> = this.heroes
-            ? GameConfig.instance.getFile(GConfig.HeroType).rows.map(hero => {
+            ? GameConfig.instance.getConfig(GConfig.HeroType).map(hero => {
                 const skills = SkillAuditUtils.skills(hero.type);
                 const count = skills.filter(skill => skill.fixture).length;
                 return { caption: String(hero.note || hero.type) + " [" + hero.type + "] " + count + "/" + skills.length,
@@ -117,19 +115,18 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
         this.options!.toStart();
     }
 
-    /** 使用预制体提示节点浮动显示原因；重复提示先取消旧动画，关页时清理。 */
+    /** 操作原因转交全局飘字；关闭后的迟到结果和空串不覆盖其他页面的提示。 */
     private showNotice(text: string): void {
-        const label = this.noticeLabel!;
-        Tween.stopAllByTarget(label.node);
-        label.string = text;
-        label.node.active = true;
-        label.node.setPosition(0, -80, 0);
-        tween(label.node).by(0.3, { position: new Vec3(0, 20, 0) }).delay(1.3)
-            .call(() => { if (label.node.isValid) label.node.active = false; }).start();
+        if (!this.closed && text.trim()) {
+            UIManager.instance.toast(text);
+        }
     }
 
-    /** 播放已有证据场景；未支持时保留原因并飘字，失败后可重试。 */
+    /** 播放已有证据场景；未支持时提示原因，失败可重试；取消和框架已报告的失败不重复飘字。 */
     private async play(): Promise<void> {
+        if (this.closed || this.playButton?.interactable === false) {
+            return;
+        }
         if (!this.selected?.fixture) {
             this.showNotice(this.selected ? this.selected.reason : "请先选择英雄和技能等级");
             return;
@@ -137,23 +134,30 @@ export class SkillAuditView extends BaseView<SkillAuditOpenArgs> {
         this.playButton!.interactable = false;
         try {
             await this.args!.play(this.selected, () => {
-                if (!this.closed && this.node.isValid) this.node.active = true;
+                if (!this.closed && this.node.isValid) {
+                    this.node.active = true;
+                }
             });
-            if (!this.closed) this.node.active = false;
-        }
-        catch (error) {
+            if (!this.closed) {
+                this.node.active = false;
+            }
+        } catch (error) {
             if (!this.closed) {
                 this.node.active = true;
-                this.message!.string = "演示打开失败：" + String(error);
-                this.showNotice("演示资源未就绪，请启动独立战报服务");
+                if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                    this.showNotice("演示打开失败：" + (error instanceof Error ? error.message : String(error)));
+                }
             }
-        } finally { if (!this.closed) this.playButton!.interactable = true; }
+        } finally {
+            if (!this.closed) {
+                this.playButton!.interactable = true;
+            }
+        }
     }
 
-    /** 关闭仅释放本页引用，不影响账号、英雄或背包。 */
+    /** 关闭仅释放本页引用，不清除全局飘字，也不影响账号、英雄或背包。 */
     onClose(): void {
         this.closed = true;
-        if (this.noticeLabel?.node.isValid) Tween.stopAllByTarget(this.noticeLabel.node);
         this.args = undefined;
     }
 }

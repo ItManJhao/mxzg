@@ -294,12 +294,36 @@ export class GameSocketClient {
       } else {
         const error = this.object(frame.error);
         if (typeof error.code !== "string" || !/^[A-Z_]{3,64}$/.test(error.code) || frame.body !== null) throw new SocketFailure("INVALID_MESSAGE");
-        const failure = new SocketFailure(error.code, error.code === "UNAUTHENTICATED" ? "登录已失效，请重新登录" : error.code === "SERVER_UNAVAILABLE" ? "服务器暂未开放，请重新选择" : error.code === "GM_DISABLED" ? "服务端开发GM未开启" : error.code === "CHAPTER_UNAVAILABLE" ? "主线条件不满足、阵容技能尚未支持或战报不可用，请检查阵容与进度" : error.code === "BATTLE_EMPTY" ? "请先保存非空主线阵容" : error.code === "BATTLE_UNSUPPORTED" ? "当前阵容包含尚未支持的技能或助战，请调整阵容" : error.code === "BATTLE_INVALID" ? "只读试战仅支持第一章前三关" : error.code === "UNKNOWN_MESSAGE" ? "服务端不支持此协议，请更新并重启后端" : "连接请求失败，请重试");
+        const failure = new SocketFailure(error.code, GameSocketClient.failureMessage(error.code));
         this.traceReceived(frame);
         this.pending.delete(frame.id); clearTimeout(pending.timer); pending.reject(failure);
         if (failure.unauthorized) this.rejectSession(failure);
       }
     } catch (error) { this.drop(error instanceof SocketFailure ? error : new SocketFailure("INVALID_MESSAGE"), false); }
+  }
+
+  /** 将真实业务拒绝转为中文反馈；保留错误码供幂等重试，不把业务失败误称为断网。 */
+  private static failureMessage(code: string): string {
+    switch (code) {
+      case "UNAUTHENTICATED": return "登录已失效，请重新登录";
+      case "SERVER_UNAVAILABLE": return "服务器暂未开放，请重新选择";
+      case "BUSY": return "服务器正在处理，请稍后重试";
+      case "GM_DISABLED": return "服务端开发GM未开启";
+      case "GM_INVALID": return "GM发放参数无效，请检查配置和整数数量";
+      case "GM_INVALID_HERO": return "英雄配置无效，或单次发放超过20名";
+      case "GM_CAPACITY_FULL": return "英雄名册容量不足，请减少发放数量";
+      case "GM_UNKNOWN_ITEM": return "该道具配置不存在，请重新选择";
+      case "GM_UNSUPPORTED_ITEM_TYPE": return "该精灵尚未恢复真实实例生成，暂不能发放";
+      case "GM_SPIRIT_LIMIT": return "精灵单次最多发放1000只，请减少数量";
+      case "GM_TIMED_LIMIT": return "期限道具单次最多发放100件，请减少数量";
+      case "GM_REQUEST_CONFLICT": return "同一发放请求的参数发生变化，请重新确认";
+      case "CHAPTER_UNAVAILABLE": return "主线条件不满足、阵容技能尚未支持或战报不可用，请检查阵容与进度";
+      case "BATTLE_EMPTY": return "请先保存非空主线阵容";
+      case "BATTLE_UNSUPPORTED": return "当前阵容包含尚未支持的技能或助战，请调整阵容";
+      case "BATTLE_INVALID": return "只读试战仅支持第一章前三关";
+      case "UNKNOWN_MESSAGE": return "服务端不支持此协议，请更新并重启后端";
+      default: return "请求未完成（" + code + "），请稍后重试";
+    }
   }
 
   /** 日志观察不参与协议处理；诊断回调异常不能关闭正常连接或阻断 Model 更新。 */

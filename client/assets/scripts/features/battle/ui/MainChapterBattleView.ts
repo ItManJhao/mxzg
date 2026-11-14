@@ -5,7 +5,6 @@ import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { MainChapterController } from "../MainChapterController";
 import { MainChapterModel } from "../MainChapterModel";
 import { ChapterEndView } from "./ChapterEndView";
@@ -26,10 +25,6 @@ interface MainChapterBattleArgs {
     cache: false,
     allowMultiple: false,
     hostId: "main-chapter-field",
-    prepare: async () => {
-        await RemakeConfigUtils.prepareInventoryConfig();
-        await RemakeConfigUtils.prepareHeroDetailConfig();
-    },
 })
 @ccclass("MainChapterBattleView")
 export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {

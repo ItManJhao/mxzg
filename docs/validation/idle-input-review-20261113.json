@@ -1,0 +1,333 @@
+{
+  "date": "2026-11-13",
+  "baseline": "c23b53ed",
+  "scope": "挂机输入依据复核、纯计算分项/期限、后端配置源修复；无领取/协议/资产变更，无Creator或浏览器验收",
+  "legacyHead": "35ccb5f080b93e1c28b6303fa146e248367ac248",
+  "legacySources": [
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/service/RoleMissionService.java",
+      "sha256": "7f03358bfdec11db91fa5a34a0c6c875eb50efe104d92da877294fdb5ea95740"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/worldLevel/manager/WorldLevelManager.java",
+      "sha256": "688f115691ef5e819cb4863566642e0a19dc909da85610fe4482a77147dfda95"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/promotionNew/service/Promotion010PrivilegeGiftService.java",
+      "sha256": "f544dd670f79414b0ee8ff0c6b2c3c6eb24e79b5d6e055cf26329ea36a3fdacd"
+    }
+  ],
+  "activityConfig": [
+    {
+      "source": "config/gameconfig/promotiondragonmarkdrops.xlsx",
+      "sha256": "85fc2bfd110120bfec0d35e2bf7ae8d8f7041b9516186f89a7e33ce6fcd2b6ea",
+      "cell": "E4",
+      "gainChance": 6936,
+      "fixedSeconds": 1234,
+      "rewardItem": 901701,
+      "rewardQuantity": 1,
+      "clientExportFlag": "概率列第二行为空，服务端旧加载器不按该行过滤"
+    },
+    {
+      "source": "config/gameconfig/promotionpvedrops.xlsx",
+      "sha256": "af07eb5030a4f1a04c7081d08578d5f39503a80275a801b19011fbc9bb95d9dc",
+      "cell": "E4",
+      "gainChance": 0,
+      "fixedSeconds": 3600,
+      "rewardItem": 900502,
+      "rewardQuantity": 1,
+      "clientExportFlag": "概率列第二行为空，服务端旧加载器不按该行过滤"
+    },
+    {
+      "source": "config/gameconfig/promotionfiredrops.xlsx",
+      "sha256": "66091ac866c0d66b430e4a663d50643c9a28c8480cbf372f3f4ed3d4321f41b5",
+      "cell": "D4",
+      "gainChance": 6936,
+      "fixedSeconds": 1234,
+      "rewardItem": 901702,
+      "rewardQuantity": 1,
+      "clientExportFlag": "概率列第二行为空，服务端旧加载器不按该行过滤"
+    }
+  ],
+  "decisions": {
+    "worldLevel": "新版各区服独立统计，合服范围另行确认；本批未恢复世界等级服务",
+    "gift": "endTime=0永久，否则计算入口冻结的nowSeconds<=endTime仍有效；active不作为加成过滤，不在读取时清理active"
+  },
+  "worldLegacyCorrection": "注入实际为WorldLevelManager；同进程数据库全体角色前50名平均，空服1，首次读取计算后每5分钟更新；旧调用断点误判关闭",
+  "activitySemantics": "6936/0/6936是原表实际值；旧服务端读取未标记列。0基百万随机<=阈值，实际6937/1/6937个命中点；挂机领取随机周期60秒，5秒表头差异保留",
+  "rewardFragments": "基础独立；随机同窗合并、跨重置窗口不合并；活动各自分项；总量、计数和随机消费不变，溢出立即拒绝",
+  "backendConfigRecovery": {
+    "sourceCommit": "8cb605070f492956c2075f8b927dcfa781787088",
+    "restored": [
+      {
+        "name": "battledefend",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/battledefend.json",
+            "sha256": "4e54ed10d8084fcd8d1d3e82c1adb1c500590b7cac341c7d30ad5c5c2f8d76f8",
+            "bytes": 454,
+            "gitBlobSha256": "a95665851cca2776ca2395a3ab06355925e487293497ed557edcb6a508862dea"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/battledefend.json.meta",
+            "sha256": "a2b5599e6f8184edcd5ec0672cb464791f93fb6ab8a73031c5e0ee817f4dd578",
+            "bytes": 179
+          }
+        ],
+        "uuid": "8897e13e-b0fb-4fe4-bfa5-3efc63b87691"
+      },
+      {
+        "name": "battleformation",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/battleformation.json",
+            "sha256": "2cd98bcf93618d19447bdf0a73d9eba10c7b3501bed5d1e9014e0b5386c5de90",
+            "bytes": 3847,
+            "gitBlobSha256": "ba028bd8f24b5e725461b3b60aac11749db9411b3b463da2e91138d2dd31ac1a"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/battleformation.json.meta",
+            "sha256": "a973a3377ffcbf63381f0890c16b1edcf48e81ac53dbbfc8f246e1fc8b4dd9f4",
+            "bytes": 179
+          }
+        ],
+        "uuid": "70d3c520-b21b-483d-9279-fe6e1ac1b0b7"
+      },
+      {
+        "name": "battlematrix",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/battlematrix.json",
+            "sha256": "a553be37e4397060d4a6bdc69157f630e8a675ff196730d523ca7de3054cf4a2",
+            "bytes": 1492,
+            "gitBlobSha256": "37f0b814be1e4a71a84970e73da9b71f73110e317811436f19d666cf659ce268"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/battlematrix.json.meta",
+            "sha256": "7754a73b016d710438fe611b620548a65b9f201c2b74f945f426590ccbf38a82",
+            "bytes": 179
+          }
+        ],
+        "uuid": "729296a5-a19b-42c4-a2c9-5ebfbaf32370"
+      },
+      {
+        "name": "battlematrixaddition",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/battlematrixaddition.json",
+            "sha256": "d591b4cb2dafe19af238d258d8875b92545483971f7e19243c8f7fcd7bb587c8",
+            "bytes": 5084,
+            "gitBlobSha256": "8619bf92bde584434cfa4b5945d1648b450446c0e9e8f017478e325a1c15b3dd"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/battlematrixaddition.json.meta",
+            "sha256": "406a5c8bf8e3fa256d32828b22b740253727afc88501527e7545688945448a2d",
+            "bytes": 179
+          }
+        ],
+        "uuid": "736244a9-62a7-4538-9ea4-689e7afc2ffd"
+      },
+      {
+        "name": "battleroundaddition",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/battleroundaddition.json",
+            "sha256": "f694e57ca405d71a5f5dd8d826c348405967d804f920d6615a2947bb5be62fb1",
+            "bytes": 4069,
+            "gitBlobSha256": "b30a0f9b75b8ed1fb58d586a3528c86e43f6deaf1dfcf2c9290a7a0e1444ce37"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/battleroundaddition.json.meta",
+            "sha256": "283bc18ac66fa1ae3d488e584bd414f3546fd532fc3d1331dbea90a22217e661",
+            "bytes": 179
+          }
+        ],
+        "uuid": "dd6005d8-a346-46c5-91fd-b4b5ef54c85b"
+      },
+      {
+        "name": "elementaddition",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/elementaddition.json",
+            "sha256": "7565445fd854f95aaf7ef5e64abc6046ea93667d87d8f7710d15c315a4867f4c",
+            "bytes": 2762,
+            "gitBlobSha256": "f1047a498b6ac6fb89890bc41822d8c82ca6bf9d81aa8b4866eb3560e89bfb66"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/elementaddition.json.meta",
+            "sha256": "6c73639faff2714ff41af1147e41a007e07a7a4a1b379a672cad02e0658d245b",
+            "bytes": 179
+          }
+        ],
+        "uuid": "ab12483f-4caa-4162-9139-3c23e6c2acc1"
+      },
+      {
+        "name": "equipmentsettype",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/equipmentsettype.json",
+            "sha256": "40c2fed44dbb4e8ef710a026bd73dcfbe6697d67a688cfbd09c07bbce0706fbb",
+            "bytes": 2168,
+            "gitBlobSha256": "0f18bf580c5c84c12f196bc6885090a332156c641b8d6d6428554f80bc0b9cdd"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/equipmentsettype.json.meta",
+            "sha256": "a44c035f55369f339a1bfb5ecfad36314daed4e998d99b673041af032941a440",
+            "bytes": 179
+          }
+        ],
+        "uuid": "c71b02b0-2642-4869-948f-acc41f089824"
+      },
+      {
+        "name": "goddessvip",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/goddessvip.json",
+            "sha256": "3c1b77817f16aaac2f0a7c2e651d86ca62830bedbe09beb69b090e9e02826319",
+            "bytes": 6894,
+            "gitBlobSha256": "22f9b501174c0a2ccd7213ffc6b82f0352390a616a7c19b7b03f0beb3c694744"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/goddessvip.json.meta",
+            "sha256": "f8a304d673c0e116b3a8a7b4c5336281b5bb147640507a85ed2ebcfc4ed54504",
+            "bytes": 179
+          }
+        ],
+        "uuid": "131b466d-8068-49ea-b6e6-dd454cc7f89d"
+      },
+      {
+        "name": "heroelemmul",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/heroelemmul.json",
+            "sha256": "206e43d147d5af142e2d1409913d414506312c8007e3c14a4ab4e9f35bdf1a06",
+            "bytes": 881,
+            "gitBlobSha256": "ce73eaf530674739d7b5da527f77c9b0f802d6a0ba4818251b983c7ea46f5297"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/heroelemmul.json.meta",
+            "sha256": "d4f5ad81c219263c8f3a0864f31cc532ea76fdaec5ae1f573e34ba066dbac182",
+            "bytes": 179
+          }
+        ],
+        "uuid": "7a2bc637-ef43-47d9-86a9-273b064b1810"
+      },
+      {
+        "name": "heroequipsoul",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/heroequipsoul.json",
+            "sha256": "c88407dc0aaacec121a6315864266d0c0a795d5da3c07dd048c0ed978f633ee8",
+            "bytes": 4353,
+            "gitBlobSha256": "3b1c400d69fb79d156038943b1c2f7d16f0f1fd027ae300c129fa04fb817b440"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/heroequipsoul.json.meta",
+            "sha256": "5c6e7e9d9a2f81cff1f78f7b695947acc99b21be5921fe283345ccf97e3963fc",
+            "bytes": 179
+          }
+        ],
+        "uuid": "d48ff684-c2a7-4682-a9d8-c742a15fd1dc"
+      },
+      {
+        "name": "heroequipsoulextra",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/heroequipsoulextra.json",
+            "sha256": "41c0852f6bd5daaa297e2e0ebc854b8ddff97c780fd107cd1dc7f6095c10c2a1",
+            "bytes": 421,
+            "gitBlobSha256": "280a682050b0d3fa434d6cf153945bb165f2462d5caa49e3e91dcff642bb9e2b"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/heroequipsoulextra.json.meta",
+            "sha256": "dc7152b7547905dd3ed5aed9cd5749731d2a6729761aa3002e74ce76d7074a8a",
+            "bytes": 179
+          }
+        ],
+        "uuid": "7b037ec6-3bf2-499d-8c13-9163dd1d498d"
+      },
+      {
+        "name": "inituser",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/inituser.json",
+            "sha256": "666f30f13778b67f1e091c58ccdca12cd6f6350705e6dca3904ac84d953ebffd",
+            "bytes": 293,
+            "gitBlobSha256": "1db9cd92b3bead2ec89466768ae5f2bcd2173cf4c60bab7b1e506ec95414d057"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/inituser.json.meta",
+            "sha256": "5aab9176e503d81a1aeb2204b6ac6a8032e1592b9a675aac6597c34f26745f37",
+            "bytes": 179
+          }
+        ],
+        "uuid": "f0364ed9-d71c-488d-b372-9217e403ee96"
+      },
+      {
+        "name": "scorecount",
+        "files": [
+          {
+            "path": "client/assets/bundles/resources/config/scorecount.json",
+            "sha256": "9030bb5336fcc02cd2f44ead2dd2a1a872ff2733f068365e0db035a1da3f9f8c",
+            "bytes": 1162,
+            "gitBlobSha256": "9d1cccb26ad27a1bdc2793e9a31f943bfdb115fe4991b642773933cf3ca77489"
+          },
+          {
+            "path": "client/assets/bundles/resources/config/scorecount.json.meta",
+            "sha256": "2c0b560731f4ba23e7bbdd02c26a417c02c853e325866dee445a094e80bf7ed2",
+            "bytes": 179
+          }
+        ],
+        "uuid": "0a23cba9-60f9-49b8-9c32-c2e7ce324651"
+      }
+    ],
+    "existingFilesPreserved": 63,
+    "tables": 44
+  },
+  "packagedInputs": {
+    "pomIncludes": 29,
+    "sourceEqualsTarget": true,
+    "sourceDirectory": "client/assets/bundles/resources/config"
+  },
+  "checks": {
+    "java": {
+      "IdleRulesBoundaryTest": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleBonusUtilsTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleTest": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "pythonConfigScope": {
+      "tests": 14,
+      "passed": 14
+    },
+    "resourceScope": "16 Bundle/32 Prefab/17 View、全部序列化引用及12841特效文件/UUID集合通过",
+    "resourceGenerated": "32 Prefab索引检查通过；文本换行兼容Git CRLF检出",
+    "project": {
+      "activeSuites": 52,
+      "passed": 52,
+      "pausedSuites": 5,
+      "log": "client/temp/idle-input-project-check-20261113.log"
+    }
+  },
+  "limitations": [
+    "新主线没有生产领取调用",
+    "VIP/神职/世界/活动/礼包权威持久状态链尚未恢复",
+    "IdleTest为旧领域独立内存H2回归，不证明新主线领取已接通",
+    "无真实CDN、新发布包、真机或长期内存验收"
+  ],
+  "git": "本批未提交未推送；另有HeroRosterController导入排版本地修改，保持原样"
+}

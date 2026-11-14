@@ -6,7 +6,6 @@
 import { UILayer } from "../../../framework/ui/UILayer";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 
 import { _decorator, Button, director, Director, Label, Layers, Node, Prefab, UITransform } from "cc";
 import { BagTabKind } from "../data/BagTabKind";
@@ -27,6 +26,8 @@ import { BagItemView } from "./BagItemView";
 import { BagTabView } from "./BagTabView";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { BagInfoView } from "./BagInfoView";
+import { SpiritInfoView } from "./SpiritInfoView";
+import { EquipmentInfoView } from "./EquipmentInfoView";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
@@ -47,7 +48,6 @@ export interface BagOpenArgs {
     layer: UILayer.Page,
     cache: true,
     allowMultiple: false,
-    prepare: RemakeConfigUtils.prepareInventoryConfig,
 })
 @ccclass("BagView")
 export class BagView extends BaseView<BagOpenArgs> {
@@ -84,12 +84,10 @@ export class BagView extends BaseView<BagOpenArgs> {
 
     /** 显示分类；打开参数可覆盖默认道具分类，点击页签只改变展示。 */
     private tab: BagTabKind = "item";
-    /** 当前选中的格子 key（堆叠记录或期限实例）；条目消失、离开当前分类或关页后清空。 */
+    /** 当前选中的格子key（堆叠、期限或精灵实例）；条目消失、离开当前分类或关页后清空。 */
     private pickedId: string | null = null;
     /** 下次需隐藏过期格子的服务器秒，无期限格子时为无穷大。 */
     private nextExpiry = Infinity;
-    /** 本页静态配置索引，初始化时创建，不保存数量；未初始化为 null。 */
-    private catalog: BagItemCatalog | null = null;
     /** 本页创建的分类组件，刷新时同步选中态，随页面节点销毁。 */
     private tabs: BagTabView[] = [];
     /** 是否已创建页签，避免重复实例化。 */
@@ -118,7 +116,9 @@ export class BagView extends BaseView<BagOpenArgs> {
 
     /** 同步状态变化仅更新提示，不重复提交库存或重绘列表。 */
     private onSyncStateChanged(): void {
-        if (!this.closed && this.catalog) this.writeTalk();
+        if (!this.closed) {
+            this.writeTalk();
+        }
     }
 
     /** 每次打开重新登记监听并读取最新库存；无参数仍默认道具分类，不沿用旧实例的分类。 */
@@ -149,7 +149,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.clearShownWatch();
     }
 
-    /** 校验业务控件并读取配置；固定布局、内容比例和居中由Prefab及通用组件维护。 */
+    /** 校验业务控件并绑定展示；配置由统一仓库直接查询，布局和居中由Prefab维护。 */
     private async initialize(): Promise<void> {
         try {
             this.validateBindings();
@@ -159,8 +159,6 @@ export class BagView extends BaseView<BagOpenArgs> {
                     ViewportLayoutUtils.fitVisibleRoot(this.node);
                 }
             });
-            this.catalog = new BagItemCatalog(GameConfig.instance.getFile(GConfig.Item),
-                GameConfig.instance.getFile(GConfig.Language), GameConfig.instance.getFile(GConfig.TimeLimitItem));
             this.dressPortrait();
             if (this.closed || !this.node || !this.node.isValid) {
                 this.failOpen(new Error("页面已关"));
@@ -269,14 +267,16 @@ export class BagView extends BaseView<BagOpenArgs> {
         BattleSpineService.instance.mountNamedSpine(this.portrait, BagView.shopkeeperSkeleton, "act");
     }
 
-    /** 显示同步结果及缓存库存提示；重连由传输层自动处理，不诱导重复查询。 */
+    /** 显示库存同步结果，欢迎语直接读语言映射；精灵未同步仍明确提示，不补查库存。 */
     private writeTalk(): void {
         if (this.bubble) this.bubble.active = true;
         if (!this.talk) return;
         this.talk.node.active = true;
         const state = BagModel.instance.snapshot;
         this.talk.string = state.status === "idle" ? "背包尚未同步"
-            : state.items.length ? this.catalog!.greeting : "背包为空";
+            : this.tab === "spirit" && !state.spiritSynced ? "精灵库存尚未同步"
+            : state.items.length || state.timedItems.length || state.spiritItems.length
+                ? GameConfig.instance.getConfig(GConfig.Language, 5788)?.value || "欢迎光临～" : "背包为空";
     }
 
     /** 根据现有分类生成页签，点击只切换显示分类，不查询库存。 */
@@ -327,7 +327,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
     }
 
-    /** 列表创建或复用格子时只绘制当前条目，空分类保留20个可提示的空槽。 */
+    /** 绘制当前库存，只有背包显式启用精英碎片完成度；空分类保留20个可提示的空槽。 */
     private onRender(node: Node, item: BagListItem | null): void {
         if (this.closed) {
             return;
@@ -337,8 +337,8 @@ export class BagView extends BaseView<BagOpenArgs> {
             throw new Error("BagItemView预制体缺少物品格组件");
         }
         const selected = item !== null && item.key === this.pickedId;
-        cell.show(item, selected, item ? this.catalog!.face(item.itemId, item.quantity) : undefined,
-            item !== null || this.emptyTab);
+        cell.show(item, selected, item ? BagItemCatalog.face(item.itemId, item.quantity) : undefined,
+            item !== null || this.emptyTab, true);
     }
 
     /** 选择当前条目后再次核对最新库存键；过期或已移除物品不打开详情。 */
@@ -349,7 +349,9 @@ export class BagView extends BaseView<BagOpenArgs> {
         const rows = this.visibleItems();
         if (!item) {
             if (!rows.length) {
-                this.toast(BagModel.instance.snapshot.status === "ready" ? BagUtils.emptyToast() : "背包尚未同步");
+                const state = BagModel.instance.snapshot;
+                this.toast(state.status !== "ready" ? "背包尚未同步"
+                    : this.tab === "spirit" && !state.spiritSynced ? "精灵库存尚未同步" : BagUtils.emptyToast());
             }
             return;
         }
@@ -362,15 +364,48 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.refreshGrid();
     }
 
-    /** 按配置筛选库存并恢复普通道具排序；隐藏条目与服务器原始顺序仍由 Model 完整持有。 */
+    /** 按配置筛选库存并恢复普通道具排序；精灵按实例追加显示，服务器原始集合仍由Model分别持有。 */
     visibleItems(): readonly BagListItem[] {
-        if (!this.catalog) return [];
+        if (!this.opened || this.closed) {
+            return [];
+        }
         const state = BagModel.instance.snapshot;
-        return this.catalog.list(state.items, state.timedItems, this.tab, BagModel.instance.serverTimeSeconds());
+        return BagItemCatalog.list(state.items, state.timedItems, this.tab, BagModel.instance.serverTimeSeconds(), state.spiritItems);
     }
 
-    /** 通过页面管理器打开独立详情；合并加载期间的重复点击，最终只展示仍选中的条目。 */
+    /** 按真实实例和物品mode选择精灵/普通装备/通用详情；切换类型取消旧窗及在途加载，不按页签猜类型。 */
     private showInfo(item: Readonly<BagListItem>): void {
+        if (item.spirit) {
+            UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
+            UIManager.instance.closeById(UIRegistry.viewSpecOf(EquipmentInfoView)!.id);
+            const args = { key: item.key };
+            void UIManager.instance.open(SpiritInfoView, args).then(detail => {
+                if (!this.closed && this.pickedId === item.key) {
+                    detail.runOpen(args);
+                }
+            }).catch(error => {
+                if (!UIManager.isOpenCancelled(error) && !this.closed) {
+                    this.pickedId = null;
+                }
+            });
+            return;
+        }
+        UIManager.instance.closeById(UIRegistry.viewSpecOf(SpiritInfoView)!.id);
+        if (GameConfig.instance.getConfig(GConfig.Item, item.itemId)?.mode === 1) {
+            UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
+            const args = { key: item.key };
+            void UIManager.instance.open(EquipmentInfoView, args).then(detail => {
+                if (!this.closed && this.pickedId === item.key) {
+                    detail.runOpen(args);
+                }
+            }).catch(error => {
+                if (!UIManager.isOpenCancelled(error) && !this.closed) {
+                    this.pickedId = null;
+                }
+            });
+            return;
+        }
+        UIManager.instance.closeById(UIRegistry.viewSpecOf(EquipmentInfoView)!.id);
         const args = { source: "inventory" as const, key: item.key, tab: this.tab };
         void UIManager.instance.open(BagInfoView, args).then(detail => {
             if (!this.closed && this.pickedId === item.key) {
@@ -395,6 +430,8 @@ export class BagView extends BaseView<BagOpenArgs> {
     /** 关闭独立详情，连同尚未完成的打开一起取消；不直接销毁其他窗口节点。 */
     private dismissInfo(): void {
         UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
+        UIManager.instance.closeById(UIRegistry.viewSpecOf(SpiritInfoView)!.id);
+        UIManager.instance.closeById(UIRegistry.viewSpecOf(EquipmentInfoView)!.id);
     }
 
     /** 写入页面提示日志并交由 UIManager 展示。 */

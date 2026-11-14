@@ -1,0 +1,127 @@
+{
+  "date": "2026-11-14",
+  "branch": "hao",
+  "baseline": "保留c23b53ed之后全部既有未提交修改，不回退、不覆盖其他批次成果",
+  "scope": "补齐背包普通装备mode=1专用只读详情；mode=18灵器、英雄已穿戴装备入口和其他分类详情不在本批恢复范围，穿脱/合成/分解/领取继续关闭",
+  "reference": {
+    "officialUrl": "https://mxzg-test.funsgamex.com/jp/",
+    "officialObserved": "通过已有角色只读打开背包装备与银制利剑，核对绿色标题、一颗黄星、武器类型、评分33、攻击33、书本说明及来源/装备按钮；没有点击正式服资产操作",
+    "officialScreenshot": "docs/images/equipment-official-sword-20261114.jpg",
+    "officialLimit": "正式服当前可见装备未包含套装/六星样本，不能把本机紫/红样本记为正式服逐项视觉验收",
+    "oldSources": [
+      "client/cocos_mxzg/client/idle/src/layer/AbilityInfoCtr.lua",
+      "client/cocos_mxzg/client/idle/src/data/EquipData.lua",
+      "client/cocos_mxzg/client/idle/src/comp/menu/UIMenuItemBackpack.lua",
+      "client/cocos_mxzg/client/ccb-hd/Resources/AbilityInfoLayer.ccb"
+    ],
+    "oldRoot": "G:/work/FsGame/Demo/mj/program",
+    "configComparison": {
+      "equipmenttype": { "oldUniqueRows": 68, "newRows": 68, "differences": 0 },
+      "equipmentsettype": { "oldUniqueRows": 33, "newRows": 33, "differences": 0 },
+      "scorecount": { "oldUniqueRows": 13, "newRows": 13, "differences": 0 },
+      "attrshow": { "oldUniqueRows": 50, "newRows": 50, "differences": 0 }
+    }
+  },
+  "implementation": {
+    "entry": "BagView按真实mode=1打开EquipmentInfoView，页面自己登记唯一Prefab/prepare；普通道具、碎片、精灵及灵器保留各自既有分路",
+    "data": "参数只传稳定库存key，每次事件重读BagModel；条目消失或分类改变即关闭，不生成穿戴实例，不查询库存或写资产",
+    "rules": "评分沿旧Lua先ratio/10000再乘属性、逐条ceil后求和；属性按scorecount.idx稳定排序，套装按旧背包空穿戴上下文固定0/4和2/3/4档未激活说明",
+    "config": "新增ScoreCount、EquipmentSetType、AttributeShow类型规范并由生成器产出；attrshow完全相同的重复226行按旧Lua覆盖语义去重，同键异值拒绝",
+    "missingData": "整张评分表、装备行、语言、图标映射及套装档位缺失均返回明确不可展示并限频记录；合法单属性没有评分映射时沿旧代码贡献0，不伪造其他值",
+    "layout": "一个完整静态Prefab，Layout/Widget/ViewportScale管理尺寸，两个基础属性槽、三个套装槽；六星一颗原红星，不沿用英雄高星规则；共享模态由UIManager提供",
+    "lifecycle": "事件和按钮解绑、绘制代次拒绝迟到、ResManager归还本窗及属性槽图片；注销统一关窗，不保存owner或自行比较角色键",
+    "loading": "保留三段配置和现有资源池；详情按需prepare，不添模块资源清单、不调整LoadingPlan",
+    "assets": {
+      "evidence": "docs/validation/equipment-detail-assets-20261114.json",
+      "imagesChecked": 24,
+      "imagesCorrected": 17,
+      "method": "按旧图集直接复制RGBA，保留原UUID；不重复以自身alpha作蒙版",
+      "historicalBaseline": "ui-atlas与common-atlas检查只按明确旧/新哈希证据认可本批separator及前批精灵button透明修复，不改历史迁移证据"
+    },
+    "scopeCount": {
+      "bundles": 16,
+      "remoteBundles": 15,
+      "prefabs": 36,
+      "views": 21,
+      "scripts": 169,
+      "prefabSceneFiles": 37,
+      "scriptBindings": 85,
+      "sharedJson": 49,
+      "typedConfig": 20,
+      "mavenShared": 32
+    }
+  },
+  "validation": {
+    "frontendSuites": [
+      "equipment-detail",
+      "equipment-info-view",
+      "backpack",
+      "bindings",
+      "current-resource-scope",
+      "ui-atlas",
+      "common-atlas",
+      "config-generated",
+      "client-config-scope",
+      "config-groups",
+      "staged-loading",
+      "creator-compat",
+      "hero-detail"
+    ],
+    "pythonClientConfigTests": 33,
+    "otherChecks": [
+      "Creator工程tsc --noEmit",
+      "generate_resources.cjs --check",
+      "check_prefab_plan.py（36保留项）",
+      "audit_prefabs.py（36结构记录及当前指纹）",
+      "check_docs.py",
+      "git diff --check"
+    ],
+    "suiteLogDirectory": "client/temp/project-checks",
+    "browser": {
+      "mode": "Creator本机预览，随机端口独立H2/WS，真实GM持久发放测试样本后只读验收，不构建发布包",
+      "port": 51278,
+      "run": "52ec688d98f1423cbaaf607e2f061c8c",
+      "account": "battle_review",
+      "deviceSetting": "Apple iPhone 14 Pro (393×852)",
+      "browserViewport": "1280×720；不等同真机393×852完整可见区域",
+      "samples": [
+        { "itemId": 1001001, "quantity": 1, "result": "绿1星银制利剑，评分33、攻击33，无套装，紧凑面板" },
+        { "itemId": 1001007, "quantity": 1, "result": "紫3星双极雷刃，评分276、攻击276，雷鸣套装0/4及三档加成" },
+        { "itemId": 1001017, "quantity": 1, "result": "红6星创世·烈焰，一颗红星，评分4137、攻击3780及暴击伤害510，创世套装0/4" }
+      ],
+      "passed": [
+        "来源及装备按钮仅全局未开放飘字，不提交资产请求",
+        "X关闭和空白关闭返回列表，无点击穿透",
+        "套装/双属性后重开普通装备，隐藏槽清空且面板恢复紧凑高度",
+        "返回英雄列表后重开背包与详情，原共用品质边框正常",
+        "注销返回登录，无旧详情残留"
+      ],
+      "assetRevision": 5,
+      "stateChangedAfterRefresh": 0,
+      "warningAndErrorCutoff": "2026-11-14T07:50:00.272Z",
+      "newWarningsOrErrorsAfterCutoff": 0,
+      "consoleNote": "历史日志保留15:43旧编译PrefabPlanUtils拒绝新详情的错误；刷新后07:50Z重新鉴权起无新增警告/错误，不称全历史日志清空",
+      "screenshots": [
+        "docs/images/equipment-preview-sword-20261114.jpg",
+        "docs/images/equipment-preview-set-20261114.jpg",
+        "docs/images/equipment-preview-six-star-20261114.jpg",
+        "docs/images/equipment-preview-readonly-toast-20261114.jpg",
+        "docs/images/equipment-preview-logout-20261114.jpg"
+      ],
+      "ownedTestProcess": {
+        "pid": 9080,
+        "stopped": true,
+        "verification": "停止前核对唯一equipment-detail-preview复制目录和SocketPreviewServer完整进程命令行，只停止本批进程；日常服务未改动"
+      }
+    },
+    "notRun": [
+      "未构建新发布包或测试CDN新包",
+      "未运行新Java/MySQL测试；本批不改后端生产代码或协议",
+      "未把前批GM/精灵Java测试计入本批",
+      "未做真机、原生、微信或多尺寸全覆盖",
+      "未在正式服操作穿戴、来源、领取或其他资产写入口"
+    ]
+  },
+  "remaining": "道具/碎片各自详细流程和mode18灵器仍有缺口；装备来源、穿脱、养成、合成及分解继续关闭，不将只读完成描述为装备玩法完成",
+  "git": "hao本地保留，未提交、推送或合并main"
+}

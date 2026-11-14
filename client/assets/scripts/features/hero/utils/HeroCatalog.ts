@@ -1,6 +1,8 @@
-/** 英雄名册配置投影：直接使用英雄配置item_id，物品回退图标复用BagItemCatalog的配置解析。
- * 只生成显示信息，不持有库存或发起资源加载；未知配置保留明确缺失。
+/** 英雄模板显示投影：按需查询唯一GameConfig中的当前英雄行及必要的物品回退行。
+ * 不再按页面复制整表或建立模板Map；仅返回名称、元素和图标，不持有玩家、配置或资源状态。
  */
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 export interface HeroTemplateFace {
@@ -9,49 +11,42 @@ export interface HeroTemplateFace {
     readonly elem: number | null;
     readonly icon: string | null;
 }
-import type { HeroTypeRow, ItemRow } from "../../../config/GConfig";
-/** Local display projection only; does not own role data. */
+/** 只计算一个模板的显示字段，配置所有权及索引归GameConfig。 */
 export class HeroCatalog {
-    /** 按模板ID索引只读展示信息，随本配置投影实例释放。 */
-    private readonly templates = new Map<number, HeroTemplateFace>();
-    /** 对已校验的配置建立显示索引，不修改源表或角色名册。 */
-    constructor(herotype: {
-        readonly rows: readonly HeroTypeRow[];
-    }, items: {
-        readonly rows: readonly ItemRow[];
-    }) {
-        if (!Array.isArray(herotype?.rows) || !Array.isArray(items?.rows)) {
-            throw new Error("英雄展示配置无效");
-        }
-        const icons = new Map<number, string>();
-        for (const row of items.rows) {
-            if (!HeroCatalog.positive(row.idx) || typeof row.icon !== "string") {
-                continue;
-            }
-            const match = /^hero-icon\/([A-Za-z0-9_-]+)$/.exec(row.icon);
-            if (match) {
-                icons.set(row.idx, BagItemCatalog.iconSource(row) || "");
-            }
-        }
-        for (const row of herotype.rows) {
-            // 配置包含说明行，只有正整数ID作为有效英雄模板。
-            if (!HeroCatalog.positive(row.type)) {
-                continue;
-            }
-            if (this.templates.has(row.type)) {
-                throw new Error("英雄模板 ID 重复：" + row.type);
-            }
-            this.templates.set(row.type, Object.freeze({
-                templateId: row.type,
-                name: typeof row.note === "string" && row.note.trim() ? row.note.trim() : "英雄 " + row.type,
-                elem: HeroCatalog.positive(row.elem) && row.elem <= 5 ? row.elem : null,
-                icon: ResManager.hero(row.item_id) || icons.get(row.type) || null,
-            }));
-        }
+    /** 无状态工具只提供静态入口，不创建页面专属配置对象。 */
+    private constructor() {
     }
 
-    /** 找不到模板时返回 null，由页面明确显示未知模板。 */
-    find(templateId: number): HeroTemplateFace | null { return this.templates.get(templateId) || null; }
+    /**
+     * 按模板主键读取已安装配置并投影当前显示；缺行返回null，调用方显示明确缺失。
+     * @param config 默认使用应用唯一仓库，独立规则检查可传入已准备的真实GameConfig。
+     */
+    public static find(templateId: number, config: GameConfig = GameConfig.instance): HeroTemplateFace | null {
+        if (!HeroCatalog.positive(templateId)) {
+            return null;
+        }
+        const row = config.getConfig(GConfig.HeroType, templateId);
+        if (!row) {
+            return null;
+        }
+        const iconId = row.item_id;
+        let icon = HeroCatalog.positive(iconId) ? ResManager.hero(iconId) : null;
+        if (!icon) {
+            const item = config.getConfig(GConfig.Item, templateId);
+            // 保留原有仅接受hero-icon物品图标的回退，不把其他物品图片当英雄头像。
+            if (item && typeof item.icon === "string" && /^hero-icon\/([A-Za-z0-9_-]+)$/.test(item.icon)) {
+                icon = BagItemCatalog.iconSource(item);
+            }
+        }
+        const elem = row.elem;
+        return Object.freeze({
+            templateId: row.type,
+            name: typeof row.note === "string" && row.note.trim() ? row.note.trim() : "英雄 " + row.type,
+            elem: HeroCatalog.positive(elem) && elem <= 5 ? elem : null,
+            icon,
+        });
+    }
+
     /** 判断配置中的正整数 ID，不将占位值当作有效模板。 */
     private static positive(value: unknown): value is number {
         return typeof value === "number" && Number.isSafeInteger(value) && value > 0;

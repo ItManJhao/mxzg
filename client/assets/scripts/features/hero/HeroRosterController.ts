@@ -5,9 +5,9 @@ import { EventDispatcher } from "../../framework/EventDispatcher";
 import { Protocol, ProtocolName } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
 import { ProtocolStateUtils, STATE_PROTOCOLS } from "../../platform/ProtocolStateUtils";
-import { HeroSnapshotUtils } from "./data/HeroSnapshotUtils";
 import { HeroRosterModel } from "./HeroRosterModel";
 import { HeroRosterEvent } from "./utils/HeroRosterEvent";
+import {HeroSnapshotUtils} from "./data/HeroSnapshotUtils";
 
 export class HeroRosterController extends BaseController {
     /** 应用唯一模块，独立于窗口开关。 */

@@ -3,9 +3,6 @@
  * 持有该场冻结展示参数，不联网、不重算战斗、不发奖；独立于结算倒计时，关闭时释放本页监听。
  */
 import { _decorator, Button, Label, Node } from "cc";
-import { GameConfig } from "../../../config/GameConfig";
-import { GConfig } from "../../../config/GConfig";
-import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
@@ -34,10 +31,6 @@ export interface BattleDetailArgs {
     allowMultiple: false,
     hostId: "remake-modal",
     modal: { mask: true, closeOnOutside: true },
-    prepare: async () => {
-        await RemakeConfigUtils.prepareInventoryConfig();
-        await RemakeConfigUtils.prepareHeroDetailConfig();
-    },
 })
 @ccclass("BattleDetailLayer")
 export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
@@ -59,10 +52,10 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
     @property(Label) attackerName: Label | null = null;
     /** 本场守方名称，不使用当前关卡推算旧战报。 */
     @property(Label) defenderName: Label | null = null;
-    /** 关闭后为true，阻止迟到配置更新已销毁页面。 */
+    /** 关闭后为true，禁止继续更新统计或布局。 */
     private released = false;
 
-    /** 绑定内容关闭按钮并加载配置；遮罩由ModalLayer处理，异步失败交UIManager统一处理。 */
+    /** 绑定关闭按钮并从已安装配置展示统计；遮罩和打开失败由UIManager统一处理。 */
     public onOpen(args?: BattleDetailArgs): void {
         super.onOpen(args);
         if (!args || !this.panel || !this.closeButton || !this.attackerList
@@ -86,24 +79,19 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
         this.closeButton.node.on(Button.EventType.CLICK, close);
         this.ownListener(() => this.closeButton?.node.off(Button.EventType.CLICK, close));
         ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
-        void this.prepare(args).then(() => {
-            if (!this.released) {
-                this.finishOpen();
-            }
-        }).catch(error => {
-            if (!this.released) {
-                this.failOpen(error instanceof Error ? error : new Error(String(error)));
-            }
-        });
+        try {
+            this.paintRows(args);
+            this.finishOpen();
+        } catch (error) {
+            this.failOpen(error instanceof Error ? error : new Error(String(error)));
+        }
     }
 
-    /** 同源配置仅用于名称和图标；双方最大值取同一战报名册，顺序不按伤害重排。 */
-    private async prepare(args: BattleDetailArgs): Promise<void> {
-        await RemakeConfigUtils.prepareHeroDetailConfig();
+    /** 当前格子按主键查询名称和基础图标；双方统计沿同一战报顺序，不保存配置索引或重排伤害。 */
+    private paintRows(args: BattleDetailArgs): void {
         if (this.released || !this.node.isValid) {
             return;
         }
-        const catalog = new HeroCatalog(GameConfig.instance.getFile(GConfig.HeroType), GameConfig.instance.getFile(GConfig.Item));
         const rows = BattleStatisticsUtils.rows(args.units);
         for (const [faction, scroll] of [[1, this.attackerList!], [2, this.defenderList!]] as const) {
             scroll.validateBindings();
@@ -112,7 +100,7 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
                 if (!cell) {
                     throw new Error("战斗统计列表缺少BattleDetailCell");
                 }
-                cell.show(row, catalog.find(row.unit.templateId));
+                cell.show(row, HeroCatalog.find(row.unit.templateId));
             });
             scroll.toStart();
         }

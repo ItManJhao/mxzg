@@ -14,10 +14,95 @@ const currentPrefabs = new Map(current.retainedPrefabs.map(row => [resolveAssetP
 const currentPrefabText = new Map([...currentPrefabs.keys()].map(file => [file, fs.readFileSync(file, 'utf8')]));
 // 仅登记离线迁移证据，不作为运行时模块资源清单。
 const manifests = ['hero-static-migration-20261111.json', 'battle-static-migration-20261111.json'];
+// 后续修复只由本批证据显式承接；历史迁移报告及源修复报告不回写新摘要。
+const repairImports = JSON.parse(fs.readFileSync(path.join(root,
+    'docs/validation/item-shard-assets-20261114.json'))).priorRepairImports || [];
+const checkedRepairImports = new Map();
 
 /** 计算文件摘要，保护像素、UUID和九宫格等原始设置。 */
 function hash(file) {
     return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+}
+
+/** 计算证据中保留的原始meta文本摘要，连同原换行一起核对旧迁移记录。 */
+function textHash(text) {
+    return crypto.createHash('sha256').update(text, 'utf8').digest('hex');
+}
+
+/** 沿明示属性路径读取元数据；路径不存在时拒绝，而非忽略未列出的字段。 */
+function valueAt(object, propertyPath) {
+    return propertyPath.split('.').reduce((value, key) => {
+        assert(value && Object.hasOwn(value, key), propertyPath + ' 元数据字段不存在');
+        return value[key];
+    }, object);
+}
+
+/** 按已记录差异构造预期meta；不修改实际图片、meta或历史证据。 */
+function replaceAt(object, propertyPath, expectedBefore, expectedAfter) {
+    const segments = propertyPath.split('.');
+    const field = segments.pop();
+    const parent = segments.length ? valueAt(object, segments.join('.')) : object;
+    assert.deepEqual(parent[field], expectedBefore, propertyPath + ' 旧值与修复证据不符');
+    parent[field] = expectedAfter;
+}
+
+/**
+ * 校验一次原RGBA修复及Creator导入链：旧图片摘要来自原修复报告，旧meta全文必须命中旧摘要。
+ * 只接受明列的导入差异，完整meta深比较会继续拒绝UUID、九宫格及任何未记录设置变化。
+ */
+function checkRepairImport(entry) {
+    const file = resolveAssetPath(entry.path);
+    if (checkedRepairImports.has(file)) {
+        return checkedRepairImports.get(file);
+    }
+    assert.equal(entry.repairEvidence, 'docs/validation/equipment-detail-assets-20261114.json',
+        entry.path + ' 修复来源未核实');
+    const evidence = JSON.parse(fs.readFileSync(path.join(root, entry.repairEvidence)));
+    const resources = evidence.resources.filter(row => resolveAssetPath(row.path) === file);
+    assert.equal(resources.length, 1, entry.path + ' 修复记录必须唯一');
+    const repair = resources[0];
+    assert.equal(repair.rgbaMatched, true, entry.path + ' 没有旧图RGBA核对证据');
+    assert.equal(repair.pixelsCorrected, true, entry.path + ' 并非明确修复的图片');
+    assert.notEqual(repair.beforeSha256, repair.afterSha256, entry.path + ' 缺少图片修复前后摘要');
+    assert.equal(hash(file), repair.afterSha256, entry.path + ' 已核RGBA修复后图片变化');
+    assert.equal(textHash(entry.beforeMetaText), repair.metaSha256, entry.path + ' 原meta文本摘要不符');
+    assert.equal(hash(file + '.meta'), entry.afterMetaSha256, entry.path + ' Creator导入后meta变化');
+    const original = JSON.parse(entry.beforeMetaText);
+    const actual = JSON.parse(fs.readFileSync(file + '.meta'));
+    assert.equal(original.uuid, repair.uuid, entry.path + ' 原meta与图片修复UUID不一致');
+    assert.equal(original.uuid, entry.mainUuid, entry.path + ' 原主UUID证据不一致');
+    assert.equal(actual.uuid, original.uuid, entry.path + ' 主UUID变化');
+    const subUuids = Object.fromEntries(Object.entries(original.subMetas).map(([key, row]) => [key, row.uuid]));
+    assert.deepEqual(subUuids, entry.subUuids, entry.path + ' 原子UUID证据不一致');
+    assert.deepEqual(Object.fromEntries(Object.entries(actual.subMetas).map(([key, row]) => [key, row.uuid])),
+        subUuids, entry.path + ' 子UUID变化');
+    const expected = JSON.parse(entry.beforeMetaText);
+    assert(entry.creatorChanges.length > 0, entry.path + ' 缺少Creator导入差异');
+    for (const change of entry.creatorChanges) {
+        replaceAt(expected, change.path, change.before, change.after);
+    }
+    assert.deepEqual(actual, expected, entry.path + ' 出现未记录的meta变化');
+    const chain = { beforeImage: repair.beforeSha256, afterImage: repair.afterSha256,
+        beforeMeta: repair.metaSha256, afterMeta: entry.afterMetaSha256 };
+    checkedRepairImports.set(file, chain);
+    return chain;
+}
+
+/** 保持历史内容门槛；仅允许精确旧摘要→已核RGBA修复→明示Creator导入后的新摘要。 */
+function checkHistoricalResource(file, historicalSha256, description) {
+    const actualSha256 = hash(file);
+    if (actualSha256 === historicalSha256) {
+        return;
+    }
+    const image = file.endsWith('.meta') ? file.slice(0, -5) : file;
+    const imports = repairImports.filter(row => resolveAssetPath(row.path) === image);
+    assert.equal(imports.length, 1, description + ' 原资源或meta变化，缺少唯一修复承接证据');
+    const chain = checkRepairImport(imports[0]);
+    const metadata = file.endsWith('.meta');
+    assert.equal(historicalSha256, metadata ? chain.beforeMeta : chain.beforeImage,
+        description + ' 历史摘要未命中修复前值');
+    assert.equal(actualSha256, metadata ? chain.afterMeta : chain.afterImage,
+        description + ' 当前摘要未命中修复后值');
 }
 
 for (const name of manifests) {
@@ -70,7 +155,7 @@ function checkBagBundle() {
             const meta = JSON.parse(fs.readFileSync(resolveAssetPath(row.path + '.meta')));
             assert.equal(meta.uuid, retained.uuid, row.path + ' 当前身份变化');
         } else {
-            assert.equal(hash(resolveAssetPath(row.path)), row.sha256, row.path + ' 原资源或meta变化');
+            checkHistoricalResource(resolveAssetPath(row.path), row.sha256, row.path);
         }
         assert(!fs.existsSync(path.join(root, row.oldPath)), row.oldPath + ' 遗留重复文件');
     }

@@ -7,6 +7,9 @@ const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
 const root = path.resolve(__dirname, '../..');
 const { bundleRoot, resolveBundleFile } = require('../../tools/bundle-paths.cjs');
+// 按旧图集复原的明确增量，不改写原迁移时的字节基线。
+const equipmentImages = JSON.parse(fs.readFileSync(path.join(root,
+    'docs/validation/equipment-detail-assets-20261114.json'), 'utf8')).resources;
 const directory = path.join(bundleRoot('bag'), 'atlas');
 const pac = JSON.parse(fs.readFileSync(path.join(directory, 'BagAtlas.pac'), 'utf8'));
 assert.equal(pac.__type__, 'cc.SpriteAtlas');
@@ -23,8 +26,15 @@ for (const [name, prefab, originalUuid, originalHash] of [
     const meta = JSON.parse(fs.readFileSync(path.join(imageDirectory, name + '.png.meta'), 'utf8'));
     assert.equal(meta.uuid, originalUuid, '保留图片 UUID');
     assert.equal(meta.subMetas.f9941.uuid, originalUuid + '@f9941', '保留帧 UUID');
-    assert.equal(createHash('sha256').update(fs.readFileSync(path.join(imageDirectory, name + '.png'))).digest('hex'),
-        originalHash, '迁移原图保持不变；以后主动换图时同步审核此基线');
+    const file = path.join(imageDirectory, name + '.png');
+    const restored = equipmentImages.find(row => path.resolve(root, row.path) === file && row.pixelsCorrected);
+    if (restored) {
+        assert.equal(restored.beforeSha256, originalHash, '图集复原必须承接原迁移图片基线');
+        assert.equal(restored.uuid, originalUuid, '图集复原不得重建UUID');
+        assert.equal(restored.rgbaMatched, true, '图集复原必须逐像素核对旧图');
+    }
+    assert.equal(createHash('sha256').update(fs.readFileSync(file)).digest('hex'),
+        restored ? restored.afterSha256 : originalHash, '图片必须符合原迁移或已核实的旧图像素恢复记录');
     const view = fs.readFileSync(resolveBundleFile(owner + '/prefabs/' + prefab + '.prefab'), 'utf8');
     assert(view.includes(meta.subMetas.f9941.uuid), '预制体直接绑定原图帧');
 }

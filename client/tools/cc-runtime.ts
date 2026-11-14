@@ -34,6 +34,17 @@ export class JsonAsset extends Asset {
   json: object | null = null;
 }
 
+/** 配置包测试使用的二进制资产；只模拟公开buffer读取与引用，不模拟真实引擎解码。 */
+export class BufferAsset extends Asset {
+  /** 测试读取到的原始包字节，由加载夹具明确写入。 */
+  public data = new ArrayBuffer(0);
+
+  /** 和Creator的公开BufferAsset.buffer接口一致，返回当前测试原始字节。 */
+  public buffer(): ArrayBuffer {
+    return this.data;
+  }
+}
+
 /** 只读列表裁剪测试使用的矩形，不模拟真实引擎坐标变换或绘制。 */
 export class Rect {
   /** 保存测试矩形的原点和尺寸，单位与调用方传入坐标一致。
@@ -53,7 +64,7 @@ export class Rect {
 
 export const KeyCode = { F9: 120, BACKQUOTE: 192 };
 
-export const Input = { EventType: { KEY_DOWN: "keydown" } };
+export const Input = { EventType: { KEY_DOWN: "keydown", KEY_UP: "keyup" } };
 
 export const input = {
   on(_type: string, _callback: (event: { keyCode: number }) => void, _target?: unknown): void {},
@@ -354,10 +365,15 @@ export class Label extends Component {
   font: unknown = null;
   fontFamily = "";
   overflow = 0;
+  /** 供全局提示核对换行配置，不模拟真实字体的断行和测量。 */
+  enableWrapText = true;
   isBold = false;
   horizontalAlign = 1;
   verticalAlign = 1;
   color = new Color();
+
+  /** 渲染测量由具体用例设置尺寸夹具；替身不冒充Creator的真实排版结果。 */
+  updateRenderData(_force = false): void {}
 }
 
 export class SpriteFrame {

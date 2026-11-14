@@ -1,0 +1,202 @@
+{
+  "date": "2026-11-13",
+  "baseline": "hao c23b53ed及此前未提交修改",
+  "scope": "完整挂机收益纯计算装配、真实只读输入接线与旧随机调用修正；不开放领取",
+  "legacySources": [
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/service/RoleMissionService.java",
+      "sha256": "7f03358bfdec11db91fa5a34a0c6c875eb50efe104d92da877294fdb5ea95740"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/clergy/service/ClergyService.java",
+      "sha256": "15468fa9be09be8a4f280c6cd7dda200f7cb4e67c94549e5b8f41e8d44a33f29"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/ThingService.java",
+      "sha256": "92a1098722c88ac8d002277613de2a1a2fb9e74d1321a4a863759e315040fc5a"
+    },
+    {
+      "path": "server/mxzg-common/src/main/java/com/ayjs/mxzg/common/util/RandomUtil.java",
+      "sha256": "dca456ace2b8012f66990b50be4b7d2a2dad3b98382e901639e5480095a5fffe"
+    },
+    {
+      "path": "server/mxzg-common/src/main/java/com/ayjs/mxzg/common/excel/BaseExcelCache.java",
+      "sha256": "b3b29f4d4171b7ccf6112d17a9edb7b62b27c003e19c92a48f73d36f54abbfec"
+    },
+    {
+      "path": "server/mxzg-common/pom.xml",
+      "sha256": "74dfb42073b129087e3c1d62dbbf391e8a906448d114b3b3f9de3a333bf77de6"
+    },
+    {
+      "path": "server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/DropGroupSysCache.java",
+      "sha256": "d8dc4727eeafa9f538199a796fce104d301d46a7b19eac5aaad2f97801b9ddb4"
+    }
+  ],
+  "upstream": {
+    "library": "Hutool 5.8.4，旧mxzg-common/pom.xml声明",
+    "url": "https://raw.githubusercontent.com/dromara/hutool/5.8.4/hutool-core/src/main/java/cn/hutool/core/lang/WeightRandom.java",
+    "httpStatus": 200,
+    "bytes": 5091,
+    "sha256": "2dcf8fcbf76fd3991d7b61cc430ebcbaba33a4dc2f7ab26ce88ae39433bb70db",
+    "readMethod": "审查代理通过只读Invoke-WebRequest读取；web缓存未命中不能当作URL失效",
+    "behavior": "next()用nextDouble乘总权重，选择累计权重大于抽样点的首项；单行仍抽"
+  },
+  "implementation": {
+    "entry": "IdleRewardUtils.calculate(IdleRules,Input,stageId,seconds,dropSeconds,previous,RandomGenerator)",
+    "pure": "无数据库/当前时钟/网络/发奖，不判定持久快照新鲜，不伪造幂等成功",
+    "rngOrder": [
+      "activity16",
+      "activity34",
+      "activity44",
+      "ordinary trigger/weight/quantity",
+      "clergy"
+    ],
+    "clergyInputs": "baseRewards -> ordinary.dropRewards(同窗合并/跨窗分项) -> 16/34/44各自倍乘列表；不重复加入ordinary.rewards",
+    "frozenActivity": "静态drop(Drop,seconds,random)只用冻结行，不重新selectedDrop/current；公开Drop构造校验且冻结",
+    "versions": "Input新idleRulesVersion与传入普通规则匹配；组合rulesVersion继续冻结各来源配置",
+    "preflight": "首个随机前校验全部活动顺序/状态/期次/Drop、开服日数原值及原因矛盾、所有bonus/clergy、旧计数/时段/关卡；016/034具体等级资格归权威输入层",
+    "failure": "非法输入提前拒绝；晚期溢出无部分候选、previous不变，已消费随机源不回滚",
+    "result": "保留Input/关卡/秒数/前窗口及counter/ordinary/三活动/outcome最终总量；集合不可变"
+  },
+  "correctedLegacyDifferences": {
+    "ordinaryProbability": "旧lucky概率0/1000000及保底不消费命中率随机，部分概率严格<",
+    "ordinaryWeight": "原整数权重抽样改为旧nextDouble乘累计权重；正权重按idx顺序；单行仍抽",
+    "quantity": "固定min=max仍nextInt(min,max+1)，源越界拒绝",
+    "activityAndClergy": "活动0仍按<=抽样；神职0/full每条仍抽，0秒不整体提前返回",
+    "projectionOrder": "触发器/权重显式按原idx排序；反转源rows测试完整内容及version一致",
+    "historicalLimit": "前批结果边界测试未证明这些随机消费一致；原历史证据保持不改"
+  },
+  "authoritativeIntegration": {
+    "environment": "独立H2，无日常库或MySQL",
+    "sources": "真实角色VIP13/等级70，世界80，神职10，永久100610礼包与三活动控制044轮次0",
+    "frozenNowSeconds": 2000,
+    "seconds": 60,
+    "knownTotals": {
+      "900001": 440,
+      "900003": 32,
+      "900101": 68,
+      "901701": 3,
+      "900502": 3,
+      "901702": 3
+    },
+    "unchanged": "role全部字段/资产revision、inventory、gift、control全行，未创建新主线挂机/领取记录"
+  },
+  "config": {
+    "sharedTables": 47,
+    "mavenSharedIncludes": 32,
+    "typedSchemaTables": 16,
+    "projectionHashes": {
+      "idle-rules.json": "00936e8a1f26c95f8efdd3f04a40f9a2743e85ace97e0c0de75956286c9c8e08",
+      "idle-activities.json": "bbb22e62b8f8eafaf3e3219e0f7490ba07bdc03c98522f486be2680070b48dcd"
+    },
+    "projectionBytesUnchanged": true,
+    "packagedResourcesEqualSource": true
+  },
+  "checks": {
+    "java": {
+      "IdleRewardUtilsTest": {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleActivityRulesTest": {
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleActivityServiceTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardInputServiceTest": {
+        "tests": 23,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRewardRulesTest": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "ClergyInputRulesTest": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "ClergyStateMigrationTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "WorldLevelServiceTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "PrivilegeGiftRulesTest": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "PrivilegeGiftServiceTest": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "MainChapterIdleTest": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleRulesBoundaryTest": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleBonusUtilsTest": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "IdleTest": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "total": 163,
+    "failures": 0,
+    "errors": 0,
+    "log": "backend/target/idle-calculation-review-20261113.log",
+    "configScope": {
+      "tests": 24,
+      "passed": 24
+    },
+    "review": "首轮162项通过后复核补矛盾状态/日数校验，最终163项通过",
+    "resourceScope": "16包/32Prefab/17独立View、原UUID、全部序列化引用及12841份特效文件/UUID集合摘要通过",
+    "docs": "44份文档文件链接与git diff --check通过",
+    "resourceGenerated": "32份Prefab索引通过"
+  },
+  "limitations": [
+    "活动控制初始化/发布/周期维护未恢复；V21缺控制仍明确拒绝",
+    "没有新领取协议、累计计数/回执或资产同事务，没有生产calculate调用",
+    "无浏览器/Creator/新发布包/真机验收，不操作桌面应用",
+    "宝箱领取、快速战斗、英雄升级与穿脱仍关闭；清心与护盾待审保持"
+  ],
+  "git": "hao本地未提交推送，保留此前全部修改及HeroRosterController导入排版"
+}
