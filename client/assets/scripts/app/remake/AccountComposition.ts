@@ -1,4 +1,5 @@
-/** 会话装配：创建统一账号Model、WS连接、选服与凭证服务；不打开页面、不建立模块副本。 */
+/** 会话装配：创建统一账号Model、WS连接、选服与凭证服务；接纳连接前校验角色及冒险点。
+ * 不打开页面、不建立模块副本，不以普通库存补齐旧快照缺失的冒险点。 */
 import {MainChapterController} from "../../features/battle/MainChapterController";
 import {sys} from "cc";
 import {PREVIEW} from "cc/env";
@@ -20,9 +21,11 @@ export class AccountComposition {
     private constructor() {
     }
 
-    /** 创建会话依赖，不自动重放写请求；调用方在应用销毁时断开socket。 */
+    /** 创建会话依赖并在连接推进前校验完整角色扩展，不自动重放写请求；应用销毁时断开socket。 */
     public static async create(socketUrl: string): Promise<{
         model: AccountModel; socket: GameSocketClient; service: AccountService; servers: ServerSelection;
+        /** 经过测试实例核验的持久存储作用域，供应用绑定领取恢复。 */
+        storageNamespace: string;
     }> {
         const model = new AccountModel();
         const connection = await IsolatedSocketPreviewUtils.isolatedSocketPreview(socketUrl, sys.localStorage);
@@ -37,7 +40,7 @@ export class AccountComposition {
                 if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("恢复数据无效");
                 const snapshot = value as Record<string, unknown>;
                 MainChapterController.readState(snapshot.mainChapter, Number(snapshot.revision));
-                AccountApi.readRole(snapshot.role);
+                AccountApi.readSnapshotRole(snapshot);
                 BagItemDataUtils.readBagItems(snapshot.inventory);
                 BagItemDataUtils.readTimedItems(snapshot.timedInventory);
                 if (!Number.isSafeInteger(snapshot.revision) || Number(snapshot.revision) < 0) throw new Error("状态版本无效");
@@ -59,6 +62,6 @@ export class AccountComposition {
             write: session => storage.setItem(SESSION_KEY, JSON.stringify(session)),
             clear: () => storage.removeItem(SESSION_KEY),
         });
-        return {model, socket, service, servers};
+        return {model, socket, service, servers, storageNamespace: connection.storageNamespace};
     }
 }

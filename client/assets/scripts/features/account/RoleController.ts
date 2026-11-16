@@ -1,4 +1,4 @@
-/** 角色协议控制器：按实际协议更新唯一 AccountModel 中的角色资料，不处理登录或签发凭证。 */
+/** 角色协议控制器：按统一快照更新唯一AccountModel中的角色及冒险点，不处理登录或签发凭证。 */
 import { GameLog } from "../../core/GameLog";
 import { AccountApi } from "./AccountApi";
 import type { RoleProfile } from "./AccountModel";
@@ -32,9 +32,9 @@ export class RoleController {
         }
     }
 
-    /** 提交经过整体校验的权威角色，账号 Model 负责资料变更通知。 */
+    /** 一次提交经过整体校验的角色及独立冒险点，缺失扩展明确覆盖为未同步，账号Model统一通知。 */
     private onRoleState(protocol: ProtocolName, data: unknown): void {
-        this.accept(AccountApi.readRole(ProtocolStateUtils.statePayload(protocol, data).role));
+        this.accept(AccountApi.readSnapshotRole(ProtocolStateUtils.statePayload(protocol, data)));
     }
 
     /** 应用销毁时解除登记，关闭页面不调用。 */

@@ -16,6 +16,27 @@ def read(path):
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
+def acceptance_fingerprint(source, recorded_sha256, resource):
+    """只允许人工原指纹与当前字节完全相同或仅CRLF/LF转换；其他文本变化仍拒绝。
+
+    返回None表示原始字节相同；换行等价时返回明确证据，报告仍保留当前原始sha256，
+    不改写人工验收指纹、不移除BOM、不按JSON重排或忽略缩进等文本变化。
+    """
+    current_sha256 = hashlib.sha256(source).hexdigest()
+    if current_sha256 == recorded_sha256:
+        return None
+    normalized = source.replace(b'\r\n', b'\n')
+    normalized_sha256 = hashlib.sha256(normalized).hexdigest()
+    crlf_sha256 = hashlib.sha256(normalized.replace(b'\n', b'\r\n')).hexdigest()
+    assert recorded_sha256 in (normalized_sha256, crlf_sha256), (
+        resource, '人工验收记录对应旧 Prefab，须重新核对')
+    return {
+        'difference': '仅CRLF/LF差异',
+        'recordedSha256': recorded_sha256,
+        'normalizedLfSha256': normalized_sha256,
+    }
+
+
 def check_repaired_panels(data, name):
     """检查已修复窗口的内容包含与文字分栏，阻止父坐标错位、自动扩宽再次造成遮挡。"""
     if name not in ('BattleEditLayer', 'HeroInfoUpgradeLayer', 'UpgradeSuccessLayer',
@@ -213,15 +234,18 @@ def audit():
             assert content['_parent'] == view['heroPort'], (rel, '内容必须静态挂在视口下')
             assert not any(data[c['__id__']]['__type__'] == 'cc.Mask' for c in host['_components'])
             assert any(data[c['__id__']]['__type__'] == 'cc.Mask' for c in port['_components'])
+        fingerprint_source = file.read_bytes()
         report.append({'path': rel, 'classes': classes, 'root': {'position': root['_lpos'], 'scale': root['_lscale'], 'size': ui['_contentSize'], 'anchor': ui['_anchorPoint']},
                        'components': counts, 'specialAnchors': anchors, 'scrolls': scrolls, 'warnings': warnings,
                        'decision': '已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留' if rel in changes else '保留：组件/组合局部坐标与布局关系不机械转换',
                        'reviewStatus': '依赖所属页面检查的组合资源' if re.search(r'(?:Cell(?:View)?|ItemView|TabView|BoardView|SlotView|Shell|Chip(?:View)?)$', file.stem) else '结构检查通过但视觉待验收',
-                       'visual': '未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md', 'sha256': hashlib.sha256(file.read_bytes()).hexdigest()})
+                       'visual': '未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md', 'sha256': hashlib.sha256(fingerprint_source).hexdigest()})
         evidence = acceptance.get(rel)
         if evidence:
             accepted_paths.add(rel)
-            assert evidence['sha256'] == report[-1]['sha256'], (rel, '人工验收记录对应旧 Prefab，须重新核对')
+            fingerprint_difference = acceptance_fingerprint(fingerprint_source, evidence['sha256'], rel)
+            if fingerprint_difference:
+                report[-1]['acceptanceFingerprintDifference'] = fingerprint_difference
             assert evidence['status'] in ('实际预览通过', '结构检查通过但视觉待验收',
                                           '发现问题待修复', '依赖所属页面检查的组合资源'), rel
             report[-1]['reviewStatus'] = evidence['status']

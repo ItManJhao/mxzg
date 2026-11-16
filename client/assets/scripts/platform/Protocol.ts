@@ -37,6 +37,8 @@ export class Protocol {
     public static readonly SESSION_LOGIN = "session.login";
     /** 事务提交后同步角色与背包。 */
     public static readonly STATE_CHANGED = "state.changed";
+    /** 原发奖事务提交后的通用反馈；不作为角色或背包资产增量。 */
+    public static readonly REWARD_GRANTED = "reward.granted";
     /** 会话：建连后鉴权，凭证只出现在请求体，不打印。 */
     public static readonly SESSION_AUTHENTICATE = "session.authenticate";
     /** 会话：应用层心跳，不更新玩法数据，默认不打印。 */
@@ -73,6 +75,7 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.SERVERS_LIST, module: "选服", description: "开放区服" },
     { name: Protocol.SESSION_LOGIN, module: "登录", description: "统一初始化角色和背包" },
     { name: Protocol.STATE_CHANGED, module: "资产", description: "提交后的角色与背包同步" },
+    { name: Protocol.REWARD_GRANTED, module: "奖励", description: "已提交奖励的通用反馈" },
     { name: Protocol.SESSION_HEARTBEAT, module: "会话", description: "连接心跳" },
     { name: Protocol.SESSION_KICKED, module: "会话", description: "当前连接被替换" },
 ]);

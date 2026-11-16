@@ -1,6 +1,6 @@
 # 文档索引
 
-更新：2026-11-13。新聊天从[交接文档](handoff.md)进入；先读根目录[AGENTS.md](../AGENTS.md)，再按用途查阅。
+更新：2026-11-16。新聊天从[交接文档](handoff.md)进入；先读根目录[AGENTS.md](../AGENTS.md)，再按用途查阅。当前进度、下一步和操作入口分别只维护在下表主文档，历史批次不再重复粘贴。
 
 | 想了解什么 | 唯一主入口 | 维护边界 |
 |---|---|---|
@@ -12,14 +12,14 @@
 
 ## 按任务查阅
 
-- 通信与状态：[网络契约](network-contract.md)、[角色](role-data-contract.md)、[背包通信/MVC样板](bag-mvc-maintenance.md)、[库存事件](bag-inventory-events.md)、[英雄](hero-data-contract.md)、[阵容](hero-lineup-contract.md)。
-- 页面与交互：[Prefab规范](prefab-layout.md)、[战斗布局](battle-prefab-layout.md)、[阵容编辑](formation-ui-authoring.md)、[虚拟列表](super-scroll-authoring.md)。
+- 通信与状态：[网络契约](network-contract.md)、[断线后的页面与战斗恢复](reconnect-recovery.md)、[角色](role-data-contract.md)、[背包通信/MVC样板](bag-mvc-maintenance.md)、[库存事件](bag-inventory-events.md)、[英雄](hero-data-contract.md)、[阵容](hero-lineup-contract.md)。
+- 页面与交互：[Prefab规范及弹窗归属](prefab-layout.md)、[通用发奖反馈/奖励窗/确认框](reward-feedback.md)、[战斗布局](battle-prefab-layout.md)、[阵容编辑](formation-ui-authoring.md)、[虚拟列表](super-scroll-authoring.md)。
 - 资源与构建：[三段加载、Bundle与缓存](staged-resource-loading.md)、[自动图集与构建工具](bag-auto-atlas.md)、[配置生成与查询](config-pipeline.md)。
 - 玩法恢复：[挂机规则审计](idle-reward-rules.md)、[挂机输入契约](idle-reward-input-contract.md)、[新挂机累计与领取方案](main-chapter-idle-settlement.md)、[活动控制维护](idle-activity-maintenance.md)、[战斗统计](battle-statistics.md)、[战斗待复验问题](battle-known-issues.md)。
 - 运行与排错：[本机启停](local-remake-workflow.md)、[开发GM](gm-development.md)。
 
 ## 历史与证据
 
-2026-11-13 将重复批次过程和过时路线状态移出当前入口，完整原文保存在[进度历史快照](validation/development-history-20261113.md)与[旧路线快照](validation/restructuring-plan-history-20261113.md)。历史中的旧包数量、HTTP方案、已退役类名或“未提交”只表示当时情况，不能据此重新开放功能或判断今天的分支状态。
+2026-11-13的完整入口快照保存在[进度历史](validation/development-history-20261113.md)与[旧路线](validation/restructuring-plan-history-20261113.md)。11-14至11-16的实现/本机/发布证据保留在validation原文件，并由[当前进度证据索引](development-progress.md#既有证据索引)和相关专题链接；2026-11-16再次收敛了重复流水及已过时待办。历史中的旧包数量、HTTP方案、已退役类名或“未提交”只表示当时情况，不能据此重新开放功能或判断今天的分支状态。
 
 [开服规则研究](day60-open-server.md)是旧配置参考，images/保存截图；资源来源、Prefab审查等 JSON 仍供工具和追溯使用，不能因数量多而删除。后续修改对应主文档，历史证据保留，不再新增另一份“当前进度”。

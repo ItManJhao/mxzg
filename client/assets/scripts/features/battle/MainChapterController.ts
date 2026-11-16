@@ -1,4 +1,4 @@
-/** 主线控制器：协议onNotify提交Model，负责挑战幂等、战报读取与结算，不持有View、token或账号。 */
+/** 主线控制器：协议提交唯一Model，组织原战斗回执与权威快照双确认；不持有View、token或账号。 */
 import { BaseController } from "../../framework/BaseController";
 import { EventDispatcher } from "../../framework/EventDispatcher";
 import { Protocol, ProtocolName } from "../../platform/Protocol";
@@ -8,7 +8,7 @@ import { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { mxzg } from "../../platform/GameProtocol.generated";
 import { GameLog } from "../../core/GameLog";
 import { MainChapterModel, MainChapterState, MainChapterReplay, MainChapterIdleState, MainChapterExperience,
-    MainChapterIdleClaimState } from "./MainChapterModel";
+    MainChapterIdleClaimState, MainChapterReceipt } from "./MainChapterModel";
 import { BattleReplayUtils } from "./utils/BattleReplayUtils";
 
 declare module "../../framework/EventDispatcher" {
@@ -17,6 +17,15 @@ declare module "../../framework/EventDispatcher" {
 
 /** 唯一主线命令类型，不能透传任意暂停玩法。 */
 export type ChapterCommand = typeof Protocol.CHAPTER_CHALLENGE | typeof Protocol.CHAPTER_CLAIM | typeof Protocol.CHAPTER_REPLAY | typeof Protocol.CHAPTER_IDLE_ENCOUNTER;
+/** 一次结算确认任务；引用只用于合并业务操作及撤销重置后的异步续段，不承担身份判断。 */
+interface SettlementTask {
+    /** 当前任务始终使用同一个服务器战斗编号。 */
+    battleId: string;
+    /** 重复按钮及鉴权触发共用的确认任务，结束后释放。 */
+    promise: Promise<void>;
+    /** 请求期间鉴权已恢复且尚无回执，任务结束后允许恢复一次原编号。 */
+    resumeAfterAuthentication: boolean;
+}
 export class MainChapterController extends BaseController {
     /** 应用装配一次，页面只读Model并调用业务意图。 */
     public static readonly instance = new MainChapterController(MainChapterModel.instance);
@@ -25,6 +34,14 @@ export class MainChapterController extends BaseController {
     /** 应用提供身份隔离后的交付口，模块不感知登录。 */
     private send: ((name: ChapterCommand, body: object, received: (frame: GameFrame) => void,
         failed: (error: unknown) => void) => Promise<void>) | null = null;
+    /** 应用注入一次有界重新鉴权，成功/失败仍经过当前身份交付口；未装配时保持待确认。 */
+    private refreshSnapshot: ((received: () => void, failed: (error: unknown) => void) => Promise<void>) | null = null;
+    /** 当前在途结算任务；关页保留，身份重置或任务完成解除，旧续段不能改新任务。 */
+    private settlementTask: SettlementTask | null = null;
+    /** 应用把双确认历史回执投影到既有通用队列；empty表示无正奖励，无需打开空窗。 */
+    private restoreFeedback: ((receipt: MainChapterReceipt) => "queued" | "empty") | null = null;
+    /** 应用只重试通用队列显示，不重新发送结算、挑战或战报读取。 */
+    private retryFeedback: (() => void) | null = null;
 
     /** 注入唯一数据所有者，独立测试可传入隔离Model。 */
     constructor(private readonly model: MainChapterModel) { super(); }
@@ -34,12 +51,23 @@ export class MainChapterController extends BaseController {
     /** 应用提供当前角色头像只读入口；仅开结算时读取，不缓存账号或角色资料。 */
     public readRoleAppearance: () => { headId: number; borderId: number } | null = () => null;
 
-    /** 注入当前长连接、对话等级及结算头像读取口；身份仍由应用隔离，模块不保存角色副本。 */
+    /** 注入业务交付、角色显示及缺状态的有界鉴权入口；身份仍由应用隔离。 */
     public configure(send: NonNullable<MainChapterController["send"]>, readRoleLevel: () => number = () => 0,
-        readRoleAppearance: MainChapterController["readRoleAppearance"] = () => null): void {
+        readRoleAppearance: MainChapterController["readRoleAppearance"] = () => null,
+        refreshSnapshot: MainChapterController["refreshSnapshot"] = null): void {
         this.send = send;
         this.readRoleLevel = readRoleLevel;
         this.readRoleAppearance = readRoleAppearance;
+        this.refreshSnapshot = refreshSnapshot;
+    }
+
+    /** 应用装配既有通用反馈入口，模块不持有RewardView或当前账号资料。 */
+    public configureRecoveryFeedback(
+        restore: (receipt: MainChapterReceipt) => "queued" | "empty",
+        retry: () => void,
+    ): void {
+        this.restoreFeedback = restore;
+        this.retryFeedback = retry;
     }
 
     /** 登记明确协议清单，页面打开不再查询主线状态。 */
@@ -131,7 +159,7 @@ export class MainChapterController extends BaseController {
         });
     }
 
-    /** 统一初始化、操作回执、战报各自有清晰入口；历史回执绝不覆盖最新进度。 */
+    /** 统一快照与历史回执分权；首个已接纳鉴权包仅记恢复候选，实际进入主线页才确认结算。 */
     public onNotify(protocol: ProtocolName, value: unknown): void {
         switch (protocol) {
             case Protocol.SESSION_LOGIN:
@@ -143,6 +171,10 @@ export class MainChapterController extends BaseController {
                 this.model.state = chapter;
                 this.model.idle = idle;
                 this.model.idleReceivedAt = Date.now();
+                if (this.model.entryRecovery === null && protocol !== Protocol.STATE_CHANGED) {
+                    this.model.entryRecovery = Object.freeze({ battleId: chapter?.pendingBattleId || null, consumed: false });
+                }
+                this.observeSettlement();
                 break;
             }
             case Protocol.CHAPTER_CHALLENGE:
@@ -190,39 +222,268 @@ export class MainChapterController extends BaseController {
             lineupVersion: v.lineupVersion, bytes });
     }
 
-    /** 首次生成业务编号，失败保留原编号供显式重试；不自动跨关。 */
+    /** 首次生成编号，失败保留原编号；未收口的结算优先确认，绝不借恢复出战下一关。 */
     public async challenge(): Promise<void> {
-        if (this.model.busy || !this.model.state) return;
-        if (!this.model.requestId) this.model.requestId = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,
-            ch => { const n = Math.floor(Math.random() * 16); return (ch === "x" ? n : (n & 3) | 8).toString(16); });
-        await this.execute(Protocol.CHAPTER_CHALLENGE, { requestId: this.model.requestId });
+        if (this.model.busy || !this.model.state) {
+            return;
+        }
+        const settlement = this.model.settlement;
+        if (settlement && !settlement.presented) {
+            await this.claim(settlement.battleId);
+            return;
+        }
+        if (!this.model.requestId) {
+            this.model.requestId = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, ch => {
+                const n = Math.floor(Math.random() * 16);
+                return (ch === "x" ? n : (n & 3) | 8).toString(16);
+            });
+        }
+        const received = await this.execute(Protocol.CHAPTER_CHALLENGE, { requestId: this.model.requestId });
+        const receipt = this.model.receipt;
+        if (received && receipt?.action === "SETTLED" && !this.model.requestId) {
+            await this.claim(receipt.battleId);
+        }
     }
 
-    /** 结算显式指定服务器战报；重复点击由服务端战报ID保证只发一次。 */
-    public async claim(battleId: string): Promise<void> {
-        if (!MainChapterController.validId(battleId)) throw new Error("结算战报编号无效");
-        await this.execute(Protocol.CHAPTER_CLAIM, { battleId });
+    /**
+     * 记录演出结束后的原战斗意图并合并重复请求；仅回执与当前统一快照同时满足才确认。
+     * Promise结束也可能仍待恢复，调用者必须读取confirmedSettlement，不能据返回当作成功。
+     */
+    public claim(battleId: string): Promise<void> {
+        if (!MainChapterController.validId(battleId)) {
+            throw new Error("结算战报编号无效");
+        }
+        if (this.settlementTask) {
+            if (this.settlementTask.battleId !== battleId) {
+                throw new Error("另一场主线结算正在确认");
+            }
+            return this.settlementTask.promise;
+        }
+        if (this.model.busy || !this.send) {
+            return Promise.resolve();
+        }
+        const before = this.model.settlement;
+        if (before && before.battleId !== battleId && !before.presented) {
+            throw new Error("上一场主线结算尚未确认");
+        }
+        if (!before || before.battleId !== battleId) {
+            this.model.settlement = Object.freeze({
+                battleId, phase: "pending", presentation: "battle", feedbackQueued: false, presented: false,
+            });
+        }
+        if (this.observeSettlement()) {
+            return Promise.resolve();
+        }
+        const task: SettlementTask = { battleId, promise: Promise.resolve(), resumeAfterAuthentication: false };
+        this.settlementTask = task;
+        // 先登记任务再进入交付，避免同步夹具或鉴权事件重入产生第二次写请求。
+        task.promise = Promise.resolve().then(() => this.confirmSettlement(task));
+        return task.promise;
+    }
+
+    /**
+     * 首次进入主线页才消费身份首包候选；已有本地挑战、战报或结算仍走其原流程。
+     * 登录主城和后续推送不会调用此入口创建意图，关页也不取消已经接纳的结算。
+     */
+    public recoverPendingOnEntry(): Promise<void> {
+        const entry = this.model.entryRecovery;
+        if (!entry || entry.consumed || !this.restoreFeedback) {
+            return Promise.resolve();
+        }
+        this.model.entryRecovery = Object.freeze({ ...entry, consumed: true });
+        const battleId = entry.battleId;
+        if (!battleId || this.model.state?.pendingBattleId !== battleId || this.model.busy
+            || this.model.requestId || this.model.receipt || this.model.replay || this.model.settlement || this.settlementTask) {
+            return Promise.resolve();
+        }
+        this.model.settlement = Object.freeze({
+            battleId, phase: "pending", presentation: "reward", feedbackQueued: false, presented: false,
+        });
+        return this.claim(battleId);
+    }
+
+    /** 恢复归属的按钮意图：未确认继续原结算；已入队只重试显示，绝不切回胜利页或重播。 */
+    public async retryRecoveredSettlement(): Promise<void> {
+        const settlement = this.model.settlement;
+        if (!settlement || settlement.presentation !== "reward" || settlement.presented) {
+            return;
+        }
+        if (settlement.phase !== "confirmed") {
+            await this.claim(settlement.battleId);
+        } else if (settlement.feedbackQueued) {
+            this.retryFeedback?.();
+        } else {
+            this.offerRecoveryFeedback();
+        }
+    }
+
+    /** 应用只在整包被接纳后调用；普通推送只确认，鉴权仅恢复已有原战斗意图。 */
+    public afterSnapshot(protocol: string): void {
+        if (this.observeSettlement()) {
+            return;
+        }
+        const settlement = this.model.settlement;
+        if (!settlement || (protocol !== Protocol.SESSION_AUTHENTICATE && protocol !== Protocol.SESSION_LOGIN)) {
+            return;
+        }
+        if (this.settlementTask) {
+            this.settlementTask.resumeAfterAuthentication = !this.settlementReceipt(settlement.battleId);
+            return;
+        }
+        if (!this.settlementReceipt(settlement.battleId)) {
+            void this.claim(settlement.battleId).catch(error => this.reportSettlement(error));
+        }
+    }
+
+    /** 返回已双确认的原回执，未达版本或编号不匹配时返回null；历史回执从不写资产。 */
+    public confirmedSettlement(battleId: string): MainChapterReceipt | null {
+        const settlement = this.model.settlement;
+        return settlement?.battleId === battleId && settlement.phase === "confirmed"
+            ? this.settlementReceipt(battleId) : null;
+    }
+
+    /** 只由已固定归属的窗口实际打开通知；另一种展示入口不能消费本场反馈。 */
+    public markSettlementPresented(battleId: string, presentation: "battle" | "reward" = "battle"): void {
+        if (this.confirmedSettlement(battleId) && this.model.settlement
+            && this.model.settlement.presentation === presentation && !this.model.settlement.presented) {
+            this.model.settlement = Object.freeze({ ...this.model.settlement, presented: true });
+            this.notify();
+        }
+    }
+
+    /** 每轮只发原编号一次；已有回执只补一次鉴权，失败或仍旧快照保留显式恢复入口。 */
+    private async confirmSettlement(task: SettlementTask): Promise<void> {
+        if (this.settlementTask !== task) {
+            return;
+        }
+        this.model.settlement = Object.freeze({ ...this.model.settlement!, phase: "confirming" });
+        this.notify();
+        try {
+            if (!this.settlementReceipt(task.battleId)) {
+                await this.execute(Protocol.CHAPTER_CLAIM, { battleId: task.battleId });
+            }
+            if (this.settlementTask !== task || this.observeSettlement()) {
+                return;
+            }
+            if (this.settlementReceipt(task.battleId) && this.refreshSnapshot) {
+                await this.refreshSnapshot(() => {}, error => this.reportSettlement(error));
+                if (this.settlementTask === task) {
+                    this.observeSettlement();
+                }
+            }
+        } catch (error) {
+            if (this.settlementTask === task) {
+                this.reportSettlement(error);
+            }
+        } finally {
+            if (this.settlementTask === task) {
+                this.settlementTask = null;
+                if (!this.observeSettlement()) {
+                    this.model.settlement = Object.freeze({ ...this.model.settlement!, phase: "pending" });
+                    this.model.message = "战斗结算待确认，连接恢复后继续；也可返回主线重试";
+                    this.notify();
+                    if (task.resumeAfterAuthentication && !this.settlementReceipt(task.battleId)) {
+                        void this.claim(task.battleId).catch(error => this.reportSettlement(error));
+                    }
+                }
+            }
+        }
+    }
+
+    /** 当前唯一历史回执必须属于原战斗且为SETTLED，不能以其他战斗或挑战回执补位。 */
+    private settlementReceipt(battleId: string): MainChapterReceipt | null {
+        const receipt = this.model.receipt;
+        return receipt?.battleId === battleId && receipt.action === "SETTLED" ? receipt : null;
+    }
+
+    /** 两个版本独立核对；pending为空本身不证明发奖，较新快照可确认较早历史结果。 */
+    private observeSettlement(): boolean {
+        const settlement = this.model.settlement;
+        if (!settlement) {
+            return false;
+        }
+        const receipt = this.settlementReceipt(settlement.battleId);
+        const state = this.model.state;
+        if (!receipt || !state || state.assetRevision < receipt.state.assetRevision
+            || state.pendingBattleId === settlement.battleId || state.maxCleared < receipt.state.maxCleared) {
+            return false;
+        }
+        if (settlement.phase !== "confirmed") {
+            this.model.settlement = Object.freeze({ ...settlement, phase: "confirmed" });
+            this.model.message = "战斗结算已确认";
+            this.notify();
+            this.offerRecoveryFeedback();
+        }
+        return true;
+    }
+
+    /** 双确认后仅交付一次通用反馈；入队不算展示，投影失败保留明确的手动重试入口。 */
+    private offerRecoveryFeedback(): void {
+        const settlement = this.model.settlement;
+        if (!settlement || settlement.presentation !== "reward" || settlement.phase !== "confirmed"
+            || settlement.feedbackQueued || settlement.presented || !this.restoreFeedback) {
+            return;
+        }
+        const receipt = this.confirmedSettlement(settlement.battleId);
+        if (!receipt) {
+            return;
+        }
+        const reservation = Object.freeze({ ...settlement, feedbackQueued: true });
+        this.model.settlement = reservation;
+        try {
+            const result = this.restoreFeedback(receipt);
+            if (result === "empty" && this.model.settlement === reservation) {
+                this.markSettlementPresented(settlement.battleId, "reward");
+            }
+        } catch (error) {
+            if (this.model.settlement === reservation) {
+                this.model.settlement = Object.freeze({ ...reservation, feedbackQueued: false });
+                this.model.message = "奖励已结算，显示未交付，请重试显示";
+                this.reportSettlement(error);
+            }
+        }
+        this.notify();
+    }
+
+    /** 统一记录恢复失败，玩家反馈仍由页面消费Model后交全局飘字。 */
+    private reportSettlement(error: unknown): void {
+        GameLog.shared.classified("MODULE", "warn", "MainChapterController", "主线结算待恢复：" + String(error));
     }
 
     /** 读取持久战报供玩家继续观看；读取失败不重新挑战。 */
     public async replay(battleId: string): Promise<MainChapterReplay | null> {
-        if (this.model.busy) return null;
-        if (!MainChapterController.validId(battleId)) throw new Error("战报编号无效");
+        if (this.model.busy) {
+            return null;
+        }
+        if (!MainChapterController.validId(battleId)) {
+            throw new Error("战报编号无效");
+        }
         this.model.replay = null;
-        await this.execute(Protocol.CHAPTER_REPLAY, { battleId });
+        if (!await this.execute(Protocol.CHAPTER_REPLAY, { battleId })) {
+            return null;
+        }
         const result = this.model.replay as MainChapterReplay | null;
-        if (result && result.battleId !== battleId) throw new Error("战报编号不匹配");
+        if (result && result.battleId !== battleId) {
+            throw new Error("战报编号不匹配");
+        }
         return result;
     }
 
-    /** 应用交付成功/失败回调才结束业务请求，换号后的旧Promise不修改新Model。 */
-    private async execute(name: ChapterCommand, body: object): Promise<void> {
-        if (this.model.busy || !this.send) return;
+    /** 应用交付才结束请求；仅真实接收成功返回true，换号丢弃或失败返回false，续段不可推导成功。 */
+    private async execute(name: ChapterCommand, body: object): Promise<boolean> {
+        if (this.model.busy || !this.send) {
+            return false;
+        }
+        let received = false;
         this.model.busy = true;
         this.model.message = "正在处理…";
         this.notify();
         await this.send(name, body, frame => {
+            if (name === Protocol.CHAPTER_CLAIM && (frame.body as { battleId?: unknown })?.battleId !== (body as { battleId: string }).battleId) {
+                throw new Error("主线结算回执编号不匹配");
+            }
             ProtocolRouter.instance.dispatch(this, frame);
+            received = true;
             this.model.busy = false;
             this.notify();
         }, error => {
@@ -230,6 +491,7 @@ export class MainChapterController extends BaseController {
             this.model.message = String(error);
             this.notify();
         });
+        return received;
     }
 
     /** 校验奖励及历史经验整包后提交；仅挑战成功清空挑战编号，结算展示不改变资产Model。 */
@@ -255,7 +517,8 @@ export class MainChapterController extends BaseController {
             ...(experience ? { experience: Object.freeze({ ...experience }) } : {}),
             rewards: Object.freeze(v.rewards.map(row => Object.freeze({ ...row }))) });
         if (protocol === Protocol.CHAPTER_CHALLENGE) this.model.requestId = null;
-        this.model.message = v.action === "BATTLE" ? "战报已保存，可观看" : "结算已确认，资产以服务器同步为准";
+        this.model.message = v.action === "BATTLE" ? "战报已保存，可观看" : "已收到结算回执，等待服务器同步";
+        this.observeSettlement();
     }
 
     /** 强类型战报先校验场景及完整事件链，之后才交付播放器。 */
@@ -276,6 +539,9 @@ export class MainChapterController extends BaseController {
     /** 应用销毁解除通信注入，避免保留失效服务闭包。 */
     protected onDispose(): void {
         this.send = null;
+        this.refreshSnapshot = null;
+        this.restoreFeedback = null;
+        this.retryFeedback = null;
         this.readRoleLevel = () => 0;
         this.readRoleAppearance = () => null;
     }
@@ -287,6 +553,7 @@ export class MainChapterController extends BaseController {
 
     /** 仅应用身份协调调用，页面关闭不丢失待确认请求。 */
     protected onResetSession(): void {
+        this.settlementTask = null;
         this.model.reset();
         this.notify();
     }

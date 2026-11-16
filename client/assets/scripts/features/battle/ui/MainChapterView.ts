@@ -1,6 +1,6 @@
 /** 主线挂机主页：静态底板保存关卡、四项收益及三个正式入口；挑战交给页内战场，奖励仅在结算显示。
  * 挂机读取权威时钟与基础速率，宝箱只读；页面关闭取消显示但保留服务端待结算状态。 */
-import { _decorator, Button, Label, Node, Sprite, SpriteFrame, UITransform, sp } from "cc";
+import { _decorator, AudioClip, AudioSource, Button, Label, Node, Sprite, SpriteFrame, UITransform, sp } from "cc";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
@@ -18,6 +18,9 @@ import { GameLog } from "../../../core/GameLog";
 import { IdleChestUtils } from "../utils/IdleChestUtils";
 import { BattleSpineService } from "./BattleSpineService";
 import { MainChapterIdleResources } from "./MainChapterIdleResources";
+import { MainChapterIdleChest, IdleChestAnimation } from "./MainChapterIdleChest";
+import { PREVIEW } from "cc/env";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -64,7 +67,7 @@ export class MainChapterView extends BaseView {
     @property(Label) roleExpRateLabel: Label | null = null;
     /** 英雄经验每分钟收益。 */
     @property(Label) heroExpRateLabel: Label | null = null;
-    /** 挂机收益入口，尚未接通时明确提示。 */
+    /** 挂机收益入口保持关闭，只显示全局说明，不发送领取请求。 */
     @property(Button) idleClaimButton: Button | null = null;
     /** 旧中央章节图标的产物说明入口，只读配置不开放领取。 */
     @property(Button) rewardInfoButton: Button | null = null;
@@ -74,8 +77,10 @@ export class MainChapterView extends BaseView {
     @property(Node) idleBubble: Node | null = null;
     /** 气泡内时长，与底栏使用同一服务器快照。 */
     @property(Label) idleBubbleLabel: Label | null = null;
-    /** 已应用的待机档位；0表示资源尚未就绪，关闭时清零。 */
-    private idleChestStage = 0;
+    /** 宝箱仅负责旧收取时序及跨档播放；关闭清理，不发送领取或修改服务器起点。 */
+    private idleChest: MainChapterIdleChest | null = null;
+    /** 当前页收取演示的通用点击音，关闭停止；不持有业务领取状态。 */
+    private chestAudio: AudioSource | null = null;
     /** 累计进度条，使用旧版整数百分比，不代表可领取资产比例。 */
     @property(Sprite) idleProgress: Sprite | null = null;
     /** 资源飞行独立层，不与临时战场一起销毁。 */
@@ -106,7 +111,7 @@ export class MainChapterView extends BaseView {
     /** 远景独立偏移，制造旧版的前后景速度差。 */
     private skyOffset = 0;
 
-    /** 绑定现有预制体按钮与Model事件，不在开页时请求库存或主线进度。 */
+    /** 绑定现有显示与事件，首次进入只转交首包待结算恢复，不查询库存或主线进度。 */
     public onOpen(): void {
         if (!this.battleHost || !this.panel || !this.challengeButton || !this.quickBattleButton || !this.powerButton
             || !this.stageLabel || !this.statusLabel || !this.challengeLabel || !this.idleTimeLabel
@@ -129,7 +134,7 @@ export class MainChapterView extends BaseView {
         this.listen(this.challengeButton, () => { void this.prepareChallenge(); });
         this.listen(this.quickBattleButton, () => UIManager.instance.toast("快速战斗尚未恢复"));
         this.listen(this.powerButton, () => UIManager.instance.toast("战力提升建议尚未恢复"));
-        this.listen(this.idleClaimButton, () => UIManager.instance.toast("挂机领取尚未恢复。每分钟显示基础收益，不含随机掉落和额外加成。"));
+        this.listen(this.idleClaimButton, () => UIManager.instance.toast("挂机领取暂未开放。每分钟显示基础收益，不含随机掉落和额外加成。"));
         if (!this.rewardInfoButton) {
             throw new Error("主线产物说明入口绑定缺失");
         }
@@ -143,16 +148,29 @@ export class MainChapterView extends BaseView {
         if (!this.idleChestHost || !this.idleBubble || !this.idleBubbleLabel) {
             throw new Error("挂机宝箱静态绑定缺失");
         }
+        this.idleChest?.dispose();
+        this.idleChest = new MainChapterIdleChest(() => {
+            if (this.closed || !this.idleChestHost?.isValid) {
+                return null;
+            }
+            const skeleton = this.idleChestHost.getComponent(sp.Skeleton);
+            return skeleton?.skeletonData ? skeleton as IdleChestAnimation : null;
+        });
         BattleSpineService.instance.mountNamedSpine(this.idleChestHost, "res-block", "normal-1", {
             onReady: () => {
                 if (!this.closed) {
-                    this.idleChestStage = 0;
                     this.renderIdle();
                 }
             },
         });
         this.ownListener(EventDispatcher.instance.on(MainChapterController.Updated, this, this.render));
         this.render();
+        void MainChapterController.instance.recoverPendingOnEntry().catch(error => {
+            if (!this.closed) {
+                GameLog.shared.classified("MODULE", "warn", "MainChapterView", "主线待结算恢复暂停：" + String(error));
+                UIManager.instance.toast("结算待恢复，请点击确认结算重试");
+            }
+        });
     }
 
     /** 按钮监听归当前页面持有，关闭由BaseView统一解除。 */
@@ -167,7 +185,7 @@ export class MainChapterView extends BaseView {
         if (this.closed || this.playing || model.busy || !model.state) {
             return;
         }
-        if (model.requestId || model.state.pendingBattleId) {
+        if (model.requestId || model.state.pendingBattleId || (model.settlement && !model.settlement.presented)) {
             await this.challenge();
             return;
         }
@@ -191,18 +209,28 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 只依据统一快照选择挑战或领奖；未确认挑战优先用原编号确认。 */
+    /** 未收口结算用原战斗编号继续确认，未确认挑战复用原请求，其余按权威状态选择。 */
     private async challenge(): Promise<void> {
         const model = MainChapterModel.instance;
-        if (model.busy || this.playing || !model.state) return;
+        if (model.busy || this.playing || !model.state) {
+            return;
+        }
         const controller = MainChapterController.instance;
         try {
-            if (model.state.pendingBattleId && !model.requestId) {
+            if (model.settlement && !model.settlement.presented) {
+                if (model.settlement.presentation === "reward") {
+                    await controller.retryRecoveredSettlement();
+                } else {
+                    await this.play(model.settlement.battleId, true);
+                }
+            } else if (model.state.pendingBattleId && !model.requestId) {
                 await this.play(model.state.pendingBattleId);
             } else {
                 await controller.challenge();
                 if (!this.closed && !model.requestId && model.receipt?.action === "BATTLE") {
                     await this.play(model.receipt.battleId);
+                } else if (!this.closed && !model.requestId && model.receipt?.action === "SETTLED") {
+                    await this.play(model.receipt.battleId, true);
                 }
             }
         } catch (error) {
@@ -210,18 +238,22 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 播放器使用UIManager管理的页内战场，加载迟到和中途关页都释放；正常播完转交控制器结算，关闭不触发领奖。 */
-    private async play(battleId: string): Promise<void> {
-        if (this.closed || this.playing) return;
+    /** 显示页内战场；本应用已结束的原战斗可只继续结算，关页不取消服务端提交。 */
+    private async play(battleId: string, settlementOnly = false): Promise<void> {
+        if (this.closed || this.playing) {
+            return;
+        }
         this.playing = true;
         this.clearIdleDisplay();
         this.render();
         try {
-            const report = await MainChapterController.instance.replay(battleId);
+            const cached = MainChapterModel.instance.replay;
+            const report = settlementOnly && cached?.battleId === battleId ? cached
+                : await MainChapterController.instance.replay(battleId);
             if (this.closed || !report) return;
             // 战场在主页内部播放，底部面板与共享导航继续显示。
             this.stopReplay = () => UIManager.instance.closeById("main-chapter-battle");
-            await UIManager.instance.openById("main-chapter-battle", { report, onClosed: () => {
+            await UIManager.instance.openById("main-chapter-battle", { report, settlementOnly, onClosed: () => {
                 this.stopReplay = null;
                 this.playing = false;
                 if (!this.closed) { this.panel!.active = true; this.render(); }
@@ -251,12 +283,17 @@ export class MainChapterView extends BaseView {
             UIManager.instance.toast(model.message);
             this.lastResultMessage = model.message;
         }
-        this.statusLabel!.string = completed ? "当前开放的前三关已全部通关"
+        const settlementPending = !!model.settlement && !model.settlement.presented;
+        const retryReward = settlementPending && model.settlement?.presentation === "reward" && model.settlement.phase === "confirmed";
+        this.statusLabel!.string = retryReward ? "奖励已结算，显示未完成，可重试显示"
+            : settlementPending ? "上一场战斗结算待确认，可继续恢复"
+            : completed ? "当前开放的前三关已全部通关"
             : model.busy ? "正在处理…" : state?.pendingBattleId ? "上次战斗待结算，点击战斗恢复" : "";
-        this.challengeLabel!.string = this.playing ? "战斗中" : model.busy ? "处理中" : !state ? "等待同步" : model.requestId ? "确认挑战"
+        this.challengeLabel!.string = this.playing ? "战斗中" : model.busy ? "处理中" : !state ? "等待同步"
+            : model.settlement?.phase === "confirming" ? "确认中" : retryReward ? "重试显示" : settlementPending ? "确认结算" : model.requestId ? "确认挑战"
             : state?.pendingBattleId ? "恢复战斗" : completed ? "已通关" : "战斗";
         this.renderIdle();
-        const enabled = !!state && !model.busy && !this.playing;
+        const enabled = !!state && !model.busy && !this.playing && model.settlement?.phase !== "confirming";
         this.challengeButton!.interactable = enabled && !completed;
         this.quickBattleButton!.interactable = enabled;
         this.powerButton!.interactable = enabled;
@@ -266,12 +303,13 @@ export class MainChapterView extends BaseView {
     private isChapterRangeComplete(): boolean {
         const model = MainChapterModel.instance;
         return !!model.state && model.state.maxCleared >= MainChapterView.LAST_SUPPORTED_STAGE
-            && !model.requestId && !model.state.pendingBattleId;
+            && !model.requestId && !model.state.pendingBattleId && (!model.settlement || model.settlement.presented);
     }
 
     /** 引擎帧只更新计时显示；后台恢复按已接纳服务器时间推算，不自行发奖。 */
     public update(dt: number): void {
         if (!this.closed) {
+            this.idleChest?.update(dt);
             this.renderIdle();
             this.updateMarch(dt);
             this.heroTalk?.update(dt, !this.playing);
@@ -289,7 +327,9 @@ export class MainChapterView extends BaseView {
         if (state) {
             const seconds = IdleChestUtils.elapsed(state.serverTime, state.startedAt,
                 state.maxSeconds, model.idleReceivedAt, Date.now());
-            this.idleTimeLabel.string = IdleChestUtils.time(seconds);
+            if (!this.idleChest?.collecting) {
+                this.idleTimeLabel.string = IdleChestUtils.time(seconds);
+            }
             this.renderIdleChest(seconds, state.maxSeconds);
         } else {
             this.idleTimeLabel.string = model.state?.maxCleared === 0 ? "通关后开启" : "未接入";
@@ -312,24 +352,59 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 只切换跨档动作；加载期间仍刷新目标时间，资源就绪后读取最新快照，关页不再访问节点。 */
+    /** 四档待机复用同一骨骼；旧收取两秒内保留计时/进度/气泡，随后只读最新统一状态。 */
     private renderIdleChest(seconds: number, maxSeconds: number): void {
         if (!this.idleChestHost || !this.idleBubble || !this.idleBubbleLabel) {
             return;
         }
         this.idleChestHost.active = !this.playing;
+        this.idleChest?.render(seconds, maxSeconds);
+        if (this.idleChest?.collecting) {
+            return;
+        }
         this.idleBubble.active = !this.playing && IdleChestUtils.showBubble(seconds);
         this.idleBubbleLabel.string = IdleChestUtils.time(seconds);
         if (this.idleProgress) {
             this.idleProgress.node.active = true;
             this.idleProgress.fillRange = IdleChestUtils.percentage(seconds, maxSeconds) / 100;
         }
-        const skeleton = this.idleChestHost.getComponent(sp.Skeleton);
-        const stage = IdleChestUtils.stage(seconds, maxSeconds);
-        if (skeleton?.skeletonData && stage !== this.idleChestStage) {
-            skeleton.setAnimation(0, "normal-" + stage, true);
-            this.idleChestStage = stage;
+    }
+
+    /** 仅Creator显式演示入口可调用收取表现；不重置累计、不发请求、不触发奖励到账提示。 */
+    public previewIdleChest(stage: number): boolean {
+        if (!PREVIEW || this.closed || this.playing || !MainChapterModel.instance.idle) {
+            return false;
         }
+        const played = this.idleChest?.collect(stage) || false;
+        if (played) {
+            this.playChestClick();
+            const state = MainChapterModel.instance.idle;
+            const seconds = IdleChestUtils.elapsed(state.serverTime, state.startedAt,
+                state.maxSeconds, MainChapterModel.instance.idleReceivedAt, Date.now());
+            GameLog.shared.classified("DEV", "info", "IdleChestPreview", JSON.stringify({
+                stage, collect: IdleChestUtils.collectAnimation(stage), queued: "normal-0",
+                queuedDelaySeconds: 1.5, displayGuardSeconds: 2,
+                claimWaitSeconds: IdleChestUtils.claimWaitSeconds(seconds, state.frequency, state.maxSeconds),
+                readOnly: true,
+            }));
+        }
+        return played;
+    }
+
+    /** 复用节点资源作用域播放旧通用点击音；关页后的加载完成不再播放或保留音源。 */
+    private playChestClick(): void {
+        ResourceAssetsUtils.loadForNode(this.node, "audio/sfx-button-click", "AudioClip", (error, asset) => {
+            if (this.closed || !this.node.isValid) {
+                return;
+            }
+            if (error || !asset) {
+                GameLog.shared.warnOnce("MODULE", "MainChapterView", "idle-chest-click-audio", "挂机收取点击音暂不可用");
+                return;
+            }
+            this.chestAudio = this.node.getComponent(AudioSource) || this.node.addComponent(AudioSource);
+            this.chestAudio.clip = asset as AudioClip;
+            this.chestAudio.play();
+        });
     }
 
     /** 快照选人或英雄外观变化时重建，未接通挂机或正式挑战期间不显示替代英雄。 */
@@ -461,7 +536,13 @@ export class MainChapterView extends BaseView {
     /** 页面关闭只取消展示，不撤销已提交战斗；待领奖随下次登录恢复。 */
     public onClose(): void {
         this.closed = true;
-        this.idleChestStage = 0;
+        this.idleChest?.dispose();
+        this.idleChest = null;
+        if (this.chestAudio?.isValid) {
+            this.chestAudio.stop();
+            this.chestAudio.clip = null;
+        }
+        this.chestAudio = null;
         this.heroTalk?.dispose();
         this.heroTalk = null;
         this.clearIdleDisplay();

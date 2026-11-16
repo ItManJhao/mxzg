@@ -1,6 +1,6 @@
 # 英雄与主线阵容维护契约
 
-更新：2026-11-11。当前事实以本节、[英雄数据契约](hero-data-contract.md)、[通信契约](network-contract.md)和[开发进度](development-progress.md)为准。下方按日期保留旧规则核查和实现过程；旧 HTTP、普通升级与初始化赠送合同均不是当前可调用入口。
+更新：2026-11-16。当前事实以本节、[英雄数据契约](hero-data-contract.md)、[通信契约](network-contract.md)和[开发进度](development-progress.md)为准。下方按日期保留旧规则核查和实现过程；旧 HTTP、普通升级与初始化赠送合同均不是当前可调用入口。
 
 ## 当前代码与开放范围
 
@@ -13,7 +13,9 @@
 
 HeroInfoView 是当前列表点击后打开的只读详情；HeroInfoUpLevelLayer 与 HeroInfoUpgradeLayer 均不在正常导航中。保留旧预制体、脚本绑定和领域测试不等于玩法恢复，也不据旧文档重接 HTTP 或资产回调。
 
-人工修改先看 client/assets/scripts/app/remake/ApplicationPages.ts 的注册，再进入 features/hero 的 Controller、Model 和 ui。FormationController 不持有 View、账号或角色键；身份隔离由 GameSocketClient 与应用 AccountService.deliverAuthenticated 统一负责。原 LineupApi 已删除，不再维护另一套查询与保存入口。
+人工修改先看features/hero/ui对应View的@UIRegistry.view，再进入同模块Controller和Model。FormationController不持有View、账号或角色键；身份隔离由GameSocketClient与应用AccountService.deliverAuthenticated统一负责。原LineupApi已删除，不再维护另一套查询与保存入口。
+
+布阵保存回执不是统一资产状态。FormationSaveModel保留原提交直到权威mainFormation.version达到回执version；有ACK缺推送时每轮至多一次现有refreshSnapshot，显式重试只确认状态，无ACK才按原requestId/expectedVersion/站位重试保存。页面锁定待确认参数，关页保留模块意图但撤销本页出战回调；身份结束清空过程。具体修改与验证边界见[页面维护](formation-ui-authoring.md)和[本批恢复记录](validation/formation-confirm-review-20261116.json)。
 
 ## 历史合同与规则核查
 

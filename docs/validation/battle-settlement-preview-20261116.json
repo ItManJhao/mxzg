@@ -1,0 +1,170 @@
+{
+  "date": "2026-11-16",
+  "kind": "CREATOR_PREVIEW_REAL_WS_ISOLATED_MEMORY_H2",
+  "run": "17c8900a2ffb4fe184a1f323fc8ea4e0",
+  "pid": 21012,
+  "processStopped": true,
+  "port": 60669,
+  "deviceOption": "Apple iPhone 14 Pro (393X852)",
+  "browserViewport": "1280x720",
+  "compiledChecks": {
+    "newClaimBranch": true,
+    "executeReturnsDeliveredSuccess": true
+  },
+  "normal": {
+    "battleId": "013874a4-22b4-4629-8a8f-4dfbcf37a47d",
+    "receiptRevision": 5,
+    "snapshotRevision": 5,
+    "phase": "confirmed",
+    "presented": true,
+    "observedVictoryPanel": true,
+    "returnedToIdle": true
+  },
+  "simulatedBackground": {
+    "method": "cc.game.EVENT_HIDE / EVENT_SHOW，通过原应用监听主动断开并重新鉴权；不是操作系统真后台",
+    "battleId": "e4d3782d-a7e1-4d80-8fd1-e918e2f18712",
+    "before": {
+      "snapshotRevision": 6,
+      "pendingBattleId": "e4d3782d-a7e1-4d80-8fd1-e918e2f18712",
+      "phase": "pending",
+      "presented": false
+    },
+    "after": {
+      "snapshotRevision": 7,
+      "receiptRevision": 7,
+      "pendingBattleId": null,
+      "phase": "confirmed",
+      "presented": true
+    },
+    "noNewChallenge": true,
+    "returnedToIdle": true,
+    "foregroundRestored": true
+  },
+  "claimReceipts": [
+    {
+      "at": "2026-11-16T08:47:42.704Z",
+      "battleId": "013874a4-22b4-4629-8a8f-4dfbcf37a47d",
+      "action": "SETTLED",
+      "revision": 5,
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 20204004,
+          "quantity": 30
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ],
+      "experience": {
+        "beforeLevel": 1,
+        "beforeExp": 0,
+        "beforeThreshold": 120,
+        "afterLevel": 2,
+        "afterExp": 80,
+        "afterThreshold": 360
+      }
+    },
+    {
+      "at": "2026-11-16T08:49:30.654Z",
+      "battleId": "e4d3782d-a7e1-4d80-8fd1-e918e2f18712",
+      "action": "SETTLED",
+      "revision": 7,
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900002,
+          "quantity": 151
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ],
+      "experience": {
+        "beforeLevel": 2,
+        "beforeExp": 80,
+        "beforeThreshold": 360,
+        "afterLevel": 2,
+        "afterExp": 280,
+        "afterThreshold": 360
+      }
+    }
+  ],
+  "final": {
+    "state": {
+      "maxCleared": 2,
+      "pendingBattleId": null,
+      "assetRevision": 7
+    },
+    "settlement": null,
+    "inFlight": false,
+    "residents": [],
+    "returnedToCity": true
+  },
+  "warnings": [],
+  "images": [
+    "docs/images/battle-settlement-preview-20261116.jpg",
+    "docs/images/battle-settlement-pending-20261116.jpg",
+    "docs/images/battle-settlement-recovered-20261116.jpg"
+  ],
+  "limitations": [
+    "未在Creator中注入回执/状态单独丢失；由受控客户端专项覆盖",
+    "未做实际系统前后台、真机或弱网",
+    "未集中构建"
+  ],
+  "previewReentry": {
+    "observed": true,
+    "description": "后续预览重新显示登录；点击开始后回主城，最高通关2、资产版本7不变，未再发结算。当前结算意图为同次应用内状态，重新初始化后为空；不以此记录推断重进登录的具体原因。",
+    "compiledLatestClaimGuardCount": 1
+  },
+  "openedResultWindows": [
+    {
+      "at": "2026-11-16T08:47:43.203Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 16:47:43 打开界面 ChapterEndView ui ChapterEndView 耗时 498ms"
+    },
+    {
+      "at": "2026-11-16T08:49:30.907Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 16:49:30 打开界面 ChapterEndView ui ChapterEndView 耗时 254ms"
+    }
+  ]
+}

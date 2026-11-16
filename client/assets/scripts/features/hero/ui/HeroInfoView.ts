@@ -10,6 +10,7 @@ import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
+import { HeroSkillView } from "./HeroSkillView";
 import { HeroSkillUtils } from "../utils/HeroSkillUtils";
 import { HeroEquipmentUtils } from "../utils/HeroEquipmentUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
@@ -84,7 +85,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         ViewportLayoutUtils.bindVisibleRefresh(this.node, () => ViewportLayoutUtils.fitVisibleRoot(this.node));
     }
 
-    /** 统一入口只传实例 ID；资料来自唯一名册，不额外发送详情查询。 */
+    /** 统一入口只传实例ID；只读技能窗归本页持有，资料来自唯一名册，不额外查询。 */
     onOpen(args: { heroId: string }): void {
         if (!args?.heroId) {
             throw new Error("缺少英雄实例 ID");
@@ -99,8 +100,12 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
                 if (this.closed) {
                     return;
                 }
-                void UIManager.instance.openById("hero-skill", { heroId: this.selectedId, slot })
-                    .catch(error => GameLog.shared.classified("MODULE", "warn", "Hero", String(error)));
+                void UIManager.instance.openChild(this, HeroSkillView, { heroId: this.selectedId, slot })
+                    .catch(error => {
+                        if (!this.closed && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                            GameLog.shared.classified("MODULE", "warn", "Hero", "技能详情未能打开：" + String(error));
+                        }
+                    });
             };
             button.node.on(Button.EventType.CLICK, click);
             this.skillStops.push(() => button.node.off(Button.EventType.CLICK, click));
@@ -193,12 +198,11 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         // 当前导航只保留主城根页面，详情必须显式打开列表，不能直接调用 back 回主城。
         void UIManager.instance.openById("hero").catch(error => GameLog.shared.classified("MODULE", "warn", "Hero", "返回英雄列表失败：" + String(error)));
     }
-    /** 关页释放订阅和立绘；绘制代次阻止异步图片回写，关闭状态阻止再次导航。 */
+    /** 关页释放订阅和立绘；框架清理本页技能孩子，绘制代次与关闭状态阻止迟到回写及导航。 */
     onClose(): void {
         this.closed = true;
         this.clearListeners();
         this.paintVersion++;
-        UIManager.instance.closeById("hero-skill");
         this.selectedId = "";
         if (this.spineNode?.isValid) {
             this.spineNode.destroy();

@@ -40,6 +40,11 @@ import { StartupFlowUtils, StartupCancelled } from "./StartupFlowUtils";
 
 import {RoleController} from "../../features/account/RoleController";
 import {AssetStateBinding} from "./AssetStateBinding";
+import { IdleClaimBinding } from "./IdleClaimBinding";
+import { IdleClaimJournal } from "./IdleClaimJournal";
+import { RewardBinding } from "./RewardBinding";
+import { MainChapterModel } from "../../features/battle/MainChapterModel";
+import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 
 const {ccclass, property} = _decorator;
 
@@ -73,6 +78,10 @@ export class RemakeApp extends Component {
     private offAccount: (() => void) | null = null;
     /** 应用持有的角色与背包统一状态协调器，销毁时先解除，再释放模块。 */
     private assetState: AssetStateBinding | null = null;
+    /** 领取恢复由应用按认证身份激活，页面关闭不清除持久原请求。 */
+    private idleClaims: IdleClaimBinding | null = null;
+    /** 通用发奖反馈归应用装配，等待统一资产版本及主城就绪，不由挂机界面单独弹窗。 */
+    private rewards: RewardBinding | null = null;
     /** 本应用初始化的背包模块，应用退出时释放。 */
     private bagModule: BagController | null = null;
     /** 本应用登记的页面与宿主撤销函数。 */
@@ -115,7 +124,7 @@ export class RemakeApp extends Component {
         this.development = new DevelopmentPreview(this.pageHost, this.startupHost, () => this.isValid);
         if (await this.development.start()) return;
         if (!this.loadingPrefab || !this.pageHost || !this.startupHost) throw new Error("Remake 场景未绑定本地加载 Prefab 或启动宿主，请重新打开已更新的 Remake.scene");
-        const {model, socket, service, servers} = await AccountComposition.create(this.socketUrl);
+        const {model, socket, service, servers, storageNamespace} = await AccountComposition.create(this.socketUrl);
         if (!this.isValid) {
             socket.disconnect();
             return;
@@ -136,7 +145,17 @@ export class RemakeApp extends Component {
             error => {
                 if (this.alive) failed(error);
             },
-        ));
+        ), (received, failed) => service.deliverAuthenticated(token => socket.refreshSnapshot(token),
+            () => {
+                if (this.alive) {
+                    received();
+                }
+            },
+            error => {
+                if (this.alive) {
+                    failed(error);
+                }
+            }));
         formation.initialize();
         const chapter = MainChapterController.instance;
         chapter.configure((name, body, received, failed) => service.deliverAuthenticated(
@@ -150,12 +169,45 @@ export class RemakeApp extends Component {
         ), () => model.snapshot.role?.level || 0, () => {
             const basics = model.snapshot.role?.basics;
             return basics ? {headId: basics.headId, borderId: basics.borderId} : null;
-        });
+        }, (received, failed) => service.deliverAuthenticated(token => socket.refreshSnapshot(token),
+            () => {
+                if (this.alive) {
+                    received();
+                }
+            },
+            error => {
+                if (this.alive) {
+                    failed(error);
+                }
+            }));
         chapter.initialize();
+        const rewards = this.rewards = new RewardBinding(model,
+            receiptId => chapter.markSettlementPresented(receiptId, "reward"));
+        chapter.configureRecoveryFeedback(
+            receipt => rewards.restoreItems(receipt.battleId, receipt.state.assetRevision, receipt.rewards),
+            () => rewards.retry(),
+        );
+        this.development?.configureRewards(notice => rewards.restore(notice));
+        const idleClaims = this.idleClaims = new IdleClaimBinding(model, service, socket,
+            new IdleClaimJournal(storageNamespace), MainChapterModel.instance, notice => rewards.restore(notice),
+            { enabled: false });
         const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController,
-            HeroRosterController.instance, formation, () => this.clearRolePages(), chapter);
-        service.onInitialized = frame => assets.apply(frame);
-        socket.onState = frame => assets.apply(frame);
+            HeroRosterController.instance, formation, () => {
+                this.clearRolePages();
+                rewards.resetSession();
+                idleClaims.deactivate();
+            }, chapter);
+        // 只有整包被唯一资产入口接纳后，才以该最新状态检查历史领取确认。
+        const applyState = (frame: GameFrame): void => {
+            if (assets.apply(frame)) {
+                rewards.afterSnapshot(frame);
+                idleClaims.afterSnapshot(frame.name);
+                chapter.afterSnapshot(frame.name);
+            }
+        };
+        service.onInitialized = applyState;
+        socket.onState = applyState;
+        socket.onReward = frame => rewards.receive(frame);
         let connectionNotice = "";
         socket.onRejected = (token, message) => service.rejectSession(token, message);
         // 重连鉴权首包就是统一恢复数据，不再单独补查钱包或背包。
@@ -163,7 +215,7 @@ export class RemakeApp extends Component {
             if (connectionNotice) homeView?.showNotice("");
             connectionNotice = "";
             if (!model.snapshot.role || model.snapshot.busy) return;
-            if (socket.latestState) assets.apply(socket.latestState);
+            if (socket.latestState) applyState(socket.latestState);
         };
         // 连接提示不改变账号 busy/role，避免断网被误当换号而清空模块和在途收据。
         socket.onDisconnected = message => {
@@ -271,6 +323,7 @@ export class RemakeApp extends Component {
         syncRoute = () => {
             if (!this.alive || !this.started) return;
             if (model.snapshot.busy || !model.snapshot.role) {
+                rewards.setReady(false);
                 this.resources.stopBackground();
                 ui.closeById("remake-formation");
                 ui.closeById("role-profile");
@@ -294,10 +347,14 @@ export class RemakeApp extends Component {
             }
             const route = entry.route(!!model.snapshot.role);
             if (route === this.requestedRoute) {
-                if (!this.routePending) this.chrome?.hide();
+                if (!this.routePending) {
+                    this.chrome?.hide();
+                    rewards.setReady(route === "remake-home");
+                }
                 return;
             }
             this.requestedRoute = route;
+            rewards.setReady(false);
             ui.keepOnly(route);
             const epoch = ++this.routeEpoch;
             this.routePending = true;
@@ -310,6 +367,7 @@ export class RemakeApp extends Component {
                 await this.reveal(epoch, route === "remake-home");
                 if (epoch === this.routeEpoch) this.routePending = false;
                 if (route === "remake-home" && epoch === this.routeEpoch && this.alive) {
+                    rewards.setReady(true);
                     void this.resources.prepareBackground(() => this.afterPaint(), () => this.alive && epoch === this.routeEpoch && !model.snapshot.busy && !!model.snapshot.role).catch(error => {
                         if (this.alive && epoch === this.routeEpoch) {
                             GameLog.shared.classified("APP", "warn", "RemakeApp", "后台资源准备失败，返回主城时可重试：" + String(error));
@@ -441,7 +499,7 @@ export class RemakeApp extends Component {
         ui.invalidatePending();
         this.navigation?.back(false);
         for (const id of ["hero-skill", "bag-info", "spirit-info", "equipment-info", "role-profile", "remake-formation", "battle-detail",
-            "chapter-end", "chapter-reward-info", "main-chapter-battle", "skill-audit"]) {
+            "chapter-end", "chapter-reward-info", "main-chapter-battle", "skill-audit", "confirm", "reward"]) {
             ui.closeById(id);
         }
         this.closeGmViews();
@@ -493,8 +551,13 @@ export class RemakeApp extends Component {
         this.started = false;
         game.off(Game.EVENT_HIDE, this.onBackground, this);
         game.off(Game.EVENT_SHOW, this.onForeground, this);
+        this.idleClaims?.dispose();
+        this.idleClaims = null;
+        this.rewards?.dispose();
+        this.rewards = null;
         if (this.gameSocket) {
             this.gameSocket.onReady = this.gameSocket.onDisconnected = this.gameSocket.onRejected = this.gameSocket.onState = null;
+            this.gameSocket.onReward = null;
             this.gameSocket.disconnect();
             this.gameSocket = null;
         }

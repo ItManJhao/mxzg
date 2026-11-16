@@ -18,6 +18,8 @@ const paths = new Set<string>([
     "bundles/module/bootstrap/prefabs/LoadingLayer",
     "bundles/module/common/prefabs/BagItemView",
     "bundles/module/common/prefabs/CommonPanel1",
+    "bundles/module/common/prefabs/ConfirmView",
+    "bundles/module/common/prefabs/RewardView",
     "bundles/module/gm/prefabs/GmBattleView",
     "bundles/module/gm/prefabs/GmGrantView",
     "bundles/module/gm/prefabs/GmOptionCellView",

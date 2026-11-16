@@ -1,6 +1,6 @@
 /**
- * 长连接鉴权接管与恢复快照：在同一角色锁内读取钱包、普通/期限/精灵实例及主线状态。
- * 登录首包和提交后state.changed共用本入口；不为背包开页另行查询或创建精灵实例。
+ * 长连接鉴权接管与恢复快照：在同一角色锁内读取钱包、普通/期限/精灵实例、冒险点及主线状态。
+ * 登录首包和提交后state.changed共用本入口；冒险点真正缺行才按旧规则懒建，不生成酒馆任务。
  */
 package com.funsgamex.mxzg.network;
 
@@ -10,6 +10,7 @@ import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.inventory.TimedInventoryService;
 import com.funsgamex.mxzg.role.*;
 import com.funsgamex.mxzg.spirit.SpiritInventoryService;
+import com.funsgamex.mxzg.tavern.TavernPointService;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
@@ -22,7 +23,7 @@ public class SessionSnapshotService {
                            com.funsgamex.mxzg.lineup.MainFormationStateService.State mainFormation,
                            com.funsgamex.mxzg.campaign.MainChapterService.State mainChapter,
                            com.funsgamex.mxzg.campaign.MainChapterIdleService.State mainChapterIdle,
-                           SpiritInventoryService.State spiritInventory) {}
+                           SpiritInventoryService.State spiritInventory, TavernPointService.State tavernPoints) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -49,12 +50,19 @@ public class SessionSnapshotService {
     /** 新主线挂机时钟与收益配置，随同一快照恢复。 */
     private final com.funsgamex.mxzg.campaign.MainChapterIdleService idle;
 
+    /** 独立持久冒险点，与同次已通关关卡上限组成完整只读投影。 */
+    private final TavernPointService tavernPoints;
+
+    /** 可信主线关卡规则只在快照装配处提供上限，不反向注入角色持久入口。 */
+    private final com.funsgamex.mxzg.campaign.MainChapterRules chapterRules;
+
     /** 注入原有数据入口，不新增玩家状态副本。 */
     public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory,
             TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity,
             com.funsgamex.mxzg.lineup.MainFormationStateService formations,
             com.funsgamex.mxzg.campaign.MainChapterService chapters,
-            com.funsgamex.mxzg.campaign.MainChapterIdleService idle, SpiritInventoryService spirits) {
+            com.funsgamex.mxzg.campaign.MainChapterIdleService idle, SpiritInventoryService spirits,
+            TavernPointService tavernPoints, com.funsgamex.mxzg.campaign.MainChapterRules chapterRules) {
         this.idle = idle;
         this.chapters = chapters;
         this.sessions = sessions;
@@ -65,6 +73,8 @@ public class SessionSnapshotService {
         this.heroes = heroes;
         this.capacity = capacity;
         this.formations = formations;
+        this.tavernPoints = tavernPoints;
+        this.chapterRules = chapterRules;
     }
 
     /** 锁内再次校验，撤销同角色其他令牌；并发接管中已失效的令牌不能复活。 */
@@ -76,7 +86,7 @@ public class SessionSnapshotService {
         return role;
     }
 
-    /** 在同一角色锁中读取完整资产和精灵集合，全部成功才返回；缺表或坏实例不降级为空背包。 */
+    /** 同一角色锁内组装完整资产；冒险点缺行初始化与当前revision同事务，任一坏状态均整包拒绝。 */
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Snapshot snapshot(String token) {
         String role = sessions.requireRole(token);
@@ -86,9 +96,14 @@ public class SessionSnapshotService {
         var timedState = timed.current(role, java.time.Instant.now().getEpochSecond());
         var spiritState = spirits.current(role);
         var chapter = chapters.current(token);
+        var pointState = tavernPoints.current(role, chapterRules.tavernLimit(chapter.maxCleared()));
+        // 冒险点首次懒建可能推进同一事务版本；主线子快照必须与最终完整资产版本一致。
+        chapter = new com.funsgamex.mxzg.campaign.MainChapterService.State(
+                chapter.maxCleared(), chapter.pendingBattleId(), roles.revision(role));
         var idleState = idle.snapshot(role, chapter.maxCleared(), java.time.Instant.now().getEpochSecond());
         idleState = idle.withLineup(role, idleState, formation);
         return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role),
-                roles.revision(role), timedState, capacity.current(role), formation, chapter, idleState, spiritState);
+                roles.revision(role), timedState, capacity.current(role), formation, chapter, idleState, spiritState,
+                pointState);
     }
 }

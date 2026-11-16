@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-16",
+  "branch": "hao",
+  "publishedHead": "d4a9c4f1afe1e71b4ae6a845390a520d6d3950e9",
+  "scope": "仅同一次应用内主线原battleId的结算双确认、鉴权后恢复和窗口关闭；前三关既有范围不变。",
+  "status": "IMPLEMENTED_TARGETED_CHECKS_AND_LOCAL_PREVIEW_PASSED",
+  "constraints": {
+    "idleClaimPlayerEntry": "CLOSED",
+    "idleClaimApplicationEnabled": false,
+    "centralizedBuild": false,
+    "commit": false,
+    "push": false,
+    "mergeMain": false,
+    "newProtocol": false,
+    "newPrefab": false,
+    "newAssetModel": false,
+    "newResourceManifest": false,
+    "newJournal": false
+  },
+  "implementation": [
+    {
+      "file": "client/assets/scripts/features/battle/MainChapterModel.ts",
+      "result": "唯一Model保存settlement原编号、phase和presented；原receipt只作历史展示，不写当前资产；身份重置清内存过程。"
+    },
+    {
+      "file": "client/assets/scripts/features/battle/MainChapterController.ts",
+      "result": "合并同编号在途任务；匹配SETTLED回执、当前revision>=receipt.state.assetRevision、原pending清空且关卡不倒退才确认。缺状态每次尝试至多一次refreshSnapshot，缺回执鉴权接纳后恢复同编号；原挑战合法返回SETTLED也统一确认。"
+    },
+    {
+      "file": "client/assets/scripts/features/battle/ui/MainChapterBattleView.ts",
+      "result": "等待确认后才开ChapterEndView；单次结束回调与实际展示标记去重，关闭取消准备与迟到结果，历史回放/失败不再领奖。"
+    },
+    {
+      "file": "client/assets/scripts/features/battle/ui/MainChapterView.ts",
+      "result": "结算尚未展示时保留确认结算入口，即使服务器pending已清；只继续原结果，不重播或发起下一关。"
+    },
+    {
+      "file": "client/assets/scripts/app/remake/RemakeApp.ts",
+      "result": "刷新继续用deliverAuthenticated+alive，恢复钩子只在assets.apply完整接纳后调用，旧身份结果不交付。"
+    }
+  ],
+  "client": {
+    "newCases": 17,
+    "suites": [
+      {
+        "suite": "main-chapter-settlement",
+        "command": "node client/tools/check-project.mjs --suite main-chapter-settlement",
+        "passed": true,
+        "log": "client/temp/project-checks/main-chapter-settlement.log",
+        "sha256": "63ed660e8754415227773977b412180e7746671a5bc51e330ff9e7cf4975bd17",
+        "output": "PASS receipt before state\nPASS state before receipt\nPASS challenge state lost\nPASS claim receipt lost and authenticated recovery\nPASS bounded refresh and synchronous afterSnapshot\nPASS refresh failure retains original intent\nPASS authentication during original request\nPASS concurrent claims and feedback dedupe\nPASS snapshot revision, pending and cleared-stage conditions\nPASS wrong receipt battleId rejected\nPASS challenge legally returns SETTLED\nPASS challenge prioritizes original settlement\nPASS reset during original refresh\nPASS other identity old success\nPASS other identity old failure\nPASS same role relogin old success\nPASS same role relogin old failure\n主线结算双确认专项：17/17 passed\n"
+      },
+      {
+        "suite": "main-chapter",
+        "command": "node client/tools/check-project.mjs --suite main-chapter",
+        "passed": true,
+        "log": "client/temp/project-checks/main-chapter.log",
+        "sha256": "5917802ad1898e5b333683dac1c13b6ca835ca5b885bab18ef493947ab05b858",
+        "output": "PASS 主线客户端状态、重试、回执、身份清理及窗口迟到取消\n"
+      },
+      {
+        "suite": "game-socket",
+        "command": "node client/tools/check-project.mjs --suite game-socket",
+        "passed": true,
+        "log": "client/temp/project-checks/game-socket.log",
+        "sha256": "3596778103affe643e15c1424b98024b17e24a008d5dbe5ccd15ed920a7d14c7",
+        "output": "PASS unified initialization, no duplicate requests, atomic role/bag events, monotonic revision, reconnect, old-wire isolation, invalid payload, logout\n[mxzg][MODULE][warn][FormationController] 17:00:33 Error: 网络断开\n"
+      },
+      {
+        "suite": "idle-claim-binding",
+        "command": "node client/tools/check-project.mjs --suite idle-claim-binding",
+        "passed": true,
+        "log": "client/temp/project-checks/idle-claim-binding.log",
+        "sha256": "a2b21db0b1211eccfffcbaf9edf17397ebff57c443c5c4d8c074a44b75549fa1",
+        "output": "PASS idle claim application binding: readonly history, dual versions, bounded reauth, logout/relogin, late storage/wire, owner blocking, storage activation retry, authenticated A/B replacement and closed entry\n[mxzg][MODULE][warn][MainChapterIdleClaimController] 17:00:33 SocketFailure: 挂机历史回执不属于当前角色\n    at IdleClaimBinding.validateReceiptOwner (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:26441:13)\n    at G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:26206:16\n    at AccountService.deliverAuthenticated (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:18766:22)\n    at async MainChapterIdleClaimController.request (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:21933:7)\n    at async MainChapterIdleClaimController.execute (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:21741:18)\n    at async IdleClaimBinding.activate (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:26420:7)\n[mxzg][APP][warn][IdleClaimBinding] 17:00:33 挂机领取恢复暂停：Error: 测试存储暂时不可用\n"
+      },
+      {
+        "suite": "reward-binding",
+        "command": "node client/tools/check-project.mjs --suite reward-binding",
+        "passed": true,
+        "log": "client/temp/project-checks/reward-binding.log",
+        "sha256": "b838c96b091387f0cae3caf910ace24fe3561356b6228af72bce3fec27b93140",
+        "output": "PASS 12 reward binding cases: snapshot gating, recovery confirmation, explicit retry and stale scope isolation\n"
+      },
+      {
+        "suite": "formation-state",
+        "command": "node client/tools/check-project.mjs --suite formation-state",
+        "passed": true,
+        "log": "client/temp/project-checks/formation-state.log",
+        "sha256": "6adaec4e5fba9905d9835ed1d0b9ef2513cb068d8e4cdeaeb17a43e6769c1ddc",
+        "output": "PASS formation module: no View/draft, authoritative isolation, event-only refresh, pending survives window closure, original retry, concurrent submission guard\n[mxzg][MODULE][warn][FormationController] 17:00:34 Error: 断线\n"
+      },
+      {
+        "suite": "remake-navigation",
+        "command": "node client/tools/check-project.mjs --suite remake-navigation",
+        "passed": true,
+        "log": "client/temp/project-checks/remake-navigation.log",
+        "sha256": "25fea03addd72bb0b8acbdfb7720982638ac594ac1554a00b8f65bb99a350b23",
+        "output": "[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 IdentityHome ui test 耗时 1ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 IdentityFeature ui test 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 LoginFixture ui test-remake-login 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 LoginFixture ui test-remake-login 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 HomeFixture ui test-remake-home 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 SlowFixture ui test-remake-slow 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 ResidentFixture ui test-remake-resident 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 HomeFixture ui test-remake-home 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 FeatureFixture ui test-remake-feature 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 FeatureFixture ui test-remake-feature 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 LoginFixture ui test-remake-login 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 HomeFixture ui test-remake-home 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 FeatureFixture ui test-remake-feature 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 FeatureFixture ui test-remake-feature 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 CacheRootView ui test 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 CachedView ui test 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 CachedView ui test 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 17:00:34 打开界面 CachedView ui test 耗时 0ms\nremake-navigation-check passed: explicit registration, shared UIManager, controller cleanup, replacement, failure/cancellation, logout and Prefab bindings\n[mxzg][FRAMEWORK][error][UIManager] 17:00:34 页面没有打开 prefabs/test/test-remake-failed Prefab load failed\n[mxzg][FRAMEWORK][error][UIManager] 17:00:34 页面没有打开 prefabs/test/test-config-failed page configuration failed\n[mxzg][FRAMEWORK][error][UIManager] 17:00:34 页面没有打开 Controller initialization failed\n"
+      }
+    ],
+    "typeCheck": {
+      "command": "node C:/ProgramData/cocos/editors/Creator/3.8.8/resources/app.asar.unpacked/node_modules/typescript/lib/tsc.js -p client/tools/tsconfig.remake.json --noEmit",
+      "exitCode": 0
+    },
+    "testBoundary": "受控Protobuf交付和真实AccountService身份隔离；不是Creator网络故障注入。旧窗口专项已改为独立交付回执与状态。"
+  },
+  "backend": {
+    "generatedAt": "2026-11-16T08:41:39.972Z",
+    "command": "backend/.tools JDK21 + mvnw.cmd -o -Dmaven.repo.local=.tools/m2 -Dtest=MainChapterPersistenceTest,MainChapterSocketTest test",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "name": "MainChapterPersistenceTest",
+        "tests": 9
+      },
+      {
+        "name": "MainChapterSocketTest",
+        "tests": 2
+      }
+    ],
+    "databaseUrls": [
+      "jdbc:h2:mem:main_chapter_persist",
+      "jdbc:h2:mem:chapter_socket"
+    ],
+    "socketPort": 60496,
+    "sampleVersions": [
+      {
+        "mission": 1,
+        "receiptRevision": 4,
+        "snapshotRevision": 4,
+        "snapshotMainChapterRevision": 4
+      },
+      {
+        "mission": 2,
+        "receiptRevision": 6,
+        "snapshotRevision": 6,
+        "snapshotMainChapterRevision": 6
+      },
+      {
+        "mission": 3,
+        "receiptRevision": 8,
+        "snapshotRevision": 8,
+        "snapshotMainChapterRevision": 8
+      }
+    ],
+    "coverage": [
+      "threeRealBattlesPersistAndSettleExactlyOnce: repeated claim returns equal historical Receipt, aggregate role assets and revision +6 over 3 challenges + 3 claims",
+      "concurrentRequestsAndClaimsUsePersistentReceipts: concurrent same battleId claims return same Receipt; only revision +1",
+      "challengeRestoreReplayAndClaimThroughBinarySocket: repeated claim body identical, complete game_role row unchanged including state_revision; snapshot revision equals mainChapter.assetRevision",
+      "failedSettlementRollsBackAndCanRetry: role, inventory, pending state and stored settlement rollback together",
+      "Current socket test lacks direct receipt.state.assetRevision <= snapshot.revision assertion, but fresh binary artifacts verified here",
+      "No existing backend test simulates receipt/snapshot loss, delivery reorder, or client-side dual confirmation; those need client-specific coverage"
+    ],
+    "sourceModified": false
+  },
+  "preview": {
+    "record": "docs/validation/battle-settlement-preview-20261116.json",
+    "run": "17c8900a2ffb4fe184a1f323fc8ea4e0",
+    "port": 60669,
+    "pid": 21012,
+    "normal": {
+      "battleId": "013874a4-22b4-4629-8a8f-4dfbcf37a47d",
+      "receiptRevision": 5,
+      "snapshotRevision": 5,
+      "phase": "confirmed",
+      "presented": true,
+      "observedVictoryPanel": true,
+      "returnedToIdle": true
+    },
+    "simulatedBackground": {
+      "method": "cc.game.EVENT_HIDE / EVENT_SHOW，通过原应用监听主动断开并重新鉴权；不是操作系统真后台",
+      "battleId": "e4d3782d-a7e1-4d80-8fd1-e918e2f18712",
+      "before": {
+        "snapshotRevision": 6,
+        "pendingBattleId": "e4d3782d-a7e1-4d80-8fd1-e918e2f18712",
+        "phase": "pending",
+        "presented": false
+      },
+      "after": {
+        "snapshotRevision": 7,
+        "receiptRevision": 7,
+        "pendingBattleId": null,
+        "phase": "confirmed",
+        "presented": true
+      },
+      "noNewChallenge": true,
+      "returnedToIdle": true,
+      "foregroundRestored": true
+    },
+    "claimResponses": 2,
+    "resultWindowOpenings": 2,
+    "warnings": 0,
+    "processStopped": true,
+    "stoppedAfterFullCommandLineOwnerCheck": true,
+    "images": [
+      "docs/images/battle-settlement-preview-20261116.jpg",
+      "docs/images/battle-settlement-pending-20261116.jpg",
+      "docs/images/battle-settlement-recovered-20261116.jpg"
+    ]
+  },
+  "sourceFingerprints": [
+    {
+      "path": "client/assets/scripts/features/battle/MainChapterModel.ts",
+      "sha256": "0b27aa1169c8c9e7526af4ff4920d9dc36689130e29e21a2fb129fede68a8ce6"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/MainChapterController.ts",
+      "sha256": "07501d8152710b950893a2e5804477a16d166cafbc8d1c9442d9c2fecf4fde02"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/MainChapterBattleView.ts",
+      "sha256": "92f520133b769f57b3836505eb984b2d0fc703c1126acddf783492c8b3b93a60"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/MainChapterView.ts",
+      "sha256": "e0e1060f5b6bf5cc706d16f70faba158bd3b9822dad56db99ce5bbb989ccec9e"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/RemakeApp.ts",
+      "sha256": "295736732b70059e0fd890d868a747f53f04cf07ca71a256e3161f3bb82eeb18"
+    },
+    {
+      "path": "client/tools/main-chapter-check.ts",
+      "sha256": "3459a403be2e8bbfe9d4140a4ae6f4e71a04e494ceb3a4e3124f33dbc91f7a38"
+    },
+    {
+      "path": "client/tools/main-chapter-settlement-check.ts",
+      "sha256": "da96bf486a86529c0d9f3ae48b167b3d2bc10bfa7639c414188381f43be6cd26"
+    },
+    {
+      "path": "client/tools/check-project.mjs",
+      "sha256": "5f12dbd373c1678262618fceba212b0dc51ec1c515dabbbb79927e902ec9a1ee"
+    }
+  ],
+  "notImplemented": [
+    "冷重新进入后首次打开主线页的pending自动补结算",
+    "正常胜利页与冷恢复通用奖励窗的跨页归属",
+    "布阵ACK后缺推送有界确认",
+    "跨重启已经提交且pending已清空的主线反馈持久恢复"
+  ],
+  "notRun": [
+    "Creator单独丢回执/状态的网络故障注入",
+    "正式服H5故障演练",
+    "实际操作系统后台或真实弱网",
+    "MySQL",
+    "目标APP/微信/真机",
+    "进程崩溃断电",
+    "集中构建/发布包"
+  ],
+  "documentation": [
+    "docs/reconnect-recovery.md",
+    "docs/development-progress.md",
+    "docs/restructuring-plan.md",
+    "docs/handoff.md",
+    "docs/network-contract.md",
+    "docs/architecture.md"
+  ]
+}

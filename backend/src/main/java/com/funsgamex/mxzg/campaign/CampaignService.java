@@ -1,4 +1,8 @@
-/** 主线使用真实库存与战报事务；玩家/NPC 属性通过统一英雄成长规则构建，历史战报不重算。 */
+/**
+ * 暂停的基础普攻主线领域：仅保留旧领域回归，当前玩家协议使用MainChapterService。
+ * 历史战报和简化game_campaign经验语义保留；其他资产发放复用共享领域，不能再写精灵或冒险点假堆叠。
+ * 本链尚未还原当前主线完整规则，不能直接接回页面或网络入口。
+ */
 package com.funsgamex.mxzg.campaign;
 
 import com.funsgamex.mxzg.auth.SessionService;
@@ -6,6 +10,8 @@ import com.funsgamex.mxzg.hero.HeroRepository;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.role.RoleProfile;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.reward.RewardGrantService;
+import com.funsgamex.mxzg.tavern.TavernPointRules;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,11 +37,23 @@ public class CampaignService {
     private final ObjectMapper json;
     private final com.funsgamex.mxzg.hero.HeroGrowthRules growth;
     private final IdleService idle;
-    /** 注入主线规则与统一成长计算，正常业务仍使用原有角色锁和事务。 */
+    /** 共享真实资产分发，精灵与冒险点只经所属领域，不另建旧链库存。 */
+    private final RewardGrantService grants;
+
+    /** 注入保留规则与共享发奖入口；本服务不注册玩家协议，旧角色锁与回执事务保持。 */
     public CampaignService(JdbcTemplate jdbc, SessionService sessions, RoleRepository roles,
-        HeroRepository heroes, InventoryService inventory, CampaignRules rules, ObjectMapper json, com.funsgamex.mxzg.hero.HeroGrowthRules growth, IdleService idle) {
-        this.jdbc=jdbc;this.sessions=sessions;this.roles=roles;this.heroes=heroes;
-        this.inventory=inventory;this.rules=rules;this.json=json;this.growth=growth;this.idle=idle;
+            HeroRepository heroes, InventoryService inventory, CampaignRules rules, ObjectMapper json,
+            com.funsgamex.mxzg.hero.HeroGrowthRules growth, IdleService idle, RewardGrantService grants) {
+        this.jdbc = jdbc;
+        this.sessions = sessions;
+        this.roles = roles;
+        this.heroes = heroes;
+        this.inventory = inventory;
+        this.rules = rules;
+        this.json = json;
+        this.growth = growth;
+        this.idle = idle;
+        this.grants = grants;
     }
     private void lock(String role) { jdbc.queryForObject("SELECT id FROM game_role WHERE id=? FOR UPDATE",String.class,role); }
     public State current(String token) { return state(sessions.requireRole(token)); }
@@ -109,25 +127,48 @@ public class CampaignService {
         var stats = growth.stats(hero.templateId(),hero.star(),level,stage);
         return new CampaignBattle.Unit(id,ally,position,hero.templateId(),hero.name(),level,stats.hp(),stats.atk(),stats.def(),stats.spd());
     }
-    @Transactional(isolation=Isolation.READ_COMMITTED)
-    public Settlement claim(String token,String battleId) {
-        String role=sessions.requireRole(token);lock(role);
-        var reports=jdbc.query("SELECT snapshot_json,claimed FROM game_battle WHERE id=? AND role_id=?",
-            (row,index)->json.readValue(row.getString(1),CampaignBattle.Report.class).claimed(row.getBoolean(2)),battleId,role);
-        if(reports.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Battle not found");
-        var battle=reports.getFirst();
-        if(!battle.claimed()) {
-            var current=state(role);
-            if(battle.stageId()!=current.stageId()) throw new ResponseStatusException(HttpStatus.CONFLICT,"Stage changed");
-            for(var reward:battle.rewards()) {
-                if(reward.itemId()==900001) roles.creditCurrency(role,reward.quantity(),0);
-                else if(reward.itemId()==900002) roles.creditCurrency(role,0,reward.quantity());
-                else if(reward.itemId()==900003) jdbc.update("UPDATE game_campaign SET role_exp=role_exp+? WHERE role_id=?",reward.quantity(),role);
-                else inventory.credit(role,reward.itemId(),reward.quantity());
-            }
-            if(battle.won()) jdbc.update("UPDATE game_campaign SET stage_id=stage_id+1 WHERE role_id=?",role);
-            jdbc.update("UPDATE game_battle SET claimed=TRUE WHERE id=?",battle.id());
+    /** 原战报只结算一次；共享分发与旧经验、关卡和领取标记同事务，任一失败全部回滚。 */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Settlement claim(String token, String battleId) {
+        String role = sessions.requireRole(token);
+        lock(role);
+        var reports = jdbc.query("SELECT snapshot_json,claimed FROM game_battle WHERE id=? AND role_id=?",
+                (row, index) -> json.readValue(row.getString(1), CampaignBattle.Report.class)
+                        .claimed(row.getBoolean(2)), battleId, role);
+        if (reports.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Battle not found");
         }
-        return new Settlement(battle.claimed(true),roles.findById(role).orElseThrow(),inventory.list(role),state(role).stageId());
+        var battle = reports.getFirst();
+        if (!battle.claimed()) {
+            var current = state(role);
+            if (battle.stageId() != current.stageId()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Stage changed");
+            }
+            grantRewards(role, battle.rewards());
+            if (battle.won()) {
+                jdbc.update("UPDATE game_campaign SET stage_id=stage_id+1 WHERE role_id=?", role);
+            }
+            jdbc.update("UPDATE game_battle SET claimed=TRUE WHERE id=?", battle.id());
+        }
+        return new Settlement(battle.claimed(true), roles.findById(role).orElseThrow(),
+                inventory.list(role), state(role).stageId());
+    }
+
+    /**
+     * 保留旧简化经验存储，其余奖励复用唯一真实发放入口；不改变历史战报或重复结算语义。
+     * 此暂停链原来未接关卡冒险点上限，仍仅用安全整数边界；当前主线由MainChapterRewardService传真实上限。
+     */
+    private void grantRewards(String role, List<CampaignRules.Reward> rewards) {
+        var actualRewards = new ArrayList<RewardGrantService.Reward>();
+        for (var reward : rewards) {
+            if (reward.itemId() == 900003) {
+                jdbc.update("UPDATE game_campaign SET role_exp=role_exp+? WHERE role_id=?", reward.quantity(), role);
+            } else {
+                actualRewards.add(new RewardGrantService.Reward(reward.itemId(), reward.quantity()));
+            }
+        }
+        grants.grant(role, actualRewards,
+                new RewardGrantService.Context(java.time.Instant.now().getEpochSecond(), TavernPointRules.MAX_SAFE_INTEGER),
+                java.util.concurrent.ThreadLocalRandom.current());
     }
 }

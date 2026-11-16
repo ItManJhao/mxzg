@@ -1,0 +1,627 @@
+{
+  "date": "2026-11-16",
+  "run": "5839c292c4dd475baaeb88bf5f68dd8b",
+  "scope": "真实JavaWS + 新客户端 + 原生IDB",
+  "result": "PASS",
+  "cases": [
+    {
+      "case": "idle_direct",
+      "original": {
+        "schemaVersion": 1,
+        "requestId": "7ec79be2-7c9b-4ba7-91ec-991cecaef4e3",
+        "expectedOperationVersion": 1
+      },
+      "receipt": {
+        "requestId": "7ec79be2-7c9b-4ba7-91ec-991cecaef4e3",
+        "receiptId": "ae25d6e0-5990-46f2-81a7-67a80b3eb344",
+        "beforeOperationVersion": 1,
+        "afterOperationVersion": 2,
+        "assetRevision": 4,
+        "committedAtSeconds": 1794815913,
+        "previousStartedAtSeconds": 1794815675,
+        "seconds": 238,
+        "theoreticalRewards": [
+          {
+            "itemId": 900001,
+            "quantity": 600
+          },
+          {
+            "itemId": 900003,
+            "quantity": 30
+          },
+          {
+            "itemId": 900101,
+            "quantity": 75
+          },
+          {
+            "itemId": 900102,
+            "quantity": 1
+          },
+          {
+            "itemId": 900401,
+            "quantity": 44
+          }
+        ],
+        "actual": {
+          "roleId": "ce9c0c7d-4a49-40c5-80fe-4e100bc96010",
+          "items": [
+            {
+              "itemId": 900001,
+              "requested": 600,
+              "credited": 600,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900003,
+              "requested": 30,
+              "credited": 30,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900101,
+              "requested": 75,
+              "credited": 75,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900102,
+              "requested": 1,
+              "credited": 1,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900401,
+              "requested": 44,
+              "credited": 44,
+              "ignored": 0,
+              "reason": "NONE"
+            }
+          ],
+          "wallet": {
+            "goldBefore": 0,
+            "diamondsBefore": 0,
+            "goldAfter": 600,
+            "diamondsAfter": 0
+          },
+          "tavern": [
+            {
+              "beforeQuantity": 2000,
+              "limit": 11000,
+              "afterQuantity": 2044
+            }
+          ],
+          "bonuses": [],
+          "spirits": {
+            "items": [],
+            "schemaVersion": 1
+          },
+          "timedItems": []
+        }
+      },
+      "current": {
+        "assetRevision": 4,
+        "operationVersion": 2,
+        "requestMode": "ENABLED",
+        "startedAt": 1794815913,
+        "wallet": {
+          "gold": 600,
+          "diamonds": 0
+        }
+      },
+      "tavernPoints": {
+        "schemaVersion": 1,
+        "adventureCount": 2044,
+        "limit": 11000
+      },
+      "requests": [
+        {
+          "name": "session.login",
+          "frameId": "34b1897f-257c-4968-afe5-37d2f64ab7ac"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "062a8949-c96d-4399-b62b-9be9340e1a11",
+          "requestId": "7ec79be2-7c9b-4ba7-91ec-991cecaef4e3"
+        },
+        {
+          "name": "chapter.idle.claim",
+          "frameId": "859bc087-6946-400b-81f2-30206bff6752",
+          "requestId": "7ec79be2-7c9b-4ba7-91ec-991cecaef4e3",
+          "expectedOperationVersion": 1
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "26fd7afa-2d78-45d6-b6c0-f8cc3836f32f",
+          "requestId": "7ec79be2-7c9b-4ba7-91ec-991cecaef4e3"
+        }
+      ],
+      "dropped": [],
+      "stateEvents": 1,
+      "connections": 1,
+      "rewardFeedback": {
+        "accepted": 1,
+        "shown": [
+          {
+            "receiptId": "ae25d6e0-5990-46f2-81a7-67a80b3eb344",
+            "items": [
+              {
+                "itemId": 900001,
+                "credited": 600
+              },
+              {
+                "itemId": 900003,
+                "credited": 30
+              },
+              {
+                "itemId": 900101,
+                "credited": 75
+              },
+              {
+                "itemId": 900102,
+                "credited": 1
+              },
+              {
+                "itemId": 900401,
+                "credited": 44
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "case": "idle_lost_receipt",
+      "original": {
+        "schemaVersion": 1,
+        "requestId": "9ea8f077-e076-4040-8a58-473a5673e42f",
+        "expectedOperationVersion": 1
+      },
+      "receipt": {
+        "requestId": "9ea8f077-e076-4040-8a58-473a5673e42f",
+        "receiptId": "8d22c2e9-876e-4e11-bf8f-7be00e1c1a84",
+        "beforeOperationVersion": 1,
+        "afterOperationVersion": 2,
+        "assetRevision": 4,
+        "committedAtSeconds": 1794815913,
+        "previousStartedAtSeconds": 1794815675,
+        "seconds": 238,
+        "theoreticalRewards": [
+          {
+            "itemId": 900001,
+            "quantity": 600
+          },
+          {
+            "itemId": 900003,
+            "quantity": 30
+          },
+          {
+            "itemId": 900101,
+            "quantity": 75
+          },
+          {
+            "itemId": 900401,
+            "quantity": 44
+          }
+        ],
+        "actual": {
+          "roleId": "1955a3e4-6079-4a76-8736-dc2f28d89c2f",
+          "items": [
+            {
+              "itemId": 900001,
+              "requested": 600,
+              "credited": 600,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900003,
+              "requested": 30,
+              "credited": 30,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900101,
+              "requested": 75,
+              "credited": 75,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900401,
+              "requested": 44,
+              "credited": 44,
+              "ignored": 0,
+              "reason": "NONE"
+            }
+          ],
+          "wallet": {
+            "goldBefore": 0,
+            "diamondsBefore": 0,
+            "goldAfter": 600,
+            "diamondsAfter": 0
+          },
+          "tavern": [
+            {
+              "beforeQuantity": 2000,
+              "limit": 11000,
+              "afterQuantity": 2044
+            }
+          ],
+          "bonuses": [],
+          "spirits": {
+            "items": [],
+            "schemaVersion": 1
+          },
+          "timedItems": []
+        }
+      },
+      "current": {
+        "assetRevision": 4,
+        "operationVersion": 2,
+        "requestMode": "ENABLED",
+        "startedAt": 1794815913,
+        "wallet": {
+          "gold": 600,
+          "diamonds": 0
+        }
+      },
+      "tavernPoints": {
+        "schemaVersion": 1,
+        "adventureCount": 2044,
+        "limit": 11000
+      },
+      "requests": [
+        {
+          "name": "session.login",
+          "frameId": "6dfd0b02-472d-4049-8f4e-87ee776cbc53"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "2883fa79-6d11-4a42-a9fc-e3f1c30d8001",
+          "requestId": "9ea8f077-e076-4040-8a58-473a5673e42f"
+        },
+        {
+          "name": "chapter.idle.claim",
+          "frameId": "0ce4464d-e465-436a-aa42-a5d826851417",
+          "requestId": "9ea8f077-e076-4040-8a58-473a5673e42f",
+          "expectedOperationVersion": 1
+        },
+        {
+          "name": "session.authenticate",
+          "frameId": "13a8b709-8bf9-4c7f-9926-39888fc6f1a7"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "11374a48-0842-4ea7-ba6a-c629039350c0",
+          "requestId": "9ea8f077-e076-4040-8a58-473a5673e42f"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "f6bc0799-3db8-40c9-9c63-72d12ffa2713",
+          "requestId": "9ea8f077-e076-4040-8a58-473a5673e42f"
+        }
+      ],
+      "dropped": [
+        "chapter.idle.claim"
+      ],
+      "stateEvents": 1,
+      "connections": 2,
+      "rewardFeedback": {
+        "accepted": 1,
+        "shown": [
+          {
+            "receiptId": "8d22c2e9-876e-4e11-bf8f-7be00e1c1a84",
+            "items": [
+              {
+                "itemId": 900001,
+                "credited": 600
+              },
+              {
+                "itemId": 900003,
+                "credited": 30
+              },
+              {
+                "itemId": 900101,
+                "credited": 75
+              },
+              {
+                "itemId": 900401,
+                "credited": 44
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "case": "idle_lost_state",
+      "original": {
+        "schemaVersion": 1,
+        "requestId": "edfbe407-f4b9-40b2-982d-e808b35ea7ca",
+        "expectedOperationVersion": 1
+      },
+      "receipt": {
+        "requestId": "edfbe407-f4b9-40b2-982d-e808b35ea7ca",
+        "receiptId": "9592d951-8ba4-4e4a-ac43-a6c67141d2d7",
+        "beforeOperationVersion": 1,
+        "afterOperationVersion": 2,
+        "assetRevision": 4,
+        "committedAtSeconds": 1794815914,
+        "previousStartedAtSeconds": 1794815675,
+        "seconds": 239,
+        "theoreticalRewards": [
+          {
+            "itemId": 900001,
+            "quantity": 600
+          },
+          {
+            "itemId": 900002,
+            "quantity": 1
+          },
+          {
+            "itemId": 900003,
+            "quantity": 30
+          },
+          {
+            "itemId": 900101,
+            "quantity": 75
+          },
+          {
+            "itemId": 900401,
+            "quantity": 44
+          }
+        ],
+        "actual": {
+          "roleId": "02b69f97-af4f-4461-976d-f89a48927b73",
+          "items": [
+            {
+              "itemId": 900001,
+              "requested": 600,
+              "credited": 600,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900002,
+              "requested": 1,
+              "credited": 1,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900003,
+              "requested": 30,
+              "credited": 30,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900101,
+              "requested": 75,
+              "credited": 75,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900401,
+              "requested": 44,
+              "credited": 44,
+              "ignored": 0,
+              "reason": "NONE"
+            }
+          ],
+          "wallet": {
+            "goldBefore": 0,
+            "diamondsBefore": 0,
+            "goldAfter": 600,
+            "diamondsAfter": 1
+          },
+          "tavern": [
+            {
+              "beforeQuantity": 2000,
+              "limit": 11000,
+              "afterQuantity": 2044
+            }
+          ],
+          "bonuses": [],
+          "spirits": {
+            "items": [],
+            "schemaVersion": 1
+          },
+          "timedItems": []
+        }
+      },
+      "current": {
+        "assetRevision": 4,
+        "operationVersion": 2,
+        "requestMode": "ENABLED",
+        "startedAt": 1794815914,
+        "wallet": {
+          "gold": 600,
+          "diamonds": 1
+        }
+      },
+      "tavernPoints": {
+        "schemaVersion": 1,
+        "adventureCount": 2044,
+        "limit": 11000
+      },
+      "requests": [
+        {
+          "name": "session.login",
+          "frameId": "03489369-c5ef-4466-817d-724a97a92995"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "b8403429-c5d9-4574-ad8a-957af57a4024",
+          "requestId": "edfbe407-f4b9-40b2-982d-e808b35ea7ca"
+        },
+        {
+          "name": "chapter.idle.claim",
+          "frameId": "d84985c8-e750-4b7b-bead-6c65abe1a013",
+          "requestId": "edfbe407-f4b9-40b2-982d-e808b35ea7ca",
+          "expectedOperationVersion": 1
+        },
+        {
+          "name": "session.authenticate",
+          "frameId": "c9024093-e90e-4545-bba6-5ba1a941f471"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "53ee598f-4aa1-4eae-aaf5-b3a63d7a0bab",
+          "requestId": "edfbe407-f4b9-40b2-982d-e808b35ea7ca"
+        }
+      ],
+      "dropped": [
+        "state.changed"
+      ],
+      "stateEvents": 1,
+      "connections": 2,
+      "rewardFeedback": {
+        "accepted": 1,
+        "shown": [
+          {
+            "receiptId": "9592d951-8ba4-4e4a-ac43-a6c67141d2d7",
+            "items": [
+              {
+                "itemId": 900001,
+                "credited": 600
+              },
+              {
+                "itemId": 900002,
+                "credited": 1
+              },
+              {
+                "itemId": 900003,
+                "credited": 30
+              },
+              {
+                "itemId": 900101,
+                "credited": 75
+              },
+              {
+                "itemId": 900401,
+                "credited": 44
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "databaseSummary": [
+    {
+      "id": "ce9c0c7d-4a49-40c5-80fe-4e100bc96010",
+      "login_account": "idle_direct",
+      "gold": 600,
+      "diamonds": 0,
+      "role_level": 1,
+      "role_experience": 30,
+      "asset_revision": 4,
+      "started_at": 1794815913,
+      "operation_version": 2,
+      "receipt_count": 1,
+      "stack_rows": 2,
+      "timed_rows": 0,
+      "spirit_rows": 0,
+      "adventure_count": 2044,
+      "legacy_tavern_stack_rows": 0
+    },
+    {
+      "id": "1955a3e4-6079-4a76-8736-dc2f28d89c2f",
+      "login_account": "idle_lost_receipt",
+      "gold": 600,
+      "diamonds": 0,
+      "role_level": 1,
+      "role_experience": 30,
+      "asset_revision": 4,
+      "started_at": 1794815913,
+      "operation_version": 2,
+      "receipt_count": 1,
+      "stack_rows": 1,
+      "timed_rows": 0,
+      "spirit_rows": 0,
+      "adventure_count": 2044,
+      "legacy_tavern_stack_rows": 0
+    },
+    {
+      "id": "02b69f97-af4f-4461-976d-f89a48927b73",
+      "login_account": "idle_lost_state",
+      "gold": 600,
+      "diamonds": 1,
+      "role_level": 1,
+      "role_experience": 30,
+      "asset_revision": 4,
+      "started_at": 1794815914,
+      "operation_version": 2,
+      "receipt_count": 1,
+      "stack_rows": 1,
+      "timed_rows": 0,
+      "spirit_rows": 0,
+      "adventure_count": 2044,
+      "legacy_tavern_stack_rows": 0
+    },
+    {
+      "id": "81148307-fe6e-45ac-930e-db2253bf73a8",
+      "login_account": "idle_other",
+      "gold": 0,
+      "diamonds": 0,
+      "role_level": 1,
+      "role_experience": 0,
+      "asset_revision": 1,
+      "started_at": 1794815675,
+      "operation_version": 1,
+      "receipt_count": 0,
+      "stack_rows": 0,
+      "timed_rows": 0,
+      "spirit_rows": 0,
+      "adventure_count": null,
+      "legacy_tavern_stack_rows": 0
+    },
+    {
+      "id": "824a2da4-9078-444f-9720-7ca07893027f",
+      "login_account": "idle_pending",
+      "gold": 0,
+      "diamonds": 0,
+      "role_level": 1,
+      "role_experience": 0,
+      "asset_revision": 1,
+      "started_at": 1794815675,
+      "operation_version": 1,
+      "receipt_count": 0,
+      "stack_rows": 0,
+      "timed_rows": 0,
+      "spirit_rows": 0,
+      "adventure_count": null,
+      "legacy_tavern_stack_rows": 0
+    },
+    {
+      "id": "5e87d234-e3e2-4db6-99e0-f525eceba898",
+      "login_account": "idle_reload",
+      "gold": 0,
+      "diamonds": 0,
+      "role_level": 1,
+      "role_experience": 0,
+      "asset_revision": 1,
+      "started_at": 1794815675,
+      "operation_version": 1,
+      "receipt_count": 0,
+      "stack_rows": 0,
+      "timed_rows": 0,
+      "spirit_rows": 0,
+      "adventure_count": null,
+      "legacy_tavern_stack_rows": 0
+    }
+  ],
+  "cleanup": {
+    "run": "5839c292c4dd475baaeb88bf5f68dd8b",
+    "backendStopped": true,
+    "frontendStopped": true,
+    "scope": "本轮独立宿主停止，保留文件H2及证据，不操作日常数据库"
+  }
+}

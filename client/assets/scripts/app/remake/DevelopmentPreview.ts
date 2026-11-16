@@ -6,6 +6,13 @@ import {BattleReplayPreview} from "../../features/battle/ui/BattleReplayPreview"
 import {SkillAuditView} from "../../features/battle/ui/SkillAuditView";
 import {SkillAuditEntry} from "../../features/battle/utils/SkillAuditUtils";
 import { UIManager } from "../../framework/ui/UIManager";
+import { MainChapterView } from "../../features/battle/ui/MainChapterView";
+import { ConfirmView } from "../../features/common/ui/ConfirmView";
+import { RewardUtils } from "../../features/reward/utils/RewardUtils";
+import type { RewardNotice } from "../../features/reward/data/RewardNoticeData";
+import { GameProtocolCodecUtils } from "../../platform/GameProtocolCodecUtils";
+import { GameConfig } from "../../config/GameConfig";
+import { GConfig } from "../../config/GConfig";
 
 import {assetManager} from "cc";
 import { GameLog } from "../../core/GameLog";
@@ -21,8 +28,32 @@ const REPLAY_RESOURCE_ROOT = "http://127.0.0.1:19091/";
 export class DevelopmentPreview {
     /** 开发诊断按键监听，销毁时解除，不在正式构建注册。 */
     private readonly diagnosticKey = (event: KeyboardEvent) => {
-        if (event.code === "F8") this.reportLifecycle();
+        if (event.code === "F8") {
+            this.reportLifecycle();
+        }
+        if (event.code === "F7" && !event.repeat && this.idleChestPreviewEnabled()) {
+            event.preventDefault();
+            if (event.shiftKey) {
+                void this.previewIdleReward();
+            } else {
+                const view = this.idleChestView();
+                if (view?.previewIdleChest(this.idleChestStage)) {
+                    UIManager.instance.toast("仅演示第" + this.idleChestStage + "档宝箱收取，不发送领取请求");
+                    this.idleChestStage = this.idleChestStage % 4 + 1;
+                } else {
+                    UIManager.instance.toast("请在战斗主页等待宝箱就绪或上次演示结束");
+                }
+            }
+        }
     };
+    /** 显式预览按键下一次播放1至4档；不写页面当前档位或挂机状态。 */
+    private idleChestStage = 1;
+    /** 奖励演示准备期间互斥，关闭/换号后解除，不允许迟到窗口打开。 */
+    private idleRewardPreparing = false;
+    /** 演示装配代次由应用身份清理递增，只取消本地加载，不承担业务会话隔离。 */
+    private idleRewardEpoch = 0;
+    /** 应用提供通用奖励反馈队列；独立演示不另开一套奖励窗口，也不触碰资产。 */
+    private showReward: ((notice: RewardNotice) => void) | null = null;
     /** 当前战报窗口加载序号，关闭或切换时阻止迟到加载重新出现。 */
     private replayEpoch = 0;
     /** 本实例拥有的开发页面注册解除函数。 */
@@ -38,6 +69,11 @@ export class DevelopmentPreview {
      */
     constructor(private readonly pageHost: Node | null, private readonly startupHost: Node | null,
                 private readonly valid: () => boolean) {
+    }
+
+    /** 正常应用装配后复用同一反馈队列；独立战报页不需要该能力。 */
+    public configureRewards(show: (notice: RewardNotice) => void): void {
+        this.showReward = show;
     }
 
     /** 注册开发入口；true表示已进入独立预览，正常会话装配必须停止。 */
@@ -177,8 +213,92 @@ export class DevelopmentPreview {
         }));
     }
 
+    /** 宝箱演示须显式参数且只在Creator本机预览中注册，不随正式包或普通F7生效。 */
+    private idleChestPreviewEnabled(): boolean {
+        return PREVIEW && typeof location !== "undefined"
+            && /^http:\/\/(localhost|127\.0\.0\.1):7456\//.test(location.href)
+            && new URLSearchParams(location.search).get("idleChestPreview") === "1";
+    }
+
+    /** 只选取当前仍显示的主线页面，不重新打开页面或创建测试资产。 */
+    private idleChestView(): MainChapterView | null {
+        if (!this.pageHost?.isValid) {
+            return null;
+        }
+        return this.pageHost.getComponentsInChildren(MainChapterView)
+            .find(view => view.isValid && view.node.activeInHierarchy) || null;
+    }
+
+    /** 读取独立测试导出的真实历史回执演示旧确认/奖励窗，始终不发送领取或提交其中的资产。 */
+    private async previewIdleReward(): Promise<void> {
+        if (!this.idleChestPreviewEnabled() || !this.valid() || !this.idleChestView() || this.idleRewardPreparing
+            || !this.showReward || UIManager.instance.isOpen("confirm") || UIManager.instance.isOpen("reward")) {
+            return;
+        }
+        this.idleRewardPreparing = true;
+        const epoch = this.idleRewardEpoch;
+        try {
+            const response = await fetch(REPLAY_RESOURCE_ROOT + "idle-chest-receipt.json", {credentials: "omit", redirect: "error"});
+            if (!response.ok) {
+                throw new Error("独立宝箱演示回执不可用");
+            }
+            const receipt = GameProtocolCodecUtils.validateIdleReceipt(await response.json());
+            const notice = RewardUtils.fromActual(receipt.receiptId as string, receipt.assetRevision as number, receipt.actual);
+            if (!notice) {
+                throw new Error("宝箱演示回执没有实际到账");
+            }
+            if (epoch !== this.idleRewardEpoch || !this.valid() || !this.idleChestView()) {
+                return;
+            }
+            UIManager.instance.toast("仅演示冒险点满额确认及真实回执展示，不发送领取请求");
+            const language = (id: number): string => {
+                const value = GameConfig.instance.getConfig(GConfig.Language, id)?.value;
+                if (!value) {
+                    throw new Error("宝箱演示缺少语言配置：" + id);
+                }
+                return value;
+            };
+            await UIManager.instance.open(ConfirmView, {
+                title: language(3500),
+                message: language(2220),
+                confirmText: language(47589),
+                cancelText: language(47703),
+                onConfirm: () => {
+                    if (epoch !== this.idleRewardEpoch || !this.valid()) {
+                        return;
+                    }
+                    this.idleChestView()?.previewIdleChest(this.idleChestStage);
+                    try {
+                        this.showReward?.(notice);
+                    } catch (error) {
+                        this.reportIdleRewardFailure(error);
+                    }
+                },
+            });
+        } catch (error) {
+            if (epoch === this.idleRewardEpoch && this.valid()) {
+                this.reportIdleRewardFailure(error);
+            }
+        } finally {
+            if (epoch === this.idleRewardEpoch) {
+                this.idleRewardPreparing = false;
+            }
+        }
+    }
+
+    /** 演示失败沿用统一飘字，框架已经报告的异常不重复反馈。 */
+    private reportIdleRewardFailure(error: unknown): void {
+        if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+            UIManager.instance.toast("宝箱表现演示失败：" + String(error));
+        }
+    }
+
     /** 应用统一在身份变化或退出时关闭演示，模块不检查角色键。 */
     public cancelReplay(): void {
+        this.idleRewardEpoch++;
+        this.idleRewardPreparing = false;
+        UIManager.instance.closeById("confirm");
+        UIManager.instance.closeById("reward");
         this.replayEpoch++;
         this.replayCleanup?.();
         this.replayCleanup = null;
@@ -198,6 +318,7 @@ export class DevelopmentPreview {
     public dispose(): void {
         if (typeof window !== "undefined") window.removeEventListener("keydown", this.diagnosticKey, true);
         this.cancelReplay();
+        this.showReward = null;
         UIManager.instance.closeById("skill-audit");
         for (const stop of this.unregister.splice(0)) stop();
     }

@@ -37,6 +37,7 @@ import { GameProtocolCodecUtils, GameFrame } from "../assets/scripts/platform/Ga
 import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
 import { mxzg } from "../assets/scripts/platform/GameProtocol.generated";
 import { GameLog } from "../assets/scripts/core/GameLog";
+import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 const battleId = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
 const original = { maxCleared: 1, pendingBattleId: battleId, assetRevision: 3 };
 const latest = { maxCleared: 2, assetRevision: 8 };
@@ -822,61 +823,188 @@ async function main(): Promise<void> {
         screenView.getVisibleSize = originalVisibleSize;
         Tween.stopAllByTarget = originalStopTween;
     }
-    // 正常战斗完成自动结算；历史重播、失败及关闭后均不发起领奖。
-    const originalClaim = MainChapterController.instance.claim;
-    const originalUiOpen = UIManager.instance.open;
+    // 真实Controller独立接收回执与快照；窗口仅在双确认后消费一次结果。
+    const settlementController = MainChapterController.instance;
+    const originalUiOpen = UIManager.instance.openChild;
+    const originalOwnsChild = UIManager.instance.ownsChild;
+    const originalUiCloseById = UIManager.instance.closeById;
     const originalUnits = BattleReplayUtils.units;
     const originalNames = BattleReplayUtils.names;
     // 此段只测试结算调度；真实二进制统计由上面的Java→TS互通检查验证。
     BattleReplayUtils.units = () => ranked;
     BattleReplayUtils.names = () => ({ attacker: "开战昵称", defender: "羽嘉森林1" });
-    const resultNode = new Node("MainChapterBattleView");
-    const resultView: any = resultNode.addComponent(MainChapterBattleView);
-    resultView.args = { report: { battleId, mission: 1 }, onClosed: () => {} };
-    resultView.closed = false;
+    const settlementViews: any[] = [];
+    const resultArgs: any[] = [];
+    const resultCloseRequests: string[] = [];
     let claimCount = 0;
-    let resultArgs: any;
-    UIManager.instance.open = (async (_view: any, args: any) => { resultArgs = args; }) as any;
-    MainChapterController.instance.claim = async id => {
-        claimCount++;
-        shared.receipt = { action: "SETTLED", battleId: id, state: shared.state!, rewards: [{ itemId: 900001, quantity: 4000 }] };
-        shared.state = { ...shared.state!, pendingBattleId: null };
+    let closedResults = 0;
+    let delayResultOpen = false;
+    let releaseResultOpen: ((view: { close(): void }) => void) | null = null;
+    type ClaimDelivery = (received: (response: GameFrame) => void,
+        failed: (error: unknown) => void) => Promise<void>;
+    /** 仅交付结算历史回执，不同步当前快照，保留两个确认来源的独立性。 */
+    const settledResponse = (): GameFrame => frame(Protocol.CHAPTER_CLAIM, {
+        action: "SETTLED", battleId,
+        state: { maxCleared: 1, pendingBattleId: null, assetRevision: 2 },
+        rewards: [{ itemId: 900001, quantity: 4000 }],
+    });
+    let claimDelivery: ClaimDelivery = async received => { received(settledResponse()); };
+
+    /** 通过真实状态入口接纳快照；版本未达回执时不能提前交付完成反馈。 */
+    function deliverSettlementSnapshot(revision: number, pendingBattleId: string | null): void {
+        settlementController.onNotify(Protocol.STATE_CHANGED, {
+            revision, mainChapter: { maxCleared: 1, pendingBattleId, assetRevision: revision },
+        });
+    }
+
+    /** 为本段调度检查绑定真实结果事件；不启动资源播放器，关闭仍走View自身清理。 */
+    function createSettlementView(): any {
+        const current: any = new Node("MainChapterBattleView").addComponent(MainChapterBattleView);
+        current.args = {
+            report: { battleId, mission: 1, pending: [], bytes: new Uint8Array() },
+            onClosed: () => {},
+        };
+        EventDispatcher.instance.on(MainChapterController.Updated, current, current.showConfirmedSettlement);
+        settlementViews.push(current);
+        return current;
+    }
+
+    /** 等待异步开窗的Promise接纳与续段，不依赖返回Promise的微任务层数。 */
+    async function flushSettlementUpdates(): Promise<void> {
+        await new Promise<void>(resolve => setTimeout(resolve, 0));
+    }
+
+    UIManager.instance.openChild = (async (owner: any, _view: any, args: any) => {
+        assert(settlementViews.includes(owner), "结果页必须登记到当前真实战场的显示作用域");
+        resultArgs.push(args);
+        if (delayResultOpen) {
+            return new Promise<{ close(): void }>(resolve => { releaseResultOpen = resolve; });
+        }
+        return { close: () => { closedResults++; } };
+    }) as any;
+    UIManager.instance.ownsChild = owner => settlementViews.includes(owner);
+    UIManager.instance.closeById = (id: string) => {
+        resultCloseRequests.push(id);
+        return true;
     };
+    settlementController.configure(async (name, body, received, failed) => {
+        assert.equal(name, Protocol.CHAPTER_CLAIM);
+        assert.deepEqual(body, { battleId }, "结算只能重用原战斗编号");
+        claimCount++;
+        await claimDelivery(received, failed);
+    });
+    settlementController.initialize();
     try {
-        shared.state = { maxCleared: 1, pendingBattleId: battleId, assetRevision: 1 };
+        settlementController.resetSession();
+        deliverSettlementSnapshot(1, battleId);
+        const resultView = createSettlementView();
         await resultView.completeBattle(true);
         assert.equal(claimCount, 1);
-        assert.equal(resultArgs.rewards[0].quantity, 4000, "结算窗口消费真实回执");
-        assert.deepEqual(resultArgs.names, { attacker: "开战昵称", defender: "羽嘉森林1" });
+        assert.equal(shared.receipt?.action, "SETTLED");
+        assert.equal(shared.state!.pendingBattleId, battleId, "历史回执不能代替统一状态");
+        assert.equal(resultArgs.length, 0, "只有回执不能打开尚未确认或成功结果窗");
         await resultView.completeBattle(true);
+        assert.equal(claimCount, 1, "同窗口重复结束回调不能重复结算");
+        deliverSettlementSnapshot(1, null);
+        assert.equal(resultArgs.length, 0, "pending清空但版本未达到回执仍不能显示奖励");
+        deliverSettlementSnapshot(2, null);
+        await flushSettlementUpdates();
+        assert.equal(resultArgs.length, 1, "后到快照通过真实Updated事件交付结果");
+        assert.equal(resultArgs[0].rewards[0].quantity, 4000, "结算窗口消费真实回执");
+        assert.deepEqual(resultArgs[0].names, { attacker: "开战昵称", defender: "羽嘉森林1" });
+        assert.equal(shared.settlement?.presented, true, "实际打开后才登记已展示");
+        deliverSettlementSnapshot(3, null);
+        await resultView.completeBattle(true);
+        assert.equal(resultArgs.length, 1, "重复快照和结束回调只展示一次实际结果");
+        resultView.onClose();
+
+        const historicalView = createSettlementView();
+        await historicalView.completeBattle(true);
         assert.equal(claimCount, 1, "历史重播不再次发起结算");
-        assert.deepEqual(resultArgs.rewards, []);
-        await resultView.completeBattle(false);
-        assert.equal(claimCount, 1, "失败不发奖");
-        shared.state = { ...shared.state!, pendingBattleId: battleId };
-        shared.receipt = null;
-        MainChapterController.instance.claim = async () => { claimCount++; };
-        await resultView.completeBattle(true);
-        assert.match(resultArgs.notice, /尚未确认/);
-        assert.deepEqual(resultArgs.rewards, [], "失败或断线不能伪造奖励");
-        resultView.closed = true;
-        await resultView.completeBattle(true);
+        assert.deepEqual(resultArgs[1].rewards, []);
+        assert.equal(resultArgs[1].notice, "此战报已结算");
+        historicalView.onClose();
+
+        settlementController.resetSession();
+        deliverSettlementSnapshot(1, battleId);
+        const failedBattleView = createSettlementView();
+        await failedBattleView.completeBattle(false);
+        await failedBattleView.completeBattle(true);
+        assert.equal(claimCount, 1, "失败不发奖且同窗口不接受第二次结束结果");
+        assert.equal(resultArgs[2].won, false);
+        assert.deepEqual(resultArgs[2].rewards, []);
+        failedBattleView.onClose();
+
+        settlementController.resetSession();
+        deliverSettlementSnapshot(1, battleId);
+        claimDelivery = async (_received, failed) => { failed(new Error("offline")); };
+        const offlineView = createSettlementView();
+        const beforeOffline = resultArgs.length;
+        await offlineView.completeBattle(true);
+        assert.equal(claimCount, 2);
+        assert.equal(shared.settlement?.phase, "pending");
+        assert.equal(resultArgs.length, beforeOffline, "断线待确认保留原窗口，不显示假结果");
+        deliverSettlementSnapshot(2, null);
+        assert.equal(resultArgs.length, beforeOffline, "没有回执时快照不能伪造奖励");
+        offlineView.onClose();
+
+        settlementController.resetSession();
+        deliverSettlementSnapshot(1, battleId);
+        const closedView = createSettlementView();
+        closedView.onClose();
+        await closedView.completeBattle(true);
         assert.equal(claimCount, 2, "提前关闭不触发结算");
-        resultView.closed = false;
-        MainChapterController.instance.claim = async () => { throw new Error("offline"); };
-        await resultView.completeBattle(true);
-        assert.match(resultArgs.notice, /尚未确认/, "请求异常保留领奖恢复入口");
-        let releaseClaim!: () => void;
-        MainChapterController.instance.claim = async () => new Promise<void>(resolve => { releaseClaim = resolve; });
-        const beforeClose = resultArgs;
-        const finishing = resultView.completeBattle(true);
-        resultView.closed = true;
+
+        let releaseClaim: (() => void) | null = null;
+        claimDelivery = received => new Promise<void>(resolve => {
+            releaseClaim = () => {
+                received(settledResponse());
+                resolve();
+            };
+        });
+        const closingRequestView = createSettlementView();
+        const beforeClose = resultArgs.length;
+        const finishing = closingRequestView.completeBattle(true);
+        await Promise.resolve();
+        assert(releaseClaim, "结算请求已进入真实Controller交付口");
+        closingRequestView.onClose();
         releaseClaim();
         await finishing;
-        assert.equal(resultArgs, beforeClose, "结算在途退出后不弹出迟到窗口");
+        deliverSettlementSnapshot(2, null);
+        await flushSettlementUpdates();
+        assert.equal(claimCount, 3);
+        assert.equal(resultArgs.length, beforeClose, "结算在途退出后不弹出迟到窗口");
+        assert.equal(shared.settlement?.presented, false, "关闭不取消服务器结果，也不冒充已经展示");
+
+        settlementController.resetSession();
+        deliverSettlementSnapshot(1, battleId);
+        claimDelivery = async received => { received(settledResponse()); };
+        const closingOpenView = createSettlementView();
+        await closingOpenView.completeBattle(true);
+        delayResultOpen = true;
+        deliverSettlementSnapshot(2, null);
+        assert(releaseResultOpen, "双确认后结果窗口已经开始异步打开");
+        const beforeLateOpen = resultArgs.length;
+        const beforeLateClose = closedResults;
+        const beforeCancelRequests = resultCloseRequests.length;
+        closingOpenView.onClose();
+        assert.deepEqual(resultCloseRequests.slice(beforeCancelRequests), [],
+            "战场不得按id全局关闭可能被其他用途接管的结果页；归属取消由叠窗专项验证");
+        releaseResultOpen({ close: () => { closedResults++; } });
+        await flushSettlementUpdates();
+        assert.equal(closedResults, beforeLateClose, "旧战场的迟到续段不得关闭框架已转交的结果实例");
+        assert.equal(shared.settlement?.presented, false, "准备中关闭不能登记已经展示");
+        deliverSettlementSnapshot(3, null);
+        await flushSettlementUpdates();
+        assert.equal(resultArgs.length, beforeLateOpen, "关闭后的快照不能再次打开结果窗");
     } finally {
-        MainChapterController.instance.claim = originalClaim;
-        UIManager.instance.open = originalUiOpen;
+        for (const settlementView of settlementViews) {
+            settlementView.onClose();
+        }
+        settlementController.dispose();
+        UIManager.instance.openChild = originalUiOpen;
+        UIManager.instance.ownsChild = originalOwnsChild;
+        UIManager.instance.closeById = originalUiCloseById;
         BattleReplayUtils.units = originalUnits;
         BattleReplayUtils.names = originalNames;
         shared.reset();

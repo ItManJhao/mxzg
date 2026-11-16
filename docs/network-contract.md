@@ -1,6 +1,8 @@
 # 游戏通信与统一状态契约
 
-更新：2026-11-14。全部游戏业务只走 WS＋Protobuf。当前已接入登录、角色、背包、英雄只读状态、主线阵容保存、前三关挑战/结算及挂机演出；新挂机领取/status服务端事务已实现但默认关闭，客户端尚未接发包/持久待确认；升级、穿脱、宝箱按钮、快速战斗仍关闭。资源下载、WS握手及测试实例身份探针不属于游戏业务API。后文按日期记录字段演进，完整状态以[开发进度](development-progress.md)为准。
+更新：2026-11-16。全部游戏业务只走 WS＋Protobuf。当前已接入登录、角色、背包、英雄只读状态、主线阵容保存、前三关挑战/结算及挂机演出；新挂机领取/status服务端事务、客户端原请求持久恢复和双确认已接入，日常开关及玩家按钮仍关闭；升级、穿脱、快速战斗仍关闭。资源下载、WS握手及测试实例身份探针不属于游戏业务API。后文按日期记录字段演进，完整状态以[开发进度](development-progress.md)为准。
+
+断线后的页面与战斗边界见[恢复核对及接线方案](reconnect-recovery.md)：短断线重新鉴权保留页面，完整重新进入回主城。原battleId回执与最新快照双确认已接，缺状态每轮至多一次refreshSnapshot；首个身份首包只记候选，首次进入主线页才接纳冷恢复意图，后续鉴权只续已有意图。恢复按原编号/版本交通用奖励队列，不伪造reward.granted；正常胜利与恢复窗归属互斥，实际打开才标记展示。布阵缺推送确认也已复用同一鉴权能力：ACK保留原意图，直到权威mainFormation.version达到回执版本；有ACK时重试只同步，无ACK才允许复用原编号/参数重试保存。已清pending的跨重启历史定位仍有缺口；不增加库存查询或通用业务自动重发。
 
 ## 原项目初始化依据
 
@@ -25,6 +27,7 @@
 | session.heartbeat | 请求/响应 | 已鉴权连接保活，不更新资产，默认不打印 |
 | session.kicked | 服务端事件 | 清理对应账号，停止自动重连，回登录 |
 | state.changed | 服务端事件 | 事务提交后的完整 Snapshot；角色、库存、英雄、阵容、主线共用持久 revision |
+| reward.granted | 服务端事件 | 原发奖事务提交后的通用显示反馈；沿原业务receiptId去重，不是资产增量 |
 | formation.save | 请求/响应 | 当前角色主线阵容保存；requestId 持久幂等，回执不代替统一快照 |
 | chapter.challenge | 请求/响应 | 前三关主线挑战，服务端权威输入与持久战报 |
 | chapter.claim | 请求/响应 | 指定主线战报的幂等结算；不是挂机宝箱领取 |
@@ -39,9 +42,13 @@ inventory.list、session.sync 已删除业务处理，鉴权后请求返回 UNKN
 
 ## 信封和业务载荷
 
+通用奖励事件使用Frame字段35 reward_notice，包含schemaVersion=1、业务receiptId(UUID)、roleId、正安全整数assetRevision、mode(SILENT/POPUP/TIPS)及去重的itemId/credited正数量。事件无id/ok/error，角色及连接必须为当前认证对象；它不更新latestState/revision。客户端等待唯一状态入口达到该版本后展示，历史匹配回执恢复也进入同一反馈去重入口。静默/零量服务端不发显示事件，重放和status不重复发送；详情见[通用发奖反馈](reward-feedback.md)。
+
 Frame 的 version=1，kind=request/response/event，name 是 Protocol.ts 统一登记的消息标识。id 关联单次请求，不是持久幂等键。成功响应含 ok=true/body，无 error；失败 ok=false/body=null/error。connectionId 标识当前连接，不是资产版本。令牌只在消息体，不放 URL、不打印。
 
 Accepted={connectionId,roleId,serverTimeMs,initial,session?}。统一 Snapshot 包含 role、heroes、inventory、revision，并扩展 timedInventory、heroRoster、mainFormation、mainChapter、mainChapterIdle。协议字段名及是否可选以 game.proto 为准；Codec 向应用提供 camelCase，不把缺失可选状态当作全零或已同步。heroes 是真实名册，空数组表示没有英雄，不是预留字段。
+
+Snapshot字段11为可选TavernPointState tavern_points，解码为tavernPoints={schemaVersion:1,adventureCount,limit}；两数均为非负安全整数，合法超关卡上限不裁回。服务端同一角色锁中读取当前独立余额及已通关上限，初始化/变更后统一推进revision；不能用900401普通库存或reward.granted实际增量当当前点数。客户端缺字段清为未同步，已提供但坏格式拒绝整包；新格式快照同时携带900401库存也拒绝。旧成功回执保持原冻结内容，包括旧actual.stacks中的900401，不能因此回写当前资产。未新增酒馆请求或HTTP查询。
 
 role 包含身份、区服、等级、金币、钻石，以及基础资料 basics（经验、奖杯、头像/形象/头像框、语言、创建/登录秒和当前级经验门槛）；字段依据及缺口见[角色基础契约](role-data-contract.md)。inventory 为 Item{itemId,quantity,instanceId?}[]，数量是正整数绝对值，空数组表示已确认没有库存。期限物品使用独立 timedInventory；配置 ID 与持久实例 ID 不混用，实例 ID 保留字符串。revision 来自 game_role.state_revision（V6），是安全整数；不与 BagModel 本地界面 revision、阵容 version 或连接 connectionId 混用。
 
@@ -83,9 +90,9 @@ Frame oneof新增31～34，MainChapterIdleState新增可选claim_state=9；不�
 
 Receipt schema1带请求/回执ID、消费版本前后、统一计算秒/原起点/实际秒数/VIP上限/关卡、提交asset_revision、理论量、完整强类型实际到账及经验动画。实际结果明确分开满级/封顶忽略、升级附赠、钱包/库存前后、酒馆上限及真实期限/精灵实例；不塞JSON载荷或当前Snapshot。数据库另存AuditV1完整输入/候选/累计及摘要，未知格式或损坏不重算。
 
-claim_state提供schema_version、operation_version和READ_ONLY/ENABLED，默认只读；它不是完整收益ready预报，不因登录展示而读取全部权益。缺字段/未知schema不能允许领取；客户端未知schema仅丢弃这项能力并限频记录，旧挂机演出继续。日常开关`mxzg.main-chapter.idle-claim-enabled`默认false，仅独立测试开启；当前没有新增客户端发包、journal或按钮交互。
+claim_state提供schema_version、operation_version和READ_ONLY/ENABLED，默认只读；它不是完整收益ready预报，不因登录展示而读取全部权益。缺字段/未知schema不能允许领取；客户端未知schema仅丢弃这项能力并限频记录，旧挂机演出继续。日常开关`mxzg.main-chapter.idle-claim-enabled`默认false；客户端恢复命令已接入，但没有玩家按钮调用begin。
 
-服务器在角色锁内再次鉴权，先恢复成功回执再判断新请求开关、版本和输入；指定status查询与重放不抽样、不推进任何版本。历史receipt只用于命令确认/展示；最新资产及累计仍由统一Snapshot提交Model，确认应满足snapshot.revision≥receipt.assetRevision且operationVersion≥after。客户端持久待确认和双向确认尚未实现，详细依据见[领取事务](main-chapter-idle-settlement.md)。
+服务器在角色锁内再次鉴权，先恢复成功回执再判断新请求开关、版本和输入；指定status查询与重放不抽样、不推进任何版本。历史receipt只用于命令确认/展示；最新资产及累计仍由统一Snapshot提交Model，确认须满足snapshot.revision≥receipt.assetRevision且operationVersion≥after。客户端先持久原requestId/expected，再经应用认证交付；重登查原status，NOT_FOUND不当取消，确认后按完整指纹条件清理。缺快照仅重新鉴权一次，不新增库存查询；身份键归应用，模块不比较角色键。实现、存储平台限制和验证范围见[领取事务](main-chapter-idle-settlement.md)。
 
 AssetStateBinding提交任何模块前校验主线与挂机快照；MainChapterController.onNotify校验后提交Model。客户端经过时间只用于显示且封顶，领奖必须以后由服务器重新计算。关卡收益使用maxCleared而非下一关，也不使用最近一次通关奖励。
 

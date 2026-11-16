@@ -196,7 +196,7 @@ function checkSocketWire(): void {
     console.log("PASS Java/TS actual WS claim/event and separate status/reconnect confirmation pairs");
 }
 
-/** 执行协议边界与拒绝场景；不访问服务器、日常玩家库或本地持久待确认记录。 */
+/** 执行协议边界与恢复确认字段拒绝场景；不访问服务器、玩家库或持久待确认记录。 */
 function main(): void {
     roundTrip(frame("request", Protocol.CHAPTER_IDLE_CLAIM, { requestId, expectedOperationVersion: Number.MAX_SAFE_INTEGER }));
     roundTrip(frame("request", Protocol.CHAPTER_IDLE_CLAIM_STATUS, { requestId }));
@@ -221,6 +221,14 @@ function main(): void {
         { ...receipt, expectedOperationVersion: 2 },
         { ...receipt, afterOperationVersion: 5 },
         { ...receipt, assetRevision: Number.MAX_SAFE_INTEGER + 1 },
+        { ...receipt, committedAtSeconds: 0 },
+        { ...receipt, previousStartedAtSeconds: "100" },
+        { ...receipt, seconds: -1 },
+        { ...receipt, maxSeconds: 59 },
+        { ...receipt, committedAtSeconds: 159 },
+        { ...receipt, rewardStage: 0 },
+        { ...receipt, actual: null },
+        { ...receipt, actual: { ...actual, roleId: "" } },
     ]) {
         assert.throws(() => GameProtocolCodecUtils.encodeGameFrame(frame("response", Protocol.CHAPTER_IDLE_CLAIM, body)));
     }

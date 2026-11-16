@@ -16,6 +16,7 @@ import com.funsgamex.mxzg.hero.*;
 import com.funsgamex.mxzg.inventory.*;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.spirit.SpiritInventoryService;
+import com.funsgamex.mxzg.tavern.TavernPointService;
 @Service @Profile("local & !production")
 public class GmService {
  /** 当前已恢复真实实例生成的精灵物品，其他type8不能降级成普通库存。 */
@@ -36,6 +37,8 @@ public class GmService {
  private final TimedInventoryService timed;
  /** 真实精灵实例写入口，加入本次GM回执事务，不重抽已确认的重复请求。 */
  private final SpiritInventoryService spirits;
+ /** 冒险点唯一领域入口，开发准备明确不受关卡上限裁剪。 */
+ private final TavernPointService tavernPoints;
  /** 递增资产版本并提交后同步。 */
  private final AssetSyncService sync;
  /** 英雄初始属性校验规则。 */
@@ -53,7 +56,7 @@ public class GmService {
  /** 注入同库资产入口及真实精灵生成服务，读取同源策划配置；本机GM不创建第二套库存。 */
  public GmService(@Value("${mxzg.gm.enabled:false}") boolean enabled, SessionService sessions,
      RoleRepository roles, JdbcTemplate jdbc, InventoryService inventory, TimedInventoryService timed,
-     SpiritInventoryService spirits, AssetSyncService sync, HeroGrowthRules growth,
+     SpiritInventoryService spirits, TavernPointService tavernPoints, AssetSyncService sync, HeroGrowthRules growth,
      HeroCapacityService capacity, com.funsgamex.mxzg.lineup.MainFormationStateService formations,
      ObjectMapper mapper) {
   this.enabled = enabled;
@@ -63,6 +66,7 @@ public class GmService {
   this.inventory = inventory;
   this.timed = timed;
   this.spirits = spirits;
+  this.tavernPoints = tavernPoints;
   this.sync = sync;
   this.growth = growth;
   this.capacity = capacity;
@@ -83,7 +87,7 @@ public class GmService {
  }
  /** 查询实际服务端开关，不能由客户端开启。 */
  public boolean enabled(){return enabled;}
- /** 当前角色锁内原子发放并存回执；重复回执先返回，精灵逐件生成且与回执、资产版本同事务提交。 */
+ /** 当前角色锁内原子发放并存回执；精灵逐件生成、冒险点走独立无cap开发入口，重复回执不再发奖。 */
  @Transactional
  public Result grant(String token, String requestId, String kind, int configId, int quantity) {
   if (!enabled) {
@@ -136,6 +140,11 @@ public class GmService {
      throw rejected("GM_SPIRIT_LIMIT");
     }
     spirits.grant(role, configId, quantity, ThreadLocalRandom.current());
+   } else if (items.get(configId).path("type").asInt() == 11) {
+    if (configId != 900401) {
+     throw rejected("GM_UNSUPPORTED_ITEM_TYPE");
+    }
+    tavernPoints.creditForDevelopment(role, quantity);
    } else if (timedIds.contains(configId)) {
     if (quantity > 100) {
      throw rejected("GM_TIMED_LIMIT");

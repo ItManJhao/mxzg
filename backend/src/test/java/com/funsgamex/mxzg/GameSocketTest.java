@@ -231,14 +231,19 @@ class GameSocketTest {
         }
     }
 
-    /** 普通断线不撤销自身令牌；重连后获取正常战斗领奖产生的最新背包。 */
+    /** 普通断线不撤销自身令牌；离线期间可信库存事务提交后，重连恢复最新真实背包。 */
     @Test void reconnectReadsCommittedInventory() throws Exception {
-        var player=player(); String token="Bearer "+player.session().accessToken(); tools.jackson.databind.JsonNode initial;
-        try(var first=new Peer()){initial=first.authenticate(player.session().accessToken()).path("body").path("initial");}
-        var battle=campaign.challenge(token,UUID.randomUUID().toString());campaign.claim(token,battle.id());
-        try(var second=new Peer()) {
-            var state=second.authenticate(player.session().accessToken()).path("body").path("initial");
-            assertTrue(state.path("revision").asLong()>initial.path("revision").asLong());assertNotEquals(initial.path("inventory"),state.path("inventory"));
+        var player = player();
+        tools.jackson.databind.JsonNode initial;
+        try (var first = new Peer()) {
+            initial = first.authenticate(player.session().accessToken()).path("body").path("initial");
+        }
+        new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status ->
+                inventory.credit(player.role().id(), 900101, 5));
+        try (var second = new Peer()) {
+            var state = second.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertTrue(state.path("revision").asLong() > initial.path("revision").asLong());
+            assertNotEquals(initial.path("inventory"), state.path("inventory"));
         }
     }
 
@@ -305,13 +310,19 @@ class GameSocketTest {
         }
     }
 
-    /** 不同角色同时在线且背包各自归属；一次正常奖励不会污染其他账号。 */
+    /** 不同角色同时在线且背包各自归属；一次可信库存事务只向资产所属账号推送。 */
     @Test void accountsRemainIsolated() throws Exception {
-        var first=player();var second=player();try(var one=new Peer();var two=new Peer()) {
-            one.authenticate(first.session().accessToken());two.authenticate(second.session().accessToken());
-            String token="Bearer "+first.session().accessToken();var battle=campaign.challenge(token,UUID.randomUUID().toString());campaign.claim(token,battle.id());
-            var event=one.messages.poll(5,TimeUnit.SECONDS);assertNotNull(event);assertEquals(first.role().id(),event.path("body").path("role").path("id").asString());
-            assertNull(two.messages.poll(150,TimeUnit.MILLISECONDS));
+        var first = player();
+        var second = player();
+        try (var one = new Peer(); var two = new Peer()) {
+            one.authenticate(first.session().accessToken());
+            two.authenticate(second.session().accessToken());
+            new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status ->
+                    inventory.credit(first.role().id(), 900101, 5));
+            var event = one.messages.poll(5, TimeUnit.SECONDS);
+            assertNotNull(event);
+            assertEquals(first.role().id(), event.path("body").path("role").path("id").asString());
+            assertNull(two.messages.poll(150, TimeUnit.MILLISECONDS));
         }
     }
 

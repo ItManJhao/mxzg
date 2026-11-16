@@ -98,15 +98,15 @@ class InventoryCreditTest {
     @Test
     void zeroBalanceKeepsItsExistingNonUuidIdentity() {
         String roleId = role();
-        String identity = "stack:" + roleId + ":900401";
-        jdbc.update("INSERT INTO game_inventory(role_id,item_id,quantity,instance_id) VALUES (?,900401,0,?)",
+        String identity = "stack:" + roleId + ":900102";
+        jdbc.update("INSERT INTO game_inventory(role_id,item_id,quantity,instance_id) VALUES (?,900102,0,?)",
                 roleId, identity);
-        assertEquals(new InventoryService.Item(900401, 0, identity), inventory.find(roleId, 900401).orElseThrow());
-        assertTrue(inventory.find(roleId, 900102).isEmpty());
+        assertEquals(new InventoryService.Item(900102, 0, identity), inventory.find(roleId, 900102).orElseThrow());
+        assertTrue(inventory.find(roleId, 900101).isEmpty());
         assertEquals(0, roles.revision(roleId));
         assertTrue(notifications.isEmpty());
-        assertEquals(new InventoryService.Credit(900401, identity, 0, 7, 7), credit(roleId, 900401, 7));
-        assertEquals(new InventoryService.Item(900401, 7, identity), inventory.find(roleId, 900401).orElseThrow());
+        assertEquals(new InventoryService.Credit(900102, identity, 0, 7, 7), credit(roleId, 900102, 7));
+        assertEquals(new InventoryService.Item(900102, 7, identity), inventory.find(roleId, 900102).orElseThrow());
         assertEquals(1, roles.revision(roleId));
     }
 

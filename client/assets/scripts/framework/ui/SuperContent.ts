@@ -1,6 +1,7 @@
 /** 通用等尺寸列表：保留Layout的Inspector参数，运行时按逻辑总量布局并复用可见范围的有限格子。
  * 页面监听渲染和选择事件、提交展示数据；本组件管理节点及点击绑定，不读取业务状态。
- * 编辑器样板和明确关闭虚拟化时使用原生Layout；实际滚动只换绑，不重置惯性或发业务请求。
+ * 编辑器样板和明确关闭虚拟化时默认使用原生Layout；短行居中与虚拟池共用逻辑几何，不在页面手排。
+ * 实际滚动只换绑，不重置惯性或发业务请求。
  */
 import { _decorator, Button, CCObject, Enum, instantiate, Layout, Node, Prefab, Size, UITransform, Widget } from "cc";
 import { EDITOR, PREVIEW } from "cc/env";
@@ -31,6 +32,10 @@ interface ListGeometry {
     contentWidth: number;
     /** 根据逻辑总量计算的content高度。 */
     contentHeight: number;
+    /** 全量不足一个网格行时，在左右边距之间增加的居中留白；默认0。 */
+    shortOffsetX: number;
+    /** 全量不足一个横向网格列时，在上下边距之间增加的居中留白；默认0。 */
+    shortOffsetY: number;
     /** 当前视口局部宽度，窗口适配或嵌套行尺寸变化时重新测量。 */
     viewWidth: number;
     /** 当前视口局部高度。 */
@@ -58,6 +63,10 @@ export class SuperContent extends Layout {
     columns = 4;
     @property({ displayName: "行数", group: "布局", min: 1, step: 1, visible(this: SuperContent) { return this.layoutType === SuperLayout.Grid && this.gridAxis === SuperAxis.Horizontal; } })
     rows = 2;
+
+    /** true仅让逻辑总量不足一行/列的网格居中；false沿原留白，满行及多行末尾不改变。 */
+    @property({ displayName: "不足一行时居中", group: "布局", visible(this: SuperContent) { return this.layoutType === SuperLayout.Grid; }, tooltip: "仅全部数据不足列数/行数时，在两侧边距内居中；多行末尾不居中" })
+    centerShortLine = false;
 
     /** 默认只创建可见范围的格子；关闭后按全量节点布局，用于确需静态列表的页面。 */
     @property({ displayName: "虚拟列表", group: "虚拟列表" })
@@ -364,26 +373,33 @@ export class SuperContent extends Layout {
         }
     }
 
-    /** 根据逻辑条目量测出完整滚动尺寸，保留Cell原缩放和所有Inspector间距。 */
-    private measure(): ListGeometry {
+    /** 根据逻辑条目量测出完整滚动尺寸和短行留白；编辑器显式传样板数量，不取虚拟池量。 */
+    private measure(logicalCount = this.count): ListGeometry {
         const template = this.cellPrefab!.data as Node;
         const size = this.overrideCellSize ? this.explicitCellSize : template.getComponent(UITransform)!.contentSize;
         const port = this.node.parent!.getComponent(UITransform)!;
         const vertical = this.scrollAxis === SuperAxis.Vertical;
         const across = this.layoutType === SuperLayout.Grid ? (vertical ? this.columns : this.rows) : 1;
-        const lines = Math.ceil(this.count / across);
-        const short = Math.min(across, this.count);
+        const lines = Math.ceil(logicalCount / across);
+        const short = Math.min(across, logicalCount);
         const columns = vertical ? short : lines;
         const rows = vertical ? lines : short;
         const width = size.width * template.scale.x;
         const height = size.height * template.scale.y;
+        const usedWidth = columns * width + Math.max(0, columns - 1) * this.spacingX;
+        const usedHeight = rows * height + Math.max(0, rows - 1) * this.spacingY;
+        const contentWidth = Math.max(port.width, this.paddingLeft + this.paddingRight + usedWidth);
+        const contentHeight = Math.max(port.height, this.paddingTop + this.paddingBottom + usedHeight);
+        const center = this.centerShortLine && this.layoutType === SuperLayout.Grid
+            && logicalCount > 0 && logicalCount < across;
         return {
             vertical, across, cellWidth: size.width, cellHeight: size.height, width, height,
             stepX: width + this.spacingX, stepY: height + this.spacingY,
-            contentWidth: Math.max(port.width, this.paddingLeft + this.paddingRight
-                + columns * width + Math.max(0, columns - 1) * this.spacingX),
-            contentHeight: Math.max(port.height, this.paddingTop + this.paddingBottom
-                + rows * height + Math.max(0, rows - 1) * this.spacingY),
+            contentWidth, contentHeight,
+            shortOffsetX: center && vertical
+                ? Math.max(0, contentWidth - this.paddingLeft - this.paddingRight - usedWidth) / 2 : 0,
+            shortOffsetY: center && !vertical
+                ? Math.max(0, contentHeight - this.paddingTop - this.paddingBottom - usedHeight) / 2 : 0,
             viewWidth: port.width, viewHeight: port.height,
         };
     }
@@ -394,7 +410,7 @@ export class SuperContent extends Layout {
         const content = this.node.getComponent(UITransform);
         const template = this.cellPrefab?.data as Node | undefined;
         const size = template?.getComponent(UITransform);
-        return JSON.stringify([this.count, this.virtualized, this.bufferLines, this.layoutType, this.gridAxis,
+        return JSON.stringify([this.count, this.virtualized, this.bufferLines, this.layoutType, this.gridAxis, this.centerShortLine,
             this.columns, this.rows, this.paddingLeft, this.paddingRight, this.paddingTop, this.paddingBottom,
             this.spacingX, this.spacingY, this.overrideCellSize, this.explicitCellSize.width, this.explicitCellSize.height,
             size?.width, size?.height, size?.anchorX, size?.anchorY, template?.scale.x, template?.scale.y,
@@ -437,15 +453,17 @@ export class SuperContent extends Layout {
         }
     }
 
-    /** 依据逻辑索引和原始锚点定位池节点，不在业务View中手算坐标。 */
+    /** 依据逻辑索引、短行留白和原始锚点定位，不在业务View中手算坐标。 */
     private positionCell(cell: Node, index: number, geometry: ListGeometry): void {
         const bounds = this.node.getComponent(UITransform)!;
         const ui = cell.getComponent(UITransform)!;
         ui.setContentSize(geometry.cellWidth, geometry.cellHeight);
         const column = geometry.vertical ? index % geometry.across : Math.floor(index / geometry.across);
         const row = geometry.vertical ? Math.floor(index / geometry.across) : index % geometry.across;
-        cell.setPosition(-bounds.anchorX * geometry.contentWidth + this.paddingLeft + column * geometry.stepX + ui.anchorX * geometry.width,
-            (1 - bounds.anchorY) * geometry.contentHeight - this.paddingTop - row * geometry.stepY - (1 - ui.anchorY) * geometry.height, 0);
+        cell.setPosition(-bounds.anchorX * geometry.contentWidth + this.paddingLeft + geometry.shortOffsetX
+            + column * geometry.stepX + ui.anchorX * geometry.width,
+            (1 - bounds.anchorY) * geometry.contentHeight - this.paddingTop - geometry.shortOffsetY
+            - row * geometry.stepY - (1 - ui.anchorY) * geometry.height, 0);
     }
 
     /**
@@ -564,7 +582,7 @@ export class SuperContent extends Layout {
         }
     }
 
-    /** 编辑器样板和关闭虚拟化时沿用原布局，不把池节点当逻辑数据总量。 */
+    /** 编辑器及非虚拟默认沿原生布局，短行居中时复用同一逻辑测量与定位，不误取池节点量。 */
     private reflowNative(): void {
         const template = this.cellPrefab!.data as Node;
         const size = this.overrideCellSize ? this.explicitCellSize : template.getComponent(UITransform)!.contentSize;
@@ -575,6 +593,15 @@ export class SuperContent extends Layout {
         }
         const vertical = this.scrollAxis === SuperAxis.Vertical;
         const fixed = this.layoutType === SuperLayout.Grid ? (vertical ? this.columns : this.rows) : 1;
+        if (this.centerShortLine && this.layoutType === SuperLayout.Grid
+                && children.length > 0 && children.length < fixed) {
+            const geometry = this.measure(children.length);
+            this.type = Layout.Type.NONE;
+            this.resizeMode = Layout.ResizeMode.NONE;
+            this.node.getComponent(UITransform)!.setContentSize(geometry.contentWidth, geometry.contentHeight);
+            children.forEach((child, index) => this.positionCell(child, index, geometry));
+            return;
+        }
         const across = children.length ? Math.min(fixed, children.length) : 0;
         const along = Math.ceil(children.length / fixed);
         const cols = vertical ? across : along, rows = vertical ? along : across;
@@ -627,9 +654,10 @@ export class SuperContent extends Layout {
     private onContentMoved(): void {
         this.refreshVisible();
     }
+    /** 编辑器参数变化时重建临时样板；短行居中也按样板逻辑量重算，不进入运行数据。 */
     protected update(): void {
         if (!EDITOR || PREVIEW) return;
-        const signature = JSON.stringify([this.previewCount, this.cellPrefab?.uuid, this.layoutType, this.gridAxis, this.columns, this.rows,
+        const signature = JSON.stringify([this.previewCount, this.cellPrefab?.uuid, this.layoutType, this.gridAxis, this.columns, this.rows, this.centerShortLine,
             this.spacingX, this.spacingY, this.paddingTop, this.paddingBottom, this.paddingLeft, this.paddingRight,
             this.overrideCellSize, this.explicitCellSize]);
         if (signature === this.previewSignature) return;

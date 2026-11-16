@@ -22,12 +22,14 @@ export class IsolatedSocketPreviewUtils {
     public static async isolatedSocketPreview(socketUrl: string, storage: PreviewStorage): Promise<{
         socketUrl: string;
         storage: PreviewStorage;
+        /** 持久命令使用相同的独立验收作用域，不读取日常待确认记录。 */
+        storageNamespace: string;
     }> {
         const href = typeof location !== "undefined" ? location.href : "";
         const page = href ? new URL(href) : null;
         const query = page?.searchParams;
         if (!query?.has("mxzgTestApi") && !query?.has("mxzgTestRun")) {
-            return { socketUrl, storage };
+            return { socketUrl, storage, storageNamespace: "default" };
         }
         // 端口与路径明确限定；独立入口还须证明自己服务的是本项目实际验收包。
         const loopbackPage = page?.protocol === "http:"
@@ -73,6 +75,7 @@ export class IsolatedSocketPreviewUtils {
         const prefix = "mxzg.test." + run + ".";
         return {
             socketUrl: target.replace(/^http/, "ws") + "/api/v1/game/socket",
+            storageNamespace: "isolated:" + run,
             storage: {
                 getItem: key => storage.getItem(prefix + key),
                 setItem: (key, value) => storage.setItem(prefix + key, value),

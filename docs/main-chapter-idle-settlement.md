@@ -1,6 +1,6 @@
 # 新主线挂机累计与领取事务
 
-更新：2026-11-14。**V24累计状态、V25成功回执及服务端领取/status事务与强类型协议已实现；日常开关和客户端按钮仍关闭，客户端持久待确认尚未接入。** 通用同步/钱包前置已修正；负责人随后授权的2000002最小精灵领域现已实现生成、持久化、统一快照及背包只读详情。V23精灵表和Snapshot实例集合继续保留；本批在其上接真实发奖事务，领取和养成仍未向玩家开放；2000002开发GM按11-14后续授权接入真实实例服务，未提交推送。现有纯计算与活动维护事实见[输入契约](idle-reward-input-contract.md)，后续顺序见[实施路线](restructuring-plan.md)。
+更新：2026-11-16。**V24累计、V25成功回执、服务端领取/status及客户端持久待确认/双版本恢复已接入；日常开关和玩家按钮仍关闭。** 通用同步/钱包、2000002最小精灵、统一快照与背包只读详情继续保留；不因恢复基础完成开放领取或养成。客户端范围见[持久基础](validation/idle-claim-client-recovery-review-20261114.json)及[11-16真实联调](validation/idle-claim-live-recovery-review-20261116.json)，输入见[输入契约](idle-reward-input-contract.md)，顺序见[实施路线](restructuring-plan.md)。Git交付状态以实际分支为准；验证记录只说明对应批次，不代表新的发布包验收。
 
 ## 当前基础和本批决定
 
@@ -19,7 +19,7 @@
 - 服务器开关为`mxzg.main-chapter.idle-claim-enabled`，可由`MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED`配置，默认false；只有独立测试显式开启。本批不要求负责人开启日常环境或重启后端。
 - 新请求关闭时返回IDLE_CLOSED；命中历史成功回执及status查询先于开关、当前权益、时长和版本判断。锁等待失败返回IDLE_BUSY，不能伪装NOT_FOUND。
 - `AuditV1`固定请求/归属、累计前后、完整计算Input/分窗/加成/理论量及真实结果，并保存SHA-256摘要和关键列交叉校验。未知格式或损坏拒绝，不重新计算。返回回执全部数值在提交前校验JS安全整数。
-- 客户端目前仅登记协议/编解码及只读claimState投影；没有新增领取发包、持久journal或按钮交互。当前挑战/布阵pending仍只有内存，后文客户端恢复方案仍待实现。
+- 客户端领取命令、原请求持久日志及应用身份恢复已接入；无原记录时不发请求，玩家按钮仍未绑定begin。挑战/布阵客户端提交意图仍只保存在内存；主线冷重登已可从首包的服务端待结算记录恢复，布阵保存后的权威阵容也随首包恢复，但尚无ACK的客户端草稿不持久化。两者均不复用挂机日志，详见[断线恢复边界](reconnect-recovery.md)。
 
 ## 旧规则如何进入新事务
 
@@ -132,7 +132,7 @@
 | 角色经验900003 | 复用RoleExperienceService.credit及RoleRules真实升级规则，冻结前后经验与升级钻石；满级忽略须记录，不能写game_campaign.role_exp |
 | 英雄经验900101、普通装备/碎片等 | 复用InventoryService中确已支持的类型入口；余额存储不等于开放英雄升级或穿脱 |
 | 酒馆点900401 | 按领取时最高已通关关卡冻结chapterreward.tavern_point_max，当前前三关均11000；与首通Plan的上限同源，但不复用首通奖励内容。先合并同物品理论量，再按正剩余额度截取，已超上限不倒扣；冻结实际量及原因，不能任意inventory.credit |
-| **月兔精灵·蓝2000002（旧RUNE/item.type=8）** | 普通group1001的掉落表10013会产生，前三关同样可能命中。SpiritRules/SpiritInventoryService在可信外层事务中逐件生成并保存真实实例；已接共享发奖并直接返回真实UUID、能力与技能，未接新领取回执，不能把内部服务当成已开放领取 |
+| **月兔精灵·蓝2000002（旧RUNE/item.type=8）** | 普通group1001的掉落表10013会产生，前三关同样可能命中。SpiritRules/SpiritInventoryService在可信外层事务中逐件生成并保存真实实例；已接共享发奖并在新领取成功回执冻结真实UUID、能力与技能，不能把内部领域及关闭入口的恢复机制当成已开放领取 |
 | 期限物品 | 当前普通＋三活动奖励ID未命中期限配置；若规则扩大到该类型，复用TimedInventoryService及已确认上海自然日规则，不降格普通库存 |
 
 实际普通＋三活动奖励ID并集15项，各自生成/分发能力不能以“纯计算全通”代替整次原子发奖。本批已收敛共享发奖及实际结果，后续将真实结果与新领取回执同事务冻结；资格和幂等仍各归业务。不扩展养成/穿脱入口。旧内部RUNE/符文与背包显示“精灵”指同类实例，下面按实际中文名称描述。
@@ -147,7 +147,9 @@
 
 共享入口加入外层事务，不拥有业务请求ID或持久幂等；直接重复调用仍会再次发放。调用方须先查成功回执，发奖后在同一事务保存结果；失败整体回滚，提交后由既有AssetSyncService统一推送。历史结果与当前资产快照分离，后续改资产或清理过期项不能改写回执。前三关首通已复用此分发，当前协议仅返回实际基础量和原经验动画，挑战协议仍未新增该详细结果；本批独立的挂机领取协议及V25回执已完整携带和保存它。
 
-酒馆新角色缺记录时仍从新版既有0余额计算；旧TavernInfoService按system.tavern_initial_item初始化（当前共享表为2000，旧常量默认3000但会被配置覆盖）。这一初始化差异保留为后续酒馆恢复缺口，不在共享发奖时悄悄补发。
+11-14共享发奖批曾保留“缺900401按0”的初始化差异；11-16已由独立TavernPointService/V26恢复旧规则。迁移已有900401记录时按原量保存，合法0和超额都不补差；真正无持久记录才按同源system.tavern_initial_item=2000懒建一次，旧常量3000不作兜底。共享发奖/GM/快照复用唯一领域，不把初值伪装成本次奖励，不改旧成功AuditV1的JSON或hash。旧证据见[初始化与同步核对](validation/tavern-point-legacy-audit-20261116.json)。
+
+Snapshot字段11 tavernPoints显式携带schemaVersion/adventureCount/limit，limit来自同次最高已通关关卡，未通关取第一关。客户端唯一AccountModel保存当前值，缺字段明确未同步；旧奖励actual.tavern只用于历史说明，不覆盖当前值。旧满额条件为当前adventureCount>=limit，不是预计本次将溢出；未来应用begin在65秒显示门槛、当前连接和ENABLED能力满足后才确认，取消/空白/换号不写原请求。确认后再次检查连接及操作版本，读取journal期间版本变化同样停止新建。生产装配enabled=false，页面依然只飘字；本批没有接玩家领取或酒馆任务/扣点协议。
 
 ### 已修正的通用事务前置
 
@@ -180,7 +182,7 @@ V23的game_spirit每件保存独立UUID、角色归属、能力/技能及未开�
 
 ## 断线、重启和换号恢复
 
-当前挑战/布阵pending只有内存状态，不能照搬后宣称跨应用重启可靠。拟在应用层增加最小持久待确认记录，复用现有请求/状态通路，不保存第二份资产：
+当前挑战/布阵pending仍只有内存状态，本批不顺带修改它们。新挂机领取通过应用层IdleClaimJournal/IdleClaimBinding与MainChapterIdleClaimController保存最小原请求，复用现有两条请求/状态通路，不保存第二份资产：
 
 1. 发包前先持久保存原请求格式、request_id和expected版本；按已认证区服/角色及稳定客户端实例分命名空间，不存token。存储失败则不发送，否则无法保证跨重启恢复；不同标签页/实例不能相互覆盖待确认记录。
 2. 应用层负责按认证身份激活记录，并通过既有AccountService认证交付隔离旧连接。Controller/View不比较角色键，不复制owner方案。换号清内存，原身份持久记录保留；切回后才继续原意图。
@@ -191,9 +193,23 @@ V23的game_spirit每件保存独立UUID、角色归属、能力/技能及未开�
 
 持久回执只保证**已提交**请求的结果稳定；未提交且回滚的请求不产生成功记录，可以用原内容重试，并使用重试受理时一次冻结的服务器时间/权益。不能描述成“第一次失败也永久冻结收益”。客户端有待确认操作时不并行创建第二个新领取意图。
 
+存储实现为原生IndexedDB：meta表在事务中创建稳定客户端UUID，pending表按区服/角色/实例复合键保存schemaVersion、requestId和expectedOperationVersion；并发create返回已有记录，clear在同一事务中比较完整指纹，仅complete后交付结果。独立测试namespace来自已核验的run，不能读写日常空间。登出/应用销毁只关闭连接和撤销内存绑定；坏记录、版本变化及不可用明确失败，不降级内存或静默清空。浏览器事务默认durability，不将页面刷新/连接重开验证称为操作系统断电保证；APP/小游戏平台持久适配另验。
+
+AssetStateBinding整包接受之后才激活/观察恢复；身份键只在IdleClaimBinding，AccountService过滤旧成功与旧失败，Controller只持不透明记录口和当前流程引用。历史摘要进MainChapterModel.idleClaim，不提交receipt中的余额、库存或起点。当前按钮仍只飘字；无原意图时不发领取/status。缺提交通知可显式重连获取session.authenticate首包，一轮至多一次；日常READ_ONLY下未提交原请求仅暂停。普通状态推送只做本地双确认，不自动重新领取。
+
+### 独立真实恢复联调（11-16）
+
+测试宿主`backend/src/test/java/com/funsgamex/mxzg/IdleClaimRecoveryPreview.java`仅进入测试类路径，显式参数`--run=<32位hex> --mode=enabled/read-only`；强制回环随机端口、独立target/run文件H2、GM和活动定时维护关闭。首次只为六个固定测试账号准备合法活动控制、已通关1关和累计；后续启动只读既有记录，不能用重建夹具掩盖持久丢失。ready/audit/stop文件都限定本run，不开放游戏业务HTTP，身份探针只返回kind/run/phase。
+
+前端测试入口为`client/tools/idle-claim-live-review.cjs`，参数`--run=<同run> --api=http://127.0.0.1:<ready端口> --serverId=<ready区服>`；它只编译测试页，监听现有白名单127.0.0.1:18081，端口占用即失败，不停止其他服务。页面三个按钮依次运行正常/丢包、保存重启前意图、恢复重启后意图。Java切换只读后在同一浏览器标签和origin替换api参数重新载入，必须先读到原生IDB原请求，不能靠sessionStorage证据重新补建。前端停止文件为其owner目录下stop.request，内容为同run；后端停止文件路径由ready明确提供，核验归属后写同run。
+
+本轮五组结果和真实数据库对照见[证据](validation/idle-claim-live-recovery-review-20261116.json)。丢回执用例同时断线，重启为优雅关闭后新JVM，不写成开放连接超时或进程崩溃。每个成功账号仅1回执/1次操作版本消费，恢复当前revision可高于历史回执；未提交只读意图与换号不发奖。精灵/期限本次随机未命中，跨平台、MySQL、断电及玩家65秒入口仍另验。
+
 ## 分步实施与验证条件
 
-通用同步/钱包、最小精灵领域及共享可信发奖/实际明细已实现。新累计状态、回执和服务端协议事务已实现并消费真实发奖；下一步补应用层持久待确认及双向状态确认，再按单独授权连接按钮。以下仍是**完整领取完成条件**，本批已覆盖部分见[事务证据](validation/main-chapter-idle-claim-review-20261114.json)，不能把服务端/H2/WS结果推定为客户端恢复、MySQL、发布包或真机已验收。
+11-16新增通用发奖反馈已由挂机复用：MainChapterIdleClaimService只在首次成功保存回执后登记RewardFeedbackService.POPUP，提交后发reward.granted；旧回执重放/status不重复登记。客户端等待统一快照版本及主城就绪，实时事件与匹配原请求且双确认后的历史实际量共用同一receiptId去重。共同RewardView/ConfirmView在common，无挂机专用奖励/确认页；失败询问只重试原展示。宝箱仍按旧collect-1..4→延迟1.5秒normal-0、2秒守卫后恢复最新档，不在表现里改起点/保底或飞第二份资源。入口保持关闭，冒险点当前权威字段仍缺；详见[通用发奖说明](reward-feedback.md)。
+
+通用同步/钱包、最小精灵领域及共享可信发奖/实际明细已实现。新累计、回执和服务端协议事务已实现并消费真实发奖；客户端持久待确认/双向确认已接入且入口仍关。[服务端事务证据](validation/main-chapter-idle-claim-review-20261114.json)与[客户端恢复证据](validation/idle-claim-client-recovery-review-20261114.json)分别保留。以下仍是**完整领取完成条件**，受控二进制基础与11-16真实Java/原生IDB已各有证据，仍不能替代MySQL、APP/小游戏、真机、浏览器崩溃或断电验证；本批不安排集中构建，连接按钮另获授权。
 
 | 类别 | 必须验证 |
 |---|---|

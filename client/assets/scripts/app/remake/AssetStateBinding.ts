@@ -1,4 +1,4 @@
-/** 应用层统一资产提交：校验角色归属和持久版本，再把真实协议交给角色/背包/英雄 onNotify。
+/** 应用层统一资产提交：校验角色归属、冒险点和持久版本，再把真实协议交给角色/背包/英雄 onNotify。
  * 同一通知批次完成全部 Model 更新；不查询库存、不反推玩家资产、不保存第二份资产。
  */
 import {MainChapterController} from "../../features/battle/MainChapterController";
@@ -48,7 +48,7 @@ export class AssetStateBinding {
         });
     }
 
-    /** 完整校验后提交真实协议；重复及低版本不通知，同版本鉴权首包仍校准时间。 */
+    /** 包括冒险点在内完整校验后批量提交；重复及低版本不通知，同版本鉴权首包仍校准时间和可选扩展。 */
     apply(frame: GameFrame): boolean {
         const current = this.account.snapshot;
         if (!current.role || current.busy) return false;
@@ -58,7 +58,7 @@ export class AssetStateBinding {
         const state = ProtocolStateUtils.statePayload(frame.name as ProtocolName, frame.body);
         const chapter = MainChapterController.readState(state.mainChapter, Number(state.revision));
         const idle = MainChapterController.readIdle(state.mainChapterIdle, chapter);
-        const role = AccountApi.readRole(state.role);
+        const role = AccountApi.readSnapshotRole(state);
         const heroRows = HeroSnapshotUtils.readOwnedHeroes(state.heroes);
         const formation = HeroSnapshotUtils.readMainFormation(state.mainFormation, heroRows);
         if (idle?.slots && (!formation || idle.lineupVersion !== formation.version

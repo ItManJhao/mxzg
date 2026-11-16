@@ -19,6 +19,8 @@ import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.role.RoleRules;
 import com.funsgamex.mxzg.spirit.SpiritInventoryService;
 import com.funsgamex.mxzg.spirit.SpiritRules;
+import com.funsgamex.mxzg.tavern.TavernPointRules;
+import com.funsgamex.mxzg.tavern.TavernPointService;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -68,6 +70,8 @@ class RewardGrantServiceTest {
     private RoleRules roleRules;
     /** 普通库存唯一入口，实际结果必须与它读取的持久记录一致。 */
     private InventoryService inventory;
+    /** 独立冒险点唯一入口，不再把前后余额写成普通库存明细。 */
+    private TavernPointService tavernPoints;
     /** 带生产MANDATORY事务代理的精灵领域，读取不会重新抽样。 */
     private SpiritInventoryService spirits;
     /** 带生产MANDATORY事务代理的共享发奖入口。 */
@@ -109,7 +113,7 @@ class RewardGrantServiceTest {
     void createIsolatedRewardDomain() {
         String url = "jdbc:h2:mem:reward_grant_" + UUID.randomUUID()
                 + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000";
-        Flyway.configure().dataSource(url, "sa", "").target("23").load().migrate();
+        Flyway.configure().dataSource(url, "sa", "").load().migrate();
         var source = new DriverManagerDataSource(url, "sa", "");
         jdbc = new JdbcTemplate(source);
         transactions = new DataSourceTransactionManager(source);
@@ -120,6 +124,8 @@ class RewardGrantServiceTest {
         // 本用例直接插入独立角色，不调用创建角色；容量依赖不参与任何被测奖励路径。
         roles = new RoleRepository(jdbc, sync, roleRules, mock(HeroCapacityService.class));
         inventory = new InventoryService(jdbc, sync, json, roles);
+        tavernPoints = transactional(new TavernPointService(jdbc, roles, new TavernPointRules(json), sync),
+                TavernPointService.class);
         var experience = transactional(new RoleExperienceService(roleRules, roles, jdbc, sync),
                 RoleExperienceService.class);
         var timedRules = new TimedItemRules(json);
@@ -127,7 +133,7 @@ class RewardGrantServiceTest {
         spirits = transactional(new SpiritInventoryService(jdbc, roles, new SpiritRules(json), sync, json),
                 SpiritInventoryService.class);
         service = transactional(new RewardGrantService(roles, experience, inventory, timedRules, timed,
-                spirits, sync, json), RewardGrantService.class);
+                spirits, tavernPoints, sync, json), RewardGrantService.class);
         jdbc.execute("CREATE TABLE reward_test_receipt (role_id VARCHAR(36) NOT NULL, "
                 + "request_id VARCHAR(64) NOT NULL, fingerprint TEXT NOT NULL, result_json TEXT NOT NULL, "
                 + "PRIMARY KEY(role_id,request_id))");
@@ -166,6 +172,11 @@ class RewardGrantServiceTest {
                 role, itemId, quantity, UUID.randomUUID().toString());
     }
 
+    /** 设置独立冒险点历史原量，0也表示已经初始化，不触发补差或同步版本。 */
+    private void seedTavernPoints(String role, long quantity) {
+        jdbc.update("INSERT INTO game_tavern_point(role_id,adventure_count) VALUES (?,?)", role, quantity);
+    }
+
     /** 在可信外层事务调用共享发奖，返回后事务已经完成提交。 */
     private RewardGrantResult grant(String role, List<Reward> rewards, Context context, RandomGenerator random) {
         return new TransactionTemplate(transactions).execute(status -> service.grant(role, rewards, context, random));
@@ -186,6 +197,7 @@ class RewardGrantServiceTest {
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_inventory WHERE role_id=?", Integer.class, role));
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_timed_inventory WHERE role_id=?", Integer.class, role));
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_spirit WHERE role_id=?", Integer.class, role));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_tavern_point WHERE role_id=?", Integer.class, role));
         assertEquals(0, roles.revision(role));
         assertTrue(notifications.isEmpty());
     }
@@ -194,7 +206,7 @@ class RewardGrantServiceTest {
     @Test
     void mixedRewardsCommitActualDomainResultsWithOneRevisionAndNotification() {
         String role = role(1, 100, 100, 20);
-        seedStack(role, 900401, 10_995);
+        seedTavernPoints(role, 10_995);
         var random = new LowestDraws();
         var result = new TransactionTemplate(transactions).execute(status -> {
             var granted = service.grant(role, List.of(
@@ -224,7 +236,8 @@ class RewardGrantServiceTest {
         assertEquals(List.of(new RewardGrantResult.Bonus(RewardGrantResult.BonusSource.ROLE_LEVEL_UP, 900002, 10)),
                 result.bonuses());
         assertEquals(List.of(new RewardGrantResult.TavernChange(10_995, 11_000, 11_000)), result.tavern());
-        assertEquals(3, result.stacks().size());
+        assertEquals(2, result.stacks().size());
+        assertTrue(result.stacks().stream().noneMatch(stack -> stack.itemId() == 900401));
         for (var credit : result.stacks()) {
             var stored = inventory.find(role, credit.itemId()).orElseThrow();
             assertEquals(credit.instanceId(), stored.instanceId());
@@ -262,7 +275,7 @@ class RewardGrantServiceTest {
     @Test
     void mergedRewardsAtExistingCapsKeepIgnoredReasonsWithoutCreatingAWrite() {
         String role = role(300, 7, 100, 20);
-        seedStack(role, 900401, 11_002);
+        seedTavernPoints(role, 11_002);
         var before = roles.findById(role).orElseThrow();
         var result = grant(role, List.of(new Reward(900003, 100), new Reward(900401, 20),
                 new Reward(900003, 200), new Reward(900401, 30)), CONTEXT, new LowestDraws());
@@ -275,21 +288,24 @@ class RewardGrantServiceTest {
         assertTrue(result.stacks().isEmpty());
         assertTrue(result.bonuses().isEmpty());
         assertEquals(before, roles.findById(role).orElseThrow());
-        assertEquals(11_002, inventory.find(role, 900401).orElseThrow().quantity());
+        assertEquals(11_002, jdbc.queryForObject("SELECT adventure_count FROM game_tavern_point WHERE role_id=?", Long.class, role));
         assertEquals(0, roles.revision(role));
         assertTrue(notifications.isEmpty());
     }
 
-    /** 零酒馆额度且原来没有库存时，仍冻结原因与前后余额，不新建空记录。 */
+    /** 已初始化零余额且零额度时保留零到账明细，不创建普通库存、不推进版本。 */
     @Test
     void zeroTavernAllowanceDoesNotCreateAnEmptyStack() {
         String role = role(1, 0, 0, 0);
+        seedTavernPoints(role, 0);
         var result = grant(role, List.of(new Reward(900401, 11)), new Context(NOW, 0), new LowestDraws());
         assertEquals(new RewardGrantResult.Outcome(900401, 11, 0, 11, RewardGrantResult.Reduction.TAVERN_CAP),
                 result.items().getFirst());
         assertEquals(List.of(new RewardGrantResult.TavernChange(0, 0, 0)), result.tavern());
         assertTrue(result.stacks().isEmpty());
-        assertNoRewardAssets(role);
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_inventory WHERE role_id=?", Integer.class, role));
+        assertEquals(0, roles.revision(role));
+        assertTrue(notifications.isEmpty());
     }
 
     /** 最后一级只接纳所缺经验，超额独立记为忽略，升级赠钻与直接钻石来源分开冻结。 */

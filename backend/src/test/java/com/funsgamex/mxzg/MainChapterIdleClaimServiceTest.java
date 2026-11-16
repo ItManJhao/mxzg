@@ -26,18 +26,25 @@ import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.privilege.PrivilegeGiftRules;
 import com.funsgamex.mxzg.privilege.PrivilegeGiftService;
 import com.funsgamex.mxzg.reward.RewardGrantService;
+import com.funsgamex.mxzg.reward.RewardFeedbackService;
+import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.role.RoleExperienceService;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.role.RoleRules;
 import com.funsgamex.mxzg.spirit.SpiritInventoryService;
 import com.funsgamex.mxzg.spirit.SpiritRules;
+import com.funsgamex.mxzg.tavern.TavernPointRules;
+import com.funsgamex.mxzg.tavern.TavernPointService;
 import com.funsgamex.mxzg.world.WorldLevelService;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -102,6 +109,10 @@ class MainChapterIdleClaimServiceTest {
     private IdleActivityMaintenanceService maintenance;
     /** 真实资产同步，记录提交之后实际发布的通知。 */
     private AssetSyncService sync;
+    /** 真实事务后通用反馈入口，不替换为无状态空实现。 */
+    private RewardFeedbackService feedback;
+    /** 当前用例已提交的反馈；回滚、零到账及历史重放不能增加。 */
+    private List<RewardFeedbackService.Committed> rewardNotifications;
     /** 领域及成功回执使用的同一JSON编解码器。 */
     private ObjectMapper json;
     /** 每项测试独立的服务器时钟，只有测试主动推进或回拨。 */
@@ -116,10 +127,11 @@ class MainChapterIdleClaimServiceTest {
     /** 一次测试角色的权威身份，token只在进程内用于调用真实会话校验。 */
     private record Player(String role, String token, String server) {}
 
-    /** 保存所有领取相关表的原值，失败时逐表核对，没有从通知反推持久事实。 */
+    /** 保存所有领取相关表及独立冒险点的原值，失败时逐表核对，不从通知反推持久事实。 */
     private record Stored(Map<String, Object> role, List<Map<String, Object>> idle,
                           List<Map<String, Object>> counters, List<Map<String, Object>> inventory,
-                          List<Map<String, Object>> spirits, List<Map<String, Object>> receipts) {}
+                          List<Map<String, Object>> spirits, List<Map<String, Object>> tavernPoints,
+                          List<Map<String, Object>> receipts) {}
 
     /** 固定合法最低抽样点；普通概率、数量、精灵属性均保留实际调用次数。 */
     private static final class Draws implements RandomGenerator {
@@ -192,18 +204,23 @@ class MainChapterIdleClaimServiceTest {
         json = new ObjectMapper();
         notifications = new CopyOnWriteArrayList<>();
         sync = new AssetSyncService(jdbc, event -> notifications.add((AssetSyncService.Changed) event));
+        rewardNotifications = new CopyOnWriteArrayList<>();
+        feedback = transactional(new RewardFeedbackService(event ->
+                rewardNotifications.add((RewardFeedbackService.Committed) event)), RewardFeedbackService.class);
         roleRules = new RoleRules(json);
         // 直接准备独立角色，不调用创建角色；容量依赖不参与领取奖励路径。
         roles = new RoleRepository(jdbc, sync, roleRules, mock(HeroCapacityService.class));
         sessions = new SessionService(jdbc);
         inventory = new InventoryService(jdbc, sync, json, roles);
+        var tavernPoints = transactional(new TavernPointService(jdbc, roles, new TavernPointRules(json), sync),
+                TavernPointService.class);
         var experience = transactional(new RoleExperienceService(roleRules, roles, jdbc, sync), RoleExperienceService.class);
         var timedRules = new TimedItemRules(json);
         var timed = new TimedInventoryService(jdbc, sync, timedRules);
         spirits = transactional(new SpiritInventoryService(jdbc, roles, new SpiritRules(json), sync, json),
                 SpiritInventoryService.class);
         rewards = transactional(new RewardGrantService(roles, experience, inventory, timedRules, timed,
-                spirits, sync, json), RewardGrantService.class);
+                spirits, tavernPoints, sync, json), RewardGrantService.class);
         idleRules = new IdleRules(json);
         chapterRules = new MainChapterRules(json);
         var activityRules = new IdleActivityRules(json);
@@ -242,7 +259,7 @@ class MainChapterIdleClaimServiceTest {
     /** 重建无角色缓存的领取服务，可模拟进程重建及入口关闭后恢复已提交回执。 */
     private MainChapterIdleClaimService claimService(boolean enabled) {
         return transactional(new MainChapterIdleClaimService(sessions, roles, jdbc, idleRules, chapterRules,
-                inputs, rewards, states, roleRules, sync, json, clock, random, enabled),
+                inputs, rewards, states, roleRules, sync, feedback, json, clock, random, enabled),
                 MainChapterIdleClaimService.class);
     }
 
@@ -287,6 +304,7 @@ class MainChapterIdleClaimServiceTest {
                 jdbc.queryForList("SELECT * FROM game_main_chapter_idle_counter WHERE role_id=? ORDER BY group_type", player.role()),
                 jdbc.queryForList("SELECT * FROM game_inventory WHERE role_id=? ORDER BY item_id", player.role()),
                 jdbc.queryForList("SELECT * FROM game_spirit WHERE role_id=? ORDER BY instance_id", player.role()),
+                jdbc.queryForList("SELECT * FROM game_tavern_point WHERE role_id=?", player.role()),
                 jdbc.queryForList("SELECT * FROM game_main_chapter_idle_receipt WHERE role_id=? ORDER BY request_id", player.role()));
     }
 
@@ -318,6 +336,19 @@ class MainChapterIdleClaimServiceTest {
         assertEquals(NOW, after.startedAt());
         assertEquals(new IdleRules.Counter(22, 0), after.counters().get(6));
         assertOneCommittedConsumption(player);
+        assertEquals(1, rewardNotifications.size());
+        var notice = rewardNotifications.getFirst().notice();
+        assertEquals(receipt.receiptId(), notice.receiptId());
+        assertEquals(receipt.assetRevision(), notice.assetRevision());
+        assertEquals(player.role(), notice.roleId());
+        assertEquals(RewardFeedbackService.Mode.POPUP, notice.mode());
+        assertTrue(receipt.actual().stacks().stream().noneMatch(stack -> stack.itemId() == 900401));
+        var pointChange = receipt.actual().tavern().getFirst();
+        assertEquals(2_000, pointChange.beforeQuantity());
+        assertEquals(pointChange.afterQuantity(), jdbc.queryForObject(
+                "SELECT adventure_count FROM game_tavern_point WHERE role_id=?", Long.class, player.role()));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_inventory WHERE role_id=? AND item_id=900401",
+                Integer.class, player.role()));
     }
 
     /** 未满最低60秒不抽样、不留成功回执，也不消费原起点和任何持久版本。 */
@@ -562,6 +593,7 @@ class MainChapterIdleClaimServiceTest {
         assertThrows(RuntimeException.class, () -> service.claim(player.token(), requestId(), 1));
         assertEquals(before, stored(player));
         assertTrue(notifications.isEmpty());
+        assertTrue(rewardNotifications.isEmpty());
     }
 
     /** 领取后其他合法资产变化不改写旧实际结果，重放不把历史余额或实例集合当作当前资产。 */
@@ -587,6 +619,58 @@ class MainChapterIdleClaimServiceTest {
         assertEquals(calls, random.calls.get());
         assertEquals(2, roles.revision(player.role()));
         assertEquals(2, notifications.size());
+    }
+
+    /** 真实旧AuditV1含900401堆叠时仍原样恢复，不用当前普通库存边界拒绝或重写历史JSON/hash。 */
+    @Test
+    void legacyAuditWithAnAdventurePointStackRestoresWithoutRewritingOrRegranting() throws Exception {
+        var player = player(20, 0, 119, 1);
+        String id = requestId();
+        var receipt = service.claim(player.token(), id, 1);
+        var audit = json.readValue(jdbc.queryForObject(
+                "SELECT payload_json FROM game_main_chapter_idle_receipt WHERE role_id=? AND request_id=?",
+                String.class, player.role(), id), MainChapterIdleClaimService.AuditV1.class);
+        var actual = receipt.actual();
+        var points = actual.tavern().getFirst();
+        long credited = actual.items().stream().filter(item -> item.itemId() == 900401)
+                .findFirst().orElseThrow().credited();
+        assertTrue(credited > 0);
+        var legacyStacks = new ArrayList<>(actual.stacks());
+        legacyStacks.add(new InventoryService.Credit(900401, "stack:" + player.role() + ":900401",
+                points.beforeQuantity(), credited, points.afterQuantity()));
+        var legacyActual = new RewardGrantResult(actual.roleId(), actual.items(), actual.wallet(), legacyStacks,
+                actual.experience(), actual.tavern(), actual.bonuses(), actual.timedItems(), actual.spirits());
+        var legacyReceipt = new MainChapterIdleClaimService.Receipt(receipt.schemaVersion(), receipt.requestId(),
+                receipt.receiptId(), receipt.expectedOperationVersion(), receipt.beforeOperationVersion(),
+                receipt.afterOperationVersion(), receipt.committedAtSeconds(), receipt.previousStartedAtSeconds(),
+                receipt.seconds(), receipt.maxSeconds(), receipt.rewardStage(), receipt.assetRevision(),
+                receipt.theoreticalRewards(), legacyActual, receipt.experience());
+        var legacyAudit = new MainChapterIdleClaimService.AuditV1(audit.storageVersion(), audit.roleId(),
+                audit.serverId(), audit.requestFormat(), audit.requestName(), audit.requestFingerprint(), legacyReceipt,
+                audit.before(), audit.after(), audit.calculation());
+        // 只在本独立库准备一条旧版成功载荷；生产迁移和恢复逻辑均不得改写它。
+        String legacyPayload = json.writeValueAsString(legacyAudit);
+        String legacyHash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(legacyPayload.getBytes(StandardCharsets.UTF_8)));
+        jdbc.update("UPDATE game_main_chapter_idle_receipt SET payload_json=?,payload_hash=? WHERE role_id=? AND request_id=?",
+                legacyPayload, legacyHash, player.role(), id);
+        var before = stored(player);
+        int calls = random.calls.get();
+        int eventCount = notifications.size();
+        int feedbackCount = rewardNotifications.size();
+        var closedEntry = claimService(false);
+        assertEquals(legacyReceipt, closedEntry.status(player.token(), id).receipt());
+        assertEquals(legacyReceipt, closedEntry.claim(player.token(), id, 1));
+        assertEquals(before, stored(player));
+        assertEquals(legacyPayload, jdbc.queryForObject(
+                "SELECT payload_json FROM game_main_chapter_idle_receipt WHERE role_id=? AND request_id=?",
+                String.class, player.role(), id));
+        assertEquals(legacyHash, jdbc.queryForObject(
+                "SELECT payload_hash FROM game_main_chapter_idle_receipt WHERE role_id=? AND request_id=?",
+                String.class, player.role(), id));
+        assertEquals(calls, random.calls.get());
+        assertEquals(eventCount, notifications.size());
+        assertEquals(feedbackCount, rewardNotifications.size());
     }
 
     /** 本次升级与礼包到期秒均使用发奖前统一输入，不在经验入账后重新计算增益。 */
@@ -646,7 +730,7 @@ class MainChapterIdleClaimServiceTest {
                 source.maxSeconds(), source.resetSeconds(), source.stages(), source.triggers(), drops);
         var candidateRules = parsedRules(variant);
         var candidateService = transactional(new MainChapterIdleClaimService(sessions, roles, jdbc, candidateRules,
-                chapterRules, inputs, rewards, states, roleRules, sync, json, clock, random, true),
+                chapterRules, inputs, rewards, states, roleRules, sync, feedback, json, clock, random, true),
                 MainChapterIdleClaimService.class);
         var before = stored(player);
         assertThrows(IllegalArgumentException.class,
@@ -670,7 +754,7 @@ class MainChapterIdleClaimServiceTest {
         var variant = new IdleRules.Data(source.version(), source.frequency(), source.initialSeconds(),
                 source.maxSeconds(), source.resetSeconds(), source.stages(), source.triggers(), drops);
         var candidateService = transactional(new MainChapterIdleClaimService(sessions, roles, jdbc, parsedRules(variant),
-                chapterRules, inputs, rewards, states, roleRules, sync, json, clock, random, true),
+                chapterRules, inputs, rewards, states, roleRules, sync, feedback, json, clock, random, true),
                 MainChapterIdleClaimService.class);
         var before = stored(player);
         assertThrows(IllegalStateException.class,
@@ -697,7 +781,7 @@ class MainChapterIdleClaimServiceTest {
         var variant = new IdleRules.Data(source.version(), source.frequency(), source.initialSeconds(),
                 source.maxSeconds(), source.resetSeconds(), source.stages(), source.triggers(), drops);
         var candidateService = transactional(new MainChapterIdleClaimService(sessions, roles, jdbc, parsedRules(variant),
-                chapterRules, inputs, rewards, states, roleRules, sync, json, clock, random, true),
+                chapterRules, inputs, rewards, states, roleRules, sync, feedback, json, clock, random, true),
                 MainChapterIdleClaimService.class);
         var before = stored(player);
         assertThrows(ArithmeticException.class,
@@ -732,7 +816,7 @@ class MainChapterIdleClaimServiceTest {
                 List.of(new IdleRules.Stage(1, source.stages().getFirst().group(),
                         List.of(new CampaignRules.Reward(900003, 10)))), List.of(), List.of());
         var candidateService = transactional(new MainChapterIdleClaimService(sessions, roles, jdbc, parsedRules(variant),
-                chapterRules, inputs, rewards, states, roleRules, sync, json, clock, random, true),
+                chapterRules, inputs, rewards, states, roleRules, sync, feedback, json, clock, random, true),
                 MainChapterIdleClaimService.class);
         var beforeRole = roles.findById(player.role()).orElseThrow();
         var receipt = candidateService.claim(player.token(), requestId(), 1);

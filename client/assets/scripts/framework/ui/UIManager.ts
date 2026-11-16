@@ -40,6 +40,19 @@ interface ResidentPage extends OpenPage {
     onDestroyed: (() => void) | null;
     /** 层级激活状态监听；宿主或祖先隐藏/恢复时重新决定共享模态归属。 */
     onActiveChanged: (() => void) | null;
+    /** 已交给本实例的最近打开意图；单实例合并准备时据此只应用末次参数。 */
+    appliedIntent: ResidentIntent | null;
+}
+/** 单实例弹窗的当前使用意图；普通打开同样接管归属，不将父子关系保存在业务View中。 */
+interface ResidentIntent {
+    /** 最近一次打开传入的参数，在共享准备完成前允许被后来的意图替换。 */
+    readonly args: unknown;
+    /** 已挂载的真实子窗；null表示尚在资源加载阶段，取消时不得等待其兑现。 */
+    view: BaseView<unknown> | null;
+    /** 当前负责子窗的父页；null表示普通打开，明确接管并解除旧父页归属。 */
+    readonly owner: BaseView<unknown> | null;
+    /** 解除当前父页关闭登记的句柄；普通打开无父页，关闭/转交后清空。 */
+    stopOwner: (() => void) | null;
 }
 /** 加载还没进栈，玩家已经去了别的页。不 Toast，不改底栏。 */
 export class OpenCancelled extends Error {
@@ -111,6 +124,8 @@ export class UIManager {
     private residentEpoch = new Map<string, number>();
     /** 已挂载但仍在whenReady等待中的弹窗，取消时只释放对应宿主。 */
     private pendingResident = new Map<Node, ResidentPage>();
+    /** 单实例弹窗按页面id保留唯一当前意图；窗口关闭移除，旧父页与旧异步续段不可撤销后来意图。 */
+    private readonly residentIntents = new Map<string, ResidentIntent>();
     /** 真实弹窗的先后编号，重复打开已有窗口时递增以反映置顶。 */
     private nextResidentOrder = 1;
     /** 当前管理器唯一的模态节点，所有弹窗共用；卸载时统一销毁。 */
@@ -190,6 +205,37 @@ export class UIManager {
                 this.opening.delete(spec.id);
             }
         }
+    }
+
+    /**
+     * 打开随父页显示期关闭的单实例Popup；普通open或其他父页后来打开同id时接管归属。
+     * 父页在加载完成前关闭会立即撤销自己的意图；同id在途打开只挂载一次，并采用末次参数。
+     */
+    public openChild<T>(owner: BaseView<unknown>, ctor: ViewClass<T>, args?: T): Promise<BaseView<T>> {
+        const spec = UIRegistry.viewSpecOf(ctor);
+        if (!spec || spec.layer !== UILayer.Popup || spec.allowMultiple || !spec.hostId) {
+            return Promise.reject(new Error("子窗口必须登记为有宿主的单实例Popup"));
+        }
+        return this.openResident(ctor, spec, args, owner);
+    }
+
+    /** 主动关闭仍归本父页持有的全部子窗及在途意图；已经被其他打开接管的同id窗口不受影响。 */
+    public closeChildren(owner: BaseView<unknown>): boolean {
+        let closed = false;
+        for (const [id, intent] of Array.from(this.residentIntents)) {
+            if (intent.owner === owner && this.residentIntents.get(id) === intent) {
+                closed = this.closeResident(id) || closed;
+            }
+        }
+        return closed;
+    }
+
+    /** 当前已显示的单实例子窗仍归本父页时返回true；准备期接管后旧调用方不能确认其展示结果。 */
+    public ownsChild(owner: BaseView<unknown>, view: BaseView<unknown>): boolean {
+        const page = this.findResident(view);
+        const intent = page ? this.residentIntents.get(page.id) : null;
+        return !!page && this.residents.get(page.host) === page && !page.cancelled && page.host.isValid
+            && intent?.owner === owner && intent.view === view && page.appliedIntent === intent;
     }
 
     /**
@@ -474,54 +520,133 @@ export class UIManager {
     }
 
     /** 打开或置顶弹窗；单实例窗口复用，同id多实例各自保留生命周期。 */
-    private async openResident<T>(ctor: ViewClass<T>, spec: ViewSpec, args: unknown): Promise<BaseView<T>> {
-        if (!spec.allowMultiple) {
-            const alive = Array.from(this.residents.values()).find(page => page.id === spec.id && page.host.isValid);
-            if (alive) {
-                const started = GameLog.monoNow();
-                alive.spec = spec;
-                this.raiseResident(alive);
-                try {
-                    if (spec.prepare) {
-                        await spec.prepare();
-                    }
-                    if (alive.cancelled || !alive.host.isValid) {
-                        throw new OpenCancelled();
-                    }
-                    alive.view.runOpen(args);
-                    await alive.view.whenReady();
-                    if (alive.cancelled || !alive.host.isValid) {
-                        throw new OpenCancelled();
-                    }
-                    this.noteOpened(alive.view, spec, started);
-                    return alive.view as BaseView<T>;
-                }
-                catch (error) {
-                    const cancelled = alive.cancelled || UIManager.isOpenCancelled(error);
-                    this.disposeResident(alive);
-                    if (!cancelled) {
-                        this.reportOpenFailed(spec.id, error);
-                    }
-                    throw error;
-                }
-            }
-            const pending = this.opening.get(spec.id);
-            if (pending) {
-                return (await pending) as BaseView<T>;
-            }
+    private async openResident<T>(ctor: ViewClass<T>, spec: ViewSpec, args: unknown,
+        owner?: BaseView<unknown>): Promise<BaseView<T>> {
+        if (spec.allowMultiple) {
+            return this.openResidentNew(ctor, spec, args);
         }
-        const job = this.openResidentNew(ctor, spec, args);
-        if (!spec.allowMultiple) {
-            this.opening.set(spec.id, job);
+        const intent = this.replaceResidentIntent(spec.id, args, owner);
+        if (this.residentIntents.get(spec.id) !== intent) {
+            throw new OpenCancelled();
         }
+        const pending = this.opening.get(spec.id);
+        if (pending) {
+            const view = await pending;
+            const page = this.findResident(view);
+            if (!page) {
+                throw new OpenCancelled();
+            }
+            // 准备完成的同步通知也可能又提出一次打开；只补尚未应用的最新参数。
+            await this.applyResidentIntent(page, args);
+            return view as BaseView<T>;
+        }
+        const alive = Array.from(this.residents.values()).find(page => page.id === spec.id && page.host.isValid);
+        const epoch = this.residentEpoch.get(spec.id) || 0;
+        this.residentEpoch.set(spec.id, epoch);
+        // 先登记共享任务再开始加载，父页同步关闭或重复点击也能撤销/合并同一意图。
+        const job = Promise.resolve().then(() => {
+            this.ensureResident(spec.id, epoch);
+            return alive ? this.reopenResident(alive, spec, args) : this.openResidentNew(ctor, spec, args);
+        });
+        this.opening.set(spec.id, job);
         try {
             return (await job) as BaseView<T>;
         }
         finally {
             if (this.opening.get(spec.id) === job) {
                 this.opening.delete(spec.id);
+                const current = this.residentIntents.get(spec.id);
+                if (current && !this.residentPages().some(page => page.id === spec.id)) {
+                    this.releaseResidentIntent(spec.id, current);
+                }
             }
         }
+    }
+
+    /** 普通打开与子窗打开都接管单实例归属，先解除旧父页登记，旧清理不会关闭新用途。 */
+    private replaceResidentIntent(id: string, args: unknown, owner?: BaseView<unknown>): ResidentIntent {
+        const previous = this.residentIntents.get(id);
+        const intent: ResidentIntent = { args, view: previous?.view || null, owner: owner || null, stopOwner: null };
+        let ownerClosed = false;
+        if (owner) {
+            intent.stopOwner = owner.onViewClose(() => {
+                ownerClosed = true;
+                if (this.residentIntents.get(id) === intent) {
+                    this.closeResident(id);
+                }
+            });
+        }
+        // 已关父页的迟到操作必须在接管前拒绝，否则会先抢走并关闭其他页面仍在使用的详情。
+        if (ownerClosed) {
+            intent.stopOwner?.();
+            intent.stopOwner = null;
+            return intent;
+        }
+        this.residentIntents.set(id, intent);
+        previous?.stopOwner?.();
+        if (previous) {
+            previous.stopOwner = null;
+        }
+        return intent;
+    }
+
+    /** 只释放仍匹配的意图和父页引用；旧任务的finally不会清理后来接管的窗口。 */
+    private releaseResidentIntent(id: string, intent: ResidentIntent): void {
+        if (this.residentIntents.get(id) !== intent) {
+            return;
+        }
+        this.residentIntents.delete(id);
+        const stopOwner = intent.stopOwner;
+        intent.stopOwner = null;
+        stopOwner?.();
+    }
+
+    /** 存活弹窗重用同一准备任务；只重画最新参数，不重复实例化或保留旧父页关闭回调。 */
+    private async reopenResident(page: ResidentPage, spec: ViewSpec, args: unknown): Promise<BaseView<unknown>> {
+        const started = GameLog.monoNow();
+        page.spec = spec;
+        this.raiseResident(page);
+        try {
+            if (spec.prepare) {
+                await spec.prepare();
+            }
+            await this.applyResidentIntent(page, args);
+            this.noteOpened(page.view, spec, started);
+            return page.view;
+        } catch (error) {
+            const cancelled = page.cancelled || UIManager.isOpenCancelled(error);
+            this.disposeResident(page);
+            if (!cancelled) {
+                this.reportOpenFailed(spec.id, error);
+            }
+            throw error;
+        }
+    }
+
+    /** 准备期只提交当前意图；等待中被新选择接管时继续应用末次参数，关闭后不再回调View。 */
+    private async applyResidentIntent(page: ResidentPage, args: unknown): Promise<void> {
+        do {
+            if (page.cancelled || !page.host.isValid) {
+                throw new OpenCancelled();
+            }
+            if (page.spec.allowMultiple) {
+                page.view.runOpen(args);
+            } else {
+                const intent = this.residentIntents.get(page.id);
+                if (!intent) {
+                    throw new OpenCancelled();
+                }
+                intent.view = page.view;
+                if (page.appliedIntent !== intent) {
+                    page.appliedIntent = intent;
+                    page.view.runOpen(intent.args);
+                }
+            }
+            await this.waitResidentReady(page);
+            if (page.cancelled || !page.host.isValid) {
+                throw new OpenCancelled();
+            }
+        } while (!page.spec.allowMultiple && page.appliedIntent !== this.residentIntents.get(page.id));
     }
 
     /** 挂载后的准备期也接入共享模态；关闭本实例即可取消，不等待业务页面兑现ready。 */
@@ -551,7 +676,7 @@ export class UIManager {
             if (!found) {
                 throw new Error(spec.prefab + " 上没有视图组件");
             }
-            page = { id: spec.id, host: viewNode, view: found, spec,
+            page = { id: spec.id, host: viewNode, view: found, spec, appliedIntent: null,
                 order: this.nextResidentOrder++, cancelled: false, rejectOpening: null,
                 onDestroyed: null, onActiveChanged: null };
             const current = page;
@@ -564,9 +689,7 @@ export class UIManager {
             if (spec.createController) {
                 found.attachController(spec.createController(found));
             }
-            found.runOpen(args as T);
-            this.ensureResident(spec.id, epoch, page);
-            await this.waitResidentReady(page);
+            await this.applyResidentIntent(page, args);
             this.ensureResident(spec.id, epoch, page);
             if (!viewNode.isValid || !found.node || !found.node.isValid) {
                 throw new Error("页面已关");
@@ -597,8 +720,11 @@ export class UIManager {
         }
     }
 
-    /** 竞速等待内容就绪与窗口取消，完成后解除本次取消出口。 */
+    /** 竞速等待内容就绪与窗口取消；onOpen已同步关窗时直接拒绝，不等待业务结束Promise。 */
     private async waitResidentReady(page: ResidentPage): Promise<void> {
+        if (page.cancelled || !page.host.isValid) {
+            throw new OpenCancelled();
+        }
         const cancelled = new Promise<void>((_resolve, reject) => { page.rejectOpening = reject; });
         try {
             await Promise.race([page.view.whenReady(), cancelled]);
@@ -621,6 +747,10 @@ export class UIManager {
         const had = this.opening.has(id) || pages.length > 0;
         this.residentEpoch.set(id, (this.residentEpoch.get(id) || 0) + 1);
         this.opening.delete(id);
+        const intent = this.residentIntents.get(id);
+        if (intent) {
+            this.releaseResidentIntent(id, intent);
+        }
         for (const page of pages) {
             this.disposeResident(page);
         }
@@ -655,6 +785,10 @@ export class UIManager {
         }
         this.residents.delete(page.host);
         this.pendingResident.delete(page.host);
+        const intent = this.residentIntents.get(page.id);
+        if (intent?.view === page.view) {
+            this.releaseResidentIntent(page.id, intent);
+        }
         page.cancelled = true;
         page.rejectOpening?.(new OpenCancelled());
         page.rejectOpening = null;

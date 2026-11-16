@@ -1,4 +1,7 @@
-/** 普通挂机回归：独立 H2 合成时间验证计时边界、真实事务、持久收据、并发与随机保底，不修改玩家库。 */
+/**
+ * 暂停简化挂机的独立H2回归：保留计时、旧经验和回执语义，不代表当前主线领取已开放。
+ * 发放共用真实资产入口，检查独立精灵及冒险点的回滚、重放和无假堆叠，不修改玩家库。
+ */
 package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.campaign.*;
@@ -25,6 +28,10 @@ class IdleTest {
     @Autowired JdbcTemplate jdbc;
     @Autowired RoleRepository roles;
     @Autowired InventoryService inventory;
+    /** 独立冒险点初值，用于核对初始化和本次实际奖励没有混为一笔。 */
+    @Autowired com.funsgamex.mxzg.tavern.TavernPointRules tavernRules;
+    /** 序列化本例保底夹具，使用生产SavedCounters结构而非手写持久字段格式。 */
+    @Autowired tools.jackson.databind.ObjectMapper json;
     private record Player(String account,String role,String token) {}
     /** 使用正常入口建立本测试独立角色；不修改服务端时钟。 */
     private Player player() {
@@ -79,10 +86,41 @@ class IdleTest {
         finally {jdbc.execute("ALTER TABLE game_idle_receipt DROP CONSTRAINT idle_test_fail");}
         assertEquals(0,roles.findById(p.role()).orElseThrow().gold());assertEquals(items,inventory.list(p.role()));
         assertEquals(before.startedAt(),idle.current(p.token()).startedAt());assertEquals(0,idle.current(p.token()).revision());
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_tavern_point WHERE role_id=?", Integer.class, p.role()));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_spirit WHERE role_id=?", Integer.class, p.role()));
         assertEquals(401,assertThrows(ResponseStatusException.class,()->idle.current(null)).getStatusCode().value());
         var other=player();var req=request(0);var first=idle.claim(p.token(),req);elapsed(other,0);
         rejected("IDLE_NOT_READY",()->idle.claim(other.token(),req));assertEquals(0,roles.findById(other.role()).orElseThrow().gold());
         assertFalse(first.receipt().rewards().isEmpty());
+    }
+
+    /** 保底精灵进入真实实例、冒险点进入唯一余额；原收据重放不重抽实例、不再次初始化或发奖。 */
+    @Test
+    void sharedGrantKeepsSpiritAndAdventurePointDomainsAcrossReplay() {
+        var player = player();
+        var trigger = rules.data().triggers().stream()
+                .filter(row -> row.group() == rules.stage(1).group() && row.type() == 3)
+                .findFirst().orElseThrow();
+        var counters = new IdleService.SavedCounters(Map.of(3, new IdleRules.Counter(0, trigger.guarantee() - 1)));
+        jdbc.update("UPDATE game_idle SET counters_json=? WHERE role_id=?", json.writeValueAsString(counters), player.role());
+        var request = request(0);
+        var first = idle.claim(player.token(), request);
+        var spiritRows = jdbc.queryForList("SELECT * FROM game_spirit WHERE role_id=? ORDER BY instance_id", player.role());
+        assertEquals(1, spiritRows.size());
+        long points = first.receipt().rewards().stream().filter(row -> row.itemId() == 900401)
+                .mapToLong(CampaignRules.Reward::quantity).sum();
+        assertTrue(points > 0);
+        long balance = jdbc.queryForObject("SELECT adventure_count FROM game_tavern_point WHERE role_id=?", Long.class, player.role());
+        assertEquals(tavernRules.initialAdventureCount() + points, balance);
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_inventory WHERE role_id=? AND item_id IN (900401,2000002)",
+                Integer.class, player.role()));
+        long revision = roles.revision(player.role());
+
+        assertEquals(first.receipt(), idle.claim(player.token(), request).receipt());
+
+        assertEquals(spiritRows, jdbc.queryForList("SELECT * FROM game_spirit WHERE role_id=? ORDER BY instance_id", player.role()));
+        assertEquals(balance, jdbc.queryForObject("SELECT adventure_count FROM game_tavern_point WHERE role_id=?", Long.class, player.role()));
+        assertEquals(revision, roles.revision(player.role()));
     }
     /** 待领奖的真实胜利取已通关关卡，领奖推进后收益仍取刚通关的关卡。 */
     @Test void stageUsesCompletedBattle() {

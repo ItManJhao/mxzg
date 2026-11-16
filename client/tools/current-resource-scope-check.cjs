@@ -21,7 +21,10 @@ const gmSplit = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/gm-p
 const equipmentDetail = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/equipment-detail-assets-20261114.json'), 'utf8'));
 // 道具/碎片复用既有页面，只核对明确恢复的三张原图，不扩大Prefab或Bundle范围。
 const itemShard = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/item-shard-assets-20261114.json'), 'utf8'));
-const approvedPrefabs = [...evidence.retainedPrefabs, ...spiritDetail.addedPrefabs, ...gmSplit.addedPrefabs, ...equipmentDetail.addedPrefabs];
+// 通用奖励与确认已获准接入，新增范围另留证，不改写旧批保留清单。
+const commonFeedback = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/reward-common-ui-scope-20261116.json'), 'utf8'));
+const approvedPrefabs = [...evidence.retainedPrefabs, ...spiritDetail.addedPrefabs, ...gmSplit.addedPrefabs,
+    ...equipmentDetail.addedPrefabs, ...commonFeedback.addedPrefabs];
 
 /** 收集当前目录普通文件；资源审查不允许通过链接访问工作区外的文件。 */
 function files(directory) {
@@ -126,7 +129,7 @@ for (const file of resourceFiles.filter(file => file.endsWith('.ts'))) {
         resolveAssetPath(match[1] + '.prefab');
     }
 }
-assert.equal(views, 21, '当前独立View数量改变时须同步核对入口与资源闭包');
+assert.equal(views, 21 + commonFeedback.addedPrefabs.length, '当前独立View数量改变时须同步核对入口与资源闭包');
 // 原图像素恢复有单独旧图集证据；仅接受明确列出的最终图片摘要，继续核对原UUID和meta。
 for (const row of [...equipmentDetail.resources, ...itemShard.resources]) {
     const file = path.resolve(root, row.path);

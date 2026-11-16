@@ -36,6 +36,8 @@ export class GameSocketClient {
   onReady: (() => void) | null = null;
   /** 资产事件交给应用统一校验并提交。 */
   onState: ((frame: GameFrame) => void) | null = null;
+  /** 当前连接的通用奖励事件，只交应用核对归属及安排展示，不替代状态快照。 */
+  onReward: ((frame: GameFrame) => void) | null = null;
   /** 当前连接最近的完整帧，供本次登录交付，不另建资产 Model。 */
   latestState: GameFrame | null = null;
   onDisconnected: ((message: string) => void) | null = null;
@@ -139,12 +141,24 @@ export class GameSocketClient {
   }
 
   /** 主线命令不自动重放；连接代次统一隔离，模块只保留业务幂等键。 */
-  async chapter(token: string, name: typeof Protocol.CHAPTER_CHALLENGE | typeof Protocol.CHAPTER_CLAIM | typeof Protocol.CHAPTER_REPLAY | typeof Protocol.CHAPTER_IDLE_ENCOUNTER, body: unknown): Promise<GameFrame> {
+  async chapter(token: string, name: typeof Protocol.CHAPTER_CHALLENGE | typeof Protocol.CHAPTER_CLAIM
+      | typeof Protocol.CHAPTER_REPLAY | typeof Protocol.CHAPTER_IDLE_ENCOUNTER
+      | typeof Protocol.CHAPTER_IDLE_CLAIM | typeof Protocol.CHAPTER_IDLE_CLAIM_STATUS, body: unknown): Promise<GameFrame> {
     this.assertReady(token);
     const generation = this.generation;
     const frame = await this.send(name, body);
     if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
     return frame;
+  }
+
+  /**
+   * 回执已到但提交快照缺失时，显式重建当前通道并等待统一鉴权首包。
+   * 普通connect在就绪时不会刷新；这里不查询库存，也不重放任何业务命令。
+   */
+  async refreshSnapshot(token: string): Promise<void> {
+    this.assertReady(token);
+    this.drop(new SocketFailure("STATE_REFRESH", "正在恢复最新状态"), false);
+    await this.connect(token);
   }
 
   /** 当前阵容只读试战，不自动重放；连接切换由通信层拒绝旧结果。 */
@@ -277,6 +291,16 @@ export class GameSocketClient {
         this.traceReceived(frame);
         if(revision<=this.stateRevision)return;
         this.stateRevision=revision;this.latestState=frame;this.onState?.(frame);return;
+      }
+      if (frame.kind === "event" && frame.name === Protocol.REWARD_GRANTED && this.connectionId && this.ready) {
+        const notice = GameProtocolCodecUtils.validateRewardNotice(frame.body);
+        if (notice.roleId !== this.roleId) {
+          throw new SocketFailure("INVALID_MESSAGE");
+        }
+        // 反馈可能先于状态到达；展示等待由奖励模块承担，不污染传输层的状态版本。
+        this.traceReceived(frame);
+        this.onReward?.(frame);
+        return;
       }
       if (frame.kind === "event" && frame.name === Protocol.SESSION_KICKED && this.connectionId) {
         this.traceReceived(frame);

@@ -1,0 +1,1467 @@
+{
+  "date": "2026-11-16",
+  "mode": "Creator localhost preview, isolated memory H2, real WebSocket Protobuf",
+  "host": {
+    "pid": 3652,
+    "port": 51536,
+    "run": "e8f2e7b23255455d90e05329cad661a4",
+    "stopped": true
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "creatorDeviceOption": "Apple iPhone 14 Pro (393X852)"
+  },
+  "compiledFeatures": {
+    "closeChildren": true,
+    "openChild": true,
+    "rejectClosedOwnerBeforeTransfer": true,
+    "synchronousReadyCloseGuard": false
+  },
+  "statistics": {
+    "trigger": "After actual first-chapter result opened, emitted two real ReportButton CLICK events through the existing handler.",
+    "before": {
+      "at": "2026-11-16T10:32:36.344Z",
+      "mono": 151429.40000003576,
+      "route": "remake-campaign",
+      "ready": true,
+      "generation": 2,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 1,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      },
+      "residentIntents": 1,
+      "residents": [
+        {
+          "id": "battle-detail",
+          "uuid": "Comp.4888"
+        }
+      ],
+      "subscriptions": 16,
+      "statistics": {
+        "uuid": "Comp.4888",
+        "names": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "units": [
+          {
+            "unitId": 2,
+            "faction": 1,
+            "templateId": 10101001,
+            "level": 100,
+            "position": 2,
+            "initialHp": 1816,
+            "maxHp": 1816,
+            "finalHp": 1816,
+            "totalDamage": 142,
+            "totalTakenDamage": 0,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          },
+          {
+            "unitId": 10,
+            "faction": 2,
+            "templateId": 10101001,
+            "level": 1,
+            "position": 2,
+            "initialHp": 142,
+            "maxHp": 142,
+            "finalHp": 0,
+            "totalDamage": 0,
+            "totalTakenDamage": 142,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          }
+        ],
+        "labels": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "released": false
+      },
+      "info": null
+    },
+    "offlineStart": {
+      "at": "2026-11-16T10:32:47.321Z",
+      "mono": 162406.40000003576
+    },
+    "offlineObservation": {
+      "at": "2026-11-16T10:34:19.826Z",
+      "mono": 254911.5,
+      "route": "remake-campaign",
+      "ready": false,
+      "generation": 21,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 1,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      },
+      "residentIntents": 1,
+      "residents": [
+        {
+          "id": "battle-detail",
+          "uuid": "Comp.4888"
+        }
+      ],
+      "subscriptions": 16,
+      "statistics": {
+        "uuid": "Comp.4888",
+        "names": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "units": [
+          {
+            "unitId": 2,
+            "faction": 1,
+            "templateId": 10101001,
+            "level": 100,
+            "position": 2,
+            "initialHp": 1816,
+            "maxHp": 1816,
+            "finalHp": 1816,
+            "totalDamage": 142,
+            "totalTakenDamage": 0,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          },
+          {
+            "unitId": 10,
+            "faction": 2,
+            "templateId": 10101001,
+            "level": 1,
+            "position": 2,
+            "initialHp": 142,
+            "maxHp": 142,
+            "finalHp": 0,
+            "totalDamage": 0,
+            "totalTakenDamage": 142,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          }
+        ],
+        "labels": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "released": false
+      },
+      "info": null
+    },
+    "networkRestored": {
+      "at": "2026-11-16T10:34:45.366Z",
+      "mono": 280452.2000000477
+    },
+    "actualOfflineSeconds": 118.04580000001192,
+    "afterLongDisconnect": {
+      "at": "2026-11-16T10:35:28.779Z",
+      "mono": 323864.8000000119,
+      "route": "remake-campaign",
+      "ready": true,
+      "generation": 24,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 1,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      },
+      "residentIntents": 1,
+      "residents": [
+        {
+          "id": "battle-detail",
+          "uuid": "Comp.4888"
+        }
+      ],
+      "subscriptions": 16,
+      "statistics": {
+        "uuid": "Comp.4888",
+        "names": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "units": [
+          {
+            "unitId": 2,
+            "faction": 1,
+            "templateId": 10101001,
+            "level": 100,
+            "position": 2,
+            "initialHp": 1816,
+            "maxHp": 1816,
+            "finalHp": 1816,
+            "totalDamage": 142,
+            "totalTakenDamage": 0,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          },
+          {
+            "unitId": 10,
+            "faction": 2,
+            "templateId": 10101001,
+            "level": 1,
+            "position": 2,
+            "initialHp": 142,
+            "maxHp": 142,
+            "finalHp": 0,
+            "totalDamage": 0,
+            "totalTakenDamage": 142,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          }
+        ],
+        "labels": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "released": false
+      },
+      "info": null
+    },
+    "reconnectCycles": [
+      {
+        "cycle": 1,
+        "at": "2026-11-16T10:35:53.96Z",
+        "generation": 26,
+        "uuid": "Comp.4888",
+        "units": [
+          {
+            "unitId": 2,
+            "faction": 1,
+            "templateId": 10101001,
+            "level": 100,
+            "position": 2,
+            "initialHp": 1816,
+            "maxHp": 1816,
+            "finalHp": 1816,
+            "totalDamage": 142,
+            "totalTakenDamage": 0,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          },
+          {
+            "unitId": 10,
+            "faction": 2,
+            "templateId": 10101001,
+            "level": 1,
+            "position": 2,
+            "initialHp": 142,
+            "maxHp": 142,
+            "finalHp": 0,
+            "totalDamage": 0,
+            "totalTakenDamage": 142,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 1,
+          "cached": 0,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      },
+      {
+        "cycle": 2,
+        "at": "2026-11-16T10:35:55.118Z",
+        "generation": 28,
+        "uuid": "Comp.4888",
+        "units": [
+          {
+            "unitId": 2,
+            "faction": 1,
+            "templateId": 10101001,
+            "level": 100,
+            "position": 2,
+            "initialHp": 1816,
+            "maxHp": 1816,
+            "finalHp": 1816,
+            "totalDamage": 142,
+            "totalTakenDamage": 0,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          },
+          {
+            "unitId": 10,
+            "faction": 2,
+            "templateId": 10101001,
+            "level": 1,
+            "position": 2,
+            "initialHp": 142,
+            "maxHp": 142,
+            "finalHp": 0,
+            "totalDamage": 0,
+            "totalTakenDamage": 142,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 1,
+          "cached": 0,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      },
+      {
+        "cycle": 3,
+        "at": "2026-11-16T10:35:56.324Z",
+        "generation": 30,
+        "uuid": "Comp.4888",
+        "units": [
+          {
+            "unitId": 2,
+            "faction": 1,
+            "templateId": 10101001,
+            "level": 100,
+            "position": 2,
+            "initialHp": 1816,
+            "maxHp": 1816,
+            "finalHp": 1816,
+            "totalDamage": 142,
+            "totalTakenDamage": 0,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          },
+          {
+            "unitId": 10,
+            "faction": 2,
+            "templateId": 10101001,
+            "level": 1,
+            "position": 2,
+            "initialHp": 142,
+            "maxHp": 142,
+            "finalHp": 0,
+            "totalDamage": 0,
+            "totalTakenDamage": 142,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 1,
+          "cached": 0,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      }
+    ],
+    "closed": {
+      "at": "2026-11-16T10:36:28.74Z",
+      "mono": 383825.90000003576,
+      "route": "remake-campaign",
+      "ready": true,
+      "generation": 30,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 0,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 0
+      },
+      "residentIntents": 0,
+      "residents": [],
+      "subscriptions": 14,
+      "statistics": null,
+      "info": null
+    },
+    "screenshot": "docs/images/overlay-statistics-reconnected-20261116.jpg"
+  },
+  "stack": {
+    "trigger": "Opened actual inventory 900102 detail by bag Cell, then opened the same validated frozen battle statistics above it through existing UIManager entry; no new battle or asset mutation.",
+    "before": {
+      "at": "2026-11-16T10:37:44.383Z",
+      "mono": 459468.8000000119,
+      "route": "bag",
+      "ready": true,
+      "generation": 30,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 2,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      },
+      "residentIntents": 2,
+      "residents": [
+        {
+          "id": "bag-info",
+          "uuid": "Comp.12435"
+        },
+        {
+          "id": "battle-detail",
+          "uuid": "Comp.12511"
+        }
+      ],
+      "subscriptions": 11,
+      "statistics": {
+        "uuid": "Comp.12511",
+        "names": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "units": [
+          {
+            "unitId": 2,
+            "faction": 1,
+            "templateId": 10101001,
+            "level": 100,
+            "position": 2,
+            "initialHp": 1816,
+            "maxHp": 1816,
+            "finalHp": 1816,
+            "totalDamage": 142,
+            "totalTakenDamage": 0,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          },
+          {
+            "unitId": 10,
+            "faction": 2,
+            "templateId": 10101001,
+            "level": 1,
+            "position": 2,
+            "initialHp": 142,
+            "maxHp": 142,
+            "finalHp": 0,
+            "totalDamage": 0,
+            "totalTakenDamage": 142,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          }
+        ],
+        "labels": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "released": false
+      },
+      "info": {
+        "uuid": "Comp.12435",
+        "args": {
+          "source": "inventory",
+          "key": "stack:0ceff8b1-4eb6-4541-bd6f-3a052b528a03",
+          "tab": "item"
+        }
+      }
+    },
+    "offlineStart": {
+      "at": "2026-11-16T10:37:44.417Z",
+      "mono": 459502.5
+    },
+    "offlineObservation": {
+      "at": "2026-11-16T10:39:14.82Z",
+      "mono": 549905.3000000119,
+      "route": "bag",
+      "ready": false,
+      "generation": 49,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 2,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      },
+      "residentIntents": 2,
+      "residents": [
+        {
+          "id": "bag-info",
+          "uuid": "Comp.12435"
+        },
+        {
+          "id": "battle-detail",
+          "uuid": "Comp.12511"
+        }
+      ],
+      "subscriptions": 11,
+      "statistics": {
+        "uuid": "Comp.12511",
+        "names": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "units": [
+          {
+            "unitId": 2,
+            "faction": 1,
+            "templateId": 10101001,
+            "level": 100,
+            "position": 2,
+            "initialHp": 1816,
+            "maxHp": 1816,
+            "finalHp": 1816,
+            "totalDamage": 142,
+            "totalTakenDamage": 0,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          },
+          {
+            "unitId": 10,
+            "faction": 2,
+            "templateId": 10101001,
+            "level": 1,
+            "position": 2,
+            "initialHp": 142,
+            "maxHp": 142,
+            "finalHp": 0,
+            "totalDamage": 0,
+            "totalTakenDamage": 142,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          }
+        ],
+        "labels": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "released": false
+      },
+      "info": {
+        "uuid": "Comp.12435",
+        "args": {
+          "source": "inventory",
+          "key": "stack:0ceff8b1-4eb6-4541-bd6f-3a052b528a03",
+          "tab": "item"
+        }
+      }
+    },
+    "networkRestored": {
+      "at": "2026-11-16T10:39:21.954Z",
+      "mono": 557039.6000000238
+    },
+    "actualOfflineSeconds": 97.53710000002384,
+    "afterRecovery": {
+      "at": "2026-11-16T10:39:49.646Z",
+      "mono": 584732,
+      "route": "bag",
+      "ready": true,
+      "generation": 56,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 2,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      },
+      "residentIntents": 2,
+      "residents": [
+        {
+          "id": "bag-info",
+          "uuid": "Comp.12435"
+        },
+        {
+          "id": "battle-detail",
+          "uuid": "Comp.12511"
+        }
+      ],
+      "subscriptions": 11,
+      "statistics": {
+        "uuid": "Comp.12511",
+        "names": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "units": [
+          {
+            "unitId": 2,
+            "faction": 1,
+            "templateId": 10101001,
+            "level": 100,
+            "position": 2,
+            "initialHp": 1816,
+            "maxHp": 1816,
+            "finalHp": 1816,
+            "totalDamage": 142,
+            "totalTakenDamage": 0,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          },
+          {
+            "unitId": 10,
+            "faction": 2,
+            "templateId": 10101001,
+            "level": 1,
+            "position": 2,
+            "initialHp": 142,
+            "maxHp": 142,
+            "finalHp": 0,
+            "totalDamage": 0,
+            "totalTakenDamage": 142,
+            "totalRecovery": 0,
+            "star": 1,
+            "portraitIconId": 20101001
+          }
+        ],
+        "labels": {
+          "attacker": "chapter_review",
+          "defender": "羽嘉森林1"
+        },
+        "released": false
+      },
+      "info": {
+        "uuid": "Comp.12435",
+        "args": {
+          "source": "inventory",
+          "key": "stack:0ceff8b1-4eb6-4541-bd6f-3a052b528a03",
+          "tab": "item"
+        }
+      }
+    },
+    "reconnectCycles": [
+      {
+        "cycle": 0,
+        "at": "2026-11-16T10:39:46.517Z",
+        "generation": 50,
+        "residents": [
+          {
+            "id": "bag-info",
+            "uuid": "Comp.12435"
+          },
+          {
+            "id": "battle-detail",
+            "uuid": "Comp.12511"
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 2,
+          "cached": 0,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      },
+      {
+        "cycle": 1,
+        "at": "2026-11-16T10:39:47.515Z",
+        "generation": 52,
+        "residents": [
+          {
+            "id": "bag-info",
+            "uuid": "Comp.12435"
+          },
+          {
+            "id": "battle-detail",
+            "uuid": "Comp.12511"
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 2,
+          "cached": 0,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      },
+      {
+        "cycle": 2,
+        "at": "2026-11-16T10:39:48.526Z",
+        "generation": 54,
+        "residents": [
+          {
+            "id": "bag-info",
+            "uuid": "Comp.12435"
+          },
+          {
+            "id": "battle-detail",
+            "uuid": "Comp.12511"
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 2,
+          "cached": 0,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      },
+      {
+        "cycle": 3,
+        "at": "2026-11-16T10:39:49.626Z",
+        "generation": 56,
+        "residents": [
+          {
+            "id": "bag-info",
+            "uuid": "Comp.12435"
+          },
+          {
+            "id": "battle-detail",
+            "uuid": "Comp.12511"
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 2,
+          "cached": 0,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      }
+    ],
+    "afterTopClosed": {
+      "at": "2026-11-16T10:40:22.94Z",
+      "mono": 618025.8000000119,
+      "route": "bag",
+      "ready": true,
+      "generation": 56,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 1,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      },
+      "residentIntents": 1,
+      "residents": [
+        {
+          "id": "bag-info",
+          "uuid": "Comp.12435"
+        }
+      ],
+      "subscriptions": 9,
+      "statistics": null,
+      "info": {
+        "uuid": "Comp.12435",
+        "args": {
+          "source": "inventory",
+          "key": "stack:0ceff8b1-4eb6-4541-bd6f-3a052b528a03",
+          "tab": "item"
+        }
+      }
+    },
+    "afterBagParentClosed": {
+      "at": "2026-11-16T10:40:29.425Z",
+      "mono": 624510.6000000238,
+      "route": "hero",
+      "ready": true,
+      "generation": 56,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 0,
+        "cached": 1,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 0
+      },
+      "residentIntents": 0,
+      "residents": [],
+      "subscriptions": 16,
+      "statistics": null,
+      "info": null
+    },
+    "screenshot": "docs/images/overlay-stack-reconnected-20261116.jpg"
+  },
+  "skill": {
+    "before": {
+      "globalEvents": {
+        "listeners": 3,
+        "targets": 3
+      },
+      "at": "2026-11-16T10:41:28.171Z",
+      "mono": 683256.8000000119,
+      "route": "hero-info",
+      "ready": true,
+      "generation": 56,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 1,
+        "cached": 1,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      },
+      "residentIntents": 1,
+      "residents": [
+        {
+          "id": "hero-skill",
+          "uuid": "Comp.13207"
+        }
+      ],
+      "subscriptions": 8,
+      "statistics": null,
+      "info": null
+    },
+    "after": {
+      "globalEvents": {
+        "listeners": 3,
+        "targets": 3
+      },
+      "at": "2026-11-16T10:41:31.358Z",
+      "mono": 686444,
+      "route": "hero-info",
+      "ready": true,
+      "generation": 62,
+      "chapter": {
+        "maxCleared": 1,
+        "pendingBattleId": null,
+        "assetRevision": 5
+      },
+      "settlement": {
+        "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+        "phase": "confirmed",
+        "presentation": "battle",
+        "feedbackQueued": false,
+        "presented": true
+      },
+      "rewards": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 5,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 0
+      },
+      "ui": {
+        "pages": 2,
+        "residents": 1,
+        "cached": 1,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      },
+      "residentIntents": 1,
+      "residents": [
+        {
+          "id": "hero-skill",
+          "uuid": "Comp.13207"
+        }
+      ],
+      "subscriptions": 8,
+      "statistics": null,
+      "info": null
+    },
+    "reconnectCycles": [
+      {
+        "cycle": 1,
+        "at": "2026-11-16T10:41:29.326Z",
+        "residents": [
+          {
+            "id": "hero-skill",
+            "uuid": "Comp.13207"
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 1,
+          "cached": 1,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      },
+      {
+        "cycle": 2,
+        "at": "2026-11-16T10:41:30.396Z",
+        "residents": [
+          {
+            "id": "hero-skill",
+            "uuid": "Comp.13207"
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 1,
+          "cached": 1,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      },
+      {
+        "cycle": 3,
+        "at": "2026-11-16T10:41:31.34Z",
+        "residents": [
+          {
+            "id": "hero-skill",
+            "uuid": "Comp.13207"
+          }
+        ],
+        "ui": {
+          "pages": 2,
+          "residents": 1,
+          "cached": 1,
+          "prepared": 0,
+          "opening": 0,
+          "pendingResident": 0,
+          "intents": 0,
+          "modalNodes": 1,
+          "modalActive": 1
+        },
+        "assetRevision": 5
+      }
+    ],
+    "screenshot": "docs/images/overlay-skill-reconnected-20261116.jpg"
+  },
+  "final": {
+    "globalEvents": {
+      "listeners": 2,
+      "targets": 2
+    },
+    "at": "2026-11-16T10:42:57Z",
+    "mono": 772085.7000000477,
+    "route": "hero",
+    "ready": true,
+    "generation": 62,
+    "chapter": {
+      "maxCleared": 1,
+      "pendingBattleId": null,
+      "assetRevision": 5
+    },
+    "settlement": {
+      "battleId": "422b649e-1c38-4199-9947-08ff79afff1f",
+      "phase": "confirmed",
+      "presentation": "battle",
+      "feedbackQueued": false,
+      "presented": true
+    },
+    "rewards": {
+      "phase": "idle",
+      "ready": true,
+      "assetRevision": 5,
+      "pending": [],
+      "activeReceiptId": null,
+      "message": "",
+      "acceptedCount": 0
+    },
+    "ui": {
+      "pages": 2,
+      "residents": 0,
+      "cached": 0,
+      "prepared": 0,
+      "opening": 0,
+      "pendingResident": 0,
+      "intents": 0,
+      "modalNodes": 1,
+      "modalActive": 0
+    },
+    "residentIntents": 0,
+    "residents": [],
+    "subscriptions": 16,
+    "statistics": null,
+    "info": null
+  },
+  "countsAfterFirstOffline": {
+    "authenticationReplies": 11,
+    "chapterClaimReplies": 0,
+    "chapterChallengeReplies": 0,
+    "chapterEndOpens": 0,
+    "rewardOpens": 0
+  },
+  "warnings": [
+    {
+      "timestamp": "2026-11-16T10:32:48.761Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:32:48 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:32:54.927Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:32:54 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:01.113Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:01 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:07.274Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:07 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:13.44Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:13 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:19.624Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:19 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:25.792Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:25 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:31.975Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:31 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:38.14Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:38 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:44.324Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:44 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:50.49Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:50 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:33:56.659Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:33:56 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:34:02.841Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:34:02 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:34:09.009Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:34:09 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:34:15.191Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:34:15 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:34:21.359Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:34:21 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:34:27.525Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:34:27 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:34:33.709Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:34:33 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:34:39.876Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:34:39 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    },
+    {
+      "timestamp": "2026-11-16T10:34:46.059Z",
+      "level": "warn",
+      "message": "%c[mxzg][MODULE][MainChapter]%c[warn] 18:34:46 挂机遇敌暂不可用：SocketFailure: 网络正在恢复，请稍后重试 color:#66BB6A color:#FFB74D"
+    }
+  ],
+  "logs": [
+    {
+      "timestamp": "2026-11-16T10:34:46.832Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:34:46 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:35:53.964Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:35:53 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:35:55.118Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:35:55 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:35:56.325Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:35:56 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:36:28.778Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 18:36:28 打开界面 BagView ui BagView 耗时 4ms color:#4ea1ff color:#4ea1ff"
+    },
+    {
+      "timestamp": "2026-11-16T10:37:19.386Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 18:37:19 打开界面 BagInfoView ui BagInfoView 耗时 7ms color:#4ea1ff color:#4ea1ff"
+    },
+    {
+      "timestamp": "2026-11-16T10:37:44.337Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 18:37:44 打开界面 BattleDetailLayer ui BattleDetailLayer 耗时 7ms color:#4ea1ff color:#4ea1ff"
+    },
+    {
+      "timestamp": "2026-11-16T10:39:28.707Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:39:28 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:39:47.518Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:39:47 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:39:48.526Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:39:48 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:39:49.626Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:39:49 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:40:22.955Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 18:40:22 打开界面 HeroListView ui HeroListView 耗时 2ms color:#4ea1ff color:#4ea1ff"
+    },
+    {
+      "timestamp": "2026-11-16T10:40:35.122Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 18:40:35 打开界面 HeroInfoView ui HeroInfoView 耗时 5ms color:#4ea1ff color:#4ea1ff"
+    },
+    {
+      "timestamp": "2026-11-16T10:40:59.268Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 18:40:59 打开界面 HeroSkillView ui HeroSkillView 耗时 33ms color:#4ea1ff color:#4ea1ff"
+    },
+    {
+      "timestamp": "2026-11-16T10:41:28.191Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 18:41:28 打开界面 HeroSkillView ui HeroSkillView 耗时 0ms color:#4ea1ff color:#4ea1ff"
+    },
+    {
+      "timestamp": "2026-11-16T10:41:29.331Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:41:29 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:41:30.397Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:41:30 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:41:31.341Z",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 18:41:31 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T10:42:01.532Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 18:42:01 打开界面 HeroListView ui HeroListView 耗时 1ms color:#4ea1ff color:#4ea1ff"
+    }
+  ],
+  "runtimeHooksRemoved": true,
+  "networkEmulationRestored": true,
+  "claimEntryEnabled": false,
+  "centralBuild": false,
+  "committed": false,
+  "pushed": false,
+  "limitations": [
+    "CDP offline emulation and explicit closure of only the isolated browser WebSocket; not physical network equipment or OS background.",
+    "Delayed resources and synchronous onOpen cancellation branches are controlled tests; screenshots do not claim every branch was injected in Creator.",
+    "Observed interval is about two minutes per run, not hours of offline soak testing.",
+    "Preloaded resources and one cached bag page remain intentional; UI counts do not claim all game/GPU memory is zero.",
+    "No MySQL, native APP, WeChat, crash, power-loss or new centralized build review."
+  ],
+  "finalReloadCompiledFeatures": {
+    "openChild": true,
+    "synchronousReadyCloseGuard": false
+  }
+}

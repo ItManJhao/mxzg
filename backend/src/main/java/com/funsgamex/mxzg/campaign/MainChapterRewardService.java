@@ -32,7 +32,7 @@ public class MainChapterRewardService {
     /**
      * 分发可信待领奖状态对应的原配置奖励，返回实际基础量；满级经验与封顶酒馆量不伪称到账。
      * progress必须由外层从角色持久记录读取；本方法不能独立用于重复请求或玩家领奖协议。
-     * 英雄经验沿新版既有900101余额存储；酒馆点沿900401余额存储并施加旧上限，不开放酒馆。
+     * 英雄经验沿新版既有900101余额存储；冒险点由酒馆独立领域持久保存并施加旧上限，不开放酒馆任务。
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public List<MainChapterRules.Reward> grant(String roleId, MainChapterRules.Progress progress) {

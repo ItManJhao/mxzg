@@ -46,7 +46,7 @@ function fixture(project) {
     write(path.join(project, 'tools/generate_config_package.cjs'), `
 const fs = require('node:fs');
 const path = require('node:path');
-exports.generateConfigPackage = ({check}) => ({version:'fixture-version',check,source:__dirname});
+exports.generateConfigPackage = ({check}) => ({version:'fixture-version',changed:[],check,source:__dirname});
 if (require.main === module) {
     if (fs.existsSync(path.join(__dirname,'../config/reject-input'))) process.exit(2);
     if (process.argv.includes('--write')) fs.writeFileSync(path.join(__dirname,'../client/assets/package-marker.txt'),'generated before copy');

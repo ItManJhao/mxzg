@@ -1,0 +1,240 @@
+{
+  "date": "2026-11-16",
+  "branch": "hao",
+  "status": "本地实现和限定验证完成，未提交推送",
+  "range": "冒险点初始化、原量迁移、唯一发放、统一状态、真实满额确认依赖；玩家入口继续关闭",
+  "rules": {
+    "initial": 2000,
+    "existingZero": "保留0，不补差",
+    "overCap": "保留原量，不倒扣",
+    "confirmation": "当前adventureCount>=limit",
+    "clientSeconds": 65,
+    "serverSeconds": 60
+  },
+  "protocol": "Snapshot.tavern_points=11；缺失明确未同步，坏扩展整包拒绝",
+  "backend": {
+    "groups": 13,
+    "uniqueTests": 110,
+    "migrationCases": 4,
+    "mysql": false,
+    "scope": "领域/真实H2迁移/当前共享发奖/GM/首包推送恢复/旧Audit原样恢复；重复运行不累计"
+  },
+  "client": {
+    "suites": [
+      "tavern-state",
+      "idle-claim-intent",
+      "idle-claim-recovery",
+      "idle-claim-binding",
+      "game-socket",
+      "game-protocol",
+      "reward-binding",
+      "formation-state",
+      "hero-state",
+      "bindings"
+    ],
+    "strictTypes": true,
+    "javaBinaryInterop": [
+      "initial 2000/11000",
+      "event 11999/11000"
+    ]
+  },
+  "live": {
+    "run": "5839c292c4dd475baaeb88bf5f68dd8b",
+    "result": "PASS",
+    "cases": [
+      {
+        "name": "idle_direct",
+        "points": {
+          "schemaVersion": 1,
+          "adventureCount": 2044,
+          "limit": 11000
+        },
+        "accepted": 1,
+        "shown": 1
+      },
+      {
+        "name": "idle_lost_receipt",
+        "points": {
+          "schemaVersion": 1,
+          "adventureCount": 2044,
+          "limit": 11000
+        },
+        "accepted": 1,
+        "shown": 1
+      },
+      {
+        "name": "idle_lost_state",
+        "points": {
+          "schemaVersion": 1,
+          "adventureCount": 2044,
+          "limit": 11000
+        },
+        "accepted": 1,
+        "shown": 1
+      }
+    ],
+    "databaseSummary": [
+      {
+        "id": "ce9c0c7d-4a49-40c5-80fe-4e100bc96010",
+        "login_account": "idle_direct",
+        "gold": 600,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 30,
+        "asset_revision": 4,
+        "started_at": 1794815913,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 2,
+        "timed_rows": 0,
+        "spirit_rows": 0,
+        "adventure_count": 2044,
+        "legacy_tavern_stack_rows": 0
+      },
+      {
+        "id": "1955a3e4-6079-4a76-8736-dc2f28d89c2f",
+        "login_account": "idle_lost_receipt",
+        "gold": 600,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 30,
+        "asset_revision": 4,
+        "started_at": 1794815913,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 1,
+        "timed_rows": 0,
+        "spirit_rows": 0,
+        "adventure_count": 2044,
+        "legacy_tavern_stack_rows": 0
+      },
+      {
+        "id": "02b69f97-af4f-4461-976d-f89a48927b73",
+        "login_account": "idle_lost_state",
+        "gold": 600,
+        "diamonds": 1,
+        "role_level": 1,
+        "role_experience": 30,
+        "asset_revision": 4,
+        "started_at": 1794815914,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 1,
+        "timed_rows": 0,
+        "spirit_rows": 0,
+        "adventure_count": 2044,
+        "legacy_tavern_stack_rows": 0
+      },
+      {
+        "id": "81148307-fe6e-45ac-930e-db2253bf73a8",
+        "login_account": "idle_other",
+        "gold": 0,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 0,
+        "asset_revision": 1,
+        "started_at": 1794815675,
+        "operation_version": 1,
+        "receipt_count": 0,
+        "stack_rows": 0,
+        "timed_rows": 0,
+        "spirit_rows": 0,
+        "adventure_count": null,
+        "legacy_tavern_stack_rows": 0
+      },
+      {
+        "id": "824a2da4-9078-444f-9720-7ca07893027f",
+        "login_account": "idle_pending",
+        "gold": 0,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 0,
+        "asset_revision": 1,
+        "started_at": 1794815675,
+        "operation_version": 1,
+        "receipt_count": 0,
+        "stack_rows": 0,
+        "timed_rows": 0,
+        "spirit_rows": 0,
+        "adventure_count": null,
+        "legacy_tavern_stack_rows": 0
+      },
+      {
+        "id": "5e87d234-e3e2-4db6-99e0-f525eceba898",
+        "login_account": "idle_reload",
+        "gold": 0,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 0,
+        "asset_revision": 1,
+        "started_at": 1794815675,
+        "operation_version": 1,
+        "receipt_count": 0,
+        "stack_rows": 0,
+        "timed_rows": 0,
+        "spirit_rows": 0,
+        "adventure_count": null,
+        "legacy_tavern_stack_rows": 0
+      }
+    ]
+  },
+  "references": [
+    "docs/validation/tavern-point-legacy-audit-20261116.json",
+    "docs/validation/tavern-point-live-review-20261116.json"
+  ],
+  "sourceHashes": [
+    {
+      "path": "protocol/game.proto",
+      "sha256": "e0fbe502eee7e76ca257c7656a271ff718067c4b23d78126517de5f4dadc22ba"
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V26__tavern_points.sql",
+      "sha256": "eb6b94b71416f3f2fa014b68fef34bac35422fed9818906b7fc71b0235cb7924"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/tavern/TavernPointRules.java",
+      "sha256": "a19dfdad6938f8b3ba60a37a4d95ec7ac157102ab3857883b5f0492e14da9427"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/tavern/TavernPointService.java",
+      "sha256": "d9b2f8a8c31d64587d517621229c40ccc46fa33ff74d7f8cc45da02deb60f420"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/network/SessionSnapshotService.java",
+      "sha256": "341078bab4fc6f7aea02db69856a811badd1ffc7ba652fee7e0cff3152f6081c"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/reward/RewardGrantService.java",
+      "sha256": "adf336c752770c18254f54a74055fd9e656bd18eca6618dc935124863de9f94b"
+    },
+    {
+      "path": "client/assets/scripts/features/account/AccountApi.ts",
+      "sha256": "b0cbd07dca1f9e074d40e1bf18eb6a9f5d27a7ae208202a5fc64f95e79861fbf"
+    },
+    {
+      "path": "client/assets/scripts/features/account/AccountModel.ts",
+      "sha256": "e0bda0d6389f17f04aee182fb5cbb3bf05a5b87710628db4559fb18b13b32697"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/IdleClaimBinding.ts",
+      "sha256": "09d9ac8ac8b858b78798618abf260b46e1885d08004cd2094f41d2bb33c54047"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/MainChapterIdleClaimController.ts",
+      "sha256": "b70d4c798118056b6a1bb9ae1769e78a4acff988f27f4dc28954bbf260b219a4"
+    }
+  ],
+  "limitations": [
+    "未运行Creator画面/发布构建、MySQL、真机或APP/小游戏适配",
+    "通用确认的当前点数条件在真实应用入口专项验证，玩家View仍不调用begin",
+    "酒馆任务/扣点未恢复",
+    "暂停CampaignService/IdleService旧claim无现用WS入口；type11拒绝回滚，恢复前须迁共享链",
+    "完整断线页面/战斗场景重现仍在计划，不能把本轮回执恢复当作已完成"
+  ],
+  "cleanup": {
+    "run": "5839c292c4dd475baaeb88bf5f68dd8b",
+    "backendStopped": true,
+    "frontendStopped": true,
+    "scope": "本轮独立宿主停止，保留文件H2及证据，不操作日常数据库"
+  }
+}

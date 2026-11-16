@@ -174,11 +174,23 @@ class MainChapterIdleClaimSocketTest {
             return received;
         }
 
-        /** 同连接保活作为串行屏障后，确认只读/重放/拒绝没有登记新资产通知。 */
+        /** 首领还会发送通用实际到账反馈，独立于统一状态，不用它修改资产。 */
+        private Received rewardGranted() throws Exception {
+            var received = events.poll();
+            if (received == null) {
+                received = receive();
+            }
+            assertEquals("event", received.frame().path("kind").asString());
+            assertEquals("reward.granted", received.frame().path("name").asString());
+            assertEquals(connectionId, received.frame().path("connectionId").asString());
+            return received;
+        }
+
+        /** 同连接保活作为串行屏障后，确认只读/重放/拒绝没有登记资产或奖励展示通知。 */
         private void assertNoStateChange() throws Exception {
             assertTrue(request("session.heartbeat", Map.of()).frame().path("ok").asBoolean());
-            assertTrue(events.isEmpty(), "只读、重放或拒绝不得新增统一资产事件");
-            assertNull(incoming.poll(100, TimeUnit.MILLISECONDS), "业务响应后不应迟到重复资产事件");
+            assertTrue(events.isEmpty(), "只读、重放或拒绝不得新增资产或奖励展示事件");
+            assertNull(incoming.poll(100, TimeUnit.MILLISECONDS), "业务响应后不应迟到重复事件");
         }
 
         /** 中止独立连接并释放客户端，不在用例间残留在线身份或网络线程。 */
@@ -224,12 +236,21 @@ class MainChapterIdleClaimSocketTest {
                 "inventory", jdbc.queryForList("SELECT * FROM game_inventory WHERE role_id=? ORDER BY instance_id", role),
                 "timed", jdbc.queryForList("SELECT * FROM game_timed_inventory WHERE role_id=? ORDER BY instance_id", role),
                 "spirits", jdbc.queryForList("SELECT * FROM game_spirit WHERE role_id=? ORDER BY instance_id", role),
+                "tavernPoints", jdbc.queryForList("SELECT * FROM game_tavern_point WHERE role_id=?", role),
                 "receipts", jdbc.queryForList("SELECT * FROM game_main_chapter_idle_receipt WHERE role_id=? ORDER BY request_id", role));
     }
 
     /** 仅抽取统一快照确认条件，不要求快照与历史回执的版本恰好相等。 */
     private void assertConfirmsReceipt(JsonNode snapshot, JsonNode receipt) {
         assertTrue(snapshot.path("revision").asLong() >= receipt.path("assetRevision").asLong());
+        assertEquals(snapshot.path("revision").asLong(), snapshot.path("mainChapter").path("assetRevision").asLong());
+        assertEquals(1, snapshot.path("tavernPoints").path("schemaVersion").asInt());
+        assertEquals(11_000, snapshot.path("tavernPoints").path("limit").asLong());
+        assertEquals(receipt.path("actual").path("tavern").get(0).path("afterQuantity").asLong(),
+                snapshot.path("tavernPoints").path("adventureCount").asLong());
+        for (var item : snapshot.path("inventory")) {
+            assertNotEquals(900401, item.path("itemId").asInt());
+        }
         var idle = snapshot.path("mainChapterIdle");
         assertEquals(1, idle.path("claimState").path("schemaVersion").asInt());
         assertTrue(idle.path("claimState").path("operationVersion").asLong()
@@ -244,6 +265,8 @@ class MainChapterIdleClaimSocketTest {
         var player = player(false, false);
         try (var peer = new Peer()) {
             var initial = peer.authenticate(player).frame().path("body").path("initial");
+            assertEquals(2_000, initial.path("tavernPoints").path("adventureCount").asLong());
+            assertEquals(initial.path("revision").asLong(), initial.path("mainChapter").path("assetRevision").asLong());
             assertFalse(initial.has("mainChapterIdle"));
             var before = stored(player.role());
             String requestId = UUID.randomUUID().toString();
@@ -281,6 +304,26 @@ class MainChapterIdleClaimSocketTest {
             var event = peer.stateChanged();
             assertConfirmsReceipt(event.frame().path("body"), receipt);
             assertEquals(player.pendingBattleId(), event.frame().path("body").path("mainChapter").path("pendingBattleId").asString());
+            var rewardEvent = peer.rewardGranted();
+            var notice = rewardEvent.frame().path("body");
+            assertEquals(1, notice.path("schemaVersion").asInt());
+            assertEquals(receipt.path("receiptId").asString(), notice.path("receiptId").asString());
+            assertEquals(player.role(), notice.path("roleId").asString());
+            assertEquals(receipt.path("assetRevision").asLong(), notice.path("assetRevision").asLong());
+            assertEquals("POPUP", notice.path("mode").asString());
+            Map<Integer, Long> credited = new LinkedHashMap<>();
+            for (var item : receipt.path("actual").path("items")) {
+                if (item.path("credited").asLong() > 0) {
+                    credited.merge(item.path("itemId").asInt(), item.path("credited").asLong(), Math::addExact);
+                }
+            }
+            for (var bonus : receipt.path("actual").path("bonuses")) {
+                credited.merge(bonus.path("itemId").asInt(), bonus.path("quantity").asLong(), Math::addExact);
+            }
+            assertEquals(credited.size(), notice.path("items").size());
+            for (var item : notice.path("items")) {
+                assertEquals(credited.get(item.path("itemId").asInt()), item.path("credited").asLong());
+            }
             var committed = stored(player.role());
             var repeated = peer.request("chapter.idle.claim", body);
             assertNotEquals(first.frame().path("id").asString(), repeated.frame().path("id").asString());
@@ -297,6 +340,7 @@ class MainChapterIdleClaimSocketTest {
             assertEquals(committed, stored(player.role()));
             Files.write(Path.of("target/main-idle-claim-receipt.pb"), first.wire());
             Files.write(Path.of("target/main-idle-claim-event.pb"), event.wire());
+            Files.write(Path.of("target/reward-notice.pb"), rewardEvent.wire());
         }
     }
 
@@ -333,20 +377,23 @@ class MainChapterIdleClaimSocketTest {
         }
     }
 
-    /** 回执按当前认证角色隔离；其他角色使用同requestId只得到NOT_FOUND且不建立累计。 */
+    /** 回执和即时奖励均按当前认证角色隔离；旁观连接不收反馈，同requestId查询也不建立累计。 */
     @Test
     void anotherAuthenticatedRoleCannotReadTheOwnersReceipt() throws Exception {
         var owner = player(true, false);
         var other = player(false, false);
         String requestId = UUID.randomUUID().toString();
         try (var peer = new Peer()) {
-            peer.authenticate(owner);
-            assertTrue(peer.request("chapter.idle.claim", Map.of("requestId", requestId, "expectedOperationVersion", 1))
-                    .frame().path("ok").asBoolean());
-        }
-        var ownerCommitted = stored(owner.role());
-        try (var peer = new Peer()) {
             peer.authenticate(other);
+            try (var ownerPeer = new Peer()) {
+                ownerPeer.authenticate(owner);
+                assertTrue(ownerPeer.request("chapter.idle.claim",
+                        Map.of("requestId", requestId, "expectedOperationVersion", 1)).frame().path("ok").asBoolean());
+                ownerPeer.stateChanged();
+                assertEquals(owner.role(), ownerPeer.rewardGranted().frame().path("body").path("roleId").asString());
+            }
+            var ownerCommitted = stored(owner.role());
+            peer.assertNoStateChange();
             var before = stored(other.role());
             var response = peer.request("chapter.idle.claim.status", Map.of("requestId", requestId)).frame();
             assertTrue(response.path("ok").asBoolean());
@@ -354,7 +401,26 @@ class MainChapterIdleClaimSocketTest {
             assertFalse(response.path("body").has("receipt"));
             peer.assertNoStateChange();
             assertEquals(before, stored(other.role()));
+            assertEquals(ownerCommitted, stored(owner.role()));
         }
-        assertEquals(ownerCommitted, stored(owner.role()));
+    }
+
+    /** 同角色接管后只向新连接交付首次领取；旧连接只收到接管通知，不再收资产或奖励。 */
+    @Test
+    void replacedConnectionCannotReceiveTheNewRewardNotice() throws Exception {
+        var player = player(true, false);
+        try (var oldPeer = new Peer(); var current = new Peer()) {
+            oldPeer.authenticate(player);
+            current.authenticate(player);
+            assertEquals("session.kicked", oldPeer.receive().frame().path("name").asString());
+            var response = current.request("chapter.idle.claim",
+                    Map.of("requestId", UUID.randomUUID().toString(), "expectedOperationVersion", 1)).frame();
+            assertTrue(response.path("ok").asBoolean());
+            current.stateChanged();
+            var notice = current.rewardGranted().frame().path("body");
+            assertEquals(response.path("body").path("receiptId").asString(), notice.path("receiptId").asString());
+            current.assertNoStateChange();
+            assertNull(oldPeer.incoming.poll(100, TimeUnit.MILLISECONDS), "被接管旧连接不能收到新领取反馈");
+        }
     }
 }

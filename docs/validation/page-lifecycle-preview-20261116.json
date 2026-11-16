@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-16",
+  "mode": "Creator本机预览，独立内存H2、真实WS与Protobuf",
+  "host": { "pid": 5720, "port": 50293, "run": "2c8c6359c7e44dc3b67771ef713f262c", "ownershipVerified": true, "stopped": true },
+  "viewport": { "width": 1280, "height": 720, "creatorDeviceOption": "Apple iPhone 14 Pro (393X852)" },
+  "businessSourceChangedThisBatch": false,
+  "cases": [
+    {
+      "name": "未保存草稿重复前后台",
+      "observedAt": "2026-11-16T10:03:58.904Z",
+      "authoritativeFormation": { "version": 1, "position": 2 },
+      "draftPosition": 3,
+      "elementFilter": 1,
+      "selectedHeroPreserved": true,
+      "viewUuidBeforeAndAfter": "Comp.2527",
+      "engineHideEvents": 2,
+      "engineShowEvents": 2,
+      "counts": { "authentication": 1, "save": 0, "challenge": 0 },
+      "result": "同版本鉴权后仍是原窗口、原草稿、原筛选及英雄选择；未修改服务端阵容",
+      "screenshot": "docs/images/page-recovery-draft-20261116.jpg"
+    },
+    {
+      "name": "关闭草稿后切页及普通断线重连",
+      "steps": ["关闭布阵", "切到背包", "主动关闭本测试角色的真实WebSocket", "切到英雄并自动鉴权", "重开布阵"],
+      "counts": { "authentication": 1, "save": 0, "challenge": 0 },
+      "result": "仍停英雄页；布阵为新实例、恢复服务器位置2、无旧submitted或隐式出战"
+    },
+    {
+      "name": "结算已提交但缺回执，切页后恢复及结果页重复快照",
+      "battleId": "1cfc0b08-19b4-41c7-9dab-81ccbcf6c1a3",
+      "fault": "在GameSocketClient.receive之前丢一次真实SETTLED响应并发送两次引擎HIDE；服务端提交快照已先交付",
+      "interrupted": { "maxCleared": 1, "assetRevision": 5, "pendingBattleId": null, "receiptAction": "BATTLE", "settlementPhase": "pending", "presented": false },
+      "recoveredOnBag": { "assetRevision": 5, "receiptAction": "SETTLED", "settlementPhase": "confirmed", "presented": false, "rewardAcceptedCount": 0, "residents": 0 },
+      "steps": ["背包页恢复前台", "原battleId重取持久回执", "经过主城及英雄返回主线", "明确点击确认结算", "结果窗打开后再次两次HIDE/SHOW", "将同一真实鉴权首包的onReady回调重复交付三次"],
+      "counts": { "initialChallengeReplies": 1, "claimAttemptsIncludingInterrupted": 2, "claimRepliesDelivered": 1, "authentication": 2, "readOnlyReplay": 1, "resultViewOpens": 1, "rewardViewOpens": 0 },
+      "resultViewEvents": [
+        { "event": "opened", "uuid": "Comp.7039", "at": "2026-11-16T10:08:06.162Z" },
+        { "event": "authenticated-three-deliveries", "uuid": "Comp.7039", "open": true, "at": "2026-11-16T10:08:06.194Z" }
+      ],
+      "final": { "assetRevision": 5, "settlementPhase": "confirmed", "presented": true, "rewardAcceptedCount": 0 },
+      "result": "资产不再次增加，背包不弹旧结果，明确确认只开一个结果页；结果页前后台仍同实例，不重发结算",
+      "screenshot": "docs/images/page-recovery-settlement-pending-20261116.jpg"
+    },
+    {
+      "name": "真实冷恢复奖励窗前后台及重复历史反馈",
+      "battleId": "ea1bea8c-2313-4f9c-b5a2-19932301158d",
+      "prepared": { "maxCleared": 2, "assetRevision": 6, "pendingBattleId": "ea1bea8c-2313-4f9c-b5a2-19932301158d" },
+      "steps": ["真实第二关挑战已提交后暂停通信", "实际重载浏览器", "登录主城不结算", "首次进入主线按原编号结算", "显示中两次restore同一实际历史反馈", "两次引擎HIDE/SHOW并重交真实鉴权首包回调三次", "空白关闭奖励窗", "关闭后两次restore同一反馈并再次HIDE/SHOW"],
+      "countsAfterFirstMainEntry": { "claim": 1, "authentication": 2, "rewardViewOpens": 1, "resultViewOpens": 0, "challenge": 0, "replay": 0 },
+      "popupEvents": [
+        { "event": "reward-opened", "uuid": "Comp.2679", "acceptedCount": 1, "at": "2026-11-16T10:10:45.512Z" },
+        { "event": "foreground-three-snapshot-deliveries", "uuid": "Comp.2679", "acceptedCount": 1, "at": "2026-11-16T10:10:45.543Z" }
+      ],
+      "final": { "assetRevision": 7, "presentation": "reward", "settlementPhase": "confirmed", "presented": true, "feedbackQueued": true, "rewardAcceptedCount": 1, "rewardPhase": "idle", "pendingFeedbackCount": 0, "residents": 0, "modalActive": 0 },
+      "result": "真实RewardBinding及窗口只接纳/显示一次，历史反馈重复交付和前后台鉴权不重弹、不重新结算",
+      "screenshot": "docs/images/page-recovery-reward-20261116.jpg"
+    }
+  ],
+  "instrumentationRemoved": true,
+  "claimEntryEnabled": false,
+  "centralBuild": false,
+  "committed": false,
+  "pushed": false,
+  "limitations": [
+    "前后台使用引擎EVENT_HIDE/EVENT_SHOW模拟，未操作系统后台或测试真机",
+    "普通断线主动关闭本测试WebSocket；丢回包在本地接收边界注入，非物理网络弱网",
+    "重复鉴权通过重交同一真实首包的onReady回调；未伪造资产状态或服务端消息",
+    "重复反馈重放同一实际历史结果到RewardBinding.restore，未伪造reward.granted；实时重复由受控组合专项覆盖",
+    "本批未完整导出和逐条审计所有控制台日志；主动中断会产生预期SUSPENDED警告，不宣称全程零告警",
+    "未运行新的Maven、MySQL、集中发布包、APP/微信、浏览器进程崩溃或断电检查"
+  ]
+}

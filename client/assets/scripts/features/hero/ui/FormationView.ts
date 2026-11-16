@@ -40,7 +40,7 @@ export interface FormationRequest {
 export class FormationView extends BaseView<FormationRequest> {
     /** 关闭按钮，丢弃未保存草稿。 */
     @property(Button) closeButton: Button | null = null;
-    /** 明确保存按钮，未知结果时重试原请求。 */
+    /** 无ACK时保存原意图，有ACK待同步时只重试快照确认。 */
     @property(Button) confirmButton: Button | null = null;
     /** 标题文字与样式保留在预制体。 */
     @property(Label) titleLabel: Label | null = null;
@@ -80,6 +80,8 @@ export class FormationView extends BaseView<FormationRequest> {
     private state: FormationState = { heroes: [], lineup: { version: 0, slots: [] }, busy: true, message: "等待阵容同步…" };
     /** 当前保存轮次已反馈的结果文字；进入下一次发送时清空，避免资产事件重复提示。 */
     private lastSaveMessage = "";
+    /** 从Prefab首次读取的按钮文字；确认恢复结束后恢复人工配置的原文案，不重写静态布局。 */
+    private defaultConfirmText: string | null = null;
     /** 当前筛选元素，0表示全部，关闭清理。 */
     private elem = 0;
     /** 防止关闭回调重复执行。 */
@@ -158,7 +160,9 @@ export class FormationView extends BaseView<FormationRequest> {
     private onAssetsChanged(): void {
         if (this.closed) return;
         const current = this.roster.snapshot.mainFormation;
-        if (this.saves.snapshot.pending || this.saves.snapshot.busy) return;
+        if (this.saves.snapshot.pending || this.saves.snapshot.busy || this.saves.snapshot.acknowledged !== null) {
+            return;
+        }
         if (current && (this.state.busy || current.version !== this.state.lineup.version)) {
             this.reload("服务器阵容已更新，已载入最新数据");
         } else if (current) {
@@ -170,7 +174,7 @@ export class FormationView extends BaseView<FormationRequest> {
         }
     }
 
-    /** 保存过程驱动当前页；结果交全局飘字，未确认请求仍保留原草稿供重试。 */
+    /** 原意图直到ACK及权威状态确认都保持只读；恢复等待不丢提交参数或误触发出战。 */
     private onSaveChanged(): void {
         if (this.closed) return;
         const status = this.saves.snapshot;
@@ -195,7 +199,9 @@ export class FormationView extends BaseView<FormationRequest> {
             const option = this.roster.snapshot.mainFormation?.options?.find(row => row.formationId === request.formationId);
             this.state = { ...this.state, formationId: request.formationId, openPositions: option?.openPositions,
                 lineup: { version: request.expectedVersion, slots: request.slots.map(slot => ({ ...slot })) },
-                busy: status.busy, message: status.busy ? status.message : "保存结果待确认，请用原草稿重试" };
+                busy: status.busy, message: status.busy ? status.message
+                    : status.acknowledged !== null ? "已收到保存回执，点击重试同步"
+                        : "保存结果待确认，请用原草稿重试" };
             this.paint();
         } else if (status.busy) {
             this.state = { ...this.state, busy: true, message: status.message };
@@ -205,7 +211,7 @@ export class FormationView extends BaseView<FormationRequest> {
         }
     }
 
-    /** 页面空阵提示不抛异常；只向模块提交草稿，结果通过事件回来。 */
+    /** 有ACK时按钮只交同步确认意图；没有ACK才提交原草稿，双确认前不开始挑战。 */
     private saveDraft(): void {
         if (this.closed || this.state.busy) return;
         if (!this.saves.snapshot.pending && !this.state.lineup.slots.length) {
@@ -220,14 +226,23 @@ export class FormationView extends BaseView<FormationRequest> {
             formationId: this.state.formationId!, slots: this.state.lineup.slots.map(slot => ({ ...slot })) });
     }
 
-    /** 根据草稿与当前模板行绘制；不建立全量配置索引，列表只setData。 */
+    /** 待确认操作保持参数只读但允许明确同步重试；静态布局归Prefab，列表只setData。 */
     public render(state: FormationState): void {
         this.state = state;
         this.tipLabel!.string = state.message;
         this.countLabel!.string = "已上阵 " + state.lineup.slots.length + " / " + (state.openPositions?.length ?? 0);
         this.formationLabel!.string = "阵型 " + (state.formationId ?? "—") + " ▼";
+        const editable = this.editable();
         this.confirmButton!.interactable = !state.busy;
-        this.formationButton!.interactable = !state.busy && (state.unlockedIds?.length ?? 0) > 1;
+        const confirmLabel = this.confirmButton!.node.getComponentInChildren(Label);
+        if (confirmLabel) {
+            if (this.defaultConfirmText === null) {
+                this.defaultConfirmText = confirmLabel.string;
+            }
+            confirmLabel.string = this.saves.snapshot.acknowledged !== null
+                ? state.busy ? "同步中" : "重试同步" : this.defaultConfirmText;
+        }
+        this.formationButton!.interactable = editable && (state.unlockedIds?.length ?? 0) > 1;
         const selected = this.elementButtons[this.elem].node;
         this.filterMark!.setPosition(selected.position.x, selected.position.y, 0);
         this.elementButtons.forEach(button => { button.interactable = !state.busy; });
@@ -240,13 +255,13 @@ export class FormationView extends BaseView<FormationRequest> {
                 face: face?.icon || null, elem: face?.elem || null, level: hero.level, stars: hero.star, locked: false,
                 deployed: state.lineup.slots.some(slot => slot.heroId === hero.id),
             });
-            cell.button!.interactable = !state.busy;
+            cell.button!.interactable = editable;
         });
         this.slots.forEach(slot => {
             const heroId = state.lineup.slots.find(row => row.position === slot.position)?.heroId;
             const hero = state.heroes.find(row => row.id === heroId);
             const face = hero ? HeroCatalog.find(hero.templateId) : null;
-            slot.show(state.openPositions?.includes(slot.position) === true, state.busy,
+            slot.show(state.openPositions?.includes(slot.position) === true, !editable,
                 hero ? face?.name || String(hero.templateId) : null, face?.icon || null);
         });
     }

@@ -1,0 +1,871 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-16",
+  "branch": "hao",
+  "baseCommit": "d4a9c4f1afe1e71b4ae6a845390a520d6d3950e9",
+  "scope": "仅核对指定旧客户端/服务端和当前新版的断线页面、主线与挂机演出、结算回执流程；运行逻辑未修改。",
+  "status": "SOURCE_AUDIT_COMPLETE_IMPLEMENTATION_PENDING",
+  "constraints": {
+    "idleClaimEntry": "CLOSED",
+    "centralizedBuild": false,
+    "commit": false,
+    "push": false,
+    "mergeMain": false,
+    "newProtocol": false,
+    "newAssetModel": false,
+    "creatorOperation": false,
+    "dailyDatabase": false
+  },
+  "document": "docs/reconnect-recovery.md",
+  "evidenceMeaning": {
+    "sourceAudit": "源码分支事实及条件推演，不等同于真实浏览器故障复现",
+    "regression": "六套既有客户端专项本批实跑；不覆盖全部新列故障矩阵",
+    "legacyBoundary": "旧指定Lua/C++客户端；没有对当前正式服H5主动断网演练"
+  },
+  "findings": [
+    {
+      "id": "L1",
+      "kind": "legacy_source",
+      "sources": [
+        "old-network",
+        "old-role"
+      ],
+      "result": "暖重连清普通发送缓存，只重发登录；主场景存在时通常不切页面或执行全量初始化。"
+    },
+    {
+      "id": "L2",
+      "kind": "legacy_source",
+      "sources": [
+        "old-main-scene",
+        "old-main-battle-init",
+        "old-battle-response",
+        "old-page-map"
+      ],
+      "result": "冷重登默认主城，addKeepLayer只登记保留类型；首次创建/打开主线页才发3002补结算，缺战报且非引导时用通用奖励窗。"
+    },
+    {
+      "id": "L3",
+      "kind": "legacy_source",
+      "sources": [
+        "old-chapter-server",
+        "old-chapter-state"
+      ],
+      "result": "主线先服务端算完并保存胜利待领；3002无待领直接忽略；没有持久战报/结算结果查询来恢复成功后丢响应。"
+    },
+    {
+      "id": "L4",
+      "kind": "legacy_source",
+      "sources": [
+        "old-main-battle-end",
+        "old-battle-end-view"
+      ],
+      "result": "演出胜利后3002每2秒重发，收到BATTLE_END停止；胜利窗确认不发奖。旧无限重试不照搬。"
+    },
+    {
+      "id": "L5",
+      "kind": "legacy_source",
+      "sources": [
+        "old-idle-presentation",
+        "old-chapter-server"
+      ],
+      "result": "挂机3006只演出，冷进入重建行军；收益累计与3005独立，不持久化行军/对话帧。"
+    },
+    {
+      "id": "L6",
+      "kind": "legacy_source",
+      "sources": [
+        "old-background",
+        "old-heartbeat"
+      ],
+      "result": "前后台停启引擎动画/音频，旧心跳实际20秒请求、超过40秒断开；不是20/40秒一套现代WS规定。"
+    },
+    {
+      "id": "L7",
+      "kind": "legacy_source_limited",
+      "sources": [
+        "old-role",
+        "old-login-server",
+        "old-heartbeat"
+      ],
+      "result": "顶号明确停自动连接回登录；所核过期检查已注释，不能宣称旧版有可靠token过期重登。"
+    },
+    {
+      "id": "N1",
+      "kind": "current_source",
+      "sources": [
+        "new-app",
+        "new-asset-binding",
+        "new-account",
+        "new-socket"
+      ],
+      "result": "暖重连保页面，鉴权首包更新唯一状态，旧连接/身份结果隔离；失效或换号统一清旧页。"
+    },
+    {
+      "id": "N2",
+      "kind": "current_source_conditional_risk",
+      "sources": [
+        "new-battle-view",
+        "new-chapter",
+        "new-end-view"
+      ],
+      "result": "挑战回执到但推送缺失时可能以pending为空误报已结算；结算回执到但状态缺失时没有等统一快照确认。"
+    },
+    {
+      "id": "N3",
+      "kind": "current_source_conditional_risk",
+      "sources": [
+        "new-battle-view",
+        "new-end-view",
+        "new-chapter-server"
+      ],
+      "result": "claim已提交但回包丢失且状态已清pending时，当前提示未确认且无页面恢复继续；已有原battleId可通过claim取原settlement_json。"
+    },
+    {
+      "id": "N4",
+      "kind": "current_source_conditional_risk",
+      "sources": [
+        "new-socket",
+        "new-app",
+        "new-battle-view"
+      ],
+      "result": "前台演出先完成、鉴权未ready会导致结算被拒，后续首包不会自动继续同战报结算。"
+    },
+    {
+      "id": "N5",
+      "kind": "visible_behavior_gap",
+      "sources": [
+        "old-main-battle-init",
+        "old-battle-response",
+        "new-chapter-view"
+      ],
+      "result": "旧版首次创建/打开主线页补结算或下次3001先补领，无需重播；新版pending当前需点击恢复回放，进入主线页时的收口需对齐，不能提前到登录主城。"
+    },
+    {
+      "id": "N6",
+      "kind": "current_source_conditional_risk",
+      "sources": [
+        "new-formation",
+        "new-formation-view"
+      ],
+      "result": "保存ACK后等阵容版本，丢提交推送且连接存活会持续busy；同版普通名册更新保留草稿。"
+    },
+    {
+      "id": "N7",
+      "kind": "current_source_limit",
+      "sources": [
+        "new-login-entry",
+        "new-chapter-model",
+        "new-chapter-server"
+      ],
+      "result": "冷重启已经提交且pending清空后，快照无原battleId，不能定位历史结果；主线普通requestId未持久，挂机journal不代表主线journal。"
+    }
+  ],
+  "implementationOrder": [
+    {
+      "step": 1,
+      "work": "同一次应用内主线原battleId/原requestId结算双确认",
+      "reuse": [
+        "MainChapterController",
+        "MainChapterModel.receipt/replay/state",
+        "AssetStateBinding",
+        "GameSocketClient.refreshSnapshot"
+      ],
+      "newProtocol": false,
+      "implemented": false
+    },
+    {
+      "step": 2,
+      "work": "重新进入后首次打开主线页收口pending结算并复用通用奖励窗；在原主线Model协调正常胜利页与恢复窗互斥，不因相同编号就假定已去重",
+      "reuse": [
+        "pendingBattleId",
+        "chapter.claim",
+        "RewardBinding",
+        "RewardController",
+        "RewardView"
+      ],
+      "implemented": false
+    },
+    {
+      "step": 3,
+      "work": "布阵ACK缺状态的一次有界快照确认、页面关闭/草稿矩阵",
+      "reuse": [
+        "FormationSaveModel",
+        "HeroRosterModel",
+        "session.authenticate"
+      ],
+      "implemented": false
+    },
+    {
+      "step": 4,
+      "work": "Creator本机前后台/真实断线/顶号换号针对性演示",
+      "implemented": false
+    }
+  ],
+  "checks": [
+    {
+      "suite": "game-socket",
+      "sha256": "89763f74f73298f8f7372dbd9fd40d91a3d87085790d0622bbff49638ad46b28",
+      "output": "PASS unified initialization, no duplicate requests, atomic role/bag events, monotonic revision, reconnect, old-wire isolation, invalid payload, logout\n[mxzg][MODULE][warn][FormationController] 16:13:51 Error: 网络断开\n",
+      "passed": true,
+      "command": "node client/tools/check-project.mjs --suite game-socket",
+      "log": "client/temp/project-checks/game-socket.log"
+    },
+    {
+      "suite": "main-chapter",
+      "sha256": "6c52e839284a6525157c5fcdb1d7d83bbfdbaf722c33af0395b79fd09959c2b1",
+      "output": "PASS 主线客户端状态、重试、回执、身份清理及窗口迟到取消\n[mxzg][MODULE][warn][MainChapterBattleView] 16:13:53 主线结算待恢复：Error: offline\n",
+      "passed": true,
+      "command": "node client/tools/check-project.mjs --suite main-chapter",
+      "log": "client/temp/project-checks/main-chapter.log"
+    },
+    {
+      "suite": "formation-state",
+      "sha256": "cfcb76af88ded1e96b57b142a799c12d667ae4413ea1dac0b61b8342b3c8e711",
+      "output": "PASS formation module: no View/draft, authoritative isolation, event-only refresh, pending survives window closure, original retry, concurrent submission guard\n[mxzg][MODULE][warn][FormationController] 16:13:53 Error: 断线\n",
+      "passed": true,
+      "command": "node client/tools/check-project.mjs --suite formation-state",
+      "log": "client/temp/project-checks/formation-state.log"
+    },
+    {
+      "suite": "remake-navigation",
+      "sha256": "2318d23432eb08250259492750c8bd52b5cd3d495cb7c59dbae858e4193e231b",
+      "output": "[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 IdentityHome ui test 耗时 1ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 IdentityFeature ui test 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 LoginFixture ui test-remake-login 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 LoginFixture ui test-remake-login 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 HomeFixture ui test-remake-home 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 SlowFixture ui test-remake-slow 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 ResidentFixture ui test-remake-resident 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 HomeFixture ui test-remake-home 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 FeatureFixture ui test-remake-feature 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 FeatureFixture ui test-remake-feature 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 LoginFixture ui test-remake-login 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 HomeFixture ui test-remake-home 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 FeatureFixture ui test-remake-feature 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 FeatureFixture ui test-remake-feature 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 CacheRootView ui test 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 CachedView ui test 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 CachedView ui test 耗时 0ms\n[mxzg][FRAMEWORK][info][UIManager] 16:13:53 打开界面 CachedView ui test 耗时 0ms\nremake-navigation-check passed: explicit registration, shared UIManager, controller cleanup, replacement, failure/cancellation, logout and Prefab bindings\n[mxzg][FRAMEWORK][error][UIManager] 16:13:53 页面没有打开 prefabs/test/test-remake-failed Prefab load failed\n[mxzg][FRAMEWORK][error][UIManager] 16:13:53 页面没有打开 prefabs/test/test-config-failed page configuration failed\n[mxzg][FRAMEWORK][error][UIManager] 16:13:53 页面没有打开 Controller initialization failed\n",
+      "passed": true,
+      "command": "node client/tools/check-project.mjs --suite remake-navigation",
+      "log": "client/temp/project-checks/remake-navigation.log"
+    },
+    {
+      "suite": "idle-claim-binding",
+      "sha256": "0fa2f6c9c3915d8115cdb979fb1f947e3e3d8c08dcac23a43bf0e8abc81055b3",
+      "output": "PASS idle claim application binding: readonly history, dual versions, bounded reauth, logout/relogin, late storage/wire, owner blocking, storage activation retry, authenticated A/B replacement and closed entry\n[mxzg][MODULE][warn][MainChapterIdleClaimController] 16:13:54 SocketFailure: 挂机历史回执不属于当前角色\n    at IdleClaimBinding.validateReceiptOwner (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:26281:13)\n    at G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:26046:16\n    at AccountService.deliverAuthenticated (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:18766:22)\n    at async MainChapterIdleClaimController.request (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:21773:7)\n    at async MainChapterIdleClaimController.execute (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:21581:18)\n    at async IdleClaimBinding.activate (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:26260:7)\n[mxzg][APP][warn][IdleClaimBinding] 16:13:54 挂机领取恢复暂停：Error: 测试存储暂时不可用\n",
+      "passed": true,
+      "command": "node client/tools/check-project.mjs --suite idle-claim-binding",
+      "log": "client/temp/project-checks/idle-claim-binding.log"
+    },
+    {
+      "suite": "reward-binding",
+      "sha256": "b838c96b091387f0cae3caf910ace24fe3561356b6228af72bce3fec27b93140",
+      "output": "PASS 12 reward binding cases: snapshot gating, recovery confirmation, explicit retry and stale scope isolation\n",
+      "passed": true,
+      "command": "node client/tools/check-project.mjs --suite reward-binding",
+      "log": "client/temp/project-checks/reward-binding.log"
+    }
+  ],
+  "sources": [
+    {
+      "id": "old-network",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/frameworks/runtime-src/Classes/AutoRun/NetManager.cpp",
+      "sha256": "66cb9568c001daab033a5c1a8c4c809d461a27cecad070d287c7dc9a896eadfa",
+      "lineCount": 305,
+      "ranges": [
+        {
+          "start": 42,
+          "end": 107
+        },
+        {
+          "start": 226,
+          "end": 271
+        }
+      ],
+      "finding": "短断线自动连接与登录；清空普通发送缓存；连续失败进入重新登录"
+    },
+    {
+      "id": "old-heartbeat",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/frameworks/runtime-src/Classes/Model/Game.cpp",
+      "sha256": "4e891350ab8a345575def5b920da872d999e54d508b937fe6ce8a01ce504a110",
+      "lineCount": 696,
+      "ranges": [
+        {
+          "start": 108,
+          "end": 130
+        },
+        {
+          "start": 430,
+          "end": 505
+        }
+      ],
+      "finding": "20秒心跳、超过40秒关闭；停止游戏；过期检查已注释"
+    },
+    {
+      "id": "old-background",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/frameworks/runtime-src/Classes/AppDelegate.cpp",
+      "sha256": "1116311d610523d1f03932b03fe63c4b5d1d36fcc86985b067335da6a41419ee",
+      "lineCount": 317,
+      "ranges": [
+        {
+          "start": 275,
+          "end": 317
+        }
+      ],
+      "finding": "停启动画和音频，未直接切场景"
+    },
+    {
+      "id": "old-role",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/net/RoleResponse.lua",
+      "sha256": "cd628329110bcbfc7593d01fc92f053e1e6bba92b6736e27b688c6a2dafb0742",
+      "lineCount": 789,
+      "ranges": [
+        {
+          "start": 28,
+          "end": 57
+        },
+        {
+          "start": 72,
+          "end": 178
+        },
+        {
+          "start": 665,
+          "end": 724
+        }
+      ],
+      "finding": "主场景存活通常提前返回；冷初始化和踢下线分支"
+    },
+    {
+      "id": "old-main-scene",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/scene/MainSceneCtr.lua",
+      "sha256": "656adbceb310db813ec219029f7babf2708042b0a0b350cdea5e8d150c5c6789",
+      "lineCount": 1851,
+      "ranges": [
+        {
+          "start": 889,
+          "end": 905
+        },
+        {
+          "start": 1044,
+          "end": 1053
+        },
+        {
+          "start": 1260,
+          "end": 1264
+        }
+      ],
+      "finding": "冷进入默认主城；addKeepLayer仅登记保留类型，changeLayer缺缓存才创建实际页面；退出清旧页面缓存"
+    },
+    {
+      "id": "old-loading",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/scene/LoadingSceneCtr.lua",
+      "sha256": "d88ef5f023659791d13098cc615efcb4cc571f5116a96f60c5df98945c4414d2",
+      "lineCount": 360,
+      "ranges": [
+        {
+          "start": 173,
+          "end": 175
+        },
+        {
+          "start": 213,
+          "end": 252
+        }
+      ],
+      "finding": "重新进入等待资源和初始化后进主场景"
+    },
+    {
+      "id": "old-native",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/native/Native.lua",
+      "sha256": "4cacde86a79e1d32176a600f6b06ebd648bd40a536e177d4c7a7670d0ff30d6f",
+      "lineCount": 572,
+      "ranges": [
+        {
+          "start": 192,
+          "end": 219
+        },
+        {
+          "start": 421,
+          "end": 439
+        }
+      ],
+      "finding": "停止与重新进入；登录凭据复用"
+    },
+    {
+      "id": "old-main-battle-init",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/layer/battle/BattleLayer.lua",
+      "sha256": "1dfb820957569588c1c9b4fceae06ce67b920e86d2f7740636637bf676e45205",
+      "lineCount": 536,
+      "ranges": [
+        {
+          "start": 202,
+          "end": 207
+        }
+      ],
+      "finding": "实际创建BattleLayer时发3002；登记保留类型不会提前执行"
+    },
+    {
+      "id": "old-main-battle-end",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/layer/battle/BattleMissionLayer.lua",
+      "sha256": "dfdf271af5b3edb851455a2f7665ee00e2b5d7604886b81664faa5db65838d37",
+      "lineCount": 81,
+      "ranges": [
+        {
+          "start": 19,
+          "end": 61
+        }
+      ],
+      "finding": "胜利后3002每两秒重发；超时结束展示"
+    },
+    {
+      "id": "old-battle-response",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+      "sha256": "cd6e0f4be3083523d4a8e11dccda81ac0fec9b5a60f8e7c26fc682f51f854f3e",
+      "lineCount": 174,
+      "ranges": [
+        {
+          "start": 18,
+          "end": 46
+        },
+        {
+          "start": 54,
+          "end": 61
+        }
+      ],
+      "finding": "vec_battle_detail非nil开胜利页但不严验场次；缺战报且非引导开通用奖励窗"
+    },
+    {
+      "id": "old-idle-presentation",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/layer/battle/BattleIdleLayer.lua",
+      "sha256": "eb0d012491bf5d7c95b01447390acb7e7c31b1ea0dc94146427c17f8a80742b4",
+      "lineCount": 287,
+      "ranges": [
+        {
+          "start": 44,
+          "end": 116
+        }
+      ],
+      "finding": "重建行军和战报缓存；非资产结算"
+    },
+    {
+      "id": "old-report-review",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/layer/battle/BattleReportCtr.lua",
+      "sha256": "e8ec3feb0bc34c1267eeea4b79f871c77899a21be48970e3ecae70b516f840f9",
+      "lineCount": 74,
+      "ranges": [
+        {
+          "start": 1,
+          "end": 14
+        },
+        {
+          "start": 54,
+          "end": 67
+        }
+      ],
+      "finding": "3102显式打开，默认PVP_DEFENSE，不能替代主线恢复证据"
+    },
+    {
+      "id": "old-battle-timeout",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/comp/BattleReportBaseLayer.lua",
+      "sha256": "f41c1beb3aeba852add61b9d00912c295bea229e2badd01ee356ff2872db5aa7",
+      "lineCount": 540,
+      "ranges": [
+        {
+          "start": 65,
+          "end": 90
+        }
+      ],
+      "finding": "等待战报超时展示分支"
+    },
+    {
+      "id": "old-battle-end-view",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua",
+      "sha256": "4982085e75497c0abb5a448200ca3cbd16698c817583ef529bb9a2bf81cdf7f7",
+      "lineCount": 522,
+      "ranges": [
+        {
+          "start": 34,
+          "end": 61
+        },
+        {
+          "start": 513,
+          "end": 522
+        }
+      ],
+      "finding": "胜利页展示不再次结算，统计读取内存"
+    },
+    {
+      "id": "old-chapter-server",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+      "sha256": "18a80683934def0e4c8466a200b4179127b1d538e49b9364704f808cb64f8f64",
+      "lineCount": 914,
+      "ranges": [
+        {
+          "start": 253,
+          "end": 317
+        },
+        {
+          "start": 323,
+          "end": 410
+        },
+        {
+          "start": 722,
+          "end": 755
+        }
+      ],
+      "finding": "先保存胜利待领再回包；3002独立结算；3006只演出"
+    },
+    {
+      "id": "old-chapter-state",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/domain/RoleMission.java",
+      "sha256": "2b31f41c9c3fc1fd9c304886913d0122887be4414bc5433e70de3d1c662aa0a5",
+      "lineCount": 155,
+      "ranges": [
+        {
+          "start": 21,
+          "end": 60
+        }
+      ],
+      "finding": "仅关卡/计时/待领，没有持久主线播放位置"
+    },
+    {
+      "id": "old-login-server",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/role/handler/LoginHandler.java",
+      "sha256": "d6056f39500f68f31c523fe2b27249ae2b83a2109ccbcf7b53a86e1ac3ac1073",
+      "lineCount": 277,
+      "ranges": [
+        {
+          "start": 93,
+          "end": 104
+        },
+        {
+          "start": 137,
+          "end": 145
+        }
+      ],
+      "finding": "签名校验和顶号事件，不证明旧凭据过期机制"
+    },
+    {
+      "id": "old-disconnect-server",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/infrastructure/netty/ContextManager.java",
+      "sha256": "5330856de7c26aa13c779f1756c464d1aa23be673bb94ffa9903e1c4bb57ff5f",
+      "lineCount": 194,
+      "ranges": [
+        {
+          "start": 93,
+          "end": 125
+        }
+      ],
+      "finding": "下线/停止actor，不证明已提交主线撤销或崩溃原子性"
+    },
+    {
+      "id": "old-response-delivery",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/infrastructure/netty/PlayerContext.java",
+      "sha256": "b16d21f6ec1fa047f38600932990f996884f61e4c6b123bfcbcfa1b8852bd2a3",
+      "lineCount": 232,
+      "ranges": [
+        {
+          "start": 149,
+          "end": 175
+        }
+      ],
+      "finding": "不活跃连接不发，没有持久响应队列"
+    },
+    {
+      "id": "new-socket",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/platform/GameSocketClient.ts",
+      "sha256": "1f47a876bdc0b2da1281a233b88bb5656a4b757d3e55c52c9b82aad05d3f2e5d",
+      "lineCount": 421,
+      "ranges": [
+        {
+          "start": 143,
+          "end": 163
+        },
+        {
+          "start": 190,
+          "end": 207
+        },
+        {
+          "start": 230,
+          "end": 258
+        },
+        {
+          "start": 367,
+          "end": 403
+        }
+      ],
+      "finding": "原快照刷新、前后台、鉴权和连接代次，不重放业务"
+    },
+    {
+      "id": "new-app",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/app/remake/RemakeApp.ts",
+      "sha256": "5fa17c53e9a7b01f32a0b61cc80813d6bf42371a0de9238523a7dce78fd88974",
+      "lineCount": 581,
+      "ranges": [
+        {
+          "start": 146,
+          "end": 198
+        },
+        {
+          "start": 297,
+          "end": 375
+        },
+        {
+          "start": 469,
+          "end": 514
+        }
+      ],
+      "finding": "模块注入、快照接纳、普通断线保页面、身份变化清理、入口关闭"
+    },
+    {
+      "id": "new-asset-binding",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/app/remake/AssetStateBinding.ts",
+      "sha256": "2ef1599c5e6776fdc532bd6e28a0418f88aa42a60107725be5854972598a2334",
+      "lineCount": 113,
+      "ranges": [
+        {
+          "start": 51,
+          "end": 106
+        }
+      ],
+      "finding": "统一整包版本/身份校验，同版鉴权首包接纳"
+    },
+    {
+      "id": "new-account",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/features/account/AccountService.ts",
+      "sha256": "94d15e0f7882ea12b23ba3437ed23ddff3d14dc4c78a07c2d5f0c4c3065fc924",
+      "lineCount": 219,
+      "ranges": [
+        {
+          "start": 119,
+          "end": 180
+        }
+      ],
+      "finding": "身份失效和成功/失败应用交付"
+    },
+    {
+      "id": "new-navigation",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/app/remake/RemakeNavigation.ts",
+      "sha256": "c471130a84ccb067dc267cd11f1710207545ba14b968d7bc20e1e184ae01a00d",
+      "lineCount": 139,
+      "ranges": [
+        {
+          "start": 1,
+          "end": 75
+        }
+      ],
+      "finding": "页面导航缓存边界"
+    },
+    {
+      "id": "new-login-entry",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/app/remake/LoginEntry.ts",
+      "sha256": "a69e9286249f43e53cdd865276891ba58d02e7ac43ea65024853e16ef9e078bf",
+      "lineCount": 23,
+      "ranges": [
+        {
+          "start": 1,
+          "end": 23
+        }
+      ],
+      "finding": "冷启动开始游戏意图不持久化"
+    },
+    {
+      "id": "new-chapter",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/features/battle/MainChapterController.ts",
+      "sha256": "5c5a8a0edf7201a36a30332f75e9104500f6e38b7403b0461d4df53b40475c25",
+      "lineCount": 296,
+      "ranges": [
+        {
+          "start": 143,
+          "end": 173
+        },
+        {
+          "start": 210,
+          "end": 264
+        }
+      ],
+      "finding": "快照与历史回执分权；原requestId、battleId命令"
+    },
+    {
+      "id": "new-chapter-model",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/features/battle/MainChapterModel.ts",
+      "sha256": "4959b39cc72f1d724c081d8565053bbc87240a7256c84b1c6d3ea703a862df9d",
+      "lineCount": 111,
+      "ranges": [
+        {
+          "start": 80,
+          "end": 111
+        }
+      ],
+      "finding": "当前过程状态与应用身份重置，没有普通挑战持久journal"
+    },
+    {
+      "id": "new-chapter-view",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/features/battle/ui/MainChapterView.ts",
+      "sha256": "e2eaac93805f314369600de5e1ddf6c2e10d3523fdbdd89141cc820cc299d5c1",
+      "lineCount": 529,
+      "ranges": [
+        {
+          "start": 176,
+          "end": 237
+        },
+        {
+          "start": 258,
+          "end": 273
+        }
+      ],
+      "finding": "pending先回放；当前恢复按钮行为"
+    },
+    {
+      "id": "new-battle-view",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/features/battle/ui/MainChapterBattleView.ts",
+      "sha256": "39d95c5b970466efe7cfa158acf1489c4a56de0f448b72c7dad03415b5f6a3e4",
+      "lineCount": 113,
+      "ranges": [
+        {
+          "start": 36,
+          "end": 103
+        }
+      ],
+      "finding": "无快照/回执双确认，未确认页面不随重连继续"
+    },
+    {
+      "id": "new-end-view",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/features/battle/ui/ChapterEndView.ts",
+      "sha256": "d403afd5f70fca7d24c17c902c2a05afe83ef6cb5f59b9903bd82e8e20413b99",
+      "lineCount": 455,
+      "ranges": [
+        {
+          "start": 110,
+          "end": 165
+        },
+        {
+          "start": 426,
+          "end": 455
+        }
+      ],
+      "finding": "静态传入奖励/经验，不监听恢复后主线状态"
+    },
+    {
+      "id": "new-formation",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/features/hero/FormationController.ts",
+      "sha256": "cc7f0ade29d042e31a93cfa22cf3c56261dcb7be6e71b0a69a7027475b0c19b0",
+      "lineCount": 117,
+      "ranges": [
+        {
+          "start": 58,
+          "end": 117
+        }
+      ],
+      "finding": "ACK等待唯一权威阵容版本，缺推送无主动兜底"
+    },
+    {
+      "id": "new-formation-view",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/features/hero/ui/FormationView.ts",
+      "sha256": "25777a8e673ff8f03eaa1acf9a504465006bf17cc2814814ea7af3167d02aea0",
+      "lineCount": 344,
+      "ranges": [
+        {
+          "start": 157,
+          "end": 199
+        },
+        {
+          "start": 268,
+          "end": 282
+        }
+      ],
+      "finding": "同版本保留草稿，外部新版本加载，关闭清理"
+    },
+    {
+      "id": "new-idle-binding",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/app/remake/IdleClaimBinding.ts",
+      "sha256": "09d9ac8ac8b858b78798618abf260b46e1885d08004cd2094f41d2bb33c54047",
+      "lineCount": 353,
+      "ranges": [
+        {
+          "start": 1,
+          "end": 80
+        },
+        {
+          "start": 111,
+          "end": 190
+        }
+      ],
+      "finding": "原请求与当前快照双确认参考；策略默认关闭"
+    },
+    {
+      "id": "new-reward-binding",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "client/assets/scripts/app/remake/RewardBinding.ts",
+      "sha256": "936d1e47e431963fb4c409776d0a15a27ff86fd71b241e94d8a227223b81a466",
+      "lineCount": 218,
+      "ranges": [
+        {
+          "start": 1,
+          "end": 95
+        }
+      ],
+      "finding": "通用反馈/弹窗和主城就绪边界"
+    },
+    {
+      "id": "new-chapter-server",
+      "root": "G:/work/FsGame/Project/mxzg",
+      "file": "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterService.java",
+      "sha256": "87279d9832a49747d46fa31827e7d1579f6e868e926a27aa04e45a718b405f58",
+      "lineCount": 269,
+      "ranges": [
+        {
+          "start": 86,
+          "end": 111
+        },
+        {
+          "start": 139,
+          "end": 201
+        }
+      ],
+      "finding": "鉴权读不发奖；pending保留；原battleId重取settlement_json不重复发奖"
+    },
+    {
+      "id": "old-page-map",
+      "root": "G:/work/FsGame/Demo/mj/program",
+      "file": "client/cocos_mxzg/client/idle/src/config/mainscenepage.lua",
+      "sha256": "02287662a69bd330f22f1e985041772770ecbcf72325ebaf2805367624d9cd27",
+      "lineCount": 904,
+      "ranges": [
+        {
+          "start": 233,
+          "end": 236
+        }
+      ],
+      "finding": "MLT_BATTLE对应BattleLayer，实际创建仍经changeLayer"
+    }
+  ],
+  "notRun": [
+    "Creator预览或原生应用操作",
+    "正式服H5断线/弱网演练",
+    "集中构建或发布包",
+    "日常数据库连接",
+    "Java业务重新测试（无运行代码变更）",
+    "真机/APP/微信后台",
+    "MySQL",
+    "崩溃断电",
+    "跨进程主线反馈恢复"
+  ]
+}

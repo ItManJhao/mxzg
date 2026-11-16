@@ -1,6 +1,7 @@
-/** 账号边界：WebSocket 交换身份；统一初始化通过鉴权/同步后才交付角色，不持有玩家状态。 */
+/** 账号边界：WebSocket 交换身份，统一快照校验角色和独立冒险点后交付唯一账号Model。
+ * 不持有玩家状态，不从普通库存或历史奖励回执反推当前冒险点。 */
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
-import type { RoleProfile, RoleBasics } from "./AccountModel";
+import type { RoleProfile, RoleBasics, TavernPointState } from "./AccountModel";
 import type { GameSocketClient } from "../../platform/GameSocketClient";
 export interface AccountSession {
     accessToken: string;
@@ -25,17 +26,18 @@ export class AccountApi implements AccountGateway {
     constructor(private readonly socket: GameSocketClient) {
     }
 
-    /** 本地身份交换成功后直接读取首包，不追加角色或背包查询。 */
+    /** 本地身份交换成功后从同一首包读取角色及冒险点，不追加角色或背包查询。 */
     async developmentLogin(account: string, serverId = "local-1"): Promise<LoginResult> {
-        const frame = await this.socket.login(account, serverId), body = AccountApi.record(frame.body), initial = AccountApi.record(body.initial);
-        const role = AccountApi.readRole(initial.role);
+        const frame = await this.socket.login(account, serverId);
+        const body = AccountApi.record(frame.body);
+        const role = AccountApi.readSnapshotRole(body.initial);
         if (role.serverId !== serverId) {
             throw new Error("角色区服与所选区服不一致");
         }
         return { session: AccountApi.readSession(body.session), role };
     }
 
-    /** 恢复连接直接使用鉴权首包；已连接则读取同连接最近的权威状态，不发送额外查询。 */
+    /** 恢复连接读取同连接最新完整快照的角色及冒险点，不发送额外查询或沿用旧扩展。 */
     async currentRole(token: string): Promise<RoleProfile> {
         await this.socket.connect(token);
         const frame = this.socket.latestState;
@@ -43,7 +45,7 @@ export class AccountApi implements AccountGateway {
             throw new Error("缺少登录初始化数据");
         }
         const body = AccountApi.record(frame.body);
-        return AccountApi.readRole(AccountApi.record(frame.kind === "event" ? body : body.initial).role);
+        return AccountApi.readSnapshotRole(frame.kind === "event" ? body : body.initial);
     }
 
     /** 应用在接纳账号的同一通知批次中交付初始化状态。 */
@@ -83,6 +85,38 @@ export class AccountApi implements AccountGateway {
             accessToken: row.accessToken,
             expiresAt: row.expiresAt, ...(typeof row.account === "string" ? { account: row.account } : {})
         };
+    }
+
+    /**
+     * 从统一快照一次投影角色和独立冒险点；扩展缺失保持未同步，合法超上限余额原样保留。
+     * 新快照同时携带900401普通库存属于重复资产表达，整包拒绝；旧快照保留其原库存且不推导点数。
+     */
+    public static readSnapshotRole(value: unknown): RoleProfile {
+        const snapshot = AccountApi.record(value);
+        const role = AccountApi.readRole(snapshot.role);
+        if (snapshot.tavernPoints === undefined) {
+            return role;
+        }
+        const tavernPoints = AccountApi.readTavernPoints(snapshot.tavernPoints);
+        if (Array.isArray(snapshot.inventory)
+            && snapshot.inventory.some(item => item?.itemId === 900401)) {
+            throw new Error("冒险点不能同时放入普通库存：900401");
+        }
+        return { ...role, tavernPoints };
+    }
+
+    /** 已提供的冒险点扩展必须完整且格式受支持；零余额、零上限和历史超上限余额均有效。 */
+    private static readTavernPoints(value: unknown): Readonly<TavernPointState> {
+        const row = AccountApi.record(value);
+        if (row.schemaVersion !== 1 || !Number.isSafeInteger(row.adventureCount)
+            || Number(row.adventureCount) < 0 || !Number.isSafeInteger(row.limit) || Number(row.limit) < 0) {
+            throw new Error("冒险点快照版本、余额或上限无效");
+        }
+        return Object.freeze({
+            schemaVersion: 1,
+            adventureCount: Number(row.adventureCount),
+            limit: Number(row.limit),
+        });
     }
 
     /** 严格校验整组角色基础字段；时间单位为秒，不能用缺省零掩盖缺字段。 */

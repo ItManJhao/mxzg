@@ -1,0 +1,185 @@
+/**
+ * 通用发奖反馈：将真实发放结果投影为展示通知，在原业务事务提交后才交给在线连接。
+ * 业务保存的成功回执ID是唯一展示身份；本服务不写资产、不增加版本，也不保存第二份发奖队列。
+ * 离线或交付失败时由业务持久回执恢复展示，不能因此重新发奖。
+ */
+package com.funsgamex.mxzg.reward;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+@Service
+public class RewardFeedbackService {
+    /** 反馈投影和协议保持一致，拒绝JavaScript不能精确表达的数量与资产版本。 */
+    private static final long MAX_SAFE_INTEGER = 9_007_199_254_740_991L;
+    /** 持久成功回执的标准小写UUID格式，不生成第二个通知身份。 */
+    private static final String UUID_PATTERN = "[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}";
+    /** 提交后交付失败的统一日志，不影响已经完成的发奖事务。 */
+    private static final Logger LOG = LoggerFactory.getLogger(RewardFeedbackService.class);
+    /** 只向当前进程在线会话分发已提交展示，不拥有资产和持久回执。 */
+    private final ApplicationEventPublisher events;
+
+    /** 旧通用发奖的三种反馈；SILENT保持资产同步但不推送展示通知。 */
+    public enum Mode { SILENT, POPUP, TIPS }
+
+    /**
+     * 同一配置ID合并后的实际到账，不是理论奖励或钱包余额。
+     * @param itemId 奖励的真实配置ID。
+     * @param credited 合并后的正安全整数数量。
+     */
+    public record Item(int itemId, long credited) {}
+
+    /**
+     * 已验证、不可变的通用展示消息；不用于写入客户端资产。
+     * @param schemaVersion 固定为1的通用反馈格式版本。
+     * @param receiptId 原业务持久成功回执ID，恢复展示时仍使用它。
+     * @param roleId 真实发放结果所属角色。
+     * @param assetRevision 原资产事务的持久版本，客户端等待该版本提交后展示。
+     * @param mode 本次业务选择的通用展示方式。
+     * @param items 按首次出现顺序合并的正实际到账，包含独立升级附赠。
+     */
+    public record Notice(int schemaVersion, String receiptId, String roleId, long assetRevision,
+            Mode mode, List<Item> items) {
+        /** 复制明细，避免调用者在事务登记后改变已验证的展示数据。 */
+        public Notice {
+            items = List.copyOf(items);
+        }
+    }
+
+    /** 仅在原事务提交后发布；连接层只能发送notice，不能据此再次修改资产。 */
+    public record Committed(Notice notice) {}
+
+    /** 注入应用事件出口；事务去重随线程事务绑定，不跨账号积累展示状态。 */
+    public RewardFeedbackService(ApplicationEventPublisher events) {
+        this.events = events;
+    }
+
+    /**
+     * 在业务成功回执持久化后登记通用反馈；回滚无通知，静默或零到账也不弹空窗。
+     * 同事务同角色同回执只登记一次；同一身份出现不同内容表示业务不变量损坏并拒绝事务。
+     * @param actual 本事务真实发放结果；items.credited不包含bonuses，二者各计一次。
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    @SuppressWarnings("unchecked")
+    public void publish(String receiptId, String roleId, long assetRevision, Mode mode,
+            RewardGrantResult actual) {
+        requireTransaction();
+        Notice notice = project(receiptId, roleId, assetRevision, mode, actual);
+        Map<String, Notice> batch = (Map<String, Notice>) TransactionSynchronizationManager.getResource(this);
+        if (batch == null) {
+            batch = new LinkedHashMap<>();
+            TransactionSynchronizationManager.bindResource(this, batch);
+            registerBatch(batch);
+        }
+        String key = roleId + ":" + receiptId;
+        Notice previous = batch.putIfAbsent(key, notice);
+        if (previous != null && !previous.equals(notice)) {
+            throw new IllegalStateException("同一发奖回执的反馈内容不一致");
+        }
+    }
+
+    /** 验证业务归属及安全数值，只合并正实际到账；钱包已含升级赠钻，不能再取钱包差分。 */
+    private Notice project(String receiptId, String roleId, long revision, Mode mode, RewardGrantResult actual) {
+        if (receiptId == null || !receiptId.matches(UUID_PATTERN) || roleId == null || roleId.isBlank()
+                || roleId.length() > 128 || revision < 1 || revision > MAX_SAFE_INTEGER
+                || mode == null || actual == null || !roleId.equals(actual.roleId())) {
+            throw new IllegalArgumentException("通用发奖反馈身份或版本无效");
+        }
+        Map<Integer, Long> merged = new LinkedHashMap<>();
+        for (var item : Objects.requireNonNull(actual.items(), "实际发放明细缺失")) {
+            add(merged, item.itemId(), item.credited());
+        }
+        for (var bonus : Objects.requireNonNull(actual.bonuses(), "实际附赠明细缺失")) {
+            add(merged, bonus.itemId(), bonus.quantity());
+        }
+        List<Item> items = merged.entrySet().stream().map(row -> new Item(row.getKey(), row.getValue())).toList();
+        return new Notice(1, receiptId, roleId, revision, mode, items);
+    }
+
+    /** 过滤零实际到账；负数、无效配置ID、单项或合并溢出都拒绝，避免展示假奖励。 */
+    private void add(Map<Integer, Long> merged, int itemId, long quantity) {
+        if (itemId < 1 || quantity < 0 || quantity > MAX_SAFE_INTEGER) {
+            throw new IllegalArgumentException("通用发奖反馈数量或配置ID无效");
+        }
+        if (quantity == 0) {
+            return;
+        }
+        long total = Math.addExact(merged.getOrDefault(itemId, 0L), quantity);
+        if (total > MAX_SAFE_INTEGER) {
+            throw new IllegalArgumentException("通用发奖反馈合并数量超过安全范围");
+        }
+        merged.put(itemId, total);
+    }
+
+    /** 为一个真实事务登记提交与清理钩子；独立新事务不能复用外层去重集合。 */
+    private void registerBatch(Map<String, Notice> owned) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            /** 挂起时移除本事务资源，让REQUIRES_NEW独立登记和提交。 */
+            @Override
+            public void suspend() {
+                unbindOwnedBatch(owned);
+            }
+
+            /** 内层结束后恢复原集合，避免外层重复登记已存在的回执。 */
+            @Override
+            public void resume() {
+                TransactionSynchronizationManager.bindResource(RewardFeedbackService.this, owned);
+            }
+
+            /** 只交付已提交的非空可见反馈，不补发资产、不拦截其他回执。 */
+            @Override
+            public void afterCommit() {
+                for (Notice notice : owned.values()) {
+                    if (notice.mode() != Mode.SILENT && !notice.items().isEmpty()) {
+                        notifyCommitted(notice);
+                    }
+                }
+            }
+
+            /** 提交或回滚均释放本事务集合，不清掉外层或另一事务资源。 */
+            @Override
+            public void afterCompletion(int status) {
+                unbindOwnedBatch(owned);
+            }
+        });
+    }
+
+    /** 提交后交付失败只记日志；异常不能使客户端把已完成事务误判为可重新发奖。 */
+    private void notifyCommitted(Notice notice) {
+        try {
+            events.publishEvent(new Committed(notice));
+        } catch (RuntimeException failure) {
+            try {
+                LOG.warn("奖励已提交但反馈交付失败，等待业务回执恢复：roleId={} receiptId={}",
+                        notice.roleId(), notice.receiptId(), failure);
+            } catch (RuntimeException loggingFailure) {
+                // 日志也不可用时仍保留持久成功结果，不能改变业务或再次发奖。
+            }
+        }
+    }
+
+    /** 直接构造的测试对象也必须遵守原事务约束，不能绕过MANDATORY自动提交展示。 */
+    private void requireTransaction() {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()
+                || !TransactionSynchronizationManager.isSynchronizationActive()) {
+            throw new IllegalStateException("发奖反馈必须在原业务事务内登记");
+        }
+    }
+
+    /** 仅解除对象身份相同的集合；重复清理和内外事务切换均不会误删其他登记。 */
+    private void unbindOwnedBatch(Map<String, Notice> owned) {
+        if (TransactionSynchronizationManager.getResource(this) == owned) {
+            TransactionSynchronizationManager.unbindResource(this);
+        }
+    }
+}

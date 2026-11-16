@@ -341,6 +341,37 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         } finally { lock.unlock(); }
     }
 
+    /**
+     * 通用发奖只交付给当前角色的有效在线连接；资产提交及版本仍由state.changed负责。
+     * 换号、接管或离线不发送，交付失败也不重新执行发奖；历史展示由原业务回执恢复。
+     */
+    @org.springframework.context.event.EventListener
+    public void rewardGranted(com.funsgamex.mxzg.reward.RewardFeedbackService.Committed event) {
+        var notice = event.notice();
+        ReentrantLock lock = roleLock(notice.roleId());
+        lock.lock();
+        try {
+            Connection connection = online.get(notice.roleId());
+            if (connection == null || !connection.ready
+                    || connections.get(connection.socket.getId()) != connection || !connection.socket.isOpen()) {
+                return;
+            }
+            try {
+                if (!notice.roleId().equals(connection.role)
+                        || !notice.roleId().equals(sessions.requireRole(connection.token))) {
+                    close(connection, CloseStatus.POLICY_VIOLATION);
+                    return;
+                }
+                send(connection, Map.of("version", 1, "kind", "event", "name", "reward.granted",
+                        "connectionId", connection.socket.getId(), "body", notice));
+            } catch (Exception error) {
+                close(connection, CloseStatus.SERVER_ERROR);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /** 验证解码后的统一信封及关联标识；具体业务字段和阶段继续单独校验。 */
     private static void validateEnvelope(JsonNode request) {
         fields(request, Set.of("version", "kind", "name", "id", "body", "connectionId"));

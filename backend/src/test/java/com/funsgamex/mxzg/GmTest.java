@@ -32,6 +32,8 @@ class GmTest {
  @Autowired SpiritInventoryService spirits;
  /** 与GM代理、精灵写入和资产版本共用的真实事务管理器。 */
  @Autowired PlatformTransactionManager transactions;
+ /** 统一首包读取入口，用于确认鉴权懒初始化之后重复快照不再推进版本。 */
+ @Autowired com.funsgamex.mxzg.network.SessionSnapshotService snapshots;
  /** 合成账号，不连接玩家库。 */
  private DevelopmentLoginService.LoginResult player(){return login.login("gm_"+UUID.randomUUID().toString().substring(0,15));}
  /** 相同请求只到账一次；改参数复用请求 ID 回滚。 */
@@ -118,7 +120,7 @@ class GmTest {
   assertEquals(before + 1, revision(role));
  }
 
- /** 回执SQL失败时实例、资产版本和推送一起回滚；移除独立库故障后原请求仍能正常重试。 */
+ /** 以鉴权懒初始化后的版本为基线；回执SQL失败回滚精灵和版本，原请求重试仅增加一次。 */
  @Test
  void spiritReceiptFailureRollsBackAndRetrySucceeds() throws Exception {
   var player = player();
@@ -126,8 +128,9 @@ class GmTest {
   String token = "Bearer " + player.session().accessToken();
   String requestId = UUID.randomUUID().toString();
   String constraint = "gm_spirit_receipt_reject_" + UUID.randomUUID().toString().replace("-", "");
-  long before = revision(role);
+  long beforeAuthentication = revision(role);
   try (var peer = new SpiritPeer(player.session().accessToken())) {
+   long before = initializedRevision(token, role, beforeAuthentication);
    // 只拦截当前合成角色的回执插入，确保故障发生在真实精灵写入之后。
    jdbc.execute("ALTER TABLE game_gm_grant ADD CONSTRAINT " + constraint + " CHECK (role_id <> '" + role + "')");
    try {
@@ -151,15 +154,16 @@ class GmTest {
   }
  }
 
- /** 正式二进制GM请求推送完整真实精灵快照，重放只回执且不重抽、不增版本、不再次推送。 */
+ /** 鉴权初始版本之后，真实精灵发放只推进一次；重放不重抽、不增版本、不再次推送。 */
  @Test
  void websocketSpiritGrantPushesCompleteStateOnce() throws Exception {
   var player = player();
   String role = player.role().id();
-  long before = revision(role);
   String requestId = UUID.randomUUID().toString();
   var body = Map.of("requestId", requestId, "kind", "item", "configId", 2000002, "quantity", 2);
+  long beforeAuthentication = revision(role);
   try (var peer = new SpiritPeer(player.session().accessToken())) {
+   long before = initializedRevision("Bearer " + player.session().accessToken(), role, beforeAuthentication);
    peer.send("gm.grant", body);
    var first = peer.receive();
    var second = peer.receive();
@@ -206,6 +210,17 @@ class GmTest {
    assertEquals(before + 1, revision(role));
    assertEquals(1, count("game_gm_grant", role));
   }
+ }
+
+ /** 新角色鉴权只懒建一次冒险点；后续同一首包读取必须保持真实版本与唯一记录。 */
+ private long initializedRevision(String token, String role, long beforeAuthentication) {
+  long initialized = revision(role);
+  assertEquals(beforeAuthentication + 1, initialized);
+  assertEquals(1, count("game_tavern_point", role));
+  assertEquals(initialized, snapshots.snapshot(token).revision());
+  assertEquals(initialized, revision(role));
+  assertEquals(1, count("game_tavern_point", role));
+  return initialized;
  }
 
  /** 在真实事务内读取完整精灵状态，读取校验同时覆盖持久真实属性。 */

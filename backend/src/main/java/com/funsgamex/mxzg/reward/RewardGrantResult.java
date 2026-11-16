@@ -69,7 +69,7 @@ public record RewardGrantResult(
     public record Bonus(BonusSource source, int itemId, long quantity) {}
 
     /**
-     * 酒馆900401的真实前后余额及本次冻结上限；包括没有库存且到账为0的情形。
+     * 酒馆900401的真实前后余额及本次冻结上限；缺行初值先由独立领域建立，不计入本次奖励。
      * @param beforeQuantity 原有余额，已超上限时不倒扣
      * @param limit 本次业务冻结的最高通关关卡上限
      * @param afterQuantity 本次入账后的真实余额，零到账时与原有相等

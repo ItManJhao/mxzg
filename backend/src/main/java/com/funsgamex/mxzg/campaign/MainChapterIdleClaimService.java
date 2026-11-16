@@ -7,6 +7,7 @@ package com.funsgamex.mxzg.campaign;
 
 import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.reward.RewardFeedbackService;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.role.RoleRepository;
@@ -64,6 +65,8 @@ public class MainChapterIdleClaimService {
     private final RoleRules roleRules;
     /** 同角色同事务仅递增一次版本，并在成功提交后通知。 */
     private final AssetSyncService sync;
+    /** 原业务回执保存后登记通用奖励反馈，提交前不展示，历史重放不重复登记。 */
+    private final RewardFeedbackService feedback;
     /** 仅用于明确版本的数据库审计格式，网络仍使用生成Protobuf。 */
     private final ObjectMapper json;
     /** 可信服务器时钟，每次新领取只捕获一次，历史重放不读取。 */
@@ -157,7 +160,8 @@ public class MainChapterIdleClaimService {
     /** 注入真实领域服务和可控时间/随机边界，不保存第二份角色资产。 */
     public MainChapterIdleClaimService(SessionService sessions, RoleRepository roles, JdbcTemplate jdbc,
             IdleRules rules, MainChapterRules chapters, IdleRewardInputService inputs, RewardGrantService grants,
-            MainChapterIdleStateRepository states, RoleRules roleRules, AssetSyncService sync, ObjectMapper json,
+            MainChapterIdleStateRepository states, RoleRules roleRules, AssetSyncService sync,
+            RewardFeedbackService feedback, ObjectMapper json,
             @Qualifier("mainChapterIdleClaimClock") Clock clock,
             @Qualifier("mainChapterIdleClaimRandom") RandomGenerator random,
             @Value("${mxzg.main-chapter.idle-claim-enabled:false}") boolean enabled) {
@@ -171,6 +175,7 @@ public class MainChapterIdleClaimService {
         this.states = states;
         this.roleRules = roleRules;
         this.sync = sync;
+        this.feedback = feedback;
         this.json = json;
         this.clock = clock;
         this.random = random;
@@ -239,6 +244,7 @@ public class MainChapterIdleClaimService {
         var audit = new AuditV1(STORAGE_VERSION, role, input.serverId(), REQUEST_FORMAT, "chapter.idle.claim",
                 fingerprint, receipt, before, after, calculation);
         save(audit);
+        feedback.publish(receipt.receiptId(), role, assetRevision, RewardFeedbackService.Mode.POPUP, actual);
         return receipt;
     }
 

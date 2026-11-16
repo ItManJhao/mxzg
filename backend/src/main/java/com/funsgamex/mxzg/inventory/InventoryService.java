@@ -1,7 +1,7 @@
 /**
  * 普通堆叠库存的查询、发放和扣除，发放在调用方事务内锁定真实角色并返回本次到账明细。
  * 外层业务负责奖励资格、请求幂等和回执提交；本服务不创建独立事务或完整资产快照。
- * 精灵按独立实例存储，本入口拒绝item.type=8的读写，不将历史错误堆叠猜补为真实精灵。
+ * 精灵及冒险点由独立领域持有，本入口拒绝item.type=8/11的读写，不将错误堆叠混入普通库存。
  */
 package com.funsgamex.mxzg.inventory;
 
@@ -46,7 +46,10 @@ public class InventoryService {
     /** 原item表中所有精灵配置ID，只用于拒绝错误堆叠，不保存实例或维护第二份奖励映射。 */
     private final Set<Integer> spiritItemIds;
 
-    /** 在调用方事务内条件扣普通物品，余额不足返回false；精灵不能按配置数量扣除。 */
+    /** 原item表中全部冒险点类型配置ID，独立领域迁移后连合法0的错误堆叠也拒绝。 */
+    private final Set<Integer> tavernItemIds;
+
+    /** 在调用方事务内条件扣普通物品，余额不足返回false；精灵和冒险点不能从堆叠扣除。 */
     public boolean debit(String roleId, int itemId, long amount) {
         if (amount <= 0) throw new IllegalArgumentException("Nonpositive inventory debit");
         requireStackItem(itemId);
@@ -56,13 +59,14 @@ public class InventoryService {
         return changed;
     }
 
-    /** 注入持久化、角色锁和同步出口，从可信item表读取精灵类型边界；缺表或坏结构拒绝启动。 */
+    /** 注入持久化、角色锁和同步出口，从可信item表读取独立领域类型边界；坏结构拒绝启动。 */
     public InventoryService(JdbcTemplate jdbc, AssetSyncService sync, ObjectMapper mapper,
                             RoleRepository roles) {
         this.jdbc = jdbc;
         this.sync = sync;
         this.roles = roles;
         var ids = new HashSet<Integer>();
+        var points = new HashSet<Integer>();
         try (var input = getClass().getResourceAsStream("/gameplay/item.json")) {
             if (input == null) {
                 throw new IllegalStateException("普通库存缺少物品类型配置");
@@ -72,10 +76,12 @@ public class InventoryService {
                 throw new IllegalStateException("普通库存物品类型配置无效");
             }
             for (var row : rows) {
-                if (row.path("type").asInt() == 8) {
+                int type = row.path("type").asInt();
+                if (type == 8 || type == 11) {
+                    var target = type == 8 ? ids : points;
                     if (!row.path("idx").isIntegralNumber() || !row.path("idx").canConvertToInt()
-                            || row.path("idx").asInt() <= 0 || !ids.add(row.path("idx").asInt())) {
-                        throw new IllegalStateException("精灵物品类型配置无效");
+                            || row.path("idx").asInt() <= 0 || !target.add(row.path("idx").asInt())) {
+                        throw new IllegalStateException("独立领域物品类型配置无效");
                     }
                 }
             }
@@ -83,21 +89,23 @@ public class InventoryService {
             throw new IllegalStateException("普通库存物品类型配置读取失败", failure);
         }
         spiritItemIds = Set.copyOf(ids);
+        tavernItemIds = Set.copyOf(points);
     }
 
-    /** 读取普通堆叠并保留身份；发现精灵错误记录拒绝整包，不静默隐藏或猜补随机属性。 */
+    /** 读取普通堆叠并保留身份；先校验全部记录，独立领域错误堆叠即使数量为0也拒绝整包。 */
     public List<Item> list(String roleId) {
-        var items = jdbc.query("SELECT item_id,quantity,instance_id FROM game_inventory WHERE role_id=? AND quantity>0 ORDER BY item_id",
-            (row,index) -> new Item(row.getInt(1), row.getLong(2), row.getString(3)), roleId);
-        if (items.stream().anyMatch(item -> spiritItemIds.contains(item.itemId()))) {
-            throw new IllegalStateException("普通库存包含错误精灵堆叠，不能替代独立实例");
+        var items = jdbc.query("SELECT item_id,quantity,instance_id FROM game_inventory WHERE role_id=? ORDER BY item_id",
+                this::readStored, roleId);
+        if (items.stream().anyMatch(item -> spiritItemIds.contains(item.itemId())
+                || tavernItemIds.contains(item.itemId()))) {
+            throw new IllegalStateException("普通库存包含独立领域错误堆叠，不能替代精灵实例或冒险点");
         }
-        return items;
+        return items.stream().filter(item -> item.quantity() > 0).toList();
     }
 
     /**
      * 在调用方事务内先锁真实角色，再精确增加普通库存并返回本次实际到账数量及稳定身份。
-     * 精灵必须经独立实例入口；旧记录保留原ID，即使余额为0也不替换身份。
+     * 精灵和冒险点必须经所属领域入口；普通旧记录保留原ID，即使余额为0也不替换身份。
      * @throws ArithmeticException 新余额超出long范围时拒绝，库存和同步版本均不写入
      * @throws IllegalStateException 缺事务、旧记录损坏或写入行数异常时拒绝，由外层处理整体回滚
      */
@@ -129,7 +137,7 @@ public class InventoryService {
 
     /**
      * 只读指定普通库存记录，包含合法零余额；不存在返回空，损坏记录拒绝，不清理库存或推进版本。
-     * 精灵仍由实例入口读取；需要一致余额的业务须在自己的角色锁事务内调用。
+     * 精灵和冒险点由所属领域读取；需要一致余额的业务须在自己的角色锁事务内调用。
      */
     public Optional<Item> find(String roleId, int itemId) {
         requireStackItem(itemId);
@@ -153,10 +161,13 @@ public class InventoryService {
         return new Item(row.getInt("item_id"), quantity, instanceId);
     }
 
-    /** 按可信配置拒绝全部精灵类型，包含本批尚未支持生成的其他精灵配置。 */
+    /** 按可信配置拒绝全部精灵和冒险点类型，不能通过普通库存绕过独立领域规则。 */
     private void requireStackItem(int itemId) {
         if (spiritItemIds.contains(itemId)) {
             throw new IllegalArgumentException("精灵必须按独立实例处理：" + itemId);
+        }
+        if (tavernItemIds.contains(itemId)) {
+            throw new IllegalArgumentException("冒险点必须由酒馆领域处理：" + itemId);
         }
     }
 }

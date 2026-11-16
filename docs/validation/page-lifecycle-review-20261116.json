@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-16",
+  "branch": "hao",
+  "head": "d4a9c4f1afe1e71b4ae6a845390a520d6d3950e9",
+  "objective": "检查页面切换及前后台断线后的布阵草稿、战斗结算和重复反馈",
+  "businessSourceChangedThisBatch": false,
+  "changes": [
+    "新增真实通信/账号/统一资产/业务Controller组合专项，复用既有框架，不镜像恢复算法",
+    "真实FormationView/Prefab专项补未保存草稿、筛选、英雄选择与关闭重开断言",
+    "统一检查入口登记page-lifecycle-recovery，更新当前进度、恢复矩阵和维护说明"
+  ],
+  "verification": {
+    "newIntegrationCases": 7,
+    "newUnsavedDraftPrefabCase": 1,
+    "passedSuites": [
+      "formation-view",
+      "page-lifecycle-recovery",
+      "formation-recovery",
+      "game-socket",
+      "main-chapter",
+      "main-chapter-settlement",
+      "main-chapter-entry-recovery",
+      "reward-controller",
+      "reward-binding",
+      "remake-navigation"
+    ],
+    "strictCreatorTypeCheckPassed": true,
+    "previewRecord": "docs/validation/page-lifecycle-preview-20261116.json",
+    "javaMavenRun": false,
+    "ownedHostStopped": true,
+    "runtimeProbeRemoved": true
+  },
+  "integrationLimits": [
+    "第7条是RewardController/Model队列及展示能力任务去重，实际RewardBinding与窗口由本机预览另验",
+    "通信暂停只调用生产setBackground；宿主setReady由测试单独显式控制",
+    "受控通信不替代真实服务端事务或目标平台运行"
+  ],
+  "scope": {
+    "gameplayExpanded": false,
+    "claimEntryEnabled": false,
+    "newProtocol": false,
+    "newPrefab": false,
+    "centralBuild": false,
+    "committed": false,
+    "pushed": false,
+    "mergedMain": false
+  },
+  "remaining": [
+    "目标平台实际OS前后台、长时弱网/掉线重试及真机验证",
+    "统计/详情叠窗和更多切页时点按实际目标补验",
+    "跨重启且pending已清、原编号消失的历史主线反馈需另定持久意图边界"
+  ],
+  "sourceFingerprints": [
+    {
+      "path": "client/assets/scripts/app/remake/RemakeApp.ts",
+      "sha256": "b1e2d0ad06231ef9cd7a2fa3835f39b83d99dd11b5e81d95391a407165ee0b14"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/AssetStateBinding.ts",
+      "sha256": "2ef1599c5e6776fdc532bd6e28a0418f88aa42a60107725be5854972598a2334"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/RewardBinding.ts",
+      "sha256": "d94d765ef94ccb36da3ba949e74db392c7310e98667c3d0f8a7addd5604f1b8e"
+    },
+    {
+      "path": "client/assets/scripts/platform/GameSocketClient.ts",
+      "sha256": "1f47a876bdc0b2da1281a233b88bb5656a4b757d3e55c52c9b82aad05d3f2e5d"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/FormationController.ts",
+      "sha256": "a972335ae815d1ed89c6f24f25009f72a8e3e23669fab7fa10ee200097958ef7"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/ui/FormationView.ts",
+      "sha256": "6fe2be014a3bc36bddd1eceb803583a3ddd9fa3d138a6e07328abc5ba395032a"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/MainChapterController.ts",
+      "sha256": "d355bd66c0d7805d628280891f6600f06d2670277ce0b022a52ef8be7b4bcfa4"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/MainChapterModel.ts",
+      "sha256": "7808572b429b5ed439cfd211dcb197a920eef041cf18db4b005dba902df6b872"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/MainChapterView.ts",
+      "sha256": "c54ee2cdc3bcf13a2599f0f984c5ec469eac1754785d2182d9e304dbe722b3f4"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/MainChapterBattleView.ts",
+      "sha256": "991785d923c8c4d134d3551411fb34a299ef1273ab1e4591a4f636fac35f2167"
+    },
+    {
+      "path": "client/tools/page-lifecycle-recovery-check.ts",
+      "sha256": "5f64f377263b66c0e8561374597c3133416347aa9f9c4a240a6cdd91cec8841c"
+    },
+    {
+      "path": "client/tools/formation-view-check.ts",
+      "sha256": "3216191d3c1b6d39fd6423cb9d1c3982d181c974431bfb7896091a6cc4902859"
+    }
+  ]
+}

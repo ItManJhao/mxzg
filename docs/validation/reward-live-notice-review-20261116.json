@@ -1,0 +1,683 @@
+{
+  "date": "2026-11-16",
+  "run": "31b761183d1349a98c4e029797643f68",
+  "scope": "真实JavaWS + 新客户端 + 原生IDB",
+  "result": "PASS",
+  "cases": [
+    {
+      "case": "idle_direct",
+      "original": {
+        "schemaVersion": 1,
+        "requestId": "67a41b17-1aaf-4268-b880-a75810f6dc29",
+        "expectedOperationVersion": 1
+      },
+      "receipt": {
+        "requestId": "67a41b17-1aaf-4268-b880-a75810f6dc29",
+        "receiptId": "c2fe727d-cb49-4db4-a95b-7a357ce69fbe",
+        "beforeOperationVersion": 1,
+        "afterOperationVersion": 2,
+        "assetRevision": 3,
+        "committedAtSeconds": 1794812788,
+        "previousStartedAtSeconds": 1794812362,
+        "seconds": 426,
+        "theoreticalRewards": [
+          {
+            "itemId": 900001,
+            "quantity": 1400
+          },
+          {
+            "itemId": 900002,
+            "quantity": 3
+          },
+          {
+            "itemId": 900003,
+            "quantity": 70
+          },
+          {
+            "itemId": 900101,
+            "quantity": 175
+          },
+          {
+            "itemId": 900102,
+            "quantity": 1
+          },
+          {
+            "itemId": 900401,
+            "quantity": 77
+          },
+          {
+            "itemId": 1001001,
+            "quantity": 1
+          },
+          {
+            "itemId": 1003001,
+            "quantity": 1
+          }
+        ],
+        "actual": {
+          "roleId": "20c10165-3b90-464d-b2bf-5d00f066a1b2",
+          "items": [
+            {
+              "itemId": 900001,
+              "requested": 1400,
+              "credited": 1400,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900002,
+              "requested": 3,
+              "credited": 3,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900003,
+              "requested": 70,
+              "credited": 70,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900101,
+              "requested": 175,
+              "credited": 175,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900102,
+              "requested": 1,
+              "credited": 1,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900401,
+              "requested": 77,
+              "credited": 77,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 1001001,
+              "requested": 1,
+              "credited": 1,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 1003001,
+              "requested": 1,
+              "credited": 1,
+              "ignored": 0,
+              "reason": "NONE"
+            }
+          ],
+          "wallet": {
+            "goldBefore": 0,
+            "diamondsBefore": 0,
+            "goldAfter": 1400,
+            "diamondsAfter": 3
+          },
+          "bonuses": [],
+          "spirits": {
+            "items": [],
+            "schemaVersion": 1
+          },
+          "timedItems": []
+        }
+      },
+      "current": {
+        "assetRevision": 3,
+        "operationVersion": 2,
+        "requestMode": "ENABLED",
+        "startedAt": 1794812788,
+        "wallet": {
+          "gold": 1400,
+          "diamonds": 3
+        }
+      },
+      "requests": [
+        {
+          "name": "session.login",
+          "frameId": "e642eb26-f889-4719-9bbb-e774f748a5bb"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "3f9dd243-39dc-4247-b430-3e2b698f8371",
+          "requestId": "67a41b17-1aaf-4268-b880-a75810f6dc29"
+        },
+        {
+          "name": "chapter.idle.claim",
+          "frameId": "40cad1da-11a8-4897-979e-f50bc0492e1a",
+          "requestId": "67a41b17-1aaf-4268-b880-a75810f6dc29",
+          "expectedOperationVersion": 1
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "1f454974-c3e1-4e73-9fa2-1c3272da5c89",
+          "requestId": "67a41b17-1aaf-4268-b880-a75810f6dc29"
+        }
+      ],
+      "dropped": [],
+      "stateEvents": 1,
+      "connections": 1,
+      "rewardFeedback": {
+        "accepted": 1,
+        "shown": [
+          {
+            "receiptId": "c2fe727d-cb49-4db4-a95b-7a357ce69fbe",
+            "items": [
+              {
+                "itemId": 900001,
+                "credited": 1400
+              },
+              {
+                "itemId": 900002,
+                "credited": 3
+              },
+              {
+                "itemId": 900003,
+                "credited": 70
+              },
+              {
+                "itemId": 900101,
+                "credited": 175
+              },
+              {
+                "itemId": 900102,
+                "credited": 1
+              },
+              {
+                "itemId": 900401,
+                "credited": 77
+              },
+              {
+                "itemId": 1001001,
+                "credited": 1
+              },
+              {
+                "itemId": 1003001,
+                "credited": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "case": "idle_lost_receipt",
+      "original": {
+        "schemaVersion": 1,
+        "requestId": "7311f466-2876-44a8-9b3a-e88754bd1622",
+        "expectedOperationVersion": 1
+      },
+      "receipt": {
+        "requestId": "7311f466-2876-44a8-9b3a-e88754bd1622",
+        "receiptId": "eba1bb1e-474e-4f89-ba6f-31f0a07d5647",
+        "beforeOperationVersion": 1,
+        "afterOperationVersion": 2,
+        "assetRevision": 3,
+        "committedAtSeconds": 1794812788,
+        "previousStartedAtSeconds": 1794812362,
+        "seconds": 426,
+        "theoreticalRewards": [
+          {
+            "itemId": 900001,
+            "quantity": 1400
+          },
+          {
+            "itemId": 900002,
+            "quantity": 2
+          },
+          {
+            "itemId": 900003,
+            "quantity": 70
+          },
+          {
+            "itemId": 900101,
+            "quantity": 175
+          },
+          {
+            "itemId": 900401,
+            "quantity": 77
+          },
+          {
+            "itemId": 1003001,
+            "quantity": 1
+          },
+          {
+            "itemId": 1004001,
+            "quantity": 1
+          }
+        ],
+        "actual": {
+          "roleId": "1aa16e92-28f8-4e3f-9d51-6bde477b32fe",
+          "items": [
+            {
+              "itemId": 900001,
+              "requested": 1400,
+              "credited": 1400,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900002,
+              "requested": 2,
+              "credited": 2,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900003,
+              "requested": 70,
+              "credited": 70,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900101,
+              "requested": 175,
+              "credited": 175,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900401,
+              "requested": 77,
+              "credited": 77,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 1003001,
+              "requested": 1,
+              "credited": 1,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 1004001,
+              "requested": 1,
+              "credited": 1,
+              "ignored": 0,
+              "reason": "NONE"
+            }
+          ],
+          "wallet": {
+            "goldBefore": 0,
+            "diamondsBefore": 0,
+            "goldAfter": 1400,
+            "diamondsAfter": 2
+          },
+          "bonuses": [],
+          "spirits": {
+            "items": [],
+            "schemaVersion": 1
+          },
+          "timedItems": []
+        }
+      },
+      "current": {
+        "assetRevision": 3,
+        "operationVersion": 2,
+        "requestMode": "ENABLED",
+        "startedAt": 1794812788,
+        "wallet": {
+          "gold": 1400,
+          "diamonds": 2
+        }
+      },
+      "requests": [
+        {
+          "name": "session.login",
+          "frameId": "b4e6f620-30a7-41bd-ac55-cbfef2d383bc"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "525aad2d-c44c-4aa4-8ad4-fb547fba8930",
+          "requestId": "7311f466-2876-44a8-9b3a-e88754bd1622"
+        },
+        {
+          "name": "chapter.idle.claim",
+          "frameId": "77b7a9ee-4969-4b8c-a30e-d2bf4936c3c3",
+          "requestId": "7311f466-2876-44a8-9b3a-e88754bd1622",
+          "expectedOperationVersion": 1
+        },
+        {
+          "name": "session.authenticate",
+          "frameId": "2718fb4d-d2eb-46e9-8abf-bfffe4ca0c2b"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "00efbb06-c65d-4198-8e84-ce3101085fd7",
+          "requestId": "7311f466-2876-44a8-9b3a-e88754bd1622"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "be261578-2bc5-4127-8a19-867515f13995",
+          "requestId": "7311f466-2876-44a8-9b3a-e88754bd1622"
+        }
+      ],
+      "dropped": [
+        "chapter.idle.claim"
+      ],
+      "stateEvents": 1,
+      "connections": 2,
+      "rewardFeedback": {
+        "accepted": 1,
+        "shown": [
+          {
+            "receiptId": "eba1bb1e-474e-4f89-ba6f-31f0a07d5647",
+            "items": [
+              {
+                "itemId": 900001,
+                "credited": 1400
+              },
+              {
+                "itemId": 900002,
+                "credited": 2
+              },
+              {
+                "itemId": 900003,
+                "credited": 70
+              },
+              {
+                "itemId": 900101,
+                "credited": 175
+              },
+              {
+                "itemId": 900401,
+                "credited": 77
+              },
+              {
+                "itemId": 1003001,
+                "credited": 1
+              },
+              {
+                "itemId": 1004001,
+                "credited": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "case": "idle_lost_state",
+      "original": {
+        "schemaVersion": 1,
+        "requestId": "cc0f3fe0-b773-4631-b5ac-34b5ebb5764d",
+        "expectedOperationVersion": 1
+      },
+      "receipt": {
+        "requestId": "cc0f3fe0-b773-4631-b5ac-34b5ebb5764d",
+        "receiptId": "a16eb53a-30ec-4a4d-914d-d287015a4b15",
+        "beforeOperationVersion": 1,
+        "afterOperationVersion": 2,
+        "assetRevision": 3,
+        "committedAtSeconds": 1794812788,
+        "previousStartedAtSeconds": 1794812362,
+        "seconds": 426,
+        "theoreticalRewards": [
+          {
+            "itemId": 900001,
+            "quantity": 1400
+          },
+          {
+            "itemId": 900002,
+            "quantity": 1
+          },
+          {
+            "itemId": 900003,
+            "quantity": 70
+          },
+          {
+            "itemId": 900101,
+            "quantity": 175
+          },
+          {
+            "itemId": 900102,
+            "quantity": 1
+          },
+          {
+            "itemId": 900401,
+            "quantity": 77
+          }
+        ],
+        "actual": {
+          "roleId": "41fbbde1-5dad-419c-a4f0-da5ea058c5c5",
+          "items": [
+            {
+              "itemId": 900001,
+              "requested": 1400,
+              "credited": 1400,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900002,
+              "requested": 1,
+              "credited": 1,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900003,
+              "requested": 70,
+              "credited": 70,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900101,
+              "requested": 175,
+              "credited": 175,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900102,
+              "requested": 1,
+              "credited": 1,
+              "ignored": 0,
+              "reason": "NONE"
+            },
+            {
+              "itemId": 900401,
+              "requested": 77,
+              "credited": 77,
+              "ignored": 0,
+              "reason": "NONE"
+            }
+          ],
+          "wallet": {
+            "goldBefore": 0,
+            "diamondsBefore": 0,
+            "goldAfter": 1400,
+            "diamondsAfter": 1
+          },
+          "bonuses": [],
+          "spirits": {
+            "items": [],
+            "schemaVersion": 1
+          },
+          "timedItems": []
+        }
+      },
+      "current": {
+        "assetRevision": 3,
+        "operationVersion": 2,
+        "requestMode": "ENABLED",
+        "startedAt": 1794812788,
+        "wallet": {
+          "gold": 1400,
+          "diamonds": 1
+        }
+      },
+      "requests": [
+        {
+          "name": "session.login",
+          "frameId": "c67a4ec1-739a-4ba2-a368-efde7c339706"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "070d312d-1477-4332-99a7-071b83663b55",
+          "requestId": "cc0f3fe0-b773-4631-b5ac-34b5ebb5764d"
+        },
+        {
+          "name": "chapter.idle.claim",
+          "frameId": "f24d5db5-3986-42c8-840d-234c3d50ad2b",
+          "requestId": "cc0f3fe0-b773-4631-b5ac-34b5ebb5764d",
+          "expectedOperationVersion": 1
+        },
+        {
+          "name": "session.authenticate",
+          "frameId": "399a4da5-4320-42e9-9c6d-569b3766cf43"
+        },
+        {
+          "name": "chapter.idle.claim.status",
+          "frameId": "75973f82-8f41-4bd3-98f3-deb792e796f2",
+          "requestId": "cc0f3fe0-b773-4631-b5ac-34b5ebb5764d"
+        }
+      ],
+      "dropped": [
+        "state.changed"
+      ],
+      "stateEvents": 1,
+      "connections": 2,
+      "rewardFeedback": {
+        "accepted": 1,
+        "shown": [
+          {
+            "receiptId": "a16eb53a-30ec-4a4d-914d-d287015a4b15",
+            "items": [
+              {
+                "itemId": 900001,
+                "credited": 1400
+              },
+              {
+                "itemId": 900002,
+                "credited": 1
+              },
+              {
+                "itemId": 900003,
+                "credited": 70
+              },
+              {
+                "itemId": 900101,
+                "credited": 175
+              },
+              {
+                "itemId": 900102,
+                "credited": 1
+              },
+              {
+                "itemId": 900401,
+                "credited": 77
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "databaseSummary": [
+    {
+      "id": "20c10165-3b90-464d-b2bf-5d00f066a1b2",
+      "login_account": "idle_direct",
+      "gold": 1400,
+      "diamonds": 3,
+      "role_level": 1,
+      "role_experience": 70,
+      "asset_revision": 5,
+      "started_at": 1794812788,
+      "operation_version": 2,
+      "receipt_count": 1,
+      "stack_rows": 5,
+      "timed_rows": 0,
+      "spirit_rows": 0
+    },
+    {
+      "id": "1aa16e92-28f8-4e3f-9d51-6bde477b32fe",
+      "login_account": "idle_lost_receipt",
+      "gold": 1400,
+      "diamonds": 2,
+      "role_level": 1,
+      "role_experience": 70,
+      "asset_revision": 3,
+      "started_at": 1794812788,
+      "operation_version": 2,
+      "receipt_count": 1,
+      "stack_rows": 4,
+      "timed_rows": 0,
+      "spirit_rows": 0
+    },
+    {
+      "id": "41fbbde1-5dad-419c-a4f0-da5ea058c5c5",
+      "login_account": "idle_lost_state",
+      "gold": 1400,
+      "diamonds": 1,
+      "role_level": 1,
+      "role_experience": 70,
+      "asset_revision": 3,
+      "started_at": 1794812788,
+      "operation_version": 2,
+      "receipt_count": 1,
+      "stack_rows": 3,
+      "timed_rows": 0,
+      "spirit_rows": 0
+    },
+    {
+      "id": "13895004-4f21-41d0-8fb6-fab2af10d8ba",
+      "login_account": "idle_other",
+      "gold": 0,
+      "diamonds": 0,
+      "role_level": 1,
+      "role_experience": 0,
+      "asset_revision": 1,
+      "started_at": 1794812362,
+      "operation_version": 1,
+      "receipt_count": 0,
+      "stack_rows": 0,
+      "timed_rows": 0,
+      "spirit_rows": 0
+    },
+    {
+      "id": "95736fd8-e96b-44b7-a858-eb37ee151fb9",
+      "login_account": "idle_pending",
+      "gold": 0,
+      "diamonds": 0,
+      "role_level": 1,
+      "role_experience": 0,
+      "asset_revision": 1,
+      "started_at": 1794812362,
+      "operation_version": 1,
+      "receipt_count": 0,
+      "stack_rows": 0,
+      "timed_rows": 0,
+      "spirit_rows": 0
+    },
+    {
+      "id": "867a3a75-183f-437f-8bd6-2a5edf6ffd15",
+      "login_account": "idle_reload",
+      "gold": 0,
+      "diamonds": 0,
+      "role_level": 1,
+      "role_experience": 0,
+      "asset_revision": 1,
+      "started_at": 1794812362,
+      "operation_version": 1,
+      "receipt_count": 0,
+      "stack_rows": 0,
+      "timed_rows": 0,
+      "spirit_rows": 0
+    }
+  ],
+  "cleanup": {
+    "run": "31b761183d1349a98c4e029797643f68",
+    "stopped": true,
+    "scope": "本次独立Java与前端/夹具宿主均已停止；独立H2和无凭证证据保留"
+  }
+}

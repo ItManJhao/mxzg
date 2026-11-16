@@ -124,6 +124,8 @@ async function main(): Promise<void> {
     }, "popup", () => new Promise(resolve => { finishConfiguration = resolve; }));
     const configurationPending = ui.open(ConfigCancelledDialog);
     const configurationCancelled = assert.rejects(configurationPending, UIManager.isOpenCancelled);
+    // 弹窗先登记可取消的打开任务，再在微任务中准备配置；等真实准备进入后再模拟中途取消。
+    await flush();
     ui.closeById("config-cancelled");
     finishConfiguration();
     await configurationCancelled;
@@ -193,6 +195,7 @@ async function main(): Promise<void> {
         () => new Promise(resolve => { finishLoad = resolve; }));
     const delayed = ui.open(DelayedDialog);
     const delayedResult = assert.rejects(delayed, UIManager.isOpenCancelled);
+    await flush();
     ui.closeById("shared-delayed");
     finishLoad(new Prefab());
     await delayedResult;

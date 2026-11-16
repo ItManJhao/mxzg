@@ -1,0 +1,117 @@
+{
+  "date": "2026-11-16",
+  "branch": "hao",
+  "head": "d4a9c4f1afe1e71b4ae6a845390a520d6d3950e9",
+  "objective": "检查战报统计与详情叠窗在长断线、多次重连时的关闭、迟到回调和重复打开",
+  "fixedFindings": [
+    "ChapterEnd关闭时无条件closeById误关其他来源BagInfoView",
+    "准备中重复打开忽略末次参数，调用方open.then(runOpen)旧续段反而覆盖后来选择",
+    "Reward/Bag/Hero子详情缺少当前父页归属取消，父关闭后资源可能迟到挂载",
+    "BattleDetail重复置顶重复登记按钮及视口监听",
+    "onOpen同步关闭后错过ready取消出口会等待永不兑现的准备"
+  ],
+  "implementation": [
+    "在现有UIManager增加openChild和closeChildren，单实例Popup保存当前打开意图，普通open可转归属",
+    "BaseView.onViewClose复用原EventScope登记父显示期清理；已关闭owner先拒绝，子窗关闭/转交主动退订",
+    "准备期合并实例但应用最后参数；epoch、job及intent身份隔离旧成功/失败/finally",
+    "结算和奖励窗、背包三类详情、英雄技能窗复用同一归属入口，删除重复runOpen和按页面名误关",
+    "统计静态监听onBind一次，仍以独立open保持结算倒计时关闭后可读"
+  ],
+  "verification": {
+    "overlayLifecycleCases": 10,
+    "pageLifecycleCases": 9,
+    "newPageReconnectCases": 2,
+    "passedSuites": [
+      "overlay-lifecycle",
+      "modal-layer",
+      "remake-navigation",
+      "main-chapter",
+      "reward-view",
+      "item-info-view",
+      "equipment-info-view",
+      "hero",
+      "hero-detail",
+      "hero-equipment",
+      "backpack",
+      "feature-navigation",
+      "confirm-view",
+      "reward-binding",
+      "page-lifecycle-recovery"
+    ],
+    "strictCreatorTypeCheckPassed": true,
+    "mutationEvidence": "临时编译输入移除waitResidentReady入口关闭保护，第10组有限微任务反例按预期失败；工作区源码未回退",
+    "previewRecord": "docs/validation/overlay-lifecycle-preview-20261116.json",
+    "previewPending": false,
+    "javaMavenRun": false,
+    "previewScope": "两次真实墙钟CDP离线118.0458秒/97.5371秒，统计/叠窗/技能9次主动重连；最后追加同步onOpen关闭保护仅由10组专项覆盖，Creator编译尚未包含该保护",
+    "ownedHostStopped": true
+  },
+  "scope": {
+    "claimEntryEnabled": false,
+    "newGameplay": false,
+    "newProtocol": false,
+    "newPrefab": false,
+    "uuidChanged": false,
+    "newResourceList": false,
+    "centralBuild": false,
+    "committed": false,
+    "pushed": false,
+    "mergedMain": false
+  },
+  "sourceFingerprints": [
+    {
+      "path": "client/assets/scripts/framework/ui/BaseView.ts",
+      "sha256": "d222fd9b307bdfddad2afa0f11c5d64534dfd8588e92bbada476a315c1335a24"
+    },
+    {
+      "path": "client/assets/scripts/framework/ui/UIManager.ts",
+      "sha256": "fffa6919bb671db88552f22f8a2dfafcb7326d0676ce449873f83f39a0f7c991"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/BattleDetailLayer.ts",
+      "sha256": "5332ac67ddc438d35f7fab78010ec77df652c348f23a7cab63414261225c3ac4"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/ChapterEndView.ts",
+      "sha256": "6bc2f6d62cd9681d2b127a1fe646dec175f02e932f76800c351994e56e839913"
+    },
+    {
+      "path": "client/assets/scripts/features/reward/ui/RewardView.ts",
+      "sha256": "a4492654d0366080b3efb4fe6024fe68c3a9e1606e1de660e9f98cab9021e1b7"
+    },
+    {
+      "path": "client/assets/scripts/features/bag/ui/BagView.ts",
+      "sha256": "c86c0ef95ee8efb0c1c517bc3219440730d1311c61884a94c775e03bb3320266"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/ui/HeroInfoView.ts",
+      "sha256": "9b22cc46823be7c62474d8e9afc4fed4dc9a4208f3794496dc58fddcd408c238"
+    },
+    {
+      "path": "client/tools/overlay-lifecycle-check.ts",
+      "sha256": "7e698a4a842f5244df2114b17231f6a969edb08fb274a650a2f9b1c10584d187"
+    },
+    {
+      "path": "client/tools/page-lifecycle-recovery-check.ts",
+      "sha256": "ace3afbe0ec634fa7ffc5dc59400ef72c35ebdd60e0b0caafc93083a28595ae2"
+    },
+    {
+      "path": "client/tools/modal-layer-check.ts",
+      "sha256": "b71e6e1ac8b93fc20e688f8ba62cc724ccc2afa3a3afec3ba399f8e7249d67ad"
+    },
+    {
+      "path": "client/tools/remake-navigation-check.ts",
+      "sha256": "0c160639b623e978fcc87d552a039e4cf0fa9a0bf6fd071ddc5243f38e8434fa"
+    },
+    {
+      "path": "client/tools/equipment-info-view-check.ts",
+      "sha256": "7636ea480b7b32071f557874680b20c23fab50020b0f1a08fe80ad9ea4421449"
+    }
+  ],
+  "limitations": [
+    "受控资源、同步取消及连续BUSY鉴权失败由专项证明，不冒称真实CDN故障或真机验收",
+    "本机预览另行记录真实断线墙钟时长与连续重连，不能把1ms测试退避称为长断线",
+    "onOpen同步关闭新增保护仅专项覆盖，不将统计长断线画面当该边界已在Creator注入",
+    "MySQL、系统后台、APP/微信、小时级离线、进程崩溃和断电仍待按目标验证"
+  ]
+}

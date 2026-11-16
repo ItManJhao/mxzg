@@ -40,9 +40,26 @@ message Frame {
     ChapterIdleClaimStatusRequest chapter_idle_claim_status_request = 32;
     ChapterIdleClaimReceipt chapter_idle_claim_receipt = 33;
     ChapterIdleClaimStatus chapter_idle_claim_status = 34;
+    RewardNotice reward_notice = 35;
   }
 }
 message Empty {}
+// 通用发奖反馈仅描述已提交的实际到账，不更新客户端资产；资产仍走Snapshot。
+message RewardNotice {
+  required uint32 schema_version = 1;
+  // 使用业务持久成功回执ID，和历史查询恢复共用同一个展示身份。
+  required string receipt_id = 2;
+  required string role_id = 3;
+  required int64 asset_revision = 4;
+  // SILENT / POPUP / TIPS；当前通用展示不接受客户端上报或自行猜测模式。
+  required string mode = 5;
+  repeated RewardNoticeItem items = 6;
+}
+// credited为本次真正到账的正安全整数，含已合并的升级附赠，不是理论量或钱包余额。
+message RewardNoticeItem {
+  required uint32 item_id = 1;
+  required int64 credited = 2;
+}
 // 本地身份交换只在 local 后端启用，生产渠道认证另行接入。
 message Login { required string account = 1; required string server_id = 2; required string client_instance_id = 3; }
 message Session { required string access_token = 1; required string expires_at = 2; }
@@ -127,6 +144,15 @@ message Snapshot {
   optional MainChapterIdleState main_chapter_idle = 9;
   // 精灵独立实例；缺失表示未同步，不能混入按item_id唯一的普通库存。
   optional SpiritInventory spirit_inventory = 10;
+  // 独立持久冒险点；缺失表示尚未同步，合法0与超上限余额均按服务端原值保留。
+  optional TavernPointState tavern_points = 11;
+}
+
+// 旧酒馆冒险点只读状态，不开放任务、刷新或领取；上限来自同次最高已通关关卡。
+message TavernPointState {
+  required uint32 schema_version = 1;
+  required int64 adventure_count = 2;
+  required int64 limit = 3;
 }
 
 // 服务端最终容量已经包含 VIP 加成；缺失表示尚未同步，不能当作零容量。

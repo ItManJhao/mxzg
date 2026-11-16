@@ -75,9 +75,15 @@ async function checkIdentityCleanup(): Promise<void> {
     hostId: "identity-modal", cache: false, allowMultiple: false,
     load: () => new Promise(resolve => { finishPopup = resolve; }) }));
   const opening = ui.open(IdentityPopup);
+  const openingCancelled = assert.rejects(opening, UIManager.isOpenCancelled);
+  // 弹窗任务先登记再进入加载；等真实加载口被调用，才模拟旧身份在准备期间退出。
+  for (let turn = 0; turn < 20 && !finishPopup; turn++) {
+    await Promise.resolve();
+  }
+  assert.equal(typeof finishPopup, "function");
   ui.closeById("identity-popup");
   finishPopup(prefab(IdentityPopup));
-  await assert.rejects(opening, UIManager.isOpenCancelled);
+  await openingCancelled;
   assert.equal(ui.snapshot().residents, 0, "迟到的旧身份弹窗不得重新出现");
   nav.dispose();
   for (const stop of unregister) stop();

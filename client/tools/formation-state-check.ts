@@ -1,4 +1,4 @@
-/** 阵容模块回归：不创建View，验证回执、统一同步、关窗后请求保留与并发提交。 */
+/** 阵容模块回归：验证原请求重试、ACK与统一状态确认、有界鉴权及页面关闭后的模块存活。 */
 import { strict as assert } from "node:assert";
 import { FormationController } from "../assets/scripts/features/hero/FormationController";
 import { FormationSaveModel } from "../assets/scripts/features/hero/FormationSaveModel";
@@ -26,22 +26,41 @@ function receipt(body: FormationSaveRequest): GameFrame {
         id: "response", ok: true, body: { requestId: body.requestId, version: 1 } }));
 }
 /** 每个用例使用独立模块和Model，不依赖账号或UI。 */
-function setup(send: (body: FormationSaveRequest) => Promise<GameFrame>) {
+function setup(send: (body: FormationSaveRequest) => Promise<GameFrame>,
+    refreshSnapshot: Parameters<FormationController["configure"]>[1] = null) {
     const heroes = new HeroRosterModel(), saves = new FormationSaveModel();
     heroes.reset(); sync(heroes, 0);
     const controller = new FormationController(saves, heroes);
     controller.configure(async (body, received, failed) => {
         try { received(await send(body)); } catch (error) { failed(error); }
-    }); controller.initialize(); controller.resetSession();
+    }, refreshSnapshot); controller.initialize(); controller.resetSession();
     return { heroes, saves, controller };
 }
-/** 正常同步、未确认重试和并发业务边界分别检查。 */
+
+/** 等待本轮已登记任务进入交付口，不提前等待仍由用例控制的网络结果。 */
+async function settleTasks(): Promise<void> {
+    await new Promise<void>(resolve => setImmediate(resolve));
+}
+
+/** 分别检查ACK待同步、原编号重试、重复点击合并及每轮一次鉴权。 */
 async function main(): Promise<void> {
-    const p = setup(async body => receipt(body));
+    let directSaves = 0;
+    const p = setup(async body => {
+        directSaves++;
+        return receipt(body);
+    });
     await p.controller.save(draft);
     assert.equal(p.heroes.snapshot.mainFormation!.version, 0, "回执不能写权威Model");
-    assert(p.saves.snapshot.busy); assert.equal(p.saves.snapshot.acknowledged, 1);
+    assert(!p.saves.snapshot.busy, "未装配鉴权时须解除忙碌并保留明确重试入口");
+    assert.equal(p.saves.snapshot.acknowledged, 1);
+    const originalAck = p.saves.snapshot.pending;
+    assert(originalAck, "ACK后仍保留原意图直到权威状态确认");
+    await p.controller.save({ ...draft, slots: [] });
+    assert.equal(directSaves, 1, "ACK已知时重试不能再次保存或生成新请求");
+    assert.deepEqual(p.saves.snapshot.pending, originalAck);
     sync(p.heroes, 1); assert(!p.saves.snapshot.busy); assert.equal(p.saves.snapshot.message, "阵容已保存");
+    assert.equal(p.saves.snapshot.pending, null);
+    assert.equal(p.saves.snapshot.confirmedRequestId, originalAck.requestId);
     p.controller.dispose();
 
     let fail = true; const requests: FormationSaveRequest[] = [];
@@ -57,12 +76,55 @@ async function main(): Promise<void> {
 
     let finish!: (frame: GameFrame) => void, sent!: FormationSaveRequest, calls = 0;
     const late = setup(body => { sent = body; calls++; return new Promise(resolve => { finish = resolve; }); });
-    const first = late.controller.save(draft); await late.controller.save(draft); assert.equal(calls, 1);
+    const first = late.controller.save(draft);
+    const duplicate = late.controller.save(draft);
+    assert.equal(first, duplicate, "重复点击共享已登记任务");
+    await settleTasks();
+    assert.equal(calls, 1);
     finish(receipt(sent)); await first;
-    assert.equal(late.saves.snapshot.pending, null); assert.equal(late.saves.snapshot.acknowledged, 1);
+    assert.deepEqual(late.saves.snapshot.pending, sent);
+    assert.equal(late.saves.snapshot.acknowledged, 1);
     sync(late.heroes, 1); late.controller.dispose();
     assert.equal(EventDispatcher.instance.targetListenerCount(late.controller), 0);
     assert.equal("view" in late.controller, false); assert.equal("state" in late.controller, false);
-    console.log("PASS formation module: no View/draft, authoritative isolation, event-only refresh, pending survives window closure, original retry, concurrent submission guard");
+
+    let refreshes = 0;
+    let saveCalls = 0;
+    let recovered!: ReturnType<typeof setup>;
+    recovered = setup(async body => {
+        saveCalls++;
+        return receipt(body);
+    }, async (received, failed) => {
+        refreshes++;
+        if (refreshes === 1) {
+            failed(new Error("鉴权同步失败"));
+            return;
+        }
+        // 同步首包回调可立即发布名册事件；旧版首包不能递归开启下一轮鉴权。
+        sync(recovered.heroes, refreshes === 2 ? 0 : 1);
+        received();
+    });
+    try {
+        await recovered.controller.save(draft);
+        const pending = recovered.saves.snapshot.pending;
+        assert(pending);
+        assert.equal(refreshes, 1);
+        assert.equal(recovered.saves.snapshot.acknowledged, 1);
+        assert(!recovered.saves.snapshot.busy);
+        await recovered.controller.save({ ...draft, slots: [] });
+        assert.equal(refreshes, 2, "旧版首包每轮只鉴权一次");
+        assert.deepEqual(recovered.saves.snapshot.pending, pending);
+        assert.equal(recovered.saves.snapshot.acknowledged, 1);
+        assert(!recovered.saves.snapshot.busy);
+        await recovered.controller.save({ ...draft, slots: [] });
+        assert.equal(refreshes, 3);
+        assert.equal(saveCalls, 1, "失败、旧版首包及成功恢复均只重试鉴权");
+        assert.equal(recovered.saves.snapshot.pending, null);
+        assert.equal(recovered.saves.snapshot.acknowledged, null);
+        assert.equal(recovered.saves.snapshot.confirmedRequestId, pending.requestId);
+    } finally {
+        recovered.controller.dispose();
+    }
+    console.log("PASS formation module: authoritative isolation, original retry, shared task, ACK intent retention, one authentication per round, synchronous state recovery");
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

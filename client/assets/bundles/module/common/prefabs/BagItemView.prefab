@@ -53,6 +53,9 @@
       },
       {
         "__id__": 32
+      },
+      {
+        "__id__": 101
       }
     ],
     "_prefab": {
@@ -2364,5 +2367,24 @@
       "a": 255
     },
     "_id": ""
+  },
+  {
+    "__type__": "cc.UIOpacity",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 102
+    },
+    "_opacity": 255,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "76344309-53c5-420d-b663-c7c53ac646bc"
   }
 ]

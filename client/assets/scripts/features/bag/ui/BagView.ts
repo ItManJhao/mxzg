@@ -86,6 +86,10 @@ export class BagView extends BaseView<BagOpenArgs> {
     private tab: BagTabKind = "item";
     /** 当前选中的格子key（堆叠、期限或精灵实例）；条目消失、离开当前分类或关页后清空。 */
     private pickedId: string | null = null;
+    /** 本页最近选择的详情类型；同类交框架更新参数，换类型或关闭时只取消本页孩子。 */
+    private infoKind: "item" | "equip" | "spirit" | null = null;
+    /** 最近一次详情选择的本地意图引用；换选择或关闭即失效，旧失败不能清除新的选中项。 */
+    private infoIntent: object | null = null;
     /** 下次需隐藏过期格子的服务器秒，无期限格子时为无穷大。 */
     private nextExpiry = Infinity;
     /** 本页创建的分类组件，刷新时同步选中态，随页面节点销毁。 */
@@ -373,50 +377,31 @@ export class BagView extends BaseView<BagOpenArgs> {
         return BagItemCatalog.list(state.items, state.timedItems, this.tab, BagModel.instance.serverTimeSeconds(), state.spiritItems);
     }
 
-    /** 按真实实例和物品mode选择精灵/普通装备/通用详情；切换类型取消旧窗及在途加载，不按页签猜类型。 */
+    /** 按实例及物品mode选择本页所属的详情；同类参数交框架更新，换类型只取消本页旧孩子。 */
     private showInfo(item: Readonly<BagListItem>): void {
-        if (item.spirit) {
-            UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
-            UIManager.instance.closeById(UIRegistry.viewSpecOf(EquipmentInfoView)!.id);
-            const args = { key: item.key };
-            void UIManager.instance.open(SpiritInfoView, args).then(detail => {
-                if (!this.closed && this.pickedId === item.key) {
-                    detail.runOpen(args);
-                }
-            }).catch(error => {
-                if (!UIManager.isOpenCancelled(error) && !this.closed) {
-                    this.pickedId = null;
-                }
-            });
-            return;
+        const kind = item.spirit ? "spirit"
+            : GameConfig.instance.getConfig(GConfig.Item, item.itemId)?.mode === 1 ? "equip" : "item";
+        if (this.infoKind !== kind) {
+            this.dismissInfo();
+            this.infoKind = kind;
         }
-        UIManager.instance.closeById(UIRegistry.viewSpecOf(SpiritInfoView)!.id);
-        if (GameConfig.instance.getConfig(GConfig.Item, item.itemId)?.mode === 1) {
-            UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
-            const args = { key: item.key };
-            void UIManager.instance.open(EquipmentInfoView, args).then(detail => {
-                if (!this.closed && this.pickedId === item.key) {
-                    detail.runOpen(args);
-                }
-            }).catch(error => {
-                if (!UIManager.isOpenCancelled(error) && !this.closed) {
-                    this.pickedId = null;
-                }
-            });
-            return;
+        const intent = {};
+        this.infoIntent = intent;
+        const ui = UIManager.instance;
+        const opening = kind === "spirit" ? ui.openChild(this, SpiritInfoView, { key: item.key })
+            : kind === "equip" ? ui.openChild(this, EquipmentInfoView, { key: item.key })
+                : ui.openChild(this, BagInfoView, { source: "inventory", key: item.key, tab: this.tab });
+        void opening.catch(error => this.onInfoFailed(error, intent, item.key));
+    }
+
+    /** 只清理当前选择的真实打开失败；取消及旧意图不影响后来选中项，统一提示仍由UIManager负责。 */
+    private onInfoFailed(error: unknown, intent: object, key: string): void {
+        if (!this.closed && this.infoIntent === intent && this.pickedId === key
+            && !UIManager.isOpenCancelled(error)) {
+            this.pickedId = null;
+            this.infoKind = null;
+            this.infoIntent = null;
         }
-        UIManager.instance.closeById(UIRegistry.viewSpecOf(EquipmentInfoView)!.id);
-        const args = { source: "inventory" as const, key: item.key, tab: this.tab };
-        void UIManager.instance.open(BagInfoView, args).then(detail => {
-            if (!this.closed && this.pickedId === item.key) {
-                detail.runOpen(args);
-            }
-        }).catch(error => {
-            // 取消由页面管理器处理；真实加载失败也已在该边界统一记录和提示。
-            if (!UIManager.isOpenCancelled(error) && !this.closed) {
-                this.pickedId = null;
-            }
-        });
     }
 
     /** 到达下一件物品期限才重绘格子；关闭页面停止处理，不发补查或修改库存。 */
@@ -427,11 +412,11 @@ export class BagView extends BaseView<BagOpenArgs> {
         if (now !== null && now >= this.nextExpiry) this.refreshGrid();
     }
 
-    /** 关闭独立详情，连同尚未完成的打开一起取消；不直接销毁其他窗口节点。 */
+    /** 关闭本页持有的详情及在途打开，作废选择意图；不关闭其他页面后来接管的同类窗口。 */
     private dismissInfo(): void {
-        UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
-        UIManager.instance.closeById(UIRegistry.viewSpecOf(SpiritInfoView)!.id);
-        UIManager.instance.closeById(UIRegistry.viewSpecOf(EquipmentInfoView)!.id);
+        this.infoKind = null;
+        this.infoIntent = null;
+        UIManager.instance.closeChildren(this);
     }
 
     /** 写入页面提示日志并交由 UIManager 展示。 */

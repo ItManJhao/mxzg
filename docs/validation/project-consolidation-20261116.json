@@ -1,0 +1,543 @@
+{
+  "date": "2026-11-16",
+  "timezone": "Asia/Shanghai",
+  "branch": "hao",
+  "baseCommit": "d4a9c4f1afe1e71b4ae6a845390a520d6d3950e9",
+  "scope": [
+    "汇总本地通用奖励、冒险点及断线恢复成果，按负责人授权交付hao并合并main",
+    "收敛当前进度、计划、交接及后台维护文档",
+    "只修有证据的旧调用和资产分发冲突，不扩展玩法"
+  ],
+  "fixes": [
+    "战场结算复用openChild；有结束回调的播放器不再接管结算宿主或全局关闭",
+    "旧战场仅在结果仍归自己时确认实际展示，迟到共享打开不误确认",
+    "暂停Campaign/Idle的非简化经验奖励复用RewardGrantService，精灵与冒险点不写普通堆叠",
+    "GM回归在鉴权初始化后取版本，同时验证懒初始化只发生一次",
+    "统一检查入口分开保存全套与单项汇总，避免后续专项覆盖整轮报告"
+  ],
+  "client": {
+    "fullRunPassed": 80,
+    "paused": [
+      "hero-roster：模块等待重做，旧业务",
+      "hero-level：模块等待重做，旧业务",
+      "formation：模块等待重做，旧业务",
+      "remake-playable：模块等待重做，旧业务",
+      "idle：模块等待重做，旧业务"
+    ],
+    "suites": [
+      {
+        "id": "gm",
+        "passed": true,
+        "elapsedMs": 442
+      },
+      {
+        "id": "equipment-detail",
+        "passed": true,
+        "elapsedMs": 2174
+      },
+      {
+        "id": "equipment-info-view",
+        "passed": true,
+        "elapsedMs": 1719
+      },
+      {
+        "id": "item-detail",
+        "passed": true,
+        "elapsedMs": 822
+      },
+      {
+        "id": "item-info-view",
+        "passed": true,
+        "elapsedMs": 1941
+      },
+      {
+        "id": "docs",
+        "passed": true,
+        "elapsedMs": 217
+      },
+      {
+        "id": "resource-catalog",
+        "passed": true,
+        "elapsedMs": 3710
+      },
+      {
+        "id": "current-resource-scope",
+        "passed": true,
+        "elapsedMs": 13546
+      },
+      {
+        "id": "bundle-paths",
+        "passed": true,
+        "elapsedMs": 786
+      },
+      {
+        "id": "ui-atlas",
+        "passed": true,
+        "elapsedMs": 1368
+      },
+      {
+        "id": "common-atlas",
+        "passed": true,
+        "elapsedMs": 1275
+      },
+      {
+        "id": "ui-static",
+        "passed": true,
+        "elapsedMs": 6671
+      },
+      {
+        "id": "resource-generated",
+        "passed": true,
+        "elapsedMs": 689
+      },
+      {
+        "id": "config-generated",
+        "passed": true,
+        "elapsedMs": 18277
+      },
+      {
+        "id": "client-config-scope",
+        "passed": true,
+        "elapsedMs": 72199
+      },
+      {
+        "id": "prefab-review",
+        "passed": true,
+        "elapsedMs": 4363
+      },
+      {
+        "id": "prefab-fingerprints",
+        "passed": true,
+        "elapsedMs": 1290
+      },
+      {
+        "id": "event-target",
+        "passed": true,
+        "elapsedMs": 75
+      },
+      {
+        "id": "game-protocol",
+        "passed": true,
+        "elapsedMs": 336
+      },
+      {
+        "id": "main-chapter-idle-protocol",
+        "passed": true,
+        "elapsedMs": 133
+      },
+      {
+        "id": "idle-claim-recovery",
+        "passed": true,
+        "elapsedMs": 156
+      },
+      {
+        "id": "idle-claim-binding",
+        "passed": true,
+        "elapsedMs": 410
+      },
+      {
+        "id": "idle-claim-intent",
+        "passed": true,
+        "elapsedMs": 1258
+      },
+      {
+        "id": "tavern-state",
+        "passed": true,
+        "elapsedMs": 143
+      },
+      {
+        "id": "game-protocol-generated",
+        "passed": true,
+        "elapsedMs": 965
+      },
+      {
+        "id": "main-chapter",
+        "passed": true,
+        "elapsedMs": 2402
+      },
+      {
+        "id": "main-chapter-settlement",
+        "passed": true,
+        "elapsedMs": 250
+      },
+      {
+        "id": "main-chapter-entry-recovery",
+        "passed": true,
+        "elapsedMs": 294
+      },
+      {
+        "id": "idle-chest",
+        "passed": true,
+        "elapsedMs": 62
+      },
+      {
+        "id": "idle-chest-presentation",
+        "passed": true,
+        "elapsedMs": 124
+      },
+      {
+        "id": "reward-protocol",
+        "passed": true,
+        "elapsedMs": 137
+      },
+      {
+        "id": "reward-controller",
+        "passed": true,
+        "elapsedMs": 132
+      },
+      {
+        "id": "reward-binding",
+        "passed": true,
+        "elapsedMs": 158
+      },
+      {
+        "id": "reward-view",
+        "passed": true,
+        "elapsedMs": 134
+      },
+      {
+        "id": "confirm-view",
+        "passed": true,
+        "elapsedMs": 85
+      },
+      {
+        "id": "battle-presentation",
+        "passed": true,
+        "elapsedMs": 580
+      },
+      {
+        "id": "battle-layout",
+        "passed": true,
+        "elapsedMs": 3320
+      },
+      {
+        "id": "battle-layout-rules",
+        "passed": true,
+        "elapsedMs": 183
+      },
+      {
+        "id": "game-socket",
+        "passed": true,
+        "elapsedMs": 318
+      },
+      {
+        "id": "isolated-build",
+        "passed": true,
+        "elapsedMs": 139
+      },
+      {
+        "id": "build-entry",
+        "passed": true,
+        "elapsedMs": 15692
+      },
+      {
+        "id": "hero-state",
+        "passed": true,
+        "elapsedMs": 133
+      },
+      {
+        "id": "formation-state",
+        "passed": true,
+        "elapsedMs": 129
+      },
+      {
+        "id": "formation-recovery",
+        "passed": true,
+        "elapsedMs": 135
+      },
+      {
+        "id": "page-lifecycle-recovery",
+        "passed": true,
+        "elapsedMs": 469
+      },
+      {
+        "id": "overlay-lifecycle",
+        "passed": true,
+        "elapsedMs": 1796
+      },
+      {
+        "id": "formation-view",
+        "passed": true,
+        "elapsedMs": 1639
+      },
+      {
+        "id": "hero-growth-generated",
+        "passed": true,
+        "elapsedMs": 1183
+      },
+      {
+        "id": "idle-generated",
+        "passed": true,
+        "elapsedMs": 1860
+      },
+      {
+        "id": "campaign-rules",
+        "passed": true,
+        "elapsedMs": 1137
+      },
+      {
+        "id": "remake-navigation",
+        "passed": true,
+        "elapsedMs": 137
+      },
+      {
+        "id": "feature-navigation",
+        "passed": true,
+        "elapsedMs": 122
+      },
+      {
+        "id": "login-presentation",
+        "passed": true,
+        "elapsedMs": 102
+      },
+      {
+        "id": "home-presentation",
+        "passed": true,
+        "elapsedMs": 1553
+      },
+      {
+        "id": "startup",
+        "passed": true,
+        "elapsedMs": 217
+      },
+      {
+        "id": "staged-loading",
+        "passed": true,
+        "elapsedMs": 647
+      },
+      {
+        "id": "resources",
+        "passed": true,
+        "elapsedMs": 70
+      },
+      {
+        "id": "home-bundle",
+        "passed": true,
+        "elapsedMs": 65
+      },
+      {
+        "id": "resource-audit",
+        "passed": true,
+        "elapsedMs": 234
+      },
+      {
+        "id": "config-groups",
+        "passed": true,
+        "elapsedMs": 1454
+      },
+      {
+        "id": "config-package-store",
+        "passed": true,
+        "elapsedMs": 4046
+      },
+      {
+        "id": "config-package-loading",
+        "passed": true,
+        "elapsedMs": 4683
+      },
+      {
+        "id": "config-package",
+        "passed": true,
+        "elapsedMs": 5388
+      },
+      {
+        "id": "config-package-generated",
+        "passed": true,
+        "elapsedMs": 1313
+      },
+      {
+        "id": "config-package-build",
+        "passed": true,
+        "elapsedMs": 34670
+      },
+      {
+        "id": "backend-launcher",
+        "passed": true,
+        "elapsedMs": 7314
+      },
+      {
+        "id": "creator-compat",
+        "passed": true,
+        "elapsedMs": 19388
+      },
+      {
+        "id": "prefab-plan",
+        "passed": true,
+        "elapsedMs": 2179
+      },
+      {
+        "id": "architecture",
+        "passed": true,
+        "elapsedMs": 2882
+      },
+      {
+        "id": "bindings",
+        "passed": true,
+        "elapsedMs": 326
+      },
+      {
+        "id": "backpack",
+        "passed": true,
+        "elapsedMs": 2931
+      },
+      {
+        "id": "modal-layer",
+        "passed": true,
+        "elapsedMs": 75
+      },
+      {
+        "id": "viewport-scale",
+        "passed": true,
+        "elapsedMs": 58
+      },
+      {
+        "id": "super-scroll",
+        "passed": true,
+        "elapsedMs": 105
+      },
+      {
+        "id": "hero-detail",
+        "passed": true,
+        "elapsedMs": 1544
+      },
+      {
+        "id": "hero-equipment",
+        "passed": true,
+        "elapsedMs": 1497
+      },
+      {
+        "id": "hero",
+        "passed": true,
+        "elapsedMs": 2458
+      },
+      {
+        "id": "city",
+        "passed": true,
+        "elapsedMs": 70
+      },
+      {
+        "id": "battle",
+        "passed": true,
+        "elapsedMs": 116
+      },
+      {
+        "id": "retirement",
+        "passed": true,
+        "elapsedMs": 382
+      }
+    ],
+    "afterFixSuites": [
+      {
+        "id": "overlay-lifecycle",
+        "passed": true,
+        "elapsedMs": 1925,
+        "log": "client/temp/project-checks/overlay-lifecycle.log"
+      },
+      {
+        "id": "main-chapter",
+        "passed": true,
+        "elapsedMs": 2222,
+        "log": "client/temp/project-checks/main-chapter.log"
+      },
+      {
+        "id": "main-chapter-entry-recovery",
+        "passed": true,
+        "elapsedMs": 1269,
+        "log": "client/temp/project-checks/main-chapter-entry-recovery.log"
+      },
+      {
+        "id": "main-chapter-settlement",
+        "passed": true,
+        "elapsedMs": 1012,
+        "log": "client/temp/project-checks/main-chapter-settlement.log"
+      },
+      {
+        "id": "battle-presentation",
+        "passed": true,
+        "elapsedMs": 2104,
+        "log": "client/temp/project-checks/battle-presentation.log"
+      },
+      {
+        "id": "battle-layout",
+        "passed": true,
+        "elapsedMs": 4373,
+        "log": "client/temp/project-checks/battle-layout.log"
+      },
+      {
+        "id": "reward-binding",
+        "passed": true,
+        "elapsedMs": 243,
+        "log": "client/temp/project-checks/reward-binding.log"
+      },
+      {
+        "id": "modal-layer",
+        "passed": true,
+        "elapsedMs": 1418,
+        "log": "client/temp/project-checks/modal-layer.log"
+      }
+    ],
+    "overlayCases": 11,
+    "creatorStrictTypes": "passed",
+    "singleReportIsolation": "passed；单项docs输出单独文件，原results.json哈希不变"
+  },
+  "backend": {
+    "initial": {
+      "tests": 680,
+      "failures": 2,
+      "errors": 11,
+      "reason": "暂停链旧库存分发冲突及GM测试鉴权前旧版本基线"
+    },
+    "targeted": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "final": {
+      "tests": 681,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "BUILD SUCCESS"
+    },
+    "mysql": "not-run"
+  },
+  "boundaries": [
+    "本轮未重跑浏览器，未集中构建；最后onOpen同步关闭保护和本轮战场/播放器归属仅专项验证",
+    "此前118.0458秒/97.5371秒断线及9次重连是上一轮证据，不计为本轮新实测",
+    "未运行MySQL、原生App/微信、真机、崩溃或断电检查",
+    "领取策略、玩家宝箱入口、日常新领取开关继续关闭；未触碰日常数据库",
+    "暂停简化链仍有领域测试依赖，未直接删除；后续先迁移夹具再统一退役"
+  ],
+  "nextSuggested": "对照旧源码核对主线升级赠钻及额外奖励明细，必要时补原业务回执，再由正常结算及冷恢复复用现有反馈；本次不实现新玩法",
+  "sourceFingerprints": [
+    {
+      "path": "client/assets/scripts/framework/ui/UIManager.ts",
+      "sha256": "e5a9e092dd2663f21ea5dd4fe4b73a7a031f6ae1ecd4a2a8b1c57c5f87da9107"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/MainChapterBattleView.ts",
+      "sha256": "ed15298930cbdf4205cbefc831e27770425191e2b94705ca2c595da5f739af2f"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts",
+      "sha256": "916d92cff7a2ad238a8ad682ff5cd4cd0559f3a368cbe7aeae3ea0680f18b746"
+    },
+    {
+      "path": "client/tools/overlay-lifecycle-check.ts",
+      "sha256": "951e665429eec64ab37df7736f1893370b68a228dfd3b2aefe0fde9237dcc251"
+    },
+    {
+      "path": "client/tools/check-project.mjs",
+      "sha256": "2712a09bccb0cc0a5165c9706218634d8e938efdb39d955a1ee55802c4ddfc57"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/campaign/CampaignService.java",
+      "sha256": "d92e24962bff958c2675a0e108509513ffc0f8c665c2bb69e24da52008eb668b"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/campaign/IdleService.java",
+      "sha256": "c1219f3eb62e9f63e40fc73e3d30bf794c280fbb90cd176907843d69e5df289c"
+    }
+  ]
+}

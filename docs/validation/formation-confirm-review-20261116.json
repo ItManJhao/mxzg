@@ -1,0 +1,129 @@
+{
+  "date": "2026-11-16",
+  "branch": "hao",
+  "head": "d4a9c4f1afe1e71b4ae6a845390a520d6d3950e9",
+  "task": "布阵保存回执已到但状态推送缺失时，复用原回执及统一鉴权快照确认恢复",
+  "scope": {
+    "claimEntryEnabled": false,
+    "centralBuild": false,
+    "committed": false,
+    "pushed": false,
+    "mergedMain": false,
+    "newProtocol": false,
+    "newAssetModel": false,
+    "newPrefab": false,
+    "backendChangedThisBatch": false
+  },
+  "behavior": [
+    "ACK及mainFormation.version双确认前保留原requestId、expectedVersion、阵型及站位",
+    "每轮至多一次现有refreshSnapshot，ACK后重试只同步，不再次保存",
+    "未确认参数只读，失败或旧首包可明确重试同步",
+    "重复点击合并任务，重置和销毁撤销旧任务；身份隔离仍归AccountService",
+    "关页清理本页监听及出战意图，模块请求保留；真正双确认才继续一次挑战"
+  ],
+  "verification": {
+    "checks": [
+      {
+        "suite": "formation-recovery",
+        "passed": true,
+        "log": "client/temp/project-checks/formation-recovery.log"
+      },
+      {
+        "suite": "formation-state",
+        "passed": true,
+        "log": "client/temp/project-checks/formation-state.log"
+      },
+      {
+        "suite": "formation-view",
+        "passed": true,
+        "log": "client/temp/project-checks/formation-view.log"
+      },
+      {
+        "suite": "game-socket",
+        "passed": true,
+        "log": "client/temp/project-checks/game-socket.log"
+      },
+      {
+        "suite": "hero-state",
+        "passed": true,
+        "log": "client/temp/project-checks/hero-state.log"
+      },
+      {
+        "suite": "main-chapter-settlement",
+        "passed": true,
+        "log": "client/temp/project-checks/main-chapter-settlement.log"
+      },
+      {
+        "suite": "main-chapter-entry-recovery",
+        "passed": true,
+        "log": "client/temp/project-checks/main-chapter-entry-recovery.log"
+      },
+      {
+        "suite": "remake-navigation",
+        "passed": true,
+        "log": "client/temp/project-checks/remake-navigation.log"
+      }
+    ],
+    "newRecoveryCases": 26,
+    "strictCreatorTypeCheckPassed": true,
+    "diffCheckPassed": true,
+    "javaMavenRun": false,
+    "previewRecord": "docs/validation/formation-confirm-preview-20261116.json",
+    "previewFault": "GameSocketClient.onState交付边界丢一次真实state.changed，不修改Model、请求或服务端数据",
+    "firstNormalFormationVersion": "1->2",
+    "faultFormationVersion": "2->3",
+    "ackBeforeRecovery": 3,
+    "localFormationBeforeRecovery": 2,
+    "formationSaveRepliesDuringFault": 1,
+    "authenticateRepliesDuringFault": 1,
+    "battleViewOpensDuringFault": 1,
+    "endViewOpensDuringFault": 1,
+    "newPreviewWarnings": 0,
+    "previewInstrumentationRemoved": true,
+    "testProcess": {
+      "pid": 6732,
+      "ownershipVerified": true,
+      "stopped": true
+    }
+  },
+  "limitations": [
+    "只在本机预览模拟一次交付缺失，不代表实际网络弱网",
+    "失败、旧首包、重入、关页和身份切换组合为受控专项，不冒称Creator逐一故障实测",
+    "未运行新的集中发布包、Maven、MySQL、目标真机、系统后台、APP/微信及进程崩溃验证",
+    "未新增跨重启布阵持久意图，也未解决已清pending历史主线结算定位"
+  ],
+  "sourceFingerprints": [
+    {
+      "path": "client/assets/scripts/features/hero/FormationController.ts",
+      "sha256": "a972335ae815d1ed89c6f24f25009f72a8e3e23669fab7fa10ee200097958ef7"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/FormationSaveModel.ts",
+      "sha256": "543f494ca744d6809ab70f74495151bc476321a7266877c5bda96fea3150579d"
+    },
+    {
+      "path": "client/assets/scripts/features/hero/ui/FormationView.ts",
+      "sha256": "6fe2be014a3bc36bddd1eceb803583a3ddd9fa3d138a6e07328abc5ba395032a"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/RemakeApp.ts",
+      "sha256": "b1e2d0ad06231ef9cd7a2fa3835f39b83d99dd11b5e81d95391a407165ee0b14"
+    },
+    {
+      "path": "client/tools/formation-recovery-check.ts",
+      "sha256": "721dc81f32cb07fab813eaa45be840e27d04ef79cd7eb1611c33caa3da933eae"
+    },
+    {
+      "path": "client/tools/formation-state-check.ts",
+      "sha256": "2cb21c2d7d3042e8b16d998f049d65dd4ba9e446f0698d62dd46db2df3954f45"
+    },
+    {
+      "path": "client/tools/formation-view-check.ts",
+      "sha256": "1346abca3742501115d9f71e72addfa4ef9ce3215d63a37c336dd01e5848b744"
+    },
+    {
+      "path": "client/tools/session-state-check.ts",
+      "sha256": "501398cbfcb75151abf7d7d9c8f9cd164aed734df534a40a838017a335f095e9"
+    }
+  ]
+}

@@ -13,6 +13,8 @@ import com.funsgamex.mxzg.role.RoleExperienceService;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.role.RoleRules;
 import com.funsgamex.mxzg.spirit.SpiritInventoryService;
+import com.funsgamex.mxzg.tavern.TavernPointService;
+import com.funsgamex.mxzg.tavern.TavernPointRules;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,8 +37,10 @@ public class RewardGrantService {
     private final RoleRepository roles;
     /** 角色经验及升级赠钻的唯一写入口。 */
     private final RoleExperienceService experience;
-    /** 普通配置堆叠、英雄经验及酒馆点余额入口。 */
+    /** 普通配置堆叠及英雄经验入口，不持有酒馆冒险点。 */
     private final InventoryService inventory;
+    /** 冒险点唯一领域入口；初始化和截顶由它在本次外层事务中处理。 */
+    private final TavernPointService tavernPoints;
     /** 上海自然日期限规则，用于随机前预检。 */
     private final TimedItemRules timedRules;
     /** 期限实例的唯一写入口，不调用会清理过期物品的current方法。 */
@@ -59,9 +63,9 @@ public class RewardGrantService {
      * @param tavernLimit 按最高已通关关卡冻结的酒馆900401上限，不是下一关上限
      */
     public record Context(long nowSeconds, long tavernLimit) {
-        /** 时间及上限不能为负；当前首通无期限奖励，时间只对期限分路生效。 */
+        /** 时间不能为负，冒险点上限须为可安全传输整数；时间只对期限分路生效。 */
         public Context {
-            if (nowSeconds < 0 || tavernLimit < 0) {
+            if (nowSeconds < 0 || tavernLimit < 0 || tavernLimit > TavernPointRules.MAX_SAFE_INTEGER) {
                 throw new IllegalArgumentException("可信发奖时间或酒馆上限无效");
             }
         }
@@ -70,10 +74,12 @@ public class RewardGrantService {
     /** 注入已有领域服务，从同源item表建立唯一类型分路，不另造模块奖励清单。 */
     public RewardGrantService(RoleRepository roles, RoleExperienceService experience,
             InventoryService inventory, TimedItemRules timedRules, TimedInventoryService timed,
-            SpiritInventoryService spirits, AssetSyncService sync, ObjectMapper json) {
+            SpiritInventoryService spirits, TavernPointService tavernPoints, AssetSyncService sync,
+            ObjectMapper json) {
         this.roles = roles;
         this.experience = experience;
         this.inventory = inventory;
+        this.tavernPoints = tavernPoints;
         this.timedRules = timedRules;
         this.timed = timed;
         this.spirits = spirits;
@@ -161,16 +167,14 @@ public class RewardGrantService {
                 case 5, 6 -> stacks.add(inventory.credit(roleId, id, requested));
                 case 8 -> spiritItems.addAll(spirits.grant(roleId, id, Math.toIntExact(requested), random));
                 case 11 -> {
-                    long current = inventory.find(roleId, id).map(InventoryService.Item::quantity).orElse(0L);
-                    credited = current >= context.tavernLimit() ? 0 : Math.min(requested, context.tavernLimit() - current);
+                    var change = tavernPoints.credit(roleId, requested, context.tavernLimit());
+                    credited = change.quantity();
                     if (credited < requested) {
                         reason = RewardGrantResult.Reduction.TAVERN_CAP;
                     }
-                    // 零到账也保留旧余额和身份，不创建空库存，不推进资产版本。
-                    if (credited > 0) {
-                        stacks.add(inventory.credit(roleId, id, credited));
-                    }
-                    tavern.add(new RewardGrantResult.TavernChange(current, context.tavernLimit(), current + credited));
+                    // 冒险点不是普通库存；领域初值不冒充本次奖励，也不填入stacks或历史堆叠身份。
+                    tavern.add(new RewardGrantResult.TavernChange(change.beforeQuantity(),
+                            context.tavernLimit(), change.afterQuantity()));
                 }
                 case 16 -> {
                     for (long index = 0; index < requested; index++) {

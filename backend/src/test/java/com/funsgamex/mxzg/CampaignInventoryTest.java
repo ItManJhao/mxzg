@@ -1,4 +1,4 @@
-/** 主线发奖与库存事务回归；库存读取通过统一会话快照，不依赖已退役的 HTTP Controller。 */
+/** 暂停基础主线的领域回归；奖励复用当前唯一资产入口，库存读取通过统一快照，不恢复旧网络入口。 */
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
@@ -29,6 +29,8 @@ class CampaignInventoryTest {
     @Autowired SessionSnapshotService snapshots;
     @Autowired RoleService roles;
     @Autowired JdbcTemplate jdbc;
+    /** 独立冒险点的旧配置初值，核对共享发放没有写回普通堆叠或重复初始化。 */
+    @Autowired com.funsgamex.mxzg.tavern.TavernPointRules tavernRules;
     @LocalServerPort int port;
     record Player(String account,String role,String token) {}
     Player player() {
@@ -65,14 +67,20 @@ class CampaignInventoryTest {
         assertTrue(battle.won());assertFalse(battle.hits().isEmpty());
         for(var hit:battle.hits()) { assertTrue(hit.damage()>0);assertTrue(hit.remainingHp()>=0); }
     }
-    /** 发奖权威、持久且幂等，重登后的库存快照与结算一致。 */
+    /** 发奖权威、持久且幂等；冒险点经独立领域仅增加一次，重登后的普通库存快照仍一致。 */
     @Test void claimIsOwnedDurableAndIdempotent() {
         var p=player();var other=player();campaign.initialize(p.token());
         var battle=campaign.challenge(p.token(),request());
         assertEquals(404,assertThrows(ResponseStatusException.class,()->campaign.claim(other.token(),battle.id())).getStatusCode().value());
         var result=campaign.claim(p.token(),battle.id());
+        long adventureReward = battle.rewards().stream().filter(row -> row.itemId() == 900401)
+                .mapToLong(CampaignRules.Reward::quantity).sum();
+        long adventureBalance = tavernRules.initialAdventureCount() + adventureReward;
+        assertEquals(adventureBalance, jdbc.queryForObject("SELECT adventure_count FROM game_tavern_point WHERE role_id=?", Long.class, p.role()));
+        assertTrue(result.inventory().stream().noneMatch(item -> item.itemId() == 900401));
         assertEquals(4000,result.role().gold());assertEquals(2,result.stageId());assertTrue(result.battle().claimed());
         assertEquals(result,campaign.claim(p.token(),battle.id()));
+        assertEquals(adventureBalance, jdbc.queryForObject("SELECT adventure_count FROM game_tavern_point WHERE role_id=?", Long.class, p.role()));
         var relogin=login.login(p.account());String token="Bearer "+relogin.session().accessToken();
         assertEquals(4000,relogin.role().gold());assertEquals(2,campaign.current(token).stageId());
         assertEquals(result.inventory(),snapshots.snapshot(token).inventory());assertNull(campaign.current(token).pending());

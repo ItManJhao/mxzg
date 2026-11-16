@@ -120,11 +120,13 @@ export class BattleReplayPreview {
                 if (node) node.active = false;
             }
         }
-        const unregisterEnd = idleEncounter ? () => {} : UIRegistry.bindViewRuntime(ChapterEndView, {
+        // 提供结束回调时，结果窗口归调用方；播放器不能改宿主或清理调用方后来交接的结算。
+        const ownsSettlement = !idleEncounter && !onCompleted;
+        const unregisterEnd = !ownsSettlement ? () => {} : UIRegistry.bindViewRuntime(ChapterEndView, {
             hostId: persistentChapter ? "remake-modal" : "battle-settlement",
         });
         // 正常结算必须在应用弹层，避免完整旧胜利页被挂机面板遮挡；技能台仍归本地战场清理。
-        const releaseEndHost = idleEncounter || persistentChapter ? () => {} : UIManager.instance.setResidentHost("battle-settlement", () => shell.root.isValid ? shell.root : null);
+        const releaseEndHost = !ownsSettlement || persistentChapter ? () => {} : UIManager.instance.setResidentHost("battle-settlement", () => shell.root.isValid ? shell.root : null);
         for (const path of ["LayerAppear", "LayerHud/SkillBars"]) {
             const node = shell.root.getChildByPath(path);
             if (node) node.active = false;
@@ -221,9 +223,11 @@ export class BattleReplayPreview {
             if (audio.isValid) audio.stop();
             for (const finish of pending) finish();
         };
-        /** 战场销毁才释放结算入口；正常播放结束仍需打开结算。 */
+        /** 只读演示释放自己装配的结算入口；带结束回调的主线/遇敌只清播放器，不接管外层结果。 */
         const releaseSettlement = () => {
-            if (!idleEncounter) UIManager.instance.closeById("chapter-end");
+            if (ownsSettlement) {
+                UIManager.instance.closeById("chapter-end");
+            }
             releaseEndHost();
             unregisterEnd();
         };

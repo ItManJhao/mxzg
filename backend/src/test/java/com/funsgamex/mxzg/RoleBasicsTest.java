@@ -45,7 +45,9 @@ class RoleBasicsTest {
     @Test void atomicPersistenceAndIsolation() {
         var player=login.login("role_"+UUID.randomUUID().toString().substring(0,12));String id=player.role().id();
         var other=login.login("role_"+UUID.randomUUID().toString().substring(0,12));
-        var tx=new TransactionTemplate(manager);long before=roles.revision(id);
+        var tx=new TransactionTemplate(manager);
+        // 首次完整初始化包含独立冒险点懒建；后续资料事务以已同步版本为基线。
+        long before=snapshots.snapshot("Bearer "+player.session().accessToken()).revision();
         tx.executeWithoutResult(status->{roles.lock(id);jdbc.update("UPDATE game_role SET role_experience=66,cup=1400 WHERE id=?",id);sync.changed(id);});
         var state=snapshots.snapshot("Bearer "+player.session().accessToken());assertEquals(66,state.role().basics().experience());assertEquals(1400,state.role().basics().cup());assertEquals(before+1,state.revision());
         tx.executeWithoutResult(status->{roles.lock(id);jdbc.update("UPDATE game_role SET role_experience=99 WHERE id=?",id);roles.recordLogin(id,state.role().basics().lastLoginAtSeconds()+100);status.setRollbackOnly();});

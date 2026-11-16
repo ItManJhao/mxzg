@@ -276,7 +276,7 @@ async function checkViewLifecycle(): Promise<void> {
     }
 }
 
-/** 通过列表选择事件验证按mode分路，装备页中的灵器不能进入普通装备详情。 */
+/** 列表选择按mode交本页子窗，灵器不进普通装备；验证不重复runOpen及旧A→B→A失败不清新选择。 */
 async function checkSelectionRouting(): Promise<void> {
     const db = GameConfig.instance;
     assert.equal(db.getConfig(GConfig.Item, 1001001)?.mode, 1);
@@ -300,28 +300,52 @@ async function checkSelectionRouting(): Promise<void> {
         { itemId: 908101, quantity: 1, instanceId: "artifact-routing" },
     ]);
     const before = model.snapshot;
-    const originalOpen = UIManager.instance.open;
-    const calls: { ctor: Function; args: any }[] = [];
-    UIManager.instance.open = (async (ctor: Function, args: any) => {
-        calls.push({ ctor, args });
-        return { runOpen: () => {} };
-    }) as typeof UIManager.instance.open;
+    const originalOpenChild = UIManager.instance.openChild;
+    const calls: { owner: unknown; ctor: Function; args: any; reject?: (error: Error) => void }[] = [];
+    let hold = false;
+    let duplicateRunOpen = 0;
+    UIManager.instance.openChild = ((owner: unknown, ctor: Function, args: any) => {
+        const call: (typeof calls)[number] = { owner, ctor, args };
+        calls.push(call);
+        if (hold) {
+            return new Promise((_resolve, reject) => { call.reject = reject; });
+        }
+        return Promise.resolve({ runOpen: () => { duplicateRunOpen++; } });
+    }) as typeof UIManager.instance.openChild;
     try {
         const rows = page.visibleItems();
         content.emit(SuperContent.SELECT_ITEM, rows.find((row: any) => row.itemId === 1001001));
         await settle();
+        assert.equal(calls[0].owner, page, "普通装备详情归实际背包页面持有");
         assert.equal(calls[0].ctor, EquipmentInfoView);
         assert.deepEqual(calls[0].args, { key: "stack:equip-routing" }, "详情只接收真实记录key");
         content.emit(SuperContent.SELECT_ITEM, rows.find((row: any) => row.itemId === 908101));
         await settle();
+        assert.equal(calls[1].owner, page);
         assert.equal(calls[1].ctor, BagInfoView, "同装备页灵器保持原通用入口，不伪造普通装备属性");
+        assert.equal(duplicateRunOpen, 0, "详情参数由框架交付，页面不能在打开后重复runOpen");
+        // A→B→A即使记录key再次相同，旧A失败也不能清除新A；意图引用由实际BagView判断。
+        hold = true;
+        const equipment = rows.find((row: any) => row.itemId === 1001001);
+        const artifact = rows.find((row: any) => row.itemId === 908101);
+        content.emit(SuperContent.SELECT_ITEM, equipment);
+        content.emit(SuperContent.SELECT_ITEM, artifact);
+        content.emit(SuperContent.SELECT_ITEM, equipment);
+        calls[2].reject!(new Error("旧装备详情加载失败"));
+        calls[3].reject!(new Error("旧灵器详情加载失败"));
+        await settle();
+        assert.equal(page.pickedId, equipment.key, "旧失败不能清除后来再次选择的同一个key");
+        assert(calls.slice(2).every(call => call.owner === page));
+        calls[4].reject!(new Error("当前装备详情加载失败"));
+        await settle();
+        assert.equal(page.pickedId, null, "当前意图真实失败才清理选中态");
         assert.equal(model.snapshot, before, "切详情不改资产、不追加库存读取");
         page.onClose();
         content.emit(SuperContent.SELECT_ITEM, rows[0]);
         await settle();
-        assert.equal(calls.length, 2, "关页后列表迟到选择不能重新开窗");
+        assert.equal(calls.length, 5, "关页后列表迟到选择不能重新开窗");
     } finally {
-        UIManager.instance.open = originalOpen;
+        UIManager.instance.openChild = originalOpenChild;
         page.runDispose();
         root.destroy();
         model.reset();

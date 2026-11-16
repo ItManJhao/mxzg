@@ -8,6 +8,14 @@
 
 弹窗模态只在ViewSpec配置`{mask,closeOnOutside}`：省略不拦截、mask=false透明拦截、mask=true显示蒙版，是否空白关闭由closeOnOutside独立控制。UIManager共用一份动态节点，Prefab只在实际内容背景保留BlockInputEvents；布阵/结算原关闭流程、GM/技能台仅按钮关闭保持。三模式及相关页面的[8cb60507基线证据](validation/shared-modal-widget-20261111.json)保留原限定范围，不作为本批资源精简与虚拟化的画面验收。
 
+## 当前弹窗打开与关闭归属（2026-11-16）
+
+模态拦截和父子生命周期分别由页面注册、UIManager处理，保持完整Prefab和原UUID。单实例Popup如果应随父页关闭，直接用`UIManager.openChild(this, ChildView, args)`；父页关闭时，自己的在途打开会失效，已显示子窗会关闭，迟到资源不能重新挂载。同id详情后来被其他父页或普通`open`接管时，旧父页不再持有它，不能按全局id误关其他用途的窗口。
+
+切分类或切详情类型时，父页可调用`UIManager.closeChildren(this)`，只关闭当前仍归本页持有的子窗。父页关闭、子窗关闭和归属转交的登记由`BaseView.onViewClose`复用EventScope，支持提前解除，避免每次开详情积累父页监听；已关父页的迟到调用在接管前拒绝。同id在途打开只挂载一次，末次参数由框架提交，禁止在调用方`open(...).then(...)`里再次`runOpen`。页面只提交当前选择，不另建详情打开/重开链。
+
+需独立保留的弹层仍使用普通`open`。BattleDetailLayer独立于结算倒计时；它的关闭按钮和视口监听仅在`onBind`登记，`onOpen`只展示本场冻结名称、头像及统计，重复打开同实例不重绑静态监听。子节点可能先销毁时，退订检查原节点有效性。具体源码和检查边界见[叠窗生命周期记录](validation/overlay-lifecycle-review-20261116.json)；本机长断线和多次重连尚不能仅由结构检查推定通过，不改变领取等玩法的开放范围。
+
 ## 历史画面与结构记录
 
 以下保留2026-11-02及前后批次的局部验收、旧目录和阶段方案，仅供追溯。记录中的“当前”“本批”、资源数量与后续安排只针对当时；后续已清理部分资源及旧Campaign/Idle/普通升级客户端链，后端领域规则保留。不能据旧证据恢复HTTP、领取或养成入口，也不能将历史画面算作当前保留范围的新验收。下文的坐标、命名及静态修正同属历史记录，包括已退役的CommonRedDotShell和PrefabLayout；当前布局职责以本文开头及维护指南为准。

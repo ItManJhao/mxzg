@@ -51,6 +51,7 @@ const payloads = [
     "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
     "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
     "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
+    "rewardNotice",
 ];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
 export class GameProtocolCodecUtils {
@@ -88,6 +89,9 @@ export class GameProtocolCodecUtils {
         }
         if (frame.kind === "event" && frame.name === Protocol.STATE_CHANGED) {
             return "snapshot";
+        }
+        if (frame.kind === "event" && frame.name === Protocol.REWARD_GRANTED) {
+            return "rewardNotice";
         }
         if (frame.kind === "event" && frame.name === Protocol.SESSION_KICKED) {
             return "kicked";
@@ -147,8 +151,8 @@ export class GameProtocolCodecUtils {
         }
     }
 
-    /** 验证可恢复历史回执的格式及消费版本关系；不会将历史余额或起点提交给当前状态。 */
-    private static validateIdleReceipt(value: unknown): Record<string, unknown> {
+    /** 验证历史回执格式、消费版本、安全时间及角色字段；返回的历史数据不能提交为当前资产。 */
+    public static validateIdleReceipt(value: unknown): Record<string, unknown> {
         const receipt = GameProtocolCodecUtils.idleObject(value);
         if (receipt.schemaVersion !== 1) {
             throw new Error("挂机回执格式未支持");
@@ -163,7 +167,63 @@ export class GameProtocolCodecUtils {
             || receipt.afterOperationVersion !== receipt.beforeOperationVersion + 1) {
             throw new Error("挂机回执消费版本不一致");
         }
+        for (const field of ["committedAtSeconds", "previousStartedAtSeconds", "seconds", "maxSeconds", "rewardStage"]) {
+            if (typeof receipt[field] !== "number" || !Number.isSafeInteger(receipt[field]) || (receipt[field] as number) <= 0) {
+                throw new Error("挂机回执时间或关卡无效");
+            }
+        }
+        if ((receipt.seconds as number) > (receipt.maxSeconds as number)
+            || (receipt.committedAtSeconds as number) - (receipt.previousStartedAtSeconds as number) < (receipt.seconds as number)) {
+            throw new Error("挂机回执累计时间不一致");
+        }
+        const actual = GameProtocolCodecUtils.idleObject(receipt.actual);
+        if (typeof actual.roleId !== "string" || !actual.roleId || actual.roleId.length > 128) {
+            throw new Error("挂机回执缺少角色归属");
+        }
         return receipt;
+    }
+
+    /** 校验真实到账反馈；拒绝理论数量、重复配置ID、未知模式及不安全整数，不改任何资产。 */
+    public static validateRewardNotice(value: unknown): Record<string, unknown> {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            throw new Error("奖励通知对象无效");
+        }
+        const notice = value as Record<string, unknown>;
+        if (notice.schemaVersion !== 1
+            || typeof notice.receiptId !== "string"
+            || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(notice.receiptId)
+            || typeof notice.roleId !== "string" || !notice.roleId || notice.roleId.length > 128
+            || /[\u0000-\u001f\u007f]/.test(notice.roleId)
+            || !Number.isSafeInteger(notice.assetRevision) || (notice.assetRevision as number) <= 0
+            || !["SILENT", "POPUP", "TIPS"].includes(notice.mode as string)
+            || !Array.isArray(notice.items) || notice.items.length === 0) {
+            throw new Error("奖励通知格式、归属或版本无效");
+        }
+        const seen = new Set<number>();
+        for (const raw of notice.items) {
+            if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+                throw new Error("奖励通知明细无效");
+            }
+            const item = raw as Record<string, unknown>;
+            if (!Number.isSafeInteger(item.itemId) || (item.itemId as number) <= 0
+                || (item.itemId as number) > 0xffffffff || seen.has(item.itemId as number)
+                || !Number.isSafeInteger(item.credited) || (item.credited as number) <= 0) {
+                throw new Error("奖励通知实际数量无效");
+            }
+            seen.add(item.itemId as number);
+        }
+        return notice;
+    }
+
+    /** 通用奖励只允许事务后事件信封；请求/响应不能伪装为共享奖励通知。 */
+    private static validateRewardFrame(frame: GameFrame): void {
+        if (frame.name !== Protocol.REWARD_GRANTED) {
+            return;
+        }
+        if (frame.kind !== "event" || frame.id !== undefined || frame.ok !== undefined || frame.error !== undefined) {
+            throw new Error("奖励通知信封无效");
+        }
+        GameProtocolCodecUtils.validateRewardNotice(frame.body);
     }
 
     /**
@@ -204,6 +264,7 @@ export class GameProtocolCodecUtils {
     public static encodeGameFrame(frame: GameFrame): ArrayBuffer {
         GameProtocolCodecUtils.validateIntegers(frame);
         GameProtocolCodecUtils.validateIdleClaim(frame);
+        GameProtocolCodecUtils.validateRewardFrame(frame);
         const { body, ...envelope } = frame;
         const payload = GameProtocolCodecUtils.payloadName(frame);
         const message: Record<string, unknown> = { ...envelope };
@@ -251,6 +312,7 @@ export class GameProtocolCodecUtils {
             delete value[key];
         }
         GameProtocolCodecUtils.validateIdleClaim(frame);
+        GameProtocolCodecUtils.validateRewardFrame(frame);
         return frame;
     }
 }

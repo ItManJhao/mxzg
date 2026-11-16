@@ -204,9 +204,14 @@ export class ViewportLayoutUtils {
         node.setScale(design.sx * squeeze, design.sy * squeeze, 1);
     }
 
-    /** 窗口变化后再铺一次。安全区会在稍后的 tick 里改缩放，所以多补两帧。 */
-    public static bindVisibleRefresh(owner: Node, apply: () => void): void {
+    /** 窗口变化后重新适配并补两帧安全区变化；返回幂等清理句柄，允许页面关闭时提前退订。 */
+    public static bindVisibleRefresh(owner: Node, apply: () => void): () => void {
+        // 关闭后已排入事件或计时器队列的回调也不能再修改旧页面。
+        let disposed = false;
         const safe = () => {
+            if (disposed) {
+                return;
+            }
             try {
                 apply();
             }
@@ -223,14 +228,23 @@ export class ViewportLayoutUtils {
             host.on("canvas-resize", safe);
         }
         const timers = [setTimeout(safe, 0), setTimeout(safe, 80)];
-        owner.once(Node.EventType.NODE_DESTROYED, () => {
+        const stop = () => {
+            if (disposed) {
+                return;
+            }
+            disposed = true;
             if (host.off) {
                 host.off("canvas-resize", safe);
             }
             for (let i = 0; i < timers.length; i++) {
                 clearTimeout(timers[i]);
             }
-        });
+            if (owner.isValid) {
+                owner.off(Node.EventType.NODE_DESTROYED, stop);
+            }
+        };
+        owner.once(Node.EventType.NODE_DESTROYED, stop);
+        return stop;
     }
 
     /** 将Canvas中心换算到父节点坐标；页面切换动画中不改位置，无法换算时回到父节点原点。 */

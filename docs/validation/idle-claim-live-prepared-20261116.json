@@ -1,0 +1,116 @@
+{
+  "result": "PREPARED",
+  "record": {
+    "run": "098420c974c6485ba4c76ceb7a5a0abe",
+    "serverId": "idle-recovery-098420c9",
+    "pending": {
+      "schemaVersion": 1,
+      "requestId": "cfd7dd60-4159-4e1a-9210-c10ff5a89d5f",
+      "expectedOperationVersion": 1
+    },
+    "receipt": {
+      "requestId": "cfd7dd60-4159-4e1a-9210-c10ff5a89d5f",
+      "receiptId": "8040b1a0-19b8-48ac-abf5-3bcf74cf0761",
+      "beforeOperationVersion": 1,
+      "afterOperationVersion": 2,
+      "assetRevision": 3,
+      "committedAtSeconds": 1794808856,
+      "previousStartedAtSeconds": 1794808592,
+      "seconds": 264,
+      "theoreticalRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 800
+        },
+        {
+          "itemId": 900003,
+          "quantity": 40
+        },
+        {
+          "itemId": 900101,
+          "quantity": 100
+        },
+        {
+          "itemId": 900102,
+          "quantity": 1
+        },
+        {
+          "itemId": 900401,
+          "quantity": 44
+        }
+      ],
+      "actual": {
+        "items": [
+          {
+            "itemId": 900001,
+            "requested": 800,
+            "credited": 800,
+            "ignored": 0,
+            "reason": "NONE"
+          },
+          {
+            "itemId": 900003,
+            "requested": 40,
+            "credited": 40,
+            "ignored": 0,
+            "reason": "NONE"
+          },
+          {
+            "itemId": 900101,
+            "requested": 100,
+            "credited": 100,
+            "ignored": 0,
+            "reason": "NONE"
+          },
+          {
+            "itemId": 900102,
+            "requested": 1,
+            "credited": 1,
+            "ignored": 0,
+            "reason": "NONE"
+          },
+          {
+            "itemId": 900401,
+            "requested": 44,
+            "credited": 44,
+            "ignored": 0,
+            "reason": "NONE"
+          }
+        ],
+        "wallet": {
+          "goldBefore": 0,
+          "diamondsBefore": 0,
+          "goldAfter": 800,
+          "diamondsAfter": 0
+        },
+        "spirits": {
+          "items": [],
+          "schemaVersion": 1
+        },
+        "timedItems": []
+      }
+    }
+  },
+  "requests": [
+    {
+      "name": "session.login",
+      "frameId": "92a11bf4-cddb-4477-8535-b3094b6a60e8"
+    },
+    {
+      "name": "chapter.idle.claim.status",
+      "frameId": "e00634f9-e07c-435f-98b6-6e5c2743d041",
+      "requestId": "cfd7dd60-4159-4e1a-9210-c10ff5a89d5f"
+    },
+    {
+      "name": "chapter.idle.claim",
+      "frameId": "4d22066d-9ddf-4342-8e33-27469da6d327",
+      "requestId": "cfd7dd60-4159-4e1a-9210-c10ff5a89d5f",
+      "expectedOperationVersion": 1
+    }
+  ],
+  "dropped": [
+    "state.changed",
+    "chapter.idle.claim"
+  ],
+  "next": "停止测试Java宿主后以同run只读重启，换新api参数并刷新，再恢复原请求"
+}

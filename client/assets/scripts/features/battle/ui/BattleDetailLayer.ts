@@ -55,30 +55,43 @@ export class BattleDetailLayer extends BaseView<BattleDetailArgs> {
     /** 关闭后为true，禁止继续更新统计或布局。 */
     private released = false;
 
-    /** 绑定关闭按钮并从已安装配置展示统计；遮罩和打开失败由UIManager统一处理。 */
-    public onOpen(args?: BattleDetailArgs): void {
-        super.onOpen(args);
-        if (!args || !this.panel || !this.closeButton || !this.attackerList
+    /** 实例首次打开时绑定静态按钮与视口；重复打开同一弹层不叠加监听，销毁子按钮时安全退订。 */
+    public onBind(): void {
+        if (!this.panel || !this.closeButton || !this.attackerList
             || !this.defenderList || !this.attackerWin || !this.defenderWin || !this.missingNotice
             || !this.attackerName || !this.defenderName) {
-            throw new Error("战斗统计参数或预制体绑定缺失");
+            throw new Error("战斗统计预制体绑定缺失");
+        }
+        const closeNode = this.closeButton.node;
+        const close = () => this.close();
+        closeNode.on(Button.EventType.CLICK, close);
+        this.ownListener(() => {
+            if (closeNode.isValid) {
+                closeNode.off(Button.EventType.CLICK, close);
+            }
+        });
+        this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport()));
+    }
+
+    /** 只更新当前冻结战报的展示参数；遮罩和打开失败由UIManager统一处理，不重绑静态监听。 */
+    public onOpen(args?: BattleDetailArgs): void {
+        super.onOpen(args);
+        if (!args) {
+            throw new Error("战斗统计参数缺失");
         }
         this.beginOpen();
         this.released = false;
-        this.attackerWin.active = args.won;
-        this.defenderWin.active = !args.won;
-        this.attackerName.string = args.names?.attacker ?? "我方（历史名称未记录）";
-        this.defenderName.string = args.names?.defender ?? "敌方（历史名称未记录）";
+        this.attackerWin!.active = args.won;
+        this.defenderWin!.active = !args.won;
+        this.attackerName!.string = args.names?.attacker ?? "我方（历史名称未记录）";
+        this.defenderName!.string = args.names?.defender ?? "敌方（历史名称未记录）";
         const missing = args.units.some(unit => unit.totalDamage == null || unit.totalTakenDamage == null || unit.totalRecovery == null);
         const missingPortrait = args.units.some(unit => BattleStatisticsUtils.portrait(unit) === null);
-        this.missingNotice.string = [
+        this.missingNotice!.string = [
             missing ? "部分统计未记录（—）" : "",
             missingPortrait ? "历史头像缺失，显示基础头像" : "",
         ].filter(Boolean).join("；");
-        const close = () => this.close();
-        this.closeButton.node.on(Button.EventType.CLICK, close);
-        this.ownListener(() => this.closeButton?.node.off(Button.EventType.CLICK, close));
-        ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport());
+        this.fitViewport();
         try {
             this.paintRows(args);
             this.finishOpen();

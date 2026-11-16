@@ -23,6 +23,16 @@ export interface RoleBasics {
     readonly experienceToNextLevel: number;
 }
 
+/** 统一快照中的酒馆冒险点；独立于900401普通库存，不使用历史发奖回执补余额。 */
+export interface TavernPointState {
+    /** 本批已实现的权威快照格式，其他版本不能按本格式解释。 */
+    readonly schemaVersion: 1;
+    /** 当前持久冒险点绝对余额；可能因历史规则超过当前上限，不在客户端扣减。 */
+    readonly adventureCount: number;
+    /** 服务端按当前已通关关卡冻结的上限，零是合法已同步值。 */
+    readonly limit: number;
+}
+
 export interface RoleProfile {
     /** 所属角色字符串 ID，不能转为 number。 */
     readonly id: string;
@@ -38,6 +48,8 @@ export interface RoleProfile {
     readonly serverId?: string;
     /** 服务器基础资料扩展，缺失时界面显示未同步。 */
     readonly basics?: Readonly<RoleBasics>;
+    /** 服务器冒险点扩展；旧快照缺失表示未同步，不能用普通库存或零余额代替。 */
+    readonly tavernPoints?: Readonly<TavernPointState>;
 }
 
 export interface AccountState {
@@ -62,11 +74,17 @@ export class AccountModel {
         };
     }
 
-    /** 原子替换账号与角色，并冻结嵌套基础资料，防止 View 绕过控制器修改资产。 */
+    /** 原子替换账号与角色，复制并冻结基础资料及冒险点；缺失扩展覆盖旧值，不沿用上次快照。 */
     replace(state: AccountState): void {
         this.state = Object.freeze({
             ...state,
-            role: state.role ? Object.freeze({ ...state.role, ...(state.role.basics ? { basics: Object.freeze({ ...state.role.basics }) } : {}) }) : null
+            role: state.role ? Object.freeze({
+                ...state.role,
+                ...(state.role.basics ? { basics: Object.freeze({ ...state.role.basics }) } : {}),
+                ...(state.role.tavernPoints ? {
+                    tavernPoints: Object.freeze({ ...state.role.tavernPoints }),
+                } : {}),
+            }) : null,
         });
         EventDispatcher.publishNotification(this.notify);
     }

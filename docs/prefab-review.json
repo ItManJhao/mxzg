@@ -1644,7 +1644,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，目录正常，未选技能的播放操作由全局飘字反馈；未逐技能演示。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-    "sha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
+    "sha256": "5bb1960ac87541c2ae0ffca734f295b6008309744e077a4d5e39d37502dae526",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
+      "normalizedLfSha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed"
+    },
     "acceptance": {
       "sha256": "27248211cd95f5e4b417e9a2f9fc93f02308545f3b5dad6891ceb6bee74632ed",
       "date": "2026-11-14",
@@ -1753,14 +1758,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
-    "visual": "本批同一竖屏预览中，真实随机3星碎片28/20封顶、指定1星碎片2/5、mode9无碎片样式；切换精灵隐藏数量且无残留，普通装备分流正常，产物候选不显示0。奖励本次数量与库存完成度的隔离另有实际Prefab专项，不称新结算战斗全流程复验。详见docs/validation/item-shard-review-20261114.json。",
-    "sha256": "bdd3c97734e0cc4e739d620b263132b31d82be09baad840e0a4b8011073b6644",
+    "visual": "本批只新增默认255 UIOpacity；Creator 393×852设备预览/浏览器1280×720实际检查通用奖励8格（金币1400、钻石3、经验70、月光175等），图标/品质/数量与金钱简介、叠窗关闭正常。原碎片及精灵专项见11-14记录，不冒称本批全部重跑。 证据见docs/validation/reward-preview-review-20261116.json。",
+    "sha256": "ac59635475682a74be6391d609860f553b6343785a291487f4108862eb77f973",
     "acceptance": {
-      "sha256": "bdd3c97734e0cc4e739d620b263132b31d82be09baad840e0a4b8011073b6644",
-      "date": "2026-11-14",
+      "sha256": "ac59635475682a74be6391d609860f553b6343785a291487f4108862eb77f973",
+      "date": "2026-11-16",
       "status": "依赖所属页面检查的组合资源",
-      "scope": "本批同一竖屏预览中，真实随机3星碎片28/20封顶、指定1星碎片2/5、mode9无碎片样式；切换精灵隐藏数量且无残留，普通装备分流正常，产物候选不显示0。奖励本次数量与库存完成度的隔离另有实际Prefab专项，不称新结算战斗全流程复验。详见docs/validation/item-shard-review-20261114.json。",
-      "inspector": "所属背包及产物页面的本机浏览器检查；未操作Creator Inspector。"
+      "scope": "本批只新增默认255 UIOpacity；Creator 393×852设备预览/浏览器1280×720实际检查通用奖励8格（金币1400、钻石3、经验70、月光175等），图标/品质/数量与金钱简介、叠窗关闭正常。原碎片及精灵专项见11-14记录，不冒称本批全部重跑。 证据见docs/validation/reward-preview-review-20261116.json。",
+      "inspector": "负责人刷新，浏览器检查；未操作Creator原生窗口或Inspector。"
     }
   },
   {
@@ -1807,6 +1812,127 @@
     "sha256": "ca502e6e5494a54da6a5a150f183cd1b1b841682d6ca15fec20ab21d3f16332d"
   },
   {
+    "path": "client/assets/bundles/module/common/prefabs/ConfirmView.prefab",
+    "classes": [
+      "ViewportScale",
+      "ConfirmView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 1,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "ContentLabel",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "本批Creator 393×852设备预览/浏览器1280×720：共用旧3500/2220文案及双按钮布局、取消无奖励、确认进入通用队列。空标题/单按钮由Prefab Layout和专项验证，未做本批单按钮实际画面或全机型验收。 证据见docs/validation/reward-preview-review-20261116.json。",
+    "sha256": "dead69094b19a3cc5ec5e4cc788a47d103551a55fe45a27ead6a3411a8549c9b",
+    "acceptance": {
+      "sha256": "dead69094b19a3cc5ec5e4cc788a47d103551a55fe45a27ead6a3411a8549c9b",
+      "date": "2026-11-16",
+      "status": "实际预览通过",
+      "scope": "本批Creator 393×852设备预览/浏览器1280×720：共用旧3500/2220文案及双按钮布局、取消无奖励、确认进入通用队列。空标题/单按钮由Prefab Layout和专项验证，未做本批单按钮实际画面或全机型验收。 证据见docs/validation/reward-preview-review-20261116.json。",
+      "inspector": "负责人刷新，浏览器检查；未操作Creator原生窗口或Inspector。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/RewardView.prefab",
+    "classes": [
+      "RewardView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "本批Creator 393×852设备预览/浏览器1280×720：真实独立WS回执8项到账、标题动画和获得声源、金币只读简介叠窗；上层/下层关闭，modalNodes始终1，最终residents/modalActive均0，钱包1400/3不变。仅限该画面，1～3格居中/失败重试由专项证明，不代签全机型或发布产物。 证据见docs/validation/reward-preview-review-20261116.json。",
+    "sha256": "ed3fb531c8404c1812f3ef5fbaaac17c930ac3185647e4e6fe6ca3ea6821ac64",
+    "acceptance": {
+      "sha256": "ed3fb531c8404c1812f3ef5fbaaac17c930ac3185647e4e6fe6ca3ea6821ac64",
+      "date": "2026-11-16",
+      "status": "实际预览通过",
+      "scope": "本批Creator 393×852设备预览/浏览器1280×720：真实独立WS回执8项到账、标题动画和获得声源、金币只读简介叠窗；上层/下层关闭，modalNodes始终1，最终residents/modalActive均0，钱包1400/3不变。仅限该画面，1～3格居中/失败重试由专项证明，不代签全机型或发布产物。 证据见docs/validation/reward-preview-review-20261116.json。",
+      "inspector": "负责人刷新，浏览器检查；未操作Creator原生窗口或Inspector。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/gm/prefabs/GmBattleView.prefab",
     "classes": [
       "GmBattleView",
@@ -1850,7 +1976,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。三关按钮显示、第一关真实阵容只读试战至胜利并返回。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-    "sha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616",
+    "sha256": "16e7cc59b0053d6a1e310b9e87e479836eef9a38d7a77033e1d75e34b310261a",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616",
+      "normalizedLfSha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616"
+    },
     "acceptance": {
       "sha256": "6a8cc9f5242539ca2b5e2bd9560bbd91f9b1fa33a1ef505d619b89c845b2f616",
       "date": "2026-11-14",
@@ -1953,7 +2084,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。英雄与道具搜索/选择、英雄与真实精灵发放成功、超量明确飘字、关闭和F9关闭。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-    "sha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509",
+    "sha256": "8ffb329bf5119a9c15333d6e86f5b92e434df30ca53a5b63665b13649f46be8f",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509",
+      "normalizedLfSha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509"
+    },
     "acceptance": {
       "sha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509",
       "date": "2026-11-14",
@@ -2051,7 +2187,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。F9总菜单四入口及开关、关闭子窗返回菜单。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-    "sha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729",
+    "sha256": "0da13d6d03f72a2bd60af5c904b22e674f50c3b6ea220d1e7a02a445bffd3bc5",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729",
+      "normalizedLfSha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729"
+    },
     "acceptance": {
       "sha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729",
       "date": "2026-11-14",
@@ -3036,7 +3177,12 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
     "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。移除旧Notice，导航与全局反馈正常，资料页与GM打开不依赖旧主城提示层。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-    "sha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
+    "sha256": "3151f6ccb506ee2fcd80376771055bcce80f4cbd69789a63f4688c02dd2a6dd3",
+    "acceptanceFingerprintDifference": {
+      "difference": "仅CRLF/LF差异",
+      "recordedSha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
+      "normalizedLfSha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f"
+    },
     "acceptance": {
       "sha256": "a519a0b81a21c0ccdd0c7a0f0a2366dacef2316f34326726abcc24f9d4be978f",
       "date": "2026-11-14",

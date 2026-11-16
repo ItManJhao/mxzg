@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-16",
+  "kind": "CREATOR_PREVIEW_REAL_WS_ISOLATED_MEMORY_H2",
+  "run": "0e84be149622439990a8717a396997a3",
+  "pid": 23392,
+  "port": 64738,
+  "processStopped": true,
+  "deviceOption": "Apple iPhone 14 Pro (393X852)",
+  "browserViewport": "1280x720",
+  "compiled": {
+    "recoverPendingOnEntry": true,
+    "restoreItems": true
+  },
+  "interrupted": {
+    "state": {
+      "maxCleared": 1,
+      "pendingBattleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "assetRevision": 4
+    },
+    "entry": {
+      "battleId": null,
+      "consumed": true
+    },
+    "receipt": {
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "action": "BATTLE",
+      "revision": 4
+    },
+    "settlement": null
+  },
+  "actualPageReload": true,
+  "coldCity": {
+    "state": {
+      "maxCleared": 1,
+      "pendingBattleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "assetRevision": 4
+    },
+    "entry": {
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "consumed": false
+    },
+    "settlement": null,
+    "receipt": null,
+    "inFlight": false,
+    "reward": {
+      "phase": "idle",
+      "acceptedCount": 0,
+      "pending": [],
+      "activeReceiptId": null
+    },
+    "residents": []
+  },
+  "coldRecovered": {
+    "state": {
+      "maxCleared": 1,
+      "pendingBattleId": null,
+      "assetRevision": 5
+    },
+    "entry": {
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "consumed": true
+    },
+    "settlement": {
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "phase": "confirmed",
+      "presentation": "reward",
+      "feedbackQueued": true,
+      "presented": true
+    },
+    "receipt": {
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "action": "SETTLED",
+      "revision": 5,
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 20204004,
+          "quantity": 30
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    "inFlight": false,
+    "reward": {
+      "phase": "showing",
+      "acceptedCount": 1,
+      "pending": [
+        "8b303d50-db0a-49d5-a055-cf408073ab3c"
+      ],
+      "activeReceiptId": "8b303d50-db0a-49d5-a055-cf408073ab3c"
+    },
+    "residents": [
+      "reward"
+    ]
+  },
+  "reopened": {
+    "state": {
+      "maxCleared": 1,
+      "pendingBattleId": null,
+      "assetRevision": 5
+    },
+    "entry": {
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "consumed": true
+    },
+    "settlement": {
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "phase": "confirmed",
+      "presentation": "reward",
+      "feedbackQueued": true,
+      "presented": true
+    },
+    "receipt": {
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "action": "SETTLED",
+      "revision": 5,
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 20204004,
+          "quantity": 30
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    "inFlight": false,
+    "reward": {
+      "phase": "idle",
+      "acceptedCount": 1,
+      "pending": [],
+      "activeReceiptId": null
+    },
+    "residents": []
+  },
+  "coldAuthenticationAt": "2026-11-16T09:23:56.924Z",
+  "coldPhaseRpc": {
+    "chapter.claim": [
+      {
+        "at": "2026-11-16T09:24:42.871Z",
+        "description": "%c[mxzg][APP][WS接收]%c[debug] 17:24:42 服务端 → 客户端｜主线｜chapter.claim｜幂等结算回执｜成功"
+      }
+    ],
+    "chapter.challenge": [],
+    "chapter.replay": []
+  },
+  "coldPhaseWindows": [
+    {
+      "at": "2026-11-16T09:24:43.471Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 17:24:43 打开界面 RewardView ui RewardView 耗时 598ms"
+    }
+  ],
+  "normalFollowingRecovery": {
+    "state": {
+      "maxCleared": 2,
+      "pendingBattleId": null,
+      "assetRevision": 7
+    },
+    "entry": {
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "consumed": true
+    },
+    "settlement": {
+      "battleId": "9c7c075a-9cbd-43df-80be-efc473aa7036",
+      "phase": "confirmed",
+      "presentation": "battle",
+      "feedbackQueued": false,
+      "presented": true
+    },
+    "receipt": {
+      "battleId": "9c7c075a-9cbd-43df-80be-efc473aa7036",
+      "action": "SETTLED",
+      "revision": 7,
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900002,
+          "quantity": 151
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ]
+    },
+    "inFlight": false,
+    "reward": {
+      "phase": "idle",
+      "acceptedCount": 1,
+      "pending": [],
+      "activeReceiptId": null
+    },
+    "residents": []
+  },
+  "allClaimReceipts": [
+    {
+      "at": "2026-11-16T09:24:42.871Z",
+      "battleId": "8b303d50-db0a-49d5-a055-cf408073ab3c",
+      "action": "SETTLED",
+      "revision": 5
+    },
+    {
+      "at": "2026-11-16T09:26:57.966Z",
+      "battleId": "9c7c075a-9cbd-43df-80be-efc473aa7036",
+      "action": "SETTLED",
+      "revision": 7
+    }
+  ],
+  "allResultWindows": [
+    {
+      "at": "2026-11-16T09:24:43.471Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 17:24:43 打开界面 RewardView ui RewardView 耗时 598ms"
+    },
+    {
+      "at": "2026-11-16T09:26:56.351Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 17:26:56 打开界面 MainChapterBattleView ui MainChapterBattleView 耗时 4590ms"
+    },
+    {
+      "at": "2026-11-16T09:26:58.387Z",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 17:26:58 打开界面 ChapterEndView ui ChapterEndView 耗时 422ms"
+    }
+  ],
+  "warnings": [],
+  "images": [
+    "docs/images/chapter-entry-city-20261116.jpg",
+    "docs/images/chapter-entry-reward-20261116.jpg",
+    "docs/images/chapter-entry-reopened-20261116.jpg",
+    "docs/images/chapter-entry-normal-result-20261116.jpg"
+  ],
+  "assertions": {
+    "cityDidNotSettle": true,
+    "originalBattleIdRecovered": true,
+    "confirmedSnapshotAndReceipt": true,
+    "recoveryUsesRewardWindow": true,
+    "coldNoChallengeOrReplay": true,
+    "coldSingleClaim": true,
+    "reopenNoDuplicate": true,
+    "normalStillBattle": true
+  },
+  "limits": [
+    "本机浏览器真实重载，不等同进程崩溃断电",
+    "未在Creator注入丢回执/状态、奖励资源失败、换号迟到；相关条件由受控专项覆盖",
+    "后端复用前批已编译独立SocketPreviewServer，当前未修改Java或重跑Maven",
+    "不验集中发布包、MySQL、真实CDN、APP/微信/真机",
+    "恢复窗只展示chapter.claim已有基础实际奖励，不补猜升级赠钻"
+  ]
+}

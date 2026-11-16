@@ -4,9 +4,9 @@ import type { FormationSaveRequest } from "./data/FormationData";
 
 /** 过程状态不是服务器资产，不含View或草稿。 */
 export interface FormationSaveState {
-    /** 正在发送或等待权威状态时为true。 */
+    /** 正在保存或执行本轮同步确认时为true；仍缺状态但本轮已结束时为false，可明确重试同步。 */
     readonly busy: boolean;
-    /** 结果未确认的完整请求，关窗后保留，换号清空。 */
+    /** 原保存意图保留至回执及权威阵容均确认；有ACK时仅用于保留参数，不再次保存。关窗保留，换号清空。 */
     readonly pending: FormationSaveRequest | null;
     /** 已收到成功回执，等待统一快照达到的阵容版本。 */
     readonly acknowledged: number | null;

@@ -1,0 +1,127 @@
+{
+  "recordedAtUtc": "2026-11-14T13:30:56.791270+00:00",
+  "scope": "客户端挂机领取持久恢复；不开放玩家入口，不集中构建，不修改日常数据",
+  "git": {
+    "branch": "hao",
+    "publishedExistingWork": "d4a9c4f1",
+    "remoteHao": "d4a9c4f1",
+    "remoteMain": "d4a9c4f1",
+    "merge": "fast-forward",
+    "newRecoveryWork": "local uncommitted"
+  },
+  "implementation": {
+    "storage": "native IndexedDB, meta/pending, complete-before-resolve",
+    "identity": "application server/role + persistent client UUID; isolated test namespace",
+    "record": [
+      "schemaVersion",
+      "requestId",
+      "expectedOperationVersion"
+    ],
+    "confirmation": [
+      "matching original receipt",
+      "snapshot assetRevision >= receipt assetRevision",
+      "snapshot operationVersion >= receipt afterOperationVersion",
+      "transactional full-fingerprint conditional delete"
+    ],
+    "recovery": [
+      "no send before durable intent",
+      "same original body on retry",
+      "NOT_FOUND is not cancellation",
+      "READ_ONLY can query historical success; no resend of uncommitted intent",
+      "newer operation before NOT_FOUND proves obsolete intent",
+      "at most one explicit reauthentication per recovery",
+      "ordinary state push performs local confirmation only",
+      "account switch retains durable intent; old callbacks and storage IO isolated",
+      "corrupt/fingerprint conflict/invalid response blocks automatic processing"
+    ],
+    "notAdded": [
+      "new game protocol",
+      "HTTP game API",
+      "second asset model",
+      "module resource list",
+      "player claim entry",
+      "server enable configuration"
+    ]
+  },
+  "checks": {
+    "controllerCases": 32,
+    "applicationBindingGroups": 7,
+    "focusedSuites": [
+      "idle-claim-recovery",
+      "idle-claim-binding",
+      "main-chapter-idle-protocol",
+      "game-socket",
+      "main-chapter",
+      "bindings",
+      "docs",
+      "architecture"
+    ],
+    "logs": {
+      "idle-claim-recovery": "PASS 32 idle claim recovery cases: immutable intent, bounded status retry, dual confirmation and late-result isolation\n",
+      "idle-claim-binding": "PASS idle claim application binding: readonly history, dual versions, bounded reauth, logout/relogin, late storage/wire, owner blocking, storage activation retry and closed entry\n[mxzg][MODULE][warn][MainChapterIdleClaimController] 21:28:59 SocketFailure: 挂机历史回执不属于当前角色\n    at IdleClaimBinding.validateReceiptOwner (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:20062:13)\n    at G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:19986:16\n    at AccountService.deliverAuthenticated (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:18028:22)\n    at async MainChapterIdleClaimController.request (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:19889:7)\n    at async MainChapterIdleClaimController.execute (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:19734:18)\n    at async IdleClaimBinding.activate (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:20044:7)\n[mxzg][APP][warn][IdleClaimBinding] 21:28:59 挂机领取恢复暂停：Error: 测试存储暂时不可用\n",
+      "main-chapter-idle-protocol": "PASS idle claim/status binary schemas, safe versions, receipt consistency and string instance IDs\n",
+      "game-socket": "PASS unified initialization, no duplicate requests, atomic role/bag events, monotonic revision, reconnect, old-wire isolation, invalid payload, logout\n[mxzg][MODULE][warn][FormationController] 21:29:00 Error: 网络断开\n",
+      "main-chapter": "PASS 主线客户端状态、重试、回执、身份清理及窗口迟到取消\n[mxzg][MODULE][warn][MainChapterBattleView] 21:29:02 主线结算待恢复：Error: offline\n",
+      "bindings": "PASS 全库绑定：176 个脚本，37 个 Prefab/Scene，86 处脚本绑定；无旧格式/未知类/无效按钮目标。检查器反例通过。\n",
+      "docs": "�ĵ��ļ�����ͨ����46 �� README/ָ��/��֤��¼\n",
+      "architecture": "Scripts: 176; imports: 708; prefabs: 36\nResources (source, excluding meta): 13022 files, 442.18 MiB\n  16909 lines  platform/GameProtocol.generated.ts\n   1462 lines  config/GConfig.ts\n    987 lines  framework/ui/UIManager.ts\n    783 lines  features/battle/ui/BattleReplayPreview.ts\n    690 lines  framework/ui/SuperContent.ts\nAccepted boundary debt: 0\n"
+    },
+    "strictCreatorTypes": "passed, noEmit",
+    "scriptBindings": "passed",
+    "diffWhitespace": "passed",
+    "docs": "passed using explicit workspace Python; initial python alias unavailable (EACCES)",
+    "architecture": "passed; Accepted boundary debt: 0"
+  },
+  "nativeBrowser": {
+    "host": "owned loopback 127.0.0.1:51738, random test namespace",
+    "gameServerConnected": false,
+    "journalGroups": 12,
+    "cases": [
+      "multi-connection stable instance",
+      "competing create preserves one intent",
+      "full fingerprint and A/B late-clear",
+      "server/role/run isolation",
+      "close/reopen persists",
+      "corrupt record preserved and rejected",
+      "bad version/extra sensitive fields rejected",
+      "corrupt stable instance not reset",
+      "synchronous open failure retried",
+      "dispose during open and stale port",
+      "unavailable storage has no memory fallback",
+      "database versionchange releases original connection"
+    ],
+    "realPageReload": {
+      "savedRequestId": "f9ab0000-0000-4000-8000-000000000007",
+      "savedExpectedOperationVersion": 7,
+      "action": "save -> reload page -> restore",
+      "restoredExactly": true,
+      "conditionalClear": true,
+      "randomTestDatabaseDeleted": true
+    },
+    "screenshot": "docs/images/idle-claim-journal-review-20261114.png",
+    "lateIncrement": "upgrade-initialization exception catch added after browser run; final strict types passed; no engine asset or normal storage path change",
+    "hostStoppedByOwnedRun": true
+  },
+  "limits": [
+    "No centralized/release build per user instruction",
+    "Controlled binary transport uses real client codec/socket/account/asset binding with deterministic server fixture, not a fresh Java claim transaction",
+    "No new client + real server end-to-end idle claim run in this batch",
+    "Native browser refresh and storage connection reopen tested; OS/browser process crash or power loss not tested",
+    "Default IDB durability, no power-loss durability claim",
+    "APP/WeChat platform persistence adapters, real device, MySQL and actual CDN not tested",
+    "No Creator game-scene preview needed for this logic-only closed-entry batch",
+    "Daily backend and player data unchanged"
+  ],
+  "sourceSha256": {
+    "client/assets/scripts/app/remake/IdleClaimJournal.ts": "46dd5a7ac072bcd6e10aef59b128fa78a727fadaa3226483d5665f824691e44e",
+    "client/assets/scripts/app/remake/IdleClaimBinding.ts": "22a373c5afee840ee5e69091721a1a52f42ef5421ea861ffaf4e79e40dd40a50",
+    "client/assets/scripts/features/battle/MainChapterIdleClaimController.ts": "46dca39abf44b3be1ba97bb7c5ffb4cb6961f874173055d17a7919f2abf9c6d3",
+    "client/assets/scripts/features/battle/data/MainChapterIdleClaimData.ts": "b7a810dbbe0a7d31bc995f357a5573da27dd1790376da2b767a72a988642b56a",
+    "client/assets/scripts/features/battle/MainChapterModel.ts": "4959b39cc72f1d724c081d8565053bbc87240a7256c84b1c6d3ea703a862df9d",
+    "client/assets/scripts/platform/GameSocketClient.ts": "66d41a6c84cc0355c571d99a3cd9a8bb7f5e85c94c6682ea38cfd233809cbb6c",
+    "client/assets/scripts/platform/GameProtocolCodecUtils.ts": "3c92d5c1a1a6024f162387456cede74c7bcafdbedd4cb8cfc758d79bdefc0c77",
+    "client/assets/scripts/app/remake/RemakeApp.ts": "515ee48c246044bcc24b9001c13cfd8d95ef4afd1a02d80fd30c65119e6ec191",
+    "client/assets/scripts/app/remake/AccountComposition.ts": "d602c5f7670623c1ea4ed75351bac0e5fd067df1401a1acb27dc591e8417b406",
+    "client/assets/scripts/app/remake/IsolatedSocketPreviewUtils.ts": "4ca7a0bf1c51df716d18cab129d516690966b5c4138cbb19fe1710326836823b"
+  }
+}

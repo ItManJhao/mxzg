@@ -5,6 +5,7 @@ import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.campaign.*;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.tavern.TavernPointService;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,8 @@ class MainChapterRewardTest {
     @Autowired RoleRepository roles;
     /** 核对普通库存与余额，不访问玩家库。 */
     @Autowired InventoryService inventory;
+    /** 独立冒险点领域入口，与普通库存分别核对。 */
+    @Autowired TavernPointService tavernPoints;
     /** 模拟外层结算事务。 */
     @Autowired PlatformTransactionManager transactions;
     /** 准备余额边界及核对未创建穿戴记录。 */
@@ -41,8 +44,11 @@ class MainChapterRewardTest {
         return login.login("award_" + UUID.randomUUID().toString().substring(0, 12)).role().id();
     }
 
-    /** 按配置ID查询已入账余额，缺记录等于零。 */
+    /** 按真实领域读取已入账数量；冒险点不再从普通背包推断。 */
     private long count(String role, int id) {
+        if (id == 900401) {
+            return new TransactionTemplate(transactions).execute(status -> tavernPoints.current(role, 11_000)).adventureCount();
+        }
         return inventory.list(role).stream().filter(item -> item.itemId() == id)
             .mapToLong(InventoryService.Item::quantity).sum();
     }
@@ -64,7 +70,7 @@ class MainChapterRewardTest {
         assertEquals(3, after.level());
         assertEquals(120, after.basics().experience());
         assertEquals(1700, count(role, 900101));
-        assertEquals(300, count(role, 900401));
+        assertEquals(2_300, count(role, 900401));
         assertEquals(2, count(role, 1004001));
         assertEquals(1, count(role, 1003001));
         assertEquals(30, count(role, 20204004));
@@ -78,12 +84,12 @@ class MainChapterRewardTest {
     /** 酒馆奖励只补到已通关上限；原有超上限余额不扣回，其他奖励照常处理。 */
     @Test void tavernCapDoesNotOverflowOrRemoveExistingBalance() {
         String role = player();
-        new TransactionTemplate(transactions).executeWithoutResult(status -> inventory.credit(role, 900401, 10990));
+        new TransactionTemplate(transactions).executeWithoutResult(status -> tavernPoints.creditForDevelopment(role, 8990));
         var first = new TransactionTemplate(transactions).execute(status ->
             rewards.grant(role, new MainChapterRules.Progress(1, true)));
         assertTrue(first.contains(new MainChapterRules.Reward(900401, 10)));
         assertEquals(11000, count(role, 900401));
-        jdbc.update("UPDATE game_inventory SET quantity=12000 WHERE role_id=? AND item_id=900401", role);
+        jdbc.update("UPDATE game_tavern_point SET adventure_count=12000 WHERE role_id=?", role);
         var second = new TransactionTemplate(transactions).execute(status ->
             rewards.grant(role, new MainChapterRules.Progress(2, true)));
         assertTrue(second.stream().noneMatch(item -> item.itemId() == 900401));

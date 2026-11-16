@@ -1,5 +1,5 @@
-/** 挂机宝箱只读显示计算，由主线页面消费服务器时钟快照。
- * 不计算领取奖励，不修改持久起点；百分比取整和四档边界沿用旧BattlePanelLayer。 */
+/** 挂机宝箱显示与收取表现的纯计算，由主线页面消费服务器时钟快照。
+ * 不发送领取请求、不计算奖励或修改持久起点；取整、四档和显示门槛沿用旧BattlePanelLayer。 */
 export class IdleChestUtils {
     /** 纯显示工具不允许实例化。 */
     private constructor() {}
@@ -23,6 +23,35 @@ export class IdleChestUtils {
             throw new Error("挂机宝箱显示时间非法");
         }
         return Math.floor(Math.max(0, Math.min(100, seconds / maxSeconds * 100)));
+    }
+
+    /**
+     * 按旧频率加5秒计算显示等待时间，当前frequency=60时显示门槛为65秒。
+     * @param seconds 从已接纳快照推算的显示秒数；不足一秒向下取整，回拨按0秒显示。
+     * @param frequency 同一服务端快照中的收益周期，单位为秒。
+     * @param maxSeconds 同一快照的显示上限，单位为秒，不用于重新计算领取资格。
+     * @returns 0表示显示时间已到门槛，正数为还需等待的秒数；null表示封顶显示无法确认门槛。
+     * 上限低于门槛时不显示“可领取”；null只代表展示不可判定，不定义新的玩法限制。
+     */
+    public static claimWaitSeconds(seconds: number, frequency: number, maxSeconds: number): number | null {
+        if (!Number.isFinite(seconds) || !Number.isSafeInteger(frequency) || frequency <= 0
+            || !Number.isSafeInteger(frequency + 5) || !Number.isSafeInteger(maxSeconds) || maxSeconds <= 0) {
+            throw new Error("挂机宝箱领取显示时间非法");
+        }
+        const minimumSeconds = frequency + 5;
+        if (maxSeconds < minimumSeconds) {
+            return null;
+        }
+        const displayedSeconds = Math.floor(Math.max(0, Math.min(seconds, maxSeconds)));
+        return Math.max(0, minimumSeconds - displayedSeconds);
+    }
+
+    /** 返回对应旧宝箱档位的真实收取动作名；只接受1至4，不将非法档位回退成其他表现。 */
+    public static collectAnimation(stage: number): string {
+        if (!Number.isInteger(stage) || stage < 1 || stage > 4) {
+            throw new Error("挂机宝箱收取档位无效");
+        }
+        return "collect-" + stage;
     }
 
     /** 只生成旧版飞行表现参数；随机数取[0,1)，不用于掉落、资产或权威战报。 */

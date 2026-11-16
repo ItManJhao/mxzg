@@ -1,0 +1,418 @@
+{
+  "date": "2026-11-16",
+  "branch": "hao",
+  "scope": "旧版冒险点权威状态、初始化、普通背包边界、初始化与变更协议、挂机满额确认门槛的直接源码核实",
+  "method": "直接读取旧项目正常工作目录的客户端、服务端和协议；未使用正式服、历史裸仓库或运行时假数据",
+  "sourceRoots": {
+    "legacy": "G:/work/FsGame/Demo/mj/program",
+    "current": "G:/work/FsGame/Project/mxzg"
+  },
+  "findings": {
+    "identityAndOwner": {
+      "conclusion": "奖励配置900401的item.type为11，分路到TAVERN；真实余额属于TavernInfo.adventureCount，对应tavern_info.adventure_count，不是普通BackPack记录。旧客户端pub_task.adventure_count是服务端当前余额的展示状态。",
+      "evidence": [
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/item.lua",
+          "lines": [
+            283,
+            284,
+            285,
+            287
+          ],
+          "observed": "900401配置type=11、place=0。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/processor/ThingType.java",
+          "lines": [
+            55,
+            57
+          ],
+          "observed": "TAVERN(11)表示酒馆冒险点数。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/ThingService.java",
+          "lines": [
+            73,
+            74,
+            75
+          ],
+          "observed": "按CItem.type取得ThingType及对应Processor，不按旧常量的中文名称选择普通背包。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/task/domain/TavernInfo.java",
+          "lines": [
+            21,
+            40,
+            41
+          ],
+          "observed": "实体表tavern_info，adventure_count持久字段保存冒险点余额。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/processor/TavernProcessor.java",
+          "lines": [
+            45,
+            46,
+            47,
+            51,
+            52
+          ],
+          "observed": "TAVERN Processor读TavernInfo.adventureCount。"
+        }
+      ]
+    },
+    "initialization": {
+      "conclusion": "旧服务首次读取持久记录时懒初始化：只有tavern_info整行不存在才赋初始冒险点；已有记录的0余额不会补发，每日重置也不会重置余额。",
+      "initialValue": 2000,
+      "constantDefault": 3000,
+      "configurationPrecedence": "TavernConst声明默认3000，但loadConst从system.tavern_initial_item覆盖；旧Lua配置和新版共享system投影均为2000。未启动旧服务或核实旧正式服的外部配置，不将常量默认值视为最终生效值。",
+      "evidence": [
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/task/service/TavernInfoService.java",
+          "lines": [
+            27,
+            28,
+            29,
+            30,
+            31,
+            36,
+            37,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54
+          ],
+          "observed": "getTavernInfo先查rid，仅info==null时setAdventureCount(TAVERN_INITIAL_ITEM)并add；每日重置分支只清刷新状态，没有修改冒险点余额。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/constant/TavernConst.java",
+          "lines": [
+            59,
+            61,
+            78,
+            87
+          ],
+          "observed": "初始冒险点常量默认3000，loadConst使用SystemSysCache.parseInt0(nameMap, tavern_initial_item)覆盖。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/system.lua",
+          "lines": [
+            30
+          ],
+          "observed": "tavern_initial_item=2000。"
+        },
+        {
+          "path": "G:/work/FsGame/Project/mxzg/client/assets/bundles/resources/config/system.json",
+          "lines": [
+            1
+          ],
+          "selector": "rows[key=tavern_initial_item].value",
+          "observed": "共享投影的值为2000；该JSON为单行生成文件。"
+        },
+        {
+          "path": "G:/work/FsGame/Project/mxzg/backend/pom.xml",
+          "lines": [
+            29
+          ],
+          "observed": "客户端共享config/system.json作为服务端gameplay/system.json资源打包，不需要另造一份初始值配置。"
+        }
+      ]
+    },
+    "loginOrder": {
+      "conclusion": "旧login回包不直接携带冒险点；登录后先取角色资料，roleInfo初始化请求队列依次包含普通背包、主线及酒馆列表。酒馆13021读取就会初始化缺行，无须用户主动打开酒馆页面。",
+      "evidence": [
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/net/RoleResponse.lua",
+          "lines": [
+            12,
+            41,
+            49,
+            52,
+            65,
+            67,
+            72,
+            160,
+            175,
+            263
+          ],
+          "observed": "新角色先GReqInit并重新登录；已有角色请求GReqRoleInfo；roleInfo发送GReqBackPackList、GReqChapterData和GReqPubTaskList。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/task/handler/PubTaskHandler.java",
+          "lines": [
+            99,
+            100,
+            101,
+            104,
+            117,
+            118,
+            129,
+            130
+          ],
+          "observed": "13021先getTavernInfo，再初始化默认任务并将当前冒险点写入回包。"
+        }
+      ]
+    },
+    "balanceMutationAndCap": {
+      "conclusion": "增加先合并理论数量，再按领取时角色已通关chapterId对应的tavern_point_max裁剪；chapterId=0取第1行。只增加正剩余额度，已超过上限不倒扣；扣除先检查余额足够，再持久减余额。",
+      "firstThreeStageCap": 11000,
+      "legacyRewardResultCaveat": "旧TavernProcessor.add返回Rewards.of(原thingSet)，可能仍是理论数量；新版既有实际到账及减少原因回执应继续保留，不能因复制旧返回值而伪报到账。",
+      "evidence": [
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/processor/TavernProcessor.java",
+          "lines": [
+            56,
+            57,
+            59,
+            60,
+            62,
+            63,
+            65,
+            68,
+            69,
+            72,
+            73,
+            74,
+            75,
+            78,
+            82,
+            84,
+            90,
+            93,
+            94,
+            96
+          ],
+          "observed": "combine后取关卡上限；超限计算cap-current，仅totalReward>0才更新和发增加事件；prepareCost检查剩余非负，cost持久扣除并发消耗事件。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/chapterreward.lua",
+          "lines": [
+            17,
+            33,
+            49
+          ],
+          "observed": "第1、2、3关tavern_point_max均为11000。"
+        }
+      ]
+    },
+    "initialAndChangedProtocols": {
+      "conclusion": "13021初始化列表的字段5和13027余额变化通知的字段1均传当前绝对余额，不是增量。客户端两条处理都覆盖唯一pub_task.adventure_count，13027另发PUB_POINTS事件刷新界面。",
+      "evidence": [
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/mxzg-protofiles/protofiles/game/PubTask.proto",
+          "lines": [
+            18,
+            23,
+            31,
+            94,
+            95,
+            96,
+            97
+          ],
+          "observed": "GResPubTaskList.adventure_count=5，GResPubAdventureCount.adventure_count=1；字段类型int64。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/task/handler/PubTaskHandler.java",
+          "lines": [
+            129,
+            130
+          ],
+          "observed": "13021设置pubInfo.getAdventureCount()。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/task/observer/TavernObserver.java",
+          "lines": [
+            41,
+            42,
+            43,
+            44,
+            45,
+            46
+          ],
+          "observed": "TavernAdventureEvent后重新读取当前余额并以13027主动推送。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/net/PubTaskResponse.lua",
+          "lines": [
+            10,
+            11,
+            13,
+            63,
+            69
+          ],
+          "observed": "初始化和变化都赋pub_task.adventure_count；变化处理派发PUB_POINTS。"
+        }
+      ]
+    },
+    "ordinaryBackpackBoundary": {
+      "conclusion": "普通背包5001仅序列化BackPack表正数量记录，冒险点由独立TAVERN Processor管理；存在900401配置图标或奖励格不表示它属于普通背包。",
+      "evidence": [
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/handler/BackPackHandler.java",
+          "lines": [
+            116,
+            117,
+            118,
+            120,
+            121,
+            125,
+            126,
+            127,
+            128,
+            130
+          ],
+          "observed": "GReqBackPackList只从backPackService.getBagList获取并序列化BackPack记录。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/BackPackService.java",
+          "lines": [
+            21,
+            22
+          ],
+          "observed": "getBagList只查询BackPackDao.list(rid)。"
+        }
+      ]
+    },
+    "idleFullConfirmation": {
+      "conclusion": "挂机点击领取前，比较当前冒险点余额>=当前已通关关卡的tavern_point_max。满足时弹二次确认，确认回调才请求领取；不是根据预计奖励是否会溢出，也不是服务端禁止满额领取。快速战斗使用相同门槛。",
+      "evidence": [
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "lines": [
+            126,
+            127,
+            133,
+            134,
+            135,
+            140,
+            142,
+            144
+          ],
+          "observed": "goCoffeeCtr读取chapter_id配置；adventure_count>=tavern_point_max时ConfirmCtr.openWindow，确认执行onIdleReward；否则直接执行。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/layer/QuickBattleCtr.lua",
+          "lines": [
+            109,
+            110,
+            116,
+            117,
+            119,
+            122,
+            124
+          ],
+          "observed": "快速战斗相同余额>=cap确认，确认回调发送奖励请求。"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/language.lua",
+          "lines": [
+            885,
+            886,
+            1470,
+            1471
+          ],
+          "observed": "标题3500为提示；正文2220说明领取后超出咖啡馆点数上限的部分将清除，并询问是否继续。"
+        }
+      ]
+    }
+  },
+  "restorationRequirements": {
+    "authority": "一个酒馆点领域入口持有真实余额的读、缺行初始化及上限发放；复用角色锁事务、持久资产revision和提交后统一推送，不在共享发奖或View另造初值。",
+    "initialization": "使用共享system.tavern_initial_item=2000，只在真正未初始化时一次赋值；已存在余额记录包括0均保持原量，不追加2000，不按历史差额补偿。",
+    "migration": "独立表V26须先迁移现有game_inventory中900401的全部真实行，包含quantity=0；迁移后这些角色视为已初始化。仅未迁移且独立表缺行者允许懒初始化。禁止把新表缺行一律当作新玩家而忽略旧记录。",
+    "history": "不修改历史领取audit或成功回执，不重算、重放或再发已经提交的奖励。",
+    "protocol": "在唯一game.proto中定义明确可辨别未同步的酒馆权威状态，至少含当前点数和同源上限；登录、鉴权恢复及state.changed共用统一快照，不恢复旧HTTP或新增背包查询。",
+    "client": "Controller提交唯一酒馆点Model，View订阅状态事件；普通背包不再拥有900401余额，奖励展示仍可使用900401配置身份。满额确认读取已接纳权威状态，不由奖励回执或库存差量推断。",
+    "scope": "恢复挂机满额确认所需状态链，不因此开放酒馆派遣、酒馆刷新、玩家扣点或快速战斗。"
+  },
+  "implementationStaticReview": {
+    "status": "已对落盘的V26及唯一领域服务完成只读静态核对；未运行H2/MySQL，不代表整条接线或运行时验收通过。",
+    "reviewedFiles": [
+      {
+        "path": "G:/work/FsGame/Project/mxzg/backend/src/main/resources/db/migration/V26__tavern_points.sql",
+        "sha256": "E67D32282F059408DD25EF11F6F2CEC1A2F8180B405C06F15C511DD25CF06194",
+        "lines": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          11,
+          12,
+          14
+        ],
+        "observed": "独立表按role_id主键；INSERT SELECT没有quantity>0过滤，因此合法0和超上限余额按原量迁移；INSERT成功后才DELETE旧900401，没有2000补差或历史回执写入。"
+      },
+      {
+        "path": "G:/work/FsGame/Project/mxzg/backend/src/main/java/com/funsgamex/mxzg/tavern/TavernPointService.java",
+        "sha256": "382B62EBEFE3B45BAE774B95F4A1FD6446F814E5B3CE4AC27CD89546E1AB9DEE",
+        "lines": [
+          61,
+          64,
+          65,
+          66,
+          67,
+          68,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          111,
+          112
+        ],
+        "observed": "MANDATORY外层事务及角色锁后读唯一记录，仅Optional.empty取初值并保存；已有0不补发，超cap不倒扣；Math.addExact先完成再保存，初值不算本次奖励。"
+      },
+      {
+        "path": "G:/work/FsGame/Project/mxzg/backend/src/main/java/com/funsgamex/mxzg/tavern/TavernPointRules.java",
+        "sha256": "5C096454C42B34300D5DB3A849890831E80B8D0562BD29076FA705B49D9AE561",
+        "lines": [
+          18,
+          27,
+          30,
+          31,
+          32,
+          35,
+          40,
+          41,
+          43
+        ],
+        "observed": "读取同源system.tavern_initial_item；缺失、重复、非整数、负值拒绝，不以3000或0兜底。"
+      }
+    ],
+    "duplicateGrantAssessment": "当前已读实现没有按余额0或历史差额再次补2000的分支；迁移保存已有记录，懒初始化以独立表缺行判定，并由角色锁串行保护。",
+    "databaseConditions": {
+      "staticAssessment": "V26沿用既有迁移的VARCHAR(36)角色外键、BIGINT及非负CHECK，迁移使用标准INSERT SELECT和DELETE，没有引入某一数据库专有的upsert语法；这是静态兼容性判断。",
+      "h2": "本机配置application-local.yml使用H2的MODE=MySQL；本子任务未实际执行V26。",
+      "mysql": "本子任务未连接MySQL或执行V26，不能依据旧数据库记录宣称本次迁移已通过；也不把CREATE TABLE及后续DML宣称为跨DDL整体原子回滚。",
+      "requiredRuntimeCoverage": [
+        "从V25旧库准备900401余额0、正数及超cap记录，迁移后逐角色数量完全一致，旧普通堆叠删除。",
+        "已有0及正余额首次读取和重复读取不补2000；真正缺行首次读取初始化2000，重复读取保持原量。",
+        "缺行初始化与发奖在外层回滚后都不残留余额或资产revision；并发同角色初始化只产生一条记录。",
+        "真实MySQL迁移及H2 MODE=MySQL分别执行，不互相替代。"
+      ]
+    }
+  },
+  "verification": {
+    "legacyEvidence": "已直接读取并核对上述源码与行号。",
+    "formalServer": "未浏览、未连接，不声称正式服验收。",
+    "implementation": "本记录固定旧版依据并记录V26及领域服务的限定静态核对；后端接线仍由后端任务实现和验证，不将本子任务视作运行时通过。",
+    "runtime": "本次旧源码核实及静态复核未运行游戏或数据库；迁移测试已新增，按分工不运行Maven，由后端任务统一验证。",
+    "pendingMigrationTest": {
+      "path": "G:/work/FsGame/Project/mxzg/backend/src/test/java/com/funsgamex/mxzg/TavernPointMigrationTest.java",
+      "status": "已新增并完成源码/空白检查，尚未执行，不计为通过。",
+      "cases": [
+        "V25独立随机H2到V26：正、0、超cap按原量迁移，缺记录不预建，其他库存、原成功result_json和revision保持；再次migrate不补发。",
+        "解除旧非负约束注入负数量，迁移拒绝且全部旧库存和revision保持，V26无成功记录。",
+        "解除旧非空约束注入NULL数量，迁移拒绝且全部旧库存和revision保持，V26无成功记录。"
+      ]
+    }
+  },
+  "finalImplementationReview": "docs/validation/tavern-point-review-20261116.json",
+  "staticReviewNote": "文内静态复核哈希仅代表当时核对快照；后续安全整数边界与最终通过证据以上述本批总记录为准。"
+}

@@ -1,0 +1,501 @@
+{
+  "date": "2026-11-16",
+  "timezone": "Asia/Shanghai",
+  "recordedAtUtc": "2026-11-16T06:05:52.583182+00:00",
+  "scope": "Closed-entry idle claim recovery with real Java WS, native browser IndexedDB and process restart; no centralized/release build",
+  "git": {
+    "branch": "hao",
+    "base": "d4a9c4f1",
+    "newWork": "local uncommitted; no push or merge this batch"
+  },
+  "cases": [
+    {
+      "name": "normal",
+      "record": "idle-claim-live-enabled-20261116.json",
+      "account": "idle_direct",
+      "result": "PASS",
+      "claims": 1
+    },
+    {
+      "name": "dropped real receipt + disconnect",
+      "record": "idle-claim-live-enabled-20261116.json",
+      "account": "idle_lost_receipt",
+      "result": "PASS",
+      "claims": 1,
+      "authentications": 1,
+      "stateFirst": true
+    },
+    {
+      "name": "dropped real state event",
+      "record": "idle-claim-live-enabled-20261116.json",
+      "account": "idle_lost_state",
+      "result": "PASS",
+      "claims": 1,
+      "authentications": 1
+    },
+    {
+      "name": "dropped both, page navigation reload, new Java process, READ_ONLY historical recovery",
+      "prepared": "idle-claim-live-prepared-20261116.json",
+      "restored": "idle-claim-live-restored-20261116.json",
+      "account": "idle_reload",
+      "result": "PASS",
+      "claimsBeforeRestart": 1,
+      "claimsAfterRestart": 0,
+      "sameReceiptAndRequest": true,
+      "nativePendingReadRequired": true,
+      "acceptedLatestRevision": 4,
+      "receiptRevision": 3,
+      "operationVersion": 2
+    },
+    {
+      "name": "READ_ONLY NOT_FOUND, switch role, return to original role",
+      "record": "idle-claim-live-restored-20261116.json",
+      "account": "idle_pending",
+      "otherAccount": "idle_other",
+      "result": "PASS",
+      "claims": 0,
+      "statuses": 2,
+      "originalIntentRetainedUntilTestCleanup": true
+    }
+  ],
+  "backend": {
+    "kind": "mxzg-owned-socket-it",
+    "run": "098420c974c6485ba4c76ceb7a5a0abe",
+    "enabled": {
+      "kind": "mxzg-owned-socket-it",
+      "run": "098420c974c6485ba4c76ceb7a5a0abe",
+      "phase": "enabled",
+      "pid": 16708,
+      "port": 63736,
+      "serverId": "idle-recovery-098420c9",
+      "accounts": [
+        "idle_direct",
+        "idle_lost_receipt",
+        "idle_lost_state",
+        "idle_reload",
+        "idle_other",
+        "idle_pending"
+      ],
+      "databaseRoot": "G:\\work\\FsGame\\Project\\mxzg\\backend\\target\\idle-recovery-live-098420c974c6485ba4c76ceb7a5a0abe",
+      "stopRequest": "G:\\work\\FsGame\\Project\\mxzg\\backend\\target\\idle-recovery-live-098420c974c6485ba4c76ceb7a5a0abe\\stop-enabled.request"
+    },
+    "readOnly": {
+      "kind": "mxzg-owned-socket-it",
+      "run": "098420c974c6485ba4c76ceb7a5a0abe",
+      "phase": "read-only",
+      "pid": 8356,
+      "port": 64214,
+      "serverId": "idle-recovery-098420c9",
+      "accounts": [
+        "idle_direct",
+        "idle_lost_receipt",
+        "idle_lost_state",
+        "idle_reload",
+        "idle_other",
+        "idle_pending"
+      ],
+      "databaseRoot": "G:\\work\\FsGame\\Project\\mxzg\\backend\\target\\idle-recovery-live-098420c974c6485ba4c76ceb7a5a0abe",
+      "stopRequest": "G:\\work\\FsGame\\Project\\mxzg\\backend\\target\\idle-recovery-live-098420c974c6485ba4c76ceb7a5a0abe\\stop-read-only.request"
+    },
+    "fixture": "Six test-only roles, maxCleared=1 and elapsed idle state prepared on server; not proof of a real challenge run",
+    "compilation": "Isolated current 91 Java sources, 87 dependency jars, 156 hashed source/resource inputs; no daily target/classes in launched classpath",
+    "sourceInputManifestSha256": "0b975b74b73ef423959585210234f87dd0605e2d08795a1fac81ea0c4a1cc11b",
+    "sourceInputCount": 156,
+    "startupDidNotChangeExistingState": true,
+    "economicStateUnchangedAcrossReadOnlyRecovery": true,
+    "readOnlyRecoveryDidNotWriteReceipt": true,
+    "summaryBeforeRestart": [
+      {
+        "id": "0fdec390-9b57-4efd-a985-22f617e7f068",
+        "login_account": "idle_direct",
+        "gold": 800,
+        "diamonds": 3,
+        "role_level": 1,
+        "role_experience": 40,
+        "asset_revision": 3,
+        "started_at": 1794808833,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 3,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "9917d228-8b20-4065-bc00-1f553b184fc1",
+        "login_account": "idle_lost_receipt",
+        "gold": 800,
+        "diamonds": 1,
+        "role_level": 1,
+        "role_experience": 40,
+        "asset_revision": 3,
+        "started_at": 1794808833,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 3,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "c812908e-7a41-449f-903e-c13d790d150f",
+        "login_account": "idle_lost_state",
+        "gold": 800,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 40,
+        "asset_revision": 3,
+        "started_at": 1794808834,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 3,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "a4a44703-550c-4fcb-adfd-df0c817a6526",
+        "login_account": "idle_other",
+        "gold": 0,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 0,
+        "asset_revision": 1,
+        "started_at": 1794808592,
+        "operation_version": 1,
+        "receipt_count": 0,
+        "stack_rows": 0,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "1f75926d-d229-4471-ad2c-cd690e5b01e8",
+        "login_account": "idle_pending",
+        "gold": 0,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 0,
+        "asset_revision": 1,
+        "started_at": 1794808592,
+        "operation_version": 1,
+        "receipt_count": 0,
+        "stack_rows": 0,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "5b779bb7-0c61-4815-9fa5-6723afc7c26b",
+        "login_account": "idle_reload",
+        "gold": 800,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 40,
+        "asset_revision": 3,
+        "started_at": 1794808856,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 3,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      }
+    ],
+    "summaryAfterRecovery": [
+      {
+        "id": "0fdec390-9b57-4efd-a985-22f617e7f068",
+        "login_account": "idle_direct",
+        "gold": 800,
+        "diamonds": 3,
+        "role_level": 1,
+        "role_experience": 40,
+        "asset_revision": 3,
+        "started_at": 1794808833,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 3,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "9917d228-8b20-4065-bc00-1f553b184fc1",
+        "login_account": "idle_lost_receipt",
+        "gold": 800,
+        "diamonds": 1,
+        "role_level": 1,
+        "role_experience": 40,
+        "asset_revision": 3,
+        "started_at": 1794808833,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 3,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "c812908e-7a41-449f-903e-c13d790d150f",
+        "login_account": "idle_lost_state",
+        "gold": 800,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 40,
+        "asset_revision": 3,
+        "started_at": 1794808834,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 3,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "a4a44703-550c-4fcb-adfd-df0c817a6526",
+        "login_account": "idle_other",
+        "gold": 0,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 0,
+        "asset_revision": 2,
+        "started_at": 1794808592,
+        "operation_version": 1,
+        "receipt_count": 0,
+        "stack_rows": 0,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "1f75926d-d229-4471-ad2c-cd690e5b01e8",
+        "login_account": "idle_pending",
+        "gold": 0,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 0,
+        "asset_revision": 2,
+        "started_at": 1794808592,
+        "operation_version": 1,
+        "receipt_count": 0,
+        "stack_rows": 0,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      },
+      {
+        "id": "5b779bb7-0c61-4815-9fa5-6723afc7c26b",
+        "login_account": "idle_reload",
+        "gold": 800,
+        "diamonds": 0,
+        "role_level": 1,
+        "role_experience": 40,
+        "asset_revision": 4,
+        "started_at": 1794808856,
+        "operation_version": 2,
+        "receipt_count": 1,
+        "stack_rows": 3,
+        "timed_rows": 0,
+        "spirit_rows": 0
+      }
+    ],
+    "receiptsBeforeAndAfter": [
+      {
+        "role_id": "0fdec390-9b57-4efd-a985-22f617e7f068",
+        "request_id": "1ae700bf-7683-4da8-b792-c70c7bb64c23",
+        "receipt_id": "520c8ac8-8eec-4929-aecf-fb2d94a21b38",
+        "expected_operation_version": 1,
+        "before_operation_version": 1,
+        "after_operation_version": 2,
+        "committed_at_seconds": 1794808833,
+        "asset_revision": 3,
+        "payload_hash": "223b498daea61a2b387362938b16d87afdc02fae4561a4a1f9b17d10cc19815d"
+      },
+      {
+        "role_id": "5b779bb7-0c61-4815-9fa5-6723afc7c26b",
+        "request_id": "cfd7dd60-4159-4e1a-9210-c10ff5a89d5f",
+        "receipt_id": "8040b1a0-19b8-48ac-abf5-3bcf74cf0761",
+        "expected_operation_version": 1,
+        "before_operation_version": 1,
+        "after_operation_version": 2,
+        "committed_at_seconds": 1794808856,
+        "asset_revision": 3,
+        "payload_hash": "eee0bfbe02fff059c06ad2ef78bbe27e19f495800f6513adfdfae161bfcb3422"
+      },
+      {
+        "role_id": "9917d228-8b20-4065-bc00-1f553b184fc1",
+        "request_id": "0def3fa4-7c89-42d4-bacc-5deb8db62eae",
+        "receipt_id": "33d3b8bb-4443-4bbf-b7de-efa6300b60d2",
+        "expected_operation_version": 1,
+        "before_operation_version": 1,
+        "after_operation_version": 2,
+        "committed_at_seconds": 1794808833,
+        "asset_revision": 3,
+        "payload_hash": "e7df5afaa6a2dbd6cb6b86475c82d521e3eec317a7596a6f3d1d1c7228406fbc"
+      },
+      {
+        "role_id": "c812908e-7a41-449f-903e-c13d790d150f",
+        "request_id": "40965cc2-f36e-42f4-9f1c-20e7d766f2e8",
+        "receipt_id": "17e7b3cf-f36c-4fad-a221-1c32585dab29",
+        "expected_operation_version": 1,
+        "before_operation_version": 1,
+        "after_operation_version": 2,
+        "committed_at_seconds": 1794808834,
+        "asset_revision": 3,
+        "payload_hash": "a5fb58870fc9d0491ae5ee03810a827b23b307ef6ed5bae4327e216ccc2d44d6"
+      }
+    ],
+    "economicTableHashes": {
+      "game_main_chapter": {
+        "before": "16a5b6516ca06d581ad9ef45fc59f2c747d868535d2025e13bfe836ba607d35e",
+        "after": "16a5b6516ca06d581ad9ef45fc59f2c747d868535d2025e13bfe836ba607d35e"
+      },
+      "game_main_chapter_idle": {
+        "before": "6e61e149cd0e258477fb7510d48549a87a025e6faf0f534d2fd09e9040b31b51",
+        "after": "6e61e149cd0e258477fb7510d48549a87a025e6faf0f534d2fd09e9040b31b51"
+      },
+      "game_main_chapter_idle_counter": {
+        "before": "f98902b9c1f8732e3b79b9507dd891804f852589b6f8d417d79fcd2390f8118a",
+        "after": "f98902b9c1f8732e3b79b9507dd891804f852589b6f8d417d79fcd2390f8118a"
+      },
+      "game_inventory": {
+        "before": "5a62f368cb6266797b9c46c0bc1ee59d5cb2db94c128474659340811afaf5e41",
+        "after": "5a62f368cb6266797b9c46c0bc1ee59d5cb2db94c128474659340811afaf5e41"
+      },
+      "game_timed_inventory": {
+        "before": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "after": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "game_spirit": {
+        "before": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "after": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "receipts": {
+        "before": "551e699ee332f4b801f665558b3b96a0416f0b90a84085ff3edef770fbea9793",
+        "after": "551e699ee332f4b801f665558b3b96a0416f0b90a84085ff3edef770fbea9793"
+      }
+    },
+    "rolesAfter": [
+      {
+        "id": "0fdec390-9b57-4efd-a985-22f617e7f068",
+        "login_account": "idle_direct",
+        "role_level": 1,
+        "gold": 800,
+        "diamonds": 3,
+        "role_experience": 40,
+        "state_revision": 3,
+        "last_login_at_seconds": 1794808833
+      },
+      {
+        "id": "9917d228-8b20-4065-bc00-1f553b184fc1",
+        "login_account": "idle_lost_receipt",
+        "role_level": 1,
+        "gold": 800,
+        "diamonds": 1,
+        "role_experience": 40,
+        "state_revision": 3,
+        "last_login_at_seconds": 1794808833
+      },
+      {
+        "id": "c812908e-7a41-449f-903e-c13d790d150f",
+        "login_account": "idle_lost_state",
+        "role_level": 1,
+        "gold": 800,
+        "diamonds": 0,
+        "role_experience": 40,
+        "state_revision": 3,
+        "last_login_at_seconds": 1794808834
+      },
+      {
+        "id": "a4a44703-550c-4fcb-adfd-df0c817a6526",
+        "login_account": "idle_other",
+        "role_level": 1,
+        "gold": 0,
+        "diamonds": 0,
+        "role_experience": 0,
+        "state_revision": 2,
+        "last_login_at_seconds": 1794808961
+      },
+      {
+        "id": "1f75926d-d229-4471-ad2c-cd690e5b01e8",
+        "login_account": "idle_pending",
+        "role_level": 1,
+        "gold": 0,
+        "diamonds": 0,
+        "role_experience": 0,
+        "state_revision": 2,
+        "last_login_at_seconds": 1794808961
+      },
+      {
+        "id": "5b779bb7-0c61-4815-9fa5-6723afc7c26b",
+        "login_account": "idle_reload",
+        "role_level": 1,
+        "gold": 800,
+        "diamonds": 0,
+        "role_experience": 40,
+        "state_revision": 4,
+        "last_login_at_seconds": 1794808961
+      }
+    ],
+    "controlledShutdown": {
+      "enabled": {
+        "run": "098420c974c6485ba4c76ceb7a5a0abe",
+        "phase": "enabled",
+        "pid": 16708,
+        "stopped": true
+      },
+      "readOnly": {
+        "run": "098420c974c6485ba4c76ceb7a5a0abe",
+        "phase": "read-only",
+        "pid": 8356,
+        "stopped": true
+      }
+    }
+  },
+  "bugFix": {
+    "file": "IdleClaimBinding.ts",
+    "problem": "Authentication invoked confirmation-only flow before recovery, swallowing the same auth when another tab replaced pending A with B",
+    "change": "Authenticated snapshot runs recover; ordinary state event runs observeSnapshot, mutually exclusive",
+    "regression": "8th binding group; previous branch order fails in an in-memory source substitution, current code passes"
+  },
+  "validation": {
+    "recoveryCases": 32,
+    "applicationGroups": 8,
+    "focusedSuites": [
+      "idle-claim-recovery",
+      "idle-claim-binding",
+      "game-socket",
+      "docs",
+      "architecture"
+    ],
+    "strictCreatorTypes": "passed",
+    "nativeIDB": "actual browser; no reconstruction from saved page metadata",
+    "logs": {
+      "idle-claim-recovery": "PASS 32 idle claim recovery cases: immutable intent, bounded status retry, dual confirmation and late-result isolation\n",
+      "idle-claim-binding": "PASS idle claim application binding: readonly history, dual versions, bounded reauth, logout/relogin, late storage/wire, owner blocking, storage activation retry, authenticated A/B replacement and closed entry\n[mxzg][MODULE][warn][MainChapterIdleClaimController] 14:03:19 SocketFailure: 挂机历史回执不属于当前角色\n    at IdleClaimBinding.validateReceiptOwner (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:20063:13)\n    at G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:19986:16\n    at AccountService.deliverAuthenticated (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:18028:22)\n    at async MainChapterIdleClaimController.request (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:19889:7)\n    at async MainChapterIdleClaimController.execute (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:19734:18)\n    at async IdleClaimBinding.activate (G:\\work\\FsGame\\Project\\mxzg\\client\\temp\\project-checks\\idle-claim-binding.cjs:20045:7)\n[mxzg][APP][warn][IdleClaimBinding] 14:03:19 挂机领取恢复暂停：Error: 测试存储暂时不可用\n",
+      "game-socket": "PASS unified initialization, no duplicate requests, atomic role/bag events, monotonic revision, reconnect, old-wire isolation, invalid payload, logout\n[mxzg][MODULE][warn][FormationController] 14:03:19 Error: 网络断开\n",
+      "docs": "�ĵ��ļ�����ͨ����46 �� README/ָ��/��֤��¼\n",
+      "architecture": "Scripts: 176; imports: 708; prefabs: 36\nResources (source, excluding meta): 13022 files, 442.18 MiB\n  16909 lines  platform/GameProtocol.generated.ts\n   1462 lines  config/GConfig.ts\n    987 lines  framework/ui/UIManager.ts\n    783 lines  features/battle/ui/BattleReplayPreview.ts\n    690 lines  framework/ui/SuperContent.ts\nAccepted boundary debt: 0\n"
+    },
+    "toolJavaScriptSyntax": "passed",
+    "diffWhitespace": "passed; external Creator settings EOL warnings retained without modification"
+  },
+  "screenshots": [
+    "../images/idle-claim-live-enabled-20261116.jpg",
+    "../images/idle-claim-live-restored-20261116.jpg"
+  ],
+  "cleanup": {
+    "backendProcessesStopped": true,
+    "frontendStopped": true,
+    "browserIsolatedDatabaseDeleted": true,
+    "testSessionMetadataRemoved": true,
+    "dailyBackendUntouched": true
+  },
+  "limits": [
+    "No player claim button or 65-second interaction opened",
+    "No centralized/release build per user instruction",
+    "H2 file database; MySQL not run this batch",
+    "Java shutdown/restart and real page reload tested; OS power loss and browser process crash not tested",
+    "APP/WeChat persistence adapters and real devices not tested",
+    "No simultaneous two-tab live server takeover run; native multi-connection races and A/B unit regression are separate evidence",
+    "No spirit/timed drop happened in these five live scenarios; full reward types remain covered by their own domain tests",
+    "Historical and current wallet happen to match in this real run; distinct-wallet protection remains separately covered by controlled binding test",
+    "No game-scene art/UI regression or challenge playthrough in this logic-only test harness"
+  ],
+  "sourceSha256": {
+    "client/assets/scripts/app/remake/IdleClaimBinding.ts": "9c402cc5cc0d000cbe952bab5d87e6bd7776ba93fd88a0c7c4d1fe9eb0a5012e",
+    "client/tools/idle-claim-binding-check.ts": "6b8382243b935a7d0a47e7cb139bc4a515ee98a4c2282ed2c169ec248a0e62a6",
+    "backend/src/test/java/com/funsgamex/mxzg/IdleClaimRecoveryPreview.java": "b47786695552690d51866b947bd914b7af22a9a6fc5119c3813f6588a3ba65d7",
+    "client/tools/idle-claim-live-browser-check.ts": "ddd11bf442f912ec9de0b47f89a1bb81908b94cc0bf02dd5644d8cfdf631e283",
+    "client/tools/idle-claim-live-review.cjs": "9a0834fa15c4e2550b14fcd58c1811becf322941b865a0a55741d613ebb5e441"
+  }
+}

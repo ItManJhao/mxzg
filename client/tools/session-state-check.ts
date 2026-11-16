@@ -56,10 +56,10 @@ async function checkPreviewIsolation(){
  context.fetch=async()=>{calls++;return {ok:true,json:async()=>({kind:"mxzg-owned-mysql-it",run})};};
  const address=(value:string)=>Object.defineProperty(context,"location",{value:{href:value},configurable:true});
  try {
-  address("http://localhost:7456/");const normal=await IsolatedSocketPreviewUtils.isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage);assert.equal(normal.storage,storage);assert.equal(calls,0);
+  address("http://localhost:7456/");const normal=await IsolatedSocketPreviewUtils.isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage);assert.equal(normal.storage,storage);assert.equal(normal.storageNamespace,"default");assert.equal(calls,0);
   address("http://localhost:7456/?mxzgTestRun="+run);await assert.rejects(IsolatedSocketPreviewUtils.isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage));assert.equal(calls,0);
   address("http://localhost:7456/?mxzgTestRun="+run+"&mxzgTestApi="+encodeURIComponent("http://127.0.0.1:39001"));
-  const isolated=await IsolatedSocketPreviewUtils.isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage);assert.equal(isolated.socketUrl,"ws://127.0.0.1:39001/api/v1/game/socket");isolated.storage.setItem("session","test");assert.equal(storage.getItem("session"),null);assert.equal(isolated.storage.getItem("session"),"test");
+  const isolated=await IsolatedSocketPreviewUtils.isolatedSocketPreview("ws://127.0.0.1:18080/api/v1/game/socket",storage);assert.equal(isolated.socketUrl,"ws://127.0.0.1:39001/api/v1/game/socket");assert.equal(isolated.storageNamespace,"isolated:"+run);isolated.storage.setItem("session","test");assert.equal(storage.getItem("session"),null);assert.equal(isolated.storage.getItem("session"),"test");
   context.fetch=async()=>({ok:true,json:async()=>({kind:"mxzg-owned-mysql-it",run:"wrong"})});await assert.rejects(IsolatedSocketPreviewUtils.isolatedSocketPreview(normal.socketUrl,storage));
   address("http://localhost:7456/?mxzgTestRun="+run+"&mxzgTestApi="+encodeURIComponent("http://127.0.0.1:18080"));await assert.rejects(IsolatedSocketPreviewUtils.isolatedSocketPreview(normal.socketUrl,storage));
  }finally{context.fetch=fetchBefore;if(previous)Object.defineProperty(context,"location",previous);else delete context.location;}
@@ -167,7 +167,7 @@ function checkRoleBasics(){
  assert.throws(()=>AccountApi.readRole({...raw,basics:null}));assert.throws(()=>AccountApi.readRole([]));
  const account=new AccountModel();account.replace({busy:false,role:raw,error:""});basics.experience=99;assert.equal(account.snapshot.role!.basics!.experience,66);assert(Object.isFrozen(account.snapshot.role!.basics));
 }
-/** 应用统一隔离成功与失败；业务模块不比较账号、令牌或会话代次。 */
+/** 应用统一隔离成功与失败；等待保存微任务实际发出后再切换身份或交付结果，保证覆盖在途回包。 */
 async function checkApplicationDelivery(): Promise<void> {
  const server=new Server(), account=new AccountModel(), inventory=new BagModel(), bag=new BagController(inventory);
  const saves=new FormationSaveModel(), formation=new FormationController(saves,new HeroRosterModel());
@@ -178,14 +178,21 @@ async function checkApplicationDelivery(): Promise<void> {
  const assets=new AssetStateBinding(account,bag,new RoleController(role=>service.acceptRole(role)),undefined,formation,()=>{closePages++;});
  service.onInitialized=frame=>assets.apply(frame);
  let resolve!: (frame:GameFrame)=>void, reject!: (error:unknown)=>void, sent!:FormationSaveRequest;
+ let sentCount = 0;
  formation.configure((body,received,failed)=>service.deliverAuthenticated(()=>{
-  sent=body;return new Promise<GameFrame>((yes,no)=>{resolve=yes;reject=no;});
+  sent = body;
+  sentCount++;
+  return new Promise<GameFrame>((yes,no)=>{
+   resolve = yes;
+   reject = no;
+  });
  },received,failed));
  const draft={expectedVersion:0,formationId:1,slots:[{position:3,heroId:"hero-one"}]};
  const receipt=():GameFrame=>({version:1,kind:"response",name:"formation.save",ok:true,body:{requestId:sent.requestId,version:1}});
  try {
   assert(await service.login("player","local-1"));
   let done=formation.save(draft);
+  await until(()=>sentCount===1);
   assert(await service.login("other","local-2"));
   const switched=saves.snapshot, pages=closePages;
   resolve(receipt());await done;
@@ -194,18 +201,128 @@ async function checkApplicationDelivery(): Promise<void> {
   server.state={...server.state,revision:1};socket.onState=frame=>assets.apply(frame);
   server.push(1,0,0);assert.equal(closePages,pages,"同角色状态同步不关页");
   done=formation.save(draft);
+  await until(()=>sentCount===2);
   service.logout();assert(await service.login("other","local-2")); // 同角色重新登录也是新身份周期。
   const relogged=saves.snapshot;
   reject(new SocketFailure("UNAUTHENTICATED"));await done;
   assert.equal(saves.snapshot,relogged,"旧失败不能恢复待重试请求");assert(account.snapshot.role);
-  done=formation.save(draft);reject(new Error("网络断开"));await done;
+  done=formation.save(draft);
+  await until(()=>sentCount===3);
+  reject(new Error("网络断开"));
+  await done;
   const original=saves.snapshot.pending;assert(original);assert(!saves.snapshot.busy);
-  done=formation.save({...draft,slots:[]});assert.deepEqual(sent,original,"当前身份断网重试保留幂等请求");
+  done=formation.save({...draft,slots:[]});
+  await until(()=>sentCount===4);
+  assert.deepEqual(sent,original,"当前身份断网重试保留幂等请求");
   resolve(receipt());await done;assert.equal(saves.snapshot.acknowledged,1);
   assert(closePages>=3,"角色页面由应用统一关闭");
  } finally { socket.onState=null;socket.disconnect();assets.dispose();bag.dispose(); }
 }
+/** 就绪连接显式刷新必须重新鉴权交付首包，不能沿用connect的就绪短路或发起资产查询。 */
+async function checkExplicitSnapshotRefresh(): Promise<void> {
+ const server = new Server();
+ const socket = new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket", {
+  create: server.create, validateSnapshot: () => {}, heartbeatMs: 100000,
+ });
+ let initialized = 0;
+ socket.onReady = () => { initialized++; };
+ try {
+  await socket.login("player", "local-1");
+  const wires = server.wires.length;
+  await socket.connect("a".repeat(43));
+  assert.equal(server.wires.length, wires, "普通connect复用就绪通道");
+  server.state = {...server.state, revision: 3, role: {...server.state.role, gold: 23}};
+  await socket.refreshSnapshot("a".repeat(43));
+  assert.equal(server.wires.length, wires + 1);
+  assert.equal(server.wires[0].readyState, 3, "刷新先关闭旧通道");
+  assert.equal(initialized, 2);
+  assert.equal(socket.latestState!.name, "session.authenticate");
+  assert.equal((socket.latestState!.body as any).initial.revision, 3);
+  assert.equal((socket.latestState!.body as any).initial.role.gold, 23);
+  assert.deepEqual(server.requests, ["session.login", "session.authenticate"]);
+  const snapshot = socket.latestState;
+  server.wires[0].push({version: 1, kind: "event", name: "state.changed", body: {...server.state, revision: 100}});
+  assert.equal(socket.latestState, snapshot, "旧通道迟到不能覆盖显式刷新首包");
+  await assert.rejects(socket.refreshSnapshot("b".repeat(43)), (error: SocketFailure) => error.code === "NOT_READY");
+  assert.equal(server.wires.length, wires + 1, "错误凭证不能切换刷新目标");
+  socket.setBackground(true);
+  await assert.rejects(socket.refreshSnapshot("a".repeat(43)), (error: SocketFailure) => error.code === "NOT_READY");
+  assert.equal(server.wires.length, wires + 1, "后台不新建刷新通道");
+ } finally {
+  socket.onReady = null;
+  socket.disconnect();
+ }
+}
+
+/** 真实二进制推送及同版恢复共用冒险点校验；坏扩展在传输状态版本前拒绝，不污染角色或背包。 */
+async function checkTavernSnapshotTransport(): Promise<void> {
+    const server = new Server();
+    const account = new AccountModel();
+    const inventory = new BagModel();
+    const bag = new BagController(inventory);
+    const socket = new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket", {
+        create: server.create,
+        validateSnapshot: value => {
+            const state = value as Record<string, unknown>;
+            AccountApi.readSnapshotRole(value);
+            BagItemDataUtils.readBagItems(state.inventory);
+            assert(Number.isSafeInteger(state.revision));
+        },
+        heartbeatMs: 100000,
+    });
+    const service = new AccountService(account, new AccountApi(socket), {
+        read: () => null,
+        write: () => {},
+        clear: () => {},
+    });
+    bag.initialize();
+    const assets = new AssetStateBinding(account, bag, new RoleController(value => service.acceptRole(value)));
+    service.onInitialized = frame => { assets.apply(frame); };
+    socket.onState = frame => { assets.apply(frame); };
+    socket.onReady = () => {
+        if (account.snapshot.role && socket.latestState) {
+            assets.apply(socket.latestState);
+        }
+    };
+    try {
+        assert(await service.login("player", "local-1"));
+        assert.equal(account.snapshot.role!.tavernPoints, undefined, "旧首包缺字段保持未同步");
+        server.state.tavernPoints = { schemaVersion: 1, adventureCount: 12000, limit: 11000 };
+        server.push(1, 7, 5);
+        assert.deepEqual(account.snapshot.role!.tavernPoints, server.state.tavernPoints);
+        assert.equal(inventory.quantity(900101), 5);
+        const accepted = account.snapshot;
+        server.state.tavernPoints = { schemaVersion: 1, adventureCount: 1, limit: 11000 };
+        server.push(1, 99, 99);
+        assert.equal(account.snapshot, accepted, "同版推送不覆盖已接纳点数");
+        delete server.state.tavernPoints;
+        await service.authenticated(token => socket.refreshSnapshot(token));
+        assert.equal(account.snapshot.role!.tavernPoints, undefined, "同版鉴权缺字段清除旧点数");
+        server.state.tavernPoints = { schemaVersion: 1, adventureCount: 0, limit: 0 };
+        server.push(2, 8, 6);
+        assert.equal(account.snapshot.role!.tavernPoints!.adventureCount, 0);
+        const before = account.snapshot;
+        const bagBefore = inventory.snapshot;
+        const latest = socket.latestState;
+        server.state.tavernPoints = { schemaVersion: 1, adventureCount: -1, limit: 11000 };
+        server.push(3, 100, 100);
+        assert.equal(account.snapshot, before);
+        assert.equal(inventory.snapshot, bagBefore);
+        assert.equal(socket.latestState, latest, "非法扩展不能先推进连接快照或版本");
+        assert.equal(server.wires[server.wires.length - 1].readyState, 3, "非法快照停止连接，不自动循环恢复");
+        assert.deepEqual(server.requests, ["session.login", "session.authenticate"]);
+    } finally {
+        socket.onReady = socket.onState = null;
+        socket.disconnect();
+        assets.dispose();
+        bag.dispose();
+    }
+}
+
+/** 依次执行本文件的会话与统一状态检查；全部使用受控连接，不访问日常服务。 */
 async function main(){
+ await checkTavernSnapshotTransport();
+ await checkExplicitSnapshotRefresh();
  await checkApplicationDelivery();
  const oldServer=new Server(),oldSocket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:oldServer.create,validateSnapshot:()=>{},heartbeatMs:100000});
  try {
@@ -233,7 +350,7 @@ async function main(){
  checkSpiritAssetDelivery();
  await checkPreviewIsolation();
  const server=new Server(),account=new AccountModel(),model=new BagModel(),bag=new BagController(model);
- const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:value=>{const row=value as any;AccountApi.readRole(row.role);BagItemDataUtils.readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},retryDelay:()=>1,heartbeatMs:100000});
+ const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:value=>{const row=value as any;AccountApi.readSnapshotRole(value);BagItemDataUtils.readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},retryDelay:()=>1,heartbeatMs:100000});
  const service=new AccountService(account,new AccountApi(socket),{read:()=>null,write:()=>{},clear:()=>{}});bag.initialize();
  const assets=new AssetStateBinding(account,bag,new RoleController(value=>service.acceptRole(value)));
  service.onInitialized=frame=>assets.apply(frame);socket.onState=frame=>assets.apply(frame);socket.onReady=()=>{if(account.snapshot.role&&socket.latestState)assets.apply(socket.latestState);};

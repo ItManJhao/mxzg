@@ -1,192 +1,94 @@
 # 当前项目进度
 
-更新：2026-11-14。最近已推送为 `c23b53ed`（包含代码整理 `dd5822a8`），hao/main 已同步；活动控制维护、完整纯装配及此前权益输入修正仍在 hao 本地。此前已接通2000002真实精灵实例、专用详情、GM分窗和统一飘字，普通装备已完成本机限定复验。前批普通道具/精英碎片只读表现已完成本机限定复验；共享可信发奖已保留；本批V24累计、V25成功回执及服务端领取/status事务已接入，客户端按钮和持久待确认未接，未提交推送，后续合并 main 仍依当次授权。
-
-本页只维护当前状态、依据和限制；执行顺序见[实施路线](restructuring-plan.md)，接手步骤见[交接文档](handoff.md)。原先累计的批次过程已完整保存在[历史快照](validation/development-history-20261113.md)，其中旧数量、未提交状态和旧方案不再作为当前结论。
-
-## 当前批次：配置取用与显示索引精简（11-14）
-
-按负责人核查BagItemCatalog及SpiritInfoView四表组装的要求，已进一步整理当前配置使用方式。BagItemCatalog/HeroCatalog改为无状态静态显示计算，移除每个实例重复的物品、语言、期限、精灵及英雄索引；背包、详情、英雄、布阵、战报与产物行不再new或持有Catalog。物品mode、欢迎语等单字段直接getConfig；真正涉及分类、技能、头像回退、评分和富文本的规则继续集中复用，不把计算复制到每个View。
-
-EquipmentDetailSource六表传参与窗口source已移除，装备和普通道具详情直接查询GameConfig；GM不再建立语言Map，结算不再建立mainlevel门槛Map。ScoreCount.mapping不是主键、套装需要type/num组合、mainlevel尚未类型化，这些在同一只读行中匹配，不新建索引Manager。虚拟列表数据、库存差异、布阵草稿和本场血量/Buff/资源映射继续保留。脚本路径、原UUID、Prefab、49份源JSON、20张类型表和配置包内容不变，三段及原资源池不变，未新增清单或开放玩法。
-
-16套相关前端专项、严格Creator工具工程类型、配置生成检查及绑定检查通过，覆盖不读整表/不复用旧映射、392精灵组合、584道具投影、68装备及关闭迟到边界。本机确认新静态代码后，独立H2/WS实测背包四类、英雄/技能、产物两页首屏/只读详情、布阵、二三关结算战报返回及GM道具名称通过。配置请求6项不增、单bin408367字节，244条日志无warn/error；独立测试服已停止。完整证据见[本批记录](validation/config-direct-lookup-review-20261114.json)。本批未构建、未提交推送；上一批发布不能代替当前源码的发布验证，真机/完整经验动画边界及长期内存仍另验。
-
-## 前批：登录后统一配置包与真实发布收口（11-14）
-
-按负责人要求先收拢客户端静态配置，暂停推进领取客户端。源目录49份JSON及原meta保留；启动表唯一由LoadingPlan.login配置，目前为Language、LoadingTips，其余47份自动打成ZIP字节的game-config.bin。enterGame统一完成下载、启动同版校验、逐表解析/规范校验与GameConfig原子安装，再进入主城；页面配置prepare、配置分组及战报/挂机等直接JSON读取已移除，实际美术资源prepare和三段显式目标保留。
-
-包408,367字节（约399KiB），47份源JSON约7.01MB；下载压缩不等于配置对象内存减少。raw与类型索引共用唯一GameConfig，压缩BufferAsset通过临时作用域归还资源池；取消、损坏或迟到不提交半包，重登复用已安装数据。生成器从目录、schema与同一LoadingPlan派生目录、内容版本及官方Bundle过滤，不增加模块清单。源Excel正常导出自动更新，直接编辑JSON后须重新生成；构建前拒绝过期包。
-
-前轮本机预览发现fflate的ESM入口被Creator误判为CommonJS，已改为可再生TypeScript解码器，不手改第三方。前端、生成、发布转换、工程类型及34项共享Python检查通过；重新导入旧调用者后，独立H2/WS预览通过登录、背包现有四类详情、英雄/技能和二三关闭环。该轮历史范围、缓存命中及未验事项仍保留在[预览记录](validation/config-package-review-20261114.json)，不反写为发布验收。
-
-本轮按负责人四项要求统一`scripts/build-remake-h5.bat`→PowerShell→固定构建参数，隔离工程构建成功、三阶段实际钩子与产物检查通过后才发布到`client/build/remake-h5`。真实构建暴露Creator工作线程不能运行同步esbuild的Worker，前置核验已改为普通Node子进程且继续只读拒绝过期输入；实际身份为`config-package-artifact-v1 v1.8.0`。完整流程验收使用2026-11-14上海19:54:53包，之后的最终增量包及验证范围另列如下；源码仍有未提交内容，不能将产物等同于已推送提交。
-
-真实18个输出Bundle（含引擎包）检查通过：config仅两张启动JsonAsset及一个408,367字节BufferAsset，47份非启动源JSON在全部包中均无副本，解码模块登记和依赖正确。47是包内解析/索引任务数，玩家文字改为“加载游戏数据”“整理游戏数据”“准备游戏数据”，进度仍按真实任务。ApplicationResources移除普通JsonAsset隐式配置准备；主城同步读取GameConfig，缺必需表明确失败；挂机对话复用同一语言索引，不另存整张Map。页面不补下载、不增加清单。
-
-新发布包在18081/7460与随机独立H2端口完成运行复验：先核对前端build再核对后端kind/run；首次、冷恢复及换号均正常。普通装备1001001评分/攻击33、道具/碎片/精灵专用详情、英雄/技能、挂机对话、布阵、二三关挑战结算及双方战报通过，关闭返回已通关挂机。GameConfig为49份文件/20类型表；配置网络六项＝Bundle配置/脚本＋两张启动表＋bin元数据＋唯一bin，开页及战斗未新增逐表下载，bin已归还。当前116条浏览器记录无warn/error，测试服务均已核对归属后停止。证据见[发布记录](validation/config-package-release-review-20261114.json)。这不替代完整经验动画边界、正式CDN、真机、MySQL或未开放领取验收；玩法范围不变，未提交推送。
-
-最终代码复核补齐一个完成状态边界：普通JsonAsset只代表文件已下载，显式config目标才代表GameConfig已校验提交，两者不再共用完成键；同地址下载仍由原资源池合并。新增“原始Language→显式配置”的专项证明实际只加载一次且配置成功就绪，三段、配置包专项及工程类型通过。最终20:14:38（上海）增量包再次通过18包和三钩子检查，172份TS摘要与当前源码一致；新独立实例仅重验变化相关的登录→单包安装→背包→装备评分/攻击33→关闭，14条记录无warn/error、bin已归还，服务均已停止。完整英雄/战斗/换号矩阵属于19:54包的结果，不冒称在最终小修后全部重跑；两份build和运行记录分开保留在同一证据中。
-
-前批已按正式服完成精灵格无数量与专用SpiritInfoView：蓝色标题、基础属性、技能图文及四个未开放操作；实际预览抽查攻击146/低级生机、护甲21/低级荣光及两种关闭、返回主城通过。9套相关前端专项、Creator项目类型、13项领域/WS回归及392种显示组合通过；修正nameLabel绑定错误并补过失败回归。109张原图核对、106张透明边缘修正及原UUID保持，见[11-14专用详情复验](validation/spirit-detail-review-20261114.json)。未构建、未逐技能实机，不以此开放领取或精灵养成。
-
-前一轮追加检查已收口：当时负责人确认GM开关false，默认关闭未改；独立GM开启实发英雄/道具及29项Java回归通过。第三关待挑战可进入布阵/战斗，通关后三关范围封顶已明确显示“已通关”，GM重复监听和关闭拒绝后的按钮状态已修正。4套前端专项、Creator类型和独立画面见[本轮证据](validation/gm-bag-battle-review-20261114.json)。正式服装备/道具/碎片差异已逐类核对；该次仅审计，随后普通装备已收口，本批道具与碎片已实现、本机限定复验已完成，见[详情差异](bag-resource-inventory.md#详情还原差异)；不能把历史审计或本批专项当作背包全部详情已1:1验收。
-
-负责人随后确认本机GM永久开启：local默认值已保存为true，重启保留，可显式设false关闭；production服务端限制保留。当前运行后端需用restart-remake-backend.bat重启一次，脚本的Bypass仅限子进程，不修改系统策略。该次只调整默认配置及相关测试/说明，当时未开放精灵GM；本轮已按后续授权接入2000002真实生成。该次31项相关回归通过，见[默认设置记录](validation/gm-local-default-20261114.json)。未重启正在运行的日常后端。
-
-## 本批：新主线挂机累计、持久回执与服务端事务（11-14）
-
-V24在原计时行增加格式/时间语义、窗口秒和操作版本，并按group_type保存普通原始数量/未中次数；旧started_at原值保留，新字段从version1、窗口0、空计数开始。首次挑战在冻结战斗输入前创建now-60并同事务登记revision，正常失败也保留；已有通关但缺累计明确拒绝，登录、快照、胜利和结算不再补建或重置。
-
-MainChapterIdleClaimService在角色行锁/READ_COMMITTED事务内再次鉴权，先查原回执再检查新请求开关、版本、60秒门槛及完整输入。一次冻结服务器时间、发奖前VIP/等级/世界/神职/礼包/活动；候选从真实配置求闭包，缺权重表/溢出/未支持类型在抽样前拒绝。119秒基础只结一轮但累计119秒，VIP超限/基础尾数成功后不留待下次。
-
-真实发奖、起点/保底/操作版本、统一revision和V25成功回执同事务；同请求异内容拒绝、不同ID不能消费同一版本。AuditV1冻结完整Input、各来源/分窗/加成/理论量、实际到账/实例和累计前后，保存摘要/关键列交叉校验；重放和status不重算、不抽样、不依赖当前权益或开关。零到账仍消费时钟并推一次版本；历史回执与最新快照分离。
-
-唯一proto新增Frame31～34及claim_state=9，两端生成/Codec/Handler及只读Model投影接通；未知claimState格式只丢弃该可选能力、限频记录，旧挂机演出继续。日常`mxzg.main-chapter.idle-claim-enabled`默认false，当前客户端无领取发包、持久journal或按钮。本批不要求Creator刷新、不构建或重启日常后端，未提交推送。
-
-13类135项不同Java用例最终通过，其中新领域/累计/协议/真实WS共43项；四套前端专项、Creator工程类型、协议生成漂移及Java→TS实际二进制通过。初次编译发现Jackson3方法名不兼容后已修正；各轮重复用例不累加，详见[本批证据](validation/main-chapter-idle-claim-review-20261114.json)。客户端持久待确认/双向确认仍待下一批，跨进程恢复、MySQL、发布包和真机未以本批结果替代；宝箱领取、快速战斗及养成仍未向玩家开放。
-
-## 前批：共享可信发奖及实际到账明细（11-14）
-
-RewardGrantService已收敛服务端可信计划的完整类型预检、最终同ID精确合并、角色锁和领域分发，前三关首通改为复用它；原首通Plan字段和历史协议形状不变。RewardGrantResult区分理论/实际/忽略及原因，另保留经验前后、满级溢出、升级赠钻、钱包/普通库存/酒馆前后，以及真实期限/精灵实例。普通装备仍是堆叠；普通库存保留历史字符串ID，余额加法溢出在SQL前明确拒绝。
-
-精灵及期限单次各1000件保护在整单预检时执行，超限整单拒绝，不是持有容量或截奖。共享服务不拥有请求幂等，直接重复调用仍会重复发放；业务必须先查回执，再将真实结果与业务消费同事务保存。该发奖批次结束时新挂机累计/回执及协议仍未实现；本批已在上节接入服务端事务及候选预检。旧酒馆初始化配置2000与新版缺记录为0的差异保留，不在发奖时补发。
-
-12类101项不同Java用例最终通过，其中共享新专项13项；业务回归最初1项仍期待旧SQL溢出异常，改为精确加法异常后，该类9项已重跑通过，不重复累加测试数。完整结果记录在[共享发奖证据](validation/reward-grant-review-20261114.json)。仅使用独立H2及随机端口WS，未修改日常数据，未安排Creator或新发布包验收；MySQL、真机和未来领取事务不能由这些结果替代。宝箱领取、快速战斗、英雄升级和穿脱等继续关闭，当前修改留在hao，未提交推送。
-
-## 前批：普通道具与精英碎片只读表现（11-14）
-
-复用既有BagInfoView和BagItemView，新增无状态ItemDetailUtils，按mode2/8/9/17及实际库存上下文恢复类型、正文和条件按钮；不新增View、Prefab、Bundle、协议或模块资源清单。584条同源配置的纯投影及富文本/纯文本文字等值专项通过。来源、使用、分解和指定英雄图鉴只调用UIManager.toast说明未开放，不写资产、不把图鉴入口接到仅接受已拥有实例的HeroInfoView；mode17的真实到期倒计时继续保留。
-
-mode8显示同源1～5星、拼图角标；背包显式开启“实际持有数/合成所需数”及截顶进度，文字保留超额数量。共用奖励格只显示本次获得数量，产物候选quantity=0隐藏数量，详情图标无进度。mode9虽在碎片页但不是精英碎片，不使用其星角和合成进度；23条同源正文缺失显示明确提示并按配置限频记录，不伪造说明。
-
-BagInfoView.prefab正文已改为cc.RichText，保留旧br及字面量`\n`换行，将合法font颜色转换为Cocos颜色标记；不再把正文简单剥成Label文字。普通库存和奖励/产物Face共用ItemDetailUtils.richText生成richBody，不对已转换内容二次剥标签，也不增加配置清单。Prefab保存长正文的60～300高度参数，ScrollView仅滚动单段说明（同源最长553字），不是业务列表；位置继续由Layout/Widget维护。奖励/产物说明保留调用方的“本次获得”或“产物说明（只读）”副标题及唯一确定按钮，不冒用当前库存或带入使用/分解。真实库存key、删除/重置关窗及异步赋图清理已有新视图专项通过。
-
-本轮正式服只读核对[召唤点的来源按钮](images/item-official-source-20261114.jpg)、[诸神挑战券无操作按钮](images/item-official-no-actions-20261114.jpg)，以及随机3星碎片[列表28/20](images/shard-official-list-20261114.jpg)和[详情来源/使用](images/shard-official-detail-20261114.jpg)；未点击正式服使用或跳转。3张既有拼图/进度原图恢复RGBA并保留UUID，见[资源证据](validation/item-shard-assets-20261114.json)。当前170份TS、36份Prefab、21个独立View；37份Prefab/Scene共86处绑定，49份JSON/20类型/Maven32表不变。本机限定复验已完成，最终证据见[本批复验](validation/item-shard-review-20261114.json)；尚无本批新发布包、真机、Java或MySQL验收结论。
-
-第一阶段使用item_shard_review独立H2/WS账号，准备阶段12次真实GM及同requestId重放验证幂等，记录为revision13。该阶段浏览器于2026-11-14T08:33:43.184Z鉴权读到revision14；不推测两次记录间变动原因，也不把数据准备和多次登录当作同一版本基线。以该阶段14为只读基线后，新增state.changed为0、新error为0，唯一一条新warn是30104004正文缺失；11条堆叠与1只精灵各自数量和准备样本一致。已手测来源、使用、两者组合、分解及无操作详情；3010007长文首末滚动；随机20003000的3星28/20、具体20101001的1星2/5；30104004特殊材料无碎片星角且显示缺正文；X/空白关闭、图鉴只飘字、精灵无数量/无残留、普通装备分流，以及主线产物金币候选隐藏0、说明保留“产物说明（只读）”和唯一确定、双窗关闭返回。样本900102的真实名为“英雄进阶石”，前批正式服“强化石”截图只保留其实际显示名，不将该截图强配为900102。
-
-富文本追加阶段使用新的item_rich_review独立H2/WS环境，真实GM准备900504×2、900505×3、3010007×1、20003000×28，准备版本4；2026-11-14T08:47:24.375Z（上海16:47:24.375）的session.login初始化读到revision5，之后新增state.changed、warn及error均为0，数量保持，关闭和注销正常。实际确认900504正文11行/10项橙色、900505正文3行/2项橙色，553字长文能滚动到末行，随机碎片仍显示3星28/20；最终对应截图已更新为RichText画面。该阶段只复验富文本追加范围，第一阶段的完整UI矩阵保留独立结果，不宣称所有场景均在RichText修正后重跑；两个阶段的准备和初始化版本分开记录。
-
-关闭过程中曾发现对已销毁节点解除输入监听引发Node.off异常，已补isValid保护及反例，两项专项和类型检查通过；浏览器历史中的已修错误保留，不能称全历史零错误。最终NoActionSpacer无操作底部留白和注销均已通过，本批本机限定复验收口；未操作真实收益、战斗挑战、玩家领取、使用或分解，不以GM数据准备开放玩法。进程清理及完整范围以[最终证据](validation/item-shard-review-20261114.json)为准；未新构建、未运行本批Java/MySQL验收。
-
-## 前批：普通装备专用只读详情（11-14）
-
-BagView按真实物品的mode=1分流至EquipmentInfoView；页面只传稳定库存key，打开和库存事件均重读唯一BagModel，删除、类型改变或换号后关窗。完整Prefab保存品质标题、旧星级、评分、基础属性、套装、说明及来源/装备按钮；布局归Layout、Widget和统一缩放，共享模态支持空白关闭。来源与装备操作只走全局飘字说明未开放，不新建装备实例或资产写协议；mode=18灵器继续走原入口，不套用普通装备模板。
-
-EquipmentDetailUtils复用68条equipmenttype，接入ScoreCount、EquipmentSetType、AttributeShow三张显示类型。评分沿旧Lua先ratio/10000、再乘属性值、逐条ceil后求和；基础属性保留原值，套装数值按旧语言模板，背包空穿戴上下文显示0/4。attrshow原XLSX的51行中仅合并一条完全相同的226重复，保留50个唯一属性；同键异内容拒绝，缺显示配置不补零值。当前共享JSON49份、类型20表、Maven共享32表。
-
-该装备批次依赖24张图片已按旧图集核对，17张修正为原RGBA，既有UUID保留，见[装备资源记录](validation/equipment-detail-assets-20261114.json)。正式服新核银制利剑的绿1星、武器、评分33/攻击33及无套装；套装和高品质依据旧源码/配置，不称正式服逐项实测。当时36份Prefab、21个独立View、169份TS，37份Prefab/Scene共85处脚本绑定。本机限定复验已通过，见[该批最终记录](validation/equipment-detail-review-20261114.json)。
-
-本批使用设备选项393×852、浏览器1280×720和独立H2/WS，真实三库存各1件：银制利剑1001001为绿1星、评分33/攻击33；1001007为紫3星、评分276/套装0/4；1001017为红6星、评分4137、攻击3780/暴伤510及一颗红星。来源/装备仅全局飘字，X/空白关闭、套装后普通面板收缩、英雄往返及注销通过；只读阶段revision保持5，无新增state.changed。刷新后15:50（上海，07:50Z）无新增warn/error，历史旧编译错误保留。PID9080已核身份停止；未构建新包或运行新Java/MySQL，不计前批48项Java，不将本机样本记为正式服套装/红6逐项实测。
-
-## 本轮：GM分窗与全局飘字（11-14）
-
-截图中的2000002被旧GM按不支持的精灵类型拒绝，客户端又把业务拒绝统一翻译成连接失败。本轮沿原gm.grant接入真实SpiritInventoryService，单次1～1000只；先查持久回执再抽样，每只保留独立UUID、能力和技能。实例、GM回执及资产revision同事务，失败整笔回滚，提交后统一推送。其他未恢复精灵仍明确拒绝，不写普通堆叠。
-
-GM改为Creator预览中的F9松键入口，角色设置中的旧入口移除；GmView只保留英雄、道具、技能、战斗测试四个按钮，发放和前三关试战各有完整Prefab和独立View，技能复用现有只读验收台。关窗、换号和销毁统一取消子窗及迟到反馈；所有发放继续共用唯一GmController，不开放玩家获取、领取或养成。
-
-操作反馈统一由UIManager.toast进入ToastManager，复用场景已有面板，最多八条、同文去重、排队、上浮淡入淡出；长文字换行撑高背景，不新建页面或计时器。登录、主城、技能台、布阵和主线操作结果不再写成固定错误正文，加载进度和玩法状态仍由页面展示。换号clear清空旧提示，销毁dispose后不接受迟到消息；开窗异常有已报告标记，避免调用方重复飘字。
-
-该GM批次48项相关Java检查、15套前端专项、Creator项目类型与Prefab/资源绑定检查已通过；本机独立预览已验证F9/四入口、真实精灵与英雄发放、超限中文反馈、背包详情、只读试战返回及第三关结算返回；退出后F9不打开GM。不把本机结果当发布包或真机结论。该GM批次为16包、35份Prefab、20个独立View、166份TS，新增两份GM窗口，没有新增Bundle。最终结果见[GM与反馈证据](validation/gm-toast-review-20261114.json)。未提交推送，日常后端未替负责人重启。
+更新：2026-11-16。本页维护当前实现、开放边界和验证证据；后续顺序只在[实施路线](restructuring-plan.md)维护，接手操作见[交接文档](handoff.md)。开发分支为 `hao`；本次负责人已授权推送并合并 `main`，实际完成状态以 Git 为准。验证记录中的“本批”“未提交”均是当时状态，不能覆盖今天的分支状态。
 
 ## 当前阶段
 
-前三关主线的“挂机→布阵→挑战→结算→返回挂机”已接通；战报与结算由服务端持久化，客户端走WS＋Protobuf及唯一Model。当前仍是分期恢复版本，不是完整挂机收益或全游戏上线版本。
+前三关已经形成“挂机 → 布阵 → 挑战 → 结算 → 返回挂机”的真实闭环。加载、配置、资源池、页面生命周期及断线恢复已有统一入口；当前仍是旧游戏的分期恢复版本，不按文件数或测试数量计算完成率。
 
-| 模块 | 当前已接通 | 仍未完成/开放 |
+| 领域 | 当前已实现 | 尚未开放或尚有缺口 |
 |---|---|---|
-| 登录、角色、背包 | 统一登录快照、角色只读资料、分类与详情、普通装备评分/属性/套装、精灵独立实例详情；本批普通道具条件按钮、精英碎片星角及库存进度已实现/专项通过 | 本批本机限定复验已完成；正式身份平台、完整创角、灵器专页和英雄图鉴仍缺；来源跳转、使用/分解未开放，真机及98技能逐项画面未验 |
-| 英雄与阵容 | 名册、基础详情、技能只读、普通四槽关系、进化持久状态及只读技能、主线布阵保存 | 完整属性/技能覆盖不足；升级、穿脱、扩容未开放 |
-| 主线挑战与结算 | 前三关真实输入、持久战报、幂等结算、恢复待领奖；开场、最高伤害、经验动画、确认/倒计时及返回 | 更多关卡和技能；大型进化翅膀裁边待审 |
-| 战斗统计与历史展示 | 双方伤害/承伤/治疗，冻结名称/头像/星级及胜利骨骼；进化头像、高星样式；缺历史字段明确提示 | 不等同全英雄外观/全技能表现验收 |
-| 挂机演出与只读说明 | 最多三英雄持久选择、行军/遇敌/对话；四档宝箱、计时气泡、累计条、阵亡资源飞行；全部850关双页产物及只读详情 | 宝箱领取、快速战斗、完整离线奖励事务未开放 |
-| 挂机奖励规则 | 完整纯计算、各来源只读输入、活动控制维护、2000002真实实例发放领域；主线时长读取VIP上限；累计/回执/协议事务方案已整理 | 维护默认关闭，日常服未配置真实开服时间；服务端累计/成功回执/领取协议事务已接入但默认关闭；客户端持久待确认与按钮未接 |
-| GM与技能台 | 当前测试角色隔离数据准备、技能演示和覆盖标记 | 开发工具不等于玩法获取途径；其他玩法/社交不在本批范围 |
+| 登录、角色与状态 | WS＋Protobuf登录/鉴权、统一持久版本快照、角色只读资料、应用层换号隔离 | 正式身份平台、完整创角及目标平台适配 |
+| 背包 | 普通堆叠、期限物品和精灵独立实例；普通装备、道具/碎片、精灵分别按旧表现显示只读详情 | 灵器专页、英雄图鉴；来源跳转、使用、分解、穿戴等写操作 |
+| 英雄与布阵 | 名册、基础详情、技能/四槽/进化只读状态，主线布阵保存及回执/状态双确认 | 完整属性与技能覆盖；升级、穿脱、扩容等养成 |
+| 主线挑战 | 前三关权威战报、幂等结算、经验/奖励表现、暖恢复及冷重登首次主线恢复 | 更多关卡与技能；主线回执未包含升级赠钻等完整附赠展示信息 |
+| 战报与弹窗 | 冻结名称、头像、星级及统计；父页所属详情关闭清理、单实例最后参数、共享模态；统计独立于结算页 | 全英雄/全技能表现、真机布局与长期内存证据不能由当前样本代替 |
+| 挂机演出 | 选人、行军/遇敌/对话、四档宝箱、计时、累计条、资源飞行及850关只读产物说明 | 玩家宝箱领取和快速战斗仍关闭；850关说明不等于开放850关挑战 |
+| 挂机领取基础 | 完整纯计算/权威输入，V24累计、V25回执，同事务发奖，客户端原请求持久恢复、双版本确认及通用反馈 | 日常服务端新请求开关和客户端策略仍为false；真实开服日期/活动维护配置未启用，玩家按钮未绑定领取 |
+| 共享奖励与冒险点 | 可信发奖、实际到账明细、事务后反馈、统一奖励窗/确认框；V26冒险点独立领域及统一快照 | 酒馆任务/扣点及其他玩法仍未恢复；不能把测试发奖视为玩家获取玩法 |
+| GM | 本机local默认开启、Creator F9总入口及模块窗口、真实持久发放与统一飘字 | 仅开发数据准备；production不装配服务，不能仅隐藏前端代替服务端限制 |
 
-## 本批：最小精灵实例与背包只读展示
+`chapter.claim`是挑战结算，`chapter.idle.claim`才是挂机领取。两者的回执和恢复用途不同，不以名称相近替换。2000002“月兔精灵·蓝”具备真实独立实例和只读详情，合成、重生、洗练及穿脱继续关闭。
 
-- 负责人已授权并接通2000002“月兔精灵·蓝”：SpiritRules按真实规则生成单能力和单技能，SpiritInventoryService在角色锁及外层奖励事务中逐件保存V23实例。UUID、属性和技能不因同配置合并；新建保持未穿戴、经验0、洗练空状态。
-- 统一Snapshot新增可选字段10 `SpiritInventory`，首包、state.changed与重连共用同一权威来源。BagModel独立保存精灵实例，以`spirit:instanceId`选择；沿用现有背包Prefab展示真实属性及技能，不把精灵塞进普通数量库存。普通InventoryService拒绝type8假堆叠；本批当时未开放GM精灵生成，已由上方11-14 GM批次沿真实实例链补齐2000002；玩家写路由仍关闭。
-- 后端真实13类88项Java回归、32项合并配置/路径/活动/精灵Python检查通过；Java→TS真实WS事件/重连帧互通通过。前端backpack、game-socket、config-groups、staged-loading、creator-compat五套检查及Creator项目tsc通过；工具tsconfig与旧Creator编译器仍不兼容，未通过，不算作类型检查全通过。
-- 最终393×852本机预览、独立H2已通过：8只实例显示8格，详情收为真实属性/技能两段，抽查生命+1476与护甲+21及各自不同的Lv1技能；空白关闭、确认关闭、返回主城和warn/error空记录均通过。4能力×98技能的392种全文组合检查通过；该11-13批次沿用通用详情Prefab，已由本次专用详情替代；不是98种技能逐项画面验收。见[列表](images/spirit-list-20261113.jpg)、[详情一](images/spirit-detail-20261113.jpg)、[详情二](images/spirit-detail-second-20261113.jpg)和[本批证据](validation/spirit-instance-review-20261113.json)；没有新发布包或MySQL结论。
+## 本轮代码与文档收口
 
-前批AssetSync嵌套事务隔离、提交通知异常和钱包精确加法修复继续保留，证据见[前置修复记录](validation/idle-settlement-prerequisites-review-20261113.json)。最小精灵范围已实现，详情见[领取方案](main-chapter-idle-settlement.md#精灵最小范围已实现)；该精灵批次未实现新领取累计/回执事务；本批服务端实现见上节，日常领取、快速战斗、精灵养成/穿脱/洗练/合成继续关闭。
+本轮检查继续收敛既有实现：战场结算页归入openChild生命周期，带结束回调的播放器不再接管结算宿主或全局关窗；共享开窗被其他用途接管后，旧战场不再误记已展示。暂停的Campaign/Idle领域删除重复资产分发，非简化经验奖励复用RewardGrantService，冒险点和精灵分别进入唯一领域，不恢复玩家入口。统一检查工具按全套/单项分别保存汇总，单项复查不会覆盖整轮结果。
 
-## 新领取方案现状
+文档按“进度记录状态、路线记录下一步、交接记录操作”分工，清掉已经完成的客户端恢复/布阵确认待办、旧发布包结论及旧脚本数量。原始证据和各自限制继续保留，不删除记录来制造整齐的完成率。
 
-[累计/回执/协议事务方案](main-chapter-idle-settlement.md)已形成，保持唯一计时状态、类别保底、历史成功回执与最新资产快照分离。负责人确认未来首次挑战前建立now-60、胜利不重置，按钮65秒/服务端60秒；计时已在本批改为首次挑战前创建，已有起点保持。成功后丢弃基础周期尾数/超限时长，随机累计仍使用截顶后的完整秒数。前批V23只增加精灵实例及快照；本批V24/V25和新领取/status协议已接服务端事务，下一步补客户端持久待确认与双向确认，按钮保持关闭。
+本轮统一检查80套通过，5项暂停不计通过；最后结算归属修复后8套相关检查和严格类型复验通过，叠窗专项共11组。后台首轮680项暴露13处失败，修复旧分发/测试基线后30项定向检查及最终681项全部通过；未运行MySQL专项。结果和修改范围见[本轮收口记录](validation/project-consolidation-20261116.json)。本轮没有重跑浏览器或集中构建，不能用这些结果替代画面验收。
 
-## 上一实现批：活动控制初始化、发布和周期维护
+## 本阶段已完成的恢复链
 
-- 新增唯一控制写服务及实际Spring启动/定时入口。默认关闭，可信配置须明确列出区服和带偏移的真实开服时间；相同时刻重启不重置，冲突拒绝，不以当前时钟填日期。操作说明见[维护指南](idle-activity-maintenance.md)。
-- 016首日开始，记录7天加清理2天；034保留第9999天，最大轮次从promotionpve读取。当前均最大1轮、循环0，结束后不自动开第二轮。long时间不复制旧2038溢出；非0星期初始化限制仍明确待审。
-- 周期参数加入既有服务端活动投影，不增加客户端表或模块清单。V22保存冻结next，严格now>next才单步推进；三种循环语义均有纯规则覆盖。044发布后next=start，严格过开始秒才写turnsTime并清空next。
-- 用户确认同时保存并校验非空044兑换配置，仅开放控制维护。配置版本、内容指纹、控制revision与期次身份分开；同版本同内容幂等，同版本异内容/旧版本拒绝，同内容升版本不重挂开始标记。进行中开始时间不能后移，同start修订不等于新期。
-- 每服锁区服行再维护控制；初始化与可选发布同事务，失败不留半份状态。独立环境已跑“维护→冻结Input→完整纯计算”，维护前后资产、库存和挂机起点不变。未调用角色活动重置、兑换、任务或道具回收。
+| 场景 | 当前处理 | 证据 |
+|---|---|---|
+| 挂机原请求中断 | 先写原生IndexedDB，再发原请求；按原编号查回执，历史结果与最新快照双确认后条件清理，换号不删除旧角色日志 | [客户端基础](validation/idle-claim-client-recovery-review-20261114.json)、[真实WS/同库只读重启](validation/idle-claim-live-recovery-review-20261116.json) |
+| 通用发奖反馈 | 原业务receiptId去重，等待统一资产版本；窗口失败只重试展示，不重新发奖；挂机复用RewardView/ConfirmView | [通用链](reward-feedback.md)、[真实通知](validation/reward-live-notice-review-20261116.json)、[本机画面](validation/reward-preview-review-20261116.json) |
+| 冒险点满额依赖 | 独立持久余额及上限随首包/推送恢复；未来65秒点击链复用通用确认，取消不建日志 | [旧依据](validation/tavern-point-legacy-audit-20261116.json)、[实现检查](validation/tavern-point-review-20261116.json)、[真实联调](validation/tavern-point-live-review-20261116.json) |
+| 暖重连战斗结算 | 保留原battleId，SETTLED回执和足够新的统一快照均确认后才展示；缺状态每轮一次鉴权，关页不丢模块意图 | [旧链审计](validation/reconnect-recovery-audit-20261116.json)、[双确认](validation/battle-settlement-review-20261116.json)、[本机](validation/battle-settlement-preview-20261116.json) |
+| 冷重登首次主线 | 登录主城仅记pending候选，首次进入主线才结算原编号；正常胜利页与恢复通用奖励窗互斥，实际开窗才记已展示 | [入口检查](validation/chapter-entry-recovery-review-20261116.json)、[真实重载](validation/chapter-entry-preview-20261116.json) |
+| 布阵ACK到、状态缺失 | 保留原请求与站位至双确认；有ACK只重试同步，不重发保存；真正确认才继续一次出战 | [恢复检查](validation/formation-confirm-review-20261116.json)、[丢推送复验](validation/formation-confirm-preview-20261116.json) |
+| 切页与前后台 | 同页未保存草稿保留，关闭重开回权威站位；结算关页后确认原编号，重复首包/历史反馈不重复弹奖 | [组合检查](validation/page-lifecycle-review-20261116.json)、[本机矩阵](validation/page-lifecycle-preview-20261116.json) |
+| 统计与详情长断线 | openChild统一归属及最后参数，旧父/旧回调不能误关或覆盖新窗；统计静态监听仅绑定一次，仍可独立保留 | [实现检查](validation/overlay-lifecycle-review-20261116.json)、[长断线实测](validation/overlay-lifecycle-preview-20261116.json) |
 
-上一实现批221项相关Java与27项配置/路径/导出回归通过，见[活动控制维护证据](validation/idle-activity-maintenance-review-20261113.json)。只有独立H2和纯规则测试，没有操作日常服、运行MySQL、浏览器/Creator或新发布包；日常服尚无明确开服配置，维护仍默认关闭。该证据不替代本批新方案的后续实现验证，控制维护就绪不表示活动兑换、回收或新挂机领取已开放。
+前一轮叠窗工作完成15套相关专项及严格类型检查。独立Creator/真实H2与WS下，两组实际离线时长为118.0458秒、97.5371秒，另有9次主动重连；统计、详情叠窗和技能窗保持原实例/内容，关闭后无残留弹窗或打开意图。断线开始后没有新的挑战、结算请求或重复奖励窗。期间20条挂机NOT_READY告警属于已记录断线行为，不能称全程零告警。
 
-前批[完整纯装配](validation/idle-calculation-review-20261113.json)、[活动输入](validation/idle-activity-review-20261113.json)、[礼包](validation/idle-gift-review-20261113.json)、[神职](validation/idle-clergy-review-20261113.json)、[VIP/世界](validation/idle-authority-review-20261113.json)与[旧依据/构建源修正](validation/idle-input-review-20261113.json)保留各自范围，不将当时未实现项或验证数量当成当前结论。
+最后追加的同步 `onOpen` 关闭/ready入口保护，以及本轮补齐的战场/播放器结算归属，均只有专项证据，尚未进入上述Creator编译；下次正常刷新核对即可，不为此重复安排集中构建。以上是各批已有证据，本轮没有重跑浏览器，也不把历史通过计为本轮新验证。
 
 ## 框架、资源与人工维护入口
 
-- 页面自行通过 `@UIRegistry.view` 定义唯一 Prefab 地址、层级、缓存、模态与配置前置；ApplicationPages 只装配登录/主城 Controller 及宿主。静态布局归完整 Prefab、Widget 与统一比例适配，不再使用 BagMount、HeroMount 或旧页面壳。
-- 列表使用 SuperScroll/SuperContent 的 RENDER_ITEM/SELECT_ITEM；View 负责渲染及选择，Cell 负责显示。等尺寸虚拟列表仅创建可见区和缓冲行节点；变高列表、无限循环及父子拖动角度仲裁尚未实现。
-- 取图统一为 ResManager，复用 ResourcePool；CommonUiResources、IconCatalog、ResourceCatalog 已退役。动态资源按包名和包内路径获取，缺图打印具体路径及原因，不维护存在性清单。
-- 资源均在 `assets/bundles`：resources 下为 audio/chapter/config/effects/font/icons/maps/spine；module 下为 bag/battle/bootstrap/common/gm/hero/home/login。共 **16 包，15 远程＋本地 bootstrap**，36份Prefab、170份脚本（21个独立View）；本批新增ItemDetailUtils，修改既有BagInfoView/BagItemView，不新增页面或包。共享目录49份JSON，类型规范20表，Maven直接共享32表；两个分类父目录不是Bundle，现有自动图集继续保留。
-- LoadingPlan 是三段加载的唯一人工配置入口；预载页面读取其唯一 Prefab 地址，直接绑定依赖由引擎带入。没有模块额外清单，也不全量扫描目录加载。当前配置如下，具体资源以[LoadingPlan](../client/assets/scripts/app/remake/LoadingPlan.ts)为准。
+| 职责 | 唯一维护入口与约定 |
+|---|---|
+| 页面 | View自己的 `@UIRegistry.view` 保存地址、模态、缓存等参数；Prefab保存布局、Widget及统一比例。ApplicationPages只承担应用装配，配置不再由页面准备 |
+| 弹窗归属 | 随父页结束的详情使用 `UIManager.openChild`；独立统计等使用普通 `open`。由框架提交最后参数，不在Promise后再次 `runOpen` 或按全局id误关其他来源 |
+| 列表 | SuperScroll/SuperContent、View的渲染/选择事件；等尺寸虚拟列表只创建可见区及缓冲节点 |
+| 资源 | `assets/bundles/resources`为通用素材包，`module`为页面模块；父目录不设Bundle。运行时仍用原包名/包内路径，原UUID保留，自动图集继续使用 |
+| 取图与持有 | ResManager复用ResourcePool/PrefabLoader；不恢复CommonUiResources、IconCatalog、ResourceCatalog或模块存在性清单 |
+| 配置 | 少量启动表由LoadingPlan声明，其余生成一份压缩包；登录后校验安装到唯一GameConfig。页面同步查映射，真实显示计算保留在无状态Utils中 |
+| 页面/资源缓存 | 背包短期缓存；页面闲置120秒、最多2页，Prefab闲置120秒、最多16个可回收项。阶段预载持有、活动实例及其他拥有者引用均受到保护，回收不等于GC/GPU立刻下降 |
 
-| 阶段 | 当前显式目标 | 完成时机 |
+三段以[LoadingPlan](../client/assets/scripts/app/remake/LoadingPlan.ts)为准，不另建模块清单：
+
+| 阶段 | 当前目标 | 时机 |
 |---|---|---|
-| login | 语言/提示配置、加载动画/背景、登录音乐、选服页 | 登录页出现前 |
-| enterGame | 主城及背包所需配置、主城页、背包页 | 登录成功后、显示主城前 |
-| background | 背包详情、英雄列表、英雄详情、挂机主页 | 主城显示后后台准备 |
+| login | 语言/提示启动表、加载骨骼/背景/音乐、选服页 | 登录页出现前 |
+| enterGame | 统一配置包、主城页、背包页 | 登录成功后、显示主城前 |
+| background | 背包详情、英雄列表/详情、挂机主页 | 主城出现后后台准备 |
 
-其他资源在实际使用时加载；预载完成不表示所有动态图标、立绘、骨骼常驻或首次显示绝无开销。页面缓存已接入：背包 cache:true，UIManager 闲置 120 秒、最多 2 页；PrefabLoader 闲置 120 秒、最多 16 个可回收项，前台约每 30 秒维护。阶段目标由应用单独持有，仍被阶段、实例或其他拥有者引用的资源不能因闲置维护而释放。缓存条目消失也不等于 GC/GPU 内存立刻下降。维护步骤见[加载与远程资源](staged-resource-loading.md)和[架构](architecture.md)。
+其余资源按需加载，预载不代表全部图标/立绘常驻。目录与加载维护见[资源指南](staged-resource-loading.md)，状态和生命周期见[架构](architecture.md)。
 
-## 本轮代码整理结果
+## 验证边界与下一步缺口
 
-- 账号切换与旧回包隔离归应用/连接层；BaseModel 不保存角色键，英雄详情和技能页不再比较 owner。保留页面关闭、绘制代次等自身异步生命周期保护。
-- 40 份脚本改名，130 个自由导出 API 整理为所属类方法，18 份无调用旧脚本及 meta 退役。保留的 50 份定义 meta 与原文件一致；有状态的 BattleSpineService、CityMapService 仍由实例管理缓存和节点。
-- chapter 整包归 resources，184 份资源/meta 逐字节保持。effects 从 battle 模块拆为独立远程资源包：12,841 份原文件及原 UUID 保留，仅根 meta 新增 Bundle 声明；运行地址统一为 effects/包内路径。加载、生成器、工具及当前指南同步修改。
-- 已删除的未实现客户端链不再挂入口，后端领域规则仍保留；删除旧代码和归档资源不等于取消最终玩法目标。
+- 最新实际发布证据是11-14[配置包发布记录](validation/config-package-release-review-20261114.json)，包括19:54完整流程与20:14限定增量；此前“effects拆包后尚无发布证据”的旧结论已过时。该包不能证明11-16恢复代码已在发布版验证；负责人已明确本阶段不做集中构建。
+- 当前只有本地远程资源样板，真实CDN HTTPS、可信版本发布/回滚、原生App/微信及目标真机仍待实际交付范围确定。长时内存/GPU、物理弱网、系统后台、进程崩溃和断电没有完整证据。
+- 挂机持久恢复已验证真实WS、原生IDB及同库优雅重启；不等于MySQL、所有平台持久存储或断电安全已通过。布阵和主线挑战意图仍主要在内存；pending已清且原battleId随冷启动丢失时，历史反馈无法定位。
+- 主线当前只保存/返回基础实际奖励与既有经验展示。升级赠钻已真实到账，但其完整附赠明细不在主线历史回执中，不能靠钱包差补猜；这是下一步可核实并收口的具体缺口。
+- 850关只读说明、20关奖励规则投影与前三关可挑战范围分开；全英雄/技能、清心概率、护盾、大型模型裁边及额外奖励表现仍见[战斗问题表](battle-known-issues.md)。
+- 只做竖屏；不重新安排横屏、无目标全仓改名或专门拆分RemakeApp。已验证的通用恢复主链不继续无限增加重复矩阵，后续检查围绕真实缺陷或明确平台目标展开。
 
-## 验证状态与限制
+## 既有证据索引
 
-| 范围 | 最新证据及适用边界 |
+下列保留各阶段原始证据，不把它们的旧文件数量、开关或提交状态当成当前结论。
+
+| 内容 | 证据入口 |
 |---|---|
-| 前批11-13 代码、目录与绑定 | 52/52 项有效检查、两套类型检查通过，5 组旧检查暂停；162 脚本、33 份 Prefab/Scene、71 处脚本绑定无缺失。见[代码整理](validation/script-cleanup-20261113.json)、[chapter](validation/chapter-resource-move-20261113.json)、[effects](validation/battle-effects-move-20261113.json) |
-| 11-11 本机入口与主线 | 已验登录、三段任务、背包、英雄、850 关说明及第二关结算返回。见[目录批次](validation/bundle-directory-groups-20261111.json)、[虚拟列表批次](validation/virtual-list-resource-review-20261111.json)；不替代 11-13 新路径的发布验证 |
-| 缓存自然到期与重开 | 既有发布包测量见[加载与缓存](validation/loading-cache-review-20261111.json)；预载持有及闲置回收已有证据，最新改名链未重新签收 |
-| 最后实际发布包 | [自动构建](validation/bundles-auto-build-20261111.json)为早期 104 远程包批次。之后资源精简、页面调整和 effects 拆包尚无新发布包证据；旧包体数字不能称为当前 App 大小 |
-| 11-13精灵最小领域/通用详情 | 88项Java、32项Python、真实WS互通及前端五套/Creator项目类型检查通过；当批通用详情画面为历史证据，未执行新构建 |
-| 11-14精灵专用详情 | 9套相关前端专项、13项领域/WS、Creator项目类型、392显示组合及33份Prefab结构通过；正式服只读对照和独立预览8格、两只实例、两种关闭及返回主城通过。见[本批证据](validation/spirit-detail-review-20261114.json)；未逐项展示98技能或构建 |
-| 11-14普通装备只读详情 | 绿1星、紫3星套装、红6星双属性及只读按钮/关闭/重开/英雄往返/注销完成本机限定复验；真实库存revision5不变，无新state.changed。正式服只对照银剑，未构建或做新Java/MySQL，见[本批记录](validation/equipment-detail-review-20261114.json) |
-| 11-14普通道具/精英碎片 | 584条mode2/8/9/17配置纯投影及真实Prefab视图专项通过；条件按钮、共享数量上下文、稳定key和迟到清理已有自动验证。3张原图恢复RGBA/保留UUID；本机限定复验已完成，不能引用前批装备或精灵画面代替 |
+| 配置包与直接查表 | [包实现](validation/config-package-review-20261114.json)、[真实发布](validation/config-package-release-review-20261114.json)、[直接取用](validation/config-direct-lookup-review-20261114.json) |
+| 代码、目录与缓存 | [代码清理](validation/script-cleanup-20261113.json)、[chapter迁移](validation/chapter-resource-move-20261113.json)、[effects迁移](validation/battle-effects-move-20261113.json)、[目录分层](validation/bundle-directory-groups-20261111.json)、[虚拟列表](validation/virtual-list-resource-review-20261111.json)、[缓存](validation/loading-cache-review-20261111.json) |
+| 精灵与分类详情 | [精灵领域](validation/spirit-instance-review-20261113.json)、[专用详情](validation/spirit-detail-review-20261114.json)、[精灵原图](validation/spirit-detail-assets-20261114.json)、[装备详情](validation/equipment-detail-review-20261114.json)、[装备原图](validation/equipment-detail-assets-20261114.json)、[道具碎片](validation/item-shard-review-20261114.json)、[道具原图](validation/item-shard-assets-20261114.json) |
+| GM及提示 | [第三关/GM核对](validation/gm-bag-battle-review-20261114.json)、[local默认](validation/gm-local-default-20261114.json)、[F9与飘字](validation/gm-toast-review-20261114.json) |
+| 奖励事务前置 | [同步/钱包](validation/idle-settlement-prerequisites-review-20261113.json)、[共享发奖](validation/reward-grant-review-20261114.json)、[新累计与回执](validation/main-chapter-idle-claim-review-20261114.json)、[事务说明](main-chapter-idle-settlement.md) |
+| 完整输入与计算 | [输入核对](validation/idle-input-review-20261113.json)、[VIP/世界](validation/idle-authority-review-20261113.json)、[神职](validation/idle-clergy-review-20261113.json)、[礼包](validation/idle-gift-review-20261113.json)、[活动](validation/idle-activity-review-20261113.json)、[纯装配](validation/idle-calculation-review-20261113.json)、[控制维护](validation/idle-activity-maintenance-review-20261113.json) |
+| 主线历史表现 | [胜利页](validation/victory-review-20261109.json)、[统计](validation/battle-statistics-20261109.json)、[高星](validation/battle-high-stars-20261109.json)、[治疗](validation/battle-healing-20261109.json)、[名称](validation/battle-names-20261109.json)、[外观](validation/victory-appearance-20261109.json)、[挂点](validation/victory-anchor-20261109.json) |
+| 挂机演出与规则 | [宝箱](validation/idle-chest-20261109.json)、[850关说明](validation/chapter-reward-info-20261109.json)、[累计/飞行](validation/idle-resources-20261109.json)、[规则审计](idle-reward-rules.md)、[取整边界](validation/idle-rule-boundaries-20261109.json)、[纯加成](validation/idle-bonus-20261109.json)、[输入契约](idle-reward-input-contract.md) |
 
-当前只有本地独立资源服务样板；真实 CDN HTTPS、弱网/离线、原生/微信、真机帧率及长时间内存/GPU 测量未完成。源码整理与有限节点测试不能代替这些结论。
-
-## 已核实的重要边界
-
-- 挂机四项体验修复已获负责人验收：准备期隐藏敌方模型/头顶信息、我方骨骼连续复用、攻击后回待机、独立站位与放大。挂机模型0.60是已确认体验调整，正式挑战0.48不变；正式战斗8槽，不能把当前最多三英雄说成旧版固定六人上限。
-- BattleInfo条件已核对：主线隐藏跳过，保持默认1.5倍；后两档待权威羁绊状态，不因已有goddess_vip数据库列就开放。
-- 最高伤害沿负责人确认的旧abs(实际血量变化＋护盾吸收)口径；护盾疑点继续保留。历史姓名、进化头像、高星样式、胜利冻结骨骼已完成接入，不再列为未开始。
-- 冰晶女巫真实治疗回放与统计26已完成独立环境验证；不代表其他治疗英雄及负治疗死亡边界均已恢复。
-- 850关是产物说明配置范围，现有奖励规则投影20关，正常挑战仅前三关；三者不可混写。
-- 当前初始星级/强化0直接动作扫描：113模板中51个可解析、62个有缺口，见[扫描结果](validation/battle-presentation-coverage-20261109.json)。不包含全部进化、被动链、声音或实际画面验收。
-- 只检查手机竖屏；负责人明确不需要横屏。平板、真机、密集气泡避让与部分大型模型裁边仍待验。
-
-补充：`chapter.claim`是挑战结算接口，不是挂机宝箱领取。完整纯装配、控制维护及2000002实例领域已有，**服务端新领取事务已接入但默认关闭，客户端尚无发包/恢复闭环**。维护只在显式启用且提供真实日期后应用，未初始化仍不能当作无活动。共享可信发奖与服务端累计/回执事务已实现，下一步补客户端恢复和确认；同步/钱包和最小精灵不再列为缺失，按钮仍须后续授权。清心概率、护盾、技能资源及大型模型疑点见[待复验问题](battle-known-issues.md)。
-
-## 玩法证据入口
-
-| 内容 | 证据 |
-|---|---|
-| 真实主线结算、经验、三种竖屏 | [胜利页](validation/victory-review-20261109.json)、[统计](validation/battle-statistics-20261109.json) |
-| 进化头像/高星、真实治疗、历史名称 | [高星](validation/battle-high-stars-20261109.json)、[治疗](validation/battle-healing-20261109.json)、[名称](validation/battle-names-20261109.json) |
-| 胜利历史模型及挂点 | [外观](validation/victory-appearance-20261109.json)、[挂点修正](validation/victory-anchor-20261109.json) |
-| 挂机只读表现与说明 | [宝箱](validation/idle-chest-20261109.json)、[850关说明](validation/chapter-reward-info-20261109.json)、[进度与飞行](validation/idle-resources-20261109.json) |
-| 收益规则与后续设计 | [规则审计](idle-reward-rules.md)、[10项边界](validation/idle-rule-boundaries-20261109.json)、[纯加成测试](validation/idle-bonus-20261109.json)、[输入契约](idle-reward-input-contract.md)、[新领取事务方案](main-chapter-idle-settlement.md) |
-
-上述证据只代表各自批次；原始记录中的“未提交”“本批”“当前”均有当时范围，不推断今天的 Git、资源数量或验收状态。下一步按[路线中的优先顺序](restructuring-plan.md#接下来的执行顺序)推进。
+更早完整过程见[11-13进度快照](validation/development-history-20261113.md)及[11-09主线快照](validation/main-chapter-history-20261109.md)。接下来只按[当前执行顺序](restructuring-plan.md#接下来的执行顺序)推进，不从历史待办重新起一条重复链。

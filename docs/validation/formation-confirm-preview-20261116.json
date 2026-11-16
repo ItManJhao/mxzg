@@ -1,0 +1,132 @@
+{
+  "date": "2026-11-16",
+  "mode": "Creator localhost preview, isolated memory H2, real WebSocket Protobuf",
+  "url": "http://localhost:7456/?mxzgTestApi=http%3A%2F%2F127.0.0.1%3A49355&mxzgTestRun=caa5456c076f4d91ad340ab9a4515549",
+  "testHost": {
+    "pid": 6732,
+    "port": 49355,
+    "run": "caa5456c076f4d91ad340ab9a4515549"
+  },
+  "fault": "Developer test hook omitted exactly one state.changed delivery at GameSocketClient.onState; did not alter authoritative models, requests or server data.",
+  "probe": {
+    "priorVersion": 2,
+    "dropped": 1,
+    "droppedVersion": 3,
+    "frames": [
+      {
+        "name": "state.changed",
+        "version": 3
+      }
+    ],
+    "progress": [
+      {
+        "busy": true,
+        "ack": null,
+        "pending": true,
+        "formationVersion": 2,
+        "slots": [
+          {
+            "position": 2,
+            "heroId": "40323ab1-8972-44a8-a472-b35cbd4b0711"
+          }
+        ]
+      },
+      {
+        "busy": true,
+        "ack": 3,
+        "pending": true,
+        "formationVersion": 2,
+        "slots": [
+          {
+            "position": 2,
+            "heroId": "40323ab1-8972-44a8-a472-b35cbd4b0711"
+          }
+        ]
+      },
+      {
+        "busy": false,
+        "ack": null,
+        "pending": false,
+        "formationVersion": 3,
+        "slots": [
+          {
+            "position": 2,
+            "heroId": "40323ab1-8972-44a8-a472-b35cbd4b0711"
+          }
+        ]
+      }
+    ],
+    "startedAt": "2026-11-16T09:52:32.505Z"
+  },
+  "save": {
+    "busy": false,
+    "pending": null,
+    "acknowledged": null,
+    "confirmedRequestId": "6c3bec35-3d93-4dc5-bf21-22fc6a409ee6",
+    "message": "阵容已保存"
+  },
+  "formation": {
+    "options": [
+      {
+        "formationId": 1,
+        "openPositions": [
+          2,
+          3,
+          5,
+          6,
+          7,
+          8
+        ]
+      }
+    ],
+    "formationId": 1,
+    "unlockedIds": [
+      1
+    ],
+    "assistanceUnlocked": false,
+    "version": 3,
+    "slots": [
+      {
+        "position": 2,
+        "heroId": "40323ab1-8972-44a8-a472-b35cbd4b0711"
+      }
+    ]
+  },
+  "counts": {
+    "formationSaveReplies": 1,
+    "authenticateReplies": 1,
+    "battleViewOpens": 1,
+    "endViewOpens": 1
+  },
+  "logs": [
+    {
+      "timestamp": "2026-11-16T09:52:32.946Z",
+      "level": "log",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 17:52:32 服务端 → 客户端｜阵容｜formation.save｜主线阵容保存回执｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T09:52:32.964Z",
+      "level": "log",
+      "message": "%c[mxzg][APP][WS接收]%c[debug] 17:52:32 服务端 → 客户端｜会话｜session.authenticate｜连接鉴权确认｜成功"
+    },
+    {
+      "timestamp": "2026-11-16T09:52:37.436Z",
+      "level": "log",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 17:52:37 打开界面 MainChapterBattleView ui MainChapterBattleView 耗时 4431ms color:#4ea1ff color:#4ea1ff"
+    },
+    {
+      "timestamp": "2026-11-16T09:52:39.242Z",
+      "level": "log",
+      "message": "%c[mxzg][FRAMEWORK][UIManager]%c[info] 17:52:39 打开界面 ChapterEndView ui ChapterEndView 耗时 170ms color:#4ea1ff color:#4ea1ff"
+    }
+  ],
+  "warnings": [],
+  "limitations": [
+    "Single dropped state delivery simulated at the local application boundary, not network hardware loss.",
+    "Failure, old snapshot, concurrent retry and identity-switch cases are controlled unit/Prefab tests.",
+    "No new production build, MySQL, true OS background, native APP, WeChat or process crash review."
+  ],
+  "instrumentationRemoved": true,
+  "screenshot": "docs/images/formation-confirm-recovered-20261116.jpg",
+  "processStopped": true
+}

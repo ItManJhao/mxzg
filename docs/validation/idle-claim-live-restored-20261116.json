@@ -1,0 +1,166 @@
+{
+  "result": "PASS",
+  "scope": "页面刷新 + Java进程重启 + READ_ONLY历史恢复",
+  "history": {
+    "original": {
+      "schemaVersion": 1,
+      "requestId": "cfd7dd60-4159-4e1a-9210-c10ff5a89d5f",
+      "expectedOperationVersion": 1
+    },
+    "receipt": {
+      "requestId": "cfd7dd60-4159-4e1a-9210-c10ff5a89d5f",
+      "receiptId": "8040b1a0-19b8-48ac-abf5-3bcf74cf0761",
+      "beforeOperationVersion": 1,
+      "afterOperationVersion": 2,
+      "assetRevision": 3,
+      "committedAtSeconds": 1794808856,
+      "previousStartedAtSeconds": 1794808592,
+      "seconds": 264,
+      "theoreticalRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 800
+        },
+        {
+          "itemId": 900003,
+          "quantity": 40
+        },
+        {
+          "itemId": 900101,
+          "quantity": 100
+        },
+        {
+          "itemId": 900102,
+          "quantity": 1
+        },
+        {
+          "itemId": 900401,
+          "quantity": 44
+        }
+      ],
+      "actual": {
+        "items": [
+          {
+            "itemId": 900001,
+            "requested": 800,
+            "credited": 800,
+            "ignored": 0,
+            "reason": "NONE"
+          },
+          {
+            "itemId": 900003,
+            "requested": 40,
+            "credited": 40,
+            "ignored": 0,
+            "reason": "NONE"
+          },
+          {
+            "itemId": 900101,
+            "requested": 100,
+            "credited": 100,
+            "ignored": 0,
+            "reason": "NONE"
+          },
+          {
+            "itemId": 900102,
+            "requested": 1,
+            "credited": 1,
+            "ignored": 0,
+            "reason": "NONE"
+          },
+          {
+            "itemId": 900401,
+            "requested": 44,
+            "credited": 44,
+            "ignored": 0,
+            "reason": "NONE"
+          }
+        ],
+        "wallet": {
+          "goldBefore": 0,
+          "diamondsBefore": 0,
+          "goldAfter": 800,
+          "diamondsAfter": 0
+        },
+        "spirits": {
+          "items": [],
+          "schemaVersion": 1
+        },
+        "timedItems": []
+      }
+    },
+    "current": {
+      "assetRevision": 4,
+      "operationVersion": 2,
+      "requestMode": "READ_ONLY",
+      "startedAt": 1794808856,
+      "wallet": {
+        "gold": 800,
+        "diamonds": 0
+      }
+    },
+    "requests": [
+      {
+        "name": "session.login",
+        "frameId": "9c6b9a19-c572-4255-9c54-94d7d983019d"
+      },
+      {
+        "name": "chapter.idle.claim.status",
+        "frameId": "169b3449-83d3-46c3-aa4f-a4c64e5aebb5",
+        "requestId": "cfd7dd60-4159-4e1a-9210-c10ff5a89d5f"
+      },
+      {
+        "name": "chapter.idle.claim.status",
+        "frameId": "e4570c2d-19e1-4521-904d-3ee7746e3367",
+        "requestId": "cfd7dd60-4159-4e1a-9210-c10ff5a89d5f"
+      }
+    ],
+    "dropped": [],
+    "stateEvents": 0,
+    "connections": 1,
+    "acceptedBeforeRecovery": {
+      "wallet": {
+        "gold": 800,
+        "diamonds": 0
+      },
+      "assetRevision": 4,
+      "operationVersion": 2,
+      "startedAt": 1794808856
+    }
+  },
+  "pending": {
+    "original": {
+      "schemaVersion": 1,
+      "requestId": "97ef70b8-75b7-4a65-accf-252eb880a943",
+      "expectedOperationVersion": 1
+    },
+    "phase": "paused",
+    "requests": [
+      {
+        "name": "session.login",
+        "frameId": "8dc83df7-7ca2-44da-b724-1b5aa68ba99d"
+      },
+      {
+        "name": "chapter.idle.claim.status",
+        "frameId": "cc33669c-d813-4934-9fcd-a4c6c0c6e8f0",
+        "requestId": "97ef70b8-75b7-4a65-accf-252eb880a943"
+      },
+      {
+        "name": "session.login",
+        "frameId": "4a256ad7-f044-4437-9df9-1ea888c508a5"
+      },
+      {
+        "name": "session.login",
+        "frameId": "13d76b32-4413-456d-b30e-1696bca6d9f5"
+      },
+      {
+        "name": "chapter.idle.claim.status",
+        "frameId": "ab704df3-4e35-4be1-9176-9dba55d34e01",
+        "requestId": "97ef70b8-75b7-4a65-accf-252eb880a943"
+      }
+    ],
+    "assetRevision": 2,
+    "operationVersion": 1
+  },
+  "isolatedDatabaseDeleted": true
+}

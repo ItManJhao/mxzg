@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-16",
+  "scope": "本批通用奖励窗及通用确认框的已实现资源准入；不开放玩家领取入口",
+  "addedPrefabs": [
+    {
+      "path": "client/assets/bundles/module/common/prefabs/ConfirmView.prefab",
+      "uuid": "5fe40211-db40-49eb-b968-51891bb9c26b",
+      "scriptUuid": "84d1c43c-5d4b-4bb5-8298-793f77809be6"
+    },
+    {
+      "path": "client/assets/bundles/module/common/prefabs/RewardView.prefab",
+      "uuid": "bb09e057-6340-4f97-ae03-cbe86269fbdf",
+      "scriptUuid": "132271d3-0825-4c37-998b-e24c2ee5313a"
+    }
+  ],
+  "assets": "复用common原有标题/彩带帧、背景和audio/item-get，不复制原图或新增Bundle",
+  "layout": "完整Prefab；共享模态；SuperScroll四列，centerShortLine仅总量不足四格居中",
+  "verification": "源码、绑定与专项检查；实际Creator画面记录另列"
+}

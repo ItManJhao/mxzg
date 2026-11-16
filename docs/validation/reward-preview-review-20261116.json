@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-16",
+  "run": "31b761183d1349a98c4e029797643f68",
+  "status": "本机限定画面通过，玩家入口仍关闭",
+  "viewport": {
+    "device": "393x852",
+    "browser": "1280x720"
+  },
+  "source": "独立真实WS已提交回执的只读显示；显式idleChestPreview参数，不发送新领取",
+  "checks": [
+    "旧3500/2220通用确认双按钮，取消不弹奖励",
+    "确认经RewardBinding共享队列显示真实8项到账",
+    "金币详情显示本次1400，关闭上层仍保留奖励窗",
+    "共享模态节点始终1，全部关闭residents=0/modalActive=0",
+    "钱包显示保持金币1400/钻石3",
+    "collect-2/collect-3实读排队normal-0延迟1.5秒，守卫后恢复normal-2"
+  ],
+  "screenshots": [
+    "docs/images/reward-confirm-preview-20261116.jpg",
+    "docs/images/reward-popup-preview-20261116.jpg",
+    "docs/images/reward-detail-modal-preview-20261116.jpg"
+  ],
+  "lifecycleLogs": [
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:19:53 {\"assets\":{\"scopes\":46,\"entries\":103,\"pending\":0,\"owners\":115,\"retained\":103},\"prefabs\":{\"pending\":0,\"cached\":5},\"ui\":{\"pages\":2,\"residents\":2,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0,\"modalNodes\":1,\"modalActive\":1},\"events\":{\"listeners\":2,\"targets\":2},\"scopedSubscriptions\":16,\"nativeTimers\":12,\"engineAssets\":777} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-16T07:19:53.086Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:20:17 {\"assets\":{\"scopes\":44,\"entries\":103,\"pending\":0,\"owners\":113,\"retained\":103},\"prefabs\":{\"pending\":0,\"cached\":5},\"ui\":{\"pages\":2,\"residents\":1,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0,\"modalNodes\":1,\"modalActive\":1},\"events\":{\"listeners\":2,\"targets\":2},\"scopedSubscriptions\":16,\"nativeTimers\":12,\"engineAssets\":777} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-16T07:20:17.066Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "log",
+      "message": "%c[mxzg][DEV][Lifecycle]%c[info] 15:20:27 {\"assets\":{\"scopes\":44,\"entries\":103,\"pending\":0,\"owners\":113,\"retained\":103},\"prefabs\":{\"pending\":0,\"cached\":5},\"ui\":{\"pages\":2,\"residents\":0,\"cached\":0,\"prepared\":0,\"opening\":0,\"pendingResident\":0,\"intents\":0,\"modalNodes\":1,\"modalActive\":0},\"events\":{\"listeners\":2,\"targets\":2},\"scopedSubscriptions\":14,\"nativeTimers\":12,\"engineAssets\":777} color:#90A4AE color:#90A4AE",
+      "timestamp": "2026-11-16T07:20:27.497Z",
+      "url": "http://localhost:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    }
+  ],
+  "limits": [
+    "2/3档实读轨道与部分画面；1/4档、短行及单按钮完整口径由专项证明，本轮未逐档逐帧视觉签收",
+    "未开玩家领取、未集中构建、未操作Creator Inspector",
+    "冒险点当前权威字段仍缺，不以900401替代",
+    "无引擎三组真实通知交付证据另见reward-live-notice-review-20261116.json"
+  ],
+  "initialIssue": "准入索引首次刷新后仍旧，重新导入两份生成脚本后复验正常；旧15:13:49错误日志不作为复验后新异常",
+  "cleanup": {
+    "backendStopped": true,
+    "frontendStopped": true,
+    "resourceFixtureStopped": true,
+    "run": "31b761183d1349a98c4e029797643f68",
+    "scope": "仅停止本轮owned测试宿主；保留本地证据和独立H2，不触碰日常服"
+  }
+}

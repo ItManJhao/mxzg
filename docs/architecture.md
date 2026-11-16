@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新：2026-11-14。当前范围与进度见[开发进度](development-progress.md)，字段与时序见[通信契约](network-contract.md)。
+更新：2026-11-16。当前范围与进度见[开发进度](development-progress.md)，字段与时序见[通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -29,11 +29,23 @@ BaseModel只管理本地展示版本和业务清空，不保存roleKey、凭证�
 
 服务器 game_role.state_revision 是资产提交版本，与 BagModel/基类本地 revision、连接 connectionId、单次请求 id 均不同。重复/较旧持久版本不提交，旧连接回调由连接代次隔离。非法整包不允许先改钱包；回滚不发送成功状态。
 
+主线结算归MainChapterModel/Controller：原battleId、确认阶段、固定presentation归属、入队及实际展示分别记录，原SETTLED回执和足够新快照双确认后才交结果。entryRecovery只记首个已接纳身份首包候选，MainChapterView首次进入才消费，不在登录主城或每次推送创建领取意图。正常battle归属通过openChild打开ChapterEndView，真实打开且仍归原战场时才记已展示；播放器提供结束回调后不再接管结算宿主或全局关窗。冷reward归属经RewardBinding.restoreItems走既有RewardModel，onPresented真开窗后才登记，失败只重试显示。缺状态每轮一次鉴权，旧任务由应用身份隔离与重置撤销；没有新账号键、资产Model或协议，见[恢复说明](reconnect-recovery.md)。
+
+布阵确认仍归FormationController/FormationSaveModel，权威阵容唯一归HeroRosterModel。保存回执到后保留原意图，直到mainFormation.version达到ACK版本；缺状态每轮至多调用一次原refreshSnapshot，失败/旧快照保留并允许显式“重试同步”，有ACK不再写保存。View锁定提交参数，关页只清自身监听和出战回调，身份结束由应用重置模块；真正双确认后才继续一次出战。不增加第二份阵容、账号键或自动写重放队列，见[布阵维护](formation-ui-authoring.md)。
+
 ## 共享可信发奖
+
+通用展示链已接入RewardFeedbackService→reward.granted→RewardBinding→RewardController/RewardModel→RewardView或全局飘字。通知只在原事务提交后发送，使用原业务持久receiptId及assetRevision，不从背包差量推断奖励；静默、弹窗、飘字由服务端明确选择。应用先核当前角色归属，模块等待已接纳快照版本和主城就绪，再逐批展示、关闭后推进。同编号实时通知与匹配原请求且双确认后的历史回执共用去重；不以历史钱包更新资产。具体入口、旧源码依据和限制见[通用发奖反馈](reward-feedback.md)。
+
+ConfirmView是common中的完整通用Prefab，文案和确认/取消由调用方提供；支持空标题和单/双按钮，共享唯一模态节点。挂机不再保留专用确认/奖励窗，只保留宝箱动画及业务门槛。奖励准备失败保留原批次并复用通用确认询问重试，换号关闭本绑定窗口并撤销旧队列；正常首通仍走既有结算页，冷恢复通用奖励窗由同一结算归属互斥，不重复展示。
 
 共享奖励入口为RewardGrantService：只接服务端可信最终理论量，按item.type明确分发、最终合并、实例批量预检后加入外层角色锁事务；RewardGrantResult冻结真实到账、减少原因、前后余额/经验、升级附赠与独立实例。MainChapterRewardService只适配原首通Plan，不维护另一份类型分发表；当前首通协议仍只返回基础实际量与原经验动画。资格、请求幂等和持久回执归调用业务，统一版本/提交后通知复用AssetSyncService，不以共享方法返回代表已经提交。详细边界见[共享发奖](main-chapter-idle-settlement.md#已实现的共享发奖与实际明细11-14)，本批MainChapterIdleClaimService已接共享发奖及真实结果，日常新领取默认关闭。
 
 ## 挂机已恢复输入与世界快照
+
+冒险点由tavern/TavernPointService及game_tavern_point唯一持有。V26把已有900401普通记录（包括0及合法超额）原量迁入，旧堆叠移除，不补2000差额、不改历史回执。只有真正缺少持久记录才在角色锁事务按system.tavern_initial_item懒建一次；共享发奖与开发GM统一走该领域，普通InventoryService拒绝type11。业务奖励按本次冻结上限截取，GM明确无cap准备测试数据；初值不算本次奖励，不产生获得弹窗。初始化/变化复用AssetSyncService，不另造版本或余额缓存。
+
+SessionSnapshotService在同次角色锁内读取冒险点及最高已通关关卡上限，Snapshot.tavernPoints（字段11）随首包、提交推送和恢复统一下发。RoleController通过AccountApi.readSnapshotRole一次提交原AccountModel.role.tavernPoints，旧快照缺字段明确未同步，坏扩展拒绝整包；不创建酒馆Model/Manager，也不从库存或RewardGrantResult历史值猜点数。新快照不能同时含900401普通库存。IdleClaimBinding未来begin入口使用此状态及旧65秒门槛，已满时复用ConfirmView，取消不建journal；确认后再检查连接及冻结操作版本。实际玩家入口仍明确关闭，不恢复酒馆任务或扣点玩法。
 
 IdleRewardRules只保存不可变配置，IdleRewardInputService在当前角色锁事务中单次读取server_id/role_level/goddess_vip/clergy_level，current(roleId,nowSeconds)显式接收统一服务器时刻。Input冻结VIP、世界、神职、礼包及活动控制/适用结果，同时保存组合rulesVersion与普通idleRulesVersion。主线只读计时上限只使用VIP规则，不因活动未初始化阻断主页。基础rates不混入完整权益，输入准备不等于已接生产领取。
 
@@ -49,9 +61,9 @@ IdleActivityMaintenanceService是该控制的唯一写入口；IdleActivityMaint
 
 IdleRewardUtils是唯一完整纯装配入口，显式传入当前普通规则、冻结Input、奖励关卡/秒数、旧累计窗口/计数和随机源，不注入数据库/时钟或维护玩家状态。先校验完整性、投影版本及冻结状态的一致性，再按三活动→普通随机→神职消费同一随机源；使用冻结Drop，不重新查询活动。神职前拼接基础→普通分窗→三活动，最终才合并；不重复加入ordinary.rewards。Result保留计数前后及各来源，晚期失败无候选、previous不变，不能声称随机源回滚。本批已由MainChapterIdleClaimService在唯一角色锁事务中调用并冻结候选；重放分支不再调用纯装配。
 
-V24累计状态与类别计数、V25成功回执及领取/status强类型WS消息已按[事务说明](main-chapter-idle-settlement.md)接入。MainChapterIdleStateRepository唯一拥有累计，首次挑战创建、消费带旧操作版本条件；快照只读。MainChapterIdleClaimService先查回执再检查开关/版本和前置，冻结同次时间/输入，经完整候选预检→纯计算→真实发奖→累计消费→revision→AuditV1同事务保存；历史回执不依赖当前权益且不能覆盖最新Model。请求默认关闭，客户端仅接claimState只读投影，持久待确认/双向确认与按钮仍待后续接入。
+V24累计状态与类别计数、V25成功回执及领取/status强类型WS消息已按[事务说明](main-chapter-idle-settlement.md)接入。MainChapterIdleStateRepository唯一拥有累计，首次挑战创建、消费带旧操作版本条件；快照只读。MainChapterIdleClaimService先查回执再检查开关/版本和前置，冻结同次时间/输入，经完整候选预检→纯计算→真实发奖→累计消费→revision→AuditV1同事务保存；历史回执不依赖当前权益且不能覆盖最新Model。IdleClaimJournal以原生IDB原子保存/条件清理，IdleClaimBinding按应用身份激活并校验receipt归属；MainChapterIdleClaimController仅恢复命令、提交原MainChapterModel.idleClaim摘要，待回执与统一状态双确认才清理。缺通知通过既有重新鉴权首包恢复，不查库存；鉴权首包直接recover，普通推送仅observe，不让本地确认抢占鉴权恢复。日常新请求开关和玩家按钮仍关闭；基础见[恢复记录](validation/idle-claim-client-recovery-review-20261114.json)，真实WS/同库只读重启范围见[11-16联调](validation/idle-claim-live-recovery-review-20261116.json)。
 
-本批通用AssetSync已处理自定义事务资源的suspend/resume，REQUIRES_NEW与外层分别去重，afterCompletion按集合身份解除；提交后通知及日志异常不改变已提交结果。RoleRepository.creditCurrency在真实角色行锁内分别校验两币种精确加法后一次更新，继续使用相同同步出口。独立事务/期限回收及钱包回归见[前置证据](validation/idle-settlement-prerequisites-review-20261113.json)，不表示新领取协议/回执已实现。
+通用AssetSync已处理自定义事务资源的suspend/resume，REQUIRES_NEW与外层分别去重，afterCompletion按集合身份解除；提交后通知及日志异常不改变已提交结果。RoleRepository.creditCurrency在真实角色行锁内分别校验两币种精确加法后一次更新，继续使用相同同步出口。独立事务/期限回收及钱包回归见[前置证据](validation/idle-settlement-prerequisites-review-20261113.json)；该前置批次不作为后续新领取协议、回执与客户端恢复的验证证据，后续实现及边界见上一段。
 
 ## 最小精灵实例与统一背包
 
@@ -139,6 +151,10 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 | ModalLayer | UIManager内部的一份动态共享输入层，按当前最上方模态窗口配置绘制蒙版或透明拦截 | 不挂业务Prefab；关闭或隐藏窗口后向下寻找仍显示的模态窗口，最后一窗关闭后脱离场景复用 |
 
 弹窗只在页面注册的ViewSpec设置modal，不再在各Prefab添加蒙版或ModalLayer绑定。省略modal表示不拦截外部；`{mask:false,closeOnOutside:true}`使用透明拦截；`{mask:true,closeOnOutside:true}`显示共享蒙版并点击空白关闭。closeOnOutside可独立设为false，只阻挡外部点击。实际面板背景保留BlockInputEvents，不能给只承载坐标的大节点盲加阻挡。叠窗始终共用一份节点，颜色不叠加。
+
+2026-11-16补齐弹窗归属：详情这类随父页关闭的单实例Popup使用`UIManager.openChild(owner, ctor, args)`。父页结束显示期时，只取消自己仍拥有的在途意图或真实子窗；同id后来由其他父页或普通`open`接管后，旧父页关闭不能误关它。父页仍打开但切分类、切详情类型时，可调用`closeChildren(owner)`清理本页仍持有的子窗。框架在同id共享准备中应用末次参数，调用方禁止再用`open(...).then(view => view.runOpen(args))`重复开页或覆盖后来选择。
+
+关闭登记复用`BaseView.onViewClose`和既有EventScope：子窗关闭或转移归属时提前解除父页登记，父页关闭时清理只执行一次。已经关闭的父页发起迟到打开会在接管前被拒绝，不能抢走其他页面的窗口；旧加载及finally也不能撤销后来意图。这些状态只处理界面生命周期，不保存账号、资产或联网恢复。战报统计继续独立`open`，不随结算倒计时关闭；BattleDetailLayer将关闭按钮及视口静态绑定放在`onBind`，重复展示只换冻结参数。实现与检查范围见[叠窗生命周期记录](validation/overlay-lifecycle-review-20261116.json)，本机长断线及多重连结果以该记录为准，不由源码检查提前签收。
 
 物品详情、资料、选服、技能、战报、产物说明及原有布阵/结算均使用共享层；关闭仍走各自既有生命周期，布阵空白关闭取消未保存草稿，结算释放和返回回调保持。GM与技能台为`{mask:true,closeOnOutside:false}`，由各自按钮关闭，GM另支持F9开关。8cb60507基线的专项、类型与本机限定预览见[共享层证据](validation/shared-modal-widget-20261111.json)，不作为本批页面注册和列表事件改造的新验收。[旧模态证据](validation/modal-layer-20261111.json)属于被取代的逐窗蒙版实现；未实测窗口不沿用旧画面签收。
 

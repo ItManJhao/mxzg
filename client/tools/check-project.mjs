@@ -1,4 +1,6 @@
-/** 本机统一检查入口：执行配置、资源、功能边界和文档检查；不启动 Creator、不连接玩家服务器。 */
+/** 本机统一检查入口：执行配置、资源、功能边界和文档检查；不启动 Creator、不连接玩家服务器。
+ * 全套与单项报告分别保存，后续单项复查不会覆盖整轮汇总；日志用于定位当前对应检查的结果。
+ */
 import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -24,11 +26,25 @@ const suites = [
   ["config-generated", "python", "tools/generate_config.py"],
   ["client-config-scope", "python", "tools/test_client_config_scope.py"],
   ["prefab-review", "python", "tools/audit_prefabs.py"],
+  ["prefab-fingerprints", "python", "tools/test_prefab_audit.py"],
   ["event-target", "ts", "client/tools/event-target-check.ts"],
   ["game-protocol", "ts", "client/tools/game-protocol-check.ts"],
   ["main-chapter-idle-protocol", "ts", "client/tools/main-chapter-idle-protocol-check.ts"],
+  ["idle-claim-recovery", "ts", "client/tools/main-chapter-idle-recovery-check.ts"],
+  ["idle-claim-binding", "ts", "client/tools/idle-claim-binding-check.ts"],
+  ["idle-claim-intent", "ts", "client/tools/idle-claim-intent-check.ts"],
+  ["tavern-state", "ts", "client/tools/tavern-state-check.ts"],
   ["game-protocol-generated", "node", "tools/generate_game_protocol.cjs"],
   ["main-chapter", "ts", "client/tools/main-chapter-check.ts"],
+  ["main-chapter-settlement", "ts", "client/tools/main-chapter-settlement-check.ts"],
+  ["main-chapter-entry-recovery", "ts", "client/tools/main-chapter-entry-recovery-check.ts"],
+  ["idle-chest", "ts", "client/tools/idle-chest-check.ts"],
+  ["idle-chest-presentation", "ts", "client/tools/idle-chest-presentation-check.ts"],
+  ["reward-protocol", "ts", "client/tools/reward-protocol-check.ts"],
+  ["reward-controller", "ts", "client/tools/reward-controller-check.ts"],
+  ["reward-binding", "ts", "client/tools/reward-binding-check.ts"],
+  ["reward-view", "ts", "client/tools/reward-view-check.ts"],
+  ["confirm-view", "ts", "client/tools/confirm-view-check.ts"],
   ["battle-presentation", "ts", "client/tools/battle-presentation-audit.ts"],
   ["battle-layout", "python", "tools/check_battle_prefab_layout.py"],
   ["battle-layout-rules", "python", "tools/test_battle_prefab_layout.py"],
@@ -40,6 +56,9 @@ const suites = [
   ["hero-level", "paused", null],
   ["formation", "paused", null],
   ["formation-state", "ts", "client/tools/formation-state-check.ts"],
+  ["formation-recovery", "ts", "client/tools/formation-recovery-check.ts"],
+  ["page-lifecycle-recovery", "ts", "client/tools/page-lifecycle-recovery-check.ts"],
+  ["overlay-lifecycle", "ts", "client/tools/overlay-lifecycle-check.ts"],
   ["formation-view", "ts", "client/tools/formation-view-check.ts"],
   ["remake-playable", "paused", null],
   ["hero-growth-generated", "python", "tools/export_hero_growth.py"],
@@ -133,6 +152,8 @@ for (const [id, kind, source] of selected) {
   if (!result.passed) console.error(result.output.trim().split(/\r?\n/).slice(0, 7).join("\n"));
   results.push({ id, passed: result.passed, elapsedMs: result.elapsedMs, log: `client/temp/project-checks/${id}.log` });
 }
-await writeFile(resolve(output, "results.json"), JSON.stringify(results, null, 2) + "\n");
+// 全套汇总保留在results.json；单项检查有自己的报告，避免文档复查覆盖业务检查结果。
+const reportFile = args.length ? `results.${args[1]}.json` : "results.json";
+await writeFile(resolve(output, reportFile), JSON.stringify(results, null, 2) + "\n");
 console.log(`${results.filter(r => r.passed).length}/${results.filter(r=>!r.paused).length} active suites passed. Logs: client/temp/project-checks/`);
 process.exitCode = results.every(r => r.paused || r.passed) ? 0 : 1;

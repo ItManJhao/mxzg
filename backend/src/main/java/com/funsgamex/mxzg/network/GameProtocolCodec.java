@@ -22,7 +22,8 @@ public final class GameProtocolCodec {
         "authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers",
         "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
         "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
-        "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus");
+        "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
+        "rewardNotice");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -81,6 +82,7 @@ public final class GameProtocolCodec {
         }
         if (kind.equals("event") && name.equals("state.changed")) return "snapshot";
         if (kind.equals("event") && name.equals("session.kicked")) return "kicked";
+        if (kind.equals("event") && name.equals("reward.granted")) return "rewardNotice";
         if (kind.equals("response")) return switch (name) {
             case "session.login", "session.authenticate" -> "accepted"; case "servers.list" -> "servers";
             case "chapter.idle.claim" -> "chapterIdleClaimReceipt";

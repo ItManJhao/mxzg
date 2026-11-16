@@ -1,4 +1,4 @@
-/** 通用列表回归：验证布局、滚动边界、当前条目渲染/选择和编辑器隔离；当前列表尚未虚拟化。 */
+/** 通用列表回归：验证虚拟池、静态布局、短行居中、滚动边界、当前选择和编辑器隔离。 */
 import { strict as assert } from "node:assert";
 import { readFileSync, writeFileSync } from "node:fs";
 import { Button, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UITransform, Vec2 } from "cc";
@@ -236,6 +236,52 @@ function checkListEvents(): void {
     assert.doesNotThrow(() => (destroyed as any).onDestroy(), "引擎先销毁子节点时仍能清理列表");
 }
 
+/** 短行只按全量逻辑数量居中，虚拟/静态一致，满行和多行末尾保持原左对齐。 */
+function checkShortLineCentering(): void {
+    for (const virtual of [false, true]) {
+        const { list, scroll } = fixture(virtual);
+        list.columns = 4;
+        assert.equal(list.centerShortLine, false, "新参数默认不改变既有列表");
+        list.setData(data(2), (cell, item) => { cell.name = item; });
+        assert.equal(list.node.children[0].position.x, 32);
+        list.centerShortLine = true;
+        list.updateLayout(true);
+        assert.equal(list.node.children[0].position.x, 95);
+        assert.equal(list.node.children[1].position.x, 143);
+        list.node.parent!.getComponent(UITransform)!.setContentSize(320, 120);
+        assert.equal(list.node.children[0].position.x, 135, "视口变化后在两侧边距内重新居中");
+        list.node.parent!.getComponent(UITransform)!.setContentSize(240, 120);
+        list.setData(data(1));
+        assert.equal(list.node.children[0].position.x, 119, "单格居中，左右不同边距仍保留");
+        list.setData(data(4));
+        assert.equal(list.node.children[0].position.x, 32, "满行不改变原布局");
+        list.setData(data(5), (cell, item) => { cell.name = item; });
+        assert.equal(list.node.children.find(cell => cell.name === "Cell 4")!.position.x, 32,
+            "只剩一个格子的末行也不单独居中");
+        list.setData(data(2));
+        list.centerShortLine = false;
+        list.updateLayout(true);
+        assert.equal(list.node.children[0].position.x, 32, "关闭参数立即恢复原生留白");
+        list.centerShortLine = true;
+        list.gridAxis = SuperAxis.Horizontal;
+        list.rows = 3;
+        list.setData(data(2));
+        assert.equal(list.node.children[0].position.y, -39);
+        assert.equal(list.node.children[1].position.y, -75, "横滚短列复用转置后的上下边距规则");
+        if (virtual) {
+            list.gridAxis = SuperAxis.Vertical;
+            list.setData(data(1001), (cell, item) => { cell.name = item; });
+            scroll.restorePosition(scroll.getMaxScrollOffset());
+            const last = list.node.children.find(cell => cell.active && cell.name === "Cell 1000");
+            assert(last);
+            assert.equal(last.position.x, 32, "虚拟池末端数量少，仍必须使用全量1001条计算");
+            assert(list.pooledCount < 50, "短行参数不扩大虚拟节点池");
+        }
+        list.clear();
+        assert.equal(list.pooledCount, 0);
+    }
+}
+
 /** 使用完整物品格绑定核对复用、迟到图片和销毁边界，保留原有异步行为断言。 */
 async function checkCellReuse(): Promise<void> {
     const root = node("BagItemView", 96, 96);
@@ -285,6 +331,14 @@ function checkEditorPreview(): void {
         assert.equal(list.node.children.length,6);
         assert(list.node.children.every(cell=>cell.name.startsWith("__SuperContentPreview__")&&(cell.hideFlags&24)===24));
         assert.equal(list.length,0,"editor samples are not runtime data");
+        list.columns = 4;
+        list.previewCount = 2;
+        list.centerShortLine = true;
+        (list as any).update();
+        assert.equal(list.node.children[0].position.x, 95, "编辑器按样板数量居中，不使用运行数据量0");
+        list.centerShortLine = false;
+        (list as any).update();
+        assert.equal(list.node.children[0].position.x, 32, "编辑器切换参数后恢复原留白");
         list.previewCount=0;(list as any).update();assert.equal(list.node.children.length,0);
         setEditorContext(false,true);list.previewCount=6;(list as any).update();assert.equal(list.node.children.length,0,"preview samples cannot become player inventory");
         const source=JSON.parse(readFileSync("client/assets/bundles/module/bag/prefabs/BagView.prefab","utf8"));
@@ -314,15 +368,44 @@ function checkRewardLayout(): void {
     assert.equal(content._name,"content");
 }
 
+/** 通用奖励窗开启Inspector短行参数，1至3格居中、4格满行及5格末行保留原网格。 */
+function checkCommonRewardShortLine(): void {
+    const source = JSON.parse(readFileSync("client/assets/bundles/module/common/prefabs/RewardView.prefab", "utf8"));
+    const config = source.find((row: any) => row.columns !== undefined && row.layoutType === SuperLayout.Grid);
+    assert.equal(config.centerShortLine, true, "奖励窗通过Prefab参数启用，不让业务View手排格子");
+    const { list } = fixture(true);
+    list.node.parent!.getComponent(UITransform)!.setContentSize(600, 332);
+    list.overrideCellSize = config.overrideCellSize;
+    list.explicitCellSize.width = config.explicitCellSize.width;
+    list.explicitCellSize.height = config.explicitCellSize.height;
+    for (const field of ["columns", "rows", "layoutType", "gridAxis", "centerShortLine"] as const) {
+        list[field] = config[field];
+    }
+    for (const field of ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom", "spacingX", "spacingY"] as const) {
+        list[field] = config["_" + field];
+    }
+    for (const count of [1, 2, 3]) {
+        list.setData(data(count));
+        const first = list.node.children[0].position.x;
+        const last = list.node.children[count - 1].position.x;
+        assert.equal((first + last) / 2, 300, "不足4格的奖励整体居中");
+    }
+    list.setData(data(5), (cell, item) => { cell.name = item; });
+    assert.equal(list.node.children.find(cell => cell.name === "Cell 4")!.position.x, 114,
+        "第5个奖励从下一行原起点开始");
+}
+
 /** 依次核对列表几何、页面监听生命周期、异步图标和实际奖励模板。 */
 async function main(): Promise<void> {
     checkLayouts();
     checkVirtualLists();
     checkVirtualAnchorsAndResize();
     checkListEvents();
+    checkShortLineCentering();
     await checkCellReuse();
     checkEditorPreview();
     checkRewardLayout();
+    checkCommonRewardShortLine();
     writeFileSync("client/temp/virtual-list-unit-metrics.json", JSON.stringify({
         source: "通用列表隔离夹具，不是真机或发布包性能测量",
         samples: virtualSamples,

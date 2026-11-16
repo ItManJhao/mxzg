@@ -34,6 +34,28 @@ export class BaseView<TArgs = unknown> extends Component {
   /** Views register their own event/button disposers; closing never clears another owner's listeners. */
   protected ownListener(stop: () => void): void { this.eventScope.add(stop); }
 
+  /**
+   * 登记当前显示期的关闭清理；已关闭或未显示的页面立即清理，阻止迟到子窗挂载。
+   * 返回值只解除本项登记，不执行清理；子窗关闭或归属转移后可提前释放父页引用。
+   */
+  public onViewClose(cleanup: () => void): () => void {
+    if (!this.shown || this.disposed || this.unbound) {
+      cleanup();
+      return () => {};
+    }
+    let active = true;
+    const stop = this.eventScope.add(() => {
+      if (active) {
+        active = false;
+        cleanup();
+      }
+    });
+    return () => {
+      active = false;
+      stop();
+    };
+  }
+
   /** UIManager attaches the application-created controller before opening the View. */
   attachController(controller: ViewController): void {
     if (this.created || this.disposed || this.controller) throw new Error("Controller must be attached once before View creation");

@@ -3,6 +3,7 @@
  * 命令回执只描述历史操作，不反写当前角色、背包或挂机状态；应用换号时统一清空。
  */
 import { BaseModel } from "../../framework/BaseModel";
+import type { IdleClaimProgress } from "./data/MainChapterIdleClaimData";
 
 /** 服务端权威进度；空待领奖表示没有未领取战报。 */
 export interface MainChapterState {
@@ -41,7 +42,20 @@ export interface MainChapterReplay {
     readonly pending: readonly string[];
     readonly bytes: Uint8Array;
 }
-/** 已知格式的挂机消费能力投影；保留版本用于未来领取意图，当前仍没有发包或按钮入口。 */
+/** 同一次应用内的主线结算过程；不保存第二份资产或跨重启记录。 */
+export interface MainChapterSettlement {
+    /** 演出结束或原挑战已结算后固定的服务器战斗编号，恢复时不生成新编号。 */
+    readonly battleId: string;
+    /** pending待恢复，confirming正在确认，confirmed表示回执及统一快照均已确认。 */
+    readonly phase: "pending" | "confirming" | "confirmed";
+    /** 在异步确认前固定展示归属；battle走正常胜利页，reward只走通用恢复奖励窗。 */
+    readonly presentation: "battle" | "reward";
+    /** 恢复反馈已交给通用队列时为true，失败重试只重试显示；不代表窗口已打开。 */
+    readonly feedbackQueued: boolean;
+    /** 对应窗口已实际打开时为true；无正奖励时表示反馈已明确处理，不造空窗。 */
+    readonly presented: boolean;
+}
+/** 已知格式的挂机消费能力投影；恢复命令读取版本，当前仍没有玩家按钮入口。 */
 export interface MainChapterIdleClaimState {
     /** 当前已验证的协议格式，未来未知格式保持只读，不猜测其字段含义。 */
     readonly schemaVersion: 1;
@@ -84,10 +98,18 @@ export class MainChapterModel extends BaseModel {
     public requestId: string | null = null;
     /** 最近一次回执，不作为资产余额来源。 */
     public receipt: MainChapterReceipt | null = null;
+    /** 当前原战斗的双确认及展示进度；页面关闭保留，应用身份重置时清空。 */
+    public settlement: MainChapterSettlement | null = null;
+    /** 本身份首个已接纳鉴权首包中的待结算候选；null为尚无首包，consumed只在首次进入主线页时设置。 */
+    public entryRecovery: Readonly<{ battleId: string | null; consumed: boolean }> | null = null;
     /** 最近一次恢复的战报，换号与应用销毁时清空。 */
     public replay: MainChapterReplay | null = null;
     /** 可恢复操作结果，页面关闭不抹去错误。 */
     public message = "";
+    /** 原请求恢复的本地进度，不是第二份资产；换号清空内存，持久意图由应用保留。 */
+    public idleClaim: IdleClaimProgress = Object.freeze({
+        phase: "idle", pending: null, receipt: null, message: "",
+    });
 
     /** 应用切换身份清空业务状态；不承担网络连接代次判断。 */
     protected onReset(): void {
@@ -99,7 +121,10 @@ export class MainChapterModel extends BaseModel {
         this.busy = false;
         this.requestId = null;
         this.receipt = null;
+        this.settlement = null;
+        this.entryRecovery = null;
         this.replay = null;
         this.message = "";
+        this.idleClaim = Object.freeze({ phase: "idle", pending: null, receipt: null, message: "" });
     }
 }

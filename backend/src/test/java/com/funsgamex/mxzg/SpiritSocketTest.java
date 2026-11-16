@@ -202,6 +202,7 @@ class SpiritSocketTest {
         try (var peer = new Peer()) {
             var accepted = peer.authenticate(player.session().accessToken());
             assertTrue(identities(accepted.frame().path("body").path("initial").path("spiritInventory")).isEmpty());
+            before = accepted.frame().path("body").path("initial").path("revision").asLong();
             new TransactionTemplate(transactions).executeWithoutResult(status -> {
                 roles.lock(role);
                 for (var item : spirits.grant(role, 2000002, 2, identicalRandom())) {
@@ -246,18 +247,23 @@ class SpiritSocketTest {
         assertEquals(before, roles.revision(role));
     }
 
-    /** 领取和精灵写入均无业务消息入口，不能用新增快照字段反向推断接口开放。 */
+    /** 精灵写入无玩家入口，挂机新领取保持关闭，新增快照字段不能反向解释为玩法开放。 */
     @Test
     void snapshotExtensionDoesNotOpenNewPlayerCommands() throws Exception {
         var player = player();
         long before = roles.revision(player.role().id());
         try (var peer = new Peer()) {
             peer.authenticate(player.session().accessToken());
-            for (String name : List.of("chapter.idle.claim", "spirit.grant", "spirit.upgrade", "spirit.equip")) {
+            before = roles.revision(player.role().id());
+            for (String name : List.of("spirit.grant", "spirit.upgrade", "spirit.equip")) {
                 var response = peer.request(name, Map.of());
                 assertFalse(response.frame().path("ok").asBoolean());
                 assertEquals("UNKNOWN_MESSAGE", response.frame().path("error").path("code").asString());
             }
+            var closed = peer.request("chapter.idle.claim", Map.of("requestId", UUID.randomUUID().toString(),
+                    "expectedOperationVersion", 1));
+            assertFalse(closed.frame().path("ok").asBoolean());
+            assertEquals("IDLE_CLOSED", closed.frame().path("error").path("code").asString());
         }
         assertEquals(before, roles.revision(player.role().id()));
     }

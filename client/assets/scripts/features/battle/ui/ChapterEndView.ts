@@ -245,7 +245,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         cell.show(reward, false, BagItemCatalog.face(reward.itemId, reward.quantity));
     }
 
-    /** 选择本次回执中的当前奖励打开只读说明，展示本次数量，不读取或修改库存。 */
+    /** 选择本次奖励打开随本结算关闭的只读说明；归属转移及末次参数由UIManager处理，不手动重开。 */
     private onRewardSelect(reward: Readonly<BagItemData>): void {
         if (this.released) {
             return;
@@ -254,11 +254,8 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             source: "description",
             face: { ...BagItemCatalog.face(reward.itemId, reward.quantity), typeLine: "本次获得：" + reward.quantity },
         };
-        void UIManager.instance.open(BagInfoView, args).then(info => {
-            if (!this.released) {
-                info.runOpen(args);
-            }
-        }).catch(() => { /* 加载失败或取消由UIManager统一处理。 */ });
+        void UIManager.instance.openChild(this, BagInfoView, args)
+            .catch(() => { /* 加载失败或取消由UIManager统一处理。 */ });
     }
 
     /** 预载胜负音频；真实主线胜利使用旧14帧光效与双音源，失败不播放胜利光效。 */
@@ -422,13 +419,13 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.closeHint!.string = (this.args?.presentationOnly ? "失败样式验收 · " : "") + this.seconds + " 秒后关闭";
     }
 
-    /** 统一关闭释放动画、音频与定时器；兼容引擎先销毁子节点再调用父组件onDestroy，不访问失效节点。 */
+    /** 关闭本页仍持有的详情并释放动画、音频与定时器；不影响其他来源接管的详情或独立战报统计。 */
     public onClose(): void {
         if (this.released) {
             return;
         }
         this.released = true;
-        UIManager.instance.closeById(UIRegistry.viewSpecOf(BagInfoView)!.id);
+        UIManager.instance.closeChildren(this);
         this.unscheduleAllCallbacks();
         if (this.audio?.isValid) {
             this.audio.stop();
