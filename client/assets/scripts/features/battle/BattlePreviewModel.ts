@@ -1,6 +1,6 @@
 /** 只读试战的最近一次已校验结果，不保存或修改角色资产。 */
 export interface BattlePreviewResult {
-    /** 关卡及读取时的持久版本，用于展示来源，不作为通关凭据。 */
+    /** 同源关卡表全局idx；读取时的持久版本仅用于展示来源，不作为通关或开放凭据。 */
     readonly mission: number;
     readonly assetRevision: number;
     readonly lineupVersion: number;

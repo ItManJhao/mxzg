@@ -54,6 +54,15 @@ message RewardNotice {
   // SILENT / POPUP / TIPS；当前通用展示不接受客户端上报或自行猜测模式。
   required string mode = 5;
   repeated RewardNoticeItem items = 6;
+  // 可选关联原业务请求；展示身份仍为receipt_id，不建立另一份发奖身份。
+  optional string request_id = 7;
+  // 同笔发奖真实发生的角色升级；无升级不携带，不能用当前Snapshot反推历史等级。
+  optional RewardRoleUpgrade role_upgrade = 8;
+}
+// 原发奖经验链的起止等级；只用于通用升级表现，不写回角色资产或新建奖励身份。
+message RewardRoleUpgrade {
+  required uint32 before_level = 1;
+  required uint32 after_level = 2;
 }
 // credited为本次真正到账的正安全整数，含已合并的升级附赠，不是理论量或钱包余额。
 message RewardNoticeItem {
@@ -298,13 +307,35 @@ message BattlePreviewResult {
 }
 
 // 主线进度随登录及state.changed同步；缺失表示未同步，不默认未通关。
-message MainChapterState { required uint32 max_cleared = 1; optional string pending_battle_id = 2; required int64 asset_revision = 3; }
+message MainChapterState {
+  required uint32 max_cleared = 1;
+  optional string pending_battle_id = 2;
+  required int64 asset_revision = 3;
+  // 缺失表示里程碑已领进度未同步；显式空claimed_ids才表示真实未领取，不能按通关数推断。
+  optional ChapterMilestoneProgress milestone_progress = 4;
+  // 服务端可信配置的当前挑战上限，与完整关卡目录分开；缺失表示范围未同步，不默认开放。
+  optional uint32 challenge_limit = 5;
+}
+// 原额外奖励配置idx的已领集合；领取可乱序，不能改为最大已领ID或下一顺序号。
+message ChapterMilestoneProgress {
+  required uint32 schema_version = 1;
+  repeated uint32 claimed_ids = 2;
+}
 // request_id是持久幂等键；重试同一次挑战必须复用，客户端不提交胜负和奖励。
 message ChapterChallenge { required string request_id = 1; }
 message ChapterBattleId { required string battle_id = 1; }
 message ChapterReward { required uint32 item_id = 1; required int64 quantity = 2; }
 // 历史回执不覆盖统一资产快照；BATTLE需读取持久战报，SETTLED表示只补领奖。
-message ChapterReceipt { required string action = 1; required string battle_id = 2; required MainChapterState state = 3; repeated ChapterReward rewards = 4; optional ChapterExperience experience = 5; }
+message ChapterReceipt {
+  required string action = 1;
+  required string battle_id = 2;
+  required MainChapterState state = 3;
+  // 基础奖励的真实到账量；附赠独立保存在actual.bonuses，不重复混入此清单。
+  repeated ChapterReward rewards = 4;
+  optional ChapterExperience experience = 5;
+  // 新结算冻结的完整实际结果，供普通结算/冷恢复共用；旧回执缺失时不可重算或猜测附赠。
+  optional RewardGrantResult actual = 6;
+}
 // 发奖事务前后冻结的经验展示；历史回执缺失时不从当前余额反推，不写回角色Model。
 message ChapterExperience {
   required uint32 before_level = 1;

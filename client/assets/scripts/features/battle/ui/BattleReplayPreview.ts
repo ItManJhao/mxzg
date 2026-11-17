@@ -31,8 +31,8 @@ export interface SkillReplayFocus {
 }
 
 export class BattleReplayPreview {
-    /** 同步读取GameConfig的已安装配置，再装载美术资源并执行二进制战报；遇敌可借用行军骨骼，关场先归还骨骼再销毁战场。
-     * onIdleDeath仅向挂机页提供真实阵亡的世界位置用于资源飞行，不是奖励事件，正式挑战不调用。 */
+    /** 同步读取已安装配置，再装载美术资源并播放战报；只读结果也传原冻结名册供同一统计窗使用。
+     * 遇敌可借行军骨骼，关闭先归还再销毁；onIdleDeath只给原页阵亡位置，不是奖励事件。 */
     public static async open(
         parent: Node,
         bytes: Uint8Array,
@@ -49,6 +49,7 @@ export class BattleReplayPreview {
     ): Promise<() => void> {
         const steps = BattleReplayUtils.decode(bytes);
         const units = BattleReplayUtils.units(bytes);
+        const names = BattleReplayUtils.names(bytes);
         const config = GameConfig.instance.getFileByPath("config/buff");
         const rows = (config as { rows: BuffRow[] }).rows;
         const elementPaths = ["hero/ui/hero-icon_elem-1/spriteFrame", "hero/ui/hero-icon_elem-2/spriteFrame",
@@ -132,7 +133,7 @@ export class BattleReplayPreview {
             if (node) node.active = false;
         }
         UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, persistentChapter ? "主线挑战阵容" : lineupTitle ? "当前保存阵容·只读" : "独立测试阵容");
-        UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, lineupTitle || (units.some(unit => unit.templateId === 10105011) ? "魅惑之拥·随机目标验收" : units.every(unit => unit.templateId === 10505005) ? "三级流血专项" : units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关"));
+        UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, names.defender || lineupTitle || (units.some(unit => unit.templateId === 10105011) ? "魅惑之拥·随机目标验收" : units.every(unit => unit.templateId === 10505005) ? "三级流血专项" : units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关"));
         const actors = new Map<number, SpineActor>();
         // 借用的我方骨骼在所有退出路径先归还，不能随临时战场销毁。
         const returnActors: (() => void)[] = [];
@@ -182,6 +183,8 @@ export class BattleReplayPreview {
         let player: BattleReplayPlayer | null = null;
         /** 窗口关闭与节点销毁共用一次清理，避免重复访问已销毁组件。 */
         let stopped = false;
+        /** 本场首个播放异常已经报告；并行帧序列取消后不再重复报告同一失败。 */
+        let failureReported = false;
         /** 停止动画等待、声音并恢复站位；不更改服务器数据。 */
         const stop = () => {
             if (stopped) return;
@@ -222,6 +225,18 @@ export class BattleReplayPreview {
             if (releasedMaterial?.isValid) releasedMaterial.destroy();
             if (audio.isValid) audio.stop();
             for (const finish of pending) finish();
+        };
+        /** 活跃战场的表现失败统一停止并记录一次有界原因/堆栈；关页或取消后的迟到失败不触碰节点。 */
+        const failPlayback = (error: unknown) => {
+            if (failureReported || closed || isCancelled() || !shell.root.isValid) {
+                return;
+            }
+            failureReported = true;
+            UiKitUtils.setText(shell.logLabel, "战报播放失败，请查看日志");
+            const detail = error instanceof Error ? error.stack || error.message : String(error);
+            GameLog.shared.classified("MODULE", "error", "BattleReplayPreview", "播放失败：" + detail.slice(0, 4096));
+            player?.stop();
+            stop();
         };
         /** 只读演示释放自己装配的结算入口；带结束回调的主线/遇敌只清播放器，不接管外层结果。 */
         const releaseSettlement = () => {
@@ -320,7 +335,8 @@ export class BattleReplayPreview {
                 const effect = await assets.loadPath("effects/legacy-frozen", "EffectAsset");
                 frozenMaterial = new Material();
                 frozenMaterial.initialize({ effectAsset: effect });
-                if (!units.every(unit => unit.templateId === 10205023)) {
+                if (!lineupTitle && !persistentChapter && !names.defender
+                    && !units.every(unit => unit.templateId === 10205023)) {
                     UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, "独立冰冻验收");
                 }
             }
@@ -505,6 +521,10 @@ export class BattleReplayPreview {
             player = new BattleReplayPlayer({
                 stop,
                 restore,
+                /**
+                 * 播放真实步骤或旧覆盖子动作；type8按战场比例往返，空动作仅等待配置延迟。
+                 * 独立帧及投射不延长角色动作，仍归本战场持有；关闭后丢弃迟到回调，活跃帧失败统一取消。
+                 */
                 play: async function play(step, targets = [step]) {
                     const actions = step.kind === "presentation" ? expanded.get(step.configId) : undefined;
                     if (actions) {
@@ -515,6 +535,19 @@ export class BattleReplayPreview {
                     const cancelled = () => closed || epoch !== effectEpoch;
                     if (cancelled()) return;
                     const effectRow = selected.get(step.configId);
+                    if (step.kind === "presentation" && effectRow?.type === 1) {
+                        // 旧覆盖已在上方展开；这里只完成其中的空动作，不能连带丢弃同组真实特效。
+                        BattleAttackUtils.plan(effectRow);
+                        const delay = BattleAttackUtils.delaySeconds(effectRow);
+                        if (delay > 0) {
+                            await wait(delay);
+                        }
+                        if (!cancelled()) {
+                            GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
+                                "effect.empty " + step.configId + " delay=" + delay);
+                        }
+                        return;
+                    }
                     if (effectRow && step.kind !== "buff.remove") {
                         await wait(BattleAttackUtils.delaySeconds(effectRow));
                         if (cancelled()) return;
@@ -552,20 +585,33 @@ export class BattleReplayPreview {
                             GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "sound " + sound + " playing=" + audio.playing);
                         }
                         const slot = slots.get(step.sourceId)!;
-                        const target = slots.get(step.targetId)!;
-                        // 使用世界坐标转回攻击者父节点，避免双方槽组偏移导致移错位置。
-                        const world = target.worldPosition.clone();
-                        world.x += units.find(unit => unit.unitId === step.targetId)!.faction === 1 ? 100 : -100;
-                        const point = slot.parent!.getComponent(UITransform)!.convertToNodeSpaceAR(world);
-                        if (plan.melee) {
+                        const moving = plan.melee || plan.moveOffset !== null;
+                        if (moving) {
+                            let world: Vec3;
+                            if (plan.moveOffset) {
+                                // 旧type8按整张战场比例定位，敌方镜像X；不能借某个命中目标的站位代替。
+                                const field = shell.root.getComponent(UITransform)!;
+                                const ratioX = units.find(unit => unit.unitId === step.sourceId)!.faction === 2
+                                    ? 1 - plan.moveOffset[0] : plan.moveOffset[0];
+                                world = field.convertToWorldSpaceAR(new Vec3(
+                                    field.width * (ratioX - field.anchorX),
+                                    field.height * (plan.moveOffset[1] - field.anchorY), 0));
+                            } else {
+                                world = slots.get(step.targetId)!.worldPosition.clone();
+                                world.x += units.find(unit => unit.unitId === step.targetId)!.faction === 1 ? 100 : -100;
+                            }
+                            // 转回施法者槽的父坐标，保留双方槽组和战场缩放，不手写屏幕坐标。
+                            const point = slot.parent!.getComponent(UITransform)!.convertToNodeSpaceAR(world);
                             tween(slot).to(plan.moveSeconds / playbackScale, { position: point }).start();
                             await wait(plan.moveSeconds);
                         }
                         if (cancelled()) return;
                         if (!plan.effectOnly && !actors.get(step.sourceId)!.gesture(plan.action)) throw new Error("缺少英雄动作：" + plan.action);
-                        // 施法只播一次，各目标特效同时在旧attack_time时点启动。
+                        // 施法只播一次。独立帧由本战场持有，按旧attack_time挂出并继续播放，不延长角色动作。
                         const targetEffects = (async () => {
-                            await wait(plan.attackSeconds);
+                            if (plan.attackSeconds > 0) {
+                                await wait(plan.attackSeconds);
+                            }
                             if (cancelled() || !plan.effect) return;
                             const definition = plan.effect;
                             await Promise.all((plan.onSource ? [step] : targets).map(async hit => {
@@ -620,10 +666,20 @@ export class BattleReplayPreview {
                                 if (node.isValid) node.destroy();
                             }));
                         })();
-                        await Promise.all([targetEffects,
-                            wait(plan.attackSeconds + plan.attackDelaySeconds + plan.actionSeconds + plan.beforeReturnSeconds)]);
+                        const actorSeconds = plan.attackSeconds + plan.attackDelaySeconds
+                            + plan.actionSeconds + plan.beforeReturnSeconds;
+                        // 旧type5投射与type3帧均独立持有，完成只等角色动作；type6/7/9挂出即完成。
+                        // 立即接住独立任务异常，角色完成后发生的帧失败仍停止整场，关场后不重复报告。
+                        void targetEffects.catch(error => {
+                            if (!cancelled()) {
+                                failPlayback(error);
+                            }
+                        });
+                        if (actorSeconds > 0) {
+                            await wait(actorSeconds);
+                        }
                         if (cancelled()) return;
-                        if (plan.melee) {
+                        if (moving) {
                             tween(slot).to(plan.moveSeconds / playbackScale, { position: origins.get(step.sourceId)! }).start();
                             await wait(plan.moveSeconds);
                         }
@@ -737,15 +793,14 @@ export class BattleReplayPreview {
                         if (onCompleted) {
                             await onCompleted(won);
                         } else {
-                            await UIManager.instance.open(ChapterEndView, { won, persistentChapter });
+                            await UIManager.instance.open(ChapterEndView, {
+                                won, persistentChapter, units, names,
+                            });
                         }
                         GameLog.shared.classified("MODULE", "info", "BattleReplayPreview",
                             "completed hp=" + JSON.stringify(last.hpByUnit) + " round=" + last.round);
                     }
-                }).catch(error => {
-                    if (!closed) UiKitUtils.setText(shell.logLabel, "战报播放失败，请查看日志");
-                    GameLog.shared.classified("MODULE", "error", "BattleReplayPreview", "播放失败：" + String(error));
-                });
+                }).catch(failPlayback);
             };
             shell.bindSkip(startPlayback);
             // 正常主线由已确认的出战操作启动；只读技能台保留手动开始和重播。

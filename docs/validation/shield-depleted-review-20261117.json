@@ -1,0 +1,265 @@
+{
+  "date": "2026-11-17",
+  "branch": "hao",
+  "baseCommit": "51c3434a2fe385e54437b00d8fab69c4e1d4bdc6",
+  "commitPushMerge": false,
+  "centralBuild": false,
+  "scope": "BPROTO-001：已有护盾耗尽及移除原因契约贯通；复用现有引擎、播放器、配置和冻结统计。BRULE-002数值仍待核实，当前前三关和领取关闭不变。",
+  "clientChecks": [
+    {
+      "id": "shield-depleted",
+      "passed": true,
+      "elapsedMs": 186,
+      "log": "client/temp/project-checks/shield-depleted.log"
+    },
+    {
+      "id": "main-chapter",
+      "passed": true,
+      "elapsedMs": 2297,
+      "log": "client/temp/project-checks/main-chapter.log"
+    },
+    {
+      "id": "startup",
+      "passed": true,
+      "elapsedMs": 250,
+      "log": "client/temp/project-checks/startup.log"
+    },
+    {
+      "id": "page-lifecycle-recovery",
+      "passed": true,
+      "elapsedMs": 563,
+      "log": "client/temp/project-checks/page-lifecycle-recovery.log"
+    },
+    {
+      "id": "overlay-lifecycle",
+      "passed": true,
+      "elapsedMs": 1585,
+      "log": "client/temp/project-checks/overlay-lifecycle.log"
+    },
+    {
+      "id": "config-package-loading",
+      "passed": true,
+      "elapsedMs": 4562,
+      "log": "client/temp/project-checks/config-package-loading.log"
+    }
+  ],
+  "typeCheck": {
+    "passed": true,
+    "command": "node C:/ProgramData/cocos/editors/Creator/3.8.8/resources/app.asar.unpacked/node_modules/typescript/lib/tsc.js -p client/tools/tsconfig.remake.json --noEmit"
+  },
+  "existingReplayChecks": [
+    {
+      "command": "node tools/check_battle_replay.cjs",
+      "passed": true,
+      "scope": "实际旧战报、技能并行、致死增益、取消、定位、播放及资源路径回归。"
+    },
+    {
+      "command": "node tools/check_lineup_battle.cjs",
+      "passed": true,
+      "scope": "既有混合阵容前三关PB→Controller→Model及播放器。"
+    }
+  ],
+  "backendTests": [
+    {
+      "name": "com.funsgamex.mxzg.HeroBattleShieldReplayTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.funsgamex.mxzg.HeroBattleBuffLifecycleTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.funsgamex.mxzg.HeroBattleOrdinaryRuntimeTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.funsgamex.mxzg.HeroBattleContractDamageTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.funsgamex.mxzg.HeroBattleStatisticsTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.funsgamex.mxzg.HeroBattleBleedTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "interop": [
+    {
+      "path": "backend/target/shield-depleted-survival.pb",
+      "bytes": 740,
+      "sha256": "631bb5628b47f264a5665a6460c695032cb5f199c313f79631bbbbcf133035d2",
+      "passed": true
+    },
+    {
+      "path": "backend/target/shield-depleted-death.pb",
+      "bytes": 414,
+      "sha256": "b8d3ddff37298d2f0040af4561798b8f20bd05b24380b989fd10a35bcabc8d22",
+      "passed": true
+    }
+  ],
+  "interopCommand": "node client/temp/project-checks/shield-depleted.cjs --java=backend/target/shield-depleted-survival.pb --java=backend/target/shield-depleted-death.pb",
+  "originalNumerics": {
+    "survival": {
+      "incoming": [
+        1000,
+        1000
+      ],
+      "absorbed": [
+        100,
+        100
+      ],
+      "actual": [
+        -1000,
+        -500
+      ],
+      "reported": [
+        -900,
+        -900
+      ],
+      "totalDamage": 1300,
+      "totalTakenDamage": 1500
+    },
+    "death": {
+      "incoming": 1000,
+      "absorbed": 100,
+      "actual": -400,
+      "reported": -900,
+      "totalDamage": 300,
+      "totalTakenDamage": 400
+    },
+    "depletedBuffValue": 100,
+    "statisticsFormulaChanged": false,
+    "serverCalculationChanged": false,
+    "protocolChangedThisBatch": false
+  },
+  "acceptedRemovalReasons": [
+    "expire",
+    "death",
+    "replace",
+    "dispel",
+    "trigger-limit",
+    "shield-depleted",
+    "break-ice",
+    "pure-heart",
+    "counter-crit"
+  ],
+  "strictness": [
+    "未知原因拒绝；实例/期限/安全整数及最终HP校验保持。",
+    "耗尽须有同phase同target的后续damage，不能跨技能；不以sourceId当攻击者配对。",
+    "移除步骤仍保留原线序和原HP快照，播放器仅安排显示依赖，不在客户端重算伤害。"
+  ],
+  "regressionCorrection": "首轮原致死增益回归发现死亡移除过早；已将death保留原全技能表现屏障，最终旧战报回归全部通过，未修改旧回归期望以掩盖差异。",
+  "preview": "docs/validation/shield-depleted-preview-20261117.json",
+  "files": [
+    {
+      "path": "client/assets/scripts/features/battle/BattleReplayPlayer.ts",
+      "bytes": 10101,
+      "sha256": "71af3feb2c01adcd9c8a9b190ab4c51b53523de64997f8f307b96445283bbf58"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/utils/BattleReplayUtils.ts",
+      "bytes": 23954,
+      "sha256": "6eff9fc426df15998fe2197ed193c2581b643ef6616ab25997d8312d3c51b9bf"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts",
+      "bytes": 50430,
+      "sha256": "ff0f12c834c3ac6483cb0163a551a548e57df3ebdce5849d7e89c14aaf751362"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/DevelopmentPreview.ts",
+      "bytes": 17839,
+      "sha256": "863b55b86a3f4ed0c5b8154b9897eda4f3a4e70e5d1caca76cf13acc4b07545b"
+    },
+    {
+      "path": "client/tools/shield-depleted-check.ts",
+      "bytes": 17444,
+      "sha256": "ff463c0660547aebb59fc4d1c6005ed05d33d134cb9ce86e500b421f7558b0e2"
+    },
+    {
+      "path": "client/tools/check-project.mjs",
+      "bytes": 10229,
+      "sha256": "c44b3c236c830b9d0f7194efabd567bbfe3dbccc7f792f48dbb2f15496de2abe"
+    },
+    {
+      "path": "tools/serve_battle_replay.cjs",
+      "bytes": 3513,
+      "sha256": "f001720d12bf4094c9d1d173c7d7924f886d87353b89c06a55e936652d6b598d"
+    },
+    {
+      "path": "backend/src/test/java/com/funsgamex/mxzg/HeroBattleShieldReplayTest.java",
+      "bytes": 15106,
+      "sha256": "07a4999c6ea8ceb47f1345e072a2f38b5bbeffacc8141c3f222cc029933259bd"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/hero/HeroBattleHealingExecutor.java",
+      "bytes": 69229,
+      "sha256": "b78378f0cc10852f981376467f4186246f08bd1dbc41b881518d36d86beba447"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/hero/HeroBattleReplayProtocolUtils.java",
+      "bytes": 4656,
+      "sha256": "3653d0e049253735a1035e55d70f1eb1ace5891c55598dc7200fdc1098d9c49c"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/utils/BattleStatisticsUtils.ts",
+      "bytes": 3663,
+      "sha256": "c7fd6796b56bbb70ec754e786a3dd6dd03e3822308cc961f286670c7af8bc25c"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/ChapterEndView.ts",
+      "bytes": 24968,
+      "sha256": "296ca3411f8cc8f853c3c104125f264af02b350da3816938a36a7c852db1ebdf"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/RemakeApp.ts",
+      "bytes": 31402,
+      "sha256": "7ddd8d885e1849d4db284984373c8305a292e2aad4dce0e0130f40c9e9af3da1"
+    },
+    {
+      "path": "backend/src/main/resources/application.yml",
+      "bytes": 582,
+      "sha256": "723f82c1ec323dc51379fd9a8ae247f52d5018fb0d821ed31786f6c3c37e9c1b"
+    },
+    {
+      "path": "protocol/game.proto",
+      "bytes": 20905,
+      "sha256": "3a4f2e9dd536d3cea6130bbd9b5fd912d8528d462c18fccc89c8bfede935db37"
+    }
+  ],
+  "remaining": [
+    "护盾旧扣血数值语义BRULE-002仍保留，不按常识改公式。",
+    "所有英雄、延迟护盾组合、全Buff美术、目标平台和发布包不属于本批通过范围。",
+    "下一批核对正式参战输入与技能支持边界；领取入口继续关闭。"
+  ],
+  "documentationCheck": {
+    "id": "docs",
+    "passed": true,
+    "elapsedMs": 954,
+    "log": "client/temp/project-checks/docs.log"
+  },
+  "diffCheck": {
+    "passed": true,
+    "command": "git -c core.safecrlf=false diff --check"
+  }
+}

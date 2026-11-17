@@ -1,0 +1,1584 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "scope": "第5关三怪的旧源码/配置/原plist独立核对；仅新增本批证据，不修改生产、数值或前批快照，不执行玩家战斗/领取。",
+  "sourceFiles": {
+    "actions": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/battle/actions.lua",
+      "sha256": "644e2429db1ab41d0d501dc81f2b45c4424fad426561ba5a1f97554c9b8e9be0"
+    },
+    "buff": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/buff.lua",
+      "sha256": "feee5e5dc8772c5d8bbf0a5a081c228709feae38a3f4c55074671c78dec92d06"
+    },
+    "buffart": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/buffart.lua",
+      "sha256": "a1fa56186ed87d87c6a689115b55492618bd27ae5eaf3ec38762de9c78fa388d"
+    },
+    "chapter": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/chapter.lua",
+      "sha256": "fe890693fc6ee1140054f6f94c7bd7f91b13ba10cfe84c21bed1ae084237db23"
+    },
+    "skills": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/heroskill.lua",
+      "sha256": "777378322fc0d167cc2f2ae7480d87f592a8930e151228ba3c2303890d1975b7"
+    },
+    "hero": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/herotype.lua",
+      "sha256": "77a44352539caa8c8803c4374f402ab7f24162bb0225c9b565a62dc5f02df494"
+    },
+    "upgrade": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/heroupgrade.lua",
+      "sha256": "3af6cbefec6a6ca6bc2d879837c9143d147b48573f2d9e7be050195a0fe7114b"
+    },
+    "star": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/herostar.lua",
+      "sha256": "17dc4cbc98d024cf61c0fd010fbab285a23b44173be70c28506bbc1f70535030"
+    },
+    "actionUtils": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/utils/BattleActionUtils.lua",
+      "sha256": "3cd6c14394cc53fe98099556ba5b3febc4e9bc80741b3a2580856fd2c041eea1"
+    },
+    "infoFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/BattleInfoFactory.lua",
+      "sha256": "eba97fe749e608cb5349a308869ae9c9639187ee8b112bf0a9cf96e3a827b2c5"
+    },
+    "skillController": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/controller/SkillController.lua",
+      "sha256": "4cf2f730fad6cc816fcf8e47cd74f7190fd442a5a93f0e9e02c83c2cf787b604"
+    },
+    "buffFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/BuffFactory.lua",
+      "sha256": "f87be2815ba7b5e2fc7b25202c9646ef9e7e7e6421e1c0ac028c4a46ccad1867"
+    },
+    "effectFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/EffectFactory.lua",
+      "sha256": "89a71fd246b15a01344ebf82eb4f2069fb52a1b8069d7687b195c3dfedd9f64b"
+    },
+    "audio": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/model/AudioManager.lua",
+      "sha256": "233241785c8ff135cfa88b84592afe380dcca1197e3b3918d10f4c7614f61f9b"
+    },
+    "buffArtCache": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/BuffArtSysCache.java",
+      "sha256": "d6c84e14f50145ff1ef568b5e1ce5621fd60a3da0b09c685dc5830b98b964fae"
+    },
+    "buffArtModel": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/entity/CBuffArt.java",
+      "sha256": "55ff5d47e8fc20475639d907154a4c712e573d0b816555d2ef82ecda70c89279"
+    },
+    "buffConfig": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/entity/CBuff.java",
+      "sha256": "c408d3650a8d76b99820d944e2dda8b167428c5661873d189f80af49cfa720a8"
+    },
+    "buffTypes": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/struct/BuffType.java",
+      "sha256": "f7a37154e8f0deba3608ee84ed85d4223927acc3970ad199b17c852901da11b5"
+    },
+    "heroSkillCache": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/HeroSkillSysCache.java",
+      "sha256": "fa52d6aacc20c694b5896ff1f77cec0a78453149e34eb48837ad46a6d739dd65"
+    },
+    "attackType": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/struct/AttackType.java",
+      "sha256": "eda89a8bc9316e30e2bd331562f8cfab380aff5c4ade49478d74994a175641b4"
+    },
+    "selectors": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/struct/SelectorType.java",
+      "sha256": "2eaa360303955da22c02ab8c9acfb2e961368db5dba66d33e4b3cd90ebcc9b5e"
+    },
+    "battleService": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/service/BattleService.java",
+      "sha256": "476b1cbc900fb2dd8cefd23a2aa8dd51ff4e5137be069e4b6f155b9ea8f8c3c5"
+    },
+    "handlerHolder": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/BuffHandlerHolder.java",
+      "sha256": "44703c8aaff0ac324120a66406c375f0e04cb4353b918d2777662ea44b674bb5"
+    },
+    "clientHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/function/ClientBuffHandler.java",
+      "sha256": "85bbb64ceb8167e7fcf3950fbd7502667d01377644758997b1bc7d1243c1db5e"
+    },
+    "abstractBuff": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/AbstractBuffHandler.java",
+      "sha256": "311736f767f56121db5e8f9146a02f588c4e2a4ee0eb02f43e9daae7e3307cc8"
+    },
+    "buffDo": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/BuffDo.java",
+      "sha256": "725ceb1d54ec08c000f92124b33a17eeda608c4335948dca2f6af1c7cc6f99c5"
+    },
+    "heroDo": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/HeroDo.java",
+      "sha256": "24983d2ab529f729d5fd5d94c41b8cf18e60e2898c88c4c288b850878114761b"
+    },
+    "controlHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/control/AbstractControlBuffHandler.java",
+      "sha256": "d31ef51cd2e460cb42a916bea26bc67f1037dc41af4eddcad00e2f9c4c4cbdfb"
+    },
+    "frozenHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/control/FrozenBuffHandler.java",
+      "sha256": "29c4ca8593dcfdb105b6ccf055ff0b13c3bf6c9e88239dfb585fbe701497bea4"
+    },
+    "dizzyHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/control/DizzyBuffHandler.java",
+      "sha256": "2e319009940baed06dbe8c7f8cb8c6da9da8947420c495c9aff1a3af27eb7048"
+    },
+    "damageHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/damage/AbstractDamageBuffHandler.java",
+      "sha256": "2176fd2efaee4f17d328d493362102fb038eb93ac045573aa9be0eb36f1abc3a"
+    },
+    "protocol": {
+      "path": "G:/work/FsGame/Demo/mj/program/mxzg-protofiles/protofiles/game/Battle.proto",
+      "sha256": "9a06f2b24a78c212148495af1a4c39c2590d4ce5f4a49cd9b6748909d94cc2e1"
+    }
+  },
+  "input": {
+    "stage": 5,
+    "mode": 1,
+    "chapter": 1,
+    "mission": 5,
+    "grade": 0,
+    "enemies": [
+      {
+        "configId": 25,
+        "position": 1,
+        "templateId": 10102002,
+        "level": 3,
+        "star": 2,
+        "skills": [
+          "101020020:0",
+          "101020021:1"
+        ],
+        "source": {
+          "source": "chapter",
+          "key": 25,
+          "lineStart": 243,
+          "lineEnd": 252,
+          "exists": true
+        }
+      },
+      {
+        "configId": 26,
+        "position": 2,
+        "templateId": 10202002,
+        "level": 3,
+        "star": 2,
+        "skills": [
+          "102020020:0",
+          "102020021:1"
+        ],
+        "source": {
+          "source": "chapter",
+          "key": 26,
+          "lineStart": 253,
+          "lineEnd": 262,
+          "exists": true
+        }
+      },
+      {
+        "configId": 27,
+        "position": 3,
+        "templateId": 10204005,
+        "level": 3,
+        "star": 4,
+        "skills": [
+          "102040050:0",
+          "102040051:1"
+        ],
+        "source": {
+          "source": "chapter",
+          "key": 27,
+          "lineStart": 263,
+          "lineEnd": 272,
+          "exists": true
+        }
+      }
+    ],
+    "unlock": "本级grade0仅skill1与普攻；不把模板未解锁的二/三槽被动作为本关已装配技能。",
+    "upgradeEvidence": {
+      "source": "upgrade",
+      "key": 0,
+      "lineStart": 3,
+      "lineEnd": 13,
+      "exists": true
+    },
+    "equipment": [],
+    "runes": []
+  },
+  "actionOverrides": [
+    {
+      "buffId": 2050100,
+      "override": {
+        "source": "actions",
+        "key": 2050100,
+        "lineStart": 4596,
+        "lineEnd": 4617,
+        "exists": true
+      },
+      "expansion": [
+        {
+          "type": 1,
+          "delayFrames": 0,
+          "aniBase": {},
+          "file": [],
+          "sound": []
+        },
+        {
+          "type": 3,
+          "delayFrames": 0,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 0.8,
+            "format": "skill-102040050/%d.png",
+            "duration": 0.04,
+            "scale_x": 1,
+            "scale_y": 1,
+            "anchor_y": 0.2
+          },
+          "file": [
+            "skill-102040050"
+          ],
+          "sound": [
+            "skill-102040050"
+          ]
+        }
+      ],
+      "type1Body": "本体不攻击；base为空则不移动、所有等待0、不自发声音/帧，立即completed。整个2050100覆盖还含第二项type3，不能据名称抹掉。"
+    },
+    {
+      "buffId": 2050300,
+      "override": {
+        "source": "actions",
+        "key": 2050300,
+        "exists": false
+      },
+      "fallback": {
+        "source": "buff",
+        "key": 2050300,
+        "lineStart": 23403,
+        "lineEnd": 23422,
+        "exists": true
+      },
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 0,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 0.8,
+            "format": "skill-102040050/%d.png",
+            "duration": 0.04,
+            "scale_x": 1,
+            "scale_y": 1,
+            "anchor_y": 0.2
+          },
+          "file": [
+            "skill-102040050"
+          ],
+          "sound": [
+            "skill-102040050"
+          ]
+        }
+      ],
+      "reason": "G_BATTLE_ACTIONS无2050300键，工厂使用原buff行type3；不因与2050100第二项同帧/同file而去重。"
+    },
+    {
+      "buffId": 2021101,
+      "override": {
+        "source": "actions",
+        "key": 2021101,
+        "lineStart": 4382,
+        "lineEnd": 4393,
+        "exists": true
+      },
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 0,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 1,
+            "format": "skill-102020021/%d.png",
+            "duration": 0.04,
+            "scale_x": 0.8,
+            "scale_y": 0.8,
+            "anchor_x": 0.3,
+            "anchor_y": 0.23,
+            "flipped": 1
+          },
+          "file": [
+            "skill-102020021"
+          ],
+          "sound": [
+            "skill-102020021"
+          ]
+        }
+      ]
+    },
+    {
+      "buffId": 2051101,
+      "override": {
+        "source": "actions",
+        "key": 2051101,
+        "lineStart": 4620,
+        "lineEnd": 4631,
+        "exists": true
+      },
+      "dimly": 1,
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 0,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 2,
+            "format": "skill-102040051/%d.png",
+            "duration": 0.1,
+            "scale_x": 1.4,
+            "scale_y": 1.4,
+            "anchor_y": 0.14,
+            "anchor_x": 0.5
+          },
+          "file": [
+            "skill-102040051"
+          ],
+          "sound": [
+            "skill-102040051"
+          ]
+        }
+      ]
+    },
+    {
+      "buffId": 1020100,
+      "override": {
+        "source": "actions",
+        "key": 1020100,
+        "lineStart": 99,
+        "lineEnd": 120,
+        "exists": true
+      },
+      "expansion": [
+        {
+          "type": 2,
+          "delayFrames": 0,
+          "aniBase": {
+            "move_time": 0.1,
+            "move_back": 1,
+            "attack_delay": 0
+          },
+          "file": [],
+          "sound": []
+        },
+        {
+          "type": 6,
+          "delayFrames": 25,
+          "aniBase": {
+            "format": "skill-101030030/%d.png",
+            "anchor_x": 0.3,
+            "anchor_y": 0.5,
+            "duration": 0.06,
+            "scale_x": 1.8,
+            "scale_y": 1.8
+          },
+          "file": [
+            "skill-101030030"
+          ],
+          "sound": [
+            "skill-101030030"
+          ]
+        }
+      ],
+      "reason": "玛蒙是本关真实敌人；原type2行没有此file，仅读原JSON会漏type6及独立音效。"
+    },
+    {
+      "buffId": 1021101,
+      "override": {
+        "source": "actions",
+        "key": 1021101,
+        "lineStart": 123,
+        "lineEnd": 134,
+        "exists": true
+      },
+      "dimly": 1,
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 0,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 1,
+            "format": "skill-101020021/%d.png",
+            "duration": 0.1,
+            "scale_x": 2,
+            "scale_y": 2,
+            "anchor_y": 0.4
+          },
+          "file": [
+            "skill-101020021"
+          ],
+          "sound": [
+            "skill-101020021"
+          ]
+        }
+      ],
+      "reason": "与现原buff同语义；不需要另造另一种主动动作。"
+    },
+    {
+      "buffId": 2020100,
+      "override": {
+        "source": "actions",
+        "key": 2020100,
+        "lineStart": 4368,
+        "lineEnd": 4379,
+        "exists": true
+      },
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 10,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 0.5,
+            "format": "skill-102040040/%d.png",
+            "duration": 0.05,
+            "scale_x": 4,
+            "scale_y": 4,
+            "anchor_y": 0.2,
+            "anchor_x": 0.4
+          },
+          "file": [
+            "skill-102040040"
+          ],
+          "sound": [
+            "skill-102040040"
+          ]
+        }
+      ],
+      "reason": "覆盖表是.05/4倍/.4,.2；原buff为.02/1倍/.5,.3，不能只因源文件存在就称还原。"
+    }
+  ],
+  "skillAndRuleChains": [
+    {
+      "templateId": 10102002,
+      "artId": 1020100,
+      "rawBuffList": [
+        1020100,
+        1020200
+      ],
+      "javaExecutionBuffOrder": [
+        1020100,
+        1020200
+      ],
+      "selectors": [
+        3,
+        4,
+        10
+      ],
+      "targetCount": 1,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 1020100,
+          "type": 2,
+          "value": "0|0|0|0",
+          "round": 0,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1020100,
+            "lineStart": 1383,
+            "lineEnd": 1402,
+            "exists": true
+          }
+        },
+        {
+          "id": 1020200,
+          "type": 100,
+          "value": "10000|0|0|0",
+          "round": 0,
+          "delayFrames": 30,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1020200,
+            "lineStart": 1403,
+            "lineEnd": 1422,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 1020100,
+        "lineStart": 238,
+        "lineEnd": 242,
+        "exists": true
+      }
+    },
+    {
+      "templateId": 10102002,
+      "artId": 1021101,
+      "rawBuffList": [
+        1021101,
+        1021201,
+        1021301
+      ],
+      "javaExecutionBuffOrder": [
+        1021101,
+        1021201,
+        1021301
+      ],
+      "selectors": [
+        3,
+        4,
+        7
+      ],
+      "targetCount": 6,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 1021101,
+          "type": 3,
+          "value": "0|0|0|0",
+          "round": 2,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1021101,
+            "lineStart": 1423,
+            "lineEnd": 1442,
+            "exists": true
+          }
+        },
+        {
+          "id": 1021201,
+          "type": 100,
+          "value": "6500|0|0|0",
+          "round": 2,
+          "delayFrames": 50,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1021201,
+            "lineStart": 1483,
+            "lineEnd": 1502,
+            "exists": true
+          }
+        },
+        {
+          "id": 1021301,
+          "type": 201,
+          "value": "0|0|0|0",
+          "round": 2,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 1,
+          "artList": [
+            1021201
+          ],
+          "buffIcon": 101020021,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1021301,
+            "lineStart": 1543,
+            "lineEnd": 1562,
+            "exists": true
+          }
+        },
+        {
+          "id": 1021401,
+          "type": 100,
+          "value": "1800|1|0|0",
+          "round": 0,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1021401,
+            "lineStart": 1603,
+            "lineEnd": 1622,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 1021101,
+        "lineStart": 243,
+        "lineEnd": 247,
+        "exists": true
+      }
+    },
+    {
+      "templateId": 10202002,
+      "artId": 2020100,
+      "rawBuffList": [
+        2020100,
+        2020200
+      ],
+      "javaExecutionBuffOrder": [
+        2020100,
+        2020200
+      ],
+      "selectors": [
+        3,
+        4,
+        10
+      ],
+      "targetCount": 1,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 2020100,
+          "type": 3,
+          "value": "0|0|0|0",
+          "round": 0,
+          "delayFrames": 10,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2020100,
+            "lineStart": 22343,
+            "lineEnd": 22362,
+            "exists": true
+          }
+        },
+        {
+          "id": 2020200,
+          "type": 100,
+          "value": "10000|0|0|0",
+          "round": 0,
+          "delayFrames": 25,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2020200,
+            "lineStart": 22363,
+            "lineEnd": 22382,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 2020100,
+        "lineStart": 3288,
+        "lineEnd": 3292,
+        "exists": true
+      }
+    },
+    {
+      "templateId": 10202002,
+      "artId": 2021101,
+      "rawBuffList": [
+        2021101,
+        2021201,
+        2021301
+      ],
+      "javaExecutionBuffOrder": [
+        2021101,
+        2021201,
+        2021301
+      ],
+      "selectors": [
+        3,
+        4,
+        10
+      ],
+      "targetCount": 1,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 2021101,
+          "type": 3,
+          "value": "0|0|0|0",
+          "round": 0,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2021101,
+            "lineStart": 22383,
+            "lineEnd": 22402,
+            "exists": true
+          }
+        },
+        {
+          "id": 2021201,
+          "type": 100,
+          "value": "9000|0|0|0",
+          "round": 0,
+          "delayFrames": 30,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2021201,
+            "lineStart": 22443,
+            "lineEnd": 22462,
+            "exists": true
+          }
+        },
+        {
+          "id": 2021301,
+          "type": 1005,
+          "value": "0|0|0|0",
+          "round": 2,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 1,
+          "artList": [],
+          "buffIcon": 102020021,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2021301,
+            "lineStart": 22503,
+            "lineEnd": 22522,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 2021101,
+        "lineStart": 3293,
+        "lineEnd": 3297,
+        "exists": true
+      }
+    },
+    {
+      "templateId": 10204005,
+      "artId": 2050100,
+      "rawBuffList": [
+        2050100,
+        2050200,
+        2050300
+      ],
+      "javaExecutionBuffOrder": [
+        2050100,
+        2050300,
+        2050200
+      ],
+      "selectors": [
+        3,
+        4,
+        10
+      ],
+      "targetCount": 1,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 2050100,
+          "type": 1,
+          "value": "0|0|0|0",
+          "round": 0,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2050100,
+            "lineStart": 23363,
+            "lineEnd": 23382,
+            "exists": true
+          }
+        },
+        {
+          "id": 2050200,
+          "type": 100,
+          "value": "10000|0|0|0",
+          "round": 0,
+          "delayFrames": 30,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2050200,
+            "lineStart": 23383,
+            "lineEnd": 23402,
+            "exists": true
+          }
+        },
+        {
+          "id": 2050300,
+          "type": 3,
+          "value": "0|0|0|0",
+          "round": 0,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2050300,
+            "lineStart": 23403,
+            "lineEnd": 23422,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 2050100,
+        "lineStart": 3468,
+        "lineEnd": 3472,
+        "exists": true
+      }
+    },
+    {
+      "templateId": 10204005,
+      "artId": 2051101,
+      "rawBuffList": [
+        2051101,
+        2051201,
+        2051301
+      ],
+      "javaExecutionBuffOrder": [
+        2051101,
+        2051201,
+        2051301
+      ],
+      "selectors": [
+        3,
+        4
+      ],
+      "targetCount": 6,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 2051101,
+          "type": 3,
+          "value": "0|0|0|0",
+          "round": 0,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2051101,
+            "lineStart": 23423,
+            "lineEnd": 23442,
+            "exists": true
+          }
+        },
+        {
+          "id": 2051201,
+          "type": 100,
+          "value": "5100|0|0|0",
+          "round": 0,
+          "delayFrames": 80,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2051201,
+            "lineStart": 23483,
+            "lineEnd": 23502,
+            "exists": true
+          }
+        },
+        {
+          "id": 2051301,
+          "type": 1004,
+          "value": "0|0|0|0",
+          "round": 2,
+          "delayFrames": 80,
+          "attachPercent": 1500,
+          "copyTarget": 1,
+          "artList": [],
+          "buffIcon": 102040051,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2051301,
+            "lineStart": 23543,
+            "lineEnd": 23562,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 2051101,
+        "lineStart": 3473,
+        "lineEnd": 3477,
+        "exists": true
+      }
+    }
+  ],
+  "emptyActionSemantics": {
+    "evidence": [
+      {
+        "source": "actionUtils",
+        "lineStart": 227,
+        "lineEnd": 255
+      },
+      {
+        "source": "actionUtils",
+        "lineStart": 100,
+        "lineEnd": 106
+      },
+      {
+        "source": "actionUtils",
+        "lineStart": 1062,
+        "lineEnd": 1115
+      }
+    ],
+    "exact2050100Body": {
+      "move": false,
+      "playAttack": false,
+      "file": [],
+      "sound": [],
+      "delayFrames": 0,
+      "allDefaultWaitSeconds": 0,
+      "completed": "由零时长Sequence到达compHandler；不阻塞其余效果，不代表整招立即完成。"
+    },
+    "generalType1Boundary": "type1只是playAttack=false；若其他配置带move_time等参数仍可能移动/等待，不能将所有type1强行当零时长。",
+    "damageIsSeparate": "2050200是type100，10000|0|0|0，delay30帧；伤害来自独立服务器事件，不由空动作、重复VFX或life10推算。"
+  },
+  "oldJavaOrdering": {
+    "finding": "实际旧Java稳定前置非逻辑表现Buff，并使用该排序执行；不是原buff_list直接执行。",
+    "evidence": [
+      {
+        "source": "buffArtCache",
+        "lineStart": 35,
+        "lineEnd": 40
+      },
+      {
+        "source": "buffArtModel",
+        "lineStart": 62,
+        "lineEnd": 67
+      },
+      {
+        "source": "battleService",
+        "lineStart": 513,
+        "lineEnd": 525
+      }
+    ],
+    "stage5WinterNormal": {
+      "declared": [
+        2050100,
+        2050200,
+        2050300
+      ],
+      "actual": [
+        2050100,
+        2050300,
+        2050200
+      ]
+    },
+    "priorStage4NoahClarification": {
+      "declared": [
+        3050200,
+        3050300
+      ],
+      "actual": [
+        3050300,
+        3050200
+      ],
+      "clarifies": "前批stage4证据normalBuffs字段是原表声明，不应解读为旧Java实际执行顺序；本条补充澄清，不改写前批历史文件。",
+      "source": {
+        "source": "buffart",
+        "key": 3050100,
+        "lineStart": 6363,
+        "lineEnd": 6367,
+        "exists": true
+      }
+    }
+  },
+  "doublePresentationConclusion": {
+    "sourceConclusion": "正常存活目标、未被打断且非后台模式时，旧源码会保留2050100覆盖中的type3和独立2050300的type3；工厂/播放器/音效管理均无同名去重。",
+    "wireConditions": [
+      {
+        "finding": "type1和type3都非逻辑；Holder直接选ClientBuffHandler，handle调用addBuff并设置协议三项required字段。",
+        "evidence": [
+          {
+            "source": "buffTypes",
+            "lineStart": 24,
+            "lineEnd": 31
+          },
+          {
+            "source": "handlerHolder",
+            "lineStart": 31,
+            "lineEnd": 36
+          },
+          {
+            "source": "clientHandler",
+            "lineStart": 20,
+            "lineEnd": 27
+          },
+          {
+            "source": "abstractBuff",
+            "lineStart": 38,
+            "lineEnd": 58
+          },
+          {
+            "source": "buffDo",
+            "lineStart": 158,
+            "lineEnd": 163
+          }
+        ]
+      },
+      {
+        "finding": "旧BuffInfo只有unit_id/target_unitId/buff_id为required，status/expired/hit不阻止纯表现初始化；各Buff非空结果各产生独立EffectInfo。",
+        "evidence": [
+          {
+            "source": "protocol",
+            "lineStart": 177,
+            "lineEnd": 194
+          },
+          {
+            "source": "battleService",
+            "lineStart": 518,
+            "lineEnd": 525
+          },
+          {
+            "source": "battleService",
+            "lineStart": 586,
+            "lineEnd": 612
+          }
+        ]
+      },
+      {
+        "finding": "两动作先于伤害执行，目标集合从相同选中存活敌复制；面板预处理只标属性Buff，不将这些表现行置passive。",
+        "evidence": [
+          {
+            "source": "heroDo",
+            "lineStart": 596,
+            "lineEnd": 600
+          },
+          {
+            "source": "heroSkillCache",
+            "lineStart": 72,
+            "lineEnd": 84
+          }
+        ]
+      }
+    ],
+    "clientConditions": [
+      {
+        "finding": "每条effect_info单独查G_BATTLE_ACTIONS；2050100逐项展开[1,3]，2050300无覆盖则用原type3。不存在以art替代全部effect的过滤。",
+        "evidence": [
+          {
+            "source": "infoFactory",
+            "lineStart": 142,
+            "lineEnd": 160
+          },
+          {
+            "source": "infoFactory",
+            "lineStart": 166,
+            "lineEnd": 193
+          }
+        ]
+      },
+      {
+        "finding": "SkillController并行play每个effect，所有声音逐条调用；AudioManager只检查全局音效开关，无同名去重。",
+        "evidence": [
+          {
+            "source": "skillController",
+            "lineStart": 79,
+            "lineEnd": 85
+          },
+          {
+            "source": "skillController",
+            "lineStart": 128,
+            "lineEnd": 175
+          },
+          {
+            "source": "actionUtils",
+            "lineStart": 165,
+            "lineEnd": 172
+          },
+          {
+            "source": "audio",
+            "lineStart": 94,
+            "lineEnd": 103
+          }
+        ]
+      }
+    ],
+    "multiplicity": {
+      "emptyType1Bodies": 1,
+      "sameWinterNormalType3Bodies": 2,
+      "damageEvents": 1,
+      "foregroundSameAudioPlayCalls": 2,
+      "audioName": "skill-102040050"
+    },
+    "qualification": "两次音效调用可由源码确定；原生音频引擎最终混音音量、正式服是否另有补丁未实测，不能编造为必然两倍响。不可仅因计划名称空动作就删掉真实覆盖。"
+  },
+  "positionAndAnimation": {
+    "type2": "移至首实际目标近身点；type6在生成时取施法者当下坐标并挂独立effectLayer，不持续随返程移动。",
+    "type3": "原地播放默认actionAttack；各目标在attack_time后独立挂VFX。未写ani_base.action不自动换attack2。",
+    "type1": "不播放攻击骨骼；2050100本体无移动/等待/声音。",
+    "sources": [
+      {
+        "source": "actionUtils",
+        "lineStart": 261,
+        "lineEnd": 307
+      },
+      {
+        "source": "actionUtils",
+        "lineStart": 348,
+        "lineEnd": 383
+      },
+      {
+        "source": "actionUtils",
+        "lineStart": 1081,
+        "lineEnd": 1110
+      },
+      {
+        "source": "actionUtils",
+        "lineStart": 1249,
+        "lineEnd": 1277
+      }
+    ]
+  },
+  "controlsAndTick": {
+    "mammon": "1021301为201，round2，原目标/原来源，子art1021201→1021401=1800|1|0|0；到期轮先触发后移除，第二位1禁止反击，非安装即伤害。",
+    "iceElement": "2021301为1005眩晕，round2，基础概率10000；不是冰冻或沉默。",
+    "winter": "2051301为1004冰冻，round2，基础1500、delay80，首value0在FrozenBuffHandler转999次受击，不是永久不可破。",
+    "controlProbability": "基础attachPercent还乘专属抗性、控制强化和免控，不能将基础15%当无条件最终15%。",
+    "sourceReferences": [
+      {
+        "source": "battleService",
+        "lineStart": 140,
+        "lineEnd": 153
+      },
+      {
+        "source": "battleService",
+        "lineStart": 284,
+        "lineEnd": 296
+      },
+      {
+        "source": "battleService",
+        "lineStart": 328,
+        "lineEnd": 361
+      },
+      {
+        "source": "controlHandler",
+        "lineStart": 21,
+        "lineEnd": 38
+      },
+      {
+        "source": "frozenHandler",
+        "lineStart": 23,
+        "lineEnd": 39
+      },
+      {
+        "source": "buffConfig",
+        "lineStart": 43,
+        "lineEnd": 60
+      }
+    ]
+  },
+  "resourceFrames": {
+    "method": "直接plistlib读取每个原hd/skill/*.plist的frames，并从stem/0.png连续查到首个缺帧；未按图集尺寸、目录文件数或多套总和猜单套。",
+    "atlases": [
+      {
+        "stem": "skill-102020021",
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102020021.plist",
+        "plistSha256": "60244d1ee5c830dfaf7822fc477a16755f6fcf7dfd3b0845c2f70123bd5aea80",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102020021.pvr.ccz",
+        "textureSha256": "deac9654f89d4107f1d84bdaf3ac98e21a157be5779248ff98e6f42c58c5a2bd",
+        "totalFrameKeys": 14,
+        "continuousPercentDFromZero": 14,
+        "orderedKeys": [
+          "skill-102020021/0.png",
+          "skill-102020021/1.png",
+          "skill-102020021/2.png",
+          "skill-102020021/3.png",
+          "skill-102020021/4.png",
+          "skill-102020021/5.png",
+          "skill-102020021/6.png",
+          "skill-102020021/7.png",
+          "skill-102020021/8.png",
+          "skill-102020021/9.png",
+          "skill-102020021/10.png",
+          "skill-102020021/11.png",
+          "skill-102020021/12.png",
+          "skill-102020021/13.png"
+        ]
+      },
+      {
+        "stem": "skill-102040050",
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102040050.plist",
+        "plistSha256": "e491f63347caf1db85c368a536ccb199179fe11e96577f5a46dc51185e2c76c4",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102040050.pvr.ccz",
+        "textureSha256": "743de121f865c64f41fb7c533eb461f6bd733228078b411b0cca302022f2f444",
+        "totalFrameKeys": 11,
+        "continuousPercentDFromZero": 11,
+        "orderedKeys": [
+          "skill-102040050/0.png",
+          "skill-102040050/1.png",
+          "skill-102040050/2.png",
+          "skill-102040050/3.png",
+          "skill-102040050/4.png",
+          "skill-102040050/5.png",
+          "skill-102040050/6.png",
+          "skill-102040050/7.png",
+          "skill-102040050/8.png",
+          "skill-102040050/9.png",
+          "skill-102040050/10.png"
+        ]
+      },
+      {
+        "stem": "skill-102040051",
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102040051.plist",
+        "plistSha256": "95714ed65fb567f9b376e5c9a160866fcb6aa068f0af09dccf36ff76aeb96372",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102040051.pvr.ccz",
+        "textureSha256": "14e5d1d7430929e7310d0a43da624a7f69e2992dbd8153058814d74e54623c9d",
+        "totalFrameKeys": 10,
+        "continuousPercentDFromZero": 10,
+        "orderedKeys": [
+          "skill-102040051/0.png",
+          "skill-102040051/1.png",
+          "skill-102040051/2.png",
+          "skill-102040051/3.png",
+          "skill-102040051/4.png",
+          "skill-102040051/5.png",
+          "skill-102040051/6.png",
+          "skill-102040051/7.png",
+          "skill-102040051/8.png",
+          "skill-102040051/9.png"
+        ]
+      },
+      {
+        "stem": "skill-101030030",
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101030030.plist",
+        "plistSha256": "45002297b6ad8187be3e3b3569b38a99e7672e9c58a0d12cb4728b61265236d0",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101030030.pvr.ccz",
+        "textureSha256": "7503ea693998f27244b0b83863b8bbd95c86f17f6675b54d73db0c96200a6619",
+        "totalFrameKeys": 6,
+        "continuousPercentDFromZero": 6,
+        "orderedKeys": [
+          "skill-101030030/0.png",
+          "skill-101030030/1.png",
+          "skill-101030030/2.png",
+          "skill-101030030/3.png",
+          "skill-101030030/4.png",
+          "skill-101030030/5.png"
+        ]
+      },
+      {
+        "stem": "skill-102040040",
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102040040.plist",
+        "plistSha256": "a548647c532a4ff09d5702dc34343cf8e7bbf235e17e1c714a865ae358c15b30",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102040040.pvr.ccz",
+        "textureSha256": "9fb6ce818796296b2dd68451f27f05da87535f5f4a4765ca841f213d8b49af59",
+        "totalFrameKeys": 14,
+        "continuousPercentDFromZero": 14,
+        "orderedKeys": [
+          "skill-102040040/0.png",
+          "skill-102040040/1.png",
+          "skill-102040040/2.png",
+          "skill-102040040/3.png",
+          "skill-102040040/4.png",
+          "skill-102040040/5.png",
+          "skill-102040040/6.png",
+          "skill-102040040/7.png",
+          "skill-102040040/8.png",
+          "skill-102040040/9.png",
+          "skill-102040040/10.png",
+          "skill-102040040/11.png",
+          "skill-102040040/12.png",
+          "skill-102040040/13.png"
+        ]
+      },
+      {
+        "stem": "skill-101020021",
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101020021.plist",
+        "plistSha256": "87cdcdce64830bfb5bccacd54098b8164cd605462674d010b062eda23e8fc266",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101020021.pvr.ccz",
+        "textureSha256": "c5a72ef1a7b048b23b19d3835af48bde74cfaecf6234848f02573b3bbd0ae031",
+        "totalFrameKeys": 11,
+        "continuousPercentDFromZero": 11,
+        "orderedKeys": [
+          "skill-101020021/0.png",
+          "skill-101020021/1.png",
+          "skill-101020021/2.png",
+          "skill-101020021/3.png",
+          "skill-101020021/4.png",
+          "skill-101020021/5.png",
+          "skill-101020021/6.png",
+          "skill-101020021/7.png",
+          "skill-101020021/8.png",
+          "skill-101020021/9.png",
+          "skill-101020021/10.png"
+        ]
+      }
+    ],
+    "totalAcrossSixReferencedAtlases": 66,
+    "note": "六套总66含既有玛蒙主动11与水花14；不等于本批需要修改66帧，也不能把任何总数套到单一技能。"
+  },
+  "nominalCompletionAt1x": [
+    {
+      "buffId": 2050100,
+      "scope": "仅type1本体",
+      "actorSeconds": 0,
+      "vfxSeconds": 0
+    },
+    {
+      "buffId": 2050300,
+      "actorSeconds": 1.1,
+      "vfxSpawnSeconds": 0.3,
+      "vfxFrames": 11,
+      "interval": 0.04,
+      "vfxEndSeconds": 0.74
+    },
+    {
+      "buffId": 2021101,
+      "actorSeconds": 1.3,
+      "vfxSpawnSeconds": 0.3,
+      "vfxFrames": 14,
+      "interval": 0.04,
+      "vfxEndSeconds": 0.86
+    },
+    {
+      "buffId": 2051101,
+      "actorSeconds": 2.3,
+      "vfxSpawnSeconds": 0.3,
+      "vfxFrames": 10,
+      "interval": 0.1,
+      "vfxEndSeconds": 1.3
+    },
+    {
+      "buffId": 1020100,
+      "actorSeconds": 1.2,
+      "vfxSpawnSeconds": 0.4166666666666667,
+      "vfxFrames": 6,
+      "interval": 0.06,
+      "vfxEndSeconds": 0.7766666666666666
+    },
+    {
+      "buffId": 1021101,
+      "actorSeconds": 1.3,
+      "vfxSpawnSeconds": 0.3,
+      "vfxFrames": 11,
+      "interval": 0.1,
+      "vfxEndSeconds": 1.4
+    },
+    {
+      "buffId": 2020100,
+      "actorSeconds": 0.9666666666666667,
+      "vfxSpawnSeconds": 0.4666666666666667,
+      "vfxFrames": 14,
+      "interval": 0.05,
+      "vfxEndSeconds": 1.1666666666666667
+    }
+  ],
+  "completionBoundary": "旧type3不等目标帧自删，type6/7挂出即completed。故玛蒙主动有VFX比actor多0.1s、水花普攻多0.2s的真实名义边界；不裁帧或改伤害掩盖。播放器现状与本批修复结果由后续运行证据记录，不能用此旧证据冒称已验收。",
+  "guards": {
+    "challengeCapUnchangedByAudit": true,
+    "claimEntry": "继续关闭",
+    "mavenRunByThisAudit": false,
+    "productionChangedByThisAudit": false,
+    "historicSnapshotsChanged": false,
+    "nextDependencySnapshot": "20261117-stage5",
+    "commitOrPush": false
+  },
+  "completionBoundaryByType": {
+    "type3": {
+      "completed": "仅_attackingAction的compHandler；各目标VFX在attack_time时独立挂出，不把帧播完作为技能完成条件。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 282,
+          "lineEnd": 307
+        }
+      ]
+    },
+    "type6": {
+      "completed": "_playBuffOnHero先_appendBuffEffect，紧接CallFunc(compHandler)。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 348,
+          "lineEnd": 355
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 1189,
+          "lineEnd": 1198
+        }
+      ]
+    },
+    "type7": {
+      "completed": "每目标调用同_playBuffOnHero；Promise.all等每个挂出回调，不是等帧动画自删。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 361,
+          "lineEnd": 383
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 1189,
+          "lineEnd": 1198
+        }
+      ]
+    },
+    "type9": {
+      "completed": "_playBuffOnPosition创建/添加特效后直接compHandler；无帧寿命等待。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 427,
+          "lineEnd": 434
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 1209,
+          "lineEnd": 1216
+        }
+      ]
+    },
+    "type5": {
+      "completed": "每目标_rangeAttackingAction独立启动飞行，无完成回调；技能仅将ctx.completed交给_attackingAction。旧源码不等待flight结束再completed。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 326,
+          "lineEnd": 342
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 1124,
+          "lineEnd": 1173
+        }
+      ],
+      "scopeBoundary": "第5关没有新增type5；本批若保持既有flight屏障，应记为暂保现状，不能声称旧源码以flight结束为技能屏障。"
+    }
+  },
+  "currentBatchImplementationBoundary": {
+    "source": "G:/work/FsGame/Project/mxzg/client/assets/scripts/features/battle/ui/BattleReplayPreview.ts",
+    "sha256": "aacc1b713d353987ef7b22cef14c1ead932fc485969a7d35d66dcabe2501d6fa",
+    "observedCode": {
+      "type3AndIndependentFrames": {
+        "lineStart": 595,
+        "lineEnd": 669,
+        "finding": "角色等待与独立VFX帧寿命分开；type3按角色完成，type6/7/9挂出后完成，帧仍登记本战场effects并自行清理。"
+      },
+      "cancelOrFailure": {
+        "lineStart": 660,
+        "lineEnd": 665,
+        "finding": "脱离技能等待的帧任务仍捕获失败并交给failPlayback；不是吞掉异常或把它假报成功。"
+      },
+      "type5": {
+        "lineStart": 656,
+        "lineEnd": 658,
+        "finding": "继续等待targetEffects与角色完成，保留既有flight等待。",
+        "comparison": "旧type5实际只把技能completed交给角色动作，独立飞行无完成回调；此差异本批未处理，不伪称等价。"
+      }
+    },
+    "scope": "本节只证明本批源码边界已接线，不冒称实际Creator时序/异常画面验收；运行结果由root本机证据给出。"
+  },
+  "freshDependencySweep": {
+    "snapshot": "main-chapter-dependencies-20261117-stage5",
+    "method": "默认入口重新运行MainChapterDependencyAuditTest取得能力证据后扫描，不使用旧target结果冒充新规则；Node真实专项、严格--check --from-java及参数纯检查通过。",
+    "beforeSupported": [
+      1,
+      2,
+      3,
+      4,
+      14,
+      15
+    ],
+    "afterSupported": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      14,
+      15
+    ],
+    "newlyClosed": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "stage5Blockers": [],
+    "resourcesBeforeAfter": [
+      531,
+      566
+    ],
+    "unresolvedBeforeAfter": [
+      48,
+      41
+    ],
+    "unchangedGaps": {
+      "coordinateMismatchStages": 300,
+      "unreferencedEnemyRows": 1800,
+      "ordinaryIdleProjectionMaxStage": 20,
+      "idleStageNotProjectedCount": 830
+    },
+    "firstBlocked": {
+      "stage": 9,
+      "mode": 1,
+      "chapter": 1,
+      "mission": 9,
+      "blockers": [
+        {
+          "code": "ENEMY_RUNTIME_UNSUPPORTED",
+          "reason": "IllegalArgumentException: 技能表现动作尚未支持：1051101"
+        },
+        {
+          "code": "SKILL_RUNTIME_UNSUPPORTED",
+          "key": "101040051:1",
+          "reason": "IllegalArgumentException: 技能表现动作尚未支持：1051101"
+        },
+        {
+          "code": "PRESENTATION_UNSUPPORTED",
+          "key": "1051101",
+          "reason": "尚未支持该战斗动作类型",
+          "skill": "101040051:1"
+        }
+      ]
+    },
+    "historicalHashesPreserved": {
+      "main-chapter-dependencies-20261117.json": "324fcd4efb28027b6fb3a826217f5d698d8243565dad4ade7da3f8bdd593faaf",
+      "main-chapter-dependencies-20261117-stage4.json": "5f07d4723cf8bcb163e79b77b9e80c9b5b639aa4b0d50dd97938cb0ffa44b4ac"
+    },
+    "openingBoundary": "静态闭合不是开放或完整验收；默认challenge-limit仍3，领取仍关闭，本证据未修改任何开关。"
+  }
+}

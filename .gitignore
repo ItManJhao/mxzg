@@ -29,6 +29,9 @@ __pycache__/
 !/config/gameconfig/**
 !/config/client-maincity/
 !/config/client-maincity/**
+!/config/legacy-client/
+!/config/legacy-client/opencondition.lua
+!/config/legacy-client/opencondition.source.json
 /server/
 CONFIG_LINK.txt
 SERVER_LINK.txt

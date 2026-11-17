@@ -1,0 +1,448 @@
+{
+  "date": "2026-11-16",
+  "timezone": "Asia/Shanghai",
+  "branch": "hao",
+  "scope": "Creator本机预览，独立真实WS与自有H2夹具；前三关范围不变，里程碑和挂机玩家领取均未开放。",
+  "environment": {
+    "clientOrigin": "http://127.0.0.1:7456/",
+    "testBackendPort": 58758,
+    "testDatabase": "独立随机H2，仅测试角色",
+    "preparedHero": "独立测试英雄100级，不代表新账号自然获取或战斗平衡验收",
+    "creatorBuild": false,
+    "dailyBackendTouched": false
+  },
+  "normal": {
+    "initial": {
+      "entry": false,
+      "role": {
+        "diamonds": 0,
+        "gold": 0,
+        "id": "4bf34b62-64bf-4f76-bd86-f74927fb79bf"
+      },
+      "state": {
+        "assetRevision": 3,
+        "maxCleared": 0,
+        "milestoneProgress": {
+          "claimedIds": [],
+          "schemaVersion": 1
+        },
+        "pendingBattleId": null
+      }
+    },
+    "receipt": {
+      "action": "SETTLED",
+      "actual": {
+        "bonuses": [],
+        "experience": [
+          {
+            "accepted": 200,
+            "beforeExperience": 80,
+            "beforeLevel": 2,
+            "diamonds": 0,
+            "experience": 280,
+            "ignored": 0,
+            "level": 2,
+            "requested": 200
+          }
+        ],
+        "items": [
+          {
+            "credited": 100,
+            "ignored": 0,
+            "itemId": 900401,
+            "reason": "NONE",
+            "requested": 100
+          },
+          {
+            "credited": 4000,
+            "ignored": 0,
+            "itemId": 900001,
+            "reason": "NONE",
+            "requested": 4000
+          },
+          {
+            "credited": 151,
+            "ignored": 0,
+            "itemId": 900002,
+            "reason": "NONE",
+            "requested": 151
+          },
+          {
+            "credited": 200,
+            "ignored": 0,
+            "itemId": 900003,
+            "reason": "NONE",
+            "requested": 200
+          },
+          {
+            "credited": 500,
+            "ignored": 0,
+            "itemId": 900101,
+            "reason": "NONE",
+            "requested": 500
+          },
+          {
+            "credited": 2,
+            "ignored": 0,
+            "itemId": 900102,
+            "reason": "NONE",
+            "requested": 2
+          },
+          {
+            "credited": 1,
+            "ignored": 0,
+            "itemId": 1004001,
+            "reason": "NONE",
+            "requested": 1
+          }
+        ],
+        "roleId": "4bf34b62-64bf-4f76-bd86-f74927fb79bf"
+      },
+      "battleId": "16b9a16b-40cc-4eec-946d-6c7c6c1bcf1d",
+      "experience": {
+        "afterExp": 280,
+        "afterLevel": 2,
+        "afterThreshold": 360,
+        "beforeExp": 80,
+        "beforeLevel": 2,
+        "beforeThreshold": 360
+      },
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900002,
+          "quantity": 151
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ],
+      "state": {
+        "assetRevision": 7,
+        "maxCleared": 2,
+        "milestoneProgress": {
+          "claimedIds": [],
+          "schemaVersion": 1
+        },
+        "pendingBattleId": null
+      }
+    },
+    "role": {
+      "diamonds": 161,
+      "gold": 8000,
+      "level": 2
+    },
+    "state": {
+      "assetRevision": 7,
+      "maxCleared": 2,
+      "milestoneProgress": {
+        "claimedIds": [],
+        "schemaVersion": 1
+      },
+      "pendingBattleId": null
+    },
+    "statistics": {
+      "after": {
+        "diamonds": 161,
+        "gold": 8000
+      },
+      "before": {
+        "diamonds": 161,
+        "gold": 8000
+      },
+      "closedAt": 355306.5,
+      "displayReplay": true,
+      "elapsedMs": 4029.900000035763,
+      "openedAt": 351276.59999996424,
+      "resultClosed": true,
+      "statisticsCount": 1
+    },
+    "views": [
+      {
+        "nextTarget": {
+          "kind": "target",
+          "remaining": 14,
+          "rewardId": 100,
+          "targetChapter": 15,
+          "text": "通关<color=#ec0000>14</color>关领取<color=#ef6b00>烈焰骑士</color>"
+        },
+        "openedAt": 138834,
+        "persistent": true,
+        "ready": true,
+        "text": "通关<color=#ec0000>14</color>关领取<color=#ef6b00>烈焰骑士</color>",
+        "visible": true,
+        "won": true
+      },
+      {
+        "nextTarget": {
+          "kind": "target",
+          "remaining": 13,
+          "rewardId": 100,
+          "targetChapter": 15,
+          "text": "通关<color=#ec0000>13</color>关领取<color=#ef6b00>烈焰骑士</color>"
+        },
+        "openedAt": 197792.19999998808,
+        "persistent": true,
+        "ready": true,
+        "text": "通关<color=#ec0000>13</color>关领取<color=#ef6b00>烈焰骑士</color>",
+        "visible": true,
+        "won": true
+      }
+    ]
+  },
+  "screenshot": {
+    "path": "docs/images/chapter-milestone-victory-preview-20261116.jpg",
+    "bytes": 66356,
+    "sha256": "1f12dc687164d8492c7020d937b33cdb39bbb1676f9ba4a85040c45da71c56b9"
+  },
+  "statisticsVerification": "同一真实第2关回执/战报的只读显示重放。未重新挑战、未再发奖；点击原统计入口后，结果页约4.03秒自动关闭，统计组件仍保留。",
+  "coldBeforeReload": {
+    "battleId": "cec26b67-c734-4343-9923-ba2a3a1b51aa",
+    "role": {
+      "diamonds": 161,
+      "gold": 8000,
+      "level": 2
+    },
+    "state": {
+      "assetRevision": 8,
+      "maxCleared": 3,
+      "milestoneProgress": {
+        "claimedIds": [],
+        "schemaVersion": 1
+      },
+      "pendingBattleId": "cec26b67-c734-4343-9923-ba2a3a1b51aa"
+    }
+  },
+  "coldAfterReloadAndFirstMain": {
+    "before": {
+      "main": 0,
+      "role": {
+        "diamonds": 161,
+        "level": 2
+      },
+      "state": {
+        "assetRevision": 8,
+        "maxCleared": 3,
+        "milestoneProgress": {
+          "claimedIds": [],
+          "schemaVersion": 1
+        },
+        "pendingBattleId": "cec26b67-c734-4343-9923-ba2a3a1b51aa"
+      }
+    },
+    "endOpens": 0,
+    "entry": false,
+    "receipt": {
+      "action": "SETTLED",
+      "actual": {
+        "bonuses": [
+          {
+            "itemId": 900002,
+            "quantity": 10,
+            "source": "ROLE_LEVEL_UP"
+          }
+        ],
+        "experience": [
+          {
+            "accepted": 200,
+            "beforeExperience": 280,
+            "beforeLevel": 2,
+            "diamonds": 10,
+            "experience": 120,
+            "ignored": 0,
+            "level": 3,
+            "requested": 200
+          }
+        ],
+        "items": [
+          {
+            "credited": 100,
+            "ignored": 0,
+            "itemId": 900401,
+            "reason": "NONE",
+            "requested": 100
+          },
+          {
+            "credited": 4200,
+            "ignored": 0,
+            "itemId": 900001,
+            "reason": "NONE",
+            "requested": 4200
+          },
+          {
+            "credited": 200,
+            "ignored": 0,
+            "itemId": 900003,
+            "reason": "NONE",
+            "requested": 200
+          },
+          {
+            "credited": 700,
+            "ignored": 0,
+            "itemId": 900101,
+            "reason": "NONE",
+            "requested": 700
+          },
+          {
+            "credited": 1,
+            "ignored": 0,
+            "itemId": 20005000,
+            "reason": "NONE",
+            "requested": 1
+          },
+          {
+            "credited": 1,
+            "ignored": 0,
+            "itemId": 1003001,
+            "reason": "NONE",
+            "requested": 1
+          }
+        ],
+        "roleId": "4bf34b62-64bf-4f76-bd86-f74927fb79bf"
+      },
+      "battleId": "cec26b67-c734-4343-9923-ba2a3a1b51aa",
+      "experience": {
+        "afterExp": 120,
+        "afterLevel": 3,
+        "afterThreshold": 720,
+        "beforeExp": 280,
+        "beforeLevel": 2,
+        "beforeThreshold": 360
+      },
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4200
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 700
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1003001,
+          "quantity": 1
+        }
+      ],
+      "state": {
+        "assetRevision": 9,
+        "maxCleared": 3,
+        "milestoneProgress": {
+          "claimedIds": [],
+          "schemaVersion": 1
+        },
+        "pendingBattleId": null
+      }
+    },
+    "role": {
+      "diamonds": 171,
+      "gold": 12200,
+      "level": 3
+    },
+    "state": {
+      "assetRevision": 9,
+      "maxCleared": 3,
+      "milestoneProgress": {
+        "claimedIds": [],
+        "schemaVersion": 1
+      },
+      "pendingBattleId": null
+    },
+    "ui": {
+      "cached": 0,
+      "intents": 0,
+      "modalActive": 1,
+      "modalNodes": 1,
+      "opening": 0,
+      "pages": 2,
+      "pendingResident": 0,
+      "prepared": 0,
+      "residents": 1
+    },
+    "upgrade": true
+  },
+  "final": {
+    "entry": false,
+    "mainClosed": true,
+    "reward": {
+      "acceptedCount": 1,
+      "activeReceiptId": null,
+      "assetRevision": 9,
+      "message": "",
+      "pending": [],
+      "phase": "idle",
+      "ready": true
+    },
+    "role": {
+      "diamonds": 171,
+      "gold": 12200,
+      "level": 3
+    },
+    "state": {
+      "assetRevision": 9,
+      "maxCleared": 3,
+      "milestoneProgress": {
+        "claimedIds": [],
+        "schemaVersion": 1
+      },
+      "pendingBattleId": null
+    },
+    "ui": {
+      "cached": 0,
+      "intents": 0,
+      "modalActive": 0,
+      "modalNodes": 1,
+      "opening": 0,
+      "pages": 1,
+      "pendingResident": 0,
+      "prepared": 0,
+      "residents": 0
+    }
+  },
+  "consoleWarnErrors": [],
+  "cleanup": {
+    "browserReviewTabClosed": true,
+    "ownedServerPid": 16056,
+    "ownedServerStartedUtc": "2026-11-16T13:08:11.4935593Z",
+    "ownedServerStopped": true,
+    "dailyServerRestarted": false
+  },
+  "limitations": [
+    "实际达到15关待领、非连续已领和全部已领只由专项数据验证，当前真实挑战限制前三关。",
+    "未执行3008领取或任何里程碑发奖。",
+    "未验证MySQL、发布包、真机及全屏幕尺寸。",
+    "自然第1关只保存了参数/可见性观察，截图为自然第2关实际显示。"
+  ],
+  "commitPushMerge": false
+}

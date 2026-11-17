@@ -1,0 +1,1072 @@
+{
+  "date": "2026-11-16",
+  "timezone": "Asia/Shanghai",
+  "kind": "Creator本机预览＋真实随机内存H2/WS",
+  "host": {
+    "pid": 10468,
+    "port": 53896,
+    "run": "800e323633a24db3af6b4537b12396b9",
+    "stopped": true,
+    "dailyDatabaseTouched": false,
+    "fixture": "SocketPreviewServer --main-chapter-fixture；100级英雄仅测试准备，角色经验按默认0起步"
+  },
+  "normal": {
+    "opens": [
+      {
+        "id": "chapter-end",
+        "uuid": "Node.2565",
+        "args": {
+          "won": true,
+          "persistentChapter": true,
+          "rewards": [
+            {
+              "itemId": 900401,
+              "quantity": 100
+            },
+            {
+              "itemId": 900001,
+              "quantity": 4000
+            },
+            {
+              "itemId": 900003,
+              "quantity": 200
+            },
+            {
+              "itemId": 900101,
+              "quantity": 500
+            },
+            {
+              "itemId": 900102,
+              "quantity": 2
+            },
+            {
+              "itemId": 20204004,
+              "quantity": 30
+            },
+            {
+              "itemId": 1004001,
+              "quantity": 1
+            }
+          ],
+          "notice": "本次获得",
+          "roleAppearance": {
+            "headId": 0,
+            "borderId": 0
+          },
+          "units": [
+            {
+              "unitId": 2,
+              "faction": 1,
+              "templateId": 10101001,
+              "level": 100,
+              "position": 2,
+              "initialHp": 1816,
+              "maxHp": 1816,
+              "finalHp": 1816,
+              "totalDamage": 142,
+              "totalTakenDamage": 0,
+              "totalRecovery": 0,
+              "star": 1,
+              "portraitIconId": 20101001
+            },
+            {
+              "unitId": 10,
+              "faction": 2,
+              "templateId": 10101001,
+              "level": 1,
+              "position": 2,
+              "initialHp": 142,
+              "maxHp": 142,
+              "finalHp": 0,
+              "totalDamage": 0,
+              "totalTakenDamage": 142,
+              "totalRecovery": 0,
+              "star": 1,
+              "portraitIconId": 20101001
+            }
+          ],
+          "names": {
+            "attacker": "chapter_review",
+            "defender": "羽嘉森林1"
+          },
+          "experience": {
+            "beforeLevel": 1,
+            "beforeExp": 0,
+            "beforeThreshold": 120,
+            "afterLevel": 2,
+            "afterExp": 80,
+            "afterThreshold": 360
+          }
+        },
+        "chapter": {
+          "action": "SETTLED",
+          "battleId": "48f52ed9-cf7a-405d-a065-e0c09fb6c646",
+          "state": {
+            "maxCleared": 1,
+            "pendingBattleId": null,
+            "assetRevision": 5
+          },
+          "experience": {
+            "beforeLevel": 1,
+            "beforeExp": 0,
+            "beforeThreshold": 120,
+            "afterLevel": 2,
+            "afterExp": 80,
+            "afterThreshold": 360
+          },
+          "actual": {
+            "roleId": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+            "items": [
+              {
+                "itemId": 900401,
+                "requested": 100,
+                "credited": 100,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900001,
+                "requested": 4000,
+                "credited": 4000,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900003,
+                "requested": 200,
+                "credited": 200,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900101,
+                "requested": 500,
+                "credited": 500,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900102,
+                "requested": 2,
+                "credited": 2,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 20204004,
+                "requested": 30,
+                "credited": 30,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 1004001,
+                "requested": 1,
+                "credited": 1,
+                "ignored": 0,
+                "reason": "NONE"
+              }
+            ],
+            "bonuses": [
+              {
+                "source": "ROLE_LEVEL_UP",
+                "itemId": 900002,
+                "quantity": 10
+              }
+            ]
+          },
+          "rewards": [
+            {
+              "itemId": 900401,
+              "quantity": 100
+            },
+            {
+              "itemId": 900001,
+              "quantity": 4000
+            },
+            {
+              "itemId": 900003,
+              "quantity": 200
+            },
+            {
+              "itemId": 900101,
+              "quantity": 500
+            },
+            {
+              "itemId": 900102,
+              "quantity": 2
+            },
+            {
+              "itemId": 20204004,
+              "quantity": 30
+            },
+            {
+              "itemId": 1004001,
+              "quantity": 1
+            }
+          ]
+        },
+        "role": {
+          "id": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+          "nickname": "chapter_review",
+          "level": 2,
+          "gold": 4000,
+          "diamonds": 10,
+          "serverId": "local-1",
+          "basics": {
+            "experience": 80,
+            "cup": 1000,
+            "headId": 0,
+            "imageId": 410304012,
+            "borderId": 0,
+            "language": 1,
+            "createdAtSeconds": 1794827869,
+            "lastLoginAtSeconds": 1794828037,
+            "experienceToNextLevel": 360
+          },
+          "tavernPoints": {
+            "schemaVersion": 1,
+            "adventureCount": 2100,
+            "limit": 11000
+          }
+        },
+        "settlement": {
+          "battleId": "48f52ed9-cf7a-405d-a065-e0c09fb6c646",
+          "phase": "confirmed",
+          "presentation": "battle",
+          "feedbackReady": false,
+          "feedbackQueued": false,
+          "presented": false
+        },
+        "at": "2026-11-16T11:22:36.432Z"
+      },
+      {
+        "id": "reward",
+        "uuid": "Node.3034",
+        "args": {
+          "receiptId": "48f52ed9-cf7a-405d-a065-e0c09fb6c646",
+          "items": [
+            {
+              "itemId": 900002,
+              "credited": 10
+            }
+          ]
+        },
+        "chapter": {
+          "action": "SETTLED",
+          "battleId": "48f52ed9-cf7a-405d-a065-e0c09fb6c646",
+          "state": {
+            "maxCleared": 1,
+            "pendingBattleId": null,
+            "assetRevision": 5
+          },
+          "experience": {
+            "beforeLevel": 1,
+            "beforeExp": 0,
+            "beforeThreshold": 120,
+            "afterLevel": 2,
+            "afterExp": 80,
+            "afterThreshold": 360
+          },
+          "actual": {
+            "roleId": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+            "items": [
+              {
+                "itemId": 900401,
+                "requested": 100,
+                "credited": 100,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900001,
+                "requested": 4000,
+                "credited": 4000,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900003,
+                "requested": 200,
+                "credited": 200,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900101,
+                "requested": 500,
+                "credited": 500,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900102,
+                "requested": 2,
+                "credited": 2,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 20204004,
+                "requested": 30,
+                "credited": 30,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 1004001,
+                "requested": 1,
+                "credited": 1,
+                "ignored": 0,
+                "reason": "NONE"
+              }
+            ],
+            "bonuses": [
+              {
+                "source": "ROLE_LEVEL_UP",
+                "itemId": 900002,
+                "quantity": 10
+              }
+            ]
+          },
+          "rewards": [
+            {
+              "itemId": 900401,
+              "quantity": 100
+            },
+            {
+              "itemId": 900001,
+              "quantity": 4000
+            },
+            {
+              "itemId": 900003,
+              "quantity": 200
+            },
+            {
+              "itemId": 900101,
+              "quantity": 500
+            },
+            {
+              "itemId": 900102,
+              "quantity": 2
+            },
+            {
+              "itemId": 20204004,
+              "quantity": 30
+            },
+            {
+              "itemId": 1004001,
+              "quantity": 1
+            }
+          ]
+        },
+        "role": {
+          "id": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+          "nickname": "chapter_review",
+          "level": 2,
+          "gold": 4000,
+          "diamonds": 10,
+          "serverId": "local-1",
+          "basics": {
+            "experience": 80,
+            "cup": 1000,
+            "headId": 0,
+            "imageId": 410304012,
+            "borderId": 0,
+            "language": 1,
+            "createdAtSeconds": 1794827869,
+            "lastLoginAtSeconds": 1794828037,
+            "experienceToNextLevel": 360
+          },
+          "tavernPoints": {
+            "schemaVersion": 1,
+            "adventureCount": 2100,
+            "limit": 11000
+          }
+        },
+        "settlement": {
+          "battleId": "48f52ed9-cf7a-405d-a065-e0c09fb6c646",
+          "phase": "confirmed",
+          "presentation": "battle",
+          "feedbackReady": true,
+          "feedbackQueued": true,
+          "presented": true
+        },
+        "at": "2026-11-16T11:22:40.76Z"
+      },
+      {
+        "id": "chapter-end",
+        "uuid": "Node.4914",
+        "args": {
+          "won": true,
+          "persistentChapter": true,
+          "rewards": [
+            {
+              "itemId": 900401,
+              "quantity": 100
+            },
+            {
+              "itemId": 900001,
+              "quantity": 4000
+            },
+            {
+              "itemId": 900002,
+              "quantity": 151
+            },
+            {
+              "itemId": 900003,
+              "quantity": 200
+            },
+            {
+              "itemId": 900101,
+              "quantity": 500
+            },
+            {
+              "itemId": 900102,
+              "quantity": 2
+            },
+            {
+              "itemId": 1004001,
+              "quantity": 1
+            }
+          ],
+          "notice": "本次获得",
+          "roleAppearance": {
+            "headId": 0,
+            "borderId": 0
+          },
+          "units": [
+            {
+              "unitId": 2,
+              "faction": 1,
+              "templateId": 10101001,
+              "level": 100,
+              "position": 2,
+              "initialHp": 1816,
+              "maxHp": 1816,
+              "finalHp": 1816,
+              "totalDamage": 199,
+              "totalTakenDamage": 0,
+              "totalRecovery": 0,
+              "star": 1,
+              "portraitIconId": 20101001
+            },
+            {
+              "unitId": 10,
+              "faction": 2,
+              "templateId": 10505005,
+              "level": 2,
+              "position": 2,
+              "initialHp": 199,
+              "maxHp": 199,
+              "finalHp": 0,
+              "totalDamage": 0,
+              "totalTakenDamage": 199,
+              "totalRecovery": 0,
+              "star": 5,
+              "portraitIconId": 20505005
+            }
+          ],
+          "names": {
+            "attacker": "chapter_review",
+            "defender": "羽嘉森林2"
+          },
+          "experience": {
+            "beforeLevel": 2,
+            "beforeExp": 80,
+            "beforeThreshold": 360,
+            "afterLevel": 2,
+            "afterExp": 280,
+            "afterThreshold": 360
+          }
+        },
+        "chapter": {
+          "action": "SETTLED",
+          "battleId": "c7a8b649-22f0-43a2-a0bc-29b023689869",
+          "state": {
+            "maxCleared": 2,
+            "pendingBattleId": null,
+            "assetRevision": 7
+          },
+          "experience": {
+            "beforeLevel": 2,
+            "beforeExp": 80,
+            "beforeThreshold": 360,
+            "afterLevel": 2,
+            "afterExp": 280,
+            "afterThreshold": 360
+          },
+          "actual": {
+            "roleId": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+            "items": [
+              {
+                "itemId": 900401,
+                "requested": 100,
+                "credited": 100,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900001,
+                "requested": 4000,
+                "credited": 4000,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900002,
+                "requested": 151,
+                "credited": 151,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900003,
+                "requested": 200,
+                "credited": 200,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900101,
+                "requested": 500,
+                "credited": 500,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900102,
+                "requested": 2,
+                "credited": 2,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 1004001,
+                "requested": 1,
+                "credited": 1,
+                "ignored": 0,
+                "reason": "NONE"
+              }
+            ],
+            "bonuses": []
+          },
+          "rewards": [
+            {
+              "itemId": 900401,
+              "quantity": 100
+            },
+            {
+              "itemId": 900001,
+              "quantity": 4000
+            },
+            {
+              "itemId": 900002,
+              "quantity": 151
+            },
+            {
+              "itemId": 900003,
+              "quantity": 200
+            },
+            {
+              "itemId": 900101,
+              "quantity": 500
+            },
+            {
+              "itemId": 900102,
+              "quantity": 2
+            },
+            {
+              "itemId": 1004001,
+              "quantity": 1
+            }
+          ]
+        },
+        "role": {
+          "id": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+          "nickname": "chapter_review",
+          "level": 2,
+          "gold": 8000,
+          "diamonds": 161,
+          "serverId": "local-1",
+          "basics": {
+            "experience": 280,
+            "cup": 1000,
+            "headId": 0,
+            "imageId": 410304012,
+            "borderId": 0,
+            "language": 1,
+            "createdAtSeconds": 1794827869,
+            "lastLoginAtSeconds": 1794828037,
+            "experienceToNextLevel": 360
+          },
+          "tavernPoints": {
+            "schemaVersion": 1,
+            "adventureCount": 2200,
+            "limit": 11000
+          }
+        },
+        "settlement": {
+          "battleId": "c7a8b649-22f0-43a2-a0bc-29b023689869",
+          "phase": "confirmed",
+          "presentation": "battle",
+          "feedbackReady": false,
+          "feedbackQueued": false,
+          "presented": false
+        },
+        "at": "2026-11-16T11:23:40.946Z"
+      }
+    ],
+    "initial": {
+      "role": {
+        "id": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+        "nickname": "chapter_review",
+        "level": 1,
+        "gold": 0,
+        "diamonds": 0,
+        "serverId": "local-1",
+        "basics": {
+          "experience": 0,
+          "cup": 1000,
+          "headId": 0,
+          "imageId": 410304012,
+          "borderId": 0,
+          "language": 1,
+          "createdAtSeconds": 1794827869,
+          "lastLoginAtSeconds": 1794828037,
+          "experienceToNextLevel": 120
+        },
+        "tavernPoints": {
+          "schemaVersion": 1,
+          "adventureCount": 2000,
+          "limit": 11000
+        }
+      },
+      "chapter": {
+        "maxCleared": 0,
+        "pendingBattleId": null,
+        "assetRevision": 3
+      }
+    }
+  },
+  "cold": {
+    "opens": [
+      {
+        "id": "reward",
+        "uuid": "Node.1739",
+        "args": {
+          "receiptId": "aff65347-034f-4722-8c98-f2851ccd6b70",
+          "items": [
+            {
+              "itemId": 900401,
+              "credited": 100
+            },
+            {
+              "itemId": 900001,
+              "credited": 4200
+            },
+            {
+              "itemId": 900003,
+              "credited": 200
+            },
+            {
+              "itemId": 900101,
+              "credited": 700
+            },
+            {
+              "itemId": 20005000,
+              "credited": 1
+            },
+            {
+              "itemId": 1003001,
+              "credited": 1
+            },
+            {
+              "itemId": 900002,
+              "credited": 10
+            }
+          ]
+        },
+        "chapter": {
+          "action": "SETTLED",
+          "battleId": "aff65347-034f-4722-8c98-f2851ccd6b70",
+          "state": {
+            "maxCleared": 3,
+            "pendingBattleId": null,
+            "assetRevision": 9
+          },
+          "experience": {
+            "beforeLevel": 2,
+            "beforeExp": 280,
+            "beforeThreshold": 360,
+            "afterLevel": 3,
+            "afterExp": 120,
+            "afterThreshold": 720
+          },
+          "actual": {
+            "roleId": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+            "items": [
+              {
+                "itemId": 900401,
+                "requested": 100,
+                "credited": 100,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900001,
+                "requested": 4200,
+                "credited": 4200,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900003,
+                "requested": 200,
+                "credited": 200,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 900101,
+                "requested": 700,
+                "credited": 700,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 20005000,
+                "requested": 1,
+                "credited": 1,
+                "ignored": 0,
+                "reason": "NONE"
+              },
+              {
+                "itemId": 1003001,
+                "requested": 1,
+                "credited": 1,
+                "ignored": 0,
+                "reason": "NONE"
+              }
+            ],
+            "bonuses": [
+              {
+                "source": "ROLE_LEVEL_UP",
+                "itemId": 900002,
+                "quantity": 10
+              }
+            ]
+          },
+          "rewards": [
+            {
+              "itemId": 900401,
+              "quantity": 100
+            },
+            {
+              "itemId": 900001,
+              "quantity": 4200
+            },
+            {
+              "itemId": 900003,
+              "quantity": 200
+            },
+            {
+              "itemId": 900101,
+              "quantity": 700
+            },
+            {
+              "itemId": 20005000,
+              "quantity": 1
+            },
+            {
+              "itemId": 1003001,
+              "quantity": 1
+            }
+          ]
+        },
+        "role": {
+          "id": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+          "nickname": "chapter_review",
+          "level": 3,
+          "gold": 12200,
+          "diamonds": 171,
+          "serverId": "local-1",
+          "basics": {
+            "experience": 120,
+            "cup": 1000,
+            "headId": 0,
+            "imageId": 410304012,
+            "borderId": 0,
+            "language": 1,
+            "createdAtSeconds": 1794827869,
+            "lastLoginAtSeconds": 1794828037,
+            "experienceToNextLevel": 720
+          },
+          "tavernPoints": {
+            "schemaVersion": 1,
+            "adventureCount": 2300,
+            "limit": 11000
+          }
+        },
+        "settlement": {
+          "battleId": "aff65347-034f-4722-8c98-f2851ccd6b70",
+          "phase": "confirmed",
+          "presentation": "reward",
+          "feedbackReady": true,
+          "feedbackQueued": true,
+          "presented": false
+        },
+        "at": "2026-11-16T11:25:25.021Z"
+      }
+    ],
+    "marker": {
+      "battleId": "aff65347-034f-4722-8c98-f2851ccd6b70",
+      "at": "2026-11-16T11:24:41.014Z",
+      "maxCleared": 3
+    },
+    "beforeMain": {
+      "role": {
+        "id": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+        "nickname": "chapter_review",
+        "level": 2,
+        "gold": 8000,
+        "diamonds": 161,
+        "serverId": "local-1",
+        "basics": {
+          "experience": 280,
+          "cup": 1000,
+          "headId": 0,
+          "imageId": 410304012,
+          "borderId": 0,
+          "language": 1,
+          "createdAtSeconds": 1794827869,
+          "lastLoginAtSeconds": 1794828037,
+          "experienceToNextLevel": 360
+        },
+        "tavernPoints": {
+          "schemaVersion": 1,
+          "adventureCount": 2200,
+          "limit": 11000
+        }
+      },
+      "chapter": {
+        "maxCleared": 3,
+        "pendingBattleId": "aff65347-034f-4722-8c98-f2851ccd6b70",
+        "assetRevision": 8
+      },
+      "entry": {
+        "battleId": "aff65347-034f-4722-8c98-f2851ccd6b70",
+        "consumed": false
+      },
+      "receipt": null,
+      "ui": {
+        "pages": 1,
+        "residents": 0,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 0,
+        "modalActive": 0
+      }
+    },
+    "beforeReconnect": {
+      "role": {
+        "id": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+        "nickname": "chapter_review",
+        "level": 3,
+        "gold": 12200,
+        "diamonds": 171,
+        "serverId": "local-1",
+        "basics": {
+          "experience": 120,
+          "cup": 1000,
+          "headId": 0,
+          "imageId": 410304012,
+          "borderId": 0,
+          "language": 1,
+          "createdAtSeconds": 1794827869,
+          "lastLoginAtSeconds": 1794828037,
+          "experienceToNextLevel": 720
+        },
+        "tavernPoints": {
+          "schemaVersion": 1,
+          "adventureCount": 2300,
+          "limit": 11000
+        }
+      },
+      "settlement": {
+        "battleId": "aff65347-034f-4722-8c98-f2851ccd6b70",
+        "phase": "confirmed",
+        "presentation": "reward",
+        "feedbackReady": false,
+        "feedbackQueued": true,
+        "presented": true
+      },
+      "opens": 1,
+      "ui": {
+        "pages": 2,
+        "residents": 1,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      }
+    },
+    "afterReconnect": {
+      "ready": true,
+      "role": {
+        "id": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+        "nickname": "chapter_review",
+        "level": 3,
+        "gold": 12200,
+        "diamonds": 171,
+        "serverId": "local-1",
+        "basics": {
+          "experience": 120,
+          "cup": 1000,
+          "headId": 0,
+          "imageId": 410304012,
+          "borderId": 0,
+          "language": 1,
+          "createdAtSeconds": 1794827869,
+          "lastLoginAtSeconds": 1794828037,
+          "experienceToNextLevel": 720
+        },
+        "tavernPoints": {
+          "schemaVersion": 1,
+          "adventureCount": 2300,
+          "limit": 11000
+        }
+      },
+      "opens": 1,
+      "rewardUuid": "Node.1739",
+      "ui": {
+        "pages": 2,
+        "residents": 1,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 1
+      }
+    },
+    "afterClose": {
+      "pages": 2,
+      "residents": 0,
+      "cached": 0,
+      "prepared": 0,
+      "opening": 0,
+      "pendingResident": 0,
+      "intents": 0,
+      "modalNodes": 1,
+      "modalActive": 0
+    },
+    "final": {
+      "role": {
+        "id": "5bbed4cf-13d7-4a53-b629-b1229bd2936d",
+        "nickname": "chapter_review",
+        "level": 3,
+        "gold": 12200,
+        "diamonds": 171,
+        "serverId": "local-1",
+        "basics": {
+          "experience": 120,
+          "cup": 1000,
+          "headId": 0,
+          "imageId": 410304012,
+          "borderId": 0,
+          "language": 1,
+          "createdAtSeconds": 1794827869,
+          "lastLoginAtSeconds": 1794828037,
+          "experienceToNextLevel": 720
+        },
+        "tavernPoints": {
+          "schemaVersion": 1,
+          "adventureCount": 2300,
+          "limit": 11000
+        }
+      },
+      "chapter": {
+        "maxCleared": 3,
+        "pendingBattleId": null,
+        "assetRevision": 9
+      },
+      "settlement": {
+        "battleId": "aff65347-034f-4722-8c98-f2851ccd6b70",
+        "phase": "confirmed",
+        "presentation": "reward",
+        "feedbackReady": false,
+        "feedbackQueued": true,
+        "presented": true
+      },
+      "opens": 1,
+      "ui": {
+        "pages": 2,
+        "residents": 0,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 0
+      },
+      "rewardQueue": {
+        "phase": "idle",
+        "ready": true,
+        "assetRevision": 9,
+        "pending": [],
+        "activeReceiptId": null,
+        "message": "",
+        "acceptedCount": 1
+      },
+      "claimEnabled": false,
+      "compiled": {
+        "afterBattleResultClosed": true,
+        "markSettlementFeedbackPresented": true,
+        "restoreActual": true,
+        "synchronousCloseGuard": true
+      }
+    }
+  },
+  "observations": [
+    "首关正常胜利基础7项不含900002；实际升级1→2、经验0→80；4秒自动关闭后仅一个通用10钻附赠窗",
+    "第二关基础奖励包含151钻、actual.bonuses为空；等级2、经验80→280；没有第二笔升级奖励窗",
+    "第三关真实challenge BATTLE返回后由诊断观察钩子安排浏览器reload；未改服务端数据或伪造回执",
+    "冷恢复重新开始游戏后主城持有原pending战斗、资产未发放；首次进入主线后原编号一次结算，基础6项与10钻附赠合并7格",
+    "奖励窗中实际关闭WebSocket并自动重连一次，仍为Node.1739，opens仍1，资产revision9、12200金币和171钻保持",
+    "点击空白关闭，返回主城再进入主线，奖励队列idle且acceptedCount1；弹窗/在途/打开意图和活动模态均0"
+  ],
+  "applicationWarnings": [
+    "强制重连时1条MainChapter挂机遇敌暂不可用/网络正在恢复告警"
+  ],
+  "applicationErrors": [],
+  "screenshots": {
+    "normalBonus": "docs/images/chapter-level-bonus-preview-20261116.jpg",
+    "secondReturn": "docs/images/chapter-base-diamonds-preview-20261116.jpg",
+    "coldCity": "docs/images/chapter-reward-cold-city-20261116.jpg",
+    "coldReward": "docs/images/chapter-reward-cold-popup-20261116.jpg"
+  },
+  "cleanup": {
+    "tab11Closed": true,
+    "noteOpenedHookRestored": true,
+    "onNotifyReloadHookDiscardedByReload": true,
+    "sessionStorageMarkerRemoved": true,
+    "pageProbeRemoved": true,
+    "ownedHostStopped": true
+  },
+  "limits": [
+    "第二关截图记录返回后的顶部161钻；基础151的来源来自本次实际回执和开窗参数，不冒称该图为胜利页截图",
+    "旧缺actual、坏扩展、投影/开窗失败、跨账号及重复回执由专项覆盖，本轮未在浏览器逐项故障注入",
+    "浏览器reload是客户端冷启动；不是后端重启、进程崩溃、断电或物理弱网",
+    "未进行集中构建、MySQL、APP/微信或目标真机验证",
+    "通用奖励窗反馈附赠与旧RoleUpgrade专页不同；独立里程碑和下一目标提示未恢复；领取仍关闭"
+  ]
+}

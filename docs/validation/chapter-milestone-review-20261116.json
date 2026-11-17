@@ -1,0 +1,338 @@
+{
+  "date": "2026-11-16",
+  "branch": "hao",
+  "baseCommit": "51c3434a2fe385e54437b00d8fab69c4e1d4bdc6",
+  "scope": "同源6项配置、原统一快照中的真实已领集合、旧胜利页只读下一目标；领取入口关闭，不扩前三关。保留此前未提交工作。",
+  "commitPushMerge": false,
+  "centralBuild": false,
+  "typeCheck": {
+    "passed": true,
+    "command": "node C:/ProgramData/cocos/editors/Creator/3.8.8/resources/app.asar.unpacked/node_modules/typescript/lib/tsc.js -p client/tools/tsconfig.remake.json --noEmit"
+  },
+  "clientChecks": [
+    {
+      "id": "chapter-milestone",
+      "passed": true,
+      "elapsedMs": 533,
+      "log": "client/temp/project-checks/chapter-milestone.log"
+    },
+    {
+      "id": "main-chapter",
+      "passed": true,
+      "elapsedMs": 2160,
+      "log": "client/temp/project-checks/main-chapter.log"
+    },
+    {
+      "id": "main-chapter-entry-recovery",
+      "passed": true,
+      "elapsedMs": 367,
+      "log": "client/temp/project-checks/main-chapter-entry-recovery.log"
+    },
+    {
+      "id": "game-protocol",
+      "passed": true,
+      "elapsedMs": 408,
+      "log": "client/temp/project-checks/game-protocol.log"
+    },
+    {
+      "id": "page-lifecycle-recovery",
+      "passed": true,
+      "elapsedMs": 585,
+      "log": "client/temp/project-checks/page-lifecycle-recovery.log"
+    },
+    {
+      "id": "overlay-lifecycle",
+      "passed": true,
+      "elapsedMs": 1506,
+      "log": "client/temp/project-checks/overlay-lifecycle.log"
+    },
+    {
+      "id": "bindings",
+      "passed": true,
+      "elapsedMs": 309,
+      "log": "client/temp/project-checks/bindings.log"
+    },
+    {
+      "id": "battle",
+      "passed": true,
+      "elapsedMs": 94,
+      "log": "client/temp/project-checks/battle.log"
+    },
+    {
+      "id": "prefab-plan",
+      "passed": true,
+      "elapsedMs": 2112,
+      "log": "client/temp/project-checks/prefab-plan.log"
+    },
+    {
+      "id": "game-protocol-generated",
+      "passed": true,
+      "elapsedMs": 944,
+      "log": "client/temp/project-checks/game-protocol-generated.log"
+    },
+    {
+      "id": "config-generated",
+      "passed": true,
+      "elapsedMs": 13262,
+      "log": "client/temp/project-checks/config-generated.log"
+    },
+    {
+      "id": "config-package-generated",
+      "passed": true,
+      "elapsedMs": 1199,
+      "log": "client/temp/project-checks/config-package-generated.log"
+    },
+    {
+      "id": "config-package",
+      "passed": true,
+      "elapsedMs": 5960,
+      "log": "client/temp/project-checks/config-package.log"
+    },
+    {
+      "id": "config-package-store",
+      "passed": true,
+      "elapsedMs": 5117,
+      "log": "client/temp/project-checks/config-package-store.log"
+    },
+    {
+      "id": "config-package-loading",
+      "passed": true,
+      "elapsedMs": 4342,
+      "log": "client/temp/project-checks/config-package-loading.log"
+    },
+    {
+      "id": "client-config-scope",
+      "passed": true,
+      "elapsedMs": 40493,
+      "log": "client/temp/project-checks/client-config-scope.log"
+    },
+    {
+      "id": "docs",
+      "passed": true,
+      "elapsedMs": 349,
+      "log": "client/temp/project-checks/docs.log"
+    }
+  ],
+  "backendTests": [
+    {
+      "name": "com.funsgamex.mxzg.MainChapterPersistenceTest",
+      "tests": "16",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.funsgamex.mxzg.MainChapterSocketTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "interop": [
+    {
+      "path": "backend/target/chapter-milestone-empty.pb",
+      "expectedClaimedIds": [],
+      "command": "node client/temp/project-checks/chapter-milestone.cjs --java=backend/target/chapter-milestone-empty.pb",
+      "passed": true,
+      "bytes": 380,
+      "sha256": "cb6940a295d326f655f4ccfcfd99f914e202e0865744913520c010f197823905"
+    },
+    {
+      "path": "backend/target/chapter-milestone-event.pb",
+      "expectedClaimedIds": [
+        2,
+        7
+      ],
+      "command": "node client/temp/project-checks/chapter-milestone.cjs --java=backend/target/chapter-milestone-event.pb --expected=2,7",
+      "passed": true,
+      "bytes": 248,
+      "sha256": "1b75755f6aedd9289a3b691e3a5d7a4d06502a797ad459734faa06dc176cc0fc"
+    },
+    {
+      "path": "backend/target/chapter-milestone-auth.pb",
+      "expectedClaimedIds": [
+        2,
+        7
+      ],
+      "command": "node client/temp/project-checks/chapter-milestone.cjs --java=backend/target/chapter-milestone-auth.pb --expected=2,7",
+      "passed": true,
+      "bytes": 384,
+      "sha256": "b284efa2e155794fb69a89939c9dbe1779155b7370b438a73de3ca99987c274b"
+    },
+    {
+      "path": "backend/target/chapter-receipt-1.pb",
+      "expectedClaimedIds": [],
+      "command": "node client/temp/project-checks/chapter-milestone.cjs --java=backend/target/chapter-receipt-1.pb",
+      "passed": true,
+      "bytes": 687,
+      "sha256": "66cdeef072f4801e34ae1560c7400599d778feddacc1dedc6889f773bb273649"
+    }
+  ],
+  "configuration": {
+    "table": "GConfig.ChapterExtraReward",
+    "rows": 6,
+    "fields": 7,
+    "sameOldLuaAndCurrentXlsx": true,
+    "jsonUuid": "35952be7-40b2-4add-a60d-8f662e038dd9",
+    "sourceJsonCount": 51,
+    "startupJsonCount": 2,
+    "loginArchiveJsonCount": 49,
+    "archiveBytes": 410240,
+    "newBundleOrPagePreparation": false
+  },
+  "ui": {
+    "prefabUuid": "87487742-8794-4b8b-824c-ef1c009cdf27",
+    "node": "NextTargetRichText",
+    "oldMember": "show_rich",
+    "position": [
+      324,
+      467
+    ],
+    "size": [
+      420,
+      52
+    ],
+    "fontSize": 20,
+    "lineHeight": 26,
+    "temporaryMainVictoryNoticeRemoved": true,
+    "autoCloseSeconds": 4,
+    "latestModelInsteadOfHistoricalReceiptVerified": true
+  },
+  "behaviorCoverage": [
+    "真实空集合与旧字段缺失区分；非法/重复/未知格式扩展拒绝整包。",
+    "原配置ID升序选择最小未领，达成未领不跳过，全部已领隐藏，展示依赖缺失明确不可用。",
+    "只读集合不插行、不增加资产版本；原回执冻结与重新鉴权保持。",
+    "胜利目标使用最新唯一Model，历史回执的旧集合不得覆盖。",
+    "自然通关1/2目标14/13；统计显示重放约4.03秒关闭后仍保留；冷第3关复用原battleId和通用反馈。"
+  ],
+  "legacyAudit": "docs/validation/chapter-milestone-legacy-audit-20261116.json",
+  "preview": "docs/validation/chapter-milestone-preview-20261116.json",
+  "files": [
+    {
+      "path": "protocol/game.proto",
+      "bytes": 20905,
+      "sha256": "3a4f2e9dd536d3cea6130bbd9b5fd912d8528d462c18fccc89c8bfede935db37"
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V27__main_chapter_milestones.sql",
+      "bytes": 549,
+      "sha256": "0f0eaa0df7f4c3ac92bc15d2e2051e61d83d41a9463220cd90edbea1c34d116f"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterService.java",
+      "bytes": 21973,
+      "sha256": "662461a487ef6b7fa0e2a526bd38b03e0b4633733274d9f816b6fa1719beb89a"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/network/SessionSnapshotService.java",
+      "bytes": 6228,
+      "sha256": "f79bfca3822019aca93435ec6d5e31336a6f87579fb5aa82f7dc73255b8f0e83"
+    },
+    {
+      "path": "backend/src/test/java/com/funsgamex/mxzg/MainChapterPersistenceTest.java",
+      "bytes": 29626,
+      "sha256": "ccf25cfa9804b32fd2883b49ab7f596b096f2f9808c0b97e5f176f90525abc66"
+    },
+    {
+      "path": "backend/src/test/java/com/funsgamex/mxzg/MainChapterSocketTest.java",
+      "bytes": 24746,
+      "sha256": "64581f094e666bafa3b560b0e7512745073f77cc8aad348ed666eed080272373"
+    },
+    {
+      "path": "config/client-schema.json",
+      "bytes": 28365,
+      "sha256": "b889bef11f880f07d161bba57cff62287a260754fff5540667f6f62ee5ae510e"
+    },
+    {
+      "path": "tools/export_gameconfig.py",
+      "bytes": 27530,
+      "sha256": "97e6b15a51dab7582688d119c299d574af29626a950a9141909f96284ac8723f"
+    },
+    {
+      "path": "client/assets/bundles/resources/config/chapterextrareward.json",
+      "bytes": 1095,
+      "sha256": "c469126aefa2ecd96255aa8ca7d1965b9e58efa843637d349939906480365a02"
+    },
+    {
+      "path": "client/assets/bundles/resources/config/chapterextrareward.json.meta",
+      "bytes": 179,
+      "sha256": "bc6a3c09d8b3b810c1a38521d3bdb45c068ba3478c8b18c0989210a6bf355da5"
+    },
+    {
+      "path": "client/assets/bundles/resources/config/game-config.bin",
+      "bytes": 410240,
+      "sha256": "da60aeda905db0970bd8b115c452ad808953c5a4508ff1a436fc76a2de7cf6df"
+    },
+    {
+      "path": "client/assets/scripts/config/GConfig.ts",
+      "bytes": 41891,
+      "sha256": "19b5149cbe6fbc79e6d5784f141e49ceee0b107b26b9772ae540a8d7bb991664"
+    },
+    {
+      "path": "client/assets/scripts/config/ConfigZip.generated.ts",
+      "bytes": 13659,
+      "sha256": "a970b87c2266bca889d8479ebd383c7fc13399c3169436a40d44bfabbaf62dc4"
+    },
+    {
+      "path": "client/assets/scripts/platform/GameProtocol.generated.ts",
+      "bytes": 794263,
+      "sha256": "9a63f499f4bc7dd5df0934e76920ad6ec16ceb03ba465c5eb842566d5a06aaab"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/MainChapterModel.ts",
+      "bytes": 9290,
+      "sha256": "608e1c22a06dca0b1617656feeb5795b9a0ba194c19b4e46ddb0b0de0f2abd91"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/MainChapterController.ts",
+      "bytes": 33387,
+      "sha256": "86ada529ea2adbefde621f665c03659e55633d0ff73cc47e40928447d705121b"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/utils/ChapterMilestoneUtils.ts",
+      "bytes": 5987,
+      "sha256": "a679a625946524c8fdc0d3866215e819c5abb69bbb2a325aeb49f2005d173b55"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/utils/ChapterMilestoneUtils.ts.meta",
+      "bytes": 180,
+      "sha256": "d691c1daf53d0fe790550c527482a307ad2e023cfddd586143c3c2cdeda27ec0"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/MainChapterBattleView.ts",
+      "bytes": 9219,
+      "sha256": "4d311dfff698930f7d7cb4231a4e56812018a003e565bb54ecd11e320a372a3e"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/ChapterEndView.ts",
+      "bytes": 24968,
+      "sha256": "296ca3411f8cc8f853c3c104125f264af02b350da3816938a36a7c852db1ebdf"
+    },
+    {
+      "path": "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab",
+      "bytes": 143874,
+      "sha256": "f38227a08a21fc2b35bb5a2a1f9722a6b5d885b11263c9134d1ffe5e4457005e"
+    },
+    {
+      "path": "client/tools/chapter-milestone-check.ts",
+      "bytes": 8199,
+      "sha256": "f9d5d68dc7481f61a7f7bfbfa480c3e4d36ea21550ff77f6acb31e046dd987a3"
+    },
+    {
+      "path": "client/tools/main-chapter-check.ts",
+      "bytes": 93282,
+      "sha256": "c7cdf45e63218285336d72612d84bb3445a9a497cef07f6f6a2ced35323e76db"
+    },
+    {
+      "path": "client/tools/check-project.mjs",
+      "bytes": 10158,
+      "sha256": "e5035b41b55cb017832bd27734a19ce7660794a265397cd1226826de9106ca66"
+    }
+  ],
+  "remaining": [
+    "里程碑3008实际领取未开放；挂机玩家领取保持关闭。",
+    "日常服务未重启；下次正常启动由Flyway应用V27，旧服务端缺扩展时显示目标不可用。",
+    "MySQL、发布包、真机及后续关卡不在本批验收范围。"
+  ]
+}

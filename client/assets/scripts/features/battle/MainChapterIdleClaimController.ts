@@ -8,11 +8,10 @@ import { GameLog } from "../../core/GameLog";
 import { GameProtocolCodecUtils, GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { Protocol, ProtocolName } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
-import type { RewardNotice } from "../reward/data/RewardNoticeData";
 import { RewardUtils } from "../reward/utils/RewardUtils";
 import { MainChapterModel } from "./MainChapterModel";
 import type {
-    IdleClaimCommand, IdleClaimJournalPort, IdleClaimPending, IdleClaimProgress,
+    IdleClaimCommand, IdleClaimConfirmation, IdleClaimJournalPort, IdleClaimPending, IdleClaimProgress,
     IdleClaimReceipt, IdleClaimSend,
 } from "./data/MainChapterIdleClaimData";
 
@@ -28,6 +27,16 @@ interface ClaimFlow {
     readonly port: IdleClaimJournalPort;
     /** 本轮完成Promise；并发恢复复用，不同时发送第二份意图。 */
     promise: Promise<void>;
+    /** 本次begin提供的不透明显示引用；只在原子create真正接纳新请求时转为现场归属。 */
+    readonly presentationContext: object | null;
+}
+
+/** 原请求在当前应用中的显示来源，只有生命周期引用，不保存页面、账号或第二份资产。 */
+interface ClaimPresentation {
+    /** 原子保存后接纳的同一请求引用，后续恢复仅核对其业务指纹。 */
+    readonly pending: IdleClaimPending;
+    /** 应用传入的现场引用；模块不解引用其中内容，成功交付/过时/解除激活时释放。 */
+    readonly context: object;
 }
 
 export class MainChapterIdleClaimController extends BaseController {
@@ -41,19 +50,21 @@ export class MainChapterIdleClaimController extends BaseController {
     private flow: ClaimFlow | null = null;
     /** 忙时收到统一快照则合并为一次本地复核；流程结束清空，不触发额外网络恢复。 */
     private observationQueued = false;
-    /** 原意图及统一快照均确认后交付通用反馈；应用提供，模块不直接持有奖励窗口。 */
-    private onConfirmed: ((notice: RewardNotice) => void) | null = null;
+    /** 原意图及统一快照均确认后交付完整显示信号，零到账也交付；模块不持有奖励窗口。 */
+    private onConfirmed: ((confirmation: IdleClaimConfirmation) => void) | null = null;
+    /** 当前应用真正新建请求的显示来源；跨流程恢复保留，冷日志或后来请求不能借用。 */
+    private presentation: ClaimPresentation | null = null;
 
     /** @param model 应用已有的唯一主线Model，领取回执不替换其权威快照。 */
     public constructor(private readonly model: MainChapterModel) {
         super();
     }
 
-    /** 注入身份隔离的通信、重新鉴权及确认反馈；回调只接收已匹配且双版本确认的原实际结果。 */
+    /** 注入身份隔离的通信、重新鉴权及同步显示信号；零到账仍报告成功，不等待页面或奖励窗。 */
     public configure(
         send: IdleClaimSend,
         synchronize: () => Promise<void>,
-        onConfirmed?: (notice: RewardNotice) => void,
+        onConfirmed?: (confirmation: IdleClaimConfirmation) => void,
     ): void {
         this.send = send;
         this.synchronize = synchronize;
@@ -79,6 +90,7 @@ export class MainChapterIdleClaimController extends BaseController {
     public deactivate(): void {
         this.port = null;
         this.flow = null;
+        this.presentation = null;
         this.observationQueued = false;
         this.update("idle", null, null, "");
     }
@@ -104,13 +116,14 @@ export class MainChapterIdleClaimController extends BaseController {
      * 未来领取入口：仅已知ENABLED快照允许建立意图，保存成功后才发送。
      * 当前没有View调用；已有待确认记录时原子create返回原记录，不能创建第二笔。
      * @param expectedOperationVersion 应用确认时冻结的操作版本；读日志期间变化则停止新建，旧意图仍按自身版本恢复。
+     * @param presentationContext 应用提供的本次现场显示引用，仅真正新建的请求可携带；模块不读取其内容。
      */
-    public begin(expectedOperationVersion?: number): Promise<void> {
+    public begin(expectedOperationVersion?: number, presentationContext: object | null = null): Promise<void> {
         if (expectedOperationVersion !== undefined
             && (!Number.isSafeInteger(expectedOperationVersion) || expectedOperationVersion <= 0)) {
             throw new Error("挂机点击的操作版本无效");
         }
-        return this.run("begin", expectedOperationVersion);
+        return this.run("begin", expectedOperationVersion, presentationContext);
     }
 
     /** 统一快照仅触发本地双确认；忙时合并到结束后复核，不查询或重发新读到的其他意图。 */
@@ -172,6 +185,10 @@ export class MainChapterIdleClaimController extends BaseController {
             afterOperationVersion: valueObject.afterOperationVersion,
             assetRevision: valueObject.assetRevision,
             committedAtSeconds: valueObject.committedAtSeconds,
+            previousStartedAtSeconds: valueObject.previousStartedAtSeconds,
+            seconds: valueObject.seconds,
+            maxSeconds: valueObject.maxSeconds,
+            rewardStage: valueObject.rewardStage,
             feedback: RewardUtils.fromActual(
                 valueObject.receiptId as string,
                 valueObject.assetRevision as number,
@@ -183,7 +200,8 @@ export class MainChapterIdleClaimController extends BaseController {
     }
 
     /** 同时只运行一个流程；对象引用隔离读写迟到，不使用角色/账号比较。 */
-    private run(mode: "begin" | "recover" | "confirm", expectedOperationVersion?: number): Promise<void> {
+    private run(mode: "begin" | "recover" | "confirm", expectedOperationVersion?: number,
+        presentationContext: object | null = null): Promise<void> {
         if (this.flow) {
             return this.flow.promise;
         }
@@ -193,7 +211,12 @@ export class MainChapterIdleClaimController extends BaseController {
         if (this.model.idleClaim.phase === "blocked") {
             return Promise.resolve();
         }
-        const flow: ClaimFlow = { port: this.port, promise: Promise.resolve(), expectedOperationVersion };
+        const flow: ClaimFlow = {
+            port: this.port,
+            promise: Promise.resolve(),
+            expectedOperationVersion,
+            presentationContext,
+        };
         this.flow = flow;
         flow.promise = this.execute(flow, mode).then(() => {
             this.completeFlow(flow);
@@ -233,6 +256,12 @@ export class MainChapterIdleClaimController extends BaseController {
             if (!this.current(flow)) {
                 return;
             }
+            if (flow.presentationContext && this.sameRequest(pending, request)) {
+                this.presentation = { pending, context: flow.presentationContext };
+            }
+        }
+        if (this.presentation && (!pending || !this.sameRequest(this.presentation.pending, pending))) {
+            this.presentation = null;
         }
         if (!pending) {
             this.update("idle", null, null, "");
@@ -339,6 +368,7 @@ export class MainChapterIdleClaimController extends BaseController {
             return;
         }
         if (!this.sameRequest(pending, stored)) {
+            this.presentation = null;
             this.update("paused", stored, null, "发现新的待确认记录，等待重新鉴权恢复");
             return;
         }
@@ -380,6 +410,7 @@ export class MainChapterIdleClaimController extends BaseController {
                 if (this.sameRequest(stored, pending)) {
                     throw new Error("挂机原请求条件清理未完成，保留待确认记录");
                 }
+                this.presentation = null;
                 this.update("paused", stored, null, "发现新的待确认记录，等待重新鉴权恢复");
                 return;
             }
@@ -390,17 +421,25 @@ export class MainChapterIdleClaimController extends BaseController {
         }
     }
 
-    /** 双确认及持久条件清理后只转交通用反馈；展示异常不撤销已提交结果，也不重发资产。 */
+    /** 双确认及持久条件清理后交付单次完整信号；零到账仍收口，显示异常不撤销资产或重发。 */
     private deliverFeedback(flow: ClaimFlow, receipt: IdleClaimReceipt): void {
-        if (!this.current(flow) || !receipt.feedback || !this.onConfirmed) {
+        if (!this.current(flow)) {
+            return;
+        }
+        const origin = this.presentation;
+        const presentationContext = origin && origin.pending.requestId === receipt.requestId
+            && origin.pending.expectedOperationVersion === receipt.expectedOperationVersion ? origin.context : null;
+        // 显示回调可以同步换页或抛错；先释放来源，避免重入后同一请求再借用旧现场。
+        this.presentation = null;
+        if (!this.onConfirmed) {
             return;
         }
         try {
-            this.onConfirmed(receipt.feedback);
+            this.onConfirmed(Object.freeze({ receipt, presentationContext }));
         } catch (error) {
             const detail = error instanceof Error ? error.stack || error.message : String(error);
             GameLog.shared.classified("MODULE", "warn", "MainChapterIdleClaimController",
-                "挂机结果已确认，通用反馈交付失败：" + receipt.receiptId + "\n" + detail);
+                "挂机结果已确认，显示信号交付失败：" + receipt.receiptId + "\n" + detail);
         }
     }
 
@@ -411,6 +450,7 @@ export class MainChapterIdleClaimController extends BaseController {
         }
         await flow.port.clear(pending);
         if (this.current(flow)) {
+            this.presentation = null;
             this.update("rejected", null, null, "原请求未提交，累计版本已被其他操作消费");
         }
         return true;

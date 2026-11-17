@@ -7,6 +7,22 @@ export interface AttributeShowRow {
   /** 图标（101速度220攻击223生命224防御） */
   readonly icon: number;
 }
+export interface ChapterExtraRewardRow {
+  /** 到达关卡数 */
+  readonly chapter: number;
+  /** 唯一编号 */
+  readonly idx: number;
+  /** 提示语言表 */
+  readonly other_tip_language: number;
+  /** 奖励 */
+  readonly reward: string;
+  /** 展示模型 */
+  readonly show_model: number;
+  /** 提示图片 */
+  readonly tip_img: number;
+  /** 提示语言表 */
+  readonly tips_lang: number;
+}
 export interface CityButtonRow {
   /** 未知 */
   readonly atom: string;
@@ -321,6 +337,20 @@ export interface OpenConditionRow {
   /** 世界等级条件 */
   readonly world_level?: number;
 }
+export interface RoleUpgradeFeatureRow {
+  /** 旧功能标识，用于升级页下一功能图片 */
+  readonly atom: string;
+  /** 旧Lua升级预告等级，严格大于本次升级后的等级才显示 */
+  readonly condition_value: number;
+  /** 旧功能描述语言键，原空文案不伪造语言ID */
+  readonly desc?: number;
+  /** 升级预告查询标识，等于旧功能atom，不改变导航门槛 */
+  readonly id: string;
+  /** 旧功能名称语言键，原空文案不伪造语言ID */
+  readonly name_lang?: number;
+  /** 原策划说明，仅供人工阅读候选归属 */
+  readonly note?: string;
+}
 export interface ScoreCountRow {
   /** 战力计算类型 */
   readonly idx: number;
@@ -363,6 +393,7 @@ export interface TimeLimitItemRow {
 }
 export const GConfig = {
   AttributeShow: "AttributeShow",
+  ChapterExtraReward: "ChapterExtraReward",
   CityButton: "CityButton",
   CityEffect: "CityEffect",
   CityPosition: "CityPosition",
@@ -378,6 +409,7 @@ export const GConfig = {
   Language: "Language",
   LoadingTips: "LoadingTips",
   OpenCondition: "OpenCondition",
+  RoleUpgradeFeature: "RoleUpgradeFeature",
   ScoreCount: "ScoreCount",
   SpiritDisplay: "SpiritDisplay",
   SystemGate: "SystemGate",
@@ -385,6 +417,7 @@ export const GConfig = {
 } as const;
 export interface ConfigRowMap {
   AttributeShow: AttributeShowRow;
+  ChapterExtraReward: ChapterExtraRewardRow;
   CityButton: CityButtonRow;
   CityEffect: CityEffectRow;
   CityPosition: CityPositionRow;
@@ -400,6 +433,7 @@ export interface ConfigRowMap {
   Language: LanguageRow;
   LoadingTips: LoadingTipsRow;
   OpenCondition: OpenConditionRow;
+  RoleUpgradeFeature: RoleUpgradeFeatureRow;
   ScoreCount: ScoreCountRow;
   SpiritDisplay: SpiritDisplayRow;
   SystemGate: SystemGateRow;
@@ -407,6 +441,7 @@ export interface ConfigRowMap {
 }
 export interface ConfigKeyMap {
   AttributeShow: number;
+  ChapterExtraReward: number;
   CityButton: string;
   CityEffect: number;
   CityPosition: number;
@@ -422,6 +457,7 @@ export interface ConfigKeyMap {
   Language: number | string;
   LoadingTips: number;
   OpenCondition: string;
+  RoleUpgradeFeature: string;
   ScoreCount: number;
   SpiritDisplay: number;
   SystemGate: string;
@@ -429,6 +465,7 @@ export interface ConfigKeyMap {
 }
 export interface ConfigFileMap {
   AttributeShow: { readonly rows: readonly AttributeShowRow[] };
+  ChapterExtraReward: { readonly rows: readonly ChapterExtraRewardRow[] };
   CityButton: { readonly act: Readonly<Record<string, CityButtonRow>> };
   CityEffect: { readonly maincityeffect: readonly CityEffectRow[] };
   CityPosition: { readonly main: readonly CityPositionRow[] };
@@ -444,6 +481,7 @@ export interface ConfigFileMap {
   Language: { readonly rows: readonly LanguageRow[] };
   LoadingTips: { readonly rows: readonly LoadingTipsRow[] };
   OpenCondition: { readonly rows: readonly OpenConditionRow[] };
+  RoleUpgradeFeature: { readonly rows: readonly RoleUpgradeFeatureRow[] };
   ScoreCount: { readonly rows: readonly ScoreCountRow[] };
   SpiritDisplay: { readonly rows: readonly SpiritDisplayRow[] };
   SystemGate: { readonly rows: readonly SystemGateRow[] };
@@ -472,6 +510,48 @@ export const CONFIG_SCHEMA = {
     },
     "key": "attr",
     "path": "config/attrshow"
+  },
+  "ChapterExtraReward": {
+    "container": "rows",
+    "fields": {
+      "chapter": {
+        "note": "达成目标的绝对chapterreward关卡idx",
+        "required": true,
+        "type": "number"
+      },
+      "idx": {
+        "note": "里程碑配置主键，不是目标关卡或物品实例ID",
+        "required": true,
+        "type": "number"
+      },
+      "other_tip_language": {
+        "note": "已达成但尚未领取时的富文本文案语言键",
+        "required": true,
+        "type": "number"
+      },
+      "reward": {
+        "note": "原奖励JSON文本，仅只读展示，不据此在客户端发奖",
+        "required": true,
+        "type": "string"
+      },
+      "show_model": {
+        "note": "原里程碑展示物品配置ID",
+        "required": true,
+        "type": "number"
+      },
+      "tip_img": {
+        "note": "原里程碑展示图片索引，保留同源数据，不表示已恢复该入口",
+        "required": true,
+        "type": "number"
+      },
+      "tips_lang": {
+        "note": "尚未达成时的富文本文案语言键，胜利页填剩余关数",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "idx",
+    "path": "config/chapterextrareward"
   },
   "CityButton": {
     "container": "act",
@@ -1290,6 +1370,43 @@ export const CONFIG_SCHEMA = {
     },
     "key": "id",
     "path": "config/opencondition"
+  },
+  "RoleUpgradeFeature": {
+    "container": "rows",
+    "fields": {
+      "atom": {
+        "note": "旧功能标识，用于升级页下一功能图片",
+        "required": true,
+        "type": "string"
+      },
+      "condition_value": {
+        "note": "旧Lua升级预告等级，严格大于本次升级后的等级才显示",
+        "required": true,
+        "type": "number"
+      },
+      "desc": {
+        "note": "旧功能描述语言键，原空文案不伪造语言ID",
+        "required": false,
+        "type": "number"
+      },
+      "id": {
+        "note": "升级预告查询标识，等于旧功能atom，不改变导航门槛",
+        "required": true,
+        "type": "string"
+      },
+      "name_lang": {
+        "note": "旧功能名称语言键，原空文案不伪造语言ID",
+        "required": false,
+        "type": "number"
+      },
+      "note": {
+        "note": "原策划说明，仅供人工阅读候选归属",
+        "required": false,
+        "type": "string"
+      }
+    },
+    "key": "id",
+    "path": "config/roleupgradefeature"
   },
   "ScoreCount": {
     "container": "rows",

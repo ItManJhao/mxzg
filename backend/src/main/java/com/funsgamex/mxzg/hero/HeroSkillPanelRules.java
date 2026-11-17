@@ -1,4 +1,7 @@
-/** 按旧 BattleTemplate/SkillInfo/CBuff 解析英雄技能面板加成；不执行战斗触发效果或技能升级。 */
+/**
+ * 按旧 BattleTemplate/SkillInfo/CBuff 解析面板加成、技能排期及已支持战斗动作的配置。
+ * 面板输入、战场和只读依赖审计共用此规则；只校验与转换，不执行战斗、升级或资产写入。
+ */
 package com.funsgamex.mxzg.hero;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -332,16 +335,21 @@ public class HeroSkillPanelRules {
         return true;
     }
 
-    /** 已核对的直接属性动作：奈奈子降护甲及魅惑之拥主动后的自身破甲提升。 */
+    /** 已核对的直接属性动作：既有护甲/破甲链及必中、无下游的固定207暴击属性增减。 */
     public boolean battleDirectAttribute(int buffId) {
         if (nanakoArmorDebuff(buffId)) {
             return true;
         }
-        if (buffId < 1111401 || buffId > 1111403) {
-            return false;
+        if (buffId >= 1111401 && buffId <= 1111403) {
+            charmArmorAttribute(buffId);
+            return true;
         }
-        charmArmorAttribute(buffId);
-        return true;
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() == 160 && buff.path("value").asString().startsWith("207|")) {
+            controlAttribute(buffId);
+            return true;
+        }
+        return false;
     }
 
     /** 按旧111140x配置读取203破甲万分比；不泛化为任意160号增益或条件属性。 */
@@ -380,7 +388,7 @@ public class HeroSkillPanelRules {
     /** 一个已预检的纯普通伤害动作，保留目标规则和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
-    /** 按真实普攻/主动预检伤害、控制、监听、流血、已核对直接属性、冰晶女巫直接治疗及2/3/5表现；未知效果拒绝，不执行半组技能。 */
+    /** 预检真实技能的伤害、控制、监听、流血、属性/治疗、空1号及2/3/5/8/11表现；未知效果拒绝。 */
     public List<DamageArt> damageSkillArts(HeroBattleSkillUtils.Skill skill) {
         var config = skills.get(skill.skillId() + ":" + skill.level());
         if (config == null || !Set.of(1, 2).contains(config.path("active_type").asInt())) {
@@ -548,7 +556,36 @@ public class HeroSkillPanelRules {
                 if (entry.buffId() == buffId) return entry;
             }
         }
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() == 160 && buff.path("value").asString().startsWith("207|")) {
+            return fixedCriticalAttribute(buffId);
+        }
         throw new IllegalArgumentException("未核对的控制属性效果：" + buffId);
+    }
+
+    /**
+     * 旧AbilityAdd/AbstractAttributeBuffHandler按原整数加减207；不把-1250改成乘区或夹成零。
+     * 仅接必中、无子动作且后两项为0的固定形式，其他属性、概率和条件效果继续拒绝。
+     */
+    private ControlAttributeDefinition fixedCriticalAttribute(int buffId) {
+        var buff = row("buff", buffId);
+        var values = buff.path("value").asString().split("\\|", -1);
+        var children = mapper.readTree(buff.path("art_list").asString());
+        if (buff.path("type").asInt() != 160 || values.length != 4 || !values[0].equals("207")
+                || !values[1].matches("-?(0|[1-9][0-9]*)") || !values[2].equals("0") || !values[3].equals("0")
+                || buff.path("attach_percent").asInt() != 10000 || children == null
+                || !children.isArray() || !children.isEmpty()
+                || !buff.path("round").isIntegralNumber() || !buff.path("round").canConvertToInt()
+                || buff.path("round").asInt() < 0) {
+            throw new IllegalArgumentException("固定207属性动作含未支持形式：" + buffId);
+        }
+        int amount;
+        try {
+            amount = Integer.parseInt(values[1]);
+        } catch (NumberFormatException error) {
+            throw new IllegalArgumentException("固定207属性量超出原整数范围：" + buffId, error);
+        }
+        return new ControlAttributeDefinition(buffId, 207, amount, buff.path("round").asInt());
     }
 
     /** 预检冰冻类型与真实配置；其他类型交由各自处理器。 */
@@ -651,13 +688,32 @@ public class HeroSkillPanelRules {
         return Integer.parseInt(row("buff", buffId).path("value").asString().split("\\|")[0]);
     }
 
-    /** 旧2/3/5及魅惑之拥11号近身表现由ClientBuffHandler处理，只记录表现，不参与服务端伤害。 */
+    /**
+     * 旧ClientBuffHandler只记录非逻辑表现；本规则校验服务端原字段，Lua覆盖由客户端解析。
+     * 当前1号仅接空资源/空动画的占位，非空1号、未知概率或下游动作仍拒绝。
+     */
     public boolean battleProjectile(int buffId) {
         var buff = row("buff", buffId);
-        if (!Set.of(2, 3, 5).contains(buff.path("type").asInt())
-            && !(buffId == 1110200 && buff.path("type").asInt() == 11)) return false;
-        if (buff.path("attach_percent").asInt() != 10000 || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
-            throw new IllegalArgumentException("投射表现含未支持分支");
+        int type = buff.path("type").asInt();
+        if (!Set.of(1, 2, 3, 5, 8, 11).contains(type)) {
+            return false;
+        }
+        var children = mapper.readTree(buff.path("art_list").asString());
+        if (buff.path("attach_percent").asInt() != 10000 || children == null
+                || !children.isArray() || !children.isEmpty()) {
+            throw new IllegalArgumentException("客户端表现含未支持概率或后续动作：" + buffId);
+        }
+        if (type == 1) {
+            var animation = mapper.readTree(buff.path("ani_base").asString());
+            var files = mapper.readTree(buff.path("file").asString());
+            var sounds = mapper.readTree(buff.path("sound").asString());
+            if (animation == null || !animation.isObject() || !animation.isEmpty()
+                    || files == null || !files.isArray() || !files.isEmpty()
+                    || sounds == null || !sounds.isArray() || !sounds.isEmpty()
+                    || !buff.path("shake").isIntegralNumber() || buff.path("shake").asInt() != 0
+                    || !buff.path("dimly").isIntegralNumber() || buff.path("dimly").asInt() != 0) {
+                throw new IllegalArgumentException("非空1号客户端动画尚未支持：" + buffId);
+            }
         }
         return true;
     }

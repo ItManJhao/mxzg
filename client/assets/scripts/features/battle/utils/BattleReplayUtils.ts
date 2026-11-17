@@ -149,7 +149,7 @@ export class BattleReplayUtils {
         return Object.freeze(result);
     }
 
-    /** 接受已核对的前三关战报数据；第3关解码成功不代表投射资源与画面已验收。 */
+    /** 校验全局关卡战报及旧具名样本；通用名册不猜配置内容，解码成功不代表对应技能资源已验收。 */
     public static decode(bytes: Uint8Array): readonly BattleReplayStep[] {
         if (!bytes.length || bytes.length > 256 * 1024) {
             throw new Error("战报大小无效");
@@ -165,8 +165,9 @@ export class BattleReplayUtils {
                 throw new Error("战报双方名称无效");
             }
         }
-        const idleMission = /^idle:chapter:[123]$/.test(report.scenario) ? Number(report.scenario.slice(-1)) : 0;
-        const lineupMission = /^(audit|chapter):lineup:[123]$/.test(report.scenario) ? Number(report.scenario.slice(-1)) : 0;
+        const chapter = this.chapterScenario(report.scenario);
+        const idleMission = chapter?.idle ? chapter.index : 0;
+        const lineupMission = chapter && !chapter.idle ? chapter.index : 0;
         if (report.schemaVersion !== 1 || (!lineupMission && !idleMission && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
             || (!lineupMission && !idleMission && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > 15) {
             throw new Error("战报版本或场景不支持");
@@ -190,13 +191,6 @@ export class BattleReplayUtils {
         for (const unit of roster) {
             if (lineupMission || idleMission) {
                 if (unit.unitId !== unit.position + (unit.faction === 2 ? 8 : 0)) throw new Error("阵容战报身份无效");
-                if (unit.faction === 2) {
-                    const template = unit.position === 2 ? ((lineupMission || idleMission) === 2 ? 10505005 : 10101001)
-                        : (lineupMission || idleMission) === 3 && unit.position === 3 ? 10104004 : 0;
-                    if (unit.templateId !== template || unit.level !== ((lineupMission || idleMission) === 1 ? 1 : 2)) {
-                        throw new Error("阵容战报敌方与关卡不符");
-                    }
-                }
             } else {
                 const entry = expected.find(value => value[0] === unit.unitId);
                 if (!entry || unit.faction !== entry[1] || unit.templateId !== entry[2]
@@ -205,9 +199,6 @@ export class BattleReplayUtils {
                 }
             }
             hp.set(unit.unitId, unit.initialHp);
-        }
-        if (lineupMission && roster.filter(unit => unit.faction === 2).length !== (lineupMission === 3 ? 2 : 1)) {
-            throw new Error("阵容战报敌方数量不符");
         }
         if (idleMission && (roster.filter(unit => unit.faction === 1).length > 3
             || roster.filter(unit => unit.faction === 2).length !== 1
@@ -225,7 +216,7 @@ export class BattleReplayUtils {
                 throw new Error("战报出手阶段无效");
             }
             let skill = 0;
-            for (const event of phase.events) {
+            for (const [eventIndex, event] of phase.events.entries()) {
                 if (!hp.has(event.sourceId) || !hp.has(event.targetId) || event.configId <= 0) {
                     throw new Error("战报事件单位或配置无效");
                 }
@@ -250,8 +241,14 @@ export class BattleReplayUtils {
                 }
                 if (event.kind === "buff.remove") {
                     this.required(event, ["removalReason"]);
-                    if (["expire", "death", "replace", "dispel", "trigger-limit"].indexOf(event.removalReason) < 0) {
+                    // 仅接纳当前服务端真实产出的原因；补齐既有链，不以任意字符串放开未知效果。
+                    if (["expire", "death", "replace", "dispel", "trigger-limit", "shield-depleted",
+                        "break-ice", "pure-heart", "counter-crit"].indexOf(event.removalReason) < 0) {
                         throw new Error("Buff移除原因无效");
+                    }
+                    if (event.removalReason === "shield-depleted"
+                        && !this.hasShieldHit(phase.events, eventIndex, event.targetId)) {
+                        throw new Error("护盾耗尽缺少同阶段命中");
                     }
                 }
                 switch (event.kind) {
@@ -346,6 +343,39 @@ export class BattleReplayUtils {
             : round === 15 ? "DEFENDER_WIN" : "ONGOING";
         if (outcome === "ONGOING" || report.outcome !== outcome) throw new Error("战报胜负无效");
         return Object.freeze(steps);
+    }
+
+    /**
+     * 通用主线身份使用同源表全局idx；只接受规范正uint32十进制，不把章节内序号或含糊后缀当关卡。
+     * 此处不读GameConfig，登录首包和历史回放不依赖页面配置准备，也不据战报身份开放新挑战。
+     */
+    private static chapterScenario(scenario: string): Readonly<{ index: number; idle: boolean }> | null {
+        const match = /^(idle:chapter|(?:audit|chapter):lineup):([1-9][0-9]*)$/.exec(scenario);
+        if (!match) {
+            return null;
+        }
+        const index = Number(match[2]);
+        if (!Number.isInteger(index) || index > 0xffffffff) {
+            throw new Error("战报关卡索引无效");
+        }
+        return { index, idle: match[1] === "idle:chapter" };
+    }
+
+    /**
+     * 服务端先记录护盾耗尽，再记录原命中；同技能或回合流血均须在本阶段找到对应目标。
+     * 不跨技能起止借用后续伤害，避免播放器把无关命中当作旧护盾的移除时点。
+     */
+    private static hasShieldHit(events: readonly WireEvent[], removedIndex: number, targetId: number): boolean {
+        for (let index = removedIndex + 1; index < events.length; index++) {
+            const event = events[index];
+            if (event.kind === "skill.begin" || event.kind === "skill.end") {
+                return false;
+            }
+            if (event.kind === "damage" && event.targetId === targetId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 可选协议字段在对应业务事件中必须存在，不能把protobuf默认值误当真实下发。 */

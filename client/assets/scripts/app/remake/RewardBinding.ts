@@ -10,6 +10,7 @@ import { RewardModel } from "../../features/reward/RewardModel";
 import type { RewardArgs } from "../../features/reward/data/RewardData";
 import type { RewardNotice } from "../../features/reward/data/RewardNoticeData";
 import { RewardView } from "../../features/reward/ui/RewardView";
+import { RoleUpgradeView } from "../../features/reward/ui/RoleUpgradeView";
 import { UIManager } from "../../framework/ui/UIManager";
 import { GameProtocolCodecUtils } from "../../platform/GameProtocolCodecUtils";
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
@@ -19,6 +20,7 @@ import { ProtocolStateUtils } from "../../platform/ProtocolStateUtils";
 import { GameLog } from "../../core/GameLog";
 import type { BaseView } from "../../framework/ui/BaseView";
 import type { ConfirmArgs } from "../../features/common/ui/ConfirmView";
+import { RewardUtils } from "../../features/reward/utils/RewardUtils";
 
 /** 本次重试确认的窗口归属；只用于关闭本绑定创建的实例，不保存账号或业务资产。 */
 interface RetryPrompt {
@@ -126,6 +128,25 @@ export class RewardBinding {
         return "queued";
     }
 
+    /**
+     * 将双确认的真实发放投影交既有队列；正常主线只交升级附赠，冷恢复及其他业务可交完整实际量。
+     * 归属始终在应用层校验，既无升级也无正量才不展示；part不改变服务端结果或历史经验。
+     */
+    public restoreActual(receiptId: string, assetRevision: number, actual: unknown,
+        part: "all" | "bonuses" = "all"): "queued" | "empty" {
+        const state = this.account.snapshot;
+        if (this.disposed || state.busy || !state.role || !actual || typeof actual !== "object"
+            || (actual as { roleId?: unknown }).roleId !== state.role.id) {
+            throw new Error("实际奖励不属于当前可接纳反馈的角色");
+        }
+        const notice = RewardUtils.fromActual(receiptId, assetRevision, actual, "POPUP", part);
+        if (!notice) {
+            return "empty";
+        }
+        this.restore(notice);
+        return "queued";
+    }
+
     /** 主城已显示且配置包已安装才允许开窗；等待期间保留反馈，不强行加载配置。 */
     public setReady(ready: boolean): void {
         if (!this.disposed) {
@@ -146,6 +167,7 @@ export class RewardBinding {
         this.displayScope = {};
         this.controller.resetSession();
         UIManager.instance.closeById("reward");
+        UIManager.instance.closeById("role-upgrade");
         this.closeRetryPrompt();
     }
 
@@ -158,13 +180,13 @@ export class RewardBinding {
         }
     }
 
-    /** 等待窗口真正关闭才推进下一笔；打开失败即拒绝，销毁回调不能掩盖准备失败。 */
+    /** 同队列按真实升级信息选择通用升级或奖励窗；关闭才推进，失败不能伪装为已显示。 */
     private showPopup(args: RewardArgs): Promise<void> {
         const scope = this.displayScope;
         return new Promise<void>((resolve, reject) => {
             let opened = false;
             let closed = false;
-            void UIManager.instance.open(RewardView, {
+            void UIManager.instance.open<RewardArgs>(args.roleUpgrade ? RoleUpgradeView : RewardView, {
                 ...args,
                 onClosed: () => {
                     closed = true;
@@ -266,6 +288,9 @@ export class RewardBinding {
 
     /** 旧TIPS模式复用全局飘字，按实际到账逐条提示；名称只从已安装的GameConfig投影。 */
     private showTips(notice: RewardNotice): void {
+        if (notice.roleUpgrade) {
+            UIManager.instance.toast("角色等级 " + notice.roleUpgrade.beforeLevel + " → " + notice.roleUpgrade.afterLevel);
+        }
         for (const item of notice.items) {
             const title = BagItemCatalog.face(item.itemId, item.credited).title;
             UIManager.instance.toast("获得 " + title + " ×" + item.credited);
@@ -281,6 +306,7 @@ export class RewardBinding {
         this.displayScope = {};
         this.controller.dispose();
         UIManager.instance.closeById("reward");
+        UIManager.instance.closeById("role-upgrade");
         this.closeRetryPrompt();
     }
 }

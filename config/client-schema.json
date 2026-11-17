@@ -268,6 +268,85 @@
         }
       }
     },
+    "ChapterExtraReward": {
+      "path": "config/chapterextrareward",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": {
+          "type": "number",
+          "required": true,
+          "note": "里程碑配置主键，不是目标关卡或物品实例ID"
+        },
+        "chapter": {
+          "type": "number",
+          "required": true,
+          "note": "达成目标的绝对chapterreward关卡idx"
+        },
+        "reward": {
+          "type": "string",
+          "required": true,
+          "note": "原奖励JSON文本，仅只读展示，不据此在客户端发奖"
+        },
+        "show_model": {
+          "type": "number",
+          "required": true,
+          "note": "原里程碑展示物品配置ID"
+        },
+        "tips_lang": {
+          "type": "number",
+          "required": true,
+          "note": "尚未达成时的富文本文案语言键，胜利页填剩余关数"
+        },
+        "tip_img": {
+          "type": "number",
+          "required": true,
+          "note": "原里程碑展示图片索引，保留同源数据，不表示已恢复该入口"
+        },
+        "other_tip_language": {
+          "type": "number",
+          "required": true,
+          "note": "已达成但尚未领取时的富文本文案语言键"
+        }
+      }
+    },
+    "RoleUpgradeFeature": {
+      "path": "config/roleupgradefeature",
+      "container": "rows",
+      "key": "id",
+      "fields": {
+        "id": {
+          "type": "string",
+          "required": true,
+          "note": "升级预告查询标识，等于旧功能atom，不改变导航门槛"
+        },
+        "atom": {
+          "type": "string",
+          "required": true,
+          "note": "旧功能标识，用于升级页下一功能图片"
+        },
+        "condition_value": {
+          "type": "number",
+          "required": true,
+          "note": "旧Lua升级预告等级，严格大于本次升级后的等级才显示"
+        },
+        "name_lang": {
+          "type": "number",
+          "required": false,
+          "note": "旧功能名称语言键，原空文案不伪造语言ID"
+        },
+        "desc": {
+          "type": "number",
+          "required": false,
+          "note": "旧功能描述语言键，原空文案不伪造语言ID"
+        },
+        "note": {
+          "type": "string",
+          "required": false,
+          "note": "原策划说明，仅供人工阅读候选归属"
+        }
+      }
+    },
     "OpenCondition": {
       "path": "config/opencondition",
       "container": "rows",

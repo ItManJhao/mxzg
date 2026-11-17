@@ -344,7 +344,7 @@ export class GameSocketClient {
       case "CHAPTER_UNAVAILABLE": return "主线条件不满足、阵容技能尚未支持或战报不可用，请检查阵容与进度";
       case "BATTLE_EMPTY": return "请先保存非空主线阵容";
       case "BATTLE_UNSUPPORTED": return "当前阵容包含尚未支持的技能或助战，请调整阵容";
-      case "BATTLE_INVALID": return "只读试战仅支持第一章前三关";
+      case "BATTLE_INVALID": return "只读试战关卡参数无效，请检查全局关卡编号";
       case "UNKNOWN_MESSAGE": return "服务端不支持此协议，请更新并重启后端";
       default: return "请求未完成（" + code + "），请稍后重试";
     }

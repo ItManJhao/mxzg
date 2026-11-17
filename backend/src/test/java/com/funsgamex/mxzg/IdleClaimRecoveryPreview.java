@@ -1,7 +1,8 @@
 /**
  * 客户端挂机领取恢复的独立真实后端宿主：仅测试类路径可用，强制回环随机端口及本次run的文件H2。
- * 首次仅准备六个测试角色的已通关/累计夹具，活动控制走真实维护服务；重启不重置资产、起点或回执。
- * 通过同run的enabled/read-only两次进程验证持久恢复；只读HTTP仅提供实例身份，不增加业务HTTP或控制接口。
+ * 首次仅准备六个测试角色的已通关/累计夹具，upgrade-enabled可将新角色经验准备到升级前一经验。
+ * 活动控制走真实维护服务，重启不重置资产、起点或回执；enabled/read-only继续验证原持久恢复。
+ * 三种模式均只用本次run文件库；只读HTTP仅提供实例身份，不增加业务HTTP或控制接口。
  */
 package com.funsgamex.mxzg;
 
@@ -10,6 +11,7 @@ import com.funsgamex.mxzg.campaign.IdleActivityMaintenanceService;
 import com.funsgamex.mxzg.campaign.MainChapterIdleStateRepository;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.role.RoleRules;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -36,7 +38,7 @@ public final class IdleClaimRecoveryPreview {
             "idle_reload", "idle_other", "idle_pending");
     /** 本进程经命令行校验的唯一运行标识，身份探针不返回凭证或资产。 */
     private static String run;
-    /** 本进程固定启动模式；读取历史回执不因read-only开关改变。 */
+    /** 本进程固定测试模式；upgrade-enabled只影响首次新角色夹具，历史回执不因read-only改变。 */
     private static String mode;
 
     /** 测试入口类不需要实例，所有进程内可变业务状态仍归Spring领域服务。 */
@@ -46,6 +48,7 @@ public final class IdleClaimRecoveryPreview {
     /**
      * 只接受run和启动模式，数据目录由run派生，不接收任意数据库、端口或外部配置地址。
      * 退出时保存不含会话的持久事实，再关闭Spring及H2；后续同run可启动read-only恢复进程。
+     * upgrade-enabled仅为独立新角色准备临界经验，领取与升级仍执行正式领域规则。
      */
     public static void main(String[] args) throws Exception {
         Map<String, String> options = readOptions(args);
@@ -90,7 +93,7 @@ public final class IdleClaimRecoveryPreview {
                         + ProcessHandle.current().pid() + ",\"stopped\":true}");
     }
 
-    /** 强制应用、Flyway及网络使用同一个本次文件库；外部数据库变量和配置位置不能覆盖命令行。 */
+    /** 强制使用本次文件库与随机回环端口；两种enabled模式均开启独立领取，外部地址不得覆盖。 */
     private static ConfigurableApplicationContext open(String database) {
         return SpringApplication.run(new Class<?>[] {GameApplication.class, Identity.class}, new String[] {
                 "--spring.config.location=classpath:/", "--spring.config.additional-location=",
@@ -99,12 +102,12 @@ public final class IdleClaimRecoveryPreview {
                 "--spring.datasource.url=" + database, "--spring.datasource.username=sa", "--spring.datasource.password=",
                 "--spring.flyway.url=" + database, "--spring.flyway.user=sa", "--spring.flyway.password=",
                 "--mxzg.websocket.enabled=true", "--mxzg.gm.enabled=false",
-                "--mxzg.main-chapter.idle-claim-enabled=" + mode.equals("enabled"),
+                "--mxzg.main-chapter.idle-claim-enabled=" + (mode.equals("enabled") || mode.equals("upgrade-enabled")),
                 "--mxzg.idle-activity-maintenance.enabled=false"
         });
     }
 
-    /** 参数仅接受规范32位run和两种固定模式；未知参数不透传给Spring或H2。 */
+    /** 参数仅接受规范32位run及三种固定模式；升级模式不接收经验值，未知参数不透传给Spring或H2。 */
     private static Map<String, String> readOptions(String[] args) {
         var values = new LinkedHashMap<String, String>();
         for (String argument : args) {
@@ -115,8 +118,8 @@ public final class IdleClaimRecoveryPreview {
             }
         }
         if (values.size() != 2 || !values.getOrDefault("run", "").matches("[a-f0-9]{32}")
-                || !List.of("enabled", "read-only").contains(values.get("mode"))) {
-            throw new IllegalArgumentException("run需32位小写十六进制，mode需enabled或read-only");
+                || !List.of("enabled", "read-only", "upgrade-enabled").contains(values.get("mode"))) {
+            throw new IllegalArgumentException("run需32位小写十六进制，mode需enabled、read-only或upgrade-enabled");
         }
         return Map.copyOf(values);
     }
@@ -132,6 +135,7 @@ public final class IdleClaimRecoveryPreview {
     /**
      * 只在首次创建时准备合法活动控制和六个一级角色；重启读取原记录，不签发多余会话或改写资产。
      * maxCleared=1是明确测试夹具，不冒称已通过真实挑战；真实领取仍消费正式领域规则及同库事务。
+     * 仅upgrade-enabled的新角色在原角色锁事务设置threshold(1)-1经验；旧角色始终跳过，不重复补种。
      */
     private static void prepare(ConfigurableApplicationContext context, String server) {
         JdbcTemplate jdbc = context.getBean(JdbcTemplate.class);
@@ -159,6 +163,11 @@ public final class IdleClaimRecoveryPreview {
             transaction.executeWithoutResult(status -> {
                 String role = player.role().id();
                 roles.lock(role);
+                if (mode.equals("upgrade-enabled") && jdbc.update(
+                        "UPDATE game_role SET role_experience=? WHERE id=? AND role_level=1",
+                        context.getBean(RoleRules.class).threshold(1) - 1, role) != 1) {
+                    throw new IllegalStateException("新升级夹具必须为一级角色，不能改写既有等级");
+                }
                 jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,1)", role);
                 boolean created = context.getBean(MainChapterIdleStateRepository.class)
                         .initializeForChallenge(role, Instant.now().getEpochSecond() - 120);
@@ -226,7 +235,7 @@ public final class IdleClaimRecoveryPreview {
     @TestComponent
     @RestController
     public static class Identity {
-        /** 只返回实例归属及当前只读模式，客户端先核对run才允许连接正式业务WS。 */
+        /** 只返回实例归属及当前固定测试阶段，客户端先核对run才允许连接正式业务WS。 */
         @GetMapping("/api/v1/test-identity")
         public Map<String, String> identity() {
             return Map.of("kind", "mxzg-owned-socket-it", "run", run, "phase", mode);

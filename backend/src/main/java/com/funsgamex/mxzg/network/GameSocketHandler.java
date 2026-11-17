@@ -221,8 +221,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             if (!gm.enabled()) throw rejected("GM_DISABLED");
             var body = request.path("body");
             fields(body, Set.of("mission"));
-            if (!body.path("mission").canConvertToInt() || body.path("mission").asInt() < 1
-                || body.path("mission").asInt() > 3) throw rejected("BATTLE_INVALID");
+            if (!body.path("mission").isIntegralNumber() || !body.path("mission").canConvertToInt()
+                || body.path("mission").asInt() < 1) throw rejected("BATTLE_INVALID");
             int mission = body.path("mission").asInt();
             com.funsgamex.mxzg.hero.HeroLineupBattleService.Preview result;
             try {
@@ -319,6 +319,9 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 response.put("rewards", receipt.rewards());
                 if (receipt.experience() != null) {
                     response.put("experience", receipt.experience());
+                }
+                if (receipt.actual() != null) {
+                    response.put("actual", receipt.actual());
                 }
                 respond(connection, request, response);
             }

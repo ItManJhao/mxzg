@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "objective": "配置化主线通用链与850关依赖扫描，不直接开放全部关卡",
+  "branch": "hao",
+  "baseHead": "51c3434a2fe385e54437b00d8fab69c4e1d4bdc6",
+  "status": {
+    "committed": false,
+    "pushed": false,
+    "merged": false,
+    "creatorBuild": false,
+    "defaultChallengeLimit": 3,
+    "idleClaimOpen": false,
+    "dailyBackendRestarted": false,
+    "dailyDatabaseAccessed": false
+  },
+  "changes": [
+    "完整chapterreward目录850条，全局idx贯穿敌方输入、战报、进度与冻结奖励计划；可信新挑战范围单独默认3。",
+    "正式阵容和挂机从配置生成敌方，不再调用固定前三关initial；旧固定initial只保留具名审计输入。",
+    "challenge_limit=5可选字段由真实快照交付，旧缺失不补0；历史回执不覆盖最新范围。",
+    "新请求先核当前范围；原请求、pending及持久回执优先恢复，降低范围不取消原结算。",
+    "范围变化时布阵返回不能把未替换的旧receipt误当新挑战成功；真实重复原编号仍按新返回对象确认。",
+    "仅预检实际开放段的真实敌方、挂机投影及共享奖励类型；配置存在不等于技能已支持。",
+    "客户端通用场景接受规范正uint32全局idx，不固定敌人模板/级别/人数；仍保留16单位、阵营站位、实例、生命与事件校验。",
+    "完整扫描沿生产Java能力和实际前端表现解析，报告是离线证据，不进入运行时、不增加模块清单。"
+  ],
+  "audit": {
+    "file": "docs/validation/main-chapter-dependencies-20261117.json",
+    "sha256": "324fcd4efb28027b6fb3a826217f5d698d8243565dad4ade7da3f8bdd593faaf",
+    "summary": {
+      "stages": 850,
+      "enemies": 5000,
+      "distinctReferencedEnemyRows": 3200,
+      "unreferencedEnemyRows": 1800,
+      "rawEnemySkillCombinations": 3999,
+      "coordinateMismatchStages": 300,
+      "uniqueSkills": 249,
+      "resources": 490,
+      "missingResources": 0,
+      "unresolvedResourceDeclarations": 53,
+      "supported": 5,
+      "blocked": 845,
+      "unverified": 0,
+      "blockedStageCountsByReason": {
+        "ENEMY_RUNTIME_UNSUPPORTED": 842,
+        "PRESENTATION_UNSUPPORTED": 845,
+        "SKILL_RUNTIME_UNSUPPORTED": 842,
+        "IDLE_STAGE_NOT_PROJECTED": 830
+      }
+    },
+    "staticallyClosedStages": [
+      1,
+      2,
+      3,
+      14,
+      15
+    ],
+    "limits": [
+      "没有玩家阵容、随机执行、数值等价或Creator渲染验收；敌人依赖闭合不代表所有玩家阵容可用",
+      "递归覆盖heroskill.art_list→buffart.buff_list→buff.art_list及实际battleContract返回的反向Buff；其他value保留原文并由生产严格预检，不猜未知语义",
+      "不包含独立活动/权益动态掉落、快速战斗或里程碑领取；这些不能当成普通挂机候选已验证",
+      "Spine内存转换和源文件检查不等于引擎实际导入；背景列配置映射资源，不证明当前Prefab已按关卡切图"
+    ]
+  },
+  "mappingDecision": {
+    "affectedIndices": "551-850",
+    "count": 300,
+    "actual": "沿旧mode_id/chapter_id/mission_id定位，复用此前10组敌人",
+    "unreferencedNonemptyEnemyRows": 1800,
+    "handling": "保留目录和运行定位/原note差异证据，正式敌方构建拒绝此段待确认映射，不擅自按note修表"
+  },
+  "checks": {
+    "backend": {
+      "total": 55,
+      "suites": [
+        {
+          "name": "MainChapterConfigurationTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "reportSha256": "5d307243b06e2b630302e04f221c92ba1a6088aa4b340455344b61c24e6b020b",
+          "writtenUtc": "2026-11-17T07:14:27.492Z"
+        },
+        {
+          "name": "MainChapterPersistenceTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "reportSha256": "57cd86885aeae6280323859a47baead86297991b09aaaf2e3fe33957889203a9",
+          "writtenUtc": "2026-11-17T07:14:30.601Z"
+        },
+        {
+          "name": "MainChapterSocketTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "reportSha256": "08a7dae709ec99ac4dce46670f764e571fffe184be1414e76d8cb0031b1fdfa0",
+          "writtenUtc": "2026-11-17T07:14:34.392Z"
+        },
+        {
+          "name": "HeroLineupBattleTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "reportSha256": "981e7d7d3349a0d8db2befcc80908aef42beb816e168e1257b15e198d528e35e",
+          "writtenUtc": "2026-11-17T07:14:25.248Z"
+        },
+        {
+          "name": "MainChapterRewardTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "reportSha256": "3fa7b6e652919035f8c8ba62034fb7bf1e0b219bda6fa9c28bfb86403d1bf9bf",
+          "writtenUtc": "2026-11-17T07:14:31.678Z"
+        },
+        {
+          "name": "MainChapterIdleTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "reportSha256": "30554be281a15a8396adb459794f109aa8d0a3a1d11472e75c553fad16d13615",
+          "writtenUtc": "2026-11-17T07:14:28.948Z"
+        },
+        {
+          "name": "HeroBattleShieldReplayTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "reportSha256": "d68440ac93732aad23198cffeb2e6e6ae7c778912802e4a78e7d99a0cf7a15c7",
+          "writtenUtc": "2026-11-17T07:14:10.134Z"
+        },
+        {
+          "name": "MainChapterRulesTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "reportSha256": "5f068556788b058cdf2857b716b29f15b83ab2e529850b64665fa4294b18a224",
+          "writtenUtc": "2026-11-17T07:11:00.934Z"
+        },
+        {
+          "name": "MainChapterDependencyAuditTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "reportSha256": "efc93213e7c082315500411fb11a6109d6f9746c0bcd51ec914f182fec257990",
+          "writtenUtc": "2026-11-17T07:32:56.352Z"
+        }
+      ]
+    },
+    "clientSuites": [
+      {
+        "id": "main-chapter-scope",
+        "passed": true,
+        "elapsedMs": 559,
+        "log": "client/temp/project-checks/main-chapter-scope.log",
+        "recordedUtc": "2026-11-17T07:12:00.567Z"
+      },
+      {
+        "id": "main-chapter",
+        "passed": true,
+        "elapsedMs": 2175,
+        "log": "client/temp/project-checks/main-chapter.log",
+        "recordedUtc": "2026-11-17T07:09:18.490Z"
+      },
+      {
+        "id": "main-chapter-settlement",
+        "passed": true,
+        "elapsedMs": 921,
+        "log": "client/temp/project-checks/main-chapter-settlement.log",
+        "recordedUtc": "2026-11-17T07:01:49.134Z"
+      },
+      {
+        "id": "main-chapter-entry-recovery",
+        "passed": true,
+        "elapsedMs": 463,
+        "log": "client/temp/project-checks/main-chapter-entry-recovery.log",
+        "recordedUtc": "2026-11-17T07:12:01.225Z"
+      },
+      {
+        "id": "page-lifecycle-recovery",
+        "passed": true,
+        "elapsedMs": 461,
+        "log": "client/temp/project-checks/page-lifecycle-recovery.log",
+        "recordedUtc": "2026-11-17T07:02:59.393Z"
+      },
+      {
+        "id": "game-protocol",
+        "passed": true,
+        "elapsedMs": 966,
+        "log": "client/temp/project-checks/game-protocol.log",
+        "recordedUtc": "2026-11-17T07:12:00.965Z"
+      },
+      {
+        "id": "main-chapter-idle-protocol",
+        "passed": true,
+        "elapsedMs": 412,
+        "log": "client/temp/project-checks/main-chapter-idle-protocol.log",
+        "recordedUtc": "2026-11-17T07:12:01.505Z"
+      },
+      {
+        "id": "idle-claim-recovery",
+        "passed": true,
+        "elapsedMs": 867,
+        "log": "client/temp/project-checks/idle-claim-recovery.log",
+        "recordedUtc": "2026-11-17T07:12:02.612Z"
+      }
+    ],
+    "typescript": {
+      "passed": true,
+      "compiler": "Creator 3.8.8 bundled TypeScript",
+      "project": "client/tools/tsconfig.remake.json",
+      "mode": "--noEmit"
+    },
+    "wireInterop": {
+      "passed": true,
+      "binaries": [
+        {
+          "file": "backend/target/chapter-config-scope.pb",
+          "bytes": 386,
+          "sha256": "76c6f24d6f0a2d16fd297ae8393f096f341b82899eb812bccbc024372db31a50"
+        },
+        {
+          "file": "backend/target/chapter-config-stage-14.pb",
+          "bytes": 1007,
+          "sha256": "5d374185836417bc4e9daa57ac5093589c3473bf8e64338f255010e7c806f1ea"
+        },
+        {
+          "file": "backend/target/chapter-config-stage-14-frame.pb",
+          "bytes": 1185,
+          "sha256": "e5c39f2b4cbbef4e63575e7408ff523f052989fef9c74270f2741acf3a7fd790"
+        },
+        {
+          "file": "backend/target/chapter-config-stage-6-frame.pb",
+          "bytes": 1184,
+          "sha256": "30d86a059f102a107265fa1c6f167188eafa9846e83cde9b8e7b6f995ce4a01c"
+        }
+      ],
+      "note": "6关仅确认PB解析/Controller-Model互通，不计表现通过"
+    },
+    "auditTool": {
+      "nodeRulesPassed": true,
+      "freshJavaAuditAndSnapshotCheckPassed": true
+    },
+    "protobufGenerationCheckPassed": true,
+    "legacyReplayAndLineupToolsPassed": true,
+    "diffWhitespaceCheckPassed": true,
+    "independentReview": "客户端作者只读复核后端目录/新范围/恢复优先/冻结奖励与预检，未发现阻塞问题",
+    "documentationLinksPassed": true,
+    "diffWhitespaceConvention": "CRLF按仓库约定接受；git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol diff --check通过"
+  },
+  "preview": "docs/validation/main-chapter-config-preview-20261117.json",
+  "remaining": [
+    "正式仍只开放3；后续从第4关10302002、10304005技能与3050300/3021101/3020100/3051101表现恢复，通用实现后重扫。",
+    "挂机生产投影仅20关，后830关需按旧规则扩展；未开放领取。",
+    "53项资源声明未解析；resolved missing=0不代表全部资源完成。",
+    "素材背景存在不代表逐关实际切换接线已完成。",
+    "部分玩家完整属性与先手/助战等仍pending；独立100级样本不代表自然新账号成长。",
+    "551-850关映射须确认来源意图后处理，不猜数值。",
+    "旧日常服务端缺challengeLimit时客户端等待同步；本批未重启日常后端，新字段需正常重启后生效。",
+    "没有验证发布包、真机、MySQL或全850关逐场实际战斗。"
+  ],
+  "sourceSha256": {
+    "protocol/game.proto": "378692588fba5ec887a911308eaf99896be01f750ce8169f3edd35361e954233",
+    "backend/src/main/resources/application.yml": "4ebf0c7448b4b8e61a3f818285dd18fef9f1a44b9d5fba32c69a46071ab5ed70",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterRules.java": "64e05c086493e82a5bf77e66d8465c310fdd111abe7cc8905e1c12b055ed4276",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterService.java": "d7fc63a34893b589f9ddb40b37111eefc18e1e18d9be420e33d7ed3a96641221",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterRewardService.java": "27d45b259678eec8aac9e3f3f122e9a07f2ceee90bb5ea00d543542e265d54c2",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterIdleBattleService.java": "822c3a575b7bc9d11da017d448c815898d00ef07ddd21056ac2a8a966b23eac0",
+    "backend/src/main/java/com/funsgamex/mxzg/hero/HeroBattleChapterScenario.java": "d81abf519040851b61c41f132937740e56254a75c752746f20ba31b016aa0bfc",
+    "backend/src/main/java/com/funsgamex/mxzg/hero/HeroLineupBattleService.java": "9a88b85208ffaed1cc04c03b33f817bf30784729c35fd13b08b45dde6e43efa2",
+    "backend/src/main/java/com/funsgamex/mxzg/network/SessionSnapshotService.java": "647fa9c1fdd7715cbed63537ead01b2b40db73516aac85ff078aa17a111d3d7e",
+    "backend/src/main/java/com/funsgamex/mxzg/network/GameSocketHandler.java": "fd5bfed4292b5caf5afd9d4abf1a42696ab9161c67243ec13540fa397934b5f2",
+    "client/assets/scripts/features/battle/MainChapterModel.ts": "10c82c07cc4e30d89a2555d25cdf31dd8206efd1515a733073f1bf57f426ca97",
+    "client/assets/scripts/features/battle/MainChapterController.ts": "e4cced90b955af50655fc3ee4e67f30a73d376c2632353cc5d0f0363bde21cba",
+    "client/assets/scripts/features/battle/ui/MainChapterView.ts": "93163d9a49502f577919bcd558c3a27f11969f09c5bf275b177252089de44aa2",
+    "client/assets/scripts/features/battle/BattlePreviewController.ts": "1a170c8f1d7c5f189e3fb303a09df508afd913dc04cce9c39c0d878417732edf",
+    "client/assets/scripts/features/battle/utils/BattleReplayUtils.ts": "37a9dcb1ed21793ac7f55a0b99b56a5d4e319efbd246422b3b6f0a65cd0c8af7",
+    "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts": "ef3e5898031d66e3dcb64705e5bc320885765cf2f5e005f1fc3455b09738fa4b",
+    "client/assets/scripts/app/remake/DevelopmentPreview.ts": "4493ef84e4626a3e240720e52dee1b01eb311277d7344b07b388ef216e6654c8",
+    "client/tools/main-chapter-scope-check.ts": "eb1cc3d763cdc86b5de7b90d733f0313313d4895809ef300b8c554dd5fcc6855",
+    "client/tools/check-project.mjs": "57fa86a223b01669e36feca26f2a8013e85c6c3a7d04ff64fc46c723b19275bc",
+    "tools/check_lineup_battle.cjs": "2996c399603217cb43c8f32fe2ba44b9dba0b5ff4e3ff5e625a3fdb73dc98c2e",
+    "tools/serve_battle_replay.cjs": "30e546c60379e3a297bcc94f8c70959fee7b3b9c3f635abf64b56f68e49e66e7",
+    "backend/src/test/java/com/funsgamex/mxzg/MainChapterConfigurationTest.java": "d786777dc4e18d9fb194db8e40a1107db8846f1897d2082cef4a279936d0b3c9",
+    "backend/src/test/java/com/funsgamex/mxzg/MainChapterDependencyAuditTest.java": "c112c827a413feaf4b6c4bdcaca2e1cd3460cdc0d301d0c0508894bf562f68f8",
+    "backend/src/test/java/com/funsgamex/mxzg/MainChapterPersistenceTest.java": "ccf25cfa9804b32fd2883b49ab7f596b096f2f9808c0b97e5f176f90525abc66",
+    "backend/src/test/java/com/funsgamex/mxzg/MainChapterRulesTest.java": "d446b2d6d8494af31ab92af930192b0a9af0de093c080ebfee00e956c9992db4",
+    "backend/src/test/java/com/funsgamex/mxzg/MainChapterSocketTest.java": "bb19a84c53d28bff16fd583156bf019710a8963ff4b315c4c657c476256fd233"
+  }
+}

@@ -160,7 +160,7 @@ class EntryFixture {
                 }
             }
         });
-        this.controller.configureRecoveryFeedback(value => {
+        this.controller.configureSettlementFeedback(value => {
             this.restored.push(value);
             return this.restoreHandler(value);
         }, () => {
@@ -285,7 +285,7 @@ async function checkWarmGuard(kind: "request" | "receipt" | "replay" | "settleme
             fixture.model.replay = { battleId: BATTLE_A, mission: 1, pending: [], bytes: new Uint8Array() };
         } else if (kind === "settlement") {
             fixture.model.settlement = {
-                battleId: BATTLE_A, phase: "pending", presentation: "battle", feedbackQueued: false, presented: false,
+                battleId: BATTLE_A, phase: "pending", presentation: "battle", feedbackReady: false, feedbackQueued: false, presented: false,
             };
         } else {
             fixture.model.busy = true;
@@ -365,7 +365,7 @@ async function checkBoundedRefresh(): Promise<void> {
         await fixture.controller.recoverPendingOnEntry();
         assert.equal(fixture.refreshes, 1);
         fixture.refreshHandler = async () => fixture.accept(state(4, null), Protocol.SESSION_AUTHENTICATE);
-        await fixture.controller.retryRecoveredSettlement();
+        await fixture.controller.retrySettlementFeedback();
         fixture.assertClaims(1);
         assert.equal(fixture.refreshes, 2);
         assert.equal(fixture.restored.length, 1);
@@ -381,14 +381,14 @@ async function checkQueuedRetryAndOwnership(): Promise<void> {
         assert.equal(fixture.model.settlement!.presented, false, "胜利页不能消费恢复奖励");
         fixture.controller.markSettlementPresented(BATTLE_B, "reward");
         assert.equal(fixture.model.settlement!.presented, false, "另一场战斗不能消费反馈");
-        await fixture.controller.retryRecoveredSettlement();
-        await fixture.controller.retryRecoveredSettlement();
+        await fixture.controller.retrySettlementFeedback();
+        await fixture.controller.retrySettlementFeedback();
         assert.equal(fixture.displayRetries, 2);
         fixture.assertClaims(1);
         assert.equal(fixture.restored.length, 1);
         fixture.controller.markSettlementPresented(BATTLE_A, "reward");
         assert.equal(fixture.model.settlement!.presented, true);
-        await fixture.controller.retryRecoveredSettlement();
+        await fixture.controller.retrySettlementFeedback();
         await fixture.controller.recoverPendingOnEntry();
         fixture.accept(state(5, null));
         assert.equal(fixture.displayRetries, 2);
@@ -405,7 +405,7 @@ async function checkNormalSettlementOwnership(): Promise<void> {
         assert.equal(fixture.restored.length, 0);
         fixture.controller.markSettlementPresented(BATTLE_A, "reward");
         assert.equal(fixture.model.settlement!.presented, false);
-        await fixture.controller.retryRecoveredSettlement();
+        await fixture.controller.retrySettlementFeedback();
         assert.equal(fixture.displayRetries, 0);
         fixture.controller.markSettlementPresented(BATTLE_A);
         assert.equal(fixture.model.settlement!.presented, true);
@@ -431,7 +431,7 @@ async function checkProjectionFailure(): Promise<void> {
         await drain();
         assert.equal(fixture.restored.length, 1, "投影失败不能由事件自动循环");
         fixture.restoreHandler = () => "queued";
-        await fixture.controller.retryRecoveredSettlement();
+        await fixture.controller.retrySettlementFeedback();
         assert.equal(fixture.restored.length, 2);
         assert.equal(fixture.model.settlement!.feedbackQueued, true);
         assert.equal(fixture.displayRetries, 0);
@@ -453,7 +453,7 @@ async function checkEmptyFeedback(): Promise<void> {
         await fixture.controller.recoverPendingOnEntry();
         assert.equal(fixture.model.settlement!.presented, true);
         assert.equal(fixture.model.settlement!.feedbackQueued, true);
-        await fixture.controller.retryRecoveredSettlement();
+        await fixture.controller.retrySettlementFeedback();
         await fixture.controller.recoverPendingOnEntry();
         fixture.assertClaims(1);
         assert.equal(fixture.displayRetries, 0);
@@ -545,7 +545,7 @@ async function withRewardViewState(check: () => Promise<void>): Promise<void> {
         model.receipt = receipt();
         model.replay = null;
         model.settlement = {
-            battleId: BATTLE_A, phase: "confirmed", presentation: "reward", feedbackQueued: true, presented: false,
+            battleId: BATTLE_A, phase: "confirmed", presentation: "reward", feedbackReady: true, feedbackQueued: true, presented: false,
         };
         await check();
     } finally {
@@ -560,7 +560,7 @@ async function checkMainViewRecoveryRoute(): Promise<void> {
         const page: any = node.addComponent(MainChapterView);
         const controller = MainChapterController.instance;
         const ui = UIManager.instance;
-        const originalRetry = controller.retryRecoveredSettlement;
+        const originalRetry = controller.retrySettlementFeedback;
         const originalChallenge = controller.challenge;
         const originalClaim = controller.claim;
         const originalOpen = ui.open;
@@ -572,7 +572,7 @@ async function checkMainViewRecoveryRoute(): Promise<void> {
         let windows = 0;
         let notices = 0;
         try {
-            controller.retryRecoveredSettlement = async () => {
+            controller.retrySettlementFeedback = async () => {
                 retries++;
             };
             controller.challenge = async () => {
@@ -595,14 +595,14 @@ async function checkMainViewRecoveryRoute(): Promise<void> {
             };
             const settlement = MainChapterModel.instance.settlement;
             await page.challenge();
-            assert.equal(retries, 1, "恢复奖励按钮必须交给retryRecoveredSettlement");
+            assert.equal(retries, 1, "恢复奖励按钮必须交给retrySettlementFeedback");
             assert.equal(commands, 0, "View不能直接重发领取或生成新挑战");
             assert.equal(plays, 0, "恢复奖励不能转入play或settlementOnly战场");
             assert.equal(windows, 0, "恢复按钮不能直接打开胜利页或其他窗口");
             assert.equal(notices, 0, "路由不能用捕获异常掩盖误入旧流程");
             assert.equal(MainChapterModel.instance.settlement, settlement);
         } finally {
-            controller.retryRecoveredSettlement = originalRetry;
+            controller.retrySettlementFeedback = originalRetry;
             controller.challenge = originalChallenge;
             controller.claim = originalClaim;
             ui.open = originalOpen;

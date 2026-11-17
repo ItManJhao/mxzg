@@ -1,0 +1,1018 @@
+{
+  "date": "2026-11-16",
+  "scope": "Creator本机、独立真实WS/H2；不集中构建、不接日常库",
+  "mainServer": {
+    "pid": 21756,
+    "directory": "G:\\work\\FsGame\\Project\\mxzg\\backend\\target\\role-upgrade-preview-11e2cbfc1ab24e43bf76e81d650450eb",
+    "stopped": true
+  },
+  "mainRun": "be7a33bf937f470d93531a2bcf888d00",
+  "normal": {
+    "account": {
+      "diamonds": 10,
+      "gold": 4000,
+      "level": 2
+    },
+    "condition": "<color=#00FF06>5级</color>开启",
+    "feature": "铁匠铺",
+    "levels": {
+      "afterLevel": 2,
+      "beforeLevel": 1
+    },
+    "opens": [
+      {
+        "items": [
+          {
+            "credited": 10,
+            "itemId": 900002
+          }
+        ],
+        "receiptId": "90247f0d-20e0-4d39-917a-177d5b79674d",
+        "roleUpgrade": {
+          "afterLevel": 2,
+          "beforeLevel": 1
+        }
+      }
+    ],
+    "receipt": {
+      "action": "SETTLED",
+      "actual": {
+        "bonuses": [
+          {
+            "itemId": 900002,
+            "quantity": 10,
+            "source": "ROLE_LEVEL_UP"
+          }
+        ],
+        "experience": [
+          {
+            "accepted": 200,
+            "beforeExperience": 0,
+            "beforeLevel": 1,
+            "diamonds": 10,
+            "experience": 80,
+            "ignored": 0,
+            "level": 2,
+            "requested": 200
+          }
+        ],
+        "items": [
+          {
+            "credited": 100,
+            "ignored": 0,
+            "itemId": 900401,
+            "reason": "NONE",
+            "requested": 100
+          },
+          {
+            "credited": 4000,
+            "ignored": 0,
+            "itemId": 900001,
+            "reason": "NONE",
+            "requested": 4000
+          },
+          {
+            "credited": 200,
+            "ignored": 0,
+            "itemId": 900003,
+            "reason": "NONE",
+            "requested": 200
+          },
+          {
+            "credited": 500,
+            "ignored": 0,
+            "itemId": 900101,
+            "reason": "NONE",
+            "requested": 500
+          },
+          {
+            "credited": 2,
+            "ignored": 0,
+            "itemId": 900102,
+            "reason": "NONE",
+            "requested": 2
+          },
+          {
+            "credited": 30,
+            "ignored": 0,
+            "itemId": 20204004,
+            "reason": "NONE",
+            "requested": 30
+          },
+          {
+            "credited": 1,
+            "ignored": 0,
+            "itemId": 1004001,
+            "reason": "NONE",
+            "requested": 1
+          }
+        ],
+        "roleId": "2e69cb9d-aa96-40af-87ed-6414da287ea8"
+      },
+      "battleId": "90247f0d-20e0-4d39-917a-177d5b79674d",
+      "experience": {
+        "afterExp": 80,
+        "afterLevel": 2,
+        "afterThreshold": 360,
+        "beforeExp": 0,
+        "beforeLevel": 1,
+        "beforeThreshold": 120
+      },
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 20204004,
+          "quantity": 30
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ],
+      "state": {
+        "assetRevision": 5,
+        "maxCleared": 1,
+        "pendingBattleId": null
+      }
+    },
+    "reward": {
+      "acceptedCount": 1,
+      "activeReceiptId": "90247f0d-20e0-4d39-917a-177d5b79674d",
+      "assetRevision": 5,
+      "message": "",
+      "pending": [
+        {
+          "assetRevision": 5,
+          "items": [
+            {
+              "credited": 10,
+              "itemId": 900002
+            }
+          ],
+          "mode": "POPUP",
+          "receiptId": "90247f0d-20e0-4d39-917a-177d5b79674d",
+          "roleId": "2e69cb9d-aa96-40af-87ed-6414da287ea8",
+          "roleUpgrade": {
+            "afterLevel": 2,
+            "beforeLevel": 1
+          },
+          "schemaVersion": 1
+        }
+      ],
+      "phase": "showing",
+      "ready": true
+    },
+    "rows": [
+      {
+        "itemId": 900002,
+        "quantity": 10
+      }
+    ],
+    "ui": {
+      "cached": 0,
+      "intents": 0,
+      "modalActive": 1,
+      "modalNodes": 1,
+      "opening": 0,
+      "pages": 2,
+      "pendingResident": 0,
+      "prepared": 0,
+      "residents": 1
+    }
+  },
+  "noUpgrade": {
+    "opens": 1,
+    "receipt": {
+      "action": "SETTLED",
+      "actual": {
+        "bonuses": [],
+        "experience": [
+          {
+            "accepted": 200,
+            "beforeExperience": 80,
+            "beforeLevel": 2,
+            "diamonds": 0,
+            "experience": 280,
+            "ignored": 0,
+            "level": 2,
+            "requested": 200
+          }
+        ],
+        "items": [
+          {
+            "credited": 100,
+            "ignored": 0,
+            "itemId": 900401,
+            "reason": "NONE",
+            "requested": 100
+          },
+          {
+            "credited": 4000,
+            "ignored": 0,
+            "itemId": 900001,
+            "reason": "NONE",
+            "requested": 4000
+          },
+          {
+            "credited": 151,
+            "ignored": 0,
+            "itemId": 900002,
+            "reason": "NONE",
+            "requested": 151
+          },
+          {
+            "credited": 200,
+            "ignored": 0,
+            "itemId": 900003,
+            "reason": "NONE",
+            "requested": 200
+          },
+          {
+            "credited": 500,
+            "ignored": 0,
+            "itemId": 900101,
+            "reason": "NONE",
+            "requested": 500
+          },
+          {
+            "credited": 2,
+            "ignored": 0,
+            "itemId": 900102,
+            "reason": "NONE",
+            "requested": 2
+          },
+          {
+            "credited": 1,
+            "ignored": 0,
+            "itemId": 1004001,
+            "reason": "NONE",
+            "requested": 1
+          }
+        ],
+        "roleId": "2e69cb9d-aa96-40af-87ed-6414da287ea8"
+      },
+      "battleId": "355f18c9-23fc-4c28-bdbc-5ad678025d5c",
+      "experience": {
+        "afterExp": 280,
+        "afterLevel": 2,
+        "afterThreshold": 360,
+        "beforeExp": 80,
+        "beforeLevel": 2,
+        "beforeThreshold": 360
+      },
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4000
+        },
+        {
+          "itemId": 900002,
+          "quantity": 151
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 500
+        },
+        {
+          "itemId": 900102,
+          "quantity": 2
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 1
+        }
+      ],
+      "state": {
+        "assetRevision": 7,
+        "maxCleared": 2,
+        "pendingBattleId": null
+      }
+    },
+    "reward": {
+      "acceptedCount": 1,
+      "activeReceiptId": null,
+      "assetRevision": 7,
+      "message": "",
+      "pending": [],
+      "phase": "idle",
+      "ready": true
+    },
+    "role": {
+      "diamonds": 161,
+      "gold": 8000,
+      "level": 2
+    }
+  },
+  "coldBefore": {
+    "battleId": "73a8862c-f1bd-4184-8ec1-f65aea2d1d6c",
+    "role": {
+      "diamonds": 161,
+      "level": 2
+    },
+    "state": {
+      "assetRevision": 8,
+      "maxCleared": 3,
+      "pendingBattleId": "73a8862c-f1bd-4184-8ec1-f65aea2d1d6c"
+    }
+  },
+  "cold": {
+    "city": {
+      "diamonds": 161,
+      "level": 2,
+      "main": 0,
+      "state": {
+        "assetRevision": 8,
+        "maxCleared": 3,
+        "pendingBattleId": "73a8862c-f1bd-4184-8ec1-f65aea2d1d6c"
+      }
+    },
+    "max": {
+      "x": 0,
+      "y": 134
+    },
+    "offset": {
+      "x": 0,
+      "y": 134
+    },
+    "opens": [
+      {
+        "items": [
+          {
+            "credited": 100,
+            "itemId": 900401
+          },
+          {
+            "credited": 4200,
+            "itemId": 900001
+          },
+          {
+            "credited": 200,
+            "itemId": 900003
+          },
+          {
+            "credited": 700,
+            "itemId": 900101
+          },
+          {
+            "credited": 1,
+            "itemId": 20005000
+          },
+          {
+            "credited": 1,
+            "itemId": 1003001
+          },
+          {
+            "credited": 10,
+            "itemId": 900002
+          }
+        ],
+        "receiptId": "73a8862c-f1bd-4184-8ec1-f65aea2d1d6c",
+        "roleUpgrade": {
+          "afterLevel": 3,
+          "beforeLevel": 2
+        }
+      }
+    ],
+    "receipt": {
+      "action": "SETTLED",
+      "actual": {
+        "bonuses": [
+          {
+            "itemId": 900002,
+            "quantity": 10,
+            "source": "ROLE_LEVEL_UP"
+          }
+        ],
+        "experience": [
+          {
+            "accepted": 200,
+            "beforeExperience": 280,
+            "beforeLevel": 2,
+            "diamonds": 10,
+            "experience": 120,
+            "ignored": 0,
+            "level": 3,
+            "requested": 200
+          }
+        ],
+        "items": [
+          {
+            "credited": 100,
+            "ignored": 0,
+            "itemId": 900401,
+            "reason": "NONE",
+            "requested": 100
+          },
+          {
+            "credited": 4200,
+            "ignored": 0,
+            "itemId": 900001,
+            "reason": "NONE",
+            "requested": 4200
+          },
+          {
+            "credited": 200,
+            "ignored": 0,
+            "itemId": 900003,
+            "reason": "NONE",
+            "requested": 200
+          },
+          {
+            "credited": 700,
+            "ignored": 0,
+            "itemId": 900101,
+            "reason": "NONE",
+            "requested": 700
+          },
+          {
+            "credited": 1,
+            "ignored": 0,
+            "itemId": 20005000,
+            "reason": "NONE",
+            "requested": 1
+          },
+          {
+            "credited": 1,
+            "ignored": 0,
+            "itemId": 1003001,
+            "reason": "NONE",
+            "requested": 1
+          }
+        ],
+        "roleId": "2e69cb9d-aa96-40af-87ed-6414da287ea8"
+      },
+      "battleId": "73a8862c-f1bd-4184-8ec1-f65aea2d1d6c",
+      "experience": {
+        "afterExp": 120,
+        "afterLevel": 3,
+        "afterThreshold": 720,
+        "beforeExp": 280,
+        "beforeLevel": 2,
+        "beforeThreshold": 360
+      },
+      "rewards": [
+        {
+          "itemId": 900401,
+          "quantity": 100
+        },
+        {
+          "itemId": 900001,
+          "quantity": 4200
+        },
+        {
+          "itemId": 900003,
+          "quantity": 200
+        },
+        {
+          "itemId": 900101,
+          "quantity": 700
+        },
+        {
+          "itemId": 20005000,
+          "quantity": 1
+        },
+        {
+          "itemId": 1003001,
+          "quantity": 1
+        }
+      ],
+      "state": {
+        "assetRevision": 9,
+        "maxCleared": 3,
+        "pendingBattleId": null
+      }
+    },
+    "reward": {
+      "acceptedCount": 1,
+      "activeReceiptId": "73a8862c-f1bd-4184-8ec1-f65aea2d1d6c",
+      "assetRevision": 9,
+      "message": "",
+      "pending": [
+        {
+          "assetRevision": 9,
+          "items": [
+            {
+              "credited": 100,
+              "itemId": 900401
+            },
+            {
+              "credited": 4200,
+              "itemId": 900001
+            },
+            {
+              "credited": 200,
+              "itemId": 900003
+            },
+            {
+              "credited": 700,
+              "itemId": 900101
+            },
+            {
+              "credited": 1,
+              "itemId": 20005000
+            },
+            {
+              "credited": 1,
+              "itemId": 1003001
+            },
+            {
+              "credited": 10,
+              "itemId": 900002
+            }
+          ],
+          "mode": "POPUP",
+          "receiptId": "73a8862c-f1bd-4184-8ec1-f65aea2d1d6c",
+          "roleId": "2e69cb9d-aa96-40af-87ed-6414da287ea8",
+          "roleUpgrade": {
+            "afterLevel": 3,
+            "beforeLevel": 2
+          },
+          "schemaVersion": 1
+        }
+      ],
+      "phase": "showing",
+      "ready": true
+    },
+    "role": {
+      "diamonds": 171,
+      "gold": 12200,
+      "level": 3
+    },
+    "rows": [
+      {
+        "itemId": 900401,
+        "quantity": 100
+      },
+      {
+        "itemId": 900001,
+        "quantity": 4200
+      },
+      {
+        "itemId": 900003,
+        "quantity": 200
+      },
+      {
+        "itemId": 900101,
+        "quantity": 700
+      },
+      {
+        "itemId": 20005000,
+        "quantity": 1
+      },
+      {
+        "itemId": 1003001,
+        "quantity": 1
+      },
+      {
+        "itemId": 900002,
+        "quantity": 10
+      }
+    ],
+    "ui": {
+      "cached": 0,
+      "intents": 0,
+      "modalActive": 1,
+      "modalNodes": 1,
+      "opening": 0,
+      "pages": 2,
+      "pendingResident": 0,
+      "prepared": 0,
+      "residents": 1
+    }
+  },
+  "mainCloseAndDuplicate": {
+    "duplicate": {
+      "accepted": 1,
+      "after": 1,
+      "before": 1
+    },
+    "entry": false,
+    "finalUi": {
+      "cached": 0,
+      "intents": 0,
+      "modalActive": 0,
+      "modalNodes": 1,
+      "opening": 0,
+      "pages": 2,
+      "pendingResident": 0,
+      "prepared": 0,
+      "residents": 0
+    },
+    "opens": 1,
+    "reward": {
+      "acceptedCount": 1,
+      "activeReceiptId": null,
+      "assetRevision": 9,
+      "message": "",
+      "pending": [],
+      "phase": "idle",
+      "ready": true
+    },
+    "role": {
+      "diamonds": 171,
+      "gold": 12200,
+      "level": 3
+    },
+    "ui": {
+      "cached": 0,
+      "intents": 0,
+      "modalActive": 0,
+      "modalNodes": 1,
+      "opening": 0,
+      "pages": 2,
+      "pendingResident": 0,
+      "prepared": 0,
+      "residents": 0
+    }
+  },
+  "idleServer": {
+    "pid": 23032,
+    "run": "d79e3b0234b6496fb0c90ebcfaee0d0c",
+    "phase": "upgrade-enabled",
+    "stopped": true
+  },
+  "idleLiveObservation": {
+    "before": {
+      "level": 1,
+      "experience": 119,
+      "gold": 0
+    },
+    "events": [
+      {
+        "kind": "status-request",
+        "ms": 78509.20000004768
+      },
+      {
+        "kind": "status-response",
+        "ms": 78531.70000004768
+      },
+      {
+        "kind": "claim-request",
+        "ms": 78532
+      },
+      {
+        "kind": "reward-event",
+        "ms": 78659.80000001192
+      },
+      {
+        "kind": "claim-response",
+        "ms": 78694.90000003576
+      },
+      {
+        "kind": "confirmed",
+        "ms": 78696
+      },
+      {
+        "kind": "collect",
+        "ms": 78696.60000002384,
+        "started": true
+      },
+      {
+        "kind": "popup",
+        "ms": 78828.70000004768,
+        "collecting": true
+      }
+    ],
+    "collectCount": 1,
+    "popupCount": 1,
+    "after": {
+      "level": 2,
+      "experience": 69,
+      "gold": 1400,
+      "diamonds": 11
+    },
+    "rows": 6,
+    "source": "刷新前CUA Runtime.evaluate实测输出；最终标题导入触发预览自动重载，内存诊断钩子随旧应用销毁。原成功回执通过真实status取回，未再次领取。"
+  },
+  "idleFinalCaptionReplay": {
+    "after": {
+      "diamonds": 11,
+      "gold": 1400,
+      "level": 2
+    },
+    "before": {
+      "diamonds": 11,
+      "gold": 1400,
+      "level": 2
+    },
+    "entry": false,
+    "header": [
+      "本次获得"
+    ],
+    "levels": {
+      "afterLevel": 2,
+      "beforeLevel": 1
+    },
+    "receipt": {
+      "actual": {
+        "bonuses": [
+          {
+            "itemId": 900002,
+            "quantity": 10,
+            "source": "ROLE_LEVEL_UP"
+          }
+        ],
+        "experience": [
+          {
+            "accepted": 70,
+            "beforeExperience": 119,
+            "beforeLevel": 1,
+            "diamonds": 10,
+            "experience": 69,
+            "ignored": 0,
+            "level": 2,
+            "requested": 70
+          }
+        ],
+        "items": [
+          {
+            "credited": 1400,
+            "ignored": 0,
+            "itemId": 900001,
+            "reason": "NONE",
+            "requested": 1400
+          },
+          {
+            "credited": 1,
+            "ignored": 0,
+            "itemId": 900002,
+            "reason": "NONE",
+            "requested": 1
+          },
+          {
+            "credited": 70,
+            "ignored": 0,
+            "itemId": 900003,
+            "reason": "NONE",
+            "requested": 70
+          },
+          {
+            "credited": 175,
+            "ignored": 0,
+            "itemId": 900101,
+            "reason": "NONE",
+            "requested": 175
+          },
+          {
+            "credited": 88,
+            "ignored": 0,
+            "itemId": 900401,
+            "reason": "NONE",
+            "requested": 88
+          },
+          {
+            "credited": 2,
+            "ignored": 0,
+            "itemId": 1004001,
+            "reason": "NONE",
+            "requested": 2
+          }
+        ],
+        "roleId": "31fed56e-2788-4c61-9459-c396df4005b4",
+        "spirits": {
+          "items": [],
+          "schemaVersion": 1
+        },
+        "stacks": [
+          {
+            "afterQuantity": 175,
+            "beforeQuantity": 0,
+            "instanceId": "88c623f3-fa4d-4c2f-90f6-9987c5430d68",
+            "itemId": 900101,
+            "quantity": 175
+          },
+          {
+            "afterQuantity": 2,
+            "beforeQuantity": 0,
+            "instanceId": "952ddb96-899b-4645-83c8-320d80c942f8",
+            "itemId": 1004001,
+            "quantity": 2
+          }
+        ],
+        "tavern": [
+          {
+            "afterQuantity": 2088,
+            "beforeQuantity": 2000,
+            "limit": 11000
+          }
+        ],
+        "timedItems": [],
+        "wallet": {
+          "diamondsAfter": 11,
+          "diamondsBefore": 0,
+          "goldAfter": 1400,
+          "goldBefore": 0
+        }
+      },
+      "afterOperationVersion": 2,
+      "assetRevision": 4,
+      "beforeOperationVersion": 1,
+      "committedAtSeconds": 1794832637,
+      "expectedOperationVersion": 1,
+      "experience": {
+        "afterExp": 69,
+        "afterLevel": 2,
+        "afterThreshold": 360,
+        "beforeExp": 119,
+        "beforeLevel": 1,
+        "beforeThreshold": 120
+      },
+      "maxSeconds": 21600,
+      "previousStartedAtSeconds": 1794832166,
+      "receiptId": "48f02746-59c0-45b8-9863-8fbd54dca2b5",
+      "requestId": "5b128fe7-9df6-4e6d-9959-8a3e19ef8a05",
+      "rewardStage": 1,
+      "schemaVersion": 1,
+      "seconds": 471,
+      "theoreticalRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 1400
+        },
+        {
+          "itemId": 900002,
+          "quantity": 1
+        },
+        {
+          "itemId": 900003,
+          "quantity": 70
+        },
+        {
+          "itemId": 900101,
+          "quantity": 175
+        },
+        {
+          "itemId": 900401,
+          "quantity": 88
+        },
+        {
+          "itemId": 1004001,
+          "quantity": 2
+        }
+      ]
+    },
+    "reward": {
+      "acceptedCount": 1,
+      "activeReceiptId": "48f02746-59c0-45b8-9863-8fbd54dca2b5",
+      "assetRevision": 4,
+      "message": "",
+      "pending": [
+        {
+          "assetRevision": 4,
+          "items": [
+            {
+              "credited": 1400,
+              "itemId": 900001
+            },
+            {
+              "credited": 11,
+              "itemId": 900002
+            },
+            {
+              "credited": 70,
+              "itemId": 900003
+            },
+            {
+              "credited": 175,
+              "itemId": 900101
+            },
+            {
+              "credited": 88,
+              "itemId": 900401
+            },
+            {
+              "credited": 2,
+              "itemId": 1004001
+            }
+          ],
+          "mode": "POPUP",
+          "receiptId": "48f02746-59c0-45b8-9863-8fbd54dca2b5",
+          "roleId": "31fed56e-2788-4c61-9459-c396df4005b4",
+          "roleUpgrade": {
+            "afterLevel": 2,
+            "beforeLevel": 1
+          },
+          "schemaVersion": 1
+        }
+      ],
+      "phase": "showing",
+      "ready": true
+    },
+    "rows": [
+      {
+        "itemId": 900001,
+        "quantity": 1400
+      },
+      {
+        "itemId": 900002,
+        "quantity": 11
+      },
+      {
+        "itemId": 900003,
+        "quantity": 70
+      },
+      {
+        "itemId": 900101,
+        "quantity": 175
+      },
+      {
+        "itemId": 900401,
+        "quantity": 88
+      },
+      {
+        "itemId": 1004001,
+        "quantity": 2
+      }
+    ]
+  },
+  "idleCleanup": {
+    "entry": false,
+    "reward": {
+      "acceptedCount": 1,
+      "activeReceiptId": null,
+      "assetRevision": 4,
+      "message": "",
+      "pending": [],
+      "phase": "idle",
+      "ready": true
+    },
+    "role": {
+      "diamonds": 11,
+      "gold": 1400,
+      "level": 2
+    },
+    "ui": {
+      "cached": 0,
+      "intents": 0,
+      "modalActive": 0,
+      "modalNodes": 1,
+      "opening": 0,
+      "pages": 1,
+      "pendingResident": 0,
+      "prepared": 0,
+      "residents": 0
+    }
+  },
+  "serverSummary": [
+    {
+      "id": "31fed56e-2788-4c61-9459-c396df4005b4",
+      "login_account": "idle_direct",
+      "gold": 1400,
+      "diamonds": 11,
+      "role_level": 2,
+      "role_experience": 69,
+      "asset_revision": 4,
+      "started_at": 1794832637,
+      "operation_version": 2,
+      "receipt_count": 1,
+      "stack_rows": 2,
+      "timed_rows": 0,
+      "spirit_rows": 0,
+      "adventure_count": 2088,
+      "legacy_tavern_stack_rows": 0
+    }
+  ],
+  "screenshots": [
+    "docs/images/role-upgrade-normal-preview-20261116.jpg",
+    "docs/images/role-upgrade-cold-scroll-preview-20261116.jpg",
+    "docs/images/role-upgrade-final-preview-20261116.jpg"
+  ],
+  "notes": [
+    "前两张为初轮标题“升级奖励”；发现冷all可含基础量后，最终统一“本次获得”，末张已用重导入的实际Prefab核验。",
+    "最终文案阶段由只读chapter.idle.claim.status取原成功回执，显式复用通用展示；这是受控历史重放，不声称它是自动冷恢复或第二次领取。",
+    "重导入导致预览自动重载后，旧诊断钩子不存在，首次诊断导出遇到测试脚本TypeError；后续用真实历史回执恢复记录，产品无相应异常。",
+    "主线重复交付实测一次、重开无重弹；挂机升级实时链只实测一次，重复通知边界另由专项覆盖。"
+  ],
+  "limits": [
+    "最高等级/多段经验链/无奖励升级/SILENT/TIPS/高等级同阈值由专项而非全部实际画面覆盖。",
+    "未做发布包、MySQL、真机/OS后台/崩溃断电或所有旧经验来源验收；领取仍关闭。",
+    "两个独立服已停止、两个临时标签已关闭；主线内存夹具进程按PID/启动时间/Java路径核归属停止。"
+  ]
+}

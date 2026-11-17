@@ -1,0 +1,3405 @@
+{
+  "date": "2026-11-16",
+  "timezone": "Asia/Shanghai",
+  "oldRoot": "G:/work/FsGame/Demo/mj/program/",
+  "scope": "核对旧角色升级反馈、实际下一功能候选与资源；本批额外按负责人决定保存旧Lua原样快照及可复现只读提示投影，不开放功能或领取、不构建、不提交。",
+  "primaryFindings": [
+    {
+      "topic": "唯一升级触发与实际附赠",
+      "conclusion": "角色经验道具先经RoleExpProcessor合并数量并调用RoleService.addExp；RoleService依离开等级的CMainLevel.exp逐级扣经验并累加该等级reward。只在oldLv!=current时用LEVEL_REWARD+SLIENT实际发放附赠，再写2014。未升级不发2014；到服务器配置最高级立即返回，升级至最高级把剩余经验清0。原经验Rewards与独立等级附赠不是同一份列表。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/processor/RoleExpProcessor.java",
+          "line": 41,
+          "endLine": 45
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/role/service/RoleService.java",
+          "line": 270,
+          "endLine": 305
+        },
+        {
+          "path": "server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/entity/CMainLevel.java",
+          "line": 14,
+          "endLine": 32
+        },
+        {
+          "path": "server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/MainLevelSysCache.java",
+          "line": 18,
+          "endLine": 29
+        }
+      ]
+    },
+    {
+      "topic": "2014完整字段与体力边界",
+      "conclusion": "GResRoleUpgradeReward只有level_beford(旧拼写)、level_current、now_exp及PSBackpackData list。没有体力当前值/上限/恢复量、下一功能或领取参数。RoleUpgradeCtr和RoleUpgradeLayer.ccb展示前后冒险者等级、奖励及功能预告，无体力节点。不能从通用language体力词条推导升级回体力。",
+      "evidence": [
+        {
+          "path": "mxzg-protofiles/protofiles/game/Role.proto",
+          "line": 187,
+          "endLine": 195
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/role/service/RoleService.java",
+          "line": 296,
+          "endLine": 301
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 89,
+          "endLine": 167
+        },
+        {
+          "path": "client/cocos_mxzg/client/ccb-hd/Resources/RoleUpgradeLayer.ccb",
+          "line": 327,
+          "endLine": 583
+        }
+      ]
+    },
+    {
+      "topic": "客户端读包和资产边界",
+      "conclusion": "RoleResponse.roleUpgrade把list转成item_id/type/num并立即打开专用RoleUpgradeCtr；now_exp仅读入局部，给ex.Player.exp赋值的行已注释，顶栏调用setExp(level_current,ex.Player.exp)。资产增加仍由5002的Player.addItem处理；2014不再次加奖励。玩家经验5002还会在Player.addItem中按mainlevel本地推进等级，此旧流程不应作为新版服务端权威状态的依据。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/RoleResponse.lua",
+          "line": 590,
+          "endLine": 619
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BackpackResponse.lua",
+          "line": 21,
+          "endLine": 57
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/data/Player.lua",
+          "line": 169,
+          "endLine": 196
+        }
+      ]
+    },
+    {
+      "topic": "通用与专用反馈边界",
+      "conclusion": "升级奖励实际发放走共用ThingService但NoticeType.SLIENT；2014交专用RoleUpgradeCtr，不走type1的ItemRewardCtr。专页复用backpack_data:createWithData和通用物品详情点击，并把重复item_type相加后展示。升级页不负责发奖或领取。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/role/service/RoleService.java",
+          "line": 293,
+          "endLine": 301
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 72,
+          "endLine": 86
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 101,
+          "endLine": 128
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 182,
+          "endLine": 211
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BackpackResponse.lua",
+          "line": 42,
+          "endLine": 57
+        }
+      ]
+    },
+    {
+      "topic": "源代码时序与并发窗口",
+      "conclusion": "同步源码顺序为独立附赠的静默5002写出→2014写出→RoleLvUp/RoleExpAdd事件→返回RoleExpProcessor→外层ThingService发经验/其他奖励5002及原业务回包。只证明源码调用顺序，不保证网络交付先后。RoleResponse不等待战斗胜利页、通用奖励窗或主城就绪；RoleUpgradeCtr.setIsSingle(false)可叠窗，已经打开时直接return，没有升级反馈队列。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/ThingService.java",
+          "line": 188,
+          "endLine": 203
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/observer/ThingObserver.java",
+          "line": 34,
+          "endLine": 79
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/role/service/RoleService.java",
+          "line": 293,
+          "endLine": 305
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 63,
+          "endLine": 86
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/RoleResponse.lua",
+          "line": 590,
+          "endLine": 631
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/comp/LuaNodeCtr.lua",
+          "line": 39,
+          "endLine": 69
+        }
+      ]
+    },
+    {
+      "topic": "触发来源并非主线专属",
+      "conclusion": "普通经验发放经RoleExpProcessor触发，不限制GameEvent为主线；旧挂机/首通等真实发放经验均复用此链。另一处直接调用是GM ADD_ROLE_EXP。RoleResponse在开升级页后另刷新活动升级奖励红点、请求活动列表、发ROLE_LEVEL事件、执行GuideLevelCtr及试炼/冥域红点；这些后续模块副作用不等于升级奖励或本批恢复授权。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/processor/RoleExpProcessor.java",
+          "line": 42,
+          "endLine": 45
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/role/handler/GmHandler.java",
+          "line": 310,
+          "endLine": 317
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/RoleResponse.lua",
+          "line": 619,
+          "endLine": 641
+        }
+      ]
+    },
+    {
+      "topic": "下一功能候选来自配置父子集合",
+      "conclusion": "JumpManager构造时从opencondition建立system_data：parent空串的配置创建自身键，非空parent创建父键并收录子项；getSystemData返回这个集合。与initJumpData导入的五张任务跳转表是两个不同集合。RoleUpgradeCtr仅遍历system_data的键回查opencondition，不遍历手写功能路由，也不只取已实现模块。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/ex/JumpManager.lua",
+          "line": 3,
+          "endLine": 42
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/ex/JumpManager.lua",
+          "line": 89,
+          "endLine": 94
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 35,
+          "endLine": 55
+        }
+      ]
+    },
+    {
+      "topic": "下一功能的真实筛选及非筛选项",
+      "conclusion": "条件严格为condition_type==1且open不是4/5，排序仅condition_value升序，取严格大于当前等级的第一项。代码没有额外排除open=0/2，也不检查parent子节点、funcopen.isVisible/渠道、world_level或实际功能是否可打开；实际checkOpenCondition才另查世界等级与显隐。下一功能是预告，不开放跳转或资格。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 35,
+          "endLine": 55
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/ex/JumpManager.lua",
+          "line": 65,
+          "endLine": 86
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/ex/JumpManager.lua",
+          "line": 97,
+          "endLine": 132
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/common/CommonDefine.lua",
+          "line": 720,
+          "endLine": 726
+        }
+      ]
+    },
+    {
+      "topic": "真实提示文字及图片",
+      "conclusion": "名称/描述分别使用opencondition.name/desc作language键，开启条件用language[47576]格式化condition_value；图标先查main-city/up-{atom}.png，缺帧回退main-city/icon-{atom}.png。不是mainlevel或通关章节表给下一功能。无下一项隐藏图标/名称/描述并返回；没有展示已开放功能或奖励新资产。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 144,
+          "endLine": 167
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/config/language.lua",
+          "line": 13437,
+          "endLine": 13438
+        }
+      ]
+    },
+    {
+      "topic": "冷重登与重复触发边界",
+      "conclusion": "本次检索RoleUpgradeCtr:openWindow只有2014处理调用；没有在读取角色首包/冷重登时从前后等级恢复该专页的调用。已打开时后续2014被openWindow直接忽略。旧代码未提供持久展示回执；新版若复用原业务实际经验/奖励与回执恢复，须明确是可靠性改进，不能声称旧源码已有。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/RoleResponse.lua",
+          "line": 619
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 72,
+          "endLine": 75
+        }
+      ]
+    }
+  ],
+  "nextFunctionConfiguration": {
+    "legacySource": "client/cocos_mxzg/client/idle/src/config/opencondition.lua",
+    "legacy": {
+      "rawRowCount": 205,
+      "runtimeUniqueCount": 204,
+      "systemKeyCount": 190,
+      "systemKeys": [
+        "act_achievement",
+        "act_adven_note",
+        "act_altar_reborn",
+        "act_appreciate_moon",
+        "act_appreciate_moon_slot",
+        "act_appreciate_moon_task",
+        "act_appreciate_moon_yue",
+        "act_black_friday",
+        "act_black_friday_81",
+        "act_black_friday_82",
+        "act_buy_fashion",
+        "act_buy_gold",
+        "act_christmas",
+        "act_christmas_connection",
+        "act_christmas_discount",
+        "act_christmas_fantasynight",
+        "act_christmas_giftbox",
+        "act_christmas_happy",
+        "act_christmas_surprise_blind_box",
+        "act_clan_boss",
+        "act_clan_gvg",
+        "act_clergy_privilege",
+        "act_continuity_welfare",
+        "act_daily_gift",
+        "act_daily_gift_shop",
+        "act_daily_recharge_gift",
+        "act_day_first_recharge",
+        "act_day_first_recharge_one",
+        "act_day_first_recharge_two",
+        "act_develop_gift_activity",
+        "act_develop_gift_activity_fetter",
+        "act_develop_gift_activity_gold",
+        "act_develop_gift_activity_hero",
+        "act_dragonboat_gift",
+        "act_dragonboat_taks",
+        "act_festival_gift",
+        "act_five_one_draw",
+        "act_growth_fund",
+        "act_halloween",
+        "act_halloween_gacha",
+        "act_halloween_package",
+        "act_halloween_task",
+        "act_happy_month",
+        "act_hero_arrive",
+        "act_hero_shop",
+        "act_invitation",
+        "act_limit_gift",
+        "act_limit_time_activity",
+        "act_limit_time_server",
+        "act_mid_autumn",
+        "act_month_card",
+        "act_month_card_normal",
+        "act_month_gift",
+        "act_month_invest",
+        "act_mystery_box",
+        "act_new_server_limit_activity",
+        "act_new_year",
+        "act_online_reward",
+        "act_privilege",
+        "act_privilege_shop",
+        "act_recharge",
+        "act_recharge_day_reward",
+        "act_recharge_first",
+        "act_recharge_first_one",
+        "act_recharge_first_two",
+        "act_recharge_growth",
+        "act_recharge_smart",
+        "act_secret_treasure",
+        "act_secret_treasure_package",
+        "act_secret_treasure_task",
+        "act_seven_artifact",
+        "act_seven_artifact_package",
+        "act_sevent_day_christmass_gift",
+        "act_sevent_day_gift",
+        "act_sevent_day_target",
+        "act_sign_in",
+        "act_spring",
+        "act_spring_dice",
+        "act_spring_eggs",
+        "act_spring_outing",
+        "act_spring_travel",
+        "act_super_gift",
+        "act_super_hero",
+        "act_supre_gift",
+        "act_war_order",
+        "act_week_gift",
+        "act_welfare",
+        "backpack_hallows",
+        "backpack_magic_wand",
+        "backpack_runes",
+        "bag_god_equip",
+        "comments_reward",
+        "fetter_cast_soul",
+        "go_to_twitter",
+        "hero_astrolabe",
+        "hero_comments",
+        "hero_hexagram",
+        "hero_magic_wand",
+        "hero_skin_shop",
+        "magic_tower",
+        "magic_tower_buy_king",
+        "main_alice_unicorn",
+        "main_alice_wonderland",
+        "main_altar",
+        "main_ancient",
+        "main_battle",
+        "main_black_market",
+        "main_black_market_exotic_adventure",
+        "main_black_market_floating_islands",
+        "main_black_market_stage",
+        "main_black_market_time_tower",
+        "main_blessingpool",
+        "main_champion",
+        "main_champion_cross",
+        "main_champion_cross_like",
+        "main_champion_cross_notcheck",
+        "main_champion_cross_shop",
+        "main_champion_like",
+        "main_champion_notcheck",
+        "main_chat",
+        "main_chsd",
+        "main_clan",
+        "main_clan_boss",
+        "main_clan_gvg",
+        "main_country_war",
+        "main_country_war_city",
+        "main_crusade_group",
+        "main_crusade_group_god_arms",
+        "main_dragon",
+        "main_dress",
+        "main_dungeon",
+        "main_exotic_adventure",
+        "main_fantasy_land",
+        "main_fantasy_tower",
+        "main_fetter",
+        "main_fetter_Illusion",
+        "main_floating_islands",
+        "main_friend",
+        "main_god_equip_illustration",
+        "main_god_equip_shop",
+        "main_god_equip_summon",
+        "main_god_equip_wear_show",
+        "main_god_relic",
+        "main_god_relic_list",
+        "main_hero",
+        "main_hero_make",
+        "main_hero_palace",
+        "main_hero_pernute",
+        "main_hero_recommend",
+        "main_hero_rollback",
+        "main_infinite",
+        "main_ladder_shop",
+        "main_ladder_war",
+        "main_magic_cube",
+        "main_mail",
+        "main_mission",
+        "main_mission_hall",
+        "main_plane_war",
+        "main_prophet_tree",
+        "main_proving_lang",
+        "main_pub_task",
+        "main_pvp",
+        "main_pvp_shop",
+        "main_rank",
+        "main_shop",
+        "main_smith_shop",
+        "main_smith_shop_gem",
+        "main_smith_shop_god_equip",
+        "main_smith_shop_sprite",
+        "main_soul_illustration",
+        "main_space_time_magic_tower",
+        "main_summon",
+        "main_summon_wish",
+        "main_super_stage",
+        "main_super_stage_token",
+        "main_talent_shop",
+        "main_team_arena",
+        "main_trial_shop",
+        "main_underworld_pagoda",
+        "main_video_studio",
+        "main_vip",
+        "main_zsjt_shop",
+        "off_line_reward",
+        "role_exchange",
+        "team_arena_team_main",
+        "team_arena_team_main_my_team",
+        "team_arena_team_main_recv_invite",
+        "team_arena_team_main_team",
+        "thumb_up_to_share",
+        "twitter_share"
+      ],
+      "missingParentKeys": [],
+      "candidateCount": 34,
+      "candidateRows": [
+        {
+          "atom": "main_hero",
+          "line": 27,
+          "idx": 3,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "英雄导航界面",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "main_battle",
+          "line": 39,
+          "idx": 4,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "战斗导航界面",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "main_hero_make",
+          "line": 63,
+          "idx": 6,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "创造法阵",
+          "parent": "",
+          "name": 4304,
+          "desc": 4204
+        },
+        {
+          "atom": "main_summon",
+          "line": 75,
+          "idx": 7,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "召唤法阵",
+          "parent": "",
+          "name": 4305,
+          "desc": 4205
+        },
+        {
+          "atom": "main_shop",
+          "line": 99,
+          "idx": 9,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "商店",
+          "parent": "",
+          "name": 4307,
+          "desc": ""
+        },
+        {
+          "atom": "main_fetter",
+          "line": 195,
+          "idx": 17,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "羁绊",
+          "parent": "",
+          "name": 4315,
+          "desc": 4214
+        },
+        {
+          "atom": "main_friend",
+          "line": 219,
+          "idx": 19,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "好友",
+          "parent": "",
+          "name": 4317,
+          "desc": ""
+        },
+        {
+          "atom": "main_mail",
+          "line": 231,
+          "idx": 20,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "邮件",
+          "parent": "",
+          "name": 4318,
+          "desc": ""
+        },
+        {
+          "atom": "main_chat",
+          "line": 243,
+          "idx": 21,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "聊天",
+          "parent": "",
+          "name": 4319,
+          "desc": ""
+        },
+        {
+          "atom": "main_rank",
+          "line": 255,
+          "idx": 22,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "排行榜",
+          "parent": "",
+          "name": 4320,
+          "desc": 4216
+        },
+        {
+          "atom": "main_hero_recommend",
+          "line": 267,
+          "idx": 23,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "英雄推荐",
+          "parent": "",
+          "name": 4321,
+          "desc": ""
+        },
+        {
+          "atom": "main_black_market",
+          "line": 279,
+          "idx": 24,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "黑市",
+          "parent": "",
+          "name": 4322,
+          "desc": ""
+        },
+        {
+          "atom": "main_black_market_stage",
+          "line": 291,
+          "idx": 25,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "黑市-段位",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "act_online_reward",
+          "line": 435,
+          "idx": 37,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "在线奖励",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "act_buy_gold",
+          "line": 471,
+          "idx": 40,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "点金",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "act_mid_autumn",
+          "line": 567,
+          "idx": 48,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "中秋礼包",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "main_dress",
+          "line": 615,
+          "idx": 52,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "装饰",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "act_month_card",
+          "line": 627,
+          "idx": 53,
+          "open": 0,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "福利-至尊月卡",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "backpack_runes",
+          "line": 1407,
+          "idx": 118,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "精灵背包",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "backpack_hallows",
+          "line": 1419,
+          "idx": 119,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 1,
+          "world_level": 1,
+          "note": "圣物背包",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        {
+          "atom": "main_smith_shop",
+          "line": 111,
+          "idx": 10,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 5,
+          "world_level": 1,
+          "note": "铁匠铺",
+          "parent": "",
+          "name": 4308,
+          "desc": 4207
+        },
+        {
+          "atom": "main_pvp",
+          "line": 171,
+          "idx": 15,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 8,
+          "world_level": 1,
+          "note": "竞技场",
+          "parent": "",
+          "name": 4313,
+          "desc": 4212
+        },
+        {
+          "atom": "main_blessingpool",
+          "line": 87,
+          "idx": 8,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 10,
+          "world_level": 1,
+          "note": "许愿池",
+          "parent": "",
+          "name": 4306,
+          "desc": 4206
+        },
+        {
+          "atom": "main_pub_task",
+          "line": 123,
+          "idx": 11,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 12,
+          "world_level": 1,
+          "note": "咖啡馆",
+          "parent": "",
+          "name": 4309,
+          "desc": 4208
+        },
+        {
+          "atom": "main_mission",
+          "line": 15,
+          "idx": 2,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 15,
+          "world_level": 1,
+          "note": "日常副本",
+          "parent": "",
+          "name": 4302,
+          "desc": 4202
+        },
+        {
+          "atom": "main_fantasy_tower",
+          "line": 207,
+          "idx": 18,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 16,
+          "world_level": 1,
+          "note": "幻境之塔",
+          "parent": "",
+          "name": 4316,
+          "desc": 4215
+        },
+        {
+          "atom": "main_clan",
+          "line": 3,
+          "idx": 1,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 18,
+          "world_level": 1,
+          "note": "公会",
+          "parent": "",
+          "name": 4301,
+          "desc": 4201
+        },
+        {
+          "atom": "main_fantasy_land",
+          "line": 159,
+          "idx": 14,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 18,
+          "world_level": 1,
+          "note": "跨服时空",
+          "parent": "",
+          "name": 4312,
+          "desc": 4211
+        },
+        {
+          "atom": "main_altar",
+          "line": 135,
+          "idx": 12,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 20,
+          "world_level": 1,
+          "note": "祭坛",
+          "parent": "",
+          "name": 4310,
+          "desc": 4209
+        },
+        {
+          "atom": "main_prophet_tree",
+          "line": 147,
+          "idx": 13,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 20,
+          "world_level": 1,
+          "note": "先知之树",
+          "parent": "",
+          "name": 4311,
+          "desc": 4210
+        },
+        {
+          "atom": "main_proving_lang",
+          "line": 183,
+          "idx": 16,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 30,
+          "world_level": 1,
+          "note": "勇者试炼",
+          "parent": "",
+          "name": 4314,
+          "desc": 4213
+        },
+        {
+          "atom": "main_hero_pernute",
+          "line": 819,
+          "idx": 69,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 32,
+          "world_level": 1,
+          "note": "时光神殿-英雄置换",
+          "parent": "",
+          "name": 4330,
+          "desc": 4218
+        },
+        {
+          "atom": "main_dungeon",
+          "line": 51,
+          "idx": 5,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 50,
+          "world_level": 1,
+          "note": "月神庇护所",
+          "parent": "",
+          "name": 4303,
+          "desc": 4203
+        },
+        {
+          "atom": "main_ancient",
+          "line": 1227,
+          "idx": 103,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 50,
+          "world_level": 1,
+          "note": "远古战场",
+          "parent": "",
+          "name": 4325,
+          "desc": 4217
+        }
+      ],
+      "futureCandidateCount": 14,
+      "futureCandidateRows": [
+        {
+          "atom": "main_smith_shop",
+          "line": 111,
+          "idx": 10,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 5,
+          "world_level": 1,
+          "note": "铁匠铺",
+          "parent": "",
+          "name": 4308,
+          "desc": 4207
+        },
+        {
+          "atom": "main_pvp",
+          "line": 171,
+          "idx": 15,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 8,
+          "world_level": 1,
+          "note": "竞技场",
+          "parent": "",
+          "name": 4313,
+          "desc": 4212
+        },
+        {
+          "atom": "main_blessingpool",
+          "line": 87,
+          "idx": 8,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 10,
+          "world_level": 1,
+          "note": "许愿池",
+          "parent": "",
+          "name": 4306,
+          "desc": 4206
+        },
+        {
+          "atom": "main_pub_task",
+          "line": 123,
+          "idx": 11,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 12,
+          "world_level": 1,
+          "note": "咖啡馆",
+          "parent": "",
+          "name": 4309,
+          "desc": 4208
+        },
+        {
+          "atom": "main_mission",
+          "line": 15,
+          "idx": 2,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 15,
+          "world_level": 1,
+          "note": "日常副本",
+          "parent": "",
+          "name": 4302,
+          "desc": 4202
+        },
+        {
+          "atom": "main_fantasy_tower",
+          "line": 207,
+          "idx": 18,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 16,
+          "world_level": 1,
+          "note": "幻境之塔",
+          "parent": "",
+          "name": 4316,
+          "desc": 4215
+        },
+        {
+          "atom": "main_clan",
+          "line": 3,
+          "idx": 1,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 18,
+          "world_level": 1,
+          "note": "公会",
+          "parent": "",
+          "name": 4301,
+          "desc": 4201
+        },
+        {
+          "atom": "main_fantasy_land",
+          "line": 159,
+          "idx": 14,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 18,
+          "world_level": 1,
+          "note": "跨服时空",
+          "parent": "",
+          "name": 4312,
+          "desc": 4211
+        },
+        {
+          "atom": "main_altar",
+          "line": 135,
+          "idx": 12,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 20,
+          "world_level": 1,
+          "note": "祭坛",
+          "parent": "",
+          "name": 4310,
+          "desc": 4209
+        },
+        {
+          "atom": "main_prophet_tree",
+          "line": 147,
+          "idx": 13,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 20,
+          "world_level": 1,
+          "note": "先知之树",
+          "parent": "",
+          "name": 4311,
+          "desc": 4210
+        },
+        {
+          "atom": "main_proving_lang",
+          "line": 183,
+          "idx": 16,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 30,
+          "world_level": 1,
+          "note": "勇者试炼",
+          "parent": "",
+          "name": 4314,
+          "desc": 4213
+        },
+        {
+          "atom": "main_hero_pernute",
+          "line": 819,
+          "idx": 69,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 32,
+          "world_level": 1,
+          "note": "时光神殿-英雄置换",
+          "parent": "",
+          "name": 4330,
+          "desc": 4218
+        },
+        {
+          "atom": "main_dungeon",
+          "line": 51,
+          "idx": 5,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 50,
+          "world_level": 1,
+          "note": "月神庇护所",
+          "parent": "",
+          "name": 4303,
+          "desc": 4203
+        },
+        {
+          "atom": "main_ancient",
+          "line": 1227,
+          "idx": 103,
+          "open": 1,
+          "condition_type": 1,
+          "condition_value": 50,
+          "world_level": 1,
+          "note": "远古战场",
+          "parent": "",
+          "name": 4325,
+          "desc": 4217
+        }
+      ],
+      "sameLevelTies": [
+        {
+          "level": 18,
+          "atoms": [
+            "main_clan",
+            "main_fantasy_land"
+          ]
+        },
+        {
+          "level": 20,
+          "atoms": [
+            "main_altar",
+            "main_prophet_tree"
+          ]
+        },
+        {
+          "level": 50,
+          "atoms": [
+            "main_dungeon",
+            "main_ancient"
+          ]
+        }
+      ],
+      "duplicateKeys": [
+        {
+          "atom": "act_recharge_day_reward",
+          "definitions": [
+            {
+              "atom": "act_recharge_day_reward",
+              "line": 1011,
+              "idx": 85,
+              "open": 5,
+              "condition_type": 1,
+              "condition_value": 6,
+              "world_level": 1,
+              "note": "福利-积天豪礼",
+              "parent": "",
+              "name": "",
+              "desc": ""
+            },
+            {
+              "atom": "act_recharge_day_reward",
+              "line": 1611,
+              "idx": 135,
+              "open": 5,
+              "condition_type": 1,
+              "condition_value": 13,
+              "world_level": 1,
+              "note": "积天累充",
+              "parent": "",
+              "name": "",
+              "desc": ""
+            }
+          ]
+        }
+      ]
+    },
+    "sortingNote": "证据为便于人工比较以condition_value、idx排序列出；旧运行时只比较condition_value，没有idx/atom同值规则，列表顺序不能当成旧同级最终选择。",
+    "legacyNextSamples": [
+      {
+        "level": 1,
+        "nextThreshold": 5,
+        "possibleAtoms": [
+          "main_smith_shop"
+        ]
+      },
+      {
+        "level": 2,
+        "nextThreshold": 5,
+        "possibleAtoms": [
+          "main_smith_shop"
+        ]
+      },
+      {
+        "level": 3,
+        "nextThreshold": 5,
+        "possibleAtoms": [
+          "main_smith_shop"
+        ]
+      },
+      {
+        "level": 4,
+        "nextThreshold": 5,
+        "possibleAtoms": [
+          "main_smith_shop"
+        ]
+      },
+      {
+        "level": 5,
+        "nextThreshold": 8,
+        "possibleAtoms": [
+          "main_pvp"
+        ]
+      },
+      {
+        "level": 7,
+        "nextThreshold": 8,
+        "possibleAtoms": [
+          "main_pvp"
+        ]
+      },
+      {
+        "level": 8,
+        "nextThreshold": 10,
+        "possibleAtoms": [
+          "main_blessingpool"
+        ]
+      },
+      {
+        "level": 9,
+        "nextThreshold": 10,
+        "possibleAtoms": [
+          "main_blessingpool"
+        ]
+      },
+      {
+        "level": 10,
+        "nextThreshold": 12,
+        "possibleAtoms": [
+          "main_pub_task"
+        ]
+      },
+      {
+        "level": 11,
+        "nextThreshold": 12,
+        "possibleAtoms": [
+          "main_pub_task"
+        ]
+      },
+      {
+        "level": 12,
+        "nextThreshold": 15,
+        "possibleAtoms": [
+          "main_mission"
+        ]
+      },
+      {
+        "level": 14,
+        "nextThreshold": 15,
+        "possibleAtoms": [
+          "main_mission"
+        ]
+      },
+      {
+        "level": 15,
+        "nextThreshold": 16,
+        "possibleAtoms": [
+          "main_fantasy_tower"
+        ]
+      },
+      {
+        "level": 16,
+        "nextThreshold": 18,
+        "possibleAtoms": [
+          "main_clan",
+          "main_fantasy_land"
+        ]
+      },
+      {
+        "level": 17,
+        "nextThreshold": 18,
+        "possibleAtoms": [
+          "main_clan",
+          "main_fantasy_land"
+        ]
+      },
+      {
+        "level": 18,
+        "nextThreshold": 20,
+        "possibleAtoms": [
+          "main_altar",
+          "main_prophet_tree"
+        ]
+      },
+      {
+        "level": 19,
+        "nextThreshold": 20,
+        "possibleAtoms": [
+          "main_altar",
+          "main_prophet_tree"
+        ]
+      },
+      {
+        "level": 20,
+        "nextThreshold": 30,
+        "possibleAtoms": [
+          "main_proving_lang"
+        ]
+      },
+      {
+        "level": 29,
+        "nextThreshold": 30,
+        "possibleAtoms": [
+          "main_proving_lang"
+        ]
+      },
+      {
+        "level": 30,
+        "nextThreshold": 32,
+        "possibleAtoms": [
+          "main_hero_pernute"
+        ]
+      },
+      {
+        "level": 31,
+        "nextThreshold": 32,
+        "possibleAtoms": [
+          "main_hero_pernute"
+        ]
+      },
+      {
+        "level": 32,
+        "nextThreshold": 50,
+        "possibleAtoms": [
+          "main_dungeon",
+          "main_ancient"
+        ]
+      },
+      {
+        "level": 49,
+        "nextThreshold": 50,
+        "possibleAtoms": [
+          "main_dungeon",
+          "main_ancient"
+        ]
+      },
+      {
+        "level": 50,
+        "nextThreshold": null,
+        "possibleAtoms": []
+      },
+      {
+        "level": 94,
+        "nextThreshold": null,
+        "possibleAtoms": []
+      },
+      {
+        "level": 95,
+        "nextThreshold": null,
+        "possibleAtoms": []
+      }
+    ],
+    "currentWorkbook": {
+      "path": "config/gameconfig/opencondition.xlsx",
+      "sheet": "",
+      "headerRow": 3,
+      "normalization": "仅统计有非空atom和数值idx的行；空白单元格按空串，数值字段转换数字。重复atom为单独风险，runtime对比采用最后定义覆盖以匹配旧Lua字面量语义。",
+      "rawRowCount": 213,
+      "runtimeUniqueCount": 213,
+      "systemKeyCount": 198,
+      "systemKeys": [
+        "act_achievement",
+        "act_adven_note",
+        "act_altar_reborn",
+        "act_appreciate_moon",
+        "act_appreciate_moon_slot",
+        "act_appreciate_moon_task",
+        "act_appreciate_moon_yue",
+        "act_black_friday",
+        "act_black_friday_81",
+        "act_black_friday_82",
+        "act_buy_fashion",
+        "act_buy_gold",
+        "act_christmas",
+        "act_christmas_connection",
+        "act_christmas_discount",
+        "act_christmas_fantasynight",
+        "act_christmas_giftbox",
+        "act_christmas_happy",
+        "act_christmas_surprise_blind_box",
+        "act_clan_boss",
+        "act_clan_gvg",
+        "act_clergy_privilege",
+        "act_continuity_welfare",
+        "act_daily_gift",
+        "act_daily_gift_shop",
+        "act_daily_recharge_gift",
+        "act_day_first_recharge",
+        "act_day_first_recharge_one",
+        "act_day_first_recharge_two",
+        "act_destroy",
+        "act_destroy_limit_recharge",
+        "act_destroy_rise_star",
+        "act_develop_gift_activity",
+        "act_develop_gift_activity_fetter",
+        "act_develop_gift_activity_gold",
+        "act_develop_gift_activity_hero",
+        "act_dragonboat_gift",
+        "act_dragonboat_taks",
+        "act_festival_gift",
+        "act_five_one_draw",
+        "act_growth_fund",
+        "act_halloween",
+        "act_halloween_gacha",
+        "act_halloween_package",
+        "act_halloween_task",
+        "act_happy_month",
+        "act_hero_arrive",
+        "act_hero_recharge",
+        "act_hero_rise_star",
+        "act_hero_shop",
+        "act_hero_super_gift",
+        "act_invitation",
+        "act_limit_gift",
+        "act_limit_time_activity",
+        "act_limit_time_server",
+        "act_mid_autumn",
+        "act_month_card",
+        "act_month_card_normal",
+        "act_month_gift",
+        "act_month_invest",
+        "act_mystery_box",
+        "act_new_hero_call",
+        "act_new_server_limit_activity",
+        "act_new_year",
+        "act_online_reward",
+        "act_privilege",
+        "act_privilege_shop",
+        "act_recharge",
+        "act_recharge_day_reward",
+        "act_recharge_first",
+        "act_recharge_first_one",
+        "act_recharge_first_two",
+        "act_recharge_growth",
+        "act_recharge_smart",
+        "act_secret_treasure",
+        "act_secret_treasure_package",
+        "act_secret_treasure_task",
+        "act_seven_artifact",
+        "act_seven_artifact_package",
+        "act_sevent_day_christmass_gift",
+        "act_sevent_day_gift",
+        "act_sevent_day_target",
+        "act_sign_in",
+        "act_spring",
+        "act_spring_dice",
+        "act_spring_eggs",
+        "act_spring_outing",
+        "act_spring_travel",
+        "act_super_gift",
+        "act_super_hero",
+        "act_supre_gift",
+        "act_war_order",
+        "act_week_gift",
+        "act_welfare",
+        "backpack_hallows",
+        "backpack_magic_wand",
+        "backpack_runes",
+        "bag_god_equip",
+        "comments_reward",
+        "fetter_cast_soul",
+        "go_to_twitter",
+        "hero_astrolabe",
+        "hero_comments",
+        "hero_hexagram",
+        "hero_magic_wand",
+        "hero_skin_shop",
+        "magic_tower",
+        "magic_tower_buy_king",
+        "main_altar",
+        "main_ancient",
+        "main_battle",
+        "main_battlefield",
+        "main_black_market",
+        "main_black_market_exotic_adventure",
+        "main_black_market_floating_islands",
+        "main_black_market_stage",
+        "main_black_market_time_tower",
+        "main_blessingpool",
+        "main_champion",
+        "main_champion_cross",
+        "main_champion_cross_like",
+        "main_champion_cross_notcheck",
+        "main_champion_cross_shop",
+        "main_champion_like",
+        "main_champion_notcheck",
+        "main_chat",
+        "main_chsd",
+        "main_clan",
+        "main_clan_boss",
+        "main_clan_gvg",
+        "main_country_war",
+        "main_country_war_city",
+        "main_crusade_group",
+        "main_crusade_group_god_arms",
+        "main_dragon",
+        "main_dress",
+        "main_dungeon",
+        "main_exotic_adventure",
+        "main_fantasy_land",
+        "main_fantasy_tower",
+        "main_fetter",
+        "main_fetter_Illusion",
+        "main_floating_islands",
+        "main_friend",
+        "main_god_equip_illustration",
+        "main_god_equip_shop",
+        "main_god_equip_summon",
+        "main_god_equip_wear_show",
+        "main_god_relic",
+        "main_god_relic_list",
+        "main_hero",
+        "main_hero_make",
+        "main_hero_palace",
+        "main_hero_pernute",
+        "main_hero_recommend",
+        "main_hero_rollback",
+        "main_infinite",
+        "main_ladder_shop",
+        "main_ladder_war",
+        "main_magic_cube",
+        "main_mail",
+        "main_mission",
+        "main_mission_hall",
+        "main_plane_war",
+        "main_prophet_tree",
+        "main_proving_lang",
+        "main_pub_task",
+        "main_pvp",
+        "main_pvp_shop",
+        "main_rank",
+        "main_share_first",
+        "main_share_friend",
+        "main_shop",
+        "main_smith_shop",
+        "main_smith_shop_gem",
+        "main_smith_shop_god_equip",
+        "main_smith_shop_sprite",
+        "main_soul_illustration",
+        "main_space_time_magic_tower",
+        "main_summon",
+        "main_summon_wish",
+        "main_super_stage",
+        "main_super_stage_token",
+        "main_talent_shop",
+        "main_team_arena",
+        "main_trial_shop",
+        "main_underworld_pagoda",
+        "main_video_studio",
+        "main_vip",
+        "main_zsjt_shop",
+        "off_line_reward",
+        "role_exchange",
+        "team_arena_team_main",
+        "team_arena_team_main_my_team",
+        "team_arena_team_main_recv_invite",
+        "team_arena_team_main_team",
+        "thumb_up_to_share",
+        "twitter_share"
+      ],
+      "missingParentKeys": [],
+      "candidateCount": 35,
+      "candidateRows": [
+        {
+          "row": 6,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 3,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_hero",
+          "note": "英雄导航界面",
+          "condition_value": 1
+        },
+        {
+          "row": 7,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 4,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_battle",
+          "note": "战斗导航界面",
+          "condition_value": 1
+        },
+        {
+          "row": 9,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4204,
+          "idx": 6,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4304,
+          "atom": "main_hero_make",
+          "note": "创造法阵",
+          "condition_value": 1
+        },
+        {
+          "row": 10,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4205,
+          "idx": 7,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4305,
+          "atom": "main_summon",
+          "note": "召唤法阵",
+          "condition_value": 1
+        },
+        {
+          "row": 12,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 9,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4307,
+          "atom": "main_shop",
+          "note": "商店",
+          "condition_value": 1
+        },
+        {
+          "row": 20,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4214,
+          "idx": 17,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4315,
+          "atom": "main_fetter",
+          "note": "羁绊",
+          "condition_value": 1
+        },
+        {
+          "row": 22,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 19,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4317,
+          "atom": "main_friend",
+          "note": "好友",
+          "condition_value": 1
+        },
+        {
+          "row": 23,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 20,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4318,
+          "atom": "main_mail",
+          "note": "邮件",
+          "condition_value": 1
+        },
+        {
+          "row": 24,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 21,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4319,
+          "atom": "main_chat",
+          "note": "聊天",
+          "condition_value": 1
+        },
+        {
+          "row": 26,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 23,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4321,
+          "atom": "main_hero_recommend",
+          "note": "英雄推荐",
+          "condition_value": 1
+        },
+        {
+          "row": 27,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 24,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4322,
+          "atom": "main_black_market",
+          "note": "黑市",
+          "condition_value": 1
+        },
+        {
+          "row": 40,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 37,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_online_reward",
+          "note": "在线奖励",
+          "condition_value": 1
+        },
+        {
+          "row": 43,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 40,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_buy_gold",
+          "note": "点金",
+          "condition_value": 1
+        },
+        {
+          "row": 51,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 48,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_mid_autumn",
+          "note": "中秋礼包",
+          "condition_value": 1
+        },
+        {
+          "row": 55,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 52,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_dress",
+          "note": "装饰",
+          "condition_value": 1
+        },
+        {
+          "row": 56,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 53,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_month_card",
+          "note": "福利-至尊月卡",
+          "condition_value": 1
+        },
+        {
+          "row": 121,
+          "world_level": 1,
+          "open": 1,
+          "desc": "",
+          "idx": 118,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "backpack_runes",
+          "note": "精灵背包",
+          "condition_value": 1
+        },
+        {
+          "row": 122,
+          "world_level": 1,
+          "open": 1,
+          "desc": "",
+          "idx": 119,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "backpack_hallows",
+          "note": "圣物背包",
+          "condition_value": 1
+        },
+        {
+          "row": 13,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4207,
+          "idx": 10,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4308,
+          "atom": "main_smith_shop",
+          "note": "铁匠铺",
+          "condition_value": 5
+        },
+        {
+          "row": 18,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4212,
+          "idx": 15,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4313,
+          "atom": "main_pvp",
+          "note": "竞技场",
+          "condition_value": 8
+        },
+        {
+          "row": 11,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4206,
+          "idx": 8,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4306,
+          "atom": "main_blessingpool",
+          "note": "许愿池",
+          "condition_value": 10
+        },
+        {
+          "row": 14,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4208,
+          "idx": 11,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4309,
+          "atom": "main_pub_task",
+          "note": "咖啡馆",
+          "condition_value": 12
+        },
+        {
+          "row": 5,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4202,
+          "idx": 2,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4302,
+          "atom": "main_mission",
+          "note": "日常副本",
+          "condition_value": 15
+        },
+        {
+          "row": 21,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4215,
+          "idx": 18,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4316,
+          "atom": "main_fantasy_tower",
+          "note": "幻境之塔",
+          "condition_value": 16
+        },
+        {
+          "row": 4,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4201,
+          "idx": 1,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4301,
+          "atom": "main_clan",
+          "note": "公会",
+          "condition_value": 18
+        },
+        {
+          "row": 17,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4211,
+          "idx": 14,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4312,
+          "atom": "main_fantasy_land",
+          "note": "跨服时空",
+          "condition_value": 18
+        },
+        {
+          "row": 25,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4216,
+          "idx": 22,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4320,
+          "atom": "main_rank",
+          "note": "排行榜",
+          "condition_value": 18
+        },
+        {
+          "row": 15,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4209,
+          "idx": 12,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4310,
+          "atom": "main_altar",
+          "note": "祭坛",
+          "condition_value": 20
+        },
+        {
+          "row": 16,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4210,
+          "idx": 13,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4311,
+          "atom": "main_prophet_tree",
+          "note": "先知之树",
+          "condition_value": 20
+        },
+        {
+          "row": 19,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4213,
+          "idx": 16,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4314,
+          "atom": "main_proving_lang",
+          "note": "勇者试炼",
+          "condition_value": 30
+        },
+        {
+          "row": 72,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4218,
+          "idx": 69,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4330,
+          "atom": "main_hero_pernute",
+          "note": "时光神殿-英雄置换",
+          "condition_value": 32
+        },
+        {
+          "row": 8,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4203,
+          "idx": 5,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4303,
+          "atom": "main_dungeon",
+          "note": "月神庇护所",
+          "condition_value": 50
+        },
+        {
+          "row": 106,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4217,
+          "idx": 103,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4325,
+          "atom": "main_ancient",
+          "note": "远古战场",
+          "condition_value": 50
+        },
+        {
+          "row": 211,
+          "world_level": 1,
+          "open": 1,
+          "desc": "",
+          "idx": 208,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_battlefield",
+          "note": "艾尼亚战场",
+          "condition_value": 80
+        },
+        {
+          "row": 28,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 25,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_black_market_stage",
+          "note": "黑市-段位",
+          "condition_value": 95
+        }
+      ],
+      "futureCandidateCount": 17,
+      "futureCandidateRows": [
+        {
+          "row": 13,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4207,
+          "idx": 10,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4308,
+          "atom": "main_smith_shop",
+          "note": "铁匠铺",
+          "condition_value": 5
+        },
+        {
+          "row": 18,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4212,
+          "idx": 15,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4313,
+          "atom": "main_pvp",
+          "note": "竞技场",
+          "condition_value": 8
+        },
+        {
+          "row": 11,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4206,
+          "idx": 8,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4306,
+          "atom": "main_blessingpool",
+          "note": "许愿池",
+          "condition_value": 10
+        },
+        {
+          "row": 14,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4208,
+          "idx": 11,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4309,
+          "atom": "main_pub_task",
+          "note": "咖啡馆",
+          "condition_value": 12
+        },
+        {
+          "row": 5,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4202,
+          "idx": 2,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4302,
+          "atom": "main_mission",
+          "note": "日常副本",
+          "condition_value": 15
+        },
+        {
+          "row": 21,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4215,
+          "idx": 18,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4316,
+          "atom": "main_fantasy_tower",
+          "note": "幻境之塔",
+          "condition_value": 16
+        },
+        {
+          "row": 4,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4201,
+          "idx": 1,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4301,
+          "atom": "main_clan",
+          "note": "公会",
+          "condition_value": 18
+        },
+        {
+          "row": 17,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4211,
+          "idx": 14,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4312,
+          "atom": "main_fantasy_land",
+          "note": "跨服时空",
+          "condition_value": 18
+        },
+        {
+          "row": 25,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4216,
+          "idx": 22,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4320,
+          "atom": "main_rank",
+          "note": "排行榜",
+          "condition_value": 18
+        },
+        {
+          "row": 15,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4209,
+          "idx": 12,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4310,
+          "atom": "main_altar",
+          "note": "祭坛",
+          "condition_value": 20
+        },
+        {
+          "row": 16,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4210,
+          "idx": 13,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4311,
+          "atom": "main_prophet_tree",
+          "note": "先知之树",
+          "condition_value": 20
+        },
+        {
+          "row": 19,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4213,
+          "idx": 16,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4314,
+          "atom": "main_proving_lang",
+          "note": "勇者试炼",
+          "condition_value": 30
+        },
+        {
+          "row": 72,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4218,
+          "idx": 69,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4330,
+          "atom": "main_hero_pernute",
+          "note": "时光神殿-英雄置换",
+          "condition_value": 32
+        },
+        {
+          "row": 8,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4203,
+          "idx": 5,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4303,
+          "atom": "main_dungeon",
+          "note": "月神庇护所",
+          "condition_value": 50
+        },
+        {
+          "row": 106,
+          "world_level": 1,
+          "open": 1,
+          "desc": 4217,
+          "idx": 103,
+          "condition_type": 1,
+          "parent": "",
+          "name": 4325,
+          "atom": "main_ancient",
+          "note": "远古战场",
+          "condition_value": 50
+        },
+        {
+          "row": 211,
+          "world_level": 1,
+          "open": 1,
+          "desc": "",
+          "idx": 208,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_battlefield",
+          "note": "艾尼亚战场",
+          "condition_value": 80
+        },
+        {
+          "row": 28,
+          "world_level": 1,
+          "open": 0,
+          "desc": "",
+          "idx": 25,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_black_market_stage",
+          "note": "黑市-段位",
+          "condition_value": 95
+        }
+      ],
+      "sameLevelTies": [
+        {
+          "level": 18,
+          "atoms": [
+            "main_clan",
+            "main_fantasy_land",
+            "main_rank"
+          ]
+        },
+        {
+          "level": 20,
+          "atoms": [
+            "main_altar",
+            "main_prophet_tree"
+          ]
+        },
+        {
+          "level": 50,
+          "atoms": [
+            "main_dungeon",
+            "main_ancient"
+          ]
+        }
+      ],
+      "duplicateKeys": []
+    },
+    "currentNextSamples": [
+      {
+        "level": 1,
+        "nextThreshold": 5,
+        "possibleAtoms": [
+          "main_smith_shop"
+        ]
+      },
+      {
+        "level": 2,
+        "nextThreshold": 5,
+        "possibleAtoms": [
+          "main_smith_shop"
+        ]
+      },
+      {
+        "level": 3,
+        "nextThreshold": 5,
+        "possibleAtoms": [
+          "main_smith_shop"
+        ]
+      },
+      {
+        "level": 4,
+        "nextThreshold": 5,
+        "possibleAtoms": [
+          "main_smith_shop"
+        ]
+      },
+      {
+        "level": 5,
+        "nextThreshold": 8,
+        "possibleAtoms": [
+          "main_pvp"
+        ]
+      },
+      {
+        "level": 7,
+        "nextThreshold": 8,
+        "possibleAtoms": [
+          "main_pvp"
+        ]
+      },
+      {
+        "level": 8,
+        "nextThreshold": 10,
+        "possibleAtoms": [
+          "main_blessingpool"
+        ]
+      },
+      {
+        "level": 9,
+        "nextThreshold": 10,
+        "possibleAtoms": [
+          "main_blessingpool"
+        ]
+      },
+      {
+        "level": 10,
+        "nextThreshold": 12,
+        "possibleAtoms": [
+          "main_pub_task"
+        ]
+      },
+      {
+        "level": 11,
+        "nextThreshold": 12,
+        "possibleAtoms": [
+          "main_pub_task"
+        ]
+      },
+      {
+        "level": 12,
+        "nextThreshold": 15,
+        "possibleAtoms": [
+          "main_mission"
+        ]
+      },
+      {
+        "level": 14,
+        "nextThreshold": 15,
+        "possibleAtoms": [
+          "main_mission"
+        ]
+      },
+      {
+        "level": 15,
+        "nextThreshold": 16,
+        "possibleAtoms": [
+          "main_fantasy_tower"
+        ]
+      },
+      {
+        "level": 16,
+        "nextThreshold": 18,
+        "possibleAtoms": [
+          "main_clan",
+          "main_fantasy_land",
+          "main_rank"
+        ]
+      },
+      {
+        "level": 17,
+        "nextThreshold": 18,
+        "possibleAtoms": [
+          "main_clan",
+          "main_fantasy_land",
+          "main_rank"
+        ]
+      },
+      {
+        "level": 18,
+        "nextThreshold": 20,
+        "possibleAtoms": [
+          "main_altar",
+          "main_prophet_tree"
+        ]
+      },
+      {
+        "level": 19,
+        "nextThreshold": 20,
+        "possibleAtoms": [
+          "main_altar",
+          "main_prophet_tree"
+        ]
+      },
+      {
+        "level": 20,
+        "nextThreshold": 30,
+        "possibleAtoms": [
+          "main_proving_lang"
+        ]
+      },
+      {
+        "level": 29,
+        "nextThreshold": 30,
+        "possibleAtoms": [
+          "main_proving_lang"
+        ]
+      },
+      {
+        "level": 30,
+        "nextThreshold": 32,
+        "possibleAtoms": [
+          "main_hero_pernute"
+        ]
+      },
+      {
+        "level": 31,
+        "nextThreshold": 32,
+        "possibleAtoms": [
+          "main_hero_pernute"
+        ]
+      },
+      {
+        "level": 32,
+        "nextThreshold": 50,
+        "possibleAtoms": [
+          "main_dungeon",
+          "main_ancient"
+        ]
+      },
+      {
+        "level": 49,
+        "nextThreshold": 50,
+        "possibleAtoms": [
+          "main_dungeon",
+          "main_ancient"
+        ]
+      },
+      {
+        "level": 50,
+        "nextThreshold": 80,
+        "possibleAtoms": [
+          "main_battlefield"
+        ]
+      },
+      {
+        "level": 94,
+        "nextThreshold": 95,
+        "possibleAtoms": [
+          "main_black_market_stage"
+        ]
+      },
+      {
+        "level": 95,
+        "nextThreshold": null,
+        "possibleAtoms": []
+      }
+    ],
+    "differences": [
+      {
+        "atom": "act_destroy",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 208,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 205,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_destroy",
+          "note": "毁灭之尽活动",
+          "condition_value": 1
+        }
+      },
+      {
+        "atom": "act_destroy_limit_recharge",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 210,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 207,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_destroy_limit_recharge",
+          "note": "限时累充",
+          "condition_value": 1
+        }
+      },
+      {
+        "atom": "act_destroy_rise_star",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 209,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 206,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_destroy_rise_star",
+          "note": "毁灭升星",
+          "condition_value": 1
+        }
+      },
+      {
+        "atom": "act_hero_recharge",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 213,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 210,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_hero_recharge",
+          "note": "英雄累充礼48",
+          "condition_value": 13
+        }
+      },
+      {
+        "atom": "act_hero_rise_star",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 212,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 209,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_hero_rise_star",
+          "note": "英雄升星礼100",
+          "condition_value": 13
+        }
+      },
+      {
+        "atom": "act_hero_super_gift",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 214,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 211,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_hero_super_gift",
+          "note": "英雄超值礼99",
+          "condition_value": 13
+        }
+      },
+      {
+        "atom": "act_new_hero_call",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 217,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 214,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "act_new_hero_call",
+          "note": "新英雄抽奖65",
+          "condition_value": 13
+        }
+      },
+      {
+        "atom": "act_recharge_day_reward",
+        "field": "idx",
+        "legacy": 135,
+        "workbook": 85,
+        "legacyLine": 1611,
+        "workbookRow": 88
+      },
+      {
+        "atom": "act_recharge_day_reward",
+        "field": "condition_value",
+        "legacy": 13,
+        "workbook": 6,
+        "legacyLine": 1611,
+        "workbookRow": 88
+      },
+      {
+        "atom": "act_recharge_day_reward",
+        "field": "note",
+        "legacy": "积天累充",
+        "workbook": "福利-积天豪礼",
+        "legacyLine": 1611,
+        "workbookRow": 88
+      },
+      {
+        "atom": "bag_god_equip",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 65,
+        "legacyLine": 1359,
+        "workbookRow": 117
+      },
+      {
+        "atom": "main_alice_unicorn",
+        "kind": "onlyLegacy",
+        "legacy": {
+          "atom": "main_alice_unicorn",
+          "line": 2451,
+          "idx": 205,
+          "open": 5,
+          "condition_type": 1,
+          "condition_value": 160,
+          "world_level": 1,
+          "note": "独角兽养成",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        "workbook": null
+      },
+      {
+        "atom": "main_alice_wonderland",
+        "kind": "onlyLegacy",
+        "legacy": {
+          "atom": "main_alice_wonderland",
+          "line": 2439,
+          "idx": 204,
+          "open": 5,
+          "condition_type": 1,
+          "condition_value": 160,
+          "world_level": 1,
+          "note": "爱丽丝空间",
+          "parent": "",
+          "name": "",
+          "desc": ""
+        },
+        "workbook": null
+      },
+      {
+        "atom": "main_battlefield",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 211,
+          "world_level": 1,
+          "open": 1,
+          "desc": "",
+          "idx": 208,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_battlefield",
+          "note": "艾尼亚战场",
+          "condition_value": 80
+        }
+      },
+      {
+        "atom": "main_black_market_stage",
+        "field": "condition_value",
+        "legacy": 1,
+        "workbook": 95,
+        "legacyLine": 291,
+        "workbookRow": 28
+      },
+      {
+        "atom": "main_crusade_group",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 80,
+        "legacyLine": 1995,
+        "workbookRow": 170
+      },
+      {
+        "atom": "main_crusade_group_god_arms",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 80,
+        "legacyLine": 2007,
+        "workbookRow": 171
+      },
+      {
+        "atom": "main_god_equip_illustration",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 65,
+        "legacyLine": 1323,
+        "workbookRow": 114
+      },
+      {
+        "atom": "main_god_equip_shop",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 65,
+        "legacyLine": 1311,
+        "workbookRow": 113
+      },
+      {
+        "atom": "main_god_equip_summon",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 65,
+        "legacyLine": 1299,
+        "workbookRow": 112
+      },
+      {
+        "atom": "main_god_equip_wear_show",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 65,
+        "legacyLine": 1335,
+        "workbookRow": 115
+      },
+      {
+        "atom": "main_god_relic",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 65,
+        "legacyLine": 1239,
+        "workbookRow": 107
+      },
+      {
+        "atom": "main_god_relic_list",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 65,
+        "legacyLine": 1251,
+        "workbookRow": 108
+      },
+      {
+        "atom": "main_mission_pet",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 207,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 204,
+          "condition_type": 1,
+          "parent": "main_mission",
+          "name": "",
+          "atom": "main_mission_pet",
+          "note": "宠物副本（俄德h）",
+          "condition_value": 65
+        }
+      },
+      {
+        "atom": "main_rank",
+        "field": "condition_value",
+        "legacy": 1,
+        "workbook": 18,
+        "legacyLine": 255,
+        "workbookRow": 25
+      },
+      {
+        "atom": "main_share_first",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 215,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 212,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_share_first",
+          "note": "【h5发行需求】首次分享开启等级",
+          "condition_value": 15
+        }
+      },
+      {
+        "atom": "main_share_friend",
+        "kind": "onlyWorkbook",
+        "legacy": null,
+        "workbook": {
+          "row": 216,
+          "world_level": 1,
+          "open": 5,
+          "desc": "",
+          "idx": 213,
+          "condition_type": 1,
+          "parent": "",
+          "name": "",
+          "atom": "main_share_friend",
+          "note": "【h5发行需求】分享有礼开启等级",
+          "condition_value": 15
+        }
+      },
+      {
+        "atom": "main_smith_shop_god_equip",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 65,
+        "legacyLine": 1347,
+        "workbookRow": 116
+      },
+      {
+        "atom": "main_team_arena",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 75,
+        "legacyLine": 1443,
+        "workbookRow": 124
+      },
+      {
+        "atom": "team_arena_team_main",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 75,
+        "legacyLine": 1455,
+        "workbookRow": 125
+      },
+      {
+        "atom": "team_arena_team_main_my_team",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 75,
+        "legacyLine": 1491,
+        "workbookRow": 128
+      },
+      {
+        "atom": "team_arena_team_main_recv_invite",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 75,
+        "legacyLine": 1479,
+        "workbookRow": 127
+      },
+      {
+        "atom": "team_arena_team_main_team",
+        "field": "world_level",
+        "legacy": 1,
+        "workbook": 75,
+        "legacyLine": 1467,
+        "workbookRow": 126
+      }
+    ],
+    "decisionRequired": "2026-11-16负责人已明确：升级页下一功能提示采用旧客户端Lua（排行榜门槛1级），只决定提示依据，不开放功能，也不修改当前OpenCondition导航/实际门槛。同阈值按投影源顺序保留，不额外按idx排序；这是一份可复现展示次序，不伪称旧pairs+table.sort明确保证同值顺序。",
+    "noRuntimeMutationFound": "检索旧客户端src内cfg.opencondition赋值仅配置文件本身；该候选路径未调用funcopen.isVisible。只证明本地源码，不代签线上渠道覆盖或热更。",
+    "languageEntries": [
+      {
+        "key": 47576,
+        "value": "<outline color='#000000' size='1'><font color='#00FF06'>%s級</font>開啟</outline>",
+        "line": 13437
+      },
+      {
+        "key": 4308,
+        "value": "鐵匠鋪",
+        "line": 1824
+      },
+      {
+        "key": 4207,
+        "value": "冶煉打鐵，打造高級裝備！",
+        "line": 1764
+      },
+      {
+        "key": 4313,
+        "value": "競技場",
+        "line": 1839
+      },
+      {
+        "key": 4212,
+        "value": "競技場裡與其他英雄一較高下！",
+        "line": 1779
+      },
+      {
+        "key": 4306,
+        "value": "許願池",
+        "line": 1818
+      },
+      {
+        "key": 4206,
+        "value": "許願池裡獎勵拿不完！",
+        "line": 1761
+      },
+      {
+        "key": 4309,
+        "value": "咖啡館",
+        "line": 1827
+      },
+      {
+        "key": 4208,
+        "value": "咖啡館任務，收穫珍貴道具！",
+        "line": 1767
+      },
+      {
+        "key": 4302,
+        "value": "日常副本",
+        "line": 1806
+      },
+      {
+        "key": 4202,
+        "value": "海量材料，等你來拿！",
+        "line": 1749
+      },
+      {
+        "key": 4316,
+        "value": "幻境之塔",
+        "line": 1848
+      },
+      {
+        "key": 4215,
+        "value": "挑戰環境之塔，獲取英雄材料！",
+        "line": 1788
+      },
+      {
+        "key": 4301,
+        "value": "公會",
+        "line": 1803
+      },
+      {
+        "key": 4201,
+        "value": "兄弟同心，共創輝煌！",
+        "line": 1746
+      },
+      {
+        "key": 4312,
+        "value": "跨服時空",
+        "line": 1836
+      },
+      {
+        "key": 4211,
+        "value": "跨服時空，更多玩法一起體驗！",
+        "line": 1776
+      },
+      {
+        "key": 4310,
+        "value": "祭壇",
+        "line": 1830
+      },
+      {
+        "key": 4209,
+        "value": "英雄回收，獲得海量材料！",
+        "line": 1770
+      },
+      {
+        "key": 4311,
+        "value": "先知之樹",
+        "line": 1833
+      },
+      {
+        "key": 4210,
+        "value": "稀有英雄和珍惜道具，點擊獲得",
+        "line": 1773
+      },
+      {
+        "key": 4314,
+        "value": "勇者試煉",
+        "line": 1842
+      },
+      {
+        "key": 4213,
+        "value": "獲取大量材料和道具！",
+        "line": 1782
+      },
+      {
+        "key": 4330,
+        "value": "時光神殿",
+        "line": 1890
+      },
+      {
+        "key": 4218,
+        "value": "時光神殿，任性置換！",
+        "line": 1797
+      },
+      {
+        "key": 4303,
+        "value": "月神庇護所",
+        "line": 1809
+      },
+      {
+        "key": 4203,
+        "value": "珍稀道具，點擊就有！",
+        "line": 1752
+      },
+      {
+        "key": 4325,
+        "value": "遠古戰場",
+        "line": 1875
+      },
+      {
+        "key": 4217,
+        "value": "探索戰場，遠古遺物！",
+        "line": 1794
+      }
+    ],
+    "sourceSnapshot": {
+      "path": "config/legacy-client/opencondition.lua",
+      "metadata": "config/legacy-client/opencondition.source.json",
+      "sha256": "84cd705acff316bbf2994f5ed7a45a968150fed87af9220993559e35f31bc1e6",
+      "bytes": 50474,
+      "byteIdenticalToOldSource": true,
+      "rawDefinitions": 205,
+      "uniqueAfterLastKeyWins": 204,
+      "systemKeys": 190,
+      "candidates": 34,
+      "allCandidatesParentEmpty": true
+    },
+    "projection": {
+      "table": "GConfig.RoleUpgradeFeature",
+      "path": "config/roleupgradefeature",
+      "sourceMetadata": {
+        "generated_by": "tools/export_role_upgrade_features.py",
+        "source": "config/legacy-client/opencondition.lua",
+        "original_repository": "G:/work/FsGame/Demo/mj/program",
+        "original_path": "client/cocos_mxzg/client/idle/src/config/opencondition.lua",
+        "source_sha256": "84cd705acff316bbf2994f5ed7a45a968150fed87af9220993559e35f31bc1e6",
+        "source_bytes": 50474,
+        "decision_date": "2026-11-16",
+        "decision": "负责人选择旧客户端Lua作为升级页下一功能提示依据；不改变现有导航门槛，不开放功能。",
+        "output": "config/roleupgradefeature",
+        "definition_count": 205,
+        "unique_count": 204,
+        "system_key_count": 190,
+        "candidate_count": 34,
+        "candidate_order": "source-definition-order; no idx priority for equal thresholds",
+        "duplicates": [
+          {
+            "atom": "act_recharge_day_reward",
+            "definitions": [
+              {
+                "line": 1011,
+                "idx": 85,
+                "condition_value": 6
+              },
+              {
+                "line": 1611,
+                "idx": 135,
+                "condition_value": 13
+              }
+            ],
+            "retained_line": 1611
+          }
+        ]
+      },
+      "output": "client/assets/bundles/resources/config/roleupgradefeature.json",
+      "sourceOrderAtoms": [
+        "main_clan",
+        "main_mission",
+        "main_hero",
+        "main_battle",
+        "main_dungeon",
+        "main_hero_make",
+        "main_summon",
+        "main_blessingpool",
+        "main_shop",
+        "main_smith_shop",
+        "main_pub_task",
+        "main_altar",
+        "main_prophet_tree",
+        "main_fantasy_land",
+        "main_pvp",
+        "main_proving_lang",
+        "main_fetter",
+        "main_fantasy_tower",
+        "main_friend",
+        "main_mail",
+        "main_chat",
+        "main_rank",
+        "main_hero_recommend",
+        "main_black_market",
+        "main_black_market_stage",
+        "act_online_reward",
+        "act_buy_gold",
+        "act_mid_autumn",
+        "main_dress",
+        "act_month_card",
+        "main_hero_pernute",
+        "main_ancient",
+        "backpack_runes",
+        "backpack_hallows"
+      ],
+      "schema": "config/client-schema.json:RoleUpgradeFeature",
+      "fields": "id/atom/condition_value必填；name_lang/desc是可选数字语言ID；note保留原策划说明。空文案不造0或空语言键。",
+      "normalExport": "python tools/export_gameconfig.py（沿原配置导出入口自动派生候选、来源元数据、保留已有meta UUID并更新配置ZIP）",
+      "generatedTypes": "python tools/generate_config.py（更新GConfig及同文件内CONFIG_SCHEMA）",
+      "navigationUnchanged": true,
+      "checkCommands": [
+        "python tools/export_role_upgrade_features.py --check",
+        "python tools/test_role_upgrade_features.py",
+        "python tools/test_client_config_scope.py",
+        "python tools/generate_config.py --check",
+        "node tools/test_config_package.cjs"
+      ],
+      "validations": {
+        "projectionTests": 9,
+        "sharedConfigScopeTests": 34,
+        "configPackage": "passed; 50 sources / 2 startup / 48 packed",
+        "creator": "not run by this audit",
+        "build": "not run",
+        "commit": "not performed",
+        "realZipStoreAndLoading": "两项旧专项已取消包表数硬编码：分别从真实源目录和LoadingPlan.login推期望集合，与实际ZIP解码及GameConfig安装交叉核对；两项本轮通过，非微型夹具替代。"
+      },
+      "sourceBytesPolicy": ".gitattributes把原样opencondition.lua设为-text，避免换行转换改变审计SHA；.gitignore仅放行仓库内源快照与自动来源元数据。"
+    }
+  },
+  "levelConfiguration": {
+    "legacyClientLua": "client/cocos_mxzg/client/idle/src/config/mainlevel.lua",
+    "legacyClientFields": "旧Lua只导出exp，不带reward；不能据此断言升级不送奖励。",
+    "serverFields": "CMainLevel读取level/exp/reward，MainLevelSysCache文件名mainlevel；完整奖励数值使用当前同源config/gameconfig/mainlevel.xlsx和生成JSON交叉核实，不声称旧服务端仓库缺失的实际Excel已找到。",
+    "sourceWorkbook": "config/gameconfig/mainlevel.xlsx",
+    "sheet": "",
+    "headerRow": 3,
+    "firstFiveLevels": [
+      {
+        "level": 1,
+        "exp": 120,
+        "reward": "[{\"item_type\":900002,\"item_num\":10}]"
+      },
+      {
+        "level": 2,
+        "exp": 360,
+        "reward": "[{\"item_type\":900002,\"item_num\":10}]"
+      },
+      {
+        "level": 3,
+        "exp": 720,
+        "reward": "[{\"item_type\":900002,\"item_num\":20}]"
+      },
+      {
+        "level": 4,
+        "exp": 1200,
+        "reward": "[{\"item_type\":900002,\"item_num\":20}]"
+      },
+      {
+        "level": 5,
+        "exp": 1800,
+        "reward": "[{\"item_type\":900002,\"item_num\":20}]"
+      }
+    ],
+    "examples": [
+      {
+        "fromLevel": 1,
+        "fromExperience": 0,
+        "addedExperience": 200,
+        "toLevel": 2,
+        "toExperience": 80,
+        "diamondBonus": 10
+      },
+      {
+        "fromLevel": 1,
+        "fromExperience": 0,
+        "addedExperience": 480,
+        "toLevel": 3,
+        "toExperience": 0,
+        "diamondBonus": 20
+      },
+      {
+        "fromLevel": 1,
+        "fromExperience": 0,
+        "addedExperience": 1200,
+        "toLevel": 4,
+        "toExperience": 0,
+        "diamondBonus": 40
+      }
+    ],
+    "noEnergyConclusion": "字段和本条调用链没有体力恢复；此结论限角色升级链，不扩大为全游戏无体力领域。"
+  },
+  "oldUiAndResourceReuse": {
+    "sourceCcb": "client/cocos_mxzg/client/ccb-hd/Resources/RoleUpgradeLayer.ccb",
+    "compiledCcbi": "client/cocos_mxzg/client/idle/res/hd/ccbi/RoleUpgradeLayer.ccbi",
+    "layout": {
+      "backgroundSize": [
+        640,
+        500
+      ],
+      "titleY": 506,
+      "levelY": 420,
+      "levelLabel": "冒险者等级",
+      "levelBeforePosition": [
+        338,
+        420
+      ],
+      "levelAfterPosition": [
+        410,
+        420
+      ],
+      "arrowPosition": [
+        372,
+        420
+      ],
+      "rewardHeaderY": 360,
+      "nextFunctionHeaderY": 170,
+      "nextNamePosition": [
+        242,
+        117
+      ],
+      "nextDescriptionPosition": [
+        242,
+        78
+      ],
+      "nextIconPosition": [
+        172,
+        98
+      ],
+      "closeTipPosition": [
+        320,
+        -20
+      ],
+      "rootSize": [
+        640,
+        550
+      ],
+      "rootAnchor": [
+        0.5,
+        0.5
+      ],
+      "rootIgnoreAnchorPointForPosition": true,
+      "backgroundAnchor": [
+        0,
+        0
+      ],
+      "backgroundPosition": "CCB未保存position；按原Node默认位置0/0，非实际运行CCBI观察",
+      "backgroundDefaultEvidence": {
+        "path": "client/cocos_mxzg/client/idle/frameworks/cocos2d-x/cocos/editor-support/cocosbuilder/CCScale9SpriteLoader.cpp",
+        "line": 20,
+        "endLine": 23,
+        "conclusion": "原Scale9SpriteLoader创建后显式setAnchorPoint(Vec2::ZERO)，不能沿普通Sprite默认锚点猜测。"
+      }
+    },
+    "runtime": "Lua额外建背景遮罩、竖向滚动区(width-40,292)、富文本和奖励格；sprite background按屏宽缩放。资源表可复用，旧.ccb/.ccbi与Lua控制器不能直接作为Creator3.8 View/Prefab导入。",
+    "modalAndLifecycle": "setIsSingle(false)不关闭其他窗口，addBlackBackground加遮罩；LuaNodeCtr的通用外侧点击关闭。新版应使用现有共享模态，不复制一份手工遮罩。",
+    "assets": [
+      {
+        "frame": "map-bg-result-1.png",
+        "oldCcbLine": 69,
+        "currentPath": "client/assets/bundles/resources/maps/ui/map-bg-result-1.png",
+        "currentExists": true
+      },
+      {
+        "frame": "reward-layer-lang/spr-upgrade.png",
+        "oldCcbLine": 205,
+        "currentPath": "client/assets/bundles/module/common/ui/reward-layer-lang_spr-upgrade.png",
+        "currentExists": true
+      },
+      {
+        "frame": "win-bg/text-bg.png",
+        "oldCcbLine": 288,
+        "currentPath": "client/assets/bundles/module/common/ui/win-bg_text-bg.png",
+        "currentExists": true
+      },
+      {
+        "frame": "reward-layer/spr-arrow.png",
+        "oldCcbLine": 768,
+        "currentPath": "client/assets/bundles/module/common/ui/reward-layer_spr-arrow.png",
+        "currentExists": true
+      },
+      {
+        "frame": "win-bg/block-bg-15.png",
+        "oldCcbLine": 851,
+        "currentPath": "client/assets/bundles/module/common/ui/win-bg_block-bg-15.png",
+        "currentExists": true
+      },
+      {
+        "frame": "lang-1/close-tips.png",
+        "oldCcbLine": 1128,
+        "currentPath": "client/assets/bundles/module/common/ui/lang-1_close-tips.png",
+        "currentExists": true
+      }
+    ],
+    "futureIcons": [
+      {
+        "atom": "main_smith_shop",
+        "legacyPreferred": "main-city/up-main_smith_shop.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_smith_shop.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_smith_shop.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_smith_shop.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_pvp",
+        "legacyPreferred": "main-city/up-main_pvp.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_pvp.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_pvp.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_pvp.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_blessingpool",
+        "legacyPreferred": "main-city/up-main_blessingpool.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_blessingpool.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_blessingpool.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_blessingpool.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_pub_task",
+        "legacyPreferred": "main-city/up-main_pub_task.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_pub_task.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_pub_task.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_pub_task.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_mission",
+        "legacyPreferred": "main-city/up-main_mission.png",
+        "preferredInOldPlist": false,
+        "legacyFallback": "main-city/icon-main_mission.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/icon-main_mission.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_icon-main_mission.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_fantasy_tower",
+        "legacyPreferred": "main-city/up-main_fantasy_tower.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_fantasy_tower.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_fantasy_tower.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_fantasy_tower.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_clan",
+        "legacyPreferred": "main-city/up-main_clan.png",
+        "preferredInOldPlist": false,
+        "legacyFallback": "main-city/icon-main_clan.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/icon-main_clan.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_icon-main_clan.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_fantasy_land",
+        "legacyPreferred": "main-city/up-main_fantasy_land.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_fantasy_land.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_fantasy_land.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_fantasy_land.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_altar",
+        "legacyPreferred": "main-city/up-main_altar.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_altar.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_altar.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_altar.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_prophet_tree",
+        "legacyPreferred": "main-city/up-main_prophet_tree.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_prophet_tree.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_prophet_tree.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_prophet_tree.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_proving_lang",
+        "legacyPreferred": "main-city/up-main_proving_lang.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_proving_lang.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_proving_lang.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_proving_lang.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_hero_pernute",
+        "legacyPreferred": "main-city/up-main_hero_pernute.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_hero_pernute.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_hero_pernute.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_hero_pernute.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_dungeon",
+        "legacyPreferred": "main-city/up-main_dungeon.png",
+        "preferredInOldPlist": true,
+        "legacyFallback": "main-city/icon-main_dungeon.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/up-main_dungeon.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_up-main_dungeon.png",
+        "currentExists": true
+      },
+      {
+        "atom": "main_ancient",
+        "legacyPreferred": "main-city/up-main_ancient.png",
+        "preferredInOldPlist": false,
+        "legacyFallback": "main-city/icon-main_ancient.png",
+        "fallbackInOldPlist": true,
+        "resolvedFrame": "main-city/icon-main_ancient.png",
+        "currentPath": "client/assets/bundles/module/home/ui/main-city_icon-main_ancient.png",
+        "currentExists": true
+      }
+    ],
+    "sound": {
+      "old": "music/item-get.mp3",
+      "current": "client/assets/bundles/resources/audio/item-get.mp3",
+      "currentExists": true,
+      "evidence": {
+        "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+        "line": 86
+      }
+    },
+    "animationNote": "openWindow加载summon-effect/reward-layer/main-city图集；onceAnim方法存在，但奖励格调用它的动作代码133–138行已经注释，不能因方法存在就新增升级格爆光演出。",
+    "reuseBoundary": "复用现有通用奖励格、资源池/加载入口、共享模态及实际发奖结果；升级页保留独立前后等级/下一功能展示职责，不新建发奖链。当前文件存在性不代表画面、裁切或Prefab绑定验收。"
+  },
+  "limitations": [
+    "仅读取本地旧源码、旧Lua/CCB/图集和当前同源XLSX/资源；未访问正式服，不以本审计代签正式服画面。",
+    "该角色升级批未运行后端、浏览器、Creator、构建、MySQL或资产发放测试；只完成源码审计和配置投影专项，不代签页面/协议整体。",
+    "角色升级附赠实际数值以当前同源XLSX/JSON可复核；旧服务端部署的完整Excel不在所查源码目录，不据此捏造旧表字节相同。",
+    "所有未恢复玩法和挂机领取继续关闭；下一功能预告不是开放新功能的授权。",
+    "升级提示已由负责人选择旧客户端Lua；当前策划XLSX差异仍保留作为版本证据，不反向改写导航和业务资格。"
+  ]
+}

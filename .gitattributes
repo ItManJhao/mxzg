@@ -1,1 +1,3 @@
 *.bat text eol=crlf
+# 旧客户端源快照保留原始字节，避免跨平台换行转换改变审计SHA。
+config/legacy-client/opencondition.lua -text

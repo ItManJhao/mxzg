@@ -1,0 +1,175 @@
+{
+  "date": "2026-11-16",
+  "timezone": "Asia/Shanghai",
+  "scope": "旧挂机收取动画与通用奖励窗时序只读源码审计；不开放领取、不改生产代码、不运行发奖或浏览器",
+  "oldRoot": "G:/work/FsGame/Demo/mj/program/",
+  "protocol": {
+    "claimRequest": 3005,
+    "claimResponse": 3005,
+    "timeSnapshot": 3004,
+    "rewardNotice": 5002,
+    "claimResponseHandler": "BattleResponse.chapterItemListReward仅读取reward_time，本身不触发收取或弹奖"
+  },
+  "findings": [
+    {
+      "topic": "点击与动画",
+      "conclusion": "65秒显示门槛满足后，先按旧起点计算进度档位，再本地重置起点/3类累计值，发送3005，随后立即刷新显示并播放collect；旧动画不等待服务端成功回包",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "line": 109,
+          "endLine": 130
+        }
+      ]
+    },
+    {
+      "topic": "满额确认",
+      "conclusion": "已有章节配置且冒险点当前余额达到同章节上限才先用共用ConfirmCtr；确认回调仍回onIdleReward执行65秒检查。取消不会调用onIdleReward",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "line": 135,
+          "endLine": 149
+        }
+      ]
+    },
+    {
+      "topic": "四档与截断",
+      "conclusion": "先clamp进度至0..100再floor百分比；<=2档1、>2且<=5档2、>5且<=10档3、>10档4；档位基于本次点击前经过时长和同次max_reward_time",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "line": 72,
+          "endLine": 107
+        }
+      ]
+    },
+    {
+      "topic": "collect动作与保护",
+      "conclusion": "collect-N循环播放，队列追加normal-0且delay=1.5秒；collect_time记服务器秒，每秒刷新在collect_time+2>now期间退出，不覆盖收取动作。这两个时间不是奖励弹窗延迟",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "line": 169,
+          "endLine": 172
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "line": 212,
+          "endLine": 230
+        }
+      ]
+    },
+    {
+      "topic": "奖励窗与动画独立并行",
+      "conclusion": "5002 type1由BackpackResponse直接打开共用ItemRewardCtr；没有等待collect结束的客户端逻辑。3005回复处理不负责弹奖",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BackpackResponse.lua",
+          "line": 21,
+          "endLine": 59
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 123,
+          "endLine": 125
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/ResponseManager.lua",
+          "line": 53
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/ResponseManager.lua",
+          "line": 152,
+          "endLine": 153
+        }
+      ]
+    },
+    {
+      "topic": "服务端通知调用顺序",
+      "conclusion": "BattleHandler先调用ThingService.add默认NORMAL（含同步ThingAddEvent及5002写出），随后才write3005回复。只证明源码调用顺序，不承诺客户端实际到达先后",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 323,
+          "endLine": 390
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/ThingService.java",
+          "line": 200,
+          "endLine": 220
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/observer/ThingObserver.java",
+          "line": 34,
+          "endLine": 79
+        }
+      ]
+    },
+    {
+      "topic": "实际零奖励",
+      "conclusion": "旧ThingService要求理论总量大于0，但最终Rewards为空时不发布ThingAddEvent。点击收取动画已独立触发，所以动画不应以有无奖励通知/窗口为成功条件；新版成功消费且零实际量仍按真实回执处理，不造空窗",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/ThingService.java",
+          "line": 176,
+          "endLine": 204
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "line": 109,
+          "endLine": 130
+        }
+      ]
+    },
+    {
+      "topic": "冷重登与关页",
+      "conclusion": "3004只恢复起点/上限并fire UPDATEREWARD；页面创建按当前起点重画normal档，没有由3004/3005恢复回包调用collect的路径。BattlePanelLayer.onExit移除reward计时器，EventLayer退出统一移除计时和事件，不补开已关闭页面。未发现旧成功回执/collect持久展示恢复",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 75,
+          "endLine": 82
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "line": 65,
+          "endLine": 70
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/comp/EventLayer.lua",
+          "line": 3,
+          "endLine": 10
+        }
+      ]
+    },
+    {
+      "topic": "阵亡资源飞行",
+      "conclusion": "runResCollectAction由HANG_HERO_DEAD事件触发，与点击收取独立；领取成功不再飞第二份资源",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "line": 55,
+          "endLine": 57
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattlePanelLayer.lua",
+          "line": 234,
+          "endLine": 259
+        }
+      ]
+    }
+  ],
+  "adaptationBoundary": [
+    "新版继续服务端权威：不复制旧客户端先写起点/累计资产的乐观行为",
+    "本批按真实回执与统一状态确认后才开始可靠反馈；该确认门槛属于新版可靠性调整，不能说旧版也等待双确认",
+    "动画与奖励窗沿旧允许并行，不新增等待1.5秒或2秒才弹奖的规则",
+    "恢复或迟到结果只使用原持久身份去重，不因再次鉴权无条件重播收取，不补开主线页面",
+    "本次档位应来自原操作/原回执显示字段，不能用成功后重置的新起点倒推"
+  ],
+  "limits": [
+    "未运行旧客户端或正式服实测，不将源码顺序等同网络时序验收",
+    "旧版没有新式持久请求/回执，因此冷恢复精确一次是新版机制，须由新版专项证明",
+    "本审计未实现任何新业务或变更开关"
+  ]
+}

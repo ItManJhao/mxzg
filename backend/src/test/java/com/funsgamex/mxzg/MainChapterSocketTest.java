@@ -1,7 +1,12 @@
-/** 主线挑战、登录恢复与结算真实WebSocket回归：独立H2、随机端口，不修改日常玩家库。 */
+/**
+ * 主线挑战、结算与统一里程碑进度的真实WebSocket回归，核对登录、提交事件及重新鉴权。
+ * 使用独立H2和随机端口；夹具只准备测试角色，不修改日常玩家库或开放里程碑领取协议。
+ */
 package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.*;
 import com.funsgamex.mxzg.network.GameProtocolCodec;
+import com.funsgamex.mxzg.network.AssetSyncService;
+import com.funsgamex.mxzg.role.RoleRepository;
 import java.nio.ByteBuffer;
 import java.net.URI;
 import java.net.http.*;
@@ -13,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import tools.jackson.databind.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,6 +35,12 @@ class MainChapterSocketTest {
     @Autowired DevelopmentLoginService login;
     /** 用于准备测试英雄及检查只读边界。 */
     @Autowired JdbcTemplate jdbc;
+    /** 隔离测试写入持久事实前取得真实角色锁，不经未开放的里程碑业务接口。 */
+    @Autowired RoleRepository roles;
+    /** 同事务提交统一版本，真实在线连接应只接到提交后的完整状态。 */
+    @Autowired AssetSyncService sync;
+    /** 测试夹具写入与回滚使用应用真实事务管理。 */
+    @Autowired PlatformTransactionManager transactions;
     private final class Peer implements WebSocket.Listener, AutoCloseable {
         final HttpClient client = HttpClient.newHttpClient();
         final BlockingQueue<JsonNode> messages = new LinkedBlockingQueue<>();
@@ -94,6 +107,74 @@ class MainChapterSocketTest {
         @Override public void close() { socket.abort(); client.close(); }
     }
 
+    /** 登录明确交付真实空集；非连续持久集合经提交事件和重新鉴权恢复，读取不改版本或开放领取。 */
+    @Test void milestoneProgressFollowsLoginCommittedSnapshotAndAuthentication() throws Exception {
+        String token;
+        String role;
+        long revision;
+        try (var peer = new Peer()) {
+            var accepted = peer.request("session.login", Map.of("account",
+                    "milestone_" + UUID.randomUUID().toString().substring(0, 12), "serverId", "local-1",
+                    "clientInstanceId", UUID.randomUUID().toString()));
+            assertTrue(accepted.path("ok").asBoolean());
+            peer.connectionId = accepted.path("body").path("connectionId").asString();
+            token = accepted.path("body").path("session").path("accessToken").asString();
+            var initial = accepted.path("body").path("initial");
+            role = initial.path("role").path("id").asString();
+            assertEquals(0, initial.path("mainChapter").path("maxCleared").asInt());
+            assertMilestones(initial.path("mainChapter"), List.of());
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_milestone WHERE role_id=?",
+                    Integer.class, role));
+            long before = roles.revision(role);
+            new TransactionTemplate(transactions).executeWithoutResult(status -> {
+                roles.lock(role);
+                jdbc.update("INSERT INTO game_main_chapter_milestone(role_id,reward_id) VALUES (?,?)", role, 7);
+                jdbc.update("INSERT INTO game_main_chapter_milestone(role_id,reward_id) VALUES (?,?)", role, 2);
+                sync.changed(role);
+                sync.changed(role);
+            });
+            var event = peer.messages.poll(5, TimeUnit.SECONDS);
+            assertNotNull(event, "真实持久集合提交后未发送完整状态");
+            assertEquals("state.changed", event.path("name").asString());
+            assertMilestones(event.path("body").path("mainChapter"), List.of(2, 7));
+            revision = roles.revision(role);
+            assertEquals(before + 1, revision, "同事务多次变更只登记一次统一版本");
+            assertEquals(revision, event.path("body").path("mainChapter").path("assetRevision").asLong());
+            assertEquals(revision, event.path("body").path("revision").asLong());
+            write("milestone-event", event);
+            assertTrue(peer.request("session.heartbeat", Map.of()).path("ok").asBoolean());
+            assertTrue(peer.events.isEmpty(), "只读心跳不得补写或重复推送里程碑进度");
+        }
+        try (var restored = new Peer()) {
+            var accepted = restored.authenticate(token);
+            assertTrue(accepted.path("ok").asBoolean());
+            assertFalse(accepted.path("body").has("session"), "互通文件不保存签发凭证");
+            assertMilestones(accepted.path("body").path("initial").path("mainChapter"), List.of(2, 7));
+            assertEquals(revision, roles.revision(role), "重新鉴权只读取原集合，不改资产版本");
+            write("milestone-auth", accepted);
+            java.nio.file.Files.write(java.nio.file.Path.of("target/chapter-config-scope.pb"), GameProtocolCodec.encode(accepted));
+        }
+        var other = login.login("milestone_" + UUID.randomUUID().toString().substring(0, 12));
+        try (var peer = new Peer()) {
+            var accepted = peer.authenticate(other.session().accessToken());
+            assertMilestones(accepted.path("body").path("initial").path("mainChapter"), List.of());
+            write("milestone-empty", accepted);
+        }
+    }
+
+    /** 校验真实新挑战范围及里程碑集合；空数组与缺字段不同，ID顺序不暗示必须按序领取。 */
+    private void assertMilestones(JsonNode state, List<Integer> expected) {
+        assertTrue(state.has("challengeLimit"), "新快照必须交付当前服务端可信范围");
+        assertEquals(3, state.path("challengeLimit").asInt());
+        assertTrue(state.has("milestoneProgress"), "新版统一状态必须明确交付里程碑集合");
+        var progress = state.path("milestoneProgress");
+        assertEquals(1, progress.path("schemaVersion").asInt());
+        assertTrue(progress.path("claimedIds").isArray());
+        var ids = new ArrayList<Integer>();
+        progress.path("claimedIds").forEach(id -> ids.add(id.asInt()));
+        assertEquals(expected, ids);
+    }
+
 
     /** 真实协议跑通三关、冻结伤害/经验、重新鉴权恢复待领奖与幂等结算，不访问日常库。 */
     @Test void challengeRestoreReplayAndClaimThroughBinarySocket() throws Exception {
@@ -105,6 +186,7 @@ class MainChapterSocketTest {
         try (var peer = new Peer()) {
             var init = peer.authenticate(token);
             assertEquals(0, init.path("body").path("initial").path("mainChapter").path("maxCleared").asInt());
+            assertMilestones(init.path("body").path("initial").path("mainChapter"), List.of());
             long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, role);
             assertTrue(peer.request("formation.save", Map.of("requestId", UUID.randomUUID().toString(),
                 "expectedVersion", version, "formationId", 1, "slots", List.of(Map.of("position", 2, "heroId", hero))))
@@ -120,6 +202,7 @@ class MainChapterSocketTest {
                 original = peer.request("chapter.challenge", Map.of("requestId", command));
                 assertTrue(original.path("ok").asBoolean(), original.toString());
                 assertEquals("BATTLE", original.path("body").path("action").asString());
+                assertFalse(original.path("body").has("actual"), "未结算战报不携带虚构到账");
                 battle = original.path("body").path("battleId").asString();
                 assertEquals(mission, original.path("body").path("state").path("maxCleared").asInt());
                 assertEquals(gold, jdbc.queryForObject("SELECT gold FROM game_role WHERE id=?", Long.class, role));
@@ -146,6 +229,21 @@ class MainChapterSocketTest {
                 var claim = peer.request("chapter.claim", Map.of("battleId", battle));
                 assertTrue(claim.path("ok").asBoolean(), claim.toString());
                 assertFalse(claim.path("body").path("rewards").isEmpty());
+                var actual = claim.path("body").path("actual");
+                assertMilestones(claim.path("body").path("state"), List.of());
+                assertEquals(role, actual.path("roleId").asString());
+                assertFalse(actual.path("items").isEmpty());
+                assertTrue(actual.has("bonuses"), "协议须保留已确认无附赠与旧明细缺失的区别");
+                long bonusDiamonds = 0;
+                for (var bonus : actual.path("bonuses")) {
+                    assertEquals("ROLE_LEVEL_UP", bonus.path("source").asString());
+                    assertEquals(900002, bonus.path("itemId").asInt());
+                    bonusDiamonds += bonus.path("quantity").asLong();
+                }
+                assertEquals(mission == 2 ? 0 : 10, bonusDiamonds, "前三关仅真实升级赠钻，不凭额外奖励提示发里程碑奖励");
+                if (mission == 1) {
+                    write("reward-settled", claim);
+                }
                 var roleAfter = jdbc.queryForMap("SELECT * FROM game_role WHERE id=?", role);
                 var experience = claim.path("body").path("experience");
                 assertEquals(((Number) beforeExperience.get("role_level")).intValue(), experience.path("beforeLevel").asInt());

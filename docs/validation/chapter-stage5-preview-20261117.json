@@ -1,0 +1,3001 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "url": "http://127.0.0.1:7456/?battleReplay=1&fixture=configured&mission=5",
+  "environment": {
+    "creator": "3.8.8",
+    "scene": "Remake",
+    "readonlyResource": "127.0.0.1:19091",
+    "normalLogin": false,
+    "businessChallenge": false,
+    "rewardGrant": false,
+    "dailyDatabaseAccess": false,
+    "creatorBuild": false
+  },
+  "source": {
+    "index": 5,
+    "mode": 1,
+    "chapter": 1,
+    "mission": 5,
+    "scenario": "audit:lineup:5",
+    "fixture": "合法1级/3星/强化0冰晶女巫对原第5关三名3级NPC；未伪造HP、修改敌人或奖励。",
+    "binaries": [
+      {
+        "file": "backend/target/chapter-config-stage-5.pb",
+        "bytes": 1442,
+        "sha256": "270d1a5f4c86fa6c8716c6ecf83dd178b5fdc561d31c95d73cdcd824309bee33",
+        "writtenUtc": "2026-11-17T08:23:52.797749+00:00"
+      },
+      {
+        "file": "backend/target/chapter-config-stage-5-frame.pb",
+        "bytes": 1620,
+        "sha256": "5da37f30efbadb1422a2dd60ff1e86ff6e26076eda6420d82fb6ecd1412baa90",
+        "writtenUtc": "2026-11-17T08:23:52.974422+00:00"
+      }
+    ],
+    "coverage": {
+      "file": "backend/target/chapter-config-stage-5-coverage.json",
+      "bytes": 31561,
+      "sha256": "ab61852d3d91e0e9c464166632a7046f4ed08decfad5524eee229155b39ad795",
+      "writtenUtc": "2026-11-17T08:23:52.997361+00:00"
+    }
+  },
+  "compiledFeatures": {
+    "strictEmptyAction": true,
+    "winterDoubleEffects": true,
+    "newFrameDefinitions": true,
+    "failureReportedGuard": true,
+    "independentNonProjectileLifetime": true,
+    "creatorReimportedMetaObserved": 40
+  },
+  "natural": {
+    "start": "实际坐标点击开始，无暂停；对原播放器及日志只加观察回调，不修改任何步骤、数值或结果。观察节点销毁使用引擎事件。",
+    "outcome": "DEFENDER_WIN",
+    "won": false,
+    "rounds": 2,
+    "playerResultMeaning": "true只表示完整播放成功，不表示攻击方胜利。",
+    "requiredPresentations": [
+      {
+        "configId": 1020100,
+        "events": 1
+      },
+      {
+        "configId": 1021101,
+        "events": 1
+      },
+      {
+        "configId": 2020100,
+        "events": 1
+      },
+      {
+        "configId": 2021101,
+        "events": 1
+      },
+      {
+        "configId": 2050100,
+        "events": 1
+      },
+      {
+        "configId": 2050300,
+        "events": 1
+      },
+      {
+        "configId": 2051101,
+        "events": 1
+      }
+    ],
+    "requiredSkills": [
+      {
+        "configId": 101020020,
+        "events": 1
+      },
+      {
+        "configId": 101020021,
+        "events": 1
+      },
+      {
+        "configId": 102020020,
+        "events": 1
+      },
+      {
+        "configId": 102020021,
+        "events": 1
+      },
+      {
+        "configId": 102040050,
+        "events": 1
+      },
+      {
+        "configId": 102040051,
+        "events": 1
+      }
+    ],
+    "emptyActionLogs": [
+      {
+        "level": "debug",
+        "message": "effect.empty 20501000 delay=0",
+        "time": 1794904928411
+      }
+    ],
+    "winterOrdinary": {
+      "rawOrder": [
+        2050100,
+        2050200,
+        2050300
+      ],
+      "expandedEmptyId": 20501000,
+      "expandedEffectId": 20501001,
+      "effectNodeCount": 2,
+      "soundCallCount": 2,
+      "audioStartedEventCount": 2,
+      "damageEventCount": 1,
+      "physicalAudioMixNotMeasured": true
+    },
+    "nominalTimingFromSource": [
+      {
+        "configId": 1021101,
+        "actorSeconds": 1.3,
+        "effectEndSeconds": 1.4,
+        "basis": "0.3+1角色完成；0.3+11×0.1帧寿命"
+      },
+      {
+        "configId": 2020100,
+        "actorSeconds": 0.9666666666666667,
+        "effectEndSeconds": 1.1666666666666667,
+        "basis": "包含10/60配置延迟；保持14帧，不裁到角色完成时刻"
+      }
+    ],
+    "observedTiming": [
+      {
+        "configId": 1021101,
+        "actorPromiseMs": 1365.300000011921,
+        "effectNodeRemainingAfterActorMs": 365.80000001192093,
+        "note": "引擎调度观察，非性能基准；玛蒙特效在角色完成后继续，冰霜最后特效于整场结束清除，不代表自然播完所有剩余帧。"
+      },
+      {
+        "configId": 2020100,
+        "actorPromiseMs": 1001.1999999880791,
+        "effectNodeRemainingAfterActorMs": 14.800000011920929,
+        "note": "引擎调度观察，非性能基准；玛蒙特效在角色完成后继续，冰霜最后特效于整场结束清除，不代表自然播完所有剩余帧。"
+      }
+    ],
+    "observation": {
+      "mode": "second natural run, no pause; corrected node-lifetime observer",
+      "playerResult": true,
+      "logs": [
+        {
+          "level": "debug",
+          "message": "effect.start 2051101 delay=0",
+          "time": 1794904920293
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102040051 playing=false",
+          "time": 1794904920294
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102040051",
+          "time": 1794904920311
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 2051101 target=2 count=10",
+          "time": 1794904920610
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2051201 delay=1.3333333333333333",
+          "time": 1794904921626
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 20311010 delay=0",
+          "time": 1794904922643
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102030031 playing=true",
+          "time": 1794904922643
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102030031",
+          "time": 1794904922644
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 20311011 delay=0.3333333333333333",
+          "time": 1794904922961
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 20311011 target=9 count=8",
+          "time": 1794904922962
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2031201 delay=0.5",
+          "time": 1794904923129
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2031201 delay=0.5",
+          "time": 1794904923130
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2031201 delay=0.5",
+          "time": 1794904923130
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2031301 delay=0.5",
+          "time": 1794904923131
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1021101 delay=0",
+          "time": 1794904924294
+        },
+        {
+          "level": "info",
+          "message": "sound skill-101020021 playing=false",
+          "time": 1794904924294
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-101020021",
+          "time": 1794904924294
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 1021101 target=2 count=11",
+          "time": 1794904924627
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1021201 delay=0.8333333333333334",
+          "time": 1794904925131
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1021301 delay=0",
+          "time": 1794904925543
+        },
+        {
+          "level": "info",
+          "message": "buff buff.upsert config=1021301 round=1 target=2 instance=1 visible=1",
+          "time": 1794904925544
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2021101 delay=0",
+          "time": 1794904925660
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102020021 playing=false",
+          "time": 1794904925660
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102020021",
+          "time": 1794904925661
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 2021101 target=2 count=14",
+          "time": 1794904925977
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2021201 delay=0.5",
+          "time": 1794904926143
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2021301 delay=0",
+          "time": 1794904926560
+        },
+        {
+          "level": "info",
+          "message": "buff buff.upsert config=2021301 round=1 target=2 instance=2 visible=2",
+          "time": 1794904926561
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1021401 delay=0",
+          "time": 1794904927028
+        },
+        {
+          "level": "debug",
+          "message": "effect.empty 20501000 delay=0",
+          "time": 1794904928411
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 20501001 delay=0",
+          "time": 1794904928444
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102040050 playing=false",
+          "time": 1794904928444
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2050300 delay=0",
+          "time": 1794904928444
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102040050 playing=false",
+          "time": 1794904928445
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102040050",
+          "time": 1794904928445
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102040050",
+          "time": 1794904928445
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 20501001 target=2 count=11",
+          "time": 1794904928777
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 2050300 target=2 count=11",
+          "time": 1794904928777
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2050200 delay=0.5",
+          "time": 1794904928938
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 10201000 delay=0",
+          "time": 1794904929595
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 10201001 delay=0.4166666666666667",
+          "time": 1794904930011
+        },
+        {
+          "level": "info",
+          "message": "sound skill-101030030 playing=false",
+          "time": 1794904930011
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 10201001 target=2 count=6",
+          "time": 1794904930011
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-101030030",
+          "time": 1794904930011
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1020200 delay=0.5",
+          "time": 1794904930082
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2020100 delay=0.16666666666666666",
+          "time": 1794904931077
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102040040 playing=false",
+          "time": 1794904931077
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102040040",
+          "time": 1794904931078
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2020200 delay=0.4166666666666667",
+          "time": 1794904931327
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 2020100 target=2 count=14",
+          "time": 1794904931411
+        },
+        {
+          "level": "info",
+          "message": "buff buff.remove config=1021301 round=2 target=2 instance=1 visible=1",
+          "time": 1794904931895
+        },
+        {
+          "level": "info",
+          "message": "buff buff.remove config=2021301 round=2 target=2 instance=2 visible=0",
+          "time": 1794904931896
+        },
+        {
+          "level": "info",
+          "message": "completed hp={\"2\":0,\"9\":95,\"10\":112,\"11\":196} round=2",
+          "time": 1794904932329
+        }
+      ],
+      "steps": [
+        {
+          "kind": "round.ready",
+          "configId": 0,
+          "sourceId": 0,
+          "targetId": 0,
+          "round": 1,
+          "start": 34467.30000001192,
+          "end": 35471.09999996424
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102040051,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 1,
+          "start": 35471.09999996424,
+          "end": 35471.09999996424
+        },
+        {
+          "kind": "presentation",
+          "configId": 2051101,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 1,
+          "start": 35471.39999997616,
+          "end": 37821.39999997616
+        },
+        {
+          "kind": "damage",
+          "configId": 2051201,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 1,
+          "start": 35471.5,
+          "end": 37205
+        },
+        {
+          "kind": "skill.end",
+          "configId": 102040051,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 1,
+          "start": 37821.39999997616,
+          "end": 37821.5
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102030031,
+          "sourceId": 2,
+          "targetId": 9,
+          "round": 1,
+          "start": 37821.5,
+          "end": 37821.5
+        },
+        {
+          "kind": "presentation",
+          "configId": 2031101,
+          "sourceId": 2,
+          "targetId": 9,
+          "round": 1,
+          "start": 37821.5,
+          "end": 39472.39999997616
+        },
+        {
+          "kind": "damage",
+          "configId": 2031201,
+          "sourceId": 2,
+          "targetId": 9,
+          "round": 1,
+          "start": 37821.59999996424,
+          "end": 38723.09999996424
+        },
+        {
+          "kind": "damage",
+          "configId": 2031201,
+          "sourceId": 2,
+          "targetId": 10,
+          "round": 1,
+          "start": 37821.59999996424,
+          "end": 38723.19999998808
+        },
+        {
+          "kind": "damage",
+          "configId": 2031201,
+          "sourceId": 2,
+          "targetId": 11,
+          "round": 1,
+          "start": 37821.59999996424,
+          "end": 38723.19999998808
+        },
+        {
+          "kind": "recovery",
+          "configId": 2031301,
+          "sourceId": 2,
+          "targetId": 2,
+          "round": 1,
+          "start": 37821.59999996424,
+          "end": 38723.19999998808
+        },
+        {
+          "kind": "skill.end",
+          "configId": 102030031,
+          "sourceId": 2,
+          "targetId": 9,
+          "round": 1,
+          "start": 39472.39999997616,
+          "end": 39472.5
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 101020021,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 39472.5,
+          "end": 39472.5
+        },
+        {
+          "kind": "presentation",
+          "configId": 1021101,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 39472.69999998808,
+          "end": 40838
+        },
+        {
+          "kind": "damage",
+          "configId": 1021201,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 39472.80000001192,
+          "end": 40721.30000001192
+        },
+        {
+          "kind": "buff.upsert",
+          "configId": 1021301,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 40721.30000001192,
+          "end": 40755.09999996424
+        },
+        {
+          "kind": "skill.end",
+          "configId": 101020021,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 40838.09999996424,
+          "end": 40838.09999996424
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102020021,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 40838.09999996424,
+          "end": 40838.09999996424
+        },
+        {
+          "kind": "presentation",
+          "configId": 2021101,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 40838.09999996424,
+          "end": 42204.69999998808
+        },
+        {
+          "kind": "damage",
+          "configId": 2021201,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 40838.09999996424,
+          "end": 41739.5
+        },
+        {
+          "kind": "buff.upsert",
+          "configId": 2021301,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 41739.5,
+          "end": 41772
+        },
+        {
+          "kind": "skill.end",
+          "configId": 102020021,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 42204.69999998808,
+          "end": 42204.69999998808
+        },
+        {
+          "kind": "damage",
+          "configId": 1021401,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 42204.69999998808,
+          "end": 42604.59999996424
+        },
+        {
+          "kind": "round.ready",
+          "configId": 0,
+          "sourceId": 0,
+          "targetId": 0,
+          "round": 2,
+          "start": 42604.69999998808,
+          "end": 43622.39999997616
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102040050,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 43622.39999997616,
+          "end": 43622.39999997616
+        },
+        {
+          "kind": "presentation",
+          "configId": 2050100,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 43622.5,
+          "end": 44773.39999997616
+        },
+        {
+          "kind": "damage",
+          "configId": 2050200,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 43623.5,
+          "end": 44505.19999998808
+        },
+        {
+          "kind": "presentation",
+          "configId": 2050300,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 43623.5,
+          "end": 44773.39999997616
+        },
+        {
+          "kind": "skill.end",
+          "configId": 102040050,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 44773.39999997616,
+          "end": 44773.5
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 101020020,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 44773.5,
+          "end": 44773.5
+        },
+        {
+          "kind": "presentation",
+          "configId": 1020100,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 44773.5,
+          "end": 46105.30000001192
+        },
+        {
+          "kind": "damage",
+          "configId": 1020200,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 44773.5,
+          "end": 45674.19999998808
+        },
+        {
+          "kind": "skill.end",
+          "configId": 101020020,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 46105.30000001192,
+          "end": 46105.30000001192
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102020020,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 2,
+          "start": 46105.30000001192,
+          "end": 46105.30000001192
+        },
+        {
+          "kind": "presentation",
+          "configId": 2020100,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 2,
+          "start": 46105.30000001192,
+          "end": 47106.5
+        },
+        {
+          "kind": "damage",
+          "configId": 2020200,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 2,
+          "start": 46105.39999997616,
+          "end": 46905.39999997616
+        },
+        {
+          "kind": "buff.remove",
+          "configId": 1021301,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 47106.5,
+          "end": 47107.09999996424
+        },
+        {
+          "kind": "buff.remove",
+          "configId": 2021301,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 2,
+          "start": 47107.09999996424,
+          "end": 47107.5
+        },
+        {
+          "kind": "skill.end",
+          "configId": 102020020,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 2,
+          "start": 47107.5,
+          "end": 47107.5
+        }
+      ],
+      "effects": [
+        {
+          "configId": 2051101,
+          "targetId": 2,
+          "frames": 10,
+          "start": 35821.69999998808,
+          "end": 37054.09999996424,
+          "frameUuid": "57ad11a5-cd2a-411a-8332-7d8c0b2071a3@f9941",
+          "offset": {
+            "x": 0.5,
+            "y": -45
+          },
+          "originalSize": {
+            "width": 150,
+            "height": 189
+          },
+          "world": {
+            "x": 272.50709867452133,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.4,
+            "y": 1.4,
+            "z": 1
+          }
+        },
+        {
+          "configId": 20311011,
+          "targetId": 9,
+          "frames": 8,
+          "start": 38173.89999997616,
+          "end": 39187.09999996424,
+          "frameUuid": "f36b8fe8-040b-422a-8955-d88c5abc866d@f9941",
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "originalSize": {
+            "width": 230,
+            "height": 200
+          },
+          "world": {
+            "x": 434.42709867452135,
+            "y": 512,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.8,
+            "y": 1.8,
+            "z": 1
+          }
+        },
+        {
+          "configId": 1021101,
+          "targetId": 2,
+          "frames": 11,
+          "start": 39838.39999997616,
+          "end": 41203.80000001192,
+          "frameUuid": "75dfc1c9-c5b2-400c-a13e-3889d2ab386b@f9941",
+          "offset": {
+            "x": 3.5,
+            "y": 14
+          },
+          "originalSize": {
+            "width": 146,
+            "height": 168
+          },
+          "world": {
+            "x": 272.50709867452133,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 2,
+            "z": 1
+          }
+        },
+        {
+          "configId": 2021101,
+          "targetId": 2,
+          "frames": 14,
+          "start": 41188.80000001192,
+          "end": 42137.30000001192,
+          "frameUuid": "d90bb4c1-a1da-44e8-84e7-1a4d7e66791f@f9941",
+          "offset": {
+            "x": -55,
+            "y": 0
+          },
+          "originalSize": {
+            "width": 250,
+            "height": 200
+          },
+          "world": {
+            "x": 272.50709867452133,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": -0.8,
+            "y": 0.8,
+            "z": 1
+          }
+        },
+        {
+          "configId": 20501001,
+          "targetId": 2,
+          "frames": 11,
+          "start": 43988.09999996424,
+          "end": 44737.89999997616,
+          "frameUuid": "47e233c3-e996-4aee-8abd-8ec9518b6e67@f9941",
+          "offset": {
+            "x": -3,
+            "y": 164
+          },
+          "originalSize": {
+            "width": 280,
+            "height": 380
+          },
+          "world": {
+            "x": 272.50709867452133,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        {
+          "configId": 2050300,
+          "targetId": 2,
+          "frames": 11,
+          "start": 43988.30000001192,
+          "end": 44737.89999997616,
+          "frameUuid": "47e233c3-e996-4aee-8abd-8ec9518b6e67@f9941",
+          "offset": {
+            "x": -3,
+            "y": 164
+          },
+          "originalSize": {
+            "width": 280,
+            "height": 380
+          },
+          "world": {
+            "x": 272.50709867452133,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        {
+          "configId": 10201001,
+          "targetId": 2,
+          "frames": 6,
+          "start": 45222.39999997616,
+          "end": 45739.39999997616,
+          "frameUuid": "4e38fc71-2611-4a3b-8165-fc5bb8e3acbe@f9941",
+          "offset": {
+            "x": -18.5,
+            "y": -8.5
+          },
+          "originalSize": {
+            "width": 202,
+            "height": 144
+          },
+          "world": {
+            "x": 372.50709867452133,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": -1.8,
+            "y": 1.8,
+            "z": 1
+          }
+        },
+        {
+          "configId": 2020100,
+          "targetId": 2,
+          "frames": 14,
+          "start": 46621.89999997616,
+          "end": 47121.30000001192,
+          "frameUuid": "1a6a29c0-63f0-487f-9729-829220f40645@f9941",
+          "offset": {
+            "x": 3.5,
+            "y": 25.5
+          },
+          "originalSize": {
+            "width": 100,
+            "height": 100
+          },
+          "world": {
+            "x": 272.50709867452133,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 4,
+            "z": 1
+          }
+        }
+      ],
+      "units": [
+        {
+          "unitId": 2,
+          "faction": 1,
+          "templateId": 10203003,
+          "level": 1,
+          "position": 2,
+          "initialHp": 364,
+          "maxHp": 364,
+          "finalHp": 0,
+          "totalDamage": 215,
+          "totalTakenDamage": 390,
+          "totalRecovery": 26,
+          "star": 3,
+          "portraitIconId": 20203003
+        },
+        {
+          "unitId": 9,
+          "faction": 2,
+          "templateId": 10102002,
+          "level": 3,
+          "position": 1,
+          "initialHp": 183,
+          "maxHp": 183,
+          "finalHp": 95,
+          "totalDamage": 107,
+          "totalTakenDamage": 88,
+          "totalRecovery": 0,
+          "star": 2,
+          "portraitIconId": 20102002
+        },
+        {
+          "unitId": 10,
+          "faction": 2,
+          "templateId": 10202002,
+          "level": 3,
+          "position": 2,
+          "initialHp": 176,
+          "maxHp": 176,
+          "finalHp": 112,
+          "totalDamage": 155,
+          "totalTakenDamage": 64,
+          "totalRecovery": 0,
+          "star": 2,
+          "portraitIconId": 20202002
+        },
+        {
+          "unitId": 11,
+          "faction": 2,
+          "templateId": 10204005,
+          "level": 3,
+          "position": 3,
+          "initialHp": 259,
+          "maxHp": 259,
+          "finalHp": 196,
+          "totalDamage": 128,
+          "totalTakenDamage": 63,
+          "totalRecovery": 0,
+          "star": 4,
+          "portraitIconId": 20204005
+        }
+      ],
+      "decoded": [
+        {
+          "round": 1,
+          "kind": "round.ready",
+          "sourceId": 0,
+          "targetId": 0,
+          "configId": 0,
+          "readySeconds": 1,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 364,
+            "9": 183,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "skill.begin",
+          "sourceId": 11,
+          "targetId": 2,
+          "configId": 102040051,
+          "skillLevel": 1,
+          "skillType": 1,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 364,
+            "9": 183,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "presentation",
+          "sourceId": 11,
+          "targetId": 2,
+          "configId": 2051101,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 364,
+            "9": 183,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "damage",
+          "sourceId": 11,
+          "targetId": 2,
+          "configId": 2051201,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -43,
+          "reportedHpChange": -43,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 321,
+            "9": 183,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "skill.end",
+          "sourceId": 11,
+          "targetId": 2,
+          "configId": 102040051,
+          "skillLevel": 1,
+          "skillType": 1,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 321,
+            "9": 183,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "skill.begin",
+          "sourceId": 2,
+          "targetId": 9,
+          "configId": 102030031,
+          "skillLevel": 1,
+          "skillType": 1,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 321,
+            "9": 183,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "presentation",
+          "sourceId": 2,
+          "targetId": 9,
+          "configId": 2031101,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 321,
+            "9": 183,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "presentation",
+          "sourceId": 2,
+          "targetId": 10,
+          "configId": 2031101,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 321,
+            "9": 183,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "presentation",
+          "sourceId": 2,
+          "targetId": 11,
+          "configId": 2031101,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 321,
+            "9": 183,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "damage",
+          "sourceId": 2,
+          "targetId": 9,
+          "configId": 2031201,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -88,
+          "reportedHpChange": -88,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 321,
+            "9": 95,
+            "10": 176,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "damage",
+          "sourceId": 2,
+          "targetId": 10,
+          "configId": 2031201,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -64,
+          "reportedHpChange": -64,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 321,
+            "9": 95,
+            "10": 112,
+            "11": 259
+          }
+        },
+        {
+          "round": 1,
+          "kind": "damage",
+          "sourceId": 2,
+          "targetId": 11,
+          "configId": 2031201,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -63,
+          "reportedHpChange": -63,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 321,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "recovery",
+          "sourceId": 2,
+          "targetId": 2,
+          "configId": 2031301,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": 26,
+          "reportedHpChange": 26,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 347,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "skill.end",
+          "sourceId": 2,
+          "targetId": 9,
+          "configId": 102030031,
+          "skillLevel": 1,
+          "skillType": 1,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 347,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "skill.begin",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 101020021,
+          "skillLevel": 1,
+          "skillType": 1,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 347,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "presentation",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 1021101,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 347,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "damage",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 1021201,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -38,
+          "reportedHpChange": -38,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 309,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "buff.upsert",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 1021301,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": "1",
+          "expiresAtRound": 3,
+          "buffValue": "0",
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 309,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "skill.end",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 101020021,
+          "skillLevel": 1,
+          "skillType": 1,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 309,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "skill.begin",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 102020021,
+          "skillLevel": 1,
+          "skillType": 1,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 309,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "presentation",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 2021101,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 309,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "damage",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 2021201,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -86,
+          "reportedHpChange": -86,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 223,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "buff.upsert",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 2021301,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": "2",
+          "expiresAtRound": 3,
+          "buffValue": "0",
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 223,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 1,
+          "kind": "skill.end",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 102020021,
+          "skillLevel": 1,
+          "skillType": 1,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 223,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "damage",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 1021401,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -10,
+          "reportedHpChange": -10,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 213,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "round.ready",
+          "sourceId": 0,
+          "targetId": 0,
+          "configId": 0,
+          "readySeconds": 1,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 213,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "skill.begin",
+          "sourceId": 11,
+          "targetId": 2,
+          "configId": 102040050,
+          "skillLevel": 0,
+          "skillType": 2,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 213,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "presentation",
+          "sourceId": 11,
+          "targetId": 2,
+          "configId": 2050100,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 213,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "damage",
+          "sourceId": 11,
+          "targetId": 2,
+          "configId": 2050200,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -85,
+          "reportedHpChange": -85,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 128,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "presentation",
+          "sourceId": 11,
+          "targetId": 2,
+          "configId": 2050300,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 128,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "skill.end",
+          "sourceId": 11,
+          "targetId": 2,
+          "configId": 102040050,
+          "skillLevel": 0,
+          "skillType": 2,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 128,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "skill.begin",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 101020020,
+          "skillLevel": 0,
+          "skillType": 2,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 128,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "presentation",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 1020100,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 128,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "damage",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 1020200,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -59,
+          "reportedHpChange": -59,
+          "dead": false,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 69,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "skill.end",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 101020020,
+          "skillLevel": 0,
+          "skillType": 2,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 69,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "skill.begin",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 102020020,
+          "skillLevel": 0,
+          "skillType": 2,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 69,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "presentation",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 2020100,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 69,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "damage",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 2020200,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": -69,
+          "reportedHpChange": -95,
+          "dead": true,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 0,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "buff.remove",
+          "sourceId": 9,
+          "targetId": 2,
+          "configId": 1021301,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": "1",
+          "expiresAtRound": 3,
+          "buffValue": "0",
+          "removalReason": "death",
+          "hpByUnit": {
+            "2": 0,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "buff.remove",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 2021301,
+          "skillLevel": null,
+          "skillType": null,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": "2",
+          "expiresAtRound": 3,
+          "buffValue": "0",
+          "removalReason": "death",
+          "hpByUnit": {
+            "2": 0,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        },
+        {
+          "round": 2,
+          "kind": "skill.end",
+          "sourceId": 10,
+          "targetId": 2,
+          "configId": 102020020,
+          "skillLevel": 0,
+          "skillType": 2,
+          "actualHpChange": null,
+          "reportedHpChange": null,
+          "dead": null,
+          "buffInstanceId": null,
+          "expiresAtRound": null,
+          "buffValue": null,
+          "removalReason": null,
+          "hpByUnit": {
+            "2": 0,
+            "9": 95,
+            "10": 112,
+            "11": 196
+          }
+        }
+      ],
+      "warnings": []
+    },
+    "statistics": {
+      "source": "原战报冻结单位数据，经既有统计窗口展示；仅开发检查打开",
+      "historicalNameMissing": "历史名称未记录",
+      "allyTaken390ExplainedByRecovery26": true,
+      "units": [
+        {
+          "unitId": 2,
+          "faction": 1,
+          "templateId": 10203003,
+          "level": 1,
+          "position": 2,
+          "initialHp": 364,
+          "maxHp": 364,
+          "finalHp": 0,
+          "totalDamage": 215,
+          "totalTakenDamage": 390,
+          "totalRecovery": 26,
+          "star": 3,
+          "portraitIconId": 20203003
+        },
+        {
+          "unitId": 9,
+          "faction": 2,
+          "templateId": 10102002,
+          "level": 3,
+          "position": 1,
+          "initialHp": 183,
+          "maxHp": 183,
+          "finalHp": 95,
+          "totalDamage": 107,
+          "totalTakenDamage": 88,
+          "totalRecovery": 0,
+          "star": 2,
+          "portraitIconId": 20102002
+        },
+        {
+          "unitId": 10,
+          "faction": 2,
+          "templateId": 10202002,
+          "level": 3,
+          "position": 2,
+          "initialHp": 176,
+          "maxHp": 176,
+          "finalHp": 112,
+          "totalDamage": 155,
+          "totalTakenDamage": 64,
+          "totalRecovery": 0,
+          "star": 2,
+          "portraitIconId": 20202002
+        },
+        {
+          "unitId": 11,
+          "faction": 2,
+          "templateId": 10204005,
+          "level": 3,
+          "position": 3,
+          "initialHp": 259,
+          "maxHp": 259,
+          "finalHp": 196,
+          "totalDamage": 128,
+          "totalTakenDamage": 63,
+          "totalRecovery": 0,
+          "star": 4,
+          "portraitIconId": 20204005
+        }
+      ]
+    },
+    "cleanup": {
+      "roots": [],
+      "residents": 0,
+      "opening": 0,
+      "intents": 0,
+      "paused": false
+    }
+  },
+  "controlled": {
+    "purpose": "四处受控暂停截图，然后验证真实异步下一帧抛错；此轮耗时不作自然播放证据。",
+    "screenshotsAt": [
+      2051101,
+      2021101,
+      20501001,
+      10201001
+    ],
+    "fault": {
+      "configId": 2020100,
+      "injection": "仅该次SkillEffect的Sprite实例临时覆写spriteFrame访问器；第一次循环帧允许写入，第二次写入在后续实际异步帧抛错",
+      "marker": "CHAPTER_STAGE5_FRAME_FAILURE_TEST",
+      "modelOrAssetWrites": false
+    },
+    "observation": {
+      "mode": "controlled screenshot pauses then targeted second-frame setter failure",
+      "fault": {
+        "installed": true,
+        "injected": true,
+        "writes": 2,
+        "at": 118486.90000003576
+      },
+      "playerResult": false,
+      "logs": [
+        {
+          "level": "debug",
+          "message": "effect.start 2051101 delay=0",
+          "time": 1794905260918
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102040051 playing=false",
+          "time": 1794905260918
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102040051",
+          "time": 1794905260937
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 2051101 target=2 count=10",
+          "time": 1794905261238
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2051201 delay=1.3333333333333333",
+          "time": 1794905274985
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 20311010 delay=0",
+          "time": 1794905276018
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102030031 playing=true",
+          "time": 1794905276018
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102030031",
+          "time": 1794905276019
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 20311011 delay=0.3333333333333333",
+          "time": 1794905276335
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 20311011 target=9 count=8",
+          "time": 1794905276336
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2031201 delay=0.5",
+          "time": 1794905276501
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2031201 delay=0.5",
+          "time": 1794905276502
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2031201 delay=0.5",
+          "time": 1794905276502
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2031301 delay=0.5",
+          "time": 1794905276502
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1021101 delay=0",
+          "time": 1794905277669
+        },
+        {
+          "level": "info",
+          "message": "sound skill-101020021 playing=false",
+          "time": 1794905277669
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-101020021",
+          "time": 1794905277670
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 1021101 target=2 count=11",
+          "time": 1794905277986
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1021201 delay=0.8333333333333334",
+          "time": 1794905278486
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1021301 delay=0",
+          "time": 1794905278903
+        },
+        {
+          "level": "info",
+          "message": "buff buff.upsert config=1021301 round=1 target=2 instance=1 visible=1",
+          "time": 1794905278903
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2021101 delay=0",
+          "time": 1794905279018
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102020021 playing=false",
+          "time": 1794905279018
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102020021",
+          "time": 1794905279019
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 2021101 target=2 count=14",
+          "time": 1794905279335
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2021201 delay=0.5",
+          "time": 1794905279501
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2021301 delay=0",
+          "time": 1794905292871
+        },
+        {
+          "level": "info",
+          "message": "buff buff.upsert config=2021301 round=1 target=2 instance=2 visible=2",
+          "time": 1794905292873
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1021401 delay=0",
+          "time": 1794905293340
+        },
+        {
+          "level": "debug",
+          "message": "effect.empty 20501000 delay=0",
+          "time": 1794905294735
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 20501001 delay=0",
+          "time": 1794905294768
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102040050 playing=false",
+          "time": 1794905294768
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2050300 delay=0",
+          "time": 1794905294769
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102040050 playing=false",
+          "time": 1794905294769
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102040050",
+          "time": 1794905294769
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102040050",
+          "time": 1794905294770
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 20501001 target=2 count=11",
+          "time": 1794905295085
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 2050300 target=2 count=11",
+          "time": 1794905295086
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2050200 delay=0.5",
+          "time": 1794905295252
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 10201000 delay=0",
+          "time": 1794905305552
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 10201001 delay=0.4166666666666667",
+          "time": 1794905305969
+        },
+        {
+          "level": "info",
+          "message": "sound skill-101030030 playing=false",
+          "time": 1794905305969
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 10201001 target=2 count=6",
+          "time": 1794905305970
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-101030030",
+          "time": 1794905305970
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 1020200 delay=0.5",
+          "time": 1794905306052
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2020100 delay=0.16666666666666666",
+          "time": 1794905331202
+        },
+        {
+          "level": "info",
+          "message": "sound skill-102040040 playing=false",
+          "time": 1794905331203
+        },
+        {
+          "level": "info",
+          "message": "audio.started skill-102040040",
+          "time": 1794905331203
+        },
+        {
+          "level": "debug",
+          "message": "effect.start 2020200 delay=0.4166666666666667",
+          "time": 1794905331452
+        },
+        {
+          "level": "debug",
+          "message": "effect.frames 2020100 target=2 count=14",
+          "time": 1794905331536
+        },
+        {
+          "level": "error",
+          "message": "播放失败：Error: CHAPTER_STAGE5_FRAME_FAILURE_TEST",
+          "time": 1794905331603
+        }
+      ],
+      "steps": [
+        {
+          "kind": "round.ready",
+          "configId": 0,
+          "sourceId": 0,
+          "targetId": 0,
+          "round": 1,
+          "start": 46754.700000047684,
+          "end": 47768.5
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102040051,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 1,
+          "start": 47768.5,
+          "end": 47768.5
+        },
+        {
+          "kind": "presentation",
+          "configId": 2051101,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 1,
+          "start": 47768.90000003576,
+          "end": 62868.80000001192
+        },
+        {
+          "kind": "damage",
+          "configId": 2051201,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 1,
+          "start": 47769,
+          "end": 62235.60000002384
+        },
+        {
+          "kind": "skill.end",
+          "configId": 102040051,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 1,
+          "start": 62868.80000001192,
+          "end": 62868.80000001192
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102030031,
+          "sourceId": 2,
+          "targetId": 9,
+          "round": 1,
+          "start": 62868.90000003576,
+          "end": 62868.90000003576
+        },
+        {
+          "kind": "presentation",
+          "configId": 2031101,
+          "sourceId": 2,
+          "targetId": 9,
+          "round": 1,
+          "start": 62869,
+          "end": 64519.200000047684
+        },
+        {
+          "kind": "damage",
+          "configId": 2031201,
+          "sourceId": 2,
+          "targetId": 9,
+          "round": 1,
+          "start": 62869.200000047684,
+          "end": 63752.700000047684
+        },
+        {
+          "kind": "damage",
+          "configId": 2031201,
+          "sourceId": 2,
+          "targetId": 10,
+          "round": 1,
+          "start": 62869.200000047684,
+          "end": 63752.700000047684
+        },
+        {
+          "kind": "damage",
+          "configId": 2031201,
+          "sourceId": 2,
+          "targetId": 11,
+          "round": 1,
+          "start": 62869.200000047684,
+          "end": 63752.700000047684
+        },
+        {
+          "kind": "recovery",
+          "configId": 2031301,
+          "sourceId": 2,
+          "targetId": 2,
+          "round": 1,
+          "start": 62869.200000047684,
+          "end": 63752.700000047684
+        },
+        {
+          "kind": "skill.end",
+          "configId": 102030031,
+          "sourceId": 2,
+          "targetId": 9,
+          "round": 1,
+          "start": 64519.200000047684,
+          "end": 64519.200000047684
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 101020021,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 64519.30000001192,
+          "end": 64519.30000001192
+        },
+        {
+          "kind": "presentation",
+          "configId": 1021101,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 64519.60000002384,
+          "end": 65870.20000004768
+        },
+        {
+          "kind": "damage",
+          "configId": 1021201,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 64519.60000002384,
+          "end": 65752.40000003576
+        },
+        {
+          "kind": "buff.upsert",
+          "configId": 1021301,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 65752.40000003576,
+          "end": 65787.70000004768
+        },
+        {
+          "kind": "skill.end",
+          "configId": 101020021,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 1,
+          "start": 65870.30000001192,
+          "end": 65870.30000001192
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102020021,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 65870.30000001192,
+          "end": 65870.30000001192
+        },
+        {
+          "kind": "presentation",
+          "configId": 2021101,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 65870.40000003576,
+          "end": 80191.60000002384
+        },
+        {
+          "kind": "damage",
+          "configId": 2021201,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 65870.40000003576,
+          "end": 79720.40000003576
+        },
+        {
+          "kind": "buff.upsert",
+          "configId": 2021301,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 79720.40000003576,
+          "end": 79757.60000002384
+        },
+        {
+          "kind": "skill.end",
+          "configId": 102020021,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 1,
+          "start": 80191.60000002384,
+          "end": 80191.60000002384
+        },
+        {
+          "kind": "damage",
+          "configId": 1021401,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 80191.60000002384,
+          "end": 80604.90000003576
+        },
+        {
+          "kind": "round.ready",
+          "configId": 0,
+          "sourceId": 0,
+          "targetId": 0,
+          "round": 2,
+          "start": 80604.90000003576,
+          "end": 81619.10000002384
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102040050,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 81619.20000004768,
+          "end": 81619.20000004768
+        },
+        {
+          "kind": "presentation",
+          "configId": 2050100,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 81619.30000001192,
+          "end": 92402.90000003576
+        },
+        {
+          "kind": "damage",
+          "configId": 2050200,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 81619.70000004768,
+          "end": 92136.40000003576
+        },
+        {
+          "kind": "presentation",
+          "configId": 2050300,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 81619.70000004768,
+          "end": 92402.90000003576
+        },
+        {
+          "kind": "skill.end",
+          "configId": 102040050,
+          "sourceId": 11,
+          "targetId": 2,
+          "round": 2,
+          "start": 92402.90000003576,
+          "end": 92402.90000003576
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 101020020,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 92402.90000003576,
+          "end": 92402.90000003576
+        },
+        {
+          "kind": "presentation",
+          "configId": 1020100,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 92403,
+          "end": 117886.80000001192
+        },
+        {
+          "kind": "damage",
+          "configId": 1020200,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 92403.10000002384,
+          "end": 117470.10000002384
+        },
+        {
+          "kind": "skill.end",
+          "configId": 101020020,
+          "sourceId": 9,
+          "targetId": 2,
+          "round": 2,
+          "start": 117886.80000001192,
+          "end": 117886.80000001192
+        },
+        {
+          "kind": "skill.begin",
+          "configId": 102020020,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 2,
+          "start": 117886.80000001192,
+          "end": 117886.80000001192
+        },
+        {
+          "kind": "presentation",
+          "configId": 2020100,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 2,
+          "start": 117886.80000001192,
+          "end": 118487.5
+        },
+        {
+          "kind": "damage",
+          "configId": 2020200,
+          "sourceId": 10,
+          "targetId": 2,
+          "round": 2,
+          "start": 117886.90000003576,
+          "end": 118487.5
+        }
+      ],
+      "effects": [
+        {
+          "configId": 2051101,
+          "targetId": 2,
+          "frames": 10,
+          "start": 48122.60000002384,
+          "end": 62134.80000001192,
+          "frameUuid": "57ad11a5-cd2a-411a-8332-7d8c0b2071a3@f9941",
+          "offset": {
+            "x": 0.5,
+            "y": -45
+          },
+          "originalSize": {
+            "width": 150,
+            "height": 189
+          },
+          "world": {
+            "x": 216.0874906367041,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.4,
+            "y": 1.4,
+            "z": 1
+          }
+        },
+        {
+          "configId": 20311011,
+          "targetId": 9,
+          "frames": 8,
+          "start": 63220.30000001192,
+          "end": 64234.60000002384,
+          "frameUuid": "f36b8fe8-040b-422a-8955-d88c5abc866d@f9941",
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "originalSize": {
+            "width": 230,
+            "height": 200
+          },
+          "world": {
+            "x": 378.0074906367041,
+            "y": 512,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.8,
+            "y": 1.8,
+            "z": 1
+          }
+        },
+        {
+          "configId": 1021101,
+          "targetId": 2,
+          "frames": 11,
+          "start": 64870.10000002384,
+          "end": 66301.40000003576,
+          "frameUuid": "75dfc1c9-c5b2-400c-a13e-3889d2ab386b@f9941",
+          "offset": {
+            "x": 3.5,
+            "y": 14
+          },
+          "originalSize": {
+            "width": 146,
+            "height": 168
+          },
+          "world": {
+            "x": 216.0874906367041,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 2,
+            "z": 1
+          }
+        },
+        {
+          "configId": 2021101,
+          "targetId": 2,
+          "frames": 14,
+          "start": 66219.10000002384,
+          "end": 80118.5,
+          "frameUuid": "d90bb4c1-a1da-44e8-84e7-1a4d7e66791f@f9941",
+          "offset": {
+            "x": -55,
+            "y": 0
+          },
+          "originalSize": {
+            "width": 250,
+            "height": 200
+          },
+          "world": {
+            "x": 216.0874906367041,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": -0.8,
+            "y": 0.8,
+            "z": 1
+          }
+        },
+        {
+          "configId": 20501001,
+          "targetId": 2,
+          "frames": 11,
+          "start": 81969.70000004768,
+          "end": 92352.20000004768,
+          "frameUuid": "47e233c3-e996-4aee-8abd-8ec9518b6e67@f9941",
+          "offset": {
+            "x": -3,
+            "y": 164
+          },
+          "originalSize": {
+            "width": 280,
+            "height": 380
+          },
+          "world": {
+            "x": 216.0874906367041,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        {
+          "configId": 2050300,
+          "targetId": 2,
+          "frames": 11,
+          "start": 81969.90000003576,
+          "end": 92352.20000004768,
+          "frameUuid": "47e233c3-e996-4aee-8abd-8ec9518b6e67@f9941",
+          "offset": {
+            "x": -3,
+            "y": 164
+          },
+          "originalSize": {
+            "width": 280,
+            "height": 380
+          },
+          "world": {
+            "x": 216.0874906367041,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        {
+          "configId": 10201001,
+          "targetId": 2,
+          "frames": 6,
+          "start": 92854,
+          "end": 117536,
+          "frameUuid": "4e38fc71-2611-4a3b-8165-fc5bb8e3acbe@f9941",
+          "offset": {
+            "x": -18.5,
+            "y": -8.5
+          },
+          "originalSize": {
+            "width": 202,
+            "height": 144
+          },
+          "world": {
+            "x": 316.0874906367041,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": -1.8,
+            "y": 1.8,
+            "z": 1
+          }
+        },
+        {
+          "configId": 2020100,
+          "targetId": 2,
+          "frames": 14,
+          "start": 118420.60000002384,
+          "end": 118502.70000004768,
+          "frameUuid": "1a6a29c0-63f0-487f-9729-829220f40645@f9941",
+          "offset": {
+            "x": 3.5,
+            "y": 25.5
+          },
+          "originalSize": {
+            "width": 100,
+            "height": 100
+          },
+          "world": {
+            "x": 216.0874906367041,
+            "y": 508.456,
+            "z": 0
+          },
+          "scale": {
+            "x": 4,
+            "y": 4,
+            "z": 1
+          }
+        }
+      ],
+      "checkpoint": {
+        "at": 161757,
+        "stepCount": 36,
+        "errorCount": 1,
+        "effectNodes": 0,
+        "resultViews": 0,
+        "paused": false
+      }
+    },
+    "rawLogEncoding": "采集临时记录中的注入错误中文前缀出现编码替换；原level和英文故障标记完整。源码与截图保留原中文。",
+    "deferredDestroy": "取消当刻曾短暂保留一个待引擎销毁节点，随后观察为0，不将同步destroy调用误写为当刻节点立即消失。",
+    "lateObservation": {
+      "at": 208167.5,
+      "faultAt": 118486.90000003576,
+      "lateStartedSteps": 0,
+      "steps": 36,
+      "errors": 1,
+      "completed": 0,
+      "playerResult": false
+    },
+    "observedAfterFaultSeconds": 89.68059999996424,
+    "notProved": [
+      "OS后台、网络断线、真机",
+      "其他英雄所有特效或投射type5",
+      "发布包"
+    ]
+  },
+  "cleanup": {
+    "browserAndObservers": {
+      "pageRoots": [],
+      "residents": 0,
+      "pendingResident": 0,
+      "opening": 0,
+      "residentIntents": 0,
+      "modalActive": null,
+      "paused": false,
+      "observerRemoved": true,
+      "frozenRemoved": true
+    },
+    "ownedResourceServerStopped": {
+      "pid": 14700,
+      "port": 19091,
+      "identityChecked": "可执行路径及UTC启动ticks与本次owner记录一致后停止",
+      "listeningAfterStop": 0
+    },
+    "temporaryBrowserTabsClosed": true,
+    "previousBrowserVisibilityRestored": true,
+    "creatorPrefabSaved": false
+  },
+  "screenshots": [
+    {
+      "file": "docs/images/chapter-stage5-ready-20261117.jpg",
+      "bytes": 70763,
+      "sha256": "47c10252fef17ecd652094d5ad6f643cf2331e8d5f501ba630072153aa539c2d",
+      "writtenUtc": "2026-11-17T08:39:03.360045+00:00",
+      "size": [
+        1280,
+        720
+      ],
+      "meaning": "实际第5关原始阵容，尚未播放"
+    },
+    {
+      "file": "docs/images/chapter-stage5-outcome-20261117.jpg",
+      "bytes": 46964,
+      "sha256": "dc925d1ec54fbc1d814bff62e51567d9c642a75a8cd6dfc65430b0fb98dcfdf1",
+      "writtenUtc": "2026-11-17T08:42:12.403009+00:00",
+      "size": [
+        1280,
+        720
+      ],
+      "meaning": "自然播放到败北，截图处于败北淡入开始阶段"
+    },
+    {
+      "file": "docs/images/chapter-stage5-statistics-20261117.jpg",
+      "bytes": 54618,
+      "sha256": "80d7a3530d913a58dfbd7a3f4765a86b6913104b2ae195e1f3aa83245474ca5e",
+      "writtenUtc": "2026-11-17T08:44:57.620818+00:00",
+      "size": [
+        1151,
+        848
+      ],
+      "meaning": "自然结束后的实际冻结统计；开发检查打开既有统计窗，不表示败北页新增玩家入口"
+    },
+    {
+      "file": "docs/images/chapter-stage5-winter-active-20261117.jpg",
+      "bytes": 63536,
+      "sha256": "fc51ade43fe5f28ed88a8d01ebc74e1fb559e9b736f96f7892f7a49f68c1234e",
+      "writtenUtc": "2026-11-17T08:47:41.683779+00:00",
+      "size": [
+        1151,
+        848
+      ],
+      "meaning": "寒冬之怒主动，播放中受控暂停截图"
+    },
+    {
+      "file": "docs/images/chapter-stage5-frost-active-20261117.jpg",
+      "bytes": 85189,
+      "sha256": "c96535897a5ecac5a51d64d1f9a36c25d604332de810d39199c381d9a0d6f26a",
+      "writtenUtc": "2026-11-17T08:47:59.760176+00:00",
+      "size": [
+        1151,
+        848
+      ],
+      "meaning": "冰霜元素主动，播放中受控暂停截图"
+    },
+    {
+      "file": "docs/images/chapter-stage5-winter-ordinary-20261117.jpg",
+      "bytes": 84324,
+      "sha256": "a4c08acbe9ac3e1e65d86593352af824d337f1ed3075f6aab78954fddfb12ee8",
+      "writtenUtc": "2026-11-17T08:48:15.370518+00:00",
+      "size": [
+        1151,
+        848
+      ],
+      "meaning": "寒冬之怒普攻的两份同套特效，播放中受控暂停截图"
+    },
+    {
+      "file": "docs/images/chapter-stage5-mammon-ordinary-20261117.jpg",
+      "bytes": 84069,
+      "sha256": "49cbf6601b301828e358c5d1c12ae238a35b0e2bb1a295571f55e4e120b6aa41",
+      "writtenUtc": "2026-11-17T08:48:26.286962+00:00",
+      "size": [
+        1151,
+        848
+      ],
+      "meaning": "玛蒙普攻近身及施法者帧，播放中受控暂停截图"
+    },
+    {
+      "file": "docs/images/chapter-stage5-frame-failure-20261117.jpg",
+      "bytes": 83603,
+      "sha256": "3b7a469558f2218f0fb10a61f542d8477b13110e85301e38ecd218cdb7665a34",
+      "writtenUtc": "2026-11-17T08:48:51.735894+00:00",
+      "size": [
+        1151,
+        848
+      ],
+      "meaning": "下一异步帧定点抛错后取消；使用原有开发播放失败文案，无结算窗"
+    }
+  ],
+  "limits": [
+    "初次仍见旧编译资源，负责人刷新预览后才进行本文件的有效检查；不把旧编译失败算成新实现通过。",
+    "只读原配置战报不代表实际开放第5关挑战或宝箱领取。",
+    "自然帧调度与整场清理使墙钟时长不同于配置名义时长，不宣称帧率或流畅度性能结论。",
+    "旧Java稳定排序与新版raw/wire顺序不同，保留新版现有顺序；说明见本批legacy-audit，未重写历史战报。"
+  ]
+}

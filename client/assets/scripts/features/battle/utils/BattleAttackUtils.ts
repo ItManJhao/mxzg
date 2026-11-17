@@ -1,4 +1,4 @@
-/** 按旧G_BATTLE_ACTIONS覆盖及BattleActionUtils解析近身、远程和独立特效时序；不把life当动作时长或生成通用特效。 */
+/** 按旧G_BATTLE_ACTIONS覆盖及BattleActionUtils解析近身、场地移动、远程和独立特效时序；不把life当动作时长或生成通用特效。 */
 export interface BattleAttackPlan {
     /** true为type2/11近身移动；false为type3原地施法，不能瞬移到目标。 */
     readonly melee: boolean;
@@ -7,6 +7,8 @@ export interface BattleAttackPlan {
     readonly onSource: boolean;
     /** type9按战场宽高比例定位，仅播放一次；左右阵营按旧特效层镜像。 */
     readonly battlefieldOffset: readonly [number, number] | null;
+    /** type8角色按显式战场宽高比例移动，敌方镜像横坐标；其他类型为null，不与type9特效位置混用。 */
+    readonly moveOffset: readonly [number, number] | null;
     /** type5投射，按旧帧计数飞行；type3在各目标脚下播放一次。 */
     readonly projectile: boolean;
     /** 同源序列帧路径、帧间隔、缩放和锚点；空file时为null。 */
@@ -14,7 +16,7 @@ export interface BattleAttackPlan {
         scaleX: number; scaleY: number; anchorX: number; anchorY: number } | null;
     /** 秒；去程与回程分别使用相同移动时间。 */
     readonly moveSeconds: number;
-    /** 按旧BattleHeroNode.Action映射骨骼动作：skill为attack2，skill2为attack3，transform为skill。 */
+    /** 按旧BattleHeroNode.Action映射骨骼动作；真正空type1为空串，skill为attack2，skill2为attack3，transform为skill。 */
     readonly action: string;
     /** 攻击开始后到附加效果时点的秒数。 */
     readonly attackSeconds: number;
@@ -32,6 +34,67 @@ export class BattleAttackUtils {
 
     /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；恢复已核对的英雄覆盖，内部索引不写回战报。 */
     public static legacyActions<T extends { idx: number; type: number; ani_base: string; file: string; sound: string; delay: number; dimly: number }>(row: T): readonly T[] {
+        // 荆棘之炎在场地比例位置施法；第15帧独立特效读取当下施法者位置，不能改成目标近身或删除覆盖。
+        if (row.idx === 1051101) {
+            return [
+                { ...row, idx: row.idx * 10, type: 8, delay: 0, dimly: 0, shake: 0,
+                    ani_base: JSON.stringify({ move_time: 0.1, move_back: 1.7, attack_delay: 0.3,
+                        offset_x: 0.55, offset_y: 0.4 }), file: "[]",
+                    sound: JSON.stringify(["skill-101040051"]) },
+                { ...row, idx: row.idx * 10 + 1, type: 6, delay: 15, dimly: 1, shake: 0,
+                    ani_base: JSON.stringify({ format: "skill-101040051/%d.png", anchor_x: 0.5,
+                        anchor_y: 0.4, duration: 0.1, scale_x: 1.3, scale_y: 1.3 }),
+                    file: JSON.stringify(["skill-101040051"]), sound: "[]" },
+            ];
+        }
+        // 玛蒙近身本体没有额外音效；旧第25帧在施法者当下位置挂特效并单独播放原音效。
+        if (row.idx === 1020100) {
+            return [
+                { ...row, idx: row.idx * 10, type: 2, delay: 0, dimly: 0, shake: 0,
+                    ani_base: JSON.stringify({ move_time: 0.1, move_back: 1, attack_delay: 0 }),
+                    file: "[]", sound: "[]" },
+                { ...row, idx: row.idx * 10 + 1, type: 6, delay: 25, dimly: 0, shake: 0,
+                    ani_base: JSON.stringify({ format: "skill-101030030/%d.png", anchor_x: 0.3,
+                        anchor_y: 0.5, duration: 0.06, scale_x: 1.8, scale_y: 1.8 }),
+                    file: JSON.stringify(["skill-101030030"]), sound: JSON.stringify(["skill-101030030"]) },
+            ];
+        }
+        // 寒冬旧覆盖同时保留空动作和原地普攻；独立2050300仍按原表执行，不能擅自去重旧双特效/音效。
+        if (row.idx === 2050100) {
+            return [
+                { ...row, idx: row.idx * 10, type: 1, delay: 0, dimly: 0, shake: 0,
+                    ani_base: "{}", file: "[]", sound: "[]" },
+                { ...row, idx: row.idx * 10 + 1, type: 3, delay: 0, dimly: 0, shake: 0,
+                    ani_base: JSON.stringify({ attack_time: 0.3, action_time: 0.8,
+                        format: "skill-102040050/%d.png", duration: 0.04,
+                        scale_x: 1, scale_y: 1, anchor_y: 0.2 }),
+                    file: JSON.stringify(["skill-102040050"]), sound: JSON.stringify(["skill-102040050"]) },
+            ];
+        }
+        // 追猎者普攻的file仅供旧预载；近身负责唯一音效，第30帧的type6在施法者位置播放。
+        if (row.idx === 3020100) {
+            return [
+                { ...row, idx: row.idx * 10, type: 2, delay: 0, dimly: 0,
+                    ani_base: JSON.stringify({ move_time: 0.1, move_back: 1.5, attack_delay: 0.4 }),
+                    file: "[]", sound: JSON.stringify(["skill-103030030"]) },
+                { ...row, idx: row.idx * 10 + 1, type: 6, delay: 30, dimly: 0,
+                    ani_base: JSON.stringify({ format: "skill-103030030/%d.png", anchor_x: 0.6,
+                        anchor_y: 0.35, duration: 0.06, scale_x: 1.4, scale_y: 1.4 }),
+                    file: JSON.stringify(["skill-103030030"]), sound: "[]" },
+            ];
+        }
+        // 诺亚普攻沿旧覆盖分成目标特效与type11近身；offset字段旧type11也未消费，不按战场比例移动。
+        if (row.idx === 3050300) {
+            return [
+                { ...row, idx: row.idx * 10, type: 7, delay: 30, dimly: 0,
+                    ani_base: JSON.stringify({ format: "skill-103040050/%d.png", anchor_x: 0.25,
+                        anchor_y: 0.21, duration: 0.06, scale_x: 1.4, scale_y: 1.4 }),
+                    file: JSON.stringify(["skill-103040050"]), sound: JSON.stringify(["skill-103040050"]) },
+                { ...row, idx: row.idx * 10 + 1, type: 11, delay: 0, dimly: 0,
+                    ani_base: JSON.stringify({ move_time: 0.1, move_back: 2, attack_delay: 0.2,
+                        offset_x: 0.6, offset_y: 0.3 }), file: "[]", sound: "[]" },
+            ];
+        }
         // 冰晶女巫的file仅用于预加载；施法与第20帧的战场特效分开，不能在目标脚下重复播放。
         if (row.idx >= 2031101 && row.idx <= 2031103) {
             return [
@@ -56,8 +119,8 @@ export class BattleAttackUtils {
                     file: JSON.stringify(["skill-103010011"]), sound: "[]" },
             ];
         }
-        // 布鲁与冰晶女巫普攻按旧actions.lua在目标处播放4倍水花，不直接采用基础buff的表现参数。
-        if (row.idx === 2010100 || row.idx === 2030100) {
+        // 布鲁、冰霜元素与冰晶女巫普攻沿旧覆盖在目标处播放4倍水花，不使用基础表的帧率/缩放差异。
+        if (row.idx === 2010100 || row.idx === 2020100 || row.idx === 2030100) {
             return [{
                 ...row,
                 type: 3,
@@ -142,9 +205,10 @@ export class BattleAttackUtils {
             sound: JSON.stringify(entry.sound ? [entry.sound] : []) }));
     }
 
-    /** 读取同源buff行；开放type1/2/3/5/11和已核对覆盖表的type6/7/9真实帧资源，未知表现明确拒绝。 */
-    public static plan(row: { type: number; ani_base: string; file: string; sound: string }): BattleAttackPlan {
-        if ([1, 2, 3, 5, 6, 7, 9, 11].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
+    /** 读取同源buff行；type1只接空动作，type8要求显式双轴比例，其余只接已核对类型与真实帧，未知声明明确拒绝。 */
+    public static plan(row: { type: number; ani_base: string; file: string; sound: string;
+        shake?: number; dimly?: number }): BattleAttackPlan {
+        if ([1, 2, 3, 5, 6, 7, 8, 9, 11].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
         const base: unknown = JSON.parse(row.ani_base);
         const files: unknown = JSON.parse(row.file);
         const sounds: unknown = JSON.parse(row.sound);
@@ -154,8 +218,13 @@ export class BattleAttackUtils {
             throw new Error("攻击动作配置超出当前支持范围");
         }
         const values = base as Record<string, unknown>;
+        if (row.type === 1 && (Object.keys(values).length || files.length || sounds.length
+            || (row.shake !== undefined && row.shake !== 0) || (row.dimly !== undefined && row.dimly !== 0))) {
+            // 当前仅恢复真正空动作；旧可选位移及其他领域带音效type1仍须另行核实，不能假装已经支持。
+            throw new Error("空动作包含尚未恢复的位移、特效、音效或画面副作用");
+        }
         const known = ["move_time", "attack_time", "attack_delay", "action_time", "move_back", "action", "format", "duration", "scale_x", "scale_y", "anchor_x", "anchor_y", "flipped"];
-        if (row.type === 9 || row.type === 11) known.push("offset_x", "offset_y");
+        if (row.type === 8 || row.type === 9 || row.type === 11) known.push("offset_x", "offset_y");
         if (Object.keys(values).some(key => known.indexOf(key) < 0)) {
             throw new Error("攻击动作存在未支持参数");
         }
@@ -163,18 +232,36 @@ export class BattleAttackUtils {
         if (["attack", "skill", "skill2", "transform"].indexOf(action as string) < 0) {
             throw new Error("攻击动作名称无效");
         }
+        // 旧type8只移动角色；其独立帧由另一个覆盖子动作承担，不能把file误画在目标脚下。
+        if (row.type === 8 && (files.length || values.format !== undefined)) {
+            throw new Error("场地移动动作不支持内嵌序列帧");
+        }
+        // 旧缺横坐标时保持0且不镜像，与显式0的敌方坐标不同；本轮不猜缺省，只有完整比例进入播放。
+        if (row.type === 8 && (values.offset_x === undefined || values.offset_y === undefined)) {
+            throw new Error("场地移动动作缺少显式双轴比例");
+        }
+        const moveOffset = row.type === 8
+            ? Object.freeze([this.seconds(values, "offset_x", 0), this.seconds(values, "offset_y", 0)]) as readonly [number, number]
+            : null;
+        if (moveOffset && moveOffset.some(value => value > 1)) {
+            throw new Error("角色移动比例超出战场范围");
+        }
         let effect: BattleAttackPlan["effect"] = null;
         if (files.length) {
             // 帧数以旧plist连续帧及本地逐像素复验为依据，不能遇到未知资源就跳过表现。
             const counts: Record<string, number> = {
                 "skill-101050110": 10, "skill-101050111": 10,
                 "skill-105050051": 19, "skill-105050051-1": 8,
-                "skill-101010011": 9, "skill-101040050": 7, "skill-101020021": 11,
+                "skill-101010011": 9, "skill-101040050": 7, "skill-101040051": 6, "skill-101020021": 11,
                 "skill-102050230": 8, "skill-102050231": 17,
                 "skill-102050233": 22, "skill-102050233_1": 22,
                 "skill-102040040": 14, "skill-102010011": 4,
                 "skill-103010011": 7,
                 "skill-102030031": 8,
+                "skill-103020021": 15, "skill-103030030": 12,
+                "skill-103040050": 8, "skill-103040051": 10,
+                "skill-102020021": 14, "skill-102040050": 11, "skill-102040051": 10,
+                "skill-101030030": 6,
             };
             const file = files[0];
             if (files.length !== 1 || typeof file !== "string" || !counts[file]
@@ -202,8 +289,10 @@ export class BattleAttackUtils {
         return Object.freeze({
             effectOnly: row.type === 1 || row.type === 6 || row.type === 7 || row.type === 9, onSource: row.type === 6 || row.type === 9,
             battlefieldOffset: row.type === 9 ? Object.freeze([this.seconds(values, "offset_x", 0), this.seconds(values, "offset_y", 0)]) as readonly [number, number] : null,
+            moveOffset,
             melee: row.type === 2 || row.type === 11, projectile: row.type === 5, effect,
-            moveSeconds: row.type === 2 || row.type === 11 ? this.seconds(values, "move_time", 0.1) : 0, action: action === "skill" ? "attack2" : action === "skill2" ? "attack3" : action === "transform" ? "skill" : "attack",
+            moveSeconds: row.type === 2 || row.type === 8 || row.type === 11 ? this.seconds(values, "move_time", 0.1) : 0,
+            action: row.type === 1 ? "" : action === "skill" ? "attack2" : action === "skill2" ? "attack3" : action === "transform" ? "skill" : "attack",
             attackSeconds: this.seconds(values, "attack_time", 0),
             attackDelaySeconds: this.seconds(values, "attack_delay", 0),
             actionSeconds: this.seconds(values, "action_time", 0),

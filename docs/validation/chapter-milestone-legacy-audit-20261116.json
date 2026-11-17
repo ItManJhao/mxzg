@@ -1,0 +1,994 @@
+{
+  "date": "2026-11-16",
+  "timezone": "Asia/Shanghai",
+  "oldRoot": "G:/work/FsGame/Demo/mj/program/",
+  "scope": "核对旧主线里程碑配置、已领状态/3008与胜利页show_rich，并按后续指令恢复同源只读配置。用户本批只读展示，3008及挂机领取继续关闭，当前前三关范围不扩，不构建、不提交推送。",
+  "primaryFindings": [
+    {
+      "topic": "六项里程碑与真实主键",
+      "conclusion": "chapterextrareward不是每关首通奖励表。配置主键依次100/150/200/300/400/500，达成绝对关卡idx分别15/30/50/80/110/140；rewardIds保存的是前者配置ID，不是后者目标关卡、列表序号或物品实例ID。前三关没有可领里程碑，胜利页可显示第一项目标剩余14/13/12关而不扩大挑战范围。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/config/chapterextrareward.lua",
+          "line": 3,
+          "endLine": 55
+        },
+        {
+          "path": "mxzg-protofiles/protofiles/game/Battle.proto",
+          "line": 324,
+          "endLine": 336
+        }
+      ]
+    },
+    {
+      "topic": "持久已领类型及初始化",
+      "conclusion": "RoleMission.reward_id为List<Integer> rewardIds，字段初始化new ArrayList<>()；新RoleMission由getRoleMission创建时沿用这个空列表。与chapterReward/chapterRewardId首通领取列表是不同字段。普通加载读取已保存rewardIds，不按通关数推算全部已领，也没有达到目标自动加入记录的代码。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/domain/RoleMission.java",
+          "line": 34,
+          "endLine": 41
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/domain/RoleMission.java",
+          "line": 108,
+          "endLine": 113
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/service/RoleMissionService.java",
+          "line": 90,
+          "endLine": 113
+        }
+      ]
+    },
+    {
+      "topic": "状态协议与更新归属",
+      "conclusion": "3007回包携带max_idx和完整extra_reward_id(int32[])；3008成功回包携带完整reward_id(int32[])、真实奖励list及heroList。登录RoleResponse请求3007，BattleResponse.chapterSetData写chapter_id并重建已领布尔表；3008回包同样重建后发送本地EXTRA_REWARD事件和红点刷新。此事件不是独立服务端推送，所查链无另一条异步rewardIds增量协议。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 413,
+          "endLine": 443
+        },
+        {
+          "path": "mxzg-protofiles/protofiles/game/Battle.proto",
+          "line": 310,
+          "endLine": 336
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 83,
+          "endLine": 119
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/RoleResponse.lua",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "topic": "服务端可乱序领取、客户端只请求最小未领",
+      "conclusion": "3008仅校验配置存在、目标chapter<=roleMission.chapterId、请求idx不在rewardIds，没有要求先领更小idx、没有检查receiveReward或前序里程碑。所以旧后端允许任意已达成且未领项；正常客户端canReward/onReward只发getNowExtraReward返回的最小未领idx。不能把客户端路径约束伪称旧后端顺序规则。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 424,
+          "endLine": 443
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/ChapterExtraRewardCell.lua",
+          "line": 144,
+          "endLine": 158
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/ChapterExtraRewardCell.lua",
+          "line": 205,
+          "endLine": 213
+        }
+      ]
+    },
+    {
+      "topic": "排序与目标选择",
+      "conclusion": "resExtraReward先从配置取全部idx并按数值升序排序，再对服务器完整已领列表作成员查找，生成idx/is_reward。getNowExtraReward取首个is_reward!=true，不按chapter、奖励价值、服务器列表顺序或是否已达成重排。重复/未知已领ID在旧客户端成员判断中不额外产生配置项；未知请求ID由服务端配置getOrThrow拒绝。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/data/ChapterData.lua",
+          "line": 441,
+          "endLine": 477
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 426
+        }
+      ]
+    },
+    {
+      "topic": "达成待领与全部已领",
+      "conclusion": "已达成但尚未领取仍是下一目标，不跳到未来项；show_rich用other_tip_language而非带0/负数的tips_lang。六项全部已领时getNowExtraReward为nil，胜利页新建富文本保持空；场景额外奖励Cell移除父节点并发EXTRA_REMOVE。红点仅对最小未领项用chapter_id>=target判断。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/data/ChapterData.lua",
+          "line": 467,
+          "endLine": 488
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua",
+          "line": 314,
+          "endLine": 328
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/ChapterExtraRewardCell.lua",
+          "line": 89,
+          "endLine": 95
+        }
+      ]
+    },
+    {
+      "topic": "零进度与尚未收到权威状态",
+      "conclusion": "明确maxCleared=0且已领列表为空时，按完整配置应选idx100/目标15/剩15；但旧ChapterData构造时vec_chapter_extra_reward也为空，直到3007/3008重建才有候选，初始化前getNowExtraReward同样返回nil。不能据旧nil推定全部已领；新版缺少权威已领字段时应明确未同步，不能单为提示擅造空已领列表。rewardId=0本身不是合法配置ID。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/data/ChapterData.lua",
+          "line": 6,
+          "endLine": 32
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/data/ChapterData.lua",
+          "line": 441,
+          "endLine": 477
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 83,
+          "endLine": 103
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 426
+        }
+      ]
+    },
+    {
+      "topic": "跨大关/模式的剩余关数公式",
+      "conclusion": "胜利提示直接用chapterextrareward.chapter(绝对chapterreward.idx)减ChapterData.chapter_id(最高已通关绝对idx)。不使用显示大章chapter_id、chapter_total、mission_id做减法，不假设每章长度固定，也不按下一关idx再减1。章和模式边界只改变显示分组，绝对idx连续。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua",
+          "line": 314,
+          "endLine": 326
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 276,
+          "endLine": 280
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 18,
+          "endLine": 19
+        }
+      ]
+    },
+    {
+      "topic": "胜利显示与战败例外",
+      "conclusion": "正常3002回包先把ChapterData.chapter_id更新为data.idx，有vec_battle_detail时才开BattleEndCtr(true)，其initData无is_win条件地创建show_rich。因此此旧胜利页文本使用结算后的最高进度；虽然BattleEndCtr内部有is_win=false皮肤分支，当前主线失败实际走独立chapterend/ChapterEndCtr，不是该show_rich路径。失败不更新服务端chapterId，也不新增已领ID。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 18,
+          "endLine": 48
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua",
+          "line": 273,
+          "endLine": 328
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua",
+          "line": 403,
+          "endLine": 415
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattleMissionLayer.lua",
+          "line": 34,
+          "endLine": 46
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 276,
+          "endLine": 281
+        }
+      ]
+    },
+    {
+      "topic": "冷恢复与缺战报",
+      "conclusion": "BattleLayer创建时请求3002补结算；旧BattleResponse注释并实施：缺vec_battle_detail时非引导开通用ItemRewardCtr，执行引导时不打开它。此冷恢复路径不会构造BattleEndCtr的show_rich，不补造胜利页。3007仍可恢复当前最高进度和完整已领集合供后续正常页面查询；不从旧首通回执奖励反推里程碑已领。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattleLayer.lua",
+          "line": 202,
+          "endLine": 207
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 40,
+          "endLine": 48
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 413,
+          "endLine": 420
+        }
+      ]
+    },
+    {
+      "topic": "独立发奖反馈边界",
+      "conclusion": "3008先将idx加入rewardIds并更新RoleMission，再ThingService.add(CHAPTER_EXTRA_REWARD,SLIENT)，最后返回完整已领和奖励。客户端有heroList走openRewardPanel英雄表现，否则交ItemRewardCtr。它不是3002首通自动附赠，也不并入挂机奖励。本审计不据旧调用顺序宣称具备新版事务回执原子性，未来开放需单独完整设计。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 433,
+          "endLine": 443
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 107,
+          "endLine": 120
+        }
+      ]
+    }
+  ],
+  "configurationEvidence": {
+    "legacyLua": "client/cocos_mxzg/client/idle/src/config/chapterextrareward.lua",
+    "legacySha256": "f4a3dae826d27b9321b7877aefbc8d36dde4fda67134c0d3b868df813a848fa8",
+    "legacyRows": [
+      {
+        "source_line": 3,
+        "idx": 100,
+        "chapter": 15,
+        "reward": [
+          {
+            "item_num": 1,
+            "item_type": 10105007
+          }
+        ],
+        "show_model": 10105007,
+        "tips_lang": 52801,
+        "tip_img": 1,
+        "other_tip_language": 52831
+      },
+      {
+        "source_line": 12,
+        "idx": 150,
+        "chapter": 30,
+        "reward": [
+          {
+            "item_num": 500,
+            "item_type": 900102
+          }
+        ],
+        "show_model": 900102,
+        "tips_lang": 52802,
+        "tip_img": 2,
+        "other_tip_language": 52832
+      },
+      {
+        "source_line": 21,
+        "idx": 200,
+        "chapter": 50,
+        "reward": [
+          {
+            "item_num": 800,
+            "item_type": 900102
+          }
+        ],
+        "show_model": 900102,
+        "tips_lang": 52803,
+        "tip_img": 2,
+        "other_tip_language": 52833
+      },
+      {
+        "source_line": 30,
+        "idx": 300,
+        "chapter": 80,
+        "reward": [
+          {
+            "item_num": 1,
+            "item_type": 1001012
+          }
+        ],
+        "show_model": 1001012,
+        "tips_lang": 52804,
+        "tip_img": 3,
+        "other_tip_language": 52834
+      },
+      {
+        "source_line": 39,
+        "idx": 400,
+        "chapter": 110,
+        "reward": [
+          {
+            "item_num": 1,
+            "item_type": 10205011
+          }
+        ],
+        "show_model": 10205011,
+        "tips_lang": 52805,
+        "tip_img": 4,
+        "other_tip_language": 52835
+      },
+      {
+        "source_line": 48,
+        "idx": 500,
+        "chapter": 140,
+        "reward": [
+          {
+            "item_num": 1,
+            "item_type": 10105007
+          }
+        ],
+        "show_model": 10105007,
+        "tips_lang": 52806,
+        "tip_img": 1,
+        "other_tip_language": 52836
+      }
+    ],
+    "currentWorkbook": "config/gameconfig/chapterextrareward.xlsx",
+    "sheet": "firstrewardchapter",
+    "headerRow": 3,
+    "workbookRows": [
+      {
+        "idx": 100,
+        "chapter": 15,
+        "reward": [
+          {
+            "item_type": 10105007,
+            "item_num": 1
+          }
+        ],
+        "show_model": 10105007,
+        "tips_lang": 52801,
+        "tip_img": 1,
+        "other_tip_language": 52831,
+        "workbook_row": 4
+      },
+      {
+        "idx": 150,
+        "chapter": 30,
+        "reward": [
+          {
+            "item_type": 900102,
+            "item_num": 500
+          }
+        ],
+        "show_model": 900102,
+        "tips_lang": 52802,
+        "tip_img": 2,
+        "other_tip_language": 52832,
+        "workbook_row": 5
+      },
+      {
+        "idx": 200,
+        "chapter": 50,
+        "reward": [
+          {
+            "item_type": 900102,
+            "item_num": 800
+          }
+        ],
+        "show_model": 900102,
+        "tips_lang": 52803,
+        "tip_img": 2,
+        "other_tip_language": 52833,
+        "workbook_row": 6
+      },
+      {
+        "idx": 300,
+        "chapter": 80,
+        "reward": [
+          {
+            "item_type": 1001012,
+            "item_num": 1
+          }
+        ],
+        "show_model": 1001012,
+        "tips_lang": 52804,
+        "tip_img": 3,
+        "other_tip_language": 52834,
+        "workbook_row": 7
+      },
+      {
+        "idx": 400,
+        "chapter": 110,
+        "reward": [
+          {
+            "item_type": 10205011,
+            "item_num": 1
+          }
+        ],
+        "show_model": 10205011,
+        "tips_lang": 52805,
+        "tip_img": 4,
+        "other_tip_language": 52835,
+        "workbook_row": 8
+      },
+      {
+        "idx": 500,
+        "chapter": 140,
+        "reward": [
+          {
+            "item_type": 10105007,
+            "item_num": 1
+          }
+        ],
+        "show_model": 10105007,
+        "tips_lang": 52806,
+        "tip_img": 1,
+        "other_tip_language": 52836,
+        "workbook_row": 9
+      }
+    ],
+    "comparedFields": [
+      "idx",
+      "chapter",
+      "reward",
+      "show_model",
+      "tips_lang",
+      "tip_img",
+      "other_tip_language"
+    ],
+    "fieldDifferences": [],
+    "allSixRowsSemanticallyEqual": true,
+    "serverSchema": {
+      "fields": [
+        "idx",
+        "chapter",
+        "reward"
+      ],
+      "cacheFileName": "chapterextrareward",
+      "entity": {
+        "path": "server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/entity/CChapterExtraReward.java",
+        "line": 14,
+        "endLine": 25
+      },
+      "cache": {
+        "path": "server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/ChapterExtraRewardSysCache.java",
+        "line": 12,
+        "endLine": 18
+      },
+      "note": "旧服务端实体只读取三项业务字段；其余四项为客户端展示输入。所查旧仓库未含部署用Excel，不能将当前XLSX与Lua一致升级为部署字节相同证明。"
+    },
+    "languageEntries": [
+      {
+        "key": 52801,
+        "legacy_line": 15735,
+        "legacy_cn_trad": "通關<font color='#ec0000'>%s</font>關領取<font color='#ef6b00'>烈焰騎士</font>",
+        "current_simplified": "通关<font color='#ec0000'>%s</font>关领取<font color='#ef6b00'>烈焰骑士</font>",
+        "has_inline_image": false,
+        "sample_max_plain_length": 12
+      },
+      {
+        "key": 52802,
+        "legacy_line": 15738,
+        "legacy_cn_trad": "通關<font color='#ec0000'>%s</font>關得<font color='#ef6b00'>海量進階石</font>",
+        "current_simplified": "通关<font color='#ec0000'>%s</font>关得<font color='#ef6b00'>海量进阶石</font>",
+        "has_inline_image": false,
+        "sample_max_plain_length": 12
+      },
+      {
+        "key": 52803,
+        "legacy_line": 15741,
+        "legacy_cn_trad": "通關<font color='#ec0000'>%s</font>關得<font color='#ef6b00'>海量進階石</font>",
+        "current_simplified": "通关<font color='#ec0000'>%s</font>关得<font color='#ef6b00'>海量进阶石</font>",
+        "has_inline_image": false,
+        "sample_max_plain_length": 12
+      },
+      {
+        "key": 52804,
+        "legacy_line": 15744,
+        "legacy_cn_trad": "通關<font color='#ec0000'>%s</font>關領取<font color='#ef6b00'>絕世紅武</font>",
+        "current_simplified": "通关<font color='#ec0000'>%s</font>关领取<font color='#ef6b00'>绝世红武</font>",
+        "has_inline_image": false,
+        "sample_max_plain_length": 12
+      },
+      {
+        "key": 52805,
+        "legacy_line": 15747,
+        "legacy_cn_trad": "通關<font color='#ec0000'>%s</font>關領取<font color='#ef6b00'>章魚公主</font>",
+        "current_simplified": "通关<font color='#ec0000'>%s</font>关领取<font color='#ef6b00'>章鱼公主</font>",
+        "has_inline_image": false,
+        "sample_max_plain_length": 12
+      },
+      {
+        "key": 52806,
+        "legacy_line": 15750,
+        "legacy_cn_trad": "通關<font color='#ec0000'>%s</font>關領取<font color='#ef6b00'>烈焰騎士</font>",
+        "current_simplified": "通关<font color='#ec0000'>%s</font>关领取<font color='#ef6b00'>烈焰骑士</font>",
+        "has_inline_image": false,
+        "sample_max_plain_length": 12
+      },
+      {
+        "key": 52831,
+        "legacy_line": 15753,
+        "legacy_cn_trad": "現在就去領取領取<font color='#ef6b00'>烈焰騎士</font>吧",
+        "current_simplified": "现在就去领取领取<font color='#ef6b00'>烈焰骑士</font>吧",
+        "has_inline_image": false,
+        "sample_max_plain_length": 13
+      },
+      {
+        "key": 52832,
+        "legacy_line": 15756,
+        "legacy_cn_trad": "現在就去領取<font color='#ef6b00'>海量進階石</font>吧",
+        "current_simplified": "现在就去领取<font color='#ef6b00'>海量进阶石</font>吧",
+        "has_inline_image": false,
+        "sample_max_plain_length": 12
+      },
+      {
+        "key": 52833,
+        "legacy_line": 15759,
+        "legacy_cn_trad": "現在就去領取<font color='#ef6b00'>海量進階石</font>吧",
+        "current_simplified": "现在就去领取<font color='#ef6b00'>海量进阶石</font>吧",
+        "has_inline_image": false,
+        "sample_max_plain_length": 12
+      },
+      {
+        "key": 52834,
+        "legacy_line": 15762,
+        "legacy_cn_trad": "現在就去領取<font color='#ef6b00'>絕世紅武</font>吧",
+        "current_simplified": "现在就去领取<font color='#ef6b00'>绝世红武</font>吧",
+        "has_inline_image": false,
+        "sample_max_plain_length": 11
+      },
+      {
+        "key": 52835,
+        "legacy_line": 15765,
+        "legacy_cn_trad": "現在就去領取<font color='#ef6b00'>章魚公主</font>吧",
+        "current_simplified": "现在就去领取<font color='#ef6b00'>章鱼公主</font>吧",
+        "has_inline_image": false,
+        "sample_max_plain_length": 11
+      },
+      {
+        "key": 52836,
+        "legacy_line": 15768,
+        "legacy_cn_trad": "現在就去領取<font color='#ef6b00'>烈焰騎士</font>吧",
+        "current_simplified": "现在就去领取<font color='#ef6b00'>烈焰骑士</font>吧",
+        "has_inline_image": false,
+        "sample_max_plain_length": 11
+      }
+    ],
+    "languageNotes": "旧繁中与当前简中为已确认本地化差异；同键格式和已达成文案的重复领取均保留。12条均只有font颜色标签，无内嵌图片。最长示例是52831重复领取的13字，三位剩余关数的未达成示例12字。",
+    "absoluteChapterMapping": {
+      "source": "client/cocos_mxzg/client/idle/src/config/chapterreward.lua",
+      "legacyRows": 850,
+      "currentRows": 850,
+      "selected": [
+        {
+          "source_line": 3,
+          "idx": 1,
+          "mode_id": 1,
+          "chapter_id": 1,
+          "chapter_total": 1,
+          "mission_id": 1
+        },
+        {
+          "source_line": 35,
+          "idx": 3,
+          "mode_id": 1,
+          "chapter_id": 1,
+          "chapter_total": 1,
+          "mission_id": 3
+        },
+        {
+          "source_line": 131,
+          "idx": 9,
+          "mode_id": 1,
+          "chapter_id": 1,
+          "chapter_total": 1,
+          "mission_id": 9
+        },
+        {
+          "source_line": 147,
+          "idx": 10,
+          "mode_id": 1,
+          "chapter_id": 1,
+          "chapter_total": 1,
+          "mission_id": 10
+        },
+        {
+          "source_line": 163,
+          "idx": 11,
+          "mode_id": 1,
+          "chapter_id": 2,
+          "chapter_total": 2,
+          "mission_id": 1
+        },
+        {
+          "source_line": 211,
+          "idx": 14,
+          "mode_id": 1,
+          "chapter_id": 2,
+          "chapter_total": 2,
+          "mission_id": 4
+        },
+        {
+          "source_line": 227,
+          "idx": 15,
+          "mode_id": 1,
+          "chapter_id": 2,
+          "chapter_total": 2,
+          "mission_id": 5
+        },
+        {
+          "source_line": 243,
+          "idx": 16,
+          "mode_id": 1,
+          "chapter_id": 2,
+          "chapter_total": 2,
+          "mission_id": 6
+        },
+        {
+          "source_line": 451,
+          "idx": 29,
+          "mode_id": 1,
+          "chapter_id": 3,
+          "chapter_total": 3,
+          "mission_id": 9
+        },
+        {
+          "source_line": 467,
+          "idx": 30,
+          "mode_id": 1,
+          "chapter_id": 3,
+          "chapter_total": 3,
+          "mission_id": 10
+        },
+        {
+          "source_line": 771,
+          "idx": 49,
+          "mode_id": 1,
+          "chapter_id": 4,
+          "chapter_total": 4,
+          "mission_id": 14
+        },
+        {
+          "source_line": 787,
+          "idx": 50,
+          "mode_id": 1,
+          "chapter_id": 4,
+          "chapter_total": 4,
+          "mission_id": 15
+        },
+        {
+          "source_line": 803,
+          "idx": 51,
+          "mode_id": 1,
+          "chapter_id": 5,
+          "chapter_total": 5,
+          "mission_id": 1
+        },
+        {
+          "source_line": 1747,
+          "idx": 110,
+          "mode_id": 1,
+          "chapter_id": 7,
+          "chapter_total": 7,
+          "mission_id": 20
+        },
+        {
+          "source_line": 1763,
+          "idx": 111,
+          "mode_id": 1,
+          "chapter_id": 8,
+          "chapter_total": 8,
+          "mission_id": 1
+        },
+        {
+          "source_line": 2051,
+          "idx": 129,
+          "mode_id": 1,
+          "chapter_id": 8,
+          "chapter_total": 8,
+          "mission_id": 19
+        },
+        {
+          "source_line": 2067,
+          "idx": 130,
+          "mode_id": 1,
+          "chapter_id": 8,
+          "chapter_total": 8,
+          "mission_id": 20
+        },
+        {
+          "source_line": 2083,
+          "idx": 131,
+          "mode_id": 2,
+          "chapter_id": 1,
+          "chapter_total": 9,
+          "mission_id": 1
+        },
+        {
+          "source_line": 2211,
+          "idx": 139,
+          "mode_id": 2,
+          "chapter_id": 1,
+          "chapter_total": 9,
+          "mission_id": 9
+        },
+        {
+          "source_line": 2227,
+          "idx": 140,
+          "mode_id": 2,
+          "chapter_id": 1,
+          "chapter_total": 9,
+          "mission_id": 10
+        },
+        {
+          "source_line": 2243,
+          "idx": 141,
+          "mode_id": 2,
+          "chapter_id": 2,
+          "chapter_total": 10,
+          "mission_id": 1
+        }
+      ],
+      "mappingDifferences": []
+    }
+  },
+  "stateAndHintExamples": [
+    {
+      "maxCleared": 0,
+      "claimedIds": [],
+      "nextId": 100,
+      "target": 15,
+      "remaining": 15,
+      "languageKey": 52801,
+      "hint": "通关<font color='#ec0000'>15</font>关领取<font color='#ef6b00'>烈焰骑士</font>",
+      "eligibleAccordingToOldChapterCheck": false
+    },
+    {
+      "maxCleared": 1,
+      "claimedIds": [],
+      "nextId": 100,
+      "target": 15,
+      "remaining": 14,
+      "languageKey": 52801,
+      "hint": "通关<font color='#ec0000'>14</font>关领取<font color='#ef6b00'>烈焰骑士</font>",
+      "eligibleAccordingToOldChapterCheck": false
+    },
+    {
+      "maxCleared": 2,
+      "claimedIds": [],
+      "nextId": 100,
+      "target": 15,
+      "remaining": 13,
+      "languageKey": 52801,
+      "hint": "通关<font color='#ec0000'>13</font>关领取<font color='#ef6b00'>烈焰骑士</font>",
+      "eligibleAccordingToOldChapterCheck": false
+    },
+    {
+      "maxCleared": 3,
+      "claimedIds": [],
+      "nextId": 100,
+      "target": 15,
+      "remaining": 12,
+      "languageKey": 52801,
+      "hint": "通关<font color='#ec0000'>12</font>关领取<font color='#ef6b00'>烈焰骑士</font>",
+      "eligibleAccordingToOldChapterCheck": false
+    },
+    {
+      "maxCleared": 10,
+      "claimedIds": [],
+      "nextId": 100,
+      "target": 15,
+      "remaining": 5,
+      "languageKey": 52801,
+      "hint": "通关<font color='#ec0000'>5</font>关领取<font color='#ef6b00'>烈焰骑士</font>",
+      "eligibleAccordingToOldChapterCheck": false
+    },
+    {
+      "maxCleared": 15,
+      "claimedIds": [],
+      "nextId": 100,
+      "target": 15,
+      "remaining": 0,
+      "languageKey": 52831,
+      "hint": "现在就去领取领取<font color='#ef6b00'>烈焰骑士</font>吧",
+      "eligibleAccordingToOldChapterCheck": true
+    },
+    {
+      "maxCleared": 30,
+      "claimedIds": [
+        100
+      ],
+      "nextId": 150,
+      "target": 30,
+      "remaining": 0,
+      "languageKey": 52832,
+      "hint": "现在就去领取<font color='#ef6b00'>海量进阶石</font>吧",
+      "eligibleAccordingToOldChapterCheck": true
+    },
+    {
+      "maxCleared": 51,
+      "claimedIds": [
+        100,
+        150
+      ],
+      "nextId": 200,
+      "target": 50,
+      "remaining": -1,
+      "languageKey": 52833,
+      "hint": "现在就去领取<font color='#ef6b00'>海量进阶石</font>吧",
+      "eligibleAccordingToOldChapterCheck": true
+    },
+    {
+      "maxCleared": 130,
+      "claimedIds": [
+        100,
+        150,
+        200,
+        300,
+        400
+      ],
+      "nextId": 500,
+      "target": 140,
+      "remaining": 10,
+      "languageKey": 52806,
+      "hint": "通关<font color='#ec0000'>10</font>关领取<font color='#ef6b00'>烈焰骑士</font>",
+      "eligibleAccordingToOldChapterCheck": false
+    },
+    {
+      "maxCleared": 140,
+      "claimedIds": [
+        100,
+        150,
+        200,
+        300,
+        400
+      ],
+      "nextId": 500,
+      "target": 140,
+      "remaining": 0,
+      "languageKey": 52836,
+      "hint": "现在就去领取<font color='#ef6b00'>烈焰骑士</font>吧",
+      "eligibleAccordingToOldChapterCheck": true
+    },
+    {
+      "maxCleared": 140,
+      "claimedIds": [
+        500
+      ],
+      "nextId": 100,
+      "target": 15,
+      "remaining": -125,
+      "languageKey": 52831,
+      "hint": "现在就去领取领取<font color='#ef6b00'>烈焰骑士</font>吧",
+      "eligibleAccordingToOldChapterCheck": true
+    },
+    {
+      "maxCleared": 140,
+      "claimedIds": [
+        100,
+        150,
+        200,
+        300,
+        400,
+        500
+      ],
+      "nextId": null,
+      "hint": ""
+    }
+  ],
+  "outOfOrderExample": {
+    "maxCleared": 140,
+    "claimedBefore": [],
+    "serverRequestRewardId": 500,
+    "serverCondition": "配置500目标140已达成且未领，旧后端允许；正常客户端此时只会请求100",
+    "claimedAfter": [
+      500
+    ],
+    "nextClientId": 100,
+    "scope": "仅源码推导，不执行领取"
+  },
+  "uiEvidence": {
+    "ccb": "client/cocos_mxzg/client/ccb-hd/Resources/BattleEndLayer.ccb",
+    "showRichLine": 1206,
+    "showRichProperties": {
+      "position": [
+        324.0,
+        467.0,
+        0
+      ],
+      "anchorPoint": [
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        false,
+        0
+      ],
+      "ignoreAnchorPointForPosition": false
+    },
+    "richText": "在show_rich创建RichTextEx，字体20/默认粗体/anchor文字阴影/wrapMode1/位置0,0；文本仅展示，不包含领取按钮或图片。",
+    "cellVsVictory": "ChapterExtraRewardCell的tips_lang格式参数是总目标chapter；胜利show_rich的参数是剩余关数。相同语言模板在两个位置意义不同，不能共享错误数值。",
+    "source": {
+      "path": "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua",
+      "line": 295,
+      "endLine": 327
+    },
+    "cellSource": {
+      "path": "client/cocos_mxzg/client/idle/src/layer/battle/ChapterExtraRewardCell.lua",
+      "line": 98,
+      "endLine": 139
+    }
+  },
+  "readOnlyImplementationBoundary": [
+    "可以保留完整六项配置及其全部真实文本；前三关正常胜利只显示第一项剩余目标，不因此开放15关或奖励。",
+    "已领进度必须由服务端唯一主线状态/统一快照权威提供，明确新角色空集合初始化、持久化与版本；缺字段不能伪装成已知未领。",
+    "只读选择按idx升序最小未领，达成待领保留该项；不从钱包、英雄持有、首通奖励列表、通关数或当前可挑战前三关猜已领ID。",
+    "普通失败与冷恢复沿旧实际页面路径，不为补提示额外开胜利页；只读文案不等于可领取状态。",
+    "本批不登记3008领取、无领奖按钮/回调、不接独立发奖、不开放挂机领取；以后恢复需复用统一权威快照、真实发奖、持久回执与通用反馈完整接线。"
+  ],
+  "limitations": [
+    "只读取本地旧源码、Lua/CCB和当前同源XLSX/共享JSON；未访问正式服，不代签线上热更或正式服画面。",
+    "配置恢复仅运行生成/闭包/真实ZIP仓库与加载专项；未运行服务、WebSocket、资产变更、浏览器、Creator、构建、MySQL或提交推送。",
+    "普通/全领/乱序/跨大关样本均为旧公式的确定性源码推导，不将其写成真实业务发奖验收。",
+    "旧服务端部署Excel不在所查源码目录；当前XLSX六项与旧Lua逐字段一致，但不是历史部署版本字节证明。"
+  ],
+  "configurationRestore": {
+    "schema": "config/client-schema.json:ChapterExtraReward",
+    "table": "GConfig.ChapterExtraReward",
+    "path": "config/chapterextrareward",
+    "container": "rows",
+    "key": "idx",
+    "fields": {
+      "idx": "number",
+      "chapter": "number",
+      "reward": "string (原JSON文本)",
+      "show_model": "number",
+      "tips_lang": "number",
+      "tip_img": "number",
+      "other_tip_language": "number"
+    },
+    "json": "client/assets/bundles/resources/config/chapterextrareward.json",
+    "rowCount": 6,
+    "sourceWorkbook": "config/gameconfig/chapterextrareward.xlsx",
+    "sheet": "firstrewardchapter",
+    "sourceComparison": "完整6项7字段与XLSX正常导出完全相等；解析reward文本后逐字段与本审计旧Lua行相等。",
+    "metadata": {
+      "path": "client/assets/bundles/resources/config/chapterextrareward.json.meta",
+      "uuid": "35952be7-40b2-4add-a60d-8f662e038dd9",
+      "restoredFullBytes": true,
+      "gitSource": "f3cd64a3:client/assets/bundles/config/chapterextrareward.json.meta",
+      "gitDeletionCommit": "a2ea3e43",
+      "cleanupReport": "docs/validation/current-resource-scope-cleanup-20261111.json",
+      "cleanupOriginalPath": "client/assets/bundles/config/chapterextrareward.json",
+      "activeAssetReferenceMatchesBeforeRestore": 0,
+      "note": "先从清理报告和Git交叉追溯原UUID，再原样恢复完整meta；正常导出ensure_meta未重建，不覆盖其他已有元数据。"
+    },
+    "normalGeneration": [
+      "python tools/export_gameconfig.py",
+      "python tools/generate_config.py"
+    ],
+    "outputs": "沿既有共享配置JSON/GConfig及同文件CONFIG_SCHEMA/原game-config.bin生成；未新增模块准备或独立包清单。",
+    "package": {
+      "sources": 51,
+      "startup": 2,
+      "packed": 49,
+      "bytes": 410240,
+      "version": "config-v1:ecff186dbd5b5ad6a81f86e5b85ebb3492f0ba0841b4b957ab5d94a87a18e855"
+    },
+    "validation": {
+      "sixRowsAndOriginalFullMeta": "passed",
+      "sharedConfigScopeTests": 34,
+      "configPackage": "passed",
+      "realZipStore": "passed",
+      "realZipLoading": "passed",
+      "creator": "not run by this task",
+      "build": "not run",
+      "commit": "not performed"
+    },
+    "boundary": "只恢复可查询同源配置，不登记或开放3008、挂机领取，也不修改服务端领取规则、已领状态或当前前三关挑战。"
+  }
+}

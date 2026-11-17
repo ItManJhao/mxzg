@@ -1,0 +1,186 @@
+{
+  "date": "2026-11-16",
+  "branch": "hao",
+  "baseCommit": "51c3434a2fe385e54437b00d8fab69c4e1d4bdc6",
+  "committed": false,
+  "pushed": false,
+  "claimEntryEnabled": false,
+  "legacyAudit": "docs/validation/chapter-reward-legacy-audit-20261116.json",
+  "implementation": [
+    "proto先追加ChapterReceipt.actual=6并重新生成静态协议，复用RewardGrantResult",
+    "新SETTLED与原资产事务冻结actual；基础rewards与bonuses分开，旧缺字段不重算/补发",
+    "角色归属、基础实际量、冻结经验/钱包/升级附赠与JS安全整数自洽校验；损坏拒绝整包",
+    "正常胜利关闭后只交bonuses，冷恢复交完整实际量，统一RewardBinding/RewardUtils/原battleId去重",
+    "feedbackReady区分已开基础页与可交附赠时点；失败原按钮只重试展示，不再claim或重播"
+  ],
+  "client": {
+    "suites": [
+      {
+        "id": "main-chapter",
+        "passed": true,
+        "elapsedMs": 2168,
+        "log": "client/temp/project-checks/main-chapter.log"
+      },
+      {
+        "id": "main-chapter-entry-recovery",
+        "passed": true,
+        "elapsedMs": 319,
+        "log": "client/temp/project-checks/main-chapter-entry-recovery.log"
+      },
+      {
+        "id": "main-chapter-settlement",
+        "passed": true,
+        "elapsedMs": 296,
+        "log": "client/temp/project-checks/main-chapter-settlement.log"
+      },
+      {
+        "id": "page-lifecycle-recovery",
+        "passed": true,
+        "elapsedMs": 618,
+        "log": "client/temp/project-checks/page-lifecycle-recovery.log"
+      },
+      {
+        "id": "overlay-lifecycle",
+        "passed": true,
+        "elapsedMs": 1604,
+        "log": "client/temp/project-checks/overlay-lifecycle.log"
+      },
+      {
+        "id": "reward-binding",
+        "passed": true,
+        "elapsedMs": 186,
+        "log": "client/temp/project-checks/reward-binding.log"
+      },
+      {
+        "id": "reward-controller",
+        "passed": true,
+        "elapsedMs": 160,
+        "log": "client/temp/project-checks/reward-controller.log"
+      },
+      {
+        "id": "reward-protocol",
+        "passed": true,
+        "elapsedMs": 193,
+        "log": "client/temp/project-checks/reward-protocol.log"
+      },
+      {
+        "id": "reward-view",
+        "passed": true,
+        "elapsedMs": 181,
+        "log": "client/temp/project-checks/reward-view.log"
+      },
+      {
+        "id": "game-protocol",
+        "passed": true,
+        "elapsedMs": 403,
+        "log": "client/temp/project-checks/game-protocol.log"
+      },
+      {
+        "id": "bindings",
+        "passed": true,
+        "elapsedMs": 345,
+        "log": "client/temp/project-checks/bindings.log"
+      },
+      {
+        "id": "modal-layer",
+        "passed": true,
+        "elapsedMs": 173,
+        "log": "client/temp/project-checks/modal-layer.log"
+      },
+      {
+        "id": "main-chapter-idle-protocol",
+        "passed": true,
+        "elapsedMs": 186,
+        "log": "client/temp/project-checks/main-chapter-idle-protocol.log"
+      },
+      {
+        "id": "idle-claim-binding",
+        "passed": true,
+        "elapsedMs": 556,
+        "log": "client/temp/project-checks/idle-claim-binding.log"
+      }
+    ],
+    "passed": 14,
+    "creatorStrictTypes": "passed",
+    "overlayCases": 11,
+    "rewardBindingCases": 22,
+    "generatedDrift": "passed",
+    "javaTsWire": "真实首次结算683字节互通通过；无Node浏览器codec和旧字段缺失保留通过"
+  },
+  "backend": {
+    "classes": [
+      "MainChapterRewardTest",
+      "MainChapterPersistenceTest",
+      "MainChapterSocketTest"
+    ],
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "finalPersistenceRerun": 12,
+    "rerunOverlaps": true,
+    "firstNewTestMistake": "初轮新增socket断言误写第二关升级，按实际规则改为第一/三关10钻；生产规则未更改",
+    "fullSuiteThisBatch": false,
+    "mysql": false
+  },
+  "preview": "docs/validation/chapter-reward-preview-20261116.json",
+  "sourceFingerprints": [
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterRewardService.java",
+      "sha256": "80cdd2259181aa8d5d451b747d08ff60ae675226f618dfe4f421ede79ad79c35"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterService.java",
+      "sha256": "56fedad2c9d3ffcc90f407f7a442eb0f9ed69da7fbf938ae9486279fbd12d71e"
+    },
+    {
+      "path": "backend/src/main/java/com/funsgamex/mxzg/network/GameSocketHandler.java",
+      "sha256": "b33f2a03297c176124052c71fb902a24dac640f46b52088bc4b12018d06ca077"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/RemakeApp.ts",
+      "sha256": "5fd8355506970c9fcdd92f4d24979324bd0680449d553df33e1f7fad4d1b0792"
+    },
+    {
+      "path": "client/assets/scripts/app/remake/RewardBinding.ts",
+      "sha256": "e3eeda4c75971694da18a395984292a3463e0b05d8618d671ed1f1b5cb4916e8"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/MainChapterController.ts",
+      "sha256": "924dd71aa105e68d2caa2e3732829568612c268177e6b0ff68ce2c30deecd740"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/MainChapterModel.ts",
+      "sha256": "e0bb4a2655b57b149c2f0f92164997bcf7d7cea1753f6765ffeabdf14fd298ca"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/MainChapterBattleView.ts",
+      "sha256": "da69545d8e9ed079757ff5db47e641e4d677ad5a6c72da9781a94c44c33d66da"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/ui/MainChapterView.ts",
+      "sha256": "349764e1e90d4986bba9aa93a76c86daba73ef6c2b7a58e834216d6b68d60110"
+    },
+    {
+      "path": "client/assets/scripts/features/battle/utils/ChapterSettlementUtils.ts",
+      "sha256": "0f14985b2cf739c035160e94019f0fc41257b6c0b91864deb3e6fc4f3eebc29a"
+    },
+    {
+      "path": "client/assets/scripts/features/reward/utils/RewardUtils.ts",
+      "sha256": "c537b94f262316046fe89dc286b4b9d900c90548c13559fb760e9078bc2f06f4"
+    },
+    {
+      "path": "client/assets/scripts/platform/GameProtocol.generated.ts",
+      "sha256": "87590cf87d7d1a5200a92f89992799068610c057c744aa9b6c8225f1d0d12261"
+    },
+    {
+      "path": "protocol/game.proto",
+      "sha256": "eef36b9d8290a47c9086e4a204194eceb49451fe26a5e15ea36c59d3ef3f2ae5"
+    }
+  ],
+  "remaining": [
+    "旧2014等级变化/下一功能专页尚未恢复，本批明确复用通用奖励窗",
+    "第15关独立里程碑领取、下一目标提示及权威进度未接入",
+    "已提交且pending已清、客户端battleId丢失后的跨进程纯展示恢复仍未实现",
+    "领取入口继续关闭；未集中构建、提交或推送"
+  ]
+}

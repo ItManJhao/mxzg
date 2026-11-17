@@ -37,7 +37,7 @@ public class MainChapterIdleBattleService {
         this.formations = formations; this.inputs = inputs; this.battles = new HeroBattleChapterScenario(mapper);
     }
 
-    /** 每次遇敌取一场只读战报；客户端不能指定角色、属性、怪物或奖励。 */
+    /** 按已通关全局idx取一场只读遇敌战报；客户端不能指定角色、属性、怪物或奖励。 */
     @Transactional
     public Encounter encounter(String token) {
         String role = sessions.requireRole(token);
@@ -53,7 +53,7 @@ public class MainChapterIdleBattleService {
         if (selected.size() != state.slots().size()) throw new IllegalStateException("挂机选择与当前名册不一致");
         var input = new HeroBattleInputService.Input(current.assetRevision(), current.lineupVersion(),
             current.formationId(), selected, current.pending());
-        int enemyCount = (int) battles.initial(stage).stream().filter(unit -> unit.faction() == 2).count();
+        int enemyCount = battles.enemies(stage).size();
         var random = ThreadLocalRandom.current();
         var replay = battles.runIdle(stage, input, random.nextInt(3), random.nextInt(enemyCount), rate -> random.nextDouble() < rate);
         HeroBattleReplayUtils.validate(replay);

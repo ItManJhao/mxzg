@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-16",
+  "scope": "本批通用升级只读展示准入，不开放领取/下一功能",
+  "addedPrefabs": [
+    {
+      "path": "client/assets/bundles/module/common/prefabs/RoleUpgradeView.prefab",
+      "uuid": "d72b3dac-0767-4dd2-adbb-249a4b213bdf",
+      "scriptUuid": "df9d29b6-4ffb-4480-b815-28c8d5e7154d"
+    }
+  ],
+  "assets": "只复用maps/common/home旧图和audio/item-get，没有复制图片或新增Bundle",
+  "layout": "旧640x550根/640x500背景；静态134高四列SuperScroll支持冷恢复多项；共享模态；本次获得标题避免基础量误归升级附赠",
+  "checks": "role-upgrade-view、bindings、prefab-plan；真实证据见role-upgrade-preview-20261116.json"
+}

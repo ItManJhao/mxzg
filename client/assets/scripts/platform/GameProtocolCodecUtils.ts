@@ -189,6 +189,10 @@ export class GameProtocolCodecUtils {
             throw new Error("奖励通知对象无效");
         }
         const notice = value as Record<string, unknown>;
+        if (notice.requestId !== undefined && (typeof notice.requestId !== "string"
+            || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(notice.requestId))) {
+            throw new Error("奖励通知原请求关联无效");
+        }
         if (notice.schemaVersion !== 1
             || typeof notice.receiptId !== "string"
             || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(notice.receiptId)
@@ -196,8 +200,17 @@ export class GameProtocolCodecUtils {
             || /[\u0000-\u001f\u007f]/.test(notice.roleId)
             || !Number.isSafeInteger(notice.assetRevision) || (notice.assetRevision as number) <= 0
             || !["SILENT", "POPUP", "TIPS"].includes(notice.mode as string)
-            || !Array.isArray(notice.items) || notice.items.length === 0) {
+            || !Array.isArray(notice.items) || (notice.items.length === 0 && notice.roleUpgrade === undefined)) {
             throw new Error("奖励通知格式、归属或版本无效");
+        }
+        if (notice.roleUpgrade !== undefined) {
+            const upgrade = notice.roleUpgrade as Record<string, unknown>;
+            if (!upgrade || typeof upgrade !== "object" || Array.isArray(upgrade)
+                || !Number.isSafeInteger(upgrade.beforeLevel) || (upgrade.beforeLevel as number) < 1
+                || !Number.isSafeInteger(upgrade.afterLevel) || (upgrade.afterLevel as number) > 0xffffffff
+                || (upgrade.afterLevel as number) <= (upgrade.beforeLevel as number)) {
+                throw new Error("奖励通知的历史升级信息无效");
+            }
         }
         const seen = new Set<number>();
         for (const raw of notice.items) {

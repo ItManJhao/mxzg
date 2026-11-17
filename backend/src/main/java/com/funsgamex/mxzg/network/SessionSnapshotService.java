@@ -1,5 +1,5 @@
 /**
- * 长连接鉴权接管与恢复快照：在同一角色锁内读取钱包、普通/期限/精灵实例、冒险点及主线状态。
+ * 长连接鉴权接管与恢复快照：同一角色锁内读取钱包、库存实例、冒险点及主线/里程碑已领状态。
  * 登录首包和提交后state.changed共用本入口；冒险点真正缺行才按旧规则懒建，不生成酒馆任务。
  */
 package com.funsgamex.mxzg.network;
@@ -97,9 +97,10 @@ public class SessionSnapshotService {
         var spiritState = spirits.current(role);
         var chapter = chapters.current(token);
         var pointState = tavernPoints.current(role, chapterRules.tavernLimit(chapter.maxCleared()));
-        // 冒险点首次懒建可能推进同一事务版本；主线子快照必须与最终完整资产版本一致。
+        // 冒险点首次懒建可能推进同一事务版本；对齐时保留里程碑集合和可信新挑战范围。
         chapter = new com.funsgamex.mxzg.campaign.MainChapterService.State(
-                chapter.maxCleared(), chapter.pendingBattleId(), roles.revision(role));
+                chapter.maxCleared(), chapter.pendingBattleId(), roles.revision(role), chapter.milestoneProgress(),
+                chapter.challengeLimit());
         var idleState = idle.snapshot(role, chapter.maxCleared(), java.time.Instant.now().getEpochSecond());
         idleState = idle.withLineup(role, idleState, formation);
         return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role),

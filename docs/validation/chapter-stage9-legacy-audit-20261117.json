@@ -1,0 +1,2449 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "batch": "stage9",
+  "scope": "第9关三怪六技能及荆棘之炎1051101完整旧源依赖核对；只读证据，不代表开放、完整数值/画面验收。",
+  "sourceFiles": {
+    "actions": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/battle/actions.lua",
+      "sha256": "644e2429db1ab41d0d501dc81f2b45c4424fad426561ba5a1f97554c9b8e9be0"
+    },
+    "buff": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/buff.lua",
+      "sha256": "feee5e5dc8772c5d8bbf0a5a081c228709feae38a3f4c55074671c78dec92d06"
+    },
+    "buffart": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/buffart.lua",
+      "sha256": "a1fa56186ed87d87c6a689115b55492618bd27ae5eaf3ec38762de9c78fa388d"
+    },
+    "chapter": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/chapter.lua",
+      "sha256": "fe890693fc6ee1140054f6f94c7bd7f91b13ba10cfe84c21bed1ae084237db23"
+    },
+    "skills": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/heroskill.lua",
+      "sha256": "777378322fc0d167cc2f2ae7480d87f592a8930e151228ba3c2303890d1975b7"
+    },
+    "hero": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/herotype.lua",
+      "sha256": "77a44352539caa8c8803c4374f402ab7f24162bb0225c9b565a62dc5f02df494"
+    },
+    "upgrade": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/heroupgrade.lua",
+      "sha256": "3af6cbefec6a6ca6bc2d879837c9143d147b48573f2d9e7be050195a0fe7114b"
+    },
+    "star": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/herostar.lua",
+      "sha256": "17dc4cbc98d024cf61c0fd010fbab285a23b44173be70c28506bbc1f70535030"
+    },
+    "actionUtils": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/utils/BattleActionUtils.lua",
+      "sha256": "3cd6c14394cc53fe98099556ba5b3febc4e9bc80741b3a2580856fd2c041eea1"
+    },
+    "infoFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/BattleInfoFactory.lua",
+      "sha256": "eba97fe749e608cb5349a308869ae9c9639187ee8b112bf0a9cf96e3a827b2c5"
+    },
+    "skillController": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/controller/SkillController.lua",
+      "sha256": "4cf2f730fad6cc816fcf8e47cd74f7190fd442a5a93f0e9e02c83c2cf787b604"
+    },
+    "buffFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/BuffFactory.lua",
+      "sha256": "f87be2815ba7b5e2fc7b25202c9646ef9e7e7e6421e1c0ac028c4a46ccad1867"
+    },
+    "effectFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/EffectFactory.lua",
+      "sha256": "89a71fd246b15a01344ebf82eb4f2069fb52a1b8069d7687b195c3dfedd9f64b"
+    },
+    "audio": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/model/AudioManager.lua",
+      "sha256": "233241785c8ff135cfa88b84592afe380dcca1197e3b3918d10f4c7614f61f9b"
+    },
+    "buffArtCache": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/BuffArtSysCache.java",
+      "sha256": "d6c84e14f50145ff1ef568b5e1ce5621fd60a3da0b09c685dc5830b98b964fae"
+    },
+    "buffArtModel": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/entity/CBuffArt.java",
+      "sha256": "55ff5d47e8fc20475639d907154a4c712e573d0b816555d2ef82ecda70c89279"
+    },
+    "buffConfig": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/entity/CBuff.java",
+      "sha256": "c408d3650a8d76b99820d944e2dda8b167428c5661873d189f80af49cfa720a8"
+    },
+    "buffTypes": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/struct/BuffType.java",
+      "sha256": "f7a37154e8f0deba3608ee84ed85d4223927acc3970ad199b17c852901da11b5"
+    },
+    "heroSkillCache": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/cache/HeroSkillSysCache.java",
+      "sha256": "fa52d6aacc20c694b5896ff1f77cec0a78453149e34eb48837ad46a6d739dd65"
+    },
+    "attackType": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/struct/AttackType.java",
+      "sha256": "eda89a8bc9316e30e2bd331562f8cfab380aff5c4ade49478d74994a175641b4"
+    },
+    "selectors": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/struct/SelectorType.java",
+      "sha256": "2eaa360303955da22c02ab8c9acfb2e961368db5dba66d33e4b3cd90ebcc9b5e"
+    },
+    "battleService": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/service/BattleService.java",
+      "sha256": "476b1cbc900fb2dd8cefd23a2aa8dd51ff4e5137be069e4b6f155b9ea8f8c3c5"
+    },
+    "handlerHolder": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/BuffHandlerHolder.java",
+      "sha256": "44703c8aaff0ac324120a66406c375f0e04cb4353b918d2777662ea44b674bb5"
+    },
+    "clientHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/function/ClientBuffHandler.java",
+      "sha256": "85bbb64ceb8167e7fcf3950fbd7502667d01377644758997b1bc7d1243c1db5e"
+    },
+    "abstractBuff": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/AbstractBuffHandler.java",
+      "sha256": "311736f767f56121db5e8f9146a02f588c4e2a4ee0eb02f43e9daae7e3307cc8"
+    },
+    "buffDo": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/BuffDo.java",
+      "sha256": "725ceb1d54ec08c000f92124b33a17eeda608c4335948dca2f6af1c7cc6f99c5"
+    },
+    "heroDo": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/HeroDo.java",
+      "sha256": "24983d2ab529f729d5fd5d94c41b8cf18e60e2898c88c4c288b850878114761b"
+    },
+    "controlHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/control/AbstractControlBuffHandler.java",
+      "sha256": "d31ef51cd2e460cb42a916bea26bc67f1037dc41af4eddcad00e2f9c4c4cbdfb"
+    },
+    "frozenHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/control/FrozenBuffHandler.java",
+      "sha256": "29c4ca8593dcfdb105b6ccf055ff0b13c3bf6c9e88239dfb585fbe701497bea4"
+    },
+    "dizzyHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/control/DizzyBuffHandler.java",
+      "sha256": "2e319009940baed06dbe8c7f8cb8c6da9da8947420c495c9aff1a3af27eb7048"
+    },
+    "damageHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/damage/AbstractDamageBuffHandler.java",
+      "sha256": "2176fd2efaee4f17d328d493362102fb038eb93ac045573aa9be0eb36f1abc3a"
+    },
+    "protocol": {
+      "path": "G:/work/FsGame/Demo/mj/program/mxzg-protofiles/protofiles/game/Battle.proto",
+      "sha256": "9a06f2b24a78c212148495af1a4c39c2590d4ce5f4a49cd9b6748909d94cc2e1"
+    },
+    "attributeHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/attribute/AbstractAttributeBuffHandler.java",
+      "sha256": "e1cae9b6fc610496054904828501760af97b3692c50c9d70123eff9ff644b173"
+    },
+    "baseAttributeHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/attribute/AbstractBaseAttributeBuffHandler.java",
+      "sha256": "c9843fd26a191d03ba8a0ad6e9d19bf7d3c31790410bc9fcbc1bc6c89cc49d67"
+    },
+    "abilityAddHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/attribute/AbilityAddBuffHandler.java",
+      "sha256": "059a6839c6ddd5e98d1485ce685019281e1e4df4ce894b0ef310a5dc79d57da1"
+    },
+    "debuffHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/AbstractDebuffHandler.java",
+      "sha256": "8a0c58991cd5b583c1edc594b0d45e5747f389e6d1bf4a0fabd53b1cbb37b0ac"
+    },
+    "resistanceHandler": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/AbstractResistanceHandler.java",
+      "sha256": "05f7e0406fd6c077c58440aa448c18d4bf869d044331b36fbbc622cf422edf56"
+    },
+    "attributeInfo": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/AttributeInfo.java",
+      "sha256": "55f1e6965c56f5f863091a7c1877cc22c19e22f47b661e9e52292693bda5f8d4"
+    },
+    "buffsInfo": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/BuffsInfo.java",
+      "sha256": "6b8542cf2ddcae4578479a3dc3446cfeef729105120bf8914ac692c801b657f7"
+    },
+    "buffHelper": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/BuffHelper.java",
+      "sha256": "f841594fb124f92631070e4e640de3ecc56728634f7ddc20c75881f14af38592"
+    },
+    "fightUtil": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/util/FightUtil.java",
+      "sha256": "3ddd21830d92d27ee3384b30a054c4127d4da91f312548fcca6a15b1aa5366e6"
+    },
+    "attributeTypes": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/struct/AttributeType.java",
+      "sha256": "9469bc0a323ad36374e3466ebf03528978e22fbbb9bc3de82339f0e940cddf60"
+    },
+    "battleController": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/controller/BattleController.lua",
+      "sha256": "b30618afb9649ffb607321d33cf7d86085e3499db25ef728a56da9556eaba40b"
+    },
+    "battleHeroNode": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/entity/battle/BattleHeroNode.lua",
+      "sha256": "70717febdc0c2224dc8d84d115bff526bd7f167248d48be17ffd9e35a2abd229"
+    },
+    "heroSpineFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/HeroSpineFactory.lua",
+      "sha256": "8dd6e2f28f346a58919dfc812822a97e36c1ca4b9fd61c03a3a9aaf15b6a6bab"
+    },
+    "tools": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/model/Tools.lua",
+      "sha256": "d53ba4f9f5252c4c083939710662e694a7bad1437299f08edd38d471007a4fa9"
+    },
+    "skin": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/skin.lua",
+      "sha256": "fedc38ea4b4f03a6a5b3f478b0e3ee365f367c6e8fc8a4a1bdcc02886a6e12b6"
+    },
+    "globalBattleHelper": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/global/GlobalBattleHelper.lua",
+      "sha256": "32a19d5b52cca295407b1d0ffece4ac929dd0d2ffd7b1eb9a6bd797508b5433d"
+    }
+  },
+  "sameSourceReuse": {
+    "priorAudit": "docs/validation/chapter-stage5-legacy-audit-20261117.json",
+    "priorSha256": "c30e169b86798f65d3d77cc742ab03de04cbfaac104ad3f60a0b93e2ecef0c13",
+    "method": "原32份旧依据逐个重新计算SHA256均相等；完整复用本关仍使用的玛蒙/冰霜动作展开和规则链，再独立补荆棘之炎。",
+    "legacyLuaEncoding": "旧actions.lua部分注释自身含替换字符；新证据仅摘数值/参数数据，不复制该乱码。"
+  },
+  "input": {
+    "stage": 9,
+    "mode": 1,
+    "chapter": 1,
+    "mission": 9,
+    "grade": 0,
+    "enemies": [
+      {
+        "idx": 49,
+        "mode_id": 1,
+        "chapter_id": 1,
+        "mission_id": 9,
+        "pos": 1,
+        "hero_type": 10102002,
+        "hero_level": 5,
+        "hero_star": 2,
+        "attr": "[{\"type\":220,\"value\":10000,\"kind\":2},{\"type\":223,\"value\":5600,\"kind\":2}]",
+        "equipment": "[]",
+        "runes": "[]",
+        "note": 9
+      },
+      {
+        "idx": 50,
+        "mode_id": 1,
+        "chapter_id": 1,
+        "mission_id": 9,
+        "pos": 2,
+        "hero_type": 10202002,
+        "hero_level": 5,
+        "hero_star": 2,
+        "attr": "[{\"type\":220,\"value\":10000,\"kind\":2},{\"type\":223,\"value\":5600,\"kind\":2}]",
+        "equipment": "[]",
+        "runes": "[]",
+        "note": 9
+      },
+      {
+        "idx": 51,
+        "mode_id": 1,
+        "chapter_id": 1,
+        "mission_id": 9,
+        "pos": 3,
+        "hero_type": 10104005,
+        "hero_level": 5,
+        "hero_star": 4,
+        "attr": "[{\"type\":220,\"value\":10000,\"kind\":2},{\"type\":223,\"value\":5600,\"kind\":2}]",
+        "equipment": "[]",
+        "runes": "[]",
+        "note": 9
+      }
+    ],
+    "legacyEnemyRows": [
+      {
+        "source": "chapter",
+        "key": 49,
+        "lineStart": 483,
+        "lineEnd": 492,
+        "dataLines": [
+          "\t\t[49] = {",
+          "\t\t\tidx = 49,",
+          "\t\t\tmode_id = 1,",
+          "\t\t\tchapter_id = 1,",
+          "\t\t\tmission_id = 9,",
+          "\t\t\tpos = 1,",
+          "\t\t\thero_type = 10102002,",
+          "\t\t\thero_level = 5,",
+          "\t\t\thero_star = 2,",
+          "\t\t},"
+        ]
+      },
+      {
+        "source": "chapter",
+        "key": 50,
+        "lineStart": 493,
+        "lineEnd": 502,
+        "dataLines": [
+          "\t\t[50] = {",
+          "\t\t\tidx = 50,",
+          "\t\t\tmode_id = 1,",
+          "\t\t\tchapter_id = 1,",
+          "\t\t\tmission_id = 9,",
+          "\t\t\tpos = 2,",
+          "\t\t\thero_type = 10202002,",
+          "\t\t\thero_level = 5,",
+          "\t\t\thero_star = 2,",
+          "\t\t},"
+        ]
+      },
+      {
+        "source": "chapter",
+        "key": 51,
+        "lineStart": 503,
+        "lineEnd": 512,
+        "dataLines": [
+          "\t\t[51] = {",
+          "\t\t\tidx = 51,",
+          "\t\t\tmode_id = 1,",
+          "\t\t\tchapter_id = 1,",
+          "\t\t\tmission_id = 9,",
+          "\t\t\tpos = 3,",
+          "\t\t\thero_type = 10104005,",
+          "\t\t\thero_level = 5,",
+          "\t\t\thero_star = 4,",
+          "\t\t},"
+        ]
+      }
+    ],
+    "heroRows": [
+      {
+        "type": 10102002,
+        "note": "玛蒙",
+        "occupation": 3,
+        "elem": 1,
+        "star": 2,
+        "to_5_star": "[]",
+        "to_6_star": "[]",
+        "to_7_star": "[]",
+        "to_8_star": "[]",
+        "to_9_star": "[]",
+        "to_10_star": "[]",
+        "to_11_star": "[]",
+        "to_12_star": "[]",
+        "to_13_star": "[]",
+        "to_14_star": "[]",
+        "damage_type": 0,
+        "skill_1": 101020021,
+        "skill_2": 101020022,
+        "skill_3": 0,
+        "skill_4": 0,
+        "skill_5": 101020020,
+        "item_id": 20102002,
+        "describe": 73102,
+        "talent_recommend": "[150010001,150080001,150090001]",
+        "kind": 1
+      },
+      {
+        "type": 10104005,
+        "note": "荆棘之炎",
+        "occupation": 1,
+        "elem": 1,
+        "star": 4,
+        "to_5_star": "[{\"type\":10104005,\"elem\":1,\"star\":4,\"num\":2},{\"type\":0,\"elem\":1,\"star\":4,\"num\":5},{\"type\":0,\"elem\":1,\"star\":3,\"num\":4}]",
+        "to_6_star": "[]",
+        "to_7_star": "[]",
+        "to_8_star": "[]",
+        "to_9_star": "[]",
+        "to_10_star": "[]",
+        "to_11_star": "[]",
+        "to_12_star": "[]",
+        "to_13_star": "[]",
+        "to_14_star": "[]",
+        "damage_type": 1,
+        "skill_1": 101040051,
+        "skill_2": 101040052,
+        "skill_3": 101040053,
+        "skill_4": 0,
+        "skill_5": 101040050,
+        "item_id": 20104005,
+        "describe": 73105,
+        "talent_recommend": "[150010001,150080001,150090001]",
+        "kind": 1
+      },
+      {
+        "type": 10202002,
+        "note": "冰霜元素",
+        "occupation": 2,
+        "elem": 2,
+        "star": 2,
+        "to_5_star": "[]",
+        "to_6_star": "[]",
+        "to_7_star": "[]",
+        "to_8_star": "[]",
+        "to_9_star": "[]",
+        "to_10_star": "[]",
+        "to_11_star": "[]",
+        "to_12_star": "[]",
+        "to_13_star": "[]",
+        "to_14_star": "[]",
+        "damage_type": 0,
+        "skill_1": 102020021,
+        "skill_2": 0,
+        "skill_3": 0,
+        "skill_4": 0,
+        "skill_5": 102020020,
+        "item_id": 20202002,
+        "describe": 73124,
+        "talent_recommend": "[150010001,150080001,150090001]",
+        "kind": 1
+      }
+    ],
+    "legacyHeroRows": [
+      {
+        "source": "hero",
+        "key": 10102002,
+        "lineStart": 28,
+        "lineEnd": 52,
+        "dataLines": [
+          "\t\t[10102002] = {",
+          "\t\t\ttype = 10102002,",
+          "\t\t\toccupation = 3,",
+          "\t\t\telem = 1,",
+          "\t\t\tstar = 2,",
+          "\t\t\tto_5_star = {},",
+          "\t\t\tto_6_star = {},",
+          "\t\t\tto_7_star = {},",
+          "\t\t\tto_8_star = {},",
+          "\t\t\tto_9_star = {},",
+          "\t\t\tto_10_star = {},",
+          "\t\t\tto_11_star = {},",
+          "\t\t\tto_12_star = {},",
+          "\t\t\tto_13_star = {},",
+          "\t\t\tto_14_star = {},",
+          "\t\t\tskill_1 = 101020021,",
+          "\t\t\tskill_2 = 101020022,",
+          "\t\t\tskill_3 = 0,",
+          "\t\t\tskill_4 = 0,",
+          "\t\t\tskill_5 = 101020020,",
+          "\t\t\titem_id = 20102002,",
+          "\t\t\tdescribe = 73102,",
+          "\t\t\ttalent_recommend = {150010001,150080001,150090001},",
+          "\t\t\tkind = 1,",
+          "\t\t},"
+        ]
+      },
+      {
+        "source": "hero",
+        "key": 10202002,
+        "lineStart": 603,
+        "lineEnd": 627,
+        "dataLines": [
+          "\t\t[10202002] = {",
+          "\t\t\ttype = 10202002,",
+          "\t\t\toccupation = 2,",
+          "\t\t\telem = 2,",
+          "\t\t\tstar = 2,",
+          "\t\t\tto_5_star = {},",
+          "\t\t\tto_6_star = {},",
+          "\t\t\tto_7_star = {},",
+          "\t\t\tto_8_star = {},",
+          "\t\t\tto_9_star = {},",
+          "\t\t\tto_10_star = {},",
+          "\t\t\tto_11_star = {},",
+          "\t\t\tto_12_star = {},",
+          "\t\t\tto_13_star = {},",
+          "\t\t\tto_14_star = {},",
+          "\t\t\tskill_1 = 102020021,",
+          "\t\t\tskill_2 = 0,",
+          "\t\t\tskill_3 = 0,",
+          "\t\t\tskill_4 = 0,",
+          "\t\t\tskill_5 = 102020020,",
+          "\t\t\titem_id = 20202002,",
+          "\t\t\tdescribe = 73124,",
+          "\t\t\ttalent_recommend = {150010001,150080001,150090001},",
+          "\t\t\tkind = 1,",
+          "\t\t},"
+        ]
+      },
+      {
+        "source": "hero",
+        "key": 10104005,
+        "lineStart": 103,
+        "lineEnd": 127,
+        "dataLines": [
+          "\t\t[10104005] = {",
+          "\t\t\ttype = 10104005,",
+          "\t\t\toccupation = 1,",
+          "\t\t\telem = 1,",
+          "\t\t\tstar = 4,",
+          "\t\t\tto_5_star = {{elem=1,num=2,star=4,type=10104005},{elem=1,num=5,star=4,type=0},{elem=1,num=4,star=3,type=0}},",
+          "\t\t\tto_6_star = {},",
+          "\t\t\tto_7_star = {},",
+          "\t\t\tto_8_star = {},",
+          "\t\t\tto_9_star = {},",
+          "\t\t\tto_10_star = {},",
+          "\t\t\tto_11_star = {},",
+          "\t\t\tto_12_star = {},",
+          "\t\t\tto_13_star = {},",
+          "\t\t\tto_14_star = {},",
+          "\t\t\tskill_1 = 101040051,",
+          "\t\t\tskill_2 = 101040052,",
+          "\t\t\tskill_3 = 101040053,",
+          "\t\t\tskill_4 = 0,",
+          "\t\t\tskill_5 = 101040050,",
+          "\t\t\titem_id = 20104005,",
+          "\t\t\tdescribe = 73105,",
+          "\t\t\ttalent_recommend = {150010001,150080001,150090001},",
+          "\t\t\tkind = 1,",
+          "\t\t},"
+        ]
+      }
+    ],
+    "selectedSkillRows": [
+      {
+        "idx": 25,
+        "type": 101020020,
+        "initial_round": 0,
+        "cool_round": 0,
+        "star": 0,
+        "level": 0,
+        "count_stats": 0,
+        "active_type": 2,
+        "art_list": "[1020100]",
+        "lan_name": 100000005,
+        "lan_describe": 110000005,
+        "note3": "玛蒙",
+        "power_mark": 0,
+        "buff_lan_on": 0
+      },
+      {
+        "idx": 26,
+        "type": 101020021,
+        "initial_round": 1,
+        "cool_round": 3,
+        "star": 0,
+        "level": 1,
+        "count_stats": 0,
+        "active_type": 1,
+        "art_list": "[1021101]",
+        "lan_name": 100000006,
+        "lan_describe": 110000006,
+        "note3": "玛蒙",
+        "power_mark": 0,
+        "buff_lan_on": 0,
+        "levelup_describe": 110000007
+      },
+      {
+        "idx": 49,
+        "type": 101040050,
+        "initial_round": 0,
+        "cool_round": 0,
+        "star": 0,
+        "level": 0,
+        "count_stats": 0,
+        "active_type": 2,
+        "art_list": "[1050100]",
+        "lan_name": 100000029,
+        "lan_describe": 110000029,
+        "note3": "荆棘之炎",
+        "power_mark": 0,
+        "buff_lan_on": 0
+      },
+      {
+        "idx": 50,
+        "type": 101040051,
+        "initial_round": 1,
+        "cool_round": 3,
+        "star": 0,
+        "level": 1,
+        "count_stats": 0,
+        "active_type": 1,
+        "art_list": "[1051101]",
+        "lan_name": 100000030,
+        "lan_describe": 110000030,
+        "note3": "荆棘之炎",
+        "power_mark": 0,
+        "buff_lan_on": 0,
+        "levelup_describe": 110000031
+      },
+      {
+        "idx": 346,
+        "type": 102020020,
+        "initial_round": 0,
+        "cool_round": 0,
+        "star": 0,
+        "level": 0,
+        "count_stats": 0,
+        "active_type": 2,
+        "art_list": "[2020100]",
+        "lan_name": 100000285,
+        "lan_describe": 110000285,
+        "note3": "冰霜元素",
+        "power_mark": 0,
+        "buff_lan_on": 0
+      },
+      {
+        "idx": 347,
+        "type": 102020021,
+        "initial_round": 1,
+        "cool_round": 3,
+        "star": 0,
+        "level": 1,
+        "count_stats": 0,
+        "active_type": 1,
+        "art_list": "[2021101]",
+        "lan_name": 100000286,
+        "lan_describe": 110000286,
+        "note3": "冰霜元素",
+        "power_mark": 0,
+        "buff_lan_on": 0,
+        "levelup_describe": 110000287
+      }
+    ],
+    "legacySelectedSkillRows": [
+      {
+        "source": "skills",
+        "key": 25,
+        "lineStart": 387,
+        "lineEnd": 402,
+        "dataLines": [
+          "\t\t[25] = {",
+          "\t\t\tidx = 25,",
+          "\t\t\ttype = 101020020,",
+          "\t\t\tinitial_round = 0,",
+          "\t\t\tcool_round = 0,",
+          "\t\t\tlevel = 0,",
+          "\t\t\tcount_stats = 0,",
+          "\t\t\tactive_type = 2,",
+          "\t\t\tart_list = {1020100},",
+          "\t\t\tlan_name = 100000005,",
+          "\t\t\tlan_describe = 110000005,",
+          "\t\t\tpower_mark = 0,",
+          "\t\t\tbuff_lan_on = 0,",
+          "\t\t\tbuff_lan_describe = \"\",",
+          "\t\t\tlevelup_describe = \"\",",
+          "\t\t},"
+        ]
+      },
+      {
+        "source": "skills",
+        "key": 26,
+        "lineStart": 403,
+        "lineEnd": 418,
+        "dataLines": [
+          "\t\t[26] = {",
+          "\t\t\tidx = 26,",
+          "\t\t\ttype = 101020021,",
+          "\t\t\tinitial_round = 1,",
+          "\t\t\tcool_round = 3,",
+          "\t\t\tlevel = 1,",
+          "\t\t\tcount_stats = 0,",
+          "\t\t\tactive_type = 1,",
+          "\t\t\tart_list = {1021101},",
+          "\t\t\tlan_name = 100000006,",
+          "\t\t\tlan_describe = 110000006,",
+          "\t\t\tpower_mark = 0,",
+          "\t\t\tbuff_lan_on = 0,",
+          "\t\t\tbuff_lan_describe = \"\",",
+          "\t\t\tlevelup_describe = 110000007,",
+          "\t\t},"
+        ]
+      },
+      {
+        "source": "skills",
+        "key": 49,
+        "lineStart": 771,
+        "lineEnd": 786,
+        "dataLines": [
+          "\t\t[49] = {",
+          "\t\t\tidx = 49,",
+          "\t\t\ttype = 101040050,",
+          "\t\t\tinitial_round = 0,",
+          "\t\t\tcool_round = 0,",
+          "\t\t\tlevel = 0,",
+          "\t\t\tcount_stats = 0,",
+          "\t\t\tactive_type = 2,",
+          "\t\t\tart_list = {1050100},",
+          "\t\t\tlan_name = 100000029,",
+          "\t\t\tlan_describe = 110000029,",
+          "\t\t\tpower_mark = 0,",
+          "\t\t\tbuff_lan_on = 0,",
+          "\t\t\tbuff_lan_describe = \"\",",
+          "\t\t\tlevelup_describe = \"\",",
+          "\t\t},"
+        ]
+      },
+      {
+        "source": "skills",
+        "key": 50,
+        "lineStart": 787,
+        "lineEnd": 802,
+        "dataLines": [
+          "\t\t[50] = {",
+          "\t\t\tidx = 50,",
+          "\t\t\ttype = 101040051,",
+          "\t\t\tinitial_round = 1,",
+          "\t\t\tcool_round = 3,",
+          "\t\t\tlevel = 1,",
+          "\t\t\tcount_stats = 0,",
+          "\t\t\tactive_type = 1,",
+          "\t\t\tart_list = {1051101},",
+          "\t\t\tlan_name = 100000030,",
+          "\t\t\tlan_describe = 110000030,",
+          "\t\t\tpower_mark = 0,",
+          "\t\t\tbuff_lan_on = 0,",
+          "\t\t\tbuff_lan_describe = \"\",",
+          "\t\t\tlevelup_describe = 110000031,",
+          "\t\t},"
+        ]
+      },
+      {
+        "source": "skills",
+        "key": 346,
+        "lineStart": 5523,
+        "lineEnd": 5538,
+        "dataLines": [
+          "\t\t[346] = {",
+          "\t\t\tidx = 346,",
+          "\t\t\ttype = 102010011,",
+          "\t\t\tinitial_round = 1,",
+          "\t\t\tcool_round = 3,",
+          "\t\t\tlevel = 3,",
+          "\t\t\tcount_stats = 0,",
+          "\t\t\tactive_type = 1,",
+          "\t\t\tart_list = {2011103},",
+          "\t\t\tlan_name = 100000284,",
+          "\t\t\tlan_describe = 110000284,",
+          "\t\t\tpower_mark = 0,",
+          "\t\t\tbuff_lan_on = 0,",
+          "\t\t\tbuff_lan_describe = \"\",",
+          "\t\t\tlevelup_describe = \"\",",
+          "\t\t},"
+        ]
+      },
+      {
+        "source": "skills",
+        "key": 347,
+        "lineStart": 5539,
+        "lineEnd": 5554,
+        "dataLines": [
+          "\t\t[347] = {",
+          "\t\t\tidx = 347,",
+          "\t\t\ttype = 102020020,",
+          "\t\t\tinitial_round = 0,",
+          "\t\t\tcool_round = 0,",
+          "\t\t\tlevel = 0,",
+          "\t\t\tcount_stats = 0,",
+          "\t\t\tactive_type = 2,",
+          "\t\t\tart_list = {2020100},",
+          "\t\t\tlan_name = 100000285,",
+          "\t\t\tlan_describe = 110000285,",
+          "\t\t\tpower_mark = 0,",
+          "\t\t\tbuff_lan_on = 0,",
+          "\t\t\tbuff_lan_describe = \"\",",
+          "\t\t\tlevelup_describe = \"\",",
+          "\t\t},"
+        ]
+      }
+    ],
+    "levelRule": "旧heroupgrade.lua3–13的grade0区间begin_level1/level30，skill1=1且skill2/3/4=0；Lv5不装配尚未解锁被动。herostar2/4均skill1=1。装备/符文均空，未改前三关开放上限。",
+    "equipment": [],
+    "runes": []
+  },
+  "actionOverrides": [
+    {
+      "buffId": 2021101,
+      "override": {
+        "source": "actions",
+        "key": 2021101,
+        "lineStart": 4382,
+        "lineEnd": 4393,
+        "exists": true
+      },
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 0,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 1,
+            "format": "skill-102020021/%d.png",
+            "duration": 0.04,
+            "scale_x": 0.8,
+            "scale_y": 0.8,
+            "anchor_x": 0.3,
+            "anchor_y": 0.23,
+            "flipped": 1
+          },
+          "file": [
+            "skill-102020021"
+          ],
+          "sound": [
+            "skill-102020021"
+          ]
+        }
+      ]
+    },
+    {
+      "buffId": 1020100,
+      "override": {
+        "source": "actions",
+        "key": 1020100,
+        "lineStart": 99,
+        "lineEnd": 120,
+        "exists": true
+      },
+      "expansion": [
+        {
+          "type": 2,
+          "delayFrames": 0,
+          "aniBase": {
+            "move_time": 0.1,
+            "move_back": 1,
+            "attack_delay": 0
+          },
+          "file": [],
+          "sound": []
+        },
+        {
+          "type": 6,
+          "delayFrames": 25,
+          "aniBase": {
+            "format": "skill-101030030/%d.png",
+            "anchor_x": 0.3,
+            "anchor_y": 0.5,
+            "duration": 0.06,
+            "scale_x": 1.8,
+            "scale_y": 1.8
+          },
+          "file": [
+            "skill-101030030"
+          ],
+          "sound": [
+            "skill-101030030"
+          ]
+        }
+      ],
+      "reason": "玛蒙是本关真实敌人；原type2行没有此file，仅读原JSON会漏type6及独立音效。"
+    },
+    {
+      "buffId": 1021101,
+      "override": {
+        "source": "actions",
+        "key": 1021101,
+        "lineStart": 123,
+        "lineEnd": 134,
+        "exists": true
+      },
+      "dimly": 1,
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 0,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 1,
+            "format": "skill-101020021/%d.png",
+            "duration": 0.1,
+            "scale_x": 2,
+            "scale_y": 2,
+            "anchor_y": 0.4
+          },
+          "file": [
+            "skill-101020021"
+          ],
+          "sound": [
+            "skill-101020021"
+          ]
+        }
+      ],
+      "reason": "与现原buff同语义；不需要另造另一种主动动作。"
+    },
+    {
+      "buffId": 2020100,
+      "override": {
+        "source": "actions",
+        "key": 2020100,
+        "lineStart": 4368,
+        "lineEnd": 4379,
+        "exists": true
+      },
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 10,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 0.5,
+            "format": "skill-102040040/%d.png",
+            "duration": 0.05,
+            "scale_x": 4,
+            "scale_y": 4,
+            "anchor_y": 0.2,
+            "anchor_x": 0.4
+          },
+          "file": [
+            "skill-102040040"
+          ],
+          "sound": [
+            "skill-102040040"
+          ]
+        }
+      ],
+      "reason": "覆盖表是.05/4倍/.4,.2；原buff为.02/1倍/.5,.3，不能只因源文件存在就称还原。"
+    },
+    {
+      "buffId": 1050100,
+      "override": {
+        "source": "actions",
+        "key": 1050100,
+        "lineStart": 320,
+        "lineEnd": 331,
+        "dataLines": [
+          "\t[1050100] = {",
+          "\t\t{",
+          "\t\t\ttype = 5,",
+          "\t\t\tdelay = 0,",
+          "\t\t\tbuff_icon = 0,",
+          "\t\t\tshake = 0,",
+          "\t\t\tdimly = 0,",
+          "\t\t\tani_base = { attack_time = 0.4, action_time = 0.4, format = 'skill-101040050/%d.png', scale_x = 2.6, scale_y = 2.6 },",
+          "\t\t\tfile = { 'skill-101040050' },",
+          "\t\t\tsound = { 'skill-101040050' }",
+          "\t\t}",
+          "\t},"
+        ]
+      },
+      "expansion": [
+        {
+          "type": 5,
+          "delayFrames": 0,
+          "dimly": 0,
+          "shake": 0,
+          "aniBase": {
+            "attack_time": 0.4,
+            "action_time": 0.4,
+            "format": "skill-101040050/%d.png",
+            "scale_x": 2.6,
+            "scale_y": 2.6
+          },
+          "file": [
+            "skill-101040050"
+          ],
+          "sound": [
+            "skill-101040050"
+          ]
+        }
+      ]
+    },
+    {
+      "buffId": 1051101,
+      "override": {
+        "source": "actions",
+        "key": 1051101,
+        "lineStart": 334,
+        "lineEnd": 355,
+        "dataLines": [
+          "\t[1051101] = {",
+          "\t\t{",
+          "\t\t\ttype = 8,",
+          "\t\t\tdelay = 0,",
+          "\t\t\tbuff_icon = 0,",
+          "\t\t\tshake = 0,",
+          "\t\t\tdimly = 0,",
+          "\t\t\tani_base = { move_time = 0.1, move_back = 1.7, attack_delay = 0.3, offset_x = 0.55, offset_y = 0.4 },",
+          "\t\t\tfile = {},",
+          "\t\t\tsound = { 'skill-101040051' }",
+          "\t\t},",
+          "\t\t{",
+          "\t\t\ttype = 6,",
+          "\t\t\tdelay = 15,",
+          "\t\t\tbuff_icon = 0,",
+          "\t\t\tshake = 0,",
+          "\t\t\tdimly = 1,",
+          "\t\t\tani_base = { format = 'skill-101040051/%d.png', anchor_x = 0.5, anchor_y = 0.4, duration = 0.1, scale_x = 1.3, scale_y = 1.3 },",
+          "\t\t\tfile = { 'skill-101040051' },",
+          "\t\t\tsound = {}",
+          "\t\t}",
+          "\t},"
+        ]
+      },
+      "expansion": [
+        {
+          "type": 8,
+          "delayFrames": 0,
+          "dimly": 0,
+          "shake": 0,
+          "aniBase": {
+            "move_time": 0.1,
+            "move_back": 1.7,
+            "attack_delay": 0.3,
+            "offset_x": 0.55,
+            "offset_y": 0.4
+          },
+          "file": [],
+          "sound": [
+            "skill-101040051"
+          ]
+        },
+        {
+          "type": 6,
+          "delayFrames": 15,
+          "dimly": 1,
+          "shake": 0,
+          "aniBase": {
+            "format": "skill-101040051/%d.png",
+            "anchor_x": 0.5,
+            "anchor_y": 0.4,
+            "duration": 0.1,
+            "scale_x": 1.3,
+            "scale_y": 1.3
+          },
+          "file": [
+            "skill-101040051"
+          ],
+          "sound": []
+        }
+      ]
+    }
+  ],
+  "skillAndRuleChains": [
+    {
+      "templateId": 10102002,
+      "artId": 1020100,
+      "rawBuffList": [
+        1020100,
+        1020200
+      ],
+      "javaExecutionBuffOrder": [
+        1020100,
+        1020200
+      ],
+      "selectors": [
+        3,
+        4,
+        10
+      ],
+      "targetCount": 1,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 1020100,
+          "type": 2,
+          "value": "0|0|0|0",
+          "round": 0,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1020100,
+            "lineStart": 1383,
+            "lineEnd": 1402,
+            "exists": true
+          }
+        },
+        {
+          "id": 1020200,
+          "type": 100,
+          "value": "10000|0|0|0",
+          "round": 0,
+          "delayFrames": 30,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1020200,
+            "lineStart": 1403,
+            "lineEnd": 1422,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 1020100,
+        "lineStart": 238,
+        "lineEnd": 242,
+        "exists": true
+      }
+    },
+    {
+      "templateId": 10102002,
+      "artId": 1021101,
+      "rawBuffList": [
+        1021101,
+        1021201,
+        1021301
+      ],
+      "javaExecutionBuffOrder": [
+        1021101,
+        1021201,
+        1021301
+      ],
+      "selectors": [
+        3,
+        4,
+        7
+      ],
+      "targetCount": 6,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 1021101,
+          "type": 3,
+          "value": "0|0|0|0",
+          "round": 2,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1021101,
+            "lineStart": 1423,
+            "lineEnd": 1442,
+            "exists": true
+          }
+        },
+        {
+          "id": 1021201,
+          "type": 100,
+          "value": "6500|0|0|0",
+          "round": 2,
+          "delayFrames": 50,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1021201,
+            "lineStart": 1483,
+            "lineEnd": 1502,
+            "exists": true
+          }
+        },
+        {
+          "id": 1021301,
+          "type": 201,
+          "value": "0|0|0|0",
+          "round": 2,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 1,
+          "artList": [
+            1021201
+          ],
+          "buffIcon": 101020021,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1021301,
+            "lineStart": 1543,
+            "lineEnd": 1562,
+            "exists": true
+          }
+        },
+        {
+          "id": 1021401,
+          "type": 100,
+          "value": "1800|1|0|0",
+          "round": 0,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 1021401,
+            "lineStart": 1603,
+            "lineEnd": 1622,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 1021101,
+        "lineStart": 243,
+        "lineEnd": 247,
+        "exists": true
+      }
+    },
+    {
+      "templateId": 10202002,
+      "artId": 2020100,
+      "rawBuffList": [
+        2020100,
+        2020200
+      ],
+      "javaExecutionBuffOrder": [
+        2020100,
+        2020200
+      ],
+      "selectors": [
+        3,
+        4,
+        10
+      ],
+      "targetCount": 1,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 2020100,
+          "type": 3,
+          "value": "0|0|0|0",
+          "round": 0,
+          "delayFrames": 10,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2020100,
+            "lineStart": 22343,
+            "lineEnd": 22362,
+            "exists": true
+          }
+        },
+        {
+          "id": 2020200,
+          "type": 100,
+          "value": "10000|0|0|0",
+          "round": 0,
+          "delayFrames": 25,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2020200,
+            "lineStart": 22363,
+            "lineEnd": 22382,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 2020100,
+        "lineStart": 3288,
+        "lineEnd": 3292,
+        "exists": true
+      }
+    },
+    {
+      "templateId": 10202002,
+      "artId": 2021101,
+      "rawBuffList": [
+        2021101,
+        2021201,
+        2021301
+      ],
+      "javaExecutionBuffOrder": [
+        2021101,
+        2021201,
+        2021301
+      ],
+      "selectors": [
+        3,
+        4,
+        10
+      ],
+      "targetCount": 1,
+      "sourceType": 0,
+      "effects": [
+        {
+          "id": 2021101,
+          "type": 3,
+          "value": "0|0|0|0",
+          "round": 0,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2021101,
+            "lineStart": 22383,
+            "lineEnd": 22402,
+            "exists": true
+          }
+        },
+        {
+          "id": 2021201,
+          "type": 100,
+          "value": "9000|0|0|0",
+          "round": 0,
+          "delayFrames": 30,
+          "attachPercent": 10000,
+          "copyTarget": 0,
+          "artList": [],
+          "buffIcon": 0,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2021201,
+            "lineStart": 22443,
+            "lineEnd": 22462,
+            "exists": true
+          }
+        },
+        {
+          "id": 2021301,
+          "type": 1005,
+          "value": "0|0|0|0",
+          "round": 2,
+          "delayFrames": 0,
+          "attachPercent": 10000,
+          "copyTarget": 1,
+          "artList": [],
+          "buffIcon": 102020021,
+          "sourceRow": {
+            "source": "buff",
+            "key": 2021301,
+            "lineStart": 22503,
+            "lineEnd": 22522,
+            "exists": true
+          }
+        }
+      ],
+      "sourceArt": {
+        "source": "buffart",
+        "key": 2021101,
+        "lineStart": 3293,
+        "lineEnd": 3297,
+        "exists": true
+      }
+    },
+    {
+      "templateId": 10104005,
+      "artId": 1050100,
+      "rawBuffList": [
+        1050100,
+        1050200
+      ],
+      "javaExecutionBuffOrder": [
+        1050100,
+        1050200
+      ],
+      "selectors": [
+        3,
+        4,
+        10
+      ],
+      "targetCount": 1,
+      "sourceType": 0,
+      "sourceArt": {
+        "source": "buffart",
+        "key": 1050100,
+        "lineStart": 403,
+        "lineEnd": 407,
+        "dataLines": [
+          "\t\t[1050100] = {",
+          "\t\t\tidx = 1050100,",
+          "\t\t\ttarget = {3,4,10},",
+          "\t\t\tbuff_list = {1050100,1050200},",
+          "\t\t},"
+        ]
+      },
+      "effects": [
+        {
+          "row": {
+            "idx": 1050100,
+            "note": "荆棘之炎·普攻",
+            "type": 5,
+            "round": 0,
+            "attach_percent": 10000,
+            "value": "0|0|0|0",
+            "effecttype": 0,
+            "dispelled": 1,
+            "life": 300,
+            "delay": 0,
+            "copy_target": 0,
+            "art_list": "[]",
+            "conflict_type": 0,
+            "stacking_max": 10,
+            "buff_icon": 0,
+            "shake": 0,
+            "dimly": 0,
+            "ani_base": "{\"attack_time\":0.4,\"action_time\":0.4,\"format\":\"skill-101040050/%d.png\",\"scale_x\":2.6,\"scale_y\":2.6}",
+            "file": "[\"skill-101040050\"]",
+            "sound": "[\"skill-101040050\"]",
+            "buff_name_lang": 0,
+            "buff_name_color": "{\"R\":255,\"G\":253,\"B\":178}"
+          },
+          "sourceRow": {
+            "source": "buff",
+            "key": 1050100,
+            "lineStart": 2523,
+            "lineEnd": 2542,
+            "dataLines": [
+              "\t\t[1050100] = {",
+              "\t\t\tidx = 1050100,",
+              "\t\t\ttype = 5,",
+              "\t\t\tround = 0,",
+              "\t\t\tattach_percent = 10000,",
+              "\t\t\tvalue = \"0|0|0|0\",",
+              "\t\t\tlife = 300,",
+              "\t\t\tdelay = 0,",
+              "\t\t\tcopy_target = 0,",
+              "\t\t\tart_list = {},",
+              "\t\t\tconflict_type = 0,",
+              "\t\t\tbuff_icon = 0,",
+              "\t\t\tshake = 0,",
+              "\t\t\tdimly = 0,",
+              "\t\t\tani_base = {action_time=0.4,attack_time=0.4,format=\"skill-101040050/%d.png\",scale_x=2.6,scale_y=2.6},",
+              "\t\t\tfile = {\"skill-101040050\"},",
+              "\t\t\tsound = {\"skill-101040050\"},",
+              "\t\t\tbuff_name_lang = 0,",
+              "\t\t\tbuff_name_color = {B=178,G=253,R=255},",
+              "\t\t},"
+            ]
+          }
+        },
+        {
+          "row": {
+            "idx": 1050200,
+            "note": "荆棘之炎·普攻",
+            "type": 100,
+            "round": 0,
+            "attach_percent": 10000,
+            "value": "10000|0|0|0",
+            "effecttype": 0,
+            "dispelled": 1,
+            "life": 0,
+            "delay": 40,
+            "copy_target": 0,
+            "art_list": "[]",
+            "conflict_type": 0,
+            "stacking_max": 10,
+            "buff_icon": 0,
+            "shake": 0,
+            "dimly": 0,
+            "ani_base": "{}",
+            "file": "[]",
+            "sound": "[]",
+            "buff_name_lang": 0,
+            "buff_name_color": "{\"R\":255,\"G\":253,\"B\":178}"
+          },
+          "sourceRow": {
+            "source": "buff",
+            "key": 1050200,
+            "lineStart": 2543,
+            "lineEnd": 2562,
+            "dataLines": [
+              "\t\t[1050200] = {",
+              "\t\t\tidx = 1050200,",
+              "\t\t\ttype = 100,",
+              "\t\t\tround = 0,",
+              "\t\t\tattach_percent = 10000,",
+              "\t\t\tvalue = \"10000|0|0|0\",",
+              "\t\t\tlife = 0,",
+              "\t\t\tdelay = 40,",
+              "\t\t\tcopy_target = 0,",
+              "\t\t\tart_list = {},",
+              "\t\t\tconflict_type = 0,",
+              "\t\t\tbuff_icon = 0,",
+              "\t\t\tshake = 0,",
+              "\t\t\tdimly = 0,",
+              "\t\t\tani_base = {},",
+              "\t\t\tfile = {},",
+              "\t\t\tsound = {},",
+              "\t\t\tbuff_name_lang = 0,",
+              "\t\t\tbuff_name_color = {B=178,G=253,R=255},",
+              "\t\t},"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "templateId": 10104005,
+      "artId": 1051101,
+      "rawBuffList": [
+        1051101,
+        1051201,
+        1051301
+      ],
+      "javaExecutionBuffOrder": [
+        1051101,
+        1051201,
+        1051301
+      ],
+      "selectors": [
+        3,
+        4,
+        7
+      ],
+      "targetCount": 6,
+      "sourceType": 0,
+      "sourceArt": {
+        "source": "buffart",
+        "key": 1051101,
+        "lineStart": 408,
+        "lineEnd": 412,
+        "dataLines": [
+          "\t\t[1051101] = {",
+          "\t\t\tidx = 1051101,",
+          "\t\t\ttarget = {3,4,7},",
+          "\t\t\tbuff_list = {1051101,1051201,1051301},",
+          "\t\t},"
+        ]
+      },
+      "effects": [
+        {
+          "row": {
+            "idx": 1051101,
+            "note": "荆棘之炎1技能1级",
+            "type": 8,
+            "round": 2,
+            "attach_percent": 10000,
+            "value": "0|0|0|0",
+            "effecttype": 0,
+            "dispelled": 1,
+            "life": 300,
+            "delay": 0,
+            "copy_target": 0,
+            "art_list": "[]",
+            "conflict_type": 0,
+            "stacking_max": 10,
+            "buff_icon": 0,
+            "shake": 0,
+            "dimly": 0,
+            "ani_base": "{\"move_time\":0.1,\"move_back\":1.7,\"attack_delay\":0.3,\"offset_x\":0.55,\"offset_y\":0.4}",
+            "file": "[]",
+            "sound": "[\"skill-101040051\"]",
+            "buff_name_lang": 0,
+            "buff_name_color": "{\"R\":255,\"G\":253,\"B\":178}"
+          },
+          "sourceRow": {
+            "source": "buff",
+            "key": 1051101,
+            "lineStart": 2563,
+            "lineEnd": 2582,
+            "dataLines": [
+              "\t\t[1051101] = {",
+              "\t\t\tidx = 1051101,",
+              "\t\t\ttype = 8,",
+              "\t\t\tround = 2,",
+              "\t\t\tattach_percent = 10000,",
+              "\t\t\tvalue = \"0|0|0|0\",",
+              "\t\t\tlife = 300,",
+              "\t\t\tdelay = 0,",
+              "\t\t\tcopy_target = 0,",
+              "\t\t\tart_list = {},",
+              "\t\t\tconflict_type = 0,",
+              "\t\t\tbuff_icon = 0,",
+              "\t\t\tshake = 0,",
+              "\t\t\tdimly = 0,",
+              "\t\t\tani_base = {attack_delay=0.3,move_back=1.7,move_time=0.1,offset_x=0.55,offset_y=0.4},",
+              "\t\t\tfile = {},",
+              "\t\t\tsound = {\"skill-101040051\"},",
+              "\t\t\tbuff_name_lang = 0,",
+              "\t\t\tbuff_name_color = {B=178,G=253,R=255},",
+              "\t\t},"
+            ]
+          }
+        },
+        {
+          "row": {
+            "idx": 1051201,
+            "note": "荆棘之炎1技能1级",
+            "type": 100,
+            "round": 2,
+            "attach_percent": 10000,
+            "value": "9000|0|0|0",
+            "effecttype": 0,
+            "dispelled": 1,
+            "life": 0,
+            "delay": 50,
+            "copy_target": 0,
+            "art_list": "[]",
+            "conflict_type": 0,
+            "stacking_max": 10,
+            "buff_icon": 0,
+            "shake": 0,
+            "dimly": 0,
+            "ani_base": "{}",
+            "file": "[]",
+            "sound": "[]",
+            "buff_name_lang": 0,
+            "buff_name_color": "{\"R\":255,\"G\":253,\"B\":178}"
+          },
+          "sourceRow": {
+            "source": "buff",
+            "key": 1051201,
+            "lineStart": 2623,
+            "lineEnd": 2642,
+            "dataLines": [
+              "\t\t[1051201] = {",
+              "\t\t\tidx = 1051201,",
+              "\t\t\ttype = 100,",
+              "\t\t\tround = 2,",
+              "\t\t\tattach_percent = 10000,",
+              "\t\t\tvalue = \"9000|0|0|0\",",
+              "\t\t\tlife = 0,",
+              "\t\t\tdelay = 50,",
+              "\t\t\tcopy_target = 0,",
+              "\t\t\tart_list = {},",
+              "\t\t\tconflict_type = 0,",
+              "\t\t\tbuff_icon = 0,",
+              "\t\t\tshake = 0,",
+              "\t\t\tdimly = 0,",
+              "\t\t\tani_base = {},",
+              "\t\t\tfile = {},",
+              "\t\t\tsound = {},",
+              "\t\t\tbuff_name_lang = 0,",
+              "\t\t\tbuff_name_color = {B=178,G=253,R=255},",
+              "\t\t},"
+            ]
+          }
+        },
+        {
+          "row": {
+            "idx": 1051301,
+            "note": "荆棘之炎1技能1级",
+            "type": 160,
+            "round": 2,
+            "attach_percent": 10000,
+            "value": "207|-1250|0|0",
+            "effecttype": 2,
+            "dispelled": 1,
+            "life": 0,
+            "delay": 50,
+            "copy_target": 0,
+            "art_list": "[]",
+            "conflict_type": 1052,
+            "stacking_max": 10,
+            "buff_icon": 101040051,
+            "shake": 0,
+            "dimly": 0,
+            "ani_base": "{}",
+            "file": "[]",
+            "sound": "[]",
+            "buff_name_lang": 130000083,
+            "note1": "暴击下降",
+            "buff_name_color": "{\"R\":255,\"G\":253,\"B\":178}"
+          },
+          "sourceRow": {
+            "source": "buff",
+            "key": 1051301,
+            "lineStart": 2683,
+            "lineEnd": 2702,
+            "dataLines": [
+              "\t\t[1051301] = {",
+              "\t\t\tidx = 1051301,",
+              "\t\t\ttype = 160,",
+              "\t\t\tround = 2,",
+              "\t\t\tattach_percent = 10000,",
+              "\t\t\tvalue = \"207|-1250|0|0\",",
+              "\t\t\tlife = 0,",
+              "\t\t\tdelay = 50,",
+              "\t\t\tcopy_target = 0,",
+              "\t\t\tart_list = {},",
+              "\t\t\tconflict_type = 1052,",
+              "\t\t\tbuff_icon = 101040051,",
+              "\t\t\tshake = 0,",
+              "\t\t\tdimly = 0,",
+              "\t\t\tani_base = {},",
+              "\t\t\tfile = {},",
+              "\t\t\tsound = {},",
+              "\t\t\tbuff_name_lang = 130000083,",
+              "\t\t\tbuff_name_color = {B=178,G=253,R=255},",
+              "\t\t},"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "factoryAndConcurrency": {
+    "overridePriority": "BattleInfoFactory.lua142–160优先G_BATTLE_ACTIONS[buff_id]，有覆盖逐条展开，无覆盖回退原buff；166–193逐条携带目标/实例/到期/命中，不按相同帧或声音去重。",
+    "parallelStart": "SkillController.lua79–85每个effect并行，Promise.all等各自completed；128–175预载资源后传isDelay=true；BattleActionUtils.lua120–130统一delay/60，所有延迟从各自技能效果启动计算。",
+    "javaOrder": "BuffArtSysCache35–40→CBuffArt62–67稳定分区非逻辑前置。上述六条art原声明均已是表现→伤害→逻辑顺序，因此本关实际顺序与raw一致；不把上批3050100或2050100的raw错称旧执行顺序。",
+    "audio": "BattleActionUtils.lua165–172在效果delay之后立即逐项播放sound；1051101声音属于type8第1项，type6不重复发声。默认动作不依赖声音和帧结束。"
+  },
+  "positionAndLayers": {
+    "type8": {
+      "source": {
+        "source": "actionUtils",
+        "lineStart": 389,
+        "lineEnd": 421
+      },
+      "rule": "取layerCtx:getLayer()整战场尺寸，pos初始(0,0)，仅存在offset_x时按敌方1-x；offset_y不镜像。本关完整(.55,.4)，敌方实际(.45*width,.4*height)。",
+      "missingFieldBoundary": "缺offset_x时旧X保持0而不镜像；本关完整参数，不以统一默认tuple假称缺省分支等价。"
+    },
+    "actorOrder": {
+      "sources": [
+        {
+          "source": "actionUtils",
+          "lineStart": 1062,
+          "lineEnd": 1115
+        },
+        {
+          "source": "battleController",
+          "lineStart": 506,
+          "lineEnd": 514
+        }
+      ],
+      "rule": "旧英雄同级按HeroBase-y排序；到目的地改为HeroBase-currentY+1，回程前恢复originZ。当前新战场保留双方槽组绘制层级，跨槽组的y深度排序属既有非阻塞待审，不能称全部遮挡已旧版等价。"
+    },
+    "type6Placement": {
+      "sources": [
+        {
+          "source": "actionUtils",
+          "lineStart": 1249,
+          "lineEnd": 1277
+        },
+        {
+          "source": "battleController",
+          "lineStart": 1346,
+          "lineEnd": 1358
+        },
+        {
+          "source": "battleController",
+          "lineStart": 1380,
+          "lineEnd": 1391
+        }
+      ],
+      "rule": "type6于.25s采样施法者当前移动位置，不读被攻击者、不持续跟随；旧敌方先x=width-x再挂positionX=width/scaleX=-1的leftEffectLayer，合成后世界X仍是采样位置。新worldPosition转LayerVfx局部坐标不应再次镜像位置。"
+    },
+    "defaultAnimation": "所有本关有攻击动作的ani_base均未给action；_attackingAction1085–1094默认actionAttack，而非因为active_type=1就actionSkill。BattleHeroNode238–253区分attack/skill/skill2。",
+    "skeletonSelection": "BattleHeroNode149–154→Tools:getHeroSkinByStar377–394→skin表；本关无进化/时装且星级命中原模板。HeroSpineFactory11–20拼spine/{skin}.json/.atlas。"
+  },
+  "type160CriticalDebuff": {
+    "configuration": {
+      "idx": 1051301,
+      "note": "荆棘之炎1技能1级",
+      "type": 160,
+      "round": 2,
+      "attach_percent": 10000,
+      "value": "207|-1250|0|0",
+      "effecttype": 2,
+      "dispelled": 1,
+      "life": 0,
+      "delay": 50,
+      "copy_target": 0,
+      "art_list": "[]",
+      "conflict_type": 1052,
+      "stacking_max": 10,
+      "buff_icon": 101040051,
+      "shake": 0,
+      "dimly": 0,
+      "ani_base": "{}",
+      "file": "[]",
+      "sound": "[]",
+      "buff_name_lang": 130000083,
+      "note1": "暴击下降",
+      "buff_name_color": "{\"R\":255,\"G\":253,\"B\":178}"
+    },
+    "sourceLua": {
+      "source": "buff",
+      "key": 1051301,
+      "lineStart": 2683,
+      "lineEnd": 2702,
+      "dataLines": [
+        "\t\t[1051301] = {",
+        "\t\t\tidx = 1051301,",
+        "\t\t\ttype = 160,",
+        "\t\t\tround = 2,",
+        "\t\t\tattach_percent = 10000,",
+        "\t\t\tvalue = \"207|-1250|0|0\",",
+        "\t\t\tlife = 0,",
+        "\t\t\tdelay = 50,",
+        "\t\t\tcopy_target = 0,",
+        "\t\t\tart_list = {},",
+        "\t\t\tconflict_type = 1052,",
+        "\t\t\tbuff_icon = 101040051,",
+        "\t\t\tshake = 0,",
+        "\t\t\tdimly = 0,",
+        "\t\t\tani_base = {},",
+        "\t\t\tfile = {},",
+        "\t\t\tsound = {},",
+        "\t\t\tbuff_name_lang = 130000083,",
+        "\t\t\tbuff_name_color = {B=178,G=253,R=255},",
+        "\t\t},"
+      ]
+    },
+    "meaning": "属性207=暴击率，直接叠加-1250（万分比，下降12.5个百分点），不是伤害/攻击下降；保持负值，不在读暴击率时夹0。",
+    "applyAndRemove": {
+      "sources": [
+        {
+          "source": "abilityAddHandler",
+          "lineStart": 12,
+          "lineEnd": 17
+        },
+        {
+          "source": "baseAttributeHandler",
+          "lineStart": 15,
+          "lineEnd": 23
+        },
+        {
+          "source": "attributeHandler",
+          "lineStart": 19,
+          "lineEnd": 31
+        },
+        {
+          "source": "buffHelper",
+          "lineStart": 32,
+          "lineEnd": 42
+        }
+      ],
+      "rule": "type160处理器继承AbstractAttributeBuffHandler→AbstractBaseAttributeBuffHandler→AbstractBuffHandler；addBuff成功后直接updateAttribute，移除反向减原delta，并发出移除状态。"
+    },
+    "noSpecialResistance": {
+      "sources": [
+        {
+          "source": "buffTypes",
+          "lineStart": 410,
+          "lineEnd": 415
+        },
+        {
+          "source": "buffTypes",
+          "lineStart": 1853,
+          "lineEnd": 1859
+        },
+        {
+          "source": "buffConfig",
+          "lineStart": 102,
+          "lineEnd": 123
+        },
+        {
+          "source": "debuffHandler",
+          "lineStart": 16,
+          "lineEnd": 25
+        },
+        {
+          "source": "resistanceHandler",
+          "lineStart": 24,
+          "lineEnd": 36
+        }
+      ],
+      "rule": "type160未覆盖buffResistanceAttribute，默认为null；effecttype2仍走CBuff.isHit的普通attach概率。其继承链不经过AbstractDebuffHandler的BT_IMMUNITY_DEBUFF，也不经过AbstractResistanceHandler的抗性乘算。本行10000故必中；通用低概率属性buff不能因本行而假支持。"
+    },
+    "lifecycle": {
+      "sources": [
+        {
+          "source": "abstractBuff",
+          "lineStart": 38,
+          "lineEnd": 58
+        },
+        {
+          "source": "buffsInfo",
+          "lineStart": 51,
+          "lineEnd": 73
+        },
+        {
+          "source": "buffDo",
+          "lineStart": 99,
+          "lineEnd": 100
+        },
+        {
+          "source": "battleService",
+          "lineStart": 328,
+          "lineEnd": 335
+        }
+      ],
+      "rule": "保存来源/目标和expiredRound=currentRound+2，conflict1052的旧实例先移除并反向还原再施加新值；属性叠加溢出按配置ID/来源择旧，stacking_max10，不能按每次表现直接写死状态。到期由通用remove路径恢复，不是每回合再次-1250。"
+    },
+    "liveCritReading": {
+      "sources": [
+        {
+          "source": "attributeTypes",
+          "lineStart": 184,
+          "lineEnd": 189
+        },
+        {
+          "source": "attributeInfo",
+          "lineStart": 112,
+          "lineEnd": 115
+        },
+        {
+          "source": "attributeInfo",
+          "lineStart": 240,
+          "lineEnd": 250
+        },
+        {
+          "source": "fightUtil",
+          "lineStart": 171,
+          "lineEnd": 175
+        }
+      ],
+      "rule": "updateAttribute把实际currentValue写回即使负数；getRate只上限50000，暴击读取当前207×(1-208)，未下夹0。单次返回updateValue有下界并不代表存储值被夹0。"
+    },
+    "clientStatus": "BuffFactory动作不是type160图标生命周期的所有者；BattleActionUtils155–160按真实buff实例/到期/命中决定图标。1051301 delay50/60，两个回合真实状态与1051101帧并行。"
+  },
+  "controlsAndTick": {
+    "mammon": "1021301为201，round2，原目标/原来源，子art1021201→1021401=1800|1|0|0；到期轮先触发后移除，第二位1禁止反击，非安装即伤害。",
+    "iceElement": "2021301为1005眩晕，round2，基础概率10000；不是冰冻或沉默。",
+    "controlProbability": "基础attachPercent还乘专属抗性、控制强化和免控，不能将基础15%当无条件最终15%。",
+    "sourceReferences": [
+      {
+        "source": "battleService",
+        "lineStart": 140,
+        "lineEnd": 153
+      },
+      {
+        "source": "battleService",
+        "lineStart": 284,
+        "lineEnd": 296
+      },
+      {
+        "source": "battleService",
+        "lineStart": 328,
+        "lineEnd": 361
+      },
+      {
+        "source": "controlHandler",
+        "lineStart": 21,
+        "lineEnd": 38
+      },
+      {
+        "source": "frozenHandler",
+        "lineStart": 23,
+        "lineEnd": 39
+      },
+      {
+        "source": "buffConfig",
+        "lineStart": 43,
+        "lineEnd": 60
+      }
+    ],
+    "scope": "本关无凛冬2051301；不把上一关15%冰冻带入本关。"
+  },
+  "resourceFrames": {
+    "method": "独立plistlib读取六个原hd/skill plist frames键，确认同stem/%d.png从0连续；对原plist/PVR/audio原始字节分别SHA256。帧总数不当单套帧数。",
+    "atlases": [
+      {
+        "stem": "skill-101030030",
+        "frameCount": 6,
+        "frameKeys": [
+          "skill-101030030/0.png",
+          "skill-101030030/1.png",
+          "skill-101030030/2.png",
+          "skill-101030030/3.png",
+          "skill-101030030/4.png",
+          "skill-101030030/5.png"
+        ],
+        "plist": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101030030.plist",
+          "sha256": "45002297b6ad8187be3e3b3569b38a99e7672e9c58a0d12cb4728b61265236d0"
+        },
+        "texture": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101030030.pvr.ccz",
+          "sha256": "7503ea693998f27244b0b83863b8bbd95c86f17f6675b54d73db0c96200a6619"
+        },
+        "audio": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-101030030.mp3",
+          "sha256": "9a37c652a7a3abcbee91c174288d9067049a239efd83877fbf1b93ec8152f3ae"
+        },
+        "metadata": {
+          "format": 2,
+          "realTextureFileName": "skill-101030030.pvr.ccz",
+          "size": "{293,246}",
+          "smartupdate": "$TexturePacker:SmartUpdate:06d01f347a796ed631ce663d155be605:1/1$",
+          "textureFileName": "skill-101030030.pvr.ccz"
+        }
+      },
+      {
+        "stem": "skill-101020021",
+        "frameCount": 11,
+        "frameKeys": [
+          "skill-101020021/0.png",
+          "skill-101020021/1.png",
+          "skill-101020021/2.png",
+          "skill-101020021/3.png",
+          "skill-101020021/4.png",
+          "skill-101020021/5.png",
+          "skill-101020021/6.png",
+          "skill-101020021/7.png",
+          "skill-101020021/8.png",
+          "skill-101020021/9.png",
+          "skill-101020021/10.png"
+        ],
+        "plist": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101020021.plist",
+          "sha256": "87cdcdce64830bfb5bccacd54098b8164cd605462674d010b062eda23e8fc266"
+        },
+        "texture": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101020021.pvr.ccz",
+          "sha256": "c5a72ef1a7b048b23b19d3835af48bde74cfaecf6234848f02573b3bbd0ae031"
+        },
+        "audio": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-101020021.mp3",
+          "sha256": "c0f459bcff14c34b7c3eceb544b411745bc4c6e815b7b18e840b9513668c111e"
+        },
+        "metadata": {
+          "format": 2,
+          "realTextureFileName": "skill-101020021.pvr.ccz",
+          "size": "{873,337}",
+          "smartupdate": "$TexturePacker:SmartUpdate:258137ec05b61908d21006fb9a198d07:1/1$",
+          "textureFileName": "skill-101020021.pvr.ccz"
+        }
+      },
+      {
+        "stem": "skill-102040040",
+        "frameCount": 14,
+        "frameKeys": [
+          "skill-102040040/0.png",
+          "skill-102040040/1.png",
+          "skill-102040040/2.png",
+          "skill-102040040/3.png",
+          "skill-102040040/4.png",
+          "skill-102040040/5.png",
+          "skill-102040040/6.png",
+          "skill-102040040/7.png",
+          "skill-102040040/8.png",
+          "skill-102040040/9.png",
+          "skill-102040040/10.png",
+          "skill-102040040/11.png",
+          "skill-102040040/12.png",
+          "skill-102040040/13.png"
+        ],
+        "plist": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102040040.plist",
+          "sha256": "a548647c532a4ff09d5702dc34343cf8e7bbf235e17e1c714a865ae358c15b30"
+        },
+        "texture": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102040040.pvr.ccz",
+          "sha256": "9fb6ce818796296b2dd68451f27f05da87535f5f4a4765ca841f213d8b49af59"
+        },
+        "audio": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-102040040.mp3",
+          "sha256": "561aac1e5fb63c16711b4279c3e069f39f9a08fcada015d2f2edb21e63a6adeb"
+        },
+        "metadata": {
+          "format": 2,
+          "realTextureFileName": "skill-102040040.pvr.ccz",
+          "size": "{499,175}",
+          "smartupdate": "$TexturePacker:SmartUpdate:4f46301883424c34da65619a979de6e3:1/1$",
+          "textureFileName": "skill-102040040.pvr.ccz"
+        }
+      },
+      {
+        "stem": "skill-102020021",
+        "frameCount": 14,
+        "frameKeys": [
+          "skill-102020021/0.png",
+          "skill-102020021/1.png",
+          "skill-102020021/2.png",
+          "skill-102020021/3.png",
+          "skill-102020021/4.png",
+          "skill-102020021/5.png",
+          "skill-102020021/6.png",
+          "skill-102020021/7.png",
+          "skill-102020021/8.png",
+          "skill-102020021/9.png",
+          "skill-102020021/10.png",
+          "skill-102020021/11.png",
+          "skill-102020021/12.png",
+          "skill-102020021/13.png"
+        ],
+        "plist": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102020021.plist",
+          "sha256": "60244d1ee5c830dfaf7822fc477a16755f6fcf7dfd3b0845c2f70123bd5aea80"
+        },
+        "texture": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-102020021.pvr.ccz",
+          "sha256": "deac9654f89d4107f1d84bdaf3ac98e21a157be5779248ff98e6f42c58c5a2bd"
+        },
+        "audio": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-102020021.mp3",
+          "sha256": "aa62d032102780252ec6045431d8e3711a27a32b017c50aa680465df75fc7b49"
+        },
+        "metadata": {
+          "format": 2,
+          "realTextureFileName": "skill-102020021.pvr.ccz",
+          "size": "{928,345}",
+          "smartupdate": "$TexturePacker:SmartUpdate:1c8a588d5af547bdf702009a5c1cf797:1/1$",
+          "textureFileName": "skill-102020021.pvr.ccz"
+        }
+      },
+      {
+        "stem": "skill-101040050",
+        "frameCount": 7,
+        "frameKeys": [
+          "skill-101040050/0.png",
+          "skill-101040050/1.png",
+          "skill-101040050/2.png",
+          "skill-101040050/3.png",
+          "skill-101040050/4.png",
+          "skill-101040050/5.png",
+          "skill-101040050/6.png"
+        ],
+        "plist": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101040050.plist",
+          "sha256": "4dfd55bafa8f4bb43b4a5f22c83e423c3afff4ed22b80b7606f1b61e618c87fe"
+        },
+        "texture": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101040050.pvr.ccz",
+          "sha256": "40d9f406496d21d1e35028b55bb4f40036c9a96c8b37acb042ef80806b17ba80"
+        },
+        "audio": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-101040050.mp3",
+          "sha256": "d4d2e80e2ff6ebd022567127277f313c62ce0b319a71e2cf7ca0194bd2367dcb"
+        },
+        "metadata": {
+          "format": 2,
+          "realTextureFileName": "skill-101040050.pvr.ccz",
+          "size": "{443,123}",
+          "smartupdate": "$TexturePacker:SmartUpdate:0587ec2faf72a472de2d6b191fa7a07b:1/1$",
+          "textureFileName": "skill-101040050.pvr.ccz"
+        }
+      },
+      {
+        "stem": "skill-101040051",
+        "frameCount": 6,
+        "frameKeys": [
+          "skill-101040051/0.png",
+          "skill-101040051/1.png",
+          "skill-101040051/2.png",
+          "skill-101040051/3.png",
+          "skill-101040051/4.png",
+          "skill-101040051/5.png"
+        ],
+        "plist": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101040051.plist",
+          "sha256": "754e0f96fcacae3fac5a7c272d6e8ea3cd8b104e3b9fc18bcecf35b3bca8c14f"
+        },
+        "texture": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-101040051.pvr.ccz",
+          "sha256": "ad48168d365d7a629bd2c6084f780d5802e30ac9b6f922f5d742e52041a5b981"
+        },
+        "audio": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-101040051.mp3",
+          "sha256": "086a8ee7682cbd41b14995c30f701fee16c0f4e4d8e52e497d05ed52abe5f07a"
+        },
+        "metadata": {
+          "format": 2,
+          "realTextureFileName": "skill-101040051.pvr.ccz",
+          "size": "{451,249}",
+          "smartupdate": "$TexturePacker:SmartUpdate:7973387939478ca70aaf6c511bba649b:1/1$",
+          "textureFileName": "skill-101040051.pvr.ccz"
+        }
+      }
+    ],
+    "totalAcrossSixReferencedAtlases": 58,
+    "skeletons": [
+      {
+        "templateId": 10102002,
+        "skinSource": {
+          "source": "skin",
+          "key": 10102002,
+          "lineStart": 9,
+          "lineEnd": 14,
+          "dataLines": [
+            "\t\t[10102002] = {",
+            "\t\t\ttype = 10102002,",
+            "\t\t\tstar_limit = {2},",
+            "\t\t\thandbook = {2},",
+            "\t\t\tskin = {10102002},",
+            "\t\t},"
+          ]
+        },
+        "files": [
+          {
+            "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/10102002.json",
+            "sha256": "28cc051e4e8d714a368c5d7a5e6f89554626298381de5b5ecf2aa9716c2444a2"
+          },
+          {
+            "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/10102002.atlas",
+            "sha256": "42ee18a83438a6c7c7eb3ca3862888f067724bebc93acc0ff18781e1e0002a31"
+          },
+          {
+            "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/10102002.png",
+            "sha256": "c33216aafe575466383c4b17be314e12ce56f3b93ffbb46eb3dca3bdf3d1d3e6"
+          }
+        ],
+        "animationNames": [
+          "attack",
+          "hit",
+          "run",
+          "stand"
+        ]
+      },
+      {
+        "templateId": 10202002,
+        "skinSource": {
+          "source": "skin",
+          "key": 10202002,
+          "lineStart": 147,
+          "lineEnd": 152,
+          "dataLines": [
+            "\t\t[10202002] = {",
+            "\t\t\ttype = 10202002,",
+            "\t\t\tstar_limit = {2},",
+            "\t\t\thandbook = {2},",
+            "\t\t\tskin = {10202002},",
+            "\t\t},"
+          ]
+        },
+        "files": [
+          {
+            "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/10202002.json",
+            "sha256": "7b921390bddccb99ae4aa77053f6625557e61c1965b6f98881a382fb22bdd89b"
+          },
+          {
+            "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/10202002.atlas",
+            "sha256": "72f4e3c091f8f47192175cabd159539491ad859e23ee8f4c792e71183c9a4678"
+          },
+          {
+            "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/10202002.png",
+            "sha256": "42cb17285930f2ad276e34fc0b8c10927596533bda1bd823a5f326f9eb076793"
+          }
+        ],
+        "animationNames": [
+          "attack",
+          "hit",
+          "run",
+          "stand"
+        ]
+      },
+      {
+        "templateId": 10104005,
+        "skinSource": {
+          "source": "skin",
+          "key": 10104005,
+          "lineStart": 27,
+          "lineEnd": 32,
+          "dataLines": [
+            "\t\t[10104005] = {",
+            "\t\t\ttype = 10104005,",
+            "\t\t\tstar_limit = {4,5},",
+            "\t\t\thandbook = {4,5},",
+            "\t\t\tskin = {10104005,10105005},",
+            "\t\t},"
+          ]
+        },
+        "files": [
+          {
+            "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/10104005.json",
+            "sha256": "ebbc7d4280e64909d1f5cb16ed4609d4df8143a7fa9068844f19aa9256721122"
+          },
+          {
+            "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/10104005.atlas",
+            "sha256": "612d55c8f790dfa7d3369c238d919b56dc647ccb8cde0d253639c0483ac5f9eb"
+          },
+          {
+            "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/10104005.png",
+            "sha256": "51742cc0f5bb738f6d2bb3c3ed8dfed04f8f349c7f03a1f03aa1588170702f92"
+          }
+        ],
+        "animationNames": [
+          "attack",
+          "hit",
+          "run",
+          "stand"
+        ]
+      }
+    ]
+  },
+  "nominalCompletionAt1x": [
+    {
+      "buffId": 1020100,
+      "actorSeconds": 1.2,
+      "effectDelaySeconds": 0.4166666666666667,
+      "frameSeconds": 0.36,
+      "effectEndSeconds": 0.7766666666666666,
+      "rule": "type2的.1出+1停+.1回，type6自delay时点挂施法者；独立不阻塞角色。"
+    },
+    {
+      "buffId": 1021101,
+      "actorSeconds": 1.3,
+      "frameBeginSeconds": 0.3,
+      "frameSeconds": 1.1,
+      "effectEndSeconds": 1.4
+    },
+    {
+      "buffId": 2020100,
+      "delaySeconds": 0.16666666666666666,
+      "actorEndSeconds": 0.9666666666666667,
+      "frameBeginSeconds": 0.4666666666666667,
+      "frameSeconds": 0.7000000000000001,
+      "effectEndSeconds": 1.1666666666666667
+    },
+    {
+      "buffId": 2021101,
+      "actorSeconds": 1.3,
+      "frameBeginSeconds": 0.3,
+      "frameSeconds": 0.56,
+      "effectEndSeconds": 0.8600000000000001
+    },
+    {
+      "buffId": 1050100,
+      "actorSeconds": 0.8,
+      "frameBeginSeconds": 0.4,
+      "validFrames": 7,
+      "legacyAnimateCountReturn": 8,
+      "flightSeconds": 0.4,
+      "flightEndSeconds": 0.8,
+      "rule": "旧getAnimateCount38–55会在首次缺帧后i加1并返回8；投射循环动画7帧，旧飞行长度按8*.05，不是7*.05。名义到达与actor完成均.8s，不能仅凭含type5声称本行自然延长。"
+    },
+    {
+      "buffId": 1051101,
+      "actorSeconds": 2.2,
+      "actorFormula": ".1出+.3攻击等待+1.7停留+.1回",
+      "effectDelaySeconds": 0.25,
+      "frameSeconds": 0.6000000000000001,
+      "effectEndSeconds": 0.85,
+      "damageAndAttributeDelaySeconds": 0.8333333333333334,
+      "rule": "两个展开项并行；type6挂出立即completed，帧由战场拥有。角色不是等帧才回原位；时间仅无加载/调度开销的配置推算。"
+    }
+  ],
+  "completionBoundary": {
+    "sources": [
+      {
+        "source": "actionUtils",
+        "lineStart": 282,
+        "lineEnd": 307
+      },
+      {
+        "source": "actionUtils",
+        "lineStart": 326,
+        "lineEnd": 355
+      },
+      {
+        "source": "actionUtils",
+        "lineStart": 1062,
+        "lineEnd": 1115
+      },
+      {
+        "source": "actionUtils",
+        "lineStart": 1124,
+        "lineEnd": 1173
+      },
+      {
+        "source": "actionUtils",
+        "lineStart": 1189,
+        "lineEnd": 1198
+      },
+      {
+        "source": "buffFactory",
+        "lineStart": 38,
+        "lineEnd": 55
+      }
+    ],
+    "type3And6": "type3角色链完成独立于目标帧；type6挂出即完成。旧帧依战场独立自然结束，关闭/整战清理另由战场负责。",
+    "type5": "旧_rangeAttackingAction无技能completed回调；type5仅actor回调完成，不等待飞行。此前新版仍等flight属BFX-007；root本批修通用等待边界，审计记录旧依据，不将代码改完等同画面验收。",
+    "frameError": "旧未知动作跳过不是新版可借用的假成功；新版独立帧异常/迟到仍须保持统一失败和关闭清理。"
+  },
+  "guards": {
+    "challengeCap": 3,
+    "claimEntry": "closed",
+    "mavenRunByThisAudit": false,
+    "productionChangedByThisAudit": false,
+    "historicSnapshotsChanged": false,
+    "commitOrPush": false,
+    "scope": "只写本独立证据；真实样本/画面及新stage9 fresh依赖报告由根代理统一收尾，不能沿用旧Java缓存。"
+  },
+  "freshDependencySweep": {
+    "snapshot": "docs/validation/main-chapter-dependencies-20261117-stage9.json",
+    "sha256": "852906f67ec8ee64672a54310fe9b4ee8a15c3b64caaf5732b0f6e78d127e3ee",
+    "method": "后端代理先完成fresh MainChapterDependencyAuditTest；本代理仅--from-java --write新stage9，再真实Node闭包专项、--from-java --check及snapshot纯参数专项，全通过。未启动Maven/服务/浏览器。 最终显式双轴guard后再次from-java重扫与两项一致性检查通过。",
+    "beforeSupported": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      14,
+      15
+    ],
+    "afterSupported": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      14,
+      15,
+      19,
+      20
+    ],
+    "newlyClosed": [
+      9,
+      19,
+      20
+    ],
+    "summary": {
+      "stages": 850,
+      "enemies": 5000,
+      "distinctReferencedEnemyRows": 3200,
+      "unreferencedEnemyRows": 1800,
+      "rawEnemySkillCombinations": 3999,
+      "coordinateMismatchStages": 300,
+      "uniqueSkills": 249,
+      "resources": 572,
+      "missingResources": 0,
+      "unresolvedResourceDeclarations": 41,
+      "supported": 13,
+      "blocked": 837,
+      "unverified": 0,
+      "blockedStageCountsByReason": {
+        "PRESENTATION_UNSUPPORTED": 829,
+        "ENEMY_RUNTIME_UNSUPPORTED": 820,
+        "SKILL_RUNTIME_UNSUPPORTED": 820,
+        "IDLE_STAGE_NOT_PROJECTED": 830
+      }
+    },
+    "stage9Blockers": [],
+    "stage9Unverified": [],
+    "firstBlocked": {
+      "index": 10,
+      "blockers": [
+        {
+          "code": "PRESENTATION_UNSUPPORTED",
+          "key": "3031101",
+          "reason": "战斗帧资源尚未核对：type=3，file=[\"skill-103030031\"]",
+          "skill": "103030031:1"
+        },
+        {
+          "code": "PRESENTATION_UNSUPPORTED",
+          "key": "4011101",
+          "reason": "战斗帧资源尚未核对：type=2，file=[\"skill-104030011\"]",
+          "skill": "104030011:1"
+        },
+        {
+          "code": "PRESENTATION_UNSUPPORTED",
+          "key": "4010100",
+          "reason": "攻击动作存在未支持参数",
+          "skill": "104030010:0"
+        }
+      ]
+    },
+    "resourcesDelta": {
+      "before": 566,
+      "after": 572,
+      "added": [
+        "image:effects/skill/skill-101040051/skill-101040051_0/spriteFrame",
+        "image:effects/skill/skill-101040051/skill-101040051_1/spriteFrame",
+        "image:effects/skill/skill-101040051/skill-101040051_2/spriteFrame",
+        "image:effects/skill/skill-101040051/skill-101040051_3/spriteFrame",
+        "image:effects/skill/skill-101040051/skill-101040051_4/spriteFrame",
+        "image:effects/skill/skill-101040051/skill-101040051_5/spriteFrame"
+      ],
+      "removed": []
+    },
+    "unresolvedBeforeAfter": [
+      41,
+      41
+    ],
+    "unchangedGaps": "300关奖励/敌坐标映射异常、1800未引用原始敌行及仅20关挂机奖励投影仍保留。新type8完整参数通用解析同时覆盖1161101/1171101，不代表这些技能全部实际画面验收。",
+    "historicalHashesPreserved": {
+      "20261117": "324fcd4efb28027b6fb3a826217f5d698d8243565dad4ade7da3f8bdd593faaf",
+      "20261117-stage4": "5f07d4723cf8bcb163e79b77b9e80c9b5b639aa4b0d50dd97938cb0ffa44b4ac",
+      "20261117-stage5": "25b7a8f3152a26bd90f88e4c849f39fa0c8718ecbab40377213c2e062bac7a2f"
+    },
+    "openingBoundary": "cap3/claimclosed不变；静态支持不等于全部旧actions覆盖完整还原或关卡开放。"
+  }
+}

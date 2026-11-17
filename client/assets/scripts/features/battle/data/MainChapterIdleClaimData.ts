@@ -32,8 +32,24 @@ export interface IdleClaimReceipt {
     readonly assetRevision: number;
     /** 服务端冻结提交时刻，Unix秒，不作为本地超时依据。 */
     readonly committedAtSeconds: number;
+    /** 本次消费前的服务端持久起点，Unix秒；只用于核对历史表现，不回写当前挂机状态。 */
+    readonly previousStartedAtSeconds: number;
+    /** 本次实际结算的封顶秒数；收取表现必须用它，不能使用已重置的新快照反推。 */
+    readonly seconds: number;
+    /** 本次领取前冻结的VIP最大累计秒数，与seconds共同决定原宝箱显示档位。 */
+    readonly maxSeconds: number;
+    /** 本次真实收益关卡，非宝箱档位；只读保留来源，不能由页面改作新领取参数。 */
+    readonly rewardStage: number;
     /** 完整已匹配actual投影的通用反馈；零到账为null，不从理论收益或当前库存补造。 */
     readonly feedback: RewardNotice | null;
+}
+
+/** 原意图持久清理及统一状态双确认后的单次显示信号，零到账也必须交付。 */
+export interface IdleClaimConfirmation {
+    /** 已冻结的历史成功回执；调用方不能据此再次写角色、库存或挂机起点。 */
+    readonly receipt: IdleClaimReceipt;
+    /** 本应用真正新建原请求时传入的显示引用；历史/冷恢复为null，应用判断原页面是否仍可显示。 */
+    readonly presentationContext: object | null;
 }
 
 /** 命令恢复过程，界面入口关闭时仍可由独立测试观察，不代表领取资格。 */

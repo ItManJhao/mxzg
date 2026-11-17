@@ -29,6 +29,15 @@ class RewardControllerChecks {
         };
     }
 
+    /** 同一原奖励回执携带真实升级；空物品列表也由既有队列完成，不另造升级通知编号。 */
+    private static upgrade(index = 1, changes: Partial<RewardNotice> = {}): RewardNotice {
+        return this.notice(index, {
+            items: [],
+            roleUpgrade: { beforeLevel: 1, afterLevel: 3 },
+            ...changes,
+        });
+    }
+
     /** 真实Protobuf事件往返后经登记路由交付，不在测试中直接伪造其他模块协议。 */
     private static deliver(controller: RewardController, notice: RewardNotice): void {
         const frame = GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({
@@ -111,10 +120,50 @@ class RewardControllerChecks {
                 { ...original, mode: "TIPS" },
                 { ...original, roleId: "other-result-owner" },
                 { ...original, items: [{ itemId: 101, credited: 3 }] },
+                { ...original, roleUpgrade: { beforeLevel: 1, afterLevel: 3 } },
             ]) {
                 assert.throws(() => test.controller.restore(conflict), /内容不一致/);
                 assert.deepEqual(test.model.snapshot, before);
             }
+            test.controller.dispose();
+            checks++;
+        }
+        {
+            const test = this.fixture();
+            const original = this.upgrade(1, { items: [{ itemId: 101, credited: 2 }] });
+            test.controller.restore(original);
+            for (const roleUpgrade of [undefined, { beforeLevel: 1, afterLevel: 4 }, { beforeLevel: 2, afterLevel: 3 }]) {
+                assert.throws(() => test.controller.restore({ ...original, roleUpgrade }), /内容不一致/,
+                    "同回执删掉或改变升级信息也属于冲突，不能另弹第二窗");
+            }
+            assert.equal(test.model.snapshot.pending.length, 1);
+            assert.equal(test.model.snapshot.acceptedCount, 1);
+            assert.deepEqual(test.model.snapshot.pending[0].roleUpgrade, { beforeLevel: 1, afterLevel: 3 });
+            test.controller.dispose();
+            checks++;
+        }
+        {
+            const test = this.fixture();
+            const original = this.upgrade();
+            this.deliver(test.controller, original);
+            assert.equal(test.model.snapshot.phase, "waiting-ready");
+            assert.equal(test.model.snapshot.pending.length, 1);
+            assert.equal(test.model.snapshot.pending[0].receiptId, original.receiptId);
+            test.controller.setReady(true);
+            test.controller.observeRevision(6);
+            assert.equal(test.popups.length, 0, "升级同样等待原事务统一资产版本");
+            test.controller.observeRevision(7);
+            assert.equal(test.popups.length, 1);
+            assert.equal(test.popups[0].receiptId, original.receiptId);
+            assert.deepEqual(test.popups[0].items, []);
+            assert.deepEqual(test.popups[0].roleUpgrade, original.roleUpgrade);
+            assert(Object.isFrozen(test.popups[0].roleUpgrade));
+            assert.equal(test.controller.restore(original), false);
+            test.close[0]();
+            await this.settle();
+            this.deliver(test.controller, original);
+            assert.equal(test.popups.length, 1);
+            assert.equal(test.model.snapshot.phase, "idle");
             test.controller.dispose();
             checks++;
         }
@@ -142,7 +191,7 @@ class RewardControllerChecks {
         }
         {
             const test = this.fixture();
-            const silent = this.notice(1, { mode: "SILENT" });
+            const silent = this.upgrade(1, { mode: "SILENT" });
             this.deliver(test.controller, silent);
             assert.equal(test.controller.restore(silent), false);
             assert.equal(test.model.snapshot.acceptedCount, 1);
@@ -157,7 +206,7 @@ class RewardControllerChecks {
         }
         {
             const test = this.fixture();
-            const tips = this.notice(1, { mode: "TIPS" });
+            const tips = this.upgrade(1, { mode: "TIPS" });
             test.controller.setReady(true);
             test.controller.restore(tips);
             assert.equal(test.tips.length, 0);
@@ -243,13 +292,16 @@ class RewardControllerChecks {
         }
         {
             const test = this.fixture();
-            const original = this.notice();
+            const original = this.upgrade(1, { items: [{ itemId: 101, credited: 2 }] });
             test.controller.restore(original);
             (original.items[0] as { credited: number }).credited = 99;
+            (original.roleUpgrade as { afterLevel: number }).afterLevel = 9;
             assert.equal(test.model.snapshot.pending[0].items[0].credited, 2);
             assert.equal(Object.isFrozen(test.model.snapshot.pending[0]), true);
             assert.equal(Object.isFrozen(test.model.snapshot.pending[0].items), true);
             assert.equal(Object.isFrozen(test.model.snapshot.pending[0].items[0]), true);
+            assert.deepEqual(test.model.snapshot.pending[0].roleUpgrade, { beforeLevel: 1, afterLevel: 3 });
+            assert.equal(Object.isFrozen(test.model.snapshot.pending[0].roleUpgrade), true);
             test.controller.observeRevision(9);
             test.controller.observeRevision(7);
             assert.equal(test.model.snapshot.assetRevision, 9);

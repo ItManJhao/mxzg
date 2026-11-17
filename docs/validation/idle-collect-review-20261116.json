@@ -1,0 +1,144 @@
+{
+  "date": "2026-11-16",
+  "branch": "hao",
+  "commitPushMerge": false,
+  "centralBuild": false,
+  "clientChecks": [
+    {
+      "id": "idle-claim-recovery",
+      "passed": true,
+      "elapsedMs": 249,
+      "log": "client/temp/project-checks/idle-claim-recovery.log"
+    },
+    {
+      "id": "idle-claim-binding",
+      "passed": true,
+      "elapsedMs": 719,
+      "log": "client/temp/project-checks/idle-claim-binding.log"
+    },
+    {
+      "id": "idle-claim-intent",
+      "passed": true,
+      "elapsedMs": 1260,
+      "log": "client/temp/project-checks/idle-claim-intent.log"
+    },
+    {
+      "id": "main-chapter",
+      "passed": true,
+      "elapsedMs": 2234,
+      "log": "client/temp/project-checks/main-chapter.log"
+    },
+    {
+      "id": "idle-chest-presentation",
+      "passed": true,
+      "elapsedMs": 147,
+      "log": "client/temp/project-checks/idle-chest-presentation.log"
+    },
+    {
+      "id": "reward-protocol",
+      "passed": true,
+      "elapsedMs": 152,
+      "log": "client/temp/project-checks/reward-protocol.log"
+    },
+    {
+      "id": "reward-binding",
+      "passed": true,
+      "elapsedMs": 181,
+      "log": "client/temp/project-checks/reward-binding.log"
+    },
+    {
+      "id": "reward-controller",
+      "passed": true,
+      "elapsedMs": 158,
+      "log": "client/temp/project-checks/reward-controller.log"
+    },
+    {
+      "id": "idle-chest",
+      "passed": true,
+      "elapsedMs": 85,
+      "log": "client/temp/project-checks/idle-chest.log"
+    },
+    {
+      "id": "main-chapter-idle-protocol",
+      "passed": true,
+      "elapsedMs": 147,
+      "log": "client/temp/project-checks/main-chapter-idle-protocol.log"
+    },
+    {
+      "id": "game-protocol-generated",
+      "passed": true,
+      "elapsedMs": 988,
+      "log": "client/temp/project-checks/game-protocol-generated.log"
+    },
+    {
+      "id": "bindings",
+      "passed": true,
+      "elapsedMs": 327,
+      "log": "client/temp/project-checks/bindings.log"
+    },
+    {
+      "id": "game-protocol",
+      "passed": true,
+      "elapsedMs": 1302,
+      "log": "client/temp/project-checks/game-protocol.log"
+    },
+    {
+      "id": "page-lifecycle-recovery",
+      "passed": true,
+      "elapsedMs": 596,
+      "log": "client/temp/project-checks/page-lifecycle-recovery.log"
+    },
+    {
+      "id": "main-chapter-entry-recovery",
+      "passed": true,
+      "elapsedMs": 303,
+      "log": "client/temp/project-checks/main-chapter-entry-recovery.log"
+    }
+  ],
+  "typeCheck": {
+    "command": "Creator 3.8.8 TypeScript tsc -p client/tools/tsconfig.remake.json --noEmit",
+    "passed": true
+  },
+  "backendTests": [
+    {
+      "name": "com.funsgamex.mxzg.RewardFeedbackServiceTest",
+      "tests": "13",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.funsgamex.mxzg.MainChapterIdleClaimSocketTest",
+      "tests": "5",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0"
+    }
+  ],
+  "javaTsInterop": {
+    "command": "node client/temp/project-checks/reward-protocol.cjs --java=backend/target/reward-notice.pb",
+    "passed": true,
+    "wireSha256": "b3ea0f8c8631c20d7981f2b3cbb5d7a6e744f1cee9f4e1ac7b92d92a9ba56910"
+  },
+  "sourceSha256": {
+    "protocol/game.proto": "bbed11e7c94484b0867ddb910233009a54165c1e1bd650930a2094187b20f847",
+    "backend/src/main/java/com/funsgamex/mxzg/reward/RewardFeedbackService.java": "86d810a5f12f61aaee803c17b16f136198eadd7afaabb60b76883ea8ecdd35ad",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterIdleClaimService.java": "236152d136aa33ae82f64f968c47d29b3067b7d4e8fc91e2de720d4b5990bf6e",
+    "client/assets/scripts/platform/GameProtocol.generated.ts": "7130cdaf74d1af995b099a93cd1aeba5c10e374b38085684c234c47d1969b60f",
+    "client/assets/scripts/platform/GameProtocolCodecUtils.ts": "dc7eb3e13dfb36a7a7147410b7f58b8edf3959c34fbe4177b6eac3ee9ba5d519",
+    "client/assets/scripts/app/remake/RemakeApp.ts": "7ddd8d885e1849d4db284984373c8305a292e2aad4dce0e0130f40c9e9af3da1",
+    "client/assets/scripts/app/remake/IdleClaimBinding.ts": "85025ca1ab37d028b3f246d85bce9fb1765769c186f969ff4aed5d785677d918",
+    "client/assets/scripts/features/battle/MainChapterIdleClaimController.ts": "d8958b5efcebf0c594b62abc3ec6e786244320c3150941850dfc51a3aa6e6ba6",
+    "client/assets/scripts/features/battle/data/MainChapterIdleClaimData.ts": "93d6a0fb4f413c674cb1bd798a0590012b66e435d8ed9a8575edb9b8fc82254c",
+    "client/assets/scripts/features/battle/ui/MainChapterView.ts": "307edb248570dbe8bcee7efcf83cdcfc9de05a9fa8eadbf2f602e4f055ba834f",
+    "client/assets/scripts/features/reward/data/RewardNoticeData.ts": "abc5bce87623151f94a9fb56d096cdaa8d50a0df467b01f8802a3ea406b7fffc"
+  },
+  "preview": "docs/validation/idle-collect-preview-20261116.json",
+  "legacy": "docs/validation/idle-collect-legacy-audit-20261116.json",
+  "limitations": [
+    "四档、零到账、资源未就绪和换身份只由专项证明，未逐档做真实发奖画面。",
+    "未集中构建、未运行MySQL/真机/OS后台/崩溃断电；未提交、推送或合并。",
+    "没有永久离线视觉收件箱；持久原请求清理后的纯视觉中断不承诺跨进程重播。"
+  ],
+  "peerReview": "只读复核未发现实质缺陷：提前通知、身份切换、零到账、关页、通用去重及可选编码边界。"
+}

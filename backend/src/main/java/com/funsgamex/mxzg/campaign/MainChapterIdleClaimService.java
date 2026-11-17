@@ -185,6 +185,7 @@ public class MainChapterIdleClaimService {
     /**
      * 锁内先查原回执，再对新意图计算和发奖；起点/计数/资产/回执任一保存失败均整笔回滚。
      * 相同请求异内容先于当前开关和权益拒绝；不同请求不能消费同一操作版本。
+     * 首次提交的通用反馈携带原请求关联，重复领取与状态查询不重复推送或更换回执身份。
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt claim(String token, String requestId, long expectedOperationVersion) {
@@ -244,7 +245,8 @@ public class MainChapterIdleClaimService {
         var audit = new AuditV1(STORAGE_VERSION, role, input.serverId(), REQUEST_FORMAT, "chapter.idle.claim",
                 fingerprint, receipt, before, after, calculation);
         save(audit);
-        feedback.publish(receipt.receiptId(), role, assetRevision, RewardFeedbackService.Mode.POPUP, actual);
+        feedback.publish(receipt.receiptId(), role, assetRevision, RewardFeedbackService.Mode.POPUP,
+                actual, receipt.requestId());
         return receipt;
     }
 
@@ -266,7 +268,7 @@ public class MainChapterIdleClaimService {
         return role;
     }
 
-    /** 当前仅接已恢复前三关；未通关不沿旧服务端旁路回落第一关，也不补建计时。 */
+    /** 读取已通关全局索引并核对主线目录；未通关不旁路回落第一关，也不补建计时或猜补挂机投影。 */
     private int rewardStage(String role) {
         var stages = jdbc.query("SELECT max_cleared FROM game_main_chapter WHERE role_id=?",
                 (row, index) -> row.getInt(1), role);

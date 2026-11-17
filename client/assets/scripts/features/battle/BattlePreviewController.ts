@@ -13,15 +13,15 @@ export class BattlePreviewController {
     private readonly model = new BattlePreviewModel();
     /** 同时只允许一次试战请求，避免连续点击重复计算。 */
     private busy = false;
-    /** 本次请求关卡，用于检查回包没有串关。 */
+    /** 本次请求的全局关卡idx，用于检查回包没有串关；不表示玩家挑战范围。 */
     private mission = 0;
     /** 本控制器拥有的协议登记，应用销毁时解除。 */
     private readonly unregister = ProtocolRouter.instance.register(this, [Protocol.BATTLE_PREVIEW]);
 
-    /** 请求当前已保存阵容；过期身份未交付时返回null，不打开旧角色画面。 */
+    /** 按正uint32全局关卡idx请求只读试战；服务端校验配置与依赖，不以此开放正式挑战。过期未交付返回null。 */
     public async preview(mission: number): Promise<BattlePreviewResult | null> {
         if (this.busy) throw new Error("试战正在准备，请稍候");
-        if (![1, 2, 3].includes(mission)) throw new Error("试战关卡无效");
+        if (!Number.isInteger(mission) || mission <= 0 || mission > 0xffffffff) throw new Error("试战关卡无效");
         this.busy = true;
         this.mission = mission;
         this.model.result = null;

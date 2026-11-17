@@ -1,4 +1,7 @@
-/** 开发验收入口：仅PREVIEW可用，只读战报与技能目录不装配登录或游戏连接；应用销毁统一撤销。 */
+/**
+ * 开发验收入口：仅PREVIEW可用，只读战报与技能目录不装配登录或游戏连接。
+ * 独立入口复用LoadingPlan启动表与唯一配置包，展示仍用原战场/统计；应用销毁统一撤销。
+ */
 import {Node} from "cc";
 import {BattlePreviewResult} from "../../features/battle/BattlePreviewModel";
 import {PREVIEW} from "cc/env";
@@ -13,6 +16,8 @@ import type { RewardNotice } from "../../features/reward/data/RewardNoticeData";
 import { GameProtocolCodecUtils } from "../../platform/GameProtocolCodecUtils";
 import { GameConfig } from "../../config/GameConfig";
 import { GConfig } from "../../config/GConfig";
+import { RemakeConfigUtils } from "../../config/RemakeConfigUtils";
+import { LOADING_PLAN } from "./LoadingPlan";
 
 import {assetManager} from "cc";
 import { GameLog } from "../../core/GameLog";
@@ -76,7 +81,7 @@ export class DevelopmentPreview {
         this.showReward = show;
     }
 
-    /** 注册开发入口；true表示已进入独立预览，正常会话装配必须停止。 */
+    /** 独立预览先安装同版配置，再注册只读展示；true表示正常会话装配必须停止。 */
     public async start(): Promise<boolean> {
         if (!PREVIEW) {
             return false;
@@ -85,6 +90,23 @@ export class DevelopmentPreview {
             window.addEventListener("keydown", this.diagnosticKey, true);
         }
         const query = typeof location !== "undefined" ? new URLSearchParams(location.search) : null;
+        if (this.pageHost && (query?.get("skillAudit") === "1" || query?.get("battleReplay") === "1")) {
+            if (!/^http:\/\/(localhost|127\.0\.0\.1):7456\//.test(location.href)) {
+                throw new Error("独立战报仅允许本机Creator预览");
+            }
+            // 独立入口不经过登录资源阶段，仍复用唯一计划和配置包，不恢复页面配置准备清单。
+            RemakeConfigUtils.initialize();
+            for (const target of LOADING_PLAN.login) {
+                if ("config" in target) {
+                    await GameConfig.instance.prepare([target.config]);
+                }
+            }
+            await RemakeConfigUtils.prepareGameConfig(() => {}, () => this.valid());
+            if (!this.valid()) {
+                return true;
+            }
+            this.unregister.push(UIManager.instance.setResidentHost("remake-modal", () => this.pageHost));
+        }
         if (this.pageHost) {
             this.unregister.push(UIManager.instance.setResidentHost("skill-audit-host", () => this.pageHost));
             if (query?.get("skillAudit") === "1") {
@@ -104,13 +126,25 @@ export class DevelopmentPreview {
             if (this.startupHost) {
                 this.startupHost.active = false;
             }
-            const requestedMission = query.get("mission");
-            const mission = requestedMission === "3" ? "3" : requestedMission === "2" ? "2" : "1";
+            const mission = query.get("mission") || "1";
+            if (!/^[1-9]\d*$/.test(mission) || !Number.isSafeInteger(Number(mission)) || Number(mission) > 0xffffffff) {
+                throw new Error("独立预览关卡必须是规范的正整数全局idx");
+            }
             const control = mission === "3" && query.get("control") === "1" ? "-control" : "";
             const fixtureType = query.get("fixture");
-            // 混合阵容验收只播放隔离环境导出的真实回包，关卡号沿上面的1至3校验。
+            // 全局idx只定位只读文件；不修改服务器challengeLimit或申请挑战/奖励。
             let fixture = "chapter-1-1-" + mission + control + "-replay.pb";
             switch (fixtureType) {
+                case "configured": {
+                    const source = GameConfig.instance.getFileByPath("config/chapterreward") as {
+                        rows?: Array<{ idx: number }>;
+                    };
+                    if (!source.rows?.some(row => row.idx === Number(mission))) {
+                        throw new Error("主线配置中不存在该全局关卡");
+                    }
+                    fixture = "chapter-config-stage-" + mission + ".pb";
+                    break;
+                }
                 case "mixed":
                     fixture = "lineup-mixed-" + mission + "-replay.pb";
                     break;
@@ -126,6 +160,12 @@ export class DevelopmentPreview {
                 case "control-teams":
                     fixture = "independent-control-teams-replay.pb";
                     break;
+                case "shield-survival":
+                    fixture = "shield-depleted-survival.pb";
+                    break;
+                case "shield-death":
+                    fixture = "shield-depleted-death.pb";
+                    break;
             }
             const response = await fetch(REPLAY_RESOURCE_ROOT + fixture);
             if (!response.ok) {
@@ -133,7 +173,8 @@ export class DevelopmentPreview {
             }
             this.replayCleanup = await BattleReplayPreview.open(this.pageHost, new Uint8Array(await response.arrayBuffer()),
                 query.get("chapterEnd") === "defeat",
-                undefined, undefined, fixtureType === "mixed" ? "独立混合阵容 · 第" + mission + "关" : undefined);
+                undefined, undefined, fixtureType === "configured" ? "配置关卡 · 第" + mission + "关（只读）"
+                    : fixtureType === "mixed" ? "独立混合阵容 · 第" + mission + "关" : undefined);
             if (!this.valid()) {
                 this.replayCleanup();
             }

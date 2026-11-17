@@ -272,7 +272,7 @@ class Fixture {
         this.chapter.configure((name, body, received, failed) => this.service.deliverAuthenticated(
             token => this.socket.chapter(token, name, body), received, failed), undefined, undefined,
         (received, failed) => this.service.deliverAuthenticated(token => this.socket.refreshSnapshot(token), received, failed));
-        this.chapter.configureRecoveryFeedback(receipt => {
+        this.chapter.configureSettlementFeedback(receipt => {
             this.rewardController.restore(this.notice(receipt.state.assetRevision));
             return "queued";
         }, () => this.rewardController.retry());

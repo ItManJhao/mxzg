@@ -1,6 +1,7 @@
 /**
  * 静态核对英雄初始星级、强化0的技能动作与帧资源，供主线接入前发现缺口。
  * 调用实际BattleAttackUtils覆盖与解析；只读配置，不连接服务器，不代表技能规则或画面验收。
+ * 默认将本次结果写入client/temp，不与历史快照硬比较；完整关卡的保留证据由主线依赖审计生成。
  */
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { strict as assert } from "node:assert";
@@ -14,8 +15,9 @@ function rows(name: string): any[] {
     return JSON.parse(readFileSync(`client/assets/bundles/resources/config/${name}.json`, "utf8")).rows;
 }
 
-/** 沿模板→技能→动作→表现检查；完整目录用于发现缺口，已验收反馈阵容必须持续通过。 */
+/** 沿模板→技能→动作→表现检查并保存当前结果；历史可解析模板及反馈阵容不能倒退，不覆盖历史证据。 */
 function main(): void {
+    assert.deepEqual(process.argv.slice(2), [], "本工具不接受覆盖历史报告的参数；保留批次请使用主线依赖审计的snapshot参数");
     const skills = rows("heroskill");
     const stars = rows("herostar");
     const upgrade = rows("heroupgrade").find(row => row.grade === 0);
@@ -66,19 +68,22 @@ function main(): void {
         ready: heroes.filter(hero => hero.gaps.length === 0).length,
         entries: heroes,
     };
-    const reportPath = "docs/validation/battle-presentation-coverage-20261109.json";
-    if (process.argv.includes("--write")) {
-        mkdirSync("docs/validation", { recursive: true });
-        writeFileSync(reportPath, JSON.stringify(result, null, 2) + "\n");
-    } else {
-        assert.deepEqual(JSON.parse(readFileSync(reportPath, "utf8")), result,
-            "表现覆盖报告已变化，请核对差异后用--write更新");
+    // 历史静态通过只作防倒退基线；新支持可以增加，本次仍逐模板实际重新解析和核对文件。
+    const baseline = JSON.parse(readFileSync("docs/validation/battle-presentation-coverage-20261109.json", "utf8")) as {
+        entries: Array<{ template: number; gaps: unknown[] }>;
+    };
+    for (const previous of baseline.entries.filter(entry => entry.gaps.length === 0)) {
+        const current = heroes.find(hero => hero.template === previous.template);
+        assert.ok(current, `历史可解析模板缺失 ${previous.template}`);
+        assert.deepEqual(current.gaps, [], `历史可解析模板出现表现回退 ${previous.template}`);
     }
     for (const id of [10101001, 10201001, 10301001]) {
         const hero = heroes.find(row => row.template === id);
         assert.ok(hero);
         assert.deepEqual(hero.gaps, [], `已验收英雄 ${id} 出现表现缺口`);
     }
+    mkdirSync("client/temp", { recursive: true });
+    writeFileSync("client/temp/battle-presentation-coverage-current.json", JSON.stringify(result, null, 2) + "\n");
     console.log(`初始表现静态检查：${result.ready}/${result.heroes} 模板可解析；反馈三英雄通过。`);
 }
 

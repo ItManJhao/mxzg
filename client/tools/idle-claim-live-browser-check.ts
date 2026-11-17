@@ -299,7 +299,11 @@ class LiveApplication {
         Verify.equal(await this.port.read(), original, "发包前原请求未持久化");
         if (!this.binding) {
             this.binding = new IdleClaimBinding(this.account, this.service, this.socket, this.journal, this.model,
-                notice => this.feedback.restore(notice));
+                confirmation => {
+                    if (confirmation.receipt.feedback) {
+                        this.feedback.restore(confirmation.receipt.feedback);
+                    }
+                });
         }
         this.binding.afterSnapshot(this.initialized.name);
         return original;

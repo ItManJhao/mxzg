@@ -1,4 +1,6 @@
-/** 强类型二进制契约回归：初始化/精灵实例推送、日志脱敏、错误载荷与无Node浏览器环境，可追加Java实际帧互通。 */
+/** 强类型二进制契约回归：初始化/精灵实例、主线实际奖励、日志脱敏、错误载荷与无Node浏览器环境。
+ * 可显式读取本轮Java真实帧互通；旧主线回执缺实际明细仍保留缺失，不借当前资产补数据。
+ */
 import {strict as assert} from "node:assert";
 import {createRequire} from "node:module";
 import {runInNewContext} from "node:vm";
@@ -61,6 +63,59 @@ function main(){
  if (process.argv.includes("--spirit-wire")) {
      checkSpiritWire();
  }
+ checkChapterRewardWire();
+}
+
+/** 主线追加的实际明细复用原协议类型；旧回执缺扩展保持缺失，历史钱包只用于核对不提交资产。 */
+function checkChapterRewardWire(): void {
+    const actual = {
+        roleId: "chapter-role",
+        items: [{ itemId: 900003, requested: 60, credited: 60, ignored: 0, reason: "NONE" }],
+        wallet: { goldBefore: 100, goldAfter: 100, diamondsBefore: 10, diamondsAfter: 20 },
+        stacks: [],
+        experience: [{ beforeLevel: 1, beforeExperience: 119, requested: 60, accepted: 60,
+            ignored: 0, level: 2, experience: 59, diamonds: 10 }],
+        tavern: [],
+        bonuses: [{ source: "ROLE_LEVEL_UP", itemId: 900002, quantity: 10 }],
+        timedItems: [],
+        spirits: { schemaVersion: 1, items: [] },
+    };
+    const receipt = { action: "SETTLED", battleId: "11223344-1122-4122-8122-112233441122",
+        state: { maxCleared: 1, assetRevision: 5 }, rewards: [{ itemId: 900003, quantity: 60 }],
+        experience: { beforeLevel: 1, beforeExp: 119, beforeThreshold: 120,
+            afterLevel: 2, afterExp: 59, afterThreshold: 360 }, actual };
+    const frame = { version: 1, kind: "response", name: Protocol.CHAPTER_CLAIM,
+        id: "chapter-reward", ok: true, body: receipt };
+    roundTrip(frame);
+    const { actual: _actual, ...legacy } = receipt;
+    roundTrip({ ...frame, body: legacy });
+    const { buildSync } = createRequire(process.cwd() + "/client/package.json")("esbuild");
+    const source = buildSync({ entryPoints: ["client/assets/scripts/platform/GameProtocolCodecUtils.ts"],
+        bundle: true, platform: "browser", format: "iife", globalName: "ChapterCodec", write: false,
+        target: "es2017" }).outputFiles[0].text;
+    const sandbox: any = {};
+    runInNewContext(source, sandbox);
+    const codec = sandbox.ChapterCodec.GameProtocolCodecUtils;
+    const restored = codec.decodeGameFrame(codec.encodeGameFrame(frame));
+    assert.equal(restored.body.actual.bonuses[0].quantity, 10);
+    assert.equal(restored.body.actual.experience[0].beforeExperience, 119);
+    assert.equal(restored.body.rewards.some((row: any) => row.itemId === 900002), false,
+        "升级赠钻不混进原首通基础奖励");
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...frame,
+        body: { ...receipt, actual: { ...actual, bonuses: [{ source: "ROLE_LEVEL_UP", itemId: 900002,
+            quantity: Number.MAX_SAFE_INTEGER + 1 }] } } }));
+    const wire = process.argv.find(value => value.startsWith("--chapter-reward-java="))?.slice(22);
+    if (wire) {
+        const javaFrame = GameProtocolCodecUtils.decodeGameFrame(readFileSync(wire));
+        const body = javaFrame.body as any;
+        assert.equal(javaFrame.name, Protocol.CHAPTER_CLAIM);
+        assert.equal(body.action, "SETTLED");
+        assert(body.actual.bonuses.some((row: any) => row.source === "ROLE_LEVEL_UP"
+            && row.itemId === 900002 && row.quantity > 0));
+        assert(!body.rewards.some((row: any) => row.itemId === 900002));
+        console.log("PASS Java/TS actual chapter reward frame");
+    }
+    console.log("PASS chapter actual rewards, separate level bonuses, legacy absence and browser codec");
 }
 
 /** 对照独立Java测试收到的实际WS二进制，核对事件/重连实例身份和属性均不变。 */

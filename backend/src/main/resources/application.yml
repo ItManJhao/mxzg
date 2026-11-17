@@ -17,5 +17,7 @@ server:
   port: ${MXZG_PORT:18080}
 mxzg:
   main-chapter:
+    # 完整关卡目录按配置装载；新挑战仅开放到此全局idx，扩范围需先核对依赖。
+    challenge-limit: ${MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT:3}
     # 仅独立测试显式开启；现有宝箱按钮仍关闭，历史成功回执不受开关影响。
     idle-claim-enabled: ${MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED:false}

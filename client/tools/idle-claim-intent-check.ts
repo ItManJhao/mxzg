@@ -15,7 +15,9 @@ import { BagController } from "../assets/scripts/features/bag/BagController";
 import { BagModel } from "../assets/scripts/features/bag/BagModel";
 import { MainChapterController } from "../assets/scripts/features/battle/MainChapterController";
 import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterModel";
-import type { IdleClaimJournalPort, IdleClaimPending } from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
+import type {
+    IdleClaimConfirmation, IdleClaimJournalPort, IdleClaimPending,
+} from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
 import { ConfirmView, type ConfirmArgs } from "../assets/scripts/features/common/ui/ConfirmView";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
@@ -409,6 +411,8 @@ class Application {
     public readonly binding: IdleClaimBinding;
     /** 实际双确认后的通用反馈，不能将历史钱包写回账号。 */
     public readonly feedbacks: RewardNotice[] = [];
+    /** 完整确认信号，核对现场引用只与真正创建的原请求绑定。 */
+    public readonly confirmations: IdleClaimConfirmation[] = [];
     /** 背包唯一模块只接受统一状态。 */
     private readonly bag = new BagController(new BagModel());
     /** 原主线Controller负责权威时钟及操作版本。 */
@@ -418,7 +422,12 @@ class Application {
 
     /** 显式启用只影响本案例新意图；显示时钟固定在已接纳快照，不靠真实等待通过65秒门槛。 */
     public constructor(options?: IdleClaimEntryOptions) {
-        const feedback = (notice: RewardNotice): void => { this.feedbacks.push(notice); };
+        const feedback = (confirmation: IdleClaimConfirmation): void => {
+            this.confirmations.push(confirmation);
+            if (confirmation.receipt.feedback) {
+                this.feedbacks.push(confirmation.receipt.feedback);
+            }
+        };
         this.binding = options === undefined
             ? new IdleClaimBinding(this.account, this.service, this.socket, this.journal, this.chapterModel, feedback)
             : new IdleClaimBinding(this.account, this.service, this.socket, this.journal, this.chapterModel, feedback,
@@ -514,7 +523,8 @@ async function checkDirectClaim(): Promise<void> {
     const app = new Application({ enabled: true });
     try {
         await app.login();
-        await app.binding.begin();
+        const context = Object.freeze({ source: "main-chapter-display" });
+        await app.binding.begin(context);
         assert.equal(app.windows.confirms.length, 0);
         assert.equal(app.journal.creates, 1);
         assert.equal(app.server.claims().length, 1);
@@ -523,6 +533,11 @@ async function checkDirectClaim(): Promise<void> {
         assert.equal(app.chapterModel.idleClaim.phase, "confirmed");
         assert.equal(app.account.snapshot.role!.gold, 60);
         assert.equal(app.feedbacks.length, 1);
+        assert.equal(app.confirmations.length, 1);
+        assert.equal(app.confirmations[0].presentationContext, context);
+        assert.equal(app.confirmations[0].receipt.seconds, 60);
+        assert.equal(app.confirmations[0].receipt.maxSeconds, 43200);
+        assert.equal(app.confirmations[0].receipt.feedback, app.feedbacks[0]);
         assert.deepEqual(app.server.requests.map(frame => frame.name),
             [Protocol.SESSION_LOGIN, Protocol.CHAPTER_IDLE_CLAIM_STATUS, Protocol.CHAPTER_IDLE_CLAIM]);
     } finally {
@@ -735,13 +750,16 @@ async function checkPendingRecovery(): Promise<void> {
         assert.equal(app.chapterModel.idleClaim.phase, "paused");
         app.assertNoIntent();
         app.server.pushOperation(1, "ENABLED");
-        await app.binding.begin();
+        await app.binding.begin(Object.freeze({ source: "later-click" }));
         assert.equal(app.windows.confirms.length, 0);
         assert.equal(app.journal.creates, 0);
         assert.equal(app.server.claims().length, 1);
         assert.equal((app.server.claims()[0].body as any).requestId, originalPending.requestId);
         assert.equal(app.journal.clears, 1);
         assert.equal(app.chapterModel.idleClaim.phase, "confirmed");
+        assert.equal(app.confirmations.length, 1);
+        assert.equal(app.confirmations[0].presentationContext, null,
+            "恢复已有持久原请求不能借用新点击的现场引用");
     } finally {
         app.dispose();
     }

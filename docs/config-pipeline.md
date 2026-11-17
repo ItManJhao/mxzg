@@ -11,11 +11,21 @@
 3. [client-schema.json](../config/client-schema.json)维护明确字段、主键、必需性与结构规范。
 4. python tools/generate_config.py生成GConfig.ts；--check只核验，不写入。
 
-截至2026-11-14，client-schema.json定义20张类型化表；assets/bundles/resources/config保留49份共享JSON，Maven直接共享32表，三项统计范围不同。保留配置不表示对应玩法开放：普通升级、精灵养成和穿脱仍关，HeroLevel等投影继续供后续恢复。此前已恢复13张真实后端依赖及原UUID；导出器从POM读取既有include，不另维护表清单，检查拒绝旧target缓存掩盖缺源。新增类型先声明规范，再接实际查询；数组声明items，对象声明fields，空对象禁止额外字段。原JSON数组文本仍为string，注释来自表头，派生字段在规范维护，生成顺序稳定且不写本机绝对路径。
+类型化表、客户端共享JSON和Maven共享表是不同范围；数量以本次生成器和配置包manifest输出为准，不再将历史数字当作当前清单。保留配置不表示对应玩法开放：普通升级、精灵养成和穿脱仍关，HeroLevel等投影继续供后续恢复。此前已恢复13张真实后端依赖及原UUID；导出器从POM读取既有include，不另维护表清单，检查拒绝旧target缓存掩盖缺源。新增类型先声明规范，再接实际查询；数组声明items，对象声明fields，空对象禁止额外字段。原JSON数组文本仍为string，注释来自表头，派生字段在规范维护，生成顺序稳定且不写本机绝对路径。
+
+### 角色升级的旧客户端预告投影
+
+负责人2026-11-16确认：升级页下一功能提示按旧客户端Lua；当前XLSX门槛与它有差异，不能直接替代。原样输入保存在[opencondition.lua](../config/legacy-client/opencondition.lua)，来源、SHA及覆盖规则由相邻source.json记录。正常`tools/export_gameconfig.py`会自动调用`export_role_upgrade_features.py`的投影能力，按旧重复键最后覆盖、JumpManager父系统集合及type/open规则生成roleupgradefeature.json，随后沿原流程生成配置包。修改输入后仍使用正常导出和`generate_config.py`，不手改生成JSON/GConfig/bin，也不手写34项候选。
+
+此投影只供RoleUpgradeUtils/RoleUpgradeView读取历史afterLevel的下一提示。OpenCondition仍服务当前导航/实际门槛，本批没有改它；预告没有跳转或开放行为。相同等级的旧pairs/sort未定义次序，新版保持源定义顺序，不能解释成新增idx业务优先级。统一检查已接`role-upgrade-config`和`role-upgrade-config-rules`；包集合专项从真实目录与LoadingPlan推导，不再硬编码包内表数。
+
+### 主线里程碑只读配置
+
+`GConfig.ChapterExtraReward`直接来自现有chapterextrareward.xlsx，保留六项七字段；旧Lua逐字段一致，包含奖励JSON文本列但本批只读取目标/文案，不能据此发奖。原meta从历史恢复并保留UUID，正常导出、类型生成和原配置包统一承载，不加页面准备或第二份候选表。下一目标还必须有服务端milestoneProgress已领集合，不能仅靠配置/通关数算作未领；缺失/已达成未领/全领分别由ChapterMilestoneUtils处理，见[旧审计](validation/chapter-milestone-legacy-audit-20261116.json)。
 
 ### 客户端压缩包与源表保留
 
-tools/generate_config_package.cjs从LoadingPlan.login现有`{config:GConfig.X}`自动推导启动表，当前为2份；其余47份共享JSON生成config Bundle内的`game-config.bin`，以ZIP字节交给Creator的BufferAsset导入器。源JSON及各自meta继续供Excel导出核对和Maven读取，不能删除，也不能以包内文件反向替换策划源；启动表不重复放入ZIP。不维护另一份启动表、模块分组或47表人工清单。
+tools/generate_config_package.cjs从LoadingPlan.login现有`{config:GConfig.X}`自动推导启动表，当前为2份；其余共享JSON生成config Bundle内的`game-config.bin`，以ZIP字节交给Creator的BufferAsset导入器。源JSON及各自meta继续供Excel导出核对和Maven读取，不能删除，也不能以包内文件反向替换策划源；启动表不重复放入ZIP。不维护另一份启动表、模块分组或包内表人工清单。
 
 登录后配置正文只请求这一份bin，随后在内存中解压、解析47份表并建立索引。此前画面的“整理游戏数据9/47”“准备游戏数据20/47”是包内任务完成数，不是下载47个文件；现在玩家文案统一为“加载游戏数据”“整理游戏数据”“准备游戏数据”，进度条仍由实际任务完成量推进，不用计时模拟，也不冒充下载字节进度。Bundle元数据、启动脚本及BufferAsset元数据的请求与配置正文分开统计。
 

@@ -206,6 +206,17 @@ def export_current(src: Path, out: Path) -> int:
     gates = build_system_gate(loose_rows(src / "system.xlsx", system["sheet"]))
     for name in targets:
         stem = name.split("/")[-1]
+        if name == "roleupgradefeature":
+            # 负责人选定旧Lua只作升级预告；不能用同名XLSX或改变OpenCondition导航门槛。
+            from export_role_upgrade_features import SOURCE_METADATA, build_projection
+
+            payload, metadata = build_projection()
+            target = out / (name + ".json")
+            write_json(target, payload)
+            ensure_meta(Path(str(target) + ".meta"))
+            if out.resolve() == DEFAULT_OUT.resolve():
+                write_json(SOURCE_METADATA, metadata)
+            continue
         if name == "spirit-display":
             # 该表由真实精灵随机/显示闭包派生，不存在同名XLSX；与专项导出共用唯一算法。
             from export_spirit_rules import build_display, build_projection

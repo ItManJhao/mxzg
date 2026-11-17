@@ -4,12 +4,18 @@
  */
 package com.funsgamex.mxzg;
 
+import com.funsgamex.mxzg.network.GameProtocolCodec;
+import com.funsgamex.mxzg.protocol.GameProtocol;
 import com.funsgamex.mxzg.reward.RewardFeedbackService;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.role.RoleRules;
 import com.funsgamex.mxzg.spirit.SpiritInventoryService;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.AfterEach;
@@ -110,19 +116,127 @@ class RewardFeedbackServiceTest {
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM committed_marker", Integer.class));
         assertEquals(List.of(new RewardFeedbackService.Notice(1, receipt, "role-a", 7,
                 RewardFeedbackService.Mode.POPUP, List.of(new RewardFeedbackService.Item(900001, 14),
-                new RewardFeedbackService.Item(900002, 5)))), notifications);
+                new RewardFeedbackService.Item(900002, 5)), null, null)), notifications);
         assertThrows(UnsupportedOperationException.class,
                 () -> notifications.getFirst().items().add(new RewardFeedbackService.Item(1, 1)));
     }
 
-    /** TIPS复用同一提交出口，保留原回执身份和模式，不重新执行发放。 */
+    /** TIPS复用同一提交出口，原五参调用不额外携带请求关联，不重新执行发放。 */
     @Test
-    void tipsUsesTheSameCommittedNotice() {
+    void tipsUsesTheSameCommittedNotice() throws Exception {
         String receipt = UUID.randomUUID().toString();
         transaction.executeWithoutResult(status -> feedback.publish(receipt, "role-a", 1,
                 RewardFeedbackService.Mode.TIPS, gold("role-a")));
         assertEquals(receipt, notifications.getFirst().receiptId());
         assertEquals(RewardFeedbackService.Mode.TIPS, notifications.getFirst().mode());
+        assertNull(notifications.getFirst().requestId());
+        var wire = GameProtocolCodec.encode(Map.of("version", 1, "kind", "event", "name", "reward.granted",
+                "body", notifications.getFirst()));
+        assertFalse(GameProtocol.Frame.parseFrom(wire).getRewardNotice().hasRequestId());
+        assertFalse(GameProtocolCodec.decode(wire).path("body").has("requestId"));
+    }
+
+    /** 连续经验链只提取首尾升级，不以钻石量或当前角色状态推算；实时PB保留同一升级摘要。 */
+    @Test
+    void visibleModesKeepTheOriginalContinuousUpgradeAndWireFields() throws Exception {
+        for (var mode : List.of(RewardFeedbackService.Mode.POPUP, RewardFeedbackService.Mode.TIPS)) {
+            var actual = withExperience(gold("role-a"), List.of(
+                    new RoleRules.ExperienceGain(1, 5, 20, 20, 0, 2, 3, 0),
+                    new RoleRules.ExperienceGain(2, 3, 10, 10, 0, 4, 1, 0)));
+            String receipt = UUID.randomUUID().toString();
+            transaction.executeWithoutResult(status -> feedback.publish(receipt, "role-a", 7, mode, actual));
+            var notice = notifications.getLast();
+            assertEquals(new RewardFeedbackService.RoleUpgrade(1, 4), notice.roleUpgrade());
+            var wire = GameProtocolCodec.encode(Map.of("version", 1, "kind", "event", "name", "reward.granted",
+                    "body", notice));
+            var typed = GameProtocol.Frame.parseFrom(wire).getRewardNotice();
+            assertTrue(typed.hasRoleUpgrade());
+            assertEquals(1, typed.getRoleUpgrade().getBeforeLevel());
+            assertEquals(4, typed.getRoleUpgrade().getAfterLevel());
+            var decoded = GameProtocolCodec.decode(wire).path("body").path("roleUpgrade");
+            assertEquals(1, decoded.path("beforeLevel").asInt());
+            assertEquals(4, decoded.path("afterLevel").asInt());
+        }
+        assertEquals(2, notifications.size());
+    }
+
+    /** 零正奖励但真实升级仍可显示；无升级或静默不能制造空窗，也不为了显示补发钻石。 */
+    @Test
+    void upgradeWithoutPositiveItemsIsVisibleButSilentStillDoesNotEmit() throws Exception {
+        var empty = actual("role-a", List.of(), List.of());
+        var upgrade = withExperience(empty, List.of(new RoleRules.ExperienceGain(1, 9, 1, 1, 0, 2, 0, 0)));
+        transaction.executeWithoutResult(status -> {
+            feedback.publish(UUID.randomUUID().toString(), "role-a", 1, RewardFeedbackService.Mode.POPUP, upgrade);
+            feedback.publish(UUID.randomUUID().toString(), "role-a", 1, RewardFeedbackService.Mode.TIPS, upgrade);
+            feedback.publish(UUID.randomUUID().toString(), "role-a", 1, RewardFeedbackService.Mode.SILENT, upgrade);
+            feedback.publish(UUID.randomUUID().toString(), "role-a", 1, RewardFeedbackService.Mode.POPUP,
+                    withExperience(empty, List.of(new RoleRules.ExperienceGain(2, 3, 4, 4, 0, 2, 7, 0))));
+            feedback.publish(UUID.randomUUID().toString(), "role-a", 1, RewardFeedbackService.Mode.POPUP,
+                    withExperience(empty, List.of(new RoleRules.ExperienceGain(100, 0, 4, 0, 4, 100, 0, 0))));
+        });
+        assertEquals(2, notifications.size());
+        assertTrue(notifications.stream().allMatch(notice -> notice.items().isEmpty()
+                && notice.roleUpgrade().equals(new RewardFeedbackService.RoleUpgrade(1, 2))));
+        var wire = GameProtocolCodec.encode(Map.of("version", 1, "kind", "event", "name", "reward.granted",
+                "body", notifications.getFirst()));
+        var typed = GameProtocol.Frame.parseFrom(wire).getRewardNotice();
+        assertEquals(0, typed.getItemsCount());
+        assertTrue(typed.hasRoleUpgrade());
+        assertEquals(2, typed.getRoleUpgrade().getAfterLevel());
+        Files.write(Path.of("target/reward-notice-upgrade-empty.pb"), wire);
+    }
+
+    /** 同回执的升级来源也是冻结内容；只有升级范围改变也必须拒绝并回滚，而非叠加第二个窗口。 */
+    @Test
+    void conflictingUpgradeRollsBackEvenWhenRewardItemsMatch() {
+        String receipt = UUID.randomUUID().toString();
+        var first = withExperience(gold("role-a"), List.of(new RoleRules.ExperienceGain(1, 0, 1, 1, 0, 2, 0, 0)));
+        var different = withExperience(gold("role-a"), List.of(new RoleRules.ExperienceGain(1, 0, 1, 1, 0, 3, 0, 0)));
+        assertThrows(IllegalStateException.class, () -> transaction.executeWithoutResult(status -> {
+            jdbc.update("INSERT INTO committed_marker VALUES ('upgrade-conflict')");
+            feedback.publish(receipt, "role-a", 1, RewardFeedbackService.Mode.POPUP, first);
+            feedback.publish(receipt, "role-a", 1, RewardFeedbackService.Mode.POPUP, different);
+        }));
+        assertTrue(notifications.isEmpty());
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM committed_marker", Integer.class));
+    }
+
+    /** 非法数值、倒退等级和拼接不连续均拒绝整笔事务，不从破损历史记录猜测一次升级。 */
+    @Test
+    void malformedExperienceChainsAreRejected() {
+        var valid = new RoleRules.ExperienceGain(1, 5, 20, 20, 0, 2, 3, 0);
+        var invalidRows = List.of(
+                new RoleRules.ExperienceGain(0, 5, 20, 20, 0, 2, 3, 0),
+                new RoleRules.ExperienceGain(2, 5, 20, 20, 0, 1, 3, 0),
+                new RoleRules.ExperienceGain(1, -1, 20, 20, 0, 2, 3, 0),
+                new RoleRules.ExperienceGain(1, MAX_SAFE_INTEGER + 1, 20, 20, 0, 2, 3, 0),
+                new RoleRules.ExperienceGain(1, 5, 0, 0, 0, 2, 3, 0),
+                new RoleRules.ExperienceGain(1, 5, 20, -1, 21, 2, 3, 0),
+                new RoleRules.ExperienceGain(1, 5, 20, 20, -1, 2, 3, 0),
+                new RoleRules.ExperienceGain(1, 5, 20, 19, 0, 2, 3, 0),
+                new RoleRules.ExperienceGain(1, 5, 20, 0, 20, 2, 3, 0),
+                new RoleRules.ExperienceGain(1, 5, 20, 20, 0, 1, 25, 1),
+                new RoleRules.ExperienceGain(1, 5, 20, 20, 0, 2, -1, 0),
+                new RoleRules.ExperienceGain(1, 5, 20, 20, 0, 2, 3, -1));
+        var invalidChains = new ArrayList<List<RoleRules.ExperienceGain>>();
+        invalidRows.forEach(row -> invalidChains.add(List.of(row)));
+        invalidChains.add(List.of(valid, new RoleRules.ExperienceGain(3, 3, 10, 10, 0, 4, 1, 0)));
+        invalidChains.add(List.of(valid, new RoleRules.ExperienceGain(2, 4, 10, 10, 0, 4, 1, 0)));
+        for (var chain : invalidChains) {
+            assertThrows(IllegalArgumentException.class, () -> transaction.executeWithoutResult(status -> {
+                jdbc.update("INSERT INTO committed_marker VALUES ('invalid-upgrade')");
+                feedback.publish(UUID.randomUUID().toString(), "role-a", 1, RewardFeedbackService.Mode.POPUP,
+                        withExperience(gold("role-a"), chain));
+            }));
+            assertTrue(notifications.isEmpty());
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM committed_marker", Integer.class));
+        }
+    }
+
+    /** 保留同一真实结果中的奖励及领域归属，仅替换本用例需要验证的冻结经验链。 */
+    private RewardGrantResult withExperience(RewardGrantResult actual, List<RoleRules.ExperienceGain> gains) {
+        return new RewardGrantResult(actual.roleId(), actual.items(), actual.wallet(), actual.stacks(), gains,
+                actual.tavern(), actual.bonuses(), actual.timedItems(), actual.spirits());
     }
 
     /** 静默和全部零实际到账只影响反馈，不产生空奖励窗或虚假实际量。 */
@@ -139,15 +253,58 @@ class RewardFeedbackServiceTest {
         assertTrue(notifications.isEmpty());
     }
 
-    /** 完全相同的同事务登记只发送一次，不维护跨事务的第二份持久幂等表。 */
+    /** 相同原请求的同事务登记只发送一次，协议保留关联但仍使用持久回执作为展示身份。 */
     @Test
-    void identicalReceiptInOneTransactionIsDeliveredOnce() {
+    void identicalReceiptInOneTransactionIsDeliveredOnce() throws Exception {
         String receipt = UUID.randomUUID().toString();
+        String requestId = UUID.randomUUID().toString();
         transaction.executeWithoutResult(status -> {
-            feedback.publish(receipt, "role-a", 1, RewardFeedbackService.Mode.POPUP, gold("role-a"));
-            feedback.publish(receipt, "role-a", 1, RewardFeedbackService.Mode.POPUP, gold("role-a"));
+            feedback.publish(receipt, "role-a", 1, RewardFeedbackService.Mode.POPUP, gold("role-a"), requestId);
+            feedback.publish(receipt, "role-a", 1, RewardFeedbackService.Mode.POPUP, gold("role-a"), requestId);
         });
         assertEquals(1, notifications.size());
+        assertEquals(requestId, notifications.getFirst().requestId());
+        assertEquals(receipt, notifications.getFirst().receiptId());
+        var wire = GameProtocolCodec.encode(Map.of("version", 1, "kind", "event", "name", "reward.granted",
+                "body", notifications.getFirst()));
+        var typed = GameProtocol.Frame.parseFrom(wire).getRewardNotice();
+        assertTrue(typed.hasRequestId());
+        assertEquals(requestId, typed.getRequestId());
+        assertEquals(receipt, typed.getReceiptId());
+        assertEquals(requestId, GameProtocolCodec.decode(wire).path("body").path("requestId").asString());
+    }
+
+    /** 请求关联属于同一回执内容；更换请求或删去关联不能绕开同事务冲突保护。 */
+    @Test
+    void conflictingRequestCorrelationRollsBackTheOriginalBusinessTransaction() {
+        String receipt = UUID.randomUUID().toString();
+        String requestId = UUID.randomUUID().toString();
+        for (String conflictingRequest : new String[] { UUID.randomUUID().toString(), null }) {
+            assertThrows(IllegalStateException.class, () -> transaction.executeWithoutResult(status -> {
+                jdbc.update("INSERT INTO committed_marker VALUES ('request-conflict')");
+                feedback.publish(receipt, "role-a", 1, RewardFeedbackService.Mode.POPUP, gold("role-a"), requestId);
+                feedback.publish(receipt, "role-a", 1, RewardFeedbackService.Mode.POPUP,
+                        gold("role-a"), conflictingRequest);
+            }));
+            assertTrue(notifications.isEmpty());
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM committed_marker", Integer.class));
+        }
+    }
+
+    /** 非空请求关联必须是标准小写UUID；校验失败回滚原业务且不遗留下一事务可见的反馈。 */
+    @Test
+    void invalidRequestCorrelationRollsBackBusinessAndDiscardsNotices() {
+        for (String invalid : List.of("", " ", "not-a-request", "12345678-1234-1234-1234-123456789ABC")) {
+            assertThrows(IllegalArgumentException.class, () -> transaction.executeWithoutResult(status -> {
+                jdbc.update("INSERT INTO committed_marker VALUES ('invalid-request')");
+                feedback.publish(UUID.randomUUID().toString(), "role-a", 1,
+                        RewardFeedbackService.Mode.POPUP, gold("role-a"));
+                feedback.publish(UUID.randomUUID().toString(), "role-a", 1,
+                        RewardFeedbackService.Mode.POPUP, gold("role-a"), invalid);
+            }));
+            assertTrue(notifications.isEmpty());
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM committed_marker", Integer.class));
+        }
     }
 
     /** 同一持久回执发生不同内容属于不变量损坏，必须回滚而不是选择其中一版展示。 */
@@ -177,20 +334,25 @@ class RewardFeedbackServiceTest {
         assertEquals(1, notifications.size());
     }
 
-    /** 新事务独立提交、恢复外层去重，外层回滚也不能撤销已经提交的内层反馈。 */
+    /** 新事务独立保留请求关联并自行去重；外层恢复后继续去重，回滚不撤销内层已提交反馈。 */
     @Test
     void independentTransactionHasItsOwnBatchAndOuterRollbackDoesNotEraseIt() {
         String outer = UUID.randomUUID().toString();
         String inner = UUID.randomUUID().toString();
+        String outerRequest = UUID.randomUUID().toString();
+        String innerRequest = UUID.randomUUID().toString();
         transaction.executeWithoutResult(status -> {
-            feedback.publish(outer, "role-a", 1, RewardFeedbackService.Mode.POPUP, gold("role-a"));
-            requiresNew.executeWithoutResult(innerStatus -> feedback.publish(inner, "role-b", 1,
-                    RewardFeedbackService.Mode.TIPS, gold("role-b")));
+            feedback.publish(outer, "role-a", 1, RewardFeedbackService.Mode.POPUP, gold("role-a"), outerRequest);
+            requiresNew.executeWithoutResult(innerStatus -> {
+                feedback.publish(inner, "role-b", 1, RewardFeedbackService.Mode.TIPS, gold("role-b"), innerRequest);
+                feedback.publish(inner, "role-b", 1, RewardFeedbackService.Mode.TIPS, gold("role-b"), innerRequest);
+            });
             assertEquals(List.of(inner), notifications.stream().map(RewardFeedbackService.Notice::receiptId).toList());
-            feedback.publish(outer, "role-a", 1, RewardFeedbackService.Mode.POPUP, gold("role-a"));
+            feedback.publish(outer, "role-a", 1, RewardFeedbackService.Mode.POPUP, gold("role-a"), outerRequest);
             status.setRollbackOnly();
         });
         assertEquals(List.of(inner), notifications.stream().map(RewardFeedbackService.Notice::receiptId).toList());
+        assertEquals(innerRequest, notifications.getFirst().requestId());
     }
 
     /** 内层回滚后外层登记恢复且仍去重，不能清空外层或错误交付内层。 */

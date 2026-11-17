@@ -73,7 +73,7 @@ async function main() {
         ctrl.dispose();
         for (const corrupt of [
             data => data.mission = 4,
-            data => data.replay.units.find(unit => unit.faction === 2).templateId = 999,
+            data => data.replay.units.find(unit => unit.faction === 2).templateId = 0,
             data => data.replay.units.find(unit => unit.faction === 1).unitId = 99,
             data => data.replay.units[0].finalHp += 1,
             data => data.pending = null,
@@ -82,6 +82,15 @@ async function main() {
             const broken = JSON.parse(JSON.stringify(frame));corrupt(broken.body);
             const reject = new BattlePreviewController(async (_,received) => received(broken));
             await assert.rejects(reject.preview(mission));reject.dispose();
+        }
+        // 通用战报的敌方模板由服务端冻结，不再复制前三关NPC白名单；结构身份仍须合法。
+        const alternative = JSON.parse(JSON.stringify(frame));
+        alternative.body.replay.units.find(unit => unit.faction === 2).templateId = 10104004;
+        const configured = new BattlePreviewController(async (_, received) => received(alternative));
+        try {
+            assert.ok((await configured.preview(mission)).bytes.length);
+        } finally {
+            configured.dispose();
         }
     }
     const charm = GameProtocolCodecUtils.decodeGameFrame(fs.readFileSync(path.join(root, "backend/target/lineup-preview-charm.pb")));

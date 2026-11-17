@@ -1,6 +1,6 @@
 /**
- * 原主线前三关持久闭环：鉴权挑战、不可变Protobuf战报、通关待领奖和事务幂等结算。
- * 供主线WebSocket协议调用，登录快照统一恢复进度，不调用旧简化CampaignBattle。
+ * 配置化主线持久闭环：鉴权挑战、不可变Protobuf战报、通关待领奖和事务幂等结算。
+ * 供主线WebSocket协议调用，登录快照统一恢复通关及里程碑已领集合，不调用旧简化CampaignBattle。
  */
 package com.funsgamex.mxzg.campaign;
 
@@ -13,6 +13,7 @@ import com.funsgamex.mxzg.hero.*;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.protocol.GameProtocol;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.reward.RewardGrantResult;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -23,6 +24,8 @@ import tools.jackson.databind.ObjectMapper;
 public class MainChapterService {
     /** 持久记录版本，未来格式改变须显式兼容，不能重算旧战报。 */
     private static final int STORAGE_VERSION = 1;
+    /** 回执中交付给客户端的整数必须精确可表达，超限在发奖事务提交前拒绝。 */
+    private static final long MAX_SAFE_INTEGER = 9_007_199_254_740_991L;
     /** 鉴权角色，锁内再次确认会话未撤销。 */
     private final SessionService sessions;
     /** 角色锁、等级与资产版本。 */
@@ -44,20 +47,57 @@ public class MainChapterService {
     /** 仅序列化数据库元信息；战报本身为Protobuf二进制。 */
     private final ObjectMapper mapper;
 
-    /** 当前已通关、待领奖战报及最新资产版本；没有记录时返回0/空。 */
-    public record State(int maxCleared, String pendingBattleId, long assetRevision) {}
+    /**
+     * 当前主线状态与同角色锁内读取的真实里程碑集合，不由通关数推断已领。
+     * @param maxCleared 当前已通关关卡，没有主线记录时为0。
+     * @param pendingBattleId 尚待首通结算的战报；为空不代表里程碑已领取。
+     * @param assetRevision 最新统一资产版本，历史回执中的值不能覆盖当前版本。
+     * @param milestoneProgress 真实已领集合；旧历史回执缺字段时保留null，不补造空集。
+     * @param challengeLimit 当前服务端新挑战上限；旧回执未记录时为null，不限制历史恢复。
+     */
+    public record State(int maxCleared, String pendingBattleId, long assetRevision,
+                        MilestoneProgress milestoneProgress, Integer challengeLimit) {
+        /** 旧手工历史状态保留缺失，不从当前配置补造当时的开放范围。 */
+        public State(int maxCleared, String pendingBattleId, long assetRevision, MilestoneProgress milestoneProgress) {
+            this(maxCleared, pendingBattleId, assetRevision, milestoneProgress, null);
+        }
+
+        /** 当前范围必须为正数；已有通关可高于新范围，不因此抹除历史进度。 */
+        public State {
+            if (challengeLimit != null && challengeLimit < 1) {
+                throw new IllegalArgumentException("主线新挑战范围无效");
+            }
+        }
+    }
+
+    /**
+     * 原额外奖励配置idx的冻结已领集合；旧领取允许乱序，不能压缩为最大已领ID。
+     * @param schemaVersion 当前格式固定为1；未知历史格式拒绝，不按空集解释。
+     * @param claimedIds 角色锁内读取的真实正配置ID；空集合表示该领域已同步且尚无领取记录。
+     */
+    public record MilestoneProgress(int schemaVersion, List<Integer> claimedIds) {
+        /** 冻结明确集合并拒绝坏ID/重复项，旧State缺字段不经过此构造而保持null。 */
+        public MilestoneProgress {
+            if (schemaVersion != 1 || claimedIds == null
+                    || claimedIds.stream().anyMatch(id -> id == null || id <= 0)
+                    || claimedIds.stream().distinct().count() != claimedIds.size()) {
+                throw new IllegalArgumentException("主线里程碑已领集合格式或配置ID无效");
+            }
+            claimedIds = List.copyOf(claimedIds);
+        }
+    }
     /** 挑战返回战报，或沿旧规则只补领奖，不在同一次请求继续打下一关。 */
     public enum Action { BATTLE, SETTLED }
-    /** 可重复交付的历史操作回执；state是操作完成当时状态，最新状态通过current读取。 */
+    /** 可重复交付的历史回执；actual冻结真实基础/附赠，只供展示，缺失的旧结果不重算或补发。 */
     public record Receipt(Action action, String battleId, State state, List<MainChapterRules.Reward> rewards,
-                          Experience experience) {
+                          Experience experience, RewardGrantResult actual) {
         /** 结果冻结，重复请求不重算奖励。 */
         public Receipt { rewards = List.copyOf(rewards); }
     }
     /** 发奖事务前后经验快照，历史回执允许缺失；只能用于动画，不作为当前角色余额。 */
     public record Experience(int beforeLevel, long beforeExp, long beforeThreshold,
                              int afterLevel, long afterExp, long afterThreshold) {}
-    /** 可恢复的战报元信息；rewardPlan和pending随生成时快照冻结。 */
+    /** 可恢复的战报元信息；历史字段mission保存全局关卡idx，rewardPlan和pending随生成时冻结。 */
     public record Details(int schemaVersion, int mission, long inputRevision, long lineupVersion,
                           int formationId, int power, List<String> pending, MainChapterRewardService.Plan rewardPlan) {
         /** 保留缺口，不把未恢复属性隐藏为完整数据。 */
@@ -100,7 +140,7 @@ public class MainChapterService {
         requireId(requestId);
         String role = authorizedRole(token);
         var previous = jdbc.query("SELECT result_json FROM game_main_chapter_command WHERE role_id=? AND request_id=?",
-            (row, index) -> mapper.readValue(row.getString(1), Receipt.class), role, requestId);
+            (row, index) -> readReceipt(row.getString(1), role, null), role, requestId);
         if (!previous.isEmpty()) {
             return previous.getFirst();
         }
@@ -120,23 +160,23 @@ public class MainChapterService {
             var power = powers.current(token);
             var roleData = roles.findById(role).orElseThrow();
             var decision = rules.decide(new MainChapterRules.Progress(before.maxCleared(), false), roleData.level(), power.total());
-            int mission = decision.stage().mission();
-            var preview = battles.preview(token, mission, probability -> ThreadLocalRandom.current().nextDouble() < probability);
+            int stageIndex = decision.stage().index();
+            var preview = battles.preview(token, stageIndex, probability -> ThreadLocalRandom.current().nextDouble() < probability);
             if (preview.assetRevision() != power.assetRevision() || preview.lineupVersion() != power.lineupVersion()) {
                 throw new IllegalStateException("主线输入版本在同一角色锁内发生变化");
             }
             var replay = HeroBattleReplayProtocolUtils.encode(preview.battle()).toBuilder()
                 .setAttackerName(roleData.nickname())
                 .setDefenderName(rules.opponentName(decision.stage().index()))
-                .setScenario("chapter:lineup:" + mission).build();
+                .setScenario("chapter:lineup:" + stageIndex).build();
             boolean won = preview.battle().outcome() == HeroBattleRoundUtils.Outcome.ATTACKER_WIN;
-            var after = rules.complete(new MainChapterRules.Progress(before.maxCleared(), false), mission, won);
+            var after = rules.complete(new MainChapterRules.Progress(before.maxCleared(), false), stageIndex, won);
             var pending = new LinkedHashSet<>(preview.pending());
             pending.addAll(power.pending());
             pending.add("random_probability_pending_review");
-            var details = new Details(STORAGE_VERSION, mission, preview.assetRevision(), preview.lineupVersion(),
+            var details = new Details(STORAGE_VERSION, stageIndex, preview.assetRevision(), preview.lineupVersion(),
                 preview.formationId(), power.total(), List.copyOf(pending),
-                rewards.plan(new MainChapterRules.Progress(mission, won)));
+                rewards.plan(new MainChapterRules.Progress(stageIndex, won)));
             String id = UUID.randomUUID().toString();
             byte[] bytes = replay.toByteArray();
             String metadata = mapper.writeValueAsString(details);
@@ -149,7 +189,7 @@ public class MainChapterService {
                 }
                 sync.changed(role);
             }
-            receipt = new Receipt(Action.BATTLE, id, state(role), List.of(), null);
+            receipt = new Receipt(Action.BATTLE, id, state(role), List.of(), null, null);
         }
         jdbc.update("INSERT INTO game_main_chapter_command(role_id,request_id,result_json) VALUES (?,?,?)",
             role, requestId, mapper.writeValueAsString(receipt));
@@ -176,17 +216,19 @@ public class MainChapterService {
         var settled = jdbc.query("SELECT settlement_json FROM game_main_chapter_battle WHERE id=? AND role_id=?",
             (row, index) -> row.getString(1), battleId, role).getFirst();
         if (settled != null) {
-            return mapper.readValue(settled, Receipt.class);
+            return readReceipt(settled, role, battleId);
         }
         var before = state(role);
         if (!battle.replay().getOutcome().equals("ATTACKER_WIN")) {
-            return new Receipt(Action.SETTLED, battleId, before, List.of(), null);
+            return new Receipt(Action.SETTLED, battleId, before, List.of(), null, null);
         }
         if (!battleId.equals(before.pendingBattleId()) || before.maxCleared() != battle.details().mission()) {
             throw new IllegalStateException("待领奖关卡与战报不一致");
         }
         var beforeRole = roles.findById(role).orElseThrow();
-        var processed = rewards.grantPlan(role, battle.details().rewardPlan());
+        var actual = rewards.grantPlan(role, battle.details().rewardPlan());
+        var processed = actual.items().stream().filter(item -> item.credited() > 0)
+                .map(item -> new MainChapterRules.Reward(item.itemId(), item.credited())).toList();
         var afterRole = roles.findById(role).orElseThrow();
         if (jdbc.update("UPDATE game_main_chapter SET pending_battle_id=NULL WHERE role_id=? AND pending_battle_id=?",
                 role, battleId) != 1) {
@@ -195,10 +237,89 @@ public class MainChapterService {
         sync.changed(role);
         var experience = new Experience(beforeRole.level(), beforeRole.basics().experience(), beforeRole.basics().experienceToNextLevel(),
             afterRole.level(), afterRole.basics().experience(), afterRole.basics().experienceToNextLevel());
-        var receipt = new Receipt(Action.SETTLED, battleId, state(role), processed, experience);
+        var receipt = new Receipt(Action.SETTLED, battleId, state(role), processed, experience, actual);
+        validateReceipt(receipt, role, battleId);
         jdbc.update("UPDATE game_main_chapter_battle SET settlement_json=? WHERE id=? AND role_id=?",
             mapper.writeValueAsString(receipt), battleId, role);
         return receipt;
+    }
+
+    /** 只读取原回执并校验自身归属/明细；旧actual缺失保留缺失，不再查询当前权益或补发。 */
+    private Receipt readReceipt(String payload, String role, String battleId) {
+        var receipt = mapper.readValue(payload, Receipt.class);
+        validateReceipt(receipt, role, battleId);
+        return receipt;
+    }
+
+    /** 拒绝损坏身份、超安全数及互相矛盾的历史明细，避免回包后才发现已提交结果无法显示。 */
+    private void validateReceipt(Receipt receipt, String role, String battleId) {
+        if (receipt == null || receipt.action() == null || receipt.state() == null
+                || (battleId != null && !battleId.equals(receipt.battleId()))) {
+            throw new IllegalStateException("主线历史回执身份或状态无效");
+        }
+        requireId(receipt.battleId());
+        requireSafeNumbers(mapper.valueToTree(receipt));
+        var actual = receipt.actual();
+        if (actual == null) {
+            return;
+        }
+        var projected = actual.items().stream().filter(item -> item.credited() > 0)
+                .map(item -> new MainChapterRules.Reward(item.itemId(), item.credited())).toList();
+        if (receipt.action() != Action.SETTLED || !role.equals(actual.roleId())
+                || !projected.equals(receipt.rewards())
+                || actual.items().stream().map(RewardGrantResult.Outcome::itemId).distinct().count() != actual.items().size()) {
+            throw new IllegalStateException("主线实际奖励归属或基础明细不一致");
+        }
+        long directGold = 0;
+        long directDiamonds = 0;
+        for (var item : actual.items()) {
+            if (item.itemId() == 900001) {
+                directGold = Math.addExact(directGold, item.credited());
+            } else if (item.itemId() == 900002) {
+                directDiamonds = Math.addExact(directDiamonds, item.credited());
+            }
+        }
+        long bonusDiamonds = 0;
+        for (var bonus : actual.bonuses()) {
+            if (bonus.source() != RewardGrantResult.BonusSource.ROLE_LEVEL_UP
+                    || bonus.itemId() != 900002 || bonus.quantity() <= 0) {
+                throw new IllegalStateException("主线升级附赠来源或数量无效");
+            }
+            bonusDiamonds = Math.addExact(bonusDiamonds, bonus.quantity());
+        }
+        long experienceDiamonds = 0;
+        for (var gain : actual.experience()) {
+            experienceDiamonds = Math.addExact(experienceDiamonds, gain.diamonds());
+        }
+        var wallet = actual.wallet();
+        if (experienceDiamonds != bonusDiamonds
+                || Math.subtractExact(wallet.goldAfter(), wallet.goldBefore()) != directGold
+                || Math.subtractExact(wallet.diamondsAfter(), wallet.diamondsBefore())
+                    != Math.addExact(directDiamonds, bonusDiamonds)) {
+            throw new IllegalStateException("主线实际钱包、经验与附赠明细不一致");
+        }
+        if (!actual.experience().isEmpty()) {
+            var gain = actual.experience().getFirst();
+            var display = receipt.experience();
+            if (actual.experience().size() != 1 || display == null
+                    || display.beforeLevel() != gain.beforeLevel() || display.beforeExp() != gain.beforeExperience()
+                    || display.afterLevel() != gain.level() || display.afterExp() != gain.experience()) {
+                throw new IllegalStateException("主线历史经验展示与实际结果不一致");
+            }
+        }
+    }
+
+    /** 在事务内递归拒绝JS不能精确表达的非负整数，历史钱包只验数值，不覆盖当前角色。 */
+    private static void requireSafeNumbers(tools.jackson.databind.JsonNode value) {
+        if (value.isIntegralNumber()
+                && (!value.canConvertToLong() || value.asLong() < 0 || value.asLong() > MAX_SAFE_INTEGER)) {
+            throw new IllegalStateException("主线回执数值超出协议精确非负整数范围");
+        }
+        if (value.isObject() || value.isArray()) {
+            for (var child : value) {
+                requireSafeNumbers(child);
+            }
+        }
     }
 
     /** 角色锁后重新鉴权，避免等待锁期间会话已被撤销。 */
@@ -209,12 +330,15 @@ public class MainChapterService {
         return role;
     }
 
-    /** 持锁读取主线状态，与早期简化进度完全隔离，不迁移猜测值。 */
+    /** 持锁读取主线与排序冻结的真实里程碑集合；空查询明确未领，不插行、不改版本或猜测通关领取。 */
     private State state(String role) {
         long revision = roles.revision(role);
+        var claimedIds = jdbc.queryForList("SELECT reward_id FROM game_main_chapter_milestone WHERE role_id=? ORDER BY reward_id",
+                Integer.class, role);
+        var milestones = new MilestoneProgress(1, claimedIds);
         var states = jdbc.query("SELECT max_cleared,pending_battle_id FROM game_main_chapter WHERE role_id=?",
-            (row, index) -> new State(row.getInt(1), row.getString(2), revision), role);
-        var result = states.isEmpty() ? new State(0, null, revision) : states.getFirst();
+            (row, index) -> new State(row.getInt(1), row.getString(2), revision, milestones, rules.challengeLimit()), role);
+        var result = states.isEmpty() ? new State(0, null, revision, milestones, rules.challengeLimit()) : states.getFirst();
         new MainChapterRules.Progress(result.maxCleared(), result.pendingBattleId() != null);
         return result;
     }

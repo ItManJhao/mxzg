@@ -138,6 +138,10 @@ export class RewardController extends BaseController {
                 itemId: item.itemId,
                 credited: item.credited,
             }))),
+            ...(notice.roleUpgrade ? { roleUpgrade: Object.freeze({
+                beforeLevel: (notice.roleUpgrade as { beforeLevel: number }).beforeLevel,
+                afterLevel: (notice.roleUpgrade as { afterLevel: number }).afterLevel,
+            }) } : {}),
         });
     }
 
@@ -163,7 +167,8 @@ export class RewardController extends BaseController {
                 if (!this.showPopup) {
                     throw new Error("通用奖励窗口尚未装配");
                 }
-                await this.showPopup(Object.freeze({ receiptId: notice.receiptId, items: notice.items }));
+                await this.showPopup(Object.freeze({ receiptId: notice.receiptId, items: notice.items,
+                    ...(notice.roleUpgrade ? { roleUpgrade: notice.roleUpgrade } : {}) }));
             } else {
                 if (!this.showTips) {
                     throw new Error("通用奖励飘字尚未装配");

@@ -1,11 +1,12 @@
 /**
- * 独立环境的旧主线第一章第1至3关战斗验收器：读取真实敌方、成长和技能，驱动完整选定场景到胜负。
- * 默认使用固定无装备单英雄阵容，另提供明确标识的独立双单位/多单位审计入口；不接玩家库、业务协议、关卡进度或奖励。
+ * 配置化主线战场：按全局关卡目录读取真实敌方、成长和技能，驱动已支持场景到胜负。
+ * 正式阵容/挂机入口不依赖固定三关；旧initial仅保留独立审计用途，不接玩家库、进度或奖励。
  */
 package com.funsgamex.mxzg.hero;
 
 import java.util.*;
 import java.util.function.DoublePredicate;
+import com.funsgamex.mxzg.campaign.MainChapterRules;
 import com.funsgamex.mxzg.lineup.MainFormationRules;
 import tools.jackson.databind.*;
 
@@ -25,6 +26,8 @@ public final class HeroBattleChapterScenario {
 
     /** 同源星级/进化头像规则，只在本场输入构建时使用。 */
     private final HeroBattleAppearanceRules appearance;
+    /** 完整关卡与敌方目录；配置可读不代替服务端新挑战范围或依赖预检。 */
+    private final MainChapterRules chapters;
 
     /** 初始单位信息；faction为1攻方/2守方，id为本场身份。portraitIconId保存开战头像；审计输入null由开战入口补齐。 */
     public record Unit(int id, int faction, int template, int level, int star, int stage, int position,
@@ -79,6 +82,7 @@ public final class HeroBattleChapterScenario {
     /** 注入现有规则；此验收器不注册业务接口。 */
     public HeroBattleChapterScenario(ObjectMapper mapper) {
         this.mapper = mapper;
+        chapters = new MainChapterRules(mapper);
         growth = new HeroGrowthRules(mapper);
         appearance = new HeroBattleAppearanceRules(mapper);
         skills = new HeroSkillPanelRules(mapper);
@@ -197,7 +201,7 @@ public final class HeroBattleChapterScenario {
         }
         var plan = skills.battleSchedule(skills.select(template, star, stage));
         for (var skill : plan) {
-            validateSkill(skill);
+            requireSupportedSkill(skill);
         }
         return new Unit(id, enemy == null ? 1 : 2, template, level, star, stage,
             enemy == null ? 2 : enemy.path("pos").asInt(), attributes,
@@ -319,8 +323,8 @@ public final class HeroBattleChapterScenario {
         return runBattle("audit:dark-cutter-bleed", applyElementHalo(input), decision);
     }
 
-    /** 预检静态被动、开场监听和出手动作；未知效果在开场前拒绝。 */
-    private void validateSkill(HeroBattleSkillUtils.Skill skill) {
+    /** 只读预检一个完整技能，供战场及逐技能依赖审计共用；未知效果或先手明确拒绝。 */
+    public void requireSupportedSkill(HeroBattleSkillUtils.Skill skill) {
         if (skill.first()) {
             throw new IllegalArgumentException("独立战场尚未接入先手技能");
         }
@@ -334,10 +338,10 @@ public final class HeroBattleChapterScenario {
     }
 
     /**
-     * 将服务端已鉴权读取的持久阵容接入前三关，只读审计，不生成主线通关凭据。
+     * 将服务端已鉴权读取的持久阵容接入全局关卡，只读审计，不生成主线通关凭据。
      * 直接复用原始属性和完整技能排期，不替换为固定英雄，不重复添加阵型属性；助战暂不支持。
      */
-    public Result runSavedFormation(int mission, HeroBattleInputService.Input input, DoublePredicate decision) {
+    public Result runSavedFormation(int stageIndex, HeroBattleInputService.Input input, DoublePredicate decision) {
         if (input.units().isEmpty()) {
             throw new IllegalArgumentException("请先保存非空主线阵容");
         }
@@ -354,18 +358,42 @@ public final class HeroBattleChapterScenario {
                     hero.evolution().type(), hero.evolution().level())));
         }
         // 本场ID与持久英雄ID分离：攻方使用1至8，守方使用9至16，避免双方同站位碰撞。
-        for (var enemy : initial(mission)) {
-            if (enemy.faction() == 2) {
-                units.add(new Unit(8 + enemy.position(), 2, enemy.template(), enemy.level(), enemy.star(),
-                    enemy.stage(), enemy.position(), enemy.attributes(), enemy.opening(), enemy.skills()));
+        units.addAll(enemies(stageIndex));
+        roster(units);
+        return runBattle("audit:lineup:" + stageIndex, applyElementHalo(units), decision);
+    }
+
+    /**
+     * 按全局索引构建原顺序敌方输入，保留成长、初始属性和完整技能预检；不在此重复添加元素光环。
+     * 源定位待确认、装备、符文、先手或未支持技能明确拒绝，不伪造无装备或删技能战场。
+     */
+    public List<Unit> enemies(int stageIndex) {
+        if (chapters.enemyMappingPending(stageIndex)) {
+            throw new IllegalArgumentException("主线奖励-敌方映射待确认：" + stageIndex);
+        }
+        for (var addition : rows("battleroundaddition")) {
+            if (addition.path("battleType").asInt() == 1) {
+                throw new IllegalArgumentException("主线回合加成尚未支持：" + stageIndex);
             }
         }
-        roster(units);
-        return runBattle("audit:lineup:" + mission, applyElementHalo(units), decision);
+        var result = new ArrayList<Unit>();
+        for (var enemy : chapters.enemies(stageIndex)) {
+            if (!mapper.readTree(enemy.equipment()).isEmpty() || !mapper.readTree(enemy.runes()).isEmpty()) {
+                throw new IllegalArgumentException("主线敌方装备或符文尚未支持：" + enemy.configId());
+            }
+            var row = mapper.createObjectNode();
+            row.put("hero_type", enemy.template());
+            row.put("hero_level", enemy.level());
+            row.put("hero_star", enemy.star());
+            row.put("pos", enemy.position());
+            row.put("attr", mapper.writeValueAsString(enemy.modifiers()));
+            result.add(unit(8 + enemy.position(), growth.npcStage(enemy.level()), row));
+        }
+        return List.copyOf(result);
     }
 
     /** 旧3006：持久挂机三人、当前关卡单个怪物、双方仅普攻、怪物初始生命1；不修改主线资产。 */
-    public Result runIdle(int mission, HeroBattleInputService.Input input, int firstPos, int enemyIndex,
+    public Result runIdle(int stageIndex, HeroBattleInputService.Input input, int firstPos, int enemyIndex,
                           DoublePredicate decision) {
         if (input.units().isEmpty() || input.units().size() > 3 || firstPos < 0 || firstPos > 2) {
             throw new IllegalArgumentException("挂机阵容或首行动位置无效");
@@ -380,7 +408,7 @@ public final class HeroBattleChapterScenario {
                 source.position(), source.attributes(), opening, ordinary(source.skillSchedule()),
                 appearance.icon(hero.templateId(), hero.star(), hero.evolution().type(), hero.evolution().level())));
         }
-        var enemies = initial(mission).stream().filter(unit -> unit.faction() == 2).toList();
+        var enemies = enemies(stageIndex);
         if (enemyIndex < 0 || enemyIndex >= enemies.size()) throw new IllegalArgumentException("挂机怪物索引无效");
         var enemy = enemies.get(enemyIndex);
         var attributes = new HashMap<>(enemy.attributes());
@@ -395,7 +423,7 @@ public final class HeroBattleChapterScenario {
             return new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(), unit.stage(),
                 unit.position(), unit.attributes(), opening, unit.skills(), unit.portraitIconId());
         }).toList();
-        return runBattle("idle:chapter:" + mission, prepared, decision);
+        return runBattle("idle:chapter:" + stageIndex, prepared, decision);
     }
 
     /** 旧testType=6只使用普攻；不存在普攻时拒绝，不改用主动技能。 */
@@ -443,7 +471,7 @@ public final class HeroBattleChapterScenario {
                 ? appearance.icon(unit.template(), unit.star(), 0, 0) : unit.portraitIconId())).toList();
         for (var unit : initial) {
             for (var skill : unit.skills()) {
-                validateSkill(skill);
+                requireSupportedSkill(skill);
             }
         }
         var states = initial.stream().map(unit -> new HeroBattleHealingExecutor.State(

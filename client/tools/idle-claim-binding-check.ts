@@ -12,7 +12,9 @@ import { BagController } from "../assets/scripts/features/bag/BagController";
 import { BagModel } from "../assets/scripts/features/bag/BagModel";
 import { MainChapterController } from "../assets/scripts/features/battle/MainChapterController";
 import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterModel";
-import type { IdleClaimJournalPort, IdleClaimPending } from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
+import type {
+    IdleClaimConfirmation, IdleClaimJournalPort, IdleClaimPending,
+} from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
 import { AssetStateBinding } from "../assets/scripts/app/remake/AssetStateBinding";
 import { IdleClaimBinding } from "../assets/scripts/app/remake/IdleClaimBinding";
@@ -24,6 +26,25 @@ import { Protocol } from "../assets/scripts/platform/Protocol";
 const requestId = "12345678-1234-4234-8234-123456789abc";
 /** 登录时原意图版本为1，服务端提交后版本为2。 */
 const pending: IdleClaimPending = Object.freeze({schemaVersion: 1, requestId, expectedOperationVersion: 1});
+
+/** 通知经过实际PB往返；原请求关联可省略，通用回执编号与领取历史保持同一份。 */
+function rewardFrame(sourceRequestId: string | null = requestId,
+    receiptId = "22345678-1234-4234-8234-123456789abc", roleId = "role-player"): GameFrame {
+    return GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({
+        version: 1,
+        kind: "event",
+        name: Protocol.REWARD_GRANTED,
+        body: {
+            schemaVersion: 1,
+            receiptId,
+            ...(sourceRequestId === null ? {} : {requestId: sourceRequestId}),
+            roleId,
+            assetRevision: 8,
+            mode: "POPUP",
+            items: [{itemId: 900001, credited: 10}],
+        },
+    }));
+}
 
 /** 冻结历史回执；其中历史钱包故意不同于当前资产，防止误当快照提交。 */
 function receipt(roleId: string): Record<string, unknown> {
@@ -268,9 +289,16 @@ class Application {
     });
     /** 应用转交到通用奖励模块的双确认结果，不根据其中的历史余额写资产。 */
     public readonly feedbacks: RewardNotice[] = [];
+    /** 完整确认信号供应用同时协调零到账、现场收取及历史反馈。 */
+    public readonly confirmations: IdleClaimConfirmation[] = [];
     /** 领取恢复应用绑定，对当前状态只读。 */
     public readonly binding = new IdleClaimBinding(this.account, this.service, this.socket, this.journal,
-        this.chapterModel, notice => this.feedbacks.push(notice));
+        this.chapterModel, confirmation => {
+            this.confirmations.push(confirmation);
+            if (confirmation.receipt.feedback) {
+                this.feedbacks.push(confirmation.receipt.feedback);
+            }
+        });
     /** 背包实例只接受统一状态，不查询库存。 */
     private readonly bag = new BagController(new BagModel());
     /** 原主线模块负责权威idle快照。 */
@@ -328,12 +356,83 @@ async function checkReadOnlyCommitted(): Promise<void> {
         await until(() => app.chapterModel.idleClaim.phase === "confirmed", "只读历史回执未完成双确认");
         assert.equal(app.journal.cleared, 1);
         assert.equal(app.feedbacks.length, 1);
+        assert.equal(app.confirmations.length, 1);
+        assert.equal(app.confirmations[0].presentationContext, null, "冷恢复不凭空借用显示现场");
+        assert.equal(app.confirmations[0].receipt.seconds, 60);
+        assert.equal(app.confirmations[0].receipt.maxSeconds, 43200);
         assert.deepEqual(app.feedbacks[0].items, [{ itemId: 900001, credited: 10 }]);
         assert.equal(app.account.snapshot.role!.gold, 50);
         assert.equal(app.account.snapshot.role!.diamonds, 7);
         assert.equal(app.chapterModel.idle!.startedAt, 160);
         assert.equal(app.chapterModel.idle!.claimState!.requestMode, "READ_ONLY");
         assert.deepEqual(app.server.requests.map(row => row.name), [Protocol.SESSION_LOGIN, Protocol.CHAPTER_IDLE_CLAIM_STATUS]);
+    } finally {
+        app.dispose();
+    }
+}
+
+/** 匹配原请求的提前通知等待双确认；无关联、其他请求及完成后的迟到通知交回通用入口。 */
+async function checkRewardRouting(): Promise<void> {
+    const app = new Application();
+    app.journal.seed("local-1", "role-player");
+    app.server.loginRevision = 7;
+    app.server.loginOperation = 1;
+    try {
+        assert(await app.service.login("player", "local-1"));
+        await until(() => app.chapterModel.idleClaim.phase === "waiting-state", "提前奖励测试未进入双确认等待");
+        assert.equal(app.confirmations.length, 0);
+        assert.equal(await app.binding.receiveReward(rewardFrame()), true,
+            "同原请求通知不能绕开回执及两种状态版本确认");
+        assert.equal(await app.binding.receiveReward(rewardFrame(null)), false, "通用无关联奖励不能被挂机吞掉");
+        assert.equal(await app.binding.receiveReward(rewardFrame("32345678-1234-4234-8234-123456789abc")), false,
+            "其他请求奖励继续走通用队列");
+        await assert.rejects(
+            () => app.binding.receiveReward(rewardFrame(requestId, "42345678-1234-4234-8234-123456789abc")),
+            (error: any) => error.code === "INVALID_MESSAGE",
+            "同请求不同回执不能被当作同一成功反馈",
+        );
+        await assert.rejects(
+            () => app.binding.receiveReward(rewardFrame(requestId, undefined, "role-other")),
+            (error: any) => error.code === "INVALID_MESSAGE",
+            "跨角色提前通知必须在应用边界拒绝",
+        );
+        assert.equal(app.journal.cleared, 0);
+        assert.equal(app.confirmations.length, 0);
+        app.server.pushState(9, 2);
+        await until(() => app.confirmations.length === 1, "后到状态未交付完整确认");
+        assert.equal(app.chapterModel.idleClaim.phase, "confirmed");
+        assert.equal(await app.binding.receiveReward(rewardFrame()), false,
+            "已确认的迟到通知复用通用回执去重，不另存挂机去重表");
+        assert.equal(app.confirmations.length, 1);
+        assert.equal(app.feedbacks.length, 1);
+    } finally {
+        app.dispose();
+    }
+}
+
+/** 持久口尚未打开时通知先等待；等待期间换号后直接丢弃旧通知，不交给新角色通用反馈。 */
+async function checkDelayedRewardAcrossIdentity(): Promise<void> {
+    const app = new Application();
+    app.journal.seed("local-1", "role-player");
+    app.journal.delayedRole = "role-player";
+    try {
+        assert(await app.service.login("player", "local-1"));
+        await until(() => !!app.journal.release, "通知测试未暂停持久口打开");
+        let completed = false;
+        const receiving = app.binding.receiveReward(rewardFrame()).then(consumed => {
+            completed = true;
+            return consumed;
+        });
+        await Promise.resolve();
+        assert.equal(completed, false, "原日志尚未打开时不能提前把未知通知交给通用队列");
+        assert(await app.service.login("other", "local-2"));
+        app.journal.release!();
+        assert.equal(await receiving, true, "旧激活代次结束后直接丢弃通知");
+        assert.equal(app.account.snapshot.role!.id, "role-other");
+        assert.equal(app.confirmations.length, 0);
+        assert.equal(app.feedbacks.length, 0);
+        assert.equal(app.journal.cleared, 0);
+        assert.equal(app.journal.records.size, 1);
     } finally {
         app.dispose();
     }
@@ -550,7 +649,9 @@ async function main(): Promise<void> {
     await checkCrossRoleReceipt();
     await checkJournalActivationRetry();
     await checkAuthenticatedRecoveryAfterJournalReplacement();
-    console.log("PASS idle claim application binding: readonly history, dual versions, bounded reauth, logout/relogin, late storage/wire, owner blocking, storage activation retry, authenticated A/B replacement and closed entry");
+    await checkRewardRouting();
+    await checkDelayedRewardAcrossIdentity();
+    console.log("PASS idle claim application binding: readonly history, dual versions, bounded reauth, logout/relogin, late storage/wire, owner blocking, storage activation retry, authenticated A/B replacement, reward routing and closed entry");
 }
 
 void main().catch(error => {

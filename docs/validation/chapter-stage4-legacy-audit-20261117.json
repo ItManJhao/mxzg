@@ -1,0 +1,928 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "scope": "第4关两个真实敌人的旧动作、伤害与201回合监听证据；不改数值、不执行战斗或发奖，不代表画面验收或玩法开放。",
+  "sourceFiles": {
+    "actions": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/battle/actions.lua",
+      "sha256": "644e2429db1ab41d0d501dc81f2b45c4424fad426561ba5a1f97554c9b8e9be0"
+    },
+    "actionUtils": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/utils/BattleActionUtils.lua",
+      "sha256": "3cd6c14394cc53fe98099556ba5b3febc4e9bc80741b3a2580856fd2c041eea1"
+    },
+    "skillController": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/controller/SkillController.lua",
+      "sha256": "4cf2f730fad6cc816fcf8e47cd74f7190fd442a5a93f0e9e02c83c2cf787b604"
+    },
+    "battleController": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/controller/BattleController.lua",
+      "sha256": "b30618afb9649ffb607321d33cf7d86085e3499db25ef728a56da9556eaba40b"
+    },
+    "infoFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/BattleInfoFactory.lua",
+      "sha256": "eba97fe749e608cb5349a308869ae9c9639187ee8b112bf0a9cf96e3a827b2c5"
+    },
+    "buffFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/BuffFactory.lua",
+      "sha256": "f87be2815ba7b5e2fc7b25202c9646ef9e7e7e6421e1c0ac028c4a46ccad1867"
+    },
+    "effectFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/EffectFactory.lua",
+      "sha256": "89a71fd246b15a01344ebf82eb4f2069fb52a1b8069d7687b195c3dfedd9f64b"
+    },
+    "heroNode": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/entity/battle/BattleHeroNode.lua",
+      "sha256": "70717febdc0c2224dc8d84d115bff526bd7f167248d48be17ffd9e35a2abd229"
+    },
+    "chapter": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/chapter.lua",
+      "sha256": "fe890693fc6ee1140054f6f94c7bd7f91b13ba10cfe84c21bed1ae084237db23"
+    },
+    "buff": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/buff.lua",
+      "sha256": "feee5e5dc8772c5d8bbf0a5a081c228709feae38a3f4c55074671c78dec92d06"
+    },
+    "buffart": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/buffart.lua",
+      "sha256": "a1fa56186ed87d87c6a689115b55492618bd27ae5eaf3ec38762de9c78fa388d"
+    },
+    "skills": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/heroskill.lua",
+      "sha256": "777378322fc0d167cc2f2ae7480d87f592a8930e151228ba3c2303890d1975b7"
+    },
+    "upgrade": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/heroupgrade.lua",
+      "sha256": "3af6cbefec6a6ca6bc2d879837c9143d147b48573f2d9e7be050195a0fe7114b"
+    },
+    "star": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/config/herostar.lua",
+      "sha256": "17dc4cbc98d024cf61c0fd010fbab285a23b44173be70c28506bbc1f70535030"
+    },
+    "battleService": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/service/BattleService.java",
+      "sha256": "476b1cbc900fb2dd8cefd23a2aa8dd51ff4e5137be069e4b6f155b9ea8f8c3c5"
+    },
+    "buffDo": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/BuffDo.java",
+      "sha256": "725ceb1d54ec08c000f92124b33a17eeda608c4335948dca2f6af1c7cc6f99c5"
+    },
+    "heroDo": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/model/HeroDo.java",
+      "sha256": "24983d2ab529f729d5fd5d94c41b8cf18e60e2898c88c4c288b850878114761b"
+    },
+    "abstractBuff": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/AbstractBuffHandler.java",
+      "sha256": "311736f767f56121db5e8f9146a02f588c4e2a4ee0eb02f43e9daae7e3307cc8"
+    },
+    "abstractDamage": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/damage/AbstractDamageBuffHandler.java",
+      "sha256": "2176fd2efaee4f17d328d493362102fb038eb93ac045573aa9be0eb36f1abc3a"
+    },
+    "roundStart": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-battle/src/main/java/com/ayjs/mxzg/battle/buff/trigger/RoundStartBuffHandler.java",
+      "sha256": "17a3da3a1fcb901b2f404484b4ed78ce52f6c8372b19efb1dfaf01c65ae5ded9"
+    },
+    "contractBuff": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/excel/entity/CBuff.java",
+      "sha256": "c408d3650a8d76b99820d944e2dda8b167428c5661873d189f80af49cfa720a8"
+    },
+    "attackType": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/struct/AttackType.java",
+      "sha256": "eda89a8bc9316e30e2bd331562f8cfab380aff5c4ade49478d74994a175641b4"
+    },
+    "selectorTypes": {
+      "path": "G:/work/FsGame/Demo/mj/program/server/mxzg-server/mxzg-config/src/main/java/com/ayjs/mxzg/config/struct/SelectorType.java",
+      "sha256": "2eaa360303955da22c02ab8c9acfb2e961368db5dba66d33e4b3cd90ebcc9b5e"
+    }
+  },
+  "input": {
+    "stage": 4,
+    "mode": 1,
+    "chapter": 1,
+    "mission": 4,
+    "enemies": [
+      {
+        "configId": 19,
+        "templateId": 10302002,
+        "level": 2,
+        "star": 2,
+        "position": 2
+      },
+      {
+        "configId": 20,
+        "templateId": 10304005,
+        "level": 2,
+        "star": 4,
+        "position": 3
+      }
+    ],
+    "chapterEvidence": {
+      "source": "chapter",
+      "lineStart": 183,
+      "lineEnd": 202
+    },
+    "equipment": [],
+    "runes": [],
+    "unlock": "level2处于grade0，heroupgrade0仅skill1开放；分别选普攻level0和一级主动，不把模板未解锁被动直接加入。",
+    "unlockEvidence": [
+      {
+        "source": "upgrade",
+        "lineStart": 3,
+        "lineEnd": 13
+      },
+      {
+        "source": "star",
+        "lineStart": 18,
+        "lineEnd": 32
+      },
+      {
+        "source": "star",
+        "lineStart": 48,
+        "lineEnd": 62
+      }
+    ],
+    "skills": [
+      {
+        "templateId": 10302002,
+        "normal": "103020020:0",
+        "active": "103020021:1",
+        "evidence": {
+          "source": "skills",
+          "lineStart": 10435,
+          "lineEnd": 10466
+        }
+      },
+      {
+        "templateId": 10304005,
+        "normal": "103040050:0",
+        "active": "103040051:1",
+        "evidence": {
+          "source": "skills",
+          "lineStart": 10867,
+          "lineEnd": 10898
+        }
+      }
+    ]
+  },
+  "actionOverrides": [
+    {
+      "buffId": 3020100,
+      "name": "追猎者普攻",
+      "override": {
+        "source": "actions",
+        "lineStart": 8192,
+        "lineEnd": 8212
+      },
+      "expansion": [
+        {
+          "type": 2,
+          "delayFrames": 0,
+          "aniBase": {
+            "move_time": 0.1,
+            "move_back": 1.5,
+            "attack_delay": 0.4
+          },
+          "file": [
+            "skill-103030030"
+          ],
+          "sound": [
+            "skill-103030030"
+          ]
+        },
+        {
+          "type": 6,
+          "delayFrames": 30,
+          "aniBase": {
+            "format": "skill-103030030/%d.png",
+            "anchor_y": 0.35,
+            "anchor_x": 0.6,
+            "duration": 0.06,
+            "scale_x": 1.4,
+            "scale_y": 1.4
+          },
+          "file": [],
+          "sound": []
+        }
+      ],
+      "notes": [
+        "第一项file用于旧预载；type2本身不创建该帧特效。",
+        "第二项type6定位施法者，不是type7目标；音效只在第一项。"
+      ],
+      "nominalAt1x": {
+        "actorCompletedSeconds": 2.1,
+        "vfxSpawnSeconds": 0.5,
+        "vfxFrames": 12,
+        "vfxEndedSeconds": 1.22,
+        "damageDelayFrames": 50
+      }
+    },
+    {
+      "buffId": 3021101,
+      "name": "追猎者一级主动",
+      "override": {
+        "source": "actions",
+        "lineStart": 8216,
+        "lineEnd": 8226
+      },
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 0,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 1.5,
+            "format": "skill-103020021/%d.png",
+            "duration": 0.06,
+            "scale_x": 1.4,
+            "scale_y": 1.4,
+            "anchor_y": 0.14,
+            "anchor_x": 0.45
+          },
+          "file": [
+            "skill-103020021"
+          ],
+          "sound": [
+            "skill-103020021"
+          ]
+        }
+      ],
+      "nominalAt1x": {
+        "actorCompletedSeconds": 1.8,
+        "vfxSpawnSeconds": 0.3,
+        "vfxFrames": 15,
+        "vfxEndedSeconds": 1.2,
+        "damageDelayFrames": 60
+      }
+    },
+    {
+      "buffId": 3050300,
+      "name": "诺亚普攻",
+      "override": {
+        "source": "actions",
+        "lineStart": 8420,
+        "lineEnd": 8440
+      },
+      "expansion": [
+        {
+          "type": 7,
+          "delayFrames": 30,
+          "aniBase": {
+            "format": "skill-103040050/%d.png",
+            "anchor_y": 0.21,
+            "anchor_x": 0.25,
+            "duration": 0.06,
+            "scale_x": 1.4,
+            "scale_y": 1.4
+          },
+          "file": [
+            "skill-103040050"
+          ],
+          "sound": [
+            "skill-103040050"
+          ]
+        },
+        {
+          "type": 11,
+          "delayFrames": 0,
+          "aniBase": {
+            "move_time": 0.1,
+            "move_back": 2,
+            "attack_delay": 0.2,
+            "offset_x": 0.6,
+            "offset_y": 0.3
+          },
+          "file": [],
+          "sound": []
+        }
+      ],
+      "notes": [
+        "目标帧和音效归第一项；第二项近身动作无帧资源和音效。",
+        "offset_x/y存在于配置，但旧type11调用链不读取，不作为战场坐标。"
+      ],
+      "nominalAt1x": {
+        "actorCompletedSeconds": 2.4,
+        "vfxSpawnSeconds": 0.5,
+        "vfxFrames": 8,
+        "vfxEndedSeconds": 0.98,
+        "damageDelayFrames": 30
+      }
+    },
+    {
+      "buffId": 3051101,
+      "name": "诺亚一级主动",
+      "override": {
+        "source": "actions",
+        "lineStart": 8444,
+        "lineEnd": 8454
+      },
+      "expansion": [
+        {
+          "type": 3,
+          "delayFrames": 0,
+          "aniBase": {
+            "attack_time": 0.3,
+            "action_time": 1.8,
+            "format": "skill-103040051/%d.png",
+            "duration": 0.06,
+            "scale_x": 1.4,
+            "scale_y": 1.4,
+            "anchor_y": 0.15
+          },
+          "file": [
+            "skill-103040051"
+          ],
+          "sound": [
+            "skill-103040051"
+          ]
+        }
+      ],
+      "dimly": 1,
+      "nominalAt1x": {
+        "actorCompletedSeconds": 2.1,
+        "vfxSpawnSeconds": 0.3,
+        "vfxFrames": 10,
+        "vfxEndedSeconds": 0.9,
+        "damageDelayFrames": 30
+      }
+    }
+  ],
+  "sharedActionSemantics": [
+    {
+      "finding": "G_BATTLE_ACTIONS优先于原buff行，一个原Buff可以展开多个并行动作，不能直接放开原type2带file。",
+      "evidence": [
+        {
+          "source": "infoFactory",
+          "lineStart": 142,
+          "lineEnd": 180
+        },
+        {
+          "source": "skillController",
+          "lineStart": 79,
+          "lineEnd": 85
+        }
+      ]
+    },
+    {
+      "finding": "延迟来自buff.delay/60；每个效果从技能起点并行计时，不把其他效果动画时长累加为伤害延迟。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 36,
+          "lineEnd": 36
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 120,
+          "lineEnd": 130
+        },
+        {
+          "source": "skillController",
+          "lineStart": 79,
+          "lineEnd": 85
+        }
+      ]
+    },
+    {
+      "finding": "type2和type11都移向首个实际目标的近身点；type11没有读取offset_x/y。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 261,
+          "lineEnd": 276
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 504,
+          "lineEnd": 519
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 1062,
+          "lineEnd": 1115
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 1283,
+          "lineEnd": 1287
+        }
+      ]
+    },
+    {
+      "finding": "type6使用施法者，type7使用各目标；生成时采样该英雄节点当前坐标，随后挂独立effectLayer，不持续跟随角色返程。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 348,
+          "lineEnd": 355
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 361,
+          "lineEnd": 383
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 1249,
+          "lineEnd": 1277
+        }
+      ]
+    },
+    {
+      "finding": "type3在attack_time=0.3秒独立挂目标帧，同时运行角色动作。两项均没有ani_base.action，默认actionAttack，不因主动类别自动变为skill/attack2。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 282,
+          "lineEnd": 307
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 1081,
+          "lineEnd": 1105
+        },
+        {
+          "source": "heroNode",
+          "lineStart": 238,
+          "lineEnd": 240
+        }
+      ]
+    },
+    {
+      "finding": "动作常量ATTACK_TIME/ACTION_TIME/ATTACK_DELAY/BACK_TIME全为0；move_time默认0.1。本批life=300不是动作等待秒数。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 100,
+          "lineEnd": 106
+        },
+        {
+          "source": "actionUtils",
+          "lineStart": 1070,
+          "lineEnd": 1109
+        }
+      ]
+    },
+    {
+      "finding": "type6/7挂出特效后立即completed；type3不等待目标VFX自删。效果工厂自己播帧并RemoveSelf；仅整场切换/结束清层。",
+      "evidence": [
+        {
+          "source": "actionUtils",
+          "lineStart": 1189,
+          "lineEnd": 1198
+        },
+        {
+          "source": "buffFactory",
+          "lineStart": 98,
+          "lineEnd": 109
+        },
+        {
+          "source": "effectFactory",
+          "lineStart": 12,
+          "lineEnd": 35
+        },
+        {
+          "source": "battleController",
+          "lineStart": 255,
+          "lineEnd": 260
+        },
+        {
+          "source": "battleController",
+          "lineStart": 982,
+          "lineEnd": 988
+        },
+        {
+          "source": "battleController",
+          "lineStart": 1415,
+          "lineEnd": 1437
+        }
+      ]
+    }
+  ],
+  "skillDamageAndTickChains": [
+    {
+      "templateId": 10302002,
+      "normalArt": 3020100,
+      "normalBuffs": [
+        3020100,
+        3020200
+      ],
+      "normalDamage": {
+        "buffId": 3020200,
+        "value": "10000|0|0|0",
+        "delayFrames": 50
+      },
+      "activeArt": 3021101,
+      "activeBuffs": [
+        3021101,
+        3021201,
+        3021301
+      ],
+      "directDamage": {
+        "buffId": 3021201,
+        "value": "10000|0|0|0",
+        "delayFrames": 60
+      },
+      "listener": {
+        "buffId": 3021301,
+        "type": 201,
+        "round": 2,
+        "copyTarget": 1,
+        "conflictType": 3023,
+        "delayFrames": 0,
+        "artList": [
+          3021201
+        ],
+        "icon": 103020021
+      },
+      "tickArt": 3021201,
+      "tickBuff": {
+        "buffId": 3021401,
+        "type": 100,
+        "value": "5400|1|0|0",
+        "delayFrames": 0
+      },
+      "evidence": [
+        {
+          "source": "buffart",
+          "lineStart": 6123,
+          "lineEnd": 6147
+        },
+        {
+          "source": "buff",
+          "lineStart": 42663,
+          "lineEnd": 42682
+        },
+        {
+          "source": "buff",
+          "lineStart": 42743,
+          "lineEnd": 42762
+        },
+        {
+          "source": "buff",
+          "lineStart": 42803,
+          "lineEnd": 42822
+        },
+        {
+          "source": "buff",
+          "lineStart": 42863,
+          "lineEnd": 42882
+        }
+      ]
+    },
+    {
+      "templateId": 10304005,
+      "normalArt": 3050100,
+      "normalBuffs": [
+        3050200,
+        3050300
+      ],
+      "normalDamage": {
+        "buffId": 3050200,
+        "value": "10000|0|0|0",
+        "delayFrames": 30
+      },
+      "activeArt": 3051101,
+      "activeBuffs": [
+        3051101,
+        3051201,
+        3051301
+      ],
+      "directDamage": {
+        "buffId": 3051201,
+        "value": "21500|0|0|0",
+        "delayFrames": 30
+      },
+      "listener": {
+        "buffId": 3051301,
+        "type": 201,
+        "round": 2,
+        "copyTarget": 1,
+        "conflictType": 0,
+        "life": 1,
+        "delayFrames": 30,
+        "artList": [
+          3051201
+        ],
+        "icon": 103040051
+      },
+      "tickArt": 3051201,
+      "tickBuff": {
+        "buffId": 3051401,
+        "type": 100,
+        "value": "3400|1|0|0",
+        "delayFrames": 0
+      },
+      "evidence": [
+        {
+          "source": "buffart",
+          "lineStart": 6363,
+          "lineEnd": 6387
+        },
+        {
+          "source": "buff",
+          "lineStart": 44023,
+          "lineEnd": 44042
+        },
+        {
+          "source": "buff",
+          "lineStart": 44123,
+          "lineEnd": 44142
+        },
+        {
+          "source": "buff",
+          "lineStart": 44183,
+          "lineEnd": 44202
+        },
+        {
+          "source": "buff",
+          "lineStart": 44243,
+          "lineEnd": 44262
+        }
+      ]
+    }
+  ],
+  "targetRules": {
+    "normalAndHunterActive": {
+      "selectors": [
+        3,
+        4,
+        10
+      ],
+      "targetCount": 1,
+      "meaning": "敌方→存活→默认位置"
+    },
+    "noahActive": {
+      "selectors": [
+        3,
+        4,
+        8
+      ],
+      "targetCount": 1,
+      "meaning": "敌方→存活→随机"
+    },
+    "tick": "子art target=[]，executeRoundArt直接使用原Buff携带目标，不重新随机选人。",
+    "evidence": [
+      {
+        "source": "selectorTypes",
+        "lineStart": 18,
+        "lineEnd": 38
+      },
+      {
+        "source": "battleService",
+        "lineStart": 346,
+        "lineEnd": 361
+      },
+      {
+        "source": "battleService",
+        "lineStart": 548,
+        "lineEnd": 568
+      }
+    ]
+  },
+  "tickSemantics": [
+    {
+      "finding": "201是回合开始监听，不是1205流血；安装后不立即递归art_list。",
+      "evidence": [
+        {
+          "source": "roundStart",
+          "lineStart": 13,
+          "lineEnd": 18
+        },
+        {
+          "source": "battleService",
+          "lineStart": 527,
+          "lineEnd": 530
+        },
+        {
+          "source": "buffDo",
+          "lineStart": 82,
+          "lineEnd": 91
+        }
+      ]
+    },
+    {
+      "finding": "安装过期轮为currentRound+round。每轮在行动前执行201；到期轮先执行再按expiredRound<=currentRound移除。若R轮施加round2，通常R+1与R+2轮各触发一次。",
+      "evidence": [
+        {
+          "source": "abstractBuff",
+          "lineStart": 48,
+          "lineEnd": 58
+        },
+        {
+          "source": "battleService",
+          "lineStart": 140,
+          "lineEnd": 153
+        },
+        {
+          "source": "battleService",
+          "lineStart": 284,
+          "lineEnd": 296
+        },
+        {
+          "source": "battleService",
+          "lineStart": 328,
+          "lineEnd": 335
+        },
+        {
+          "source": "buffDo",
+          "lineStart": 72,
+          "lineEnd": 74
+        },
+        {
+          "source": "heroDo",
+          "lineStart": 312,
+          "lineEnd": 314
+        }
+      ]
+    },
+    {
+      "finding": "回合伤害使用buff.sourceId取得原施法者，使用原携带目标；不借当前回合出手者替代来源。",
+      "evidence": [
+        {
+          "source": "battleService",
+          "lineStart": 346,
+          "lineEnd": 361
+        }
+      ]
+    },
+    {
+      "finding": "普通原施法者死亡且非deathTrigger，或目标已死，type100伤害处理器直接返回；监听尚在不等于死后继续伤害。",
+      "evidence": [
+        {
+          "source": "abstractDamage",
+          "lineStart": 23,
+          "lineEnd": 25
+        },
+        {
+          "source": "heroDo",
+          "lineStart": 534,
+          "lineEnd": 535
+        }
+      ]
+    },
+    {
+      "finding": "value第二位1表示NOT_COUNTERATTACK（序号1），不是新增100%或“触发一次”；5400/3400等原值原样保留。",
+      "evidence": [
+        {
+          "source": "contractBuff",
+          "lineStart": 43,
+          "lineEnd": 60
+        },
+        {
+          "source": "attackType",
+          "lineStart": 8,
+          "lineEnd": 16
+        }
+      ]
+    }
+  ],
+  "resourceFrameProof": {
+    "sourceDirectory": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill",
+    "method": "直接用Python plistlib读取每个frames字典，再按stem/%d.png从0查连续帧，未按整图尺寸或目录文件数猜测。",
+    "atlases": [
+      {
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103020021.plist",
+        "plistSha256": "73915a244b500c24de7a512d0090fa9a1a7a2684fceda1aa274381f8f596cc3b",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103020021.pvr.ccz",
+        "textureSha256": "9363e95774425f13719adb16b72cdc7df05bfbb213f3c5323873f1a051526390",
+        "totalFrameKeys": 15,
+        "continuousPercentDFromZero": 15,
+        "orderedFrameKeys": [
+          "skill-103020021/0.png",
+          "skill-103020021/1.png",
+          "skill-103020021/2.png",
+          "skill-103020021/3.png",
+          "skill-103020021/4.png",
+          "skill-103020021/5.png",
+          "skill-103020021/6.png",
+          "skill-103020021/7.png",
+          "skill-103020021/8.png",
+          "skill-103020021/9.png",
+          "skill-103020021/10.png",
+          "skill-103020021/11.png",
+          "skill-103020021/12.png",
+          "skill-103020021/13.png",
+          "skill-103020021/14.png"
+        ],
+        "textureFileName": "skill-103020021.pvr.ccz",
+        "size": "{489,507}"
+      },
+      {
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103030030.plist",
+        "plistSha256": "4171626f9121ddc8b3ac374ca926930cb67e62f51c655a4588cb0a4e193af277",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103030030.pvr.ccz",
+        "textureSha256": "c79024309df72f7b7069d8629636d93aa27b8bea9c450c77a8017635d4c037d8",
+        "totalFrameKeys": 12,
+        "continuousPercentDFromZero": 12,
+        "orderedFrameKeys": [
+          "skill-103030030/0.png",
+          "skill-103030030/1.png",
+          "skill-103030030/2.png",
+          "skill-103030030/3.png",
+          "skill-103030030/4.png",
+          "skill-103030030/5.png",
+          "skill-103030030/6.png",
+          "skill-103030030/7.png",
+          "skill-103030030/8.png",
+          "skill-103030030/9.png",
+          "skill-103030030/10.png",
+          "skill-103030030/11.png"
+        ],
+        "textureFileName": "skill-103030030.pvr.ccz",
+        "size": "{374,401}"
+      },
+      {
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103040050.plist",
+        "plistSha256": "cd6d590ee0a1f111ac7a64d648d55e7d294b0c7faac335950f91bfdef68371f0",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103040050.pvr.ccz",
+        "textureSha256": "9cafb71937d3e0295317f3a0ec7bfc399e2835cff81f64651fd2efb242a7307f",
+        "totalFrameKeys": 8,
+        "continuousPercentDFromZero": 8,
+        "orderedFrameKeys": [
+          "skill-103040050/0.png",
+          "skill-103040050/1.png",
+          "skill-103040050/2.png",
+          "skill-103040050/3.png",
+          "skill-103040050/4.png",
+          "skill-103040050/5.png",
+          "skill-103040050/6.png",
+          "skill-103040050/7.png"
+        ],
+        "textureFileName": "skill-103040050.pvr.ccz",
+        "size": "{488,150}"
+      },
+      {
+        "plist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103040051.plist",
+        "plistSha256": "f643fc47617e8bca1e8a6e42f7205ae9fbbfb7e17566c5934f7339d7a7400441",
+        "texture": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103040051.pvr.ccz",
+        "textureSha256": "69a21be9de22efb140e923c5ba6dda72c6e7e41836262fc21e32f1ed76af7dd0",
+        "totalFrameKeys": 10,
+        "continuousPercentDFromZero": 10,
+        "orderedFrameKeys": [
+          "skill-103040051/0.png",
+          "skill-103040051/1.png",
+          "skill-103040051/2.png",
+          "skill-103040051/3.png",
+          "skill-103040051/4.png",
+          "skill-103040051/5.png",
+          "skill-103040051/6.png",
+          "skill-103040051/7.png",
+          "skill-103040051/8.png",
+          "skill-103040051/9.png"
+        ],
+        "textureFileName": "skill-103040051.pvr.ccz",
+        "size": "{319,450}"
+      }
+    ],
+    "totalAcrossFourAtlases": 45,
+    "noahActiveFrameCount": 10
+  },
+  "completionBarrierAssessment": {
+    "finding": "本批四套VFX均早于对应角色动作完成；45是四套合计，不能当诺亚主动45帧并推导其延长到3秒。",
+    "perAction": [
+      {
+        "buffId": 3020100,
+        "actorCompletedSeconds": 2.1,
+        "vfxSpawnSeconds": 0.5,
+        "vfxFrames": 12,
+        "vfxEndedSeconds": 1.22,
+        "damageDelayFrames": 50
+      },
+      {
+        "buffId": 3021101,
+        "actorCompletedSeconds": 1.8,
+        "vfxSpawnSeconds": 0.3,
+        "vfxFrames": 15,
+        "vfxEndedSeconds": 1.2,
+        "damageDelayFrames": 60
+      },
+      {
+        "buffId": 3050300,
+        "actorCompletedSeconds": 2.4,
+        "vfxSpawnSeconds": 0.5,
+        "vfxFrames": 8,
+        "vfxEndedSeconds": 0.98,
+        "damageDelayFrames": 30
+      },
+      {
+        "buffId": 3051101,
+        "actorCompletedSeconds": 2.1,
+        "vfxSpawnSeconds": 0.3,
+        "vfxFrames": 10,
+        "vfxEndedSeconds": 0.9,
+        "damageDelayFrames": 30
+      }
+    ],
+    "currentImplementationRiskObservedForTheseFour": false,
+    "qualification": "仅按旧配置1倍速名义时序比较，不替代实际Creator画面；通用独立VFX完成边界问题不能借本批假设扩大重构。"
+  },
+  "guards": {
+    "claimEntry": "继续关闭",
+    "newChallengeScope": "不由此证据自动扩大",
+    "build": "本证据未构建",
+    "commitOrPush": false,
+    "productionChangedByThisAudit": false,
+    "historicalDependencySnapshot": "保留main-chapter-dependencies-20261117.json，不覆盖；后续使用20261117-stage4标识。"
+  }
+}

@@ -4,12 +4,25 @@
  */
 import { BaseModel } from "../../framework/BaseModel";
 import type { IdleClaimProgress } from "./data/MainChapterIdleClaimData";
+import type { RewardExperienceGain } from "../reward/data/RewardData";
 
 /** 服务端权威进度；空待领奖表示没有未领取战报。 */
 export interface MainChapterState {
     readonly maxCleared: number;
     readonly pendingBattleId: string | null;
     readonly assetRevision: number;
+    /** 服务端当前允许新挑战的最大全局关卡；旧快照缺失为undefined，不默认开放或限制历史恢复。 */
+    readonly challengeLimit?: number;
+    /** 最新权威已领集合；旧快照缺失为undefined，不能按通关数或历史回执补为0。 */
+    readonly milestoneProgress?: MainChapterMilestoneProgress;
+}
+
+/** 服务端读取真实持久集合后交付的里程碑进度，不表示已开放领取。 */
+export interface MainChapterMilestoneProgress {
+    /** 当前只支持1；损坏或未知格式不能当作明确空集。 */
+    readonly schemaVersion: 1;
+    /** 已领取的配置ID集合，允许不连续；空数组是服务端确认尚未领取。 */
+    readonly claimedIds: readonly number[];
 }
 /** 成功回执的历史结果，只用于说明，不替代当前快照。 */
 export interface MainChapterReceipt {
@@ -19,6 +32,29 @@ export interface MainChapterReceipt {
     readonly rewards: readonly { itemId: number; quantity: number }[];
     /** 服务端冻结的发奖前后经验；旧回执缺失，不从当前角色状态反推。 */
     readonly experience?: MainChapterExperience;
+    /** 新回执的实际发放显示投影；旧记录缺失时不从钱包或当前配置补猜升级附赠。 */
+    readonly actual?: MainChapterRewardActual;
+}
+/** 原事务真实明细的最小显示投影；不保存历史钱包或用其更新当前资产。 */
+export interface MainChapterRewardActual {
+    /** 同次真实经验链；通用升级反馈读取历史值，不依赖最新角色等级。 */
+    readonly experience: readonly RewardExperienceGain[];
+    /** 服务端发放归属，应用层在交付通用反馈时与当前角色校验。 */
+    readonly roleId: string;
+    /** 首通基础实际量及减少原因；零到账仍保留，不能与升级附赠混为同一来源。 */
+    readonly items: readonly {
+        readonly itemId: number;
+        readonly requested: number;
+        readonly credited: number;
+        readonly ignored: number;
+        readonly reason: "NONE" | "ROLE_MAX_LEVEL" | "TAVERN_CAP";
+    }[];
+    /** 单独记录的升级赠钻；通用反馈按实际数量合并，正常胜利基础格子不混入。 */
+    readonly bonuses: readonly {
+        readonly source: "ROLE_LEVEL_UP";
+        readonly itemId: number;
+        readonly quantity: number;
+    }[];
 }
 /** 结算动画的历史快照，不提交到角色资产Model；最高级门槛为0。 */
 export interface MainChapterExperience {
@@ -38,6 +74,7 @@ export interface MainChapterExperience {
 /** 已验证的持久战报，仅保留当前展示所需字节。 */
 export interface MainChapterReplay {
     readonly battleId: string;
+    /** 同源关卡表的全局idx，不是章节内mission_id；历史字段名保留协议兼容。 */
     readonly mission: number;
     readonly pending: readonly string[];
     readonly bytes: Uint8Array;
@@ -50,9 +87,11 @@ export interface MainChapterSettlement {
     readonly phase: "pending" | "confirming" | "confirmed";
     /** 在异步确认前固定展示归属；battle走正常胜利页，reward只走通用恢复奖励窗。 */
     readonly presentation: "battle" | "reward";
-    /** 恢复反馈已交给通用队列时为true，失败重试只重试显示；不代表窗口已打开。 */
+    /** 已到通用反馈时点且尚未实际打开：正常胜利页关闭后或冷恢复开始时为true，换号随结算清空。 */
+    readonly feedbackReady: boolean;
+    /** 恢复全部奖励或正常结算后的升级附赠已交给通用队列；失败仅重试显示，不代表弹窗已打开。 */
     readonly feedbackQueued: boolean;
-    /** 对应窗口已实际打开时为true；无正奖励时表示反馈已明确处理，不造空窗。 */
+    /** 主展示已实际打开：battle指胜利页，reward指恢复奖励窗；正常附赠是否交队列另由feedbackQueued记录。 */
     readonly presented: boolean;
 }
 /** 已知格式的挂机消费能力投影；恢复命令读取版本，当前仍没有玩家按钮入口。 */

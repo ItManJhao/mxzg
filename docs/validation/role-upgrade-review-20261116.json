@@ -1,0 +1,220 @@
+{
+  "date": "2026-11-16",
+  "branch": "hao",
+  "commitPushMerge": false,
+  "centralBuild": false,
+  "typeCheck": {
+    "passed": true,
+    "command": "Creator 3.8.8 TypeScript tsc -p client/tools/tsconfig.remake.json --noEmit"
+  },
+  "clientChecks": [
+    {
+      "id": "role-upgrade-config",
+      "passed": true,
+      "elapsedMs": 1488,
+      "log": "client/temp/project-checks/role-upgrade-config.log"
+    },
+    {
+      "id": "role-upgrade-config-rules",
+      "passed": true,
+      "elapsedMs": 1411,
+      "log": "client/temp/project-checks/role-upgrade-config-rules.log"
+    },
+    {
+      "id": "role-upgrade-view",
+      "passed": true,
+      "elapsedMs": 2359,
+      "log": "client/temp/project-checks/role-upgrade-view.log"
+    },
+    {
+      "id": "reward-view",
+      "passed": true,
+      "elapsedMs": 164,
+      "log": "client/temp/project-checks/reward-view.log"
+    },
+    {
+      "id": "reward-protocol",
+      "passed": true,
+      "elapsedMs": 145,
+      "log": "client/temp/project-checks/reward-protocol.log"
+    },
+    {
+      "id": "reward-controller",
+      "passed": true,
+      "elapsedMs": 157,
+      "log": "client/temp/project-checks/reward-controller.log"
+    },
+    {
+      "id": "reward-binding",
+      "passed": true,
+      "elapsedMs": 201,
+      "log": "client/temp/project-checks/reward-binding.log"
+    },
+    {
+      "id": "main-chapter",
+      "passed": true,
+      "elapsedMs": 2064,
+      "log": "client/temp/project-checks/main-chapter.log"
+    },
+    {
+      "id": "main-chapter-entry-recovery",
+      "passed": true,
+      "elapsedMs": 292,
+      "log": "client/temp/project-checks/main-chapter-entry-recovery.log"
+    },
+    {
+      "id": "idle-claim-recovery",
+      "passed": true,
+      "elapsedMs": 178,
+      "log": "client/temp/project-checks/idle-claim-recovery.log"
+    },
+    {
+      "id": "idle-claim-binding",
+      "passed": true,
+      "elapsedMs": 484,
+      "log": "client/temp/project-checks/idle-claim-binding.log"
+    },
+    {
+      "id": "idle-claim-intent",
+      "passed": true,
+      "elapsedMs": 1221,
+      "log": "client/temp/project-checks/idle-claim-intent.log"
+    },
+    {
+      "id": "resource-generated",
+      "passed": true,
+      "elapsedMs": 661,
+      "log": "client/temp/project-checks/resource-generated.log"
+    },
+    {
+      "id": "game-protocol-generated",
+      "passed": true,
+      "elapsedMs": 1035,
+      "log": "client/temp/project-checks/game-protocol-generated.log"
+    },
+    {
+      "id": "config-generated",
+      "passed": true,
+      "elapsedMs": 16247,
+      "log": "client/temp/project-checks/config-generated.log"
+    },
+    {
+      "id": "config-package",
+      "passed": true,
+      "elapsedMs": 5960,
+      "log": "client/temp/project-checks/config-package.log"
+    },
+    {
+      "id": "config-package-generated",
+      "passed": true,
+      "elapsedMs": 1601,
+      "log": "client/temp/project-checks/config-package-generated.log"
+    },
+    {
+      "id": "config-package-store",
+      "passed": true,
+      "elapsedMs": 5147,
+      "log": "client/temp/project-checks/config-package-store.log"
+    },
+    {
+      "id": "config-package-loading",
+      "passed": true,
+      "elapsedMs": 4526,
+      "log": "client/temp/project-checks/config-package-loading.log"
+    },
+    {
+      "id": "bindings",
+      "passed": true,
+      "elapsedMs": 301,
+      "log": "client/temp/project-checks/bindings.log"
+    },
+    {
+      "id": "prefab-plan",
+      "passed": true,
+      "elapsedMs": 2200,
+      "log": "client/temp/project-checks/prefab-plan.log"
+    },
+    {
+      "id": "game-protocol",
+      "passed": true,
+      "elapsedMs": 407,
+      "log": "client/temp/project-checks/game-protocol.log"
+    },
+    {
+      "id": "page-lifecycle-recovery",
+      "passed": true,
+      "elapsedMs": 522,
+      "log": "client/temp/project-checks/page-lifecycle-recovery.log"
+    },
+    {
+      "id": "overlay-lifecycle",
+      "passed": true,
+      "elapsedMs": 1680,
+      "log": "client/temp/project-checks/overlay-lifecycle.log"
+    }
+  ],
+  "backendTests": [
+    {
+      "name": "com.funsgamex.mxzg.RewardFeedbackServiceTest",
+      "tests": "17",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.funsgamex.mxzg.MainChapterIdleClaimSocketTest",
+      "tests": "5",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0"
+    }
+  ],
+  "interop": [
+    {
+      "path": "backend/target/reward-notice.pb",
+      "passed": true,
+      "command": "node client/temp/project-checks/reward-protocol.cjs --java=backend/target/reward-notice.pb --require-upgrade",
+      "bytes": 255,
+      "sha256": "a52875d8e352d7bd1f9f9a6041524460087926c9af2b0d98abb44fb9c82e035d"
+    },
+    {
+      "path": "backend/target/reward-notice-upgrade-empty.pb",
+      "passed": true,
+      "command": "node client/temp/project-checks/reward-protocol.cjs --java=backend/target/reward-notice-upgrade-empty.pb --require-upgrade",
+      "bytes": 91,
+      "sha256": "b2a352c073c040c8e24232a83d14e68767c91407445555ab144dbf80000ab7f7"
+    }
+  ],
+  "sourceSha256": {
+    "protocol/game.proto": "02396eb017c52f32838991ebb129ea1781885f428a6cd6b27e90304262228cc1",
+    "backend/src/main/java/com/funsgamex/mxzg/reward/RewardFeedbackService.java": "a69d97e397d7611146e227ecd62f0a8096f9d4288a2768592809f0451a002dad",
+    "client/assets/scripts/platform/GameProtocol.generated.ts": "01f910c0c733b989dcfba599634086e42beeccb97ea256411104eb3d4c5db25f",
+    "client/assets/scripts/platform/GameProtocolCodecUtils.ts": "6d91149617806ed8386c900f3ad2f6c8efc19e94b04b3ede3b251686df2b6d16",
+    "client/assets/scripts/features/reward/data/RewardData.ts": "e3e519d47d69742721b92695cf2a9b9496036534816ff0f7f5c65d7a6ecac228",
+    "client/assets/scripts/features/reward/data/RewardNoticeData.ts": "6cfcbc0a766821c35a0cd121bcf7f81ecfc32a3adfa547078929547a1d655def",
+    "client/assets/scripts/features/reward/utils/RewardUtils.ts": "8f289201a63c29bbe0b55c1b417e1585ff3faf347130ec6c655b3cc60d525f73",
+    "client/assets/scripts/features/reward/utils/RoleUpgradeUtils.ts": "f8c3cbbb235682faca1faabc3ed12a6f383b44d12a6586d5c87d213b805b5fee",
+    "client/assets/scripts/features/reward/ui/RoleUpgradeView.ts": "7ef8cbb0fae1e884b3954c419d1aacf77280e0d6017a2fa2215f24e26dfad572",
+    "client/assets/bundles/module/common/prefabs/RoleUpgradeView.prefab": "de06028c228cbc733d5ea5a650bcc5839d81a85d8c167727cf94ca2df224d5be",
+    "client/assets/scripts/features/reward/RewardController.ts": "8ab0ceae89b65506dc57a93306c47afb6615ace7ff23751532aa5bc45112a54a",
+    "client/assets/scripts/features/reward/RewardModel.ts": "96fbee0c28067c7a83cce5145862c1fc69996a6181738bd1dba7c4a0b090473d",
+    "client/assets/scripts/app/remake/RewardBinding.ts": "26dd6786a93685842cd8cab6a2f8c71515e1667583d0240e8801f326d495d942",
+    "client/assets/scripts/features/battle/MainChapterModel.ts": "d7f0eeaf57de7ae236cb628f61b16b7311b81f00fb89240022fe4c4aaf68c75f",
+    "client/assets/scripts/features/battle/utils/ChapterSettlementUtils.ts": "ca1c3e39cc593e6575febae97c696cd1a8529e5bfa8deda4735c5016ff9403ee",
+    "tools/export_role_upgrade_features.py": "b177664aff80f6fbd9384e690700dd898a48083aefc12a3898d1578642c7a526",
+    "tools/export_gameconfig.py": "97e6b15a51dab7582688d119c299d574af29626a950a9141909f96284ac8723f",
+    "config/client-schema.json": "aa429ee7e1840ff38e888f83ee9f1cadabc38e62e10cc519d5ff59096ad20817",
+    "config/legacy-client/opencondition.lua": "84cd705acff316bbf2994f5ed7a45a968150fed87af9220993559e35f31bc1e6",
+    "config/legacy-client/opencondition.source.json": "3aabb8c576c412af83b0bad0f0c4ece3c2e4e43045aafbf061b75ed16e5204f1",
+    "client/assets/bundles/resources/config/roleupgradefeature.json": "274612615f0eead5f535388548a0aa4fc51c7f8d92b183ab9dbf5f97cbf327e6"
+  },
+  "legacy": "docs/validation/role-upgrade-legacy-audit-20261116.json",
+  "preview": "docs/validation/role-upgrade-preview-20261116.json",
+  "limits": [
+    "最高等级/多段经验链/无奖励升级/SILENT/TIPS/高等级同阈值由专项而非全部实际画面覆盖。",
+    "未做发布包、MySQL、真机/OS后台/崩溃断电或所有旧经验来源验收；领取仍关闭。",
+    "两个独立服已停止、两个临时标签已关闭；主线内存夹具进程按PID/启动时间/Java路径核归属停止。"
+  ],
+  "peerReview": "只读复核未发现实质缺陷：真实经验链、模式、原回执去重、冷恢复/挂机一致性、关闭及旧源只读投影。",
+  "documentationLinksChecked": 258
+}

@@ -1,0 +1,243 @@
+{
+  "date": "2026-11-16",
+  "scope": "主线前三关首通、角色升级赠钻及额外奖励分类的源码审计；不实现、不开放、不构建、不提交",
+  "oldRoot": "G:/work/FsGame/Demo/mj/program/",
+  "primaryFindings": [
+    {
+      "topic": "首通奖励",
+      "conclusion": "3002只发cModel.first_reward，SLIENT；不会套挂机VIP/世界/礼包/神职加成，也不把角色升级赠钻并入首通thingSet。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 291
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/processor/RoleExpProcessor.java",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "topic": "正常与冷重登反馈",
+      "conclusion": "旧BattleLayer.onCreate发3002；BattleResponse有战报开BattleEndCtr，缺战报且非引导开通用ItemRewardCtr。两者只消费3002实际首通列表。",
+      "evidence": [
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/battle/BattleLayer.lua",
+          "line": 207
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "topic": "角色升级赠钻",
+      "conclusion": "RoleExpProcessor调用RoleService.addExp后仅返回原经验thingSet；addExp逐级汇总离开等级的mainlevel.reward，另走ThingService.add(LEVEL_REWARD,SLIENT)，2014携带升级前后等级、now_exp和真实奖励。Lua RoleResponse.roleUpgrade另开RoleUpgradeCtr，后者合并同类奖励并展示等级变化/下一功能。不是旧胜利首通列表的一部分。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/role/service/RoleService.java",
+          "line": 270
+        },
+        {
+          "path": "mxzg-protofiles/protofiles/game/Role.proto",
+          "line": 189
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/RoleResponse.lua",
+          "line": 590
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 72
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/RoleUpgradeCtr.lua",
+          "line": 186
+        }
+      ]
+    },
+    {
+      "topic": "chapterextrareward额外奖励",
+      "conclusion": "独立3008请求，校验达成关卡、rewardIds未领后发放，不是首通自动附赠。旧配置首项idx100/第15关/10105007英雄1个，前三关没有可领里程碑。BattleEndCtr只读取下一未领配置并显示剩余关卡提示；不会把其物品加进vec_reward。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/handler/BattleHandler.java",
+          "line": 424
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/config/chapterextrareward.lua",
+          "line": 3
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/data/ChapterData.lua",
+          "line": 441
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/layer/BattleEndCtr.lua",
+          "line": 305
+        },
+        {
+          "path": "client/cocos_mxzg/client/idle/src/net/BattleResponse.lua",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "topic": "加成及事件边界",
+      "conclusion": "VIP/世界/礼包/神职加成位于RoleMissionService.idleBattleReward，3002未调用。ChapterPassEvent另驱动任务/活动计数、限购提示等未恢复模块；所查观察者不向3002追加首通奖励，不能据事件存在把这些领域恢复为主线附赠。",
+      "evidence": [
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/battle/service/RoleMissionService.java",
+          "line": 268
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/limitBuy/service/ChapterLimitProductionService.java",
+          "line": 29
+        },
+        {
+          "path": "server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/promotionNew/observer/Promotion030MysteryBoxObserver.java",
+          "line": 68
+        }
+      ]
+    }
+  ],
+  "firstThreeStages": [
+    {
+      "stage": 1,
+      "firstRewards": [
+        {
+          "quantity": 100,
+          "itemId": 900401
+        },
+        {
+          "quantity": 4000,
+          "itemId": 900001
+        },
+        {
+          "quantity": 200,
+          "itemId": 900003
+        },
+        {
+          "quantity": 500,
+          "itemId": 900101
+        },
+        {
+          "quantity": 2,
+          "itemId": 900102
+        },
+        {
+          "quantity": 30,
+          "itemId": 20204004
+        },
+        {
+          "quantity": 1,
+          "itemId": 1004001
+        }
+      ],
+      "freshRoleExample": "等级1经验0增加200→等级2经验80，离开等级1附赠900002×10"
+    },
+    {
+      "stage": 2,
+      "firstRewards": [
+        {
+          "quantity": 100,
+          "itemId": 900401
+        },
+        {
+          "quantity": 4000,
+          "itemId": 900001
+        },
+        {
+          "quantity": 151,
+          "itemId": 900002
+        },
+        {
+          "quantity": 200,
+          "itemId": 900003
+        },
+        {
+          "quantity": 500,
+          "itemId": 900101
+        },
+        {
+          "quantity": 2,
+          "itemId": 900102
+        },
+        {
+          "quantity": 1,
+          "itemId": 1004001
+        }
+      ],
+      "freshRoleSequentialExample": "接第一关等级2经验80增加200→等级2经验280，无升级附赠；151钻为首通基础奖励"
+    },
+    {
+      "stage": 3,
+      "firstRewards": [
+        {
+          "quantity": 100,
+          "itemId": 900401
+        },
+        {
+          "quantity": 4200,
+          "itemId": 900001
+        },
+        {
+          "quantity": 200,
+          "itemId": 900003
+        },
+        {
+          "quantity": 700,
+          "itemId": 900101
+        },
+        {
+          "quantity": 1,
+          "itemId": 20005000
+        },
+        {
+          "quantity": 1,
+          "itemId": 1003001
+        }
+      ],
+      "freshRoleSequentialExample": "接第二关等级2经验280增加200→等级3经验120，离开等级2附赠900002×10"
+    }
+  ],
+  "configurationEvidence": {
+    "oldChapterLua": "client/cocos_mxzg/client/idle/src/config/chapterreward.lua:3",
+    "sharedMainlevel": "client/assets/bundles/resources/config/mainlevel.json",
+    "sharedSource": "config/gameconfig/mainlevel.xlsx",
+    "thresholds": [
+      {
+        "level": 1,
+        "exp": 120,
+        "diamondBonus": 10
+      },
+      {
+        "level": 2,
+        "exp": 360,
+        "diamondBonus": 10
+      },
+      {
+        "level": 3,
+        "exp": 720,
+        "diamondBonus": 20
+      }
+    ],
+    "note": "旧客户端mainlevel.lua只导出经验字段；升级奖励由旧服务端CMainLevel.reward读取。数值示例据当前项目同源XLSX生成JSON，不从Lua缺字段推断奖励为空。例子不计算未恢复其他玩法的经验。"
+  },
+  "currentGap": {
+    "atStart": "MainChapterRewardService.grantPlan丢弃RewardGrantResult.bonuses，仅映射items.credited。MainChapterService.Receipt只有基础rewards和经验前后，正常ChapterEndView与冷恢复restoreItems都拿不到实际升级赠钻明细。",
+    "scopeAdvice": [
+      "原回执冻结实际基础items、bonuses来源/数量及经验；重放读取原结果，不能用当前钱包差或当前mainlevel重算历史。",
+      "首通列表和升级附赠保留不同来源，尤其第二关151基础钻石不得误标升级奖励。",
+      "正常胜利与冷重登沿既有固定presentation互斥，复用当前通用奖励链；若合并视觉必须记录为本次授权的收敛方式，不能声称旧版就是同窗。",
+      "额外奖励里程碑当前没有到账；其下一目标提示尚缺权威领取进度、同源表及旧show_rich区域，本批不单造文字补表现。3008领取、第15关及英雄发放不在本批范围。",
+      "历史回执缺bonuses须明确未记录，不能把缺字段解释成已知零奖励；当前新发奖写完整，旧记录只读。"
+    ]
+  },
+  "limitations": [
+    "只审计本地旧源码、当前源码和同源配置投影，未访问正式服、不代签正式服画面。",
+    "未运行浏览器、后端领域/WS、MySQL、构建或真实发奖测试。",
+    "只列当前前三关直接首通及等级附赠，不声称旧游戏所有活动/任务奖励都已审完。"
+  ]
+}

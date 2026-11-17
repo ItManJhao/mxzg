@@ -1,5 +1,5 @@
 /**
- * 持久主线阵容的只读战斗审计：鉴权读取同一版本输入，再在独立内存中执行前三关。
+ * 持久主线阵容的只读战斗审计：鉴权读取同一版本输入，再按全局关卡配置在独立内存中执行。
  * 由受开发开关保护的battle.preview调用，不修改通关、奖励、阵容或英雄；未恢复属性以pending明确返回。
  */
 package com.funsgamex.mxzg.hero;
@@ -35,12 +35,9 @@ public class HeroLineupBattleService {
      * 读取当前角色真实阵容并运行独立战场；未知技能明确失败，禁止静默删技能。
      * decision由调用方提供；开发请求保留概率待审，独立测试可固定分支，不伪称原随机算法已验收。
      */
-    public Preview preview(String token, int mission, DoublePredicate decision) {
-        if (mission < 1 || mission > 3) {
-            throw new IllegalArgumentException("只读审计仅支持第一章前三关");
-        }
+    public Preview preview(String token, int stageIndex, DoublePredicate decision) {
         var input = inputs.current(token);
-        var report = battles.runSavedFormation(mission, input, decision);
+        var report = battles.runSavedFormation(stageIndex, input, decision);
         HeroBattleReplayUtils.validate(report);
         return new Preview(input.assetRevision(), input.lineupVersion(), input.formationId(), input.pending(), report);
     }

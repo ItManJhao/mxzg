@@ -1,0 +1,1936 @@
+{
+  "schemaVersion": 1,
+  "scope": "第4关闭合必需的追猎者/诺亚四套旧技能序列帧；只修原画布内Y偏移和RGBA复制，不改美术内容、尺寸、Prefab或UUID。",
+  "basis": "旧PVR RGBA8888与plist.sourceColorRect；修前PNG摘要与像素读取Git HEAD基线，meta摘要在本批修复前从实际工作区保存。",
+  "beforeCommit": "51c3434a2fe385e54437b00d8fab69c4e1d4bdc6",
+  "pixelComparison": "逐帧在原sourceSize透明画布按sourceColorRect直接复制RGBA，逐字节相等；不使用alpha作为二次mask。",
+  "metadataHandling": "修复脚本只写PNG，完成瞬间45份meta字节未变；Creator监听图片后自动重导入trim/offset/UV派生字段。保留这些正确派生更新，逐项验证image/texture/spriteFrame UUID、rawSize、pivot和九宫格不变。",
+  "browserValidation": "本文件不代表Creator显示/真机验收。",
+  "sources": [
+    {
+      "name": "skill-103020021",
+      "legacyPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103020021.pvr.ccz",
+      "pvrSha256": "9363e95774425f13719adb16b72cdc7df05bfbb213f3c5323873f1a051526390",
+      "legacyPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103020021.plist",
+      "plistSha256": "73915a244b500c24de7a512d0090fa9a1a7a2684fceda1aa274381f8f596cc3b",
+      "frameCount": 15,
+      "firstFrame": "skill-103020021/0.png",
+      "lastFrame": "skill-103020021/14.png",
+      "continuousFromZero": true
+    },
+    {
+      "name": "skill-103030030",
+      "legacyPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103030030.pvr.ccz",
+      "pvrSha256": "c79024309df72f7b7069d8629636d93aa27b8bea9c450c77a8017635d4c037d8",
+      "legacyPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103030030.plist",
+      "plistSha256": "4171626f9121ddc8b3ac374ca926930cb67e62f51c655a4588cb0a4e193af277",
+      "frameCount": 12,
+      "firstFrame": "skill-103030030/0.png",
+      "lastFrame": "skill-103030030/11.png",
+      "continuousFromZero": true
+    },
+    {
+      "name": "skill-103040050",
+      "legacyPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103040050.pvr.ccz",
+      "pvrSha256": "9cafb71937d3e0295317f3a0ec7bfc399e2835cff81f64651fd2efb242a7307f",
+      "legacyPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103040050.plist",
+      "plistSha256": "cd6d590ee0a1f111ac7a64d648d55e7d294b0c7faac335950f91bfdef68371f0",
+      "frameCount": 8,
+      "firstFrame": "skill-103040050/0.png",
+      "lastFrame": "skill-103040050/7.png",
+      "continuousFromZero": true
+    },
+    {
+      "name": "skill-103040051",
+      "legacyPvr": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103040051.pvr.ccz",
+      "pvrSha256": "69a21be9de22efb140e923c5ba6dda72c6e7e41836262fc21e32f1ed76af7dd0",
+      "legacyPlist": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/skill/skill-103040051.plist",
+      "plistSha256": "f643fc47617e8bca1e8a6e42f7205ae9fbbfb7e17566c5934f7339d7a7400441",
+      "frameCount": 10,
+      "firstFrame": "skill-103040051/0.png",
+      "lastFrame": "skill-103040051/9.png",
+      "continuousFromZero": true
+    }
+  ],
+  "files": [
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_0.png",
+      "frame": "skill-103020021/0.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        55,
+        175,
+        49,
+        15
+      ],
+      "beforeSha256": "e4143126f93bc1c5eabba5d0bafb2053e5856279f8d9d810664835a6662971d5",
+      "afterSha256": "7cb511b48392d55ab11cbf24742ddb79c8691439dc47794120a0f021df4a4325",
+      "beforeBounds": [
+        55,
+        2,
+        104,
+        16
+      ],
+      "afterBounds": [
+        55,
+        176,
+        104,
+        190
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "f60633ccf5d43306ab38dfa2f6691e0171c72d0d694af6795067b55892e4856e",
+      "metaSha256After": "91c80bb23d6c5639db9269ab4684b27f3ee57bf77a53c2dfd9607d0a1fe8f83c",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "9795a380-cd5e-4d3d-84a0-ec6612c8a007",
+        "subMetas": {
+          "6c48a": "9795a380-cd5e-4d3d-84a0-ec6612c8a007@6c48a",
+          "f9941": "9795a380-cd5e-4d3d-84a0-ec6612c8a007@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_1.png",
+      "frame": "skill-103020021/1.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        54,
+        168,
+        53,
+        23
+      ],
+      "beforeSha256": "0e094d551ad72fdd02d7babc1cf5c02eefb165623889f77f7d83bb1ea1c2e035",
+      "afterSha256": "e9775e601819908c5e6bfef8e4ed86c49bd6fe2915d9a6835e48f39edf5c13cd",
+      "beforeBounds": [
+        54,
+        0,
+        107,
+        23
+      ],
+      "afterBounds": [
+        54,
+        168,
+        107,
+        191
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "859a5fe2df9f2551b893c99a171e22d5555db004a6fa9e7a2d756f7c6853fea0",
+      "metaSha256After": "5736bcaad48e627d6c7b8d38af114c1376faabd6988fedc443794a6fe64b4a53",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "36c520f0-c091-4dbf-97db-dcb12af6259e",
+        "subMetas": {
+          "6c48a": "36c520f0-c091-4dbf-97db-dcb12af6259e@6c48a",
+          "f9941": "36c520f0-c091-4dbf-97db-dcb12af6259e@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_2.png",
+      "frame": "skill-103020021/2.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        52,
+        164,
+        57,
+        27
+      ],
+      "beforeSha256": "d8350b0067253fed95a3e67ad4ef6c9cf1903354246fcfcd93915494bee30165",
+      "afterSha256": "ed9a7aaeef331dadec8c6a133a23017270cd3688dd5cf169f334dfceb02e356e",
+      "beforeBounds": [
+        52,
+        0,
+        109,
+        27
+      ],
+      "afterBounds": [
+        52,
+        164,
+        109,
+        191
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "ea279f237fbf57b225a5cf757c0b73c2002c14e7e3457252849f460265cb2d74",
+      "metaSha256After": "ff05c88a73b682841b2d10710814999b57e916d3d9f4ecfbac6cc6539b198e29",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "26cb5100-33ad-49c9-ac36-6fc1e70abd86",
+        "subMetas": {
+          "6c48a": "26cb5100-33ad-49c9-ac36-6fc1e70abd86@6c48a",
+          "f9941": "26cb5100-33ad-49c9-ac36-6fc1e70abd86@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_3.png",
+      "frame": "skill-103020021/3.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        50,
+        160,
+        61,
+        31
+      ],
+      "beforeSha256": "5f9878705cbffccdb7f20564ef4b055d27fdd77e539f471cb1b880b49aa92c10",
+      "afterSha256": "e73aad1e1ea71a166304ff051b5d59ae0ae9599b843972027892dc989534775f",
+      "beforeBounds": [
+        50,
+        0,
+        111,
+        31
+      ],
+      "afterBounds": [
+        50,
+        160,
+        111,
+        191
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "0de1e86834c82f04ed7fd5f80d1df3820178e1dc07b1edeee2ffd6513d91c49a",
+      "metaSha256After": "d539fe8c632fadf9283dcb72b45e563840cc5eeb81ba387537fb9402c97fa3cb",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "1cc6654b-7a7a-4d4b-bee0-5896e80ae949",
+        "subMetas": {
+          "6c48a": "1cc6654b-7a7a-4d4b-bee0-5896e80ae949@6c48a",
+          "f9941": "1cc6654b-7a7a-4d4b-bee0-5896e80ae949@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_4.png",
+      "frame": "skill-103020021/4.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        49,
+        132,
+        79,
+        59
+      ],
+      "beforeSha256": "cf3eecae7af8f83edb75ec8d844f276ead8ad67adb10129783ed6f0cf6f8d304",
+      "afterSha256": "b34adc186352a81bfe4fc71e5a1694c28dd5e3b1d23ba91a5e5bff3ff63bc764",
+      "beforeBounds": [
+        50,
+        1,
+        128,
+        59
+      ],
+      "afterBounds": [
+        50,
+        133,
+        128,
+        191
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "3b3a39f649ac3b22378b253e7d38e79f5edb4624b2bc1760c265510de43995fa",
+      "metaSha256After": "7d491b272b99c92bd293dc86c20cace37a2c93b6f07d28e9a8696c26b1550e6f",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "3230ba24-9d55-4f37-893d-853bd91b668b",
+        "subMetas": {
+          "6c48a": "3230ba24-9d55-4f37-893d-853bd91b668b@6c48a",
+          "f9941": "3230ba24-9d55-4f37-893d-853bd91b668b@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_5.png",
+      "frame": "skill-103020021/5.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        22,
+        22,
+        115,
+        169
+      ],
+      "beforeSha256": "27f1123f3288d5a0f81f2f8ee565e80a09d7d65c5787d3decceefcb641c81672",
+      "afterSha256": "6dfeb3b804f9d7ddd29e55afa1d8003ac3162297fb99bc0e7d329e2ae68c41e8",
+      "beforeBounds": [
+        23,
+        0,
+        137,
+        169
+      ],
+      "afterBounds": [
+        23,
+        22,
+        137,
+        191
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "a9dcc95e5bdac010ad1077d6fa52aba7a567ab6d712a76718a1b7dd54df2f922",
+      "metaSha256After": "8057d253db2157001d9a3a81f1076a8c83d7771649fa3bd4580a4539cb4c92d9",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "e9168986-4c80-4911-b1ab-954ffbd70a48",
+        "subMetas": {
+          "6c48a": "e9168986-4c80-4911-b1ab-954ffbd70a48@6c48a",
+          "f9941": "e9168986-4c80-4911-b1ab-954ffbd70a48@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_6.png",
+      "frame": "skill-103020021/6.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        5,
+        21,
+        129,
+        169
+      ],
+      "beforeSha256": "c48a6b6161d3b9d818bfbac6b26d6e28ebe21a8021e802cab745054d89744336",
+      "afterSha256": "a542abe5f1c57b0aa494efe3a08e607a5dfe3bcfaa8dcf47801928bb3b7a02fa",
+      "beforeBounds": [
+        6,
+        2,
+        134,
+        170
+      ],
+      "afterBounds": [
+        6,
+        22,
+        134,
+        190
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "cc86bbd7fb5184670c090a20f98799835096da7900ccc39e6030ddebbce94846",
+      "metaSha256After": "97bf6ace540c09d35cb61ffa71d9b0cd698d3f4a09dce894cb5d9324913495bb",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "7a9a30bb-15aa-40ad-8c4c-fa4386799b99",
+        "subMetas": {
+          "6c48a": "7a9a30bb-15aa-40ad-8c4c-fa4386799b99@6c48a",
+          "f9941": "7a9a30bb-15aa-40ad-8c4c-fa4386799b99@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_7.png",
+      "frame": "skill-103020021/7.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        0,
+        24,
+        131,
+        167
+      ],
+      "beforeSha256": "b64472abc29bf5cbeb7976eac6e6cebd541e396462777634587fd2f7fd6f8625",
+      "afterSha256": "8426f968eddb9eef7831955b19e828f6b04d31f92dea28e55bbfdd57c8e807f6",
+      "beforeBounds": [
+        0,
+        1,
+        131,
+        167
+      ],
+      "afterBounds": [
+        0,
+        25,
+        131,
+        191
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "688be1a9e1ad9cbcf15c60dd32a5af5fb559df577eca4d7d20387a2612b9bb3c",
+      "metaSha256After": "d37adb31fd5a31d5085a8794b7181aa18c8ca5b5088c23717ee95295831edd03",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "7a03799a-ab56-42b2-a50e-a43349222006",
+        "subMetas": {
+          "6c48a": "7a03799a-ab56-42b2-a50e-a43349222006@6c48a",
+          "f9941": "7a03799a-ab56-42b2-a50e-a43349222006@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_8.png",
+      "frame": "skill-103020021/8.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        3,
+        15,
+        129,
+        175
+      ],
+      "beforeSha256": "7d80c36a48652692d1890e4f54d2d2ce8d6ad87da39cb5174ef4b3da4f87f567",
+      "afterSha256": "707c4711ef4ca9186a26256911dfb887de060adfa53122fec071883a276e0942",
+      "beforeBounds": [
+        4,
+        2,
+        132,
+        176
+      ],
+      "afterBounds": [
+        4,
+        16,
+        132,
+        190
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "1d61c58df1364ee7e913b1dec2eb1b5e548ced82114cf87eb96c917fb14eb635",
+      "metaSha256After": "e4a6a64bcfbfe953141a587f2d13c08d6d1963be1a29a73e275594b4bdb47d6d",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "057323d6-a761-4f5d-b433-bad4b79ddce3",
+        "subMetas": {
+          "6c48a": "057323d6-a761-4f5d-b433-bad4b79ddce3@6c48a",
+          "f9941": "057323d6-a761-4f5d-b433-bad4b79ddce3@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_9.png",
+      "frame": "skill-103020021/9.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        5,
+        9,
+        129,
+        181
+      ],
+      "beforeSha256": "2a89d329b8cda1b710f0292881bf2bf7ff4d6aec6be81e4d64cf0aa0e18ae88c",
+      "afterSha256": "d7d1a987777abc7c2a6f1d81d1c756f91be2f926ae62f20df320a2887b700ea7",
+      "beforeBounds": [
+        6,
+        1,
+        134,
+        182
+      ],
+      "afterBounds": [
+        6,
+        9,
+        134,
+        190
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "0573ee79d736a623d07cac24fe97d30b159dc99722731afd16bee2ef875b6d0a",
+      "metaSha256After": "0e79743add34685277b8208573d9e21e11c81cfe1bf3cb95cb69fade4ffffea6",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "a6a20d54-57bc-41fd-89ab-c7860f5c52d3",
+        "subMetas": {
+          "6c48a": "a6a20d54-57bc-41fd-89ab-c7860f5c52d3@6c48a",
+          "f9941": "a6a20d54-57bc-41fd-89ab-c7860f5c52d3@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_10.png",
+      "frame": "skill-103020021/10.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        11,
+        0,
+        123,
+        191
+      ],
+      "beforeSha256": "d2e7237e256f0bcd37510b7d80abd365caac896aab6408e7aa8b274f746da31e",
+      "afterSha256": "d9912822bf2ef048d303dcccd901ecd1cd6166aa054ab35bd34a50237784defb",
+      "beforeBounds": [
+        12,
+        0,
+        134,
+        190
+      ],
+      "afterBounds": [
+        12,
+        0,
+        134,
+        190
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "b44e5572922ddab53d7aae3b432efa0eda6a3252e4f89e7fee7eceb4569bf315",
+      "metaSha256After": "b44e5572922ddab53d7aae3b432efa0eda6a3252e4f89e7fee7eceb4569bf315",
+      "creatorReimportedMeta": false,
+      "preservedIdentity": {
+        "image": "671c36a2-7bc5-4de2-bf01-da5ef3b53040",
+        "subMetas": {
+          "6c48a": "671c36a2-7bc5-4de2-bf01-da5ef3b53040@6c48a",
+          "f9941": "671c36a2-7bc5-4de2-bf01-da5ef3b53040@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_11.png",
+      "frame": "skill-103020021/11.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        14,
+        1,
+        111,
+        189
+      ],
+      "beforeSha256": "203825177d5e3383c1340574845a6c41977d19edade314169575f13261a60dba",
+      "afterSha256": "8f35505716ed56689eaff36dce8d648697b635ec622132b60aa433dd3c259b91",
+      "beforeBounds": [
+        14,
+        2,
+        125,
+        190
+      ],
+      "afterBounds": [
+        14,
+        2,
+        125,
+        190
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "481ccfb11c1f0fa6c9a2b7e0837da658c69ab10436db08fef829aaa995df50e3",
+      "metaSha256After": "481ccfb11c1f0fa6c9a2b7e0837da658c69ab10436db08fef829aaa995df50e3",
+      "creatorReimportedMeta": false,
+      "preservedIdentity": {
+        "image": "0dc290f2-f640-4eb1-9409-68f10f968340",
+        "subMetas": {
+          "6c48a": "0dc290f2-f640-4eb1-9409-68f10f968340@6c48a",
+          "f9941": "0dc290f2-f640-4eb1-9409-68f10f968340@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_12.png",
+      "frame": "skill-103020021/12.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        14,
+        2,
+        103,
+        187
+      ],
+      "beforeSha256": "fe85ab3db1b9829e063140357cc84826b4e57d48572b0d62245da38a6e98f823",
+      "afterSha256": "cc5331c86e8fed42229638436a3b0c55ca526fae1df3913bc7801eb7ae6df597",
+      "beforeBounds": [
+        14,
+        3,
+        117,
+        189
+      ],
+      "afterBounds": [
+        14,
+        3,
+        117,
+        189
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "ebdfbb95f4ee80c175d8d43e00e9af8e7298a6495d5464a708b433a1f120a18e",
+      "metaSha256After": "ebdfbb95f4ee80c175d8d43e00e9af8e7298a6495d5464a708b433a1f120a18e",
+      "creatorReimportedMeta": false,
+      "preservedIdentity": {
+        "image": "9ee83827-a1ba-440e-9073-a386bf55df22",
+        "subMetas": {
+          "6c48a": "9ee83827-a1ba-440e-9073-a386bf55df22@6c48a",
+          "f9941": "9ee83827-a1ba-440e-9073-a386bf55df22@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_13.png",
+      "frame": "skill-103020021/13.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        16,
+        3,
+        93,
+        185
+      ],
+      "beforeSha256": "81c0eeb38dec4632b7cd4964876060793c5da8303183970c76b9c53b77b0ac42",
+      "afterSha256": "648c9f6e159f975264c410dc3e72a9631b1dfef50026395164d4204a126c9a23",
+      "beforeBounds": [
+        17,
+        3,
+        109,
+        188
+      ],
+      "afterBounds": [
+        17,
+        3,
+        109,
+        188
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "1715d5d4af596f43b4068fb95d7011aab012960bbc0f220de64e774b01da943d",
+      "metaSha256After": "1715d5d4af596f43b4068fb95d7011aab012960bbc0f220de64e774b01da943d",
+      "creatorReimportedMeta": false,
+      "preservedIdentity": {
+        "image": "1f6737ac-109e-47fa-8ade-6d3788e8b3a4",
+        "subMetas": {
+          "6c48a": "1f6737ac-109e-47fa-8ade-6d3788e8b3a4@6c48a",
+          "f9941": "1f6737ac-109e-47fa-8ade-6d3788e8b3a4@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103020021/skill-103020021_14.png",
+      "frame": "skill-103020021/14.png",
+      "canvasSize": [
+        137,
+        191
+      ],
+      "sourceColorRect": [
+        55,
+        42,
+        51,
+        41
+      ],
+      "beforeSha256": "24c09656edc507958ee6396abe1b5eefaede4ad9bf5ffd63accc39d6894c4a9b",
+      "afterSha256": "3d72ad557ba720f83a5f8ac7fe2f2ce34e39c75654eedf0e5ff206a82074ee40",
+      "beforeBounds": [
+        56,
+        108,
+        106,
+        149
+      ],
+      "afterBounds": [
+        56,
+        42,
+        106,
+        83
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "d101d1f14ea177fa81c0028fdd4d8199f99af89d3b5c6859f3a670f064e38c87",
+      "metaSha256After": "8878eae550b80c22a60c9977cddf36cb247e6e51fb2c949f48f423edcaf10f2c",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "a353fa64-dba6-47e5-8d4a-47d82624b0c3",
+        "subMetas": {
+          "6c48a": "a353fa64-dba6-47e5-8d4a-47d82624b0c3@6c48a",
+          "f9941": "a353fa64-dba6-47e5-8d4a-47d82624b0c3@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_0.png",
+      "frame": "skill-103030030/0.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        3,
+        40,
+        146,
+        135
+      ],
+      "beforeSha256": "5873a82219ce0191af2ec1f42189fc5ed12ebd38cb2c8523e6d2d5b8d1346877",
+      "afterSha256": "394e16432e5d4192da0c6056b5007cdff949329c36223c03dd9d8d6849afd866",
+      "beforeBounds": [
+        3,
+        1,
+        149,
+        135
+      ],
+      "afterBounds": [
+        3,
+        41,
+        149,
+        175
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "047a43bdf4d1d224effe433a4d511037457d9183dc959f48dab18c234ae2c8cb",
+      "metaSha256After": "463258864e071b9e2c1add7e04ed8b161fda6a52e968baad1e4a71ca8cbf200a",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "027f50eb-d499-45a8-b1a3-fad0a6692144",
+        "subMetas": {
+          "6c48a": "027f50eb-d499-45a8-b1a3-fad0a6692144@6c48a",
+          "f9941": "027f50eb-d499-45a8-b1a3-fad0a6692144@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_1.png",
+      "frame": "skill-103030030/1.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        7,
+        36,
+        142,
+        133
+      ],
+      "beforeSha256": "793c96957626bbec7413660521a325a79959124008e832c3ae4adde2810da63d",
+      "afterSha256": "7b6561b4a38ccd49f6edcdd7f1d5b6db96aee291c3ebd30605773bff0dc63f4e",
+      "beforeBounds": [
+        7,
+        7,
+        149,
+        139
+      ],
+      "afterBounds": [
+        7,
+        37,
+        149,
+        169
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "e2cf0eae734ba0cf26a8325dd4fa500ba74852fd1170bada7dec19dcc5bcbcbf",
+      "metaSha256After": "8079b48596bb20631e53651a339f3abdc9dd0718b2bf4f998fd3eeff8a90b64d",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "2fdd7180-1fdb-436f-9800-190d812b8cd6",
+        "subMetas": {
+          "6c48a": "2fdd7180-1fdb-436f-9800-190d812b8cd6@6c48a",
+          "f9941": "2fdd7180-1fdb-436f-9800-190d812b8cd6@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_2.png",
+      "frame": "skill-103030030/2.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        17,
+        34,
+        122,
+        123
+      ],
+      "beforeSha256": "521c1d8c980ada11a43167e059c079a3386a51b6b9a6ee3c076e794b8d6040b6",
+      "afterSha256": "1c3e416dfbc303e981e21aaa1b0d8054e36c19b8487a78a9cd790f9d0cb4d95c",
+      "beforeBounds": [
+        17,
+        19,
+        139,
+        141
+      ],
+      "afterBounds": [
+        17,
+        35,
+        139,
+        157
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "c7c59362b9ac0f5d5b3029609b6d9082d114dcfcbd883470a14cd60ee6f13d04",
+      "metaSha256After": "c53834c4442ab05989cd3988e7d62e56777f8515a1c14c73cf0be412924fbb58",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "8af94e95-52bc-4e49-9c87-95c1ed1fa791",
+        "subMetas": {
+          "6c48a": "8af94e95-52bc-4e49-9c87-95c1ed1fa791@6c48a",
+          "f9941": "8af94e95-52bc-4e49-9c87-95c1ed1fa791@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_3.png",
+      "frame": "skill-103030030/3.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        18,
+        34,
+        112,
+        123
+      ],
+      "beforeSha256": "591856cc7fc32b2fbf3f17968295fbadef372a553f0b743ad4cb590c908276a5",
+      "afterSha256": "20ca7075a1d42d47469c7c9af2652de488a505a0ba630f90f61d5979cb5a8b74",
+      "beforeBounds": [
+        19,
+        19,
+        130,
+        141
+      ],
+      "afterBounds": [
+        19,
+        35,
+        130,
+        157
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "9380cac2c52babe82b13dafc47861292a8111c58ddfc7842cf11a9268ab6e3aa",
+      "metaSha256After": "a0ea3d9cff2b0d41b0b8231fac434b4f791fe8d0d48d2c586ed5a69a306f0c53",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "6e54f24b-1385-4160-a4c6-0e705eefd8c8",
+        "subMetas": {
+          "6c48a": "6e54f24b-1385-4160-a4c6-0e705eefd8c8@6c48a",
+          "f9941": "6e54f24b-1385-4160-a4c6-0e705eefd8c8@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_4.png",
+      "frame": "skill-103030030/4.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        55,
+        84,
+        58,
+        51
+      ],
+      "beforeSha256": "5fec6d730a2f21f0da2d994336da7840ab68f6bd2ea896f2e97b79c714b8f414",
+      "afterSha256": "6ba152e06c6516781114b58ada865df5acfb8d1ae0d844196239f6f1a10b0479",
+      "beforeBounds": [
+        55,
+        40,
+        113,
+        91
+      ],
+      "afterBounds": [
+        55,
+        84,
+        113,
+        135
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "6313c631b4c37b3178ddd55fa4442c69f27027d117a88d2f5deeb2a4bbaeb306",
+      "metaSha256After": "af8c189d9d8060fff5b69613e1c85d4b1520fa449f33f365a28f983ac1da9bd8",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "db22cfd6-6935-4883-9e3a-55fbbe609f7a",
+        "subMetas": {
+          "6c48a": "db22cfd6-6935-4883-9e3a-55fbbe609f7a@6c48a",
+          "f9941": "db22cfd6-6935-4883-9e3a-55fbbe609f7a@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_5.png",
+      "frame": "skill-103030030/5.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        58,
+        84,
+        50,
+        51
+      ],
+      "beforeSha256": "55bdd4626463c643746d438c53362681a3ef73aad8a36b9cf3539b62e82cf0d5",
+      "afterSha256": "a95c0b2c6369d2ba00f0706d563f2b4c8905285bb154e284ad511fe99187ec39",
+      "beforeBounds": [
+        58,
+        40,
+        108,
+        91
+      ],
+      "afterBounds": [
+        58,
+        84,
+        108,
+        135
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "f5b16cd4fdbd0ab7b227214eab1952e715d2b9c0dab1ef0fe31d694bf256143c",
+      "metaSha256After": "9a6d3ad9eab870796f64256d92d55d83375e38f6f1c8b4b47037d8c3111555fd",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "c2037397-a124-4799-9a89-604e21e17453",
+        "subMetas": {
+          "6c48a": "c2037397-a124-4799-9a89-604e21e17453@6c48a",
+          "f9941": "c2037397-a124-4799-9a89-604e21e17453@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_6.png",
+      "frame": "skill-103030030/6.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        24,
+        6,
+        138,
+        131
+      ],
+      "beforeSha256": "a2c8cc956ccd47b51a31e25532c588952e6b87457ec58e37ad97f3b0acb960f4",
+      "afterSha256": "1c189805f00e8d9c83d506461ee78a2082be1dee723efa0364cd784a94852952",
+      "beforeBounds": [
+        25,
+        39,
+        162,
+        169
+      ],
+      "afterBounds": [
+        25,
+        7,
+        162,
+        137
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "053a29f6125738af7e1e7ff7c2481f032e8b84fdfc27e3b13c25624f5dab4d5f",
+      "metaSha256After": "b580fabe024b948a3796ce16647e6f86730cada86b8adfe4249e2cc5aeabef66",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "240bd90b-b3f3-4e0c-9caf-1df185a3b3e9",
+        "subMetas": {
+          "6c48a": "240bd90b-b3f3-4e0c-9caf-1df185a3b3e9@6c48a",
+          "f9941": "240bd90b-b3f3-4e0c-9caf-1df185a3b3e9@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_7.png",
+      "frame": "skill-103030030/7.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        7,
+        2,
+        152,
+        133
+      ],
+      "beforeSha256": "c3c97478a1a99e44a6d3038f67c69aa0a0d3150df07cf6be458619bf5521770f",
+      "afterSha256": "9347c951b22598d4423a9b461d50602966843825df89e74b8cb1e4958928baf9",
+      "beforeBounds": [
+        7,
+        40,
+        159,
+        173
+      ],
+      "afterBounds": [
+        7,
+        2,
+        159,
+        135
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "66671f41b4244c3e2593cf0c8f2bd64c7cecd3bc4544d0f63441bcb078aaa8f8",
+      "metaSha256After": "37cc76dcc1a6775a8572ff0608d1aaad01628eefbb79b21ac98efc6992b5229c",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "23db82c1-94af-47b5-813d-db79887d865b",
+        "subMetas": {
+          "6c48a": "23db82c1-94af-47b5-813d-db79887d865b@6c48a",
+          "f9941": "23db82c1-94af-47b5-813d-db79887d865b@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_8.png",
+      "frame": "skill-103030030/8.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        2,
+        0,
+        148,
+        135
+      ],
+      "beforeSha256": "c513cb83860c2272367d92291bf4d9b3b3e2b30bbe41ac3fa1927e6d678b85fd",
+      "afterSha256": "7ab73c7ed2e2eff77db3016dbffe54eb241f866dcfeccbf50f197e5e2f448305",
+      "beforeBounds": [
+        3,
+        40,
+        150,
+        174
+      ],
+      "afterBounds": [
+        3,
+        0,
+        150,
+        134
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "3ad9ebad6b894e50e4a27718bf0091b648f2d62d4c1da45b3035a747b5b094ac",
+      "metaSha256After": "e821bd506a6e4d94c9e1d196fb1eae56339e01a9ba16ac30a916734f7d47e933",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "e05d8c99-b8c6-4c56-b610-7f820e0848c1",
+        "subMetas": {
+          "6c48a": "e05d8c99-b8c6-4c56-b610-7f820e0848c1@6c48a",
+          "f9941": "e05d8c99-b8c6-4c56-b610-7f820e0848c1@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_9.png",
+      "frame": "skill-103030030/9.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        0,
+        98,
+        74,
+        37
+      ],
+      "beforeSha256": "8a7a619e82a08e153f7d82a22a9020c8438b10f4be802eb72ccbb3df4a8f2700",
+      "afterSha256": "964ea0942d8f2ac8161f6408d58115b681a0c3ef3ed86f021e2653ad1301c60b",
+      "beforeBounds": [
+        0,
+        40,
+        73,
+        77
+      ],
+      "afterBounds": [
+        0,
+        98,
+        73,
+        135
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "9d05431c7c20071307a2586afa0f6799cfca29ea0ae7c661bcf989ed09fa8a82",
+      "metaSha256After": "8247a8481f273b215470485baeb6d2009e74c10cd4ac8fe433b8bfd3ad9ccd07",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "94119d14-f228-4ea0-87de-18b1f54f05dc",
+        "subMetas": {
+          "6c48a": "94119d14-f228-4ea0-87de-18b1f54f05dc@6c48a",
+          "f9941": "94119d14-f228-4ea0-87de-18b1f54f05dc@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_10.png",
+      "frame": "skill-103030030/10.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        1,
+        95,
+        62,
+        39
+      ],
+      "beforeSha256": "779de3dcf162f2f98c057fa1b5cdb7223e0b9636921c48ecd035cbb57c3b73a9",
+      "afterSha256": "e07a5f9bede3e0110fe195ddc5e3b2154deef23b0ab68c4f4ffdbace3336cff1",
+      "beforeBounds": [
+        2,
+        41,
+        63,
+        80
+      ],
+      "afterBounds": [
+        2,
+        95,
+        63,
+        134
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "aa6aaf4b452de0da6de6f0c2a43bb452aaae10baa873ba2ad0e71f68bb64f3cc",
+      "metaSha256After": "04b62e5f8b293ad37480e228553077b1748d74d2899f1157911ae2c1a75b7ed8",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "7e806612-6ada-4bf5-9c0f-4bfca8dc9d48",
+        "subMetas": {
+          "6c48a": "7e806612-6ada-4bf5-9c0f-4bfca8dc9d48@6c48a",
+          "f9941": "7e806612-6ada-4bf5-9c0f-4bfca8dc9d48@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103030030/skill-103030030_11.png",
+      "frame": "skill-103030030/11.png",
+      "canvasSize": [
+        162,
+        175
+      ],
+      "sourceColorRect": [
+        2,
+        108,
+        54,
+        25
+      ],
+      "beforeSha256": "e1bb7f63842c824a5e1c4de9435ca22a96ac88ef97d6b2261e03a4a086fab18e",
+      "afterSha256": "48107281ab92fcb77b79252aba3adbed2ea428cd9ea1fa12123e550dab300500",
+      "beforeBounds": [
+        3,
+        42,
+        56,
+        67
+      ],
+      "afterBounds": [
+        3,
+        108,
+        56,
+        133
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "fa732161ba296659b850d3d4c0d47555ab9287376c4ff673efdd4baf8c53142d",
+      "metaSha256After": "9a144c0845baf32a0e7ad8072f1e0d137b14dece6b07ba1a3cf377477aebddbe",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "83a722cd-74a7-4a68-b658-d8cd050b48a4",
+        "subMetas": {
+          "6c48a": "83a722cd-74a7-4a68-b658-d8cd050b48a4@6c48a",
+          "f9941": "83a722cd-74a7-4a68-b658-d8cd050b48a4@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040050/skill-103040050_0.png",
+      "frame": "skill-103040050/0.png",
+      "canvasSize": [
+        152,
+        150
+      ],
+      "sourceColorRect": [
+        150,
+        145,
+        2,
+        2
+      ],
+      "beforeSha256": "a564d9092b8698fbb4b7f0cb58fbc92d68c0fc5cca71177df1b956e05fa3ef49",
+      "afterSha256": "a28286818c24e96c56eaa25a38d098567d7f2d2b0ca88f2216a5f2f90a79d4e7",
+      "beforeBounds": [
+        151,
+        4,
+        152,
+        5
+      ],
+      "afterBounds": [
+        151,
+        146,
+        152,
+        147
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "9b7250685b3dcd69426ec8285d35b63528c3b1845164dd0ee99b852f7b0f95fb",
+      "metaSha256After": "8079700e5179d6f81881ca7ed0d9ea83196faaff413072065eb2eba1a3cbfdc6",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "9a661f20-47ee-4514-a9e4-83a4c7b035a0",
+        "subMetas": {
+          "6c48a": "9a661f20-47ee-4514-a9e4-83a4c7b035a0@6c48a",
+          "f9941": "9a661f20-47ee-4514-a9e4-83a4c7b035a0@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040050/skill-103040050_1.png",
+      "frame": "skill-103040050/1.png",
+      "canvasSize": [
+        152,
+        150
+      ],
+      "sourceColorRect": [
+        7,
+        3,
+        68,
+        146
+      ],
+      "beforeSha256": "add97676cec8ef681505e03b3f0d9d2a372d8ff7bc9fd38e98193d8b49eda2e8",
+      "afterSha256": "6ef4bd12002ab44af4fb933edcbb5ae6b862726500ac781d08fe75d302f2df66",
+      "beforeBounds": [
+        7,
+        2,
+        75,
+        147
+      ],
+      "afterBounds": [
+        7,
+        4,
+        75,
+        149
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "9f732ddd602fb86e420823b4290f6de1a3f04d5365289efeedef7f18d893ef2e",
+      "metaSha256After": "ee199f7ff6ea0f8da820f6e4bbffe4a6cbfe7929adad425cec332ec6ec667be7",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "ae9bc1e5-d651-4dfe-83f4-bb8c1bac6a97",
+        "subMetas": {
+          "6c48a": "ae9bc1e5-d651-4dfe-83f4-bb8c1bac6a97@6c48a",
+          "f9941": "ae9bc1e5-d651-4dfe-83f4-bb8c1bac6a97@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040050/skill-103040050_2.png",
+      "frame": "skill-103040050/2.png",
+      "canvasSize": [
+        152,
+        150
+      ],
+      "sourceColorRect": [
+        2,
+        3,
+        72,
+        146
+      ],
+      "beforeSha256": "af3dd055e8e7046cf8a3e3ba81d29f69ebd16ee5322b79a0f3ad0434cf02b7dc",
+      "afterSha256": "366629fd9d6a7d4ade723e41f0abbec483351dacc56541f14d776cfcc42301ed",
+      "beforeBounds": [
+        2,
+        2,
+        74,
+        147
+      ],
+      "afterBounds": [
+        2,
+        4,
+        74,
+        149
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "e29dfdb9559312777b21795549e3270847ae469e19e14a3f53f7cd7769693e41",
+      "metaSha256After": "9ff54557805ba17da972779821de840d4dc4c5993e4edd4ab5a43775c7f681dc",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "064c3ffc-0b6f-4089-bf1d-c0b2d1feeee3",
+        "subMetas": {
+          "6c48a": "064c3ffc-0b6f-4089-bf1d-c0b2d1feeee3@6c48a",
+          "f9941": "064c3ffc-0b6f-4089-bf1d-c0b2d1feeee3@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040050/skill-103040050_3.png",
+      "frame": "skill-103040050/3.png",
+      "canvasSize": [
+        152,
+        150
+      ],
+      "sourceColorRect": [
+        0,
+        4,
+        78,
+        146
+      ],
+      "beforeSha256": "561cb9a6f04048205d00c6cc25e9c1eca18a039438bc611dae33873b14e3ac03",
+      "afterSha256": "afb25ae014f7af1baa2c7cfedc6222f9c059945014ddfc9ce2ed4b09fed15940",
+      "beforeBounds": [
+        0,
+        0,
+        77,
+        146
+      ],
+      "afterBounds": [
+        0,
+        4,
+        77,
+        150
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "e6c1410f31f14e415117169508a104bf005721a20c75965d6da818968f066a61",
+      "metaSha256After": "88522a74fbf8e98295cd779da9320c85a265ef15961f9a28c9f4603650a37e2b",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "db6b6bbe-f1e0-4c4e-aa9e-5476ca34e901",
+        "subMetas": {
+          "6c48a": "db6b6bbe-f1e0-4c4e-aa9e-5476ca34e901@6c48a",
+          "f9941": "db6b6bbe-f1e0-4c4e-aa9e-5476ca34e901@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040050/skill-103040050_4.png",
+      "frame": "skill-103040050/4.png",
+      "canvasSize": [
+        152,
+        150
+      ],
+      "sourceColorRect": [
+        2,
+        0,
+        76,
+        150
+      ],
+      "beforeSha256": "63c407fc9732d4e66d8972771d090d962108890308002c8e73ca3e038302884f",
+      "afterSha256": "7d0b5f9abf5dc1afecc9a78cd21dccbfeedb8b24be02d7f6fd1a6697917d5d1d",
+      "beforeBounds": [
+        3,
+        0,
+        78,
+        150
+      ],
+      "afterBounds": [
+        3,
+        0,
+        78,
+        150
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "76748c6b9328500eeb9a4acfb9dd29f84b1b2519a8ad27cbabec02f68a44e068",
+      "metaSha256After": "76748c6b9328500eeb9a4acfb9dd29f84b1b2519a8ad27cbabec02f68a44e068",
+      "creatorReimportedMeta": false,
+      "preservedIdentity": {
+        "image": "c212cf70-5f4e-44fd-affe-036909532757",
+        "subMetas": {
+          "6c48a": "c212cf70-5f4e-44fd-affe-036909532757@6c48a",
+          "f9941": "c212cf70-5f4e-44fd-affe-036909532757@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040050/skill-103040050_5.png",
+      "frame": "skill-103040050/5.png",
+      "canvasSize": [
+        152,
+        150
+      ],
+      "sourceColorRect": [
+        3,
+        14,
+        76,
+        134
+      ],
+      "beforeSha256": "764241eeefb1268c2bd6b55fe82dce2119d46e2ddd0c62faa2f7f52d5a67d63e",
+      "afterSha256": "ceaefb2e7a4c886b0620b791bad9e4f984e18d142d1a274e2d7dbd91fc47e24e",
+      "beforeBounds": [
+        4,
+        2,
+        79,
+        136
+      ],
+      "afterBounds": [
+        4,
+        14,
+        79,
+        148
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "d12a204b18471b4bb3e18e5223268d2a82024a759c760d95dac753837da57dfc",
+      "metaSha256After": "c13a923519f956a3eec273da52727b842c7cb74f51083fa89e6fd9cdd5d02960",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "65271ffa-4cce-480a-bc21-1a5b1c55f54b",
+        "subMetas": {
+          "6c48a": "65271ffa-4cce-480a-bc21-1a5b1c55f54b@6c48a",
+          "f9941": "65271ffa-4cce-480a-bc21-1a5b1c55f54b@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040050/skill-103040050_6.png",
+      "frame": "skill-103040050/6.png",
+      "canvasSize": [
+        152,
+        150
+      ],
+      "sourceColorRect": [
+        2,
+        30,
+        76,
+        114
+      ],
+      "beforeSha256": "228864695323f9570d2cb20eb01aee430e586907c7eb1c25f1a1488a135eab40",
+      "afterSha256": "73f12b90902af4e9c64df1fca048bfc2748d787fa5e735d6fd3c9dda9b425179",
+      "beforeBounds": [
+        3,
+        7,
+        78,
+        120
+      ],
+      "afterBounds": [
+        3,
+        31,
+        78,
+        144
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "92b82a2bd24eb576e6cd69507d74717f909c37de72f207dfc2037ba9df4be2d7",
+      "metaSha256After": "cdf92ba0d7aac33564070cc94ccd3bf63fd705a5d95414ff02d01cfbf48d2192",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "c7746a3f-01da-4392-8fca-5018c07de0a8",
+        "subMetas": {
+          "6c48a": "c7746a3f-01da-4392-8fca-5018c07de0a8@6c48a",
+          "f9941": "c7746a3f-01da-4392-8fca-5018c07de0a8@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040050/skill-103040050_7.png",
+      "frame": "skill-103040050/7.png",
+      "canvasSize": [
+        152,
+        150
+      ],
+      "sourceColorRect": [
+        22,
+        65,
+        36,
+        74
+      ],
+      "beforeSha256": "87eb5e7a430ce767042b50016406c79e299bb9e4bdb39b39aad0df2ab91fa05f",
+      "afterSha256": "4221a8df6324b67cd4a03d5a75ebeb682cc5c0fdac321e637086235961898b31",
+      "beforeBounds": [
+        22,
+        12,
+        58,
+        85
+      ],
+      "afterBounds": [
+        22,
+        66,
+        58,
+        139
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "2ea9a38869b9d6b4c33e9e7a32271538f2de998057be9f1660381608c94b2352",
+      "metaSha256After": "30933b82deb3093b6e6ab940877df9dde237a6fff7985f0db5086323a5adb5bd",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "37ad2150-69b8-4cd4-9905-8f4acf714134",
+        "subMetas": {
+          "6c48a": "37ad2150-69b8-4cd4-9905-8f4acf714134@6c48a",
+          "f9941": "37ad2150-69b8-4cd4-9905-8f4acf714134@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_0.png",
+      "frame": "skill-103040051/0.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        52,
+        180,
+        35,
+        16
+      ],
+      "beforeSha256": "2854a1cdfb35313bea382046ee58ef279fca3c7a642fe7cd493b64de5ef39f2e",
+      "afterSha256": "67a722184bef602f9dcb15e259d6c8bc0e3667736a91e8659b0fbe00775f6a82",
+      "beforeBounds": [
+        52,
+        0,
+        87,
+        16
+      ],
+      "afterBounds": [
+        52,
+        180,
+        87,
+        196
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "8619c348b3e7f086c64f22bf8dc964d3c9d63995cbed49f3499616a903dd257a",
+      "metaSha256After": "500d4adaf4bf1dbf4ae79c490d61d97204e890407e04f89271a443c90b32c94d",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "620b8188-ea82-4162-9641-74436fd0c9c0",
+        "subMetas": {
+          "6c48a": "620b8188-ea82-4162-9641-74436fd0c9c0@6c48a",
+          "f9941": "620b8188-ea82-4162-9641-74436fd0c9c0@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_1.png",
+      "frame": "skill-103040051/1.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        43,
+        174,
+        53,
+        20
+      ],
+      "beforeSha256": "e7a0aa91b9fae9f2067174537928e4cb65288bc1522d6c56fbd00a2197f42311",
+      "afterSha256": "34e9447600aedd06264d94d1b0326f7bac34605769bf0c77e88c10a4da928953",
+      "beforeBounds": [
+        44,
+        3,
+        96,
+        22
+      ],
+      "afterBounds": [
+        44,
+        175,
+        96,
+        194
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "c24f0180abc0b58188aef934f18dca1a44d536e610022589dce6c83d50ec291c",
+      "metaSha256After": "6585ecf27fccc07d8aab6ee8d53e39e8b2666a8c89f91cf23195c7dc236003d5",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "95a74967-35d7-4aef-942c-9e969237b971",
+        "subMetas": {
+          "6c48a": "95a74967-35d7-4aef-942c-9e969237b971@6c48a",
+          "f9941": "95a74967-35d7-4aef-942c-9e969237b971@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_2.png",
+      "frame": "skill-103040051/2.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        38,
+        168,
+        63,
+        26
+      ],
+      "beforeSha256": "f37b2dcdb0140cbd328fdd9b5f194d82625a29d7dc958b56bef27c229d0201a6",
+      "afterSha256": "b65f647fa66cba2669e9daaf5f9eca358f9dd0cf56a52caff5873088f01955de",
+      "beforeBounds": [
+        38,
+        3,
+        101,
+        28
+      ],
+      "afterBounds": [
+        38,
+        169,
+        101,
+        194
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "7d5e7317f6637829e32ad0f1c5a07ba15a0724d5198f1735c17797975ed8d700",
+      "metaSha256After": "9072afff5a772ce2b41dc39729488ba241f3c70e96a6d801274bffb41fc8c4e9",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "f6d37ea4-dfbf-44c1-870e-791c7df02600",
+        "subMetas": {
+          "6c48a": "f6d37ea4-dfbf-44c1-870e-791c7df02600@6c48a",
+          "f9941": "f6d37ea4-dfbf-44c1-870e-791c7df02600@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_3.png",
+      "frame": "skill-103040051/3.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        38,
+        166,
+        63,
+        28
+      ],
+      "beforeSha256": "608dad1d175ce48b89d8e13c1eaba9952322291f8959cd0de838437c93d50748",
+      "afterSha256": "107c554f7b47cb6d35268b04d7c295b205f7d5980065d857ade512f84c16d260",
+      "beforeBounds": [
+        39,
+        3,
+        101,
+        30
+      ],
+      "afterBounds": [
+        39,
+        167,
+        101,
+        194
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "c17029aaee5e28b51ea6bc18003e62708a530da8b4343abd333400745bdce076",
+      "metaSha256After": "212aad1ebd18bbcd19de5b0c4582a9e6c112fd340550a098505d4041ad68cc21",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "c7d459fe-188a-415f-b7fd-86ddd82d96e3",
+        "subMetas": {
+          "6c48a": "c7d459fe-188a-415f-b7fd-86ddd82d96e3@6c48a",
+          "f9941": "c7d459fe-188a-415f-b7fd-86ddd82d96e3@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_4.png",
+      "frame": "skill-103040051/4.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        139,
+        194
+      ],
+      "beforeSha256": "5ce9d1287b02152eab813b42fb0ce5e2e5f0185413ea0b1d88c9ab985b79105f",
+      "afterSha256": "58d7ae53d6b7cdb21a1373e99c1980c5666776252b719c9315f09f7ca015968f",
+      "beforeBounds": [
+        0,
+        2,
+        139,
+        195
+      ],
+      "afterBounds": [
+        0,
+        0,
+        139,
+        193
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "6da4ffaa212934afd8d3d06ac4229216bd629d74b1f9f8104b2de923288f4e1a",
+      "metaSha256After": "2214b38f774f2d9618d45cc7bb905bffa0a81dc5ebd541aac145b747257dc08c",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "7027bcfd-8c61-4a4d-9f6a-eaa371f09e4c",
+        "subMetas": {
+          "6c48a": "7027bcfd-8c61-4a4d-9f6a-eaa371f09e4c@6c48a",
+          "f9941": "7027bcfd-8c61-4a4d-9f6a-eaa371f09e4c@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_5.png",
+      "frame": "skill-103040051/5.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        5,
+        0,
+        127,
+        194
+      ],
+      "beforeSha256": "4e261e7c3a1e467714125c3c1503281853ca1efef6dcc4619af1a6e3211395dd",
+      "afterSha256": "1362181c54375c5c346b4b35a693b912bf02c47423e3b06b8c90e92de119eb50",
+      "beforeBounds": [
+        5,
+        2,
+        132,
+        196
+      ],
+      "afterBounds": [
+        5,
+        0,
+        132,
+        194
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "f409a4fadf311c2611ddad6130bff3b0df41699e3e5918ded7a1b9a6cce83491",
+      "metaSha256After": "58de3894caf90fd79da455abb238e4f98d2e46295210b4797bd5cfc5268d1aef",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "441e60cc-6bbb-42ae-ad1c-7720baf31b70",
+        "subMetas": {
+          "6c48a": "441e60cc-6bbb-42ae-ad1c-7720baf31b70@6c48a",
+          "f9941": "441e60cc-6bbb-42ae-ad1c-7720baf31b70@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_6.png",
+      "frame": "skill-103040051/6.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        10,
+        2,
+        115,
+        192
+      ],
+      "beforeSha256": "7b27bbac7cb91ffb9c081c5836957a950820536969c80cd435261aac87bf2a27",
+      "afterSha256": "59260e3229d201eb85badced8c19e0cf21ca7f7d90d20095af15dd4411172ff4",
+      "beforeBounds": [
+        11,
+        2,
+        125,
+        194
+      ],
+      "afterBounds": [
+        11,
+        2,
+        125,
+        194
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "901fbcc6f9b005c5efa27d4c26de988abfc3294bf4bd9d7b1533d7e1fd048d52",
+      "metaSha256After": "901fbcc6f9b005c5efa27d4c26de988abfc3294bf4bd9d7b1533d7e1fd048d52",
+      "creatorReimportedMeta": false,
+      "preservedIdentity": {
+        "image": "f84962a9-f108-4e50-a2fc-8edf10e02853",
+        "subMetas": {
+          "6c48a": "f84962a9-f108-4e50-a2fc-8edf10e02853@6c48a",
+          "f9941": "f84962a9-f108-4e50-a2fc-8edf10e02853@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_7.png",
+      "frame": "skill-103040051/7.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        20,
+        7,
+        103,
+        186
+      ],
+      "beforeSha256": "ad46595220244c70cf5465dcf1ae8fc0040feafcec0488b4a8e8890637a28144",
+      "afterSha256": "aa5cc4f84d9d5bca5c1f47966bb5beabc60e5ef8ebbf68fa954a8dfda8cc4917",
+      "beforeBounds": [
+        21,
+        3,
+        123,
+        189
+      ],
+      "afterBounds": [
+        21,
+        7,
+        123,
+        193
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "e63e50c8e71bd562df77d74d97b2a7afbdc6d54dc49e71aeb23f55ed79322531",
+      "metaSha256After": "d824c0ee9a5e5a500658ad60a6472e4a95a031d9a2062858e6e52af57b679e6c",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "50a2b224-06b5-4c4f-aee3-b97387636fdd",
+        "subMetas": {
+          "6c48a": "50a2b224-06b5-4c4f-aee3-b97387636fdd@6c48a",
+          "f9941": "50a2b224-06b5-4c4f-aee3-b97387636fdd@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_8.png",
+      "frame": "skill-103040051/8.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        22,
+        58,
+        99,
+        134
+      ],
+      "beforeSha256": "f7545e068041519a438f5bdb4566b07049e8dc57a1c35640a5b93a5d3027eb7f",
+      "afterSha256": "bae0643ca15d667efa6b7a1b7007df667eeabb86a75095056c147f270dfecf6a",
+      "beforeBounds": [
+        22,
+        4,
+        121,
+        138
+      ],
+      "afterBounds": [
+        22,
+        58,
+        121,
+        192
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "ca9e452e9d6ef57ff26b9bfdfdd4bed6bbd87b04d12643e4b0ea943f01fc4f29",
+      "metaSha256After": "bed26ad63959ce4b043d280cd51883b2fc85092a26a11eb7a1adc71f68c9af47",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "20de00f5-eaa7-4f1e-8872-aaf8e71ce6c2",
+        "subMetas": {
+          "6c48a": "20de00f5-eaa7-4f1e-8872-aaf8e71ce6c2@6c48a",
+          "f9941": "20de00f5-eaa7-4f1e-8872-aaf8e71ce6c2@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/skill/skill-103040051/skill-103040051_9.png",
+      "frame": "skill-103040051/9.png",
+      "canvasSize": [
+        139,
+        196
+      ],
+      "sourceColorRect": [
+        21,
+        68,
+        93,
+        120
+      ],
+      "beforeSha256": "0c56b1e530e668be56ac98d4200cd9cf21e5db25a62f4aec72e6c3bdc8eb8a37",
+      "afterSha256": "a80c304ae235abf2614ebc55994d11abe0979b09e6f00347bdf99261b0093f5e",
+      "beforeBounds": [
+        22,
+        8,
+        114,
+        128
+      ],
+      "afterBounds": [
+        22,
+        68,
+        114,
+        188
+      ],
+      "beforePixelsMatchSource": false,
+      "afterPixelsMatchSource": true,
+      "metaSha256Before": "45186df77bfd2b864ccb6b031ebcc4e3bef8dae2c2836c84a92705d64b37654b",
+      "metaSha256After": "67ec91478a9320ca113f7de5498d136ee89ac8647de38a042f56b0b9ed46c431",
+      "creatorReimportedMeta": true,
+      "preservedIdentity": {
+        "image": "67974eee-261f-4c62-857c-6907459c8353",
+        "subMetas": {
+          "6c48a": "67974eee-261f-4c62-857c-6907459c8353@6c48a",
+          "f9941": "67974eee-261f-4c62-857c-6907459c8353@f9941"
+        }
+      },
+      "preservedCanvasPivotAndBorders": true
+    }
+  ],
+  "audio": [
+    {
+      "path": "client/assets/bundles/resources/audio/skill-103020021.mp3",
+      "legacyPath": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-103020021.mp3",
+      "sha256": "928451da31f7cc44cefaa1bf4b7b8de7c84c73ea190d2c3bc90594216b2f20b8",
+      "matchesLegacyBytes": true
+    },
+    {
+      "path": "client/assets/bundles/resources/audio/skill-103030030.mp3",
+      "legacyPath": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-103030030.mp3",
+      "sha256": "63ce0674b87ecc5d8e09580e2804cfb28e91332f589bd9ed83a7cb9b748b1813",
+      "matchesLegacyBytes": true
+    },
+    {
+      "path": "client/assets/bundles/resources/audio/skill-103040050.mp3",
+      "legacyPath": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-103040050.mp3",
+      "sha256": "416c42936f8c92e4148d88bc30c62308a3aa55060411220b4a3c54d5ef55acd7",
+      "matchesLegacyBytes": true
+    },
+    {
+      "path": "client/assets/bundles/resources/audio/skill-103040051.mp3",
+      "legacyPath": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/music/skill-103040051.mp3",
+      "sha256": "c37e91d0d8cb41864a8839f8c2db129d84330d90d2a80102caa717c672f2dc3e",
+      "matchesLegacyBytes": true
+    }
+  ],
+  "result": {
+    "frames": 45,
+    "beforeMismatches": 45,
+    "afterMismatches": 0,
+    "preservedIdentityFiles": 45,
+    "creatorReimportedMetaFiles": 39,
+    "audioFilesByteIdentical": 4
+  }
+}

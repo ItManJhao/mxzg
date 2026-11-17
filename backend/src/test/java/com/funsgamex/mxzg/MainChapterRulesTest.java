@@ -74,4 +74,43 @@ class MainChapterRulesTest {
         assertThrows(IllegalArgumentException.class, () -> rules.complete(new Progress(1, true), 2, true));
         assertThrows(IllegalArgumentException.class, () -> rules.complete(new Progress(1, false), 1, true));
     }
+
+    /** 完整850关按全局idx连续索引；章节与模式切换后小关重置不能覆盖旧记录。 */
+    @Test void fullCatalogUsesGlobalIndexAndExplicitLocation() {
+        assertEquals(850, rules.catalog().size());
+        for (int index = 1; index <= 850; index++) {
+            assertEquals(index, rules.catalog().get(index - 1).index());
+            assertFalse(rules.enemies(index).isEmpty());
+        }
+        assertEquals(11, rules.stage(1, 2, 1).index());
+        assertEquals(131, rules.stage(2, 1, 1).index());
+        assertEquals(1, rules.stage(131).mission());
+        assertEquals(850, rules.stage(850).index());
+        assertThrows(UnsupportedOperationException.class, () -> rules.catalog().clear());
+        assertThrows(UnsupportedOperationException.class, () -> rules.enemies(1).clear());
+        assertThrows(IllegalArgumentException.class, () -> rules.stage(851));
+    }
+
+    /** 源表后300奖励关复用三维定位；保留旧敌组，但不按note或当前序号猜测修配置。 */
+    @Test void duplicateRewardLocationRemainsExplicitlyPending() {
+        assertFalse(rules.enemyMappingPending(541));
+        assertTrue(rules.enemyMappingPending(551));
+        assertTrue(rules.enemyMappingPending(850));
+        assertEquals(rules.enemies(541), rules.enemies(551));
+        assertThrows(IllegalArgumentException.class, () -> rules.stage(5, 12, 1));
+        assertEquals(300, rules.catalog().stream().filter(stage -> rules.enemyMappingPending(stage.index())).count());
+    }
+
+    /** 新挑战范围只读可信配置，不由850目录自动全开；降低范围不阻止已赢历史结算。 */
+    @Test void challengeLimitIsIndependentAndDoesNotBlockPendingHistory() {
+        assertEquals(3, rules.challengeLimit());
+        assertEquals(4, new MainChapterRules(new ObjectMapper(), 4).challengeLimit());
+        assertThrows(IllegalArgumentException.class, () -> rules.decide(new Progress(3, false), 300, Long.MAX_VALUE));
+        var pending = new Progress(4, true);
+        assertEquals(Action.SETTLE_PENDING, rules.decide(pending, 0, 0).action());
+        assertEquals(rules.stage(4).firstRewards(), rules.pendingRewards(pending));
+        assertEquals(new Progress(4, false), rules.settled(pending));
+        assertThrows(IllegalStateException.class, () -> new MainChapterRules(new ObjectMapper(), 0));
+        assertThrows(IllegalStateException.class, () -> new MainChapterRules(new ObjectMapper(), 851));
+    }
 }

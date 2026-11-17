@@ -1,0 +1,578 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "objective": "补齐第9关通用type8、固定207直接属性及旧覆盖/技能帧，修正实际涉及的type5完成边界，不开放新关卡或领取。",
+  "branch": "hao",
+  "baseHead": "51c3434a2fe385e54437b00d8fab69c4e1d4bdc6",
+  "scope": {
+    "challengeLimit": 3,
+    "idleClaimEnabled": false,
+    "noCreatorBuild": true,
+    "noCommit": true,
+    "noPush": true,
+    "noMerge": true,
+    "dailyBackendRestarted": false
+  },
+  "changes": [
+    "服务端通用接纳必中/无下游的type8纯表现，既有wire顺序和数值不变。",
+    "固定207直接属性沿旧AbilityAdd原整数加减，严格限制必中、无下游和value后两项0，复用属性池、冲突、驱散、到期、死亡回收及整技能失败回滚；未知条件/概率/属性仍拒绝。",
+    "1051101按旧type8+15帧延迟type6展开；独立moveOffset只控制角色，type9特效比例字段不混用，敌侧只镜像X并通过世界坐标转换。",
+    "整关58帧逐像素核对，其中主动6帧恢复原画布RGBA/偏移，其余52帧原样；58组UUID/画布/pivot/borders及六音频同源字节保持，6份派生meta由Creator合法更新。",
+    "type5投射与其他独立帧一样由原战场持有，但角色只等待自身动作；不裁帧或改伤害匹配时长，取消和异步失败沿既有一次报告与epoch。",
+    "新stage9审计保留历史3份报告，静态闭合新增9/19/20；不以静态ready代替全部旧覆盖审计或开放。"
+  ],
+  "evidence": {
+    "legacy": {
+      "file": "docs/validation/chapter-stage9-legacy-audit-20261117.json",
+      "bytes": 82767,
+      "sha256": "fd80785831cac2741d21631c816736105ee1303872dd72d6ddceaf09a9feb2b4",
+      "writtenUtc": "2026-11-17T09:31:42.505428+00:00"
+    },
+    "assets": {
+      "file": "docs/validation/chapter-stage9-assets-20261117.json",
+      "bytes": 101205,
+      "sha256": "3d0dfcdbd5c10825796b89b09a2daf9966a824716dcc8094ab35f5f991804103",
+      "writtenUtc": "2026-11-17T09:16:49.508309+00:00"
+    },
+    "preview": {
+      "file": "docs/validation/chapter-stage9-preview-20261117.json",
+      "bytes": 142326,
+      "sha256": "77e7a8fd3c4975d27b00ff5bf4d179646e3bcc401da506501d16ad4f0f78290f",
+      "writtenUtc": "2026-11-17T09:37:25.797127+00:00"
+    }
+  },
+  "audit": {
+    "current": {
+      "file": "docs/validation/main-chapter-dependencies-20261117-stage9.json",
+      "bytes": 15006184,
+      "sha256": "852906f67ec8ee64672a54310fe9b4ee8a15c3b64caaf5732b0f6e78d127e3ee",
+      "writtenUtc": "2026-11-17T09:31:17.049074+00:00"
+    },
+    "summary": {
+      "stages": 850,
+      "enemies": 5000,
+      "distinctReferencedEnemyRows": 3200,
+      "unreferencedEnemyRows": 1800,
+      "rawEnemySkillCombinations": 3999,
+      "coordinateMismatchStages": 300,
+      "uniqueSkills": 249,
+      "resources": 572,
+      "missingResources": 0,
+      "unresolvedResourceDeclarations": 41,
+      "supported": 13,
+      "blocked": 837,
+      "unverified": 0,
+      "blockedStageCountsByReason": {
+        "PRESENTATION_UNSUPPORTED": 829,
+        "ENEMY_RUNTIME_UNSUPPORTED": 820,
+        "SKILL_RUNTIME_UNSUPPORTED": 820,
+        "IDLE_STAGE_NOT_PROJECTED": 830
+      }
+    },
+    "previouslyClosed": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      14,
+      15
+    ],
+    "currentlyClosed": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      14,
+      15,
+      19,
+      20
+    ],
+    "added": [
+      9,
+      19,
+      20
+    ],
+    "historicalSnapshots": [
+      {
+        "file": "docs/validation/main-chapter-dependencies-20261117.json",
+        "bytes": 14934170,
+        "sha256": "324fcd4efb28027b6fb3a826217f5d698d8243565dad4ade7da3f8bdd593faaf",
+        "writtenUtc": "2026-11-17T07:28:05.946675+00:00",
+        "unchanged": true
+      },
+      {
+        "file": "docs/validation/main-chapter-dependencies-20261117-stage4.json",
+        "bytes": 14950852,
+        "sha256": "5f07d4723cf8bcb163e79b77b9e80c9b5b639aa4b0d50dd97938cb0ffa44b4ac",
+        "writtenUtc": "2026-11-17T07:53:11.096656+00:00",
+        "unchanged": true
+      },
+      {
+        "file": "docs/validation/main-chapter-dependencies-20261117-stage5.json",
+        "bytes": 15001687,
+        "sha256": "25b7a8f3152a26bd90f88e4c849f39fa0c8718ecbab40377213c2e062bac7a2f",
+        "writtenUtc": "2026-11-17T08:33:11.085038+00:00",
+        "unchanged": true
+      }
+    ],
+    "resourceDeclarations": {
+      "before": 566,
+      "after": 572,
+      "unresolvedBefore": 41,
+      "unresolvedAfter": 41,
+      "resolvedMissing": 0
+    },
+    "stage9": {
+      "enemies": [
+        {
+          "configId": 49,
+          "position": 1,
+          "templateId": 10102002,
+          "level": 5,
+          "star": 2,
+          "growthStage": 0,
+          "modifiers": [
+            {
+              "type": 220,
+              "value": 10000,
+              "kind": 2
+            },
+            {
+              "type": 223,
+              "value": 5600,
+              "kind": 2
+            }
+          ],
+          "equipment": [],
+          "runes": [],
+          "skills": [
+            "101020021:1",
+            "101020020:0"
+          ],
+          "capabilityKey": "10102002:5:2"
+        },
+        {
+          "configId": 50,
+          "position": 2,
+          "templateId": 10202002,
+          "level": 5,
+          "star": 2,
+          "growthStage": 0,
+          "modifiers": [
+            {
+              "type": 220,
+              "value": 10000,
+              "kind": 2
+            },
+            {
+              "type": 223,
+              "value": 5600,
+              "kind": 2
+            }
+          ],
+          "equipment": [],
+          "runes": [],
+          "skills": [
+            "102020021:1",
+            "102020020:0"
+          ],
+          "capabilityKey": "10202002:5:2"
+        },
+        {
+          "configId": 51,
+          "position": 3,
+          "templateId": 10104005,
+          "level": 5,
+          "star": 4,
+          "growthStage": 0,
+          "modifiers": [
+            {
+              "type": 220,
+              "value": 10000,
+              "kind": 2
+            },
+            {
+              "type": 223,
+              "value": 5600,
+              "kind": 2
+            }
+          ],
+          "equipment": [],
+          "runes": [],
+          "skills": [
+            "101040051:1",
+            "101040050:0"
+          ],
+          "capabilityKey": "10104005:5:4"
+        }
+      ],
+      "status": "supported",
+      "blockers": [],
+      "unverified": []
+    },
+    "meaning": "当前生产预检/解析器的静态闭合，不验证所有旧G_BATTLE_ACTIONS、高等级、被动或美术等价；不是开放许可。"
+  },
+  "checks": {
+    "backend": {
+      "targeted": 73,
+      "freshDependencyAudit": 1,
+      "totalNonOverlapping": 74,
+      "suites": [
+        {
+          "name": "HeroBattleBuffLifecycleTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleBuffLifecycleTest.xml",
+          "bytes": 27561,
+          "sha256": "64d5895416493070c28f4890b24a712d3ae24fbe398b9dfb51ec22996ae69097",
+          "writtenUtc": "2026-11-17T09:20:11.063454+00:00"
+        },
+        {
+          "name": "HeroBattleCharmArmorTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleCharmArmorTest.xml",
+          "bytes": 27359,
+          "sha256": "d0cca2d19cb45513264f8b144173ee950686b906b67ad4842fc570b1eb50f28b",
+          "writtenUtc": "2026-11-17T09:20:11.845603+00:00"
+        },
+        {
+          "name": "HeroBattleCharmDeathTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleCharmDeathTest.xml",
+          "bytes": 27239,
+          "sha256": "caf8e41b513b8f4c05856b9b4ebb8995f705811736fbf2a878a8cb7330b76a0a",
+          "writtenUtc": "2026-11-17T09:20:12.181148+00:00"
+        },
+        {
+          "name": "HeroBattleCriticalDebuffTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleCriticalDebuffTest.xml",
+          "bytes": 27761,
+          "sha256": "cf2891b3fd27fd941c0ac76e111bf47ed1d1f0275a7e5b43fcc3944c1d694578",
+          "writtenUtc": "2026-11-17T09:20:12.441826+00:00"
+        },
+        {
+          "name": "HeroBattleDamageActionTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleDamageActionTest.xml",
+          "bytes": 27875,
+          "sha256": "6405ef2bf767be1a552464d7d23e15c3f46b38b86f05c1dc8e12bdee2c291e9c",
+          "writtenUtc": "2026-11-17T09:20:12.475633+00:00"
+        },
+        {
+          "name": "HeroBattleEmptyAnimationTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleEmptyAnimationTest.xml",
+          "bytes": 27287,
+          "sha256": "fb38cf3bb72053ab37f448e030c25e671ca35bed05d485b40dbcff05f0077e33",
+          "writtenUtc": "2026-11-17T09:20:12.607758+00:00"
+        },
+        {
+          "name": "HeroBattleNanakoChainTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleNanakoChainTest.xml",
+          "bytes": 28150,
+          "sha256": "0ffc2d101afcfe31223e430aea33cf7103e5baf3056ef4daf19e212580d98c62",
+          "writtenUtc": "2026-11-17T09:20:14.178969+00:00"
+        },
+        {
+          "name": "HeroBattleNearStrikeTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleNearStrikeTest.xml",
+          "bytes": 27286,
+          "sha256": "7a66f74f017349f78c0feafb72f6096a37ac713d5e02b853f000a3acb89f603c",
+          "writtenUtc": "2026-11-17T09:20:14.306696+00:00"
+        },
+        {
+          "name": "HeroBattleOrdinaryRuntimeTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleOrdinaryRuntimeTest.xml",
+          "bytes": 27533,
+          "sha256": "87f6f1c0fd6b3c3dc73eb0fc12b069430d1cabf7bea4d69a70103f151bfa3edd",
+          "writtenUtc": "2026-11-17T09:20:14.457461+00:00"
+        },
+        {
+          "name": "HeroBattleStatisticsTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleStatisticsTest.xml",
+          "bytes": 27597,
+          "sha256": "ac5ae521fbda917d6775d4fa6e5cbb5531777f65bfdded7920d122a732fc35bc",
+          "writtenUtc": "2026-11-17T09:20:14.560776+00:00"
+        },
+        {
+          "name": "MainChapterConfigurationTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterConfigurationTest.xml",
+          "bytes": 38382,
+          "sha256": "07427bc3cc771be8cc3cce213c2c11c6e246c80bcfd3c8cc4106d1bf7f894a8d",
+          "writtenUtc": "2026-11-17T09:20:28.930606+00:00"
+        },
+        {
+          "name": "MainChapterRulesTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterRulesTest.xml",
+          "bytes": 28537,
+          "sha256": "3ccf45c4bae7fb38ca3e8c799fab372b90ad94600803b6e532f81a7c89e0a39c",
+          "writtenUtc": "2026-11-17T09:20:29.434008+00:00"
+        },
+        {
+          "name": "MainChapterSocketTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterSocketTest.xml",
+          "bytes": 38489,
+          "sha256": "587e775920573baccfcb89fe6e40ea05825b6e068fca72d40090de461e83f3f4",
+          "writtenUtc": "2026-11-17T09:20:32.347657+00:00"
+        },
+        {
+          "name": "MainChapterDependencyAuditTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterDependencyAuditTest.xml",
+          "bytes": 26696,
+          "sha256": "f98db5edda3e8b7edb2d241a902f27c757767d8ccf188331d41ef8b2c67ce8b9",
+          "writtenUtc": "2026-11-17T09:21:34.351395+00:00"
+        }
+      ],
+      "logs": [
+        {
+          "file": "backend/target/chapter-stage9-review.log",
+          "bytes": 20316,
+          "sha256": "747cc086b25c3e710b60f3aaf5af23de8eecf01c72a25b6d216d5f7af56e179b",
+          "writtenUtc": "2026-11-17T09:20:31.331165+00:00"
+        },
+        {
+          "file": "backend/target/chapter-stage9-audit.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "writtenUtc": "2026-11-17T09:21:08.540890+00:00"
+        }
+      ]
+    },
+    "client": [
+      {
+        "id": "battle-thorn-actions",
+        "passed": true,
+        "elapsedMs": 664,
+        "log": "client/temp/project-checks/battle-thorn-actions.log",
+        "report": {
+          "file": "client/temp/project-checks/results.battle-thorn-actions.json",
+          "bytes": 153,
+          "sha256": "ce167f04eb468ca0225f622fe44feeba43a755d63d9d4de3fd5f3603d05216e9",
+          "writtenUtc": "2026-11-17T09:19:04.472145+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/battle-thorn-actions.log",
+          "bytes": 101,
+          "sha256": "e489130df3faef68560eec4b98ba4669730efac3deb4e92c6bfcc87abb3d82c3",
+          "writtenUtc": "2026-11-17T09:19:04.471147+00:00"
+        }
+      },
+      {
+        "id": "battle-frost-winter-actions",
+        "passed": true,
+        "elapsedMs": 581,
+        "log": "client/temp/project-checks/battle-frost-winter-actions.log",
+        "report": {
+          "file": "client/temp/project-checks/results.battle-frost-winter-actions.json",
+          "bytes": 167,
+          "sha256": "98ac4be687d370845621eaeef12c873e7a6480024243bc288cbb8b00af3dfe2c",
+          "writtenUtc": "2026-11-17T09:17:21.895397+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/battle-frost-winter-actions.log",
+          "bytes": 102,
+          "sha256": "49a693f796be761479629f3d8dbc4a2116e6256abc78883bf33a419e238259ed",
+          "writtenUtc": "2026-11-17T09:17:21.894428+00:00"
+        }
+      },
+      {
+        "id": "battle-hunter-noah-actions",
+        "passed": true,
+        "elapsedMs": 557,
+        "log": "client/temp/project-checks/battle-hunter-noah-actions.log",
+        "report": {
+          "file": "client/temp/project-checks/results.battle-hunter-noah-actions.json",
+          "bytes": 165,
+          "sha256": "a3562b3896fb46bb5adb2477763aeb778b4041508604098a3bacbd87e3bd5d07",
+          "writtenUtc": "2026-11-17T09:17:21.234598+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/battle-hunter-noah-actions.log",
+          "bytes": 87,
+          "sha256": "27c384fbf714c6603fbe516afbb6e939cae47c891733d1a93c3f3b1ef5106cfe",
+          "writtenUtc": "2026-11-17T09:17:21.234598+00:00"
+        }
+      },
+      {
+        "id": "battle-presentation",
+        "passed": true,
+        "elapsedMs": 741,
+        "log": "client/temp/project-checks/battle-presentation.log",
+        "report": {
+          "file": "client/temp/project-checks/results.battle-presentation.json",
+          "bytes": 151,
+          "sha256": "e75fc8fa78a380954b601778f53d19bdfb00d32f343a8e1e2fdd3b90f9dee974",
+          "writtenUtc": "2026-11-17T09:30:08.377606+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/battle-presentation.log",
+          "bytes": 77,
+          "sha256": "cf69e74a62ecb647e56c3cfb4c881d2ddd3164a4bb8c0ec94c6edbfd6cd77521",
+          "writtenUtc": "2026-11-17T09:30:08.375611+00:00"
+        }
+      },
+      {
+        "id": "shield-depleted",
+        "passed": true,
+        "elapsedMs": 190,
+        "log": "client/temp/project-checks/shield-depleted.log",
+        "report": {
+          "file": "client/temp/project-checks/results.shield-depleted.json",
+          "bytes": 143,
+          "sha256": "c856f829b4f6f1bcbe628b55c58879efc811310d44b4cc21614b0c78474c6167",
+          "writtenUtc": "2026-11-17T09:16:20.828355+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/shield-depleted.log",
+          "bytes": 97,
+          "sha256": "579b29fd5ae73d281b7d88063b6718ccc88e960eb3f05ac09a48fc9f637a7c37",
+          "writtenUtc": "2026-11-17T09:16:20.827358+00:00"
+        }
+      }
+    ],
+    "strictTypecheck": {
+      "compiler": "Creator 3.8.8自带TypeScript",
+      "project": "client/tsconfig.json",
+      "args": [
+        "--strict",
+        "--noEmit"
+      ],
+      "passed": true,
+      "log": {
+        "file": "client/temp/chapter-stage9-types-final.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "writtenUtc": "2026-11-17T09:20:15.889650+00:00"
+      },
+      "boundary": "最终缺轴拒绝收紧后通过；未把旧编译的合法参数实播当作新校验运行态验证。"
+    },
+    "protocolGenerated": "node tools/generate_game_protocol.cjs --check 通过，本批未改协议。",
+    "interop": [
+      "battle-thorn-actions.cjs --java=backend/target/chapter-config-stage-9.pb 通过",
+      "main-chapter-scope.cjs --java=backend/target/chapter-config-stage-9-frame.pb 通过"
+    ],
+    "dependency": "新stage9 --from-java生成、test_main_chapter_dependencies、--check --from-java及snapshot参数专项通过；只读Java真实新能力，不复用旧源码摘要。",
+    "directPresentationCoverage": {
+      "heroes": 113,
+      "ready": 64,
+      "gaps": 49,
+      "report": {
+        "file": "client/temp/battle-presentation-coverage-current.json",
+        "bytes": 27886,
+        "sha256": "5bdf14e04bacd8615322b710af236c253d46a2164f7c561cc0e5ced2c5414d93",
+        "writtenUtc": "2026-11-17T09:30:08.361676+00:00"
+      }
+    },
+    "browser": "真实自然两回合/冻结统计与两处受控暂停/飞行取消分开记录；111.8秒无迟到，不冒充物理断网或OS后台测试。"
+  },
+  "sourceFingerprints": [
+    {
+      "file": "backend/src/main/java/com/funsgamex/mxzg/hero/HeroSkillPanelRules.java",
+      "bytes": 51905,
+      "sha256": "ed2f0206b36977c72d74a237a6d34e28f5c99a7a2c2fcb00a7d06caa9fe64fb5",
+      "writtenUtc": "2026-11-17T09:16:09.804010+00:00"
+    },
+    {
+      "file": "backend/src/test/java/com/funsgamex/mxzg/HeroBattleCriticalDebuffTest.java",
+      "bytes": 11231,
+      "sha256": "0773768500b4d930f26722f19b3ca16d03146c1ba315c6fbe7bf182e80ac99ad",
+      "writtenUtc": "2026-11-17T09:16:10.902956+00:00"
+    },
+    {
+      "file": "backend/src/test/java/com/funsgamex/mxzg/MainChapterConfigurationTest.java",
+      "bytes": 24759,
+      "sha256": "8f94c647cfc5299e6126e4bf43d0769cf12bdd7ca0dc4336bc9ba83c86539ae7",
+      "writtenUtc": "2026-11-17T09:18:51.550702+00:00"
+    },
+    {
+      "file": "client/assets/scripts/features/battle/utils/BattleAttackUtils.ts",
+      "bytes": 23807,
+      "sha256": "dad2407bd280e58eb4a673fb74520066ce3d1e7a08338c8e27254e47ba8edb21",
+      "writtenUtc": "2026-11-17T09:19:01.617623+00:00"
+    },
+    {
+      "file": "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts",
+      "bytes": 53901,
+      "sha256": "9a42f1132a0b744e58ef160f8a7588b1253d8c02308eae3d8e9d6b6c390bb31f",
+      "writtenUtc": "2026-11-17T09:12:03.480541+00:00"
+    },
+    {
+      "file": "client/tools/battle-thorn-actions-check.ts",
+      "bytes": 11210,
+      "sha256": "200830473a2b37aeff3b8ae96e63cb1049673500abf3be327d625832a1d6b788",
+      "writtenUtc": "2026-11-17T09:19:02.446727+00:00"
+    },
+    {
+      "file": "client/tools/check-project.mjs",
+      "bytes": 10671,
+      "sha256": "58ae86c563fbddcd32ab70edbec6b989b483bf8080bc484cdf02b69cc8cf91c2",
+      "writtenUtc": "2026-11-17T09:16:48.058453+00:00"
+    }
+  ],
+  "remaining": [
+    "第10关下一阻塞：3031101未核帧、4011101近身附加资源分支、4010100未支持参数，需要完整旧覆盖/资源/规则对接。",
+    "BFX-008：旧type8到达后按Y排序，当前跨槽组深度尚未恢复，待多单位交叉遮挡核对。",
+    "1051102及更高等级未从一级覆盖推定完整；当前64/113可解析不代表所有旧演出已核。",
+    "后300关映射歧义、1800未关联原敌行、挂机投影830关缺口保持。",
+    "发布包、实际CDN、真机、目标数据库未在本批执行。"
+  ]
+}

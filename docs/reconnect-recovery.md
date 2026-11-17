@@ -1,6 +1,6 @@
 # 断线后的页面与战斗恢复
 
-更新：2026-11-16。已修正详情归属、准备期末次参数与统计重复绑定，并补战报统计/详情叠窗的实际分钟级断线及多次重连检查，范围见[叠窗检查](validation/overlay-lifecycle-review-20261116.json)、[本机记录](validation/overlay-lifecycle-preview-20261116.json)。最终追加的onOpen同步关闭保护仅由专项覆盖，所记录Creator预览尚未编译到该边界，不将本机主路径写成所有最终源码已验。领取入口继续关闭；本页后文的“本批未提交”等描述保留对应验证批次的历史事实，当前Git状态以实际分支为准。后续顺序统一见[实施路线](restructuring-plan.md)。
+更新：2026-11-16。主线新回执actual已冻结实际明细及升级赠钻，正常结算关闭后仅反馈附赠，冷重登首次主线一次反馈基础及附赠；本批相关检查和独立Creator/真实WS复验见[本批检查](validation/chapter-reward-review-20261116.json)、[本机记录](validation/chapter-reward-preview-20261116.json)。前批叠窗长断线证据仍见[叠窗检查](validation/overlay-lifecycle-review-20261116.json)、[原本机记录](validation/overlay-lifecycle-preview-20261116.json)；其当时尚未编译的同步onOpen保护在本批已确认编译为true，但没有重跑全部长断线矩阵。领取入口继续关闭；本页后文的“本批未提交”等描述保留对应验证批次的历史事实，当前Git状态以实际分支为准。后续顺序统一见[实施路线](restructuring-plan.md)。
 
 前批页面切换、引擎前后台及重复反馈的四组矩阵见[组合检查](validation/page-lifecycle-review-20261116.json)、[本机矩阵](validation/page-lifecycle-preview-20261116.json)。旧依据见[原核对](validation/reconnect-recovery-audit-20261116.json)，同次应用主线双确认见[原记录](validation/battle-settlement-review-20261116.json)；首次进入及展示互斥见[前阶段记录](validation/chapter-entry-recovery-review-20261116.json)、[真实重载预览](validation/chapter-entry-preview-20261116.json)，布阵单条推送缺失见[前批本机记录](validation/formation-confirm-preview-20261116.json)。各阶段保留原指纹和验证范围，不以最新修复替换历史证据。
 
@@ -65,7 +65,7 @@
 | 完整资产与版本 | app/remake/AssetStateBinding.ts：校验完整首包再批量提交；同版本authenticate仍校准时钟；不补查库存 |
 | 页面生命周期 | RemakeApp及RemakeNavigation：普通断线不改role/busy，保留页面；身份变化统一关闭旧页并重置模块 |
 | 主线结果 | MainChapterService：requestId挑战幂等、持久pendingBattleId/战报、battleId结算幂等；settlement_json存在直接返回原结果 |
-| 回执与当前状态分权 | MainChapterController/Model：receipt只供历史结果展示，state来自统一快照；历史经验不覆盖当前角色 |
+| 回执与当前状态分权 | MainChapterController/Model：receipt及可选actual只供历史奖励/经验展示，state来自统一快照；历史钱包、库存与经验不覆盖当前角色 |
 | 缺状态兜底 | GameSocketClient.refreshSnapshot：有界重建通道并等鉴权首包，不增加inventory.list/session.sync |
 | 布阵确认 | FormationController/FormationSaveModel：保留原保存意图与ACK版本，等HeroRosterModel统一阵容确认；有ACK后仅重试鉴权同步 |
 | 通用反馈 | RewardBinding、RewardController/Model、RewardView、ConfirmView：排队、去重、主城就绪后显示和关闭清理 |
@@ -82,17 +82,19 @@
 - MainChapterBattleView等待双确认再开既有ChapterEndView，奖励/经验均来自原回执。重复结束和重复快照只开一次；打开过程中关页会取消准备并关闭迟到实例。实际打开后才登记presented。
 - 关页后尚未展示的结算，即使服务器pending已清，主线仍保留“确认结算”入口，只恢复本应用原结算，不强制重播。合法challenge返回SETTLED也走相同确认；原战斗回放及失败不再次发奖。
 
-正常胜利页继续按battle归属展示；冷恢复按下节reward归属交同一通用队列。后端无需变更，原battleId结算本身已经持久幂等。
+正常胜利页继续按battle归属显示基础奖励及经验，关闭后将原actual中的升级bonuses交同一通用队列；冷恢复按下节reward归属显示一次基础量及附赠。原battleId结算继续持久幂等，新回执冻结actual，重复确认不重新计算或发放。
 
 ## 已接通的首次进入恢复与反馈归属
 
 1. 首个已接纳SESSION_LOGIN/AUTHENTICATE只记录entryRecovery候选，不结算。后续推送和暖重连不替换候选；首次打开MainChapterView才调用recoverPendingOnEntry并消费候选。
 2. 候选须仍是当前pending，且本应用无挑战编号、战报、回执、既有结算或在途操作，才以reward归属创建意图。已有本地战斗保留原恢复路径，cache:false导致的重新建View也不会抢成冷恢复。
-3. 原claim及快照双确认后只交一次通用反馈。RewardBinding.restoreItems合并实际正数量、过滤0，使用原battleId作receiptId及原回执版本；当前角色归属仍由应用读取。没有正奖励则明确完成，不伪造空条目。
+3. 原claim及快照双确认后只交一次通用反馈。新回执从actual.items的实际量及actual.bonuses合并正数量，旧回执缺actual保留原rewards；使用原battleId作receiptId及原回执版本，当前角色归属仍由应用读取。没有正奖励则明确完成，不伪造空条目，不把历史钱包或库存提交到Model。
 4. feedbackQueued只表示交给RewardModel；其队列失败保留、显式retry继续复用。onPresented只在同展示作用域窗口真正打开后回调，应用再按编号和reward归属登记presented。准备失败不假称已展示，按钮只重试显示，不重新claim/replay。
-5. battle与reward归属在异步确认前固定，各阶段保留。正常胜利页只消费battle，通用恢复窗只消费reward；错误创建的同编号战场会自行关闭。首次主线已处理后再次开页不会重复弹奖，身份重置清候选和过程，旧请求/窗口不能影响新身份。
+5. battle与reward归属在异步确认前固定，各阶段保留。正常胜利页只消费battle，其关闭后仅反馈升级bonuses；冷恢复reward将基础和附赠合并反馈，不能再叠一次正常升级反馈。错误创建的同编号战场会自行关闭。首次主线已处理后再次开页不会重复弹奖，身份重置清候选和过程，旧请求/窗口不能影响新身份。
 
-恢复窗只使用当前chapter.claim协议已有的基础实际奖励；升级赠钻未在此回执中，不能从钱包差量补猜。跨重启时pending已清且本地编号丢失的纯反馈中断仍不能定位，不在本批宣称恢复。
+ChapterReceipt.actual（可选字段6）复用RewardGrantResult保存新结算的实际发放及升级附赠；rewards基础量与experience既有动画保持原含义。历史SETTLED缺actual表示当时未记录，不依据当前钱包差量或当前等级配置补猜。旧版升级奖励另走2014专页，本次按负责人要求收敛到现有通用反馈；独立第15关里程碑不混入前三关结算，见[旧源码审计](validation/chapter-reward-legacy-audit-20261116.json)。跨重启时pending已清且本地编号丢失的纯反馈中断仍不能定位，不在本批宣称恢复。
+
+本批冷恢复实测使用真实第三关challenge回包后的浏览器重载，诊断钩子只控制重载时点，不改回执或资产。冷主城保留原pending、等级2/经验280/钻石161；首次进入主线才按原battleId结算，版本8→9，通用奖励一次显示6项基础量及10钻附赠，等级3/经验120/钻石171。奖励显示中主动断开测试Socket，自动重新鉴权后仍同实例、一次打开且资产不变；关闭和主城/主线切换后residents、opening、pendingResident、意图与modalActive均为0，通用队列idle且acceptedCount=1。此证据仅覆盖一次本机重连，不代替物理弱网、OS后台或断电。详情见[本机记录](validation/chapter-reward-preview-20261116.json)。
 
 ## 已接通的布阵缺推送确认
 
@@ -135,7 +137,7 @@
 - ChapterEndView原先在关闭时无条件按bag-info全局id清理，会误关其他来源持有的详情；奖励、背包和英雄详情的父关闭也缺少统一的在途子窗取消。本批用现有UIManager.openChild/closeChildren收敛归属，父页只清自己仍持有的意图或实例。普通open或其他父页后来接管后，旧父页不能误关；已关父页的迟到调用在接管前拒绝。
 - 同id在途打开共用一次加载，但原来只保留最早参数；调用方open.then(runOpen)又让旧续段覆盖后来选择。现在末次参数由框架提交，结算/奖励、背包三类详情及英雄技能入口去掉重复runOpen和全局按id误关，旧成功、失败及finally均按意图或任务身份收口。
 - BaseView.onViewClose复用EventScope，子窗关闭或转交时提前解除父页登记，不因反复打开积累监听。统计仍使用独立open，不随结算倒计时关闭；BattleDetailLayer静态按钮和视口绑定仅onBind一次，子节点已销毁时不再访问其输入处理器。
-- onOpen内部beginOpen后同步关闭时，业务可能不会兑现ready；waitResidentReady在登记等待前检查已关闭状态，避免错过取消出口而一直挂起。该最终追加边界有反例覆盖，未假称本机已经编译复验。
+- onOpen内部beginOpen后同步关闭时，业务可能不会兑现ready；waitResidentReady在登记等待前检查已关闭状态，避免错过取消出口而一直挂起。该叠窗批次只有反例覆盖；后续主线奖励本机批次已确认这一保护编译为true，验证范围仍按各自记录区分。
 
 ### 实际浏览器分钟级离线与多次重连
 
@@ -153,7 +155,7 @@ Creator本机预览连接随机独立内存H2、真实WS＋Protobuf。浏览器C
 
 最终十五套相关专项及严格Creator类型通过；overlay-lifecycle为10/10，page-lifecycle-recovery为9/9，后者新增两组连续三次BUSY鉴权失败后恢复。针对同步onOpen关闭的第十组反例，临时编译输入移除waitResidentReady入口保护后按预期失败，工作区源码没有回退。详情归属转交、同id末次参数、旧失败不清新选择、加载失败后解除父登记、节点先销毁、迟到图片与重复打开等受控分支和实际浏览器主路径分别记录，见[最终检查记录](validation/overlay-lifecycle-review-20261116.json)。
 
-用户唯一一次刷新后的Creator编译已包含openChild、closeChildren及“已关闭owner在转交前拒绝”，实际浏览器证明以上主路径。最终追加的同步onOpen关闭ready保护写入更晚，最后重载确认该编译特征仍为false，因此只按专项通过记录，不宣称所有最终源码都已在Creator验证；下一次常规资源刷新时自然纳入，无需为这一边界重复要求用户刷新或构建。
+该叠窗批次唯一一次刷新后的Creator编译包含openChild、closeChildren及“已关闭owner在转交前拒绝”，实际浏览器证明以上主路径。同步onOpen关闭ready保护在该批次写入更晚，最后重载的编译特征仍为false，因此当时仅记录专项通过。这一历史范围不修改；后续主线奖励批次已读到保护为true并完成正常/冷恢复关闭链限定复验，不能将其混写成原长断线矩阵已按新源码全部重跑。
 
 网络配置与临时钩子已还原，临时浏览器标签已关闭，自有独立服PID3652已核归属停止。本批源码修改仅七份现有UI生命周期文件，没有新增协议、Prefab、UUID或资源清单；没有Maven、集中构建、提交、推送或main合并，领取入口及日常开关继续关闭。小时级离线、OS后台、真机、MySQL、原生APP/微信、崩溃与断电仍未验证；下一步按实际目标补这些边界，不扩展未授权玩法。
 

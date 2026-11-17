@@ -9,13 +9,17 @@ public final class HeroBattleReplayUtils {
 
     /** 按伤害/治疗原顺序重放完整名册生命，拒绝少帧、乱序、未知单位及提前结束；审计场景保持独立来源。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
-        if (!Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed", "audit:round-limit", "audit:lineup:1", "audit:lineup:2", "audit:lineup:3", "idle:chapter:1", "idle:chapter:2", "idle:chapter:3").contains(report.scenario())
+        boolean indexed = indexedScenario(report.scenario());
+        if ((!indexed && !Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed", "audit:round-limit").contains(report.scenario()))
             || report.rounds() < 1 || report.rounds() > HeroBattleRoundUtils.MAX_ROUNDS || report.frames().isEmpty()) {
             throw new IllegalArgumentException("战斗回放场景或回合范围无效");
         }
         var units = HeroBattleChapterScenario.roster(report.initial());
-        if (!Set.of("audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "main:1:1:3", "audit:lineup:1", "audit:lineup:2", "audit:lineup:3", "idle:chapter:1", "idle:chapter:2", "idle:chapter:3").contains(report.scenario()) && units.size() != 2) {
+        if (!indexed && !Set.of("audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "main:1:1:3").contains(report.scenario()) && units.size() != 2) {
             throw new IllegalArgumentException("该战斗来源未开放多单位");
+        }
+        if (indexed && units.stream().anyMatch(unit -> unit.id() != unit.position() + (unit.faction() == 2 ? 8 : 0))) {
+            throw new IllegalArgumentException("配置化战报名册身份与站位不一致");
         }
         if (report.scenario().equals("main:1:1:3")) {
             if (units.size() != 3) {
@@ -115,6 +119,15 @@ public final class HeroBattleReplayUtils {
             || report.outcome() == HeroBattleRoundUtils.Outcome.ONGOING) {
             throw new IllegalArgumentException("战斗最终结果不一致");
         }
+    }
+
+    /** 通用生产来源使用正十进制全局uint32索引；历史审计别名另保留原固定准入。 */
+    private static boolean indexedScenario(String scenario) {
+        if (scenario == null || !scenario.matches("(?:audit:lineup|idle:chapter):[1-9][0-9]{0,9}")) {
+            return false;
+        }
+        long index = Long.parseLong(scenario.substring(scenario.lastIndexOf(':') + 1));
+        return index <= 4_294_967_295L;
     }
 
     /** 从当前游标跳过死亡单位；存活单位不可遗漏，同速保持名册的攻方优先稳定顺序。 */

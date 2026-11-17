@@ -14,6 +14,9 @@ import type { MainChapterReceipt } from "../MainChapterModel";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { BattleReplayPreview } from "./BattleReplayPreview";
 import { BattleReplayUtils } from "../utils/BattleReplayUtils";
+import { ChapterMilestoneUtils } from "../utils/ChapterMilestoneUtils";
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
 const { ccclass } = _decorator;
 /** 已校验战报及调用页面的展示清理通知，不能修改服务器资产。 */
 interface MainChapterBattleArgs {
@@ -123,7 +126,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         }
     };
 
-    /** 结果页归本战场持有，父页关闭由框架取消；已被后来用途接管的窗口不再由旧续段关闭。 */
+    /** 结果页归本战场持有；下一目标只消费最新快照，父页关闭或窗口被接管后停止旧续段。 */
     private async showResult(receipt: MainChapterReceipt | null, notice: string): Promise<void> {
         if (this.closed || !this.args || this.resultOpening) {
             return;
@@ -136,7 +139,15 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
                 units: BattleReplayUtils.units(this.args.report.bytes),
                 names: BattleReplayUtils.names(this.args.report.bytes),
                 experience: receipt?.experience,
+                nextTarget: this.finishedWon === true ? ChapterMilestoneUtils.hint(
+                    MainChapterModel.instance.state,
+                    () => GameConfig.instance.getConfig(GConfig.ChapterExtraReward),
+                    id => GameConfig.instance.getConfig(GConfig.Language, id)?.value,
+                ) : undefined,
                 onClosed: () => {
+                    if (receipt) {
+                        MainChapterController.instance.afterBattleResultClosed(receipt.battleId);
+                    }
                     if (!this.closed) {
                         this.close();
                     }

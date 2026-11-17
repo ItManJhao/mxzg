@@ -1,6 +1,7 @@
 /** 主线客户端回归：初始化、历史回执不倒退资产、未知结果原键重试、身份切换不被旧请求复活。 */
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
+import { GConfig } from "../assets/scripts/config/GConfig";
 import { MainChapterHeroTalk } from "../assets/scripts/features/battle/ui/MainChapterHeroTalk";
 
 /** 离线展示帧按Bundle的实际meta目录读取，客户端仍用原包名/包内路径。 */
@@ -16,14 +17,20 @@ import { HeroTalkUtils } from "../assets/scripts/features/battle/utils/HeroTalkU
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { Button, Label, Mask, Node, Prefab, SpriteFrame, Tween, UITransform, view as screenView } from "cc";
 import { MainChapterView } from "../assets/scripts/features/battle/ui/MainChapterView";
+import { MainChapterIdleChest } from "../assets/scripts/features/battle/ui/MainChapterIdleChest";
+import { BattleSpineService } from "../assets/scripts/features/battle/ui/BattleSpineService";
+import type { IdleClaimConfirmation, IdleClaimReceipt } from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
+import { AudioClip, AudioSource } from "cc";
 import { BagItemView } from "../assets/scripts/features/bag/ui/BagItemView";
 import { MainChapterBattleView } from "../assets/scripts/features/battle/ui/MainChapterBattleView";
 import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/BattleReplayPreview";
 import { ChapterEndView } from "../assets/scripts/features/battle/ui/ChapterEndView";
+import type { ChapterEndArgs } from "../assets/scripts/features/battle/ui/ChapterEndView";
 import { BattleInfoUtils } from "../assets/scripts/features/battle/utils/BattleInfoUtils";
 import { ChapterSettlementUtils } from "../assets/scripts/features/battle/utils/ChapterSettlementUtils";
 import { BattleHeroStarView } from "../assets/scripts/features/battle/ui/BattleHeroStarView";
-import { Sprite } from "cc";
+import { RichText, Sprite } from "cc";
 import { ResManager } from "../assets/scripts/framework/assets/ResManager";
 import { BattleStatisticsUtils } from "../assets/scripts/features/battle/utils/BattleStatisticsUtils";
 import { BattleAttackUtils } from "../assets/scripts/features/battle/utils/BattleAttackUtils";
@@ -31,6 +38,7 @@ import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { MainChapterController } from "../assets/scripts/features/battle/MainChapterController";
 import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterModel";
+import type { MainChapterReceipt } from "../assets/scripts/features/battle/MainChapterModel";
 import { Protocol } from "../assets/scripts/platform/Protocol";
 import { ProtocolRouter } from "../assets/scripts/platform/ProtocolRouter";
 import { GameProtocolCodecUtils, GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
@@ -40,10 +48,106 @@ import { GameLog } from "../assets/scripts/core/GameLog";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 const battleId = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
 const original = { maxCleared: 1, pendingBattleId: battleId, assetRevision: 3 };
-const latest = { maxCleared: 2, assetRevision: 8 };
+const latest = { maxCleared: 2, assetRevision: 8, challengeLimit: 3 };
 /** 构造真实方向信封，经生成编码往返，不直接绕过协议约束。 */
 function frame(name: string, body: unknown, kind = "response"): GameFrame {
     return GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({ version: 1, name, kind, ...(kind === "response" ? {ok: true} : {}), body }));
+}
+
+/** 验证实际明细来源、自洽校验以及正常附赠在主结果关闭后的有界恢复，不向任何服务器发奖。 */
+async function checkSettlementActualAndBonusFeedback(): Promise<void> {
+    const model = new MainChapterModel();
+    const controller = new MainChapterController(model);
+    const experience = { beforeLevel: 1, beforeExp: 0, beforeThreshold: 120,
+        afterLevel: 2, afterExp: 80, afterThreshold: 360 };
+    const rewards = [{ itemId: 900001, quantity: 4000 }, { itemId: 900003, quantity: 200 }];
+    const actual = {
+        roleId: "actual-role",
+        items: rewards.map(row => ({ itemId: row.itemId, requested: row.quantity,
+            credited: row.quantity, ignored: 0, reason: "NONE" })),
+        bonuses: [{ source: "ROLE_LEVEL_UP", itemId: 900002, quantity: 10 }],
+        wallet: { goldBefore: 8, goldAfter: 4008, diamondsBefore: 5, diamondsAfter: 15 },
+        experience: [{ beforeLevel: 1, beforeExperience: 0, requested: 200, accepted: 200,
+            ignored: 0, level: 2, experience: 80, diamonds: 10 }],
+        stacks: [], tavern: [], timedItems: [], spirits: { schemaVersion: 1, items: [] },
+    };
+    const settled = { action: "SETTLED", battleId,
+        state: { maxCleared: 1, pendingBattleId: null, assetRevision: 4 }, rewards, experience, actual };
+    let claims = 0;
+    let projections = 0;
+    let retries = 0;
+    let failProjection = true;
+    controller.configure(async (name, _body, received) => {
+        claims++;
+        controller.onNotify(Protocol.STATE_CHANGED, { revision: 4, mainChapter: settled.state });
+        received(frame(name, settled));
+    });
+    controller.configureSettlementFeedback((receipt, presentation) => {
+        projections++;
+        assert.equal(presentation, "battle", "普通胜利只能交附赠归属，不能改为冷恢复全量");
+        assert.equal(receipt.actual!.bonuses[0].quantity, 10);
+        if (failProjection) {
+            throw new Error("受控附赠投影失败");
+        }
+        return "queued";
+    }, () => { retries++; });
+    controller.initialize();
+    try {
+        controller.onNotify(Protocol.STATE_CHANGED, { revision: 3, mainChapter: original });
+        await controller.claim(battleId);
+        const accepted = model.receipt!;
+        assert.deepEqual(accepted.rewards, rewards, "升级钻石不得混入原首通基础列表");
+        assert(Object.isFrozen(accepted.actual) && Object.isFrozen(accepted.actual!.items)
+            && Object.isFrozen(accepted.actual!.bonuses[0]), "明细只读投影不能保留协议外可变引用");
+        assert.equal(accepted.actual!.bonuses[0].source, "ROLE_LEVEL_UP");
+        assert.deepEqual(accepted.actual!.experience, actual.experience,
+            "主线只读投影必须保留真实经验链，正常附赠和冷恢复共用升级信息");
+        assert(Object.isFrozen(accepted.actual!.experience) && Object.isFrozen(accepted.actual!.experience[0]));
+        assert.equal(model.state!.assetRevision, 4);
+        assert.equal(projections, 0, "双确认本身不提前弹普通胜利附赠");
+        controller.afterBattleResultClosed(battleId);
+        assert.equal(projections, 0, "准备取消或未真实显示的结果不能消费附赠");
+        controller.markSettlementPresented(battleId);
+        assert.equal(model.settlement!.feedbackReady, false, "胜利页仍显示时不交附赠");
+        controller.afterBattleResultClosed(battleId);
+        assert.equal(projections, 1);
+        assert.equal(model.settlement!.feedbackReady, true);
+        assert.equal(model.settlement!.feedbackQueued, false, "投影异常不能假称已交队列");
+        failProjection = false;
+        await controller.retrySettlementFeedback();
+        assert.equal(projections, 2);
+        assert.equal(claims, 1, "附赠重交仅用已确认原回执，不再次结算发奖");
+        assert.equal(model.settlement!.feedbackQueued, true);
+        assert.equal(model.settlement!.feedbackReady, true, "入队不等于窗口已打开");
+        await controller.retrySettlementFeedback();
+        assert.equal(projections, 2);
+        assert.equal(retries, 1, "已入队只重试既有显示队列");
+        controller.markSettlementFeedbackPresented(battleId);
+        assert.equal(model.settlement!.feedbackReady, false);
+        assert.equal(model.settlement!.presented, true);
+        await controller.retrySettlementFeedback();
+        controller.afterBattleResultClosed(battleId);
+        assert.equal(projections, 2);
+        assert.equal(retries, 1, "重复关闭或通知不能再交一次升级奖励");
+        for (const corrupt of [
+            { ...actual, bonuses: [{ source: "UNKNOWN", itemId: 900002, quantity: 10 }] },
+            { ...actual, bonuses: [{ source: "ROLE_LEVEL_UP", itemId: 900002, quantity: 11 }] },
+            { ...actual, wallet: { ...actual.wallet, diamondsAfter: 14 } },
+            { ...actual, items: [...actual.items, actual.items[0]] },
+            { ...actual, items: [{ ...actual.items[0], credited: 3999 }, actual.items[1]] },
+            { ...actual, experience: [{ ...actual.experience[0], level: 3 }] },
+        ]) {
+            assert.throws(() => controller.onNotify(Protocol.CHAPTER_CLAIM, { ...settled, actual: corrupt }));
+            assert.equal(model.receipt, accepted, "坏新扩展拒绝整包，不能先替换成功记录再降级");
+        }
+        const oldReceipt = { ...settled, actual: undefined };
+        controller.onNotify(Protocol.CHAPTER_CLAIM, oldReceipt);
+        assert.equal(model.receipt!.actual, undefined, "旧记录保持缺失，不从已保存经验或现钱包补造赠钻");
+        assert.deepEqual(model.receipt!.rewards, rewards);
+        console.log("PASS main chapter actual provenance, corrupt extensions, after-close bonus and explicit retry");
+    } finally {
+        controller.dispose();
+    }
 }
 
 /** 构造包含普通与碎片必需绑定的物品格替身，真实布局及资源绑定另由Prefab专项检查。 */
@@ -162,7 +266,7 @@ async function checkChallengeButtonAvailability(page: any): Promise<void> {
         model.message = "";
         model.requestId = null;
         for (const maxCleared of [0, 2]) {
-            model.state = { maxCleared, pendingBattleId: null, assetRevision: 1 };
+            model.state = { maxCleared, pendingBattleId: null, assetRevision: 1, challengeLimit: 3 };
             page.render();
             assert.equal(page.challengeButton.interactable, true, "开放范围内仍允许出战确认");
             assert.equal(page.challengeLabel.string, "战斗");
@@ -171,14 +275,14 @@ async function checkChallengeButtonAvailability(page: any): Promise<void> {
         assert.equal(openings.length, 2);
         assert(openings.every(row => row.id === "remake-formation" && row.args.closeAfterSave
             && typeof row.args.complete === "function"), "正常挑战进入实际阵容确认流程");
-        model.state = { maxCleared: 3, pendingBattleId: null, assetRevision: 1 };
+        model.state = { maxCleared: 3, pendingBattleId: null, assetRevision: 1, challengeLimit: 3 };
         page.render();
         assert.equal(page.challengeLabel.string, "已通关", "封顶不能仍显示普通战斗文案而无响应");
         assert.equal(page.challengeButton.interactable, false, "不因修复点击体验而开放第四关");
-        assert.equal(page.statusLabel.string, "当前开放的前三关已全部通关");
+        assert.equal(page.statusLabel.string, "当前开放的3关已全部通关");
         await page.prepareChallenge();
         assert.equal(openings.length, 2, "迟到点击也不误开已超范围的布阵");
-        assert.deepEqual(notices, ["当前开放的前三关已全部通关"]);
+        assert.deepEqual(notices, ["当前开放的3关已全部通关"]);
         model.state = { ...model.state, pendingBattleId: "11111111-1111-4111-8111-111111111111" };
         page.render();
         assert.equal(page.challengeLabel.string, "恢复战斗");
@@ -203,7 +307,7 @@ async function checkChallengeButtonAvailability(page: any): Promise<void> {
         assert.equal(page.challengeLabel.string, "等待同步");
         assert.equal(page.challengeButton.interactable, false);
         await page.prepareChallenge();
-        model.state = { maxCleared: 2, pendingBattleId: null, assetRevision: 1 };
+        model.state = { maxCleared: 2, pendingBattleId: null, assetRevision: 1, challengeLimit: 3 };
         page.playing = true;
         page.render();
         assert.equal(page.challengeLabel.string, "战斗中");
@@ -290,10 +394,385 @@ function checkIdleClaimStateProjection(): void {
     }
 }
 
+/** 现场确认只交给原显示期，冻结回执控制四档表现；关页和迟到资源不补播，不改统一快照。 */
+function checkIdleCollectionPresentation(): void {
+    const model = MainChapterModel.instance;
+    const previous = { idle: model.idle, idleReceivedAt: model.idleReceivedAt };
+    const node = new Node("IdleCollectionPageTest");
+    const page = node.addComponent(MainChapterView) as any;
+    const controller = MainChapterController.instance;
+    const spine = BattleSpineService.instance;
+    const ui = UIManager.instance;
+    const original = {
+        recover: controller.recoverPendingOnEntry,
+        mount: spine.mountNamedSpine,
+        resident: ui.setResidentHost,
+        close: ui.closeById,
+        load: ResourceAssetsUtils.loadForNode,
+    };
+    const listeners = EventDispatcher.instance.snapshot();
+    const actions: string[] = [];
+    const skeleton = {
+        findAnimation: (name: string) => chestActions[name],
+        setAnimation: (_track: number, name: string) => { actions.push("set:" + name); },
+        addAnimation: (_track: number, name: string, _loop: boolean, delay: number) => {
+            actions.push("add:" + name + ":" + delay);
+        },
+        clearTracks: () => { actions.push("clear"); },
+    };
+    const chestActions = JSON.parse(readFileSync(
+        "client/assets/bundles/resources/spine/res-block.json", "utf8")).animations;
+    let clicks = 0;
+    const playClick = page.playChestClick;
+    const renderIdle = page.renderIdle.bind(page);
+    page.render = () => {};
+    page.fitViewport = () => {};
+    page.playChestClick = () => { clicks++; };
+    for (const key of ["panel", "battleHost", "idleChestHost", "idleBubble", "resourceFlightHost",
+        "resourceFlightTemplate", "resourceFlightTarget"]) {
+        page[key] = new Node(key);
+        page[key].parent = node;
+    }
+    for (const key of ["stageLabel", "statusLabel", "challengeLabel", "idleTimeLabel", "goldRateLabel",
+        "roleExpRateLabel", "heroExpRateLabel", "idleBubbleLabel"]) {
+        const label = new Node(key);
+        label.parent = node;
+        page[key] = label.addComponent(Label);
+    }
+    for (const key of ["challengeButton", "quickBattleButton", "powerButton", "idleClaimButton", "rewardInfoButton"]) {
+        const button = new Node(key);
+        button.parent = node;
+        page[key] = button.addComponent(Button);
+    }
+    page.resourceFlightTemplate.addComponent(Sprite);
+    page.resourceFlightFrames = [new SpriteFrame(), new SpriteFrame(), new SpriteFrame(), new SpriteFrame()];
+    page.idleProgress = new Node("IdleProgress").addComponent(Sprite);
+    page.idleProgress.node.parent = node;
+    const receipt: IdleClaimReceipt = {
+        requestId: "idle-display-request", receiptId: "idle-display-receipt", expectedOperationVersion: 1,
+        beforeOperationVersion: 1, afterOperationVersion: 2, assetRevision: 4, committedAtSeconds: 1000,
+        previousStartedAtSeconds: 399, seconds: 601, maxSeconds: 1000, rewardStage: 1, feedback: null,
+    };
+    const emit = (presentationContext: object | null, value = receipt) => {
+        const confirmation: IdleClaimConfirmation = { receipt: value, presentationContext };
+        EventDispatcher.instance.emit("main-chapter.idle-collection", confirmation);
+    };
+    try {
+        controller.recoverPendingOnEntry = async () => {};
+        spine.mountNamedSpine = () => {};
+        ui.setResidentHost = () => () => {};
+        ui.closeById = () => {};
+        model.idle = { serverTime: 1000, startedAt: 1000, maxSeconds: 1000,
+            frequency: 60, rewardStage: 1, rates: [], slots: [] };
+        model.idleReceivedAt = Date.now();
+        const resetIdle = model.idle;
+        const unopened = page.idleCollectionContext();
+        page.runOpen();
+        const context = page.idleCollectionContext();
+        assert.notEqual(context, unopened, "每次onOpen必须生成新的显示期引用");
+        assert.equal(EventDispatcher.instance.listenerCount("main-chapter.idle-collection"), 1);
+        page.idleChest = new MainChapterIdleChest(() => skeleton);
+        renderIdle();
+        const initialActions = actions.length;
+        emit(null);
+        emit({});
+        assert.equal(actions.length, initialActions, "历史确认和其他页面的现场确认都不补播");
+        for (const [seconds, stage] of [[29, 1], [59, 2], [109, 3], [601, 4]]) {
+            emit(context, { ...receipt, seconds });
+            assert.deepEqual(actions.slice(-2), ["set:collect-" + stage, "add:normal-0:1.5"]);
+            assert.equal(page.idleTimeLabel.string, IdleChestUtils.time(seconds));
+            assert.equal(page.idleBubble.active, seconds > 600);
+            assert.equal(page.idleProgress.fillRange, Math.floor(seconds / 10) / 100);
+            const playedActions = actions.length;
+            emit(context, { ...receipt, seconds });
+            assert.equal(actions.length, playedActions, "收取保护期间重复交付不能打断动画");
+            renderIdle();
+            assert.equal(page.idleProgress.fillRange, Math.floor(seconds / 10) / 100,
+                "已经归零的快照不能覆盖原领取量");
+            page.idleChest.update(2);
+            renderIdle();
+            assert.equal(page.idleProgress.fillRange, 0, "保护结束后回到最新权威累计");
+            assert.equal(page.idleTimeLabel.string, "00:00");
+        }
+        assert.equal(clicks, 4, "零到账确认仍可播放四档，重复确认不重复音效");
+        assert.equal(model.idle, resetIdle, "表现不能修改权威起点或快照");
+        page.playing = true;
+        assert.equal(page.playIdleCollection(receipt), false, "战斗期间不能切换底层宝箱轨道");
+        page.playing = false;
+        let ready = false;
+        page.idleChest.dispose();
+        page.idleChest = new MainChapterIdleChest(() => ready ? skeleton : null);
+        const beforeUnavailable = actions.length;
+        emit(context);
+        assert.equal(actions.length, beforeUnavailable, "未就绪不报告收取已播放");
+        ready = true;
+        renderIdle();
+        assert.equal(actions.at(-1), "set:normal-1", "资源后来就绪仅显示当前待机，不补播旧收取");
+        emit(context);
+        assert.equal(page.idleChest.collecting, true);
+        page.runClose();
+        assert.equal(actions.at(-1), "clear", "关页立即撤销已有收取轨道");
+        assert.notEqual(page.idleCollectionContext(), context, "onClose立即使原现场引用失效");
+        assert.equal(page.playIdleCollection(receipt), false);
+        assert.deepEqual(EventDispatcher.instance.snapshot(), listeners, "关闭清理全部本页事件");
+        const closedActions = actions.length;
+        emit(context);
+        assert.equal(actions.length, closedActions, "已关闭页面不接收迟到成功");
+        page.runOpen();
+        page.idleChest = new MainChapterIdleChest(() => skeleton);
+        const reopenedActions = actions.length;
+        emit(context);
+        assert.equal(actions.length, reopenedActions, "同一实例重开也不能接收上一显示期的回执");
+        const audioLoads: ((error: unknown, asset: AudioClip | null) => void)[] = [];
+        ResourceAssetsUtils.loadForNode = ((_node, _path, _type, done) => {
+            audioLoads.push(done);
+        }) as typeof ResourceAssetsUtils.loadForNode;
+        page.playChestClick = playClick;
+        page.playChestClick();
+        page.runClose();
+        page.runOpen();
+        audioLoads[0](null, new AudioClip());
+        assert.equal(node.getComponent(AudioSource), null, "旧显示期迟到音频不能在重开页面播放");
+        page.playChestClick();
+        audioLoads[1](null, new AudioClip());
+        assert(node.getComponent(AudioSource)?.clip, "当前显示期音效仍正常使用原节点资源作用域");
+        page.runClose();
+        assert.equal(node.getComponent(AudioSource)?.clip, null, "关闭停止并释放本页音效引用");
+        assert.deepEqual(EventDispatcher.instance.snapshot(), listeners);
+    } finally {
+        page.runClose();
+        controller.recoverPendingOnEntry = original.recover;
+        spine.mountNamedSpine = original.mount;
+        ui.setResidentHost = original.resident;
+        ui.closeById = original.close;
+        ResourceAssetsUtils.loadForNode = original.load;
+        Object.assign(model, previous);
+        node.destroy();
+    }
+}
+
+/** 下一目标使用旧独立挂点并避开统计区，只消费已校验文字；状态变化不重置四秒关闭或替换实际奖励。 */
+function checkChapterNextTargetPresentation(): void {
+    const objects = JSON.parse(readFileSync(
+        "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab", "utf8"));
+    const component = objects.find((row: any) => row.mainVictoryPanel && row.nextTarget && row.readonlyNotice);
+    assert(component, "ChapterEndView必须序列化绑定独立目标RichText");
+    const readonlyNotice = objects[component.readonlyNotice.__id__];
+    assert.equal(readonlyNotice._name, "ReadonlyNotice", "原只读说明仍绑定普通底板，不指向已删除阶段占位");
+    assert.equal(objects[readonlyNotice._parent.__id__]._name, "Panel");
+    const rich = objects[component.nextTarget.__id__];
+    const targetNode = objects[rich.node.__id__];
+    const targetSize = targetNode._components.map((ref: any) => objects[ref.__id__])
+        .find((row: any) => row.__type__ === "cc.UITransform");
+    assert.equal(targetNode._name, "NextTargetRichText");
+    assert.deepEqual(targetNode._lpos, { __type__: "cc.Vec3", x: 324, y: 467, z: 0 });
+    assert.deepEqual(targetSize._contentSize, { __type__: "cc.Size", width: 420, height: 52 });
+    assert.equal(rich.__type__, "cc.RichText");
+    assert.equal(rich._fontSize, 20);
+    assert.equal(rich._maxWidth, 420);
+    assert.equal(rich._lineHeight, 26);
+    assert.equal(rich._horizontalAlign, 1);
+    assert.equal(rich._handleTouchEvent, false, "只读目标不拦截统计或打开新领取入口");
+    assert(!objects.some((row: any) => row._name === "MainVictoryNotice"), "旧同位置阶段占位不能与目标叠字");
+    const divider = objects.find((row: any) => row.__type__ === "cc.Node" && row._name === "RewardDivider");
+    assert.equal(divider._lpos.y, 282, "下方本次获得区域保留旧位置，不拿来充当下一目标");
+    const rewards = objects.find((row: any) => row.__type__ === "cc.Node" && row._name === "MainVictoryRewards");
+    assert.deepEqual(rewards._lpos, { __type__: "cc.Vec3", x: 320, y: 130, z: 0 });
+    const report = objects.find((row: any) => row.__type__ === "cc.Node" && row._name === "ReportButton");
+    const reportSize = report._components.map((ref: any) => objects[ref.__id__])
+        .find((row: any) => row.__type__ === "cc.UITransform");
+    const targetRight = targetNode._lpos.x + targetSize._contentSize.width / 2;
+    const reportLeft = report._lpos.x - reportSize._contentSize.width / 2;
+    assert(targetRight <= reportLeft - 12, "长目标换行也应留出统计按钮横向安全边界");
+    const page: any = new Node("NextTargetResult").addComponent(ChapterEndView);
+    page.nextTarget = new Node("NextTargetRichText").addComponent(RichText);
+    page.nextTarget.node.parent = page.node;
+    page.seconds = 4;
+    const target = {
+        kind: "target", text: "通关<color=#ec0000>14</color>关领取<color=#ef6b00>烈焰骑士</color>",
+        rewardId: 100, targetChapter: 15, remaining: 14,
+    };
+    const configRead = GameConfig.instance.getConfig;
+    const fileRead = GameConfig.instance.getFileByPath;
+    const open = UIManager.instance.open;
+    const openChild = UIManager.instance.openChild;
+    const opened: unknown[][] = [];
+    let closed = 0;
+    try {
+        GameConfig.instance.getConfig = (() => { throw new Error("目标View不得查询配置或当前状态"); }) as any;
+        GameConfig.instance.getFileByPath = () => { throw new Error("目标View不得另读JSON"); };
+        const paint = (args: any): void => {
+            page.paintNextTarget(args);
+            assert.equal(page.seconds, 4, "目标状态不改变胜利四秒关闭");
+        };
+        paint({ persistentChapter: true, won: true, nextTarget: target });
+        assert.equal(page.nextTarget.node.active, true);
+        assert.equal(page.nextTarget.string, target.text, "使用已校验Cocos富文本，不在页面重算剩余关卡");
+        const claimable = { ...target, remaining: 0, text: "现在就去领取领取<color=#ef6b00>烈焰骑士</color>吧" };
+        paint({ persistentChapter: true, won: true, nextTarget: claimable });
+        assert.equal(page.nextTarget.string, claimable.text, "复用页面时使用末次只读投影，不残留旧目标");
+        paint({ persistentChapter: true, won: true, nextTarget: { kind: "complete", text: "" } });
+        assert.equal(page.nextTarget.node.active, false);
+        assert.equal(page.nextTarget.string, "");
+        paint({ persistentChapter: true, won: true,
+            nextTarget: { kind: "unavailable", text: "目标信息暂不可用" } });
+        assert.equal(page.nextTarget.node.active, true);
+        assert.equal(page.nextTarget.string, "目标信息暂不可用");
+        paint({ persistentChapter: true, won: true });
+        assert.equal(page.nextTarget.string, "目标信息暂不可用", "缺少权威已领集不能当作0或空集");
+        for (const flags of [{ persistentChapter: false, won: true }, { persistentChapter: true, won: false },
+            { persistentChapter: true, won: true, presentationOnly: true }]) {
+            paint({ ...flags, nextTarget: target });
+            assert.equal(page.nextTarget.node.active, false, "失败与只读演示不显示正式下一目标");
+            assert.equal(page.nextTarget.string, "");
+        }
+        paint({ persistentChapter: true, won: true, nextTarget: target });
+        UIManager.instance.open = (async (...values: unknown[]) => { opened.push(values); }) as any;
+        UIManager.instance.openChild = (async () => { throw new Error("结算统计必须独立打开"); }) as any;
+        page.args = { won: true, persistentChapter: true, units: [{ unitId: 1 }],
+            onClosed: () => { closed++; } };
+        page.openStatistics();
+        assert.equal(opened.length, 1, "目标文本不应占用或重绑统计按钮");
+        page.closeHint = { string: "4 秒后关闭" };
+        page.unscheduleAllCallbacks = () => {};
+        page.close = () => page.onClose();
+        for (let second = 0; second < 4; second++) {
+            page.tickClose();
+        }
+        page.onClose();
+        assert.equal(closed, 1);
+        assert.equal(page.nextTarget.node.active, false);
+        assert.equal(page.nextTarget.string, "", "关页清理原目标文字，迟到画面不保留它");
+        assert.equal(opened.length, 1, "四秒关闭不重开或消耗独立统计");
+        page.openStatistics();
+        assert.equal(opened.length, 1, "关闭后的旧统计回调不能重开弹窗");
+    } finally {
+        GameConfig.instance.getConfig = configRead;
+        GameConfig.instance.getFileByPath = fileRead;
+        UIManager.instance.open = open;
+        UIManager.instance.openChild = openChild;
+        page.node.destroy();
+    }
+    for (const flags of [{ persistentChapter: false, won: true }, { persistentChapter: true, won: false }]) {
+        const mode: any = new Node("UnchangedReadonlyResult").addComponent(ChapterEndView);
+        mode.panel = new Node("Panel");
+        mode.panel.parent = mode.node;
+        const confirm = new Node("ConfirmButton");
+        confirm.parent = mode.panel;
+        for (const key of ["victory", "defeatWing", "defeatTitle", "defeatContent", "readonlyNotice"]) {
+            mode[key] = new Node(key);
+            mode[key].parent = mode.panel;
+        }
+        const originalNotice = mode.readonlyNotice;
+        originalNotice.addComponent(Label).string = "只读演示说明";
+        mode.mainVictoryPanel = new Node("MainVictoryPanel");
+        mode.mainVictoryPanel.parent = mode.node;
+        mode.mainVictoryPanel.active = false;
+        mode.nextTarget = new Node("NextTargetRichText").addComponent(RichText);
+        mode.nextTarget.node.parent = mode.mainVictoryPanel;
+        mode.closeHint = new Node("CloseHint").addComponent(Label);
+        mode.closeHint.node.parent = mode.panel;
+        mode.confetti = new Node("Confetti").addComponent(Sprite);
+        mode.confetti.node.parent = mode.panel;
+        mode.prepare = async () => {};
+        mode.fitViewport = () => {};
+        mode.unscheduleAllCallbacks = () => {};
+        const stopTween = Tween.stopAllByTarget;
+        Tween.stopAllByTarget = () => {};
+        try {
+            mode.runOpen({ ...flags, nextTarget: target });
+            assert.equal(mode.readonlyNotice, originalNotice, "失败/演示仍使用原普通底板说明");
+            assert.equal(mode.panel.active, true);
+            assert.equal(mode.mainVictoryPanel.active, false);
+            assert.equal(mode.nextTarget.node.active, false);
+            assert.equal(mode.defeatContent.active, !flags.won);
+            assert.equal(mode.victoryCountdown, false);
+            assert.equal(mode.seconds, 5, "本批目标恢复不能改动失败五秒或演示无胜利倒计时的分支");
+            if (!flags.persistentChapter) {
+                assert.equal(mode.readonlyNotice.getComponent(Label).string, "只读演示说明");
+            }
+        } finally {
+            try {
+                mode.runClose();
+                mode.node.destroy();
+            } finally {
+                Tween.stopAllByTarget = stopTween;
+            }
+        }
+    }
+}
+
+/** 真实showResult路由以最新已领集合选择下一目标，历史成功回执只供奖励展示，不能覆盖最新进度。 */
+async function checkResultUsesLatestMilestoneProgress(): Promise<void> {
+    const model = MainChapterModel.instance;
+    const previous = { state: model.state, receipt: model.receipt };
+    const openChild = UIManager.instance.openChild;
+    const ownsChild = UIManager.instance.ownsChild;
+    const units = BattleReplayUtils.units;
+    const names = BattleReplayUtils.names;
+    const root = new Node("LatestMilestoneResultRoute");
+    const page = root.addComponent(MainChapterBattleView) as any;
+    const opened: ChapterEndArgs[] = [];
+    const rows = GameConfig.instance.getConfig(GConfig.ChapterExtraReward);
+    const ordered = [...rows].sort((left, right) => left.idx - right.idx);
+    assert.equal(rows.length, 6, "路由测试读取真实同源六行配置，不伪造目标清单");
+    assert.equal(ordered[0].idx, 100);
+    const historical: MainChapterReceipt = Object.freeze({
+        action: "SETTLED",
+        battleId,
+        state: MainChapterController.readState({ maxCleared: 1, pendingBattleId: null, assetRevision: 2,
+            milestoneProgress: { schemaVersion: 1, claimedIds: [] } })!,
+        rewards: Object.freeze([{ itemId: 900001, quantity: 4000 }]),
+    });
+    const current = MainChapterController.readState({ maxCleared: 2, pendingBattleId: null, assetRevision: 8,
+        milestoneProgress: { schemaVersion: 1, claimedIds: [100] } })!;
+    const historicalBefore = JSON.stringify(historical);
+    try {
+        model.state = current;
+        model.receipt = historical;
+        page.args = { report: { battleId, mission: 1, pending: [], bytes: new Uint8Array() }, onClosed: () => {} };
+        page.finishedWon = true;
+        BattleReplayUtils.units = () => [];
+        BattleReplayUtils.names = () => ({ attacker: "历史角色", defender: "历史关卡" });
+        UIManager.instance.openChild = (async (owner: unknown, view: unknown, args: ChapterEndArgs) => {
+            assert.equal(owner, page);
+            assert.equal(view, ChapterEndView);
+            opened.push(args);
+            return {};
+        }) as any;
+        UIManager.instance.ownsChild = () => false;
+        await page.showResult(historical, "本次获得");
+        assert.equal(opened.length, 1, "调用正式showResult，捕获真实交给ChapterEndView的参数");
+        assert.equal(opened[0].nextTarget!.kind, "target");
+        assert.equal(opened[0].nextTarget!.rewardId, ordered[1].idx,
+            "最新已领100后应显示第二最小未领项，不能被历史回执的空集合退回第一项");
+        assert.equal(opened[0].nextTarget!.targetChapter, ordered[1].chapter);
+        assert.equal(opened[0].nextTarget!.remaining, ordered[1].chapter - current.maxCleared,
+            "剩余关卡也使用最新仍在前三关范围内的进度");
+        assert.deepEqual(opened[0].rewards, historical.rewards, "历史回执仍只提供本次实际奖励，不变更来源");
+        assert.equal(model.state, current, "开窗不得把receipt.state写回唯一Model");
+        assert.deepEqual(model.state!.milestoneProgress!.claimedIds, [100]);
+        assert.equal(model.receipt, historical);
+        assert.equal(JSON.stringify(historical), historicalBefore, "投影不能修改历史回执的已领集合");
+    } finally {
+        page.onClose();
+        root.destroy();
+        UIManager.instance.openChild = openChild;
+        UIManager.instance.ownsChild = ownsChild;
+        BattleReplayUtils.units = units;
+        BattleReplayUtils.names = names;
+        Object.assign(model, previous);
+    }
+}
+
 /** 只测试当前模块的状态、领取能力只读投影、按钮边界和展示；完整资产绑定另由session-state回归覆盖。 */
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
+    await checkSettlementActualAndBonusFeedback();
     checkIdleClaimStateProjection();
+    checkIdleCollectionPresentation();
+    checkChapterNextTargetPresentation();
+    await checkResultUsesLatestMilestoneProgress();
     const rewardInfo = ChapterRewardInfoUtils.rows(JSON.parse(readFileSync(
         "client/assets/bundles/resources/config/chapterreward.json", "utf8")));
     assert.equal(rewardInfo.length, 850, "说明配置投影不得静默截断旧关卡");
@@ -471,6 +950,8 @@ async function main(): Promise<void> {
     destroyedSettlement.panel = { isValid: false, getComponent: () => { throw new Error("已销毁子节点不能查询组件"); } };
     destroyedSettlement.audio = { isValid: false, stop: () => { throw new Error("已销毁音源不能停止"); } };
     destroyedSettlement.mainAudio = destroyedSettlement.audio;
+    destroyedSettlement.nextTarget = { isValid: false,
+        get node(): never { throw new Error("已销毁目标组件不能访问节点"); } };
     let destroyedClosed = 0;
     destroyedSettlement.args = { onClosed: () => destroyedClosed++ };
     destroyedSettlement.onClose();
@@ -508,7 +989,7 @@ async function main(): Promise<void> {
     controller.onNotify(Protocol.STATE_CHANGED, { revision: 3, mainChapter: original });
     assert.deepEqual(model.state, original);
     assert.equal(MainChapterController.readState(undefined), null);
-    for (const value of [{...original, maxCleared: 4}, {...original, pendingBattleId: "bad"}, {...original, assetRevision: -1}]) {
+    for (const value of [{...original, maxCleared: 0x100000000}, {...original, pendingBattleId: "bad"}, {...original, assetRevision: -1}]) {
         assert.throws(() => MainChapterController.readState(value));
     }
     assert.throws(() => MainChapterController.readState(original, 4));

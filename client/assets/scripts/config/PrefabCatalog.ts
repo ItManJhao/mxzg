@@ -28,6 +28,7 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "bundles/module/common/prefabs/CommonPanel1": "a947bf3d-bdb0-4b1c-b9c5-30997719c343",
   "bundles/module/common/prefabs/ConfirmView": "5fe40211-db40-49eb-b968-51891bb9c26b",
   "bundles/module/common/prefabs/RewardView": "bb09e057-6340-4f97-ae03-cbe86269fbdf",
+  "bundles/module/common/prefabs/RoleUpgradeView": "d72b3dac-0767-4dd2-adbb-249a4b213bdf",
   "bundles/module/gm/prefabs/GmBattleView": "cc3da575-12f4-4198-9832-c68fb455475e",
   "bundles/module/gm/prefabs/GmGrantView": "bb17e366-2157-40ce-8902-96b0af1c43d9",
   "bundles/module/gm/prefabs/GmOptionCellView": "ac4b58d6-8086-44b6-9701-4997d58d6b13",

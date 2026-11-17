@@ -24,6 +24,7 @@ import { Protocol } from "../../platform/Protocol";
 import {_decorator, Component, director, Director, EventKeyboard, game, Game, input, Input, KeyCode, Label, Node, Prefab} from "cc";
 import {PREVIEW} from "cc/env";
 import { GameLog } from "../../core/GameLog";
+import { EventDispatcher } from "../../framework/EventDispatcher";
 import {BagController} from "../../features/bag/BagController";
 import {HeroRosterController} from "../../features/hero/HeroRosterController";
 import {RemakeHomeView} from "../../features/home/ui/RemakeHomeView";
@@ -182,14 +183,29 @@ export class RemakeApp extends Component {
             }));
         chapter.initialize();
         const rewards = this.rewards = new RewardBinding(model,
-            receiptId => chapter.markSettlementPresented(receiptId, "reward"));
-        chapter.configureRecoveryFeedback(
-            receipt => rewards.restoreItems(receipt.battleId, receipt.state.assetRevision, receipt.rewards),
+            receiptId => chapter.markSettlementFeedbackPresented(receiptId));
+        chapter.configureSettlementFeedback(
+            (receipt, presentation) => {
+                if (receipt.actual) {
+                    return rewards.restoreActual(receipt.battleId, receipt.state.assetRevision, receipt.actual,
+                        presentation === "battle" ? "bonuses" : "all");
+                }
+                // 原历史记录没有附赠明细，固定归属只交一次反馈；不能从当前钱包或等级配置补算。
+                UIManager.instance.toast("历史结算未记录附赠明细，仅展示已保存奖励");
+                return presentation === "reward"
+                    ? rewards.restoreItems(receipt.battleId, receipt.state.assetRevision, receipt.rewards) : "empty";
+            },
             () => rewards.retry(),
         );
         this.development?.configureRewards(notice => rewards.restore(notice));
         const idleClaims = this.idleClaims = new IdleClaimBinding(model, service, socket,
-            new IdleClaimJournal(storageNamespace), MainChapterModel.instance, notice => rewards.restore(notice),
+            new IdleClaimJournal(storageNamespace), MainChapterModel.instance, confirmation => {
+                // 收取与旧通用奖励窗并行；历史恢复没有原页面显示期，不补播现场动画。
+                EventDispatcher.instance.emit("main-chapter.idle-collection", confirmation);
+                if (confirmation.receipt.feedback) {
+                    rewards.restore(confirmation.receipt.feedback);
+                }
+            },
             { enabled: false });
         const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController,
             HeroRosterController.instance, formation, () => {
@@ -207,7 +223,17 @@ export class RemakeApp extends Component {
         };
         service.onInitialized = applyState;
         socket.onState = applyState;
-        socket.onReward = frame => rewards.receive(frame);
+        socket.onReward = frame => {
+            // 同一持久原请求的提前通知只交双确认链；其他业务继续复用原通用队列。
+            void idleClaims.receiveReward(frame).then(handled => {
+                if (this.alive && !handled) {
+                    rewards.receive(frame);
+                }
+            }).catch(error => {
+                const reason = error instanceof Error ? error.stack || error.message : String(error);
+                GameLog.shared.classified("APP", "error", "IdleClaimBinding", "奖励通知协调失败：" + reason);
+            });
+        };
         let connectionNotice = "";
         socket.onRejected = (token, message) => service.rejectSession(token, message);
         // 重连鉴权首包就是统一恢复数据，不再单独补查钱包或背包。

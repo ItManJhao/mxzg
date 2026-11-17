@@ -1,6 +1,6 @@
 /**
  * 配置包唯一仓库专项：独立验证整包原子提交、只读引用、启动复用和异步取消/版本隔离。
- * 先用最小规范夹具覆盖失败边界，再安装当前全部源 JSON，检查类型与无类型文件共用存储。
+ * 先用最小规范夹具覆盖失败边界，再核对真实源目录与ZIP并安装解码结果，检查唯一存储。
  * 本工具只读取本地配置，不启动 Creator、不联网、不修改源 JSON。
  */
 import { strict as assert } from "node:assert";
@@ -12,7 +12,7 @@ import { ConfigUnavailable, ConfigVersionSuperseded, GameConfig } from "../asset
 import { LOADING_PLAN } from "../assets/scripts/app/remake/LoadingPlan";
 
 /** 逻辑包名定位唯一源目录，避免工具维护第二份物理路径清单。 */
-const { bundleRoot } = require(process.cwd() + "/tools/bundle-paths.cjs");
+const { bundleRoot, resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
 
 /** 启动表只从唯一阶段计划派生，夹具不再维护独立表名清单。 */
 const startupNames = LOADING_PLAN.login.flatMap(target => "config" in target ? [target.config] : []);
@@ -243,18 +243,31 @@ function readSourceFiles(): Record<string, unknown> {
     return files;
 }
 
-/** 安装当前真实配置闭包并核对全部类型表、原始文件引用与深冻结。 */
-async function checkCurrentSourcePackage(): Promise<void> {
+/** 核对真实源集合、启动计划与实际ZIP一致，再安装解码结果检查唯一仓库及深冻结。 */
+async function checkCurrentSourcePackage(): Promise<{ packed: number; startup: number }> {
     const source = readSourceFiles();
+    const sourcePaths = Object.keys(source).sort();
+    assert(startupPaths.length > 0, "启动配置必须来自真实LoadingPlan.login");
+    assert.equal(new Set(startupPaths).size, startupPaths.length, "启动路径不能重复");
+    assert(startupPaths.every(path => sourcePaths.includes(path)), "启动表必须存在于真实源目录");
+    const startupSet = new Set<string>(startupPaths);
+    const expectedPackagePaths = sourcePaths.filter(path => !startupSet.has(path));
+    assert(expectedPackagePaths.length > 0, "真实源目录必须包含游戏配置，不能用微型空包替代");
+    const bytes = Uint8Array.from(readFileSync(resolveBundleFile("config/game-config.bin")));
+    const decoded = await ConfigPackageUtils.decode(bytes, path => source[path] === undefined
+        ? undefined : ConfigPackageUtils.sourceChecksum(source[path]));
+    assert.deepEqual([...decoded.startupPaths].sort(), [...startupPaths].sort(),
+        "实际ZIP启动集合必须与唯一加载计划一致");
+    assert.deepEqual(Object.keys(decoded.files).sort(), expectedPackagePaths,
+        "实际ZIP必须覆盖真实源目录的全部非启动表，小包夹具不能代替真实产物");
+    for (const path of expectedPackagePaths) {
+        assert.deepEqual(decoded.files[path], source[path], path + " 必须与真实源JSON一致");
+    }
     const store = new GameConfig(async path => source[path]);
     await store.prepare(startupNames);
-    const packageFiles = { ...source };
-    for (const path of startupPaths) {
-        delete packageFiles[path];
-    }
-    const count = Object.keys(packageFiles).length;
-    assert.equal(count, 47, "当前49张源表中只有启动两表独立读取");
-    await store.installPackage("actual-source", packageFiles, startupPaths);
+    const packageFiles = decoded.files;
+    await store.installPackage(decoded.version, packageFiles, decoded.startupPaths);
+    assert.equal(store.getPackageVersion(), decoded.version);
     for (const name of Object.keys(CONFIG_SCHEMA) as ConfigName[]) {
         assert.equal(store.getFileByPath(CONFIG_SCHEMA[name].path), store.getFile(name));
         assert.equal(store.status(name).state, "ready");
@@ -266,6 +279,7 @@ async function checkCurrentSourcePackage(): Promise<void> {
     assert(store.getConfig(GConfig.HeroType).length > 0);
     assert.equal(store.requireConfig(GConfig.Language, 11).value, "确 定");
     assert(Object.isFrozen(store.requireConfig(GConfig.SpiritDisplay, 2000002).skills[0]));
+    return { packed: expectedPackagePaths.length, startup: startupPaths.length };
 }
 
 /** 顺序运行纯仓库专项，任一边界失败时以非零退出码报告。 */
@@ -273,8 +287,8 @@ async function main(): Promise<void> {
     await checkAtomicAndReferences();
     await checkManifestStartupPaths();
     await checkCancellationAndRaces();
-    await checkCurrentSourcePackage();
-    console.log("config-package-store-check passed (47 package files + 2 startup files)");
+    const actual = await checkCurrentSourcePackage();
+    console.log(`config-package-store-check passed (${actual.packed} real ZIP files + ${actual.startup} planned startup files)`);
 }
 
 void main().catch(error => {

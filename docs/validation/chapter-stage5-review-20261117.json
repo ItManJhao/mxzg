@@ -1,0 +1,561 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "objective": "补齐第5关空动作、三怪六技能旧覆盖和技能帧，复用通用链；本机只读预览，不开放关卡或领取。",
+  "branch": "hao",
+  "baseHead": "51c3434a2fe385e54437b00d8fab69c4e1d4bdc6",
+  "scope": {
+    "challengeLimit": 3,
+    "idleClaimEnabled": false,
+    "noCreatorBuild": true,
+    "noCommit": true,
+    "noPush": true,
+    "noMerge": true,
+    "dailyBackendRestarted": false
+  },
+  "changes": [
+    "前后端严格接纳真正空type1；非空ani/file/sound、非零shake/dimly仍拒绝，不以忽略事件放宽未知规则。",
+    "恢复2050100旧覆盖的空动作与独立type3，2050300另一路type3仍保留；双特效和双音效调用不增加伤害。",
+    "恢复玛蒙普攻近身+type6施法者帧，以及冰霜元素旧水花覆盖；不是只补原始buffart中缺图。",
+    "66帧同源逐像素核对，41帧修正RGBA/原画布Y位置，25帧原样复用，6音频原字节一致；保留UUID和画布等人工元数据，40份Creator派生trim/offset/UV正常重导入。",
+    "非投射帧与角色动作分别完成，帧到原寿命或关场清除；异步帧失败复用本场一次报告与停止，取消后丢弃迟到表现；有界日志保留原因与堆栈。",
+    "重新扫描850关，保留初始与第4关报告，新增独立stage5快照；未提高挑战上限。"
+  ],
+  "evidence": {
+    "legacy": {
+      "file": "docs/validation/chapter-stage5-legacy-audit-20261117.json",
+      "bytes": 48832,
+      "sha256": "c30e169b86798f65d3d77cc742ab03de04cbfaac104ad3f60a0b93e2ecef0c13",
+      "writtenUtc": "2026-11-17T08:35:32.108888+00:00"
+    },
+    "assets": {
+      "file": "docs/validation/chapter-stage5-assets-20261117.json",
+      "bytes": 110675,
+      "sha256": "2437758fb660f348cf2d3e4273e92dc792e2c4079438f94f6f6c0f4b34854227",
+      "writtenUtc": "2026-11-17T08:38:43.499574+00:00"
+    },
+    "preview": {
+      "file": "docs/validation/chapter-stage5-preview-20261117.json",
+      "bytes": 81892,
+      "sha256": "1cc2a4221000640e884c38e1b18c557e3fda46dcfef6668f7a0ef411e80e471c",
+      "writtenUtc": "2026-11-17T09:04:33.691816+00:00"
+    }
+  },
+  "audit": {
+    "current": {
+      "file": "docs/validation/main-chapter-dependencies-20261117-stage5.json",
+      "bytes": 15001687,
+      "sha256": "25b7a8f3152a26bd90f88e4c849f39fa0c8718ecbab40377213c2e062bac7a2f",
+      "writtenUtc": "2026-11-17T08:33:11.085038+00:00"
+    },
+    "summary": {
+      "stages": 850,
+      "enemies": 5000,
+      "distinctReferencedEnemyRows": 3200,
+      "unreferencedEnemyRows": 1800,
+      "rawEnemySkillCombinations": 3999,
+      "coordinateMismatchStages": 300,
+      "uniqueSkills": 249,
+      "resources": 566,
+      "missingResources": 0,
+      "unresolvedResourceDeclarations": 41,
+      "supported": 10,
+      "blocked": 840,
+      "unverified": 0,
+      "blockedStageCountsByReason": {
+        "ENEMY_RUNTIME_UNSUPPORTED": 828,
+        "SKILL_RUNTIME_UNSUPPORTED": 828,
+        "PRESENTATION_UNSUPPORTED": 836,
+        "IDLE_STAGE_NOT_PROJECTED": 830
+      }
+    },
+    "previouslyClosed": [
+      1,
+      2,
+      3,
+      4,
+      14,
+      15
+    ],
+    "currentlyClosed": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      14,
+      15
+    ],
+    "added": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "stage5": {
+      "enemies": [
+        {
+          "configId": 25,
+          "position": 1,
+          "templateId": 10102002,
+          "level": 3,
+          "star": 2,
+          "growthStage": 0,
+          "modifiers": [
+            {
+              "type": 220,
+              "value": 10000,
+              "kind": 2
+            },
+            {
+              "type": 223,
+              "value": 5600,
+              "kind": 2
+            }
+          ],
+          "equipment": [],
+          "runes": [],
+          "skills": [
+            "101020021:1",
+            "101020020:0"
+          ],
+          "capabilityKey": "10102002:3:2"
+        },
+        {
+          "configId": 26,
+          "position": 2,
+          "templateId": 10202002,
+          "level": 3,
+          "star": 2,
+          "growthStage": 0,
+          "modifiers": [
+            {
+              "type": 220,
+              "value": 15000,
+              "kind": 2
+            },
+            {
+              "type": 223,
+              "value": 5600,
+              "kind": 2
+            }
+          ],
+          "equipment": [],
+          "runes": [],
+          "skills": [
+            "102020021:1",
+            "102020020:0"
+          ],
+          "capabilityKey": "10202002:3:2"
+        },
+        {
+          "configId": 27,
+          "position": 3,
+          "templateId": 10204005,
+          "level": 3,
+          "star": 4,
+          "growthStage": 0,
+          "modifiers": [
+            {
+              "type": 220,
+              "value": 10000,
+              "kind": 2
+            },
+            {
+              "type": 223,
+              "value": 5600,
+              "kind": 2
+            }
+          ],
+          "equipment": [],
+          "runes": [],
+          "skills": [
+            "102040051:1",
+            "102040050:0"
+          ],
+          "capabilityKey": "10204005:3:4"
+        }
+      ],
+      "status": "supported",
+      "blockers": [],
+      "unverified": []
+    },
+    "resourceDeclarations": {
+      "before": 531,
+      "after": 566,
+      "unresolvedBefore": 48,
+      "unresolvedAfter": 41,
+      "resolvedMissing": 0
+    },
+    "historicalSnapshots": [
+      {
+        "file": "docs/validation/main-chapter-dependencies-20261117.json",
+        "bytes": 14934170,
+        "sha256": "324fcd4efb28027b6fb3a826217f5d698d8243565dad4ade7da3f8bdd593faaf",
+        "writtenUtc": "2026-11-17T07:28:05.946675+00:00",
+        "unchanged": true
+      },
+      {
+        "file": "docs/validation/main-chapter-dependencies-20261117-stage4.json",
+        "bytes": 14950852,
+        "sha256": "5f07d4723cf8bcb163e79b77b9e80c9b5b639aa4b0d50dd97938cb0ffa44b4ac",
+        "writtenUtc": "2026-11-17T07:53:11.096656+00:00",
+        "unchanged": true
+      }
+    ],
+    "sourceCheck": "node tools/audit_main_chapter_dependencies.cjs --check --from-java --snapshot=20261117-stage5 最终通过，Creator重导入后未漂移。",
+    "meaning": "当前实现的静态闭合，不代表全部旧G_BATTLE_ACTIONS已逐项核对、实际表现等价或关卡开放许可。"
+  },
+  "checks": {
+    "backend": {
+      "targeted": 72,
+      "freshDependencyAudit": 1,
+      "totalNonOverlapping": 73,
+      "suites": [
+        {
+          "name": "HeroBattleEmptyAnimationTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleEmptyAnimationTest.xml",
+          "bytes": 27001,
+          "sha256": "37420060857fc691cb3d502b0c14ee8ac6c5cff032db797f662b3b4431ea44aa",
+          "writtenUtc": "2026-11-17T08:23:39.232734+00:00"
+        },
+        {
+          "name": "MainChapterConfigurationTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterConfigurationTest.xml",
+          "bytes": 37945,
+          "sha256": "8bcb73575eda33efc891f75251a57681b13a46adabab33057a6b6f2826cc4f2f",
+          "writtenUtc": "2026-11-17T08:23:53.398521+00:00"
+        },
+        {
+          "name": "HeroBattleNearStrikeTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleNearStrikeTest.xml",
+          "bytes": 27209,
+          "sha256": "e6b628e121374d88a5a35add6590cb55f93d2a6617a3b9b518af6494c5e16831",
+          "writtenUtc": "2026-11-17T08:20:39.380769+00:00"
+        },
+        {
+          "name": "HeroBattleChapterScenarioTest",
+          "tests": 28,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleChapterScenarioTest.xml",
+          "bytes": 30504,
+          "sha256": "0c842a3b87d0b27a7d23d60d87c44cd667f14a00642dfeae2e6d3799f8db8c70",
+          "writtenUtc": "2026-11-17T08:20:38.922734+00:00"
+        },
+        {
+          "name": "HeroBattleContractDamageTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleContractDamageTest.xml",
+          "bytes": 27484,
+          "sha256": "370fd43e0942c80ff1efdcf0342079b57d57484a11c2f66e62cc0f6247394a0b",
+          "writtenUtc": "2026-11-17T08:20:39.160024+00:00"
+        },
+        {
+          "name": "HeroBattleOrdinaryRuntimeTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleOrdinaryRuntimeTest.xml",
+          "bytes": 27455,
+          "sha256": "17558e8b1f0b968aa4a3a2b060630e2dcf89d3da64ea27edc2ed763ed67db6f3",
+          "writtenUtc": "2026-11-17T08:20:39.536352+00:00"
+        },
+        {
+          "name": "HeroBattleStatisticsTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleStatisticsTest.xml",
+          "bytes": 27516,
+          "sha256": "f21b7dac7f4adc37841f7fde86356fe7038b2e9ee118fe38bfd6d6309f802de4",
+          "writtenUtc": "2026-11-17T08:20:39.760325+00:00"
+        },
+        {
+          "name": "HeroBattleShieldReplayTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.HeroBattleShieldReplayTest.xml",
+          "bytes": 27217,
+          "sha256": "19d2852339fbec8b1edbd542720cfb4f6bc675900b3e4308057d29df76c9e7e9",
+          "writtenUtc": "2026-11-17T08:20:39.666514+00:00"
+        },
+        {
+          "name": "MainChapterRulesTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterRulesTest.xml",
+          "bytes": 28462,
+          "sha256": "76771b65eb0f6f16f2b45d264820f731cd60087123de2c50ddf6747165c02472",
+          "writtenUtc": "2026-11-17T08:20:53.869168+00:00"
+        },
+        {
+          "name": "MainChapterSocketTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterSocketTest.xml",
+          "bytes": 38410,
+          "sha256": "45fdd20f6370c7e9c1528c74396c9036d3e0c2cf074b4914d871b03b4f9adad5",
+          "writtenUtc": "2026-11-17T08:20:56.283148+00:00"
+        },
+        {
+          "name": "MainChapterDependencyAuditTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "file": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterDependencyAuditTest.xml",
+          "bytes": 26634,
+          "sha256": "4f11bf5afb617a7f0c1ddbf9e26130f21a7daebb3fd8c527f4bd91ec07ab9ea9",
+          "writtenUtc": "2026-11-17T08:33:09.322211+00:00"
+        }
+      ],
+      "note": "最初一项测试误把dimly=1视为空动作，生产拒绝正确；修正测试预期后重跑Empty3+Configuration6，最新全部通过。9项重跑不重复计数。"
+    },
+    "client": [
+      {
+        "id": "battle-frost-winter-actions",
+        "passed": true,
+        "elapsedMs": 578,
+        "log": "client/temp/project-checks/battle-frost-winter-actions.log",
+        "report": {
+          "file": "client/temp/project-checks/results.battle-frost-winter-actions.json",
+          "bytes": 167,
+          "sha256": "097a8d886bd4c46d6c61ecd2487bba8325659776388d1ae79e1484cf5ed45287",
+          "writtenUtc": "2026-11-17T08:38:44.296490+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/battle-frost-winter-actions.log",
+          "bytes": 102,
+          "sha256": "49a693f796be761479629f3d8dbc4a2116e6256abc78883bf33a419e238259ed",
+          "writtenUtc": "2026-11-17T08:38:44.296490+00:00"
+        }
+      },
+      {
+        "id": "battle-hunter-noah-actions",
+        "passed": true,
+        "elapsedMs": 560,
+        "log": "client/temp/project-checks/battle-hunter-noah-actions.log",
+        "report": {
+          "file": "client/temp/project-checks/results.battle-hunter-noah-actions.json",
+          "bytes": 165,
+          "sha256": "5bb42e6991a6f6a944ae6f492136a6978fb2591b6c3164340745c16b81d9ee71",
+          "writtenUtc": "2026-11-17T08:32:26.551503+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/battle-hunter-noah-actions.log",
+          "bytes": 87,
+          "sha256": "27c384fbf714c6603fbe516afbb6e939cae47c891733d1a93c3f3b1ef5106cfe",
+          "writtenUtc": "2026-11-17T08:32:26.550506+00:00"
+        }
+      },
+      {
+        "id": "battle-presentation",
+        "passed": true,
+        "elapsedMs": 896,
+        "log": "client/temp/project-checks/battle-presentation.log",
+        "report": {
+          "file": "client/temp/project-checks/results.battle-presentation.json",
+          "bytes": 151,
+          "sha256": "5d0c7ef62c06db3ecc7067a6262d77d23415230c454cea578338811f3e190d81",
+          "writtenUtc": "2026-11-17T08:28:52.700083+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/battle-presentation.log",
+          "bytes": 77,
+          "sha256": "bb8e3219e9dec88b8638cd4529e4b35503a8a84ef7846674c264a9ca8ae3d584",
+          "writtenUtc": "2026-11-17T08:28:52.699085+00:00"
+        }
+      },
+      {
+        "id": "main-chapter-scope",
+        "passed": true,
+        "elapsedMs": 559,
+        "log": "client/temp/project-checks/main-chapter-scope.log",
+        "report": {
+          "file": "client/temp/project-checks/results.main-chapter-scope.json",
+          "bytes": 149,
+          "sha256": "0f6ebfd7599073faef2ff10ae865083f41d6fd09fcd7d0b7c4710eb3decd5ce6",
+          "writtenUtc": "2026-11-17T07:12:00.566619+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/main-chapter-scope.log",
+          "bytes": 90,
+          "sha256": "a7fb9c022d13096185a5a3d24ac6f4539e780377a85d35dff867df074213b31b",
+          "writtenUtc": "2026-11-17T07:12:00.565621+00:00"
+        }
+      },
+      {
+        "id": "main-chapter-dependency-args",
+        "passed": true,
+        "elapsedMs": 73,
+        "log": "client/temp/project-checks/main-chapter-dependency-args.log",
+        "report": {
+          "file": "client/temp/project-checks/results.main-chapter-dependency-args.json",
+          "bytes": 168,
+          "sha256": "1e414e542e217908de62bbcacd2400e46152323d6b6dcc48aaf80322d3dddad2",
+          "writtenUtc": "2026-11-17T07:53:47.757545+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/main-chapter-dependency-args.log",
+          "bytes": 120,
+          "sha256": "f9ad8acce1f015027e9e55eb55b244e3af592134d13bcf1948ec0c3cc99cdf29",
+          "writtenUtc": "2026-11-17T07:53:47.756548+00:00"
+        }
+      },
+      {
+        "id": "main-chapter",
+        "passed": true,
+        "elapsedMs": 2273,
+        "log": "client/temp/project-checks/main-chapter.log",
+        "report": {
+          "file": "client/temp/project-checks/results.main-chapter.json",
+          "bytes": 138,
+          "sha256": "823128f948f43aeff65e37cc46d04ac95155d8409907fa7a718e17f2898c02a0",
+          "writtenUtc": "2026-11-17T08:52:32.363772+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/main-chapter.log",
+          "bytes": 529,
+          "sha256": "1763defa5b65a316edd558144be250804d9b3612afa2d7525c989d6916c72a33",
+          "writtenUtc": "2026-11-17T08:52:32.362774+00:00"
+        }
+      },
+      {
+        "id": "shield-depleted",
+        "passed": true,
+        "elapsedMs": 168,
+        "log": "client/temp/project-checks/shield-depleted.log",
+        "report": {
+          "file": "client/temp/project-checks/results.shield-depleted.json",
+          "bytes": 143,
+          "sha256": "461676358e87468e3460bce9826eebec3ca1d2ca9f5d36c2e66a4eb476c0f173",
+          "writtenUtc": "2026-11-17T08:52:32.609347+00:00"
+        },
+        "logFingerprint": {
+          "file": "client/temp/project-checks/shield-depleted.log",
+          "bytes": 97,
+          "sha256": "579b29fd5ae73d281b7d88063b6718ccc88e960eb3f05ac09a48fc9f637a7c37",
+          "writtenUtc": "2026-11-17T08:52:32.608350+00:00"
+        }
+      }
+    ],
+    "strictTypecheck": {
+      "compiler": "Creator 3.8.8自带TypeScript",
+      "project": "client/tsconfig.json",
+      "args": [
+        "--strict",
+        "--noEmit"
+      ],
+      "passed": true,
+      "log": {
+        "file": "client/temp/chapter-stage5-types-final.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "writtenUtc": "2026-11-17T09:03:45.537656+00:00"
+      },
+      "sourceBoundary": "在BattleReplayPreview最后一次有界堆栈日志修改之后重新执行通过。"
+    },
+    "protocolGenerated": "node tools/generate_game_protocol.cjs --check 通过；本批未更改协议。",
+    "interop": [
+      "battle-frost-winter-actions.cjs --java=backend/target/chapter-config-stage-5.pb 通过",
+      "main-chapter-scope.cjs --java=backend/target/chapter-config-stage-5-frame.pb 通过"
+    ],
+    "directPresentationCoverage": {
+      "heroes": 113,
+      "ready": 59,
+      "gaps": 54,
+      "report": {
+        "file": "client/temp/battle-presentation-coverage-current.json",
+        "bytes": 28528,
+        "sha256": "5a52797a95e2d32d1f8a91abc50e6efb9b5197647d7ee295c2a6cdfc955adecd",
+        "writtenUtc": "2026-11-17T08:28:52.684125+00:00"
+      }
+    },
+    "browser": "见独立preview证据；自然完整播放与受控异步故障分别记录，不用单元测试代替实际画面。其后只把失败日志的String(error)改为Error堆栈/原因并截4096字符，未改控制流或清理；最后日志格式做严格类型检查，未要求再次预览，也不声称截图显示新堆栈格式。"
+  },
+  "sourceFingerprints": [
+    {
+      "file": "backend/src/main/java/com/funsgamex/mxzg/hero/HeroSkillPanelRules.java",
+      "bytes": 49957,
+      "sha256": "088a38cfcdbb0515772b622dbfa46e0e020e8b684414e2e619cdb7e919d4cb24",
+      "writtenUtc": "2026-11-17T08:23:10.512181+00:00"
+    },
+    {
+      "file": "backend/src/test/java/com/funsgamex/mxzg/HeroBattleEmptyAnimationTest.java",
+      "bytes": 5662,
+      "sha256": "3b7f7595049b2310e4de1bb8afa50f7f49c465f67dec7ebc897df723abbd4123",
+      "writtenUtc": "2026-11-17T08:23:11.346528+00:00"
+    },
+    {
+      "file": "backend/src/test/java/com/funsgamex/mxzg/MainChapterConfigurationTest.java",
+      "bytes": 20436,
+      "sha256": "a35d5a01f0d1654c28d3dac7abcd4553cd47f6a206ac4fe9f7e4db570e3c8a39",
+      "writtenUtc": "2026-11-17T08:23:13.036485+00:00"
+    },
+    {
+      "file": "backend/src/test/java/com/funsgamex/mxzg/HeroBattleNearStrikeTest.java",
+      "bytes": 5021,
+      "sha256": "3d5db02b5527b3b2f36191952a02af7645b61f40f5ba98b2292122d666f7cb1c",
+      "writtenUtc": "2026-11-17T08:23:12.195855+00:00"
+    },
+    {
+      "file": "client/assets/scripts/features/battle/utils/BattleAttackUtils.ts",
+      "bytes": 21625,
+      "sha256": "604811e0189364ac284ce6ab9dc5792e9fac803714140888dd0abd38d7971ae7",
+      "writtenUtc": "2026-11-17T08:23:41.537893+00:00"
+    },
+    {
+      "file": "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts",
+      "bytes": 53083,
+      "sha256": "c414663a7c475ed63731d38723cfc454c0784fd49db66b0c95b4e5dfb9187759",
+      "writtenUtc": "2026-11-17T09:03:43.527439+00:00"
+    },
+    {
+      "file": "client/tools/battle-frost-winter-actions-check.ts",
+      "bytes": 11299,
+      "sha256": "f3d772dbf9c8fa17d873cb1ef11947c011d6aac26195244abe05d7359dbdeb5b",
+      "writtenUtc": "2026-11-17T08:27:06.256435+00:00"
+    },
+    {
+      "file": "client/tools/check-project.mjs",
+      "bytes": 10590,
+      "sha256": "87789300aca0bce7a195ca7898eb305847912ccc7a10583af977464f944e1717",
+      "writtenUtc": "2026-11-17T08:28:49.056005+00:00"
+    }
+  ],
+  "remaining": [
+    "下一处依赖缺口：第9关10104005（5级4星）技能101040051:1 / 表现1051101，前后端均仍拒绝。",
+    "旧type5投射独立飞行，技能按角色动作完成而不等待飞行结束；当前仍等投射结束，本批不涉及type5，作为BFX-007单列。",
+    "后300关敌人映射歧义、1800未关联敌行、挂机投影830关缺口保持原证据。",
+    "当前审计未验证全部旧覆盖、进化与被动链；850目录及10关静态闭合不能解释为所有玩法/资源已完成。",
+    "正式服完整对照、发布包、真机和实际CDN不在本批验证范围。"
+  ]
+}

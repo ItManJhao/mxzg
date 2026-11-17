@@ -1,10 +1,10 @@
 /**
  * 主线结算展示：正式胜利复用旧BattleEnd布局，失败与只读演示保留ChapterEnd底板。
  * 由 UIManager 打开，展示已验证战报结果和控制器确认的奖励；不自行请求结算、不发奖、不开放养成跳转。
- * 最高伤害、经验动画和统计入口只消费冻结快照；旧战报缺数据时明确显示缺失。
+ * 最高伤害、经验动画和统计入口只消费冻结快照；下一目标只展示调用方已校验结果，不查询当前领取状态。
  */
 import {
-    _decorator, AudioSource, Button, Label, Node, Sprite, SpriteFrame,
+    _decorator, AudioSource, Button, Label, Node, RichText, Sprite, SpriteFrame,
     tween, Tween, UIOpacity, UITransform, Vec3,
 } from "cc";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
@@ -29,6 +29,7 @@ import { BattleReplayUnit } from "../utils/BattleReplayUtils";
 import { MainChapterExperience } from "../MainChapterModel";
 import { RolePortraitUtils } from "../../account/utils/RolePortraitUtils";
 import { BattleDetailLayer } from "./BattleDetailLayer";
+import type { ChapterMilestoneHint } from "../utils/ChapterMilestoneUtils";
 
 const { ccclass, property } = _decorator;
 
@@ -52,6 +53,8 @@ export interface ChapterEndArgs {
     roleAppearance?: { headId: number; borderId: number } | null;
     /** 已结算或待恢复说明，不以客户端播放结果伪造奖励。 */
     notice?: string;
+    /** 已校验的里程碑下一目标；缺失明确显示未同步，不从本次奖励或当前关卡猜测。 */
+    readonly nextTarget?: ChapterMilestoneHint;
     /** 结果窗口关闭后通知主线返回主页；不触发结算。 */
     onClosed?: () => void;
 }
@@ -85,6 +88,8 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
     @property(Label) closeHint: Label | null = null;
     /** 旧主线eff_battle_end序列帧挂点；只读演示仍使用原奖励彩带，失败不播放。 */
     @property(Sprite) confetti: Sprite | null = null;
+    /** 旧show_rich位置的独立下一目标，只用于正式主线胜利，不替代下方本次获得区域。 */
+    @property(RichText) nextTarget: RichText | null = null;
     /** 真实奖励列表；普通底板横排、主线胜利四列，布局与格子预制体由Prefab维护。 */
     @property(SuperScroll) rewardScroll: SuperScroll | null = null;
     /** 本窗口音源；关闭立即停止，不影响战场背景音。 */
@@ -106,7 +111,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
     /** 本页经验动画已推进的0.1秒步数，关闭停止调度。 */
     private experienceTick = 0;
 
-    /** 绑定确认关闭并异步准备表现；原空白关闭由ViewSpec共享模态转交，不请求结算。 */
+    /** 绑定已校验目标、确认关闭并异步准备表现；空白关闭由ViewSpec共享模态转交，不请求结算。 */
     public onOpen(args?: ChapterEndArgs): void {
         super.onOpen(args);
         if (!args || !this.panel || !this.victory || !this.defeatWing || !this.defeatTitle
@@ -140,6 +145,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         if (notice && args.persistentChapter) {
             notice.string = args.notice || "战报已保存";
         }
+        this.paintNextTarget(args);
         this.showRewards(args);
         this.seconds = this.victoryCountdown ? 4 : 5;
         this.closeHint.string = args.won && !this.victoryCountdown ? "点击空白处关闭" : this.seconds + " 秒后关闭";
@@ -173,7 +179,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
 
     /** 切换到旧胜利布局并隐藏加载内容，资源就绪后统一淡入；统计按钮打开独立只读弹层。 */
     private bindMainVictory(): void {
-        if (!this.mainVictoryPanel) {
+        if (!this.mainVictoryPanel || !this.nextTarget) {
             throw new Error("主线胜利预制体绑定缺失");
         }
         this.panel!.active = false;
@@ -182,7 +188,6 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         // 头像、骨骼和经验均异步准备，避免先露出空白文案与默认满经验条。
         this.panel.getComponent(UIOpacity)!.opacity = 0;
         this.victory = this.panel.getChildByName("MainVictoryAnimation");
-        this.readonlyNotice = this.panel.getChildByName("MainVictoryNotice");
         this.closeHint = this.panel.getChildByName("CloseHint")!.getComponent(Label);
         this.confetti = this.panel.getChildByName("MainVictoryConfetti")!.getComponent(Sprite);
         this.rewardScroll = this.panel.getChildByName("MainVictoryRewards")!.getComponent(SuperScroll);
@@ -193,6 +198,32 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
                 reportButton.off(Button.EventType.CLICK, this.openStatistics, this);
             }
         });
+    }
+
+    /**
+     * 只展示调用方已核实的安全Cocos富文本；全部已领隐藏，状态缺失明确提示，不假定已领集为空。
+     * 失败和只读演示不显示目标，也不改变胜利倒计时、奖励列表或统计窗口归属。
+     */
+    private paintNextTarget(args: ChapterEndArgs): void {
+        const target = this.nextTarget;
+        if (!target) {
+            return;
+        }
+        target.node.active = false;
+        target.string = "";
+        if (!args.persistentChapter || !args.won || args.presentationOnly) {
+            return;
+        }
+        const hint = args.nextTarget;
+        if (hint?.kind === "complete") {
+            return;
+        }
+        if (hint && ((hint.kind !== "target" && hint.kind !== "unavailable")
+            || typeof hint.text !== "string" || !hint.text)) {
+            throw new Error("主线下一目标展示参数无效");
+        }
+        target.string = hint?.text || "目标信息暂不可用";
+        target.node.active = true;
     }
 
     /** 打开本场冻结统计；沿旧版独立弹层，结算倒计时继续，已打开统计不会随其关闭。 */
@@ -419,7 +450,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.closeHint!.string = (this.args?.presentationOnly ? "失败样式验收 · " : "") + this.seconds + " 秒后关闭";
     }
 
-    /** 关闭本页仍持有的详情并释放动画、音频与定时器；不影响其他来源接管的详情或独立战报统计。 */
+    /** 关闭本页详情并清空目标、动画、音频与定时器；不影响其他来源接管的详情或独立战报统计。 */
     public onClose(): void {
         if (this.released) {
             return;
@@ -437,6 +468,10 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         }
         if (this.confetti?.isValid) {
             this.confetti.spriteFrame = null;
+        }
+        if (this.nextTarget?.isValid && this.nextTarget.node.isValid) {
+            this.nextTarget.string = "";
+            this.nextTarget.node.active = false;
         }
         this.frames = [];
         if (this.panel?.isValid) {

@@ -68,7 +68,7 @@ function frame(name: string, body: unknown, kind = "response"): GameFrame {
 
 /** 构造主线权威状态；revision属于服务端资产版本，不是本地展示版本。 */
 function state(revision: number, pendingBattleId: string | null, maxCleared = 1): MainChapterState {
-    return { maxCleared, pendingBattleId, assetRevision: revision };
+    return { maxCleared, pendingBattleId, assetRevision: revision, challengeLimit: 3 };
 }
 
 /** 返回包含历史经验的结算回执，当前资产只能通过单独的统一快照提交。 */

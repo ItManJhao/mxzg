@@ -41,6 +41,12 @@ function projection(): void {
     const frame: GameFrame = { version: 1, kind: "event", name: Protocol.REWARD_GRANTED,
         connectionId: "connection", body: notice };
     assert.deepEqual(GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame(frame)), frame);
+    // 原请求只协调本地待确认反馈；可选扩展不改变旧通知，非法UUID在编码前拒绝。
+    const correlated: GameFrame = { ...frame, body: { ...notice, requestId: receiptId } };
+    assert.deepEqual(GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame(correlated)), correlated);
+    for (const requestId of ["", "not-a-request", "ABCDEFAB-1234-1234-1234-123456789012", 123]) {
+        assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...frame, body: { ...notice, requestId } }));
+    }
     for (const changes of [{ kind: "request" }, { kind: "response", ok: true }, { id: "unrelated-rpc" },
         { ok: true }, { body: { ...notice, items: [] } }, { body: { ...notice, mode: "NORMAL" } }]) {
         assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...frame, ...changes }));
@@ -49,6 +55,41 @@ function projection(): void {
     const invalid = Frame.encode({ version: 1, kind: "event", name: Protocol.REWARD_GRANTED,
         rewardNotice: { ...notice, items: [{ itemId: 1, credited: 0 }] } }).finish();
     assert.throws(() => GameProtocolCodecUtils.decodeGameFrame(invalid));
+}
+
+/** 升级来自连续经验链，与是否赠钻或是否存在正物品分开；通知与历史投影必须同构。 */
+function upgradeProjection(): void {
+    const first = { beforeLevel: 1, beforeExperience: 119, requested: 1, accepted: 1, ignored: 0,
+        level: 2, experience: 0, diamonds: 10 };
+    const second = { beforeLevel: 2, beforeExperience: 0, requested: 360, accepted: 360, ignored: 0,
+        level: 3, experience: 0, diamonds: 0 };
+    const notice = RewardUtils.fromActual(receiptId, 6,
+        { ...actual, items: [], bonuses: [], experience: [first, second] })!;
+    assert.deepEqual(notice.items, []);
+    assert.deepEqual(notice.roleUpgrade, { beforeLevel: 1, afterLevel: 3 });
+    assert(Object.isFrozen(notice.roleUpgrade));
+    const frame: GameFrame = { version: 1, kind: "event", name: Protocol.REWARD_GRANTED, body: notice };
+    assert.deepEqual(GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame(frame)), frame);
+    const bonusOnly = RewardUtils.fromActual(receiptId, 6,
+        { ...actual, experience: [first], bonuses: [] }, "POPUP", "bonuses")!;
+    assert.deepEqual(bonusOnly.items, [], "基础已在胜利页显示，无赠钻仍需展示真实等级变化");
+    assert.deepEqual(bonusOnly.roleUpgrade, { beforeLevel: 1, afterLevel: 2 });
+    assert.equal(RewardUtils.roleUpgrade([{ ...first, beforeExperience: 0, level: 1,
+        experience: 1, diamonds: 0 }]), undefined);
+    assert.equal(RewardUtils.roleUpgrade([{ ...first, beforeLevel: 600, level: 600,
+        requested: 1, accepted: 0, ignored: 1, beforeExperience: 0, experience: 0, diamonds: 0 }]), undefined);
+    assert.equal(RewardUtils.fromActual(receiptId, 6, { ...actual, items: [], bonuses: [], experience: [] }), null);
+    for (const experience of [null, {}, [null], [{ ...first, accepted: 0 }],
+        [{ ...first, level: 1 }], [{ ...first, level: 0 }],
+        [{ ...first, experience: Number.MAX_SAFE_INTEGER + 1 }],
+        [first, { ...second, beforeLevel: 3 }], [first, { ...second, beforeExperience: 1 }]]) {
+        assert.throws(() => RewardUtils.roleUpgrade(experience));
+    }
+    for (const roleUpgrade of [null, [], {}, { beforeLevel: 1, afterLevel: 1 },
+        { beforeLevel: 2, afterLevel: 1 }, { beforeLevel: 0, afterLevel: 2 },
+        { beforeLevel: 1, afterLevel: 0x100000000 }, { beforeLevel: "1", afterLevel: 2 }]) {
+        assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...frame, body: { ...notice, roleUpgrade } }));
+    }
 }
 
 /** 内存连接只响应真实鉴权帧，不自行交付资产增量或奖励业务命令。 */
@@ -131,12 +172,17 @@ async function transport(): Promise<void> {
 /** 可选参数仅读本轮Java真实帧，默认专项不依赖历史target产物。 */
 async function main(): Promise<void> {
     projection();
+    upgradeProjection();
     await transport();
     const path = process.argv.find(value => value.startsWith("--java="))?.slice(7);
     if (path) {
         const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync(path));
         assert.equal(frame.name, Protocol.REWARD_GRANTED);
-        GameProtocolCodecUtils.validateRewardNotice(frame.body);
+        const notice = GameProtocolCodecUtils.validateRewardNotice(frame.body);
+        if (process.argv.includes("--require-upgrade")) {
+            assert.deepEqual(notice.roleUpgrade, { beforeLevel: 1, afterLevel: 2 },
+                "本轮Java真实升级的前后等级必须原样进入客户端");
+        }
         console.log("Java实际reward.granted二进制互通通过");
     }
     console.log("通用奖励实际投影、协议和连接隔离检查通过");

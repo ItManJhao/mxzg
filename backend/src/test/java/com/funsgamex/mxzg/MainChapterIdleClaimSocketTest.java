@@ -10,6 +10,7 @@ import com.funsgamex.mxzg.campaign.IdleActivityMaintenanceService;
 import com.funsgamex.mxzg.campaign.MainChapterIdleStateRepository;
 import com.funsgamex.mxzg.network.GameProtocolCodec;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.role.RoleRules;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -55,6 +56,9 @@ class MainChapterIdleClaimSocketTest {
     /** 当前独立数据库的角色锁和已提交资产版本来源。 */
     @Autowired
     private RoleRepository roles;
+    /** 同源角色等级门槛，仅用来将独立测试角色准备在真实升级边界前，不改奖励配置。 */
+    @Autowired
+    private RoleRules roleRules;
     /** 真实累计初建入口，不通过快照读取补造可领取时间。 */
     @Autowired
     private MainChapterIdleStateRepository states;
@@ -280,10 +284,14 @@ class MainChapterIdleClaimSocketTest {
         }
     }
 
-    /** 首次领取原子提交并推统一快照；不同Frame重放复用原结果，异expected冲突且不再发奖。 */
+    /** 首次领取冻结真实升级并带原请求关联；不同Frame重放复用回执，异expected冲突且不再发奖。 */
     @Test
     void claimPushesOnceAndDifferentFramesReplayTheSameBusinessReceipt() throws Exception {
         var player = player(true, true);
+        new TransactionTemplate(transactions).executeWithoutResult(status -> {
+            roles.lock(player.role());
+            jdbc.update("UPDATE game_role SET role_experience=? WHERE id=?", roleRules.threshold(1) - 1, player.role());
+        });
         String requestId = UUID.randomUUID().toString();
         try (var peer = new Peer()) {
             var initial = peer.authenticate(player).frame().path("body").path("initial");
@@ -308,9 +316,17 @@ class MainChapterIdleClaimSocketTest {
             var notice = rewardEvent.frame().path("body");
             assertEquals(1, notice.path("schemaVersion").asInt());
             assertEquals(receipt.path("receiptId").asString(), notice.path("receiptId").asString());
+            assertEquals(requestId, notice.path("requestId").asString());
             assertEquals(player.role(), notice.path("roleId").asString());
             assertEquals(receipt.path("assetRevision").asLong(), notice.path("assetRevision").asLong());
             assertEquals("POPUP", notice.path("mode").asString());
+            var experience = receipt.path("actual").path("experience");
+            assertFalse(experience.isEmpty());
+            int beforeLevel = experience.get(0).path("beforeLevel").asInt();
+            int afterLevel = experience.get(experience.size() - 1).path("level").asInt();
+            assertTrue(afterLevel > beforeLevel, "独立角色跨真实门槛后必须携带升级反馈");
+            assertEquals(beforeLevel, notice.path("roleUpgrade").path("beforeLevel").asInt());
+            assertEquals(afterLevel, notice.path("roleUpgrade").path("afterLevel").asInt());
             Map<Integer, Long> credited = new LinkedHashMap<>();
             for (var item : receipt.path("actual").path("items")) {
                 if (item.path("credited").asLong() > 0) {
@@ -419,6 +435,7 @@ class MainChapterIdleClaimSocketTest {
             current.stateChanged();
             var notice = current.rewardGranted().frame().path("body");
             assertEquals(response.path("body").path("receiptId").asString(), notice.path("receiptId").asString());
+            assertEquals(response.path("body").path("requestId").asString(), notice.path("requestId").asString());
             current.assertNoStateChange();
             assertNull(oldPeer.incoming.poll(100, TimeUnit.MILLISECONDS), "被接管旧连接不能收到新领取反馈");
         }

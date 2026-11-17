@@ -4,7 +4,8 @@
  * 不启动服务、Creator或浏览器，不写配置源文件；纯解码反例不会修改应用唯一GameConfig。
  */
 import { strict as assert } from "node:assert";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { join, relative } from "node:path";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { Asset, BufferAsset, JsonAsset, assetManager } from "cc";
 import { ApplicationResources } from "../assets/scripts/app/remake/ApplicationResources";
@@ -15,7 +16,8 @@ import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 
 /** 源文件及真实生成包按现有Bundle定位器读取，不新增配置文件清单。 */
-const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs") as {
+const { bundleRoot, resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs") as {
+    bundleRoot(name: string): string;
     resolveBundleFile(path: string): string;
 };
 
@@ -34,6 +36,26 @@ function manifestOf(bytes: Uint8Array): TestManifest {
     return JSON.parse(strFromU8(unzipSync(bytes)["manifest.json"])) as TestManifest;
 }
 
+/** 递归扫描真实源JSON路径，独立于ZIP目录派生期望集合，不能用小包清单自证完整。 */
+function currentSourcePaths(): string[] {
+    const directory = bundleRoot("config");
+    const paths: string[] = [];
+    const pending = [directory];
+    while (pending.length) {
+        const current = pending.pop()!;
+        for (const entry of readdirSync(current, { withFileTypes: true })) {
+            assert(!entry.isSymbolicLink(), "配置源目录不能由链接替代真实源：" + entry.name);
+            const absolute = join(current, entry.name);
+            if (entry.isDirectory()) {
+                pending.push(absolute);
+            } else if (entry.name.endsWith(".json")) {
+                paths.push("config/" + relative(directory, absolute).replace(/\\/g, "/").slice(0, -5));
+            }
+        }
+    }
+    return paths.sort();
+}
+
 /**
  * 解包后定向篡改，再生成ZIP自身CRC正确的新包，让生产解码器核对独立的源CRC与目录。
  * 删除manifest时不重新补回；其他情况重新写入修改后的目录。
@@ -49,8 +71,20 @@ function changedPackage(bytes: Uint8Array,
     return zipSync(files, { level: 6 });
 }
 
-/** 用真实启动源CRC验证生产解码器，覆盖缺目录、篡改内容、重复路径、额外文件和启动不同版。 */
+/** 从真实源集合及启动计划核对完整ZIP，再验证源CRC、缺目录、篡改及启动不同版等反例。 */
 async function checkDecode(bytes: Uint8Array, manifest: TestManifest): Promise<Uint8Array> {
+    const sourcePaths = currentSourcePaths();
+    const plannedStartup = LOADING_PLAN.login.flatMap(target => "config" in target ? [CONFIG_SCHEMA[target.config].path] : []);
+    assert(plannedStartup.length > 0, "真实LoadingPlan.login必须声明启动配置");
+    assert.equal(new Set(plannedStartup).size, plannedStartup.length, "启动配置路径不能重复");
+    assert(plannedStartup.every(path => sourcePaths.includes(path)), "启动配置必须存在于真实源目录");
+    const startupSet = new Set<string>(plannedStartup);
+    const expectedPackagePaths = sourcePaths.filter(path => !startupSet.has(path));
+    assert(expectedPackagePaths.length > 0, "真实源目录必须含有非启动配置");
+    assert.deepEqual(manifest.startup.map(entry => entry.path).sort(), [...plannedStartup].sort(),
+        "真实ZIP启动集合必须与LoadingPlan.login一致");
+    assert.deepEqual(manifest.files.map(entry => entry.path).sort(), expectedPackagePaths,
+        "实际ZIP必须覆盖真实源JSON集合的全部非启动项，空包或微型夹具不能代替真实产物");
     const startup = new Map(manifest.startup.map(entry => [entry.path,
         ConfigPackageUtils.sourceChecksum(JSON.parse(readFileSync(resolveBundleFile(entry.path + ".json"), "utf8")))]));
     const readStartup = (path: string) => startup.get(path);
@@ -58,11 +92,14 @@ async function checkDecode(bytes: Uint8Array, manifest: TestManifest): Promise<U
     const decoded = await ConfigPackageUtils.decode(bytes, readStartup, (done, total) => progress.push({ done, total }));
     assert.equal(decoded.version, manifest.version);
     assert.deepEqual(decoded.startupPaths, manifest.startup.map(entry => entry.path), "安装边界使用已校验目录中的启动路径");
-    assert.equal(manifest.files.length, 47, "当前真实产物包含47张非启动配置，不使用空包或微型假包");
+    assert.deepEqual(Object.keys(decoded.files).sort(), expectedPackagePaths);
     assert.equal(Object.keys(decoded.files).length, manifest.files.length);
     assert.deepEqual(progress.map(value => value.done), Array.from({ length: manifest.files.length + 1 }, (_, index) => index));
     assert(progress.every(value => value.total === manifest.files.length), "逐张进度报告实际包内文件数");
-    assert.deepEqual(decoded.files["config/buff"], JSON.parse(readFileSync(resolveBundleFile("config/buff.json"), "utf8")));
+    for (const path of expectedPackagePaths) {
+        assert.deepEqual(decoded.files[path], JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8")),
+            path + " 解码内容必须与真实源JSON一致");
+    }
 
     const missingManifest = changedPackage(bytes, files => { delete files["manifest.json"]; });
     await assert.rejects(ConfigPackageUtils.decode(missingManifest, readStartup), /缺少manifest/);
@@ -146,8 +183,8 @@ async function checkApplication(bytes: Uint8Array, badContent: Uint8Array, manif
     const config = GameConfig.instance;
     try {
         const startupNames = LOADING_PLAN.login.flatMap(target => "config" in target ? [target.config] : []);
-        assert.equal(startupNames.length, 2, "完整应用登录阶段只读取当前声明的两个启动表");
-        assert.deepEqual(manifest.startup.map(entry => entry.path), startupNames.map(name => CONFIG_SCHEMA[name].path),
+        assert(startupNames.length > 0, "完整应用登录阶段读取唯一计划声明的启动表");
+        assert.deepEqual(manifest.startup.map(entry => entry.path).sort(), startupNames.map(name => CONFIG_SCHEMA[name].path).sort(),
             "压缩包启动目录与唯一加载方案保持一致");
         const loginProgress: { label: string; ratio: number }[] = [];
         await app.prepareStage("login", (label, ratio) => loginProgress.push({ label, ratio }), () => true);
@@ -194,7 +231,7 @@ async function checkApplication(bytes: Uint8Array, badContent: Uint8Array, manif
         assert.strictEqual(config.getFileByPath("config/herotype"), config.getFile(GConfig.HeroType));
         assert.equal(requests.length, beforeRead, "英雄、背包、战斗与关卡查询直接读取同一已安装快照");
         const jsonRequests = requests.filter(request => request.type === JsonAsset);
-        assert.equal(jsonRequests.length, 2, "游戏包安装及页面配置读取不补发逐张JSON请求");
+        assert.equal(jsonRequests.length, startupNames.length, "游戏包安装及页面配置读取不补发逐张JSON请求");
         const stableHero = config.getFile(GConfig.HeroType);
         await app.prepareStage("login", () => {}, () => true);
         await app.prepareStage("enterGame", () => {}, () => true);
@@ -217,7 +254,7 @@ async function main(): Promise<void> {
     const manifest = manifestOf(bytes);
     const badContent = await checkDecode(bytes, manifest);
     await checkApplication(bytes, badContent, manifest);
-    console.log("PASS config package loading: real 47-file archive, manifest/CRC failures, boot2, cancellation, retry, shared queries, re-login reuse and released binary refs");
+    console.log(`PASS config package loading: real ${manifest.files.length}-file archive, manifest/CRC failures, boot${manifest.startup.length}, cancellation, retry, shared queries, re-login reuse and released binary refs`);
 }
 
 void main().catch(error => {

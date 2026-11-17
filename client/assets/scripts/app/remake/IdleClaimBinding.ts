@@ -7,7 +7,8 @@ import { AccountModel } from "../../features/account/AccountModel";
 import { AccountService } from "../../features/account/AccountService";
 import { MainChapterIdleClaimController } from "../../features/battle/MainChapterIdleClaimController";
 import { MainChapterModel } from "../../features/battle/MainChapterModel";
-import type { RewardNotice } from "../../features/reward/data/RewardNoticeData";
+import type { IdleClaimConfirmation } from "../../features/battle/data/MainChapterIdleClaimData";
+import { GameProtocolCodecUtils } from "../../platform/GameProtocolCodecUtils";
 import { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { GameSocketClient, SocketFailure } from "../../platform/GameSocketClient";
 import { Protocol } from "../../platform/Protocol";
@@ -30,6 +31,8 @@ export interface IdleClaimEntryOptions {
 
 /** 一次点击期间的本地能力，换号/关闭后失效，不替代持久原请求或服务端幂等。 */
 interface IdleClaimIntent {
+    /** 原点击页的显示期能力，只在真正创建新意图时交给模块，关闭后的旧页面不会据此补播。 */
+    readonly presentationContext: object | null;
     /** 创建意图时的应用激活代次；只由应用层隔离旧确认回调。 */
     readonly activation: number;
     /** 并发点击共享同一流程，结束后解除引用。 */
@@ -54,6 +57,8 @@ export class IdleClaimBinding {
     private activationFailed = false;
     /** 当前身份持久端口激活及首次恢复已完成；准备中不能创建新的原请求。 */
     private activated = false;
+    /** 当前身份的日志激活/首次恢复任务；提前奖励通知等待它识别原请求，结束或解除激活时释放。 */
+    private activationTask: Promise<void> | null = null;
     /** 本次玩家点击及确认，重复点击复用，身份变化时取消。 */
     private intent: IdleClaimIntent | null = null;
     /** 只检查现有认证连接，不发业务查询；旧身份的成功/失败仍由AccountService隔离。 */
@@ -67,7 +72,7 @@ export class IdleClaimBinding {
      * 绑定应用唯一账号、长连接和持久记录；独立测试可注入隔离主线Model和存储。
      * @param journal 已经过独立测试作用域隔离的存储，不允许共享日常身份记录。
      * @param model 应用已有的唯一主线状态，默认使用原实例，不在绑定内复制资产。
-     * @param onConfirmed 原意图及统一快照双确认后的通用反馈，由应用交给唯一奖励模块去重展示。
+     * @param onConfirmed 原意图及统一快照双确认后的完整只读结果，含零到账，由应用协调收取表现和通用反馈。
      */
     constructor(
         /** 统一账号状态只用于应用身份归属检查，不复制角色资产。 */
@@ -80,7 +85,7 @@ export class IdleClaimBinding {
         private readonly journal: Pick<IdleClaimJournal, "forRole" | "dispose">,
         /** 应用原有主线数据；只读取时钟与操作版本，不保存另一份权威状态。 */
         private readonly model = MainChapterModel.instance,
-        onConfirmed?: (notice: RewardNotice) => void,
+        onConfirmed?: (confirmation: IdleClaimConfirmation) => void,
         /** 玩家入口策略与显示时钟；正式装配明确关闭，不从URL或后端开关擅自开启。 */
         private readonly entry: IdleClaimEntryOptions = {},
     ) {
@@ -128,7 +133,13 @@ export class IdleClaimBinding {
             this.deactivate();
             this.identity = identity;
             const activation = this.activation;
-            void this.activate(role.serverId, role.id, activation);
+            const task = this.activate(role.serverId, role.id, activation);
+            this.activationTask = task;
+            void task.then(() => {
+                if (this.activationTask === task) {
+                    this.activationTask = null;
+                }
+            });
             return;
         }
         if (authenticated) {
@@ -146,14 +157,54 @@ export class IdleClaimBinding {
         this.identity = null;
         this.activationFailed = false;
         this.activated = false;
+        this.activationTask = null;
         this.controller.deactivate();
+    }
+
+    /**
+     * 匹配本应用持久原请求的提前通知交由回执双确认统一反馈；其他奖励继续走原通用队列。
+     * 激活期间先等原日志恢复，避免将未知的本地意图当作无关联通知；旧身份等待结束后直接丢弃。
+     * 不保存第二份奖励，不查询资产，也不以通知本身认定原请求已经完成。
+     * @returns true表示本地确认链拥有这笔反馈或身份已失效，调用方不再直接弹奖。
+     */
+    public async receiveReward(frame: GameFrame): Promise<boolean> {
+        if (frame.name !== Protocol.REWARD_GRANTED || frame.kind !== "event") {
+            return false;
+        }
+        const notice = GameProtocolCodecUtils.validateRewardNotice(frame.body);
+        const activation = this.activation;
+        if (this.disposed) {
+            return true;
+        }
+        if (notice.requestId === undefined) {
+            return false;
+        }
+        if (this.account.snapshot.role?.id !== notice.roleId) {
+            throw new SocketFailure("INVALID_MESSAGE", "奖励通知不属于当前角色");
+        }
+        const task = this.activationTask;
+        if (task) {
+            await task;
+        }
+        if (this.disposed || activation !== this.activation) {
+            return true;
+        }
+        const pending = this.model.idleClaim.pending;
+        if (pending?.requestId !== notice.requestId) {
+            return false;
+        }
+        const receipt = this.model.idleClaim.receipt;
+        if (receipt && receipt.receiptId !== notice.receiptId) {
+            throw new SocketFailure("INVALID_MESSAGE", "奖励通知与原领取回执不一致");
+        }
+        return true;
     }
 
     /**
      * 未来玩家领取意图的唯一应用入口：先检查显示门槛和真实冒险点，再复用通用确认。
      * 默认关闭；确认前不写journal、不发送领取。恢复旧请求不重问当前满额条件。
      */
-    public begin(): Promise<void> {
+    public begin(presentationContext: object | null = null): Promise<void> {
         if (this.disposed) {
             return Promise.resolve();
         }
@@ -164,8 +215,14 @@ export class IdleClaimBinding {
         if (this.intent) {
             return this.intent.promise;
         }
-        const intent: IdleClaimIntent = { activation: this.activation, promise: Promise.resolve(),
-            view: null, opening: false, resolve: null };
+        const intent: IdleClaimIntent = {
+            activation: this.activation,
+            presentationContext,
+            promise: Promise.resolve(),
+            view: null,
+            opening: false,
+            resolve: null,
+        };
         this.intent = intent;
         intent.promise = this.executeIntent(intent).catch(error => {
             if (this.currentIntent(intent) && !UIManager.isOpenCancelled(error)) {
@@ -232,7 +289,7 @@ export class IdleClaimBinding {
             UIManager.instance.toast("挂机状态已更新，请重新操作");
             return;
         }
-        await this.controller.begin(operationVersion);
+        await this.controller.begin(operationVersion, intent.presentationContext);
     }
 
     /** 已满才打开通用确认；已有其他确认时不顶替它，取消/空白关闭都不创建原请求。 */

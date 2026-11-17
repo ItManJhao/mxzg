@@ -5,6 +5,7 @@
  */
 package com.funsgamex.mxzg.reward;
 
+import com.funsgamex.mxzg.role.RoleRules;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,20 @@ public class RewardFeedbackService {
     public record Item(int itemId, long credited) {}
 
     /**
+     * 同笔发奖经验链实际发生的起止等级，只供显示，不读取当前角色或复制经验资产。
+     * @param beforeLevel 本次真实发放前的正角色等级。
+     * @param afterLevel 全部连续经验发放后的等级，必须严格高于beforeLevel。
+     */
+    public record RoleUpgrade(int beforeLevel, int afterLevel) {
+        /** 拒绝不升或倒退的摘要，不能以非升级通知打开升级窗口。 */
+        public RoleUpgrade {
+            if (beforeLevel < 1 || afterLevel <= beforeLevel) {
+                throw new IllegalArgumentException("通用升级反馈的前后等级无效");
+            }
+        }
+    }
+
+    /**
      * 已验证、不可变的通用展示消息；不用于写入客户端资产。
      * @param schemaVersion 固定为1的通用反馈格式版本。
      * @param receiptId 原业务持久成功回执ID，恢复展示时仍使用它。
@@ -47,9 +62,11 @@ public class RewardFeedbackService {
      * @param assetRevision 原资产事务的持久版本，客户端等待该版本提交后展示。
      * @param mode 本次业务选择的通用展示方式。
      * @param items 按首次出现顺序合并的正实际到账，包含独立升级附赠。
+     * @param requestId 可空的原业务请求关联，只帮助识别提前到达的通知，不改变回执展示身份。
+     * @param roleUpgrade 同笔真实经验链的升级摘要；没有升级时为空，不用当前角色等级推断。
      */
     public record Notice(int schemaVersion, String receiptId, String roleId, long assetRevision,
-            Mode mode, List<Item> items) {
+            Mode mode, List<Item> items, String requestId, RoleUpgrade roleUpgrade) {
         /** 复制明细，避免调用者在事务登记后改变已验证的展示数据。 */
         public Notice {
             items = List.copyOf(items);
@@ -66,15 +83,27 @@ public class RewardFeedbackService {
 
     /**
      * 在业务成功回执持久化后登记通用反馈；回滚无通知，静默或零到账也不弹空窗。
-     * 同事务同角色同回执只登记一次；同一身份出现不同内容表示业务不变量损坏并拒绝事务。
+     * 通用业务不提供请求关联，原持久回执仍是唯一展示身份。
      * @param actual 本事务真实发放结果；items.credited不包含bonuses，二者各计一次。
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void publish(String receiptId, String roleId, long assetRevision, Mode mode,
+            RewardGrantResult actual) {
+        publish(receiptId, roleId, assetRevision, mode, actual, null);
+    }
+
+    /**
+     * 为已持久化成功回执登记可选的原请求关联，便于客户端识别先于业务回包到达的反馈。
+     * 同事务同角色同回执只登记一次；关联或明细不一致都拒绝事务，不新建发奖或展示身份。
+     * @param actual 本事务真实发放结果；items.credited与bonuses各计一次。
+     * @param requestId 原业务请求的小写UUID；null表示业务无需请求关联，空串或非法UUID拒绝。
      */
     @Transactional(propagation = Propagation.MANDATORY)
     @SuppressWarnings("unchecked")
     public void publish(String receiptId, String roleId, long assetRevision, Mode mode,
-            RewardGrantResult actual) {
+            RewardGrantResult actual, String requestId) {
         requireTransaction();
-        Notice notice = project(receiptId, roleId, assetRevision, mode, actual);
+        Notice notice = project(receiptId, roleId, assetRevision, mode, actual, requestId);
         Map<String, Notice> batch = (Map<String, Notice>) TransactionSynchronizationManager.getResource(this);
         if (batch == null) {
             batch = new LinkedHashMap<>();
@@ -88,12 +117,14 @@ public class RewardFeedbackService {
         }
     }
 
-    /** 验证业务归属及安全数值，只合并正实际到账；钱包已含升级赠钻，不能再取钱包差分。 */
-    private Notice project(String receiptId, String roleId, long revision, Mode mode, RewardGrantResult actual) {
+    /** 验证归属、请求关联及连续历史经验，只投影正实际量与真实升级，不能取当前资产差分。 */
+    private Notice project(String receiptId, String roleId, long revision, Mode mode,
+            RewardGrantResult actual, String requestId) {
         if (receiptId == null || !receiptId.matches(UUID_PATTERN) || roleId == null || roleId.isBlank()
                 || roleId.length() > 128 || revision < 1 || revision > MAX_SAFE_INTEGER
-                || mode == null || actual == null || !roleId.equals(actual.roleId())) {
-            throw new IllegalArgumentException("通用发奖反馈身份或版本无效");
+                || mode == null || actual == null || !roleId.equals(actual.roleId())
+                || (requestId != null && !requestId.matches(UUID_PATTERN))) {
+            throw new IllegalArgumentException("通用发奖反馈身份、请求关联或版本无效");
         }
         Map<Integer, Long> merged = new LinkedHashMap<>();
         for (var item : Objects.requireNonNull(actual.items(), "实际发放明细缺失")) {
@@ -103,7 +134,41 @@ public class RewardFeedbackService {
             add(merged, bonus.itemId(), bonus.quantity());
         }
         List<Item> items = merged.entrySet().stream().map(row -> new Item(row.getKey(), row.getValue())).toList();
-        return new Notice(1, receiptId, roleId, revision, mode, items);
+        return new Notice(1, receiptId, roleId, revision, mode, items, requestId, roleUpgrade(actual));
+    }
+
+    /**
+     * 校验原实际经验链并提取首尾等级；允许零接纳及没有升级，不因零赠钻漏掉真实升级。
+     * 连续性同时核对本级经验，避免把不同事务或角色的片段拼成一次升级；不查询当前等级配置或资产。
+     */
+    private RoleUpgrade roleUpgrade(RewardGrantResult actual) {
+        var gains = Objects.requireNonNull(actual.experience(), "实际经验明细缺失");
+        if (gains.isEmpty()) {
+            return null;
+        }
+        RoleRules.ExperienceGain previous = null;
+        for (var gain : gains) {
+            if (gain.beforeLevel() < 1 || gain.level() < gain.beforeLevel()
+                    || !safeAmount(gain.beforeExperience()) || !safeAmount(gain.requested())
+                    || gain.requested() == 0 || !safeAmount(gain.accepted()) || !safeAmount(gain.ignored())
+                    || !safeAmount(gain.experience()) || !safeAmount(gain.diamonds())
+                    || Math.addExact(gain.accepted(), gain.ignored()) != gain.requested()
+                    || (gain.level() > gain.beforeLevel() && gain.accepted() == 0)
+                    || (gain.level() == gain.beforeLevel() && gain.diamonds() != 0)
+                    || (previous != null && (previous.level() != gain.beforeLevel()
+                        || previous.experience() != gain.beforeExperience()))) {
+                throw new IllegalArgumentException("通用升级反馈的实际经验链无效或不连续");
+            }
+            previous = gain;
+        }
+        int beforeLevel = gains.getFirst().beforeLevel();
+        int afterLevel = gains.getLast().level();
+        return afterLevel > beforeLevel ? new RoleUpgrade(beforeLevel, afterLevel) : null;
+    }
+
+    /** 历史经验和附赠数量必须能由JavaScript精确表达，零值属于合法领域结果。 */
+    private static boolean safeAmount(long value) {
+        return value >= 0 && value <= MAX_SAFE_INTEGER;
     }
 
     /** 过滤零实际到账；负数、无效配置ID、单项或合并溢出都拒绝，避免展示假奖励。 */
@@ -136,11 +201,11 @@ public class RewardFeedbackService {
                 TransactionSynchronizationManager.bindResource(RewardFeedbackService.this, owned);
             }
 
-            /** 只交付已提交的非空可见反馈，不补发资产、不拦截其他回执。 */
+            /** 可见模式交付正到账或真实升级；静默仍不展示，不补发资产或制造空窗。 */
             @Override
             public void afterCommit() {
                 for (Notice notice : owned.values()) {
-                    if (notice.mode() != Mode.SILENT && !notice.items().isEmpty()) {
+                    if (notice.mode() != Mode.SILENT && (!notice.items().isEmpty() || notice.roleUpgrade() != null)) {
                         notifyCommitted(notice);
                     }
                 }

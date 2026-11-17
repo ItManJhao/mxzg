@@ -20,6 +20,7 @@ const paths = new Set<string>([
     "bundles/module/common/prefabs/CommonPanel1",
     "bundles/module/common/prefabs/ConfirmView",
     "bundles/module/common/prefabs/RewardView",
+    "bundles/module/common/prefabs/RoleUpgradeView",
     "bundles/module/gm/prefabs/GmBattleView",
     "bundles/module/gm/prefabs/GmGrantView",
     "bundles/module/gm/prefabs/GmOptionCellView",

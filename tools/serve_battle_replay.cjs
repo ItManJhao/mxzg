@@ -25,6 +25,21 @@ const charmDeathPath = path.join(__dirname, "../backend/target", charmDeathName)
 if (fs.existsSync(charmDeathPath)) {
     fixtures.set("/" + charmDeathName, fs.readFileSync(charmDeathPath));
 }
+// 护盾专项使用真实后端输出，固定两份文件；缺文件仍可启动既有战报服务，不接受任意路径。
+for (const name of ["shield-depleted-survival.pb", "shield-depleted-death.pb"]) {
+    const file = path.join(__dirname, "../backend/target", name);
+    if (fs.existsSync(file)) {
+        fixtures.set("/" + name, fs.readFileSync(file));
+    }
+}
+// 配置化专项只发布测试导出的规范文件名，路径固定在backend/target，URL不能选择任意磁盘文件。
+const replayTarget = path.resolve(__dirname, "../backend/target");
+for (const name of fs.readdirSync(replayTarget)) {
+    const stage = /^chapter-config-stage-([1-9]\d*)\.pb$/.exec(name);
+    if (stage && Number.isSafeInteger(Number(stage[1])) && Number(stage[1]) <= 0xffffffff) {
+        fixtures.set("/" + name, fs.readFileSync(path.join(replayTarget, name)));
+    }
+}
 // 独立WebSocket试战的导出文件可选，不接受任意路径。
 for (const mission of [1, 2, 3]) {
     const name = "lineup-mixed-" + mission + "-replay.pb";

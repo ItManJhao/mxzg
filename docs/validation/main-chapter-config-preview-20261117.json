@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "environment": {
+    "url": "http://127.0.0.1:7456/?battleReplay=1&fixture=configured&mission=14",
+    "creator": "3.8.8",
+    "scene": "Remake",
+    "viewport": {
+      "width": 393,
+      "height": 852
+    },
+    "readonlyResourceServer": "127.0.0.1:19091",
+    "normalAccountLogin": false,
+    "challengeRequested": false,
+    "rewardGranted": false,
+    "dailyBackendRestarted": false,
+    "assetDatabaseAccessed": false
+  },
+  "source": {
+    "globalStageIndex": 14,
+    "mode": 1,
+    "chapter": 2,
+    "mission": 4,
+    "replayScenario": "audit:lineup:14",
+    "replay": {
+      "file": "backend/target/chapter-config-stage-14.pb",
+      "bytes": 1007,
+      "sha256": "5d374185836417bc4e9daa57ac5093589c3473bf8e64338f255010e7c806f1ea"
+    },
+    "fixture": "真实配置三名敌方，独立100级九星测试英雄；固定测试输入由真实引擎输出，无手造回放事件"
+  },
+  "compiledFeatures": {
+    "DevelopmentPreviewConfiguredBranch": true,
+    "genericGlobalIndexDecoderAccepted": true
+  },
+  "observations": {
+    "start": "通过实际BattlePage的BtnSkip点击事件开始，未注入战报或改写播放器。",
+    "units": 4,
+    "enemyTemplates": [
+      10103003,
+      10103003,
+      10103003
+    ],
+    "enemyLevels": [
+      7,
+      7,
+      7
+    ],
+    "enemyStars": [
+      3,
+      3,
+      3
+    ],
+    "enemyPositions": [
+      1,
+      2,
+      3
+    ],
+    "enemyInitialHp": [
+      331,
+      331,
+      331
+    ],
+    "rounds": 2,
+    "won": true,
+    "allyInitialHp": 36559,
+    "allyFinalHp": 36468,
+    "allyDamage": 993,
+    "allyTaken": 91,
+    "allyRecovery": 0,
+    "enemyDamage": [
+      0,
+      91,
+      0
+    ],
+    "enemyTaken": [
+      331,
+      331,
+      331
+    ],
+    "statistics": "通过真实ChapterEndView实例的既有openStatistics方法打开；独立只读底板没有可见统计按钮，不声称点击该按钮。",
+    "historicalNames": "PB未保存双方名称，统计明确显示历史名称未记录；战场使用只读全局14标题，不按单位数量误猜第3关。",
+    "close": "关闭battle-detail/chapter-end，再发实际BtnRetreat点击事件，后续帧观察销毁结果。",
+    "final": {
+      "pageRoots": [],
+      "residents": 0,
+      "pendingResident": 0,
+      "residentIntents": 0,
+      "opening": 0,
+      "modalActive": null,
+      "warnings": []
+    }
+  },
+  "screenshots": [
+    {
+      "file": "docs/images/chapter-config-stage14-ready-20261117.jpg",
+      "sha256": "801801dbaae11a8d44f65252551c7d378a015f4ffbd80826bac11022f5ffb656",
+      "capturedUtc": "2026-11-17T07:26:13.578Z"
+    },
+    {
+      "file": "docs/images/chapter-config-stage14-victory-20261117.jpg",
+      "sha256": "b083875ffb11274114ce3bc30afa1191e598b487b1f4de20272fa5070c2ce422",
+      "capturedUtc": "2026-11-17T07:26:46.765Z"
+    },
+    {
+      "file": "docs/images/chapter-config-stage14-statistics-20261117.jpg",
+      "sha256": "b114337ef4efa61faffe81fe1912c2dfd192513183109f0eb65f3e8dd61ba539",
+      "capturedUtc": "2026-11-17T07:27:24.549Z"
+    }
+  ],
+  "cleanup": {
+    "browserTabClosed": true,
+    "readonlyResourceServerStopped": true,
+    "port19091ListenersAfterStop": 0,
+    "temporaryBrowserHooksInstalled": false,
+    "creatorPrefabsSaved": false
+  },
+  "limitations": [
+    "只读回放，不是玩家第14关挑战或通关/奖励验收。",
+    "没有放开4-13关，也未验证连续闯关、发布或真机。",
+    "本次没有更改Prefab、资源UUID、旧表或数值；预览所见背景不证明850关背景全部接线。"
+  ]
+}

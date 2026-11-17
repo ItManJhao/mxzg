@@ -10,7 +10,9 @@ import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { GameProtocolCodecUtils, GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { Protocol } from "../assets/scripts/platform/Protocol";
-import type { IdleClaimJournalPort, IdleClaimPending, IdleClaimSend } from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
+import type {
+    IdleClaimConfirmation, IdleClaimJournalPort, IdleClaimPending, IdleClaimSend,
+} from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
 
 /** 本机测试提供浏览器密码学能力，不替换运行时请求编号实现。 */
@@ -98,13 +100,14 @@ function snapshot(model: MainChapterModel, revision = 7, operation = 4,
 function setup(port = new MemoryJournal(), send?: IdleClaimSend, refresh: (model: MainChapterModel) => Promise<void> = async () => {}): {
     model: MainChapterModel; controller: MainChapterIdleClaimController; port: MemoryJournal;
     calls: { name: string; body: object }[]; refreshed: () => number;
-    feedbacks: RewardNotice[];
+    feedbacks: RewardNotice[]; confirmations: IdleClaimConfirmation[];
 } {
     const model = new MainChapterModel();
     snapshot(model);
     const calls: { name: string; body: object }[] = [];
     let refreshes = 0;
     const feedbacks: RewardNotice[] = [];
+    const confirmations: IdleClaimConfirmation[] = [];
     const controller = new MainChapterIdleClaimController(model);
     controller.configure(async (name, body, received, failed) => {
         calls.push({ name, body });
@@ -116,9 +119,14 @@ function setup(port = new MemoryJournal(), send?: IdleClaimSend, refresh: (model
     }, async () => {
         refreshes++;
         await refresh(model);
-    }, notice => feedbacks.push(notice));
+    }, confirmation => {
+        confirmations.push(confirmation);
+        if (confirmation.receipt.feedback) {
+            feedbacks.push(confirmation.receipt.feedback);
+        }
+    });
     controller.initialize();
-    return { model, controller, port, calls, refreshed: () => refreshes, feedbacks };
+    return { model, controller, port, calls, refreshed: () => refreshes, feedbacks, confirmations };
 }
 
 /** 等待局部存储微任务，不使用计时器掩盖未结束流程。 */
@@ -378,10 +386,111 @@ async function main(): Promise<void> {
         });
         snapshot(test.model, 6, 3, "ENABLED");
         await test.controller.activate(port);
-        await test.controller.begin();
+        const context = Object.freeze({ source: "fresh-request" });
+        await test.controller.begin(3, context);
         assert.equal(test.model.idleClaim.phase, "confirmed");
         assert.equal(port.created, 1);
         assert.equal(test.calls.length, 2);
+        assert.equal(test.confirmations.length, 1);
+        assert.equal(test.confirmations[0].presentationContext, context);
+        assert.equal(test.confirmations[0].receipt.seconds, 60);
+        assert.equal(test.confirmations[0].receipt.maxSeconds, 43200);
+        assert.equal(test.confirmations[0].receipt.previousStartedAtSeconds, 100);
+        assert.equal(test.confirmations[0].receipt.rewardStage, 1);
+        assert(Object.isFrozen(test.confirmations[0]));
+        assert(Object.isFrozen(test.confirmations[0].receipt));
+        test.controller.observeSnapshot();
+        await test.controller.recover();
+        assert.equal(test.confirmations.length, 1, "确认后重复快照及恢复不再次交付显示");
+        assert.equal(test.calls.length, 2);
+        test.controller.dispose(); checks++;
+    }
+    {
+        const test = setup();
+        snapshot(test.model, 6, 3);
+        await test.controller.activate(test.port);
+        assert.equal(test.model.idleClaim.phase, "waiting-state");
+        snapshot(test.model);
+        await test.controller.begin(3, Object.freeze({ source: "later-click" }));
+        assert.equal(test.model.idleClaim.phase, "confirmed");
+        assert.equal(test.confirmations.length, 1);
+        assert.equal(test.confirmations[0].presentationContext, null,
+            "begin读到历史原请求时不得借用此次点击的现场引用");
+        assert.equal(test.calls.length, 1);
+        test.controller.dispose(); checks++;
+    }
+    {
+        const port = new MemoryJournal(null);
+        let recovered = false;
+        const test = setup(port, async (name, body, received, failed) => {
+            assert(port.value);
+            if (recovered) {
+                received(frame(name, { requestId: port.value.requestId, status: "COMMITTED", receipt: receipt(port.value) }));
+            } else if (name === Protocol.CHAPTER_IDLE_CLAIM_STATUS && test.calls.length === 1) {
+                received(frame(name, { requestId: port.value.requestId, status: "NOT_FOUND" }));
+            } else {
+                failed(new Error("connection lost"));
+            }
+        });
+        snapshot(test.model, 6, 3, "ENABLED");
+        await test.controller.activate(port);
+        const context = Object.freeze({ source: "same-app-request" });
+        await test.controller.begin(3, context);
+        assert.equal(test.model.idleClaim.phase, "paused");
+        assert.equal(test.confirmations.length, 0);
+        assert.equal(test.calls.length, 3);
+        recovered = true;
+        snapshot(test.model);
+        await test.controller.recover();
+        assert.equal(test.model.idleClaim.phase, "confirmed");
+        assert.equal(test.confirmations.length, 1);
+        assert.equal(test.confirmations[0].presentationContext, context,
+            "同一应用断线恢复仍可交付原请求现场引用，由应用核实页面是否仍在");
+        assert.equal(test.calls.filter(call => call.name === Protocol.CHAPTER_IDLE_CLAIM).length, 1);
+        test.controller.dispose(); checks++;
+    }
+    {
+        const port = new MemoryJournal(null);
+        port.create = async () => {
+            port.created++;
+            port.value = original;
+            return original;
+        };
+        const test = setup(port);
+        snapshot(test.model, 6, 3, "ENABLED");
+        await test.controller.activate(port);
+        snapshot(test.model, 7, 4, "ENABLED");
+        await test.controller.begin(4, Object.freeze({ source: "racing-click" }));
+        assert.equal(test.model.idleClaim.phase, "confirmed");
+        assert.equal(test.confirmations.length, 1);
+        assert.equal(test.confirmations[0].presentationContext, null,
+            "原子建单返回其他标签页意图时不能携带此次现场");
+        assert.equal(test.confirmations[0].receipt.requestId, original.requestId);
+        test.controller.dispose(); checks++;
+    }
+    {
+        const port = new MemoryJournal(null);
+        let recovered = false;
+        const test = setup(port, async (name, body, received, failed) => {
+            assert(port.value);
+            if (recovered) {
+                received(frame(name, { requestId: port.value.requestId, status: "COMMITTED", receipt: receipt(port.value) }));
+            } else {
+                failed(new Error("connection lost"));
+            }
+        });
+        snapshot(test.model, 6, 3, "ENABLED");
+        await test.controller.activate(port);
+        await test.controller.begin(3, Object.freeze({ source: "closed-session" }));
+        assert.equal(test.model.idleClaim.phase, "paused");
+        test.controller.deactivate();
+        recovered = true;
+        snapshot(test.model);
+        await test.controller.activate(port);
+        assert.equal(test.model.idleClaim.phase, "confirmed");
+        assert.equal(test.confirmations.length, 1);
+        assert.equal(test.confirmations[0].presentationContext, null,
+            "解除激活后仅恢复持久原意图，不恢复旧会话现场引用");
         test.controller.dispose(); checks++;
     }
     {
@@ -424,6 +533,11 @@ async function main(): Promise<void> {
         assert.equal(test.model.idleClaim.receipt?.feedback, null);
         assert.equal(test.feedbacks.length, 0);
         assert.equal(test.port.value, null);
+        assert.equal(test.confirmations.length, 1, "零到账也必须交付成功确认供宝箱收取表现收口");
+        assert.equal(test.confirmations[0].receipt.seconds, 60);
+        assert.equal(test.confirmations[0].receipt.maxSeconds, 43200);
+        assert.equal(test.confirmations[0].receipt.feedback, null);
+        assert.equal(test.confirmations[0].presentationContext, null);
         test.controller.dispose(); checks++;
     }
     {
@@ -438,6 +552,7 @@ async function main(): Promise<void> {
         assert.equal(test.port.value, null);
         assert.equal(test.model.idleClaim.phase, "idle");
         assert.equal(test.feedbacks.length, 0);
+        assert.equal(test.confirmations.length, 0, "确认事件内解除激活后不能向旧显示现场交付");
         test.controller.dispose(); checks++;
     }
     {

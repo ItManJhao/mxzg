@@ -36,16 +36,25 @@ const suites = [
   ["tavern-state", "ts", "client/tools/tavern-state-check.ts"],
   ["game-protocol-generated", "node", "tools/generate_game_protocol.cjs"],
   ["main-chapter", "ts", "client/tools/main-chapter-check.ts"],
+  ["chapter-milestone", "ts", "client/tools/chapter-milestone-check.ts"],
+  ["main-chapter-scope", "ts", "client/tools/main-chapter-scope-check.ts"],
+  ["main-chapter-dependency-args", "node", "tools/test_main_chapter_dependency_snapshot.cjs"],
   ["main-chapter-settlement", "ts", "client/tools/main-chapter-settlement-check.ts"],
   ["main-chapter-entry-recovery", "ts", "client/tools/main-chapter-entry-recovery-check.ts"],
   ["idle-chest", "ts", "client/tools/idle-chest-check.ts"],
   ["idle-chest-presentation", "ts", "client/tools/idle-chest-presentation-check.ts"],
   ["reward-protocol", "ts", "client/tools/reward-protocol-check.ts"],
+  ["role-upgrade-view", "ts", "client/tools/role-upgrade-view-check.ts"],
+  ["role-upgrade-config", "py", "tools/export_role_upgrade_features.py"],
+  ["role-upgrade-config-rules", "py", "tools/test_role_upgrade_features.py"],
   ["reward-controller", "ts", "client/tools/reward-controller-check.ts"],
   ["reward-binding", "ts", "client/tools/reward-binding-check.ts"],
   ["reward-view", "ts", "client/tools/reward-view-check.ts"],
   ["confirm-view", "ts", "client/tools/confirm-view-check.ts"],
   ["battle-presentation", "ts", "client/tools/battle-presentation-audit.ts"],
+  ["battle-hunter-noah-actions", "ts", "client/tools/battle-hunter-noah-actions-check.ts"],
+  ["battle-frost-winter-actions", "ts", "client/tools/battle-frost-winter-actions-check.ts"],
+  ["battle-thorn-actions", "ts", "client/tools/battle-thorn-actions-check.ts"],
   ["battle-layout", "python", "tools/check_battle_prefab_layout.py"],
   ["battle-layout-rules", "python", "tools/test_battle_prefab_layout.py"],
   ["game-socket", "ts", "client/tools/session-state-check.ts"],
@@ -94,6 +103,7 @@ const suites = [
   ["hero", "ts", "client/tools/hero-view-check.ts"],
   ["city", "ts", "client/tools/city-view-check.ts"],
   ["battle", "ts", "client/tools/battle-view-check.ts"],
+  ["shield-depleted", "ts", "client/tools/shield-depleted-check.ts"],
   ["retirement", "python", "tools/check_retirement.py"],
 ];
 const pausedSuites=new Set(["hero-roster","hero-level","formation","remake-playable","idle"]);
@@ -140,7 +150,7 @@ for (const [id, kind, source] of selected) {
       command = process.env.MXZG_PYTHON || "python";
       commandArgs = [source];
     }
-    if (["resource-generated", "config-generated", "prefab-review", "game-protocol-generated"].includes(id)) commandArgs.push("--check");
+    if (["resource-generated", "config-generated", "prefab-review", "game-protocol-generated", "role-upgrade-config"].includes(id)) commandArgs.push("--check");
     const run = spawnSync(command, commandArgs, { cwd: root, encoding: "utf8", timeout: 120000, maxBuffer: 16 * 1024 * 1024 });
     result = { id, passed: run.status === 0 && !run.error, output: (run.stdout || "") + (run.stderr || "") + (run.error ? String(run.error) : "") };
   } catch (error) {

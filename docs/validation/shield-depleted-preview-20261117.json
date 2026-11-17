@@ -1,0 +1,2410 @@
+{
+  "date": "2026-11-17",
+  "timezone": "Asia/Shanghai",
+  "branch": "hao",
+  "scope": "Creator独立只读预览，两份真实引擎生成的PB边界样本；不连接账号、不访问玩家库、不发奖或开放新技能。",
+  "environment": {
+    "origin": "http://127.0.0.1:7456/",
+    "resourceServer": "http://127.0.0.1:19091/",
+    "devicePreset": "Apple iPhone 14 Pro 393x852",
+    "configPackageVersion": "config-v1:ecff186dbd5b5ad6a81f86e5b85ebb3492f0ba0841b4b957ab5d94a87a18e855",
+    "creatorBuild": false
+  },
+  "testMethod": {
+    "statistics": "调用真实结果实例的既有openStatistics方法，窗口消费原冻结units；只读底板没有可见战报按钮，不宣称执行了按钮点击。",
+    "survivalGate": "第一次真实护盾upsert表现完成后用测试Promise等待截图，随后释放，剩余战报正常播放；不改伤害或统计。",
+    "cancelGate": "同样在护盾显示后控制Promise，执行实际退出预览回调，再释放迟到等待；事件数4保持4，未打开结果。",
+    "death": "无等待门闩，按完整样本播放；只在原宿主上观察事件和图标。",
+    "instrumentation": "只在临时页面观察presentation前后，退出前恢复原prototype，临时页已关闭。"
+  },
+  "survival": {
+    "records": [
+      {
+        "at": 134377.89999997616,
+        "when": "before",
+        "kind": "recovery",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": []
+      },
+      {
+        "at": 135774.19999998808,
+        "when": "after",
+        "kind": "recovery",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": []
+      },
+      {
+        "at": 135774.30000001192,
+        "when": "before",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "1",
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": []
+      },
+      {
+        "at": 135808.60000002384,
+        "when": "after",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "1",
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 158187.10000002384,
+        "when": "before",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "1",
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 158208.30000001192,
+        "when": "after",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "1",
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 158208.60000002384,
+        "when": "before",
+        "kind": "round.ready",
+        "reason": null,
+        "target": 0,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 161241.10000002384,
+        "when": "after",
+        "kind": "round.ready",
+        "reason": null,
+        "target": 0,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 161241.19999998808,
+        "when": "before",
+        "kind": "skill.begin",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 161241.39999997616,
+        "when": "after",
+        "kind": "skill.begin",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 161242.10000002384,
+        "when": "before",
+        "kind": "presentation",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 161242.10000002384,
+        "when": "before",
+        "kind": "damage",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 162141.60000002384,
+        "when": "after",
+        "kind": "damage",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 162141.80000001192,
+        "when": "before",
+        "kind": "buff.remove",
+        "reason": "shield-depleted",
+        "target": 10,
+        "instance": "1",
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 162142.39999997616,
+        "when": "after",
+        "kind": "buff.remove",
+        "reason": "shield-depleted",
+        "target": 10,
+        "instance": "1",
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": []
+      },
+      {
+        "at": 162558.60000002384,
+        "when": "after",
+        "kind": "presentation",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 1500
+        },
+        "icons": []
+      },
+      {
+        "at": 162558.69999998808,
+        "when": "before",
+        "kind": "skill.end",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 162558.80000001192,
+        "when": "after",
+        "kind": "skill.end",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 162558.89999997616,
+        "when": "before",
+        "kind": "skill.begin",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 162558.89999997616,
+        "when": "after",
+        "kind": "skill.begin",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 162559,
+        "when": "before",
+        "kind": "presentation",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 162559.10000002384,
+        "when": "before",
+        "kind": "damage",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 900,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 163458.69999998808,
+        "when": "after",
+        "kind": "damage",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 900,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 163892.80000001192,
+        "when": "after",
+        "kind": "presentation",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 163892.89999997616,
+        "when": "before",
+        "kind": "skill.end",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 900,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 163893,
+        "when": "after",
+        "kind": "skill.end",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 900,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 163893,
+        "when": "before",
+        "kind": "recovery",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 165278.60000002384,
+        "when": "after",
+        "kind": "recovery",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 165278.80000001192,
+        "when": "before",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "3",
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 165312.69999998808,
+        "when": "after",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "3",
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 165313,
+        "when": "before",
+        "kind": "round.ready",
+        "reason": null,
+        "target": 0,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 168341.39999997616,
+        "when": "after",
+        "kind": "round.ready",
+        "reason": null,
+        "target": 0,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 168341.5,
+        "when": "before",
+        "kind": "skill.begin",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 168341.60000002384,
+        "when": "after",
+        "kind": "skill.begin",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 168341.69999998808,
+        "when": "before",
+        "kind": "presentation",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 168341.69999998808,
+        "when": "before",
+        "kind": "damage",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 0
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 169242.19999998808,
+        "when": "after",
+        "kind": "damage",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 0
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 169242.19999998808,
+        "when": "before",
+        "kind": "buff.remove",
+        "reason": "shield-depleted",
+        "target": 10,
+        "instance": "3",
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": [
+          {
+            "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+            "icons": [
+              {
+                "name": "Buff_0",
+                "frame": "skill-icon_300100001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "at": 169242.69999998808,
+        "when": "after",
+        "kind": "buff.remove",
+        "reason": "shield-depleted",
+        "target": 10,
+        "instance": "3",
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 169624.80000001192,
+        "when": "after",
+        "kind": "presentation",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 500
+        },
+        "icons": []
+      },
+      {
+        "at": 169624.89999997616,
+        "when": "before",
+        "kind": "skill.end",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 0
+        },
+        "icons": []
+      },
+      {
+        "at": 169624.89999997616,
+        "when": "after",
+        "kind": "skill.end",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "hp": {
+          "2": 1000,
+          "10": 0
+        },
+        "icons": []
+      }
+    ],
+    "gateFirst": false,
+    "units": [
+      {
+        "unitId": 2,
+        "faction": 1,
+        "templateId": 10101001,
+        "level": 1,
+        "position": 2,
+        "initialHp": 1000,
+        "maxHp": 1000,
+        "finalHp": 1000,
+        "totalDamage": 1300,
+        "totalTakenDamage": 100,
+        "totalRecovery": 1000,
+        "star": 1,
+        "portraitIconId": 20101001
+      },
+      {
+        "unitId": 10,
+        "faction": 2,
+        "templateId": 10101001,
+        "level": 1,
+        "position": 2,
+        "initialHp": 1500,
+        "maxHp": 1500,
+        "finalHp": 0,
+        "totalDamage": 100,
+        "totalTakenDamage": 1500,
+        "totalRecovery": 0,
+        "star": 1,
+        "portraitIconId": 20101001
+      }
+    ],
+    "steps": [
+      {
+        "round": 1,
+        "kind": "recovery",
+        "sourceId": 2,
+        "targetId": 2,
+        "configId": 1063201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": 0,
+        "reportedHpChange": 500,
+        "dead": false,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 1500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.upsert",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 10011201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "1",
+        "expiresAtRound": 3,
+        "buffValue": "100",
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 1500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.upsert",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 10011201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "1",
+        "expiresAtRound": 3,
+        "buffValue": "100",
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 1500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "round.ready",
+        "sourceId": 0,
+        "targetId": 0,
+        "configId": 0,
+        "readySeconds": 3,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 1500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "skill.begin",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 1500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "presentation",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 1010100,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 1500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.remove",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 10011201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "1",
+        "expiresAtRound": 3,
+        "buffValue": "100",
+        "removalReason": "shield-depleted",
+        "hpByUnit": {
+          "2": 1000,
+          "10": 1500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "damage",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 1010300,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": -1000,
+        "reportedHpChange": -900,
+        "dead": false,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "skill.end",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "skill.begin",
+        "sourceId": 10,
+        "targetId": 2,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "presentation",
+        "sourceId": 10,
+        "targetId": 2,
+        "configId": 1010100,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "damage",
+        "sourceId": 10,
+        "targetId": 2,
+        "configId": 1010300,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": -100,
+        "reportedHpChange": -100,
+        "dead": false,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 900,
+          "10": 500
+        }
+      },
+      {
+        "round": 1,
+        "kind": "skill.end",
+        "sourceId": 10,
+        "targetId": 2,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 900,
+          "10": 500
+        }
+      },
+      {
+        "round": 2,
+        "kind": "recovery",
+        "sourceId": 2,
+        "targetId": 2,
+        "configId": 1063201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": 100,
+        "reportedHpChange": 500,
+        "dead": false,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 2,
+        "kind": "buff.upsert",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 10011201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "3",
+        "expiresAtRound": 4,
+        "buffValue": "100",
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 2,
+        "kind": "round.ready",
+        "sourceId": 0,
+        "targetId": 0,
+        "configId": 0,
+        "readySeconds": 3,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 2,
+        "kind": "skill.begin",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 2,
+        "kind": "presentation",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 1010100,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 2,
+        "kind": "buff.remove",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 10011201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "3",
+        "expiresAtRound": 4,
+        "buffValue": "100",
+        "removalReason": "shield-depleted",
+        "hpByUnit": {
+          "2": 1000,
+          "10": 500
+        }
+      },
+      {
+        "round": 2,
+        "kind": "damage",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 1010300,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": -500,
+        "reportedHpChange": -900,
+        "dead": true,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 0
+        }
+      },
+      {
+        "round": 2,
+        "kind": "skill.end",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 0
+        }
+      }
+    ],
+    "gated": false,
+    "activeSnapshot": {
+      "icons": [
+        {
+          "path": "BattlePage/LayerField/EnemySlots/Slot_E1/HeadAnchor/BuffRow",
+          "icons": [
+            {
+              "name": "Buff_0",
+              "frame": "skill-icon_300100001"
+            }
+          ]
+        }
+      ],
+      "units": [
+        {
+          "unitId": 2,
+          "faction": 1,
+          "templateId": 10101001,
+          "level": 1,
+          "position": 2,
+          "initialHp": 1000,
+          "maxHp": 1000,
+          "finalHp": 1000,
+          "totalDamage": 1300,
+          "totalTakenDamage": 100,
+          "totalRecovery": 1000,
+          "star": 1,
+          "portraitIconId": 20101001
+        },
+        {
+          "unitId": 10,
+          "faction": 2,
+          "templateId": 10101001,
+          "level": 1,
+          "position": 2,
+          "initialHp": 1500,
+          "maxHp": 1500,
+          "finalHp": 0,
+          "totalDamage": 100,
+          "totalTakenDamage": 1500,
+          "totalRecovery": 0,
+          "star": 1,
+          "portraitIconId": 20101001
+        }
+      ],
+      "at": 158187.10000002384
+    },
+    "completed": true,
+    "statistics": {
+      "labels": [
+        "战 报",
+        "",
+        "伤害:",
+        "承受伤害:",
+        "治疗:",
+        "我方（历史名称未记录）",
+        "",
+        "1",
+        "✓",
+        "1300",
+        "100",
+        "1000",
+        "敌方（历史名称未记录）",
+        "",
+        "1",
+        "✓",
+        "100",
+        "1500",
+        "0",
+        "确定",
+        "确定",
+        "确定"
+      ],
+      "units": [
+        {
+          "unitId": 2,
+          "faction": 1,
+          "templateId": 10101001,
+          "level": 1,
+          "position": 2,
+          "initialHp": 1000,
+          "maxHp": 1000,
+          "finalHp": 1000,
+          "totalDamage": 1300,
+          "totalTakenDamage": 100,
+          "totalRecovery": 1000,
+          "star": 1,
+          "portraitIconId": 20101001
+        },
+        {
+          "unitId": 10,
+          "faction": 2,
+          "templateId": 10101001,
+          "level": 1,
+          "position": 2,
+          "initialHp": 1500,
+          "maxHp": 1500,
+          "finalHp": 0,
+          "totalDamage": 100,
+          "totalTakenDamage": 1500,
+          "totalRecovery": 0,
+          "star": 1,
+          "portraitIconId": 20101001
+        }
+      ]
+    },
+    "final": {
+      "roots": 0,
+      "ui": {
+        "pages": 0,
+        "residents": 0,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 0
+      }
+    }
+  },
+  "death": {
+    "records": [
+      {
+        "at": 26187.700000047684,
+        "when": "before",
+        "kind": "recovery",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "actual": 0,
+        "reported": 500,
+        "icons": []
+      },
+      {
+        "at": 39256.200000047684,
+        "when": "after",
+        "kind": "recovery",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "actual": 0,
+        "reported": 500,
+        "icons": []
+      },
+      {
+        "at": 39256.40000003576,
+        "when": "before",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "1",
+        "actual": null,
+        "reported": null,
+        "icons": []
+      },
+      {
+        "at": 41260.10000002384,
+        "when": "after",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "1",
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001"
+            ]
+          }
+        ]
+      },
+      {
+        "at": 41261,
+        "when": "before",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "2",
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001"
+            ]
+          }
+        ]
+      },
+      {
+        "at": 43272.60000002384,
+        "when": "after",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "2",
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 43272.90000003576,
+        "when": "before",
+        "kind": "round.ready",
+        "reason": null,
+        "target": 0,
+        "instance": null,
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 54338.80000001192,
+        "when": "after",
+        "kind": "round.ready",
+        "reason": null,
+        "target": 0,
+        "instance": null,
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 54339,
+        "when": "before",
+        "kind": "skill.begin",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 54339.10000002384,
+        "when": "after",
+        "kind": "skill.begin",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 54339.60000002384,
+        "when": "before",
+        "kind": "presentation",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 54339.60000002384,
+        "when": "before",
+        "kind": "damage",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "actual": -400,
+        "reported": -900,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 66455.70000004768,
+        "when": "after",
+        "kind": "damage",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "actual": -400,
+        "reported": -900,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 66455.90000003576,
+        "when": "before",
+        "kind": "buff.remove",
+        "reason": "shield-depleted",
+        "target": 10,
+        "instance": "1",
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 66456.30000001192,
+        "when": "after",
+        "kind": "buff.remove",
+        "reason": "shield-depleted",
+        "target": 10,
+        "instance": "1",
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 74526.70000004768,
+        "when": "after",
+        "kind": "presentation",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 74526.90000003576,
+        "when": "before",
+        "kind": "buff.remove",
+        "reason": "death",
+        "target": 10,
+        "instance": "2",
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 74528.5,
+        "when": "after",
+        "kind": "buff.remove",
+        "reason": "death",
+        "target": 10,
+        "instance": "2",
+        "actual": null,
+        "reported": null,
+        "icons": []
+      },
+      {
+        "at": 74528.60000002384,
+        "when": "before",
+        "kind": "skill.end",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "actual": null,
+        "reported": null,
+        "icons": []
+      },
+      {
+        "at": 74528.80000001192,
+        "when": "after",
+        "kind": "skill.end",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "actual": null,
+        "reported": null,
+        "icons": []
+      }
+    ],
+    "gateFirst": false,
+    "units": [
+      {
+        "unitId": 2,
+        "faction": 1,
+        "templateId": 10101001,
+        "level": 1,
+        "position": 2,
+        "initialHp": 1000,
+        "maxHp": 1000,
+        "finalHp": 1000,
+        "totalDamage": 300,
+        "totalTakenDamage": 0,
+        "totalRecovery": 500,
+        "star": 1,
+        "portraitIconId": 20101001
+      },
+      {
+        "unitId": 10,
+        "faction": 2,
+        "templateId": 10101001,
+        "level": 1,
+        "position": 2,
+        "initialHp": 400,
+        "maxHp": 400,
+        "finalHp": 0,
+        "totalDamage": 0,
+        "totalTakenDamage": 400,
+        "totalRecovery": 0,
+        "star": 1,
+        "portraitIconId": 20101001
+      }
+    ],
+    "steps": [
+      {
+        "round": 1,
+        "kind": "recovery",
+        "sourceId": 2,
+        "targetId": 2,
+        "configId": 1063201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": 0,
+        "reportedHpChange": 500,
+        "dead": false,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.upsert",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 10011201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "1",
+        "expiresAtRound": 3,
+        "buffValue": "100",
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.upsert",
+        "sourceId": 10,
+        "targetId": 10,
+        "configId": 19004303,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "2",
+        "expiresAtRound": 2,
+        "buffValue": "0",
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "round.ready",
+        "sourceId": 0,
+        "targetId": 0,
+        "configId": 0,
+        "readySeconds": 3,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "skill.begin",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "presentation",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 1010100,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.remove",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 10011201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "1",
+        "expiresAtRound": 3,
+        "buffValue": "100",
+        "removalReason": "shield-depleted",
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "damage",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 1010300,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": -400,
+        "reportedHpChange": -900,
+        "dead": true,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 0
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.remove",
+        "sourceId": 10,
+        "targetId": 10,
+        "configId": 19004303,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "2",
+        "expiresAtRound": 2,
+        "buffValue": "0",
+        "removalReason": "death",
+        "hpByUnit": {
+          "2": 1000,
+          "10": 0
+        }
+      },
+      {
+        "round": 1,
+        "kind": "skill.end",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 0
+        }
+      }
+    ],
+    "completed": true,
+    "removalSequence": [
+      {
+        "at": 66455.70000004768,
+        "when": "after",
+        "kind": "damage",
+        "reason": null,
+        "target": 10,
+        "instance": null,
+        "actual": -400,
+        "reported": -900,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001",
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 66456.30000001192,
+        "when": "after",
+        "kind": "buff.remove",
+        "reason": "shield-depleted",
+        "target": 10,
+        "instance": "1",
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              null
+            ]
+          }
+        ]
+      },
+      {
+        "at": 74528.5,
+        "when": "after",
+        "kind": "buff.remove",
+        "reason": "death",
+        "target": 10,
+        "instance": "2",
+        "actual": null,
+        "reported": null,
+        "icons": []
+      }
+    ],
+    "statistics": {
+      "labels": [
+        "战 报",
+        "",
+        "伤害:",
+        "承受伤害:",
+        "治疗:",
+        "我方（历史名称未记录）",
+        "",
+        "1",
+        "✓",
+        "300",
+        "0",
+        "500",
+        "敌方（历史名称未记录）",
+        "",
+        "1",
+        "✓",
+        "0",
+        "400",
+        "0",
+        "确定",
+        "确定",
+        "确定"
+      ],
+      "units": [
+        {
+          "unitId": 2,
+          "faction": 1,
+          "templateId": 10101001,
+          "level": 1,
+          "position": 2,
+          "initialHp": 1000,
+          "maxHp": 1000,
+          "finalHp": 1000,
+          "totalDamage": 300,
+          "totalTakenDamage": 0,
+          "totalRecovery": 500,
+          "star": 1,
+          "portraitIconId": 20101001
+        },
+        {
+          "unitId": 10,
+          "faction": 2,
+          "templateId": 10101001,
+          "level": 1,
+          "position": 2,
+          "initialHp": 400,
+          "maxHp": 400,
+          "finalHp": 0,
+          "totalDamage": 0,
+          "totalTakenDamage": 400,
+          "totalRecovery": 0,
+          "star": 1,
+          "portraitIconId": 20101001
+        }
+      ]
+    },
+    "final": {
+      "roots": 0,
+      "ui": {
+        "pages": 0,
+        "residents": 0,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 0
+      },
+      "currentPageStartedAt": "2026-11-17T06:21:44.865Z"
+    }
+  },
+  "cancel": {
+    "records": [
+      {
+        "at": 83018.69999998808,
+        "when": "before",
+        "kind": "recovery",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "actual": 0,
+        "reported": 500,
+        "icons": []
+      },
+      {
+        "at": 84389.10000002384,
+        "when": "after",
+        "kind": "recovery",
+        "reason": null,
+        "target": 2,
+        "instance": null,
+        "actual": 0,
+        "reported": 500,
+        "icons": []
+      },
+      {
+        "at": 84389.30000001192,
+        "when": "before",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "1",
+        "actual": null,
+        "reported": null,
+        "icons": []
+      },
+      {
+        "at": 84423.19999998808,
+        "when": "after",
+        "kind": "buff.upsert",
+        "reason": null,
+        "target": 10,
+        "instance": "1",
+        "actual": null,
+        "reported": null,
+        "icons": [
+          {
+            "slot": "Slot_E1",
+            "frames": [
+              "skill-icon_300100001"
+            ]
+          }
+        ]
+      }
+    ],
+    "gateFirst": false,
+    "units": [
+      {
+        "unitId": 2,
+        "faction": 1,
+        "templateId": 10101001,
+        "level": 1,
+        "position": 2,
+        "initialHp": 1000,
+        "maxHp": 1000,
+        "finalHp": 1000,
+        "totalDamage": 300,
+        "totalTakenDamage": 0,
+        "totalRecovery": 500,
+        "star": 1,
+        "portraitIconId": 20101001
+      },
+      {
+        "unitId": 10,
+        "faction": 2,
+        "templateId": 10101001,
+        "level": 1,
+        "position": 2,
+        "initialHp": 400,
+        "maxHp": 400,
+        "finalHp": 0,
+        "totalDamage": 0,
+        "totalTakenDamage": 400,
+        "totalRecovery": 0,
+        "star": 1,
+        "portraitIconId": 20101001
+      }
+    ],
+    "steps": [
+      {
+        "round": 1,
+        "kind": "recovery",
+        "sourceId": 2,
+        "targetId": 2,
+        "configId": 1063201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": 0,
+        "reportedHpChange": 500,
+        "dead": false,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.upsert",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 10011201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "1",
+        "expiresAtRound": 3,
+        "buffValue": "100",
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.upsert",
+        "sourceId": 10,
+        "targetId": 10,
+        "configId": 19004303,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "2",
+        "expiresAtRound": 2,
+        "buffValue": "0",
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "round.ready",
+        "sourceId": 0,
+        "targetId": 0,
+        "configId": 0,
+        "readySeconds": 3,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "skill.begin",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "presentation",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 1010100,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.remove",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 10011201,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "1",
+        "expiresAtRound": 3,
+        "buffValue": "100",
+        "removalReason": "shield-depleted",
+        "hpByUnit": {
+          "2": 1000,
+          "10": 400
+        }
+      },
+      {
+        "round": 1,
+        "kind": "damage",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 1010300,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": -400,
+        "reportedHpChange": -900,
+        "dead": true,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 0
+        }
+      },
+      {
+        "round": 1,
+        "kind": "buff.remove",
+        "sourceId": 10,
+        "targetId": 10,
+        "configId": 19004303,
+        "skillLevel": null,
+        "skillType": null,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": "2",
+        "expiresAtRound": 2,
+        "buffValue": "0",
+        "removalReason": "death",
+        "hpByUnit": {
+          "2": 1000,
+          "10": 0
+        }
+      },
+      {
+        "round": 1,
+        "kind": "skill.end",
+        "sourceId": 2,
+        "targetId": 10,
+        "configId": 101010010,
+        "skillLevel": 0,
+        "skillType": 2,
+        "actualHpChange": null,
+        "reportedHpChange": null,
+        "dead": null,
+        "buffInstanceId": null,
+        "expiresAtRound": null,
+        "buffValue": null,
+        "removalReason": null,
+        "hpByUnit": {
+          "2": 1000,
+          "10": 0
+        }
+      }
+    ],
+    "gated": false,
+    "beforeClose": {
+      "records": 4,
+      "icons": [
+        {
+          "slot": "Slot_E1",
+          "frames": [
+            "skill-icon_300100001"
+          ]
+        }
+      ]
+    },
+    "completed": false,
+    "final": {
+      "roots": 0,
+      "ui": {
+        "pages": 0,
+        "residents": 0,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 0,
+        "modalActive": 0
+      }
+    }
+  },
+  "screenshots": [
+    {
+      "path": "docs/images/shield-active-preview-20261117.jpg",
+      "bytes": 79762,
+      "sha256": "da06aa5eef975183e2cc9f8b85bf39fc36bdbc2226b4a72016763fa5f0b34e08"
+    },
+    {
+      "path": "docs/images/shield-statistics-preview-20261117.jpg",
+      "bytes": 55781,
+      "sha256": "9049ef2409c0870b6c0d961fd9f8cdc632a6306db8b555166d2286ce9ff0689d"
+    },
+    {
+      "path": "docs/images/shield-death-statistics-preview-20261117.jpg",
+      "bytes": 55683,
+      "sha256": "b2b07010c4b3ef96984c59ba8b241aea22530af3d5edfbccde8be363feff0844"
+    }
+  ],
+  "startupFailuresBeforeFinalCompiledPreview": [
+    {
+      "level": "error",
+      "message": "%c[mxzg][APP][RemakeApp]%c[error] 14:07:06 启动装配失败：TypeError: Failed to fetch color:#B388FF color:#EF5350",
+      "timestamp": "2026-11-17T06:07:06.869Z",
+      "url": "http://127.0.0.1:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    },
+    {
+      "level": "error",
+      "message": "%c[mxzg][APP][RemakeApp]%c[error] 14:11:06 启动装配失败：Error: config/buff：配置尚未加载 color:#B388FF color:#EF5350",
+      "timestamp": "2026-11-17T06:11:06.541Z",
+      "url": "http://127.0.0.1:7456/scripting/x/chunks/ea/ea931370251ff77124685b5f21902587d4084485.js"
+    }
+  ],
+  "startupCorrection": "最初只读资源服务未启动导致fetch失败；随后独立入口未经过登录配置包导致config/buff未就绪。已启动自有只读服务并让独立入口复用LoadingPlan启动表和原配置包；重载确认新代码，不要求用户构建。",
+  "errorsAfterFinalPreviewCorrection": [],
+  "cleanup": {
+    "tabClosed": true,
+    "resourceServer": {
+      "kind": "shield-replay-readonly",
+      "pid": 7900,
+      "executable": "C:\\Users\\HelloWorld\\AppData\\Local\\Programs\\nodejs\\node.exe",
+      "startedUtc": "2026-11-17T06:10:28.4950302Z",
+      "stopped": true
+    },
+    "dailyBackendTouched": false,
+    "creatorUnsavedPrefabTouched": false
+  },
+  "limitations": [
+    "数值由独立边界夹具传入真实引擎，不是自然玩家成长或新账号通关证明。",
+    "耗尽在命中表现Promise完成后移除，不声称与扣血同帧；死亡清理仍沿既有全技能屏障。",
+    "真实样本护盾为10011201，配置delay=0；不宣称其他延迟护盾、全部九原因的画面或所有Buff美术已验证。",
+    "回合流血、多目标、在途重播等按各自代码专项验证，不当作本次三轮画面全部实测。",
+    "动画受浏览器和引擎时钟影响，记录不作为帧率或耗时性能验收。",
+    "未做集中构建、发布包、真机或MySQL验证；领取仍关闭。"
+  ],
+  "commitPushMerge": false
+}

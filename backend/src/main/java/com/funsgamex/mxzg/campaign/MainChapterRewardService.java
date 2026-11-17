@@ -1,5 +1,5 @@
 /**
- * 前三关首通奖励适配：冻结原首通计划，委托共享可信发奖入口，返回当前协议所需实际基础奖励。
+ * 配置化主线首通奖励适配：冻结原首通计划，委托共享可信发奖入口，保留基础到账与升级附赠的完整结果。
  * 由MainChapterService持久结算调用，不注册协议；外层负责鉴权、待领奖凭据和幂等控制。
  */
 package com.funsgamex.mxzg.campaign;
@@ -7,25 +7,36 @@ package com.funsgamex.mxzg.campaign;
 import java.time.Instant;
 import java.util.List;
 import java.util.random.RandomGenerator;
+import com.funsgamex.mxzg.hero.HeroBattleChapterScenario;
 import com.funsgamex.mxzg.reward.RewardGrantService;
+import com.funsgamex.mxzg.reward.RewardGrantResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class MainChapterRewardService {
-    /** 只接受已核验前三关的首通奖励，不收客户端奖励清单。 */
+    /** 读取完整首通目录；实际新挑战范围由同一可信服务端配置独立限制。 */
     private final MainChapterRules rules;
     /** 共用类型校验、实际入账与领域明细，不在首通模块维护第二份分发表。 */
     private final RewardGrantService grants;
 
-    /** 预检同源前三关奖励的支持能力，不在此保存第二份类型索引。 */
-    public MainChapterRewardService(MainChapterRules rules, RewardGrantService grants) {
+    /** 预检真正开放关卡的战斗、首通奖励和后续挂机快照，未开放目录交审计，不扩大玩法范围。 */
+    public MainChapterRewardService(MainChapterRules rules, RewardGrantService grants, IdleRules idle, ObjectMapper mapper) {
         this.rules = rules;
         this.grants = grants;
-        for (int index = 1; index <= 3; index++) {
-            grants.requireSupported(rules.stage(index).firstRewards().stream()
-                    .map(MainChapterRules.Reward::itemId).toList());
+        var battle = new HeroBattleChapterScenario(mapper);
+        for (int index = 1; index <= rules.challengeLimit(); index++) {
+            try {
+                // 新胜利提交后首包必须可读；缺挂机投影或战斗依赖时不能靠提高上限绕过缺口。
+                idle.stage(index);
+                battle.enemies(index);
+                grants.requireSupported(rules.stage(index).firstRewards().stream()
+                        .map(MainChapterRules.Reward::itemId).toList());
+            } catch (RuntimeException error) {
+                throw new IllegalStateException("主线开放范围依赖未就绪：" + index, error);
+            }
         }
     }
 
@@ -36,7 +47,8 @@ public class MainChapterRewardService {
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public List<MainChapterRules.Reward> grant(String roleId, MainChapterRules.Progress progress) {
-        return grantPlan(roleId, plan(progress));
+        return grantPlan(roleId, plan(progress)).items().stream().filter(item -> item.credited() > 0)
+                .map(item -> new MainChapterRules.Reward(item.itemId(), item.credited())).toList();
     }
 
     /** 持久战报冻结的首通奖励与酒馆上限；重试不能重新读取已变化的奖励配置。 */
@@ -55,15 +67,12 @@ public class MainChapterRewardService {
         return new Plan(rules.pendingRewards(progress), rules.tavernLimit(progress.maxCleared()));
     }
 
-    /** 仅消费服务端持久战报中的奖励计划，调用方须已核对归属、胜利和未结算凭据。 */
+    /** 消费持久战报中的原奖励计划并返回完整真实结果；调用方同事务保存，不另行补发升级附赠。 */
     @Transactional(propagation = Propagation.MANDATORY)
-    public List<MainChapterRules.Reward> grantPlan(String roleId, Plan plan) {
-        var result = grants.grant(roleId, plan.rewards().stream()
+    public RewardGrantResult grantPlan(String roleId, Plan plan) {
+        return grants.grant(roleId, plan.rewards().stream()
                         .map(reward -> new RewardGrantService.Reward(reward.itemId(), reward.quantity())).toList(),
                 new RewardGrantService.Context(Instant.now().getEpochSecond(), plan.tavernLimit()),
                 RandomGenerator.getDefault());
-        // 当前主线协议仍保留基础奖励和独立经验动画，升级赠钻实际发放但不冒充基础奖励。
-        return result.items().stream().filter(item -> item.credited() > 0)
-                .map(item -> new MainChapterRules.Reward(item.itemId(), item.credited())).toList();
     }
 }

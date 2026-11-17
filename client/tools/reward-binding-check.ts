@@ -10,6 +10,7 @@ import type { RoleProfile } from "../assets/scripts/features/account/AccountMode
 import { ConfirmView } from "../assets/scripts/features/common/ui/ConfirmView";
 import type { ConfirmArgs } from "../assets/scripts/features/common/ui/ConfirmView";
 import { RewardView } from "../assets/scripts/features/reward/ui/RewardView";
+import { RoleUpgradeView } from "../assets/scripts/features/reward/ui/RoleUpgradeView";
 import type { RewardArgs } from "../assets/scripts/features/reward/data/RewardData";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
@@ -22,7 +23,7 @@ GameLog.shared.mirrorConsole = false;
 /** 可控窗口记录；真实onClosed与确认回调仍由RewardBinding提供。 */
 interface TestWindow {
     /** 被测试装配请求打开的真实页面类，用于识别奖励与确认。 */
-    readonly ctor: typeof RewardView | typeof ConfirmView;
+    readonly ctor: typeof RewardView | typeof RoleUpgradeView | typeof ConfirmView;
     /** 调用方提供的不可变展示参数，不复制成另一套业务规则。 */
     readonly args: RewardArgs | ConfirmArgs;
     /** 本次真实窗口替身，只用于按实例关闭。 */
@@ -42,6 +43,8 @@ class BindingFixture {
     public readonly confirms: TestWindow[] = [];
     /** 只记录装配在窗口真正打开后交付的回执编号，不从开窗请求推导已展示。 */
     public readonly presented: string[] = [];
+    /** 通用TIPS模式产生的全局反馈，仅记录真实装配调用，不替代角色状态。 */
+    public readonly toasts: string[] = [];
     /** 尚未关闭的窗口；准备中的窗口也保留，取消必须使其Promise拒绝。 */
     private readonly active = new Set<TestWindow>();
     /** 接下来一次奖励准备失败；同时触发onClosed，验证销毁不会伪装成成功。 */
@@ -65,6 +68,7 @@ class BindingFixture {
         closeById: UIManager.instance.closeById,
         isOpen: UIManager.instance.isOpen,
         snapshot: UIManager.instance.snapshot,
+        toast: UIManager.instance.toast,
     };
     /** 应用真实奖励装配，使用受控UI但不替换反馈去重和队列。 */
     public readonly binding: RewardBinding;
@@ -73,9 +77,9 @@ class BindingFixture {
     public constructor(observePresented = false) {
         this.changeOwner("isolated-role");
         const ui = UIManager.instance;
-        ui.open = ((ctor: typeof RewardView | typeof ConfirmView, args: RewardArgs | ConfirmArgs) => {
+        ui.open = ((ctor: typeof RewardView | typeof RoleUpgradeView | typeof ConfirmView, args: RewardArgs | ConfirmArgs) => {
             const row: TestWindow = { ctor, args, view: {}, reject: null, resolve: null };
-            const reward = ctor === RewardView;
+            const reward = ctor === RewardView || ctor === RoleUpgradeView;
             assert(reward || ctor === ConfirmView);
             (reward ? this.rewards : this.confirms).push(row);
             this.active.add(row);
@@ -98,6 +102,7 @@ class BindingFixture {
             }
             return Promise.resolve(row.view);
         }) as typeof ui.open;
+        ui.toast = ((message: string) => { this.toasts.push(message); }) as typeof ui.toast;
         ui.isOpen = ((target: unknown) => target === "confirm" && (this.otherConfirm
             || Array.from(this.active).some(row => row.ctor === ConfirmView && !row.reject))) as typeof ui.isOpen;
         ui.snapshot = () => ({ opening: this.otherOpening + Array.from(this.active).filter(row => !!row.reject).length });
@@ -114,7 +119,8 @@ class BindingFixture {
                 this.otherConfirm = false;
                 this.otherConfirmCloses++;
             }
-            const rows = Array.from(this.active).filter(row => (row.ctor === RewardView ? "reward" : "confirm") === id);
+            const rows = Array.from(this.active).filter(row => (row.ctor === RewardView ? "reward"
+                : row.ctor === RoleUpgradeView ? "role-upgrade" : "confirm") === id);
             rows.forEach(row => this.close(row));
             return rows.length > 0;
         }) as typeof ui.closeById;
@@ -133,6 +139,11 @@ class BindingFixture {
     public notice(index = 1, roleId = this.account.snapshot.role!.id): RewardNotice {
         return { schemaVersion: 1, receiptId: "12345678-1234-4234-8234-" + String(index).padStart(12, "0"),
             roleId, assetRevision: 7, mode: "POPUP", items: [{ itemId: 900001, credited: 2 }] };
+    }
+
+    /** 真升级与普通奖励共用原回执；默认空物品专门核对只有升级时的队列及窗口。 */
+    public upgrade(index = 1): RewardNotice {
+        return { ...this.notice(index), items: [], roleUpgrade: { beforeLevel: 1, afterLevel: 3 } };
     }
 
     /** 用真实Protobuf事件交付当前角色的已提交结果。 */
@@ -164,7 +175,7 @@ class BindingFixture {
         if (!this.active.delete(row)) {
             return;
         }
-        if (row.ctor === RewardView) {
+        if (row.ctor === RewardView || row.ctor === RoleUpgradeView) {
             (row.args as RewardArgs).onClosed?.();
         } else {
             (row.args as ConfirmArgs).onCancel?.();
@@ -195,9 +206,208 @@ class RewardBindingChecks {
         }
     }
 
+    /** 真升级复用原通用队列、确认和作用域，覆盖空奖励、失败重试及旧窗口迟到。 */
+    private static async checkUpgradeFlows(): Promise<number> {
+        let checks = 0;
+        {
+            const test = new BindingFixture(true);
+            try {
+                const notice = test.upgrade(70);
+                test.deliver(notice);
+                test.binding.restore(notice);
+                test.ready(6);
+                await this.settle();
+                assert.equal(test.rewards.length, 0, "只有升级也不能越过统一资产版本门槛");
+                test.ready();
+                test.deliver(test.notice(71));
+                await this.settle();
+                assert.equal(test.rewards.length, 1, "升级和后一笔普通奖励共用一个队列");
+                assert.equal(test.rewards[0].ctor, RoleUpgradeView);
+                assert.deepEqual((test.rewards[0].args as RewardArgs).items, []);
+                assert.deepEqual((test.rewards[0].args as RewardArgs).roleUpgrade, notice.roleUpgrade);
+                assert.deepEqual(test.presented, [notice.receiptId]);
+                test.close(test.rewards[0]);
+                await this.settle();
+                assert.equal(test.rewards.length, 2);
+                assert.equal(test.rewards[1].ctor, RewardView);
+                (test.rewards[0].args as RewardArgs).onClosed?.();
+                test.binding.restore(notice);
+                await this.settle();
+                assert.equal(test.rewards.length, 2, "重复关闭和原回执不能消费或重放后一笔");
+            } finally { test.dispose(); }
+            checks++;
+        }
+        for (const startsWithUpgrade of [false, true]) {
+            const test = new BindingFixture(true);
+            try {
+                const base = test.notice(72);
+                const upgraded = { ...base, roleUpgrade: { beforeLevel: 1, afterLevel: 3 } };
+                test.binding.restore(startsWithUpgrade ? upgraded : base);
+                assert.throws(() => test.binding.restore(startsWithUpgrade ? base : upgraded), /内容不一致/,
+                    "同回执从无升级变为有升级或反向改变不能另造展示");
+                if (startsWithUpgrade) {
+                    assert.throws(() => test.binding.restore({ ...upgraded,
+                        roleUpgrade: { beforeLevel: 1, afterLevel: 4 } }), /内容不一致/);
+                }
+                test.ready();
+                await this.settle();
+                assert.equal(test.rewards.length, 1);
+                assert.equal(test.rewards[0].ctor, startsWithUpgrade ? RoleUpgradeView : RewardView);
+            } finally { test.dispose(); }
+            checks++;
+        }
+        {
+            const test = new BindingFixture(true);
+            try {
+                const notice = test.upgrade(73);
+                test.failReward = true;
+                test.ready();
+                test.deliver(notice);
+                test.deliver(test.notice(74));
+                await this.settle();
+                assert.equal(test.rewards.length, 1);
+                assert.equal(test.rewards[0].ctor, RoleUpgradeView);
+                assert.equal(test.confirms.length, 1);
+                assert.deepEqual(test.presented, [], "升级准备失败及销毁不能登记实际展示");
+                test.close(test.confirms[0]);
+                test.ready(8);
+                test.binding.restore(notice);
+                await this.settle();
+                assert.equal(test.rewards.length, 1, "取消重试后新快照和重复恢复不得自动再弹升级");
+                test.binding.retry();
+                await this.settle();
+                assert.equal(test.rewards.length, 2);
+                assert.equal(test.rewards[1].ctor, RoleUpgradeView);
+                assert.equal((test.rewards[1].args as RewardArgs).receiptId, notice.receiptId);
+                assert.deepEqual(test.presented, [notice.receiptId]);
+                test.close(test.rewards[1]);
+                await this.settle();
+                assert.equal(test.rewards.length, 3);
+                assert.equal(test.rewards[2].ctor, RewardView);
+                assert.deepEqual(test.presented, [notice.receiptId, test.notice(74).receiptId]);
+            } finally { test.dispose(); }
+            checks++;
+        }
+        for (const timing of ["opening", "opened"] as const) {
+            const test = new BindingFixture(true);
+            try {
+                test.deferReward = timing === "opening";
+                test.ready();
+                test.deliver(test.upgrade(75));
+                const old = test.rewards[0];
+                const lateReject = old.reject;
+                test.binding.resetSession();
+                test.changeOwner("new-owner");
+                test.ready();
+                test.deliver(test.upgrade(76));
+                await this.settle();
+                (old.args as RewardArgs).onClosed?.();
+                lateReject?.(new Error("旧升级资源迟到失败"));
+                await this.settle();
+                assert.equal(test.rewards.length, 2);
+                assert.equal(test.rewards[1].ctor, RoleUpgradeView);
+                assert.deepEqual(test.presented, [test.notice(76).receiptId], "旧升级完成不得报告为新身份已展示");
+                assert.equal(test.confirms.length, 0, "旧升级失败不得干扰新角色或弹重试确认");
+                test.close(test.rewards[1]);
+            } finally { test.dispose(); }
+            checks++;
+        }
+        {
+            const test = new BindingFixture(true);
+            try {
+                test.ready();
+                test.deliver(test.upgrade(77));
+                test.binding.dispose();
+                await this.settle();
+                (test.rewards[0].args as RewardArgs).onClosed?.();
+                assert.deepEqual(test.presented, []);
+                assert.equal(test.confirms.length, 0);
+                assert.equal(test.rewards.length, 1);
+            } finally { test.dispose(); }
+            checks++;
+        }
+        {
+            const test = new BindingFixture(true);
+            try {
+                test.ready();
+                test.deliver({ ...test.upgrade(78), mode: "SILENT" });
+                test.deliver({ ...test.upgrade(79), mode: "TIPS" });
+                await this.settle();
+                assert.equal(test.rewards.length, 0);
+                assert.deepEqual(test.toasts, ["角色等级 1 → 3"], "静默保持不显示，TIPS升级复用全局飘字");
+                assert.deepEqual(test.presented, [], "TIPS不伪造升级窗口已显示通知");
+            } finally { test.dispose(); }
+            checks++;
+        }
+        {
+            const test = new BindingFixture(true);
+            try {
+                const actual = { roleId: "isolated-role", items: [], bonuses: [],
+                    experience: [{ beforeLevel: 1, beforeExperience: 9, requested: 1, accepted: 1,
+                        ignored: 0, level: 2, experience: 0, diamonds: 0 }] };
+                test.ready();
+                assert.equal(test.binding.restoreActual(test.notice(80).receiptId, 7, actual, "bonuses"), "queued");
+                await this.settle();
+                assert.equal(test.rewards[0].ctor, RoleUpgradeView);
+                assert.deepEqual((test.rewards[0].args as RewardArgs).items, []);
+                assert.deepEqual((test.rewards[0].args as RewardArgs).roleUpgrade, { beforeLevel: 1, afterLevel: 2 },
+                    "正常主线只投影附赠时仍保留真实升级，不能因零赠钻丢失");
+                test.close(test.rewards[0]);
+                await this.settle();
+                assert.equal(test.binding.restoreActual(test.notice(81).receiptId, 7, actual, "all"), "queued");
+                await this.settle();
+                assert.equal(test.rewards[1].ctor, RoleUpgradeView);
+                assert.deepEqual((test.rewards[1].args as RewardArgs).items, []);
+                assert.deepEqual((test.rewards[1].args as RewardArgs).roleUpgrade, { beforeLevel: 1, afterLevel: 2 });
+                assert.equal(test.account.snapshot.role!.level, 1, "历史升级展示不能写回当前角色等级");
+            } finally { test.dispose(); }
+            checks++;
+        }
+        return checks;
+    }
+
     /** 每例均释放装配和替身，验证失败恢复不会写资产或跨身份打开窗口。 */
     public static async run(): Promise<void> {
-        let checks = 0;
+        let checks = await this.checkUpgradeFlows();
+        {
+            const test = new BindingFixture(true);
+            try {
+                const actual = { roleId: "isolated-role", items: [
+                    { itemId: 900001, credited: 4000 }, { itemId: 900002, credited: 151 },
+                    { itemId: 900003, credited: 50 },
+                ], bonuses: [{ source: "ROLE_LEVEL_UP", itemId: 900002, quantity: 10 }],
+                experience: [{ beforeLevel: 1, beforeExperience: 0, requested: 50, accepted: 50,
+                    ignored: 0, level: 2, experience: 1, diamonds: 10 }] };
+                test.ready();
+                assert.equal(test.binding.restoreActual(test.notice(60).receiptId, 7, actual, "bonuses"), "queued");
+                await this.settle();
+                assert.equal(test.rewards[0].ctor, RoleUpgradeView);
+                assert.deepEqual((test.rewards[0].args as RewardArgs).roleUpgrade, { beforeLevel: 1, afterLevel: 2 });
+                assert.deepEqual((test.rewards[0].args as RewardArgs).items, [{ itemId: 900002, credited: 10 }],
+                    "普通胜利后的通用窗只展示独立附赠，不把首通151钻再算一次");
+                test.close(test.rewards[0]);
+                await this.settle();
+                test.binding.restoreActual(test.notice(60).receiptId, 7, actual, "bonuses");
+                await this.settle();
+                assert.equal(test.rewards.length, 1, "重复原回执不重复弹赠钻");
+                test.binding.restoreActual(test.notice(61).receiptId, 7, actual);
+                await this.settle();
+                assert.equal(test.rewards[1].ctor, RoleUpgradeView);
+                assert.deepEqual((test.rewards[1].args as RewardArgs).items,
+                    [{ itemId: 900001, credited: 4000 }, { itemId: 900002, credited: 161 },
+                        { itemId: 900003, credited: 50 }],
+                    "冷恢复基础实际和附赠在同一通用窗按ID合计一次");
+                test.close(test.rewards[1]);
+                await this.settle();
+                assert.equal(test.binding.restoreActual(test.notice(62).receiptId, 7,
+                    { ...actual, bonuses: [], experience: [] }, "bonuses"), "empty", "无实际升级及附赠不弹空奖励窗");
+                assert.throws(() => test.binding.restoreActual(test.notice(63).receiptId, 7,
+                    { ...actual, roleId: "other-role" }), /当前.*角色/);
+                assert.equal(test.account.snapshot.role!.gold, 17);
+                assert.equal(test.account.snapshot.role!.diamonds, 3, "奖励显示不提交任何历史钱包或资产");
+            } finally { test.dispose(); }
+            checks++;
+        }
         {
             const test = new BindingFixture();
             try {

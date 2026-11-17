@@ -157,6 +157,7 @@ export class RewardModel extends BaseModel {
             notice.assetRevision,
             notice.mode,
             notice.items.map(item => [item.itemId, item.credited]).sort((left, right) => left[0] - right[0]),
+            notice.roleUpgrade ? [notice.roleUpgrade.beforeLevel, notice.roleUpgrade.afterLevel] : null,
         ]);
     }
 }
