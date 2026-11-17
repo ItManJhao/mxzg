@@ -165,7 +165,7 @@ class MainChapterSocketTest {
     /** 校验真实新挑战范围及里程碑集合；空数组与缺字段不同，ID顺序不暗示必须按序领取。 */
     private void assertMilestones(JsonNode state, List<Integer> expected) {
         assertTrue(state.has("challengeLimit"), "新快照必须交付当前服务端可信范围");
-        assertEquals(3, state.path("challengeLimit").asInt());
+        assertEquals(9, state.path("challengeLimit").asInt());
         assertTrue(state.has("milestoneProgress"), "新版统一状态必须明确交付里程碑集合");
         var progress = state.path("milestoneProgress");
         assertEquals(1, progress.path("schemaVersion").asInt());
@@ -176,7 +176,7 @@ class MainChapterSocketTest {
     }
 
 
-    /** 真实协议跑通三关、冻结伤害/经验、重新鉴权恢复待领奖与幂等结算，不访问日常库。 */
+    /** 真实协议跑通前三关结算并准入第四关；核对冻结伤害/经验、鉴权恢复与幂等，不访问日常库。 */
     @Test void challengeRestoreReplayAndClaimThroughBinarySocket() throws Exception {
         var player = login.login("test_" + UUID.randomUUID().toString().substring(0, 12));
         String role = player.role().id();
@@ -277,9 +277,12 @@ class MainChapterSocketTest {
             var init = peer.authenticate(token);
             assertEquals(3, init.path("body").path("initial").path("mainChapter").path("maxCleared").asInt());
             assertFalse(init.path("body").path("initial").path("mainChapter").has("pendingBattleId"));
-            assertEquals("CHAPTER_UNAVAILABLE", peer.request("chapter.challenge", Map.of("requestId", UUID.randomUUID().toString())).path("error").path("code").asString());
+            assertEquals(9, init.path("body").path("initial").path("mainChapter").path("challengeLimit").asInt());
+            var fourth = peer.request("chapter.challenge", Map.of("requestId", UUID.randomUUID().toString()));
+            assertTrue(fourth.path("ok").asBoolean(), fourth.toString());
+            assertEquals(4, fourth.path("body").path("state").path("maxCleared").asInt());
         }
-        assertEquals(3, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_battle WHERE role_id=?", Integer.class, role));
+        assertEquals(4, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_battle WHERE role_id=?", Integer.class, role));
     }
 
     /** 真实弱队败北后重连和重战，再换混合阵容获胜；核对两种结果的资产与待领奖边界。 */

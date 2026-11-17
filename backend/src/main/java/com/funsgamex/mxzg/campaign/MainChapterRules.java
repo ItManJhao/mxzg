@@ -69,15 +69,15 @@ public final class MainChapterRules {
     /** 决策携带本次处理的关卡，补领奖不能继续生成下一场战报。 */
     public record Decision(Action action, Stage stage) {}
 
-    /** 独立规则测试默认仍只开放前三关；完整目录存在不表示玩法已开放。 */
+    /** 使用已接通的连续九关默认范围；完整目录存在不表示其余关卡已开放。 */
     public MainChapterRules(ObjectMapper mapper) {
-        this(mapper, 3);
+        this(mapper, 9);
     }
 
     /** 装配完整目录与独立新挑战范围；坏索引/内容明确失败，源表重复定位保留并标待确认。 */
     @Autowired
     public MainChapterRules(ObjectMapper mapper,
-            @Value("${mxzg.main-chapter.challenge-limit:3}") int challengeLimit) {
+            @Value("${mxzg.main-chapter.challenge-limit:9}") int challengeLimit) {
         var result = new HashMap<Integer, Stage>();
         var byLocation = new HashMap<StageKey, List<Stage>>();
         var language = new HashMap<String, String>();

@@ -31,8 +31,8 @@ export interface SkillReplayFocus {
 }
 
 export class BattleReplayPreview {
-    /** 同步读取已安装配置，再装载美术资源并播放战报；只读结果也传原冻结名册供同一统计窗使用。
-     * 遇敌可借行军骨骼，关闭先归还再销毁；onIdleDeath只给原页阵亡位置，不是奖励事件。 */
+    /** 同步读取已安装配置并装载美术资源，正式挑战按开场、出场特效、模型渐入的顺序准备战报。
+     * 只读结果传原冻结名册；遇敌可借行军骨骼，关闭先归还再销毁，onIdleDeath不是奖励事件。 */
     public static async open(
         parent: Node,
         bytes: Uint8Array,
@@ -345,7 +345,7 @@ export class BattleReplayPreview {
                     assets.loadPath(path, "SpriteFrame")));
             }
             for (const row of selected.values()) {
-                if (row.type === 1 || row.type === 11 || row.type === 2 || row.type === 3 || row.type === 5 || row.type === 6 || row.type === 7 || row.type === 9 || row.type === 100) {
+                if (row.type === 1 || row.type === 11 || row.type === 2 || row.type === 3 || row.type === 5 || row.type === 6 || row.type === 7 || row.type === 8 || row.type === 9 || row.type === 100) {
                     const names = row.type === 100 ? BattleAttackUtils.damageSounds(row) : BattleAttackUtils.plan(row).sounds;
                     if (row.type !== 100) {
                         const effect = BattleAttackUtils.plan(row).effect;
@@ -373,7 +373,7 @@ export class BattleReplayPreview {
                 const id = unit.unitId;
                 const index = unit.position - 1;
                 shell.slot(side, index).active = !(idleEncounter && unit.faction === 2);
-                shell.hpLabel(side, index)!.parent!.active = !(idleEncounter && unit.faction === 2);
+                shell.hpLabel(side, index)!.parent!.active = !formalOpening && !(idleEncounter && unit.faction === 2);
                 const slot = shell.slot(side, index);
                 if (idleEncounter && unit.faction === 2) {
                     const order = units.filter(value => value.faction === 2).indexOf(unit) + 1;
@@ -407,6 +407,10 @@ export class BattleReplayPreview {
                 const actor = await new Promise<SpineActor>((resolve, reject) => {
                     const actor = BattleSpineService.instance.mountBattleSpine(slot, String(unit.templateId), () => reject(new Error("英雄骨骼加载失败")),
                         { face: unit.faction === 1 ? 1 : -1, scale: heroScale, seatY: 0, onReady: () => resolve(actor) });
+                    // 在骨骼资源完成前就隐藏模型，揭开战场或慢载出场图片时都不能先闪出角色。
+                    if (formalOpening || (idleEncounter && unit.faction === 2)) {
+                        (actor.node.getComponent(UIOpacity) || actor.node.addComponent(UIOpacity)).opacity = 0;
+                    }
                 });
                 actors.set(id, actor);
                 if (idleEncounter && unit.faction === 2) {
@@ -416,10 +420,17 @@ export class BattleReplayPreview {
                 const head = slot.getChildByName("HeadAnchor");
                 if (head) head.setSiblingIndex(slot.children.length - 1);
                 hp(id, unit.initialHp);
-                if (idleEncounter && unit.faction === 2) hpRow.active = false;
+                if (formalOpening || (idleEncounter && unit.faction === 2)) hpRow.active = false;
                 paintBuffs(id);
             }
             syncHpRows();
+            /** 两侧出场帧先全部就绪再展示战场；不让异步下载发生在模型/血条已经可见之后。 */
+            const loadEntry = (side: "left" | "right") => Promise.all(Array.from({ length: 15 }, (_, index) =>
+                assets.loadPath("battle/ui/battle-appear-" + side + "_" + index + "/spriteFrame", "SpriteFrame")));
+            const [rightFrames, leftFrames] = idleEncounter || formalOpening
+                ? await Promise.all([loadEntry("right"), formalOpening ? loadEntry("left") : Promise.resolve([])])
+                : [[], []];
+            if (closed || isCancelled() || !shell.root.isValid) throw new Error("战斗进场已取消");
             if (formalOpening) {
                 // 旧 BattleReportBaseLayer 使用 ZDKS/stand；BattleController 延迟 2.5 秒再出场。
                 await assets.loadPath("spine/ZDKS", "SkeletonData");
@@ -442,13 +453,9 @@ export class BattleReplayPreview {
                 if (opening.isValid) opening.destroy();
                 if (closed || isCancelled() || !shell.root.isValid) throw new Error("挑战开场已取消");
                 shell.layerField.active = true;
-                shell.root.getChildByPath("LayerHud/HpBars")!.active = true;
+                GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview", "opening.effects.started");
             }
             if (idleEncounter || formalOpening) {
-                const loadEntry = (side: string) => Promise.all(Array.from({ length: 15 }, (_, index) =>
-                    assets.loadPath("battle/ui/battle-appear-" + side + "_" + index + "/spriteFrame", "SpriteFrame")));
-                const rightFrames = await loadEntry("right");
-                const leftFrames = formalOpening ? await loadEntry("left") : [];
                 if (closed || isCancelled()) throw new Error("战斗进场已取消");
                 if (idleEncounter) {
                     for (const unit of units.filter(value => value.faction === 1)) {
@@ -464,7 +471,9 @@ export class BattleReplayPreview {
                     shell.root.getChildByPath("LayerHud/HpBars")!.active = true;
                     syncHpRows();
                 }
-                await Promise.all(units.filter(unit => formalOpening || unit.faction === 2).map(async unit => {
+                const entering = units.filter(unit => formalOpening || unit.faction === 2);
+                // 双方全部出场特效同时播放；正式挑战在所有帧完成前保持模型和血条隐藏。
+                await Promise.all(entering.map(async unit => {
                     const slot = slots.get(unit.unitId)!;
                     const node = new Node(unit.faction === 1 ? "AllyAppearEffect" : "EnemyAppearEffect");
                     node.layer = slot.layer;
@@ -477,8 +486,8 @@ export class BattleReplayPreview {
                     const actorNode = actors.get(unit.unitId)!.node;
                     const opacity = actorNode.getComponent(UIOpacity) || actorNode.addComponent(UIOpacity);
                     opacity.opacity = 0;
-                    // 旧版模型连续淡入1秒；帧特效按自身时长移除，不把最后一帧额外停留。
-                    tween(opacity).to(1, { opacity: 255 }).start();
+                    // 挂机保留旧并行淡入；正式挑战按本次要求等全部特效结束后再开始淡入。
+                    if (idleEncounter) tween(opacity).to(1, { opacity: 255 }).start();
                     const entryFrames = unit.faction === 1 ? leftFrames : rightFrames;
                     for (let index = 0; index < entryFrames.length; index++) {
                         if (closed || isCancelled() || !node.isValid) break;
@@ -487,13 +496,29 @@ export class BattleReplayPreview {
                     }
                     effects.delete(node);
                     if (node.isValid) node.destroy();
-                    if (actorNode.isValid && !closed && !isCancelled()) {
+                    if (idleEncounter && actorNode.isValid && !closed && !isCancelled()) {
                         await wait(0.25);
                         if (opacity.isValid) opacity.opacity = 255;
                         if (idleEncounter && hpRows.get(unit.unitId)?.isValid) hpRows.get(unit.unitId)!.active = true;
                     }
                 }));
                 if (closed || isCancelled() || !shell.root.isValid) throw new Error("战斗进场已取消");
+                if (formalOpening) {
+                    GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview", "opening.effects.completed; fade.started");
+                    // 所有模型一起淡入完整1秒；等待归原战场持有，关页会同时停止Tween并释放等待。
+                    await Promise.all(entering.map(async unit => {
+                        const actorNode = actors.get(unit.unitId)!.node;
+                        const opacity = actorNode.getComponent(UIOpacity)!;
+                        tween(opacity).to(1, { opacity: 255 }).start();
+                        await wait(1);
+                        if (!closed && !isCancelled() && opacity.isValid) opacity.opacity = 255;
+                    }));
+                    if (closed || isCancelled() || !shell.root.isValid) throw new Error("挑战渐入已取消");
+                    for (const unit of entering) {
+                        hpRows.get(unit.unitId)!.active = unit.initialHp > 0;
+                    }
+                    shell.root.getChildByPath("LayerHud/HpBars")!.active = true;
+                }
                 GameLog.shared.classified("MODULE", "info", "BattleReplayPreview",
                     formalOpening ? "opening.completed ZDKS; both teams ready" : "idle.entry.completed");
             }

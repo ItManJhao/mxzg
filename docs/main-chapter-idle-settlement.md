@@ -1,8 +1,8 @@
 # 新主线挂机累计与领取事务
 
-更新：2026-11-16。**V24累计、V25成功回执、服务端领取/status、客户端持久待确认/双版本恢复及现场宝箱收取接线已接入；日常开关和玩家按钮仍关闭。** 本批现场、重复通知、实际关页及冷重登已完成限定Creator复验，四档与零到账等仍只按专项范围记录。通用同步/钱包、2000002最小精灵、统一快照与背包只读详情继续保留；不因恢复基础完成开放领取或养成。客户端范围见[持久基础](validation/idle-claim-client-recovery-review-20261114.json)及[11-16真实联调](validation/idle-claim-live-recovery-review-20261116.json)，输入见[输入契约](idle-reward-input-contract.md)，顺序见[实施路线](restructuring-plan.md)。Git交付状态以实际分支为准；验证记录只说明对应批次，不代表新的发布包验收。
+更新：2026-11-17。**负责人已授权开放本机挂机领取，玩家宝箱按钮和local服务开关已接回既有V24累计、V25回执、持久原请求、双确认和通用奖励链；通用服务配置仍默认拒绝新领取。** 当前65秒显示门槛、满冒险点确认与服务器60秒校验保留，快速战斗及养成不随之开放。11-14、11-16记录中的“入口关闭”是当时边界，不覆盖本次授权。当前验证范围见[本批记录](validation/chapter-player-entry-review-20261117.json)，历史恢复见[持久基础](validation/idle-claim-client-recovery-review-20261114.json)及[11-16真实联调](validation/idle-claim-live-recovery-review-20261116.json)，输入见[输入契约](idle-reward-input-contract.md)。Git交付状态以实际分支为准；本机验证不代表发布包或目标平台通过。
 
-同日新增的通用角色升级反馈已完成源码及限定专项：挂机以原回执真实经验链提取roleUpgrade，复用现有奖励队列选择common升级页，不重发奖励或开放领取。本轮升级页Creator画面仍在复验，前述收取证据不代替新增画面的验证。
+通用角色升级反馈已有[限定本机证据](validation/role-upgrade-preview-20261116.json)：挂机以原回执真实经验链提取roleUpgrade，复用现有奖励队列选择common升级页，不重发奖励；本次只接通玩家意图，不另造发奖、奖励窗或恢复实现。
 
 ## 当前基础和本批决定
 
@@ -18,10 +18,12 @@
 ## 当前实现入口与开放边界
 
 - `MainChapterIdleStateRepository`是累计唯一持久入口；`MainChapterService`只在首次挑战创建，领取由`MainChapterIdleClaimService`在READ_COMMITTED事务中消费。
-- 服务器开关为`mxzg.main-chapter.idle-claim-enabled`，可由`MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED`配置，默认false；只有独立测试显式开启。本批不要求负责人开启日常环境或重启后端。
+- 服务器开关为`mxzg.main-chapter.idle-claim-enabled`，可由`MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED`配置；通用配置默认false，local默认true，可显式关闭。2026-11-17已按授权更新本仓本机服务，生产配置未自动开放。
 - 新请求关闭时返回IDLE_CLOSED；命中历史成功回执及status查询先于开关、当前权益、时长和版本判断。锁等待失败返回IDLE_BUSY，不能伪装NOT_FOUND。
 - `AuditV1`固定请求/归属、累计前后、完整计算Input/分窗/加成/理论量及真实结果，并保存SHA-256摘要和关键列交叉校验。未知格式或损坏拒绝，不重新计算。返回回执全部数值在提交前校验JS安全整数。
-- 客户端领取命令、原请求持久日志及应用身份恢复已接入；无原记录时不发请求，玩家按钮仍未绑定begin。挑战/布阵客户端提交意图仍只保存在内存；主线冷重登已可从首包的服务端待结算记录恢复，布阵保存后的权威阵容也随首包恢复，但尚无ACK的客户端草稿不持久化。两者均不复用挂机日志，详见[断线恢复边界](reconnect-recovery.md)。
+- 玩家按钮经`MainChapterController.requestIdleClaim`交给应用持有的`IdleClaimBinding.begin`，携带本页显示期；页面不发协议或改资产。无新点击和原持久记录时不查询领取。挑战/布阵客户端提交意图仍只保存在内存；主线冷重登从首包待结算恢复，权威阵容随首包恢复，无ACK草稿不持久化。两者不复用挂机日志，详见[断线恢复边界](reconnect-recovery.md)。
+
+本机开服资料与三活动控制曾实际缺失，不能只打开按钮。负责人已确认local-1、local-2优先沿用原值，缺失时使用上海时间2026-11-17零点，044明确未发布。只读核对两服原值均空后，配置保存在忽略提交的`backend/.local/idle-activity.yml`，由原维护服务初始化和周期维护；`dev.ps1 run`自动载入既有文件，不替其他区服猜日期。维护方法和上线前资料边界见[活动控制](idle-activity-maintenance.md)。
 
 ## 旧规则如何进入新事务
 
@@ -201,7 +203,7 @@ V23的game_spirit每件保存独立UUID、角色归属、能力/技能及未开�
 
 存储实现为原生IndexedDB：meta表在事务中创建稳定客户端UUID，pending表按区服/角色/实例复合键保存schemaVersion、requestId和expectedOperationVersion；并发create返回已有记录，clear在同一事务中比较完整指纹，仅complete后交付结果。独立测试namespace来自已核验的run，不能读写日常空间。登出/应用销毁只关闭连接和撤销内存绑定；坏记录、版本变化及不可用明确失败，不降级内存或静默清空。浏览器事务默认durability，不将页面刷新/连接重开验证称为操作系统断电保证；APP/小游戏平台持久适配另验。
 
-AssetStateBinding整包接受之后才激活/观察恢复；身份键只在IdleClaimBinding，AccountService过滤旧成功与旧失败，Controller只持不透明记录口和当前流程引用。历史摘要进MainChapterModel.idleClaim，不提交receipt中的余额、库存或起点。当前按钮仍只飘字；无原意图时不发领取/status。缺提交通知可显式重连获取session.authenticate首包，一轮至多一次；日常READ_ONLY下未提交原请求仅暂停。普通状态推送只做本地双确认，不自动重新领取。
+AssetStateBinding整包接受之后才激活/观察恢复；身份键只在IdleClaimBinding，AccountService过滤旧成功与旧失败，Controller只持不透明记录口和当前流程引用。历史摘要进MainChapterModel.idleClaim，不提交receipt中的余额、库存或起点。当前玩家点击可创建新意图，未点击且无原持久意图时不发领取/status。缺提交通知可显式重连获取session.authenticate首包，一轮至多一次；READ_ONLY下未提交原请求仅暂停。普通状态推送只做本地双确认，不自动重新领取。
 
 ### 独立真实恢复联调（11-16）
 
@@ -225,7 +227,7 @@ AssetStateBinding整包接受之后才激活/观察恢复；身份键只在IdleC
 | 正在战斗/收取、资源或节点未就绪 | 跳过本次视觉动作，不补播、不改变成功回执、不重新发奖，也不阻塞通用奖励；不因收取再飞一份阵亡资源 |
 | 换号、应用销毁或旧回调迟到 | 沿现有激活/流程及页面清理边界丢弃旧现场，不借新页面续播；持久原请求仍由原恢复链负责 |
 
-收取不是资产确认条件；即使页面无法播放，已经提交的资产和回执仍然成立。玩家按钮、应用新领取入口及日常服务端新请求开关继续关闭，只有独立测试显式开启服务端并经受控调用检查。本批不做集中构建，也不提交推送。
+收取不是资产确认条件；即使页面无法播放，已经提交的资产和回执仍然成立。11-16该批只用独立测试受控调用，当时玩家入口及新请求开关关闭；2026-11-17已按本页上方说明开放local玩家按钮，沿用这条原链。两批证据和提交状态分别保留，不把本地开放扩写成所有环境开放。
 
 此前现场收取接线的`RewardFeedbackServiceTest`13项与`MainChapterIdleClaimSocketTest`5项共18项通过，验证可选请求关联保留、通用通知无关联、非法关联回滚、同回执异请求冲突、嵌套事务去重及真实WS。协议生成检查及实际Java/TS字节互通通过。另有15套客户端专项及类型检查；Creator现场、重复通知、实际关页与冷恢复已限定复验，详见[本批检查](validation/idle-collect-review-20261116.json)及[本机证据](validation/idle-collect-preview-20261116.json)，不扩大为真机或全档位画面。
 

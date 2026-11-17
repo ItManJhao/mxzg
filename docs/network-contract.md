@@ -1,6 +1,6 @@
 # 游戏通信与统一状态契约
 
-更新：2026-11-17。全部游戏业务只走 WS＋Protobuf。当前已接入登录、角色、背包、英雄只读状态、主线阵容保存、前三关挑战/结算及挂机演出；主线里程碑真实已领集合随原快照下发，胜利页恢复只读下一目标，独立3008领取仍未开放。新挂机领取/status服务端事务、客户端原请求持久恢复和双确认已接入，日常开关及玩家按钮仍关闭；英雄升级、穿脱、快速战斗仍关闭。资源下载、WS握手及测试实例身份探针不属于游戏业务API。后文按日期记录字段演进，完整状态以[开发进度](development-progress.md)为准。
+更新：2026-11-17。全部游戏业务只走 WS＋Protobuf。当前已接入登录、角色、背包、英雄只读状态、主线阵容保存、连续第1～9关挑战/结算及挂机演出；主线里程碑真实已领集合随原快照下发，胜利页恢复只读下一目标，独立3008领取仍未开放。新挂机领取/status服务端事务、客户端原请求持久恢复和双确认已接入，本次已接玩家按钮，local新领取默认true、全局默认false；英雄升级、穿脱、快速战斗仍关闭。资源下载、WS握手及测试实例身份探针不属于游戏业务API。后文按日期记录字段演进，完整状态以[开发进度](development-progress.md)为准。
 
 断线后的页面与战斗边界见[恢复核对及接线方案](reconnect-recovery.md)：短断线重新鉴权保留页面，完整重新进入回主城。原battleId回执与最新快照双确认已接，缺状态每轮至多一次refreshSnapshot；首个身份首包只记候选，首次进入主线页才接纳冷恢复意图，后续鉴权只续已有意图。恢复按原编号/版本交通用奖励队列，不伪造reward.granted；正常胜利与恢复窗归属互斥，实际打开才标记展示。布阵缺推送确认也已复用同一鉴权能力：ACK保留原意图，直到权威mainFormation.version达到回执版本；有ACK时重试只同步，无ACK才允许复用原编号/参数重试保存。已清pending的跨重启历史定位仍有缺口；不增加库存查询或通用业务自动重发。
 
@@ -29,11 +29,11 @@
 | state.changed | 服务端事件 | 事务提交后的完整 Snapshot；角色、库存、英雄、阵容、主线共用持久 revision |
 | reward.granted | 服务端事件 | 原发奖事务提交后的通用显示反馈；沿原业务receiptId去重，不是资产增量 |
 | formation.save | 请求/响应 | 当前角色主线阵容保存；requestId 持久幂等，回执不代替统一快照 |
-| chapter.challenge | 请求/响应 | 按服务端当前开放范围挑战（默认前三关），权威输入与持久战报 |
+| chapter.challenge | 请求/响应 | 按服务端当前开放范围挑战（默认连续1～9关），权威输入与持久战报 |
 | chapter.claim | 请求/响应 | 指定主线战报的幂等结算；不是挂机宝箱领取 |
 | chapter.replay | 请求/响应 | 恢复既有持久战报，不重新计算或发奖 |
 | chapter.idle.encounter | 请求/响应 | 已通关主线的挂机遇敌演出战报，不结算资产 |
-| chapter.idle.claim | 请求/响应 | requestId＋expectedOperationVersion → 冻结历史到账；服务端默认关闭，当前客户端无发包入口 |
+| chapter.idle.claim | 请求/响应 | requestId＋expectedOperationVersion → 冻结历史到账；全局默认关闭、local默认开启，玩家按钮转原持久命令入口 |
 | chapter.idle.claim.status | 请求/响应 | 只查指定requestId的COMMITTED/NOT_FOUND，不查库存、不抽样或创建计时；锁忙不能返回NOT_FOUND |
 | battle.preview | 请求/响应 | 当前已保存阵容按全局关卡idx进行开发只读试战；未支持依赖拒绝，不推进通关或发奖 |
 | gm.status、gm.grant | 请求/响应 | local按负责人要求默认开启，production不装配的开发数据准备；不等同玩法获取入口 |
@@ -80,15 +80,15 @@ Item 增加可选字符串 instance_id=3，item_id=1 仍为配置 ID；不得把
 
 ## 主线完整目录与新挑战范围（2026-11-17）
 
-`MainChapterState`追加可选`uint32 challenge_limit=5`，解码为正整数`challengeLimit`。当前真实状态来自服务端可信`mxzg.main-chapter.challenge-limit`，环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`默认3；配置了850关目录不表示全部开放。登录、state.changed和重新鉴权沿原Snapshot下发，SessionSnapshotService重建最终revision时保留范围与原里程碑集合，不增加请求或第二份主线状态。
+`MainChapterState`追加可选`uint32 challenge_limit=5`，解码为正整数`challengeLimit`。当前真实状态来自服务端可信`mxzg.main-chapter.challenge-limit`，环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`现按负责人授权默认9；配置了850关目录不表示全部开放。登录、state.changed和重新鉴权沿原Snapshot下发，SessionSnapshotService重建最终revision时保留范围与原里程碑集合，不增加请求或第二份主线状态。
 
-缺字段表示范围未同步/历史未记录，不能把Protobuf默认0解释为当前上限，也不能在客户端补3。当前范围缺失时禁全新挑战；已经收到的值必须为正uint32。maxCleared允许高于当前范围，缩限不删除旧进度。客户端发起新挑战使用最新权威Model，服务端只在新挑战分支校验当前配置；原requestId回执先查、pending先结算、原battleId的claim/replay继续恢复，不受新上限阻断。旧持久回执JSON缺challengeLimit保持null，新回执冻结当时状态；历史范围不能覆盖最新已接纳状态。
+缺字段表示范围未同步/历史未记录，不能把Protobuf默认0解释为当前上限，也不能在客户端补9。当前范围缺失时禁全新挑战；已经收到的值必须为正uint32。maxCleared允许高于当前范围，缩限不删除旧进度。客户端发起新挑战使用最新权威Model，服务端只在新挑战分支校验当前配置；原requestId回执先查、pending先结算、原battleId的claim/replay继续恢复，不受新上限阻断。旧持久回执JSON缺challengeLimit保持null，新回执冻结当时状态；历史范围不能覆盖最新已接纳状态。
 
 MainChapterRules按全局idx装配850关；mode/chapter/mission只作旧敌方配置定位，不是进度身份。MainChapterService传给战场、进度和持久Details.mission的值统一为全局idx，历史字段名不变。`battle.preview`请求/响应中的mission同样表示全局idx；场景`audit:lineup:<idx>`、`chapter:lineup:<idx>`与`idle:chapter:<idx>`使用严格正十进制索引，保留站位/阵营身份、HP及完整事件校验，不再把三个固定敌方模板当作通用战报契约。挂机仍为最多三名我方、单名怪物初始HP1及仅普攻的既有只读演出，不结算资产。
 
-配置敌方由真实NPC成长、原属性修正顺序及完整技能构建；装备、符文、先手及未知效果明确拒绝，不能删技能或替换为普攻来导出“成功”战报。实际开放段在MainChapterRewardService装配时统一预检战斗、共享首通发奖及原IdleRules后续快照依赖；当前挂机投影仅20关，误提高上限不能先提交胜利再让登录快照读缺配置。只读目录/审计不受默认3的准入限制，但不等于各关战斗、表现或所有玩家阵容都已支持。
+配置敌方由真实NPC成长、原属性修正顺序及完整技能构建；装备、符文、先手及未知效果明确拒绝，不能删技能或替换为普攻来导出“成功”战报。实际开放段在MainChapterRewardService装配时统一预检战斗、共享首通发奖及原IdleRules后续快照依赖；当前挂机投影仅20关，误提高上限不能先提交胜利再让登录快照读缺配置。本次新挑战只开放连续1～9关，第10关依赖阻塞，不跳到14、19、20等离散静态可解析关。只读目录/审计不受新挑战准入限制，但不等于各关战斗、表现或所有玩家阵容都已支持。
 
-551–850奖励关与前段共用mode5/chapter12/mission1–10，敌方源表却继续累加小关；旧运行Cache只按三维筛选，note不参与定位。本批保留旧关联并显式标记映射待确认，构建这些关卡时拒绝，不用note猜修敌表或奖励表；三维反查出现多条奖励关也不静默取一条。扫描覆盖与阻塞见[最新完整依赖审计](validation/main-chapter-dependencies-20261117-stage5.json)。第4关type11及第5关严格空type1支持都沿既有presentation事件，没有新增协议字段或改伤害。默认玩家范围仍为3关，领取开关不变；局部静态及只读证据不能作为全部关卡、发布包或真机验收结论。
+551–850奖励关与前段共用mode5/chapter12/mission1–10，敌方源表却继续累加小关；旧运行Cache只按三维筛选，note不参与定位。本批保留旧关联并显式标记映射待确认，构建这些关卡时拒绝，不用note猜修敌表或奖励表；三维反查出现多条奖励关也不静默取一条。扫描覆盖与阻塞见[最新完整依赖审计](validation/main-chapter-dependencies-20261117-stage9.json)。第4关type11及第5关严格空type1支持都沿既有presentation事件，没有新增协议字段或改伤害。当前新挑战范围按最新授权为连续1～9关；领取由独立可信开关控制，局部静态及只读证据不能作为全部关卡、发布包或真机验收结论。
 
 ### 第5关纯表现与显示完成边界
 
@@ -96,7 +96,9 @@ MainChapterRules按全局idx装配850关；mode/chapter/mission只作旧敌方�
 
 旧Java的CBuffArt.setBuffs在Cache装配时将非逻辑Buff前置；新版既有PB保留原表声明顺序，包括寒冬普攻2050100→2050200伤害→2050300。本批不改该wire顺序、伤害或统计，不能把新版声明顺序称作旧服务端实际执行顺序。同技能纯表现按配置delay并行；type3/5/6/7/9独立帧按attack_time启动、到原寿命自行释放，与角色动作完成分开。第9关接线同时纠正type5完成边界：原投射帧数、飞行时间和节点归属保留，角色不等待投射/帧全部完成；停止、迟到和独立帧错误仍沿同一战场清理。该修正不修改PB顺序或伤害，也不据此宣称全类型等价。
 
-第5关三怪完整技能、空动作及资源的静态/独立只读核对不扩大默认cap3或开放领取；浏览器关闭、迟到和故障注入的实际结果应另有本机证据，不能由上述契约提前签收。
+第5关历史批次的三怪完整技能、空动作及资源核对当时不扩大cap3或开放领取；浏览器关闭、迟到和故障注入的实际结果应另有本机证据，不能由上述契约提前签收。
+
+正式挑战开场只调整客户端演出，不新增Frame字段或重算战报：先准备真实资源并将模型opacity设0，ZDKS 2.5秒后双方出场帧并行0.75秒，全部结束再并行淡入模型1秒，最后显示HP、消费原战报。旧版淡入与出场帧并行，本次改为顺序属于负责人新授权；idleEncounter时序不变。此前异步加载时可见场地中的模型闪现已从资源/隐藏边界修正，type8原音效也纳入预载；本轮独立64008角色实际布阵后挑战第2关并胜利结算，最终cleared=2、pending=null、真实战斗数1；两个FX期间模型opacity为0且HP隐藏，FX后渐入1秒，七阶段观察断言通过。该观察不改变协议或证明全1～9关视觉已验，见[本批记录](validation/chapter-player-entry-preview-20261117.json)。
 
 ### 第9关场地移动与固定暴击属性依赖
 
@@ -104,7 +106,7 @@ type8沿原ClientBuffHandler纯表现链及既有presentation事件传递，服�
 
 本关固定暴击增减仍复用原属性Buff实例链，不新增协议或修改统计。服务端只接type160、attach_percent=10000、无子动作、`207|整数|0|0`且非负整数期限的已核实形式，保持原整数加减与负值，不把固定-1250改成乘区或夹零；其他属性、概率或条件形式继续拒绝。这里的207是属性编号，不表示泛化接通所有同名事件或其他玩法。
 
-实际本关只核101040051:1/1051101及三怪六技能；通用parser没有自动逐一对照所有旧覆盖，1051102及后续等级仍待审核。默认cap3、领取关闭及WS＋Protobuf契约不变；源码接通和[原帧证据](validation/chapter-stage9-assets-20261117.json)不代替Java互通、本机画面、发布包或真机验收。
+实际本关只核101040051:1/1051101及三怪六技能；通用parser没有自动逐一对照所有旧覆盖，1051102及后续等级仍待审核。第9关历史批次维持cap3和领取关闭，详见[该批检查](validation/chapter-stage9-review-20261117.json)及[画面记录](validation/chapter-stage9-preview-20261117.json)。本次连续1～9关与local领取是后续明确授权，WS＋Protobuf无新字段；[原帧证据](validation/chapter-stage9-assets-20261117.json)不代替新入口、开场、发布包或真机验收。
 
 ## 主线里程碑权威进度与下一目标（2026-11-16）
 
@@ -114,7 +116,7 @@ V27建立`game_main_chapter_milestone(role_id,reward_id)`，复合主键、角�
 
 显式schema1且claimedIds空数组表示已同步未领取；可选字段缺失表示该领域尚未同步，不能补为空集合或显示默认第一项。存在但未知格式、重复或非法ID拒绝整包。旧持久回执JSON缺字段保持null，不反查新集合改写历史；新回执State自然冻结当时集合，也不能回写当前状态。胜利页showResult只读取最新已接纳的MainChapterModel.state，与登录配置包内的ChapterExtraReward及语言投影下一目标，不使用历史receipt.state覆盖最新已领集合。
 
-ChapterMilestoneUtils按配置idx升序选择最小未领项，以绝对目标关卡减当前maxCleared得到非负差值；已达成未领仍停在该项，全部已领清空提示。配置、语言或权威集合缺失时明确显示不可用，不猜奖励。ChapterEndView的完整Prefab已在旧show_rich挂点绑定独立静态RichText；本次获得区域、升级附赠和下一目标分别显示，不把目标当作本次到账。首次目标第15关只作提示，当前挑战仍限前三关；旧3008及挂机领取入口继续关闭。
+ChapterMilestoneUtils按配置idx升序选择最小未领项，以绝对目标关卡减当前maxCleared得到非负差值；已达成未领仍停在该项，全部已领清空提示。配置、语言或权威集合缺失时明确显示不可用，不猜奖励。ChapterEndView的完整Prefab已在旧show_rich挂点绑定独立静态RichText；本次获得区域、升级附赠和下一目标分别显示，不把目标当作本次到账。首次目标第15关只作提示，当前挑战范围为连续1～9关；旧3008继续关闭，挂机宝箱另走原新领取链。
 
 本轮后端持久化16项、真实WS3项共19项通过，4份Java→TS真实帧互通通过，覆盖空集合、非连续集合、主键/正数/归属约束、只读版本、旧回执缺失和登录/提交事件/重新鉴权保留扩展。限定Creator闭环中，真实通关1/2后下一目标分别为再通14/13关。同一第2关原回执/战报的只读显示重放中，结果页约4.03秒关闭后统计窗仍保留，资产不变；冷第3关首次进主线仅交一次通用升级反馈，未额外打开胜利页。显示重放不算新战斗或再次发奖，以上不扩大为里程碑实际领取、后续关卡、真机或发布包验收。见[本批检查](validation/chapter-milestone-review-20261116.json)、[本机记录](validation/chapter-milestone-preview-20261116.json)及[旧源码审计](validation/chapter-milestone-legacy-audit-20261116.json)。
 
@@ -122,7 +124,7 @@ ChapterMilestoneUtils按配置idx升序选择最小未领项，以绝对目标�
 
 Snapshot.main_chapter_idle（字段9）随登录/鉴权恢复和state.changed统一下发，没有开页查询。MainChapterIdleState提供server_time、started_at（Unix秒）、max_seconds、frequency、reward_stage及rates。rates为每frequency秒的同源基础资源量，前端仅换算每分钟，不是已到账资产。
 
-11-14已替换早期“首次胜利/快照补建”生命周期：首次真正受理主线挑战在角色锁和同一事务中初始化game_main_chapter_idle起点为now-initialSeconds，失败战斗正常提交也保留；已有起点、重连、挑战胜利与结算均不重置。已通关却缺累计明确拒绝，不由快照补免费起点。新表与已暂停的game_idle/game_campaign隔离；旧IdleService.claim不得接回。服务端新领取能力及关闭边界见下节。
+11-14已替换早期“首次胜利/快照补建”生命周期：首次真正受理主线挑战在角色锁和同一事务中初始化game_main_chapter_idle起点为now-initialSeconds，失败战斗正常提交也保留；已有起点、重连、挑战胜利与结算均不重置。已通关却缺累计明确拒绝，不由快照补免费起点。新表与已暂停的game_idle/game_campaign隔离；旧IdleService.claim不得接回。服务端新领取能力及local/全局开关边界见下节。
 
 ### 新挂机领取与持久回执（2026-11-14）
 
@@ -130,11 +132,11 @@ Frame oneof新增31～34，MainChapterIdleState新增可选claim_state=9；不�
 
 Receipt schema1带请求/回执ID、消费版本前后、统一计算秒/原起点/实际秒数/VIP上限/关卡、提交asset_revision、理论量、完整强类型实际到账及经验动画。实际结果明确分开满级/封顶忽略、升级附赠、钱包/库存前后、酒馆上限及真实期限/精灵实例；不塞JSON载荷或当前Snapshot。数据库另存AuditV1完整输入/候选/累计及摘要，未知格式或损坏不重算。
 
-claim_state提供schema_version、operation_version和READ_ONLY/ENABLED，默认只读；它不是完整收益ready预报，不因登录展示而读取全部权益。缺字段/未知schema不能允许领取；客户端未知schema仅丢弃这项能力并限频记录，旧挂机演出继续。日常开关`mxzg.main-chapter.idle-claim-enabled`默认false；客户端恢复命令已接入，但没有玩家按钮调用begin。
+claim_state提供schema_version、operation_version和READ_ONLY/ENABLED，由当前可信领取开关决定；它不是完整收益ready预报，不因登录展示而读取全部权益。缺字段/未知schema不能允许领取；客户端未知schema仅丢弃这项能力并限频记录，旧挂机演出继续。开关`mxzg.main-chapter.idle-claim-enabled`全局默认false，application-local.yml默认true，可用MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED显式覆盖。本次玩家按钮经MainChapterController.requestIdleClaim转应用注入的原IdleClaimBinding.begin(当前显示期)，不新增协议、队列或资产写入口。点击仍要求已同步ENABLED、旧65秒门槛及真实冒险点状态；满冒险点复用ConfirmView，取消不建journal，确认后再核连接/操作版本。服务端保留60秒受理门槛，不把按钮可点击当作服务端免校验。
 
-服务器在角色锁内再次鉴权，先恢复成功回执再判断新请求开关、版本和输入；指定status查询与重放不抽样、不推进任何版本。历史receipt只用于命令确认/展示；最新资产及累计仍由统一Snapshot提交Model，确认须满足snapshot.revision≥receipt.assetRevision且operationVersion≥after。客户端先持久原requestId/expected，再经应用认证交付；重登查原status，NOT_FOUND不当取消，确认后按完整指纹条件清理。缺快照仅重新鉴权一次，不新增库存查询；身份键归应用，模块不比较角色键。实现、存储平台限制和验证范围见[领取事务](main-chapter-idle-settlement.md)。
+服务器在角色锁内再次鉴权，先恢复成功回执再判断新请求开关、版本和输入；指定status查询与重放不抽样、不推进任何版本。历史receipt只用于命令确认/展示；最新资产及累计仍由统一Snapshot提交Model，确认须满足snapshot.revision≥receipt.assetRevision且operationVersion≥after。客户端先持久原requestId/expected，再经应用认证交付；重登查原status，NOT_FOUND不当取消，确认后按完整指纹条件清理。缺快照仅重新鉴权一次，不新增库存查询；身份键归应用，模块不比较角色键。正常现场的当前显示期才可播放原collect，原回执冻结秒数决定档位；恢复/历史回执继续只交原通用反馈，不补开页面或重播收取。零到账也走双确认，但不伪造奖励。local活动控制读取缺失会拒绝实际计算，不能用null/[]当未发布；负责人确认的两服开服资料及044未发布保存在忽略的外部配置，由原启动/周期维护装配，不向协议添加默认日期，也不代表production开放。本轮独立64008角色实际点击宝箱，只有1份回执，实际到账gold1600、diamond1、角色经验80，通用RewardView展示7项；真实主线关2及缓存切页无准备提示也已限定复验，过程无warn/error。该结果不包括满冒险点确认/取消的实际点击、全部1～9关自然成长、发布包或真机，见[本批检查](validation/chapter-player-entry-review-20261117.json)及[本机记录](validation/chapter-player-entry-preview-20261117.json)。实现、存储平台限制和验证范围见[领取事务](main-chapter-idle-settlement.md)。
 
-AssetStateBinding提交任何模块前校验主线与挂机快照；MainChapterController.onNotify校验后提交Model。客户端经过时间只用于显示且封顶，领奖必须以后由服务器重新计算。关卡收益使用maxCleared而非下一关，也不使用最近一次通关奖励。
+AssetStateBinding提交任何模块前校验主线与挂机快照；MainChapterController.onNotify校验后提交Model。客户端经过时间只用于显示且封顶，领取实际量始终由服务器在原事务中重新计算。关卡收益使用maxCleared而非下一关，也不使用最近一次通关奖励。
 
 
 ### 挂机选人快照补充（2026-11-06）
@@ -152,7 +154,7 @@ MainChapterIdleState新增slots（字段7）与lineup_version（字段8）。slo
 
 两个样本由真实执行器和生产PB映射器生成，使用已支持的`audit:lineup:1`名册，属性明确为边界夹具，不冒充玩家持久阵容或自然关卡。存活样本中盾实例1耗尽后重新生成实例3，真实输出统计1300、敌方承伤1500，攻方报告治疗1000、敌方输出100；致死样本的命中实际-400、报告-900，显示后依次移除耗尽实例1和独立死亡实例2，真实输出300、承伤400、攻方报告治疗500。这些反直觉数值沿原计算保留，不能将耗尽事件中的盾值100再加一次；护盾数值语义仍归[BRULE-002](battle-known-issues.md)。
 
-31项后端相关检查及两份Java→TS真实PB互通通过，限定本机开发独立入口已检查图标、重施、致死和统计。统计复用同一真实`ChapterEndView.openStatistics`方法调用，只读底板没有可见战报按钮，未将其记为点击按钮。全程不连接账号、不发奖；仅存活首盾为截图等待控制时序，后续自然播放，致死样本无门闩。取消样本在真实盾显示时以可控Promise停住，关页再释放后事件数保持4→4、completed=false，roots/residents/opening/intents/modalActive均为0。此结论不覆盖所有护盾技能、正式服、真机或发布包；领取入口继续关闭。见[本批检查](validation/shield-depleted-review-20261117.json)和[本机记录](validation/shield-depleted-preview-20261117.json)。
+31项后端相关检查及两份Java→TS真实PB互通通过，限定本机开发独立入口已检查图标、重施、致死和统计。统计复用同一真实`ChapterEndView.openStatistics`方法调用，只读底板没有可见战报按钮，未将其记为点击按钮。全程不连接账号、不发奖；仅存活首盾为截图等待控制时序，后续自然播放，致死样本无门闩。取消样本在真实盾显示时以可控Promise停住，关页再释放后事件数保持4→4、completed=false，roots/residents/opening/intents/modalActive均为0。此历史结论不覆盖所有护盾技能、正式服、真机或发布包；该护盾批次当时仍关闭领取。见[本批检查](validation/shield-depleted-review-20261117.json)和[本机记录](validation/shield-depleted-preview-20261117.json)。
 
 ### 结算展示数据补充（2026-11-09）
 
@@ -165,7 +167,7 @@ ChapterReceipt新增可选experience=5，包含发奖事务前后的等级、等
 治疗顺序事件kind=recovery复用actual_hp_change/reported_hp_change/dead字段，不新增字段号。服务端在治疗发生处同时记录累计量与顺序事件，事务失败一并回滚；双方均按原事件顺序验证生命。actual为实际变化，reported为含溢出的旧报告量，dead固定false；拒绝复活、越过死亡边界、超过最大生命或实际量与溢出上限不符的记录。客户端血条使用actual，飘字和统计使用reported，不重算或请求奖励。2026-11-09真实主线只增加冰晶女巫2031301至2031303直接治疗覆盖，不能解释为全部治疗技能开放。
 
 - `chapter.idle.encounter`：鉴权后空请求，返回 `IdleEncounter`（Frame字段30），包含stage、assetRevision、lineupVersion、强类型BattleReplay。沿用WS＋Protobuf，无HTTP或JSON回退。协议名遵守小写分段规则。
-- 服务端在角色锁内读取当前已通关关卡与持久挂机选择，随机取该关卡一条非空怪物配置，首行动序号按0..2抽取后对英雄数量取模。双方只用普攻，怪物初始HP=1；挂机使用旧独立阵型1，保留原站位和元素加成。现阶段仍只支持已接入的前三关/普攻配置。
+- 服务端在角色锁内读取当前已通关关卡与持久挂机选择，随机取该关卡一条非空怪物配置，首行动序号按0..2抽取后对英雄数量取模。双方只用普攻，怪物初始HP=1；挂机使用旧独立阵型1，保留原站位和元素加成。常规玩家来源随当前连续1～9关进度，挂机仍仅消费原普攻配置；缺配置或未支持分支明确拒绝。
 - 场景标识 `idle:chapter:N` 与 `chapter:lineup:N` 挑战战报分开。演出不写主线战报、不领奖、不推进关卡、不增加资产版本。客户端校验完整生命事件链、最多三名我方和一名敌方、普攻类型，以及当前关卡/阵容/资产版本后才播放。
 - 此请求只在行军路程到达遇敌点后发出，不查询角色/背包。失败不伪造击杀；下一次行军到遇敌点才重试。页面关闭或进入挑战取消本页演出，连接切换仍由通信和应用层隔离。
 

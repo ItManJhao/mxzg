@@ -8,6 +8,9 @@ spring:
 server:
   address: 127.0.0.1
 mxzg:
+  main-chapter:
+    # 复用真实领取事务；缺权威活动控制时明确拒绝，不补假开服时间或跳过奖励来源。
+    idle-claim-enabled: ${MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED:true}
   gm:
     enabled: ${MXZG_GM_ENABLED:true}
   websocket:

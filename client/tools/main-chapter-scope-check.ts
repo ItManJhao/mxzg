@@ -225,6 +225,45 @@ async function pageScope(): Promise<void> {
     }
 }
 
+/** 真实主页把当前显示期交给唯一领取绑定；关闭、战斗或收取中不会再请求，缺注入只给可恢复提示。 */
+async function playerIdleEntry(): Promise<void> {
+    const controller = MainChapterController.instance;
+    const originalRequest = controller.requestIdleClaim;
+    const originalToast = UIManager.instance.toast;
+    const host = new Node("PlayerIdleEntryFixture");
+    const page: any = host.addComponent(MainChapterView);
+    const calls: object[] = [];
+    const notices: string[] = [];
+    try {
+        UIManager.instance.toast = text => { notices.push(text); };
+        controller.requestIdleClaim = async context => { calls.push(context); };
+        page.closed = false;
+        const context = page.idleCollectionContext();
+        page.collectIdleRewards();
+        await Promise.resolve();
+        assert.deepEqual(calls, [context], "页面只交当前显示期，不自己构造领取请求或修改累计");
+
+        page.closed = true;
+        page.collectIdleRewards();
+        page.closed = false;
+        page.playing = true;
+        page.collectIdleRewards();
+        page.playing = false;
+        page.idleChest = { collecting: true };
+        page.collectIdleRewards();
+        assert.equal(calls.length, 1, "关闭、正式战斗及已有收取不能创建新意图");
+        page.idleChest = null;
+        controller.requestIdleClaim = null;
+        page.collectIdleRewards();
+        assert.deepEqual(notices, ["挂机领取正在准备，请稍后重试"]);
+        assert.equal(calls.length, 1);
+    } finally {
+        controller.requestIdleClaim = originalRequest;
+        UIManager.instance.toast = originalToast;
+        host.destroy();
+    }
+}
+
 /** 构造不同等级、模板及多目标的通用战报，验证编解码职责而非某关固定敌人；不用于真实玩法。 */
 function replay(index = 850, prefix = "chapter:lineup"): any {
     const units = [
@@ -386,7 +425,7 @@ async function interop(): Promise<void> {
         } else {
             assert([Protocol.SESSION_LOGIN, Protocol.SESSION_AUTHENTICATE, Protocol.STATE_CHANGED].includes(wire.name as any));
             const snapshot = wire.name === Protocol.STATE_CHANGED ? body : body.initial;
-            assert.equal(MainChapterController.readState(snapshot.mainChapter, snapshot.revision)!.challengeLimit, 3);
+            assert.equal(MainChapterController.readState(snapshot.mainChapter, snapshot.revision)!.challengeLimit, 9);
         }
         console.log("Java全局主线/挑战范围PB互通通过：" + wire.name + " " + argument.slice(7));
     }
@@ -397,6 +436,7 @@ async function main(): Promise<void> {
     readScope();
     await requests();
     await pageScope();
+    await playerIdleEntry();
     genericReplay();
     await routes();
     await interop();

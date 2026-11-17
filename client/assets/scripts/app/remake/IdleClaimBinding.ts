@@ -21,7 +21,7 @@ import type { ConfirmArgs } from "../../features/common/ui/ConfirmView";
 import type { BaseView } from "../../framework/ui/BaseView";
 import { UIManager } from "../../framework/ui/UIManager";
 
-/** 新领取的应用策略；默认关闭入口，独立专项可明确启用并提供可控显示时钟。 */
+/** 新领取的应用策略；由应用显式启用，缺省不接受新点击，专项可提供可控显示时钟。 */
 export interface IdleClaimEntryOptions {
     /** true才允许创建新的玩家意图；不影响既有持久请求的鉴权恢复。 */
     readonly enabled?: boolean;
@@ -86,7 +86,7 @@ export class IdleClaimBinding {
         /** 应用原有主线数据；只读取时钟与操作版本，不保存另一份权威状态。 */
         private readonly model = MainChapterModel.instance,
         onConfirmed?: (confirmation: IdleClaimConfirmation) => void,
-        /** 玩家入口策略与显示时钟；正式装配明确关闭，不从URL或后端开关擅自开启。 */
+        /** 玩家入口策略与显示时钟；应用显式启用，缺省关闭，且仍受服务端能力约束。 */
         private readonly entry: IdleClaimEntryOptions = {},
     ) {
         this.ensureReady = () => service.authenticated(async token => { socket.assertReady(token); });
@@ -201,8 +201,8 @@ export class IdleClaimBinding {
     }
 
     /**
-     * 未来玩家领取意图的唯一应用入口：先检查显示门槛和真实冒险点，再复用通用确认。
-     * 默认关闭；确认前不写journal、不发送领取。恢复旧请求不重问当前满额条件。
+     * 玩家领取意图的唯一应用入口：先检查显示门槛和真实冒险点，再复用通用确认。
+     * 是否接收新意图由应用显式配置；确认前不写journal、不发送领取，恢复旧请求不重问满额条件。
      */
     public begin(presentationContext: object | null = null): Promise<void> {
         if (this.disposed) {

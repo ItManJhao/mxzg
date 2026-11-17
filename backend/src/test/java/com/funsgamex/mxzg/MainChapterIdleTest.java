@@ -62,7 +62,7 @@ class MainChapterIdleTest {
         });
     }
 
-    /** 未通关不展示；挑战显式创建后持久起点不因胜利、重连或换关改变，快照不发奖。 */
+    /** 本地领取模式随快照下发；读取不因胜利、重连或换关重置挑战起点，也不发奖。 */
     @Test void clockPersistsAndRatesFollowMainChapterWithoutGranting() throws Exception {
         var session=login.login("idle_"+UUID.randomUUID().toString().substring(0,12));
         String role=session.role().id();
@@ -78,7 +78,7 @@ class MainChapterIdleTest {
         assertEquals(initializedAt-rules.data().initialSeconds(),first.mainChapterIdle().startedAt());
         assertEquals(1,first.mainChapterIdle().claimState().schemaVersion());
         assertEquals(1,first.mainChapterIdle().claimState().operationVersion());
-        assertEquals("READ_ONLY",first.mainChapterIdle().claimState().requestMode());
+        assertEquals("ENABLED",first.mainChapterIdle().claimState().requestMode());
         var restored=snapshots.snapshot(token);
         assertEquals(first.mainChapterIdle().startedAt(),restored.mainChapterIdle().startedAt());
         assertEquals(first.revision(),restored.revision());

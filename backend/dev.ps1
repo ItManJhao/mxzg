@@ -1,12 +1,22 @@
 ﻿<# 本机后端启动和检查入口；复用进程前核实新长连接可握手，避免误复用旧 HTTP 后端。 #>
+# 启动时可载入已确认的.local/idle-activity.yml；不生成开服日期或活动状态。
+# 已有显式外部配置优先保留，命令结束后恢复当前终端环境。
 param([ValidateSet('run', 'test', 'package')][string]$Action = 'run')
 $ErrorActionPreference = 'Stop'
 $previousJavaHome = $env:JAVA_HOME
 $previousPath = $env:PATH
 $previousMavenHome = $env:MAVEN_USER_HOME
+$previousAdditionalLocation = $env:SPRING_CONFIG_ADDITIONAL_LOCATION
 Push-Location -LiteralPath $PSScriptRoot
 try {
     if ($Action -eq 'run') {
+        # 只自动载入已存在的可信配置；缺文件保持未配置，不创建默认活动或猜开服时间。
+        $localActivityConfig = Join-Path $PSScriptRoot '.local/idle-activity.yml'
+        if ([string]::IsNullOrWhiteSpace($previousAdditionalLocation) -and
+                (Test-Path -LiteralPath $localActivityConfig -PathType Leaf)) {
+            $env:SPRING_CONFIG_ADDITIONAL_LOCATION = 'file:./.local/idle-activity.yml'
+            Write-Host '[CONFIG] Loading confirmed local idle activity configuration.'
+        }
         $backendPort = if ($env:MXZG_PORT) { [int]$env:MXZG_PORT } else { 18080 }
         $backendSocket = New-Object System.Net.Sockets.TcpClient
         $backendRunning = $false
@@ -44,4 +54,5 @@ try {
     $env:JAVA_HOME = $previousJavaHome
     $env:PATH = $previousPath
     $env:MAVEN_USER_HOME = $previousMavenHome
+    $env:SPRING_CONFIG_ADDITIONAL_LOCATION = $previousAdditionalLocation
 }

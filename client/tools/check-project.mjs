@@ -55,6 +55,7 @@ const suites = [
   ["battle-hunter-noah-actions", "ts", "client/tools/battle-hunter-noah-actions-check.ts"],
   ["battle-frost-winter-actions", "ts", "client/tools/battle-frost-winter-actions-check.ts"],
   ["battle-thorn-actions", "ts", "client/tools/battle-thorn-actions-check.ts"],
+  ["battle-opening", "ts", "client/tools/battle-opening-check.ts"],
   ["battle-layout", "python", "tools/check_battle_prefab_layout.py"],
   ["battle-layout-rules", "python", "tools/test_battle_prefab_layout.py"],
   ["game-socket", "ts", "client/tools/session-state-check.ts"],
@@ -140,6 +141,10 @@ for (const [id, kind, source] of selected) {
       const outfile = resolve(output, id + ".cjs");
       await esbuild.build({ absWorkingDir: root, entryPoints: [source], bundle: true,
         platform: "node", format: "cjs", tsconfig: "client/tools/tsconfig.check.json", outfile,
+        // 只有出场行为专项启用确定性Tween时钟；其他套件保持原cc替身的动画拒绝边界。
+        plugins: id === "battle-opening" ? [{ name: "opening-clock", setup(build) {
+          build.onResolve({ filter: /^cc$/ }, () => ({ path: resolve(root, "client/tools/OpeningClockRuntime.ts") }));
+        } }] : [],
         logLevel: "silent" });
       command = process.execPath;
       commandArgs = [outfile];

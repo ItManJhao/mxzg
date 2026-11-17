@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "objective": "核对正式挑战的ZDKS、双方出场帧、模型和血条时序；区分旧并行淡入与用户本次明确要求的顺序淡入。",
+  "sources": {
+    "reportBase": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/comp/BattleReportBaseLayer.lua",
+      "sha256": "f41c1beb3aeba852add61b9d00912c295bea229e2badd01ee356ff2872db5aa7"
+    },
+    "controller": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/controller/BattleController.lua",
+      "sha256": "b30618afb9649ffb607321d33cf7d86085e3499db25ef728a56da9556eaba40b"
+    },
+    "heroNode": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/entity/battle/BattleHeroNode.lua",
+      "sha256": "70717febdc0c2224dc8d84d115bff526bd7f167248d48be17ffd9e35a2abd229"
+    },
+    "effectFactory": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/factory/EffectFactory.lua",
+      "sha256": "89a71fd246b15a01344ebf82eb4f2069fb52a1b8069d7687b195c3dfedd9f64b"
+    },
+    "idleLayer": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/layer/battle/BattleIdleLayer.lua",
+      "sha256": "eb0d012491bf5d7c95b01447390acb7e7c31b1ea0dc94146427c17f8a80742b4"
+    },
+    "olderBase": {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/src/comp/BattleBaseLayer.lua",
+      "sha256": "c2aa40ddcf9d881256971812539b9fa082f280b79a7b6156d3d2b45eccdab5c9"
+    }
+  },
+  "legacy": {
+    "entry": {
+      "source": "reportBase",
+      "lines": [
+        175,
+        221
+      ],
+      "facts": "battleStart先battle_ctr:play(report,options)，reset界面后立即showBattleStartAmin。实际仪式链在BattleReportBaseLayer，comp/BattleBaseLayer不含ZDKS/出场帧链。"
+    },
+    "zdks": {
+      "sources": [
+        {
+          "source": "reportBase",
+          "lines": [
+            224,
+            234
+          ]
+        },
+        {
+          "source": "controller",
+          "lines": [
+            63,
+            81
+          ]
+        },
+        {
+          "source": "controller",
+          "lines": [
+            255,
+            290
+          ]
+        }
+      ],
+      "facts": "ZDKS/stand、loop=false，无动画完成事件等待。Controller默认hasEnter=true，以ENTER_DELAY_TIME=2.5延迟创建并显示双方单位。素材最大关键帧1.2333不替代该固定业务cue，不能把2.5写成素材动画时长。"
+    },
+    "concurrency": {
+      "source": "controller",
+      "lines": [
+        438,
+        515
+      ],
+      "facts": "单个pairs遍历给每名单位创建并启动FX，无逐边等待；我方left、敌方right并行。anchor(.5,.25)，帧间隔.05；不是左右各.75相加。"
+    },
+    "fade": {
+      "sources": [
+        {
+          "source": "controller",
+          "lines": [
+            471,
+            501
+          ]
+        },
+        {
+          "source": "controller",
+          "lines": [
+            406,
+            432
+          ]
+        },
+        {
+          "source": "heroNode",
+          "lines": [
+            340,
+            352
+          ]
+        }
+      ],
+      "facts": "旧fadeIn(START_DELAY=1)先启动，然后同轮创建出场FX；模型/骨骼opacity0→255与FX并行，heroInfoNode隐藏1秒后Show。_play也等待1秒再_playRound。旧代码不是先等FX结束再淡入模型。"
+    },
+    "frameLifetime": {
+      "source": "effectFactory",
+      "lines": [
+        12,
+        42,
+        49,
+        63
+      ],
+      "facts": "按连续帧创建cc.Animate；非循环分支在动画完成后RemoveSelf，无多停一帧。"
+    },
+    "nominalTimelineSeconds": {
+      "t0": "play请求与ZDKS启动",
+      "t2_5": "双方单位FX与1秒fade同时启动",
+      "t3_25": "15×.05的双方FX各自结束",
+      "t3_5": "fade结束、HP/info显示、进入回合准备；具体调度不作为物理耗时保证。"
+    },
+    "idleDifference": {
+      "sources": [
+        {
+          "source": "idleLayer",
+          "lines": [
+            60,
+            67
+          ]
+        },
+        {
+          "source": "idleLayer",
+          "lines": [
+            106,
+            109
+          ]
+        },
+        {
+          "source": "controller",
+          "lines": [
+            451,
+            469,
+            481,
+            494
+          ]
+        }
+      ],
+      "facts": "挂机enabledPlaySpeed=false、retainPlayerHeroes=true、hasEnter=false；留存我方直接visible/保留站场且不重播left入场，仅新敌方有right出场与并行淡入，不应套正式挑战重新隐藏整个保留队伍。"
+    }
+  },
+  "resources": {
+    "zdks": {
+      "files": [
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/ZDKS.json",
+          "sha256": "635cbf1dd2dea1ae950d7d8fde9430401bcde007e6251532855502036630d5ff"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/ZDKS.atlas",
+          "sha256": "776872c62c8567160d0aac723f3b71066b1eae379f2c76d15dfc7627b85bee0c"
+        },
+        {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/ZDKS.png",
+          "sha256": "6ee992eb199e834fb8c4b583b089e274b6e22079d9b623e7640364c53e626d8a"
+        }
+      ],
+      "animation": "stand",
+      "maxKeyframeTimeSeconds": 1.2333,
+      "animationEvents": {}
+    },
+    "appearAtlases": [
+      {
+        "side": "left",
+        "plist": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/ccbi-res/battle-appear-left.plist",
+          "sha256": "44eda2e749adcf95b62710c12392290c940c1362f9a029bbe2e599778dcda028"
+        },
+        "texture": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/ccbi-res/battle-appear-left.pvr.ccz",
+          "sha256": "6cd57566efa83e452e4e0cf581670134d8c6950b7e489ebea8225c9d83fe5edc"
+        },
+        "keys": [
+          "battle-appear-left/0.png",
+          "battle-appear-left/1.png",
+          "battle-appear-left/2.png",
+          "battle-appear-left/3.png",
+          "battle-appear-left/4.png",
+          "battle-appear-left/5.png",
+          "battle-appear-left/6.png",
+          "battle-appear-left/7.png",
+          "battle-appear-left/8.png",
+          "battle-appear-left/9.png",
+          "battle-appear-left/10.png",
+          "battle-appear-left/11.png",
+          "battle-appear-left/12.png",
+          "battle-appear-left/13.png",
+          "battle-appear-left/14.png"
+        ],
+        "frameCount": 15,
+        "durationPerFrameSeconds": 0.05,
+        "nominalDurationSeconds": 0.75
+      },
+      {
+        "side": "right",
+        "plist": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/ccbi-res/battle-appear-right.plist",
+          "sha256": "61e8dbb7586508c4f20ef11193685b44f46ca973a7e258c3ce7ba44767fed7f9"
+        },
+        "texture": {
+          "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/ccbi-res/battle-appear-right.pvr.ccz",
+          "sha256": "238942bc331de6bee55f3758b7d5f1bce2b66497925f072d049b103f06a64f89"
+        },
+        "keys": [
+          "battle-appear-right/0.png",
+          "battle-appear-right/1.png",
+          "battle-appear-right/2.png",
+          "battle-appear-right/3.png",
+          "battle-appear-right/4.png",
+          "battle-appear-right/5.png",
+          "battle-appear-right/6.png",
+          "battle-appear-right/7.png",
+          "battle-appear-right/8.png",
+          "battle-appear-right/9.png",
+          "battle-appear-right/10.png",
+          "battle-appear-right/11.png",
+          "battle-appear-right/12.png",
+          "battle-appear-right/13.png",
+          "battle-appear-right/14.png"
+        ],
+        "frameCount": 15,
+        "durationPerFrameSeconds": 0.05,
+        "nominalDurationSeconds": 0.75
+      }
+    ]
+  },
+  "baselineNewPreview": {
+    "path": "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts",
+    "observedBaselineHead": "6c668a73（根代理告知的本批开始版本）",
+    "observedLinesBeforePatch": {
+      "fieldVisible": [
+        440,
+        451
+      ],
+      "opacityReset": [
+        467,
+        481
+      ],
+      "trailingWait": [
+        483,
+        494
+      ]
+    },
+    "fault": "正式分支结束ZDKS后先打开LayerField和HpBars，再异步读取出场帧，直到FX循环前才把模型opacity置0；异步空档会先露模型/HP。既有fade与FX同时启动，循环后的.25仅补1-.75，不能在改为顺序fade后保留为渐入总长。"
+  },
+  "userAuthorizedSequence": {
+    "basis": "本批用户明确要求出场FX结束后模型再渐入，优先于旧源码并行淡入；仅此明确演出调整，不更改战斗数值。",
+    "phases": [
+      "出场资源完整就绪前模型/HP保持隐藏",
+      "ZDKS固定2.5秒cue",
+      "所有双方单位FX并行15帧×.05，模型/HP仍隐藏",
+      "双方所有模型并行渐入1秒",
+      "HP/info显示并进入战报ready"
+    ],
+    "nominalPreparationSeconds": 4.25,
+    "guards": "取消沿原根节点生命周期、资源作用域、waits和Tween归属，资源/开场/FX/渐入迟到都不能再次显图或启动战报；这不是新增Manager、页面状态或运行时资源清单。"
+  },
+  "testEvidence": {
+    "entry": "node client/tools/check-project.mjs --suite battle-opening",
+    "method": "执行真实BattleReplayPreview.open；只替换资源/骨骼边界与cc动画时钟，战报执行记录是否被调用。时钟只解释生产Tween指令，不另实现一套出场流程。",
+    "covered": [
+      "真实末张资源门闩阻断时的模型/HP隐藏",
+      "2边4单位FX并行开始并完整保留末帧",
+      "全部FX结束后才并行1秒渐入、血条末尾显示、仅一次战报启动",
+      "资源、ZDKS、FX、fade四阶段根节点销毁后，放行迟到资源并推进100秒无战报/无出场节点/无残余Tween/无错误"
+    ],
+    "scope": "通过行为检查不能替代Creator真实帧/混合/机型渲染。共享cc-runtime仍拒绝Tween，专用时钟只由battle-opening的构建插件启用。"
+  },
+  "scope": {
+    "productionEditedByThisAudit": false,
+    "creatorBuilt": false,
+    "dailyServiceStarted": false,
+    "gitActionByThisAudit": false,
+    "historicEvidenceChanged": false,
+    "otherCurrentAuthorization": "用户已另行授权连续关卡与挂机接通，本出场专项不将历史cap3/claimclosed当作新需求限制；这些业务由根代理和其他子任务处理。"
+  }
+}

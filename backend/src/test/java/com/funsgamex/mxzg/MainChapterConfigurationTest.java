@@ -1,6 +1,6 @@
 /**
  * 配置化主线的独立H2回归：新挑战范围、全局关卡只读预览和降低范围后的历史结算。
- * 只为隔离角色准备数据，原回执与共享事务均走生产链，不连接日常数据库或开放玩家功能。
+ * 只为隔离角色准备数据，原回执与共享事务均走生产链，不连接日常数据库或修改运行中的范围。
  */
 package com.funsgamex.mxzg;
 
@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(properties = {
     "spring.datasource.url=jdbc:h2:mem:main_chapter_configuration;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
-    "spring.datasource.username=sa", "spring.datasource.password=", "mxzg.main-chapter.challenge-limit=3"
+    "spring.datasource.username=sa", "spring.datasource.password="
 })
 @ActiveProfiles("local")
 class MainChapterConfigurationTest {
@@ -51,7 +51,7 @@ class MainChapterConfigurationTest {
     @Autowired private DevelopmentLoginService login;
     /** 真实鉴权服务供不同只读范围的领域实例复用。 */
     @Autowired private SessionService sessions;
-    /** 当前默认开放三关的真实主线服务。 */
+    /** 当前默认开放连续九关的真实主线服务。 */
     @Autowired private MainChapterService chapters;
     /** 真实共享发奖适配，历史结算仍消费持久冻结计划。 */
     @Autowired private MainChapterRewardService rewards;
@@ -109,13 +109,13 @@ class MainChapterConfigurationTest {
             player.role(), Instant.now().getEpochSecond() - 60);
     }
 
-    /** 目录完整不自动开放；第三关结束后的新挑战拒绝且事务不落战报或推进资产版本。 */
+    /** 九关之外不自动开放；第十关新挑战拒绝且事务不落战报或推进资产版本。 */
     @Test
-    void defaultScopeRejectsFourthNewChallengeWithoutChangingAssets() {
+    void defaultScopeRejectsTenthNewChallengeWithoutChangingAssets() {
         var player = player();
-        cleared(player, 3);
+        cleared(player, 9);
         var before = snapshots.snapshot(player.token());
-        assertEquals(3, before.mainChapter().challengeLimit());
+        assertEquals(9, before.mainChapter().challengeLimit());
         var failure = assertThrows(IllegalArgumentException.class,
             () -> chapters.challenge(player.token(), UUID.randomUUID().toString()));
         assertTrue(failure.getMessage().contains("开放范围"));
@@ -127,7 +127,39 @@ class MainChapterConfigurationTest {
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_command WHERE role_id=?", Integer.class, player.role()));
     }
 
-    /** 默认范围外的只读预览使用真实全局目录；输出原PB，不改敌人、技能、角色资产或开放范围。 */
+    /** 默认九关均经真实挑战和结算；重复回执不多发奖，最后一关结算后不跳到离散可用关。 */
+    @Test
+    void defaultScopeChallengesAndSettlesAllNineContinuousStages() throws Exception {
+        var player = player();
+        for (int index = 1; index <= 9; index++) {
+            String requestId = UUID.randomUUID().toString();
+            var battle = chapters.challenge(player.token(), requestId);
+            assertEquals(MainChapterService.Action.BATTLE, battle.action());
+            assertEquals(index, battle.state().maxCleared());
+            assertEquals(9, battle.state().challengeLimit());
+            assertEquals("chapter:lineup:" + index, chapters.replay(player.token(), battle.battleId()).replay().getScenario());
+            assertEquals(battle, chapters.challenge(player.token(), requestId));
+            var settled = chapters.claim(player.token(), battle.battleId());
+            assertEquals(MainChapterService.Action.SETTLED, settled.action());
+            assertNotNull(settled.actual());
+            assertNull(settled.state().pendingBattleId());
+            assertEquals(index, settled.state().maxCleared());
+            var after = snapshots.snapshot(player.token());
+            assertEquals(index, after.mainChapterIdle().rewardStage());
+            assertEquals(settled, chapters.claim(player.token(), battle.battleId()));
+            assertEquals(after.revision(), snapshots.snapshot(player.token()).revision());
+        }
+        var finalSnapshot = snapshots.snapshot(player.token());
+        assertEquals("ENABLED", finalSnapshot.mainChapterIdle().claimState().requestMode());
+        Files.write(Path.of("target/chapter-open-scope-9.pb"), GameProtocolCodec.encode(Map.of(
+            "version", 1, "kind", "event", "name", "state.changed", "body", finalSnapshot)));
+        assertThrows(IllegalArgumentException.class,
+            () -> chapters.challenge(player.token(), UUID.randomUUID().toString()));
+        assertEquals(finalSnapshot.revision(), snapshots.snapshot(player.token()).revision());
+        assertEquals(9, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_battle WHERE role_id=?", Integer.class, player.role()));
+    }
+
+    /** 只读预览使用真实全局目录，包括九关范围外；输出原PB，不改敌人、技能、资产或范围。 */
     @Test
     void configuredReadOnlyBattlesKeepGlobalIndexAndFrozenUnits() throws Exception {
         var player = player();
@@ -301,7 +333,7 @@ class MainChapterConfigurationTest {
             assertEquals(before.revision(), after.revision());
             assertEquals(before.inventory(), after.inventory());
             assertEquals(before.mainChapter(), after.mainChapter());
-            assertEquals(3, after.mainChapter().challengeLimit());
+            assertEquals(9, after.mainChapter().challengeLimit());
             if (installed > 0 && List.of(1020100, 1021101, 2020100, 2021101, 1050100, 1051101)
                     .stream().allMatch(counts::containsKey)) {
                 selected = preview;

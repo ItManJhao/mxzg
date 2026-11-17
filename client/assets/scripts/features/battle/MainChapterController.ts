@@ -52,6 +52,8 @@ export class MainChapterController extends BaseController {
     public readRoleLevel: () => number = () => 0;
     /** 应用提供当前角色头像只读入口；仅开结算时读取，不缓存账号或角色资料。 */
     public readRoleAppearance: () => { headId: number; borderId: number } | null = () => null;
+    /** 应用注入的挂机领取意图入口；复用IdleClaimBinding的门槛/确认/回执链，未装配或销毁后为null。 */
+    public requestIdleClaim: ((presentationContext: object) => Promise<void>) | null = null;
 
     /** 注入业务交付、角色显示及缺状态的有界鉴权入口；身份仍由应用隔离。 */
     public configure(send: NonNullable<MainChapterController["send"]>, readRoleLevel: () => number = () => 0,
@@ -605,6 +607,7 @@ export class MainChapterController extends BaseController {
         this.retryFeedback = null;
         this.readRoleLevel = () => 0;
         this.readRoleAppearance = () => null;
+        this.requestIdleClaim = null;
     }
 
     /** 持久编号必须为UUID字符串，不接受数值或任意路径。 */

@@ -1,5 +1,5 @@
 /** 主线挂机主页：静态底板保存关卡、四项收益及三个正式入口，挑战交给页内战场。
- * 挂机读取权威时钟与基础速率；原请求双确认后只在原显示期播放宝箱，玩家领取入口仍关闭。
+ * 挂机读取权威时钟与基础速率；领取意图经Controller交应用绑定，双确认后仅在原显示期播放宝箱。
  * 页面关闭取消显示但保留服务端待结算状态，奖励到账与通用反馈由应用处理。 */
 import { _decorator, AudioClip, AudioSource, Button, Label, Node, Sprite, SpriteFrame, UITransform, sp } from "cc";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
@@ -73,7 +73,7 @@ export class MainChapterView extends BaseView {
     @property(Label) roleExpRateLabel: Label | null = null;
     /** 英雄经验每分钟收益。 */
     @property(Label) heroExpRateLabel: Label | null = null;
-    /** 挂机收益入口保持关闭，只显示全局说明，不发送领取请求。 */
+    /** 挂机收益入口，只转交当前显示期；实际门槛、网络、发奖与恢复沿原领取绑定。 */
     @property(Button) idleClaimButton: Button | null = null;
     /** 旧中央章节图标的产物说明入口，只读配置不开放领取。 */
     @property(Button) rewardInfoButton: Button | null = null;
@@ -143,7 +143,7 @@ export class MainChapterView extends BaseView {
         this.listen(this.challengeButton, () => { void this.prepareChallenge(); });
         this.listen(this.quickBattleButton, () => UIManager.instance.toast("快速战斗尚未恢复"));
         this.listen(this.powerButton, () => UIManager.instance.toast("战力提升建议尚未恢复"));
-        this.listen(this.idleClaimButton, () => UIManager.instance.toast("挂机领取暂未开放。每分钟显示基础收益，不含随机掉落和额外加成。"));
+        this.listen(this.idleClaimButton, () => this.collectIdleRewards());
         if (!this.rewardInfoButton) {
             throw new Error("主线产物说明入口绑定缺失");
         }
@@ -187,6 +187,26 @@ export class MainChapterView extends BaseView {
     private listen(button: Button, callback: () => void): void {
         button.node.on(Button.EventType.CLICK, callback);
         this.ownListener(() => { if (button.isValid) button.node.off(Button.EventType.CLICK, callback); });
+    }
+
+    /** 转交宝箱点击，正式战斗/已有收取演出时不重复发起；页面自身不发协议或修改累计与资产。 */
+    private collectIdleRewards(): void {
+        if (this.closed || this.playing || this.idleChest?.collecting) {
+            return;
+        }
+        const request = MainChapterController.instance.requestIdleClaim;
+        if (!request) {
+            UIManager.instance.toast("挂机领取正在准备，请稍后重试");
+            return;
+        }
+        void request(this.idleCollectionToken).catch(error => {
+            if (this.closed || UIManager.isOpenCancelled(error) || UIManager.isFailureReported(error)) {
+                return;
+            }
+            const reason = error instanceof Error ? error.stack || error.message : String(error);
+            GameLog.shared.classified("MODULE", "warn", "MainChapterView", "挂机领取入口失败：" + reason.slice(0, 4096));
+            UIManager.instance.toast("挂机领取未开始，请稍后重试");
+        });
     }
 
     /** 正常挑战先确认阵容；未确认挑战及待领奖优先恢复，已完成开放范围时明确说明而不误开布阵。 */

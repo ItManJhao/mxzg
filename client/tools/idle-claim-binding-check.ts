@@ -1,6 +1,6 @@
 /**
  * 挂机领取恢复的应用集成专项：真实账号交付、统一资产入口和二进制Socket共用受控服务端。
- * 仅在内存中模拟持久端口与服务端回包；不访问日常服、不开放UI、不运行发布构建。
+ * 仅在内存中模拟持久端口与服务端回包，并检查玩家入口仍经应用绑定；不访问日常服或运行发布构建。
  */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
@@ -630,18 +630,19 @@ async function checkAuthenticatedRecoveryAfterJournalReplacement(): Promise<void
     }
 }
 
-/** 玩家入口仍只显示未恢复提示；本次恢复不改变日常服务端默认开关。 */
-function checkEntryRemainsClosed(): void {
+/** 玩家页只转交意图、不创建第二个领取控制器；只有local默认启用，通用服务配置仍保留显式开关。 */
+function checkPlayerEntryBoundary(): void {
     const source = readFileSync("client/assets/scripts/features/battle/ui/MainChapterView.ts", "utf8");
-    assert.match(source, /this\.listen\(this\.idleClaimButton,\s*\(\)\s*=>\s*UIManager\.instance\.toast\("挂机领取暂未开放/);
     assert(!source.includes("MainChapterIdleClaimController"));
     const properties = readFileSync("backend/src/main/resources/application.yml", "utf8");
     assert.match(properties, /idle-claim-enabled:\s*\$\{MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED:false\}/);
+    const local = readFileSync("backend/src/main/resources/application-local.yml", "utf8");
+    assert.match(local, /idle-claim-enabled:\s*\$\{MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED:true\}/);
 }
 
 /** 全部案例均走本机受控二进制通信，不要求Creator刷新或发布构建。 */
 async function main(): Promise<void> {
-    checkEntryRemainsClosed();
+    checkPlayerEntryBoundary();
     await checkReadOnlyCommitted();
     await checkMissingStateAndDualVersions();
     await checkReadOnlyNotFoundAndRelogin();
@@ -651,7 +652,7 @@ async function main(): Promise<void> {
     await checkAuthenticatedRecoveryAfterJournalReplacement();
     await checkRewardRouting();
     await checkDelayedRewardAcrossIdentity();
-    console.log("PASS idle claim application binding: readonly history, dual versions, bounded reauth, logout/relogin, late storage/wire, owner blocking, storage activation retry, authenticated A/B replacement, reward routing and closed entry");
+    console.log("PASS idle claim application binding: readonly history, dual versions, bounded reauth, logout/relogin, late storage/wire, owner blocking, storage activation retry, authenticated A/B replacement, reward routing and local entry boundary");
 }
 
 void main().catch(error => {

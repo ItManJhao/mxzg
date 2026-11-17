@@ -1,0 +1,263 @@
+{
+  "date": "2026-11-17",
+  "status": "passed-with-explicit-scope",
+  "baseCommit": "6c668a7309dadec750bb80347bd233f667a6e2d4",
+  "authorization": [
+    "推送并快进合并main，后续开发仍在hao",
+    "已接通连续关卡同步开放，当前1至9",
+    "接回真实挂机领取",
+    "修复每次切页准备提示",
+    "正式战斗等出场特效结束再渐入模型"
+  ],
+  "implementation": {
+    "chapter": "服务端默认连续1至9；客户端读统一快照challengeLimit；9后拒绝10，不跳过中间缺口",
+    "idleClaim": "沿原65秒客户端/60秒服务端、满额确认、原持久请求、双确认、共享发奖；View只转交显示期",
+    "switches": {
+      "globalDefault": false,
+      "localDefault": true,
+      "explicitEnvironmentOverride": true
+    },
+    "navigation": "只在当前打开仍等待350ms时提示一次；完成、失败、替换、返回、换身份及销毁清理",
+    "formalOpening": "真实两侧资源就绪→ZDKS 2.5秒→双方全部出场帧完成→模型并行渐入1秒→血条及战报",
+    "idleOpening": "保持既有挂机敌方特效与渐入并行，不改变行军英雄移交",
+    "audio": "type8主动动作音效加入现有预载分支",
+    "prefabChanged": false
+  },
+  "checks": {
+    "backendUniqueTests": 110,
+    "backend": [
+      {
+        "suite": "MainChapterRulesTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterRulesTest.xml",
+        "sha256": "49fbebf356f38240631126c28efcc9aa5217d54bc6c782405e3899512f038198"
+      },
+      {
+        "suite": "MainChapterConfigurationTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterConfigurationTest.xml",
+        "sha256": "f324df6136d5568f432dcecf1b338a95d2e648e45bf3c400149044d5fd9bd2f0"
+      },
+      {
+        "suite": "MainChapterSocketTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterSocketTest.xml",
+        "sha256": "dfea2d607e62320d06b64a9fd9080bfbcb0c2cc257394a890767710fa1d0464d"
+      },
+      {
+        "suite": "MainChapterIdleTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterIdleTest.xml",
+        "sha256": "eb3d38b450ecf497651eaaffcb8f9581b54d5eb21f8f7bbadd58f934bd54ff8f"
+      },
+      {
+        "suite": "MainChapterIdleClaimServiceTest",
+        "tests": 25,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterIdleClaimServiceTest.xml",
+        "sha256": "1e1636cfadbe935fb039a785942ca239431613734074af37d0491dfbaf9c404d"
+      },
+      {
+        "suite": "MainChapterIdleClaimSocketTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterIdleClaimSocketTest.xml",
+        "sha256": "9d224b356191d8ce20576a3ed211e746431a01759aeed4f953e8e80bd6ba156b"
+      },
+      {
+        "suite": "MainChapterIdleClaimProtocolTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.MainChapterIdleClaimProtocolTest.xml",
+        "sha256": "dcf9625f0b00cf26f48ab25d9c90f3f349565f1719e8501445161dd34754c6bd"
+      },
+      {
+        "suite": "IdleActivityMaintenanceServiceTest",
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.IdleActivityMaintenanceServiceTest.xml",
+        "sha256": "eed4b1b02d20aaafbdcdea05fdbc7922991b0dd9735dbfb46ea3f9eaf967964c"
+      },
+      {
+        "suite": "campaign.IdleActivityMaintenanceTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.campaign.IdleActivityMaintenanceTest.xml",
+        "sha256": "6aa0df35bb0664e017617980f9ab434a3d22a8a7cd6961e82939a55d5d70190b"
+      },
+      {
+        "suite": "IdleRewardInputServiceTest",
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.IdleRewardInputServiceTest.xml",
+        "sha256": "4f1013eff572ab98ecd1f329010bc49ae948cbf752d0b35a05ad35c96d200d0b"
+      },
+      {
+        "suite": "TavernPointSocketTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "report": "backend/target/surefire-reports/TEST-com.funsgamex.mxzg.TavernPointSocketTest.xml",
+        "sha256": "ad558849639f1e717e466e86542348d38fecb1a956227d5182763719ce997efa"
+      }
+    ],
+    "client": [
+      {
+        "suite": "main-chapter",
+        "passed": true,
+        "result": "client/temp/project-checks/results.main-chapter.json",
+        "sha256": "505ca05151becbf7c5cca3c5cbbc7b67a8bd1f0a536d8dd6a3987d772eaf58ee"
+      },
+      {
+        "suite": "main-chapter-scope",
+        "passed": true,
+        "result": "client/temp/project-checks/results.main-chapter-scope.json",
+        "sha256": "1cfe007e314530920bfc7b8feddc2a59ffb58649c7e7341a09567c3ea8b85d2b"
+      },
+      {
+        "suite": "idle-claim-intent",
+        "passed": true,
+        "result": "client/temp/project-checks/results.idle-claim-intent.json",
+        "sha256": "98728fe8be3d599c91cb384d809eaa259bde2d7f715c7fd21d119599315cd944"
+      },
+      {
+        "suite": "idle-claim-binding",
+        "passed": true,
+        "result": "client/temp/project-checks/results.idle-claim-binding.json",
+        "sha256": "1d4a7c316dd12dcf8922efd4a3818a3374dd1e3c17ab31f2c4f2a7b429c17a90"
+      },
+      {
+        "suite": "idle-claim-recovery",
+        "passed": true,
+        "result": "client/temp/project-checks/results.idle-claim-recovery.json",
+        "sha256": "0d543f0352a5ba0faba347b342a990188e22005c55416ab2e5d67253fa170153"
+      },
+      {
+        "suite": "idle-chest-presentation",
+        "passed": true,
+        "result": "client/temp/project-checks/results.idle-chest-presentation.json",
+        "sha256": "8e54750c3d69cbe8b28062e7f4d1a7d093d6cc2f207260e9218cb9eeb20a413d"
+      },
+      {
+        "suite": "feature-navigation",
+        "passed": true,
+        "result": "client/temp/project-checks/results.feature-navigation.json",
+        "sha256": "3cd6c075eb34f558155f700a69a995f0f6901b7e2aa56c9f4e33570139f5d1dd"
+      },
+      {
+        "suite": "battle-opening",
+        "passed": true,
+        "result": "client/temp/project-checks/results.battle-opening.json",
+        "sha256": "9034d5856cda6b44f920be0e4263fb4d642c763670f2f98f5e5d2ad26e9057ba"
+      },
+      {
+        "suite": "battle",
+        "passed": true,
+        "result": "client/temp/project-checks/results.battle.json",
+        "sha256": "87cfdd47b43e54474705e2e7bc41faa6b349cc16d487dd1db4b3d5133aaef92c"
+      },
+      {
+        "suite": "overlay-lifecycle",
+        "passed": true,
+        "result": "client/temp/project-checks/results.overlay-lifecycle.json",
+        "sha256": "31d8ce5bb620cf5bba7a110ff0b2a00672317104e636ca3802209ad14a3e6d87"
+      },
+      {
+        "suite": "game-protocol-generated",
+        "passed": true,
+        "result": "client/temp/project-checks/results.game-protocol-generated.json",
+        "sha256": "a96c757107e87f8b0dca1b962c5387dee9bed4d052cf02cd2fc0e61bf66fb797"
+      }
+    ],
+    "backendRerunNote": "首轮110例中2条旧期望不适用（默认拒绝第4关、旧scenario名）；修正后重跑Configuration8与Socket3全过，汇总不重复计数",
+    "strictTypeScript": {
+      "passed": true,
+      "compiler": "Creator3.8.8 TypeScript",
+      "options": "--strict --noEmit",
+      "log": "client/temp/open-idle-types.log"
+    },
+    "realJavaTsScope9": {
+      "passed": true,
+      "snapshot": "backend/target/chapter-open-scope-9.pb",
+      "sha256": "23997c0b56f281f6f7f64c7270d14c35df2d7d4725d720cf2706e8c187d111a3"
+    },
+    "openingCancellation": "真实BattleReplayPreview在资源/ZDKS/出场帧/渐入四阶段关闭后放行迟到，未残留播放、节点或Tween",
+    "legacyAudit": "docs/validation/chapter-opening-legacy-audit-20261117.json"
+  },
+  "localOperations": {
+    "readOnlyBefore": {
+      "servers": [
+        "local-1",
+        "local-2"
+      ],
+      "openedAtWasNull": true,
+      "activityControlsWereEmpty": true
+    },
+    "approvedMissingDate": "2026-11-17T00:00:00+08:00",
+    "timezone": "Asia/Shanghai",
+    "activity44": "明确未发布",
+    "ignoredConfiguration": "backend/.local/idle-activity.yml",
+    "devScript": "仅在文件存在且外部未指定附加配置时自动加载；不猜其他区服日期",
+    "dailyBackend": {
+      "pidAtReview": 16000,
+      "port": 18080,
+      "maintenanceServers": 2,
+      "maintenanceIntervalMs": 2000,
+      "webSocketProbe": "Open / mxzg.protobuf.v2",
+      "keptRunning": true
+    },
+    "roleAssets": "日常库未以测试手段改写角色或资产；真实领取与挑战只在独立内存库执行"
+  },
+  "previewEvidence": "docs/validation/chapter-player-entry-preview-20261117.json",
+  "sourceSha256": {
+    "backend/dev.ps1": "f46c15ceefc47ac6c8b7a8dfc2740ef618d38bfb7e374f31e5dab86341e209aa",
+    "backend/src/main/resources/application.yml": "0c3b328f8935bd73830b67806bbb5a73ac5fa231004b15b6fd6787d85f7f2ad0",
+    "backend/src/main/resources/application-local.yml": "17d5e751e1d0cda4f484274aa7504c7f6a9347aa0d4eaf16deb6afae8d731b5e",
+    "backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterRules.java": "d920d87742c55e69cf3208fdb8d8cba5f17c5cf5a1eb72cda377aebe35d5828a",
+    "client/assets/scripts/app/remake/RemakeApp.ts": "d26c05eee581ffde75068376aded4d99e91702c1d1cd418c5b893e5bc3079564",
+    "client/assets/scripts/app/remake/IdleClaimBinding.ts": "0a4eae52d8915cd663ec9429c3b9bd416bf233c9871d7054024b6364f842de73",
+    "client/assets/scripts/app/remake/HomeFeatureNavigation.ts": "5fb497365e3bae9bb4c6e473668a4f365f318aae701a9cb1409bae4769dbcee1",
+    "client/assets/scripts/features/battle/MainChapterController.ts": "a8086bfb8d94bb3d7c829c345975b6881c2dcc892ca63d592d9efcf8b346a846",
+    "client/assets/scripts/features/battle/ui/MainChapterView.ts": "417d6e8a6401f22ed0f447bc817e7cca0fd5955fa997a1cf471d8bb4c9200007",
+    "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts": "49c33a8eac64a83ffc708cc59d39c1f59f89170d9c0d7226a835315dbf584cd8",
+    "client/tools/check-project.mjs": "005580867aa9324ca61207fe70fabd8830b840a8df9e4cf8e4e792d8684376d5",
+    "client/tools/OpeningClockRuntime.ts": "a1c8c97e28ae378df014ebf9e30951e437aab86e6c61fbe12b74f12d8bc3536a",
+    "client/tools/battle-opening-check.ts": "9f6694613743f45af15e31eab4965987397d72bec6fc8f1d2ada5cc0a46e2722",
+    "client/tools/feature-navigation-check.ts": "b7a1553c63b9ca5047702de314e15ec374e2f5c24782734548585f8d98339484",
+    "client/tools/main-chapter-scope-check.ts": "97177a4cc6c1deb34cef7f2bccd4b4cbad10d302f2f3795eb3351d345e27e4e3",
+    "client/tools/idle-claim-binding-check.ts": "5f221ad17b12839775dfd1865f66a243fd1a0240008defafdb7fe756b478c960"
+  },
+  "limits": [
+    "未集中构建、未验发布包/真机/MySQL",
+    "不把静态13关等同于连续13关可开放",
+    "不宣称全1至9画面均在本批重跑",
+    "独立Lv100测试英雄不是自然成长",
+    "第10关三项表现和BFX-008继续保留",
+    "生产环境可信开服资料与实际044发布另行准备"
+  ]
+}

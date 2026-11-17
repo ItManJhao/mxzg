@@ -1,5 +1,5 @@
 /**
- * 主城功能入口协调：把底栏意图交给UIManager，处理加载取消、重试和返回主城。
+ * 主城功能入口协调：把底栏意图交给UIManager，处理真实慢开提示、加载取消、重试和返回主城。
  * 由RemakeApp持有，登录确认与账号状态仍归应用和账号模块，不复制玩家数据。
  */
 import { UIManager } from "../../framework/ui/UIManager";
@@ -39,10 +39,14 @@ export const REMAKE_FEATURE_ROUTES: Readonly<Record<string, string>> = {
 
 /** 管理最新功能打开意图，加载失败时保留已显示的主城或功能页。 */
 export class HomeFeatureNavigation {
+    /** 同次打开仍在等待350毫秒后才提示；缓存瞬开不把资源复用误报成重新准备。 */
+    private static readonly loadingNoticeDelayMs = 350;
     /** 功能打开意图代次；新点击、身份重置和销毁时递增，拒绝旧提示与重开。 */
     private epoch = 0;
     /** true表示所属应用已退出，不再处理页面打开或迟到结果。 */
     private disposed = false;
+    /** 当前开页意图的慢开计时器；完成、失败、替换、返回、身份重置或销毁时撤销，触发后清空。 */
+    private loadingNoticeTimer: ReturnType<typeof setTimeout> | null = null;
 
     /**
      * 保存应用注入的页面操作与状态读取口，不订阅账号或自行加载资源。
@@ -52,7 +56,7 @@ export class HomeFeatureNavigation {
     constructor(private readonly ui: FeatureUi, private readonly host: FeatureHost) {
     }
 
-    /** 处理已实现入口并返回true；未知入口返回false，由原调用方说明未开放。 */
+    /** 处理已实现入口并返回true；仅有效打开持续等待才提示，未知入口返回false交原调用方说明未开放。 */
     open(id: string): boolean {
         if (id === "mainline") {
             id = "battle";
@@ -79,14 +83,22 @@ export class HomeFeatureNavigation {
             this.host.notice("");
             return true;
         }
+        this.clearLoadingNotice();
         const epoch = ++this.epoch;
-        this.host.notice("正在准备" + titles[id] + "界面…");
+        this.loadingNoticeTimer = setTimeout(() => {
+            this.loadingNoticeTimer = null;
+            if (this.accepts(epoch) && this.host.current() !== page) {
+                this.host.notice("正在准备" + titles[id] + "界面…");
+            }
+        }, HomeFeatureNavigation.loadingNoticeDelayMs);
         this.ui.keepOnly(page);
         void this.ui.openById(page).then(() => {
+            this.clearLoadingNotice(epoch);
             if (this.accepts(epoch)) {
                 this.host.notice("");
             }
         }).catch(error => {
+            this.clearLoadingNotice(epoch);
             if (!this.accepts(epoch)) {
                 return;
             }
@@ -97,14 +109,17 @@ export class HomeFeatureNavigation {
             }
             const reason = error instanceof Error ? error.stack || error.message : String(error);
             GameLog.shared.classified("APP", "warn", "HomeFeatureNavigation", page + "打开失败：" + reason);
-            this.host.notice(titles[id] + "界面加载失败，请再次点击重试");
+            if (!UIManager.isFailureReported(error)) {
+                this.host.notice(titles[id] + "界面加载失败，请再次点击重试");
+            }
         });
         return true;
     }
 
-    /** 身份变化或返回时使旧意图失效，不清除业务Model或直接销毁页面。 */
+    /** 身份变化或返回时撤销等待提示并使旧意图失效，不清除业务Model或直接销毁页面。 */
     reset(): void {
         this.epoch++;
+        this.clearLoadingNotice();
     }
 
     /** 应用销毁后拒绝后续点击和迟到失败，页面释放仍由统一导航负责。 */
@@ -116,5 +131,16 @@ export class HomeFeatureNavigation {
     /** 判断某次打开结果是否仍属于当前有效意图。 */
     private accepts(epoch: number): boolean {
         return !this.disposed && epoch === this.epoch && this.host.authorized();
+    }
+
+    /** 撤销未触发的等待提示；旧异步完成只清理自己的意图，不能撤掉后来页面的计时器。 */
+    private clearLoadingNotice(expectedEpoch?: number): void {
+        if (expectedEpoch !== undefined && expectedEpoch !== this.epoch) {
+            return;
+        }
+        if (this.loadingNoticeTimer !== null) {
+            clearTimeout(this.loadingNoticeTimer);
+            this.loadingNoticeTimer = null;
+        }
     }
 }

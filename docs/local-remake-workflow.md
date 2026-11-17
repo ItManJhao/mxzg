@@ -1,10 +1,10 @@
 # 重做版本机启动、重启与独立 H5
 
-> 2026-11-14 当前通信：全部游戏业务HTTP已删除，登录、角色、背包及已恢复玩法使用WS＋Protobuf v2。实际开放范围、当前数据与测试以[开发进度](development-progress.md)和[通信契约](network-contract.md)为准。
+> 2026-11-17 当前通信：全部游戏业务HTTP已删除，登录、角色、背包及已恢复玩法使用WS＋Protobuf v2。实际开放范围、当前数据与测试以[开发进度](development-progress.md)和[通信契约](network-contract.md)为准。
 
 本页只对应新后端与 `Remake.scene`，旧 Java 8 / WebSocket 链路与启停脚本已删除。H5 是本地开发构建；独立 MySQL 验证入口见下文，App、微信小游戏和生产部署另行验收。
 
-**当前约定（2026-11-14）：日常开发优先使用Creator本机预览；每批按负责人当次授权集中构建，不要求每修改一个页面就构建。** 本批负责人已明确授权统一构建入口及检查真实发布产物，使用下述同一套脚本与构建钩子。旧18081目录或历史成功日志不代表当前源码已通过验收；是否构建和真实运行通过，按本批身份记录与[当前进度](development-progress.md)确认。
+**当前约定（2026-11-17）：日常开发优先使用Creator本机预览，不按每个页面反复构建；只有负责人明确需要发布产物时再走统一构建入口。** 11-14配置包批次的独立H5构建入口与钩子仍保留，当前切页、开场与挂机入口批次不做集中构建。旧18081目录或历史成功日志不代表当前源码已通过验收；是否构建和真实运行通过，按本批身份记录与[当前进度](development-progress.md)确认。
 
 ## 日常入口
 
@@ -32,6 +32,20 @@ node client/tools/serve-remote-bundles.cjs client/build/remake-h5 7460
 本批出阵页的 Prefab、节点、Inspector 参数和修改验证步骤见 [出阵页人工维护指南](formation-ui-authoring.md)。修改源 Prefab 后，Creator 预览需要等待导入；独立 H5 需要重新构建，两者不要混为同一个产物。
 
 当前批次库存事件的参数、顺序与订阅见[事件规则](bag-inventory-events.md)。模块职责、请求/领奖链和退役边界见[背包MVC维护指南](bag-mvc-maintenance.md)。沿用的背包列表入口、布局参数和无业务数据的编辑器预览见[SuperScroll维护指南](super-scroll-authoring.md)。历史“仅预览”批次结论仍按原记录保留；本批构建和浏览器范围另记，不互相替代。
+
+## 当前本机主线与挂机配置（2026-11-17）
+
+本次负责人授权新挑战默认连续第1～9关，来源为服务端mxzg.main-chapter.challenge-limit（MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT）。第10关依赖仍阻塞，不能跳到静态可解析的14、19、20关，也不能把850条目录当作全部可玩。客户端只读最新快照challengeLimit，缺范围时禁新挑战；已有pending、结算及回执恢复仍走原链。
+
+挂机宝箱按钮已转MainChapterController.requestIdleClaim→应用注入的IdleClaimBinding.begin(当前显示期)，复用原IDB journal、回执和快照双确认、通用奖励窗与飘字，不另造发奖入口。local配置的idle-claim-enabled默认true，全局默认false；显式MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED可覆盖。按钮仍需服务端ENABLED、累计65秒、真实冒险点及连接就绪；满冒险点先用原ConfirmView确认，取消不建journal。恢复既有请求不重开页、不补播collect，也不重发已提交奖励。
+
+本机两个服此前开服资料为null、控制为空数组，不能当作“044未发布”绕过权益输入。负责人已确认local-1/local-2均在2026-11-17的Asia/Shanghai零点开服、044明确未发布，配置保存在忽略的backend/.local/idle-activity.yml。backend/dev.ps1在run时仅自动读取已存在且没有其他显式外部配置的该文件；缺文件保持未配置，不生成默认开服日期。原IdleActivityMaintenance负责启动及周期维护16/34/44；本次实际PID16000启动日志已确认维护2服，这个PID只描述该次启动，不是后续固定值。该本机资料不得写为源码默认，也不代表production允许领取或发布活动。
+
+普通底栏切页只有同次开页真实等待满350毫秒且页面尚未显示才飘准备提示；缓存瞬开不提示。完成、取消、替换、返回、换号与销毁都清理计时，失败沿UIManager统一反馈且不重复排队。LoadingPlan三段与现有资源池保持原样，未列目标仍按需加载。
+
+正式主线开场先准备资源、将演员opacity设0，再ZDKS 2.5秒→双方左右出场帧同时播放0.75秒→模型一起淡入1秒→显示HP→播放原战报。旧版模型淡入与出场特效并行，这次先后顺序是负责人新要求；不要将其写成旧源码原样。修复了场地先出现、模型异步加载导致的闪现，挂机idleEncounter原链保持；type8音效也已纳入预载。本轮已在独立64008测试库/后端实测正常宝箱点击：1份回执，到账gold1600、diamond1、角色经验80，原RewardView展示7项。实际布阵→第2关胜利/结算后cleared=2、pending=null、真实战斗数1；两个FX期间模型0透明度/HP隐藏，FX后渐入1秒，七阶段断言通过。缓存bag→hero→bag→bag→battle全序列0条准备提示，限定过程无warn/error。测试后端已停、测试标签已关闭，日常PID16000保留；64008仅标识本次实例，不作为下次固定端口。完整边界见[本批检查](validation/chapter-player-entry-review-20261117.json)和[本机记录](validation/chapter-player-entry-preview-20261117.json)。这不是全1～9关视觉、满额确认/取消实际点击、自然成长、发布包或真机验收。
+
+旧批成果已推送并快进main至6c668a7309dadec750bb80347bd233f667a6e2d4；本段本批新修改与该历史提交区分，后续是否提交合并以负责人当次授权及实际仓库记录为准。
 
 ## 构建如何隔离
 

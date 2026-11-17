@@ -206,7 +206,9 @@ export class RemakeApp extends Component {
                     rewards.restore(confirmation.receipt.feedback);
                 }
             },
-            { enabled: false });
+            { enabled: true });
+        // 页面只转交意图；门槛、原请求日志、双确认和通用奖励仍归现有应用领取绑定。
+        chapter.requestIdleClaim = presentationContext => idleClaims.begin(presentationContext);
         const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController,
             HeroRosterController.instance, formation, () => {
                 this.clearRolePages();
