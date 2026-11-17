@@ -14,6 +14,24 @@ export class Vec3 extends BaseVec3 {
     }
 }
 
+/** 持续控制专项只记录材质归属与销毁，不模拟shader像素或Creator渲染。 */
+export class Material {
+    /** true表示材质仍由当前战场持有；destroy后仅用于验证清理。 */
+    public isValid = true;
+    /** 记录真实生产选择的效果资产，便于区分石化与冰冻。 */
+    public effectAsset: unknown = null;
+
+    /** 保存生产加载的唯一效果，不在替身中定义颜色或控制规则。 */
+    public initialize(options: { effectAsset: unknown }): void {
+        this.effectAsset = options.effectAsset;
+    }
+
+    /** 标记本战场的材质已释放，禁止误称真实GPU释放验收。 */
+    public destroy(): void {
+        this.isValid = false;
+    }
+}
+
 /** 一段由真实生产调用创建的延迟、数值渐变或即时回调。 */
 type ClockStep = { duration: number; values?: Record<string, number>; callback?: () => void };
 
@@ -35,6 +53,8 @@ interface RunningStep {
 export class OpeningClockRuntime {
     /** 测试累计推进的秒数，不读取或替换系统墙钟。 */
     public static now = 0;
+    /** 用例可为指定目标/时长的delay增加调度耗时；reset清空，不改变生产传入时长或渐变公式。 */
+    public static delayDispatchOffset: ((target: Readonly<Record<string, any>>, seconds: number) => number) | null = null;
     /** 等待结束的Tween片段；由生产tween调用添加、完成或stop移除。 */
     private static running = new Set<RunningStep>();
 
@@ -46,6 +66,7 @@ export class OpeningClockRuntime {
     public static reset(): void {
         OpeningClockRuntime.running.clear();
         OpeningClockRuntime.now = 0;
+        OpeningClockRuntime.delayDispatchOffset = null;
     }
 
     /** 返回尚未结束的Tween片段数，验证取消后没有迟到调度。 */
@@ -53,15 +74,21 @@ export class OpeningClockRuntime {
         return OpeningClockRuntime.running.size;
     }
 
-    /** 挂入一段由生产调用提供的动画，不解释其业务含义。 */
+    /** 挂入生产提供的动画；可控额外delay只模拟调度，哪些等待受影响由用例决定，不识别业务阶段。 */
     public static schedule(tween: Tween, step: ClockStep): void {
+        const extra = step.values ? 0
+            : OpeningClockRuntime.delayDispatchOffset?.(tween.target, step.duration) ?? 0;
+        if (!Number.isFinite(extra) || extra < 0) {
+            throw new Error("测试调度附加耗时必须是非负有限秒数");
+        }
+        const scheduled = extra ? { ...step, duration: step.duration + extra } : step;
         const before = Object.fromEntries(Object.keys(step.values || {}).map(key => [key, tween.target[key]]));
         OpeningClockRuntime.running.add({
             tween,
-            step,
+            step: scheduled,
             before,
             started: OpeningClockRuntime.now,
-            ends: OpeningClockRuntime.now + step.duration,
+            ends: OpeningClockRuntime.now + scheduled.duration,
         });
     }
 
@@ -118,6 +145,8 @@ export class Tween {
     private steps: ClockStep[] = [];
     /** 下一条待执行指令的位置，stop后不再推进。 */
     private cursor = 0;
+    /** 持续帧节点复用生产提供的完整序列，stop目标后不再循环。 */
+    private repeating = false;
 
     /** 保存生产传来的目标，具体指令由链式调用登记。 */
     public constructor(target: Record<string, any>) {
@@ -145,6 +174,16 @@ export class Tween {
         return this;
     }
 
+    /** 重复生产传入的子序列；没有计时片段的循环明确拒绝，避免测试自身空转。 */
+    public repeatForever(sequence: Tween): this {
+        if (!sequence.steps.some(step => step.duration > 0)) {
+            throw new Error("专项不能循环没有等待的Tween");
+        }
+        this.steps.push(...sequence.steps);
+        this.repeating = true;
+        return this;
+    }
+
     /** 启动本Tween，不改变其他任务的调度或完成结果。 */
     public start(): this {
         this.next();
@@ -153,7 +192,13 @@ export class Tween {
 
     /** 执行即时回调或挂入下一计时片段；没有片段时正常结束。 */
     public next(): void {
-        while (!this.cancelled && this.cursor < this.steps.length) {
+        while (!this.cancelled) {
+            if (this.cursor >= this.steps.length) {
+                if (!this.repeating) {
+                    return;
+                }
+                this.cursor = 0;
+            }
             const step = this.steps[this.cursor++];
             if (step.callback) {
                 step.callback();

@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "environment": "Creator本机预览，原iPhone14Pro选项；非发布包、真机或性能验收",
+  "backend": {
+    "kind": "mxzg-owned-socket-it",
+    "run": "94333dbb3d2846398d2ca7d5f285cd5c",
+    "preparedProgress": 14,
+    "preparedHero": {
+      "template": 10105011,
+      "level": 100,
+      "star": 9,
+      "stage": 3
+    },
+    "naturalGrowth": false,
+    "dailyPlayersTouched": false
+  },
+  "readOnlyReplays": [
+    {
+      "stage": 10,
+      "result": true,
+      "actualPresentationSteps": 45,
+      "skillBeginsIncludingPlayer": 8,
+      "errors": [],
+      "observationSha256": "26d9b20c3e6a8d9a37926236fd0bd043410626248f2bd8d9ad0c2f510872f197",
+      "replaySha256": "9cd262f5a3cc7067ed2de9e46a7c59193728073127c73b4217c62c013cb9eb80"
+    },
+    {
+      "stage": 11,
+      "result": true,
+      "actualPresentationSteps": 39,
+      "skillBeginsIncludingPlayer": 7,
+      "errors": [],
+      "observationSha256": "745f58da52290491c4c0207941b85cc1dd6c846f2db2ad0e1394b143ec70ff77",
+      "replaySha256": "ee36abdcdf06307c3c2be2eff85efd210e147b4e0d67aa195c4c6daa2ae7963b"
+    },
+    {
+      "stage": 12,
+      "result": true,
+      "actualPresentationSteps": 42,
+      "skillBeginsIncludingPlayer": 7,
+      "errors": [],
+      "observationSha256": "76abcd9447484f392d8e80bdb23ae8dc1b35ad834820931e394f1bde0cbd3197",
+      "replaySha256": "00b89e1ed0585b60c6f46f25ea1a80710f75a6830eee0fb8051895bd5a1ec40b"
+    },
+    {
+      "stage": 13,
+      "result": true,
+      "actualPresentationSteps": 34,
+      "skillBeginsIncludingPlayer": 6,
+      "errors": [],
+      "observationSha256": "0cea52e8e7a94938eb09fce10ad7810a5a492f6786a34bcee6e36041ca428c5f",
+      "replaySha256": "9d45e731356ef6879e63b193b962b3e804f8be4224e0560e8f965606e1141c44"
+    },
+    {
+      "stage": 14,
+      "result": true,
+      "actualPresentationSteps": 40,
+      "skillBeginsIncludingPlayer": 7,
+      "errors": [],
+      "observationSha256": "8c4f266d6f065eb137caf6a497a2b7ade1d1dbae2679f7a451152ff206b5ef1d",
+      "replaySha256": "5e14115d8308d33333290f3f37ded41bb1d1f2fc8cf9d0cc6ad01f90699e2f8d"
+    },
+    {
+      "stage": 15,
+      "result": true,
+      "actualPresentationSteps": 42,
+      "skillBeginsIncludingPlayer": 7,
+      "errors": [],
+      "observationSha256": "d37b37b6dc930dfc6e2379ce91f8f97d1cdff47638c337e8080efacacc394b3f",
+      "replaySha256": "b3c7185a39280ef83f05a40497ba26f308c292f2bd033b74774b6b54934f8aa9"
+    },
+    {
+      "stage": 16,
+      "result": true,
+      "actualPresentationSteps": 40,
+      "skillBeginsIncludingPlayer": 7,
+      "errors": [],
+      "observationSha256": "488c6a2e73faf013cb7cea3f13cb8baf623e27bef8eb4f45a753ae3aaf434969",
+      "replaySha256": "a8eaa91049dcb776c5d5db29e6804ce873171c0d3c21ca6bc514ac9ac5e23bf0"
+    },
+    {
+      "stage": 17,
+      "result": true,
+      "actualPresentationSteps": 36,
+      "skillBeginsIncludingPlayer": 7,
+      "errors": [],
+      "observationSha256": "48013dfd55051ac4aaa1d1eb008a4a968d4f01a7b8a6d29638d1749d9db4cb02",
+      "replaySha256": "e4c0e78e242be3caa854585aa56a144bbbd93e7039fdf52ee778b55f1ffdcd9a"
+    },
+    {
+      "stage": 18,
+      "result": true,
+      "actualPresentationSteps": 43,
+      "skillBeginsIncludingPlayer": 8,
+      "errors": [],
+      "observationSha256": "af1be8f5ce774d26b6f03b656b7ebbf31c32ef5a487da5036f89fd5dc13b2a6e",
+      "replaySha256": "8c6b7306c6d3e27851a8e00770418e8b475fbbf732d091363698dc2b23b9f89c"
+    },
+    {
+      "stage": 19,
+      "result": true,
+      "actualPresentationSteps": 56,
+      "skillBeginsIncludingPlayer": 9,
+      "errors": [],
+      "observationSha256": "42e46920d2aca7586522a902fb12b83d73205dc55e9f4f76b04044ec05244268",
+      "replaySha256": "f4f08272f30ecadff79fa232662b66d29e6848cebc9ed47253380b157ffa2795"
+    },
+    {
+      "stage": 20,
+      "result": true,
+      "actualPresentationSteps": 51,
+      "skillBeginsIncludingPlayer": 9,
+      "errors": [],
+      "observationSha256": "df0792abdd80b7419b75977269d56e15e93c9dfcb97767ce2314d4e70c3bce1a",
+      "replaySha256": "41f38ae71e6675269b72157491c297ce0cd38c0051d80526cf88a0adde09722c"
+    }
+  ],
+  "stage10": {
+    "configuredEnemyCount": 4,
+    "configuredEnemySkills": 8,
+    "actualComplete": true,
+    "statisticsOpened": true,
+    "capture": "../images/chapter10-statistics-20261117.jpg"
+  },
+  "controls": {
+    "stoneMaterialAndSkeletonPause": true,
+    "stoneRemovalRestoresOriginal": true,
+    "silenceAndOneTimeAttribute": true,
+    "sleepWake": true,
+    "blockShieldInstalled": true,
+    "blockHitOrdering": "真实PB完整播放器和针对性用例通过；本场图形样本不宣称触发每种移除分支"
+  },
+  "realPlayerFlow": {
+    "challengesAndSettlements": [
+      15,
+      16
+    ],
+    "milestoneRewardId": 100,
+    "hero": {
+      "instanceId": "e71bec35-e7a7-4864-ac74-7ee47b8e963e",
+      "level": 1,
+      "stage": 0,
+      "star": 5,
+      "templateId": 10105007
+    },
+    "receiptId": "9c22b92d-cd0d-4028-8b1e-702bffdb6d1b",
+    "assetRevisionAfterClaim": 6,
+    "assetRevisionAfterStage16": 8,
+    "claimedIds": [
+      100
+    ],
+    "newHeroCount": 1,
+    "journalAfterRealPresentation": null,
+    "coldReloadHeroInstancesUnchanged": true,
+    "coldReloadNoDuplicatePopup": true,
+    "heroListStarsWidth": 74
+  },
+  "heroPresentation": {
+    "firstActualClaimDisplayed": true,
+    "initialProblem": "旧screen/additive光效在straight PNG下呈黑三角，仅开启PMA又过亮",
+    "savedFixObserved": true,
+    "fix": "仅原两路prophet-loop在shader采样时预乘RGB，并保持原PMA/slot blend；不修改源PNG",
+    "finalCapture": "../images/chapter15-hero-reward-20261117.jpg",
+    "finalCaptureIsReadOnlyReplayOfOriginalReceipt": true,
+    "noAdditionalClaimForReplay": true,
+    "skillChildOpened": true,
+    "parentCloseAlsoClosedSkill": true,
+    "releasedPackCount": 3,
+    "modalAfterClose": 0,
+    "openingAfterClose": 0
+  },
+  "map": {
+    "configurationField": "chapterreward.map",
+    "afterStage16": "map02",
+    "backgroundFrames": [
+      "map02_B",
+      "map02_B",
+      "map02_F",
+      "map02_F"
+    ],
+    "capture": "../images/chapter16-background-20261117.jpg",
+    "all850RowsAndAll13MapsChecked": true,
+    "otherMapsNotAllRendered": true
+  },
+  "errors": {
+    "latestPlaybackPage": [],
+    "latestFlowPage": []
+  },
+  "cleanup": {
+    "temporaryObserversRemoved": true,
+    "temporaryRenderProbesRestored": true,
+    "enginePaused": false,
+    "temporaryCacheOverrideRestored": true,
+    "testTabsClosed": true,
+    "isolatedBackendStopped": true,
+    "dailyBackendKeptRunning": true,
+    "resourceHelperStopped": true
+  },
+  "limits": [
+    "逐关自然播放使用准备过英雄的只读真实战报，不是自然成长。",
+    "正式挑战/发奖为15、16关独立角色；1至20连续真实事务由H2集成验证。",
+    "未重跑全部长断线矩阵，不做集中构建，不据单一设备选项签收真机/三尺寸或所有850关。"
+  ]
+}

@@ -7,8 +7,8 @@ import {BattlePreviewResult} from "../../features/battle/BattlePreviewModel";
 import {PREVIEW} from "cc/env";
 import {BattleReplayPreview} from "../../features/battle/ui/BattleReplayPreview";
 import {SkillAuditView} from "../../features/battle/ui/SkillAuditView";
-import {SkillAuditEntry} from "../../features/battle/utils/SkillAuditUtils";
-import { UIManager } from "../../framework/ui/UIManager";
+import {SkillAuditEntry, SkillAuditEvidence, SkillAuditUtils} from "../../features/battle/utils/SkillAuditUtils";
+import { OpenCancelled, UIManager } from "../../framework/ui/UIManager";
 import { MainChapterView } from "../../features/battle/ui/MainChapterView";
 import { ConfirmView } from "../../features/common/ui/ConfirmView";
 import { RewardUtils } from "../../features/reward/utils/RewardUtils";
@@ -61,6 +61,8 @@ export class DevelopmentPreview {
     private showReward: ((notice: RewardNotice) => void) | null = null;
     /** 当前战报窗口加载序号，关闭或切换时阻止迟到加载重新出现。 */
     private replayEpoch = 0;
+    /** 本机演示资源的在途读取；完成即移除，换身份或销毁时统一中止。 */
+    private readonly replayRequests = new Set<AbortController>();
     /** 本实例拥有的开发页面注册解除函数。 */
     private readonly unregister: Array<() => void> = [];
     /** 当前演示的取消函数，重复播放前先清理旧画面。 */
@@ -183,37 +185,168 @@ export class DevelopmentPreview {
         return false;
     }
 
-    /** 打开开发技能目录；固定只读战报资源不携带账号凭证，也不请求游戏业务HTTP。 */
+    /** 打开配置目录，由Creator自动宿主扫描真实战报；不再维护技能/等级演示白名单。 */
     public async openSkillAudit(): Promise<void> {
         if (!PREVIEW || !this.pageHost) return;
+        const epoch = this.replayEpoch;
+        const replays = new Map<string, Uint8Array>();
+        const requests = new Set<AbortController>();
+        let active = true;
+        let replaySerial = 0;
+        let ownedCleanup: (() => void) | null = null;
+        const current = () => active && epoch === this.replayEpoch && this.valid();
         await UIManager.instance.open(SkillAuditView, {
+            load: () => this.loadSkillReplays(current, replays, requests),
+            cancel: () => {
+                active = false;
+                replaySerial++;
+                for (const request of requests) {
+                    request.abort();
+                }
+                requests.clear();
+                replays.clear();
+                if (ownedCleanup) {
+                    if (this.replayCleanup === ownedCleanup) {
+                        this.replayCleanup = null;
+                    }
+                    ownedCleanup();
+                    ownedCleanup = null;
+                }
+            },
             play: async (skill: SkillAuditEntry, returned: () => void) => {
                 const fixture = skill.fixture || "";
                 if (!/^http:\/\/(localhost|127\.0\.0\.1):7456\//.test(location.href)
                     || !/^[a-z0-9-]+\.pb$/.test(fixture)) {
                     throw new Error("技能演示仅允许本机Creator预览");
                 }
-                const response = await fetch(REPLAY_RESOURCE_ROOT + fixture);
-                if (!response.ok) throw new Error("演示战报资源缺失");
-                const bytes = new Uint8Array(await response.arrayBuffer());
+                const bytes = replays.get(fixture);
+                if (!bytes) {
+                    throw new Error("本次检测没有对应战报，请重新打开技能目录");
+                }
                 const show = async () => {
+                    if (!current() || !this.pageHost?.isValid) {
+                        throw new OpenCancelled();
+                    }
+                    const serial = ++replaySerial;
                     this.replayCleanup?.();
-                    if (!this.valid() || !this.pageHost?.isValid) return;
-                    this.replayCleanup = await BattleReplayPreview.open(this.pageHost, bytes, false, returned, {
+                    const cleanup = await BattleReplayPreview.open(this.pageHost, bytes, false, () => {
+                        if (current() && serial === replaySerial) {
+                            returned();
+                        }
+                    }, {
                         skillId: skill.id, level: skill.level, name: skill.name,
                         passive: skill.activeType !== 1 && skill.activeType !== 2,
                         replay: () => {
                             void show().catch(error => {
-                                returned();
-                                UIManager.instance.toast("重播失败：" + String(error));
+                                if (current() && !UIManager.isOpenCancelled(error)
+                                    && !UIManager.isFailureReported(error)) {
+                                    returned();
+                                    UIManager.instance.toast("重播失败：" + String(error));
+                                }
                             });
                         }
+                    }, undefined, false, undefined, false,
+                        () => !current() || serial !== replaySerial).catch(error => {
+                        // 旧准备失败只算取消，不能向较新的重播或身份弹出失败提示。
+                        if (!current() || serial !== replaySerial) {
+                            throw new OpenCancelled();
+                        }
+                        throw error;
                     });
-                    if (!this.valid()) this.replayCleanup?.();
+                    if (!current() || serial !== replaySerial) {
+                        cleanup();
+                        throw new OpenCancelled();
+                    }
+                    ownedCleanup = cleanup;
+                    this.replayCleanup = cleanup;
                 };
                 await show();
             }
         });
+    }
+
+    /** 每次打开重新扫描本机PB，逐份沿当前战报与动作解析预检；有问题的整场不进入可播放目录。 */
+    private async loadSkillReplays(current: () => boolean, replays: Map<string, Uint8Array>,
+        requests: Set<AbortController>): Promise<readonly SkillAuditEvidence[]> {
+        if (!current()) {
+            throw new OpenCancelled();
+        }
+        if (!/^http:\/\/(localhost|127\.0\.0\.1):7456\//.test(location.href)) {
+            throw new Error("技能演示目录仅允许本机Creator预览");
+        }
+        const response = await this.fetchReplayResource("skill-audit.json", requests);
+        const index = JSON.parse(new TextDecoder().decode(response)) as {
+            schemaVersion?: unknown; replays?: Array<{ fixture?: unknown }>;
+        };
+        if (!index || index.schemaVersion !== 1 || !Array.isArray(index.replays) || index.replays.length > 2048) {
+            throw new Error("本机技能演示目录格式无效，请重载项目扩展");
+        }
+        const files = index.replays.map(entry => entry?.fixture);
+        if (!files.every((file): file is string => typeof file === "string" && /^[a-z0-9-]+\.pb$/.test(file))
+            || new Set(files).size !== files.length) {
+            throw new Error("本机技能演示目录含非法或重复文件名");
+        }
+        const evidence: SkillAuditEvidence[] = [];
+        replays.clear();
+        // 每批只读八份，避免积累目录后同时下载大量二进制；不保存第二份配置或玩法状态。
+        for (let offset = 0; offset < files.length; offset += 8) {
+            if (!current()) {
+                throw new OpenCancelled();
+            }
+            await Promise.all(files.slice(offset, offset + 8).map(async fixture => {
+                try {
+                    const bytes = await this.fetchReplayResource(fixture, requests);
+                    const found = SkillAuditUtils.inspectReplay(fixture, bytes);
+                    if (!current()) {
+                        throw new OpenCancelled();
+                    }
+                    replays.set(fixture, bytes);
+                    evidence.push(...found);
+                } catch (error) {
+                    if (UIManager.isOpenCancelled(error) || !current()) {
+                        throw new OpenCancelled();
+                    }
+                    const reason = error instanceof Error ? error.message : String(error);
+                    GameLog.shared.warnOnce("DEV", "SkillAudit", fixture + ":" + reason,
+                        "跳过不能播放的战报 " + fixture + "：" + reason);
+                }
+            }));
+        }
+        if (!current()) {
+            throw new OpenCancelled();
+        }
+        return Object.freeze(evidence.sort((a, b) => a.fixture.localeCompare(b.fixture)));
+    }
+
+    /** 本机开发资源读取不携带凭证、不跟随重定向；中止和超时均释放在途记录。 */
+    private async fetchReplayResource(file: string, requests: Set<AbortController>): Promise<Uint8Array> {
+        const controller = new AbortController();
+        this.replayRequests.add(controller);
+        requests.add(controller);
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        try {
+            const response = await fetch(REPLAY_RESOURCE_ROOT + file, {
+                credentials: "omit", redirect: "error", cache: "no-store", signal: controller.signal,
+            });
+            if (!response.ok) {
+                throw new Error("资源状态 " + response.status);
+            }
+            const bytes = new Uint8Array(await response.arrayBuffer());
+            if (bytes.byteLength > 2 * 1024 * 1024) {
+                throw new Error("演示资源超过2MB上限");
+            }
+            return bytes;
+        } catch (error) {
+            if (!this.valid()) {
+                throw new OpenCancelled();
+            }
+            throw new Error("本机技能演示资源未就绪，请重载“UI资源构建检查”扩展后重试（"
+                + file + "：" + (error instanceof Error ? error.message : String(error)) + "）");
+        } finally {
+            clearTimeout(timeout);
+            this.replayRequests.delete(controller);
+            requests.delete(controller);
+        }
     }
 
 
@@ -341,6 +474,10 @@ export class DevelopmentPreview {
         UIManager.instance.closeById("confirm");
         UIManager.instance.closeById("reward");
         this.replayEpoch++;
+        for (const request of this.replayRequests) {
+            request.abort();
+        }
+        this.replayRequests.clear();
         this.replayCleanup?.();
         this.replayCleanup = null;
     }

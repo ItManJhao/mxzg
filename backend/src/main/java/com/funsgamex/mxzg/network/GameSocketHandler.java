@@ -42,6 +42,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles;
     /** 挂机消费及持久回执入口；数据库锁、幂等和实际发放均归该事务服务。 */
     private final com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims;
+    /** 里程碑稳定业务键的真实领取与只读回执，不接受客户端奖励计划。 */
+    private final com.funsgamex.mxzg.campaign.MainChapterMilestoneService milestones;
     private final SessionService sessions;
     private final SessionSnapshotService snapshots;
     private final ConcurrentMap<String, Connection> connections = new ConcurrentHashMap<>();
@@ -74,7 +76,9 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             com.funsgamex.mxzg.hero.HeroLineupBattleService battles,
             com.funsgamex.mxzg.campaign.MainChapterService chapters,
             com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles,
-            com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims) {
+            com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims,
+            com.funsgamex.mxzg.campaign.MainChapterMilestoneService milestones) {
+        this.milestones = milestones;
         this.idleClaims = idleClaims;
         this.idleBattles = idleBattles;
         this.chapters = chapters;
@@ -206,6 +210,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             idleClaim(connection, request, name);
             return;
         }
+        if (name.equals("chapter.milestone.claim") || name.equals("chapter.milestone.claim.status")) {
+            milestone(connection, request, name);
+            return;
+        }
         if (name.equals("chapter.idle.encounter")) {
             fields(request.path("body"), Set.of());
             try {
@@ -295,6 +303,27 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         } catch (org.springframework.dao.PessimisticLockingFailureException
                 | org.springframework.dao.QueryTimeoutException error) {
             fail(connection, request, "IDLE_BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 里程碑只接收原配置正ID；业务拒绝保留连接，锁忙明确可重试且不伪装为未发奖。 */
+    private void milestone(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        fields(body, Set.of("rewardId"));
+        var id = body.path("rewardId");
+        if (!id.isIntegralNumber() || !id.canConvertToInt() || id.asInt() <= 0) {
+            fail(connection, request, "MILESTONE_INVALID", "通关奖励编号无效", false);
+            return;
+        }
+        try {
+            Object result = name.equals("chapter.milestone.claim")
+                    ? milestones.claim(connection.token, id.asInt()) : milestones.status(connection.token, id.asInt());
+            respond(connection, request, result);
+        } catch (com.funsgamex.mxzg.campaign.MainChapterMilestoneService.Rejected error) {
+            fail(connection, request, error.code(), error.getMessage(), false);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "MILESTONE_BUSY", "角色数据正忙，请稍后重试", true);
         }
     }
 

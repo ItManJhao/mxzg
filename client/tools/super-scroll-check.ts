@@ -1,4 +1,4 @@
-/** 通用列表回归：验证虚拟池、静态布局、短行居中、滚动边界、当前选择和编辑器隔离。 */
+/** 通用列表回归：验证虚拟池、静态布局、短行居中、滚动边界、当前选择、结算奖励区域及编辑器隔离。 */
 import { strict as assert } from "node:assert";
 import { readFileSync, writeFileSync } from "node:fs";
 import { Button, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UITransform, Vec2 } from "cc";
@@ -347,25 +347,108 @@ function checkEditorPreview(): void {
     } finally {setEditorContext(false,true);}
 }
 
-/** 使用当前胜利页实际网格参数，验证逻辑尺寸、末行可达、刷新保位与缩短归位。 */
+/** 使用胜利页和原Cell的实际Prefab几何，验证奖励裁剪区、可见首末行及滚动保位。 */
 function checkRewardLayout(): void {
-    const source=JSON.parse(readFileSync("client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab","utf8"));
-    const config=source.find((row:any)=>row.columns!==undefined&&row.layoutType===SuperLayout.Grid);
-    const {list,scroll}=fixture(true);
-    list.node.parent!.getComponent(UITransform)!.setContentSize(580,250);
-    list.cellPrefab=prefab(96,96);
-    for(const field of ["columns","rows","layoutType","gridAxis"] as const)list[field]=config[field];
-    for(const field of ["paddingLeft","paddingRight","paddingTop","paddingBottom","spacingX","spacingY"] as const)list[field]=config["_"+field];
-    list.setData(data(20),(cell,item)=>{cell.name=item;});
-    assert.equal(list.node.getComponent(UITransform)!.height,568);
-    scroll.restorePosition(new Vec2(0,318));
-    assert.equal(scroll.readPosition().y,318,"末行必须可达");
-    list.refresh();assert.equal(scroll.readPosition().y,318,"刷新保留滚动位置");
-    list.setData(data(7),()=>{});assert.equal(scroll.readPosition().y,0,"缩短后不能停留空白区域");
-    const content=source[config.node.__id__];
-    const port=source[content._parent.__id__];
-    assert.equal(port._name,"view");assert(port._components.some((ref:any)=>source[ref.__id__].__type__==="cc.Mask"));
-    assert.equal(content._name,"content");
+    const source = JSON.parse(readFileSync("client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab", "utf8"));
+    const scrollNode = source.find((row: any) => row.__type__ === "cc.Node" && row._name === "MainVictoryRewards");
+    const portNode = source[scrollNode._children[0].__id__];
+    const contentNode = source[portNode._children[0].__id__];
+    const config = contentNode._components.map((ref: any) => source[ref.__id__])
+        .find((row: any) => row.columns !== undefined && row.layoutType === SuperLayout.Grid);
+    const uiOf = (row: any) => row._components.map((ref: any) => source[ref.__id__])
+        .find((component: any) => component.__type__ === "cc.UITransform");
+    const scrollUi = uiOf(scrollNode);
+    const portUi = uiOf(portNode);
+    const contentUi = uiOf(contentNode);
+    const area = {
+        left: scrollNode._lpos.x - scrollUi._anchorPoint.x * scrollUi._contentSize.width,
+        right: scrollNode._lpos.x + (1 - scrollUi._anchorPoint.x) * scrollUi._contentSize.width,
+        bottom: scrollNode._lpos.y - scrollUi._anchorPoint.y * scrollUi._contentSize.height,
+        top: scrollNode._lpos.y + (1 - scrollUi._anchorPoint.y) * scrollUi._contentSize.height,
+    };
+    const background = source.find((row: any) => row.__type__ === "cc.Node" && row._name === "VictoryBackground");
+    const backgroundUi = uiOf(background);
+    const divider = source.find((row: any) => row.__type__ === "cc.Node" && row._name === "RewardDivider");
+    const confirm = source.find((row: any) => row.__type__ === "cc.Node" && row._name === "ConfirmButton"
+        && source[row._parent.__id__]._name === "VictoryButtons");
+    const confirmUi = uiOf(confirm);
+    const backgroundLeft = background._lpos.x - backgroundUi._anchorPoint.x * backgroundUi._contentSize.width;
+    const backgroundBottom = background._lpos.y - backgroundUi._anchorPoint.y * backgroundUi._contentSize.height;
+    const dividerBottom = divider._lpos.y - uiOf(divider)._anchorPoint.y * uiOf(divider)._contentSize.height;
+    const confirmTop = confirm._lpos.y + (1 - confirmUi._anchorPoint.y) * confirmUi._contentSize.height;
+    assert(area.left >= backgroundLeft && area.right <= backgroundLeft + backgroundUi._contentSize.width,
+        "奖励视口的左右边界必须留在胜利底板内");
+    assert(area.bottom >= backgroundBottom, "顶锚点奖励视口不能误用居中坐标而越过底板下沿");
+    assert(area.bottom >= confirmTop + 8, "奖励裁剪区不能覆盖确认按钮");
+    assert(area.top <= dividerBottom - 2, "奖励视口必须位于本次获得标题下方");
+    assert.equal(portNode._name, "view");
+    assert.equal(contentNode._name, "content");
+    assert(portNode._components.some((ref: any) => source[ref.__id__].__type__ === "cc.Mask"));
+    assert.equal(contentNode._lpos.y + (1 - contentUi._anchorPoint.y) * contentUi._contentSize.height,
+        (1 - portUi._anchorPoint.y) * portUi._contentSize.height,
+        "序列化content顶边应直接对齐view，不依赖运行时纠正半个视口偏移");
+
+    const cellSource = JSON.parse(readFileSync("client/assets/bundles/module/common/prefabs/BagItemView.prefab", "utf8"));
+    const cellMeta = JSON.parse(readFileSync("client/assets/bundles/module/common/prefabs/BagItemView.prefab.meta", "utf8"));
+    assert.equal(config.cellPrefab.__uuid__, cellMeta.uuid, "边界检查必须使用列表实际绑定的Cell");
+    const cellNode = cellSource.find((row: any) => row.__type__ === "cc.Node" && row._parent === null);
+    const cellUi = cellNode._components.map((ref: any) => cellSource[ref.__id__])
+        .find((component: any) => component.__type__ === "cc.UITransform");
+    const { list, scroll } = fixture(true);
+    const nodes = [scroll.node, list.node.parent!, list.node];
+    for (let index = 0; index < nodes.length; index++) {
+        const raw = [scrollNode, portNode, contentNode][index];
+        const transform = [scrollUi, portUi, contentUi][index];
+        const ui = nodes[index].getComponent(UITransform)!;
+        ui.setContentSize(transform._contentSize.width, transform._contentSize.height);
+        ui.setAnchorPoint(transform._anchorPoint.x, transform._anchorPoint.y);
+        nodes[index].setPosition(raw._lpos.x, raw._lpos.y, 0);
+    }
+    const cell = new Prefab() as any;
+    // 仅构造真实Cell的根几何，内部美术不由离线替身渲染，也不改动原Prefab。
+    const createRewardCell = () => {
+        const value = node("RewardCell", cellUi._contentSize.width, cellUi._contentSize.height);
+        value.getComponent(UITransform)!.setAnchorPoint(cellUi._anchorPoint.x, cellUi._anchorPoint.y);
+        value.setScale(cellNode._lscale.x, cellNode._lscale.y, cellNode._lscale.z);
+        return value;
+    };
+    cell.data = createRewardCell();
+    cell._instantiate = createRewardCell;
+    list.cellPrefab = cell;
+    list.overrideCellSize = config.overrideCellSize;
+    list.explicitCellSize.width = config.explicitCellSize.width;
+    list.explicitCellSize.height = config.explicitCellSize.height;
+    for (const field of ["columns", "rows", "layoutType", "gridAxis"] as const) {
+        list[field] = config[field];
+    }
+    for (const field of ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom", "spacingX", "spacingY"] as const) {
+        list[field] = config["_" + field];
+    }
+    // 实际布局由SuperContent完成；这里只将渲染后的Cell边界投回同一胜利面板坐标用于断言。
+    const visibleBounds = (value: Node) => {
+        const ui = value.getComponent(UITransform)!;
+        const y = scroll.node.position.y + list.node.parent!.position.y + list.node.position.y + value.position.y;
+        const height = ui.height * value.scale.y;
+        return { top: y + (1 - ui.anchorY) * height, bottom: y - ui.anchorY * height };
+    };
+    for (const count of [1, 4, 5, 8, 12, 20]) {
+        list.setData(data(count), (value, item) => { value.name = item; });
+        scroll.toStart();
+        const first = list.node.children.find(value => value.active && value.name === "Cell 0")!;
+        assert(first, "首个真实奖励必须可见并渲染");
+        assert(visibleBounds(first).top <= area.top && visibleBounds(first).bottom >= area.bottom,
+            "首行奖励必须完整落在标题下方的裁剪区内");
+        scroll.restorePosition(scroll.getMaxScrollOffset());
+        const last = list.node.children.find(value => value.active && value.name === "Cell " + (count - 1))!;
+        assert(last, "奖励末项必须实际渲染并可滚到");
+        assert(visibleBounds(last).top <= area.top && visibleBounds(last).bottom >= area.bottom,
+            "滚到底部时末行完整留在底板内，不能落到确认按钮区域");
+    }
+    const before = scroll.readPosition();
+    list.refresh();
+    assert.deepEqual(scroll.readPosition(), before, "刷新奖励必须保留合法滚动位置");
+    list.setData(data(7), () => {});
+    assert.equal(scroll.readPosition().y, 0, "缩短奖励后不能停留空白区域");
 }
 
 /** 通用奖励窗开启Inspector短行参数，1至3格居中、4格满行及5格末行保留原网格。 */

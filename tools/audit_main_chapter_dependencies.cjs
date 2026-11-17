@@ -558,14 +558,14 @@ class MainChapterDependencyAudit {
         return report;
     }
 
-    /** 生成人可读的逐关摘要；完整敌人、递归技能和素材细节仍在同名机器JSON中。 */
+    /** 生成人可读的逐关摘要，空阻塞列表不追加行尾分隔；扫描结果不决定玩家入口开关。 */
     static text(report) {
         const lines = ['主线850关离线依赖审计（' + (report.batch || '当前') + '）', report.scope,
-            '扫描不等于开放、真实战斗或画面验收；领取入口保持关闭。', '',
+            '扫描不等于开放、真实战斗、领取授权或画面验收。', '',
             JSON.stringify(report.summary, null, 2), '', '逐关：index mode/chapter/mission 敌人数 状态 主要阻塞'];
         for (const stage of report.stages) {
             const codes = [...new Set(stage.blockers.concat(stage.unverified).map(gap => gap.code))];
-            lines.push(`${stage.index} ${stage.mode}/${stage.chapter}/${stage.mission} ${stage.enemies.length} ${stage.status} ${codes.join(',')}`);
+            lines.push(`${stage.index} ${stage.mode}/${stage.chapter}/${stage.mission} ${stage.enemies.length} ${stage.status} ${codes.join(',')}`.trimEnd());
         }
         return lines.join('\n') + '\n';
     }

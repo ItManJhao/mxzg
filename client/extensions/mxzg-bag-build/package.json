@@ -2,8 +2,9 @@
   "name": "mxzg-bag-build",
   "title": "UI资源构建检查",
   "package_version": 2,
-  "version": "1.8.0",
-  "description": "构建前核验配置源，完成后检查全部Bundle的散表排除及唯一配置包，准备bootstrap并核验资源。",
+  "version": "1.8.1",
+  "description": "构建时核验配置包与资源；项目启用时自动提供本机技能演示只读资源。",
+  "main": "./main.js",
   "contributions": {
     "builder": "./builder.js"
   }

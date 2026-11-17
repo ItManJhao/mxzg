@@ -3,6 +3,7 @@
  * 复用真实反馈控制器、Model与协议；不连接玩家服，不把窗口替身当实际画面验收。
  */
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { RewardBinding } from "../assets/scripts/app/remake/RewardBinding";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
@@ -11,6 +12,8 @@ import { ConfirmView } from "../assets/scripts/features/common/ui/ConfirmView";
 import type { ConfirmArgs } from "../assets/scripts/features/common/ui/ConfirmView";
 import { RewardView } from "../assets/scripts/features/reward/ui/RewardView";
 import { RoleUpgradeView } from "../assets/scripts/features/reward/ui/RoleUpgradeView";
+import { HeroRewardView } from "../assets/scripts/features/reward/ui/HeroRewardView";
+import type { HeroRewardArgs } from "../assets/scripts/features/reward/ui/HeroRewardView";
 import type { RewardArgs } from "../assets/scripts/features/reward/data/RewardData";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
@@ -23,9 +26,9 @@ GameLog.shared.mirrorConsole = false;
 /** 可控窗口记录；真实onClosed与确认回调仍由RewardBinding提供。 */
 interface TestWindow {
     /** 被测试装配请求打开的真实页面类，用于识别奖励与确认。 */
-    readonly ctor: typeof RewardView | typeof RoleUpgradeView | typeof ConfirmView;
+    readonly ctor: typeof RewardView | typeof RoleUpgradeView | typeof HeroRewardView | typeof ConfirmView;
     /** 调用方提供的不可变展示参数，不复制成另一套业务规则。 */
-    readonly args: RewardArgs | ConfirmArgs;
+    readonly args: RewardArgs | HeroRewardArgs | ConfirmArgs;
     /** 本次真实窗口替身，只用于按实例关闭。 */
     readonly view: object;
     /** 尚未完成打开时由测试显式拒绝，模拟资源失败或取消。 */
@@ -77,16 +80,16 @@ class BindingFixture {
     public constructor(observePresented = false) {
         this.changeOwner("isolated-role");
         const ui = UIManager.instance;
-        ui.open = ((ctor: typeof RewardView | typeof RoleUpgradeView | typeof ConfirmView, args: RewardArgs | ConfirmArgs) => {
+        ui.open = ((ctor: TestWindow["ctor"], args: TestWindow["args"]) => {
             const row: TestWindow = { ctor, args, view: {}, reject: null, resolve: null };
-            const reward = ctor === RewardView || ctor === RoleUpgradeView;
+            const reward = ctor === RewardView || ctor === RoleUpgradeView || ctor === HeroRewardView;
             assert(reward || ctor === ConfirmView);
             (reward ? this.rewards : this.confirms).push(row);
             this.active.add(row);
             if (reward ? this.failReward : this.failConfirm) {
                 if (reward) {
                     this.failReward = false;
-                    (args as RewardArgs).onClosed?.();
+                    (args as RewardArgs | HeroRewardArgs).onClosed?.();
                 } else {
                     this.failConfirm = false;
                 }
@@ -120,7 +123,7 @@ class BindingFixture {
                 this.otherConfirmCloses++;
             }
             const rows = Array.from(this.active).filter(row => (row.ctor === RewardView ? "reward"
-                : row.ctor === RoleUpgradeView ? "role-upgrade" : "confirm") === id);
+                : row.ctor === RoleUpgradeView ? "role-upgrade" : row.ctor === HeroRewardView ? "hero-reward" : "confirm") === id);
             rows.forEach(row => this.close(row));
             return rows.length > 0;
         }) as typeof ui.closeById;
@@ -144,6 +147,23 @@ class BindingFixture {
     /** 真升级与普通奖励共用原回执；默认空物品专门核对只有升级时的队列及窗口。 */
     public upgrade(index = 1): RewardNotice {
         return { ...this.notice(index), items: [], roleUpgrade: { beforeLevel: 1, afterLevel: 3 } };
+    }
+
+    /** 用实际模板原星级构造本轮冻结实例；同模板多个实例与items真实到账数逐项对应。 */
+    public heroes(index: number, templates: readonly number[], gold = 0): RewardNotice {
+        const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
+        const rows = JSON.parse(readFileSync(resolveBundleFile("config/herotype.json"), "utf8")).rows;
+        const counts = new Map<number, number>();
+        const heroes = templates.map((templateId, offset) => {
+            const row = rows.find((value: { type: number }) => value.type === templateId);
+            assert(row, "英雄奖励夹具必须来自真实模板");
+            counts.set(templateId, (counts.get(templateId) || 0) + 1);
+            return { instanceId: "22345678-1234-4234-8234-" + String(index * 10 + offset).padStart(12, "0"),
+                templateId, star: row.star, level: 1, stage: 0 };
+        });
+        return { ...this.notice(index), heroes,
+            items: [...counts].map(([itemId, credited]) => ({ itemId, credited }))
+                .concat(gold > 0 ? [{ itemId: 900001, credited: gold }] : []) };
     }
 
     /** 用真实Protobuf事件交付当前角色的已提交结果。 */
@@ -175,8 +195,8 @@ class BindingFixture {
         if (!this.active.delete(row)) {
             return;
         }
-        if (row.ctor === RewardView || row.ctor === RoleUpgradeView) {
-            (row.args as RewardArgs).onClosed?.();
+        if (row.ctor === RewardView || row.ctor === RoleUpgradeView || row.ctor === HeroRewardView) {
+            (row.args as RewardArgs | HeroRewardArgs).onClosed?.();
         } else {
             (row.args as ConfirmArgs).onCancel?.();
         }
@@ -204,6 +224,162 @@ class RewardBindingChecks {
         for (let index = 0; index < 24; index++) {
             await Promise.resolve();
         }
+    }
+
+    /** 真实英雄实例复用唯一反馈队列；按原星级分段，最后一段真正打开才报告整批已展示。 */
+    private static async checkHeroFlows(): Promise<number> {
+        let checks = 0;
+        {
+            const test = new BindingFixture(true);
+            try {
+                const notice = test.heroes(90, [10105007]);
+                assert.equal(notice.heroes![0].star, 5, "首里程碑英雄必须采用模板原五星");
+                test.deliver(notice);
+                test.ready(6);
+                await this.settle();
+                assert.equal(test.rewards.length, 0, "英雄不能越过统一revision门槛");
+                test.deferReward = true;
+                test.ready();
+                await this.settle();
+                assert.equal(test.rewards.length, 1);
+                assert.equal(test.rewards[0].ctor, HeroRewardView);
+                assert.deepEqual((test.rewards[0].args as HeroRewardArgs).hero, notice.heroes![0]);
+                assert.deepEqual(test.presented, [], "英雄仅准备中不能报告已展示");
+                test.finishOpen(test.rewards[0]);
+                await this.settle();
+                assert.deepEqual(test.presented, [notice.receiptId]);
+                test.close(test.rewards[0]);
+                test.binding.restore(notice);
+                await this.settle();
+                assert.equal(test.rewards.length, 1, "仅英雄奖励不能补出重复type7物品格窗口");
+                assert.equal(test.account.snapshot.role!.gold, 17);
+            } finally { test.dispose(); }
+            checks++;
+        }
+        {
+            const test = new BindingFixture(true);
+            try {
+                const notice = test.heroes(91, [10105007], 10);
+                test.ready();
+                test.deliver(notice);
+                await this.settle();
+                assert.equal(test.rewards.length, 1);
+                assert.equal(test.rewards[0].ctor, HeroRewardView);
+                assert.deepEqual(test.presented, [], "混合奖励的英雄段不等于整批已经展示");
+                test.binding.restore(notice);
+                test.deferReward = true;
+                test.close(test.rewards[0]);
+                await this.settle();
+                assert.equal(test.rewards.length, 2);
+                assert.equal(test.rewards[1].ctor, RewardView);
+                const rest = test.rewards[1].args as RewardArgs;
+                assert.equal(rest.receiptId, notice.receiptId);
+                assert.deepEqual(rest.heroes, []);
+                assert.deepEqual(rest.items, [{ itemId: 900001, credited: 10 }], "后段应剔除已展示英雄的type7格");
+                assert.deepEqual(test.presented, [], "后段准备未完成不能提前清业务原意图");
+                test.finishOpen(test.rewards[1]);
+                await this.settle();
+                assert.deepEqual(test.presented, [notice.receiptId]);
+                test.close(test.rewards[1]);
+                await this.settle();
+                assert.equal(test.rewards.length, 2);
+            } finally { test.dispose(); }
+            checks++;
+        }
+        {
+            const test = new BindingFixture(true);
+            try {
+                const notice = test.heroes(92, [10101001, 10105007, 10104004, 10105007, 10203003]);
+                test.ready();
+                test.deliver(notice);
+                test.deliver(test.notice(93));
+                const expected = [...notice.heroes!].sort((left, right) => right.star - left.star);
+                for (let index = 0; index < expected.length; index++) {
+                    await this.settle();
+                    assert.equal(test.rewards.length, index + 1, "关闭本英雄前不能准备下一英雄或下一批");
+                    assert.equal(test.rewards[index].ctor, HeroRewardView);
+                    assert.deepEqual((test.rewards[index].args as HeroRewardArgs).hero, expected[index],
+                        "原星级降序且同星级保持冻结实例顺序");
+                    assert.deepEqual(test.presented, index === expected.length - 1 ? [notice.receiptId] : []);
+                    test.close(test.rewards[index]);
+                    (test.rewards[index].args as HeroRewardArgs).onClosed?.();
+                }
+                await this.settle();
+                assert.equal(test.rewards.length, expected.length + 1);
+                assert.equal(test.rewards[expected.length].ctor, RewardView);
+                assert.deepEqual(test.presented, [notice.receiptId, test.notice(93).receiptId]);
+            } finally { test.dispose(); }
+            checks++;
+        }
+        for (const timing of ["opening", "opened"] as const) {
+            const test = new BindingFixture(true);
+            try {
+                test.ready();
+                test.deferReward = timing === "opening";
+                test.deliver(test.heroes(94, [10105007, 10104004], 2));
+                const old = test.rewards[0];
+                const lateResolve = old.resolve;
+                const lateReject = old.reject;
+                if (timing === "opened") {
+                    await this.settle();
+                }
+                test.binding.resetSession();
+                test.changeOwner("new-owner");
+                test.ready();
+                const next = test.notice(95);
+                test.deliver(next);
+                lateResolve?.(old.view);
+                lateReject?.(new Error("旧英雄资源迟到失败"));
+                (old.args as HeroRewardArgs).onClosed?.();
+                await this.settle();
+                assert.equal(test.rewards.length, 2, "旧英雄结束不能续开第二英雄或旧金币后段");
+                assert.equal(test.rewards[1].ctor, RewardView);
+                assert.deepEqual(test.presented, [next.receiptId]);
+                assert.equal(test.confirms.length, 0, "旧英雄迟到失败不能影响新身份");
+            } finally { test.dispose(); }
+            checks++;
+        }
+        {
+            const test = new BindingFixture(true);
+            try {
+                const notice = test.heroes(96, [10105007, 10104004]);
+                test.failReward = true;
+                test.ready();
+                test.deliver(notice);
+                await this.settle();
+                assert.equal(test.confirms.length, 1);
+                assert.deepEqual(test.presented, []);
+                assert.equal(test.rewards[0].ctor, HeroRewardView);
+                test.confirm();
+                await this.settle();
+                assert.equal(test.rewards.length, 2);
+                assert.deepEqual((test.rewards[1].args as HeroRewardArgs).hero, notice.heroes![0]);
+                assert.deepEqual(test.presented, []);
+                test.close(test.rewards[1]);
+                await this.settle();
+                assert.equal(test.rewards.length, 3);
+                assert.equal(test.rewards[2].ctor, HeroRewardView);
+                assert.deepEqual((test.rewards[2].args as HeroRewardArgs).hero, notice.heroes![1]);
+                assert.deepEqual(test.presented, [notice.receiptId], "失败重试仍只在最后英雄段报告整批");
+            } finally { test.dispose(); }
+            checks++;
+        }
+        {
+            const test = new BindingFixture(true);
+            try {
+                test.ready();
+                test.deliver(test.heroes(97, [10105007, 10104004], 2));
+                await this.settle();
+                test.binding.dispose();
+                (test.rewards[0].args as HeroRewardArgs).onClosed?.();
+                await this.settle();
+                assert.equal(test.rewards.length, 1, "销毁后不能续开后段英雄或金币");
+                assert.deepEqual(test.presented, []);
+                assert.equal(test.confirms.length, 0);
+            } finally { test.dispose(); }
+            checks++;
+        }
+        return checks;
     }
 
     /** 真升级复用原通用队列、确认和作用域，覆盖空奖励、失败重试及旧窗口迟到。 */
@@ -369,6 +545,7 @@ class RewardBindingChecks {
     /** 每例均释放装配和替身，验证失败恢复不会写资产或跨身份打开窗口。 */
     public static async run(): Promise<void> {
         let checks = await this.checkUpgradeFlows();
+        checks += await this.checkHeroFlows();
         {
             const test = new BindingFixture(true);
             try {

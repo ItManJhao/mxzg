@@ -52,6 +52,7 @@ const payloads = [
     "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
     "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
     "rewardNotice",
+    "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus",
 ];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
 export class GameProtocolCodecUtils {
@@ -71,6 +72,10 @@ export class GameProtocolCodecUtils {
         }
         if (frame.kind === "request" && frame.name === Protocol.CHAPTER_IDLE_CLAIM_STATUS) {
             return "chapterIdleClaimStatusRequest";
+        }
+        if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_MILESTONE_CLAIM
+                || frame.name === Protocol.CHAPTER_MILESTONE_STATUS)) {
+            return "chapterMilestoneClaim";
         }
         if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_CLAIM || frame.name === Protocol.CHAPTER_REPLAY)) {
             return "chapterBattleId";
@@ -106,6 +111,8 @@ export class GameProtocolCodecUtils {
                 case Protocol.CHAPTER_IDLE_ENCOUNTER: return "idleEncounter";
                 case Protocol.CHAPTER_IDLE_CLAIM: return "chapterIdleClaimReceipt";
                 case Protocol.CHAPTER_IDLE_CLAIM_STATUS: return "chapterIdleClaimStatus";
+                case Protocol.CHAPTER_MILESTONE_CLAIM: return "chapterMilestoneReceipt";
+                case Protocol.CHAPTER_MILESTONE_STATUS: return "chapterMilestoneStatus";
                 case Protocol.BATTLE_PREVIEW: return "battlePreviewed";
                 case Protocol.FORMATION_SAVE: return "formationSaved";
                 case Protocol.GM_GRANT: return "gmResult";
@@ -225,7 +232,48 @@ export class GameProtocolCodecUtils {
             }
             seen.add(item.itemId as number);
         }
+        GameProtocolCodecUtils.validateHeroGrants(notice.heroes,
+            notice.items as readonly { itemId: number; credited: number }[]);
         return notice;
+    }
+
+    /** 验证并冻结同笔新英雄；每个实例唯一且逐模板数等于本笔实际到账，不从当前名册补身份。 */
+    public static validateHeroGrants(value: unknown,
+        items: readonly { readonly itemId: number; readonly credited: number }[]): readonly {
+            readonly instanceId: string; readonly templateId: number; readonly level: number;
+            readonly star: number; readonly stage: number;
+        }[] {
+        if (value === undefined) {
+            return Object.freeze([]);
+        }
+        if (!Array.isArray(value) || value.length > 1000) {
+            throw new Error("奖励英雄实例集合无效");
+        }
+        const seen = new Set<string>();
+        const counts = new Map<number, number>();
+        const heroes = value.map(raw => {
+            const row = raw as Record<string, unknown>;
+            if (!row || typeof row !== "object" || Array.isArray(row)
+                || typeof row.instanceId !== "string"
+                || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(row.instanceId)
+                || seen.has(row.instanceId)
+                || ![row.templateId, row.level, row.star, row.stage].every(number =>
+                    typeof number === "number" && Number.isSafeInteger(number) && number <= 0xffffffff)
+                || (row.templateId as number) <= 0 || (row.level as number) <= 0
+                || (row.star as number) <= 0 || (row.stage as number) < 0) {
+                throw new Error("奖励英雄实例身份或成长无效");
+            }
+            seen.add(row.instanceId);
+            counts.set(row.templateId as number, (counts.get(row.templateId as number) || 0) + 1);
+            return Object.freeze({ instanceId: row.instanceId, templateId: row.templateId as number,
+                level: row.level as number, star: row.star as number, stage: row.stage as number });
+        });
+        for (const [id, count] of counts) {
+            if (items.find(item => item.itemId === id)?.credited !== count) {
+                throw new Error("奖励英雄实例与同笔实际数量不一致");
+            }
+        }
+        return Object.freeze(heroes);
     }
 
     /** 通用奖励只允许事务后事件信封；请求/响应不能伪装为共享奖励通知。 */
@@ -237,6 +285,54 @@ export class GameProtocolCodecUtils {
             throw new Error("奖励通知信封无效");
         }
         GameProtocolCodecUtils.validateRewardNotice(frame.body);
+    }
+
+    /** 校验稳定里程碑键与强类型历史结果，未知格式、关联冲突和跨角色实际结果拒绝整包。 */
+    private static validateMilestone(frame: GameFrame): void {
+        const claim = frame.name === Protocol.CHAPTER_MILESTONE_CLAIM;
+        const status = frame.name === Protocol.CHAPTER_MILESTONE_STATUS;
+        if ((!claim && !status) || (frame.kind === "response" && frame.ok === false)) {
+            return;
+        }
+        if (frame.kind !== "request" && frame.kind !== "response") {
+            throw new Error("里程碑信封方向无效");
+        }
+        const body = GameProtocolCodecUtils.idleObject(frame.body);
+        const validId = (id: unknown): id is number => typeof id === "number"
+            && Number.isSafeInteger(id) && id > 0 && id <= 0xffffffff;
+        if (!validId(body.rewardId)) {
+            throw new Error("里程碑稳定业务键无效");
+        }
+        if (frame.kind === "request") {
+            if (Object.keys(body).join(",") !== "rewardId") {
+                throw new Error("里程碑请求不得提交奖励或身份");
+            }
+            return;
+        }
+        if (status && (typeof body.found !== "boolean"
+                || (body.found ? body.receipt === undefined : body.receipt !== undefined))) {
+            throw new Error("里程碑查询结果无效");
+        }
+        if (status && !body.found) {
+            return;
+        }
+        const receipt = status ? GameProtocolCodecUtils.idleObject(body.receipt) : body;
+        GameProtocolCodecUtils.validateIdleRequestId(receipt.receiptId);
+        GameProtocolCodecUtils.validateIdleVersion(receipt.assetRevision);
+        const state = GameProtocolCodecUtils.idleObject(receipt.state);
+        const progress = GameProtocolCodecUtils.idleObject(state.milestoneProgress);
+        const actual = GameProtocolCodecUtils.idleObject(receipt.actual);
+        if (receipt.schemaVersion !== 1 || receipt.rewardId !== body.rewardId || !validId(receipt.targetChapter)
+                || typeof receipt.roleId !== "string" || !receipt.roleId || receipt.roleId.length > 128
+                || /[\u0000-\u001f\u007f]/.test(receipt.roleId) || actual.roleId !== receipt.roleId
+                || typeof receipt.rulesVersion !== "string" || !/^chapter-milestone-v1:[0-9a-f]{64}$/.test(receipt.rulesVersion)
+                || state.assetRevision !== receipt.assetRevision || progress.schemaVersion !== 1
+                || !Array.isArray(progress.claimedIds) || !progress.claimedIds.includes(receipt.rewardId)
+                || !Array.isArray(actual.items) || !Array.isArray(actual.heroes)) {
+            throw new Error("里程碑回执归属、原配置版本或已领集合无效");
+        }
+        GameProtocolCodecUtils.validateHeroGrants(actual.heroes,
+            actual.items as { itemId: number; credited: number }[]);
     }
 
     /**
@@ -278,6 +374,7 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateIntegers(frame);
         GameProtocolCodecUtils.validateIdleClaim(frame);
         GameProtocolCodecUtils.validateRewardFrame(frame);
+        GameProtocolCodecUtils.validateMilestone(frame);
         const { body, ...envelope } = frame;
         const payload = GameProtocolCodecUtils.payloadName(frame);
         const message: Record<string, unknown> = { ...envelope };
@@ -326,6 +423,7 @@ export class GameProtocolCodecUtils {
         }
         GameProtocolCodecUtils.validateIdleClaim(frame);
         GameProtocolCodecUtils.validateRewardFrame(frame);
+        GameProtocolCodecUtils.validateMilestone(frame);
         return frame;
     }
 }

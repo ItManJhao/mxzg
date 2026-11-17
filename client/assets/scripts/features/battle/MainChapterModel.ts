@@ -5,6 +5,7 @@
 import { BaseModel } from "../../framework/BaseModel";
 import type { IdleClaimProgress } from "./data/MainChapterIdleClaimData";
 import type { RewardExperienceGain } from "../reward/data/RewardData";
+import type { MilestoneClaimProgress } from "./data/MainChapterMilestoneData";
 
 /** 服务端权威进度；空待领奖表示没有未领取战报。 */
 export interface MainChapterState {
@@ -149,6 +150,10 @@ export class MainChapterModel extends BaseModel {
     public idleClaim: IdleClaimProgress = Object.freeze({
         phase: "idle", pending: null, receipt: null, message: "",
     });
+    /** 里程碑稳定键的本地确认，不保存身份或第二份已领集合；应用换号后清空。 */
+    public milestoneClaim: MilestoneClaimProgress = Object.freeze({
+        phase: "idle", rewardId: null, receipt: null, message: "",
+    });
 
     /** 应用切换身份清空业务状态；不承担网络连接代次判断。 */
     protected onReset(): void {
@@ -165,5 +170,6 @@ export class MainChapterModel extends BaseModel {
         this.replay = null;
         this.message = "";
         this.idleClaim = Object.freeze({ phase: "idle", pending: null, receipt: null, message: "" });
+        this.milestoneClaim = Object.freeze({ phase: "idle", rewardId: null, receipt: null, message: "" });
     }
 }

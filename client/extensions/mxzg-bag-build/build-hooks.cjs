@@ -9,7 +9,7 @@ const { execFileSync } = require('node:child_process');
 /** 实际实现身份；与包版本共同打印，区分旧入口缓存和当前执行代码。 */
 const IMPLEMENTATION_ID = 'config-package-artifact-v1';
 /** 实际实现版本；升级时与package.json同步，禁止旧函数仅打印新包版本冒充更新。 */
-const IMPLEMENTATION_VERSION = '1.8.0';
+const IMPLEMENTATION_VERSION = '1.8.1';
 
 /** 隔离构建入口读取真实常量核对日志；只读身份不表示钩子已被Creator实际调用。 */
 exports.implementationIdentity = Object.freeze({ id: IMPLEMENTATION_ID, version: IMPLEMENTATION_VERSION });

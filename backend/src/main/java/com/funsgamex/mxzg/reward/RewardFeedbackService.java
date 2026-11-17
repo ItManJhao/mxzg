@@ -6,6 +6,7 @@
 package com.funsgamex.mxzg.reward;
 
 import com.funsgamex.mxzg.role.RoleRules;
+import com.funsgamex.mxzg.hero.HeroGrantService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,10 +67,18 @@ public class RewardFeedbackService {
      * @param roleUpgrade 同笔真实经验链的升级摘要；没有升级时为空，不用当前角色等级推断。
      */
     public record Notice(int schemaVersion, String receiptId, String roleId, long assetRevision,
-            Mode mode, List<Item> items, String requestId, RoleUpgrade roleUpgrade) {
+            Mode mode, List<Item> items, String requestId, RoleUpgrade roleUpgrade,
+            List<HeroGrantService.Granted> heroes) {
+        /** 原无英雄反馈保持原明细，新增字段为空不从名册补查。 */
+        public Notice(int schemaVersion, String receiptId, String roleId, long assetRevision,
+                Mode mode, List<Item> items, String requestId, RoleUpgrade roleUpgrade) {
+            this(schemaVersion, receiptId, roleId, assetRevision, mode, items, requestId, roleUpgrade, List.of());
+        }
+
         /** 复制明细，避免调用者在事务登记后改变已验证的展示数据。 */
         public Notice {
             items = List.copyOf(items);
+            heroes = List.copyOf(heroes);
         }
     }
 
@@ -134,7 +143,7 @@ public class RewardFeedbackService {
             add(merged, bonus.itemId(), bonus.quantity());
         }
         List<Item> items = merged.entrySet().stream().map(row -> new Item(row.getKey(), row.getValue())).toList();
-        return new Notice(1, receiptId, roleId, revision, mode, items, requestId, roleUpgrade(actual));
+        return new Notice(1, receiptId, roleId, revision, mode, items, requestId, roleUpgrade(actual), actual.heroes());
     }
 
     /**

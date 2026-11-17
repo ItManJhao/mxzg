@@ -1,0 +1,414 @@
+{
+  "date": "2026-11-17",
+  "status": "passed-with-explicit-preview-scope",
+  "baseCommit": "b333e3d9debb0f37e47c5beab980f8c44abd6802",
+  "branch": "hao",
+  "committedOrPushed": false,
+  "request": [
+    "结算奖励整体偏下超框",
+    "出场特效播放60%时开始模型淡入",
+    "VS和倍数栏放回宝箱附近的底部区域"
+  ],
+  "changes": {
+    "rewardArea": {
+      "prefab": "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab",
+      "node": "MainVictoryPanel/MainVictoryRewards",
+      "cause": "260高顶部锚点仍用居中y130，视口越过底板下沿并压到确认按钮",
+      "topYBefore": 130,
+      "topYAfter": 260,
+      "contentYBefore": 130,
+      "contentYAfter": 0,
+      "size": [
+        600,
+        260
+      ],
+      "columns": 4,
+      "list": "原SuperScroll/SuperContent，不另造坐标布局"
+    },
+    "appearance": {
+      "framesPerSide": 15,
+      "frameNominalSeconds": 0.05,
+      "completeFramesBeforeFade": 9,
+      "threshold": 0.6,
+      "nominalThresholdSeconds": 0.45,
+      "fadeSeconds": 1,
+      "gate": "第9帧完整原等待结束后释放，归原waits与effectEpoch；不使用独立墙钟提前渐入",
+      "barrier": "双方完整FX与渐入全部完成后才显示HP并开始战报",
+      "idleEncounter": "原0时刻并行渐入与时序保持",
+      "newManagerOrProtocol": false
+    },
+    "hud": {
+      "prefab": "client/assets/bundles/module/battle/prefabs/BattlePage.prefab",
+      "dock": "LayerHud/ChapterInfoDock",
+      "widgetBottom": 150,
+      "matchAnchorY": 264.5,
+      "topBarAnchorY": 369.5,
+      "binding": "原视口刷新先缩放，再将Widget目标接到可见区域祖先，按挂点世界坐标对齐原HUD",
+      "cause": "原正式挂点180/285位于中场；首次下移仍有底板遮挡，最终上调40设计像素使VS底边留8像素间隔",
+      "modelAndHpMoved": false
+    },
+    "preservedPrefabMeta": {
+      "client/assets/bundles/module/battle/prefabs/BattlePage.prefab.meta": {
+        "uuid": "733c8611-a124-4c16-bb79-6b3011dfb408",
+        "sha256": "3113af57fe9043bb3fcf1b12b4bbbb8210484e4334fb475f5897e46497646817"
+      },
+      "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab.meta": {
+        "uuid": "87487742-8794-4b8b-824c-ef1c009cdf27",
+        "sha256": "58abd6d127d1e8f1dbd33fec6f11557b651de35c43ccc6bf934234e2930b234e"
+      }
+    },
+    "sourceSha256": {
+      "client/assets/bundles/module/battle/prefabs/BattlePage.prefab": "27fb7ca11c4d392d8c0ede30b82af21689aaa7008db9d4d9e0d67cb5e057bc1a",
+      "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab": "b82fcf1b9cdbc41ee172efa2213d738bb1231cd185ba050ed6049ea2fff270e6",
+      "client/assets/scripts/features/battle/ui/BattlePageUtils.ts": "27dad68fa50a0e234ab8adde4cb98e8aa1487f0c0a4f1e1dae18909cdafee136",
+      "client/assets/scripts/features/battle/ui/BattlePrefabLayoutUtils.ts": "5f65fcc00cbafff33eecfc2366f569b99ba0ccb8d87e49bbeee367da02503246",
+      "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts": "7a63f95023ad8dcc6112180370bf53b862b35a8d6312c7b69037a43f996d36fc",
+      "client/tools/OpeningClockRuntime.ts": "c90b9996a6d5fbe46bbde2e60a46d36460173dc525c9f081ae03bab5e866e5ee",
+      "client/tools/battle-opening-check.ts": "f1e4490eec35987336196e82059140e9155dc3bf06d46365fc4d55a6b752c454",
+      "client/tools/main-chapter-check.ts": "a8278fbe276945506ccc358d4ea8acfad09010cca88e49349021b40c1c12fa87",
+      "client/tools/super-scroll-check.ts": "6bd7d4413a59d1fe239cf7ad101dc4d390f1c67f6e5a383e360e719752279a53"
+    }
+  },
+  "checks": {
+    "clientSuites": [
+      {
+        "suite": "battle-opening",
+        "passed": true,
+        "result": "client/temp/project-checks/results.battle-opening.json",
+        "sha256": "cfef89ea1bcf544b2dd95598549b0fb8bb0e2f4e7a1d2858be426d1268aa7aa4"
+      },
+      {
+        "suite": "main-chapter",
+        "passed": true,
+        "result": "client/temp/project-checks/results.main-chapter.json",
+        "sha256": "b3fca9ad48c3208410ebb074d6591703798b0547069d673ac2556b82784a66bc"
+      },
+      {
+        "suite": "battle",
+        "passed": true,
+        "result": "client/temp/project-checks/results.battle.json",
+        "sha256": "f81b84df81d49a22fd043d7508ce4144e2ef996eea711811c4ac9bea4ba9047f"
+      },
+      {
+        "suite": "bindings",
+        "passed": true,
+        "result": "client/temp/project-checks/results.bindings.json",
+        "sha256": "405f32a5984a096019171ee5787ab7ed9eebe9233bda5ac2bde3d303db7185f6"
+      },
+      {
+        "suite": "battle-layout",
+        "passed": true,
+        "result": "client/temp/project-checks/results.battle-layout.json",
+        "sha256": "33cd5e6617c2e38f57713eaeb3b9d4e555aad70fb49596f24ac13a7c403ffb79"
+      },
+      {
+        "suite": "super-scroll",
+        "passed": true,
+        "result": "client/temp/project-checks/results.super-scroll.json",
+        "sha256": "57584231f01ad3823bc807cc42015b55358bb5f012c78796bfcc11babb61934d"
+      }
+    ],
+    "strictTypeScript": {
+      "passed": true,
+      "compiler": "Creator3.8.8 TypeScript via node",
+      "options": "--strict --noEmit"
+    },
+    "appearanceCases": "真实生产Preview；名义60%边界、每帧额外.02延迟、九阶段取消、HP屏障和原挂机时序",
+    "delayedFrameCase": "独立.45到时仅6完整帧仍隐藏，真实9帧.63后才fade，15帧1.05完整；1秒fade后4.13放行",
+    "rewardCases": "读取真实Prefab/Cell/SuperContent，1/4/5/8/12/20项首尾、滚动保位与边界；旧y130反例准确失败",
+    "backendTestRerun": false,
+    "reason": "本批仅修改客户端显示，独立预览使用真实既有服务链"
+  },
+  "preview": {
+    "mode": "Creator本机预览＋真实WS/Protobuf＋独立H2内存库",
+    "compiledFrameGate": true,
+    "host": {
+      "run": "cff7f8ca02764571ae1665939d27b827",
+      "pidAtReview": 9428,
+      "server": "local-1",
+      "account": "chapter_review",
+      "gmEnabled": false
+    },
+    "fixture": "2级角色、10101001的100级单英雄slot2、起始已过关1；不代表自然成长",
+    "realChallenge": {
+      "stage": 2,
+      "battleId": "fee13088-4f27-470b-bf99-c9479a584376",
+      "battleCount": 1,
+      "rewards": 7,
+      "maxClearedAfter": 2,
+      "pendingAfter": null,
+      "note": "真实挑战在中间计时版完成；最终修改使用这份原PB与已提交结算只读重放，不再挑战/发奖"
+    },
+    "opening": {
+      "checks": {
+        "bothFadeEvents": true,
+        "completeNineFramesBeforeFade": true,
+        "hiddenBeforeFade": true,
+        "fxAndFadeOverlap": true,
+        "fadeContinuesAfterFx": true,
+        "readyAfterBoth": true,
+        "hudAbovePanel": true
+      },
+      "events": [
+        {
+          "message": "opening.effects.started",
+          "sample": {
+            "ms": 3095.699999988079,
+            "hp": false,
+            "effects": [],
+            "models": [
+              {
+                "name": "spine-10505005",
+                "opacity": 0
+              },
+              {
+                "name": "spine-10101001",
+                "opacity": 0
+              }
+            ]
+          }
+        },
+        {
+          "message": "opening.fade.started unit=2 progress=0.6",
+          "sample": {
+            "ms": 3728.199999988079,
+            "hp": false,
+            "effects": [
+              {
+                "name": "EnemyAppearEffect",
+                "frame": "battle-appear-right_9"
+              },
+              {
+                "name": "AllyAppearEffect",
+                "frame": "battle-appear-left_9"
+              }
+            ],
+            "models": [
+              {
+                "name": "spine-10505005",
+                "opacity": 0
+              },
+              {
+                "name": "spine-10101001",
+                "opacity": 0
+              }
+            ]
+          }
+        },
+        {
+          "message": "opening.fade.started unit=10 progress=0.6",
+          "sample": {
+            "ms": 3729.800000011921,
+            "hp": false,
+            "effects": [
+              {
+                "name": "EnemyAppearEffect",
+                "frame": "battle-appear-right_9"
+              },
+              {
+                "name": "AllyAppearEffect",
+                "frame": "battle-appear-left_9"
+              }
+            ],
+            "models": [
+              {
+                "name": "spine-10505005",
+                "opacity": 0
+              },
+              {
+                "name": "spine-10101001",
+                "opacity": 0
+              }
+            ]
+          }
+        },
+        {
+          "message": "opening.effects-and-fade.completed",
+          "sample": {
+            "ms": 4759.600000023842,
+            "hp": false,
+            "effects": [],
+            "models": [
+              {
+                "name": "spine-10505005",
+                "opacity": 255
+              },
+              {
+                "name": "spine-10101001",
+                "opacity": 255
+              }
+            ]
+          }
+        },
+        {
+          "message": "opening.completed ZDKS; both teams ready",
+          "sample": {
+            "ms": 4760.800000011921,
+            "hp": true,
+            "effects": [],
+            "models": [
+              {
+                "name": "spine-10505005",
+                "opacity": 255
+              },
+              {
+                "name": "spine-10101001",
+                "opacity": 255
+              }
+            ]
+          }
+        }
+      ],
+      "rawFrames": {
+        "file": "client/temp/battle-display-final-opening-20261117.json",
+        "sha256": "2bc3932d776eb5c1bf7a4fa2fbe99ecfc5bb5e09ee61b63832ce7bcc1f4fa85e"
+      },
+      "note": "fade日志时显示0基frame9，表示前9帧已完整结束；实际时长约633ms包含逐帧调度，不将.45墙钟当真实60%"
+    },
+    "hud": {
+      "nokia": {
+        "panel": {
+          "left": 22.347696879643422,
+          "bottom": 49.5,
+          "right": 662.3476968796434,
+          "top": 418.5
+        },
+        "vs": {
+          "left": 302.3476968796434,
+          "bottom": 426.5,
+          "right": 382.3476968796434,
+          "top": 472.5
+        },
+        "speed": {
+          "left": 570.8476968796434,
+          "bottom": 522.5,
+          "right": 643.8476968796434,
+          "top": 600.5
+        },
+        "gap": 8,
+        "matchAnchorY": 264.5,
+        "topAnchorY": 369.5,
+        "view": {
+          "width": 684.6953937592868,
+          "height": 1280
+        }
+      },
+      "iphone": {
+        "panel": {
+          "left": 50.427098674521346,
+          "bottom": 49.5,
+          "right": 690.4270986745214,
+          "top": 418.5
+        },
+        "vs": {
+          "left": 330.42709867452135,
+          "bottom": 426.5,
+          "right": 410.42709867452135,
+          "top": 472.5
+        },
+        "speed": {
+          "left": 598.9270986745214,
+          "bottom": 522.5,
+          "right": 671.9270986745214,
+          "top": 600.5
+        },
+        "gap": 8,
+        "matchAnchorY": 264.5,
+        "topAnchorY": 369.5,
+        "view": {
+          "width": 740.8541973490427,
+          "height": 1280
+        }
+      }
+    },
+    "rewardLayout": {
+      "paused": true,
+      "scrollY": 260,
+      "contentY": 0,
+      "scrollAnchor": 1,
+      "rewards": 7,
+      "bounds": {
+        "left": 70.42709867452135,
+        "bottom": 275,
+        "right": 670.4270986745214,
+        "top": 535
+      },
+      "button": {
+        "left": 272.92709867452135,
+        "bottom": 153,
+        "right": 467.92709867452135,
+        "top": 219
+      },
+      "aboveConfirm": true,
+      "view": {
+        "width": 740.8541973490427,
+        "height": 1280
+      }
+    },
+    "pauseScope": "正式出场阶段正常运行并逐帧观察；只在开场完成或结果完整显示后临时暂停保存静帧，结束已恢复",
+    "readOnlyAssetEquality": {
+      "roleUnchanged": true,
+      "inventoryUnchanged": true,
+      "battleCountStayedOne": true,
+      "idleReceiptCount": 0,
+      "gold": 4000,
+      "diamonds": 151,
+      "experience": 200,
+      "assetRevision": 6
+    },
+    "screenshots": [
+      "client/temp/battle-rewards-corrected-20261117.jpg",
+      "client/temp/battle-rewards-final-20261117.jpg",
+      "client/temp/battle-hud-corrected-nokia-20261117.jpg",
+      "client/temp/battle-hud-corrected-iphone-20261117.jpg"
+    ],
+    "warnings": 0,
+    "errors": 0,
+    "cleanup": {
+      "ui": {
+        "pages": 1,
+        "residents": 0,
+        "cached": 0,
+        "prepared": 0,
+        "opening": 0,
+        "pendingResident": 0,
+        "intents": 0,
+        "modalNodes": 1,
+        "modalActive": 0
+      },
+      "mainChapter": {
+        "maxCleared": 2,
+        "pendingBattleId": null,
+        "assetRevision": 6,
+        "challengeLimit": 9,
+        "milestoneProgress": {
+          "schemaVersion": 1,
+          "claimedIds": []
+        }
+      },
+      "observersRemoved": true,
+      "engineResumed": true,
+      "temporaryTabsClosed": true,
+      "viewportOverrideReset": true,
+      "ownedHostStopped": {
+        "run": "cff7f8ca02764571ae1665939d27b827",
+        "pid": 9428,
+        "stopped": true
+      },
+      "dailyBackend16000KeptRunning": true
+    }
+  },
+  "references": {
+    "legacyRewardArea": "client/idle/src/layer/BattleEndCtr.lua:16-22，600×260 scroll原区域[0,260]",
+    "legacyBattleInfo": "BattleReportBaseLayer.lua:53 与 layer/battle/BattleMissionLayer.lua:69，主线按map_pos.y-10布置信息栏",
+    "formalObservation": "本批只观察正式服主线页/宝箱区域，未在旧正式服发起新挑战或领取；VS最终位置按旧挂点依据与用户指定区域调整",
+    "previousTiming": "前批FX结束才fade及本批中间独立.45计时均为历史；没有覆盖旧JSON证据"
+  },
+  "limits": [
+    "未构建发布包、未验真机/MySQL",
+    "未扩大挑战上限、玩法、倍数权限或修改奖励/技能数值",
+    "未将只读重放写成新发奖或全1至9自然闯关验收",
+    "平板及多人密集表现继续按既有缺口复验"
+  ],
+  "toolingNote": "类型检查曾误经文件关联打开WebStorm；已改用node并严格编译通过。关闭编辑器的自动审批因潜在未保存内容拒绝，保留该进程，未绕过拒绝。"
+}

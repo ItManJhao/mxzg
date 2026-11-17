@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-17",
+  "scope": "负责人授权完整第15关里程碑及可复用通用英雄获得反馈，新增HeroRewardView；不恢复召唤、养成或其他玩法。此证据仅离线资源准入，不作为运行加载清单。",
+  "addedPrefabs": [
+    {
+      "path": "client/assets/bundles/module/common/prefabs/HeroRewardView.prefab",
+      "uuid": "0d65f8e0-fa08-421d-b511-bfc56668f63d",
+      "scriptUuid": "562c7d43-c49a-4d1f-9a68-07ffc9ecbcb6",
+      "sha256": "e1897ac1076e19b2ff4bf510be9b747ec4fea8a3227fca983db2da96e242cf60"
+    }
+  ],
+  "layout": "完整Prefab，原高星揭幕及英雄/光柱/光环、名字/技能与低星单格共用一页；共享模态及原奖励队列，不新增Bundle。",
+  "verification": {
+    "structure": "通过相关专项、脚本/资源UUID与静态绑定核对。",
+    "visual": "结构检查通过但视觉待验收；Creator本批实际画面由根侧实测后另行补证，不能据准入签收三尺寸、Inspector或发布包。"
+  },
+  "references": [
+    "docs/validation/hero-reward-assets-20261117.json",
+    "docs/main-chapter-milestone.md"
+  ]
+}

@@ -2,13 +2,15 @@
  * 通用发奖反馈的数据契约：保存服务端已提交结果及客户端展示进度。
  * 通知与已确认历史回执共用同一编号；这里只描述展示，不代表当前资产或发奖命令。
  */
-import type { RewardItem, RoleUpgradeData } from "./RewardData";
+import type { RewardItem, RoleUpgradeData, HeroGrantItem } from "./RewardData";
 
 /** 实时通知按服务端指定模式；已确认历史回执按原业务交互恢复，静默也参与去重，不反推背包变化。 */
 export type RewardNoticeMode = "SILENT" | "POPUP" | "TIPS";
 
 /** 已通过通信与应用归属校验的实际发奖结果。 */
 export interface RewardNotice {
+    /** 冻结的新英雄实例；不作为当前资产增量，和本回执实际数量严格对应。 */
+    readonly heroes?: readonly HeroGrantItem[];
     /** 当前支持的反馈格式，未知格式由协议边界拒绝。 */
     readonly schemaVersion: 1;
     /** 原业务成功回执的UUID，通知与恢复必须保持一致。 */

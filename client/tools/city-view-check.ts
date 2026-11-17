@@ -10,8 +10,6 @@ import { join } from "path";
 
 import { CityMapLayoutUtils, CITY_EDGE_BLEED } from "../assets/scripts/features/city/ui/CityMapLayoutUtils";
 
-import { PageSlideUtils } from "../assets/scripts/framework/ui/PageSlideUtils";
-
 import { TAB_SELECTED_SCALE, CityTabUtils } from "../assets/scripts/features/city/utils/CityTabUtils";
 
 const root = process.cwd();
@@ -224,10 +222,8 @@ function checkChromePrefab(): void {
   assert(text.split(shell).length === 2, "CityChromeShell class id stays once");
 }
 
-/** 当前切页只使用方向与指数曲线；旧页面壳和栈捕获已退役。 */
-function checkBarSlide(): void {
-  assert(PageSlideUtils.barSlideDir(0, 1) === 1 && PageSlideUtils.barSlideDir(4, 1) === -1 && PageSlideUtils.barSlideDir(2, 2) === 0);
-  assert(PageSlideUtils.expoOut(0) === 0 && PageSlideUtils.expoOut(1) === 1 && PageSlideUtils.expoOut(0.5) > 0.9);
+/** 导航立即切换页面，底栏仍只保留最后一个选中按钮。 */
+function checkTabSelection(): void {
   const paint = CityTabUtils.tabPaintState(["selected", "selected", "open", "locked"]);
   assert(paint.join(",") === "open,selected,open,locked");
 }
@@ -238,4 +234,4 @@ function checkWideTabSize(): void {
   assert(CityTabUtils.cityTabLayout(360, 3, true).scale < base.scale, "窄屏仍按可用宽度缩小");
   assert(CityTabUtils.cityTabLayout(960, 6, false).x > CityTabUtils.cityTabLayout(640, 6, false).x, "宽屏按钮间距仍展开");
 }
-checkFramework(); checkHubPrefab(); checkChromePrefab(); checkSources(); checkBarSlide(); checkWideTabSize(); console.log("city-view passed: bindings, framework isolation, narrow viewport coverage, tab scaling and transitions");
+checkFramework(); checkHubPrefab(); checkChromePrefab(); checkSources(); checkTabSelection(); checkWideTabSize(); console.log("city-view passed: bindings, framework isolation, narrow viewport coverage, tab scaling and selection");

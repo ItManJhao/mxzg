@@ -23,8 +23,13 @@ const equipmentDetail = JSON.parse(fs.readFileSync(path.join(root, 'docs/validat
 const itemShard = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/item-shard-assets-20261114.json'), 'utf8'));
 // 通用奖励与确认已获准接入，新增范围另留证，不改写旧批保留清单。
 const commonFeedback = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/reward-common-ui-scope-20261116.json'), 'utf8'));
+// 原升级页已有独立批准记录，范围聚合须保留该既有增量，不能回填旧通用反馈清单。
+const upgradeFeedback = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/role-upgrade-ui-scope-20261116.json'), 'utf8'));
+// 里程碑复用的通用英雄获得页另留本批准入证据，不改历史清理范围或生成运行清单。
+const heroFeedback = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/hero-reward-ui-scope-20261117.json'), 'utf8'));
 const approvedPrefabs = [...evidence.retainedPrefabs, ...spiritDetail.addedPrefabs, ...gmSplit.addedPrefabs,
-    ...equipmentDetail.addedPrefabs, ...commonFeedback.addedPrefabs];
+    ...equipmentDetail.addedPrefabs, ...commonFeedback.addedPrefabs, ...upgradeFeedback.addedPrefabs,
+    ...heroFeedback.addedPrefabs];
 
 /** 收集当前目录普通文件；资源审查不允许通过链接访问工作区外的文件。 */
 function files(directory) {
@@ -66,14 +71,25 @@ function compareUtf8(left, right) {
     return Buffer.compare(Buffer.from(left, 'utf8'), Buffer.from(right, 'utf8'));
 }
 
-/** 重新哈希全部特效文件和meta UUID集合；摘要含相对路径、长度及原字节哈希，不只统计数量。 */
-function effectsSnapshot(directory, rootMeta) {
+/**
+ * 重新哈希全部特效文件和meta UUID集合；摘要含相对路径、长度及原字节哈希，不只统计数量。
+ * 有明确修复链时先核当前结果，再虚拟还原原字节记录；新增获准shader仅从旧快照投影中排除。
+ */
+function effectsSnapshot(directory, rootMeta, approvedChanges = new Map()) {
     const rows = files(directory).map(file => ({
         file,
         relative: path.relative(directory, file).replaceAll('\\', '/'),
         bytes: fs.statSync(file).size,
         sha256: hash(file),
-    })).sort((left, right) => compareUtf8(left.relative, right.relative));
+    })).map(row => {
+        const change = approvedChanges.get(row.relative);
+        if (!change) {
+            return row;
+        }
+        assert.equal(row.sha256, change.after.sha256, '已批准特效增量当前内容改变：' + row.relative);
+        assert.equal(row.bytes, change.after.bytes, '已批准特效增量当前长度改变：' + row.relative);
+        return change.before ? { ...row, ...change.before } : null;
+    }).filter(Boolean).sort((left, right) => compareUtf8(left.relative, right.relative));
     const digest = crypto.createHash('sha256');
     const uuids = new Set();
     collectUuids(rootMeta, uuids);
@@ -95,6 +111,90 @@ function effectsSnapshot(directory, rootMeta) {
         uuidDigest.update(JSON.stringify(uuid) + '\n', 'utf8');
     }
     return { ...snapshot, sha256: digest.digest('hex'), metaUuidCount: uuids.size, metaUuidSha256: uuidDigest.digest('hex') };
+}
+
+/** 读取有界属性路径；派生meta变化只能逐项承接，不能跳过整份meta或UUID检查。 */
+function propertyAt(value, propertyPath) {
+    return propertyPath.split('.').reduce((parent, key) => {
+        assert(parent && Object.hasOwn(parent, key), 'meta派生字段不存在：' + propertyPath);
+        return parent[key];
+    }, value);
+}
+
+/** 校验逐批原RGBA修复与Creator派生meta，返回可虚拟还原13号原整树的离线增量。 */
+function approvedEffectsChanges() {
+    const delta = read(path.join(root, 'docs/validation/effects-approved-delta-20261117.json'));
+    assert.equal(delta.format, 'effects-approved-delta-v1');
+    assert.equal(delta.baselineEvidence, 'docs/validation/battle-effects-move-20261113.json');
+    assert.deepEqual(delta.assetEvidence, [4, 5, 9, '10-20']
+        .map(stage => `docs/validation/chapter-stage${stage}-assets-20261117.json`),
+        '本批特效增量只能承接已批准四批原图证据');
+    assert.deepEqual([...delta.newAssets].sort(), ['legacy-stone.effect', 'legacy-stone.effect.meta',
+        'legacy-spine-pma.effect', 'legacy-spine-pma.effect.meta'].sort(),
+        '本批只批准新增石化和旧PNG预乘适配效果，不可任意扩资源范围');
+    const sources = new Map(delta.assetEvidence.map(file => [file, read(path.join(root, file))]));
+    const changes = new Map();
+    const directory = resolveAssetPath(effectsMove.to);
+    for (const entry of delta.metaImports) {
+        const source = sources.get(entry.source.evidencePath);
+        assert(source, 'meta导入来源未登记');
+        const original = source.files.filter(row => row.path === entry.source.assetPath);
+        assert.equal(original.length, 1, 'meta导入必须对应唯一原RGBA修复');
+        assert.equal(entry.beforeSha256, original[0].metaSha256After, 'meta导入起点未命中原修复摘要');
+        assert.equal(crypto.createHash('sha256').update(entry.beforeMetaText).digest('hex'), entry.beforeSha256,
+            'meta导入原文摘要无效：' + entry.file);
+        assert.equal(hash(path.join(root, entry.file)), entry.afterSha256, 'meta导入后摘要改变：' + entry.file);
+        const expected = JSON.parse(entry.beforeMetaText);
+        for (const difference of entry.differences) {
+            assert(/^subMetas\.f9941\.userData\.(?:offset[XY]|trim[XY]|width|height|vertices(?:\..+)?)$/.test(difference.propertyPath),
+                'meta非派生字段不能由本次导入承接：' + difference.propertyPath);
+            assert.deepEqual(propertyAt(expected, difference.propertyPath), difference.before, 'meta派生旧值不符');
+            const keys = difference.propertyPath.split('.');
+            const field = keys.pop();
+            propertyAt(expected, keys.join('.'))[field] = difference.after;
+        }
+        assert.deepEqual(read(path.join(root, entry.file)), expected,
+            'meta含未批准的UUID、九宫格、原尺寸或其他变化：' + entry.file);
+    }
+    for (const entry of delta.changes) {
+        assert(!changes.has(entry.relative), '特效增量路径重复');
+        const file = path.resolve(directory, entry.relative);
+        assert(path.relative(directory, file).split(path.sep).join('/') === entry.relative && !entry.relative.startsWith('../'),
+            '特效增量越界');
+        assert.equal(hash(file), entry.after.sha256, '特效增量结果与当前文件不符：' + entry.relative);
+        assert.equal(fs.statSync(file).size, entry.after.bytes);
+        let previous = entry.before?.sha256;
+        for (const step of entry.sources) {
+            assert.equal(previous, step.beforeSha256, '特效修复历史链不连续：' + entry.relative);
+            if (step.kind === 'creator-derived-meta') {
+                const imported = delta.metaImports[step.importIndex];
+                assert(imported && path.resolve(root, imported.file) === file, 'meta导入引用其他文件');
+                assert.equal(step.beforeSha256, imported.beforeSha256);
+                assert.equal(step.afterSha256, imported.afterSha256);
+            } else {
+                const source = sources.get(step.evidencePath);
+                assert(source, '特效修复来源未登记');
+                const rows = source.files.filter(row => row.path === step.assetPath);
+                assert.equal(rows.length, 1, '特效修复来源必须唯一');
+                const row = rows[0];
+                assert.equal(path.resolve(root, step.assetPath + (step.metadata ? '.meta' : '')), file);
+                assert.equal(step.beforeSha256, step.metadata ? row.metaSha256Before : row.beforeSha256);
+                assert.equal(step.afterSha256, step.metadata ? row.metaSha256After : row.afterSha256);
+                assert.equal(row.afterPixelsMatchSource, true, '原RGBA修复必须已核对像素');
+            }
+            previous = step.afterSha256;
+        }
+        if (entry.before) {
+            assert.equal(previous, entry.after.sha256, '特效修复链未到当前内容：' + entry.relative);
+        } else {
+            assert(delta.newAssets.includes(entry.relative), '未批准的新特效文件：' + entry.relative);
+            assert.equal(entry.sources.length, 0);
+        }
+        changes.set(entry.relative, entry);
+    }
+    assert.deepEqual([...changes].filter(([, entry]) => !entry.before).map(([relative]) => relative).sort(),
+        [...delta.newAssets].sort(), '新增特效文件必须逐项覆盖');
+    return changes;
 }
 
 const actualBundles = bundleEntries().map(entry => entry.name).sort();
@@ -129,7 +229,11 @@ for (const file of resourceFiles.filter(file => file.endsWith('.ts'))) {
         resolveAssetPath(match[1] + '.prefab');
     }
 }
-assert.equal(views, 21 + commonFeedback.addedPrefabs.length, '当前独立View数量改变时须同步核对入口与资源闭包');
+assert.equal(views, 21 + commonFeedback.addedPrefabs.length + upgradeFeedback.addedPrefabs.length + heroFeedback.addedPrefabs.length,
+    '当前独立View数量改变时须同步核对入口与资源闭包');
+for (const row of heroFeedback.addedPrefabs) {
+    assert.equal(hash(resolveAssetPath(row.path)), row.sha256, '本批新增英雄获得页与准入证据不一致：' + row.path);
+}
 // 原图像素恢复有单独旧图集证据；仅接受明确列出的最终图片摘要，继续核对原UUID和meta。
 for (const row of [...equipmentDetail.resources, ...itemShard.resources]) {
     const file = path.resolve(root, row.path);
@@ -150,8 +254,9 @@ const effectsMetaFile = resolveAssetPath(effectsMove.rootMeta.to);
 const effectsMeta = read(effectsMetaFile);
 assert.equal(effectsMove.snapshot.format, 'effects-tree-sha256-v1', '特效摘要格式变更必须重新审核');
 assert.deepEqual(effectsMove.snapshot.before, effectsMove.snapshot.after, '迁移前后特效文件或UUID集合摘要必须完全一致');
-assert.deepEqual(effectsSnapshot(effectsRoot, effectsMeta), effectsMove.snapshot.after,
-    '特效文件路径、字节、内容哈希或meta UUID集合与原始快照不一致');
+const effectsChanges = approvedEffectsChanges();
+assert.deepEqual(effectsSnapshot(effectsRoot, effectsMeta, effectsChanges), effectsMove.snapshot.after,
+    '承接已批准逐文件修复后，原特效路径、字节、内容或meta UUID整树仍不一致');
 // 此根meta在拆包时新增Bundle声明并以LF保存，Git在Windows重新检出可能变为CRLF。
 // 只规范这份声明的文本换行；上方全部原特效文件仍逐字节核对，不放宽图片或原meta摘要。
 const effectsMetaText = fs.readFileSync(effectsMetaFile, 'utf8').replace(/\r\n/g, '\n');
@@ -163,4 +268,4 @@ assert.equal(bundleEntries().filter(entry => entry.meta.userData.bundleConfigID 
     effectsMove.bundleInventory.after.remoteBundles, '拆包后的远程范围数量须与证据一致');
 const roster = read(resolveBundleFile('hero/prefabs/HeroListView.prefab'));
 assert(!roster.some(row => row._name === 'btn_permanent_skin'), '未实现皮肤商店的隐藏资源依赖不可恢复');
-console.log(`当前资源范围通过：${actualBundles.length}包/${actualPrefabs.length}Prefab/${views}独立View、原UUID、全部序列化引用与${effectsMove.snapshot.after.files}份特效文件/UUID集合摘要。实际下载和构建另验。`);
+console.log(`当前资源范围通过：${actualBundles.length}包/${actualPrefabs.length}Prefab/${views}独立View、原UUID、全部序列化引用及${effectsChanges.size}项有据特效增量；虚拟还原${effectsMove.snapshot.after.files}份原特效整树/UUID摘要。实际下载和构建另验。`);

@@ -11,6 +11,8 @@ import type { RewardArgs } from "../../features/reward/data/RewardData";
 import type { RewardNotice } from "../../features/reward/data/RewardNoticeData";
 import { RewardView } from "../../features/reward/ui/RewardView";
 import { RoleUpgradeView } from "../../features/reward/ui/RoleUpgradeView";
+import { HeroRewardView } from "../../features/reward/ui/HeroRewardView";
+import type { HeroRewardArgs } from "../../features/reward/ui/HeroRewardView";
 import { UIManager } from "../../framework/ui/UIManager";
 import { GameProtocolCodecUtils } from "../../platform/GameProtocolCodecUtils";
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
@@ -21,6 +23,7 @@ import { GameLog } from "../../core/GameLog";
 import type { BaseView } from "../../framework/ui/BaseView";
 import type { ConfirmArgs } from "../../features/common/ui/ConfirmView";
 import { RewardUtils } from "../../features/reward/utils/RewardUtils";
+import { EventDispatcher } from "../../framework/EventDispatcher";
 
 /** 本次重试确认的窗口归属；只用于关闭本绑定创建的实例，不保存账号或业务资产。 */
 interface RetryPrompt {
@@ -41,6 +44,10 @@ export class RewardBinding {
     private displayScope: object = {};
     /** 本绑定拥有的重试确认，完成或取消后清空；不接管其他业务的确认窗口。 */
     private retryPrompt: RetryPrompt | null = null;
+    /** 原反馈队列进度订阅；只在真实failed提交后询问重试，销毁解除，不用微任务顺序猜失败时机。 */
+    private readonly stopProgress: () => void;
+    /** 同一次展示失败只询问一次；显式重试解除failed或身份重置后才接收下一次失败。 */
+    private failureObserved = false;
 
     /**
      * @param account 应用唯一认证角色，只检查归属，不复制钱包或库存。
@@ -51,6 +58,15 @@ export class RewardBinding {
         private readonly onPresented?: (receiptId: string) => void,
     ) {
         this.controller.configure(args => this.showPopup(args), notice => this.showTips(notice));
+        this.stopProgress = EventDispatcher.instance.on("reward.updated", () => {
+            const failed = this.model.snapshot.phase === "failed";
+            if (failed && !this.failureObserved) {
+                this.failureObserved = true;
+                this.offerRetry(this.displayScope);
+            } else if (!failed) {
+                this.failureObserved = false;
+            }
+        });
         this.controller.initialize();
     }
 
@@ -168,6 +184,7 @@ export class RewardBinding {
         this.controller.resetSession();
         UIManager.instance.closeById("reward");
         UIManager.instance.closeById("role-upgrade");
+        UIManager.instance.closeById("hero-reward");
         this.closeRetryPrompt();
     }
 
@@ -180,13 +197,35 @@ export class RewardBinding {
         }
     }
 
-    /** 同队列按真实升级信息选择通用升级或奖励窗；关闭才推进，失败不能伪装为已显示。 */
-    private showPopup(args: RewardArgs): Promise<void> {
+    /** 同一原队列按旧高星优先展示真实新英雄，再展示其余奖励；最后一部分真实打开才报告整批已显示。 */
+    private async showPopup(args: RewardArgs): Promise<void> {
         const scope = this.displayScope;
+        const heroes = [...(args.heroes || [])].sort((left, right) => right.star - left.star);
+        const heroTypes = new Set(heroes.map(hero => hero.templateId));
+        const items = args.items.filter(item => !heroTypes.has(item.itemId));
+        const hasOtherRewards = items.some(item => item.credited > 0) || !!args.roleUpgrade;
+        for (let index = 0; index < heroes.length; index++) {
+            if (!this.isCurrentScope(scope)) {
+                return;
+            }
+            await this.showWindow(HeroRewardView, {
+                receiptId: args.receiptId,
+                hero: heroes[index],
+            }, scope, index === heroes.length - 1 && !hasOtherRewards);
+        }
+        if (this.isCurrentScope(scope) && (!heroes.length || hasOtherRewards)) {
+            await this.showWindow(args.roleUpgrade ? RoleUpgradeView : RewardView,
+                { ...args, heroes: [], items }, scope, true);
+        }
+    }
+
+    /** 等待一个静态通用窗口真实打开并关闭；任一准备失败保持原队首，换号不继续下一段。 */
+    private showWindow(ctor: typeof HeroRewardView | typeof RewardView | typeof RoleUpgradeView,
+        args: RewardArgs | HeroRewardArgs, scope: object, last: boolean): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             let opened = false;
             let closed = false;
-            void UIManager.instance.open<RewardArgs>(args.roleUpgrade ? RoleUpgradeView : RewardView, {
+            void UIManager.instance.open<RewardArgs | HeroRewardArgs>(ctor, {
                 ...args,
                 onClosed: () => {
                     closed = true;
@@ -201,15 +240,13 @@ export class RewardBinding {
                     return;
                 }
                 opened = true;
-                this.notifyPresented(args.receiptId);
+                if (last) {
+                    this.notifyPresented(args.receiptId);
+                }
                 if (closed) {
                     resolve();
                 }
-            }, error => {
-                reject(error);
-                // 先让Controller保留failed队首，再询问是否重试；关闭清理不能把准备失败当成成功。
-                void Promise.resolve().then(() => this.offerRetry(scope));
-            });
+            }, reject);
         });
     }
 
@@ -304,9 +341,11 @@ export class RewardBinding {
         }
         this.disposed = true;
         this.displayScope = {};
+        this.stopProgress();
         this.controller.dispose();
         UIManager.instance.closeById("reward");
         UIManager.instance.closeById("role-upgrade");
+        UIManager.instance.closeById("hero-reward");
         this.closeRetryPrompt();
     }
 }

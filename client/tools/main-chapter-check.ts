@@ -69,7 +69,7 @@ async function checkSettlementActualAndBonusFeedback(): Promise<void> {
         wallet: { goldBefore: 8, goldAfter: 4008, diamondsBefore: 5, diamondsAfter: 15 },
         experience: [{ beforeLevel: 1, beforeExperience: 0, requested: 200, accepted: 200,
             ignored: 0, level: 2, experience: 80, diamonds: 10 }],
-        stacks: [], tavern: [], timedItems: [], spirits: { schemaVersion: 1, items: [] },
+        stacks: [], tavern: [], timedItems: [], spirits: { schemaVersion: 1, items: [] }, heroes: [],
     };
     const settled = { action: "SETTLED", battleId,
         state: { maxCleared: 1, pendingBattleId: null, assetRevision: 4 }, rewards, experience, actual };
@@ -577,7 +577,10 @@ function checkChapterNextTargetPresentation(): void {
     const divider = objects.find((row: any) => row.__type__ === "cc.Node" && row._name === "RewardDivider");
     assert.equal(divider._lpos.y, 282, "下方本次获得区域保留旧位置，不拿来充当下一目标");
     const rewards = objects.find((row: any) => row.__type__ === "cc.Node" && row._name === "MainVictoryRewards");
-    assert.deepEqual(rewards._lpos, { __type__: "cc.Vec3", x: 320, y: 130, z: 0 });
+    const rewardSize = rewards._components.map((ref: any) => objects[ref.__id__])
+        .find((row: any) => row.__type__ === "cc.UITransform");
+    const rewardTop = rewards._lpos.y + (1 - rewardSize._anchorPoint.y) * rewardSize._contentSize.height;
+    assert(rewardTop < divider._lpos.y, "奖励顶边应在本次获得标题下方，不能混用顶锚与居中坐标");
     const report = objects.find((row: any) => row.__type__ === "cc.Node" && row._name === "ReportButton");
     const reportSize = report._components.map((ref: any) => objects[ref.__id__])
         .find((row: any) => row.__type__ === "cc.UITransform");

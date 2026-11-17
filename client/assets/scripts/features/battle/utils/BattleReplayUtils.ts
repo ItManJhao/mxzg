@@ -206,7 +206,8 @@ export class BattleReplayUtils {
             throw new Error("挂机战报名册不符");
         }
         const steps: BattleReplayStep[] = [];
-        const buffs = new Map<string, number>();
+        // 记录真实实例施加时点和原期限；一次属性仍有实例，下一回合过期不能凭配置ID猜测。
+        const buffs = new Map<string, { configId: number; appliedRound: number; expiresAtRound: number }>();
         let round = 0;
         for (const phase of report.phases) {
             if (phase.sourceId === 0) {
@@ -235,7 +236,10 @@ export class BattleReplayUtils {
                 if (isDamage || isRecovery) this.required(event, ["actualHpChange", "reportedHpChange", "dead"]);
                 if (isBuff) {
                     this.required(event, ["buffInstanceId", "expiresAtRound", "buffValue"]);
-                    if (!Number.isInteger(event.expiresAtRound) || event.expiresAtRound < round) {
+                    const previousRoundExpiry = event.kind === "buff.remove" && event.removalReason === "expire"
+                        && phase.sourceId === 0 && event.expiresAtRound === round - 1;
+                    if (!Number.isInteger(event.expiresAtRound) || event.expiresAtRound <= 0
+                        || (event.expiresAtRound < round && !previousRoundExpiry)) {
                         throw new Error("Buff期限无效");
                     }
                 }
@@ -243,7 +247,7 @@ export class BattleReplayUtils {
                     this.required(event, ["removalReason"]);
                     // 仅接纳当前服务端真实产出的原因；补齐既有链，不以任意字符串放开未知效果。
                     if (["expire", "death", "replace", "dispel", "trigger-limit", "shield-depleted",
-                        "break-ice", "pure-heart", "counter-crit"].indexOf(event.removalReason) < 0) {
+                        "break-ice", "pure-heart", "counter-crit", "wake"].indexOf(event.removalReason) < 0) {
                         throw new Error("Buff移除原因无效");
                     }
                     if (event.removalReason === "shield-depleted"
@@ -291,12 +295,17 @@ export class BattleReplayUtils {
                     }
                     case "buff.upsert": {
                         const key = event.targetId + ":" + this.instance(event.buffInstanceId);
-                        buffs.set(key, event.configId);
+                        buffs.set(key, { configId: event.configId, appliedRound: round, expiresAtRound: event.expiresAtRound });
                         break;
                     }
                     case "buff.remove": {
                         const key = event.targetId + ":" + this.instance(event.buffInstanceId);
-                        if (buffs.get(key) !== event.configId) throw new Error("移除了不存在的Buff");
+                        const previous = buffs.get(key);
+                        if (!previous || previous.configId !== event.configId) throw new Error("移除了不存在的Buff");
+                        if (previous.expiresAtRound !== event.expiresAtRound
+                            || (event.expiresAtRound < round && previous.appliedRound !== event.expiresAtRound)) {
+                            throw new Error("Buff移除期限与原实例不一致");
+                        }
                         buffs.delete(key);
                         break;
                     }

@@ -3,7 +3,7 @@
  * 当前主线使用宫殿远景、地板和紧凑血条；静态布局由预制体维护。
  * 只装配显示与事件，不发协议。缺失必要挂点时拒绝打开，由调用边界报告错误。
  */
-import { Node, Sprite, UITransform } from "cc";
+import { Node, Sprite, UITransform, Widget } from "cc";
 import { PrefabLoader } from "../../../framework/assets/PrefabLoader";
 import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { BATTLE_PREFAB_PATH, BattlePrefabLayoutUtils, BattleSlotSide, BattleVfxRole, HP_FILL_HEIGHT } from "./BattlePrefabLayoutUtils";
@@ -27,6 +27,30 @@ export class BattlePageUtils {
         catch (err) {
             root.destroy();
             throw err;
+        }
+    }
+
+    /**
+     * 将正式主线的对阵栏与倍数栏对齐到底部挂点，避免长屏上随战场中心漂移。
+     * 挂点偏移和导航留白由Prefab的Widget保存；target是本战场的可见区域祖先。
+     * 页面等比缩放后先更新Widget，再换算回HUD局部坐标，不移动角色、血条或技能特效。
+     */
+    public static alignChapterInfo(shell: BattlePrefabShell, target: Node): void {
+        const hud = PrefabLoader.requireNode(shell.root, "LayerHud");
+        const dock = PrefabLoader.requireNode(hud, "ChapterInfoDock");
+        const widget = dock.getComponent(Widget);
+        const transform = hud.getComponent(UITransform);
+        if (!widget || !transform) {
+            throw new Error("主线战斗信息栏底部适配绑定缺失");
+        }
+        widget.target = target;
+        widget.updateAlignment();
+        for (const [viewName, anchorName] of [
+            ["MatchInfo", "ChapterMatchInfoAnchor"],
+            ["TopBar", "ChapterTopBarAnchor"],
+        ]) {
+            const anchor = PrefabLoader.requireNode(dock, anchorName);
+            PrefabLoader.requireNode(hud, viewName).setPosition(transform.convertToNodeSpaceAR(anchor.worldPosition));
         }
     }
 

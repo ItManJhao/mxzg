@@ -11210,10 +11210,7 @@
         "__id__": 1127
       },
       {
-        "__id__": 1155
-      },
-      {
-        "__id__": 1156
+        "__id__": 1166
       }
     ],
     "_active": true,
@@ -32511,7 +32508,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
-      "__id__": 460
+      "__id__": 1166
     },
     "_children": [],
     "_active": true,
@@ -32520,7 +32517,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": -320,
-      "y": 180,
+      "y": 264.5,
       "z": 0
     },
     "_lrot": {
@@ -32552,7 +32549,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
-      "__id__": 460
+      "__id__": 1166
     },
     "_children": [],
     "_active": true,
@@ -32561,7 +32558,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 285,
+      "y": 369.5,
       "z": 0
     },
     "_lrot": {
@@ -32980,5 +32977,112 @@
       "z": 0
     },
     "_id": ""
+  },
+  {
+    "__type__": "cc.Node",
+    "_name": "ChapterInfoDock",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "_parent": {
+      "__id__": 460
+    },
+    "_children": [
+      {
+        "__id__": 1155
+      },
+      {
+        "__id__": 1156
+      }
+    ],
+    "_active": true,
+    "_components": [
+      {
+        "__id__": 1167
+      },
+      {
+        "__id__": 1168
+      }
+    ],
+    "_prefab": null,
+    "_lpos": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": -490,
+      "z": 0
+    },
+    "_lrot": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "_lscale": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_mobility": 0,
+    "_layer": 33554432,
+    "_euler": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.UITransform",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1166
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 640,
+      "height": 0
+    },
+    "_anchorPoint": {
+      "__type__": "cc.Vec2",
+      "x": 0.5,
+      "y": 0
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.Widget",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "_enabled": true,
+    "_alignFlags": 20,
+    "_target": null,
+    "_left": 0,
+    "_right": 0,
+    "_top": 0,
+    "_bottom": 150,
+    "_horizontalCenter": 0,
+    "_verticalCenter": 0,
+    "_isAbsLeft": true,
+    "_isAbsRight": true,
+    "_isAbsTop": true,
+    "_isAbsBottom": true,
+    "_isAbsHorizontalCenter": true,
+    "_isAbsVerticalCenter": true,
+    "_originalWidth": 0,
+    "_originalHeight": 0,
+    "_alignMode": 2,
+    "_lockFlags": 0,
+    "_id": "",
+    "node": {
+      "__id__": 1166
+    },
+    "__prefab": null
   }
 ]

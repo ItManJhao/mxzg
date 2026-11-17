@@ -2,7 +2,9 @@
 
 更新：2026-11-17。此页只维护未解决项及已关闭问题索引；过程见[历史归档](validation/main-chapter-history-20261109.md)。技能依据旧源码、配置和资源，正式服主要对照界面；非阻塞差异可记录后推进，不能据此跳过上线前复验。
 
-当前按新授权连续开放1～9关，local正常挂机领取启用，全局新领取仍默认false；历史证据中的3关/领取关闭是当时状态。本批独立角色经真实按钮完成一次领取、第2关胜利结算、正式出场及缓存切页的限定复验，见[本批检查](validation/chapter-player-entry-review-20261117.json)与[本机记录](validation/chapter-player-entry-preview-20261117.json)；不代表1～9逐关或自然成长验收。
+当前按新授权连续开放1～20关，15关独立里程碑领奖已接入，local正常挂机领取启用，全局新领取仍默认false；历史证据中的3关/领取关闭是当时状态。前批独立角色经真实按钮完成一次领取、第2关胜利结算、当时正式出场及缓存切页的限定复验，见[本批检查](validation/chapter-player-entry-review-20261117.json)与[本机记录](validation/chapter-player-entry-preview-20261117.json)；不代表1～9逐关或自然成长验收。
+
+本批正式渐入改为FX真实第9/15帧的完整等待结束后开始，0.45秒只是名义值，不用独立墙钟提前触发，保持双方FX/fade并行且等待两路全完成后才露HP和开战；同时修正奖励顶锚/内容偏移与VS、倍数底部Dock。相关专项已通过（含每帧额外0.02秒调度时0.63秒才fade、九阶段取消及gate清理）；本批6项专项和最终strict退出0；新gate已编译并用原真实关2PB只读重放，确认前9完整帧后才fade、FX与半透明模型重叠、两路结束才露HP，七项观察断言通过。最新7项奖励与两种Creator机型选项下VS/Panel间距8的静帧也已核对，期间没有再challenge/claim。运行观察与暂停静帧分开，不能外推全关卡、自然成长、发布或真机；先不提交推送。前批FX结束后淡入证据保留为历史，不作为本批画面结论；跟踪见[本批显示调整记录](validation/battle-display-adjustment-review-20261117.json)。
 
 ## 当前未解决
 
@@ -16,8 +18,8 @@
 | BFX-008 | 旧type8到达后按英雄Y调整绘制深度，回程前恢复；当前双方槽组分层，尚未恢复跨槽组的统一Y深度 | 场地比例、敌方X镜像及特效世界定位已按旧接入，分组遮挡差异保留待审；后续核对多单位交叉遮挡后处理，不以本批坐标正确或单场截图宣布全部绘制顺序等价。见[旧层级依据](validation/chapter-stage9-legacy-audit-20261117.json) |
 | BUI-001 | 历史名称、头像、高星及胜利骨骼已接入；大型进化翅膀左裁边仍待验 | 胜利挂点已按旧容器锚点修正至607.2，缩放1.065；不再重复补横向偏移，见[挂点记录](validation/victory-anchor-20261109.json) |
 | BUI-002 | 手机360×840、393×852、360×720有批次画面证据；平板仅几何检查，真机及密集气泡避让未完整验证 | 不要求横屏；不能把尺寸切换截图当多次独立发奖 |
-| BUI-003 | 升级附赠、等级/下一功能预告及里程碑下一目标已接通；独立3008领取链尚未恢复，不只是已有服务关了开关 | 真正3008仍需资格、幂等回执、发奖、已领集合与统一版本完整事务；当前1～9范围未到首项15关，不把它混入普通actual。见[里程碑记录](validation/chapter-milestone-review-20261116.json)及[剩余计划](restructuring-plan.md#主线剩余缺口) |
-| BCHAPTER-001 | 完整850目录已接通，按新授权连续开放1～9；前批静态闭合1～9、14、15、19、20共13关，其他837关有阻塞；下一处为第10关3031101、4011101、4010100，挂机投影仍仅20关 | 每批通用链接通后重扫并同步评估连续范围，不人为固定3关，也不跳过缺口开离散关卡。前批572条资源、41未解析声明不代表全资源齐备，旧报告保留原摘要；见[审计汇总](validation/main-chapter-dependencies-20261117-stage9.txt)与[前批检查](validation/chapter-stage9-review-20261117.json) |
+| BUI-003 | 通用升级、里程碑目标与15关独立领取链已接通；通用HeroRewardView本机渲染已完成限定复验 | V28真实回执、type7英雄发放及已领集合同事务；发布/真机仍单列，不拿源码检查代替实际界面结论 |
+| BCHAPTER-001 | 默认连续开放1～20，最新静态34/850闭合、816阻塞；挂机收益投影已完整850，原map背景已接线 | 后续从21关真实依赖继续，不按离散结果跳关；769条资源记录、35未解析声明与已解析缺图0是不同口径，见[最新扫描](validation/main-chapter-dependencies-20261117-stage20.txt) |
 | BCHAPTER-002 | 第551～850关奖励表重复旧三维定位，而原敌表note对应另300组敌人；旧运行按三维复用前10组，1800非空敌行未被关联 | 保留旧实际定位，目录不删除、不猜note换怪；扩展到此段前确认源配置意图。报告同时保留运行关联和未关联原行证据 |
 | IDLE-DEP-004 | 原完整输入、纯计算、活动维护、V24/V25及客户端双确认已接入；local-1/2确认2026-11-17上海零点并维护，044未发布；本批local真实按钮领取已限定通过 | 本机运行缺口已补，基础全局仍false；其他环境资料、044实际发布、目标数据库/平台仍分别准备，不回收活动道具或开放兑换，世界合服范围另议。满额取消本批未在浏览器重做；复用[原领取链](main-chapter-idle-settlement.md)不另造服务 |
 | IDLE-CTRL-005 | 旧活动非零星期限制存在周日循环疑点 | 当前016/034均为0；新初始化遇非0明确拒绝，不猜修复。真实配置未受影响；后续配置扩大前另核对 |
@@ -28,19 +30,21 @@
 
 ## 覆盖限制
 
-当前直接动作扫描113模板中64个可解析、49个有缺口，本次结果及摘要见[第9关检查](validation/chapter-stage9-review-20261117.json)；原[51个历史快照](validation/battle-presentation-coverage-20261109.json)、[前批55个结果](validation/chapter-stage4-review-20261117.json)和[第5关59个结果](validation/chapter-stage5-review-20261117.json)保留，不覆盖成新结果。统一battle-presentation检查重新解析所有模板并写client/temp当前报告，不把“新支持增加”误判为历史快照漂移失败。此范围仅初始星级/强化0，不包含全部旧动作覆盖、所有进化、被动触发链、声音与画面；1051102及更高等级未沿本批一级覆盖推定完整。
+当前直接动作扫描113模板中69个可解析、44个有缺口，本次摘要见[本批检查](validation/chapter-stage10-20-review-20261117.json)；[第9关64个结果](validation/chapter-stage9-review-20261117.json)、原[51个历史快照](validation/battle-presentation-coverage-20261109.json)、[前批55个结果](validation/chapter-stage4-review-20261117.json)和[第5关59个结果](validation/chapter-stage5-review-20261117.json)保留，不覆盖成新结果。统一battle-presentation检查重新解析所有模板并写client/temp当前报告，不把“新支持增加”误判为历史快照漂移失败。此范围仅初始星级/强化0，不包含全部旧动作覆盖、所有进化、被动触发链、声音与画面；1051102及更高等级未沿本批一级覆盖推定完整。
 
 第5关的2050100旧覆盖包含空type1及真实type3，原2050300又各自产生同套特效，当前保留两次特效/音效调用、单次伤害，不能以去重为由删掉一个。新版仍保留原始声明/战报顺序，旧Java按非逻辑表现优先稳定排序；前批第4关“伤害→表现”仅说明新版已有顺序，不能当作旧服务端实际顺序的依据。两处说明和非阻塞差异见[原始源码核对](validation/chapter-stage5-legacy-audit-20261117.json)。自然播放统计、四处受控截图和一次实际异步帧失败的范围分别记录在[本机预览](validation/chapter-stage5-preview-20261117.json)，没有把暂停截图当自然播放耗时或发布包验收。
+
+本轮奖励越框已在Prefab中修正MainVictoryRewards顶锚130→260、content130→0；原7项奖励实际挑战与原参数只读窗口均核对，列表底275高于确认顶219。VS/倍数用ChapterInfoDock底部Widget（锚点264.5/369.5），Creator Nokia C2/iPhone14Pro选项均读取VS底426.5高于Panel顶418.5，间距8、未被底板遮挡；只证明这些预览尺寸，真机及其他密集排版仍归BUI-002边界。确认关闭返回与观察器/引擎/视口清理已核，过程无warn/error；完整证据见[本批显示调整](validation/battle-display-adjustment-review-20261117.json)。
 
 ## 已解决问题索引
 
 | 编号/内容 | 最新结论与证据 |
 |---|---|
-| BUI-004 正式开场先露模型/HP | 已将资源隐藏、ZDKS、双方FX并行、随后模型并行fade、最后HP/战报接通；实际第2关开场七项逐帧断言通过，真实Preview专项还覆盖四阶段取消。先FX后fade是本次用户要求，旧源码两者并行，不伪称旧时序相同。type8音效预载遗漏也已修，本场不代表全部技能音效重播。见[本批记录](validation/chapter-player-entry-preview-20261117.json)与[旧依据](validation/chapter-opening-legacy-audit-20261117.json) |
+| BUI-004 正式开场先露模型/HP | 资源先准备、模型先隐藏的修复保留；最新正式时序为各自真实第9完整帧（9/15=60%）后开始并行1秒fade（名义.45秒，调度慢时不抢跑），FX与全部fade结束后才HP/战报，idleEncounter不改。额外帧调度回归、九阶段取消/gate释放及挂机回归专项通过；最终strict退出0、6项专项与原真实PB只读重放限定通过，新gate下双方fade均对应0基frame9，FX/半透明模型重叠且HP等双路完成后才显示；不把中间独立.45秒或前批时序画面作为最新证据；前批[七项画面](validation/chapter-player-entry-preview-20261117.json)只证明当时FX结束后fade，不覆盖最新时序。旧版FX/fade从起点并发也另有[源码依据](validation/chapter-opening-legacy-audit-20261117.json)，本次60%是新授权；type8音效预载已修，不据此称全部技能声音已验。见[当前显示调整](validation/battle-display-adjustment-review-20261117.json) |
 | IDLE-CLOCK-008 计时与正常按钮接线 | 首次挑战前now-60、失败/胜利不重置及65秒客户端/60秒服务端门槛已具备，本批local沿原按钮完成494秒真实领取，一张持久回执、原收取及通用7项奖励。临界秒与满额取消仍按专项边界，本批未在浏览器重做；见[本批记录](validation/chapter-player-entry-preview-20261117.json)及[原事务](validation/main-chapter-idle-claim-review-20261114.json) |
 | BFX-007 投射不应延长角色完成 | type5帧/飞行已复用原战场独立持有，角色按自身时序完成，取消沿原epoch与等待清理；本机真实1050100飞行及中途关闭有限定证据。其名义角色和投射结束恰好都为0.8秒，不声称旧代码在这个样本必然造成了可见延长，也不据此宣布所有投射美术均已等价；见[第9关记录](validation/chapter-stage9-preview-20261117.json)及[旧依据](validation/chapter-stage9-legacy-audit-20261117.json) |
 | BPROTO-001 护盾耗尽战报被拒绝及移除时序 | 已接通既有后端真实PB、前端九原因严格校验、同阶段同目标命中配对及实例播放；服务端仍先记耗尽再记damage，显示等待对应命中完成后移除，不改协议或数值。31项后端相关检查及两份真实PB互通通过，本机只读样本的输出/承伤分别1300/1500、300/400，原统计入口与关页取消已复验。仅在开发独立入口播放，不连账号、不发奖；首个存活盾为截图可控等待、后续自然播放，致死样本无门闩。见[本批检查](validation/shield-depleted-review-20261117.json)、[本机记录](validation/shield-depleted-preview-20261117.json)及[通信边界](network-contract.md#护盾耗尽移除贯通2026-11-17)，不据此关闭BRULE-002或宣称所有技能、正式服、真机和发布包均通过 |
-| 第三关按钮状态混淆 | 11-14三关范围下已区分maxCleared=2待挑战和=3封顶，并补同步/处理中/战斗中及恢复优先守卫，见[当时证据](validation/gm-bag-battle-review-20261114.json)。本批范围已改为连续1～9，仍读取服务端challengeLimit，不沿用该历史封顶值 |
+| 第三关按钮状态混淆 | 11-14三关范围下已区分maxCleared=2待挑战和=3封顶，并补同步/处理中/战斗中及恢复优先守卫，见[当时证据](validation/gm-bag-battle-review-20261114.json)。本批范围已改为连续1～20，仍读取服务端challengeLimit，不沿用该历史封顶值 |
 | IDLE-GRANT-006 最小精灵实例缺失 | 用户授权的2000002真实生成/V23持久/统一快照/背包只读已接入，普通库存及GM阻止假堆叠。88项Java、32项配置及浏览器见[精灵记录](validation/spirit-instance-review-20261113.json)；共享完整发奖与新领取仍归IDLE-DEP-004 |
 | IDLE-SYNC-007 嵌套事务漏同步 | 已独立H2复现并修正自定义资源suspend/resume及按身份清理，通知失败隔离；9项同步/75项关联/最后16项同步钱包复验见[证据](validation/idle-settlement-prerequisites-review-20261113.json)。不代表新领取事务已验证 |
 | IDLE-DEP-001 旧世界等级接线 | 实际注入WorldLevelManager，原断点是变量名误判；新版已确认各区服独立统计，合服另议。见[11-13复核](validation/idle-input-review-20261113.json) |

@@ -15,7 +15,7 @@ export class UIOpenLogUtils {
         return name.replace(/\.prefab$/, "");
     }
 
-    /** 记录一次成功打开；耗时截至 whenReady 兑现，不包含后续切页动画或按需贴图。 */
+    /** 记录一次成功打开；耗时截至 whenReady 兑现，不包含后续按需贴图完成。 */
     public static logViewReady(viewName: string, prefabPath: string, started: number, tag = "UIManager"): void {
         const prefab = UIOpenLogUtils.prefabBaseName(prefabPath);
         const elapsedMs = Math.max(0, Math.round(GameLog.monoNow() - started));

@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "reason": "旧PNG白RGB低Alpha经CCImage上传预乘，旧Spine默认PMA且screen固定ONE；Creator保留straight PNG，原false暗罩、单独true过亮均非旧效果。",
+  "fix": "仅两路prophet-tree命名特效显式legacyPmaTexture:true；采样RGB乘纹理Alpha一次，顶点PMA保持原slot/节点Alpha，不改变slot blend或源PNG。",
+  "lifetime": "EffectAsset沿节点原资源池，Material与转换骨架归BattleSpineService.runtimePacks原条目，最后owner销毁一并释放；默认英雄和其它named不变。",
+  "files": [
+    {
+      "path": "client/assets/bundles/resources/spine/prophet-tree-effect-1.png",
+      "legacyPath": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/prophet-tree-effect-1.png",
+      "sha256": "14eb3717aba7c4af53bf8691f90d20d798cd9036664e52e8f160ad8b1d3eac31",
+      "imageUuid": "51c09076-86e6-40a2-9984-59cc19e3437c"
+    },
+    {
+      "path": "client/assets/bundles/resources/spine/prophet-tree-effect-2.png",
+      "legacyPath": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/res/hd/spine/prophet-tree-effect-2.png",
+      "sha256": "53e609569af528e908a398869436b9a87f0737d2a072258dc2a7510f9c6518d2",
+      "imageUuid": "f6ecc2f3-1c6a-4db4-b3c8-73b02c21112a"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/legacy-spine-pma.effect",
+      "sha256": "5be4ae024f5a393d7374ef965078d29b990910b427043e7280c732cd6aaa9761"
+    },
+    {
+      "path": "client/assets/bundles/resources/effects/legacy-spine-pma.effect.meta",
+      "sha256": "7136da7f127a275f56d2d14bdb7e832f805c0db50ded8d02a0592522ec8c5308",
+      "uuid": "6ee4495f-5cc0-4057-be48-b4528f334979"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/frameworks/cocos2d-x/cocos/platform/CCImage.cpp",
+      "sha256": "e2b939c8934d03bfc0abc68ee99266848158e5ad0fc762bfbfa1e8cdaae130f4"
+    },
+    {
+      "path": "G:/work/FsGame/Demo/mj/program/client/cocos_mxzg/client/idle/frameworks/cocos2d-x/cocos/editor-support/spine/SkeletonRenderer.cpp",
+      "sha256": "66ece8ffda6876d8134e0bed9f5cdebbdda86c5da67c83abf10852498f7029dd"
+    },
+    {
+      "path": "C:/ProgramData/cocos/editors/Creator/3.8.8/resources/resources/3d/engine/cocos/spine/assembler/simple.ts",
+      "sha256": "287bc40ca0db02aa775d6526e06db962aa1009c143d7db364a89b49813982ef7"
+    }
+  ],
+  "slots": [
+    {
+      "name": "prophet-tree-effect-1",
+      "values": [
+        {
+          "name": "1",
+          "blend": "screen"
+        },
+        {
+          "name": "2",
+          "blend": "screen"
+        },
+        {
+          "name": "3",
+          "blend": "screen"
+        },
+        {
+          "name": "4",
+          "blend": "screen"
+        }
+      ]
+    },
+    {
+      "name": "prophet-tree-effect-2",
+      "values": [
+        {
+          "name": "glow011",
+          "blend": "additive"
+        },
+        {
+          "name": "glow11",
+          "blend": "additive"
+        },
+        {
+          "name": "glow12",
+          "blend": "additive"
+        },
+        {
+          "name": "glow003",
+          "blend": "additive"
+        },
+        {
+          "name": "glow008",
+          "blend": "screen"
+        },
+        {
+          "name": "glow8",
+          "blend": "screen"
+        },
+        {
+          "name": "glow9",
+          "blend": "screen"
+        },
+        {
+          "name": "glow014",
+          "blend": "additive"
+        }
+      ]
+    }
+  ],
+  "limitation": "数值/生命周期专项不能替代实际Creator材质编译与画面对照；真实画面由根代理随后复验。"
+}

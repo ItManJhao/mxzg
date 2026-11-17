@@ -11,6 +11,20 @@ export interface RewardItem {
     readonly credited: number;
 }
 
+/** 同一次可信发奖真实创建的英雄；只供获得展示，不覆盖当前名册或按模板猜实例。 */
+export interface HeroGrantItem {
+    /** 原事务创建并冻结的持久字符串实例ID。 */
+    readonly instanceId: string;
+    /** 同源英雄配置ID，与items中的实际数量逐项对应。 */
+    readonly templateId: number;
+    /** 发放时的真实初始等级，后续升级不改变原回执。 */
+    readonly level: number;
+    /** 模板原星级，不从当前名册反推。 */
+    readonly star: number;
+    /** 发放时强化阶数，允许0。 */
+    readonly stage: number;
+}
+
 /** 原发奖事务的真实等级变化，仅供升级反馈，不写角色Model或开启新功能。 */
 export interface RoleUpgradeData {
     /** 本次经验链开始前的角色等级，不能从当前等级倒推。 */
@@ -41,6 +55,8 @@ export interface RewardExperienceGain {
 
 /** 打开一次历史奖励展示，同编号重复打开不重新播放当前窗口的音效和动画。 */
 export interface RewardArgs {
+    /** 本次新英雄实例，复用原队列身份；旧无英雄反馈缺省为空。 */
+    readonly heroes?: readonly HeroGrantItem[];
     /** 已确认业务成功结果的真实UUID，只用于当前窗口重复展示判断。 */
     readonly receiptId: string;
     /** 服务端通知或真实回执中已合并的实际到账与附赠；不传理论量或背包当前持有数。 */

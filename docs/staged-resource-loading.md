@@ -91,7 +91,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File client/tools/build-remak
 
 隔离目录client/temp/remake-h5-project/client保持Creator工程结构，兄弟tools/config保留构建扩展所需相对路径；复制当前源资源、脚本、扩展、依赖和工具，不复制旧profiles覆盖统一选项。仅完成Creator构建和产物检查后才复制到client/build/remake-h5，旧验收目录不在准备阶段清空。日志在client/temp/remake-h5-build，prepared.json记录本次真实输入；产物mxzg-build.json记录源摘要、配置包和资源服务器，不能仅凭旧目录存在判定本次已成功。
 
-当前扩展应打印`config-package-artifact-v1 v1.8.0`及onBeforeBuild、onBeforeCompressSettings、onAfterBuild实际身份。稳定hooks.js每次重读build-hooks.cjs及源目录定位工具；before只读核验配置包、源表过滤与生成解码器，过期即拒绝，不在工作进程内生成尚未导入资源。after对所有Bundle执行配置包产物检查，再核对bootstrap与旧原图清理。包版本号或静态检查通过不能证明真实钩子执行，最终须核对本轮日志与实际输出；1.7.0仅配置前置核验以及更早bootstrap-preload-v1结论均只作历史，见[旧证据](validation/bundles-auto-build-20261111.json)。
+当前扩展应打印`config-package-artifact-v1 v1.8.1`及onBeforeBuild、onBeforeCompressSettings、onAfterBuild实际身份。稳定hooks.js每次重读build-hooks.cjs及源目录定位工具；before只读核验配置包、源表过滤与生成解码器，过期即拒绝，不在工作进程内生成尚未导入资源。after对所有Bundle执行配置包产物检查，再核对bootstrap与旧原图清理。包版本号或静态检查通过不能证明真实钩子执行，最终须核对本轮日志与实际输出；1.7.0仅配置前置核验以及更早bootstrap-preload-v1结论均只作历史，见[旧证据](validation/bundles-auto-build-20261111.json)。
 
 手动Creator任务继续沿用相同选项。首次使用新增固定钩子入口需完整退出Creator并重新打开工程；扩展重载可能保留旧构建工作进程。手动任务与隔离CLI都运行同一扩展，不能用未带扩展的旧隔离输出替代当前验收。
 
@@ -110,7 +110,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File client/tools/build-remak
 
 ## 自动图集与旧删除扩展
 
-图集继续构建；所有源图迁入Bundle后具有动态加载路径，config/ui-atlas-dedupe.json的删除名单为空。当前UI资源构建检查1.8.0的旧原图清理应报告0项，不再按历史43项删图。配置散表使用构建前的官方Bundle过滤，不进入这份删图名单；构建体积仍需检查，不以合图或过滤规则存在等同于实际产物已去重。
+图集继续构建；所有源图迁入Bundle后具有动态加载路径，config/ui-atlas-dedupe.json的删除名单为空。当前UI资源构建检查1.8.1的旧原图清理应报告0项，不再按历史43项删图。配置散表使用构建前的官方Bundle过滤，不进入这份删图名单；构建体积仍需检查，不以合图或过滤规则存在等同于实际产物已去重。
 
 ## 人工维护入口与缓存边界
 

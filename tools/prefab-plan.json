@@ -54,6 +54,7 @@
         "BagItemView",
         "CommonPanel1",
         "ConfirmView",
+        "HeroRewardView",
         "RewardView",
         "RoleUpgradeView"
       ]

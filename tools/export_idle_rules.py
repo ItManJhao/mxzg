@@ -1,4 +1,4 @@
-"""生成服务端挂机规则及三活动掉落投影；默认检查，--write更新，不开放领取或活动入口。
+"""生成全主线目录的挂机规则及三活动掉落投影；默认检查，--write更新，不改变入口开关。
 
 基础规则继续来自现用JSON；活动定向读取掉落与循环控制字段，包括未标记的gain_chance。
 两份输出独立版本化，不将服务端未标记列恢复到客户端，不修改原始XLSX或现有基础规则格式。
@@ -21,8 +21,36 @@ ACTIVITY_CONTROL_SOURCES = ((16, 'promotiondragonmarkdrops'), (34, 'promotionpve
 ACTIVITY_OUTPUT = ROOT / 'backend/src/main/resources/gameplay/idle-activities.json'
 
 
+def project_stages(stage_rows):
+    """按全局idx投影全部难度的挂机收益，拒绝重复、断档或损坏基础奖励，不决定挑战开放范围。"""
+    stages = []
+    for row in sorted(stage_rows, key=lambda value: value['idx']):
+        stage_id = require_integer(row, 'idx', 'chapterreward', minimum=1)
+        group = require_integer(row, 'drop_group', f'chapterreward[{stage_id}]', minimum=1)
+        try:
+            rewards = json.loads(row['reward_base'])
+        except (KeyError, TypeError, json.JSONDecodeError) as error:
+            raise ValueError(f'挂机基础奖励缺失或非法：chapterreward[{stage_id}]') from error
+        if not isinstance(rewards, list) or not rewards:
+            raise ValueError(f'挂机基础奖励必须为非空列表：chapterreward[{stage_id}]')
+        base = []
+        for index, reward in enumerate(rewards):
+            if not isinstance(reward, dict):
+                raise ValueError(f'挂机基础奖励条目非法：chapterreward[{stage_id}].reward_base[{index}]')
+            location = f'chapterreward[{stage_id}].reward_base[{index}]'
+            base.append({
+                'itemId': require_integer(reward, 'item_type', location, minimum=1),
+                'quantity': require_integer(reward, 'item_num', location,
+                                            maximum=9223372036854775807),
+            })
+        stages.append({'id': stage_id, 'group': group, 'base': base})
+    if not stages or [stage['id'] for stage in stages] != list(range(1, len(stages) + 1)):
+        raise ValueError('挂机收益全局idx必须从1连续且无重复；不能按mode或前三关过滤目录')
+    return stages
+
+
 def project():
-    """提取时间、基础收益、保底和权重；沿旧cache的idx升序固定随机消费及权重区间顺序。"""
+    """提取全目录收益、保底和权重；沿旧cache的idx升序固定随机消费及权重区间顺序。"""
     def rows(name):
         """读取现有导出，不修改策划表。"""
         return json.loads((SOURCE / (name + '.json')).read_text(encoding='utf-8'))['rows']
@@ -31,10 +59,7 @@ def project():
         'frequency': 'idle_drop_frequency', 'initialSeconds': 'idle_initial_time',
         'maxSeconds': 'idle_max_time', 'resetSeconds': 'idle_drops_max_reset_time'}.items()}
     assert all(type(v) is int and v > 0 for v in result.values())
-    stages = [{'id': r['idx'], 'group': r['drop_group'], 'base': [
-        {'itemId': x['item_type'], 'quantity': x['item_num']} for x in json.loads(r['reward_base'])]}
-        for r in rows('chapterreward') if r['mode_id'] == 1 and 1 <= r['idx'] <= 20]
-    assert len(stages) == 20
+    stages = project_stages(rows('chapterreward'))
     groups = {r['group'] for r in stages}
     # 旧BaseExcelCache先按idx排序，再顺序组装触发器与权重，不能依赖JSON导出时的行序。
     trigger_rows = sorted(rows('droptrigger'), key=lambda row: row['idx'])

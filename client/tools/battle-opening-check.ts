@@ -1,16 +1,16 @@
 /**
  * 正式战斗出场时序专项：直接执行BattleReplayPreview.open，控制真实资源入口和cc动画时钟。
- * 验证加载隐藏、双边并行出场、随后渐入、血条及战报启动，以及各阶段关闭后的迟到隔离。
- * 节点/骨骼不渲染，战报执行只记录是否启动；不能替代Creator实际特效和机型验收。
+ * 验证加载隐藏、真实开始骨骼70%接双边出场、出场60%时渐入、等待两路完成后显示HP/战报，以及各阶段关闭迟到隔离。
+ * 同时执行真实持续控制显示回调，核材质、共享循环帧、隐藏实例和关页清理；不能替代Creator渲染验收。
  */
 import { strict as assert } from "node:assert";
-import { Button, Label, Node, sp, Sprite, SpriteFrame, UIOpacity, UITransform, Vec3 } from "cc";
+import { Button, director, Director, Label, Node, sp, Sprite, SpriteFrame, tween, UIOpacity, UITransform, Vec3 } from "cc";
 import { OpeningClockRuntime } from "./OpeningClockRuntime";
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { ViewportLayoutUtils } from "../assets/scripts/framework/ui/ViewportLayoutUtils";
-import { BattleReplayPlayer } from "../assets/scripts/features/battle/BattleReplayPlayer";
+import { BattleReplayPlayer, BattleReplayPresentation } from "../assets/scripts/features/battle/BattleReplayPlayer";
 import { BattlePageUtils } from "../assets/scripts/features/battle/ui/BattlePageUtils";
 import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/BattleReplayPreview";
 import { BattleSpineService } from "../assets/scripts/features/battle/ui/BattleSpineService";
@@ -23,10 +23,14 @@ function deferred(): { promise: Promise<void>; resolve(): void } {
     return { promise, resolve };
 }
 
-/** 创建具备已知挂点和恒等坐标转换的节点；不模拟真实排版或绘制。 */
+/** 创建已知挂点及恒等坐标转换；位移保留Vec3复制与对象重载，不模拟真实排版或绘制。 */
 function node(name: string, parent?: Node): Node {
     const value = new Node(name);
     (value as any).position = new Vec3();
+    value.setPosition = ((x: number | Vec3, y = 0, z = 0) => {
+        (value as any).position = typeof x === "number" ? new Vec3(x, y, z) : x.clone();
+        value.emit(Node.EventType.TRANSFORM_CHANGED);
+    }) as typeof value.setPosition;
     if (parent) {
         value.parent = parent;
     }
@@ -47,12 +51,20 @@ const units = [
 
 /** 单个用例的节点与边界替身，所有生产方法在finally恢复。 */
 class OpeningFixture {
+    /** 正式用例保留双边四单位；挂机回归只用一个我方和一个敌方，不扩大协议名册范围。 */
+    public readonly roster: typeof units;
     /** 资源门闩只拦最后一张敌方出场帧，覆盖揭开战场前的异步空档。 */
     public readonly resource = deferred();
     /** 用例根节点，销毁它触发生产Preview自己的取消与清理。 */
     public readonly parent = node("OpeningTestRoot");
     /** 真实Preview挂载的战场节点，保存生产需要的静态挂点。 */
     public readonly root = node("OpeningBattlePage", this.parent);
+    /** 手动进度用例的轨道时间；仅模拟Skeleton.getCurrent读取，不在测试中实现阈值。 */
+    public zdksTrackTime = 0;
+    /** 记录生产读取当前轨道次数，用于断言70%或关闭后已解除每帧监听。 */
+    public zdksProgressReads = 0;
+    /** 当前开始骨骼完成回调，由手动用例明确触发；取消后只能验证生产拒绝迟到继续。 */
+    public completeZdks: (() => void) | undefined;
     /** 当前资源请求路径，不参与业务决策。 */
     public readonly loaded: string[] = [];
     /** 被生产挂入的模型节点，检查其真实可见性和透明度。 */
@@ -61,8 +73,12 @@ class OpeningFixture {
     public readonly zdksStarts: number[] = [];
     /** 记录真实Preview何时调用战报入口；不在此模拟战报逻辑。 */
     public readonly playbackStarts: number[] = [];
+    /** 真实生产渐入日志出现时的时钟与当前出场图，验证渐入跟随完整帧进度而非独立墙钟。 */
+    public readonly fadeStarts: { at: number; frames: string[] }[] = [];
     /** 生产分类日志中收集的错误，防止取消被误报为播放失败。 */
     public readonly errors: string[] = [];
+    /** 由真实Preview创建的显示能力，仅用来调用生产状态显示，不复制paintBuffs规则。 */
+    public presentation: BattleReplayPresentation | null = null;
     /** 资源门闩是否阻断；用例放行后不重新阻断其他请求。 */
     private blocked: boolean;
     /** 保存被替换的边界方法，用例后按原引用恢复。 */
@@ -79,12 +95,14 @@ class OpeningFixture {
         log: GameLog.shared.classified,
     };
 
-    /** 构造静态挂点并替换外部边界；生产出场和关闭逻辑保持原实现。 */
-    public constructor(blockResource = false) {
+    /** 构造静态挂点并替换外部边界；可选择真实挂机的一对单位，出场与关闭逻辑仍用生产实现。 */
+    public constructor(blockResource = false, idleEncounter = false, selectedSteps: any[] = [], manualOpening = false) {
+        this.roster = idleEncounter ? [units[0], units[2]] : units;
         this.blocked = blockResource;
         const child = (path: string): Node => this.child(path);
         child("IdleLayout/ModelScale");
         child("IdleLayout/HpOffset");
+        child("IdleLayout/Enemy1");
         for (const side of ["ally", "enemy"]) {
             for (let index = 0; index < 8; index++) {
                 const slot = child("LayerField/" + side + "/Slot" + index);
@@ -99,13 +117,13 @@ class OpeningFixture {
             }
         }
         for (const path of ["LayerHud/MatchInfo/AllyNameLabel", "LayerHud/MatchInfo/EnemyNameLabel",
-            "LayerHud/BtnSkip/Label", "LayerHud/Log"]) {
+            "LayerHud/BtnSkip/Label", "LayerHud/Log", "LayerHud/RoundLabel"]) {
             child(path).addComponent(Label);
         }
         child("LayerHud/TopBar/BtnSpeed").addComponent(Button);
         child("LayerHud/TopBar/BtnClose");
-        child("LayerHud/ChapterMatchInfoAnchor");
-        child("LayerHud/ChapterTopBarAnchor");
+        child("LayerHud/ChapterInfoDock/ChapterMatchInfoAnchor");
+        child("LayerHud/ChapterInfoDock/ChapterTopBarAnchor");
         child("LayerHud/MatchInfo");
         child("LayerHud/BtnRetreat");
         child("LayerAppear");
@@ -115,6 +133,7 @@ class OpeningFixture {
             root: this.root,
             layerField: child("LayerField"),
             logLabel: child("LayerHud/Log"),
+            roundLabel: child("LayerHud/RoundLabel"),
             slot: (side: string, index: number) => child("LayerField/" + side + "/Slot" + index),
             hpLabel: (side: string, index: number) => child("LayerHud/HpBars/" + side + index + "/Label"),
             bindSkip: () => {},
@@ -122,8 +141,8 @@ class OpeningFixture {
             bindClose: () => {},
         };
         BattlePageUtils.mountBattlePrefab = async () => shell as any;
-        BattleReplayUtils.decode = () => [];
-        BattleReplayUtils.units = () => units as any;
+        BattleReplayUtils.decode = () => selectedSteps;
+        BattleReplayUtils.units = () => this.roster as any;
         BattleReplayUtils.names = () => ({ attacker: "测试甲", defender: "测试乙" });
         ResourceAssetsUtils.forNode = () => ({
             loadPath: async (path: string) => {
@@ -137,26 +156,50 @@ class OpeningFixture {
         }) as any;
         BattleSpineService.instance.mountBattleSpine = (slot: Node, _stem: string, _fail: () => void, options: any) => {
             const actorNode = node("Model", slot);
-            actorNode.addComponent(sp.Skeleton);
+            const skeleton = actorNode.addComponent(sp.Skeleton);
+            (skeleton as any).customMaterial = { testOriginal: true };
             this.models.push(actorNode);
             const actor = { node: actorNode, play: () => {}, gesture: () => true };
             void Promise.resolve().then(options.onReady);
             return actor as any;
         };
-        BattleSpineService.instance.mountNamedSpine = (_host, stem, _clip, options) => {
+        BattleSpineService.instance.mountNamedSpine = (host, stem, _clip, options) => {
             assert.equal(stem, "ZDKS");
-            this.zdksStarts.push(OpeningClockRuntime.now);
+            const started = OpeningClockRuntime.now;
+            this.zdksStarts.push(started);
+            const skeleton = host.addComponent(sp.Skeleton);
+            // 用一秒轨道方便边界断言；生产阈值只可由getCurrent实际trackTime得出，不能读测试时钟。
+            (skeleton as any).getCurrent = () => {
+                this.zdksProgressReads++;
+                return {
+                    animationStart: 0,
+                    animationEnd: 1,
+                    trackTime: manualOpening ? this.zdksTrackTime : OpeningClockRuntime.now - started,
+                };
+            };
+            this.completeZdks = () => options?.onComplete?.();
+            if (!manualOpening) {
+                tween(host).delay(0.7).call(() => director.emit(Director.EVENT_AFTER_UPDATE))
+                    .delay(0.3).call(() => options?.onComplete?.()).start();
+            }
             void Promise.resolve().then(() => options?.onReady?.());
         };
         ViewportLayoutUtils.bindVisibleRefresh = () => () => {};
-        const starts = this.playbackStarts;
-        BattleReplayPlayer.prototype.play = async () => {
-            starts.push(OpeningClockRuntime.now);
+        const fixture = this;
+        BattleReplayPlayer.prototype.play = async function() {
+            fixture.playbackStarts.push(OpeningClockRuntime.now);
+            fixture.presentation = (this as any).presentation;
             return false;
         };
         GameLog.shared.classified = (_layer, severity, _source, message) => {
             if (severity === "error") {
                 this.errors.push(String(message));
+            }
+            if (String(message).startsWith("opening.fade.started")) {
+                this.fadeStarts.push({
+                    at: OpeningClockRuntime.now,
+                    frames: this.effects().map(value => (value.getComponent(Sprite)!.spriteFrame as any).testPath),
+                });
             }
         };
     }
@@ -176,15 +219,15 @@ class OpeningFixture {
         this.resource.resolve();
     }
 
-    /** 调用真实正式入口，使用onCompleted隔离本专项不涉及的结算装配。 */
-    public open(): Promise<() => void> {
+    /** 调用真实正式/挂机入口，使用onCompleted隔离本专项不涉及的结算装配。 */
+    public open(idleEncounter = false): Promise<() => void> {
         return BattleReplayPreview.open(this.parent, new Uint8Array(), false, undefined,
-            undefined, undefined, true, async () => {});
+            undefined, undefined, true, async () => {}, idleEncounter);
     }
 
     /** 返回真实出场节点，仅按业务节点名定位而不读取生产源码文字。 */
     public effects(): Node[] {
-        return units.flatMap(unit => {
+        return this.roster.flatMap(unit => {
             const side = unit.faction === 1 ? "ally" : "enemy";
             const slot = this.root.getChildByPath("LayerField/" + side + "/Slot" + (unit.position - 1));
             return slot ? slot.children.filter(value => value.name.endsWith("AppearEffect") && value.isValid) : [];
@@ -193,14 +236,14 @@ class OpeningFixture {
 
     /** 返回本关真实使用的四条血条，其他空槽不计。 */
     public hpRows(): Node[] {
-        return units.map(unit => this.child("LayerHud/HpBars/"
+        return this.roster.map(unit => this.child("LayerHud/HpBars/"
             + (unit.faction === 1 ? "ally" : "enemy") + (unit.position - 1)));
     }
 
     /** 同时断言模型和血条尚未可见，父容器隐藏也属于有效隐藏。 */
     public assertHidden(): void {
         assert(this.models.every(value => !value.activeInHierarchy || value.getComponent(UIOpacity)!.opacity === 0),
-            "正式资源/出场特效期间不能先露模型");
+            "正式资源/出场特效60%前不能先露模型");
         assert(this.hpRows().every(value => !value.activeInHierarchy), "渐入结束前不能先露血条");
         assert.equal(this.playbackStarts.length, 0, "出场尚未完成不能进入战报");
     }
@@ -222,7 +265,7 @@ class OpeningFixture {
     }
 }
 
-/** 验证真实入口的资源门闩、并行双边帧、渐入与HP/战报启动顺序。 */
+/** 无调度延迟时第9完整帧对应.45秒，FX完整播完且渐入完成前均不放行HP/战报。 */
 async function checkOrdering(): Promise<void> {
     OpeningClockRuntime.reset();
     const fixture = new OpeningFixture(true);
@@ -240,7 +283,7 @@ async function checkOrdering(): Promise<void> {
         fixture.releaseResources();
         await OpeningClockRuntime.flush();
         assert.deepEqual(fixture.zdksStarts, [0]);
-        await OpeningClockRuntime.advance(2.499);
+        await OpeningClockRuntime.advance(0.699);
         fixture.assertHidden();
         assert.equal(fixture.effects().length, 0);
         await OpeningClockRuntime.advance(0.001);
@@ -248,20 +291,34 @@ async function checkOrdering(): Promise<void> {
         fixture.assertHidden();
         const paths = fixture.effects().map(value => (value.getComponent(Sprite)!.spriteFrame as any).testPath);
         assert(paths.some(path => path.includes("appear-left_0/")) && paths.some(path => path.includes("appear-right_0/")));
-        await OpeningClockRuntime.advance(0.749);
+        await OpeningClockRuntime.advance(0.449);
         fixture.assertHidden();
+        assert.equal(fixture.effects().length, 4);
+        await OpeningClockRuntime.advance(0.001);
+        fixture.assertHidden();
+        assert.equal(fixture.fadeStarts.length, 4);
+        assert(fixture.fadeStarts.every(value => Math.abs(value.at - 1.15) < 1e-6));
+        await OpeningClockRuntime.advance(0.001);
+        assert(fixture.models.every(value => Math.abs(value.getComponent(UIOpacity)!.opacity - 0.255) < 1e-6),
+            ".45秒触发后1毫秒应精确推进1秒渐入的千分之一，不能等FX结束或按单位串行");
+        assert.equal(fixture.effects().length, 4, "模型渐入开始时双方FX仍在播放");
+        assert(fixture.hpRows().every(value => !value.activeInHierarchy));
+        assert.equal(fixture.playbackStarts.length, 0);
+        await OpeningClockRuntime.advance(0.298);
         assert.equal(fixture.effects().length, 4, "最后一帧应保留自身0.05秒，不提前删除");
         await OpeningClockRuntime.advance(0.001);
-        assert.equal(fixture.effects().length, 0, "两边出场帧都结束后才进入渐入");
-        fixture.assertHidden();
-        await OpeningClockRuntime.advance(0.5);
+        assert.equal(fixture.effects().length, 0, "两边FX完整播放.75秒后移除，不延长或裁帧");
         assert(fixture.models.every(value => {
             const opacity = value.getComponent(UIOpacity)!.opacity;
             return opacity > 0 && opacity < 255;
-        }), "所有模型应同时处于1秒渐入中途");
+        }), "FX结束时所有模型仍处于从60%时点开始的渐入过程");
         assert(fixture.hpRows().every(value => !value.activeInHierarchy));
         assert.equal(fixture.playbackStarts.length, 0);
-        await OpeningClockRuntime.advance(0.5);
+        await OpeningClockRuntime.advance(0.699);
+        assert(fixture.models.every(value => value.getComponent(UIOpacity)!.opacity < 255));
+        assert(fixture.hpRows().every(value => !value.activeInHierarchy));
+        assert.equal(fixture.playbackStarts.length, 0, "1秒渐入仍差1毫秒时不能提前开始战报");
+        await OpeningClockRuntime.advance(0.001);
         await opening;
         if (openError) {
             throw openError;
@@ -269,7 +326,7 @@ async function checkOrdering(): Promise<void> {
         assert(fixture.models.every(value => value.getComponent(UIOpacity)!.opacity === 255));
         assert(fixture.hpRows().every(value => value.activeInHierarchy));
         assert.equal(fixture.playbackStarts.length, 1);
-        assert(Math.abs(fixture.playbackStarts[0] - 4.25) < 1e-6, "正式阶段耗时由并行.75和并行1秒组成");
+        assert(Math.abs(fixture.playbackStarts[0] - 2.15) < 1e-6, "正式阶段在开始轨道70%即.7秒接出场，再等待max(.75,.45+1)秒");
         assert.deepEqual(fixture.errors, []);
         close!();
         await OpeningClockRuntime.flush();
@@ -279,17 +336,133 @@ async function checkOrdering(): Promise<void> {
     }
 }
 
-/** 分别在资源、ZDKS、出场帧、渐入中关页，迟到完成不得继续露图或启动战报。 */
+/** 即使墙钟已过很久仍按暂停轨道等待70%；出场可重叠，但完整开始骨骼未结束不能开战。 */
+async function checkActualSpineProgress(): Promise<void> {
+    OpeningClockRuntime.reset();
+    const fixture = new OpeningFixture(false, false, [], true);
+    let close: (() => void) | undefined;
+    let openError: unknown;
+    const opening = fixture.open().then(value => { close = value; }, error => { openError = error; });
+    try {
+        await OpeningClockRuntime.flush();
+        await OpeningClockRuntime.advance(10);
+        fixture.assertHidden();
+        assert.equal(fixture.effects().length, 0, "墙钟超过旧2.5秒也不能越过暂停的Spine进度");
+        fixture.zdksTrackTime = 0.699999;
+        director.emit(Director.EVENT_AFTER_UPDATE);
+        await OpeningClockRuntime.flush();
+        assert.equal(fixture.effects().length, 0, "真实轨道不足70%时不能提前出场");
+        fixture.zdksTrackTime = 0.7;
+        director.emit(Director.EVENT_AFTER_UPDATE);
+        await OpeningClockRuntime.flush();
+        assert.equal(fixture.effects().length, 4, "真实轨道达到70%即并行开始双边出场");
+        assert(fixture.root.getChildByName("ChallengeOpeningEffect")?.isValid,
+            "70%只放行人物出场，开始骨骼要保留完整播放，不在阈值处裁掉");
+        const readsAtThreshold = fixture.zdksProgressReads;
+        director.emit(Director.EVENT_AFTER_UPDATE);
+        assert.equal(fixture.zdksProgressReads, readsAtThreshold, "达到70%后应立即解除每帧进度监听");
+        await OpeningClockRuntime.advance(1.45);
+        assert(fixture.models.every(value => value.getComponent(UIOpacity)!.opacity === 255));
+        assert.equal(fixture.playbackStarts.length, 0, "人物完成但暂停的开始骨骼未结束，仍不得开战");
+        fixture.completeZdks!();
+        await OpeningClockRuntime.flush();
+        await opening;
+        if (openError) throw openError;
+        assert.equal(fixture.playbackStarts.length, 1);
+        assert(!fixture.root.getChildByName("ChallengeOpeningEffect")?.isValid);
+        assert.deepEqual(fixture.errors, []);
+        close!();
+        await OpeningClockRuntime.flush();
+        assert.equal(OpeningClockRuntime.pending(), 0);
+    } finally {
+        fixture.dispose();
+    }
+}
+
+/** 每个FX等待额外延迟.02秒，真实第9帧完成前即使墙钟超过.45也不能渐入。 */
+async function checkDelayedFrames(): Promise<void> {
+    OpeningClockRuntime.reset();
+    const fixture = new OpeningFixture();
+    OpeningClockRuntime.delayDispatchOffset = (target, seconds) =>
+        target === fixture.root && Math.abs(seconds - 0.05) < 1e-9 ? 0.02 : 0;
+    let close: (() => void) | undefined;
+    let openError: unknown;
+    const opening = fixture.open().then(value => { close = value; }, error => { openError = error; });
+    try {
+        await OpeningClockRuntime.flush();
+        if (openError) throw openError;
+        await OpeningClockRuntime.advance(0.7);
+        assert.equal(fixture.effects().length, 4);
+        await OpeningClockRuntime.advance(0.45);
+        fixture.assertHidden();
+        assert.equal(fixture.fadeStarts.length, 0, "独立.45秒已到，但实际只完成6帧，不得提前开始渐入");
+        assert(fixture.effects().every(value => (value.getComponent(Sprite)!.spriteFrame as any).testPath.includes("_6/")));
+        await OpeningClockRuntime.advance(0.179);
+        fixture.assertHidden();
+        assert.equal(fixture.fadeStarts.length, 0);
+        await OpeningClockRuntime.advance(0.001);
+        assert.equal(fixture.fadeStarts.length, 4, "四单位分别在完整第9帧后开始，不能按首个单位提前放行");
+        assert(fixture.fadeStarts.every(value => Math.abs(value.at - 1.33) < 1e-6));
+        assert(fixture.fadeStarts.every(value => value.frames.length === 4
+            && value.frames.every(path => path.includes("_9/"))), "开始渐入时已进入第10张图，之前9张的等待均已完成");
+        await OpeningClockRuntime.advance(0.001);
+        assert(fixture.models.every(value => Math.abs(value.getComponent(UIOpacity)!.opacity - 0.255) < 1e-6));
+        await OpeningClockRuntime.advance(0.419);
+        assert.equal(fixture.effects().length, 0, "15帧在附加调度下完整播放1.05秒，不能裁短追赶墙钟");
+        assert(fixture.models.every(value => value.getComponent(UIOpacity)!.opacity > 0
+            && value.getComponent(UIOpacity)!.opacity < 255));
+        assert(fixture.hpRows().every(value => !value.activeInHierarchy));
+        assert.equal(fixture.playbackStarts.length, 0);
+        await OpeningClockRuntime.advance(0.579);
+        assert.equal(fixture.playbackStarts.length, 0);
+        await OpeningClockRuntime.advance(0.001);
+        await opening;
+        if (openError) throw openError;
+        assert(Math.abs(fixture.playbackStarts[0] - 2.33) < 1e-6,
+            "真正第9帧1.33秒后保留完整1秒渐入，不受独立.45秒计时影响");
+        assert(fixture.hpRows().every(value => value.activeInHierarchy));
+        assert.deepEqual(fixture.errors, []);
+        close!();
+        await OpeningClockRuntime.flush();
+        assert.equal(OpeningClockRuntime.pending(), 0);
+    } finally {
+        OpeningClockRuntime.delayDispatchOffset = null;
+        fixture.dispose();
+    }
+}
+
+/** 覆盖资源、ZDKS、60%前/阈值、FX与渐入重叠以及仅渐入阶段，关页不能迟到露图或开战。 */
 async function checkCancellation(): Promise<void> {
-    for (const [phase, seconds] of [["resources", 0], ["zdks", 0.5], ["entry", 2.6], ["fade", 3.5]] as const) {
+    for (const [phase, seconds] of [["resources", 0], ["zdks", 0.5], ["entry", 0.8],
+        ["before-fade", 1.149], ["fade-threshold", 1.15], ["fx-and-fade", 1.3],
+        ["fade-only", 1.7], ["before-ready", 2.149], ["delayed-frame-gate", 1.25]] as const) {
         OpeningClockRuntime.reset();
         const fixture = new OpeningFixture(phase === "resources");
+        if (phase === "delayed-frame-gate") {
+            OpeningClockRuntime.delayDispatchOffset = (target, seconds) =>
+                target === fixture.root && Math.abs(seconds - 0.05) < 1e-9 ? 0.02 : 0;
+        }
         let result: unknown = "pending";
         const opening = fixture.open().then(() => { result = "ready"; }, error => { result = error; });
         try {
             await OpeningClockRuntime.flush();
             await OpeningClockRuntime.advance(seconds);
+            if (phase === "delayed-frame-gate") {
+                fixture.assertHidden();
+                assert.equal(fixture.fadeStarts.length, 0, "关闭时gate仍应等待真实第9帧");
+            }
+            if (phase === "fx-and-fade" || phase === "fade-only" || phase === "before-ready") {
+                assert(fixture.models.every(value => {
+                    const opacity = value.getComponent(UIOpacity)!.opacity;
+                    return opacity > 0 && opacity < 255;
+                }), phase + "必须确实处于渐入，不能只按测试名称认定阶段");
+                assert.equal(fixture.effects().length, phase === "fx-and-fade" ? 4 : 0);
+            }
             fixture.root.destroy();
+            const readsAfterClose = fixture.zdksProgressReads;
+            director.emit(Director.EVENT_AFTER_UPDATE);
+            assert.equal(fixture.zdksProgressReads, readsAfterClose, phase + "关闭后不得遗留开始骨骼进度监听");
+            fixture.completeZdks?.();
             fixture.releaseResources();
             await OpeningClockRuntime.flush();
             await OpeningClockRuntime.advance(100);
@@ -297,6 +470,7 @@ async function checkCancellation(): Promise<void> {
             assert(result instanceof Error, phase + "关闭应结束准备Promise，不得假开窗成功");
             assert.equal(fixture.playbackStarts.length, 0, phase + "取消后不能启动战报");
             assert.equal(fixture.effects().length, 0, phase + "迟到资源不能重建出场节点");
+            if (phase === "delayed-frame-gate") assert.equal(fixture.fadeStarts.length, 0, "关闭释放gate不能迟到创建模型Tween");
             assert.equal(OpeningClockRuntime.pending(), 0, phase + "取消后所有Tween必须终止");
             assert.deepEqual(fixture.errors, [], phase + "正常取消不报播放错误");
         } finally {
@@ -305,13 +479,134 @@ async function checkCancellation(): Promise<void> {
     }
 }
 
-/** 使用真实配置完成两个行为场景，再清理配置与时钟；不运行玩家服务或实际战斗。 */
+/** 挂机仍从FX起点并行淡入，.75秒帧加原.25秒等待，不受正式60%时点影响。 */
+async function checkIdleUnchanged(): Promise<void> {
+    OpeningClockRuntime.reset();
+    const fixture = new OpeningFixture(false, true);
+    let close: (() => void) | undefined;
+    let openError: unknown;
+    const opening = fixture.open(true).then(value => { close = value; }, error => { openError = error; });
+    try {
+        await OpeningClockRuntime.flush();
+        if (openError) {
+            throw openError;
+        }
+        assert.equal(fixture.zdksStarts.length, 0);
+        assert.equal(fixture.effects().length, 1);
+        await OpeningClockRuntime.advance(0.1);
+        const enemy = fixture.models[1];
+        assert(Math.abs(enemy.getComponent(UIOpacity)!.opacity - 25.5) < 1e-6,
+            "挂机仍在0时刻淡入，不能被正式.45秒等待延迟");
+        await OpeningClockRuntime.advance(0.65);
+        assert.equal(fixture.effects().length, 0);
+        assert.equal(fixture.playbackStarts.length, 0);
+        await OpeningClockRuntime.advance(0.25);
+        await opening;
+        if (openError) {
+            throw openError;
+        }
+        assert.equal(enemy.getComponent(UIOpacity)!.opacity, 255);
+        assert.equal(fixture.playbackStarts[0], 1);
+        assert.deepEqual(fixture.errors, []);
+        close!();
+        await OpeningClockRuntime.flush();
+        assert.equal(OpeningClockRuntime.pending(), 0);
+    } finally {
+        fixture.dispose();
+    }
+}
+
+/** 直接调用真实状态显示：多实例共享循环、真实材质优先级、无图标实例和关页迟到均不另造实现。 */
+async function checkControlLifecycle(): Promise<void> {
+    OpeningClockRuntime.reset();
+    const step = (configId: number, instance: string, kind = "buff.upsert"): any => ({
+        kind, configId, buffInstanceId: instance, sourceId: 1, targetId: 1, round: 1,
+        expiresAtRound: 3, buffValue: 1, hpByUnit: { 1: 10, 2: 10, 3: 10, 4: 10 },
+    });
+    const fixture = new OpeningFixture(false, false,
+        [2051301, 5011301, 1081501, 2141401, 2141301, 1081301].map(id => step(id, "preload-" + id)));
+    let close: (() => void) | undefined;
+    try {
+        const opening = fixture.open().then(value => { close = value; });
+        await OpeningClockRuntime.advance(4);
+        await opening;
+        assert(fixture.presentation, "必须取得真实Preview显示能力，不能只核描述符");
+        const slot = fixture.models[0].parent!;
+        const row = slot.getChildByPath("HeadAnchor/BuffRow")!;
+        const skeleton = fixture.models[0].getComponent(sp.Skeleton) as any;
+        const original = skeleton.customMaterial;
+        /** 放行真实配置delay=0的异步边界后再检查节点状态。 */
+        const apply = async (configId: number, instance: string, remove = false) => {
+            const pending = fixture.presentation!.play(step(configId, instance, remove ? "buff.remove" : "buff.upsert"));
+            await OpeningClockRuntime.advance(0);
+            await pending;
+        };
+        await apply(1081301, "invisible");
+        assert.equal(row.active, false, "一次属性实例必须保留生命周期，但不能出现空Buff图标槽");
+        for (const [config, name] of [[1081501, "SilenceEffect"], [2141401, "ParryEffect"]] as const) {
+            await apply(config, "first");
+            const effect = slot.getChildByName(name)!;
+            assert(effect?.isValid);
+            const firstPath = (effect.getComponent(Sprite)!.spriteFrame as any).testPath;
+            await OpeningClockRuntime.advance(0.2);
+            assert.notEqual((effect.getComponent(Sprite)!.spriteFrame as any).testPath, firstPath,
+                "持续效果必须循环原帧，不能停在第0帧");
+            await apply(config, "second");
+            assert.equal(slot.children.filter(value => value.name === name).length, 1);
+            await apply(config, "first", true);
+            assert.equal(slot.getChildByName(name), effect, "只移除第一实例不能撤掉仍有效的共享效果");
+            await apply(config, "second", true);
+            assert.equal(effect.isValid, false);
+        }
+        await apply(2141301, "sleep");
+        assert.equal(row.active, true, "深睡沿原状态图标展示");
+        assert(!slot.children.some(value => /sleep|zzz/i.test(value.name)), "旧源没有深睡动作，不发明额外帧");
+        await apply(2141301, "sleep", true);
+        await apply(2051301, "frozen");
+        const frozen = skeleton.customMaterial;
+        assert.equal(frozen.effectAsset.testPath, "effects/legacy-frozen");
+        assert.equal(skeleton.paused, true);
+        await apply(5011301, "stone");
+        const stone = skeleton.customMaterial;
+        assert.equal(stone.effectAsset.testPath, "effects/legacy-stone");
+        await apply(5011301, "stone", true);
+        assert.equal(skeleton.customMaterial, frozen, "解除后加入石化必须恢复仍有效的冰冻");
+        await apply(2051301, "frozen", true);
+        assert.equal(skeleton.customMaterial, original);
+        assert.equal(skeleton.paused, false);
+        await apply(5011301, "stone-again");
+        await apply(1081501, "silence-open");
+        await apply(2141401, "parry-open");
+        const activeNodes = slot.children.filter(value => /SilenceEffect|ParryEffect/.test(value.name));
+        close!();
+        assert(activeNodes.every(value => !value.isValid));
+        assert.equal(stone.isValid, false);
+        assert.equal(frozen.isValid, false);
+        assert.equal(skeleton.customMaterial, original, "关场前恢复借用材质");
+        assert.equal(skeleton.paused, false);
+        assert.equal(OpeningClockRuntime.pending(), 0, "关闭必须清所有持续循环等待");
+        await fixture.presentation!.play(step(1081501, "late"));
+        await OpeningClockRuntime.advance(5);
+        assert.equal(OpeningClockRuntime.pending(), 0, "迟到显示不能新建Tween或持续节点");
+        assert.deepEqual(fixture.errors, []);
+    } finally {
+        close?.();
+        fixture.dispose();
+        OpeningClockRuntime.reset();
+    }
+}
+
+/** 使用真实配置完成出场、持续控制及关闭回归；不运行玩家服务或实际战斗。 */
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
     await checkOrdering();
+    await checkActualSpineProgress();
+    await checkDelayedFrames();
     await checkCancellation();
+    await checkIdleUnchanged();
+    await checkControlLifecycle();
     OpeningClockRuntime.reset();
-    console.log("PASS 正式出场：真实Preview资源隐藏、双边并行帧→并行渐入→HP/战报，以及四阶段关闭迟到隔离");
+    console.log("PASS 正式出场：开始骨骼真实70%接双边出场、完整第9帧触发60%渐入、暂停轨道/两路屏障/九阶段取消；持续控制多实例/原材质/隐藏实例及关场清理");
 }
 
 void main().catch(error => {

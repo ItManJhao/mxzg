@@ -23,6 +23,10 @@ export class Protocol {
     public static readonly CHAPTER_IDLE_CLAIM_STATUS = "chapter.idle.claim.status";
     /** 恢复当前角色的持久战报，不重新计算。 */
     public static readonly CHAPTER_REPLAY = "chapter.replay";
+    /** 原配置ID是每角色稳定业务键，重复领取读取冻结回执。 */
+    public static readonly CHAPTER_MILESTONE_CLAIM = "chapter.milestone.claim";
+    /** 只查指定里程碑成功回执，不重新发放或查询库存。 */
+    public static readonly CHAPTER_MILESTONE_STATUS = "chapter.milestone.claim.status";
     /** 当前已保存阵容的开发只读试战，不发奖、不记录通关。 */
     public static readonly BATTLE_PREVIEW = "battle.preview";
     /** 主线阵型和站位保存；资产仍从统一状态同步。 */
@@ -67,6 +71,8 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.CHAPTER_IDLE_CLAIM, module: "主线", description: "挂机领取历史回执" },
     { name: Protocol.CHAPTER_IDLE_CLAIM_STATUS, module: "主线", description: "指定挂机领取结果查询" },
     { name: Protocol.CHAPTER_REPLAY, module: "主线", description: "恢复持久战报" },
+    { name: Protocol.CHAPTER_MILESTONE_CLAIM, module: "主线", description: "领取通关里程碑" },
+    { name: Protocol.CHAPTER_MILESTONE_STATUS, module: "主线", description: "恢复里程碑领取回执" },
     { name: Protocol.BATTLE_PREVIEW, module: "战斗", description: "当前阵容只读试战" },
     { name: Protocol.FORMATION_SAVE, module: "阵容", description: "主线阵容保存回执" },
     { name: Protocol.GM_STATUS, module: "开发GM", description: "GM 开关" },

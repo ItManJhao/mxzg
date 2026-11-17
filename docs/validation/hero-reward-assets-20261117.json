@@ -1,0 +1,644 @@
+{
+  "schemaVersion": 1,
+  "basis": "原PVR/plist完整RGBA恢复sourceColorRect到sourceSize；已有UUID不重铸。",
+  "sources": [
+    {
+      "name": "reward-effect2",
+      "legacyPvr": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\reward-effect2.pvr.ccz",
+      "pvrSha256": "4865e98283c56b7830ba05107c0f5420417857a33e91075f203349d41aa62a0d",
+      "legacyPlist": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\reward-effect2.plist",
+      "plistSha256": "8e7048b875da6d933f880e207bcdc41ab8ccfb8a1af1ba2ea7dead55a5a4152a",
+      "selected": 20
+    },
+    {
+      "name": "reward-effect",
+      "legacyPvr": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\reward-effect.pvr.ccz",
+      "pvrSha256": "b6f12c0163f637030ec55923716e8a1a6b6c2c723e2641eb14bbe5961d16559e",
+      "legacyPlist": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\reward-effect.plist",
+      "plistSha256": "eacf16f603b569f142170616ae7b9689ee79da28fa53ddf6ce70bff27743d051",
+      "selected": 12
+    },
+    {
+      "name": "prophet-tree",
+      "legacyPvr": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\prophet-tree.pvr.ccz",
+      "pvrSha256": "35326e76fa8c61f38f323fbff37c6a5185867aa16d419730fead959f705b3c38",
+      "legacyPlist": "G:\\work\\FsGame\\Demo\\mj\\program\\client\\cocos_mxzg\\client\\idle\\res\\hd\\ccbi-res\\prophet-tree.plist",
+      "plistSha256": "4ce6901a395f74cb1aaf84495b0f7a3e040c513c127f2d89d5a02c18ff9242f2",
+      "selected": 2
+    }
+  ],
+  "files": [
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-0.png",
+      "frame": "reward-effect2/jin-0.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        296,
+        294
+      ],
+      "sha256": "319f27270a6ab908c6323af9bf557255cc24f396400920927f2575a6971354a3",
+      "imageUuid": "76ed9838-07cd-44b9-9693-3c270f8e87b9",
+      "spriteFrameUuid": "76ed9838-07cd-44b9-9693-3c270f8e87b9@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-1.png",
+      "frame": "reward-effect2/jin-1.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        5,
+        6,
+        290,
+        288
+      ],
+      "sha256": "07180151eab31429f20bd7a18986b7409723878a732cd4d6dfe0d665cafcdc37",
+      "imageUuid": "7c7d38a3-58a3-44e3-8400-ea0cd91e0e25",
+      "spriteFrameUuid": "7c7d38a3-58a3-44e3-8400-ea0cd91e0e25@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-2.png",
+      "frame": "reward-effect2/jin-2.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        296,
+        294
+      ],
+      "sha256": "63ad4ebf4410b1231d0b544b461ee51951ea3efd547027df4e8f6bc45a3f0d55",
+      "imageUuid": "d9a7f9fe-a98b-4078-9a7c-fb02fdb1958e",
+      "spriteFrameUuid": "d9a7f9fe-a98b-4078-9a7c-fb02fdb1958e@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-3.png",
+      "frame": "reward-effect2/jin-3.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        296,
+        294
+      ],
+      "sha256": "507825f73a7f699642245a75d8a89a166622d2642a693f9cb70fc469bf73add1",
+      "imageUuid": "1f7f555c-facb-4919-a5ab-b2561d2ed370",
+      "spriteFrameUuid": "1f7f555c-facb-4919-a5ab-b2561d2ed370@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-4.png",
+      "frame": "reward-effect2/jin-4.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        296,
+        294
+      ],
+      "sha256": "aaefb2626c4b76a77ba5e7e4b000a4e1d8ff388a99af06d82a0d7bbef2cb0376",
+      "imageUuid": "a9dc446b-ac55-4b33-bb81-ed7ff6ae1509",
+      "spriteFrameUuid": "a9dc446b-ac55-4b33-bb81-ed7ff6ae1509@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-5.png",
+      "frame": "reward-effect2/jin-5.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        296,
+        294
+      ],
+      "sha256": "ae3f5b109a90d9455b0e8423481b9fd7e95af4946b3de0667a02a952622d8e31",
+      "imageUuid": "6e941f9d-26b0-426e-add7-2e0e04665ee4",
+      "spriteFrameUuid": "6e941f9d-26b0-426e-add7-2e0e04665ee4@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-6.png",
+      "frame": "reward-effect2/jin-6.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        296,
+        294
+      ],
+      "sha256": "27d3ca455fc5e3ffa97bcfbe6b0503a806d38c7c8738fbe2321207be8ebd2fc8",
+      "imageUuid": "a7742384-7d3b-4ea9-af88-41490fc031a2",
+      "spriteFrameUuid": "a7742384-7d3b-4ea9-af88-41490fc031a2@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-7.png",
+      "frame": "reward-effect2/jin-7.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        296,
+        294
+      ],
+      "sha256": "544ab488f51222ac8221e03eccf38262f6515aa14204d34c275095773c919c0f",
+      "imageUuid": "cd0c4892-65ba-49b6-9baf-c24d4fc61e44",
+      "spriteFrameUuid": "cd0c4892-65ba-49b6-9baf-c24d4fc61e44@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-8.png",
+      "frame": "reward-effect2/jin-8.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        296,
+        294
+      ],
+      "sha256": "e9497eeb0aca140935492f1629bc0707b4b0226f245706cb87f4b0838463003b",
+      "imageUuid": "ae5c1654-26f2-42a2-92b1-7df9b3c7e02f",
+      "spriteFrameUuid": "ae5c1654-26f2-42a2-92b1-7df9b3c7e02f@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_jin-9.png",
+      "frame": "reward-effect2/jin-9.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        5,
+        6,
+        290,
+        288
+      ],
+      "sha256": "ca2187eb05334be58c0b81a7d285012e6d58c0e34e528c710f3f938584c5a011",
+      "imageUuid": "a459a0d5-f878-4f47-95d6-e34952fd496d",
+      "spriteFrameUuid": "a459a0d5-f878-4f47-95d6-e34952fd496d@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-0.png",
+      "frame": "reward-effect2/zi-0.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        17,
+        18,
+        266,
+        264
+      ],
+      "sha256": "65844b8ec8c3547e3b9d0bd9d1fc1a21009c577caa77d73f3642feba39fc8ca6",
+      "imageUuid": "20d55169-65dc-4a2c-a967-d7090a970ff1",
+      "spriteFrameUuid": "20d55169-65dc-4a2c-a967-d7090a970ff1@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-1.png",
+      "frame": "reward-effect2/zi-1.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        17,
+        18,
+        266,
+        264
+      ],
+      "sha256": "65844b8ec8c3547e3b9d0bd9d1fc1a21009c577caa77d73f3642feba39fc8ca6",
+      "imageUuid": "4a29d762-cf07-454e-899b-d2212e53e13d",
+      "spriteFrameUuid": "4a29d762-cf07-454e-899b-d2212e53e13d@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-2.png",
+      "frame": "reward-effect2/zi-2.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        4,
+        4,
+        292,
+        290
+      ],
+      "sha256": "33cf9ef406f0af09892d01f16b6168bb6e8d477ea10944fd9d3772a31bbe459c",
+      "imageUuid": "312b6dc0-5bbd-4066-a7d5-b6e4d88e9489",
+      "spriteFrameUuid": "312b6dc0-5bbd-4066-a7d5-b6e4d88e9489@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-3.png",
+      "frame": "reward-effect2/zi-3.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        4,
+        4,
+        292,
+        290
+      ],
+      "sha256": "3fb2a29c0b31d418cc7ffd4495e08deb9b573a10e33232a7f009873b7ee589cb",
+      "imageUuid": "18bbd0e2-d724-46c2-9f6d-33ce22084b40",
+      "spriteFrameUuid": "18bbd0e2-d724-46c2-9f6d-33ce22084b40@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-4.png",
+      "frame": "reward-effect2/zi-4.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        4,
+        4,
+        292,
+        290
+      ],
+      "sha256": "7f07a9c932cdb73fed574390f74e55d83a35a654179819f4ecb7d96f2b487895",
+      "imageUuid": "18ecfeae-6cf6-476b-95eb-d5ba65adf71c",
+      "spriteFrameUuid": "18ecfeae-6cf6-476b-95eb-d5ba65adf71c@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-5.png",
+      "frame": "reward-effect2/zi-5.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        296,
+        294
+      ],
+      "sha256": "03be703c1206d6daefdc83e14d093328ea239d00f1bc435fc1683df6180ed562",
+      "imageUuid": "b1981544-4d91-4e2c-983d-792f16cc25be",
+      "spriteFrameUuid": "b1981544-4d91-4e2c-983d-792f16cc25be@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-6.png",
+      "frame": "reward-effect2/zi-6.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        4,
+        4,
+        292,
+        290
+      ],
+      "sha256": "66344f23cd467d948f4332080b33bab30b6775e2168d0db170103f9aca546a5b",
+      "imageUuid": "f2f3d4ae-9997-4191-bb8b-9903afece832",
+      "spriteFrameUuid": "f2f3d4ae-9997-4191-bb8b-9903afece832@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-7.png",
+      "frame": "reward-effect2/zi-7.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        4,
+        4,
+        292,
+        290
+      ],
+      "sha256": "49c495ffc02550107972a316ed497361fed7f5b1b8424575153288c468b83231",
+      "imageUuid": "a07f2272-07e2-4e92-8762-9943eb10ae9c",
+      "spriteFrameUuid": "a07f2272-07e2-4e92-8762-9943eb10ae9c@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-8.png",
+      "frame": "reward-effect2/zi-8.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        4,
+        4,
+        292,
+        290
+      ],
+      "sha256": "02d666adf36033e221a27c97ac18a5b85737fd98d640dad5b45d0cc788391c10",
+      "imageUuid": "5e33c7cc-18db-4e44-b24b-efd44b8ea378",
+      "spriteFrameUuid": "5e33c7cc-18db-4e44-b24b-efd44b8ea378@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect2_zi-9.png",
+      "frame": "reward-effect2/zi-9.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        17,
+        18,
+        266,
+        264
+      ],
+      "sha256": "ab5d5ffcf736680f627122069d4baaaa78f24dc61c9edf32bc172dab986c9e1d",
+      "imageUuid": "c45fb55b-8237-43a9-9591-45ef466fc267",
+      "spriteFrameUuid": "c45fb55b-8237-43a9-9591-45ef466fc267@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_jin-xun-0.png",
+      "frame": "reward-effect/jin-xun-0.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        14,
+        10,
+        276,
+        264
+      ],
+      "sha256": "6f45751b05f7c0b9455aa652d607f5e1e4f428c6ac9c053bc0e81dcc3ea4a2e7",
+      "imageUuid": "1c33bdb9-336b-4baf-94db-00be304cee0c",
+      "spriteFrameUuid": "1c33bdb9-336b-4baf-94db-00be304cee0c@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_jin-xun-1.png",
+      "frame": "reward-effect/jin-xun-1.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        13,
+        10,
+        278,
+        266
+      ],
+      "sha256": "64b8eafc735ed99a05b60784c7ffdd7c3f433426ffd803906cb5affecc218347",
+      "imageUuid": "46e61e60-e35f-4cb2-bb23-359a6fdc0d27",
+      "spriteFrameUuid": "46e61e60-e35f-4cb2-bb23-359a6fdc0d27@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_jin-xun-2.png",
+      "frame": "reward-effect/jin-xun-2.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        14,
+        7,
+        276,
+        270
+      ],
+      "sha256": "38ac4c19a726afb06aeba64a707ec96c581ab7f6a3c2d3b6f00d592f1207f554",
+      "imageUuid": "bc6a2d39-d53d-4fed-b8d8-affe8c98e26d",
+      "spriteFrameUuid": "bc6a2d39-d53d-4fed-b8d8-affe8c98e26d@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_jin-xun-3.png",
+      "frame": "reward-effect/jin-xun-3.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        12,
+        6,
+        278,
+        272
+      ],
+      "sha256": "cf87aeaf8964b5f4c65936657ca59a088ade96eed4c7fd78a7e9e7cf4177bf46",
+      "imageUuid": "73bfd978-0f16-4e31-8be4-137e2fca0753",
+      "spriteFrameUuid": "73bfd978-0f16-4e31-8be4-137e2fca0753@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_jin-xun-4.png",
+      "frame": "reward-effect/jin-xun-4.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        14,
+        6,
+        276,
+        272
+      ],
+      "sha256": "d2de0a5395c7aae008e4c8ba0184903df74c826e5f4a0364d72e803e4416a7fb",
+      "imageUuid": "a54df89b-d35c-4333-809a-9121bee66e0a",
+      "spriteFrameUuid": "a54df89b-d35c-4333-809a-9121bee66e0a@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_jin-xun-5.png",
+      "frame": "reward-effect/jin-xun-5.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        13,
+        10,
+        274,
+        264
+      ],
+      "sha256": "14eaad2dbe6e9c421d4204be425e0a0a2c58572740a0bb80772f729815bc6123",
+      "imageUuid": "6772b484-4043-414c-855e-bf919117cc85",
+      "spriteFrameUuid": "6772b484-4043-414c-855e-bf919117cc85@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_zi-xun-0.png",
+      "frame": "reward-effect/zi-xun-0.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        14,
+        10,
+        276,
+        264
+      ],
+      "sha256": "5d85d84bb109bf399209d77c1b96dec545fb2e2874d06bd0546b09a459e5f9ec",
+      "imageUuid": "869c9f64-ae2d-45b2-a536-4dc97096d06b",
+      "spriteFrameUuid": "869c9f64-ae2d-45b2-a536-4dc97096d06b@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_zi-xun-1.png",
+      "frame": "reward-effect/zi-xun-1.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        13,
+        10,
+        278,
+        266
+      ],
+      "sha256": "b87a1cb9eb4dad83d222f389c712aafadba4859bb7bd6563a2566dbf3d67a099",
+      "imageUuid": "10319cbd-7d83-4461-bfc3-ddcb43b6b664",
+      "spriteFrameUuid": "10319cbd-7d83-4461-bfc3-ddcb43b6b664@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_zi-xun-2.png",
+      "frame": "reward-effect/zi-xun-2.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        14,
+        7,
+        276,
+        270
+      ],
+      "sha256": "63158607ff3a207964b2763479e240429d72faf8ab8e4062c560aa6f4656ab51",
+      "imageUuid": "1328a4c7-85e7-423f-959c-18f770d4275c",
+      "spriteFrameUuid": "1328a4c7-85e7-423f-959c-18f770d4275c@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_zi-xun-3.png",
+      "frame": "reward-effect/zi-xun-3.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        12,
+        6,
+        278,
+        272
+      ],
+      "sha256": "c6bc12f83207d1db5d7b323a723eb847f502525be5e5eab3121df6b6f985fd01",
+      "imageUuid": "6fa9cd4b-f188-4f7a-ac2c-65400d14c729",
+      "spriteFrameUuid": "6fa9cd4b-f188-4f7a-ac2c-65400d14c729@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_zi-xun-4.png",
+      "frame": "reward-effect/zi-xun-4.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        14,
+        6,
+        276,
+        272
+      ],
+      "sha256": "719597c454688cd9087b7a0d831088141fb8e5565123ba81a6deffefe1453fd1",
+      "imageUuid": "7261af59-07aa-427e-b5cd-1ad71c070377",
+      "spriteFrameUuid": "7261af59-07aa-427e-b5cd-1ad71c070377@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/reward-effect_zi-xun-5.png",
+      "frame": "reward-effect/zi-xun-5.png",
+      "sourceSize": [
+        296,
+        294
+      ],
+      "sourceColorRect": [
+        13,
+        10,
+        274,
+        264
+      ],
+      "sha256": "d3355de4738fed96391c58f363446c671d9a784d2aadb27ad8949e1144074206",
+      "imageUuid": "1c91462d-41e8-4e8f-a8f1-165b78da170e",
+      "spriteFrameUuid": "1c91462d-41e8-4e8f-a8f1-165b78da170e@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/prophet-tree_light.png",
+      "frame": "prophet-tree/light.png",
+      "sourceSize": [
+        176,
+        211
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        176,
+        211
+      ],
+      "sha256": "551ee4097b3761b2a14cc3890913fc89090bb6ea091b9579f1876511e92dd637",
+      "imageUuid": "658e3c89-7089-464e-a89f-2bb493badf7c",
+      "spriteFrameUuid": "658e3c89-7089-464e-a89f-2bb493badf7c@f9941",
+      "pixelsMatchSource": true
+    },
+    {
+      "path": "client/assets/bundles/module/common/ui/prophet-tree_seat.png",
+      "frame": "prophet-tree/seat.png",
+      "sourceSize": [
+        198,
+        83
+      ],
+      "sourceColorRect": [
+        0,
+        0,
+        198,
+        83
+      ],
+      "sha256": "34a7475502394bf99e0742b733440a152af1ba1405b3fe15c83690c98610f547",
+      "imageUuid": "5b0dfee8-a258-49c7-a92e-cb98395b6bde",
+      "spriteFrameUuid": "5b0dfee8-a258-49c7-a92e-cb98395b6bde@f9941",
+      "pixelsMatchSource": true
+    }
+  ]
+}

@@ -2778,9 +2778,12 @@ var mxzg = $root.mxzg = (() => {
       Frame.prototype.chapterIdleClaimReceipt = null;
       Frame.prototype.chapterIdleClaimStatus = null;
       Frame.prototype.rewardNotice = null;
+      Frame.prototype.chapterMilestoneClaim = null;
+      Frame.prototype.chapterMilestoneReceipt = null;
+      Frame.prototype.chapterMilestoneStatus = null;
       let $oneOfFields;
       Object.defineProperty(Frame.prototype, "payload", {
-        get: $util.oneOfGetter($oneOfFields = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed", "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter", "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus", "rewardNotice"]),
+        get: $util.oneOfGetter($oneOfFields = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed", "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter", "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus", "rewardNotice", "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus"]),
         set: $util.oneOfSetter($oneOfFields)
       });
       Frame.create = function create(properties) {
@@ -2955,6 +2958,21 @@ var mxzg = $root.mxzg = (() => {
             /* id 35, wireType 2 =*/
             282
           ).fork(), q + 1).ldelim();
+        if (message.chapterMilestoneClaim != null && Object.hasOwnProperty.call(message, "chapterMilestoneClaim"))
+          $root.mxzg.game.ChapterMilestoneClaim.encode(message.chapterMilestoneClaim, writer.uint32(
+            /* id 36, wireType 2 =*/
+            290
+          ).fork(), q + 1).ldelim();
+        if (message.chapterMilestoneReceipt != null && Object.hasOwnProperty.call(message, "chapterMilestoneReceipt"))
+          $root.mxzg.game.ChapterMilestoneReceipt.encode(message.chapterMilestoneReceipt, writer.uint32(
+            /* id 37, wireType 2 =*/
+            298
+          ).fork(), q + 1).ldelim();
+        if (message.chapterMilestoneStatus != null && Object.hasOwnProperty.call(message, "chapterMilestoneStatus"))
+          $root.mxzg.game.ChapterMilestoneStatus.encode(message.chapterMilestoneStatus, writer.uint32(
+            /* id 38, wireType 2 =*/
+            306
+          ).fork(), q + 1).ldelim();
         return writer;
       };
       Frame.decode = function decode(reader, length, error, long) {
@@ -3110,6 +3128,18 @@ var mxzg = $root.mxzg = (() => {
             }
             case 35: {
               message.rewardNotice = $root.mxzg.game.RewardNotice.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 36: {
+              message.chapterMilestoneClaim = $root.mxzg.game.ChapterMilestoneClaim.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 37: {
+              message.chapterMilestoneReceipt = $root.mxzg.game.ChapterMilestoneReceipt.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 38: {
+              message.chapterMilestoneStatus = $root.mxzg.game.ChapterMilestoneStatus.decode(reader, reader.uint32(), void 0, long + 1);
               break;
             }
             default:
@@ -3419,6 +3449,36 @@ var mxzg = $root.mxzg = (() => {
               return "rewardNotice." + error;
           }
         }
+        if (message.chapterMilestoneClaim != null && Object.hasOwnProperty.call(message, "chapterMilestoneClaim")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.ChapterMilestoneClaim.verify(message.chapterMilestoneClaim, long + 1);
+            if (error)
+              return "chapterMilestoneClaim." + error;
+          }
+        }
+        if (message.chapterMilestoneReceipt != null && Object.hasOwnProperty.call(message, "chapterMilestoneReceipt")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.ChapterMilestoneReceipt.verify(message.chapterMilestoneReceipt, long + 1);
+            if (error)
+              return "chapterMilestoneReceipt." + error;
+          }
+        }
+        if (message.chapterMilestoneStatus != null && Object.hasOwnProperty.call(message, "chapterMilestoneStatus")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.ChapterMilestoneStatus.verify(message.chapterMilestoneStatus, long + 1);
+            if (error)
+              return "chapterMilestoneStatus." + error;
+          }
+        }
         return null;
       };
       Frame.fromObject = function fromObject(object, long) {
@@ -3577,6 +3637,21 @@ var mxzg = $root.mxzg = (() => {
           if (!$util.isObject(object.rewardNotice))
             throw TypeError(".mxzg.game.Frame.rewardNotice: object expected");
           message.rewardNotice = $root.mxzg.game.RewardNotice.fromObject(object.rewardNotice, long + 1);
+        }
+        if (object.chapterMilestoneClaim != null) {
+          if (!$util.isObject(object.chapterMilestoneClaim))
+            throw TypeError(".mxzg.game.Frame.chapterMilestoneClaim: object expected");
+          message.chapterMilestoneClaim = $root.mxzg.game.ChapterMilestoneClaim.fromObject(object.chapterMilestoneClaim, long + 1);
+        }
+        if (object.chapterMilestoneReceipt != null) {
+          if (!$util.isObject(object.chapterMilestoneReceipt))
+            throw TypeError(".mxzg.game.Frame.chapterMilestoneReceipt: object expected");
+          message.chapterMilestoneReceipt = $root.mxzg.game.ChapterMilestoneReceipt.fromObject(object.chapterMilestoneReceipt, long + 1);
+        }
+        if (object.chapterMilestoneStatus != null) {
+          if (!$util.isObject(object.chapterMilestoneStatus))
+            throw TypeError(".mxzg.game.Frame.chapterMilestoneStatus: object expected");
+          message.chapterMilestoneStatus = $root.mxzg.game.ChapterMilestoneStatus.fromObject(object.chapterMilestoneStatus, long + 1);
         }
         return message;
       };
@@ -3741,6 +3816,21 @@ var mxzg = $root.mxzg = (() => {
           if (options.oneofs)
             object.payload = "rewardNotice";
         }
+        if (message.chapterMilestoneClaim != null && Object.hasOwnProperty.call(message, "chapterMilestoneClaim")) {
+          object.chapterMilestoneClaim = $root.mxzg.game.ChapterMilestoneClaim.toObject(message.chapterMilestoneClaim, options, q + 1);
+          if (options.oneofs)
+            object.payload = "chapterMilestoneClaim";
+        }
+        if (message.chapterMilestoneReceipt != null && Object.hasOwnProperty.call(message, "chapterMilestoneReceipt")) {
+          object.chapterMilestoneReceipt = $root.mxzg.game.ChapterMilestoneReceipt.toObject(message.chapterMilestoneReceipt, options, q + 1);
+          if (options.oneofs)
+            object.payload = "chapterMilestoneReceipt";
+        }
+        if (message.chapterMilestoneStatus != null && Object.hasOwnProperty.call(message, "chapterMilestoneStatus")) {
+          object.chapterMilestoneStatus = $root.mxzg.game.ChapterMilestoneStatus.toObject(message.chapterMilestoneStatus, options, q + 1);
+          if (options.oneofs)
+            object.payload = "chapterMilestoneStatus";
+        }
         return object;
       };
       Frame.prototype.toJSON = function toJSON() {
@@ -3840,6 +3930,7 @@ var mxzg = $root.mxzg = (() => {
     game.RewardNotice = (function() {
       function RewardNotice(properties) {
         this.items = [];
+        this.heroes = [];
         if (properties) {
           for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
             if (properties[keys[i]] != null && keys[i] !== "__proto__")
@@ -3854,6 +3945,7 @@ var mxzg = $root.mxzg = (() => {
       RewardNotice.prototype.items = $util.emptyArray;
       RewardNotice.prototype.requestId = "";
       RewardNotice.prototype.roleUpgrade = null;
+      RewardNotice.prototype.heroes = $util.emptyArray;
       RewardNotice.create = function create(properties) {
         return new RewardNotice(properties);
       };
@@ -3900,6 +3992,12 @@ var mxzg = $root.mxzg = (() => {
             /* id 8, wireType 2 =*/
             66
           ).fork(), q + 1).ldelim();
+        if (message.heroes != null && message.heroes.length)
+          for (let i = 0; i < message.heroes.length; ++i)
+            $root.mxzg.game.RewardHeroGrant.encode(message.heroes[i], writer.uint32(
+              /* id 9, wireType 2 =*/
+              74
+            ).fork(), q + 1).ldelim();
         return writer;
       };
       RewardNotice.decode = function decode(reader, length, error, long) {
@@ -3959,6 +4057,12 @@ var mxzg = $root.mxzg = (() => {
               message.roleUpgrade = $root.mxzg.game.RewardRoleUpgrade.decode(reader, reader.uint32(), void 0, long + 1);
               break;
             }
+            case 9: {
+              if (!(message.heroes && message.heroes.length))
+                message.heroes = [];
+              message.heroes.push($root.mxzg.game.RewardHeroGrant.decode(reader, reader.uint32(), void 0, long + 1));
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -4016,6 +4120,15 @@ var mxzg = $root.mxzg = (() => {
           if (error)
             return "roleUpgrade." + error;
         }
+        if (message.heroes != null && Object.hasOwnProperty.call(message, "heroes")) {
+          if (!Array.isArray(message.heroes))
+            return "heroes: array expected";
+          for (let i = 0; i < message.heroes.length; ++i) {
+            let error = $root.mxzg.game.RewardHeroGrant.verify(message.heroes[i], long + 1);
+            if (error)
+              return "heroes." + error;
+          }
+        }
         return null;
       };
       RewardNotice.fromObject = function fromObject(object, long) {
@@ -4063,6 +4176,16 @@ var mxzg = $root.mxzg = (() => {
             throw TypeError(".mxzg.game.RewardNotice.roleUpgrade: object expected");
           message.roleUpgrade = $root.mxzg.game.RewardRoleUpgrade.fromObject(object.roleUpgrade, long + 1);
         }
+        if (object.heroes) {
+          if (!Array.isArray(object.heroes))
+            throw TypeError(".mxzg.game.RewardNotice.heroes: array expected");
+          message.heroes = [];
+          for (let i = 0; i < object.heroes.length; ++i) {
+            if (!$util.isObject(object.heroes[i]))
+              throw TypeError(".mxzg.game.RewardNotice.heroes: object expected");
+            message.heroes[i] = $root.mxzg.game.RewardHeroGrant.fromObject(object.heroes[i], long + 1);
+          }
+        }
         return message;
       };
       RewardNotice.toObject = function toObject(message, options, q) {
@@ -4073,8 +4196,10 @@ var mxzg = $root.mxzg = (() => {
         if (q > $util.recursionLimit)
           throw Error("max depth exceeded");
         let object = {};
-        if (options.arrays || options.defaults)
+        if (options.arrays || options.defaults) {
           object.items = [];
+          object.heroes = [];
+        }
         if (options.defaults) {
           object.schemaVersion = 0;
           object.receiptId = "";
@@ -4112,6 +4237,11 @@ var mxzg = $root.mxzg = (() => {
           object.requestId = message.requestId;
         if (message.roleUpgrade != null && Object.hasOwnProperty.call(message, "roleUpgrade"))
           object.roleUpgrade = $root.mxzg.game.RewardRoleUpgrade.toObject(message.roleUpgrade, options, q + 1);
+        if (message.heroes && message.heroes.length) {
+          object.heroes = [];
+          for (let j = 0; j < message.heroes.length; ++j)
+            object.heroes[j] = $root.mxzg.game.RewardHeroGrant.toObject(message.heroes[j], options, q + 1);
+        }
         return object;
       };
       RewardNotice.prototype.toJSON = function toJSON() {
@@ -4124,6 +4254,195 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.RewardNotice";
       };
       return RewardNotice;
+    })();
+    game.RewardHeroGrant = (function() {
+      function RewardHeroGrant(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RewardHeroGrant.prototype.instanceId = "";
+      RewardHeroGrant.prototype.templateId = 0;
+      RewardHeroGrant.prototype.level = 0;
+      RewardHeroGrant.prototype.star = 0;
+      RewardHeroGrant.prototype.stage = 0;
+      RewardHeroGrant.create = function create(properties) {
+        return new RewardHeroGrant(properties);
+      };
+      RewardHeroGrant.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 2 =*/
+          10
+        ).string(message.instanceId);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).uint32(message.templateId);
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).uint32(message.level);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).uint32(message.star);
+        writer.uint32(
+          /* id 5, wireType 0 =*/
+          40
+        ).uint32(message.stage);
+        return writer;
+      };
+      RewardHeroGrant.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RewardHeroGrant();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.instanceId = reader.string();
+              break;
+            }
+            case 2: {
+              message.templateId = reader.uint32();
+              break;
+            }
+            case 3: {
+              message.level = reader.uint32();
+              break;
+            }
+            case 4: {
+              message.star = reader.uint32();
+              break;
+            }
+            case 5: {
+              message.stage = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "instanceId"))
+          throw $util.ProtocolError("missing required 'instanceId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "templateId"))
+          throw $util.ProtocolError("missing required 'templateId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "level"))
+          throw $util.ProtocolError("missing required 'level'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "star"))
+          throw $util.ProtocolError("missing required 'star'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "stage"))
+          throw $util.ProtocolError("missing required 'stage'", { instance: message });
+        return message;
+      };
+      RewardHeroGrant.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isString(message.instanceId))
+          return "instanceId: string expected";
+        if (!$util.isInteger(message.templateId))
+          return "templateId: integer expected";
+        if (!$util.isInteger(message.level))
+          return "level: integer expected";
+        if (!$util.isInteger(message.star))
+          return "star: integer expected";
+        if (!$util.isInteger(message.stage))
+          return "stage: integer expected";
+        return null;
+      };
+      RewardHeroGrant.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RewardHeroGrant)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RewardHeroGrant: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RewardHeroGrant();
+        if (object.instanceId != null)
+          message.instanceId = String(object.instanceId);
+        if (object.templateId != null)
+          message.templateId = object.templateId >>> 0;
+        if (object.level != null)
+          message.level = object.level >>> 0;
+        if (object.star != null)
+          message.star = object.star >>> 0;
+        if (object.stage != null)
+          message.stage = object.stage >>> 0;
+        return message;
+      };
+      RewardHeroGrant.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.instanceId = "";
+          object.templateId = 0;
+          object.level = 0;
+          object.star = 0;
+          object.stage = 0;
+        }
+        if (message.instanceId != null && Object.hasOwnProperty.call(message, "instanceId"))
+          object.instanceId = message.instanceId;
+        if (message.templateId != null && Object.hasOwnProperty.call(message, "templateId"))
+          object.templateId = message.templateId;
+        if (message.level != null && Object.hasOwnProperty.call(message, "level"))
+          object.level = message.level;
+        if (message.star != null && Object.hasOwnProperty.call(message, "star"))
+          object.star = message.star;
+        if (message.stage != null && Object.hasOwnProperty.call(message, "stage"))
+          object.stage = message.stage;
+        return object;
+      };
+      RewardHeroGrant.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RewardHeroGrant.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RewardHeroGrant";
+      };
+      return RewardHeroGrant;
     })();
     game.RewardRoleUpgrade = (function() {
       function RewardRoleUpgrade(properties) {
@@ -13331,6 +13650,570 @@ var mxzg = $root.mxzg = (() => {
       };
       return ChapterMilestoneProgress;
     })();
+    game.ChapterMilestoneClaim = (function() {
+      function ChapterMilestoneClaim(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      ChapterMilestoneClaim.prototype.rewardId = 0;
+      ChapterMilestoneClaim.create = function create(properties) {
+        return new ChapterMilestoneClaim(properties);
+      };
+      ChapterMilestoneClaim.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.rewardId);
+        return writer;
+      };
+      ChapterMilestoneClaim.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.ChapterMilestoneClaim();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.rewardId = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "rewardId"))
+          throw $util.ProtocolError("missing required 'rewardId'", { instance: message });
+        return message;
+      };
+      ChapterMilestoneClaim.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.rewardId))
+          return "rewardId: integer expected";
+        return null;
+      };
+      ChapterMilestoneClaim.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.ChapterMilestoneClaim)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.ChapterMilestoneClaim: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.ChapterMilestoneClaim();
+        if (object.rewardId != null)
+          message.rewardId = object.rewardId >>> 0;
+        return message;
+      };
+      ChapterMilestoneClaim.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults)
+          object.rewardId = 0;
+        if (message.rewardId != null && Object.hasOwnProperty.call(message, "rewardId"))
+          object.rewardId = message.rewardId;
+        return object;
+      };
+      ChapterMilestoneClaim.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      ChapterMilestoneClaim.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.ChapterMilestoneClaim";
+      };
+      return ChapterMilestoneClaim;
+    })();
+    game.ChapterMilestoneReceipt = (function() {
+      function ChapterMilestoneReceipt(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      ChapterMilestoneReceipt.prototype.schemaVersion = 0;
+      ChapterMilestoneReceipt.prototype.rewardId = 0;
+      ChapterMilestoneReceipt.prototype.receiptId = "";
+      ChapterMilestoneReceipt.prototype.roleId = "";
+      ChapterMilestoneReceipt.prototype.assetRevision = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      ChapterMilestoneReceipt.prototype.state = null;
+      ChapterMilestoneReceipt.prototype.actual = null;
+      ChapterMilestoneReceipt.prototype.targetChapter = 0;
+      ChapterMilestoneReceipt.prototype.rulesVersion = "";
+      ChapterMilestoneReceipt.create = function create(properties) {
+        return new ChapterMilestoneReceipt(properties);
+      };
+      ChapterMilestoneReceipt.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.schemaVersion);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).uint32(message.rewardId);
+        writer.uint32(
+          /* id 3, wireType 2 =*/
+          26
+        ).string(message.receiptId);
+        writer.uint32(
+          /* id 4, wireType 2 =*/
+          34
+        ).string(message.roleId);
+        writer.uint32(
+          /* id 5, wireType 0 =*/
+          40
+        ).int64(message.assetRevision);
+        $root.mxzg.game.MainChapterState.encode(message.state, writer.uint32(
+          /* id 6, wireType 2 =*/
+          50
+        ).fork(), q + 1).ldelim();
+        $root.mxzg.game.RewardGrantResult.encode(message.actual, writer.uint32(
+          /* id 7, wireType 2 =*/
+          58
+        ).fork(), q + 1).ldelim();
+        writer.uint32(
+          /* id 8, wireType 0 =*/
+          64
+        ).uint32(message.targetChapter);
+        writer.uint32(
+          /* id 9, wireType 2 =*/
+          74
+        ).string(message.rulesVersion);
+        return writer;
+      };
+      ChapterMilestoneReceipt.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.ChapterMilestoneReceipt();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.schemaVersion = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.rewardId = reader.uint32();
+              break;
+            }
+            case 3: {
+              message.receiptId = reader.string();
+              break;
+            }
+            case 4: {
+              message.roleId = reader.string();
+              break;
+            }
+            case 5: {
+              message.assetRevision = reader.int64();
+              break;
+            }
+            case 6: {
+              message.state = $root.mxzg.game.MainChapterState.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 7: {
+              message.actual = $root.mxzg.game.RewardGrantResult.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 8: {
+              message.targetChapter = reader.uint32();
+              break;
+            }
+            case 9: {
+              message.rulesVersion = reader.string();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "schemaVersion"))
+          throw $util.ProtocolError("missing required 'schemaVersion'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "rewardId"))
+          throw $util.ProtocolError("missing required 'rewardId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "receiptId"))
+          throw $util.ProtocolError("missing required 'receiptId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "roleId"))
+          throw $util.ProtocolError("missing required 'roleId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "assetRevision"))
+          throw $util.ProtocolError("missing required 'assetRevision'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "state"))
+          throw $util.ProtocolError("missing required 'state'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "actual"))
+          throw $util.ProtocolError("missing required 'actual'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "targetChapter"))
+          throw $util.ProtocolError("missing required 'targetChapter'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "rulesVersion"))
+          throw $util.ProtocolError("missing required 'rulesVersion'", { instance: message });
+        return message;
+      };
+      ChapterMilestoneReceipt.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.schemaVersion))
+          return "schemaVersion: integer expected";
+        if (!$util.isInteger(message.rewardId))
+          return "rewardId: integer expected";
+        if (!$util.isString(message.receiptId))
+          return "receiptId: string expected";
+        if (!$util.isString(message.roleId))
+          return "roleId: string expected";
+        if (!$util.isInteger(message.assetRevision) && !(message.assetRevision && $util.isInteger(message.assetRevision.low) && $util.isInteger(message.assetRevision.high)))
+          return "assetRevision: integer|Long expected";
+        {
+          let error = $root.mxzg.game.MainChapterState.verify(message.state, long + 1);
+          if (error)
+            return "state." + error;
+        }
+        {
+          let error = $root.mxzg.game.RewardGrantResult.verify(message.actual, long + 1);
+          if (error)
+            return "actual." + error;
+        }
+        if (!$util.isInteger(message.targetChapter))
+          return "targetChapter: integer expected";
+        if (!$util.isString(message.rulesVersion))
+          return "rulesVersion: string expected";
+        return null;
+      };
+      ChapterMilestoneReceipt.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.ChapterMilestoneReceipt)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.ChapterMilestoneReceipt: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.ChapterMilestoneReceipt();
+        if (object.schemaVersion != null)
+          message.schemaVersion = object.schemaVersion >>> 0;
+        if (object.rewardId != null)
+          message.rewardId = object.rewardId >>> 0;
+        if (object.receiptId != null)
+          message.receiptId = String(object.receiptId);
+        if (object.roleId != null)
+          message.roleId = String(object.roleId);
+        if (object.assetRevision != null) {
+          if ($util.Long)
+            message.assetRevision = $util.Long.fromValue(object.assetRevision, false);
+          else if (typeof object.assetRevision === "string")
+            message.assetRevision = parseInt(object.assetRevision, 10);
+          else if (typeof object.assetRevision === "number")
+            message.assetRevision = object.assetRevision;
+          else if (typeof object.assetRevision === "object")
+            message.assetRevision = new $util.LongBits(object.assetRevision.low >>> 0, object.assetRevision.high >>> 0).toNumber();
+        }
+        if (object.state != null) {
+          if (!$util.isObject(object.state))
+            throw TypeError(".mxzg.game.ChapterMilestoneReceipt.state: object expected");
+          message.state = $root.mxzg.game.MainChapterState.fromObject(object.state, long + 1);
+        }
+        if (object.actual != null) {
+          if (!$util.isObject(object.actual))
+            throw TypeError(".mxzg.game.ChapterMilestoneReceipt.actual: object expected");
+          message.actual = $root.mxzg.game.RewardGrantResult.fromObject(object.actual, long + 1);
+        }
+        if (object.targetChapter != null)
+          message.targetChapter = object.targetChapter >>> 0;
+        if (object.rulesVersion != null)
+          message.rulesVersion = String(object.rulesVersion);
+        return message;
+      };
+      ChapterMilestoneReceipt.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.schemaVersion = 0;
+          object.rewardId = 0;
+          object.receiptId = "";
+          object.roleId = "";
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.assetRevision = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.assetRevision = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          object.state = null;
+          object.actual = null;
+          object.targetChapter = 0;
+          object.rulesVersion = "";
+        }
+        if (message.schemaVersion != null && Object.hasOwnProperty.call(message, "schemaVersion"))
+          object.schemaVersion = message.schemaVersion;
+        if (message.rewardId != null && Object.hasOwnProperty.call(message, "rewardId"))
+          object.rewardId = message.rewardId;
+        if (message.receiptId != null && Object.hasOwnProperty.call(message, "receiptId"))
+          object.receiptId = message.receiptId;
+        if (message.roleId != null && Object.hasOwnProperty.call(message, "roleId"))
+          object.roleId = message.roleId;
+        if (message.assetRevision != null && Object.hasOwnProperty.call(message, "assetRevision"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.assetRevision = typeof message.assetRevision === "number" ? BigInt(message.assetRevision) : $util.Long.fromBits(message.assetRevision.low >>> 0, message.assetRevision.high >>> 0, false).toBigInt();
+          else if (typeof message.assetRevision === "number")
+            object.assetRevision = options.longs === String ? String(message.assetRevision) : message.assetRevision;
+          else
+            object.assetRevision = options.longs === String ? $util.Long.prototype.toString.call(message.assetRevision) : options.longs === Number ? new $util.LongBits(message.assetRevision.low >>> 0, message.assetRevision.high >>> 0).toNumber() : message.assetRevision;
+        if (message.state != null && Object.hasOwnProperty.call(message, "state"))
+          object.state = $root.mxzg.game.MainChapterState.toObject(message.state, options, q + 1);
+        if (message.actual != null && Object.hasOwnProperty.call(message, "actual"))
+          object.actual = $root.mxzg.game.RewardGrantResult.toObject(message.actual, options, q + 1);
+        if (message.targetChapter != null && Object.hasOwnProperty.call(message, "targetChapter"))
+          object.targetChapter = message.targetChapter;
+        if (message.rulesVersion != null && Object.hasOwnProperty.call(message, "rulesVersion"))
+          object.rulesVersion = message.rulesVersion;
+        return object;
+      };
+      ChapterMilestoneReceipt.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      ChapterMilestoneReceipt.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.ChapterMilestoneReceipt";
+      };
+      return ChapterMilestoneReceipt;
+    })();
+    game.ChapterMilestoneStatus = (function() {
+      function ChapterMilestoneStatus(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      ChapterMilestoneStatus.prototype.rewardId = 0;
+      ChapterMilestoneStatus.prototype.found = false;
+      ChapterMilestoneStatus.prototype.receipt = null;
+      ChapterMilestoneStatus.create = function create(properties) {
+        return new ChapterMilestoneStatus(properties);
+      };
+      ChapterMilestoneStatus.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.rewardId);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).bool(message.found);
+        if (message.receipt != null && Object.hasOwnProperty.call(message, "receipt"))
+          $root.mxzg.game.ChapterMilestoneReceipt.encode(message.receipt, writer.uint32(
+            /* id 3, wireType 2 =*/
+            26
+          ).fork(), q + 1).ldelim();
+        return writer;
+      };
+      ChapterMilestoneStatus.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.ChapterMilestoneStatus();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.rewardId = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.found = reader.bool();
+              break;
+            }
+            case 3: {
+              message.receipt = $root.mxzg.game.ChapterMilestoneReceipt.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "rewardId"))
+          throw $util.ProtocolError("missing required 'rewardId'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "found"))
+          throw $util.ProtocolError("missing required 'found'", { instance: message });
+        return message;
+      };
+      ChapterMilestoneStatus.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.rewardId))
+          return "rewardId: integer expected";
+        if (typeof message.found !== "boolean")
+          return "found: boolean expected";
+        if (message.receipt != null && Object.hasOwnProperty.call(message, "receipt")) {
+          let error = $root.mxzg.game.ChapterMilestoneReceipt.verify(message.receipt, long + 1);
+          if (error)
+            return "receipt." + error;
+        }
+        return null;
+      };
+      ChapterMilestoneStatus.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.ChapterMilestoneStatus)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.ChapterMilestoneStatus: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.ChapterMilestoneStatus();
+        if (object.rewardId != null)
+          message.rewardId = object.rewardId >>> 0;
+        if (object.found != null)
+          message.found = Boolean(object.found);
+        if (object.receipt != null) {
+          if (!$util.isObject(object.receipt))
+            throw TypeError(".mxzg.game.ChapterMilestoneStatus.receipt: object expected");
+          message.receipt = $root.mxzg.game.ChapterMilestoneReceipt.fromObject(object.receipt, long + 1);
+        }
+        return message;
+      };
+      ChapterMilestoneStatus.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.rewardId = 0;
+          object.found = false;
+          object.receipt = null;
+        }
+        if (message.rewardId != null && Object.hasOwnProperty.call(message, "rewardId"))
+          object.rewardId = message.rewardId;
+        if (message.found != null && Object.hasOwnProperty.call(message, "found"))
+          object.found = message.found;
+        if (message.receipt != null && Object.hasOwnProperty.call(message, "receipt"))
+          object.receipt = $root.mxzg.game.ChapterMilestoneReceipt.toObject(message.receipt, options, q + 1);
+        return object;
+      };
+      ChapterMilestoneStatus.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      ChapterMilestoneStatus.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.ChapterMilestoneStatus";
+      };
+      return ChapterMilestoneStatus;
+    })();
     game.ChapterChallenge = (function() {
       function ChapterChallenge(properties) {
         if (properties) {
@@ -15899,6 +16782,7 @@ var mxzg = $root.mxzg = (() => {
         this.tavern = [];
         this.bonuses = [];
         this.timedItems = [];
+        this.heroes = [];
         if (properties) {
           for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
             if (properties[keys[i]] != null && keys[i] !== "__proto__")
@@ -15914,6 +16798,7 @@ var mxzg = $root.mxzg = (() => {
       RewardGrantResult.prototype.bonuses = $util.emptyArray;
       RewardGrantResult.prototype.timedItems = $util.emptyArray;
       RewardGrantResult.prototype.spirits = null;
+      RewardGrantResult.prototype.heroes = $util.emptyArray;
       RewardGrantResult.create = function create(properties) {
         return new RewardGrantResult(properties);
       };
@@ -15972,6 +16857,12 @@ var mxzg = $root.mxzg = (() => {
           /* id 9, wireType 2 =*/
           74
         ).fork(), q + 1).ldelim();
+        if (message.heroes != null && message.heroes.length)
+          for (let i = 0; i < message.heroes.length; ++i)
+            $root.mxzg.game.RewardHeroGrant.encode(message.heroes[i], writer.uint32(
+              /* id 10, wireType 2 =*/
+              82
+            ).fork(), q + 1).ldelim();
         return writer;
       };
       RewardGrantResult.decode = function decode(reader, length, error, long) {
@@ -16043,6 +16934,12 @@ var mxzg = $root.mxzg = (() => {
             }
             case 9: {
               message.spirits = $root.mxzg.game.SpiritInventory.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 10: {
+              if (!(message.heroes && message.heroes.length))
+                message.heroes = [];
+              message.heroes.push($root.mxzg.game.RewardHeroGrant.decode(reader, reader.uint32(), void 0, long + 1));
               break;
             }
             default:
@@ -16136,6 +17033,15 @@ var mxzg = $root.mxzg = (() => {
           if (error)
             return "spirits." + error;
         }
+        if (message.heroes != null && Object.hasOwnProperty.call(message, "heroes")) {
+          if (!Array.isArray(message.heroes))
+            return "heroes: array expected";
+          for (let i = 0; i < message.heroes.length; ++i) {
+            let error = $root.mxzg.game.RewardHeroGrant.verify(message.heroes[i], long + 1);
+            if (error)
+              return "heroes." + error;
+          }
+        }
         return null;
       };
       RewardGrantResult.fromObject = function fromObject(object, long) {
@@ -16220,6 +17126,16 @@ var mxzg = $root.mxzg = (() => {
             throw TypeError(".mxzg.game.RewardGrantResult.spirits: object expected");
           message.spirits = $root.mxzg.game.SpiritInventory.fromObject(object.spirits, long + 1);
         }
+        if (object.heroes) {
+          if (!Array.isArray(object.heroes))
+            throw TypeError(".mxzg.game.RewardGrantResult.heroes: array expected");
+          message.heroes = [];
+          for (let i = 0; i < object.heroes.length; ++i) {
+            if (!$util.isObject(object.heroes[i]))
+              throw TypeError(".mxzg.game.RewardGrantResult.heroes: object expected");
+            message.heroes[i] = $root.mxzg.game.RewardHeroGrant.fromObject(object.heroes[i], long + 1);
+          }
+        }
         return message;
       };
       RewardGrantResult.toObject = function toObject(message, options, q) {
@@ -16237,6 +17153,7 @@ var mxzg = $root.mxzg = (() => {
           object.tavern = [];
           object.bonuses = [];
           object.timedItems = [];
+          object.heroes = [];
         }
         if (options.defaults) {
           object.roleId = "";
@@ -16279,6 +17196,11 @@ var mxzg = $root.mxzg = (() => {
         }
         if (message.spirits != null && Object.hasOwnProperty.call(message, "spirits"))
           object.spirits = $root.mxzg.game.SpiritInventory.toObject(message.spirits, options, q + 1);
+        if (message.heroes && message.heroes.length) {
+          object.heroes = [];
+          for (let j = 0; j < message.heroes.length; ++j)
+            object.heroes[j] = $root.mxzg.game.RewardHeroGrant.toObject(message.heroes[j], options, q + 1);
+        }
         return object;
       };
       RewardGrantResult.prototype.toJSON = function toJSON() {

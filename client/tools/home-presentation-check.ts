@@ -16,7 +16,9 @@ import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { CityChromeView } from "../assets/scripts/features/city/ui/CityChromeView";
 import { SkillAuditView } from "../assets/scripts/features/battle/ui/SkillAuditView";
-import { ConfigUnavailable } from "../assets/scripts/config/GameConfig";
+import { SkillAuditUtils } from "../assets/scripts/features/battle/utils/SkillAuditUtils";
+import { ConfigUnavailable, GameConfig } from "../assets/scripts/config/GameConfig";
+import { GConfig } from "../assets/scripts/config/GConfig";
 
 class CityFixture extends CityHubView {
   closedCount = 0; disposedCount = 0; refreshCount = 0;
@@ -56,7 +58,7 @@ function fixture() {
   return { home, city, chrome, profile };
 }
 
-/** 两种存量入口共用全局反馈；切页空串、异步迟到失败和重复播放均不能覆盖其他窗口提示。 */
+/** 两种入口共用全局反馈；技能条目由真实配置和精确等级证据生成，迟到失败不能覆盖其他窗口。 */
 async function checkGlobalFeedback(): Promise<void> {
     const notices: string[] = [];
     const releaseNotice = UIManager.instance.bindNotice(text => notices.push(text));
@@ -82,27 +84,43 @@ async function checkGlobalFeedback(): Promise<void> {
         }
         audit.playButton = new Node("Play").addComponent(Button);
         audit.closeButton = new Node("Close").addComponent(Button);
-        audit.options = { list: { setData: () => {} }, toStart: () => {} } as any;
+        let rows: Array<{ caption: string; tap: () => void }> = [];
+        audit.options = {
+            list: { setData: (values: typeof rows) => { rows = values; } },
+            toStart: () => {},
+        } as any;
+        const hero = GameConfig.instance.requireConfig(GConfig.HeroType, 10101001);
+        const skill = SkillAuditUtils.skills(hero.type).find(value => value.id === hero.skill_1 && value.level === 1)!;
+        assert(skill, "反馈回归使用实际存在的一级主动技能");
+        const evidence = [{ heroId: hero.type, skillId: skill.id, level: skill.level, fixture: "feedback-fixture-replay.pb" }];
         let calls = 0;
         let rejectLate!: (error: Error) => void;
-        audit.runOpen({ play: async () => {
-            calls++;
-            if (calls === 1) {
-                throw new Error("演示资源测试失败");
-            }
-            await new Promise<void>((_resolve, reject) => { rejectLate = reject; });
-        } });
+        audit.runOpen({
+            load: async () => evidence,
+            play: async () => {
+                calls++;
+                if (calls === 1) {
+                    throw new Error("演示资源测试失败");
+                }
+                await new Promise<void>((_resolve, reject) => { rejectLate = reject; });
+            },
+            cancel: () => {},
+        });
+        await Promise.resolve();
         await (audit as any).play();
         assert.equal(notices[notices.length - 1], "请先选择英雄和技能等级");
         assert.equal(calls, 0, "未选择时只提示，不发起播放");
-        (audit as any).selected = { fixture: null, reason: "该等级尚未接入演示" };
+        rows.find(row => row.caption.includes("[" + hero.type + "]"))!.tap();
+        rows.find(row => row.caption.includes("[" + skill.id + "]") && row.caption.includes(" Lv.2 ·"))!.tap();
+        const unavailable = SkillAuditUtils.skills(hero.type, evidence).find(value => value.id === skill.id && value.level === 2)!;
         await (audit as any).play();
-        assert.equal(notices[notices.length - 1], "该等级尚未接入演示");
-        audit.message.string = "当前等级的规则状态与说明";
-        (audit as any).selected = { fixture: "feedback-fixture" };
+        assert.equal(notices[notices.length - 1], unavailable.reason);
+        assert.equal(calls, 0, "一级演示证据不能用于二级技能");
+        rows.find(row => row.caption.includes("[" + skill.id + "]") && row.caption.includes(" Lv.1 ·"))!.tap();
+        const description = audit.message.string;
         await (audit as any).play();
         assert.equal(notices[notices.length - 1], "演示打开失败：演示资源测试失败");
-        assert.equal(audit.message.string, "当前等级的规则状态与说明", "失败反馈不占用技能状态区域");
+        assert.equal(audit.message.string, description, "失败反馈不占用技能状态区域");
         const late = (audit as any).play();
         await (audit as any).play();
         assert.equal(calls, 2, "播放在途时不重复发起或追加提示");

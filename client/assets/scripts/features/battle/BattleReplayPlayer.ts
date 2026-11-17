@@ -1,6 +1,6 @@
 /**
  * 战报播放协调器：技能间顺序执行，同技能不同目标保持并行，Buff按真实实例维护因果顺序。
- * 耗尽移除等待对应命中，死亡/重施不被旧回调覆盖；不请求协议、修改业务Model或重算数值。
+ * 耗尽移除等待对应命中，格挡等扩展由显示能力显式确认，死亡/重施不被旧回调覆盖；不改业务Model或数值。
  */
 import { BattleReplayStep, BattleReplayUtils } from "./utils/BattleReplayUtils";
 
@@ -10,6 +10,8 @@ export interface BattleReplayPresentation {
     play(step: BattleReplayStep, targets?: readonly BattleReplayStep[]): Promise<void>;
     /** 定位前恢复真实战报快照，不播放动画、不重新计算伤害。 */
     restore?(step: BattleReplayStep): void;
+    /** 已由显示配置确认需要等待后续同目标命中的状态耗尽；播放器不读取配置或猜Buff编号。 */
+    waitForFollowingHit?(step: BattleReplayStep): boolean;
     /** 结束本次表现并释放等待；重复结束由页面自身保证安全。 */
     stop(): void;
 }
@@ -28,7 +30,7 @@ export class BattleReplayPlayer {
 
     /**
      * 先校验整包；定位时恢复前置状态，再按技能与实例依赖播放。
-     * 不同目标仍并行，耗尽移除等待对应命中，死亡清理保持既有技能屏障；false表示取消。
+     * 不同目标仍并行，确认的耗尽移除等待对应命中且无匹配时拒绝，死亡清理保持技能屏障；false表示取消。
      */
     public async play(bytes: Uint8Array, focus?: { skillId: number; level: number }): Promise<boolean> {
         const steps = BattleReplayUtils.decode(bytes);
@@ -44,7 +46,7 @@ export class BattleReplayPlayer {
         const generation = this.generation;
         this.active = true;
         try {
-            // 回合流血也会先记耗尽移除再记damage，不能只修技能内的耗尽事件。
+            // 回合流血也会先记耗尽移除再记damage，显示能力确认的额外耗尽同样不能跨阶段借命中。
             const roundRemovals: BattleReplayStep[] = [];
             for (let index = 0; index < start; index++) {
                 if (generation !== this.generation) {
@@ -57,7 +59,10 @@ export class BattleReplayPlayer {
                     return false;
                 }
                 const step = steps[index];
-                if (step.kind === "buff.remove" && step.removalReason === "shield-depleted") {
+                if (this.requiresFollowingHit(step)) {
+                    if (!this.hasRoundFollowingHit(steps, index)) {
+                        throw new Error("状态耗尽缺少同阶段对应命中");
+                    }
                     roundRemovals.push(step);
                     continue;
                 }
@@ -103,7 +108,7 @@ export class BattleReplayPlayer {
 
     /**
      * 启动单技能的表现依赖：相同实例按事件顺序，不同目标保留并行。
-     * 后端在damage前记录护盾耗尽，故该移除需等待后续同目标命中；其他Buff等待此前同目标命中。
+     * 护盾和显示能力明确声明的格挡耗尽在damage前记录，等待后续同目标命中；其他Buff等此前命中。
      * 死亡清理仍在全技能表现完成后执行，不改已有多目标致死/增益表现；当前未开放复活链。
      * 依赖和Promise只活在本技能中，取消后不再启动迟到任务，也不另存一份战斗状态。
      */
@@ -144,12 +149,13 @@ export class BattleReplayPlayer {
                     dependencies[index].add(previousBuff);
                 }
                 lastBuff.set(key, index);
-                if (effect.kind === "buff.remove" && effect.removalReason === "shield-depleted") {
+                if (this.requiresFollowingHit(effect)) {
                     const hit = groups.findIndex((group, next) => next > index
                         && group[0].kind === "damage" && group[0].targetId === effect.targetId);
                     // 整包解析已校验此关联；若调用链破坏它也必须停止，而非把耗尽当普通驱散。
                     if (hit < 0) {
-                        throw new Error("护盾耗尽缺少对应命中");
+                        throw new Error(effect.removalReason === "shield-depleted"
+                            ? "护盾耗尽缺少对应命中" : "状态耗尽缺少对应命中");
                     }
                     dependencies[index].add(hit);
                 } else if (previousHit !== undefined) {
@@ -192,6 +198,23 @@ export class BattleReplayPlayer {
             }
             await this.presentation.play(removal);
         }
+    }
+
+    /** 护盾耗尽沿原规则；其他状态仅由已核实的显示能力明确提供，未知原因不在这里放行协议。 */
+    private requiresFollowingHit(step: BattleReplayStep): boolean {
+        return step.kind === "buff.remove" && (step.removalReason === "shield-depleted"
+            || this.presentation.waitForFollowingHit?.(step) === true);
+    }
+
+    /** 技能外耗尽也必须在当前回合阶段找到后续同目标damage，不跨回合或技能边界借命中。 */
+    private hasRoundFollowingHit(steps: readonly BattleReplayStep[], start: number): boolean {
+        for (let index = start + 1; index < steps.length; index++) {
+            const step = steps[index];
+            if (step.round !== steps[start].round || step.kind === "round.ready"
+                || step.kind === "skill.begin" || step.kind === "skill.end") return false;
+            if (step.kind === "damage" && step.targetId === steps[start].targetId) return true;
+        }
+        return false;
     }
 
     /** 关页或切换播放时取消后续步骤；页面stop负责取消当前动画并结束等待。 */

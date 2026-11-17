@@ -42,8 +42,6 @@ export class RemakeHomeView extends BaseView implements HomeView {
     private currentFeature: "city" | "hero" | "bag" | "battle" = "city";
 
     get featureHost(): Node | null { return this.cityHost; }
-    get cityContent(): Node | null { return this.city?.node || null; }
-
     /** 切换主城或背包只隐藏内容区；共用头像保留，角色详情同时收起。 */
     showFeature(id: "city" | "hero" | "bag" | "battle"): void {
         if (this.closed) return;

@@ -158,6 +158,8 @@ export class RewardModel extends BaseModel {
             notice.mode,
             notice.items.map(item => [item.itemId, item.credited]).sort((left, right) => left[0] - right[0]),
             notice.roleUpgrade ? [notice.roleUpgrade.beforeLevel, notice.roleUpgrade.afterLevel] : null,
+            (notice.heroes || []).map(hero => [hero.instanceId, hero.templateId, hero.level, hero.star, hero.stage])
+                .sort((left, right) => String(left[0]).localeCompare(String(right[0]))),
         ]);
     }
 }

@@ -8,6 +8,8 @@ package com.funsgamex.mxzg.reward;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.inventory.TimedInventoryService;
 import com.funsgamex.mxzg.inventory.TimedItemRules;
+import com.funsgamex.mxzg.hero.HeroGrantService;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.role.RoleExperienceService;
 import com.funsgamex.mxzg.role.RoleRepository;
@@ -49,6 +51,8 @@ public class RewardGrantService {
     private final SpiritInventoryService spirits;
     /** 要求外层事务，并复用所有领域共同的版本/提交后推送。 */
     private final AssetSyncService sync;
+    /** 奖励英雄真实入库领域；旧无英雄专项可不装配，但不得据此创建假堆叠。 */
+    private final HeroGrantService heroes;
 
     /**
      * 加成逐条取整后的可信最终理论量；同配置在本层精确合并。
@@ -76,6 +80,15 @@ public class RewardGrantService {
             InventoryService inventory, TimedItemRules timedRules, TimedInventoryService timed,
             SpiritInventoryService spirits, TavernPointService tavernPoints, AssetSyncService sync,
             ObjectMapper json) {
+        this(roles, experience, inventory, timedRules, timed, spirits, tavernPoints, sync, json, null);
+    }
+
+    /** 正常应用装配真实英雄领域，资格和幂等仍由调用业务持有。 */
+    @Autowired
+    public RewardGrantService(RoleRepository roles, RoleExperienceService experience,
+            InventoryService inventory, TimedItemRules timedRules, TimedInventoryService timed,
+            SpiritInventoryService spirits, TavernPointService tavernPoints, AssetSyncService sync,
+            ObjectMapper json, HeroGrantService heroes) {
         this.roles = roles;
         this.experience = experience;
         this.inventory = inventory;
@@ -84,6 +97,7 @@ public class RewardGrantService {
         this.timed = timed;
         this.spirits = spirits;
         this.sync = sync;
+        this.heroes = heroes;
         var index = new HashMap<Integer, Integer>();
         try (var input = getClass().getResourceAsStream("/gameplay/item.json")) {
             if (input == null) {
@@ -144,6 +158,7 @@ public class RewardGrantService {
         var bonuses = new ArrayList<RewardGrantResult.Bonus>();
         var timedItems = new ArrayList<TimedInventoryService.Item>();
         var spiritItems = new ArrayList<SpiritInventoryService.Item>();
+        var heroItems = new ArrayList<HeroGrantService.Granted>();
         for (var reward : merged) {
             int id = reward.itemId();
             long requested = reward.quantity();
@@ -165,6 +180,7 @@ public class RewardGrantService {
                     }
                 }
                 case 5, 6 -> stacks.add(inventory.credit(roleId, id, requested));
+                case 7 -> heroItems.addAll(heroes.grant(roleId, id, Math.toIntExact(requested)));
                 case 8 -> spiritItems.addAll(spirits.grant(roleId, id, Math.toIntExact(requested), random));
                 case 11 -> {
                     var change = tavernPoints.credit(roleId, requested, context.tavernLimit());
@@ -189,7 +205,7 @@ public class RewardGrantService {
         return new RewardGrantResult(roleId, outcomes,
                 new RoleRepository.CurrencyCredit(before.gold(), before.diamonds(), after.gold(), after.diamonds()),
                 stacks, gains, tavern, bonuses, timedItems,
-                new SpiritInventoryService.State(SpiritInventoryService.SCHEMA_VERSION, spiritItems));
+                new SpiritInventoryService.State(SpiritInventoryService.SCHEMA_VERSION, spiritItems), heroItems);
     }
 
     /** 全量预检并精确合并同ID，保留首次出现顺序；不得拆行绕过精灵批量保护。 */
@@ -207,10 +223,16 @@ public class RewardGrantService {
         }
         var result = new ArrayList<Reward>();
         long timedQuantity = 0;
+        long heroQuantity = 0;
         for (var entry : merged.entrySet()) {
             int type = requireType(entry.getKey());
             if (type == 8) {
                 SpiritInventoryService.requireSupportedGrant(entry.getKey(), entry.getValue());
+            } else if (type == 7) {
+                heroQuantity = Math.addExact(heroQuantity, entry.getValue());
+                if (heroQuantity > HeroGrantService.MAX_GRANT_QUANTITY) {
+                    throw new IllegalArgumentException("英雄奖励合计技术批量超限");
+                }
             } else if (type == 16) {
                 timedQuantity = Math.addExact(timedQuantity, entry.getValue());
                 if (timedQuantity > MAX_TIMED_GRANT_QUANTITY) {
@@ -232,6 +254,13 @@ public class RewardGrantService {
             case 3 -> itemId == 900003;
             case 5 -> itemId == 900101;
             case 6 -> true;
+            case 7 -> {
+                if (heroes == null) {
+                    throw new IllegalArgumentException("奖励英雄领域尚未装配：" + itemId);
+                }
+                heroes.requireSupported(itemId);
+                yield true;
+            }
             case 11 -> itemId == 900401;
             case 8 -> {
                 SpiritInventoryService.requireSupportedGrant(itemId, 1);

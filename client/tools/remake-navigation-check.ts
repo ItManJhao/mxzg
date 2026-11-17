@@ -20,17 +20,16 @@ class SlowFixture extends BaseView {}
 class ThrowingFixture extends BaseView {}
 class ResidentFixture extends BaseView {}
 class FeatureFixture extends BaseView {}
+class AlternateFeatureFixture extends BaseView {}
 class PreparedFixture extends BaseView {}
 class PreparingFixture extends BaseView {}
 
-/** 换号先关页的真实导航回归：动画中的功能页立即退订，缓存及迟到开窗不得保留旧页面。 */
+/** 换号先关页的真实导航回归：功能页同步退订，缓存及迟到开窗不得保留旧页面。 */
 async function checkIdentityCleanup(): Promise<void> {
   const ui = new UIManager();
   const root = new Node("IdentityCanvas");
   const content = new Node("HomeContent");
   let listening = false;
-  let animations = 0;
-  let stopped = 0;
   class IdentityHome extends BaseView {}
   class IdentityFeature extends BaseView {
     /** 模拟页面已经订阅Model，关闭必须在下一次数据重置前解除。 */
@@ -41,11 +40,7 @@ async function checkIdentityCleanup(): Promise<void> {
   class IdentityPopup extends BaseView {}
   const nav = new RemakeNavigation(ui, root, {
     parent: id => id === "identity-feature" ? root : null,
-    content: () => content,
-    changed: () => {},
-  }, (_from, _to, _fromId, _toId, done) => {
-    animations++;
-    return () => { stopped++; done(); };
+    changed: id => { content.active = id === null; },
   });
   ui.install(nav, { showToast: () => {} });
   const prefab = (ctor: new () => BaseView) => Object.assign(new Prefab(), {
@@ -60,11 +55,9 @@ async function checkIdentityCleanup(): Promise<void> {
   await ui.open(IdentityHome);
   const feature = await ui.open(IdentityFeature);
   assert.equal(listening, true);
-  assert.equal(animations, 1, "普通切页仍播放动画");
+  assert.equal(content.active, false, "功能页挂载完成时主城内容已隐藏");
   ui.invalidatePending();
-  assert.equal(nav.back(false), true);
-  assert.equal(stopped, 1, "身份变化先结束上一段动画");
-  assert.equal(animations, 1, "身份变化不再启动返回动画");
+  assert.equal(nav.back(), true);
   assert.equal(listening, false, "Model清空之前页面已经退订");
   assert.equal(content.active, true, "立即返回恢复主城内容");
   ui.clearCached();
@@ -91,6 +84,7 @@ async function checkIdentityCleanup(): Promise<void> {
   root.destroy();
 }
 
+/** 沿真实页面管理入口验证同步切换、缓存复用、取消和身份清理，不等待动画或连接服务器。 */
 async function main() {
   await checkIdentityCleanup();
   const ui = new UIManager();
@@ -199,12 +193,13 @@ async function main() {
   let slot: Node | null = null;
   const changes: Array<string | null> = [];
   const featureNav = new RemakeNavigation(ui, parent, {
-    parent: id => id === "test-remake-feature" ? slot : null,
+    parent: id => id === "test-remake-feature" || id === "test-remake-feature-alt" ? slot : null,
     changed: id => { changes.push(id); },
   });
   ui.install(featureNav, { showToast: () => {} });
   const keptHome = register(HomeFixture, "test-remake-home");
   const feature = register(FeatureFixture, "test-remake-feature", undefined, false, false, true);
+  const alternateFeature = register(AlternateFeatureFixture, "test-remake-feature-alt");
   register(LoginFixture, "test-remake-login");
   await ui.open(HomeFixture);
   const keptHomeNode = hosts.get("test-remake-home")!;
@@ -223,10 +218,19 @@ async function main() {
   await ui.open(FeatureFixture);
   assert.equal(hosts.get("test-remake-feature"), cachedFeature, "重新打开复用原实例");
   assert.equal(cachedFeature.parent!.active, true, "缓存宿主重开恢复激活");
+  await ui.open(AlternateFeatureFixture);
+  assert.equal(feature.closed, 2, "新功能页准备成功后立即关闭旧页监听，不等待动画计时");
+  assert.equal(cachedFeature.parent!.active, false, "旧功能页立即隐藏并交回缓存");
+  assert.equal(alternateFeature.closed, 0);
+  const alternateHost = hosts.get("test-remake-feature-alt")!;
+  await ui.open(FeatureFixture);
+  assert.equal(alternateFeature.closed, 1, "再次切页同步关闭未缓存页面");
+  assert.equal(alternateHost.isValid, false, "无缓存的旧页在切换完成前已释放");
+  assert.equal(hosts.get("test-remake-feature"), cachedFeature, "连续切换仍使用原缓存实例");
   await ui.open(LoginFixture);
   assert.equal(ui.snapshot().cached, 0, "根页面替换清空旧会话缓存");
   assert.equal(cachedFeature.isValid, false);
-  assert.equal(feature.closed, 2); assert.equal(keptHome.closed, 1, "logout disposes both feature and home");
+  assert.equal(feature.closed, 3); assert.equal(keptHome.closed, 1, "logout disposes both feature and home");
   assert.equal(featureNav.current, "test-remake-login");
   assert.equal(parent.children.length, 1);
   assert(changes.includes("test-remake-feature") && changes[changes.length - 1] === null);

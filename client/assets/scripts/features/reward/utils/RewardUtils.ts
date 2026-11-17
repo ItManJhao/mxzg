@@ -67,6 +67,9 @@ export class RewardUtils {
             throw new Error("奖励回执编号、归属或版本无效");
         }
         const roleUpgrade = RewardUtils.roleUpgrade(actual.experience);
+        const allHeroes = GameProtocolCodecUtils.validateHeroGrants(actual.heroes,
+            Array.from(baseQuantities, ([itemId, credited]) => ({ itemId, credited })));
+        const heroes = part === "all" ? allHeroes : Object.freeze([]);
         if (quantities.size === 0 && !roleUpgrade) {
             return null;
         }
@@ -78,6 +81,7 @@ export class RewardUtils {
             mode,
             items: Object.freeze(Array.from(quantities, ([itemId, credited]) => Object.freeze({ itemId, credited }))),
             ...(roleUpgrade ? { roleUpgrade } : {}),
+            heroes,
         };
         GameProtocolCodecUtils.validateRewardNotice(notice);
         return Object.freeze(notice);

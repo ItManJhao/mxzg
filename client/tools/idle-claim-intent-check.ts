@@ -45,6 +45,7 @@ function receipt(roleId: string, request: IdleClaimPending, revision: number): R
             wallet: { goldBefore: 50, diamondsBefore: 7, goldAfter: 60, diamondsAfter: 7 },
             stacks: [], experience: [], tavern: [], bonuses: [], timedItems: [],
             spirits: { schemaVersion: 1, items: [] },
+            heroes: [],
         },
     };
 }

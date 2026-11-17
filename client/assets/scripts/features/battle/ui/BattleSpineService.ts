@@ -6,7 +6,7 @@
  * 这些套是 Spine 3.7.94。播之前在内存里收成 spine-3.8 能读的皮和曲线，不改磁盘上的 json。
  * Creator 3.8.8 仍可能加载失败，失败只回调，攻击照旧。不播 bisha。
  */
-import { Node, sp } from "cc";
+import { EffectAsset, Material, Node, sp } from "cc";
 import { GameLog } from "../../../core/GameLog";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { TrackedTimers } from "../../../framework/TrackedTimers";
@@ -26,6 +26,15 @@ interface SpineLocomotionAnimation {
         };
     };
 }
+/** 同一运行骨架及可选旧预乘材质共用原有拥有者集合，最后节点释放后一起销毁。 */
+interface RuntimeSpinePack {
+    /** 原3.7数据转换副本，不修改源SkeletonData。 */
+    data: sp.SkeletonData;
+    /** 仍使用该副本的节点，最后一个销毁时释放data和material。 */
+    owners: Set<Node>;
+    /** 显式旧PNG预乘效果的材质；null表示沿现有默认材质，不影响其他英雄或特效。 */
+    material: Material | null;
+}
 /** 战斗骨骼显示服务：唯一实例维护转换后骨架与使用节点的资源归属，动作工厂返回独立控制器，最后使用节点销毁时释放副本。 */
 export class BattleSpineService {
     /** 当前资源服务唯一实例，统一持有节点、请求及清理状态。 */
@@ -34,10 +43,7 @@ export class BattleSpineService {
     private constructor() { }
 
     /** 骨架资源键到运行副本及使用节点；最后使用节点销毁后释放副本。 */
-    private readonly runtimePacks = new Map<string, {
-        data: sp.SkeletonData;
-        owners: Set<Node>;
-    }>();
+    private readonly runtimePacks = new Map<string, RuntimeSpinePack>();
     /**
      * 固定运行副本中挂机跑/走动作的身体根位移，避免英雄浮离地砖。
      * 调用方传入可修改的内存副本；原资源、攻击及待机轨道保持原样。
@@ -69,7 +75,7 @@ export class BattleSpineService {
         return raw;
     }
 
-    /** 进度条、掉落堆这类单节点特效。失败只留空节点并回调，不抛。 */
+    /** 单节点特效沿原资源池加载；显式旧PNG预乘保持原slot混合，材质归同一运行副本，失败回调且不假成功。 */
     public mountNamedSpine(host: Node, stem: string, clip: string, play?: NamedSpinePlay): void {
         const loop = !play || play.loop !== false;
         let loading = true;
@@ -81,9 +87,37 @@ export class BattleSpineService {
             play?.onFail?.();
         });
         const fail = (): void => {
+            if (!loading) {
+                return;
+            }
+            loading = false;
             GameLog.shared.classified("MODULE", "warn", "BattleSpine", "named miss spine/" + stem + " clip=" + clip);
             if (play && play.onFail) {
                 play.onFail();
+            }
+        };
+        /** 原资源与可选shader均就绪才挂载，关页迟到不建材质或重新播放。 */
+        const attach = (asset: sp.SkeletonData, legacyEffect?: EffectAsset): void => {
+            if (!loading || !host.isValid) {
+                return;
+            }
+            try {
+                const view = host.getComponent(sp.Skeleton) || host.addComponent(sp.Skeleton);
+                view.premultipliedAlpha = !!legacyEffect;
+                view.skeletonData = BattleSpineService.instance.runtimeSpineData(host, stem, asset, legacyEffect);
+                const skinned = view as sp.Skeleton & { setSkin?: (name: string) => void };
+                if (typeof skinned.setSkin === "function") {
+                    try {
+                        skinned.setSkin("default");
+                    } catch (_skinErr) {
+                        /* no default skin */
+                    }
+                }
+                arm(view);
+                loading = false;
+                play?.onReady?.();
+            } catch (_err) {
+                fail();
             }
         };
         const arm = (view: sp.Skeleton): void => {
@@ -110,34 +144,21 @@ export class BattleSpineService {
                 if (!host.isValid) {
                     return;
                 }
-                loading = false;
                 if (err || !asset) {
                     fail();
                     return;
                 }
-                try {
-                    const view = host.getComponent(sp.Skeleton) || host.addComponent(sp.Skeleton);
-                    view.premultipliedAlpha = false;
-                    view.skeletonData = BattleSpineService.instance.runtimeSpineData(host, stem, asset);
-                    const skinned = view as sp.Skeleton & {
-                        setSkin?: (name: string) => void;
-                    };
-                    if (typeof skinned.setSkin === "function") {
-                        try {
-                            skinned.setSkin("default");
-                        }
-                        catch (_skinErr) {
-                            /* no default skin */
-                        }
-                    }
-                    arm(view);
-                    if (play && play.onReady) {
-                        play.onReady();
-                    }
+                if (!play?.legacyPmaTexture) {
+                    attach(asset);
+                    return;
                 }
-                catch (_err) {
-                    fail();
-                }
+                ResourceAssetsUtils.loadForNode(host, "effects/legacy-spine-pma", "EffectAsset", (effectError, effect) => {
+                    if (effectError || !effect) {
+                        fail();
+                        return;
+                    }
+                    attach(asset, effect);
+                });
             });
         }
         catch (_err) {
@@ -343,19 +364,22 @@ export class BattleSpineService {
         return { node, stem, play, burst, gesture, hasGesture };
     }
 
-    /** 原资源的 wasm 缓存按 uuid 记住第一次解析。3.7 失败过的 uuid 不能复用，所以副本用 #38。 */
-    private runtimeSpineData(owner: Node, stem: string, asset: sp.SkeletonData): sp.SkeletonData {
-        const key = asset.uuid || stem;
-        const keep = (entry: {
-            data: sp.SkeletonData;
-            owners: Set<Node>;
-        }): sp.SkeletonData => {
+    /** 原wasm缓存按UUID区分3.8副本；显式旧PNG预乘再分开材质模式，最后原拥有者释放时一并销毁。 */
+    private runtimeSpineData(owner: Node, stem: string, asset: sp.SkeletonData, legacyEffect?: EffectAsset): sp.SkeletonData {
+        const key = (asset.uuid || stem) + (legacyEffect ? "#legacy-pma" : "");
+        const keep = (entry: RuntimeSpinePack): sp.SkeletonData => {
+            if (entry.material) {
+                owner.getComponent(sp.Skeleton)!.customMaterial = entry.material;
+            }
             if (!entry.owners.has(owner)) {
                 entry.owners.add(owner);
                 owner.once(Node.EventType.NODE_DESTROYED, () => {
                     entry.owners.delete(owner);
                     if (entry.owners.size === 0 && BattleSpineService.instance.runtimePacks.get(key) === entry) {
                         BattleSpineService.instance.runtimePacks.delete(key);
+                        if (entry.material?.isValid) {
+                            entry.material.destroy();
+                        }
                         if (entry.data.isValid) {
                             entry.data.destroy();
                         }
@@ -368,6 +392,8 @@ export class BattleSpineService {
         if (cached) {
             return keep(cached);
         }
+        let created: sp.SkeletonData | null = null;
+        let material: Material | null = null;
         try {
             const src = asset as sp.SkeletonData & {
                 skeletonJson?: unknown;
@@ -380,6 +406,9 @@ export class BattleSpineService {
             };
             const raw = src.skeletonJson || src._skeletonJson;
             if (!raw || !src.atlasText) {
+                if (legacyEffect) {
+                    throw new Error("旧PNG预乘特效缺少完整骨架与图集：" + stem);
+                }
                 if (raw) {
                     try {
                         (src as {
@@ -393,6 +422,7 @@ export class BattleSpineService {
                 return asset;
             }
             const copy = new sp.SkeletonData();
+            created = copy;
             const dst = copy as sp.SkeletonData & {
                 skeletonJson?: unknown;
                 atlasText?: string;
@@ -401,7 +431,7 @@ export class BattleSpineService {
                 scale?: number;
                 _uuid?: string;
             };
-            const uuid = (src._uuid || stem) + "#38";
+            const uuid = (src._uuid || stem) + "#38" + (legacyEffect ? ":legacy-pma" : "");
             dst._uuid = uuid;
             dst.atlasText = src.atlasText;
             dst.textures = src.textures;
@@ -412,11 +442,24 @@ export class BattleSpineService {
             dst._uuid = uuid;
             const upgraded = SpineJsonUtils.upgradeSpine37Json(raw);
             dst.skeletonJson = BattleSpineService.instance.plantHangLocomotion(upgraded === raw ? JSON.parse(JSON.stringify(upgraded)) : upgraded) as typeof copy.skeletonJson;
-            const entry = { data: copy, owners: new Set<Node>() };
+            if (legacyEffect) {
+                material = new Material();
+                material.initialize({ effectAsset: legacyEffect });
+            }
+            const entry: RuntimeSpinePack = { data: copy, owners: new Set<Node>(), material };
             BattleSpineService.instance.runtimePacks.set(key, entry);
             return keep(entry);
         }
         catch (err) {
+            if (material?.isValid) {
+                material.destroy();
+            }
+            if (created?.isValid) {
+                created.destroy();
+            }
+            if (legacyEffect) {
+                throw err;
+            }
             return asset;
         }
     }
@@ -529,6 +572,8 @@ const VFX_SCALE: {
     act: 0.4,
 };
 export interface NamedSpinePlay {
+    /** 仅已核实旧PNG上传预乘的特效显式启用；采样RGB乘纹理A并保留原PMA/slot混合，缺省不改既有行为。 */
+    legacyPmaTexture?: boolean;
     /** 缺省循环。收起这类动作传 false，播完走 onComplete。 */
     loop?: boolean;
     onFail?: () => void;

@@ -8,7 +8,7 @@ import { GameProtocolCodecUtils } from "../../platform/GameProtocolCodecUtils";
 import { Protocol } from "../../platform/Protocol";
 import type { ProtocolName } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
-import type { RewardArgs } from "./data/RewardData";
+import type { RewardArgs, HeroGrantItem } from "./data/RewardData";
 import type { RewardNotice, RewardNoticeMode, RewardProgress } from "./data/RewardNoticeData";
 import { RewardModel } from "./RewardModel";
 
@@ -128,6 +128,7 @@ export class RewardController extends BaseController {
     private readNotice(value: unknown): RewardNotice {
         const notice = GameProtocolCodecUtils.validateRewardNotice(value);
         const items = notice.items as readonly { itemId: number; credited: number }[];
+        const heroes = (notice.heroes || []) as readonly HeroGrantItem[];
         return Object.freeze({
             schemaVersion: 1,
             receiptId: notice.receiptId as string,
@@ -138,6 +139,7 @@ export class RewardController extends BaseController {
                 itemId: item.itemId,
                 credited: item.credited,
             }))),
+            ...(heroes.length ? { heroes: Object.freeze(heroes.map(hero => Object.freeze({ ...hero }))) } : {}),
             ...(notice.roleUpgrade ? { roleUpgrade: Object.freeze({
                 beforeLevel: (notice.roleUpgrade as { beforeLevel: number }).beforeLevel,
                 afterLevel: (notice.roleUpgrade as { afterLevel: number }).afterLevel,
@@ -168,6 +170,7 @@ export class RewardController extends BaseController {
                     throw new Error("通用奖励窗口尚未装配");
                 }
                 await this.showPopup(Object.freeze({ receiptId: notice.receiptId, items: notice.items,
+                    ...(notice.heroes?.length ? { heroes: notice.heroes } : {}),
                     ...(notice.roleUpgrade ? { roleUpgrade: notice.roleUpgrade } : {}) }));
             } else {
                 if (!this.showTips) {

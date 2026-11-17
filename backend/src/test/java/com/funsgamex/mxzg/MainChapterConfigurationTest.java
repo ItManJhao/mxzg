@@ -51,7 +51,7 @@ class MainChapterConfigurationTest {
     @Autowired private DevelopmentLoginService login;
     /** 真实鉴权服务供不同只读范围的领域实例复用。 */
     @Autowired private SessionService sessions;
-    /** 当前默认开放连续九关的真实主线服务。 */
+    /** 当前默认开放连续二十关的真实主线服务。 */
     @Autowired private MainChapterService chapters;
     /** 真实共享发奖适配，历史结算仍消费持久冻结计划。 */
     @Autowired private MainChapterRewardService rewards;
@@ -75,7 +75,7 @@ class MainChapterConfigurationTest {
     @Autowired private MainChapterIdleStateRepository idleStates;
     /** 同源配置与历史JSON序列化。 */
     @Autowired private ObjectMapper mapper;
-    /** 当前只投影20关的原挂机规则，开放范围不能越过缺失依赖。 */
+    /** 完整同源挂机目录；拥有收益配置不代表相应挑战已开放。 */
     @Autowired private IdleRules idle;
     /** 共享类型支持检查只读使用，不在配置预检时发奖。 */
     @Autowired private RewardGrantService grants;
@@ -109,13 +109,13 @@ class MainChapterConfigurationTest {
             player.role(), Instant.now().getEpochSecond() - 60);
     }
 
-    /** 九关之外不自动开放；第十关新挑战拒绝且事务不落战报或推进资产版本。 */
+    /** 二十关之外不自动开放；第二十一关新挑战拒绝且事务不落战报或推进资产版本。 */
     @Test
-    void defaultScopeRejectsTenthNewChallengeWithoutChangingAssets() {
+    void defaultScopeRejectsTwentyFirstNewChallengeWithoutChangingAssets() {
         var player = player();
-        cleared(player, 9);
+        cleared(player, 20);
         var before = snapshots.snapshot(player.token());
-        assertEquals(9, before.mainChapter().challengeLimit());
+        assertEquals(20, before.mainChapter().challengeLimit());
         var failure = assertThrows(IllegalArgumentException.class,
             () -> chapters.challenge(player.token(), UUID.randomUUID().toString()));
         assertTrue(failure.getMessage().contains("开放范围"));
@@ -127,16 +127,16 @@ class MainChapterConfigurationTest {
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_command WHERE role_id=?", Integer.class, player.role()));
     }
 
-    /** 默认九关均经真实挑战和结算；重复回执不多发奖，最后一关结算后不跳到离散可用关。 */
+    /** 默认二十关均经真实挑战和结算；重复回执不多发奖，最后一关结算后不跳到离散可用关。 */
     @Test
-    void defaultScopeChallengesAndSettlesAllNineContinuousStages() throws Exception {
+    void defaultScopeChallengesAndSettlesAllTwentyContinuousStages() throws Exception {
         var player = player();
-        for (int index = 1; index <= 9; index++) {
+        for (int index = 1; index <= 20; index++) {
             String requestId = UUID.randomUUID().toString();
             var battle = chapters.challenge(player.token(), requestId);
             assertEquals(MainChapterService.Action.BATTLE, battle.action());
             assertEquals(index, battle.state().maxCleared());
-            assertEquals(9, battle.state().challengeLimit());
+            assertEquals(20, battle.state().challengeLimit());
             assertEquals("chapter:lineup:" + index, chapters.replay(player.token(), battle.battleId()).replay().getScenario());
             assertEquals(battle, chapters.challenge(player.token(), requestId));
             var settled = chapters.claim(player.token(), battle.battleId());
@@ -151,22 +151,21 @@ class MainChapterConfigurationTest {
         }
         var finalSnapshot = snapshots.snapshot(player.token());
         assertEquals("ENABLED", finalSnapshot.mainChapterIdle().claimState().requestMode());
-        Files.write(Path.of("target/chapter-open-scope-9.pb"), GameProtocolCodec.encode(Map.of(
+        Files.write(Path.of("target/chapter-open-scope-20.pb"), GameProtocolCodec.encode(Map.of(
             "version", 1, "kind", "event", "name", "state.changed", "body", finalSnapshot)));
         assertThrows(IllegalArgumentException.class,
             () -> chapters.challenge(player.token(), UUID.randomUUID().toString()));
         assertEquals(finalSnapshot.revision(), snapshots.snapshot(player.token()).revision());
-        assertEquals(9, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_battle WHERE role_id=?", Integer.class, player.role()));
+        assertEquals(20, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_battle WHERE role_id=?", Integer.class, player.role()));
     }
 
-    /** 只读预览使用真实全局目录，包括九关范围外；输出原PB，不改敌人、技能、资产或范围。 */
+    /** 只读预览使用真实全局目录；输出当前已接通关卡原PB，不改敌人、技能、资产或范围。 */
     @Test
     void configuredReadOnlyBattlesKeepGlobalIndexAndFrozenUnits() throws Exception {
         var player = player();
         var before = snapshots.snapshot(player.token());
         assertEquals(2, new HeroBattleChapterScenario(mapper).enemies(4).size());
-        assertThrows(IllegalArgumentException.class, () -> battles.preview(player.token(), 11, rate -> rate == 1D));
-        for (int index : List.of(6, 14)) {
+        for (int index : List.of(6)) {
             var result = battles.preview(player.token(), index, rate -> rate == 1D);
             var report = result.battle();
             assertEquals("audit:lineup:" + index, report.scenario());
@@ -333,7 +332,7 @@ class MainChapterConfigurationTest {
             assertEquals(before.revision(), after.revision());
             assertEquals(before.inventory(), after.inventory());
             assertEquals(before.mainChapter(), after.mainChapter());
-            assertEquals(9, after.mainChapter().challengeLimit());
+            assertEquals(20, after.mainChapter().challengeLimit());
             if (installed > 0 && List.of(1020100, 1021101, 2020100, 2021101, 1050100, 1051101)
                     .stream().allMatch(counts::containsKey)) {
                 selected = preview;
@@ -368,6 +367,64 @@ class MainChapterConfigurationTest {
                 "heroStar", 3, "heroStage", 0, "heroLevel", selectedLevel, "attempts", attempts,
                 "presentationCounts", presentationCounts(report), "enemySkillStarts", enemySkills,
                 "report", report)));
+    }
+
+    /**
+     * 每关使用真实持久英雄及阵型读取完整敌方普通/主动，再导出合法只读PB供客户端播放。
+     * 合法成长候选只延长战场，不改原敌方、技能、伤害或场景标签；失败样本同样验证完整出手。
+     */
+    @Test
+    void tenthThroughTwentiethStagesExportEveryConfiguredEnemySkill() throws Exception {
+        var coverage = new ArrayList<Map<String, Object>>();
+        for (int index = 10; index <= 20; index++) {
+            HeroLineupBattleService.Preview selected = null;
+            int selectedLevel = 0;
+            var attempts = new ArrayList<Map<String, Object>>();
+            for (int level : List.of(1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50)) {
+                var player = player(10203003, 3, level, 0);
+                var before = snapshots.snapshot(player.token());
+                var preview = battles.preview(player.token(), index, probability -> true);
+                var report = preview.battle();
+                var expected = report.initial().stream().filter(unit -> unit.faction() == 2)
+                    .flatMap(unit -> unit.skills().stream().map(skill -> unit.id() + ":" + skill.skillId()))
+                    .collect(java.util.stream.Collectors.toSet());
+                var occurred = report.frames().stream().flatMap(frame -> frame.trace().stream())
+                    .filter(event -> event.kind().equals("skill.begin") && event.sourceId() >= 9)
+                    .map(event -> event.sourceId() + ":" + event.configId())
+                    .collect(java.util.stream.Collectors.toSet());
+                attempts.add(Map.of("heroLevel", level, "expected", expected, "occurred", occurred));
+                var after = snapshots.snapshot(player.token());
+                assertEquals(before.role(), after.role());
+                assertEquals(before.revision(), after.revision());
+                assertEquals(before.inventory(), after.inventory());
+                assertEquals(before.heroes(), after.heroes());
+                assertEquals(before.mainChapter(), after.mainChapter());
+                if (occurred.containsAll(expected)) {
+                    selected = preview;
+                    selectedLevel = level;
+                    break;
+                }
+            }
+            assertNotNull(selected, "完整NPC普通/主动未出现：关=" + index + "；" + attempts);
+            var report = selected.battle();
+            assertEquals("audit:lineup:" + index, report.scenario());
+            var configured = new MainChapterRules(mapper).enemies(index);
+            var enemies = report.initial().stream().filter(unit -> unit.faction() == 2).toList();
+            assertEquals(configured.stream().map(MainChapterRules.Enemy::template).toList(),
+                enemies.stream().map(HeroBattleChapterScenario.Unit::template).toList());
+            var replay = HeroBattleReplayProtocolUtils.encode(report);
+            Files.write(Path.of("target/chapter-config-stage-" + index + ".pb"), replay.toByteArray());
+            Files.write(Path.of("target/chapter-config-stage-" + index + "-frame.pb"), GameProtocolCodec.encode(Map.of(
+                "version", 1, "kind", "response", "name", "battle.preview", "id", UUID.randomUUID().toString(), "ok", true,
+                "body", Map.of("mission", index, "assetRevision", selected.assetRevision(),
+                    "lineupVersion", selected.lineupVersion(), "formationId", selected.formationId(),
+                    "pending", selected.pending(), "replay", GameProtocolCodec.tree(replay)))));
+            coverage.add(Map.of("stage", index, "heroLevel", selectedLevel, "scenario", report.scenario(),
+                "enemyCount", enemies.size(), "attempts", attempts, "presentationCounts", presentationCounts(report),
+                "outcome", report.outcome().name(), "readOnly", true));
+        }
+        Files.writeString(Path.of("target/chapter-config-stage10-20-coverage.json"),
+            mapper.writerWithDefaultPrettyPrinter().writeValueAsString(coverage));
     }
 
     /** 已有第三关待结算降到二关范围后仍可恢复原请求并一次结算，不按新范围删除旧成果。 */
@@ -407,8 +464,9 @@ class MainChapterConfigurationTest {
         assertNull(old.challengeLimit());
         assertNull(old.milestoneProgress());
         assertThrows(IllegalArgumentException.class, () -> new HeroBattleChapterScenario(mapper).enemies(551));
-        assertThrows(IllegalStateException.class,
-            () -> new MainChapterRewardService(new MainChapterRules(mapper, 21), grants, idle, mapper));
+        assertEquals(270, idle.stage(21).base().getFirst().quantity());
+        assertEquals(20, new MainChapterRules(mapper).challengeLimit());
+
     }
 
     /** 构建同一依赖但采用较小可信范围的领域实例；测试调用仍由外层真实事务持锁。 */

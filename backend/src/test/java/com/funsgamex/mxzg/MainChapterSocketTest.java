@@ -165,7 +165,7 @@ class MainChapterSocketTest {
     /** 校验真实新挑战范围及里程碑集合；空数组与缺字段不同，ID顺序不暗示必须按序领取。 */
     private void assertMilestones(JsonNode state, List<Integer> expected) {
         assertTrue(state.has("challengeLimit"), "新快照必须交付当前服务端可信范围");
-        assertEquals(9, state.path("challengeLimit").asInt());
+        assertEquals(20, state.path("challengeLimit").asInt());
         assertTrue(state.has("milestoneProgress"), "新版统一状态必须明确交付里程碑集合");
         var progress = state.path("milestoneProgress");
         assertEquals(1, progress.path("schemaVersion").asInt());
@@ -277,7 +277,7 @@ class MainChapterSocketTest {
             var init = peer.authenticate(token);
             assertEquals(3, init.path("body").path("initial").path("mainChapter").path("maxCleared").asInt());
             assertFalse(init.path("body").path("initial").path("mainChapter").has("pendingBattleId"));
-            assertEquals(9, init.path("body").path("initial").path("mainChapter").path("challengeLimit").asInt());
+            assertEquals(20, init.path("body").path("initial").path("mainChapter").path("challengeLimit").asInt());
             var fourth = peer.request("chapter.challenge", Map.of("requestId", UUID.randomUUID().toString()));
             assertTrue(fourth.path("ok").asBoolean(), fourth.toString());
             assertEquals(4, fourth.path("body").path("state").path("maxCleared").asInt());

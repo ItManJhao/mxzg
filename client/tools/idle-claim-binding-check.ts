@@ -59,6 +59,7 @@ function receipt(roleId: string): Record<string, unknown> {
             wallet: {goldBefore: 0, diamondsBefore: 0, goldAfter: 10, diamondsAfter: 0},
             stacks: [], experience: [], tavern: [], bonuses: [], timedItems: [],
             spirits: {schemaVersion: 1, items: []},
+            heroes: [],
         },
     };
 }

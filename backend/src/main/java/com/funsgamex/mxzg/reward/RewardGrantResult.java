@@ -10,6 +10,7 @@ import com.funsgamex.mxzg.inventory.TimedInventoryService;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.role.RoleRules;
 import com.funsgamex.mxzg.spirit.SpiritInventoryService;
+import com.funsgamex.mxzg.hero.HeroGrantService;
 import java.util.List;
 
 /**
@@ -23,6 +24,7 @@ import java.util.List;
  * @param bonuses 规则额外赠送的奖励，和理论基础清单分开
  * @param timedItems 本次真实新增的期限实例，不包含原有或过期回收实例
  * @param spirits 本次真实新增的精灵集合及实例格式版本，不是全部持有快照
+ * @param heroes 本次真实创建的英雄身份与初始成长，原成功回执冻结，不是当前名册
  */
 public record RewardGrantResult(
         String roleId,
@@ -33,7 +35,16 @@ public record RewardGrantResult(
         List<TavernChange> tavern,
         List<Bonus> bonuses,
         List<TimedInventoryService.Item> timedItems,
-        SpiritInventoryService.State spirits) {
+        SpiritInventoryService.State spirits,
+        List<HeroGrantService.Granted> heroes) {
+
+    /** 旧无英雄发放记录保留原内容，显式补空新实例列表，不反查当前名册。 */
+    public RewardGrantResult(String roleId, List<Outcome> items, RoleRepository.CurrencyCredit wallet,
+            List<InventoryService.Credit> stacks, List<RoleRules.ExperienceGain> experience,
+            List<TavernChange> tavern, List<Bonus> bonuses, List<TimedInventoryService.Item> timedItems,
+            SpiritInventoryService.State spirits) {
+        this(roleId, items, wallet, stacks, experience, tavern, bonuses, timedItems, spirits, List.of());
+    }
 
     /** 少到账的真实规则原因；数量为0的结果仍保留，不能从明细中静默消失。 */
     public enum Reduction { NONE, ROLE_MAX_LEVEL, TAVERN_CAP }
@@ -87,5 +98,17 @@ public record RewardGrantResult(
         tavern = List.copyOf(tavern);
         bonuses = List.copyOf(bonuses);
         timedItems = List.copyOf(timedItems);
+        heroes = heroes == null ? List.of() : List.copyOf(heroes);
+        if (heroes.stream().map(HeroGrantService.Granted::instanceId).distinct().count() != heroes.size()) {
+            throw new IllegalArgumentException("英雄奖励实际实例重复");
+        }
+        for (int template : heroes.stream().map(HeroGrantService.Granted::templateId).distinct().toList()) {
+            long count = heroes.stream().filter(hero -> hero.templateId() == template).count();
+            long credited = items.stream().filter(item -> item.itemId() == template)
+                    .mapToLong(Outcome::credited).sum();
+            if (count != credited) {
+                throw new IllegalArgumentException("英雄实际实例与同笔到账数量不一致");
+            }
+        }
     }
 }

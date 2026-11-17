@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "scope": "技能演示自动目录、开始动画70%接出场、删除底栏切页效果",
+  "branch": "hao",
+  "commitPushBuildPerformed": false,
+  "skillAudit": {
+    "manualDemosRemoved": true,
+    "source": "backend/target中真实BattleReplay，按实际skill.begin提取模板/技能/精确等级",
+    "creatorOwnedHost": "127.0.0.1:19091",
+    "extensionVersion": "1.8.1",
+    "basicReplayFiles": 48,
+    "clientParsedReplayFiles": 35,
+    "configuredSkillLevels": 1478,
+    "uniquePlayableSkillLevels": 47,
+    "statusDoesNotClaimAcceptance": true,
+    "passiveWithoutActualCast": "需触发场景",
+    "configurationStillSingleGameConfig": true,
+    "projectMainEntryMetadataRequiresOneFullReopen": true
+  },
+  "opening": {
+    "zdksActualDurationSeconds": 1.2333,
+    "startEntryAtActualProgress": 0.7,
+    "fixedWait2Point5Removed": true,
+    "fadeAtActualEntryProgress": 0.6,
+    "entryFrames": 15,
+    "fadeAfterFullFrames": 9,
+    "fadeSeconds": 1,
+    "allOpeningEntryAndFadeCompleteBeforeHpAndReplay": true,
+    "idleOpeningUnchanged": true
+  },
+  "navigation": {
+    "effectsRemoved": [
+      "PageTransitionUtils.ts",
+      "PageSlideUtils.ts",
+      "对应原meta",
+      "动画取消状态与注入参数",
+      "mxzgPageAnimating视口特判",
+      "cityContent专用入口"
+    ],
+    "preserved": [
+      "原页面准备意图",
+      "页面缓存",
+      "失败保留旧页",
+      "350毫秒真实慢准备提示",
+      "身份清理"
+    ],
+    "remainingRuntimeOrToolReferences": 0
+  },
+  "checks": {
+    "skill-replay-server": {
+      "passed": true,
+      "log": "client/temp/project-checks/skill-replay-server.log"
+    },
+    "skill-audit": {
+      "passed": true,
+      "log": "client/temp/project-checks/skill-audit.log"
+    },
+    "skill-audit-view": {
+      "passed": true,
+      "log": "client/temp/project-checks/skill-audit-view.log"
+    },
+    "skill-audit-preview": {
+      "passed": true,
+      "log": "client/temp/project-checks/skill-audit-preview.log"
+    },
+    "battle-opening": {
+      "passed": true,
+      "log": "client/temp/project-checks/battle-opening.log"
+    },
+    "remake-navigation": {
+      "passed": true,
+      "log": "client/temp/project-checks/remake-navigation.log"
+    },
+    "feature-navigation": {
+      "passed": true,
+      "log": "client/temp/project-checks/feature-navigation.log"
+    },
+    "city": {
+      "passed": true,
+      "log": "client/temp/project-checks/city.log"
+    },
+    "viewport-scale": {
+      "passed": true,
+      "log": "client/temp/project-checks/viewport-scale.log"
+    },
+    "home-presentation": {
+      "passed": true,
+      "log": "client/temp/project-checks/home-presentation.log"
+    },
+    "architecture": {
+      "passed": true,
+      "log": "client/temp/project-checks/architecture.log"
+    },
+    "bindings": {
+      "passed": true,
+      "log": "client/temp/project-checks/bindings.log"
+    },
+    "docs": {
+      "passed": true,
+      "log": "client/temp/project-checks/docs.log"
+    }
+  },
+  "strictTypes": true,
+  "sourceSha256": {
+    "client/assets/scripts/app/remake/DevelopmentPreview.ts": "c82668019260f58f8a02edd3df9e19c091d6d103eb434773e32a90ca15343eca",
+    "client/assets/scripts/app/remake/RemakeNavigation.ts": "94769125f1937bb422a6dada606b752fcb377811ba814d6f56b283e67c6071de",
+    "client/assets/scripts/features/battle/ui/SkillAuditView.ts": "a771b8fc134415470830313ead140df740dc9685a37fe841a6c053b75946fcb7",
+    "client/assets/scripts/features/battle/utils/SkillAuditUtils.ts": "692d5e6f305aaa86ee309f282e671440efeabcb62433ccc6e1bf04c7f70bfba4",
+    "client/assets/scripts/features/battle/ui/BattleReplayPreview.ts": "d33e9df445a6f05faff0634d0cfc3df7a545c7496f6c9de6e694e6f590a33328",
+    "tools/serve_battle_replay.cjs": "090c6481c14e1da81be3c84b3f6137a723da6df9f95810c63b7e117d236d48f9",
+    "client/extensions/mxzg-bag-build/main.js": "f579677f9f6aea5d3ada7832aa608b5c6a9953db59a5274c2fa5674c4a054672",
+    "docs/images/skill-audit-auto-20261117.jpg": "39d667d60ea435960fc377e63093220162592fdaab80a920545e7271e5935d4e"
+  },
+  "preview": {
+    "status": "限定本机实际复验通过",
+    "creatorHost": {
+      "automaticStartupObserved": true,
+      "service": "mxzg-skill-replay",
+      "version": 1,
+      "log": "2026-11-17 22:27:40 主编辑器自动启动；没有手动启动19091资源进程",
+      "requiresFutureManualStart": false,
+      "unloadShutdown": "专项验证，未为本批额外要求重启一次"
+    },
+    "skillAudit": {
+      "gmF9EntryOpened": true,
+      "uniqueExactLevels": 47,
+      "replayEvidenceRows": 132,
+      "actualHero": 10102002,
+      "actualSkill": 101020021,
+      "level": 1,
+      "fixture": "chapter-config-stage-11.pb",
+      "playbackCompleted": true,
+      "returnToDirectory": true,
+      "closeRemovedBattleAndRequests": true,
+      "malformedOrUnsupportedReplaysExcluded": 13,
+      "skipWarningsDeduplicatedByExistingGameLog": true,
+      "capture": "../images/skill-audit-auto-20261117.jpg"
+    },
+    "formalOpening": {
+      "mission": 15,
+      "realChallengeAndSettlement": true,
+      "duration": 1.233299970626831,
+      "gateTime": 0.86680006980896,
+      "gateProgress": 0.702829879553475,
+      "entryStartTime": 0.8834000825881958,
+      "entryStartProgress": 0.7162897134743328,
+      "openingAndAppearOverlapped": true,
+      "fadeStartedForUnits": 4,
+      "fadeFrameNames": [
+        "battle-appear-right_9",
+        "battle-appear-right_9",
+        "battle-appear-right_9",
+        "battle-appear-left_9"
+      ],
+      "allOpeningAndEntryCompleted": true,
+      "probeErrorsInFinalRun": [],
+      "scope": "实际轨道首个达到阈值的帧，异步衔接可能再跨一帧；不作为精确墙钟或性能测量"
+    },
+    "navigation": {
+      "actualSequence": [
+        "主城",
+        "背包",
+        "英雄",
+        "主线",
+        "主城"
+      ],
+      "firstVisibleHostSamples": {
+        "bag": 12,
+        "hero": 12,
+        "remake-campaign": 12
+      },
+      "allSampledHostPositions": {
+        "x": 0,
+        "y": 0
+      },
+      "oldPageSlideObserved": false
+    },
+    "isolatedBackend": {
+      "kind": "mxzg-owned-socket-it",
+      "run": "21536d4eaa4b49648618711a181b7a82",
+      "port": 50786,
+      "preparedProgress": 14,
+      "preparedHeroLevel": 100,
+      "naturalGrowth": false,
+      "stopped": true,
+      "dailyDatabaseTouched": false,
+      "milestoneClaimInvoked": false
+    },
+    "cleanup": {
+      "navigation": "remake-home",
+      "paused": false,
+      "replayCleanup": false,
+      "requests": 0,
+      "ui": {
+        "cached": 0,
+        "intents": 0,
+        "modalActive": 0,
+        "modalNodes": 1,
+        "opening": 0,
+        "pages": 1,
+        "pendingResident": 0,
+        "prepared": 0,
+        "residents": 0
+      },
+      "testTabsClosed": true,
+      "temporaryObserversRemoved": true,
+      "creatorOwnedResourceHostIntentionallyKeptRunning": true
+    },
+    "diagnosticBoundary": "一次观察器误用全局cc.sp后已立即撤销并重载独立页；最终改用cc模块sp导出，观察器无错误。不把该诊断错误写成游戏缺陷，也不宣称整个调试时间线从未报错。"
+  },
+  "limits": [
+    "不是所有英雄或全部被动分支已验收",
+    "样本由对应开发测试生成，清理target后需重新生成",
+    "不做集中构建、发布或真机验收",
+    "不修改日常玩家数据"
+  ]
+}

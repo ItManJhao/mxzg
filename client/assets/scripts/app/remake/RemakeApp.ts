@@ -35,7 +35,6 @@ import {HomeFeatureNavigation, REMAKE_FEATURE_ROUTES} from "./HomeFeatureNavigat
 import {LoginEntry} from "./LoginEntry";
 import type { LogoSplashHandle } from "./LogoSplashUtils";
 import { LogoSplashUtils } from "./LogoSplashUtils";
-import { PageTransitionUtils } from "./PageTransitionUtils";
 import {RemakeNavigation} from "./RemakeNavigation";
 import { StartupFlowUtils, StartupCancelled } from "./StartupFlowUtils";
 
@@ -43,6 +42,8 @@ import {RoleController} from "../../features/account/RoleController";
 import {AssetStateBinding} from "./AssetStateBinding";
 import { IdleClaimBinding } from "./IdleClaimBinding";
 import { IdleClaimJournal } from "./IdleClaimJournal";
+import { MainChapterMilestoneBinding } from "./MainChapterMilestoneBinding";
+import { MilestoneClaimJournal } from "./MilestoneClaimJournal";
 import { RewardBinding } from "./RewardBinding";
 import { MainChapterModel } from "../../features/battle/MainChapterModel";
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
@@ -81,6 +82,8 @@ export class RemakeApp extends Component {
     private assetState: AssetStateBinding | null = null;
     /** 领取恢复由应用按认证身份激活，页面关闭不清除持久原请求。 */
     private idleClaims: IdleClaimBinding | null = null;
+    /** 通关奖励原稳定键恢复，关闭主线页不撤销已发起意图，换号保留原日志。 */
+    private milestoneClaims: MainChapterMilestoneBinding | null = null;
     /** 通用发奖反馈归应用装配，等待统一资产版本及主城就绪，不由挂机界面单独弹窗。 */
     private rewards: RewardBinding | null = null;
     /** 本应用初始化的背包模块，应用退出时释放。 */
@@ -182,8 +185,10 @@ export class RemakeApp extends Component {
                 }
             }));
         chapter.initialize();
-        const rewards = this.rewards = new RewardBinding(model,
-            receiptId => chapter.markSettlementFeedbackPresented(receiptId));
+        const rewards = this.rewards = new RewardBinding(model, receiptId => {
+            chapter.markSettlementFeedbackPresented(receiptId);
+            this.milestoneClaims?.presented(receiptId);
+        });
         chapter.configureSettlementFeedback(
             (receipt, presentation) => {
                 if (receipt.actual) {
@@ -209,11 +214,16 @@ export class RemakeApp extends Component {
             { enabled: true });
         // 页面只转交意图；门槛、原请求日志、双确认和通用奖励仍归现有应用领取绑定。
         chapter.requestIdleClaim = presentationContext => idleClaims.begin(presentationContext);
+        const milestones = this.milestoneClaims = new MainChapterMilestoneBinding(model, service, socket,
+            new MilestoneClaimJournal(storageNamespace), receipt =>
+                rewards.restoreActual(receipt.receiptId, receipt.assetRevision, receipt.actual));
+        chapter.requestMilestoneClaim = rewardId => milestones.begin(rewardId);
         const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController,
             HeroRosterController.instance, formation, () => {
                 this.clearRolePages();
                 rewards.resetSession();
                 idleClaims.deactivate();
+                milestones.deactivate();
             }, chapter);
         // 只有整包被唯一资产入口接纳后，才以该最新状态检查历史领取确认。
         const applyState = (frame: GameFrame): void => {
@@ -221,6 +231,7 @@ export class RemakeApp extends Component {
                 rewards.afterSnapshot(frame);
                 idleClaims.afterSnapshot(frame.name);
                 chapter.afterSnapshot(frame.name);
+                milestones.afterSnapshot(frame.name);
             }
         };
         service.onInitialized = applyState;
@@ -258,9 +269,8 @@ export class RemakeApp extends Component {
         };
         this.navigation = new RemakeNavigation(ui, this.pageHost, {
             parent: id => Object.values(REMAKE_FEATURE_ROUTES).includes(id) ? homeView?.featureHost || null : null,
-            content: () => homeView?.cityContent || null,
             changed: id => homeView?.showFeature(id === "remake-campaign" ? "battle" : id === "hero-info" ? "hero" : id === "hero" || id === "bag" ? id : "city"),
-        }, PageTransitionUtils.slideFeaturePage);
+        });
         const battlePreview = new BattlePreviewController(async (mission, received) => {
             let failure: unknown = null;
             await service.deliverAuthenticated(token => socket.previewBattle(token, mission),
@@ -518,14 +528,14 @@ export class RemakeApp extends Component {
 
     /**
      * 统一状态入口确认身份改变后，先同步关闭旧角色界面，再允许它重置Model。
-     * 取消页面意图、弹窗准备及切页动画，不让页面通过旧账号键或清空事件触发返回导航。
+     * 取消页面意图与弹窗准备，不让页面通过旧账号键或清空事件触发返回导航。
      */
     private clearRolePages(): void {
         const ui = UIManager.instance;
         this.features?.reset();
         this.development?.cancelReplay();
         ui.invalidatePending();
-        this.navigation?.back(false);
+        this.navigation?.back();
         for (const id of ["hero-skill", "bag-info", "spirit-info", "equipment-info", "role-profile", "remake-formation", "battle-detail",
             "chapter-end", "chapter-reward-info", "main-chapter-battle", "skill-audit", "confirm", "reward"]) {
             ui.closeById(id);
@@ -581,6 +591,8 @@ export class RemakeApp extends Component {
         game.off(Game.EVENT_SHOW, this.onForeground, this);
         this.idleClaims?.dispose();
         this.idleClaims = null;
+        this.milestoneClaims?.dispose();
+        this.milestoneClaims = null;
         this.rewards?.dispose();
         this.rewards = null;
         if (this.gameSocket) {

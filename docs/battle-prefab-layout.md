@@ -1,5 +1,14 @@
 # 战斗预制体整理与正式服对照
 
+## 当前主线显示入口（2026-11-17）
+
+- 正常胜利奖励区在`ChapterEndView.prefab/MainVictoryPanel/MainVictoryRewards`，600×260、顶部锚点，顶边y=260，content顶对齐y=0。四列、间距、边距和Cell仍由SuperContent保存；增加奖励数量只滚动，不把奖励或确认按钮向下推。此前y=130是居中坐标残留，会让列表跨出底板并压到确认按钮。
+- 主线对阵和倍数位置由`BattlePage.prefab/LayerHud/ChapterInfoDock`维护。Dock的Widget贴底并居中，底部留白150；其`ChapterMatchInfoAnchor`与`ChapterTopBarAnchor`分别保存264.5、369.5的局部y。信息栏放在原宝箱上方，VS和姓名底条避开底板上沿，不再放在战场中央。
+- `BattlePageUtils.alignChapterInfo`只把Widget目标接到当前战场可见区域，更新约束后将挂点世界坐标换回HUD局部坐标。原视口刷新先更新统一比例，再执行对齐；角色、血条和技能特效不随信息栏迁移。修改布局先改以上Prefab参数，不能再在播放器另加一套位置常量。
+- 正式出场仍先等资源就绪并播放ZDKS，再并行播放双方15帧出场特效。第9帧完整播放结束后释放60%进度，开始1秒模型渐入；完整特效与双方渐入都完成后才显示血条并播放战报。0.45秒是9×0.05的名义值，实际调度延迟时以帧进度为准，不用独立计时器抢跑。挂机原出场时序保持。
+
+本批源码、检查与实际预览范围见[显示调整记录](validation/battle-display-adjustment-review-20261117.json)。下方日期段落为历史依据，不覆盖本节当前入口。
+
 ## 挂机布局补充（2026-11-09）
 
 BattlePage的IdleLayout保存Ally1至3、Enemy1至3静态锚点，以及ModelScale、HpOffset。位置依据旧BattleUtils.getHangHeroPosition及BattleInfoFactory的队伍顺序；保留服务端position身份，仅显示时映射。正式战斗继续使用原8槽布局，不共享挂机坐标。当前实际遇敌仅一名敌方，额外锚点不代表开放多人挂机敌队。

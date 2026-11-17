@@ -425,7 +425,7 @@ async function interop(): Promise<void> {
         } else {
             assert([Protocol.SESSION_LOGIN, Protocol.SESSION_AUTHENTICATE, Protocol.STATE_CHANGED].includes(wire.name as any));
             const snapshot = wire.name === Protocol.STATE_CHANGED ? body : body.initial;
-            assert.equal(MainChapterController.readState(snapshot.mainChapter, snapshot.revision)!.challengeLimit, 9);
+            assert.equal(MainChapterController.readState(snapshot.mainChapter, snapshot.revision)!.challengeLimit, 20);
         }
         console.log("Java全局主线/挑战范围PB互通通过：" + wire.name + " " + argument.slice(7));
     }

@@ -139,11 +139,11 @@ async function main() {
     poisonImplementation();
     const packageBefore = await captureLogs(() => hook.onBeforeBuild({}, {}));
     assert.equal(packageBefore.value.changed.length, 0, '配置包构建前检查只能读取');
-    assert(packageBefore.lines.some(line => line.includes('config-package-artifact-v1 v1.8.0') && line.includes('onBeforeBuild')),
+    assert(packageBefore.lines.some(line => line.includes('config-package-artifact-v1 v1.8.1') && line.includes('onBeforeBuild')),
         '必须打印实际配置包前置实现标识和版本');
     poisonImplementation();
     const before = await captureLogs(() => hook.onBeforeCompressSettings({}, launch));
-    assert(before.lines.some(line => line.includes('config-package-artifact-v1 v1.8.0') && line.includes('onBeforeCompressSettings')),
+    assert(before.lines.some(line => line.includes('config-package-artifact-v1 v1.8.1') && line.includes('onBeforeCompressSettings')),
         '必须打印实际before实现标识和版本');
     poisonImplementation();
     await hook.onBeforeCompressSettings({}, launch);
@@ -154,7 +154,7 @@ async function main() {
     await hook.onBeforeCompressSettings({}, existing);
     assert.equal(existing.settings.assets.preloadBundles[1].version, 'boot-kept', '已有bootstrap版本不得被覆盖');
     const packageVersion = JSON.parse(fs.readFileSync(path.join(root, 'client/extensions/mxzg-bag-build/package.json'), 'utf8')).version;
-    assert.equal(packageVersion, '1.8.0', '实际实现版本与包版本必须同步');
+    assert.equal(packageVersion, '1.8.1', '实际实现版本与包版本必须同步');
     await assert.rejects(hook.onBeforeCompressSettings({}, {}), /启动配置/);
     await assert.rejects(hook.onBeforeCompressSettings({}, { settings: { assets: { preloadBundles: {} } } }), /数组/);
     if (!images.length) {
@@ -170,7 +170,7 @@ async function main() {
             const stalePaths = poisonSourcePaths();
             const repaired = await captureLogs(() => hook.onAfterBuild({ platform: 'web-mobile' }, { dest: directory }));
             assert.notEqual(require.cache[sourcePathsPath].exports, stalePaths, '构建后检查必须重新发现当前源目录');
-            assert(repaired.lines.some(line => line.includes('config-package-artifact-v1 v1.8.0') && line.includes('after-build repaired')),
+            assert(repaired.lines.some(line => line.includes('config-package-artifact-v1 v1.8.1') && line.includes('after-build repaired')),
                 '最终文件修正必须打印实际实现与repaired标识');
             assert.equal(repaired.value.startupPreloadRepaired, true);
             const written = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -179,7 +179,7 @@ async function main() {
             const once = fs.readFileSync(file, 'utf8');
             poisonImplementation();
             const after = await captureLogs(() => hook.onAfterBuild({ platform: 'web-mobile' }, { dest: directory }));
-            assert(after.lines.some(line => line.includes('config-package-artifact-v1 v1.8.0') && line.includes('onAfterBuild')),
+            assert(after.lines.some(line => line.includes('config-package-artifact-v1 v1.8.1') && line.includes('onAfterBuild')),
                 '必须打印实际after实现标识和版本');
             assert.equal(after.value.startupPreloadRepaired, false);
             assert.equal(fs.readFileSync(file, 'utf8'), once, '再次执行不重写已有启动配置');

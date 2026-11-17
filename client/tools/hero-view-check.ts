@@ -30,7 +30,9 @@ import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCel
 import { HeroListView } from "../assets/scripts/features/hero/ui/HeroListView";
 
 /** 行为替身的视口高度，真实布局从完整HeroListView的SuperContent与Widget读取。 */
-const HERO_PORT_H = 720;
+const HERO_PORT_H = 517;
+/** 当前Prefab视口宽度，避免将旧540宽的夹具与四列真实格子混用。 */
+const HERO_PORT_W = 572;
 
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 
@@ -118,6 +120,7 @@ function assertComp(data: PrefabObj[], comp: PrefabObj, field: string, compId: n
   assert(target && target.__type__ === typeName, field + " 指向的不是 " + typeName);
 }
 
+/** 校验当前真实页面结构与字段绑定；序列化索引可重排，业务节点顺序和类型仍必须正确。 */
 function checkPrefab(): void {
   const viewType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroListView.ts.meta"));
   const cellType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroIconCellView.ts.meta"));
@@ -168,6 +171,23 @@ function checkPrefab(): void {
   }
 
   const cellData = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroIconCellView.prefab");
+  // 初始星全隐藏时旧Layout曾保存-1宽；静态尺寸须合法并能容纳五星，运行时仍由原Layout更新。
+  for (const transform of cellData.filter(row => row.__type__ === "cc.UITransform")) {
+    assert(transform._contentSize.width >= 0 && transform._contentSize.height >= 0,
+      "英雄格所有静态UITransform保持非负尺寸");
+  }
+  const starGroup = cellData.find(row => row._name === "Stars")!;
+  const starParts = starGroup._components.map((row: { __id__: number }) => cellData[row.__id__]);
+  const starTransform = starParts.find((row: PrefabObj) => row.__type__ === "cc.UITransform")!;
+  const starLayout = starParts.find((row: PrefabObj) => row.__type__ === "cc.Layout")!;
+  const fullStarWidth = starGroup._children.reduce((width: number, child: { __id__: number }) => {
+    const node = cellData[child.__id__];
+    const transform = node._components.map((row: { __id__: number }) => cellData[row.__id__])
+      .find((row: PrefabObj) => row.__type__ === "cc.UITransform")!;
+    return width + transform._contentSize.width * (starLayout._affectedByScale ? node._lscale.x : 1);
+  }, starLayout._paddingLeft + starLayout._paddingRight)
+    + Math.max(0, starGroup._children.length - 1) * starLayout._spacingX;
+  assert(starTransform._contentSize.width === fullStarWidth, "星容器初始宽度等于原五子星宽、缩放、边距及间距");
   const cell = component(cellData, cellType);
   assertNode(cellData, cell.comp, "face", 19, "spr_face");
   assertComp(cellData, cell.comp, "nameLabel", 29, "cc.Label");
@@ -176,7 +196,8 @@ function checkPrefab(): void {
   assertNode(cellData, cell.comp, "lock", 73, "spr_lock");
   assertNode(cellData, cell.comp, "battle", 79, "spr_battle");
   const stars = cell.comp.stars as { __id__?: number }[];
-  assert(stars.map((row) => row.__id__).join(",") === "37,43,49,55,61", "五颗星按 star0 到 star4");
+  assert(stars.map(row => cellData[row.__id__!]?._name).join(",") === "star0,star1,star2,star3,star4",
+    "五颗星按业务节点star0到star4绑定，不依赖Creator序列化数组索引");
 
   const infoType = classId(metaUuid("client/assets/scripts/features/hero/ui/HeroInfoView.ts.meta"));
   const infoData = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab");
@@ -231,9 +252,17 @@ function fakePrefab(build: (node: Node) => void): Prefab {
   return prefab;
 }
 
+/** 根尺寸与缩放读取当前真实Cell，内部字段只替身显示绑定，避免旧夹具134高冒充现在124高。 */
 function makeCell(node: Node): void {
   node.name = "HeroIconCellView";
-  node.addComponent(UITransform).setContentSize(124,134);
+  const source = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroIconCellView.prefab");
+  const root = source[idOf(source[0].data)];
+  const transform = (root._components || []).map(ref => source[ref.__id__!])
+    .find(row => row.__type__ === "cc.UITransform")!;
+  const size = transform._contentSize as { width: number; height: number };
+  const scale = root._lscale as { x: number; y: number; z: number };
+  node.addComponent(UITransform).setContentSize(size.width, size.height);
+  node.setScale(scale.x, scale.y, scale.z);
   const cell = node.addComponent(HeroIconCellView);
   cell.button = node.addComponent(Button);
   cell.face = new Node("spr_face");
@@ -270,13 +299,13 @@ function makeBoard(node: Node) {
     capacityLabel: null as unknown as Label, elemButtons: [] as Button[], scroll: null as unknown as SuperScroll };
   const box = sized("spr_box", 580, 450);
   box.parent = node;
-  board.heroScroll = sized("HeroScroll", 540, HERO_PORT_H);
+  board.heroScroll = sized("HeroScroll", HERO_PORT_W, HERO_PORT_H);
   board.heroScroll.parent = box;
 
   board.scroll = board.heroScroll.addComponent(SuperScroll);
-  board.heroPort = sized("view", 540, HERO_PORT_H);
+  board.heroPort = sized("view", HERO_PORT_W, HERO_PORT_H);
   board.heroPort.parent = board.heroScroll;
-  board.heroContent = sized("content", 540, 320);
+  board.heroContent = sized("content", HERO_PORT_W, HERO_PORT_H);
   board.heroContent.parent = board.heroPort;
   board.heroPort.addComponent(Mask);
   board.heroScroll.getComponent(SuperScroll)!.content = board.heroContent;
@@ -448,16 +477,16 @@ async function checkHeroCellReuse():Promise<void> {
   assert(cell.face!.getComponent(Sprite)!.spriteFrame===null,"销毁后不写回头像");
  }finally{resources.load=original;root.destroy();}
 }
-/** 使用真实英雄列表布局配置验证长列表末行可达、刷新保位以及过滤缩短后归位。 */
+/** 当前Cell高124、视口高517，用24项真实长列表验证末端335可达、保位和缩短归零。 */
 function checkHeroScrollBounds():void {
  const root=new Node("long-list"),board=makeBoard(root),scroll=board.scroll,list=scroll.list;
  const source=JSON.parse(read("client/assets/bundles/module/hero/prefabs/HeroListView.prefab"));const config=source.find((row:any)=>row.columns!==undefined);
  for(const key of ["columns","rows","layoutType","gridAxis"] as const)list[key]=config[key];
  for(const key of ["spacingX","spacingY","paddingLeft","paddingRight","paddingTop","paddingBottom"] as const)list[key]=config["_"+key];
- list.setData(Array.from({length:20},(_,i)=>i),()=>{});
- assert(board.heroContent!.getComponent(UITransform)!.height===750,"真实格子和间距计算长列表高度");
- scroll.restorePosition({x:0,y:30} as any);assert(scroll.readPosition().y===30,"末行可达");
- list.refresh();assert(scroll.readPosition().y===30,"普通刷新保留位置");
+ list.setData(Array.from({length:24},(_,i)=>i),()=>{});
+ assert(board.heroContent!.getComponent(UITransform)!.height===852,"真实124高格子、20间距与8上边距计算六行高度");
+ scroll.restorePosition({x:0,y:335} as any);assert(scroll.readPosition().y===335,"末行可达");
+ list.refresh();assert(scroll.readPosition().y===335,"普通刷新保留位置");
  list.setData([1,2,3],()=>{});assert(scroll.readPosition().y===0,"筛选缩短不留下空白滚动区域");root.destroy();
 }
 

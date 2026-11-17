@@ -23,7 +23,7 @@ public final class GameProtocolCodec {
         "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
         "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
         "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
-        "rewardNotice");
+        "rewardNotice", "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -77,6 +77,7 @@ public final class GameProtocolCodec {
                 case "chapter.claim", "chapter.replay" -> "chapterBattleId";
                 case "chapter.idle.claim" -> "chapterIdleClaim";
                 case "chapter.idle.claim.status" -> "chapterIdleClaimStatusRequest";
+                case "chapter.milestone.claim", "chapter.milestone.claim.status" -> "chapterMilestoneClaim";
                 default -> "empty";
             };
         }
@@ -87,6 +88,8 @@ public final class GameProtocolCodec {
             case "session.login", "session.authenticate" -> "accepted"; case "servers.list" -> "servers";
             case "chapter.idle.claim" -> "chapterIdleClaimReceipt";
             case "chapter.idle.claim.status" -> "chapterIdleClaimStatus";
+            case "chapter.milestone.claim" -> "chapterMilestoneReceipt";
+            case "chapter.milestone.claim.status" -> "chapterMilestoneStatus";
             case "chapter.challenge", "chapter.claim" -> "chapterReceipt"; case "chapter.replay" -> "chapterReplay"; case "chapter.idle.encounter" -> "idleEncounter"; case "battle.preview" -> "battlePreviewed"; case "formation.save" -> "formationSaved"; case "session.heartbeat" -> "heartbeat"; case "gm.grant" -> "gmResult"; case "gm.status" -> "gmStatus";
             default -> throw new IllegalArgumentException("Unknown payload");
         };

@@ -72,6 +72,19 @@ public final class HeroBattleBuffState {
         throw new IllegalStateException("冰冻实例已失效");
     }
 
+    /** 累加旧触发次数；保持来源、期限及安装顺序，失效实例不能重新创建。 */
+    public long increment(long instanceId) {
+        for (int i = 0; i < entries.size(); i++) {
+            var entry = entries.get(i);
+            if (entry.instanceId() == instanceId) {
+                long next = Math.addExact(entry.value(), 1);
+                entries.set(i, new Entry(instanceId, entry.sourceId(), entry.expiresAt(), entry.spec(), next));
+                return next;
+            }
+        }
+        throw new IllegalStateException("触发实例已失效");
+    }
+
     /** 按实例身份移除一次触发耗尽的Buff，不误清同配置其他来源或层数。 */
     public List<Entry> removeInstance(long instanceId) {
         return remove(entries.stream().filter(entry -> entry.instanceId() == instanceId).toList());

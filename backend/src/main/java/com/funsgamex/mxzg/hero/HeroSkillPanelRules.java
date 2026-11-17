@@ -150,7 +150,18 @@ public class HeroSkillPanelRules {
             }
             selectors.add(value.asInt());
         }
-        return new HeroBattleTargetUtils.Plan(artId, selectors, art.path("target_num").asInt());
+        var values = new ArrayList<Integer>();
+        var rawValues = mapper.readTree(art.path("target_value").asString());
+        if (!rawValues.isArray()) {
+            throw new IllegalStateException("动作目标参数配置无效：" + artId);
+        }
+        for (var value : rawValues) {
+            if (!value.isIntegralNumber() || !value.canConvertToInt()) {
+                throw new IllegalStateException("动作目标参数类型无效：" + artId);
+            }
+            values.add(value.asInt());
+        }
+        return new HeroBattleTargetUtils.Plan(artId, selectors, art.path("target_num").asInt(), values);
     }
 
     /** 解析旧218号血量条件的前三个参数；后续art_list由动作层负责，不在此伪执行。 */
@@ -229,18 +240,18 @@ public class HeroSkillPanelRules {
         return List.copyOf(definitions);
     }
 
-    /** 解析当前已支持的治疗/通用监听元数据；属性Buff等有移除副作用的类型尚不接入。 */
+    /** 解析已支持效果的生命周期元数据；直接属性及控制的移除副作用由同一执行器处理。 */
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 160, 1205).contains(type)
+        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 160, 167, 1205, 1001, 1006, 1014, 234).contains(type)
             && !(type == 180 && isCharmDeathListener(buffId))) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
         if (type == 160) controlAttribute(buffId);
         return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
             buff.path("dispelled").asInt() == 1, buff.path("effecttype").asInt(),
-            buff.path("conflict_type").asInt(), buff.path("stacking_max").asInt(), type == 160);
+            buff.path("conflict_type").asInt(), buff.path("stacking_max").asInt(), type == 160 || type == 167);
     }
 
     /** 当前模板真实职业和元素，用于装配战场，不从UI面板或调用方猜测。 */
@@ -257,7 +268,7 @@ public class HeroSkillPanelRules {
         return new BattleIdentity(element, 280 + job);
     }
 
-    /** 解析不触发反击、必中安装且无后续动作的100号伤害子集；未恢复的反击链明确拒绝。 */
+    /** 解析禁止反击入口的100号伤害；只允许已核对的即时控制等子链，其他下游拒绝。 */
     public int battleOrdinaryDamageRate(int buffId) {
         return battleOrdinaryDamageRate(buffId, false);
     }
@@ -268,7 +279,8 @@ public class HeroSkillPanelRules {
         var values = buff.path("value").asString().split("\\|", -1);
         if (buff.path("type").asInt() != 100 || buff.path("attach_percent").asInt() != 10000
             || values.length < 2 || (!values[1].equals("1") && !allowCounterattack)
-            || (!mapper.readTree(buff.path("art_list").asString()).isEmpty() && !nanakoDamageChain(buffId) && !nanakoCriticalChain(buffId))) {
+            || (!mapper.readTree(buff.path("art_list").asString()).isEmpty() && !nanakoDamageChain(buffId)
+                && !nanakoCriticalChain(buffId) && !battleDamageControlFollowup(buffId))) {
             throw new IllegalArgumentException("普通伤害配置的反击或后续动作尚未支持：" + buffId);
         }
         return Integer.parseInt(values[0]);
@@ -335,7 +347,7 @@ public class HeroSkillPanelRules {
         return true;
     }
 
-    /** 已核对的直接属性动作：既有护甲/破甲链及必中、无下游的固定207暴击属性增减。 */
+    /** 已核对的直接属性动作：既有护甲/破甲链及必中、无下游的固定201攻击和207暴击属性增减。 */
     public boolean battleDirectAttribute(int buffId) {
         if (nanakoArmorDebuff(buffId)) {
             return true;
@@ -345,7 +357,8 @@ public class HeroSkillPanelRules {
             return true;
         }
         var buff = row("buff", buffId);
-        if (buff.path("type").asInt() == 160 && buff.path("value").asString().startsWith("207|")) {
+        if (buff.path("type").asInt() == 160 && (buff.path("value").asString().startsWith("207|")
+                || buff.path("value").asString().startsWith("201|"))) {
             controlAttribute(buffId);
             return true;
         }
@@ -385,7 +398,7 @@ public class HeroSkillPanelRules {
         return buffId >= 2031301 && buffId <= 2031303;
     }
 
-    /** 一个已预检的纯普通伤害动作，保留目标规则和Buff顺序。 */
+    /** 一个已预检的伤害/控制/属性动作，保留选目标、参数和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
     /** 预检真实技能的伤害、控制、监听、流血、属性/治疗、空1号及2/3/5/8/11表现；未知效果拒绝。 */
@@ -407,7 +420,8 @@ public class HeroSkillPanelRules {
                         battleHealing(buff.asInt() - 100);
                     } else if (battleRoundListener(buff.asInt())) {
                         battleTrigger(buff.asInt());
-                    } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleBleed(buff.asInt()) && !battleDirectAttribute(buff.asInt())) {
+                    } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleBleed(buff.asInt()) && !battleDirectAttribute(buff.asInt()) && !battleSimpleControl(buff.asInt())
+                            && !battleJobCondition(buff.asInt()) && !battleBlockShield(buff.asInt())) {
                         battleOrdinaryDamageRate(buff.asInt(), true);
                     }
                 }
@@ -557,35 +571,202 @@ public class HeroSkillPanelRules {
             }
         }
         var buff = row("buff", buffId);
-        if (buff.path("type").asInt() == 160 && buff.path("value").asString().startsWith("207|")) {
-            return fixedCriticalAttribute(buffId);
+        if (buff.path("type").asInt() == 160 && (buff.path("value").asString().startsWith("207|")
+                || buff.path("value").asString().startsWith("201|"))) {
+            return fixedBattleAttribute(buffId);
         }
         throw new IllegalArgumentException("未核对的控制属性效果：" + buffId);
     }
 
     /**
-     * 旧AbilityAdd/AbstractAttributeBuffHandler按原整数加减207；不把-1250改成乘区或夹成零。
+     * 旧AbilityAdd/AbstractAttributeBuffHandler按原整数加减201攻击万分比或207暴击万分比。
      * 仅接必中、无子动作且后两项为0的固定形式，其他属性、概率和条件效果继续拒绝。
      */
-    private ControlAttributeDefinition fixedCriticalAttribute(int buffId) {
+    private ControlAttributeDefinition fixedBattleAttribute(int buffId) {
         var buff = row("buff", buffId);
         var values = buff.path("value").asString().split("\\|", -1);
         var children = mapper.readTree(buff.path("art_list").asString());
-        if (buff.path("type").asInt() != 160 || values.length != 4 || !values[0].equals("207")
+        if (buff.path("type").asInt() != 160 || values.length != 4 || !Set.of("201", "207").contains(values[0])
                 || !values[1].matches("-?(0|[1-9][0-9]*)") || !values[2].equals("0") || !values[3].equals("0")
                 || buff.path("attach_percent").asInt() != 10000 || children == null
                 || !children.isArray() || !children.isEmpty()
                 || !buff.path("round").isIntegralNumber() || !buff.path("round").canConvertToInt()
                 || buff.path("round").asInt() < 0) {
-            throw new IllegalArgumentException("固定207属性动作含未支持形式：" + buffId);
+            throw new IllegalArgumentException("固定201/207属性动作含未支持形式：" + buffId);
         }
         int amount;
         try {
             amount = Integer.parseInt(values[1]);
         } catch (NumberFormatException error) {
-            throw new IllegalArgumentException("固定207属性量超出原整数范围：" + buffId, error);
+            throw new IllegalArgumentException("固定201/207属性量超出原整数范围：" + buffId, error);
         }
-        return new ControlAttributeDefinition(buffId, 207, amount, buff.path("round").asInt());
+        return new ControlAttributeDefinition(buffId, Integer.parseInt(values[0]), amount, buff.path("round").asInt());
+    }
+
+    /** 已核实控制的基础概率、专属抗性与深睡受击唤醒率；0抗性编号表示没有专属抗性。 */
+    public record SimpleControl(int buffId, int type, double rate, int resistance, List<Integer> wakeRates) {}
+
+    /** 预检无下游的沉默、石化和深睡；命中、免控与动态抗性由实际执行器处理。 */
+    public boolean battleSimpleControl(int buffId) {
+        if (!Set.of(1001, 1006, 1014).contains(row("buff", buffId).path("type").asInt())) {
+            return false;
+        }
+        simpleControl(buffId);
+        return true;
+    }
+
+    /** 沉默专属抗性213、石化218；深睡没有专属抗性，并保留受击整数抽醒率。 */
+    public SimpleControl simpleControl(int buffId) {
+        var buff = row("buff", buffId);
+        int type = buff.path("type").asInt();
+        var values = buff.path("value").asString().split("\\|", -1);
+        int chance = buff.path("attach_percent").asInt();
+        if (!Set.of(1001, 1006, 1014).contains(type) || values.length != 4
+                || chance < 0 || chance > 10000 || !mapper.readTree(buff.path("art_list").asString()).isEmpty()
+                || !values[2].equals("0") || !values[3].equals("0")
+                || buff.path("effecttype").asInt() != (type == 1001 ? 2 : 3)) {
+            throw new IllegalArgumentException("未核实的直接控制形式：" + buffId);
+        }
+        var waking = new ArrayList<Integer>();
+        if (type == 1014) {
+            for (int i = 0; i < 2; i++) {
+                int rate = Integer.parseInt(values[i]);
+                if (rate < 0 || rate > 10000) {
+                    throw new IllegalArgumentException("深睡唤醒率无效：" + buffId);
+                }
+                waking.add(rate);
+            }
+            if (waking.getLast() != 10000) {
+                throw new IllegalArgumentException("深睡后续受击未保证终止：" + buffId);
+            }
+        } else if (!values[0].equals("0") || !values[1].equals("0")) {
+            throw new IllegalArgumentException("控制包含未支持计数：" + buffId);
+        }
+        battleBuff(buffId);
+        return new SimpleControl(buffId, type, chance / 10000D,
+            type == 1001 ? 213 : type == 1006 ? 218 : 0, List.copyOf(waking));
+    }
+
+    /** 预检旧234：必中、无子动作的非固定攻击格挡次数，实际消耗在扣血前事件执行。 */
+    public boolean battleBlockShield(int buffId) {
+        if (row("buff", buffId).path("type").asInt() != 234) {
+            return false;
+        }
+        blockShieldCount(buffId);
+        return true;
+    }
+
+    /** 读取格挡盾正次数，拒绝概率和复合参数，不能将234当作1008吸收盾。 */
+    public int blockShieldCount(int buffId) {
+        var buff = row("buff", buffId);
+        var values = buff.path("value").asString().split("\\|", -1);
+        if (buff.path("type").asInt() != 234 || buff.path("attach_percent").asInt() != 10000
+                || values.length != 4 || !values[1].equals("0") || !values[2].equals("0")
+                || !values[3].equals("0") || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("格挡盾包含未支持形式：" + buffId);
+        }
+        int count = Integer.parseInt(values[0]);
+        if (count < 1) {
+            throw new IllegalArgumentException("格挡盾次数必须为正：" + buffId);
+        }
+        return count;
+    }
+
+    /** 预检职业条件及其自选一次性属性子动作，不按技能ID特许放行。 */
+    public boolean battleJobCondition(int buffId) {
+        if (row("buff", buffId).path("type").asInt() != 212) {
+            return false;
+        }
+        jobConditionValues(buffId);
+        var children = immediateArts(buffId);
+        if (children.isEmpty()) {
+            throw new IllegalArgumentException("职业条件缺少实际子动作：" + buffId);
+        }
+        for (var art : children) {
+            if (!art.targets().selectors().equals(List.of(1))) {
+                throw new IllegalArgumentException("职业条件子动作并非施法者一次性属性：" + buffId);
+            }
+            for (int id : art.buffs()) {
+                onceDamageAttribute(id);
+            }
+        }
+        return true;
+    }
+
+    /** 旧CBuff.getValues包含value各项；职业1至5参与判定，0为配置占位。 */
+    public Set<Integer> jobConditionValues(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 212 || buff.path("attach_percent").asInt() != 10000) {
+            throw new IllegalArgumentException("职业条件含未支持概率：" + buffId);
+        }
+        var jobs = new LinkedHashSet<Integer>();
+        for (String part : buff.path("value").asString().split("\\|", -1)) {
+            int job = Integer.parseInt(part);
+            if (job < 0 || job > 5) {
+                throw new IllegalArgumentException("职业条件值无效：" + buffId);
+            }
+            if (job != 0) {
+                jobs.add(job);
+            }
+        }
+        if (jobs.isEmpty()) {
+            throw new IllegalArgumentException("职业条件没有有效职业：" + buffId);
+        }
+        return Set.copyOf(jobs);
+    }
+
+    /** 读取167的270一次性伤害加成；只作用于下一次真实读取，不能变为永久或逐目标加成。 */
+    public ControlAttributeDefinition onceDamageAttribute(int buffId) {
+        var buff = row("buff", buffId);
+        var values = buff.path("value").asString().split("\\|", -1);
+        if (buff.path("type").asInt() != 167 || buff.path("attach_percent").asInt() != 10000
+                || values.length != 4 || !values[0].equals("270") || !values[2].equals("0")
+                || !values[3].equals("0") || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("未核实的一次性属性动作：" + buffId);
+        }
+        return new ControlAttributeDefinition(buffId, 270, Integer.parseInt(values[1]), buff.path("round").asInt());
+    }
+
+    /** 解析立即子动作的原选目标与Buff顺序；只供完成具体类型预检的执行路径使用。 */
+    public List<DamageArt> immediateArts(int buffId) {
+        var result = new ArrayList<DamageArt>();
+        for (var child : mapper.readTree(row("buff", buffId).path("art_list").asString())) {
+            var art = row("buffart", child.asInt());
+            if (art.path("source_type").asInt() != 0) {
+                throw new IllegalArgumentException("立即子动作来源尚未支持：" + buffId);
+            }
+            var ids = new ArrayList<Integer>();
+            for (var id : mapper.readTree(art.path("buff_list").asString())) {
+                ids.add(id.asInt());
+            }
+            if (ids.isEmpty()) {
+                throw new IllegalArgumentException("立即子动作无实际效果：" + buffId);
+            }
+            result.add(new DamageArt(battleTargets(child.asInt()), List.copyOf(ids)));
+        }
+        return List.copyOf(result);
+    }
+
+    /** 只接受继承上下文的直接控制子链；普通伤害miss仍按旧流程继续该控制。 */
+    public boolean battleDamageControlFollowup(int buffId) {
+        if (row("buff", buffId).path("type").asInt() != 100) {
+            return false;
+        }
+        var children = immediateArts(buffId);
+        if (children.isEmpty()) {
+            return false;
+        }
+        for (var child : children) {
+            if (!child.targets().selectors().isEmpty()) {
+                return false;
+            }
+            for (int id : child.buffs()) {
+                if (!battleSimpleControl(id)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /** 预检冰冻类型与真实配置；其他类型交由各自处理器。 */

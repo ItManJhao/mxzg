@@ -1,67 +1,135 @@
-/** 技能验收目录：配置提供全部英雄与技能，精确等级白名单仅记录已有演示证据，不推断未恢复效果。 */
+/**
+ * 技能演示目录：从唯一GameConfig列出英雄技能，从真实战报的出手事件识别精确等级。
+ * 由开发技能窗使用，不维护人工完成清单；可解析演示不代表玩法或视觉已经验收。
+ */
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
+import { BattleAttackUtils } from "./BattleAttackUtils";
+import { BattleReplayUtils } from "./BattleReplayUtils";
 
-/** 一个可选择的真实技能等级及开发证据。 */
-export interface SkillAuditEntry {
-    readonly id: number;
+/** 一份已通过当前播放器配置预检、确实出现过的技能出手。 */
+export interface SkillAuditEvidence {
+    /** 战报sourceId对应的真实英雄模板，不以文件名推断。 */
+    readonly heroId: number;
+    /** 原skill.begin记录的技能配置ID。 */
+    readonly skillId: number;
+    /** 原skill.begin记录的精确技能等级。 */
     readonly level: number;
-    /** 原配置技能类型，用于区分主动定位与被动完整触发过程。 */
+    /** 本机开发资源目录中的二进制文件名，不是任意URL。 */
+    readonly fixture: string;
+}
+
+/** 可选择的真实技能等级；状态只说明演示可用性，不保存开发完成进度。 */
+export interface SkillAuditEntry {
+    /** 技能配置ID，与level共同定位一行配置。 */
+    readonly id: number;
+    /** 原配置技能等级，不能以其他等级代替。 */
+    readonly level: number;
+    /** 原配置类型，区分普通/主动出手和被动触发。 */
     readonly activeType: number;
+    /** 唯一语言表中的技能名称。 */
     readonly name: string;
+    /** 唯一语言表中的原技能说明。 */
     readonly description: string;
+    /** 自动检测状态，不用“已验收”表示静态可解析。 */
     readonly status: string;
+    /** 当前条目可播放或需要场景证据的原因。 */
     readonly reason: string;
+    /** 匹配英雄、技能与等级的真实战报；null表示没有对应出手证据。 */
     readonly fixture: string | null;
 }
 
+/** 当前播放器消费的同源Buff字段，不另存配置映射。 */
+interface AuditBuffRow {
+    /** 原Buff配置主键。 */
+    readonly idx: number;
+    /** 原动作或数值效果类型。 */
+    readonly type: number;
+    /** 原动作参数JSON。 */
+    readonly ani_base: string;
+    /** 原序列帧声明JSON。 */
+    readonly file: string;
+    /** 原音效声明JSON。 */
+    readonly sound: string;
+    /** 原60帧制延迟。 */
+    readonly delay: number;
+    /** 原暗屏标记。 */
+    readonly dimly: number;
+}
+
 export class SkillAuditUtils {
-    /** 无状态配置工具禁止实例化。 */
+    /** 无状态配置与战报查询工具禁止实例化。 */
     private constructor() {}
 
-    /** 精确技能/等级对应的已有只读场景；未登记不是对后端全部能力的推断。 */
-    private static readonly demos: Readonly<Record<string, readonly [string | null, string, string]>> = {
-        "101050110:0": ["independent-charm-star-5-replay.pb", "可演示", "真实普攻11号近身、目标特效及返回已复验；多段打击由原骨骼与战报体现，不额外扣血。"],
-        "101050111:1": ["independent-charm-star-5-replay.pb", "可演示", "五星初始技能：随机后排两目标、自身破甲及第8回合结算已实测；未包含尚未解锁的其他被动。"],
-        "101050111:2": ["independent-charm-star-6-replay.pb", "可演示", "六星二级主动已实测随机双目标和第5回合结算，剩余生命3020。"],
-        "101050111:3": ["independent-charm-star-7-replay.pb", "可演示", "七星三级主动已实测随机双目标、暂停恢复和第3回合结算，剩余生命8033。"],
-        "101050113:1": [null, "规则已验证", "一级死亡监听、20%暴击叠加及清理通过独立回归，暂无单独演示。"],
-        "101050113:2": [null, "规则已验证", "二级死亡监听、25%暴击叠加及清理通过独立回归，暂无单独演示。"],
-        "101050113:3": ["independent-charm-death-replay.pb", "可演示", "强化3九星战报：敌方死亡后由原施加者叠暴击，末名敌方死亡不加层。旧配置没有独立特效。"],
-        "101010010:0": ["chapter-1-1-1-replay.pb", "部分接入", "普攻战报可播放；旧覆盖表ani_ba4e字段疑点待核对，独立特效未恢复。"],
-        "101010011:1": ["chapter-1-1-1-replay.pb", "可演示", "一级主动已复验斩击特效、暗屏和退出；正式服完整时序对照仍待验收。"],
-        "101040040:0": ["chapter-1-1-3-control-replay.pb", "已验收", "第三关敌方赛西莉普攻与多单位场景。"],
-        "101040041:1": ["chapter-1-1-3-control-replay.pb", "已验收", "第三关赛西莉真实施法与眩晕。"],
-        "105050050:0": ["chapter-1-1-2-replay.pb", "已验收", "第二关黑暗切割者普攻。"],
-        "105050051:1": ["chapter-1-1-2-replay.pb", "部分接入", "两段旧特效已接入；紫色特效出屏范围待正式服核对，本等级流血概率为零。"],
-        "105050051:3": ["independent-dark-cutter-bleed-replay.pb", "部分接入", "三级主动专项战报：安装流血、回合伤害及移除；已复验图标及结算，非完整英雄技能；紫色特效范围疑点保留。"],
-        "102050230:0": ["independent-nanako-replay.pb", "可演示", "普攻已补旧表现覆盖；正式服完整特效对照待验收。"],
-        "102050231:1": ["independent-nanako-star-5-replay.pb", "可演示", "五星真实一级技能，降护甲后伤害；暴击追加概率为零。"],
-        "102050231:2": ["independent-nanako-star-6-replay.pb", "可演示", "六星真实二级技能，降护甲后伤害；暴击追加概率为零。"],
-        "102050231:3": ["independent-nanako-critical-replay.pb", "可演示", "三级暴击追加已通过自动验证；此暴击分支画面待验收。"],
-        "102050232:1": ["independent-nanako-star-5-replay.pb", "可演示", "五星一级静态属性被动在入场计算，无独立施法动画。"],
-        "102050233:1": ["independent-nanako-star-5-replay.pb", "可演示", "五星一级技能降攻与到期冰冻独立战报。"],
-        "102050234:1": ["independent-nanako-star-5-replay.pb", "部分接入", "五星一级控制监听可演示；208配置疑点保留。"],
-        "102050232:2": ["independent-nanako-replay.pb", "可演示", "静态属性被动在入场计算，无独立施法动画。"],
-        "102050233:2": ["independent-nanako-replay.pb", "可演示", "已补施法者与目标双段特效；正式服完整表现待对照，保留降攻和冰冻战报验证。"],
-        "102050234:2": ["independent-nanako-replay.pb", "部分接入", "控制触发链可演示；208全零配置疑点保留，不能视为所有分支验收。"]
-    };
+    /**
+     * 完整校验真实战报及本场动作，再提取实际出手的英雄/技能/等级。
+     * 整场存在不支持的动作时抛出，由开发目录边界记录并跳过，不伪造可播放状态。
+     */
+    public static inspectReplay(fixture: string, bytes: Uint8Array,
+        config = GameConfig.instance): readonly SkillAuditEvidence[] {
+        if (!/^[a-z0-9-]+\.pb$/.test(fixture)) {
+            throw new Error("演示战报文件名无效");
+        }
+        const steps = BattleReplayUtils.decode(bytes);
+        const units = BattleReplayUtils.units(bytes);
+        const rows = (config.getFileByPath("config/buff") as { rows: readonly AuditBuffRow[] }).rows;
+        for (const step of steps) {
+            if (!["presentation", "buff.upsert", "damage", "recovery"].includes(step.kind)) {
+                continue;
+            }
+            const row = rows.find(value => value.idx === step.configId);
+            if (!row) {
+                throw new Error("演示缺少战斗配置：" + step.configId);
+            }
+            if (step.kind === "presentation") {
+                for (const action of BattleAttackUtils.legacyActions(row)) {
+                    BattleAttackUtils.plan(action);
+                }
+            } else if (step.kind === "damage" && row.type === 100) {
+                BattleAttackUtils.damageSounds(row);
+            }
+        }
+        const evidence = new Map<string, SkillAuditEvidence>();
+        for (const step of steps) {
+            if (step.kind !== "skill.begin") {
+                continue;
+            }
+            const heroId = units.find(unit => unit.unitId === step.sourceId)!.templateId;
+            const level = step.skillLevel!;
+            const entry = Object.freeze({ heroId, skillId: step.configId, level, fixture });
+            evidence.set(heroId + ":" + step.configId + ":" + level, entry);
+        }
+        return Object.freeze(Array.from(evidence.values()));
+    }
 
-    /** 从统一配置的只读行列出英雄全部技能等级；此处是列表筛选，不再读取文件或复制索引。 */
-    public static skills(heroId: number, config = GameConfig.instance): readonly SkillAuditEntry[] {
+    /**
+     * 从已安装配置列出英雄全部技能等级，按真实出手证据自动匹配演示。
+     * 未出现的被动只说明需要触发场景，不从资源存在或其他等级推定完成。
+     */
+    public static skills(heroId: number, evidence: readonly SkillAuditEvidence[] = [],
+        config = GameConfig.instance): readonly SkillAuditEntry[] {
         const hero = config.requireConfig(GConfig.HeroType, heroId);
         const ids = [hero.skill_5, hero.skill_1, hero.skill_2, hero.skill_3, hero.skill_4];
         const rows = config.getConfig(GConfig.HeroSkill);
         const text = (id: number) => String(config.getConfig(GConfig.Language, id)?.value || "");
-        return ids.filter((id): id is number => typeof id === "number" && id > 0).reduce<SkillAuditEntry[]>((all, id) => all.concat(rows.filter(row => row.type === id)
-            .sort((a, b) => a.level - b.level).map(row => {
-                const demo = this.demos[id + ":" + row.level];
-                return Object.freeze({ id, level: row.level, activeType: row.active_type ?? 0,
-                    name: text(row.lan_name).replace(/<[^>]*>/g, "") || (row.active_type === 2 ? "普通攻击" : String(id)),
-                    description: text(row.lan_describe).replace(/<[^>]*>/g, ""),
-                    status: demo ? demo[1] : "未接入",
-                    reason: demo ? demo[2] : "此技能等级尚未登记可播放演示；不代表其他等级已完成。",
-                    fixture: demo ? demo[0] : null });
-            })), []);
+        return ids.filter((id): id is number => typeof id === "number" && id > 0)
+            .reduce<SkillAuditEntry[]>((result, id) => result.concat(rows.filter(row => row.type === id)
+                .sort((a, b) => a.level - b.level).map(row => {
+                    const demo = evidence.find(value => value.heroId === heroId
+                        && value.skillId === id && value.level === row.level);
+                    const passive = row.active_type !== 1 && row.active_type !== 2;
+                    return Object.freeze({
+                        id,
+                        level: row.level,
+                        activeType: row.active_type ?? 0,
+                        name: text(row.lan_name).replace(/<[^>]*>/g, "") || (row.active_type === 2 ? "普通攻击" : String(id)),
+                        description: text(row.lan_describe).replace(/<[^>]*>/g, ""),
+                        status: demo ? "有演示" : passive ? "需触发场景" : "暂无演示",
+                        reason: demo ? "真实战报已记录本英雄此等级出手，当前动作解析通过；不等同于完整验收。"
+                            : passive ? "被动需要真实触发场景；没有出手记录时不伪造施法演示，也不推断规则未实现。"
+                                : "当前测试战报没有此英雄、技能和等级的可播放出手记录；不代表底层尚未实现。",
+                        fixture: demo?.fixture || null,
+                    });
+                })), []);
     }
 }

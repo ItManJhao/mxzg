@@ -1094,26 +1094,34 @@
       }
     },
     "components": {
-      "Widget": 0,
+      "Widget": 1,
       "Layout": 0,
       "Mask": 0,
       "ScrollView": 0,
       "Animation": 0,
       "PrefabInstance": 0
     },
-    "specialAnchors": [],
+    "specialAnchors": [
+      {
+        "node": "ChapterInfoDock",
+        "anchor": [
+          0.5,
+          0
+        ]
+      }
+    ],
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "本批仅393×852 Creator设置：新增主线信息栏锚点，ZDKS开场、双方出场、第二/三关结算、返回挂机及开场取消已实测。原技能台布局未移动；不表示全分辨率或Inspector全项通过。证据 docs/validation/main-chapter-talk-opening-20261109.json。 2026-11-09负责人明确验收挂机出场连续性、攻击后待机、模型大小与独立站位；IdleLayout保存挂机锚点，挂机模型0.60、正式战斗0.48。此次确认不扩大到全英雄、全尺寸或完整结算。",
-    "sha256": "4ab121d60f030a6af19748d7a4abdf816be5209390f7179c8d29ded127257fab",
+    "visual": "仅限定本批原VS/倍数底部锚点及正式战场既有显示修复。前批原第2关只读重放与设备选项采样见docs/validation/battle-display-adjustment-review-20261117.json；本轮第10关真实自然战报及同场统计由根侧实测通过，统一证据正在汇总。此指纹不签收三尺寸、全关卡、全部英雄或Inspector。",
+    "sha256": "27fb7ca11c4d392d8c0ede30b82af21689aaa7008db9d4d9e0d67cb5e057bc1a",
     "acceptance": {
-      "sha256": "4ab121d60f030a6af19748d7a4abdf816be5209390f7179c8d29ded127257fab",
-      "date": "2026-11-09",
+      "sha256": "27fb7ca11c4d392d8c0ede30b82af21689aaa7008db9d4d9e0d67cb5e057bc1a",
+      "date": "2026-11-17",
       "status": "实际预览通过",
-      "scope": "本批仅393×852 Creator设置：新增主线信息栏锚点，ZDKS开场、双方出场、第二/三关结算、返回挂机及开场取消已实测。原技能台布局未移动；不表示全分辨率或Inspector全项通过。证据 docs/validation/main-chapter-talk-opening-20261109.json。 2026-11-09负责人明确验收挂机出场连续性、攻击后待机、模型大小与独立站位；IdleLayout保存挂机锚点，挂机模型0.60、正式战斗0.48。此次确认不扩大到全英雄、全尺寸或完整结算。",
-      "inspector": "自动结构复核；完整视觉待负责人确认"
+      "scope": "仅限定本批原VS/倍数底部锚点及正式战场既有显示修复。前批原第2关只读重放与设备选项采样见docs/validation/battle-display-adjustment-review-20261117.json；本轮第10关真实自然战报及同场统计由根侧实测通过，统一证据正在汇总。此指纹不签收三尺寸、全关卡、全部英雄或Inspector。",
+      "inspector": "本批未操作Creator原生Inspector；结构检查不代签完整视觉。"
     }
   },
   {
@@ -1225,13 +1233,6 @@
         ]
       },
       {
-        "node": "RewardNotice",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
         "node": "UnusedMenu",
         "anchor": [
           0,
@@ -1271,14 +1272,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "最终31表资源重载后360x720独立服务器真实第二关布阵确认、挑战、胜利与7项奖励列表（virtual=true，7节点）；倒计时返回挂机，maxCleared=2、pendingBattleId=null、playing=false。未重新签完整经验动画或所有奖励详情。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
-    "sha256": "aaab063110e15a9b43f777f371bd98658256091039af167e9c9ab0ab8eb235b5",
+    "visual": "仅本批MainVictoryRewards首行越框修复：600×260列表顶锚y260、content.y0，真实7项奖励在实际挑战及原参数只读窗口核实底275高于确认按钮顶219，关闭清理通过。证据docs/validation/battle-display-adjustment-review-20261117.json。此记录不签收三尺寸、全奖励详情、全关卡或Inspector。",
+    "sha256": "b82fcf1b9cdbc41ee172efa2213d738bb1231cd185ba050ed6049ea2fff270e6",
     "acceptance": {
-      "sha256": "aaab063110e15a9b43f777f371bd98658256091039af167e9c9ab0ab8eb235b5",
-      "date": "2026-11-11",
+      "sha256": "b82fcf1b9cdbc41ee172efa2213d738bb1231cd185ba050ed6049ea2fff270e6",
+      "date": "2026-11-17",
       "status": "实际预览通过",
-      "scope": "最终31表资源重载后360x720独立服务器真实第二关布阵确认、挑战、胜利与7项奖励列表（virtual=true，7节点）；倒计时返回挂机，maxCleared=2、pendingBattleId=null、playing=false。未重新签完整经验动画或所有奖励详情。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
-      "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
+      "scope": "仅本批MainVictoryRewards首行越框修复：600×260列表顶锚y260、content.y0，真实7项奖励在实际挑战及原参数只读窗口核实底275高于确认按钮顶219，关闭清理通过。证据docs/validation/battle-display-adjustment-review-20261117.json。此记录不签收三尺寸、全奖励详情、全关卡或Inspector。",
+      "inspector": "未操作Creator原生Inspector；仅限定Creator本机浏览器实际显示。"
     }
   },
   {
@@ -1496,14 +1497,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "既有宝箱与850关说明证据保留。本批累计进度条与阵亡资源飞行：360×840、393×852、360×720真实遇敌画面通过；修正英雄归还清理顺序并刷新后，正常/暂停中关闭页面与图标均0，重开与自然结束通过，资产未变。见docs/validation/idle-resources-20261109.json。",
-    "sha256": "96ac31d2eff66554751b46c6b915d2dd95c802575ef53927ed602ef57ca9dc5d",
+    "visual": "Creator本机独立角色已实测14/15常显卡、15与16真实挑战/结算、15关独立真实领奖、原map01到map02前后景切换；重登保持16关/已领100且不重复反馈。仅本次iPhone14Pro预览选项，不代签三尺寸、发布或真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
+    "sha256": "1250753ec2b4c3a9435eaa591efdb5dcdad2c814a09bf6bc2059e737b5a1eb7c",
     "acceptance": {
-      "sha256": "96ac31d2eff66554751b46c6b915d2dd95c802575ef53927ed602ef57ca9dc5d",
-      "date": "2026-11-09",
+      "sha256": "1250753ec2b4c3a9435eaa591efdb5dcdad2c814a09bf6bc2059e737b5a1eb7c",
+      "date": "2026-11-17",
       "status": "实际预览通过",
-      "scope": "既有宝箱与850关说明证据保留。本批累计进度条与阵亡资源飞行：360×840、393×852、360×720真实遇敌画面通过；修正英雄归还清理顺序并刷新后，正常/暂停中关闭页面与图标均0，重开与自然结束通过，资产未变。见docs/validation/idle-resources-20261109.json。",
-      "inspector": "未操作Creator Inspector；负责人刷新资源后浏览器验收"
+      "scope": "Creator本机独立角色已实测14/15常显卡、15与16真实挑战/结算、15关独立真实领奖、原map01到map02前后景切换；重登保持16关/已领100且不重复反馈。仅本次iPhone14Pro预览选项，不代签三尺寸、发布或真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
+      "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
     }
   },
   {
@@ -1873,6 +1874,67 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/common/prefabs/HeroRewardView.prefab",
+    "classes": [
+      "HeroRewardView",
+      "ViewportScale"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 1,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "HeroLight",
+        "anchor": [
+          0.5,
+          0
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator以15关真实回执获得唯一10105007五星实例；保存后的两路原Spine PMA修复已用同一回执只读重放确认，无黑三角或过亮白片，未再次发奖。技能子窗打开、关父窗联动清理及3个专属runtimePack释放已验。仅该五星样本，4星/低星保留专项，不代签发布/真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
+    "sha256": "e1897ac1076e19b2ff4bf510be9b747ec4fea8a3227fca983db2da96e242cf60",
+    "acceptance": {
+      "sha256": "e1897ac1076e19b2ff4bf510be9b747ec4fea8a3227fca983db2da96e242cf60",
+      "date": "2026-11-17",
+      "status": "实际预览通过",
+      "scope": "Creator以15关真实回执获得唯一10105007五星实例；保存后的两路原Spine PMA修复已用同一回执只读重放确认，无黑三角或过亮白片，未再次发奖。技能子窗打开、关父窗联动清理及3个专属runtimePack释放已验。仅该五星样本，4星/低星保留专项，不代签发布/真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
+      "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/common/prefabs/RewardView.prefab",
     "classes": [
       "RewardView"
@@ -1931,6 +1993,95 @@
       "scope": "本批Creator 393×852设备预览/浏览器1280×720：真实独立WS回执8项到账、标题动画和获得声源、金币只读简介叠窗；上层/下层关闭，modalNodes始终1，最终residents/modalActive均0，钱包1400/3不变。仅限该画面，1～3格居中/失败重试由专项证明，不代签全机型或发布产物。 证据见docs/validation/reward-preview-review-20261116.json。",
       "inspector": "负责人刷新，浏览器检查；未操作Creator原生窗口或Inspector。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/common/prefabs/RoleUpgradeView.prefab",
+    "classes": [
+      "ViewportScale",
+      "RoleUpgradeView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "BeforeLevel",
+        "anchor": [
+          1,
+          0.5
+        ]
+      },
+      {
+        "node": "AfterLevel",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "FeatureName",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "FeatureDescription",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "FeatureCondition",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "de06028c228cbc733d5ea5a650bcc5839d81a85d8c167727cf94ca2df224d5be"
   },
   {
     "path": "client/assets/bundles/module/gm/prefabs/GmBattleView.prefab",
@@ -2502,7 +2653,7 @@
       "size": {
         "__type__": "cc.Size",
         "width": 124,
-        "height": 134
+        "height": 124
       },
       "anchor": {
         "__type__": "cc.Vec2",
@@ -2511,7 +2662,7 @@
       }
     },
     "components": {
-      "Widget": 0,
+      "Widget": 2,
       "Layout": 1,
       "Mask": 0,
       "ScrollView": 0,
@@ -2524,7 +2675,7 @@
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "7d58ef7f999dca3979f6792a901df56578fa44e3c1a099bb95afccf4d251a240"
+    "sha256": "bed7f3d7a32b0b2feaff60cecc4833b24babe60c9de7a303c7094749853cf74c"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
@@ -2778,23 +2929,86 @@
       }
     },
     "components": {
-      "Widget": 14,
-      "Layout": 0,
+      "Widget": 13,
+      "Layout": 1,
       "Mask": 1,
       "ScrollView": 0,
       "Animation": 0,
-      "PrefabInstance": 0
+      "PrefabInstance": 1
     },
     "specialAnchors": [
       {
-        "node": "Content",
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "view",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "HeroScroll",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "btn_elem2",
+        "anchor": [
+          0.499,
+          0.5
+        ]
+      },
+      {
+        "node": "UIMenu_1",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "UIMenu_1",
+        "node": "node_capacity",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "bottom_menu",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_capacity",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "spr_bubble_bg",
+        "anchor": [
+          1,
+          0
+        ]
+      },
+      {
+        "node": "CCMenu_1",
+        "anchor": [
+          0,
+          0
+        ]
+      },
+      {
+        "node": "node_bubble",
         "anchor": [
           0,
           0
@@ -2824,106 +3038,8 @@
       {
         "node": "UIMenu_2",
         "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "node_capacity",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "node_bubble",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "spr_bubble_bg",
-        "anchor": [
           1,
-          0
-        ]
-      },
-      {
-        "node": "CCMenu_1",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "HeroBoard",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "spr_box",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "elem_menu",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "btn_elem2",
-        "anchor": [
-          0.499,
           0.5
-        ]
-      },
-      {
-        "node": "node_capacity",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "UIMenu_1",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "bottom_menu",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "HeroScroll",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "view",
-        "anchor": [
-          0.5,
-          1
-        ]
-      },
-      {
-        "node": "content",
-        "anchor": [
-          0.5,
-          1
         ]
       }
     ],
@@ -2931,14 +3047,14 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "实际预览通过",
-    "visual": "最终31表资源重载后360x720真实3英雄名册、等级100、容量3/300和虚拟池3节点正常；已移除旧隐藏皮肤商店按钮。未重新检查详情全部机型或长名册画面。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
-    "sha256": "448e7fdda02a07442c810995e1fc6e0b682c12befdf7da20a999e1c2714d127e",
+    "visual": "Creator冷重登入主城后显示原100级英雄和唯一新五星烈焰骑士，实例与领取前后权威快照一致，无重复奖励；两个Stars实际宽74。仅2英雄与本次预览选项，不代签三尺寸、长列表或发布。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
+    "sha256": "bbb5ec445008aa71cec85ff065ac1d9a047d2988b4627102e7b5479283ee9b42",
     "acceptance": {
-      "sha256": "448e7fdda02a07442c810995e1fc6e0b682c12befdf7da20a999e1c2714d127e",
-      "date": "2026-11-11",
+      "sha256": "bbb5ec445008aa71cec85ff065ac1d9a047d2988b4627102e7b5479283ee9b42",
+      "date": "2026-11-17",
       "status": "实际预览通过",
-      "scope": "最终31表资源重载后360x720真实3英雄名册、等级100、容量3/300和虚拟池3节点正常；已移除旧隐藏皮肤商店按钮。未重新检查详情全部机型或长名册画面。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
-      "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
+      "scope": "Creator冷重登入主城后显示原100级英雄和唯一新五星烈焰骑士，实例与领取前后权威快照一致，无重复奖励；两个Stars实际宽74。仅2英雄与本次预览选项，不代签三尺寸、长列表或发布。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
+      "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
     }
   },
   {

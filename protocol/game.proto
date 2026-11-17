@@ -41,6 +41,9 @@ message Frame {
     ChapterIdleClaimReceipt chapter_idle_claim_receipt = 33;
     ChapterIdleClaimStatus chapter_idle_claim_status = 34;
     RewardNotice reward_notice = 35;
+    ChapterMilestoneClaim chapter_milestone_claim = 36;
+    ChapterMilestoneReceipt chapter_milestone_receipt = 37;
+    ChapterMilestoneStatus chapter_milestone_status = 38;
   }
 }
 message Empty {}
@@ -58,6 +61,16 @@ message RewardNotice {
   optional string request_id = 7;
   // 同笔发奖真实发生的角色升级；无升级不携带，不能用当前Snapshot反推历史等级。
   optional RewardRoleUpgrade role_upgrade = 8;
+  // 本次真正创建的英雄实例，复用原反馈回执和队列，不以当前名册反推。
+  repeated RewardHeroGrant heroes = 9;
+}
+// 发奖时冻结的新英雄身份与合法初始成长，只供获得英雄展示，不覆盖当前名册。
+message RewardHeroGrant {
+  required string instance_id = 1;
+  required uint32 template_id = 2;
+  required uint32 level = 3;
+  required uint32 star = 4;
+  required uint32 stage = 5;
 }
 // 原发奖经验链的起止等级；只用于通用升级表现，不写回角色资产或新建奖励身份。
 message RewardRoleUpgrade {
@@ -321,6 +334,27 @@ message ChapterMilestoneProgress {
   required uint32 schema_version = 1;
   repeated uint32 claimed_ids = 2;
 }
+
+// 每角色每配置ID只可领取一次，reward_id本身是稳定业务键，重复请求读取原成功回执。
+message ChapterMilestoneClaim { required uint32 reward_id = 1; }
+// 原事务冻结的领取结果；资产和已领集合仍由统一Snapshot交付。
+message ChapterMilestoneReceipt {
+  required uint32 schema_version = 1;
+  required uint32 reward_id = 2;
+  required string receipt_id = 3;
+  required string role_id = 4;
+  required int64 asset_revision = 5;
+  required MainChapterState state = 6;
+  required RewardGrantResult actual = 7;
+  required uint32 target_chapter = 8;
+  required string rules_version = 9;
+}
+// 只查询指定稳定业务键的原回执，found=false不改变资产、不补发或猜测旧奖励。
+message ChapterMilestoneStatus {
+  required uint32 reward_id = 1;
+  required bool found = 2;
+  optional ChapterMilestoneReceipt receipt = 3;
+}
 // request_id是持久幂等键；重试同一次挑战必须复用，客户端不提交胜负和奖励。
 message ChapterChallenge { required string request_id = 1; }
 message ChapterBattleId { required string battle_id = 1; }
@@ -416,6 +450,7 @@ message RewardGrantResult {
   repeated RewardBonus bonuses = 7;
   repeated TimedItem timed_items = 8;
   required SpiritInventory spirits = 9;
+  repeated RewardHeroGrant heroes = 10;
 }
 
 // requested等于credited加ignored；零到账仍保留真实减少原因。

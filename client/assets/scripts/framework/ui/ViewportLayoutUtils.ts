@@ -247,17 +247,8 @@ export class ViewportLayoutUtils {
         return stop;
     }
 
-    /** 将Canvas中心换算到父节点坐标；页面切换动画中不改位置，无法换算时回到父节点原点。 */
+    /** 将Canvas中心换算到父节点坐标；无法换算时回到父节点原点。 */
     private static centerOnCanvas(node: Node): void {
-        let moving: Node | null = node;
-        while (moving) {
-            if ((moving as Node & {
-                mxzgPageAnimating?: boolean;
-            }).mxzgPageAnimating) {
-                return;
-            }
-            moving = moving.parent;
-        }
         const canvas = ViewportLayoutUtils.findCanvas(node);
         const parent = node.parent;
         if (!canvas || !parent) {

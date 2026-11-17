@@ -2,73 +2,91 @@
  * 应用页面导航：保留主城根页并切换功能页，根页替换时清理上一会话的闲置界面。
  * 功能页是否保留由 UIManager 的页面注册决定；不拥有业务 Model 或资源池。
  */
-import type {Node} from "cc";
+import type { Node } from "cc";
 import { UIManager } from "../../framework/ui/UIManager";
 import type { PageNav } from "../../framework/ui/UIManager";
-import type { PageTransition } from "./PageTransitionUtils";
 
+/** 主城提供功能页挂点和选中状态入口；内容显隐由主城页面自己处理。 */
 export interface FeaturePageHost {
+    /** 功能页可挂载时返回主城内容区，非功能页或主城未准备好时返回null。 */
     parent(id: string): Node | null;
 
+    /** 同步更新功能选中与主城内容显隐；null表示恢复主城内容。 */
     changed(id: string | null): void;
-
-    content?(): Node | null;
 }
 
-/** Session roots replace each other; a feature keeps its home root and shared chrome. */
+/** 登录根页互相替换；功能页保留主城根和共用顶底栏，准备成功后直接切换显示。 */
 export class RemakeNavigation implements PageNav {
+    /** 当前已经挂载的页面ID；初始化前和销毁后为null，不表示尚在准备的意图。 */
     current: string | null = null;
+    /** 当前页面的真实宿主节点；替换或销毁时清理，不持有准备中的页面。 */
     private currentHost: Node | null = null;
+    /** 打开功能页时保存的主城根，返回时恢复；会话根替换或应用销毁时释放。 */
     private root: { id: string; host: Node } | null = null;
-    private stopTransition: (() => void) | null = null;
 
-    constructor(private readonly ui: UIManager, private readonly parent: Node,
-                private readonly features?: FeaturePageHost, private readonly transition?: PageTransition) {
+    /**
+     * 保存统一页面管理器、场景挂点与可选主城宿主，不创建动画或另存页面缓存。
+     * @param ui 应用已装配的页面管理器，负责生命周期和实例缓存。
+     * @param parent 登录/主城根页面的场景挂点。
+     * @param features 主城的功能页挂点与显隐通知；未提供时所有页面按根页面替换。
+     */
+    constructor(
+        private readonly ui: UIManager,
+        private readonly parent: Node,
+        private readonly features?: FeaturePageHost,
+    ) {
     }
 
     /** 将准备好的页面挂入导航；更换登录/主城根时清空旧页面缓存。 */
     openChild(id: string): void {
-        this.finishTransition();
         const featureParent = this.features?.parent(id);
         const next = this.ui.createPageHost(id);
-        if (!next) throw new Error("页面未准备好：" + id);
+        if (!next) {
+            throw new Error("页面未准备好：" + id);
+        }
         if (featureParent?.isValid && this.current && this.currentHost) {
-            const previousId = this.current;
             const previous = this.root ? {id: this.current, host: this.currentHost} : null;
-            const outgoing = previous?.host || this.features?.content?.() || null;
-            if (!this.root) this.root = {id: this.current, host: this.currentHost};
+            if (!this.root) {
+                this.root = {id: this.current, host: this.currentHost};
+            }
             next.parent = featureParent;
             this.current = id;
             this.currentHost = next;
             this.features?.changed(id);
-            this.animate(outgoing, next, previousId, id, () => {
-                if (previous) this.closePage(previous.id, previous.host);
-                else if (outgoing?.isValid) outgoing.active = false;
-            });
+            if (previous) {
+                this.closePage(previous.id, previous.host);
+            }
             return;
         }
-        // A failed load never reaches here, so the visible page survives loading failures.
+        // 准备失败不会进入挂载阶段，原可见页面继续保留，避免失败时出现空白。
         const previous = this.current;
         const previousHost = this.currentHost;
         next.parent = this.parent;
         this.current = id;
         this.currentHost = next;
-        if (previous) this.ui.noteClosed(previous);
-        if (previousHost?.isValid) previousHost.destroy();
+        if (previous) {
+            this.ui.noteClosed(previous);
+        }
+        if (previousHost?.isValid) {
+            previousHost.destroy();
+        }
         if (this.root) {
             this.ui.noteClosed(this.root.id);
-            if (this.root.host.isValid) this.root.host.destroy();
+            if (this.root.host.isValid) {
+                this.root.host.destroy();
+            }
             this.root = null;
         }
         this.ui.clearCached();
         this.features?.changed(null);
     }
 
-    /** 返回主城根页；身份切换时animate=false，同步关页解除监听后才能清空模块数据。 */
-    back(animate = true): boolean {
-        this.finishTransition();
+    /** 同步返回主城并关闭功能页；返回false表示已在根页，身份重置可在关页完成后清空Model。 */
+    back(): boolean {
         const root = this.root;
-        if (!root) return false;
+        if (!root) {
+            return false;
+        }
         this.ui.keepOnly(root.id);
         const previousId = this.current!;
         const previousHost = this.currentHost!;
@@ -76,26 +94,24 @@ export class RemakeNavigation implements PageNav {
         this.currentHost = root.host;
         this.root = null;
         this.features?.changed(null);
-        const incoming = this.features?.content?.();
-        if (incoming && animate) {
-            this.animate(previousHost, incoming, previousId, root.id, () => this.closePage(previousId, previousHost));
-        } else {
-            if (incoming?.isValid) {
-                incoming.active = true;
-            }
-            this.closePage(previousId, previousHost);
-        }
+        this.closePage(previousId, previousHost);
         return true;
     }
 
+    /** 应用退出时取消准备任务并释放当前页和保留根；不延迟关闭或继续保存旧会话宿主。 */
     dispose(): void {
-        this.finishTransition();
         this.ui.invalidatePending();
-        if (this.current) this.ui.noteClosed(this.current);
-        if (this.currentHost?.isValid) this.currentHost.destroy();
+        if (this.current) {
+            this.ui.noteClosed(this.current);
+        }
+        if (this.currentHost?.isValid) {
+            this.currentHost.destroy();
+        }
         if (this.root) {
             this.ui.noteClosed(this.root.id);
-            if (this.root.host.isValid) this.root.host.destroy();
+            if (this.root.host.isValid) {
+                this.root.host.destroy();
+            }
             this.root = null;
         }
         this.current = null;
@@ -103,37 +119,12 @@ export class RemakeNavigation implements PageNav {
         this.ui.uninstall(this);
     }
 
-    /** 过渡结束后关闭功能页；缓存页交回管理器，其他页面销毁并释放节点作用域。 */
+    /** 切换时立即关闭旧功能页；缓存页交回管理器，其他页面销毁并释放节点作用域。 */
     private closePage(id: string, host: Node): void {
         const retained = this.ui.retainOnClose(host);
         this.ui.noteClosed(id);
         if (!retained && host.isValid) {
             host.destroy();
         }
-    }
-
-    private finishTransition(): void {
-        const stop = this.stopTransition;
-        this.stopTransition = null;
-        stop?.();
-    }
-
-    private animate(from: Node | null, to: Node, fromId: string, toId: string, cleanup: () => void): void {
-        if (!this.transition) {
-            cleanup();
-            return;
-        }
-        let completed = false;
-        const finish = () => {
-            if (!completed) {
-                completed = true;
-                cleanup();
-            }
-        };
-        const stop = this.transition(from, to, fromId, toId, finish);
-        if (!completed) this.stopTransition = () => {
-            stop();
-            finish();
-        };
     }
 }

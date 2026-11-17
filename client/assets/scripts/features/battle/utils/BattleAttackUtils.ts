@@ -28,12 +28,44 @@ export interface BattleAttackPlan {
     readonly sounds: readonly string[];
 }
 
+/** 已核实旧覆盖子动作；不保存当前关卡、资源缓存或网络状态。 */
+interface LegacyAttackAction {
+    /** 旧动作类型，决定角色、投射或独立帧语义。 */
+    readonly type: number;
+    /** 从技能起点计算的60帧制延迟。 */
+    readonly delay: number;
+    /** 原暗屏标志；不从技能名称或帧资源推测。 */
+    readonly dimly: number;
+    /** 原位移、动作和帧参数，坐标允许原来的负锚点。 */
+    readonly base: Readonly<Record<string, number | string>>;
+    /** 原file仅用于预载；实际format另由唯一plan核对。 */
+    readonly files: readonly string[];
+    /** 原音效调用，保留多路与空数组，不按同名去重。 */
+    readonly sounds: readonly string[];
+}
+
 export class BattleAttackUtils {
     /** 纯配置工具不保存播放状态。 */
     private constructor() {}
 
     /** 旧BattleInfoFactory优先展开G_BATTLE_ACTIONS；恢复已核对的英雄覆盖，内部索引不写回战报。 */
     public static legacyActions<T extends { idx: number; type: number; ani_base: string; file: string; sound: string; delay: number; dimly: number }>(row: T): readonly T[] {
+        const verified = this.verifiedLegacyActions(row.idx);
+        if (verified) {
+            return verified.map((entry, index) => {
+                const base = { ...entry.base };
+                // 旧type5与_attackingAction都不消费delay_time，不能把它误加为额外等待。
+                delete base.delay_time;
+                const format = base.format;
+                // type2的file仅预载；6/7/9实际按format取帧，即使旧file为空也不能丢失效果。
+                const files = entry.type === 2 || entry.type === 11 ? []
+                    : entry.files.length ? entry.files
+                    : typeof format === "string" ? [format.replace("/%d.png", "")] : [];
+                return { ...row, idx: row.idx * 10 + index, type: entry.type, delay: entry.delay,
+                    dimly: entry.dimly, shake: 0, ani_base: JSON.stringify(base),
+                    file: JSON.stringify(files), sound: JSON.stringify(entry.sounds) };
+            });
+        }
         // 荆棘之炎在场地比例位置施法；第15帧独立特效读取当下施法者位置，不能改成目标近身或删除覆盖。
         if (row.idx === 1051101) {
             return [
@@ -205,6 +237,122 @@ export class BattleAttackUtils {
             sound: JSON.stringify(entry.sound ? [entry.sound] : []) }));
     }
 
+    /** 逐项保留已核实的旧G_BATTLE_ACTIONS；所有复用同一动作的关卡共用，不按关卡特许。 */
+    private static verifiedLegacyActions(id: number): readonly LegacyAttackAction[] | null {
+        switch (id) {
+            case 1030100:
+                return [
+                    { type: 2, delay: 0, dimly: 0,
+                        base: {"move_time": 0.1, "move_back": 1, "attack_delay": 0.0},
+                        files: [], sounds: [] },
+                    { type: 6, delay: 25, dimly: 0,
+                        base: {"format": "skill-101030030/%d.png", "anchor_x": 0.3, "anchor_y": 0.5, "duration": 0.06, "scale_x": 1.6, "scale_y": 1.6},
+                        files: ["skill-101030030"], sounds: ["skill-101030030"] },
+                ];
+            case 1031101:
+                return [
+                    { type: 2, delay: 0, dimly: 1,
+                        base: {"move_time": 0.1, "move_back": 1},
+                        files: [], sounds: [] },
+                    { type: 7, delay: 20, dimly: 0,
+                        base: {"format": "skill-101020021/%d.png", "anchor_y": 0.25, "duration": 0.04, "scale_x": 1.8, "scale_y": 1.8},
+                        files: ["skill-101020021"], sounds: ["skill-101020021"] },
+                ];
+            case 3030300:
+                return [
+                    { type: 7, delay: 30, dimly: 0,
+                        base: {"format": "skill-103030030/%d.png", "anchor_y": 0.35, "anchor_x": 0.25, "duration": 0.06, "scale_x": 2.8, "scale_y": 2.8, "flipped": 1},
+                        files: ["skill-103030030"], sounds: ["skill-103030030"] },
+                    { type: 11, delay: 0, dimly: 0,
+                        base: {"move_time": 0.1, "move_back": 2, "attack_delay": 0.2, "offset_x": 0.6, "offset_y": 0.3},
+                        files: [], sounds: [] },
+                ];
+            case 3031101:
+                return [
+                    { type: 3, delay: 0, dimly: 1,
+                        base: {"attack_time": 0.3, "action_time": 1, "format": "skill-103030031/%d.png", "duration": 0.06, "scale_x": 4, "scale_y": 4, "anchor_y": 0.2, "anchor_x": 0.5},
+                        files: ["skill-103030031"], sounds: ["skill-103030031"] },
+                ];
+            case 4010100:
+                return [
+                    { type: 5, delay: 0, dimly: 0,
+                        base: {"attack_time": 0.3, "delay_time": 0.3, "action_time": 0.3, "format": "skill-104040020/%d.png", "scale_x": 2, "scale_y": 2, "duration": 0.03},
+                        files: ["skill-104040020"], sounds: ["skill-104040020"] },
+                ];
+            case 4011101:
+                return [
+                    { type: 2, delay: 0, dimly: 0,
+                        base: {"move_time": 0.1, "move_back": 1},
+                        files: [], sounds: [] },
+                    { type: 6, delay: 15, dimly: 1,
+                        base: {"format": "skill-104030011/%d.png", "anchor_x": 0.6, "anchor_y": 0.35, "duration": 0.1, "scale_x": 1.1, "scale_y": 1.1},
+                        files: ["skill-104030011"], sounds: ["skill-104030011"] },
+                ];
+            case 5010300:
+                return [
+                    { type: 7, delay: 0, dimly: 0,
+                        base: {"format": "skill-105040030/%d.png", "anchor_y": 0.4, "anchor_x": 0.45, "duration": 0.08, "scale_x": 1.8, "scale_y": 1.8},
+                        files: ["skill-105040030"], sounds: ["skill-105040030"] },
+                    { type: 11, delay: 0, dimly: 0,
+                        base: {"move_time": 0.1, "move_back": 2, "attack_delay": 0.2, "offset_x": 0.6, "offset_y": 0.3},
+                        files: [], sounds: [] },
+                ];
+            case 5011101:
+                return [
+                    { type: 2, delay: 0, dimly: 0,
+                        base: {"move_time": 0.1, "move_back": 1},
+                        files: ["skill-105030011"], sounds: ["skill-105030011"] },
+                    { type: 6, delay: 15, dimly: 1,
+                        base: {"format": "skill-105030011/%d.png", "anchor_x": 0.7, "anchor_y": 0.4, "duration": 0.1, "scale_x": 1.8, "scale_y": 1.8},
+                        files: [], sounds: [] },
+                ];
+            case 1080100:
+                return [
+                    { type: 5, delay: 0, dimly: 0,
+                        base: {"attack_time": 0.4, "action_time": 0.4, "format": "skill-101050080-1/%d.png", "duration": 0.02},
+                        files: ["skill-101050080-1"], sounds: ["skill-101050080"] },
+                    { type: 7, delay: 20, dimly: 0,
+                        base: {"format": "skill-101050080-2/%d.png", "anchor_x": 0.4, "anchor_y": 0.4, "duration": 0.1, "scale_x": 1.2, "scale_y": 1.2, "flipped": 1},
+                        files: ["skill-101050080-2"], sounds: [] },
+                ];
+            case 1081101:
+                return [
+                    { type: 3, delay: 0, dimly: 0,
+                        base: {"action": "skill", "attack_time": 0.6, "action_time": 1},
+                        files: [], sounds: [] },
+                    { type: 9, delay: 75, dimly: 1,
+                        base: {"format": "skill-101050081/%d.png", "anchor_y": 0.55, "anchor_x": 0.45, "duration": 0.04, "scale_x": 2, "scale_y": 2, "offset_x": 0.75, "offset_y": 0.5},
+                        files: ["skill-101050081"], sounds: ["skill-101050081"] },
+                    { type: 6, delay: 40, dimly: 0,
+                        base: {"format": "skill-101050081-1/%d.png", "anchor_x": 0.45, "anchor_y": -0.1, "duration": 0.025, "scale_x": 1, "scale_y": 1},
+                        files: ["skill-101050081-1"], sounds: [] },
+                ];
+            case 2141101:
+                return [
+                    { type: 3, delay: 0, dimly: 0,
+                        base: {"action": "skill", "attack_time": 0.6, "action_time": 1.8},
+                        files: [], sounds: [] },
+                    { type: 7, delay: 100, dimly: 1,
+                        base: {"format": "skill-102050141/%d.png", "anchor_x": 0.5, "anchor_y": 0.35, "duration": 0.05, "scale_x": 3, "scale_y": 3},
+                        files: ["skill-102050141"], sounds: ["skill-102050110"] },
+                    { type: 6, delay: 10, dimly: 0,
+                        base: {"format": "skill-102050141-1/%d.png", "anchor_x": 0.5, "anchor_y": 0.3, "duration": 0.035, "scale_x": 2, "scale_y": 2},
+                        files: ["skill-102050141-1"], sounds: [] },
+                ];
+            case 1161101:
+                return [
+                    { type: 8, delay: 0, dimly: 0,
+                        base: {"move_time": 0.1, "move_back": 1.7, "attack_delay": 0.3, "offset_x": 0.55, "offset_y": 0.4},
+                        files: [], sounds: ["skill-101040051"] },
+                    { type: 6, delay: 15, dimly: 1,
+                        base: {"format": "skill-101040051/%d.png", "anchor_x": 0.7, "anchor_y": 0.4, "duration": 0.1, "scale_x": 1.3, "scale_y": 1.3},
+                        files: ["skill-101040051"], sounds: [] },
+                ];
+            default:
+                return null;
+        }
+    }
+
     /** 读取同源buff行；type1只接空动作，type8要求显式双轴比例，其余只接已核对类型与真实帧，未知声明明确拒绝。 */
     public static plan(row: { type: number; ani_base: string; file: string; sound: string;
         shake?: number; dimly?: number }): BattleAttackPlan {
@@ -262,6 +410,11 @@ export class BattleAttackUtils {
                 "skill-103040050": 8, "skill-103040051": 10,
                 "skill-102020021": 14, "skill-102040050": 11, "skill-102040051": 10,
                 "skill-101030030": 6,
+                "skill-103030031": 9, "skill-104040020": 9, "skill-104030011": 6,
+                "skill-105040030": 9, "skill-105030011": 6,
+                "skill-101050080-1": 6, "skill-101050080-2": 12,
+                "skill-101050081": 25, "skill-101050081-1": 29,
+                "skill-102050140": 15, "skill-102050141": 22, "skill-102050141-1": 53,
             };
             const file = files[0];
             if (files.length !== 1 || typeof file !== "string" || !counts[file]
@@ -281,7 +434,7 @@ export class BattleAttackUtils {
                 flightSeconds: (counts[file] + 1) * interval,
                 // 旧flipped只翻图像；反转锚点配合负缩放保持原图几何边界，不修改共享SpriteFrame。
                 scaleX: (typeof values.scale_x === "number" && Number.isFinite(values.scale_x) ? values.scale_x : 1) * (values.flipped === 1 ? -1 : 1), scaleY: this.seconds(values, "scale_y", 1),
-                anchorX: values.flipped === 1 ? 1 - this.seconds(values, "anchor_x", 0.5) : this.seconds(values, "anchor_x", 0.5), anchorY: this.seconds(values, "anchor_y", 0.5) - 0.07
+                anchorX: values.flipped === 1 ? 1 - this.coordinate(values, "anchor_x", 0.5) : this.coordinate(values, "anchor_x", 0.5), anchorY: this.coordinate(values, "anchor_y", 0.5) - 0.07
             });
         } else if (values.format !== undefined || row.type === 5) {
             throw new Error("投射或序列帧缺少资源");
@@ -305,6 +458,24 @@ export class BattleAttackUtils {
     public static dizzyFrames(): readonly string[] {
         return Object.freeze(Array.from({length: 10}, (_, index) =>
             "effects/skill/hero-skill/hero-skill_effect-1-" + index + "/spriteFrame"));
+    }
+
+    /** 旧BuffFactory按类型共享持续帧；只有最后一份同类型实例移除才应撤下，返回值不持有节点或资产。 */
+    public static roundEffect(type: 1001 | 1005 | 234): {
+        paths: readonly string[]; interval: number; scale: number; anchorY: number;
+    } {
+        if (type === 1005) {
+            return { paths: this.dizzyFrames(), interval: 0.05, scale: 1, anchorY: 0.43 };
+        }
+        const stem = type === 1001 ? "skill-effect-slient" : "skill-effect-parry";
+        const count = type === 1001 ? 8 : 10;
+        return {
+            paths: Object.freeze(Array.from({ length: count }, (_, index) =>
+                "effects/skill-effect/" + stem + "/" + stem + "_" + index + "/spriteFrame")),
+            interval: type === 1001 ? 0.05 : 0.15,
+            scale: type === 1001 ? 1 : 2,
+            anchorY: type === 1001 ? 0.43 : 0.73,
+        };
     }
 
     /** 旧SkillController每个效果从技能起点延迟delay帧，按60帧换算，不叠加攻击动作耗时。 */
@@ -342,6 +513,15 @@ export class BattleAttackUtils {
         const value = values[key] === undefined ? fallback : values[key];
         if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
             throw new Error("攻击动作时间无效：" + key);
+        }
+        return value;
+    }
+
+    /** 原锚点可超出0～1或为负（如毁灭之烬施法者特效），只拒绝非有限数，不借时间非负规则裁图。 */
+    private static coordinate(values: Record<string, unknown>, key: string, fallback: number): number {
+        const value = values[key] === undefined ? fallback : values[key];
+        if (typeof value !== "number" || !Number.isFinite(value)) {
+            throw new Error("攻击动作坐标无效：" + key);
         }
         return value;
     }

@@ -8,7 +8,7 @@
 
 ## 客户端统一采用模块级 MVC
 
-Model 保存唯一状态，Controller 明确处理业务协议并更新 Model，View 展示和转交操作。背包作为标准模块；当前维护登录、角色、背包、英雄只读展示、主线阵容保存、连续第1～9关挑战/结算及挂机演出。本次负责人授权接通挂机宝箱按钮，local新领取默认开启，全局默认仍关闭；英雄升级、穿脱、快速战斗及其他未恢复入口仍关闭，不能把暂停解释为删减功能。
+Model 保存唯一状态，Controller明确处理业务协议并更新Model，View展示和转交操作。背包作为标准模块；当前维护登录、角色、背包、英雄只读展示、主线阵容保存、连续第1～20关挑战/结算、挂机演出及首个15关独立里程碑领取。local挂机新领取默认开启，全局默认仍关闭；英雄升级、穿脱、召唤和快速战斗等未恢复入口仍关闭。
 
 - BagController：初始化时登记三个实际消息，onNotify → onInventoryState → BagModel → BagEvent，不持有凭证、查询接口或资产写队列。
 - BagModel：唯一背包状态，分别保存普通堆叠、期限物品和精灵独立实例，整批校验/冻结后计算差异；不联网、不依赖View，不按itemId合并精灵。
@@ -37,11 +37,11 @@ BaseModel只管理本地展示版本和业务清空，不保存roleKey、凭证�
 
 MainChapterRules读取全部850条同源chapterreward，按全局idx保存门槛、首通奖励和酒馆上限，并关联原mode/chapter/mission敌方定位。MainChapterService的新挑战、HeroLineupBattleService的只读试战、挂机遇敌及战报来源统一传全局idx；持久Details中历史字段mission也保存全局idx，不能在章节或模式切换后把小关号当进度。HeroBattleChapterScenario.enemies按配置构建真实NPC成长、原顺序属性修正及完整技能，正式savedFormation/idle入口不再借固定三关initial模板；initial及固定审计场景只保留独立测试用途。
 
-完整目录与开放权限分开。服务端可信`mxzg.main-chapter.challenge-limit`（环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`）现按负责人授权默认9，只限制全新挑战，开放连续第1～9关。第10关依赖仍阻塞，不跳到静态可解析的14、19、20关。MainChapterRewardService启动时按实际开放段预检敌方战斗依赖、原IdleRules挂机投影及共享发奖支持，缺任一项明确拒绝装配，不能只改上限就宣称新关卡可用。当前挂机投影仍只有20关，装备、符文、先手、未支持技能/动作等继续显式拒绝；完整850目录、只读预览或纯扫描都不会自动开放更多关卡；领取能力另外受可信开关控制。
+完整目录与开放权限分开。服务端可信`mxzg.main-chapter.challenge-limit`（环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`）默认20，只限制全新挑战，开放连续第1～20关。MainChapterRewardService按开放段预检真实敌方、挂机投影及共享发奖支持，缺项拒绝装配。第10～20关已补对应通用控制、目标选择与旧动作/帧；其余关卡不会因为静态可解析而自动开放。IdleRules现按同源chapterreward导出850个全局idx的基础量与掉落组，完整配置不等于850关战斗已恢复。装备、符文、先手或未支持技能仍保留明确边界。
 
-MainChapterState可选`challengeLimit`来自字段5，统一首包、提交事件及重新鉴权沿原快照交付，SessionSnapshotService对齐revision时同时保留它与里程碑集合。旧回执缺字段保持null/未记录，客户端缺当前范围时禁新挑战，不默认0或猜9。新挑战读最新MainChapterModel.state的范围；已经存在的pending、原requestId回执、claim及replay优先恢复，不被缩小后的范围阻断。maxCleared可高于当前范围，不能因此拒绝合法旧进度或用历史回执回写当前范围；不新增Model、同步请求或恢复队列。
+MainChapterState可选`challengeLimit`来自字段5，统一首包、提交事件及重新鉴权沿原快照交付，SessionSnapshotService对齐revision时同时保留它与里程碑集合。旧回执缺字段保持null/未记录，客户端缺当前范围时禁新挑战，不默认0或猜开放上限。新挑战读最新MainChapterModel.state的范围；已经存在的pending、原requestId回执、claim及replay优先恢复，不被缩小后的范围阻断。maxCleared可高于当前范围，不能因此拒绝合法旧进度或用历史回执回写当前范围；不新增Model、同步请求或恢复队列。
 
-同源后段551–850奖励记录重复mode5/chapter12/mission1–10，而敌表继续累加小关号。旧ChapterSysCache实际按三维筛选，note不是运行字段，因此目录保留旧三维关联并把这些重复奖励记录标为enemyMappingPending，敌方构建明确拒绝“奖励-敌方映射待确认”；不按note替换敌人、不自动改原表。三维反查不能唯一确定全局关卡时同样拒绝。完整依赖及源表/资源边界见[最新只读审计](validation/main-chapter-dependencies-20261117-stage9.json)；静态闭合和后端只读样本不作为浏览器画面、全部玩家阵容或后续关卡已验收的结论。
+同源后段551–850奖励记录重复mode5/chapter12/mission1–10，而敌表继续累加小关号。旧ChapterSysCache实际按三维筛选，note不是运行字段，因此目录保留旧三维关联并把这些重复奖励记录标为enemyMappingPending，敌方构建明确拒绝“奖励-敌方映射待确认”；不按note替换敌人、不自动改原表。三维反查不能唯一确定全局关卡时同样拒绝。完整依赖及源表/资源边界见[最新只读审计](validation/main-chapter-dependencies-20261117-stage20.json)；静态闭合和后端只读样本不作为浏览器画面、全部玩家阵容或后续关卡已验收的结论。
 
 HeroSkillPanelRules按旧ClientBuffHandler统一识别type2/3/5/8/11纯表现，并通用接入严格空type1：服务端原动画、资源、声音为空且无震屏/遮罩，必中并无下游动作；非空type1及未知分支仍拒绝。不按英雄或关卡特许，也不让表现重复扣血。BattleAttackUtils恢复旧actions覆盖的近身/施法者/目标拆分，实际资源仍由原池按节点拥有，四套原帧的定向修正保留UUID和画布，Creator裁剪meta按正确像素重新导入。第4关只读动作、回合持续伤害与统计证据见[本批记录](validation/chapter-stage4-review-20261117.json)，不提高默认开放范围。
 
@@ -61,7 +61,7 @@ ConfirmView是common中的完整通用Prefab，文案和确认/取消由调用�
 
 共享奖励入口为RewardGrantService：只接服务端可信最终理论量，按item.type明确分发、最终合并、实例批量预检后加入外层角色锁事务；RewardGrantResult冻结真实到账、减少原因、前后余额/经验、升级附赠与独立实例。MainChapterRewardService只适配原首通Plan，不维护另一份类型分发表。新SETTLED回执的ChapterReceipt.actual（可选字段6）保存原RewardGrantResult，rewards仍是基础实际量，experience继续服务既有经验动画；重复结算读取原持久结果，旧回执缺actual明确未记录，不按当前配置或钱包差补算。资格、请求幂等和持久回执归调用业务，统一版本/提交后通知复用AssetSyncService，不以共享方法返回代表已经提交。详细边界见[共享发奖](main-chapter-idle-settlement.md#已实现的共享发奖与实际明细11-14)，MainChapterIdleClaimService已接共享发奖及真实结果；全局新领取默认false，local配置默认true，生产不因本机开放而自动开启。
 
-主线展示保留原battle/reward固定归属。正常胜利页只显示原基础奖励和经验，关闭后仅将actual.bonuses的升级附赠交原通用POPUP队列，仍使用原battleId去重；冷重登首次进入主线则将同一actual的基础实际量和附赠合并为一次通用反馈。两条路径不同时消费同一回执，不额外发布首通reward.granted，回执中的钱包、库存和等级只是历史审计内容，不能回写最新Model。旧版升级另走2014及RoleUpgradeCtr专页，本次按负责人要求复用通用反馈，不将这种展示收敛写成旧胜利页原本就包含升级附赠。第15关起的chapterextrareward为独立里程碑玩法，当前连续1～9关没有该项实际到账，3008领取仍未开放。前批缺少的下一目标show_rich现已补齐权威已领集合、同源配置及原挂点的静态RichText，不再借“本次获得”区域单填提示；前批[缺口依据](validation/chapter-reward-legacy-audit-20261116.json)保留，本轮实现见下节。
+主线展示保留原battle/reward固定归属。正常胜利页展示基础奖励与经验，关闭后仅将actual.bonuses交同一通用队列；冷重登首次进入主线将同一actual的实际量与附赠合并反馈，始终按原battleId去重，不另发首通reward.granted，不以历史结果回写当前资产。旧升级另走2014及RoleUpgradeCtr；新版按已确认方向复用通用反馈。第15关起chapterextrareward独立领取，不混进普通首通actual；它复用同一RewardGrantService并新增真实英雄发放和通用HeroRewardView，详见[里程碑链](main-chapter-milestone.md)。
 
 ## 战报显示依赖与冻结统计
 
@@ -69,17 +69,23 @@ BattleReplayUtils仍完整校验原PB及HP/实例，再输出不可变步骤；�
 
 BattleReplayPreview将type3/5/6/7/9的独立帧生命周期与角色动作完成分开：帧按attack_time挂出，type5仍保留原帧计数和飞行时长，均由原战场持有并到寿命自删。角色只等待自己的动作、配置延迟及必要去返移动，不为了投射飞行或帧播完延长动作；关场沿原生命周期取消，独立帧异常沿同一失败入口停止整场且不重复报告。1050100本例角色与投射名义上均在0.8秒完成，不能把通用完成边界修正说成本例已自然观测到延长。结构与静态检查不代替浏览器迟到/失败注入或真机验证，也不代表其他旧动作类型已全量等价。
 
-BattleStatisticsUtils/BattleDetailLayer只读战报冻结的输出、实际承伤和治疗，不从移除或飘字重算，不改变旧护盾统计口径。独立DevelopmentPreview只在本机PREVIEW中复用LoadingPlan启动配置及原配置包，提前结束正常登录装配；固定只读PB资源服务不连接玩家库。只读结果也传原units，测试复用既有openStatistics方法，不另造统计页或奖励链。限定证据和时序/样本限制见[本批检查](validation/shield-depleted-review-20261117.json)、[本机记录](validation/shield-depleted-preview-20261117.json)；BRULE-002旧数值疑点仍保留。
+BattleStatisticsUtils/BattleDetailLayer只读战报冻结的输出、实际承伤和治疗，不从移除或飘字重算，不改变旧护盾统计口径。独立DevelopmentPreview只在本机PREVIEW中复用LoadingPlan启动配置及原配置包，提前结束正常登录装配；固定只读PB资源服务不连接玩家库。只读结果也传原units，测试复用既有openStatistics方法，不另造统计页或奖励链。技能台每次从Creator扩展自动资源宿主扫描真实PB，按实际出手与当前解析匹配演示，已移除人工技能/等级白名单；它不生成战报或签署验收，独立测试输出被清理后会显示暂无演示。限定证据和时序/样本限制见[本批检查](validation/shield-depleted-review-20261117.json)、[本机记录](validation/shield-depleted-preview-20261117.json)；BRULE-002旧数值疑点仍保留。
 
-正式挑战的开场顺序按本次负责人新要求执行：资源先全部就绪、角色在挂载进可见战场前opacity=0，然后ZDKS播放2.5秒→双方全部左右出场特效并行0.75秒→全部模型并行淡入1秒→显示HP→播放原战报。旧版模型淡入与出场特效并行，本次顺序差异是明确授权，不写成旧版原时序。此前先显现场地再异步加载模型会产生闪现，当前先隐藏角色再放行场地。idleEncounter保留原挂机出场链；关场、迟到和异步帧失败继续走原取消/释放。type8也已加入音效预载类型集合，避免计划能解析但sounds缺原clip；本轮独立角色实际布阵→第2关胜利/结算通过，战斗数1、cleared=2、pending=null；实际两个出场特效期间模型opacity=0且HP隐藏，FX结束后渐入1秒，七阶段观察断言通过。缓存bag→hero→bag→bag→battle序列未出现准备飘字，限定过程无warn/error。详见[本机证据](validation/chapter-player-entry-preview-20261117.json)；不扩展为全部1～9关视觉、自然成长、发布包或真机通过。
+正式挑战按负责人最新要求在出场特效播放到60%时开始模型渐入：先准备全部资源、将模型opacity设0，再播放ZDKS原stand；通过AFTER_UPDATE读取实际TrackEntry的trackTime/(animationEnd-animationStart)，到70%立即启动双方出场，ZDKS自身保留到真正onComplete，不再固定等待2.5秒。双方全部15帧出场FX同时播放，每帧按0.05秒等待，各单位真实第9帧的完整等待结束后释放60%进度gate并启动自己的1秒fade。9/15对应名义0.45秒，不能另起独立墙钟0.45秒提前渐入；逐帧调度变慢时等待真实进度。FX保留完整15帧，0.75秒仅为名义时长，不按墙钟裁短；ZDKS和双方所有单位的FX与fade均完成后才显示HP、播放原战报，名义出场段为max(0.75,0.45+1)=1.45秒。资源未就绪不开始出场，关闭仍沿原等待/Tween取消清理，idleEncounter不改。原版从FX起点并行淡入、前批“FX结束后再fade”及本次60%分别是不同规则，不互相冒充；前批[七阶段画面](validation/chapter-player-entry-preview-20261117.json)仅证明当时实现。当前九阶段取消、真实第9完整帧触发及挂机不变专项已通过；仅专项为每个FX帧等待增加0.02秒调度，证明独立0.45秒已到时仍不fade，真实第9帧0.63秒结束才开始，完整15帧仍播放至1.05秒。gate归原waits集合释放，并以战场代次拒绝stop后的迟到Tween。最终严格类型退出0及本批6项专项通过；Creator已确认新进度gate编译生效，并用原真实第2关PB只读重放：每方fade开始时当前出场图为0基frame9，即前9帧完整结束；FX与半透明模型重叠、FX消失后仍在fade，全部完成后模型255且HP可见，七项观察断言通过。实际采样和暂停静帧不作为精确墙钟或性能基准；没有再challenge/claim，不扩大为全部关卡或真机验收。
 
-## 主线里程碑集合与只读目标
+胜利页MainVictoryRewards采用Prefab顶锚列表：本轮将节点y从130改为260，content.y从130改为0，保持600×260视口与SuperScroll布局，避免首行越过列表顶端或标题区域，不另加运行时补偿。VS对阵栏和倍数栏保留LayerHud/MatchInfo、TopBar原路径，由Prefab新增ChapterInfoDock保存底部Widget（bottom=150、水平居中），原两个Chapter*Anchor移入其下，当前y为264.5/369.5。BattlePageUtils.alignChapterInfo在正式战场打开/resize的可见区回调内、等比缩放之后更新Widget目标为MainChapterBattleView，再将锚点worldPosition转回HUD局部坐标；不移动角色、血条或技能特效。本轮相关专项和最终严格类型通过，真实7项奖励已在实际挑战及原参数只读窗口核对：scroll.y=260、content.y=0、anchorY=1，列表底275高于确认按钮顶219。Creator的Nokia C2与iPhone14Pro机型选项下均实读VS底426.5、Panel顶418.5，间距8、完整显示；这是预览尺寸采样，不是两台真机。实际确认关闭返回主城后pages=1、residents/cached/opening/intents/modalActive均0，观察器清理、引擎恢复且视口override重置，过程无warn/error。运行观察与暂停静帧分开记录，不签收自然成长、发布包或其他机型；本轮不构建、不提交推送，见[显示调整记录](validation/battle-display-adjustment-review-20261117.json)。
 
-V27的game_main_chapter_milestone以role_id/reward_id复合主键保存真实已领集合，并有角色外键、正数约束。旧rewardIds是配置idx集合且3008允许乱序领取，不用lastId或maxCleared推导。独立新版无旧玩家迁移且目前没有3008写入口，角色锁下空查询是真实空集；查询不插行、不发奖、不推进AssetSync版本，未来领取写入仍须与原发奖/回执同事务接统一同步，当前不提前创建领取服务或接口。
+## 主线里程碑集合、领取与目标
+
+MainChapterMilestoneController只核原回执与最新快照集合/revision双确认；应用MainChapterMilestoneBinding在认证身份下先持久化rewardId，再发送claim/status。PersistentOperationJournal复用原IndexedDB事务实现，原挂机库名/版本/稳定实例键不变；里程碑使用独立库格式。原意图在共享反馈真实展示后才条件删除，清理失败显式重试只重试原删除，不等待已经去重的第二次弹窗。
+
+通用RewardGrantResult的heroes只冻结真实新英雄实例，不与items.credited重复计数；type7走既有HeroGrantService，保留旧奖励无容量拦截。RewardBinding在同一队列中先按原星级展示英雄获得，再显示其余实际奖励，最后部分真实打开才报告整批已显示；关页/换号终止迟到续开。
+
+V27的game_main_chapter_milestone保存真实已领集合；V28保存每角色/rewardId唯一的成功回执及完整校验摘要。领取在原角色锁事务内依次校验资格、共用发奖、插入已领集合/冻结回执、递增统一资产版本，提交后仅原状态推送。重复claim/status优先读取原回执，不依新配置或后来英雄成长重算；旧已领而缺回执明确拒绝，不能补造原奖励。旧3008允许乱序，界面仍按最小未领目标展示。
 
 MainChapterState可选milestoneProgress（字段4）携带schemaVersion=1与claimedIds，原MainChapterController校验并冻结到唯一MainChapterModel.state，不新建资源清单或Model。SessionSnapshotService对齐最终revision重建State时保留此字段，统一首包、state.changed和重新鉴权共用同一来源。显式空集合是已同步未领；缺失是未同步，旧回执JSON缺字段保持null，不能默认空集合或从当前通关数猜已领。历史receipt.state不回写最新已领集合。
 
-showResult从最新MainChapterModel.state读取已领集合，ChapterMilestoneUtils与登录包内ChapterExtraReward/Language选择最小未领配置idx，按目标绝对关卡计算非负差值；达成未领不跳项，全部已领清空，缺配置/语言/权威状态明确不可用。ChapterEndView.nextTarget使用完整Prefab在旧show_rich处保存的独立RichText，不改变本次获得、胜利动画或统计页职责。第15关目标不扩大当前连续1～9关范围，里程碑3008仍关闭；挂机宝箱走独立的新领取链。
+showResult与常显MainChapterMilestoneCard均从最新唯一MainChapterModel.state的milestoneProgress读取已领集合，选择配置中最小未领目标。胜利页保留原show_rich；主线常显卡恢复原框、英雄stand模型及真实进度，达标点击直接交应用稳定键入口，不新增确认详情或图鉴。未同步、未达标、正在恢复和全部已领明确区分。
 
 本轮19项后端、4份Java→TS帧互通及限定Creator复验通过：真实通关1/2时目标分别剩14/13关；同一第2关回执和战报的只读显示重放中，结果页约4.03秒关闭，已打开统计窗继续保留且资产不变。冷第3关登录主城不补结算，首次进主线后仅一次通用升级反馈、胜利页打开数0。显示重放不是新战斗/发奖；本机结果不代替后续关卡或领取验收。详见[本批检查](validation/chapter-milestone-review-20261116.json)、[本机证据](validation/chapter-milestone-preview-20261116.json)及[旧链核对](validation/chapter-milestone-legacy-audit-20261116.json)。
 
@@ -143,7 +149,7 @@ Prefab保存静态结构、布局、样式和绑定；业务列表使用SuperScr
 
 ## 当前入口与职责
 
-RemakeApp 装配选服、登录、角色、主城、背包和资源作用域。AccountApi 只调用 WS 登录/恢复；角色/背包初始化在接纳账号的同批通知中交付。背包打开、切分类、同角色再次开始不查询库存。英雄只读列表/详情、阵容编辑、连续第1～9关挑战与结算及挂机演出已按后续授权接入；宝箱按钮已接回既有领取链，local新领取默认开启、全局默认关闭。英雄升级、穿脱和快速战斗仍关闭。资源采用可配置三段加载，实际范围以进度页为准。
+RemakeApp装配选服、登录、角色、主城、背包、资源作用域和各操作恢复绑定。AssetStateBinding接纳整包后交付同一资产版本；IdleClaimBinding恢复挂机原请求，MainChapterMilestoneBinding恢复里程碑原稳定键，RewardBinding持有唯一展示队列。页面关闭不销毁模块；换号在应用层统一撤销旧异步。连续1～20关、local挂机和15关独立领奖按当前授权接入，其他未恢复玩法不随之开放。
 
 页面类通过自身@UIRegistry.view定义唯一Prefab地址、层级、缓存、模态和必要的页面装配prepare，UIManager打开时先执行prepare，再复用统一加载器取得Prefab；预加载只准备资源，不执行页面业务前置或创建页面。配置已在登录后统一准备，页面不再逐表prepare。应用通过UIRegistry.bindViewRuntime只注入createController或确需变化的hostId，不重复登记静态页面定义。ApplicationPages只保留登录/主城的Controller与宿主装配，不再转发英雄选择或包装各页资源地址。
 
@@ -185,12 +191,13 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 | UIManager、BaseView、UIRegistry、UILayer、ViewCloseUtils | 页面注册、分层、异步打开、关闭、取消、缓存与生命周期；ViewCloseUtils连接BaseView的关闭动作 | 核心开关入口，不保存角色资产；页面静态节点不在这里另造 |
 | SuperScroll、SuperContent | 原生滚动手势与等尺寸虚拟列表：完整逻辑尺寸、视口范围、缓冲行及有限节点池 | virtual默认true、bufferLines默认1；原锚点/Cell正缩放保留，view/content局部缩放为1，业务只提交数据和监听事件 |
 | ViewportLayoutUtils、ChromeLayoutUtils | 读取当前可见区域，处理全屏根、背景和顶底栏在不同视口中的尺寸关系 | 运行时可见尺寸与固定布局分开；不能把逐个子节点坐标修补都归为必要适配 |
-| PageSlideUtils | 现有底栏切页的方向、缓动与位移计算 | 由应用PageTransitionUtils调用，不负责页面栈或业务操作 |
 | ViewportScale | 按外根可用宽度与设计宽度，对一个内容容器等比缩放 | 在Prefab绑定target、designWidth、maxScale；位置、纵向留白与拉伸交给Widget，不识别模块名或机型 |
 | UiKitUtils | 现有演出、飘字、动态挂点及旧显示回退使用的节点构造辅助 | 无人使用的输入框链已删除；新页面主体与固定控件继续写在Prefab |
 | 骨骼处理位置 | 通用数据转换直接使用framework/assets/SpineJsonUtils；挂机身体位移修正内聚到BattleSpineService | framework/ui/spineUpgrade转发文件已删除，不新建兼容别名 |
 | UIOpenLogUtils | UIManager成功打开后的耗时日志 | 只格式化当前完成结果，旧页面计时Map与重复计时链已删除 |
 | ModalLayer | UIManager内部的一份动态共享输入层，按当前最上方模态窗口配置绘制蒙版或透明拦截 | 不挂业务Prefab；关闭或隐藏窗口后向下寻找仍显示的模态窗口，最后一窗关闭后脱离场景复用 |
+
+主城底栏在新功能页准备成功后直接切换，旧功能页同步关闭监听并交回原缓存或销毁；准备失败仍保留原可见页面。PageTransitionUtils、PageSlideUtils及其位移、缓动、过渡取消状态已删除，视口布局不再保留动画中跳过居中的特判。主城根和共用顶底栏继续保留，页面准备意图与350毫秒慢开提示仍归HomeFeatureNavigation。
 
 弹窗只在页面注册的ViewSpec设置modal，不再在各Prefab添加蒙版或ModalLayer绑定。省略modal表示不拦截外部；`{mask:false,closeOnOutside:true}`使用透明拦截；`{mask:true,closeOnOutside:true}`显示共享蒙版并点击空白关闭。closeOnOutside可独立设为false，只阻挡外部点击。实际面板背景保留BlockInputEvents，不能给只承载坐标的大节点盲加阻挡。叠窗始终共用一份节点，颜色不叠加。
 
@@ -242,7 +249,7 @@ SessionSnapshotService 在数据库角色锁内读取完整钱包、背包和版
 
 配置以生成GConfig与唯一GameConfig查询。49份源JSON供人工与导出工具维护，当前Language/LoadingTips按LoadingPlan.login独立准备，其余47份自动生成ZIP格式的game-config.bin。RemakeConfigUtils在登录后下载、校验启动同版、逐表解析，由GameConfig原子安装，类型索引和按路径读取共用文件引用。页面不再加载JSON或维护配置组；临时压缩资源持有归还现有资源池，配置对象应用期驻留，不随界面缓存到期删除。生成、版本和构建前检查见[配置管线](config-pipeline.md)。配置包接入批次的真实去重和解压运行已有[发布证据](validation/config-package-release-review-20261114.json)；本轮Catalog/查询整理是之后的源码，不将旧20:14包冒充当前版本，新增预览与发布结果依[开发进度](development-progress.md)分开记录。
 
-包内各表只对应一个bin正文请求；解析、校验和索引初始化仍逐表计真实完成量。玩家文案不再显示9/47等容易被误认为文件下载的数字，而显示下载配置包、解析配置包、初始化配置；进度不按时间模拟。发布入口统一到scripts/build-remake-h5.bat及其PowerShell/JSON选项，隔离工程复制同一扩展和工具；config-package-artifact-v1 v1.8.0在before核验源，在after对全部Bundle检查两份启动JSON、唯一bin、散表排除及解码模块静态登记。该机制和自动检查不等于实际发布运行通过，真实结果由本批最终证据记录。
+包内各表只对应一个bin正文请求；解析、校验和索引初始化仍逐表计真实完成量。玩家文案不再显示9/47等容易被误认为文件下载的数字，而显示下载配置包、解析配置包、初始化配置；进度不按时间模拟。发布入口统一到scripts/build-remake-h5.bat及其PowerShell/JSON选项，隔离工程复制同一扩展和工具；config-package-artifact-v1 v1.8.1在before核验源，在after对全部Bundle检查两份启动JSON、唯一bin、散表排除及解码模块静态登记。该机制和自动检查不等于实际发布运行通过，真实结果由本批最终证据记录。
 
 资源通过统一目录与作用域管理；界面布局以Prefab和SuperScroll Inspector为准，不用字符串散落或运行时兜底掩盖缺资源。
 
@@ -337,3 +344,5 @@ Java 21 / Spring Boot / JDBC / Flyway 不因需要 WebSocket 就必须推倒。S
 5. **三端与生产验收**：实际 H5/App/小游戏网络切换、后台恢复、协议/资源版本切换、连接压力/慢客户端、维护停服和恢复。构建仍按用户届时授权执行；没有设备/部署证据的项目保持未完成。
 
 协议不兼容和旧玩家迁移已由用户明确排除为当前要求，不再反复询问。仍待相应阶段确认：首发平台顺序/渠道、预期同时在线与广播规模、聊天保留期与跨服分组。此前不据未知规模承诺单体容量，也不为等待这些数字停止可独立完成的契约和小链路设计。
+
+本批技能台、开始骨骼70%与底栏直接切换已完成限定Creator复验，见[本机记录](validation/skill-audit-opening-navigation-review-20261117.json)。1.8.1扩展主入口已实际自动启动资源宿主；本轮未构建，配置包构建产物仍以原1.8.0历史记录为依据。

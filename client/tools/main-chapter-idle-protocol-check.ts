@@ -25,6 +25,7 @@ const actual = {
     bonuses: [{ source: "ROLE_LEVEL_UP", itemId: 900002, quantity: 3 }],
     timedItems: [{ instanceId, itemId: 1000001, activeAtSeconds: 100, expiresAtSeconds: 200 }],
     spirits: { schemaVersion: 1, items: [{ instanceId, itemId: 2000002, abilityId: 1, skills: [{ sort: 1, skillId: 1, level: 1 }] }] },
+    heroes: [],
 };
 /** 历史receipt只描述已提交领取，assetRevision与操作版本各自有独立含义。 */
 const receipt = {

@@ -21,8 +21,13 @@ import { IdleChestUtils } from "../utils/IdleChestUtils";
 import { BattleSpineService } from "./BattleSpineService";
 import { MainChapterIdleResources } from "./MainChapterIdleResources";
 import { MainChapterIdleChest, IdleChestAnimation } from "./MainChapterIdleChest";
+import { MainChapterMilestoneCard } from "./MainChapterMilestoneCard";
 import { PREVIEW } from "cc/env";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
+import type { AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
+import { GameConfig } from "../../../config/GameConfig";
+import { ChapterBackgroundUtils } from "../utils/ChapterBackgroundUtils";
+import type { ChapterBackgroundPlan } from "../utils/ChapterBackgroundUtils";
 
 declare module "../../../framework/EventDispatcher" {
     interface EventPayloads {
@@ -59,6 +64,8 @@ export class MainChapterView extends BaseView {
     @property(Button) quickBattleButton: Button | null = null;
     /** 战力提升入口；不将旧变强建议误用为布阵或开放养成。 */
     @property(Button) powerButton: Button | null = null;
+    /** 原主线常显最小未领里程碑卡，正式战斗期间隐藏，不另造弹窗入口。 */
+    @property(MainChapterMilestoneCard) milestoneCard: MainChapterMilestoneCard | null = null;
     /** 当前关卡与通关信息。 */
     @property(Label) stageLabel: Label | null = null;
     /** 操作状态或待领奖提示。 */
@@ -118,6 +125,16 @@ export class MainChapterView extends BaseView {
     private marchOffset = 0;
     /** 远景独立偏移，制造旧版的前后景速度差。 */
     private skyOffset = 0;
+    /** 最近请求的地图与演出模式；同一地图内刷新快照不重复加载，打开本页时清空。 */
+    private backgroundKey = "";
+    /** 已实际切到画面的资源身份；与请求不同期间暂停行军背景，避免旧地图继续循环。 */
+    private appliedBackgroundKey = "";
+    /** 本页背景切换代次；新地图和关闭时递增，迟到图片不能覆盖当前地图。 */
+    private backgroundEpoch = 0;
+    /** 当前四张显示节点共用的图片作用域，切换全部成功后才撤回旧图持有。 */
+    private backgroundScope: AssetScope | null = null;
+    /** 正在准备的候选图片作用域；被新地图替代或关页时立即释放，不另造资源池。 */
+    private pendingBackgroundScope: AssetScope | null = null;
 
     /** 绑定现有显示与事件，首次进入只转交首包待结算恢复，不查询库存或主线进度。 */
     public onOpen(): void {
@@ -125,6 +142,8 @@ export class MainChapterView extends BaseView {
             || !this.stageLabel || !this.statusLabel || !this.challengeLabel || !this.idleTimeLabel
             || !this.goldRateLabel || !this.roleExpRateLabel || !this.heroExpRateLabel || !this.idleClaimButton) throw new Error("主线页面绑定缺失");
         this.closed = false;
+        this.backgroundKey = "";
+        this.appliedBackgroundKey = "";
         this.idleCollectionToken = Object.freeze({});
         this.lastResultMessage = MainChapterModel.instance.message;
         if (!this.idleProgress || !this.resourceFlightHost || !this.resourceFlightTemplate || !this.resourceFlightTarget) {
@@ -310,9 +329,13 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 页面读取最新服务端挑战范围；缺失只禁新挑战，原请求/待结算仍保留恢复入口和真实历史进度。 */
+    /** 事件驱动更新挑战范围及同源背景；缺范围只禁新挑战，历史恢复仍优先，不在每帧查询配置。 */
     private render = (): void => {
         if (this.closed) return;
+        if (this.milestoneCard?.isValid) {
+            this.milestoneCard.node.active = !this.playing && !this.milestoneCard.completed;
+        }
+        this.refreshChapterBackground();
         const model = MainChapterModel.instance;
         const state = model.state;
         const completed = this.isChapterRangeComplete();
@@ -526,7 +549,8 @@ export class MainChapterView extends BaseView {
 
     /** 近景120、远景20沿旧BattleIdleLayer；两份静态背景循环，不创建每帧节点。 */
     private updateMarch(dt: number): void {
-        if (!this.idleDisplay || this.playing || this.idleEncounterActive) {
+        if (!this.idleDisplay || this.playing || this.idleEncounterActive
+            || this.backgroundKey !== this.appliedBackgroundKey) {
             return;
         }
         const floor = this.node.getChildByName("PalaceFloor")!;
@@ -595,6 +619,11 @@ export class MainChapterView extends BaseView {
         this.idleDisplay = null;
         this.idleDisplayKey = "";
         if (!resetBackground) return;
+        this.resetBackgroundOffsets();
+    }
+
+    /** 重置近远景的两份循环位置；图片成套切换和清理行军时共用，不重建静态节点。 */
+    private resetBackgroundOffsets(): void {
         this.marchOffset = 0;
         this.skyOffset = 0;
         for (const name of ["PalaceFloor", "PalaceBackground"]) {
@@ -602,6 +631,68 @@ export class MainChapterView extends BaseView {
             node?.setPosition(0, 0, 0);
             this.node.getChildByName(name + "Loop")?.setPosition(node?.getComponent(UITransform)?.contentSize.width || 640, 0, 0);
         }
+    }
+
+    /**
+     * 从已安装配置包选择当前背景，候选图片全部就绪后成套替换；失败保留原图并记录明确原因。
+     * 正式整图隐藏地板与循环副本，挂机两层继续复用原速度；关闭或换景会撤销迟到交付。
+     */
+    private refreshChapterBackground(): void {
+        let plan: ChapterBackgroundPlan;
+        try {
+            plan = ChapterBackgroundUtils.resolve(GameConfig.instance.getFileByPath("config/chapterreward"),
+                MainChapterModel.instance.state, this.playing);
+        } catch (error) {
+            GameLog.shared.warnOnce("MODULE", "MainChapterView", "chapter-background-config", String(error));
+            return;
+        }
+        if (plan.key === this.backgroundKey) {
+            return;
+        }
+        this.backgroundKey = plan.key;
+        const epoch = ++this.backgroundEpoch;
+        this.pendingBackgroundScope?.dispose();
+        const scope = this.pendingBackgroundScope = ResourceAssetsUtils.createAssetScope();
+        const target = plan;
+        void Promise.all([
+            scope.loadPath(target.background, "SpriteFrame"),
+            target.floor ? scope.loadPath(target.floor, "SpriteFrame") : Promise.resolve(null),
+        ]).then(([backgroundFrame, floorFrame]) => {
+            if (this.closed || epoch !== this.backgroundEpoch || !this.node.isValid) {
+                scope.dispose();
+                return;
+            }
+            // 先检查全部静态绑定，避免第四个节点缺失时前三个已经换成随后释放的候选图片。
+            const targets = ["PalaceBackground", "PalaceBackgroundLoop", "PalaceFloor", "PalaceFloorLoop"].map(name => {
+                const node = this.node.getChildByName(name);
+                const sprite = node?.getComponent(Sprite);
+                if (!node || !sprite) {
+                    throw new Error("主线背景显示绑定缺失：" + name);
+                }
+                return { name, node, sprite };
+            });
+            for (const { name, node, sprite } of targets) {
+                sprite.spriteFrame = name.startsWith("PalaceBackground") ? backgroundFrame : floorFrame;
+                node.active = !!floorFrame || name === "PalaceBackground";
+            }
+            const previous = this.backgroundScope;
+            this.backgroundScope = scope;
+            this.pendingBackgroundScope = null;
+            this.appliedBackgroundKey = target.key;
+            this.resetBackgroundOffsets();
+            previous?.dispose();
+        }).catch(error => {
+            scope.dispose();
+            if (this.closed || epoch !== this.backgroundEpoch) {
+                return;
+            }
+            if (this.pendingBackgroundScope === scope) {
+                this.pendingBackgroundScope = null;
+            }
+            GameLog.shared.warnOnce("MODULE", "MainChapterView", "chapter-background:" + target.key,
+                "主线背景未切换：" + target.background + "；" + String(error));
+            UIManager.instance.toast("主线背景加载失败，请重新打开战斗界面");
+        });
     }
 
     /** 根与背景覆盖实际可见区域，纸张在窄长屏缩至安全宽度，不改变格子内部排布。 */
@@ -623,6 +714,19 @@ export class MainChapterView extends BaseView {
     /** 页面关闭只取消展示，不撤销已提交战斗；待领奖随下次登录恢复。 */
     public onClose(): void {
         this.closed = true;
+        this.backgroundEpoch++;
+        for (const name of ["PalaceBackground", "PalaceBackgroundLoop", "PalaceFloor", "PalaceFloorLoop"]) {
+            const sprite = this.node.getChildByName(name)?.getComponent(Sprite);
+            if (sprite) {
+                sprite.spriteFrame = null;
+            }
+        }
+        this.pendingBackgroundScope?.dispose();
+        this.pendingBackgroundScope = null;
+        this.backgroundScope?.dispose();
+        this.backgroundScope = null;
+        this.backgroundKey = "";
+        this.appliedBackgroundKey = "";
         this.idleCollectionToken = Object.freeze({});
         this.idleChest?.dispose();
         this.idleChest = null;

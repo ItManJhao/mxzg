@@ -34,7 +34,7 @@ class MainChapterRulesTest {
         assertThrows(IllegalArgumentException.class, () -> rules.decide(initial, 1, 0));
         assertThrows(IllegalArgumentException.class, () -> rules.decide(initial, 0, 1));
         assertEquals(4, rules.decide(new Progress(3, false), 300, 99999).stage().index());
-        assertThrows(IllegalArgumentException.class, () -> rules.decide(new Progress(9, false), 300, 99999));
+        assertThrows(IllegalArgumentException.class, () -> rules.decide(new Progress(20, false), 300, 99999));
     }
 
     /** 胜利立即记录已通关；再次挑战只补领奖，不检查下一关门槛也不越关。 */
@@ -50,9 +50,9 @@ class MainChapterRulesTest {
         assertEquals(settled, rules.settled(settled));
     }
 
-    /** 第九关胜利仍可结算，不能因第十关未接通而卡住已赢奖励。 */
+    /** 第二十关胜利仍可结算，不能因第二十一关未开放而卡住已赢奖励。 */
     @Test void lastSupportedVictoryCanStillSettle() {
-        var won = rules.complete(new Progress(8, false), 9, true);
+        var won = rules.complete(new Progress(19, false), 20, true);
         assertEquals(Action.SETTLE_PENDING, rules.decide(won, 0, 0).action());
         assertFalse(rules.pendingRewards(won).isEmpty());
         assertThrows(IllegalArgumentException.class, () -> rules.decide(rules.settled(won), 300, 99999));
@@ -104,7 +104,7 @@ class MainChapterRulesTest {
 
     /** 新挑战范围只读可信配置，不由850目录自动全开；降低范围不阻止已赢历史结算。 */
     @Test void challengeLimitIsIndependentAndDoesNotBlockPendingHistory() {
-        assertEquals(9, rules.challengeLimit());
+        assertEquals(20, rules.challengeLimit());
         assertEquals(4, new MainChapterRules(new ObjectMapper(), 4).challengeLimit());
         var narrowed = new MainChapterRules(new ObjectMapper(), 3);
         assertThrows(IllegalArgumentException.class, () -> narrowed.decide(new Progress(3, false), 300, Long.MAX_VALUE));

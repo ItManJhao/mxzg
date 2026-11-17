@@ -143,7 +143,8 @@ export class GameSocketClient {
   /** 主线命令不自动重放；连接代次统一隔离，模块只保留业务幂等键。 */
   async chapter(token: string, name: typeof Protocol.CHAPTER_CHALLENGE | typeof Protocol.CHAPTER_CLAIM
       | typeof Protocol.CHAPTER_REPLAY | typeof Protocol.CHAPTER_IDLE_ENCOUNTER
-      | typeof Protocol.CHAPTER_IDLE_CLAIM | typeof Protocol.CHAPTER_IDLE_CLAIM_STATUS, body: unknown): Promise<GameFrame> {
+      | typeof Protocol.CHAPTER_IDLE_CLAIM | typeof Protocol.CHAPTER_IDLE_CLAIM_STATUS
+      | typeof Protocol.CHAPTER_MILESTONE_CLAIM | typeof Protocol.CHAPTER_MILESTONE_STATUS, body: unknown): Promise<GameFrame> {
     this.assertReady(token);
     const generation = this.generation;
     const frame = await this.send(name, body);

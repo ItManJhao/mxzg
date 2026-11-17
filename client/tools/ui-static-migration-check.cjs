@@ -8,6 +8,7 @@ const crypto = require('node:crypto');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
 const { bundleInfo, resolveAssetPath, resolveBundleFile } = require('../../tools/bundle-paths.cjs');
+// 前置范围检查合并每批独立addedPrefabs证据（含本批HeroRewardView），不回写旧迁移清单。
 require('./current-resource-scope-check.cjs');
 const current = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/current-resource-scope-cleanup-20261111.json')));
 const currentPrefabs = new Map(current.retainedPrefabs.map(row => [resolveAssetPath(row.path), row]));

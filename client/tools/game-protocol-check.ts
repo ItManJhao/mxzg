@@ -79,6 +79,7 @@ function checkChapterRewardWire(): void {
         bonuses: [{ source: "ROLE_LEVEL_UP", itemId: 900002, quantity: 10 }],
         timedItems: [],
         spirits: { schemaVersion: 1, items: [] },
+        heroes: [],
     };
     const receipt = { action: "SETTLED", battleId: "11223344-1122-4122-8122-112233441122",
         state: { maxCleared: 1, assetRevision: 5 }, rewards: [{ itemId: 900003, quantity: 60 }],

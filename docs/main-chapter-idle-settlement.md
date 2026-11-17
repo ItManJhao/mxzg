@@ -4,6 +4,16 @@
 
 通用角色升级反馈已有[限定本机证据](validation/role-upgrade-preview-20261116.json)：挂机以原回执真实经验链提取roleUpgrade，复用现有奖励队列选择common升级页，不重发奖励；本次只接通玩家意图，不另造发奖、奖励窗或恢复实现。
 
+## 当前关卡目录、收益投影与开放范围
+
+主线配置目录与挂机基础收益投影现均覆盖原表全局idx 1～850，不能再将`idle-rules.json`理解为仅20关的清单。[export_idle_rules.py](../tools/export_idle_rules.py)按原`chapterreward.reward_base/drop_group`逐行导出全部难度，拒绝重复、断档及非法奖励；[IdleRules](../backend/src/main/java/com/funsgamex/mxzg/campaign/IdleRules.java)仍只做纯计算，不持有玩家进度。第21关使用自己的基础收益（首项270，20关为260），不沿用第20关封顶量；这些数值是一次基础周期的配置量，不是每秒量或全部权益后的到账承诺。
+
+实际新挑战独立由`mxzg.main-chapter.challenge-limit`限制，当前默认连续1～20关，通过`MainChapterState.challengeLimit`同步。850行可查询不等于开放850关，也不等于所有关卡战斗或发奖依赖已验收。[MainChapterRewardService](../backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterRewardService.java)只对真正开放范围启动预检战斗敌方、首通奖励及后续挂机投影；未知依赖明确拒绝。旧pending和成功回执仍可在缩小新挑战范围后恢复，旧快照缺challengeLimit表示未同步，不能默认0或猜成全开。551～850的原奖励/敌方三维映射歧义仍待确认，不能用note擅自修正；最新静态闭包范围见[关卡依赖审计](validation/main-chapter-dependencies-20261117-stage20.json)。
+
+挂机实际领取仍按锁内最高已通关全局idx读取该关收益，未通关不旁路领取。全目录导出会改变普通规则及组合输入的内容版本；**已提交V25回执只校验原审计自身、摘要和列，不要求等于当前规则版本，也不重新抽样或发奖**。新领取才冻结当前规则。第15关里程碑使用独立稳定配置键和V28回执，不与挂机requestId、累计版本或首通结算混用，见[里程碑完整链](main-chapter-milestone.md)。
+
+本轮`MainChapterConfigurationTest`9项（含连续1～20真实挑战/结算及各关配置敌方技能导出）、`IdleCatalogTest`3项、里程碑事务9项及真实WS1项共22项通过。挂机目录检查逐行覆盖850配置、跨20关的独立基础量和其他难度；它不证明未开放关卡的玩家挑战、实际收益全类型发放或本机画面通过。本批Creator实测由统一验收记录另行给出，不在此提前签收。
+
 ## 当前基础和本批决定
 
 目前新主线沿用唯一`game_main_chapter_idle`计时表，V24增加随机累计/保底计数/操作版本，V25保存成功领取回执；独立挂机选人记录继续保留。`IdleRewardUtils.Result`是纯候选，不是到账证明；旧简化`game_idle/game_idle_receipt/IdleService`不能复用为新领取链。`chapter.claim`仍只负责挑战结算。
@@ -132,7 +142,7 @@
 
 ## 真实发奖能力与阻塞项
 
-不能直接调用旧`IdleService.claim`：它仍写简化`game_campaign`经验，不是新版角色经验。`MainChapterRewardService.Plan`仍只表示持久战报冻结的前三关首通内容，字段与历史摘要不变；内部已委托`RewardGrantService`，不能将首通奖励内容当作挂机计划。
+不能直接调用旧`IdleService.claim`：它仍写简化`game_campaign`经验，不是新版角色经验。`MainChapterRewardService.Plan`表示生成权威战报时冻结的该关首通内容，已接配置目录及独立开放范围，不再固定前三关；原计划字段与历史摘要不变。内部已委托`RewardGrantService`，不能将首通奖励内容当作挂机计划。
 
 | 结果类型 | 可复用能力或实际缺口 |
 |---|---|
@@ -149,7 +159,7 @@
 
 入口是`reward/RewardGrantService`，只接受服务端可信最终理论量、同一次业务冻结的服务器秒/酒馆上限及随机源。加成逐条取整归现有纯规则，最终同ID用精确加法合并后才分发。`requireSupported`已由MainChapterIdleClaimService在抽奖前调用：按本关基础资源、当前group全部正权重掉落及冻结适用活动行导出候选，不手写15ID清单；缺正权重表或总权重溢出也在抽样前拒绝。
 
-明确支持真实item.type的1/2/3/5/6/11、已恢复的2000002精灵及三种已有期限配置（type16，mode17）；特殊类型核对实际ID，其他类型拒绝，无默认堆叠分支。普通装备/碎片仍按配置堆叠，不新建装备实例。合并后精灵及期限实例单次各至多1000件，为整单拒绝的技术保护，不是持有容量，不裁剪奖励；当前15ID没有期限物品。
+11-14该批已支持真实item.type的1/2/3/5/6/11、已恢复的2000002精灵及三种已有期限配置（type16，mode17）；特殊类型核对实际ID，其他类型拒绝，无默认堆叠分支。11-17因第15关里程碑完整接线，共享入口另接type7真实英雄实例创建，详见[里程碑与英雄反馈](main-chapter-milestone.md#共享英雄发奖和反馈)。普通装备/碎片仍按配置堆叠，不新建装备实例。合并后精灵、期限及英雄实例单次各至多1000件，为整单拒绝的技术保护，不是持有容量，不裁剪奖励；11-14列举的15ID没有期限物品，不能将这份历史并集当作850关全量白名单。
 
 `RewardGrantResult`保留每项requested/credited/ignored及减少原因，包括满级经验与零到账酒馆点；另保存经验前后、实际接纳/忽略量、升级附赠钻石、钱包前后、普通库存稳定身份/余额、酒馆冻结上限及期限/精灵真实实例。普通库存保留历史`stack:`字符串ID，不能统一改成UUID。实例明细直接来自写入口，不调用会清理过期项的完整快照来猜测到账。
 
@@ -157,7 +167,7 @@
 
 11-14共享发奖批曾保留“缺900401按0”的初始化差异；11-16已由独立TavernPointService/V26恢复旧规则。迁移已有900401记录时按原量保存，合法0和超额都不补差；真正无持久记录才按同源system.tavern_initial_item=2000懒建一次，旧常量3000不作兜底。共享发奖/GM/快照复用唯一领域，不把初值伪装成本次奖励，不改旧成功AuditV1的JSON或hash。旧证据见[初始化与同步核对](validation/tavern-point-legacy-audit-20261116.json)。
 
-Snapshot字段11 tavernPoints显式携带schemaVersion/adventureCount/limit，limit来自同次最高已通关关卡，未通关取第一关。客户端唯一AccountModel保存当前值，缺字段明确未同步；旧奖励actual.tavern只用于历史说明，不覆盖当前值。旧满额条件为当前adventureCount>=limit，不是预计本次将溢出；未来应用begin在65秒显示门槛、当前连接和ENABLED能力满足后才确认，取消/空白/换号不写原请求。确认后再次检查连接及操作版本，读取journal期间版本变化同样停止新建。生产装配enabled=false，页面依然只飘字；本批没有接玩家领取或酒馆任务/扣点协议。
+Snapshot字段11 tavernPoints显式携带schemaVersion/adventureCount/limit，limit来自同次最高已通关关卡，未通关取第一关。客户端唯一AccountModel保存当前值，缺字段明确未同步；旧奖励actual.tavern只用于历史说明，不覆盖当前值。旧满额条件为当前adventureCount>=limit，不是预计本次将溢出；应用begin在65秒显示门槛、当前连接和ENABLED能力满足后才确认，取消/空白/换号不写原请求。确认后再次检查连接及操作版本，读取journal期间版本变化同样停止新建。11-16接字段时玩家入口仍关；11-17已按本页顶部说明接通local玩家领取，通用服务配置仍默认false，酒馆任务/扣点协议未开放。
 
 ### 已修正的通用事务前置
 
@@ -235,11 +245,11 @@ AssetStateBinding整包接受之后才激活/观察恢复；身份键只在IdleC
 
 挂机首次成功通知和双确认后的历史反馈都保留原actual.experience提取的roleUpgrade，与正实际量共用receiptId及RewardModel队列。RewardBinding在POPUP模式按有无升级选择common的RoleUpgradeView或原RewardView，不同时再弹一份升级窗和奖励窗。无正显示物品但真实升级仍可展示；两者均无则不造空通知。主线也复用该入口：正常胜利后的物品仅选bonuses，冷恢复选all，两者都保留原经验升级；不另行补发钻石，不拿历史等级或经验覆盖当前角色资产。
 
-当前两个已实现的生产来源是主线及新挂机。主线不发送一份竞争的全量reward.granted，而由原战斗归属固定正常/冷恢复投影；挂机以原requestId接管提前通知，等双确认后统一反馈。SILENT继续不展示，TIPS仅复用全局等级/物品飘字。旧RoleService却是在内部SLIENT发放升级赠钻后独立发送2014升级提示，因此不能把现行SILENT契约称为所有旧经验来源的完整还原；未来其他来源恢复时须再核对，本批不改未实现来源的模式。依据及界面职责见[通用反馈](reward-feedback.md#升级信息与只读功能预告)和[旧升级审计](validation/role-upgrade-legacy-audit-20261116.json)。
+11-16升级反馈批接通的两个生产来源是主线及新挂机。主线不发送一份竞争的全量reward.granted，而由原战斗归属固定正常/冷恢复投影；挂机以原requestId接管提前通知，等双确认后统一反馈。11-17新增的[主线里程碑](main-chapter-milestone.md)另沿旧3008静默事务、原回执双确认后复用同一通用队列，不复制升级链。SILENT继续不展示，TIPS仅复用全局等级/物品飘字。旧RoleService却是在内部SLIENT发放升级赠钻后独立发送2014升级提示，因此不能把现行SILENT契约称为所有旧经验来源的完整还原；未来其他来源恢复时须再核对，本批不改未实现来源的模式。依据及界面职责见[通用反馈](reward-feedback.md#升级信息与只读功能预告)和[旧升级审计](validation/role-upgrade-legacy-audit-20261116.json)。
 
 升级页下一功能采用负责人确认的旧Lua候选，由现有导出流程生成只读RoleUpgradeFeature并纳入登录配置包；不改OpenCondition实际门槛，不开放或跳转功能。同门槛在旧pairs排序中未规定次序，新版仅稳定保留源表顺序。完整预制体的奖励视口固定134设计单位，冷恢复all多行滚动在此裁剪，不遮住下方预告；普通RewardView保持原表现。
 
-本轮后端`RewardFeedbackServiceTest`17项、`MainChapterIdleClaimSocketTest`5项及客户端`reward-controller`15组、`reward-binding`31组通过；覆盖真实升级PB、空items升级、坏链回滚、同回执内容冲突、等待统一版本、失败重试及身份切换迟到。协议生成无漂移，Java通知分别输出`backend/target/reward-notice.pb`及`backend/target/reward-notice-upgrade-empty.pb`。本轮升级Creator实测尚在进行，不能先称正常、冷恢复及挂机升级画面通过；玩家领取入口及日常开关保持关闭，不做集中构建、不提交推送。
+11-16升级反馈批后端`RewardFeedbackServiceTest`17项、`MainChapterIdleClaimSocketTest`5项及客户端`reward-controller`15组、`reward-binding`31组通过；覆盖真实升级PB、空items升级、坏链回滚、同回执内容冲突、等待统一版本、失败重试及身份切换迟到。协议生成无漂移，Java通知分别输出`backend/target/reward-notice.pb`及`backend/target/reward-notice-upgrade-empty.pb`。该批当时的Creator实测及入口关闭边界属于历史记录，后续限定画面见本页顶部的升级证据；11-17的local玩家领取授权不扩大为其他环境或全关卡验收。
 
 ## 分步实施与验证条件
 
@@ -247,7 +257,7 @@ AssetStateBinding整包接受之后才激活/观察恢复；身份键只在IdleC
 
 宝箱收取已接到同一回执双确认信号，现场播放与通用反馈各自按上述边界执行；`previewIdleChest`仍只是显式开发演示，不代表真实发奖或入口开放。资产/起点只接受统一快照，不能由动画修改。本批已补现场、关闭/重开和冷恢复的[本机证据](validation/idle-collect-preview-20261116.json)；四档、零到账及未就绪仍只按专项范围记录；详见[通用发奖说明](reward-feedback.md)。
 
-通用同步/钱包、最小精灵领域及共享可信发奖/实际明细已实现。新累计、回执和服务端协议事务已实现并消费真实发奖；客户端持久待确认/双向确认已接入且入口仍关。[服务端事务证据](validation/main-chapter-idle-claim-review-20261114.json)与[客户端恢复证据](validation/idle-claim-client-recovery-review-20261114.json)分别保留。以下仍是**完整领取完成条件**，受控二进制基础与11-16真实Java/原生IDB已各有证据，仍不能替代MySQL、APP/小游戏、真机、浏览器崩溃或断电验证；本批不安排集中构建，连接按钮另获授权。
+通用同步/钱包、最小精灵领域及共享可信发奖/实际明细已实现。新累计、回执和服务端协议事务已实现并消费真实发奖；客户端持久待确认/双向确认已接入，local玩家入口已按11-17授权接通。[服务端事务证据](validation/main-chapter-idle-claim-review-20261114.json)与[客户端恢复证据](validation/idle-claim-client-recovery-review-20261114.json)分别保留。以下仍是**完整领取完成条件**，受控二进制基础与11-16真实Java/原生IDB已各有证据，仍不能替代MySQL、APP/小游戏、真机、浏览器崩溃或断电验证；本批不安排集中构建。
 
 | 类别 | 必须验证 |
 |---|---|

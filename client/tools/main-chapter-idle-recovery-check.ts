@@ -77,7 +77,7 @@ function receipt(request: IdleClaimPending = original): object {
             items: [{ itemId: 900001, requested: 2, credited: 2, ignored: 0, reason: "NONE" }],
             wallet: { goldBefore: 1, diamondsBefore: 0, goldAfter: 1, diamondsAfter: 0 },
             stacks: [], experience: [], tavern: [], bonuses: [], timedItems: [],
-            spirits: { schemaVersion: 1, items: [] } } };
+            spirits: { schemaVersion: 1, items: [] }, heroes: [] } };
 }
 
 /** 真实成功信封往返，与Controller路由校验共同覆盖发送方向。 */

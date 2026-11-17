@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "batch": "chapter-stage10-20-20261117",
+  "branch": "hao",
+  "baseline": "b333e3d9",
+  "committed": false,
+  "pushed": false,
+  "creatorBuild": false,
+  "scope": {
+    "challengeDefault": 20,
+    "actualMilestoneEntry": true,
+    "idleCatalog": 850,
+    "unrelatedGameplayOpened": false
+  },
+  "backend": {
+    "engineTargeted": {
+      "cases": 72,
+      "passed": true
+    },
+    "mainChapterConfiguration": {
+      "cases": 9,
+      "passed": true,
+      "includes": "完整1至20真实挑战/结算及每关敌方普通主动只读导出"
+    },
+    "idleCatalog": {
+      "cases": 3,
+      "passed": true
+    },
+    "milestoneService": {
+      "cases": 9,
+      "passed": true
+    },
+    "milestoneSocket": {
+      "cases": 1,
+      "passed": true
+    },
+    "reports": "backend/target/surefire-reports",
+    "preparedFixtureNotNaturalGrowth": true,
+    "defaultScopeRules": {
+      "cases": 9,
+      "passed": true
+    },
+    "mainChapterSocket": {
+      "cases": 3,
+      "passed": true
+    },
+    "dailyService": {
+      "pid": 17148,
+      "updated": true,
+      "databasePreserved": true,
+      "schema": 28,
+      "websocketHandshake": "mxzg.protobuf.v2"
+    }
+  },
+  "interop": {
+    "configuredReplayCount": 11,
+    "configuredReplayFiles": "backend/target/chapter-config-stage-{10..20}.pb",
+    "source": "真实独立H2英雄与保存阵型，未修改场景标签或敌方",
+    "fullPlayerPassed": true,
+    "log": "client/temp/chapter10-20-java-interop.log"
+  },
+  "staticDependencyAudit": {
+    "report": "main-chapter-dependencies-20261117-stage20.json",
+    "supported": 34,
+    "blocked": 816,
+    "first20Supported": true,
+    "missingResolvedResources": 0,
+    "unresolvedDeclarations": 35,
+    "doesNotOpenBeyond20": true
+  },
+  "nativeJournal": {
+    "passed": 15,
+    "capture": "client/temp/stage20-journal-native.png",
+    "realIndexedDB": true,
+    "dailyStorageRead": false,
+    "originalIdleDatabaseSchemaPreserved": true
+  },
+  "preview": {
+    "status": "限定实际预览通过",
+    "evidence": "chapter-stage10-20-preview-20261117.json"
+  },
+  "limits": [
+    "不做集中构建或发布验收",
+    "850配置投影不代表850挑战开放",
+    "不开放英雄养成、召唤、穿脱或快速战斗",
+    "随机概率/旧护盾数值和跨槽绘制深度问题继续记录"
+  ],
+  "clientVerification": {
+    "strictTypes": true,
+    "baseFullRunActiveSuites": 98,
+    "baseRunPassed": 95,
+    "threeScopeFailuresResolvedByLatestSingleSuites": true,
+    "additionalLegacyPmaSuitePassed": true,
+    "latestRelevantSuitesPassed": true
+  },
+  "directActionCoverage": {
+    "templates": 113,
+    "ready": 69,
+    "blocked": 44,
+    "scope": "全部模板的初始星级/强化0直接动作；不代表全部模板已开放，不含进化、被动触发链、音效和Spine画面验收"
+  }
+}
