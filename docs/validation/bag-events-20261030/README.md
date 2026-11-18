@@ -7,7 +7,7 @@
 - [完整检查](project-checks.log)：27/27。保留账号、阵容版本冲突、主线奖励、资源、页面、历史链检查，新增 bag-events。
 - [事件专项](events-check.log)：首次同步、两种新增聚合、已有数量增加/减少、归零移除、同批新增/数量/删除、重复快照、无效全量/增量、失败恢复、旧账号响应、直接/外层 batchNotifications 中的回调提交下一批及回调重置。
 - 每个库存回调都断言当前 Model 版本与参数一致，并保留该次完整库存快照比较；事件参数、数组、原条目及数量变化对象冻结。捕获派发器的异常日志，避免监听断言被异常隔离吞掉却误报通过。
-- [Creator strict 日志](creator-types.log)：Creator 3.8.8 自带 TypeScript，tsconfig.remake.json，退出 0；成功无文本。负向约束覆盖错误事件名/参数、事件快照不可修改，以及模块 Controller 不可作页面 Controller。
+- Creator 3.8.8 自带 TypeScript 使用 `tsconfig.remake.json` 严格检查，退出码为 0。负向约束覆盖错误事件名和参数、事件快照不可修改，以及模块 Controller 不可作页面 Controller。
 
 ## 实际本机运行
 

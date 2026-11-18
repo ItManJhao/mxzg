@@ -84,9 +84,7 @@ class OpeningFixture {
     /** 保存被替换的边界方法，用例后按原引用恢复。 */
     private readonly originals = {
         mount: BattlePageUtils.mountBattlePrefab,
-        decode: BattleReplayUtils.decode,
-        units: BattleReplayUtils.units,
-        names: BattleReplayUtils.names,
+        parse: BattleReplayUtils.parse,
         resources: ResourceAssetsUtils.forNode,
         spine: BattleSpineService.instance.mountBattleSpine,
         namedSpine: BattleSpineService.instance.mountNamedSpine,
@@ -141,9 +139,11 @@ class OpeningFixture {
             bindClose: () => {},
         };
         BattlePageUtils.mountBattlePrefab = async () => shell as any;
-        BattleReplayUtils.decode = () => selectedSteps;
-        BattleReplayUtils.units = () => this.roster as any;
-        BattleReplayUtils.names = () => ({ attacker: "测试甲", defender: "测试乙" });
+        BattleReplayUtils.parse = () => ({
+            steps: selectedSteps,
+            units: this.roster as any,
+            names: { attacker: "测试甲", defender: "测试乙" },
+        });
         ResourceAssetsUtils.forNode = () => ({
             loadPath: async (path: string) => {
                 this.loaded.push(path);
@@ -253,9 +253,7 @@ class OpeningFixture {
         this.parent.destroy();
         this.releaseResources();
         BattlePageUtils.mountBattlePrefab = this.originals.mount;
-        BattleReplayUtils.decode = this.originals.decode;
-        BattleReplayUtils.units = this.originals.units;
-        BattleReplayUtils.names = this.originals.names;
+        BattleReplayUtils.parse = this.originals.parse;
         ResourceAssetsUtils.forNode = this.originals.resources;
         BattleSpineService.instance.mountBattleSpine = this.originals.spine;
         BattleSpineService.instance.mountNamedSpine = this.originals.namedSpine;

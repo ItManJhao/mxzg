@@ -149,9 +149,9 @@
       "docs/images/item-preview-long-bottom-20261114.jpg",
       "docs/images/item-preview-description-context-20261114.jpg",
       "docs/images/shard-preview-reuse-spirit-20261114.jpg",
-      "docs/images/item-preview-logout-20261114.jpg",
-      "docs/images/item-preview-rich-logout-20261114.jpg"
+      "docs/images/item-preview-logout-20261114.jpg"
     ],
+    "screenshotNote": "富文本验收的退出图与既有静态登录图字节相同，退出及清理结果见本批运行记录。",
     "notRun": [
       "未构建新发布包、CDN包或做真机/原生/微信检查",
       "本批未新跑Java/MySQL或配置导出测试，不沿用前批Java/Python数量",

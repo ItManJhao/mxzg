@@ -83,25 +83,29 @@ export interface BattleReplayStep {
     readonly hpByUnit: Readonly<Record<number, number>>;
 }
 
+/** 一次完整解码和校验后交付的只读战报，统一提供播放步骤、名册和双方名称。 */
+export interface ParsedBattleReplay {
+    /** 按服务端顺序整理的播放步骤，含本地回合准备步骤。 */
+    readonly steps: readonly BattleReplayStep[];
+    /** 已校验的本场冻结名册，不依赖玩家现有阵容。 */
+    readonly units: readonly BattleReplayUnit[];
+    /** 开战时保存的双方名称，缺失为null，保留已记录的空串。 */
+    readonly names: Readonly<{ attacker: string | null; defender: string | null }>;
+}
+
 export class BattleReplayUtils {
     /** 读取已校验战报的冻结名称；缺失返回null，不读取当前角色资料。 */
-    public static names(bytes: Uint8Array): Readonly<{ attacker: string | null; defender: string | null }> {
-        this.decode(bytes);
-        const report = (mxzg as unknown as {
-            game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
-        }).game.BattleReplay.decode(bytes);
-        return Object.freeze({
-            attacker: Object.prototype.hasOwnProperty.call(report, "attackerName") ? report.attackerName! : null,
-            defender: Object.prototype.hasOwnProperty.call(report, "defenderName") ? report.defenderName! : null,
-        });
+    public static names(bytes: Uint8Array): ParsedBattleReplay["names"] {
+        return this.parse(bytes).names;
     }
     /** 校验整包后保留服务器单位身份、模板及站位，展示层不再把所有人塞入首槽。 */
     public static units(bytes: Uint8Array): readonly BattleReplayUnit[] {
-        this.decode(bytes);
-        const report = (mxzg as unknown as {
-            game: { BattleReplay: { decode(bytes: Uint8Array): WireReplay } }
-        }).game.BattleReplay.decode(bytes);
-        return this.validateUnits(report.units);
+        return this.parse(bytes).units;
+    }
+
+    /** 完整校验原始战报，只向仅需播放步骤的调用方返回步骤。 */
+    public static decode(bytes: Uint8Array): readonly BattleReplayStep[] {
+        return this.parse(bytes).steps;
     }
 
     /** 校验最多双方各8个单位；支持重复模板与跨侧同站位，拒绝缺字段、重复身份和同侧重叠。 */
@@ -149,8 +153,11 @@ export class BattleReplayUtils {
         return Object.freeze(result);
     }
 
-    /** 校验全局关卡战报及旧具名样本；通用名册不猜配置内容，解码成功不代表对应技能资源已验收。 */
-    public static decode(bytes: Uint8Array): readonly BattleReplayStep[] {
+    /**
+     * 解码并完整校验全局关卡战报及旧具名样本，一次返回步骤、名册及冻结名称。
+     * 校验失败保留原错误，不交付部分结果。成功仅确认战报数据有效，技能表现资源另行核对。
+     */
+    public static parse(bytes: Uint8Array): ParsedBattleReplay {
         if (!bytes.length || bytes.length > 256 * 1024) {
             throw new Error("战报大小无效");
         }
@@ -351,7 +358,14 @@ export class BattleReplayUtils {
         const outcome = !attackersAlive ? "DEFENDER_WIN" : !defendersAlive ? "ATTACKER_WIN"
             : round === 15 ? "DEFENDER_WIN" : "ONGOING";
         if (outcome === "ONGOING" || report.outcome !== outcome) throw new Error("战报胜负无效");
-        return Object.freeze(steps);
+        return Object.freeze({
+            steps: Object.freeze(steps),
+            units: roster,
+            names: Object.freeze({
+                attacker: Object.prototype.hasOwnProperty.call(report, "attackerName") ? report.attackerName! : null,
+                defender: Object.prototype.hasOwnProperty.call(report, "defenderName") ? report.defenderName! : null,
+            }),
+        });
     }
 
     /**

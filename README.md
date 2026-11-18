@@ -1,42 +1,27 @@
 # mxzg
 
-旧项目因技术版本老、代码难以人工维护而重做：现代化技术和内部结构，旧玩法、内容、规则与效果以 **1:1 还原**为目标。当前客户端为 Cocos Creator 3.8.8 / TypeScript，后端为 Java 21 / Spring Boot。开发约束见 [AGENTS.md](AGENTS.md)。
+mxzg 重做工程使用 Cocos Creator 3.8.8 / TypeScript 和 Java 21 / Spring Boot。游戏业务统一走 WebSocket + Protobuf。工作约定见 [AGENTS.md](AGENTS.md)。
 
-## 启动
+## 本机启动
 
-1. 运行 scripts/start-remake-backend.bat，长连接监听 ws://127.0.0.1:18080/api/v1/game/socket。
-2. Creator 打开 client，打开 assets/scenes/Remake.scene，预览当前场景。
-3. 选服/登录 → 主城 → 背包、角色详情、英雄只读列表/详情；主线阵容保存、前三关挑战/结算及挂机演出已接通；宝箱领取、快速战斗、升级和穿脱未开放。
+1. 双击 [start-remake-backend.bat](scripts/start-remake-backend.bat)。修改 Java 后使用 [restart-remake-backend.bat](scripts/restart-remake-backend.bat)。
+2. 在 Creator 中打开 client 项目，预览 [Remake.scene](client/assets/scenes/Remake.scene)。
+3. 选服、登录后进入主城。已开放功能和当前验证范围见 [项目进度](docs/development-progress.md)。
 
-本机预览优先；未明确要求时不构建 H5/App/小游戏包。旧 module、Boot/Main、WebSocket 桥与旧网络链已删除。
+日常开发使用本机预览。后端配置、独立测试及集中构建步骤见 [本机工作流](docs/local-remake-workflow.md)。
 
-## 文档入口
+## 阅读入口
 
-最终目标：完整重做旧游戏，分批恢复玩法与社交；独立新版，不要求旧客户端兼容或旧玩家迁移。全部游戏业务 HTTP 已移除，登录、角色、背包采用 WS＋Protobuf；统一登录初始化、资产事务提交后同步。本轮框架、目录与旧代码整理已收口；当前玩法范围、验证限制和后续顺序分别见进度、实施路线，不从历史批次推断。后续开发在 hao，main 仅按负责人明确指令合并。
+| 要找的内容 | 文档 |
+|---|---|
+| 当前功能和验证结果 | [项目进度](docs/development-progress.md) |
+| 剩余工作与优先级 | [实施路线](docs/restructuring-plan.md) |
+| 接手步骤和代码入口 | [交接文档](docs/handoff.md) |
+| 职责、状态和生命周期 | [架构](docs/architecture.md)、[开发约定](docs/development-conventions.md) |
+| 各功能的专题说明 | [文档索引](docs/README.md) |
 
-阅读顺序：产品需求（要做什么）→ 开发进度（现在做到哪）→ 实施计划（接下来做什么）→ 架构（怎样做及证据）。同一事实只在对应主文档维护，不让历史批次覆盖当前结论。
+后续开发使用 hao 分支。提交、推送及 main 合并按当次授权执行。
 
+## 检查
 
-- [产品需求](docs/product-requirements.md)：有效需求与首测范围。
-- [架构与职责](docs/architecture.md)：MVC、状态、事件、生命周期及后端边界。
-- [开发写法与阅读约定](docs/development-conventions.md)：游爱写法的借鉴范围、方法/注释、明确调用链和还原流程。
-- [交接文档](docs/handoff.md)：新聊天先读，包含接手步骤、边界、代码入口和独立环境操作。
-- [文档索引](docs/README.md)：按用途查阅，区分当前约束和历史证据。
-- [首批通信契约](docs/network-contract.md)：登录、重连、幂等、迁移顺序与试点门槛；含独立预览入口。
-- [运行维护](docs/local-remake-workflow.md)：本机启停、日志和排错。
-- [加载与远程资源](docs/staged-resource-loading.md)：Bundle目录、三段配置、资源池与缓存。
-- [配置与资源](docs/config-pipeline.md)：生成、分组查询及统一资源入口。
-- [Prefab 编辑](docs/prefab-layout.md)：命名、坐标、逐项审查及视觉待验收。
-- [当前计划](docs/restructuring-plan.md) / [实际进度](docs/development-progress.md)。
-
-历史记录：[本次文档收口快照](docs/validation/development-history-20261113.md)；[11月3–4日批次快照](docs/validation/development-history-20261104.md)；[截至 2026-11-02 的开发过程](docs/validation/development-history-20261102.md)。[开服规则参考](docs/day60-open-server.md)只用于核对配置，不再作为另一套删减玩法/排期方案。
-
-文档目录的 JSON 是资源来源、Prefab 保留清单和审查数据，供工具/追溯使用；validation 保存历史证据。它们不作为当前计划，也不因文件多而删除。
-
-功能维护：[背包](docs/bag-mvc-maintenance.md)、[库存事件](docs/bag-inventory-events.md)、[列表](docs/super-scroll-authoring.md)、[出阵](docs/formation-ui-authoring.md)、[英雄/阵容接口](docs/hero-lineup-contract.md)。
-
-## 常见代码入口
-
-app 负责启动装配；features 负责功能数据、业务、接口和 UI；framework 负责事件、资源及页面生命周期；platform 负责 WebSocket/Protobuf/平台；config 负责生成配置与统一查询。Prefab 保存静态结构与样式。
-
-在 client 执行 npm run check。若 Python 为商店占位入口，将当前进程 MXZG_PYTHON 指向实际 Python。配置与资源生成检查、脚本/Prefab 绑定、业务和生命周期均在综合入口中；检查不读取玩家文件数据库。Creator strict 保持 ES2017。
+从仓库根目录运行 node client/tools/check-project.mjs --help 查看专项。日常改动运行对应专项即可，完整检查通过 client 下的 npm run check 启动。Python 路径、后端测试和预览入口见 [交接文档](docs/handoff.md#常用检查)。

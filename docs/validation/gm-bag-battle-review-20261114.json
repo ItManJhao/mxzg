@@ -98,12 +98,8 @@
     ],
     "typeCheck": "Creator项目tsc --noEmit",
     "browser": "docs/validation/gm-battle-browser-20261114.json",
-    "screenshots": [
-      "docs/images/chapter-third-formation-20261114.jpg",
-      "docs/images/chapter-third-completed-20261114.jpg",
-      "docs/images/gm-hero-grant-20261114.jpg",
-      "docs/images/gm-item-grant-20261114.jpg"
-    ],
+    "screenshots": [],
+    "screenshotNote": "第三关和GM的四份截图均为相同黑屏，已移除。实际操作结果见browser记录。",
     "notRun": [
       "未操作日常库或修改其GM开关",
       "未恢复装备/道具/碎片专用UI",

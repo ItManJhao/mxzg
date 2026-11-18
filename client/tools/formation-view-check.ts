@@ -1,8 +1,8 @@
-/** 出阵真实Prefab专项：核对静态绑定、未保存草稿的同版恢复，以及ACK缺状态后的同步重试和页面生命周期。 */
+/** 出阵真实Prefab专项：核对绑定、自动入位、拖放及切阵型，也检查草稿与权威状态恢复。 */
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
-import { Button, Color, Label, Mask, Node, Prefab, ScrollView, Sprite, UITransform } from "cc";
+import { Button, Color, Label, Mask, Node, Prefab, ScrollView, Sprite, UITransform, Vec2, Vec3 } from "cc";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
@@ -40,6 +40,84 @@ const classes: Record<string, any> = { "cc.Button": Button, "cc.Label": Label, "
     "cc.UITransform": UITransform, "cc.Mask": Mask, "cc.ScrollView": ScrollView,
     [scrollType]: SuperScroll, [contentType]: SuperContent, [viewType]: FormationView, [slotType]: FormationSlotView, [cellType]: FormationHeroCellView };
 
+/** 按服务器站位编号取得本轮预制上的阵位，避免依赖节点数组顺序。 */
+function slotAt(editor: FormationView, position: number): FormationSlotView {
+    const slot = editor.slots.find(item => item.position === position);
+    assert(slot, "预制应绑定阵位 " + position);
+    return slot;
+}
+
+/** 从当前可见列表取得格子，避开重绘前已回收的Cell。 */
+function heroCellAt(editor: FormationView, index: number): HeroIconCellView {
+    return editor.heroScroll!.content!.children[index].getComponent(HeroIconCellView)!;
+}
+
+/** 对当前可见列表格派发点击。 */
+function clickHero(editor: FormationView, index: number): void {
+    heroCellAt(editor, index).button!.node.emit(Button.EventType.CLICK);
+}
+
+/** 补足本专项用到的向量运算，保持公共引擎替身不变。 */
+class FixtureVec3 extends Vec3 {
+    /** 返回独立的坐标，供拖动保留原位置。 */
+    public clone(): FixtureVec3 {
+        return new FixtureVec3(this.x, this.y, this.z);
+    }
+
+    /** 按Creator的原地加法更新位移和位置。 */
+    public add(point: Vec3): this {
+        this.x += point.x;
+        this.y += point.y;
+        this.z += point.z;
+        return this;
+    }
+
+    /** 按Creator的原地减法求出触摸的相对偏移。 */
+    public subtract(point: Vec3): this {
+        this.x -= point.x;
+        this.y -= point.y;
+        this.z -= point.z;
+        return this;
+    }
+}
+
+/** 从实际Prefab的父链计算平移与缩放，供专项模拟没有旋转的UI节点。 */
+function uiTransformOf(node: Node): { x: number; y: number; scaleX: number; scaleY: number } {
+    let x = 0, y = 0, scaleX = 1, scaleY = 1;
+    for (let current: Node | null = node; current; current = current.parent) {
+        x = x * current.scale.x + current.position.x;
+        y = y * current.scale.y + current.position.y;
+        scaleX *= current.scale.x;
+        scaleY *= current.scale.y;
+    }
+    return { x, y, scaleX, scaleY };
+}
+
+/** 在Prefab的阵位触摸区派发手势，落点取目标格中心或两个格子间的空隙。 */
+function dragSlot(editor: FormationView, from: number, to: number | null, end = Node.EventType.TOUCH_END): void {
+    const input = editor.slotInput!;
+    const start = uiTransformOf(slotAt(editor, from).node);
+    const startPoint = new Vec2(start.x, start.y);
+    let dropPoint: Vec2;
+    if (to === null) {
+        const right = uiTransformOf(slotAt(editor, 2).node);
+        const left = uiTransformOf(slotAt(editor, 3).node);
+        dropPoint = new Vec2((right.x + left.x) / 2, right.y);
+    } else {
+        const target = uiTransformOf(slotAt(editor, to).node);
+        dropPoint = new Vec2(target.x, target.y);
+    }
+    assert(input.hitTest(startPoint, 0) && input.hitTest(dropPoint, 0), "出阵触摸区应覆盖拖动路径的两端");
+    if (to === null) {
+        assert(editor.slots.every(slot => !slot.node.getComponent(UITransform)!.hitTest(dropPoint, 0)), "空隙应未命中任何阵位");
+    }
+    const first = { getID: () => 1, getLocation: () => startPoint, getUILocation: () => startPoint, windowId: 0 };
+    const after = { getID: () => 1, getLocation: () => dropPoint, getUILocation: () => dropPoint, windowId: 0 };
+    input.node.emit(Node.EventType.TOUCH_START, first);
+    input.node.emit(Node.EventType.TOUCH_MOVE, after);
+    input.node.emit(end, after);
+}
+
 /** 在本次重建的节点树中查找组件，补齐轻量引擎替身未提供的子节点查找能力。 */
 function findComponentInChildren(node: Node, type: any): any {
     const component = node.getComponent(type);
@@ -68,17 +146,52 @@ function instantiateData(data: any[]): Node {
             return;
         }
         const node = new Node(row._name);
+        const originalSetPosition = node.setPosition.bind(node);
         node.active = row._active;
-        node.setPosition(row._lpos.x, row._lpos.y, row._lpos.z);
         node.setScale(row._lscale.x, row._lscale.y, row._lscale.z);
         // 能力仅安装在本次重建实例，不改共享Node原型或其他专项环境。
-        (node as any).getComponentInChildren = (type: any) => findComponentInChildren(node, type);
+        Object.assign(node, {
+            getComponentInChildren: (type: any) => findComponentInChildren(node, type),
+            setPosition(point: Vec3 | number, y = 0, z = 0): void {
+                if (typeof point === "number") {
+                    point = new FixtureVec3(point, y, z);
+                }
+                originalSetPosition(point.x, point.y, point.z);
+                Object.assign(node, { position: new FixtureVec3(point.x, point.y, point.z) });
+            },
+            setParent(parent: Node, keepWorldTransform: boolean): void {
+                const current = uiTransformOf(node);
+                node.parent = parent;
+                if (keepWorldTransform) {
+                    const host = uiTransformOf(parent);
+                    node.setPosition((current.x - host.x) / host.scaleX, (current.y - host.y) / host.scaleY, node.position.z);
+                    node.setScale(current.scaleX / host.scaleX, current.scaleY / host.scaleY, node.scale.z);
+                }
+            },
+        });
+        node.setPosition(row._lpos.x, row._lpos.y, row._lpos.z);
         objects.set(id, node);
     });
     data.forEach((row, id) => {
         if (!classes[row.__type__]) return;
         const value: any = objects.get(row.node.__id__).addComponent(classes[row.__type__]); objects.set(id,value);
-        if (value instanceof UITransform) { value.setContentSize(row._contentSize.width,row._contentSize.height); value.setAnchorPoint(row._anchorPoint.x,row._anchorPoint.y); }
+        if (value instanceof UITransform) {
+            value.setContentSize(row._contentSize.width, row._contentSize.height);
+            value.setAnchorPoint(row._anchorPoint.x, row._anchorPoint.y);
+            // 专项的引擎替身没有坐标换算，用实际预制的节点位置和大小模拟命中。
+            Object.assign(value, {
+                convertToNodeSpaceAR(point: Vec3): FixtureVec3 {
+                    const transform = uiTransformOf(value.node);
+                    return new FixtureVec3((point.x - transform.x) / transform.scaleX, (point.y - transform.y) / transform.scaleY, point.z);
+                },
+                hitTest(point: Vec2): boolean {
+                    const transform = uiTransformOf(value.node);
+                    const x = (point.x - transform.x) / transform.scaleX + value.width * value.anchorX;
+                    const y = (point.y - transform.y) / transform.scaleY + value.height * value.anchorY;
+                    return x >= 0 && x <= value.width && y >= 0 && y <= value.height;
+                },
+            });
+        }
         if (value instanceof Label) { value.string=row._string; value.fontSize=row._fontSize; value.lineHeight=row._lineHeight; value.color=new Color(row._color.r,row._color.g,row._color.b,row._color.a); }
     });
     const reference = (value: any): any => {
@@ -110,7 +223,7 @@ function instantiateData(data: any[]): Node {
     return root;
 }
 
-/** 验证同版鉴权与重复名册事件保留未保存站位、选择及筛选；关页丢弃草稿且没有写请求或出战。 */
+/** 验证同版鉴权与重复名册事件保留未保存站位及筛选；关页丢弃草稿且没有写请求或出战。 */
 async function checkUnsavedDraftRecovery(heroes: Parameters<FormationView["render"]>[0]["heroes"]): Promise<void> {
     const root = instantiateData(read(PAGE));
     const editor = root.getComponent(FormationView) as FormationView;
@@ -124,7 +237,7 @@ async function checkUnsavedDraftRecovery(heroes: Parameters<FormationView["rende
         unlockedIds: [1],
         assistanceUnlocked: false,
         version: 5,
-        slots: [{ position: 2, heroId: hero.id }],
+        slots: [{ position: 3, heroId: hero.id }],
         options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }],
     };
     roster.replace({ status: "ready", heroes: [hero], error: "", mainFormation: asset });
@@ -143,21 +256,16 @@ async function checkUnsavedDraftRecovery(heroes: Parameters<FormationView["rende
     });
     editor.configure(module, roster, saves);
 
-    /** 用当前实际列表格子派发选择，避免引用重绘前已经回收的Cell。 */
-    const selectHero = (): void => {
-        editor.heroScroll!.content!.children[0].getComponent(HeroIconCellView)!
-            .button!.node.emit(Button.EventType.CLICK);
-    };
-    /** 只确认真实Prefab的显示和交互，不直接修改View私有草稿。 */
-    const assertDraftAt = (position: number): void => {
+    /** 同版恢复保持阵位草稿与筛选，未保存位置不进入Model。 */
+    const assertDraft = (): void => {
         assert(editor.countLabel!.string.includes("1 / 6"));
-        assert.equal(editor.slots.find(slot => slot.position === position)!.portrait!.active, true);
-        assert.equal(editor.slots.find(slot => slot.position === 2)!.portrait!.active, false);
+        assert.equal(slotAt(editor, 2).portrait!.active, true);
+        assert.equal(slotAt(editor, 3).portrait!.active, false);
         assert.equal(editor.filterMark!.position.x, editor.elementButtons[elem].node.position.x);
         assert.equal(editor.filterMark!.position.y, editor.elementButtons[elem].node.position.y);
         assert.equal(editor.heroScroll!.content!.children.length, 1);
         assert.equal(editor.confirmButton!.interactable, true);
-        assert.equal(roster.snapshot.mainFormation!.slots[0].position, 2, "未保存站位不能改权威阵容");
+        assert.equal(roster.snapshot.mainFormation!.slots[0].position, 3, "未保存站位不能改权威阵容");
     };
     /** 关闭不算确认，重新打开后必须由玩家重新提交才可能继续出战。 */
     const complete = (ok: boolean): void => {
@@ -169,29 +277,24 @@ async function checkUnsavedDraftRecovery(heroes: Parameters<FormationView["rende
     };
     try {
         editor.runOpen({ closeAfterSave: true, complete });
-        selectHero();
-        editor.slots.find(slot => slot.position === 3)!.button!.node.emit(Button.EventType.CLICK);
         editor.elementButtons[elem].node.emit(Button.EventType.CLICK);
-        selectHero();
-        assertDraftAt(3);
-        assert(editor.tipLabel!.string.includes("已选英雄"));
+        clickHero(editor, 0);
+        assert.equal(slotAt(editor, 3).portrait!.active, false, "点击已上阵英雄应撤下该实例");
+        clickHero(editor, 0);
+        assertDraft();
 
         // 模拟统一鉴权首包已接纳后的同版名册提交，其他展示字段更新不能冲掉本页未保存输入。
         roster.replace({ status: "ready", heroes: [{ ...hero, level: hero.level + 1 }], error: "", mainFormation: asset });
         EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
-        assertDraftAt(3);
-        assert(editor.tipLabel!.string.includes("已选英雄"), "同版恢复保留当前英雄选择");
+        assertDraft();
         for (let index = 0; index < 3; index++) {
             EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
-            assertDraftAt(3);
-            assert(editor.tipLabel!.string.includes("已选英雄"), "重复名册通知不能清掉选择");
+            assertDraft();
         }
-        editor.slots.find(slot => slot.position === 5)!.button!.node.emit(Button.EventType.CLICK);
-        assertDraftAt(5);
-        assert.equal(editor.slots.find(slot => slot.position === 3)!.portrait!.active, false,
-            "恢复后点击空阵位仍使用之前选中的英雄，不能变成无选择撤下操作");
-        selectHero();
-        assert(editor.tipLabel!.string.includes("已选英雄"));
+        clickHero(editor, 0);
+        assert.equal(slotAt(editor, 2).portrait!.active, false, "同版恢复后仍可撤下当前草稿中的英雄");
+        clickHero(editor, 0);
+        assertDraft();
         await settleTasks();
         assert.equal(saveCalls, 0);
         assert.equal(refreshes, 0);
@@ -203,12 +306,11 @@ async function checkUnsavedDraftRecovery(heroes: Parameters<FormationView["rende
         assert.equal(EventDispatcher.instance.targetListenerCount(editor), 0);
         EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
         editor.runOpen({ closeAfterSave: true, complete });
-        assert.equal(editor.slots.find(slot => slot.position === 2)!.portrait!.active, true,
+        assert.equal(slotAt(editor, 3).portrait!.active, true,
             "关页重开只读服务器站位，不恢复未保存草稿");
-        assert.equal(editor.slots.find(slot => slot.position === 5)!.portrait!.active, false);
+        assert.equal(slotAt(editor, 2).portrait!.active, false);
         assert.equal(editor.filterMark!.position.x, editor.elementButtons[0].node.position.x,
             "重开回到全部筛选，不复活旧筛选交互");
-        assert(!editor.tipLabel!.string.includes("已选英雄"));
         assert.equal(Reflect.get(editor, "submitted"), null, "未保存草稿不得生成或复活出战提交意图");
         EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
         await settleTasks();
@@ -262,8 +364,8 @@ async function checkMissingStateRecovery(heroes: Parameters<FormationView["rende
         assert.equal(roster.snapshot.mainFormation!.version, 0, "失败或旧首包不改变权威阵容");
         assert.equal(roster.snapshot.mainFormation!.slots.length, 0);
         assert(editor.countLabel!.string.includes("1 / 6"));
-        assert.equal(editor.slots.find(slot => slot.position === 3)!.portrait!.active, true);
-        assert.equal(editor.slots.find(slot => slot.position === 2)!.portrait!.active, false);
+        assert.equal(slotAt(editor, 2).portrait!.active, true);
+        assert.equal(slotAt(editor, 3).portrait!.active, false);
         assert.equal(editor.formationButton!.interactable, false);
         assert(editor.slots.every(slot => !slot.button!.interactable));
         assert(editor.heroScroll!.content!.children.every(node => !node.getComponent(HeroIconCellView)!.button!.interactable));
@@ -302,8 +404,7 @@ async function checkMissingStateRecovery(heroes: Parameters<FormationView["rende
     editor.configure(module, roster, saves);
     try {
         editor.runOpen({ closeAfterSave: true, complete });
-        editor.heroScroll!.content!.children[0].getComponent(HeroIconCellView)!.button!.node.emit(Button.EventType.CLICK);
-        editor.slots.find(slot => slot.position === 3)!.button!.node.emit(Button.EventType.CLICK);
+        clickHero(editor, 0);
         editor.confirmButton!.node.emit(Button.EventType.CLICK);
         await settleTasks();
         assert.equal(saveCalls, 1);
@@ -316,8 +417,8 @@ async function checkMissingStateRecovery(heroes: Parameters<FormationView["rende
         assertRetryableDraft();
 
         // 即使直接派发按钮事件绕过引擎禁用判断，View仍拒绝修改待确认的原草稿。
-        editor.heroScroll!.content!.children[0].getComponent(HeroIconCellView)!.button!.node.emit(Button.EventType.CLICK);
-        editor.slots.find(slot => slot.position === 2)!.button!.node.emit(Button.EventType.CLICK);
+        clickHero(editor, 0);
+        slotAt(editor, 2).button!.node.emit(Button.EventType.CLICK);
         editor.formationButton!.node.emit(Button.EventType.CLICK);
         assertRetryableDraft();
 
@@ -343,7 +444,7 @@ async function checkMissingStateRecovery(heroes: Parameters<FormationView["rende
         editor.runOpen({ closeAfterSave: true, complete });
         assert.deepEqual(saves.snapshot.pending, original);
         assert(editor.countLabel!.string.includes("1 / 6"));
-        assert.equal(editor.slots.find(slot => slot.position === 3)!.portrait!.active, true);
+        assert.equal(slotAt(editor, 2).portrait!.active, true);
         assert.equal(editor.confirmButton!.interactable, false, "刷新在途重开仍等待当前任务");
         assert.equal(findComponentInChildren(editor.confirmButton!.node, Label).string, "同步中");
         assert(finishRefresh);
@@ -374,6 +475,155 @@ async function checkMissingStateRecovery(heroes: Parameters<FormationView["rende
         }
         module.dispose();
         offFeedback();
+    }
+}
+
+/** 验证拖放变更只写本页草稿，确认发出最终站位并继续等待权威状态。 */
+async function checkDragDraft(heroes: Parameters<FormationView["render"]>[0]["heroes"]): Promise<void> {
+    const [first, second] = heroes;
+    const rosterHeroes = [first, { ...second, templateId: 10304012 }];
+    const names = rosterHeroes.map(hero => HeroCatalog.find(hero.templateId)?.name);
+    assert(names[0] && names[1] && names[0] !== names[1], "换位夹具需要两位名称不同的真实英雄");
+    const root = instantiateData(read(PAGE));
+    const editor = root.getComponent(FormationView) as FormationView;
+    const roster = new HeroRosterModel();
+    const saves = new FormationSaveModel();
+    const module = new FormationController(saves, roster);
+    const original = [{ position: 2, heroId: first.id }, { position: 3, heroId: second.id }];
+    const asset = {
+        formationId: 1, unlockedIds: [1], assistanceUnlocked: false, version: 5, slots: original,
+        options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }],
+    };
+    roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: asset });
+    const submissions: FormationSaveRequest[] = [];
+    let confirmed = 0;
+    let acknowledge: ((frame: GameFrame) => void) | undefined;
+    module.initialize();
+    module.configure(async (request, received) => {
+        submissions.push(request);
+        received(await new Promise<GameFrame>(resolve => { acknowledge = resolve; }));
+    });
+    editor.configure(module, roster, saves);
+    try {
+        editor.runOpen({ closeAfterSave: true, complete: ok => { if (ok) confirmed++; } });
+        const caption = (position: number): string => slotAt(editor, position).caption!.string;
+        const source = slotAt(editor, 8).portrait!;
+        const sourceParent = source.parent;
+        const sourcePosition = { ...source.position };
+
+        dragSlot(editor, 2, 8);
+        assert.equal(slotAt(editor, 2).portrait!.active, false, "前排原位移到后排后应为空");
+        assert.equal(caption(8), names[0], "可拖到不同排的开放空位");
+
+        dragSlot(editor, 3, 8);
+        assert.equal(caption(8), names[1], "命中已有英雄时目标位得到拖动的英雄");
+        assert.equal(caption(3), names[0], "原位得到刚才目标位的英雄");
+
+        dragSlot(editor, 8, 4);
+        dragSlot(editor, 3, null);
+        dragSlot(editor, 8, 6, Node.EventType.TOUCH_CANCEL);
+        assert.equal(caption(3), names[0], "未命中时回到拖动前阵位");
+        assert.equal(caption(8), names[1], "锁位或触摸取消不得改变草稿");
+        assert.equal(slotAt(editor, 4).portrait!.active, false, "拖放不能写入关闭位");
+        assert.equal(slotAt(editor, 6).portrait!.active, false, "取消拖放不能写入原目标位");
+        assert.equal(source.parent, sourceParent, "无效拖放应恢复头像节点归属");
+        assert.deepEqual({ ...source.position }, sourcePosition, "无效拖放应恢复头像节点坐标");
+        assert.deepEqual(roster.snapshot.mainFormation!.slots, original);
+        assert.equal(submissions.length, 0, "拖放不会自动提交保存");
+
+        editor.confirmButton!.node.emit(Button.EventType.CLICK);
+        await settleTasks();
+        assert.equal(submissions.length, 1);
+        const [request] = submissions;
+        assert.equal(request.expectedVersion, asset.version);
+        assert.deepEqual([...request.slots].sort((a, b) => a.position - b.position), [
+            { position: 3, heroId: first.id }, { position: 8, heroId: second.id },
+        ]);
+        acknowledge!({ version: 1, kind: "response", name: Protocol.FORMATION_SAVE,
+            ok: true, body: { requestId: request.requestId, version: asset.version + 1 } });
+        await settleTasks();
+        assert.equal(confirmed, 0, "拖放结果仍需权威快照确认才能出战");
+        roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: {
+            ...asset, version: asset.version + 1, slots: request.slots,
+        } });
+        EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
+        assert.equal(confirmed, 1);
+    } finally {
+        editor.runClose();
+        module.dispose();
+        root.destroy();
+    }
+}
+
+/** 用真实的阵型一、二往返检查开放格序位和助战边界，切换只改草稿。 */
+async function checkFormationCycle(heroes: Parameters<FormationView["render"]>[0]["heroes"]): Promise<void> {
+    const [first, second, assistance] = heroes;
+    const rosterHeroes = [first, { ...second, templateId: 10304012 }, { ...assistance, templateId: 10105007 }];
+    const names = rosterHeroes.map(hero => HeroCatalog.find(hero.templateId)?.name);
+    assert(names.every(Boolean) && new Set(names).size === names.length, "切阵型夹具需要不同名称的真实英雄");
+
+    const { rows }: { rows: { type: number; position: number; is_open: number }[] } =
+        read("client/assets/bundles/resources/config/battlematrixaddition.json");
+    const options = [1, 2].map(formationId => ({
+        formationId,
+        openPositions: rows.filter(row => row.type === formationId && row.is_open > 0)
+            .map(row => row.position).reverse(),
+    }));
+    const original = [
+        { position: 8, heroId: first.id }, { position: 5, heroId: second.id }, { position: 9, heroId: assistance.id },
+    ];
+    const asset = { formationId: 1, unlockedIds: [1, 2], assistanceUnlocked: true, version: 5, slots: original, options };
+    const root = instantiateData(read(PAGE));
+    const editor = root.getComponent(FormationView) as FormationView;
+    const roster = new HeroRosterModel();
+    const saves = new FormationSaveModel();
+    const controller = new FormationController(saves, roster);
+    const submissions: FormationSaveRequest[] = [];
+    roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: asset });
+    controller.initialize();
+    controller.configure(async (body, received) => {
+        submissions.push(body);
+        received({ version: 1, kind: "response", name: Protocol.FORMATION_SAVE,
+            ok: true, body: { requestId: body.requestId, version: 6 } });
+    });
+    editor.configure(controller, roster, saves);
+    try {
+        editor.runOpen({ complete: () => {} });
+        editor.formationButton!.node.emit(Button.EventType.CLICK);
+        assert.equal(editor.formationLabel!.string, "阵型 2 ▼");
+        assert.equal(slotAt(editor, 7).caption!.string, names[0], "旧第六个开放普通位对应新第六个开放普通位");
+        assert.equal(slotAt(editor, 3).caption!.string, names[1], "旧第三个开放普通位对应新第三个开放普通位");
+        assert.equal(slotAt(editor, 1).portrait!.active, false, "首个开放格仍保持空位");
+        assert.equal(slotAt(editor, 9).caption!.string, names[2], "双方允许的助战位保持独立");
+
+        editor.formationButton!.node.emit(Button.EventType.CLICK);
+        assert.equal(editor.formationLabel!.string, "阵型 1 ▼");
+        assert.equal(slotAt(editor, 8).caption!.string, names[0], "反向切换恢复原序位");
+        assert.equal(slotAt(editor, 5).caption!.string, names[1]);
+        assert.equal(slotAt(editor, 9).caption!.string, names[2]);
+
+        // 注入较窄的目标选项，确认不存在同序位时不会把普通英雄移到助战格，也不保留关闭的助战格。
+        roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: {
+            ...asset, options: [options[0], { ...options[1], openPositions: options[1].openPositions.filter(pos => pos !== 7 && pos !== 9) }],
+        } });
+        EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
+        editor.formationButton!.node.emit(Button.EventType.CLICK);
+        assert.equal(slotAt(editor, 3).caption!.string, names[1]);
+        assert.equal(slotAt(editor, 7).portrait!.active, false, "缺失同序位时保持关闭格为空");
+        assert.equal(slotAt(editor, 9).portrait!.active, false, "目标阵型关闭助战位时不保留助战英雄");
+        assert.deepEqual(roster.snapshot.mainFormation!.slots, original);
+        assert.equal(submissions.length, 0, "阵型往返和迁移不能提前保存");
+
+        editor.confirmButton!.node.emit(Button.EventType.CLICK);
+        await settleTasks();
+        assert.equal(submissions.length, 1);
+        assert.equal(submissions[0].formationId, 2);
+        assert.equal(submissions[0].expectedVersion, asset.version);
+        assert.deepEqual(submissions[0].slots, [{ position: 3, heroId: second.id }]);
+    } finally {
+        editor.runClose();
+        controller.dispose();
+        root.destroy();
     }
 }
 
@@ -418,7 +668,7 @@ async function main(): Promise<void> {
     const editRoot=instantiateData(read(PAGE)), editor=editRoot.getComponent(FormationView) as FormationView;
     const roster=new HeroRosterModel(), saves=new FormationSaveModel(); roster.reset();
     const asset={formationId:1,unlockedIds:[1,2],assistanceUnlocked:false,version:0,slots:[],
-        options:[{formationId:1,openPositions:[2,3,5,6,7,8]},{formationId:2,openPositions:[1,2,3,5,6,7]}]};
+        options:[{formationId:1,openPositions:[8,2,5,3,7,6]},{formationId:2,openPositions:[1,2,3,5,6,7]}]};
     roster.replace({status:"ready",heroes,error:"",mainFormation:asset});
     const module=new FormationController(saves,roster);module.initialize();module.resetSession();
     let request:any,resolveSave!: (value:any)=>void;
@@ -427,12 +677,22 @@ async function main(): Promise<void> {
         try { received(await new Promise(resolve=>{resolveSave=resolve;})); } catch(error) { failed(error); }
     });
     editor.configure(module,roster,saves);editor.runOpen({complete:()=>{}});
-    editor.heroScroll!.content!.children[0].getComponent(HeroIconCellView)!.button!.node.emit(Button.EventType.CLICK);
-    editor.slots.find(slot=>slot.position===3)!.button!.node.emit(Button.EventType.CLICK);
+    assert.equal(heroCellAt(editor, 0).battle!.active, false, "未上阵头像保持完整亮度");
+    clickHero(editor, 0);
+    assert.equal(slotAt(editor, 2).portrait!.active, true, "优先按开放站位编号升序找空位");
+    assert.equal(slotAt(editor, 8).portrait!.active, false, "服务器数组首项并非最低开放站位");
+    const deployed = heroCellAt(editor, 0).battle!;
+    assert.equal(deployed.name, "DeploymentOverlay");
+    assert(deployed.getChildByName("DeploymentShade")?.activeInHierarchy, "上阵草稿应遮暗头像");
+    assert(deployed.getChildByName("DeploymentCheck")?.activeInHierarchy, "上阵草稿应显示绿勾");
+    assert.equal(heroCellAt(editor, 0).button!.interactable, true, "已上阵格子仍支持点按撤下");
+    clickHero(editor, 1);
+    assert.equal(heroCellAt(editor, 1).battle!.active, false, "被拒的同模板实例不得显示已上阵");
     assert.equal(roster.snapshot.mainFormation!.slots.length,0,"选位不能提前修改资产");
-    assert(editor.countLabel!.string.includes("1 / 6"));
+    assert(editor.countLabel!.string.includes("1 / 6"), "另一同模板实例不能占第二个位置");
     editor.confirmButton!.node.emit(Button.EventType.CLICK);assert(saves.snapshot.busy);
     await settleTasks();
+    assert.deepEqual(request.slots, [{position: 2, heroId: heroes[0].id}], "同模板点击不能替换已上阵的原实例");
     editor.runClose();assert.equal(EventDispatcher.instance.targetListenerCount(editor),0);
     resolveSave({version:1,kind:"response",name:Protocol.FORMATION_SAVE,ok:true,body:{requestId:request.requestId,version:1}});
     await settleTasks();
@@ -440,13 +700,15 @@ async function main(): Promise<void> {
     assert.deepEqual(saves.snapshot.pending, request, "ACK后原提交参数保留到统一状态确认");
     roster.replace({status:"ready",heroes,error:"",mainFormation:{...asset,version:1,slots:request.slots}});
     EventDispatcher.instance.emit(HeroRosterEvent.Updated,{revision:roster.version});
+    const priorFeedbackCount = feedback.length;
     editor.runOpen({complete:()=>{}});
-    assert.equal(feedback.length, 0, "重开页面不重播历史保存结果");
+    assert.equal(feedback.length, priorFeedbackCount, "重开页面不重播历史保存结果");
     assert(!editor.tipLabel!.string.includes("已保存"), "固定操作说明不再充当结果提示区");
     assert(editor.countLabel!.string.includes("1 / 6"));
-    editor.heroScroll!.content!.children[0].getComponent(HeroIconCellView)!.button!.node.emit(Button.EventType.CLICK);
-    editor.slots.find(slot=>slot.position===2)!.button!.node.emit(Button.EventType.CLICK);
-    assert.equal(roster.snapshot.mainFormation!.slots[0].position,3,"再次编辑仍只修改页面草稿");
+    clickHero(editor, 0);
+    assert.equal(slotAt(editor, 2).portrait!.active, false, "关闭前可从草稿撤下已上阵实例");
+    assert.equal(heroCellAt(editor, 0).battle!.active, false, "撤下后遮暗与绿勾随草稿清理");
+    assert.equal(roster.snapshot.mainFormation!.slots[0].position, 2, "再次编辑仍只修改页面草稿");
     editor.runClose();editor.runOpen({complete:()=>{}});
     assert(editor.countLabel!.string.includes("1 / 6"));
     editor.runClose();
@@ -483,10 +745,16 @@ async function main(): Promise<void> {
     brokenCell.button=null;
     assert.throws(()=>brokenCell.show({} as any),/button/);
     const cellData=read(CELL);
+    const deploymentOverlay = cellData.find((row: any) => row.__type__ === "cc.Node" && row._name === "DeploymentOverlay");
+    assert(deploymentOverlay, "已上阵状态应绑定预制体上的覆盖节点");
+    assert.deepEqual(deploymentOverlay._children.map((ref: { __id__: number }) => cellData[ref.__id__]._name),
+        ["DeploymentShade", "DeploymentCheck"], "绿勾应绘制在暗层上方，保持原颜色");
     assert.equal(cellData.find((row:any)=>row.__type__==="cc.Node"&&row._name==="Stars")._active,true,"the star Layout container must remain visible when individual stars toggle");
     assert(cellData.some((row:any)=>row.__type__==="cc.Layout"&&row._layoutType===1),"stars use an authored horizontal Layout");
     await checkUnsavedDraftRecovery(heroes);
     await checkMissingStateRecovery(heroes);
-    console.log("formation-view-check passed: real Prefab bindings, Inspector edits, unsaved draft/selection/filter after same-version recovery, no implicit writes, original ACK draft, locked editing, explicit sync-only retry, close/reopen retention and exactly one battle confirmation");
+    await checkDragDraft(heroes);
+    await checkFormationCycle(heroes);
+    console.log("formation-view-check passed: real Prefab bindings, Inspector edits, automatic placement, duplicate template, drag/swap/cancel, formation rank mapping, same-version draft recovery, original ACK draft, explicit sync-only retry and exactly one battle confirmation");
 }
 void main().catch(error=>{console.error(error);process.exitCode=1;});

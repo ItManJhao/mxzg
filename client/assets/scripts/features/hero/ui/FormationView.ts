@@ -1,5 +1,5 @@
-/** 主线阵容页面：复用旧阵位和美术，SuperScroll绘制名册，所有写操作交给FormationController。 */
-import { _decorator, Button, Label, Node, UITransform, view as ccView } from "cc";
+/** 主线阵容页面：用原阵位和英雄列表编辑本页草稿，确认后由 FormationController 保存。 */
+import { _decorator, Button, EventTouch, Label, Node, UITransform, Vec3, view as ccView } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
@@ -19,6 +19,22 @@ import { HeroCatalog } from "../utils/HeroCatalog";
 import type { FormationState } from "../data/FormationData";
 
 const { ccclass, property } = _decorator;
+
+/** 单次站位手势，坐标以阵位输入区为准，跨格移动前保留头像原布局。 */
+interface SlotGesture {
+    touchId: number;
+    slot: FormationSlotView;
+    start: Vec3;
+    originalPosition: Vec3;
+    originalSibling: number;
+    previewStart: Vec3 | null;
+}
+
+/** 小于 12 个预制体设计单位的位移视为点击，避免按下时轻微抖动触发拖动。 */
+const SLOT_DRAG_THRESHOLD = 12;
+
+/** 服务端编号 9 是独立助战位，切换阵型时不参与普通格的序位映射。 */
+const ASSISTANCE_POSITION = 9;
 /** 应用可注入关闭结果，保存成功仍留在编辑页供核对服务端同步。 */
 export interface FormationRequest {
     /** 关闭结果；只有本次出战草稿被服务端确认后才返回true。 */
@@ -56,6 +72,8 @@ export class FormationView extends BaseView<FormationRequest> {
     @property([Button]) elementButtons: Button[] = [];
     /** 九个旧版站位组件，开放状态来自服务器。 */
     @property([FormationSlotView]) slots: FormationSlotView[] = [];
+    /** 覆盖九槽的透明输入区域，由同一个节点接收跨格手势直到结束。 */
+    @property(UITransform) slotInput: UITransform | null = null;
     /** 复用旧阵型按钮，循环已解锁阵型。 */
     @property(Button) formationButton: Button | null = null;
     /** 当前草稿阵型编号，不推算解锁。 */
@@ -72,8 +90,8 @@ export class FormationView extends BaseView<FormationRequest> {
     private roster = HeroRosterModel.instance;
     /** 模块保存进度，窗口关闭不销毁。 */
     private saves = FormationSaveModel.instance;
-    /** 未保存草稿仅属于当前页面。 */
-    private selected: string | null = null;
+    /** 当前手指的站位手势，屏幕取消、重绘或关闭时恢复头像并清空。 */
+    private slotGesture: SlotGesture | null = null;
     /** 页面关闭后不再绘制。 */
     private closed = true;
     /** 当前页面草稿，绝不回写权威Model。 */
@@ -100,7 +118,7 @@ export class FormationView extends BaseView<FormationRequest> {
         const fields = { closeButton: this.closeButton, confirmButton: this.confirmButton, titleLabel: this.titleLabel,
             tipLabel: this.tipLabel, countLabel: this.countLabel, heroScroll: this.heroScroll,
             formationButton: this.formationButton, formationLabel: this.formationLabel, filterMark: this.filterMark,
-            panelBounds: this.panelBounds };
+            panelBounds: this.panelBounds, slotInput: this.slotInput };
         for (const [name, value] of Object.entries(fields)) {
             if (!value) throw new Error("FormationView.prefab 缺失绑定：" + name);
         }
@@ -139,7 +157,7 @@ export class FormationView extends BaseView<FormationRequest> {
         this.saves = saves;
     }
 
-    /** 绑定内容按钮；共享模态空白关闭走onClose的草稿取消回调，不重复绑定背景。 */
+    /** 绑定内容按钮及站位输入区，关页时由本页统一解除监听。 */
     private bindControls(): void {
         const bind = (button: Button, run: () => void) => {
             button.node.on(Button.EventType.CLICK, run);
@@ -153,7 +171,20 @@ export class FormationView extends BaseView<FormationRequest> {
             this.paint();
             this.heroScroll!.toStart();
         }));
-        this.slots.forEach(slot => bind(slot.button!, () => this.remove(slot.position)));
+        this.slots.forEach(slot => bind(slot.button!, () => this.removeSlot(slot.position)));
+
+        // Creator 在触摸结束点离开接收节点时改派取消事件，必须由整块区域接收手势。
+        const input = this.slotInput!.node;
+        input.on(Node.EventType.TOUCH_START, this.onSlotTouchStart, this);
+        input.on(Node.EventType.TOUCH_MOVE, this.onSlotTouchMove, this);
+        input.on(Node.EventType.TOUCH_END, this.onSlotTouchEnd, this);
+        input.on(Node.EventType.TOUCH_CANCEL, this.onSlotTouchCancel, this);
+        this.ownListener(() => {
+            input.off(Node.EventType.TOUCH_START, this.onSlotTouchStart, this);
+            input.off(Node.EventType.TOUCH_MOVE, this.onSlotTouchMove, this);
+            input.off(Node.EventType.TOUCH_END, this.onSlotTouchEnd, this);
+            input.off(Node.EventType.TOUCH_CANCEL, this.onSlotTouchCancel, this);
+        });
     }
 
     /** 资产事件只读取Model；同版本名册变化保留草稿，外部保存则载入最新版本。 */
@@ -169,7 +200,6 @@ export class FormationView extends BaseView<FormationRequest> {
             const option = current.options?.find(row => row.formationId === this.state.formationId);
             this.state = { ...this.state, heroes: this.roster.snapshot.heroes,
                 unlockedIds: current.unlockedIds, openPositions: option?.openPositions ?? this.state.openPositions };
-            if (!this.state.heroes.some(hero => hero.id === this.selected)) this.selected = null;
             this.paint();
         }
     }
@@ -226,8 +256,9 @@ export class FormationView extends BaseView<FormationRequest> {
             formationId: this.state.formationId!, slots: this.state.lineup.slots.map(slot => ({ ...slot })) });
     }
 
-    /** 待确认操作保持参数只读但允许明确同步重试；静态布局归Prefab，列表只setData。 */
+    /** 重绘前结束在途拖动；待确认的草稿保持只读，仍允许明确同步重试。 */
     public render(state: FormationState): void {
+        this.cancelSlotGesture();
         this.state = state;
         this.tipLabel!.string = state.message;
         this.countLabel!.string = "已上阵 " + state.lineup.slots.length + " / " + (state.openPositions?.length ?? 0);
@@ -266,9 +297,9 @@ export class FormationView extends BaseView<FormationRequest> {
         });
     }
 
-    /** 列表派发当前英雄实例；草稿可编辑性仍由toggle统一判断。 */
+    /** 列表派发当前英雄实例，按草稿决定上阵或撤下。 */
     private onSelect(hero: FormationState["heroes"][number]): void {
-        this.toggle(hero.id);
+        this.toggleHero(hero.id);
     }
 
     /** 通知应用关闭，避免重复回调；不代表任何战斗或挑战已经启动。 */
@@ -279,26 +310,25 @@ export class FormationView extends BaseView<FormationRequest> {
         this.args?.complete(confirmed);
     }
 
-    /** 释放视口监听和临时绘制引用；只清理本页按钮与事件，模块继续接收回执。 */
+    /** 释放视口监听与拖动预览，模块继续接收已提交的保存回执。 */
     public onClose(): void {
         ccView.off("canvas-resize", this.fit, this);
         this.closed = true;
+        this.cancelSlotGesture();
         this.submitted = null;
         EventDispatcher.instance.offTarget(this);
-        this.selected = null;
         if (!this.done) {
             this.done = true;
             this.args?.complete(false);
         }
     }
     /** 仅从唯一快照复制草稿；未同步允许位置时不开放编辑。 */
-    private reload(message = "点击英雄，再点击阵位；未选英雄时点击阵位可撤下"): void {
+    private reload(message = "点击英雄上阵或撤下，拖动阵位中的英雄换位"): void {
         const snapshot = this.roster.snapshot, current = snapshot.mainFormation;
         const option = current?.options?.find(row => row.formationId === current.formationId);
         if (!current || !option) {
             this.state = {...this.state, busy: true, message: "阵型配置尚未同步，请等待连接恢复"};
         } else {
-            this.selected = null;
             this.state = {
                 heroes: snapshot.heroes, formationId: current.formationId,
                 openPositions: option.openPositions, unlockedIds: current.unlockedIds,
@@ -313,39 +343,191 @@ export class FormationView extends BaseView<FormationRequest> {
         return !this.closed && !this.state.busy && !this.saves.snapshot.pending && this.saves.snapshot.acknowledged === null;
     }
 
-    /** 选中同一英雄可取消，所选实例必须仍归当前角色所有。 */
-    private toggle(id: string): void {
-        if (!this.editable() || !this.state.heroes.some(hero => hero.id === id)) return;
-        this.selected = this.selected === id ? null : id;
-        this.state = {...this.state, message: this.selected ? "已选英雄，请点击目标阵位" : "已取消选择"};
+    /** 已上阵则撤下，否则填入编号最小的开放空位；同模板不能重复出阵。 */
+    private toggleHero(id: string): void {
+        const hero = this.state.heroes.find(row => row.id === id);
+        if (!this.editable() || !hero) {
+            return;
+        }
+        const slots = this.state.lineup.slots;
+        const deployed = slots.find(slot => slot.heroId === id);
+        if (deployed) {
+            this.removeSlot(deployed.position);
+            return;
+        }
+        const deployedIds = new Set(slots.map(slot => slot.heroId));
+        if (this.state.heroes.some(row => row.templateId === hero.templateId && deployedIds.has(row.id))) {
+            UIManager.instance.toast("相同英雄不能重复上阵");
+            return;
+        }
+        const openPositions = [...(this.state.openPositions ?? [])].sort((left, right) => left - right);
+        const position = openPositions.find(candidate => slots.every(slot => slot.position !== candidate));
+        if (position === undefined) {
+            UIManager.instance.toast("没有空闲阵位");
+            return;
+        }
+        this.updateDraftSlots([...slots, { position, heroId: id }]);
+    }
+
+    /** 撤下当前草稿指定位置的英雄，空位与关闭位置无需刷新。 */
+    private removeSlot(position: number): void {
+        const slots = this.state.lineup.slots;
+        if (!this.editable() || !this.state.openPositions?.includes(position)
+                || !slots.some(slot => slot.position === position)) {
+            return;
+        }
+        this.updateDraftSlots(slots.filter(slot => slot.position !== position));
+    }
+
+    /** 放到开放空位时移动，放到开放占用位时交换；无效放置不改草稿。 */
+    private moveSlot(from: number, to: number): void {
+        const open = this.state.openPositions;
+        const slots = this.state.lineup.slots;
+        if (!this.editable() || from === to || !open?.includes(from) || !open.includes(to)
+                || !slots.some(slot => slot.position === from)) {
+            return;
+        }
+        this.updateDraftSlots(slots.map(slot => {
+            if (slot.position === from) {
+                return { ...slot, position: to };
+            }
+            if (slot.position === to) {
+                return { ...slot, position: from };
+            }
+            return slot;
+        }));
+    }
+
+    /** 站位调整只刷新草稿和格子，写入继续由确认按钮提交。 */
+    private updateDraftSlots(slots: FormationState["lineup"]["slots"]): void {
+        this.state = {
+            ...this.state,
+            lineup: { ...this.state.lineup, slots },
+            message: "草稿已修改，点击确认保存",
+        };
         this.paint();
     }
 
-    /** 放置会移除原位置和同模板草稿项；无选中英雄时仅撤下，服务器仍执行最终校验。 */
-    private remove(position: number): void {
-        if (!this.editable() || !this.state.openPositions?.includes(position)) return;
-        const chosen = this.state.heroes.find(hero => hero.id === this.selected);
-        const slots = this.state.lineup.slots.filter(slot => slot.position !== position &&
-            (!chosen || this.state.heroes.find(hero => hero.id === slot.heroId)?.templateId !== chosen.templateId));
-        if (chosen) slots.push({position, heroId: chosen.id});
-        this.selected = null;
-        this.state = {...this.state, lineup: {...this.state.lineup, slots}, message: "草稿已修改，点击确认保存"};
-        this.paint();
+    /** 用真实屏幕坐标命中开放阵位，跟随 Creator 的相机、缩放和视口适配。 */
+    private slotAt(event: EventTouch): FormationSlotView | undefined {
+        const point = event.getLocation();
+        return this.slots.find(slot => slot.button!.interactable && slot.node.activeInHierarchy
+            && slot.node.getComponent(UITransform)!.hitTest(point, event.windowId));
     }
 
-    /** 切换已解锁阵型，关闭位置仅从草稿移除；不提前写服务器。 */
+    /** 将指针投到输入区本地坐标，供头像跟随和移动阈值共用。 */
+    private slotPointer(event: EventTouch): Vec3 {
+        const point = event.getUILocation();
+        return this.slotInput!.convertToNodeSpaceAR(new Vec3(point.x, point.y, 0));
+    }
+
+    /** 只跟踪在开放且已占用阵位上按下的第一根手指。 */
+    private onSlotTouchStart(event: EventTouch): void {
+        const touchId = event.getID();
+        if (touchId === null || !this.editable() || this.slotGesture) {
+            return;
+        }
+        const slot = this.slotAt(event);
+        if (!slot || !this.state.lineup.slots.some(row => row.position === slot.position)) {
+            return;
+        }
+        const portrait = slot.portrait!;
+        this.slotGesture = {
+            touchId,
+            slot,
+            start: this.slotPointer(event),
+            originalPosition: portrait.position.clone(),
+            originalSibling: portrait.getSiblingIndex(),
+            previewStart: null,
+        };
+    }
+
+    /** 越过点击阈值后将原头像提到阵位上方跟随手指，拖动中不修改站位。 */
+    private onSlotTouchMove(event: EventTouch): void {
+        const gesture = this.slotGesture;
+        if (!gesture || gesture.touchId !== event.getID()) {
+            return;
+        }
+        const offset = this.slotPointer(event).subtract(gesture.start);
+        const portrait = gesture.slot.portrait!;
+        if (!gesture.previewStart) {
+            if (Math.hypot(offset.x, offset.y) < SLOT_DRAG_THRESHOLD) {
+                return;
+            }
+            portrait.setParent(this.slotInput!.node, true);
+            gesture.previewStart = portrait.position.clone();
+        }
+        portrait.setPosition(gesture.previewStart.clone().add(offset));
+    }
+
+    /** 先恢复头像布局，再按命中的站位处理移动；在原位短按仍可撤下。 */
+    private onSlotTouchEnd(event: EventTouch): void {
+        const gesture = this.slotGesture;
+        if (!gesture || gesture.touchId !== event.getID()) {
+            return;
+        }
+        const target = this.slotAt(event);
+        this.cancelSlotGesture();
+        if (!target) {
+            return;
+        }
+        if (gesture.previewStart) {
+            this.moveSlot(gesture.slot.position, target.position);
+        } else if (gesture.slot === target) {
+            this.removeSlot(gesture.slot.position);
+        }
+    }
+
+    /** 引擎取消或拖出输入区时直接回位，无论触点下方是否有格子。 */
+    private onSlotTouchCancel(event: EventTouch): void {
+        if (this.slotGesture?.touchId === event.getID()) {
+            this.cancelSlotGesture();
+        }
+    }
+
+    /** 还原头像在原槽位的父节点与坐标；重复调用不产生副作用。 */
+    private cancelSlotGesture(): void {
+        const gesture = this.slotGesture;
+        this.slotGesture = null;
+        if (!gesture?.previewStart || !gesture.slot.isValid || !gesture.slot.portrait?.isValid) {
+            return;
+        }
+        const portrait = gesture.slot.portrait;
+        portrait.setParent(gesture.slot.node, true);
+        portrait.setPosition(gesture.originalPosition);
+        portrait.setSiblingIndex(gesture.originalSibling);
+    }
+
+    /** 按新旧开放普通格的相同序位迁移草稿，保留空位；助战只在仍可用时留在原位。 */
     private cycleFormation(): void {
-        if (!this.editable()) return;
+        const currentPositions = this.state.openPositions;
+        if (!this.editable() || !currentPositions) {
+            return;
+        }
         const options = this.roster.snapshot.mainFormation?.options || [];
         const next = options[(options.findIndex(row => row.formationId === this.state.formationId) + 1) % options.length];
-        if (!next) return;
-        this.selected = null;
+        if (!next) {
+            return;
+        }
+
+        const previousOrdinary = currentPositions.filter(position => position !== ASSISTANCE_POSITION)
+            .sort((left, right) => left - right);
+        const nextOrdinary = next.openPositions.filter(position => position !== ASSISTANCE_POSITION)
+            .sort((left, right) => left - right);
+        const assistance = currentPositions.includes(ASSISTANCE_POSITION) && next.openPositions.includes(ASSISTANCE_POSITION)
+            ? ASSISTANCE_POSITION : undefined;
+        const slots: FormationState["lineup"]["slots"] = [];
+        for (const slot of this.state.lineup.slots) {
+            // 旧版按开放格序位迁移，空位也占一个序位，不能只对已上阵的英雄重新排队。
+            const position = slot.position === ASSISTANCE_POSITION
+                ? assistance : nextOrdinary[previousOrdinary.indexOf(slot.position)];
+            if (position !== undefined) {
+                slots.push({ ...slot, position });
+            }
+        }
         this.state = {
             ...this.state, formationId: next.formationId, openPositions: next.openPositions,
-            lineup: {
-                ...this.state.lineup,
-                slots: this.state.lineup.slots.filter(slot => next.openPositions.includes(slot.position))
-            },
+            lineup: { ...this.state.lineup, slots },
             message: "已切换阵型草稿，请确认保存"
         };
         this.paint();

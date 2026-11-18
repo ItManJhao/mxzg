@@ -1,6 +1,6 @@
 /**
  * 主城地图特效：序列帧轮播 + spine（dx / chuanghu）。
- * 序列挂到中景的父节点上、画在近景板之后，避免被建筑图标和近景盖成静帧。
+ * 特效绘制在地图底板上方，建筑入口由地图外的预制体层单独绘制。
  * 帧按序号往下要，缺一张就停，不再一次等 64 张不存在的帧。
  * dx 播不出来时改播 portrait 光球序列。失败打 GameLog。
  */
@@ -119,8 +119,8 @@ export class CityEffectPlayUtils {
     }
 
     /**
-     * 近景板是中景的后绘制兄弟，中景里的特效会被它和后挂的建筑图标挡住。
-     * 把特效挂到同一视差父节点的最后，每拍用中景的本地坐标换算世界坐标，滚动仍跟着中景。
+     * 将特效绘制在视差地图底板之后，每拍用配置所在图层换算世界坐标，滚动仍跟着原层。
+     * 建筑入口层在视差地图外绘制，特效的排序只影响地图内部。
      */
     private static followLayer(node: Node, layer: Node, x: number, y: number, placeBottomLeft: PlaceFn): () => void {
         const host = layer.parent;

@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新：2026-11-17。当前范围与进度见[开发进度](development-progress.md)，字段与时序见[通信契约](network-contract.md)。
+更新于 2026-11-18。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -21,7 +21,7 @@ Model 保存唯一状态，Controller明确处理业务协议并更新Model，Vi
 
 ## 基类与监听归属
 
-BaseModel只管理本地展示版本和业务清空，不保存roleKey、凭证或服务端版本；BaseController管理模块初始化、无参重置和监听。连接旧回包由GameSocketClient及AccountService认证交付隔离，整包角色归属与持久revision由AssetStateBinding校验。身份变化时先调用RemakeApp.clearRolePages：结束过渡、同步关闭旧功能页及弹窗、取消在途打开、清理闲置页，再重置模块与提交新快照。HeroInfo/HeroSkill不保存owner，不比较旧账号；closed、paintVersion和选中实例仍负责页面自身生命周期。关页不销毁业务模块。
+BaseModel只管理本地展示版本和业务清空，不保存roleKey、凭证或服务端版本；BaseController管理模块初始化、无参重置和监听。连接旧回包由GameSocketClient及AccountService认证交付隔离，整包角色归属与持久revision由AssetStateBinding校验。身份变化时先调用RemakeApp.clearRolePages：同步关闭旧功能页及弹窗、取消在途打开、清理闲置页，再重置模块与提交新快照。HeroInfo/HeroSkill不保存owner，不比较旧账号；closed、paintVersion和选中实例仍负责页面自身生命周期。关页不销毁业务模块。
 
 ## 单一全局事件与数据顺序
 
@@ -65,13 +65,13 @@ ConfirmView是common中的完整通用Prefab，文案和确认/取消由调用�
 
 ## 战报显示依赖与冻结统计
 
-BattleReplayUtils仍完整校验原PB及HP/实例，再输出不可变步骤；当前九种服务端移除原因显式接纳，耗尽必须关联同阶段同目标后续damage，未知原因不跳过。wire的耗尽→damage顺序不变；BattleReplayPlayer只为表现建立单技能局部依赖：同实例Buff保序、同目标命中保序、耗尽等对应命中表现完成，不同目标仍并行。回合无技能的耗尽同样处理；死亡移除沿既有全技能屏障，致死增益仍等待对应目标，取消/重播由本页generation阻止迟到展示。没有新战斗Model或数值计算器。
+BattleReplayUtils.parse 一次完整校验原PB及HP/实例，返回不可变的步骤、名册和冻结名称。战场装配、结算页与技能目录需要多个字段时直接取这份结果；当前九种服务端移除原因显式接纳，耗尽必须关联同阶段同目标后续damage，未知原因不跳过。wire的耗尽→damage顺序不变；BattleReplayPlayer只为表现建立单技能局部依赖：同实例Buff保序、同目标命中保序、耗尽等对应命中表现完成，不同目标仍并行。回合无技能的耗尽同样处理；死亡移除沿既有全技能屏障，致死增益仍等待对应目标，取消/重播由本页generation阻止迟到展示。没有新战斗Model或数值计算器。
 
 BattleReplayPreview将type3/5/6/7/9的独立帧生命周期与角色动作完成分开：帧按attack_time挂出，type5仍保留原帧计数和飞行时长，均由原战场持有并到寿命自删。角色只等待自己的动作、配置延迟及必要去返移动，不为了投射飞行或帧播完延长动作；关场沿原生命周期取消，独立帧异常沿同一失败入口停止整场且不重复报告。1050100本例角色与投射名义上均在0.8秒完成，不能把通用完成边界修正说成本例已自然观测到延长。结构与静态检查不代替浏览器迟到/失败注入或真机验证，也不代表其他旧动作类型已全量等价。
 
 BattleStatisticsUtils/BattleDetailLayer只读战报冻结的输出、实际承伤和治疗，不从移除或飘字重算，不改变旧护盾统计口径。独立DevelopmentPreview只在本机PREVIEW中复用LoadingPlan启动配置及原配置包，提前结束正常登录装配；固定只读PB资源服务不连接玩家库。只读结果也传原units，测试复用既有openStatistics方法，不另造统计页或奖励链。技能台每次从Creator扩展自动资源宿主扫描真实PB，按实际出手与当前解析匹配演示，已移除人工技能/等级白名单；它不生成战报或签署验收，独立测试输出被清理后会显示暂无演示。限定证据和时序/样本限制见[本批检查](validation/shield-depleted-review-20261117.json)、[本机记录](validation/shield-depleted-preview-20261117.json)；BRULE-002旧数值疑点仍保留。
 
-正式挑战按负责人最新要求在出场特效播放到60%时开始模型渐入：先准备全部资源、将模型opacity设0，再播放ZDKS原stand；通过AFTER_UPDATE读取实际TrackEntry的trackTime/(animationEnd-animationStart)，到70%立即启动双方出场，ZDKS自身保留到真正onComplete，不再固定等待2.5秒。双方全部15帧出场FX同时播放，每帧按0.05秒等待，各单位真实第9帧的完整等待结束后释放60%进度gate并启动自己的1秒fade。9/15对应名义0.45秒，不能另起独立墙钟0.45秒提前渐入；逐帧调度变慢时等待真实进度。FX保留完整15帧，0.75秒仅为名义时长，不按墙钟裁短；ZDKS和双方所有单位的FX与fade均完成后才显示HP、播放原战报，名义出场段为max(0.75,0.45+1)=1.45秒。资源未就绪不开始出场，关闭仍沿原等待/Tween取消清理，idleEncounter不改。原版从FX起点并行淡入、前批“FX结束后再fade”及本次60%分别是不同规则，不互相冒充；前批[七阶段画面](validation/chapter-player-entry-preview-20261117.json)仅证明当时实现。当前九阶段取消、真实第9完整帧触发及挂机不变专项已通过；仅专项为每个FX帧等待增加0.02秒调度，证明独立0.45秒已到时仍不fade，真实第9帧0.63秒结束才开始，完整15帧仍播放至1.05秒。gate归原waits集合释放，并以战场代次拒绝stop后的迟到Tween。最终严格类型退出0及本批6项专项通过；Creator已确认新进度gate编译生效，并用原真实第2关PB只读重放：每方fade开始时当前出场图为0基frame9，即前9帧完整结束；FX与半透明模型重叠、FX消失后仍在fade，全部完成后模型255且HP可见，七项观察断言通过。实际采样和暂停静帧不作为精确墙钟或性能基准；没有再challenge/claim，不扩大为全部关卡或真机验收。
+正式挑战先准备资源并隐藏模型、血条。ZDKS 按实际轨道到70%时衔接双方出场，原开始特效继续播完。出场各15帧，前9个完整帧结束后触发1秒模型渐入。开始特效、出场和渐入都结束后显示血条并播放战报。关闭沿战场作用域取消，挂机遇敌保留自己的进场流程。逐帧观察与适用范围见 [本机记录](validation/skill-audit-opening-navigation-review-20261117.json)。
 
 胜利页MainVictoryRewards采用Prefab顶锚列表：本轮将节点y从130改为260，content.y从130改为0，保持600×260视口与SuperScroll布局，避免首行越过列表顶端或标题区域，不另加运行时补偿。VS对阵栏和倍数栏保留LayerHud/MatchInfo、TopBar原路径，由Prefab新增ChapterInfoDock保存底部Widget（bottom=150、水平居中），原两个Chapter*Anchor移入其下，当前y为264.5/369.5。BattlePageUtils.alignChapterInfo在正式战场打开/resize的可见区回调内、等比缩放之后更新Widget目标为MainChapterBattleView，再将锚点worldPosition转回HUD局部坐标；不移动角色、血条或技能特效。本轮相关专项和最终严格类型通过，真实7项奖励已在实际挑战及原参数只读窗口核对：scroll.y=260、content.y=0、anchorY=1，列表底275高于确认按钮顶219。Creator的Nokia C2与iPhone14Pro机型选项下均实读VS底426.5、Panel顶418.5，间距8、完整显示；这是预览尺寸采样，不是两台真机。实际确认关闭返回主城后pages=1、residents/cached/opening/intents/modalActive均0，观察器清理、引擎恢复且视口override重置，过程无warn/error。运行观察与暂停静帧分开记录，不签收自然成长、发布包或其他机型；本轮不构建、不提交推送，见[显示调整记录](validation/battle-display-adjustment-review-20261117.json)。
 
@@ -199,9 +199,11 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 
 主城底栏在新功能页准备成功后直接切换，旧功能页同步关闭监听并交回原缓存或销毁；准备失败仍保留原可见页面。PageTransitionUtils、PageSlideUtils及其位移、缓动、过渡取消状态已删除，视口布局不再保留动画中跳过居中的特判。主城根和共用顶底栏继续保留，页面准备意图与350毫秒慢开提示仍归HomeFeatureNavigation。
 
+`UILayer` 规定同一宿主从底到顶为 `Page → Battle → Hud → Popup → Dialog → Guide → System → Toast`。`Page` 走页面栈，其他层由 `hostId` 选择宿主。同一宿主内只在本层置顶，多个宿主按场景节点树绘制。主线战场使用 `Battle` 和原战场宿主，通用确认使用 `Dialog`。`Guide` 用于覆盖业务界面的引导，`System` 用于应当盖在引导上方的系统提示。
+
 弹窗只在页面注册的ViewSpec设置modal，不再在各Prefab添加蒙版或ModalLayer绑定。省略modal表示不拦截外部；`{mask:false,closeOnOutside:true}`使用透明拦截；`{mask:true,closeOnOutside:true}`显示共享蒙版并点击空白关闭。closeOnOutside可独立设为false，只阻挡外部点击。实际面板背景保留BlockInputEvents，不能给只承载坐标的大节点盲加阻挡。叠窗始终共用一份节点，颜色不叠加。
 
-2026-11-16补齐弹窗归属：详情这类随父页关闭的单实例Popup使用`UIManager.openChild(owner, ctor, args)`。父页结束显示期时，只取消自己仍拥有的在途意图或真实子窗；同id后来由其他父页或普通`open`接管后，旧父页关闭不能误关它。父页仍打开但切分类、切详情类型时，可调用`closeChildren(owner)`清理本页仍持有的子窗。框架在同id共享准备中应用末次参数，调用方禁止再用`open(...).then(view => view.runOpen(args))`重复开页或覆盖后来选择。
+`Popup`、`Dialog`、`Guide` 和 `System` 都可使用共享模态。随父页关闭的单实例窗口使用 `UIManager.openChild(owner, ctor, args)`。父页结束显示期时，取消自己仍拥有的在途意图或真实子窗。同 id 可由其他父页或普通 `open` 接管。父页仍打开但切分类、切详情类型时，可调用 `closeChildren(owner)` 清理本页仍持有的子窗。框架在同 id 共享准备中应用末次参数，调用方直接把参数交给 `openChild` 或 `open`。
 
 关闭登记复用`BaseView.onViewClose`和既有EventScope：子窗关闭或转移归属时提前解除父页登记，父页关闭时清理只执行一次。已经关闭的父页发起迟到打开会在接管前被拒绝，不能抢走其他页面的窗口；旧加载及finally也不能撤销后来意图。这些状态只处理界面生命周期，不保存账号、资产或联网恢复。战报统计继续独立`open`，不随结算倒计时关闭；BattleDetailLayer将关闭按钮及视口静态绑定放在`onBind`，重复展示只换冻结参数。实现与检查范围见[叠窗生命周期记录](validation/overlay-lifecycle-review-20261116.json)，本机长断线及多重连结果以该记录为准，不由源码检查提前签收。
 
@@ -254,6 +256,8 @@ SessionSnapshotService 在数据库角色锁内读取完整钱包、背包和版
 资源通过统一目录与作用域管理；界面布局以Prefab和SuperScroll Inspector为准，不用字符串散落或运行时兜底掩盖缺资源。
 
 ## 原项目架构核查（2026-11-02）
+
+以下为2026-11-02核查快照，涉及当时的代码、布局和未实施建议。当前入口按本页前半部分和 [实施路线](restructuring-plan.md) 查阅。
 
 本节为当时只读核查与差异快照，包含已退役的 HTTP 基线及当时建议；当前实现与优先级以本文前部、通信契约和进度为准。
 

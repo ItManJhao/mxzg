@@ -160,10 +160,12 @@ function checkSources(): void {
   assert(chrome.indexOf("layoutCityTab") >= 0, "new chrome keeps the selected scale after fit");
 }
 
+/** 核对视差底板、特效和入口仍由预制体绑定，入口绘制在地图之后。 */
 function checkHubPrefab(): void {
   const uuid = metaUuid("client/assets/scripts/features/city/ui/CityHubView.ts.meta");
   const data = loadPrefab("client/assets/bundles/module/home/prefabs/CityHubView.prefab");
   const comp = component(data, classId(uuid)) as {
+    node?: { __id__?: number };
     parallax?: { __id__?: number };
     mapNodes?: { __id__?: number }[];
     spots?: { __id__?: number }[];
@@ -177,8 +179,29 @@ function checkHubPrefab(): void {
   const spots = (comp.spots || []).map((ref) => nodeName(data, ref));
   assert(spots.indexOf("spot-main_summon") >= 0, "summon building is bound");
   assert(spots.indexOf("spot-main_smith_shop") >= 0, "smith building is bound");
+  for (const ref of comp.spots || []) {
+    assert(parentName(data, ref) === "BuildingEntries", "building is rendered in the entrance layer: " + nodeName(data, ref));
+  }
+  const layers = nodeAt(data, comp.node)._children?.map((ref) => nodeName(data, ref)) || [];
+  const entries = layers.indexOf("BuildingEntries");
+  assert(entries > layers.indexOf("CityParallax") && entries < layers.indexOf("BtnMainline"),
+    "entrances render above the map and below the mainline button");
   assert(nodeName(data, comp.btnMainline) === "BtnMainline", "mainline button is bound");
   assert((comp.effects || []).length >= 1, "city effects are bound");
+}
+
+/** 入口绘制层固定图标比例，位置仍以配置指定的近景或远景图层为准。 */
+function checkEntryLayout(): void {
+  const positions = { main: [
+    { idx: 1, atom: "main_shop", zorder: 2, x: 100, y: 120 },
+    { idx: 2, atom: "main_summon", zorder: 3, x: 300, y: 420 },
+  ] };
+  for (const viewH of [720, 1280, 1440]) {
+    const [shop, summon] = CityMapLayoutUtils.buildCityMapLayout(positions, null, null, { viewW: 640, viewH }).buildings;
+    assert(shop.parent === "spr_map_bg2" && shop.x === 100 && shop.y === 120, "shop follows its configured layer");
+    assert(summon.parent === "spr_map_bg3" && summon.x === 300 && summon.y === 420, "summon follows its configured layer");
+    assert(shop.scale === 0.9 && summon.scale === 0.9, "entrances keep their on-screen size as the map scales");
+  }
 }
 
 function checkChromePrefab(): void {
@@ -234,4 +257,4 @@ function checkWideTabSize(): void {
   assert(CityTabUtils.cityTabLayout(360, 3, true).scale < base.scale, "窄屏仍按可用宽度缩小");
   assert(CityTabUtils.cityTabLayout(960, 6, false).x > CityTabUtils.cityTabLayout(640, 6, false).x, "宽屏按钮间距仍展开");
 }
-checkFramework(); checkHubPrefab(); checkChromePrefab(); checkSources(); checkTabSelection(); checkWideTabSize(); console.log("city-view passed: bindings, framework isolation, narrow viewport coverage, tab scaling and selection");
+checkFramework(); checkHubPrefab(); checkEntryLayout(); checkChromePrefab(); checkSources(); checkTabSelection(); checkWideTabSize(); console.log("city-view passed: bindings, entrance layering, framework isolation, narrow viewport coverage, tab scaling and selection");

@@ -7,7 +7,7 @@ import { GameLog } from "../../core/GameLog";
 import { PrefabLoader } from "../assets/PrefabLoader";
 import { UIOpenLogUtils } from "./UIOpenLogUtils";
 import { BaseView } from "./BaseView";
-import { UILayer } from "./UILayer";
+import { UILayer, UI_LAYER_ORDER, UI_WINDOW_LAYERS } from "./UILayer";
 import { ViewClass, ViewSpec, UIRegistry } from "./UIRegistry";
 import { ViewCloseUtils } from "./ViewCloseUtils";
 import { ModalLayer } from "./ModalLayer";
@@ -65,7 +65,7 @@ export class OpenCancelled extends Error {
  * 正式界面的统一开关，Page走应用注入的导航，其他层挂到登记的宿主。
  * 预制没装上之前不进页面栈，避免留下可点的空壳。
  * 每次打开带一个意图。加载期间切走，旧意图作废，不能再压栈。
- * Popup根据ViewSpec共享一份模态节点；实例关闭后恢复下层配置，不叠加多份颜色。
+ * 常驻层在同宿主按层级绘制；窗口层按ViewSpec共享一份模态节点，关闭后恢复下层配置。
  */
 export class UIManager {
     /** 识别界面打开被替换或取消的正常退出，不把其他异常误当取消。 */
@@ -156,7 +156,7 @@ export class UIManager {
 
     /**
      * 打开已注册视图；先等@UIRegistry.view.prepare的配置，再按唯一地址取得Prefab，Page意图有效后才交给导航。
-     * Popup按ViewSpec共享模态。失败会清理本次实例并提示；取消仅清理，保留当前页面。
+     * 窗口层按ViewSpec共享模态。失败清理本次实例并提示，取消时保留当前页面。
      */
     async open<T>(ctor: ViewClass<T>, args?: T): Promise<BaseView<T>> {
         const spec = UIRegistry.viewSpecOf(ctor);
@@ -208,13 +208,13 @@ export class UIManager {
     }
 
     /**
-     * 打开随父页显示期关闭的单实例Popup；普通open或其他父页后来打开同id时接管归属。
+     * 打开随父页显示期关闭的单实例窗口；普通open或其他父页后来打开同id时接管归属。
      * 父页在加载完成前关闭会立即撤销自己的意图；同id在途打开只挂载一次，并采用末次参数。
      */
     public openChild<T>(owner: BaseView<unknown>, ctor: ViewClass<T>, args?: T): Promise<BaseView<T>> {
         const spec = UIRegistry.viewSpecOf(ctor);
-        if (!spec || spec.layer !== UILayer.Popup || spec.allowMultiple || !spec.hostId) {
-            return Promise.reject(new Error("子窗口必须登记为有宿主的单实例Popup"));
+        if (!spec || !UI_WINDOW_LAYERS.has(spec.layer) || spec.allowMultiple || !spec.hostId) {
+            return Promise.reject(new Error("子窗口必须登记为有宿主的单实例窗口"));
         }
         return this.openResident(ctor, spec, args, owner);
     }
@@ -826,10 +826,19 @@ export class UIManager {
         this.disposeResident(page);
     }
 
-    /** 重复打开时真正移到同父级最上方，再将共享模态放到它下面。 */
+    /** 打开或重开时提升到同宿主本层顶部，高层窗口保持在上。 */
     private raiseResident(page: ResidentPage): void {
-        if (page.host.parent?.isValid) {
-            page.host.setSiblingIndex(page.host.parent.children.length - 1);
+        const parent = page.host.parent;
+        if (parent?.isValid) {
+            const rank = UI_LAYER_ORDER.indexOf(page.spec.layer);
+            const nextLayer = parent.children.findIndex(sibling => {
+                const resident = this.residents.get(sibling) ?? this.pendingResident.get(sibling);
+                return !!resident && UI_LAYER_ORDER.indexOf(resident.spec.layer) > rank;
+            });
+            // setSiblingIndex先从旧位置移除节点，目标在旧位置之后时要扣除旧占位。
+            const target = nextLayer < 0 ? parent.children.length - 1
+                : nextLayer - Number(page.host.getSiblingIndex() < nextLayer);
+            page.host.setSiblingIndex(target);
         }
         page.order = this.nextResidentOrder++;
         this.refreshModal();
@@ -837,7 +846,7 @@ export class UIManager {
 
     /** 按真实绘制次序寻找最高模态；更上层的普通窗口保持在遮罩上方。 */
     private refreshModal(): void {
-        const candidates = this.residentPages().filter(page => page.spec.layer === UILayer.Popup
+        const candidates = this.residentPages().filter(page => UI_WINDOW_LAYERS.has(page.spec.layer)
             && page.spec.modal && !page.cancelled && page.host.isValid && page.host.activeInHierarchy && page.host.parent?.isValid);
         candidates.sort((left, right) => this.compareResidentOrder(left, right));
         const owner = candidates[candidates.length - 1];

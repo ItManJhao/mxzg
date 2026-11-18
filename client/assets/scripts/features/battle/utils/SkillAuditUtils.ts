@@ -63,15 +63,14 @@ export class SkillAuditUtils {
 
     /**
      * 完整校验真实战报及本场动作，再提取实际出手的英雄/技能/等级。
-     * 整场存在不支持的动作时抛出，由开发目录边界记录并跳过，不伪造可播放状态。
+     * 战报步骤和单位身份取自同一次校验；整场存在不支持的动作时由开发目录记录失败并跳过。
      */
     public static inspectReplay(fixture: string, bytes: Uint8Array,
         config = GameConfig.instance): readonly SkillAuditEvidence[] {
         if (!/^[a-z0-9-]+\.pb$/.test(fixture)) {
             throw new Error("演示战报文件名无效");
         }
-        const steps = BattleReplayUtils.decode(bytes);
-        const units = BattleReplayUtils.units(bytes);
+        const { steps, units } = BattleReplayUtils.parse(bytes);
         const rows = (config.getFileByPath("config/buff") as { rows: readonly AuditBuffRow[] }).rows;
         for (const step of steps) {
             if (!["presentation", "buff.upsert", "damage", "recovery"].includes(step.kind)) {

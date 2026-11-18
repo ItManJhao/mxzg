@@ -31,7 +31,7 @@ export interface SkillReplayFocus {
 }
 
 export class BattleReplayPreview {
-    /** 同步读取已安装配置并装载美术资源，开始骨骼到70%时出场、出场特效到60%时渐入模型，全部完成才显示HP并播放战报。
+    /** 一次解析战场装配所需的战报数据，读取已安装配置并装载美术资源，开始骨骼到70%时出场、出场特效到60%时渐入模型，全部完成才显示HP并播放战报。
      * 只读结果传原冻结名册；遇敌可借行军骨骼，关闭先归还再销毁，onIdleDeath不是奖励事件。 */
     public static async open(
         parent: Node,
@@ -47,9 +47,7 @@ export class BattleReplayPreview {
         retainedIdle?: MainChapterIdleDisplay,
         onIdleDeath?: (world: Readonly<Vec3>) => void,
     ): Promise<() => void> {
-        const steps = BattleReplayUtils.decode(bytes);
-        const units = BattleReplayUtils.units(bytes);
-        const names = BattleReplayUtils.names(bytes);
+        const { steps, units, names } = BattleReplayUtils.parse(bytes);
         const config = GameConfig.instance.getFileByPath("config/buff");
         const rows = (config as { rows: BuffRow[] }).rows;
         const elementPaths = ["hero/ui/hero-icon_elem-1/spriteFrame", "hero/ui/hero-icon_elem-2/spriteFrame",

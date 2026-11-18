@@ -8,6 +8,6 @@
 - `stop-remake-backend.bat`：仅停止已核对属于本仓库的服务，不清库。
 - `build-remake-h5.bat` / `start-remake-h5.bat`：保留的按需操作入口；当前默认只用 Creator 预览，不自动构建。
 
-Creator 打开 `client/assets/scenes/Remake.scene`。开发登录、选服、主城及已接入功能全部调用新 HTTP API。
+Creator 打开 `client/assets/scenes/Remake.scene` 并预览。开发登录、选服和其他已接通的游戏业务统一使用 WebSocket + Protobuf。
 
 旧 Java 8 服务、WebSocket 桥及对应启停脚本已经删除。详细行为见 [本机工作流](../docs/local-remake-workflow.md)。

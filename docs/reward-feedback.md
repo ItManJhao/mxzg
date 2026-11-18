@@ -12,7 +12,7 @@
 
 旧挂机的3005点击链立即播放`collect-N`，不等待成功回包；5002到达后独立打开共用奖励窗，3005回复只读领取时间。动作后1.5秒排`normal-0`及两秒刷新守卫都不推迟弹奖。旧最终零实际奖励不发5002，但点击动画已经开始；冷3004只恢复当前计时，不补播收取。新版保留动画与通用奖励并行，改为匹配回执和统一状态双确认后才交付成功表现，属于明确的可靠性差异，不宣称点击时序完全相同。详见[旧收取审计](validation/idle-collect-legacy-audit-20261116.json)。
 
-主线升级赠钻旧链须另行区分：RoleExpProcessor先调用RoleService.addExp，逐级累计离开等级的mainlevel.reward；升级附赠另以SLIENT发放，再由2014交RoleUpgradeCtr展示升级前后等级及合并奖励。3002首通回包只含first_reward，不含这笔附赠；前三关顺序新角色样本分别产生10、0、10升级钻石，第二关151钻属于基础首通。chapterextrareward是3008独立里程碑领取，首项第15关，旧胜利页的相关文字只是下一目标提示，不能当作前三关已到账奖励。新版已恢复该提示的完整同源表、V27权威已领集合和原show_rich只读区域，见[里程碑记录](validation/chapter-milestone-review-20261116.json)；它仍不是本次到账奖励，不开放独立3008领取。完整路径和行号见[本批旧源码审计](validation/chapter-reward-legacy-audit-20261116.json)。
+主线升级赠钻旧链须另行区分：RoleExpProcessor先调用RoleService.addExp，逐级累计离开等级的mainlevel.reward；升级附赠另以SLIENT发放，再由2014交RoleUpgradeCtr展示升级前后等级及合并奖励。3002首通回包只含first_reward，不含这笔附赠；前三关顺序新角色样本分别产生10、0、10升级钻石，第二关151钻属于基础首通。chapterextrareward是3008独立里程碑领取，首项第15关，旧胜利页的相关文字只是下一目标提示，不能当作前三关已到账奖励。新版已恢复该提示的完整同源表、V27权威已领集合和原show_rich只读区域，见[里程碑记录](validation/chapter-milestone-review-20261116.json)；胜利页文字是下一目标。独立里程碑已接入新的领取与回执，详见 [里程碑领取](main-chapter-milestone.md)。完整路径和行号见[本批旧源码审计](validation/chapter-reward-legacy-audit-20261116.json)。
 
 旧RoleService的2014独立于通用5002模式：内部升级赠钻虽然使用拼写为`SLIENT`的静默发放，真实升级仍发送2014并开升级页。新版通用`SILENT`继续保持不展示，和该旧独立推送语义存在明确差异，不能声称所有静默经验来源已等价恢复。当前生产只完整接通主线与新挂机两个真实角色经验来源：主线通过原actual恢复显式POPUP，挂机首次成功通过POPUP通知并由双确认恢复；尚无生产SILENT/TIPS发奖调用。其他暂停简化链写`game_campaign.role_exp`，开发GM也不等于真实角色经验来源。依据见[升级源码审计](validation/role-upgrade-legacy-audit-20261116.json)。
 

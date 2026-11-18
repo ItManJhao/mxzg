@@ -134,7 +134,17 @@ async function main() {
             fs.copyFileSync(frame, path.join(directory, "frame.pb"));
         }
         assert.deepEqual([...scanReplayDirectory(directory, codec).keys()], ["first.pb"], "无效/其他消息/目录不进入资源目录");
-        host = await startReplayResourceServer({ projectRoot: root, directory, codec, port: 0 });
+        let decodeCalls = 0;
+        const countedCodec = {
+            decode(value) {
+                decodeCalls++;
+                return codec.decode(value);
+            },
+            verify(value) {
+                return codec.verify(value);
+            },
+        };
+        host = await startReplayResourceServer({ projectRoot: root, directory, codec: countedCodec, port: 0 });
         const port = host.address.port;
         assert.equal(host.address.address, "127.0.0.1");
         const catalog = await request(port, "/skill-audit.json", { origin: "http://localhost:7456" });
@@ -148,8 +158,10 @@ async function main() {
         assert.equal(parsed.schemaVersion, 1);
         assert.deepEqual(parsed.replays[0].skills, skills);
         assert.match(parsed.replays[0].sha256, /^[a-f0-9]{64}$/);
+        decodeCalls = 0;
         const original = await request(port, "/first.pb", { origin: "http://127.0.0.1:7456" });
         assert.deepEqual(original.bytes, bytes, "旧显式PB地址仍返回原二进制");
+        assert.equal(decodeCalls, 1, "单份下载只校验目标战报，其他文件不重复解码");
         fs.writeFileSync(path.join(directory, "new-test-replay.pb"), bytes);
         const refreshed = JSON.parse((await request(port, "/skill-audit.json")).bytes);
         assert.equal(refreshed.replays.length, 2, "新测试战报无需修改宿主或页面白名单");

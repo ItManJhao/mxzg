@@ -601,8 +601,7 @@ async function checkSynchronousCloseBeforeReadyWait(): Promise<void> {
 /** 只替代美术节点与战报输入，取得真实播放器的关闭函数；不启动动画或重写releaseSettlement逻辑。 */
 async function mountReplayCleanup(parent: Node, completed?: (won: boolean) => Promise<void>): Promise<() => void> {
     const originalMount = BattlePageUtils.mountBattlePrefab;
-    const originalDecode = BattleReplayUtils.decode;
-    const originalUnits = BattleReplayUtils.units;
+    const originalParse = BattleReplayUtils.parse;
     const originalAudioEvents = (AudioSource as any).EventType;
     const root = node("LifecycleBattlePage", parent);
     (root as any).position = { x: 0, y: 0, z: 0, clone: () => new Vec3() };
@@ -631,16 +630,14 @@ async function mountReplayCleanup(parent: Node, completed?: (won: boolean) => Pr
     };
     shell.logLabel.addComponent(Label);
     BattlePageUtils.mountBattlePrefab = async () => shell as any;
-    BattleReplayUtils.decode = () => [];
-    BattleReplayUtils.units = () => [];
+    BattleReplayUtils.parse = () => ({ steps: [], units: [], names: { attacker: null, defender: null } });
     (AudioSource as any).EventType = { STARTED: "audio-started" };
     try {
         return await BattleReplayPreview.open(parent, new Uint8Array(), false, undefined,
             undefined, undefined, false, completed);
     } finally {
         BattlePageUtils.mountBattlePrefab = originalMount;
-        BattleReplayUtils.decode = originalDecode;
-        BattleReplayUtils.units = originalUnits;
+        BattleReplayUtils.parse = originalParse;
         (AudioSource as any).EventType = originalAudioEvents;
     }
 }
@@ -650,15 +647,13 @@ async function checkBattleResultOwnership(): Promise<void> {
     await withFixture(async test => {
         const battleSpec = UIRegistry.viewSpecOf(MainChapterBattleView)!;
         const chapterSpec = UIRegistry.viewSpecOf(ChapterEndView)!;
-        const originalUnits = BattleReplayUtils.units;
-        const originalNames = BattleReplayUtils.names;
+        const originalParse = BattleReplayUtils.parse;
         const originalPresented = MainChapterController.instance.markSettlementPresented;
         const stopHost = test.ui.setResidentHost("main-chapter-field", () => test.root);
         let loads = 0;
         let wait: ReturnType<typeof deferred<void>> | null = null;
         // 本例只跳过战报解码和播放器；实际showResult、onClose及框架归属链完整运行。
-        BattleReplayUtils.units = () => report.units as any;
-        BattleReplayUtils.names = () => report.names;
+        BattleReplayUtils.parse = () => ({ steps: [], units: report.units as any, names: report.names });
         UIRegistry.registerView(MainChapterBattleView, {
             ...battleSpec,
             load: async () => Object.assign(new Prefab(), {
@@ -733,8 +728,7 @@ async function checkBattleResultOwnership(): Promise<void> {
             stopHost();
             UIRegistry.registerView(MainChapterBattleView, battleSpec);
             UIRegistry.registerView(ChapterEndView, chapterSpec);
-            BattleReplayUtils.units = originalUnits;
-            BattleReplayUtils.names = originalNames;
+            BattleReplayUtils.parse = originalParse;
             MainChapterController.instance.markSettlementPresented = originalPresented;
         }
     });

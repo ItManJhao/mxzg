@@ -30,7 +30,7 @@ interface MainChapterBattleArgs {
 @UIRegistry.view({
     id: "main-chapter-battle",
     prefab: "bundles/module/battle/prefabs/MainChapterBattleView",
-    layer: UILayer.Popup,
+    layer: UILayer.Battle,
     cache: false,
     allowMultiple: false,
     hostId: "main-chapter-field",
@@ -126,18 +126,19 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
         }
     };
 
-    /** 结果页归本战场持有；下一目标只消费最新快照，父页关闭或窗口被接管后停止旧续段。 */
+    /** 从同一次战报校验取得结果页名册和名称；下一目标使用最新快照，父页关闭或窗口被接管后停止旧续段。 */
     private async showResult(receipt: MainChapterReceipt | null, notice: string): Promise<void> {
         if (this.closed || !this.args || this.resultOpening) {
             return;
         }
         this.resultOpening = true;
         try {
+            const { units, names } = BattleReplayUtils.parse(this.args.report.bytes);
             const result = await UIManager.instance.openChild(this, ChapterEndView, {
                 won: this.finishedWon === true, persistentChapter: true, rewards: receipt?.rewards || [], notice,
                 roleAppearance: MainChapterController.instance.readRoleAppearance(),
-                units: BattleReplayUtils.units(this.args.report.bytes),
-                names: BattleReplayUtils.names(this.args.report.bytes),
+                units,
+                names,
                 experience: receipt?.experience,
                 nextTarget: this.finishedWon === true ? ChapterMilestoneUtils.hint(
                     MainChapterModel.instance.state,

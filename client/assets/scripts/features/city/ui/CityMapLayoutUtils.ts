@@ -74,9 +74,11 @@ export interface CityMapNode {
 export interface CitySpot {
     atom: string;
     label: string;
+    /** 建筑位置随此视差层变化，绘制仍归预制体入口层。 */
     parent: string;
     x: number;
     y: number;
+    /** 相对入口层的图标比例，独立于背景图的缩放。 */
     scale: number;
     /** 按顺序试，缺图就换下一张。 */
     icons: string[];
@@ -420,14 +422,13 @@ export class CityMapLayoutUtils {
             if (!row || !row.atom) {
                 continue;
             }
-            const scaleOf = row.zorder === 4 ? skyScale : mapScale;
             buildings.push({
                 atom: row.atom,
                 label: CityMapLayoutUtils.cityAtomLabel(row.atom),
                 parent: CityMapLayoutUtils.parentForZ(row.zorder),
                 x: row.x,
                 y: row.y,
-                scale: scaleOf === 0 ? 0.9 : (1 / scaleOf) * 0.9,
+                scale: 0.9,
                 icons: CityMapLayoutUtils.buildingIconCandidates(row.atom),
             });
         }

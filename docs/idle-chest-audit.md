@@ -36,7 +36,7 @@
 
 ## 后续产物说明恢复（2026-11-09）
 
-负责人确认展示全部850关，只读展示不改变前三关挑战范围。`ChapterRewardInfoUtils`按旧表顺序投影首通产物、基础与随机产物去重列表；当前全部850关共41种物品，均有物品配置。
+负责人确认展示全部850关，当时只读展示不改变前三关挑战范围。`ChapterRewardInfoUtils`按旧表顺序投影首通产物、基础与随机产物去重列表；当前全部850关共41种物品，均有物品配置。
 
 入口沿用旧`BattlePanelLayer.ccb`的`btn_icon → onRewardInfo`，对应新版面板中央章节图标。`ChapterRewardInfoView`与`ChapterRewardInfoCell`使用独立静态Prefab，纵向关卡/横向产物均用SuperScroll。关卡行全部保留，只有可视行创建物品格；离开可视区域清空图标，避免同时加载数千物品。详情复用只读BagInfoView，隐藏获取跳转，明确不是当前持有数量。
 

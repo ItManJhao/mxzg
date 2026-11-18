@@ -711,8 +711,7 @@ async function checkResultUsesLatestMilestoneProgress(): Promise<void> {
     const previous = { state: model.state, receipt: model.receipt };
     const openChild = UIManager.instance.openChild;
     const ownsChild = UIManager.instance.ownsChild;
-    const units = BattleReplayUtils.units;
-    const names = BattleReplayUtils.names;
+    const parse = BattleReplayUtils.parse;
     const root = new Node("LatestMilestoneResultRoute");
     const page = root.addComponent(MainChapterBattleView) as any;
     const opened: ChapterEndArgs[] = [];
@@ -735,8 +734,11 @@ async function checkResultUsesLatestMilestoneProgress(): Promise<void> {
         model.receipt = historical;
         page.args = { report: { battleId, mission: 1, pending: [], bytes: new Uint8Array() }, onClosed: () => {} };
         page.finishedWon = true;
-        BattleReplayUtils.units = () => [];
-        BattleReplayUtils.names = () => ({ attacker: "历史角色", defender: "历史关卡" });
+        BattleReplayUtils.parse = () => ({
+            steps: [],
+            units: [],
+            names: { attacker: "历史角色", defender: "历史关卡" },
+        });
         UIManager.instance.openChild = (async (owner: unknown, view: unknown, args: ChapterEndArgs) => {
             assert.equal(owner, page);
             assert.equal(view, ChapterEndView);
@@ -762,8 +764,7 @@ async function checkResultUsesLatestMilestoneProgress(): Promise<void> {
         root.destroy();
         UIManager.instance.openChild = openChild;
         UIManager.instance.ownsChild = ownsChild;
-        BattleReplayUtils.units = units;
-        BattleReplayUtils.names = names;
+        BattleReplayUtils.parse = parse;
         Object.assign(model, previous);
     }
 }
@@ -1312,11 +1313,13 @@ async function main(): Promise<void> {
     const originalUiOpen = UIManager.instance.openChild;
     const originalOwnsChild = UIManager.instance.ownsChild;
     const originalUiCloseById = UIManager.instance.closeById;
-    const originalUnits = BattleReplayUtils.units;
-    const originalNames = BattleReplayUtils.names;
+    const originalParse = BattleReplayUtils.parse;
     // 此段只测试结算调度；真实二进制统计由上面的Java→TS互通检查验证。
-    BattleReplayUtils.units = () => ranked;
-    BattleReplayUtils.names = () => ({ attacker: "开战昵称", defender: "羽嘉森林1" });
+    BattleReplayUtils.parse = () => ({
+        steps: [],
+        units: ranked,
+        names: { attacker: "开战昵称", defender: "羽嘉森林1" },
+    });
     const settlementViews: any[] = [];
     const resultArgs: any[] = [];
     const resultCloseRequests: string[] = [];
@@ -1489,8 +1492,7 @@ async function main(): Promise<void> {
         UIManager.instance.openChild = originalUiOpen;
         UIManager.instance.ownsChild = originalOwnsChild;
         UIManager.instance.closeById = originalUiCloseById;
-        BattleReplayUtils.units = originalUnits;
-        BattleReplayUtils.names = originalNames;
+        BattleReplayUtils.parse = originalParse;
         shared.reset();
     }
     const chapterPrefab = JSON.parse(readFileSync("client/assets/bundles/module/battle/prefabs/MainChapterView.prefab", "utf8"));

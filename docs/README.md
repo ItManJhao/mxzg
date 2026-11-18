@@ -1,25 +1,29 @@
 # 文档索引
 
-更新：2026-11-16。新聊天从[交接文档](handoff.md)进入；先读根目录[AGENTS.md](../AGENTS.md)，再按用途查阅。当前进度、下一步和操作入口分别只维护在下表主文档，历史批次不再重复粘贴。
+更新于 2026-11-18。第一次接手先看 [开发交接](handoff.md) 和 [仓库约定](../AGENTS.md)。
 
-| 想了解什么 | 唯一主入口 | 维护边界 |
-|---|---|---|
-| 现在做到哪、哪些还未开放 | [当前进度](development-progress.md) | 当前状态、最新证据及未验证范围；不继续累加长批次日志 |
-| 接下来先做什么 | [实施路线](restructuring-plan.md) | 执行顺序、前置条件及完成标准；不复制当前状态表 |
-| 代码由谁负责、从哪里修改 | [架构](architecture.md)、[开发约定](development-conventions.md) | 当前职责、调用链、生命周期与人工维护方式 |
-| 最终要还原什么 | [产品要求](product-requirements.md) | 长期需求与已确认差异，分期不等于删减 |
-| 为什么这样实现、过去如何验证 | validation/ 中对应批次记录 | 只证明记录当时的版本与范围，不代替当前代码或验收 |
+| 想了解什么 | 去哪里查 |
+|---|---|
+| 现在能用什么，验证做到哪 | [当前进度](development-progress.md) |
+| 接下来做什么，怎样完成 | [实施路线](restructuring-plan.md) |
+| 功能归属、调用和状态生命周期 | [架构](architecture.md)、[开发约定](development-conventions.md) |
+| 长期目标和确认过的设计决定 | [产品要求](product-requirements.md) |
+| 哪次测试做了什么，历史附件怎样取回 | [验收记录](validation/README.md) |
 
 ## 按任务查阅
 
-- 通信与状态：[网络契约](network-contract.md)、[断线后的页面与战斗恢复](reconnect-recovery.md)、[角色](role-data-contract.md)、[背包通信/MVC样板](bag-mvc-maintenance.md)、[库存事件](bag-inventory-events.md)、[英雄](hero-data-contract.md)、[阵容](hero-lineup-contract.md)。
-- 页面与交互：[Prefab规范及弹窗归属](prefab-layout.md)、[通用发奖反馈/奖励窗/确认框](reward-feedback.md)、[战斗布局](battle-prefab-layout.md)、[阵容编辑](formation-ui-authoring.md)、[虚拟列表](super-scroll-authoring.md)。
-- 资源与构建：[三段加载、Bundle与缓存](staged-resource-loading.md)、[自动图集与构建工具](bag-auto-atlas.md)、[配置生成与查询](config-pipeline.md)。
-- 玩法恢复：[挂机规则审计](idle-reward-rules.md)、[挂机输入契约](idle-reward-input-contract.md)、[新挂机累计与领取方案](main-chapter-idle-settlement.md)、[活动控制维护](idle-activity-maintenance.md)、[战斗统计](battle-statistics.md)、[战斗待复验问题](battle-known-issues.md)。
-- 运行与排错：[本机启停](local-remake-workflow.md)、[开发GM](gm-development.md)。
+| 要改的地方 | 说明 |
+|---|---|
+| 通信、状态和恢复 | [网络契约](network-contract.md)、[断线恢复](reconnect-recovery.md)、[角色](role-data-contract.md) |
+| 背包和英雄 | [背包MVC](bag-mvc-maintenance.md)、[库存事件](bag-inventory-events.md)、[英雄](hero-data-contract.md)、[阵容](hero-lineup-contract.md) |
+| 界面、弹窗与列表 | [Prefab与弹窗](prefab-layout.md)、[虚拟列表](super-scroll-authoring.md)、[阵容编辑](formation-ui-authoring.md) |
+| 主线和战斗 | [里程碑](main-chapter-milestone.md)、[战斗布局](battle-prefab-layout.md)、[统计](battle-statistics.md)、[待复验问题](battle-known-issues.md) |
+| 挂机与奖励 | [领取事务](main-chapter-idle-settlement.md)、[收益规则](idle-reward-rules.md)、[活动控制](idle-activity-maintenance.md)、[通用奖励与确认](reward-feedback.md) |
+| 配置、资源和构建 | [配置生成](config-pipeline.md)、[加载与缓存](staged-resource-loading.md)、[自动图集](bag-auto-atlas.md) |
+| 本机运行、GM和技能台 | [本机启停与独立验证](local-remake-workflow.md)、[GM维护](gm-development.md) |
 
-## 历史与证据
+## 记录怎样维护
 
-2026-11-13的完整入口快照保存在[进度历史](validation/development-history-20261113.md)与[旧路线](validation/restructuring-plan-history-20261113.md)。11-14至11-16的实现/本机/发布证据保留在validation原文件，并由[当前进度证据索引](development-progress.md#既有证据索引)和相关专题链接；2026-11-16再次收敛了重复流水及已过时待办。历史中的旧包数量、HTTP方案、已退役类名或“未提交”只表示当时情况，不能据此重新开放功能或判断今天的分支状态。
+开放范围改进度，计划改路线，当前实现改架构或对应专题。资产来源、Prefab 审查和检查输入按工具使用的路径保留。验收记录保留当时的输入、环境、结果和必要图片。只用于历史追溯的大附件从固定 Git 版本取回，入口见 [历史关卡报告](validation/README.md#历史关卡报告)。
 
-[开服规则研究](day60-open-server.md)是旧配置参考，images/保存截图；资源来源、Prefab审查等 JSON 仍供工具和追溯使用，不能因数量多而删除。后续修改对应主文档，历史证据保留，不再新增另一份“当前进度”。
+[开服规则研究](day60-open-server.md) 继续作为历史配置核对依据。

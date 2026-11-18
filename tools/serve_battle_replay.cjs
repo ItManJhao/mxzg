@@ -75,10 +75,29 @@ function replaySkills(bytes, codec) {
     return [...skills.values()].sort((a, b) => a.heroId - b.heroId || a.skillId - b.skillId || a.level - b.level);
 }
 
-/**
- * 每次请求重新读取目标目录，不维护手工白名单，也不沿用已删除或被测试覆盖的旧字节。
- * 缺目录返回空目录；损坏/其他类型PB及符号链接被忽略，URL只能访问本次已解码的完整资源。
- */
+/** 读取并校验一个本机战报。文件消失、损坏、超限或并非普通文件时返回null，下次请求仍可重新检测。 */
+function readReplay(directory, fixture, codec) {
+    if (!REPLAY_NAME.test(fixture)) {
+        return null;
+    }
+    try {
+        const file = path.join(directory, fixture);
+        const stat = fs.lstatSync(file);
+        if (!stat.isFile() || stat.isSymbolicLink() || stat.size < 1 || stat.size > MAX_REPLAY_BYTES) {
+            return null;
+        }
+        const bytes = fs.readFileSync(file);
+        if (bytes.length < 1 || bytes.length > MAX_REPLAY_BYTES) {
+            return null;
+        }
+        return { bytes, skills: replaySkills(bytes, codec) };
+    } catch {
+        // 测试可能正覆盖文件，这次只跳过该文件，不发布半份战报。
+        return null;
+    }
+}
+
+/** 列举当前目录中的真实战报并计算索引。目录不存在时返回空集合，文件变化在下次目录请求时可见。 */
 function scanReplayDirectory(directory, codec) {
     const resources = new Map();
     let names;
@@ -91,21 +110,15 @@ function scanReplayDirectory(directory, codec) {
         throw error;
     }
     for (const fixture of names) {
-        try {
-            const file = path.join(directory, fixture);
-            const stat = fs.lstatSync(file);
-            if (!stat.isFile() || stat.isSymbolicLink() || stat.size < 1 || stat.size > MAX_REPLAY_BYTES) {
-                continue;
-            }
-            const bytes = fs.readFileSync(file);
-            const skills = replaySkills(bytes, codec);
-            resources.set(fixture, {
-                bytes,
-                entry: { fixture, sha256: createHash("sha256").update(bytes).digest("hex"), skills },
-            });
-        } catch {
-            // 测试可能正在原子替换/写入文件；不把半份PB或其他消息登记为演示，下一次请求会重新扫描。
+        const resource = readReplay(directory, fixture, codec);
+        if (!resource) {
+            continue;
         }
+        resources.set(fixture, {
+            fixture,
+            sha256: createHash("sha256").update(resource.bytes).digest("hex"),
+            skills: resource.skills,
+        });
     }
     return resources;
 }
@@ -146,14 +159,15 @@ async function startReplayResourceServer(options = {}) {
                 response.end();
                 return;
             }
-            const resources = scanReplayDirectory(directory, codec);
             if (url === "/skill-audit.json") {
+                const resources = scanReplayDirectory(directory, codec);
                 response.writeHead(200, { ...headers, "Content-Type": "application/json; charset=utf-8" });
                 response.end(JSON.stringify({ service: "mxzg-skill-replay", version: 1, schemaVersion: 1,
-                    replays: [...resources.values()].map(value => value.entry) }));
+                    replays: [...resources.values()] }));
                 return;
             }
-            const resource = resources.get(url.slice(1));
+            // 单份PB校验只依赖该文件，避免浏览器下载每份战报时重新扫描整目录。
+            const resource = readReplay(directory, url.slice(1), codec);
             if (!resource) {
                 response.writeHead(404, headers);
                 response.end();

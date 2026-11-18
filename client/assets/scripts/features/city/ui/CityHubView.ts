@@ -2,7 +2,7 @@
  * 主城地图View：同步读取登录后已安装的GameConfig，装配地图、建筑和特效显示并转交入口点击。
  * 本页不准备或下载配置；页面只持有仓库中只读表的引用，美术资源仍由现有服务按需提供。
  */
-import { _decorator, Button, Color, EventTouch, Node, Sprite, UITransform } from "cc";
+import { _decorator, Button, Color, EventTouch, Node, Sprite, UITransform, Vec3 } from "cc";
 import { GameConfig } from "../../../config/GameConfig";
 import { ErrorUtils } from "../../../core/ErrorUtils";
 import { GameLog } from "../../../core/GameLog";
@@ -309,7 +309,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         this.applyScroll(CityHubView.clamp(this.scroll + dx, this.layout.minScroll, this.layout.maxScroll));
     }
 
-    /** 根据当前视口重算既有地图、建筑和特效的动态布局；未手动拖动时使用默认中心位置。 */
+    /** 根据当前视口重算地图与特效布局，再用滚动位置同步入口。未手动拖动时使用默认中心位置。 */
     private applyVisible(): void {
         if (!this.node || !this.node.isValid || !this.parallax) {
             return;
@@ -349,7 +349,6 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
             }
             this.placeBottomLeft(node, parent, spot.x, spot.y);
         }
-        this.placeBuildings();
         if (this.btnMainline) {
             ViewportLayoutUtils.squeezeWideNode(this.btnMainline, box.width);
         }
@@ -362,21 +361,23 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         this.applyScroll(this.scroll);
     }
 
-    /** 根据当前布局描述把既有建筑节点放回所属图层，不创建或替换建筑。 */
+    /** 将建筑原图层上的左下角坐标换算到世界坐标，入口仍绘制于预制体的独立入口层。 */
     private placeBuildings(): void {
+        const point = new Vec3();
         for (let i = 0; i < this.layout.buildings.length; i++) {
             const spot = this.layout.buildings[i];
             const node = this.views.get("spot-" + spot.atom);
-            const parent = this.views.get(spot.parent);
-            if (!node || !parent) {
+            const layer = this.views.get(spot.parent)?.getComponent(UITransform);
+            if (!node || !layer) {
                 continue;
             }
-            node.setScale(spot.scale, spot.scale, 1);
-            this.placeBottomLeft(node, parent, spot.x, spot.y);
+            point.set(spot.x - layer.width * layer.anchorX, spot.y - layer.height * layer.anchorY, 0);
+            layer.convertToWorldSpaceAR(point, point);
+            node.setWorldPosition(point);
         }
     }
 
-    /** 保存地图横向滚动像素，并按各层视差比例更新既有背景节点。 */
+    /** 保存地图横向滚动像素，先更新各背景层的视差，再同步其对应入口坐标。 */
     private applyScroll(next: number): void {
         if (!this.parallax) {
             return;
@@ -395,6 +396,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
             }
             this.placeBottomLeft(node, this.parallax, CityMapLayoutUtils.layerCoverX(this.scroll, desc.parallax.ratio, desc.parallax.ox, desc.ax, desc.w, desc.scale, this.layout.viewW), desc.parallax.oy);
         }
+        this.placeBuildings();
     }
 
     /** 将配置的左下角坐标换算为父节点锚点坐标，再更新现有节点位置。 */

@@ -2,7 +2,7 @@
 
 本批仅在 Creator 3.8.8 的本机 7456 预览验收，没有构建任何包。实际入口、节点与手工修改方法见 [维护指南](../../super-scroll-authoring.md)。人工编辑体验仍待用户确认。
 
-- `local-acceptance.log` 与 `local-layout.json`：默认源 Prefab 的实际本机流程与布局。包含原生拖动后不弹详情、同分类刷新保留位置/复用节点、重复刷新后只触发一次详情、四分类、选中、兼容 Cell、切页重开；另用独立无业务数据节点检查各布局及空/单/不足/超屏/缩短。
+- 默认源 Prefab 的本机检查覆盖四分类、选中、拖动后不弹详情、刷新保留位置和复用节点、重复刷新只触发一次详情、兼容 Cell 和切页重开。独立无业务数据节点覆盖各布局及空、单条、不满屏、超屏、缩短。查看[布局快照](local-layout.json)及[与本批日志内容完全一致的保留副本](../bag-mvc-20261030/preview-list.log)。
 - `authoring-probe.log` 与 `authoring-probe-layout.json`：临时把源 Prefab 改成 3 列、30/18 间距、左/右/上/下边距 24/24/18/26，等待用户完成导入后在实际预览和切页重开验证。探针只改源布局，不改库存；已经恢复交付默认 4 列。
 - `default-parameters.json`：当前源 Prefab 的预期 Inspector 参数。
 - `project-check.log`：完整 25/25 检查。strict 另外使用安装的 Creator 3.8.8 TypeScript 编译器与真实引擎声明完成。

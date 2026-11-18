@@ -2912,6 +2912,9 @@
         "__id__": 393
       },
       {
+        "__id__": 775
+      },
+      {
         "__id__": 421
       },
       {
@@ -18782,6 +18785,9 @@
     },
     "formationLabel": {
       "__id__": 774
+    },
+    "slotInput": {
+      "__id__": 776
     }
   },
   {
@@ -19265,5 +19271,93 @@
     "node": {
       "__id__": 772
     }
+  },
+  {
+    "__type__": "cc.Node",
+    "_active": true,
+    "_layer": 33554432,
+    "_parent": {
+      "__id__": 117
+    },
+    "_euler": {
+      "__type__": "cc.Vec3",
+      "z": 0,
+      "y": 0,
+      "x": 0
+    },
+    "_id": "",
+    "_lpos": {
+      "__type__": "cc.Vec3",
+      "z": 0,
+      "y": 145,
+      "x": 32
+    },
+    "_objFlags": 0,
+    "_children": [],
+    "_name": "SlotInput",
+    "_mobility": 0,
+    "_lscale": {
+      "__type__": "cc.Vec3",
+      "z": 1,
+      "y": 1,
+      "x": 1
+    },
+    "_components": [
+      {
+        "__id__": 776
+      }
+    ],
+    "_prefab": {
+      "__id__": 778
+    },
+    "__editorExtras__": {},
+    "_lrot": {
+      "__type__": "cc.Quat",
+      "z": 0,
+      "w": 1,
+      "y": 0,
+      "x": 0
+    }
+  },
+  {
+    "_enabled": true,
+    "_name": "",
+    "__prefab": {
+      "__id__": 777
+    },
+    "node": {
+      "__id__": 775
+    },
+    "_contentSize": {
+      "__type__": "cc.Size",
+      "width": 480,
+      "height": 220
+    },
+    "_objFlags": 0,
+    "__type__": "cc.UITransform",
+    "__editorExtras__": {},
+    "_id": "",
+    "_anchorPoint": {
+      "__type__": "cc.Vec2",
+      "x": 0.5,
+      "y": 0.5
+    }
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "Lz1hbm+srWRoyTMaB45EkQ"
+  },
+  {
+    "instance": null,
+    "__type__": "cc.PrefabInfo",
+    "nestedPrefabInstanceRoots": null,
+    "root": {
+      "__id__": 1
+    },
+    "targetOverrides": null,
+    "asset": {
+      "__id__": 0
+    },
+    "fileId": "cHWTmnbiMvYeUKYEL2/C/Q"
   }
 ]

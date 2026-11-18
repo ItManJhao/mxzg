@@ -3,7 +3,7 @@
  * 支持本地及远程Bundle路径；资源持有和下载仍由统一加载器管理。
  */
 import { Prefab } from "cc";
-import { UILayer } from "./UILayer";
+import { UILayer, UI_WINDOW_LAYERS } from "./UILayer";
 import type { BaseView } from "./BaseView";
 /** 页面生命周期适配器；模块BaseController由应用持有，不能交给窗口关闭流程销毁。 */
 export interface ViewController {
@@ -16,7 +16,7 @@ export interface ViewSpec {
     /** 相对 assets，例如 bundles/module/bag/prefabs/BagView。 */
     prefab: string;
     layer: UILayer;
-    /** 仅Page启用限时实例缓存；Popup关闭释放实例，资源缓存仍由共享资源池管理。 */
+    /** 仅Page启用限时实例缓存；常驻层关闭释放实例，资源缓存仍由共享资源池管理。 */
     cache: boolean;
     /** 同一页面能否叠两份。不能时，进行中的打开共用一次，只压一层。 */
     allowMultiple: boolean;
@@ -73,11 +73,11 @@ export class UIRegistry {
         return ctor => { UIRegistry.registerView(ctor, spec); };
     }
 
-    /** 登记页面地址与开关契约；模态参数只用于Popup，复制配置避免调用方随后修改已登记行为。 */
+    /** 登记页面地址与开关契约；窗口层可共用模态，复制配置避免外部修改已登记行为。 */
     public static registerView(ctor: Function, spec: ViewSpec): () => void {
-        if (spec.modal !== undefined && (!spec.modal || spec.layer !== UILayer.Popup || typeof spec.modal.mask !== "boolean"
+        if (spec.modal !== undefined && (!spec.modal || !UI_WINDOW_LAYERS.has(spec.layer) || typeof spec.modal.mask !== "boolean"
             || typeof spec.modal.closeOnOutside !== "boolean")) {
-            throw new Error("模态配置仅支持Popup，并须明确mask和closeOnOutside " + spec.id);
+            throw new Error("模态配置只用于窗口层，并须明确mask和closeOnOutside " + spec.id);
         }
         const stored: ViewSpec = {
             id: spec.id,

@@ -1,5 +1,5 @@
 /**
- * 共享模态行为检查：三种配置、跨窗口恢复、真实实例关闭、准备取消和应用卸载。
+ * 共享模态行为检查：三种配置、窗口层级、跨窗口恢复、真实实例关闭、准备取消和应用卸载。
  * 使用cc替身验证框架生命周期；触摸命中、颜色及实际视口另由本机浏览器复验。
  */
 import assert from "node:assert/strict";
@@ -25,6 +25,9 @@ class DelayedDialog extends DialogFixture { }
 class HiddenDialog extends DialogFixture { }
 class ConfiguredDialog extends DialogFixture { }
 class ConfigCancelledDialog extends DialogFixture { }
+class ConfirmationLayerView extends DialogFixture { }
+class GuideLayerView extends DialogFixture { }
+class SystemLayerView extends DialogFixture { }
 /** 内容尚未准备好时也允许共享模态取消。 */
 class WaitingDialog extends DialogFixture {
     /** 建立未兑现的ready，故意不在onClose中完成，检查框架自己的取消。 */
@@ -61,7 +64,7 @@ async function main(): Promise<void> {
     /** 注入可实例化的Prefab，沿用UIManager的统一实例化与拥有者生命周期。 */
     function register(ctor: ViewClass<unknown>, id: string, modal?: ModalOptions,
         multiple = false, load: () => Promise<Prefab> = async () => new Prefab(), hostId = "popup",
-        prepare?: () => Promise<void>): void {
+        prepare?: () => Promise<void>, layer = UILayer.Popup): void {
         /** 保留加载失败/取消时序，只由Prefab实例化回调构造测试节点。 */
         async function loadFixturePrefab(): Promise<Prefab> {
             const prefab = await load();
@@ -76,7 +79,7 @@ async function main(): Promise<void> {
             });
         }
         UIRegistry.registerView(ctor, {
-            id, prefab: "test/" + id, layer: UILayer.Popup, cache: false, allowMultiple: multiple,
+            id, prefab: "test/" + id, layer, cache: false, allowMultiple: multiple,
             hostId, modal, load: loadFixturePrefab, prepare,
         });
     }
@@ -87,6 +90,12 @@ async function main(): Promise<void> {
     register(MultipleDialog, "shared-multiple", { mask: true, closeOnOutside: true }, true);
     register(WaitingDialog, "shared-waiting", { mask: true, closeOnOutside: true });
     register(FailedDialog, "shared-failed", { mask: true, closeOnOutside: true });
+    register(ConfirmationLayerView, "shared-confirm", { mask: false, closeOnOutside: true },
+        false, undefined, "popup", undefined, UILayer.Dialog);
+    register(GuideLayerView, "shared-guide", { mask: true, closeOnOutside: true },
+        false, undefined, "popup", undefined, UILayer.Guide);
+    register(SystemLayerView, "shared-system", { mask: true, closeOnOutside: false },
+        false, undefined, "popup", undefined, UILayer.System);
 
     const ownSpec = UIRegistry.viewSpecOf(PlainDialog)!;
     const firstBinding = UIRegistry.bindViewRuntime(PlainDialog, { hostId: "first-runtime-host" });
@@ -176,6 +185,48 @@ async function main(): Promise<void> {
     assert.equal(graphics.fillColor.a, 0);
     ui.close(upper);
 
+    // 高层先开，后来的低层弹窗和同层置顶不能夺走高层模态。
+    const confirmation = await ui.open(ConfirmationLayerView);
+    const system = await ui.open(SystemLayerView);
+    const popup = await ui.open(MaskedDialog);
+    const peer = await ui.open(TransparentDialog);
+    assert.deepEqual(root.children, [popup.node, peer.node, confirmation.node, shade, system.node]);
+    assert.equal(await ui.open(MaskedDialog), popup);
+    assert.deepEqual(root.children, [peer.node, popup.node, confirmation.node, shade, system.node],
+        "低层只在同行内置顶，仍在Dialog和System下方");
+    assert.equal(root.getChildByName("SharedModalLayer"), shade);
+    assert.equal(ui.snapshot().modalNodes, 1);
+    shade.emit(Button.EventType.CLICK);
+    assert(ui.isOpen(system) && ui.isOpen(confirmation), "System仍拥有禁止外部关闭的模态");
+    ui.close(system);
+    assert.deepEqual(root.children, [peer.node, popup.node, shade, confirmation.node]);
+    assert.equal(graphics.fillColor.a, 0, "System关闭后恢复Dialog的透明拦截");
+    shade.emit(Button.EventType.CLICK);
+    assert(!ui.isOpen(confirmation) && ui.isOpen(popup));
+    assert.deepEqual(root.children, [peer.node, shade, popup.node]);
+    assert(graphics.fillColor.a > 0, "Dialog关闭后恢复Popup的原蒙版");
+
+    const childConfirmation = await ui.openChild(popup, ConfirmationLayerView);
+    const childSystem = await ui.openChild(childConfirmation, SystemLayerView);
+    assert(ui.ownsChild(popup, childConfirmation) && ui.ownsChild(childConfirmation, childSystem),
+        "Dialog与System复用单实例子窗归属");
+    ui.close(popup);
+    assert(!ui.isOpen(childConfirmation) && !ui.isOpen(childSystem) && ui.isOpen(peer));
+    assert.deepEqual(root.children, [shade, peer.node], "关闭父窗回收两层子窗并恢复原来模态");
+    ui.close(peer);
+
+    const guide = await ui.open(GuideLayerView);
+    const guidedDialog = await ui.open(ConfirmationLayerView);
+    const systemAboveGuide = await ui.open(SystemLayerView);
+    assert.deepEqual(root.children, [guidedDialog.node, guide.node, shade, systemAboveGuide.node],
+        "引导盖在业务确认窗之上，系统提示仍在最前");
+    ui.close(systemAboveGuide);
+    assert.deepEqual(root.children, [guidedDialog.node, shade, guide.node]);
+    shade.emit(Button.EventType.CLICK);
+    assert(!ui.isOpen(guide) && ui.isOpen(guidedDialog));
+    assert.deepEqual(root.children, [shade, guidedDialog.node], "引导退出后复用原遮罩恢复确认窗");
+    ui.close(guidedDialog);
+
     const cancelled = ui.open(WaitingDialog);
     const cancelledResult = assert.rejects(cancelled, UIManager.isOpenCancelled);
     await flush();
@@ -242,7 +293,7 @@ async function main(): Promise<void> {
     assert.equal(createdNodes.slice(createdAt).filter(node => node.name === "SharedModalLayer").length, 1,
         "整个堆叠与恢复过程只创建过一份节点");
     assert.throws(() => UIRegistry.registerView(PlainDialog, { id: "bad-modal", prefab: "test", layer: UILayer.Page,
-        cache: false, allowMultiple: false, modal: { mask: true, closeOnOutside: true } }), /仅支持Popup/);
+        cache: false, allowMultiple: false, modal: { mask: true, closeOnOutside: true } }), /只用于窗口层/);
     const standalone = new UIManager();
     standalone.setResidentHost("popup", () => root);
     const independent = await standalone.open(MaskedDialog);
@@ -251,7 +302,7 @@ async function main(): Promise<void> {
     assert.equal(standalone.releaseUnusedModal(), true, "未安装导航的独立预览也能释放闲置节点");
     assert.equal(standalone.releaseUnusedModal(), false);
     root.destroy();
-    console.log("PASS shared modal: 3 modes, one node, stacking, instances, cancel, activity and unload");
+    console.log("PASS shared modal: 3 modes, one node, window layers, child instances, cancel, activity and unload");
 }
 
 void main().catch(error => {

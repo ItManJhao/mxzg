@@ -302,15 +302,31 @@ function idleReplay(index = 850): any {
     return report;
 }
 
-/** 通用场景接受规范全局idx及任意有效名册，旧具名样本仍严格，不放松结构、数值和事件规则。 */
+/** 检查完整解析一次交付三个冻结结果，兼容旧名称缺失，并保留所有场景、名册和事件校验。 */
 function genericReplay(): void {
     for (const index of [1, 3, 4, 21, 850, 0xffffffff]) {
         for (const prefix of ["chapter:lineup", "audit:lineup"]) {
-            const report = replay(index, prefix);
-            assert.equal(BattleReplayUtils.units(bytes(report)).length, 5);
-            assert.equal(BattleReplayUtils.decode(bytes(report)).filter(step => step.kind === "damage").length, 3);
+            const parsed = BattleReplayUtils.parse(bytes(replay(index, prefix)));
+            assert.equal(parsed.units.length, 5);
+            assert.equal(parsed.steps.filter(step => step.kind === "damage").length, 3);
         }
     }
+    const named = replay();
+    named.attackerName = "";
+    named.defenderName = "冻结对手";
+    const namedBytes = bytes(named);
+    const parsed = BattleReplayUtils.parse(namedBytes);
+    assert.deepEqual(parsed.names, { attacker: "", defender: "冻结对手" });
+    assert(Object.isFrozen(parsed) && Object.isFrozen(parsed.steps) && Object.isFrozen(parsed.units) && Object.isFrozen(parsed.names));
+    assert.deepEqual(BattleReplayUtils.decode(namedBytes), parsed.steps);
+    assert.deepEqual(BattleReplayUtils.units(namedBytes), parsed.units);
+    assert.deepEqual(BattleReplayUtils.names(namedBytes), parsed.names);
+    delete named.attackerName;
+    assert.equal(BattleReplayUtils.parse(bytes(named)).names.attacker, null);
+    named.units[2].finalHp = 1;
+    const invalidNamed = bytes(named);
+    assert.throws(() => BattleReplayUtils.units(invalidNamed), /最终血量/);
+    assert.throws(() => BattleReplayUtils.names(invalidNamed), /最终血量/);
     const full = replay();
     full.units = [1, 2].flatMap(faction => Array.from({ length: 8 }, (_, index) => ({
         unitId: index + 1 + (faction === 2 ? 8 : 0), faction, templateId: 10101001,

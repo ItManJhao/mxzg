@@ -32,7 +32,7 @@ const { ccclass, property } = _decorator;
 @UIRegistry.view({
     id: "confirm",
     prefab: "bundles/module/common/prefabs/ConfirmView",
-    layer: UILayer.Popup,
+    layer: UILayer.Dialog,
     hostId: "remake-modal",
     cache: false,
     allowMultiple: false,
