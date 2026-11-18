@@ -23,7 +23,7 @@ export interface NavEntry {
 const BOTTOM_TABS: NavEntry[] = [
     { id: "city", title: "主城", blurb: "主城" },
     { id: "hero", title: "英雄", gateId: "main_hero", blurb: "英雄列表、详情与升级" },
-    { id: "summon", title: "召唤", gateId: "main_summon", blurb: "单抽与十连。新英雄进名册，重复转碎片" },
+    { id: "summon", title: "召唤", gateId: "main_summon", blurb: "普通免费首抽" },
     { id: "smith", title: "铁匠铺", gateId: "main_smith_shop", blurb: "强化新手短剑，消耗金币和强化石" },
     { id: "plays", title: "玩法", blurb: "按主线等级或开服天开启" },
 ];

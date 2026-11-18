@@ -6,6 +6,7 @@ import { BaseModel } from "../../framework/BaseModel";
 import type { IdleClaimProgress } from "./data/MainChapterIdleClaimData";
 import type { RewardExperienceGain } from "../reward/data/RewardData";
 import type { MilestoneClaimProgress } from "./data/MainChapterMilestoneData";
+import type { FirstRewardClaimProgress, MainChapterFirstRewardProgress } from "./data/MainChapterFirstRewardData";
 
 /** 服务端权威进度；空待领奖表示没有未领取战报。 */
 export interface MainChapterState {
@@ -16,6 +17,8 @@ export interface MainChapterState {
     readonly challengeLimit?: number;
     /** 最新权威已领集合；旧快照缺失为undefined，不能按通关数或历史回执补为0。 */
     readonly milestoneProgress?: MainChapterMilestoneProgress;
+    /** 独立通关奖励已领和可领集合；缺扩展仍为未同步。 */
+    readonly firstRewardProgress?: MainChapterFirstRewardProgress;
 }
 
 /** 服务端读取真实持久集合后交付的里程碑进度，不表示已开放领取。 */
@@ -154,6 +157,10 @@ export class MainChapterModel extends BaseModel {
     public milestoneClaim: MilestoneClaimProgress = Object.freeze({
         phase: "idle", rewardId: null, receipt: null, message: "",
     });
+    /** 独立通关奖励原关卡的确认进度；权威资格只在上方state。 */
+    public firstRewardClaim: FirstRewardClaimProgress = Object.freeze({
+        phase: "idle", chapter: null, receipt: null, busy: false,
+    });
 
     /** 应用切换身份清空业务状态；不承担网络连接代次判断。 */
     protected onReset(): void {
@@ -171,5 +178,6 @@ export class MainChapterModel extends BaseModel {
         this.message = "";
         this.idleClaim = Object.freeze({ phase: "idle", pending: null, receipt: null, message: "" });
         this.milestoneClaim = Object.freeze({ phase: "idle", rewardId: null, receipt: null, message: "" });
+        this.firstRewardClaim = Object.freeze({ phase: "idle", chapter: null, receipt: null, busy: false });
     }
 }

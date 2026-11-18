@@ -391,7 +391,7 @@ class MySqlIT {
         var p=player();campaign.initialize(p.token());var battle=campaign.challenge(p.token(),UUID.randomUUID().toString());
         assertTrue(battle.won());campaign.claim(p.token(),battle.id());String hero=heroes.list(p.token()).getFirst().id();
         var request=new com.funsgamex.mxzg.hero.HeroLevelService.Request(UUID.randomUUID().toString(),1);
-        Callable<com.funsgamex.mxzg.hero.HeroLevelService.Result> upgrade=()->levels.upgrade(p.token(),hero,request);
+        Callable<com.funsgamex.mxzg.hero.HeroLevelService.Receipt> upgrade=()->levels.upgrade(p.token(),hero,request);
         var repeated=overlap("hero-upgrade-same-request",List.of(upgrade,upgrade));
         assertEquals(repeated.getFirst(),repeated.getLast());assertEquals(3947,roles.current(p.token()).gold());
         var jobs=new ArrayList<Callable<Integer>>();

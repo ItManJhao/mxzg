@@ -8,7 +8,7 @@
 
 ## 客户端统一采用模块级 MVC
 
-Model 保存唯一状态，Controller明确处理业务协议并更新Model，View展示和转交操作。背包作为标准模块；当前维护登录、角色、背包、英雄只读展示、主线阵容保存、连续第1～20关挑战/结算、挂机演出及首个15关独立里程碑领取。local挂机新领取默认开启，全局默认仍关闭；英雄升级、穿脱、召唤和快速战斗等未恢复入口仍关闭。
+Model 保存唯一状态，Controller处理业务协议并更新 Model，View 展示和转交操作。背包是标准模块。当前维护登录、角色、背包、英雄展示及普通升级、主线阵容、连续第1～20关挑战与结算、挂机、独立通关奖励及第15关里程碑领取。英雄可通过免费首抽和精英碎片合成获得。挂机新领取只在 local 默认启用。装备穿脱、强化进阶、后续招募和快速战斗入口待恢复。
 
 - BagController：初始化时登记三个实际消息，onNotify → onInventoryState → BagModel → BagEvent，不持有凭证、查询接口或资产写队列。
 - BagModel：唯一背包状态，分别保存普通堆叠、期限物品和精灵独立实例，整批校验/冻结后计算差异；不联网、不依赖View，不按itemId合并精灵。
@@ -295,7 +295,7 @@ S 下 `mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/` 简写为 `GS/`�
 | 收包分发 | S: GS/infrastructure/netty/PlayerActor.java:38 | 协议号查 HandlerExecutor、登录/开放条件校验、Protobuf parseFrom，再执行处理器 |
 | 在线上下文 | S: GS/infrastructure/netty/PlayerContext.java / ContextManager.java | 上下文创建 Akka typed actor 串行处理；在线角色查找、定向/群体广播、离线处理 |
 | 登录 | S: GS/module/role/handler/LoginHandler.java:81 | 1001 登录、旧连接下线通知、注册在线角色；1004 心跳/时间同步 |
-| 英雄升级 | S: GS/module/hero/handler/HeroHandler.java:365 | 4018 校验拥有权、升级级数与上限，消耗资源并返回等级；支持配置范围内多级，新版当前只做一级 |
+| 英雄升级 | S: GS/module/hero/handler/HeroHandler.java:365 | 4018 校验拥有权、升级级数与上限，消耗资源并返回等级。新版普通升级支持配置范围内逐级累计消耗 |
 | 聊天 | S: GS/module/chat/handler/ChatHandler.java:73 | 6001 发送；频道、等级、禁言和频率条件；6003/6007 历史、6009 未读 |
 | 公会聊天 | S: GS/module/chat/executor/ClanSendExecutor.java:71 | 服务端确定公会，按成员/黑名单向在线上下文发送 6001；内存维护最多 100 条记录，不代表可靠离线消息存储 |
 | 公会状态 | S: GS/module/clan/service/ClanService.java:569 | 成员集合 writeSome 广播；申请列表向有管理权限成员推送；ClanHandler 有创建/申请/审批/退出/职务/捐献 |

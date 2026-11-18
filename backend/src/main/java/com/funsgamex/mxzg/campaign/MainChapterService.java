@@ -1,6 +1,6 @@
 /**
  * 配置化主线持久闭环：鉴权挑战、不可变Protobuf战报、通关待领奖和事务幂等结算。
- * 供主线WebSocket协议调用，登录快照统一恢复通关及里程碑已领集合，不调用旧简化CampaignBattle。
+ * 供主线WebSocket协议调用，登录快照统一恢复通关、里程碑与独立通关奖励状态。
  */
 package com.funsgamex.mxzg.campaign;
 
@@ -36,6 +36,8 @@ public class MainChapterService {
     private final JdbcTemplate jdbc;
     /** 同源关卡门槛及进度转换。 */
     private final MainChapterRules rules;
+    /** 从通关和已领记录投影独立通关奖励的当前资格。 */
+    private final MainChapterFirstRewardRules firstRewards;
     /** 服务端持久队伍评分，缺失属性仍保留标记。 */
     private final HeroMainPowerService powers;
     /** 当前完整技能战斗执行链，不使用客户端胜负。 */
@@ -54,18 +56,34 @@ public class MainChapterService {
      * @param assetRevision 最新统一资产版本，历史回执中的值不能覆盖当前版本。
      * @param milestoneProgress 真实已领集合；旧历史回执缺字段时保留null，不补造空集。
      * @param challengeLimit 当前服务端新挑战上限；旧回执未记录时为null，不限制历史恢复。
+     * @param firstRewardProgress 独立通关奖励状态；旧历史回执缺失时为null。
      */
     public record State(int maxCleared, String pendingBattleId, long assetRevision,
-                        MilestoneProgress milestoneProgress, Integer challengeLimit) {
+                        MilestoneProgress milestoneProgress, Integer challengeLimit, FirstRewardProgress firstRewardProgress) {
         /** 旧手工历史状态保留缺失，不从当前配置补造当时的开放范围。 */
         public State(int maxCleared, String pendingBattleId, long assetRevision, MilestoneProgress milestoneProgress) {
-            this(maxCleared, pendingBattleId, assetRevision, milestoneProgress, null);
+            this(maxCleared, pendingBattleId, assetRevision, milestoneProgress, null, null);
         }
 
         /** 当前范围必须为正数；已有通关可高于新范围，不因此抹除历史进度。 */
         public State {
             if (challengeLimit != null && challengeLimit < 1) {
                 throw new IllegalArgumentException("主线新挑战范围无效");
+            }
+        }
+    }
+
+    /** 按绝对关卡保存已领和可领集合，互不重叠，不包含战斗结算或里程碑。 */
+    public record FirstRewardProgress(int schemaVersion, List<Integer> claimedChapters, List<Integer> eligibleChapters) {
+        /** 冻结集合并拒绝不一致持久状态，不能从当前通关重算已领。 */
+        public FirstRewardProgress {
+            claimedChapters = List.copyOf(claimedChapters);
+            eligibleChapters = List.copyOf(eligibleChapters);
+            var all = new HashSet<>(claimedChapters);
+            if (schemaVersion != 1 || all.size() != claimedChapters.size()
+                    || claimedChapters.stream().anyMatch(chapter -> chapter <= 0)
+                    || eligibleChapters.stream().anyMatch(chapter -> chapter <= 0 || !all.add(chapter))) {
+                throw new IllegalArgumentException("独立通关奖励集合版本或关卡无效");
             }
         }
     }
@@ -106,12 +124,13 @@ public class MainChapterService {
     /** 领域战报返回值：完整Protobuf与冻结元信息，不绑定当前英雄属性。 */
     public record Battle(String id, Details details, GameProtocol.BattleReplay replay) {}
 
-    /** 注入现有服务，持久化与资产修改共享同一个Spring事务。 */
+    /** 注入战斗、资产及奖励进度入口，读取和写入共享同一个Spring事务。 */
     public MainChapterService(SessionService sessions, RoleRepository roles, JdbcTemplate jdbc,
             MainChapterRules rules, HeroMainPowerService powers, HeroLineupBattleService battles,
             MainChapterRewardService rewards, AssetSyncService sync, ObjectMapper mapper,
-            MainChapterIdleStateRepository idleStates) {
+            MainChapterIdleStateRepository idleStates, MainChapterFirstRewardRules firstRewards) {
         this.idleStates = idleStates;
+        this.firstRewards = firstRewards;
         this.sessions = sessions;
         this.roles = roles;
         this.jdbc = jdbc;
@@ -330,17 +349,24 @@ public class MainChapterService {
         return role;
     }
 
-    /** 持锁读取主线与排序冻结的真实里程碑集合；空查询明确未领，不插行、不改版本或猜测通关领取。 */
+    /** 持锁读取通关与两种独立已领集合，按原配置投影可领关卡，读取不改变角色资产。 */
     private State state(String role) {
         long revision = roles.revision(role);
         var claimedIds = jdbc.queryForList("SELECT reward_id FROM game_main_chapter_milestone WHERE role_id=? ORDER BY reward_id",
                 Integer.class, role);
         var milestones = new MilestoneProgress(1, claimedIds);
-        var states = jdbc.query("SELECT max_cleared,pending_battle_id FROM game_main_chapter WHERE role_id=?",
-            (row, index) -> new State(row.getInt(1), row.getString(2), revision, milestones, rules.challengeLimit()), role);
-        var result = states.isEmpty() ? new State(0, null, revision, milestones, rules.challengeLimit()) : states.getFirst();
-        new MainChapterRules.Progress(result.maxCleared(), result.pendingBattleId() != null);
-        return result;
+        var claimedChapters = jdbc.queryForList("SELECT chapter_id FROM game_main_chapter_first_reward WHERE role_id=? ORDER BY chapter_id",
+                Integer.class, role);
+        var progress = jdbc.query("SELECT max_cleared,pending_battle_id FROM game_main_chapter WHERE role_id=?",
+                (row, index) -> new State(row.getInt(1), row.getString(2), revision, milestones, rules.challengeLimit(),
+                        firstRewards.progress(row.getInt(1), rules.challengeLimit(), claimedChapters)), role);
+        if (progress.isEmpty()) {
+            return new State(0, null, revision, milestones, rules.challengeLimit(),
+                    firstRewards.progress(0, rules.challengeLimit(), claimedChapters));
+        }
+        var current = progress.getFirst();
+        new MainChapterRules.Progress(current.maxCleared(), current.pendingBattleId() != null);
+        return current;
     }
 
     /** 校验存储格式、归属和内容摘要，再解析二进制；损坏时拒绝发奖，不回退重算。 */

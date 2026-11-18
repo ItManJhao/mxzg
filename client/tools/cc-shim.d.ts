@@ -129,6 +129,8 @@ declare module "cc" {
   }
 
   export class EditBox extends Component {
+    /** 输入框实际节点事件，不在业务代码硬写兼容字符串。 */
+    static EventType: { TEXT_CHANGED: string; EDITING_DID_ENDED: string };
     static InputFlag: { DEFAULT: number; PASSWORD: number };
     static InputMode: { ANY: number; SINGLE_LINE: number };
     string: string;

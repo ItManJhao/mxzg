@@ -262,7 +262,7 @@ class GameSocketTest {
         var player = player();
         try (var peer = new Peer()) {
             peer.authenticate(player.session().accessToken());
-            assertEquals("UNKNOWN_MESSAGE", peer.request("hero.level.upgrade", Map.of()).path("error").path("code").asString());
+            assertEquals("UNKNOWN_MESSAGE", peer.request("hero.evolve", Map.of()).path("error").path("code").asString());
             peer.connectionId = "obsolete";
             assertEquals("SESSION_REPLACED", peer.request("session.sync", Map.of()).path("error").path("code").asString());
         }

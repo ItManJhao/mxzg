@@ -22,7 +22,8 @@ export class HomeController {
         const unbind = this.view.bind({
             logout: () => this.service.logout(), heroAvailable: !!this.openFeature,
             availableFeatures: this.openFeature ? ["bag", "hero", "battle", "mainline"] : [], openFeature: id => {
-                if ((id === "battle" || id === "mainline" || id === "hero" || id === "bag" || id === "city" || id === "role-profile") && this.openFeature?.(id)) return;
+                if ((id === "battle" || id === "mainline" || id === "hero" || id === "bag" || id === "city"
+                    || id === "role-profile" || id === "main_summon") && this.openFeature?.(id)) return;
                 this.view.showNotice(id === "city" ? "" : "该模块暂停，待登录和背包完善后按原项目重做");
             }
         });

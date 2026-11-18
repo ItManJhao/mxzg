@@ -1,5 +1,5 @@
 /**
- * 重做版应用装配入口，装配登录、角色、背包、英雄只读状态、主线阵容和当前主线闭环。
+ * 重做版应用装配入口，装配登录、角色、背包、英雄名册和升级、主线阵容及结算。
  * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
  */
 import { CityMapService } from "../../features/city/ui/CityMapService";
@@ -8,6 +8,7 @@ import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssetsUtils"
 import {AccountComposition} from "./AccountComposition";
 import {ToastManager} from "../../framework/ui/ToastManager";
 import {MainChapterController} from "../../features/battle/MainChapterController";
+import { MainChapterFirstRewardController } from "../../features/battle/MainChapterFirstRewardController";
 import {ApplicationPages} from "./ApplicationPages";
 import {ApplicationResources} from "./ApplicationResources";
 import {DevelopmentPreview} from "./DevelopmentPreview";
@@ -27,6 +28,10 @@ import { GameLog } from "../../core/GameLog";
 import { EventDispatcher } from "../../framework/EventDispatcher";
 import {BagController} from "../../features/bag/BagController";
 import {HeroRosterController} from "../../features/hero/HeroRosterController";
+import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
+import { HeroLevelController } from "../../features/hero/HeroLevelController";
+import { HeroLevelData } from "../../features/hero/data/HeroLevelData";
+import type { HeroLevelRequest, HeroLevelReceipt, HeroLevelStatus } from "../../features/hero/data/HeroLevelData";
 import {RemakeHomeView} from "../../features/home/ui/RemakeHomeView";
 import { OpenCancelled, UIManager } from "../../framework/ui/UIManager";
 import {GameSocketClient} from "../../platform/GameSocketClient";
@@ -45,11 +50,27 @@ import { IdleClaimJournal } from "./IdleClaimJournal";
 import { MainChapterMilestoneBinding } from "./MainChapterMilestoneBinding";
 import { MilestoneClaimJournal } from "./MilestoneClaimJournal";
 import { RewardBinding } from "./RewardBinding";
+import { FirstSummonBinding } from "./FirstSummonBinding";
+import { ProgressRewardBinding } from "./ProgressRewardBinding";
+import { ProgressRewardUtils } from "./ProgressRewardUtils";
+import type { ChapterRewardIntent, FragmentCombineIntent } from "./ProgressRewardUtils";
+import type { AccountModel } from "../../features/account/AccountModel";
+import type { AccountService } from "../../features/account/AccountService";
+import { PersistentOperationJournal } from "../../framework/PersistentOperationJournal";
 import { MainChapterModel } from "../../features/battle/MainChapterModel";
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 
 const {ccclass, property} = _decorator;
 
+/** 应用转交真实快照和展示事件的两项成长动作。 */
+interface GrowthRewards {
+    /** 关卡稳定键原意图与反馈。 */
+    readonly firstReward: ProgressRewardBinding<ChapterRewardIntent>;
+    /** 主线领取状态和双确认。 */
+    readonly firstRewardController: MainChapterFirstRewardController;
+    /** 碎片原消费意图与反馈。 */
+    readonly fragments: ProgressRewardBinding<FragmentCombineIntent>;
+}
 
 /** 应用生命周期入口：协调会话、页面和启动流程，具体装配交给独立组件。 */
 @ccclass("RemakeApp")
@@ -84,6 +105,12 @@ export class RemakeApp extends Component {
     private idleClaims: IdleClaimBinding | null = null;
     /** 通关奖励原稳定键恢复，关闭主线页不撤销已发起意图，换号保留原日志。 */
     private milestoneClaims: MainChapterMilestoneBinding | null = null;
+    /** 普通首抽原意图与奖励确认；切页保留，换号后停止当前续段。 */
+    private firstSummon: FirstSummonBinding | null = null;
+    /** 当前应用的独立通关奖励、碎片合成及其回执监听，退出时统一释放。 */
+    private growthRewards: GrowthRewards | null = null;
+    /** 普通升级原意图日志，身份键由应用提供，销毁时关闭连接。 */
+    private heroLevelJournal: PersistentOperationJournal<HeroLevelRequest> | null = null;
     /** 通用发奖反馈归应用装配，等待统一资产版本及主城就绪，不由挂机界面单独弹窗。 */
     private rewards: RewardBinding | null = null;
     /** 本应用初始化的背包模块，应用退出时释放。 */
@@ -123,7 +150,7 @@ export class RemakeApp extends Component {
         }
     }
 
-    /** 开发分流完成后装配会话与页面；场景只持有本地加载层，登录页通过页面注册异步下载。 */
+    /** 装配会话、资产与页面；普通升级跟随统一首包激活原意图恢复。 */
     private async initialize(): Promise<void> {
         this.development = new DevelopmentPreview(this.pageHost, this.startupHost, () => this.isValid);
         if (await this.development.start()) return;
@@ -188,6 +215,9 @@ export class RemakeApp extends Component {
         const rewards = this.rewards = new RewardBinding(model, receiptId => {
             chapter.markSettlementFeedbackPresented(receiptId);
             this.milestoneClaims?.presented(receiptId);
+            this.firstSummon?.presented(receiptId);
+            this.growthRewards?.firstReward.presented(receiptId);
+            this.growthRewards?.fragments.presented(receiptId);
         });
         chapter.configureSettlementFeedback(
             (receipt, presentation) => {
@@ -218,13 +248,22 @@ export class RemakeApp extends Component {
             new MilestoneClaimJournal(storageNamespace), receipt =>
                 rewards.restoreActual(receipt.receiptId, receipt.assetRevision, receipt.actual));
         chapter.requestMilestoneClaim = rewardId => milestones.begin(rewardId);
+        const summon = this.firstSummon = new FirstSummonBinding(model, service, socket, storageNamespace,
+            notice => rewards.restore(notice), () => rewards.retry());
+        const growth = this.growthRewards = this.bindProgressRewards(model, service, socket, rewards, storageNamespace, chapter);
+        const heroLevel = this.bindHeroLevel(model, service, socket, storageNamespace);
         const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController,
             HeroRosterController.instance, formation, () => {
                 this.clearRolePages();
                 rewards.resetSession();
                 idleClaims.deactivate();
                 milestones.deactivate();
-            }, chapter);
+                summon.deactivate();
+                growth.firstReward.deactivate();
+                growth.firstRewardController.resetSession();
+                growth.fragments.deactivate();
+                heroLevel.resetSession();
+            }, chapter, summon.controller);
         // 只有整包被唯一资产入口接纳后，才以该最新状态检查历史领取确认。
         const applyState = (frame: GameFrame): void => {
             if (assets.apply(frame)) {
@@ -232,6 +271,15 @@ export class RemakeApp extends Component {
                 idleClaims.afterSnapshot(frame.name);
                 chapter.afterSnapshot(frame.name);
                 milestones.afterSnapshot(frame.name);
+                summon.afterSnapshot(frame.name);
+                growth.firstRewardController.afterSnapshot();
+                growth.firstReward.afterSnapshot(frame.name);
+                growth.fragments.afterSnapshot(frame.name);
+                const role = model.snapshot.role;
+                const journal = this.heroLevelJournal;
+                if (journal && role?.serverId && (frame.name === Protocol.SESSION_LOGIN || frame.name === Protocol.SESSION_AUTHENTICATE)) {
+                    heroLevel.afterAuthentication(() => journal.forScope([role.serverId!, role.id]));
+                }
             }
         };
         service.onInitialized = applyState;
@@ -352,6 +400,7 @@ export class RemakeApp extends Component {
             servers,
             entry,
             features,
+            summon,
             syncRoute: () => syncRoute(),
             onHome: view => {
                 homeView = view;
@@ -537,7 +586,7 @@ export class RemakeApp extends Component {
         ui.invalidatePending();
         this.navigation?.back();
         for (const id of ["hero-skill", "bag-info", "spirit-info", "equipment-info", "role-profile", "remake-formation", "battle-detail",
-            "chapter-end", "chapter-reward-info", "main-chapter-battle", "skill-audit", "confirm", "reward"]) {
+            "chapter-end", "chapter-reward-info", "main-chapter-battle", "skill-audit", "confirm", "reward", "first-summon"]) {
             ui.closeById(id);
         }
         this.closeGmViews();
@@ -577,7 +626,77 @@ export class RemakeApp extends Component {
         this.gameSocket?.setBackground(false);
     }
 
-    /** 应用销毁时清理开发演示、页面注册与会话资源。 */
+    /** 装配两项早期成长的原请求、认证交付和通用发奖，页面只转交操作参数。 */
+    private bindProgressRewards(model: AccountModel, service: AccountService, socket: GameSocketClient,
+        rewards: RewardBinding, namespace: string, chapter: MainChapterController): GrowthRewards {
+        const firstRewardController = new MainChapterFirstRewardController();
+        const firstReward = new ProgressRewardBinding<ChapterRewardIntent>(model,
+            new PersistentOperationJournal("mxzg.remake.chapter-first-reward.v1." + namespace,
+                ProgressRewardUtils.readChapterIntent, (left, right) => left.chapter === right.chapter),
+            (intent, recover) => recover ? firstRewardController.recover(intent.chapter) : firstRewardController.claim(intent.chapter),
+            (intent, receipt) => intent.chapter === (receipt as { chapter?: number }).chapter,
+            new Set(["FIRST_REWARD_INVALID", "FIRST_REWARD_UNKNOWN", "FIRST_REWARD_NOT_REACHED"]),
+            receipt => rewards.restoreActual(receipt.receiptId, receipt.assetRevision, receipt.actual),
+            () => rewards.retry());
+        firstRewardController.configure((name, body, received, failed) => service.deliverAuthenticated(
+            token => socket.chapter(token, name, body), received, failed),
+            () => service.authenticated(token => socket.refreshSnapshot(token)),
+            receipt => firstReward.deliver(receipt));
+        firstRewardController.initialize();
+        chapter.requestFirstRewardClaim = chapterNumber => firstReward.begin({ schemaVersion: 1, chapter: chapterNumber });
+
+        const fragments: ProgressRewardBinding<FragmentCombineIntent> = new ProgressRewardBinding(model,
+            new PersistentOperationJournal("mxzg.remake.hero-fragment.v1." + namespace,
+                ProgressRewardUtils.readFragmentIntent, (left, right) => left.requestId === right.requestId
+                    && left.itemId === right.itemId && left.quantity === right.quantity),
+            async (intent, recover) => {
+                const receipt = await ProgressRewardUtils.combine(service, socket, intent, recover,
+                    () => this.assetState?.acceptedRevision ?? -1);
+                fragments.deliver(receipt);
+            },
+            ProgressRewardUtils.matchesFragment,
+            new Set(["FRAGMENT_INVALID", "FRAGMENT_UNSUPPORTED", "FRAGMENT_INSUFFICIENT", "FRAGMENT_CAPACITY_FULL",
+                "FRAGMENT_LEVEL_REQUIRED", "FRAGMENT_REQUEST_CONFLICT"]),
+            receipt => rewards.restoreActual(receipt.receiptId, receipt.assetRevision, receipt.actual),
+            () => rewards.retry());
+        BagController.instance.configurePieceCompose((itemId, quantity) => fragments.begin({ schemaVersion: 1,
+            requestId: PersistentOperationJournal.createId(), itemId, quantity }),
+        () => model.snapshot.role?.level ?? 0, undefined, () => {
+            const roster = HeroRosterModel.instance.snapshot;
+            return roster.rosterInfo ? roster.rosterInfo.capacity - roster.heroes.length : null;
+        });
+        return { firstReward, firstRewardController, fragments };
+    }
+
+    /** 普通升级只读统一资产与认证通道，身份归属在回执交付给英雄模块前校验。 */
+    private bindHeroLevel(model: AccountModel, service: AccountService, socket: GameSocketClient,
+        namespace: string): HeroLevelController {
+        this.heroLevelJournal = new PersistentOperationJournal("mxzg.remake.hero-level.v1." + namespace,
+            HeroLevelData.readRequest, HeroLevelData.sameRequest);
+        const controller = HeroLevelController.instance;
+        controller.configure({
+            send: (name, body) => service.authenticated(async token => {
+                const frame = await socket.heroLevel(token, name, body);
+                const receipt = name === Protocol.HERO_LEVEL_UPGRADE_STATUS
+                    ? (frame.body as HeroLevelStatus).receipt : frame.body as HeroLevelReceipt;
+                if (receipt && receipt.roleId !== model.snapshot.role?.id) {
+                    throw new Error("普通升级回执不属于当前角色");
+                }
+                return frame;
+            }),
+            refresh: () => service.authenticated(token => socket.refreshSnapshot(token)),
+            revision: () => this.assetState?.acceptedRevision ?? -1,
+            balances: () => {
+                const account = model.snapshot;
+                return account.role && !account.busy && BagModel.instance.snapshot.synced
+                    ? { gold: account.role.gold, heroExp: BagModel.instance.quantity(900101) } : null;
+            },
+        });
+        controller.initialize();
+        return controller;
+    }
+
+    /** 应用销毁时清理开发演示、页面注册、会话和升级日志连接。 */
     onDestroy(): void {
         this.development?.dispose();
         this.development = null;
@@ -593,6 +712,17 @@ export class RemakeApp extends Component {
         this.idleClaims = null;
         this.milestoneClaims?.dispose();
         this.milestoneClaims = null;
+        this.firstSummon?.dispose();
+        this.firstSummon = null;
+        this.growthRewards?.firstReward.dispose();
+        this.growthRewards?.firstRewardController.dispose();
+        this.growthRewards?.fragments.dispose();
+        this.growthRewards = null;
+        if (this.heroLevelJournal) {
+            HeroLevelController.instance.dispose();
+            this.heroLevelJournal.dispose();
+            this.heroLevelJournal = null;
+        }
         this.rewards?.dispose();
         this.rewards = null;
         if (this.gameSocket) {

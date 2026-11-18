@@ -18,6 +18,7 @@ const suites = [
   ["equipment-info-view", "ts", "client/tools/equipment-info-view-check.ts"],
   ["item-detail", "ts", "client/tools/item-detail-check.ts"],
   ["item-info-view", "ts", "client/tools/item-info-view-check.ts"],
+  ["hero-piece-compose", "ts", "client/tools/hero-piece-compose-check.ts"],
   ["docs", "python", "tools/check_docs.py"],
   ["resource-catalog", "ts", "client/tools/resource-catalog-check.ts"],
   ["current-resource-scope", "node", "client/tools/current-resource-scope-check.cjs"],
@@ -43,6 +44,7 @@ const suites = [
   ["chapter-milestone", "ts", "client/tools/chapter-milestone-check.ts"],
   ["chapter-milestone-claim", "ts", "client/tools/chapter-milestone-claim-check.ts"],
   ["chapter-milestone-card", "ts", "client/tools/chapter-milestone-card-check.ts"],
+  ["chapter-clear-reward", "ts", "client/tools/chapter-clear-reward-check.ts"],
   ["milestone-binding", "ts", "client/tools/milestone-binding-check.ts"],
   ["main-chapter-scope", "ts", "client/tools/main-chapter-scope-check.ts"],
   ["main-chapter-dependency-args", "node", "tools/test_main_chapter_dependency_snapshot.cjs"],
@@ -65,6 +67,7 @@ const suites = [
   ["battle-frost-winter-actions", "ts", "client/tools/battle-frost-winter-actions-check.ts"],
   ["battle-thorn-actions", "ts", "client/tools/battle-thorn-actions-check.ts"],
   ["battle-chapter10-20", "ts", "client/tools/battle-chapter10-20-check.ts"],
+  ["battle-first-summon-actions", "ts", "client/tools/battle-first-summon-actions-check.ts"],
   ["battle-opening", "ts", "client/tools/battle-opening-check.ts"],
   ["skill-audit-preview", "ts", "client/tools/skill-audit-preview-check.ts"],
   ["battle-layout", "python", "tools/check_battle_prefab_layout.py"],
@@ -74,13 +77,17 @@ const suites = [
   ["build-entry", "node", "client/tools/build-entry-check.cjs"],
   ["hero-roster", "paused", null],
   ["hero-state", "ts", "client/tools/hero-state-check.ts"],
-  ["hero-level", "paused", null],
+  ["first-summon", "ts", "client/tools/first-summon-check.ts"],
+  ["hero-level-quote", "ts", "client/tools/hero-level-quote-check.ts"],
+  ["hero-level-recovery", "ts", "client/tools/hero-level-recovery-check.ts"],
   ["formation", "paused", null],
   ["formation-state", "ts", "client/tools/formation-state-check.ts"],
   ["formation-recovery", "ts", "client/tools/formation-recovery-check.ts"],
   ["page-lifecycle-recovery", "ts", "client/tools/page-lifecycle-recovery-check.ts"],
   ["overlay-lifecycle", "ts", "client/tools/overlay-lifecycle-check.ts"],
   ["formation-view", "ts", "client/tools/formation-view-check.ts"],
+  ["formation-matrix", "ts", "client/tools/formation-matrix-check.ts"],
+  ["formation-element", "ts", "client/tools/formation-element-check.ts"],
   ["remake-playable", "paused", null],
   ["hero-growth-generated", "python", "tools/export_hero_growth.py"],
   ["idle-generated", "python", "tools/export_idle_rules.py"],
@@ -119,7 +126,7 @@ const suites = [
   ["shield-depleted", "ts", "client/tools/shield-depleted-check.ts"],
   ["retirement", "python", "tools/check_retirement.py"],
 ];
-const pausedSuites=new Set(["hero-roster","hero-level","formation","remake-playable","idle"]);
+const pausedSuites=new Set(["hero-roster","formation","remake-playable","idle"]);
 const args = process.argv.slice(2);
 if (args.includes("--help")) {
   console.log("node client/tools/check-project.mjs [--suite " + suites.map(([id]) => id).join("|") + "]");

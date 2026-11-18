@@ -3,6 +3,9 @@ import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 
 import { HeroInfoView } from "../assets/scripts/features/hero/ui/HeroInfoView";
+import { HeroLevelController } from "../assets/scripts/features/hero/HeroLevelController";
+import { HeroLevelEvent } from "../assets/scripts/features/hero/utils/HeroLevelEvent";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { HeroSkillView } from "../assets/scripts/features/hero/ui/HeroSkillView";
 import { HeroRosterUtils } from "../assets/scripts/features/hero/utils/HeroRosterUtils";
 import { Protocol } from "../assets/scripts/platform/Protocol";
@@ -23,7 +26,7 @@ import { readFileSync } from "fs";
 
 import { join } from "path";
 
-import { assetManager, Button, director, Director, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UITransform } from "cc";
+import { assetManager, Button, director, Director, Label, Mask, Node, Prefab, resources, Sprite, SpriteFrame, UIOpacity, UITransform } from "cc";
 
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
 
@@ -497,7 +500,7 @@ async function checkDefaultRoster():Promise<void> {
  const page=makeView();try {page.runOpen();await page.whenReady();pump(2);assert(boardOf(page).capacityLabel!.string==="英雄：0/300","实际默认装配显示容量");}
  finally {page.runDispose();page.node.destroy();service.dispose();}
 }
-/** 只读详情随快照刷新；应用重置只关闭页面，关闭后的同ID同步不能重新导航。 */
+/** 详情随快照刷新；应用重置只关闭页面，关闭后的同ID同步不能重新导航。 */
 async function checkReadonlyInfo(): Promise<void> {
     const controller = HeroRosterController.instance;
     controller.initialize();
@@ -561,7 +564,126 @@ async function checkReadonlyInfo(): Promise<void> {
   const detail=data.find((row:any)=>row.equipmentIcons);
  assert(detail?.equipmentIcons.length===4&&detail.equipmentFrames.length===4&&detail.equipmentLabels.length===4,"四槽图标、品质框和状态文字必须静态绑定");
  for(let i=1;i<=4;i++){const slot=data.find((row:any)=>row._name==="EquipmentSlot"+i);assert(slot&&slot._components.every((ref:any)=>data[ref.__id__].__type__!=="cc.Button"||!data[ref.__id__]._interactable),"四槽没有穿脱操作入口");}
- assert(buttons.length===5,"详情仅返回和四个技能说明按钮可操作，不开放升级/扩容");
+ assert(buttons.length===6,"详情只有返回、普通升级和四个技能说明按钮可操作");
+ const upgradeBindings = {
+     upgradeButton: ["cc.Button", "OrdinaryUpgradeButton"],
+     upgradeLabel: ["cc.Label", "UpgradeActionLabel"],
+     upgradeGold: ["cc.Label", "GoldAmount"],
+     upgradeExperience: ["cc.Label", "ExperienceAmount"],
+     upgradeStatus: ["cc.Label", "UpgradeLimitStatus"],
+     upgradeEffect: ["cc.Sprite", "OrdinaryUpgradeEffect"],
+     upgradeEffectOpacity: ["cc.UIOpacity", "OrdinaryUpgradeEffect"],
+ };
+ for (const [field, [type, name]] of Object.entries(upgradeBindings)) {
+     const component = data[idOf(detail?.[field])];
+     assert(component?.__type__ === type && data[idOf(component.node)]?._name === name,
+         `普通升级 Prefab 绑定错误：${field}`);
+ }
+ assert(data[idOf(detail?.upgradeCosts)]?._name === "UpgradeCosts"
+     && data[idOf(detail?.upgradeDot)]?._name === "UpgradeAvailableDot", "消耗区域与旧红点由 Prefab 布置");
+}
+
+/** 用真实详情生命周期验证升级报价、可恢复操作、确认光效和释放范围。 */
+async function checkLevelPresentation(): Promise<void> {
+    const roster = HeroRosterController.instance;
+    roster.initialize();
+    roster.resetSession();
+    const heroId = "00000000-0000-4000-8000-000000000004";
+    const hero = { id: heroId, templateId: 10101001, level: 1, star: 1, stage: 0 };
+    roster.onNotify(Protocol.STATE_CHANGED, { revision: 1, heroes: [hero] });
+    const level = HeroLevelController.instance;
+    const originalDescribe = level.describe;
+    const originalUpgrade = level.upgrade;
+    const originalScope = ResourceAssetsUtils.createAssetScope;
+    let quote: ReturnType<HeroLevelController["describe"]> = {
+        status: "ready", fromLevel: 1, levelLimit: 30, gold: 410, heroExp: 105,
+        goldEnough: true, heroExpEnough: true, levels: 5, jumpLabel: true,
+    };
+    const requests: string[] = [];
+    level.describe = (id) => {
+        assert(id === heroId, "只获取当前实例的升级报价");
+        return quote;
+    };
+    level.upgrade = async (id) => { requests.push(id); };
+    let releases = 0;
+    const frames = Array.from({ length: 30 }, () => new SpriteFrame());
+    let loads = 0;
+    ResourceAssetsUtils.createAssetScope = () => ({
+        load: async () => frames[loads++],
+        dispose: () => { releases++; },
+    }) as ReturnType<typeof originalScope>;
+
+    const root = new Node("GrowthInfo");
+    const page = root.addComponent(HeroInfoView);
+    const child = (name: string) => {
+        const node = new Node(name);
+        node.parent = root;
+        return node;
+    };
+    page.summary = child("Summary").addComponent(Label);
+    page.upgradeButton = child("OrdinaryUpgradeButton").addComponent(Button);
+    page.upgradeLabel = child("UpgradeActionLabel").addComponent(Label);
+    page.upgradeCosts = child("UpgradeCosts");
+    page.upgradeDot = child("UpgradeAvailableDot");
+    page.upgradeGold = child("GoldAmount").addComponent(Label);
+    page.upgradeExperience = child("ExperienceAmount").addComponent(Label);
+    page.upgradeStatus = child("UpgradeLimitStatus").addComponent(Label);
+    page.upgradeEffect = child("OrdinaryUpgradeEffect").addComponent(Sprite);
+    page.upgradeEffectOpacity = page.upgradeEffect.node.addComponent(UIOpacity);
+    (page as any).mountPortrait = () => {};
+    const events = EventDispatcher.instance;
+    const before = events.listenerCount(HeroLevelEvent.Updated);
+    try {
+        page.onOpen({ heroId });
+        assert(page.summary.string.startsWith("等级：1/30"), "详情同时展示等级与当前阶上限");
+        assert(page.upgradeLabel.string === "升5级" && page.upgradeCosts.active && page.upgradeDot.active,
+            "旧低级英雄按可承担数量显示升级");
+        assert(page.upgradeGold.string === "410" && page.upgradeExperience.string === "105", "显示两项累计消耗");
+
+        quote = { ...quote, jumpLabel: false, goldEnough: false, levels: 0 };
+        events.emit(HeroLevelEvent.Updated, {});
+        assert(page.upgradeGold.color.g < 255 && page.upgradeLabel.string === "升级" && !page.upgradeDot.active,
+            "费用不足时标红，仍可按旧版点击查看缺项");
+        page.upgradeButton.node.emit(Button.EventType.CLICK);
+        assert(requests.join() === heroId, "按钮只转交当前实例，材料校验留给控制器");
+
+        quote = { ...quote, status: "pending" };
+        events.emit(HeroLevelEvent.Updated, {});
+        assert(page.upgradeButton.interactable && page.upgradeLabel.string === "确认升级" && !page.upgradeCosts.active,
+            "原操作待确认可恢复，隐藏下一笔费用");
+        quote = { ...quote, status: "max" };
+        events.emit(HeroLevelEvent.Updated, { heroId: "other", fromLevel: 1, toLevel: 2 });
+        assert(!page.upgradeButton.node.active && page.upgradeStatus.node.active
+            && page.upgradeStatus.string === "已达当前等级上限" && loads === 0, "满级关闭按钮，其他实例确认不播放光效");
+        events.emit(HeroLevelEvent.Updated, { heroId, fromLevel: 25, toLevel: 30 });
+        await Promise.resolve();
+        await Promise.resolve();
+        assert(loads === 30 && page.upgradeEffect.node.active && page.upgradeEffectOpacity.opacity === 0,
+            "确认结果播放原 30 帧并从透明开始");
+        page.update(0.06);
+        assert(page.upgradeEffect.spriteFrame === frames[1] && page.upgradeEffectOpacity.opacity === 153,
+            "60 毫秒进入第二帧，100 毫秒渐入");
+        page.update(1.741);
+        assert(!page.upgradeEffect.node.active && !page.upgradeEffect.spriteFrame && releases === 1,
+            "完整播放结束释放帧引用");
+        page.onOpen({ heroId });
+        assert(events.listenerCount(HeroLevelEvent.Updated) === before + 1, "重复打开不叠加升级监听");
+        loads = 0;
+        events.emit(HeroLevelEvent.Updated, { heroId, fromLevel: 25, toLevel: 30 });
+        page.onClose();
+        await Promise.resolve();
+        await Promise.resolve();
+        assert(events.listenerCount(HeroLevelEvent.Updated) === before, "关闭时释放升级监听");
+        assert(loads === 30 && releases === 2 && !page.upgradeEffect.node.active,
+            "关闭在途光效会撤回持有，晚到的帧不重新显示");
+    } finally {
+        page.onClose();
+        level.describe = originalDescribe;
+        level.upgrade = originalUpgrade;
+        ResourceAssetsUtils.createAssetScope = originalScope;
+        roster.dispose();
+        root.destroy();
+    }
 }
 /** 技能窗口关闭后不响应同实例ID的新快照，重开读取当前状态。 */
 async function checkReadonlySkillLifecycle(): Promise<void> {
@@ -723,6 +845,7 @@ async function main() {
   await checkDirectTemplateLookup();
   await checkDefaultRoster();
   await checkReadonlyInfo();
+  await checkLevelPresentation();
   await checkReadonlySkillLifecycle();
   await checkElementBundleRoutes();
   await checkHeroCellReuse();

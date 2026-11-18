@@ -718,6 +718,52 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/bag/prefabs/HeroPieceComposeView.prefab",
+    "classes": [
+      "HeroPieceComposeView",
+      "ViewportScale"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 1,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "b5cde938475a3c758963aa4220739191fe1badba593891a58b8ba94e838e6a5c"
+  },
+  {
     "path": "client/assets/bundles/module/bag/prefabs/SpiritInfoView.prefab",
     "classes": [
       "ViewportScale",
@@ -1125,6 +1171,119 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/battle/prefabs/ChapterClearRewardCell.prefab",
+    "classes": [
+      "ChapterClearRewardCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 566,
+        "height": 160
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "57164ff7c90c2425e41873f1b7ed5433e051abe82c8b09eddfc10c72c8a64b75"
+  },
+  {
+    "path": "client/assets/bundles/module/battle/prefabs/ChapterClearRewardView.prefab",
+    "classes": [
+      "ChapterClearRewardView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator本机iPhone14Pro预览连接独立内存服。未通关显示前往战斗，超过开放范围显示暂未开放。首通第1关后显示可领，领取弹出通用获得窗，两件装备进背包，列表重排，关闭返回正常。",
+    "sha256": "701a6a0ca9f4a38e4e31d6f150bc7d1df2c2c30e8b785a3f27a94c0dcf00db32",
+    "acceptance": {
+      "sha256": "701a6a0ca9f4a38e4e31d6f150bc7d1df2c2c30e8b785a3f27a94c0dcf00db32",
+      "date": "2026-11-18",
+      "status": "实际预览通过",
+      "scope": "Creator本机iPhone14Pro预览连接独立内存服。未通关显示前往战斗，超过开放范围显示暂未开放。首通第1关后显示可领，领取弹出通用获得窗，两件装备进背包，列表重排，关闭返回正常。",
+      "inspector": "未操作Creator原生Inspector。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/battle/prefabs/ChapterEndView.prefab",
     "classes": [
       "ChapterEndView"
@@ -1477,7 +1636,7 @@
       }
     },
     "components": {
-      "Widget": 0,
+      "Widget": 1,
       "Layout": 0,
       "Mask": 0,
       "ScrollView": 0,
@@ -1497,14 +1656,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "Creator本机独立角色已实测14/15常显卡、15与16真实挑战/结算、15关独立真实领奖、原map01到map02前后景切换；重登保持16关/已领100且不重复反馈。仅本次iPhone14Pro预览选项，不代签三尺寸、发布或真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
-    "sha256": "1250753ec2b4c3a9435eaa591efdb5dcdad2c814a09bf6bc2059e737b5a1eb7c",
+    "visual": "Creator本机iPhone14Pro预览连接独立内存服。第1关真实首通后右上通关奖励显示红点并可点击，领奖后红点消失。证据范围为本机单尺寸，未复验第15关里程碑及发布包。",
+    "sha256": "0998b9b8323dcab4a8a6cbef4fab3f44942e6abffc99962b6128168e0ae0559d",
     "acceptance": {
-      "sha256": "1250753ec2b4c3a9435eaa591efdb5dcdad2c814a09bf6bc2059e737b5a1eb7c",
-      "date": "2026-11-17",
+      "sha256": "0998b9b8323dcab4a8a6cbef4fab3f44942e6abffc99962b6128168e0ae0559d",
+      "date": "2026-11-18",
       "status": "实际预览通过",
-      "scope": "Creator本机独立角色已实测14/15常显卡、15与16真实挑战/结算、15关独立真实领奖、原map01到map02前后景切换；重登保持16关/已领100且不重复反馈。仅本次iPhone14Pro预览选项，不代签三尺寸、发布或真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
-      "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
+      "scope": "Creator本机iPhone14Pro预览连接独立内存服。第1关真实首通后右上通关奖励显示红点并可点击，领奖后红点消失。证据范围为本机单尺寸，未复验第15关里程碑及发布包。",
+      "inspector": "未操作Creator原生Inspector。"
     }
   },
   {
@@ -2353,6 +2512,192 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/hero/prefabs/FirstSummonView.prefab",
+    "classes": [
+      "FirstSummonView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 393×852 设备选项。独立内存新号从召唤法阵免费首抽，积分由0更新至1，通用窗显示四星布兰特。重登后召唤窗保留完成状态和积分，免费按钮隐藏。",
+    "sha256": "422bf8f566ef2fd55b2e3839b63e2de801a2c32758c14ee1b368b02ec8625fb1",
+    "acceptance": {
+      "sha256": "422bf8f566ef2fd55b2e3839b63e2de801a2c32758c14ee1b368b02ec8625fb1",
+      "date": "2026-11-18",
+      "status": "实际预览通过",
+      "scope": "Creator 393×852 设备选项。独立内存新号从召唤法阵免费首抽，积分由0更新至1，通用窗显示四星布兰特。重登后召唤窗保留完成状态和积分，免费按钮隐藏。",
+      "inspector": "浏览器预览及绑定检查，未逐项签收Creator Inspector。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/FormationElementCellView.prefab",
+    "classes": [
+      "FormationElementCellView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 540,
+        "height": 157
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Tier1",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "Tier2",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "Tier3",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "Tier4",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "Tier5",
+        "anchor": [
+          0,
+          0.5
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "17217ac9d6db48310ebc9aeaaf4e1fa544da4b4a2e767f3ac73cf57a9c778a4c"
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/FormationElementView.prefab",
+    "classes": [
+      "FormationElementView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "7130c48a00ed07631f19a8210f922d0ce0e6db2126c3540c4e248287833c28b7"
+  },
+  {
     "path": "client/assets/bundles/module/hero/prefabs/FormationHeroCellView.prefab",
     "classes": [
       "FormationHeroCellView"
@@ -2393,9 +2738,114 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "随出阵页在 393×852 Creator 浏览器预览核对，上阵英雄局部压暗并显示绿勾，未上阵英雄保留原颜色。负责人已确认绿勾。证据见 docs/development-progress.md 的本机预览记录。",
+    "sha256": "ddb1c97745ae54fd6573b5c7c7dd7da88cefb2cc3cb7827d6de48da58a507791",
+    "acceptance": {
+      "sha256": "ddb1c97745ae54fd6573b5c7c7dd7da88cefb2cc3cb7827d6de48da58a507791",
+      "date": "2026-11-18",
+      "status": "实际预览通过",
+      "scope": "随出阵页在 393×852 Creator 浏览器预览核对，上阵英雄局部压暗并显示绿勾，未上阵英雄保留原颜色。负责人已确认绿勾。证据见 docs/development-progress.md 的本机预览记录。",
+      "inspector": "限所属出阵页中的头像状态，未签收三尺寸、正式包或 Inspector。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/FormationMatrixCellView.prefab",
+    "classes": [
+      "FormationMatrixCellView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 100,
+        "height": 140
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "依赖所属页面检查的组合资源",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "513c7b99372b1302b6b6b8de94241d2c2ac35f223d02be63778618cc405a7769"
+    "sha256": "09650ec66a24fb7b84062a42c3e5ca08f0a70ba93da8215ae4a93a1390ba4c2c"
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/FormationMatrixView.prefab",
+    "classes": [
+      "FormationMatrixView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "07acf15088b71c76a50e3219b937fd5966afd2c6c88b33390d2dc06320378a6e"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/FormationView.prefab",
@@ -2622,14 +3072,14 @@
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "实际预览通过",
-    "visual": "360×720从英雄页打开、外部关闭取消；428×926主线确认已有权威阵容并进入真实挑战。未新改草稿或重新验证所有保存失败路径。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-    "sha256": "e49063646a9a17df8c6eb36b1d167a2d03ce9c441cca61b2539d5a5d766f45a6",
+    "visual": "仅 Creator 浏览器 393×852 预览。出阵草稿两名火系显示生命与攻击各加 3%，三名各加 5% 且只高亮三人档，跨排拖动保持加成，从三名依次撤到两名与一名时退档并清除。元素窗展示五向克制的伤害与命中倍率、各组光环与五元素混合档。点击窗外只关闭元素子窗。证据见 docs/development-progress.md 的本机预览记录。",
+    "sha256": "852cdcae8b79191188e691f4f8516d53f319318e7d7d1d99cfddd31e2a1f1329",
     "acceptance": {
-      "sha256": "e49063646a9a17df8c6eb36b1d167a2d03ce9c441cca61b2539d5a5d766f45a6",
-      "date": "2026-11-11",
+      "sha256": "852cdcae8b79191188e691f4f8516d53f319318e7d7d1d99cfddd31e2a1f1329",
+      "date": "2026-11-18",
       "status": "实际预览通过",
-      "scope": "360×720从英雄页打开、外部关闭取消；428×926主线确认已有权威阵容并进入真实挑战。未新改草稿或重新验证所有保存失败路径。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "仅 Creator 浏览器 393×852 预览。出阵草稿两名火系显示生命与攻击各加 3%，三名各加 5% 且只高亮三人档，跨排拖动保持加成，从三名依次撤到两名与一名时退档并清除。元素窗展示五向克制的伤害与命中倍率、各组光环与五元素混合档。点击窗外只关闭元素子窗。证据见 docs/development-progress.md 的本机预览记录。",
+      "inspector": "验收限上述本机浏览器操作。Inspector、发布包和真机待独立验收。"
     }
   },
   {
@@ -2888,14 +3338,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "仅393×852实际格子选择传入实例ID后的详情显示及截图、技能窗口开关、返回与重复进入。页面自带@view/prepare，不借用8cb60507开页链路结果。 docs/validation/view-registration-list-review-20261111.json",
-    "sha256": "a2a44d93f2cdfe71517c0b3827f4131269a55210a8e8758da08fee160ce76036",
+    "visual": "本机Creator预览使用393×852设备选项和独立内存服。确认底部费用和按钮排版、布兰特从1级升到6级再到10级、属性更新、经验不足标红与飘字、冷重登仍为10级及继续出阵。动画帧时序由专项覆盖，其他设备待复验。",
+    "sha256": "dc09892ea9971af2a5073917e9c21ae3fc50d7ecc9bba6a73c53ff765b0c1520",
     "acceptance": {
-      "sha256": "a2a44d93f2cdfe71517c0b3827f4131269a55210a8e8758da08fee160ce76036",
-      "date": "2026-11-11",
+      "sha256": "dc09892ea9971af2a5073917e9c21ae3fc50d7ecc9bba6a73c53ff765b0c1520",
+      "date": "2026-11-18",
       "status": "实际预览通过",
-      "scope": "仅393×852实际格子选择传入实例ID后的详情显示及截图、技能窗口开关、返回与重复进入。页面自带@view/prepare，不借用8cb60507开页链路结果。 docs/validation/view-registration-list-review-20261111.json",
-      "inspector": "未操作Creator，自动编译的新版本在浏览器连接独立内存测试服复验；不是负责人Inspector签收"
+      "scope": "本机Creator预览使用393×852设备选项和独立内存服。确认底部费用和按钮排版、布兰特从1级升到6级再到10级、属性更新、经验不足标红与飘字、冷重登仍为10级及继续出阵。动画帧时序由专项覆盖，其他设备待复验。",
+      "inspector": "未操作Creator原生Inspector。"
     }
   },
   {
@@ -3246,9 +3696,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "fa2c0418082308fe9ee906b762621a1633d2d7c8b2fa0af4fa1bc180c17a80d1"
+    "reviewStatus": "实际预览通过",
+    "visual": "负责人已确认主城入口层级。393×852 Creator 浏览器预览中，召唤入口显示在原特效上方并可点击，得到当前功能状态提示。证据见 docs/development-progress.md 的本机预览记录。",
+    "sha256": "e08a1ef05b793cf4059bfe21493fc539f360638749d95ba07ef7b12c57fef864",
+    "acceptance": {
+      "sha256": "e08a1ef05b793cf4059bfe21493fc539f360638749d95ba07ef7b12c57fef864",
+      "date": "2026-11-18",
+      "status": "实际预览通过",
+      "scope": "负责人已确认主城入口层级。393×852 Creator 浏览器预览中，召唤入口显示在原特效上方并可点击，得到当前功能状态提示。证据见 docs/development-progress.md 的本机预览记录。",
+      "inspector": "限入口层级及上述点击，未签收所有入口、三尺寸、正式包或 Inspector。"
+    }
   },
   {
     "path": "client/assets/bundles/module/home/prefabs/RemakeHomeView.prefab",

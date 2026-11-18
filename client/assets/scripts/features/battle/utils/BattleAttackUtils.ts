@@ -273,6 +273,28 @@ export class BattleAttackUtils {
                         base: {"attack_time": 0.3, "action_time": 1, "format": "skill-103030031/%d.png", "duration": 0.06, "scale_x": 4, "scale_y": 4, "anchor_y": 0.2, "anchor_x": 0.5},
                         files: ["skill-103030031"], sounds: ["skill-103030031"] },
                 ];
+            case 3120100:
+                // 旧普攻在施法者位置补帧，近身回退仍由11号动作承担。旧覆盖引用的同名音效文件未找到。
+                return [
+                    { type: 1, delay: 0, dimly: 0, base: {}, files: [], sounds: [] },
+                    { type: 6, delay: 30, dimly: 0,
+                        base: { format: "skill-103040120/%d.png", anchor_y: 0.35, anchor_x: 0.25,
+                            duration: 0.04, scale_x: 2.4, scale_y: 2.4 },
+                        files: ["skill-103040120"], sounds: [] },
+                    { type: 11, delay: 0, dimly: 0,
+                        base: { move_time: 0.1, move_back: 2, attack_delay: 0.2, offset_x: 0.6, offset_y: 0.3 },
+                        files: [], sounds: [] },
+                ];
+            case 3121101:
+                // 覆盖替换表里的银翼杀手素材，由目标侧独立子动作播帧。原同名音效文件未找到。
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: { move_time: 0.1, move_back: 1 },
+                        files: ["skill-103040121"], sounds: [] },
+                    { type: 7, delay: 20, dimly: 1,
+                        base: { format: "skill-103040121/%d.png", anchor_y: 0.25,
+                            duration: 0.04, scale_x: -2.6, scale_y: 2.6 },
+                        files: [], sounds: [] },
+                ];
             case 4010100:
                 return [
                     { type: 5, delay: 0, dimly: 0,
@@ -408,6 +430,7 @@ export class BattleAttackUtils {
                 "skill-102030031": 8,
                 "skill-103020021": 15, "skill-103030030": 12,
                 "skill-103040050": 8, "skill-103040051": 10,
+                "skill-103040120": 11, "skill-103040121": 21,
                 "skill-102020021": 14, "skill-102040050": 11, "skill-102040051": 10,
                 "skill-101030030": 6,
                 "skill-103030031": 9, "skill-104040020": 9, "skill-104030011": 6,

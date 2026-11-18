@@ -46,21 +46,74 @@ class HeroLevelTest {
     /** 校验可处理错误码，不把不同业务失败合并成笼统失败。 */
     private void rejected(String code, Runnable action) { assertEquals(code,assertThrows(ResponseStatusException.class,action::run).getReason()); }
 
-    /** 正常首胜→升级→再战斗使用同一属性；核对当前行消耗，重复请求只扣一次且返回最新状态。 */
+    /** 正常首胜→升级→再战斗使用同一属性；重复请求保留原回执，当前状态独立查询。 */
     @Test void realRewardsUpgradeAndBattle() {
         var p=player(true); var before=levels.preview(p.token(),p.hero());
         assertEquals(new HeroGrowthRules.Cost(53,12),before.cost());
         assertEquals(new HeroGrowthRules.Stats(238,56,24,45),before.current());
         assertEquals(new HeroGrowthRules.Stats(253,59,25,46),before.next());
-        var request=request(1); var result=levels.upgrade(p.token(),p.hero(),request);
-        assertEquals(2,result.preview().hero().level()); assertEquals(3947,result.role().gold()); assertEquals(538,result.preview().experience());
-        assertEquals(result,levels.upgrade(p.token(),p.hero(),request));
-        var next=levels.upgrade(p.token(),p.hero(),request(2));
-        var replay=levels.upgrade(p.token(),p.hero(),request);
-        assertEquals(2,replay.operation().toLevel()); assertEquals(3,replay.preview().hero().level()); assertEquals(next.role(),replay.role());
+        long revision = roles.revision(p.role());
+        var request = request(1);
+        var result = levels.upgrade(p.token(), p.hero(), request);
+        var upgraded = levels.preview(p.token(), p.hero());
+        assertEquals(2, result.toLevel());
+        assertEquals(2, upgraded.hero().level());
+        assertEquals(3947, upgraded.gold());
+        assertEquals(538, upgraded.experience());
+        assertEquals(revision + 1, result.assetRevision());
+        assertEquals(p.role(), result.roleId());
+        assertEquals(result, levels.upgrade(p.token(), p.hero(), request));
+        var next = levels.upgrade(p.token(), p.hero(), request(2));
+        assertEquals(revision + 2, next.assetRevision());
+        assertEquals(result, levels.upgrade(p.token(), p.hero(), request));
+        assertEquals(result, levels.status(p.token(), request.requestId()).receipt());
+        var latest = levels.preview(p.token(), p.hero());
+        assertEquals(3, latest.hero().level());
         var battle=campaign.challenge(p.token(),UUID.randomUUID().toString());
         var unit=battle.units().stream().filter(row->row.id().equals(p.hero())).findFirst().orElseThrow();
-        assertEquals(3,unit.level()); assertEquals(next.preview().current().hp(),unit.maxHp()); assertEquals(next.preview().current().atk(),unit.attack());
+        assertEquals(3, unit.level());
+        assertEquals(latest.current().hp(), unit.maxHp());
+        assertEquals(latest.current().atk(), unit.attack());
+    }
+
+    /** 并发重复原批量只扣逐级合计一次；越单笔上限、越阶及改动原级数均拒绝。 */
+    @Test void concurrentBatchChargesPerLevelOnlyOnce() throws Exception {
+        var p = player(true);
+        var before = levels.preview(p.token(), p.hero());
+        long revision = roles.revision(p.role());
+        int count = rules.levelJumpMax();
+        var request = new HeroLevelService.Request(UUID.randomUUID().toString(), 1, count);
+        rejected("INVALID_UPGRADE_REQUEST", () -> levels.upgrade(p.token(), p.hero(),
+                new HeroLevelService.Request(UUID.randomUUID().toString(), 1, count + 1)));
+        var start = new CountDownLatch(1);
+        Callable<HeroLevelService.Receipt> run = () -> {
+            assertTrue(start.await(5, TimeUnit.SECONDS));
+            return levels.upgrade(p.token(), p.hero(), request);
+        };
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var left = executor.submit(run);
+            var right = executor.submit(run);
+            start.countDown();
+            var receipt = left.get(5, TimeUnit.SECONDS);
+            assertEquals(receipt, right.get(5, TimeUnit.SECONDS));
+            assertEquals(1 + count, receipt.toLevel());
+            assertEquals(revision + 1, receipt.assetRevision());
+        }
+        var latest = levels.preview(p.token(), p.hero());
+        long gold = 0;
+        long experience = 0;
+        for (int level = 1; level <= count; level++) {
+            gold += rules.cost(level).gold();
+            experience += rules.cost(level).experience();
+        }
+        assertEquals(before.gold() - gold, latest.gold());
+        assertEquals(before.experience() - experience, latest.experience());
+        rejected("IDEMPOTENCY_CONFLICT", () -> levels.upgrade(p.token(), p.hero(),
+                new HeroLevelService.Request(request.requestId(), 1, count - 1)));
+        jdbc.update("UPDATE game_hero SET hero_level=29 WHERE id=?", p.hero());
+        rejected("LEVEL_LIMIT", () -> levels.upgrade(p.token(), p.hero(),
+                new HeroLevelService.Request(UUID.randomUUID().toString(), 29, 2)));
+        assertEquals(revision + 1, roles.revision(p.role()));
     }
 
     /** 两种资产不足分别拒绝；无消耗和无等级变化，其他资源不抵扣英雄经验。 */
@@ -98,10 +151,12 @@ class HeroLevelTest {
     /** 在收据落库时触发专用库约束失败，证明已扣金币/经验和已提升等级全部回滚。 */
     @Test void midTransactionFailureRollsBack() {
         var p=player(true); var before=levels.preview(p.token(),p.hero()); var items=inventory.list(p.role());
+        long revision = roles.revision(p.role());
         jdbc.execute("ALTER TABLE game_hero_level_request ADD CONSTRAINT test_upgrade_failure CHECK (hero_id <> '"+p.hero()+"')");
         try { assertThrows(RuntimeException.class,()->levels.upgrade(p.token(),p.hero(),request(1))); }
         finally { jdbc.execute("ALTER TABLE game_hero_level_request DROP CONSTRAINT test_upgrade_failure"); }
         assertEquals(before,levels.preview(p.token(),p.hero())); assertEquals(items,inventory.list(p.role()));
+        assertEquals(revision, roles.revision(p.role()));
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM game_hero_level_request WHERE role_id=?",Integer.class,p.role()));
     }
 }

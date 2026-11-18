@@ -27,10 +27,26 @@ export class Protocol {
     public static readonly CHAPTER_MILESTONE_CLAIM = "chapter.milestone.claim";
     /** 只查指定里程碑成功回执，不重新发放或查询库存。 */
     public static readonly CHAPTER_MILESTONE_STATUS = "chapter.milestone.claim.status";
+    /** 领取绝对关卡号对应的独立通关奖励。 */
+    public static readonly CHAPTER_FIRST_REWARD_CLAIM = "chapter.firstreward.claim";
+    /** 根据绝对关卡号恢复同一笔独立通关奖励。 */
+    public static readonly CHAPTER_FIRST_REWARD_STATUS = "chapter.firstreward.claim.status";
+    /** 按持久请求键消耗精英碎片并生成英雄。 */
+    public static readonly HERO_FRAGMENT_COMBINE = "bag.fragment.combine";
+    /** 查询同一精英碎片合成请求的原结果。 */
+    public static readonly HERO_FRAGMENT_COMBINE_STATUS = "bag.fragment.combine.status";
     /** 当前已保存阵容的开发只读试战，不发奖、不记录通关。 */
     public static readonly BATTLE_PREVIEW = "battle.preview";
     /** 主线阵型和站位保存；资产仍从统一状态同步。 */
     public static readonly FORMATION_SAVE = "formation.save";
+    /** 领取角色唯一一次普通免费首抽，重复请求使用原幂等键。 */
+    public static readonly HERO_FIRST_SUMMON = "hero.summon.first";
+    /** 查询指定普通首抽请求的原成功回执。 */
+    public static readonly HERO_FIRST_SUMMON_STATUS = "hero.summon.first.status";
+    /** 消耗金币和英雄经验，将当前英雄提升指定的普通等级数。 */
+    public static readonly HERO_LEVEL_UPGRADE = "hero.level.upgrade";
+    /** 按原请求编号恢复已提交的普通升级回执。 */
+    public static readonly HERO_LEVEL_UPGRADE_STATUS = "hero.level.upgrade.status";
     /** 查询本机 GM 实际开关。 */
     public static readonly GM_STATUS = "gm.status";
     /** 向当前角色发放开发资产；服务端持久幂等。 */
@@ -73,8 +89,16 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.CHAPTER_REPLAY, module: "主线", description: "恢复持久战报" },
     { name: Protocol.CHAPTER_MILESTONE_CLAIM, module: "主线", description: "领取通关里程碑" },
     { name: Protocol.CHAPTER_MILESTONE_STATUS, module: "主线", description: "恢复里程碑领取回执" },
+    { name: Protocol.CHAPTER_FIRST_REWARD_CLAIM, module: "主线", description: "领取独立通关奖励" },
+    { name: Protocol.CHAPTER_FIRST_REWARD_STATUS, module: "主线", description: "恢复独立通关奖励回执" },
+    { name: Protocol.HERO_FRAGMENT_COMBINE, module: "背包", description: "精英碎片合成" },
+    { name: Protocol.HERO_FRAGMENT_COMBINE_STATUS, module: "背包", description: "恢复精英碎片合成回执" },
     { name: Protocol.BATTLE_PREVIEW, module: "战斗", description: "当前阵容只读试战" },
     { name: Protocol.FORMATION_SAVE, module: "阵容", description: "主线阵容保存回执" },
+    { name: Protocol.HERO_FIRST_SUMMON, module: "召唤", description: "普通免费首抽" },
+    { name: Protocol.HERO_FIRST_SUMMON_STATUS, module: "召唤", description: "恢复普通首抽回执" },
+    { name: Protocol.HERO_LEVEL_UPGRADE, module: "英雄", description: "普通英雄升级" },
+    { name: Protocol.HERO_LEVEL_UPGRADE_STATUS, module: "英雄", description: "恢复普通升级回执" },
     { name: Protocol.GM_STATUS, module: "开发GM", description: "GM 开关" },
     { name: Protocol.GM_GRANT, module: "开发GM", description: "当前角色资产发放回执" },
     { name: Protocol.SESSION_AUTHENTICATE, module: "会话", description: "连接鉴权确认" },

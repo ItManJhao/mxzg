@@ -7,6 +7,7 @@ package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.campaign.IdleRules;
+import com.funsgamex.mxzg.campaign.MainChapterFirstRewardRules;
 import com.funsgamex.mxzg.campaign.MainChapterIdleStateRepository;
 import com.funsgamex.mxzg.campaign.MainChapterRewardService;
 import com.funsgamex.mxzg.campaign.MainChapterRules;
@@ -55,6 +56,8 @@ class MainChapterConfigurationTest {
     @Autowired private MainChapterService chapters;
     /** 真实共享发奖适配，历史结算仍消费持久冻结计划。 */
     @Autowired private MainChapterRewardService rewards;
+    /** 独立通关奖励继续随受限主线进度装配。 */
+    @Autowired private MainChapterFirstRewardRules firstRewards;
     /** 只读输入及计算不会修改角色资产。 */
     @Autowired private HeroLineupBattleService battles;
     /** 原队伍战力及持久输入版本。 */
@@ -472,6 +475,6 @@ class MainChapterConfigurationTest {
     /** 构建同一依赖但采用较小可信范围的领域实例；测试调用仍由外层真实事务持锁。 */
     private MainChapterService serviceAtLimit(int limit) {
         return new MainChapterService(sessions, roles, jdbc, new MainChapterRules(mapper, limit), powers,
-            battles, rewards, sync, mapper, idleStates);
+            battles, rewards, sync, mapper, idleStates, firstRewards);
     }
 }

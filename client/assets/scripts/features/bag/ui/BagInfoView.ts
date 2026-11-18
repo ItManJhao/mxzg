@@ -1,7 +1,7 @@
 /**
  * 独立物品详情窗口，由UIManager打开完整预制体；背景、内容布局及面板内输入阻挡保存在Prefab。
  * 共享模态由UIManager按ViewSpec配置提供，窗口不持有独立蒙版节点。
- * 库存入口读取唯一 BagModel；结算与产物说明入口展示调用方传入的只读内容，不查询或修改资产。
+ * 库存入口读取唯一BagModel，精英碎片使用转交BagController；结算与产物说明只读，不自行查询或修改资产。
  */
 import { _decorator, Button, Label, Layout, Node, RichText, ScrollView, Sprite, UITransform, Widget } from "cc";
 import { BagUtils } from "../utils/BagUtils";
@@ -21,16 +21,24 @@ import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { ItemDetailDisplay, ItemDetailUtils } from "../utils/ItemDetailUtils";
+import { BagController } from "../BagController";
+import type { HeroPieceComposeState } from "../utils/HeroPieceComposeUtils";
 
 /** 库存只传条目键与分类；奖励和产物只传只读内容，不能冒充当前库存。 */
 export type BagInfoArgs =
-    | { source: "inventory"; key: string; tab: BagTabKind }
+    | {
+        source: "inventory";
+        key: string;
+        tab: BagTabKind;
+        /** 背包父页拥有数量窗，详情关闭不取消新窗，切页仍会撤销未发送选择。 */
+        onSelectPieceQuantity?: (itemId: number) => void;
+    }
     | { source: "description"; face: BagFace };
 
 const { ccclass, property } = _decorator;
 
 /**
- * BagInfoView共用普通道具与碎片的旧基础详情，按真实mode展示条件按钮，不承担使用或分解业务。
+ * BagInfoView共用普通道具与碎片的旧基础详情，精英碎片合成转交BagController，其余使用和分解保持未开放。
  * 关闭只收起这张详情，不关背包页。
  */
 @UIRegistry.view({
@@ -418,16 +426,49 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         this.toast?.("物品来源暂未开放");
     };
 
-    /** 库存使用只反馈未开放；产物或奖励说明的确定按钮仍只关闭当前窗口。 */
-    private readonly showUseNotice = (): void => {
-        if (this.detail) {
-            if (this.detail.showUse) {
-                this.toast?.("物品使用暂未开放");
+    /** 精英碎片按旧数量规则转交合成，其余使用保持未开放；只读产物的确定仍仅关闭。 */
+    private readonly onUseItem = (): void => {
+        if (!this.detail) {
+            this.closeAction?.();
+            return;
+        }
+        if (!this.detail.showUse) {
+            return;
+        }
+        const state = BagController.instance.pieceComposeState(this.detail.itemId);
+        if (!state) {
+            this.toast?.("物品使用暂未开放");
+            return;
+        }
+        this.useHeroPieces(state);
+    };
+
+    /** 沿旧详情的不足/单次/多次分流；本方法只结束窗口选择，回执与错误反馈仍归应用原请求。 */
+    private useHeroPieces(state: HeroPieceComposeState): void {
+        if (!state.available) {
+            this.toast?.("该碎片合成暂未开放");
+            return;
+        }
+        if (state.maximum === 0) {
+            this.closeAction?.();
+            return;
+        }
+        if (state.maximum === 1) {
+            const pending = BagController.instance.composeHeroPieces(state.itemId, 1, true);
+            if (pending) {
+                // 应用已接管原请求；关页不撤销，失败也不在此重复提示。
+                void pending.catch(() => { });
+                this.closeAction?.();
             }
             return;
         }
-        this.closeAction?.();
-    };
+        if (this.args?.source === "inventory" && this.args.onSelectPieceQuantity) {
+            this.args.onSelectPieceQuantity(state.itemId);
+            this.closeAction?.();
+            return;
+        }
+        this.toast?.("合成数量窗口尚未准备好");
+    }
 
     /** 底部按钮按真实配置说明来源或图鉴未开放，不借用已拥有英雄的详情。 */
     private readonly showDetailNotice = (): void => {
@@ -452,7 +493,7 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         }
         this.wired = true;
         this.btnClose?.node.on(Button.EventType.CLICK, this.closeInfo);
-        this.btnEnter?.node.on(Button.EventType.CLICK, this.showUseNotice);
+        this.btnEnter?.node.on(Button.EventType.CLICK, this.onUseItem);
         this.btnSrc?.node.on(Button.EventType.CLICK, this.showSourceNotice);
         this.btnDetail?.on(Button.EventType.CLICK, this.showDetailNotice);
         this.btnDecompose?.on(Button.EventType.CLICK, this.showDecomposeNotice);
@@ -471,7 +512,7 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         EventDispatcher.instance.offTarget(this);
         const bindings: readonly (readonly [Node | null | undefined, () => void])[] = [
             [this.btnClose?.node, this.closeInfo],
-            [this.btnEnter?.node, this.showUseNotice],
+            [this.btnEnter?.node, this.onUseItem],
             [this.btnSrc?.node, this.showSourceNotice],
             [this.btnDetail, this.showDetailNotice],
             [this.btnDecompose, this.showDecomposeNotice],

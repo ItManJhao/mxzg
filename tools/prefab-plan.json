@@ -12,6 +12,7 @@
         "BagTabView",
         "BagView",
         "EquipmentInfoView",
+        "HeroPieceComposeView",
         "SpiritInfoView"
       ]
     },
@@ -26,6 +27,8 @@
         "BattleDetailLayer",
         "BattlePage",
         "ChapterEndView",
+        "ChapterClearRewardCell",
+        "ChapterClearRewardView",
         "ChapterRewardInfoCell",
         "ChapterRewardInfoView",
         "MainChapterBattleView",
@@ -79,7 +82,12 @@
       ],
       "reason": "当前已实现View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
+        "FirstSummonView",
+        "FormationElementCellView",
+        "FormationElementView",
         "FormationHeroCellView",
+        "FormationMatrixCellView",
+        "FormationMatrixView",
         "FormationView",
         "HeroIconCellView",
         "HeroInfoView",

@@ -1,5 +1,5 @@
 /**
- * 背包页面：展示 BagModel 当前角色库存；分类与只读详情由页面处理，库存由 BagController 接收协议更新。
+ * 背包页面：展示BagModel当前角色库存，处理分类、详情与合成数量选择；库存由BagController接收协议更新。
  * Prefab 保存静态布局；页面关闭清理目标事件和按钮，模块库存独立存活。
  * 短期缓存实例由UIManager限时、限量保留；重开重新读取Model，静态资源不随实例淘汰。
  */
@@ -28,6 +28,7 @@ import { BaseView } from "../../../framework/ui/BaseView";
 import { BagInfoView } from "./BagInfoView";
 import { SpiritInfoView } from "./SpiritInfoView";
 import { EquipmentInfoView } from "./EquipmentInfoView";
+import { HeroPieceComposeView } from "./HeroPieceComposeView";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
@@ -87,7 +88,7 @@ export class BagView extends BaseView<BagOpenArgs> {
     /** 当前选中的格子key（堆叠、期限或精灵实例）；条目消失、离开当前分类或关页后清空。 */
     private pickedId: string | null = null;
     /** 本页最近选择的详情类型；同类交框架更新参数，换类型或关闭时只取消本页孩子。 */
-    private infoKind: "item" | "equip" | "spirit" | null = null;
+    private infoKind: "item" | "equip" | "spirit" | "piece-compose" | null = null;
     /** 最近一次详情选择的本地意图引用；换选择或关闭即失效，旧失败不能清除新的选中项。 */
     private infoIntent: object | null = null;
     /** 下次需隐藏过期格子的服务器秒，无期限格子时为无穷大。 */
@@ -390,8 +391,25 @@ export class BagView extends BaseView<BagOpenArgs> {
         const ui = UIManager.instance;
         const opening = kind === "spirit" ? ui.openChild(this, SpiritInfoView, { key: item.key })
             : kind === "equip" ? ui.openChild(this, EquipmentInfoView, { key: item.key })
-                : ui.openChild(this, BagInfoView, { source: "inventory", key: item.key, tab: this.tab });
+                : ui.openChild(this, BagInfoView, {
+                    source: "inventory", key: item.key, tab: this.tab,
+                    onSelectPieceQuantity: itemId => this.showPieceCompose(itemId),
+                });
         void opening.catch(error => this.onInfoFailed(error, intent, item.key));
+    }
+
+    /** 旧详情转数量窗时由背包接管拥有关系；详情关闭不取消它，切页和返回主城仍撤销未发送窗口。 */
+    private showPieceCompose(itemId: number): void {
+        if (this.closed || !this.opened) {
+            return;
+        }
+        const key = this.pickedId;
+        this.dismissInfo();
+        this.infoKind = "piece-compose";
+        const intent = {};
+        this.infoIntent = intent;
+        void UIManager.instance.openChild(this, HeroPieceComposeView, { itemId })
+            .catch(error => this.onInfoFailed(error, intent, key || ""));
     }
 
     /** 只清理当前选择的真实打开失败；取消及旧意图不影响后来选中项，统一提示仍由UIManager负责。 */

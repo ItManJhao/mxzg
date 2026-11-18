@@ -22,6 +22,7 @@ import { BattleSpineService } from "./BattleSpineService";
 import { MainChapterIdleResources } from "./MainChapterIdleResources";
 import { MainChapterIdleChest, IdleChestAnimation } from "./MainChapterIdleChest";
 import { MainChapterMilestoneCard } from "./MainChapterMilestoneCard";
+import { ChapterClearRewardView } from "./ChapterClearRewardView";
 import { PREVIEW } from "cc/env";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import type { AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
@@ -84,6 +85,10 @@ export class MainChapterView extends BaseView {
     @property(Button) idleClaimButton: Button | null = null;
     /** 旧中央章节图标的产物说明入口，只读配置不开放领取。 */
     @property(Button) rewardInfoButton: Button | null = null;
+    /** 旧战斗页右上「通关奖励」独立入口。 */
+    @property(Button) clearRewardButton: Button | null = null;
+    /** 仅服务端有可领取关卡时显示的原红点。 */
+    @property(Node) clearRewardDot: Node | null = null;
     /** 静态宝箱挂点；本页只挂载一次骨骼，跨档仅切动作。 */
     @property(Node) idleChestHost: Node | null = null;
     /** 超过十分钟显示的旧计时气泡，位置和图片保存在Prefab。 */
@@ -163,8 +168,8 @@ export class MainChapterView extends BaseView {
         this.listen(this.quickBattleButton, () => UIManager.instance.toast("快速战斗尚未恢复"));
         this.listen(this.powerButton, () => UIManager.instance.toast("战力提升建议尚未恢复"));
         this.listen(this.idleClaimButton, () => this.collectIdleRewards());
-        if (!this.rewardInfoButton) {
-            throw new Error("主线产物说明入口绑定缺失");
+        if (!this.rewardInfoButton || !this.clearRewardButton || !this.clearRewardDot) {
+            throw new Error("主线产物说明或通关奖励入口绑定缺失");
         }
         this.listen(this.rewardInfoButton, () => {
             void UIManager.instance.openById("chapter-reward-info").catch(error => {
@@ -173,6 +178,7 @@ export class MainChapterView extends BaseView {
                 }
             });
         });
+        this.listen(this.clearRewardButton, () => this.openClearRewards());
         if (!this.idleChestHost || !this.idleBubble || !this.idleBubbleLabel) {
             throw new Error("挂机宝箱静态绑定缺失");
         }
@@ -206,6 +212,17 @@ export class MainChapterView extends BaseView {
     private listen(button: Button, callback: () => void): void {
         button.node.on(Button.EventType.CLICK, callback);
         this.ownListener(() => { if (button.isValid) button.node.off(Button.EventType.CLICK, callback); });
+    }
+
+    /** 只读列表直接由父页打开，切页或账号失效时一并关闭。 */
+    private openClearRewards(): void {
+        if (!this.closed && !this.playing) {
+            void UIManager.instance.openChild(this, ChapterClearRewardView).catch(error => {
+                if (!this.closed && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                    UIManager.instance.toast("通关奖励暂不可用");
+                }
+            });
+        }
     }
 
     /** 转交宝箱点击，正式战斗/已有收取演出时不重复发起；页面自身不发协议或修改累计与资产。 */
@@ -329,7 +346,7 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 事件驱动更新挑战范围及同源背景；缺范围只禁新挑战，历史恢复仍优先，不在每帧查询配置。 */
+    /** 事件驱动更新挑战范围、通关奖励提醒和背景；历史恢复仍优先于新挑战。 */
     private render = (): void => {
         if (this.closed) return;
         if (this.milestoneCard?.isValid) {
@@ -338,6 +355,10 @@ export class MainChapterView extends BaseView {
         this.refreshChapterBackground();
         const model = MainChapterModel.instance;
         const state = model.state;
+        if (this.clearRewardButton?.isValid && this.clearRewardDot?.isValid) {
+            this.clearRewardButton.node.active = !this.playing;
+            this.clearRewardDot.active = !!state?.firstRewardProgress?.eligibleChapters.length;
+        }
         const completed = this.isChapterRangeComplete();
         const scopePending = !!state && state.challengeLimit === undefined;
         this.stageLabel!.string = !state ? "等待主线同步" : scopePending ? "等待范围同步"

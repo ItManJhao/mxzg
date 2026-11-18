@@ -27,7 +27,7 @@
 
 tools/generate_config_package.cjs从LoadingPlan.login现有`{config:GConfig.X}`自动推导启动表，当前为2份；其余共享JSON生成config Bundle内的`game-config.bin`，以ZIP字节交给Creator的BufferAsset导入器。源JSON及各自meta继续供Excel导出核对和Maven读取，不能删除，也不能以包内文件反向替换策划源；启动表不重复放入ZIP。不维护另一份启动表、模块分组或包内表人工清单。
 
-登录后配置正文只请求这一份bin，随后在内存中解压、解析47份表并建立索引。此前画面的“整理游戏数据9/47”“准备游戏数据20/47”是包内任务完成数，不是下载47个文件；现在玩家文案统一为“加载游戏数据”“整理游戏数据”“准备游戏数据”，进度条仍由实际任务完成量推进，不用计时模拟，也不冒充下载字节进度。Bundle元数据、启动脚本及BufferAsset元数据的请求与配置正文分开统计。
+登录后配置正文只请求这一份bin，随后在内存中解压、解析包内表并建立索引。历史画面的“整理游戏数据9/47”“准备游戏数据20/47”指当时的包内任务数。现在玩家文案统一为“加载游戏数据”“整理游戏数据”“准备游戏数据”，进度条由实际任务完成量推进。Bundle元数据、启动脚本及BufferAsset元数据的请求与配置正文分开统计。
 
 ZIP含自动生成的manifest.json及其余表，保留maincity等相对路径。所有源表先JSON.parse再JSON.stringify规范化；清单记录源路径、包内文件名、UTF-8字节数和CRC32。`config-v1:<SHA256>`版本由全部49表、schema与启动归属生成，固定ZIP时间保证相同输入得到相同字节。启动表虽然在包外，其变化也使版本失效；运行时核对启动源CRC与包清单，并检查包内文件目录、大小、CRC和JSON结构。CRC用于发现损坏，不是安全签名；当前不提供可信远程版本发布、签名安装或回滚。
 
@@ -42,9 +42,9 @@ node tools/generate_config_package.cjs --check
 
 运行时ZIP入口为自动生成的ConfigZip.generated.ts：固定esbuild把fflate 0.8.2浏览器实现仅按strFromU8、strToU8、unzipSync三个出口捆绑为ESM，目标es2017，保留MIT许可；禁止手改生成文件或node_modules。Creator会依据.ts、.mjs和package.json的type判断模块格式，而fflate的browser.js没有type:module，直接交给Creator会被判为CommonJS。本机预览已触发该格式错误，因此采用可再生的项目内TypeScript ESM；原包声明只用于类型位置，运行时不再导入npm包。该处理遵循[Creator模块规范](https://docs.cocos.com/creator/3.8/manual/zh/scripting/modules/spec.html)及[外部模块预打包示例](https://docs.cocos.com/creator/3.8/manual/en/scripting/modules/example.html)，不新建全局ZIP对象或配置缓存。编译检查不能替代实际预览和发布验收。
 
-生成器根据实际非启动源表的原UUID维护config目录meta中的官方`userData.bundleFilterConfig` Asset排除规则，保留其他用户过滤，使构建收集资源时排除47份散表。机制依据[Creator 3.8 Bundle资源过滤](https://docs.cocos.com/creator/3.8/manual/zh/asset/bundle.html#bundle-资源过滤)，没有删除源JSON、改写构建JSON引用或重造UUID。Creator构建前只读检查包、源表和过滤是否一致，过期则拒绝；统一H5入口在复制源文件前生成并检查。
+生成器根据实际非启动源表的原UUID维护config目录meta中的官方`userData.bundleFilterConfig` Asset排除规则，构建时排除对应散表，保留其他用户过滤。Creator构建前只读检查包、源表和过滤是否一致，过期则拒绝。统一H5入口在复制源文件前生成并检查。[Creator 3.8 Bundle资源过滤](https://docs.cocos.com/creator/3.8/manual/zh/asset/bundle.html#bundle-资源过滤)
 
-构建扩展实际身份为`config-package-artifact-v1 v1.8.0`。构建后调用[配置包产物检查](../client/tools/config-package-build-check.cjs)，从同一manifest和原meta推导身份并扫描全部本地、远程Bundle，检查两份启动JSON、唯一bin及其内容版本，并拒绝47份散表因依赖进入其他包；生成解码器的模块登记和依赖也做静态检查。这份工具只读产物，不维护手写配置名单、不修改旧包或把失败产物标为可运行。before在普通Node子进程核验，避免Creator工作线程不支持同步esbuild Worker的问题。
+构建扩展的配置检查入口为`config-package-artifact-v1`。构建后从同一manifest和原meta推导身份并扫描全部本地、远程Bundle，检查两份启动JSON、唯一bin及其内容版本，并拒绝源散表因依赖进入其他包。生成解码器的模块登记和依赖也会静态检查。构建前在普通Node子进程核验，兼容Creator构建线程。[配置包产物检查](../client/tools/config-package-build-check.cjs)
 
 2026-11-14上海19:54的新H5真实构建已通过三阶段钩子及18包检查：两张启动表、一份408,367字节bin、47份源表零副本。独立发布运行也已验证解包、GameConfig的49文件/20类型表，以及背包、英雄和二三关闭环，见[发布证据](validation/config-package-release-review-20261114.json)。静态build记录继续保留codecRuntimeVerified=false，浏览器证明单独记录，不将静态模块字符串检查冒充运行成功。两张启动表和引擎元数据仍分别请求；登录后一份bin不等于全流程只有一次HTTP请求。真实CDN和目标真机另验。
 
@@ -75,9 +75,13 @@ SpiritDisplay引入时是第17张类型化表，曾由inventory配置组准备�
 
 背包标签使用 item.xlsx 的 place：0 不在背包显示、1 装备、2 道具、3 碎片、4 特殊（当前页签美术为精灵）。type 是效用类型，不代表背包标签；隐藏显示不删除 Model 中库存，也不影响结算发奖。
 
-## 普通升级最小投影（保留规则，入口关闭）
+## 独立通关奖励与精英碎片
 
-herolevel.xlsx → 导出 herolevel.json → client-schema 的 HeroLevel（level、exp_need、gold_need）→ generate_config.py。服务端由 `python tools/export_hero_growth.py --write` 从现有五张导出表生成 gameplay/hero-growth.json，只保留消耗、阶/星上限和四属性所需字段；默认调用只检查稳定性，统一检查已接入。版本为内容哈希，收据和新战报记录实际成长版本；历史已保存战报不重算。历史普通升级窗口曾展示服务端current/next并校验成本，该窗口现已退役，不属于当前开页流程。后续恢复仍须保持服务端权威，配置缺失拒绝操作，不免费升级。规则出处见[英雄契约](hero-lineup-contract.md)。
+`firstrewardchapter` 和 `elitepieces` 沿共享配置导出。前者按绝对关卡查奖励，后者保留原英雄候选与权重。碎片消耗按 `item.use_value × 合成次数`，领取资格和可抽中候选由后端校验。客户端读取包内配置，进入列表或打开碎片详情时复用已安装的配置和资源池。
+
+## 普通英雄升级
+
+herolevel.xlsx → herolevel.json → client-schema 的 HeroLevel（level、exp_need、gold_need）→ generate_config.py。服务端由 `python tools/export_hero_growth.py --write` 从五张导出表生成 gameplay/hero-growth.json，包含消耗、阶/星上限和四属性。升级按钮读取同一配置包的 herolevel、heroupgrade、herostar、system 及统一快照，计算可升等级和累计费用。服务端根据实际原等级及级数重新校验并扣费。配置版本是内容哈希，回执及新战报记录实际版本，已保存战报保留生成时的数据。[英雄契约](hero-lineup-contract.md#普通英雄升级)
 
 ## 加载与查询
 

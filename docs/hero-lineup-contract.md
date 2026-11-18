@@ -1,6 +1,6 @@
 # 英雄与主线阵容维护契约
 
-更新：2026-11-16。当前事实以本节、[英雄数据契约](hero-data-contract.md)、[通信契约](network-contract.md)和[开发进度](development-progress.md)为准。下方按日期保留旧规则核查和实现过程；旧 HTTP、普通升级与初始化赠送合同均不是当前可调用入口。
+更新于 2026-11-18。当前事实以本节、[英雄数据契约](hero-data-contract.md)、[通信契约](network-contract.md)和[开发进度](development-progress.md)为准。下方按日期保留旧规则核查和实现过程。历史 HTTP 和初始化赠送记录仅供追溯。
 
 ## 当前代码与开放范围
 
@@ -8,14 +8,22 @@
 |---|---|---|
 | 名册与基础详情 | 登录/恢复/state.changed → AssetStateBinding → HeroRosterController → HeroRosterModel → HeroRosterEvent → HeroListView/HeroInfoView | 唯一权威名册，含基础技能、普通四槽、进化状态的只读展示；不在列表开页查询或自行发英雄 |
 | 主线布阵 | FormationView 草稿 → FormationController → formation.save → FormationSaveModel；权威阵容仍随统一快照写 HeroRosterModel | 持久幂等保存及版本等待已接入；页面关闭不销毁模块，草稿不提前写 Model |
-| 主线战斗 | MainChapterController → chapter.challenge/claim/replay/idle.encounter | 前三关挑战、幂等结算及挂机演出已接入；不由旧 CampaignController/IdleController 发起 |
-| 英雄养成 | 未注册正常页面入口 | 升级、穿脱、扩容等仍未开放；HeroLevelApi/Controller、HeroInfoUpLevelLayer 是待退役或后续恢复时重审的旧链，不代表升级可用 |
+| 主线战斗 | MainChapterController → chapter.challenge/claim/replay/idle.encounter | 默认第1～20关挑战、幂等结算及挂机演出 |
+| 普通升级 | HeroInfoView → HeroLevelController → hero.level.upgrade / status → 统一快照 | 按旧级数、金币/经验消耗及阶星上限普通升级，持久回执确认后更新界面 |
 
-HeroInfoView 是当前列表点击后打开的只读详情；HeroInfoUpLevelLayer 与 HeroInfoUpgradeLayer 均不在正常导航中。保留旧预制体、脚本绑定和领域测试不等于玩法恢复，也不据旧文档重接 HTTP 或资产回调。
+HeroInfoView 由名册传入当前英雄实例。普通升级在该界面完成。穿脱、强化进阶和手动扩容留待对应入口恢复。
 
 人工修改先看features/hero/ui对应View的@UIRegistry.view，再进入同模块Controller和Model。FormationController不持有View、账号或角色键；身份隔离由GameSocketClient与应用AccountService.deliverAuthenticated统一负责。原LineupApi已删除，不再维护另一套查询与保存入口。
 
 布阵保存回执不是统一资产状态。FormationSaveModel保留原提交直到权威mainFormation.version达到回执version；有ACK缺推送时每轮至多一次现有refreshSnapshot，显式重试只确认状态，无ACK才按原requestId/expectedVersion/站位重试保存。页面锁定待确认参数，关页保留模块意图但撤销本页出战回调；身份结束清空过程。具体修改与验证边界见[页面维护](formation-ui-authoring.md)和[本批恢复记录](validation/formation-confirm-review-20261116.json)。
+
+## 普通英雄升级
+
+旧 `HeroInfoUpLevelLayer.lua` 的费用栏使用 `system.hero_level_jump_limit`（60）和 `hero_level_jump_max`（5）。60级前点击一次，升当前能负担的级数，上限5级；从60级起界面一次升一级。每级取升级前等级的 `herolevel` 费用，金币由角色钱包扣除，英雄经验为背包物品 `900101`。旧 `HeroHandler.heroUpLevel`（4018）在服务端校验实例归属、请求级数和本阶或星级上限。当前0阶上限为30级。
+
+客户端 `HeroLevelQuoteUtils` 读取已加载的配置及现有名册、角色和背包。费用不足时展示下一等级的成本，优先提示金币，再提示英雄经验。确认本次手动升级后 `HeroInfoView` 使用原 `upexp` 的30帧光效，60毫秒每帧，前100毫秒渐入，关页归还引用。
+
+服务端 `HeroLevelService` 在角色锁内完成等级与两项扣费，递增统一资产版本，并保存回执，失败一起回滚。V32 保留旧单级回执并允许存多级跨度。相同原参数返回同一回执，更改参数明确拒绝。应用提供已认证角色隔离的原请求日志，控制器确认回执及统一快照后清理。关页时可继续同步，冷恢复只查原操作，不重复播升级光效。[通信契约](network-contract.md) · [本机结果](development-progress.md#当前验证与边界)
 
 ## 历史合同与规则核查
 

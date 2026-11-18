@@ -34,6 +34,12 @@ public class HeroCapacityService {
             return new State(Math.addExact(row.getInt("hero_capacity"),vip>0?extra:0),row.getInt("hero_capacity_buys"));
         },roleId);
     }
+
+    /** 按当前名册的真实占用及 VIP 加成检查新增数量；调用者持有角色锁，奖励入库不默认套用此限制。 */
+    public boolean hasRoom(String roleId, int quantity) {
+        long owned = jdbc.queryForObject("SELECT COUNT(*) FROM game_hero WHERE role_id=?", Long.class, roleId);
+        return owned + quantity <= current(roleId).capacity();
+    }
     /** 读取构建时打包的同源策划表，缺表或空表直接失败。 */
     private static JsonNode rows(ObjectMapper mapper,String table) {
         try(var input=HeroCapacityService.class.getResourceAsStream("/gameplay/"+table+".json")) {

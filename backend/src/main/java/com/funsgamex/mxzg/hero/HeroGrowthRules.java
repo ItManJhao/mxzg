@@ -12,9 +12,12 @@ public class HeroGrowthRules {
     public record Cost(long gold, long experience) {}
     private final String version;
     private final Map<String, Map<String, JsonNode>> tables = new HashMap<>();
+    /** 旧 system.hero_level_jump_max，单笔升级允许提交的最高级数，启动时校验一次。 */
+    private final int levelJumpMax;
 
-    /** 启动时加载版本化最小投影，拒绝重复配置键，绝不缺表后按零消耗继续。 */
+    /** 启动时加载版本化成长投影及同源跳级上限，拒绝缺表和重复配置。 */
     public HeroGrowthRules(ObjectMapper mapper) {
+        levelJumpMax = readLevelJumpMax(mapper);
         try (var input = HeroGrowthRules.class.getResourceAsStream("/gameplay/hero-growth.json")) {
             if (input == null) throw new IllegalStateException("HERO_CONFIG_MISSING");
             var data = mapper.readTree(input); version = data.get("version").asText();
@@ -38,6 +41,49 @@ public class HeroGrowthRules {
 
     /** 返回内容哈希版本，幂等收据记录实际执行时的规则版本。 */
     public String version() { return version; }
+
+    /** 返回当前配置允许的单笔升级级数上限，目标等级仍需单独校验。 */
+    public int levelJumpMax() {
+        return levelJumpMax;
+    }
+
+    /** 从系统表中读取唯一正整数，缺失或重复时拒绝启动。 */
+    private static int readLevelJumpMax(ObjectMapper mapper) {
+        try (var input = HeroGrowthRules.class.getResourceAsStream("/gameplay/system.json")) {
+            if (input == null) {
+                throw new IllegalStateException("HERO_CONFIG_MISSING: system");
+            }
+            int maximum = 0;
+            for (var row : mapper.readTree(input).path("rows")) {
+                if (!row.path("key").asString().equals("hero_level_jump_max")) {
+                    continue;
+                }
+                var value = row.path("value");
+                if (maximum != 0 || !value.isIntegralNumber() || !value.canConvertToInt() || value.asInt() <= 0) {
+                    throw new IllegalStateException("HERO_CONFIG_INVALID: hero_level_jump_max");
+                }
+                maximum = value.asInt();
+            }
+            if (maximum == 0) {
+                throw new IllegalStateException("HERO_CONFIG_MISSING: hero_level_jump_max");
+            }
+            return maximum;
+        } catch (java.io.IOException failure) {
+            throw new IllegalStateException("HERO_CONFIG_MISSING: system", failure);
+        }
+    }
+
+    /** 按当前等级至目标等级前一行累加实际消耗，目标上限由提交者先校验。 */
+    public Cost costBetween(int fromLevel, int toLevel) {
+        long gold = 0;
+        long experience = 0;
+        for (int level = fromLevel; level < toLevel; level++) {
+            var cost = cost(level);
+            gold = Math.addExact(gold, cost.gold());
+            experience = Math.addExact(experience, cost.experience());
+        }
+        return new Cost(gold, experience);
+    }
 
     /** 查找准确配置行，缺失属于规则错误，不退回其他模板或等级。 */
     private JsonNode row(String table, String key) {

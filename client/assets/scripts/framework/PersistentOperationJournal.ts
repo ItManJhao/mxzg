@@ -61,7 +61,7 @@ export class PersistentOperationJournal<T> {
             const read = store.get("client");
             read.onsuccess = guard(() => {
                 if (read.result === undefined) {
-                    const value = PersistentOperationJournal.createClientId();
+                    const value = PersistentOperationJournal.createId();
                     store.add({ schemaVersion: 1, clientId: value }, "client");
                     result(value);
                     return;
@@ -286,12 +286,12 @@ export class PersistentOperationJournal<T> {
     }
 
     /** 业务和稳定实例标识均使用完整UUID，不能以普通临时字符串代替。 */
-    private static isUuid(value: unknown): value is string {
+    public static isUuid(value: unknown): value is string {
         return typeof value === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
     }
 
-    /** 用平台安全随机源创建稳定实例UUID；能力不足时拒绝，不使用可能冲突的时间戳。 */
-    private static createClientId(): string {
+    /** 持久实例和业务原意图共用安全随机UUID；无可靠随机源即拒绝写入。 */
+    public static createId(): string {
         if (typeof crypto === "undefined" || typeof crypto.getRandomValues !== "function") {
             throw new Error("当前平台缺少安全随机源，操作日志实例不能初始化");
         }

@@ -1,9 +1,11 @@
-/** 出阵真实Prefab专项：核对绑定、自动入位、拖放及切阵型，也检查草稿与权威状态恢复。 */
+/** 出阵真实Prefab专项：核对草稿交互、阵型和元素子窗归属，以及权威状态恢复。 */
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { Button, Color, Label, Mask, Node, Prefab, ScrollView, Sprite, UITransform, Vec2, Vec3 } from "cc";
+import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
+import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { FormationHeroCellView } from "../assets/scripts/features/hero/ui/FormationHeroCellView";
@@ -14,6 +16,8 @@ import { Protocol } from "../assets/scripts/platform/Protocol";
 import { FormationSaveModel } from "../assets/scripts/features/hero/FormationSaveModel";
 import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
 import { FormationView } from "../assets/scripts/features/hero/ui/FormationView";
+import { FormationElementView, type FormationElementArgs } from "../assets/scripts/features/hero/ui/FormationElementView";
+import { FormationMatrixView } from "../assets/scripts/features/hero/ui/FormationMatrixView";
 import { FormationSlotView } from "../assets/scripts/features/hero/ui/FormationSlotView";
 import { HeroIconCellView } from "../assets/scripts/features/hero/ui/HeroIconCellView";
 import { HeroCatalog } from "../assets/scripts/features/hero/utils/HeroCatalog";
@@ -555,8 +559,8 @@ async function checkDragDraft(heroes: Parameters<FormationView["render"]>[0]["he
     }
 }
 
-/** 用真实的阵型一、二往返检查开放格序位和助战边界，切换只改草稿。 */
-async function checkFormationCycle(heroes: Parameters<FormationView["render"]>[0]["heroes"]): Promise<void> {
+/** 用真实阵型配置检查子窗归属、草稿迁位，以及只有出阵才提交保存。 */
+async function checkFormationMatrix(heroes: Parameters<FormationView["render"]>[0]["heroes"]): Promise<void> {
     const [first, second, assistance] = heroes;
     const rosterHeroes = [first, { ...second, templateId: 10304012 }, { ...assistance, templateId: 10105007 }];
     const names = rosterHeroes.map(hero => HeroCatalog.find(hero.templateId)?.name);
@@ -572,42 +576,105 @@ async function checkFormationCycle(heroes: Parameters<FormationView["render"]>[0
     const original = [
         { position: 8, heroId: first.id }, { position: 5, heroId: second.id }, { position: 9, heroId: assistance.id },
     ];
-    const asset = { formationId: 1, unlockedIds: [1, 2], assistanceUnlocked: true, version: 5, slots: original, options };
+    const asset = { formationId: 1, unlockedIds: [1], assistanceUnlocked: true, version: 5, slots: original, options: [options[0]] };
     const root = instantiateData(read(PAGE));
     const editor = root.getComponent(FormationView) as FormationView;
     const roster = new HeroRosterModel();
     const saves = new FormationSaveModel();
     const controller = new FormationController(saves, roster);
     const submissions: FormationSaveRequest[] = [];
+    const ui = UIManager.instance;
+    const host = new Node("FormationMatrixTestHost");
+    host.addComponent(UITransform);
+    const matrixSpec = UIRegistry.viewSpecOf(FormationMatrixView)!;
+    const dropHost = ui.setResidentHost(matrixSpec.hostId!, () => host);
+    const loadPrefab = PrefabLoader.loadPrefab;
+    type Selection = { view: FormationMatrixView; args: NonNullable<Parameters<FormationMatrixView["onOpen"]>[0]> };
+    const opened: Selection[] = [];
+    // 只替换子窗展示，实际 UIManager 负责挂载、父窗归属与关闭。
+    PrefabLoader.loadPrefab = async path => {
+        assert.equal(path, matrixSpec.prefab);
+        return Object.assign(new Prefab(), {
+            _instantiate: () => {
+                const node = new Node("FormationMatrixTestView");
+                node.addComponent(UITransform);
+                const view = node.addComponent(FormationMatrixView);
+                view.runOpen = args => opened.push({ view, args: args! });
+                return node;
+            },
+        });
+    };
+    /** 打开一个属于本出阵页的真实子窗实例，并等待假展示接收参数。 */
+    async function openSelection(): Promise<Selection> {
+        const previousCount = opened.length;
+        editor.formationButton!.node.emit(Button.EventType.CLICK);
+        await settleTasks();
+        assert.equal(opened.length, previousCount + 1);
+        const selection = opened[previousCount];
+        assert(ui.ownsChild(editor, selection.view), "阵型选择窗应归当前出阵页");
+        return selection;
+    }
+    /** 模拟子窗关闭后交付一个确认 ID；父页仍要核对权威选项。 */
+    function confirmSelection(selection: Selection, formationId: number): void {
+        ui.close(selection.view);
+        selection.args.onConfirm(formationId);
+    }
     roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: asset });
     controller.initialize();
     controller.configure(async (body, received) => {
         submissions.push(body);
         received({ version: 1, kind: "response", name: Protocol.FORMATION_SAVE,
-            ok: true, body: { requestId: body.requestId, version: 6 } });
+            ok: true, body: { requestId: body.requestId, version: body.expectedVersion + 1 } });
     });
     editor.configure(controller, roster, saves);
     try {
         editor.runOpen({ complete: () => {} });
-        editor.formationButton!.node.emit(Button.EventType.CLICK);
+        assert.equal(editor.formationButton!.interactable, true, "只有基础阵型解锁也可以预览");
+        const cancelled = await openSelection();
+        assert.equal(cancelled.args.formationId, 1);
+        assert.deepEqual(cancelled.args.unlockedIds, [1]);
+        ui.close(cancelled.view);
+        assert.equal(slotAt(editor, 5).caption!.string, names[1], "取消预览不改出阵草稿");
+        confirmSelection(await openSelection(), 2);
+        assert.equal(editor.formationLabel!.string, "阵型 1 ▼", "锁定阵型的结果不能改草稿");
+        assert.equal(submissions.length, 0);
+
+        const unlocked = { ...asset, unlockedIds: [1, 2], options };
+        roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: unlocked });
+        EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
+        confirmSelection(await openSelection(), 2);
         assert.equal(editor.formationLabel!.string, "阵型 2 ▼");
         assert.equal(slotAt(editor, 7).caption!.string, names[0], "旧第六个开放普通位对应新第六个开放普通位");
         assert.equal(slotAt(editor, 3).caption!.string, names[1], "旧第三个开放普通位对应新第三个开放普通位");
         assert.equal(slotAt(editor, 1).portrait!.active, false, "首个开放格仍保持空位");
         assert.equal(slotAt(editor, 9).caption!.string, names[2], "双方允许的助战位保持独立");
 
-        editor.formationButton!.node.emit(Button.EventType.CLICK);
+        const reverse = await openSelection();
+        assert.equal(reverse.args.formationId, 2, "重开选择窗从当前草稿阵型开始");
+        confirmSelection(reverse, 1);
         assert.equal(editor.formationLabel!.string, "阵型 1 ▼");
         assert.equal(slotAt(editor, 8).caption!.string, names[0], "反向切换恢复原序位");
         assert.equal(slotAt(editor, 5).caption!.string, names[1]);
         assert.equal(slotAt(editor, 9).caption!.string, names[2]);
 
-        // 注入较窄的目标选项，确认不存在同序位时不会把普通英雄移到助战格，也不保留关闭的助战格。
-        roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: {
-            ...asset, options: [options[0], { ...options[1], openPositions: options[1].openPositions.filter(pos => pos !== 7 && pos !== 9) }],
-        } });
+        const outdated = await openSelection();
+        // 注入新版快照及较窄的目标选项，覆盖迟到确认和关闭格处理。
+        const updated = { ...unlocked, version: 6, options: [options[0],
+            { ...options[1], openPositions: options[1].openPositions.filter(pos => pos !== 7 && pos !== 9) }] };
+        roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: updated });
         EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
-        editor.formationButton!.node.emit(Button.EventType.CLICK);
+        assert(!ui.isOpen(outdated.view), "权威快照换版取消旧选择窗");
+        outdated.args.onConfirm(2);
+        assert.equal(editor.formationLabel!.string, "阵型 1 ▼", "忽略旧草稿的迟到确认");
+
+        const closing = await openSelection();
+        editor.runClose();
+        assert(!ui.isOpen(closing.view), "父窗关闭时释放子窗");
+        editor.runOpen({ complete: () => {} });
+        closing.args.onConfirm(2);
+        assert.equal(editor.formationLabel!.string, "阵型 1 ▼", "重开后不接收上一轮确认");
+
+        confirmSelection(await openSelection(), 2);
         assert.equal(slotAt(editor, 3).caption!.string, names[1]);
         assert.equal(slotAt(editor, 7).portrait!.active, false, "缺失同序位时保持关闭格为空");
         assert.equal(slotAt(editor, 9).portrait!.active, false, "目标阵型关闭助战位时不保留助战英雄");
@@ -618,10 +685,84 @@ async function checkFormationCycle(heroes: Parameters<FormationView["render"]>[0
         await settleTasks();
         assert.equal(submissions.length, 1);
         assert.equal(submissions[0].formationId, 2);
-        assert.equal(submissions[0].expectedVersion, asset.version);
+        assert.equal(submissions[0].expectedVersion, updated.version);
         assert.deepEqual(submissions[0].slots, [{ position: 3, heroId: second.id }]);
     } finally {
         editor.runClose();
+        PrefabLoader.loadPrefab = loadPrefab;
+        dropHost();
+        host.destroy();
+        controller.dispose();
+        root.destroy();
+    }
+}
+
+/** 用真实出阵Prefab与共享子窗归属检查同一份草稿加成的实时投影。 */
+async function checkElementDraft(heroes: Parameters<FormationView["render"]>[0]["heroes"]): Promise<void> {
+    const rosterHeroes = [heroes[0], { ...heroes[1], templateId: 10102002 }, { ...heroes[2], templateId: 10105008 }];
+    const roster = new HeroRosterModel();
+    const saves = new FormationSaveModel();
+    const controller = new FormationController(saves, roster);
+    const root = instantiateData(read(PAGE));
+    const editor = root.getComponent(FormationView)!;
+    editor.configure(controller, roster, saves);
+    roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: {
+        formationId: 1, unlockedIds: [1], assistanceUnlocked: false, version: 0, slots: [],
+        options: [{ formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] }],
+    } });
+
+    const ui = UIManager.instance;
+    const host = new Node("FormationElementTestHost");
+    host.addComponent(UITransform);
+    const spec = UIRegistry.viewSpecOf(FormationElementView)!;
+    const dropHost = ui.setResidentHost(spec.hostId!, () => host);
+    const loadPrefab = PrefabLoader.loadPrefab;
+    const refreshes: string[] = [];
+    let child: FormationElementView | undefined;
+    PrefabLoader.loadPrefab = async path => {
+        assert.equal(path, spec.prefab);
+        return Object.assign(new Prefab(), { _instantiate: () => {
+            const node = new Node("FormationElementTestView");
+            node.addComponent(UITransform);
+            const view = node.addComponent(FormationElementView);
+            let args: FormationElementArgs | undefined;
+            view.onBind = () => {};
+            view.onOpen = latest => { args = latest; };
+            view.onClose = () => { args = undefined; };
+            view.refresh = () => { refreshes.push(args!.readPreview().summary); };
+            child = view;
+            return node;
+        } });
+    };
+    try {
+        editor.runOpen({ complete: () => {} });
+        assert(editor.elementBonusButton!.interactable, "未激活时仍可打开元素克制说明");
+        assert.equal(editor.teamBonusLabel!.node.active, false);
+        clickHero(editor, 0);
+        clickHero(editor, 1);
+        assert.match(editor.teamBonusLabel!.string, /生命\+3%.*攻击\+3%/);
+
+        editor.elementBonusButton!.node.emit(Button.EventType.CLICK);
+        await settleTasks();
+        assert(child && ui.ownsChild(editor, child), "元素说明应为当前出阵页的子窗");
+        assert.equal(refreshes.at(-1), editor.teamBonusLabel!.string);
+        clickHero(editor, 2);
+        assert.match(editor.teamBonusLabel!.string, /生命\+5%.*攻击\+5%/);
+        assert.equal(refreshes.at(-1), editor.teamBonusLabel!.string, "同一子窗随草稿立即刷新");
+        dragSlot(editor, 2, 8);
+        assert.match(editor.teamBonusLabel!.string, /生命\+5%.*攻击\+5%/, "单纯拖换普通格位不改变元素人数");
+        clickHero(editor, 1);
+        clickHero(editor, 2);
+        assert.equal(editor.teamBonusLabel!.node.active, false);
+        assert.equal(refreshes.at(-1), "", "撤下后子窗同时清除激活汇总");
+        assert.equal(roster.snapshot.mainFormation!.slots.length, 0, "展示加成只读取草稿");
+        editor.runClose();
+        assert(!ui.isOpen(child), "关闭出阵页时同步关闭元素子窗");
+    } finally {
+        editor.runClose();
+        PrefabLoader.loadPrefab = loadPrefab;
+        dropHost();
+        host.destroy();
         controller.dispose();
         root.destroy();
     }
@@ -754,7 +895,8 @@ async function main(): Promise<void> {
     await checkUnsavedDraftRecovery(heroes);
     await checkMissingStateRecovery(heroes);
     await checkDragDraft(heroes);
-    await checkFormationCycle(heroes);
-    console.log("formation-view-check passed: real Prefab bindings, Inspector edits, automatic placement, duplicate template, drag/swap/cancel, formation rank mapping, same-version draft recovery, original ACK draft, explicit sync-only retry and exactly one battle confirmation");
+    await checkFormationMatrix(heroes);
+    await checkElementDraft(heroes);
+    console.log("formation-view-check passed: real Prefab bindings, automatic placement, drag, matrix, live draft bonuses and save recovery");
 }
 void main().catch(error=>{console.error(error);process.exitCode=1;});

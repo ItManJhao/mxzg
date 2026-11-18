@@ -12,6 +12,7 @@ import { MainChapterModel, MainChapterState, MainChapterReplay, MainChapterIdleS
 import { BattleReplayUtils } from "./utils/BattleReplayUtils";
 import { ChapterSettlementUtils } from "./utils/ChapterSettlementUtils";
 import { ChapterMilestoneUtils } from "./utils/ChapterMilestoneUtils";
+import { ChapterClearRewardUtils } from "./utils/ChapterClearRewardUtils";
 
 declare module "../../framework/EventDispatcher" {
     interface EventPayloads { "main-chapter.updated": undefined; }
@@ -56,6 +57,8 @@ export class MainChapterController extends BaseController {
     public requestIdleClaim: ((presentationContext: object) => Promise<void>) | null = null;
     /** 应用注入里程碑持久意图入口；页面只提交原配置ID，原回执与通用反馈归应用绑定。 */
     public requestMilestoneClaim: ((rewardId: number, presentationContext?: object) => Promise<void>) | null = null;
+    /** 应用注入独立通关奖励的持久意图入口，页面只提交原绝对关卡。 */
+    public requestFirstRewardClaim: ((chapter: number) => Promise<void>) | null = null;
 
     /** 注入业务交付、角色显示及缺状态的有界鉴权入口；身份仍由应用隔离。 */
     public configure(send: NonNullable<MainChapterController["send"]>, readRoleLevel: () => number = () => 0,
@@ -82,7 +85,7 @@ export class MainChapterController extends BaseController {
             Protocol.CHAPTER_CHALLENGE, Protocol.CHAPTER_CLAIM, Protocol.CHAPTER_REPLAY, Protocol.CHAPTER_IDLE_ENCOUNTER]));
     }
 
-    /** 校验全局进度、可选新挑战范围和资产版本；旧范围缺失保持未同步，历史进度不因降范围而丢弃。 */
+    /** 校验全局进度、可选挑战范围、两套独立领奖集合和资产版本，缺字段保持未同步。 */
     public static readState(value: unknown, revision?: number): MainChapterState | null {
         if (value === undefined) return null;
         const v = value as MainChapterState;
@@ -93,10 +96,12 @@ export class MainChapterController extends BaseController {
             || (v.pendingBattleId && v.maxCleared === 0)
             || (v.challengeLimit !== undefined && !this.chapterIndex(v.challengeLimit))) throw new Error("主线快照无效");
         const milestoneProgress = ChapterMilestoneUtils.readProgress(v.milestoneProgress);
+        const firstRewardProgress = ChapterClearRewardUtils.readProgress(v.firstRewardProgress, v.maxCleared);
         return Object.freeze({ maxCleared: v.maxCleared, pendingBattleId: v.pendingBattleId || null,
             assetRevision: v.assetRevision,
             ...(v.challengeLimit !== undefined ? { challengeLimit: v.challengeLimit } : {}),
-            ...(milestoneProgress ? { milestoneProgress } : {}) });
+            ...(milestoneProgress ? { milestoneProgress } : {}),
+            ...(firstRewardProgress ? { firstRewardProgress } : {}) });
     }
 
     /**
@@ -611,6 +616,7 @@ export class MainChapterController extends BaseController {
         this.readRoleAppearance = () => null;
         this.requestIdleClaim = null;
         this.requestMilestoneClaim = null;
+        this.requestFirstRewardClaim = null;
     }
 
     /** 持久编号必须为UUID字符串，不接受数值或任意路径。 */

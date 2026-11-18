@@ -1,5 +1,5 @@
 /**
- * 长连接鉴权接管与恢复快照：同一角色锁内读取钱包、库存实例、冒险点及主线/里程碑已领状态。
+ * 长连接鉴权接管与恢复快照：同一角色锁内读取钱包、库存实例、冒险点、主线已领及普通首抽状态。
  * 登录首包和提交后state.changed共用本入口；冒险点真正缺行才按旧规则懒建，不生成酒馆任务。
  */
 package com.funsgamex.mxzg.network;
@@ -23,7 +23,8 @@ public class SessionSnapshotService {
                            com.funsgamex.mxzg.lineup.MainFormationStateService.State mainFormation,
                            com.funsgamex.mxzg.campaign.MainChapterService.State mainChapter,
                            com.funsgamex.mxzg.campaign.MainChapterIdleService.State mainChapterIdle,
-                           SpiritInventoryService.State spiritInventory, TavernPointService.State tavernPoints) {}
+                           SpiritInventoryService.State spiritInventory, TavernPointService.State tavernPoints,
+                           HeroFirstSummonService.State heroSummon) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -41,6 +42,9 @@ public class SessionSnapshotService {
     /** 同一角色锁内读取总容量和扩容次数。 */
     private final HeroCapacityService capacity;
 
+    /** 与真实新英雄和积分同版本交付的持久首抽资格。 */
+    private final HeroFirstSummonService heroSummons;
+
     /** 与名册同事务的阵型永久解锁和站位投影。 */
     private final com.funsgamex.mxzg.lineup.MainFormationStateService formations;
 
@@ -56,13 +60,14 @@ public class SessionSnapshotService {
     /** 可信主线关卡规则只在快照装配处提供上限，不反向注入角色持久入口。 */
     private final com.funsgamex.mxzg.campaign.MainChapterRules chapterRules;
 
-    /** 注入原有数据入口，不新增玩家状态副本。 */
+    /** 注入各领域持久数据入口，在统一读取事务内聚合状态。 */
     public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory,
             TimedInventoryService timed, HeroRepository heroes, HeroCapacityService capacity,
             com.funsgamex.mxzg.lineup.MainFormationStateService formations,
             com.funsgamex.mxzg.campaign.MainChapterService chapters,
             com.funsgamex.mxzg.campaign.MainChapterIdleService idle, SpiritInventoryService spirits,
-            TavernPointService tavernPoints, com.funsgamex.mxzg.campaign.MainChapterRules chapterRules) {
+            TavernPointService tavernPoints, com.funsgamex.mxzg.campaign.MainChapterRules chapterRules,
+            HeroFirstSummonService heroSummons) {
         this.idle = idle;
         this.chapters = chapters;
         this.sessions = sessions;
@@ -75,6 +80,7 @@ public class SessionSnapshotService {
         this.formations = formations;
         this.tavernPoints = tavernPoints;
         this.chapterRules = chapterRules;
+        this.heroSummons = heroSummons;
     }
 
     /** 锁内再次校验，撤销同角色其他令牌；并发接管中已失效的令牌不能复活。 */
@@ -86,7 +92,7 @@ public class SessionSnapshotService {
         return role;
     }
 
-    /** 同一角色锁内组装完整资产；冒险点缺行初始化与当前revision同事务，任一坏状态均整包拒绝。 */
+    /** 同一角色锁内组装资产和首抽资格；冒险点缺行初始化与版本同事务，坏状态整包拒绝。 */
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
     public Snapshot snapshot(String token) {
         String role = sessions.requireRole(token);
@@ -100,11 +106,11 @@ public class SessionSnapshotService {
         // 冒险点首次懒建可能推进同一事务版本；对齐时保留里程碑集合和可信新挑战范围。
         chapter = new com.funsgamex.mxzg.campaign.MainChapterService.State(
                 chapter.maxCleared(), chapter.pendingBattleId(), roles.revision(role), chapter.milestoneProgress(),
-                chapter.challengeLimit());
+                chapter.challengeLimit(), chapter.firstRewardProgress());
         var idleState = idle.snapshot(role, chapter.maxCleared(), java.time.Instant.now().getEpochSecond());
         idleState = idle.withLineup(role, idleState, formation);
         return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role),
                 roles.revision(role), timedState, capacity.current(role), formation, chapter, idleState, spiritState,
-                pointState);
+                pointState, heroSummons.current(role));
     }
 }

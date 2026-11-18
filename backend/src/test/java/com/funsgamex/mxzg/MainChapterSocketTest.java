@@ -1,6 +1,6 @@
 /**
- * 主线挑战、结算与统一里程碑进度的真实WebSocket回归，核对登录、提交事件及重新鉴权。
- * 使用独立H2和随机端口；夹具只准备测试角色，不修改日常玩家库或开放里程碑领取协议。
+ * 主线挑战、结算、独立通关奖励和英雄早期成长的真实 WebSocket 回归，核对提交事件和重新鉴权。
+ * 使用独立H2和随机端口，验证真实发放、状态更新与回执重放。
  */
 package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.*;
@@ -175,6 +175,86 @@ class MainChapterSocketTest {
         assertEquals(expected, ids);
     }
 
+    /** 原生 WebSocket 走实际信封，确认新号首战、独立领装备、扣碎片、批量升级和重登恢复。 */
+    @Test void firstRewardAndFragmentReceiptsRoundTripOverRealSocket() throws Exception {
+        var player = login.login("growth_" + UUID.randomUUID().toString().substring(0, 12));
+        String token = player.session().accessToken();
+        var chapter = Map.of("chapter", 1);
+        String requestId = UUID.randomUUID().toString();
+        String levelRequest = UUID.randomUUID().toString();
+        JsonNode firstReward;
+        JsonNode fragment;
+        JsonNode upgradeReceipt;
+        try (var peer = new Peer()) {
+            var accepted = peer.authenticate(token);
+            assertTrue(accepted.path("ok").asBoolean());
+            var unclaimed = peer.request("chapter.firstreward.claim.status", chapter);
+            assertTrue(unclaimed.path("ok").asBoolean());
+            assertFalse(unclaimed.path("body").path("found").asBoolean(true));
+            var tooSoon = peer.request("chapter.firstreward.claim", chapter);
+            assertEquals("FIRST_REWARD_NOT_REACHED", tooSoon.path("error").path("code").asString());
+
+            var summon = peer.request("hero.summon.first", Map.of("requestId", UUID.randomUUID().toString()));
+            assertTrue(summon.path("ok").asBoolean());
+            var hero = summon.path("body").path("actual").path("heroes").get(0);
+            var formation = accepted.path("body").path("initial").path("mainFormation");
+            assertTrue(peer.request("formation.save", Map.of("requestId", UUID.randomUUID().toString(),
+                    "expectedVersion", formation.path("version").asLong(), "formationId", formation.path("formationId").asInt(),
+                    "slots", List.of(Map.of("position", 2, "heroId", hero.path("instanceId").asString())))).path("ok").asBoolean());
+            var battle = peer.request("chapter.challenge", Map.of("requestId", UUID.randomUUID().toString()));
+            assertEquals(1, battle.path("body").path("state").path("maxCleared").asInt());
+            var settled = peer.request("chapter.claim", Map.of("battleId", battle.path("body").path("battleId").asString()));
+            assertTrue(settled.path("ok").asBoolean());
+
+            var first = peer.request("chapter.firstreward.claim", chapter);
+            assertTrue(first.path("ok").asBoolean(), first.toString());
+            firstReward = first.path("body");
+            assertEquals(1001001, firstReward.path("actual").path("items").get(0).path("itemId").asInt());
+            assertEquals(firstReward, peer.request("chapter.firstreward.claim", chapter).path("body"));
+
+            var combined = peer.request("bag.fragment.combine", Map.of("requestId", requestId, "itemId", 20204004, "quantity", 1));
+            assertTrue(combined.path("ok").asBoolean(), combined.toString());
+            fragment = combined.path("body");
+            assertEquals(30, fragment.path("costQuantity").asLong());
+            assertEquals(10204004, fragment.path("actual").path("heroes").get(0).path("templateId").asInt());
+
+            var statusBefore = peer.request("hero.level.upgrade.status", Map.of("requestId", levelRequest));
+            assertTrue(statusBefore.path("ok").asBoolean(), statusBefore.toString());
+            assertFalse(statusBefore.path("body").path("found").asBoolean(true));
+            long beforeRevision = roles.revision(player.role().id());
+            var level = Map.of("requestId", levelRequest, "heroId", hero.path("instanceId").asString(),
+                    "expectedLevel", 1, "levels", 5);
+            var upgraded = peer.request("hero.level.upgrade", level);
+            assertTrue(upgraded.path("ok").asBoolean(), upgraded.toString());
+            upgradeReceipt = upgraded.path("body");
+            assertEquals(1, upgradeReceipt.path("fromLevel").asInt());
+            assertEquals(6, upgradeReceipt.path("toLevel").asInt());
+            assertEquals(beforeRevision + 1, upgradeReceipt.path("assetRevision").asLong());
+            assertEquals(player.role().id(), upgradeReceipt.path("roleId").asString());
+            assertTrue(peer.events.stream().anyMatch(event -> event.path("name").asString().equals("state.changed")
+                    && event.path("body").path("revision").asLong() == beforeRevision + 1));
+            assertEquals(upgradeReceipt, peer.request("hero.level.upgrade", level).path("body"));
+            assertEquals(beforeRevision + 1, roles.revision(player.role().id()));
+        }
+        try (var restored = new Peer()) {
+            var accepted = restored.authenticate(token);
+            assertTrue(accepted.path("ok").asBoolean());
+            var initial = accepted.path("body").path("initial");
+            assertEquals(1, initial.path("mainChapter").path("firstRewardProgress").path("claimedChapters").get(0).asInt());
+            assertEquals(2, initial.path("heroes").size());
+            assertEquals(firstReward, restored.request("chapter.firstreward.claim.status", chapter).path("body").path("receipt"));
+            assertEquals(fragment, restored.request("bag.fragment.combine.status", Map.of("requestId", requestId))
+                    .path("body").path("receipt"));
+            assertEquals(upgradeReceipt, restored.request("hero.level.upgrade.status", Map.of("requestId", levelRequest))
+                    .path("body").path("receipt"));
+            assertEquals(3590, initial.path("role").path("gold").asLong());
+            assertTrue(initial.path("inventory").valueStream()
+                    .anyMatch(item -> item.path("itemId").asInt() == 900101 && item.path("quantity").asLong() == 395));
+            assertTrue(initial.path("heroes").valueStream().anyMatch(hero ->
+                    hero.path("id").asString().equals(upgradeReceipt.path("heroId").asString())
+                            && hero.path("level").asInt() == 6));
+        }
+    }
 
     /** 真实协议跑通前三关结算并准入第四关；核对冻结伤害/经验、鉴权恢复与幂等，不访问日常库。 */
     @Test void challengeRestoreReplayAndClaimThroughBinarySocket() throws Exception {

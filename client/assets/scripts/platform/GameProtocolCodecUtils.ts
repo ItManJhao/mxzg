@@ -3,6 +3,8 @@
  * 不保存会话/资产；解码只返回数据，业务合法性与会话时效仍由传输/API/Controller 校验。
  */
 import { Protocol } from "./Protocol";
+import { FirstSummonData } from "../features/hero/data/FirstSummonData";
+import { HeroLevelData } from "../features/hero/data/HeroLevelData";
 import { mxzg } from "./GameProtocol.generated";
 /** 两端共同声明的 WebSocket 子协议；握手阶段拒绝误连旧 JSON 服务。 */
 export const GAME_SOCKET_PROTOCOL = "mxzg.protobuf.v2";
@@ -53,6 +55,10 @@ const payloads = [
     "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
     "rewardNotice",
     "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus",
+    "heroFirstSummonRequest", "heroFirstSummonReceipt", "heroFirstSummonStatus",
+    "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus",
+    "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus",
+    "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus",
 ];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
 export class GameProtocolCodecUtils {
@@ -76,6 +82,26 @@ export class GameProtocolCodecUtils {
         if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_MILESTONE_CLAIM
                 || frame.name === Protocol.CHAPTER_MILESTONE_STATUS)) {
             return "chapterMilestoneClaim";
+        }
+        if (frame.kind === "request" && (frame.name === Protocol.HERO_FIRST_SUMMON
+                || frame.name === Protocol.HERO_FIRST_SUMMON_STATUS)) {
+            return "heroFirstSummonRequest";
+        }
+        if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_FIRST_REWARD_CLAIM
+                || frame.name === Protocol.CHAPTER_FIRST_REWARD_STATUS)) {
+            return "chapterFirstRewardRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_FRAGMENT_COMBINE) {
+            return "heroFragmentCombineRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_FRAGMENT_COMBINE_STATUS) {
+            return "heroFragmentCombineStatusRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_LEVEL_UPGRADE) {
+            return "heroLevelUpgradeRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_LEVEL_UPGRADE_STATUS) {
+            return "heroLevelUpgradeStatusRequest";
         }
         if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_CLAIM || frame.name === Protocol.CHAPTER_REPLAY)) {
             return "chapterBattleId";
@@ -113,8 +139,16 @@ export class GameProtocolCodecUtils {
                 case Protocol.CHAPTER_IDLE_CLAIM_STATUS: return "chapterIdleClaimStatus";
                 case Protocol.CHAPTER_MILESTONE_CLAIM: return "chapterMilestoneReceipt";
                 case Protocol.CHAPTER_MILESTONE_STATUS: return "chapterMilestoneStatus";
+                case Protocol.CHAPTER_FIRST_REWARD_CLAIM: return "chapterFirstRewardReceipt";
+                case Protocol.CHAPTER_FIRST_REWARD_STATUS: return "chapterFirstRewardStatus";
                 case Protocol.BATTLE_PREVIEW: return "battlePreviewed";
                 case Protocol.FORMATION_SAVE: return "formationSaved";
+                case Protocol.HERO_FIRST_SUMMON: return "heroFirstSummonReceipt";
+                case Protocol.HERO_FIRST_SUMMON_STATUS: return "heroFirstSummonStatus";
+                case Protocol.HERO_FRAGMENT_COMBINE: return "heroFragmentCombineReceipt";
+                case Protocol.HERO_FRAGMENT_COMBINE_STATUS: return "heroFragmentCombineStatus";
+                case Protocol.HERO_LEVEL_UPGRADE: return "heroLevelUpgradeReceipt";
+                case Protocol.HERO_LEVEL_UPGRADE_STATUS: return "heroLevelUpgradeStatus";
                 case Protocol.GM_GRANT: return "gmResult";
                 case Protocol.GM_STATUS: return "gmStatus";
                 case Protocol.SERVERS_LIST: return "servers";
@@ -335,6 +369,85 @@ export class GameProtocolCodecUtils {
             actual.items as { itemId: number; credited: number }[]);
     }
 
+    /** 首抽请求只可携带原键，回执与查询必须使用匹配载荷和原编号。 */
+    private static validateFirstSummon(frame: GameFrame): void {
+        const status = frame.name === Protocol.HERO_FIRST_SUMMON_STATUS;
+        if ((!status && frame.name !== Protocol.HERO_FIRST_SUMMON) || (frame.kind === "response" && frame.ok === false)) {
+            return;
+        }
+        if (frame.kind !== "request" && frame.kind !== "response") {
+            throw new Error("首抽信封方向无效");
+        }
+        const body = frame.body as Record<string, unknown> | null;
+        if (!body || !FirstSummonData.isId(body.requestId)) {
+            throw new Error("首抽协议原编号无效");
+        }
+        if (frame.kind === "request") {
+            if (Object.keys(body).length !== 1) {
+                throw new Error("首抽请求参数超出约定");
+            }
+        } else if (status) {
+            const receipt = body.receipt as Record<string, unknown> | undefined;
+            if (typeof body.found !== "boolean" || (body.found ? receipt?.requestId !== body.requestId : receipt !== undefined)) {
+                throw new Error("首抽查询状态与回执不符");
+            }
+        }
+    }
+
+    /** 校验两类成长命令的原键、方向与业务结果，奖励只从原回执读取。 */
+    private static validateProgressReward(frame: GameFrame): void {
+        const chapter = frame.name === Protocol.CHAPTER_FIRST_REWARD_CLAIM
+            || frame.name === Protocol.CHAPTER_FIRST_REWARD_STATUS;
+        const fragment = frame.name === Protocol.HERO_FRAGMENT_COMBINE
+            || frame.name === Protocol.HERO_FRAGMENT_COMBINE_STATUS;
+        if ((!chapter && !fragment) || (frame.kind === "response" && frame.ok === false)) {
+            return;
+        }
+        if (frame.kind !== "request" && frame.kind !== "response") {
+            throw new Error("成长奖励协议方向无效");
+        }
+        const body = GameProtocolCodecUtils.idleObject(frame.body);
+        const key = chapter ? "chapter" : "requestId";
+        const status = frame.name === Protocol.CHAPTER_FIRST_REWARD_STATUS
+            || frame.name === Protocol.HERO_FRAGMENT_COMBINE_STATUS;
+        const positive = (value: unknown): value is number => typeof value === "number"
+            && Number.isSafeInteger(value) && value > 0 && value <= 0xffffffff;
+        if (chapter ? !positive(body.chapter) : !FirstSummonData.isId(body.requestId)) {
+            throw new Error("成长奖励协议原键无效");
+        }
+        if (frame.kind === "request") {
+            const validFields = fragment && !status
+                ? Object.keys(body).length === 3 && positive(body.itemId) && positive(body.quantity)
+                : Object.keys(body).length === 1;
+            if (!validFields) {
+                throw new Error("成长奖励请求携带了无效参数");
+            }
+            return;
+        }
+        if (status && (typeof body.found !== "boolean"
+                || (body.found ? body.receipt === undefined : body.receipt !== undefined))) {
+            throw new Error("成长奖励状态与回执不一致");
+        }
+        if (status && !body.found) {
+            return;
+        }
+        const receipt = status ? GameProtocolCodecUtils.idleObject(body.receipt) : body;
+        const actual = GameProtocolCodecUtils.idleObject(receipt.actual);
+        GameProtocolCodecUtils.validateIdleVersion(receipt.assetRevision);
+        if (receipt.schemaVersion !== 1 || receipt[key] !== body[key] || !FirstSummonData.isId(receipt.receiptId)
+                || typeof receipt.roleId !== "string" || !receipt.roleId || receipt.roleId.length > 128
+                || actual.roleId !== receipt.roleId || !Array.isArray(actual.heroes) || !Array.isArray(actual.items)) {
+            throw new Error("成长奖励回执与业务归属不一致");
+        }
+        const heroes = GameProtocolCodecUtils.validateHeroGrants(actual.heroes,
+            actual.items as { itemId: number; credited: number }[]);
+        if (fragment && (!positive(receipt.itemId) || !positive(receipt.quantity)
+                || typeof receipt.costQuantity !== "number" || receipt.costQuantity < receipt.quantity
+                || heroes?.length !== receipt.quantity)) {
+            throw new Error("碎片消耗与合成英雄数量无效");
+        }
+    }
+
     /**
      * 挂机命令校验确定的请求/回执格式，不推导可领资格或执行恢复重试。
      * status的NOT_FOUND仅代表锁内查询时尚未提交，不能解释为取消成功；未知状态明确拒绝。
@@ -375,6 +488,9 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateIdleClaim(frame);
         GameProtocolCodecUtils.validateRewardFrame(frame);
         GameProtocolCodecUtils.validateMilestone(frame);
+        GameProtocolCodecUtils.validateFirstSummon(frame);
+        GameProtocolCodecUtils.validateProgressReward(frame);
+        HeroLevelData.validateFrame(frame);
         const { body, ...envelope } = frame;
         const payload = GameProtocolCodecUtils.payloadName(frame);
         const message: Record<string, unknown> = { ...envelope };
@@ -424,6 +540,9 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateIdleClaim(frame);
         GameProtocolCodecUtils.validateRewardFrame(frame);
         GameProtocolCodecUtils.validateMilestone(frame);
+        GameProtocolCodecUtils.validateFirstSummon(frame);
+        GameProtocolCodecUtils.validateProgressReward(frame);
+        HeroLevelData.validateFrame(frame);
         return frame;
     }
 }

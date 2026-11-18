@@ -44,6 +44,20 @@ message Frame {
     ChapterMilestoneClaim chapter_milestone_claim = 36;
     ChapterMilestoneReceipt chapter_milestone_receipt = 37;
     ChapterMilestoneStatus chapter_milestone_status = 38;
+    HeroFirstSummonRequest hero_first_summon_request = 39;
+    HeroFirstSummonReceipt hero_first_summon_receipt = 40;
+    HeroFirstSummonStatus hero_first_summon_status = 41;
+    ChapterFirstRewardRequest chapter_first_reward_request = 42;
+    ChapterFirstRewardReceipt chapter_first_reward_receipt = 43;
+    ChapterFirstRewardStatus chapter_first_reward_status = 44;
+    HeroFragmentCombineRequest hero_fragment_combine_request = 45;
+    HeroFragmentCombineStatusRequest hero_fragment_combine_status_request = 46;
+    HeroFragmentCombineReceipt hero_fragment_combine_receipt = 47;
+    HeroFragmentCombineStatus hero_fragment_combine_status = 48;
+    HeroLevelUpgradeRequest hero_level_upgrade_request = 49;
+    HeroLevelUpgradeStatusRequest hero_level_upgrade_status_request = 50;
+    HeroLevelUpgradeReceipt hero_level_upgrade_receipt = 51;
+    HeroLevelUpgradeStatus hero_level_upgrade_status = 52;
   }
 }
 message Empty {}
@@ -168,6 +182,34 @@ message Snapshot {
   optional SpiritInventory spirit_inventory = 10;
   // 独立持久冒险点；缺失表示尚未同步，合法0与超上限余额均按服务端原值保留。
   optional TavernPointState tavern_points = 11;
+  // 角色首抽资格；字段缺失表示尚未同步，未完成时免费时间为0。
+  optional HeroSummonState hero_summon = 12;
+}
+
+message HeroSummonState {
+  required uint32 schema_version = 1;
+  required bool first_normal_completed = 2;
+  required int64 normal_free_at_seconds = 3;
+}
+
+// 执行与查询共用持久请求标识，与信封ID无关。
+message HeroFirstSummonRequest { required string request_id = 1; }
+
+message HeroFirstSummonReceipt {
+  required uint32 schema_version = 1;
+  required string request_id = 2;
+  required string receipt_id = 3;
+  required string role_id = 4;
+  required int64 asset_revision = 5;
+  required HeroSummonState state = 6;
+  required RewardGrantResult actual = 7;
+}
+
+// 找到时返回原成功回执；未找到时不带 receipt。
+message HeroFirstSummonStatus {
+  required string request_id = 1;
+  required bool found = 2;
+  optional HeroFirstSummonReceipt receipt = 3;
 }
 
 // 旧酒馆冒险点只读状态，不开放任务、刷新或领取；上限来自同次最高已通关关卡。
@@ -328,6 +370,86 @@ message MainChapterState {
   optional ChapterMilestoneProgress milestone_progress = 4;
   // 服务端可信配置的当前挑战上限，与完整关卡目录分开；缺失表示范围未同步，不默认开放。
   optional uint32 challenge_limit = 5;
+  // 独立通关奖励的权威进度，和战斗结算及里程碑不同源；缺失表示未同步。
+  optional ChapterFirstRewardProgress first_reward_progress = 6;
+}
+
+message ChapterFirstRewardProgress {
+  required uint32 schema_version = 1;
+  repeated uint32 claimed_chapters = 2;
+  repeated uint32 eligible_chapters = 3;
+}
+
+// 按全局通关关卡索引领取或查原回执，不接收奖励配置行idx。
+message ChapterFirstRewardRequest { required uint32 chapter = 1; }
+
+message ChapterFirstRewardReceipt {
+  required uint32 schema_version = 1;
+  required uint32 chapter = 2;
+  required string receipt_id = 3;
+  required string role_id = 4;
+  required int64 asset_revision = 5;
+  required RewardGrantResult actual = 6;
+}
+
+message ChapterFirstRewardStatus {
+  required uint32 chapter = 1;
+  required bool found = 2;
+  optional ChapterFirstRewardReceipt receipt = 3;
+}
+
+// quantity 是生成英雄数量，实际扣除由服务端按物品配置计算。
+message HeroFragmentCombineRequest {
+  required string request_id = 1;
+  required uint32 item_id = 2;
+  required uint32 quantity = 3;
+}
+
+message HeroFragmentCombineStatusRequest { required string request_id = 1; }
+
+message HeroFragmentCombineReceipt {
+  required uint32 schema_version = 1;
+  required string request_id = 2;
+  required string receipt_id = 3;
+  required string role_id = 4;
+  required int64 asset_revision = 5;
+  required uint32 item_id = 6;
+  required uint32 quantity = 7;
+  required int64 cost_quantity = 8;
+  required RewardGrantResult actual = 9;
+}
+
+message HeroFragmentCombineStatus {
+  required string request_id = 1;
+  required bool found = 2;
+  optional HeroFragmentCombineReceipt receipt = 3;
+}
+
+// 请求只传原等级及要升的级数，价格和上限由服务端配置决定。
+message HeroLevelUpgradeRequest {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required uint32 expected_level = 3;
+  required uint32 levels = 4;
+}
+
+message HeroLevelUpgradeStatusRequest { required string request_id = 1; }
+
+// 同一身份按原请求编号查原收据；英雄、金币与经验从统一快照更新。
+message HeroLevelUpgradeReceipt {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required uint32 from_level = 3;
+  required uint32 to_level = 4;
+  required string config_version = 5;
+  required int64 asset_revision = 6;
+  required string role_id = 7;
+}
+
+message HeroLevelUpgradeStatus {
+  required string request_id = 1;
+  required bool found = 2;
+  optional HeroLevelUpgradeReceipt receipt = 3;
 }
 // 原额外奖励配置idx的已领集合；领取可乱序，不能改为最大已领ID或下一顺序号。
 message ChapterMilestoneProgress {

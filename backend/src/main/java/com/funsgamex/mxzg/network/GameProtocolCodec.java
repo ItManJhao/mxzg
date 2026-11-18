@@ -23,7 +23,11 @@ public final class GameProtocolCodec {
         "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
         "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
         "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
-        "rewardNotice", "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus");
+        "rewardNotice", "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus",
+        "heroFirstSummonRequest", "heroFirstSummonReceipt", "heroFirstSummonStatus",
+        "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus",
+        "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus",
+        "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -62,7 +66,7 @@ public final class GameProtocolCodec {
         return bytes;
     }
 
-    /** 消息名称映射到 oneof，错误响应不携带成功载荷，未知请求仍可得到关联的 UNKNOWN_MESSAGE。 */
+    /** 按消息名称和方向校验 oneof，独立通关奖励、碎片合成和普通升级应答各有业务回执。 */
     private static String payload(JsonNode frame) {
         String kind = frame.path("kind").asString(), name = frame.path("name").asString();
         if (kind.equals("response") && frame.has("ok") && !frame.path("ok").asBoolean()) return null;
@@ -78,6 +82,12 @@ public final class GameProtocolCodec {
                 case "chapter.idle.claim" -> "chapterIdleClaim";
                 case "chapter.idle.claim.status" -> "chapterIdleClaimStatusRequest";
                 case "chapter.milestone.claim", "chapter.milestone.claim.status" -> "chapterMilestoneClaim";
+                case "hero.summon.first", "hero.summon.first.status" -> "heroFirstSummonRequest";
+                case "chapter.firstreward.claim", "chapter.firstreward.claim.status" -> "chapterFirstRewardRequest";
+                case "bag.fragment.combine" -> "heroFragmentCombineRequest";
+                case "bag.fragment.combine.status" -> "heroFragmentCombineStatusRequest";
+                case "hero.level.upgrade" -> "heroLevelUpgradeRequest";
+                case "hero.level.upgrade.status" -> "heroLevelUpgradeStatusRequest";
                 default -> "empty";
             };
         }
@@ -90,6 +100,14 @@ public final class GameProtocolCodec {
             case "chapter.idle.claim.status" -> "chapterIdleClaimStatus";
             case "chapter.milestone.claim" -> "chapterMilestoneReceipt";
             case "chapter.milestone.claim.status" -> "chapterMilestoneStatus";
+            case "hero.summon.first" -> "heroFirstSummonReceipt";
+            case "hero.summon.first.status" -> "heroFirstSummonStatus";
+            case "chapter.firstreward.claim" -> "chapterFirstRewardReceipt";
+            case "chapter.firstreward.claim.status" -> "chapterFirstRewardStatus";
+            case "bag.fragment.combine" -> "heroFragmentCombineReceipt";
+            case "bag.fragment.combine.status" -> "heroFragmentCombineStatus";
+            case "hero.level.upgrade" -> "heroLevelUpgradeReceipt";
+            case "hero.level.upgrade.status" -> "heroLevelUpgradeStatus";
             case "chapter.challenge", "chapter.claim" -> "chapterReceipt"; case "chapter.replay" -> "chapterReplay"; case "chapter.idle.encounter" -> "idleEncounter"; case "battle.preview" -> "battlePreviewed"; case "formation.save" -> "formationSaved"; case "session.heartbeat" -> "heartbeat"; case "gm.grant" -> "gmResult"; case "gm.status" -> "gmStatus";
             default -> throw new IllegalArgumentException("Unknown payload");
         };

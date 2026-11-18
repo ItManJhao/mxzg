@@ -1,6 +1,6 @@
 /**
  * 当前资源范围专项：核对已批准的Bundle/Prefab范围、各View唯一地址及所有序列化资源引用。
- * 只读取源码与清理证据，不删除资源、不生成运行时清单；以后开放模块时须同步审核范围证据。
+ * 当前范围取已有Prefab准入计划，历史清理证据额外保护原资源身份和原图增量。
  * 源文件体量只作记录，不能代替Creator构建体量或浏览器下载验收。
  */
 const assert = require('node:assert/strict');
@@ -27,6 +27,8 @@ const commonFeedback = JSON.parse(fs.readFileSync(path.join(root, 'docs/validati
 const upgradeFeedback = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/role-upgrade-ui-scope-20261116.json'), 'utf8'));
 // 里程碑复用的通用英雄获得页另留本批准入证据，不改历史清理范围或生成运行清单。
 const heroFeedback = JSON.parse(fs.readFileSync(path.join(root, 'docs/validation/hero-reward-ui-scope-20261117.json'), 'utf8'));
+const prefabPlan = read(path.join(root, 'tools/prefab-plan.json'));
+// 已批准的历史资产继续校验原身份，当前范围由实际准入计划维护。
 const approvedPrefabs = [...evidence.retainedPrefabs, ...spiritDetail.addedPrefabs, ...gmSplit.addedPrefabs,
     ...equipmentDetail.addedPrefabs, ...commonFeedback.addedPrefabs, ...upgradeFeedback.addedPrefabs,
     ...heroFeedback.addedPrefabs];
@@ -126,9 +128,10 @@ function approvedEffectsChanges() {
     const delta = read(path.join(root, 'docs/validation/effects-approved-delta-20261117.json'));
     assert.equal(delta.format, 'effects-approved-delta-v1');
     assert.equal(delta.baselineEvidence, 'docs/validation/battle-effects-move-20261113.json');
-    assert.deepEqual(delta.assetEvidence, [4, 5, 9, '10-20']
-        .map(stage => `docs/validation/chapter-stage${stage}-assets-20261117.json`),
-        '本批特效增量只能承接已批准四批原图证据');
+    assert.deepEqual(delta.assetEvidence, [
+        ...[4, 5, 9, '10-20'].map(stage => `docs/validation/chapter-stage${stage}-assets-20261117.json`),
+        'docs/validation/chapter-first-summon-assets-20261118.json',
+    ], '特效增量须逐批对应已核对的原图证据');
     assert.deepEqual([...delta.newAssets].sort(), ['legacy-stone.effect', 'legacy-stone.effect.meta',
         'legacy-spine-pma.effect', 'legacy-spine-pma.effect.meta'].sort(),
         '本批只批准新增石化和旧PNG预乘适配效果，不可任意扩资源范围');
@@ -204,8 +207,10 @@ assert.equal(new Set(approvedBundles).size, approvedBundles.length, '范围证�
 assert.deepEqual(actualBundles, approvedBundles, '未实现包重生或当前包被误删');
 assert.equal(actualBundles.length, effectsMove.bundleInventory.after.bundles, '拆包后的范围数量须与本次证据一致');
 const resourceFiles = files(assets);
-const actualPrefabs = resourceFiles.filter(file => file.endsWith('.prefab')).map(file => path.relative(root, file).replaceAll('\\', '/')).sort();
-assert.deepEqual(actualPrefabs, approvedPrefabs.map(row => path.relative(root, resolveAssetPath(row.path)).replaceAll('\\', '/')).sort(),
+const actualPrefabs = resourceFiles.filter(file => file.endsWith('.prefab')).sort();
+const plannedPrefabs = new Set(prefabPlan.groups.flatMap(group => group.names.map(name =>
+    resolveAssetPath(`${group.directory}/${name}.prefab`))));
+assert.deepEqual(actualPrefabs, [...plannedPrefabs].sort(),
     'Prefab必须对应已实现入口及其依赖，不预留未实现页面');
 const knownUuids = new Set();
 for (const file of resourceFiles.filter(file => file.endsWith('.meta'))) {
@@ -216,21 +221,21 @@ for (const file of resourceFiles.filter(file => /\.(prefab|scene|anim|mtl)$/.tes
 for (const row of approvedPrefabs) {
     assert.equal(read(resolveAssetPath(row.path + '.meta')).uuid, row.uuid, '当前Prefab身份变化：' + row.path);
 }
-let views = 0;
+const viewPrefabs = new Set();
 for (const file of resourceFiles.filter(file => file.endsWith('.ts'))) {
     const source = fs.readFileSync(file, 'utf8');
     if (source.includes('@UIRegistry.view({')) {
         const match = source.match(/@UIRegistry\.view\(\{[\s\S]*?prefab:\s*["']([^"']+)["']/);
         assert(match, '页面@UIRegistry.view没有明确Prefab地址：' + file);
-        resolveAssetPath(match[1] + '.prefab');
-        views++;
+        const prefab = resolveAssetPath(match[1] + '.prefab');
+        assert(plannedPrefabs.has(prefab), '页面引用未准入的Prefab：' + match[1]);
+        assert(!viewPrefabs.has(prefab), '一个Prefab只能绑定一个独立View入口：' + match[1]);
+        viewPrefabs.add(prefab);
     }
     for (const match of source.matchAll(/["'](bundles\/(?:[\w-]+\/)+prefabs\/[\w-]+)["']/g)) {
         resolveAssetPath(match[1] + '.prefab');
     }
 }
-assert.equal(views, 21 + commonFeedback.addedPrefabs.length + upgradeFeedback.addedPrefabs.length + heroFeedback.addedPrefabs.length,
-    '当前独立View数量改变时须同步核对入口与资源闭包');
 for (const row of heroFeedback.addedPrefabs) {
     assert.equal(hash(resolveAssetPath(row.path)), row.sha256, '本批新增英雄获得页与准入证据不一致：' + row.path);
 }
@@ -268,4 +273,4 @@ assert.equal(bundleEntries().filter(entry => entry.meta.userData.bundleConfigID 
     effectsMove.bundleInventory.after.remoteBundles, '拆包后的远程范围数量须与证据一致');
 const roster = read(resolveBundleFile('hero/prefabs/HeroListView.prefab'));
 assert(!roster.some(row => row._name === 'btn_permanent_skin'), '未实现皮肤商店的隐藏资源依赖不可恢复');
-console.log(`当前资源范围通过：${actualBundles.length}包/${actualPrefabs.length}Prefab/${views}独立View、原UUID、全部序列化引用及${effectsChanges.size}项有据特效增量；虚拟还原${effectsMove.snapshot.after.files}份原特效整树/UUID摘要。实际下载和构建另验。`);
+console.log(`当前资源范围通过：${actualBundles.length}包/${actualPrefabs.length}Prefab/${viewPrefabs.size}独立View、原UUID、全部序列化引用及${effectsChanges.size}项有据特效增量；虚拟还原${effectsMove.snapshot.after.files}份原特效整树/UUID摘要。实际下载和构建另验。`);

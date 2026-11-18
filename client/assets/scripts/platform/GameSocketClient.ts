@@ -144,7 +144,38 @@ export class GameSocketClient {
   async chapter(token: string, name: typeof Protocol.CHAPTER_CHALLENGE | typeof Protocol.CHAPTER_CLAIM
       | typeof Protocol.CHAPTER_REPLAY | typeof Protocol.CHAPTER_IDLE_ENCOUNTER
       | typeof Protocol.CHAPTER_IDLE_CLAIM | typeof Protocol.CHAPTER_IDLE_CLAIM_STATUS
-      | typeof Protocol.CHAPTER_MILESTONE_CLAIM | typeof Protocol.CHAPTER_MILESTONE_STATUS, body: unknown): Promise<GameFrame> {
+      | typeof Protocol.CHAPTER_MILESTONE_CLAIM | typeof Protocol.CHAPTER_MILESTONE_STATUS
+      | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS, body: unknown): Promise<GameFrame> {
+    this.assertReady(token);
+    const generation = this.generation;
+    const frame = await this.send(name, body);
+    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
+    return frame;
+  }
+
+  /** 合成和查回执共用当前连接，网络层只发送一次并拒绝旧会话结果。 */
+  async combineHeroFragments(token: string, name: typeof Protocol.HERO_FRAGMENT_COMBINE
+      | typeof Protocol.HERO_FRAGMENT_COMBINE_STATUS, body: unknown): Promise<GameFrame> {
+    this.assertReady(token);
+    const generation = this.generation;
+    const frame = await this.send(name, body);
+    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
+    return frame;
+  }
+
+  /** 首抽与查询只经当前认证连接；不在此层排队或自动重发。 */
+  async firstSummon(token: string, name: typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS,
+      requestId: string): Promise<GameFrame> {
+    this.assertReady(token);
+    const generation = this.generation;
+    const frame = await this.send(name, { requestId });
+    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
+    return frame;
+  }
+
+  /** 在当前连接发送普通升级或查回执；重试原编号由业务层负责。 */
+  async heroLevel(token: string, name: typeof Protocol.HERO_LEVEL_UPGRADE | typeof Protocol.HERO_LEVEL_UPGRADE_STATUS,
+      body: unknown): Promise<GameFrame> {
     this.assertReady(token);
     const generation = this.generation;
     const frame = await this.send(name, body);
@@ -346,6 +377,27 @@ export class GameSocketClient {
       case "BATTLE_EMPTY": return "请先保存非空主线阵容";
       case "BATTLE_UNSUPPORTED": return "当前阵容包含尚未支持的技能或助战，请调整阵容";
       case "BATTLE_INVALID": return "只读试战关卡参数无效，请检查全局关卡编号";
+      case "SUMMON_ALREADY_COMPLETED": return "普通免费首抽已完成";
+      case "SUMMON_CAPACITY_FULL": return "英雄名册已满，无法召唤";
+      case "SUMMON_BUSY": return "召唤正在确认，请稍后重试";
+      case "FIRST_REWARD_INVALID": return "通关奖励的关卡编号无效";
+      case "FIRST_REWARD_UNKNOWN": return "该关卡的通关奖励暂未开放";
+      case "FIRST_REWARD_NOT_REACHED": return "请先通关对应关卡";
+      case "FIRST_REWARD_BUSY": return "通关奖励正在确认，请稍后重试";
+      case "INVALID_UPGRADE_REQUEST": return "英雄升级参数无效";
+      case "HERO_NOT_FOUND": return "英雄资料已变化，请重新打开详情";
+      case "HERO_LEVEL_CHANGED": return "英雄等级已变化，请按当前等级重新升级";
+      case "LEVEL_LIMIT": return "已达到当前强化阶段的等级上限";
+      case "INSUFFICIENT_GOLD": return "金币不足";
+      case "INSUFFICIENT_HERO_EXP": return "英雄经验不足";
+      case "HERO_UPGRADE_BUSY": return "英雄升级正在确认，请稍后重试";
+      case "FRAGMENT_INVALID": return "碎片合成参数无效";
+      case "FRAGMENT_UNSUPPORTED": return "该碎片暂不支持合成";
+      case "FRAGMENT_INSUFFICIENT": return "碎片数量不足";
+      case "FRAGMENT_CAPACITY_FULL": return "英雄名册剩余位置不足";
+      case "FRAGMENT_LEVEL_REQUIRED": return "角色等级未达到合成要求";
+      case "FRAGMENT_REQUEST_CONFLICT": return "合成请求与原参数冲突，请重新确认";
+      case "FRAGMENT_BUSY": return "碎片合成正在确认，请稍后重试";
       case "UNKNOWN_MESSAGE": return "服务端不支持此协议，请更新并重启后端";
       default: return "请求未完成（" + code + "），请稍后重试";
     }

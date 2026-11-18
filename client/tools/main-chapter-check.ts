@@ -429,7 +429,7 @@ function checkIdleCollectionPresentation(): void {
     page.fitViewport = () => {};
     page.playChestClick = () => { clicks++; };
     for (const key of ["panel", "battleHost", "idleChestHost", "idleBubble", "resourceFlightHost",
-        "resourceFlightTemplate", "resourceFlightTarget"]) {
+        "resourceFlightTemplate", "resourceFlightTarget", "clearRewardDot"]) {
         page[key] = new Node(key);
         page[key].parent = node;
     }
@@ -439,7 +439,7 @@ function checkIdleCollectionPresentation(): void {
         label.parent = node;
         page[key] = label.addComponent(Label);
     }
-    for (const key of ["challengeButton", "quickBattleButton", "powerButton", "idleClaimButton", "rewardInfoButton"]) {
+    for (const key of ["challengeButton", "quickBattleButton", "powerButton", "idleClaimButton", "rewardInfoButton", "clearRewardButton"]) {
         const button = new Node(key);
         button.parent = node;
         page[key] = button.addComponent(Button);

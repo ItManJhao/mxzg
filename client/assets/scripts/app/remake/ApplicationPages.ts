@@ -27,6 +27,8 @@ import { UIManager } from "../../framework/ui/UIManager";
 import { UIRegistry } from "../../framework/ui/UIRegistry";
 import {HomeFeatureNavigation} from "./HomeFeatureNavigation";
 import {LoginEntry} from "./LoginEntry";
+import { FirstSummonView } from "../../features/hero/ui/FirstSummonView";
+import type { FirstSummonBinding } from "./FirstSummonBinding";
 
 /** 应用拥有的依赖和动作；View参数不保存账号凭证或复制模块状态。 */
 export interface ApplicationPageContext {
@@ -46,6 +48,8 @@ export interface ApplicationPageContext {
     entry: LoginEntry;
     /** 主城导航操作，页面只转交玩家意图。 */
     features: HomeFeatureNavigation;
+    /** 由应用统一快照及认证装配的普通首抽入口。 */
+    summon: FirstSummonBinding;
 
     /** 账号动作结束后由应用重新核对当前路由。 */
     syncRoute(): void;
@@ -90,6 +94,19 @@ export class ApplicationPages {
                     homeView = view as RemakeHomeView;
                     context.onHome(homeView);
                     return new HomeController(model, service, homeView, id => {
+                        if (id === "main_summon") {
+                            if (model.snapshot.role && !model.snapshot.busy && context.valid()) {
+                                void ui.open(FirstSummonView, {
+                                    model: context.summon.controller.model,
+                                    requestSummon: () => context.summon.begin(),
+                                }).catch(error => {
+                                    if (context.valid() && !UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                                        ui.toast("普通召唤打开失败，请重试");
+                                    }
+                                });
+                            }
+                            return true;
+                        }
                         if (id !== "role-profile") return features.open(id);
                         if (!model.snapshot.role || model.snapshot.busy) return false;
                         void ui.openById("role-profile", {

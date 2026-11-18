@@ -1,6 +1,6 @@
 # 游戏通信与统一状态契约
 
-更新于 2026-11-18。游戏业务统一使用 WS＋Protobuf。登录、角色、背包、英雄只读状态、主线布阵、第1～20关挑战、里程碑及挂机共用统一快照。各入口的开放与验证范围见 [开发进度](development-progress.md)。
+更新于 2026-11-18。游戏业务统一使用 WS＋Protobuf。登录、角色、背包、英雄、主线布阵、第1～20关挑战、里程碑及挂机共用统一快照。各入口的开放与验证范围见 [开发进度](development-progress.md)。
 
 断线后的页面与战斗边界见[恢复核对及接线方案](reconnect-recovery.md)：短断线重新鉴权保留页面，完整重新进入回主城。原battleId回执与最新快照双确认已接，缺状态每轮至多一次refreshSnapshot；首个身份首包只记候选，首次进入主线页才接纳冷恢复意图，后续鉴权只续已有意图。恢复按原编号/版本交通用奖励队列，不伪造reward.granted；正常胜利与恢复窗归属互斥，实际打开才标记展示。布阵缺推送确认也已复用同一鉴权能力：ACK保留原意图，直到权威mainFormation.version达到回执版本；有ACK时重试只同步，无ACK才允许复用原编号/参数重试保存。已清pending的跨重启历史定位仍有缺口；不增加库存查询或通用业务自动重发。
 
@@ -28,12 +28,20 @@
 | session.kicked | 服务端事件 | 清理对应账号，停止自动重连，回登录 |
 | state.changed | 服务端事件 | 事务提交后的完整 Snapshot；角色、库存、英雄、阵容、主线共用持久 revision |
 | reward.granted | 服务端事件 | 原发奖事务提交后的通用显示反馈；沿原业务receiptId去重，不是资产增量 |
+| hero.summon.first | 请求/响应 | 普通免费首抽；同一角色的原 `requestId` 返回持久回执，重复的新请求拒绝再次发放 |
+| hero.summon.first.status | 请求/响应 | 按同一角色和原 `requestId` 查询成功回执，供断线与重登恢复 |
+| hero.level.upgrade | 请求/响应 | `requestId`、英雄实例 `heroId`、原等级 `expectedLevel` 与升级级数 `levels`；服务端计算成本，提交后返回原回执 |
+| hero.level.upgrade.status | 请求/响应 | 同一角色按原 `requestId` 查原升级回执 |
 | formation.save | 请求/响应 | 当前角色主线阵容保存；requestId 持久幂等，回执不代替统一快照 |
 | chapter.challenge | 请求/响应 | 按服务端当前开放范围挑战（默认连续1～20关），权威输入与持久战报 |
 | chapter.claim | 请求/响应 | 指定主线战报的幂等结算；不是挂机宝箱领取 |
 | chapter.replay | 请求/响应 | 恢复既有持久战报，不重新计算或发奖 |
 | chapter.milestone.claim | 请求/响应 | 以 rewardId 领取达成的里程碑，返回原持久回执和实际到账 |
 | chapter.milestone.claim.status | 请求/响应 | 查询同一 rewardId 的原成功回执，冷恢复使用 |
+| chapter.firstreward.claim | 请求/响应 | 以绝对关卡号 `chapter` 领取独立通关奖励，同一角色和关卡复用原成功回执 |
+| chapter.firstreward.claim.status | 请求/响应 | 查同一绝对关卡号的独立领取回执，用于重登和断线恢复 |
+| bag.fragment.combine | 请求/响应 | `requestId`、`itemId` 与合成次数 `quantity`；服务器计算实际扣除和生成实例 |
+| bag.fragment.combine.status | 请求/响应 | 同一角色按原 `requestId` 查合成回执，不重新抽样或扣除碎片 |
 | chapter.idle.encounter | 请求/响应 | 已通关主线的挂机遇敌演出战报，不结算资产 |
 | chapter.idle.claim | 请求/响应 | requestId＋expectedOperationVersion → 冻结历史到账；全局默认关闭、local默认开启，玩家按钮转原持久命令入口 |
 | chapter.idle.claim.status | 请求/响应 | 只查指定requestId的COMMITTED/NOT_FOUND，不查库存、不抽样或创建计时；锁忙不能返回NOT_FOUND |
@@ -43,6 +51,14 @@
 inventory.list、session.sync 已删除业务处理，鉴权后请求返回 UNKNOWN_MESSAGE。未恢复玩法不得借旧 CampaignApi、IdleApi、HeroLevelApi 发请求或通过回调更新资产；这里只列 Protocol.ts 实际登记的消息。
 
 ## 信封和业务载荷
+
+`Snapshot.hero_summon=12` 承载普通首抽是否完成和下次普通免费单抽的服务端 Unix 秒。字段缺失视为尚未同步。首抽回执冻结本次实际入账与资产版本，客户端等统一快照确认后使用通用英雄获得反馈。招募积分走实际背包入账并通过快照同步，沿旧规则静默。首抽状态、回执、英雄名册和背包各由原状态入口更新。
+
+`MainChapterState.firstRewardProgress` 提供独立通关奖励的 `claimedChapters` 与 `eligibleChapters`。服务端以绝对关卡号查表并下发当前可领集合。旧首包缺字段视为尚未同步。领取后同时检查原关卡回执、统一版本和已领集合，里程碑仍用自己的配置 ID 与已领状态。
+
+`HeroFragmentCombineReceipt` 冻结合成次数、实际扣除量与创建的英雄实例。客户端核对原消费参数及统一资产版本后提交通用反馈，库存和名册由快照更新。两项业务都先保存原意图，恢复时查原回执，通用反馈实际展示后按原参数清理记录。
+
+`HeroLevelUpgradeReceipt` 保存原请求、英雄实例、角色、起止等级、配置版本和提交后的资产版本。持久意图按角色隔离。缺回执先查状态，未找到可复用原参数重试；回执已到且缺快照时使用现有鉴权首包。等级、钱包和英雄经验由统一快照更新，确认本地名册达到回执等级后清理意图。
 
 通用奖励事件使用Frame字段35 reward_notice，包含schemaVersion=1、业务receiptId(UUID)、roleId、正安全整数assetRevision、mode(SILENT/POPUP/TIPS)及去重的itemId/credited正数量；可选request_id=7关联原请求，role_upgrade=8携带原经验链的升级前后等级。事件无id/ok/error，角色及连接必须为当前认证对象；它不更新latestState/revision。客户端等待唯一状态入口达到该版本后展示，历史匹配回执恢复也进入同一反馈去重入口。静默不发展示事件；可见模式有正物品或真实升级即可交付，两者均无才跳过。重放和status不重复发送；详情见[通用发奖反馈](reward-feedback.md)。
 

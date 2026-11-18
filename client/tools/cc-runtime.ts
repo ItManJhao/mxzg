@@ -530,6 +530,8 @@ export class Button extends Component {
 export class BlockInputEvents extends Component {}
 
 export class EditBox extends Component {
+  /** 与Creator输入框一致的节点事件，供数量选择等实际交互专项使用。 */
+  static EventType = { TEXT_CHANGED: "text-changed", EDITING_DID_ENDED: "editing-did-ended" };
   static InputFlag = { DEFAULT: 0, PASSWORD: 1 };
   static InputMode = { ANY: 0, SINGLE_LINE: 1 };
   string = "";

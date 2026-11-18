@@ -1,11 +1,15 @@
 /**
  * 本机登录、角色、英雄与背包 Protobuf 二进制长连接：匿名选服、登录统一初始化、同角色连接替换和提交后资产同步。
  * 请求按连接及角色串行处理，业务尚未同步时拒绝访问；挂机领取由默认关闭的事务入口控制，历史回执可独立恢复。
- * 主线阵容保存和开发GM沿现有边界，英雄升级等玩法写操作仍暂停。
+ * 普通首抽、独立通关奖励、碎片合成、普通升级和阵容保存分别走真实业务回执，开发GM保留原环境边界。
  */
 package com.funsgamex.mxzg.network;
 
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.campaign.MainChapterFirstRewardService;
+import com.funsgamex.mxzg.hero.HeroFirstSummonService;
+import com.funsgamex.mxzg.hero.HeroFragmentCombineService;
+import com.funsgamex.mxzg.hero.HeroLevelService;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -44,6 +48,14 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims;
     /** 里程碑稳定业务键的真实领取与只读回执，不接受客户端奖励计划。 */
     private final com.funsgamex.mxzg.campaign.MainChapterMilestoneService milestones;
+    /** 普通首抽唯一写入及原回执恢复，角色来自连接凭证。 */
+    private final HeroFirstSummonService heroSummons;
+    /** 独立通关奖励领取及按原绝对关卡号恢复。 */
+    private final MainChapterFirstRewardService firstRewards;
+    /** 精英碎片真实扣除、发放及按原请求恢复。 */
+    private final HeroFragmentCombineService fragments;
+    /** 普通升级按真实配置扣费和升级，提供同一角色的原收据。 */
+    private final HeroLevelService heroLevels;
     private final SessionService sessions;
     private final SessionSnapshotService snapshots;
     private final ConcurrentMap<String, Connection> connections = new ConcurrentHashMap<>();
@@ -68,7 +80,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
-    /** 注入共享鉴权和快照服务，创建固定数量角色锁，避免锁表无限增长。 */
+    /** 注入统一快照和已开放的业务事务，固定角色锁数量以限制内存。 */
     public GameSocketHandler(SessionService sessions, SessionSnapshotService snapshots,
             com.funsgamex.mxzg.auth.DevelopmentLoginService login,
             com.funsgamex.mxzg.server.ServerCatalog servers, com.funsgamex.mxzg.gm.GmService gm,
@@ -77,8 +89,14 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             com.funsgamex.mxzg.campaign.MainChapterService chapters,
             com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles,
             com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims,
-            com.funsgamex.mxzg.campaign.MainChapterMilestoneService milestones) {
+            com.funsgamex.mxzg.campaign.MainChapterMilestoneService milestones, HeroFirstSummonService heroSummons,
+            MainChapterFirstRewardService firstRewards, HeroFragmentCombineService fragments,
+            HeroLevelService heroLevels) {
+        this.firstRewards = firstRewards;
+        this.fragments = fragments;
+        this.heroLevels = heroLevels;
         this.milestones = milestones;
+        this.heroSummons = heroSummons;
         this.idleClaims = idleClaims;
         this.idleBattles = idleBattles;
         this.chapters = chapters;
@@ -197,7 +215,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         } finally { roleLock.unlock(); }
     }
 
-    /** 每次保活重新检查令牌与连接归属；未重做玩法和已退役查询返回 UNKNOWN_MESSAGE。 */
+    /** 核对当前连接归属后分派已装配的协议，包括普通英雄升级与原收据查询。 */
     private void dispatch(Connection connection, JsonNode request, String name) throws IOException {
         if (online.get(connection.role) != connection) throw rejected("SESSION_REPLACED");
         if (!connection.role.equals(sessions.requireRole(connection.token))) throw rejected("UNAUTHENTICATED");
@@ -212,6 +230,22 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
         if (name.equals("chapter.milestone.claim") || name.equals("chapter.milestone.claim.status")) {
             milestone(connection, request, name);
+            return;
+        }
+        if (name.equals("hero.summon.first") || name.equals("hero.summon.first.status")) {
+            firstSummon(connection, request, name);
+            return;
+        }
+        if (name.equals("chapter.firstreward.claim") || name.equals("chapter.firstreward.claim.status")) {
+            firstReward(connection, request, name.equals("chapter.firstreward.claim"));
+            return;
+        }
+        if (name.equals("bag.fragment.combine") || name.equals("bag.fragment.combine.status")) {
+            combineFragment(connection, request, name.equals("bag.fragment.combine"));
+            return;
+        }
+        if (name.equals("hero.level.upgrade") || name.equals("hero.level.upgrade.status")) {
+            heroLevel(connection, request, name.equals("hero.level.upgrade"));
             return;
         }
         if (name.equals("chapter.idle.encounter")) {
@@ -324,6 +358,86 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         } catch (org.springframework.dao.PessimisticLockingFailureException
                 | org.springframework.dao.QueryTimeoutException error) {
             fail(connection, request, "MILESTONE_BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 只接收持久请求ID，首抽资格、容量和已发放结果统一在服务端锁内校验。 */
+    private void firstSummon(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        fields(body, Set.of("requestId"));
+        String requestId = body.path("requestId").asString();
+        try {
+            Object result = name.equals("hero.summon.first")
+                    ? heroSummons.summon(connection.token, requestId) : heroSummons.status(connection.token, requestId);
+            respond(connection, request, result);
+        } catch (HeroFirstSummonService.Rejected error) {
+            fail(connection, request, error.code(), error.getMessage(), false);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "SUMMON_BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 只接收绝对关卡号，发奖资格及配置由服务端事务判定。 */
+    private void firstReward(Connection connection, JsonNode request, boolean claim) throws IOException {
+        var body = request.path("body");
+        fields(body, Set.of("chapter"));
+        try {
+            int chapter = body.path("chapter").asInt();
+            Object result = claim ? firstRewards.claim(connection.token, chapter) : firstRewards.status(connection.token, chapter);
+            respond(connection, request, result);
+        } catch (MainChapterFirstRewardService.Rejected error) {
+            fail(connection, request, error.code(), error.getMessage(), false);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "FIRST_REWARD_BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 合成只传消耗物品、次数与业务键；恢复只传原业务键，不接受发奖结果或角色ID。 */
+    private void combineFragment(Connection connection, JsonNode request, boolean combine) throws IOException {
+        var body = request.path("body");
+        fields(body, combine ? Set.of("requestId", "itemId", "quantity") : Set.of("requestId"));
+        String requestId = body.path("requestId").asString();
+        try {
+            Object result;
+            if (combine) {
+                var parameters = new HeroFragmentCombineService.Request(requestId,
+                        body.path("itemId").asInt(), body.path("quantity").asInt());
+                result = fragments.combine(connection.token, parameters);
+            } else {
+                result = fragments.status(connection.token, requestId);
+            }
+            respond(connection, request, result);
+        } catch (HeroFragmentCombineService.Rejected error) {
+            fail(connection, request, error.code(), error.getMessage(), false);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "FRAGMENT_BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 只接收原 UUID、实例、前置等级及升级级数；库存和等级仍由统一快照提供。 */
+    private void heroLevel(Connection connection, JsonNode request, boolean upgrade) throws IOException {
+        var body = request.path("body");
+        fields(body, upgrade ? Set.of("requestId", "heroId", "expectedLevel", "levels") : Set.of("requestId"));
+        try {
+            String requestId = body.path("requestId").asString();
+            if (!upgrade) {
+                respond(connection, request, heroLevels.status(connection.token, requestId));
+                return;
+            }
+            var expected = body.path("expectedLevel");
+            var levels = body.path("levels");
+            if (!expected.isIntegralNumber() || !expected.canConvertToInt()
+                    || !levels.isIntegralNumber() || !levels.canConvertToInt()) {
+                throw rejected("INVALID_UPGRADE_REQUEST");
+            }
+            var parameters = new HeroLevelService.Request(requestId, expected.asInt(), levels.asInt());
+            respond(connection, request, heroLevels.upgrade(connection.token, body.path("heroId").asString(), parameters));
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "HERO_UPGRADE_BUSY", "角色数据正忙，请稍后重试", true);
         }
     }
 

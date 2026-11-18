@@ -38,11 +38,11 @@
       "inspector": "待负责人逐项确认"
     },
     "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab": {
-      "sha256": "a2a44d93f2cdfe71517c0b3827f4131269a55210a8e8758da08fee160ce76036",
-      "date": "2026-11-11",
+      "sha256": "dc09892ea9971af2a5073917e9c21ae3fc50d7ecc9bba6a73c53ff765b0c1520",
+      "date": "2026-11-18",
       "status": "实际预览通过",
-      "scope": "仅393×852实际格子选择传入实例ID后的详情显示及截图、技能窗口开关、返回与重复进入。页面自带@view/prepare，不借用8cb60507开页链路结果。 docs/validation/view-registration-list-review-20261111.json",
-      "inspector": "未操作Creator，自动编译的新版本在浏览器连接独立内存测试服复验；不是负责人Inspector签收"
+      "scope": "本机Creator预览使用393×852设备选项和独立内存服。确认底部费用和按钮排版、布兰特从1级升到6级再到10级、属性更新、经验不足标红与飘字、冷重登仍为10级及继续出阵。动画帧时序由专项覆盖，其他设备待复验。",
+      "inspector": "未操作Creator原生Inspector。"
     },
     "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab": {
       "sha256": "5e4bb3cbd507cb7d760ff0b428ec2bb138625d91bf960313796e478ddbe82073",
@@ -51,12 +51,33 @@
       "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。角色资料与设置正常、旧GM按钮移除，退出返回登录；不继承旧三尺寸。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
       "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
     },
-    "client/assets/bundles/module/hero/prefabs/FormationView.prefab": {
-      "sha256": "e49063646a9a17df8c6eb36b1d167a2d03ce9c441cca61b2539d5a5d766f45a6",
-      "date": "2026-11-11",
+    "client/assets/bundles/module/hero/prefabs/FirstSummonView.prefab": {
+      "sha256": "422bf8f566ef2fd55b2e3839b63e2de801a2c32758c14ee1b368b02ec8625fb1",
+      "date": "2026-11-18",
       "status": "实际预览通过",
-      "scope": "360×720从英雄页打开、外部关闭取消；428×926主线确认已有权威阵容并进入真实挑战。未新改草稿或重新验证所有保存失败路径。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
-      "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      "scope": "Creator 393×852 设备选项。独立内存新号从召唤法阵免费首抽，积分由0更新至1，通用窗显示四星布兰特。重登后召唤窗保留完成状态和积分，免费按钮隐藏。",
+      "inspector": "浏览器预览及绑定检查，未逐项签收Creator Inspector。"
+    },
+    "client/assets/bundles/module/hero/prefabs/FormationView.prefab": {
+      "sha256": "852cdcae8b79191188e691f4f8516d53f319318e7d7d1d99cfddd31e2a1f1329",
+      "date": "2026-11-18",
+      "status": "实际预览通过",
+      "scope": "仅 Creator 浏览器 393×852 预览。出阵草稿两名火系显示生命与攻击各加 3%，三名各加 5% 且只高亮三人档，跨排拖动保持加成，从三名依次撤到两名与一名时退档并清除。元素窗展示五向克制的伤害与命中倍率、各组光环与五元素混合档。点击窗外只关闭元素子窗。证据见 docs/development-progress.md 的本机预览记录。",
+      "inspector": "验收限上述本机浏览器操作。Inspector、发布包和真机待独立验收。"
+    },
+    "client/assets/bundles/module/hero/prefabs/FormationHeroCellView.prefab": {
+      "sha256": "ddb1c97745ae54fd6573b5c7c7dd7da88cefb2cc3cb7827d6de48da58a507791",
+      "date": "2026-11-18",
+      "status": "实际预览通过",
+      "scope": "随出阵页在 393×852 Creator 浏览器预览核对，上阵英雄局部压暗并显示绿勾，未上阵英雄保留原颜色。负责人已确认绿勾。证据见 docs/development-progress.md 的本机预览记录。",
+      "inspector": "限所属出阵页中的头像状态，未签收三尺寸、正式包或 Inspector。"
+    },
+    "client/assets/bundles/module/home/prefabs/CityHubView.prefab": {
+      "sha256": "e08a1ef05b793cf4059bfe21493fc539f360638749d95ba07ef7b12c57fef864",
+      "date": "2026-11-18",
+      "status": "实际预览通过",
+      "scope": "负责人已确认主城入口层级。393×852 Creator 浏览器预览中，召唤入口显示在原特效上方并可点击，得到当前功能状态提示。证据见 docs/development-progress.md 的本机预览记录。",
+      "inspector": "限入口层级及上述点击，未签收所有入口、三尺寸、正式包或 Inspector。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroListView.prefab": {
       "sha256": "bbb5ec445008aa71cec85ff065ac1d9a047d2988b4627102e7b5479283ee9b42",
@@ -80,11 +101,18 @@
       "inspector": "负责人刷新资源后浏览器验收；未操作Inspector"
     },
     "client/assets/bundles/module/battle/prefabs/MainChapterView.prefab": {
-      "sha256": "1250753ec2b4c3a9435eaa591efdb5dcdad2c814a09bf6bc2059e737b5a1eb7c",
-      "date": "2026-11-17",
+      "sha256": "0998b9b8323dcab4a8a6cbef4fab3f44942e6abffc99962b6128168e0ae0559d",
+      "date": "2026-11-18",
       "status": "实际预览通过",
-      "scope": "Creator本机独立角色已实测14/15常显卡、15与16真实挑战/结算、15关独立真实领奖、原map01到map02前后景切换；重登保持16关/已领100且不重复反馈。仅本次iPhone14Pro预览选项，不代签三尺寸、发布或真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
-      "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
+      "scope": "Creator本机iPhone14Pro预览连接独立内存服。第1关真实首通后右上通关奖励显示红点并可点击，领奖后红点消失。证据范围为本机单尺寸，未复验第15关里程碑及发布包。",
+      "inspector": "未操作Creator原生Inspector。"
+    },
+    "client/assets/bundles/module/battle/prefabs/ChapterClearRewardView.prefab": {
+      "sha256": "701a6a0ca9f4a38e4e31d6f150bc7d1df2c2c30e8b785a3f27a94c0dcf00db32",
+      "date": "2026-11-18",
+      "status": "实际预览通过",
+      "scope": "Creator本机iPhone14Pro预览连接独立内存服。未通关显示前往战斗，超过开放范围显示暂未开放。首通第1关后显示可领，领取弹出通用获得窗，两件装备进背包，列表重排，关闭返回正常。",
+      "inspector": "未操作Creator原生Inspector。"
     },
     "client/assets/bundles/module/battle/prefabs/ChapterRewardInfoView.prefab": {
       "sha256": "78891fcd31025faeab9d2b0a2ce0ecdc159c06aa40dc3ac6fa744691f2f12072",
@@ -197,6 +225,30 @@
     "client/temp/prefab-followup-20261102"
   ],
   "supersededEntries": [
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
+      "supersededOn": "2026-11-18",
+      "reason": "本版增加普通升级、费用和光效绑定。保留前一版本技能、详情和开关的验收。",
+      "record": {
+        "sha256": "a2a44d93f2cdfe71517c0b3827f4131269a55210a8e8758da08fee160ce76036",
+        "date": "2026-11-11",
+        "status": "实际预览通过",
+        "scope": "仅393×852实际格子选择传入实例ID后的详情显示及截图、技能窗口开关、返回与重复进入。页面自带@view/prepare，不借用8cb60507开页链路结果。 docs/validation/view-registration-list-review-20261111.json",
+        "inspector": "未操作Creator，自动编译的新版本在浏览器连接独立内存测试服复验；不是负责人Inspector签收"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/battle/prefabs/MainChapterView.prefab",
+      "supersededOn": "2026-11-18",
+      "reason": "新增独立通关奖励入口和红点，保留前一版本的里程碑和地图复验证据。",
+      "record": {
+        "sha256": "1250753ec2b4c3a9435eaa591efdb5dcdad2c814a09bf6bc2059e737b5a1eb7c",
+        "date": "2026-11-17",
+        "status": "实际预览通过",
+        "scope": "Creator本机独立角色已实测14/15常显卡、15与16真实挑战/结算、15关独立真实领奖、原map01到map02前后景切换；重登保持16关/已领100且不重复反馈。仅本次iPhone14Pro预览选项，不代签三尺寸、发布或真机。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
+        "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
+      }
+    },
     {
       "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
       "supersededOn": "2026-11-04",
@@ -591,6 +643,30 @@
         "status": "实际预览通过",
         "scope": "最终31表资源重载后360x720真实3英雄名册、等级100、容量3/300和虚拟池3节点正常；已移除旧隐藏皮肤商店按钮。未重新检查详情全部机型或长名册画面。 证据docs/validation/virtual-list-resource-review-20261111.json；仅本轮实际范围，不代表新发布包或全机型。",
         "inspector": "未操作Creator或Inspector；本机浏览器连接独立内存测试服复验。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/FormationView.prefab",
+      "supersededOn": "2026-11-18",
+      "reason": "上一批加入阵位输入区后，旧指纹的预览范围保留在此。当前指纹以本次出阵交互证据登记。",
+      "record": {
+        "sha256": "e49063646a9a17df8c6eb36b1d167a2d03ce9c441cca61b2539d5a5d766f45a6",
+        "date": "2026-11-11",
+        "status": "实际预览通过",
+        "scope": "360×720从英雄页打开、外部关闭取消；428×926主线确认已有权威阵容并进入真实挑战。未新改草稿或重新验证所有保存失败路径。 详见docs/validation/shared-modal-widget-20261111.json。仅Creator本机预览，不代表新发布包或负责人Inspector签收。",
+        "inspector": "未操作Creator；负责人刷新后在浏览器连接独立内存测试服复验"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/FormationView.prefab",
+      "supersededOn": "2026-11-18",
+      "reason": "出阵页接入元素弹窗入口及队伍加成行，本次改动前的拖动、回位和保存结果按原指纹归档。",
+      "record": {
+        "sha256": "f1900ef43176729cf3336c9feb532ca668030d244f5fe1d2aced6c1d6b762ec4",
+        "date": "2026-11-18",
+        "status": "实际预览通过",
+        "scope": "仅 393×852 Creator 浏览器独立内存角色：自动入位、前后排移动、占位交换、锁位与未命中回位、保存后关闭重开。负责人已确认出阵拖动。证据见 docs/development-progress.md 的本机预览记录。",
+        "inspector": "本批只验上述浏览器操作，未逐项复验三尺寸、正式包或 Inspector。"
       }
     }
   ]

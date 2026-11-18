@@ -15,6 +15,8 @@ import type { ProtocolName } from "../../platform/Protocol";
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import {ProtocolRouter} from "../../platform/ProtocolRouter";
 import { EventDispatcher } from "../../framework/EventDispatcher";
+import type { FirstSummonController } from "../../features/hero/FirstSummonController";
+import { FirstSummonData } from "../../features/hero/data/FirstSummonData";
 
 export class AssetStateBinding {
     /** 已接纳的区服/角色键；空值表示尚未接收初始化。 */
@@ -32,6 +34,8 @@ export class AssetStateBinding {
      * @param heroes 唯一英雄协议入口，独立测试可省略。
      * @param formation 唯一阵容保存模块，只协调过程状态重置。
      * @param identityChanged 应用关闭旧角色页面；先关闭再重置，同角色恢复不调用。
+     * @param chapter 唯一主线状态协议入口。
+     * @param summon 唯一首抽资格协议入口。
      */
     constructor(
         private readonly account: AccountModel,
@@ -42,10 +46,16 @@ export class AssetStateBinding {
         private readonly identityChanged: () => void = () => {
         },
         private readonly chapter?: MainChapterController,
+        private readonly summon?: FirstSummonController,
     ) {
         this.stop = account.subscribe(state => {
             if (!state.role) this.clear();
         });
+    }
+
+    /** 当前角色完成整包提交的权威版本，未接纳首包时为 -1。 */
+    public get acceptedRevision(): number {
+        return this.revision;
     }
 
     /** 包括冒险点在内完整校验后批量提交；重复及低版本不通知，同版本鉴权首包仍校准时间和可选扩展。 */
@@ -69,6 +79,7 @@ export class AssetStateBinding {
         BagItemDataUtils.readBagItems(state.inventory);
         BagItemDataUtils.readTimedItems(state.timedInventory);
         BagItemDataUtils.readSpiritItems(state.spiritInventory);
+        FirstSummonData.readState(state.heroSummon);
         if (role.id !== current.role.id || role.serverId !== current.role.serverId) throw new Error("资产不属于当前角色");
         const key = (role.serverId || "") + "/" + role.id;
         const revision = Number(state.revision);
@@ -80,6 +91,7 @@ export class AssetStateBinding {
             ProtocolRouter.instance.dispatch(this.bag, frame);
             if (this.heroes) ProtocolRouter.instance.dispatch(this.heroes, frame);
             if (this.chapter) ProtocolRouter.instance.dispatch(this.chapter, frame);
+            if (this.summon) ProtocolRouter.instance.dispatch(this.summon, frame);
             this.revision = revision;
         });
         return true;
@@ -94,6 +106,7 @@ export class AssetStateBinding {
         this.heroes?.resetSession();
         this.formation?.resetSession();
         this.chapter?.resetSession();
+        this.summon?.resetSession();
     }
 
     /** 登出或登录新身份前统一清理；不查询任何模块数据。 */
