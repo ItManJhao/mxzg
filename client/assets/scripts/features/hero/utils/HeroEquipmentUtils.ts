@@ -1,9 +1,14 @@
 /**
  * 英雄普通装备的只读数据边界，依据旧 HeroResponse 与 equipmenttype。
- * 供统一快照整包校验与只读详情使用，不从背包推断穿戴关系。
+ * 统一快照校验实际槽位，选择窗和红点只读同一份背包，穿脱由服务端处理。
  */
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
+import type { BagItemData } from "../../bag/data/BagItemDataUtils";
+import { EquipmentDetailUtils } from "../../bag/utils/EquipmentDetailUtils";
+
+/** 选择窗中的堆叠装备，已有服务端库存键才可提交穿戴。 */
+export type WearCandidate = BagItemData & { readonly instanceId: string };
 /** 一件已穿装备；ID 是持久实例，不允许转换为数值。 */
 export interface HeroEquipment {
     /** 持久装备实例 ID。 */
@@ -24,6 +29,33 @@ export interface HeroEquipment {
 export class HeroEquipmentUtils {
     /** 纯展示或数据转换入口，无需创建工具类实例。 */
     private constructor() { }
+
+    /** 取同部位的库存，排除当前已穿同模板，沿用旧稀有度和模板编号降序。 */
+    public static candidates(items: readonly BagItemData[], slot: number, equippedTemplate?: number): WearCandidate[] {
+        const config = GameConfig.instance;
+        const rarity = (id: number) => config.getConfig(GConfig.Item, id)?.rare_mark ?? 0;
+        return items.filter((item): item is WearCandidate => !!item.instanceId && item.itemId !== equippedTemplate
+            && config.getConfig(GConfig.EquipmentType, item.itemId)?.place === slot)
+            .sort((left, right) => rarity(right.itemId) - rarity(left.itemId) || right.itemId - left.itemId);
+    }
+
+    /** 红点只显示有装备可填的空槽或能严格提高原评分的槽，实际择装仍归服务端。 */
+    public static betterSlots(items: readonly BagItemData[], worn: readonly HeroEquipment[]): Set<number> {
+        const config = GameConfig.instance;
+        const better = new Set<number>();
+        const scores = new Map(worn.map(item => [item.slot, EquipmentDetailUtils.score(item.templateId, config)]));
+        for (const item of items) {
+            const slot = config.getConfig(GConfig.EquipmentType, item.itemId)?.place;
+            if (!slot || !item.instanceId || better.has(slot)) {
+                continue;
+            }
+            const current = scores.get(slot);
+            if (current === undefined || EquipmentDetailUtils.score(item.itemId, config) > current) {
+                better.add(slot);
+            }
+        }
+        return better;
+    }
 
     /**
      * 校验一个英雄完整的普通装备列表并冻结副本；空列表表示明确未穿戴。

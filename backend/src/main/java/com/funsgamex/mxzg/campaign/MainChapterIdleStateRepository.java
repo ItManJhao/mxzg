@@ -5,9 +5,11 @@
  */
 package com.funsgamex.mxzg.campaign;
 
+import com.funsgamex.mxzg.time.GameClock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -34,6 +36,8 @@ public class MainChapterIdleStateRepository {
     private final JdbcTemplate jdbc;
     /** 启动加载的普通规则，只用于核对时间语义、类别和首次预置秒数。 */
     private final IdleRules rules;
+    /** 首次挑战累计使用的游戏时钟，并识别开发调时造成的时间倒退。 */
+    private final GameClock clock;
     /** 全部关卡触发器的类别并集，不按当前关卡裁剪持久保底计数。 */
     private final Set<Integer> supportedGroupTypes;
 
@@ -43,7 +47,7 @@ public class MainChapterIdleStateRepository {
      * @param semanticsVersion 普通随机累计与类别保底的语义版本，当前仅接受1
      * @param frequencySeconds 基础结算与随机次数换算周期，当前60秒
      * @param resetSeconds 普通随机累计的重置窗口，当前43200秒
-     * @param startedAt 上次成功消费或首次挑战预置后的服务器Unix秒起点
+     * @param startedAt 上次成功消费或创角预置后的服务器Unix秒起点，历史角色沿用已有值
      * @param operationVersion 当前持久消费版本，正整数；读取和时间流逝不递增
      * @param dropSeconds 已结算秒数在当前随机窗口的位置，范围0至resetSeconds-1
      * @param counters 全部已触发类别的原始数量和连续未中次数，缺类别表示尚未触发的零值
@@ -57,36 +61,61 @@ public class MainChapterIdleStateRepository {
         }
     }
 
-    /** 注入唯一持久连接和同源规则，构造时建立跨关类别索引，不持有角色状态副本。 */
-    public MainChapterIdleStateRepository(JdbcTemplate jdbc, IdleRules rules) {
+    /** 注入持久连接、规则与游戏时钟，并建立跨关类别索引。 */
+    public MainChapterIdleStateRepository(JdbcTemplate jdbc, IdleRules rules, GameClock clock) {
         this.jdbc = jdbc;
         this.rules = rules;
+        this.clock = clock;
         supportedGroupTypes = rules.data().triggers().stream()
                 .map(IdleRules.Trigger::type).collect(Collectors.toUnmodifiableSet());
     }
 
+    /** 首胜前优先读已保存的累计，否则按本次快照服务器秒校验创角时间；两项都缺失时返回空。 */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public OptionalLong startBeforeFirstClear(String role, long nowSeconds) {
+        return jdbc.queryForObject("SELECT r.created_at_seconds, i.started_at FROM game_role r "
+                        + "LEFT JOIN game_main_chapter_idle i ON i.role_id=r.id WHERE r.id=?",
+                (row, index) -> {
+                    long stored = row.getLong("started_at");
+                    if (!row.wasNull()) {
+                        requireSafeNonnegative(stored, "挂机累计起点");
+                        return OptionalLong.of(stored);
+                    }
+                    long createdAt = row.getLong("created_at_seconds");
+                    return createdAt == 0 ? OptionalLong.empty() : OptionalLong.of(initialStart(createdAt, nowSeconds));
+                }, role);
+    }
+
+    /** 从可信起点扣除初始赠送时长；开发向过去调时保留真实起点，正常运行拒绝未来创角时间。 */
+    private long initialStart(long originSeconds, long nowSeconds) {
+        requireSafeNonnegative(originSeconds, "挂机初始化服务器秒");
+        int initialSeconds = rules.data().initialSeconds();
+        if (initialSeconds < 0 || originSeconds < initialSeconds
+                || (originSeconds > nowSeconds && !clock.read().overridden())) {
+            throw new IllegalArgumentException("挂机首次预置秒数或服务器时间非法");
+        }
+        return originSeconds - initialSeconds;
+    }
+
     /**
      * 在首次受理挑战的角色锁事务中仅创建一次累计，已有起点与计数原样保留。
-     * 不依赖活动或世界输入；挑战整体失败时由外层回滚，正常失败战斗仍保留该行。
+     * @param createdAtSeconds 角色创建时的服务器秒；旧记录为 0 时使用本次游戏时间
      * @return true表示插入新行，调用方须同事务登记统一状态变化；false表示已存在且校验通过
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public boolean initializeForChallenge(String role, long nowSeconds) {
+    public boolean initializeForChallenge(String role, long createdAtSeconds) {
         requireTransaction();
         requireCompatibleRules();
-        requireSafeNonnegative(nowSeconds, "挂机初始化服务器秒");
-        int initialSeconds = rules.data().initialSeconds();
-        if (initialSeconds < 0 || nowSeconds < initialSeconds) {
-            throw new IllegalArgumentException("挂机首次预置秒数或服务器时间非法");
-        }
         if (jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_idle WHERE role_id=?", Integer.class, role) != 0) {
             require(role);
             return false;
         }
+        long nowSeconds = clock.epochSeconds();
+        long startedAt = initialStart(createdAtSeconds == 0 ? nowSeconds : createdAtSeconds, nowSeconds);
         if (jdbc.update("INSERT INTO game_main_chapter_idle "
                         + "(role_id,started_at,schema_version,semantics_version,frequency_seconds,reset_seconds,operation_version,drop_seconds) "
                         + "VALUES (?,?,?,?,?,?,1,0)",
-                role, nowSeconds - initialSeconds, SCHEMA_VERSION, SEMANTICS_VERSION,
+                role, startedAt, SCHEMA_VERSION, SEMANTICS_VERSION,
                 FREQUENCY_SECONDS, RESET_SECONDS) != 1) {
             throw new IllegalStateException("新主线挂机累计初始化行数异常");
         }

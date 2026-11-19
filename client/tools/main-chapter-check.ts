@@ -45,6 +45,7 @@ import { GameProtocolCodecUtils, GameFrame } from "../assets/scripts/platform/Ga
 import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
 import { mxzg } from "../assets/scripts/platform/GameProtocol.generated";
 import { GameLog } from "../assets/scripts/core/GameLog";
+import { ServerClock } from "../assets/scripts/core/ServerClock";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 const battleId = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
 const original = { maxCleared: 1, pendingBattleId: battleId, assetRevision: 3 };
@@ -77,10 +78,12 @@ async function checkSettlementActualAndBonusFeedback(): Promise<void> {
     let projections = 0;
     let retries = 0;
     let failProjection = true;
-    controller.configure(async (name, _body, received) => {
-        claims++;
-        controller.onNotify(Protocol.STATE_CHANGED, { revision: 4, mainChapter: settled.state });
-        received(frame(name, settled));
+    controller.configure({
+        deliver: async (name, _body, received) => {
+            claims++;
+            controller.onNotify(Protocol.STATE_CHANGED, { revision: 4, mainChapter: settled.state });
+            received(frame(name, settled));
+        },
     });
     controller.configureSettlementFeedback((receipt, presentation) => {
         projections++;
@@ -339,7 +342,7 @@ async function checkChallengeButtonAvailability(page: any): Promise<void> {
     }
 }
 
-/** 验证可选领取能力的严格已知格式、未来格式降级、深冻结及整包失败不覆盖当前主线状态。 */
+/** 验证创角时钟、首胜前的收益边界，以及领取能力的严格校验、冻结和未来版本兼容。 */
 function checkIdleClaimStateProjection(): void {
     const chapter = { maxCleared: 1, pendingBattleId: null, assetRevision: 7 };
     const idle = { serverTime: 1000, startedAt: 900, maxSeconds: 43200, frequency: 60,
@@ -349,10 +352,18 @@ function checkIdleClaimStateProjection(): void {
     log.mirrorConsole = false;
     GameLog.shared = log;
     try {
-        assert.equal(MainChapterController.readIdle(idle, chapter)!.claimState, undefined);
+        assert.equal(MainChapterModel.readIdle(idle, chapter)!.claimState, undefined);
+        const beforeClear = { ...chapter, maxCleared: 0 };
+        const clock = { ...idle, rewardStage: 0, rates: [], slots: [], lineupVersion: 1 };
+        assert.equal(MainChapterModel.readIdle(clock, beforeClear)!.startedAt, 900);
+        assert.throws(() => MainChapterModel.readIdle({ ...clock, rates: idle.rates }, beforeClear));
+        assert.throws(() => MainChapterModel.readIdle({ ...clock, slots: [{ heroId: "a", position: 1 }] }, beforeClear));
+        assert.throws(() => MainChapterModel.readIdle({ ...clock, claimState: {
+            schemaVersion: 1, operationVersion: 1, requestMode: "ENABLED",
+        } }, beforeClear));
         for (const requestMode of ["READ_ONLY", "ENABLED"]) {
             const claimState = { schemaVersion: 1, operationVersion: Number.MAX_SAFE_INTEGER, requestMode };
-            const projected = MainChapterController.readIdle({ ...idle, claimState }, chapter)!;
+            const projected = MainChapterModel.readIdle({ ...idle, claimState }, chapter)!;
             assert.deepEqual(projected.claimState, claimState);
             assert(Object.isFrozen(projected.claimState));
             assert.notEqual(projected.claimState, claimState);
@@ -366,15 +377,15 @@ function checkIdleClaimStateProjection(): void {
             { schemaVersion: 1, operationVersion: 1, requestMode: "UNSPECIFIED" },
             { schemaVersion: 1, operationVersion: 1 },
         ]) {
-            assert.throws(() => MainChapterController.readIdle({ ...idle, claimState }, chapter));
+            assert.throws(() => MainChapterModel.readIdle({ ...idle, claimState }, chapter));
         }
         for (const schemaVersion of [0, 2, 2]) {
-            const projected = MainChapterController.readIdle({ ...idle,
+            const projected = MainChapterModel.readIdle({ ...idle,
                 claimState: { schemaVersion, operationVersion: 1, requestMode: "ENABLED" } }, chapter)!;
             assert.equal(projected.claimState, undefined, "未来未知领取格式只能保持只读");
             assert.equal(projected.startedAt, idle.startedAt, "领取能力降级不能抹掉原有挂机时钟");
         }
-        const warnings = log.recent().filter(line => line.tag === "MainChapterController");
+        const warnings = log.recent().filter(line => line.tag === "MainChapterModel");
         assert.equal(warnings.length, 2, "同来源同未知格式只记录一次");
         assert(warnings.every(line => line.layer === "MODULE" && line.level === "warn"));
 
@@ -394,10 +405,11 @@ function checkIdleClaimStateProjection(): void {
     }
 }
 
-/** 现场确认只交给原显示期，冻结回执控制四档表现；关页和迟到资源不补播，不改统一快照。 */
+/** 冻结回执控制原显示期的四档收取，校时等待、关页或迟到资源不触发额外收取。 */
 function checkIdleCollectionPresentation(): void {
     const model = MainChapterModel.instance;
-    const previous = { idle: model.idle, idleReceivedAt: model.idleReceivedAt };
+    const previous = model.idle;
+    const clock = ServerClock.instance;
     const node = new Node("IdleCollectionPageTest");
     const page = node.addComponent(MainChapterView) as any;
     const controller = MainChapterController.instance;
@@ -450,8 +462,7 @@ function checkIdleCollectionPresentation(): void {
     page.idleProgress.node.parent = node;
     const receipt: IdleClaimReceipt = {
         requestId: "idle-display-request", receiptId: "idle-display-receipt", expectedOperationVersion: 1,
-        beforeOperationVersion: 1, afterOperationVersion: 2, assetRevision: 4, committedAtSeconds: 1000,
-        previousStartedAtSeconds: 399, seconds: 601, maxSeconds: 1000, rewardStage: 1, feedback: null,
+        assetRevision: 4, seconds: 601, maxSeconds: 1000, actual: {},
     };
     const emit = (presentationContext: object | null, value = receipt) => {
         const confirmation: IdleClaimConfirmation = { receipt: value, presentationContext };
@@ -464,7 +475,7 @@ function checkIdleCollectionPresentation(): void {
         ui.closeById = () => {};
         model.idle = { serverTime: 1000, startedAt: 1000, maxSeconds: 1000,
             frequency: 60, rewardStage: 1, rates: [], slots: [] };
-        model.idleReceivedAt = Date.now();
+        clock.synchronize(1000000);
         const resetIdle = model.idle;
         const unopened = page.idleCollectionContext();
         page.runOpen();
@@ -489,7 +500,15 @@ function checkIdleCollectionPresentation(): void {
             renderIdle();
             assert.equal(page.idleProgress.fillRange, Math.floor(seconds / 10) / 100,
                 "已经归零的快照不能覆盖原领取量");
+            clock.invalidate();
+            renderIdle();
+            assert.equal(page.idleProgress.fillRange, Math.floor(seconds / 10) / 100,
+                "重新校时期间保留已确认收取的原领取量");
             page.idleChest.update(2);
+            renderIdle();
+            assert.equal(page.idleTimeLabel.string, "等待挂机计时");
+            assert.equal(page.idleProgress.node.active, false);
+            clock.synchronize(1000000);
             renderIdle();
             assert.equal(page.idleProgress.fillRange, 0, "保护结束后回到最新权威累计");
             assert.equal(page.idleTimeLabel.string, "00:00");
@@ -546,7 +565,8 @@ function checkIdleCollectionPresentation(): void {
         ui.setResidentHost = original.resident;
         ui.closeById = original.close;
         ResourceAssetsUtils.loadForNode = original.load;
-        Object.assign(model, previous);
+        model.idle = previous;
+        clock.invalidate();
         node.destroy();
     }
 }
@@ -722,11 +742,11 @@ async function checkResultUsesLatestMilestoneProgress(): Promise<void> {
     const historical: MainChapterReceipt = Object.freeze({
         action: "SETTLED",
         battleId,
-        state: MainChapterController.readState({ maxCleared: 1, pendingBattleId: null, assetRevision: 2,
+        state: MainChapterModel.readState({ maxCleared: 1, pendingBattleId: null, assetRevision: 2,
             milestoneProgress: { schemaVersion: 1, claimedIds: [] } })!,
         rewards: Object.freeze([{ itemId: 900001, quantity: 4000 }]),
     });
-    const current = MainChapterController.readState({ maxCleared: 2, pendingBattleId: null, assetRevision: 8,
+    const current = MainChapterModel.readState({ maxCleared: 2, pendingBattleId: null, assetRevision: 8,
         milestoneProgress: { schemaVersion: 1, claimedIds: [100] } })!;
     const historicalBefore = JSON.stringify(historical);
     try {
@@ -796,8 +816,9 @@ async function main(): Promise<void> {
     }
     assert.equal(IdleChestUtils.showBubble(600), false);
     assert.equal(IdleChestUtils.showBubble(601), true);
-    assert.equal(IdleChestUtils.elapsed(1000, 900, 21600, 5000, 4000), 100);
-    assert.equal(IdleChestUtils.elapsed(1000, 900, 21600, 5000, 99999999), 21600);
+    assert.equal(IdleChestUtils.elapsed(1000, 900, 21600), 100);
+    assert.equal(IdleChestUtils.elapsed(99999, 900, 21600), 21600);
+    assert.equal(IdleChestUtils.elapsed(899, 900, 21600), 0);
     assert.equal(IdleChestUtils.time(21600), "06:00");
     assert.throws(() => IdleChestUtils.stage(0, 0));
     assert.equal(IdleChestUtils.percentage(29, 1000), 2);
@@ -992,16 +1013,18 @@ async function main(): Promise<void> {
     controller.resetSession();
     controller.onNotify(Protocol.STATE_CHANGED, { revision: 3, mainChapter: original });
     assert.deepEqual(model.state, original);
-    assert.equal(MainChapterController.readState(undefined), null);
+    assert.equal(MainChapterModel.readState(undefined), null);
     for (const value of [{...original, maxCleared: 0x100000000}, {...original, pendingBattleId: "bad"}, {...original, assetRevision: -1}]) {
-        assert.throws(() => MainChapterController.readState(value));
+        assert.throws(() => MainChapterModel.readState(value));
     }
-    assert.throws(() => MainChapterController.readState(original, 4));
+    assert.throws(() => MainChapterModel.readState(original, 4));
     const requests: object[] = [];
-    controller.configure(async (name, body, received, failed) => {
-        requests.push(body);
-        if (requests.length === 1) { failed(new Error("模拟提交后断网")); return; }
-        received(frame(name, { action: "BATTLE", battleId, state: original, rewards: [] }));
+    controller.configure({
+        deliver: async (name, body, received, failed) => {
+            requests.push(body);
+            if (requests.length === 1) { failed(new Error("模拟提交后断网")); return; }
+            received(frame(name, { action: "BATTLE", battleId, state: original, rewards: [] }));
+        },
     });
     await controller.challenge();
     assert(model.requestId);
@@ -1120,9 +1143,11 @@ async function main(): Promise<void> {
     assert.deepEqual(ChapterSettlementUtils.experienceFrame(multiLevel, 1, () => 360),
         { level: 3, exp: 120, threshold: 720, ratio: 1 / 6 });
     assert.throws(() => ChapterSettlementUtils.experienceFrame(multiLevel, 0.5, () => 0));
-    controller.configure(async (_name, _body, _received, _failed) => {
-        // 应用换号后不交付旧成功或失败；控制器不得在finally里恢复旧业务状态。
-        controller.resetSession();
+    controller.configure({
+        deliver: async (_name, _body, _received, _failed) => {
+            // 应用换号后不交付旧成功或失败；控制器不得在finally里恢复旧业务状态。
+            controller.resetSession();
+        },
     });
     await controller.challenge();
     assert.equal(model.state, null);
@@ -1228,7 +1253,7 @@ async function main(): Promise<void> {
         rewards: [{ itemId: 900001, quantity: 4000 }] };
     rewardView.render();
     assert.equal(rewardView.goldRateLabel.string, "—/分", "不能用通关奖励代替挂机金币速率");
-    assert.equal(rewardView.idleTimeLabel.string, "未接入", "没有权威挂机时间不能显示虚假计时");
+    assert.equal(rewardView.idleTimeLabel.string, "等待挂机计时", "没有权威挂机时间时只提示等待");
     assert.equal(rewardView.challengeLabel.string, "战斗");
     shared.state = { ...shared.state, pendingBattleId: battleId };
     rewardView.render();
@@ -1244,22 +1269,23 @@ async function main(): Promise<void> {
     const idle = { serverTime: 1000, startedAt: 900, maxSeconds: 120, frequency: 5,
         rewardStage: shared.state!.maxCleared, rates: [{ itemId: 900001, quantity: 10 },
             { itemId: 900003, quantity: 3 }, { itemId: 900101, quantity: 4 }] };
-    shared.idle = MainChapterController.readIdle(idle, shared.state);
-    shared.idleReceivedAt = Date.now() - 60000;
+    shared.idle = MainChapterModel.readIdle(idle, shared.state);
+    ServerClock.instance.synchronize(1060000);
     rewardView.renderIdle();
     assert.equal(rewardView.idleTimeLabel.string, "00:02", "后台恢复显示封顶时长，沿用旧版小时分钟格式");
     assert.equal(rewardView.goldRateLabel.string, "120/分", "周期收益换算为每分钟");
+    ServerClock.instance.invalidate();
     for (const invalid of [{ ...idle, frequency: 0 }, { ...idle, rewardStage: 99 },
         { ...idle, rates: [idle.rates[0], idle.rates[0]] }, { ...idle, serverTime: NaN }]) {
-        assert.throws(() => MainChapterController.readIdle(invalid, shared.state));
+        assert.throws(() => MainChapterModel.readIdle(invalid, shared.state));
     }
     if (process.argv.includes("--wire")) {
         const frame = GameProtocolCodecUtils.decodeGameFrame(new Uint8Array(readFileSync("backend/target/main-idle-snapshot.pb")));
         const body = frame.body as any;
-        const chapter = MainChapterController.readState(body.mainChapter, body.revision);
-        assert.equal(MainChapterController.readIdle(body.mainChapterIdle, chapter)!.rewardStage, 2);
+        const chapter = MainChapterModel.readState(body.mainChapter, body.revision);
+        assert.equal(MainChapterModel.readIdle(body.mainChapterIdle, chapter)!.rewardStage, 2);
     }
-    assert.throws(() => MainChapterController.readIdle({ ...idle, lineupVersion: 1,
+    assert.throws(() => MainChapterModel.readIdle({ ...idle, lineupVersion: 1,
         slots: [{ heroId: "one", position: 1 }, { heroId: "one", position: 2 }] }, shared.state));
     let disposedIdle = 0;
     rewardView.idleDisplay = { dispose: () => disposedIdle++ };
@@ -1374,11 +1400,13 @@ async function main(): Promise<void> {
         resultCloseRequests.push(id);
         return true;
     };
-    settlementController.configure(async (name, body, received, failed) => {
-        assert.equal(name, Protocol.CHAPTER_CLAIM);
-        assert.deepEqual(body, { battleId }, "结算只能重用原战斗编号");
-        claimCount++;
-        await claimDelivery(received, failed);
+    settlementController.configure({
+        deliver: async (name, body, received, failed) => {
+            assert.equal(name, Protocol.CHAPTER_CLAIM);
+            assert.deepEqual(body, { battleId }, "结算只能重用原战斗编号");
+            claimCount++;
+            await claimDelivery(received, failed);
+        },
     });
     settlementController.initialize();
     try {

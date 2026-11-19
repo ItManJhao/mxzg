@@ -72,7 +72,7 @@ function buttonListeners(button: Button): number {
 function list(name: string, parent: Node): any {
     const root = node(name, parent);
     return { node: root, validateBindings: () => {}, toStart: () => {},
-        list: { node: node("Content", root), setData: (_data: unknown) => {} } };
+        list: { node: node("Content", root), explicitCellSize: { height: 134 }, setData: (_data: unknown) => {} } };
 }
 
 /** 真实BagInfoView使用最小静态绑定，仍执行生产onOpen/show/按钮及清理逻辑。 */
@@ -130,6 +130,14 @@ function rewardFixture(): RewardView {
     value.confetti = node("Confetti", root).addComponent(Sprite);
     value.emptyLabel = node("Empty", root).addComponent(Label);
     value.rewardAudio = root.addComponent(AudioSource);
+    value.closeHint = node("CloseHint", value.panel);
+    value.repeatButton = node("RepeatSummonButton", value.panel).addComponent(Button);
+    value.confirmButton = node("ConfirmButton", value.panel).addComponent(Button);
+    value.summonIntro = node("SummonIntro", root);
+    value.summonBackdrop = node("Backdrop", value.summonIntro).addComponent(Sprite);
+    value.summonEffects = node("Effects", value.summonIntro);
+    node("Lizi", value.summonEffects);
+    node("Shangcheng", value.summonEffects);
     value.prepare = async () => { value.finishOpen(); };
     return value;
 }

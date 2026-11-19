@@ -1,8 +1,10 @@
 # 通用发奖反馈与确认框
 
-更新：2026-11-16。本文维护通用发奖反馈、奖励窗和确认框的现行职责。主线actual及升级附赠已复用本链完成正常/冷恢复限定检查和本机复验，见[本批检查](validation/chapter-reward-review-20261116.json)、[本机记录](validation/chapter-reward-preview-20261116.json)。本批另接挂机双确认后的现场收取与通用反馈并行，现场、重复通知、实际关页及冷重登已完成限定Creator复验，见[收取记录](validation/idle-collect-preview-20261116.json)。领取入口和日常新领取开关继续关闭；本机与专项证据不代替发布包验收。Git交付状态以实际分支为准，后续范围见[实施路线](restructuring-plan.md)。
+更新于 2026-11-19。召唤、精英碎片合成、主线与挂机共用奖励展示队列。挂机在本机 local 默认接受新领取。当前开放范围见 [开发进度](development-progress.md)。
 
-同日继续补齐通用角色升级反馈：原成功回执、实时通知和现有奖励队列共用`roleUpgrade`，主线及挂机复用common的RoleUpgradeView。后端、Controller和应用装配专项已通过；本轮新增升级页的Creator实际画面仍在复验，不能用前述奖励窗/宝箱记录代替。
+召唤回包进入同一奖励队列，先播旧版开场，可点按跳过，再依序打开四星及以上的获得窗，最后按抽取顺序显示全部英雄实例。同名英雄保留独立格。再次召唤回到原奖池和次数，由召唤页按当时的余额及冷却重新核价。积分兑换结果允许查看，下一笔积分仍从召唤页发起。
+
+2026-11-16 的 Creator 记录覆盖正常主线、冷重登、挂机现场收取和角色升级页。普通英雄升级则由 HeroLevelController 提交英雄实例的等级变更，在英雄详情显示结果。两种升级的展示入口和消耗来源各自独立。[主线实测](validation/chapter-reward-preview-20261116.json) · [宝箱实测](validation/idle-collect-preview-20261116.json) · [角色升级页实测](validation/role-upgrade-preview-20261116.json) · [英雄普通升级](hero-lineup-contract.md#普通英雄升级)
 
 ## 旧源码依据
 
@@ -10,30 +12,30 @@
 
 阅读旧版入口：`server/mxzg-server/mxzg-gameserver/src/main/java/com/ayjs/mxzg/gameserver/module/backpack/service/ThingService.java`、同模块`observer/ThingObserver.java`，以及`client/cocos_mxzg/client/idle/src/net/BackpackResponse.lua`、`layer/ItemRewardCtr.lua`、`layer/ConfirmCtr.lua`。旧根为AGENTS.md指定的正常工作目录。
 
-旧挂机的3005点击链立即播放`collect-N`，不等待成功回包；5002到达后独立打开共用奖励窗，3005回复只读领取时间。动作后1.5秒排`normal-0`及两秒刷新守卫都不推迟弹奖。旧最终零实际奖励不发5002，但点击动画已经开始；冷3004只恢复当前计时，不补播收取。新版保留动画与通用奖励并行，改为匹配回执和统一状态双确认后才交付成功表现，属于明确的可靠性差异，不宣称点击时序完全相同。详见[旧收取审计](validation/idle-collect-legacy-audit-20261116.json)。
+旧挂机点击时立即播放收取动作，5002独立打开共用奖励窗。新版从当次成功回包播放收取，实时通知可独立进入通用奖励队列。冷重登只更新当前计时，不补播收取。见 [旧收取审计](validation/idle-collect-legacy-audit-20261116.json)。
 
 主线升级赠钻旧链须另行区分：RoleExpProcessor先调用RoleService.addExp，逐级累计离开等级的mainlevel.reward；升级附赠另以SLIENT发放，再由2014交RoleUpgradeCtr展示升级前后等级及合并奖励。3002首通回包只含first_reward，不含这笔附赠；前三关顺序新角色样本分别产生10、0、10升级钻石，第二关151钻属于基础首通。chapterextrareward是3008独立里程碑领取，首项第15关，旧胜利页的相关文字只是下一目标提示，不能当作前三关已到账奖励。新版已恢复该提示的完整同源表、V27权威已领集合和原show_rich只读区域，见[里程碑记录](validation/chapter-milestone-review-20261116.json)；胜利页文字是下一目标。独立里程碑已接入新的领取与回执，详见 [里程碑领取](main-chapter-milestone.md)。完整路径和行号见[本批旧源码审计](validation/chapter-reward-legacy-audit-20261116.json)。
 
-旧RoleService的2014独立于通用5002模式：内部升级赠钻虽然使用拼写为`SLIENT`的静默发放，真实升级仍发送2014并开升级页。新版通用`SILENT`继续保持不展示，和该旧独立推送语义存在明确差异，不能声称所有静默经验来源已等价恢复。当前生产只完整接通主线与新挂机两个真实角色经验来源：主线通过原actual恢复显式POPUP，挂机首次成功通过POPUP通知并由双确认恢复；尚无生产SILENT/TIPS发奖调用。其他暂停简化链写`game_campaign.role_exp`，开发GM也不等于真实角色经验来源。依据见[升级源码审计](validation/role-upgrade-legacy-audit-20261116.json)。
+旧 RoleService 的真实升级另发 2014，新版通用 SILENT 保持静默。当前真实角色经验来自主线和挂机，主线用结算回包投影，挂机通过事务后的 POPUP 通知展示。见 [升级源码审计](validation/role-upgrade-legacy-audit-20261116.json)。
 
 ## 新版完整调用链
 
 1. 业务仍负责资格、请求幂等及持久回执。原资产事务调用RewardGrantService获得真实结果，保存成功回执后调用RewardFeedbackService.publish，参数为该receiptId、角色、提交版本、模式和真实结果。
 2. 反馈服务合并items.credited及另列的升级bonuses，并从actual.experience的真实连续前后链提取升级摘要；过滤零量、精确加法并拒绝坏记录。同事务同回执去重，回滚不通知；提交后交付失败不重做资产。SILENT不发展示事件；可见模式只要有正物品或真实升级即可交付，两者均无才跳过。
 3. `reward.granted`是Frame字段35的强类型服务端事件。通知携带schemaVersion=1、receiptId、roleId、assetRevision、mode及实际到账items，不含当前钱包；可选`request_id=7`只关联原业务请求，不成为新的发奖/展示身份。新增可选`role_upgrade=8`为RewardRoleUpgrade，运行时`roleUpgrade`只含beforeLevel/afterLevel，后者必须严格更高。挂机传原回执requestId，其他五参publish调用不带此字段。GameSocketClient核对连接与角色，不因此推进状态版本。
-4. RewardBinding在应用层再次核对认证归属；AssetStateBinding成功提交整包后才交付对应revision。RewardController等待主城及配置包就绪，按回执编号冻结和去重，内容指纹包括升级前后等级。仍只有一份队列：POPUP由RewardBinding按有无roleUpgrade选择common的RoleUpgradeView或原RewardView，逐批等实际关闭再继续；TIPS复用UIManager.toast显示等级变化及已有物品，SILENT只去重、不展示。
-5. 挂机只接管requestId匹配本应用持久待确认请求的提前通知，等待原请求完整匹配、资产及操作双版本确认且持久条件清理成功后统一交付；无关联或不匹配的其他奖励继续原通用队列。确认信号先同步通知原页面显示期启动收取，随即交付同回执的实际量及升级反馈，窗口不等动画结束。实时通知或历史恢复均按同一receiptId去重，不伪造协议、不把旧资产重新提交。
+4. RewardController 接收实时发奖事件，交给唯一 RewardModel 校验及按回执去重。AssetStateBinding 提交整包后交付已接纳的资产版本。RewardBinding 在版本和主城宿主就绪后依次开窗，先展示新英雄，再展示升级或剩余物品。TIPS 走 UIManager.toast。
+5. 挂机成功回包触发原页面的收取效果，并把实际奖励送入同一个队列。实时事件与回包使用同一 receiptId 去重，任一先到均可入队。
 6. 主线原battleId回执与快照双确认后才进入展示，MainChapterModel提前固定battle/reward归属。新ChapterReceipt.actual复用RewardGrantResult，基础rewards语义不变，前端保留冻结experience链。正常battle先走胜利页，关闭后只选择actual.bonuses作为物品，并保留同笔升级；冷reward首次进主线时选择actual.items实际量及bonuses，升级信息相同。两条路径由原归属只选一次，仍用原battleId及回执版本去重，不把回执伪装成服务端事件；主线不另发一份全量通知与正常附赠投影竞争。没有正物品但真实升级仍可开升级页，两者均无不造空通知；历史缺actual只展示原rewards，不猜附赠或升级。
 
-反馈队列是当前应用会话的展示状态，不是第二份资产缓存，也不是永久离线消息箱。页面刷新/应用崩溃后，仍依原业务未确认回执恢复；已经清除待确认记录的纯视觉中断不承诺跨进程续播。完整断线场景重现另在实施计划中，不以本批替代。
+反馈队列服务于当前会话。普通操作在断线后用快照刷新数据，回包或通知丢失时不追查一次性获得效果。主线首次进入从快照读取待结算 battleId，复用原结算。
 
 现场收取以回执冻结的seconds/maxSeconds决定档位，仅本次新请求携带的原页面显示期可以播放。零实际到账仍可播放收取；无正物品且无真实升级不造空奖励窗。冷恢复、关页及关后重开不补播、不补开主线。资源/节点未就绪或正在战斗/收取时跳过本次动作，不阻止通用反馈，不重领、不再飞一份阵亡资源；关页销毁与迟到回调继续由原生命周期清理。通知的可选requestId不改变发奖资格和事务，重复登记的关联也必须一致；不按requestId另建去重表。
 
-restore/restoreItems/restoreActual仅表示已交队列，不能据此标为已显示。restoreActual的all选择基础实际量与附赠，bonuses只选择升级附赠物品；真实experience升级在两种投影中都保留，不能因零赠钻丢失。两者复用原回执编号，不生成第二笔资产奖励。RewardBinding可选onPresented只在同作用域RewardView或RoleUpgradeView真正打开后报告receiptId；应用按原主线归属登记展示进度。准备失败由原RewardModel保留failed队首，retry只重试显示，不再claim/replay。重置或销毁后的旧窗口不报告新身份。首次进入原链实测见[前批记录](validation/chapter-entry-recovery-review-20261116.json)；本批升级附赠以持久actual为唯一来源，历史回执缺字段明确未记录，不读取当前mainlevel重算。actual钱包及经验前后值只供审计/展示，不提交资产Model。
+restore、restoreItems 和 restoreActual 把真实结果送入同一队列。all 选择基础实际量和附赠，bonuses 选择附赠，两种投影均保留真实升级。主线结算用展示回调登记最后一个窗口实际打开，准备失败可以重试展示。历史缺少 actual 时展示已记录的奖励。
 
 ## 升级信息与只读功能预告
 
-roleUpgrade由同次actual.experience的首个beforeLevel与末个level提取并冻结，不看当前Snapshot等级或赠钻量。经验条目须为安全整数，requested为正且等于accepted＋ignored，等级不得倒退；升级必须接纳经验，同级不得附赠升级钻石，后段beforeLevel/beforeExperience须接上前段level/experience。未升级不携带摘要。同receiptId增加、删除或改变升级信息都是内容冲突，不能覆盖已接纳结果或新造一个升级回执；挂机提前通知仍按原requestId等待双确认，后来相同通知交同一队列去重。
+roleUpgrade 由同次经验明细的首尾等级提取并冻结。只有真实升级携带摘要。同一 receiptId 若包含不同升级信息则拒绝，回包及通知正常重复由同一队列去重。
 
 RoleUpgradeView把等级对比、该通知已有的实际奖励和下一功能预告保存在完整common预制体，复用原资源池与四列SuperScroll。奖励区标题为“本次获得”，避免把基础量误说成升级附赠；奖励视口固定134设计单位并裁剪，冷恢复all超过一行时在本区域滚动，避免遮住下方预告；原RewardView保持原有普通奖励表现。升级页关闭/销毁后才推进同一队列，失败重试、迟到资源、叠窗及换号均沿原生命周期，不新增升级发奖或第二份队列。
 
@@ -45,17 +47,19 @@ RoleUpgradeView把等级对比、该通知已有的实际奖励和下一功能�
 |---|---|
 | 事务后反馈与实际量投影 | [RewardFeedbackService](../backend/src/main/java/com/funsgamex/mxzg/reward/RewardFeedbackService.java) |
 | 强类型字段 | [game.proto](../protocol/game.proto) |
-| 认证归属、开窗/重试与飘字装配 | [RewardBinding](../client/assets/scripts/app/remake/RewardBinding.ts) |
-| 队列、版本门槛及本会话去重 | [RewardController](../client/assets/scripts/features/reward/RewardController.ts)、[RewardModel](../client/assets/scripts/features/reward/RewardModel.ts) |
+| 进入共享队列、按回执报告实际展示、重试与飘字 | [RewardBinding](../client/assets/scripts/features/reward/RewardBinding.ts) |
+| 普通操作即时反馈 | 由 [BagController](../client/assets/scripts/features/bag/BagController.ts)、[HeroRosterController](../client/assets/scripts/features/hero/HeroRosterController.ts) 或 [MainChapterController](../client/assets/scripts/features/battle/MainChapterController.ts) 交付本次实际奖励 |
+| 新英雄获得画面 | [HeroRewardView](../client/assets/scripts/features/reward/ui/HeroRewardView.ts) |
+| 协议接收、队列更新事件与 Model 的版本门槛、回执去重 | [RewardController](../client/assets/scripts/features/reward/RewardController.ts)、[RewardModel](../client/assets/scripts/features/reward/RewardModel.ts) |
 | 共用奖励画面 | [RewardView](../client/assets/scripts/features/reward/ui/RewardView.ts)、[完整Prefab](../client/assets/bundles/module/common/prefabs/RewardView.prefab) |
 | 共用升级画面与只读预告 | [RoleUpgradeView](../client/assets/scripts/features/reward/ui/RoleUpgradeView.ts)、[完整Prefab](../client/assets/bundles/module/common/prefabs/RoleUpgradeView.prefab)、[RoleUpgradeUtils](../client/assets/scripts/features/reward/utils/RoleUpgradeUtils.ts) |
 | 共用确认参数与交互 | [ConfirmView](../client/assets/scripts/features/common/ui/ConfirmView.ts)、[完整Prefab](../client/assets/bundles/module/common/prefabs/ConfirmView.prefab) |
 
 新业务复用原事务及同一反馈服务，选择明确模式；不加模块奖励窗、不从BagAdd猜测奖励。打开确认框使用`UIManager.open(ConfirmView, {title, message, onConfirm, onCancel?, confirmText?, cancelText?, showCancel?})`；空标题隐藏标题条，showCancel默认true，单按钮通过Prefab Layout居中。关闭先退订，确定/取消只交付一次。
 
-奖励窗复用common原图和原资源池；SuperScroll四列、124×134，逻辑总量不足四格才居中，多行末行不居中。原标题每帧0.12秒循环，彩带每帧0.08秒一次；主体与格子入场、音效和所有迟到清理由本窗管理。确认与奖励均使用UIManager共享模态，叠窗不增加蒙版颜色。
+奖励窗复用 common 原图和原资源池。SuperScroll 四列，每格 124×134，总量不足四格才居中。原标题使用单个精灵节点，每帧 0.12 秒循环，切帧按图片有效区域的顶部对齐。彩带每帧 0.08 秒，播放一次。主体、格子入场和音效由本窗管理，确认与奖励共用 UIManager 的模态层。
 
-## 验证与保留缺口
+## 2026-11-16 验证记录及当时的开放边界
 
 本轮升级接线后端`RewardFeedbackServiceTest`17项与`MainChapterIdleClaimSocketTest`5项通过，覆盖连续经验链、非法数值/断链回滚、同回执异升级、SILENT及空items真实升级。`reward-controller`15组、`reward-binding`31组通过，包含统一revision门槛、升级指纹/冻结、开窗失败与显式重试、旧身份迟到、TIPS及主线两种投影。Java真实WS通知在`backend/target/reward-notice.pb`，仅升级空物品通知在`backend/target/reward-notice-upgrade-empty.pb`；协议生成检查通过。本轮RoleUpgradeView已完成正常主线、冷恢复、挂机联动及最终标题的限定[本机复验](validation/role-upgrade-preview-20261116.json)，完整检查见[升级记录](validation/role-upgrade-review-20261116.json)。这些结果不代替真机、发布包或全旧经验来源验收。
 

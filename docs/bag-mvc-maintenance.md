@@ -2,7 +2,7 @@
 
 当前资源目录以[Bundle维护说明](staged-resource-loading.md)为准：顶层ui/resources/prefabs已整合，共用格子归common；当前1.8.0构建钩子不删除具有Bundle路径的原图。
 
-更新：2026-11-14。当前采用登录统一初始化与服务端资产同步，保留SuperScroll和唯一BagModel；普通道具/碎片使用BagInfoView，普通装备使用EquipmentInfoView，真实精灵实例使用SpiritInfoView，均只读。精灵专用详情此前已完成独立本机限定复验，见[11-14专用详情复验](validation/spirit-detail-review-20261114.json)；本轮只整理配置使用方式，不把旧截图或配置检查当作当前源码或98技能逐项画面验收。
+更新于 2026-11-19。BagController 处理登录、重连和资产更新协议，接收后提交 BagModel 并发送 BagEvent。普通道具与碎片共用 BagInfoView，精英英雄碎片的「使用」交给 BagController.composeHeroPieces。普通装备与精灵实例分别使用 EquipmentInfoView 和 SpiritInfoView 显示只读详情。
 
 图片放置、自动图集及构建日志操作见[背包自动图集](bag-auto-atlas.md)，具体归属见[资源清单](bag-resource-inventory.md)。
 
@@ -50,7 +50,7 @@ ScoreCount.mapping不是其主键idx，套装需要type/num组合；当前按唯
 
 ## 固定目录与文件职责
 
-- features/bag/BagController.ts：声明协议，onNotify → onInventoryState → Model → BagEvent。
+- features/bag/BagController.ts 发送精英碎片合成，登记并接收真实回包和统一库存协议。onInventoryState 提交 BagModel，再通知 BagEvent。
 - features/bag/BagModel.ts：唯一库存状态、全量校验与界面 revision，不联网。
 - features/bag/utils/BagEvent.ts、data/：界面事件、状态、变更集和物品类型。
 - features/bag/ui/：BagView、BagItemView、BagInfoView、SpiritInfoView、BagTabView 和页面登记；BagMount 已退役。
@@ -70,21 +70,21 @@ BagApi、BagUpdateCoordinator、bindBagSession已删除；不保留背包查询�
 - BagAdd 表示“新增库存种类”，不能代替旧 5002 的获得弹窗/文字提示；首次同步不播放奖励。
 - 当前 itemId 是配置 ID；instanceId 与期限数据基础已补齐，逐件展示、倒计时和全部物品操作仍待还原。
 - 已删除无人调用的 BagModel.beginSync/fail/applyDelta 和 BagItemDelta，以及无人使用的 query 原因、loading/error 状态与错误字段、BagView 未使用的 Controller 导入。断线提示继续归应用层。库存唯一更新入口为 replaceAll。事件 reason 的 reward/consume 仍被暂停模块签名引用，暂不跨模块删除。
-- 详情当前只读：普通道具“确定”是关闭，精灵通过关闭按钮或面板外空白关闭；来源、使用、合成、重生、分解和穿戴尚未恢复，注释不能写成已实现操作。
+- 普通道具确定后关闭，精灵通过按钮或空白关闭。精英英雄碎片「使用」完成数量选择后可提交合成。其余来源、重生、分解和穿戴按玩法进度恢复。
 
 ## 游爱式背包流程与接入前提
 
 参考 SGCtrl 的集中协议登记、onNotify 明确分发、onXxx 更新 Model、通知 View 的阅读路径；内容与规则仍以 mxzg 旧源码为准。独立新版以 Frame.name 字符串作为协议标识，Protocol 集中登记，不为相似外观维护另一套未使用数字号。
 
-打开 BagController 即可看到三个实际协议：session.login、session.authenticate、state.changed。前两个从 body.initial.inventory 取首包，第三个从 body.inventory 取同步；全部走 onInventoryState，不通过 Promise 伪造背包协议。
+在 BagController 查看三条统一状态协议和一条合成协议。session.login、session.authenticate 从 body.initial.inventory 取首包，state.changed 从 body.inventory 取同步，三者统一走 onInventoryState。合成成功回包提供本次获得反馈，库存和英雄仍由统一快照更新。
 
 ## 固定通信与状态模板
 
 ### 1. 登录统一初始化
 
-AccountApi → GameSocketClient.login/connect → 服务端会话验证与一致读 → 单条 Accepted.initial → AccountService.onInitialized → AssetStateBinding → 两个模块 onNotify → 唯一 Model → 事件 → View。
+AccountApi → GameSocketClient.login/connect → 服务端会话验证与一致读 → 单条 Accepted.initial → AccountController.onInitialized → AssetStateBinding → 两个模块 onNotify → 唯一 Model → 事件 → View。
 
-账号服务只管理凭证与登录；背包不 import 账号、不持有 token、不选择库存归属。服务端从有效会话决定角色；客户端检查归属是拒绝迟到旧数据，不能代替后端鉴权。
+账号服务管理凭证和登录，账号通道为 Controller 交付当前连接的请求结果。服务端从有效会话决定角色，AssetStateBinding 负责整包归属检查。
 
 ### 2. 数据变化由服务端同步
 
@@ -94,13 +94,13 @@ AccountApi → GameSocketClient.login/connect → 服务端会话验证与一致
 
 ### 3. 断线、换号与页面生命周期
 
-断线显示恢复提示并保留缓存；重连鉴权成功回包本身就是恢复数据，不发 session.sync/inventory.list。换号、切服、退出先使旧连接失效并清库存；旧连接回调受本地连接代次隔离。被顶号停止自动重连。
+断线时页面保留已接纳的 Model 数据；重连鉴权首包刷新当前资产。同一账号的普通操作只发送一次。换号、切服或退出使旧连接失效，并由应用清理旧 Model。被顶号后停止自动重连。
 
 页面打开只订阅 BagEvent、读取 Model；切分类不联网。页面关闭解除自身事件与资源，不销毁模块；应用销毁才解除协议登记。静态布局保持在 Prefab，列表只向 SuperScroll 绑定数据。
 
 ### 4. 后续模块恢复前提
 
-先核对旧源码/策划规则，再增加 .proto 与 Protocol，开发后端事务及持久幂等；前端明确 onNotify/onXxx、唯一 Model、事件及恢复快照。所有资产修改接入提交后同步，不能重新加入 HTTP、客户端发奖或本地库存写队列。获得弹窗/文字等提示依原 5002 类型恢复，不从 BagAdd 猜测业务原因。
+先核对旧源码和策划规则，再更新 .proto 与 Protocol。后端完成事务及持久幂等，前端由所属 Controller 集中发送、接收、提交唯一 Model 并通知 View。资产经统一快照恢复，获得弹窗和飘字由真实业务结果交付，不从 BagAdd 推断。
 
 ### 5. 必须验证
 
@@ -167,18 +167,18 @@ Snapshot 新增 timedInventory{items,serverTimeSeconds}；BagModel 将 timedItem
 
 ### 期限展示边界
 
-期限规则使用 GConfig.TimeLimitItem 与服务端打包的同源 timelimititem.json；不可从客户端传入天数或自行计算权威到期时间。BagModel 保存逐件期限快照与服务器秒，BagItemCatalog 只生成列表投影；期限格子和详情必须按字符串 instanceId 区分，同配置不能合并。到期由 View 隐藏、关闭详情，禁止删除 Model 或调用额外库存查询。使用、分解及权益相关操作当前未开放。展示时钟与后台恢复边界见 development-progress.md 的期限配置批次。
+期限规则使用 GConfig.TimeLimitItem 与服务端打包的同源 timelimititem.json。BagModel 保存逐件期限快照，库存包的服务器秒用于校验该包的到期时间。期限格子和详情按字符串 instanceId 区分，同配置的两件物品分别显示。BagView 和 BagInfoView 读取公共 ServerClock 到达时间后隐藏格子、关闭详情，服务端快照负责更新真实库存。[公共服务器时间](network-contract.md#公共服务器时间)
 
 ### 后台恢复与同版本首包
 
-应用层负责 Game.EVENT_HIDE/SHOW：隐藏时停止通信重试并使背包时钟失效，显示后通过 session.authenticate 恢复。鉴权首包同资产版本也须校准服务器时刻；普通重复推送和低版本不得覆盖现有资产。后台退出后禁止自动恢复旧账号，禁止为校时添加库存查询或让背包控制器持有凭证。服务端接管锁最多等待两秒，超时返回 BUSY，客户端只重试鉴权，不重放资产操作。
+应用层通过 Game.EVENT_HIDE/SHOW 暂停和恢复游戏连接。暂停时公共时钟失效，详情在等待校时期间显示同步提示。返回前台通过 session.authenticate 恢复，鉴权首包即使资产版本相同也会校准服务器时间。服务端接管锁超时返回 BUSY 时，客户端只重试鉴权。
 
 
 ## 2026-11-04 统一隔离边界
 
 背包不发送查询。2026-11-13进一步移除BaseModel、BagModel快照和事件的roleKey；BagModel只校验并保存库存数据，不判断登录身份。AssetStateBinding先校验完整角色归属与持久版本，身份变化时由应用同步关闭旧功能页、弹窗和缓存，再无参重置模块。旧成功/失败回包在连接及账号交付边界被丢弃，不把这项职责转交页面或新增本地身份副本。
 
-通信层拒绝旧连接消息；应用统一校验身份、资产版本及整包内容后才调用onNotify。布阵写操作同样由应用的AccountService.deliverAuthenticated交付结果，模块不判断账号。BaseController不再维护captureSession/isCurrent或会话代次。业务回执匹配、幂等重试与页面自身关闭清理继续保留。
+通信层隔离迟到回包。应用核对身份、版本和整包数据后调用 onNotify。业务 Controller 保留本次请求关联和必要的连点保护。布阵校验服务器阵容版本，主线结算沿用原战斗编号。页面关闭释放监听和资源。
 
 
 ## 背包自动图集维护入口

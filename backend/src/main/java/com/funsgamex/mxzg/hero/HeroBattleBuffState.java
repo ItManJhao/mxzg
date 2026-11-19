@@ -105,6 +105,13 @@ public final class HeroBattleBuffState {
         return remove(dispellable(effect));
     }
 
+    /** 旧 type1102 按安装顺序移除允许驱散的负面和控制，0 表示不限个数。 */
+    public List<Entry> removeDebuffs(int count) {
+        return remove(entries.stream().filter(entry -> entry.spec().dispelled()
+            && (entry.spec().effect() == 2 || entry.spec().effect() == 3))
+            .limit(count == 0 ? Long.MAX_VALUE : count).toList());
+    }
+
     /** 返回可驱散项而不提前删除，清心据此选择英雄，再统一调用移除入口。 */
     public List<Entry> dispellable(int effect) {
         return entries.stream().filter(entry -> entry.expiresAt() < 999

@@ -11,7 +11,6 @@ import { CityMapQuery, CityMapService } from "./CityMapService";
 import { CityEffectHandle, CityEffectPlayUtils } from "./CityEffectPlayUtils";
 import { CITY_CFG_BTN, CITY_CFG_EFFECT, CITY_CFG_POS, CityMapLayout, MainCityBtnFile, MainCityEffectFile, MainCityPosFile, CityMapLayoutUtils } from "./CityMapLayoutUtils";
 import { PrefabLoader } from "../../../framework/assets/PrefabLoader";
-import { CITY_HUB_PREFAB_PATH } from "../../../config/PrefabCatalog";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 const { ccclass, property } = _decorator;
 const LOCKED_COLOR = new Color(150, 150, 150, 255);
@@ -172,7 +171,6 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
             this.bindMainline();
             this.bindDrag();
             this.refreshLocks();
-            GameLog.shared.classified("MODULE", "info", "CityHubView", "view buildings=" + this.spotViews.size + " scroll=" + this.scroll + " " + CITY_HUB_PREFAB_PATH);
             this.finishOpen();
         }
         catch (err) {

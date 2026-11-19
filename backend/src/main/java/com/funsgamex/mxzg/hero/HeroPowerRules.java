@@ -1,5 +1,6 @@
 /**
  * 旧BattleTemplate.computeStrength的英雄战力评分：属性初始化后加权，逐英雄截断再乘倍率。
+ * 普通装备的一键穿装也读取同源评分权重，保留旧客户端的逐项向上取整。
  * 不负责属性来源组装，不读取临时战斗Buff，也不把评分当作伤害或胜负依据。
  */
 package com.funsgamex.mxzg.hero;
@@ -68,6 +69,16 @@ public final class HeroPowerRules {
             throw new IllegalArgumentException("英雄战力不能为负数");
         }
         return Math.toIntExact(result);
+    }
+
+    /** 装备评分逐属性向上取整，缺少该属性权重时贡献为零。 */
+    public long equipmentScore(int attribute, long amount) {
+        for (var weight : weights) {
+            if (weight.attribute() == attribute) {
+                return (long) Math.ceil(Math.multiplyExact(amount, (long) weight.ratio()) / 10000D);
+            }
+        }
+        return 0;
     }
 
     /** 读取共享配置，不生成另一份手工评分表。 */

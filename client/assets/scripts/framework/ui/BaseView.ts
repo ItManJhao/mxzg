@@ -4,7 +4,7 @@
  */
 import { _decorator, Component } from "cc";
 import { ViewCloseUtils } from "./ViewCloseUtils";
-import type { ViewController } from "./UIRegistry";
+import type { ViewBinding } from "./UIRegistry";
 import { EventScope } from "../EventScope";
 import { EventDispatcher } from "../EventDispatcher";
 
@@ -28,7 +28,8 @@ export class BaseView<TArgs = unknown> extends Component {
   private shown = false;
   private unbound = false;
   private disposed = false;
-  private controller: ViewController | null = null;
+  /** 由当前页面实例持有，打开时绑定交互，关闭时解绑，实例销毁时释放。 */
+  private binding: ViewBinding | null = null;
   private readonly eventScope = new EventScope(this.constructor.name);
 
   /** Views register their own event/button disposers; closing never clears another owner's listeners. */
@@ -56,13 +57,15 @@ export class BaseView<TArgs = unknown> extends Component {
     };
   }
 
-  /** UIManager attaches the application-created controller before opening the View. */
-  attachController(controller: ViewController): void {
-    if (this.created || this.disposed || this.controller) throw new Error("Controller must be attached once before View creation");
-    if (typeof controller.show !== "function" || typeof controller.close !== "function") {
-      throw new Error("BaseView.attachController 只接受页面生命周期适配器；模块 BaseController 必须由应用管理");
+  /** UIManager 在首次打开前为页面安装交互绑定，缓存重开复用同一绑定。 */
+  attachBinding(binding: ViewBinding): void {
+    if (this.created || this.disposed || this.binding) {
+      throw new Error("页面交互只能在实例创建前绑定一次");
     }
-    this.controller = controller;
+    if (typeof binding.show !== "function" || typeof binding.close !== "function") {
+      throw new Error("BaseView.attachBinding 只接受页面生命周期适配器；模块 BaseController 必须由应用管理");
+    }
+    this.binding = binding;
   }
 
   /** 实例第一次挂上时。 */
@@ -144,7 +147,7 @@ export class BaseView<TArgs = unknown> extends Component {
       this.args = args;
       this.shown = true;
       this.onOpen(args);
-      this.controller?.show();
+      this.binding?.show();
     } catch (error) {
       try { this.runClose(); }
       finally {
@@ -159,7 +162,7 @@ export class BaseView<TArgs = unknown> extends Component {
   runClose(): void {
     if (!this.shown) return;
     this.shown = false;
-    try { this.controller?.close(); }
+    try { this.binding?.close(); }
     finally {
       try { this.onClose(); }
       finally {
@@ -189,7 +192,7 @@ export class BaseView<TArgs = unknown> extends Component {
         }
       }
     } finally {
-      this.controller = null;
+      this.binding = null;
       EventDispatcher.instance.offTarget(this);
       this.eventScope.clear();
     }

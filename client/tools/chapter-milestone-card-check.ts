@@ -69,7 +69,7 @@ async function main(): Promise<void> {
     const originalMount = BattleSpineService.instance.mountBattleSpine;
     const originalPaint = ResManager.setSprite;
     const originalToast = UIManager.instance.toast;
-    const originalEntry = MainChapterController.instance.requestMilestoneClaim;
+    const originalClaim = MainChapterController.instance.claimMilestone;
     (BattleSpineService.instance as any).mountBattleSpine = (parent: Node, stem: string, _failure: unknown, options: { scale: number }) => {
         const actor = { node: new Node("OriginalHero"), stem, scale: options.scale, gestures: [] as string[],
             gesture(name: string) { this.gestures.push(name); return true; } };
@@ -93,7 +93,7 @@ async function main(): Promise<void> {
         assert(value.rewardName!.string.includes("烈焰骑士"));
         assert.equal(value.progressLabel!.string, "通关 14/15");
         let entries = 0;
-        MainChapterController.instance.requestMilestoneClaim = async () => { entries++; };
+        MainChapterController.instance.claimMilestone = async () => { entries++; };
         await (value as any).claim();
         assert.equal(entries, 0);
         assert(tips[0].includes("1关"));
@@ -102,15 +102,15 @@ async function main(): Promise<void> {
         assert.equal(value.rewardIcon!.node.active, false);
         assert.equal(value.claimLabel!.string, "领取奖励");
         let finish!: () => void;
-        MainChapterController.instance.requestMilestoneClaim = async (rewardId, context) => {
-            assert.equal(rewardId, 100); assert(context); entries++;
+        MainChapterController.instance.claimMilestone = async rewardId => {
+            assert.equal(rewardId, 100);
+            entries++;
             await new Promise<void>(done => { finish = done; });
         };
         const click = (value as any).claim();
         await (value as any).claim();
         assert.equal(entries, 1);
         assert.equal(value.claimLabel!.string, "确认中");
-        model.milestoneClaim = { phase: "confirmed", rewardId: 100, receipt: null, message: "" };
         state(15, [100]);
         finish(); await click;
         assert.equal(actors[0].node.isValid, false, "切到物品目标须释放旧英雄节点");
@@ -136,7 +136,7 @@ async function main(): Promise<void> {
         BattleSpineService.instance.mountBattleSpine = originalMount;
         ResManager.setSprite = originalPaint;
         UIManager.instance.toast = originalToast;
-        MainChapterController.instance.requestMilestoneClaim = originalEntry;
+        MainChapterController.instance.claimMilestone = originalClaim;
         model.reset();
     }
 }

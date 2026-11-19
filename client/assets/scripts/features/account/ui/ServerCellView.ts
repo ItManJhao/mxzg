@@ -1,6 +1,6 @@
 /** 选服列表单元格：由 SuperContent 复用，只显示区服数据和转交点击，不管理列表位置。 */
 import { _decorator, Button, Component, Label, Node, UITransform } from "cc";
-import type { GameServer } from "../ServerSelection";
+import type { GameServer } from "../ServerSelectionController";
 import { ResManager } from "../../../framework/assets/ResManager";
 const { ccclass, property } = _decorator;
 @ccclass("ServerCellView")

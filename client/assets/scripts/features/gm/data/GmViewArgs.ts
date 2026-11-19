@@ -6,23 +6,25 @@ import type { GmController } from "../GmController";
 
 /** 总菜单需要的当前角色和应用测试能力。 */
 export interface GmOpenArgs {
-    /** 应用装配的唯一发放控制器，所有发放子窗共用。 */
+    /** 应用装配的唯一 GM 控制器，各子窗共用。 */
     controller: GmController;
-    /** 当前测试角色的持久 ID，原样交给控制器。 */
+    /** 显示在总菜单上的当前角色 ID。 */
     roleId: string;
     /** 当前测试角色显示名称。 */
     nickname: string;
+    /** 打开工具窗时读取最新角色等级，尚未同步时为空。 */
+    readRoleLevel?: () => number | undefined;
     /** 打开现有技能验收窗口，准备成功兑现，失败保留原因。 */
     openSkillAudit?: () => Promise<void>;
-    /** 请求并播放指定关卡的只读阵容演示，不推进或发放。 */
-    openLineupBattle?: (mission: number) => Promise<void>;
+    /** 从当前试战子窗请求指定关卡，开播前由该次开窗判断能否继续显示。 */
+    openLineupBattle?: GmBattleArgs["openLineupBattle"];
 }
 
 /** 每次发放窗口只处理一个类别，不维护隐藏的分类页签。 */
 export interface GmGrantArgs {
     /** 与菜单共享的控制器，保存未确认请求的幂等键。 */
     controller: GmController;
-    /** 当前测试角色的持久 ID。 */
+    /** 显示在发放窗口上的当前角色 ID；发放使用已认证连接。 */
     roleId: string;
     /** 当前角色说明使用的名称。 */
     nickname: string;
@@ -34,6 +36,9 @@ export interface GmGrantArgs {
 export interface GmBattleArgs {
     /** 当前测试角色名称，仅用于说明。 */
     nickname: string;
-    /** 请求指定关卡的当前阵容演示；完成时返回准备结果，失败不吞错。 */
-    openLineupBattle: (mission: number) => Promise<void>;
+    /** 等待只读战场打开；stillOpen 只在发起点击的这一轮窗口展示期间为真。 */
+    openLineupBattle: (mission: number, stillOpen: () => boolean) => Promise<void>;
 }
+
+/** 角色与时间窗口只接收认证通道和当前角色说明。 */
+export type GmToolsArgs = Pick<GmOpenArgs, "controller" | "nickname" | "readRoleLevel">;

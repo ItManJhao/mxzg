@@ -53,7 +53,7 @@ export class GmGrantView extends BaseView<GmGrantArgs> {
     @property(Button) closeButton: Button | null = null;
     /** 名称或配置 ID 搜索输入。 */
     @property(EditBox) search: EditBox | null = null;
-    /** 数量输入，提交时校验为 1～9999 的整数。 */
+    /** 正整数输入，金币和钻石按钱包上限校验。 */
     @property(EditBox) quantity: EditBox | null = null;
     /** Prefab 保存的下拉区域。 */
     @property(Node) dropdown: Node | null = null;
@@ -137,7 +137,7 @@ export class GmGrantView extends BaseView<GmGrantArgs> {
     private instructions(): string {
         return this.args?.kind === "hero"
             ? "仅用于测试。英雄每次最多 20 个，发放后等待服务端同步。"
-            : "按真实配置发放；期限道具每次最多 100 件，未恢复类型由服务端拒绝。";
+            : "金币、钻石可超过 9999，其余按原上限。";
     }
 
     /** 搜索最多展示 100 条配置，列表位置、尺寸和复用完全交给 SuperScroll。 */
@@ -171,7 +171,7 @@ export class GmGrantView extends BaseView<GmGrantArgs> {
         this.message!.string = "正在发放，等待服务端确认…";
         let allowRetry = true;
         try {
-            await args.controller.grant(args.roleId, args.kind, selected.id, Number(quantity));
+            await args.controller.grant(args.kind, selected.id, Number(quantity));
             if (!this.closed && this.args === args) {
                 UIManager.instance.toast("发放成功，资产由服务端同步");
             }

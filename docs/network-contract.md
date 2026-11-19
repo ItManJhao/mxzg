@@ -1,8 +1,8 @@
 # 游戏通信与统一状态契约
 
-更新于 2026-11-18。游戏业务统一使用 WS＋Protobuf。登录、角色、背包、英雄、主线布阵、第1～20关挑战、里程碑及挂机共用统一快照。各入口的开放与验证范围见 [开发进度](development-progress.md)。
+更新于 2026-11-19。WS＋Protobuf 是游戏业务通信入口。模块 Controller 发送业务协议和接收回包，View 调 Controller。各入口的开放与验证范围见 [开发进度](development-progress.md)。
 
-断线后的页面与战斗边界见[恢复核对及接线方案](reconnect-recovery.md)：短断线重新鉴权保留页面，完整重新进入回主城。原battleId回执与最新快照双确认已接，缺状态每轮至多一次refreshSnapshot；首个身份首包只记候选，首次进入主线页才接纳冷恢复意图，后续鉴权只续已有意图。恢复按原编号/版本交通用奖励队列，不伪造reward.granted；正常胜利与恢复窗归属互斥，实际打开才标记展示。布阵缺推送确认也已复用同一鉴权能力：ACK保留原意图，直到权威mainFormation.version达到回执版本；有ACK时重试只同步，无ACK才允许复用原编号/参数重试保存。已清pending的跨重启历史定位仍有缺口；不增加库存查询或通用业务自动重发。
+普通操作每次确认发送一次，资产以在线推送或正常重连鉴权首包为准。同步快照后刷新唯一 Model，成功回包仅用于本次反馈。布阵等服务器阵容版本后出战，战斗按原 battleId 回包和快照确认结算。冷重登首次进入主线才处理快照中的待结算战斗。详见 [断线恢复](reconnect-recovery.md)。
 
 ## 原项目初始化依据
 
@@ -24,14 +24,25 @@
 | servers.list | 请求/响应 | 匿名读取 Servers.items 开放区服，读取后关闭目录连接 |
 | session.login | 请求/响应 | local 开发身份交换；account/serverId/clientInstanceId → Accepted，其中 session 是凭证、initial 是统一状态 |
 | session.authenticate | 请求/响应 | 有效令牌恢复连接；Accepted.initial 已包含统一状态，无额外同步请求 |
-| session.heartbeat | 请求/响应 | 已鉴权连接保活，不更新资产，默认不打印 |
+| session.heartbeat | 请求/响应 | 已鉴权连接保活，并用回包的 serverTimeMs 校准公共时钟。默认不打印 |
 | session.kicked | 服务端事件 | 清理对应账号，停止自动重连，回登录 |
 | state.changed | 服务端事件 | 事务提交后的完整 Snapshot；角色、库存、英雄、阵容、主线共用持久 revision |
+| role.name.random | 请求/响应 | 获取当前区服可用的随机候选名，回包携带 `nickname` |
+| role.name.set | 请求/响应 | 提交 `nickname` 首次命名，昵称与 `Role.first_named` 随统一角色快照更新 |
+| role.welcome.claim | 请求/响应 | 空请求领取一次新手赠礼，回包与 `reward.granted` 共用同一奖励回执。领取状态和资产随统一快照更新 |
 | reward.granted | 服务端事件 | 原发奖事务提交后的通用显示反馈；沿原业务receiptId去重，不是资产增量 |
-| hero.summon.first | 请求/响应 | 普通免费首抽；同一角色的原 `requestId` 返回持久回执，重复的新请求拒绝再次发放 |
+| hero.summon | 请求/响应 | `requestId`、奖池 `pool`、次数 `count` 和已确认的最高钻石 `maxDiamonds`。服务端返回抽取顺序、实际英雄和消耗。积分兑换使用同一入口，次数为 1 |
+| hero.summon.normal | 请求/响应 | 普通单抽按钮提交 `requestId`。到期优先免费，冷却中按配置扣券。服务端返回本次实际英雄、积分和资产版本，同一编号重放原结果 |
+| hero.summon.first | 请求/响应 | 旧免费首抽指令，保留既有编号重试语义，只允许免费首抽 |
 | hero.summon.first.status | 请求/响应 | 按同一角色和原 `requestId` 查询成功回执，供断线与重登恢复 |
 | hero.level.upgrade | 请求/响应 | `requestId`、英雄实例 `heroId`、原等级 `expectedLevel` 与升级级数 `levels`；服务端计算成本，提交后返回原回执 |
 | hero.level.upgrade.status | 请求/响应 | 同一角色按原 `requestId` 查原升级回执 |
+| hero.equipment.change | 请求/响应 | `requestId`、`heroId` 和 `action`。单穿使用背包堆叠字符串 ID。单脱使用槽位、穿戴实例 ID 和操作时的原配置 ID。批量穿脱由服务端按当前状态执行 |
+| market.list | 请求/响应 | 空请求获取本角色的普通市场货架、刷新次数和成交价 |
+| market.buy | 请求/响应 | `requestId`、`shelfVersion`、`productId` 和 `count`；服务端按当前货架结算 |
+| market.refresh | 请求/响应 | `requestId` 和 `shelfVersion`；服务端按免费次数及付费配置刷新货架 |
+| dungeon.gold.list | 请求/响应 | 空请求获取金币首关、当前已用次数、下次报价、原奖励预览和准入状态 |
+| dungeon.gold.challenge | 请求/响应 | `requestId`、`sweep`、`maxDiamonds`；回包携带原战报或扫荡结果、实际发放明细与最新次数 |
 | formation.save | 请求/响应 | 当前角色主线阵容保存；requestId 持久幂等，回执不代替统一快照 |
 | chapter.challenge | 请求/响应 | 按服务端当前开放范围挑战（默认连续1～20关），权威输入与持久战报 |
 | chapter.claim | 请求/响应 | 指定主线战报的幂等结算；不是挂机宝箱领取 |
@@ -40,27 +51,33 @@
 | chapter.milestone.claim.status | 请求/响应 | 查询同一 rewardId 的原成功回执，冷恢复使用 |
 | chapter.firstreward.claim | 请求/响应 | 以绝对关卡号 `chapter` 领取独立通关奖励，同一角色和关卡复用原成功回执 |
 | chapter.firstreward.claim.status | 请求/响应 | 查同一绝对关卡号的独立领取回执，用于重登和断线恢复 |
-| bag.fragment.combine | 请求/响应 | `requestId`、`itemId` 与合成次数 `quantity`；服务器计算实际扣除和生成实例 |
-| bag.fragment.combine.status | 请求/响应 | 同一角色按原 `requestId` 查合成回执，不重新抽样或扣除碎片 |
+| bag.fragment.combine | 请求/响应 | 每次确认发送一次，携带 `requestId`、`itemId` 和合成次数 `quantity`。服务端校验资格、扣除碎片并生成实例，即时成功回执交通用获得窗 |
+| bag.fragment.combine.status | 请求/响应 | 服务端支持按同角色原 `requestId` 查询，供联调和幂等检查。当前玩家端断线后通过鉴权首包更新库存和名册 |
 | chapter.idle.encounter | 请求/响应 | 已通关主线的挂机遇敌演出战报，不结算资产 |
 | chapter.idle.claim | 请求/响应 | requestId＋expectedOperationVersion → 冻结历史到账；全局默认关闭、local默认开启，玩家按钮转原持久命令入口 |
 | chapter.idle.claim.status | 请求/响应 | 只查指定requestId的COMMITTED/NOT_FOUND，不查库存、不抽样或创建计时；锁忙不能返回NOT_FOUND |
 | battle.preview | 请求/响应 | 当前已保存阵容按全局关卡idx进行开发只读试战；未支持依赖拒绝，不推进通关或发奖 |
 | gm.status、gm.grant | 请求/响应 | local按负责人要求默认开启，production不装配的开发数据准备；不等同玩法获取入口 |
+| gm.level.set、gm.chapter.set | 请求/响应 | 使用持久请求编号设置当前角色等级或下一主线挑战关卡，提交后同步统一快照 |
+| gm.time.get、gm.time.set | 请求/响应 | 查询或设置开发进程的游戏时间，设置参数为 Unix 秒，0 恢复系统时间，响应返回 Unix 毫秒和是否有偏移 |
 
 inventory.list、session.sync 已删除业务处理，鉴权后请求返回 UNKNOWN_MESSAGE。未恢复玩法不得借旧 CampaignApi、IdleApi、HeroLevelApi 发请求或通过回调更新资产；这里只列 Protocol.ts 实际登记的消息。
 
 ## 信封和业务载荷
 
-`Snapshot.hero_summon=12` 承载普通首抽是否完成和下次普通免费单抽的服务端 Unix 秒。字段缺失视为尚未同步。首抽回执冻结本次实际入账与资产版本，客户端等统一快照确认后使用通用英雄获得反馈。招募积分走实际背包入账并通过快照同步，沿旧规则静默。首抽状态、回执、英雄名册和背包各由原状态入口更新。
+`Snapshot.hero_summon=12` 携带两种免费单抽的服务器 Unix 秒、积分兑换门槛和实际点数消耗，以及祈愿资格结束时间。客户端按公共服务器时钟和统一快照显示价格，按服务端回包展示实际获得的英雄。服务端重新核算费用，在同一事务内保存扣款、英雄、积分、保底进度和回执；相同编号及参数重放原结果，变更参数会被拒绝。断线后通过鉴权首包刷新资产。积分检查累计实付和神职等级，祈愿购买随支付接入。
 
 `MainChapterState.firstRewardProgress` 提供独立通关奖励的 `claimedChapters` 与 `eligibleChapters`。服务端以绝对关卡号查表并下发当前可领集合。旧首包缺字段视为尚未同步。领取后同时检查原关卡回执、统一版本和已领集合，里程碑仍用自己的配置 ID 与已领状态。
 
 `HeroFragmentCombineReceipt` 冻结合成次数、实际扣除量与创建的英雄实例。客户端核对原消费参数及统一资产版本后提交通用反馈，库存和名册由快照更新。两项业务都先保存原意图，恢复时查原回执，通用反馈实际展示后按原参数清理记录。
 
-`HeroLevelUpgradeReceipt` 保存原请求、英雄实例、角色、起止等级、配置版本和提交后的资产版本。持久意图按角色隔离。缺回执先查状态，未找到可复用原参数重试；回执已到且缺快照时使用现有鉴权首包。等级、钱包和英雄经验由统一快照更新，确认本地名册达到回执等级后清理意图。
+`HeroLevelUpgradeReceipt` 保存原请求、角色、英雄、起止等级、配置版本和提交后的资产版本。HeroLevelController 接回包后通知详情展示本次光效，等级、钱包和英雄经验由统一快照更新。
 
-通用奖励事件使用Frame字段35 reward_notice，包含schemaVersion=1、业务receiptId(UUID)、roleId、正安全整数assetRevision、mode(SILENT/POPUP/TIPS)及去重的itemId/credited正数量；可选request_id=7关联原请求，role_upgrade=8携带原经验链的升级前后等级。事件无id/ok/error，角色及连接必须为当前认证对象；它不更新latestState/revision。客户端等待唯一状态入口达到该版本后展示，历史匹配回执恢复也进入同一反馈去重入口。静默不发展示事件；可见模式有正物品或真实升级即可交付，两者均无才跳过。重放和status不重复发送；详情见[通用发奖反馈](reward-feedback.md)。
+`HeroEquipmentChangeRequest` 的 `EQUIP` 使用背包堆叠的 `equipmentId`，装备部位读取策划配置。`UNEQUIP` 同时核对 `equipmentId`、`slot` 和 `expectedTemplateId`，防止槽位保留实例 ID 时卸下已经换上的装备。`EQUIP_ALL` 和 `UNEQUIP_ALL` 只携带英雄和动作。每笔事务提交背包扣还、槽位和原回执，重复相同请求参数返回原回执，复用请求号却修改参数会被拒绝。
+
+`HeroEquipmentChangeReceipt` 保留原选择、`roleId`、`assetRevision` 和 `changed`。无变化时保留当时的版本。最新槽位与已恢复面板属性随 `Hero.equipment` 和 `Hero.panelStats` 下发。可选 `HeroPanelStats.power` 使用服务端针对当前面板的个人战力，旧快照缺字段时保留未同步状态。普通穿脱无须补查库存。
+
+通用奖励事件为 Frame 字段35 reward_notice，携带 schemaVersion、receiptId、roleId、assetRevision、mode 和实际到账量。可选 request_id=7 关联原请求，role_upgrade=8 携带升级前后等级。GameSocketClient 校验认证连接，RewardController 接收通知，按已提交资产版本和 receiptId 交付共享队列。回执重放或 status 查询不重复发送奖励事件。见 [通用发奖反馈](reward-feedback.md)。
 
 Frame 的 version=1，kind=request/response/event，name 是 Protocol.ts 统一登记的消息标识。id 关联单次请求，不是持久幂等键。成功响应含 ok=true/body，无 error；失败 ok=false/body=null/error。connectionId 标识当前连接，不是资产版本。令牌只在消息体，不放 URL、不打印。
 
@@ -72,17 +89,37 @@ role 包含身份、区服、等级、金币、钻石，以及基础资料 basic
 
 ## 初始化与同步调用链
 
-1. 选服目录走匿名 WS；登录在游戏连接发送 session.login，恢复发送 session.authenticate。
+1. ServerSelectionController 请求匿名区服目录，AccountController 通过账号网关发起登录或恢复。GameSocketClient 统一发送 session.login 和 session.authenticate。
 2. 服务端解析身份，持有角色串行锁完成接管；旧凭证撤销，旧连接收到 kicked。读取数据库一致快照，随成功响应一次返回。
-3. GameSocketClient 校验关联、连接、角色与完整数据；AccountService 接纳账号时在同一通知批次调用 AssetStateBinding。
+3. GameSocketClient 校验请求、连接、角色与完整数据。AccountController 接纳账号时在同一通知批次调用 AssetStateBinding。
 4. AssetStateBinding 在任何模块提交前校验完整角色、普通/期限库存、英雄、阵型、主线/挂机状态、持久版本与当前身份。通过后在同一通知批次把原始帧定向交给 RoleController、BagController、HeroRosterController、MainChapterController 的 onNotify；模块更新唯一 Model 后通知界面，非法整包不得先提交部分资产。
 5. 背包打开、切页签、再次开始游戏均不查库存。断线保留已同步数据，重连鉴权首包整体恢复；登出或切服清理旧状态。重复/较旧版本被应用丢弃。
+
+## 公共服务器时间
+
+游戏应用向 GameSocketClient 注入 [ServerClock](../client/assets/scripts/core/ServerClock.ts)。连接校验通过后，登录、鉴权和心跳回包的 `serverTimeMs` 校准同一份时钟。两次回包之间用单调时钟计算经过的毫秒，缺少单调计时器的平台累积引擎帧时间。连接结束后，`nowSeconds()` 返回 `null`，直到新连接完成鉴权。连接代次和请求编号校验同样适用于心跳。
+
+背包期限展示与挂机累计读取 `nowSeconds()`，统一使用 Unix 秒。快照自己的时间字段用于校验同包的期限和累计起点，业务结算以服务端事务时间为准。
 
 ## 服务端提交边界
 
 业务用例持有角色行锁，在同一事务修改钱包/库存。RoleRepository、InventoryService 通过 AssetSyncService.changed 同事务递增版本；一事务同角色只递增一次。提交成功才发布 Changed，处理器读取已提交完整状态并发送 state.changed。回滚不会留版本或推送，发送失败不重做业务，重连读数据库恢复。
 
 当前只支持单进程在线表；离线不积压资产事件，完整快照恢复不依赖内存历史。尚无多实例消息协调、生产渠道登录、生产 WSS 发布验收；不得描述为已可上线。任何新增资产写入必须接入此事务出口，不得直接 SQL 改资产绕过版本同步。
+
+## 普通市场
+
+打开市场或连接恢复后，通过认证连接请求 `market.list` 取得权威货架。货架返回原商品配置 ID、实际成交价、奖励数量、已购数量和限购。免费次数、当日已用付费次数、各自上限及两个恢复时刻也由服务端下发。时间为 Unix 秒，免费次数已满时下次恢复时间为 0。
+
+购买和手动刷新核对当前角色与货架版本，使用 `requestId` 保存成功回执。相同编号和参数重试返回原结果，货架变化后按新货架决定下一次操作。回包的 `state` 用于刷新货架，`assetRevision` 对应当时的资产提交。免费刷新沿用当前资产版本。购买和付费刷新后的钱包及库存使用 `state.changed` 或重连首包，成功购买由原事务发送一次 `reward.granted` 打开通用奖励窗。
+
+## 金币副本首关
+
+`dungeon.gold.list` 返回唯一开放关卡的语言键、真实奖励预览、当日已用次数、上限、下一次价格和准入状态。服务端使用角色等级、历史最高主阵容战力及当前已存阵容判定资格。`resetAtSeconds` 为上海零点的 Unix 秒，过零点第一秒重置成功次数，首通标记保留。
+
+`dungeon.gold.challenge` 由服务端锁定角色后完成模拟、扣费、结算、发奖和回执写入。请求的 `maxDiamonds` 限制这次允许扣除的钻石。战败保留战报，付费场照扣，次数和奖励在胜利或成功扫荡后更新。首通后客户端用同一协议发扫荡，扫荡回包无战报。相同 `requestId` 和参数只返回原回执。页面打开或重连后读取进度，当前未确认的操作用原编号核对。
+
+战报使用既有 `BattleReplay`，场景为 `dungeon:gold:1`。客户端播放完毕显示真实结算，扫荡使用通用奖励窗。资产使用 `state.changed` 及鉴权快照，播放和关闭结算都无需再次请求发奖。
 
 ## 日志与验证
 
@@ -94,7 +131,7 @@ Creator PREVIEW 的 WS接收日志显示协议中文说明、物品种类、item
 
 Item 增加可选字符串 instance_id=3，item_id=1 仍为配置 ID；不得把二者混用。Snapshot 增加可选 timed_inventory=5，内含逐件 TimedItem 和服务器 Unix 秒。旧协议字段号保持不变；两个方向都使用原 WS+Protobuf v2，未引入新查询。期限清理和身份规则见[背包说明](bag-mvc-maintenance.md#配置-id记录-id-与期限基础2026-11-03)。
 
-单帧限制为256KB（262144字节），前后端编解码和服务端接收统一约束；300名英雄带四槽与当前面板数据的真实WS容量测试通过。面板目前只覆盖基础、装备与累计套装，其余旧加成通过pending_sources明确声明；详情不在前端叠加数值。
+单帧限制为256KB（262144字节），前后端编解码和服务端接收统一约束。300名英雄带四槽、面板与个人战力的真实 WS 容量回归通过。面板的已纳入来源与剩余来源由 `included_sources` 和 `pending_sources` 标注，详情直接显示服务端面板数值。
 
 ## 主线完整目录与新挑战范围（2026-11-17）
 
@@ -150,9 +187,9 @@ Frame oneof新增31～34，MainChapterIdleState新增可选claim_state=9；不�
 
 Receipt schema1带请求/回执ID、消费版本前后、统一计算秒/原起点/实际秒数/VIP上限/关卡、提交asset_revision、理论量、完整强类型实际到账及经验动画。实际结果明确分开满级/封顶忽略、升级附赠、钱包/库存前后、酒馆上限及真实期限/精灵实例；不塞JSON载荷或当前Snapshot。数据库另存AuditV1完整输入/候选/累计及摘要，未知格式或损坏不重算。
 
-claim_state提供schema_version、operation_version和READ_ONLY/ENABLED，由当前可信领取开关决定；它不是完整收益ready预报，不因登录展示而读取全部权益。缺字段/未知schema不能允许领取；客户端未知schema仅丢弃这项能力并限频记录，旧挂机演出继续。开关`mxzg.main-chapter.idle-claim-enabled`全局默认false，application-local.yml默认true，可用MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED显式覆盖。本次玩家按钮经MainChapterController.requestIdleClaim转应用注入的原IdleClaimBinding.begin(当前显示期)，不新增协议、队列或资产写入口。点击仍要求已同步ENABLED、旧65秒门槛及真实冒险点状态；满冒险点复用ConfirmView，取消不建journal，确认后再核连接/操作版本。服务端保留60秒受理门槛，不把按钮可点击当作服务端免校验。
+claim_state提供schema_version、operation_version和READ_ONLY/ENABLED，由当前可信领取开关决定；它不是完整收益ready预报，不因登录展示而读取全部权益。缺字段/未知schema不能允许领取；客户端未知schema仅丢弃这项能力并限频记录，旧挂机演出继续。开关`mxzg.main-chapter.idle-claim-enabled`全局默认false，application-local.yml默认true，可用MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED显式覆盖。玩家通过 MainChapterSession.claimIdle 发起收取，主线模块将页面显示期交给 IdleClaimBinding.begin，不新增协议、队列或资产写入口。点击仍要求已同步ENABLED、旧65秒门槛及真实冒险点状态；满冒险点复用ConfirmView，取消不建journal，确认后再核连接/操作版本。服务端保留60秒受理门槛，不把按钮可点击当作服务端免校验。
 
-服务器在角色锁内再次鉴权，先恢复成功回执再判断新请求开关、版本和输入；指定status查询与重放不抽样、不推进任何版本。历史receipt只用于命令确认/展示；最新资产及累计仍由统一Snapshot提交Model，确认须满足snapshot.revision≥receipt.assetRevision且operationVersion≥after。客户端先持久原requestId/expected，再经应用认证交付；重登查原status，NOT_FOUND不当取消，确认后按完整指纹条件清理。缺快照仅重新鉴权一次，不新增库存查询；身份键归应用，模块不比较角色键。正常现场的当前显示期才可播放原collect，原回执冻结秒数决定档位；恢复/历史回执继续只交原通用反馈，不补开页面或重播收取。零到账也走双确认，但不伪造奖励。local活动控制读取缺失会拒绝实际计算，不能用null/[]当未发布；负责人确认的两服开服资料及044未发布保存在忽略的外部配置，由原启动/周期维护装配，不向协议添加默认日期，也不代表production开放。本轮独立64008角色实际点击宝箱，只有1份回执，实际到账gold1600、diamond1、角色经验80，通用RewardView展示7项；真实主线关2及缓存切页无准备提示也已限定复验，过程无warn/error。该结果不包括满冒险点确认/取消的实际点击、全部1～9关自然成长、发布包或真机，见[本批检查](validation/chapter-player-entry-review-20261117.json)及[本机记录](validation/chapter-player-entry-preview-20261117.json)。实现、存储平台限制和验证范围见[领取事务](main-chapter-idle-settlement.md)。
+服务器在角色锁内再次鉴权，先识别已完成的请求，再检查新请求的开关、版本和输入。服务端保留持久回执和幂等，查询与重放不抽样、不推进版本。玩家确认后 MainChapterController 只提交一次 requestId 和 expectedOperationVersion；普通掉线由重连快照更新资产与累计。成功回包供仍打开的原页面按实际秒数播放收取，实际量与实时奖励事件使用同一 receiptId。活动控制缺失时拒绝计算；本机两服的开服资料及044未发布状态由外部配置提供。详见 [领取事务](main-chapter-idle-settlement.md)。
 
 AssetStateBinding提交任何模块前校验主线与挂机快照；MainChapterController.onNotify校验后提交Model。客户端经过时间只用于显示且封顶，领取实际量始终由服务器在原事务中重新计算。关卡收益使用maxCleared而非下一关，也不使用最近一次通关奖励。
 

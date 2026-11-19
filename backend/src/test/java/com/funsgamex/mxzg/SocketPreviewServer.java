@@ -34,6 +34,18 @@ public class SocketPreviewServer {
             var player = context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("spirit_review");
             prepareSpirits(context, player.role().id(), 8);
         }
+        if (Arrays.asList(args).contains("--summon-fixture")) {
+            prepareSummon(context);
+        }
+        if (Arrays.asList(args).contains("--hero-equipment-fixture")) {
+            prepareHeroEquipment(context);
+        }
+        if (Arrays.asList(args).contains("--dungeon-hall-fixture")) {
+            prepareDungeonHall(context);
+        }
+        if (Arrays.asList(args).contains("--gold-dungeon-fixture")) {
+            prepareGoldDungeon(context);
+        }
                 if(Arrays.asList(args).contains("--equipment-fixture")) {
             var player=context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class).login("equipment_review");
             var jdbc=context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
@@ -134,6 +146,70 @@ public class SocketPreviewServer {
         var spirits = context.getBean(com.funsgamex.mxzg.spirit.SpiritInventoryService.class);
         new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status ->
                 spirits.grant(role, 2000002, quantity, new Random(20261113)));
+    }
+
+    /** 为独立内存角色准备真实召唤券、友情点和钻石，保留未充值和未召唤状态。 */
+    private static void prepareSummon(org.springframework.context.ConfigurableApplicationContext context) {
+        var login = context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class);
+        var player = login.login("summon_review");
+        var jdbc = context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        String role = player.role().id();
+        jdbc.update("UPDATE game_role SET diamonds=6000 WHERE id=?", role);
+        Map.of(900201, 30, 900301, 1100, 900202, 3).forEach((itemId, count) ->
+                jdbc.update("INSERT INTO game_inventory(role_id,item_id,quantity,instance_id) VALUES (?,?,?,?)",
+                        role, itemId, count, UUID.randomUUID().toString()));
+    }
+
+    /** 准备普通穿脱的独立内存角色，保留原首登命名和领取流程，不影响日常角色。 */
+    private static void prepareHeroEquipment(org.springframework.context.ConfigurableApplicationContext context) {
+        var login = context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class);
+        var player = login.login("hero_equipment_review");
+        var jdbc = context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        String roleId = player.role().id();
+        String emptyHero = UUID.randomUUID().toString();
+        String wornHero = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10304012,12,4)",
+                emptyHero, roleId);
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10101001,12,1)",
+                wornHero, roleId);
+        for (int slot = 1; slot <= 4; slot++) {
+            jdbc.update("INSERT INTO game_equipment(id,role_id,template_id,slot,soul_level,hero_id) VALUES (?,?,?,?,?,?)",
+                    "922337203685477581" + slot, roleId, 1000001 + slot * 1000, slot, slot == 1 ? 3 : 0, wornHero);
+        }
+        Map.of(1001001, 2, 1001002, 1, 1002001, 1, 1003001, 1, 1004001, 1).forEach((itemId, count) ->
+                jdbc.update("INSERT INTO game_inventory(role_id,item_id,quantity,instance_id) VALUES (?,?,?,?)",
+                        roleId, itemId, count, "stack:" + roleId + ":" + itemId));
+    }
+
+    /** 独立内存服覆盖副本入口前后的等级边界，以及四张卡全部解锁的显示。 */
+    private static void prepareDungeonHall(org.springframework.context.ConfigurableApplicationContext context) {
+        var login = context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class);
+        var jdbc = context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        for (int level : new int[] {14, 15, 35}) {
+            var role = login.login("dungeon_hall_" + level).role();
+            jdbc.update("UPDATE game_role SET role_level=?,first_named=TRUE WHERE id=?", level, role.id());
+        }
+    }
+
+    /** 只在隔离 H2 准备能挑战的两支真实阵容，覆盖首胜扫荡和反复失败。 */
+    private static void prepareGoldDungeon(org.springframework.context.ConfigurableApplicationContext context) {
+        var login = context.getBean(com.funsgamex.mxzg.auth.DevelopmentLoginService.class);
+        var jdbc = context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+        var snapshots = context.getBean(com.funsgamex.mxzg.network.SessionSnapshotService.class);
+        var formations = context.getBean(com.funsgamex.mxzg.lineup.MainFormationCommandService.class);
+        for (var sample : Map.of("gold_dungeon_win", 100, "gold_dungeon_loss", 1).entrySet()) {
+            var player = login.login(sample.getKey());
+            var role = player.role().id();
+            jdbc.update("UPDATE game_role SET role_level=15,first_named=TRUE,goddess_vip=2,diamonds=300 WHERE id=?", role);
+            var hero = UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,10104004,?,4)",
+                    hero, role, sample.getValue());
+            var token = "Bearer " + player.session().accessToken();
+            var formation = snapshots.snapshot(token).mainFormation();
+            formations.save(token, new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(
+                    UUID.randomUUID().toString(), formation.version(), 1,
+                    List.of(new com.funsgamex.mxzg.lineup.Lineup.Slot(2, hero))));
+        }
     }
 
     /** 只在显式导入的预览上下文提供身份接口，不进入普通测试或产品包组件扫描。 */

@@ -6,6 +6,7 @@ import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.lineup.MainFormationStateService;
 import com.funsgamex.mxzg.hero.*;
+import com.funsgamex.mxzg.time.GameClock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
@@ -26,18 +27,27 @@ public class MainChapterIdleBattleService {
     private final HeroBattleInputService inputs;
     /** 共用真实伤害计算与事件执行器。 */
     private final HeroBattleChapterScenario battles;
+    /** 遇敌读取与挂机结算一致的游戏时间。 */
+    private final GameClock clock;
 
     /** 回包版本与本场战报在同一角色锁内生成。 */
     public record Encounter(int stage, long assetRevision, long lineupVersion, HeroBattleChapterScenario.Result replay) {}
 
-    /** 注入已有领域服务，不持有跨场战斗状态。 */
+    /** 注入领域服务和游戏时钟，不持有跨场战斗状态。 */
     public MainChapterIdleBattleService(SessionService sessions, RoleRepository roles, MainChapterService chapters,
-            MainChapterIdleService idle, MainFormationStateService formations, HeroBattleInputService inputs, ObjectMapper mapper) {
-        this.sessions = sessions; this.roles = roles; this.chapters = chapters; this.idle = idle;
-        this.formations = formations; this.inputs = inputs; this.battles = new HeroBattleChapterScenario(mapper);
+            MainChapterIdleService idle, MainFormationStateService formations, HeroBattleInputService inputs,
+            ObjectMapper mapper, GameClock clock) {
+        this.sessions = sessions;
+        this.roles = roles;
+        this.chapters = chapters;
+        this.idle = idle;
+        this.formations = formations;
+        this.inputs = inputs;
+        this.battles = new HeroBattleChapterScenario(mapper);
+        this.clock = clock;
     }
 
-    /** 按已通关全局idx取一场只读遇敌战报；客户端不能指定角色、属性、怪物或奖励。 */
+    /** 按游戏时钟和已通关全局索引取一场只读遇敌战报；角色、属性与怪物均由服务器决定。 */
     @Transactional
     public Encounter encounter(String token) {
         String role = sessions.requireRole(token);
@@ -45,7 +55,7 @@ public class MainChapterIdleBattleService {
         sessions.requireRole(token);
         int stage = chapters.current(token).maxCleared();
         var formation = formations.current(role);
-        var state = idle.withLineup(role, idle.snapshot(role, stage, java.time.Instant.now().getEpochSecond()), formation);
+        var state = idle.withLineup(role, idle.snapshot(role, stage, clock.epochSeconds()), formation);
         if (state == null || state.slots().isEmpty()) throw new IllegalArgumentException("挂机尚未解锁或阵容为空");
         var current = inputs.currentForIdle(token);
         var selected = current.units().stream().filter(unit -> state.slots().stream().anyMatch(slot ->

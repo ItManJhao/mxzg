@@ -1,10 +1,11 @@
 /** 应用层统一资产提交：校验角色归属、冒险点和持久版本，再把真实协议交给角色/背包/英雄 onNotify。
  * 同一通知批次完成全部 Model 更新；不查询库存、不反推玩家资产、不保存第二份资产。
  */
-import {MainChapterController} from "../../features/battle/MainChapterController";
+import type { MainChapterController } from "../../features/battle/MainChapterController";
+import { MainChapterModel } from "../../features/battle/MainChapterModel";
 import type {FormationController} from "../../features/hero/FormationController";
 import type {HeroRosterController} from "../../features/hero/HeroRosterController";
-import { HeroSnapshotUtils } from "../../features/hero/data/HeroSnapshotUtils";
+import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
 import type {AccountModel} from "../../features/account/AccountModel";
 import type {BagController} from "../../features/bag/BagController";
 import type {RoleController} from "../../features/account/RoleController";
@@ -15,8 +16,6 @@ import type { ProtocolName } from "../../platform/Protocol";
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import {ProtocolRouter} from "../../platform/ProtocolRouter";
 import { EventDispatcher } from "../../framework/EventDispatcher";
-import type { FirstSummonController } from "../../features/hero/FirstSummonController";
-import { FirstSummonData } from "../../features/hero/data/FirstSummonData";
 
 export class AssetStateBinding {
     /** 已接纳的区服/角色键；空值表示尚未接收初始化。 */
@@ -25,6 +24,11 @@ export class AssetStateBinding {
     private revision = -1;
     /** 应用持有账号订阅，销毁时解除。 */
     private readonly stop: () => void;
+
+    /** 返回当前已提交的服务端资产版本，未初始化时为 -1。 */
+    public get acceptedRevision(): number {
+        return this.revision;
+    }
 
     /**
      * 装配唯一模块和角色页面清理入口，不直接写模块资产。
@@ -35,7 +39,7 @@ export class AssetStateBinding {
      * @param formation 唯一阵容保存模块，只协调过程状态重置。
      * @param identityChanged 应用关闭旧角色页面；先关闭再重置，同角色恢复不调用。
      * @param chapter 唯一主线状态协议入口。
-     * @param summon 唯一首抽资格协议入口。
+     * @param sessions 模块初始化时登记的操作生命周期；先撤销旧任务，再提交同一份新快照。
      */
     constructor(
         private readonly account: AccountModel,
@@ -46,16 +50,11 @@ export class AssetStateBinding {
         private readonly identityChanged: () => void = () => {
         },
         private readonly chapter?: MainChapterController,
-        private readonly summon?: FirstSummonController,
+        private readonly sessions: readonly { resetSession(): void }[] = [],
     ) {
         this.stop = account.subscribe(state => {
             if (!state.role) this.clear();
         });
-    }
-
-    /** 当前角色完成整包提交的权威版本，未接纳首包时为 -1。 */
-    public get acceptedRevision(): number {
-        return this.revision;
     }
 
     /** 包括冒险点在内完整校验后批量提交；重复及低版本不通知，同版本鉴权首包仍校准时间和可选扩展。 */
@@ -66,20 +65,17 @@ export class AssetStateBinding {
             throw new Error("资产信封无效");
         }
         const state = ProtocolStateUtils.statePayload(frame.name as ProtocolName, frame.body);
-        const chapter = MainChapterController.readState(state.mainChapter, Number(state.revision));
-        const idle = MainChapterController.readIdle(state.mainChapterIdle, chapter);
+        const chapter = MainChapterModel.readState(state.mainChapter, Number(state.revision));
+        const idle = MainChapterModel.readIdle(state.mainChapterIdle, chapter);
         const role = AccountApi.readSnapshotRole(state);
-        const heroRows = HeroSnapshotUtils.readOwnedHeroes(state.heroes);
-        const formation = HeroSnapshotUtils.readMainFormation(state.mainFormation, heroRows);
+        const formation = HeroRosterModel.readSnapshot(state).mainFormation;
         if (idle?.slots && (!formation || idle.lineupVersion !== formation.version
             || idle.slots.some(slot => !formation.slots.some(main => main.heroId === slot.heroId && main.position === slot.position)))) {
             throw new Error("挂机阵容不属于当前主线阵容");
         }
-        HeroSnapshotUtils.readHeroRosterInfo(state.heroRoster);
         BagItemDataUtils.readBagItems(state.inventory);
         BagItemDataUtils.readTimedItems(state.timedInventory);
         BagItemDataUtils.readSpiritItems(state.spiritInventory);
-        FirstSummonData.readState(state.heroSummon);
         if (role.id !== current.role.id || role.serverId !== current.role.serverId) throw new Error("资产不属于当前角色");
         const key = (role.serverId || "") + "/" + role.id;
         const revision = Number(state.revision);
@@ -91,7 +87,6 @@ export class AssetStateBinding {
             ProtocolRouter.instance.dispatch(this.bag, frame);
             if (this.heroes) ProtocolRouter.instance.dispatch(this.heroes, frame);
             if (this.chapter) ProtocolRouter.instance.dispatch(this.chapter, frame);
-            if (this.summon) ProtocolRouter.instance.dispatch(this.summon, frame);
             this.revision = revision;
         });
         return true;
@@ -106,7 +101,9 @@ export class AssetStateBinding {
         this.heroes?.resetSession();
         this.formation?.resetSession();
         this.chapter?.resetSession();
-        this.summon?.resetSession();
+        for (const module of this.sessions) {
+            module.resetSession();
+        }
     }
 
     /** 登出或登录新身份前统一清理；不查询任何模块数据。 */

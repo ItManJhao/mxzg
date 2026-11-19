@@ -11,6 +11,8 @@
 3. [client-schema.json](../config/client-schema.json)维护明确字段、主键、必需性与结构规范。
 4. python tools/generate_config.py生成GConfig.ts；--check只核验，不写入。
 
+召唤奖池的星级、英雄权重与保底组改变后，运行 `python tools/export_normal_summon.py --write` 生成服务端规则，再运行 `python tools/export_gameconfig.py` 刷新客户端公示和配置包。概率公示复用同一奖池投影，价格读取 `lotterypoint` 和高级召唤相关配置。省略 `--write` 可检查服务端产物漂移。[奖池导出工具](../tools/export_normal_summon.py)
+
 类型化表、客户端共享JSON和Maven共享表是不同范围；数量以本次生成器和配置包manifest输出为准，不再将历史数字当作当前清单。保留配置不表示对应玩法开放：普通升级、精灵养成和穿脱仍关，HeroLevel等投影继续供后续恢复。此前已恢复13张真实后端依赖及原UUID；导出器从POM读取既有include，不另维护表清单，检查拒绝旧target缓存掩盖缺源。新增类型先声明规范，再接实际查询；数组声明items，对象声明fields，空对象禁止额外字段。原JSON数组文本仍为string，注释来自表头，派生字段在规范维护，生成顺序稳定且不写本机绝对路径。
 
 ### 角色升级的旧客户端预告投影

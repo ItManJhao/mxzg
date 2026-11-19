@@ -1,13 +1,15 @@
 /**
- * 背包普通装备的只读详情：按唯一库存键读取当前物品，显示旧版评分、基础属性和未激活套装。
- * 由BagView经UIManager打开；完整结构、品质样式、有限属性槽及竖屏适配保存在Prefab。
- * 页面只消费配置投影和BagModel，不请求库存、不生成装备实例，不执行穿脱或来源跳转。
+ * 普通装备详情：背包按库存键展示，英雄入口按当前槽位展示实际套装与更换、卸下操作。
+ * 两处共用装备配置和预制体，装备写入交给英雄装备控制器，结果由统一快照回填。
  */
 import { _decorator, Button, Color, Label, Node, Sprite, SpriteFrame } from "cc";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { ResManager } from "../../../framework/assets/ResManager";
+import { HeroEquipmentController } from "../../hero/HeroEquipmentController";
+import { HeroRosterModel } from "../../hero/HeroRosterModel";
+import { HeroRosterEvent } from "../../hero/utils/HeroRosterEvent";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
@@ -18,11 +20,12 @@ import { BagEvent } from "../utils/BagEvent";
 import { EquipmentDetail, EquipmentDetailUtils } from "../utils/EquipmentDetailUtils";
 import { EquipmentAttributeCellView } from "./EquipmentAttributeCellView";
 
-/** 库存入口只传背包格子的稳定键，不传配置副本、角色归属或可过期的持有数量。 */
-export interface EquipmentInfoArgs {
-    /** 普通库存的stack:记录ID键；旧快照缺记录ID时沿用背包当前投影的键。 */
-    readonly key: string;
-}
+/** 背包以稳定库存键打开，英雄以实例和槽位打开，更换入口由所属英雄页提供。 */
+export type EquipmentInfoArgs = { readonly key: string } | {
+    readonly heroId: string;
+    readonly slot: number;
+    readonly onReplace: () => void;
+};
 
 const { ccclass, property } = _decorator;
 
@@ -59,7 +62,7 @@ export class EquipmentInfoView extends BaseView<EquipmentInfoArgs> {
     @property([EquipmentAttributeCellView]) attributeRows: EquipmentAttributeCellView[] = [];
     /** 无套装时隐藏的完整分区，布局组件自动移除其占位。 */
     @property(Node) setPanel: Node | null = null;
-    /** 套装名称和旧背包未穿戴计数0/4，不从当前英雄猜激活状态。 */
+    /** 套装名称和当前入口所对应的实际穿戴件数。 */
     @property(Label) setName: Label | null = null;
     /** 固定两、三、四件套的三个槽，样式和条件区域由Prefab维护。 */
     @property([EquipmentAttributeCellView]) setRows: EquipmentAttributeCellView[] = [];
@@ -67,8 +70,14 @@ export class EquipmentInfoView extends BaseView<EquipmentInfoArgs> {
     @property(Button) closeButton: Button | null = null;
     /** 来源入口保留旧外观，本批只反馈未开放。 */
     @property(Button) sourceButton: Button | null = null;
-    /** 装备入口保留旧外观，本批不发起穿戴请求。 */
+    /** 背包入口提示从英雄详情选择穿戴目标。 */
     @property(Button) equipButton: Button | null = null;
+    /** 英雄装备详情专用的更换、卸下按钮组。 */
+    @property(Node) wearActions: Node | null = null;
+    /** 转到当前部位的装备选择列表。 */
+    @property(Button) replaceButton: Button | null = null;
+    /** 将当前穿戴的装备交给控制器卸下。 */
+    @property(Button) removeButton: Button | null = null;
     /** 按旧rare=1至6保存的原标题图片，不在代码维护资源地址表。 */
     @property([SpriteFrame]) rarityBanners: SpriteFrame[] = [];
     /** 按旧rare=1至6保存的名字颜色，便于直接在Prefab修改。 */
@@ -83,36 +92,58 @@ export class EquipmentInfoView extends BaseView<EquipmentInfoArgs> {
         ViewportLayoutUtils.bindVisibleRefresh(this.node, () => ViewportLayoutUtils.fitVisibleRoot(this.node));
     }
 
-    /** 绑定实际库存键；配置已在登录后统一安装，重开只撤销旧监听，不重建配置索引或发请求。 */
+    /** 按入口订阅库存或英雄槽位，重开前先移除上一轮监听。 */
     public onOpen(args?: EquipmentInfoArgs): void {
-        if (!args?.key?.startsWith("stack:")) {
-            throw new Error("普通装备详情缺少库存键");
+        if (!args || ("key" in args ? !args.key.startsWith("stack:")
+            : !args.heroId || !Number.isInteger(args.slot) || args.slot < 1 || args.slot > 4)) {
+            throw new Error("普通装备详情缺少库存键或英雄槽位");
         }
         this.validateBindings();
         this.releaseBindings();
         this.args = args;
         this.closed = false;
         this.bindButtons();
-        EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refresh);
+        if ("heroId" in args) {
+            if (!this.wearActions || !this.replaceButton || !this.removeButton) {
+                throw new Error("普通装备详情缺少更换或卸下绑定");
+            }
+            EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.refresh);
+            EventDispatcher.instance.on("hero-equipment:updated", this, this.onEquipmentChanged);
+        } else {
+            EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refresh);
+        }
         this.refresh();
     }
 
-    /** 按同一个库存键重读最新持有；条目删除或类型不符时关窗，不借用其他记录顶替。 */
+    /** 按当前入口读取权威状态；槽位清空或库存消失时关闭窗口。 */
     private refresh(): void {
-        if (this.closed) {
+        const args = this.args;
+        if (this.closed || !args) {
             return;
         }
-        const item = BagModel.instance.snapshot.items.find(row => "stack:" + (row.instanceId || row.itemId) === this.args?.key);
-        const definition = item ? GameConfig.instance.getConfig(GConfig.Item, item.itemId) : undefined;
-        if (!item || definition?.place !== 1 || definition.mode !== 1) {
+        const config = GameConfig.instance;
+        const worn = "heroId" in args;
+        const pieces = worn ? HeroRosterModel.instance.snapshot.heroes.find(row => row.id === args.heroId)?.equipment?.items : undefined;
+        const itemId = worn ? pieces?.find(piece => piece.slot === args.slot)?.templateId
+            : BagModel.instance.snapshot.items.find(row => "stack:" + (row.instanceId || row.itemId) === args.key)?.itemId;
+        const definition = itemId ? config.getConfig(GConfig.Item, itemId) : undefined;
+        if (!itemId || definition?.place !== 1 || definition.mode !== 1) {
             this.close();
             return;
         }
-        const detail = EquipmentDetailUtils.read(item.itemId);
+        const detail = EquipmentDetailUtils.read(itemId, config, pieces?.map(piece => piece.templateId));
         if (!detail) {
             UIManager.instance.toast("装备详情暂不可用，请检查显示配置");
             this.close();
             return;
+        }
+        this.equipButton!.node.active = !worn;
+        this.sourceButton!.node.active = !worn;
+        if (this.wearActions) {
+            this.wearActions.active = worn;
+        }
+        if (worn) {
+            this.refreshWearButtons();
         }
         this.paint(detail);
     }
@@ -145,7 +176,7 @@ export class EquipmentInfoView extends BaseView<EquipmentInfoArgs> {
             const bonus = detail.set?.bonuses[index];
             row.node.active = !!bonus;
             if (bonus) {
-                row.show(bonus.attributes[0], bonus.condition);
+                row.show(bonus.attributes[0], detail.set!.count >= bonus.required ? "（已激活）" : bonus.condition);
             } else {
                 row.clear();
             }
@@ -178,11 +209,13 @@ export class EquipmentInfoView extends BaseView<EquipmentInfoArgs> {
         }
     }
 
-    /** 绑定当前窗口的关闭和只读按钮；重开前已先解除旧回调。 */
+    /** 绑定共享和穿戴上下文的操作，关闭时逐项解绑。 */
     private bindButtons(): void {
         this.closeButton!.node.on(Button.EventType.CLICK, this.close, this);
         this.sourceButton!.node.on(Button.EventType.CLICK, this.showSourceNotice, this);
         this.equipButton!.node.on(Button.EventType.CLICK, this.showEquipNotice, this);
+        this.replaceButton?.node.on(Button.EventType.CLICK, this.replace, this);
+        this.removeButton?.node.on(Button.EventType.CLICK, this.unequip, this);
     }
 
     /** 来源写路由尚未恢复，只经全局飘字说明，不打开暂停模块。 */
@@ -190,9 +223,48 @@ export class EquipmentInfoView extends BaseView<EquipmentInfoArgs> {
         UIManager.instance.toast("装备来源暂未开放");
     }
 
-    /** 装备穿脱保持关闭，不提交任何资产请求。 */
+    /** 背包没有目标英雄，提示从实际英雄槽位操作。 */
     private showEquipNotice(): void {
-        UIManager.instance.toast("装备穿脱暂未开放");
+        UIManager.instance.toast("请在英雄详情选择装备部位");
+    }
+
+    /** 回到所属英雄页打开选择窗，避免原装备说明垫在候选列表下。 */
+    private replace(): void {
+        const args = this.args;
+        if (!this.closed && args && "heroId" in args && !HeroEquipmentController.instance.busy) {
+            this.close();
+            args.onReplace();
+        }
+    }
+
+    /** 读取该英雄当前真实装备，交给控制器做单件卸下。 */
+    private unequip(): void {
+        const args = this.args;
+        if (!this.closed && args && "heroId" in args) {
+            const hero = HeroRosterModel.instance.snapshot.heroes.find(row => row.id === args.heroId);
+            const item = hero?.equipment?.items.find(piece => piece.slot === args.slot);
+            if (item) {
+                HeroEquipmentController.instance.unequip(args.heroId, item);
+            }
+        }
+    }
+
+    /** 操作结束后只处理本窗发起的卸下；失败恢复按钮，槽位从名册刷新。 */
+    private onEquipmentChanged(receipt?: { heroId: string; action: string; slot?: number; changed: boolean }): void {
+        const args = this.args;
+        if (args && "heroId" in args && receipt?.changed && receipt.heroId === args.heroId
+            && receipt.action === "UNEQUIP" && receipt.slot === args.slot) {
+            this.close();
+            return;
+        }
+        this.refreshWearButtons();
+    }
+
+    /** 在途期间禁用更换和卸下。 */
+    private refreshWearButtons(): void {
+        const ready = !HeroEquipmentController.instance.busy;
+        this.replaceButton!.interactable = ready;
+        this.removeButton!.interactable = ready;
     }
 
     /** 解除本窗库存订阅与按钮，不清理其他页面或模块持有的监听。 */
@@ -206,6 +278,12 @@ export class EquipmentInfoView extends BaseView<EquipmentInfoArgs> {
         }
         if (this.equipButton?.node?.isValid) {
             this.equipButton.node.off(Button.EventType.CLICK, this.showEquipNotice, this);
+        }
+        if (this.replaceButton?.node.isValid) {
+            this.replaceButton.node.off(Button.EventType.CLICK, this.replace, this);
+        }
+        if (this.removeButton?.node.isValid) {
+            this.removeButton.node.off(Button.EventType.CLICK, this.unequip, this);
         }
     }
 

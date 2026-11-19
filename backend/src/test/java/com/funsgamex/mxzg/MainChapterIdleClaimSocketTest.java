@@ -263,7 +263,7 @@ class MainChapterIdleClaimSocketTest {
         assertTrue(idle.path("startedAt").asLong() >= receipt.path("committedAtSeconds").asLong());
     }
 
-    /** 指定未找到请求只读查询：未通关角色不补建时钟、回执或资产，首包缺字段不暗示可领。 */
+    /** 首包含创角时钟，未通关时查询不存在的请求不会创建领取记录或发奖。 */
     @Test
     void missingStatusDoesNotCreateAccumulationOrChangeAssets() throws Exception {
         var player = player(false, false);
@@ -271,7 +271,10 @@ class MainChapterIdleClaimSocketTest {
             var initial = peer.authenticate(player).frame().path("body").path("initial");
             assertEquals(2_000, initial.path("tavernPoints").path("adventureCount").asLong());
             assertEquals(initial.path("revision").asLong(), initial.path("mainChapter").path("assetRevision").asLong());
-            assertFalse(initial.has("mainChapterIdle"));
+            var clock = initial.path("mainChapterIdle");
+            assertEquals(0, clock.path("rewardStage").asInt(-1));
+            assertTrue(clock.path("startedAt").asLong() > 0);
+            assertFalse(clock.has("claimState"));
             var before = stored(player.role());
             String requestId = UUID.randomUUID().toString();
             var response = peer.request("chapter.idle.claim.status", Map.of("requestId", requestId)).frame();

@@ -91,25 +91,27 @@ public class RewardFeedbackService {
     }
 
     /**
-     * 在业务成功回执持久化后登记通用反馈；回滚无通知，静默或零到账也不弹空窗。
-     * 通用业务不提供请求关联，原持久回执仍是唯一展示身份。
+     * 在业务事务内登记通用反馈；回滚无通知，静默或零到账也不弹空窗。
+     * 通用业务不提供请求关联，可将同一份反馈随本笔回执持久化，用于失败重试。
      * @param actual 本事务真实发放结果；items.credited不包含bonuses，二者各计一次。
+     * @return 同时用于本次在线通知和回执恢复的反馈。
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public void publish(String receiptId, String roleId, long assetRevision, Mode mode,
+    public Notice publish(String receiptId, String roleId, long assetRevision, Mode mode,
             RewardGrantResult actual) {
-        publish(receiptId, roleId, assetRevision, mode, actual, null);
+        return publish(receiptId, roleId, assetRevision, mode, actual, null);
     }
 
     /**
-     * 为已持久化成功回执登记可选的原请求关联，便于客户端识别先于业务回包到达的反馈。
+     * 在业务事务内登记可选的原请求关联，便于客户端识别先于业务回包到达的反馈。
      * 同事务同角色同回执只登记一次；关联或明细不一致都拒绝事务，不新建发奖或展示身份。
      * @param actual 本事务真实发放结果；items.credited与bonuses各计一次。
      * @param requestId 原业务请求的小写UUID；null表示业务无需请求关联，空串或非法UUID拒绝。
+     * @return 本次已登记的不可变反馈，只有原事务成功提交后才交付在线连接。
      */
     @Transactional(propagation = Propagation.MANDATORY)
     @SuppressWarnings("unchecked")
-    public void publish(String receiptId, String roleId, long assetRevision, Mode mode,
+    public Notice publish(String receiptId, String roleId, long assetRevision, Mode mode,
             RewardGrantResult actual, String requestId) {
         requireTransaction();
         Notice notice = project(receiptId, roleId, assetRevision, mode, actual, requestId);
@@ -124,6 +126,7 @@ public class RewardFeedbackService {
         if (previous != null && !previous.equals(notice)) {
             throw new IllegalStateException("同一发奖回执的反馈内容不一致");
         }
+        return notice;
     }
 
     /** 验证归属、请求关联及连续历史经验，只投影正实际量与真实升级，不能取当前资产差分。 */

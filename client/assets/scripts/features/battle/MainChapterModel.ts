@@ -3,10 +3,11 @@
  * 命令回执只描述历史操作，不反写当前角色、背包或挂机状态；应用换号时统一清空。
  */
 import { BaseModel } from "../../framework/BaseModel";
-import type { IdleClaimProgress } from "./data/MainChapterIdleClaimData";
+import { GameLog } from "../../core/GameLog";
+import { ChapterMilestoneUtils } from "./utils/ChapterMilestoneUtils";
+import { ChapterClearRewardUtils } from "./utils/ChapterClearRewardUtils";
 import type { RewardExperienceGain } from "../reward/data/RewardData";
-import type { MilestoneClaimProgress } from "./data/MainChapterMilestoneData";
-import type { FirstRewardClaimProgress, MainChapterFirstRewardProgress } from "./data/MainChapterFirstRewardData";
+import type { MainChapterFirstRewardProgress } from "./data/MainChapterFirstRewardData";
 
 /** 服务端权威进度；空待领奖表示没有未领取战报。 */
 export interface MainChapterState {
@@ -127,10 +128,8 @@ export class MainChapterModel extends BaseModel {
     public static readonly instance = new MainChapterModel();
     /** null表示主线快照尚未同步。 */
     public state: MainChapterState | null = null;
-    /** null表示未通关或旧服务端尚无挂机快照；不得显示假收益。 */
+    /** 缺少可信起点或服务端未提供挂机快照时为空，首胜前的快照只包含创角计时。 */
     public idle: MainChapterIdleState | null = null;
-    /** 接纳快照时的本机毫秒，仅用于显示经过时长，不作为领取依据。 */
-    public idleReceivedAt = 0;
     /** 最近一次已校验的挂机演出，仅页面消费，不作为挑战或领奖凭证。 */
     public idleReplay: { stage: number; assetRevision: number; lineupVersion: number; bytes: Uint8Array } | null = null;
     /** 当前挂机战报请求；不占用挑战按钮的业务忙状态。 */
@@ -149,18 +148,127 @@ export class MainChapterModel extends BaseModel {
     public replay: MainChapterReplay | null = null;
     /** 可恢复操作结果，页面关闭不抹去错误。 */
     public message = "";
-    /** 原请求恢复的本地进度，不是第二份资产；换号清空内存，持久意图由应用保留。 */
-    public idleClaim: IdleClaimProgress = Object.freeze({
-        phase: "idle", pending: null, receipt: null, message: "",
-    });
-    /** 里程碑稳定键的本地确认，不保存身份或第二份已领集合；应用换号后清空。 */
-    public milestoneClaim: MilestoneClaimProgress = Object.freeze({
-        phase: "idle", rewardId: null, receipt: null, message: "",
-    });
-    /** 独立通关奖励原关卡的确认进度；权威资格只在上方state。 */
-    public firstRewardClaim: FirstRewardClaimProgress = Object.freeze({
-        phase: "idle", chapter: null, receipt: null, busy: false,
-    });
+
+    /** 同步主线进度和挂机状态。首次认证记录待结算战斗，首次进入主线页时使用。 */
+    public applySnapshot(state: Record<string, unknown>, authenticated: boolean): void {
+        const chapter = MainChapterModel.readState(state.mainChapter, Number(state.revision));
+        const idle = MainChapterModel.readIdle(state.mainChapterIdle, chapter);
+        this.state = chapter;
+        this.idle = idle;
+        if (authenticated && this.entryRecovery === null) {
+            this.entryRecovery = Object.freeze({ battleId: chapter?.pendingBattleId ?? null, consumed: false });
+        }
+    }
+
+    /** 校验全局进度、可选挑战范围、两套独立领奖集合和资产版本，缺字段保持未同步。 */
+    public static readState(value: unknown, revision?: number): MainChapterState | null {
+        if (value === undefined) {
+            return null;
+        }
+        const v = value as MainChapterState;
+        if (!v || !this.isChapterIndex(v.maxCleared, true)
+            || !Number.isSafeInteger(v.assetRevision) || v.assetRevision < 0
+            || (revision !== undefined && v.assetRevision !== revision)
+            || (v.pendingBattleId != null && !this.isBattleId(v.pendingBattleId))
+            || (v.pendingBattleId && v.maxCleared === 0)
+            || (v.challengeLimit !== undefined && !this.isChapterIndex(v.challengeLimit))) {
+            throw new Error("主线快照无效");
+        }
+        const milestoneProgress = ChapterMilestoneUtils.readProgress(v.milestoneProgress);
+        const firstRewardProgress = ChapterClearRewardUtils.readProgress(v.firstRewardProgress, v.maxCleared);
+        return Object.freeze({
+            maxCleared: v.maxCleared,
+            pendingBattleId: v.pendingBattleId || null,
+            assetRevision: v.assetRevision,
+            ...(v.challengeLimit !== undefined ? { challengeLimit: v.challengeLimit } : {}),
+            ...(milestoneProgress ? { milestoneProgress } : {}),
+            ...(firstRewardProgress ? { firstRewardProgress } : {}),
+        });
+    }
+
+    /**
+     * 校验挂机时间与对应关卡。首胜前只同步创角时钟，不能携带关卡收益、遇敌阵容或领取能力。
+     * 可选领取状态另行冻结，未来未知格式只丢弃领取能力，保留旧挂机时钟和演出。
+     */
+    public static readIdle(value: unknown, chapter: MainChapterState | null): MainChapterIdleState | null {
+        if (value == null) {
+            return null;
+        }
+        const v = value as MainChapterIdleState;
+        if (!chapter || !Number.isSafeInteger(v.serverTime) || v.serverTime <= 0
+            || !Number.isSafeInteger(v.startedAt) || v.startedAt < 0
+            || !Number.isSafeInteger(v.maxSeconds) || v.maxSeconds <= 0
+            || !Number.isSafeInteger(v.frequency) || v.frequency <= 0 || v.frequency > v.maxSeconds
+            || v.rewardStage !== chapter.maxCleared || !this.isChapterIndex(v.rewardStage, true)
+            || !Array.isArray(v.rates) || (v.rewardStage > 0) !== (v.rates.length > 0)
+            || !v.rates.every(row => Number.isSafeInteger(row.itemId) && row.itemId > 0
+                && Number.isSafeInteger(row.quantity) && row.quantity >= 0)
+            || new Set(v.rates.map(row => row.itemId)).size !== v.rates.length) {
+            throw new Error("主线挂机快照无效");
+        }
+        if (v.slots !== undefined && (!Array.isArray(v.slots) || v.slots.length > 3
+            || !Number.isSafeInteger(v.lineupVersion) || v.lineupVersion! < 0
+            || v.slots.some(slot => typeof slot.heroId !== "string" || !slot.heroId
+                || !Number.isInteger(slot.position) || slot.position < 1 || slot.position > 8)
+            || new Set(v.slots.map(slot => slot.heroId)).size !== v.slots.length
+            || new Set(v.slots.map(slot => slot.position)).size !== v.slots.length)) {
+            throw new Error("挂机阵容无效");
+        }
+        const claimState = this.readIdleClaimState(v.claimState);
+        if (v.rewardStage === 0 && (v.slots?.length || claimState)) {
+            throw new Error("未通关的挂机快照包含遇敌阵容或领取状态");
+        }
+        return Object.freeze({
+            ...v,
+            rates: Object.freeze(v.rates.map(row => Object.freeze({ ...row }))),
+            slots: v.slots ? Object.freeze(v.slots.map(row => Object.freeze({ ...row }))) : undefined,
+            claimState,
+        });
+    }
+
+    /**
+     * 读取服务端可选领取能力；已知格式的坏版本/模式拒绝，未知格式按日志来源和格式去重后保持只读。
+     * 返回对象为独立冻结副本，不持有解码树引用，不推导ready或修改按钮状态。
+     */
+    private static readIdleClaimState(value: unknown): MainChapterIdleClaimState | undefined {
+        if (value === undefined) {
+            return undefined;
+        }
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            throw new Error("主线挂机领取状态无效");
+        }
+        const claim = value as Record<string, unknown>;
+        if (typeof claim.schemaVersion !== "number" || !Number.isSafeInteger(claim.schemaVersion)
+            || claim.schemaVersion < 0 || claim.schemaVersion > 0xffffffff) {
+            throw new Error("主线挂机领取状态格式无效");
+        }
+        if (claim.schemaVersion !== 1) {
+            GameLog.shared.warnOnce("MODULE", "MainChapterModel", "IDLE_CLAIM_SCHEMA:" + claim.schemaVersion,
+                "挂机领取状态格式未支持，保持只读；schemaVersion=" + claim.schemaVersion);
+            return undefined;
+        }
+        if (typeof claim.operationVersion !== "number" || !Number.isSafeInteger(claim.operationVersion)
+            || claim.operationVersion <= 0
+            || (claim.requestMode !== "READ_ONLY" && claim.requestMode !== "ENABLED")) {
+            throw new Error("主线挂机领取状态版本或模式无效");
+        }
+        return Object.freeze({
+            schemaVersion: 1,
+            operationVersion: claim.operationVersion,
+            requestMode: claim.requestMode,
+        });
+    }
+
+    /** 全局关卡与挑战范围使用正uint32；仅已通关进度允许0，不接受浮点、字符串或越界值。 */
+    public static isChapterIndex(value: unknown, allowZero = false): value is number {
+        return typeof value === "number" && Number.isInteger(value)
+            && value >= (allowZero ? 0 : 1) && value <= 0xffffffff;
+    }
+
+    /** 持久编号必须为UUID字符串，不接受数值或任意路径。 */
+    public static isBattleId(value: unknown): value is string {
+        return typeof value === "string" && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(value);
+    }
 
     /** 应用切换身份清空业务状态；不承担网络连接代次判断。 */
     protected onReset(): void {
@@ -168,7 +276,6 @@ export class MainChapterModel extends BaseModel {
         this.idle = null;
         this.idleReplay = null;
         this.idleLoading = false;
-        this.idleReceivedAt = 0;
         this.busy = false;
         this.requestId = null;
         this.receipt = null;
@@ -176,8 +283,5 @@ export class MainChapterModel extends BaseModel {
         this.entryRecovery = null;
         this.replay = null;
         this.message = "";
-        this.idleClaim = Object.freeze({ phase: "idle", pending: null, receipt: null, message: "" });
-        this.milestoneClaim = Object.freeze({ phase: "idle", rewardId: null, receipt: null, message: "" });
-        this.firstRewardClaim = Object.freeze({ phase: "idle", chapter: null, receipt: null, busy: false });
     }
 }

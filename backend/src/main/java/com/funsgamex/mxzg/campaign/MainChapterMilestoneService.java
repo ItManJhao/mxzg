@@ -10,9 +10,9 @@ import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.time.GameClock;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.time.Instant;
 import java.util.HexFormat;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -42,6 +42,8 @@ public class MainChapterMilestoneService {
     private final AssetSyncService sync;
     /** 只用于持久不可变审计JSON，网络仍为强类型PB。 */
     private final ObjectMapper mapper;
+    /** 里程碑奖励使用的游戏时钟。 */
+    private final GameClock clock;
 
     /** 原成功结果及当时状态，资产由最新Snapshot交付，不能回写历史余额。 */
     public record Receipt(int schemaVersion, int rewardId, String receiptId, String roleId,
@@ -63,10 +65,10 @@ public class MainChapterMilestoneService {
         public String code() { return code; }
     }
 
-    /** 注入原事务领域，服务不保存另一份角色或领取队列。 */
+    /** 注入原事务领域与游戏时钟，沿用角色和领取回执持久入口。 */
     public MainChapterMilestoneService(SessionService sessions, RoleRepository roles, JdbcTemplate jdbc,
             MainChapterMilestoneRules rules, MainChapterService chapters, MainChapterRules chapterRules,
-            RewardGrantService grants, AssetSyncService sync, ObjectMapper mapper) {
+            RewardGrantService grants, AssetSyncService sync, ObjectMapper mapper, GameClock clock) {
         this.sessions = sessions;
         this.roles = roles;
         this.jdbc = jdbc;
@@ -76,10 +78,11 @@ public class MainChapterMilestoneService {
         this.grants = grants;
         this.sync = sync;
         this.mapper = mapper;
+        this.clock = clock;
     }
 
     /**
-     * 沿原角色锁原子领取；重复同rewardId读取原结果，失败整体回滚，不占用已领ID。
+     * 沿原角色锁按游戏时间原子领取；重复同rewardId读取原结果，失败整体回滚。
      * 不要求先领更小ID，也不要求首通pending为空，符合旧3008资格边界。
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -104,7 +107,7 @@ public class MainChapterMilestoneService {
         }
         grants.requireSupported(entry.rewards().stream().map(RewardGrantService.Reward::itemId).toList());
         var actual = grants.grant(role, entry.rewards(), new RewardGrantService.Context(
-                Instant.now().getEpochSecond(), chapterRules.tavernLimit(state.maxCleared())), ThreadLocalRandom.current());
+                clock.epochSeconds(), chapterRules.tavernLimit(state.maxCleared())), ThreadLocalRandom.current());
         jdbc.update("INSERT INTO game_main_chapter_milestone(role_id,reward_id) VALUES (?,?)", role, rewardId);
         sync.changed(role);
         var after = chapters.current(token);

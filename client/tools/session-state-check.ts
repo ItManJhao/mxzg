@@ -2,16 +2,19 @@
 import {strict as assert} from "node:assert";
 import {GameSocketClient,SocketPort,SocketFailure} from "../assets/scripts/platform/GameSocketClient";
 import { GameProtocolCodecUtils, GAME_SOCKET_PROTOCOL, GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
+import { Protocol } from "../assets/scripts/platform/Protocol";
 import { AccountApi } from "../assets/scripts/features/account/AccountApi";
 import {AccountModel} from "../assets/scripts/features/account/AccountModel";
-import {AccountService} from "../assets/scripts/features/account/AccountService";
-import {HomeController} from "../assets/scripts/features/home/HomeController";
 import {AccountController} from "../assets/scripts/features/account/AccountController";
+import {AccountComposition} from "../assets/scripts/app/remake/AccountComposition";
+import {HomePageBinding} from "../assets/scripts/features/home/ui/HomePageBinding";
+import { AccountLoginBinding, type AccountActions } from "../assets/scripts/features/account/ui/AccountLoginBinding";
 import {RoleController} from "../assets/scripts/features/account/RoleController";
 import {BagController} from "../assets/scripts/features/bag/BagController";
 import {BagModel} from "../assets/scripts/features/bag/BagModel";
 import {BagEvent} from "../assets/scripts/features/bag/utils/BagEvent";
 import { BagItemDataUtils } from "../assets/scripts/features/bag/data/BagItemDataUtils";
+import { ServerClock } from "../assets/scripts/core/ServerClock";
 import { IsolatedSocketPreviewUtils } from "../assets/scripts/app/remake/IsolatedSocketPreviewUtils";
 import {AssetStateBinding} from "../assets/scripts/app/remake/AssetStateBinding";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
@@ -33,6 +36,10 @@ class Server {
  busyAuthentications=0;
  /** 当前GM拒绝码，由真实二进制回包路径验证错误反馈。 */
  gmFailure="UNKNOWN_MESSAGE";
+ /** 登录、鉴权和心跳回包中的 Unix 毫秒，测试可以独立于库存快照修改。 */
+ serverTimeMs = 100_000;
+ /** 捕获待投递的心跳回包，模拟客户端关闭连接时已排队的消息。 */
+ delayHeartbeat: ((deliver: () => void) => void) | null = null;
  readonly wires:Wire[]=[];readonly requests:string[]=[];state:any=null;
  create=()=>{const wire=new Wire(this,"connection-"+this.wires.length);this.wires.push(wire);return wire as unknown as SocketPort;};
  receive(wire:Wire,frame:GameFrame){
@@ -41,8 +48,19 @@ class Server {
   if(frame.name==="session.authenticate" && this.busyAuthentications>0){this.busyAuthentications--;queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"BUSY",message:"BUSY",retryable:true}}));return;}
   if(frame.name==="session.login" && data.serverId==="missing-world") {queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:false,body:null,error:{code:"SERVER_UNAVAILABLE",message:"SERVER_UNAVAILABLE",retryable:false}}));return;}
   if(frame.name==="session.login")this.state={role:{id:"role-"+data.account,nickname:data.account,serverId:data.serverId,level:1,gold:0,diamonds:0,basics:{experience:0,cup:1000,headId:0,imageId:410304012,borderId:0,language:1,createdAtSeconds:100,lastLoginAtSeconds:100,experienceToNextLevel:120}},inventory:[],heroes:[],revision:0};
-  const body=frame.name==="session.heartbeat"?{serverTimeMs:1}:{connectionId:wire.connection,roleId:this.state.role.id,serverTimeMs:1,initial:this.state,...(frame.name==="session.login"?{session:{accessToken:"a".repeat(43),expiresAt:"2099-01-01T00:00:00Z"}}:{})};
-  queueMicrotask(()=>wire.push({version:1,kind:"response",name:frame.name,id:frame.id,ok:true,body}));
+  const heartbeat = frame.name === "session.heartbeat";
+  const body = heartbeat ? { serverTimeMs: this.serverTimeMs } : {
+   connectionId: wire.connection, roleId: this.state.role.id, serverTimeMs: this.serverTimeMs, initial: this.state,
+   ...(frame.name === "session.login" ? { session: { accessToken: "a".repeat(43), expiresAt: "2099-01-01T00:00:00Z" } } : {}),
+  };
+  const response: GameFrame = { version: 1, kind: "response", name: frame.name, id: frame.id, ok: true, body };
+  if (heartbeat && this.delayHeartbeat) {
+   const receive = wire.onmessage;
+   const data = GameProtocolCodecUtils.encodeGameFrame({ ...response, connectionId: wire.connection });
+   this.delayHeartbeat(() => receive?.({ data }));
+   return;
+  }
+  queueMicrotask(() => wire.push(response));
  }
  push(revision:number,gold:number,quantity:number){this.state={...this.state,revision,role:{...this.state.role,gold},inventory:quantity?[{itemId:900101,quantity}]:[]};this.wires[this.wires.length-1].push({version:1,kind:"event",name:"state.changed",body:this.state});}
 }
@@ -71,13 +89,64 @@ function checkInventoryIdentity(){
  assert.equal(BagItemDataUtils.readTimedItems(timed).length,2);
  assert.throws(()=>BagItemDataUtils.readTimedItems({...timed,serverTimeSeconds:200}));
  assert.throws(()=>BagItemDataUtils.readTimedItems({...timed,items:[timed.items[0],timed.items[0]]}));
- let elapsed=1000;const model=new BagModel(()=>elapsed);model.reset();model.replaceAll([],timed);assert.equal(model.snapshot.timedItems.length,2);assert.equal(model.snapshot.timedServerTimeSeconds,100);elapsed+=2500;assert.equal(model.serverTimeSeconds(),102);
- model.suspendClock();elapsed+=100000;assert.equal(model.serverTimeSeconds(),null,"后台不能沿用旧时钟");
- model.replaceAll([], {...timed,serverTimeSeconds:150});assert.equal(model.serverTimeSeconds(),150,"单调时钟暂停后按服务器首包校准");
- const fallback=new BagModel(null);fallback.reset();fallback.replaceAll([],timed);fallback.advanceClock(2);assert.equal(fallback.serverTimeSeconds(),102);
- fallback.suspendClock();fallback.advanceClock(30);assert.equal(fallback.serverTimeSeconds(),null);fallback.replaceAll([], {...timed,serverTimeSeconds:150});assert.equal(fallback.serverTimeSeconds(),150,"无单调时钟也以恢复首包校准");
+ const model = new BagModel();
+ model.replaceAll([], timed);
+ assert.equal(model.snapshot.timedItems.length, 2);
  const before=model.snapshot;assert.throws(()=>model.replaceAll([{itemId:900102,quantity:9}],{...timed,serverTimeSeconds:300}));assert.equal(model.snapshot,before);
  model.reset();assert.equal(model.snapshot.timedItems.length,0);
+}
+
+/** 验证当前连接的心跳校时，旧连接的迟到心跳在后台和新鉴权后都不能校时。 */
+async function checkServerClockHeartbeat(): Promise<void> {
+ const server = new Server();
+ const heartbeats: Array<() => void> = [];
+ server.delayHeartbeat = deliver => { heartbeats.push(deliver); };
+ let elapsedMs = 1_000;
+ const clock = new ServerClock(() => elapsedMs);
+ const socket = new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket", {
+  create: server.create,
+  validateSnapshot: () => {},
+  heartbeatMs: 10,
+  clock,
+ });
+ try {
+  assert.equal(clock.nowSeconds(), null);
+  await socket.login("player", "local-1");
+  assert.equal(clock.nowSeconds(), 100, "登录回包确立公共服务器时间");
+  elapsedMs += 2_500;
+  assert.equal(clock.nowSeconds(), 102, "公共时钟按本地流逝时间推算");
+  server.serverTimeMs = 103_000;
+  await until(() => heartbeats.length === 1);
+  heartbeats[0]();
+  await until(() => clock.nowSeconds() === 103);
+  server.serverTimeMs = 110_000;
+  await until(() => heartbeats.length === 2);
+  socket.setBackground(true);
+  assert.equal(clock.nowSeconds(), null, "后台等待新鉴权校时");
+  heartbeats[1]();
+  assert.equal(clock.nowSeconds(), null, "后台的旧心跳不能恢复时钟");
+  server.serverTimeMs = 150_000;
+  socket.setBackground(false);
+  await until(() => clock.nowSeconds() === 150);
+  heartbeats[1]();
+  assert.equal(clock.nowSeconds(), 150, "新鉴权后忽略旧连接的迟到心跳");
+ } finally {
+  socket.disconnect();
+ }
+ assert.equal(clock.nowSeconds(), null, "断开会话后清除公共钟");
+}
+
+/** 无单调计时器时，以前台帧时间续算最近一次服务器回包的毫秒。 */
+function checkServerClockFrameTime(): void {
+ const clock = new ServerClock(null);
+ clock.synchronize(100_250);
+ clock.advance(1.75);
+ assert.equal(clock.nowSeconds(), 102);
+ clock.invalidate();
+ clock.advance(30);
+ assert.equal(clock.nowSeconds(), null);
+ clock.synchronize(150_000);
+ assert.equal(clock.nowSeconds(), 150, "恢复鉴权重新选取帧时间锚点");
 }
 
 /** 精灵逐件保存生成结果；能力缺失与真实空列表不同，任一非法实例不得部分提交普通库存。 */
@@ -125,9 +194,8 @@ function checkSpiritAssetDelivery(): void {
  const spirit={instanceId:"spirit-a",itemId:2000002,abilityId:1,skills:[{sort:1,skillId:301,level:1}]};
  account.replace({busy:false,role,error:""});bag.initialize();
  let roleCommits=0, updates=0;
- const assets=new AssetStateBinding(account,bag,new RoleController(value=>{
-  roleCommits++;account.replace({...account.snapshot,role:value});
- }));
+ const stopRole=account.subscribe(()=>{roleCommits++;});
+ const assets=new AssetStateBinding(account,bag,new RoleController(account));
  const target={}, stop=EventDispatcher.instance.on(BagEvent.BagUpdate,target,()=>{
   updates++;
   if(model.snapshot.synced){
@@ -155,7 +223,7 @@ function checkSpiritAssetDelivery(): void {
   account.replace({busy:false,role:{...role,id:"other-owner"},error:""});
   assert.throws(()=>assets.apply(changed({...initial,revision:999})));
   assert.equal(model.snapshot.spiritItems.length,0,"旧角色迟到资产不能重建精灵实例");
- } finally {stop();assets.dispose();bag.dispose();EventDispatcher.instance.offTarget(target);}
+ } finally {stopRole();stop();assets.dispose();bag.dispose();EventDispatcher.instance.offTarget(target);}
 }
 /** 基础角色资料不可缺字段、取负数或混淆时间顺序；唯一 Model 深层只读。 */
 function checkRoleBasics(){
@@ -172,21 +240,24 @@ async function checkApplicationDelivery(): Promise<void> {
  const server=new Server(), account=new AccountModel(), inventory=new BagModel(), bag=new BagController(inventory);
  const saves=new FormationSaveModel(), formation=new FormationController(saves,new HeroRosterModel());
  const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:()=>{},heartbeatMs:100000});
- const service=new AccountService(account,new AccountApi(socket),{read:()=>null,write:()=>{},clear:()=>{}});
+ const service=new AccountController(account,new AccountApi(socket),{read:()=>null,write:()=>{},clear:()=>{}});
  let closePages=0;
  bag.initialize();formation.initialize();
- const assets=new AssetStateBinding(account,bag,new RoleController(role=>service.acceptRole(role)),undefined,formation,()=>{closePages++;});
+ const assets=new AssetStateBinding(account,bag,new RoleController(account),undefined,formation,()=>{closePages++;});
  service.onInitialized=frame=>assets.apply(frame);
  let resolve!: (frame:GameFrame)=>void, reject!: (error:unknown)=>void, sent!:FormationSaveRequest;
  let sentCount = 0;
- formation.configure((body,received,failed)=>service.deliverAuthenticated(()=>{
-  sent = body;
-  sentCount++;
-  return new Promise<GameFrame>((yes,no)=>{
-   resolve = yes;
-   reject = no;
-  });
- },received,failed));
+ formation.configure({
+  deliver: (name,body,received,failed)=>service.deliverAuthenticated(()=>{
+   assert.equal(name,"formation.save");
+   sent = body as FormationSaveRequest;
+   sentCount++;
+   return new Promise<GameFrame>((yes,no)=>{
+    resolve = yes;
+    reject = no;
+   });
+  },received,failed),
+ });
  const draft={expectedVersion:0,formationId:1,slots:[{position:3,heroId:"hero-one"}]};
  const receipt=():GameFrame=>({version:1,kind:"response",name:"formation.save",ok:true,body:{requestId:sent.requestId,version:1}});
  try {
@@ -205,16 +276,18 @@ async function checkApplicationDelivery(): Promise<void> {
   service.logout();assert(await service.login("other","local-2")); // 同角色重新登录也是新身份周期。
   const relogged=saves.snapshot;
   reject(new SocketFailure("UNAUTHENTICATED"));await done;
-  assert.equal(saves.snapshot,relogged,"旧失败不能恢复待重试请求");assert(account.snapshot.role);
+  assert.equal(saves.snapshot,relogged,"旧失败不能修改当前保存进度");assert(account.snapshot.role);
   done=formation.save(draft);
   await until(()=>sentCount===3);
   reject(new Error("网络断开"));
   await done;
-  const original=saves.snapshot.pending;assert(original);assert(!saves.snapshot.busy);
-  done=formation.save({...draft,slots:[]});
+  const original=sent;
+  assert.deepEqual(saves.snapshot,{busy:false,savedVersion:null});
+  done=formation.save({...draft,slots:[{position:5,heroId:"hero-one"}]});
   await until(()=>sentCount===4);
-  assert.deepEqual(sent,original,"当前身份断网重试保留幂等请求");
-  resolve(receipt());await done;assert.equal(saves.snapshot.acknowledged,1);
+  assert.notEqual(sent.requestId,original.requestId,"再次点击发送当前草稿和新的请求编号");
+  assert.equal(sent.slots[0].position,5);
+  resolve(receipt());await done;assert.equal(saves.snapshot.savedVersion,1);
   assert(closePages>=3,"角色页面由应用统一关闭");
  } finally { socket.onState=null;socket.disconnect();assets.dispose();bag.dispose(); }
 }
@@ -270,13 +343,13 @@ async function checkTavernSnapshotTransport(): Promise<void> {
         },
         heartbeatMs: 100000,
     });
-    const service = new AccountService(account, new AccountApi(socket), {
+    const service = new AccountController(account, new AccountApi(socket), {
         read: () => null,
         write: () => {},
         clear: () => {},
     });
     bag.initialize();
-    const assets = new AssetStateBinding(account, bag, new RoleController(value => service.acceptRole(value)));
+    const assets = new AssetStateBinding(account, bag, new RoleController(account));
     service.onInitialized = frame => { assets.apply(frame); };
     socket.onState = frame => { assets.apply(frame); };
     socket.onReady = () => {
@@ -319,8 +392,94 @@ async function checkTavernSnapshotTransport(): Promise<void> {
     }
 }
 
+/** 召唤、装备、历史查询和新手赠礼共用连接的回包归属检查。 */
+async function checkAuthenticatedReceipts(): Promise<void> {
+    const requestId = "10304012-1111-4111-8111-111111111111";
+    for (const name of [Protocol.HERO_SUMMON, "hero.summon.normal", "hero.summon.first",
+        "hero.summon.first.status", "role.welcome.claim", Protocol.HERO_EQUIPMENT_CHANGE] as const) {
+        const server = new Server();
+        const socket = new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket", {
+            create: server.create, validateSnapshot: () => {}, heartbeatMs: 100000,
+        });
+        try {
+            await socket.login("player", "local-1");
+            let roleId = "role-player";
+            const query = name === "hero.summon.first.status";
+            const welcome = name === "role.welcome.claim";
+            const summon = name === Protocol.HERO_SUMMON;
+            const equipment = name === Protocol.HERO_EQUIPMENT_CHANGE;
+            const choice = { pool: "ADVANCED", count: 1 };
+            const equipmentChoice = { heroId: "10304012-2222-4222-8222-222222222222", action: "UNEQUIP_ALL" };
+            let found = !query;
+            server.receive = (wire, request) => {
+                const receipt = {
+                    schemaVersion: 1, requestId, receiptId: requestId, roleId, assetRevision: 2,
+                    state: { schemaVersion: 1, firstNormalCompleted: true, normalFreeAtSeconds: 100 },
+                    actual: {
+                        roleId,
+                        items: [{ itemId: 10304012, requested: 1, credited: 1, ignored: 0, reason: "NONE" }],
+                        heroes: [{ instanceId: "10304012-3333-4333-8333-333333333333",
+                            templateId: 10304012, star: 4, level: 1, stage: 1 }],
+                        wallet: { goldBefore: 0, goldAfter: 0, diamondsBefore: 0, diamondsAfter: 0 },
+                        spirits: { schemaVersion: 1, items: [] },
+                    },
+                };
+                const body = welcome ? {
+                    schemaVersion: 1, receiptId: requestId, roleId, assetRevision: 2,
+                    mode: "POPUP", items: [{ itemId: 900002, credited: 492 }],
+                } : query ? { requestId, found, ...(found ? {receipt} : {}) }
+                    : equipment ? { requestId, ...equipmentChoice, roleId, assetRevision: 2, changed: false }
+                    : summon ? { ...receipt, ...choice } : receipt;
+                wire.push({ version: 1, kind: "response", id: request.id, name, ok: true, body });
+            };
+            const send = () => socket.requestFrame("a".repeat(43), name,
+                welcome ? {} : summon ? { requestId, ...choice }
+                    : equipment ? { requestId, ...equipmentChoice } : { requestId });
+            if (!found) {
+                const missing = await send();
+                assert.equal((missing.body as { found: boolean }).found, false);
+                found = true;
+            }
+            assert.equal((await send()).name, name);
+            roleId = "role-other";
+            await assert.rejects(send(), (error: unknown) => error instanceof SocketFailure && error.code === "INVALID_MESSAGE");
+            assert.equal(server.wires[0].readyState, 3);
+        } finally {
+            socket.disconnect();
+        }
+    }
+}
+
+/** 收包日志的同步订阅者可退出；已经解码的旧资产事件也应停止，不能在退出后重新提交。 */
+async function checkLogoutDuringNotification(): Promise<void> {
+    const server = new Server();
+    let delivered = false;
+    const socket = new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket", {
+        create: server.create,
+        validateSnapshot: () => {},
+        onReceive: frame => {
+            if (frame.name === "state.changed") {
+                socket.disconnect();
+            }
+        },
+    });
+    try {
+        await socket.login("player", "local-1");
+        socket.onState = () => { delivered = true; };
+        server.push(1, 100, 1);
+        assert.equal(delivered, false);
+        assert.equal(socket.latestState, null);
+    } finally {
+        socket.disconnect();
+    }
+}
+
 /** 依次执行本文件的会话与统一状态检查；全部使用受控连接，不访问日常服务。 */
 async function main(){
+ checkServerClockFrameTime();
+ await checkServerClockHeartbeat();
+ await checkAuthenticatedReceipts();
+ await checkLogoutDuringNotification();
  await checkTavernSnapshotTransport();
  await checkExplicitSnapshotRefresh();
  await checkApplicationDelivery();
@@ -350,14 +509,19 @@ async function main(){
  checkSpiritAssetDelivery();
  await checkPreviewIsolation();
  const server=new Server(),account=new AccountModel(),model=new BagModel(),bag=new BagController(model);
- const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:value=>{const row=value as any;AccountApi.readSnapshotRole(value);BagItemDataUtils.readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},retryDelay:()=>1,heartbeatMs:100000});
- const service=new AccountService(account,new AccountApi(socket),{read:()=>null,write:()=>{},clear:()=>{}});bag.initialize();
- const assets=new AssetStateBinding(account,bag,new RoleController(value=>service.acceptRole(value)));
- service.onInitialized=frame=>assets.apply(frame);socket.onState=frame=>assets.apply(frame);socket.onReady=()=>{if(account.snapshot.role&&socket.latestState)assets.apply(socket.latestState);};
+ const clock = new ServerClock(() => 0);
+ const socket=new GameSocketClient("ws://127.0.0.1:18080/api/v1/game/socket",{create:server.create,validateSnapshot:value=>{const row=value as any;AccountApi.readSnapshotRole(value);BagItemDataUtils.readBagItems(row.inventory);assert(Number.isSafeInteger(row.revision));},retryDelay:()=>1,heartbeatMs:100000,clock});
+ const service=new AccountController(account,new AccountApi(socket),{read:()=>null,write:()=>{},clear:()=>{}});bag.initialize();
+ const assets=new AssetStateBinding(account,bag,new RoleController(account));
+ const connectionNotices: string[] = [];
+ const unbind = AccountComposition.bind({model: account, socket, controller: service},
+    frame => { assets.apply(frame); }, () => {}, text => connectionNotices.push(text));
  let events=0;const target={};const stop=EventDispatcher.instance.on(BagEvent.BagUpdate,target,()=>{events++;if(model.snapshot.synced)assert.equal(account.snapshot.role?.gold,server.state.role.gold);});
  try{
   let homeActions:any;const opened:string[]=[];const notices:string[]=[];
-  const home=new HomeController(account,service,{bind:value=>{homeActions=value;return()=>{};},render:()=>{},showNotice:value=>notices.push(value)},id=>{opened.push(id);return true;});
+  const home=new HomePageBinding(account,{bind:value=>{homeActions=value;return()=>{};},render:()=>{},showNotice:value=>notices.push(value)},{
+   tabs:["hero","bag","battle"],open:id=>{opened.push(id);return true;}
+  });
   home.show();homeActions.openFeature("bag");homeActions.openFeature("city");homeActions.openFeature("hero");homeActions.openFeature("battle");assert.deepEqual(opened,["bag","city","hero","battle"]);assert.equal(notices.length,0);home.close();
   const unwatch=account.subscribe(state=>{if(state.role&&!state.busy)assert(model.snapshot.synced,"角色通知前库存已提交");});
   assert(await service.login("player","local-1"));assert.equal(model.snapshot.synced,true);assert.deepEqual(server.requests,["session.login"]);
@@ -366,21 +530,47 @@ async function main(){
   const count=events;server.push(1,7,5);server.push(0,0,0);assert.equal(events,count);assert.equal(model.quantity(900101),5);
   server.state={...server.state,revision:2,role:{...server.state.role,gold:9},inventory:[{itemId:900101,quantity:8}]};
   const oldMessage=server.wires[0].onmessage;server.wires[0].drop();await until(()=>server.wires.length===2&&model.quantity(900101)===8);assert.deepEqual(server.requests,["session.login","session.authenticate"]);
-  let actions:any,entered=0;const page=new AccountController(account,service,{bind:value=>{actions=value;return()=>{};},render:()=>{}},()=>entered++);page.show();actions.login("player");await until(()=>entered===1);page.close();assert.equal(server.requests.length,2,"开始按钮不重新查询");
-  // 同版本恢复也更新服务器秒；不额外请求背包，重复 show/hide 不建立多条连接。
-  const timed={serverTimeSeconds:100,items:[{instanceId:"timed-a",itemId:902025,activeAtSeconds:50,expiresAtSeconds:200}]};
-  server.state={...server.state,timedInventory:timed};server.push(3,9,8);assert.equal(model.serverTimeSeconds(),100);
+  assert.deepEqual(connectionNotices, ["网络已断开，正在重新连接…", ""], "同一绑定报告断线，重新鉴权时清除提示");
+  let actions!: AccountActions;
+  let entered = 0;
+  const routeErrors: string[] = [];
+  const page = new AccountLoginBinding(account, service, {
+    bind: value => { actions = value; return () => {}; },
+    render: () => {},
+    showNotice: text => routeErrors.push(text),
+  }, () => {
+    if (++entered === 2) {
+      throw new Error("主城挂载失败");
+    }
+  });
+  page.show();
+  actions.login("player");
+  await until(() => entered === 1);
+  await Promise.resolve();
+  actions.login("player");
+  await until(() => routeErrors.length === 1);
+  assert.deepEqual(routeErrors, ["主城挂载失败"]);
+  assert.equal(account.snapshot.error, "", "界面跳转失败只在登录页提示");
+  page.close();
+  assert.equal(server.requests.length, 2, "开始按钮不重新查询");
+  // 库存包的时间只校验期限数据。同版本鉴权用回包的公共时间校准，重复 show/hide 不建立多条连接。
+  const timed={serverTimeSeconds:95,items:[{instanceId:"timed-a",itemId:902025,activeAtSeconds:50,expiresAtSeconds:200}]};
+  server.state={...server.state,timedInventory:timed};server.push(3,9,8);
+  assert.equal(model.snapshot.timedItems.length, 1);
+  assert.equal(clock.nowSeconds(), 100, "库存推送不改变公共服务器时间");
   const oldWire=server.wires[server.wires.length-1],lateMessage=oldWire.onmessage;
-  model.suspendClock();socket.setBackground(true);socket.setBackground(true);assert.equal(model.serverTimeSeconds(),null);assert.equal(oldWire.readyState,3);
+  socket.setBackground(true);socket.setBackground(true);assert.equal(clock.nowSeconds(),null);assert.equal(oldWire.readyState,3);
   const requestsBefore=server.requests.length,wiresBefore=server.wires.length;
   await new Promise(r=>setTimeout(r,20));assert.equal(server.wires.length,wiresBefore,"后台停止重试");
   server.state={...server.state,timedInventory:{...timed,serverTimeSeconds:150}};
+  server.serverTimeMs = 151_000;
   server.busyAuthentications=1;socket.setBackground(false);socket.setBackground(false);
-  await until(()=>model.serverTimeSeconds()===150);assert.deepEqual(server.requests.slice(requestsBefore),["session.authenticate","session.authenticate"],"BUSY 只重试鉴权，不补查库存");
-  lateMessage({data:GameProtocolCodecUtils.encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:oldWire.connection,body:{...server.state,revision:999,timedInventory:timed}})});assert.equal(model.serverTimeSeconds(),150,"后台旧连接回包不能倒退时钟");
-  model.suspendClock();socket.setBackground(true);
+  await until(()=>clock.nowSeconds()===151);assert.deepEqual(server.requests.slice(requestsBefore),["session.authenticate","session.authenticate"],"BUSY 只重试鉴权，不补查库存");
+  lateMessage({data:GameProtocolCodecUtils.encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:oldWire.connection,body:{...server.state,revision:999,timedInventory:timed}})});assert.equal(clock.nowSeconds(),151,"后台旧连接回包不能倒退时钟");
+  socket.setBackground(true);
   server.state={...server.state,revision:4,timedInventory:{serverTimeSeconds:250,items:[]}};
-  socket.setBackground(false);await until(()=>model.serverTimeSeconds()===250);assert.equal(model.snapshot.timedItems.length,0,"后台跨过期限后恢复到服务器有效列表");
+  server.serverTimeMs = 250_000;
+  socket.setBackground(false);await until(()=>clock.nowSeconds()===250);assert.equal(model.snapshot.timedItems.length,0,"后台跨过期限后恢复到服务器有效列表");
   unwatch();assert(await service.login("other","local-2"));assert.equal(model.quantity(900101),0);assert.equal(account.snapshot.role!.id,"role-other");assert.equal(model.snapshot.synced,true);
   oldMessage({data:GameProtocolCodecUtils.encodeGameFrame({version:1,kind:"event",name:"state.changed",connectionId:"connection-0",body:{revision:999,role:{id:"role-player",nickname:"old",level:1,gold:999,diamonds:0,serverId:"local-1"},inventory:[{itemId:900101,quantity:999}],heroes:[]}})});
   assert.equal(model.quantity(900101),0);assert.equal(account.snapshot.role!.id,"role-other");
@@ -391,6 +581,19 @@ async function main(){
   const loggedOutWires=server.wires.length;socket.setBackground(false);await new Promise(r=>setTimeout(r,20));assert.equal(server.wires.length,loggedOutWires,"后台退出后不能恢复旧账号");
   assert.equal(await service.login("player","missing-world"),false);assert(account.snapshot.error.includes("服务器暂未开放"));assert.equal(model.snapshot.status,"idle");assert.equal(model.snapshot.synced,false);
   console.log("PASS unified initialization, no duplicate requests, atomic role/bag events, monotonic revision, reconnect, old-wire isolation, invalid payload, logout");
- }finally{stop();socket.onReady=socket.onState=null;socket.disconnect();assets.dispose();bag.dispose();EventDispatcher.instance.offTarget(target);}
+ } finally {
+    stop();
+    unbind();
+    assert.equal(service.onInitialized, null);
+    assert.equal(socket.onState, null);
+    assert.equal(socket.onReady, null);
+    assert.equal(socket.onReward, null);
+    assert.equal(socket.onRejected, null);
+    assert.equal(socket.onDisconnected, null);
+    socket.disconnect();
+    assets.dispose();
+    bag.dispose();
+    EventDispatcher.instance.offTarget(target);
+ }
 }
 void main().catch(error=>{console.error(error);process.exitCode=1;});

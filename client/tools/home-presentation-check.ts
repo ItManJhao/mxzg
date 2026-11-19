@@ -9,7 +9,7 @@ import { RoleProfileView } from "../assets/scripts/features/account/ui/RoleProfi
 import { CityHubView } from "../assets/scripts/features/city/ui/CityHubView";
 import { ServerPickerView } from "../assets/scripts/features/account/ui/ServerPickerView";
 import { ServerCellView } from "../assets/scripts/features/account/ui/ServerCellView";
-import { ServerSelection } from "../assets/scripts/features/account/ServerSelection";
+import { ServerSelectionController } from "../assets/scripts/features/account/ServerSelectionController";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
@@ -174,7 +174,7 @@ async function main() {
   chrome.setExperience(-1,120); assert.equal(chrome.experienceFill!.fillRange,0);
   chrome.setExperience(undefined,undefined); assert.equal(chrome.experienceFill!.fillRange,0);
   let logouts = 0;
-  const unbind = home.bind({ logout: () => { logouts++; }, openFeature: () => {} });
+  const unbind = home.bind({ openFeature: () => {} });
   home.runOpen();
   home.render({ busy: false, error: "", role: { id: "role-id", nickname: "玩家甲", level: 7, gold: 0, diamonds: 123 } });
   await new Promise(resolve => setTimeout(resolve, 0));
@@ -183,13 +183,16 @@ async function main() {
   assert.equal(chrome.level, "7"); assert.equal(chrome.power, "", "do not invent power");
   assert(chrome.tabs.every(tab => tab.state === (tab.id === "city" ? "selected" : "locked")));
   city.completeLoading(); await home.whenReady();
-  const featureUnbind = home.bind({ logout: () => { logouts++; }, openFeature: () => {}, heroAvailable: true });
+  const featureUnbind = home.bind({ openFeature: () => {}, availableFeatures: ["hero"] });
   assert.equal(chrome.tabs.find(tab => tab.id === "hero").state, "open");
   home.showFeature("hero");
   assert.equal(home.featureHost, home.cityHost);
   assert.equal(city.node.active, false, "feature hides only the city, preserving shared chrome");
   assert.equal(chrome.tabs.find(tab => tab.id === "hero").state, "selected");
   assert.equal(chrome.tabs.find(tab => tab.id === "city").state, "open");
+  home.showFeature("summon");
+  assert.equal(city.node.active, false, "召唤法阵占用主城内容区");
+  assert.equal(chrome.tabs.find(tab => tab.id === "city").state, "selected", "召唤页保留底栏主城选中");
   home.showFeature("city"); assert.equal(city.node.active, true);
   featureUnbind();
   const model = new AccountModel();
@@ -198,7 +201,7 @@ async function main() {
   const releaseHost = ui.setResidentHost("test-role-modal",()=>new Node("ModalHost"));
   const unregister = UIRegistry.registerView(RoleProfileView,{id:"role-profile",prefab:"bundles/module/login/prefabs/RoleProfileView",layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"test-role-modal",load:async()=>Object.assign(new Prefab(), {_instantiate:()=>profile.node})});
   let opening: Promise<unknown> | undefined;
-  const rebound=home.bind({logout:()=>{logouts++;},openFeature:id=>{assert.equal(id,"role-profile");opening=ui.openById(id,{model,logout:()=>{logouts++;},notice:()=>{}});}});
+  const rebound=home.bind({openFeature:id=>{assert.equal(id,"role-profile");opening=ui.openById(id,{model,logout:()=>{logouts++;},notice:()=>{}});}});
   chrome.avatar!.emit(Button.EventType.CLICK); await opening;
   assert.equal(profile.nickname!.string,"玩家甲");
   const same=await ui.openById("role-profile",{model,logout:()=>{logouts++;},notice:()=>{}});
@@ -227,12 +230,16 @@ async function main() {
   assert.equal(slow.home.cityHost!.children.length, 0);
 
   // 引擎先销毁按钮组件时其 node 会被清空，资料页稍后释放也不应抛错。
-  const teardown = fixture(); teardown.profile.bind(()=>{},()=>{});
+  const teardown = fixture();
+  teardown.profile.runOpen({model, logout: () => {}, notice: () => {}});
+  const beforeDestroy = teardown.profile.nickname!.string;
   (teardown.profile.closeButton as any).node = null;
   assert.doesNotThrow(()=>teardown.profile.onDestroy());
+  model.replace({busy:false,error:"",role:{id:"after-destroy",nickname:"已销毁",level:1,gold:0,diamonds:0}});
+  assert.equal(teardown.profile.nickname!.string, beforeDestroy, "直接销毁时也必须退订角色更新");
   // 选服真实数据分组与选择由页面处理，列表排列留给 SuperContent。
   const servers=[{id:"a1",regionId:"a",regionName:"一区",name:"一服",enabled:true},{id:"b1",regionId:"b",regionName:"二区",name:"二服",enabled:true}];
-  const selection = new ServerSelection({catalog:async()=>servers},()=>{});
+  const selection = new ServerSelectionController({catalog:async()=>servers},()=>{});
   await selection.load();
   const picker=new Node("Picker").addComponent(ServerPickerView);
   picker.closeButton=new Node("Close").addComponent(Button);

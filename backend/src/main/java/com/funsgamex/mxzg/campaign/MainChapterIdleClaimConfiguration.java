@@ -5,18 +5,20 @@
  */
 package com.funsgamex.mxzg.campaign;
 
+import com.funsgamex.mxzg.time.GameClock;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.ZoneOffset;
 import java.util.random.RandomGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class MainChapterIdleClaimConfiguration {
-    /** 提供UTC服务器时钟，输出Unix秒；礼包自然日计算仍由已有上海时区规则负责。 */
+    /** 将公共游戏时钟作为挂机领取的 UTC 时钟；自然日仍由既有上海时区规则计算。 */
     @Bean("mainChapterIdleClaimClock")
-    public Clock clock() {
-        return Clock.systemUTC();
+    public Clock clock(GameClock clock) {
+        return clock.withZone(ZoneOffset.UTC);
     }
 
     /** 提供线程安全的服务端抽样源，不接受客户端种子，重放分支不消费。 */

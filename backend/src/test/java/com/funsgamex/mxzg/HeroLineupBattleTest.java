@@ -65,13 +65,13 @@ class HeroLineupBattleTest {
         assertEquals(before.mainFormation(), after.mainFormation());
     }
 
-    /** 前三关均使用持久英雄和站位，返回版本与缺口，计算不改资产快照。 */
-    @Test void savedRosterRunsThreeMissionsWithoutWritingAssets() {
+    /** 前四关使用持久英雄和站位，第4关按旧表带入两名守军，试战保持资产快照。 */
+    @Test void savedRosterRunsFourMissionsWithoutWritingAssets() {
         var p = player(10101001, 1);
         save(p, List.of(new Lineup.Slot(5, p.hero())));
         var before = snapshots.snapshot(p.token());
         var input = inputs.current(p.token());
-        for (int mission = 1; mission <= 3; mission++) {
+        for (int mission = 1; mission <= 4; mission++) {
             var result = battles.preview(p.token(), mission, rate -> rate == 1D);
             assertEquals("audit:lineup:" + mission, result.battle().scenario());
             assertEquals(input.assetRevision(), result.assetRevision());
@@ -83,7 +83,12 @@ class HeroLineupBattleTest {
             assertEquals(5, attacker.id());
             assertEquals(input.units().getFirst().attributes(), attacker.attributes(), "单英雄不重复阵型加成");
             assertEquals(input.units().getFirst().skillSchedule(), attacker.skills());
-            assertEquals(mission == 3 ? 3 : 2, result.battle().initial().size());
+            assertEquals(mission >= 3 ? 3 : 2, result.battle().initial().size());
+            if (mission == 4) {
+                var enemies = result.battle().initial().stream().filter(unit -> unit.faction() == 2).toList();
+                assertEquals(List.of(10302002, 10304005), enemies.stream().map(unit -> unit.template()).toList());
+                assertEquals(List.of(2, 3), enemies.stream().map(unit -> unit.position()).toList());
+            }
             assertAssetsUnchanged(before, snapshots.snapshot(p.token()));
         }
     }
@@ -199,21 +204,31 @@ class HeroLineupBattleTest {
         save(owner, List.of(new Lineup.Slot(2, owner.hero())));
         assertThrows(IllegalArgumentException.class, () -> battles.preview(other.token(), 1, rate -> true));
         assertThrows(RuntimeException.class, () -> save(other, List.of(new Lineup.Slot(2, owner.hero()))));
-        assertThrows(IllegalArgumentException.class, () -> battles.preview(owner.token(), 4, rate -> true));
+        var outsideCatalog = assertThrows(IllegalArgumentException.class,
+            () -> battles.preview(owner.token(), 851, rate -> true));
+        assertTrue(outsideCatalog.getMessage().contains("主线全局关卡配置不存在"));
         assertThrows(RuntimeException.class, () -> battles.preview("Bearer invalid", 1, rate -> true));
     }
 
-    /** 未支持技能不静默降级到普攻；助战位不冒充普通站位。 */
-    @Test void rejectsUnsupportedSkillsAndAssistanceWithoutMutations() {
+    /** 十星零阶英雄按配置释放三级主动；尚未接通的助战位仍拒绝试战，两种结果都保持资产快照。 */
+    @Test void supportedActiveRunsAndAssistanceIsRejectedWithoutMutations() {
         var p = player(10105008, 10);
         save(p, List.of(new Lineup.Slot(2, p.hero())));
         var before = snapshots.snapshot(p.token());
-        assertThrows(IllegalArgumentException.class, () -> battles.preview(p.token(), 1, rate -> true));
+        var battle = battles.preview(p.token(), 1, rate -> true).battle();
+        var attacker = battle.initial().getFirst();
+        assertEquals(List.of(new HeroEvolutionRules.Skill(101050081, 3), new HeroEvolutionRules.Skill(101050080, 0)),
+            attacker.skills().stream().map(skill -> new HeroEvolutionRules.Skill(skill.skillId(), skill.level())).toList());
+        assertTrue(battle.frames().stream().flatMap(frame -> frame.trace().stream())
+            .anyMatch(event -> event.kind().equals("skill.begin")
+                && event.configId() == 101050081 && event.sourceId() == attacker.id()));
         assertAssetsUnchanged(before, snapshots.snapshot(p.token()));
         jdbc.update("UPDATE game_role SET assistance_unlocked=TRUE WHERE id=?", p.role());
         save(p, List.of(new Lineup.Slot(9, p.hero())));
+        var beforeAssistance = snapshots.snapshot(p.token());
         var failure = assertThrows(IllegalArgumentException.class, () -> battles.preview(p.token(), 1, rate -> true));
         assertTrue(failure.getMessage().contains("助战"));
+        assertAssetsUnchanged(beforeAssistance, snapshots.snapshot(p.token()));
     }
     /** 独立H2真实阵容胜负接入原版进度决策，尚不调用资产或持久结算。 */
     @Test void realThreeMissionResultsFollowLegacyProgressRules() {

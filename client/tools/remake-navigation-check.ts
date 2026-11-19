@@ -7,9 +7,10 @@ import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { RemakeNavigation } from "../assets/scripts/app/remake/RemakeNavigation";
+import { HomeFeatureNavigation } from "../assets/scripts/app/remake/HomeFeatureNavigation";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
-import { AccountService } from "../assets/scripts/features/account/AccountService";
-import { HomeController, HomeActions } from "../assets/scripts/features/home/HomeController";
+import { HomePageBinding, HomeActions } from "../assets/scripts/features/home/ui/HomePageBinding";
+import { FirstSummonView } from "../assets/scripts/features/hero/ui/FirstSummonView";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -111,7 +112,7 @@ async function main() {
     }
     UIRegistry.registerView(ctor, { id, prefab: "prefabs/test/" + id, layer: resident ? UILayer.Popup : UILayer.Page,
       cache, allowMultiple: false, hostId: resident ? "popup" : undefined, load: loadFixturePrefab, prepare,
-      createController: () => { count.created++; return {
+      createBinding: () => { count.created++; return {
         show: () => { count.shown++; if (throwOnShow) throw new Error("Controller initialization failed"); },
         close: () => { count.closed++; },
       }; },
@@ -294,31 +295,66 @@ async function main() {
   cacheNav.dispose();
 
   const model = new AccountModel();
-  const service = new AccountService(model, { developmentLogin: async () => { throw new Error("not used"); }, currentRole: async () => { throw new Error("not used"); } }, { read: () => null, write: () => {}, clear: () => {} });
   let renders = 0; let actions: HomeActions | null = null;
   let notice = "";
-  const controller = new HomeController(model, service, { bind: callbacks => { actions = callbacks; return () => { actions = null; }; }, render: () => { renders++; }, showNotice: text => { notice = text; } });
+  const controller = new HomePageBinding(model, { bind: callbacks => { actions = callbacks; return () => { actions = null; }; }, render: () => { renders++; }, showNotice: text => { notice = text; } });
   model.replace({ busy: false, role: { id: "one", nickname: "one", level: 1, gold: 0, diamonds: 0 }, error: "" });
   controller.show(); controller.show(); assert.equal(renders, 1);
   assert(actions);
   (actions as HomeActions).openFeature("hero"); assert.equal(notice, "该模块暂停，待登录和背包完善后按原项目重做");
   (actions as HomeActions).openFeature("city"); assert.equal(notice, "");
-  (actions as HomeActions).logout(); assert.equal(model.snapshot.role, null);
   controller.close(); const closedRenders = renders;
   model.replace({ busy: false, role: null, error: "later" }); assert.equal(renders, closedRenders);
   assert.equal(actions, null);
 
   const picked: string[] = [];
-  const enabled = new HomeController(model, service, { bind: callbacks => { actions = callbacks; return () => { actions = null; }; },
-    render: () => {}, showNotice: text => { notice = text; } }, id => {
+  const enabled = new HomePageBinding(model, { bind: callbacks => { actions = callbacks; return () => { actions = null; }; },
+    render: () => {}, showNotice: text => { notice = text; } }, { tabs: ["bag", "hero"], open: id => {
       if (id !== "bag" && id !== "city" && id !== "hero") return false;
       picked.push(id); return true;
-    });
+    } });
   enabled.show();
-  assert.equal((actions as HomeActions).heroAvailable,true);
+    assert.deepEqual((actions as HomeActions).availableFeatures, ["bag", "hero"]);
   (actions as HomeActions).openFeature("bag"); assert.deepEqual(picked, ["bag"]);
   (actions as HomeActions).openFeature("hero"); assert.deepEqual(picked,["bag","hero"]);
   enabled.close();
+  const summonPages: string[] = [];
+  const navigation = new HomeFeatureNavigation({
+    keepOnly: () => {},
+    openById: async id => { summonPages.push(id); },
+    back: () => false,
+  }, {
+    current: () => "remake-home",
+    authorized: () => !!model.snapshot.role && !model.snapshot.busy,
+    notice: () => {},
+  });
+  const map = new HomePageBinding(model, {
+    bind: callbacks => { actions = callbacks; return () => { actions = null; }; },
+    render: () => {},
+    showNotice: () => {},
+  }, { tabs: HomeFeatureNavigation.tabs, open: id => navigation.open(id) });
+  map.show();
+  const mapActions = actions as HomeActions;
+  try {
+    mapActions.openFeature("main_summon");
+    assert.deepEqual(summonPages, [], "缺少角色时点击召唤法阵不打开页面");
+    const role = { id: "two", nickname: "two", level: 1, gold: 0, diamonds: 0 };
+    model.replace({ busy: true, role, error: "" });
+    mapActions.openFeature("main_summon");
+    assert.deepEqual(summonPages, [], "角色尚在切换时等待同步");
+    model.replace({ busy: false, role, error: "" });
+    mapActions.openFeature("main_summon");
+    assert.deepEqual(summonPages, ["first-summon"], "召唤法阵复用主城功能页导航");
+    assert.equal(UIRegistry.viewSpecOf(FirstSummonView)?.layer, UILayer.Page);
+    assert.equal(HomeFeatureNavigation.tabForPage("first-summon"), "summon");
+    assert.deepEqual(HomeFeatureNavigation.tabs, ["hero", "bag", "battle"], "召唤保留既有底栏入口");
+    map.close();
+    mapActions.openFeature("main_summon");
+    assert.deepEqual(summonPages, ["first-summon"], "主城关闭后，旧点击不再打开页面");
+  } finally {
+    navigation.dispose();
+    map.close();
+  }
 
   const assets = join(process.cwd(), "client/assets");
   const prefab = JSON.parse(readFileSync(join(assets, "bundles/module/home/prefabs/RemakeHomeView.prefab"), "utf8"));

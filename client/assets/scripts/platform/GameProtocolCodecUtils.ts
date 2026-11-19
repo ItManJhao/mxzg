@@ -3,7 +3,6 @@
  * 不保存会话/资产；解码只返回数据，业务合法性与会话时效仍由传输/API/Controller 校验。
  */
 import { Protocol } from "./Protocol";
-import { FirstSummonData } from "../features/hero/data/FirstSummonData";
 import { HeroLevelData } from "../features/hero/data/HeroLevelData";
 import { mxzg } from "./GameProtocol.generated";
 /** 两端共同声明的 WebSocket 子协议；握手阶段拒绝误连旧 JSON 服务。 */
@@ -50,7 +49,8 @@ const Frame = (mxzg as unknown as {
 /** oneof 的所有有效载荷字段，用于检查消息名与载荷类型必须对应。 */
 const payloads = [
     "authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers",
-    "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
+    "gmGrant", "gmResult", "gmStatus", "gmSetRoleLevel", "gmSetChapter", "gmSetTime", "gmTime",
+    "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
     "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
     "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
     "rewardNotice",
@@ -59,13 +59,17 @@ const payloads = [
     "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus",
     "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus",
     "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus",
+    "roleName", "heroSummonRequest", "heroSummonReceipt",
+    "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
+    "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt",
+    "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt",
 ];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
 export class GameProtocolCodecUtils {
     /** 仅通过静态方法使用，禁止创建实例。 */
     private constructor() { }
 
-    /** 按消息方向和名称选择强类型载荷，不允许以 JSON 字符串或任意 bytes 代替业务定义。 */
+    /** 按方向和名称选择强类型载荷，GM 等级与关卡的请求和回执共用目标。 */
     private static payloadName(frame: GameFrame): string | null {
         if (frame.kind === "response" && frame.ok === false) {
             return null;
@@ -83,9 +87,12 @@ export class GameProtocolCodecUtils {
                 || frame.name === Protocol.CHAPTER_MILESTONE_STATUS)) {
             return "chapterMilestoneClaim";
         }
-        if (frame.kind === "request" && (frame.name === Protocol.HERO_FIRST_SUMMON
-                || frame.name === Protocol.HERO_FIRST_SUMMON_STATUS)) {
+        if (frame.kind === "request" && (frame.name === Protocol.HERO_NORMAL_SUMMON
+                || frame.name === Protocol.HERO_FIRST_SUMMON || frame.name === Protocol.HERO_FIRST_SUMMON_STATUS)) {
             return "heroFirstSummonRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_SUMMON) {
+            return "heroSummonRequest";
         }
         if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_FIRST_REWARD_CLAIM
                 || frame.name === Protocol.CHAPTER_FIRST_REWARD_STATUS)) {
@@ -103,6 +110,21 @@ export class GameProtocolCodecUtils {
         if (frame.kind === "request" && frame.name === Protocol.HERO_LEVEL_UPGRADE_STATUS) {
             return "heroLevelUpgradeStatusRequest";
         }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_EQUIPMENT_CHANGE) {
+            return "heroEquipmentChangeRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.MARKET_BUY) {
+            return "marketBuyRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.MARKET_REFRESH) {
+            return "marketRefreshRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.DAILY_DUNGEON_CHALLENGE) {
+            return "dailyDungeonChallengeRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.ROLE_NAME_SET) {
+            return "roleName";
+        }
         if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_CLAIM || frame.name === Protocol.CHAPTER_REPLAY)) {
             return "chapterBattleId";
         }
@@ -116,7 +138,14 @@ export class GameProtocolCodecUtils {
             return "gmGrant";
         }
         if (frame.kind === "request") {
-            return frame.name === Protocol.SESSION_AUTHENTICATE ? "authenticate" : frame.name === Protocol.SESSION_LOGIN ? "login" : "empty";
+            switch (frame.name) {
+                case Protocol.GM_LEVEL_SET: return "gmSetRoleLevel";
+                case Protocol.GM_CHAPTER_SET: return "gmSetChapter";
+                case Protocol.GM_TIME_SET: return "gmSetTime";
+                case Protocol.SESSION_AUTHENTICATE: return "authenticate";
+                case Protocol.SESSION_LOGIN: return "login";
+                default: return "empty";
+            }
         }
         if (frame.kind === "event" && frame.name === Protocol.STATE_CHANGED) {
             return "snapshot";
@@ -143,14 +172,29 @@ export class GameProtocolCodecUtils {
                 case Protocol.CHAPTER_FIRST_REWARD_STATUS: return "chapterFirstRewardStatus";
                 case Protocol.BATTLE_PREVIEW: return "battlePreviewed";
                 case Protocol.FORMATION_SAVE: return "formationSaved";
+                case Protocol.HERO_SUMMON: return "heroSummonReceipt";
+                case Protocol.HERO_NORMAL_SUMMON:
                 case Protocol.HERO_FIRST_SUMMON: return "heroFirstSummonReceipt";
                 case Protocol.HERO_FIRST_SUMMON_STATUS: return "heroFirstSummonStatus";
                 case Protocol.HERO_FRAGMENT_COMBINE: return "heroFragmentCombineReceipt";
                 case Protocol.HERO_FRAGMENT_COMBINE_STATUS: return "heroFragmentCombineStatus";
                 case Protocol.HERO_LEVEL_UPGRADE: return "heroLevelUpgradeReceipt";
                 case Protocol.HERO_LEVEL_UPGRADE_STATUS: return "heroLevelUpgradeStatus";
+                case Protocol.HERO_EQUIPMENT_CHANGE: return "heroEquipmentChangeReceipt";
+                case Protocol.MARKET_LIST: return "marketState";
+                case Protocol.MARKET_BUY:
+                case Protocol.MARKET_REFRESH: return "marketReceipt";
+                case Protocol.DAILY_DUNGEON_LIST: return "dailyDungeonState";
+                case Protocol.DAILY_DUNGEON_CHALLENGE: return "dailyDungeonReceipt";
+                case Protocol.ROLE_NAME_RANDOM: return "roleName";
+                case Protocol.ROLE_NAME_SET: return "empty";
+                case Protocol.ROLE_WELCOME_CLAIM: return "rewardNotice";
                 case Protocol.GM_GRANT: return "gmResult";
                 case Protocol.GM_STATUS: return "gmStatus";
+                case Protocol.GM_LEVEL_SET: return "gmSetRoleLevel";
+                case Protocol.GM_CHAPTER_SET: return "gmSetChapter";
+                case Protocol.GM_TIME_GET:
+                case Protocol.GM_TIME_SET: return "gmTime";
                 case Protocol.SERVERS_LIST: return "servers";
                 case Protocol.SESSION_HEARTBEAT: return "heartbeat";
             }
@@ -170,40 +214,181 @@ export class GameProtocolCodecUtils {
         }
     }
 
-    /** 读取挂机协议对象；不接受数组、空值或使用字符串包装的业务结果。 */
-    private static idleObject(value: unknown): Record<string, unknown> {
+    /** 各协议共用的对象边界，拒绝数组、空值或字符串包装的消息。 */
+    private static messageObject(value: unknown): Record<string, unknown> {
         if (!value || typeof value !== "object" || Array.isArray(value)) {
-            throw new Error("挂机协议对象无效");
+            throw new Error("协议载荷必须是消息对象");
         }
         return value as Record<string, unknown>;
     }
 
-    /** 验证领取意图及回执的UUID；实例ID不使用此约束，保留其真实字符串格式。 */
+    /** 判断协议约定的小写 UUID，用于请求、回执和英雄实例。 */
+    private static isUuid(value: unknown): value is string {
+        return typeof value === "string" && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(value);
+    }
+
+    /** 挂机领取意图和回执必须具备可查回的业务编号。 */
     private static validateIdleRequestId(value: unknown): void {
-        if (typeof value !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(value)) {
+        if (!GameProtocolCodecUtils.isUuid(value)) {
             throw new Error("挂机请求标识无效");
         }
     }
 
-    /** 消费版本必须显式存在且为安全正整数，不能将proto默认0或字符串当作可领版本。 */
-    private static validateIdleVersion(value: unknown): asserts value is number {
+    /** 已消费操作版本和已提交资产版本必须为安全正整数。 */
+    private static validatePositiveVersion(value: unknown): asserts value is number {
         if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
-            throw new Error("挂机消费版本无效");
+            throw new Error("协议版本必须为安全正整数");
+        }
+    }
+
+    /** 校验市场请求只含玩家选择，成功回包以服务端货架和角色回执为准。 */
+    private static validateMarket(frame: GameFrame): void {
+        const list = frame.name === Protocol.MARKET_LIST;
+        const buy = frame.name === Protocol.MARKET_BUY;
+        if ((!list && !buy && frame.name !== Protocol.MARKET_REFRESH)
+                || (frame.kind === "response" && frame.ok === false)) {
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        if (frame.kind === "request") {
+            const allowed = list ? [] : buy ? ["requestId", "shelfVersion", "productId", "count"] : ["requestId", "shelfVersion"];
+            if (Object.keys(body).some(key => !allowed.includes(key))) {
+                throw new Error("市场请求字段无效");
+            }
+            if (list) {
+                return;
+            }
+            if (!GameProtocolCodecUtils.isUuid(body.requestId)
+                    || (buy && (!GameProtocolCodecUtils.isIntegerInRange(body.productId, 1, 0x7fffffff)
+                        || !GameProtocolCodecUtils.isIntegerInRange(body.count, 1, 0x7fffffff)))) {
+                throw new Error("市场请求参数无效");
+            }
+            GameProtocolCodecUtils.validatePositiveVersion(body.shelfVersion);
+            return;
+        }
+        if (!list) {
+            if (!GameProtocolCodecUtils.isUuid(body.requestId) || !GameProtocolCodecUtils.isUuid(body.roleId)) {
+                throw new Error("市场回执标识无效");
+            }
+            if (!GameProtocolCodecUtils.isIntegerInRange(body.assetRevision, buy ? 1 : 0)) {
+                throw new Error("市场回执资产版本无效");
+            }
+        }
+        GameProtocolCodecUtils.validateMarketState(list ? body : body.state);
+    }
+
+    /** 校验服务器货架的版本、刷新额度和商品数量；合法商品 ID 在货架内唯一。 */
+    private static validateMarketState(value: unknown): void {
+        const state = GameProtocolCodecUtils.messageObject(value);
+        const integer = GameProtocolCodecUtils.isIntegerInRange;
+        GameProtocolCodecUtils.validatePositiveVersion(state.shelfVersion);
+        if (!integer(state.freeRefreshLimit, 1) || !integer(state.paidRefreshLimit, 0)
+                || !integer(state.freeRefreshes, 0, state.freeRefreshLimit)
+                || !integer(state.paidRefreshes, 0, state.paidRefreshLimit)
+                || !integer(state.nextFreeRefreshAt, 0) || !integer(state.nextPaidResetAt, 1)
+                || (state.freeRefreshes === state.freeRefreshLimit) !== (state.nextFreeRefreshAt === 0)
+                || !integer(state.refreshCostItemId, 1) || !integer(state.refreshCostQuantity, 0)
+                || !Array.isArray(state.offers) || state.offers.length === 0) {
+            throw new Error("市场货架状态无效");
+        }
+        const products = new Set<number>();
+        for (const row of state.offers) {
+            const offer = GameProtocolCodecUtils.messageObject(row);
+            if (!integer(offer.productId, 1) || products.has(offer.productId)
+                    || !integer(offer.itemId, 1) || !integer(offer.quantity, 1)
+                    || !integer(offer.costItemId, 1) || !integer(offer.costQuantity, 1)
+                    || !integer(offer.purchaseLimit, 1) || !integer(offer.purchased, 0, offer.purchaseLimit)
+                    || !integer(offer.discount, 1, 100) || typeof offer.purchasable !== "boolean") {
+                throw new Error("市场商品状态无效");
+            }
+            products.add(offer.productId);
+        }
+    }
+
+    /** 判断协议数量、编号或时间是否为指定范围内的安全整数。 */
+    private static isIntegerInRange(value: unknown, minimum: number, maximum = Number.MAX_SAFE_INTEGER): value is number {
+        return typeof value === "number" && Number.isSafeInteger(value) && value >= minimum && value <= maximum;
+    }
+
+    /** 副本挑战只接受原请求编号、清扫选择及确认价格。成功回包校验结算、战报和发奖的对应关系。 */
+    private static validateDailyDungeon(frame: GameFrame): void {
+        const list = frame.name === Protocol.DAILY_DUNGEON_LIST;
+        if ((!list && frame.name !== Protocol.DAILY_DUNGEON_CHALLENGE)
+                || (frame.kind === "response" && frame.ok === false)) {
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        const integer = GameProtocolCodecUtils.isIntegerInRange;
+        if (frame.kind === "request") {
+            const fields = list ? [] : ["requestId", "sweep", "maxDiamonds"];
+            if (Object.keys(body).some(key => !fields.includes(key))
+                    || (!list && (!GameProtocolCodecUtils.isUuid(body.requestId)
+                        || typeof body.sweep !== "boolean" || !integer(body.maxDiamonds, 0)))) {
+                throw new Error("副本请求字段无效");
+            }
+            return;
+        }
+        const state = list ? body : GameProtocolCodecUtils.messageObject(body.state);
+        GameProtocolCodecUtils.validateDailyDungeonState(state);
+        if (list) {
+            return;
+        }
+        if (!GameProtocolCodecUtils.isUuid(body.requestId) || !GameProtocolCodecUtils.isUuid(body.battleId)
+                || !GameProtocolCodecUtils.isUuid(body.roleId) || typeof body.sweep !== "boolean"
+                || typeof body.won !== "boolean" || !integer(body.assetRevision, body.won ? 1 : 0)
+                || (body.won !== (body.actual !== undefined)) || (body.sweep === (body.replay !== undefined))
+                || (body.sweep && !body.won)) {
+            throw new Error("副本结算回执无效");
+        }
+        if (body.replay !== undefined) {
+            const replay = GameProtocolCodecUtils.messageObject(body.replay);
+            if (replay.schemaVersion !== 1 || replay.scenario !== "dungeon:gold:" + state.stageId
+                    || replay.outcome !== (body.won ? "ATTACKER_WIN" : "DEFENDER_WIN")) {
+                throw new Error("副本战报与结算胜负不一致");
+            }
+        }
+        if (body.actual !== undefined) {
+            const actual = GameProtocolCodecUtils.messageObject(body.actual);
+            if (actual.roleId !== body.roleId || !Array.isArray(actual.items) || actual.items.length === 0
+                    || !Array.isArray(actual.heroes)) {
+                throw new Error("副本发奖与原回执不一致");
+            }
+            GameProtocolCodecUtils.validateHeroGrants(actual.heroes, actual.items);
+        }
+    }
+
+    /** 检查副本当日计数、重置时间和原配置奖励预览，使界面只使用有效服务器状态。 */
+    private static validateDailyDungeonState(state: Record<string, unknown>): void {
+        const integer = GameProtocolCodecUtils.isIntegerInRange;
+        if (!integer(state.stageId, 1, 0xffffffff) || !integer(state.titleLanguageId, 1, 0xffffffff)
+                || !integer(state.freeLimit, 1, 0xffffffff) || !integer(state.totalLimit, state.freeLimit, 0xffffffff)
+                || !integer(state.wins, 0, state.totalLimit) || !integer(state.nextCostDiamonds, 0)
+                || !integer(state.resetAtSeconds, 1) || !integer(state.power, 0) || !integer(state.requiredPower, 0)
+                || typeof state.cleared !== "boolean" || typeof state.unlocked !== "boolean"
+                || typeof state.canChallenge !== "boolean" || (state.canChallenge && (!state.unlocked || state.wins >= state.totalLimit))
+                || !Array.isArray(state.rewardPreview) || state.rewardPreview.length === 0) {
+            throw new Error("副本次数、准入或预览状态无效");
+        }
+        for (const value of state.rewardPreview) {
+            const reward = GameProtocolCodecUtils.messageObject(value);
+            if (!integer(reward.itemId, 1, 0xffffffff) || !integer(reward.quantity, 1)) {
+                throw new Error("副本奖励预览无效");
+            }
         }
     }
 
     /** 验证历史回执格式、消费版本、安全时间及角色字段；返回的历史数据不能提交为当前资产。 */
     public static validateIdleReceipt(value: unknown): Record<string, unknown> {
-        const receipt = GameProtocolCodecUtils.idleObject(value);
+        const receipt = GameProtocolCodecUtils.messageObject(value);
         if (receipt.schemaVersion !== 1) {
             throw new Error("挂机回执格式未支持");
         }
         GameProtocolCodecUtils.validateIdleRequestId(receipt.requestId);
         GameProtocolCodecUtils.validateIdleRequestId(receipt.receiptId);
-        GameProtocolCodecUtils.validateIdleVersion(receipt.expectedOperationVersion);
-        GameProtocolCodecUtils.validateIdleVersion(receipt.beforeOperationVersion);
-        GameProtocolCodecUtils.validateIdleVersion(receipt.afterOperationVersion);
-        GameProtocolCodecUtils.validateIdleVersion(receipt.assetRevision);
+        GameProtocolCodecUtils.validatePositiveVersion(receipt.expectedOperationVersion);
+        GameProtocolCodecUtils.validatePositiveVersion(receipt.beforeOperationVersion);
+        GameProtocolCodecUtils.validatePositiveVersion(receipt.afterOperationVersion);
+        GameProtocolCodecUtils.validatePositiveVersion(receipt.assetRevision);
         if (receipt.expectedOperationVersion !== receipt.beforeOperationVersion
             || receipt.afterOperationVersion !== receipt.beforeOperationVersion + 1) {
             throw new Error("挂机回执消费版本不一致");
@@ -217,26 +402,24 @@ export class GameProtocolCodecUtils {
             || (receipt.committedAtSeconds as number) - (receipt.previousStartedAtSeconds as number) < (receipt.seconds as number)) {
             throw new Error("挂机回执累计时间不一致");
         }
-        const actual = GameProtocolCodecUtils.idleObject(receipt.actual);
+        const actual = GameProtocolCodecUtils.messageObject(receipt.actual);
         if (typeof actual.roleId !== "string" || !actual.roleId || actual.roleId.length > 128) {
             throw new Error("挂机回执缺少角色归属");
         }
         return receipt;
     }
 
-    /** 校验真实到账反馈；拒绝理论数量、重复配置ID、未知模式及不安全整数，不改任何资产。 */
+    /** 校验通用反馈的请求关联、回执、实际到账和展示模式，不更新资产。 */
     public static validateRewardNotice(value: unknown): Record<string, unknown> {
         if (!value || typeof value !== "object" || Array.isArray(value)) {
             throw new Error("奖励通知对象无效");
         }
         const notice = value as Record<string, unknown>;
-        if (notice.requestId !== undefined && (typeof notice.requestId !== "string"
-            || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(notice.requestId))) {
+        if (notice.requestId !== undefined && !GameProtocolCodecUtils.isUuid(notice.requestId)) {
             throw new Error("奖励通知原请求关联无效");
         }
         if (notice.schemaVersion !== 1
-            || typeof notice.receiptId !== "string"
-            || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(notice.receiptId)
+            || !GameProtocolCodecUtils.isUuid(notice.receiptId)
             || typeof notice.roleId !== "string" || !notice.roleId || notice.roleId.length > 128
             || /[\u0000-\u001f\u007f]/.test(notice.roleId)
             || !Number.isSafeInteger(notice.assetRevision) || (notice.assetRevision as number) <= 0
@@ -271,7 +454,7 @@ export class GameProtocolCodecUtils {
         return notice;
     }
 
-    /** 验证并冻结同笔新英雄；每个实例唯一且逐模板数等于本笔实际到账，不从当前名册补身份。 */
+    /** 验证并冻结同笔新英雄，检查实例编号、重复实例与逐模板实际到账数量。 */
     public static validateHeroGrants(value: unknown,
         items: readonly { readonly itemId: number; readonly credited: number }[]): readonly {
             readonly instanceId: string; readonly templateId: number; readonly level: number;
@@ -288,8 +471,7 @@ export class GameProtocolCodecUtils {
         const heroes = value.map(raw => {
             const row = raw as Record<string, unknown>;
             if (!row || typeof row !== "object" || Array.isArray(row)
-                || typeof row.instanceId !== "string"
-                || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(row.instanceId)
+                || !GameProtocolCodecUtils.isUuid(row.instanceId)
                 || seen.has(row.instanceId)
                 || ![row.templateId, row.level, row.star, row.stage].every(number =>
                     typeof number === "number" && Number.isSafeInteger(number) && number <= 0xffffffff)
@@ -310,15 +492,43 @@ export class GameProtocolCodecUtils {
         return Object.freeze(heroes);
     }
 
-    /** 通用奖励只允许事务后事件信封；请求/响应不能伪装为共享奖励通知。 */
+    /** 通用奖励事件与新手赠礼包使用同样的到账结构，各自校验信封方向和必要字段。 */
     private static validateRewardFrame(frame: GameFrame): void {
-        if (frame.name !== Protocol.REWARD_GRANTED) {
+        if (frame.name === Protocol.REWARD_GRANTED) {
+            if (frame.kind !== "event" || frame.id !== undefined || frame.ok !== undefined || frame.error !== undefined) {
+                throw new Error("奖励通知信封无效");
+            }
+            GameProtocolCodecUtils.validateRewardNotice(frame.body);
+        } else if (frame.name === Protocol.ROLE_WELCOME_CLAIM) {
+            GameProtocolCodecUtils.validateWelcomeGiftFrame(frame);
+        }
+    }
+
+    /** 新手赠礼只请求当前角色的固定份额，成功返回用于通用奖励窗的原回执。 */
+    private static validateWelcomeGiftFrame(frame: GameFrame): void {
+        if (typeof frame.id !== "string" || !frame.id) {
+            throw new Error("新手赠礼信封缺少请求关联");
+        }
+        if (frame.kind === "request") {
+            if (frame.ok !== undefined || frame.error !== undefined
+                || Object.keys(GameProtocolCodecUtils.messageObject(frame.body)).length !== 0) {
+                throw new Error("新手赠礼请求必须为空");
+            }
             return;
         }
-        if (frame.kind !== "event" || frame.id !== undefined || frame.ok !== undefined || frame.error !== undefined) {
-            throw new Error("奖励通知信封无效");
+        if (frame.kind !== "response" || typeof frame.ok !== "boolean") {
+            throw new Error("新手赠礼信封方向无效");
         }
-        GameProtocolCodecUtils.validateRewardNotice(frame.body);
+        if (!frame.ok) {
+            if (frame.body != null || frame.error === undefined) {
+                throw new Error("新手赠礼失败回包无效");
+            }
+            return;
+        }
+        const notice = GameProtocolCodecUtils.validateRewardNotice(frame.body);
+        if (frame.error !== undefined || notice.mode !== "POPUP" || notice.requestId !== undefined) {
+            throw new Error("新手赠礼回执格式无效");
+        }
     }
 
     /** 校验稳定里程碑键与强类型历史结果，未知格式、关联冲突和跨角色实际结果拒绝整包。 */
@@ -331,7 +541,7 @@ export class GameProtocolCodecUtils {
         if (frame.kind !== "request" && frame.kind !== "response") {
             throw new Error("里程碑信封方向无效");
         }
-        const body = GameProtocolCodecUtils.idleObject(frame.body);
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
         const validId = (id: unknown): id is number => typeof id === "number"
             && Number.isSafeInteger(id) && id > 0 && id <= 0xffffffff;
         if (!validId(body.rewardId)) {
@@ -350,12 +560,12 @@ export class GameProtocolCodecUtils {
         if (status && !body.found) {
             return;
         }
-        const receipt = status ? GameProtocolCodecUtils.idleObject(body.receipt) : body;
+        const receipt = status ? GameProtocolCodecUtils.messageObject(body.receipt) : body;
         GameProtocolCodecUtils.validateIdleRequestId(receipt.receiptId);
-        GameProtocolCodecUtils.validateIdleVersion(receipt.assetRevision);
-        const state = GameProtocolCodecUtils.idleObject(receipt.state);
-        const progress = GameProtocolCodecUtils.idleObject(state.milestoneProgress);
-        const actual = GameProtocolCodecUtils.idleObject(receipt.actual);
+        GameProtocolCodecUtils.validatePositiveVersion(receipt.assetRevision);
+        const state = GameProtocolCodecUtils.messageObject(receipt.state);
+        const progress = GameProtocolCodecUtils.messageObject(state.milestoneProgress);
+        const actual = GameProtocolCodecUtils.messageObject(receipt.actual);
         if (receipt.schemaVersion !== 1 || receipt.rewardId !== body.rewardId || !validId(receipt.targetChapter)
                 || typeof receipt.roleId !== "string" || !receipt.roleId || receipt.roleId.length > 128
                 || /[\u0000-\u001f\u007f]/.test(receipt.roleId) || actual.roleId !== receipt.roleId
@@ -369,50 +579,27 @@ export class GameProtocolCodecUtils {
             actual.items as { itemId: number; credited: number }[]);
     }
 
-    /** 首抽请求只可携带原键，回执与查询必须使用匹配载荷和原编号。 */
-    private static validateFirstSummon(frame: GameFrame): void {
-        const status = frame.name === Protocol.HERO_FIRST_SUMMON_STATUS;
-        if ((!status && frame.name !== Protocol.HERO_FIRST_SUMMON) || (frame.kind === "response" && frame.ok === false)) {
-            return;
-        }
-        if (frame.kind !== "request" && frame.kind !== "response") {
-            throw new Error("首抽信封方向无效");
-        }
-        const body = frame.body as Record<string, unknown> | null;
-        if (!body || !FirstSummonData.isId(body.requestId)) {
-            throw new Error("首抽协议原编号无效");
-        }
-        if (frame.kind === "request") {
-            if (Object.keys(body).length !== 1) {
-                throw new Error("首抽请求参数超出约定");
-            }
-        } else if (status) {
-            const receipt = body.receipt as Record<string, unknown> | undefined;
-            if (typeof body.found !== "boolean" || (body.found ? receipt?.requestId !== body.requestId : receipt !== undefined)) {
-                throw new Error("首抽查询状态与回执不符");
-            }
-        }
-    }
-
-    /** 校验两类成长命令的原键、方向与业务结果，奖励只从原回执读取。 */
+    /** 通关、碎片和召唤共用原编号及到账归属检查，按协议补验各自的结果。 */
     private static validateProgressReward(frame: GameFrame): void {
         const chapter = frame.name === Protocol.CHAPTER_FIRST_REWARD_CLAIM
             || frame.name === Protocol.CHAPTER_FIRST_REWARD_STATUS;
         const fragment = frame.name === Protocol.HERO_FRAGMENT_COMBINE
             || frame.name === Protocol.HERO_FRAGMENT_COMBINE_STATUS;
-        if ((!chapter && !fragment) || (frame.kind === "response" && frame.ok === false)) {
+        const summon = frame.name === Protocol.HERO_NORMAL_SUMMON
+            || frame.name === Protocol.HERO_FIRST_SUMMON || frame.name === Protocol.HERO_FIRST_SUMMON_STATUS;
+        if ((!chapter && !fragment && !summon) || (frame.kind === "response" && frame.ok === false)) {
             return;
         }
         if (frame.kind !== "request" && frame.kind !== "response") {
             throw new Error("成长奖励协议方向无效");
         }
-        const body = GameProtocolCodecUtils.idleObject(frame.body);
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
         const key = chapter ? "chapter" : "requestId";
         const status = frame.name === Protocol.CHAPTER_FIRST_REWARD_STATUS
-            || frame.name === Protocol.HERO_FRAGMENT_COMBINE_STATUS;
+            || frame.name === Protocol.HERO_FRAGMENT_COMBINE_STATUS || frame.name === Protocol.HERO_FIRST_SUMMON_STATUS;
         const positive = (value: unknown): value is number => typeof value === "number"
             && Number.isSafeInteger(value) && value > 0 && value <= 0xffffffff;
-        if (chapter ? !positive(body.chapter) : !FirstSummonData.isId(body.requestId)) {
+        if (chapter ? !positive(body.chapter) : !GameProtocolCodecUtils.isUuid(body.requestId)) {
             throw new Error("成长奖励协议原键无效");
         }
         if (frame.kind === "request") {
@@ -431,21 +618,143 @@ export class GameProtocolCodecUtils {
         if (status && !body.found) {
             return;
         }
-        const receipt = status ? GameProtocolCodecUtils.idleObject(body.receipt) : body;
-        const actual = GameProtocolCodecUtils.idleObject(receipt.actual);
-        GameProtocolCodecUtils.validateIdleVersion(receipt.assetRevision);
-        if (receipt.schemaVersion !== 1 || receipt[key] !== body[key] || !FirstSummonData.isId(receipt.receiptId)
+        const receipt = status ? GameProtocolCodecUtils.messageObject(body.receipt) : body;
+        const actual = GameProtocolCodecUtils.messageObject(receipt.actual);
+        GameProtocolCodecUtils.validatePositiveVersion(receipt.assetRevision);
+        if (receipt.schemaVersion !== 1 || receipt[key] !== body[key] || !GameProtocolCodecUtils.isUuid(receipt.receiptId)
                 || typeof receipt.roleId !== "string" || !receipt.roleId || receipt.roleId.length > 128
+                || /[\u0000-\u001f\u007f]/.test(receipt.roleId)
                 || actual.roleId !== receipt.roleId || !Array.isArray(actual.heroes) || !Array.isArray(actual.items)) {
             throw new Error("成长奖励回执与业务归属不一致");
         }
         const heroes = GameProtocolCodecUtils.validateHeroGrants(actual.heroes,
             actual.items as { itemId: number; credited: number }[]);
+        if (summon) {
+            const state = GameProtocolCodecUtils.messageObject(receipt.state);
+            if (state.schemaVersion !== 1 || state.firstNormalCompleted !== true
+                    || typeof state.normalFreeAtSeconds !== "number" || state.normalFreeAtSeconds <= 0
+                    || heroes.length !== 1) {
+                throw new Error("普通单抽回包缺少召唤状态或实际英雄");
+            }
+        }
         if (fragment && (!positive(receipt.itemId) || !positive(receipt.quantity)
                 || typeof receipt.costQuantity !== "number" || receipt.costQuantity < receipt.quantity
                 || heroes?.length !== receipt.quantity)) {
             throw new Error("碎片消耗与合成英雄数量无效");
         }
+    }
+
+    /** 校验召唤池、次数和授权钻石上限，并确认成功回执里的英雄与实际到账一一对应。 */
+    private static validateSummon(frame: GameFrame): void {
+        if (frame.name !== Protocol.HERO_SUMMON) {
+            return;
+        }
+        if (!frame.id || typeof frame.id !== "string") {
+            throw new Error("召唤信封缺少请求关联");
+        }
+        if (frame.kind === "response" && frame.ok === false) {
+            if (frame.error === undefined || frame.body != null) {
+                throw new Error("召唤失败回包无效");
+            }
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        const pools = ["NORMAL", "FRIENDSHIP", "ADVANCED", "POINTS"];
+        if (!GameProtocolCodecUtils.isUuid(body.requestId) || !pools.includes(body.pool as string)
+            || (body.count !== 1 && body.count !== 10) || (body.pool === "POINTS" && body.count !== 1)) {
+            throw new Error("召唤请求编号、池或次数无效");
+        }
+        if (frame.kind === "request") {
+            const limit = body.maxDiamonds;
+            if (frame.error !== undefined || frame.ok !== undefined
+                || Object.keys(body).some(key => !["requestId", "pool", "count", "maxDiamonds"].includes(key))
+                || (limit !== undefined && (typeof limit !== "number" || !Number.isSafeInteger(limit) || limit < 0
+                    || (limit !== 0 && body.pool !== "ADVANCED")))) {
+                throw new Error("召唤请求钻石授权或额外字段无效");
+            }
+            return;
+        }
+        if (frame.kind !== "response" || frame.ok !== true || frame.error !== undefined) {
+            throw new Error("召唤回包方向或状态无效");
+        }
+        GameProtocolCodecUtils.validatePositiveVersion(body.assetRevision);
+        const actual = GameProtocolCodecUtils.messageObject(body.actual);
+        if (body.schemaVersion !== 1 || !GameProtocolCodecUtils.isUuid(body.receiptId)
+            || typeof body.roleId !== "string" || !body.roleId || body.roleId.length > 128
+            || /[\u0000-\u001f\u007f]/.test(body.roleId)
+            || actual.roleId !== body.roleId || !Array.isArray(actual.items) || !Array.isArray(actual.heroes)) {
+            throw new Error("召唤回执格式或归属无效");
+        }
+        const heroes = GameProtocolCodecUtils.validateHeroGrants(actual.heroes,
+            actual.items as readonly { itemId: number; credited: number }[]);
+        if (heroes.length !== body.count) {
+            throw new Error("召唤回执英雄数量与原次数不一致");
+        }
+        const state = GameProtocolCodecUtils.messageObject(body.state);
+        const validOptionalTimes = ["advancedFreeAtSeconds", "pointRechargeRequired", "prayerEndsAtSeconds"]
+            .every(key => state[key] === undefined
+                || (typeof state[key] === "number" && (state[key] as number) >= 0));
+        if (state.schemaVersion !== 1 || typeof state.firstNormalCompleted !== "boolean"
+            || typeof state.normalFreeAtSeconds !== "number" || state.normalFreeAtSeconds < 0
+            || state.firstNormalCompleted !== (state.normalFreeAtSeconds > 0)
+            || !validOptionalTimes
+            || (state.pointsCost !== undefined && (typeof state.pointsCost !== "number" || state.pointsCost <= 0))
+            || (state.pointsExchangeAvailable !== undefined && typeof state.pointsExchangeAvailable !== "boolean")) {
+            throw new Error("召唤回执免费时间或积分资格无效");
+        }
+    }
+
+    /** 普通装备请求仅传选择和原槽配置，成功回执保留这些参数且不携带资产写入数据。 */
+    private static validateEquipmentChange(frame: GameFrame): void {
+        if (frame.name !== Protocol.HERO_EQUIPMENT_CHANGE) {
+            return;
+        }
+        if (typeof frame.id !== "string" || !frame.id) {
+            throw new Error("装备变更信封缺少请求关联");
+        }
+        if (frame.kind === "response" && frame.ok === false) {
+            if (frame.error === undefined || frame.body != null) {
+                throw new Error("装备变更失败回包无效");
+            }
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        const { requestId, heroId, action, equipmentId, slot, expectedTemplateId } = body;
+        if (!GameProtocolCodecUtils.isUuid(requestId) || !GameProtocolCodecUtils.isUuid(heroId)
+            || (action !== "EQUIP" && action !== "UNEQUIP" && action !== "EQUIP_ALL" && action !== "UNEQUIP_ALL")) {
+            throw new Error("装备变更请求编号、英雄或操作无效");
+        }
+        const request = frame.kind === "request";
+        const validUnused = (value: unknown) => value === undefined || (!request && value === 0);
+        const single = action === "EQUIP" || action === "UNEQUIP";
+        if ((single ? !GameProtocolCodecUtils.isEquipmentIdentity(equipmentId) : equipmentId !== undefined)
+            || (action === "UNEQUIP"
+                ? typeof slot !== "number" || !Number.isInteger(slot) || slot < 1 || slot > 4
+                    || typeof expectedTemplateId !== "number" || !Number.isInteger(expectedTemplateId)
+                    || expectedTemplateId < 1 || expectedTemplateId > 0x7fffffff
+                : !validUnused(slot) || !validUnused(expectedTemplateId))) {
+            throw new Error("装备变更实例、槽位或原配置无效");
+        }
+        if (request) {
+            if (frame.error !== undefined || frame.ok !== undefined
+                || Object.keys(body).some(key => !["requestId", "heroId", "action", "equipmentId", "slot",
+                    "expectedTemplateId"].includes(key))) {
+                throw new Error("装备变更请求包含额外字段");
+            }
+            return;
+        }
+        if (frame.kind !== "response" || frame.ok !== true || frame.error !== undefined
+            || !GameProtocolCodecUtils.isEquipmentIdentity(body.roleId)
+            || typeof body.changed !== "boolean" || typeof body.assetRevision !== "number"
+            || !Number.isSafeInteger(body.assetRevision) || body.assetRevision < (body.changed ? 1 : 0)) {
+            throw new Error("装备变更回执状态或归属无效");
+        }
+    }
+
+    /** 实例身份保持原字符串，包括旧堆叠标识和长整型数字串。 */
+    private static isEquipmentIdentity(value: unknown): value is string {
+        return typeof value === "string" && value.length <= 96 && !!value.trim()
+            && !/[\u0000-\u001f\u007f-\u009f]/.test(value);
     }
 
     /**
@@ -459,11 +768,11 @@ export class GameProtocolCodecUtils {
         if (frame.kind === "response" && frame.ok === false) {
             return;
         }
-        const body = GameProtocolCodecUtils.idleObject(frame.body);
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
         if (frame.kind === "request") {
             GameProtocolCodecUtils.validateIdleRequestId(body.requestId);
             if (frame.name === Protocol.CHAPTER_IDLE_CLAIM) {
-                GameProtocolCodecUtils.validateIdleVersion(body.expectedOperationVersion);
+                GameProtocolCodecUtils.validatePositiveVersion(body.expectedOperationVersion);
             }
             return;
         }
@@ -482,17 +791,33 @@ export class GameProtocolCodecUtils {
         }
     }
 
+    /** 校验命名载荷只携带当前方向允许的字段，名称规则仍由服务端判断。 */
+    private static validateRoleName(frame: GameFrame, payload: string | null): void {
+        if (payload === null || (frame.name !== Protocol.ROLE_NAME_RANDOM && frame.name !== Protocol.ROLE_NAME_SET)) {
+            return;
+        }
+        const body = GameProtocolCodecUtils.messageObject(frame.body);
+        const carriesName = payload === "roleName";
+        if (Object.keys(body).length !== (carriesName ? 1 : 0) || (carriesName && typeof body.nickname !== "string")) {
+            throw new Error("角色命名协议载荷无效");
+        }
+    }
+
     /** 编码完整帧并限制大小；返回独立 ArrayBuffer，微信小游戏可直接发送，不使用 Base64 包装。 */
     public static encodeGameFrame(frame: GameFrame): ArrayBuffer {
         GameProtocolCodecUtils.validateIntegers(frame);
         GameProtocolCodecUtils.validateIdleClaim(frame);
         GameProtocolCodecUtils.validateRewardFrame(frame);
         GameProtocolCodecUtils.validateMilestone(frame);
-        GameProtocolCodecUtils.validateFirstSummon(frame);
         GameProtocolCodecUtils.validateProgressReward(frame);
+        GameProtocolCodecUtils.validateSummon(frame);
+        GameProtocolCodecUtils.validateEquipmentChange(frame);
+        GameProtocolCodecUtils.validateMarket(frame);
+        GameProtocolCodecUtils.validateDailyDungeon(frame);
         HeroLevelData.validateFrame(frame);
         const { body, ...envelope } = frame;
         const payload = GameProtocolCodecUtils.payloadName(frame);
+        GameProtocolCodecUtils.validateRoleName(frame, payload);
         const message: Record<string, unknown> = { ...envelope };
         if (payload) {
             message[payload] = payload === "inventory" ? { items: body } : body;
@@ -540,9 +865,13 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateIdleClaim(frame);
         GameProtocolCodecUtils.validateRewardFrame(frame);
         GameProtocolCodecUtils.validateMilestone(frame);
-        GameProtocolCodecUtils.validateFirstSummon(frame);
         GameProtocolCodecUtils.validateProgressReward(frame);
+        GameProtocolCodecUtils.validateSummon(frame);
+        GameProtocolCodecUtils.validateEquipmentChange(frame);
+        GameProtocolCodecUtils.validateMarket(frame);
+        GameProtocolCodecUtils.validateDailyDungeon(frame);
         HeroLevelData.validateFrame(frame);
+        GameProtocolCodecUtils.validateRoleName(frame, expected);
         return frame;
     }
 }

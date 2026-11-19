@@ -5,8 +5,9 @@
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { GameLog } from "../assets/scripts/core/GameLog";
-import { RewardBinding } from "../assets/scripts/app/remake/RewardBinding";
+import { RewardBinding } from "../assets/scripts/features/reward/RewardBinding";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
+import { AccountController } from "../assets/scripts/features/account/AccountController";
 import type { RoleProfile } from "../assets/scripts/features/account/AccountModel";
 import { ConfirmView } from "../assets/scripts/features/common/ui/ConfirmView";
 import type { ConfirmArgs } from "../assets/scripts/features/common/ui/ConfirmView";
@@ -16,6 +17,7 @@ import { HeroRewardView } from "../assets/scripts/features/reward/ui/HeroRewardV
 import type { HeroRewardArgs } from "../assets/scripts/features/reward/ui/HeroRewardView";
 import type { RewardArgs } from "../assets/scripts/features/reward/data/RewardData";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
+import { RewardUtils } from "../assets/scripts/features/reward/utils/RewardUtils";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { GameProtocolCodecUtils } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { Protocol } from "../assets/scripts/platform/Protocol";
@@ -46,6 +48,10 @@ class BindingFixture {
     public readonly confirms: TestWindow[] = [];
     /** 只记录装配在窗口真正打开后交付的回执编号，不从开窗请求推导已展示。 */
     public readonly presented: string[] = [];
+    /** 作为单笔业务的完成回调，在该业务登记时传给装配。 */
+    public readonly observe = (receiptId: string): void => {
+        this.presented.push(receiptId);
+    };
     /** 通用TIPS模式产生的全局反馈，仅记录真实装配调用，不替代角色状态。 */
     public readonly toasts: string[] = [];
     /** 尚未关闭的窗口；准备中的窗口也保留，取消必须使其Promise拒绝。 */
@@ -76,8 +82,11 @@ class BindingFixture {
     /** 应用真实奖励装配，使用受控UI但不替换反馈去重和队列。 */
     public readonly binding: RewardBinding;
 
-    /** 安装本例UI能力并建立已认证角色；需要时观察实际展示，默认保留旧单参数装配。 */
-    public constructor(observePresented = false) {
+    /**
+     * 安装本例 UI 能力并建立已认证角色。
+     * @param observePresented 开启时，每次收到实时通知后由对应的模拟业务单独登记展示回调。
+     */
+    public constructor(private readonly observePresented = false) {
         this.changeOwner("isolated-role");
         const ui = UIManager.instance;
         ui.open = ((ctor: TestWindow["ctor"], args: TestWindow["args"]) => {
@@ -127,9 +136,14 @@ class BindingFixture {
             rows.forEach(row => this.close(row));
             return rows.length > 0;
         }) as typeof ui.closeById;
-        this.binding = observePresented
-            ? new RewardBinding(this.account, receiptId => this.presented.push(receiptId))
-            : new RewardBinding(this.account);
+        const unusedLogin = async (): Promise<never> => {
+            throw new Error("奖励展示不应发起登录或查询角色");
+        };
+        const service = new AccountController(this.account, {
+            developmentLogin: unusedLogin,
+            currentRole: unusedLogin,
+        }, { read: () => null, write: () => {}, clear: () => {} });
+        this.binding = new RewardBinding(service);
     }
 
     /** 提供独立身份，余额在整个反馈流程保持不变。 */
@@ -166,17 +180,20 @@ class BindingFixture {
                 .concat(gold > 0 ? [{ itemId: 900001, credited: gold }] : []) };
     }
 
-    /** 用真实Protobuf事件交付当前角色的已提交结果。 */
+    /** 用真实 Protobuf 事件交付已提交结果；可同时模拟业务端随后收到这笔回执。 */
     public deliver(notice = this.notice()): void {
-        this.binding.receive(GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({
+        this.binding.controller.receive(GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({
             version: 1, kind: "event", name: Protocol.REWARD_GRANTED,
             connectionId: "isolated-connection", body: notice,
         })));
+        if (this.observePresented) {
+            this.binding.restore(notice, this.observe);
+        }
     }
 
     /** 模拟唯一资产入口已接纳版本，再明确交付主城宿主就绪；不修改任何奖励资产。 */
     public ready(revision = 7): void {
-        this.binding.afterSnapshot({ version: 1, kind: "event", name: Protocol.STATE_CHANGED, body: { revision } });
+        this.binding.controller.observeRevision(revision);
         this.binding.setReady(true);
     }
 
@@ -223,6 +240,55 @@ class RewardBindingChecks {
     private static async settle(): Promise<void> {
         for (let index = 0; index < 24; index++) {
             await Promise.resolve();
+        }
+    }
+
+    /** 十连只单独揭示四五星，汇总按原顺序保留全部真实实例，之后才推进下一回执。 */
+    private static async checkSummonResults(): Promise<void> {
+        const test = new BindingFixture();
+        try {
+            const notice: RewardNotice = {
+                ...test.heroes(89, [
+                    10101001, 10104004, 10101001, 10105007, 10101001,
+                    10203003, 10105007, 10101001, 10203003, 10101001,
+                ]),
+                summonBatch: true,
+                repeatSummon: { pool: "ADVANCED", count: 10 },
+            };
+            const reveals = [notice.heroes![3], notice.heroes![6], notice.heroes![1]];
+            test.ready();
+            test.binding.restore(notice, test.observe);
+            test.binding.restore(notice, test.observe);
+            await this.settle();
+            assert.equal(test.rewards.length, 1);
+            assert.equal(test.rewards[0].ctor, RewardView);
+            assert.equal((test.rewards[0].args as RewardArgs).summonIntro, true);
+            assert.deepEqual(test.presented, []);
+            test.close(test.rewards[0]);
+            for (let index = 0; index < reveals.length; index++) {
+                await this.settle();
+                assert.equal(test.rewards.length, index + 2);
+                const window = test.rewards[index + 1];
+                assert.equal(window.ctor, HeroRewardView);
+                assert.deepEqual((window.args as HeroRewardArgs).hero, reveals[index]);
+                assert.deepEqual(test.presented, []);
+                test.close(window);
+            }
+            await this.settle();
+            assert.equal(test.rewards.length, 5);
+            const summary = test.rewards[4];
+            assert.equal(summary.ctor, RewardView);
+            const args = summary.args as RewardArgs;
+            assert.deepEqual(args.repeatSummon, { pool: "ADVANCED", count: 10 });
+            assert.deepEqual(RewardUtils.rows(args).map(row => row.hero?.instanceId),
+                notice.heroes!.map(hero => hero.instanceId));
+            assert.equal(RewardUtils.rows(args).filter(row => row.itemId === 10101001).length, 5);
+            assert.deepEqual(test.presented, [notice.receiptId]);
+            test.close(summary);
+            await this.settle();
+            assert.equal(test.rewards.length, 5);
+        } finally {
+            test.dispose();
         }
     }
 
@@ -542,10 +608,105 @@ class RewardBindingChecks {
         return checks;
     }
 
+    /** 两笔业务分别等待自己的真实窗口；打开失败、重试和重复事件都沿用原编号。 */
+    private static async checkReceiptListeners(): Promise<void> {
+        const test = new BindingFixture();
+        try {
+            const first = test.notice(110);
+            const second = test.notice(111);
+            const firstShown: string[] = [];
+            const secondShown: string[] = [];
+            test.ready();
+            test.failReward = true;
+            test.binding.restore(first, id => firstShown.push(id));
+            test.binding.restore(second, id => secondShown.push(id));
+            await this.settle();
+            assert.equal(test.confirms.length, 1);
+            assert.deepEqual(firstShown, []);
+            assert.deepEqual(secondShown, []);
+
+            test.deferReward = true;
+            test.confirm();
+            await this.settle();
+            assert.deepEqual(firstShown, [], "重试仍在准备时不能确认");
+            test.finishOpen(test.rewards[1]);
+            await this.settle();
+            assert.deepEqual(firstShown, [first.receiptId]);
+            assert.deepEqual(secondShown, [], "第二个业务不能收到第一笔的展示结果");
+            test.deliver(first);
+            test.close(test.rewards[1]);
+            await this.settle();
+            assert.deepEqual(secondShown, [second.receiptId]);
+            test.deliver(second);
+            test.close(test.rewards[2]);
+            await this.settle();
+            assert.equal(test.rewards.length, 3, "一次打开失败加两笔成功，无重复弹窗");
+            assert.deepEqual(firstShown, [first.receiptId]);
+            assert.deepEqual(secondShown, [second.receiptId]);
+        } finally {
+            test.dispose();
+        }
+    }
+
+    /** 业务回执晚于实时通知时，即便原窗口已关闭仍可确认；矛盾回执不得借用展示结果。 */
+    private static async checkLateReceiptListeners(): Promise<void> {
+        const test = new BindingFixture();
+        try {
+            test.ready();
+            const open = test.notice(112);
+            const closed = test.notice(113);
+            test.deliver(open);
+            test.deliver(closed);
+            await this.settle();
+            test.binding.restore(open, test.observe);
+            assert.deepEqual(test.presented, [open.receiptId], "当前打开的真实窗口可直接确认");
+            test.close(test.rewards[0]);
+            await this.settle();
+            test.close(test.rewards[1]);
+            await this.settle();
+            assert.throws(() => test.binding.restore({ ...closed, items: [] }, test.observe));
+            assert.deepEqual(test.presented, [open.receiptId]);
+            test.binding.restore(closed, test.observe);
+            await this.settle();
+            assert.deepEqual(test.presented, [open.receiptId, closed.receiptId]);
+            assert.equal(test.rewards.length, 2, "迟到回执不得重弹已关闭窗口");
+        } finally {
+            test.dispose();
+        }
+    }
+
+    /** 账号重置清除排队监听；新角色即使交付相同编号也只完成自己的操作。 */
+    private static async checkResetReceiptListener(): Promise<void> {
+        const test = new BindingFixture();
+        try {
+            const old = test.notice(114);
+            const oldShown: string[] = [];
+            test.binding.restore(old, id => oldShown.push(id));
+            test.binding.resetSession();
+            test.changeOwner("new-owner");
+            const current = test.notice(114);
+            test.ready();
+            test.deliver(current);
+            await this.settle();
+            assert.equal(test.rewards.length, 1);
+            test.binding.restore(current, test.observe);
+            assert.deepEqual(test.presented, [current.receiptId]);
+            assert.deepEqual(oldShown, [], "重置时撤销的旧监听不得收到新角色反馈");
+        } finally {
+            test.dispose();
+        }
+    }
+
     /** 每例均释放装配和替身，验证失败恢复不会写资产或跨身份打开窗口。 */
     public static async run(): Promise<void> {
         let checks = await this.checkUpgradeFlows();
         checks += await this.checkHeroFlows();
+        await this.checkSummonResults();
+        checks++;
+        await this.checkReceiptListeners();
+        await this.checkLateReceiptListeners();
+        await this.checkResetReceiptListener();
+        checks += 3;
         {
             const test = new BindingFixture(true);
             try {
@@ -793,7 +954,7 @@ class RewardBindingChecks {
                     { itemId: 900003, quantity: 0 },
                     { itemId: 900001, quantity: 3 },
                     { itemId: 900101, quantity: 4 },
-                ]), "queued");
+                ], test.observe), "queued");
                 assert.equal(test.rewards.length, 0, "交付恢复队列不代表宿主或统一资产状态已就绪");
                 assert.deepEqual(test.presented, [], "入队不能抢先登记实际展示");
                 test.ready(6);
@@ -840,7 +1001,7 @@ class RewardBindingChecks {
                 assert.deepEqual(test.presented, []);
                 assert.equal(test.binding.restoreItems(receiptId, 7, [
                     { itemId: 900001, quantity: 2 },
-                ]), "queued", "空结果不得占用持久回执的去重编号");
+                ], test.observe), "queued", "空结果不得占用持久回执的去重编号");
                 await this.settle();
                 assert.equal(test.rewards.length, 1);
                 assert.deepEqual(test.presented, [receiptId]);
@@ -890,7 +1051,7 @@ class RewardBindingChecks {
                 test.ready();
                 assert.equal(test.binding.restoreItems(receiptId, 7, [
                     { itemId: 900001, quantity: 2 },
-                ]), "queued", "整包拒绝不能污染后续正确回执的去重状态");
+                ], test.observe), "queued", "整包拒绝不能污染后续正确回执的去重状态");
                 await this.settle();
                 assert.equal(test.rewards.length, 1);
                 assert.deepEqual(test.presented, [receiptId]);
@@ -912,7 +1073,7 @@ class RewardBindingChecks {
                 test.changeOwner("new-owner");
                 assert.equal(test.binding.restoreItems(receiptId, 7, [
                     { itemId: 900001, quantity: 2 },
-                ]), "queued");
+                ], test.observe), "queued");
                 test.binding.restore({ ...test.notice(34, "new-owner"), items: [{ itemId: 900001, credited: 2 }] });
                 test.ready();
                 await this.settle();
@@ -929,8 +1090,8 @@ class RewardBindingChecks {
                 const rows = [{ itemId: 900001, quantity: 2 }];
                 test.failReward = true;
                 test.ready();
-                assert.equal(test.binding.restoreItems(first, 7, rows), "queued");
-                assert.equal(test.binding.restoreItems(second, 7, rows), "queued");
+                assert.equal(test.binding.restoreItems(first, 7, rows, test.observe), "queued");
+                assert.equal(test.binding.restoreItems(second, 7, rows, test.observe), "queued");
                 await this.settle();
                 assert.deepEqual(test.presented, [], "准备失败及其销毁回调均不能登记已展示");
                 assert.equal(test.rewards.length, 1);
@@ -961,12 +1122,12 @@ class RewardBindingChecks {
                 const oldReceiptId = test.notice(37).receiptId;
                 const newReceiptId = test.notice(38).receiptId;
                 test.ready();
-                test.binding.restoreItems(oldReceiptId, 7, [{ itemId: 900001, quantity: 2 }]);
+                test.binding.restoreItems(oldReceiptId, 7, [{ itemId: 900001, quantity: 2 }], test.observe);
                 // 打开已完成，但其成功续段尚未执行；重置必须撤销旧作用域的实际展示通知。
                 test.binding.resetSession();
                 test.changeOwner("new-owner");
                 test.ready();
-                test.binding.restoreItems(newReceiptId, 7, [{ itemId: 900001, quantity: 2 }]);
+                test.binding.restoreItems(newReceiptId, 7, [{ itemId: 900001, quantity: 2 }], test.observe);
                 await this.settle();
                 assert.equal(test.rewards.length, 2);
                 assert.deepEqual(test.presented, [newReceiptId], "旧身份迟到成功不能报告为新身份展示");
@@ -979,13 +1140,13 @@ class RewardBindingChecks {
             try {
                 test.deferReward = true;
                 test.ready();
-                test.binding.restoreItems(test.notice(39).receiptId, 7, [{ itemId: 900001, quantity: 2 }]);
+                test.binding.restoreItems(test.notice(39).receiptId, 7, [{ itemId: 900001, quantity: 2 }], test.observe);
                 await this.settle();
                 assert.deepEqual(test.presented, []);
                 test.binding.resetSession();
                 test.changeOwner("new-owner");
                 test.ready();
-                test.binding.restoreItems(test.notice(40).receiptId, 7, [{ itemId: 900001, quantity: 2 }]);
+                test.binding.restoreItems(test.notice(40).receiptId, 7, [{ itemId: 900001, quantity: 2 }], test.observe);
                 await this.settle();
                 assert.deepEqual(test.presented, [test.notice(40).receiptId]);
                 assert.equal(test.confirms.length, 0, "旧身份取消准备的迟到失败不能询问新身份");
@@ -996,7 +1157,7 @@ class RewardBindingChecks {
             const test = new BindingFixture(true);
             try {
                 test.ready();
-                test.binding.restoreItems(test.notice(41).receiptId, 7, [{ itemId: 900001, quantity: 2 }]);
+                test.binding.restoreItems(test.notice(41).receiptId, 7, [{ itemId: 900001, quantity: 2 }], test.observe);
                 test.binding.dispose();
                 await this.settle();
                 assert.deepEqual(test.presented, [], "应用销毁后迟到成功不能交付实际展示通知");

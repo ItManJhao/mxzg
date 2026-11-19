@@ -1,4 +1,4 @@
-/** 按旧G_BATTLE_ACTIONS覆盖及BattleActionUtils解析近身、场地移动、远程和独立特效时序；不把life当动作时长或生成通用特效。 */
+/** 按旧 G_BATTLE_ACTIONS 覆盖及 BattleActionUtils 解析近身、场地移动、投掷和独立特效时序，由战报播放器消费。 */
 export interface BattleAttackPlan {
     /** true为type2/11近身移动；false为type3原地施法，不能瞬移到目标。 */
     readonly melee: boolean;
@@ -9,9 +9,11 @@ export interface BattleAttackPlan {
     readonly battlefieldOffset: readonly [number, number] | null;
     /** type8角色按显式战场宽高比例移动，敌方镜像横坐标；其他类型为null，不与type9特效位置混用。 */
     readonly moveOffset: readonly [number, number] | null;
-    /** type5投射，按旧帧计数飞行；type3在各目标脚下播放一次。 */
+    /** type5和type10投射，按旧帧计数飞行；type3在各目标脚下播放一次。 */
     readonly projectile: boolean;
-    /** 同源序列帧路径、帧间隔、缩放和锚点；空file时为null。 */
+    /** type10按施法者阵营镜像的战场目标比例；type5以各命中目标为终点。 */
+    readonly projectileOffset: readonly [number, number] | null;
+    /** 同源序列帧路径、帧间隔、缩放和锚点；只有无实际帧时为null。 */
     readonly effect: { paths: readonly string[]; interval: number; flightSeconds: number;
         scaleX: number; scaleY: number; anchorX: number; anchorY: number } | null;
     /** 秒；去程与回程分别使用相同移动时间。 */
@@ -57,8 +59,9 @@ export class BattleAttackUtils {
                 // 旧type5与_attackingAction都不消费delay_time，不能把它误加为额外等待。
                 delete base.delay_time;
                 const format = base.format;
-                // type2的file仅预载；6/7/9实际按format取帧，即使旧file为空也不能丢失效果。
+                // type2的file仅预载；type10可复用同技能已加载图集，实际按带前缀的format取帧。
                 const files = entry.type === 2 || entry.type === 11 ? []
+                    : entry.type === 10 ? entry.files
                     : entry.files.length ? entry.files
                     : typeof format === "string" ? [format.replace("/%d.png", "")] : [];
                 return { ...row, idx: row.idx * 10 + index, type: entry.type, delay: entry.delay,
@@ -240,6 +243,30 @@ export class BattleAttackUtils {
     /** 逐项保留已核实的旧G_BATTLE_ACTIONS；所有复用同一动作的关卡共用，不按关卡特许。 */
     private static verifiedLegacyActions(id: number): readonly LegacyAttackAction[] | null {
         switch (id) {
+            case 2041401:
+                return [
+                    { type: 6, delay: 15, dimly: 1, base: { format: "skill-102040041/%d.png", anchor_x: 0.7,
+                        anchor_y: 0.5, duration: 0.1, scale_x: 2.3, scale_y: 2.3, offset_x: 30, offset_y: 0 },
+                        files: ["skill-102040041"], sounds: ["skill-102040041"] },
+                    { type: 10, delay: 30, dimly: 0, base: { attack_time: 0.3, action_time: 0.5,
+                        format: "skill-102040041/arrow-%d.png", scale_x: 1.5, scale_y: 1.5,
+                        offset_x: 0.8, offset_y: 0.4, duration: 0.1 }, files: [], sounds: [] },
+                ];
+            case 4050100:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { attack_time: 0.3, action_time: 1.7,
+                        format: "skill-104050050/%d.png", duration: 0.06, scale_x: 2, scale_y: 2, anchor_y: 0.2 },
+                        files: ["skill-104050050"], sounds: ["skill-104050050"] },
+                ];
+            case 4051101:
+                return [
+                    { type: 3, delay: 0, dimly: 1, base: { action: "skill", action_time: 2 }, files: [], sounds: [] },
+                    { type: 6, delay: 20, dimly: 0, base: { format: "skill-104050051-1/%d.png", anchor_x: 0.5,
+                        anchor_y: 0.25, duration: 0.03, scale_x: 1, scale_y: 1 }, files: ["skill-104050051-1"], sounds: [] },
+                    { type: 7, delay: 70, dimly: 1, base: { format: "skill-104050051/%d.png", anchor_x: 0.5,
+                        anchor_y: 0.5, duration: 0.05, scale_x: 1, scale_y: 1 },
+                        files: ["skill-104050051"], sounds: ["skill-104050051"] },
+                ];
             case 1030100:
                 return [
                     { type: 2, delay: 0, dimly: 0,
@@ -375,10 +402,17 @@ export class BattleAttackUtils {
         }
     }
 
-    /** 读取同源buff行；type1只接空动作，type8要求显式双轴比例，其余只接已核对类型与真实帧，未知声明明确拒绝。 */
+    /** 判断该表现是否由通用攻击动作播放器解析，供资源准备与播放共用。 */
+    public static isActionType(type: number): boolean {
+        return [1, 2, 3, 5, 6, 7, 8, 9, 10, 11].includes(type);
+    }
+
+    /** 读取同源buff行；type1只接空动作，type8/10要求完整战场比例，未知帧或动作明确拒绝。 */
     public static plan(row: { type: number; ani_base: string; file: string; sound: string;
         shake?: number; dimly?: number }): BattleAttackPlan {
-        if ([1, 2, 3, 5, 6, 7, 8, 9, 11].indexOf(row.type) < 0) throw new Error("尚未支持该战斗动作类型");
+        if (!this.isActionType(row.type)) {
+            throw new Error("尚未支持该战斗动作类型");
+        }
         const base: unknown = JSON.parse(row.ani_base);
         const files: unknown = JSON.parse(row.file);
         const sounds: unknown = JSON.parse(row.sound);
@@ -394,7 +428,7 @@ export class BattleAttackUtils {
             throw new Error("空动作包含尚未恢复的位移、特效、音效或画面副作用");
         }
         const known = ["move_time", "attack_time", "attack_delay", "action_time", "move_back", "action", "format", "duration", "scale_x", "scale_y", "anchor_x", "anchor_y", "flipped"];
-        if (row.type === 8 || row.type === 9 || row.type === 11) known.push("offset_x", "offset_y");
+        if ([6, 7, 8, 9, 10, 11].includes(row.type)) known.push("offset_x", "offset_y");
         if (Object.keys(values).some(key => known.indexOf(key) < 0)) {
             throw new Error("攻击动作存在未支持参数");
         }
@@ -416,8 +450,18 @@ export class BattleAttackUtils {
         if (moveOffset && moveOffset.some(value => value > 1)) {
             throw new Error("角色移动比例超出战场范围");
         }
+        let projectileOffset: BattleAttackPlan["projectileOffset"] = null;
+        if (row.type === 10) {
+            if (typeof values.offset_x !== "number" || typeof values.offset_y !== "number") {
+                throw new Error("战场投掷动作缺少显式双轴比例");
+            }
+            projectileOffset = Object.freeze([this.seconds(values, "offset_x", 0), this.seconds(values, "offset_y", 0)]);
+            if (projectileOffset.some(value => value > 1)) {
+                throw new Error("投掷终点比例超出战场范围");
+            }
+        }
         let effect: BattleAttackPlan["effect"] = null;
-        if (files.length) {
+        if (files.length || row.type === 10) {
             // 帧数以旧plist连续帧及本地逐像素复验为依据，不能遇到未知资源就跳过表现。
             const counts: Record<string, number> = {
                 "skill-101050110": 10, "skill-101050111": 10,
@@ -425,7 +469,7 @@ export class BattleAttackUtils {
                 "skill-101010011": 9, "skill-101040050": 7, "skill-101040051": 6, "skill-101020021": 11,
                 "skill-102050230": 8, "skill-102050231": 17,
                 "skill-102050233": 22, "skill-102050233_1": 22,
-                "skill-102040040": 14, "skill-102010011": 4,
+                "skill-102040040": 14, "skill-102040041": 8, "skill-102010011": 4,
                 "skill-103010011": 7,
                 "skill-102030031": 8,
                 "skill-103020021": 15, "skill-103030030": 12,
@@ -434,14 +478,18 @@ export class BattleAttackUtils {
                 "skill-102020021": 14, "skill-102040050": 11, "skill-102040051": 10,
                 "skill-101030030": 6,
                 "skill-103030031": 9, "skill-104040020": 9, "skill-104030011": 6,
+                "skill-104050050": 7, "skill-104050051": 11, "skill-104050051-1": 45,
                 "skill-105040030": 9, "skill-105030011": 6,
                 "skill-101050080-1": 6, "skill-101050080-2": 12,
                 "skill-101050081": 25, "skill-101050081-1": 29,
                 "skill-102050140": 15, "skill-102050141": 22, "skill-102050141-1": 53,
             };
-            const file = files[0];
-            if (files.length !== 1 || typeof file !== "string" || !counts[file]
-                || values.format !== file + "/%d.png" || row.type === 2) {
+            const format = typeof values.format === "string" ? values.format : "";
+            const knownArrow = row.type === 10 && format === "skill-102040041/arrow-%d.png";
+            const file = knownArrow ? "skill-102040041" : files[0];
+            const count = knownArrow ? 5 : typeof file === "string" ? counts[file] : 0;
+            if (!count || (row.type === 10 && !knownArrow) || (knownArrow ? files.length !== 0
+                : files.length !== 1 || format !== file + "/%d.png" || row.type === 2)) {
                 throw new Error("战斗帧资源尚未核对：type=" + row.type + "，file=" + JSON.stringify(files));
             }
             const interval = this.seconds(values, "duration", 0.05);
@@ -449,15 +497,19 @@ export class BattleAttackUtils {
             if (values.flipped !== undefined && values.flipped !== 0 && values.flipped !== 1) {
                 throw new Error("特效水平翻转配置无效");
             }
+            const onHero = row.type === 6 || row.type === 7;
+            // 旧附身特效将offset直接加进锚点，包括2041401的大偏移。
+            const anchorX = this.coordinate(values, "anchor_x", 0.5) + (onHero ? this.coordinate(values, "offset_x", 0) : 0);
+            const anchorY = this.coordinate(values, "anchor_y", 0.5) - 0.07 + (onHero ? this.coordinate(values, "offset_y", 0) : 0);
             effect = Object.freeze({
-                paths: Object.freeze(Array.from({length: counts[file]}, (_, index) =>
-                    "effects/skill/" + file + "/" + file + "_" + index + "/spriteFrame")),
+                paths: Object.freeze(Array.from({ length: count }, (_, index) =>
+                    `effects/skill/${file}/${file}_${knownArrow ? "arrow-" : ""}${index}/spriteFrame`)),
                 interval,
                 // 旧getAnimateCount包含首次查找失败的那一帧，7张图实际飞行8个间隔。
-                flightSeconds: (counts[file] + 1) * interval,
+                flightSeconds: (count + 1) * interval,
                 // 旧flipped只翻图像；反转锚点配合负缩放保持原图几何边界，不修改共享SpriteFrame。
                 scaleX: (typeof values.scale_x === "number" && Number.isFinite(values.scale_x) ? values.scale_x : 1) * (values.flipped === 1 ? -1 : 1), scaleY: this.seconds(values, "scale_y", 1),
-                anchorX: values.flipped === 1 ? 1 - this.coordinate(values, "anchor_x", 0.5) : this.coordinate(values, "anchor_x", 0.5), anchorY: this.coordinate(values, "anchor_y", 0.5) - 0.07
+                anchorX: values.flipped === 1 ? 1 - anchorX : anchorX, anchorY,
             });
         } else if (values.format !== undefined || row.type === 5) {
             throw new Error("投射或序列帧缺少资源");
@@ -465,8 +517,8 @@ export class BattleAttackUtils {
         return Object.freeze({
             effectOnly: row.type === 1 || row.type === 6 || row.type === 7 || row.type === 9, onSource: row.type === 6 || row.type === 9,
             battlefieldOffset: row.type === 9 ? Object.freeze([this.seconds(values, "offset_x", 0), this.seconds(values, "offset_y", 0)]) as readonly [number, number] : null,
-            moveOffset,
-            melee: row.type === 2 || row.type === 11, projectile: row.type === 5, effect,
+            moveOffset, projectileOffset,
+            melee: row.type === 2 || row.type === 11, projectile: row.type === 5 || row.type === 10, effect,
             moveSeconds: row.type === 2 || row.type === 8 || row.type === 11 ? this.seconds(values, "move_time", 0.1) : 0,
             action: row.type === 1 ? "" : action === "skill" ? "attack2" : action === "skill2" ? "attack3" : action === "transform" ? "skill" : "attack",
             attackSeconds: this.seconds(values, "attack_time", 0),

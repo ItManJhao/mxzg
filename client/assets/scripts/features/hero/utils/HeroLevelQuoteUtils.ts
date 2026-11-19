@@ -6,7 +6,7 @@ import { ConfigUnavailable, GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import type { OwnedHero } from "../data/HeroSnapshotUtils";
 
-/** 按钮和消耗栏使用同一报价。pending 由持有未确认请求的控制器设置。 */
+/** 按钮和消耗栏使用同一报价。pending 表示本次请求在途。 */
 export interface HeroLevelQuote {
     readonly status: "ready" | "pending" | "max" | "unavailable";
     readonly levelLimit: number | null;

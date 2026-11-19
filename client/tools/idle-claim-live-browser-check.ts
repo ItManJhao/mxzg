@@ -1,28 +1,28 @@
 /**
- * 新客户端与独立Java服务端的挂机领取恢复联调页：真实WS/PB、应用状态入口及原生IndexedDB。
+ * 独立 Java 服务端的挂机领取联调页，复用真实 WebSocket、统一状态提交和奖励展示。
  * 只验证随机run的H2测试夹具；按钮用于测试脚本，不绑定玩家领取View，也不使用发布构建。
- * 网络故障只丢弃真实帧，不编造回执/资产；页面刷新仅保留无凭证的原请求证据。
+ * 通过丢弃真实帧验证回包、推送以及重新鉴权后的资产更新。
  */
 import { AccountApi } from "../assets/scripts/features/account/AccountApi";
+import { AccountOperations } from "../assets/scripts/features/account/AccountOperations";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
-import { AccountService } from "../assets/scripts/features/account/AccountService";
+import { AccountController } from "../assets/scripts/features/account/AccountController";
 import { RoleController } from "../assets/scripts/features/account/RoleController";
 import { BagController } from "../assets/scripts/features/bag/BagController";
 import { BagModel } from "../assets/scripts/features/bag/BagModel";
 import { MainChapterController } from "../assets/scripts/features/battle/MainChapterController";
 import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterModel";
-import type { IdleClaimJournalPort, IdleClaimPending } from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
+import { ServerClock } from "../assets/scripts/core/ServerClock";
+import type { IdleClaimConfirmation } from "../assets/scripts/features/battle/data/MainChapterIdleClaimData";
 import { AssetStateBinding } from "../assets/scripts/app/remake/AssetStateBinding";
-import { IdleClaimBinding } from "../assets/scripts/app/remake/IdleClaimBinding";
-import { IdleClaimJournal } from "../assets/scripts/app/remake/IdleClaimJournal";
+import { IdleClaimBinding } from "../assets/scripts/features/battle/IdleClaimBinding";
+import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { GameProtocolCodecUtils, GAME_SOCKET_PROTOCOL } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import type { GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { GameSocketClient } from "../assets/scripts/platform/GameSocketClient";
 import type { SocketPort } from "../assets/scripts/platform/GameSocketClient";
 import { Protocol } from "../assets/scripts/platform/Protocol";
-import { ProtocolRouter } from "../assets/scripts/platform/ProtocolRouter";
-import { RewardController } from "../assets/scripts/features/reward/RewardController";
-import { RewardModel } from "../assets/scripts/features/reward/RewardModel";
+import { RewardDisplayFixture } from "./RewardDisplayFixture";
 import { RewardUtils } from "../assets/scripts/features/reward/utils/RewardUtils";
 import type { RewardArgs } from "../assets/scripts/features/reward/data/RewardData";
 
@@ -48,18 +48,6 @@ interface RequestSummary {
     expectedOperationVersion?: number;
 }
 
-/** 页面刷新前保存的测试证据；不保存session或任何凭证。 */
-interface ReloadRecord {
-    /** 本轮隔离run及固定夹具账号。 */
-    run: string;
-    /** 同区服重新登录，避免错误绑定到别的服务端。 */
-    serverId: string;
-    /** 原领取请求，完整指纹必须在刷新后保持。 */
-    pending: IdleClaimPending;
-    /** 原成功事务的冻结摘要，重启恢复必须保持同一回执。 */
-    receipt: Record<string, any>;
-}
-
 /** 断言和有界等待只作用于测试页，失败明确中止，不靠长延时推断成功。 */
 class Verify {
     /** 无需实例化的检查辅助。 */
@@ -78,7 +66,7 @@ class Verify {
         Verify.that(JSON.stringify(actual) === JSON.stringify(expected), message);
     }
 
-    /** 等待真实网络/IDB结果，失败显示当前场景而非无限等待。 */
+    /** 等待真实网络结果，失败显示当前场景而非无限等待。 */
     public static async until(condition: () => boolean, message: string): Promise<void> {
         const deadline = Date.now() + 20000;
         while (!condition()) {
@@ -104,11 +92,8 @@ class TransportTrace {
     public connections = 0;
     /** 首个领取请求已发后才允许丢state，避免误丢准备阶段通知。 */
     private claimSent = false;
-    /** 首次真实领取成功时的受控停止入口，仅跨页面刷新场景使用。 */
-    public onCommitted: (() => void) | null = null;
-
     /** @param fault 本轮仅允许一种受控故障，后续连接恢复交给真实Socket。 */
-    public constructor(private readonly fault: "none" | "receipt" | "state" | "reload") {
+    public constructor(private readonly fault: "none" | "receipt" | "state") {
     }
 
     /** 返回原生WebSocket的薄观察包装，所有传输字节保持原样。 */
@@ -162,11 +147,8 @@ class TransportTrace {
             if (state) {
                 trace.stateEvents++;
             }
-            if (trace.fault === "reload" && trace.claimSent && (state || claimReceipt)) {
+            if (trace.fault === "receipt" && trace.claimSent && state && !trace.dropped.includes(frame.name)) {
                 trace.dropped.push(frame.name);
-                if (claimReceipt) {
-                    trace.onCommitted?.();
-                }
                 return;
             }
             if (trace.fault === "receipt" && claimReceipt && !trace.dropped.includes(frame.name)) {
@@ -184,38 +166,36 @@ class TransportTrace {
     };
 }
 
-/** 一次真实客户端装配，所有资产只经过AccountService及AssetStateBinding。 */
+/** 一次真实客户端装配，所有资产只经过AccountController及AssetStateBinding。 */
 class LiveApplication {
-    /** 本场唯一共享反馈Model，只观察展示队列，不作资产数据来源。 */
-    public readonly rewards = new RewardModel();
-    /** 通用反馈使用正式Controller；此无引擎检查只记录开窗交付，实际画面另由Creator复验。 */
-    public readonly feedback = new RewardController(this.rewards);
+    /** 通用反馈执行真实协议和展示队列，本测试只替换弹窗与飘字。 */
+    public readonly feedback: RewardDisplayFixture;
     /** 通用Controller实际交付的奖励批次，不与库存快照混用。 */
     public readonly shown: RewardArgs[] = [];
     /** 唯一账号状态，历史回执不得覆盖其当前钱包。 */
     public readonly account = new AccountModel();
     /** 本场景唯一主线数据，不使用页面或全局单例中的旧状态。 */
     public readonly model = new MainChapterModel();
-    /** 原生持久记录连接，退出仅关闭不删除。 */
-    public readonly journal: IdleClaimJournal;
     /** 真实WS连接，消息均经过现行PB编解码。 */
     public readonly socket: GameSocketClient;
     /** 认证交付会过滤换号后的成功与失败。 */
-    public readonly service: AccountService;
-    /** 当前测试身份的持久端口，仅用于核验原意图保存/清理。 */
-    public port: IdleClaimJournalPort | null = null;
+    public readonly service: AccountController;
     /** 本测试应用的唯一背包数据，所有变化来自统一服务端状态。 */
     private readonly bagModel = new BagModel();
     /** 原背包控制器提交上述唯一Model，不创建其他库存副本。 */
     private readonly bag = new BagController(this.bagModel);
     /** 原主线控制器提交当前时钟、operation和资产版本。 */
     private readonly chapter = new MainChapterController(this.model);
-    /** 按应用身份激活的恢复入口，首次登录后才显式装配以便先保存测试意图。 */
-    private binding: IdleClaimBinding | null = null;
+    /** 真实单次领取入口。 */
+    private readonly binding: IdleClaimBinding;
+    /** 即时成功用于原页面的收取。 */
+    public readonly confirmations: IdleClaimConfirmation[] = [];
+    /** 联调结束时解除原页面收取事件的观察。 */
+    private readonly stopCollection = EventDispatcher.instance.on("main-chapter.idle-collection", confirmation => {
+        this.confirmations.push(confirmation);
+    });
     /** 统一状态提交入口，销毁时负责解除模块监听。 */
     private readonly assets: AssetStateBinding;
-    /** 最近接纳的初始化信封；不向证据区输出其中的凭证。 */
-    private initialized: GameFrame | null = null;
     /** 防止真实提交观察后重复释放资源。 */
     private disposed = false;
 
@@ -226,45 +206,45 @@ class LiveApplication {
         /** 仅保存真实字节的观察摘要，不成为任何Model数据源。 */
         public readonly trace: TransportTrace,
     ) {
-        this.journal = new IdleClaimJournal("isolated:" + target.run);
         this.socket = new GameSocketClient(target.api.replace(/^http/, "ws") + "/api/v1/game/socket", {
             create: trace.create,
+            clock: ServerClock.instance,
             timeoutMs: 1500,
             retryDelay: () => 100,
             heartbeatMs: 5000,
             validateSnapshot: value => {
                 const state = value as any;
                 AccountApi.readSnapshotRole(state);
-                MainChapterController.readState(state?.mainChapter, state?.revision);
+                MainChapterModel.readState(state?.mainChapter, state?.revision);
             },
         });
-        this.service = new AccountService(this.account, new AccountApi(this.socket), {
+        this.service = new AccountController(this.account, new AccountApi(this.socket), {
             read: () => null,
             write: () => {},
             clear: () => {},
         });
         this.bag.initialize();
         this.chapter.initialize();
-        this.feedback.configure(async args => { this.shown.push(args); }, () => {
-            throw new Error("本批挂机真实反馈应为POPUP");
-        });
-        this.feedback.initialize();
+        this.feedback = new RewardDisplayFixture(this.service);
+        this.feedback.popup = async args => { this.shown.push(args); };
+        this.feedback.tips = () => { throw new Error("挂机奖励应为获得窗"); };
+        const operations = new AccountOperations(this.service, this.socket);
+        this.chapter.configure(operations, this.feedback);
+        this.binding = new IdleClaimBinding(this.service, this.model, this.chapter);
         this.assets = new AssetStateBinding(this.account, this.bag,
-            new RoleController(role => this.service.acceptRole(role)), undefined, undefined,
+            new RoleController(this.account), undefined, undefined,
             () => {
-                this.binding?.deactivate();
+                this.binding.deactivate();
                 this.feedback.resetSession();
             }, this.chapter);
         const accept = (frame: GameFrame): void => {
             if (this.assets.apply(frame)) {
-                this.initialized = frame;
-                this.feedback.observeRevision(this.model.state!.assetRevision);
-                this.binding?.afterSnapshot(frame.name);
+                this.feedback.controller.observeRevision(this.assets.acceptedRevision);
             }
         };
         this.service.onInitialized = accept;
         this.socket.onState = accept;
-        this.socket.onReward = frame => ProtocolRouter.instance.dispatch(this.feedback, frame);
+        this.socket.onReward = frame => this.feedback.controller.receive(frame);
         this.socket.onRejected = (token, message) => this.service.rejectSession(token, message);
         this.socket.onReady = () => {
             if (!this.account.snapshot.busy && this.account.snapshot.role && this.socket.latestState) {
@@ -282,70 +262,36 @@ class LiveApplication {
             && Number.isSafeInteger(points.limit), "真实统一首包没有权威冒险点");
     }
 
-    /**
-     * 先原子保存原请求，再安装正式应用恢复绑定；不调用私有controller或玩家View。
-     * @param requireExisting 刷新恢复必须先读到原记录，不能从测试元数据重建掩盖日志丢失。
-     */
-    public async startRecovery(request?: IdleClaimPending, requireExisting = false): Promise<IdleClaimPending> {
-        const role = this.account.snapshot.role;
-        Verify.that(role?.serverId && this.initialized && this.model.idle?.claimState, "恢复前必须接受真实首包");
-        this.port = await this.journal.forRole(role.serverId, role.id);
-        const original: IdleClaimPending = request || {schemaVersion: 1, requestId: crypto.randomUUID(),
-            expectedOperationVersion: this.model.idle.claimState.operationVersion};
-        if (requireExisting) {
-            Verify.equal(await this.port.read(), original, "刷新后的原生持久记录缺失或已变化，不能从页面元数据重建掩盖问题");
-        }
-        Verify.equal(await this.port.create(original), original, "同一测试身份已存在其他原请求");
-        Verify.equal(await this.port.read(), original, "发包前原请求未持久化");
-        if (!this.binding) {
-            this.binding = new IdleClaimBinding(this.account, this.service, this.socket, this.journal, this.model,
-                confirmation => {
-                    if (confirmation.receipt.feedback) {
-                        this.feedback.restore(confirmation.receipt.feedback);
-                    }
-                });
-        }
-        this.binding.afterSnapshot(this.initialized.name);
-        return original;
+    /** 在当前测试角色明确发起一次点击。 */
+    public claim(): Promise<void> {
+        return this.binding.begin({});
     }
 
-    /** 等待本场原请求与最新状态双向确认，检查期间不创建第二个新意图。 */
-    public async confirmed(): Promise<void> {
-        await Verify.until(() => this.model.idleClaim.phase === "confirmed", "恢复未确认：" + this.model.idleClaim.message);
-        Verify.that(this.port, "恢复记录口缺失");
-        Verify.equal(await this.port.read(), null, "成功双确认后仍残留原请求");
-    }
-
-    /** 从真实status读取冻结回执；仅查询历史结果，不提交其中的资产。 */
-    public async status(requestId: string): Promise<Record<string, any>> {
-        const frame = await this.service.authenticated(token => this.socket.chapter(token, Protocol.CHAPTER_IDLE_CLAIM_STATUS, {requestId}));
-        const status = frame.body as any;
-        Verify.that(status.status === "COMMITTED" && status.receipt.requestId === requestId, "真实status没有返回原提交");
-        return status.receipt;
+    /** 回前台时使用正常鉴权首包同步账户和挂机数据。 */
+    public reconnect(): void {
+        this.socket.setBackground(true);
+        this.socket.setBackground(false);
     }
 
     /**
-     * 输出当前状态与历史回执各自摘要，确认钱包来自最新统一首包而非回执重放。
-     * @param latestIsThisCommit 新提交案例需逐币种匹配本次实际到账；历史恢复允许当前资产已再次变化。
+     * 核对统一快照中的当前资产与本次真实到账，输出两者的测试摘要。
      */
-    public proof(request: IdleClaimPending, receipt: Record<string, any>, latestIsThisCommit = true): Record<string, unknown> {
+    public proof(request: { requestId: string; expectedOperationVersion: number }, receipt: Record<string, any>): Record<string, unknown> {
         const state = this.model.state;
         const idle = this.model.idle;
         const role = this.account.snapshot.role;
         Verify.that(state && idle?.claimState && role, "确认后权威状态缺失");
         Verify.that(state.assetRevision >= receipt.assetRevision, "统一资产版本未达到回执");
         Verify.that(idle.claimState.operationVersion >= receipt.afterOperationVersion, "操作版本未达到回执");
-        if (latestIsThisCommit) {
-            Verify.that(role.gold === receipt.actual.wallet.goldAfter && role.diamonds === receipt.actual.wallet.diamondsAfter,
-                "真实统一钱包与本次发奖结果不一致");
-            const changes = receipt.actual.tavern;
-            Verify.that(Array.isArray(changes) && changes.length === 1
-                && role.tavernPoints?.adventureCount === changes[0].afterQuantity
-                && role.tavernPoints.limit === changes[0].limit,
-                "权威冒险点未按真实独立领域结果同步");
-            Verify.that(!this.bagModel.snapshot.items.some(item => item.itemId === 900401),
-                "新快照仍把冒险点当作普通背包物品");
-        }
+        Verify.that(role.gold === receipt.actual.wallet.goldAfter && role.diamonds === receipt.actual.wallet.diamondsAfter,
+            "真实统一钱包与本次发奖结果不一致");
+        const changes = receipt.actual.tavern;
+        Verify.that(Array.isArray(changes) && changes.length === 1
+            && role.tavernPoints?.adventureCount === changes[0].afterQuantity
+            && role.tavernPoints.limit === changes[0].limit,
+            "权威冒险点未按真实独立领域结果同步");
+        Verify.that(!this.bagModel.snapshot.items.some(item => item.itemId === 900401),
+            "新快照仍把冒险点当作普通背包物品");
         return {
             original: request,
             receipt: LiveBrowserCheck.receiptSummary(receipt),
@@ -357,22 +303,20 @@ class LiveApplication {
             dropped: this.trace.dropped,
             stateEvents: this.trace.stateEvents,
             connections: this.trace.connections,
-            rewardFeedback: { accepted: this.rewards.snapshot.acceptedCount, shown: this.shown.map(row => ({
+            rewardFeedback: { accepted: this.feedback.queue.snapshot.acceptedCount, shown: this.shown.map(row => ({
                 receiptId: row.receiptId, items: row.items,
             })) },
         };
     }
 
-    /** 主动结束所有网络和IDB任务，但不删除已提交的待确认原记录。 */
+    /** 释放网络、界面夹具及模块监听。 */
     public dispose(): void {
         if (this.disposed) {
             return;
         }
         this.disposed = true;
-        this.binding?.dispose();
-        if (!this.binding) {
-            this.journal.dispose();
-        }
+        this.stopCollection();
+        this.binding.deactivate();
         this.socket.onReady = this.socket.onState = this.socket.onRejected = null;
         this.socket.onReward = null;
         this.socket.disconnect();
@@ -419,7 +363,7 @@ export class LiveBrowserCheck {
         };
     }
 
-    /** 运行正常、丢回执、丢通知三种真实提交，每个固定夹具角色只执行一笔。 */
+    /** 验证正常提交、丢回包和丢状态三个独立角色。 */
     public static async run(): Promise<Record<string, unknown>> {
         const target = await this.target();
         const results: Record<string, unknown>[] = [];
@@ -427,176 +371,62 @@ export class LiveBrowserCheck {
             const app = new LiveApplication(target, new TransportTrace(fault));
             try {
                 await app.login(account);
-                Verify.that(app.account.snapshot.role?.tavernPoints?.adventureCount === 2000,
-                    "独立新角色未按旧同源配置初始化2000冒险点");
+                const operationVersion = app.model.idle!.claimState!.operationVersion;
                 Verify.that(app.model.idle!.claimState!.requestMode === "ENABLED", "本阶段需要仅测试宿主启用领取");
-                const original = await app.startRecovery();
-                await app.confirmed();
-                const claims = app.trace.requests.filter(row => row.name === Protocol.CHAPTER_IDLE_CLAIM);
-                Verify.that(claims.length === 1 && claims[0].requestId === original.requestId
-                    && claims[0].expectedOperationVersion === original.expectedOperationVersion, "原请求被重复编号或改写");
-                const authenticates = app.trace.requests.filter(row => row.name === Protocol.SESSION_AUTHENTICATE).length;
-                Verify.that(fault === "none" || authenticates === 1, "故障恢复鉴权次数应恰好一次");
-                if (fault !== "none") {
-                    Verify.that(app.trace.dropped.length === 1, "指定故障未实际触发");
+                await app.claim();
+                Verify.that(app.trace.receipt, "服务端没有确认提交");
+                const receipt = app.trace.receipt;
+                const [claim, ...duplicates] = app.trace.requests.filter(row => row.name === Protocol.CHAPTER_IDLE_CLAIM);
+                Verify.that(claim?.requestId && claim.expectedOperationVersion === operationVersion && !duplicates.length, "玩家应只发送一次领取");
+                Verify.equal(receipt.requestId, claim.requestId, "服务端回执须匹配本次领取");
+                if (fault === "state") {
+                    await Verify.until(() => app.trace.dropped.includes(Protocol.STATE_CHANGED), "指定的状态事件未被丢弃");
+                    Verify.equal(app.model.idle!.claimState!.operationVersion, operationVersion, "缺失推送时保持原快照");
+                    Verify.that(app.trace.requests.every(row => row.name !== Protocol.SESSION_AUTHENTICATE), "缺少推送不能主动补鉴权");
+                    app.reconnect();
                 }
-                const receipt = await app.status(original.requestId);
-                Verify.that(receipt.afterOperationVersion === original.expectedOperationVersion + 1, "单笔提交未恰好消费一次版本");
-                Verify.that(app.rewards.snapshot.acceptedCount === 1 && app.shown.length === 0,
-                    "实时通知及历史恢复没有合并为等待主城的一笔反馈");
+                await Verify.until(() => app.model.idle?.claimState?.operationVersion === operationVersion + 1,
+                    "未收到服务端消费后的快照");
+                Verify.that(app.trace.requests.every(row => row.name !== Protocol.CHAPTER_IDLE_CLAIM_STATUS), "快照恢复不能追查历史请求");
+                Verify.equal(app.trace.requests.filter(row => row.name === Protocol.CHAPTER_IDLE_CLAIM).length, 1, "重连不能自动补发领取");
+                Verify.equal(app.confirmations.length, fault === "receipt" ? 0 : 1, "只有即时成功回包才能播放收取");
+                const feedbackCount = app.feedback.queue.snapshot.acceptedCount;
+                Verify.that(feedbackCount <= 1 && (fault === "receipt" || feedbackCount === 1), "实时通知和回包应合并");
                 app.feedback.setReady(true);
-                await Verify.until(() => app.rewards.snapshot.phase === "idle", "通用奖励批次未完成展示交付");
-                Verify.equal(app.shown, [{ receiptId: receipt.receiptId,
-                    items: RewardUtils.fromActual(receipt.receiptId, receipt.assetRevision, receipt.actual)!.items }],
-                    "通用奖励未恰好交付一次实际到账及升级附赠");
-                results.push({case: account, ...app.proof(original, receipt)});
+                await Verify.until(() => app.feedback.queue.snapshot.phase === "idle", "通用获得窗未完成展示");
+                if (feedbackCount === 1) {
+                    Verify.equal(app.shown, [{ receiptId: receipt.receiptId,
+                        items: RewardUtils.fromActual(receipt.receiptId, receipt.assetRevision, receipt.actual)!.items }],
+                        "通用获得窗应恰好展示一次实际到账");
+                }
+                results.push({case: account, ...app.proof({requestId: claim.requestId,
+                    expectedOperationVersion: operationVersion}, receipt)});
             } finally {
                 app.dispose();
             }
         }
-        return {result: "PASS", scope: "真实JavaWS + 新客户端 + 原生IDB", cases: results};
+        return {result: "PASS", scope: "真实 Java 与 TypeScript WebSocket", cases: results};
     }
 
-    /** 观察真实事务已提交后立即释放应用，故意不交付回执或通知，留下跨刷新原意图。 */
-    public static async prepareReload(): Promise<Record<string, unknown>> {
-        const target = await this.target();
-        const trace = new TransportTrace("reload");
-        const app = new LiveApplication(target, trace);
-        trace.onCommitted = () => app.dispose();
-        let original: IdleClaimPending;
-        try {
-            await app.login("idle_reload");
-            Verify.that(app.model.idle!.claimState!.requestMode === "ENABLED", "准备阶段测试宿主必须启用领取");
-            original = await app.startRecovery();
-            await Verify.until(() => trace.receipt !== null, "未观察到真实成功领取回执");
-        } finally {
-            app.dispose();
-        }
-        const journal = new IdleClaimJournal("isolated:" + target.run);
-        try {
-            const receipt = trace.receipt!;
-            const port = await journal.forRole(target.serverId, receipt.actual.roleId);
-            Verify.equal(await port.read(), original!, "销毁应用不应删除未交付的原意图");
-            Verify.that(!trace.requests.some(row => row.name === Protocol.SESSION_AUTHENTICATE), "准备阶段不应自动恢复");
-            Verify.that(trace.requests.filter(row => row.name === Protocol.CHAPTER_IDLE_CLAIM_STATUS).length === 1,
-                "准备阶段只能有提交前NOT_FOUND查询");
-            const record: ReloadRecord = {run: target.run, serverId: target.serverId,
-                pending: original!, receipt: LiveBrowserCheck.receiptSummary(receipt)};
-            sessionStorage.setItem("mxzg.idle.live.reload." + target.run, JSON.stringify(record));
-            return {result: "PREPARED", record, requests: trace.requests, dropped: trace.dropped,
-                next: "停止测试Java宿主后以同run只读重启，换新api参数并刷新，再恢复原请求"};
-        } finally {
-            journal.dispose();
-        }
-    }
-
-    /** 新服务端进程只读模式下，重新登录后从真实历史COMMITTED恢复原ID，不再发领取。 */
-    public static async restoreReload(): Promise<Record<string, unknown>> {
-        const target = await this.target();
-        const saved = sessionStorage.getItem("mxzg.idle.live.reload." + target.run);
-        Verify.that(saved, "本标签页缺少刷新前记录");
-        const record = JSON.parse(saved) as ReloadRecord;
-        Verify.that(record.run === target.run && record.serverId === target.serverId, "刷新记录不属于当前测试宿主");
-        const app = new LiveApplication(target, new TransportTrace("none"));
-        let history: Record<string, unknown>;
-        try {
-            await app.login("idle_reload");
-            Verify.that(app.model.idle!.claimState!.requestMode === "READ_ONLY", "重启恢复阶段必须为只读");
-            const acceptedBeforeRecovery = {
-                wallet: {gold: app.account.snapshot.role!.gold, diamonds: app.account.snapshot.role!.diamonds},
-                assetRevision: app.model.state!.assetRevision,
-                operationVersion: app.model.idle!.claimState!.operationVersion,
-                startedAt: app.model.idle!.startedAt,
-            };
-            await app.startRecovery(record.pending, true);
-            await app.confirmed();
-            const receipt = await app.status(record.pending.requestId);
-            Verify.equal(LiveBrowserCheck.receiptSummary(receipt), record.receipt, "跨Java进程重启后的历史回执发生变化");
-            Verify.that(!app.trace.requests.some(row => row.name === Protocol.CHAPTER_IDLE_CLAIM), "只读历史恢复误发新领取");
-            const acceptedAfterRecovery = {
-                wallet: {gold: app.account.snapshot.role!.gold, diamonds: app.account.snapshot.role!.diamonds},
-                assetRevision: app.model.state!.assetRevision,
-                operationVersion: app.model.idle!.claimState!.operationVersion,
-                startedAt: app.model.idle!.startedAt,
-            };
-            Verify.equal(acceptedAfterRecovery, acceptedBeforeRecovery, "历史回执改变了已接纳的最新统一状态");
-            history = {...app.proof(record.pending, receipt, false), acceptedBeforeRecovery};
-        } finally {
-            app.dispose();
-        }
-        const pending = await this.readOnlyPending(target);
-        sessionStorage.removeItem("mxzg.idle.live.reload." + target.run);
-        await this.clearTestDatabase(target.run);
-        return {result: "PASS", scope: "页面刷新 + Java进程重启 + READ_ONLY历史恢复", history, pending,
-            isolatedDatabaseDeleted: true};
-    }
-
-    /** 只读NOT_FOUND保留原意图，换号不串记录，回原号仍查询原ID且不发领取。 */
-    private static async readOnlyPending(target: Target): Promise<Record<string, unknown>> {
-        const app = new LiveApplication(target, new TransportTrace("none"));
-        try {
-            await app.login("idle_pending");
-            Verify.that(app.model.idle!.claimState!.requestMode === "READ_ONLY", "NOT_FOUND检查需只读状态");
-            const request = await app.startRecovery();
-            await Verify.until(() => app.model.idleClaim.phase === "paused", "只读NOT_FOUND应暂停保留");
-            Verify.equal(await app.port!.read(), request, "只读NOT_FOUND删除了原意图");
-            const currentRole = app.account.snapshot.role!;
-            const originalPort = app.port!;
-            await app.login("idle_other");
-            await Verify.until(() => app.model.idleClaim.phase === "idle", "新身份不应带入旧意图");
-            Verify.equal(await originalPort.read(), request, "换号删除了原身份记录");
-            await app.login("idle_pending");
-            await Verify.until(() => app.model.idleClaim.phase === "paused", "原身份重登没有继续原意图");
-            Verify.equal(app.model.idleClaim.pending, request, "重登改写了原请求");
-            Verify.equal(await originalPort.read(), request, "重登未保留原意图");
-            Verify.that(app.account.snapshot.role!.id === currentRole.id, "原号重登角色变化");
-            Verify.that(!app.trace.requests.some(row => row.name === Protocol.CHAPTER_IDLE_CLAIM), "只读NOT_FOUND错误重发领取");
-            const statuses = app.trace.requests.filter(row => row.name === Protocol.CHAPTER_IDLE_CLAIM_STATUS);
-            Verify.that(statuses.length === 2 && statuses.every(row => row.requestId === request.requestId), "换号恢复查询没有保持原编号");
-            return {original: request, phase: app.model.idleClaim.phase, requests: app.trace.requests,
-                assetRevision: app.model.state!.assetRevision, operationVersion: app.model.idle!.claimState!.operationVersion};
-        } finally {
-            app.dispose();
-        }
-    }
-
-    /** 仅删除本次随机测试run数据库；所有连接必须先由场景finally释放。 */
-    private static clearTestDatabase(run: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.deleteDatabase("mxzg.remake.idle-claims.v1.isolated:" + run);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-            request.onblocked = () => reject(new Error("测试数据库仍被占用，不能清理"));
-        });
-    }
-
-    /** 只绑定测试页真实按钮，异步失败受控显示，不产生未捕获异常或后台自动领取。 */
+    /** 玩家显式点击测试按钮后运行联调。 */
     public static bind(): void {
         const output = document.getElementById("Output")!;
-        const entries: [string, () => Promise<Record<string, unknown>>][] = [
-            ["RunButton", () => this.run()],
-            ["PrepareReloadButton", () => this.prepareReload()],
-            ["RestoreReloadButton", () => this.restoreReload()],
-        ];
-        const buttons = entries.map(([id]) => document.getElementById(id) as HTMLButtonElement);
-        entries.forEach(([, action], index) => {
-            buttons[index].addEventListener("click", async () => {
-                buttons.forEach(button => { button.disabled = true; });
-                output.textContent = "RUNNING";
-                document.body.dataset.result = "running";
-                try {
-                    const proof = await action();
-                    output.textContent = JSON.stringify(proof, null, 2);
-                    document.body.dataset.result = String(proof.result).toLowerCase();
-                } catch (error) {
-                    output.textContent = JSON.stringify({result: "FAIL", error: String(error instanceof Error ? error.stack : error)}, null, 2);
-                    document.body.dataset.result = "failed";
-                } finally {
-                    buttons.forEach(button => { button.disabled = false; });
-                }
-            });
+        const button = document.getElementById("RunButton") as HTMLButtonElement;
+        button.addEventListener("click", async () => {
+            button.disabled = true;
+            output.textContent = "运行中";
+            try {
+                output.textContent = JSON.stringify(await this.run(), null, 2);
+                document.body.dataset.result = "passed";
+            } catch (error) {
+                output.textContent = String(error instanceof Error ? error.stack || error.message : error);
+                document.body.dataset.result = "failed";
+            } finally {
+                button.disabled = false;
+            }
         });
     }
+
 }
 
 LiveBrowserCheck.bind();

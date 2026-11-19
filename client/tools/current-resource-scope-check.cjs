@@ -131,6 +131,7 @@ function approvedEffectsChanges() {
     assert.deepEqual(delta.assetEvidence, [
         ...[4, 5, 9, '10-20'].map(stage => `docs/validation/chapter-stage${stage}-assets-20261117.json`),
         'docs/validation/chapter-first-summon-assets-20261118.json',
+        'docs/validation/gold-dungeon-action-assets-20261119.json',
     ], '特效增量须逐批对应已核对的原图证据');
     assert.deepEqual([...delta.newAssets].sort(), ['legacy-stone.effect', 'legacy-stone.effect.meta',
         'legacy-spine-pma.effect', 'legacy-spine-pma.effect.meta'].sort(),
@@ -202,10 +203,15 @@ function approvedEffectsChanges() {
 
 const actualBundles = bundleEntries().map(entry => entry.name).sort();
 assert.deepEqual(effectsMove.bundleInventory.added.map(row => row.name), ['effects'], '本次仅新增effects素材包');
-const approvedBundles = [...evidence.bundleInventory.after, ...effectsMove.bundleInventory.added].map(row => row.name).sort();
+const enabledModules = ['market', 'dungeon'];
+for (const name of enabledModules) {
+    const meta = read(resolveAssetPath(`bundles/module/${name}.meta`));
+    assert.deepEqual(meta.userData, { isBundle: true, bundleName: name, priority: 2, bundleConfigID: 'remote-assets' });
+}
+const approvedBundles = [...[...evidence.bundleInventory.after, ...effectsMove.bundleInventory.added].map(row => row.name),
+    ...enabledModules].sort();
 assert.equal(new Set(approvedBundles).size, approvedBundles.length, '范围证据中的Bundle名称重复');
 assert.deepEqual(actualBundles, approvedBundles, '未实现包重生或当前包被误删');
-assert.equal(actualBundles.length, effectsMove.bundleInventory.after.bundles, '拆包后的范围数量须与本次证据一致');
 const resourceFiles = files(assets);
 const actualPrefabs = resourceFiles.filter(file => file.endsWith('.prefab')).sort();
 const plannedPrefabs = new Set(prefabPlan.groups.flatMap(group => group.names.map(name =>
@@ -270,7 +276,7 @@ assert.equal(crypto.createHash('sha256').update(effectsMetaText).digest('hex'),
 assert.equal(effectsMeta.uuid, effectsMove.uuid, 'effects根UUID必须保留');
 assert.deepEqual(effectsMeta.userData, { isBundle: true, bundleName: 'effects', priority: 2, bundleConfigID: 'remote-assets' });
 assert.equal(bundleEntries().filter(entry => entry.meta.userData.bundleConfigID === 'remote-assets').length,
-    effectsMove.bundleInventory.after.remoteBundles, '拆包后的远程范围数量须与证据一致');
+    effectsMove.bundleInventory.after.remoteBundles + enabledModules.length, '远程资源范围包含普通市场与副本大厅');
 const roster = read(resolveBundleFile('hero/prefabs/HeroListView.prefab'));
 assert(!roster.some(row => row._name === 'btn_permanent_skin'), '未实现皮肤商店的隐藏资源依赖不可恢复');
 console.log(`当前资源范围通过：${actualBundles.length}包/${actualPrefabs.length}Prefab/${viewPrefabs.size}独立View、原UUID、全部序列化引用及${effectsChanges.size}项有据特效增量；虚拟还原${effectsMove.snapshot.after.files}份原特效整树/UUID摘要。实际下载和构建另验。`);

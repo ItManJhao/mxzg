@@ -248,15 +248,14 @@ async function checkUnsavedDraftRecovery(heroes: Parameters<FormationView["rende
     const module = new FormationController(saves, roster);
     module.initialize();
     let saveCalls = 0;
-    let refreshes = 0;
     let confirmed = 0;
     let cancelled = 0;
-    module.configure(async () => {
-        saveCalls++;
-        assert.fail("未保存草稿或同版状态通知不得发送formation.save");
-    }, async () => {
-        refreshes++;
-        assert.fail("仅接纳同版状态不得反向创建一次鉴权任务");
+    module.configure({
+        async deliver(name) {
+            assert.equal(name, Protocol.FORMATION_SAVE);
+            saveCalls++;
+            assert.fail("未保存草稿或同版状态通知不得发送formation.save");
+        },
     });
     editor.configure(module, roster, saves);
 
@@ -301,9 +300,8 @@ async function checkUnsavedDraftRecovery(heroes: Parameters<FormationView["rende
         assertDraft();
         await settleTasks();
         assert.equal(saveCalls, 0);
-        assert.equal(refreshes, 0);
         assert.equal(confirmed, 0);
-        assert.equal(saves.snapshot.pending, null);
+        assert.deepEqual(saves.snapshot, { busy: false, savedVersion: null });
 
         editor.runClose();
         assert.equal(cancelled, 1);
@@ -315,170 +313,15 @@ async function checkUnsavedDraftRecovery(heroes: Parameters<FormationView["rende
         assert.equal(slotAt(editor, 2).portrait!.active, false);
         assert.equal(editor.filterMark!.position.x, editor.elementButtons[0].node.position.x,
             "重开回到全部筛选，不复活旧筛选交互");
-        assert.equal(Reflect.get(editor, "submitted"), null, "未保存草稿不得生成或复活出战提交意图");
+        assert.equal(Reflect.get(editor, "submittedForBattle"), false, "未保存草稿不恢复出战操作");
         EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
         await settleTasks();
         assert.equal(confirmed, 0, "重开及同版通知不自动出战");
         assert.equal(saveCalls, 0);
-        assert.equal(refreshes, 0);
     } finally {
         editor.runClose();
         module.dispose();
         root.destroy();
-    }
-}
-
-/** 验证原ACK在鉴权失败/旧首包后保留草稿，关页不出战，明确重试同步成功才完成一次。 */
-async function checkMissingStateRecovery(heroes: Parameters<FormationView["render"]>[0]["heroes"]): Promise<void> {
-    const root = instantiateData(read(PAGE));
-    const editor = root.getComponent(FormationView) as FormationView;
-    const roster = new HeroRosterModel();
-    const saves = new FormationSaveModel();
-    const asset = {
-        formationId: 1, unlockedIds: [1, 2], assistanceUnlocked: false, version: 0, slots: [],
-        options: [
-            { formationId: 1, openPositions: [2, 3, 5, 6, 7, 8] },
-            { formationId: 2, openPositions: [1, 2, 3, 5, 6, 7] },
-        ],
-    };
-    roster.replace({ status: "ready", heroes, error: "", mainFormation: asset });
-    const module = new FormationController(saves, roster);
-    module.initialize();
-    let saveCalls = 0;
-    let refreshes = 0;
-    let confirmed = 0;
-    let cancelled = 0;
-    let original: FormationSaveRequest | null = null;
-    let finishRefresh: ((result: "failure" | "old" | "current") => void) | null = null;
-    const notices: string[] = [];
-    const offFeedback = UIManager.instance.bindNotice(text => notices.push(text));
-
-    /** 模拟已校验快照提交及同步名册事件；旧版本保持空阵，不伪造ACK资产。 */
-    const sync = (version: number): void => {
-        roster.replace({ status: "ready", heroes, error: "", mainFormation: {
-            ...asset, version, slots: version === 0 ? [] : original!.slots,
-        } });
-        EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
-    };
-    /** 核对页面仍显示原提交位置，编辑控件锁定，而明确同步重试按钮保持可用。 */
-    const assertRetryableDraft = (): void => {
-        assert(original);
-        assert.deepEqual(saves.snapshot.pending, original);
-        assert.equal(saves.snapshot.acknowledged, 1);
-        assert.equal(roster.snapshot.mainFormation!.version, 0, "失败或旧首包不改变权威阵容");
-        assert.equal(roster.snapshot.mainFormation!.slots.length, 0);
-        assert(editor.countLabel!.string.includes("1 / 6"));
-        assert.equal(slotAt(editor, 2).portrait!.active, true);
-        assert.equal(slotAt(editor, 3).portrait!.active, false);
-        assert.equal(editor.formationButton!.interactable, false);
-        assert(editor.slots.every(slot => !slot.button!.interactable));
-        assert(editor.heroScroll!.content!.children.every(node => !node.getComponent(HeroIconCellView)!.button!.interactable));
-        assert.equal(editor.confirmButton!.interactable, true);
-        assert.equal(findComponentInChildren(editor.confirmButton!.node, Label).string, "重试同步");
-    };
-    /** 只把明确true计为出战确认；关闭、重开和等待中的状态通知均不能代替玩家确认。 */
-    const complete = (ok: boolean): void => {
-        if (ok) {
-            confirmed++;
-        } else {
-            cancelled++;
-        }
-    };
-    module.configure(async (body, received) => {
-        saveCalls++;
-        original = structuredClone(body);
-        const frame: GameFrame = { version: 1, kind: "response", name: Protocol.FORMATION_SAVE,
-            ok: true, body: { requestId: body.requestId, version: 1 } };
-        received(frame);
-    }, async (received, failed) => {
-        refreshes++;
-        await new Promise<void>(resolve => {
-            finishRefresh = result => {
-                finishRefresh = null;
-                if (result === "failure") {
-                    failed(new Error("受控鉴权同步失败"));
-                } else {
-                    sync(result === "old" ? 0 : 1);
-                    received();
-                }
-                resolve();
-            };
-        });
-    });
-    editor.configure(module, roster, saves);
-    try {
-        editor.runOpen({ closeAfterSave: true, complete });
-        clickHero(editor, 0);
-        editor.confirmButton!.node.emit(Button.EventType.CLICK);
-        await settleTasks();
-        assert.equal(saveCalls, 1);
-        assert.equal(refreshes, 1);
-        assert.equal(confirmed, 0, "ACK本身不能开始挑战");
-        assert(saves.snapshot.busy);
-        assert(finishRefresh);
-        finishRefresh("failure");
-        await settleTasks();
-        assertRetryableDraft();
-
-        // 即使直接派发按钮事件绕过引擎禁用判断，View仍拒绝修改待确认的原草稿。
-        clickHero(editor, 0);
-        slotAt(editor, 2).button!.node.emit(Button.EventType.CLICK);
-        editor.formationButton!.node.emit(Button.EventType.CLICK);
-        assertRetryableDraft();
-
-        editor.confirmButton!.node.emit(Button.EventType.CLICK);
-        await settleTasks();
-        assert.equal(saveCalls, 1, "ACK后的按钮只重试鉴权同步");
-        assert.equal(refreshes, 2);
-        assert(finishRefresh);
-        finishRefresh("old");
-        await settleTasks();
-        assert.equal(refreshes, 2, "同步首包事件不能递归触发下一轮鉴权");
-        assert.equal(confirmed, 0);
-        assertRetryableDraft();
-
-        editor.confirmButton!.node.emit(Button.EventType.CLICK);
-        await settleTasks();
-        assert.equal(refreshes, 3);
-        editor.runClose();
-        assert.equal(cancelled, 1);
-        assert.equal(EventDispatcher.instance.targetListenerCount(editor), 0);
-        sync(0);
-        assert.equal(confirmed, 0, "关页期间状态通知不能继续挑战");
-        editor.runOpen({ closeAfterSave: true, complete });
-        assert.deepEqual(saves.snapshot.pending, original);
-        assert(editor.countLabel!.string.includes("1 / 6"));
-        assert.equal(slotAt(editor, 2).portrait!.active, true);
-        assert.equal(editor.confirmButton!.interactable, false, "刷新在途重开仍等待当前任务");
-        assert.equal(findComponentInChildren(editor.confirmButton!.node, Label).string, "同步中");
-        assert(finishRefresh);
-        finishRefresh("old");
-        await settleTasks();
-        assert.equal(confirmed, 0, "关页重开已清理原出战意图，鉴权结束不能继续挑战");
-        assertRetryableDraft();
-        assert.equal(confirmed, 0, "重开仅恢复原待确认草稿，不自动出战");
-
-        editor.confirmButton!.node.emit(Button.EventType.CLICK);
-        await settleTasks();
-        assert.equal(refreshes, 4);
-        assert.equal(saveCalls, 1);
-        assert(finishRefresh);
-        finishRefresh("current");
-        await settleTasks();
-        assert.equal(confirmed, 1, "本页明确重试后，ACK与统一阵容确认才完成出战");
-        assert.equal(saves.snapshot.pending, null);
-        assert.equal(saves.snapshot.acknowledged, null);
-        EventDispatcher.instance.emit(HeroRosterEvent.Updated, { revision: roster.version });
-        assert.equal(confirmed, 1, "重复统一状态不能重复出战");
-        assert(notices.some(text => text.includes("已保存")));
-    } finally {
-        editor.runClose();
-        if (finishRefresh) {
-            finishRefresh("old");
-            await settleTasks();
-        }
-        module.dispose();
-        offFeedback();
     }
 }
 
@@ -503,9 +346,12 @@ async function checkDragDraft(heroes: Parameters<FormationView["render"]>[0]["he
     let confirmed = 0;
     let acknowledge: ((frame: GameFrame) => void) | undefined;
     module.initialize();
-    module.configure(async (request, received) => {
-        submissions.push(request);
-        received(await new Promise<GameFrame>(resolve => { acknowledge = resolve; }));
+    module.configure({
+        async deliver(name, request, received) {
+            assert.equal(name, Protocol.FORMATION_SAVE);
+            submissions.push(request as FormationSaveRequest);
+            received(await new Promise<GameFrame>(resolve => { acknowledge = resolve; }));
+        },
     });
     editor.configure(module, roster, saves);
     try {
@@ -621,10 +467,14 @@ async function checkFormationMatrix(heroes: Parameters<FormationView["render"]>[
     }
     roster.replace({ status: "ready", heroes: rosterHeroes, error: "", mainFormation: asset });
     controller.initialize();
-    controller.configure(async (body, received) => {
-        submissions.push(body);
-        received({ version: 1, kind: "response", name: Protocol.FORMATION_SAVE,
-            ok: true, body: { requestId: body.requestId, version: body.expectedVersion + 1 } });
+    controller.configure({
+        async deliver(name, body, received) {
+            assert.equal(name, Protocol.FORMATION_SAVE);
+            const request = body as FormationSaveRequest;
+            submissions.push(request);
+            received({ version: 1, kind: "response", name: Protocol.FORMATION_SAVE,
+                ok: true, body: { requestId: request.requestId, version: request.expectedVersion + 1 } });
+        },
     });
     editor.configure(controller, roster, saves);
     try {
@@ -813,9 +663,12 @@ async function main(): Promise<void> {
     roster.replace({status:"ready",heroes,error:"",mainFormation:asset});
     const module=new FormationController(saves,roster);module.initialize();module.resetSession();
     let request:any,resolveSave!: (value:any)=>void;
-    module.configure(async (body,received,failed)=>{
-        request=body;
-        try { received(await new Promise(resolve=>{resolveSave=resolve;})); } catch(error) { failed(error); }
+    module.configure({
+        async deliver(name, body, received, failed) {
+            assert.equal(name, Protocol.FORMATION_SAVE);
+            request=body;
+            try { received(await new Promise(resolve=>{resolveSave=resolve;})); } catch(error) { failed(error); }
+        },
     });
     editor.configure(module,roster,saves);editor.runOpen({complete:()=>{}});
     assert.equal(heroCellAt(editor, 0).battle!.active, false, "未上阵头像保持完整亮度");
@@ -837,8 +690,7 @@ async function main(): Promise<void> {
     editor.runClose();assert.equal(EventDispatcher.instance.targetListenerCount(editor),0);
     resolveSave({version:1,kind:"response",name:Protocol.FORMATION_SAVE,ok:true,body:{requestId:request.requestId,version:1}});
     await settleTasks();
-    assert.equal(saves.snapshot.acknowledged,1,"关闭窗口不销毁保存回执处理");
-    assert.deepEqual(saves.snapshot.pending, request, "ACK后原提交参数保留到统一状态确认");
+    assert.deepEqual(saves.snapshot, { busy: true, savedVersion: 1 }, "关闭窗口不销毁等待权威阵容的模块");
     roster.replace({status:"ready",heroes,error:"",mainFormation:{...asset,version:1,slots:request.slots}});
     EventDispatcher.instance.emit(HeroRosterEvent.Updated,{revision:roster.version});
     const priorFeedbackCount = feedback.length;
@@ -893,10 +745,9 @@ async function main(): Promise<void> {
     assert.equal(cellData.find((row:any)=>row.__type__==="cc.Node"&&row._name==="Stars")._active,true,"the star Layout container must remain visible when individual stars toggle");
     assert(cellData.some((row:any)=>row.__type__==="cc.Layout"&&row._layoutType===1),"stars use an authored horizontal Layout");
     await checkUnsavedDraftRecovery(heroes);
-    await checkMissingStateRecovery(heroes);
     await checkDragDraft(heroes);
     await checkFormationMatrix(heroes);
     await checkElementDraft(heroes);
-    console.log("formation-view-check passed: real Prefab bindings, automatic placement, drag, matrix, live draft bonuses and save recovery");
+    console.log("formation-view-check passed: real Prefab bindings, automatic placement, drag, matrix, live draft bonuses and authoritative save confirmation");
 }
 void main().catch(error=>{console.error(error);process.exitCode=1;});

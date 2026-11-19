@@ -105,14 +105,10 @@ class EntryFixture {
     public readonly restored: MainChapterReceipt[] = [];
     /** 已交给当前应用边界的网络或协议失败，旧身份失败不计入。 */
     public readonly failures: unknown[] = [];
-    /** 每次缺状态刷新递增，确认单轮最多只重新鉴权一次。 */
-    public refreshes = 0;
     /** 通用队列的显示重试次数，不代表发送结算或已经打开窗口。 */
     public displayRetries = 0;
     /** 案例指定请求顺序；默认成功结算，并分别提交状态和回执。 */
     public sendHandler: SendHandler;
-    /** 案例指定刷新行为；默认只结束刷新，不伪造新的统一状态。 */
-    public refreshHandler: () => Promise<void> = async () => {};
     /** 通用反馈投影结果；可抛错模拟配置投影失败，或返回empty避免空奖励窗。 */
     public restoreHandler: (value: MainChapterReceipt) => "queued" | "empty" = () => "queued";
     /** 应用交付作用域；重置后旧成功和失败回调均丢弃，不交给模块。 */
@@ -126,39 +122,27 @@ class EntryFixture {
             received(frame(name, receipt(id)));
         };
         this.controller.initialize();
-        this.controller.configure(async (name, body, received, failed) => {
-            const scope = this.deliveryScope;
-            const request = frame(name, body, "request");
-            this.requests.push(request);
-            const deliverFailure = (error: unknown): void => {
-                if (scope === this.deliveryScope) {
-                    this.failures.push(error);
-                    failed(error);
-                }
-            };
-            try {
-                await this.sendHandler(name, request.body as Record<string, unknown>, value => {
+        this.controller.configure({
+            deliver: async (name, body, received, failed) => {
+                const scope = this.deliveryScope;
+                const request = frame(name, body, "request");
+                this.requests.push(request);
+                const deliverFailure = (error: unknown): void => {
                     if (scope === this.deliveryScope) {
-                        received(value);
+                        this.failures.push(error);
+                        failed(error);
                     }
-                }, deliverFailure);
-            } catch (error) {
-                deliverFailure(error);
-            }
-        }, undefined, undefined, async (received, failed) => {
-            const scope = this.deliveryScope;
-            this.refreshes++;
-            try {
-                await this.refreshHandler();
-                if (scope === this.deliveryScope) {
-                    received();
+                };
+                try {
+                    await this.sendHandler(name, request.body as Record<string, unknown>, value => {
+                        if (scope === this.deliveryScope) {
+                            received(value);
+                        }
+                    }, deliverFailure);
+                } catch (error) {
+                    deliverFailure(error);
                 }
-            } catch (error) {
-                if (scope === this.deliveryScope) {
-                    this.failures.push(error);
-                    failed(error);
-                }
-            }
+            },
         });
         this.controller.configureSettlementFeedback(value => {
             this.restored.push(value);
@@ -189,7 +173,6 @@ class EntryFixture {
                 initial: snapshot,
             });
         ProtocolRouter.instance.dispatch(this.controller, value);
-        this.controller.afterSnapshot(protocol);
     }
 
     /** 应用身份结束先废弃交付作用域，再清理模块；不代表普通页面关闭。 */
@@ -328,46 +311,36 @@ async function checkReentryAndDedupe(): Promise<void> {
     });
 }
 
-/** pending先清但回执丢失时保持未确认，普通推送不重发，鉴权恢复仍领取原编号。 */
+/** 鉴权刷新权威进度，丢失的结算回执仅在玩家主动重试后展示。 */
 async function checkReceiptLost(): Promise<void> {
     await run(async fixture => {
         fixture.sendHandler = async (_name, _body, _received, failed) => {
-            fixture.accept(state(4, null));
-            failed(new Error("模拟SETTLED回执丢失"));
+            failed(new Error("模拟 SETTLED 回执丢失"));
         };
         await fixture.controller.recoverPendingOnEntry();
-        assert.equal(fixture.model.settlement!.phase, "pending");
-        assert.equal(fixture.restored.length, 0);
-        fixture.accept(state(4, null));
+        fixture.accept(state(4, null), Protocol.SESSION_AUTHENTICATE);
         await drain();
         fixture.assertClaims(1);
+        assert.equal(fixture.model.state!.pendingBattleId, null);
+        assert.equal(fixture.restored.length, 0);
         fixture.sendHandler = async (name, _body, received) => received(frame(name, receipt()));
-        fixture.accept(state(4, null), Protocol.SESSION_AUTHENTICATE);
-        await until(() => fixture.restored.length === 1, "鉴权没有恢复原编号回执");
+        await fixture.controller.retrySettlementFeedback();
         fixture.assertClaims(2);
-        assert.equal(fixture.model.settlement!.presentation, "reward");
+        assert.equal(fixture.restored.length, 1);
     });
 }
 
-/** 只有回执时每轮最多补一次状态；关页重开不隐式开启下一轮，显式恢复才再补快照。 */
-async function checkBoundedRefresh(): Promise<void> {
+/** 已收到结算回执时等待统一快照，重开和显式查看均不产生额外请求。 */
+async function checkWaitForState(): Promise<void> {
     await run(async fixture => {
         fixture.sendHandler = async (name, _body, received) => received(frame(name, receipt()));
-        fixture.refreshHandler = async () => {
-            fixture.accept(state(), Protocol.SESSION_AUTHENTICATE);
-        };
         await fixture.controller.recoverPendingOnEntry();
-        fixture.assertClaims(1);
-        assert.equal(fixture.refreshes, 1);
         assert.equal(fixture.model.settlement!.phase, "pending");
-        assert.equal(fixture.restored.length, 0);
-        fixture.accept(state());
         await fixture.controller.recoverPendingOnEntry();
-        assert.equal(fixture.refreshes, 1);
-        fixture.refreshHandler = async () => fixture.accept(state(4, null), Protocol.SESSION_AUTHENTICATE);
         await fixture.controller.retrySettlementFeedback();
         fixture.assertClaims(1);
-        assert.equal(fixture.refreshes, 2);
+        assert.equal(fixture.restored.length, 0);
+        fixture.accept(state(4, null), Protocol.SESSION_AUTHENTICATE);
         assert.equal(fixture.restored.length, 1);
         assert.equal(fixture.model.settlement!.presentation, "reward");
     });
@@ -476,26 +449,20 @@ async function checkSynchronousFeedback(): Promise<void> {
     });
 }
 
-/** 身份结束后原请求或刷新迟到都不能解锁新任务、恢复旧候选或投递旧奖励。 */
-async function checkResetDuringDelivery(duringRefresh: boolean, oldFails = false): Promise<void> {
+/** 身份结束后旧结算请求不会解锁新任务或投递旧奖励。 */
+async function checkResetDuringDelivery(oldFails = false): Promise<void> {
     await run(async fixture => {
         const old = gate();
-        if (duringRefresh) {
-            fixture.sendHandler = async (name, _body, received) => received(frame(name, receipt()));
-            fixture.refreshHandler = async () => old.promise;
-        } else {
-            fixture.sendHandler = async (name, _body, received, failed) => {
-                await old.promise;
-                if (oldFails) {
-                    failed(new Error("旧身份失败迟到"));
-                } else {
-                    received(frame(name, receipt()));
-                }
-            };
-        }
+        fixture.sendHandler = async (name, _body, received, failed) => {
+            await old.promise;
+            if (oldFails) {
+                failed(new Error("旧身份失败迟到"));
+            } else {
+                received(frame(name, receipt()));
+            }
+        };
         const original = fixture.controller.recoverPendingOnEntry();
-        await until(() => duringRefresh ? fixture.refreshes === 1 : fixture.requests.length === 1,
-            "旧恢复任务没有到达受控边界");
+        await until(() => fixture.requests.length === 1, "旧恢复请求没有发出");
         fixture.reset();
         assert.equal(fixture.model.entryRecovery, null);
         fixture.accept(state(8, BATTLE_B, 2), Protocol.SESSION_AUTHENTICATE);
@@ -674,16 +641,15 @@ async function main(): Promise<void> {
         ...(["request", "receipt", "replay", "settlement", "busy"] as const).map(kind =>
             ["warm " + kind + " retains original flow", () => checkWarmGuard(kind)] as [string, () => Promise<void>]),
         ["same task, repeated entry and feedback dedupe", checkReentryAndDedupe],
-        ["lost receipt waits for authentication and original id", checkReceiptLost],
-        ["receipt without state refreshes at most once per attempt", checkBoundedRefresh],
+        ["reconnect only updates state before explicit retry", checkReceiptLost],
+        ["receipt waits for the existing state channel", checkWaitForState],
         ["queued retry only retries display; presentation is exclusive", checkQueuedRetryAndOwnership],
         ["normal settlement remains exclusive to battle result", checkNormalSettlementOwnership],
         ["projection failure waits for explicit retry", checkProjectionFailure],
         ["empty recovery feedback completes without a popup", checkEmptyFeedback],
         ["synchronous feedback delivery preserves completion", checkSynchronousFeedback],
         ["reset rejects old request success", () => checkResetDuringDelivery(false)],
-        ["reset rejects old request failure", () => checkResetDuringDelivery(false, true)],
-        ["reset rejects old refresh continuation", () => checkResetDuringDelivery(true)],
+        ["reset rejects old request failure", () => checkResetDuringDelivery(true)],
         ["main view recovery button never opens a battle result", checkMainViewRecoveryRoute],
         ["battle view closes when recovery owns the same id", checkBattleViewRecoveryRoute],
     ];

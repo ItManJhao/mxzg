@@ -1,4 +1,4 @@
-/** 阵容模块回归：验证原请求重试、ACK与统一状态确认、有界鉴权及页面关闭后的模块存活。 */
+/** 阵容模块回归：核对一次保存、在途防重和统一权威阵容确认。 */
 import { strict as assert } from "node:assert";
 import { FormationController } from "../assets/scripts/features/hero/FormationController";
 import { FormationSaveModel } from "../assets/scripts/features/hero/FormationSaveModel";
@@ -26,14 +26,22 @@ function receipt(body: FormationSaveRequest): GameFrame {
         id: "response", ok: true, body: { requestId: body.requestId, version: 1 } }));
 }
 /** 每个用例使用独立模块和Model，不依赖账号或UI。 */
-function setup(send: (body: FormationSaveRequest) => Promise<GameFrame>,
-    refreshSnapshot: Parameters<FormationController["configure"]>[1] = null) {
+function setup(send: (body: FormationSaveRequest) => Promise<GameFrame>) {
     const heroes = new HeroRosterModel(), saves = new FormationSaveModel();
     heroes.reset(); sync(heroes, 0);
     const controller = new FormationController(saves, heroes);
-    controller.configure(async (body, received, failed) => {
-        try { received(await send(body)); } catch (error) { failed(error); }
-    }, refreshSnapshot); controller.initialize(); controller.resetSession();
+    controller.configure({
+        async deliver(name, body, received, failed) {
+            assert.equal(name, Protocol.FORMATION_SAVE);
+            try {
+                received(await send(body as FormationSaveRequest));
+            } catch (error) {
+                failed(error);
+            }
+        },
+    });
+    controller.initialize();
+    controller.resetSession();
     return { heroes, saves, controller };
 }
 
@@ -42,89 +50,58 @@ async function settleTasks(): Promise<void> {
     await new Promise<void>(resolve => setImmediate(resolve));
 }
 
-/** 分别检查ACK待同步、原编号重试、重复点击合并及每轮一次鉴权。 */
+/** 单次提交期间合并连点，按服务器确认版本结束等待。 */
 async function main(): Promise<void> {
-    let directSaves = 0;
-    const p = setup(async body => {
-        directSaves++;
-        return receipt(body);
-    });
-    await p.controller.save(draft);
-    assert.equal(p.heroes.snapshot.mainFormation!.version, 0, "回执不能写权威Model");
-    assert(!p.saves.snapshot.busy, "未装配鉴权时须解除忙碌并保留明确重试入口");
-    assert.equal(p.saves.snapshot.acknowledged, 1);
-    const originalAck = p.saves.snapshot.pending;
-    assert(originalAck, "ACK后仍保留原意图直到权威状态确认");
-    await p.controller.save({ ...draft, slots: [] });
-    assert.equal(directSaves, 1, "ACK已知时重试不能再次保存或生成新请求");
-    assert.deepEqual(p.saves.snapshot.pending, originalAck);
-    sync(p.heroes, 1); assert(!p.saves.snapshot.busy); assert.equal(p.saves.snapshot.message, "阵容已保存");
-    assert.equal(p.saves.snapshot.pending, null);
-    assert.equal(p.saves.snapshot.confirmedRequestId, originalAck.requestId);
-    p.controller.dispose();
-
-    let fail = true; const requests: FormationSaveRequest[] = [];
-    const retry = setup(async body => { requests.push(structuredClone(body)); if (fail) throw new Error("断线"); return receipt(body); });
-    await retry.controller.save(draft); assert(retry.saves.snapshot.pending); assert(!retry.saves.snapshot.busy);
-    const page = {}; let notices = 0;
-    EventDispatcher.instance.on(FormationEvent.SaveChanged, page, () => notices++);
-    EventDispatcher.instance.offTarget(page); // 页面关闭不销毁模块，模拟重新打开后再重试。
-    fail = false; await retry.controller.save({ ...draft, slots: [] });
-    assert.deepEqual(requests[0], requests[1], "未确认时模块仅原样重试，不能更换参数");
-    assert.equal(notices, 0); sync(retry.heroes, 1); assert(!retry.saves.snapshot.busy);
-    retry.controller.dispose();
-
-    let finish!: (frame: GameFrame) => void, sent!: FormationSaveRequest, calls = 0;
-    const late = setup(body => { sent = body; calls++; return new Promise(resolve => { finish = resolve; }); });
-    const first = late.controller.save(draft);
-    const duplicate = late.controller.save(draft);
-    assert.equal(first, duplicate, "重复点击共享已登记任务");
-    await settleTasks();
-    assert.equal(calls, 1);
-    finish(receipt(sent)); await first;
-    assert.deepEqual(late.saves.snapshot.pending, sent);
-    assert.equal(late.saves.snapshot.acknowledged, 1);
-    sync(late.heroes, 1); late.controller.dispose();
-    assert.equal(EventDispatcher.instance.targetListenerCount(late.controller), 0);
-    assert.equal("view" in late.controller, false); assert.equal("state" in late.controller, false);
-
-    let refreshes = 0;
-    let saveCalls = 0;
-    let recovered!: ReturnType<typeof setup>;
-    recovered = setup(async body => {
-        saveCalls++;
-        return receipt(body);
-    }, async (received, failed) => {
-        refreshes++;
-        if (refreshes === 1) {
-            failed(new Error("鉴权同步失败"));
-            return;
-        }
-        // 同步首包回调可立即发布名册事件；旧版首包不能递归开启下一轮鉴权。
-        sync(recovered.heroes, refreshes === 2 ? 0 : 1);
-        received();
+    const requests: FormationSaveRequest[] = [];
+    let finish!: (frame: GameFrame) => void;
+    const pending = setup(body => {
+        requests.push(body);
+        return new Promise(resolve => { finish = resolve; });
     });
     try {
-        await recovered.controller.save(draft);
-        const pending = recovered.saves.snapshot.pending;
-        assert(pending);
-        assert.equal(refreshes, 1);
-        assert.equal(recovered.saves.snapshot.acknowledged, 1);
-        assert(!recovered.saves.snapshot.busy);
-        await recovered.controller.save({ ...draft, slots: [] });
-        assert.equal(refreshes, 2, "旧版首包每轮只鉴权一次");
-        assert.deepEqual(recovered.saves.snapshot.pending, pending);
-        assert.equal(recovered.saves.snapshot.acknowledged, 1);
-        assert(!recovered.saves.snapshot.busy);
-        await recovered.controller.save({ ...draft, slots: [] });
-        assert.equal(refreshes, 3);
-        assert.equal(saveCalls, 1, "失败、旧版首包及成功恢复均只重试鉴权");
-        assert.equal(recovered.saves.snapshot.pending, null);
-        assert.equal(recovered.saves.snapshot.acknowledged, null);
-        assert.equal(recovered.saves.snapshot.confirmedRequestId, pending.requestId);
+        const first = pending.controller.save(draft);
+        assert.equal(first, pending.controller.save(draft));
+        await settleTasks();
+        assert.equal(requests.length, 1);
+        assert.match(requests[0].requestId, /^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i);
+        finish(receipt(requests[0]));
+        await first;
+        assert.equal(pending.heroes.snapshot.mainFormation!.version, 0, "回包不能写权威阵容");
+        assert.deepEqual(pending.saves.snapshot, { busy: true, savedVersion: 1 });
+        await pending.controller.save({ ...draft, slots: [] });
+        assert.equal(requests.length, 1, "等待权威状态期间不重复保存");
+        sync(pending.heroes, 1);
+        assert.deepEqual(pending.saves.snapshot, { busy: false, savedVersion: 1 });
     } finally {
-        recovered.controller.dispose();
+        pending.controller.dispose();
     }
-    console.log("PASS formation module: authoritative isolation, original retry, shared task, ACK intent retention, one authentication per round, synchronous state recovery");
+    assert.equal(EventDispatcher.instance.targetListenerCount(pending.controller), 0);
+    assert.equal("view" in pending.controller, false);
+
+    let fail = true;
+    const later: FormationSaveRequest[] = [];
+    const disconnected = setup(async body => {
+        later.push(structuredClone(body));
+        if (fail) {
+            throw new Error("断线");
+        }
+        return receipt(body);
+    });
+    try {
+        await disconnected.controller.save(draft);
+        assert.deepEqual(disconnected.saves.snapshot, { busy: false, savedVersion: null });
+        const owner = {};
+        let notices = 0;
+        EventDispatcher.instance.on(FormationEvent.SaveChanged, owner, () => notices++);
+        EventDispatcher.instance.offTarget(owner);
+        fail = false;
+        await disconnected.controller.save({ ...draft, slots: [{ ...draft.slots[0], position: 3 }] });
+        assert.notEqual(later[1].requestId, later[0].requestId);
+        assert.equal(later[1].slots[0].position, 3);
+        assert.equal(notices, 0, "关页释放监听，模块仍能完成保存");
+    } finally {
+        disconnected.controller.dispose();
+    }
+    console.log("PASS formation module: one send, concurrent click protection, authoritative confirmation and current draft");
 }
 void main().catch(error => { console.error(error); process.exitCode = 1; });

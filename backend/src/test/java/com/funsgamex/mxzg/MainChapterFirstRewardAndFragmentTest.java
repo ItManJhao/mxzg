@@ -9,7 +9,7 @@ import com.funsgamex.mxzg.campaign.MainChapterFirstRewardService;
 import com.funsgamex.mxzg.campaign.MainChapterIdleStateRepository;
 import com.funsgamex.mxzg.campaign.MainChapterMilestoneService;
 import com.funsgamex.mxzg.campaign.MainChapterService;
-import com.funsgamex.mxzg.hero.HeroFirstSummonService;
+import com.funsgamex.mxzg.hero.HeroSummonService;
 import com.funsgamex.mxzg.hero.HeroFragmentCombineService;
 import com.funsgamex.mxzg.inventory.InventoryService;
 import com.funsgamex.mxzg.lineup.Lineup;
@@ -43,7 +43,7 @@ class MainChapterFirstRewardAndFragmentTest {
     /** 各用例的真实隔离认证入口。 */
     @Autowired private DevelopmentLoginService login;
     /** 正常首战使用首抽的实际英雄实例。 */
-    @Autowired private HeroFirstSummonService summon;
+    @Autowired private HeroSummonService summon;
     /** 正常保存站位，不直接准备战斗名册。 */
     @Autowired private MainFormationCommandService formations;
     /** 真实挑战、战报与战斗结算。 */

@@ -1,76 +1,25 @@
 /**
- * 重做版应用装配入口，装配登录、角色、背包、英雄名册和升级、主线阵容及结算。
- * 应用持有模块服务及资源作用域，界面通过唯一 UIManager 打开，关闭应用时统一释放。
+ * Remake.scene 的启动入口。创建账号、模块与根页面，按三段资源计划推进登录和主城。
+ * 场景退出时释放这些对象；各模块通过统一连接接收数据并处理自己的玩法。
  */
-import { CityMapService } from "../../features/city/ui/CityMapService";
+import { _decorator, Component, director, Director, game, Game, Label, Node, Prefab } from "cc";
+import { GameLog } from "../../core/GameLog";
+import { ServerClock } from "../../core/ServerClock";
 import { PrefabLoader } from "../../framework/assets/PrefabLoader";
 import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssetsUtils";
-import {AccountComposition} from "./AccountComposition";
-import {ToastManager} from "../../framework/ui/ToastManager";
-import {MainChapterController} from "../../features/battle/MainChapterController";
-import { MainChapterFirstRewardController } from "../../features/battle/MainChapterFirstRewardController";
-import {ApplicationPages} from "./ApplicationPages";
-import {ApplicationResources} from "./ApplicationResources";
-import {DevelopmentPreview} from "./DevelopmentPreview";
-
-import {BattlePreviewController} from "../../features/battle/BattlePreviewController";
-import {FormationController} from "../../features/hero/FormationController";
-
-import {BagModel} from "../../features/bag/BagModel";
-import {GmController} from "../../features/gm/GmController";
-import "../../features/gm/ui/GmView";
-import { Protocol } from "../../platform/Protocol";
-
-
-import {_decorator, Component, director, Director, EventKeyboard, game, Game, input, Input, KeyCode, Label, Node, Prefab} from "cc";
-import {PREVIEW} from "cc/env";
-import { GameLog } from "../../core/GameLog";
-import { EventDispatcher } from "../../framework/EventDispatcher";
-import {BagController} from "../../features/bag/BagController";
-import {HeroRosterController} from "../../features/hero/HeroRosterController";
-import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
-import { HeroLevelController } from "../../features/hero/HeroLevelController";
-import { HeroLevelData } from "../../features/hero/data/HeroLevelData";
-import type { HeroLevelRequest, HeroLevelReceipt, HeroLevelStatus } from "../../features/hero/data/HeroLevelData";
-import {RemakeHomeView} from "../../features/home/ui/RemakeHomeView";
-import { OpenCancelled, UIManager } from "../../framework/ui/UIManager";
-import {GameSocketClient} from "../../platform/GameSocketClient";
+import { ToastManager } from "../../framework/ui/ToastManager";
+import { UIManager } from "../../framework/ui/UIManager";
+import { AccountComposition, type ApplicationAccount } from "./AccountComposition";
+import { ApplicationPages } from "./ApplicationPages";
+import { ApplicationResources } from "./ApplicationResources";
+import { ApplicationModules } from "./ApplicationModules";
 import { BootChrome } from "./BootChrome";
-import {HomeFeatureNavigation, REMAKE_FEATURE_ROUTES} from "./HomeFeatureNavigation";
-import {LoginEntry} from "./LoginEntry";
-import type { LogoSplashHandle } from "./LogoSplashUtils";
-import { LogoSplashUtils } from "./LogoSplashUtils";
-import {RemakeNavigation} from "./RemakeNavigation";
+import { DevelopmentPreview } from "./DevelopmentPreview";
+import { LoginEntry } from "./LoginEntry";
+import { LogoSplashUtils, type LogoSplashHandle } from "./LogoSplashUtils";
 import { StartupFlowUtils, StartupCancelled } from "./StartupFlowUtils";
 
-import {RoleController} from "../../features/account/RoleController";
-import {AssetStateBinding} from "./AssetStateBinding";
-import { IdleClaimBinding } from "./IdleClaimBinding";
-import { IdleClaimJournal } from "./IdleClaimJournal";
-import { MainChapterMilestoneBinding } from "./MainChapterMilestoneBinding";
-import { MilestoneClaimJournal } from "./MilestoneClaimJournal";
-import { RewardBinding } from "./RewardBinding";
-import { FirstSummonBinding } from "./FirstSummonBinding";
-import { ProgressRewardBinding } from "./ProgressRewardBinding";
-import { ProgressRewardUtils } from "./ProgressRewardUtils";
-import type { ChapterRewardIntent, FragmentCombineIntent } from "./ProgressRewardUtils";
-import type { AccountModel } from "../../features/account/AccountModel";
-import type { AccountService } from "../../features/account/AccountService";
-import { PersistentOperationJournal } from "../../framework/PersistentOperationJournal";
-import { MainChapterModel } from "../../features/battle/MainChapterModel";
-import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
-
 const {ccclass, property} = _decorator;
-
-/** 应用转交真实快照和展示事件的两项成长动作。 */
-interface GrowthRewards {
-    /** 关卡稳定键原意图与反馈。 */
-    readonly firstReward: ProgressRewardBinding<ChapterRewardIntent>;
-    /** 主线领取状态和双确认。 */
-    readonly firstRewardController: MainChapterFirstRewardController;
-    /** 碎片原消费意图与反馈。 */
-    readonly fragments: ProgressRewardBinding<FragmentCombineIntent>;
-}
 
 /** 应用生命周期入口：协调会话、页面和启动流程，具体装配交给独立组件。 */
 @ccclass("RemakeApp")
@@ -83,7 +32,7 @@ export class RemakeApp extends Component {
     @property(Node) startupHost: Node | null = null;
     /** 完整长连接地址，由场景保存；凭证不进入 URL。 */
     @property socketUrl = "ws://127.0.0.1:18080/api/v1/game/socket";
-    /** 独立只读战报验收页的清理函数，不影响正常登录流程。 */
+    /** 本场景的开发预览入口，启动时检查预览模式，退出时释放快捷键和临时窗口。 */
     private development: DevelopmentPreview | null = null;
     /** 应用提示独立于主城生命周期。 */
     private notices: ToastManager | null = null;
@@ -93,30 +42,14 @@ export class RemakeApp extends Component {
     @property(Node) noticePanel: Node | null = null;
     /** 独立提示的文字节点，与提示面板静态绑定。 */
     @property(Label) noticeLabel: Label | null = null;
-    /** 应用唯一游戏连接，销毁时断开并解除回调。 */
-    private gameSocket: GameSocketClient | null = null;
-    /** 正式页面导航，负责当前页及主城根页的关闭。 */
-    private navigation: RemakeNavigation | null = null;
+    /** 本次启动持有的账号与连接，退出场景时释放并保留持久凭证。 */
+    private account: ApplicationAccount | null = null;
+    /** 本场景装配的模块，共用账号状态，随场景卸载。 */
+    private modules: ApplicationModules | null = null;
+    /** 当前场景的根页面和功能导航，角色变化时关闭原界面。 */
+    private pages: ApplicationPages | null = null;
     /** 账号状态订阅解除函数，应用退出时调用。 */
     private offAccount: (() => void) | null = null;
-    /** 应用持有的角色与背包统一状态协调器，销毁时先解除，再释放模块。 */
-    private assetState: AssetStateBinding | null = null;
-    /** 领取恢复由应用按认证身份激活，页面关闭不清除持久原请求。 */
-    private idleClaims: IdleClaimBinding | null = null;
-    /** 通关奖励原稳定键恢复，关闭主线页不撤销已发起意图，换号保留原日志。 */
-    private milestoneClaims: MainChapterMilestoneBinding | null = null;
-    /** 普通首抽原意图与奖励确认；切页保留，换号后停止当前续段。 */
-    private firstSummon: FirstSummonBinding | null = null;
-    /** 当前应用的独立通关奖励、碎片合成及其回执监听，退出时统一释放。 */
-    private growthRewards: GrowthRewards | null = null;
-    /** 普通升级原意图日志，身份键由应用提供，销毁时关闭连接。 */
-    private heroLevelJournal: PersistentOperationJournal<HeroLevelRequest> | null = null;
-    /** 通用发奖反馈归应用装配，等待统一资产版本及主城就绪，不由挂机界面单独弹窗。 */
-    private rewards: RewardBinding | null = null;
-    /** 本应用初始化的背包模块，应用退出时释放。 */
-    private bagModule: BagController | null = null;
-    /** 本应用登记的页面与宿主撤销函数。 */
-    private unregisterViews: Array<() => void> = [];
     /** 最近请求的根路由，避免重复打开相同页面。 */
     private requestedRoute = "";
     /** 应用是否仍接受路由和异步回调。 */
@@ -135,8 +68,6 @@ export class RemakeApp extends Component {
     private paintWaiters = new Set<() => void>();
     /** 应用预热资源唯一所有者，与页面动态作用域分开。 */
     private readonly resources = new ApplicationResources();
-    /** 主城功能导航所有者，只协调已接入的功能入口。 */
-    private features: HomeFeatureNavigation | null = null;
 
     /** 编辑器启动应用时装配唯一会话服务和页面注册，并执行新链路启动流程。 */
     async start(): Promise<void> {
@@ -150,348 +81,121 @@ export class RemakeApp extends Component {
         }
     }
 
-    /** 装配会话、资产与页面；普通升级跟随统一首包激活原意图恢复。 */
+    /** 启动唯一连接、业务模块和页面路由，再执行登录恢复及三段资源准备。 */
     private async initialize(): Promise<void> {
         this.development = new DevelopmentPreview(this.pageHost, this.startupHost, () => this.isValid);
         if (await this.development.start()) return;
         if (!this.loadingPrefab || !this.pageHost || !this.startupHost) throw new Error("Remake 场景未绑定本地加载 Prefab 或启动宿主，请重新打开已更新的 Remake.scene");
-        const {model, socket, service, servers, storageNamespace} = await AccountComposition.create(this.socketUrl);
+        const account = await AccountComposition.create(this.socketUrl);
+        const {model, controller, servers} = account;
         if (!this.isValid) {
-            socket.disconnect();
+            controller.dispose();
             return;
         }
-        this.gameSocket = socket;
+        this.account = account;
         game.on(Game.EVENT_HIDE, this.onBackground, this);
         game.on(Game.EVENT_SHOW, this.onForeground, this);
-        BagController.instance.initialize();
-        this.bagModule = BagController.instance;
-        const roleController = new RoleController(role => service.acceptRole(role));
-        HeroRosterController.instance.initialize();
-        const formation = FormationController.instance;
-        formation.configure((body, received, failed) => service.deliverAuthenticated(
-            token => socket.saveFormation(token, body),
-            frame => {
-                if (this.alive) received(frame);
-            },
-            error => {
-                if (this.alive) failed(error);
-            },
-        ), (received, failed) => service.deliverAuthenticated(token => socket.refreshSnapshot(token),
-            () => {
-                if (this.alive) {
-                    received();
-                }
-            },
-            error => {
-                if (this.alive) {
-                    failed(error);
-                }
-            }));
-        formation.initialize();
-        const chapter = MainChapterController.instance;
-        chapter.configure((name, body, received, failed) => service.deliverAuthenticated(
-            token => socket.chapter(token, name, body),
-            frame => {
-                if (this.alive) received(frame);
-            },
-            error => {
-                if (this.alive) failed(error);
-            },
-        ), () => model.snapshot.role?.level || 0, () => {
-            const basics = model.snapshot.role?.basics;
-            return basics ? {headId: basics.headId, borderId: basics.borderId} : null;
-        }, (received, failed) => service.deliverAuthenticated(token => socket.refreshSnapshot(token),
-            () => {
-                if (this.alive) {
-                    received();
-                }
-            },
-            error => {
-                if (this.alive) {
-                    failed(error);
-                }
-            }));
-        chapter.initialize();
-        const rewards = this.rewards = new RewardBinding(model, receiptId => {
-            chapter.markSettlementFeedbackPresented(receiptId);
-            this.milestoneClaims?.presented(receiptId);
-            this.firstSummon?.presented(receiptId);
-            this.growthRewards?.firstReward.presented(receiptId);
-            this.growthRewards?.fragments.presented(receiptId);
-        });
-        chapter.configureSettlementFeedback(
-            (receipt, presentation) => {
-                if (receipt.actual) {
-                    return rewards.restoreActual(receipt.battleId, receipt.state.assetRevision, receipt.actual,
-                        presentation === "battle" ? "bonuses" : "all");
-                }
-                // 原历史记录没有附赠明细，固定归属只交一次反馈；不能从当前钱包或等级配置补算。
-                UIManager.instance.toast("历史结算未记录附赠明细，仅展示已保存奖励");
-                return presentation === "reward"
-                    ? rewards.restoreItems(receipt.battleId, receipt.state.assetRevision, receipt.rewards) : "empty";
-            },
-            () => rewards.retry(),
-        );
-        this.development?.configureRewards(notice => rewards.restore(notice));
-        const idleClaims = this.idleClaims = new IdleClaimBinding(model, service, socket,
-            new IdleClaimJournal(storageNamespace), MainChapterModel.instance, confirmation => {
-                // 收取与旧通用奖励窗并行；历史恢复没有原页面显示期，不补播现场动画。
-                EventDispatcher.instance.emit("main-chapter.idle-collection", confirmation);
-                if (confirmation.receipt.feedback) {
-                    rewards.restore(confirmation.receipt.feedback);
-                }
-            },
-            { enabled: true });
-        // 页面只转交意图；门槛、原请求日志、双确认和通用奖励仍归现有应用领取绑定。
-        chapter.requestIdleClaim = presentationContext => idleClaims.begin(presentationContext);
-        const milestones = this.milestoneClaims = new MainChapterMilestoneBinding(model, service, socket,
-            new MilestoneClaimJournal(storageNamespace), receipt =>
-                rewards.restoreActual(receipt.receiptId, receipt.assetRevision, receipt.actual));
-        chapter.requestMilestoneClaim = rewardId => milestones.begin(rewardId);
-        const summon = this.firstSummon = new FirstSummonBinding(model, service, socket, storageNamespace,
-            notice => rewards.restore(notice), () => rewards.retry());
-        const growth = this.growthRewards = this.bindProgressRewards(model, service, socket, rewards, storageNamespace, chapter);
-        const heroLevel = this.bindHeroLevel(model, service, socket, storageNamespace);
-        const assets = this.assetState = new AssetStateBinding(model, BagController.instance, roleController,
-            HeroRosterController.instance, formation, () => {
-                this.clearRolePages();
-                rewards.resetSession();
-                idleClaims.deactivate();
-                milestones.deactivate();
-                summon.deactivate();
-                growth.firstReward.deactivate();
-                growth.firstRewardController.resetSession();
-                growth.fragments.deactivate();
-                heroLevel.resetSession();
-            }, chapter, summon.controller);
-        // 只有整包被唯一资产入口接纳后，才以该最新状态检查历史领取确认。
-        const applyState = (frame: GameFrame): void => {
-            if (assets.apply(frame)) {
-                rewards.afterSnapshot(frame);
-                idleClaims.afterSnapshot(frame.name);
-                chapter.afterSnapshot(frame.name);
-                milestones.afterSnapshot(frame.name);
-                summon.afterSnapshot(frame.name);
-                growth.firstRewardController.afterSnapshot();
-                growth.firstReward.afterSnapshot(frame.name);
-                growth.fragments.afterSnapshot(frame.name);
-                const role = model.snapshot.role;
-                const journal = this.heroLevelJournal;
-                if (journal && role?.serverId && (frame.name === Protocol.SESSION_LOGIN || frame.name === Protocol.SESSION_AUTHENTICATE)) {
-                    heroLevel.afterAuthentication(() => journal.forScope([role.serverId!, role.id]));
-                }
-            }
-        };
-        service.onInitialized = applyState;
-        socket.onState = applyState;
-        socket.onReward = frame => {
-            // 同一持久原请求的提前通知只交双确认链；其他业务继续复用原通用队列。
-            void idleClaims.receiveReward(frame).then(handled => {
-                if (this.alive && !handled) {
-                    rewards.receive(frame);
-                }
-            }).catch(error => {
-                const reason = error instanceof Error ? error.stack || error.message : String(error);
-                GameLog.shared.classified("APP", "error", "IdleClaimBinding", "奖励通知协调失败：" + reason);
-            });
-        };
-        let connectionNotice = "";
-        socket.onRejected = (token, message) => service.rejectSession(token, message);
-        // 重连鉴权首包就是统一恢复数据，不再单独补查钱包或背包。
-        socket.onReady = () => {
-            if (connectionNotice) homeView?.showNotice("");
-            connectionNotice = "";
-            if (!model.snapshot.role || model.snapshot.busy) return;
-            if (socket.latestState) applyState(socket.latestState);
-        };
-        // 连接提示不改变账号 busy/role，避免断网被误当换号而清空模块和在途收据。
-        socket.onDisconnected = message => {
-            if (!model.snapshot.role || model.snapshot.busy) return;
-            connectionNotice = message;
-            homeView?.showNotice(message);
-        };
-        const ui = UIManager.instance;
         const entry = new LoginEntry();
-        let homeView: RemakeHomeView | null = null;
-        let syncRoute = () => {
-        };
-        this.navigation = new RemakeNavigation(ui, this.pageHost, {
-            parent: id => Object.values(REMAKE_FEATURE_ROUTES).includes(id) ? homeView?.featureHost || null : null,
-            changed: id => homeView?.showFeature(id === "remake-campaign" ? "battle" : id === "hero-info" ? "hero" : id === "hero" || id === "bag" ? id : "city"),
-        });
-        const battlePreview = new BattlePreviewController(async (mission, received) => {
-            let failure: unknown = null;
-            await service.deliverAuthenticated(token => socket.previewBattle(token, mission),
-                frame => {
-                    if (this.alive) received(frame);
-                }, error => {
-                    failure = error;
-                });
-            if (failure) throw failure;
-        });
-        this.unregisterViews.push(() => battlePreview.dispose());
-        const gm = new GmController(
-            () => service.authenticated(token => socket.request(token, Protocol.GM_STATUS)),
-            body => service.authenticated(async token => (await socket.gmGrant(token, body)).body));
-        // F9只切换开发菜单；准备中的打开也可取消，不保留角色资料页中的第二入口。
-        let gmRequested = false;
-        let gmIntent = 0;
-        const openGm = async (): Promise<void> => {
-            const role = model.snapshot.role;
-            if (!PREVIEW || !this.alive || !this.started || !role || model.snapshot.busy
-                || entry.route(true) !== "remake-home") {
-                return;
-            }
-            gmRequested = true;
-            const intent = ++gmIntent;
-            try {
-                await ui.openById("gm", {
-                    controller: gm,
-                    roleId: role.id,
-                    nickname: role.nickname,
-                    openLineupBattle: async (mission: number) => {
-                        ui.toast("正在读取保存阵容，仅试战、不发奖…");
-                        const result = await battlePreview.preview(mission);
-                        if (!result || !this.alive || intent !== gmIntent || !ui.isOpen("gm-battle")) {
-                            throw new OpenCancelled();
-                        }
-                        await this.development?.openLineupBattle(result);
-                        this.closeGmViews();
-                    },
-                    openSkillAudit: async () => {
-                        await this.development?.openSkillAudit();
-                        if (!this.alive || intent !== gmIntent || !ui.isOpen("gm")) {
-                            ui.closeById("skill-audit");
-                            throw new OpenCancelled();
-                        }
-                        this.closeGmViews();
-                    },
-                });
-            } catch (error) {
-                if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
-                    ui.toast("GM 打开失败：" + String(error));
-                }
-            } finally {
-                if (intent === gmIntent) {
-                    gmRequested = false;
-                }
-            }
-        };
-        this.bindGmShortcut(() => {
-            if (gmRequested || ui.isOpen("gm") || ui.isOpen("gm-grant") || ui.isOpen("gm-battle")) {
-                gmRequested = false;
-                gmIntent++;
-                this.closeGmViews();
-            } else {
-                void openGm();
-            }
-        });
-        const features = this.features = new HomeFeatureNavigation(ui, {
-            current: () => this.navigation?.current || null,
-            authorized: () => this.alive && this.started && !model.snapshot.busy && !!model.snapshot.role && entry.route(true) === "remake-home",
-            notice: text => homeView?.showNotice(text),
-        });
-        ui.install(this.navigation, {showToast: (text, duration) => this.notices?.show(text, duration)});
-        this.unregisterViews.push(...ApplicationPages.register({
+        const inHome = () => this.alive && this.started && entry.route(true) === "remake-home";
+        const syncRoute = () => this.syncRootRoute(model, entry);
+        this.modules = new ApplicationModules(account, this.development, inHome,
+            () => this.clearRolePages(), text => this.pages?.showNotice(text));
+        this.pages = new ApplicationPages({
             pageHost: this.pageHost,
-            valid: () => this.alive,
-            model,
-            service,
-            servers,
+            account,
+            role: this.modules.role,
             entry,
-            features,
-            summon,
-            syncRoute: () => syncRoute(),
-            onHome: view => {
-                homeView = view;
-            },
-        }));
+            inHome,
+            syncRoute,
+            showToast: (text, duration) => this.notices?.show(text, duration),
+        });
         this.alive = true;
-        syncRoute = () => {
-            if (!this.alive || !this.started) return;
-            if (model.snapshot.busy || !model.snapshot.role) {
-                rewards.setReady(false);
-                this.resources.stopBackground();
-                ui.closeById("remake-formation");
-                ui.closeById("role-profile");
-                this.closeGmViews();
-                gm.reset();
-            }
-            if (model.snapshot.busy) {
-                if (this.routePending) {
-                    this.routeEpoch++;
-                    this.routePending = false;
-                    this.requestedRoute = "";
-                }
-                this.chrome?.show();
-                this.chrome?.setStage("同步角色资料");
-                this.chrome?.setRatio(0);
-                return;
-            }
-            if (!model.snapshot.role) {
-                entry.reset();
-                features.reset();
-            }
-            const route = entry.route(!!model.snapshot.role);
-            if (route === this.requestedRoute) {
-                if (!this.routePending) {
-                    this.chrome?.hide();
-                    rewards.setReady(route === "remake-home");
-                }
-                return;
-            }
-            this.requestedRoute = route;
-            rewards.setReady(false);
-            ui.keepOnly(route);
-            const epoch = ++this.routeEpoch;
-            this.routePending = true;
-            this.chrome?.show();
-            this.chrome?.setStage(route === "remake-home" ? "准备主城" : "准备登录界面");
-            this.chrome?.setRatio(0);
-            void this.openRootPage(route, epoch).then(async () => {
-                if (!this.alive || epoch !== this.routeEpoch) return;
-                this.chrome?.setRatio(1);
-                await this.reveal(epoch, route === "remake-home");
-                if (epoch === this.routeEpoch) this.routePending = false;
-                if (route === "remake-home" && epoch === this.routeEpoch && this.alive) {
-                    rewards.setReady(true);
-                    void this.resources.prepareBackground(() => this.afterPaint(), () => this.alive && epoch === this.routeEpoch && !model.snapshot.busy && !!model.snapshot.role).catch(error => {
-                        if (this.alive && epoch === this.routeEpoch) {
-                            GameLog.shared.classified("APP", "warn", "RemakeApp", "后台资源准备失败，返回主城时可重试：" + String(error));
-                        }
-                    });
-                }
-            }).catch(async error => {
-                if (!this.alive || epoch !== this.routeEpoch) return;
-                this.routePending = false;
-                if (UIManager.isOpenCancelled(error) || error instanceof StartupCancelled) {
-                    // A login -> home -> login change can cancel an earlier load of the same route.
-                    if (this.requestedRoute === route) {
-                        this.requestedRoute = "";
-                        syncRoute();
-                    }
-                    return;
-                }
-                if (this.requestedRoute === route) this.requestedRoute = "";
-                GameLog.shared.classified("APP", "error", "RemakeApp", route + " 打开失败：" + String(error));
-                if (await this.chrome?.prompt("界面加载失败，请重试", "重试")) syncRoute();
-            });
-        };
         this.offAccount = model.subscribe(syncRoute);
         void this.boot(async () => {
             await servers.load();
-            await service.restore();
+            await controller.restore();
         }, async () => {
             const route = entry.route(!!model.snapshot.role);
             this.requestedRoute = route;
-            ui.keepOnly(route);
-            await ui.openById(route);
+            UIManager.instance.keepOnly(route);
+            await this.openRootPage(route, this.routeEpoch);
         }).then(() => {
             if (!this.alive) return;
             this.started = true;
             syncRoute();
         }).catch(error => {
             if (this.alive) GameLog.shared.classified("APP", "error", "RemakeApp", "启动失败：" + String(error));
+        });
+    }
+
+    /** 账号状态变化后同步登录页或主城，同时管理启动层和后台资源的生命周期。 */
+    private syncRootRoute(
+        model: ApplicationAccount["model"],
+        entry: LoginEntry,
+    ): void {
+        const ui = UIManager.instance;
+        if (!this.alive || !this.started) return;
+        if (model.snapshot.busy || !model.snapshot.role) {
+            this.modules?.setHomeReady(false);
+            this.resources.stopBackground();
+        }
+        if (model.snapshot.busy) {
+            if (this.routePending) {
+                this.routeEpoch++;
+                this.routePending = false;
+                this.requestedRoute = "";
+            }
+            this.chrome?.show();
+            this.chrome?.setStage("同步角色资料");
+            this.chrome?.setRatio(0);
+            return;
+        }
+        if (!model.snapshot.role) {
+            entry.reset();
+        }
+        const route = entry.route(!!model.snapshot.role);
+        if (route === this.requestedRoute) {
+            if (!this.routePending) {
+                this.chrome?.hide();
+                this.modules?.setHomeReady(route === "remake-home");
+            }
+            return;
+        }
+        this.requestedRoute = route;
+        this.modules?.setHomeReady(false);
+        ui.keepOnly(route);
+        const epoch = ++this.routeEpoch;
+        this.routePending = true;
+        this.chrome?.show();
+        this.chrome?.setStage(route === "remake-home" ? "准备主城" : "准备登录界面");
+        this.chrome?.setRatio(0);
+        void this.openRootPage(route, epoch).then(async () => {
+            if (!this.alive || epoch !== this.routeEpoch) return;
+            this.chrome?.setRatio(1);
+            await this.reveal(epoch, route === "remake-home");
+            if (epoch === this.routeEpoch) this.routePending = false;
+            if (route === "remake-home" && epoch === this.routeEpoch && this.alive) {
+                this.modules?.setHomeReady(true);
+                void this.resources.prepareBackground(() => this.afterPaint(), () => this.alive && epoch === this.routeEpoch && !model.snapshot.busy && !!model.snapshot.role).catch(error => {
+                    if (this.alive && epoch === this.routeEpoch) {
+                        GameLog.shared.classified("APP", "warn", "RemakeApp", "后台资源准备失败，返回主城时可重试：" + String(error));
+                    }
+                });
+            }
+        }).catch(async error => {
+            if (!this.alive || epoch !== this.routeEpoch) return;
+            this.routePending = false;
+            if (UIManager.isOpenCancelled(error) || error instanceof StartupCancelled) {
+                // 快速退出又登录时，较早的同名页面加载可能已被取消。
+                if (this.requestedRoute === route) {
+                    this.requestedRoute = "";
+                    this.syncRootRoute(model, entry);
+                }
+                return;
+            }
+            if (this.requestedRoute === route) this.requestedRoute = "";
+            GameLog.shared.classified("APP", "error", "RemakeApp", route + " 打开失败：" + String(error));
+            if (await this.chrome?.prompt("界面加载失败，请重试", "重试")) this.syncRootRoute(model, entry);
         });
     }
 
@@ -510,7 +214,7 @@ export class RemakeApp extends Component {
         await UIManager.instance.openById(route);
     }
 
-    /** 顺序执行配置、资源、会话恢复与开页，失败时保留可重试的加载画面。 */
+    /** 顺序执行配置、资源、会话恢复与根页准备，失败时保留可重试的加载画面。 */
     private async boot(restore: () => Promise<void>, openPage: () => Promise<void>): Promise<void> {
         const chrome = this.chrome = new BootChrome(this.startupHost!, async () => this.loadingPrefab!);
         const logo = this.logo = LogoSplashUtils.playLogoSplash(this.startupHost!, this.node);
@@ -535,7 +239,7 @@ export class RemakeApp extends Component {
                         }
                     },
                     {label: "准备账号信息", weight: 10, run: async () => restore()},
-                    {label: "准备登录界面", weight: 20, run: async () => openPage()},
+                    {label: "准备界面", weight: 20, run: async () => openPage()},
                 ], (label, ratio) => {
                     chrome.setStage(label);
                     chrome.setRatio(ratio);
@@ -580,123 +284,22 @@ export class RemakeApp extends Component {
      * 取消页面意图与弹窗准备，不让页面通过旧账号键或清空事件触发返回导航。
      */
     private clearRolePages(): void {
-        const ui = UIManager.instance;
-        this.features?.reset();
-        this.development?.cancelReplay();
-        ui.invalidatePending();
-        this.navigation?.back();
-        for (const id of ["hero-skill", "bag-info", "spirit-info", "equipment-info", "role-profile", "remake-formation", "battle-detail",
-            "chapter-end", "chapter-reward-info", "main-chapter-battle", "skill-audit", "confirm", "reward", "first-summon"]) {
-            ui.closeById(id);
-        }
-        this.closeGmViews();
+        this.development?.resetSession();
+        this.pages?.clearRolePages();
         this.notices?.clear();
-        ui.clearCached();
     }
 
-    /** 仅Creator预览监听F9松键，避免长按重复打开；应用退出时撤销本次监听。 */
-    private bindGmShortcut(toggle: () => void): void {
-        if (!PREVIEW) {
-            return;
-        }
-        const released = (event: EventKeyboard) => {
-            if (event.keyCode === KeyCode.F9) {
-                toggle();
-            }
-        };
-        input.on(Input.EventType.KEY_UP, released);
-        this.unregisterViews.push(() => input.off(Input.EventType.KEY_UP, released));
-    }
-
-    /** 从子窗到总入口统一关闭，包括尚在准备的窗口，不影响实际主线战场。 */
-    private closeGmViews(): void {
-        for (const id of ["gm-grant", "gm-battle", "gm"]) {
-            UIManager.instance.closeById(id);
-        }
-    }
-
-    /** 平台进入后台时由应用统一暂停通信及背包计时，不让背包控制器依赖账号。 */
+    /** 进入后台时暂停连接，连接层清除本次公共时钟的基准。 */
     private onBackground(): void {
-        BagModel.instance.suspendClock();
-        this.gameSocket?.setBackground(true);
+        this.account?.socket.setBackground(true);
     }
 
     /** 返回前台只恢复已登录会话；新鉴权首包统一校准库存和服务器时间。 */
     private onForeground(): void {
-        this.gameSocket?.setBackground(false);
+        this.account?.socket.setBackground(false);
     }
 
-    /** 装配两项早期成长的原请求、认证交付和通用发奖，页面只转交操作参数。 */
-    private bindProgressRewards(model: AccountModel, service: AccountService, socket: GameSocketClient,
-        rewards: RewardBinding, namespace: string, chapter: MainChapterController): GrowthRewards {
-        const firstRewardController = new MainChapterFirstRewardController();
-        const firstReward = new ProgressRewardBinding<ChapterRewardIntent>(model,
-            new PersistentOperationJournal("mxzg.remake.chapter-first-reward.v1." + namespace,
-                ProgressRewardUtils.readChapterIntent, (left, right) => left.chapter === right.chapter),
-            (intent, recover) => recover ? firstRewardController.recover(intent.chapter) : firstRewardController.claim(intent.chapter),
-            (intent, receipt) => intent.chapter === (receipt as { chapter?: number }).chapter,
-            new Set(["FIRST_REWARD_INVALID", "FIRST_REWARD_UNKNOWN", "FIRST_REWARD_NOT_REACHED"]),
-            receipt => rewards.restoreActual(receipt.receiptId, receipt.assetRevision, receipt.actual),
-            () => rewards.retry());
-        firstRewardController.configure((name, body, received, failed) => service.deliverAuthenticated(
-            token => socket.chapter(token, name, body), received, failed),
-            () => service.authenticated(token => socket.refreshSnapshot(token)),
-            receipt => firstReward.deliver(receipt));
-        firstRewardController.initialize();
-        chapter.requestFirstRewardClaim = chapterNumber => firstReward.begin({ schemaVersion: 1, chapter: chapterNumber });
-
-        const fragments: ProgressRewardBinding<FragmentCombineIntent> = new ProgressRewardBinding(model,
-            new PersistentOperationJournal("mxzg.remake.hero-fragment.v1." + namespace,
-                ProgressRewardUtils.readFragmentIntent, (left, right) => left.requestId === right.requestId
-                    && left.itemId === right.itemId && left.quantity === right.quantity),
-            async (intent, recover) => {
-                const receipt = await ProgressRewardUtils.combine(service, socket, intent, recover,
-                    () => this.assetState?.acceptedRevision ?? -1);
-                fragments.deliver(receipt);
-            },
-            ProgressRewardUtils.matchesFragment,
-            new Set(["FRAGMENT_INVALID", "FRAGMENT_UNSUPPORTED", "FRAGMENT_INSUFFICIENT", "FRAGMENT_CAPACITY_FULL",
-                "FRAGMENT_LEVEL_REQUIRED", "FRAGMENT_REQUEST_CONFLICT"]),
-            receipt => rewards.restoreActual(receipt.receiptId, receipt.assetRevision, receipt.actual),
-            () => rewards.retry());
-        BagController.instance.configurePieceCompose((itemId, quantity) => fragments.begin({ schemaVersion: 1,
-            requestId: PersistentOperationJournal.createId(), itemId, quantity }),
-        () => model.snapshot.role?.level ?? 0, undefined, () => {
-            const roster = HeroRosterModel.instance.snapshot;
-            return roster.rosterInfo ? roster.rosterInfo.capacity - roster.heroes.length : null;
-        });
-        return { firstReward, firstRewardController, fragments };
-    }
-
-    /** 普通升级只读统一资产与认证通道，身份归属在回执交付给英雄模块前校验。 */
-    private bindHeroLevel(model: AccountModel, service: AccountService, socket: GameSocketClient,
-        namespace: string): HeroLevelController {
-        this.heroLevelJournal = new PersistentOperationJournal("mxzg.remake.hero-level.v1." + namespace,
-            HeroLevelData.readRequest, HeroLevelData.sameRequest);
-        const controller = HeroLevelController.instance;
-        controller.configure({
-            send: (name, body) => service.authenticated(async token => {
-                const frame = await socket.heroLevel(token, name, body);
-                const receipt = name === Protocol.HERO_LEVEL_UPGRADE_STATUS
-                    ? (frame.body as HeroLevelStatus).receipt : frame.body as HeroLevelReceipt;
-                if (receipt && receipt.roleId !== model.snapshot.role?.id) {
-                    throw new Error("普通升级回执不属于当前角色");
-                }
-                return frame;
-            }),
-            refresh: () => service.authenticated(token => socket.refreshSnapshot(token)),
-            revision: () => this.assetState?.acceptedRevision ?? -1,
-            balances: () => {
-                const account = model.snapshot;
-                return account.role && !account.busy && BagModel.instance.snapshot.synced
-                    ? { gold: account.role.gold, heroExp: BagModel.instance.quantity(900101) } : null;
-            },
-        });
-        controller.initialize();
-        return controller;
-    }
-
-    /** 应用销毁时清理开发演示、页面注册、会话和升级日志连接。 */
+    /** 结束预览、会话模块、连接与页面，再释放场景资源和监听。 */
     onDestroy(): void {
         this.development?.dispose();
         this.development = null;
@@ -708,29 +311,6 @@ export class RemakeApp extends Component {
         this.started = false;
         game.off(Game.EVENT_HIDE, this.onBackground, this);
         game.off(Game.EVENT_SHOW, this.onForeground, this);
-        this.idleClaims?.dispose();
-        this.idleClaims = null;
-        this.milestoneClaims?.dispose();
-        this.milestoneClaims = null;
-        this.firstSummon?.dispose();
-        this.firstSummon = null;
-        this.growthRewards?.firstReward.dispose();
-        this.growthRewards?.firstRewardController.dispose();
-        this.growthRewards?.fragments.dispose();
-        this.growthRewards = null;
-        if (this.heroLevelJournal) {
-            HeroLevelController.instance.dispose();
-            this.heroLevelJournal.dispose();
-            this.heroLevelJournal = null;
-        }
-        this.rewards?.dispose();
-        this.rewards = null;
-        if (this.gameSocket) {
-            this.gameSocket.onReady = this.gameSocket.onDisconnected = this.gameSocket.onRejected = this.gameSocket.onState = null;
-            this.gameSocket.onReward = null;
-            this.gameSocket.disconnect();
-            this.gameSocket = null;
-        }
         this.routeEpoch++;
         for (const done of this.paintWaiters) done();
         this.logo?.stop();
@@ -738,24 +318,16 @@ export class RemakeApp extends Component {
         this.logo = null;
         this.chrome?.destroy();
         this.chrome = null;
-        this.assetState?.dispose();
-        this.assetState = null;
         this.offAccount?.();
         this.offAccount = null;
-        this.features?.dispose();
-        this.features = null;
-        this.closeGmViews();
-        UIManager.instance.closeById("role-profile");
-        UIManager.instance.closeById("server-picker");
-        UIManager.instance.closeById("remake-formation");
-        this.navigation?.dispose();
-        this.navigation = null;
-        this.bagModule?.dispose();
-        this.bagModule = null;
+        this.modules?.dispose();
+        this.modules = null;
+        this.account?.controller.dispose();
+        this.account = null;
+        this.pages?.dispose();
+        this.pages = null;
         this.resources.dispose();
-        for (const unregister of this.unregisterViews.splice(0)) unregister();
         UIManager.instance.releaseUnusedModal();
-        CityMapService.instance.clearCitySpriteCache();
         ResourceAssetsUtils.releaseResidents();
         PrefabLoader.clearPrefabCache();
     }
@@ -763,10 +335,10 @@ export class RemakeApp extends Component {
     /** 距离上次闲置预制体检查的秒数；只随当前应用update推进，销毁后不再运行。 */
     private prefabCollectionSeconds = 0;
 
-    /** 推进飘字和服务器时钟，每30秒检查无人使用的预制体缓存，不清理预加载持有。 */
+    /** 推进飘字和公共时钟的帧计时，每 30 秒检查闲置预制体。 */
     update(dt: number): void {
         this.notices?.update(dt);
-        BagModel.instance.advanceClock(dt);
+        ServerClock.instance.advance(dt);
         this.prefabCollectionSeconds += dt;
         if (this.prefabCollectionSeconds >= 30) {
             this.prefabCollectionSeconds = 0;

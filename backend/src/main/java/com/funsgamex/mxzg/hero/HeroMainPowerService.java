@@ -1,26 +1,24 @@
 /**
- * 当前主线队伍的服务端战力读取，供MainChapterService的等级/战力门槛使用。
- * 按旧QueryHeros路径从持久英雄组装面板来源，不把阵型或元素光环重复计入评分。
+ * 主阵容战力读取及历史峰值，分别供主线和金币副本入场条件使用。
+ * 复用同一英雄快照中的个人战力，不把阵型或元素光环重复计入评分。
  */
 package com.funsgamex.mxzg.hero;
 
+import com.funsgamex.mxzg.role.RoleRepository;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class HeroMainPowerService {
     /** 鉴权并锁定当前角色，读取同一版本的持久阵容。 */
     private final HeroBattleInputService inputs;
-    /** 普通装备、套装与原始基础属性组装。 */
-    private final HeroPanelRules panels;
-    /** 当前解锁静态技能属性贡献，不执行战斗触发。 */
-    private final HeroSkillPanelRules skills;
-    /** 持久进化的原始属性贡献。 */
-    private final HeroEvolutionRules evolution;
-    /** 同源评分公式。 */
-    private final HeroPowerRules powers;
+    /** 当前主阵容的个人面板分值，修改后走已有角色锁读取。 */
+    private final HeroRepository heroes;
+    /** 历史主阵容峰值的角色持久化入口。 */
+    private final RoleRepository roles;
 
     /** 队伍总分、逐英雄分值与输入版本；pending非空时不能声称完整还原旧服战力。 */
     public record State(long assetRevision, long lineupVersion, int total,
@@ -32,14 +30,26 @@ public class HeroMainPowerService {
         }
     }
 
-    /** 复用现有属性规则，避免另造英雄数据源。 */
-    public HeroMainPowerService(HeroBattleInputService inputs, HeroPanelRules panels,
-            HeroSkillPanelRules skills, HeroEvolutionRules evolution, HeroPowerRules powers) {
+    /** 当前阵容战力和历史峰值分别用于当前是否有阵容及旧金币副本门槛。 */
+    public record Measured(int current, int maximum) {}
+
+    /** 注入当前阵容及同角色事务内组装的英雄数据。 */
+    public HeroMainPowerService(HeroBattleInputService inputs, HeroRepository heroes, RoleRepository roles) {
         this.inputs = inputs;
-        this.panels = panels;
-        this.skills = skills;
-        this.evolution = evolution;
-        this.powers = powers;
+        this.heroes = heroes;
+        this.roles = roles;
+    }
+
+    /** 在角色锁内按阵容英雄的同源面板评分记录峰值，阵容或装备走低时保留原最高值。 */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Measured observe(String roleId) {
+        int current = 0;
+        for (var hero : heroes.list(roleId)) {
+            if (hero.deployed()) {
+                current = Math.addExact(current, hero.panelStats().power());
+            }
+        }
+        return new Measured(current, roles.observeMainPower(roleId, current));
     }
 
     /**
@@ -54,12 +64,7 @@ public class HeroMainPowerService {
         var pending = new LinkedHashSet<String>();
         for (var unit : input.units()) {
             var hero = unit.hero();
-            var evolved = evolution.resolve(hero.templateId(), hero.evolution().type(), hero.evolution().level());
-            var attributes = panels.attributes(hero.baseStats(), hero.equipment(), add -> {
-                skills.contribute(hero.templateId(), hero.star(), hero.stage(), add);
-                evolved.attributes().forEach(add);
-            });
-            int score = powers.score(attributes);
+            int score = hero.panelStats().power();
             if (scores.put(hero.id(), score) != null) {
                 throw new IllegalStateException("主线队伍英雄重复");
             }

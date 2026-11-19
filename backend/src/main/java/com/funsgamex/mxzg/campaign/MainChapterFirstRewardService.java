@@ -10,7 +10,7 @@ import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.reward.RewardReceiptPayloads;
 import com.funsgamex.mxzg.role.RoleRepository;
-import java.time.Instant;
+import com.funsgamex.mxzg.time.GameClock;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -38,6 +38,8 @@ public class MainChapterFirstRewardService {
     private final JdbcTemplate jdbc;
     /** 持久冻结回执和读取完整性检查。 */
     private final RewardReceiptPayloads payloads;
+    /** 独立通关奖励使用的游戏时钟。 */
+    private final GameClock clock;
 
     /** 原成功回执，显示真实奖励并等待此版本的统一快照确认。 */
     public record Receipt(int schemaVersion, int chapter, String receiptId, String roleId, long assetRevision,
@@ -63,10 +65,10 @@ public class MainChapterFirstRewardService {
         }
     }
 
-    /** 注入现有领域依赖，服务不保存本地分页或发奖状态。 */
+    /** 注入现有领域与游戏时钟，领取回执由数据库持有。 */
     public MainChapterFirstRewardService(SessionService sessions, RoleRepository roles, MainChapterService chapters,
             MainChapterRules chapterRules, MainChapterFirstRewardRules rules, RewardGrantService grants,
-            AssetSyncService sync, JdbcTemplate jdbc, RewardReceiptPayloads payloads) {
+            AssetSyncService sync, JdbcTemplate jdbc, RewardReceiptPayloads payloads, GameClock clock) {
         this.sessions = sessions;
         this.roles = roles;
         this.chapters = chapters;
@@ -76,9 +78,10 @@ public class MainChapterFirstRewardService {
         this.sync = sync;
         this.jdbc = jdbc;
         this.payloads = payloads;
+        this.clock = clock;
     }
 
-    /** 领取旧绝对关卡对应的奖励；原回执优先，失败不会产生空已领记录。 */
+    /** 按游戏时间发放旧绝对关卡对应的奖励；原回执优先，失败不会产生已领记录。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt claim(String token, int chapter) {
         String role = authorize(token, chapter);
@@ -96,7 +99,7 @@ public class MainChapterFirstRewardService {
         }
         var random = ThreadLocalRandom.current();
         var actual = grants.grant(role, plan, new RewardGrantService.Context(
-                Instant.now().getEpochSecond(), chapterRules.tavernLimit(state.maxCleared())), random);
+                clock.epochSeconds(), chapterRules.tavernLimit(state.maxCleared())), random);
         sync.changed(role);
         var receipt = new Receipt(1, chapter, UUID.randomUUID().toString(), role, roles.revision(role), actual);
         validate(receipt, role, chapter, receipt.receiptId());

@@ -1,32 +1,39 @@
 /**
- * 免费首抽的客户端专项：真实应用装配、统一快照、Protobuf与原回执投影。
- * 只替换持久存储、连接响应和展示宿主，验证断线续段和实际发奖反馈时机。
+ * 普通单抽客户端专项，覆盖免费与用券点击、按钮状态和实际英雄展示。
+ * 通过真实二进制协议、控制器和资产快照验证发包回报，只替换网络和渲染宿主。
  */
 import { strict as assert } from "node:assert";
-import { Button, Label, Node, UITransform } from "cc";
+import { Button, Label, Node, Sprite, UITransform } from "cc";
 import { AssetStateBinding } from "../assets/scripts/app/remake/AssetStateBinding";
-import { FirstSummonBinding } from "../assets/scripts/app/remake/FirstSummonBinding";
+import { ServerClock } from "../assets/scripts/core/ServerClock";
+import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
+import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
-import type { AccountService } from "../assets/scripts/features/account/AccountService";
+import { AccountOperations } from "../assets/scripts/features/account/AccountOperations";
+import { AccountController } from "../assets/scripts/features/account/AccountController";
 import { RoleController } from "../assets/scripts/features/account/RoleController";
 import { BagController } from "../assets/scripts/features/bag/BagController";
 import { BagModel } from "../assets/scripts/features/bag/BagModel";
-import type { FirstSummonIntent, FirstSummonProtocol } from "../assets/scripts/features/hero/data/FirstSummonData";
 import { FirstSummonView } from "../assets/scripts/features/hero/ui/FirstSummonView";
+import { FirstSummonData } from "../assets/scripts/features/hero/data/FirstSummonData";
+import { SummonReferenceUtils } from "../assets/scripts/features/hero/utils/SummonReferenceUtils";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
-import type { OperationJournalPort } from "../assets/scripts/framework/PersistentOperationJournal";
+import { UIManager } from "../assets/scripts/framework/ui/UIManager";
+import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { GameProtocolCodecUtils } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import type { GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { SocketFailure } from "../assets/scripts/platform/GameSocketClient";
 import type { GameSocketClient } from "../assets/scripts/platform/GameSocketClient";
 import { Protocol } from "../assets/scripts/platform/Protocol";
+import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 
 const role = Object.freeze({ id: "role-A", nickname: "独立首抽", serverId: "local-1", level: 1, gold: 0, diamonds: 0 });
-const priorKey = "10304012-1111-4111-8111-111111111111";
 const receiptId = "10304012-2222-4222-8222-222222222222";
 const heroId = "10304012-3333-4333-8333-333333333333";
 const hero = Object.freeze({ instanceId: heroId, templateId: 10304012, star: 4, level: 1, stage: 1 });
-const state = Object.freeze({ schemaVersion: 1, normalFreeAtSeconds: 1795010000, firstNormalCompleted: true });
+type SummonProtocol = typeof Protocol.HERO_NORMAL_SUMMON;
+const serverNow = 1794966800;
+const state = Object.freeze({ schemaVersion: 1, normalFreeAtSeconds: serverNow + 43200, firstNormalCompleted: true });
 
 /** 使用发布协议的二进制投影，测试调用不得绕过打包及解码。 */
 function encoded(frame: GameFrame): GameFrame {
@@ -34,7 +41,7 @@ function encoded(frame: GameFrame): GameFrame {
 }
 
 /** 同次英雄与非固定数量积分来自服务端真实回执，验证展示只投影英雄。 */
-function receipt(requestId: string, roleId = role.id): Record<string, unknown> {
+function receipt(requestId: string, roleId = role.id) {
     return {
         schemaVersion: 1, requestId, receiptId, roleId, assetRevision: 8, state,
         actual: {
@@ -51,7 +58,7 @@ function receipt(requestId: string, roleId = role.id): Record<string, unknown> {
 }
 
 /** 固定协议帧，不重新计算历史奖励。 */
-function response(name: FirstSummonProtocol, body: unknown): GameFrame {
+function response(name: SummonProtocol, body: unknown): GameFrame {
     return encoded({ version: 1, kind: "response", name, id: "stub-frame", ok: true, body });
 }
 
@@ -67,198 +74,266 @@ async function waitFor(check: () => boolean, message: string): Promise<void> {
 class Harness {
     /** 应用唯一认证状态，供资产入口验证回执及角色归属。 */
     public readonly account = new AccountModel();
+    /** 使用真实的登录／换号保护，测试传输只控制回包时序。 */
+    private readonly service: AccountController;
     /** 应用唯一实际背包，确保回执不直接写积分。 */
     public readonly bag = new BagModel();
     /** 回执排队历史，只记录真实交付，不自动视为窗已显示。 */
     public readonly queued: RewardNotice[] = [];
-    /** 单次请求的实际协议名与已编码原键。 */
-    public readonly requests: Array<{ name: FirstSummonProtocol; requestId: string }> = [];
-    /** 假存储的不同认证角色各自原键。 */
-    public readonly persisted = new Map<string, FirstSummonIntent>();
-    /** 可控制回包时序及丢失，不修改生产逻辑。 */
-    public onRequest: (name: FirstSummonProtocol, key: string) => Promise<GameFrame> = async (name, key) =>
+    /** 每次主动操作发送的请求，观察其协议和业务编号。 */
+    public readonly requests: Array<{ name: SummonProtocol; requestId: string }> = [];
+    /** 用例选择应答时机和真实结果，默认返回一个有效成功回包。 */
+    public onRequest: (name: SummonProtocol, key: string) => Promise<GameFrame> = async (name, key) =>
         response(name, receipt(key));
-    /** 模拟缺推送时请求统一鉴权状态；是否交付由案例控制。 */
-    public onRefresh: () => Promise<void> = async () => this.snapshot(true);
-    /** 应用已有的真实首抽装配。 */
-    public readonly binding: FirstSummonBinding;
+    /** 供资产协议和召唤入口共用的英雄名册。 */
+    public readonly roster = new HeroRosterModel();
+    /** 当前应用的召唤入口，复用真实的认证请求交付。 */
+    public readonly summons = new HeroRosterController(this.roster, this.bag);
     /** 唯一资产同步装配，测试登入或不完整数据以这里是否接纳为准。 */
     private readonly assets: AssetStateBinding;
 
-    /** 注入可控请求及事务日志，保留原应用对状态、展示和角色的校验。 */
+    /** 注入可控连接，复用真实账号、名册和快照入口。 */
     public constructor() {
-        const service = { authenticated: <T>(run: (token: string) => Promise<T>) => run("test-token") };
+        this.service = new AccountController(this.account, {
+            developmentLogin: async account => ({
+                session: { accessToken: "test-token", expiresAt: "2099-01-01T00:00:00Z" },
+                role: { ...role, id: account === "role-a" ? role.id : "role-B" },
+            }),
+            currentRole: async () => { throw new Error("本用例通过显式登录模拟角色切换"); },
+        }, { read: () => null, write: () => {}, clear: () => {} });
         const socket = {
-            firstSummon: async (_token: string, name: FirstSummonProtocol, requestId: string): Promise<GameFrame> => {
-                const frame = encoded({ version: 1, kind: "request", name, id: "stub-frame", body: { requestId } });
+            requestFrame: async (_token: string, name: SummonProtocol, body: { requestId: string }): Promise<GameFrame> => {
+                const { requestId } = body;
+                const frame = encoded({ version: 1, kind: "request", name, id: "stub-frame", body });
                 assert.deepEqual(frame.body, { requestId });
-                assert.equal(this.persisted.get(this.account.snapshot.role!.id)?.requestId, requestId);
+                assert.equal(name, Protocol.HERO_NORMAL_SUMMON);
                 this.requests.push({ name, requestId });
                 return this.onRequest(name, requestId);
             },
-            refreshSnapshot: () => this.onRefresh(),
+            refreshSnapshot: () => assert.fail("普通召唤不主动请求快照"),
         };
-        this.binding = new FirstSummonBinding(this.account, service as unknown as AccountService,
-            socket as unknown as GameSocketClient, "default", notice => { this.queued.push(notice); }, () => {}, {
-                forScope: async keys => this.port(keys[1]),
-                dispose: () => {},
-            });
+        const operations = new AccountOperations(this.service, socket as unknown as GameSocketClient);
+        this.summons.configure(operations, {
+            restore: notice => { this.queued.push(notice); },
+        });
+        this.summons.initialize();
         const bagController = new BagController(this.bag);
-        const roleController = new RoleController(() => {});
+        const roleController = new RoleController(this.account);
         bagController.initialize();
-        this.assets = new AssetStateBinding(this.account, bagController, roleController, undefined, undefined,
-            () => this.binding.deactivate(), undefined, this.binding.controller);
+        this.assets = new AssetStateBinding(this.account, bagController, roleController, this.summons, undefined,
+            () => UIManager.instance.invalidatePending());
     }
 
-    /** 投递同角色的最新统一首包；是否展示英雄和积分由快照决定。 */
-    public snapshot(completed: boolean | null, authenticate = true, roleId = role.id): void {
+    /** 投递已认证角色的资产快照，鉴权样本按线上连接的处理方式校准公共时钟。 */
+    public async snapshot(completed: boolean | null, authenticate = true, roleId: string = role.id,
+        templateId: number = hero.templateId, inventory = [{ itemId: 900302, quantity: 3 }],
+        revision = completed ? 8 : 7): Promise<void> {
         const currentRole = { ...role, id: roleId };
-        const revision = completed ? 8 : 7;
         const initial = {
-            role: currentRole, heroes: completed ? [{ ...hero, id: hero.instanceId }] : [],
-            inventory: completed ? [{ itemId: 900302, quantity: 3 }] : [], revision,
+            role: currentRole, heroes: completed ? [{ ...hero, templateId, id: hero.instanceId }] : [],
+            inventory: completed ? inventory : [], revision,
             ...(completed !== null ? { heroSummon: completed ? state :
                 { schemaVersion: 1, firstNormalCompleted: false, normalFreeAtSeconds: 0 } } : {}),
         };
         if (this.account.snapshot.role?.id !== roleId) {
-            this.account.replace({ busy: false, role: currentRole, error: "" });
+            assert(await this.service.login(roleId, role.serverId));
+            assert.equal(this.account.snapshot.role?.id, roleId);
         }
         const frame = authenticate ? encoded({ version: 1, kind: "response", name: Protocol.SESSION_AUTHENTICATE,
             connectionId: "wire", id: "auth", ok: true,
-            body: { connectionId: "wire", roleId, serverTimeMs: 1794966800000, initial } })
+            body: { connectionId: "wire", roleId, serverTimeMs: serverNow * 1000, initial } })
             : encoded({ version: 1, kind: "event", name: Protocol.STATE_CHANGED, body: initial });
-        if (this.assets.apply(frame)) {
-            this.binding.afterSnapshot(frame.name);
+        if (authenticate) {
+            ServerClock.instance.synchronize(serverNow * 1000);
         }
+        this.assets.apply(frame);
     }
 
-    /** 释放各模块和认证装配，避免下一案例残留监听。 */
+    /** 释放账号、资产入口和召唤事件。 */
     public dispose(): void {
         this.assets.dispose();
-        this.binding.dispose();
-    }
-
-    /** 附着到当前角色的事务端口，删除必须精确匹配最初原键。 */
-    private port(roleId: string): OperationJournalPort<FirstSummonIntent> {
-        return {
-            read: async () => this.persisted.get(roleId) ?? null,
-            create: async intent => {
-                const result = this.persisted.get(roleId) ?? intent;
-                this.persisted.set(roleId, result);
-                return result;
-            },
-            clear: async intent => {
-                if (this.persisted.get(roleId)?.requestId !== intent.requestId) {
-                    return false;
-                }
-                return this.persisted.delete(roleId);
-            },
-        };
+        this.service.dispose();
+        ServerClock.instance.invalidate();
     }
 }
 
-/** 资格缺失不能点击发奖；回执先到时必须等待快照才显示，积分只从背包获得。 */
-async function confirmsWithSnapshot(): Promise<void> {
+/** 免费点击同步返回，快速双击只发一包；即时回包只展示实际所得。 */
+async function submitsOnce(): Promise<void> {
     const app = new Harness();
-    let refresh: (() => void) | undefined;
-    app.onRefresh = () => new Promise(resolve => { refresh = resolve; });
+    let answer!: () => void;
+    app.onRequest = (name, key) => new Promise(resolve => {
+        answer = () => resolve(response(name, receipt(key)));
+    });
     try {
-        app.snapshot(null);
-        await waitFor(() => !app.binding.controller.model.snapshot.busy, "资格初始化未结束");
-        app.binding.begin();
-        await waitFor(() => !app.binding.controller.model.snapshot.busy, "无资格检查未结束");
-        assert.equal(app.requests.length, 0);
-        app.snapshot(false);
-        await waitFor(() => !app.binding.controller.model.snapshot.busy, "资格更新未结束");
-        app.binding.begin();
-        app.binding.begin();
-        await waitFor(() => !!refresh, "缺少统一状态刷新");
-        assert.equal(app.queued.length, 0);
+        await app.snapshot(false);
+        assert.equal(app.summons.summon(), undefined);
+        app.summons.summon();
+        await waitFor(() => !!answer, "召唤请求未发出");
+        assert(app.summons.summoning);
+        answer();
+        await waitFor(() => !app.summons.summoning, "召唤回包后仍在等待");
         assert.equal(app.requests.length, 1);
         assert.equal(app.bag.quantity(900302), 0);
-        app.snapshot(true);
-        refresh!();
-        await waitFor(() => app.queued.length === 1, "双确认未入队");
+        assert.equal(app.roster.snapshot.heroes.length, 0);
+        assert.deepEqual(app.queued[0]?.heroes, [hero]);
+        await app.snapshot(true);
         assert.equal(app.bag.quantity(900302), 3);
-        assert.deepEqual(app.queued[0].items, [{ itemId: hero.templateId, credited: 1 }]);
-        assert.deepEqual(app.queued[0].heroes, [hero]);
-        assert(app.persisted.has(role.id));
-        app.binding.presented(receiptId);
-        await waitFor(() => !app.persisted.has(role.id), "原回执已显示但日志未清");
-        app.binding.begin();
-        await waitFor(() => !app.binding.controller.model.snapshot.busy, "重复点击检查未结束");
+        assert.equal(app.roster.snapshot.heroes.length, 1);
+        assert.equal(app.requests.length, 1, "快照不触发第二次操作");
+    } finally {
+        app.dispose();
+    }
+}
+
+/** 丢回包时，无论是否已经完成，一律以鉴权首包刷新且不会主动追查或补发。 */
+async function reconnectWithSnapshot(completed: boolean): Promise<void> {
+    const app = new Harness();
+    app.onRequest = async () => { throw new SocketFailure("DISCONNECTED"); };
+    try {
+        await app.snapshot(false);
+        app.summons.summon();
+        await waitFor(() => app.requests.length === 1 && !app.summons.summoning, "断开连接后按钮尚未恢复");
+        await app.snapshot(completed);
         assert.equal(app.requests.length, 1);
-    } finally {
-        app.dispose();
-    }
-}
-
-/** 断线后认证已到了，旧请求故障稍后才结束；仍须用原键查询、成功一次。 */
-async function reconnectRace(): Promise<void> {
-    const app = new Harness();
-    let reject: ((error: unknown) => void) | undefined;
-    app.onRequest = (name, requestId) => name === Protocol.HERO_FIRST_SUMMON
-        ? new Promise((_resolve, fail) => { reject = fail; })
-        : Promise.resolve(response(name, { requestId, found: true, receipt: receipt(requestId) }));
-    try {
-        app.snapshot(false);
-        await waitFor(() => !app.binding.controller.model.snapshot.busy, "未完成初始同步");
-        app.binding.begin();
-        await waitFor(() => !!reject, "未发送首抽原请求");
-        app.snapshot(true);
-        reject!(new SocketFailure("DISCONNECTED"));
-        await waitFor(() => app.queued.length === 1, "丢包后的并发认证未恢复");
-        assert.deepEqual(app.requests.map(request => request.name), [
-            Protocol.HERO_FIRST_SUMMON, Protocol.HERO_FIRST_SUMMON_STATUS,
-        ]);
-        assert.equal(app.requests[0].requestId, app.requests[1].requestId);
-        app.snapshot(true);
-        app.binding.presented(receiptId);
-        await waitFor(() => !app.persisted.has(role.id), "恢复回执展示后未清理");
-        assert.equal(app.queued.length, 1);
-    } finally {
-        app.dispose();
-    }
-}
-
-/** 冷重登查原键；换号中迟到的跨角色回执不能展示或删除旧意图。 */
-async function coldRecoveryAndSwitch(): Promise<void> {
-    const app = new Harness();
-    let resolve: ((frame: GameFrame) => void) | undefined;
-    app.persisted.set(role.id, { schemaVersion: 1, requestId: priorKey });
-    app.onRequest = () => new Promise(done => { resolve = done; });
-    try {
-        app.snapshot(true);
-        await waitFor(() => !!resolve, "冷登录没有查原回执");
-        assert.deepEqual(app.requests, [{ name: Protocol.HERO_FIRST_SUMMON_STATUS, requestId: priorKey }]);
-        app.snapshot(false, true, "role-B");
-        resolve!(response(Protocol.HERO_FIRST_SUMMON_STATUS, { requestId: priorKey, found: true, receipt: receipt(priorKey) }));
-        await waitFor(() => !app.binding.controller.model.snapshot.busy, "新角色未同步完");
-        assert.equal(app.queued.length, 0);
-        assert(app.persisted.has(role.id));
-        assert.equal(app.binding.controller.model.snapshot.requestId, null);
-        assert.equal(app.binding.controller.model.snapshot.state?.firstNormalCompleted, false);
-    } finally {
-        app.dispose();
-    }
-}
-
-/** 其他设备已完成且没有该键回执，只接受其快照，不显示没有归属的资产。 */
-async function completedElsewhere(): Promise<void> {
-    const app = new Harness();
-    app.persisted.set(role.id, { schemaVersion: 1, requestId: priorKey });
-    app.onRequest = async (name, requestId) => response(name, { requestId, found: false });
-    try {
-        app.snapshot(true);
-        await waitFor(() => !app.persisted.has(role.id), "其他设备已完成后保留了无效原意图");
-        assert.equal(app.requests.length, 1);
+        assert.equal(app.roster.snapshot.normalFreeAtSeconds, completed ? state.normalFreeAtSeconds : 0);
+        assert.equal(app.bag.quantity(900302), completed ? 3 : 0);
         assert.equal(app.queued.length, 0);
     } finally {
         app.dispose();
     }
 }
 
-/** 已完成且无原意图时隐藏免费按钮，仍待确认时保留恢复入口。 */
+/** 上一角色迟到的成功回包不能显示英雄，也不能解锁下一角色正在等待的按钮。 */
+async function ignoresPreviousCharacter(): Promise<void> {
+    const app = new Harness();
+    const answers: Array<() => void> = [];
+    app.onRequest = (name, key) => new Promise(resolve => {
+        const roleId = app.account.snapshot.role!.id;
+        answers.push(() => resolve(response(name, receipt(key, roleId))));
+    });
+    try {
+        await app.snapshot(false);
+        app.summons.summon();
+        await waitFor(() => answers.length === 1, "旧角色请求未发出");
+        await app.snapshot(false, true, "role-B");
+        assert(!app.summons.summoning);
+        app.summons.summon();
+        await waitFor(() => answers.length === 2, "新角色请求未发出");
+        answers[0]();
+        await new Promise<void>(resolve => setImmediate(resolve));
+        assert.equal(app.requests.length, 2);
+        assert.equal(app.queued.length, 0);
+        assert(app.summons.summoning);
+        assert.equal(app.account.snapshot.role?.id, "role-B");
+        answers[1]();
+        await waitFor(() => app.queued.length === 1, "当前角色的召唤回包未显示");
+        assert(!app.summons.summoning);
+    } finally {
+        app.dispose();
+    }
+}
+
+/** 改变服务器产出的英雄和附带物品，获得窗仍只展示该回执中的英雄；窗口不要求指定积分到账。 */
+async function followsServerResult(): Promise<void> {
+    const app = new Harness();
+    const drawn = { ...hero, templateId: 10101001 };
+    const extra = { itemId: 101, quantity: 7 };
+    app.onRequest = async (name, key) => {
+        const result = receipt(key);
+        const items = [
+            { ...result.actual.items[0], itemId: drawn.templateId },
+            { ...result.actual.items[1], itemId: extra.itemId, requested: extra.quantity, credited: extra.quantity },
+        ];
+        await app.snapshot(true, false, role.id, drawn.templateId, [extra]);
+        return response(name, { ...result, actual: { ...result.actual, items, heroes: [drawn] } });
+    };
+    try {
+        await app.snapshot(false);
+        app.summons.summon();
+        await waitFor(() => app.queued.length === 1, "服务端给出的英雄未显示");
+        assert.equal(app.requests.length, 1);
+        assert.deepEqual(app.queued[0]?.heroes, [drawn]);
+        assert.deepEqual(app.queued[0]?.items, [{ itemId: drawn.templateId, credited: 1 }]);
+        assert.equal(app.bag.quantity(extra.itemId), extra.quantity);
+        assert.equal(app.bag.quantity(900302), 0);
+    } finally {
+        app.dispose();
+    }
+}
+
+/** 已完成首抽的角色，冷却内检查普通券；到期的同一秒可再次免费召唤。 */
+async function drawsAfterFirst(secondsUntilFree: number, tickets: number): Promise<void> {
+    const app = new Harness();
+    const notices: string[] = [];
+    const stopNotice = UIManager.instance.bindNotice(text => notices.push(text));
+    const inventory = tickets ? [{ itemId: 900201, quantity: tickets }] : [];
+    try {
+        await app.snapshot(true, true, role.id, hero.templateId, inventory);
+        ServerClock.instance.synchronize((state.normalFreeAtSeconds - secondsUntilFree) * 1000);
+        assert.equal(app.roster.normalSummonFree, secondsUntilFree <= 0);
+        assert.equal(app.summons.summon(), undefined);
+        if (secondsUntilFree > 0 && tickets === 0) {
+            assert.deepEqual(notices, ["普通召唤券不足"]);
+            assert.equal(app.summons.summoning, false);
+            assert.equal(app.requests.length, 0);
+            return;
+        }
+        await waitFor(() => app.queued.length === 1, "普通单抽没有展示收到的英雄");
+        assert.deepEqual(notices, []);
+        assert.equal(app.requests.length, 1);
+        assert.equal(app.bag.quantity(900201), tickets, "回包展示期间不预扣背包");
+        const remaining = secondsUntilFree <= 0 ? tickets : tickets - 1;
+        const after = remaining ? [{ itemId: 900201, quantity: remaining }] : [];
+        await app.snapshot(true, false, role.id, hero.templateId, after, 9);
+        assert.equal(app.bag.quantity(900201), remaining, "统一快照更新券余额");
+    } finally {
+        stopNotice();
+        app.dispose();
+    }
+}
+
+/** 切换角色时取消在途召唤页，迟到失败不提示下一角色；本角色的失败由页面管理器报告。 */
+async function cancelsPendingWindow(): Promise<void> {
+    const app = new Harness();
+    const ui = UIManager.instance;
+    const root = new Node("Canvas");
+    const navigation = { current: "home", openChild: () => {}, back: () => false };
+    const notices: string[] = [];
+    const spec = UIRegistry.viewSpecOf(FirstSummonView)!;
+    let fail: ((error: Error) => void) | null = null;
+    ui.install(navigation, { showToast: text => { notices.push(text); } });
+    UIRegistry.registerView(FirstSummonView, {
+        ...spec,
+        load: () => new Promise((_resolve, reject) => { fail = reject; }),
+    });
+    const rejectLoad = async () => {
+        await waitFor(() => !!fail, "预制体加载未开始");
+        const reject = fail!;
+        fail = null;
+        reject(new Error("受控的首抽窗口加载失败"));
+    };
+    try {
+        await app.snapshot(false);
+        const oldOpen = ui.open(FirstSummonView).catch(error => error);
+        await waitFor(() => !!fail, "旧角色首抽窗口尚未开始加载");
+        await app.snapshot(false, true, "role-B");
+        await rejectLoad();
+        assert(UIManager.isOpenCancelled(await oldOpen));
+        assert.deepEqual(notices, []);
+        assert.equal(ui.isOpen(FirstSummonView), false);
+        const currentOpen = ui.open(FirstSummonView).catch(error => error);
+        await rejectLoad();
+        assert(UIManager.isFailureReported(await currentOpen));
+        assert.equal(notices.length, 1, "当前角色的失败由框架提示一次");
+    } finally {
+        app.dispose();
+        ui.uninstall(navigation);
+        UIRegistry.registerView(FirstSummonView, spec);
+        root.destroy();
+    }
+}
+
+/** 窗口随快照显示免费或用券操作，在途时禁用；关闭窗口不影响本次交付。 */
 async function rendersOnlyAvailableAction(): Promise<void> {
     const app = new Harness();
     const root = new Node("FirstSummon");
@@ -268,40 +343,94 @@ async function rendersOnlyAvailableAction(): Promise<void> {
     view.panel = panel.addComponent(UITransform);
     view.panel.setContentSize(518, 494);
     view.closeButton = new Node("Close").addComponent(Button);
-    view.summonButton = new Node("Apply").addComponent(Button);
-    view.summonLabel = new Node("ApplyLabel").addComponent(Label);
+    view.drawButtons = Array.from({ length: 6 }, (_, index) => new Node(`Draw${index}`).addComponent(Button));
+    view.drawCosts = Array.from({ length: 6 }, (_, index) => new Node(`Cost${index}`).addComponent(Label));
+    view.drawCostIcons = Array.from({ length: 6 }, (_, index) => new Node(`CostIcon${index}`).addComponent(Sprite));
+    view.poolBalances = Array.from({ length: 3 }, (_, index) => new Node(`Balance${index}`).addComponent(Label));
     view.stateLabel = new Node("Message").addComponent(Label);
     view.pointsLabel = new Node("Points").addComponent(Label);
+    // 离线引擎没有帧调度器，保留原回调和注册周期，通过手动推进一帧核对到期与关闭。
+    const timers = new Set<(dt: number) => void>();
+    view.schedule = (callback, seconds) => {
+        assert.equal(seconds, 1);
+        assert(!timers.has(callback), "同一刷新回调重复登记");
+        timers.add(callback);
+    };
+    view.unschedule = callback => { timers.delete(callback); };
     try {
-        view.runOpen({ model: app.binding.controller.model, requestSummon: () => app.binding.begin() });
-        assert.equal(view.summonButton.node.active, false);
-        app.snapshot(false);
-        await waitFor(() => view.summonButton!.interactable, "有免费资格时未启用按钮");
-        assert.equal(view.summonLabel.string, "免费召唤");
-        app.snapshot(true);
-        await waitFor(() => !app.binding.controller.model.snapshot.busy, "完成快照未同步");
-        assert.equal(view.summonButton.node.active, false);
-        assert.equal(view.stateLabel.string, "首次普通召唤已完成");
-        app.binding.controller.setPending(priorKey, false);
-        assert.equal(view.summonButton.node.active, true);
-        assert.equal(view.summonLabel.string, "恢复结果");
+        view.configure(app.summons, app.roster, app.bag);
+        view.runOpen();
+        const [normalDraw] = view.drawButtons;
+        assert.equal(normalDraw.interactable, false, "尚未同步召唤时间时不可点击");
+        assert.equal(timers.size, 1);
+        await app.snapshot(false);
+        await waitFor(() => normalDraw.interactable, "有免费资格时未启用按钮");
+        assert.equal(view.drawCosts[0].string, "免费");
+        let answer!: () => void;
+        app.onRequest = (name, key) => new Promise(resolve => {
+            answer = () => resolve(response(name, receipt(key)));
+        });
+        normalDraw.node.emit(Button.EventType.CLICK);
+        assert.equal(normalDraw.interactable, false);
+        await waitFor(() => !!answer, "召唤请求未发出");
         view.runClose();
-        app.binding.controller.setPending(null, false);
-        assert.equal(view.summonLabel.string, "恢复结果", "关闭后未解除渲染监听");
+        assert.equal(timers.size, 0, "窗口关闭后应移除计时刷新");
+        answer();
+        await waitFor(() => !app.summons.summoning, "关闭窗口后的回包未处理");
+        assert.equal(app.queued.length, 1, "关窗不撤销正在发送的请求");
+        await app.snapshot(true);
+        view.runOpen();
+        assert.equal(normalDraw.node.active, true, "完成首抽后仍可点击普通单抽");
+        assert.equal(normalDraw.interactable, true, "缺券时应可点击查看缺券提示");
+        assert.equal(view.drawCosts[0].string, "1");
+        assert.match(view.stateLabel.string, /后免费$/);
+        assert.equal(view.poolBalances[0].string, "0");
+        assert.equal(view.pointsLabel.string, "3/1000");
+        ServerClock.instance.synchronize(state.normalFreeAtSeconds * 1000);
+        for (const callback of timers) {
+            callback.call(view, 1);
+        }
+        assert.equal(view.drawCosts[0].string, "免费", "窗口留在前台也能在到期秒切换");
+        view.runClose();
+        assert.equal(timers.size, 0);
     } finally {
         root.destroy();
         app.dispose();
     }
 }
 
+/** 用真实配置包核对高级钻石预算、积分和概率源。 */
+function checksSummonConfiguration(): void {
+    assert.deepEqual(FirstSummonData.quote("ADVANCED", 1, true, 0),
+        { itemId: 900202, items: 0, diamonds: 0, free: true });
+    assert.equal(FirstSummonData.quote("ADVANCED", 1, false, 0).diamonds, 220);
+    assert.equal(FirstSummonData.quote("ADVANCED", 10, false, 0).diamonds, 1980);
+    assert.deepEqual(FirstSummonData.quote("ADVANCED", 10, false, 3),
+        { itemId: 900202, items: 3, diamonds: 1386, free: false });
+    assert.equal(FirstSummonData.quote("ADVANCED", 10, false, 10).diamonds, 0);
+    assert.equal(FirstSummonData.cost("FRIENDSHIP", 10).item_num, 1000);
+    assert.equal(FirstSummonData.cost("POINTS", 1).item_num, 1000);
+    assert(SummonReferenceUtils.rates("NORMAL").some(row => row.text === "5 星英雄  0.4%"));
+    assert(SummonReferenceUtils.rates("ADVANCED").some(row => row.text === "首次高级十连保底"));
+    assert(SummonReferenceUtils.lineups().some(row => row.text === "三系平衡队"));
+}
+
 /** 顺序运行共享协议路由与事件环境中的独立案例。 */
 async function main(): Promise<void> {
-    await confirmsWithSnapshot();
-    await reconnectRace();
-    await coldRecoveryAndSwitch();
-    await completedElsewhere();
+    await ConfigFixtureUtils.installReal();
+    checksSummonConfiguration();
+    await submitsOnce();
+    await followsServerResult();
+    await drawsAfterFirst(1, 0);
+    await drawsAfterFirst(1, 1);
+    await drawsAfterFirst(0, 0);
+    await drawsAfterFirst(0, 1);
+    await reconnectWithSnapshot(true);
+    await reconnectWithSnapshot(false);
+    await ignoresPreviousCharacter();
     await rendersOnlyAvailableAction();
-    console.log("首抽客户端：资格、原键、双确认、重连竞态、换号及积分静默检查通过");
+    await cancelsPendingWindow();
+    console.log("普通单抽客户端：免费、用券、券不足、到期边界、实际英雄、断线换号及窗口检查通过");
 }
 
 void main().catch(error => { console.error(error); process.exitCode = 1; });

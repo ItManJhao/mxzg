@@ -63,6 +63,18 @@
       ]
     },
     {
+      "directory": "bundles/module/dungeon/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "底栏副本大厅、原奖励预览及已接通的金币首关",
+      "names": [
+        "DungeonHallCardView",
+        "DungeonHallView",
+        "GoldDungeonView"
+      ]
+    },
+    {
       "directory": "bundles/module/gm/prefabs",
       "phases": [
         "当前已实现"
@@ -72,6 +84,7 @@
         "GmBattleView",
         "GmGrantView",
         "GmOptionCellView",
+        "GmToolsView",
         "GmView"
       ]
     },
@@ -89,10 +102,16 @@
         "FormationMatrixCellView",
         "FormationMatrixView",
         "FormationView",
+        "HeroAttributeRow",
+        "HeroAttributesView",
+        "HeroEquipmentPickerRow",
+        "HeroEquipmentPickerView",
         "HeroIconCellView",
         "HeroInfoView",
         "HeroListView",
-        "HeroSkillView"
+        "HeroSkillView",
+        "SummonInfoRow",
+        "SummonInfoView"
       ]
     },
     {
@@ -108,6 +127,18 @@
       ]
     },
     {
+      "directory": "bundles/module/market/prefabs",
+      "phases": [
+        "当前已实现"
+      ],
+      "reason": "主城普通市场的页面、货架格和购买确认窗",
+      "names": [
+        "MarketBuyView",
+        "MarketItemCell",
+        "MarketView"
+      ]
+    },
+    {
       "directory": "bundles/module/login/prefabs",
       "phases": [
         "当前已实现"
@@ -115,10 +146,12 @@
       "reason": "当前已实现View、Remake场景及动态启动/战场入口的序列化依赖闭包",
       "names": [
         "AccountLoginView",
+        "RoleNameView",
         "RoleProfileView",
         "ServerCellView",
         "ServerPickerView",
-        "UpdateLayer"
+        "UpdateLayer",
+        "WelcomeGiftView"
       ]
     }
   ]

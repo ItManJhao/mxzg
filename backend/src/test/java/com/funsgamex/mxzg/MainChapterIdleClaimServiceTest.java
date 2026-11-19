@@ -35,6 +35,7 @@ import com.funsgamex.mxzg.spirit.SpiritInventoryService;
 import com.funsgamex.mxzg.spirit.SpiritRules;
 import com.funsgamex.mxzg.tavern.TavernPointRules;
 import com.funsgamex.mxzg.tavern.TavernPointService;
+import com.funsgamex.mxzg.time.GameClock;
 import com.funsgamex.mxzg.world.WorldLevelService;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -232,7 +233,8 @@ class MainChapterIdleClaimServiceTest {
         inputs = transactional(new IdleRewardInputService(jdbc, new IdleRewardRules(json, idleRules),
                 new WorldLevelService(jdbc, transactions, json), gifts, giftRules, activities, activityRules),
                 IdleRewardInputService.class);
-        states = transactional(new MainChapterIdleStateRepository(jdbc, idleRules), MainChapterIdleStateRepository.class);
+        states = transactional(new MainChapterIdleStateRepository(jdbc, idleRules, new GameClock()),
+                MainChapterIdleStateRepository.class);
         clock = new TestClock();
         random = new Draws();
         service = claimService(true);

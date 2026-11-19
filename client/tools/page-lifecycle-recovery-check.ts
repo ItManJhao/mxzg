@@ -8,7 +8,8 @@ import { GameLog } from "../assets/scripts/core/GameLog";
 import { AssetStateBinding } from "../assets/scripts/app/remake/AssetStateBinding";
 import { AccountApi } from "../assets/scripts/features/account/AccountApi";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
-import { AccountService } from "../assets/scripts/features/account/AccountService";
+import { AccountOperations } from "../assets/scripts/features/account/AccountOperations";
+import { AccountController } from "../assets/scripts/features/account/AccountController";
 import { RoleController } from "../assets/scripts/features/account/RoleController";
 import { BagController } from "../assets/scripts/features/bag/BagController";
 import { BagModel } from "../assets/scripts/features/bag/BagModel";
@@ -18,14 +19,12 @@ import { FormationController } from "../assets/scripts/features/hero/FormationCo
 import { FormationSaveModel } from "../assets/scripts/features/hero/FormationSaveModel";
 import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
 import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
-import { RewardController } from "../assets/scripts/features/reward/RewardController";
-import { RewardModel } from "../assets/scripts/features/reward/RewardModel";
+import { RewardDisplayFixture } from "./RewardDisplayFixture";
 import { GameProtocolCodecUtils, GAME_SOCKET_PROTOCOL } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import type { GameFrame } from "../assets/scripts/platform/GameProtocolCodecUtils";
 import { GameSocketClient } from "../assets/scripts/platform/GameSocketClient";
 import type { SocketPort } from "../assets/scripts/platform/GameSocketClient";
 import { Protocol } from "../assets/scripts/platform/Protocol";
-import { ProtocolRouter } from "../assets/scripts/platform/ProtocolRouter";
 
 /** 合法实例、战斗和反馈标识；只用于受控通信，不创建玩家数据。 */
 const HERO_ID = "11111111-1111-4111-8111-111111111111";
@@ -214,10 +213,8 @@ class Fixture {
     public readonly chapterModel = new MainChapterModel();
     /** 实际主线控制器，不由测试重写恢复顺序。 */
     public readonly chapter = new MainChapterController(this.chapterModel);
-    /** 原通用反馈Model，计数只反映真实队列接纳。 */
-    public readonly rewards = new RewardModel();
-    /** 实际反馈控制器，所有重复通知仍由原去重链处理。 */
-    public readonly rewardController = new RewardController(this.rewards);
+    /** 使用与应用相同的奖励队列/协议入口，测试只替换实际窗口。 */
+    public readonly rewards: RewardDisplayFixture;
     /** 已开始展示的反馈编号，窗口替身只提供异步关闭能力。 */
     public readonly shown: string[] = [];
     /** 显式关闭当前窗口的完成口，测试结束前全部释放。 */
@@ -237,7 +234,7 @@ class Fixture {
         },
     });
     /** 实际账号交付入口，测试不绕过在途身份检查。 */
-    public readonly service = new AccountService(this.account, new AccountApi(this.socket), {
+    public readonly service = new AccountController(this.account, new AccountApi(this.socket), {
         read: () => null, write: () => {}, clear: () => {},
     });
     /** 唯一整包提交入口，所有模块都在同一通知批次更新。 */
@@ -249,14 +246,15 @@ class Fixture {
         this.roster.initialize();
         this.formation.initialize();
         this.chapter.initialize();
-        this.rewardController.initialize();
-        this.rewardController.configure(args => {
+        this.rewards = new RewardDisplayFixture(this.service);
+        this.rewards.popup = args => {
             this.shown.push(args.receiptId);
             return new Promise<void>(resolve => { this.closeFeedback = resolve; });
-        }, () => assert.fail("本专项只准备POPUP反馈"));
+        };
+        this.rewards.tips = () => assert.fail("本专项只准备POPUP反馈");
         this.assets = new AssetStateBinding(this.account, this.bag,
-            new RoleController(role => this.service.acceptRole(role)), this.roster, this.formation,
-            () => { this.identityChanges++; this.rewardController.resetSession(); }, this.chapter);
+            new RoleController(this.account), this.roster, this.formation,
+            () => { this.identityChanges++; this.rewards.resetSession(); }, this.chapter);
         this.service.onInitialized = frame => this.accept(frame);
         this.socket.onState = frame => this.accept(frame);
         this.socket.onReady = () => {
@@ -265,25 +263,20 @@ class Fixture {
                 this.accept(this.socket.latestState);
             }
         };
-        this.socket.onReward = frame => ProtocolRouter.instance.dispatch(this.rewardController, frame);
-        this.formation.configure((body, received, failed) => this.service.deliverAuthenticated(
-            token => this.socket.saveFormation(token, body), received, failed),
-        (received, failed) => this.service.deliverAuthenticated(token => this.socket.refreshSnapshot(token), received, failed));
-        this.chapter.configure((name, body, received, failed) => this.service.deliverAuthenticated(
-            token => this.socket.chapter(token, name, body), received, failed), undefined, undefined,
-        (received, failed) => this.service.deliverAuthenticated(token => this.socket.refreshSnapshot(token), received, failed));
+        this.socket.onReward = frame => this.rewards.controller.receive(frame);
+        const operations = new AccountOperations(this.service, this.socket);
+        this.formation.configure(operations);
+        this.chapter.configure(operations);
         this.chapter.configureSettlementFeedback(receipt => {
-            this.rewardController.restore(this.notice(receipt.state.assetRevision));
+            this.rewards.restore(this.notice(receipt.state.assetRevision));
             return "queued";
-        }, () => this.rewardController.retry());
+        }, () => this.rewards.retry());
     }
 
-    /** 整包真正接纳后交付版本和已有恢复意图，不因重复推送伪造确认。 */
+    /** 整包真正接纳后通知奖励控制器已提交的资产版本。 */
     public accept(frame: GameFrame): void {
         if (this.assets.apply(frame)) {
-            const body = frame.body as any;
-            this.rewardController.observeRevision((frame.name === Protocol.STATE_CHANGED ? body : body.initial).revision);
-            this.chapter.afterSnapshot(frame.name);
+            this.rewards.controller.observeRevision(this.assets.acceptedRevision);
         }
     }
 
@@ -324,7 +317,7 @@ class Fixture {
         this.closeFeedback?.();
         this.assets.dispose();
         this.bag.dispose();
-        this.rewardController.dispose();
+        this.rewards.dispose();
     }
 }
 
@@ -365,76 +358,55 @@ async function checkRepeatedLifecycle(): Promise<void> {
     });
 }
 
-/** 在途保存后台中断后保留原编号和参数，前台鉴权不自动保存。 */
+/** 在途保存中断后由恢复首包决定阵容，旧通道不能再交付结果。 */
 async function checkSaveInterrupted(committed: boolean): Promise<void> {
     await withFixture(async test => {
         const saving = test.formation.save(test.draft());
         await until(() => test.server.matching(Protocol.FORMATION_SAVE).length === 1, "保存未实际发送");
         const original = test.server.matching(Protocol.FORMATION_SAVE)[0];
+        const requestId = (original.frame.body as { requestId: string }).requestId;
         const oldMessage = original.wire.onmessage!;
         if (committed) {
             test.server.savedFormation();
         }
         test.hide();
         await saving;
-        const pending = test.saves.snapshot.pending!;
-        assert(pending);
-        assert.equal(test.saves.snapshot.busy, false);
+        assert.deepEqual(test.saves.snapshot, { busy: false, savedVersion: null });
         test.show();
         await until(() => test.readyCount === 2, "恢复首包未接纳");
         assert.equal(test.server.matching(Protocol.FORMATION_SAVE).length, 1, "前台不能自动重放保存");
-        assert.deepEqual(test.saves.snapshot.pending, pending);
+        assert.equal(test.heroes.snapshot.mainFormation!.version, committed ? 2 : 1);
         oldMessage({ data: original.wire.bytes({ version: 1, kind: "response", name: Protocol.FORMATION_SAVE,
-            id: original.frame.id, ok: true, body: { requestId: pending.requestId, version: 99 } }) });
-        assert.equal(test.saves.snapshot.acknowledged, null, "旧通道迟到不能确认新连接");
-        const retry = test.formation.save({ ...test.draft(), slots: [] });
-        await until(() => test.server.matching(Protocol.FORMATION_SAVE).length === 2, "原保存未重试");
-        const request = test.server.matching(Protocol.FORMATION_SAVE)[1];
-        assert.deepEqual(request.frame.body, original.frame.body, "重试必须原编号、原参数");
-        test.server.savedFormation();
-        test.server.pushState();
-        test.server.reply(request, { requestId: pending.requestId, version: 2 });
-        await retry;
-        assert.equal(test.saves.snapshot.pending, null);
-        assert.equal(test.saves.snapshot.acknowledged, null);
-        assert.equal(test.saves.snapshot.busy, false);
-        assert.equal(test.server.matching(Protocol.SESSION_AUTHENTICATE).length, 1, "状态已足够不额外刷新");
+            id: original.frame.id, ok: true, body: { requestId, version: 99 } }) });
+        assert.deepEqual(test.saves.snapshot, { busy: false, savedVersion: null }, "旧通道迟到不能确认新连接");
+        assert.equal(test.heroes.snapshot.mainFormation!.version, committed ? 2 : 1);
+        assert.equal(test.server.matching(Protocol.SESSION_AUTHENTICATE).length, 1);
     });
 }
 
-/** ACK后快照刷新在途再次hide，保留确认意图，下一次前台首包即可确认且不再保存。 */
-async function checkSaveRefreshSuspended(): Promise<void> {
+/** 保存回包已到且推送缺失，由下一次连接的权威阵容完成确认。 */
+async function checkSaveWaitsForReconnect(): Promise<void> {
     await withFixture(async test => {
-        test.server.holdAuthentication = true;
         const saving = test.formation.save(test.draft());
         await until(() => test.server.matching(Protocol.FORMATION_SAVE).length === 1, "保存未发送");
         const request = test.server.matching(Protocol.FORMATION_SAVE)[0];
         test.server.savedFormation();
         test.server.reply(request, { requestId: (request.frame.body as any).requestId, version: 2 });
-        await until(() => test.server.matching(Protocol.SESSION_AUTHENTICATE).length === 1, "ACK后没有一次快照刷新");
-        assert.equal(test.saves.snapshot.acknowledged, 2);
-        assert.equal(test.heroes.snapshot.mainFormation!.version, 1);
-        const refreshing = test.server.matching(Protocol.SESSION_AUTHENTICATE)[0];
-        const oldMessage = refreshing.wire.onmessage!;
-        test.hide();
         await saving;
-        assert.equal(test.saves.snapshot.busy, false);
-        assert.equal(test.saves.snapshot.acknowledged, 2);
-        test.server.holdAuthentication = false;
+        assert.deepEqual(test.saves.snapshot, { busy: true, savedVersion: 2 });
+        assert.equal(test.server.matching(Protocol.SESSION_AUTHENTICATE).length, 0, "等待服务器状态期间不主动刷新");
+        assert.equal(test.heroes.snapshot.mainFormation!.version, 1);
+        test.hide();
         test.show();
         await until(() => test.readyCount === 2, "前台未完成新鉴权");
-        assert.equal(test.saves.snapshot.pending, null);
-        assert.equal(test.heroes.snapshot.mainFormation!.version, 2);
-        oldMessage({ data: refreshing.wire.bytes({ version: 1, kind: "response", name: Protocol.SESSION_AUTHENTICATE,
-            id: refreshing.frame.id, ok: true, body: { connectionId: refreshing.wire.connectionId,
-                roleId: test.server.state.role.id, serverTimeMs: 100000, initial: { ...test.server.state, revision: 99 } } }) });
+        assert.deepEqual(test.saves.snapshot, { busy: false, savedVersion: 2 });
         assert.equal(test.heroes.snapshot.mainFormation!.version, 2);
         assert.equal(test.server.matching(Protocol.FORMATION_SAVE).length, 1);
-        assert.equal(test.server.matching(Protocol.SESSION_AUTHENTICATE).length, 2, "一次刷新被中断后，仅一次前台鉴权");
+        assert.equal(test.server.matching(Protocol.SESSION_AUTHENTICATE).length, 1);
     });
 }
 
-/** 结算在途暂停，前台重取原battleId回执；重复show和状态不额外结算。 */
+/** 结算在途暂停，前台同步后允许玩家用原 battleId 重试。 */
 async function checkClaimInterrupted(): Promise<void> {
     await withFixture(async test => {
         const claiming = test.chapter.claim(BATTLE_ID);
@@ -446,14 +418,18 @@ async function checkClaimInterrupted(): Promise<void> {
         await claiming;
         assert.equal(test.chapterModel.settlement!.phase, "pending");
         test.show();
-        await until(() => test.server.matching(Protocol.CHAPTER_CLAIM).length === 2, "前台未确认原结算");
+        await until(() => test.readyCount === 2, "前台鉴权未完成");
+        assert.equal(test.server.matching(Protocol.CHAPTER_CLAIM).length, 1);
+        const manualRetry = test.chapter.claim(BATTLE_ID);
+        await until(() => test.server.matching(Protocol.CHAPTER_CLAIM).length === 2, "玩家重试未发送原结算");
         const retry = test.server.matching(Protocol.CHAPTER_CLAIM)[1];
         assert.deepEqual(retry.frame.body, original.frame.body);
         oldMessage({ data: original.wire.bytes({ version: 1, kind: "response", name: Protocol.CHAPTER_CLAIM,
             id: original.frame.id, ok: true, body: test.settledReceipt() }) });
         assert.equal(test.chapterModel.receipt, null, "旧通道原结算回执仍须丢弃");
         test.server.reply(retry, test.settledReceipt());
-        await until(() => !!test.chapter.confirmedSettlement(BATTLE_ID), "原结算双确认未完成");
+        await manualRetry;
+        assert(test.chapter.confirmedSettlement(BATTLE_ID));
         test.server.reply(retry, test.settledReceipt());
         test.server.pushState();
         await test.chapter.claim(BATTLE_ID);
@@ -464,27 +440,25 @@ async function checkClaimInterrupted(): Promise<void> {
     });
 }
 
-/** 结算回执已到时刷新被后台中断，前台只补快照而不再次claim。 */
+/** 已收到结算回执时，回前台的鉴权快照用于确认。 */
 async function checkClaimRefreshSuspended(): Promise<void> {
     await withFixture(async test => {
-        test.server.holdAuthentication = true;
         const claiming = test.chapter.claim(BATTLE_ID);
         await until(() => test.server.matching(Protocol.CHAPTER_CLAIM).length === 1, "结算未发送");
         const original = test.server.matching(Protocol.CHAPTER_CLAIM)[0];
         test.server.settledState();
         test.server.reply(original, test.settledReceipt());
-        await until(() => test.server.matching(Protocol.SESSION_AUTHENTICATE).length === 1, "结算缺状态未刷新");
+        await claiming;
+        assert.equal(test.server.matching(Protocol.SESSION_AUTHENTICATE).length, 0);
         assert.equal(test.account.snapshot.role!.gold, 0, "历史回执不能改钱包");
         test.hide();
-        await claiming;
         assert.equal(test.chapterModel.receipt!.battleId, BATTLE_ID);
-        test.server.holdAuthentication = false;
         test.show();
         await until(() => !!test.chapter.confirmedSettlement(BATTLE_ID), "前台快照未完成双确认");
         test.server.pushState();
         await test.chapter.claim(BATTLE_ID);
         assert.equal(test.server.matching(Protocol.CHAPTER_CLAIM).length, 1, "已有回执不重发结算");
-        assert.equal(test.server.matching(Protocol.SESSION_AUTHENTICATE).length, 2);
+        assert.equal(test.server.matching(Protocol.SESSION_AUTHENTICATE).length, 1);
         assert.equal(test.account.snapshot.role!.gold, 4000);
     });
 }
@@ -496,7 +470,7 @@ async function checkClaimRefreshSuspended(): Promise<void> {
 async function checkFeedbackAcrossLifecycle(): Promise<void> {
     await withFixture(async test => {
         // 宿主就绪独立于前后台事件；先模拟尚未进入可展示页面。
-        test.rewardController.setReady(false);
+        test.rewards.setReady(false);
         const recovering = test.chapter.recoverPendingOnEntry();
         await until(() => test.server.matching(Protocol.CHAPTER_CLAIM).length === 1, "首次主线结算未发送");
         const original = test.server.matching(Protocol.CHAPTER_CLAIM)[0];
@@ -505,7 +479,7 @@ async function checkFeedbackAcrossLifecycle(): Promise<void> {
         test.server.reply(original, test.settledReceipt());
         await recovering;
         assert.equal(test.chapterModel.settlement!.presentation, "reward");
-        assert.equal(test.rewards.snapshot.acceptedCount, 1);
+        assert.equal(test.rewards.queue.snapshot.acceptedCount, 1);
         assert.equal(test.shown.length, 0, "宿主未就绪不弹反馈");
         test.hide();
         test.show();
@@ -513,23 +487,23 @@ async function checkFeedbackAcrossLifecycle(): Promise<void> {
         test.server.wires[1].push({ version: 1, kind: "event", name: Protocol.REWARD_GRANTED, body: test.notice() });
         test.server.pushState();
         await test.chapter.recoverPendingOnEntry();
-        test.rewardController.setReady(true);
+        test.rewards.setReady(true);
         assert.deepEqual(test.shown, [BATTLE_ID]);
         assert.equal(test.chapterModel.settlement!.feedbackQueued, true);
         // 明确模拟离开展示宿主，不把这一步隐藏在hide里冒充生产生命周期行为。
-        test.rewardController.setReady(false);
+        test.rewards.setReady(false);
         test.hide();
         test.show();
         await until(() => test.readyCount === 3, "第二次前台鉴权未完成");
-        test.rewardController.setReady(true);
+        test.rewards.setReady(true);
         test.server.wires[2].push({ version: 1, kind: "event", name: Protocol.REWARD_GRANTED, body: test.notice() });
         assert.deepEqual(test.shown, [BATTLE_ID], "已有展示任务不能因恢复再次启动");
         test.closeFeedback!();
-        await until(() => test.rewards.snapshot.phase === "idle", "关闭反馈未消费队首");
+        await until(() => test.rewards.queue.snapshot.phase === "idle", "关闭反馈未消费队首");
         test.server.wires[2].push({ version: 1, kind: "event", name: Protocol.REWARD_GRANTED, body: test.notice() });
         test.server.pushState();
         await test.chapter.claim(BATTLE_ID);
-        assert.equal(test.rewards.snapshot.acceptedCount, 1);
+        assert.equal(test.rewards.queue.snapshot.acceptedCount, 1);
         assert.deepEqual(test.shown, [BATTLE_ID], "已经完成的同编号反馈不得复播");
         assert.equal(test.server.matching(Protocol.CHAPTER_CLAIM).length, 1);
         assert.equal(test.server.matching(Protocol.CHAPTER_CHALLENGE).length, 0);
@@ -545,8 +519,8 @@ async function checkRepeatedAuthenticationFailures(): Promise<void> {
         const identityChanges = test.identityChanges;
         const originalWire = test.server.wires[0];
         const oldMessage = originalWire.onmessage!;
-        test.rewardController.setReady(true);
-        test.rewardController.restore(test.notice(3));
+        test.rewards.setReady(true);
+        test.rewards.restore(test.notice(3));
         assert.deepEqual(test.shown, [BATTLE_ID]);
         test.server.authenticationFailuresRemaining = 3;
         originalWire.onclose!({});
@@ -559,7 +533,7 @@ async function checkRepeatedAuthenticationFailures(): Promise<void> {
         assert.equal(test.heroes.snapshot.mainFormation!.version, 1);
         assert.equal(test.chapterModel.state!.assetRevision, 3);
         assert.deepEqual(test.shown, [BATTLE_ID], "重连不能重新启动已有展示任务");
-        assert.equal(test.rewards.snapshot.acceptedCount, 1);
+        assert.equal(test.rewards.queue.snapshot.acceptedCount, 1);
         const authentication = test.server.matching(Protocol.SESSION_AUTHENTICATE)[3];
         test.server.authenticate(authentication);
         test.server.authenticate(authentication);
@@ -568,14 +542,14 @@ async function checkRepeatedAuthenticationFailures(): Promise<void> {
         authentication.wire.push({ version: 1, kind: "event", name: Protocol.REWARD_GRANTED, body: test.notice(3) });
         test.server.pushState();
         assert.equal(test.readyCount, 2, "相同鉴权响应重复交付不再次ready");
-        assert.equal(test.rewards.snapshot.acceptedCount, 1, "旧连接迟到和当前重复反馈不增加队列");
+        assert.equal(test.rewards.queue.snapshot.acceptedCount, 1, "旧连接迟到和当前重复反馈不增加队列");
         assert.deepEqual(test.shown, [BATTLE_ID]);
         assert(test.server.requests.every(row => row.frame.name === Protocol.SESSION_LOGIN
             || row.frame.name === Protocol.SESSION_AUTHENTICATE), "无写意图时多次重连只能鉴权");
         assert(test.server.wires.slice(0, -1).every(wire => wire.readyState === 3), "所有旧通道均已关闭");
         test.closeFeedback!();
-        await until(() => test.rewards.snapshot.phase === "idle", "关闭原展示任务后队列未清理");
-        test.rewardController.restore(test.notice(3));
+        await until(() => test.rewards.queue.snapshot.phase === "idle", "关闭原展示任务后队列未清理");
+        test.rewards.restore(test.notice(3));
         assert.deepEqual(test.shown, [BATTLE_ID], "已关闭的原反馈不能因重连重复弹出");
     });
 }
@@ -583,7 +557,7 @@ async function checkRepeatedAuthenticationFailures(): Promise<void> {
 /** 结算回包缺失后经历三次失败鉴权，最终只确认原battleId并拒绝旧通道与重复回包。 */
 async function checkClaimAfterRepeatedAuthenticationFailures(): Promise<void> {
     await withFixture(async test => {
-        test.rewardController.setReady(true);
+        test.rewards.setReady(true);
         const recovering = test.chapter.recoverPendingOnEntry();
         await until(() => test.server.matching(Protocol.CHAPTER_CLAIM).length === 1, "原结算未实际发送");
         const original = test.server.matching(Protocol.CHAPTER_CLAIM)[0];
@@ -593,7 +567,10 @@ async function checkClaimAfterRepeatedAuthenticationFailures(): Promise<void> {
         test.server.authenticationFailuresRemaining = 3;
         original.wire.onclose!({});
         await recovering;
-        await until(() => test.server.matching(Protocol.CHAPTER_CLAIM).length === 2, "多轮鉴权后未恢复原结算");
+        await until(() => test.readyCount === 2, "多轮鉴权未完成");
+        assert.equal(test.server.matching(Protocol.CHAPTER_CLAIM).length, 1);
+        const manualRetry = test.chapter.retrySettlementFeedback();
+        await until(() => test.server.matching(Protocol.CHAPTER_CLAIM).length === 2, "玩家重试未发送原结算");
         const retry = test.server.matching(Protocol.CHAPTER_CLAIM)[1];
         assert.equal(test.server.rejectedAuthentications, 3);
         assert.equal(test.readyCount, 2, "失败的首包不交付ready");
@@ -603,9 +580,10 @@ async function checkClaimAfterRepeatedAuthenticationFailures(): Promise<void> {
         oldMessage({ data: original.wire.bytes({ version: 1, kind: "response", name: Protocol.CHAPTER_CLAIM,
             id: original.frame.id, ok: true, body: test.settledReceipt() }) });
         assert.equal(test.chapterModel.receipt, null, "旧通道结算回执不能完成当前确认");
-        assert.equal(test.rewards.snapshot.acceptedCount, 0);
+        assert.equal(test.rewards.queue.snapshot.acceptedCount, 0);
         test.server.reply(retry, test.settledReceipt());
-        await until(() => !!test.chapter.confirmedSettlement(BATTLE_ID), "最终原回执没有完成双确认");
+        await manualRetry;
+        assert(test.chapter.confirmedSettlement(BATTLE_ID));
         test.server.reply(retry, test.settledReceipt());
         test.server.pushState();
         retry.wire.push({ version: 1, kind: "event", name: Protocol.REWARD_GRANTED, body: test.notice() });
@@ -614,11 +592,11 @@ async function checkClaimAfterRepeatedAuthenticationFailures(): Promise<void> {
         assert.equal(test.server.matching(Protocol.CHAPTER_CHALLENGE).length, 0);
         assert.equal(test.server.matching(Protocol.SESSION_AUTHENTICATE).length, 4);
         assert.deepEqual(test.shown, [BATTLE_ID]);
-        assert.equal(test.rewards.snapshot.acceptedCount, 1);
+        assert.equal(test.rewards.queue.snapshot.acceptedCount, 1);
         assert.equal(test.chapterModel.state!.assetRevision, 4);
         test.closeFeedback!();
-        await until(() => test.rewards.snapshot.phase === "idle", "关闭后没有消费原反馈");
-        test.rewardController.restore(test.notice());
+        await until(() => test.rewards.queue.snapshot.phase === "idle", "关闭后没有消费原反馈");
+        test.rewards.restore(test.notice());
         assert.deepEqual(test.shown, [BATTLE_ID]);
     });
 }
@@ -628,14 +606,14 @@ async function main(): Promise<void> {
     GameLog.shared.mirrorConsole = false;
     const checks: [string, () => Promise<void>][] = [
         ["repeated hide/show keeps identity and authenticates once", checkRepeatedLifecycle],
-        ["in-flight save before commit retains original intent", () => checkSaveInterrupted(false)],
-        ["save committed without ACK retries original request", () => checkSaveInterrupted(true)],
-        ["ACK snapshot refresh interrupted by hide", checkSaveRefreshSuspended],
-        ["claim in flight resumes original battleId", checkClaimInterrupted],
-        ["claim ACK snapshot refresh interrupted by hide", checkClaimRefreshSuspended],
+        ["interrupted save before commit uses current server state", () => checkSaveInterrupted(false)],
+        ["save committed without ACK is visible on reconnection", () => checkSaveInterrupted(true)],
+        ["save ACK waits for authoritative state on natural reconnect", checkSaveWaitsForReconnect],
+        ["foreground updates state before manual settlement retry", checkClaimInterrupted],
+        ["claim ACK waits for foreground snapshot", checkClaimRefreshSuspended],
         ["feedback dedupe across host changes and foreground snapshots", checkFeedbackAcrossLifecycle],
         ["three authentication failures recover once without replay or duplicate feedback", checkRepeatedAuthenticationFailures],
-        ["claim recovers original battle after three authentication failures", checkClaimAfterRepeatedAuthenticationFailures],
+        ["manual settlement retry after three authentication failures", checkClaimAfterRepeatedAuthenticationFailures],
     ];
     for (const [label, check] of checks) {
         await check();

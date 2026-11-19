@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 import { createdNodes, director, Director, Node, Overflow, UIOpacity, UITransform } from "cc";
 import { StartupFlowUtils, StartupCancelled } from "../assets/scripts/app/remake/StartupFlowUtils";
 import { RemakeApp } from "../assets/scripts/app/remake/RemakeApp";
+import { AccountComposition } from "../assets/scripts/app/remake/AccountComposition";
+import { ApplicationModules } from "../assets/scripts/app/remake/ApplicationModules";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { LogoSplashUtils, LOGO_BGM } from "../assets/scripts/app/remake/LogoSplashUtils";
 import { resources, AudioClip, AudioSource } from "cc";
@@ -19,7 +21,31 @@ const deferred = () => {
   const promise = new Promise<void>(done => { resolve = done; });
   return { promise, resolve };
 };
+
+/** 使用正式模块装配连续创建两次场景，检查账号与连接回调释放，且第二次可重新登记同一批模块。 */
+async function checkModuleLifecycle(): Promise<void> {
+  for (let launch = 0; launch < 2; launch++) {
+    const account = await AccountComposition.create("ws://127.0.0.1:18080/api/v1/game/socket");
+    const preview = new DevelopmentPreview(null, null, () => true);
+    const modules = new ApplicationModules(account, preview, () => false, () => {}, () => {});
+    try {
+      assert.equal(typeof account.controller.onInitialized, "function");
+      assert.equal(account.socket.onState, account.controller.onInitialized);
+      assert.equal(typeof account.socket.onReward, "function");
+      modules.setHomeReady(false);
+    } finally {
+      preview.dispose();
+      modules.dispose();
+      account.controller.dispose();
+    }
+    assert.equal(account.socket.onState, null);
+    assert.equal(account.socket.onReward, null);
+    assert.equal(account.controller.onInitialized, null);
+  }
+}
+
 async function main() {
+  await checkModuleLifecycle();
   const restore = deferred();
   const events: string[] = []; const ratios: number[] = [];
   let lateProgress!: (done: number, total: number) => void;

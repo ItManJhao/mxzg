@@ -39,7 +39,7 @@ const HERO_PORT_W = 572;
 
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 
-import { AccountService } from "../assets/scripts/features/account/AccountService";
+import { AccountController } from "../assets/scripts/features/account/AccountController";
 
 import { HeroCatalog } from "../assets/scripts/features/hero/utils/HeroCatalog";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
@@ -583,7 +583,7 @@ async function checkReadonlyInfo(): Promise<void> {
      && data[idOf(detail?.upgradeDot)]?._name === "UpgradeAvailableDot", "消耗区域与旧红点由 Prefab 布置");
 }
 
-/** 用真实详情生命周期验证升级报价、可恢复操作、确认光效和释放范围。 */
+/** 用真实详情生命周期验证升级报价、在途按钮、成功光效和释放范围。 */
 async function checkLevelPresentation(): Promise<void> {
     const roster = HeroRosterController.instance;
     roster.initialize();
@@ -604,7 +604,7 @@ async function checkLevelPresentation(): Promise<void> {
         assert(id === heroId, "只获取当前实例的升级报价");
         return quote;
     };
-    level.upgrade = async (id) => { requests.push(id); };
+    level.upgrade = id => { requests.push(id); };
     let releases = 0;
     const frames = Array.from({ length: 30 }, () => new SpriteFrame());
     let loads = 0;
@@ -649,8 +649,8 @@ async function checkLevelPresentation(): Promise<void> {
 
         quote = { ...quote, status: "pending" };
         events.emit(HeroLevelEvent.Updated, {});
-        assert(page.upgradeButton.interactable && page.upgradeLabel.string === "确认升级" && !page.upgradeCosts.active,
-            "原操作待确认可恢复，隐藏下一笔费用");
+        assert(!page.upgradeButton.interactable && page.upgradeLabel.string === "升级中…" && !page.upgradeCosts.active,
+            "请求在途时禁用按钮，隐藏下一笔费用");
         quote = { ...quote, status: "max" };
         events.emit(HeroLevelEvent.Updated, { heroId: "other", fromLevel: 1, toLevel: 2 });
         assert(!page.upgradeButton.node.active && page.upgradeStatus.node.active

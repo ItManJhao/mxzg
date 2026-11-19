@@ -3,7 +3,7 @@ import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { BagEvent } from "../assets/scripts/features/bag/utils/BagEvent";
 import type { BagUpdateData } from "../assets/scripts/features/bag/data/BagEventData";
 import { BagController } from "../assets/scripts/features/bag/BagController";
-import type { ViewController } from "../assets/scripts/framework/ui/UIRegistry";
+import type { ViewBinding } from "../assets/scripts/framework/ui/UIRegistry";
 
 function checkEventAndLifecycleTypes(data: BagUpdateData): void {
     const events = EventDispatcher.instance;
@@ -19,7 +19,7 @@ function checkEventAndLifecycleTypes(data: BagUpdateData): void {
     // @ts-expect-error Snapshot item quantities are immutable.
     if (data.removed[0]) data.removed[0].quantity = 2;
     // @ts-expect-error A module Controller is not a window's show/close adapter.
-    const pageController: ViewController = BagController.instance;
-    void pageController;
+    const pageBinding: ViewBinding = BagController.instance;
+    void pageBinding;
 }
 void checkEventAndLifecycleTypes;

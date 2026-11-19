@@ -11,6 +11,7 @@ import { _decorator, assetManager, Button, createdNodes, director, Director, Lab
 import { PrefabLoader } from "../assets/scripts/framework/assets/PrefabLoader";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { GameLog } from "../assets/scripts/core/GameLog";
+import { ServerClock } from "../assets/scripts/core/ServerClock";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { BagItemCatalog } from "../assets/scripts/features/bag/utils/BagItemCatalog";
 import { ViewportLayoutUtils } from "../assets/scripts/framework/ui/ViewportLayoutUtils";
@@ -1306,11 +1307,14 @@ async function checkInfoMaskCoverage(): Promise<void> {
   }
 }
 
-/** 同配置期限物品分格并独立选中；过期只移出显示，关闭/重开不重置时间。 */
+/** 同配置期限物品分格，倒计时随公共时钟恢复；到期只移出界面，重开继续原计时。 */
 async function checkTimedItems(): Promise<void> {
   bindTables();installNav();noteBag([]);
-  let now=1000;const model=BagModel.instance,original=model.serverTimeSeconds;
-  model.serverTimeSeconds=()=>now;
+  let now: number | null = 1000;
+  const model = BagModel.instance;
+  const clock = ServerClock.instance;
+  const original = clock.nowSeconds;
+  clock.nowSeconds = () => now;
   model.replaceAll([], {serverTimeSeconds:1000,items:[
     {instanceId:"timed-a",itemId:902025,activeAtSeconds:900,expiresAtSeconds:1002},
     {instanceId:"timed-b",itemId:902025,activeAtSeconds:900,expiresAtSeconds:1005},
@@ -1323,6 +1327,12 @@ async function checkTimedItems(): Promise<void> {
     const info=infoCard(page);assert(info.countdown!.string==="剩余：0小时0分2秒","首件显示自己的到期时间");
     assert(info.enterLabel!.string==="确定"&&!info.btnDecompose!.active,"只读详情不开放使用分解");
     now=1001;info.update();assert(info.countdown!.string==="剩余：0小时0分1秒","每秒更新剩余时间");
+    now = null;
+    info.update();
+    assert(info.countdown!.string === "等待服务器时间", "后台校时失效时显示等待");
+    now = 1001;
+    info.update();
+    assert(info.countdown!.string === "剩余：0小时0分1秒", "恢复到同一秒也清除校时提示");
     now=1002;page.update(1);assert(page.visibleItems().length===1,"到期实例从格子隐藏");
     assert(model.snapshot.timedItems.length===2,"本地到期不删服务器库存");
     assert(!UIManager.instance.isOpen(BagInfoView),"到期详情随对应实例关闭");
@@ -1331,7 +1341,7 @@ async function checkTimedItems(): Promise<void> {
     page=await openView();cells(page)[0].node.emit(Button.EventType.CLICK);await flushDetail();pump(1);
     assert(infoCard(page).countdown!.string==="剩余：0小时0分1秒","重新打开不重置期限");
     now=1005;page.update(1);assert(page.visibleItems().length===0,"所有实例到期后显示空槽");
-  } finally {page?.runDispose();page?.node.destroy();model.serverTimeSeconds=original;noteBag(null);}
+  } finally {page?.runDispose();page?.node.destroy();clock.nowSeconds=original;noteBag(null);}
 }
 
 /** 虚拟格子在普通物品、真实精灵和空槽间复用时，数量不能闪回上一件，也不能误隐藏普通单件物品。 */

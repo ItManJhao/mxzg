@@ -6,6 +6,7 @@ import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { MainChapterController } from "../MainChapterController";
+import { MainChapterSession } from "../MainChapterSession";
 import { MainChapterModel } from "../MainChapterModel";
 import { ChapterEndView } from "./ChapterEndView";
 import { UIManager } from "../../../framework/ui/UIManager";
@@ -136,7 +137,7 @@ export class MainChapterBattleView extends BaseView<MainChapterBattleArgs> {
             const { units, names } = BattleReplayUtils.parse(this.args.report.bytes);
             const result = await UIManager.instance.openChild(this, ChapterEndView, {
                 won: this.finishedWon === true, persistentChapter: true, rewards: receipt?.rewards || [], notice,
-                roleAppearance: MainChapterController.instance.readRoleAppearance(),
+                roleAppearance: MainChapterSession.current?.currentRole?.basics ?? null,
                 units,
                 names,
                 experience: receipt?.experience,

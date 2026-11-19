@@ -66,7 +66,7 @@ V8 为 game_role 增加基础列。已有新版记录保持原 ID、等级和钱
 用户提供的 [顶部栏](images/role-formal-header-reference.png) 与 [自身资料页](images/role-formal-profile-reference.png) 是本次效果依据。详情使用原 SettingLayer 的背景和图标，保留 UUID `1aedb5a3-4e33-552f-843c-c419fd8174a4`，改名为 `RoleProfileView.prefab`，与绑定的 View 一致；未改动公开玩家资料 RoleInfoLayer。
 
 - 顶部头像和头像框使用 `headId`、`borderId`；旧资源 head-icon_0 是真实默认头像，不能把 0 理解为不显示。头像资源与英雄图标分开登记，形象仍由 imageId 表达，不混用。
-- 头像点击打开资料页，关闭回到原页面；主城和背包共用同一入口。资料由 HomeController 的唯一账号订阅经 RemakeHomeView.render 注入，不新增角色查询，也不复制 Model。
+- 头像点击打开资料页，关闭回到原页面；主城和背包共用同一入口。资料由 HomePageBinding 的唯一账号订阅经 RemakeHomeView.render 注入，不新增角色查询，也不复制 Model。
 - 详情显示真实昵称、完整字符串角色 ID、等级、头像与头像框。公会写“暂未同步”，英雄区写“英雄展示暂未开放”，不伪造未加入公会或三名英雄。
 - 头像选择、改名、形象和称号按钮只显示未开放提示。原有退出登录保留在“设置 → 退出登录”，点击设置本身不会退出，也未接入新设置模块。
 - 删除临时 AccountButton/AccountPanel 和对应 Home 绑定。预制体静态保存头像 Face/Border、遮罩、详情布局与设置面板；运行时只更新资料、适配整体大小和绑定事件。

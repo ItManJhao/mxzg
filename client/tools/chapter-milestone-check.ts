@@ -32,19 +32,19 @@ function state(maxCleared: number, claimedIds: readonly number[] = []): MainChap
 
 /** 旧缺失、真实空集和坏扩展分开，冻结后外部数组不能改写已接纳状态。 */
 function progress(): void {
-    const old = MainChapterController.readState({ maxCleared: 0, pendingBattleId: null, assetRevision: 1 })!;
+    const old = MainChapterModel.readState({ maxCleared: 0, pendingBattleId: null, assetRevision: 1 })!;
     assert.equal(old.milestoneProgress, undefined);
     const source = [300, 100];
-    const accepted = MainChapterController.readState({ ...state(1),
+    const accepted = MainChapterModel.readState({ ...state(1),
         milestoneProgress: { schemaVersion: 1, claimedIds: source } })!;
     source[0] = 600;
     assert.deepEqual(accepted.milestoneProgress!.claimedIds, [100, 300]);
     assert(Object.isFrozen(accepted.milestoneProgress) && Object.isFrozen(accepted.milestoneProgress!.claimedIds));
-    assert.deepEqual(MainChapterController.readState(state(0))!.milestoneProgress!.claimedIds, []);
+    assert.deepEqual(MainChapterModel.readState(state(0))!.milestoneProgress!.claimedIds, []);
     for (const value of [null, [], {}, { schemaVersion: 2, claimedIds: [] },
         { schemaVersion: 1 }, { schemaVersion: 1, claimedIds: [100, 100] },
         ...[0, -1, 1.5, "100", 0x100000000].map(id => ({ schemaVersion: 1, claimedIds: [id] }))]) {
-        assert.throws(() => MainChapterController.readState({ ...state(1), milestoneProgress: value }));
+        assert.throws(() => MainChapterModel.readState({ ...state(1), milestoneProgress: value }));
     }
     const model = new MainChapterModel();
     const controller = new MainChapterController(model);
@@ -120,7 +120,7 @@ function interop(): void {
         default:
             assert.fail("里程碑互通样本消息未登记：" + frame.name);
     }
-    const value = MainChapterController.readState(raw)!;
+    const value = MainChapterModel.readState(raw)!;
     const expected = process.argv.find(arg => arg.startsWith("--expected="))?.slice(11);
     assert.deepEqual(value.milestoneProgress!.claimedIds, expected ? expected.split(",").map(Number) : []);
     assert.deepEqual(GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame(frame)), frame);

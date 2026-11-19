@@ -1,10 +1,13 @@
 /**
- * 开发验收入口：仅PREVIEW可用，只读战报与技能目录不装配登录或游戏连接。
- * 独立入口复用LoadingPlan启动表与唯一配置包，展示仍用原战场/统计；应用销毁统一撤销。
+ * 开发验收入口：独立只读战报和技能目录复用原战场，正常登录预览另外提供 GM 菜单。
+ * 开发快捷键和演示的生命周期在这里统一管理，发布版不登记入口。
  */
 import {Node} from "cc";
 import {BattlePreviewResult} from "../../features/battle/BattlePreviewModel";
 import {PREVIEW} from "cc/env";
+import type { AccountController } from "../../features/account/AccountController";
+import { GmPreviewMenu } from "../../features/gm/GmPreviewMenu";
+import type { AccountOperations } from "../../features/account/AccountOperations";
 import {BattleReplayPreview} from "../../features/battle/ui/BattleReplayPreview";
 import {SkillAuditView} from "../../features/battle/ui/SkillAuditView";
 import {SkillAuditEntry, SkillAuditEvidence, SkillAuditUtils} from "../../features/battle/utils/SkillAuditUtils";
@@ -67,6 +70,8 @@ export class DevelopmentPreview {
     private readonly unregister: Array<() => void> = [];
     /** 当前演示的取消函数，重复播放前先清理旧画面。 */
     private replayCleanup: (() => void) | null = null;
+    /** 登录预览才安装的 GM 热键和窗口。独立演示、发布版和销毁后均为 null。 */
+    private gm: GmPreviewMenu | null = null;
 
     /**
      * 保存应用提供的开发宿主和存活判断，不在构造时打开页面。
@@ -81,6 +86,25 @@ export class DevelopmentPreview {
     /** 正常应用装配后复用同一反馈队列；独立战报页不需要该能力。 */
     public configureRewards(show: (notice: RewardNotice) => void): void {
         this.showReward = show;
+    }
+
+    /** 为普通 Creator 预览装配一次开发菜单；F9 由 GM 模块管理，仅在主城可用。 */
+    public configureGm(
+        service: Pick<AccountController, "currentRole">,
+        operations: Pick<AccountOperations, "request" | "deliver">,
+        inHome: () => boolean,
+    ): void {
+        if (PREVIEW && !this.gm) {
+            this.gm = new GmPreviewMenu(service, operations, inHome,
+                (result, stillOpen) => this.openLineupBattle(result, stillOpen), () => this.openSkillAudit());
+        }
+    }
+
+    /** 清理该轮角色页面挂起的开发演示、技能目录、GM 窗口及未确认的开发请求。 */
+    public resetSession(): void {
+        this.gm?.reset();
+        this.cancelReplay();
+        UIManager.instance.closeById("skill-audit");
     }
 
     /** 独立预览先安装同版配置，再注册只读展示；true表示正常会话装配必须停止。 */
@@ -350,11 +374,15 @@ export class DevelopmentPreview {
     }
 
 
-    /** 打开已由模块完整校验的服务端战报，不再读取固定文件或替换阵容。 */
-    public async openLineupBattle(result: BattlePreviewResult): Promise<void> {
-        if (!PREVIEW || !this.pageHost || !this.valid()) return;
+    /** 打开已校验的战报。准备期间原窗口关闭就恢复主城，开播后由战场负责关闭。 */
+    public async openLineupBattle(result: BattlePreviewResult, stillOpen: () => boolean = () => true): Promise<void> {
+        if (!PREVIEW || !this.pageHost || !this.valid() || !stillOpen()) {
+            throw new OpenCancelled();
+        }
         this.cancelReplay();
         const epoch = this.replayEpoch;
+        let opened = false;
+        const cancelled = () => epoch !== this.replayEpoch || !this.valid() || (!opened && !stillOpen());
         const hidden = this.pageHost.children.filter(node => node.active);
         hidden.forEach(node => {
             node.active = false;
@@ -367,13 +395,17 @@ export class DevelopmentPreview {
                 if (node.isValid) node.active = true;
             });
         };
-        // 加载途中取消也先恢复旧页面；最终迟到的战场再销毁，不能重新覆盖新身份页面。
+        // 新演示接替旧演示前先恢复主城，各次清理只恢复自己隐藏过的节点。
         this.replayCleanup = restore;
         try {
             const cleanup = await BattleReplayPreview.open(this.pageHost, result.bytes, false, restore, undefined,
-                "主线第" + result.mission + "关·只读");
-            if (epoch !== this.replayEpoch || !this.valid()) cleanup();
-            else this.replayCleanup = () => {
+                "主线第" + result.mission + "关·只读", false, undefined, false, cancelled);
+            if (cancelled()) {
+                cleanup();
+                throw new OpenCancelled();
+            }
+            opened = true;
+            this.replayCleanup = () => {
                 cleanup();
                 restore();
             };
@@ -495,6 +527,8 @@ export class DevelopmentPreview {
     /** 先取消演示，再关闭目录、撤销注册，避免迟到窗口污染下一应用。 */
     public dispose(): void {
         if (typeof window !== "undefined") window.removeEventListener("keydown", this.diagnosticKey, true);
+        this.gm?.dispose();
+        this.gm = null;
         this.cancelReplay();
         this.showReward = null;
         UIManager.instance.closeById("skill-audit");

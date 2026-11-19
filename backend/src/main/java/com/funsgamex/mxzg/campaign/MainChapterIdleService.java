@@ -1,6 +1,6 @@
 /**
  * 新主线挂机只读快照：在角色锁内投影已创建的累计时钟、基础收益及请求模式。
- * 首次计时由挑战事务创建；本入口不补建累计、不抽奖、不发奖，也不读取完整权益输入。
+ * 创角即计时，首胜后展示关卡收益；读取快照不写入累计，也不发奖。
  * 挂机选人按主线阵容版本独立持久化，不改变领取操作版本。
  */
 package com.funsgamex.mxzg.campaign;
@@ -46,10 +46,10 @@ public class MainChapterIdleService {
     /**
      * 主线挂机的基础展示投影；领取状态只说明格式、操作版本和入口模式，不预报完整收益。
      * @param serverTime 当前快照服务器Unix秒
-     * @param startedAt 持久累计起点Unix秒，读取和重连不重置
+     * @param startedAt 由创角时间推得或已保存的累计起点Unix秒，读取和重连不重置
      * @param maxSeconds 当前角色VIP对应的最大可结算秒数
      * @param frequency 基础收益结算周期，单位秒
-     * @param rewardStage 本次投影使用的最高已通关关卡
+     * @param rewardStage 最高已通关关卡，0表示只有计时，尚无收益或领取能力
      * @param rates 每frequency秒的基础资源量，不含完整权益与活动加成
      * @param slots 按主线阵容版本冻结的挂机演出选人，不是第二份正式阵容
      * @param lineupVersion 上述选人使用的主线阵容版本
@@ -80,13 +80,15 @@ public class MainChapterIdleService {
     }
 
     /**
-     * 持有角色锁时投影已有累计及同角色VIP上限；未通关返回null，不开放旧服第一关旁路。
+     * 持有角色锁时投影服务器计时和VIP上限；首胜前只下发时钟，历史角色无可核实时间时返回空。
      * 已通关但累计缺失或格式损坏时拒绝整包，不因登录、重连或读取而创建免费起点。
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public State snapshot(String role, int maxCleared, long nowSeconds) {
         if (maxCleared == 0) {
-            return null;
+            var start = states.startBeforeFirstClear(role, nowSeconds);
+            return start.isEmpty() ? null : new State(nowSeconds, start.getAsLong(), inputs.maximumSeconds(role),
+                    rules.data().frequency(), 0, List.of(), List.of(), 0, null);
         }
         var rates = List.copyOf(rules.stage(maxCleared).base());
         int maxSeconds = inputs.maximumSeconds(role);
@@ -97,12 +99,19 @@ public class MainChapterIdleService {
             maxCleared, rates, List.of(), 0, claimState);
     }
 
-    /** 同一角色锁内按主线版本选人；三人内全保留，超过三人无放回抽取，重连复用原选择。 */
+    /** 同一角色锁内按主线版本选人，未首胜只同步版本；通关后的重连复用原选择。 */
     @Transactional(propagation = Propagation.MANDATORY)
     public State withLineup(String role, State state, MainFormationStateService.State formation) {
         if (state == null) {
             return null;
         }
+        var slots = state.rewardStage() == 0 ? List.<Lineup.Slot>of() : selectSlots(role, formation);
+        return new State(state.serverTime(), state.startedAt(), state.maxSeconds(), state.frequency(),
+                state.rewardStage(), state.rates(), slots, formation.version(), state.claimState());
+    }
+
+    /** 从已通关角色的阵容中最多选三人，将结果按阵容版本保存以便重连复用。 */
+    private List<Lineup.Slot> selectSlots(String role, MainFormationStateService.State formation) {
         var cached = jdbc.query("SELECT slots_json FROM game_main_chapter_idle_lineup WHERE role_id=? AND lineup_version=?",
             (row, index) -> mapper.readValue(row.getString(1), Selection.class), role, formation.version());
         List<Lineup.Slot> slots;
@@ -126,8 +135,7 @@ public class MainChapterIdleService {
                 throw new IllegalStateException("挂机阵容与主线持久版本不一致");
             }
         }
-        return new State(state.serverTime(), state.startedAt(), state.maxSeconds(), state.frequency(),
-            state.rewardStage(), state.rates(), slots, formation.version(), state.claimState());
+        return slots;
     }
 
 }

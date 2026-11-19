@@ -1,4 +1,4 @@
-/** 账号与角色唯一只读状态：凭证由 AccountService 持有，RoleController 提交权威角色，订阅者刷新界面。 */
+/** 账号与角色唯一只读状态：凭证由 AccountController 持有，RoleController 提交权威角色，订阅者刷新界面。 */
 import { EventDispatcher } from "../../framework/EventDispatcher";
 
 /** 对照旧 2001 的本批基础字段；不存在表示尚未同步，不用全零数据伪装。 */
@@ -38,6 +38,10 @@ export interface RoleProfile {
     readonly id: string;
     /** 服务器确认的昵称。 */
     readonly nickname: string;
+    /** false 表示服务器要求首次命名，未提供该字段时沿用原角色入口。 */
+    readonly firstNamed?: boolean;
+    /** true 表示当前角色已命名且还有一份新手赠礼可领。 */
+    readonly welcomeGiftAvailable?: boolean;
     /** 角色等级，不是英雄等级。 */
     readonly level: number;
     /** 当前金币绝对余额。 */

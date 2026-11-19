@@ -707,14 +707,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）：独立H2真实库存的绿1星银制利剑、紫3星雷鸣套装、红6星双属性装备；来源/装备只读飘字、X/空白关闭、套装后重开收缩、返回英雄和注销清理。正式服仅只读对照银制利剑；套装及六星以旧源码/配置和本机样本核对。详见docs/validation/equipment-detail-review-20261114.json，不代表全机型或新发布包。",
-    "sha256": "72a5e95f314072883a2fc3a7a878453babbeaac5cc389138bc54dd91e8ac202b",
+    "visual": "Creator 独立 H2 HeroInfoView 已穿银制利剑原详情可打开，展示名称、评分、属性、更换和卸下。更换正确进入同部位候选，单件卸下退回背包。背包入口和各品质/套装投影复验使用专项。",
+    "sha256": "6ba0b170a55f6ff8450ea4c189a15c2792d5b3eb406fbb41ab53a3ebffe364e0",
     "acceptance": {
-      "sha256": "72a5e95f314072883a2fc3a7a878453babbeaac5cc389138bc54dd91e8ac202b",
-      "date": "2026-11-14",
+      "sha256": "6ba0b170a55f6ff8450ea4c189a15c2792d5b3eb406fbb41ab53a3ebffe364e0",
+      "date": "2026-11-19",
       "status": "实际预览通过",
-      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）：独立H2真实库存的绿1星银制利剑、紫3星雷鸣套装、红6星双属性装备；来源/装备只读飘字、X/空白关闭、套装后重开收缩、返回英雄和注销清理。正式服仅只读对照银制利剑；套装及六星以旧源码/配置和本机样本核对。详见docs/validation/equipment-detail-review-20261114.json，不代表全机型或新发布包。",
-      "inspector": "未操作Creator原生窗口或Inspector；负责人刷新后用浏览器复验，不代签负责人Inspector。"
+      "scope": "Creator 独立 H2 HeroInfoView 已穿银制利剑原详情可打开，展示名称、评分、属性、更换和卸下。更换正确进入同部位候选，单件卸下退回背包。背包入口和各品质/套装投影复验使用专项。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     }
   },
   {
@@ -2132,6 +2132,13 @@
     },
     "specialAnchors": [
       {
+        "node": "TitleEffect",
+        "anchor": [
+          0.5,
+          0.8615384615384616
+        ]
+      },
+      {
         "node": "content",
         "anchor": [
           0,
@@ -2143,14 +2150,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "本批Creator 393×852设备预览/浏览器1280×720：真实独立WS回执8项到账、标题动画和获得声源、金币只读简介叠窗；上层/下层关闭，modalNodes始终1，最终residents/modalActive均0，钱包1400/3不变。仅限该画面，1～3格居中/失败重试由专项证明，不代签全机型或发布产物。 证据见docs/validation/reward-preview-review-20261116.json。",
-    "sha256": "ed3fb531c8404c1812f3ef5fbaaac17c930ac3185647e4e6fe6ca3ea6821ac64",
+    "visual": "Creator 独立测试服实测三秒开场和点击跳过、高星揭示、三行十格和再次召唤。全部头像在三行中显示，连续点不同英雄只开一窗，关窗后可继续点击。新手赠礼仍通过通用获得窗。",
+    "sha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
     "acceptance": {
-      "sha256": "ed3fb531c8404c1812f3ef5fbaaac17c930ac3185647e4e6fe6ca3ea6821ac64",
-      "date": "2026-11-16",
+      "sha256": "b754406613abb438e56cb2b97e4919705f9c3c700fc84e50bea83e4bec7daf53",
+      "date": "2026-11-19",
       "status": "实际预览通过",
-      "scope": "本批Creator 393×852设备预览/浏览器1280×720：真实独立WS回执8项到账、标题动画和获得声源、金币只读简介叠窗；上层/下层关闭，modalNodes始终1，最终residents/modalActive均0，钱包1400/3不变。仅限该画面，1～3格居中/失败重试由专项证明，不代签全机型或发布产物。 证据见docs/validation/reward-preview-review-20261116.json。",
-      "inspector": "负责人刷新，浏览器检查；未操作Creator原生窗口或Inspector。"
+      "scope": "Creator 独立测试服实测三秒开场和点击跳过、高星揭示、三行十格和再次召唤。全部头像在三行中显示，连续点不同英雄只开一窗，关窗后可继续点击。新手赠礼仍通过通用获得窗。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     }
   },
   {
@@ -2241,6 +2248,149 @@
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
     "sha256": "de06028c228cbc733d5ea5a650bcc5839d81a85d8c167727cf94ca2df224d5be"
+  },
+  {
+    "path": "client/assets/bundles/module/dungeon/prefabs/DungeonHallCardView.prefab",
+    "classes": [
+      "DungeonHallCardView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 600,
+        "height": 227
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "4bdfeda58129251948d4b7908fa6ae6eee14fea6d47dc30f75ddb861cee97d50"
+  },
+  {
+    "path": "client/assets/bundles/module/dungeon/prefabs/DungeonHallView.prefab",
+    "classes": [
+      "DungeonHallView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "61b579eb425a71eb3fcf5f16ebc94900a25628a677d229b818af4cbc87172295"
+  },
+  {
+    "path": "client/assets/bundles/module/dungeon/prefabs/GoldDungeonView.prefab",
+    "classes": [
+      "GoldDungeonView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "f08672ce5c35db24df1aaec1cd267044fea48fc768f556dd7e0103a7ff7883a3"
   },
   {
     "path": "client/assets/bundles/module/gm/prefabs/GmBattleView.prefab",
@@ -2393,19 +2543,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。英雄与道具搜索/选择、英雄与真实精灵发放成功、超量明确飘字、关闭和F9关闭。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
+    "visual": "Creator 浏览器独立 H2 角色预览。道具窗选中金币、输入八位数量、发放 1000 万并看到飘字及顶栏到账。见 docs/gm-development.md。",
     "sha256": "8ffb329bf5119a9c15333d6e86f5b92e434df30ca53a5b63665b13649f46be8f",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509",
-      "normalizedLfSha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509"
-    },
     "acceptance": {
-      "sha256": "408d5d027967fdbbee71f032942ac4c79bd88d0f9c7dec4065b764e5a8c0e509",
-      "date": "2026-11-14",
+      "sha256": "8ffb329bf5119a9c15333d6e86f5b92e434df30ca53a5b63665b13649f46be8f",
+      "date": "2026-11-19",
       "status": "实际预览通过",
-      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。英雄与道具搜索/选择、英雄与真实精灵发放成功、超量明确飘字、关闭和F9关闭。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+      "scope": "Creator 浏览器独立 H2 角色预览。道具窗选中金币、输入八位数量、发放 1000 万并看到飘字及顶栏到账。见 docs/gm-development.md。",
+      "inspector": "本轮核对浏览器预览，负责人 Inspector 检查待安排。"
     }
   },
   {
@@ -2454,6 +2599,102 @@
     "sha256": "264a01ce62e923b88fc11c5d8b8773703271830787b64ba47f54b6d07282fc29"
   },
   {
+    "path": "client/assets/bundles/module/gm/prefabs/GmToolsView.prefab",
+    "classes": [
+      "GmToolsView",
+      "ViewportScale"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "LevelInputLabel",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "LevelPlaceholder",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "ChapterInputLabel",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "ChapterPlaceholder",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "ServerTimeInputLabel",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "ServerTimePlaceholder",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 浏览器独立 H2 角色预览。等级设为 15 后顶栏更新，主线下一挑战设为第 10 关。北京时间可输入设置、查询飘字和恢复，关闭返回 GM 菜单。见 docs/gm-development.md。",
+    "sha256": "61cc10075b428709447d3e549f0ae55173cadb0cfa943f312b9e12938b14ff32",
+    "acceptance": {
+      "sha256": "61cc10075b428709447d3e549f0ae55173cadb0cfa943f312b9e12938b14ff32",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "Creator 浏览器独立 H2 角色预览。等级设为 15 后顶栏更新，主线下一挑战设为第 10 关。北京时间可输入设置、查询飘字和恢复，关闭返回 GM 菜单。见 docs/gm-development.md。",
+      "inspector": "本轮核对浏览器预览，负责人 Inspector 检查待安排。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/gm/prefabs/GmView.prefab",
     "classes": [
       "GmView",
@@ -2496,19 +2737,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。F9总菜单四入口及开关、关闭子窗返回菜单。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-    "sha256": "0da13d6d03f72a2bd60af5c904b22e674f50c3b6ea220d1e7a02a445bffd3bc5",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729",
-      "normalizedLfSha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729"
-    },
+    "visual": "Creator 浏览器独立 H2 角色预览。F9 显示五项入口，角色与时间、道具可打开，关闭子窗返回总菜单，F9 正常关闭菜单和子窗。见 docs/gm-development.md。",
+    "sha256": "d248fb264b250a0884888c3bb1857702a2716d91851afc57b8832f27d8cef3f8",
     "acceptance": {
-      "sha256": "42cdf8d0defe601bf4977f7fc698fa33350fec1b88aa5b1495f222ec414e1729",
-      "date": "2026-11-14",
+      "sha256": "d248fb264b250a0884888c3bb1857702a2716d91851afc57b8832f27d8cef3f8",
+      "date": "2026-11-19",
       "status": "实际预览通过",
-      "scope": "仅本轮Creator浏览器竖屏预览（设备选项393×852、浏览器1280×720）。F9总菜单四入口及开关、关闭子窗返回菜单。 详见docs/validation/gm-toast-review-20261114.json；不代表真机或新发布包。",
-      "inspector": "未操作Creator原生窗口；非负责人Inspector签收。"
+      "scope": "Creator 浏览器独立 H2 角色预览。F9 显示五项入口，角色与时间、道具可打开，关闭子窗返回总菜单，F9 正常关闭菜单和子窗。见 docs/gm-development.md。",
+      "inspector": "本轮核对浏览器预览，负责人 Inspector 检查待安排。"
     }
   },
   {
@@ -2553,14 +2789,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "Creator 393×852 设备选项。独立内存新号从召唤法阵免费首抽，积分由0更新至1，通用窗显示四星布兰特。重登后召唤窗保留完成状态和积分，免费按钮隐藏。",
-    "sha256": "422bf8f566ef2fd55b2e3839b63e2de801a2c32758c14ee1b368b02ec8625fb1",
+    "visual": "Creator 本机竖屏与窄屏预览。独立 H2 角色点击主城法阵、检查三个奖池、返回和顶底栏；六项抽取、余额与积分刷新均通过。高级十连可确认混合扣费。负责人已确认隐藏旧首周横幅。",
+    "sha256": "4fb45f38f0c1afd2fddde541b9b7b425f312a3038cd70927f66a95a3ca211196",
     "acceptance": {
-      "sha256": "422bf8f566ef2fd55b2e3839b63e2de801a2c32758c14ee1b368b02ec8625fb1",
-      "date": "2026-11-18",
+      "sha256": "4fb45f38f0c1afd2fddde541b9b7b425f312a3038cd70927f66a95a3ca211196",
+      "date": "2026-11-19",
       "status": "实际预览通过",
-      "scope": "Creator 393×852 设备选项。独立内存新号从召唤法阵免费首抽，积分由0更新至1，通用窗显示四星布兰特。重登后召唤窗保留完成状态和积分，免费按钮隐藏。",
-      "inspector": "浏览器预览及绑定检查，未逐项签收Creator Inspector。"
+      "scope": "Creator 本机竖屏与窄屏预览。独立 H2 角色点击主城法阵、检查三个奖池、返回和顶底栏；六项抽取、余额与积分刷新均通过。高级十连可确认混合扣费。负责人已确认隐藏旧首周横幅。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     }
   },
   {
@@ -3083,6 +3319,226 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroAttributeRow.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 331,
+        "height": 48
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "随英雄属性明细复验攻击、生命、防御、速度官方资源图标及数值。",
+    "sha256": "e70f1740881c32df1ef28d83dea85e3ab15bb115bacda8532ee9b7b47b45fa59",
+    "acceptance": {
+      "sha256": "e70f1740881c32df1ef28d83dea85e3ab15bb115bacda8532ee9b7b47b45fa59",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "随英雄属性明细复验攻击、生命、防御、速度官方资源图标及数值。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroAttributesView.prefab",
+    "classes": [
+      "HeroAttributesView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 竖屏实测打开并关闭，列表显示当前服务器的四项已同步数值，攻击与详情一致。",
+    "sha256": "a15a853440405b596504999e370a1b8324dce09658b63cf36ad57b1780318dff",
+    "acceptance": {
+      "sha256": "a15a853440405b596504999e370a1b8324dce09658b63cf36ad57b1780318dff",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "Creator 竖屏实测打开并关闭，列表显示当前服务器的四项已同步数值，攻击与详情一致。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroEquipmentPickerRow.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 544,
+        "height": 146
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "随装备选择实际显示黄铜之刺、银制利剑的图标、星级、评分、属性和穿戴按钮。",
+    "sha256": "4003f2e922d79462e783bae578afad4aca103d1c49a19f011c507ad7af4649ea",
+    "acceptance": {
+      "sha256": "4003f2e922d79462e783bae578afad4aca103d1c49a19f011c507ad7af4649ea",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "随装备选择实际显示黄铜之刺、银制利剑的图标、星级、评分、属性和穿戴按钮。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroEquipmentPickerView.prefab",
+    "classes": [
+      "HeroEquipmentPickerView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 竖屏实测两个同部位武器降序且可穿，已穿行独立高亮、重复模板隐藏、替换后自动返回英雄。",
+    "sha256": "5fc6cfa26d41962dee2d52f70fc4ad37dc8d7955f076507409496cd6b07c9750",
+    "acceptance": {
+      "sha256": "5fc6cfa26d41962dee2d52f70fc4ad37dc8d7955f076507409496cd6b07c9750",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "Creator 竖屏实测两个同部位武器降序且可穿，已穿行独立高亮、重复模板隐藏、替换后自动返回英雄。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/hero/prefabs/HeroIconCellView.prefab",
     "classes": [
       "HeroIconCellView"
@@ -3159,7 +3615,7 @@
     },
     "components": {
       "Widget": 2,
-      "Layout": 0,
+      "Layout": 1,
       "Mask": 2,
       "ScrollView": 2,
       "Animation": 0,
@@ -3175,13 +3631,6 @@
       },
       {
         "node": "node_name",
-        "anchor": [
-          0,
-          0
-        ]
-      },
-      {
-        "node": "node_star",
         "anchor": [
           0,
           0
@@ -3223,7 +3672,7 @@
         ]
       },
       {
-        "node": "bat_node",
+        "node": "HeroPower",
         "anchor": [
           0,
           0
@@ -3265,7 +3714,7 @@
         ]
       },
       {
-        "node": "node_btn",
+        "node": "HeroActions",
         "anchor": [
           0,
           0
@@ -3338,14 +3787,14 @@
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
     "reviewStatus": "实际预览通过",
-    "visual": "本机Creator预览使用393×852设备选项和独立内存服。确认底部费用和按钮排版、布兰特从1级升到6级再到10级、属性更新、经验不足标红与飘字、冷重登仍为10级及继续出阵。动画帧时序由专项覆盖，其他设备待复验。",
-    "sha256": "dc09892ea9971af2a5073917e9c21ae3fc50d7ecc9bba6a73c53ff765b0c1520",
+    "visual": "Creator 本机竖屏独立 H2。布兰特显示标题、金星、职业和服务器战力，四槽支持选择、更换、单件及一键穿脱。装备后战力 1068 到 1320，冷重登保留；一键卸下还原。属性窗、左右箭头及返回通过。",
+    "sha256": "110d5c9b3410b190b69c78cc6b168eea51124b01d885547875b27039263ad41b",
     "acceptance": {
-      "sha256": "dc09892ea9971af2a5073917e9c21ae3fc50d7ecc9bba6a73c53ff765b0c1520",
-      "date": "2026-11-18",
+      "sha256": "110d5c9b3410b190b69c78cc6b168eea51124b01d885547875b27039263ad41b",
+      "date": "2026-11-19",
       "status": "实际预览通过",
-      "scope": "本机Creator预览使用393×852设备选项和独立内存服。确认底部费用和按钮排版、布兰特从1级升到6级再到10级、属性更新、经验不足标红与飘字、冷重登仍为10级及继续出阵。动画帧时序由专项覆盖，其他设备待复验。",
-      "inspector": "未操作Creator原生Inspector。"
+      "scope": "Creator 本机竖屏独立 H2。布兰特显示标题、金星、职业和服务器战力，四槽支持选择、更换、单件及一键穿脱。装备后战力 1068 到 1320，冷重登保留；一键卸下还原。属性窗、左右箭头及返回通过。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     }
   },
   {
@@ -3379,7 +3828,7 @@
       }
     },
     "components": {
-      "Widget": 13,
+      "Widget": 14,
       "Layout": 1,
       "Mask": 1,
       "ScrollView": 0,
@@ -3444,21 +3893,21 @@
         ]
       },
       {
-        "node": "spr_bubble_bg",
+        "node": "DialogueBackground",
         "anchor": [
           1,
           0
         ]
       },
       {
-        "node": "CCMenu_1",
+        "node": "DialogueActions",
         "anchor": [
           0,
           0
         ]
       },
       {
-        "node": "node_bubble",
+        "node": "DialogueBubble",
         "anchor": [
           0,
           0
@@ -3491,20 +3940,27 @@
           1,
           0.5
         ]
+      },
+      {
+        "node": "DialogueContent",
+        "anchor": [
+          0,
+          1
+        ]
       }
     ],
     "scrolls": [],
     "warnings": [],
     "decision": "已按 Bag 挂载约定修正根位置或静态遮罩；子节点锚点保留",
     "reviewStatus": "实际预览通过",
-    "visual": "Creator冷重登入主城后显示原100级英雄和唯一新五星烈焰骑士，实例与领取前后权威快照一致，无重复奖励；两个Stars实际宽74。仅2英雄与本次预览选项，不代签三尺寸、长列表或发布。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
-    "sha256": "bbb5ec445008aa71cec85ff065ac1d9a047d2988b4627102e7b5479283ee9b42",
+    "visual": "Creator 浏览器的两种竖屏尺寸实测日服看板 act 循环，原对白与橙色高亮、去兑换反馈，筛选不重复装配，进详情清理并可返回重开。",
+    "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
     "acceptance": {
-      "sha256": "bbb5ec445008aa71cec85ff065ac1d9a047d2988b4627102e7b5479283ee9b42",
-      "date": "2026-11-17",
+      "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
+      "date": "2026-11-19",
       "status": "实际预览通过",
-      "scope": "Creator冷重登入主城后显示原100级英雄和唯一新五星烈焰骑士，实例与领取前后权威快照一致，无重复奖励；两个Stars实际宽74。仅2英雄与本次预览选项，不代签三尺寸、长列表或发布。 证据：docs/validation/chapter-stage10-20-preview-20261117.json。",
-      "inspector": "未操作Creator原生Inspector；仅上述限定实际预览。"
+      "scope": "Creator 浏览器的两种竖屏尺寸实测日服看板 act 循环，原对白与橙色高亮、去兑换反馈，筛选不重复装配，进详情清理并可返回重开。",
+      "inspector": "验收范围为本机 Creator 浏览器及独立内存服。"
     }
   },
   {
@@ -3560,6 +4016,116 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/hero/prefabs/SummonInfoRow.prefab",
+    "classes": [],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 528,
+        "height": 56
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "随召唤公示复验当前数值、中文正文和头像均可见，切换页签后列表重新定位。",
+    "sha256": "78b8a246c46272c0603fe454d914e2b72a4cb0e6a3092f072d3cc4327ecb47a8",
+    "acceptance": {
+      "sha256": "78b8a246c46272c0603fe454d914e2b72a4cb0e6a3092f072d3cc4327ecb47a8",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "随召唤公示复验当前数值、中文正文和头像均可见，切换页签后列表重新定位。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/SummonInfoView.prefab",
+    "classes": [
+      "SummonInfoView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 本机竖屏实测高级与基础公示、推荐阵容、祈愿条件及关闭返回。验收限召唤说明入口及现有五类公示页签结构。",
+    "sha256": "2f3e4c559e23f6c39c224cb6d5f5d75236a3ab1e2ab628f0451dc4f39da3418b",
+    "acceptance": {
+      "sha256": "2f3e4c559e23f6c39c224cb6d5f5d75236a3ab1e2ab628f0451dc4f39da3418b",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "Creator 本机竖屏实测高级与基础公示、推荐阵容、祈愿条件及关闭返回。验收限召唤说明入口及现有五类公示页签结构。",
+      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+    }
+  },
+  {
     "path": "client/assets/bundles/module/home/prefabs/CityChromeView.prefab",
     "classes": [
       "CityChromeShell",
@@ -3601,9 +4167,16 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "结构检查通过但视觉待验收",
-    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
-    "sha256": "19792d08adcf47871ba61cf7480c41234318a3593d659a333d13bb0cc5691799"
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 浏览器实测英雄详情顶栏右侧按实际背包显示 2000 英雄经验及月牙图标，返回英雄列表恢复钻石与原图标。",
+    "sha256": "27b51fee78fe5682a80f3682c42fa2622c9d1b4356647df4d679bf01c619efa7",
+    "acceptance": {
+      "sha256": "27b51fee78fe5682a80f3682c42fa2622c9d1b4356647df4d679bf01c619efa7",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "Creator 浏览器实测英雄详情顶栏右侧按实际背包显示 2000 英雄经验及月牙图标，返回英雄列表恢复钻石与原图标。",
+      "inspector": "验收范围为本机 Creator 浏览器及独立内存服。"
+    }
   },
   {
     "path": "client/assets/bundles/module/home/prefabs/CityHubView.prefab",
@@ -3824,6 +4397,66 @@
     "reviewStatus": "结构检查通过但视觉待验收",
     "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
     "sha256": "b1deb471d3fe4e34a5c1a580aa03d3b098d7090a9cf9ea8cac95c16b4bd24b94"
+  },
+  {
+    "path": "client/assets/bundles/module/login/prefabs/RoleNameView.prefab",
+    "classes": [
+      "RoleNameView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "InputText",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "PlaceholderText",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "5df549458e1f145455fc7a66c73d58d1c85b82aba599c7c039f6f014fa7b76c3"
   },
   {
     "path": "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab",
@@ -4173,6 +4806,223 @@
       "status": "结构检查通过但视觉待验收",
       "scope": "真实 Creator 原始壳层三尺寸巡检；未注入玩家数据。尚未完成所属页面的动态内容、滚动与遮罩交互验收；不能据此认定玩法完成。",
       "inspector": "待负责人逐项确认"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/login/prefabs/WelcomeGiftView.prefab",
+    "classes": [
+      "WelcomeGiftView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "0b6e4dd06e4649d6bbccc9192a1b205b14b13e71d7c4bbb1ff624521be745b5b"
+  },
+  {
+    "path": "client/assets/bundles/module/market/prefabs/MarketBuyView.prefab",
+    "classes": [
+      "MarketBuyView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 独立 H2 预览检查每份 100000 英雄经验、选择购买 1 份、总价 100 钻和禁止超过限购；确认购买后开通用奖励窗。截图 client/temp/project-checks/market-purchase.png。",
+    "sha256": "b45ee8892f2162a78084e149d9c441f6cbfe3d9df0e11906601e30127577045c",
+    "acceptance": {
+      "sha256": "b45ee8892f2162a78084e149d9c441f6cbfe3d9df0e11906601e30127577045c",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "Creator 独立 H2 预览检查每份 100000 英雄经验、选择购买 1 份、总价 100 钻和禁止超过限购；确认购买后开通用奖励窗。截图 client/temp/project-checks/market-purchase.png。",
+      "inspector": "Creator 浏览器真实交互与序列化绑定检查。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/market/prefabs/MarketItemCell.prefab",
+    "classes": [
+      "MarketItemCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 196,
+        "height": 242
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 本机检查货架物品图标、10万与25万的原报价、原折扣和售罄灰态；物品说明、购买及到账由独立 H2 验证。",
+    "sha256": "01ca9439cfd8a8b35584cf54eef17b90b4ce5f7bbc2b6dbf40ea4462a56c92ce",
+    "acceptance": {
+      "sha256": "01ca9439cfd8a8b35584cf54eef17b90b4ce5f7bbc2b6dbf40ea4462a56c92ce",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "Creator 本机检查货架物品图标、10万与25万的原报价、原折扣和售罄灰态；物品说明、购买及到账由独立 H2 验证。",
+      "inspector": "Creator 浏览器真实交互与序列化绑定检查。"
+    }
+  },
+  {
+    "path": "client/assets/bundles/module/market/prefabs/MarketView.prefab",
+    "classes": [
+      "MarketView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "z": 1,
+        "y": 1,
+        "x": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "实际预览通过",
+    "visual": "Creator 独立 H2 本机预览，角色 1 级从主城进入市场，旧看板、六件货架、金币万位缩写、免费和付费刷新、冷重登与返回均通过。截图 client/temp/project-checks/market-shelf.png。",
+    "sha256": "c70771c8b32a1e64c9ab43415e08036f9451d927c33619dbab7bb488ab6f910e",
+    "acceptance": {
+      "sha256": "c70771c8b32a1e64c9ab43415e08036f9451d927c33619dbab7bb488ab6f910e",
+      "date": "2026-11-19",
+      "status": "实际预览通过",
+      "scope": "Creator 独立 H2 本机预览，角色 1 级从主城进入市场，旧看板、六件货架、金币万位缩写、免费和付费刷新、冷重登与返回均通过。截图 client/temp/project-checks/market-shelf.png。",
+      "inspector": "Creator 浏览器真实交互与序列化绑定检查。"
     }
   }
 ]

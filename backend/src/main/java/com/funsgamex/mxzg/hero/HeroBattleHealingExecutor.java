@@ -218,7 +218,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
-    /** 执行预检动作；即时子链沿旧条件上下文执行，根动作任一失败撤回全部状态。 */
+    /** 执行预检动作；即时子链沿旧条件上下文执行，驱散写入战报，根动作失败撤回全部状态。 */
     @Override
     public void skill(Actor actor, HeroBattleSkillUtils.Skill skill) {
         if (attackContext == null) throw new UnsupportedOperationException("普通攻击缺少根动作上下文");
@@ -288,6 +288,16 @@ public final class HeroBattleHealingExecutor implements Executor {
                     }
                     continue;
                 }
+                int removeCount = rules.battleDebuffRemovalCount(buffId);
+                if (removeCount >= 0) {
+                    for (var target : targets) {
+                        if (require(target.id()).hp() > 0 && !require(target.id()).actor().isDead()
+                                && !actor.interrupted(target.id())) {
+                            removed(target.id(), buffs.get(target.id()).removeDebuffs(removeCount), "dispel");
+                        }
+                    }
+                    continue;
+                }
                 if (rules.battleBleed(buffId)) {
                     for (var target : targets) {
                         applyBleed(buffId, actor.id(), target.id(), attackContext.decision);
@@ -341,7 +351,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
-    /** 执行已预检的即时子动作：保留目标选择器，允许无选择器继承或[1]改选施加者。 */
+    /** 执行已预检的即时子动作，继承目标或改选施加者；按属性自身配置写入原持续规则。 */
     private void applyImmediateArts(int buffId, int sourceId, List<HeroBattleTargetUtils.Unit> context) {
         var source = require(sourceId);
         for (var art : rules.immediateArts(buffId)) {
@@ -353,6 +363,10 @@ public final class HeroBattleHealingExecutor implements Executor {
                 if (rules.battleSimpleControl(childId)) {
                     for (var target : targets) {
                         applySimpleControl(childId, sourceId, target.id(), attackContext.decision);
+                    }
+                } else if (rules.battleDirectAttribute(childId)) {
+                    for (var target : targets) {
+                        applyDirectAttribute(childId, sourceId, target.id());
                     }
                 } else {
                     var effect = rules.onceDamageAttribute(childId);

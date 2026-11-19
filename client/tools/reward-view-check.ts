@@ -4,16 +4,21 @@
  */
 import { strict as assert } from "node:assert";
 import { readFileSync, existsSync } from "node:fs";
-import { AudioClip, AudioSource, Label, Node, Sprite, SpriteFrame, Tween, UIOpacity, view as screenView } from "cc";
+import { AudioClip, AudioSource, Button, Label, Node, Size, Sprite, SpriteFrame, Tween, UIOpacity, UITransform, view as screenView } from "cc";
+import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { ResManager } from "../assets/scripts/framework/assets/ResManager";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
+import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { RewardView } from "../assets/scripts/features/reward/ui/RewardView";
+import { HeroRewardView } from "../assets/scripts/features/reward/ui/HeroRewardView";
 import { RewardUtils } from "../assets/scripts/features/reward/utils/RewardUtils";
-import type { RewardArgs } from "../assets/scripts/features/reward/data/RewardData";
+import type { RewardArgs, RewardRow } from "../assets/scripts/features/reward/data/RewardData";
 import { BagItemView } from "../assets/scripts/features/bag/ui/BagItemView";
 import { BagItemCatalog } from "../assets/scripts/features/bag/utils/BagItemCatalog";
+import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
+import { BattleSpineService } from "../assets/scripts/features/battle/ui/BattleSpineService";
 
 /** 本地只读显示夹具，不是领取请求或玩家库存。 */
 const args: RewardArgs = {
@@ -66,7 +71,26 @@ function checkPrefab(): void {
     assert(view && view.panel && view.rewards && view.titleEffect && view.confetti && view.rewardAudio);
     assert.equal(objects[view.panel.__id__]._name, "Panel");
     assert(objects[view.panel.__id__]._components.some((row: any) => objects[row.__id__].__type__ === "cc.UIOpacity"));
+    const titleSprite = objects[view.titleEffect.__id__];
+    const titleNode = objects[titleSprite.node.__id__];
+    const titleTransform = objects[titleNode._components[0].__id__];
+    assert.equal(titleSprite._isTrimmedMode, false, "标题对齐依赖原始尺寸和透明裁边");
+    assert.equal(titleNode._lpos.y, 242);
+    assert.equal(titleTransform._contentSize.height, 130);
+    assert(!objects.some(row => row._name === "Title"), "标题由完整动画帧独立绘制，静态字样不会叠在下方");
     const scroll = objects[view.rewards.__id__];
+    const repeat = objects[view.repeatButton.__id__];
+    const confirm = objects[view.confirmButton.__id__];
+    assert.equal(repeat.__type__, "cc.Button");
+    assert.equal(confirm.__type__, "cc.Button");
+    assert.equal(objects[repeat.node.__id__]._name, "RepeatSummonButton");
+    assert.equal(objects[confirm.node.__id__]._name, "ConfirmButton");
+    assert.equal(objects[repeat.node.__id__]._active, false);
+    assert.equal(objects[confirm.node.__id__]._active, false);
+    assert.equal(objects[view.summonIntro.__id__]._active, false);
+    assert.equal(objects[view.summonBackdrop.__id__].__type__, "cc.Sprite");
+    assert.deepEqual(objects[view.summonEffects.__id__]._children.map((row: any) => objects[row.__id__]._name),
+        ["Lizi", "Shangcheng"]);
     const content = objects[scroll.content.__id__];
     const port = objects[content._parent.__id__];
     assert.equal(objects[port._parent.__id__]._name, "Rewards");
@@ -97,9 +121,13 @@ function windowFixture(): { view: RewardView; root: Node; paints: unknown[]; aud
     view.panel.addComponent(UIOpacity);
     const content = new Node("content");
     const paints: unknown[] = [];
-    view.rewards = { list: { node: content, setData: (value: unknown) => paints.push(value) }, toStart: () => {} } as any;
+    view.rewards = { list: {
+        node: content, explicitCellSize: new Size(124, 134), setData: (value: unknown) => paints.push(value),
+    }, toStart: () => {} } as any;
     const title = new Node("TitleEffect");
     title.parent = view.panel;
+    title.addComponent(UITransform).setContentSize(356, 130);
+    title.setPosition(0, 242, 0);
     view.titleEffect = title.addComponent(Sprite);
     const confetti = new Node("Confetti");
     confetti.parent = view.panel;
@@ -107,6 +135,27 @@ function windowFixture(): { view: RewardView; root: Node; paints: unknown[]; aud
     const empty = new Node("EmptyState");
     empty.parent = view.panel;
     view.emptyLabel = empty.addComponent(Label);
+    view.closeHint = new Node("CloseHint");
+    view.closeHint.parent = view.panel;
+    const repeat = new Node("RepeatSummonButton");
+    repeat.parent = view.panel;
+    view.repeatButton = repeat.addComponent(Button);
+    const confirm = new Node("ConfirmButton");
+    confirm.parent = view.panel;
+    view.confirmButton = confirm.addComponent(Button);
+    view.summonIntro = new Node("SummonIntro");
+    view.summonIntro.parent = root;
+    view.summonIntro.addComponent(UITransform);
+    const backdrop = new Node("Backdrop");
+    backdrop.parent = view.summonIntro;
+    backdrop.addComponent(UITransform);
+    view.summonBackdrop = backdrop.addComponent(Sprite);
+    view.summonEffects = new Node("Effects");
+    view.summonEffects.parent = view.summonIntro;
+    for (const name of ["Lizi", "Shangcheng"]) {
+        const effect = new Node(name);
+        effect.parent = view.summonEffects;
+    }
     view.rewardAudio = root.addComponent(AudioSource);
     const audio = { plays: 0, stops: 0 };
     view.rewardAudio.play = () => { audio.plays++; };
@@ -233,13 +282,22 @@ async function checkViewportCleanup(): Promise<void> {
     }
 }
 
-/** 同一回执只展示一次，并核对旧标题/彩带的真实百分秒帧间隔与关闭清理。 */
+/** 同一回执只展示一次，检查标题对齐、标题和彩带的原帧间隔及关闭清理。 */
 async function checkLifecycle(): Promise<void> {
     const getFrame = ResManager.getSpriteFrame;
     const forNode = ResourceAssetsUtils.forNode;
     const loaded: SpriteFrame[] = [];
-    ResManager.getSpriteFrame = async () => {
+    ResManager.getSpriteFrame = async (_node, path) => {
         const frame = new SpriteFrame();
+        const key = typeof path === "string" ? path.match(/item-reward_effect-\d+$/)?.[0] : undefined;
+        if (key) {
+            const meta = read("client/assets/bundles/module/common/ui/" + key + ".png.meta").subMetas.f9941.userData;
+            Object.assign(frame, {
+                originalSize: { width: meta.rawWidth, height: meta.rawHeight },
+                rect: { height: meta.height },
+                offset: { y: meta.offsetY },
+            });
+        }
         loaded.push(frame);
         return frame;
     };
@@ -257,8 +315,23 @@ async function checkLifecycle(): Promise<void> {
         assert.equal(fixture.view.titleEffect!.spriteFrame, first);
         fixture.view.update(0.002);
         assert.notEqual(fixture.view.titleEffect!.spriteFrame, first);
-        fixture.view.update(0.76);
-        assert.equal(fixture.view.confetti!.node.active, false, "彩带0.88秒后结束");
+        const title = fixture.view.titleEffect!;
+        const transform = title.node.getComponent(UITransform)!;
+        for (let frame = 1; frame <= 10; frame++) {
+            assert.equal(title.spriteFrame, loaded[frame % 10], "每0.12秒切换至下一完整标题帧");
+            const geometry = title.spriteFrame as SpriteFrame & { offset: { y: number }; rect: { height: number } };
+            const trimTop = 0.5 + (geometry.offset.y + geometry.rect.height / 2) / geometry.originalSize.height;
+            assert(Math.abs(title.node.position.y + transform.height * (trimTop - transform.anchorY) - 242) < 1e-8,
+                "标题每帧裁切区域的顶部保持在同一预制体位置");
+            if (frame === 7) {
+                assert.equal(fixture.view.confetti!.node.active, true, "彩带未满0.88秒仍显示");
+                fixture.view.update(0.04);
+                assert.equal(fixture.view.confetti!.node.active, false, "彩带0.88秒后结束");
+                fixture.view.update(0.08);
+            } else {
+                fixture.view.update(0.12);
+            }
+        }
         let originalClosed = 0;
         let replacementClosed = 0;
         let listenersCleared = false;
@@ -363,6 +436,178 @@ async function checkAbnormalClose(): Promise<void> {
     }
 }
 
+/** 再召唤先关闭结果再发出原奖池与抽数，重复点击和普通奖励不会重新发出。 */
+async function checkSummonRepeat(): Promise<void> {
+    const getFrame = ResManager.getSpriteFrame;
+    const forNode = ResourceAssetsUtils.forNode;
+    const close = UIManager.instance.close;
+    const getConfig = GameConfig.instance.getConfig;
+    let heroLoad: ((frame: SpriteFrame) => void) | undefined;
+    let heroRequests = 0;
+    GameConfig.instance.getConfig = (() => ({ item_id: 20104004 })) as typeof getConfig;
+    ResManager.getSpriteFrame = async (_owner, source) => {
+        if (source === "hero/ui/hero-icon_20104004") {
+            heroRequests++;
+            return new Promise<SpriteFrame>(resolve => { heroLoad = resolve; });
+        }
+        return new SpriteFrame();
+    };
+    ResourceAssetsUtils.forNode = (() => ({ loadPath: async () => new AudioClip() })) as any;
+    const fixture = windowFixture();
+    const ordinary = windowFixture();
+    let closed = false;
+    const repeats: unknown[] = [];
+    UIManager.instance.close = view => {
+        assert.equal(view, fixture.view);
+        fixture.view.runClose();
+        closed = true;
+        return true;
+    };
+    const stop = EventDispatcher.instance.on("summon.repeat", value => {
+        assert.equal(closed, true);
+        repeats.push(value);
+    });
+    try {
+        ordinary.view.runOpen(args);
+        await ordinary.view.whenReady();
+        assert.equal(ordinary.view.repeatButton!.node.active, false);
+        assert.equal(ordinary.view.confirmButton!.node.active, false);
+        assert.equal(ordinary.view.closeHint!.active, true);
+        assert.equal(ordinary.view.rewards!.list.explicitCellSize.height, 134);
+        const repeatSummon = { pool: "ADVANCED", count: 10 } as const;
+        const templateId = 10104004;
+        const heroes = Array.from({ length: 10 }, (_, index) => ({
+            instanceId: "12345678-0000-4000-8000-" + String(index + 1).padStart(12, "0"),
+            templateId, level: 1, star: 4, stage: 0,
+        }));
+        fixture.view.runOpen({
+            ...args, items: [{ itemId: templateId, credited: 10 }], heroes, repeatSummon, summonBatch: true,
+        });
+        assert.equal(fixture.view.rewards!.list.explicitCellSize.height, 104);
+        assert.equal(fixture.view.panel!.active, false);
+        assert.equal(heroRequests, 1, "同模板头像只等一份");
+        heroLoad!(new SpriteFrame());
+        assert.equal(fixture.view.panel!.active, false, "头像准备完成前不显示空白头像格");
+        await fixture.view.whenReady();
+        assert.equal(fixture.view.panel!.active, true);
+        assert.equal(fixture.view.repeatButton!.node.active, true);
+        assert.equal(fixture.view.confirmButton!.node.active, true);
+        assert.equal(fixture.view.closeHint!.active, false);
+        fixture.view.repeatButton!.node.emit(Button.EventType.CLICK);
+        fixture.view.repeatButton!.node.emit(Button.EventType.CLICK);
+        assert.deepEqual(repeats, [repeatSummon]);
+    } finally {
+        stop();
+        fixture.root.destroy();
+        ordinary.root.destroy();
+        UIManager.instance.close = close;
+        GameConfig.instance.getConfig = getConfig;
+        ResManager.getSpriteFrame = getFrame;
+        ResourceAssetsUtils.forNode = forNode;
+    }
+}
+
+/** 开场两路骨骼一起开始，正常三秒关闭，也可直接点按跳过。 */
+async function checkSummonIntro(): Promise<void> {
+    const getFrame = ResManager.getSpriteFrame;
+    const forNode = ResourceAssetsUtils.forNode;
+    const close = UIManager.instance.close;
+    const mount = BattleSpineService.instance.mountNamedSpine;
+    const mounted: string[] = [];
+    ResManager.getSpriteFrame = async () => new SpriteFrame();
+    ResourceAssetsUtils.forNode = (() => ({ loadPath: async () => new AudioClip() })) as any;
+    BattleSpineService.instance.mountNamedSpine = (_host, stem, clip, play) => {
+        mounted.push(stem + "/" + clip);
+        play?.onReady?.();
+    };
+    try {
+        for (const skip of [true, false]) {
+            const fixture = windowFixture();
+            UIManager.instance.close = view => {
+                assert.equal(view, fixture.view);
+                fixture.view.runClose();
+                return true;
+            };
+            fixture.view.runOpen({ ...args, summonIntro: true });
+            await fixture.view.whenReady();
+            await Promise.resolve();
+            assert.equal(fixture.view.summonIntro!.active, true);
+            assert.equal(fixture.view.panel!.active, false);
+            assert.equal(fixture.audio.plays, 1);
+            if (skip) {
+                fixture.view.summonIntro!.emit(Node.EventType.TOUCH_END);
+            } else {
+                fixture.view.update(2.9);
+                assert.equal(fixture.audio.stops, 1);
+                fixture.view.update(0.2);
+            }
+            assert.equal(fixture.audio.stops, 2);
+            fixture.root.destroy();
+        }
+        assert.deepEqual(mounted, ["lizi/stand", "shangcheng/act2", "lizi/stand", "shangcheng/act2"]);
+    } finally {
+        ResManager.getSpriteFrame = getFrame;
+        ResourceAssetsUtils.forNode = forNode;
+        BattleSpineService.instance.mountNamedSpine = mount;
+        UIManager.instance.close = close;
+    }
+}
+
+/** 连点不同格子不会替换准备中或已打开的英雄，详情关闭后可看下一位。 */
+async function checkSummonDetails(): Promise<void> {
+    const getFrame = ResManager.getSpriteFrame;
+    const forNode = ResourceAssetsUtils.forNode;
+    const ui = UIManager.instance;
+    const { openChild, isOpen } = ui;
+    const fixture = windowFixture();
+    const calls: string[] = [];
+    let opened = false;
+    let finish: () => void;
+    ResManager.getSpriteFrame = async () => new SpriteFrame();
+    ResourceAssetsUtils.forNode = (() => ({ loadPath: async () => new AudioClip() })) as any;
+    ui.isOpen = ctor => ctor === HeroRewardView && opened;
+    ui.openChild = ((_owner, ctor, detail) => {
+        assert.equal(_owner, fixture.view);
+        assert.equal(ctor, HeroRewardView);
+        calls.push(detail.hero.instanceId);
+        return new Promise(resolve => { finish = () => { opened = true; resolve({}); }; });
+    }) as typeof ui.openChild;
+    const rows: RewardRow[] = [1, 2].map(index => ({
+        itemId: 10104004,
+        quantity: 1,
+        hero: {
+            instanceId: "12345678-0000-4000-8000-" + String(index).padStart(12, "0"),
+            templateId: 10104004, level: 1, star: 4, stage: 0,
+        },
+    }));
+    try {
+        fixture.view.runOpen(args);
+        await fixture.view.whenReady();
+        const select = (row: RewardRow) => (fixture.view as any).onSelect(row);
+        select(rows[0]);
+        select(rows[1]);
+        assert.deepEqual(calls, [rows[0].hero!.instanceId]);
+        finish!();
+        await Promise.resolve();
+        await Promise.resolve();
+        select(rows[1]);
+        assert.equal(calls.length, 1);
+        opened = false;
+        select(rows[1]);
+        assert.deepEqual(calls, rows.map(row => row.hero!.instanceId));
+        finish!();
+        fixture.view.runClose();
+        select(rows[0]);
+        assert.equal(calls.length, 2);
+    } finally {
+        fixture.root.destroy();
+        ResManager.getSpriteFrame = getFrame;
+        ResourceAssetsUtils.forNode = forNode;
+        ui.openChild = openChild;
+        ui.isOpen = isOpen;
+    }
+}
+
 /** 执行无网络、无资产写入的显示与生命周期专项。 */
 async function main(): Promise<void> {
     const tweens = recordTweens();
@@ -374,6 +619,9 @@ async function main(): Promise<void> {
         await checkAbnormalClose();
         await checkEntranceAnimations(tweens);
         await checkViewportCleanup();
+        await checkSummonRepeat();
+        await checkSummonIntro();
+        await checkSummonDetails();
         console.log("PASS generic reward credited projection, prefab/modal/list bindings, exact frame/entrance timing, virtual-cell replay guards and once-only close/teardown notification");
     } finally {
         tweens.restore();

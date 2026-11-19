@@ -1,5 +1,5 @@
 /** 主线挂机主页：静态底板保存关卡、四项收益及三个正式入口，挑战交给页内战场。
- * 挂机读取权威时钟与基础速率；领取意图经Controller交应用绑定，双确认后仅在原显示期播放宝箱。
+ * 挂机显示服务器下发的累计与基础收益。主线控制器通知领取成功后，本页播放收取效果。
  * 页面关闭取消显示但保留服务端待结算状态，奖励到账与通用反馈由应用处理。 */
 import { _decorator, AudioClip, AudioSource, Button, Label, Node, Sprite, SpriteFrame, UITransform, sp } from "cc";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
@@ -9,6 +9,7 @@ import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { MainChapterController } from "../MainChapterController";
+import { MainChapterSession } from "../MainChapterSession";
 import { MainChapterModel } from "../MainChapterModel";
 import type { IdleClaimConfirmation, IdleClaimReceipt } from "../data/MainChapterIdleClaimData";
 
@@ -17,6 +18,7 @@ import { MainChapterHeroTalk } from "./MainChapterHeroTalk";
 import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
 import { GameLog } from "../../../core/GameLog";
+import { ServerClock } from "../../../core/ServerClock";
 import { IdleChestUtils } from "../utils/IdleChestUtils";
 import { BattleSpineService } from "./BattleSpineService";
 import { MainChapterIdleResources } from "./MainChapterIdleResources";
@@ -29,12 +31,6 @@ import type { AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
 import { GameConfig } from "../../../config/GameConfig";
 import { ChapterBackgroundUtils } from "../utils/ChapterBackgroundUtils";
 import type { ChapterBackgroundPlan } from "../utils/ChapterBackgroundUtils";
-
-declare module "../../../framework/EventDispatcher" {
-    interface EventPayloads {
-        "main-chapter.idle-collection": IdleClaimConfirmation;
-    }
-}
 
 const { ccclass, property } = _decorator;
 
@@ -73,7 +69,7 @@ export class MainChapterView extends BaseView {
     @property(Label) statusLabel: Label | null = null;
     /** 挑战按钮文字，避免复用固定旧文案。 */
     @property(Label) challengeLabel: Label | null = null;
-    /** 服务器挂机时长按旧版小时分钟显示；没有快照时显示未接入而非零秒。 */
+    /** 按旧版小时分钟显示服务器挂机时长，首次快照到达前显示等待提示。 */
     @property(Label) idleTimeLabel: Label | null = null;
     /** 金币每分钟收益，未同步时不从通关奖励推算。 */
     @property(Label) goldRateLabel: Label | null = null;
@@ -159,7 +155,7 @@ export class MainChapterView extends BaseView {
         const talkTemplate = this.node.getChildByName("HeroTalkTemplate");
         if (talkTemplate) {
             this.heroTalk = new MainChapterHeroTalk(talkTemplate, this.battleHost,
-                () => MainChapterController.instance.readRoleLevel());
+                () => MainChapterSession.current?.currentRole?.level ?? 0);
         }
         this.ownListener(UIManager.instance.setResidentHost("main-chapter-field",
             () => !this.closed && this.battleHost?.isValid ? this.battleHost : null));
@@ -225,24 +221,17 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 转交宝箱点击，正式战斗/已有收取演出时不重复发起；页面自身不发协议或修改累计与资产。 */
+    /** 宝箱点击交给确认流程，战斗或已有收取演出时忽略重复点击。 */
     private collectIdleRewards(): void {
         if (this.closed || this.playing || this.idleChest?.collecting) {
             return;
         }
-        const request = MainChapterController.instance.requestIdleClaim;
-        if (!request) {
+        const session = MainChapterSession.current;
+        if (!session) {
             UIManager.instance.toast("挂机领取正在准备，请稍后重试");
             return;
         }
-        void request(this.idleCollectionToken).catch(error => {
-            if (this.closed || UIManager.isOpenCancelled(error) || UIManager.isFailureReported(error)) {
-                return;
-            }
-            const reason = error instanceof Error ? error.stack || error.message : String(error);
-            GameLog.shared.classified("MODULE", "warn", "MainChapterView", "挂机领取入口失败：" + reason.slice(0, 4096));
-            UIManager.instance.toast("挂机领取未开始，请稍后重试");
-        });
+        void session.idleClaim.begin(this.idleCollectionToken);
     }
 
     /** 正常挑战先确认阵容；未确认挑战及待领奖优先恢复，已完成开放范围时明确说明而不误开布阵。 */
@@ -396,7 +385,7 @@ export class MainChapterView extends BaseView {
             && (!model.settlement || (model.settlement.presented && !model.settlement.feedbackReady));
     }
 
-    /** 引擎帧只更新计时显示；后台恢复按已接纳服务器时间推算，不自行发奖。 */
+    /** 每帧刷新挂机计时、宝箱、行军和对话表现。 */
     public update(dt: number): void {
         if (!this.closed) {
             this.idleChest?.update(dt);
@@ -406,23 +395,22 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 读取统一快照，时间封顶；三种速率按服务器周期换算每分钟，首通奖励不参与。 */
+    /** 按公共时钟显示挂机累计，等待校时时保留正在播放的收取画面。首胜后显示基础收益。 */
     private renderIdle(): void {
-        const model = MainChapterModel.instance;
-        const state = model.idle;
+        const state = MainChapterModel.instance.idle;
         this.refreshIdleDisplay();
         if (!this.idleTimeLabel) {
             return;
         }
-        if (state) {
-            const seconds = IdleChestUtils.elapsed(state.serverTime, state.startedAt,
-                state.maxSeconds, model.idleReceivedAt, Date.now());
+        const now = state ? ServerClock.instance.nowSeconds() : null;
+        if (state && now !== null) {
+            const seconds = IdleChestUtils.elapsed(now, state.startedAt, state.maxSeconds);
             if (!this.idleChest?.collecting) {
                 this.idleTimeLabel.string = IdleChestUtils.time(seconds);
             }
             this.renderIdleChest(seconds, state.maxSeconds);
-        } else {
-            this.idleTimeLabel.string = model.state?.maxCleared === 0 ? "通关后开启" : "未接入";
+        } else if (!state || !this.idleChest?.collecting) {
+            this.idleTimeLabel.string = "等待挂机计时";
             if (this.idleProgress) {
                 this.idleProgress.node.active = false;
             }
@@ -465,7 +453,7 @@ export class MainChapterView extends BaseView {
         return this.idleCollectionToken;
     }
 
-    /** 只接纳原页面仍打开的现场确认；历史恢复或其他显示期不补播，也不打开页面。 */
+    /** 收到本次领取的即时回包后，只在发起领取的页面显示期内播放。 */
     private onIdleCollection(confirmation: IdleClaimConfirmation): void {
         if (this.closed || confirmation.presentationContext !== this.idleCollectionToken) {
             return;
@@ -474,9 +462,8 @@ export class MainChapterView extends BaseView {
     }
 
     /**
-     * 以原回执冻结的秒数播放四档收取，不从已经重置的最新快照猜测原档位。
-     * true只表示动画已启动；资源未就绪、正在战斗/收取或页面关闭返回false且不补播。
-     * 调用方已完成原请求双确认和单次交付；本方法不发请求、不改资产，也不等待动画后才弹奖励。
+     * 以服务端本次实际结算的秒数选择收取档位。
+     * true 表示动画已启动，false 表示页面、资源或演出状态暂不允许播放。
      */
     public playIdleCollection(receipt: Pick<IdleClaimReceipt, "receiptId" | "seconds" | "maxSeconds">): boolean {
         if (this.closed || this.playing || !this.node.isValid || !MainChapterModel.instance.idle
@@ -488,7 +475,7 @@ export class MainChapterView extends BaseView {
         if (!this.idleChest?.collect(stage)) {
             return false;
         }
-        // 双确认时统一快照可能已经归零；旧保护区间显示原领取量，结束后render恢复最新时钟。
+        // 演出期间显示本次领取量，结束后恢复最新累计。
         const time = IdleChestUtils.time(receipt.seconds);
         this.idleTimeLabel.string = time;
         this.idleChestHost.active = true;
@@ -500,17 +487,17 @@ export class MainChapterView extends BaseView {
         return true;
     }
 
-    /** 仅Creator显式演示入口可调用收取表现；不重置累计、不发请求、不触发奖励到账提示。 */
+    /** 公共时钟就绪后，允许 Creator 演示入口按指定档位播放宝箱并记录显示时间。 */
     public previewIdleChest(stage: number): boolean {
-        if (!PREVIEW || this.closed || this.playing || !MainChapterModel.instance.idle) {
+        const state = MainChapterModel.instance.idle;
+        const now = ServerClock.instance.nowSeconds();
+        if (!PREVIEW || this.closed || this.playing || !state || now === null) {
             return false;
         }
         const played = this.idleChest?.collect(stage) || false;
         if (played) {
             this.playChestClick();
-            const state = MainChapterModel.instance.idle;
-            const seconds = IdleChestUtils.elapsed(state.serverTime, state.startedAt,
-                state.maxSeconds, MainChapterModel.instance.idleReceivedAt, Date.now());
+            const seconds = IdleChestUtils.elapsed(now, state.startedAt, state.maxSeconds);
             GameLog.shared.classified("DEV", "info", "IdleChestPreview", JSON.stringify({
                 stage, collect: IdleChestUtils.collectAnimation(stage), queued: "normal-0",
                 queuedDelaySeconds: 1.5, displayGuardSeconds: 2,

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.hero.HeroMainPowerService;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.network.AssetSyncService;
 import tools.jackson.databind.ObjectMapper;
@@ -42,11 +43,13 @@ public class MainFormationCommandService {
     private final AssetSyncService sync;
     /** 只用于稳定记录请求摘要，不在网络上传输JSON。 */
     private final ObjectMapper mapper;
+    /** 原主阵容战力峰值随成功站位变更更新，供日常副本入场使用。 */
+    private final HeroMainPowerService powers;
 
     /** 注入共享服务；不建立独立资产缓存或网络通道。 */
     public MainFormationCommandService(SessionService sessions, RoleRepository roles, JdbcTemplate jdbc,
             LineupRepository lineups, MainFormationStateService states, MainFormationRules rules,
-            AssetSyncService sync, ObjectMapper mapper) {
+            AssetSyncService sync, ObjectMapper mapper, HeroMainPowerService powers) {
         this.sessions = sessions;
         this.roles = roles;
         this.jdbc = jdbc;
@@ -55,9 +58,10 @@ public class MainFormationCommandService {
         this.rules = rules;
         this.sync = sync;
         this.mapper = mapper;
+        this.powers = powers;
     }
 
-    /** 同角色锁内先检查回执，再校验版本及原版规则；任何失败均回滚，结果不明时可重试原请求。 */
+    /** 先检查回执及旧规则，再更新阵容和历史峰值；任何失败回滚，结果不明时可重试。 */
     @Transactional
     public Saved save(String token, Save request) {
         if (request == null || request.requestId() == null ||
@@ -101,6 +105,7 @@ public class MainFormationCommandService {
         if (current.formationId() != request.formationId() || !current.slots().equals(normalized)) {
             jdbc.update("UPDATE game_role SET main_formation_id=? WHERE id=?", request.formationId(), role);
             lineups.replace(role, normalized);
+            powers.observe(role);
             sync.changed(role);
             version = lineups.read(role).version();
         }

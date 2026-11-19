@@ -1,5 +1,5 @@
 /**
- * 挂机领取恢复的独立浏览器宿主：直接编译测试入口，使用真实客户端与原生IDB联调。
+ * 挂机领取独立浏览器宿主，编译测试入口并连接已校验身份的测试服务。
  * 只使用现有白名单的回环18081，不运行Creator、不生成发布包；身份和停止文件限定本次run。
  */
 const { createServer } = require("node:http");
@@ -33,18 +33,16 @@ function options() {
 /** 生成仅承载测试按钮的页面，不包含玩家入口、凭证或任何伪造资产。 */
 function page() {
     return `<!doctype html><html lang="zh-CN"><meta charset="utf-8">
-<title>挂机领取真实恢复联调</title><style>
+<title>挂机领取联调</title><style>
 body{font:16px/1.7 system-ui;background:#f3f6fa;color:#21334b;padding:24px;max-width:1180px}
 button{padding:10px 16px;margin:6px;border:1px solid #8399b5;border-radius:8px;font-size:16px;background:white}
 pre{white-space:pre-wrap;padding:18px;background:white;border-radius:10px;font-size:14px}
-</style><h1>挂机领取真实恢复联调</h1><p>独立H2 / WebSocket＋Protobuf / 原生IndexedDB，玩家领取入口仍关闭。</p>
-<button id="RunButton">运行真实恢复检查</button>
-<button id="PrepareReloadButton">保存重启前原请求</button>
-<button id="RestoreReloadButton">恢复重启后原请求</button>
+</style><h1>挂机领取联调</h1><p>连接独立 H2，验证单次领取、消息丢失与统一快照。</p>
+<button id="RunButton">运行领取检查</button>
 <pre id="Output">尚未运行</pre><script src="/check.js"></script></html>`;
 }
 
-/** 编译测试入口并保持同一前端origin，便于后端换端口重启后继续读取原IDB。 */
+/** 编译测试入口并用当前测试服务托管。 */
 async function main() {
     const config = options();
     const root = resolve(__dirname, "../..");

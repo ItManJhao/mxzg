@@ -26,9 +26,9 @@ export interface FormationState {
     /** 当前角色永久解锁的阵型。 */
     unlockedIds?: readonly number[];
 }
-/** 持久幂等请求；原始顺序和预期版本在重试时保持不变。 */
+/** 本次确认提交的阵型、站位和预期版本。 */
 export interface FormationSaveRequest {
-    /** 持久幂等键，结果不明时复用原值。 */
+    /** 服务端用于识别重复提交的请求编号。 */
     requestId: string;
     /** 编辑草稿时的服务器阵容版本。 */
     expectedVersion: number;

@@ -104,10 +104,7 @@ function checkAtomicDelivery(): void {
     let expectedPoints: number | undefined = 10;
     account.replace({ busy: false, role: role(), error: "" });
     bag.initialize();
-    const assets = new AssetStateBinding(account, bag, new RoleController(value => {
-        commits++;
-        account.replace({ busy: false, role: value, error: "" });
-    }));
+    const assets = new AssetStateBinding(account, bag, new RoleController(account));
     const verify = (): void => {
         if (account.snapshot.role && inventory.snapshot.synced) {
             notifications++;
@@ -117,7 +114,10 @@ function checkAtomicDelivery(): void {
     };
     const target = {};
     const stopBag = EventDispatcher.instance.on(BagEvent.BagUpdate, target, verify);
-    const stopAccount = account.subscribe(verify);
+    const stopAccount = account.subscribe(() => {
+        commits++;
+        verify();
+    });
     try {
         const initial = snapshot(1, 1, { schemaVersion: 1, adventureCount: 10, limit: 11 });
         assert(assets.apply({ version: 1, kind: "response", name: "session.login", ok: true,

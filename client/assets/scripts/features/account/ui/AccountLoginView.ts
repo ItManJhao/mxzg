@@ -1,12 +1,13 @@
-/** 登录页面：由 UIManager 打开，账号 Controller 注入登录与选服操作；静态界面保存在同名预制体。 */
+/** 登录页面：由 UIManager 打开，账号模块按页面生命周期绑定登录与选服操作；静态界面保存在同名预制体。 */
 import { _decorator, Button, EditBox, Label, Node } from "cc";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
-import type { AccountActions, AccountView } from "../AccountController";
+import type { AccountActions, AccountView } from "./AccountLoginBinding";
 import type { AccountState } from "../AccountModel";
-import type { GameServer } from "../ServerSelection";
+import type { GameServer, ServerSelectionController } from "../ServerSelectionController";
+import { ServerPickerView } from "./ServerPickerView";
 
 const { ccclass, property } = _decorator;
 
@@ -21,7 +22,7 @@ const { ccclass, property } = _decorator;
 export class AccountLoginView extends BaseView implements AccountView {
     /** 本机开发账号输入框，不保存服务器凭证。 */
     @property(EditBox) accountInput: EditBox | null = null;
-    /** 进入游戏按钮，将账号输入交给 Controller。 */
+    /** 进入游戏按钮，提交输入的开发账号。 */
     @property(Button) loginButton: Button | null = null;
     /** 恢复本机会话入口。 */
     @property(Button) restoreButton: Button | null = null;
@@ -75,18 +76,32 @@ export class AccountLoginView extends BaseView implements AccountView {
         this.loginButton!.interactable = !state.busy;
         this.restoreButton!.interactable = !state.busy;
         this.accountInput!.enabled = !state.busy;
-        this.accountInput!.node.active = !state.role;
         this.logoutButton!.interactable = !state.busy;
         if (this.developerButton) this.developerButton.interactable = !state.busy;
         if (this.serverButton) this.serverButton.interactable = !state.busy;
         this.statusLabel!.string = state.busy ? "正在连接服务器…" : "";
         const error = state.error || "";
         if (error && error !== this.lastError) {
-            UIManager.instance.toast(error);
+            this.showNotice(error);
         }
         this.lastError = error;
         this.profileLabel!.string = state.role ? `当前角色：${state.role.nickname}` : "仅供本机联调 · 暂未接入正式渠道账号";
     }
+
+    /** 打开本页的选服弹窗，页面关闭时由 UIManager 一并取消或关闭。 */
+    public openServerPicker(selection: ServerSelectionController): void {
+        void UIManager.instance.openChild(this, ServerPickerView, selection).catch(error => {
+            if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                this.showNotice(error instanceof Error ? error.message : "选服界面加载失败");
+            }
+        });
+    }
+
+    /** 登录页显示操作或跳转错误时复用全局提示。 */
+    public showNotice(message: string): void {
+        UIManager.instance.toast(message);
+    }
+
     /** 更新服务器名称，未同步时显示等待提示。 */
     renderServer(server: GameServer | null): void {
         if (this.serverLabel) this.serverLabel.string = server ? `${server.regionName} · ${server.name}  ▾` : "正在获取区服…";

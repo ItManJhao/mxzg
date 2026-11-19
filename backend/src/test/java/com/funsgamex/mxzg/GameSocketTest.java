@@ -1,4 +1,4 @@
-/** 登录/背包长连接集成测试：随机端口、独立 H2 与合成账号，通过真实 WebSocket 验证会话边界。 */
+/** 游戏长连接集成测试：随机端口、独立 H2 与合成账号，验证会话、资产和已开放玩法的真实 Protobuf 往返。 */
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.*;
@@ -49,6 +49,8 @@ class GameSocketTest {
     @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
     @Autowired com.funsgamex.mxzg.inventory.InventoryService inventory;
     @Autowired com.funsgamex.mxzg.role.RoleRepository roles;
+    /** 用正常保存接口准备独立副本测试阵容，供历史最高战力门槛读取。 */
+    @Autowired com.funsgamex.mxzg.lineup.MainFormationCommandService formations;
     private final ObjectMapper json = new ObjectMapper();
 
     /** 创建本测试专用账号，按真实初始化流程获得背包，不触碰文件数据库。 */
@@ -143,6 +145,56 @@ class GameSocketTest {
             assertEquals(expected+1,restored.path("mainFormation").path("version").asLong());
             assertFalse(restored.path("mainFormation").path("options").isEmpty());
         }
+    }
+
+    /** 真实 WS 持券先免费再扣一张，用统一推送、相同请求重试和重登首包核实英雄与余额。 */
+    @Test
+    void normalSummonWithTicketPublishesAndReconnects() throws Exception {
+        var player = login.login("draw_" + UUID.randomUUID().toString().substring(0, 15), "local-1");
+        new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status ->
+                inventory.credit(player.role().id(), 900201, 1));
+        var paidKey = Map.of("requestId", UUID.randomUUID().toString());
+        JsonNode paidState;
+        JsonNode receipt;
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(1, stackQuantity(initial, 900201));
+            var free = peer.request("hero.summon.normal", Map.of("requestId", UUID.randomUUID().toString()));
+            assertTrue(free.path("ok").asBoolean());
+            var freeState = peer.events.poll(5, TimeUnit.SECONDS);
+            assertNotNull(freeState);
+            assertEquals(1, stackQuantity(freeState.path("body"), 900201));
+
+            var paid = peer.request("hero.summon.normal", paidKey);
+            assertTrue(paid.path("ok").asBoolean());
+            receipt = paid.path("body");
+            var push = peer.events.poll(5, TimeUnit.SECONDS);
+            assertNotNull(push);
+            assertEquals("state.changed", push.path("name").asString());
+            paidState = push.path("body");
+            assertEquals(receipt.path("assetRevision").asLong(), paidState.path("revision").asLong());
+            assertEquals(freeState.path("body").path("heroSummon"), paidState.path("heroSummon"));
+            assertEquals(0, stackQuantity(paidState, 900201));
+            assertEquals(2, stackQuantity(paidState, 900302));
+            var hero = receipt.path("actual").path("heroes").get(0);
+            assertEquals(2, paidState.path("heroes").size());
+            assertTrue(paidState.path("heroes").valueStream().anyMatch(owned ->
+                    owned.path("id").equals(hero.path("instanceId"))
+                    && owned.path("templateId").equals(hero.path("templateId"))));
+        }
+        try (var peer = new Peer()) {
+            var restored = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(paidState.path("inventory"), restored.path("inventory"));
+            assertEquals(paidState.path("heroes"), restored.path("heroes"));
+            assertEquals(paidState.path("revision"), restored.path("revision"));
+            assertEquals(receipt, peer.request("hero.summon.normal", paidKey).path("body"));
+        }
+    }
+
+    /** 按配置编号从真实快照读堆叠数量；扣尽的堆叠不再投影给客户端。 */
+    private long stackQuantity(JsonNode state, int itemId) {
+        return state.path("inventory").valueStream().filter(item -> item.path("itemId").asInt() == itemId)
+                .mapToLong(item -> item.path("quantity").asLong()).sum();
     }
 
     /** 本测试显式关闭GM开发能力，试战也必须由服务端拒绝，不依赖本机local默认值。 */
@@ -377,16 +429,50 @@ class GameSocketTest {
         }
     }
 
-    /** 用真实 TypeScript 账号/背包模块连接本测试服务器，覆盖两端协议字段和恢复流程。 */
+    /** 真实 TypeScript 连接覆盖市场扣费、限购、发奖、重登及货架刷新协议。 */
     @Test void typescriptLoginAndBagRoundTrip() throws Exception {
+        String marketAccount = "market_" + UUID.randomUUID().toString().substring(0, 8);
+        var buyer = login.login(marketAccount, "local-1");
+        // 隔离数据库提供足够货币，测试使用真实随机货架，不依赖新号随机到了哪件低价商品。
+        jdbc.update("UPDATE game_role SET gold = ?, diamonds = ? WHERE id = ?", 10_000_000L, 100_000L, buyer.role().id());
         var script = java.nio.file.Path.of("..", "client", "tools", "run-game-socket-live.cjs").toAbsolutePath().normalize();
-        var process = new ProcessBuilder("node", script.toString(), Integer.toString(port), RUN_ID).redirectErrorStream(true).start();
+        var process = new ProcessBuilder("node", script.toString(), Integer.toString(port), RUN_ID, marketAccount)
+                .redirectErrorStream(true).start();
         try {
             assertTrue(process.waitFor(40, TimeUnit.SECONDS), "客户端联调进程超时");
             String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
             assertEquals(0, process.exitValue(), output);
             assertTrue(output.contains("PASS real TS client"), output);
         } finally { if (process.isAlive()) process.destroyForcibly(); }
+    }
+
+    /** 真实 TypeScript 连接覆盖金币副本战斗、清扫、资产快照和同请求重登恢复。 */
+    @Test void dailyDungeonChallengeAndSweepRoundTrip() throws Exception {
+        String account = "gold_dungeon_" + UUID.randomUUID().toString().substring(0, 8);
+        var player = login.login(account, "local-1");
+        String roleId = player.role().id();
+        String heroId = UUID.randomUUID().toString();
+        jdbc.update("UPDATE game_role SET role_level=?,diamonds=?,goddess_vip=? WHERE id=?", 15, 1_000, 2, roleId);
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,?,?,?,?)",
+                heroId, roleId, 10104004, 100, 4, 0);
+        long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, roleId);
+        formations.save("Bearer " + player.session().accessToken(),
+                new com.funsgamex.mxzg.lineup.MainFormationCommandService.Save(UUID.randomUUID().toString(), version, 1,
+                        List.of(new com.funsgamex.mxzg.lineup.Lineup.Slot(2, heroId))));
+
+        var script = java.nio.file.Path.of("..", "client", "tools", "run-game-socket-live.cjs").toAbsolutePath().normalize();
+        var process = new ProcessBuilder("node", script.toString(), Integer.toString(port), RUN_ID, account)
+                .redirectErrorStream(true).start();
+        try {
+            assertTrue(process.waitFor(40, TimeUnit.SECONDS), "副本联调进程超时");
+            String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            assertEquals(0, process.exitValue(), output);
+            assertTrue(output.contains("PASS real TS gold dungeon"), output);
+        } finally {
+            if (process.isAlive()) {
+                process.destroyForcibly();
+            }
+        }
     }
 
     /** 初始容量 300 英雄带完整四槽与面板可经真实长连接恢复，仍拒绝超过 256KB 的消息。 */
@@ -408,8 +494,25 @@ class GameSocketTest {
         assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.decode(new byte[GameProtocolCodec.FRAME_LIMIT+1]));
         assertThrows(IllegalArgumentException.class,()->GameProtocolCodec.encode(Map.of("version",1,"kind","request","name","session.login","body",Map.of("account","x".repeat(GameProtocolCodec.FRAME_LIMIT+1),"serverId","local-1","clientInstanceId","frame-limit-test"))));
     }
-    /** 显式关闭GM时服务端拒绝发放，即使客户端伪造开发入口；不依赖本机local默认值。 */
-    @Test void gmDisabledIsEnforced() throws Exception {var p=player();try(var peer=new Peer()){peer.authenticate(p.session().accessToken());assertFalse(peer.request("gm.status",Map.of()).path("body").path("enabled").asBoolean());assertEquals("GM_DISABLED",peer.request("gm.grant",Map.of("requestId",UUID.randomUUID().toString(),"kind","item","configId",900101,"quantity",1)).path("error").path("code").asString());}}
+    /** 关闭 GM 时所有开发操作均由服务端拒绝，普通心跳仍可用。 */
+    @Test void gmDisabledIsEnforced() throws Exception {
+        var player = player();
+        String requestId = UUID.randomUUID().toString();
+        try (var peer = new Peer()) {
+            peer.authenticate(player.session().accessToken());
+            assertFalse(peer.request("gm.status", Map.of()).path("body").path("enabled").asBoolean());
+            for (var command : Map.of(
+                    "gm.grant", Map.of("requestId", requestId, "kind", "item", "configId", 900101, "quantity", 1),
+                    "gm.level.set", Map.of("requestId", requestId, "level", 15),
+                    "gm.chapter.set", Map.of("requestId", requestId, "mission", 4),
+                    "gm.time.get", Map.of(),
+                    "gm.time.set", Map.of("unixSeconds", 2_500_000_000L)).entrySet()) {
+                var reply = peer.request(command.getKey(), command.getValue());
+                assertEquals("GM_DISABLED", reply.path("error").path("code").asString(), command.getKey());
+            }
+            assertTrue(peer.request("session.heartbeat", Map.of()).path("ok").asBoolean());
+        }
+    }
 
     /** 原库存 HTTP 路由已退役，默认客户端不能再通过它回退读取。 */
     @Test void inventoryHttpEndpointIsRetired() throws Exception {

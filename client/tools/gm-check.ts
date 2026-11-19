@@ -1,23 +1,30 @@
 /**
- * GM 请求与独立窗口回归：覆盖幂等重试、二进制载荷、菜单分流、真实列表选择及全局反馈。
+ * GM 请求与独立窗口回归：覆盖发放幂等、角色与时间操作、二进制载荷和全局反馈。
  * 使用轻量引擎替身验证重复开窗、关闭清理、迟到结果和 F9 监听释放，不代替 Creator 画面验收。
  */
 import { Button, EditBox, Input, KeyCode, Label, Node, input } from "cc";
 import { setEditorContext } from "./cc-env";
-import { RemakeApp } from "../assets/scripts/app/remake/RemakeApp";
+import { DevelopmentPreview } from "../assets/scripts/app/remake/DevelopmentPreview";
+import { AccountModel } from "../assets/scripts/features/account/AccountModel";
+import type { AccountOperations } from "../assets/scripts/features/account/AccountOperations";
+import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/BattleReplayPreview";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";
+import { ServerClock } from "../assets/scripts/core/ServerClock";
 import { GmController } from "../assets/scripts/features/gm/GmController";
+import type { GmGrant } from "../assets/scripts/features/gm/GmController";
 import { GmBattleArgs, GmGrantArgs, GmOpenArgs } from "../assets/scripts/features/gm/data/GmViewArgs";
 import { GmBattleView } from "../assets/scripts/features/gm/ui/GmBattleView";
 import { GmGrantView } from "../assets/scripts/features/gm/ui/GmGrantView";
 import { GmOptionCellView } from "../assets/scripts/features/gm/ui/GmOptionCellView";
+import { GmToolsView } from "../assets/scripts/features/gm/ui/GmToolsView";
 import { GmView } from "../assets/scripts/features/gm/ui/GmView";
 import { BaseView } from "../assets/scripts/framework/ui/BaseView";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { GameProtocolCodecUtils } from "../assets/scripts/platform/GameProtocolCodecUtils";
+import { Protocol } from "../assets/scripts/platform/Protocol";
 
 /** 失败即终止本次专项，保留可读断言原因。 */
 function assert(ok: unknown, text: string): asserts ok {
@@ -124,6 +131,25 @@ function createMenuFixture(): GmView {
     view.itemButton = button(node, "ItemButton");
     view.skillButton = button(node, "SkillButton");
     view.battleButton = button(node, "BattleButton");
+    view.toolsButton = button(node, "ToolsButton");
+    view.closeButton = button(node, "CloseButton");
+    return view;
+}
+
+/** 构造角色与时间窗口的预制体绑定，操作仍走真实 GmController。 */
+function createToolsFixture(): GmToolsView {
+    const node = new Node("GmToolsView");
+    const view = node.addComponent(GmToolsView);
+    view.owner = label(node, "CurrentRole");
+    view.message = label(node, "StatusLabel");
+    view.levelInput = child(node, "LevelInput").addComponent(EditBox);
+    view.chapterInput = child(node, "ChapterInput").addComponent(EditBox);
+    view.timeInput = child(node, "TimeInput").addComponent(EditBox);
+    view.levelButton = button(node, "LevelButton");
+    view.chapterButton = button(node, "ChapterButton");
+    view.setTimeButton = button(node, "SetTimeButton");
+    view.readTimeButton = button(node, "ReadTimeButton");
+    view.resetTimeButton = button(node, "ResetTimeButton");
     view.closeButton = button(node, "CloseButton");
     return view;
 }
@@ -139,26 +165,46 @@ function createBattleFixture(): GmBattleView {
     return view;
 }
 
-/** 结果未知只能用原请求重试，明确成功后重新生成幂等键，编码与解码保持业务载荷一致。 */
+/** 用与账号通道相同的协议信封响应 GM，仅允许开关查询和携带发放原单的请求。 */
+function gmRequests(
+    grant: (body: GmGrant) => unknown = body => body,
+    status: () => unknown = () => ({ enabled: true }),
+): Pick<AccountOperations, "request"> {
+    return {
+        async request(name, body) {
+            switch (name) {
+                case Protocol.GM_STATUS:
+                    assert(body && Object.keys(body).length === 0, "GM 开关应发送空请求");
+                    return { version: 1, kind: "response", name, ok: true, body: await status() };
+                case Protocol.GM_GRANT:
+                    return { version: 1, kind: "response", name, ok: true, body: await grant(body as GmGrant) };
+                default:
+                    throw new Error("意外的 GM 请求：" + name);
+            }
+        },
+    };
+}
+
+/** 检查幂等重试和编码，并验证大额限制只放宽给钱包货币。 */
 async function checkRequests(): Promise<void> {
     const bodies: { requestId: string; kind: string; configId: number; quantity: number }[] = [];
     let failed = true;
-    const gm = new GmController(async () => ({ enabled: true }), async body => {
+    const gm = new GmController(gmRequests(body => {
         bodies.push(body);
         if (failed) {
             throw new Error("timeout");
         }
         return body;
-    });
+    }));
     assert(await gm.enabled(), "真实开关");
-    await gm.grant("role", "hero", 10101001, 1).catch(() => {});
-    await gm.grant("role", "item", 900101, 1).then(() => {
+    await gm.grant("hero", 10101001, 1).catch(() => {});
+    await gm.grant("item", 900101, 1).then(() => {
         throw new Error("不应换参数重发");
     }, () => {});
     failed = false;
-    await gm.grant("role", "hero", 10101001, 1);
+    await gm.grant("hero", 10101001, 1);
     assert(bodies.length === 2 && bodies[0].requestId === bodies[1].requestId, "未知结果必须复用请求 ID");
-    await gm.grant("role", "hero", 10101001, 1);
+    await gm.grant("hero", 10101001, 1);
     assert(bodies[2].requestId !== bodies[1].requestId, "成功后新操作使用新 ID");
     for (const kind of ["request", "response"]) {
         const body = bodies[0];
@@ -172,6 +218,108 @@ async function checkRequests(): Promise<void> {
         }));
         assert(JSON.stringify(frame.body) === JSON.stringify(body), "GM Protobuf 互通");
     }
+    await gm.grant("item", 900001, 10_000_000);
+    await gm.grant("item", 900002, 20_000);
+    assert(bodies[3].quantity === 10_000_000 && bodies[4].quantity === 20_000, "金币和钻石高于 9999 仍照常发包");
+    const rejected = await gm.grant("item", 900101, 10_000).then(() => false, () => true);
+    assert(rejected && bodies.length === 5, "普通道具仍保持 9999 上限，超限不发包");
+}
+
+/** 实际点按钮检查等级、关卡、北京时间、读时飘字、恢复和关窗迟到响应。 */
+async function checkTools(notices: string[]): Promise<void> {
+    const view = createToolsFixture();
+    const requests: Array<{ name: string; body: Record<string, unknown> }> = [];
+    const testTime = Date.parse("2026-11-19T04:30:00Z");
+    let timeResponse = Promise.resolve({ serverTimeMs: testTime, overridden: true });
+    const controller = new GmController({
+        async request(name, input) {
+            const body = (input || {}) as Record<string, unknown>;
+            requests.push({ name, body });
+            let result: unknown = body;
+            if (name === Protocol.GM_STATUS) {
+                result = { enabled: true };
+            } else if (name === Protocol.GM_TIME_GET) {
+                result = await timeResponse;
+            } else if (name === Protocol.GM_TIME_SET) {
+                result = { serverTimeMs: testTime, overridden: body.unixSeconds !== 0 };
+            }
+            return { version: 1, kind: "response", name, ok: true, body: result };
+        },
+    });
+    try {
+        view.runOpen({ controller, nickname: "工具测试", readRoleLevel: () => 4 });
+        assert(view.levelInput.string === "4" && !view.levelButton.interactable, "显示真实等级，开关确认前按钮禁用");
+        await flushView();
+        view.levelInput.string = "15";
+        view.levelButton.node.emit(Button.EventType.CLICK);
+        view.levelButton.node.emit(Button.EventType.CLICK);
+        await flushView();
+        const levelRequest = requests.filter(row => row.name === Protocol.GM_LEVEL_SET);
+        assert(levelRequest.length === 1 && levelRequest[0].body.level === 15, "等级发包使用输入并抑制双击");
+        assert(typeof levelRequest[0].body.requestId === "string", "等级修改带请求 ID");
+        view.chapterInput.string = "6";
+        view.chapterButton.node.emit(Button.EventType.CLICK);
+        await flushView();
+        const chapterRequest = requests.find(row => row.name === Protocol.GM_CHAPTER_SET);
+        assert(chapterRequest?.body.mission === 6 && notices.at(-1)?.includes("第 6 关"), "关卡操作提交下一挑战目标");
+        view.timeInput.string = "2026-02-30 12:30:00";
+        view.setTimeButton.node.emit(Button.EventType.CLICK);
+        await flushView();
+        assert(!requests.some(row => row.name === Protocol.GM_TIME_SET), "不存在的日期被拦截");
+        view.timeInput.string = "2026-11-19 12:30:00";
+        view.setTimeButton.node.emit(Button.EventType.CLICK);
+        await flushView();
+        const timeRequest = requests.find(row => row.name === Protocol.GM_TIME_SET);
+        assert(timeRequest?.body.unixSeconds === testTime / 1000, "北京时间输入按 +08:00 转成正确 Unix 秒");
+        assert(ServerClock.instance.nowSeconds() === testTime / 1000, "GM 时间回包校准公共时钟");
+        view.readTimeButton.node.emit(Button.EventType.CLICK);
+        await flushView();
+        assert(notices.at(-1)?.includes("当前服务器时间 2026-11-19 12:30:00"), "查询以全局飘字显示实际服务端时间");
+        view.resetTimeButton.node.emit(Button.EventType.CLICK);
+        await flushView();
+        assert(requests.at(-1)?.body.unixSeconds === 0, "恢复操作使用协议规定的 0");
+        const delayed = deferred<{ serverTimeMs: number; overridden: boolean }>();
+        timeResponse = delayed.promise;
+        const noticeCount = notices.length;
+        view.readTimeButton.node.emit(Button.EventType.CLICK);
+        view.runClose();
+        delayed.resolve({ serverTimeMs: testTime, overridden: false });
+        await flushView();
+        assert(notices.length === noticeCount, "关窗后不展示旧操作飘字");
+    } finally {
+        view.runDispose();
+        view.node.destroy();
+        ServerClock.instance.invalidate();
+    }
+}
+
+/** 重置立即释放原单；前一笔的完成不能清掉后一笔的等待或禁重状态。 */
+async function checkGrantReset(): Promise<void> {
+    for (const outcome of ["success", "rejected"] as const) {
+        const first = deferred<void>();
+        const second = deferred<void>();
+        const ids: string[] = [];
+        const gm = new GmController(gmRequests(async body => {
+            ids.push(body.requestId);
+            await (ids.length === 1 ? first : second).promise;
+            return body;
+        }));
+        const oldGrant = gm.grant("hero", 10101001, 1).catch(() => undefined);
+        gm.reset();
+        const newGrant = gm.grant("item", 900101, 1);
+        assert(ids.length === 2 && ids[0] !== ids[1], "重置后发放立即生成独立的新单");
+        if (outcome === "success") {
+            first.resolve();
+        } else {
+            first.reject(Object.assign(new Error("已拒绝"), {code: "GM_DISABLED"}));
+        }
+        await oldGrant;
+        const duplicate = gm.grant("item", 900101, 1).then(() => false, () => true);
+        assert(ids.length === 2, "原单的完成不能放开新单的并发限制");
+        second.resolve();
+        await newGrant;
+        assert(await duplicate, "在途重复发放应收到拒绝");
+    }
 }
 
 /** 发放通过真实配置格子，重复打开不叠监听，所有结果走飘字，关闭拒绝保持禁用。 */
@@ -180,13 +328,13 @@ async function checkGrantView(notices: string[]): Promise<void> {
     const view = fixture.view;
     const sent: { kind: string; configId: number }[] = [];
     let failure: string | null = null;
-    const controller = new GmController(async () => ({ enabled: true }), async body => {
+    const controller = new GmController(gmRequests(body => {
         sent.push({ kind: body.kind, configId: body.configId });
         if (failure) {
             throw Object.assign(new Error(failure), { code: failure });
         }
         return body;
-    });
+    }));
     const args: GmGrantArgs = { controller, roleId: "gm-view-role", nickname: "窗口检查", kind: "hero" };
     try {
         view.runOpen(args);
@@ -239,11 +387,11 @@ async function checkGrantLateResults(notices: string[]): Promise<void> {
     const status = deferred<unknown>();
     const grant = deferred<unknown>();
     let submitted: unknown;
-    const oldController = new GmController(() => status.promise, async body => {
+    const oldController = new GmController(gmRequests(body => {
         submitted = body;
         return grant.promise;
-    });
-    const freshController = new GmController(async () => ({ enabled: true }), async body => body);
+    }, () => status.promise));
+    const freshController = new GmController(gmRequests());
     const args: GmGrantArgs = { controller: oldController, roleId: "gm-role", nickname: "旧窗口", kind: "hero" };
     try {
         view.runOpen(args);
@@ -252,10 +400,10 @@ async function checkGrantLateResults(notices: string[]): Promise<void> {
         status.resolve({ enabled: false });
         await flushView();
         assert(view.grantButton.interactable && view.owner.string.includes("新窗口"), "迟到关闭开关不覆盖新窗口");
-        view.runOpen({ ...args, controller: new GmController(async () => ({ enabled: true }), async body => {
+        view.runOpen({ ...args, controller: new GmController(gmRequests(body => {
             submitted = body;
             return grant.promise;
-        }) });
+        })) });
         await flushView();
         fixture.chooseFirst();
         view.grantButton.node.emit(Button.EventType.CLICK);
@@ -273,7 +421,7 @@ async function checkGrantLateResults(notices: string[]): Promise<void> {
     }
 }
 
-/** 总菜单只分流，不保留表单；子窗复用同控制器，关闭时取消发放和试战窗口。 */
+/** 总菜单分流到各子窗，共用控制器并在关闭时清理所属窗口。 */
 async function checkMenu(notices: string[]): Promise<void> {
     const view = createMenuFixture();
     const manager = UIManager.instance;
@@ -289,7 +437,7 @@ async function checkMenu(notices: string[]): Promise<void> {
         closed.push(id);
         return true;
     };
-    const controller = new GmController(async () => ({ enabled: true }), async body => body);
+    const controller = new GmController(gmRequests());
     let skills = 0;
     let skillError: Error | null = null;
     const args: GmOpenArgs = {
@@ -318,6 +466,9 @@ async function checkMenu(notices: string[]): Promise<void> {
         view.battleButton.node.emit(Button.EventType.CLICK);
         await flushView();
         assert(opened[2].ctor === GmBattleView && opened[2].args.openLineupBattle === args.openLineupBattle, "试战动作原样交独立窗口");
+        view.toolsButton.node.emit(Button.EventType.CLICK);
+        await flushView();
+        assert(opened[3].ctor === GmToolsView && opened[3].args.controller === controller, "总菜单打开角色与时间窗并共用控制器");
         view.runOpen({ ...args });
         await flushView();
         view.skillButton.node.emit(Button.EventType.CLICK);
@@ -330,7 +481,7 @@ async function checkMenu(notices: string[]): Promise<void> {
         assert(notices.length === count + 1 && notices.at(-1)?.includes("测试准备失败"), "业务失败在菜单边界只提示一次");
         assert(!view.message.string.includes("测试准备失败"), "错误不写菜单正文");
         view.runClose();
-        assert(closed.includes("gm-grant") && closed.includes("gm-battle"), "菜单关闭取消所有独立子窗");
+        assert(["gm-grant", "gm-battle", "gm-tools"].every(id => closed.includes(id)), "菜单关闭取消所有独立子窗");
         const before = opened.length;
         view.heroButton.node.emit(Button.EventType.CLICK);
         await flushView();
@@ -348,11 +499,13 @@ async function checkBattle(notices: string[]): Promise<void> {
     const view = createBattleFixture();
     const pending = deferred<void>();
     const missions: number[] = [];
+    const openChecks: Array<() => boolean> = [];
     let job: Promise<void> = pending.promise;
     const args: GmBattleArgs = {
         nickname: "试战检查",
-        openLineupBattle: async mission => {
+        openLineupBattle: async (mission, stillOpen) => {
             missions.push(mission);
+            openChecks.push(stillOpen);
             await job;
         },
     };
@@ -374,8 +527,11 @@ async function checkBattle(notices: string[]): Promise<void> {
         const late = deferred<void>();
         job = late.promise;
         view.battleButtons[0].node.emit(Button.EventType.CLICK);
+        const originalOpen = openChecks[openChecks.length - 1];
+        assert(originalOpen(), "准备时可向原窗口展示战报");
         view.runClose();
-        view.runOpen({ ...args });
+        view.runOpen(args);
+        assert(!originalOpen(), "重开相同试战窗口不能让上一笔战报恢复展示资格");
         const count = notices.length;
         late.reject(new Error("旧演示迟到失败"));
         await flushView();
@@ -390,41 +546,141 @@ async function checkBattle(notices: string[]): Promise<void> {
     }
 }
 
-/** F9 仅按键抬起切换一次；应用销毁解除原监听，发布模式不登记入口。 */
-function checkShortcut(): void {
+/** 试战窗关闭只取消仍在装载的战场，已经完成装载的战场独立播放。 */
+async function checkBattlePresentationLifetime(): Promise<void> {
+    const host = new Node("BattleHost");
+    const home = child(host, "Home");
+    const preview = new DevelopmentPreview(host, null, () => true);
+    const originalOpen = BattleReplayPreview.open;
+    let loading = deferred<void>();
+    let cancelled: (() => boolean) | undefined;
+    let released = 0;
+    BattleReplayPreview.open = async (...args) => {
+        cancelled = args[9];
+        await loading.promise;
+        return () => { released++; };
+    };
+    try {
+        const result = {mission: 1, assetRevision: 1, lineupVersion: 1, formationId: 1, pending: [], bytes: new Uint8Array()};
+        let visible = true;
+        const pending = preview.openLineupBattle(result, () => visible);
+        visible = false;
+        assert(cancelled?.(), "原试战窗关闭后战场准备应当取消");
+        loading.resolve();
+        const didCancel = await pending.then(() => false, error => UIManager.isOpenCancelled(error));
+        assert(didCancel && released === 1 && home.active, "中途取消时归还主城并释放原场景");
+        visible = true;
+        loading = deferred<void>();
+        const next = preview.openLineupBattle(result, () => visible);
+        loading.resolve();
+        await next;
+        visible = false;
+        assert(!cancelled?.() && !home.active, "战场接管后可以正常收起 GM 菜单");
+        preview.cancelReplay();
+        assert(Number(released) === 2 && home.active, "最后关闭演示时归还主城");
+    } finally {
+        preview.dispose();
+        BattleReplayPreview.open = originalOpen;
+        host.destroy();
+    }
+}
+
+/** 通过开发入口验证主城 F9 开关、未展示技能的撤回和预览退出释放；发布版不登记热键。 */
+async function checkShortcut(): Promise<void> {
     const originalOn = input.on;
     const originalOff = input.off;
+    const ui = UIManager.instance;
+    const originalOpen = ui.open;
+    const originalIsOpen = ui.isOpen;
+    const originalClose = ui.closeById;
     let callback: ((event: { keyCode: number }) => void) | null = null;
-    let removed = 0;
-    let toggles = 0;
-    input.on = (type, listener) => {
+    let owner: unknown;
+    const opened: GmOpenArgs[] = [];
+    const closed: string[] = [];
+    const active = new Set<string>();
+    let inHome = false;
+    const account = new AccountModel();
+    const preview = new DevelopmentPreview(null, null, () => true);
+    const unused = async (): Promise<never> => { throw new Error("打开 GM 菜单的装配不应主动发协议"); };
+    const configure = () => preview.configureGm(
+        { get currentRole() { return account.snapshot.busy ? null : account.snapshot.role; } },
+        { request: unused, deliver: unused }, () => inHome);
+    const release = (keyCode: number) => {
+        assert(callback, "预览已登记 F9");
+        callback.call(owner, { keyCode });
+    };
+    input.on = (type, listener, target) => {
         assert(type === Input.EventType.KEY_UP, "F9 使用抬起事件避免长按反复开关");
+        assert(!callback, "不重复登记 F9");
         callback = listener;
+        owner = target;
     };
-    input.off = (type, listener) => {
-        assert(type === Input.EventType.KEY_UP && listener === callback, "销毁解除同一个 F9 监听");
-        removed++;
+    input.off = (type, listener, target) => {
+        assert(type === Input.EventType.KEY_UP && listener === callback && target === owner, "销毁解除同一个 F9 监听");
+        callback = null;
     };
-    const app = new RemakeApp();
-    const bind = app as unknown as { bindGmShortcut(toggle: () => void): void };
+    ui.open = (async (ctor: unknown, args: GmOpenArgs) => {
+        assert(ctor === GmView, "F9 只打开 GM 总入口");
+        active.add("gm");
+        opened.push(args);
+        return {} as BaseView<unknown>;
+    }) as typeof ui.open;
+    ui.isOpen = id => active.has(id);
+    ui.closeById = id => {
+        closed.push(id);
+        return active.delete(id);
+    };
     try {
         setEditorContext(false, true);
-        bind.bindGmShortcut(() => toggles++);
-        assert(callback, "预览已登记 F9");
-        callback({ keyCode: KeyCode.BACKQUOTE });
-        assert(toggles === 0, "旧快捷键不再触发 GM");
-        callback({ keyCode: KeyCode.F9 });
-        assert(toggles === 1, "F9 一次切换");
-        app.onDestroy();
-        assert(removed === 1, "应用销毁恰好移除一次 F9 监听");
-        callback = null;
+        configure();
+        configure();
+        inHome = true;
+        release(KeyCode.F9);
+        account.replace({ busy: false, error: "", role: {
+            id: "gm-menu-role", nickname: "菜单检查", level: 1, gold: 0, diamonds: 0,
+        } });
+        inHome = false;
+        release(KeyCode.F9);
+        inHome = true;
+        release(KeyCode.BACKQUOTE);
+        assert(opened.length === 0, "缺角色、未进主城或其他键均不打开 GM");
+        release(KeyCode.F9);
+        await flushView();
+        assert(opened.length === 1 && opened[0].roleId === "gm-menu-role", "主城 F9 把测试角色交给 GM");
+        const skill = deferred<void>();
+        preview.openSkillAudit = () => skill.promise;
+        const outcome = opened[0].openSkillAudit!().then(() => false, error => UIManager.isOpenCancelled(error));
+        release(KeyCode.F9);
+        assert(!active.has("gm") && closed.includes("skill-audit"), "第二次 F9 关闭菜单和在途技能目录");
+        skill.resolve();
+        assert(await outcome, "迟到的技能开窗结束时不能复活已关闭菜单");
+        release(KeyCode.F9);
+        await flushView();
+        const dismissedSkill = deferred<void>();
+        preview.openSkillAudit = () => dismissedSkill.promise;
+        const dismissedOutcome = opened[1].openSkillAudit!().then(() => false, error => UIManager.isOpenCancelled(error));
+        const closedCount = closed.filter(id => id === "skill-audit").length;
+        ui.closeById("gm");
+        release(KeyCode.F9);
+        await flushView();
+        assert(closed.filter(id => id === "skill-audit").length === closedCount + 1, "关闭按钮退出后重开 GM 撤销原技能目录");
+        dismissedSkill.resolve();
+        assert(await dismissedOutcome && active.has("gm"), "旧技能异步完成不能关闭新打开的 GM");
+        preview.resetSession();
+        assert(!active.has("gm"), "角色页面重置清理已打开的 GM 窗口");
+        preview.dispose();
+        assert(callback === null, "应用销毁恰好移除一次 F9 监听");
         setEditorContext(false, false);
-        bind.bindGmShortcut(() => toggles++);
+        configure();
         assert(callback === null, "发布模式不登记 GM 快捷键");
     } finally {
         setEditorContext(false, true);
+        preview.dispose();
         input.on = originalOn;
         input.off = originalOff;
+        ui.open = originalOpen;
+        ui.isOpen = originalIsOpen;
+        ui.closeById = originalClose;
     }
 }
 
@@ -432,6 +688,7 @@ function checkShortcut(): void {
 async function main(): Promise<void> {
     prepareViewRuntime();
     await checkRequests();
+    await checkGrantReset();
     const original = GameConfig.instance.getConfig;
     const languageKeys: unknown[] = [];
     GameConfig.instance.getConfig = ((name: string, key?: unknown) => {
@@ -451,17 +708,19 @@ async function main(): Promise<void> {
     const notices: string[] = [];
     const off = UIManager.instance.bindNotice(text => notices.push(text));
     try {
-        for (const ctor of [GmView, GmGrantView, GmBattleView]) {
+        for (const ctor of [GmView, GmGrantView, GmBattleView, GmToolsView]) {
             const spec = UIRegistry.viewSpecOf(ctor);
             assert(spec?.cache === false && spec.modal?.mask === true && spec.modal.closeOnOutside === false, "每个 GM View 自行登记无缓存的共享模态参数");
         }
         await checkGrantView(notices);
         await checkGrantLateResults(notices);
         await checkMenu(notices);
+        await checkTools(notices);
         await checkBattle(notices);
-        checkShortcut();
+        await checkBattlePresentationLifetime();
+        await checkShortcut();
         assert(languageKeys.length > 0, "发放列表名称经过真实查询边界");
-        console.log("PASS GM: Protobuf, safe retry, split windows, shared controller, toast, stale results, F9 cleanup");
+        console.log("PASS GM: Protobuf, wallet grants, level, chapter, server clock, split windows and F9 cleanup");
     } finally {
         off();
         GameConfig.instance.getConfig = original;

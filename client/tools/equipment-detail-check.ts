@@ -94,6 +94,8 @@ async function main(): Promise<void> {
     assert.equal(setSword.score, 276);
     assert.equal(setSword.set.name, "雷鸣套装");
     assert.equal(setSword.set.count, 0);
+    assert.equal(EquipmentDetailUtils.read(1001007, db, [1001007, 1002007, 1003001])!.set!.count, 2);
+    assert.equal(EquipmentDetailUtils.score(1001007, db), setSword.score);
     assert.equal(setSword.set.total, 4);
     assert.deepEqual(setSword.set.bonuses.map(row => row.required), [2, 3, 4]);
     assert.deepEqual(setSword.set.bonuses.map(row => row.condition), ["(2件启动)", "(3件启动)", "(4件启动)"]);
@@ -122,6 +124,7 @@ async function main(): Promise<void> {
         assert(detail, "全部68条普通装备均应有完整只读投影：" + row.equipment_type);
         assert(detail.attributes.length > 0 && detail.attributes.length <= 2);
         assert(Number.isSafeInteger(detail.score));
+        assert.equal(EquipmentDetailUtils.score(row.equipment_type, db), detail.score);
         assert(detail.star >= 1 && detail.star <= 6);
         assert(detail.attributes.every(attribute => !attribute.name.includes("缺失") && attribute.value.length));
         if (row.set_type) {

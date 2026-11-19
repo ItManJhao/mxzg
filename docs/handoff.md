@@ -1,6 +1,6 @@
 # 开发交接
 
-更新于 2026-11-18。先读 [AGENTS.md](../AGENTS.md)、[当前进度](development-progress.md) 与 [实施路线](restructuring-plan.md)，再从 [专题索引](README.md) 进入对应模块。开始修改前查看 Git 状态与分支，后续开发在 hao。
+更新于 2026-11-19。先读 [AGENTS.md](../AGENTS.md)、[当前进度](development-progress.md) 与 [实施路线](restructuring-plan.md)，再从 [专题索引](README.md) 进入对应模块。开始修改前查看 Git 状态与分支，后续开发在 hao。
 
 ## 从哪里改
 
@@ -11,14 +11,22 @@
 | 页面布局、缓存、模态和列表 | 功能 View 的 UIRegistry.view 与同名 Prefab，框架 UIManager / BaseView / SuperScroll |
 | 底栏导航 | app/remake 的 HomeFeatureNavigation 负责准备与延迟提示，RemakeNavigation 切换已经准备好的页面 |
 | 配置、资源与预载 | app/remake/LoadingPlan.ts、config/GameConfig.ts、framework/assets 的 ResManager / ResourcePool / PrefabLoader |
-| 登录、换号与统一快照 | app/remake/AssetStateBinding.ts、features/account/AccountService.ts、platform/GameSocketClient.ts，服务端 SessionSnapshotService |
-| 背包、英雄、布阵 | features/bag 与 features/hero。布阵保存由 FormationController / FormationSaveModel 确认，权威阵容归 HeroRosterModel |
-| 主线挑战、战报与结算 | features/battle/MainChapterController.ts、MainChapterModel.ts、ui/BattleReplayPreview.ts。服务端 MainChapterService、MainChapterRules、HeroBattleChapterScenario |
-| 挂机和里程碑领取 | app/remake 的 IdleClaimBinding / MainChapterMilestoneBinding，服务端 MainChapterIdleClaimService / MainChapterMilestoneService |
-| 共享发奖和提示 | 服务端 RewardGrantService / RewardFeedbackService，客户端 app/remake/RewardBinding.ts 与 features/reward |
+| 登录、换号、迟到响应 | [AccountController](../client/assets/scripts/features/account/AccountController.ts)、[AccountOperations](../client/assets/scripts/features/account/AccountOperations.ts) 和 [GameSocketClient](../client/assets/scripts/platform/GameSocketClient.ts) 管理认证与连接交付。Controller 通过现有账号通道发送当前角色的请求 |
+| 区服列表与选服 | [ServerSelectionController](../client/assets/scripts/features/account/ServerSelectionController.ts) 负责请求区服列表并保存当前选择 |
+| 统一资产快照 | [AssetStateBinding](../client/assets/scripts/app/remake/AssetStateBinding.ts) 核对区服、角色和版本，批量提交各模块，再通知视图。服务端入口为 SessionSnapshotService |
+| 普通单抽 | 主城召唤法阵的按钮调用 `HeroRosterController.summon()`。免费或券够就发包，回包从 `onNotify` 进入获得窗。首笔固定英雄与后续普通池抽选都由服务端决定。[召唤窗口](../client/assets/scripts/features/hero/ui/FirstSummonView.ts) · [英雄控制器](../client/assets/scripts/features/hero/HeroRosterController.ts) · [抽取规则](../backend/src/main/java/com/funsgamex/mxzg/hero/HeroSummonRules.java) |
+| 背包碎片合成 | 详情「使用」 → [BagController.composeHeroPieces](../client/assets/scripts/features/bag/BagController.ts)。服务端校验资格，背包和名册读取统一快照 |
+| 主城普通市场 | 地图 `main_shop` → [MarketView](../client/assets/scripts/features/market/ui/MarketView.ts) → [MarketController](../client/assets/scripts/features/market/MarketController.ts) → [MarketService](../backend/src/main/java/com/funsgamex/mxzg/market/MarketService.java)。货架单独查询，钱包和库存沿用统一快照，购入复用奖励窗 |
+| 副本大厅 | 底栏副本 → [DungeonHallView](../client/assets/scripts/features/dungeon/ui/DungeonHallView.ts)。`opencondition` 决定等级，`gamerewardshow` 提供四张卡的原奖励，点击图标复用只读物品说明 |
+| 金币副本首关 | 大厅日常副本 → [GoldDungeonView](../client/assets/scripts/features/dungeon/ui/GoldDungeonView.ts) → [DailyDungeonController](../client/assets/scripts/features/dungeon/DailyDungeonController.ts) → [DailyDungeonService](../backend/src/main/java/com/funsgamex/mxzg/dungeon/DailyDungeonService.java)。服务端一次结算，战报、结算和扫荡奖励使用现有公共展示 |
+| 英雄普通升级、布阵 | [HeroLevelController](../client/assets/scripts/features/hero/HeroLevelController.ts) 提交普通升级。[FormationController](../client/assets/scripts/features/hero/FormationController.ts) 提交草稿并等待权威阵容达到保存版本 |
+| 主线挑战、战报与结算 | [MainChapterController](../client/assets/scripts/features/battle/MainChapterController.ts) 处理挑战、原战斗编号、结算和战报。BattleReplayPreview 播放战报 |
+| 挂机、通关奖励和里程碑领取 | [MainChapterController](../client/assets/scripts/features/battle/MainChapterController.ts) 统一发收领取协议。[IdleClaimBinding](../client/assets/scripts/features/battle/IdleClaimBinding.ts) 负责宝箱点击和满额确认 |
+| 共享发奖和提示 | 服务端 RewardGrantService、RewardFeedbackService。客户端 [RewardController](../client/assets/scripts/features/reward/RewardController.ts) 接收推送，[RewardBinding](../client/assets/scripts/features/reward/RewardBinding.ts) 展示通用奖励窗和全局飘字 |
+| GM 发放与试战 | F9 菜单把操作交给 [GmController](../client/assets/scripts/features/gm/GmController.ts) 或 [BattlePreviewController](../client/assets/scripts/features/battle/BattlePreviewController.ts) |
 | 协议修改 | [game.proto](../protocol/game.proto) 与 [通信时序](network-contract.md)。用生成工具更新产物 |
 
-身份隔离由应用和连接层负责，功能 View 管理自己的关闭、监听与迟到展示。资产写入在服务端权威事务内完成，回执与快照各有职责。详细边界见 [架构](architecture.md) 和 [断线恢复](reconnect-recovery.md)。
+查玩家操作，从按钮所在 View 进入本模块 Controller 的发送方法，再跟到 onNotify。Model 处理数据，View 监听事件后刷新。普通点击发送一次。断线重连由统一首包恢复钱包、库存、名册和玩法状态。查启动与退出看 RemakeApp，查模块依赖看 ApplicationModules。[模块装配](../client/assets/scripts/app/remake/ApplicationModules.ts) · [架构](architecture.md) · [断线恢复](reconnect-recovery.md)
 
 ## 本机运行与独立验证
 

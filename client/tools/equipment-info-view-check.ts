@@ -216,7 +216,7 @@ async function checkViewLifecycle(): Promise<void> {
         const snapshot = model.snapshot;
         view.sourceButton!.node.emit(Button.EventType.CLICK);
         view.equipButton!.node.emit(Button.EventType.CLICK);
-        assert.deepEqual(notices, ["装备来源暂未开放", "装备穿脱暂未开放"]);
+        assert.deepEqual(notices, ["装备来源暂未开放", "请在英雄详情选择装备部位"]);
         assert.equal(model.snapshot, snapshot, "只读按钮不修改唯一库存");
         const lastPaint = paints.filter(row => row.node === view.icon!.node && row.source !== null).pop()!;
         view.closeButton!.node.emit(Button.EventType.CLICK);

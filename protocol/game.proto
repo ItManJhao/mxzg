@@ -44,6 +44,7 @@ message Frame {
     ChapterMilestoneClaim chapter_milestone_claim = 36;
     ChapterMilestoneReceipt chapter_milestone_receipt = 37;
     ChapterMilestoneStatus chapter_milestone_status = 38;
+    // 普通单抽和历史首抽共用同一请求、到账结构；是否免费由服务端判定。
     HeroFirstSummonRequest hero_first_summon_request = 39;
     HeroFirstSummonReceipt hero_first_summon_receipt = 40;
     HeroFirstSummonStatus hero_first_summon_status = 41;
@@ -58,9 +59,112 @@ message Frame {
     HeroLevelUpgradeStatusRequest hero_level_upgrade_status_request = 50;
     HeroLevelUpgradeReceipt hero_level_upgrade_receipt = 51;
     HeroLevelUpgradeStatus hero_level_upgrade_status = 52;
+    // 随机名成功回包和首次命名请求都只携带昵称。
+    RoleName role_name = 53;
+    HeroSummonRequest hero_summon_request = 54;
+    HeroSummonReceipt hero_summon_receipt = 55;
+    HeroEquipmentChangeRequest hero_equipment_change_request = 56;
+    HeroEquipmentChangeReceipt hero_equipment_change_receipt = 57;
+    MarketState market_state = 58;
+    MarketBuyRequest market_buy_request = 59;
+    MarketRefreshRequest market_refresh_request = 60;
+    MarketReceipt market_receipt = 61;
+    DailyDungeonState daily_dungeon_state = 62;
+    DailyDungeonChallengeRequest daily_dungeon_challenge_request = 63;
+    DailyDungeonReceipt daily_dungeon_receipt = 64;
+    GmSetRoleLevel gm_set_role_level = 65;
+    GmSetChapter gm_set_chapter = 66;
+    GmSetTime gm_set_time = 67;
+    GmTime gm_time = 68;
   }
 }
 message Empty {}
+// 普通市场中的单个货架商品。最终售价、限购及已购数量均由服务端返回。
+message MarketOffer {
+  required uint32 product_id = 1;
+  required uint32 item_id = 2;
+  required int64 quantity = 3;
+  required uint32 cost_item_id = 4;
+  required int64 cost_quantity = 5;
+  required uint32 purchase_limit = 6;
+  required uint32 purchased = 7;
+  // 折扣百分比，100 表示原价；cost_quantity 已是实际售价。
+  required uint32 discount = 8;
+  // 商品的奖励发放已接通时为 true，已购买数量仍需与限购单独比较。
+  required bool purchasable = 9;
+}
+// 查询或修改货架后返回的市场状态。玩家钱包和库存仍由统一资产快照交付。
+message MarketState {
+  required int64 shelf_version = 1;
+  repeated MarketOffer offers = 2;
+  required uint32 free_refreshes = 3;
+  required uint32 paid_refreshes = 4; // 本日已消耗的付费次数
+  // 服务器 Unix 秒，免费次数已满时没有下次恢复时间，取 0。
+  required int64 next_free_refresh_at = 5;
+  required int64 next_paid_reset_at = 6;
+  required uint32 refresh_cost_item_id = 7;
+  required int64 refresh_cost_quantity = 8;
+  required uint32 free_refresh_limit = 9;
+  required uint32 paid_refresh_limit = 10;
+}
+// 购买以本次查看的货架版本和配置商品为准，扣费和发放由服务端确定。
+message MarketBuyRequest {
+  required string request_id = 1;
+  required int64 shelf_version = 2;
+  required uint32 product_id = 3;
+  required uint32 count = 4;
+}
+// 先消耗免费次数，再按配置扣费。只提交当前货架版本和业务请求编号。
+message MarketRefreshRequest {
+  required string request_id = 1;
+  required int64 shelf_version = 2;
+}
+// 成功操作回执用于关联本次结果和已提交资产版本，货架状态仅供市场模块显示。
+message MarketReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3; // 免费刷新沿用现有版本，未发生资产提交时可为 0
+  required MarketState state = 4;
+}
+
+// 本期仅开放金币副本首关。资格、历史阵容战力及当日胜场均由服务端给出。
+message DailyDungeonState {
+  required uint32 stage_id = 1;
+  required uint32 title_language_id = 2;
+  required uint32 wins = 3;
+  required uint32 free_limit = 4;
+  required uint32 total_limit = 5;
+  required int64 next_cost_diamonds = 6;
+  // 下次刷新每日次数的服务器 Unix 秒，已通关标记不随次数重置。
+  required int64 reset_at_seconds = 7;
+  required int64 power = 8;
+  required int64 required_power = 9;
+  required bool cleared = 10;
+  required bool unlocked = 11;
+  required bool can_challenge = 12;
+  repeated ChapterReward reward_preview = 13;
+}
+
+// request_id 为持久幂等键。最高确认价格只限制扣费，胜负与奖励由服务端决定。
+message DailyDungeonChallengeRequest {
+  required string request_id = 1;
+  required bool sweep = 2;
+  required int64 max_diamonds = 3;
+}
+
+// 开战与结算在同一服务端事务完成，重试只返回原回执。清扫成功不重算战报。
+message DailyDungeonReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required int64 asset_revision = 3;
+  required string battle_id = 4;
+  required bool won = 5;
+  required bool sweep = 6;
+  optional BattleReplay replay = 7;
+  required DailyDungeonState state = 8;
+  optional RewardGrantResult actual = 9;
+}
+
 // 通用发奖反馈仅描述已提交的实际到账，不更新客户端资产；资产仍走Snapshot。
 message RewardNotice {
   required uint32 schema_version = 1;
@@ -128,7 +232,13 @@ message Role {
   required string server_id = 6;
   // 基础资料独立扩展，缺失表示尚未同步，不能当作全零玩家。
   optional RoleBasics basics = 7;
+  // 首次命名进度；false 表示尚未命名，缺失表示快照未提供此能力。
+  optional bool first_named = 8;
+  // 当前角色是否可以领取一次性新手赠礼，缺失表示快照未提供此能力。
+  optional bool welcome_gift_available = 9;
 }
+// 候选昵称仅用于填入表单；成功保存后的昵称仍由统一角色快照交付。
+message RoleName { required string nickname = 1; }
 // 对照旧 2001；经验为本级经验，时间为 Unix 秒，0 时间表示历史未知。
 message RoleBasics {
   required int64 experience = 1;
@@ -182,7 +292,7 @@ message Snapshot {
   optional SpiritInventory spirit_inventory = 10;
   // 独立持久冒险点；缺失表示尚未同步，合法0与超上限余额均按服务端原值保留。
   optional TavernPointState tavern_points = 11;
-  // 角色首抽资格；字段缺失表示尚未同步，未完成时免费时间为0。
+  // 召唤状态随登录、重连和资产推送同步；未使用免费次数时相应时间为 0。
   optional HeroSummonState hero_summon = 12;
 }
 
@@ -190,11 +300,20 @@ message HeroSummonState {
   required uint32 schema_version = 1;
   required bool first_normal_completed = 2;
   required int64 normal_free_at_seconds = 3;
+  // 高级单抽的下次免费时间（服务端 Unix 秒）；缺失表示旧服务未提供高级召唤。
+  optional int64 advanced_free_at_seconds = 4;
+  // 是否符合积分兑换的角色条件；现有积分和实际消耗分别同步。
+  optional bool points_exchange_available = 5;
+  optional int64 point_recharge_required = 6;
+  optional uint32 points_cost = 7;
+  // 已购买的祈愿资格到期时间（服务端 Unix 秒），没有资格时为 0。
+  optional int64 prayer_ends_at_seconds = 8;
 }
 
-// 执行与查询共用持久请求标识，与信封ID无关。
+// hero.summon.normal 与历史 hero.summon.first 共用单抽请求结构，只传本次操作编号。
 message HeroFirstSummonRequest { required string request_id = 1; }
 
+// 每次普通单抽成功都返回本次实际获得的英雄与奖励；扣券后的余额随快照同步。
 message HeroFirstSummonReceipt {
   required uint32 schema_version = 1;
   required string request_id = 2;
@@ -210,6 +329,28 @@ message HeroFirstSummonStatus {
   required string request_id = 1;
   required bool found = 2;
   optional HeroFirstSummonReceipt receipt = 3;
+}
+
+// NORMAL / FRIENDSHIP / ADVANCED 为三类召唤池，POINTS 为积分兑换。
+message HeroSummonRequest {
+  required string request_id = 1;
+  required string pool = 2;
+  required uint32 count = 3;
+  // 只有玩家确认的高级召唤才可消耗钻石，缺失或 0 均不允许扣钻。
+  optional int64 max_diamonds = 4;
+}
+
+// 本次已提交的召唤结果，池和次数与原操作一致，实际获得的英雄供客户端展示。
+message HeroSummonReceipt {
+  required uint32 schema_version = 1;
+  required string request_id = 2;
+  required string receipt_id = 3;
+  required string role_id = 4;
+  required int64 asset_revision = 5;
+  required HeroSummonState state = 6;
+  required RewardGrantResult actual = 7;
+  required string pool = 8;
+  required uint32 count = 9;
 }
 
 // 旧酒馆冒险点只读状态，不开放任务、刷新或领取；上限来自同次最高已通关关卡。
@@ -260,12 +401,36 @@ message SpiritSkill {
 message GmGrant { required string request_id = 1; required string kind = 2; required uint32 config_id = 3; required uint32 quantity = 4; }
 message GmResult { required string request_id = 1; required string kind = 2; required uint32 config_id = 3; required uint32 quantity = 4; }
 message GmStatus { required bool enabled = 1; }
+// 只设置当前鉴权角色。请求和回执共用绝对目标，资产以快照为准。
+message GmSetRoleLevel {
+  required string request_id = 1;
+  required uint32 level = 2;
+}
+// mission 是当前要挑战的全局关卡，不是已经通关的数量。
+message GmSetChapter {
+  required string request_id = 1;
+  required uint32 mission = 2;
+}
+// 开发实例游戏时间的 Unix 秒。0 恢复系统时间。
+message GmSetTime { required int64 unix_seconds = 1; }
+// 读取或修改后返回的权威游戏时间，用于界面立即校准。
+message GmTime {
+  required int64 server_time_ms = 1;
+  required bool overridden = 2;
+}
 
 // 装备实例 ID 用字符串保留精度，不与配置 ID 混用。
 message HeroEquipment { required string instance_id = 1; required uint32 template_id = 2; required uint32 slot = 3; required uint32 soul_level = 4; optional HeroSoulSkill soul_skill = 5; }
 message HeroEquipmentState { repeated HeroEquipment items = 1; }
 message HeroPanelValues { required int64 hp = 1; required int64 atk = 2; required int64 def = 3; required int64 spd = 4; }
-message HeroPanelStats { required HeroPanelValues values = 1; repeated string included_sources = 2; repeated string pending_sources = 3; required bool complete = 4; }
+message HeroPanelStats {
+  required HeroPanelValues values = 1;
+  repeated string included_sources = 2;
+  repeated string pending_sources = 3;
+  required bool complete = 4;
+  // 当前已纳入面板计算来源的个人战力；旧快照缺失时不能推断为零。
+  optional uint32 power = 5;
+}
 // 缺失表示未生效；由服务端结合真实英雄与装备门槛计算。
 message HeroSoulSkill { required uint32 skill_id = 1; required uint32 level = 2; }
 
@@ -292,7 +457,7 @@ message FormationSaved {
 // 可选阵型与当前允许站位由服务端同源配置投影，不由客户端猜测。
 message FormationOption { required uint32 formation_id = 1; repeated uint32 open_positions = 2; }
 
-// 独立关卡验收战报；尚未注册业务消息，不开放挑战/奖励接口。
+// 主线、日常副本及只读验收共用的战报结构；具体请求与资产提交由各玩法管理。
 message BattleReplay {
   required uint32 schema_version = 1;
   required string scenario = 2;
@@ -450,6 +615,29 @@ message HeroLevelUpgradeStatus {
   required string request_id = 1;
   required bool found = 2;
   optional HeroLevelUpgradeReceipt receipt = 3;
+}
+
+// EQUIP 使用背包堆叠实例，UNEQUIP 使用已穿戴实例、槽位及原配置；两个批量操作只选英雄。
+message HeroEquipmentChangeRequest {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required string action = 3;
+  optional string equipment_id = 4;
+  optional uint32 slot = 5;
+  optional uint32 expected_template_id = 6;
+}
+
+// 保留原操作选择以关联成功回执，英雄面板及库存随统一快照更新。
+message HeroEquipmentChangeReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required string hero_id = 3;
+  required string action = 4;
+  optional string equipment_id = 5;
+  optional uint32 slot = 6;
+  required int64 asset_revision = 7;
+  required bool changed = 8;
+  optional uint32 expected_template_id = 9;
 }
 // 原额外奖励配置idx的已领集合；领取可乱序，不能改为最大已领ID或下一顺序号。
 message ChapterMilestoneProgress {

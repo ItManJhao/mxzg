@@ -5,7 +5,7 @@
 import { strict as assert } from "node:assert";
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { RewardController } from "../assets/scripts/features/reward/RewardController";
-import { RewardModel } from "../assets/scripts/features/reward/RewardModel";
+import { RewardDisplayFixture } from "./RewardDisplayFixture";
 import type { RewardArgs } from "../assets/scripts/features/reward/data/RewardData";
 import type { RewardNotice } from "../assets/scripts/features/reward/data/RewardNoticeData";
 import { GameProtocolCodecUtils } from "../assets/scripts/platform/GameProtocolCodecUtils";
@@ -59,17 +59,19 @@ class RewardControllerChecks {
 
     /** 构建可控窗口，测试自行关闭每笔；后续窗口不得提前替换当前展示。 */
     private static fixture() {
-        const model = new RewardModel();
-        const controller = new RewardController(model);
+        const display = new RewardDisplayFixture({
+            currentRole: { id: "isolated-role", nickname: "展示测试", level: 1, gold: 0, diamonds: 0 },
+            requireRoleOwner: roleId => assert.equal(roleId, "isolated-role"),
+        });
         const popups: RewardArgs[] = [];
         const close: (() => void)[] = [];
         const tips: RewardNotice[] = [];
-        controller.configure(args => {
+        display.popup = args => {
             popups.push(args);
             return new Promise<void>(resolve => close.push(resolve));
-        }, notice => tips.push(notice));
-        controller.initialize();
-        return { model, controller, popups, close, tips };
+        };
+        display.tips = notice => tips.push(notice);
+        return { model: display.queue, controller: display.receiver, display, popups, close, tips };
     }
 
     /** 在每例结束释放监听与内存，随后核对所有关键流程。 */
@@ -89,7 +91,7 @@ class RewardControllerChecks {
             test.close[0]();
             await this.settle();
             assert.equal(test.model.snapshot.phase, "idle");
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -107,7 +109,7 @@ class RewardControllerChecks {
             this.deliver(test.controller, original);
             assert.equal(test.popups.length, 1);
             assert.equal(test.model.snapshot.phase, "idle");
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -125,7 +127,7 @@ class RewardControllerChecks {
                 assert.throws(() => test.controller.restore(conflict), /内容不一致/);
                 assert.deepEqual(test.model.snapshot, before);
             }
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -139,7 +141,7 @@ class RewardControllerChecks {
             assert.equal(test.model.snapshot.pending.length, 1);
             assert.equal(test.model.snapshot.acceptedCount, 1);
             assert.deepEqual(test.model.snapshot.pending[0].roleUpgrade, { beforeLevel: 1, afterLevel: 3 });
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -164,7 +166,7 @@ class RewardControllerChecks {
             this.deliver(test.controller, original);
             assert.equal(test.popups.length, 1);
             assert.equal(test.model.snapshot.phase, "idle");
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -186,7 +188,7 @@ class RewardControllerChecks {
                 assert.equal(test.model.snapshot.acceptedCount, 0);
                 assert.equal(test.model.snapshot.pending.length, 0);
             }
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -201,7 +203,7 @@ class RewardControllerChecks {
             await this.settle();
             assert.equal(test.popups.length, 0);
             assert.equal(test.tips.length, 0);
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -215,7 +217,7 @@ class RewardControllerChecks {
             assert.deepEqual(test.tips, [tips]);
             assert.equal(test.popups.length, 0);
             assert.equal(test.model.snapshot.phase, "idle");
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -236,18 +238,18 @@ class RewardControllerChecks {
             await this.settle();
             assert.equal(test.tips.length, 1);
             assert.equal(test.model.snapshot.pending.length, 0);
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
             const test = this.fixture();
             let attempts = 0;
-            test.controller.configure(async () => {
+            test.display.popup = async () => {
                 attempts++;
                 if (attempts === 1) {
                     throw new Error("测试窗口打开失败");
                 }
-            }, () => undefined);
+            };
             test.controller.observeRevision(100);
             test.controller.setReady(true);
             test.controller.restore(this.notice(1));
@@ -265,7 +267,7 @@ class RewardControllerChecks {
             assert.equal(attempts, 3);
             assert.equal(test.model.snapshot.phase, "idle");
             assert.equal(test.model.snapshot.acceptedCount, 2);
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -273,21 +275,22 @@ class RewardControllerChecks {
             test.controller.setReady(true);
             test.controller.observeRevision(7);
             test.controller.restore(this.notice(1));
-            test.controller.resetSession();
+            test.display.resetSession();
             assert.equal(test.model.snapshot.ready, false);
             assert.equal(test.model.snapshot.assetRevision, 0);
             assert.equal(test.model.snapshot.acceptedCount, 0);
-            test.controller.restore(this.notice(2, { roleId: "new-owner", assetRevision: 1 }));
+            // 新展示复用同一编号时，旧窗口的关闭也不能消费新队首。
+            test.controller.restore(this.notice(1, { roleId: "new-owner", assetRevision: 1 }));
             test.controller.observeRevision(1);
             test.controller.setReady(true);
             test.close[0]();
             await this.settle();
             assert.equal(test.model.snapshot.pending.length, 1);
-            assert.equal(test.model.snapshot.activeReceiptId, this.notice(2).receiptId);
+            assert.equal(test.model.snapshot.activeReceiptId, this.notice(1).receiptId);
             test.close[1]();
             await this.settle();
             assert.equal(test.model.snapshot.phase, "idle");
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -307,7 +310,7 @@ class RewardControllerChecks {
             assert.equal(test.model.snapshot.assetRevision, 9);
             assert.throws(() => test.controller.observeRevision(-1));
             assert.throws(() => test.controller.observeRevision(Number.NaN));
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
@@ -316,7 +319,7 @@ class RewardControllerChecks {
             test.controller.setReady(true);
             test.controller.restore(this.notice(1));
             test.controller.restore(this.notice(2));
-            test.controller.dispose();
+            test.display.dispose();
             test.close[0]();
             await this.settle();
             assert.equal(test.popups.length, 1);
@@ -324,14 +327,14 @@ class RewardControllerChecks {
             assert.equal(test.model.snapshot.pending.length, 0);
             assert.throws(() => this.deliver(test.controller, this.notice(3)), /不属于已登记/);
             assert.throws(() => test.controller.restore(this.notice(3)), /尚未初始化/);
-            test.controller.initialize();
-            test.controller.configure(async () => undefined, () => undefined);
-            test.controller.observeRevision(1);
-            test.controller.setReady(true);
-            test.controller.restore(this.notice(3, { assetRevision: 1 }));
+            const reopened = this.fixture();
+            reopened.display.popup = async () => {};
+            reopened.controller.observeRevision(1);
+            reopened.controller.setReady(true);
+            reopened.controller.restore(this.notice(3, { assetRevision: 1 }));
             await this.settle();
-            assert.equal(test.model.snapshot.phase, "idle");
-            test.controller.dispose();
+            assert.equal(reopened.model.snapshot.phase, "idle");
+            reopened.display.dispose();
             checks++;
         }
         {
@@ -350,19 +353,18 @@ class RewardControllerChecks {
             test.close[1]();
             await this.settle();
             assert.equal(test.model.snapshot.phase, "idle");
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         {
             const test = this.fixture();
             let rejectOld: (reason: unknown) => void = () => undefined;
-            test.controller.configure(() => new Promise<void>((resolve, reject) => { rejectOld = reject; }),
-                notice => test.tips.push(notice));
+            test.display.popup = () => new Promise<void>((_resolve, reject) => { rejectOld = reject; });
             test.controller.observeRevision(10);
             test.controller.setReady(true);
             test.controller.restore(this.notice(1));
-            test.controller.resetSession();
-            test.controller.configure(async () => undefined, notice => test.tips.push(notice));
+            test.display.resetSession();
+            test.display.popup = async () => {};
             test.controller.restore(this.notice(2, { assetRevision: 1, mode: "TIPS" }));
             test.controller.observeRevision(1);
             test.controller.setReady(true);
@@ -372,7 +374,7 @@ class RewardControllerChecks {
             assert.equal(test.model.snapshot.acceptedCount, 1);
             assert.equal(test.model.snapshot.message, "");
             assert.equal(test.tips.length, 1);
-            test.controller.dispose();
+            test.display.dispose();
             checks++;
         }
         console.log("PASS " + checks + " reward controller cases: real protocol, snapshot gate, dedupe, FIFO, retry and stale UI isolation");

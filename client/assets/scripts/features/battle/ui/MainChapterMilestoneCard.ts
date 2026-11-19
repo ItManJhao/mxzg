@@ -1,7 +1,7 @@
 /**
  * 主线常显里程碑卡：沿旧最小未领配置显示奖励预览、绝对关卡进度和达成领取。
- * 领取按钮直接交应用稳定键入口，不增加确认弹窗、图鉴或另一条奖励表现。
- * 结构和样式保存在主线Prefab，停用/销毁清理监听，事务及持久恢复不随卡片关闭取消。
+ * 领取按钮提交当前配置编号，服务端快照更新已领取的目标。
+ * 结构和样式保存在主线 Prefab，停用时清理本页监听。
  */
 import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
@@ -32,7 +32,7 @@ export class MainChapterMilestoneCard extends Component {
     @property(Label) progressLabel: Label | null = null;
     /** 达标直接提交稳定业务键，未达标点击只提示剩余关数。 */
     @property(Button) claimButton: Button | null = null;
-    /** 显示进度、可领取或原请求待恢复。 */
+    /** 显示进度、可领取或正在等待回包。 */
     @property(Label) claimLabel: Label | null = null;
     /** 退页/停用时撤销的主线事件，不重复订阅。 */
     private stop: (() => void) | null = null;
@@ -61,7 +61,7 @@ export class MainChapterMilestoneCard extends Component {
         this.render();
     }
 
-    /** 停用只撤显示回调，不取消原领取或清应用持久意图。 */
+    /** 停用清理本页显示，领取结果由应用接收。 */
     protected onDisable(): void {
         this.stop?.();
         this.stop = null;
@@ -81,9 +81,7 @@ export class MainChapterMilestoneCard extends Component {
         const hint = ChapterMilestoneUtils.hint(state,
             () => GameConfig.instance.getConfig(GConfig.ChapterExtraReward),
             id => GameConfig.instance.getConfig(GConfig.Language, id)?.value);
-        const pending = model.milestoneClaim;
-        const recovering = pending.rewardId !== null && pending.phase !== "confirmed";
-        this.rewardId = recovering ? pending.rewardId : hint.kind === "complete" ? null
+        this.rewardId = hint.kind === "complete" ? null
             : hint.kind === "unavailable" ? undefined : hint.rewardId;
         if (this.rewardId == null) {
             this.rewardIcon!.node.active = false;
@@ -124,35 +122,25 @@ export class MainChapterMilestoneCard extends Component {
         this.progressLabel!.string = reached ? "" : "通关 " + (cleared ?? "?") + "/" + row.chapter;
         this.progressFill!.fillRange = Math.max(0, Math.min(1, (cleared || 0) / row.chapter));
         this.progressFill!.node.parent!.active = !reached;
-        this.claimLabel!.string = this.intent || pending.phase === "delivering" ? "确认中"
-            : recovering ? "恢复领取" : reached ? "领取奖励" : "第" + row.chapter + "关奖励";
-        this.claimButton!.interactable = !this.intent && pending.phase !== "delivering";
+        this.claimLabel!.string = this.intent ? "确认中" : reached ? "领取奖励" : "第" + row.chapter + "关奖励";
+        this.claimButton!.interactable = !this.intent;
     }
 
-    /** 旧卡直接领奖；未达标只提示剩余关数，不增加通用确认框或图鉴跳转。 */
+    /** 达标后把领奖交给主线控制器，未达标时提示剩余关数。 */
     private async claim(): Promise<void> {
         if (this.intent || this.rewardId == null) { return; }
         const id = this.rewardId;
-        const model = MainChapterModel.instance;
-        const pending = model.milestoneClaim;
+        const cleared = MainChapterModel.instance.state?.maxCleared ?? 0;
         const row = GameConfig.instance.requireConfig(GConfig.ChapterExtraReward, id);
-        if (pending.rewardId === null || pending.phase === "confirmed") {
-            if (!model.state || model.state.maxCleared < row.chapter) {
-                UIManager.instance.toast("再通关" + (row.chapter - (model.state?.maxCleared || 0)) + "关可领取奖励");
-                return;
-            }
+        if (cleared < row.chapter) {
+            UIManager.instance.toast("再通关" + (row.chapter - cleared) + "关可领取奖励");
+            return;
         }
-        const entry = MainChapterController.instance.requestMilestoneClaim;
-        if (!entry) { UIManager.instance.toast("通关奖励正在准备，请稍后重试"); return; }
         const intent = {};
         this.intent = intent;
         this.render();
         try {
-            await entry(id, intent);
-        } catch (error) {
-            if (this.intent === intent) {
-                UIManager.instance.toast(error instanceof Error ? error.message : "通关奖励仍待确认，请重试");
-            }
+            await MainChapterController.instance.claimMilestone(id);
         } finally {
             if (this.intent === intent) {
                 this.intent = null;

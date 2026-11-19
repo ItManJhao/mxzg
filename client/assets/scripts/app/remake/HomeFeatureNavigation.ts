@@ -1,9 +1,12 @@
 /**
  * 主城功能入口协调：把底栏意图交给UIManager，处理真实慢开提示、加载取消、重试和返回主城。
- * 由RemakeApp持有，登录确认与账号状态仍归应用和账号模块，不复制玩家数据。
+ * 由当前场景的 ApplicationPages 持有，复用账号准入和页面宿主，不复制玩家数据。
  */
 import { UIManager } from "../../framework/ui/UIManager";
 import { GameLog } from "../../core/GameLog";
+import { CityNavigationUtils } from "../../config/CityNavigationUtils";
+import { EntryGateUtils } from "../../config/EntryGateUtils";
+import type { AccountModel } from "../../features/account/AccountModel";
 
 /** 导航需要的页面操作；不包含资源获取或业务协议。 */
 interface FeatureUi {
@@ -11,7 +14,7 @@ interface FeatureUi {
     keepOnly(id: string): void;
 
     /** 等待页面完成自身准备；失败和取消保持Promise拒绝。 */
-    openById(id: string): Promise<unknown>;
+    openById(id: string, args?: unknown): Promise<unknown>;
 
     /** 将当前功能页交还主城，返回是否处理成功。 */
     back(): boolean;
@@ -19,6 +22,8 @@ interface FeatureUi {
 
 /** 应用提供的当前页面、准入和提示入口，不向导航暴露账号凭证。 */
 interface FeatureHost {
+    /** 提供副本大厅需要的实时角色等级，独立导航测试可以省略。 */
+    readonly account?: AccountModel;
     /** 当前已显示页面；尚未显示时返回null。 */
     current(): string | null;
 
@@ -29,16 +34,29 @@ interface FeatureHost {
     notice(text: string): void;
 }
 
-/** 当前主城功能与页面ID对应关系；资源地址仍由各View独立注册。 */
-export const REMAKE_FEATURE_ROUTES: Readonly<Record<string, string>> = {
-    "hero-info": "hero-info",
-    hero: "hero",
-    bag: "bag",
-    battle: "remake-campaign"
+/** 功能页占用主城的内容区域；召唤与市场仍点亮主城导航。 */
+type FeatureTab = "hero" | "bag" | "battle" | "summon" | "market" | "dungeon";
+
+/** 主城点击目标、页面和内容区域对应关系。 */
+const routes: Readonly<Record<string, { page: string; title: string; tab: FeatureTab }>> = {
+    "hero-info": {page: "hero-info", title: "英雄详情", tab: "hero"},
+    hero: {page: "hero", title: "英雄", tab: "hero"},
+    bag: {page: "bag", title: "背包", tab: "bag"},
+    battle: {page: "remake-campaign", title: "战斗", tab: "battle"},
+    main_summon: {page: "first-summon", title: "召唤", tab: "summon"},
+    main_shop: {page: "market", title: "市场", tab: "market"},
+    dungeon: {page: "dungeon-hall", title: "副本大厅", tab: "dungeon"},
+    "gold-dungeon": {page: "gold-dungeon", title: "金币副本", tab: "dungeon"},
 };
 
 /** 管理最新功能打开意图，加载失败时保留已显示的主城或功能页。 */
 export class HomeFeatureNavigation {
+    /** 从已登记的页面导出底栏开放状态；英雄详情与英雄列表只点亮同一个页签。 */
+    public static readonly tabs = Object.freeze(
+        Array.from(new Set(Object.values(routes).map(route => route.tab)))
+            .filter(tab => tab !== "summon" && tab !== "market"),
+    );
+
     /** 同次打开仍在等待350毫秒后才提示；缓存瞬开不把资源复用误报成重新准备。 */
     private static readonly loadingNoticeDelayMs = 350;
     /** 功能打开意图代次；新点击、身份重置和销毁时递增，拒绝旧提示与重开。 */
@@ -56,27 +74,34 @@ export class HomeFeatureNavigation {
     constructor(private readonly ui: FeatureUi, private readonly host: FeatureHost) {
     }
 
+    /** 返回功能页占用的主城内容区域，登录和主城地图返回 null。 */
+    public static tabForPage(page: string | null): FeatureTab | null {
+        return Object.values(routes).find(route => route.page === page)?.tab ?? null;
+    }
+
     /** 处理已实现入口并返回true；仅有效打开持续等待才提示，未知入口返回false交原调用方说明未开放。 */
     open(id: string): boolean {
         if (id === "mainline") {
             id = "battle";
         }
-        const pages = REMAKE_FEATURE_ROUTES;
-        const titles: Record<string, string> = {hero: "英雄", "hero-info": "英雄详情", bag: "背包", battle: "战斗"};
-        if (id !== "city" && !pages[id]) {
+        const route = Object.prototype.hasOwnProperty.call(routes, id) ? routes[id] : undefined;
+        if (id !== "city" && !route) {
             return false;
         }
         if (this.disposed || !this.host.authorized()) {
             return true;
         }
-        if (id === "city") {
+        if (route?.tab === "dungeon" && !this.canOpenDungeon()) {
+            return true;
+        }
+        if (!route) {
             this.reset();
             this.ui.keepOnly("remake-home");
             this.ui.back();
             this.host.notice("");
             return true;
         }
-        const page = pages[id];
+        const {page, title} = route;
         if (this.host.current() === page) {
             this.reset();
             this.ui.keepOnly(page);
@@ -88,11 +113,13 @@ export class HomeFeatureNavigation {
         this.loadingNoticeTimer = setTimeout(() => {
             this.loadingNoticeTimer = null;
             if (this.accepts(epoch) && this.host.current() !== page) {
-                this.host.notice("正在准备" + titles[id] + "界面…");
+                this.host.notice("正在准备" + title + "界面…");
             }
         }, HomeFeatureNavigation.loadingNoticeDelayMs);
         this.ui.keepOnly(page);
-        void this.ui.openById(page).then(() => {
+        const args = id === "dungeon" ? { account: this.host.account, openGoldDungeon: () => this.open("gold-dungeon") }
+            : id === "gold-dungeon" ? { backToHall: () => this.open("dungeon") } : undefined;
+        void this.ui.openById(page, args).then(() => {
             this.clearLoadingNotice(epoch);
             if (this.accepts(epoch)) {
                 this.host.notice("");
@@ -110,9 +137,24 @@ export class HomeFeatureNavigation {
             const reason = error instanceof Error ? error.stack || error.message : String(error);
             GameLog.shared.classified("APP", "warn", "HomeFeatureNavigation", page + "打开失败：" + reason);
             if (!UIManager.isFailureReported(error)) {
-                this.host.notice(titles[id] + "界面加载失败，请再次点击重试");
+                this.host.notice(title + "界面加载失败，请再次点击重试");
             }
         });
+        return true;
+    }
+
+    /** 按当前角色资料和旧副本大厅门槛放行，锁定时显示实际等级。 */
+    private canOpenDungeon(): boolean {
+        const gate = CityNavigationUtils.bottomGate("dungeon");
+        const role = this.host.account?.snapshot.role;
+        if (!gate || !role) {
+            this.host.notice("副本大厅条件尚未同步");
+            return false;
+        }
+        if (!EntryGateUtils.isEntryOpen(gate, role.level, 0)) {
+            this.host.notice(`角色达到 ${gate.level} 级开启副本大厅`);
+            return false;
+        }
         return true;
     }
 

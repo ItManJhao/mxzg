@@ -4,12 +4,12 @@
  */
 package com.funsgamex.mxzg.campaign;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.random.RandomGenerator;
 import com.funsgamex.mxzg.hero.HeroBattleChapterScenario;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
+import com.funsgamex.mxzg.time.GameClock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +21,15 @@ public class MainChapterRewardService {
     private final MainChapterRules rules;
     /** 共用类型校验、实际入账与领域明细，不在首通模块维护第二份分发表。 */
     private final RewardGrantService grants;
+    /** 主线结算使用的游戏时钟，确定期限奖励的生效时间。 */
+    private final GameClock clock;
 
-    /** 预检真正开放关卡的战斗、首通奖励和后续挂机快照，未开放目录交审计，不扩大玩法范围。 */
-    public MainChapterRewardService(MainChapterRules rules, RewardGrantService grants, IdleRules idle, ObjectMapper mapper) {
+    /** 注入发奖时钟并预检开放关卡所需战斗、首通奖励及挂机规则。 */
+    public MainChapterRewardService(MainChapterRules rules, RewardGrantService grants, IdleRules idle,
+                                    ObjectMapper mapper, GameClock clock) {
         this.rules = rules;
         this.grants = grants;
+        this.clock = clock;
         var battle = new HeroBattleChapterScenario(mapper);
         for (int index = 1; index <= rules.challengeLimit(); index++) {
             try {
@@ -67,12 +71,12 @@ public class MainChapterRewardService {
         return new Plan(rules.pendingRewards(progress), rules.tavernLimit(progress.maxCleared()));
     }
 
-    /** 消费持久战报中的原奖励计划并返回完整真实结果；调用方同事务保存，不另行补发升级附赠。 */
+    /** 以本次游戏时间消费原奖励计划，调用方在同一事务保存实际发奖结果。 */
     @Transactional(propagation = Propagation.MANDATORY)
     public RewardGrantResult grantPlan(String roleId, Plan plan) {
         return grants.grant(roleId, plan.rewards().stream()
                         .map(reward -> new RewardGrantService.Reward(reward.itemId(), reward.quantity())).toList(),
-                new RewardGrantService.Context(Instant.now().getEpochSecond(), plan.tavernLimit()),
+                new RewardGrantService.Context(clock.epochSeconds(), plan.tavernLimit()),
                 RandomGenerator.getDefault());
     }
 }

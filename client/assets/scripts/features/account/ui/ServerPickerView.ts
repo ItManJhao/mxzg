@@ -5,7 +5,7 @@ import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
-import type { ServerSelection, GameServer } from "../ServerSelection";
+import type { ServerSelectionController, GameServer } from "../ServerSelectionController";
 import { ServerCellView } from "./ServerCellView";
 const { ccclass, property } = _decorator;
 @UIRegistry.view({
@@ -18,7 +18,7 @@ const { ccclass, property } = _decorator;
     modal: { mask: true, closeOnOutside: true },
 })
 @ccclass("ServerPickerView")
-export class ServerPickerView extends BaseView<ServerSelection> {
+export class ServerPickerView extends BaseView<ServerSelectionController> {
     /** 关闭按钮，由统一窗口管理器关闭弹窗。 */
     @property(Button) closeButton: Button | null = null;
     /** 服务器列表，预制体保存格子、裁切和间距。 */
@@ -31,7 +31,7 @@ export class ServerPickerView extends BaseView<ServerSelection> {
     private stops: Array<() => void> = [];
 
     /** 绑定真实选服状态与内容按钮；内容在完整Prefab中，共享模态由UIManager按ViewSpec处理。 */
-    onOpen(selection?: ServerSelection): void {
+    onOpen(selection?: ServerSelectionController): void {
         if (!selection || !this.serverScroll || !this.regionScroll || !this.closeButton) {
             throw new Error("选服预制体或数据未绑定");
         }

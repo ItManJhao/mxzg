@@ -1,13 +1,23 @@
 /**
  * 通用发奖反馈状态：保存当前会话的展示队列、编号去重和已同步资产版本。
- * 由RewardController提交，通知与历史恢复共用同一入口；不联网、不修改角色或背包资产。
+ * RewardController 提交回执，RewardBinding 记录展示进度。实时通知和历史恢复共用编号去重。
  */
+import { EventDispatcher } from "../../framework/EventDispatcher";
 import { BaseModel } from "../../framework/BaseModel";
-import type { RewardNotice, RewardPhase, RewardProgress } from "./data/RewardNoticeData";
+import { GameProtocolCodecUtils } from "../../platform/GameProtocolCodecUtils";
+import type { HeroGrantItem, RepeatSummon } from "./data/RewardData";
+import type { RewardNotice, RewardNoticeMode, RewardPhase, RewardProgress } from "./data/RewardNoticeData";
+
+declare module "../../framework/EventDispatcher" {
+    interface EventPayloads {
+        /** 已提交的奖励队列和展示进度，角色资产仍由统一快照更新。 */
+        "reward.updated": RewardProgress;
+    }
+}
 
 export class RewardModel extends BaseModel {
-    /** 已接纳回执编号到完整指纹；换号清空，防止同一成功结果重复播放或被冲突内容覆盖。 */
-    private readonly accepted = new Map<string, string>();
+    /** 已接纳回执编号到完整指纹和弹窗展示状态；换号清空，防止同一成功结果重复播放或被冲突内容覆盖。 */
+    private readonly accepted = new Map<string, { fingerprint: string; presented: boolean }>();
     /** 按到达顺序等待展示的不可变通知；队首完成之前不丢弃任何后续批次。 */
     private readonly queue: RewardNotice[] = [];
     /** 应用已接纳的最高资产版本，重置为0后等待下一份统一快照。 */
@@ -19,7 +29,7 @@ export class RewardModel extends BaseModel {
     /** 队首失败说明；非空时阻止自动重试，不影响已经提交的资产。 */
     private failureMessage = "";
 
-    /** 返回冻结的展示快照；通知内容在控制器接纳前已经完整校验与冻结。 */
+    /** 返回冻结的展示快照；队列内容在入队前已经完整校验与冻结。 */
     public get snapshot(): RewardProgress {
         return Object.freeze({
             phase: this.phase,
@@ -32,22 +42,41 @@ export class RewardModel extends BaseModel {
         });
     }
 
-    /** 接纳已验证的通知；同编号同内容返回false，冲突内容拒绝且不覆盖已有队列。 */
-    public accept(notice: RewardNotice): boolean {
+    /** 协议或展示端完成一次状态变更后发布快照，监听方看到同一份队列。 */
+    public notify(): void {
+        EventDispatcher.instance.emit("reward.updated", this.snapshot);
+    }
+
+    /** 校验实时通知或历史回执并冻结展示数据；同编号同内容返回false，冲突内容拒绝且不覆盖已有队列。 */
+    public accept(value: unknown): boolean {
+        const notice = this.readNotice(value);
         const fingerprint = this.fingerprint(notice);
         const previous = this.accepted.get(notice.receiptId);
         if (previous !== undefined) {
-            if (previous !== fingerprint) {
+            if (previous.fingerprint !== fingerprint) {
                 throw new Error("发奖反馈回执编号对应的内容不一致：" + notice.receiptId);
             }
             return false;
         }
-        this.accepted.set(notice.receiptId, fingerprint);
+        this.accepted.set(notice.receiptId, { fingerprint, presented: false });
         if (notice.mode !== "SILENT") {
             this.queue.push(notice);
         }
         this.incrementVersion();
         return true;
+    }
+
+    /** 只在最后一个奖励窗真实打开时登记；稍到的原操作能确认展示，无需再弹一次。 */
+    public markPresented(receiptId: string): void {
+        const record = this.accepted.get(receiptId);
+        if (record) {
+            record.presented = true;
+        }
+    }
+
+    /** 已排队或失败等待重试的结果返回 false。记录随原奖励去重数据一同清理。 */
+    public wasPresented(receiptId: string): boolean {
+        return this.accepted.get(receiptId)?.presented === true;
     }
 
     /** 记录应用已提交的统一快照版本；旧版本不降低展示门槛。 */
@@ -148,7 +177,38 @@ export class RewardModel extends BaseModel {
         }
     }
 
-    /** 以稳定字段和物品ID排序比较同笔结果，物品排列变化不导致重复展示或误报冲突。 */
+    /** 复用协议唯一校验口，再冻结最小展示字段，避免外部后续修改已去重的内容。 */
+    private readNotice(value: unknown): RewardNotice {
+        const notice = GameProtocolCodecUtils.validateRewardNotice(value);
+        const items = notice.items as readonly { itemId: number; credited: number }[];
+        const heroes = (notice.heroes || []) as readonly HeroGrantItem[];
+        const repeat = notice.repeatSummon as RepeatSummon | undefined;
+        if (repeat !== undefined && (!repeat
+            || !["NORMAL", "FRIENDSHIP", "ADVANCED"].includes(repeat.pool)
+            || (repeat.count !== 1 && repeat.count !== 10) || repeat.count !== heroes.length)) {
+            throw new Error("再召唤需要原奖池和对应数量的英雄");
+        }
+        return Object.freeze({
+            schemaVersion: 1,
+            receiptId: notice.receiptId as string,
+            roleId: notice.roleId as string,
+            assetRevision: notice.assetRevision as number,
+            mode: notice.mode as RewardNoticeMode,
+            items: Object.freeze(items.map(item => Object.freeze({
+                itemId: item.itemId,
+                credited: item.credited,
+            }))),
+            ...(heroes.length ? { heroes: Object.freeze(heroes.map(hero => Object.freeze({ ...hero }))) } : {}),
+            ...(notice.summonBatch === true && heroes.length > 1 ? { summonBatch: true as const } : {}),
+            ...(repeat ? { repeatSummon: Object.freeze({ pool: repeat.pool, count: repeat.count }) } : {}),
+            ...(notice.roleUpgrade ? { roleUpgrade: Object.freeze({
+                beforeLevel: (notice.roleUpgrade as { beforeLevel: number }).beforeLevel,
+                afterLevel: (notice.roleUpgrade as { afterLevel: number }).afterLevel,
+            }) } : {}),
+        });
+    }
+
+    /** 以稳定字段和物品ID排序比较同笔入账，客户端的展示参数不影响回执去重。 */
     private fingerprint(notice: RewardNotice): string {
         return JSON.stringify([
             notice.schemaVersion,

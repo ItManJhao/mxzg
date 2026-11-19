@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { Node } from "cc";
 import { BattlePreviewController } from "../assets/scripts/features/battle/BattlePreviewController";
 import { MainChapterController } from "../assets/scripts/features/battle/MainChapterController";
+import { MainChapterSession } from "../assets/scripts/features/battle/MainChapterSession";
 import { MainChapterModel } from "../assets/scripts/features/battle/MainChapterModel";
 import type { MainChapterState } from "../assets/scripts/features/battle/MainChapterModel";
 import { MainChapterView } from "../assets/scripts/features/battle/ui/MainChapterView";
@@ -36,21 +37,21 @@ function frame(name: string, body: unknown): GameFrame {
 
 /** 配置全局idx与新挑战范围分开；缺失和坏字段分开，历史回执不能改最新范围。 */
 function readScope(): void {
-    const old = MainChapterController.readState(state())!;
+    const old = MainChapterModel.readState(state())!;
     assert.equal(old.challengeLimit, undefined);
     assert(!Object.prototype.hasOwnProperty.call(old, "challengeLimit"));
     for (const index of [0, 3, 4, 850, 0xffffffff]) {
-        const accepted = MainChapterController.readState(state(index, 3))!;
+        const accepted = MainChapterModel.readState(state(index, 3))!;
         assert.equal(accepted.maxCleared, index, "降范围不抹去真实历史进度");
         assert.equal(accepted.challengeLimit, 3);
         assert(Object.isFrozen(accepted));
     }
-    assert.equal(MainChapterController.readState(state(0, 0xffffffff))!.challengeLimit, 0xffffffff);
+    assert.equal(MainChapterModel.readState(state(0, 0xffffffff))!.challengeLimit, 0xffffffff);
     for (const value of [0, -1, 1.5, "3", null, 0x100000000, NaN]) {
-        assert.throws(() => MainChapterController.readState({ ...state(), challengeLimit: value }));
+        assert.throws(() => MainChapterModel.readState({ ...state(), challengeLimit: value }));
     }
     for (const value of [-1, 1.5, "4", 0x100000000, NaN]) {
-        assert.throws(() => MainChapterController.readState({ ...state(), maxCleared: value }));
+        assert.throws(() => MainChapterModel.readState({ ...state(), maxCleared: value }));
     }
     const current = state(2, 3);
     const wire = frame(Protocol.CHAPTER_CHALLENGE, {
@@ -62,7 +63,7 @@ function readScope(): void {
     });
     assert(!Object.prototype.hasOwnProperty.call((historical.body as any).state, "challengeLimit"),
         "旧二进制缺字段不能被PB默认0冒充为已同步范围");
-    assert.equal(MainChapterController.readState((historical.body as any).state)!.challengeLimit, undefined);
+    assert.equal(MainChapterModel.readState((historical.body as any).state)!.challengeLimit, undefined);
 }
 
 /** 新请求检查scope；已生成编号、原pending及结算仍复用原流程，不受范围缩小或旧字段缺失阻断。 */
@@ -70,9 +71,11 @@ async function requests(): Promise<void> {
     const model = new MainChapterModel();
     const controller = new MainChapterController(model);
     const sent: Array<{ name: string; body: any }> = [];
-    controller.configure(async (name, body, _received, failed) => {
-        sent.push({ name, body });
-        failed(new Error("受控断线，保留原编号"));
+    controller.configure({
+        deliver: async (name, body, _received, failed) => {
+            sent.push({ name, body });
+            failed(new Error("受控断线，保留原编号"));
+        },
     });
     controller.initialize();
     try {
@@ -227,8 +230,7 @@ async function pageScope(): Promise<void> {
 
 /** 真实主页把当前显示期交给唯一领取绑定；关闭、战斗或收取中不会再请求，缺注入只给可恢复提示。 */
 async function playerIdleEntry(): Promise<void> {
-    const controller = MainChapterController.instance;
-    const originalRequest = controller.requestIdleClaim;
+    const originalSession = MainChapterSession.current;
     const originalToast = UIManager.instance.toast;
     const host = new Node("PlayerIdleEntryFixture");
     const page: any = host.addComponent(MainChapterView);
@@ -236,7 +238,9 @@ async function playerIdleEntry(): Promise<void> {
     const notices: string[] = [];
     try {
         UIManager.instance.toast = text => { notices.push(text); };
-        controller.requestIdleClaim = async context => { calls.push(context); };
+        MainChapterSession.current = {
+            idleClaim: { async begin(context: object) { calls.push(context); } },
+        } as MainChapterSession;
         page.closed = false;
         const context = page.idleCollectionContext();
         page.collectIdleRewards();
@@ -253,12 +257,12 @@ async function playerIdleEntry(): Promise<void> {
         page.collectIdleRewards();
         assert.equal(calls.length, 1, "关闭、正式战斗及已有收取不能创建新意图");
         page.idleChest = null;
-        controller.requestIdleClaim = null;
+        MainChapterSession.current = null;
         page.collectIdleRewards();
         assert.deepEqual(notices, ["挂机领取正在准备，请稍后重试"]);
         assert.equal(calls.length, 1);
     } finally {
-        controller.requestIdleClaim = originalRequest;
+        MainChapterSession.current = originalSession;
         UIManager.instance.toast = originalToast;
         host.destroy();
     }
@@ -379,7 +383,7 @@ function genericReplay(): void {
 async function routes(): Promise<void> {
     const model = new MainChapterModel();
     const controller = new MainChapterController(model);
-    model.state = MainChapterController.readState(state(2, 3));
+    model.state = MainChapterModel.readState(state(2, 3));
     const current = model.state;
     controller.onNotify(Protocol.CHAPTER_REPLAY, { battleId: BATTLE_ID, mission: 850, pending: [], replay: replay() });
     assert.equal(model.replay!.mission, 850);
@@ -387,18 +391,22 @@ async function routes(): Promise<void> {
     assert.equal(model.state!.challengeLimit, 3);
     assert.throws(() => controller.onNotify(Protocol.CHAPTER_REPLAY,
         { battleId: BATTLE_ID, mission: 849, pending: [], replay: replay() }));
-    model.state = MainChapterController.readState(state(850, 3));
-    model.idle = MainChapterController.readIdle({ serverTime: 1000, startedAt: 900,
+    model.state = MainChapterModel.readState(state(850, 3));
+    model.idle = MainChapterModel.readIdle({ serverTime: 1000, startedAt: 900,
         maxSeconds: 120, frequency: 5, rewardStage: 850, rates: [{ itemId: 900001, quantity: 1 }],
         lineupVersion: 1 }, model.state);
     controller.onNotify(Protocol.CHAPTER_IDLE_ENCOUNTER, { stage: 850, assetRevision: 1,
         lineupVersion: 1, replay: idleReplay() });
     assert.equal(model.idleReplay!.stage, 850);
     assert.equal(model.state!.challengeLimit, 3, "高关卡挂机只读演出不扩大挑战范围");
-    const preview = new BattlePreviewController(async (mission, received) => {
-        assert.equal(mission, 850);
-        received(frame(Protocol.BATTLE_PREVIEW, { mission, assetRevision: 1, lineupVersion: 1,
-            formationId: 1, pending: [], replay: replay(mission, "audit:lineup") }));
+    const preview = new BattlePreviewController({
+        deliver: async (protocol, body, received) => {
+            assert.equal(protocol, Protocol.BATTLE_PREVIEW);
+            const { mission } = body as { mission: number };
+            assert.equal(mission, 850);
+            received(frame(protocol, { mission, assetRevision: 1, lineupVersion: 1,
+                formationId: 1, pending: [], replay: replay(mission, "audit:lineup") }));
+        },
     });
     try {
         assert.equal((await preview.preview(850))!.mission, 850);
@@ -411,13 +419,55 @@ async function routes(): Promise<void> {
     }
 }
 
+/** 旧遇敌请求被连接层撤销后，新一轮相同版本的战报也只返回给真正收到它的调用。 */
+async function encounterDelivery(): Promise<void> {
+    const model = new MainChapterModel();
+    const controller = new MainChapterController(model);
+    let release!: () => void;
+    const cancelled = new Promise<void>(done => { release = done; });
+    let first = true;
+    controller.configure({
+        deliver: async (name, _body, received) => {
+            assert.equal(name, Protocol.CHAPTER_IDLE_ENCOUNTER);
+            if (first) {
+                first = false;
+                await cancelled;
+                return;
+            }
+            received(frame(name, { stage: 850, assetRevision: 1, lineupVersion: 1, replay: idleReplay() }));
+        },
+    });
+    const restore = (): void => {
+        model.state = state(850, 3);
+        model.idle = {
+            serverTime: 1000, startedAt: 900, maxSeconds: 3600, frequency: 60,
+            rewardStage: 850, lineupVersion: 1, rates: [], slots: [{ heroId: "hero-1", position: 1 }],
+        };
+    };
+    controller.initialize();
+    try {
+        restore();
+        const old = controller.encounter();
+        controller.resetSession();
+        restore();
+        assert((await controller.encounter())?.length, "新请求应收到自己的战报");
+        release();
+        assert.equal(await old, null, "原请求未交付不能借用新请求的战报");
+    } finally {
+        release();
+        controller.dispose();
+    }
+}
+
 /** 可选真实Java帧检查只读全局关卡与当前范围分权，默认专项不依赖旧target产物。 */
 async function interop(): Promise<void> {
     for (const argument of process.argv.filter(value => value.startsWith("--java="))) {
         const wire = GameProtocolCodecUtils.decodeGameFrame(readFileSync(argument.slice(7)));
         const body = wire.body as any;
         if (wire.name === Protocol.BATTLE_PREVIEW) {
-            const controller = new BattlePreviewController(async (_mission, received) => { received(wire); });
+            const controller = new BattlePreviewController({
+                deliver: async (_protocol, _body, received) => { received(wire); },
+            });
             try {
                 const result = await controller.preview(body.mission);
                 assert.equal(result!.mission, body.mission);
@@ -432,7 +482,7 @@ async function interop(): Promise<void> {
         } else if (wire.name === Protocol.CHAPTER_CHALLENGE || wire.name === Protocol.CHAPTER_CLAIM) {
             const model = new MainChapterModel();
             const controller = new MainChapterController(model);
-            model.state = MainChapterController.readState(state(2, 3));
+            model.state = MainChapterModel.readState(state(2, 3));
             const current = model.state;
             controller.onNotify(wire.name, body);
             assert.equal(model.state, current, "真实历史回执仍不能覆盖当前范围");
@@ -441,7 +491,7 @@ async function interop(): Promise<void> {
         } else {
             assert([Protocol.SESSION_LOGIN, Protocol.SESSION_AUTHENTICATE, Protocol.STATE_CHANGED].includes(wire.name as any));
             const snapshot = wire.name === Protocol.STATE_CHANGED ? body : body.initial;
-            assert.equal(MainChapterController.readState(snapshot.mainChapter, snapshot.revision)!.challengeLimit, 20);
+            assert.equal(MainChapterModel.readState(snapshot.mainChapter, snapshot.revision)!.challengeLimit, 20);
         }
         console.log("Java全局主线/挑战范围PB互通通过：" + wire.name + " " + argument.slice(7));
     }
@@ -455,6 +505,7 @@ async function main(): Promise<void> {
     await playerIdleEntry();
     genericReplay();
     await routes();
+    await encounterDelivery();
     await interop();
     console.log("PASS main chapter scope: server limit, historical recovery and strict global-index replay");
 }

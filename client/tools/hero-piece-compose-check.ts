@@ -1,6 +1,6 @@
 /**
  * 精英碎片旧5008数量交互专项：使用仓库真实物品/语言配置，验证0/1/多次分流、输入、库存变化及关页。
- * 应用合成能力替换为可观察Promise，只检查真实调用参数与不预扣资产，不伪造英雄或奖励快照。
+ * 界面用可观察的提交能力核对参数和库存，并检查服务端拒绝、正常奖励和断线后的快照同步。
  */
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
@@ -12,6 +12,11 @@ import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { BagController } from "../assets/scripts/features/bag/BagController";
+import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
+import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
+import { AccountController } from "../assets/scripts/features/account/AccountController";
+import { AccountModel } from "../assets/scripts/features/account/AccountModel";
+import { AccountOperations } from "../assets/scripts/features/account/AccountOperations";
 import { BagModel } from "../assets/scripts/features/bag/BagModel";
 import { BagInfoView } from "../assets/scripts/features/bag/ui/BagInfoView";
 import { HeroPieceComposeView } from "../assets/scripts/features/bag/ui/HeroPieceComposeView";
@@ -19,6 +24,8 @@ import { BagEvent } from "../assets/scripts/features/bag/utils/BagEvent";
 import { BagItemCatalog } from "../assets/scripts/features/bag/utils/BagItemCatalog";
 import { ItemDetailUtils } from "../assets/scripts/features/bag/utils/ItemDetailUtils";
 import { HeroPieceComposeUtils } from "../assets/scripts/features/bag/utils/HeroPieceComposeUtils";
+import { Protocol } from "../assets/scripts/platform/Protocol";
+import { SocketFailure, type GameSocketClient } from "../assets/scripts/platform/GameSocketClient";
 
 const { resolveBundleFile } = require(process.cwd() + "/tools/bundle-paths.cjs");
 const itemId = 20204004;
@@ -30,7 +37,7 @@ function child(parent: Node, name: string): Node {
     return node;
 }
 
-/** 构造实际数量View的控件夹具；关闭走BaseView清理，已交应用的Promise不随窗口取消。 */
+/** 构造数量窗控件，关闭走真实的页面清理，已发送的请求由背包控制器接收。 */
 function quantityView(): { view: HeroPieceComposeView; closes: () => number } {
     const node = new Node("HeroPieceComposeView");
     node.addComponent(UITransform).setContentSize(640, 1280);
@@ -81,17 +88,18 @@ function checkDefinitions(): void {
         const result = HeroPieceComposeUtils.definition(row.idx)!;
         assert(result);
         assert.equal(result.required, row.use_value);
-        assert.equal(result.minimumLevel, row.level_require);
     }
     for (const id of [900102, 2000002, 30104004, 1001001, 908101]) {
         assert.equal(HeroPieceComposeUtils.definition(id), null, "非精英碎片不开放合成：" + id);
     }
     assert.equal(HeroPieceComposeUtils.definition(itemId)!.required, 30);
-    assert.equal(HeroPieceComposeUtils.maximum(29, 30), 0);
-    assert.equal(HeroPieceComposeUtils.maximum(30, 30), 1);
-    assert.equal(HeroPieceComposeUtils.maximum(95, 30), 3);
-    assert.equal(HeroPieceComposeUtils.maximum(-1, 30), null);
-    assert.equal(HeroPieceComposeUtils.maximum(30, 0), null);
+    for (const [owned, expected] of [[29, 0], [30, 1], [95, 3]]) {
+        inventory(owned);
+        assert.equal(HeroPieceComposeUtils.stock(itemId)!.maximum, expected);
+    }
+    assert.throws(() => BagModel.instance.replaceAll([{ itemId, quantity: -1 }]));
+    const invalidConfig = { getConfig: () => ({ ...rows.find(row => row.idx === itemId), use_value: 0 }) };
+    assert.equal(HeroPieceComposeUtils.definition(itemId, invalidConfig as unknown as GameConfig), null);
     assert.equal(HeroPieceComposeUtils.normalize("2.9", 3), 2);
     assert.equal(HeroPieceComposeUtils.normalize("999999", 3), 3);
     for (const text of ["", "bad", "Infinity", "-2", "0"]) {
@@ -147,8 +155,8 @@ function checkDetail(calls: number[][]): void {
     detail.view.node.destroy();
 }
 
-/** 实际输入/加减事件及库存刷新决定未发送选择；账号清空关窗，已发请求独立于窗口生命周期。 */
-async function checkQuantity(calls: number[][]): Promise<void> {
+/** 实际输入、加减和库存刷新影响当前选择，确认后直接发包关窗。 */
+function checkQuantity(calls: number[][]): void {
     inventory(95);
     let fixture = quantityView();
     let view = fixture.view;
@@ -196,55 +204,166 @@ async function checkQuantity(calls: number[][]): Promise<void> {
     view.confirmButton!.node.emit(Button.EventType.CLICK);
     assert.equal(calls.length, before + 1);
     view.node.destroy();
-    await Promise.resolve();
 }
 
-/** 运行真实配置、组件事件和无预扣验证；应用完整原回执恢复由独立装配专项负责。 */
+/** 以真实账号发送、路由和背包回调验证成功、拒绝及错配；断线后用鉴权快照恢复。 */
+async function checkAuthoritativeCompose(notices: string[]): Promise<void> {
+    const commands: string[] = [];
+    const receiptId = "20000001-1111-4111-8111-111111111111";
+    const actual = { roleId: "test-role" };
+    const hero = { id: "01000000-1111-4111-8111-111111111111", templateId: 10204004, level: 1, star: 4 };
+    const displays: Array<{ id: string; revision: number; actual: unknown }> = [];
+    const requestIds = new Set<string>();
+    const role = { id: "test-role", nickname: "测试", level: 1, gold: 0, diamonds: 0 };
+    const account = new AccountController(new AccountModel(), {
+        developmentLogin: async () => ({ session: { accessToken: "test-token", expiresAt: "2099-01-01T00:00:00Z" }, role }),
+        currentRole: async () => role,
+    }, { read: () => null, write: () => {}, clear: () => {} });
+    let outcome: "success" | "wrong-item" | "wrong-quantity" | "wrong-request" | "stale-session" | SocketFailure = "success";
+    const socket = {
+        requestFrame: async (_token: string, name: string, body: unknown) => {
+            commands.push(name);
+            assert.equal(name, Protocol.HERO_FRAGMENT_COMBINE);
+            const request = body as { requestId: string; itemId: number; quantity: number };
+            assert.deepEqual([request.itemId, request.quantity], [itemId, 1]);
+            assert.match(request.requestId, /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/);
+            assert(!requestIds.has(request.requestId), "每一次主动点击使用自己的请求编号");
+            requestIds.add(request.requestId);
+            if (outcome instanceof SocketFailure) {
+                throw outcome;
+            }
+            if (outcome === "stale-session") {
+                account.logout();
+            }
+            return {
+                version: 1, name, kind: "response", ok: true,
+                body: {
+                    requestId: outcome === "wrong-request" ? receiptId : request.requestId,
+                    itemId: outcome === "wrong-item" ? itemId + 1 : request.itemId,
+                    quantity: outcome === "wrong-quantity" ? request.quantity + 1 : request.quantity,
+                    receiptId, assetRevision: 4, roleId: role.id, actual,
+                },
+            };
+        },
+    };
+    const bag = new BagController(BagModel.instance);
+    bag.configure(new AccountOperations(account, socket as unknown as GameSocketClient), {
+        restoreActual: (id, revision, value) => {
+            displays.push({ id, revision, actual: value });
+            return "queued";
+        },
+    });
+    const roster = new HeroRosterController(HeroRosterModel.instance);
+    bag.initialize();
+    roster.initialize();
+    // 业务方法同步返回；独立等待当前内存传输的微任务完成，观察收包造成的展示变化。
+    const submit = async () => {
+        assert.equal(bag.composeHeroPieces(itemId, 1), undefined);
+        await new Promise<void>(resolve => setImmediate(resolve));
+    };
+    try {
+        assert(await account.login("compose-check"));
+        inventory(30);
+        await submit();
+        assert.deepEqual(commands, [Protocol.HERO_FRAGMENT_COMBINE]);
+        assert.deepEqual(displays, [{ id: receiptId, revision: 4, actual }]);
+        assert.equal(BagModel.instance.quantity(itemId), 30, "收到回执不在本地预扣碎片");
+        assert.equal(HeroRosterModel.instance.snapshot.heroes.length, 0, "收到回执不在本地创建英雄");
+
+        const noticeStart = notices.length;
+        outcome = new SocketFailure("FRAGMENT_CAPACITY_FULL", "英雄名册剩余位置不足");
+        await submit();
+        assert.equal(notices.length, noticeStart + 1);
+        assert.equal(notices.at(-1), "英雄名册剩余位置不足");
+        assert.equal(displays.length, 1);
+        assert.equal(BagModel.instance.quantity(itemId), 30);
+
+        outcome = "stale-session";
+        await submit();
+        assert.equal(notices.length, noticeStart + 1, "旧会话的操作结果由账号层拦截");
+        assert.equal(displays.length, 1);
+
+        assert(await account.login("compose-check"));
+        outcome = new SocketFailure("DISCONNECTED", "网络已断开");
+        await submit();
+        assert.equal(notices.at(-1), "合成结果待同步，恢复连接后请查看背包");
+        assert.equal(BagModel.instance.quantity(itemId), 30);
+        const snapshot = { initial: { revision: 4, inventory: [], heroes: [hero] } };
+        bag.onNotify(Protocol.SESSION_AUTHENTICATE, snapshot);
+        roster.onNotify(Protocol.SESSION_AUTHENTICATE, snapshot);
+        assert.equal(BagModel.instance.quantity(itemId), 0, "重连同步服务器扣除后的库存");
+        assert.equal(HeroRosterModel.instance.snapshot.heroes[0]?.id, hero.id, "名册读取服务器新增英雄");
+        assert.deepEqual(commands, Array(4).fill(Protocol.HERO_FRAGMENT_COMBINE), "重连后不查询或补发合成");
+        assert.equal(displays.length, 1, "丢失的回执不从快照补弹奖励");
+
+        for (const mistake of ["wrong-item", "wrong-quantity", "wrong-request"] as const) {
+            outcome = mistake;
+            const before = notices.length;
+            await submit();
+            assert.equal(notices.length, before + 1);
+            assert.match(notices.at(-1)!, /与(?:本次)?请求不符/);
+            assert.equal(displays.length, 1, "物品、数量或请求编号错配时不能展示奖励");
+        }
+    } finally {
+        account.dispose();
+        bag.dispose();
+        roster.dispose();
+    }
+}
+
+/** 运行真实配置、组件操作及服务端权威同步检查，全程隔离玩家数据。 */
 async function main(): Promise<void> {
     GameLog.shared.mirrorConsole = false;
     GameConfig.instance.initialize(async path => JSON.parse(readFileSync(resolveBundleFile(path + ".json"), "utf8")));
     await GameConfig.instance.prepare([GConfig.Item, GConfig.Language, GConfig.HeroType]);
-    const controller = BagController.instance;
     const originalToast = UIManager.instance.toast;
     const notices: string[] = [];
     UIManager.instance.toast = text => { notices.push(text); };
     const calls: number[][] = [];
-    let finish!: () => void;
-    const pending = new Promise<void>(resolve => { finish = resolve; });
-    let level = 1;
-    controller.initialize();
-    controller.configurePieceCompose((id, quantity) => { calls.push([id, quantity]); return pending; }, () => level);
+    const operations: Pick<AccountOperations, "send"> = {
+        send: (_controller, name, body) => {
+            assert.equal(name, Protocol.HERO_FRAGMENT_COMBINE);
+            const { itemId, quantity } = body as typeof body & { itemId: number; quantity: number };
+            calls.push([itemId, quantity]);
+        },
+    };
+    const bag = BagController.instance;
     try {
         checkDefinitions();
         checkPrefab();
-        checkDetail(calls);
-        await checkQuantity(calls);
         inventory(30);
-        controller.configurePieceCompose((id, quantity) => { calls.push([id, quantity]); return pending; },
-            () => level, undefined, () => 0);
+        assert.equal(bag.canComposeHeroPieces, false);
+        const unopened = detailView(itemId);
+        unopened.view.btnEnter!.node.emit(Button.EventType.CLICK);
+        assert.equal(unopened.closes(), 0, "背包未装配合成请求时不发送、不关详情");
+        assert.equal(notices[notices.length - 1], "该碎片合成暂未开放");
+        unopened.view.onClose();
+        unopened.view.node.destroy();
+        bag.configure(operations, { restoreActual: () => "empty" });
+        bag.initialize();
+        checkDetail(calls);
+        checkQuantity(calls);
+        inventory(30);
+        HeroRosterModel.instance.replace({
+            status: "ready", error: "",
+            heroes: [{ id: "hero", templateId: 10304012, level: 1, star: 4 }],
+            rosterInfo: { capacity: 1, buySpaceTimes: 0 },
+        });
         const full = detailView(itemId);
         const requestsBeforeFull = calls.length;
         full.view.btnEnter!.node.emit(Button.EventType.CLICK);
-        assert.equal(full.closes(), 0, "旧单次详情容量不足仍保留窗口");
-        assert.equal(calls.length, requestsBeforeFull);
-        assert.equal(notices[notices.length - 1], "英雄背包已满");
-        full.view.onClose(); full.view.node.destroy();
-        assert(controller.composeHeroPieces(itemId, 1), "数量窗分支不增加本地容量前检，服务器最终拒绝");
-        controller.configurePieceCompose(() => pending, () => level, undefined, () => null);
-        assert(controller.composeHeroPieces(itemId, 1, true), "未知容量不能当0误禁单次合成");
-        inventory(30);
-        level = 0;
-        assert.equal(controller.composeHeroPieces(itemId, 1), null);
-        assert(notices[notices.length - 1].includes("角色达到"));
-        level = 1;
-        controller.configurePieceCompose(() => pending, () => level, () => false);
-        assert.equal(controller.composeHeroPieces(itemId, 1), null);
-        assert.equal(controller.composeHeroPieces(900102, 1), null);
-        finish();
-        await pending;
-        console.log("hero-piece-compose-check passed: 136 configurations, 0/1/many routing, input, authority and close/reset");
+        assert.equal(full.closes(), 1);
+        assert.equal(calls.length, requestsBeforeFull + 1, "名册容量交服务端判定");
+        assert.equal(notices[notices.length - 1], "该碎片合成暂未开放", "客户端不替服务端提示容量不足");
+        full.view.node.destroy();
+        bag.dispose();
+        await checkAuthoritativeCompose(notices);
+        assert.equal(bag.canComposeHeroPieces, false);
+        console.log("hero-piece-compose-check passed: 136 configurations, quantity, single request, feedback and snapshot");
     } finally {
-        controller.dispose();
+        bag.dispose();
+        BagModel.instance.reset();
+        HeroRosterModel.instance.reset();
         UIManager.instance.toast = originalToast;
     }
 }

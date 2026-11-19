@@ -1,11 +1,12 @@
 /**
  * 独立物品详情窗口，由UIManager打开完整预制体；背景、内容布局及面板内输入阻挡保存在Prefab。
  * 共享模态由UIManager按ViewSpec配置提供，窗口不持有独立蒙版节点。
- * 库存入口读取唯一BagModel，精英碎片使用转交BagController；结算与产物说明只读，不自行查询或修改资产。
+ * 库存入口读取唯一 BagModel，精英碎片提交到 BagController；结算与产物说明只读。
  */
 import { _decorator, Button, Label, Layout, Node, RichText, ScrollView, Sprite, UITransform, Widget } from "cc";
 import { BagUtils } from "../utils/BagUtils";
 import { GameLog } from "../../../core/GameLog";
+import { ServerClock } from "../../../core/ServerClock";
 import { BagFace } from "../data/BagItemDataUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
@@ -22,7 +23,7 @@ import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { ItemDetailDisplay, ItemDetailUtils } from "../utils/ItemDetailUtils";
 import { BagController } from "../BagController";
-import type { HeroPieceComposeState } from "../utils/HeroPieceComposeUtils";
+import { HeroPieceComposeUtils, type HeroPieceComposeState } from "../utils/HeroPieceComposeUtils";
 
 /** 库存只传条目键与分类；奖励和产物只传只读内容，不能冒充当前库存。 */
 export type BagInfoArgs =
@@ -38,7 +39,7 @@ export type BagInfoArgs =
 const { ccclass, property } = _decorator;
 
 /**
- * BagInfoView共用普通道具与碎片的旧基础详情，精英碎片合成转交BagController，其余使用和分解保持未开放。
+ * BagInfoView 共用普通道具与碎片的旧基础详情，精英碎片合成交给 BagController，其余使用和分解保持未开放。
  * 关闭只收起这张详情，不关背包页。
  */
 @UIRegistry.view({
@@ -153,8 +154,8 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
     /** Prefab 中固定的底部倒计时标签，普通物品隐藏。 */
     @property(Label)
     countdown: Label | null = null;
-    /** 当前期限数据与服务器计时入口，关闭销毁时清空。 */
-    private timing: { expiresAtSeconds: number; now: () => number | null } | null = null;
+    /** 当前道具的 Unix 到期秒，普通详情、关闭或销毁时为空。 */
+    private expiresAtSeconds: number | null = null;
     /** 上次显示的剩余整数秒，避免逐帧重复写文本。 */
     private lastRemaining: number | null = null;
     /** 显示时绑定的关闭动作，关闭或销毁时释放。 */
@@ -192,16 +193,16 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         }
     }
 
-    /** 按原实例键重读库存和真实mode；已恢复的道具/碎片取配置投影，删除、换号或到期关窗。 */
+    /** 按实例键及公共时钟重读库存，匹配道具配置；删除、换号或到期时关窗。 */
     private refreshInventory(): void {
         const args = this.args;
         if (args?.source !== "inventory") {
             return;
         }
-        const model = BagModel.instance;
-        const state = model.snapshot;
-        const item = BagItemCatalog.list(state.items, state.timedItems, args.tab, model.serverTimeSeconds(), state.spiritItems)
-            .find(row => row.key === args.key);
+        const state = BagModel.instance.snapshot;
+        const item = BagItemCatalog.list(
+            state.items, state.timedItems, args.tab, ServerClock.instance.nowSeconds(), state.spiritItems,
+        ).find(row => row.key === args.key);
         if (!item) {
             this.close();
             return;
@@ -222,10 +223,7 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         const face = item.spirit ? BagItemCatalog.spiritFace(item.spirit) : BagItemCatalog.face(item.itemId, item.quantity);
         this.show(detail ? { ...face, typeLine: detail.typeLine, body: detail.description, richBody: detail.richDescription } : face,
             () => this.close(), text => UIManager.instance.toast(text), detail);
-        this.setCountdown(item.expiresAtSeconds === undefined ? undefined : {
-            expiresAtSeconds: item.expiresAtSeconds,
-            now: () => BagModel.instance.serverTimeSeconds(),
-        });
+        this.setCountdown(item.expiresAtSeconds);
     }
 
     /** 关闭后解除按钮与计时引用；全局目标事件由 BaseView 清理。 */
@@ -382,29 +380,32 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         }
     }
 
-    /** 设置只读倒计时，不发请求、不修改库存；普通详情传空值以隐藏标签。 */
-    public setCountdown(timing?: { expiresAtSeconds: number; now: () => number | null }): void {
-        this.timing = timing || null;
+    /** 设置道具到期时间，未提供到期秒的详情隐藏倒计时。 */
+    private setCountdown(expiresAtSeconds?: number): void {
+        this.expiresAtSeconds = expiresAtSeconds ?? null;
         this.lastRemaining = null;
         if (this.countdown) {
-            this.countdown.node.active = !!timing;
-        }
-        if (timing && !this.countdown) {
+            this.countdown.node.active = this.expiresAtSeconds !== null;
+        } else if (this.expiresAtSeconds !== null) {
             throw new Error("BagInfoView 缺少 countdown 绑定");
         }
         this.update();
     }
-    /** 每秒更新一次标签；未知服务器时刻显示同步提示，详情随节点销毁停止更新。 */
+
+    /** 用公共时钟更新详情倒计时，校时期间显示等待，物品到期后关闭详情。 */
     public update(): void {
-        if (!this.timing || !this.countdown) {
+        if (this.expiresAtSeconds === null || !this.countdown) {
             return;
         }
-        const now = this.timing.now();
+        const now = ServerClock.instance.nowSeconds();
         if (now === null) {
-            this.countdown.string = "等待服务器时间";
+            if (this.countdown.string !== "等待服务器时间") {
+                this.countdown.string = "等待服务器时间";
+                this.lastRemaining = null;
+            }
             return;
         }
-        const remaining = Math.max(0, Math.floor(this.timing.expiresAtSeconds - now));
+        const remaining = Math.max(0, this.expiresAtSeconds - now);
         if (remaining === 0 && this.args?.source === "inventory") {
             this.close();
             return;
@@ -435,7 +436,7 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         if (!this.detail.showUse) {
             return;
         }
-        const state = BagController.instance.pieceComposeState(this.detail.itemId);
+        const state = HeroPieceComposeUtils.stock(this.detail.itemId);
         if (!state) {
             this.toast?.("物品使用暂未开放");
             return;
@@ -443,9 +444,10 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         this.useHeroPieces(state);
     };
 
-    /** 沿旧详情的不足/单次/多次分流；本方法只结束窗口选择，回执与错误反馈仍归应用原请求。 */
+    /** 按库存区分不足、单次和多次合成；单次直接发包，多次交数量窗确认。 */
     private useHeroPieces(state: HeroPieceComposeState): void {
-        if (!state.available) {
+        const bag = BagController.instance;
+        if (!bag.canComposeHeroPieces) {
             this.toast?.("该碎片合成暂未开放");
             return;
         }
@@ -454,12 +456,8 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
             return;
         }
         if (state.maximum === 1) {
-            const pending = BagController.instance.composeHeroPieces(state.itemId, 1, true);
-            if (pending) {
-                // 应用已接管原请求；关页不撤销，失败也不在此重复提示。
-                void pending.catch(() => { });
-                this.closeAction?.();
-            }
+            bag.composeHeroPieces(state.itemId, 1);
+            this.closeAction?.();
             return;
         }
         if (this.args?.source === "inventory" && this.args.onSelectPieceQuantity) {
@@ -525,7 +523,7 @@ export class BagInfoView extends BaseView<BagInfoArgs> {
         if (this.descriptionScroll?.isValid) {
             this.descriptionScroll.stopAutoScroll();
         }
-        this.timing = null;
+        this.expiresAtSeconds = null;
         this.lastRemaining = null;
         this.closeAction = null;
         this.toast = null;

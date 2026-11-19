@@ -1,7 +1,7 @@
 /**
  * 精英碎片旧5008数量选择窗：初始选当前最大合成次数，支持加减和输入，数量0确认只关闭。
  * BagView通过UIManager拥有本窗，静态旧面板保存在Prefab；角色与库存仍归唯一Model，不预扣资产。
- * 正数确认交BagController及应用持久请求，关窗不取消已发送合成，账号重置和数量变化只影响未发送选择。
+ * 正数确认交给 BagController，关窗不取消已发送合成，账号重置和数量变化只影响未发送选择。
  */
 import { _decorator, Button, EditBox, Label, Node } from "cc";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
@@ -15,9 +15,8 @@ import { BagController } from "../BagController";
 import { BagEvent } from "../utils/BagEvent";
 import { BagItemCatalog } from "../utils/BagItemCatalog";
 import { HeroPieceComposeUtils } from "../utils/HeroPieceComposeUtils";
-import { BagModel } from "../BagModel";
 
-/** 只传物品配置ID，库存、可合成数量及角色等级始终重新读取当前状态。 */
+/** 只传物品配置 ID，页面根据当前库存计算可选次数。 */
 export interface HeroPieceComposeArgs {
     /** 精英碎片配置ID，不是英雄模板ID或持久记录ID。 */
     readonly itemId: number;
@@ -79,7 +78,7 @@ export class HeroPieceComposeView extends BaseView<HeroPieceComposeArgs> {
         this.submitted = false;
         this.wire();
         EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refresh);
-        const state = BagController.instance.pieceComposeState(args.itemId);
+        const state = HeroPieceComposeUtils.stock(args.itemId);
         this.quantity = state?.maximum || 0;
         this.refresh();
     }
@@ -100,11 +99,11 @@ export class HeroPieceComposeView extends BaseView<HeroPieceComposeArgs> {
         }
     }
 
-    /** 当前库存或支持资格失效时关闭；仍有库存则限制原选择，不擅自把数量更新为全选。 */
+    /** 库存变化后刷新可选次数，保留仍有效的输入。 */
     private readonly refresh = (): void => {
         const itemId = this.args?.itemId;
-        const state = itemId === undefined ? null : BagController.instance.pieceComposeState(itemId);
-        if (!state?.available || !BagModel.instance.snapshot.synced || state.owned === 0 || state.maximum === 0) {
+        const state = itemId === undefined ? null : HeroPieceComposeUtils.stock(itemId);
+        if (!state?.maximum || !BagController.instance.canComposeHeroPieces) {
             this.close();
             return;
         }
@@ -152,7 +151,7 @@ export class HeroPieceComposeView extends BaseView<HeroPieceComposeArgs> {
         this.renderQuantity();
     };
 
-    /** 0确认只关闭；正数再次核对当前权威持有量后交付应用原请求，不能在View扣碎片或创建英雄。 */
+    /** 零次数直接关闭；正数交背包控制器发包，随后关闭数量窗。 */
     private readonly confirm = (): void => {
         if (this.submitted || !this.args) {
             return;
@@ -162,19 +161,10 @@ export class HeroPieceComposeView extends BaseView<HeroPieceComposeArgs> {
             this.close();
             return;
         }
-        const args = this.args;
-        const pending = BagController.instance.composeHeroPieces(args.itemId, this.quantity);
-        if (!pending) {
-            this.refresh();
-            return;
-        }
-        // Promise的业务/网络反馈由应用统一负责；关页只结束选择，不撤回持久请求。
-        void pending.catch(() => { });
-        if (this.node.isValid && this.args === args) {
-            this.submitted = true;
-            this.renderQuantity();
-            this.close();
-        }
+        this.submitted = true;
+        this.renderQuantity();
+        BagController.instance.composeHeroPieces(this.args.itemId, this.quantity);
+        this.close();
     };
 
     /** 登记本窗实际控件；重复打开先解除旧监听，避免同次点击创建多份请求。 */

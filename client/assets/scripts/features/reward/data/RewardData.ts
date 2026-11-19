@@ -53,10 +53,24 @@ export interface RewardExperienceGain {
     readonly diamonds: number;
 }
 
+/** 召唤结果原入口，用于让召唤页面重新核对同一奖池的消耗。 */
+export interface RepeatSummon {
+    /** 对应召唤页面的奖池，积分兑换没有再召唤按钮。 */
+    readonly pool: "NORMAL" | "FRIENDSHIP" | "ADVANCED";
+    /** 原操作是单抽还是十连，重新召唤需由页面按最新快照报价。 */
+    readonly count: 1 | 10;
+}
+
 /** 打开一次历史奖励展示，同编号重复打开不重新播放当前窗口的音效和动画。 */
 export interface RewardArgs {
     /** 本次新英雄实例，复用原队列身份；旧无英雄反馈缺省为空。 */
     readonly heroes?: readonly HeroGrantItem[];
+    /** 多英雄召唤使用四列汇总，每个真实英雄实例独占一格。 */
+    readonly summonBatch?: true;
+    /** 允许重新执行同模式召唤，仅表示原操作入口，不包含报价和凭证。 */
+    readonly repeatSummon?: RepeatSummon;
+    /** 奖励队列先播放独立开场，再打开同一笔回执的获得画面。 */
+    readonly summonIntro?: true;
     /** 已确认业务成功结果的真实UUID，只用于当前窗口重复展示判断。 */
     readonly receiptId: string;
     /** 服务端通知或真实回执中已合并的实际到账与附赠；不传理论量或背包当前持有数。 */
@@ -73,4 +87,6 @@ export interface RewardRow {
     readonly itemId: number;
     /** 已过滤零值的实际到账数量。 */
     readonly quantity: number;
+    /** 召唤汇总中的单个真实英雄，普通物品行没有此字段。 */
+    readonly hero?: HeroGrantItem;
 }

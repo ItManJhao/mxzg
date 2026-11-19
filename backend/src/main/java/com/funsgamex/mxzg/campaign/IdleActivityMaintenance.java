@@ -5,8 +5,10 @@
  */
 package com.funsgamex.mxzg.campaign;
 
+import com.funsgamex.mxzg.time.GameClock;
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -48,11 +50,11 @@ public class IdleActivityMaintenance implements ApplicationRunner {
     private record PreparedServer(String id, long openedAtSeconds,
                                    Optional<IdleActivityPublicationUtils.Publication> publication) {}
 
-    /** 正常应用使用服务器UTC时钟；区服自然日规则仍由ControlRules使用上海时区。 */
+    /** 活动期次使用同一个游戏时钟；定时任务触发间隔仍由 Spring 调度管理。 */
     @Autowired
     public IdleActivityMaintenance(IdleActivityMaintenanceService service,
-                                    IdleActivityMaintenanceProperties properties) {
-        this(service, properties, Clock.systemUTC());
+                                   IdleActivityMaintenanceProperties properties, GameClock clock) {
+        this(service, properties, clock.withZone(ZoneOffset.UTC));
     }
 
     /** 隔离测试可注入固定时钟，执行与正常入口完全相同的配置和定时逻辑。 */

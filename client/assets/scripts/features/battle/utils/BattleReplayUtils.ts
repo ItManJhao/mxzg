@@ -1,4 +1,4 @@
-/** 选定主线场景的Protobuf战报校验与播放步骤整理；不请求网络、不重算伤害、不发奖励。 */
+/** 校验主线、金币副本和历史样本的Protobuf战报，整理有序播放步骤；服务端负责伤害和奖励。 */
 import { mxzg } from "../../../platform/GameProtocol.generated";
 
 /** 生成器运行时64位值；校验时显式转换，实例身份保持字符串。 */
@@ -94,6 +94,21 @@ export interface ParsedBattleReplay {
 }
 
 export class BattleReplayUtils {
+    /** 将协议内的战报编码为播放器使用的字节；字段和完整事件链都通过后才交付。 */
+    public static encodeVerified(replay: object): Uint8Array {
+        const codec = (mxzg as unknown as { game: { BattleReplay: {
+            verify(value: object): string | null;
+            encode(value: object): { finish(): Uint8Array };
+        } } }).game.BattleReplay;
+        const error = codec.verify(replay);
+        if (error) {
+            throw new Error("战报协议字段无效：" + error);
+        }
+        const bytes = codec.encode(replay).finish();
+        this.parse(bytes);
+        return bytes;
+    }
+
     /** 读取已校验战报的冻结名称；缺失返回null，不读取当前角色资料。 */
     public static names(bytes: Uint8Array): ParsedBattleReplay["names"] {
         return this.parse(bytes).names;
@@ -154,7 +169,7 @@ export class BattleReplayUtils {
     }
 
     /**
-     * 解码并完整校验全局关卡战报及旧具名样本，一次返回步骤、名册及冻结名称。
+     * 解码并完整校验关卡、副本战报及旧具名样本，一次返回步骤、名册及冻结名称。
      * 校验失败保留原错误，不交付部分结果。成功仅确认战报数据有效，技能表现资源另行核对。
      */
     public static parse(bytes: Uint8Array): ParsedBattleReplay {
@@ -174,12 +189,16 @@ export class BattleReplayUtils {
         }
         const chapter = this.chapterScenario(report.scenario);
         const idleMission = chapter?.idle ? chapter.index : 0;
-        const lineupMission = chapter && !chapter.idle ? chapter.index : 0;
-        if (report.schemaVersion !== 1 || (!lineupMission && !idleMission && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
-            || (!lineupMission && !idleMission && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > 15) {
+        const goldDungeon = report.scenario === "dungeon:gold:1";
+        const indexedRoster = !!chapter || goldDungeon;
+        if (report.schemaVersion !== 1 || (!indexedRoster && ["main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:charm", "audit:charm-death", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed"].indexOf(report.scenario) < 0)
+            || (!indexedRoster && report.units.length !== ((["audit:control-teams", "audit:charm", "audit:charm-death"].includes(report.scenario)) ? 4 : (report.scenario === "main:1:1:3" || report.scenario === "audit:frozen") ? 3 : 2)) || report.rounds < 1 || report.rounds > 15) {
             throw new Error("战报版本或场景不支持");
         }
         const roster = this.validateUnits(report.units);
+        if (goldDungeon) {
+            this.validateGoldDungeonRoster(roster);
+        }
         const hp = new Map<number, number>();
         const expected = report.scenario === "audit:charm-death"
             ? [[1, 1, 10105011, 2, 50], [2, 2, 10101001, 5, 25], [3, 2, 10101001, 6, 25], [4, 2, 10101001, 7, 25]]
@@ -196,7 +215,7 @@ export class BattleReplayUtils {
             : [[1, 1, 10101001, 2, 1], [2, 2, report.scenario === "main:1:1:2" ? 10505005 : 10101001, 2,
                 report.scenario === "main:1:1:2" ? 2 : 1]];
         for (const unit of roster) {
-            if (lineupMission || idleMission) {
+            if (indexedRoster) {
                 if (unit.unitId !== unit.position + (unit.faction === 2 ? 8 : 0)) throw new Error("阵容战报身份无效");
             } else {
                 const entry = expected.find(value => value[0] === unit.unitId);
@@ -366,6 +385,21 @@ export class BattleReplayUtils {
                 defender: Object.prototype.hasOwnProperty.call(report, "defenderName") ? report.defenderName! : null,
             }),
         });
+    }
+
+    /** 核对金币首关冻结守军，六个站位均须出现；我方沿用原阵容及通用身份校验。 */
+    private static validateGoldDungeonRoster(roster: readonly BattleReplayUnit[]): void {
+        const enemies = roster.filter(unit => unit.faction === 2);
+        const expected = [
+            [2, 10405005, 5], [3, 10104004, 4], [5, 10204005, 4],
+            [6, 10204004, 4], [7, 10104004, 4], [8, 10403001, 3],
+        ];
+        if (enemies.length !== expected.length || expected.some(([position, template, star]) => {
+            const unit = enemies.find(enemy => enemy.position === position);
+            return !unit || unit.templateId !== template || unit.star !== star || unit.level !== 5;
+        })) {
+            throw new Error("金币副本首关战报名册不符");
+        }
     }
 
     /**

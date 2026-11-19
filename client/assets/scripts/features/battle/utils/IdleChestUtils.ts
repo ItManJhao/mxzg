@@ -1,14 +1,12 @@
-/** 挂机宝箱显示与收取表现的纯计算，由主线页面消费服务器时钟快照。
+/** 挂机宝箱显示与收取表现的纯计算，由主线页面传入服务器当前时间。
  * 不发送领取请求、不计算奖励或修改持久起点；取整、四档和显示门槛沿用旧BattlePanelLayer。 */
 export class IdleChestUtils {
     /** 纯显示工具不允许实例化。 */
     private constructor() {}
 
-    /** 将已接纳服务器时间外推并封顶；本地时钟回拨不产生负的经过时间。 */
-    public static elapsed(serverTime: number, startedAt: number, maxSeconds: number,
-        receivedAt: number, now: number): number {
-        const since = Math.max(0, Math.floor((now - receivedAt) / 1000));
-        return Math.max(0, Math.min(maxSeconds, serverTime - startedAt + since));
+    /** 按公共时钟当前秒和服务端累计起点计算时长，限制在零到快照规定的上限之间。 */
+    public static elapsed(nowSeconds: number, startedAt: number, maxSeconds: number): number {
+        return Math.max(0, Math.min(maxSeconds, nowSeconds - startedAt));
     }
 
     /** 先向下取整百分比再判档；无有效上限时拒绝显示，避免伪造宝箱进度。 */
@@ -27,7 +25,7 @@ export class IdleChestUtils {
 
     /**
      * 按旧频率加5秒计算显示等待时间，当前frequency=60时显示门槛为65秒。
-     * @param seconds 从已接纳快照推算的显示秒数；不足一秒向下取整，回拨按0秒显示。
+     * @param seconds 公共时钟与累计起点得出的显示秒数，不足一秒向下取整。
      * @param frequency 同一服务端快照中的收益周期，单位为秒。
      * @param maxSeconds 同一快照的显示上限，单位为秒，不用于重新计算领取资格。
      * @returns 0表示显示时间已到门槛，正数为还需等待的秒数；null表示封顶显示无法确认门槛。

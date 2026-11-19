@@ -32,7 +32,9 @@ export interface SkillReplayFocus {
 
 export class BattleReplayPreview {
     /** 一次解析战场装配所需的战报数据，读取已安装配置并装载美术资源，开始骨骼到70%时出场、出场特效到60%时渐入模型，全部完成才显示HP并播放战报。
-     * 只读结果传原冻结名册；遇敌可借行军骨骼，关闭先归还再销毁，onIdleDeath不是奖励事件。 */
+     * 只读结果传原冻结名册；遇敌可借行军骨骼，关闭先归还再销毁，onIdleDeath不是奖励事件。
+     * @param formalTitle 其他正式玩法的己方称谓；传入时跳过主线专用信息栏布局及按钮。
+     * @param onPlaybackError 活跃播放失败并清理后调用一次，由外层展示已确认的业务结果。 */
     public static async open(
         parent: Node,
         bytes: Uint8Array,
@@ -46,6 +48,8 @@ export class BattleReplayPreview {
         isCancelled: () => boolean = () => false,
         retainedIdle?: MainChapterIdleDisplay,
         onIdleDeath?: (world: Readonly<Vec3>) => void,
+        formalTitle?: string,
+        onPlaybackError?: (error: unknown) => void,
     ): Promise<() => void> {
         const { steps, units, names } = BattleReplayUtils.parse(bytes);
         const config = GameConfig.instance.getFileByPath("config/buff");
@@ -91,17 +95,19 @@ export class BattleReplayPreview {
             shell.root.getChildByPath("LayerHud/HpBars")!.active = false;
             const hud = shell.root.getChildByName("LayerHud")!;
             const speedButton = hud.getChildByPath("TopBar/BtnSpeed")!;
-            speedButton.active = true;
-            const explainSpeed = () => UIManager.instance.toast(BattleInfoUtils.speedLockedNotice());
-            speedButton.on(Button.EventType.CLICK, explainSpeed);
-            shell.root.once(Node.EventType.NODE_DESTROYED, () => speedButton.off(Button.EventType.CLICK, explainSpeed));
-            hud.getChildByName("BtnSkip")!.active = BattleInfoUtils.mainChapterSkipVisible();
+            speedButton.active = formalTitle === undefined;
+            if (speedButton.active) {
+                const explainSpeed = () => UIManager.instance.toast(BattleInfoUtils.speedLockedNotice());
+                speedButton.on(Button.EventType.CLICK, explainSpeed);
+                shell.root.once(Node.EventType.NODE_DESTROYED, () => speedButton.off(Button.EventType.CLICK, explainSpeed));
+            }
+            hud.getChildByName("BtnSkip")!.active = formalTitle === undefined && BattleInfoUtils.mainChapterSkipVisible();
         }
         if (persistentChapter) {
             ViewportLayoutUtils.bindVisibleRefresh(shell.root, () => {
                 const scale = BattleInfoUtils.contentScale(ViewportLayoutUtils.readVisibleBox().width);
                 shell.root.setScale(scale, scale, 1);
-                if (formalOpening) {
+                if (formalOpening && formalTitle === undefined) {
                     BattlePageUtils.alignChapterInfo(shell, parent);
                 }
             });
@@ -131,7 +137,8 @@ export class BattleReplayPreview {
             const node = shell.root.getChildByPath(path);
             if (node) node.active = false;
         }
-        UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, persistentChapter ? "主线挑战阵容" : lineupTitle ? "当前保存阵容·只读" : "独立测试阵容");
+        const allyTitle = formalTitle ?? (persistentChapter ? "主线挑战阵容" : lineupTitle ? "当前保存阵容·只读" : "独立测试阵容");
+        UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/AllyNameLabel")!, allyTitle);
         UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, names.defender || lineupTitle || (units.some(unit => unit.templateId === 10105011) ? "魅惑之拥·随机目标验收" : units.every(unit => unit.templateId === 10505005) ? "三级流血专项" : units.every(unit => unit.templateId === 10205023) ? "奈奈子技能验收" : units.length === 4 ? "独立多目标验收" : units.length === 3 ? "主线第3关" : units.find(unit => unit.faction === 2)!.templateId === 10505005 ? "主线第2关" : "主线第1关"));
         const actors = new Map<number, SpineActor>();
         // 借用的我方骨骼在所有退出路径先归还，不能随临时战场销毁。
@@ -228,7 +235,7 @@ export class BattleReplayPreview {
             if (audio.isValid) audio.stop();
             for (const finish of pending) finish();
         };
-        /** 活跃战场的表现失败统一停止并记录一次有界原因/堆栈；关页或取消后的迟到失败不触碰节点。 */
+        /** 活跃战场失败时记录一次原因，停止表现并通知外层；关页或取消后的迟到失败直接丢弃。 */
         const failPlayback = (error: unknown) => {
             if (failureReported || closed || isCancelled() || !shell.root.isValid) {
                 return;
@@ -239,6 +246,7 @@ export class BattleReplayPreview {
             GameLog.shared.classified("MODULE", "error", "BattleReplayPreview", "播放失败：" + detail.slice(0, 4096));
             player?.stop();
             stop();
+            onPlaybackError?.(error);
         };
         /** 只读演示释放自己装配的结算入口；带结束回调的主线/遇敌只清播放器，不接管外层结果。 */
         const releaseSettlement = () => {
@@ -364,7 +372,7 @@ export class BattleReplayPreview {
                     assets.loadPath(path, "SpriteFrame"))));
             }
             for (const row of selected.values()) {
-                if (row.type === 1 || row.type === 11 || row.type === 2 || row.type === 3 || row.type === 5 || row.type === 6 || row.type === 7 || row.type === 8 || row.type === 9 || row.type === 100) {
+                if (BattleAttackUtils.isActionType(row.type) || row.type === 100) {
                     const names = row.type === 100 ? BattleAttackUtils.damageSounds(row) : BattleAttackUtils.plan(row).sounds;
                     if (row.type !== 100) {
                         const effect = BattleAttackUtils.plan(row).effect;
@@ -741,7 +749,8 @@ export class BattleReplayPreview {
                             }
                             if (cancelled() || !plan.effect) return;
                             const definition = plan.effect;
-                            await Promise.all((plan.onSource ? [step] : targets).map(async hit => {
+                            const fieldThrow = plan.projectileOffset !== null;
+                            await Promise.all((plan.onSource || fieldThrow ? [step] : targets).map(async hit => {
                                 if (cancelled()) return;
                                 const layer = shell.root.getChildByPath("LayerVfx")!;
                                 const transform = layer.getComponent(UITransform)!;
@@ -752,16 +761,24 @@ export class BattleReplayPreview {
                                     return transform.convertToNodeSpaceAR(world);
                                 };
                                 const from = pointOf(step.sourceId, true);
+                                if (fieldThrow) {
+                                    // 旧type10从站位中心投掷，并行动作移动角色时不偏移起点。
+                                    const origin = origins.get(step.sourceId)!.clone();
+                                    origin.y += 120 * 0.65 / 2;
+                                    const parentTransform = slot.parent!.getComponent(UITransform)!;
+                                    from.set(transform.convertToNodeSpaceAR(parentTransform.convertToWorldSpaceAR(origin)));
+                                }
                                 const effectUnit = plan.onSource ? step.sourceId : hit.targetId;
                                 const to = pointOf(effectUnit, plan.projectile);
-                                if (plan.battlefieldOffset) {
-                                    // 旧type9用战场尺寸定位，不随目标数量重复生成；旧敌方LeftEffectLayer横向镜像。
+                                const battlefieldPoint = plan.projectileOffset ?? plan.battlefieldOffset;
+                                const sourceEnemy = units.find(unit => unit.unitId === step.sourceId)!.faction === 2;
+                                if (battlefieldPoint) {
+                                    // 旧type9/10用战场尺寸定位一次，敌方特效层镜像横向比例。
                                     const field = shell.root.getComponent(UITransform)!;
-                                    const ratioX = units.find(unit => unit.unitId === step.sourceId)!.faction === 2
-                                        ? 1 - plan.battlefieldOffset[0] : plan.battlefieldOffset[0];
+                                    const ratioX = sourceEnemy ? 1 - battlefieldPoint[0] : battlefieldPoint[0];
                                     const world = field.convertToWorldSpaceAR(new Vec3(
                                         field.width * (ratioX - field.anchorX),
-                                        field.height * (plan.battlefieldOffset[1] - field.anchorY), 0));
+                                        field.height * (battlefieldPoint[1] - field.anchorY), 0));
                                     to.set(transform.convertToNodeSpaceAR(world));
                                 }
                                 const node = new Node("SkillEffect");
@@ -775,15 +792,23 @@ export class BattleReplayPreview {
                                 sprite.trim = false;
                                 const sequence = frames.get(step.configId)!;
                                 sprite.spriteFrame = sequence[0];
-                                node.setScale(definition.scaleX * (plan.effectOnly && units.find(unit => unit.unitId === effectUnit)!.faction === 2 ? -1 : 1), definition.scaleY, 1);
+                                // 将旧敌方先旋转后镜像换算到统一坐标层，沿世界方向旋转后再翻转局部Y。
+                                const flipEffect = plan.effectOnly && units.find(unit => unit.unitId === effectUnit)!.faction === 2;
+                                node.setScale(definition.scaleX * (flipEffect ? -1 : 1),
+                                    definition.scaleY * (fieldThrow && sourceEnemy ? -1 : 1), 1);
                                 node.setPosition(plan.projectile ? from : to);
                                 if (plan.projectile) {
                                     node.angle = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI;
-                                    tween(node).to(definition.flightSeconds / playbackScale, {position: to}).start();
+                                    tween(node).to(definition.flightSeconds / playbackScale, { position: to }).start();
+                                    if (fieldThrow) {
+                                        GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
+                                            "effect.throw " + step.configId + " from=" + from + " to=" + to + " seconds=" + definition.flightSeconds);
+                                    }
                                 }
                                 GameLog.shared.classified("MODULE", "debug", "BattleReplayPreview",
                                     "effect.frames " + step.configId + " target=" + hit.targetId + " count=" + sequence.length);
-                                const count = plan.projectile ? sequence.length + 1 : sequence.length;
+                                // type5连续帧循环至飞行结束，旧type10序列单次播放后自删。
+                                const count = plan.projectile && !fieldThrow ? sequence.length + 1 : sequence.length;
                                 for (let index = 0; index < count && !cancelled(); index++) {
                                     sprite.spriteFrame = sequence[index % sequence.length];
                                     await wait(definition.interval);
@@ -795,7 +820,7 @@ export class BattleReplayPreview {
                         })();
                         const actorSeconds = plan.attackSeconds + plan.attackDelaySeconds
                             + plan.actionSeconds + plan.beforeReturnSeconds;
-                        // 旧type5投射与type3帧均独立持有，完成只等角色动作；type6/7/9挂出即完成。
+                        // 旧type5/10投射与type3帧均独立持有，完成只等角色动作；type6/7/9挂出即完成。
                         // 立即接住独立任务异常，角色完成后发生的帧失败仍停止整场，关场后不重复报告。
                         void targetEffects.catch(error => {
                             if (!cancelled()) {

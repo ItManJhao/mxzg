@@ -11,6 +11,7 @@ import { _decorator, Button, director, Director, Label, Layers, Node, Prefab, UI
 import { BagTabKind } from "../data/BagTabKind";
 import { ErrorUtils } from "../../../core/ErrorUtils";
 import { GameLog } from "../../../core/GameLog";
+import { ServerClock } from "../../../core/ServerClock";
 import { BAG_TABS, BagUtils } from "../utils/BagUtils";
 import { BagModel } from "../BagModel";
 import type { BagListItem } from "../data/BagItemDataUtils";
@@ -355,7 +356,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         if (!item) {
             if (!rows.length) {
                 const state = BagModel.instance.snapshot;
-                this.toast(state.status !== "ready" ? "背包尚未同步"
+                UIManager.instance.toast(state.status !== "ready" ? "背包尚未同步"
                     : this.tab === "spirit" && !state.spiritSynced ? "精灵库存尚未同步" : BagUtils.emptyToast());
             }
             return;
@@ -369,13 +370,15 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.refreshGrid();
     }
 
-    /** 按配置筛选库存并恢复普通道具排序；精灵按实例追加显示，服务器原始集合仍由Model分别持有。 */
+    /** 按配置和公共时钟筛选格子，精灵按实例显示，原库存仍由 Model 持有。 */
     visibleItems(): readonly BagListItem[] {
         if (!this.opened || this.closed) {
             return [];
         }
         const state = BagModel.instance.snapshot;
-        return BagItemCatalog.list(state.items, state.timedItems, this.tab, BagModel.instance.serverTimeSeconds(), state.spiritItems);
+        return BagItemCatalog.list(
+            state.items, state.timedItems, this.tab, ServerClock.instance.nowSeconds(), state.spiritItems,
+        );
     }
 
     /** 按实例及物品mode选择本页所属的详情；同类参数交框架更新，换类型只取消本页旧孩子。 */
@@ -422,12 +425,15 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
     }
 
-    /** 到达下一件物品期限才重绘格子；关闭页面停止处理，不发补查或修改库存。 */
+    /** 公共时钟到达下一件物品期限时重绘格子，关页后停止检查。 */
     update(dt: number): void {
-        if (this.closed) return;
-
-        const now = BagModel.instance.serverTimeSeconds();
-        if (now !== null && now >= this.nextExpiry) this.refreshGrid();
+        if (this.closed) {
+            return;
+        }
+        const now = ServerClock.instance.nowSeconds();
+        if (now !== null && now >= this.nextExpiry) {
+            this.refreshGrid();
+        }
     }
 
     /** 关闭本页持有的详情及在途打开，作废选择意图；不关闭其他页面后来接管的同类窗口。 */
@@ -435,12 +441,6 @@ export class BagView extends BaseView<BagOpenArgs> {
         this.infoKind = null;
         this.infoIntent = null;
         UIManager.instance.closeChildren(this);
-    }
-
-    /** 写入页面提示日志并交由 UIManager 展示。 */
-    private toast(text: string): void {
-        GameLog.shared.classified("MODULE", "info", "Bag", text);
-        UIManager.instance.toast(text);
     }
 
     /** 格子和页签的子节点也要留在 UI 层，只改根节点时图标不会画出来。 */

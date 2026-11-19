@@ -11,7 +11,7 @@ export class RewardUtils {
     private constructor() {
     }
 
-    /** 校验原请求和实际明细；零到账明确不显示，重复配置或坏数量拒绝整批。 */
+    /** 校验实际到账明细；召唤汇总每个英雄实例独占一格，再接普通奖励。 */
     public static rows(args: RewardArgs): readonly RewardRow[] {
         if (!args || typeof args.receiptId !== "string"
             || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(args.receiptId)
@@ -29,6 +29,14 @@ export class RewardUtils {
             if (item.credited > 0) {
                 rows.push(Object.freeze({ itemId: item.itemId, quantity: item.credited }));
             }
+        }
+        if (args.summonBatch || args.repeatSummon) {
+            const heroes = GameProtocolCodecUtils.validateHeroGrants(args.heroes, args.items);
+            const heroTypes = new Set(heroes.map(hero => hero.templateId));
+            return Object.freeze([
+                ...heroes.map(hero => Object.freeze({ itemId: hero.templateId, quantity: 1, hero })),
+                ...rows.filter(row => !heroTypes.has(row.itemId)),
+            ]);
         }
         return Object.freeze(rows);
     }

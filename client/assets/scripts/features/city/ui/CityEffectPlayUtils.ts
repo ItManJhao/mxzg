@@ -47,7 +47,6 @@ export class CityEffectPlayUtils {
                 stops.push(stop);
             }
         }
-        GameLog.shared.classified("MODULE", "info", "CityFx", "started effects=" + effects.length + " runners=" + stops.length);
         return {
             stop() {
                 for (let i = 0; i < stops.length; i++) {
@@ -194,7 +193,6 @@ export class CityEffectPlayUtils {
             }
             CityEffectPlayUtils.applyFrame(node, sprite, frames[0]);
             if (frames.length === 1) {
-                GameLog.shared.classified("MODULE", "info", "CityFx", "anim static " + stem);
                 return;
             }
             let index = 0;
@@ -206,7 +204,6 @@ export class CityEffectPlayUtils {
                 index = (index + 1) % frames.length;
                 CityEffectPlayUtils.applyFrame(node, sprite, frames[index]);
             }, FRAME_MS);
-            GameLog.shared.classified("MODULE", "info", "CityFx", "anim loop " + stem + " frames=" + frames.length);
         });
         return stop;
     }

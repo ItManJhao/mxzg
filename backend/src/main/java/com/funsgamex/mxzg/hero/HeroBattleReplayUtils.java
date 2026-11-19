@@ -9,12 +9,16 @@ public final class HeroBattleReplayUtils {
 
     /** 按伤害/治疗原顺序重放完整名册生命，拒绝少帧、乱序、未知单位及提前结束；审计场景保持独立来源。 */
     public static void validate(HeroBattleChapterScenario.Result report) {
-        boolean indexed = indexedScenario(report.scenario());
+        boolean dailyGold = "dungeon:gold:1".equals(report.scenario());
+        boolean indexed = indexedScenario(report.scenario()) || dailyGold;
         if ((!indexed && !Set.of("main:1:1:1", "main:1:1:2", "main:1:1:3", "audit:duel", "audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "audit:nanako", "audit:dark-cutter-bleed", "audit:round-limit").contains(report.scenario()))
             || report.rounds() < 1 || report.rounds() > HeroBattleRoundUtils.MAX_ROUNDS || report.frames().isEmpty()) {
             throw new IllegalArgumentException("战斗回放场景或回合范围无效");
         }
         var units = HeroBattleChapterScenario.roster(report.initial());
+        if (dailyGold && units.stream().filter(unit -> unit.faction() == 2).count() != 6) {
+            throw new IllegalArgumentException("金币副本首关战报缺少原守军");
+        }
         if (!indexed && !Set.of("audit:charm", "audit:charm-death", "audit:teams", "audit:control-teams", "audit:frozen", "main:1:1:3").contains(report.scenario()) && units.size() != 2) {
             throw new IllegalArgumentException("该战斗来源未开放多单位");
         }

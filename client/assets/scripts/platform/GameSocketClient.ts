@@ -1,8 +1,9 @@
 /**
- * 登录与背包试点的会话传输：鉴权、恢复同步、心跳、退避重连和请求关联。
+ * 游戏 WebSocket 连接：鉴权、恢复同步、心跳、公共时钟校准、退避重连和请求关联。
  * 应用持有此实例；不保存玩家资产，不自动重放业务请求，旧连接回包由连接代次隔离。
  */
-import type { ReadProtocol } from "./Protocol";
+import type { ServerClock } from "../core/ServerClock";
+import type { AuthenticatedGameProtocol, ReadProtocol } from "./Protocol";
 import { Protocol } from "./Protocol";
 import type { GameFrame } from "./GameProtocolCodecUtils";
 import { GameProtocolCodecUtils, GAME_SOCKET_PROTOCOL } from "./GameProtocolCodecUtils";
@@ -13,6 +14,11 @@ export class SocketFailure extends Error {
   constructor(readonly code: string, message = "网络连接中断，请稍后重试") { super(message); this.name = "SocketFailure"; }
   /** 判断是否必须回到登录页面，禁止自动抢回被替换的会话。 */
   get unauthorized(): boolean { return this.code === "UNAUTHENTICATED" || this.code === "SESSION_REPLACED"; }
+
+  /** 连接被中断时业务结果可能仍已提交，允许在重新鉴权后按原操作查询。 */
+  get interrupted(): boolean {
+    return ["DISCONNECTED", "NOT_READY", "TIMEOUT", "SUSPENDED", "STATE_REFRESH", "SESSION_CHANGED"].includes(this.code);
+  }
 }
 interface Pending {
   name: string;
@@ -23,6 +29,8 @@ interface Pending {
 export interface SocketOptions {
   create(url: string): SocketPort;
   validateSnapshot(value: unknown): void;
+  /** 游戏应用提供公共时钟，收到已鉴权回包时校准。独立连接测试可省略。 */
+  clock?: ServerClock;
   /** 可选开发观察口：仅交付当前连接、已关联的服务端帧，观察异常不影响业务。 */
   onReceive?: (frame: Readonly<GameFrame>) => void;
   timeoutMs?: number;
@@ -131,55 +139,14 @@ export class GameSocketClient {
     return (await this.requestFrame(token, name)).body;
   }
 
-  /** 请求并返回已关联的真实信封，让模块路由使用服务端的 name，而不是在 Promise 回调里写死协议。 */
-  async requestFrame(token: string, name: ReadProtocol): Promise<GameFrame> {
-    this.assertReady(token);
-    const generation = this.generation;
-    const frame = await this.send(name, {});
-    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
-    return frame;
-  }
-
-  /** 主线命令不自动重放；连接代次统一隔离，模块只保留业务幂等键。 */
-  async chapter(token: string, name: typeof Protocol.CHAPTER_CHALLENGE | typeof Protocol.CHAPTER_CLAIM
-      | typeof Protocol.CHAPTER_REPLAY | typeof Protocol.CHAPTER_IDLE_ENCOUNTER
-      | typeof Protocol.CHAPTER_IDLE_CLAIM | typeof Protocol.CHAPTER_IDLE_CLAIM_STATUS
-      | typeof Protocol.CHAPTER_MILESTONE_CLAIM | typeof Protocol.CHAPTER_MILESTONE_STATUS
-      | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS, body: unknown): Promise<GameFrame> {
+  /** 用当前连接发送请求，信封已匹配且连接仍有效时才交付业务结果。 */
+  async requestFrame(token: string, name: AuthenticatedGameProtocol, body: unknown = {}): Promise<GameFrame> {
     this.assertReady(token);
     const generation = this.generation;
     const frame = await this.send(name, body);
-    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
-    return frame;
-  }
-
-  /** 合成和查回执共用当前连接，网络层只发送一次并拒绝旧会话结果。 */
-  async combineHeroFragments(token: string, name: typeof Protocol.HERO_FRAGMENT_COMBINE
-      | typeof Protocol.HERO_FRAGMENT_COMBINE_STATUS, body: unknown): Promise<GameFrame> {
-    this.assertReady(token);
-    const generation = this.generation;
-    const frame = await this.send(name, body);
-    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
-    return frame;
-  }
-
-  /** 首抽与查询只经当前认证连接；不在此层排队或自动重发。 */
-  async firstSummon(token: string, name: typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS,
-      requestId: string): Promise<GameFrame> {
-    this.assertReady(token);
-    const generation = this.generation;
-    const frame = await this.send(name, { requestId });
-    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
-    return frame;
-  }
-
-  /** 在当前连接发送普通升级或查回执；重试原编号由业务层负责。 */
-  async heroLevel(token: string, name: typeof Protocol.HERO_LEVEL_UPGRADE | typeof Protocol.HERO_LEVEL_UPGRADE_STATUS,
-      body: unknown): Promise<GameFrame> {
-    this.assertReady(token);
-    const generation = this.generation;
-    const frame = await this.send(name, body);
-    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
+    if (generation !== this.generation) {
+      throw new SocketFailure("SESSION_CHANGED");
+    }
     return frame;
   }
 
@@ -191,32 +158,6 @@ export class GameSocketClient {
     this.assertReady(token);
     this.drop(new SocketFailure("STATE_REFRESH", "正在恢复最新状态"), false);
     await this.connect(token);
-  }
-
-  /** 当前阵容只读试战，不自动重放；连接切换由通信层拒绝旧结果。 */
-  async previewBattle(token: string, mission: number): Promise<GameFrame> {
-    this.assertReady(token);
-    const generation = this.generation;
-    const frame = await this.send(Protocol.BATTLE_PREVIEW, { mission });
-    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
-    return frame;
-  }
-
-  /** GM 显式写请求，不自动重放；幂等键由 GM 模块保存，迟到回包按连接代次拒绝。 */
-  async gmGrant(token:string, body:unknown):Promise<GameFrame> {
-    this.assertReady(token);const generation=this.generation;
-    const frame=await this.send(Protocol.GM_GRANT,body);
-    if(generation!==this.generation)throw new SocketFailure("SESSION_CHANGED");
-    return frame;
-  }
-
-  /** 主线保存不自动重放；业务模块保留原幂等键，换连接的迟到回执拒绝。 */
-  async saveFormation(token: string, body: unknown): Promise<GameFrame> {
-    this.assertReady(token);
-    const generation = this.generation;
-    const frame = await this.send(Protocol.FORMATION_SAVE, body);
-    if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
-    return frame;
   }
 
   /** 后台主动结束旧通道及计时器，保留已登录凭证；回前台只重做鉴权首包，不重放业务请求。 */
@@ -239,7 +180,7 @@ export class GameSocketClient {
     this.drop(new SocketFailure("SESSION_CHANGED", "会话已切换"), false);
   }
 
-  /** 打开传输后先鉴权，再校验一致快照；此阶段不向任何 Model 写数据。 */
+  /** 鉴权和首包校验完成后校准公共时钟，再通知应用提交快照。 */
   private async establish(token: string, generation: number, login?: { account: string; serverId: string }): Promise<void> {
     try {
       const socket = this.options.create(this.url);
@@ -276,11 +217,15 @@ export class GameSocketClient {
       }
       if (generation !== this.generation) throw new SocketFailure("SESSION_CHANGED");
       this.options.validateSnapshot(snapshot);
+      if (generation !== this.generation) {
+        throw new SocketFailure("SESSION_CHANGED");
+      }
       if (this.object(this.object(snapshot).role).id !== this.roleId) throw new SocketFailure("INVALID_MESSAGE");
       if(!Number.isSafeInteger(this.object(snapshot).revision) || Number(this.object(snapshot).revision)<0) throw new SocketFailure("INVALID_MESSAGE");
       this.stateRevision=Number(this.object(snapshot).revision);
       this.latestState=frame;
       this.ready = true; this.maintain = true; this.retries = 0;
+      this.options.clock?.synchronize(Number(accepted.serverTimeMs));
       this.scheduleHeartbeat();
       this.onReady?.();
     } catch (error) {
@@ -308,57 +253,147 @@ export class GameSocketClient {
     });
   }
 
-  /** 严格关联请求和连接标识；重复回包无副作用，顶号立即阻止自动重连。 */
+  /** 校验连接标识，按服务器推送或请求回包分派。非法协议立即结束当前连接。 */
   private receive(raw: unknown): void {
+    const generation = this.generation;
     try {
       const frame = GameProtocolCodecUtils.decodeGameFrame(raw);
-      if (frame.version !== 1 || typeof frame.name !== "string") throw new SocketFailure("INVALID_MESSAGE");
-      if (this.connectionId && frame.connectionId !== this.connectionId) throw new SocketFailure("INVALID_MESSAGE");
-      if (frame.kind === "event" && frame.name === Protocol.STATE_CHANGED && this.connectionId && this.ready) {
-        if(frame.id!==undefined || frame.ok!==undefined || frame.error!==undefined) throw new SocketFailure("INVALID_MESSAGE");
-        this.options.validateSnapshot(frame.body);
-        const revision=Number(this.object(frame.body).revision);
-        if(!Number.isSafeInteger(this.object(frame.body).revision) || revision<0) throw new SocketFailure("INVALID_MESSAGE");
-        if(this.object(this.object(frame.body).role).id!==this.roleId) throw new SocketFailure("INVALID_MESSAGE");
-        this.traceReceived(frame);
-        if(revision<=this.stateRevision)return;
-        this.stateRevision=revision;this.latestState=frame;this.onState?.(frame);return;
+      if (frame.version !== 1 || typeof frame.name !== "string"
+          || (this.connectionId && frame.connectionId !== this.connectionId)) {
+        throw new SocketFailure("INVALID_MESSAGE");
       }
-      if (frame.kind === "event" && frame.name === Protocol.REWARD_GRANTED && this.connectionId && this.ready) {
+      if (frame.kind === "event") {
+        this.onServerEvent(frame);
+      } else {
+        this.onResponse(frame);
+      }
+    } catch (error) {
+      if (generation === this.generation) {
+        this.drop(error instanceof SocketFailure ? error : new SocketFailure("INVALID_MESSAGE"), false);
+      }
+    }
+  }
+
+  /** 只接纳本连接上的会话、资产和奖励通知。顶号消息在连接已识别时即可生效。 */
+  private onServerEvent(frame: GameFrame): void {
+    if (!this.connectionId) {
+      throw new SocketFailure("INVALID_MESSAGE");
+    }
+    if (frame.name === Protocol.SESSION_KICKED) {
+      if (!this.traceReceived(frame)) {
+        return;
+      }
+      this.rejectSession(new SocketFailure("SESSION_REPLACED", "账号已在其他连接登录，请重新登录"));
+      return;
+    }
+    if (!this.ready) {
+      throw new SocketFailure("INVALID_MESSAGE");
+    }
+    switch (frame.name) {
+      case Protocol.STATE_CHANGED:
+        this.onStateChanged(frame);
+        return;
+      case Protocol.REWARD_GRANTED: {
         const notice = GameProtocolCodecUtils.validateRewardNotice(frame.body);
         if (notice.roleId !== this.roleId) {
           throw new SocketFailure("INVALID_MESSAGE");
         }
-        // 反馈可能先于状态到达；展示等待由奖励模块承担，不污染传输层的状态版本。
-        this.traceReceived(frame);
+        if (!this.traceReceived(frame)) {
+          return;
+        }
+        // 允许真实通知早于快照。展示等待归奖励模块，传输层不改资产版本。
         this.onReward?.(frame);
         return;
       }
-      if (frame.kind === "event" && frame.name === Protocol.SESSION_KICKED && this.connectionId) {
-        this.traceReceived(frame);
-        this.rejectSession(new SocketFailure("SESSION_REPLACED", "账号已在其他连接登录，请重新登录")); return;
-      }
-      if (frame.kind !== "response" || typeof frame.id !== "string" || typeof frame.ok !== "boolean") throw new SocketFailure("INVALID_MESSAGE");
-      const pending = this.pending.get(frame.id);
-      if (!pending) return;
-      if (pending.name !== frame.name) throw new SocketFailure("INVALID_MESSAGE");
-      if (frame.ok) {
-        if (!("body" in frame) || frame.error !== undefined) throw new SocketFailure("INVALID_MESSAGE");
-        if ((pending.name === Protocol.SESSION_AUTHENTICATE || pending.name === Protocol.SESSION_LOGIN) && this.object(frame.body).connectionId !== frame.connectionId) throw new SocketFailure("INVALID_MESSAGE");
-        this.traceReceived(frame);
-        this.pending.delete(frame.id); clearTimeout(pending.timer); pending.resolve(frame);
-      } else {
-        const error = this.object(frame.error);
-        if (typeof error.code !== "string" || !/^[A-Z_]{3,64}$/.test(error.code) || frame.body !== null) throw new SocketFailure("INVALID_MESSAGE");
-        const failure = new SocketFailure(error.code, GameSocketClient.failureMessage(error.code));
-        this.traceReceived(frame);
-        this.pending.delete(frame.id); clearTimeout(pending.timer); pending.reject(failure);
-        if (failure.unauthorized) this.rejectSession(failure);
-      }
-    } catch (error) { this.drop(error instanceof SocketFailure ? error : new SocketFailure("INVALID_MESSAGE"), false); }
+      default:
+        throw new SocketFailure("INVALID_MESSAGE");
+    }
   }
 
-  /** 将真实业务拒绝转为中文反馈；保留错误码供幂等重试，不把业务失败误称为断网。 */
+  /** 接纳同一角色的较新快照，再通知应用一次性提交各模块。 */
+  private onStateChanged(frame: GameFrame): void {
+    if (frame.id !== undefined || frame.ok !== undefined || frame.error !== undefined) {
+      throw new SocketFailure("INVALID_MESSAGE");
+    }
+    this.options.validateSnapshot(frame.body);
+    const state = this.object(frame.body);
+    if (!Number.isSafeInteger(state.revision) || Number(state.revision) < 0
+        || this.object(state.role).id !== this.roleId) {
+      throw new SocketFailure("INVALID_MESSAGE");
+    }
+    if (!this.traceReceived(frame)) {
+      return;
+    }
+    const revision = Number(state.revision);
+    if (revision > this.stateRevision) {
+      this.stateRevision = revision;
+      this.latestState = frame;
+      this.onState?.(frame);
+    }
+  }
+
+  /** 按请求编号和协议名交付回执。已完成的编号可忽略，归属或内容非法则整帧拒绝。 */
+  private onResponse(frame: GameFrame): void {
+    if (frame.kind !== "response" || typeof frame.id !== "string" || typeof frame.ok !== "boolean") {
+      throw new SocketFailure("INVALID_MESSAGE");
+    }
+    const pending = this.pending.get(frame.id);
+    if (!pending) {
+      return;
+    }
+    if (pending.name !== frame.name) {
+      throw new SocketFailure("INVALID_MESSAGE");
+    }
+    let failure: SocketFailure | null = null;
+    if (frame.ok) {
+      if (!("body" in frame) || frame.error !== undefined) {
+        throw new SocketFailure("INVALID_MESSAGE");
+      }
+      const handshake = pending.name === Protocol.SESSION_AUTHENTICATE || pending.name === Protocol.SESSION_LOGIN;
+      if (handshake && this.object(frame.body).connectionId !== frame.connectionId) {
+        throw new SocketFailure("INVALID_MESSAGE");
+      }
+      if (this.ready) {
+        this.checkReceiptOwner(frame);
+      }
+    } else {
+      const error = this.object(frame.error);
+      if (typeof error.code !== "string" || !/^[A-Z_]{3,64}$/.test(error.code) || frame.body !== null) {
+        throw new SocketFailure("INVALID_MESSAGE");
+      }
+      failure = new SocketFailure(error.code, GameSocketClient.failureMessage(error.code));
+    }
+    if (!this.traceReceived(frame)) {
+      return;
+    }
+    this.pending.delete(frame.id);
+    clearTimeout(pending.timer);
+    if (failure) {
+      pending.reject(failure);
+      if (failure.unauthorized) {
+        this.rejectSession(failure);
+      }
+    } else {
+      pending.resolve(frame);
+    }
+  }
+
+  /**
+   * 解码器已验证协议的必填字段、查询状态和结构。直接回执与查询内回执均在交付前核对角色，
+   * 实际发奖明细也须归属本连接。旧战斗记录可没有明细，查无记录的响应可没有回执。
+   */
+  private checkReceiptOwner(frame: GameFrame): void {
+    const body = this.object(frame.body);
+    const receipt = body.receipt === undefined ? body : this.object(body.receipt);
+    if (receipt.roleId !== undefined && receipt.roleId !== this.roleId) {
+      throw new SocketFailure("INVALID_MESSAGE", "回执不属于当前角色");
+    }
+    if (receipt.actual !== undefined && this.object(receipt.actual).roleId !== this.roleId) {
+      throw new SocketFailure("INVALID_MESSAGE", "奖励明细不属于当前角色");
+    }
+  }
+
+  /** 将业务拒绝映射为飘字文案，保留 GM 参数、资格、消耗和连接故障的原因。 */
   private static failureMessage(code: string): string {
     switch (code) {
       case "UNAUTHENTICATED": return "登录已失效，请重新登录";
@@ -372,19 +407,40 @@ export class GameSocketClient {
       case "GM_UNSUPPORTED_ITEM_TYPE": return "该精灵尚未恢复真实实例生成，暂不能发放";
       case "GM_SPIRIT_LIMIT": return "精灵单次最多发放1000只，请减少数量";
       case "GM_TIMED_LIMIT": return "期限道具单次最多发放100件，请减少数量";
-      case "GM_REQUEST_CONFLICT": return "同一发放请求的参数发生变化，请重新确认";
+      case "GM_REQUEST_CONFLICT": return "同一 GM 请求的参数发生变化，请重新确认";
+      case "GM_INVALID_LEVEL": return "角色等级超出策划配置范围";
+      case "GM_INVALID_CHAPTER": return "请输入当前开放范围内的主线关卡";
+      case "GM_CHAPTER_PENDING": return "请先完成当前主线战斗的结算";
+      case "GM_INVALID_TIME": return "服务器时间无效，请检查输入";
       case "CHAPTER_UNAVAILABLE": return "主线条件不满足、阵容技能尚未支持或战报不可用，请检查阵容与进度";
       case "BATTLE_EMPTY": return "请先保存非空主线阵容";
       case "BATTLE_UNSUPPORTED": return "当前阵容包含尚未支持的技能或助战，请调整阵容";
       case "BATTLE_INVALID": return "只读试战关卡参数无效，请检查全局关卡编号";
       case "SUMMON_ALREADY_COMPLETED": return "普通免费首抽已完成";
       case "SUMMON_CAPACITY_FULL": return "英雄名册已满，无法召唤";
+      case "SUMMON_TICKET_INSUFFICIENT": return "普通召唤券不足";
+      case "SUMMON_FRIENDSHIP_INSUFFICIENT": return "友情点不足";
+      case "SUMMON_DIAMONDS_INSUFFICIENT": return "钻石不足";
+      case "SUMMON_DIAMOND_CONFIRM_REQUIRED": return "召唤消耗已变化，请重新确认";
+      case "SUMMON_POINTS_INSUFFICIENT": return "召唤积分不足";
+      case "SUMMON_POINTS_RECHARGE_REQUIRED": return "尚未达到积分召唤条件";
+      case "SUMMON_REQUEST_CONFLICT": return "召唤请求已变更，请重新操作";
+      case "SUMMON_INVALID": return "召唤参数无效";
       case "SUMMON_BUSY": return "召唤正在确认，请稍后重试";
+      case "ROLE_NAME_INVALID": return "名字格式不正确，请重新输入";
+      case "ROLE_NAME_EXISTS": return "这个名字已被使用，请换一个";
+      case "ROLE_NAME_ALREADY_CONFIRMED": return "角色已经完成首次命名";
+      case "ROLE_NAME_UNAVAILABLE": return "暂时无法获取随机名，请重试或手动输入";
+      case "WELCOME_GIFT_UNAVAILABLE": return "当前角色没有可领取的新手赠礼";
       case "FIRST_REWARD_INVALID": return "通关奖励的关卡编号无效";
       case "FIRST_REWARD_UNKNOWN": return "该关卡的通关奖励暂未开放";
       case "FIRST_REWARD_NOT_REACHED": return "请先通关对应关卡";
       case "FIRST_REWARD_BUSY": return "通关奖励正在确认，请稍后重试";
       case "INVALID_UPGRADE_REQUEST": return "英雄升级参数无效";
+      case "INVALID_EQUIPMENT_REQUEST": return "装备操作参数无效，请重新选择";
+      case "EQUIPMENT_NOT_AVAILABLE": return "该装备数量不足或已不可用";
+      case "HERO_EQUIPMENT_CHANGED": return "英雄装备已变化，请按当前槽位重新操作";
+      case "HERO_EQUIPMENT_BUSY": return "装备操作正在确认，请稍后重试";
       case "HERO_NOT_FOUND": return "英雄资料已变化，请重新打开详情";
       case "HERO_LEVEL_CHANGED": return "英雄等级已变化，请按当前等级重新升级";
       case "LEVEL_LIMIT": return "已达到当前强化阶段的等级上限";
@@ -398,14 +454,39 @@ export class GameSocketClient {
       case "FRAGMENT_LEVEL_REQUIRED": return "角色等级未达到合成要求";
       case "FRAGMENT_REQUEST_CONFLICT": return "合成请求与原参数冲突，请重新确认";
       case "FRAGMENT_BUSY": return "碎片合成正在确认，请稍后重试";
+      case "MARKET_LOCKED": return "市场尚未开放，请先提升角色等级";
+      case "MARKET_SHELF_CHANGED": return "货架已变化，请按当前商品重新操作";
+      case "MARKET_PRODUCT_MISSING": return "商品已不在当前货架";
+      case "MARKET_REWARD_UNAVAILABLE": return "该商品暂不可购买";
+      case "MARKET_LIMIT": return "已达到该商品的购买上限";
+      case "MARKET_REFRESH_LIMIT": return "今日付费刷新次数已用完";
+      case "MARKET_INSUFFICIENT": return "购买或刷新所需的货币不足";
+      case "INVALID_MARKET_REQUEST": return "市场操作参数无效，请重新选择";
+      case "DUNGEON_LEVEL": return "角色等级未达到副本开启条件";
+      case "DUNGEON_POWER": return "历史主线阵容最高战力未达到副本要求";
+      case "DUNGEON_COUNT": return "今日副本次数已用完";
+      case "DUNGEON_SWEEP_LOCKED": return "首次挑战胜利后可清扫";
+      case "DUNGEON_COST_CHANGED": return "挑战费用已变化，请重新确认";
+      case "DUNGEON_DIAMONDS": return "挑战所需钻石不足";
+      case "DUNGEON_FORMATION": return "请先保存可出战的主线阵容";
+      case "DUNGEON_BATTLE_UNAVAILABLE": return "当前阵容的技能尚不能用于此副本，请检查上阵英雄";
+      case "DUNGEON_REQUEST_INVALID": return "副本操作参数无效，请重新选择";
+      case "DUNGEON_REQUEST_CONFLICT": return "副本操作与原请求不一致，请重新确认";
+      case "IDEMPOTENCY_CONFLICT": return "操作与原请求不一致，请重新确认";
       case "UNKNOWN_MESSAGE": return "服务端不支持此协议，请更新并重启后端";
       default: return "请求未完成（" + code + "），请稍后重试";
     }
   }
 
-  /** 日志观察不参与协议处理；诊断回调异常不能关闭正常连接或阻断 Model 更新。 */
-  private traceReceived(frame: Readonly<GameFrame>): void {
-    try { this.options.onReceive?.(frame); } catch { /* 开发日志失败不影响业务。 */ }
+  /** 输出诊断后返回连接是否仍有效。监听器可同步退出游戏，此时原帧应当就地结束。 */
+  private traceReceived(frame: Readonly<GameFrame>): boolean {
+    const generation = this.generation;
+    try {
+      this.options.onReceive?.(frame);
+    } catch {
+      // 诊断代码失败本身不改变游戏连接或协议结果。
+    }
+    return generation === this.generation;
   }
 
   /** 仅当前凭证失效时通知账号层；先停止重连，避免回登录后后台抢占会话。 */
@@ -416,9 +497,10 @@ export class GameSocketClient {
     this.onRejected?.(token, error.message);
   }
 
-  /** 清理连接、定时器及待响应请求；旧事件先解绑再关闭，重试只重建鉴权/同步。 */
+  /** 清理连接、时钟和待响应请求；旧事件先解绑再关闭，重试只重建鉴权及同步。 */
   private drop(error: Error, retry: boolean): void {
     this.generation++;
+    this.options.clock?.invalidate();
     const wasReady = this.ready;
     this.ready = false; this.connectionId = ""; this.connecting = null;
     if (!retry && error instanceof SocketFailure && error.code === "INVALID_MESSAGE") {
@@ -441,7 +523,7 @@ export class GameSocketClient {
     if (wasReady) this.onDisconnected?.(retry ? "网络已断开，正在重新连接…" : this.blocked?.message || error.message);
   }
 
-  /** 心跳串行等待回应，失败由统一连接清理处理，不产生重复定时器。 */
+  /** 心跳串行等待回应；只有当前连接的有效回应可校准时钟并安排下一次心跳。 */
   private scheduleHeartbeat(): void {
     this.heartbeatTimer = setTimeout(async () => {
       this.heartbeatTimer = null;
@@ -449,7 +531,10 @@ export class GameSocketClient {
       try {
         const value = this.object((await this.send(Protocol.SESSION_HEARTBEAT, {})).body);
         if (!Number.isSafeInteger(value.serverTimeMs) || Number(value.serverTimeMs) <= 0) throw new SocketFailure("INVALID_MESSAGE");
-        if (generation === this.generation && this.ready) this.scheduleHeartbeat();
+        if (generation === this.generation && this.ready) {
+          this.options.clock?.synchronize(Number(value.serverTimeMs));
+          this.scheduleHeartbeat();
+        }
       } catch (error) {
         if (generation === this.generation) {
           if (error instanceof SocketFailure && error.code === "BUSY" && this.ready) this.scheduleHeartbeat();

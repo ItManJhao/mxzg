@@ -18,12 +18,12 @@
 - 已确认独立新版，暂不兼容旧客户端、不迁移旧玩家；这不放宽玩法和效果还原要求。简体中文、平台适配等已确认差异单列，不将技术变化解释为产品改版授权。
 - 现有基础普攻、前 20 关、一级升级和简化详情入口均是阶段子集，不作为最终等价实现。没有证据的功能标未核实，没有实现的标缺口。
 - 代码组织与阅读规范见 [开发写法与阅读约定](docs/development-conventions.md)。整理时优先修正职责、文档和明确旧引用，不为统一外观批量改名、重铸资源 UUID 或覆盖未提交修改。
-- 当前范围：登录、角色与背包继续维护，英雄模块分批恢复（统一名册、只读列表、基础详情、基础技能/普通四槽/进化只读状态已接通，完整加成仍待恢复）；主线阵容编辑保存按用户指令恢复。2026-11-17负责人授权接通后同步开放连续关卡，当前默认1～20关，第15关独立里程碑领奖已接通；扩展前仍须核对真实技能、表现、首通及挂机依赖，不能跳过未接通关卡去开放离散静态通过关。挂机行军/遇敌/对话及宝箱领取已接通，玩家点击沿既有65秒门槛、满额确认、原请求持久记录、双确认和通用发奖；仅local默认接受新领取，通用服务配置仍默认关闭，必须具备可信开服时间和活动控制。本机local-1/2经负责人确认：原持久时间缺失时使用上海时间2026-11-17零点，044明确未发布，配置保存在忽略提交的.local文件，不作为其他环境默认。英雄升级、穿脱、快速战斗及其他模块仍按旧项目逐模块恢复；保留领域服务与规则测试不表示已开放。全部游戏业务HTTP已删除，选服和开发身份交换也走WS＋Protobuf。资源下载、WebSocket的HTTP握手和仅测试上下文的实例身份探针不属于游戏业务API。
+- 当前范围：登录、角色与背包继续维护，英雄模块分批恢复（统一名册、只读列表、基础详情、基础技能/普通四槽/进化只读状态已接通，完整加成仍待恢复）；主线阵容编辑保存按用户指令恢复。2026-11-17负责人授权接通后同步开放连续关卡，当前默认1～20关，第15关独立里程碑领奖已接通；扩展前仍须核对真实技能、表现、首通及挂机依赖，不能跳过未接通关卡去开放离散静态通过关。挂机行军/遇敌/对话及宝箱领取已接通，玩家点击沿既有65秒门槛、满额确认和通用发奖，提交结果由服务端快照更新；仅local默认接受新领取，通用服务配置仍默认关闭，必须具备可信开服时间和活动控制。本机local-1/2经负责人确认：原持久时间缺失时使用上海时间2026-11-17零点，044明确未发布，配置保存在忽略提交的.local文件，不作为其他环境默认。英雄升级、穿脱、快速战斗及其他模块仍按旧项目逐模块恢复；保留领域服务与规则测试不表示已开放。全部游戏业务HTTP已删除，选服和开发身份交换也走WS＋Protobuf。资源下载、WebSocket的HTTP握手和仅测试上下文的实例身份探针不属于游戏业务API。
 - 开发 GM 仅用于当前登录测试角色的数据准备：Creator预览F9入口（总菜单分流到各独立窗口）、服务端开关、WS＋Protobuf、持久回执幂等、提交后统一状态推送。2026-11-14负责人确认本机local默认开启，重启保留，可用MXZG_GM_ENABLED=false显式关闭；production仍不装配GM服务，不能仅隐藏前端入口而放开服务端发放。不把GM发放等同于玩法开放；真实发放验收使用独立测试库，说明见docs/gm-development.md。
 - 新增或迁移联网模块必须遵守 [固定通信与状态模板](docs/bag-mvc-maintenance.md#固定通信与状态模板)：明确请求、信封/业务回包校验、Controller 提交唯一 Model、事件刷新 View、断线恢复及会话隔离；不得让 View 直接收包或修改资产。
 - 账号变化由应用层 AssetStateBinding 协调；账号服务负责凭证与登录，RoleController 与 BagController 分别按真实协议 onNotify 更新唯一 Model。登录/恢复同一条回包携带角色、背包和持久 revision；应用先校验整包及角色归属，再批量提交、发送事件。不让背包监听账号、持有 token 或额外查询库存。
 - 游戏业务唯一契约为 protocol/game.proto，使用 WebSocket 子协议 mxzg.protobuf.v2 与 Protobuf 二进制。先修改 .proto 再生成 TS/Java，检查漂移及互通；禁止手改生成文件、复用字段号、JSON/Base64 回退。已删除 inventory.list 与 session.sync 业务处理，禁止重新引入重复查询和 HTTP 回退。
-- Protocol.ts 集中登记实际已实现消息，Controller 在初始化登记协议，onNotify 用清晰 switch 转入 onXxx 方法、提交唯一 Model、通知 View。session.login/session.authenticate 是统一初始化回包，state.changed 是服务端事务提交后事件；不在客户端伪造协议。AssetSyncService 在同一资产事务内递增持久版本、提交后通知，回滚无推送。完整版本快照支持断线恢复与旧版本丢弃；不能把连接 ID 或本地 UI revision 当服务端资产版本。开发日志默认隐藏心跳和凭证，显示中文说明、字段与真实多行数据。
+- Protocol.ts 集中登记实际已实现消息，Controller 通过公共账号通道发送业务协议，并在初始化登记回包及推送，onNotify 用清晰 switch 转入 onXxx 方法、提交唯一 Model、通知 View。session.login/session.authenticate 是统一初始化回包，state.changed 是服务端事务提交后事件；不在客户端伪造协议。AssetSyncService 在同一资产事务内递增持久版本、提交后通知，回滚无推送。完整版本快照支持断线恢复与旧版本丢弃；不能把连接 ID 或本地 UI revision 当服务端资产版本。开发日志默认隐藏心跳和凭证，显示中文说明、字段与真实多行数据。
 - 背包页面打开、切换分类、返回主城均不查询库存。BagApi、BagUpdateCoordinator、bindBagSession 已退役，排序/去重由服务端持久版本与应用统一状态入口承担。暂停模块不得通过旧资产回调写 Model；恢复模块前重新核对旧协议、规则、持久幂等和状态同步。
 
 - 背包身份：Item.itemId 是配置 ID，instanceId 是持久记录 ID，以字符串传输，禁止转 number；普通物品按配置堆叠，期限物品逐件独立。新版所有区服期限自然日计算统一使用 Asia/Shanghai（用户已确认），不可依赖机器默认时区或把 valid_time 天数解释成领取后满 24 小时。
@@ -169,7 +169,7 @@ TypeScript 优先使用 JSDoc，Java 使用 Javadoc，Python 使用 docstring，
 
 - 模块归档同时覆盖资源目录：例如features/bag和bundles/module/bag/prefabs均使用小写模块目录；BagView等预制体/类名保留PascalCase。bundles/resources收纳audio/chapter/config/font/icons/maps/spine等通用素材包，bundles/module收纳页面模块、common和bootstrap；两个父目录不设为Bundle，不改变原包名、远程配置或运行时“包名/包内路径”。资源改路径后修改生成输入并重新生成资源索引，不手改生成结果；同步加载路径、测试、当前文档，校验原资源及meta UUID未变。
 
-- 主线阵容也遵守模块Controller不持有View：保存协议与回执进度归FormationController/FormationSaveModel，权威阵容归HeroRosterModel，未保存草稿及交互归FormationView；页面关闭不销毁模块，账号变化由AssetStateBinding统一协调。连接切换与旧回包隔离统一归GameSocketClient和应用装配的AccountService.deliverAuthenticated；BaseController只管理模块生命周期，不再保存会话代次。模块与View不得比较账号/角色键来隔离异步回包。
+- 主线阵容也遵守模块Controller不持有View：保存协议与回执进度归FormationController/FormationSaveModel，权威阵容归HeroRosterModel，未保存草稿及交互归FormationView；页面关闭不销毁模块，账号变化由AssetStateBinding统一协调。连接切换与旧回包隔离统一归GameSocketClient和应用装配的AccountController.deliverAuthenticated；BaseController只管理模块生命周期，不再保存会话代次。模块与View不得比较账号/角色键来隔离异步回包。
 
 
 ## 2026-11-05 技能表现参考与推进边界

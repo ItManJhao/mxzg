@@ -686,8 +686,8 @@ export class UIManager {
             viewNode.on(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, page.onActiveChanged);
             this.pendingResident.set(viewNode, page);
             this.raiseResident(page);
-            if (spec.createController) {
-                found.attachController(spec.createController(found));
+            if (spec.createBinding) {
+                found.attachBinding(spec.createBinding(found));
             }
             await this.applyResidentIntent(page, args);
             this.ensureResident(spec.id, epoch, page);
@@ -758,8 +758,8 @@ export class UIManager {
         return had;
     }
 
-    /** 卸载时取消全部弹窗，已发出的资源请求结束后也不能挂回旧应用。 */
-    private closeAllResidents(): void {
+    /** 会话结束或应用卸载时取消所有已打开及准备中的弹窗，迟到的资源无法再挂回旧界面。 */
+    public closeAllResidents(): void {
         for (const id of Array.from(this.residentEpoch.keys())) {
             this.closeResident(id);
         }
@@ -1085,8 +1085,8 @@ export class UIManager {
             throw new Error(spec.prefab + " 上没有视图组件");
         }
         try {
-            if (spec.createController) {
-                found.attachController(spec.createController(found));
+            if (spec.createBinding) {
+                found.attachBinding(spec.createBinding(found));
             }
             found.runOpen(args);
             await found.whenReady();

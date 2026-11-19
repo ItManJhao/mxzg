@@ -1,9 +1,10 @@
 /**
- * 角色初始规则与等级经验门槛，直接读取旧策划表的共享导出，不引用英雄升级消耗。
+ * 角色初始规则、新手赠礼与等级经验门槛，直接读取旧策划表的共享导出。
  * 由角色创建与可信经验发放调用，只计算配置和经验结果，不持有玩家状态或写入资产。
  * 经验结果区分跨级实际接纳、满级忽略与升级附赠，供外层事务冻结真实发放明细。
  */
 package com.funsgamex.mxzg.role;
+import com.funsgamex.mxzg.reward.RewardGrantService;
 import java.util.*;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.*;
@@ -19,7 +20,9 @@ public class RoleRules {
     private final int maxLevel;
     /** 旧规则以首抽英雄星级与类型 ID 拼接的初始形象。 */
     private final int imageId;
-    /** 启动读取可信配置；缺键、重复或非整数直接报错，不默认为零。 */
+    /** 旧系统表的命名后赠礼计划，保持原配置顺序，合并由通用发奖服务执行。 */
+    private final List<RewardGrantService.Reward> welcomeGift;
+    /** 启动读取可信角色初值、等级及赠礼配置；缺少配置或格式无效时拒绝启动。 */
     public RoleRules(ObjectMapper mapper) {
         for(var row:rows(mapper,"inituser")) {
             String key=row.path("key").asString();
@@ -47,12 +50,51 @@ public class RoleRules {
         int level=Math.toIntExact(initial("level"));
         if(level<1 || level>maxLevel || (level<maxLevel && initial("exp")>=threshold(level)))throw new IllegalStateException("初始角色经验无效");
         Math.toIntExact(initial("cup"));
-        long first=0;
-        for(var row:rows(mapper,"system"))if(row.path("key").asString().equals("first_ordinary_lottery"))first=number(row,"value");
+        long first = 0;
+        List<RewardGrantService.Reward> gift = null;
+        for (var row : rows(mapper, "system")) {
+            switch (row.path("key").asString()) {
+                case "first_ordinary_lottery" -> first = number(row, "value");
+                case "guide_initial_reward" -> {
+                    if (gift != null) {
+                        throw new IllegalStateException("新手赠礼配置重复");
+                    }
+                    gift = readWelcomeGift(mapper, row);
+                }
+            }
+        }
+        if (gift == null) {
+            throw new IllegalStateException("新手赠礼配置缺失");
+        }
+        welcomeGift = gift;
         int image=0;
         for(var row:rows(mapper,"herotype"))if(number(row,"type")==first)image=Integer.parseInt(number(row,"star")+""+first);
         if(first<=0 || image<=0)throw new IllegalStateException("初始角色形象配置缺失");
         imageId=image;
+    }
+
+    /** 从旧配置读取可发奖字段，tag 只供客户端展示。 */
+    private static List<RewardGrantService.Reward> readWelcomeGift(ObjectMapper mapper, JsonNode row) {
+        var value = row.path("value");
+        var entries = value.isTextual() ? mapper.readTree(value.asString()) : null;
+        if (entries == null || !entries.isArray() || entries.isEmpty()) {
+            throw new IllegalStateException("新手赠礼配置必须是非空 JSON 数组");
+        }
+        var plan = new ArrayList<RewardGrantService.Reward>();
+        for (var entry : entries) {
+            int itemId = Math.toIntExact(number(entry, "item_type"));
+            long quantity = number(entry, "item_num");
+            if (itemId == 0 || quantity == 0) {
+                throw new IllegalStateException("新手赠礼物品和数量必须为正整数");
+            }
+            plan.add(new RewardGrantService.Reward(itemId, quantity));
+        }
+        return List.copyOf(plan);
+    }
+
+    /** 返回命名后赠礼的唯一不可变计划，供角色领取事务使用。 */
+    public List<RewardGrantService.Reward> welcomeGift() {
+        return welcomeGift;
     }
     /**
      * 本次经验发放的不可变计算结果；实际接纳量包含用于跨级的经验，不能以本级经验差推算。

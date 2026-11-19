@@ -225,6 +225,14 @@ def export_current(src: Path, out: Path) -> int:
             write_json(target, build_display(build_projection(src)))
             ensure_meta(Path(str(target) + ".meta"))
             continue
+        if name == "hero-summon-pools":
+            # 公示和实际抽取共用同一投影，避免分别维护英雄和概率。
+            from export_normal_summon import project_full
+
+            target = out / (name + ".json")
+            write_json(target, {"table": name, "rows": [project_full(src)]})
+            ensure_meta(Path(str(target) + ".meta"))
+            continue
         if name.startswith("maincity/"):
             # 这三份当前页面输入与现存XLSX存在已记录差异，完整规则专项前保持原容器和字节。
             source = ROOT / "config/client-maincity" / (stem + ".json")

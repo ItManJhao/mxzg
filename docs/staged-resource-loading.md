@@ -71,7 +71,7 @@ login中的`{config:GConfig.X}`声明登录前启动表，当前为2份；生成
 
 正文改为Prefab内既有位置的cc.RichText，普通库存、奖励和产物Face由ItemDetailUtils.richText统一生成richBody，保留旧br/字面量`\n`换行及合法font颜色；不是把礼包内容简单剥成Label。584条纯投影/文字等值专项通过。此变更没有新增配置、模块资源清单、阶段目标或Bundle，仍复用现有资源池；追加本机只重验富文本颜色/换行、长文首末、随机碎片及关闭/注销，不将第一阶段UI矩阵称为全部重跑，完整范围见同一[最终证据](validation/item-shard-review-20261114.json)。
 
-实际打开页面时，UIManager按@UIRegistry.view的唯一注册取得Prefab，页面同步查询GameConfig；当前页面注册不再挂配置prepare。阶段预加载同样只读取页面spec.prefab，统一经资源池准备目标，不调用View.load、不创建界面或查询玩家状态。ApplicationResources负责三段调度、任务状态和美术目标持有，配置包使用短期独立作用域。preparedPage/homePage/heroPage等各页取址包装已移除；应用依赖通过bindViewRuntime窄绑定createController或动态hostId，不能借此另写页面路径或加载清单。
+实际打开页面时，UIManager按@UIRegistry.view的唯一注册取得Prefab，页面同步查询GameConfig；当前页面注册不再挂配置prepare。阶段预加载同样只读取页面spec.prefab，统一经资源池准备目标，不调用View.load、不创建界面或查询玩家状态。ApplicationResources负责三段调度、任务状态和美术目标持有，配置包使用短期独立作用域。preparedPage/homePage/heroPage等各页取址包装已移除；应用依赖通过bindViewRuntime窄绑定createBinding或动态hostId，不能借此另写页面路径或加载清单。
 
 主城子视图也同步读取已安装GameConfig，旧异步loadConfig注入和缺表默认布局兜底已删除，缺配置明确开页失败。挂机对话复用仓库已有语言主键索引；业务显示投影和按页面拥有的美术缓存仍按各自职责保留，不因改配置加载而删除必要的列表分组或资源作用域。
 

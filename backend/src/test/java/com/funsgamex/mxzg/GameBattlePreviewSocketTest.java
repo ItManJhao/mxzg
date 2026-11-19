@@ -95,7 +95,7 @@ class GameBattlePreviewSocketTest {
     }
 
 
-    /** 通过真实鉴权、保存和试战协议跑前三关，确认版本及数据库不发生变化。 */
+    /** 通过真实鉴权、保存和试战协议跑前四关，校验状态只读及无效关卡参数的错误码。 */
     @Test void savedLineupReturnsTypedReplayWithoutAssetEvents() throws Exception {
         var player = login.login("test_" + UUID.randomUUID().toString().substring(0, 12));
         String hero = UUID.randomUUID().toString();
@@ -109,7 +109,7 @@ class GameBattlePreviewSocketTest {
                 .path("ok").asBoolean());
             peer.events.clear();
             var before = jdbc.queryForMap("SELECT * FROM game_role WHERE id=?", player.role().id());
-            for (int mission = 1; mission <= 3; mission++) {
+            for (int mission = 1; mission <= 4; mission++) {
                 var response = peer.request("battle.preview", Map.of("mission", mission));
                 assertTrue(response.path("ok").asBoolean(), response.toString());
                 java.nio.file.Files.write(java.nio.file.Path.of("target/lineup-preview-" + mission + ".pb"), GameProtocolCodec.encode(response));
@@ -122,7 +122,7 @@ class GameBattlePreviewSocketTest {
                 assertEquals(before, jdbc.queryForMap("SELECT * FROM game_role WHERE id=?", player.role().id()));
                 assertTrue(peer.events.isEmpty(), "试战不推送资产变化");
             }
-            assertEquals("BATTLE_INVALID", peer.request("battle.preview", Map.of("mission", 4)).path("error").path("code").asString());
+            assertEquals("BATTLE_INVALID", peer.request("battle.preview", Map.of("mission", 0)).path("error").path("code").asString());
         }
     }
 
@@ -224,8 +224,8 @@ class GameBattlePreviewSocketTest {
         return state;
     }
 
-    /** 未鉴权不得试战；合法账号的未支持技能明确拒绝而非网络请求失败。 */
-    @Test void unauthorizedAndUnsupportedAreRejected() throws Exception {
+    /** 未鉴权和目录外关卡均被拒绝；合法账号用同一阵容仍可试战。 */
+    @Test void unauthorizedAndOutOfCatalogPreviewsAreRejected() throws Exception {
         try (var peer = new Peer()) {
             assertFalse(peer.request("battle.preview", Map.of("mission", 1)).path("ok").asBoolean());
         }
@@ -235,9 +235,11 @@ class GameBattlePreviewSocketTest {
         try (var peer = new Peer()) {
             peer.authenticate(player.session().accessToken());
             long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, player.role().id());
-            peer.request("formation.save", Map.of("requestId", UUID.randomUUID().toString(), "expectedVersion", version,
-                "formationId", 1, "slots", List.of(Map.of("position", 2, "heroId", hero))));
-            assertEquals("BATTLE_UNSUPPORTED", peer.request("battle.preview", Map.of("mission", 1)).path("error").path("code").asString());
+            assertTrue(peer.request("formation.save", Map.of("requestId", UUID.randomUUID().toString(), "expectedVersion", version,
+                "formationId", 1, "slots", List.of(Map.of("position", 2, "heroId", hero)))).path("ok").asBoolean());
+            assertEquals("BATTLE_UNSUPPORTED",
+                peer.request("battle.preview", Map.of("mission", 851)).path("error").path("code").asString());
+            assertTrue(peer.request("battle.preview", Map.of("mission", 1)).path("ok").asBoolean());
         }
     }
 }

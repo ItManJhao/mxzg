@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "ec1bda8b-7e86-5554-95c5-b7d7b96676c7",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleName": "dungeon",
+    "priority": 2,
+    "bundleConfigID": "remote-assets"
+  }
+}

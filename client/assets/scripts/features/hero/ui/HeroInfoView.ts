@@ -1,6 +1,6 @@
 /**
- * 英雄详情页：由 UIManager 传入实例 ID，读取唯一英雄 Model，并将普通升级交给英雄升级控制器。
- * Prefab 保存固定界面与特效挂点，关闭释放监听、立绘和已持有特效资源，升级事务仍由控制器确认。
+ * 英雄详情页读取名册与背包。选装、卸下和升级分别交给对应控制器，显示服务端属性。
+ * Prefab 保存界面、普通装备槽和音画挂点，关闭释放监听、立绘和特效。
  */
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import type { AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
@@ -8,23 +8,37 @@ import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UIManager } from "../../../framework/ui/UIManager";
+import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
+import type { OwnedHero } from "../data/HeroSnapshotUtils";
+import { HeroEquipmentController } from "../HeroEquipmentController";
 import { HeroLevelController } from "../HeroLevelController";
 import { HeroLevelEvent } from "../utils/HeroLevelEvent";
 import { HeroSkillView } from "./HeroSkillView";
+import { HeroAttributesView } from "./HeroAttributesView";
+import { HeroEquipmentPickerView } from "./HeroEquipmentPickerView";
 import { HeroSkillUtils } from "../utils/HeroSkillUtils";
 import { HeroEquipmentUtils } from "../utils/HeroEquipmentUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { HeroCatalog } from "../utils/HeroCatalog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { _decorator, Button, Color, Label, Node, Sprite, SpriteFrame, UIOpacity } from "cc";
+import { _decorator, AudioSource, Button, Color, Label, Node, Sprite, SpriteFrame, UIOpacity } from "cc";
 import { GameLog } from "../../../core/GameLog";
 interface HeroPortraitData { templateId: number; name: string; level: number; }
 import { BattleSpineService } from "../../battle/ui/BattleSpineService";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
+import { BagModel } from "../../bag/BagModel";
+import { BagEvent } from "../../bag/utils/BagEvent";
+import { EquipmentInfoView } from "../../bag/ui/EquipmentInfoView";
+
+/** 当前英雄及进入详情时的筛选顺序，持久数据仍由名册读取。 */
+interface HeroInfoArgs {
+    readonly heroId: string;
+    readonly heroIds?: readonly string[];
+}
 
 const { ccclass, property } = _decorator;
 /** 旧 effect.lua 7 号普通升级特效的帧间隔与淡入时长，单位为秒。 */
@@ -32,8 +46,7 @@ const UPGRADE_FRAME_SECONDS = 0.06;
 const UPGRADE_FADE_SECONDS = 0.1;
 
 /**
- * 详情字段、升级按钮和原升级特效挂点由 Prefab 绑定。
- * 普通装备和技能仍为只读展示，升级只转交当前实例编号。
+ * 详情布局由 Prefab 绑定，使用同一英雄实例打开装备、技能与属性的子窗口。
  */
 @UIRegistry.view({
     id: "hero-info",
@@ -43,7 +56,7 @@ const UPGRADE_FADE_SECONDS = 0.1;
     allowMultiple: false,
 })
 @ccclass("HeroInfoView")
-export class HeroInfoView extends BaseView<{ heroId: string }> {
+export class HeroInfoView extends BaseView<HeroInfoArgs> {
     /** 立绘挂载点，由预制体绑定。 */
     @property(Node)
     portrait: Node | null = null;
@@ -54,7 +67,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
 
     /** 由详情预制体绑定的返回按钮。 */
     @property(Button) backButton: Button | null = null;
-    /** 当前等级、星级与属性同步状态。 */
+    /** 当前等级和已同步的升级上限。 */
     @property(Label) summary: Label | null = null;
     /** 服务端面板按攻击、生命、防御、速度绑定；不在客户端叠加装备。 */
     @property([Label]) attributes: Label[] = [];
@@ -70,19 +83,47 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
     @property([Button]) skillButtons: Button[] = [];
     /** 图标异步绘制代次；每次刷新递增，关闭作废，防止旧图片覆盖新实例。 */
     private paintVersion = 0;
-    /** 普通装备四槽图标，静态节点不提供穿脱按钮。 */
+    /** 普通装备四槽的图标节点，按权威穿戴绘制。 */
     @property([Node]) equipmentIcons: Node[] = [];
     /** 按旧物品品质显示四槽边框。 */
     @property([Node]) equipmentFrames: Node[] = [];
     /** 装备星级和附魂等级；旧快照明确显示待同步。 */
     @property([Label]) equipmentLabels: Label[] = [];
-    /** 普通升级按钮，提交或恢复当前详情对应的实例。 */
+    /** 普通装备四槽的操作入口，空槽选装，已穿槽查看详情。 */
+    @property([Button]) equipmentButtons: Button[] = [];
+    /** 当前部位有候选升级时显示的旧红点。 */
+    @property([Node]) equipmentDots: Node[] = [];
+    /** 有可提升装备时出现在旧按钮位。 */
+    @property(Button) equipAllButton: Button | null = null;
+    /** 一键穿装存在改进时显示红点。 */
+    @property(Node) equipAllDot: Node | null = null;
+    /** 没有可提升装备且已穿装备时出现在同一按钮位。 */
+    @property(Button) unequipAllButton: Button | null = null;
+    /** 原版穿装和单件卸下音效的预制体音源。 */
+    @property(AudioSource) equipmentAudio: AudioSource | null = null;
+    /** 前后箭头沿进入详情时的名册顺序切换。 */
+    @property(Button) previousHeroButton: Button | null = null;
+    /** 最后一名英雄不显示下一名按钮。 */
+    @property(Button) nextHeroButton: Button | null = null;
+    /** 低阶英雄标题行的金色星标。 */
+    @property([Node]) heroStars: Node[] = [];
+    /** 超出单行星标时显示实际星数。 */
+    @property(Label) heroStarCount: Label | null = null;
+    /** 与模板职业对应的图标。 */
+    @property(Node) professionIcon: Node | null = null;
+    /** 用同源语言表显示英雄职业。 */
+    @property(Label) professionLabel: Label | null = null;
+    /** 由服务端按当前已恢复属性来源计算的个人战力。 */
+    @property(Label) heroPowerLabel: Label | null = null;
+    /** 展开服务器已同步的属性明细。 */
+    @property(Button) attributeButton: Button | null = null;
+    /** 提交当前英雄实例的普通升级。 */
     @property(Button) upgradeButton: Button | null = null;
-    /** 当前可升的级数或待确认操作名称。 */
+    /** 当前可升的级数或请求等待提示。 */
     @property(Label) upgradeLabel: Label | null = null;
     /** 有可负担升级时显示的旧红点。 */
     @property(Node) upgradeDot: Node | null = null;
-    /** 两项消耗的组合节点，上限、未同步与恢复时隐藏。 */
+    /** 两项消耗的组合节点，等待回复、达到上限或未同步时隐藏。 */
     @property(Node) upgradeCosts: Node | null = null;
     /** 当前升级金币消耗，余额不足时按旧规则标红。 */
     @property(Label) upgradeGold: Label | null = null;
@@ -94,7 +135,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
     @property(Sprite) upgradeEffect: Sprite | null = null;
     /** 光效淡入通道，独立于立绘和详情控件。 */
     @property(UIOpacity) upgradeEffectOpacity: UIOpacity | null = null;
-    /** 技能按钮解除函数，关闭时逐一释放。 */
+    /** 页面技能及装备按钮的解除函数，关闭时逐一释放。 */
     private skillStops: Array<() => void> = [];
     /** 本次打开的实例 ID；关闭清空，不能误用模板 ID 查找。 */
     private selectedId = "";
@@ -116,8 +157,8 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         ViewportLayoutUtils.bindVisibleRefresh(this.node, () => ViewportLayoutUtils.fitVisibleRoot(this.node));
     }
 
-    /** 统一入口只传实例 ID，订阅名册及普通升级的客户端确认事件。 */
-    onOpen(args: { heroId: string }): void {
+    /** 绑定当前英雄、培养按钮和其子窗，订阅唯一名册及装备库存。 */
+    onOpen(args: HeroInfoArgs): void {
         if (!args?.heroId) {
             throw new Error("缺少英雄实例 ID");
         }
@@ -129,6 +170,14 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         this.upgradeButton?.node.on(Button.EventType.CLICK, this.upgrade, this);
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.refresh);
         EventDispatcher.instance.on(HeroLevelEvent.Updated, this, this.onUpgradeChanged);
+        EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refreshEquipmentActions);
+        EventDispatcher.instance.on("hero-equipment:updated", this, this.onEquipmentChanged);
+        this.listenDetail(this.previousHeroButton, () => this.moveHero(-1));
+        this.listenDetail(this.nextHeroButton, () => this.moveHero(1));
+        this.listenDetail(this.equipAllButton, () => HeroEquipmentController.instance.changeAll(this.selectedId, true));
+        this.listenDetail(this.unequipAllButton, () => HeroEquipmentController.instance.changeAll(this.selectedId, false));
+        this.listenDetail(this.attributeButton, () => this.openAttributes());
+        this.equipmentButtons.forEach((button, index) => this.listenDetail(button, () => this.openEquipment(index + 1)));
         this.skillButtons.forEach((button, slot) => {
             const click = () => {
                 if (this.closed) {
@@ -146,13 +195,107 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         });
         this.refresh();
     }
+
+    /** 将详情新增按钮与当前打开期绑定，复用现有解绑流程。 */
+    private listenDetail(button: Button | null, click: () => void): void {
+        if (button) {
+            const node = button.node;
+            node.on(Button.EventType.CLICK, click);
+            this.skillStops.push(() => { if (node.isValid) node.off(Button.EventType.CLICK, click); });
+        }
+    }
+
+    /** 返回当前选中英雄的权威快照条目。 */
+    private currentHero(): OwnedHero | undefined {
+        return HeroRosterModel.instance.snapshot.heroes.find(row => row.id === this.selectedId);
+    }
+
+    /** 沿本次名册顺序切换英雄，切换时结束旧英雄的局部光效。 */
+    private moveHero(step: -1 | 1): void {
+        const order = this.args?.heroIds ?? [];
+        const index = order.indexOf(this.selectedId);
+        const heroId = index < 0 ? undefined : order[index + step];
+        if (!this.closed && heroId && HeroRosterModel.instance.snapshot.heroes.some(hero => hero.id === heroId)) {
+            this.stopUpgradeEffect();
+            this.selectedId = heroId;
+            this.refresh();
+        }
+    }
+
+    /** 打开权威属性明细，跟随本页关闭。 */
+    private openAttributes(): void {
+        void UIManager.instance.openChild(this, HeroAttributesView, { heroId: this.selectedId })
+            .catch(() => { /* UIManager 报告开窗失败。 */ });
+    }
+
+    /** 空槽直接选装，已穿槽沿旧版先显示换装或卸下的共享装备详情。 */
+    private openEquipment(slot: number): void {
+        const equipment = this.currentHero()?.equipment;
+        if (!equipment) {
+            return;
+        }
+        if (!equipment.items.some(item => item.slot === slot)) {
+            this.openEquipmentPicker(slot);
+            return;
+        }
+        void UIManager.instance.openChild(this, EquipmentInfoView, {
+            heroId: this.selectedId, slot, onReplace: () => this.openEquipmentPicker(slot),
+        }).catch(() => { /* UIManager 报告开窗失败。 */ });
+    }
+
+    /** 由空槽或更换入口打开同一部位选择窗。 */
+    private openEquipmentPicker(slot: number): void {
+        if (!this.closed) {
+            void UIManager.instance.openChild(this, HeroEquipmentPickerView, { heroId: this.selectedId, slot })
+                .catch(() => { /* UIManager 报告开窗失败。 */ });
+        }
+    }
+
+    /** 用已同步的背包装备显示旧版红点与一键操作。 */
+    private refreshEquipmentActions(): void {
+        if (this.closed) {
+            return;
+        }
+        const worn = this.currentHero()?.equipment?.items;
+        const ready = !!worn && BagModel.instance.snapshot.synced;
+        const better = ready ? HeroEquipmentUtils.betterSlots(BagModel.instance.items, worn) : new Set<number>();
+        const busy = HeroEquipmentController.instance.busy;
+        this.equipmentButtons.forEach(button => { button.interactable = ready && !busy; });
+        this.equipmentDots.forEach((node, index) => { node.active = better.has(index + 1); });
+        if (this.equipAllButton) {
+            this.equipAllButton.node.active = better.size > 0;
+            this.equipAllButton.interactable = !busy;
+        }
+        if (this.equipAllDot) {
+            this.equipAllDot.active = better.size > 0;
+        }
+        if (this.unequipAllButton) {
+            this.unequipAllButton.node.active = ready && better.size === 0 && worn.length > 0;
+            this.unequipAllButton.interactable = !busy;
+        }
+    }
+
+    /** 装备操作回包只刷新按钮和原音效，具体属性由统一快照刷新。 */
+    private onEquipmentChanged(receipt?: { heroId: string; changed: boolean; action: string }): void {
+        this.refreshEquipmentActions();
+        const source = this.equipmentAudio;
+        if (!source || this.closed || !receipt?.changed || receipt.heroId !== this.selectedId || receipt.action === "UNEQUIP_ALL") {
+            return;
+        }
+        void ResourceAssetsUtils.forNode(this.node).loadPath("audio/equip-wear-1", "AudioClip").then(clip => {
+            if (!this.closed && source.isValid && receipt.heroId === this.selectedId) {
+                source.clip = clip;
+                source.play();
+            }
+        }).catch(error => GameLog.shared.warnOnce("MODULE", "HeroInfoView", "EQUIP_SOUND", String(error)));
+    }
     /** 读取最新实例、服务器属性和当前模板行；不为刷新建立配置索引，实例移除时关闭或返回。 */
     private refresh(): void {
         if (this.closed) {
             return;
         }
         const state = HeroRosterModel.instance.snapshot;
-        const hero = state.heroes.find(row => row.id === this.selectedId);
+        const hero = this.currentHero();
         if (!hero) {
             if (state.status === "ready") {
                 this.goBack();
@@ -174,15 +317,14 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         const levelLimit = this.refreshUpgrade();
         if (this.summary) {
             const level = levelLimit === null ? String(hero.level) : `${hero.level}/${levelLimit}`;
-            const statsStatus = hero.panelStats
-                ? (hero.panelStats.complete ? "英雄属性" : "当前属性（部分加成待恢复）")
-                : "属性待同步";
-            this.summary.string = `等级：${level}    星级：${hero.star}    强化：${hero.stage ?? "—"}\n${statsStatus}`;
+            this.summary.string = `等级：${level}    强化：${hero.stage ?? "—"}`;
         }
+        this.refreshHeader(hero);
         const stats = hero.panelStats?.values; const names = ["攻击", "生命", "防御", "速度"], values = stats ? [stats.atk, stats.hp, stats.def, stats.spd] : [];
         this.attributes.forEach((label, i) => { label.string = names[i] + "：" + (values[i] ?? "待同步"); });
         const version = ++this.paintVersion;
         this.refreshEquipment(hero, version);
+        this.refreshEquipmentActions();
         if (this.skillIcons.length) HeroSkillUtils.present(hero).forEach((skill, i) => {
             const icon = this.skillIcons[i], sprite = icon?.getComponent(Sprite); if (sprite) { sprite.spriteFrame = null; sprite.grayscale = skill.id > 0 && skill.level === 0; }
             if (icon) ResManager.setSprite(icon, [skill.icon || "hero/ui/hero-info_spr-new-9"], () => this.paintVersion === version && this.selectedId === hero.id);
@@ -190,6 +332,50 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
             if (this.skillLevels[i]) this.skillLevels[i].string = skill.id ? HeroSkillUtils.status(skill) : "";
             if (this.skillButtons[i]) this.skillButtons[i].interactable = skill.id > 0 && skill.available;
         });
+    }
+
+    /** 显示真实星级、职业、个人战力以及当前名册顺序的翻页状态。 */
+    private refreshHeader(hero: OwnedHero): void {
+        const config = GameConfig.instance;
+        const occupation = config.getConfig(GConfig.HeroType, hero.templateId)?.occupation;
+        if (this.professionLabel) {
+            const job = occupation && config.getConfig(GConfig.Language, 111000 + occupation)?.value;
+            this.professionLabel.string = job ? `职业：${job}` : "";
+        }
+        if (this.professionIcon) {
+            this.professionIcon.active = !!occupation;
+            ResManager.setSprite(this.professionIcon, occupation ? ResManager.ui("hero", "hero-info_icon-occup-" + occupation) : null);
+        }
+        const visibleStars = hero.star < 10 ? (hero.star > 5 ? hero.star - 5 : hero.star) : 0;
+        const starFrame = ResManager.ui("common", hero.star > 5 ? "other_star-1" : "other_star-0");
+        this.heroStars.forEach((star, index) => {
+            star.active = index < visibleStars;
+            if (star.active) {
+                ResManager.setSprite(star, starFrame);
+            }
+        });
+        if (this.heroStarCount) {
+            this.heroStarCount.node.active = hero.star >= 10;
+            this.heroStarCount.string = `${hero.star} 星`;
+        }
+        if (this.heroPowerLabel) {
+            const power = hero.panelStats?.power;
+            this.heroPowerLabel.node.parent!.active = power !== undefined;
+            this.heroPowerLabel.string = power === undefined ? "" : String(power);
+        }
+        if (this.attributeButton) {
+            this.attributeButton.interactable = !!hero.panelStats;
+        }
+        const order = this.args?.heroIds ?? [];
+        const index = order.indexOf(hero.id);
+        if (this.previousHeroButton) {
+            this.previousHeroButton.interactable = index > 0;
+            this.previousHeroButton.node.active = this.previousHeroButton.interactable;
+        }
+        if (this.nextHeroButton) {
+            this.nextHeroButton.interactable = index >= 0 && index < order.length - 1;
+            this.nextHeroButton.node.active = this.nextHeroButton.interactable;
+        }
     }
 
     /** 刷新按钮、旧红点与金币/英雄经验消耗，返回标题可显示的当前上限。 */
@@ -202,38 +388,27 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         const ready = quote.status === "ready";
         const pending = quote.status === "pending";
         this.upgradeButton.node.active = ready || pending;
-        this.upgradeButton.interactable = ready || pending;
-        this.upgradeLabel.string = pending ? "确认升级" : quote.jumpLabel ? `升${quote.levels}级` : "升级";
+        this.upgradeButton.interactable = ready;
+        this.upgradeLabel.string = pending ? "升级中…" : quote.jumpLabel ? `升${quote.levels}级` : "升级";
         this.upgradeDot.active = ready && quote.levels > 0;
         this.upgradeCosts.active = ready;
-        this.upgradeGold.string = HeroInfoView.formatUpgradeAmount(quote.gold);
+        this.upgradeGold.string = UiKitUtils.formatAmount(quote.gold);
         this.upgradeGold.color = quote.goldEnough ? Color.WHITE : new Color(255, 0, 0);
-        this.upgradeExperience.string = HeroInfoView.formatUpgradeAmount(quote.heroExp);
+        this.upgradeExperience.string = UiKitUtils.formatAmount(quote.heroExp);
         this.upgradeExperience.color = quote.heroExpEnough ? Color.WHITE : new Color(255, 0, 0);
         this.upgradeStatus.node.active = !ready && !pending;
         this.upgradeStatus.string = quote.status === "max" ? "已达当前等级上限" : "升级条件待同步";
         return quote.levelLimit;
     }
 
-    /** 沿用旧费用栏的整数万、亿缩写，只影响文字，不改变比较与提交值。 */
-    private static formatUpgradeAmount(amount: number): string {
-        if (amount >= 100_000_000) {
-            return `${Math.floor(amount / 100_000_000)}亿`;
-        }
-        if (amount >= 100_000) {
-            return `${Math.floor(amount / 10_000)}万`;
-        }
-        return String(amount);
-    }
-
-    /** 把当前实例的升级或恢复意图转交控制器，费用、确认与异常提示都由控制器负责。 */
+    /** 升级按钮把当前英雄交给控制器，界面从升级事件刷新显示。 */
     private upgrade(): void {
         if (!this.closed && this.upgradeButton?.interactable) {
-            void HeroLevelController.instance.upgrade(this.selectedId);
+            HeroLevelController.instance.upgrade(this.selectedId);
         }
     }
 
-    /** 余额与请求状态变化仅重绘升级栏，当前实例的确认成功才播放旧光效。 */
+    /** 按请求忙态重绘升级栏，当前英雄的成功回包触发光效。 */
     private onUpgradeChanged(event?: { heroId?: string; fromLevel?: number; toLevel?: number }): void {
         if (this.closed) {
             return;
@@ -298,7 +473,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
     }
 
     /** 从已校验的统一名册绘制四槽，按显示需要取得空槽和品质框；不从背包库存推测穿戴。 */
-    private refreshEquipment(hero: import("../data/HeroSnapshotUtils").OwnedHero, version: number): void {
+    private refreshEquipment(hero: OwnedHero, version: number): void {
         if (!this.equipmentIcons.length) {
             return;
         }
@@ -350,6 +525,9 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         this.closed = true;
         this.clearListeners();
         this.stopUpgradeEffect();
+        if (this.equipmentAudio?.isValid) {
+            this.equipmentAudio.stop();
+        }
         this.paintVersion++;
         this.selectedId = "";
         if (this.spineNode?.isValid) {
@@ -383,7 +561,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         this.nameLabel.node.active = true;
     }
 
-    /** 动态立绘。加载失败只打日志，节点留着，不退回头像贴图。 */
+    /** 挂载日服缺图时沿用的 Spine；实际加载失败由骨骼服务统一记录。 */
     private mountPortrait(hero: HeroPortraitData): void {
         const host = this.portrait;
         if (!host) {
@@ -398,7 +576,7 @@ export class HeroInfoView extends BaseView<{ heroId: string }> {
         this.heroId = id;
         if (!id) return;
         const actor = BattleSpineService.instance.mountBattleSpine(host, String(id), () => {
-            GameLog.shared.classified("MODULE", "warn", "Hero", "详情立绘没有挂上");
+            /* 切换英雄也会取消挂载，页面没有等待项需要结束。 */
         }, { seatY: -160, scale: 2.13 });
         this.spineNode = actor.node;
         if (this.spineNode.parent === host) this.spineNode.setSiblingIndex(1);

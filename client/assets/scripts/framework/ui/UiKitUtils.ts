@@ -9,6 +9,17 @@ export class UiKitUtils {
     private constructor() {
     }
 
+    /** 按旧费用栏使用整数万、亿，提交和余额比较仍使用原始数值。 */
+    public static formatAmount(amount: number): string {
+        if (amount >= 100_000_000) {
+            return `${Math.floor(amount / 100_000_000)}亿`;
+        }
+        if (amount >= 100_000) {
+            return `${Math.floor(amount / 10_000)}万`;
+        }
+        return String(amount);
+    }
+
     /** 为动态演出创建UI层节点；调用方负责挂载和销毁。 */
     public static uiNode(name: string): Node {
         const node = new Node(name);

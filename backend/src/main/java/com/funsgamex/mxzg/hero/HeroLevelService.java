@@ -55,10 +55,13 @@ public class HeroLevelService {
     private final JdbcTemplate jdbc;
     /** 同一事务复用唯一资产版本，提交后由统一快照分发。 */
     private final AssetSyncService sync;
+    /** 已上阵英雄的升级会刷新原主阵容战力峰值。 */
+    private final HeroMainPowerService powers;
 
     /** 注入角色权威数据源与原事务版本出口。 */
     public HeroLevelService(SessionService sessions, RoleRepository roles, HeroRepository heroes,
-            InventoryService inventory, HeroGrowthRules rules, JdbcTemplate jdbc, AssetSyncService sync) {
+            InventoryService inventory, HeroGrowthRules rules, JdbcTemplate jdbc, AssetSyncService sync,
+            HeroMainPowerService powers) {
         this.sessions = sessions;
         this.roles = roles;
         this.heroes = heroes;
@@ -66,6 +69,7 @@ public class HeroLevelService {
         this.rules = rules;
         this.jdbc = jdbc;
         this.sync = sync;
+        this.powers = powers;
     }
 
     /** 预览也在角色锁内取一致的等级/钱包/库存快照，不从客户端接收可信数值。 */
@@ -93,7 +97,7 @@ public class HeroLevelService {
         return new Preview(hero, stage, limit, current, next, cost, gold, experience, status, rules.version());
     }
 
-    /** 单次提交原等级及升级级数，按旧规则整笔计算。重复请求返回原收据，失败回滚所有变化。 */
+    /** 原等级与级数按旧规则整笔结算，并更新上阵战力峰值；重复返回原收据，失败回滚。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt upgrade(String token, String heroId, Request request) {
         String role = authorizeLocked(token);
@@ -131,6 +135,9 @@ public class HeroLevelService {
         if (jdbc.update("UPDATE game_hero SET hero_level=? WHERE role_id=? AND id=? AND hero_level=?",
                 to, role, heroId, from) != 1) {
             throw error(HttpStatus.CONFLICT, "HERO_LEVEL_CHANGED");
+        }
+        if (hero.deployed()) {
+            powers.observe(role);
         }
         sync.changed(role);
         var receipt = new Receipt(request.requestId(), heroId, from, to, rules.version(), roles.revision(role), role);

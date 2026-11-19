@@ -1,6 +1,6 @@
 /**
  * 普通装备只读详情投影：直接查询唯一GameConfig中的装备、评分、套装、属性图标及语言配置。
- * 由背包专用详情调用，仅计算配置级基础属性和旧背包的空穿戴套装展示，不推断玩家穿戴或写资产。
+ * 由背包和英雄详情共用，套装件数取调用方提供的服务端已穿装备，不写玩家资产。
  * 配置缺失时按具体物品限频记录并返回null，调用方据此提示不可展示，不用零值补齐。
  */
 import { GameConfig } from "../../../config/GameConfig";
@@ -25,18 +25,18 @@ export interface EquipmentDetailAttribute {
 export interface EquipmentDetailSetBonus {
     /** 激活所需件数，当前同源配置为2、3、4。 */
     readonly required: number;
-    /** 旧版“(N件启动)”文案；不表示当前角色已激活。 */
+    /** 旧版“(N件启动)”文案；按同套实际穿戴件数判断激活。 */
     readonly condition: string;
     /** 当前配置每档一条，结构保留真实属性数组。 */
     readonly attributes: readonly EquipmentDetailAttribute[];
 }
 
-/** 旧背包打开装备详情时传空穿戴列表，因此套装计数固定为0/4。 */
+/** 背包独立开窗时套装计数为零；从英雄打开时取实际穿戴。 */
 export interface EquipmentDetailSet {
     /** 套装语言名称，不混入装备数量。 */
     readonly name: string;
-    /** 旧背包空穿戴上下文的套装件数，不从英雄装备猜取。 */
-    readonly count: 0;
+    /** 该英雄当前已穿的同套装备件数。 */
+    readonly count: number;
     /** 旧普通装备套装最多四件。 */
     readonly total: 4;
     /** 按所需件数排列的真实套装属性。 */
@@ -85,14 +85,16 @@ export class EquipmentDetailUtils {
      * 生成普通装备详情；非mode=1不适用本详情，缺少真实显示配置同样返回null并记录原因。
      * @param itemId 服务器库存中的配置ID，不能传库存实例ID。
      * @param config 已安装的唯一配置仓库；独立规则检查可传隔离仓库，不传整表副本。
+     * @param equippedTemplates 当前英雄已穿四槽中的装备配置编号；背包入口不传。
      */
-    public static read(itemId: number, config: GameConfig = GameConfig.instance): EquipmentDetail | null {
+    public static read(itemId: number, config: GameConfig = GameConfig.instance,
+        equippedTemplates: readonly number[] = []): EquipmentDetail | null {
         const item = config.getConfig(GConfig.Item, itemId);
         if (item?.mode !== 1) {
             return null;
         }
         try {
-            return EquipmentDetailUtils.build(item, config);
+            return EquipmentDetailUtils.build(item, config, equippedTemplates);
         } catch (error) {
             const reason = error instanceof Error ? error.message : String(error);
             GameLog.shared.warnOnce("MODULE", "EquipmentDetailUtils", "EQUIPMENT_DISPLAY_MISSING:" + itemId + ":" + reason,
@@ -101,8 +103,26 @@ export class EquipmentDetailUtils {
         }
     }
 
+    /** 只读取原装备评分，供一键穿装红点比较，无需准备名称、属性图标或套装说明。 */
+    public static score(itemId: number, config: GameConfig = GameConfig.instance): number {
+        const equipment = config.getConfig(GConfig.EquipmentType, itemId);
+        if (!equipment) {
+            throw new Error("装备评分缺少配置：" + itemId);
+        }
+        return this.attributeScore(this.readAttributes(equipment.ability, "equipmenttype.ability"), config);
+    }
+
+    /** 原版逐条向上取整；沿 Lua 先除比例再乘属性的求值次序。 */
+    private static attributeScore(attributes: readonly EquipmentRawAttribute[], config: GameConfig): number {
+        const scores = config.getConfig(GConfig.ScoreCount);
+        return attributes.reduce((sum, attribute) => {
+            const ratio = scores.find(row => row.mapping === attribute.id)?.ratio;
+            return sum + (ratio === undefined ? 0 : Math.ceil(attribute.value * (ratio / 10000)));
+        }, 0);
+    }
+
     /** 核对完整配置后一次构造投影；任何缺口都中止，不生成部分属性或默认评分。 */
-    private static build(item: ItemRow, config: GameConfig): EquipmentDetail {
+    private static build(item: ItemRow, config: GameConfig, equippedTemplates: readonly number[]): EquipmentDetail {
         const equipment = config.getConfig(GConfig.EquipmentType, item.idx);
         if (!equipment || !Number.isSafeInteger(equipment.rare) || equipment.rare < 1 || equipment.rare > 6
             || !Number.isSafeInteger(equipment.star) || equipment.star < 1 || equipment.star > 6
@@ -126,12 +146,7 @@ export class EquipmentDetailUtils {
                 throw new Error("scorecount映射重复或无效");
             }
         }
-        const score = raw.reduce((sum, attribute) => {
-            const ratio = scores.find(row => row.mapping === attribute.id)?.ratio;
-            // 沿旧Lua先除10000再乘属性；不能交换浮点求值顺序后改变ceil边界。
-            // 无评分映射的合法属性按旧代码贡献0，显示仍需完整属性名称和图标。
-            return sum + (ratio === undefined ? 0 : Math.ceil(attribute.value * (ratio / 10000)));
-        }, 0);
+        const score = this.attributeScore(raw, config);
         const sorted = raw.map((attribute, order) => ({ attribute, order }))
             .sort((left, right) => (scores.find(row => row.mapping === left.attribute.id)?.idx ?? 100)
                 - (scores.find(row => row.mapping === right.attribute.id)?.idx ?? 100)
@@ -151,12 +166,12 @@ export class EquipmentDetailUtils {
             description: EquipmentDetailUtils.plainText(EquipmentDetailUtils.word(config, item.idx + 100000)),
             attributes: sorted.map(row => EquipmentDetailUtils.displayAttribute(row.attribute, config, false)),
             set: Number(equipment.set_type) === 0 ? null
-                : EquipmentDetailUtils.setDetail(Number(equipment.set_type), config),
+                : EquipmentDetailUtils.setDetail(Number(equipment.set_type), config, equippedTemplates),
         };
     }
 
-    /** 按旧2/3/4件顺序取套装配置，固定空穿戴计数；缺失某档不伪造激活属性。 */
-    private static setDetail(type: number, config: GameConfig): EquipmentDetailSet {
+    /** 按旧 2/3/4 件顺序取套装配置，再以已穿装备统计该套激活件数。 */
+    private static setDetail(type: number, config: GameConfig, equippedTemplates: readonly number[]): EquipmentDetailSet {
         const rows = config.getConfig(GConfig.EquipmentSetType).filter(row => row.type === String(type));
         const bonuses: EquipmentDetailSetBonus[] = [];
         for (let required = 2; required <= 4; required++) {
@@ -174,7 +189,8 @@ export class EquipmentDetailUtils {
                 attributes: raw.map(row => EquipmentDetailUtils.displayAttribute(row, config, true)),
             });
         }
-        return { name: EquipmentDetailUtils.word(config, type), count: 0, total: 4, bonuses };
+        const count = equippedTemplates.filter(id => Number(config.getConfig(GConfig.EquipmentType, id)?.set_type) === type).length;
+        return { name: EquipmentDetailUtils.word(config, type), count, total: 4, bonuses };
     }
 
     /** 将原始单属性JSON数组解析为有序条目；保持重复条目，评分必须先逐条ceil再相加。 */

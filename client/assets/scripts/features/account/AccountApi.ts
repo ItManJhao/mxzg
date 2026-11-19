@@ -150,7 +150,7 @@ export class AccountApi implements AccountGateway {
         });
     }
 
-    /** 校验角色归属、非负钱包及基础资料；任何字段非法则整份拒绝，不产生部分提交。 */
+    /** 校验角色归属、钱包、命名和赠礼状态，返回可提交的完整角色资料。 */
     public static readRole(value: unknown): RoleProfile {
         const row = AccountApi.record(value);
         if (typeof row.id !== "string" || !row.id || typeof row.nickname !== "string" ||
@@ -163,9 +163,18 @@ export class AccountApi implements AccountGateway {
         if (serverId !== undefined && (typeof serverId !== "string" || !/^[a-z0-9_-]{1,32}$/.test(serverId))) {
             throw new Error("角色区服无效");
         }
+        if (row.firstNamed !== undefined && typeof row.firstNamed !== "boolean") {
+            throw new Error("角色首次命名状态无效");
+        }
+        if ((row.welcomeGiftAvailable !== undefined && typeof row.welcomeGiftAvailable !== "boolean")
+            || (row.welcomeGiftAvailable === true && row.firstNamed !== true)) {
+            throw new Error("角色新手赠礼资格无效");
+        }
         return {
             id: row.id,
             nickname: row.nickname,
+            ...(typeof row.firstNamed === "boolean" ? { firstNamed: row.firstNamed } : {}),
+            ...(typeof row.welcomeGiftAvailable === "boolean" ? { welcomeGiftAvailable: row.welcomeGiftAvailable } : {}),
             level: Number(row.level),
             gold: Number(row.gold),
             diamonds: Number(row.diamonds),

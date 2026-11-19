@@ -32,10 +32,8 @@ export class GmBattleView extends BaseView<GmBattleArgs> {
     @property([Button]) battleButtons: Button[] = [];
     /** 关闭本窗，返回下方总菜单。 */
     @property(Button) closeButton: Button | null = null;
-    /** 关闭后忽略迟到的演示准备结果。 */
-    private closed = true;
-    /** true 表示一次演示正在准备，阻止重复点击。 */
-    private busy = false;
+    /** 当前点击正在准备的场次；重开、关闭和准备结束时清空。相同关卡的两次点击各有独立记录。 */
+    private preparing: {mission: number} | null = null;
     /** 当前打开登记的事件清理函数。 */
     private stops: Array<() => void> = [];
 
@@ -43,8 +41,7 @@ export class GmBattleView extends BaseView<GmBattleArgs> {
     onOpen(args: GmBattleArgs): void {
         this.releaseBindings();
         this.args = args;
-        this.closed = false;
-        this.busy = false;
+        this.preparing = null;
         this.owner!.string = "当前角色：" + args.nickname;
         this.message!.string = "仅演示当前阵容，不推进关卡、不发放奖励。";
         ViewportLayoutUtils.fitVisibleRoot(this.node);
@@ -58,25 +55,26 @@ export class GmBattleView extends BaseView<GmBattleArgs> {
     /** 等待应用准备演示，同窗一次只请求一关，失败恢复重试入口。 */
     private async play(mission: number): Promise<void> {
         const args = this.args;
-        if (this.closed || this.busy || !args) {
+        if (this.preparing || !args) {
             return;
         }
-        this.busy = true;
+        const selection = this.preparing = {mission};
         this.battleButtons.forEach(button => button.interactable = false);
         this.message!.string = "正在准备阵容试战…";
+        const stillOpen = () => this.preparing === selection;
         try {
-            await args.openLineupBattle(mission);
-            if (!this.closed && this.args === args) {
+            await args.openLineupBattle(mission, stillOpen);
+            if (stillOpen()) {
                 UIManager.instance.toast("阵容试战已开始");
             }
         } catch (error) {
-            if (!this.closed && this.args === args && !UIManager.isOpenCancelled(error)
+            if (stillOpen() && !UIManager.isOpenCancelled(error)
                 && !UIManager.isFailureReported(error)) {
                 UIManager.instance.toast("阵容试战失败：" + ErrorUtils.messageOf(error));
             }
         } finally {
-            if (!this.closed && this.args === args) {
-                this.busy = false;
+            if (stillOpen()) {
+                this.preparing = null;
                 this.battleButtons.forEach(button => button.interactable = true);
                 this.message!.string = "仅演示当前阵容，不推进关卡、不发放奖励。";
             }
@@ -96,8 +94,7 @@ export class GmBattleView extends BaseView<GmBattleArgs> {
 
     /** 关窗只清理展示监听和迟到回调，真实演示生命周期由应用管理。 */
     onClose(): void {
-        this.closed = true;
-        this.busy = false;
+        this.preparing = null;
         this.releaseBindings();
         this.args = undefined;
     }

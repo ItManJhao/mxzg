@@ -142,7 +142,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.defeatContent.active = !args.won;
         this.readonlyNotice.active = args.won;
         const notice = this.readonlyNotice.getComponent(Label) || this.readonlyNotice.getComponentInChildren(Label);
-        if (notice && args.persistentChapter) {
+        if (notice && (args.persistentChapter || args.notice !== undefined)) {
             notice.string = args.notice || "战报已保存";
         }
         this.paintNextTarget(args);
@@ -155,7 +155,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         const close = () => this.close();
         const confirm = this.mainVictoryPanel?.active
             ? this.panel.getChildByPath("VictoryButtons/ConfirmButton")! : this.panel.getChildByName("ConfirmButton")!;
-        confirm.active = !!args.persistentChapter && args.won;
+        confirm.active = args.won && (args.persistentChapter === true || args.rewards !== undefined);
         if (confirm.active) {
             const anchor = this.panel.getChildByName(this.mainVictoryPanel?.active ? "MainVictoryCloseHintAnchor" : "VictoryCloseHintAnchor")!;
             this.closeHint.node.setPosition(anchor.position);
@@ -248,13 +248,12 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
         this.panel.setPosition(-320 * this.panelScale, (this.mainVictoryPanel?.active ? -365 : -200) * this.panelScale, 0);
     }
 
-    /** 只绘制已确认奖励，并复用背包物品说明；展示本次数量而非库存余额。 */
+    /** 绘制主线或副本调用方确认的胜利回执，只读演示无需提供奖励。 */
     private showRewards(args: ChapterEndArgs): void {
         if (!this.rewardScroll) {
             return;
         }
-        const rewards = args.persistentChapter && args.won
-            ? (args.rewards || []).filter(row => row.quantity > 0) : [];
+        const rewards = args.won ? (args.rewards || []).filter(row => row.quantity > 0) : [];
         this.rewardScroll.node.active = rewards.length > 0;
         if (!rewards.length) {
             return;

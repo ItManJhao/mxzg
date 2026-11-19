@@ -4,6 +4,7 @@
  */
 import { GameLog } from "../../../core/GameLog";
 import { _decorator, Button, instantiate, Node, Prefab } from "cc";
+import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
@@ -13,8 +14,12 @@ import { CityChromeView } from "../../city/ui/CityChromeView";
 import { CityHubView } from "../../city/ui/CityHubView";
 import { CityChromeShell } from "../../city/ui/CityChromeShell";
 import { RemakeConfigUtils } from "../../../config/RemakeConfigUtils";
+import { CityNavigationUtils } from "../../../config/CityNavigationUtils";
+import { EntryGateUtils } from "../../../config/EntryGateUtils";
 import type { AccountState } from "../../account/AccountModel";
-import type { HomeActions, HomeView } from "../HomeController";
+import { BagModel } from "../../bag/BagModel";
+import { BagEvent } from "../../bag/utils/BagEvent";
+import type { HomeActions, HomeView } from "./HomePageBinding";
 
 const { ccclass, property } = _decorator;
 
@@ -39,22 +44,31 @@ export class RemakeHomeView extends BaseView implements HomeView {
     private actions: HomeActions | null = null;
     private closed = false;
     private extraUnbind: Array<() => void> = [];
-    private currentFeature: "city" | "hero" | "bag" | "battle" = "city";
+    /** 主城内容区当前显示的页面，默认显示地图。 */
+    private currentFeature: "city" | "hero" | "bag" | "battle" | "summon" | "market" | "dungeon" = "city";
+    /** 英雄详情将顶栏右侧资源切到英雄经验，离开时立即复原为钻石。 */
+    private showHeroExperience = false;
 
     get featureHost(): Node | null { return this.cityHost; }
-    /** 切换主城或背包只隐藏内容区；共用头像保留，角色详情同时收起。 */
-    showFeature(id: "city" | "hero" | "bag" | "battle"): void {
+    /** 切换功能页并同步顶栏资源，英雄详情沿旧版显示英雄经验。 */
+    showFeature(id: "city" | "hero" | "bag" | "battle" | "summon" | "market" | "dungeon", showHeroExperience = false): void {
         if (this.closed) return;
         this.currentFeature = id;
+        this.showHeroExperience = showHeroExperience;
         if (this.city?.node.isValid) this.city.node.active = id === "city";
         UIManager.instance.closeById("role-profile");
         this.showNotice("");
         this.paintRole();
     }
 
-    /** 主城页面打开后加载已有预制体，生命周期由 UIManager 管理。 */
+    /** 主城打开后加载预制体，并在培养页响应英雄经验库存变化。 */
     onOpen(): void {
         this.closed = false;
+        this.ownListener(EventDispatcher.instance.on(BagEvent.BagUpdate, this, () => {
+            if (this.showHeroExperience) {
+                this.paintCurrencies();
+            }
+        }));
         this.beginOpen();
         void this.openCity();
     }
@@ -114,7 +128,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
         }
     }
 
-    /** 主城 Controller 注入已有操作；头像及详情按钮由所属实例统一清理。 */
+    /** 页面绑定提供已开放的功能入口；头像及详情按钮由所属实例统一清理。 */
     bind(actions: HomeActions): () => void {
         this.actions = actions;
         this.paintRole();
@@ -134,22 +148,38 @@ export class RemakeHomeView extends BaseView implements HomeView {
         }
     }
 
-    /** 只显示服务器资料；头像与头像框分别解析，未知战力不伪造为零。 */
+    /** 刷新服务器角色资料、底栏选中状态和主城入口条件。 */
     private paintRole(): void {
         const role = this.role;
         if (!role || !this.chrome) return;
         this.chrome.setIdentity(role.nickname, "");
         this.chrome.setLevelBadge(String(role.level));
         this.chrome.setExperience(role.basics?.experience, role.basics?.experienceToNextLevel);
-        this.chrome.setCurrencies(String(role.gold), String(role.diamonds));
+        this.paintCurrencies();
         this.chrome.setPower(""); // 战力尚未接入，不将未知值伪装为零。
         RolePortraitUtils.paint(this.chrome.avatarFace, this.chrome.avatarBorder, role.basics?.headId, role.basics?.borderId);
         this.chrome.setCityExtras(false);
-        this.chrome.setTabs(["city", "hero", "bag", "battle", "dungeon", "clan", "fetter"].map(id => ({
-            id, text: "", state: id === this.currentFeature ? "selected" :
-                id === "city" || this.actions?.availableFeatures?.includes(id) || (id === "hero" && this.actions?.heroAvailable) ? "open" : "locked",
-        })));
+        const selectedTab = this.currentFeature === "summon" || this.currentFeature === "market" ? "city" : this.currentFeature;
+        const dungeonGate = CityNavigationUtils.bottomGate("dungeon");
+        const dungeonOpen = !!dungeonGate && EntryGateUtils.isEntryOpen(dungeonGate, role.level, 0);
+        this.chrome.setTabs(["city", "hero", "bag", "battle", "dungeon", "clan", "fetter"].map(id => {
+            const available = id === "city" || (this.actions?.availableFeatures?.includes(id) && (id !== "dungeon" || dungeonOpen));
+            return {
+                id,
+                text: "",
+                state: id === selectedTab ? "selected" : available ? "open" : "locked",
+                lockLevel: id === "dungeon" ? dungeonGate?.level : undefined,
+            };
+        }));
         this.city?.refreshLocks();
+    }
+
+    /** 顶栏只读当前钱包和英雄经验，数据仍由账号与背包分别持有。 */
+    private paintCurrencies(): void {
+        if (this.role && this.chrome) {
+            const secondary = this.showHeroExperience ? BagModel.instance.quantity(900101) : this.role.diamonds;
+            this.chrome.setCurrencies(String(this.role.gold), String(secondary), this.showHeroExperience);
+        }
     }
 
     /** 主城退出时通过 UIManager 关闭资料弹窗并解除头像、货币按钮和子页面监听。 */

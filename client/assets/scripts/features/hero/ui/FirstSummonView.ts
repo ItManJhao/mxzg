@@ -1,121 +1,246 @@
-/** 普通免费首抽窗口：显示服务器资格、待确认状态和背包积分，只将点击意图交给应用。 */
-import { _decorator, Button, Label, UITransform } from "cc";
+/** 召唤法阵页面。展示各池、余额和冷却，确认消耗后由英雄控制器提交。 */
+import { _decorator, Button, Label, Node, Sprite, UITransform } from "cc";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
+import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
+import { BattleSpineService } from "../../battle/ui/BattleSpineService";
 import { BagModel } from "../../bag/BagModel";
 import { BagEvent } from "../../bag/utils/BagEvent";
-import { FirstSummonController } from "../FirstSummonController";
-import type { FirstSummonModel } from "../FirstSummonModel";
+import { ConfirmView } from "../../common/ui/ConfirmView";
+import { HeroRosterController } from "../HeroRosterController";
+import { HeroRosterModel } from "../HeroRosterModel";
+import { HeroRosterEvent } from "../utils/HeroRosterEvent";
+import { FirstSummonData, type SummonCount, type SummonPool } from "../data/FirstSummonData";
+import { SummonInfoView } from "./SummonInfoView";
 
 const { ccclass, property } = _decorator;
-
-/** 应用提供的只读资格与原请求动作。 */
-export interface FirstSummonArgs {
-    /** 当前角色权威资格与操作进度的唯一来源。 */
-    readonly model: FirstSummonModel;
-    /** 由应用登记或恢复原免抽请求，关闭窗口不取消。 */
-    requestSummon(): void;
-}
+/** 预制体上的排列顺序，先三个池，再分单次和十次。 */
+const actions: readonly { pool: SummonPool; count: SummonCount }[] = [
+    { pool: "NORMAL", count: 1 }, { pool: "NORMAL", count: 10 },
+    { pool: "FRIENDSHIP", count: 1 }, { pool: "FRIENDSHIP", count: 10 },
+    { pool: "ADVANCED", count: 1 }, { pool: "ADVANCED", count: 10 },
+];
 
 @UIRegistry.view({
     id: "first-summon",
     prefab: "bundles/module/hero/prefabs/FirstSummonView",
-    layer: UILayer.Popup,
-    hostId: "remake-modal",
+    layer: UILayer.Page,
     cache: false,
     allowMultiple: false,
-    modal: { mask: true, closeOnOutside: true },
 })
 @ccclass("FirstSummonView")
-export class FirstSummonView extends BaseView<FirstSummonArgs> {
+export class FirstSummonView extends BaseView<void> {
     /** 预制体面板尺寸，用于统一等比适配。 */
     @property(UITransform) panel: UITransform | null = null;
-    /** 关闭当前召唤窗口，不修改待确认请求。 */
+    /** 返回主城地图，已发出的请求仍由账号层接收结果。 */
     @property(Button) closeButton: Button | null = null;
-    /** 只允许首抽或恢复原结果。 */
-    @property(Button) summonButton: Button | null = null;
-    /** 根据同步状态显示本次提交或恢复动作。 */
-    @property(Label) summonLabel: Label | null = null;
-    /** 显示首次免费资格或当前确认进度。 */
+    /** 显示基础单抽的免费冷却。 */
     @property(Label) stateLabel: Label | null = null;
     /** 显示统一背包Model已同步的积分余量。 */
     @property(Label) pointsLabel: Label | null = null;
+    /** 六个抽取按钮，顺序与 actions 相同。 */
+    @property([Button]) drawButtons: Button[] = [];
+    /** 六个按钮内的消耗数量文本。 */
+    @property([Label]) drawCosts: Label[] = [];
+    /** 对应券、友情点或钻石图案，冷却或余额变化时切换。 */
+    @property([Sprite]) drawCostIcons: Sprite[] = [];
+    /** 基础、友情、高级三栏实时余额。 */
+    @property([Label]) poolBalances: Label[] = [];
+    /** 高级单抽免费时间。 */
+    @property(Label) advancedFreeLabel: Label | null = null;
+    /** 右上方显示积分使用比例。 */
+    @property(Sprite) pointsFill: Sprite | null = null;
+    /** 积分满足领取条件时的提醒。 */
+    @property(Node) pointsReady: Node | null = null;
+    /** 查看积分条件及领取。 */
+    @property(Button) pointsButton: Button | null = null;
+    /** 查看真实召唤概率。 */
+    @property(Button) infoButton: Button | null = null;
+    /** 查看原版推荐阵容。 */
+    @property(Button) recommendButton: Button | null = null;
+    /** 查看祈愿卡条件。 */
+    @property(Button) prayerButton: Button | null = null;
+    /** 高级十连钻石折扣。 */
+    @property(Label) seniorDiscount: Label | null = null;
+    /** 正式服素材的看板人物挂点。 */
+    @property(Node) portraitHost: Node | null = null;
+    /** 原召唤地图背景，按可见尺寸做等比覆盖。 */
+    @property(Sprite) background: Sprite | null = null;
+    /** 默认使用应用的英雄控制器，将召唤点击交给它。 */
+    private controller = HeroRosterController.instance;
+    /** 默认读取应用的英雄名册，显示服务器同步的免费资格。 */
+    private roster = HeroRosterModel.instance;
+    /** 与控制器读取同一份背包快照，显示召唤券和积分。 */
+    private bag = BagModel.instance;
+    /** 页面可见期间允许确认回调提交。 */
+    private isSummonShown = false;
+
+    /** 为隔离预览绑定当前角色的召唤控制器、名册和背包。 */
+    public configure(controller: HeroRosterController, roster: HeroRosterModel, bag = BagModel.instance): void {
+        this.controller = controller;
+        this.roster = roster;
+        this.bag = bag;
+    }
 
     /** 校验静态布局并登记关闭、点击及可见区域监听。 */
     public onBind(): void {
-        if (!this.panel || !this.closeButton || !this.summonButton || !this.summonLabel || !this.stateLabel || !this.pointsLabel) {
-            throw new Error("FirstSummonView.prefab 缺少普通首抽界面绑定");
+        if (!this.panel || !this.closeButton || !this.stateLabel || !this.pointsLabel
+            || this.drawButtons.length !== actions.length || this.drawCosts.length !== actions.length
+            || this.drawCostIcons.length !== actions.length || this.poolBalances.length !== 3) {
+            throw new Error("召唤预制体按钮、价格或余额绑定不完整");
         }
-        const close = this.closeButton.node;
-        const summon = this.summonButton.node;
-        close.on(Button.EventType.CLICK, this.close, this);
-        summon.on(Button.EventType.CLICK, this.summon, this);
-        this.ownListener(() => {
-            if (close.isValid) {
-                close.off(Button.EventType.CLICK, this.close, this);
-            }
-            if (summon.isValid) {
-                summon.off(Button.EventType.CLICK, this.summon, this);
-            }
-        });
+        this.listen(this.closeButton, () => this.close());
+        this.drawButtons.forEach((button, index) => this.listen(button, () => this.draw(actions[index])));
+        this.listen(this.infoButton, () => SummonInfoView.openFor(this, "rates", this.roster.snapshot.summonDetails));
+        this.listen(this.recommendButton, () => SummonInfoView.openFor(this, "lineups"));
+        this.listen(this.prayerButton, () => SummonInfoView.openFor(this, "prayer", this.roster.snapshot.summonDetails));
+        this.listen(this.pointsButton, () => this.openPointExchange());
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitPanel()));
+        if (this.portraitHost) {
+            BattleSpineService.instance.mountNamedSpine(this.portraitHost, "act", "act", { loop: true });
+        }
     }
 
-    /** 打开时读取已接纳的Model并监听同帧资格、积分变化，不查询库存。 */
-    public onOpen(args?: FirstSummonArgs): void {
-        if (!args?.model || typeof args.requestSummon !== "function") {
-            throw new Error("普通召唤缺少状态或操作入口");
-        }
-        this.args = args;
-        this.ownListener(EventDispatcher.instance.on("first-summon.updated", this, this.render));
+    /** 监听统一状态、在途请求和背包，按服务器时钟刷新两个免费单抽。 */
+    public onOpen(): void {
+        this.isSummonShown = true;
+        this.ownListener(EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.render));
+        this.ownListener(EventDispatcher.instance.on(HeroRosterEvent.SummonProgress, this, this.render));
         this.ownListener(EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.render));
+        this.ownListener(EventDispatcher.instance.on("summon.repeat", this, selection => {
+            if (this.isSummonShown) {
+                this.draw(selection);
+            }
+        }));
+        this.schedule(this.render, 1);
+        this.ownListener(() => this.unschedule(this.render));
         this.render();
     }
 
-    /** 放开本窗对模块的引用；BaseView负责释放显示期监听。 */
+    /** 关页后作废未处理的窗口操作。 */
     public onClose(): void {
-        this.args = undefined;
+        this.isSummonShown = false;
     }
 
-    /** 使用统一可见区域工具适配窗体，保持预制体内部节点位置。 */
+    /** 按钮监听随当前页面释放。 */
+    private listen(button: Button | null, action: () => void): void {
+        const node = button?.node;
+        node?.on(Button.EventType.CLICK, action);
+        this.ownListener(() => {
+            if (node?.isValid) {
+                node.off(Button.EventType.CLICK, action);
+            }
+        });
+    }
+
+    /** 保留顶栏和底栏的空间，按实际可见宽高等比缩放三个召唤池。 */
     private fitPanel(): void {
         const box = ViewportLayoutUtils.fitVisibleRoot(this.node);
         const panel = this.panel!;
-        const scale = Math.min(1, box.width * 0.96 / panel.width, box.height * 0.88 / panel.height);
+        const contentHeight = Math.max(1, box.height - 210);
+        const scale = Math.min(1, box.width * 0.96 / panel.width, contentHeight / panel.height);
         panel.node.setScale(scale, scale, 1);
+        const original = this.background?.spriteFrame?.originalSize;
+        const background = this.background?.node.getComponent(UITransform);
+        if (original && background && original.width > 0 && original.height > 0) {
+            const cover = Math.max(box.width / original.width, box.height / original.height);
+            background.setContentSize(original.width * cover, original.height * cover);
+        }
     }
 
-    /** 权威资格与原意图独立显示；已用过免费资格仍可恢复同一请求的原结果。 */
+    /** 按可用券和免费资格更新消耗、积分、余额及六个按钮。 */
     private render(): void {
-        const data = this.args?.model.snapshot;
-        if (!data) {
+        const details = this.roster.snapshot.summonDetails;
+        const busy = this.controller.summoning;
+        this.stateLabel!.string = this.cooldownLabel("NORMAL");
+        if (this.advancedFreeLabel) {
+            this.advancedFreeLabel.string = this.cooldownLabel("ADVANCED");
+        }
+        for (const [index, action] of actions.entries()) {
+            const quote = this.controller.quote(action.pool, action.count);
+            const label = this.drawCosts[index];
+            const icon = this.drawCostIcons[index];
+            this.drawButtons[index].interactable = !!quote && !busy;
+            label.string = !quote ? "—" : quote.free ? "免费" : quote.items && quote.diamonds
+                ? `${quote.items}券+${quote.diamonds}钻` : String(quote.diamonds || quote.items);
+            icon.node.active = !!quote && !quote.free;
+            if (quote) {
+                ResManager.setSprite(icon.node, ResManager.item(quote.diamonds && !quote.items ? 900002 : quote.itemId));
+            }
+        }
+        const pools = ["NORMAL", "FRIENDSHIP", "ADVANCED"] as const;
+        pools.forEach((pool, index) => {
+            this.poolBalances[index].string = String(this.bag.quantity(FirstSummonData.cost(pool, 1).item_type));
+        });
+        const points = this.bag.quantity(FirstSummonData.POINT_ITEM_ID);
+        const required = details?.pointsCost ?? FirstSummonData.cost("POINTS", 1).item_num;
+        this.pointsLabel!.string = `${points}/${required}`;
+        if (this.pointsFill) {
+            this.pointsFill.fillRange = Math.min(1, points / required);
+        }
+        if (this.pointsReady) {
+            this.pointsReady.active = points >= required && !!details?.pointsExchangeAvailable;
+        }
+        if (this.seniorDiscount) {
+            const discount = Number(FirstSummonData.system("adv_summon_discount_show"));
+            this.seniorDiscount.string = discount > 0 && discount < 100 ? `${discount / 10}折` : "";
+        }
+    }
+
+    /** 将免费时间显示为固定宽度倒计时，零秒立即切换免费。 */
+    private cooldownLabel(pool: "NORMAL" | "ADVANCED"): string {
+        const remaining = this.roster.summonCooldown(pool);
+        if (remaining === null) {
+            return "";
+        }
+        if (!remaining) {
+            return "本次免费";
+        }
+        const hours = Math.floor(remaining / 3600);
+        const minutes = String(Math.floor(remaining / 60) % 60).padStart(2, "0");
+        const seconds = String(remaining % 60).padStart(2, "0");
+        return `${hours}:${minutes}:${seconds} 后免费`;
+    }
+
+    /** 部分高级券不足时显示混合用量，确认后只允许该次报价以内的钻石消耗。 */
+    private draw({ pool, count }: { pool: SummonPool; count: SummonCount }): void {
+        const quote = this.controller.quote(pool, count);
+        if (quote?.items && quote.diamonds) {
+            this.confirm("高级召唤", `使用 ${quote.items} 张高级召唤券和 ${quote.diamonds} 钻石？`,
+                () => this.controller.summon(pool, count, quote.diamonds));
             return;
         }
-        const eligible = data.state?.firstNormalCompleted === false;
-        const canRestore = data.requestId !== null;
-        this.summonButton!.node.active = canRestore || eligible;
-        this.summonButton!.interactable = !data.busy && (canRestore || eligible);
-        this.summonLabel!.string = canRestore ? "恢复结果" : "免费召唤";
-        if (data.busy) {
-            this.stateLabel!.string = "正在确认召唤状态";
-        } else if (canRestore) {
-            this.stateLabel!.string = "有一份召唤结果待确认";
-        } else if (!data.state) {
-            this.stateLabel!.string = "等待服务器同步免费资格";
-        } else {
-            this.stateLabel!.string = eligible ? "首次普通召唤免费" : "首次普通召唤已完成";
-        }
-        const bag = BagModel.instance;
-        this.pointsLabel!.string = "召唤积分 " + (bag.snapshot.synced ? String(bag.quantity(FirstSummonController.POINT_ITEM_ID)) : "—");
+        this.controller.summon(pool, count, quote?.diamonds);
     }
 
-    /** 只转交已启用的按钮意图，应用及服务器仍会核对原请求及资格。 */
-    private summon(): void {
-        if (this.summonButton?.interactable) {
-            this.args?.requestSummon();
+    /** 显示真实积分和区服资格，满足门槛才提供领取确认。 */
+    private openPointExchange(): void {
+        const state = this.roster.snapshot.summonDetails;
+        const required = state?.pointsCost ?? FirstSummonData.cost("POINTS", 1).item_num;
+        const points = this.bag.quantity(FirstSummonData.POINT_ITEM_ID);
+        const message = `召唤积分 ${points}/${required}。兑换一次可获得五星英雄。`;
+        if (!state?.pointsExchangeAvailable || points < required) {
+            const condition = state?.pointsExchangeAvailable ? "召唤积分不足"
+                : `需达到累计充值门槛${state?.pointRechargeRequired ? "（" + state.pointRechargeRequired + "）" : ""}`;
+            this.confirm("积分召唤", `${message}\n${condition}`);
+            return;
         }
+        this.confirm("积分召唤", message, () => this.controller.summon("POINTS", 1));
+    }
+
+    /** 确认框归本页，返回或换号后不会再提交。 */
+    private confirm(title: string, message: string, action?: () => void): void {
+        void UIManager.instance.openChild(this, ConfirmView, {
+            title, message, showCancel: !!action,
+            onConfirm: () => {
+                if (this.isSummonShown) {
+                    action?.();
+                }
+            },
+        }).catch(() => { /* UIManager 统一报告开窗失败。 */ });
     }
 }

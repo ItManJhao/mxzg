@@ -1,5 +1,5 @@
 /**
- * 普通升级的原意图与协议边界。回执只确认消费和等级已提交，
+ * 普通升级的协议结构和请求、回执校验。回执可通知界面播放成功反馈，
  * 英雄等级与余额始终来自统一资产快照。
  */
 import { Protocol } from "../../../platform/Protocol";
@@ -24,19 +24,12 @@ export interface HeroLevelReceipt {
     readonly assetRevision: number;
 }
 
-/** 原记录存在时返回同一收据，缺失时允许按原意图重试。 */
-export interface HeroLevelStatus {
-    readonly requestId: string;
-    readonly found: boolean;
-    readonly receipt?: HeroLevelReceipt;
-}
-
-/** 普通升级的协议和持久日志使用相同的原请求格式。 */
+/** 使用统一格式校验普通升级消息。 */
 export class HeroLevelData {
     /** 仅通过静态方法校验，不保存连接或角色状态。 */
     private constructor() {}
 
-    /** 拒绝额外字段与损坏的操作记录，保持原参数可安全复用。 */
+    /** 验证升级请求的四个字段和取值范围。 */
     public static readRequest(value: unknown): HeroLevelRequest {
         const row = HeroLevelData.readObject(value);
         if (Object.keys(row).length !== 4 || !HeroLevelData.isId(row.requestId)
@@ -49,16 +42,10 @@ export class HeroLevelData {
         });
     }
 
-    /** 原编号和全部消费参数一致时，才允许持久日志被这次确认清除。 */
-    public static sameRequest(left: HeroLevelRequest, right: HeroLevelRequest): boolean {
-        return left.requestId === right.requestId && left.heroId === right.heroId
-            && left.expectedLevel === right.expectedLevel && left.levels === right.levels;
-    }
-
-    /** 比对原起始等级与目标级数，避免将其他升级的回执交给当前操作。 */
-    public static matches(request: HeroLevelRequest, receipt: HeroLevelReceipt): boolean {
-        return request.requestId === receipt.requestId && request.heroId === receipt.heroId
-            && request.expectedLevel === receipt.fromLevel && request.levels === receipt.toLevel - receipt.fromLevel;
+    /** 核对本次选择的英雄、起始等级和实际提升的级数。 */
+    public static matches(request: Omit<HeroLevelRequest, "requestId">, receipt: HeroLevelReceipt): boolean {
+        return request.heroId === receipt.heroId && request.expectedLevel === receipt.fromLevel
+            && request.levels === receipt.toLevel - receipt.fromLevel;
     }
 
     /** 校验升级 oneof 投影、原键以及历史回执允许的 revision=0。 */

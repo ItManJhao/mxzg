@@ -18,14 +18,14 @@
 
 上阵、撤下、拖动或切换阵型后，出阵页的汇总与元素图标使用同一次草稿投影。子窗已打开时刷新该实例，点空白关闭子窗，关闭出阵页时一并释放。服务端原战斗计算、阵位属性和出阵保存继续使用既有入口。
 
-FormationSaveModel保留原requestId、expectedVersion和参数至回执及权威阵容双确认。无ACK时结果不明只重试原请求；有ACK缺推送时每轮只补一次现有鉴权首包，绝不重发保存。mainFormation.version达到ACK版本才完成，不能把全局资产revision、本地Model版本或Promise结束当成功。仍缺状态时按钮显示“重试同步”，站位及阵型维持原提交内容只读，筛选仍可查看。服务端持久回执支持跨连接重试，复用同键修改参数拒绝；明确版本冲突按既有流程载入最新Model。
+FormationController 发送保存请求并记录成功回包的阵容版本，FormationSaveModel 只保存按钮忙态和该版本。HeroRosterModel 的权威阵容达到该版本后，当前提交页面才继续出战。快照通过正常推送或重连鉴权更新。保存结果不明时，查看同步后的当前阵容；普通保存不追查或自动重放上次操作。
 
 当前自动检查与实际画面验证范围见development-progress.md；不以结构检查替代完整视觉或Inspector验收。
 
 ## 当前生命周期
 
-页面不再由createController工厂创建布阵控制器。应用初始化唯一FormationController，View默认读取唯一Model并自己绑定按钮与事件；configure仅供显式依赖注入和回归测试。关窗清理页面草稿与监听，不清理模块保存请求；应用层负责退出/换号时清理。
+应用初始化唯一FormationController，View默认读取唯一Model并自己绑定按钮与事件；configure仅供显式依赖注入和回归测试。关窗清理页面草稿与监听，不清理模块保存请求；应用层负责退出/换号时清理。
 
-保存和鉴权任务按对象引用合并重复点击；重置撤销旧续段，但不在模块保存账号键。关页时清理本页submitted及出战回调，迟到确认不会误出战；重开可继续确认原意图，只有明确点击且原提交草稿被权威快照确认，closeAfterSave入口才继续一次挑战。普通断线仍保留内存过程，冷重登不持久恢复未保存草稿。
+在途保存合并重复点击。关窗清理草稿、监听和本页出战回调，迟到确认不会触发出战。账号结束时统一清理模块保存进度。冷重登重新读取服务器的当前阵容。
 
-恢复专项26组、原状态/真实Prefab专项及本机真实WS丢一次状态交付已限定通过，详见[恢复记录](validation/formation-confirm-review-20261116.json)、[本机记录](validation/formation-confirm-preview-20261116.json)。失败、旧首包、并发和身份切换由专项覆盖，不作为目标真机或真实弱网结论；本批没有集中构建。
+历史缺推送和本机验证记录见 [恢复记录](validation/formation-confirm-review-20261116.json)、[本机记录](validation/formation-confirm-preview-20261116.json)。该版本的主动补快照行为已被当前的正常推送与重连同步替换。

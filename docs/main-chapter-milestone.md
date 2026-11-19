@@ -46,15 +46,15 @@ V27的`MainChapterState.milestoneProgress`继续是唯一权威已领集合：�
 
 ## 客户端确认、恢复与常显卡
 
-[MainChapterMilestoneController](../client/assets/scripts/features/battle/MainChapterMilestoneController.ts)登记两条实际协议，命令进度放原[MainChapterModel](../client/assets/scripts/features/battle/MainChapterModel.ts)，不增加角色Model或第二份已领集合。应用[MainChapterMilestoneBinding](../client/assets/scripts/app/remake/MainChapterMilestoneBinding.ts)负责身份隔离、发包及持久意图，View不持凭证或直接修改资产。
+[MainChapterController](../client/assets/scripts/features/battle/MainChapterController.ts) 接收卡片传入的奖励配置 ID，发送一次领取请求，并把本次成功回包的实际奖励交给通用队列。
 
-点击前通过[MilestoneClaimJournal](../client/assets/scripts/app/remake/MilestoneClaimJournal.ts)保存格式1及rewardId，按认证区服/角色和稳定客户端实例隔离；存储失败不发请求。它复用原生持久操作存储核心，但不改变挂机journal的格式或requestId语义。认证恢复只处理真实已有意图：先查询同rewardId，未找到才按原稳定键重发claim；不因为快照可领而自动创建领取。
+服务器在事务内校验资格、记录领取和实际奖励。已领集合及英雄名册由统一快照更新，断线后由正常重连鉴权同步。
 
-成功展示需同时满足已校验原回执、最新统一快照revision至少为receipt.assetRevision，以及最新权威集合确含该rewardId。应用另核对回执角色，真实新英雄随原统一快照进入唯一HeroRosterModel，不能由奖励窗口补写。状态先到或回执先到均等待另一方，丢推送复用重新鉴权首包。模块回调允许Promise，同回执在途交付合并；反馈失败保留原结果，普通状态推送不无限循环重试，显式恢复才重试原反馈。
+奖励队列等待服务端资产版本达到回包版本，再展示本次实际获得的物品及英雄。页面打开时只读当前进度。
 
-持久意图在共享队列最后一部分真正打开后才按原键条件删除，排队不算已经显示；展示已发生但删除失败只重试清理，不等待被去重的第二份奖励。换号先撤销旧异步引用、关闭旧反馈，再激活新身份；旧回调不清新记录。关闭主线页只清卡片监听和骨骼，不取消已发资产事务或删除持久意图。
+普通领取没有客户端持久原单、回执补查或自动重发。若提交成功后丢失直接回包，已领状态以重连后的快照为准。
 
-[MainChapterMilestoneCard](../client/assets/scripts/features/battle/ui/MainChapterMilestoneCard.ts)直接绑定在原[MainChapterView.prefab](../client/assets/bundles/module/battle/prefabs/MainChapterView.prefab)：保留常显目标，按最小未领配置ID显示原模型、名字、原框和进度；英雄模型使用原10105007骨骼，按旧原生Hero加载比例0.5再乘Cell比例`0.67×0.8×1.42`。达标按钮直接转交MainChapterController.requestMilestoneClaim，不新建里程碑详情/确认弹窗。未同步不能当全领完，全部已领才撤卡；战斗期间沿主线原显示期隐藏，事务继续由应用恢复。
+[MainChapterMilestoneCard](../client/assets/scripts/features/battle/ui/MainChapterMilestoneCard.ts) 按最小未领配置 ID 显示目标模型、名字和进度。达标按钮调用 MainChapterController.claimMilestone，已同步且全部领完后撤卡。战斗期间沿用原显示期隐藏卡片。
 
 ## 共享英雄发奖和反馈
 
@@ -62,9 +62,9 @@ V27的`MainChapterState.milestoneProgress`继续是唯一权威已领集合：�
 
 `RewardHeroGrant`固定`instanceId/templateId/level/star/stage`。真实新实例列表保存在`RewardGrantResult.heroes=10`及原成功回执，通用`RewardNotice.heroes=9`可复用同类型。解析校验实例ID唯一、成长值合法且同模板实例数量与实际credited对应；回执/通知内容指纹包含这些冻结实例。历史非英雄结果缺该重复字段规范化为空，不能据当前名册猜本次新增。
 
-双确认后应用调用原`RewardBinding.restoreActual`投影，沿**同一个RewardModel队列、原receiptId**显示。队列按旧高星优先逐个打开通用[HeroRewardView](../client/assets/scripts/features/reward/ui/HeroRewardView.ts)（此处的英雄获得反馈窗口，不是新发奖服务），再显示剩余物品或RoleUpgradeView；已展示的英雄不再在普通RewardView重复算一格。高星页使用原揭幕、英雄/光柱/光环、名字/技能及获得音效，低星走原单格形式；页面只读冻结实例，关闭停止音效、骨骼、帧与迟到加载，不负责召唤或资产写入。
+成功回包由 RewardBinding.restoreActual 投影。共享队列按原 receiptId 去重，优先显示通用 [HeroRewardView](../client/assets/scripts/features/reward/ui/HeroRewardView.ts)，再显示剩余物品或角色升级。高星和低星保留原获得表现，关窗清理音效、骨骼和迟到加载。
 
-这补齐的是通用英雄获得反馈，里程碑复用它，不另造里程碑专用奖励窗、专用奖队列或toast代替完整获得表现。普通RewardView、RoleUpgradeView及SILENT/TIPS既有契约保留：里程碑事务自身静默，成功原回执经已确认的恢复入口显式投影POPUP。普通主线正常bonus-only、冷all和挂机的原反馈仍复用原链，不能顺带重发奖励。
+里程碑事务静默，控制器用本次成功回包交付通用获得展示。普通战斗胜利后的附赠、冷重登待结算和挂机的实时奖励复用同一展示队列。
 
 ## 本批验证与未签收范围
 

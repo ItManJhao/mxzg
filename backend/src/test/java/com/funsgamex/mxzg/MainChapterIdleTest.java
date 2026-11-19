@@ -62,14 +62,26 @@ class MainChapterIdleTest {
         });
     }
 
-    /** 本地领取模式随快照下发；读取不因胜利、重连或换关重置挑战起点，也不发奖。 */
+    /** 创角到首胜前只有可重登的计时，首胜与换关采用同一起点，只读快照不发奖。 */
     @Test void clockPersistsAndRatesFollowMainChapterWithoutGranting() throws Exception {
         var session=login.login("idle_"+UUID.randomUUID().toString().substring(0,12));
         String role=session.role().id();
         String token="Bearer "+session.session().accessToken();
         var initial=snapshots.snapshot(token);
-        assertNull(initial.mainChapterIdle());
-        long initializedAt = java.time.Instant.now().getEpochSecond();
+        long initializedAt = session.role().basics().createdAtSeconds();
+        var clock = initial.mainChapterIdle();
+        assertEquals(initializedAt - rules.data().initialSeconds(), clock.startedAt());
+        assertEquals(0, clock.rewardStage());
+        assertTrue(clock.slots().isEmpty());
+        assertTrue(clock.rates().isEmpty());
+        assertNull(clock.claimState());
+        assertEquals(initial.mainFormation().version(), clock.lineupVersion());
+        var frame = GameProtocolCodec.encode(Map.of("version", 1, "kind", "event", "name", "state.changed", "body", initial));
+        var wire = GameProtocolCodec.decode(frame).path("body").path("mainChapterIdle");
+        assertEquals(0, wire.path("rewardStage").asInt(-1));
+        assertEquals(clock.startedAt(), wire.path("startedAt").asLong());
+        assertFalse(wire.has("claimState"));
+        assertEquals(clock.startedAt(), snapshots.snapshot(token).mainChapterIdle().startedAt());
         initializeIdle(role, initializedAt);
         jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,?)",role,1);
         var first=snapshots.snapshot(token);
@@ -94,6 +106,25 @@ class MainChapterIdleTest {
         assertEquals(next.mainChapterIdle().startedAt(),decoded.path("startedAt").asLong());
         java.nio.file.Files.write(java.nio.file.Path.of("target/main-idle-snapshot.pb"),bytes);
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM game_idle_receipt WHERE role_id=?",Integer.class,role));
+    }
+
+    /** 首胜前新会话沿用创角时间；旧角色已有累计时优先保留，两项都缺失时不推算时长。 */
+    @Test void historicalClocksBeforeFirstClearUseOnlyKnownTimes() {
+        String account = "idle_old_" + UUID.randomUUID().toString().substring(0, 8);
+        var session = login.login(account);
+        String role = session.role().id();
+        var fresh = snapshots.snapshot("Bearer " + session.session().accessToken()).mainChapterIdle();
+        var relogin = login.login(account);
+        assertEquals(role, relogin.role().id());
+        String token = "Bearer " + relogin.session().accessToken();
+        assertEquals(fresh.startedAt(), snapshots.snapshot(token).mainChapterIdle().startedAt());
+        jdbc.update("UPDATE game_role SET created_at_seconds=0 WHERE id=?", role);
+        assertNull(snapshots.snapshot(token).mainChapterIdle());
+        long before = java.time.Instant.now().getEpochSecond();
+        initializeIdle(role, 0);
+        long after = java.time.Instant.now().getEpochSecond();
+        long origin = snapshots.snapshot(token).mainChapterIdle().startedAt() + rules.data().initialSeconds();
+        assertTrue(origin >= before && origin <= after);
     }
 
     /** 已通关但缺累计记录时拒绝快照，不能通过重连补建免费领取起点。 */

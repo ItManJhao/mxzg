@@ -161,7 +161,7 @@ IdleActivityMaintenance是实际ApplicationRunner＋定时入口，默认false�
 
 旧BattleHandler.idleAwardReceive按领取前VIP截时，服务端60秒起接受；成功把起点直接置当前秒，基础不足周期尾数和超限时间丢弃。RoleMissionService.dropReward却把截顶后的完整秒数加入43200秒窗口，按片段round并在满窗结算后清类别计数，不能把两类尾数混为一谈。
 
-该初稿批确认首次挑战前now-60起点、胜利不重置及旧按钮65秒/服务端60秒双门槛；后续代码已实现，已有V17起点保留，不猜补未记录的首次挑战时间。客户端门槛已写入关闭策略后的begin准备链，玩家按钮尚未绑定。旧客户端未通关不进入挂机，旧服务端却有第1关回退，新版不借计时调整开放该旁路，差异显式保留。
+2026-11-19 按正式服新号流程校正了初稿的计时起点。新角色从服务端创角时间减去初始 60 秒开始累计，已有 V17 时钟沿用其原值。首胜前只显示计时，通关后本地测试服可从宝箱领取。客户端沿用 65 秒点击门槛，服务端从 60 秒接受新领取。详细计算与历史数据处理见[领取实现](main-chapter-idle-settlement.md)。
 
 奖励关卡按领取时最高通关关卡，待领挑战奖励不退回前关；权益资格以本次发奖前等级冻结。本次升级及附赠需要真实RoleExperienceService，不接旧简化IdleService的game_campaign经验写法。酒馆点按当前关卡chapterreward.tavern_point_max截取，已超上限不倒扣；旧TavernProcessor返回理论ThingSet不能当作实际到账。
 

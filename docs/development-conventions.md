@@ -20,16 +20,16 @@
 
 | 环节 | 游爱现有写法 | 本项目固定写法 |
 |---|---|---|
-| 发请求 | SpiritGameMainView.onShow/onClick 可直接 NetHelper.sendProto；SGCtrl 也会发后续请求 | View 转交 Controller 的业务方法，由身份边界、模块 API、统一 GameSocketClient 发送 |
+| 发请求 | SpiritGameMainView.onShow/onClick 可直接 NetHelper.sendProto，SGCtrl 也会发后续请求 | View 调用所属 Controller，由 Controller 通过 AccountOperations 和 GameSocketClient 发送 |
 | 收包 | SGCtrl.onNotify 按 Protocol/AOI 分发 | Protocol 登记真实消息，onNotify → onXxx → 唯一 Model → 事件；角色和背包按统一持久版本批量提交 |
 | 更新状态 | getSGameData → sgModel.setData；getRecord → setRecord | BagController.onNotify → 对应处理方法 → BagModel，状态由唯一 Model 持有 |
 | 通知界面 | setData 后 dispatch(SG_UPDATE_STATUS) | 提交后 notify → EventDispatcher → BagUpdate/BagSyncStateChanged |
 | 界面刷新 | onShow 登记监听并 updateView；updateView 读取 DataMgr.ins.sgModel | onOpen 登记监听并读取 BagModel；refreshFromModel 负责刷新 |
 | 关闭清理 | onHide 成对 offEvent，并清理页面定时器 | BaseView 清理本页目标监听；模块 Controller 独立存活 |
 
-本项目额外明确入站校验、账号/区服代次、读写排序、持久幂等边界和断线恢复。这些是新版维护与正确性约束；上述三份游爱文件不足以证明其底层是否具备同类保护，不据此断言游爱没有这些能力。
+游爱的背包窗口在 `BagView.onHide` 撤下本页监听，`BagCtrl.onNotify` 继续处理道具同步。切换账号走 `SDKManager.switchLogin`，由 `Network.disAllServer` 拆除旧连接，SDK 的 `JSBridge.loginResult` 决定是否重走登录。本项目沿用这一职责分工。Cocos 页面在关闭时解除监听，账号与连接统一决定哪些结果可以交给业务。
 
-后续保持完整类名、明确业务方法和中文注释，确保能沿“请求 → 收包 → 更新 Model → 通知 View”读懂代码；不为模仿 SGCtrl 增加巨大 switch、公开可写资产、Controller 直接开窗或 View 直接发资产协议。具体链路统一遵守[固定通信与状态模板](bag-mvc-maintenance.md#固定通信与状态模板)。玩法、内容与效果仍以 mxzg 旧项目为准。
+Controller 集中发送与接收玩法协议，将状态交给唯一 Model 处理，再通知界面。碎片合成从 BagInfoView 进入 BagController.composeHeroPieces，库存到账同样沿 BagController.onNotify 进入 BagModel，随后触发 BagEvent。金币、等级和名册容量直接读取对应 Model。View 负责交互和展示，各模块保持清楚的命名与必要注释。玩法、内容与效果以 mxzg 旧源码为准。[固定通信与状态模板](bag-mvc-maintenance.md#固定通信与状态模板)
 
 
 ## 当前项目从哪里找
@@ -55,26 +55,34 @@
 
 ## 协议与生成代码
 
-登录会话与背包使用 WebSocket + Protobuf，统一在 protocol/game.proto 定义强类型载荷；前端执行 node tools/generate_game_protocol.cjs，Java 由 Maven 自动生成。新增或修改协议同时更新中文契约说明、边界校验、生成漂移和真实前后端互通测试；字段号不可复用，删除时 reserved。编解码留在 platform/network，Controller 只处理业务 DTO，不能新增 JSON/Base64 回退或将 JSON 文本包在 bytes 中。生成文件不手改注释，中文属性/函数注释仍约束手写适配代码。
+登录会话与背包使用 WebSocket + Protobuf，统一在 protocol/game.proto 定义强类型载荷；前端执行 node tools/generate_game_protocol.cjs，Java 由 Maven 自动生成。新增或修改协议同时更新中文契约说明、边界校验、生成漂移和真实前后端互通测试；字段号不可复用，删除时 reserved。编解码留在 client/assets/scripts/platform，Controller 只处理业务 DTO，不能新增 JSON/Base64 回退或将 JSON 文本包在 bytes 中。生成文件不手改注释，中文属性/函数注释仍约束手写适配代码。
 
 ## 一次操作应当怎样读
 
 ```text
 View 的点击方法
   → 本模块 Controller 的明确业务方法
-  → 功能 API / 统一网络入口
+  → AccountOperations → GameSocketClient.requestFrame
   → 后端处理入口 → 业务用例 / 规则 / 持久化
-  → 校验回包、检查会话与版本
+  → 连接和账号层校验回包、会话及版本
+  → 本模块 Controller.onNotify 按协议处理
   → 更新唯一 Model（涉及多个资产时统一提交）
   → 发送明确事件
   → View 读取 Model 刷新
 ```
 
-角色与背包已接入服务端 state.changed；登录/恢复回包统一初始化，不再追加库存查询。其他模块入口暂停，不再保留游戏 HTTP。后续模块按[固定模板](bag-mvc-maintenance.md#固定通信与状态模板)恢复，持久状态仍由所属 Model 唯一管理。
+普通按钮从 View 找到所属 Controller 的同名操作。普通召唤、碎片合成、英雄升级都返回 `void`。以 `HeroRosterController.summon()` 为例，免费或券够就调用 `AccountOperations.send`，成功回包从本模块的 `onNotify` 进入获得展示。请求编号和会话交付归公共通道，名册和余额从统一快照更新。[英雄控制器](../client/assets/scripts/features/hero/HeroRosterController.ts) · [发包入口](../client/assets/scripts/features/account/AccountOperations.ts)
 
-阅读当前角色与背包时，按 Protocol → 应用统一快照校验 → RoleController/BagController.onNotify → 唯一 Model → 页面刷新查找；暂停模块不作为现行模板。
+MainChapterController 管理挑战、结算、战报、挂机及通关领奖。IdleClaimBinding 处理宝箱点击与确认，RewardController 接发奖推送，RewardBinding 负责展示。试战和 GM 发放分别找 BattlePreviewController、GmController。[主线](../client/assets/scripts/features/battle/MainChapterController.ts)
 
-账号变化的跨模块协调放在应用层 AssetStateBinding；账号服务负责登录与凭证，RoleController 和 BagController 消费统一初始化/推送。背包不监听账号、不持有 token、不单独查询库存；旧 api.list 和 BagUpdateCoordinator 已退役，不再作为开发示例。
+| 遇到的问题 | 在哪里处理 |
+|---|---|
+| 旧连接上的回包、回执或发奖明细属于其他角色 | `GameSocketClient` 核对连接、请求编号和协议声明的角色归属。 |
+| 在途请求期间退出或重新登录 | AccountController 结束原会话的交付，Controller 继续使用当前账号的 AccountOperations。 |
+| 断线时普通操作可能已成功 | 重新鉴权的首包更新当前角色状态。普通点击只发送一次，用户随后根据服务器数据决定下一步。 |
+| 关闭页面时图片仍在加载、同一个格子已用于另一名英雄、战报仍在播放 | View 或播放器撤销自己的展示任务，在关闭时解除监听。 |
+
+账号变化时 AssetStateBinding 关闭旧角色页面并重置各模块。同角色连接恢复时刷新统一快照。背包页面打开或切换页签直接读取 BagModel。布阵等待保存过的阵容版本，战斗仍按原战斗编号接续结算。
 
 ## 文件组织与职责
 
@@ -126,7 +134,7 @@ async confirmFormation(): Promise<void> {
 
 ## 游爱式协议处理的固定阅读结构
 
-Controller 采用 Protocol 登记 → onNotify 按真实消息分发 → onXxx → Model → 事件。背包登记 session.login/session.authenticate/state.changed，应用校验整包、身份与版本后交付。已移除 BagUpdateCoordinator 与单独查询；复杂度由后端事务/持久版本及统一应用提交承担，不能通过删掉正确性边界缩短代码。
+Controller 通过统一账号通道发请求，使用 Protocol 登记 → onNotify 分发 → onXxx → Model → 事件接收真实回包。背包登记 session.login、session.authenticate、state.changed 和精英碎片合成协议。统一资产由应用核对整包、身份、持久版本后一次提交。
 
 全部已实现消息标识集中在 platform/Protocol.ts；当前以 Frame.name 字符串为线上标识，不为模仿数字编号额外维护未使用的编号。
 
@@ -163,9 +171,9 @@ Prefab 保存固定布局、资源与控件绑定；业务列表使用 SuperScro
 ## 账号界面与窗口打开规范（2026-11-03 整理）
 
 - 独立业务窗口必须使用 BaseView、同名 Prefab、UIManager 注册与打开/关闭。不得在主城手动 instantiate 角色弹窗、维护第二套 show/hide 和销毁逻辑。
-- 页面静态参数集中在各View的@UIRegistry.view：id、Prefab地址、层级、缓存、模态及prepare配置前置不在ApplicationPages重复登记。prepare由UIManager实际开页时执行，阶段预加载只准备目标资源，不调用页面前置或实例化页面。UIRegistry.bindViewRuntime仅注入createController和确需变化的hostId，撤销后恢复页面定义；ApplicationPages只装配登录/主城Controller及宿主，ApplicationResources只调度LoadingPlan，不增加各页取址包装。
+- 页面静态参数集中在各View的@UIRegistry.view：id、Prefab地址、层级、缓存、模态及prepare配置前置不在ApplicationPages重复登记。prepare由UIManager实际开页时执行，阶段预加载只准备目标资源，不调用页面前置或实例化页面。UIRegistry.bindViewRuntime仅注入createBinding和确需变化的hostId，撤销后恢复页面定义；ApplicationPages只装配登录和主城的页面交互及宿主，ApplicationResources只调度LoadingPlan，不增加各页取址包装。
 - 模态在页面注册的ViewSpec设置`modal:{mask,closeOnOutside}`，仅用于Popup。省略表示不拦截外部；mask=false使用透明拦截，mask=true显示统一蒙版；closeOnOutside独立控制空白是否关闭。UIManager动态共用一份节点，关窗或隐藏后向下恢复仍显示窗口的模态，禁止在每份Prefab再放独立蒙版或挂ModalLayer。实际面板背景保留BlockInputEvents，避免内容点击触发外部关闭；只承载坐标的大节点不要盲加阻挡。布阵草稿与结算沿既有关闭生命周期处理，GM/技能台使用mask=true、closeOnOutside=false。
-- RoleProfileView 的 Prefab 位于 bundles/module/login/prefabs，保留原 SettingLayer UUID。RemakeApp 注册 role-profile；头像点击经 HomeController 交回应用，UIManager 打开，窗口订阅唯一 AccountModel，关闭时退订。重复打开不累积监听；账号清空或忙于切换时关闭并取消未完成的打开。
+- RoleProfileView 在类上登记 `role-profile`，Prefab 位于 bundles/module/login/prefabs，沿用 SettingLayer 的 UUID。主城点击头像经 HomePageBinding 转给 ApplicationPages 打开资料窗。窗口显示时订阅 AccountModel，关闭时退订，切换角色会取消在途开窗。
 - AccountLoginView 是登录页面，ServerPickerView 是选服弹窗，两者都由 UIManager 管理。ServerCellView 是列表子组件；LoginArtwork 是登录页面适配组件；LoginLayoutUtils 和 RolePortraitUtils 是无状态辅助，不要求一一对应独立窗口。
 - 服务器和区域两列均为 SuperScroll → view/Mask → content/SuperContent。Prefab 保存 cellPrefab、尺寸、间距和方向；View 只 setData，不销毁重建所有格子、不计算格子坐标或 content 高度。
 - LoadingLayer/BootChrome 是启动加载流程，用于资源准备、进度和提示；AccountLoginView 负责账号、选服与进入。共享背景或尺寸计算不代表同一界面。启动层独立管理不构成业务弹窗绕过 UIManager 的例外。
@@ -265,19 +273,19 @@ Bag目录已改为bag，HeroRosterUtils以public static present投影名册；He
 
 FormationController是应用持有的BaseController模块，构造只接收FormationSaveModel和HeroRosterModel，不接收View/Screen/绘制回调；不提供show/close页面生命周期。configure由应用注入已有鉴权写入口，initialize只登记FORMATION_SAVE和权威状态通知。应用层AssetStateBinding统一resetSession/dispose，模块不监听登录。
 
-权威阵容仍唯一位于HeroRosterModel.mainFormation。FormationSaveModel只保存busy、未确认请求、回执等待版本与提示，不保存站位资产或页面草稿；Controller提交进度后发FormationEvent.SaveChanged。页面监听该事件和HeroRosterEvent.Updated，读取Model后自行绘制。
+HeroRosterModel.mainFormation 保存权威阵容。FormationSaveModel 保存按钮进度和已确认的服务端版本。Controller 发布 FormationEvent.SaveChanged。页面读取保存进度及名册事件，自行绘制。
 
-FormationView维护选中英雄、未保存站位/阵型、元素筛选与按钮监听；关闭丢弃草稿、清理本页监听，不销毁模块。保存期间关闭窗口，模块仍可接收回执并等待统一状态；结果不明请求保留原幂等键，重新打开仍可重试。角色变化才由应用统一清空请求。GameSocketClient负责连接代次，应用装配的AccountService.deliverAuthenticated统一决定是否交付成功/失败；BaseController不保存会话代次。各业务不新增账号监听、角色键比较、全局队列或独立会话去重体系。
+FormationView 保存选中英雄、未提交站位、阵型、筛选和页面监听。每次确认提交一次，收到保存版本后等待统一权威快照，站位与草稿相同才出战。关页丢弃草稿和出战回调，后台模块继续接收服务器数据。断线后的数据由鉴权首包刷新，身份隔离归 GameSocketClient、AccountController 和 AssetStateBinding。
 
 
 ## 连接、身份与业务的固定边界
 
 - 通信层GameSocketClient持有连接代次、连接ID与请求关联；旧连接的回调不交付，切换连接统一结束在途请求。
-- 应用通过AccountService.deliverAuthenticated装配写请求。它使用账号服务已有身份周期，在返回成功及失败前均检查当前身份；换号、退出、重新登录同一角色后都不向旧请求交付业务结果。不能只隔离成功而把旧失败交给模块恢复待重试状态。
-- AssetStateBinding整包校验角色归属及服务器revision，身份改变时先调用应用页面清理入口，再统一重置模块，最后提交新身份的快照。恢复同一角色只提交快照，不关闭页面、不清空未确认请求。
-- Controller登记onNotify、校验业务回执、更新唯一Model和发布事件；不捕获会话代次、不比较角色键、不监听账号。Model与模块事件不保存roleKey，应用通知模块无参重置；归属与持久版本只在AssetStateBinding校验，不再分散到页面owner比较。
+- AccountController.deliverAuthenticated 使用账号当前身份周期，交付成功或失败前都核对身份。换号、退出或重新登录同一角色时撤销旧请求交付。
+- AssetStateBinding 整包校验角色归属及服务器 revision。身份改变时清理页面并统一重置模块，然后提交新身份的快照。同角色重连直接提交快照。
+- Controller 发送玩法协议，登记 onNotify，校验回包并更新唯一 Model 和发布事件。账号凭证、会话代次、角色归属与资产版本由连接和应用层统一处理。
 - View只管理页面草稿、选中、滚动和自身监听；应用关闭旧角色页面。closed、节点有效性和异步贴图代次属于页面/资源生命周期，应保留。
-- 请求幂等键、重复点击保护、回执requestId匹配及服务器版本校验属于业务正确性，应保留。断网失败允许原请求显式重试；关窗不取消模块保存；客户端隔离不撤销旧角色已提交的服务端事务。
+- 每次操作保留必要的重复点击保护和回包关联，持久幂等由服务端维护。断线时以重连首包确定实际状态。普通操作的请求参数和回执仅用于本轮交付，业务模块无需保存并重发旧请求。页面只清理自己的监听和表现。
 
 
 ## 战斗输入的阵型属性约束
@@ -666,7 +674,7 @@ SkillAuditUtils不再维护技能演示白名单。Creator项目扩展自动提�
 
 ## 应用装配与资源生命周期（2026-11-06）
 
-- RemakeApp保留应用生命周期和会话到页面的协调；AccountComposition创建会话依赖，页面通过各自@UIRegistry.view登记，ApplicationPages只装配登录/主城Controller和宿主，ApplicationResources调度三段LoadingPlan并持有阶段资源，DevelopmentPreview管理只读开发入口。不得把开发战报逻辑重新塞回正式启动链路。
+- RemakeApp 负责启动、根页面切换和场景生命周期。AccountComposition 建立会话，ApplicationModules 接好各模块的依赖，ApplicationPages 绑定登录、主城页面和宿主。各页通过自身的 @UIRegistry.view 登记。ApplicationResources 调度三段 LoadingPlan 并持有阶段资源，DevelopmentPreview 管理开发入口。
 - RemakeHomeView 唯一持有 CityHubView / CityChromeView 子节点，负责打开、关闭、失败清理；子视图不再单独登记为 Hud。
 - 操作反馈统一调用UIManager.toast，由ToastManager复用Remake.scene的ApplicationNotice静态节点；登录前和独立技能台也可用，不另造页面提示节点。结果按有界队列去重、上浮和自动消失，页面保留加载进度/玩法状态/固定说明，不用正文承载成功或失败。换号clear，应用销毁dispose；已由UIManager报告的开窗异常不再次提示。
 - 动态图片复用原ResourcePool。ResManager.setSprite只保留当前显示及本轮在途候选作用域；同图/相同在途请求复用，新图赋值后释放旧显示，null、失效与销毁撤回拥有者，失败按候选回退。getSpriteFrame(owner)仍显式持有至owner销毁，不能用setSprite(null)撤回该引用；不直接releaseAll或释放其他页面引用。
@@ -748,7 +756,7 @@ SkillAuditUtils不再维护技能演示白名单。Creator项目扩展自动提�
 - chapter.challenge只接受requestId；chapter.claim与chapter.replay只接受battleId。角色取自鉴权连接，服务端决定当前关卡、胜负和奖励。三个请求使用WebSocket＋Protobuf，禁止HTTP回退或客户端提交关卡/胜负/奖励。
 - Snapshot.mainChapter同时进入session.login、session.authenticate和state.changed；maxCleared、pendingBattleId与assetRevision必须和外层revision一致。缺字段是未同步，不当作第1关。登录不携带完整战报，页面打开不重复查主线状态或库存。
 - MainChapterController在onNotify明确区分初始化/推送、历史命令回执与持久战报；MainChapterModel唯一保存进度。旧回执只能更新操作提示，不覆盖较新快照。MainChapterView只读Model、转交意图，不直接收包或加资产。
-- 未确认挑战保留原requestId，玩家显式重试复用；关闭窗口不清请求，身份变化由AssetStateBinding统一重置。通信层不自动重放写请求；模块不重复实现连接代次隔离，也不在旧Promise的finally中写回新身份状态。
+- 新挑战由 MainChapterController 随玩家确认发送。连接恢复后，按最新服务器状态决定下一次挑战，仍待结算的战斗沿原编号继续。
 - 真实主线场景标识chapter:lineup:1至3，与固定单英雄main:1:1测试夹具分开；复用多单位完整事件校验。replay按战报归属恢复原二进制，不能重新挑战代替读取。
 - MainChapterView与MainChapterBattleView通过UIManager登记、同名Prefab及现有资源入口打开；实际战报使用独立全屏窗口覆盖主城导航，关闭释放本页资源。正常主线完整播放胜利后转交MainChapterController结算，并展示已确认奖励；提前关闭、失败及已结算历史重播不发起领奖。中断待领奖可返回主线显式恢复；只读GM试战和技能台仍不写通关、不发奖。
 - 本阶段只开放原第一章前三关和当前引擎支持的阵容。升级、穿脱、挂机、其他关卡和未支持技能不随主线入口恢复。规则pending、清心概率待审与护盾疑点继续保留。
@@ -780,7 +788,7 @@ SkillAuditUtils不再维护技能演示白名单。Creator项目扩展自动提�
 
 正式挑战由主线主页的序列化BattleHost承载，UIManager使用该页提供的宿主管理战场组件；不挂到覆盖共享导航的全屏弹窗。主页关闭先取消战场，再释放宿主。背景、底部收益面板归主页，播放器仅持有战场对象、特效和显示时序。测试日志、手动开始及演示退出控件仅供开发验收入口；不因复用播放器而混入正式页面。挂机收益、计时与战报必须接服务端权威数据，禁止复活已暂停的旧业务API或用本地假收益冒充接入完成。
 
-挂机时间与收益统一来自登录/恢复/状态推送，不在View打开时另查。首次解锁的计时起点必须与通关事务一起持久化，不能以页面打开、客户端收到回包或重连时刻作为新起点。收益配置、可领取金额和已经到账奖励分开表达；只读计时接入不表示领取功能已开放。
+新角色从服务端创角时间开始挂机，沿用旧配置的初始 60 秒。登录、重连和状态推送都下发同一起点，首次受理挑战时将它写入累计表。首胜前页面只显示时钟，通关后按最高已通关关卡显示收益，实际到账以领取回执为准。
 
 
 挂机选人与战报边界：最多三人选择归服务端，保留旧站位，主阵容版本未变化时复用持久结果；客户端只读取统一快照。行军背景与骨骼归页面资源生命周期，进入挑战和关页必须清理；不得以本地假伤害、挑战战报循环替代旧挂机普攻战报。动画显示已完成与完整挂机已完成分别验收。

@@ -347,7 +347,7 @@ public class HeroSkillPanelRules {
         return true;
     }
 
-    /** 已核对的直接属性动作：既有护甲/破甲链及必中、无下游的固定201攻击和207暴击属性增减。 */
+    /** 已核对的直接属性动作，包括必中且无下游的固定201攻击、202护甲和207暴击增减。 */
     public boolean battleDirectAttribute(int buffId) {
         if (nanakoArmorDebuff(buffId)) {
             return true;
@@ -357,8 +357,7 @@ public class HeroSkillPanelRules {
             return true;
         }
         var buff = row("buff", buffId);
-        if (buff.path("type").asInt() == 160 && (buff.path("value").asString().startsWith("207|")
-                || buff.path("value").asString().startsWith("201|"))) {
+        if (isFixedBattleAttribute(buff)) {
             controlAttribute(buffId);
             return true;
         }
@@ -401,7 +400,7 @@ public class HeroSkillPanelRules {
     /** 一个已预检的伤害/控制/属性动作，保留选目标、参数和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
-    /** 预检真实技能的伤害、控制、监听、流血、属性/治疗、空1号及2/3/5/8/11表现；未知效果拒绝。 */
+    /** 预检真实技能的伤害、控制、监听、属性/治疗、驱散及现有表现；未知效果拒绝。 */
     public List<DamageArt> damageSkillArts(HeroBattleSkillUtils.Skill skill) {
         var config = skills.get(skill.skillId() + ":" + skill.level());
         if (config == null || !Set.of(1, 2).contains(config.path("active_type").asInt())) {
@@ -421,7 +420,8 @@ public class HeroSkillPanelRules {
                     } else if (battleRoundListener(buff.asInt())) {
                         battleTrigger(buff.asInt());
                     } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleBleed(buff.asInt()) && !battleDirectAttribute(buff.asInt()) && !battleSimpleControl(buff.asInt())
-                            && !battleJobCondition(buff.asInt()) && !battleBlockShield(buff.asInt())) {
+                            && !battleJobCondition(buff.asInt()) && !battleBlockShield(buff.asInt())
+                            && battleDebuffRemovalCount(buff.asInt()) < 0) {
                         battleOrdinaryDamageRate(buff.asInt(), true);
                     }
                 }
@@ -571,22 +571,28 @@ public class HeroSkillPanelRules {
             }
         }
         var buff = row("buff", buffId);
-        if (buff.path("type").asInt() == 160 && (buff.path("value").asString().startsWith("207|")
-                || buff.path("value").asString().startsWith("201|"))) {
+        if (isFixedBattleAttribute(buff)) {
             return fixedBattleAttribute(buffId);
         }
         throw new IllegalArgumentException("未核对的控制属性效果：" + buffId);
     }
 
+    /** 仅识别已接通的 type160 固定攻击、护甲、暴击参数；详细校验交给固定属性入口。 */
+    private static boolean isFixedBattleAttribute(JsonNode buff) {
+        var value = buff.path("value").asString();
+        return buff.path("type").asInt() == 160
+            && (value.startsWith("201|") || value.startsWith("202|") || value.startsWith("207|"));
+    }
+
     /**
-     * 旧AbilityAdd/AbstractAttributeBuffHandler按原整数加减201攻击万分比或207暴击万分比。
+     * 旧 AbilityAdd/AbstractAttributeBuffHandler 按原整数加减201攻击、202护甲或207暴击万分比。
      * 仅接必中、无子动作且后两项为0的固定形式，其他属性、概率和条件效果继续拒绝。
      */
     private ControlAttributeDefinition fixedBattleAttribute(int buffId) {
         var buff = row("buff", buffId);
         var values = buff.path("value").asString().split("\\|", -1);
         var children = mapper.readTree(buff.path("art_list").asString());
-        if (buff.path("type").asInt() != 160 || values.length != 4 || !Set.of("201", "207").contains(values[0])
+        if (!isFixedBattleAttribute(buff) || values.length != 4
                 || !values[1].matches("-?(0|[1-9][0-9]*)") || !values[2].equals("0") || !values[3].equals("0")
                 || buff.path("attach_percent").asInt() != 10000 || children == null
                 || !children.isArray() || !children.isEmpty()
@@ -672,9 +678,10 @@ public class HeroSkillPanelRules {
         return count;
     }
 
-    /** 预检职业条件及其自选一次性属性子动作，不按技能ID特许放行。 */
+    /** 预检职业条件的自选一次性属性，或沿旧 copy_target 传递条件命中的固定属性。 */
     public boolean battleJobCondition(int buffId) {
-        if (row("buff", buffId).path("type").asInt() != 212) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 212) {
             return false;
         }
         jobConditionValues(buffId);
@@ -683,11 +690,13 @@ public class HeroSkillPanelRules {
             throw new IllegalArgumentException("职业条件缺少实际子动作：" + buffId);
         }
         for (var art : children) {
-            if (!art.targets().selectors().equals(List.of(1))) {
-                throw new IllegalArgumentException("职业条件子动作并非施法者一次性属性：" + buffId);
-            }
-            for (int id : art.buffs()) {
-                onceDamageAttribute(id);
+            if (art.targets().selectors().equals(List.of(1))) {
+                for (int id : art.buffs()) {
+                    onceDamageAttribute(id);
+                }
+            } else if (!(buff.path("copy_target").asInt() == 1 && art.targets().selectors().isEmpty()
+                    && art.buffs().stream().allMatch(this::battleDirectAttribute))) {
+                throw new IllegalArgumentException("职业条件子动作超出已核对的属性形式：" + buffId);
             }
         }
         return true;
@@ -871,12 +880,12 @@ public class HeroSkillPanelRules {
 
     /**
      * 旧ClientBuffHandler只记录非逻辑表现；本规则校验服务端原字段，Lua覆盖由客户端解析。
-     * 当前1号仅接空资源/空动画的占位，非空1号、未知概率或下游动作仍拒绝。
+     * 1号仅接空资源/空动画的占位；type10读取场地双轴和原投掷序列。未知概率或下游动作拒绝。
      */
     public boolean battleProjectile(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(1, 2, 3, 5, 8, 11).contains(type)) {
+        if (!Set.of(1, 2, 3, 5, 8, 10, 11).contains(type)) {
             return false;
         }
         var children = mapper.readTree(buff.path("art_list").asString());
@@ -895,8 +904,38 @@ public class HeroSkillPanelRules {
                     || !buff.path("dimly").isIntegralNumber() || buff.path("dimly").asInt() != 0) {
                 throw new IllegalArgumentException("非空1号客户端动画尚未支持：" + buffId);
             }
+        } else if (type == 10) {
+            var animation = mapper.readTree(buff.path("ani_base").asString());
+            var files = mapper.readTree(buff.path("file").asString());
+            if (animation == null || !animation.isObject() || !isBattlefieldRatio(animation.path("offset_x"))
+                    || !isBattlefieldRatio(animation.path("offset_y"))
+                    || files == null || !files.isArray() || !files.isEmpty()
+                    || !animation.path("format").asString().equals("skill-102040041/arrow-%d.png")) {
+                throw new IllegalArgumentException("10号战场投掷尚未核对该资源或坐标：" + buffId);
+            }
         }
         return true;
+    }
+
+    /** 确认投掷轴显式给出战场内比例，缺少坐标或类型不符时拒绝。 */
+    private static boolean isBattlefieldRatio(JsonNode value) {
+        return value.isNumber() && value.asDouble() >= 0 && value.asDouble() <= 1;
+    }
+
+    /** type1102 按数值移除允许驱散的负面或控制实例；0 为不限量，非此类型返回 -1。 */
+    public int battleDebuffRemovalCount(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 1102) {
+            return -1;
+        }
+        var counts = buff.path("value").asString().split("\\|", -1);
+        var children = mapper.readTree(buff.path("art_list").asString());
+        if (counts.length != 4 || !counts[0].matches("0|[1-9][0-9]*") || !counts[1].equals("0")
+                || !counts[2].equals("0") || !counts[3].equals("0") || buff.path("attach_percent").asInt() != 10000
+                || children == null || !children.isArray() || !children.isEmpty()) {
+            throw new IllegalArgumentException("1102驱散含未支持概率或后续动作：" + buffId);
+        }
+        return Integer.parseInt(counts[0]);
     }
 
     /** 201回合开始监听预检；仅允许必中安装和其后续纯100号动作，避免隐藏未知效果。 */

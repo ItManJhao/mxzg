@@ -51,87 +51,94 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
     @property(Button) logoutButton: Button | null = null;
     /** 设置面板返回按钮。 */
     @property(Button) settingsClose: Button | null = null;
-    /** 当前实例的按钮注销函数；重复绑定先清理，销毁时释放。 */
-    private stops: Array<() => void> = [];
-    /** 当前模型订阅；重复打开先退订，关闭时释放。 */
-    private stopModel: (() => void) | null = null;
+    /** 本次打开的按钮、资料和尺寸监听，重开前与关闭时统一解除。 */
+    private readonly stops: Array<() => void> = [];
 
-    /** 主城注入已有账号操作和提示出口；关闭详情不会退出登录。 */
-    bind(logout: () => void, notice: (text: string) => void): void {
-        this.release();
-        const bind = (button: Button | null, action: () => void) => {
-            if (!button) throw new Error("角色详情按钮未绑定");
-            const node = button.node;
-            node.on(Button.EventType.CLICK, action);
-            this.stops.push(() => {
-                if (node.isValid) node.off(Button.EventType.CLICK, action);
-            });
-        };
-        bind(this.closeButton, () => this.close());
-        bind(this.settingsButton, () => {
-            if (this.settingsPanel) this.settingsPanel.active = true;
-        });
-        bind(this.settingsClose, () => {
-            if (this.settingsPanel) this.settingsPanel.active = false;
-        });
-        bind(this.logoutButton, logout);
-        for (const button of this.readonlyButtons) bind(button, () => notice("当前为角色资料只读展示，该操作暂未开放"));
+    /** 打开资料窗并订阅当前角色；同一窗口重新打开时以最新参数重新绑定一次。 */
+    public onOpen(args?: RoleProfileOpenArgs): void {
+        if (!args?.model.snapshot.role) {
+            throw new Error("角色尚未初始化，不能打开资料");
+        }
+        this.releaseBindings();
+        this.args = args;
+        this.bindButtons(args);
+        this.stops.push(args.model.subscribe(state => {
+            if (state.busy || !state.role) {
+                this.close();
+                return;
+            }
+            this.render(state.role);
+        }));
+        this.render(args.model.snapshot.role);
+        if (this.settingsPanel) {
+            this.settingsPanel.active = false;
+        }
+        this.fit();
+        ccView.on("canvas-resize", this.fit, this);
+        this.stops.push(() => ccView.off("canvas-resize", this.fit, this));
     }
 
-    /** 由本页的唯一账号状态订阅刷新；空角色关闭窗口，不持有第二份角色数据。 */
-    render(role: Readonly<RoleProfile> | null): void {
-        if (!role) {
-            this.close();
-            return;
+    /** 页面关闭和引擎直接销毁都经 BaseView 进入此处，结束当前显示期的全部监听。 */
+    public onClose(): void {
+        this.releaseBindings();
+        this.args = undefined;
+    }
+
+    /** 注册当前窗口的设置、退出和只读按钮。 */
+    private bindButtons(args: RoleProfileOpenArgs): void {
+        this.bindButton(this.closeButton, () => this.close());
+        this.bindButton(this.settingsButton, () => {
+            if (this.settingsPanel) {
+                this.settingsPanel.active = true;
+            }
+        });
+        this.bindButton(this.settingsClose, () => {
+            if (this.settingsPanel) {
+                this.settingsPanel.active = false;
+            }
+        });
+        this.bindButton(this.logoutButton, args.logout);
+        for (const button of this.readonlyButtons) {
+            this.bindButton(button, () => args.notice("当前为角色资料只读展示，该操作暂未开放"));
         }
-        if (!this.nickname || !this.roleId || !this.level) throw new Error("角色详情资料未绑定");
+    }
+
+    /** 保存注册时的节点，组件随窗口销毁后仍可安全移除本次点击监听。 */
+    private bindButton(button: Button | null, action: () => void): void {
+        if (!button) {
+            throw new Error("角色详情按钮未绑定");
+        }
+        const node = button.node;
+        node.on(Button.EventType.CLICK, action);
+        this.stops.push(() => {
+            if (node.isValid) {
+                node.off(Button.EventType.CLICK, action);
+            }
+        });
+    }
+
+    /** 用最新角色更新昵称、编号、等级和头像，在窗口中只保留显示所需的数据。 */
+    private render(role: Readonly<RoleProfile>): void {
+        if (!this.nickname || !this.roleId || !this.level) {
+            throw new Error("角色详情资料未绑定");
+        }
         this.nickname.string = role.nickname;
         this.roleId.string = "角色 ID：" + role.id;
         this.level.string = String(role.level);
         RolePortraitUtils.paint(this.face, this.border, role.basics?.headId, role.basics?.borderId);
     }
 
-    /** UIManager 打开弹窗，绑定按钮并订阅唯一状态；不追加角色查询。 */
-    onOpen(args?: RoleProfileOpenArgs): void {
-        if (!args?.model.snapshot.role) throw new Error("角色尚未初始化，不能打开资料");
-        this.args = args;
-        this.bind(args.logout, args.notice);
-        this.stopModel?.();
-        this.stopModel = args.model.subscribe(state => {
-            if (state.busy || !state.role) this.close();
-            else this.render(state.role);
-        });
-        this.render(args.model.snapshot.role);
-        if (this.settingsPanel) this.settingsPanel.active = false;
-        this.fit();
-        ccView.off("canvas-resize", this.fit, this);
-        ccView.on("canvas-resize", this.fit, this);
-    }
-
-    /** 统一关闭时清理按钮、模型订阅和视口适配。 */
-    onClose(): void {
-        ccView.off("canvas-resize", this.fit, this);
-        this.release();
-        this.stopModel?.();
-        this.stopModel = null;
-        this.args = undefined;
-    }
-
-    /** 只适配资料面板的整体比例；遮罩尺寸与空白关闭统一归ModalLayer，不重排旧节点。 */
+    /** 适配资料面板的整体比例，共享模态层负责屏幕遮罩。 */
     private fit(): void {
         const size = ccView.getVisibleSize();
         const scale = Math.min(1, size.width / 640, size.height / 880);
         this.node.setScale(scale, scale, 1);
     }
 
-    /** 释放当前实例绑定，防止重复开关累计回调。 */
-    private release(): void {
-        for (const stop of this.stops.splice(0)) stop();
-    }
-
-    /** 引擎直接销毁节点时，同样交由 BaseView 结束窗口生命周期。 */
-    onDestroy(): void {
-        ccView.off("canvas-resize", this.fit, this);
-        this.release();
+    /** 逐项解绑，重复关闭或重新打开时不会累加监听。 */
+    private releaseBindings(): void {
+        for (const stop of this.stops.splice(0)) {
+            stop();
+        }
     }
 }

@@ -64,7 +64,7 @@ export interface FormationRequest {
 export class FormationView extends BaseView<FormationRequest> {
     /** 关闭按钮，丢弃未保存草稿。 */
     @property(Button) closeButton: Button | null = null;
-    /** 无ACK时保存原意图，有ACK待同步时只重试快照确认。 */
+    /** 确认本页阵容草稿，保存期间禁用。 */
     @property(Button) confirmButton: Button | null = null;
     /** 标题文字与样式保留在预制体。 */
     @property(Label) titleLabel: Label | null = null;
@@ -114,23 +114,18 @@ export class FormationView extends BaseView<FormationRequest> {
     private elementDialog: FormationElementView | null = null;
     /** 本次配置异常的描述，用于避免重复重绘刷同一条日志。 */
     private lastElementIssue = "";
-    /** 当前保存轮次已反馈的结果文字；进入下一次发送时清空，避免资产事件重复提示。 */
-    private lastSaveMessage = "";
-    /** 从Prefab首次读取的按钮文字；确认恢复结束后恢复人工配置的原文案，不重写静态布局。 */
-    private defaultConfirmText: string | null = null;
     /** 当前筛选元素，0表示全部，关闭清理。 */
     private elem = 0;
     /** 防止关闭回调重复执行。 */
     private done = false;
-    /** 本页出战确认时提交的草稿，匹配权威快照后才允许进入挑战；取消时清空。 */
-    private submitted: { version: number; formationId: number; slots: { position: number; heroId: string }[] } | null = null;
+    /** 本页已点击出战，当前草稿在保存期间保持不变，等待服务器阵容确认。 */
+    private submittedForBattle = false;
 
     /** 校验布局、出阵和加成展示的静态绑定，随后从统一快照建立草稿。 */
     public onOpen(args?: FormationRequest): void {
         this.args = args;
         this.done = false;
-        this.submitted = null;
-        this.lastSaveMessage = this.saves.snapshot.message;
+        this.submittedForBattle = false;
         this.closed = false;
         this.elem = 0;
         const fields = { closeButton: this.closeButton, confirmButton: this.confirmButton, titleLabel: this.titleLabel,
@@ -215,7 +210,7 @@ export class FormationView extends BaseView<FormationRequest> {
         if (draftReplaced) {
             UIManager.instance.closeChildren(this);
         }
-        if (this.saves.snapshot.pending || this.saves.snapshot.busy || this.saves.snapshot.acknowledged !== null) {
+        if (this.saves.snapshot.busy) {
             return;
         }
         if (draftReplaced || this.state.busy) {
@@ -228,60 +223,50 @@ export class FormationView extends BaseView<FormationRequest> {
         }
     }
 
-    /** 原意图直到ACK及权威状态确认都保持只读；恢复等待不丢提交参数或误触发出战。 */
+    /** 保存期间禁用编辑；只有权威站位与本页草稿相同才执行出战。 */
     private onSaveChanged(): void {
-        if (this.closed) return;
+        if (this.closed) {
+            return;
+        }
         const status = this.saves.snapshot;
         if (status.busy) {
-            this.lastSaveMessage = "";
-        } else if (status.message && status.message !== this.lastSaveMessage) {
-            UIManager.instance.toast(status.message);
-            this.lastSaveMessage = status.message;
+            this.state = { ...this.state, busy: true, message: status.savedVersion === null
+                ? "正在保存阵容…" : "等待服务器阵容…" };
+            this.paint();
+            return;
         }
         const current = this.roster.snapshot.mainFormation;
-        const draft = this.submitted;
-        if (this.args?.closeAfterSave && draft && !status.busy && !status.pending
-                && status.acknowledged === null && !!status.confirmedRequestId && current && current.version >= draft.version
-                && current.formationId === draft.formationId && current.slots.length === draft.slots.length
+        const draft = this.state.lineup;
+        const submitted = this.submittedForBattle;
+        this.submittedForBattle = false;
+        if (submitted && status.savedVersion !== null && current
+                && current.formationId === this.state.formationId && current.slots.length === draft.slots.length
                 && draft.slots.every(slot => current.slots.some(saved => saved.position === slot.position && saved.heroId === slot.heroId))) {
-            this.submitted = null;
             this.complete(true);
             return;
         }
-        if (status.pending) {
-            const request = status.pending;
-            const option = this.roster.snapshot.mainFormation?.options?.find(row => row.formationId === request.formationId);
-            this.state = { ...this.state, formationId: request.formationId, openPositions: option?.openPositions,
-                lineup: { version: request.expectedVersion, slots: request.slots.map(slot => ({ ...slot })) },
-                busy: status.busy, message: status.busy ? status.message
-                    : status.acknowledged !== null ? "已收到保存回执，点击重试同步"
-                        : "保存结果待确认，请用原草稿重试" };
-            this.paint();
-        } else if (status.busy) {
-            this.state = { ...this.state, busy: true, message: status.message };
-            this.paint();
-        } else if (status.message) {
+        if (!current || status.savedVersion !== null || current.version !== draft.version) {
             this.reload();
+        } else if (this.state.busy) {
+            this.state = { ...this.state, busy: false, message: "" };
+            this.paint();
         }
     }
 
-    /** 关闭草稿选择窗后交出阵意图，有ACK时只重试同步，双确认前不开始挑战。 */
+    /** 只提交本页草稿一次，收到匹配的服务器阵容后再出战。 */
     private saveDraft(): void {
         if (this.closed || this.state.busy) return;
-        if (!this.saves.snapshot.pending && !this.state.lineup.slots.length) {
+        if (!this.state.lineup.slots.length) {
             UIManager.instance.toast("至少上阵一名英雄");
             return;
         }
         UIManager.instance.closeChildren(this);
-        if (this.args?.closeAfterSave) {
-            this.submitted = { version: this.state.lineup.version, formationId: this.state.formationId!,
-                slots: this.state.lineup.slots.map(slot => ({ ...slot })) };
-        }
+        this.submittedForBattle = !!this.args?.closeAfterSave;
         void this.module.save({ expectedVersion: this.state.lineup.version,
             formationId: this.state.formationId!, slots: this.state.lineup.slots.map(slot => ({ ...slot })) });
     }
 
-    /** 重绘草稿站位、阵型及元素加成；已有保存意图时仅允许显式同步重试。 */
+    /** 重绘草稿站位、阵型及元素加成，等待服务器时禁用编辑。 */
     public render(state: FormationState): void {
         this.cancelSlotGesture();
         this.state = state;
@@ -291,14 +276,6 @@ export class FormationView extends BaseView<FormationRequest> {
         this.formationLabel!.string = "阵型 " + (state.formationId ?? "—") + " ▼";
         const editable = this.editable();
         this.confirmButton!.interactable = !state.busy;
-        const confirmLabel = this.confirmButton!.node.getComponentInChildren(Label);
-        if (confirmLabel) {
-            if (this.defaultConfirmText === null) {
-                this.defaultConfirmText = confirmLabel.string;
-            }
-            confirmLabel.string = this.saves.snapshot.acknowledged !== null
-                ? state.busy ? "同步中" : "重试同步" : this.defaultConfirmText;
-        }
         const formationButton = this.formationButton!;
         const formationId = state.formationId;
         formationButton.interactable = editable && formationId !== undefined && !!state.unlockedIds?.length;
@@ -350,7 +327,7 @@ export class FormationView extends BaseView<FormationRequest> {
         this.elementPreview = null;
         this.elementDialog = null;
         this.lastElementIssue = "";
-        this.submitted = null;
+        this.submittedForBattle = false;
         EventDispatcher.instance.offTarget(this);
         if (!this.done) {
             this.done = true;
@@ -373,9 +350,9 @@ export class FormationView extends BaseView<FormationRequest> {
         this.paint();
     }
 
-    /** 保存不明时锁定草稿；只能以原参数重试，不能顺带创建新操作。 */
+    /** 仅在当前页打开且服务器阵容已就绪时编辑草稿。 */
     private editable(): boolean {
-        return !this.closed && !this.state.busy && !this.saves.snapshot.pending && this.saves.snapshot.acknowledged === null;
+        return !this.closed && !this.state.busy;
     }
 
     /** 已上阵则撤下，否则填入编号最小的开放空位；同模板不能重复出阵。 */

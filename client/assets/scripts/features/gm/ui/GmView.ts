@@ -1,5 +1,5 @@
 /**
- * 开发 GM 总入口：从完整 Prefab 打开英雄、道具、技能和阵容试战独立窗口。
+ * 开发 GM 总入口：从完整 Prefab 打开资产发放、技能与阵容试战、角色与时间窗口。
  * 子窗复用应用提供的唯一控制器，模态由 UIManager 共享；关窗取消迟到的子窗加载。
  */
 import {_decorator, Button, Label} from "cc";
@@ -12,6 +12,7 @@ import {ViewportLayoutUtils} from "../../../framework/ui/ViewportLayoutUtils";
 import {GmOpenArgs} from "../data/GmViewArgs";
 import {GmGrantView} from "./GmGrantView";
 import {GmBattleView} from "./GmBattleView";
+import {GmToolsView} from "./GmToolsView";
 
 const {ccclass, property} = _decorator;
 
@@ -36,6 +37,8 @@ export class GmView extends BaseView<GmOpenArgs> {
     @property(Button) skillButton: Button | null = null;
     /** 打开前三关只读阵容试战窗口。 */
     @property(Button) battleButton: Button | null = null;
+    /** 打开角色等级、主线关卡和测试时间窗口。 */
+    @property(Button) toolsButton: Button | null = null;
     /** 关闭整个 GM 窗口链，不注销角色。 */
     @property(Button) closeButton: Button | null = null;
     /** 固定使用说明及开关状态；操作结果统一用全局飘字。 */
@@ -47,7 +50,7 @@ export class GmView extends BaseView<GmOpenArgs> {
     /** 本次打开登记的事件清理函数。 */
     private stops: Array<() => void> = [];
 
-    /** 绑定四类入口并查询真实开关；布局和比例由 Prefab、Widget 与 ViewportScale 保存。 */
+    /** 绑定各类入口并查询真实开关；布局和比例由 Prefab、Widget 与 ViewportScale 保存。 */
     onOpen(args: GmOpenArgs): void {
         this.releaseBindings();
         this.args = args;
@@ -60,9 +63,31 @@ export class GmView extends BaseView<GmOpenArgs> {
         this.bindButton(this.itemButton!, () => void this.openGrant("item"));
         this.bindButton(this.skillButton!, () => void this.openSkill());
         this.bindButton(this.battleButton!, () => void this.openBattle());
+        this.bindButton(this.toolsButton!, () => void this.openTools());
         this.bindButton(this.closeButton!, () => this.close());
         this.refreshButtons();
         void this.readStatus(args);
+    }
+
+    /** 打开角色与时间窗口，沿用本菜单的认证 GM 请求控制器。 */
+    private async openTools(): Promise<void> {
+        const args = this.args;
+        if (this.closed || this.openingChild || !args) {
+            return;
+        }
+        this.openingChild = true;
+        this.refreshButtons();
+        try {
+            await UIManager.instance.open(GmToolsView, {
+                controller: args.controller,
+                nickname: args.nickname,
+                readRoleLevel: args.readRoleLevel,
+            });
+        } catch (_error) {
+            // UIManager 负责开窗失败的统一提示。
+        } finally {
+            this.finishChildOpening(args);
+        }
     }
 
     /** 查询真实开关；失败保留不可确认状态并通过统一飘字报告，不伪装为开启。 */
@@ -159,6 +184,7 @@ export class GmView extends BaseView<GmOpenArgs> {
         this.itemButton!.interactable = ready;
         this.skillButton!.interactable = ready && !!this.args?.openSkillAudit;
         this.battleButton!.interactable = ready && !!this.args?.openLineupBattle;
+        this.toolsButton!.interactable = ready;
     }
 
     /** 登记本窗按钮动作及清理，重复打开不累积监听。 */
@@ -172,7 +198,7 @@ export class GmView extends BaseView<GmOpenArgs> {
         });
     }
 
-    /** 关闭时取消发放、试战子窗及在途打开，控制器仍保留结果未明的幂等请求。 */
+    /** 关闭时取消 GM 子窗及在途打开，控制器仍保留结果未明的幂等请求。 */
     onClose(): void {
         this.closed = true;
         this.openingChild = false;
@@ -180,6 +206,7 @@ export class GmView extends BaseView<GmOpenArgs> {
         this.args = undefined;
         UIManager.instance.closeById("gm-grant");
         UIManager.instance.closeById("gm-battle");
+        UIManager.instance.closeById("gm-tools");
     }
 
     /** 解除本次登记的监听，不影响其他窗口。 */

@@ -6,16 +6,31 @@
 
 | 功能 | 当前调用链 | 当前范围 |
 |---|---|---|
-| 名册与基础详情 | 登录/恢复/state.changed → AssetStateBinding → HeroRosterController → HeroRosterModel → HeroRosterEvent → HeroListView/HeroInfoView | 唯一权威名册，含基础技能、普通四槽、进化状态的只读展示；不在列表开页查询或自行发英雄 |
+| 名册与详情 | 登录、恢复、state.changed → AssetStateBinding → HeroRosterController → HeroRosterModel → HeroListView / HeroInfoView | 统一提供技能、普通四槽、已有属性和个人战力。详情箭头沿进入时的筛选顺序切换英雄 |
 | 主线布阵 | FormationView 草稿 → FormationController → formation.save → FormationSaveModel；权威阵容仍随统一快照写 HeroRosterModel | 持久幂等保存及版本等待已接入；页面关闭不销毁模块，草稿不提前写 Model |
 | 主线战斗 | MainChapterController → chapter.challenge/claim/replay/idle.encounter | 默认第1～20关挑战、幂等结算及挂机演出 |
-| 普通升级 | HeroInfoView → HeroLevelController → hero.level.upgrade / status → 统一快照 | 按旧级数、金币/经验消耗及阶星上限普通升级，持久回执确认后更新界面 |
+| 普通升级 | HeroInfoView → HeroLevelController → hero.level.upgrade → 统一快照 | 按旧级数、金币/经验消耗及阶星上限普通升级，持久回执确认后更新界面 |
+| 普通装备 | HeroInfoView、HeroEquipmentPickerView 或 EquipmentInfoView → HeroEquipmentController → hero.equipment.change | 单件穿戴、换装、卸下、一键穿装及卸下。库存和槽位由同一版快照刷新 |
 
-HeroInfoView 由名册传入当前英雄实例。普通升级在该界面完成。穿脱、强化进阶和手动扩容留待对应入口恢复。
+HeroInfoView 以实际英雄实例打开，支持普通升级及四槽穿脱。强化进阶、符文、神装和手动扩容待恢复。
 
-人工修改先看features/hero/ui对应View的@UIRegistry.view，再进入同模块Controller和Model。FormationController不持有View、账号或角色键；身份隔离由GameSocketClient与应用AccountService.deliverAuthenticated统一负责。原LineupApi已删除，不再维护另一套查询与保存入口。
+## 英雄名册看板
 
-布阵保存回执不是统一资产状态。FormationSaveModel保留原提交直到权威mainFormation.version达到回执version；有ACK缺推送时每轮至多一次现有refreshSnapshot，显式重试只确认状态，无ACK才按原requestId/expectedVersion/站位重试保存。页面锁定待确认参数，关页保留模块意图但撤销本页出战回调；身份结束清空过程。具体修改与验证边界见[页面维护](formation-ui-authoring.md)和[本批恢复记录](validation/formation-confirm-review-20261116.json)。
+日服 `HeroListLayer.lua` 使用 `spine/act` 的 `act` 循环与原气泡资源。HeroListView 复用同一骨骼、资源池和颜色标签转换，位置、字号和宽度保存在 Prefab。定位 Widget 置于独立锚点，骨骼加载时改变自身尺寸也可保持原位置。切换元素只刷新列表，看板随页面关闭清理。
+
+对白来自原 `herobagjump.xlsx` 中的唯一当前配置，正文和按钮语言分别为 `3603` 和 `3602`。随登录后的 GameConfig 包加载。旧版点击指向特权面板的每日礼包页，当前入口使用统一飘字提示未开放。[正式服名册画面](images/official-hero-list-20261103.png)
+
+## 普通装备穿脱
+
+旧 `HeroInfoLayer:onClickEquip` 点击空槽直接打开 `HeroEquipCtr`，已穿槽先打开同一件装备的属性、套装、更换和卸下。候选只显示同部位、不同于当前模板的背包物品，按品质及模板编号降序。单件可人工换低评分装备，一键穿装填充空槽并且只替换评分严格更高的装备。一键卸下在没有可提升项且已穿装备时出现。
+
+服务端 `HeroEquipmentService` 持有当前角色资产锁。穿戴从已同步的库存记录扣除一件，替换或卸下的装备退回背包。`game_equipment` 保留槽位记录和附魂等级，V37 增加穿戴状态及幂等回执；数据、资产版本、快照推送在同一事务协调。相同请求重放原结果，单件卸下核对槽位及当时的装备模板。面板、个人战力和主线输入共用已恢复的装备及套装来源。[通信契约](network-contract.md) · [后端事务](../backend/src/main/java/com/funsgamex/mxzg/hero/HeroEquipmentService.java)
+
+日服英雄详情的外观依据 `jp-overlay/src/layer/heroinfo/HeroInfoLayer.lua` 和已有正式服截图。日服全身图的构建脚本注明原图仅在测试服资源目录，本地工程使用日服原有的 Spine 回退。属性窗展示当前服务器同步的数值，附魂技能等未接入的面板来源继续由快照标识。[正式服外观](images/official-hero-info-20261103.png)
+
+人工修改从对应 View 的 @UIRegistry.view 进入模块 Controller。英雄普通召唤由 HeroRosterController 收发，布阵由 FormationController 收发，普通升级由 HeroLevelController 收发。会话隔离由 GameSocketClient 与 AccountController 统一负责。
+
+布阵保存回包记录服务器阵容版本。HeroRosterModel 更新至该版本后，仍打开的原提交页面才继续出战。保存期间禁用重复提交，结束页面撤销出战回调。正常推送或重连鉴权提供当前阵容。见 [页面维护](formation-ui-authoring.md)。
 
 ## 普通英雄升级
 
@@ -23,7 +38,7 @@ HeroInfoView 由名册传入当前英雄实例。普通升级在该界面完成�
 
 客户端 `HeroLevelQuoteUtils` 读取已加载的配置及现有名册、角色和背包。费用不足时展示下一等级的成本，优先提示金币，再提示英雄经验。确认本次手动升级后 `HeroInfoView` 使用原 `upexp` 的30帧光效，60毫秒每帧，前100毫秒渐入，关页归还引用。
 
-服务端 `HeroLevelService` 在角色锁内完成等级与两项扣费，递增统一资产版本，并保存回执，失败一起回滚。V32 保留旧单级回执并允许存多级跨度。相同原参数返回同一回执，更改参数明确拒绝。应用提供已认证角色隔离的原请求日志，控制器确认回执及统一快照后清理。关页时可继续同步，冷恢复只查原操作，不重复播升级光效。[通信契约](network-contract.md) · [本机结果](development-progress.md#当前验证与边界)
+服务端 HeroLevelService 在同一角色锁事务内完成等级与两项扣费，递增统一资产版本并保存回执。V32 保留旧单级回执并允许多级跨度，同幂等键不同参数拒绝。客户端每次点击只发一次，成功回包只供本次光效，等级和消耗由统一快照更新。见 [通信契约](network-contract.md)。
 
 ## 历史合同与规则核查
 
@@ -134,7 +149,7 @@ H2 验证不能替代 MySQL。独立 MySQL 已覆盖阵容并发、升级/领奖
 - HeroSnapshotData：校验统一快照中的英雄列表/详情数据，区分实例 UUID 和模板 ID。
 - HeroRosterModel：模块唯一不可变名册及同步状态，不持有 token 或派发事件。
 - HeroRosterController：应用 initialize/dispose，负责鉴权读取、请求去重、会话/查询代次与名册事件；页面关闭不销毁模块。原 HeroRosterService 已删除。
-- AccountService.authenticated：统一会话校验，旧角色 401 不清除新角色。
+- AccountController.authenticated 校验发起请求时的登录会话，旧角色的失败回包不能清除新角色。
 - HeroListView：开页监听 HeroRosterEvent.Updated，关页解除本页监听；SuperScroll/SuperContent 维护列表布局和 Cell，固定参数在 HeroListBoardView.prefab。
 - HeroLevelController：会话级升级请求与不确定结果确认，通过 BagController 提交关联钱包/库存/英雄快照。
 - HeroInfoUpLevelLayer：当前点击英雄打开的普通升级窗口；HeroInfoView 是未接入旧详情，列表上的无效 infoPrefab 绑定已清理，二者 UUID 不重复。
@@ -188,11 +203,11 @@ Snapshot.main_formation使用新字段7：formationId、unlockedIds、assistance
 
 MainFormationCommandService使用现有角色行锁；先查V15的game_formation_save回执，再检查阵容版本和原版归一化。相同请求返回原版本，不重复修改；同键换参数拒绝。选中阵型和站位同事务写入，有实际变化才递增阵容版本并调用AssetSyncService.changed，同事务仅一次资产revision。无变化保存只写回执；回滚不留回执、站位或推送。旧LineupService仍用于暂停的历史领域测试，不作为新WS入口。
 
-HeroRosterController仍负责统一state.changed/登录恢复中的唯一Model。FormationController只持有页面草稿和未确认请求，接收FORMATION_SAVE回执后等待Model达到确认版本；不写Model、不持有账号/凭证、不查询英雄或阵容。断线不自动重放，页面确认可原样重试；关闭/换号后不绘制迟到回包。版本冲突使用已恢复的权威状态重新选择；同阵容版本下名册新增或属性变化更新可选英雄，同时保留草稿。
+HeroRosterController 将统一快照提交给唯一名册。FormationController 发送保存请求，接收回包后等权威阵容达到确认版本。草稿归 FormationView，同版本下名册变化可以更新可选英雄并保留草稿。
 
 入口为英雄列表原布阵按钮，UIManager弹出FormationView。选英雄后点击允许位置放置，无选中英雄时点击位置撤下；阵型按钮循环已解锁阵型，确认后才保存。SuperScroll＋SuperContent保存五列格子布局，专属FormationHeroCellView继承通用显示组件，0.85缩放保存在同名Prefab，不运行时手排坐标或改content高度。英雄菜单层级已修正，避免被名册底板盖住。
 
-本次实际验证：后端88项通过，独立MySQL19项通过（包含V15、同回执应用重启恢复）；前端formation-state覆盖草稿隔离、真实协议路由、等待统一同步、原请求重试、同版本名册刷新、关闭和换号；formation-view读取真实Prefab验证Inspector值、两列临时布局参数及损坏绑定。独立内存预览run=3f05bc64554b495b93edc9ad6b423363，实际完成版本0→1、移动至7号位并切阵型2后版本2、刷新重登恢复、未保存关闭重开保持旧数据，警告/错误0。仅本次合成账号，宿主已停止；没有更新日常数据库或开启其他玩法。
+历史验证使用旧的原请求恢复方案，包含保存、换位、切阵型、刷新读取已保存阵容和关闭未提交草稿。历史证据和当前实现的边界分别见下方截图与 [页面维护](formation-ui-authoring.md)。
 
 证据：[保存完成](images/formation-save-20261104.png)、[刷新恢复](images/formation-recovery-20261104.png)。截图仅证明当前393×852预览中的操作，不替代完整正式服视觉或小游戏真机验收。
 
@@ -202,7 +217,7 @@ HeroRosterController仍负责统一state.changed/登录恢复中的唯一Model�
 
 上一节的页面控制器结构已收整：FormationController不再拥有View、catalog、selected、草稿或页面show/close。它继承BaseController，应用单例初始化一次，按真实FORMATION_SAVE回执更新FormationSaveModel并发事件；权威阵容仍由HeroRosterController更新唯一HeroRosterModel。
 
-FormationView在onOpen读取这两个Model，绑定自己的按钮并维护草稿；同版本名册变化保留草稿，服务器阵容版本变化载入最新状态。onClose只解除本页监听，关窗期间保存仍由模块完成；未确认请求可跨窗口重开重试。换号/退出由AssetStateBinding先关闭旧角色页面再统一resetSession；请求成功及失败是否交付由应用的AccountService.deliverAuthenticated决定，模块和页面不再比较会话代次或角色键。
+FormationView 在 onOpen 读取两个 Model，登记按钮与事件并维护草稿。onClose 清理本页监听和出战回调，服务器提交结果仍会同步。换号或退出由 AssetStateBinding 关闭旧角色页面并重置模块，AccountController 负责旧会话回包隔离。
 
 此处会话隔离只阻止旧角色结果更新当前客户端状态，不撤销已提交的服务端保存，也不把关窗视为换号；这是通信异步边界，不是新增玩法规则或已发现串号故障的描述。
 

@@ -26,6 +26,8 @@ export interface OwnedHero {
         includedSources: readonly string[];
         pendingSources: readonly string[];
         complete: boolean;
+        /** 当前已恢复来源计算的个人战力，缺失时不拿四维面板猜测。 */
+        power?: number;
     }>;
     /** 普通装备完整状态；undefined 未同步，items 空数组明确未穿戴。 */
     readonly equipment?: Readonly<{
@@ -149,7 +151,15 @@ export class HeroSnapshotUtils {
         if (new Set([...included, ...pending]).size !== included.length + pending.length || !included.length || row.complete !== (pending.length === 0)) {
             throw new Error("英雄面板覆盖状态矛盾");
         }
-        return Object.freeze({ values: Object.freeze({ hp: stats.hp as number, atk: stats.atk as number, def: stats.def as number, spd: stats.spd as number }), includedSources: Object.freeze([...included]), pendingSources: Object.freeze([...pending]), complete: row.complete });
+        const power = row.power;
+        if (power !== undefined && (typeof power !== "number" || !Number.isSafeInteger(power) || power < 0)) {
+            throw new Error("英雄个人战力无效");
+        }
+        return Object.freeze({
+            values: Object.freeze({ hp: stats.hp as number, atk: stats.atk as number, def: stats.def as number, spd: stats.spd as number }),
+            includedSources: Object.freeze([...included]), pendingSources: Object.freeze([...pending]), complete: row.complete,
+            ...(power !== undefined ? { power } : {}),
+        });
     }
 
     /** 严格区分未同步/未进化/已进化，技能字段不得与状态矛盾。 */

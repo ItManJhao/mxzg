@@ -148,9 +148,41 @@ public class MainChapterService {
         return state(authorizedRole(token));
     }
 
+    /** 开发设置关卡的领域结果；APPLIED 包括下一关已经是目标的情况。 */
+    public enum DevelopmentStageResult { APPLIED, INVALID_STAGE, PENDING_SETTLEMENT }
+
+    /**
+     * 在开发 GM 的角色锁事务内设置下一次挑战关卡，保留领奖记录和现有挂机累计。
+     * 首次跳到第 2 关及以后时建立从创角开始的累计，已有待结算战斗时拒绝修改。
+     * @param targetStage 当前允许挑战的全局关卡号，保存为 targetStage 减 1 的已通关数
+     */
+    public DevelopmentStageResult setDevelopmentStage(String role, int targetStage) {
+        sync.requireTransaction();
+        if (targetStage < 1 || targetStage > rules.challengeLimit()) {
+            return DevelopmentStageResult.INVALID_STAGE;
+        }
+        var before = state(role);
+        if (before.pendingBattleId() != null) {
+            return DevelopmentStageResult.PENDING_SETTLEMENT;
+        }
+        int cleared = targetStage - 1;
+        if (before.maxCleared() == cleared) {
+            return DevelopmentStageResult.APPLIED;
+        }
+        if (cleared > 0) {
+            long createdAt = roles.findById(role).orElseThrow().basics().createdAtSeconds();
+            idleStates.initializeForChallenge(role, createdAt);
+        }
+        if (jdbc.update("UPDATE game_main_chapter SET max_cleared=? WHERE role_id=?", cleared, role) == 0) {
+            jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,?)", role, cleared);
+        }
+        sync.changed(role);
+        return DevelopmentStageResult.APPLIED;
+    }
+
     /**
      * 同请求ID永久复用回执；新请求遇到待领奖时仅补领奖并记回执。
-     * 否则未通关角色在锁内创建一次累计；已有通关必须具备原累计，不补建免费起点。
+     * 首次挑战将从创角开始的累计落库；历史角色保留原时钟，已通关时必须具备原累计。
      * 随后读取队伍、门槛和真实战斗并冻结双方名称。
      * 失败战斗保留累计起点但不推进通关；任何受理异常均随事务整体回滚。
      */
@@ -168,16 +200,16 @@ public class MainChapterService {
         if (before.pendingBattleId() != null) {
             receipt = settle(role, before.pendingBattleId());
         } else {
+            var roleData = roles.findById(role).orElseThrow();
             // 战力读取携带资产版本；首次累计的版本通知必须先登记，避免同场输入版本不一致。
             if (before.maxCleared() == 0) {
-                if (idleStates.initializeForChallenge(role, java.time.Instant.now().getEpochSecond())) {
+                if (idleStates.initializeForChallenge(role, roleData.basics().createdAtSeconds())) {
                     sync.changed(role);
                 }
             } else {
                 idleStates.require(role);
             }
             var power = powers.current(token);
-            var roleData = roles.findById(role).orElseThrow();
             var decision = rules.decide(new MainChapterRules.Progress(before.maxCleared(), false), roleData.level(), power.total());
             int stageIndex = decision.stage().index();
             var preview = battles.preview(token, stageIndex, probability -> ThreadLocalRandom.current().nextDouble() < probability);

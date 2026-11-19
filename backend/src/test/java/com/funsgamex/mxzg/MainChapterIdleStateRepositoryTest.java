@@ -6,6 +6,7 @@ package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.campaign.IdleRules;
 import com.funsgamex.mxzg.campaign.MainChapterIdleStateRepository;
+import com.funsgamex.mxzg.time.GameClock;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -34,10 +35,12 @@ class MainChapterIdleStateRepositoryTest {
     private TransactionTemplate transaction;
     /** 被验证的真实累计仓库，不使用Mock替代持久SQL。 */
     private MainChapterIdleStateRepository states;
+    /** 每个用例独立的游戏时钟，可模拟开发调时。 */
+    private GameClock clock;
     /** 当前用例唯一角色；资产版本固定9，用于证明仓库不擅自推进统一版本。 */
     private String role;
 
-    /** 建立真实V23独立库及一个既有角色，不预先创建挂机时钟。 */
+    /** 建立真实 V23 独立库和游戏时钟，为既有角色保留挂机累计缺行。 */
     @BeforeEach
     void preparePreviousSchema() {
         databaseUrl = "jdbc:h2:mem:main_idle_state_" + UUID.randomUUID()
@@ -46,7 +49,8 @@ class MainChapterIdleStateRepositoryTest {
         Flyway.configure().dataSource(source).target("23").load().migrate();
         jdbc = new JdbcTemplate(source);
         transaction = new TransactionTemplate(new DataSourceTransactionManager(source));
-        states = new MainChapterIdleStateRepository(jdbc, new IdleRules(new ObjectMapper()));
+        clock = new GameClock();
+        states = new MainChapterIdleStateRepository(jdbc, new IdleRules(new ObjectMapper()), clock);
         role = UUID.randomUUID().toString();
         jdbc.update("INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,"
                         + "login_account,server_id,state_revision,role_experience,goddess_vip) "
@@ -127,14 +131,35 @@ class MainChapterIdleStateRepositoryTest {
         assertEquals(2940, locked(() -> states.require(role)).startedAt());
     }
 
-    /** 服务器秒不足以形成非负预置或超出精确整数上界时整单拒绝，不插免费累计。 */
+    /** 无法形成非负起点、创角时间在未来或超出精确整数上界时拒绝初始化，不插入累计。 */
     @Test
     void invalidInitializationTimeDoesNotCreateClock() {
         migrateAccumulation();
-        for (long now : new long[]{-1, 59, 9_007_199_254_740_992L}) {
+        long future = java.time.Instant.now().plusSeconds(3600).getEpochSecond();
+        for (long now : new long[]{-1, 59, future, 9_007_199_254_740_992L}) {
             assertThrows(IllegalArgumentException.class, () -> locked(() -> states.initializeForChallenge(role, now)));
             assertEquals(0, clockCount());
         }
+    }
+
+    /** 正常时钟拒绝未来创角时间；开发回拨仅保留实际起点，读取不会创建累计。 */
+    @Test
+    void preClearSnapshotUsesTrustedRoleTimeOnly() {
+        migrateAccumulation();
+        jdbc.update("UPDATE game_role SET created_at_seconds=2000,last_login_at_seconds=2000 WHERE id=?", role);
+        for (int read = 0; read < 2; read++) {
+            assertEquals(1940, locked(() -> states.startBeforeFirstClear(role, 2000)).orElseThrow());
+        }
+        assertThrows(IllegalArgumentException.class, () -> locked(() -> states.startBeforeFirstClear(role, 1999)));
+        clock.setEpochSeconds(1000);
+        assertEquals(1940, locked(() -> states.startBeforeFirstClear(role, 1000)).orElseThrow());
+        clock.reset();
+        assertThrows(org.springframework.dao.EmptyResultDataAccessException.class,
+                () -> locked(() -> states.startBeforeFirstClear(UUID.randomUUID().toString(), 2000)));
+        assertEquals(0, clockCount());
+        assertTrue(locked(() -> states.initializeForChallenge(role, 2000)));
+        assertEquals(1940, locked(() -> states.startBeforeFirstClear(role, 1999)).orElseThrow());
+        assertFalse(locked(() -> states.initializeForChallenge(role, Long.MAX_VALUE)));
     }
 
     /** 未知格式、语义或时间尺度拒绝使用，读取和初始化均不自动迁移或清零。 */

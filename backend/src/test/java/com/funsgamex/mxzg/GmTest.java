@@ -1,9 +1,10 @@
-/** GM 独立 H2 验证：真实事务、容量、角色隔离、重复请求与 Protobuf 推送。 */
+/** GM 独立 H2 验证：发放、角色与主线调整、游戏时钟、持久回执和 Protobuf 推送。 */
 package com.funsgamex.mxzg;
 import java.util.*;
 import java.net.*;
 import java.net.http.*;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +13,11 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.jdbc.core.JdbcTemplate;
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
+import com.funsgamex.mxzg.campaign.MainChapterFirstRewardService;
 import com.funsgamex.mxzg.gm.GmService;
 import com.funsgamex.mxzg.network.GameProtocolCodec;
 import com.funsgamex.mxzg.spirit.SpiritInventoryService;
+import com.funsgamex.mxzg.time.GameClock;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -34,6 +37,10 @@ class GmTest {
  @Autowired PlatformTransactionManager transactions;
  /** 统一首包读取入口，用于确认鉴权懒初始化之后重复快照不再推进版本。 */
  @Autowired com.funsgamex.mxzg.network.SessionSnapshotService snapshots;
+ /** 重置关卡前后通过实际独立奖励入口核对同一成功回执。 */
+ @Autowired MainChapterFirstRewardService chapterRewards;
+ /** 出现断言失败时也恢复测试上下文的实际时钟。 */
+ @Autowired GameClock clock;
  /** 合成账号，不连接玩家库。 */
  private DevelopmentLoginService.LoginResult player(){return login.login("gm_"+UUID.randomUUID().toString().substring(0,15));}
  /** 相同请求只到账一次；改参数复用请求 ID 回滚。 */
@@ -42,6 +49,102 @@ class GmTest {
  @Test void heroesAndCapacity(){var p=player();String token="Bearer "+p.session().accessToken();gm.grant(token,UUID.randomUUID().toString(),"hero",10102002,2);assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM game_hero WHERE role_id=? AND star=2 AND hero_level=1",Integer.class,p.role().id()));jdbc.update("UPDATE game_role SET hero_capacity=2 WHERE id=?",p.role().id());assertThrows(Exception.class,()->gm.grant(token,UUID.randomUUID().toString(),"hero",10101001,1));assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM game_hero WHERE role_id=?",Integer.class,p.role().id()));}
  /** 非法数量、未知配置、无效会话不创建回执或资产。 */
  @Test void rejectInvalid(){var p=player();String token="Bearer "+p.session().accessToken();for(int qty:new int[]{0,-1,10000})assertThrows(Exception.class,()->gm.grant(token,UUID.randomUUID().toString(),"item",900101,qty));assertThrows(Exception.class,()->gm.grant(token,UUID.randomUUID().toString(),"hero",1,1));assertThrows(Exception.class,()->gm.grant("Bearer invalid",UUID.randomUUID().toString(),"item",900101,1));assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM game_gm_grant WHERE role_id=?",Integer.class,p.role().id()));}
+
+ /** 百万级金币和钻石分别到账，重放只加一次，普通道具仍受数量保护。 */
+ @Test
+ void largeWalletGrantsKeepOrdinaryItemLimit() {
+  var player = player();
+  String role = player.role().id();
+  String token = "Bearer " + player.session().accessToken();
+  var before = snapshots.snapshot(token);
+  String grantId = UUID.randomUUID().toString();
+  var grant = gm.grant(token, grantId, "item", 900001, 10_000_000);
+  assertEquals(grant, gm.grant(token, grantId, "item", 900001, 10_000_000));
+  gm.grant(token, UUID.randomUUID().toString(), "item", 900002, 2_000_000);
+  var rejected = assertThrows(ResponseStatusException.class,
+      () -> gm.grant(token, UUID.randomUUID().toString(), "item", 900101, 10_000));
+  assertEquals("GM_INVALID", rejected.getReason());
+  var after = snapshots.snapshot(token);
+  assertEquals(before.role().gold() + 10_000_000, after.role().gold());
+  assertEquals(before.role().diamonds() + 2_000_000, after.role().diamonds());
+  assertEquals(before.inventory(), after.inventory());
+  assertEquals(before.revision() + 2, after.revision());
+  assertEquals(2, count("game_gm_grant", role));
+ }
+
+ /** 设置角色等级统一同步且清零经验；不发升级赠钻，旧回执不能改写后来的等级。 */
+ @Test
+ void roleLevelSetsExactValueAndKeepsLatestAdjustmentOnRetry() {
+  var player = player();
+  String role = player.role().id();
+  String token = "Bearer " + player.session().accessToken();
+  jdbc.update("UPDATE game_role SET role_experience=5 WHERE id=?", role);
+  var before = snapshots.snapshot(token);
+  String requestId = UUID.randomUUID().toString();
+  var receipt = gm.setRoleLevel(token, requestId, 15);
+  var leveled = snapshots.snapshot(token);
+  assertEquals(new GmService.Adjustment(requestId, 15), receipt);
+  assertEquals(15, leveled.role().level());
+  assertEquals(0, leveled.role().basics().experience());
+  assertEquals(before.role().diamonds(), leveled.role().diamonds());
+  assertEquals(before.revision() + 1, leveled.revision());
+  gm.setRoleLevel(token, UUID.randomUUID().toString(), 2);
+  assertEquals(receipt, gm.setRoleLevel(token, requestId, 15));
+  var invalid = assertThrows(ResponseStatusException.class,
+      () -> gm.setRoleLevel(token, UUID.randomUUID().toString(), Integer.MAX_VALUE));
+  assertEquals("GM_INVALID_LEVEL", invalid.getReason());
+  var conflict = assertThrows(ResponseStatusException.class, () -> gm.setChapter(token, requestId, 2));
+  assertEquals("GM_REQUEST_CONFLICT", conflict.getReason());
+  var latest = snapshots.snapshot(token);
+  assertEquals(2, latest.role().level());
+  assertEquals(leveled.revision() + 1, latest.revision());
+  assertEquals(2, count("game_gm_adjustment", role));
+ }
+
+ /** 设置下一挑战关卡和挂机收益档位，重置后保留真实已领奖励，待结算时拒绝改写。 */
+ @Test
+ void chapterAdjustmentsPreserveIdleAndClaimHistory() {
+  var player = player();
+  String role = player.role().id();
+  String token = "Bearer " + player.session().accessToken();
+  var before = snapshots.snapshot(token);
+  String jumpId = UUID.randomUUID().toString();
+  var jump = gm.setChapter(token, jumpId, 6);
+  var after = snapshots.snapshot(token);
+  assertEquals(new GmService.Adjustment(jumpId, 6), jump);
+  assertEquals(5, after.mainChapter().maxCleared());
+  assertEquals(5, after.mainChapterIdle().rewardStage());
+  assertEquals(before.mainChapterIdle().startedAt(), after.mainChapterIdle().startedAt());
+  assertEquals(before.role(), after.role());
+  assertEquals(before.inventory(), after.inventory());
+  assertEquals(before.revision() + 1, after.revision());
+  assertEquals(0, count("game_main_chapter_battle", role));
+  var claimed = chapterRewards.claim(token, 1);
+  jdbc.update("INSERT INTO game_main_chapter_milestone(role_id,reward_id) VALUES (?,1)", role);
+  gm.setChapter(token, UUID.randomUUID().toString(), 1);
+  assertEquals(jump, gm.setChapter(token, jumpId, 6));
+  var reset = snapshots.snapshot(token);
+  assertEquals(0, reset.mainChapter().maxCleared());
+  assertEquals(0, reset.mainChapterIdle().rewardStage());
+  assertEquals(List.of(1), reset.mainChapter().firstRewardProgress().claimedChapters());
+  assertEquals(List.of(1), reset.mainChapter().milestoneProgress().claimedIds());
+  assertEquals(claimed, chapterRewards.claim(token, 1));
+  var tooHigh = assertThrows(ResponseStatusException.class,
+      () -> gm.setChapter(token, UUID.randomUUID().toString(), reset.mainChapter().challengeLimit() + 1));
+  assertEquals("GM_INVALID_CHAPTER", tooHigh.getReason());
+
+  // 预置独立测试角色的待结算标识，关卡 GM 必须保持标识与当前通关数据。
+  String pending = UUID.randomUUID().toString();
+  jdbc.update("UPDATE game_main_chapter SET max_cleared=1,pending_battle_id=? WHERE role_id=?", pending, role);
+  var busy = assertThrows(ResponseStatusException.class,
+      () -> gm.setChapter(token, UUID.randomUUID().toString(), 7));
+  assertEquals("GM_CHAPTER_PENDING", busy.getReason());
+  var unchanged = snapshots.snapshot(token);
+  assertEquals(1, unchanged.mainChapter().maxCleared());
+  assertEquals(pending, unchanged.mainChapter().pendingBattleId());
+  assertEquals(reset.revision(), unchanged.revision());
+  assertEquals(2, count("game_gm_adjustment", role));
+ }
  /** 同一请求只创建一批真实实例；重放不重抽属性，回执和实例均按真实角色隔离。 */
  @Test
  void spiritInstancesKeepStableReceiptAndRoleOwnership() {
@@ -307,6 +410,77 @@ class GmTest {
    client.close();
   }
  }
+ /** 角色等级与主线指令使用真实二进制回执，提交后的统一快照分别提供最新值。 */
+ @Test
+ void websocketAdjustmentsReturnReceiptAndUpdatedState() throws Exception {
+  var player = player();
+  try (var peer = new SpiritPeer(player.session().accessToken())) {
+   String levelRequest = UUID.randomUUID().toString();
+   peer.send("gm.level.set", Map.of("requestId", levelRequest, "level", 15));
+   var afterLevel = readAdjustment(peer, "gm.level.set", levelRequest, "level", 15);
+   assertEquals(15, afterLevel.path("role").path("level").asInt());
+
+   String chapterRequest = UUID.randomUUID().toString();
+   peer.send("gm.chapter.set", Map.of("requestId", chapterRequest, "mission", 10));
+   var afterChapter = readAdjustment(peer, "gm.chapter.set", chapterRequest, "mission", 10);
+   assertEquals(9, afterChapter.path("mainChapter").path("maxCleared").asInt());
+   assertEquals(15, afterChapter.path("role").path("level").asInt());
+  }
+ }
+
+ /** 核对单笔指令的独立回执并返回本次统一状态，适配两个消息的到达顺序。 */
+ private JsonNode readAdjustment(SpiritPeer peer, String name, String requestId, String key, int value)
+     throws Exception {
+  var first = peer.receive();
+  var second = peer.receive();
+  var push = first.path("kind").asString().equals("event") ? first : second;
+  var response = push == first ? second : first;
+  assertEquals("state.changed", push.path("name").asString());
+  assertEquals(name, response.path("name").asString());
+  assertTrue(response.path("ok").asBoolean(), response.toString());
+  assertEquals(requestId, response.path("body").path("requestId").asString());
+  assertEquals(value, response.path("body").path(key).asInt());
+  return push.path("body");
+ }
+
+ /** 通过真实 WS 设定过去时间，核对查询、重连心跳和期限快照都使用同一个游戏时钟。 */
+ @Test
+ void websocketClockDrivesGameplayAndCanReset() throws Exception {
+  var player = player();
+  var target = Instant.parse("2001-01-02T03:04:05Z");
+  try {
+   try (var peer = new SpiritPeer(player.session().accessToken())) {
+    peer.send("gm.time.set", Map.of("unixSeconds", -1));
+    assertEquals("GM_INVALID_TIME", peer.receive().path("error").path("code").asString());
+    peer.send("gm.time.set", Map.of("unixSeconds", target.getEpochSecond()));
+    var set = peer.receive();
+    assertTrue(set.path("ok").asBoolean(), set.toString());
+    assertEquals(target.toEpochMilli(), set.path("body").path("serverTimeMs").asLong());
+    assertTrue(set.path("body").path("overridden").asBoolean());
+    peer.send("gm.time.get", Map.of());
+    var read = peer.receive().path("body");
+    assertTrue(read.path("serverTimeMs").asLong() >= target.toEpochMilli());
+    assertTrue(read.path("overridden").asBoolean());
+    var snapshot = snapshots.snapshot("Bearer " + player.session().accessToken());
+    assertTrue(snapshot.timedInventory().serverTimeSeconds() >= target.getEpochSecond());
+    assertTrue(snapshot.timedInventory().serverTimeSeconds() < target.getEpochSecond() + 60);
+    assertTrue(snapshot.mainChapterIdle().serverTime() >= target.getEpochSecond());
+    assertTrue(snapshot.mainChapterIdle().serverTime() < snapshot.mainChapterIdle().startedAt());
+   }
+   try (var peer = new SpiritPeer(player.session().accessToken())) {
+    peer.send("session.heartbeat", Map.of());
+    long heartbeat = peer.receive().path("body").path("serverTimeMs").asLong();
+    assertTrue(heartbeat >= target.toEpochMilli() && heartbeat < target.plusSeconds(60).toEpochMilli());
+    peer.send("gm.time.set", Map.of("unixSeconds", 0));
+    var reset = peer.receive().path("body");
+    assertFalse(reset.path("overridden").asBoolean());
+    assertTrue(Math.abs(reset.path("serverTimeMs").asLong() - System.currentTimeMillis()) < 5_000);
+   }
+  } finally {
+   clock.reset();
+  }
+ }
+
  /** 二进制发放成功后收到真实 state.changed，响应回执与资产同步分离。 */
  @Test void websocketGrantPushesState() throws Exception {
   var p=player();var queue=new LinkedBlockingQueue<JsonNode>();

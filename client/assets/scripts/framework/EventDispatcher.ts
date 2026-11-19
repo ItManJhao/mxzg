@@ -2,14 +2,17 @@
  * 全局有类型事件派发器，负责通知批次及目标作用域的监听归属。
  * View 关闭时按目标解除；模块监听由模块生命周期清理，事件不保存业务状态。
  */
-import { GameLog } from "../core/GameLog";
+import {GameLog} from "../core/GameLog";
+
 type Stop = () => void;
 let batchDepth = 0;
 const notifications = new Set<() => void>();
 let flushing = false;
+
 /** 功能模块通过类型扩展声明事件名和负载，框架不反向导入功能代码。 */
 export interface EventPayloads {
 }
+
 /** 全局唯一派发器；仅按监听归属解除，不提供全局清空。 */
 export class EventDispatcher {
     /** 同步提交相关 Model 后再交付通知；提交回调中不能执行异步工作。 */
@@ -17,8 +20,7 @@ export class EventDispatcher {
         batchDepth++;
         try {
             return commit();
-        }
-        finally {
+        } finally {
             batchDepth--;
             if (!batchDepth) {
                 EventDispatcher.flush();
@@ -47,21 +49,23 @@ export class EventDispatcher {
                 for (const notify of pending) {
                     try {
                         notify();
-                    }
-                    catch (error) {
+                    } catch (error) {
                         GameLog.shared.classified("FRAMEWORK", "error", "Events", "订阅执行失败：" + String(error));
                     }
                 }
             }
-        }
-        finally {
+        } finally {
             flushing = false;
         }
     }
+
     static readonly instance = new EventDispatcher();
     private readonly listeners = new Map<keyof EventPayloads, Set<(payload: any) => void>>();
     private readonly targets = new Map<object, Map<keyof EventPayloads, Map<Function, Stop>>>();
-    private constructor() { }
+
+    private constructor() {
+    }
+
     on<K extends keyof EventPayloads>(event: K, target: object, handler: (payload: EventPayloads[K]) => void): Stop;
     on<K extends keyof EventPayloads>(event: K, handler: (payload: EventPayloads[K]) => void): Stop;
     /** 登记事件监听；提供目标时按事件、目标、原函数去重并绑定 this。返回重复安全的解除方法。 */
@@ -89,6 +93,7 @@ export class EventDispatcher {
             }
         };
     }
+
     once<K extends keyof EventPayloads>(event: K, target: object, handler: (payload: EventPayloads[K]) => void): Stop;
     once<K extends keyof EventPayloads>(event: K, handler: (payload: EventPayloads[K]) => void): Stop;
     /** 登记一次性监听，在回调执行前解除；同一三元组以首次注册语义为准。 */
@@ -170,7 +175,7 @@ export class EventDispatcher {
         for (const group of this.listeners.values()) {
             count += group.size;
         }
-        return { listeners: count, targets: this.targets.size };
+        return {listeners: count, targets: this.targets.size};
     }
 
     /** 返回指定目标的监听数量，供生命周期检查使用。 */
@@ -192,8 +197,7 @@ export class EventDispatcher {
                 }
                 try {
                     handler(payload);
-                }
-                catch (error) {
+                } catch (error) {
                     GameLog.shared.classified("FRAMEWORK", "error", "EventDispatcher", String(event) + " 监听失败：" + String(error));
                 }
             }
@@ -201,5 +205,7 @@ export class EventDispatcher {
     }
 
     /** 返回指定事件当前有效监听数量。 */
-    listenerCount<K extends keyof EventPayloads>(event: K): number { return this.listeners.get(event)?.size || 0; }
+    listenerCount<K extends keyof EventPayloads>(event: K): number {
+        return this.listeners.get(event)?.size || 0;
+    }
 }

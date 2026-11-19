@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新于 2026-11-18。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
+更新于 2026-11-19。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -8,20 +8,22 @@
 
 ## 客户端统一采用模块级 MVC
 
-Model 保存唯一状态，Controller处理业务协议并更新 Model，View 展示和转交操作。背包是标准模块。当前维护登录、角色、背包、英雄展示及普通升级、主线阵容、连续第1～20关挑战与结算、挂机、独立通关奖励及第15关里程碑领取。英雄可通过免费首抽和精英碎片合成获得。挂机新领取只在 local 默认启用。装备穿脱、强化进阶、后续招募和快速战斗入口待恢复。
+Model 保存唯一状态。Controller 发出玩法请求、登记和接收协议、提交 Model 并通知界面。View 读取 Model，把玩家操作交给所属 Controller。背包是标准模块。当前维护登录、角色、背包、英雄详情、普通升级与装备穿脱、主线阵容、第1～20关挑战与结算、挂机、独立通关奖励及第15关里程碑领取。基础、友情、高级召唤和积分兑换可获得英雄，精英碎片也可合成英雄。挂机新领取只在 local 默认启用。强化进阶、祈愿购买和快速战斗待恢复。
 
-- BagController：初始化时登记三个实际消息，onNotify → onInventoryState → BagModel → BagEvent，不持有凭证、查询接口或资产写队列。
+- BagController 发送精英碎片合成请求，接收库存快照和本次合成回包。库存经 BagModel 提交后由 BagEvent 通知界面。
 - BagModel：唯一背包状态，分别保存普通堆叠、期限物品和精灵独立实例，整批校验/冻结后计算差异；不联网、不依赖View，不按itemId合并精灵。
-- RoleController：onNotify → onRoleState → 账号 Model 中唯一角色资料，不处理登录签发。
-- AccountService：登录、凭证保存、恢复与失效处理，不拥有第二份角色资产。
+- RoleController 收发首次命名和新手赠礼协议。昵称、命名状态与赠礼资格由 onRoleState 写入唯一账号 Model，领取回包交通用奖励队列展示。
+- HeroEquipmentController 收发装备指令和结果。已穿槽位、属性与个人战力由 HeroRosterModel 持有，待穿库存仍由 BagModel 持有。装备选择、详情和红点读取同一资产快照。
+- AccountController 负责登录、恢复和退出，决定是否交付当前会话的成功与失败。首包通过模块校验后才保存凭证。AccountOperations 为各模块提供单次请求与回包交付。ServerSelectionController 负责区服列表和选择。
+- GameSocketClient.requestFrame 是认证业务请求的发送入口。返回时按请求编号、协议和连接匹配，并核对协议中声明的角色与实际发奖明细。主线、布阵、GM 与英雄模块使用同一条连接。
 - AssetStateBinding：应用层身份/持久版本校验、完整角色与库存批量提交，不保存第二份库存。
 - Protocol / ProtocolRouter：消息目录、模块登记与按真实消息定向交付，不保存资产或伪造模块消息。
 
-旧BagApi、BagUpdateCoordinator、bindBagSession与游戏HTTP传输已删除。2026-11-13继续退役无入口的旧Campaign/Idle/HeroLevel API与Controller、未绑定升级页及PausedFeatures；后端领域服务/规则保留，不表示这些玩家功能已开放。
+旧 BagApi、BagUpdateCoordinator、bindBagSession 与游戏 HTTP 传输已删除。2026-11-13 清理过当时无入口的 Campaign、Idle、HeroLevel 客户端和未绑定升级页。2026-11-18 已通过英雄详情与现行 HeroLevelController 接通普通升级，具体规则见 [英雄升级](hero-lineup-contract.md#普通英雄升级)。
 
 ## 基类与监听归属
 
-BaseModel只管理本地展示版本和业务清空，不保存roleKey、凭证或服务端版本；BaseController管理模块初始化、无参重置和监听。连接旧回包由GameSocketClient及AccountService认证交付隔离，整包角色归属与持久revision由AssetStateBinding校验。身份变化时先调用RemakeApp.clearRolePages：同步关闭旧功能页及弹窗、取消在途打开、清理闲置页，再重置模块与提交新快照。HeroInfo/HeroSkill不保存owner，不比较旧账号；closed、paintVersion和选中实例仍负责页面自身生命周期。关页不销毁业务模块。
+BaseModel只管理本地展示版本和业务清空，不保存roleKey、凭证或服务端版本；BaseController管理模块初始化、无参重置和监听。连接旧回包由GameSocketClient及AccountController认证交付隔离，整包角色归属与持久revision由AssetStateBinding校验。身份变化时先调用RemakeApp.clearRolePages：同步关闭旧功能页及弹窗、取消在途打开、清理闲置页，再重置模块与提交新快照。HeroInfo/HeroSkill不保存owner，不比较旧账号；closed、paintVersion和选中实例仍负责页面自身生命周期。关页不销毁业务模块。
 
 ## 单一全局事件与数据顺序
 
@@ -29,9 +31,9 @@ BaseModel只管理本地展示版本和业务清空，不保存roleKey、凭证�
 
 服务器 game_role.state_revision 是资产提交版本，与 BagModel/基类本地 revision、连接 connectionId、单次请求 id 均不同。重复/较旧持久版本不提交，旧连接回调由连接代次隔离。非法整包不允许先改钱包；回滚不发送成功状态。
 
-主线结算归MainChapterModel/Controller：原battleId、确认阶段、固定presentation归属、入队及实际展示分别记录，原SETTLED回执和足够新快照双确认后才交结果。entryRecovery只记首个已接纳身份首包候选，MainChapterView首次进入才消费，不在登录主城或每次推送创建领取意图。正常battle归属通过openChild打开ChapterEndView，真实打开且仍归原战场时才记已展示；播放器提供结束回调后不再接管结算宿主或全局关窗。冷reward归属经RewardBinding.restoreActual走既有RewardModel，旧缺actual才用restoreItems；onPresented真开窗后才登记，失败只重试显示。缺状态每轮一次鉴权，旧任务由应用身份隔离与重置撤销；没有新账号键、资产Model或协议，见[恢复说明](reconnect-recovery.md)。
+主线结算归 MainChapterController 和 MainChapterModel。以服务端战斗编号请求结算，回包与达到其资产版本的快照同时到达后交付结果。正常战斗由原战场打开 ChapterEndView。登录恢复时读取首包中的待结算战斗，玩家首次进入主线才接续，使用通用奖励队列。缺少推送时由后续推送或自然重连的快照确认，账号层隔离旧连接，页面关闭结束自身播放和显示监听。[恢复说明](reconnect-recovery.md)
 
-布阵确认仍归FormationController/FormationSaveModel，权威阵容唯一归HeroRosterModel。保存回执到后保留原意图，直到mainFormation.version达到ACK版本；缺状态每轮至多调用一次原refreshSnapshot，失败/旧快照保留并允许显式“重试同步”，有ACK不再写保存。View锁定提交参数，关页只清自身监听和出战回调，身份结束由应用重置模块；真正双确认后才继续一次出战。不增加第二份阵容、账号键或自动写重放队列，见[布阵维护](formation-ui-authoring.md)。
+FormationController 每次确认发送一次保存请求。FormationSaveModel 保存按钮进度和服务端返回的阵容版本。HeroRosterModel 保存权威阵容。版本达到确认值且站位符合当前草稿后，出战页面才继续挑战。关页释放草稿和页面回调。失败或断线后查看服务器快照，再由玩家按当前阵容决定下一次操作。[布阵维护](formation-ui-authoring.md)
 
 ## 主线完整目录与实际开放范围
 
@@ -53,7 +55,7 @@ HeroSkillPanelRules按旧ClientBuffHandler统一识别type2/3/5/8/11纯表现，
 
 ## 共享可信发奖
 
-通用展示链已接入RewardFeedbackService→reward.granted→RewardBinding→RewardController/RewardModel→RewardView或全局飘字。通知只在原事务提交后发送，使用原业务持久receiptId及assetRevision，不从背包差量推断奖励；静默、弹窗、飘字由服务端明确选择。应用先核当前角色归属，模块等待已接纳快照版本和主城就绪，再逐批展示、关闭后推进。同编号实时通知与匹配原请求且双确认后的历史回执共用去重；不以历史钱包更新资产。具体入口、旧源码依据和限制见[通用发奖反馈](reward-feedback.md)。
+服务端在原事务提交后发送 reward.granted，携带原业务回执编号和资产版本。RewardController 接收通知，核对归属与已接纳版本，并提交 RewardModel。RewardBinding 依队列打开共享奖励窗、升级窗和英雄获得窗，或显示全局飘字。静默、弹窗、飘字由服务端指定。同一批奖励的即时通知和已确认回包共用去重。[通用发奖反馈](reward-feedback.md)
 
 RoleUpgradeView同样归common，是原奖励队列的一种通用表现，不是新发奖或新队列。RewardNotice.roleUpgrade由实际经验连续链给出前后等级，同回执去重包含它；正常主线的bonuses范围仍保留原经验链，冷all/挂机直接复用。升级页读取登录包内RoleUpgradeFeature，源为负责人确认的旧Lua快照自动投影，仅作只读预告，不替换OpenCondition导航门槛。SILENT维持新版不展示契约，具体旧差异见通用发奖说明。
 
@@ -77,7 +79,7 @@ BattleStatisticsUtils/BattleDetailLayer只读战报冻结的输出、实际承�
 
 ## 主线里程碑集合、领取与目标
 
-MainChapterMilestoneController只核原回执与最新快照集合/revision双确认；应用MainChapterMilestoneBinding在认证身份下先持久化rewardId，再发送claim/status。PersistentOperationJournal复用原IndexedDB事务实现，原挂机库名/版本/稳定实例键不变；里程碑使用独立库格式。原意图在共享反馈真实展示后才条件删除，清理失败显式重试只重试原删除，不等待已经去重的第二次弹窗。
+MainChapterController 统一发送并接收里程碑领取。即时回包供通用奖励展示，已领奖集合读取主线快照。断线后同一角色从鉴权快照取得当前资格，领取一次性的幂等记录由服务端保存。
 
 通用RewardGrantResult的heroes只冻结真实新英雄实例，不与items.credited重复计数；type7走既有HeroGrantService，保留旧奖励无容量拦截。RewardBinding在同一队列中先按原星级展示英雄获得，再显示其余实际奖励，最后部分真实打开才报告整批已显示；关页/换号终止迟到续开。
 
@@ -93,7 +95,7 @@ showResult与常显MainChapterMilestoneCard均从最新唯一MainChapterModel.st
 
 冒险点由tavern/TavernPointService及game_tavern_point唯一持有。V26把已有900401普通记录（包括0及合法超额）原量迁入，旧堆叠移除，不补2000差额、不改历史回执。只有真正缺少持久记录才在角色锁事务按system.tavern_initial_item懒建一次；共享发奖与开发GM统一走该领域，普通InventoryService拒绝type11。业务奖励按本次冻结上限截取，GM明确无cap准备测试数据；初值不算本次奖励，不产生获得弹窗。初始化/变化复用AssetSyncService，不另造版本或余额缓存。
 
-SessionSnapshotService在同次角色锁内读取冒险点及最高已通关关卡上限，Snapshot.tavernPoints（字段11）随首包、提交推送和恢复统一下发。RoleController通过AccountApi.readSnapshotRole一次提交原AccountModel.role.tavernPoints，旧快照缺字段明确未同步，坏扩展拒绝整包；不创建酒馆Model/Manager，也不从库存或RewardGrantResult历史值猜点数。新快照不能同时含900401普通库存。IdleClaimBinding.begin使用此状态及旧65秒按钮门槛，已满时复用ConfirmView，取消不建journal；确认后再检查连接及冻结操作版本。MainChapterView将当前显示期交MainChapterController.requestIdleClaim，由应用注入的回调转原IdleClaimBinding.begin；View不发协议或修改资产。local已接新点击，其他环境仍由服务端claimState及可信开关决定，不恢复酒馆任务或扣点玩法。
+SessionSnapshotService 在同次角色锁内读取冒险点及最高已通关关卡对应上限。Snapshot.tavernPoints（字段11）随首包、提交推送和恢复下发。RoleController 更新 AccountModel.role.tavernPoints，缺失表示未同步，非法字段拒绝整包。点击挂机宝箱由 IdleClaimBinding 读取当前冒险点、累计及65秒按钮门槛，满额复用 ConfirmView。确认后由 MainChapterController 发送一次领取。local 启用新领取，其他环境由服务器开放状态和可信开关决定。
 
 IdleRewardRules只保存不可变配置，IdleRewardInputService在当前角色锁事务中单次读取server_id/role_level/goddess_vip/clergy_level，current(roleId,nowSeconds)显式接收统一服务器时刻。Input冻结VIP、世界、神职、礼包及活动控制/适用结果，同时保存组合rulesVersion与普通idleRulesVersion。主线只读计时上限只使用VIP规则，不因活动未初始化阻断主页。基础rates不混入完整权益，输入准备与实际发奖分开，生产仍由独立开关决定是否受理新领取。
 
@@ -109,7 +111,7 @@ IdleActivityMaintenanceService是该控制的唯一写入口；IdleActivityMaint
 
 IdleRewardUtils是唯一完整纯装配入口，显式传入当前普通规则、冻结Input、奖励关卡/秒数、旧累计窗口/计数和随机源，不注入数据库/时钟或维护玩家状态。先校验完整性、投影版本及冻结状态的一致性，再按三活动→普通随机→神职消费同一随机源；使用冻结Drop，不重新查询活动。神职前拼接基础→普通分窗→三活动，最终才合并；不重复加入ordinary.rewards。Result保留计数前后及各来源，晚期失败无候选、previous不变，不能声称随机源回滚。本批已由MainChapterIdleClaimService在唯一角色锁事务中调用并冻结候选；重放分支不再调用纯装配。
 
-V24累计状态与类别计数、V25成功回执及领取/status强类型WS消息已按[事务说明](main-chapter-idle-settlement.md)接入。MainChapterIdleStateRepository唯一拥有累计，首次挑战创建、消费带旧操作版本条件；快照只读。MainChapterIdleClaimService先查回执再检查开关/版本和前置，冻结同次时间/输入，经完整候选预检→纯计算→真实发奖→累计消费→revision→AuditV1同事务保存；历史回执不依赖当前权益且不能覆盖最新Model。IdleClaimJournal以原生IDB原子保存/条件清理，IdleClaimBinding按应用身份激活并校验receipt归属；MainChapterIdleClaimController仅恢复命令、提交原MainChapterModel.idleClaim摘要，待回执与统一状态双确认才清理。缺通知通过既有重新鉴权首包恢复，不查库存；鉴权首包直接recover，普通推送仅observe，不让本地确认抢占鉴权恢复。完整IdleClaimConfirmation保留原秒数和只对本次新请求绑定的显示期；零到账也交付。应用同步发原显示期收取事件，随即复用通用奖励；冷/关页不补播。reward.granted的可选requestId仅匹配本地持久意图以等待双确认，不增加第二份队列或改变receiptId去重；其他奖励仍直达通用链。本次将local新请求开关和玩家按钮接通，继续复用上述journal、回执、双确认和通用反馈；global默认false，缺能力、缺输入或连接未就绪继续明确拒绝。独立64008角色实际点击宝箱产生1份回执，真实到账gold1600、diamond1、角色经验80，通用RewardView显示7项；不将此正常路径签收为满冒险点确认/取消或所有恢复场景，见[本批检查](validation/chapter-player-entry-review-20261117.json)。基础见[恢复记录](validation/idle-claim-client-recovery-review-20261114.json)，真实WS/同库只读重启范围见[11-16联调](validation/idle-claim-live-recovery-review-20261116.json)。
+V24 保存累计和类别计数，V25 保存服务端成功回执。未通关的新角色从持久创角时间开始累计，首次受理挑战时保存同一起点。MainChapterIdleClaimService 在角色锁事务内校验版本并冻结本次输入，将计算、发奖、累计消费、资产 revision 和回执一起提交。客户端按真实回包展示本次奖励，只在触发领取的主线页仍打开时播放宝箱收取，累计和资产由统一快照更新。断线后的鉴权首包刷新累计和余额。服务端全局新领取开关默认关闭，local 默认启用。[事务说明](main-chapter-idle-settlement.md) · [正常领取验证](validation/chapter-player-entry-review-20261117.json)
 
 通用AssetSync已处理自定义事务资源的suspend/resume，REQUIRES_NEW与外层分别去重，afterCompletion按集合身份解除；提交后通知及日志异常不改变已提交结果。RoleRepository.creditCurrency在真实角色行锁内分别校验两币种精确加法后一次更新，继续使用相同同步出口。独立事务/期限回收及钱包回归见[前置证据](validation/idle-settlement-prerequisites-review-20261113.json)；该前置批次不作为后续新领取协议、回执与客户端恢复的验证证据，后续实现及边界见上一段。
 
@@ -121,13 +123,13 @@ SessionSnapshotService在原角色锁事务内读取精灵，Snapshot可选字�
 
 客户端沿原AssetStateBinding→BagController→BagModel链提交整包，精灵用`spirit:instanceId`作为列表/选择身份。BagView按真实实例将精灵格分路到SpiritInfoView，普通mode=1装备打开EquipmentInfoView，其余普通物品仍打开BagInfoView。BagItemCatalog.spiritDetail从唯一`spirit-display`派生表读取精确特性和技能等级；专用完整Prefab保存标题、基础属性、技能图文及旧按钮位置，格子不显示数量，不另建玩家属性。新建的hero_id保持NULL、place/exp/wash_ability_id为0、wash_skills_json为`[]`，未来玩法需另行恢复。领域/WS及393×852独立预览的8格、真实详情和关闭返回已通过，392种全文组合检查通过，见[本批证据](validation/spirit-instance-review-20261113.json)；11-14专用详情和原技能图修正见[11-14专用详情复验](validation/spirit-detail-review-20261114.json)及[资源证据](validation/spirit-detail-assets-20261114.json)；98技能逐项画面和新发布包仍未验收。
 
-## 普通道具与精英碎片只读展示
+## 普通道具详情与精英碎片合成
 
 BagInfoView继续承接普通道具、精英碎片、mode9材料与期限物品，不另造页面。ItemDetailUtils为无状态同源配置投影，读取现有Item/Language；指定英雄碎片通过已准备的HeroType检查itemId减10000000是否命中，不从当前已拥有英雄猜测。mode2/8/9/17共584条配置的类型、正文和按钮条件已接入；缺少必要显示条件拒绝开窗，23条mode9缺正文保留明确提示并限频记录。库存详情只接收原key，从BagModel重读；删除、重置和窗口关闭结束展示，不查询或写资产。
 
 BagItemView的mode8样式来自BagItemCatalog.face中的同源星级/需求数，使用已有Prefab保存的星位和拼图角标。完成度是显式展示上下文：只有BagView启用，文字保存实际持有数，填充比例最多为1；奖励格保留本次数量，产物候选数量0隐藏，详情图标不带进度。mode9的use_value是英雄配置标识，不能当作碎片需求数，也不套mode8样式；真实精灵仍无数量，普通装备仍由EquipmentInfoView分流。
 
-BagInfoView的description来源保留调用方的奖励/产物副标题及确定关闭，不显示库存操作。inventory来源按旧use_type、source、decomposition和具体英雄条件显示按钮，来源、使用、分解、图鉴均仅全局飘字，未恢复写协议或图鉴页面。正文由cc.RichText显示：ItemDetailUtils.richText统一保留旧br/字面量`\n`换行，并把合法font颜色转换为Cocos标记，普通库存和奖励/产物Face都提供richBody，View不再单纯剥标签或二次转换。584条纯投影及文字等值专项通过。单段长说明使用原生ScrollView，60～300高度界限由Prefab参数维护，Layout/Widget管理位置；它没有业务数据Cell，不替代业务列表的SuperScroll规范。本批复用既有View/Prefab/Bundle、LoadingPlan三段及资源池，不维护额外清单；3张原图恢复记录见[资源证据](validation/item-shard-assets-20261114.json)，本机限定复验已完成。
+BagInfoView 的 description 来源展示奖励或产物说明，inventory 来源按旧配置显示库存操作。精英碎片数量窗显示当前库存可选次数，确认后由 BagController 发送一次合成指令。服务端校验等级、库存和名册容量，在同一事务扣除碎片并生成英雄。即时回包交给通用获得窗，背包和名册随统一快照刷新。正文由 ItemDetailUtils.richText 转换旧换行和字体颜色，长说明通过 ScrollView 滚动。584 条数据展示专项和三张原图的核对属于11月14日批次。[资源证据](validation/item-shard-assets-20261114.json)
 
 普通无操作详情以Prefab中的NoActionSpacer保留底部留白，留白和注销均已完成本机复验；按钮/输入监听解除前检查节点有效性，关闭时保留绘制代次失效与资源撤回。第一阶段已核道具/碎片、精灵、普通装备和产物说明的共享入口隔离，富文本追加阶段另核换行/颜色、长文首末、随机碎片及关闭注销，不宣称整套矩阵重跑，不表示开放使用、分解、图鉴或领取。第一阶段准备13/鉴权14与富文本阶段准备4/初始化5分别记录，范围见[本批证据](validation/item-shard-review-20261114.json)。
 
@@ -149,11 +151,13 @@ Prefab保存静态结构、布局、样式和绑定；业务列表使用SuperScr
 
 ## 当前入口与职责
 
-RemakeApp装配选服、登录、角色、主城、背包、资源作用域和各操作恢复绑定。AssetStateBinding接纳整包后交付同一资产版本；IdleClaimBinding恢复挂机原请求，MainChapterMilestoneBinding恢复里程碑原稳定键，RewardBinding持有唯一展示队列。页面关闭不销毁模块；换号在应用层统一撤销旧异步。连续1～20关、local挂机和15关独立领奖按当前授权接入，其他未恢复玩法不随之开放。
+RemakeApp 是 Remake.scene 的启动脚本，负责加载画面、登录与主城切换、前后台和场景退出。ApplicationModules 在启动时为各模块接好账号操作、统一快照和奖励展示。ApplicationPages 绑定根页面与宿主。修改玩家点击后的行为，从对应 View 或模块 Controller 进入。[场景启动](../client/assets/scripts/app/remake/RemakeApp.ts) · [模块装配](../client/assets/scripts/app/remake/ApplicationModules.ts) · [根页面](../client/assets/scripts/app/remake/ApplicationPages.ts)
 
-页面类通过自身@UIRegistry.view定义唯一Prefab地址、层级、缓存、模态和必要的页面装配prepare，UIManager打开时先执行prepare，再复用统一加载器取得Prefab；预加载只准备资源，不执行页面业务前置或创建页面。配置已在登录后统一准备，页面不再逐表prepare。应用通过UIRegistry.bindViewRuntime只注入createController或确需变化的hostId，不重复登记静态页面定义。ApplicationPages只保留登录/主城的Controller与宿主装配，不再转发英雄选择或包装各页资源地址。
+召唤按钮将奖池、次数及已确认的钻石上限交给 `HeroRosterController.summon()`。控制器核对当前快照的消耗和资格，经 `AccountOperations.send` 发包，在 `onNotify` 收到实际英雄后使用通用获得窗。服务端负责费用、奖池、保底和入账。名册、资源、积分与免费时间随统一快照刷新。[召唤请求](../client/assets/scripts/features/hero/HeroRosterController.ts) · [服务端抽取和入账](../backend/src/main/java/com/funsgamex/mxzg/hero/HeroSummonService.java) · [通用反馈](reward-feedback.md)
 
-LoadingPlan是三个阶段唯一人工资源配置入口，页面目标使用`{page:BagView}`等View类引用，从@UIRegistry.view读取唯一Prefab地址；图片、骨骼继续显式列目标。login中的配置目标决定启动散表，enterGame的`{configPackage:true}`准备其余配置，background仍仅加载显式目标；不恢复全目录后台加载。已有凭证恢复后仍先停登录页，由LoginEntry记录本次“开始游戏”意图，再通过原路由完成enterGame后开主城；主城显示后启动background，不另增自动进入主城的分支。ApplicationResources调度并报告真实任务进度，ResourceAssetsUtils/ResourcePool共享缓存和请求，Prefab依赖不抄写清单。[前批入口证据](validation/view-registration-list-review-20261111.json)属于虚拟化与资源精简前的调用链，不能替代本批画面验收。
+页面类通过自身@UIRegistry.view定义唯一Prefab地址、层级、缓存、模态和必要的页面装配prepare，UIManager打开时先执行prepare，再复用统一加载器取得Prefab；预加载只准备资源，不执行页面业务前置或创建页面。配置已在登录后统一准备，页面不再逐表prepare。应用通过UIRegistry.bindViewRuntime只注入createBinding或确需变化的hostId，不重复登记静态页面定义。ApplicationPages只装配登录和主城的页面交互及宿主，不再转发英雄选择或包装各页资源地址。
+
+LoadingPlan 是三个阶段的资源配置入口。页面目标使用 `{page:BagView}` 等 View 类引用，从 `@UIRegistry.view` 读取唯一 Prefab 地址。图片、骨骼显式列目标。登录阶段加载启动散表，进入主城前加载配置包，主城显示后加载预先列出的后台目标。刷新后先显示登录页并恢复有效会话，点击「开始游戏」后再进入主城。ApplicationResources 报告真实任务进度，资源池共享缓存和请求。[资源加载](staged-resource-loading.md)
 
 CityHubView与其他页面一样同步查询GameConfig，旧loadConfig异步注入和缺表回退null已移除；缺表使开页等待明确失败。挂机对话通过纯查询回调复用GameConfig的语言主键索引，不在每个页面复制语言Map。必要的美术资源prepare、布局投影与页面资源作用域仍保留。
 
@@ -171,13 +175,14 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 
 | 目录 | 当前入口与职责 | 保留边界 |
 |---|---|---|
-| features/account | AccountService 处理会话；AccountController 绑定登录页；RoleController 更新 AccountModel 内唯一角色资料；ui 放登录、选服、资料页 | 正式渠道登录待接入，不新增第二份角色资产 |
-| features/bag | BagController→BagModel→BagEvent；普通/期限/精灵快照分开保存，BagView按实例key选择，普通道具/碎片归BagInfoView和ItemDetailUtils，普通装备归EquipmentInfoView、精灵归SpiritInfoView | 关闭不清持有；来源跳转、使用、分解、英雄图鉴和精灵养成穿脱/洗练合成未开放 |
-| features/hero | HeroRosterController/Model 保存名册及权威阵容；FormationController/FormationSaveModel 保存提交进度；FormationView 持有未保存草稿 | 详情/技能/四槽/进化状态只读；HeroLevel旧客户端链已退役，升级仍未开放 |
-| features/battle | MainChapterController/Model处理主线与挂机快照；MainChapterView组织行军；BattleReplayPreview、ChapterEndView、BattleDetailLayer展示战报、结算与统计 | 旧Campaign四份UI已退役，暂停领域代码不接回导航；BattlePreviewController只供开发试战，不结算奖励 |
-| features/home、features/city | HomeController 与 RemakeHomeView 绑定根页；city 提供地图、顶底栏与导航显示 | 地图中旧入口和资源不代表对应玩法已恢复 |
+| features/account | AccountController 管理认证会话，AccountOperations 通过现有连接发送当前账号的请求，RoleController 提交唯一角色资料 | 正式渠道登录待接入 |
+| features/bag | BagController 处理库存协议和精英碎片合成。BagModel 持有库存。BagInfoView、EquipmentInfoView、SpiritInfoView 按类型显示详情 | 普通道具使用、分解、图鉴及精灵养成待恢复 |
+| features/hero | HeroRosterController 处理资产快照和普通召唤，HeroRosterModel 持有名册、阵容及免费资格。HeroLevelController 负责普通升级，FormationView 持有草稿，FormationController 确认保存 | 详情可普通升级，技能、四槽和进化状态可查看，穿脱和进阶待恢复 |
+| features/battle | MainChapterSession 装配主线，MainChapterController 处理挑战、结算、战报及各类领取。IdleClaimBinding 处理宝箱点击与确认。MainChapterModel 保存权威快照和本场结算进度 | 开发试战由 BattlePreviewController 发送和接收，只读播放 |
+| features/reward | RewardController 接收发奖推送并提交 RewardModel。RewardBinding 读取展示队列并打开通用弹窗或飘字 | 奖励回包供展示，角色资产由服务端快照提交 |
+| features/home、features/city | HomePageBinding 与 RemakeHomeView 绑定根页；city 提供地图、顶底栏与导航显示 | 地图中旧入口和资源不代表对应玩法已恢复 |
 | features/gm | GmController 与 GmView 仅处理显式启用的开发数据准备 | local默认开启、production不装配，仅当前登录测试角色，不能替代正式获取玩法 |
-| app/remake | RemakeApp装配模块；AccountComposition、AssetStateBinding处理身份/状态；ApplicationPages只装配登录/主城Controller和宿主，HomeFeatureNavigation处理主城入口；LoadingPlan、ApplicationResources处理三段加载 | 页面静态定义和必要装配归View；配置包由应用统一准备，页面不列配置前置或模块资源清单 |
+| app/remake | RemakeApp 启动场景，ApplicationModules 连接业务模块，AccountComposition 和 AssetStateBinding 交付会话与统一快照。ApplicationPages 绑定根页面，HomeFeatureNavigation 处理导航，ApplicationResources 执行三段 LoadingPlan | 每个 View 声明自己的页面，配置包由应用统一准备 |
 | platform、core | platform 提供单连接、二进制编解码、真实协议目录与路由；core 提供日志和错误含义 | 不保存另一份业务状态，生成协议禁止手改 |
 
 以上路径相对client/assets/scripts。修改页面先看对应View的@UIRegistry.view与Prefab，查业务从Protocol协议名进入Controller及唯一Model；登录/主城的应用依赖再看ApplicationPages，不需要先遍历整个框架目录。

@@ -1,33 +1,59 @@
-/** 英雄面板属性：按旧装备/套装累加与万分比规则计算；未恢复来源明确列出，不冒充完整旧服属性。 */
+/** 英雄面板属性和战力。按旧装备、套装与万分比规则计算，统一快照保留未恢复的来源。 */
 package com.funsgamex.mxzg.hero;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.*;
 @Component
 public class HeroPanelRules {
     /** 四属性使用长整数；不同于基础成长，已包含本批恢复的装备与套装。 */
     public record Values(long hp,long atk,long def,long spd) {}
-    /** 可追踪的服务端计算结果；pendingSources 非空时不得标记完整属性。 */
-    public record State(Values values,List<String> includedSources,List<String> pendingSources,boolean complete) {}
+    /** 来源、四维和战力共用本次属性输入。缺少 power 表示历史读数据没有战力值。 */
+    public record State(Values values, List<String> includedSources, List<String> pendingSources,
+                        boolean complete, Integer power) {}
     /** 同源装备配置。 */
     private final Map<Integer,JsonNode> equipment=new HashMap<>();
     /** 同源套装阈值，满足多个阈值时全部累加。 */
     private final List<JsonNode> sets=new ArrayList<>();
     /** 原始 JSON 属性列的严格解析器。 */
     private final ObjectMapper mapper;
+    /** 与主线资格使用相同的战力评分。 */
+    private final HeroPowerRules powers;
     /** 加载旧同源配置，缺失直接拒绝启动。 */
-    public HeroPanelRules(ObjectMapper mapper){
-        this.mapper=mapper;
-        for(var row:rows("equipmenttype"))if(equipment.put(row.path("equipment_type").asInt(),row)!=null)throw new IllegalStateException("重复装备配置");
+    @Autowired
+    public HeroPanelRules(ObjectMapper mapper, HeroPowerRules powers) {
+        this.mapper = mapper;
+        this.powers = powers;
+        for (var row : rows("equipmenttype")) {
+            if (equipment.put(row.path("equipment_type").asInt(), row) != null) {
+                throw new IllegalStateException("重复装备配置");
+            }
+        }
         rows("equipmentsettype").forEach(sets::add);
     }
+    /** 为使用独立配置映射的规则检查构造相同的评分器。 */
+    public HeroPanelRules(ObjectMapper mapper) {
+        this(mapper, new HeroPowerRules(mapper));
+    }
     /** 计算当前已恢复来源；不保存派生值，不增加任何养成写入口。 */
-    public State calculate(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn){var result=calculate(base,worn,add->{});var pending=new ArrayList<>(result.pendingSources());pending.add(0,"skill_panel");return new State(result.values(),List.of("base","equipment","equipment_set"),List.copyOf(pending),false); }
-    /** 合并技能贡献后统一取整，成长率仅作用于原基础属性。 */
-    public State calculate(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn,java.util.function.Consumer<java.util.function.BiConsumer<Integer,Long>> skills){
-        var attrs=attributes(base,worn,skills);
-        var values=new Values(scaleHp(attrs.getOrDefault(223,0L),attrs.getOrDefault(102,0L)),scale(attrs.getOrDefault(220,0L),attrs.getOrDefault(201,0L)),scale(attrs.getOrDefault(224,0L),attrs.getOrDefault(202,0L)),scale(attrs.getOrDefault(101,0L),attrs.getOrDefault(204,0L)));
-        return new State(values,List.of("base","equipment","equipment_set","skill_panel"),List.of("soul_skill","talent","runes","awakening","account_and_other_hero_sources"),false);
+    public State calculate(HeroGrowthRules.Stats base, HeroEquipmentRepository.State worn) {
+        var result = calculate(base, worn, add -> {});
+        var pending = new ArrayList<>(result.pendingSources());
+        pending.add(0, "skill_panel");
+        return new State(result.values(), List.of("base", "equipment", "equipment_set"), List.copyOf(pending), false,
+                result.power());
+    }
+    /** 合并技能贡献后计算四维及同源战力，成长率仅作用于原基础属性。 */
+    public State calculate(HeroGrowthRules.Stats base, HeroEquipmentRepository.State worn,
+                           java.util.function.Consumer<java.util.function.BiConsumer<Integer, Long>> skills) {
+        var attrs = attributes(base, worn, skills);
+        var values = new Values(scaleHp(attrs.getOrDefault(223, 0L), attrs.getOrDefault(102, 0L)),
+                scale(attrs.getOrDefault(220, 0L), attrs.getOrDefault(201, 0L)),
+                scale(attrs.getOrDefault(224, 0L), attrs.getOrDefault(202, 0L)),
+                scale(attrs.getOrDefault(101, 0L), attrs.getOrDefault(204, 0L)));
+        return new State(values, List.of("base", "equipment", "equipment_set", "skill_panel"),
+                List.of("soul_skill", "talent", "runes", "awakening", "account_and_other_hero_sources"), false,
+                powers.score(attrs));
     }
     /** 保留全部属性编号的未折算数据，供战斗构建使用；不从四维面板反推，不丢弃暴击等属性。 */
     public Map<Integer,Long> attributes(HeroGrowthRules.Stats base,HeroEquipmentRepository.State worn,java.util.function.Consumer<java.util.function.BiConsumer<Integer,Long>> skills){

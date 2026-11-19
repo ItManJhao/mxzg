@@ -1,12 +1,12 @@
 /** 页面注册契约：各View用@UIRegistry.view保存唯一预制体地址和静态参数，UIManager统一读取。
- * 应用只绑定当前Controller工厂和确有变化的宿主；撤销绑定恢复页面自身定义。
+ * 应用只绑定当前页面交互和确有变化的宿主；撤销绑定恢复页面自身定义。
  * 支持本地及远程Bundle路径；资源持有和下载仍由统一加载器管理。
  */
 import { Prefab } from "cc";
 import { UILayer, UI_WINDOW_LAYERS } from "./UILayer";
 import type { BaseView } from "./BaseView";
 /** 页面生命周期适配器；模块BaseController由应用持有，不能交给窗口关闭流程销毁。 */
-export interface ViewController {
+export interface ViewBinding {
     show(): void;
     close(): void;
 }
@@ -31,15 +31,15 @@ export interface ViewSpec {
     prepare?: () => Promise<void>;
     /** 确需自定义Prefab取得方式时使用；复用统一加载器，不重复固定页面地址或增加UUID回退。 */
     load?: () => Promise<Prefab>;
-    /** 仅注入页面生命周期适配器；模块Controller归应用持有，背包页面无需此工厂。 */
-    createController?: (view: BaseView<unknown>) => ViewController;
+    /** 为当前页面实例创建交互绑定，在页面每次打开和关闭时接入或解除监听。 */
+    createBinding?: (view: BaseView<unknown>) => ViewBinding;
 }
 /** 应用运行期只能注入会话相关装配，不能重写页面地址、缓存和模态等静态定义。 */
 export interface ViewRuntime {
     /** 独立战报等场景临时采用的宿主；省略则使用@UIRegistry.view保存的宿主。 */
     hostId?: string;
     /** 当前应用提供的页面生命周期适配器；撤销后不保留旧应用闭包。 */
-    createController?: (view: BaseView<unknown>) => ViewController;
+    createBinding?: (view: BaseView<unknown>) => ViewBinding;
 }
 /** 模态的两个独立开关；透明拦截同样阻止点击穿透，不创建第二份遮罩。 */
 export interface ModalOptions {
@@ -89,7 +89,7 @@ export class UIRegistry {
             hostId: spec.hostId,
             prepare: spec.prepare,
             load: spec.load,
-            createController: spec.createController,
+            createBinding: spec.createBinding,
         };
         const previous = byId.get(stored.id);
         if (previous && previous !== ctor) {
@@ -115,7 +115,7 @@ export class UIRegistry {
             spec: {
                 ...previous.spec,
                 hostId: runtime.hostId === undefined ? previous.spec.hostId : runtime.hostId,
-                createController: runtime.createController === undefined ? previous.spec.createController : runtime.createController,
+                createBinding: runtime.createBinding === undefined ? previous.spec.createBinding : runtime.createBinding,
             },
             previous,
             released: false,

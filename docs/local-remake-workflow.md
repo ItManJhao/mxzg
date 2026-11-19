@@ -41,7 +41,7 @@ node client/tools/serve-remote-bundles.cjs client/build/remake-h5 7460
 
 本次负责人授权新挑战默认连续第1～9关，来源为服务端mxzg.main-chapter.challenge-limit（MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT）。第10关依赖仍阻塞，不能跳到静态可解析的14、19、20关，也不能把850条目录当作全部可玩。客户端只读最新快照challengeLimit，缺范围时禁新挑战；已有pending、结算及回执恢复仍走原链。
 
-挂机宝箱按钮已转MainChapterController.requestIdleClaim→应用注入的IdleClaimBinding.begin(当前显示期)，复用原IDB journal、回执和快照双确认、通用奖励窗与飘字，不另造发奖入口。local配置的idle-claim-enabled默认true，全局默认false；显式MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED可覆盖。按钮仍需服务端ENABLED、累计65秒、真实冒险点及连接就绪；满冒险点先用原ConfirmView确认，取消不建journal。恢复既有请求不重开页、不补播collect，也不重发已提交奖励。
+挂机宝箱按钮经 MainChapterSession.claimIdle 调用 IdleClaimBinding.begin，传入当前页面显示期，复用原IDB journal、回执和快照双确认、通用奖励窗与飘字，不另造发奖入口。local配置的idle-claim-enabled默认true，全局默认false；显式MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED可覆盖。按钮仍需服务端ENABLED、累计65秒、真实冒险点及连接就绪；满冒险点先用原ConfirmView确认，取消不建journal。恢复既有请求不重开页、不补播collect，也不重发已提交奖励。
 
 本机两个服此前开服资料为null、控制为空数组，不能当作“044未发布”绕过权益输入。负责人已确认local-1/local-2均在2026-11-17的Asia/Shanghai零点开服、044明确未发布，配置保存在忽略的backend/.local/idle-activity.yml。backend/dev.ps1在run时仅自动读取已存在且没有其他显式外部配置的该文件；缺文件保持未配置，不生成默认开服日期。原IdleActivityMaintenance负责启动及周期维护16/34/44；本次实际PID16000启动日志已确认维护2服，这个PID只描述该次启动，不是后续固定值。该本机资料不得写为源码默认，也不代表production允许领取或发布活动。
 

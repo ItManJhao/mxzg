@@ -1,40 +1,32 @@
-/** 阵容保存进度Model：只保存请求、回执等待和提示；权威阵容仍唯一保存在HeroRosterModel。 */
+/** 阵容保存按钮状态。服务端的阵容本身统一保存在英雄名册。 */
 import { BaseModel } from "../../framework/BaseModel";
-import type { FormationSaveRequest } from "./data/FormationData";
 
-/** 过程状态不是服务器资产，不含View或草稿。 */
 export interface FormationSaveState {
-    /** 正在保存或执行本轮同步确认时为true；仍缺状态但本轮已结束时为false，可明确重试同步。 */
+    /** 等待回包或服务端阵容推送时禁用确认。 */
     readonly busy: boolean;
-    /** 原保存意图保留至回执及权威阵容均确认；有ACK时仅用于保留参数，不再次保存。关窗保留，换号清空。 */
-    readonly pending: FormationSaveRequest | null;
-    /** 已收到成功回执，等待统一快照达到的阵容版本。 */
-    readonly acknowledged: number | null;
-    /** 本次保存成功回执的请求编号；busy为false且acknowledged为空时表示权威阵容也已确认。新请求或失败清空。 */
-    readonly confirmedRequestId?: string;
-    /** 保存、重试或拒绝原因，供页面读取。 */
-    readonly message: string;
+    /** 服务端回包确认的阵容版本，发送新请求或失败时清空。 */
+    readonly savedVersion: number | null;
 }
 
 export class FormationSaveModel extends BaseModel {
-    /** 应用唯一保存进度，独立于窗口生命周期。 */
+    /** 应用唯一的阵容保存进度。 */
     public static readonly instance = new FormationSaveModel();
-    /** 当前过程状态；角色重置时整体清空。 */
-    private state: FormationSaveState = Object.freeze({ busy: false, pending: null, acknowledged: null, message: "" });
+    /** 当前保存进度，换号时清空。 */
+    private state: FormationSaveState = Object.freeze({ busy: false, savedVersion: null });
 
-    /** 读取冻结状态；不复制服务器阵容。 */
-    public get snapshot(): FormationSaveState { return this.state; }
+    /** 返回当前只读保存进度。 */
+    public get snapshot(): FormationSaveState {
+        return this.state;
+    }
 
-    /** Controller提交过程状态；冻结请求参数，保证重试不被页面修改。 */
+    /** 提交按钮状态和服务端回包版本，更新本地通知序号。 */
     public replace(state: FormationSaveState): void {
-        const pending = state.pending ? Object.freeze({ ...state.pending,
-            slots: Object.freeze(state.pending.slots.map(slot => Object.freeze({ ...slot }))) }) : null;
-        this.state = Object.freeze({ ...state, pending });
+        this.state = Object.freeze({ ...state });
         this.incrementVersion();
     }
 
-    /** 角色变化或应用销毁时丢弃旧请求，页面关闭不调用。 */
+    /** 切换角色后清空旧按钮状态。 */
     protected onReset(): void {
-        this.state = Object.freeze({ busy: false, pending: null, acknowledged: null, message: "" });
+        this.state = Object.freeze({ busy: false, savedVersion: null });
     }
 }

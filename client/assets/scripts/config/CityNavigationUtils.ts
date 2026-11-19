@@ -3,6 +3,8 @@
  * 这里只计算当前配置门槛，不保存页面栈；实际导航与返回归RemakeNavigation。
  */
 import { EntryGateUtils } from "./EntryGateUtils";
+import { GameConfig } from "./GameConfig";
+import { GConfig } from "./GConfig";
 import type { OpenConditionRow, SystemGateRow } from "./GConfig";
 /**
  * 主城底栏和「玩法」列表。
@@ -38,7 +40,7 @@ export const CITY_BAR: NavEntry[] = [
     { id: "hero", title: "英雄", gateId: "main_hero", blurb: "英雄列表、详情与升级" },
     { id: "bag", title: "背包", gateId: "bag", blurb: "强化石、英雄碎片，以及可使用的金币袋和经验药水" },
     { id: "battle", title: "战斗", blurb: "主线战斗" },
-    { id: "dungeon", title: "副本", gateId: "main_mission", blurb: "日常副本" },
+    { id: "dungeon", title: "副本", gateId: "main_mission_hall", blurb: "副本大厅" },
     { id: "clan", title: "公会", gateId: "main_clan", blurb: "公会占位。主线 Lv18 开启。公会系统还没接。" },
     { id: "fetter", title: "VIP", gateId: "main_fetter", blurb: "VIP" },
 ];
@@ -57,6 +59,15 @@ export class CityNavigationUtils {
         const xs = [-300, -200, -100, 0, 100, 200, 300];
         const hot = index === 3;
         return { x: xs[index] || 0, y: hot ? -548 : -562, size: hot ? 96 : 78 };
+    }
+
+    /** 从已安装配置取得底栏入口条件，锁标和导航用同一行。 */
+    public static bottomGate(id: string): OpenConditionRow | undefined {
+        const gateId = CITY_BAR.find(entry => entry.id === id)?.gateId;
+        if (!gateId || GameConfig.instance.status(GConfig.OpenCondition).state !== "ready") {
+            return undefined;
+        }
+        return GameConfig.instance.getConfig(GConfig.OpenCondition, gateId);
     }
 
     /** 按主城动态路由id查找入口定义；不存在时返回null，不创建页面。 */

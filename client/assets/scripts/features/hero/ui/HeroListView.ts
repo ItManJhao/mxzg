@@ -1,9 +1,11 @@
 /**
- * 英雄名册页面：完整Prefab保存背景、纸面、筛选与滚动列表，控件直接绑定到本页。
- * 从唯一HeroRosterModel读取投影；打开时登记渲染和选择，关闭由BaseView解除本页监听。
- * 格子只显示数据，选择英雄由本页使用实例ID打开详情，不查询或修改名册。
+ * 英雄名册页面，从唯一 HeroRosterModel 读取筛选列表，按旧配置显示看板人物和对白。
+ * Prefab 保存人物挂点、气泡和列表；选择格子按实例编号打开详情，关闭释放页面监听。
  */
-import { _decorator, Button, director, Director, Label, Node } from "cc";
+import { _decorator, Button, director, Director, Label, Node, RichText } from "cc";
+import { GameConfig } from "../../../config/GameConfig";
+import { GConfig } from "../../../config/GConfig";
+import { GameLog } from "../../../core/GameLog";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { SuperContent } from "../../../framework/ui/SuperContent";
@@ -14,12 +16,21 @@ import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { ErrorUtils } from "../../../core/ErrorUtils";
+import { ItemDetailUtils } from "../../bag/utils/ItemDetailUtils";
+import { BattleSpineService } from "../../battle/ui/BattleSpineService";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroRosterUtils } from "../utils/HeroRosterUtils";
 import { HeroIconCellView } from "./HeroIconCellView";
 import { HeroInfoView } from "./HeroInfoView";
 import type { HeroCellModel } from "./HeroListPresentation";
+
+/** 旧英雄列表提示表，正文与按钮都引用统一语言映射。 */
+interface HeroListTip {
+    readonly atom: string;
+    readonly lang: number;
+    readonly go_lang: number;
+}
 
 const { ccclass, property } = _decorator;
 
@@ -44,6 +55,14 @@ export class HeroListView extends BaseView {
     @property(Label) capacityLabel: Label | null = null;
     /** 全部及五元素筛选，图片直接保存在Prefab，顺序为0至5。 */
     @property([Button]) elemButtons: Button[] = [];
+    /** 原看板人物的骨骼挂点，位置和比例由 Prefab 保存。 */
+    @property(Node) characterHost: Node | null = null;
+    /** 保留旧对白里的高亮字色。 */
+    @property(RichText) dialogueText: RichText | null = null;
+    /** 原对白末尾的跳转按钮，当前提供每日礼包入口反馈。 */
+    @property(Button) dialogueButton: Button | null = null;
+    /** 使用对白配置提供的按钮语言。 */
+    @property(Label) dialogueActionLabel: Label | null = null;
 
     /** 唯一名册状态；生产使用模块实例，专项检查可在开页前注入独立Model。 */
     private roster = HeroRosterModel.instance;
@@ -53,6 +72,8 @@ export class HeroListView extends BaseView {
     private closed = true;
     /** 等待完整根激活的一份帧回调；显示或关页时解除。 */
     private shownWatch: (() => void) | null = null;
+    /** 每份列表节点只挂载一次看板人物，关页隐藏，节点销毁时释放骨骼。 */
+    private characterMounted = false;
 
     /** 只将完整外根铺到可见画布；固定布局由Prefab组件处理。 */
     public onCreate(): void {
@@ -67,7 +88,7 @@ export class HeroListView extends BaseView {
         this.roster = roster;
     }
 
-    /** 每次打开登记一份列表渲染、选择和筛选监听，再显示最新名册。 */
+    /** 打开列表时绑定筛选与选中事件，并恢复原看板和对白。 */
     public onOpen(): void {
         if (!this.closed) {
             this.refresh();
@@ -84,13 +105,18 @@ export class HeroListView extends BaseView {
         });
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.refresh);
         this.bindButtons();
+        this.showCharacter();
+        this.showDialogue();
         this.refresh();
     }
 
-    /** 关闭后废弃显示等待；BaseView随后解除本页按钮、列表和名册监听。 */
+    /** 关闭后停止看板显示和帧等待，BaseView 解除对白及列表监听。 */
     public onClose(): void {
         this.closed = true;
         this.clearShownWatch();
+        if (this.characterHost?.isValid) {
+            this.characterHost.active = false;
+        }
     }
 
     /** 根重新激活时读取最新投影；开页前和关闭后不绘制。 */
@@ -105,6 +131,44 @@ export class HeroListView extends BaseView {
             throw new Error("HeroListView缺少滚动列表、说明、容量或六个元素按钮绑定");
         }
         this.heroScroll.validateBindings();
+    }
+
+    /** 复用召唤页的原 act 骨骼循环，模型刷新和切换元素不会重复装配。 */
+    private showCharacter(): void {
+        const host = this.characterHost;
+        if (!host) {
+            return;
+        }
+        host.active = true;
+        if (!this.characterMounted) {
+            this.characterMounted = true;
+            BattleSpineService.instance.mountNamedSpine(host, "act", "act", { loop: true });
+        }
+    }
+
+    /** 读取旧提示表首条对白。当前只有一条配置，保持原文和高亮颜色。 */
+    private showDialogue(): void {
+        const body = this.dialogueText;
+        const bubble = body?.node.parent;
+        const button = this.dialogueButton;
+        const label = this.dialogueActionLabel;
+        if (!body || !bubble || !button || !label) {
+            return;
+        }
+        const config = GameConfig.instance;
+        const { rows: [tip] } = config.getFileByPath("config/herobagjump") as { rows: readonly HeroListTip[] };
+        const content = tip && config.getConfig(GConfig.Language, tip.lang)?.value;
+        const action = tip && config.getConfig(GConfig.Language, tip.go_lang)?.value;
+        bubble.active = !!content && !!action;
+        if (!bubble.active || !content || !action) {
+            GameLog.shared.warnOnce("MODULE", "HeroListView", "HERO_LIST_DIALOGUE", "英雄列表对白缺少提示或语言配置");
+            return;
+        }
+        body.string = ItemDetailUtils.richText(content);
+        label.string = action;
+        const onClick = () => UIManager.instance.toast(tip.atom === "act_daily_gift" ? "每日礼包暂未开放" : "该入口暂未开放");
+        button.node.on(Button.EventType.CLICK, onClick);
+        this.ownListener(() => button.node.off(Button.EventType.CLICK, onClick));
     }
 
     /** 直接查询当前模板显示并将筛选结果交给列表，不创建模板索引或计算格子坐标。 */
@@ -136,12 +200,14 @@ export class HeroListView extends BaseView {
         cell.show(hero);
     }
 
-    /** 选中当前列表的真实英雄实例后打开详情；关闭、空槽和未获得项不执行导航。 */
+    /** 选中实例后打开详情，同时保留当前筛选顺序供详情左右切换。 */
     private onSelect(hero: HeroCellModel): void {
         if (this.closed || hero.kind !== "owned" || !hero.instanceId) {
             return;
         }
-        void UIManager.instance.open(HeroInfoView, { heroId: hero.instanceId })
+        const heroIds = HeroRosterUtils.present(this.roster.snapshot, this.elem).cells
+            .map(cell => cell.instanceId).filter((id): id is string => !!id);
+        void UIManager.instance.open(HeroInfoView, { heroId: hero.instanceId, heroIds })
             .catch(error => UIManager.instance.toast(ErrorUtils.messageOf(error)));
     }
 

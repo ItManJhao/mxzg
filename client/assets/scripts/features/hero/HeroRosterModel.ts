@@ -1,6 +1,8 @@
-/** 英雄名册唯一状态：保存只读英雄与同步状态，由模块 Controller 提交，不持有网络或监听。 */
-import type { OwnedHero, HeroRosterInfo, MainFormation } from "./data/HeroSnapshotUtils";
+/** 英雄模块的唯一名册快照，保存服务端同步的英雄、阵容及普通召唤资格。 */
+import { HeroSnapshotUtils, type OwnedHero, type HeroRosterInfo, type MainFormation } from "./data/HeroSnapshotUtils";
+import { FirstSummonData, type SummonDetails } from "./data/FirstSummonData";
 import { BaseModel } from "../../framework/BaseModel";
+import { ServerClock } from "../../core/ServerClock";
 
 export interface HeroRosterState {
     readonly status: "idle" | "loading" | "ready" | "error";
@@ -10,6 +12,10 @@ export interface HeroRosterState {
     readonly rosterInfo?: HeroRosterInfo;
     /** 同一统一快照的主线阵型；换号时一起清空。 */
     readonly mainFormation?: MainFormation;
+    /** 服务端下发的下次普通免费召唤时间（Unix 秒），未同步时等待快照。 */
+    readonly normalFreeAtSeconds?: number | null;
+    /** 服务器提供的高级冷却、积分与祈愿资格。 */
+    readonly summonDetails?: SummonDetails | null;
 }
 
 export class HeroRosterModel extends BaseModel {
@@ -21,7 +27,37 @@ export class HeroRosterModel extends BaseModel {
         return Object.freeze({ ...this.state, revision: this.version });
     }
 
-    /** 提交整批状态；输入由 Controller 校验，复制英雄避免外部后续修改。 */
+    /** 当前普通单抽是否免费。冷却到期当秒即可免费，等待资格或服务器时间时返回 null。 */
+    public get normalSummonFree(): boolean | null {
+        const remaining = this.summonCooldown("NORMAL");
+        return remaining === null ? null : remaining === 0;
+    }
+
+    /** 返回单抽距下次免费剩余秒数，旧快照缺字段时保持未知。 */
+    public summonCooldown(pool: "NORMAL" | "ADVANCED"): number | null {
+        const freeAt = pool === "NORMAL" ? this.state.normalFreeAtSeconds : this.state.summonDetails?.advancedFreeAtSeconds;
+        if (freeAt == null || freeAt === 0) {
+            return freeAt ?? null;
+        }
+        const now = ServerClock.instance.nowSeconds();
+        return now === null ? null : Math.max(0, freeAt - now);
+    }
+
+    /** 从同一份资产快照读取英雄、容量、阵容及召唤资格；整包预检与模块提交使用相同规则。 */
+    public static readSnapshot(state: Record<string, unknown>): HeroRosterState {
+        const heroes = HeroSnapshotUtils.readOwnedHeroes(state.heroes);
+        return {
+            status: "ready",
+            heroes,
+            rosterInfo: HeroSnapshotUtils.readHeroRosterInfo(state.heroRoster),
+            mainFormation: HeroSnapshotUtils.readMainFormation(state.mainFormation, heroes),
+            normalFreeAtSeconds: FirstSummonData.readFreeAt(state.heroSummon),
+            summonDetails: FirstSummonData.readDetails(state.heroSummon),
+            error: "",
+        };
+    }
+
+    /** 提交整批状态，复制英雄避免外部后续修改。 */
     replace(state: HeroRosterState): void {
         this.state = Object.freeze({
             ...state,

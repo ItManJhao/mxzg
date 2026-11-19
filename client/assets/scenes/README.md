@@ -2,9 +2,9 @@
 
 唯一有效入口为 `Remake.scene`。在 Creator 打开并选择预览当前场景。
 
-Canvas 上的 RemakeApp 负责装配新 HTTP API、模块服务及统一 UIManager。StartupHost 展示加载过渡，PageHost 承载登录和主城；功能页面复用主城内容宿主，出阵和选服使用弹层。
+Canvas 上的 RemakeApp 创建账号连接、初始化模块和 UIManager，并切换登录页与主城。StartupHost 展示加载过程，PageHost 承载根页面。功能页面复用主城内容宿主，出阵和选服使用弹层。
 
-使用 `scripts/start-remake-backend.bat` 启动新后端，默认地址 `http://127.0.0.1:18080`。
+使用 `scripts/start-remake-backend.bat` 启动新后端，客户端默认连接 `ws://127.0.0.1:18080/api/v1/game/socket`。
 
 Boot/Main 及历史空战斗场景已经删除。战斗由现有 BattlePanelLayer/BattlePage Prefab 与新 Campaign 流程展示，不增加独立场景。
 

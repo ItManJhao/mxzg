@@ -1,5 +1,5 @@
 /**
- * 配置化主线战场：按全局关卡目录读取真实敌方、成长和技能，驱动已支持场景到胜负。
+ * 配置化战场：按真实关卡敌方、成长和技能驱动主线及日常副本到胜负。
  * 正式阵容/挂机入口不依赖固定三关；旧initial仅保留独立审计用途，不接玩家库、进度或奖励。
  */
 package com.funsgamex.mxzg.hero;
@@ -45,6 +45,10 @@ public final class HeroBattleChapterScenario {
             skills = List.copyOf(skills);
         }
     }
+
+    /** 其他关卡配置使用的原守军行，属性、装备和符文保留源表数组格式。 */
+    public record ConfiguredEnemy(int configId, int position, int template, int level, int star,
+                                  String modifiers, String equipment, String runes) {}
     /** 一次出手结束后的完整单位生命，包含死亡单位，不按阵营合并。 */
     public record Turn(int round, int sourceId, long skillEnergy, Map<Integer, Long> hp) {
         /** 冻结本次出手生命，后续行动不能改写历史记录。 */
@@ -342,6 +346,24 @@ public final class HeroBattleChapterScenario {
      * 直接复用原始属性和完整技能排期，不替换为固定英雄，不重复添加阵型属性；助战暂不支持。
      */
     public Result runSavedFormation(int stageIndex, HeroBattleInputService.Input input, DoublePredicate decision) {
+        var units = savedFormationUnits(input);
+        // 本场ID与持久英雄ID分离：攻方使用1至8，守方使用9至16，避免双方同站位碰撞。
+        units.addAll(enemies(stageIndex));
+        return runBattle("audit:lineup:" + stageIndex, applyElementHalo(units), decision);
+    }
+
+    /** 日常副本按旧战斗类型2复用主阵容及15回合执行链，守军来自指定关卡原表。 */
+    public Result runDailyFormation(String scenario, HeroBattleInputService.Input input,
+                                    List<ConfiguredEnemy> enemyRows, DoublePredicate decision) {
+        var units = savedFormationUnits(input);
+        for (var enemy : enemyRows) {
+            units.add(configuredEnemy(enemy));
+        }
+        return runBattle(scenario, applyElementHalo(units), decision);
+    }
+
+    /** 将已鉴权的真实主阵容转为开场单位，完整保留属性、技能和显示身份。 */
+    private ArrayList<Unit> savedFormationUnits(HeroBattleInputService.Input input) {
         if (input.units().isEmpty()) {
             throw new IllegalArgumentException("请先保存非空主线阵容");
         }
@@ -357,10 +379,7 @@ public final class HeroBattleChapterScenario {
                 source.skillSchedule(), appearance.icon(hero.templateId(), hero.star(),
                     hero.evolution().type(), hero.evolution().level())));
         }
-        // 本场ID与持久英雄ID分离：攻方使用1至8，守方使用9至16，避免双方同站位碰撞。
-        units.addAll(enemies(stageIndex));
-        roster(units);
-        return runBattle("audit:lineup:" + stageIndex, applyElementHalo(units), decision);
+        return units;
     }
 
     /**
@@ -378,18 +397,25 @@ public final class HeroBattleChapterScenario {
         }
         var result = new ArrayList<Unit>();
         for (var enemy : chapters.enemies(stageIndex)) {
-            if (!mapper.readTree(enemy.equipment()).isEmpty() || !mapper.readTree(enemy.runes()).isEmpty()) {
-                throw new IllegalArgumentException("主线敌方装备或符文尚未支持：" + enemy.configId());
-            }
-            var row = mapper.createObjectNode();
-            row.put("hero_type", enemy.template());
-            row.put("hero_level", enemy.level());
-            row.put("hero_star", enemy.star());
-            row.put("pos", enemy.position());
-            row.put("attr", mapper.writeValueAsString(enemy.modifiers()));
-            result.add(unit(8 + enemy.position(), growth.npcStage(enemy.level()), row));
+            result.add(configuredEnemy(new ConfiguredEnemy(enemy.configId(), enemy.position(), enemy.template(),
+                    enemy.level(), enemy.star(), mapper.writeValueAsString(enemy.modifiers()), enemy.equipment(),
+                    enemy.runes())));
         }
         return List.copyOf(result);
+    }
+
+    /** 将原守军行交给统一成长和技能预检，装备或符文尚未实现时拒绝生成战报。 */
+    private Unit configuredEnemy(ConfiguredEnemy enemy) {
+        if (!mapper.readTree(enemy.equipment()).isEmpty() || !mapper.readTree(enemy.runes()).isEmpty()) {
+            throw new IllegalArgumentException("关卡守军装备或符文尚未支持：" + enemy.configId());
+        }
+        var row = mapper.createObjectNode();
+        row.put("hero_type", enemy.template());
+        row.put("hero_level", enemy.level());
+        row.put("hero_star", enemy.star());
+        row.put("pos", enemy.position());
+        row.put("attr", enemy.modifiers());
+        return unit(8 + enemy.position(), growth.npcStage(enemy.level()), row);
     }
 
     /** 旧3006：持久挂机三人、当前关卡单个怪物、双方仅普攻、怪物初始生命1；不修改主线资产。 */

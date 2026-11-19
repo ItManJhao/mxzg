@@ -1,61 +1,64 @@
 /**
- * 开发 GM 请求控制器：保存尚未确认请求的幂等键，负责校验开关和发放回执。
- * 应用注入请求能力，Controller 不持有凭证、不修改英雄/背包 Model；资产由统一推送更新。
+ * 开发 GM 请求控制器：收发开关、资产、角色进度和测试时间协议，校验服务端回执。
+ * 未确认的发放保留原幂等键；角色和资产由统一推送更新，时间回包直接校准公共时钟。
  */
+import { RequestIdUtils } from "../../core/RequestIdUtils";
+import { ServerClock } from "../../core/ServerClock";
+import { Protocol } from "../../platform/Protocol";
+import type { AccountOperations } from "../account/AccountOperations";
+
 export interface GmGrant {
     /** 本次发放的持久幂等键；结果不明时沿用。 */
     requestId: string;
     /** 服务端登记的发放分类：英雄或道具。 */
-    kind: string;
+    kind: "hero" | "item";
     /** 当前选择的真实配置 ID。 */
     configId: number;
-    /** 发放数量，范围为 1～9999。 */
+    /** 发放数量；金币和钻石允许超过普通道具的每次上限。 */
     quantity: number;
 }
 
-/** 组织开发发放请求；保留未确认请求，防止重试重复发放。 */
+/** 服务端返回的当前游戏时间。 */
+interface GmServerTime {
+    /** 游戏时间的 Unix 毫秒。 */
+    serverTimeMs: number;
+    /** true 表示当前测试实例使用 GM 设置的时间。 */
+    overridden: boolean;
+}
+
+/** 收发开发 GM 协议；保留未确认请求，防止重试重复发放。 */
 export class GmController {
-    /** 当前角色未确认请求；断线/关窗保留，明确成功或换角色后清理。 */
-    private pending: { role: string; body: GmGrant } | null = null;
+    /** 原发放参数与发送状态。结果待确认时保留原单，重置后下一次发放使用新单。 */
+    private pending: { body: GmGrant; sending: boolean } | null = null;
 
-    /** true 表示本控制器有发放正在进行，阻止并发提交。 */
-    private busy = false;
-
-    /**
-     * 接收应用层注入的请求能力，控制器不参与登录或凭证管理。
-     * @param statusRequest 查询服务器的开发开关。
-     * @param send 发送携带幂等键的发放请求，返回服务器回执。
-     */
-    constructor(
-        private readonly statusRequest: () => Promise<unknown>,
-        private readonly send: (body: GmGrant) => Promise<unknown>,
-    ) {}
+    /** 从预览应用取得当前会话的认证请求通道，所有 GM 请求共用此连接。 */
+    constructor(private readonly operations: Pick<AccountOperations, "request">) {}
 
     /** 查询真实服务端开关；非法回包拒绝展示为可用。 */
     public async enabled(): Promise<boolean> {
-        const data = await this.statusRequest() as { enabled?: unknown };
+        const frame = await this.operations.request(Protocol.GM_STATUS, {});
+        const data = frame.body as { enabled?: unknown };
         if (typeof data?.enabled !== "boolean") {
             throw new Error("GM 开关回包无效");
         }
         return data.enabled;
     }
 
-    /** 应用层在角色切换时调用，丢弃旧角色尚未确认的请求。 */
+    /** 应用结束本次测试会话时清空原单，下一次发放可以立即开始。 */
     public reset(): void {
         this.pending = null;
     }
 
     /** 发放当前选择；结果不明时要求以原参数重试，保留原幂等键。 */
-    public async grant(role: string, kind: string, configId: number, quantity: number): Promise<void> {
-        if (this.busy) {
+    public async grant(kind: GmGrant["kind"], configId: number, quantity: number): Promise<void> {
+        if (this.pending?.sending) {
             throw new Error("正在发放，请等待");
         }
-        if (!role || !Number.isSafeInteger(configId) || configId <= 0 ||
-            !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 9999) {
-            throw new Error("请选择配置并输入 1～9999 的整数数量");
-        }
-        if (this.pending?.role !== role) {
-            this.pending = null;
+        // 钱包在服务端单独记账，上限按有符号整数的协议与数据库能力校验。
+        const maximum = kind === "item" && (configId === 900001 || configId === 900002) ? 2_147_483_647 : 9999;
+        if (!Number.isSafeInteger(configId) || configId <= 0 ||
+            !Number.isSafeInteger(quantity) || quantity < 1 || quantity > maximum) {
+            throw new Error("请选择配置并输入 1～" + maximum + " 的整数数量");
         }
         if (this.pending && (this.pending.body.kind !== kind ||
             this.pending.body.configId !== configId || this.pending.body.quantity !== quantity)) {
@@ -63,22 +66,15 @@ export class GmController {
         }
         if (!this.pending) {
             this.pending = {
-                role,
-                body: {
-                    requestId: "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-                        const n = Math.floor(Math.random() * 16);
-                        return (c === "x" ? n : (n & 3) | 8).toString(16);
-                    }),
-                    kind,
-                    configId,
-                    quantity,
-                },
+                body: {requestId: RequestIdUtils.create(), kind, configId, quantity},
+                sending: false,
             };
         }
         const attempt = this.pending;
-        this.busy = true;
+        attempt.sending = true;
         try {
-            const data = await this.send(attempt.body) as GmGrant;
+            const frame = await this.operations.request(Protocol.GM_GRANT, attempt.body);
+            const data = frame.body as GmGrant;
             if (!data || data.requestId !== attempt.body.requestId || data.kind !== kind ||
                 data.configId !== configId || data.quantity !== quantity) {
                 throw new Error("GM 回执不匹配");
@@ -87,13 +83,58 @@ export class GmController {
                 this.pending = null;
             }
         } catch (error) {
-            const code = (error as { code?: string }).code;
+            const code = (error as { code?: string } | null)?.code;
             if (code?.startsWith("GM_") && this.pending === attempt) {
                 this.pending = null;
             }
             throw error;
         } finally {
-            this.busy = false;
+            attempt.sending = false;
         }
+    }
+
+    /** 提交角色目标等级，确认后由服务端快照更新角色。 */
+    public async setLevel(level: number): Promise<void> {
+        const requestId = RequestIdUtils.create();
+        const frame = await this.operations.request(Protocol.GM_LEVEL_SET, { requestId, level });
+        const data = frame.body as { requestId?: unknown; level?: unknown };
+        if (data?.requestId !== requestId || data.level !== level) {
+            throw new Error("GM 等级回执不匹配");
+        }
+    }
+
+    /** 提交目标挑战关卡，确认后界面读取服务端同步的主线进度。 */
+    public async setChapter(mission: number): Promise<void> {
+        const requestId = RequestIdUtils.create();
+        const frame = await this.operations.request(Protocol.GM_CHAPTER_SET, { requestId, mission });
+        const data = frame.body as { requestId?: unknown; mission?: unknown };
+        if (data?.requestId !== requestId || data.mission !== mission) {
+            throw new Error("GM 关卡回执不匹配");
+        }
+    }
+
+    /** 向服务端查询当前游戏时间，使用收到的时间校准公共时钟。 */
+    public async getServerTime(): Promise<GmServerTime> {
+        const frame = await this.operations.request(Protocol.GM_TIME_GET, {});
+        return this.acceptServerTime(frame.body);
+    }
+
+    /** 设置当前测试实例的时间，Unix 秒为 0 时恢复实际时间。 */
+    public async setServerTime(unixSeconds: number): Promise<GmServerTime> {
+        const frame = await this.operations.request(Protocol.GM_TIME_SET, { unixSeconds });
+        return this.acceptServerTime(frame.body);
+    }
+
+    /** 校验时间回包及覆盖状态，连接层已经校验当前请求的归属。 */
+    private acceptServerTime(body: unknown): GmServerTime {
+        const data = body as Partial<GmServerTime> | null;
+        const serverTimeMs = data?.serverTimeMs;
+        const overridden = data?.overridden;
+        if (typeof serverTimeMs !== "number" || !Number.isSafeInteger(serverTimeMs) || serverTimeMs <= 0
+            || typeof overridden !== "boolean") {
+            throw new Error("GM 时间回包无效");
+        }
+        ServerClock.instance.synchronize(serverTimeMs);
+        return { serverTimeMs, overridden };
     }
 }

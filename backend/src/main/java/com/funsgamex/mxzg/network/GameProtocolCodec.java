@@ -20,14 +20,19 @@ public final class GameProtocolCodec {
     /** oneof 载荷名，由唯一 .proto 定义约束。 */
     private static final Set<String> PAYLOADS = Set.of(
         "authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers",
-        "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
+        "gmGrant", "gmResult", "gmStatus", "gmSetRoleLevel", "gmSetChapter", "gmSetTime", "gmTime",
+        "formationSave", "formationSaved", "battlePreview", "battlePreviewed",
         "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter",
         "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus",
         "rewardNotice", "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus",
         "heroFirstSummonRequest", "heroFirstSummonReceipt", "heroFirstSummonStatus",
         "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus",
         "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus",
-        "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus");
+        "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus",
+        "roleName", "heroSummonRequest", "heroSummonReceipt",
+        "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
+        "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt",
+        "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -66,7 +71,7 @@ public final class GameProtocolCodec {
         return bytes;
     }
 
-    /** 按消息名称和方向校验 oneof，独立通关奖励、碎片合成和普通升级应答各有业务回执。 */
+    /** 按方向和消息名选择载荷，GM 等级和关卡的请求与回执共用绝对目标结构。 */
     private static String payload(JsonNode frame) {
         String kind = frame.path("kind").asString(), name = frame.path("name").asString();
         if (kind.equals("response") && frame.has("ok") && !frame.path("ok").asBoolean()) return null;
@@ -75,6 +80,9 @@ public final class GameProtocolCodec {
                 case "session.authenticate" -> "authenticate";
                 case "session.login" -> "login";
                 case "gm.grant" -> "gmGrant";
+                case "gm.level.set" -> "gmSetRoleLevel";
+                case "gm.chapter.set" -> "gmSetChapter";
+                case "gm.time.set" -> "gmSetTime";
                 case "formation.save" -> "formationSave";
                 case "battle.preview" -> "battlePreview";
                 case "chapter.challenge" -> "chapterChallenge";
@@ -82,12 +90,18 @@ public final class GameProtocolCodec {
                 case "chapter.idle.claim" -> "chapterIdleClaim";
                 case "chapter.idle.claim.status" -> "chapterIdleClaimStatusRequest";
                 case "chapter.milestone.claim", "chapter.milestone.claim.status" -> "chapterMilestoneClaim";
-                case "hero.summon.first", "hero.summon.first.status" -> "heroFirstSummonRequest";
+                case "hero.summon" -> "heroSummonRequest";
+                case "hero.summon.normal", "hero.summon.first", "hero.summon.first.status" -> "heroFirstSummonRequest";
                 case "chapter.firstreward.claim", "chapter.firstreward.claim.status" -> "chapterFirstRewardRequest";
                 case "bag.fragment.combine" -> "heroFragmentCombineRequest";
                 case "bag.fragment.combine.status" -> "heroFragmentCombineStatusRequest";
                 case "hero.level.upgrade" -> "heroLevelUpgradeRequest";
                 case "hero.level.upgrade.status" -> "heroLevelUpgradeStatusRequest";
+                case "hero.equipment.change" -> "heroEquipmentChangeRequest";
+                case "market.buy" -> "marketBuyRequest";
+                case "market.refresh" -> "marketRefreshRequest";
+                case "dungeon.gold.challenge" -> "dailyDungeonChallengeRequest";
+                case "role.name.set" -> "roleName";
                 default -> "empty";
             };
         }
@@ -100,7 +114,8 @@ public final class GameProtocolCodec {
             case "chapter.idle.claim.status" -> "chapterIdleClaimStatus";
             case "chapter.milestone.claim" -> "chapterMilestoneReceipt";
             case "chapter.milestone.claim.status" -> "chapterMilestoneStatus";
-            case "hero.summon.first" -> "heroFirstSummonReceipt";
+            case "hero.summon" -> "heroSummonReceipt";
+            case "hero.summon.normal", "hero.summon.first" -> "heroFirstSummonReceipt";
             case "hero.summon.first.status" -> "heroFirstSummonStatus";
             case "chapter.firstreward.claim" -> "chapterFirstRewardReceipt";
             case "chapter.firstreward.claim.status" -> "chapterFirstRewardStatus";
@@ -108,6 +123,17 @@ public final class GameProtocolCodec {
             case "bag.fragment.combine.status" -> "heroFragmentCombineStatus";
             case "hero.level.upgrade" -> "heroLevelUpgradeReceipt";
             case "hero.level.upgrade.status" -> "heroLevelUpgradeStatus";
+            case "hero.equipment.change" -> "heroEquipmentChangeReceipt";
+            case "market.list" -> "marketState";
+            case "market.buy", "market.refresh" -> "marketReceipt";
+            case "dungeon.gold.list" -> "dailyDungeonState";
+            case "dungeon.gold.challenge" -> "dailyDungeonReceipt";
+            case "role.name.random" -> "roleName";
+            case "role.name.set" -> "empty";
+            case "role.welcome.claim" -> "rewardNotice";
+            case "gm.level.set" -> "gmSetRoleLevel";
+            case "gm.chapter.set" -> "gmSetChapter";
+            case "gm.time.get", "gm.time.set" -> "gmTime";
             case "chapter.challenge", "chapter.claim" -> "chapterReceipt"; case "chapter.replay" -> "chapterReplay"; case "chapter.idle.encounter" -> "idleEncounter"; case "battle.preview" -> "battlePreviewed"; case "formation.save" -> "formationSaved"; case "session.heartbeat" -> "heartbeat"; case "gm.grant" -> "gmResult"; case "gm.status" -> "gmStatus";
             default -> throw new IllegalArgumentException("Unknown payload");
         };

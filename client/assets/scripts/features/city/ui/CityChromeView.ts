@@ -10,7 +10,6 @@ import { BaseView } from "../../../framework/ui/BaseView";
 import { CityChrome, CityChromeActions, CityChromeUtils, TabState } from "./CityChromeUtils";
 import { CityTabUtils } from "../utils/CityTabUtils";
 import { PrefabLoader } from "../../../framework/assets/PrefabLoader";
-import { CITY_CHROME_PREFAB_PATH } from "../../../config/PrefabCatalog";
 import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 const { ccclass, property } = _decorator;
@@ -184,13 +183,20 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
         this.lblSub.active = !debug;
         UiKitUtils.setText(this.lblSub, debug ? "" : subLine);
     }
-    /** 把已格式化的金币和钻石数量写入现有文字节点，不读取或修改钱包。 */
-    setCurrencies(goldLine: string, diamondLine: string): void {
+    /** 显示金币与宿主给定的次要资源，英雄培养页切换到预制体中的经验图标。 */
+    setCurrencies(goldLine: string, secondaryLine: string, showHeroExperience = false): void {
         if (this.goldValue) {
             UiKitUtils.setText(this.goldValue, goldLine);
         }
         if (this.gemValue) {
-            UiKitUtils.setText(this.gemValue, diamondLine);
+            UiKitUtils.setText(this.gemValue, secondaryLine);
+            const group = this.gemValue.parent;
+            const diamond = group?.getChildByName("Icon");
+            const experience = group?.getChildByName("HeroExperienceIcon");
+            if (diamond && experience) {
+                diamond.active = !showHeroExperience;
+                experience.active = showHeroExperience;
+            }
         }
     }
     /** 更新服务端战力文字，并在既有区域内缩放长文本；空字符串按调用方约定清空占位值。 */
@@ -318,7 +324,6 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
             const box = ViewportLayoutUtils.fitVisibleRoot(this.node);
             this.fitChildren(box.width);
         });
-        GameLog.shared.classified("MODULE", "info", "CityChromeView", "view " + CITY_CHROME_PREFAB_PATH);
     }
 
     /** 核对活动按钮引用并统一转交活动列表操作，缺少注入操作时记录展示警告。 */

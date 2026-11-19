@@ -5,6 +5,7 @@
  */
 package com.funsgamex.mxzg.role;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,6 +13,14 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class RoleRepository {
+    /** 角色资料同时投影新手赠礼资格，历史角色和已领角色均返回 false。 */
+    private static final String ROLE_SELECT = """
+        SELECT game_role.*, (first_named AND claimed_nickname IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM game_role_welcome_gift WHERE role_id=game_role.id))
+            AS welcome_gift_available
+        FROM game_role
+        """;
+
     /**
      * 一次钱包写入或整笔可信发奖的真实前后余额，不将升级赠钻混入直接奖励数量。
      * @param goldBefore 写入前的金币余额
@@ -26,11 +35,15 @@ public class RoleRepository {
     private final RoleRules rules;
     /** 旧英雄容量配置，只在创建角色时提供持久初值。 */
     private final com.funsgamex.mxzg.hero.HeroCapacityService heroCapacity;
-    /** 行映射保留持久字段，等级门槛按可信配置派生。 */
+    /** 行映射包含首次命名和赠礼资格，等级门槛按可信配置派生。 */
     private RoleProfile map(java.sql.ResultSet row,int index) throws java.sql.SQLException {
-        int level=row.getInt("role_level");
-        return new RoleProfile(row.getString("id"),row.getString("nickname"),level,row.getLong("gold"),row.getLong("diamonds"),row.getString("server_id"),
-            new RoleBasics(row.getLong("role_experience"),row.getInt("cup"),row.getInt("head_id"),row.getInt("image_id"),row.getInt("border_id"),row.getInt("language_id"),row.getLong("created_at_seconds"),row.getLong("last_login_at_seconds"),rules.threshold(level)));
+        int level = row.getInt("role_level");
+        var basics = new RoleBasics(row.getLong("role_experience"), row.getInt("cup"),
+            row.getInt("head_id"), row.getInt("image_id"), row.getInt("border_id"), row.getInt("language_id"),
+            row.getLong("created_at_seconds"), row.getLong("last_login_at_seconds"), rules.threshold(level));
+        return new RoleProfile(row.getString("id"), row.getString("nickname"), level, row.getLong("gold"),
+            row.getLong("diamonds"), row.getString("server_id"), basics, row.getBoolean("first_named"),
+            row.getBoolean("welcome_gift_available"));
     }
     /** 资产版本与事务提交同步，由所有钱包写入共同使用。 */
     private final com.funsgamex.mxzg.network.AssetSyncService sync;
@@ -47,10 +60,41 @@ public class RoleRepository {
         return changed;
     }
 
+    /** 在持有角色锁的事务内条件扣钻石，余额不足不写入。 */
+    public boolean debitDiamonds(String roleId, long amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Nonpositive diamond debit");
+        }
+        sync.requireTransaction();
+        boolean changed = jdbc.update("UPDATE game_role SET diamonds=diamonds-? WHERE id=? AND diamonds>=?",
+                amount, roleId, amount) == 1;
+        if (changed) {
+            sync.changed(roleId);
+        }
+        return changed;
+    }
+
     /** 注入角色持久化与资产同步出口。 */
     public RoleRepository(JdbcTemplate jdbc, com.funsgamex.mxzg.network.AssetSyncService sync, RoleRules rules, com.funsgamex.mxzg.hero.HeroCapacityService heroCapacity) { this.jdbc=jdbc; this.sync=sync; this.rules=rules; this.heroCapacity=heroCapacity; }
     /** 持有角色锁时读取持久状态版本；同一提交的角色与背包共用此值。 */
     public long revision(String role) { return jdbc.queryForObject("SELECT state_revision FROM game_role WHERE id=?",Long.class,role); }
+
+    /** 在开发 GM 的角色锁内设置合法角色等级，本级经验归零且不经过升级奖励。 */
+    public void setDevelopmentLevel(String roleId, int level) {
+        rules.threshold(level);
+        sync.requireTransaction();
+        if (jdbc.update("UPDATE game_role SET role_level=?,role_experience=0 "
+                + "WHERE id=? AND (role_level<>? OR role_experience<>0)", level, roleId, level) == 1) {
+            sync.changed(roleId);
+        }
+    }
+
+    /** 角色锁内保留最高主阵容战力；此内部入场条件不改变钱包或库存版本。 */
+    public int observeMainPower(String roleId, int power) {
+        sync.requireTransaction();
+        jdbc.update("UPDATE game_role SET max_main_power=? WHERE id=? AND max_main_power<?", power, roleId, power);
+        return jdbc.queryForObject("SELECT max_main_power FROM game_role WHERE id=?", Integer.class, roleId);
+    }
     /**
      * 在调用方事务内锁定真实钱包，分别校验金币和钻石精确加法后一次保存。
      * 两币种各自允许0但不能同时为0，不把跨币种相加当成余额或奖励有效性条件。
@@ -88,26 +132,45 @@ public class RoleRepository {
     public Optional<RoleProfile> findByAccount(String account) {
         return findByAccount(account, "local-1");
     }
-    /** 按账号及区服读取唯一角色，区服之间不共享资料。 */
+    /** 按账号及区服读取唯一角色及赠礼资格，区服之间不共享资料。 */
     public Optional<RoleProfile> findByAccount(String account, String serverId) {
-        return jdbc.query("SELECT * FROM game_role WHERE login_account = ? AND server_id = ?", this::map, account, serverId).stream().findFirst();
+        return jdbc.query(ROLE_SELECT + "WHERE login_account = ? AND server_id = ?", this::map, account, serverId)
+            .stream().findFirst();
     }
 
-    /** 按服务端已鉴权的角色 ID 读取基础资料。 */
+    /** 按服务端已鉴权的角色 ID 读取基础资料和赠礼资格。 */
     public Optional<RoleProfile> findById(String id) {
-        return jdbc.query("SELECT * FROM game_role WHERE id = ?", this::map, id).stream().findFirst();
+        return jdbc.query(ROLE_SELECT + "WHERE id = ?", this::map, id).stream().findFirst();
+    }
+
+    /** 检查同服已命名记录，保留旧服精确比较，避免数据库排序规则合并大小写或字符变体。 */
+    public boolean hasNickname(String serverId, String nickname) {
+        return jdbc.queryForList("SELECT nickname FROM game_role WHERE server_id=? AND first_named=TRUE AND nickname=?",
+            String.class, serverId, nickname).stream().anyMatch(nickname::equals);
+    }
+
+    /** 在角色锁内保存首次命名，唯一键处理跨角色同时认领，资产快照在提交后广播。 */
+    public void setFirstName(String roleId, String nickname) {
+        sync.requireTransaction();
+        int changed = jdbc.update(
+            "UPDATE game_role SET nickname=?,first_named=TRUE,claimed_nickname=? WHERE id=? AND first_named=FALSE",
+            nickname, nickname.getBytes(StandardCharsets.UTF_8), roleId);
+        if (changed != 1) {
+            throw new IllegalStateException("首次命名更新行数异常");
+        }
+        sync.changed(roleId);
     }
 
     /** 按旧初始化规则创建默认区服角色。 */
     public RoleProfile create(String account) {
         return create(account, "local-1");
     }
-    /** 按原表创建独立角色；不执行新手奖励、英雄初始化或其他模块业务。 */
+    /** 按原表创建未命名角色，暂用开发账号作为昵称。 */
     public RoleProfile create(String account, String serverId) {
         String id = UUID.randomUUID().toString();
         String key = serverId.equals("local-1") ? account : account + "@" + serverId;
         long now=java.time.Instant.now().getEpochSecond();
-        jdbc.update("INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id,role_experience,cup,image_id,created_at_seconds,last_login_at_seconds,hero_capacity) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        jdbc.update("INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id,role_experience,cup,image_id,created_at_seconds,last_login_at_seconds,hero_capacity,first_named) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,FALSE)",
             id,key,account,rules.initial("level"),rules.initial("gold"),rules.initial("gem"),account,serverId,rules.initial("exp"),rules.initial("cup"),rules.imageId(),now,now,heroCapacity.initial());
         return findById(id).orElseThrow();
     }

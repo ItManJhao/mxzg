@@ -22,6 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(properties = {
+    "mxzg.main-chapter.challenge-limit=3",
     "spring.datasource.url=jdbc:h2:mem:main_chapter_persist;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
     "spring.datasource.username=sa", "spring.datasource.password="
 })
@@ -188,9 +189,10 @@ class MainChapterPersistenceTest {
         assertThrows(IllegalArgumentException.class, () -> new MainChapterService.MilestoneProgress(1, List.of(2, 2)));
     }
 
-    /** 首场胜利只推进；完整三关结算后历史经验仍冻结，重试不使用当前等级重算。 */
+    /** 延后首场挑战仍累计创角以来的时间；三关结算与重试均保留初始挂机起点和原经验回执。 */
     @Test void threeRealBattlesPersistAndSettleExactlyOnce() {
         var p = player(true);
+        jdbc.update("UPDATE game_role SET created_at_seconds=created_at_seconds-1800 WHERE id=?", p.id());
         var initialRole = roles.findById(p.id()).orElseThrow();
         long revision = roles.revision(p.id());
         String firstRequest = id();
@@ -203,7 +205,9 @@ class MainChapterPersistenceTest {
             if (first == null) { first = result; }
             assertEquals(MainChapterService.Action.BATTLE, result.action());
             assertEquals(mission, result.state().maxCleared());
-            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_idle WHERE role_id=?", Integer.class, p.id()), "胜利事务已保存挂机起点，不等待客户端接包");
+            assertEquals(initialRole.basics().createdAtSeconds() - 60, jdbc.queryForObject(
+                    "SELECT started_at FROM game_main_chapter_idle WHERE role_id=?", Long.class, p.id()),
+                    "首次挑战及后续重试都应保留创角以来的半小时和原配置预置的一分钟");
             assertEquals(result.battleId(), result.state().pendingBattleId());
             assertEquals(before, roles.findById(p.id()).orElseThrow());
             assertEquals(result, chapters.challenge(p.token(), request));

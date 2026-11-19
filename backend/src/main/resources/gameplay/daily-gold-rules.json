@@ -1,0 +1,108 @@
+{
+  "stageId": 1,
+  "titleLanguageId": 2951,
+  "minimumLevel": 15,
+  "requiredPower": 1,
+  "freeLimit": 2,
+  "vipLimits": {
+    "0": 2,
+    "1": 2,
+    "2": 3,
+    "3": 3,
+    "4": 3,
+    "5": 3,
+    "6": 3,
+    "7": 3,
+    "8": 4,
+    "9": 4,
+    "10": 4,
+    "11": 4,
+    "12": 4,
+    "13": 4
+  },
+  "costs": {
+    "1": 0,
+    "2": 0,
+    "3": 50,
+    "4": 50
+  },
+  "rewardPreview": [
+    {
+      "itemId": 900001,
+      "quantity": 100000
+    },
+    {
+      "itemId": 900102,
+      "quantity": 20
+    }
+  ],
+  "clergy": [
+    {
+      "level": 1,
+      "points": 10000,
+      "chance": 10000
+    }
+  ],
+  "enemies": [
+    {
+      "configId": 1,
+      "position": 2,
+      "template": 10405005,
+      "level": 5,
+      "star": 5,
+      "modifiers": "[]",
+      "equipment": "[]",
+      "runes": "[]"
+    },
+    {
+      "configId": 2,
+      "position": 3,
+      "template": 10104004,
+      "level": 5,
+      "star": 4,
+      "modifiers": "[]",
+      "equipment": "[]",
+      "runes": "[]"
+    },
+    {
+      "configId": 3,
+      "position": 5,
+      "template": 10204005,
+      "level": 5,
+      "star": 4,
+      "modifiers": "[]",
+      "equipment": "[]",
+      "runes": "[]"
+    },
+    {
+      "configId": 4,
+      "position": 6,
+      "template": 10204004,
+      "level": 5,
+      "star": 4,
+      "modifiers": "[]",
+      "equipment": "[]",
+      "runes": "[]"
+    },
+    {
+      "configId": 5,
+      "position": 7,
+      "template": 10104004,
+      "level": 5,
+      "star": 4,
+      "modifiers": "[]",
+      "equipment": "[]",
+      "runes": "[]"
+    },
+    {
+      "configId": 6,
+      "position": 8,
+      "template": 10403001,
+      "level": 5,
+      "star": 3,
+      "modifiers": "[]",
+      "equipment": "[]",
+      "runes": "[]"
+    }
+  ]
+}

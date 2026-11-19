@@ -10,7 +10,7 @@ import com.funsgamex.mxzg.reward.RewardGrantResult;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.reward.RewardReceiptPayloads;
 import com.funsgamex.mxzg.role.RoleRepository;
-import java.time.Instant;
+import com.funsgamex.mxzg.time.GameClock;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -37,6 +37,8 @@ public class HeroFragmentCombineService {
     private final JdbcTemplate jdbc;
     /** 共享回执摘要和协议整数范围检查。 */
     private final RewardReceiptPayloads payloads;
+    /** 合成发奖共用的服务器游戏时钟。 */
+    private final GameClock clock;
 
     /** 客户端只提交消耗配置ID、合成次数和原业务键。 */
     public record Request(String requestId, int itemId, int quantity) {}
@@ -65,10 +67,10 @@ public class HeroFragmentCombineService {
         }
     }
 
-    /** 注入原领域服务，不维护独立的名册和库存状态。 */
+    /** 注入原领域服务和游戏时钟，复用现有名册与库存状态。 */
     public HeroFragmentCombineService(SessionService sessions, RoleRepository roles, InventoryService inventory,
             HeroCapacityService capacity, HeroFragmentRules rules, RewardGrantService grants, JdbcTemplate jdbc,
-            RewardReceiptPayloads payloads) {
+            RewardReceiptPayloads payloads, GameClock clock) {
         this.sessions = sessions;
         this.roles = roles;
         this.inventory = inventory;
@@ -77,9 +79,10 @@ public class HeroFragmentCombineService {
         this.grants = grants;
         this.jdbc = jdbc;
         this.payloads = payloads;
+        this.clock = clock;
     }
 
-    /** 共用角色锁，原键重试优先；新请求扣料、发放与存回执要么全部提交，要么全部回滚。 */
+    /** 原键重试优先；新请求在角色锁内扣料、按游戏时间发奖并保存回执。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Receipt combine(String token, Request request) {
         if (request == null || request.itemId() <= 0 || !validQuantity(request.quantity())) {
@@ -113,7 +116,7 @@ public class HeroFragmentCombineService {
         for (int index = 0; index < request.quantity(); index++) {
             plan.add(new RewardGrantService.Reward(recipe.draw(random), 1));
         }
-        var actual = grants.grant(role, plan, new RewardGrantService.Context(Instant.now().getEpochSecond(), 0), random);
+        var actual = grants.grant(role, plan, new RewardGrantService.Context(clock.epochSeconds(), 0), random);
         var receipt = new Receipt(1, request.requestId(), UUID.randomUUID().toString(), role, roles.revision(role),
                 request.itemId(), request.quantity(), cost, actual);
         validate(receipt, role, request.requestId(), receipt.receiptId());

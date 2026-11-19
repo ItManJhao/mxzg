@@ -38,8 +38,8 @@ export class ChapterClearRewardView extends BaseView {
     @property(SuperScroll) chapters: SuperScroll | null = null;
     /** 登录后共享配置的本次显示投影；关闭后释放。 */
     private config: readonly ChapterClearRewardConfig[] = [];
-    /** 当前显示期本行操作，用于合并等待持久化时的连续点击。 */
-    private intent: object | null = null;
+    /** 当前窗口正在等回包的关卡，关闭后撤销本页的按钮状态。 */
+    private intent: { chapter: number } | null = null;
 
     /** 挂载静态窗口，并从当前唯一主线状态生成旧列表。 */
     public onOpen(): void {
@@ -70,7 +70,7 @@ export class ChapterClearRewardView extends BaseView {
         this.chapters.toStart();
     }
 
-    /** 关闭只清本页列表和回调，业务原关卡仍可从应用恢复。 */
+    /** 关闭清空列表和按钮状态，已经发出的请求由应用接收。 */
     public onClose(): void {
         this.intent = null;
         this.config = [];
@@ -87,10 +87,10 @@ export class ChapterClearRewardView extends BaseView {
         panel.node.setScale(scale, scale, 1);
     }
 
-    /** 用最新快照及原键等待状态刷新可视行，保留当前纵向滚动位。 */
+    /** 用服务器资格和当前按钮状态刷新可视行，保留纵向滚动位。 */
     private render(): void {
         const model = MainChapterModel.instance;
-        this.chapters!.list.setData(ChapterClearRewardUtils.rows(this.config, model.state, model.firstRewardClaim));
+        this.chapters!.list.setData(ChapterClearRewardUtils.rows(this.config, model.state, this.intent?.chapter));
     }
 
     /** 配置行与复用节点绑定，不创建另一份目录或主动请求状态。 */
@@ -102,7 +102,7 @@ export class ChapterClearRewardView extends BaseView {
         cell.bind(row);
     }
 
-    /** 旧前往战斗只回到父页；领取和恢复都交应用按原绝对关卡处理。 */
+    /** 前往战斗回到父页，领取点击按绝对关卡交给主线控制器。 */
     private perform(row: ChapterClearRewardRow): void {
         if (this.intent || !this.config.length || !row.enabled) {
             return;
@@ -111,19 +111,16 @@ export class ChapterClearRewardView extends BaseView {
             this.close();
             return;
         }
-        const claim = MainChapterController.instance.requestFirstRewardClaim;
-        if (!claim) {
-            UIManager.instance.toast("通关奖励尚未准备好，请稍后重试");
-            return;
-        }
-        const intent = {};
+        const intent = { chapter: row.chapter };
         this.intent = intent;
+        this.render();
         const finish = (): void => {
             if (this.intent === intent) {
                 this.intent = null;
+                this.render();
             }
         };
-        void claim(row.chapter).then(finish, finish);
+        void MainChapterController.instance.claimFirstReward(row.chapter).then(finish, finish);
     }
 
     /** 物品格只读详情属于当前窗口，关父窗自动清理子窗。 */

@@ -1,6 +1,6 @@
 /**
- * 持久主线阵容的只读战斗审计：鉴权读取同一版本输入，再按全局关卡配置在独立内存中执行。
- * 由受开发开关保护的battle.preview调用，不修改通关、奖励、阵容或英雄；未恢复属性以pending明确返回。
+ * 持久主线阵容的只读战斗入口：鉴权读取同一版本输入，按主线或日常关卡配置执行。
+ * 战斗本身不修改通关、奖励或阵容；领域服务在外层事务决定结算。
  */
 package com.funsgamex.mxzg.hero;
 
@@ -38,6 +38,15 @@ public class HeroLineupBattleService {
     public Preview preview(String token, int stageIndex, DoublePredicate decision) {
         var input = inputs.current(token);
         var report = battles.runSavedFormation(stageIndex, input, decision);
+        HeroBattleReplayUtils.validate(report);
+        return new Preview(input.assetRevision(), input.lineupVersion(), input.formationId(), input.pending(), report);
+    }
+
+    /** 日常副本用同一持久主阵容与真实守军执行并检验完整战报。 */
+    public Preview daily(String token, String scenario, List<HeroBattleChapterScenario.ConfiguredEnemy> enemies,
+                         DoublePredicate decision) {
+        var input = inputs.current(token);
+        var report = battles.runDailyFormation(scenario, input, enemies, decision);
         HeroBattleReplayUtils.validate(report);
         return new Preview(input.assetRevision(), input.lineupVersion(), input.formationId(), input.pending(), report);
     }
