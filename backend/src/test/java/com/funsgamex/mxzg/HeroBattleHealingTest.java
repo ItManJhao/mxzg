@@ -81,7 +81,7 @@ class HeroBattleHealingTest {
         assertTrue(executor.recoveries().isEmpty());
     }
 
-    /** 未支持效果/控制改选/整组技能均拒绝；溢出前不写状态也不清中断。 */
+    /** 缺失动作、控制改选和整组技能均拒绝；溢出前不写状态也不清中断。 */
     @Test void rejectWithoutMutation() {
         var source = unit(1, 100, Long.MAX_VALUE, 0, 0);
         var executor = new HeroBattleHealingExecutor(rules(), List.of(source, unit(2, 100, 0, 0, 0)));
@@ -90,8 +90,9 @@ class HeroBattleHealingTest {
         assertEquals(100, executor.state(1).hp());
         assertTrue(source.actor().interrupted(2));
         assertTrue(executor.recoveries().isEmpty());
-        assertThrows(IllegalArgumentException.class,
-            () -> executor.art(new Invocation(1, 2114201, 1, 2)));
+        var error = assertThrows(IllegalStateException.class,
+            () -> executor.art(new Invocation(1, Integer.MAX_VALUE, 1, 2)));
+        assertEquals("技能面板配置缺失：buffart:" + Integer.MAX_VALUE, error.getMessage());
         source.actor().control(1011, true);
         assertThrows(UnsupportedOperationException.class, () -> heal(executor));
         assertThrows(UnsupportedOperationException.class, () -> executor.skill(source.actor(), null));

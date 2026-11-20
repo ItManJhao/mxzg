@@ -14,7 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public final class MainChapterRules {
     /** 默认开放的连续主线末关，部署可通过同名配置覆盖。 */
-    private static final int DEFAULT_CHALLENGE_LIMIT = 300;
+    private static final int DEFAULT_CHALLENGE_LIMIT = 550;
     /** 服务端可信的新挑战上限；仅限制新挑战，不能阻止历史待结算和回执恢复。 */
     private final int challengeLimit;
     /** 全局关卡索引对应门槛、敌方定位和首通奖励，不包含挂机收益。 */

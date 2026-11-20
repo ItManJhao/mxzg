@@ -29,7 +29,8 @@ public final class GameProtocolCodec {
         "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus",
         "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus",
         "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus",
-        "roleName", "heroSummonRequest", "heroSummonReceipt",
+        "roleName", "roleImageChange", "roleRename", "roleTitles", "roleImages", "heroSummonRequest", "heroSummonReceipt",
+        "roleDecorations", "roleDecorationId", "rolePeerageDisplay",
         "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
         "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt",
         "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt");
@@ -102,6 +103,10 @@ public final class GameProtocolCodec {
                 case "market.refresh" -> "marketRefreshRequest";
                 case "dungeon.gold.challenge" -> "dailyDungeonChallengeRequest";
                 case "role.name.set" -> "roleName";
+                case "role.image.change" -> "roleImageChange";
+                case "role.name.rename" -> "roleRename";
+                case "role.head.change", "role.border.change", "role.border.activate" -> "roleDecorationId";
+                case "role.peerage.display" -> "rolePeerageDisplay";
                 default -> "empty";
             };
         }
@@ -129,7 +134,11 @@ public final class GameProtocolCodec {
             case "dungeon.gold.list" -> "dailyDungeonState";
             case "dungeon.gold.challenge" -> "dailyDungeonReceipt";
             case "role.name.random" -> "roleName";
-            case "role.name.set" -> "empty";
+            case "role.name.set", "role.name.rename", "role.image.change" -> "empty";
+            case "role.titles.list" -> "roleTitles";
+            case "role.image.list" -> "roleImages";
+            case "role.decorations.list", "role.head.change", "role.border.change",
+                "role.border.activate", "role.peerage.display" -> "roleDecorations";
             case "role.welcome.claim" -> "rewardNotice";
             case "gm.level.set" -> "gmSetRoleLevel";
             case "gm.chapter.set" -> "gmSetChapter";

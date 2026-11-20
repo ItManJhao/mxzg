@@ -1,10 +1,12 @@
-/** 复验蒂芬妮实际主动技能的伤害转治疗、职业条件和战斗记录。 */
+/** 使用真实技能验证蒂芬妮与森镜之灵的伤害转治疗、各自的先决条件与战报。 */
 package com.funsgamex.mxzg;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.DoublePredicate;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import tools.jackson.databind.ObjectMapper;
 import com.funsgamex.mxzg.hero.HeroBattleElementRules;
 import com.funsgamex.mxzg.hero.HeroBattleEventProcessor.Actor;
@@ -86,5 +88,45 @@ class HeroBattleDamageHealingTest {
         assertEquals(0, blocked.ordinaryResults().getLast().damage());
         assertEquals(10000, blocked.state(4).hp());
         assertEquals(unblocked.recoveries(), blocked.recoveries());
+    }
+
+    /** 森镜三级必须实际命中带旧中毒状态的目标，并取本次伤害的一半向自己治疗。 */
+    @ParameterizedTest
+    @CsvSource({"true, true", "true, false", "false, true"})
+    void forestStrikeHealsOnlyWhenTheCurrentHitMatchesTheStatus(boolean poisoned, boolean hit) {
+        var mapper = new ObjectMapper();
+        var rules = new HeroSkillPanelRules(mapper);
+        var elements = new HeroBattleElementRules(mapper);
+        var forest = rules.battleSchedule(List.of(new HeroEvolutionRules.Skill(103050080, 0),
+            new HeroEvolutionRules.Skill(103050083, 3)));
+        var eve = rules.battleSchedule(List.of(new HeroEvolutionRules.Skill(103050090, 0)));
+        var engine = new HeroBattleHealingExecutor(rules, List.of(
+            new State(new Actor(1, forest), 1, 2, 1000, 20000, 1000, 0, 0, 0),
+            new State(new Actor(2, List.of()), 2, 2, 20000, 20000, 1000, 0, 0, 0),
+            new State(new Actor(3, eve), 1, 3, 20000, 20000, 1000, 0, 0, 0)));
+        engine.bindCombatData(1, 10305008, Map.of(220, 1000L, 150, 500L));
+        engine.bindCombatData(2, 10305008, Map.of(220, 1000L, 150, 500L));
+        engine.bindCombatData(3, 10305009, Map.of(220, 1000L, 150, 500L));
+        engine.initializePassive(3, 103050092, 3);
+        var order = List.of(1, 2, 3);
+        engine.beginRound(1, order, elements, chance -> true);
+        if (poisoned) {
+            engine.act(3, 2, 100, elements, chance -> true);
+            assertTrue(engine.buffs(2).stream().anyMatch(entry -> entry.spec().id() == 3092203));
+        }
+        engine.beginRound(2, order, elements, chance -> true);
+        engine.act(1, 2, 100, elements, chance -> hit);
+
+        var result = engine.ordinaryResults().getLast();
+        assertEquals(!hit, result.missed());
+        if (poisoned && hit) {
+            long amount = Math.absExact(result.damage()) / 2;
+            assertTrue(amount > 0);
+            assertEquals(List.of(new HeroBattleHealingExecutor.Recovery(3083903, 1, 1, amount, amount, amount)),
+                engine.recoveries());
+            assertEquals(1000 + amount, engine.state(1).hp());
+        } else {
+            assertTrue(engine.recoveries().isEmpty());
+        }
     }
 }

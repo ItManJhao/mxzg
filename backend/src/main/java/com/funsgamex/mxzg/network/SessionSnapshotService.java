@@ -63,6 +63,8 @@ public class SessionSnapshotService {
 
     /** 期限库存与主线挂机共用一次读取到的游戏时间。 */
     private final GameClock clock;
+    /** 快照装配时将实际到期的佩戴框恢复为默认框。 */
+    private final RoleProfileService roleProfiles;
 
     /** 注入各领域持久数据入口和游戏时钟，在统一读取事务内聚合状态。 */
     public SessionSnapshotService(SessionService sessions, RoleRepository roles, InventoryService inventory,
@@ -71,7 +73,7 @@ public class SessionSnapshotService {
             com.funsgamex.mxzg.campaign.MainChapterService chapters,
             com.funsgamex.mxzg.campaign.MainChapterIdleService idle, SpiritInventoryService spirits,
             TavernPointService tavernPoints, com.funsgamex.mxzg.campaign.MainChapterRules chapterRules,
-            HeroSummonService heroSummons, GameClock clock) {
+            HeroSummonService heroSummons, GameClock clock, RoleProfileService roleProfiles) {
         this.idle = idle;
         this.chapters = chapters;
         this.sessions = sessions;
@@ -86,6 +88,7 @@ public class SessionSnapshotService {
         this.chapterRules = chapterRules;
         this.heroSummons = heroSummons;
         this.clock = clock;
+        this.roleProfiles = roleProfiles;
     }
 
     /** 锁内再次校验，撤销同角色其他令牌；并发接管中已失效的令牌不能复活。 */
@@ -105,6 +108,7 @@ public class SessionSnapshotService {
         sessions.requireRole(token);
         var formation = formations.refresh(role);
         long now = clock.epochSeconds();
+        roleProfiles.expireEquippedBorder(role, now);
         var timedState = timed.current(role, now);
         var spiritState = spirits.current(role);
         var chapter = chapters.current(token);

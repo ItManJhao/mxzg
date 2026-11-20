@@ -67,7 +67,7 @@ public class CampaignService {
         return new State(current.stageId(),current.initialized(),pending.isEmpty()?null:pending.getFirst(),
             stage==null?List.of():stage.rewards(), current.initialized()?units(role,stage):List.of(),stage!=null && current.initialized());
     }
-    /** 开始游戏后初始化一次资源与挂机计时；旧角色保留现有英雄、阵容及已开始的计时。 */
+    /** 初始化旧链测试资源、图鉴与挂机计时；已有英雄、阵容和计时维持原值。 */
     @Transactional(isolation=Isolation.READ_COMMITTED)
     public State initialize(String token) {
         String role=sessions.requireRole(token);lock(role);
@@ -81,6 +81,7 @@ public class CampaignService {
             for(int template:rules.starters()) {
                 String id=UUID.randomUUID().toString();
                 jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,?,1,1)",id,role,template);
+                heroes.recordIllustration(role, template, 1);
                 jdbc.update("INSERT INTO game_lineup_slot(role_id,position,hero_id) VALUES (?,?,?)",role,positions[index++],id);
             }
             jdbc.update("UPDATE game_role SET lineup_version=lineup_version+1 WHERE id=?",role);

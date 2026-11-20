@@ -1,5 +1,5 @@
 /** 背包分类页签：由 BagView 传入选中状态与点击回调，Prefab 保存外观。 */
-import { _decorator, Button, Component, Label, Sprite, SpriteFrame } from "cc";
+import { _decorator, Button, Component, Label, Node, Sprite, SpriteFrame } from "cc";
 
 const { ccclass, property } = _decorator;
 
@@ -21,6 +21,10 @@ export class BagTabView extends Component {
     @property(Button)
     button: Button | null = null;
 
+    /** 碎片分类的可合成提醒，其他分类保留初始隐藏。 */
+    @property(Node)
+    redDot: Node | null = null;
+
     /** 父页面传入的分类切换回调，setTab 时替换，不发请求。 */
     private onClick: (() => void) | null = null;
     /** 节点是否已订阅点击，避免重复注册；随节点生命周期结束。 */
@@ -39,6 +43,13 @@ export class BagTabView extends Component {
         this.onClick = handler;
         this.ensureClick();
         this.setSelected(on);
+    }
+
+    /** 根据背包页面传入的状态显示分类红点。 */
+    public setRedDot(visible: boolean): void {
+        if (this.redDot) {
+            this.redDot.active = visible;
+        }
     }
 
     /** 同步切换预制体绑定的图片，不在点击页签时发起图片加载。 */

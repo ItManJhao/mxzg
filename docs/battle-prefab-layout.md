@@ -1,5 +1,11 @@
 # 战斗预制体整理与正式服对照
 
+## 战斗飘字（2026-11-20）
+
+- 日服 `ActionNodeFactory.lua`、`BattleAttrUpdateUtils.lua` 和旧项目对应脚本一致。每道命中在各自目标头顶生成数字，朝阵营外侧弹跳三次，最后淡出。原节奏为 0.3 秒一跳，跳高依次为 100、60、20，随后用 0.7 秒淡出，全部跟随战斗倍速。
+- `BattlePage/LayerFloat/FloatDamageRoot/DamageNumberTemplate` 是共享的隐藏模板。播放按每条战报事件创建实例，群攻目标与同目标多段数字可共存。数字用服务端报告值，血条仍读实际增减量。末次数字播完后结算，关闭立即取消。
+- 位图沿用旧版 `yellow-73` 普攻、`blue-73` 主动技能和 `green-73` 治疗。旧版还使用红字暴击和独立闪避、格挡标识，当前战报未带这些命中类型，播放端不根据伤害值推断。
+
 ## 当前主线显示入口（2026-11-17）
 
 - 正常胜利奖励区在`ChapterEndView.prefab/MainVictoryPanel/MainVictoryRewards`，600×260、顶部锚点，顶边y=260，content顶对齐y=0。四列、间距、边距和Cell仍由SuperContent保存；增加奖励数量只滚动，不把奖励或确认按钮向下推。此前y=130是居中坐标残留，会让列表跨出底板并压到确认按钮。

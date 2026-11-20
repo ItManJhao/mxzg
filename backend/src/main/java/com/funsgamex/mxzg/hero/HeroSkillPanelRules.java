@@ -403,7 +403,7 @@ public class HeroSkillPanelRules {
         return false;
     }
 
-    /** 按旧166读取普攻偷取攻击的万分比；0表示其他效果，具体转移与恢复交给执行器。 */
+    /** 按寒冰战姬三档旧166配置读取偷取攻击的万分比；0表示其他效果，转移与恢复交给执行器。 */
     public int battleAttackStealRate(int buffId) {
         var buff = row("buff", buffId);
         if (buff.path("type").asInt() != 166) {
@@ -411,7 +411,7 @@ public class HeroSkillPanelRules {
         }
         var values = buff.path("value").asString().split("\\|", -1);
         int rate = Integer.parseInt(values[0]);
-        if ((buffId != 2075301 && buffId != 2075302) || values.length != 4 || rate <= 0 || rate > 10000
+        if ((buffId < 2075301 || buffId > 2075303) || values.length != 4 || rate <= 0 || rate > 10000
                 || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")
                 || buff.path("round").asInt() != 3 || buff.path("attach_percent").asInt() != 10000
                 || buff.path("copy_target").asInt() != 0 || buff.path("effecttype").asInt() != 0
@@ -480,14 +480,15 @@ public class HeroSkillPanelRules {
         return new AttackHealing(Integer.parseInt(value[0]), chance / 10000D);
     }
 
-    /** 读取132号即时治疗的初始伤害比例；其他类型返回0，带伤害类型筛选等未核对变体拒绝执行。 */
+    /** 读取132号即时治疗的初始伤害比例，森镜的状态子动作沿原表零回合，其余已支持动作沿原一回合。 */
     public int battleDamageHealingRate(int buffId) {
         var buff = row("buff", buffId);
         if (buff.path("type").asInt() != 132) {
             return 0;
         }
         var values = buff.path("value").asString().split("\\|", -1);
-        if (buff.path("round").asInt() != 1 || buff.path("attach_percent").asInt() != 10000
+        int duration = buffId == 3083903 ? 0 : 1;
+        if (buff.path("round").asInt() != duration || buff.path("attach_percent").asInt() != 10000
                 || buff.path("effecttype").asInt() != 0 || buff.path("life").asInt() != 0
                 || buff.path("copy_target").asInt() != 0 || buff.path("conflict_type").asInt() != 0
                 || !mapper.readTree(buff.path("art_list").asString()).isEmpty()
@@ -578,16 +579,17 @@ public class HeroSkillPanelRules {
     /** 识别必须在开场实际安装的已接入被动。静态面板被动已计入初始属性。 */
     public static boolean usesOpeningBattlePassive(int skillId) {
         return skillId == 102050234 || skillId == 101050113 || skillId == 103050094 || usesPositionPassive(skillId)
-            || usesProgressionPassive(skillId);
+            || progressionPassiveMaxLevel(skillId) > 0;
     }
 
-    /** 主线已核对的一、二级普通入场被动，发起监听或同级普攻替换，其他配置仍经原预检。 */
-    private static boolean usesProgressionPassive(int skillId) {
+    /** 返回主线普通入场被动已核对的最高等级，0表示由专用路径处理或尚未接通。 */
+    private static int progressionPassiveMaxLevel(int skillId) {
         return switch (skillId) {
             case 101050062, 101050063, 101050093, 101050094, 102040132,
                 102050063, 102050072, 102050074, 102050083, 102050084, 102050114, 102050153, 102050154,
-                103050063, 103050082, 103050084, 103050092, 103050104, 103050113, 105040032 -> true;
-            default -> false;
+                103050063, 103050082, 103050084, 103050092, 103050104, 103050113 -> 3;
+            case 105040032 -> 1;
+            default -> 0;
         };
     }
 
@@ -604,8 +606,9 @@ public class HeroSkillPanelRules {
         if (skillId == 103050094) {
             return eveDeathPassiveArts(level);
         }
-        if (usesProgressionPassive(skillId)) {
-            return openingProgressionPassiveArts(skillId, level);
+        int progressionMaxLevel = progressionPassiveMaxLevel(skillId);
+        if (progressionMaxLevel > 0) {
+            return openingProgressionPassiveArts(skillId, level, progressionMaxLevel);
         }
         if (usesPositionPassive(skillId)) {
             var skill = skills.get(skillId + ":" + level);
@@ -654,10 +657,9 @@ public class HeroSkillPanelRules {
         return List.copyOf(result);
     }
 
-    /** 预检固定面板属性、常驻战斗属性及开场监听；已计入面板的效果不会再次安装。 */
-    private List<DamageArt> openingProgressionPassiveArts(int skillId, int level) {
+    /** 预检固定面板属性、常驻战斗属性及开场监听；最高等级由同一准入规则传入，面板效果只计一次。 */
+    private List<DamageArt> openingProgressionPassiveArts(int skillId, int level, int maxLevel) {
         var skill = skills.get(skillId + ":" + level);
-        int maxLevel = skillId == 105040032 ? 1 : 2;
         if (skill == null || level < 1 || level > maxLevel || skill.path("active_type").asInt() != 0) {
             throw new IllegalArgumentException("未核对的入场被动等级：" + skillId + ":" + level);
         }
@@ -711,13 +713,15 @@ public class HeroSkillPanelRules {
         return List.copyOf(result);
     }
 
-    /** 校验已核对的监听子动作及目标；未采用该路线的动作留给原执行入口。 */
+    /** 按原配置编号校验已核对的监听子动作及目标，其他动作留给各自的执行入口。 */
     public List<Integer> passiveTriggerEffects(int artId) {
-        if (!Set.of(1062201, 1062202, 1094201, 1094202, 1094301, 1094302,
-                2063201, 2063202, 2072201, 2072202,
-                2084201, 2084202, 2084301, 2084302, 2084401, 2084402, 2114201, 2114202,
-                2132301, 2132302, 2153201, 2153202, 3063201, 3063202,
-                3082501, 3082502, 3084301, 3084302, 3092201, 3092202, 3092301, 3092302, 5032301).contains(artId)) {
+        if (!Set.of(1062201, 1062202, 1062203, 1063203, 1094201, 1094202, 1094203, 1094301, 1094302, 1094303,
+                2063201, 2063202, 2063203, 2072201, 2072202, 2072203,
+                2084201, 2084202, 2084203, 2084301, 2084302, 2084303, 2084401, 2084402, 2084403,
+                2114201, 2114202, 2114203,
+                2132301, 2132302, 2132303, 2153201, 2153202, 2153203, 3063201, 3063202, 3063203,
+                3082501, 3082502, 3082503, 3084301, 3084302, 3084303,
+                3092201, 3092202, 3092203, 3092301, 3092302, 3092303, 5032301).contains(artId)) {
             return List.of();
         }
         var art = row("buffart", artId);
@@ -739,12 +743,12 @@ public class HeroSkillPanelRules {
         return List.copyOf(effects);
     }
 
-    /** 读取177受击前后跨越的生命阈值，返回10000制整数。次数由子动作的210自身条件维护。 */
+    /** 读取烈焰之印和决胜令牌三档177的受击生命阈值，返回10000制整数，次数由210子动作维护。 */
     public int battleHpThreshold(int buffId) {
         var buff = row("buff", buffId);
         var values = buff.path("value").asString().split("\\|", -1);
         int rate = Integer.parseInt(values[0]);
-        if (!Set.of(1094101, 1094102, 2084101, 2084102).contains(buffId)
+        if (!Set.of(1094101, 1094102, 1094103, 2084101, 2084102, 2084103).contains(buffId)
                 || buff.path("type").asInt() != 177 || values.length != 4 || rate <= 0 || rate >= 10000
                 || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")) {
             throw new IllegalArgumentException("受击生命阈值含未支持参数：" + buffId);
@@ -752,7 +756,7 @@ public class HeroSkillPanelRules {
         return rate;
     }
 
-    /** 读取210自身计数限制，非210返回0。每个成功的子动作触发按本场携带者与配置区分。 */
+    /** 读取烈焰之印和决胜令牌三档210的触发上限，非210返回0；本场次数区分携带者与配置。 */
     public int battleUseLimit(int buffId) {
         var buff = row("buff", buffId);
         if (buff.path("type").asInt() != 210) {
@@ -760,7 +764,8 @@ public class HeroSkillPanelRules {
         }
         var values = buff.path("value").asString().split("\\|", -1);
         int limit = Integer.parseInt(values[0]);
-        if (!Set.of(1094201, 1094202, 2084201, 2084202).contains(buffId) || values.length != 4 || limit != 1
+        if (!Set.of(1094201, 1094202, 1094203, 2084201, 2084202, 2084203).contains(buffId)
+                || values.length != 4 || limit != 1
                 || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")
                 || buff.path("round").asInt() != 0 || buff.path("attach_percent").asInt() != 10000) {
             throw new IllegalArgumentException("自身次数条件含未核对参数：" + buffId);
@@ -863,9 +868,9 @@ public class HeroSkillPanelRules {
         return buffId >= 1113101 && buffId <= 1113103;
     }
 
-    /** 仅放行主线所需的两个死亡治疗监听，未核实后续的其他180仍明确拒绝。 */
+    /** 放行伊芙百花庇护的三档敌方死亡监听，其他180仍由各自的后续规则预检。 */
     private static boolean isEveDeathListener(int buffId) {
-        return buffId == 3094101 || buffId == 3094102;
+        return buffId >= 3094101 && buffId <= 3094103;
     }
 
     /** 校验伊芙给敌方安装的死亡监听，触发时由原施法者治疗自身。 */
@@ -1177,7 +1182,7 @@ public class HeroSkillPanelRules {
         return inertLegacyAngerAdd(buffId) || dormantDamageHealing(buffId);
     }
 
-    /** 预检219状态条件继承原目标，后续仅使用已核对的自身加成。 */
+    /** 预检219状态条件继承原目标，后续仅使用已核对的自身加成与该次伤害比例治疗。 */
     public boolean battleStatusCondition(int buffId) {
         var buff = row("buff", buffId);
         if (buff.path("type").asInt() != 219) {
@@ -1190,7 +1195,7 @@ public class HeroSkillPanelRules {
         }
         for (var art : children) {
             for (int childId : art.buffs()) {
-                if (!dormantDamageHealing(childId)) {
+                if (!dormantDamageHealing(childId) && (childId != 3083903 || battleDamageHealingRate(childId) == 0)) {
                     onceDamageAttribute(childId);
                 }
             }

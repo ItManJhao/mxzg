@@ -1,11 +1,27 @@
-/** 自身角色资料只读 View：复用旧 SettingLayer，UIManager 统一开关并订阅唯一账号状态；不查询角色、不修改资产。 */
+/**
+ * 个人空间显示当前账号资料及已保存的主线英雄，并打开各独立的设置和编辑窗口。
+ * 用户操作交给 RoleController，资料与阵容读取各自的唯一快照。
+ */
 import { _decorator, Button, Label, Node, view as ccView } from "cc";
+import { EventDispatcher } from "../../../framework/EventDispatcher";
+import { ResManager } from "../../../framework/assets/ResManager";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
-import { UIRegistry } from "../../../framework/ui/UIRegistry";
+import { UIManager } from "../../../framework/ui/UIManager";
+import { UIRegistry, type ViewClass } from "../../../framework/ui/UIRegistry";
+import { HeroRosterModel } from "../../hero/HeroRosterModel";
+import type { OwnedHero } from "../../hero/data/HeroSnapshotUtils";
+import { HeroAttributesView } from "../../hero/ui/HeroAttributesView";
+import { HeroCatalog } from "../../hero/utils/HeroCatalog";
+import { HeroRosterEvent } from "../../hero/utils/HeroRosterEvent";
 import type { AccountModel } from "../AccountModel";
 import type { RoleProfile } from "../AccountModel";
+import type { RoleController } from "../RoleController";
 import { RolePortraitUtils } from "../utils/RolePortraitUtils";
+import { RolePersonalChoiceView } from "./RolePersonalChoiceView";
+import { RolePersonalChoiceUtils } from "../utils/RolePersonalChoiceUtils";
+import { RoleRenameView } from "./RoleRenameView";
+import { RoleSettingsView } from "./RoleSettingsView";
 
 const { ccclass, property } = _decorator;
 
@@ -13,10 +29,12 @@ const { ccclass, property } = _decorator;
 export interface RoleProfileOpenArgs {
     /** 唯一角色资料来源，打开订阅、关闭退订。 */
     model: AccountModel;
+    /** 角色的形象、称号与改名操作入口。 */
+    controller: RoleController;
+    /** 区服目录显示名，调用方找不到时传同一角色的区服 ID。 */
+    serverName: string;
     /** 用户明确点击退出时交回账号服务。 */
     logout: () => void;
-    /** 只读入口的提示出口。 */
-    notice: (text: string) => void;
 }
 @UIRegistry.view({
     id: "role-profile",
@@ -31,7 +49,7 @@ export interface RoleProfileOpenArgs {
 export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
     /** 服务器昵称，长昵称按预制区域收缩。 */
     @property(Label) nickname: Label | null = null;
-    /** 字符串角色 ID，不转换为数值或伪造旧服编号。 */
+    /** 服务端分配的公开数字编号，以字符串完整展示。 */
     @property(Label) roleId: Label | null = null;
     /** 角色等级，不是英雄等级。 */
     @property(Label) level: Label | null = null;
@@ -41,66 +59,92 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
     @property(Node) border: Node | null = null;
     /** 关闭资料页按钮。 */
     @property(Button) closeButton: Button | null = null;
-    /** 只读保留入口：头像、改名、形象及称号，点击仅说明未开放。 */
-    @property([Button]) readonlyButtons: Button[] = [];
-    /** 原设置按钮，仅保留已存在的退出登录功能。 */
+    /** 点击资料头像定位装饰窗的头像页。 */
+    @property(Button) portraitButton: Button | null = null;
+    /** 打开二次改名窗口。 */
+    @property(Button) renameButton: Button | null = null;
+    /** 打开图鉴形象选择。 */
+    @property(Button) imageButton: Button | null = null;
+    /** 打开个人称号目录。 */
+    @property(Button) titleButton: Button | null = null;
+    /** 打开系统设置子窗口。 */
     @property(Button) settingsButton: Button | null = null;
-    /** 账号设置小面板，默认隐藏，不能改角色属性。 */
-    @property(Node) settingsPanel: Node | null = null;
-    /** 明确标注退出登录，不将点击设置直接解释为退出。 */
-    @property(Button) logoutButton: Button | null = null;
-    /** 设置面板返回按钮。 */
-    @property(Button) settingsClose: Button | null = null;
-    /** 本次打开的按钮、资料和尺寸监听，重开前与关闭时统一解除。 */
-    private readonly stops: Array<() => void> = [];
+    /** 固定的主线展示位，排列由预制体的 Layout 处理。 */
+    @property([Button]) showcaseButtons: Button[] = [];
+    /** 与展示按钮同序的英雄头像，不替换角色顶栏头像。 */
+    @property([Node]) showcaseFaces: Node[] = [];
+    /** 与展示按钮同序的格内等级。 */
+    @property([Label]) showcaseLevels: Label[] = [];
+    /** 与英雄格同序的原星级品质框。 */
+    @property([Node]) showcaseFrames: Node[] = [];
+    /** 每个英雄格五枚星标，按格位顺序绑定。 */
+    @property([Node]) showcaseStars: Node[] = [];
+    /** 十星以上的原徽章和加星数字，按英雄格绑定。 */
+    @property([Label]) showcaseHighStars: Label[] = [];
+    /** 区分尚未同步阵容和保存阵容为空。 */
+    @property(Label) emptyShowcase: Label | null = null;
+    /** 当前已显示的主线英雄实例，点击从这一轮展示取 ID，关闭时清空。 */
+    private showcased: readonly OwnedHero[] = [];
 
     /** 打开资料窗并订阅当前角色；同一窗口重新打开时以最新参数重新绑定一次。 */
     public onOpen(args?: RoleProfileOpenArgs): void {
         if (!args?.model.snapshot.role) {
             throw new Error("角色尚未初始化，不能打开资料");
         }
-        this.releaseBindings();
-        this.args = args;
         this.bindButtons(args);
-        this.stops.push(args.model.subscribe(state => {
+        this.ownListener(args.model.subscribe(state => {
             if (state.busy || !state.role) {
                 this.close();
                 return;
             }
             this.render(state.role);
         }));
+        this.ownListener(EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.renderShowcase));
         this.render(args.model.snapshot.role);
-        if (this.settingsPanel) {
-            this.settingsPanel.active = false;
-        }
+        this.renderShowcase();
         this.fit();
         ccView.on("canvas-resize", this.fit, this);
-        this.stops.push(() => ccView.off("canvas-resize", this.fit, this));
+        this.ownListener(() => ccView.off("canvas-resize", this.fit, this));
     }
 
-    /** 页面关闭和引擎直接销毁都经 BaseView 进入此处，结束当前显示期的全部监听。 */
+    /** 关闭时作废展示数据，BaseView 将解绑本轮监听并关闭下属窗口。 */
     public onClose(): void {
-        this.releaseBindings();
-        this.args = undefined;
+        this.showcased = [];
     }
 
-    /** 注册当前窗口的设置、退出和只读按钮。 */
+    /** 注册个人空间的四个子窗和展示格子。 */
     private bindButtons(args: RoleProfileOpenArgs): void {
         this.bindButton(this.closeButton, () => this.close());
-        this.bindButton(this.settingsButton, () => {
-            if (this.settingsPanel) {
-                this.settingsPanel.active = true;
-            }
-        });
-        this.bindButton(this.settingsClose, () => {
-            if (this.settingsPanel) {
-                this.settingsPanel.active = false;
-            }
-        });
-        this.bindButton(this.logoutButton, args.logout);
-        for (const button of this.readonlyButtons) {
-            this.bindButton(button, () => args.notice("当前为角色资料只读展示，该操作暂未开放"));
+        const choice = { account: args.model, role: args.controller };
+        this.bindButton(this.portraitButton, () => this.openWindow(RolePersonalChoiceView, { ...choice, mode: "head" }));
+        this.bindButton(this.imageButton, () => this.openWindow(RolePersonalChoiceView, { ...choice, mode: "image" }));
+        this.bindButton(this.titleButton, () => this.openWindow(RolePersonalChoiceView, { ...choice, mode: "title" }));
+        this.bindButton(this.renameButton, () => this.openWindow(RoleRenameView, args));
+        this.bindButton(this.settingsButton, () => this.openWindow(RoleSettingsView, args));
+        if (!this.emptyShowcase || this.showcaseButtons.length !== 8
+            || this.showcaseFaces.length !== 8 || this.showcaseLevels.length !== 8
+            || this.showcaseFrames.length !== 8 || this.showcaseStars.length !== 40
+            || this.showcaseHighStars.length !== 8) {
+            throw new Error("角色资料的英雄展示位未绑定");
         }
+        this.showcaseButtons.forEach((button, index) => this.bindButton(button, () => {
+            const hero = this.showcased[index];
+            if (hero?.panelStats) {
+                this.openWindow(HeroAttributesView, { heroId: hero.id });
+            } else if (hero) {
+                UIManager.instance.toast("英雄属性尚未同步");
+            }
+        }));
+    }
+
+    /** 子窗归当前资料页所有，打开失败通过全局飘字反馈。 */
+    private openWindow<T>(view: ViewClass<T>, args: T): void {
+        const ui = UIManager.instance;
+        void ui.openChild(this, view, args).catch(error => {
+            if (!UIManager.isOpenCancelled(error) && !UIManager.isFailureReported(error)) {
+                ui.toast("窗口打开失败，请重试");
+            }
+        });
     }
 
     /** 保存注册时的节点，组件随窗口销毁后仍可安全移除本次点击监听。 */
@@ -110,7 +154,7 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
         }
         const node = button.node;
         node.on(Button.EventType.CLICK, action);
-        this.stops.push(() => {
+        this.ownListener(() => {
             if (node.isValid) {
                 node.off(Button.EventType.CLICK, action);
             }
@@ -123,9 +167,44 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
             throw new Error("角色详情资料未绑定");
         }
         this.nickname.string = role.nickname;
-        this.roleId.string = "角色 ID：" + role.id;
+        this.roleId.string = "角色 ID：" + (role.publicId ?? "未同步");
         this.level.string = String(role.level);
         RolePortraitUtils.paint(this.face, this.border, role.basics?.headId, role.basics?.borderId);
+    }
+
+    /** 按已保存阵容的站位显示已拥有英雄，旧版助战位排除在外。 */
+    private renderShowcase(): void {
+        const { mainFormation, heroes } = HeroRosterModel.instance.snapshot;
+        this.showcased = (mainFormation?.slots ?? [])
+            .filter(slot => slot.position < 9)
+            .sort((left, right) => left.position - right.position)
+            .map(slot => heroes.find(hero => hero.id === slot.heroId))
+            .filter((hero): hero is OwnedHero => !!hero);
+        const empty = this.emptyShowcase!;
+        empty.node.active = this.showcased.length === 0;
+        empty.string = mainFormation ? "主线阵容尚未上阵英雄" : "等待主线阵容同步";
+        this.showcaseButtons.forEach((button, index) => {
+            const hero = this.showcased[index];
+            button.node.active = !!hero;
+            if (!hero) {
+                return;
+            }
+            const face = HeroCatalog.find(hero.templateId)?.icon ?? "hero/ui/hero-icon_spr-default";
+            ResManager.setSprite(this.showcaseFaces[index], face, () => this.showcased[index] === hero);
+            ResManager.setSprite(this.showcaseFrames[index], RolePersonalChoiceUtils.heroFrame(hero.star),
+                () => this.showcased[index] === hero);
+            this.showcaseLevels[index].string = String(hero.level);
+            const marker = RolePersonalChoiceUtils.heroStarMarkers(hero.star);
+            const high = this.showcaseHighStars[index];
+            high.node.parent!.active = hero.star >= 10;
+            high.string = hero.star > 10 ? String(hero.star - 10) : "";
+            this.showcaseStars.slice(index * 5, (index + 1) * 5).forEach((star, starIndex) => {
+                star.active = hero.star < 10 && starIndex < marker.count;
+                if (star.active) {
+                    ResManager.setSprite(star, marker.icon, () => this.showcased[index] === hero);
+                }
+            });
+        });
     }
 
     /** 适配资料面板的整体比例，共享模态层负责屏幕遮罩。 */
@@ -135,10 +214,4 @@ export class RoleProfileView extends BaseView<RoleProfileOpenArgs> {
         this.node.setScale(scale, scale, 1);
     }
 
-    /** 逐项解绑，重复关闭或重新打开时不会累加监听。 */
-    private releaseBindings(): void {
-        for (const stop of this.stops.splice(0)) {
-            stop();
-        }
-    }
 }

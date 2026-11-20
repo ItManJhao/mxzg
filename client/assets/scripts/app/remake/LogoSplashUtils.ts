@@ -4,6 +4,7 @@
  * 复用加载画面底图，过小的失败抽出logo不显示，不拼造替代图像。
  */
 import { AudioSource, BlockInputEvents, Node, Sprite, SpriteFrame, UIOpacity, UITransform } from "cc";
+import { AudioPreferences } from "../../core/AudioPreferences";
 import { GameLog } from "../../core/GameLog";
 import { ResourceAssetsUtils } from "../../framework/assets/ResourceAssetsUtils";
 import { TrackedTimers } from "../../framework/TrackedTimers";
@@ -47,7 +48,7 @@ export class LogoSplashUtils {
     private constructor() {
     }
 
-    /** 启动图片归logo节点，音乐由独立句柄持有，停止后拒绝迟到音频。 */
+    /** 启动图片归logo节点，音乐由独立句柄持有并遵循设备设置，停止后拒绝迟到音频。 */
     public static playLogoSplash(parent: Node, audioHost: Node): LogoSplashHandle {
         const root = UiKitUtils.uiNode("LogoSplash");
         const ui = root.addComponent(UITransform);
@@ -87,9 +88,11 @@ export class LogoSplashUtils {
                 return;
             }
             musicStopped = true;
-            if (audio?.isValid) {
-                audio.stop();
-                audio.clip = null;
+            if (audio) {
+                AudioPreferences.stopMusic(audio);
+                if (audio.isValid) {
+                    audio.clip = null;
+                }
             }
             audio = null;
             musicScope.dispose();
@@ -202,7 +205,7 @@ export class LogoSplashUtils {
             audio = audioHost.getComponent(AudioSource) || audioHost.addComponent(AudioSource);
             audio.clip = clip;
             audio.loop = true;
-            audio.play();
+            AudioPreferences.playMusic(audio);
         }).catch(error => {
             if (!musicStopped) {
                 GameLog.shared.classified("APP", "warn", "Boot", "启动音乐加载失败：" + String(error));

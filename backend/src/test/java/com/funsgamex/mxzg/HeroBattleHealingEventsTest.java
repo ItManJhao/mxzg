@@ -97,15 +97,16 @@ class HeroBattleHealingEventsTest {
         assertEquals(100, engine.state(2).hp());
     }
 
-    /** 内层已回血后再遇未知效果，连同内层血量、治疗量、日志和中断一起回滚。 */
+    /** 内层已回血后遇到缺失动作，连同内层血量、治疗量、日志和中断一起回滚。 */
     @Test void nestedFailureRollback() {
         var one = unit(1);
         var two = unit(2);
         one.actor().listen(listener(1, 186, 2, 1063201));
-        one.actor().listen(listener(2, 186, 2, 2114201));
+        one.actor().listen(listener(2, 186, 2, Integer.MAX_VALUE));
         one.actor().interrupt(2);
         var engine = executor(one, two);
-        assertThrows(IllegalArgumentException.class, () -> engine.art(new Invocation(1, 1063201, 1, 2)));
+        var error = assertThrows(IllegalStateException.class, () -> engine.art(new Invocation(1, 1063201, 1, 2)));
+        assertEquals("技能面板配置缺失：buffart:" + Integer.MAX_VALUE, error.getMessage());
         assertEquals(100, engine.state(1).hp());
         assertEquals(100, engine.state(2).hp());
         assertEquals(0, one.actor().lastTreatment());

@@ -576,6 +576,7 @@ export class BattleAttackUtils {
                 ];
             case 1103101: // 琪亚娜三技能。
             case 1103102:
+            case 1103103:
                 return [
                     {
                         type: 3, delay: 0, dimly: 0,
@@ -688,8 +689,9 @@ export class BattleAttackUtils {
                         files: ["skill-102050111-1"], sounds: [],
                     },
                 ];
-            case 2113101:
-            case 2113102: // 章鱼公主三技能，施法后第60帧对目标播放原特效。
+            case 2113101: // 章鱼公主三技能，施法后第60帧对目标播放原特效。
+            case 2113102:
+            case 2113103:
                 return [
                     {
                         type: 3, delay: 0, dimly: 0,
@@ -786,8 +788,9 @@ export class BattleAttackUtils {
                         files: ["skill-102050151-1"], sounds: [],
                     },
                 ];
-            case 2155201:
-            case 2155202: // 凯萨丁替换普攻共享原帧，延后目标特效并保持暗屏。
+            case 2155201: // 凯萨丁三级替换普攻同用原帧，延后目标特效并保持暗屏。
+            case 2155202:
+            case 2155203:
                 return [
                     {
                         type: 7, delay: 10, dimly: 1,
@@ -870,6 +873,7 @@ export class BattleAttackUtils {
                 ];
             case 3083101: // 森镜之灵三技能。
             case 3083102:
+            case 3083103:
                 return [
                     {
                         type: 3, delay: 0, dimly: 0,
@@ -934,6 +938,7 @@ export class BattleAttackUtils {
                 ];
             case 3103101: // 安塔利亚三技能。
             case 3103102:
+            case 3103103:
                 return [
                     {
                         type: 3, delay: 0, dimly: 0,
@@ -951,7 +956,8 @@ export class BattleAttackUtils {
                 ];
             case 3110200: // 开膛手·J·普攻
             case 3115201:
-            case 3115202: { // 被动替换后的普攻使用同一帧序列，并按旧表暗屏。
+            case 3115202:
+            case 3115203: { // 被动替换后的普攻使用同一帧序列，并按旧表暗屏。
                 const dimly = id === 3110200 ? 0 : 1;
                 return [
                     {

@@ -105,6 +105,32 @@ export interface EquipmentTypeRow {
   /** 星级 */
   readonly star: number;
 }
+export interface HeadUnlockRow {
+  /** 头像id */
+  readonly icon: number;
+  /** 未激活时点击弹出的飘字提示 */
+  readonly tips_lang: number;
+  /** 在哪功能解锁 */
+  readonly unlock_task: string;
+  /** 解锁类型 */
+  readonly unlock_type: number;
+}
+export interface HeroFashionRow {
+  /** 皮肤描述 */
+  readonly fashion_desc: number;
+  /** 英雄皮肤idx */
+  readonly fashion_id: number;
+  /** 皮肤名 */
+  readonly fashion_name: number;
+  /** 备注 */
+  readonly hero_name?: string;
+  /** 英雄类型 */
+  readonly hero_type: number;
+  /** 皮肤技能（技能id） */
+  readonly skill?: number;
+  /** 技能等级 */
+  readonly skill_level?: number;
+}
 export interface HeroLevelRow {
   /** 升级所需英雄经验 */
   readonly exp_need: number;
@@ -337,6 +363,50 @@ export interface OpenConditionRow {
   /** 世界等级条件 */
   readonly world_level?: number;
 }
+export interface RoleBorderRow {
+  /** 激活类型 */
+  readonly active_type: number;
+  /** 激活条件 */
+  readonly condition: string;
+  /** 头像框ID */
+  readonly icon: number;
+  /** 限时时间 */
+  readonly limit_time: number;
+  /** 名字 */
+  readonly name_lang: number;
+  /** 激活提示语言编号 */
+  readonly tips_lang: number;
+}
+export interface RolePeerageRow {
+  /** 属性加成 */
+  readonly ability: string;
+  /** 贵族等级 */
+  readonly level: number;
+  /** 贵族昵称 */
+  readonly nick: string;
+  /** 充值档位 */
+  readonly recharge: number;
+}
+export interface RoleTitleRow {
+  /** 属性 */
+  readonly ability: string;
+  /** 条件 */
+  readonly condition: string;
+  /** ID */
+  readonly idx: number;
+  /** 前端跳转 */
+  readonly jump: string;
+  /** 称号名字 */
+  readonly name: string;
+  /** 称号描述 */
+  readonly remark: number;
+  /** 称号资源 */
+  readonly resources_id: number;
+  /** 有效时间 */
+  readonly time: number;
+  /** 称号类型 */
+  readonly type: number;
+}
 export interface RoleUpgradeFeatureRow {
   /** 旧功能标识，用于升级页下一功能图片 */
   readonly atom: string;
@@ -399,6 +469,8 @@ export const GConfig = {
   CityPosition: "CityPosition",
   EquipmentSetType: "EquipmentSetType",
   EquipmentType: "EquipmentType",
+  HeadUnlock: "HeadUnlock",
+  HeroFashion: "HeroFashion",
   HeroLevel: "HeroLevel",
   HeroSkill: "HeroSkill",
   HeroStar: "HeroStar",
@@ -409,6 +481,9 @@ export const GConfig = {
   Language: "Language",
   LoadingTips: "LoadingTips",
   OpenCondition: "OpenCondition",
+  RoleBorder: "RoleBorder",
+  RolePeerage: "RolePeerage",
+  RoleTitle: "RoleTitle",
   RoleUpgradeFeature: "RoleUpgradeFeature",
   ScoreCount: "ScoreCount",
   SpiritDisplay: "SpiritDisplay",
@@ -423,6 +498,8 @@ export interface ConfigRowMap {
   CityPosition: CityPositionRow;
   EquipmentSetType: EquipmentSetTypeRow;
   EquipmentType: EquipmentTypeRow;
+  HeadUnlock: HeadUnlockRow;
+  HeroFashion: HeroFashionRow;
   HeroLevel: HeroLevelRow;
   HeroSkill: HeroSkillRow;
   HeroStar: HeroStarRow;
@@ -433,6 +510,9 @@ export interface ConfigRowMap {
   Language: LanguageRow;
   LoadingTips: LoadingTipsRow;
   OpenCondition: OpenConditionRow;
+  RoleBorder: RoleBorderRow;
+  RolePeerage: RolePeerageRow;
+  RoleTitle: RoleTitleRow;
   RoleUpgradeFeature: RoleUpgradeFeatureRow;
   ScoreCount: ScoreCountRow;
   SpiritDisplay: SpiritDisplayRow;
@@ -447,6 +527,8 @@ export interface ConfigKeyMap {
   CityPosition: number;
   EquipmentSetType: number;
   EquipmentType: number;
+  HeadUnlock: number;
+  HeroFashion: number;
   HeroLevel: number;
   HeroSkill: number;
   HeroStar: number;
@@ -457,6 +539,9 @@ export interface ConfigKeyMap {
   Language: number | string;
   LoadingTips: number;
   OpenCondition: string;
+  RoleBorder: number;
+  RolePeerage: number;
+  RoleTitle: number;
   RoleUpgradeFeature: string;
   ScoreCount: number;
   SpiritDisplay: number;
@@ -471,6 +556,8 @@ export interface ConfigFileMap {
   CityPosition: { readonly main: readonly CityPositionRow[] };
   EquipmentSetType: { readonly rows: readonly EquipmentSetTypeRow[] };
   EquipmentType: { readonly rows: readonly EquipmentTypeRow[] };
+  HeadUnlock: { readonly rows: readonly HeadUnlockRow[] };
+  HeroFashion: { readonly rows: readonly HeroFashionRow[] };
   HeroLevel: { readonly rows: readonly HeroLevelRow[] };
   HeroSkill: { readonly rows: readonly HeroSkillRow[] };
   HeroStar: { readonly rows: readonly HeroStarRow[] };
@@ -481,6 +568,9 @@ export interface ConfigFileMap {
   Language: { readonly rows: readonly LanguageRow[] };
   LoadingTips: { readonly rows: readonly LoadingTipsRow[] };
   OpenCondition: { readonly rows: readonly OpenConditionRow[] };
+  RoleBorder: { readonly rows: readonly RoleBorderRow[] };
+  RolePeerage: { readonly rows: readonly RolePeerageRow[] };
+  RoleTitle: { readonly rows: readonly RoleTitleRow[] };
   RoleUpgradeFeature: { readonly rows: readonly RoleUpgradeFeatureRow[] };
   ScoreCount: { readonly rows: readonly ScoreCountRow[] };
   SpiritDisplay: { readonly rows: readonly SpiritDisplayRow[] };
@@ -767,6 +857,75 @@ export const CONFIG_SCHEMA = {
     },
     "key": "equipment_type",
     "path": "config/equipmenttype"
+  },
+  "HeadUnlock": {
+    "container": "rows",
+    "fields": {
+      "icon": {
+        "note": "头像 ID",
+        "required": true,
+        "type": "number"
+      },
+      "tips_lang": {
+        "note": "解锁提示语言 ID",
+        "required": true,
+        "type": "number"
+      },
+      "unlock_task": {
+        "note": "原解锁条件 JSON",
+        "required": true,
+        "type": "string"
+      },
+      "unlock_type": {
+        "note": "解锁来源类型",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "icon",
+    "path": "config/headunlock"
+  },
+  "HeroFashion": {
+    "container": "rows",
+    "fields": {
+      "fashion_desc": {
+        "note": "时装描述语言 ID",
+        "required": true,
+        "type": "number"
+      },
+      "fashion_id": {
+        "note": "时装及形象 ID",
+        "required": true,
+        "type": "number"
+      },
+      "fashion_name": {
+        "note": "时装名称语言 ID",
+        "required": true,
+        "type": "number"
+      },
+      "hero_name": {
+        "note": "原配置英雄及皮肤名称",
+        "required": false,
+        "type": "string"
+      },
+      "hero_type": {
+        "note": "对应英雄模板",
+        "required": true,
+        "type": "number"
+      },
+      "skill": {
+        "note": "配置技能 ID",
+        "required": false,
+        "type": "number"
+      },
+      "skill_level": {
+        "note": "配置技能等级",
+        "required": false,
+        "type": "number"
+      }
+    },
+    "key": "fashion_id",
+    "path": "config/herofashion"
   },
   "HeroLevel": {
     "container": "rows",
@@ -1370,6 +1529,122 @@ export const CONFIG_SCHEMA = {
     },
     "key": "id",
     "path": "config/opencondition"
+  },
+  "RoleBorder": {
+    "container": "rows",
+    "fields": {
+      "active_type": {
+        "note": "原激活方式",
+        "required": true,
+        "type": "number"
+      },
+      "condition": {
+        "note": "原激活条件 JSON",
+        "required": true,
+        "type": "string"
+      },
+      "icon": {
+        "note": "头像框 ID，0 为默认框",
+        "required": true,
+        "type": "number"
+      },
+      "limit_time": {
+        "note": "原有效天数，-1 永久",
+        "required": true,
+        "type": "number"
+      },
+      "name_lang": {
+        "note": "头像框名称语言 ID",
+        "required": true,
+        "type": "number"
+      },
+      "tips_lang": {
+        "note": "激活条件语言 ID",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "icon",
+    "path": "config/border"
+  },
+  "RolePeerage": {
+    "container": "rows",
+    "fields": {
+      "ability": {
+        "note": "标记属性配置 JSON",
+        "required": true,
+        "type": "string"
+      },
+      "level": {
+        "note": "贵重标记等级",
+        "required": true,
+        "type": "number"
+      },
+      "nick": {
+        "note": "原标记名称",
+        "required": true,
+        "type": "string"
+      },
+      "recharge": {
+        "note": "累计充值门槛，100 单位为 1 pt",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "level",
+    "path": "config/peerageemblem"
+  },
+  "RoleTitle": {
+    "container": "rows",
+    "fields": {
+      "ability": {
+        "note": "原属性明细 JSON",
+        "required": true,
+        "type": "string"
+      },
+      "condition": {
+        "note": "获得条件原参数",
+        "required": true,
+        "type": "string"
+      },
+      "idx": {
+        "note": "称号配置 ID",
+        "required": true,
+        "type": "number"
+      },
+      "jump": {
+        "note": "取得来源及关闭提示的原 JSON",
+        "required": true,
+        "type": "string"
+      },
+      "name": {
+        "note": "称号显示名称",
+        "required": true,
+        "type": "string"
+      },
+      "remark": {
+        "note": "取得说明语言 ID",
+        "required": true,
+        "type": "number"
+      },
+      "resources_id": {
+        "note": "称号预览图资源 ID",
+        "required": true,
+        "type": "number"
+      },
+      "time": {
+        "note": "获得后的有效期秒数",
+        "required": true,
+        "type": "number"
+      },
+      "type": {
+        "note": "原称号类别",
+        "required": true,
+        "type": "number"
+      }
+    },
+    "key": "idx",
+    "path": "config/title"
   },
   "RoleUpgradeFeature": {
     "container": "rows",

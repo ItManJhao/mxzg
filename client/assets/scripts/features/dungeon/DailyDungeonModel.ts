@@ -34,7 +34,7 @@ export class DailyDungeonModel {
     /** 单个应用只维护一份副本状态。 */
     public static readonly instance = new DailyDungeonModel();
 
-    /** 最近一次服务端确认的状态，登录后首次访问前为 null。 */
+    /** 最近一次服务端确认的状态，后台提醒或页面首次读取完成前为 null。 */
     public state: DailyDungeonState | null = null;
     /** 尚未开始播放的已结算战报；接管显示或换号后清空。 */
     private battle: DailyDungeonBattle | null = null;

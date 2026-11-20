@@ -1,10 +1,11 @@
 /**
- * 英雄头像格子：按传入展示数据更新图片、等级和星级，保持Prefab结构和绑定可编辑。
+ * 英雄头像格子：按展示数据更新图片、等级、星级和调用方指定的红点。
  * 点击由列表派发给所属页面；本组件不持有选择回调、页面导航或名册状态。
  */
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
 import { ResManager } from "../../../framework/assets/ResManager";
+import { RedDotManager } from "../../../framework/ui/RedDotManager";
 import { HERO_FACE_FALLBACK, HeroCellModel } from "./HeroListPresentation";
 
 const { ccclass, property } = _decorator;
@@ -39,6 +40,15 @@ export class HeroIconCellView extends Component {
     @property(Node)
     battle: Node | null = null;
 
+    /** 名册格实装的可选红点挂点，其他英雄格可省略。 */
+    @property(Node)
+    reminderDot: Node | null = null;
+
+    /** 当前格绑定的英雄红点路径，未授权显示时为 null。 */
+    private redDotPath: string | null = null;
+    /** 可见格监听的解除函数，关闭和复用时清理。 */
+    private unwatchRedDot: (() => void) | null = null;
+
     /** 图片绘制代次，复用和销毁时递增，拒绝旧图片覆盖当前格子。 */
     private revision = 0;
 
@@ -56,8 +66,11 @@ export class HeroIconCellView extends Component {
             throw new Error("assets/bundles/module/hero/prefabs/HeroIconCellView.prefab / HeroIconCellView: face 缺少 Sprite");
     }
 
-    /** 复用格子时更新显示和可选状态，并使旧图标加载结果失效；不绑定点击。 */
-    show(cell: HeroCellModel): void {
+    /**
+     * 更新格子显示和可选状态，并使复用前的头像请求和红点监听失效。
+     * @param redDotPath 只由名册传入。省略或传 null 时隐藏红点。
+     */
+    show(cell: HeroCellModel, redDotPath: string | null = null): void {
         this.validateBindings();
         const revision = ++this.revision;
         const empty = cell.kind === "empty";
@@ -69,6 +82,49 @@ export class HeroIconCellView extends Component {
         if (this.lock) this.lock.active = !empty && cell.locked;
         if (this.battle) this.battle.active = !empty && cell.deployed && cell.kind === "owned";
         this.button!.interactable = !empty;
+        if (redDotPath !== this.redDotPath) {
+            this.clearRedDotBinding();
+            this.redDotPath = redDotPath;
+        }
+        if (this.enabled && this.node.activeInHierarchy) {
+            this.bindRedDot();
+        }
+    }
+
+    /** 回收格先接收数据再激活，激活时补上其当前行的监听。 */
+    public onEnable(): void {
+        this.bindRedDot();
+    }
+
+    /** 格子离开视口或所属页面关闭时，立即解绑。 */
+    public onDisable(): void {
+        this.clearRedDotBinding();
+    }
+
+    /** 只为当前有效的红点挂点订阅一次，读到即时汇总后再更新。 */
+    private bindRedDot(): void {
+        const dot = this.reminderDot;
+        if (!dot || this.unwatchRedDot) {
+            return;
+        }
+        if (this.redDotPath === null) {
+            dot.active = false;
+            return;
+        }
+        this.unwatchRedDot = RedDotManager.instance.watch(this.redDotPath, visible => {
+            if (dot.isValid) {
+                dot.active = visible;
+            }
+        });
+    }
+
+    /** 隐藏上一行红点并解除其订阅，可重复清理。 */
+    private clearRedDotBinding(): void {
+        this.unwatchRedDot?.();
+        this.unwatchRedDot = null;
+        if (this.reminderDot?.isValid) {
+            this.reminderDot.active = false;
+        }
     }
 
     /** 头像仅接受本轮显示请求，空格或后续英雄不能被旧回包覆盖。 */
@@ -111,9 +167,10 @@ export class HeroIconCellView extends Component {
         }
     }
 
-    /** 销毁时废弃全部在途图片；列表选择监听由所属列表释放。 */
+    /** 销毁时废弃在途图片并释放红点监听。 */
     onDestroy(): void {
         this.revision++;
+        this.clearRedDotBinding();
     }
 
     private paintLevel(level: number | null): void {

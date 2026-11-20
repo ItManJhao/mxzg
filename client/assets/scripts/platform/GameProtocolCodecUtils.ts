@@ -59,7 +59,8 @@ const payloads = [
     "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus",
     "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus",
     "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus",
-    "roleName", "heroSummonRequest", "heroSummonReceipt",
+    "roleName", "roleImageChange", "roleRename", "roleTitles", "roleImages", "heroSummonRequest", "heroSummonReceipt",
+    "roleDecorations", "roleDecorationId", "rolePeerageDisplay",
     "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
     "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt",
     "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt",
@@ -125,6 +126,12 @@ export class GameProtocolCodecUtils {
         if (frame.kind === "request" && frame.name === Protocol.ROLE_NAME_SET) {
             return "roleName";
         }
+        if (frame.kind === "request" && frame.name === Protocol.ROLE_IMAGE_CHANGE) {
+            return "roleImageChange";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.ROLE_RENAME) {
+            return "roleRename";
+        }
         if (frame.kind === "request" && (frame.name === Protocol.CHAPTER_CLAIM || frame.name === Protocol.CHAPTER_REPLAY)) {
             return "chapterBattleId";
         }
@@ -139,6 +146,10 @@ export class GameProtocolCodecUtils {
         }
         if (frame.kind === "request") {
             switch (frame.name) {
+                case Protocol.ROLE_HEAD_CHANGE:
+                case Protocol.ROLE_BORDER_CHANGE:
+                case Protocol.ROLE_BORDER_ACTIVATE: return "roleDecorationId";
+                case Protocol.ROLE_PEERAGE_DISPLAY: return "rolePeerageDisplay";
                 case Protocol.GM_LEVEL_SET: return "gmSetRoleLevel";
                 case Protocol.GM_CHAPTER_SET: return "gmSetChapter";
                 case Protocol.GM_TIME_SET: return "gmSetTime";
@@ -187,7 +198,16 @@ export class GameProtocolCodecUtils {
                 case Protocol.DAILY_DUNGEON_LIST: return "dailyDungeonState";
                 case Protocol.DAILY_DUNGEON_CHALLENGE: return "dailyDungeonReceipt";
                 case Protocol.ROLE_NAME_RANDOM: return "roleName";
-                case Protocol.ROLE_NAME_SET: return "empty";
+                case Protocol.ROLE_NAME_SET:
+                case Protocol.ROLE_RENAME:
+                case Protocol.ROLE_IMAGE_CHANGE: return "empty";
+                case Protocol.ROLE_TITLES_LIST: return "roleTitles";
+                case Protocol.ROLE_IMAGES_LIST: return "roleImages";
+                case Protocol.ROLE_DECORATIONS_LIST:
+                case Protocol.ROLE_HEAD_CHANGE:
+                case Protocol.ROLE_BORDER_CHANGE:
+                case Protocol.ROLE_BORDER_ACTIVATE:
+                case Protocol.ROLE_PEERAGE_DISPLAY: return "roleDecorations";
                 case Protocol.ROLE_WELCOME_CLAIM: return "rewardNotice";
                 case Protocol.GM_GRANT: return "gmResult";
                 case Protocol.GM_STATUS: return "gmStatus";
@@ -803,6 +823,88 @@ export class GameProtocolCodecUtils {
         }
     }
 
+    /** 验证个人空间申请、装饰资格及称号列表的 DTO，非法列表不得局部交付。 */
+    private static validateRoleProfile(frame: GameFrame, payload: string | null): void {
+        const isId = (value: unknown): value is number => typeof value === "number"
+            && Number.isSafeInteger(value) && value > 0 && value <= 0x7fffffff;
+        switch (payload) {
+            case "roleImageChange": {
+                const body = this.messageObject(frame.body);
+                if (Object.keys(body).length !== 1 || !isId(body.imageId)) {
+                    throw new Error("角色形象变更载荷无效");
+                }
+                break;
+            }
+            case "roleRename": {
+                const body = this.messageObject(frame.body);
+                if (Object.keys(body).length !== 2 || typeof body.nickname !== "string"
+                    || (body.paymentType !== 1 && body.paymentType !== 2)) {
+                    throw new Error("角色改名载荷无效");
+                }
+                break;
+            }
+            case "roleImages": {
+                const images = this.messageObject(frame.body).imageIds;
+                if (!Array.isArray(images) || !images.every(isId) || new Set(images).size !== images.length) {
+                    throw new Error("角色形象列表无效");
+                }
+                break;
+            }
+            case "roleTitles": {
+                const titles = this.messageObject(frame.body).titles;
+                if (!Array.isArray(titles)) {
+                    throw new Error("角色称号列表无效");
+                }
+                const ids = new Set<number>();
+                for (const value of titles) {
+                    const title = this.messageObject(value);
+                    const end = title.endTimeSeconds;
+                    if (!isId(title.idx) || ids.has(title.idx)
+                        || typeof end !== "number" || !Number.isSafeInteger(end) || end < -1) {
+                        throw new Error("角色称号记录无效");
+                    }
+                    ids.add(title.idx);
+                }
+                break;
+            }
+            case "roleDecorationId": {
+                const body = this.messageObject(frame.body);
+                if (Object.keys(body).length !== 1 || (body.id !== 0 && !isId(body.id))) {
+                    throw new Error("角色装饰变更载荷无效");
+                }
+                break;
+            }
+            case "rolePeerageDisplay": {
+                const body = this.messageObject(frame.body);
+                if (Object.keys(body).length !== 1 || typeof body.visible !== "boolean") {
+                    throw new Error("贵重标记设置载荷无效");
+                }
+                break;
+            }
+            case "roleDecorations": {
+                const { headIds, borders, totalRecharge, showPeerage } = this.messageObject(frame.body);
+                if (!Array.isArray(headIds) || !headIds.every(isId) || new Set(headIds).size !== headIds.length
+                    || !Array.isArray(borders) || typeof totalRecharge !== "number"
+                    || !Number.isSafeInteger(totalRecharge) || totalRecharge < 0 || typeof showPeerage !== "boolean") {
+                    throw new Error("角色装饰状态无效");
+                }
+                const ids = new Set<number>();
+                for (const row of borders) {
+                    const { id, expiresAtSeconds } = this.messageObject(row);
+                    if ((id !== 0 && !isId(id)) || ids.has(id)
+                        || (expiresAtSeconds !== -1 && !(typeof expiresAtSeconds === "number"
+                            && Number.isSafeInteger(expiresAtSeconds) && expiresAtSeconds > 0))) {
+                        throw new Error("角色头像框记录无效");
+                    }
+                    ids.add(id);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
     /** 编码完整帧并限制大小；返回独立 ArrayBuffer，微信小游戏可直接发送，不使用 Base64 包装。 */
     public static encodeGameFrame(frame: GameFrame): ArrayBuffer {
         GameProtocolCodecUtils.validateIntegers(frame);
@@ -818,6 +920,7 @@ export class GameProtocolCodecUtils {
         const { body, ...envelope } = frame;
         const payload = GameProtocolCodecUtils.payloadName(frame);
         GameProtocolCodecUtils.validateRoleName(frame, payload);
+        GameProtocolCodecUtils.validateRoleProfile(frame, payload);
         const message: Record<string, unknown> = { ...envelope };
         if (payload) {
             message[payload] = payload === "inventory" ? { items: body } : body;
@@ -872,6 +975,7 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateDailyDungeon(frame);
         HeroLevelData.validateFrame(frame);
         GameProtocolCodecUtils.validateRoleName(frame, expected);
+        GameProtocolCodecUtils.validateRoleProfile(frame, expected);
         return frame;
     }
 }

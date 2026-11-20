@@ -44,7 +44,7 @@
 | dungeon.gold.list | 请求/响应 | 空请求获取金币首关、当前已用次数、下次报价、原奖励预览和准入状态 |
 | dungeon.gold.challenge | 请求/响应 | `requestId`、`sweep`、`maxDiamonds`；回包携带原战报或扫荡结果、实际发放明细与最新次数 |
 | formation.save | 请求/响应 | 当前角色主线阵容保存；requestId 持久幂等，回执不代替统一快照 |
-| chapter.challenge | 请求/响应 | 按服务端当前开放范围挑战（默认连续第 1～300 关），权威输入与持久战报 |
+| chapter.challenge | 请求/响应 | 按服务端当前开放范围挑战（默认连续第 1～550 关），权威输入与持久战报 |
 | chapter.claim | 请求/响应 | 指定主线战报的幂等结算；不是挂机宝箱领取 |
 | chapter.replay | 请求/响应 | 恢复既有持久战报，不重新计算或发奖 |
 | chapter.milestone.claim | 请求/响应 | 以 rewardId 领取达成的里程碑，返回原持久回执和实际到账 |
@@ -135,13 +135,13 @@ Item 增加可选字符串 instance_id=3，item_id=1 仍为配置 ID；不得把
 
 ## 主线完整目录与新挑战范围（2026-11-17）
 
-`MainChapterState`追加可选`uint32 challenge_limit=5`，解码为正整数`challengeLimit`。当前真实状态来自服务端可信`mxzg.main-chapter.challenge-limit`，环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`默认 300。850 个关卡配置通过开放范围限制新挑战。登录、state.changed和重新鉴权沿原Snapshot下发，SessionSnapshotService重建最终revision时保留范围与原里程碑集合，不增加请求或第二份主线状态。
+`MainChapterState`追加可选`uint32 challenge_limit=5`，解码为正整数`challengeLimit`。当前真实状态来自服务端可信`mxzg.main-chapter.challenge-limit`，环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`默认 550。850 个关卡配置通过开放范围限制新挑战。登录、state.changed和重新鉴权沿原Snapshot下发，SessionSnapshotService重建最终revision时保留范围与原里程碑集合，不增加请求或第二份主线状态。
 
 缺字段表示范围未同步/历史未记录，不能把Protobuf默认0解释为当前上限，也不能在客户端补9。当前范围缺失时禁全新挑战；已经收到的值必须为正uint32。maxCleared允许高于当前范围，缩限不删除旧进度。客户端发起新挑战使用最新权威Model，服务端只在新挑战分支校验当前配置；原requestId回执先查、pending先结算、原battleId的claim/replay继续恢复，不受新上限阻断。旧持久回执JSON缺challengeLimit保持null，新回执冻结当时状态；历史范围不能覆盖最新已接纳状态。
 
 MainChapterRules按全局idx装配850关；mode/chapter/mission只作旧敌方配置定位，不是进度身份。MainChapterService传给战场、进度和持久Details.mission的值统一为全局idx，历史字段名不变。`battle.preview`请求/响应中的mission同样表示全局idx；场景`audit:lineup:<idx>`、`chapter:lineup:<idx>`与`idle:chapter:<idx>`使用严格正十进制索引，保留站位/阵营身份、HP及完整事件校验，不再把三个固定敌方模板当作通用战报契约。挂机仍为最多三名我方、单名怪物初始HP1及仅普攻的既有只读演出，不结算资产。
 
-服务端按实际开放段预检敌方配置、战斗、首通发奖和后续挂机快照。挂机收益配置已覆盖850关，新挑战默认连续第 1～300 关。提高上限前核对连续依赖，玩家资格仍由权威主线状态校验。
+服务端按实际开放段预检敌方配置、战斗、首通发奖和后续挂机快照。挂机收益配置已覆盖850关，新挑战默认连续第 1～550 关。提高上限前核对连续依赖，玩家资格仍由权威主线状态校验。
 
 第551～850关的三维定位存在源表差异，保留待确认标记。服务端遇到不唯一的敌方定位时拒绝构建战场。各关覆盖与阻塞见 [最新依赖审计](validation/main-chapter-dependencies-20261117-stage20.json)。
 
@@ -222,7 +222,7 @@ ChapterReceipt新增可选experience=5，包含发奖事务前后的等级、等
 治疗顺序事件kind=recovery复用actual_hp_change/reported_hp_change/dead字段，不新增字段号。服务端在治疗发生处同时记录累计量与顺序事件，事务失败一并回滚；双方均按原事件顺序验证生命。actual为实际变化，reported为含溢出的旧报告量，dead固定false；拒绝复活、越过死亡边界、超过最大生命或实际量与溢出上限不符的记录。客户端血条使用actual，飘字和统计使用reported，不重算或请求奖励。2026-11-09真实主线只增加冰晶女巫2031301至2031303直接治疗覆盖，不能解释为全部治疗技能开放。
 
 - `chapter.idle.encounter`：鉴权后空请求，返回 `IdleEncounter`（Frame字段30），包含stage、assetRevision、lineupVersion、强类型BattleReplay。沿用WS＋Protobuf，无HTTP或JSON回退。协议名遵守小写分段规则。
-- 服务端在角色锁内读取当前已通关关卡与持久挂机选择，随机取该关卡一条非空怪物配置，首行动序号按0..2抽取后对英雄数量取模。双方只用普攻，怪物初始HP=1；挂机使用旧独立阵型1，保留原站位和元素加成。常规玩家来源随当前连续第 1～300 关进度，挂机仍仅消费原普攻配置；缺配置或未支持分支明确拒绝。
+- 服务端在角色锁内读取当前已通关关卡与持久挂机选择，随机取该关卡一条非空怪物配置，首行动序号按0..2抽取后对英雄数量取模。双方只用普攻，怪物初始HP=1；挂机使用旧独立阵型1，保留原站位和元素加成。常规玩家来源随当前连续第 1～550 关进度，挂机仍仅消费原普攻配置；缺配置或未支持分支明确拒绝。
 - 场景标识 `idle:chapter:N` 与 `chapter:lineup:N` 挑战战报分开。演出不写主线战报、不领奖、不推进关卡、不增加资产版本。客户端校验完整生命事件链、最多三名我方和一名敌方、普攻类型，以及当前关卡/阵容/资产版本后才播放。
 - 此请求只在行军路程到达遇敌点后发出，不查询角色/背包。失败不伪造击杀；下一次行军到遇敌点才重试。页面关闭或进入挑战取消本页演出，连接切换仍由通信和应用层隔离。
 

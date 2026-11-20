@@ -5,6 +5,7 @@
 import { _decorator, AudioSource, Button, Label, Node, Sprite, SpriteFrame, Tween, UIOpacity, UITransform, Vec3 } from "cc";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
+import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { BaseView } from "../../../framework/ui/BaseView";
@@ -267,7 +268,7 @@ export class RewardView extends BaseView<RewardArgs> {
         }
     }
 
-    /** 挂载旧开场的两路骨骼、场景与音效；播放计时从最后一项资源就绪开始。 */
+    /** 挂载旧开场的骨骼和场景；音效遵循设备设置，播放计时从全部资源就绪开始。 */
     private async prepareSummonIntro(preparation: number): Promise<void> {
         const [lizi, shangcheng] = this.summonEffects!.children;
         const [frame, clip] = await Promise.all([
@@ -291,12 +292,12 @@ export class RewardView extends BaseView<RewardArgs> {
         this.fitViewport();
         this.summonEffects!.active = true;
         this.rewardAudio!.clip = clip;
-        this.rewardAudio!.play();
+        AudioPreferences.playEffect(this.rewardAudio!);
         this.introSeconds = 0;
         this.introReady = true;
     }
 
-    /** 加载标题、彩带、音效及本次英雄头像，等头像准备后再展示格子，普通物品仍按需赋图。 */
+    /** 等标题、彩带和头像就绪再展示奖励，普通物品按需赋图，音效遵循设备设置。 */
     private async prepare(preparation: number): Promise<void> {
         const assets = ResourceAssetsUtils.forNode(this.node);
         const heroIcons = new Set<string>();
@@ -336,7 +337,7 @@ export class RewardView extends BaseView<RewardArgs> {
                 this.animateCell(node, key);
             }
         }
-        this.rewardAudio!.play();
+        AudioPreferences.playEffect(this.rewardAudio!);
         this.finishOpen();
     }
 

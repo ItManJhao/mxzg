@@ -2,12 +2,12 @@
 package com.funsgamex.mxzg.role;
 
 /**
- * 不包含经验获取、升级奖励或外观选择行为；这些玩法须按原项目另行恢复。
+ * 保存服务端已确认的基础资料；经验、装备与外观指令由所属业务事务处理。
  * @param experience 当前角色等级内经验，不是英雄经验或累计经验
  * @param cup 奖杯积分，新角色采用 inituser 配置
- * @param headId 已选头像配置 ID，0 表示尚未设置
+ * @param headId 已选头像配置 ID；存量 0 使用配置初始化的默认头像
  * @param imageId 角色形象配置 ID，与头像不同，由首抽配置初始化
- * @param borderId 已选头像框配置 ID，0 表示尚未设置
+ * @param borderId 已选头像框配置 ID；0 是免费默认框
  * @param language 角色语言编号，新版当前为 1（简体中文）
  * @param createdAtSeconds 创角 Unix 秒，旧记录为 0 表示历史未知
  * @param lastLoginAtSeconds 最后显式登录 Unix 秒，网络恢复不更新

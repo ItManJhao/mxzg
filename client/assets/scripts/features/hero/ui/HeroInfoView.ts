@@ -5,6 +5,7 @@
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import type { AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { RedDotManager } from "../../../framework/ui/RedDotManager";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UIManager } from "../../../framework/ui/UIManager";
@@ -26,11 +27,13 @@ import { HeroCatalog } from "../utils/HeroCatalog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
 import { _decorator, AudioSource, Button, Color, Label, Node, Sprite, SpriteFrame, UIOpacity } from "cc";
+import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
 interface HeroPortraitData { templateId: number; name: string; level: number; }
 import { BattleSpineService } from "../../battle/ui/BattleSpineService";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BagModel } from "../../bag/BagModel";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { BagEvent } from "../../bag/utils/BagEvent";
 import { EquipmentInfoView } from "../../bag/ui/EquipmentInfoView";
 
@@ -251,31 +254,34 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         }
     }
 
-    /** 用已同步的背包装备显示旧版红点与一键操作。 */
+    /** 读取当前英雄的装备红点，并用同一条件控制一键穿装的显示。 */
     private refreshEquipmentActions(): void {
         if (this.closed) {
             return;
         }
         const worn = this.currentHero()?.equipment?.items;
         const ready = !!worn && BagModel.instance.snapshot.synced;
-        const better = ready ? HeroEquipmentUtils.betterSlots(BagModel.instance.items, worn) : new Set<number>();
+        const dots = RedDotManager.instance;
+        const better = ready && dots.isVisible(GameRedDotKey.heroEquipment(this.selectedId));
         const busy = HeroEquipmentController.instance.busy;
         this.equipmentButtons.forEach(button => { button.interactable = ready && !busy; });
-        this.equipmentDots.forEach((node, index) => { node.active = better.has(index + 1); });
+        this.equipmentDots.forEach((node, index) => {
+            node.active = better && dots.isVisible(GameRedDotKey.heroEquipment(this.selectedId, index + 1));
+        });
         if (this.equipAllButton) {
-            this.equipAllButton.node.active = better.size > 0;
+            this.equipAllButton.node.active = better;
             this.equipAllButton.interactable = !busy;
         }
         if (this.equipAllDot) {
-            this.equipAllDot.active = better.size > 0;
+            this.equipAllDot.active = better;
         }
         if (this.unequipAllButton) {
-            this.unequipAllButton.node.active = ready && better.size === 0 && worn.length > 0;
+            this.unequipAllButton.node.active = ready && !better && worn.length > 0;
             this.unequipAllButton.interactable = !busy;
         }
     }
 
-    /** 装备操作回包只刷新按钮和原音效，具体属性由统一快照刷新。 */
+    /** 装备操作回包刷新按钮，穿装音效遵循设备偏好，具体属性由统一快照刷新。 */
     private onEquipmentChanged(receipt?: { heroId: string; changed: boolean; action: string }): void {
         this.refreshEquipmentActions();
         const source = this.equipmentAudio;
@@ -285,7 +291,7 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         void ResourceAssetsUtils.forNode(this.node).loadPath("audio/equip-wear-1", "AudioClip").then(clip => {
             if (!this.closed && source.isValid && receipt.heroId === this.selectedId) {
                 source.clip = clip;
-                source.play();
+                AudioPreferences.playEffect(source);
             }
         }).catch(error => GameLog.shared.warnOnce("MODULE", "HeroInfoView", "EQUIP_SOUND", String(error)));
     }
@@ -390,7 +396,7 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         this.upgradeButton.node.active = ready || pending;
         this.upgradeButton.interactable = ready;
         this.upgradeLabel.string = pending ? "升级中…" : quote.jumpLabel ? `升${quote.levels}级` : "升级";
-        this.upgradeDot.active = ready && quote.levels > 0;
+        this.upgradeDot.active = ready && RedDotManager.instance.isVisible(GameRedDotKey.heroUpgrade(this.selectedId));
         this.upgradeCosts.active = ready;
         this.upgradeGold.string = UiKitUtils.formatAmount(quote.gold);
         this.upgradeGold.color = quote.goldEnough ? Color.WHITE : new Color(255, 0, 0);

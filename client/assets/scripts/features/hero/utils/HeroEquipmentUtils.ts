@@ -41,17 +41,35 @@ export class HeroEquipmentUtils {
 
     /** 红点只显示有装备可填的空槽或能严格提高原评分的槽，实际择装仍归服务端。 */
     public static betterSlots(items: readonly BagItemData[], worn: readonly HeroEquipment[]): Set<number> {
+        return new Set(HeroEquipmentUtils.improvableSlots(HeroEquipmentUtils.bestAvailableScores(items), worn));
+    }
+
+    /** 一次扫描可穿戴库存，记录每个部位最好的评分，供同名册的英雄共同使用。 */
+    public static bestAvailableScores(items: readonly BagItemData[]): ReadonlyMap<number, number> {
         const config = GameConfig.instance;
-        const better = new Set<number>();
-        const scores = new Map(worn.map(item => [item.slot, EquipmentDetailUtils.score(item.templateId, config)]));
+        const best = new Map<number, number>();
         for (const item of items) {
             const slot = config.getConfig(GConfig.EquipmentType, item.itemId)?.place;
-            if (!slot || !item.instanceId || better.has(slot)) {
+            if (!slot || !item.instanceId) {
                 continue;
             }
-            const current = scores.get(slot);
-            if (current === undefined || EquipmentDetailUtils.score(item.itemId, config) > current) {
-                better.add(slot);
+            const score = EquipmentDetailUtils.score(item.itemId, config);
+            if (!best.has(slot) || score > best.get(slot)!) {
+                best.set(slot, score);
+            }
+        }
+        return best;
+    }
+
+    /** 返回有装备可填的空槽，或可替换成严格更高评分装备的现有槽位。 */
+    public static improvableSlots(scores: ReadonlyMap<number, number>, worn: readonly HeroEquipment[]): number[] {
+        const config = GameConfig.instance;
+        const equipped = new Map(worn.map(item => [item.slot, EquipmentDetailUtils.score(item.templateId, config)]));
+        const better: number[] = [];
+        for (const [slot, candidate] of scores) {
+            const current = equipped.get(slot);
+            if (current === undefined || candidate > current) {
+                better.push(slot);
             }
         }
         return better;

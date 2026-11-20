@@ -150,7 +150,7 @@ export class AccountApi implements AccountGateway {
         });
     }
 
-    /** 校验角色归属、钱包、命名和赠礼状态，返回可提交的完整角色资料。 */
+    /** 校验角色归属、公开编号、钱包、命名和赠礼状态，返回可提交的完整角色资料。 */
     public static readRole(value: unknown): RoleProfile {
         const row = AccountApi.record(value);
         if (typeof row.id !== "string" || !row.id || typeof row.nickname !== "string" ||
@@ -163,6 +163,11 @@ export class AccountApi implements AccountGateway {
         if (serverId !== undefined && (typeof serverId !== "string" || !/^[a-z0-9_-]{1,32}$/.test(serverId))) {
             throw new Error("角色区服无效");
         }
+        const publicId = row.publicId;
+        if (publicId !== undefined && (typeof publicId !== "string" || !/^[1-9][0-9]{9,18}$/.test(publicId)
+            || (publicId.length === 19 && publicId > "9223372036854775807"))) {
+            throw new Error("角色公开编号无效");
+        }
         if (row.firstNamed !== undefined && typeof row.firstNamed !== "boolean") {
             throw new Error("角色首次命名状态无效");
         }
@@ -172,6 +177,7 @@ export class AccountApi implements AccountGateway {
         }
         return {
             id: row.id,
+            ...(typeof publicId === "string" ? { publicId } : {}),
             nickname: row.nickname,
             ...(typeof row.firstNamed === "boolean" ? { firstNamed: row.firstNamed } : {}),
             ...(typeof row.welcomeGiftAvailable === "boolean" ? { welcomeGiftAvailable: row.welcomeGiftAvailable } : {}),

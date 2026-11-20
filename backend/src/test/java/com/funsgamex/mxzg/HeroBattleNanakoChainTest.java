@@ -140,7 +140,7 @@ class HeroBattleNanakoChainTest {
         }
     }
 
-    /** 三单位边界夹具：单位3攻击最高，生命可设为1验证致死分支；非真实玩家属性。 */
+    /** 为单位3绑定最高的本场攻击属性，生命可设为1以覆盖致死分支。 */
     private HeroBattleHealingExecutor criticalBoundaryEngine(long strongestHp) {
         var mapper = new ObjectMapper();
         var rules = new HeroSkillPanelRules(mapper);
@@ -151,9 +151,11 @@ class HeroBattleNanakoChainTest {
             new State(new Actor(2, List.of(normal)), 2, 1, 10000, 10000, 100, 0, 0, 0),
             new State(new Actor(3, List.of(normal)), 2, 2, strongestHp, strongestHp, 200, 0, 0, 0)));
         var attributes = new HeroBattleChapterScenario(mapper).initial().getFirst().attributes();
+        var strongestAttributes = new HashMap<>(attributes);
+        strongestAttributes.put(220, Math.multiplyExact(attributes.get(220), 2L));
         engine.bindCombatData(1, 10205023, attributes);
         engine.bindCombatData(2, 10101001, attributes);
-        engine.bindCombatData(3, 10101001, attributes);
+        engine.bindCombatData(3, 10101001, strongestAttributes);
         engine.setOnceAttribute(1, 207, 10000);
         engine.beginRound(1, List.of(1, 2, 3), new HeroBattleElementRules(mapper), rate -> rate >= 1);
         return engine;

@@ -2811,9 +2811,16 @@ var mxzg = $root.mxzg = (() => {
       Frame.prototype.gmSetChapter = null;
       Frame.prototype.gmSetTime = null;
       Frame.prototype.gmTime = null;
+      Frame.prototype.roleImageChange = null;
+      Frame.prototype.roleRename = null;
+      Frame.prototype.roleTitles = null;
+      Frame.prototype.roleImages = null;
+      Frame.prototype.roleDecorations = null;
+      Frame.prototype.roleDecorationId = null;
+      Frame.prototype.rolePeerageDisplay = null;
       let $oneOfFields;
       Object.defineProperty(Frame.prototype, "payload", {
-        get: $util.oneOfGetter($oneOfFields = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed", "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter", "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus", "rewardNotice", "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus", "heroFirstSummonRequest", "heroFirstSummonReceipt", "heroFirstSummonStatus", "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus", "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus", "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus", "roleName", "heroSummonRequest", "heroSummonReceipt", "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt", "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt", "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt", "gmSetRoleLevel", "gmSetChapter", "gmSetTime", "gmTime"]),
+        get: $util.oneOfGetter($oneOfFields = ["authenticate", "accepted", "snapshot", "inventory", "heartbeat", "kicked", "empty", "login", "servers", "gmGrant", "gmResult", "gmStatus", "formationSave", "formationSaved", "battlePreview", "battlePreviewed", "chapterChallenge", "chapterBattleId", "chapterReceipt", "chapterReplay", "idleEncounter", "chapterIdleClaim", "chapterIdleClaimStatusRequest", "chapterIdleClaimReceipt", "chapterIdleClaimStatus", "rewardNotice", "chapterMilestoneClaim", "chapterMilestoneReceipt", "chapterMilestoneStatus", "heroFirstSummonRequest", "heroFirstSummonReceipt", "heroFirstSummonStatus", "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus", "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus", "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus", "roleName", "heroSummonRequest", "heroSummonReceipt", "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt", "marketState", "marketBuyRequest", "marketRefreshRequest", "marketReceipt", "dailyDungeonState", "dailyDungeonChallengeRequest", "dailyDungeonReceipt", "gmSetRoleLevel", "gmSetChapter", "gmSetTime", "gmTime", "roleImageChange", "roleRename", "roleTitles", "roleImages", "roleDecorations", "roleDecorationId", "rolePeerageDisplay"]),
         set: $util.oneOfSetter($oneOfFields)
       });
       Frame.create = function create(properties) {
@@ -3153,6 +3160,41 @@ var mxzg = $root.mxzg = (() => {
             /* id 68, wireType 2 =*/
             546
           ).fork(), q + 1).ldelim();
+        if (message.roleImageChange != null && Object.hasOwnProperty.call(message, "roleImageChange"))
+          $root.mxzg.game.RoleImageChange.encode(message.roleImageChange, writer.uint32(
+            /* id 69, wireType 2 =*/
+            554
+          ).fork(), q + 1).ldelim();
+        if (message.roleRename != null && Object.hasOwnProperty.call(message, "roleRename"))
+          $root.mxzg.game.RoleRename.encode(message.roleRename, writer.uint32(
+            /* id 70, wireType 2 =*/
+            562
+          ).fork(), q + 1).ldelim();
+        if (message.roleTitles != null && Object.hasOwnProperty.call(message, "roleTitles"))
+          $root.mxzg.game.RoleTitles.encode(message.roleTitles, writer.uint32(
+            /* id 71, wireType 2 =*/
+            570
+          ).fork(), q + 1).ldelim();
+        if (message.roleImages != null && Object.hasOwnProperty.call(message, "roleImages"))
+          $root.mxzg.game.RoleImages.encode(message.roleImages, writer.uint32(
+            /* id 72, wireType 2 =*/
+            578
+          ).fork(), q + 1).ldelim();
+        if (message.roleDecorations != null && Object.hasOwnProperty.call(message, "roleDecorations"))
+          $root.mxzg.game.RoleDecorations.encode(message.roleDecorations, writer.uint32(
+            /* id 73, wireType 2 =*/
+            586
+          ).fork(), q + 1).ldelim();
+        if (message.roleDecorationId != null && Object.hasOwnProperty.call(message, "roleDecorationId"))
+          $root.mxzg.game.RoleDecorationId.encode(message.roleDecorationId, writer.uint32(
+            /* id 74, wireType 2 =*/
+            594
+          ).fork(), q + 1).ldelim();
+        if (message.rolePeerageDisplay != null && Object.hasOwnProperty.call(message, "rolePeerageDisplay"))
+          $root.mxzg.game.RolePeerageDisplay.encode(message.rolePeerageDisplay, writer.uint32(
+            /* id 75, wireType 2 =*/
+            602
+          ).fork(), q + 1).ldelim();
         return writer;
       };
       Frame.decode = function decode(reader, length, error, long) {
@@ -3440,6 +3482,34 @@ var mxzg = $root.mxzg = (() => {
             }
             case 68: {
               message.gmTime = $root.mxzg.game.GmTime.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 69: {
+              message.roleImageChange = $root.mxzg.game.RoleImageChange.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 70: {
+              message.roleRename = $root.mxzg.game.RoleRename.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 71: {
+              message.roleTitles = $root.mxzg.game.RoleTitles.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 72: {
+              message.roleImages = $root.mxzg.game.RoleImages.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 73: {
+              message.roleDecorations = $root.mxzg.game.RoleDecorations.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 74: {
+              message.roleDecorationId = $root.mxzg.game.RoleDecorationId.decode(reader, reader.uint32(), void 0, long + 1);
+              break;
+            }
+            case 75: {
+              message.rolePeerageDisplay = $root.mxzg.game.RolePeerageDisplay.decode(reader, reader.uint32(), void 0, long + 1);
               break;
             }
             default:
@@ -4079,6 +4149,76 @@ var mxzg = $root.mxzg = (() => {
               return "gmTime." + error;
           }
         }
+        if (message.roleImageChange != null && Object.hasOwnProperty.call(message, "roleImageChange")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.RoleImageChange.verify(message.roleImageChange, long + 1);
+            if (error)
+              return "roleImageChange." + error;
+          }
+        }
+        if (message.roleRename != null && Object.hasOwnProperty.call(message, "roleRename")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.RoleRename.verify(message.roleRename, long + 1);
+            if (error)
+              return "roleRename." + error;
+          }
+        }
+        if (message.roleTitles != null && Object.hasOwnProperty.call(message, "roleTitles")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.RoleTitles.verify(message.roleTitles, long + 1);
+            if (error)
+              return "roleTitles." + error;
+          }
+        }
+        if (message.roleImages != null && Object.hasOwnProperty.call(message, "roleImages")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.RoleImages.verify(message.roleImages, long + 1);
+            if (error)
+              return "roleImages." + error;
+          }
+        }
+        if (message.roleDecorations != null && Object.hasOwnProperty.call(message, "roleDecorations")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.RoleDecorations.verify(message.roleDecorations, long + 1);
+            if (error)
+              return "roleDecorations." + error;
+          }
+        }
+        if (message.roleDecorationId != null && Object.hasOwnProperty.call(message, "roleDecorationId")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.RoleDecorationId.verify(message.roleDecorationId, long + 1);
+            if (error)
+              return "roleDecorationId." + error;
+          }
+        }
+        if (message.rolePeerageDisplay != null && Object.hasOwnProperty.call(message, "rolePeerageDisplay")) {
+          if (properties.payload === 1)
+            return "payload: multiple values";
+          properties.payload = 1;
+          {
+            let error = $root.mxzg.game.RolePeerageDisplay.verify(message.rolePeerageDisplay, long + 1);
+            if (error)
+              return "rolePeerageDisplay." + error;
+          }
+        }
         return null;
       };
       Frame.fromObject = function fromObject(object, long) {
@@ -4402,6 +4542,41 @@ var mxzg = $root.mxzg = (() => {
           if (!$util.isObject(object.gmTime))
             throw TypeError(".mxzg.game.Frame.gmTime: object expected");
           message.gmTime = $root.mxzg.game.GmTime.fromObject(object.gmTime, long + 1);
+        }
+        if (object.roleImageChange != null) {
+          if (!$util.isObject(object.roleImageChange))
+            throw TypeError(".mxzg.game.Frame.roleImageChange: object expected");
+          message.roleImageChange = $root.mxzg.game.RoleImageChange.fromObject(object.roleImageChange, long + 1);
+        }
+        if (object.roleRename != null) {
+          if (!$util.isObject(object.roleRename))
+            throw TypeError(".mxzg.game.Frame.roleRename: object expected");
+          message.roleRename = $root.mxzg.game.RoleRename.fromObject(object.roleRename, long + 1);
+        }
+        if (object.roleTitles != null) {
+          if (!$util.isObject(object.roleTitles))
+            throw TypeError(".mxzg.game.Frame.roleTitles: object expected");
+          message.roleTitles = $root.mxzg.game.RoleTitles.fromObject(object.roleTitles, long + 1);
+        }
+        if (object.roleImages != null) {
+          if (!$util.isObject(object.roleImages))
+            throw TypeError(".mxzg.game.Frame.roleImages: object expected");
+          message.roleImages = $root.mxzg.game.RoleImages.fromObject(object.roleImages, long + 1);
+        }
+        if (object.roleDecorations != null) {
+          if (!$util.isObject(object.roleDecorations))
+            throw TypeError(".mxzg.game.Frame.roleDecorations: object expected");
+          message.roleDecorations = $root.mxzg.game.RoleDecorations.fromObject(object.roleDecorations, long + 1);
+        }
+        if (object.roleDecorationId != null) {
+          if (!$util.isObject(object.roleDecorationId))
+            throw TypeError(".mxzg.game.Frame.roleDecorationId: object expected");
+          message.roleDecorationId = $root.mxzg.game.RoleDecorationId.fromObject(object.roleDecorationId, long + 1);
+        }
+        if (object.rolePeerageDisplay != null) {
+          if (!$util.isObject(object.rolePeerageDisplay))
+            throw TypeError(".mxzg.game.Frame.rolePeerageDisplay: object expected");
+          message.rolePeerageDisplay = $root.mxzg.game.RolePeerageDisplay.fromObject(object.rolePeerageDisplay, long + 1);
         }
         return message;
       };
@@ -4730,6 +4905,41 @@ var mxzg = $root.mxzg = (() => {
           object.gmTime = $root.mxzg.game.GmTime.toObject(message.gmTime, options, q + 1);
           if (options.oneofs)
             object.payload = "gmTime";
+        }
+        if (message.roleImageChange != null && Object.hasOwnProperty.call(message, "roleImageChange")) {
+          object.roleImageChange = $root.mxzg.game.RoleImageChange.toObject(message.roleImageChange, options, q + 1);
+          if (options.oneofs)
+            object.payload = "roleImageChange";
+        }
+        if (message.roleRename != null && Object.hasOwnProperty.call(message, "roleRename")) {
+          object.roleRename = $root.mxzg.game.RoleRename.toObject(message.roleRename, options, q + 1);
+          if (options.oneofs)
+            object.payload = "roleRename";
+        }
+        if (message.roleTitles != null && Object.hasOwnProperty.call(message, "roleTitles")) {
+          object.roleTitles = $root.mxzg.game.RoleTitles.toObject(message.roleTitles, options, q + 1);
+          if (options.oneofs)
+            object.payload = "roleTitles";
+        }
+        if (message.roleImages != null && Object.hasOwnProperty.call(message, "roleImages")) {
+          object.roleImages = $root.mxzg.game.RoleImages.toObject(message.roleImages, options, q + 1);
+          if (options.oneofs)
+            object.payload = "roleImages";
+        }
+        if (message.roleDecorations != null && Object.hasOwnProperty.call(message, "roleDecorations")) {
+          object.roleDecorations = $root.mxzg.game.RoleDecorations.toObject(message.roleDecorations, options, q + 1);
+          if (options.oneofs)
+            object.payload = "roleDecorations";
+        }
+        if (message.roleDecorationId != null && Object.hasOwnProperty.call(message, "roleDecorationId")) {
+          object.roleDecorationId = $root.mxzg.game.RoleDecorationId.toObject(message.roleDecorationId, options, q + 1);
+          if (options.oneofs)
+            object.payload = "roleDecorationId";
+        }
+        if (message.rolePeerageDisplay != null && Object.hasOwnProperty.call(message, "rolePeerageDisplay")) {
+          object.rolePeerageDisplay = $root.mxzg.game.RolePeerageDisplay.toObject(message.rolePeerageDisplay, options, q + 1);
+          if (options.oneofs)
+            object.payload = "rolePeerageDisplay";
         }
         return object;
       };
@@ -9101,6 +9311,7 @@ var mxzg = $root.mxzg = (() => {
       Role.prototype.basics = null;
       Role.prototype.firstNamed = false;
       Role.prototype.welcomeGiftAvailable = false;
+      Role.prototype.publicId = "";
       Role.create = function create(properties) {
         return new Role(properties);
       };
@@ -9150,6 +9361,11 @@ var mxzg = $root.mxzg = (() => {
             /* id 9, wireType 0 =*/
             72
           ).bool(message.welcomeGiftAvailable);
+        if (message.publicId != null && Object.hasOwnProperty.call(message, "publicId"))
+          writer.uint32(
+            /* id 10, wireType 2 =*/
+            82
+          ).string(message.publicId);
         return writer;
       };
       Role.decode = function decode(reader, length, error, long) {
@@ -9211,6 +9427,10 @@ var mxzg = $root.mxzg = (() => {
               message.welcomeGiftAvailable = reader.bool();
               break;
             }
+            case 10: {
+              message.publicId = reader.string();
+              break;
+            }
             default:
               reader.skipType(tag & 7, long);
               break;
@@ -9267,6 +9487,10 @@ var mxzg = $root.mxzg = (() => {
           if (typeof message.welcomeGiftAvailable !== "boolean")
             return "welcomeGiftAvailable: boolean expected";
         }
+        if (message.publicId != null && Object.hasOwnProperty.call(message, "publicId")) {
+          if (!$util.isString(message.publicId))
+            return "publicId: string expected";
+        }
         return null;
       };
       Role.fromObject = function fromObject(object, long) {
@@ -9316,6 +9540,8 @@ var mxzg = $root.mxzg = (() => {
           message.firstNamed = Boolean(object.firstNamed);
         if (object.welcomeGiftAvailable != null)
           message.welcomeGiftAvailable = Boolean(object.welcomeGiftAvailable);
+        if (object.publicId != null)
+          message.publicId = String(object.publicId);
         return message;
       };
       Role.toObject = function toObject(message, options, q) {
@@ -9344,6 +9570,7 @@ var mxzg = $root.mxzg = (() => {
           object.basics = null;
           object.firstNamed = false;
           object.welcomeGiftAvailable = false;
+          object.publicId = "";
         }
         if (message.id != null && Object.hasOwnProperty.call(message, "id"))
           object.id = message.id;
@@ -9373,6 +9600,8 @@ var mxzg = $root.mxzg = (() => {
           object.firstNamed = message.firstNamed;
         if (message.welcomeGiftAvailable != null && Object.hasOwnProperty.call(message, "welcomeGiftAvailable"))
           object.welcomeGiftAvailable = message.welcomeGiftAvailable;
+        if (message.publicId != null && Object.hasOwnProperty.call(message, "publicId"))
+          object.publicId = message.publicId;
         return object;
       };
       Role.prototype.toJSON = function toJSON() {
@@ -9501,6 +9730,1311 @@ var mxzg = $root.mxzg = (() => {
         return typeUrlPrefix + "/mxzg.game.RoleName";
       };
       return RoleName;
+    })();
+    game.RoleImageChange = (function() {
+      function RoleImageChange(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RoleImageChange.prototype.imageId = 0;
+      RoleImageChange.create = function create(properties) {
+        return new RoleImageChange(properties);
+      };
+      RoleImageChange.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.imageId);
+        return writer;
+      };
+      RoleImageChange.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RoleImageChange();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.imageId = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "imageId"))
+          throw $util.ProtocolError("missing required 'imageId'", { instance: message });
+        return message;
+      };
+      RoleImageChange.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.imageId))
+          return "imageId: integer expected";
+        return null;
+      };
+      RoleImageChange.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RoleImageChange)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RoleImageChange: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RoleImageChange();
+        if (object.imageId != null)
+          message.imageId = object.imageId >>> 0;
+        return message;
+      };
+      RoleImageChange.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults)
+          object.imageId = 0;
+        if (message.imageId != null && Object.hasOwnProperty.call(message, "imageId"))
+          object.imageId = message.imageId;
+        return object;
+      };
+      RoleImageChange.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RoleImageChange.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RoleImageChange";
+      };
+      return RoleImageChange;
+    })();
+    game.RoleRename = (function() {
+      function RoleRename(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RoleRename.prototype.nickname = "";
+      RoleRename.prototype.paymentType = 0;
+      RoleRename.create = function create(properties) {
+        return new RoleRename(properties);
+      };
+      RoleRename.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 2 =*/
+          10
+        ).string(message.nickname);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).uint32(message.paymentType);
+        return writer;
+      };
+      RoleRename.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RoleRename();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.nickname = reader.string();
+              break;
+            }
+            case 2: {
+              message.paymentType = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "nickname"))
+          throw $util.ProtocolError("missing required 'nickname'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "paymentType"))
+          throw $util.ProtocolError("missing required 'paymentType'", { instance: message });
+        return message;
+      };
+      RoleRename.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isString(message.nickname))
+          return "nickname: string expected";
+        if (!$util.isInteger(message.paymentType))
+          return "paymentType: integer expected";
+        return null;
+      };
+      RoleRename.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RoleRename)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RoleRename: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RoleRename();
+        if (object.nickname != null)
+          message.nickname = String(object.nickname);
+        if (object.paymentType != null)
+          message.paymentType = object.paymentType >>> 0;
+        return message;
+      };
+      RoleRename.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.nickname = "";
+          object.paymentType = 0;
+        }
+        if (message.nickname != null && Object.hasOwnProperty.call(message, "nickname"))
+          object.nickname = message.nickname;
+        if (message.paymentType != null && Object.hasOwnProperty.call(message, "paymentType"))
+          object.paymentType = message.paymentType;
+        return object;
+      };
+      RoleRename.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RoleRename.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RoleRename";
+      };
+      return RoleRename;
+    })();
+    game.RoleTitle = (function() {
+      function RoleTitle(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RoleTitle.prototype.idx = 0;
+      RoleTitle.prototype.endTimeSeconds = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      RoleTitle.create = function create(properties) {
+        return new RoleTitle(properties);
+      };
+      RoleTitle.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.idx);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).int64(message.endTimeSeconds);
+        return writer;
+      };
+      RoleTitle.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RoleTitle();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.idx = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.endTimeSeconds = reader.int64();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "idx"))
+          throw $util.ProtocolError("missing required 'idx'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "endTimeSeconds"))
+          throw $util.ProtocolError("missing required 'endTimeSeconds'", { instance: message });
+        return message;
+      };
+      RoleTitle.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.idx))
+          return "idx: integer expected";
+        if (!$util.isInteger(message.endTimeSeconds) && !(message.endTimeSeconds && $util.isInteger(message.endTimeSeconds.low) && $util.isInteger(message.endTimeSeconds.high)))
+          return "endTimeSeconds: integer|Long expected";
+        return null;
+      };
+      RoleTitle.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RoleTitle)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RoleTitle: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RoleTitle();
+        if (object.idx != null)
+          message.idx = object.idx >>> 0;
+        if (object.endTimeSeconds != null) {
+          if ($util.Long)
+            message.endTimeSeconds = $util.Long.fromValue(object.endTimeSeconds, false);
+          else if (typeof object.endTimeSeconds === "string")
+            message.endTimeSeconds = parseInt(object.endTimeSeconds, 10);
+          else if (typeof object.endTimeSeconds === "number")
+            message.endTimeSeconds = object.endTimeSeconds;
+          else if (typeof object.endTimeSeconds === "object")
+            message.endTimeSeconds = new $util.LongBits(object.endTimeSeconds.low >>> 0, object.endTimeSeconds.high >>> 0).toNumber();
+        }
+        return message;
+      };
+      RoleTitle.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.idx = 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.endTimeSeconds = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.endTimeSeconds = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+        }
+        if (message.idx != null && Object.hasOwnProperty.call(message, "idx"))
+          object.idx = message.idx;
+        if (message.endTimeSeconds != null && Object.hasOwnProperty.call(message, "endTimeSeconds"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.endTimeSeconds = typeof message.endTimeSeconds === "number" ? BigInt(message.endTimeSeconds) : $util.Long.fromBits(message.endTimeSeconds.low >>> 0, message.endTimeSeconds.high >>> 0, false).toBigInt();
+          else if (typeof message.endTimeSeconds === "number")
+            object.endTimeSeconds = options.longs === String ? String(message.endTimeSeconds) : message.endTimeSeconds;
+          else
+            object.endTimeSeconds = options.longs === String ? $util.Long.prototype.toString.call(message.endTimeSeconds) : options.longs === Number ? new $util.LongBits(message.endTimeSeconds.low >>> 0, message.endTimeSeconds.high >>> 0).toNumber() : message.endTimeSeconds;
+        return object;
+      };
+      RoleTitle.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RoleTitle.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RoleTitle";
+      };
+      return RoleTitle;
+    })();
+    game.RoleTitles = (function() {
+      function RoleTitles(properties) {
+        this.titles = [];
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RoleTitles.prototype.titles = $util.emptyArray;
+      RoleTitles.create = function create(properties) {
+        return new RoleTitles(properties);
+      };
+      RoleTitles.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        if (message.titles != null && message.titles.length)
+          for (let i = 0; i < message.titles.length; ++i)
+            $root.mxzg.game.RoleTitle.encode(message.titles[i], writer.uint32(
+              /* id 1, wireType 2 =*/
+              10
+            ).fork(), q + 1).ldelim();
+        return writer;
+      };
+      RoleTitles.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RoleTitles();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              if (!(message.titles && message.titles.length))
+                message.titles = [];
+              message.titles.push($root.mxzg.game.RoleTitle.decode(reader, reader.uint32(), void 0, long + 1));
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        return message;
+      };
+      RoleTitles.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (message.titles != null && Object.hasOwnProperty.call(message, "titles")) {
+          if (!Array.isArray(message.titles))
+            return "titles: array expected";
+          for (let i = 0; i < message.titles.length; ++i) {
+            let error = $root.mxzg.game.RoleTitle.verify(message.titles[i], long + 1);
+            if (error)
+              return "titles." + error;
+          }
+        }
+        return null;
+      };
+      RoleTitles.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RoleTitles)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RoleTitles: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RoleTitles();
+        if (object.titles) {
+          if (!Array.isArray(object.titles))
+            throw TypeError(".mxzg.game.RoleTitles.titles: array expected");
+          message.titles = [];
+          for (let i = 0; i < object.titles.length; ++i) {
+            if (!$util.isObject(object.titles[i]))
+              throw TypeError(".mxzg.game.RoleTitles.titles: object expected");
+            message.titles[i] = $root.mxzg.game.RoleTitle.fromObject(object.titles[i], long + 1);
+          }
+        }
+        return message;
+      };
+      RoleTitles.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.arrays || options.defaults)
+          object.titles = [];
+        if (message.titles && message.titles.length) {
+          object.titles = [];
+          for (let j = 0; j < message.titles.length; ++j)
+            object.titles[j] = $root.mxzg.game.RoleTitle.toObject(message.titles[j], options, q + 1);
+        }
+        return object;
+      };
+      RoleTitles.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RoleTitles.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RoleTitles";
+      };
+      return RoleTitles;
+    })();
+    game.RoleImages = (function() {
+      function RoleImages(properties) {
+        this.imageIds = [];
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RoleImages.prototype.imageIds = $util.emptyArray;
+      RoleImages.create = function create(properties) {
+        return new RoleImages(properties);
+      };
+      RoleImages.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        if (message.imageIds != null && message.imageIds.length)
+          for (let i = 0; i < message.imageIds.length; ++i)
+            writer.uint32(
+              /* id 1, wireType 0 =*/
+              8
+            ).uint32(message.imageIds[i]);
+        return writer;
+      };
+      RoleImages.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RoleImages();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              if (!(message.imageIds && message.imageIds.length))
+                message.imageIds = [];
+              if ((tag & 7) === 2) {
+                let end2 = reader.uint32() + reader.pos;
+                if (end2 > reader.len)
+                  throw RangeError("index out of range");
+                reader.len = end2;
+                while (reader.pos < end2)
+                  message.imageIds.push(reader.uint32());
+                if (reader.pos !== end2)
+                  throw RangeError("index out of range");
+                reader.len = end;
+              } else
+                message.imageIds.push(reader.uint32());
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        return message;
+      };
+      RoleImages.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (message.imageIds != null && Object.hasOwnProperty.call(message, "imageIds")) {
+          if (!Array.isArray(message.imageIds))
+            return "imageIds: array expected";
+          for (let i = 0; i < message.imageIds.length; ++i)
+            if (!$util.isInteger(message.imageIds[i]))
+              return "imageIds: integer[] expected";
+        }
+        return null;
+      };
+      RoleImages.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RoleImages)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RoleImages: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RoleImages();
+        if (object.imageIds) {
+          if (!Array.isArray(object.imageIds))
+            throw TypeError(".mxzg.game.RoleImages.imageIds: array expected");
+          message.imageIds = [];
+          for (let i = 0; i < object.imageIds.length; ++i)
+            message.imageIds[i] = object.imageIds[i] >>> 0;
+        }
+        return message;
+      };
+      RoleImages.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.arrays || options.defaults)
+          object.imageIds = [];
+        if (message.imageIds && message.imageIds.length) {
+          object.imageIds = [];
+          for (let j = 0; j < message.imageIds.length; ++j)
+            object.imageIds[j] = message.imageIds[j];
+        }
+        return object;
+      };
+      RoleImages.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RoleImages.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RoleImages";
+      };
+      return RoleImages;
+    })();
+    game.RoleDecorationId = (function() {
+      function RoleDecorationId(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RoleDecorationId.prototype.id = 0;
+      RoleDecorationId.create = function create(properties) {
+        return new RoleDecorationId(properties);
+      };
+      RoleDecorationId.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.id);
+        return writer;
+      };
+      RoleDecorationId.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RoleDecorationId();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.id = reader.uint32();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "id"))
+          throw $util.ProtocolError("missing required 'id'", { instance: message });
+        return message;
+      };
+      RoleDecorationId.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.id))
+          return "id: integer expected";
+        return null;
+      };
+      RoleDecorationId.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RoleDecorationId)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RoleDecorationId: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RoleDecorationId();
+        if (object.id != null)
+          message.id = object.id >>> 0;
+        return message;
+      };
+      RoleDecorationId.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults)
+          object.id = 0;
+        if (message.id != null && Object.hasOwnProperty.call(message, "id"))
+          object.id = message.id;
+        return object;
+      };
+      RoleDecorationId.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RoleDecorationId.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RoleDecorationId";
+      };
+      return RoleDecorationId;
+    })();
+    game.RolePeerageDisplay = (function() {
+      function RolePeerageDisplay(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RolePeerageDisplay.prototype.visible = false;
+      RolePeerageDisplay.create = function create(properties) {
+        return new RolePeerageDisplay(properties);
+      };
+      RolePeerageDisplay.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).bool(message.visible);
+        return writer;
+      };
+      RolePeerageDisplay.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RolePeerageDisplay();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.visible = reader.bool();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "visible"))
+          throw $util.ProtocolError("missing required 'visible'", { instance: message });
+        return message;
+      };
+      RolePeerageDisplay.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (typeof message.visible !== "boolean")
+          return "visible: boolean expected";
+        return null;
+      };
+      RolePeerageDisplay.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RolePeerageDisplay)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RolePeerageDisplay: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RolePeerageDisplay();
+        if (object.visible != null)
+          message.visible = Boolean(object.visible);
+        return message;
+      };
+      RolePeerageDisplay.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults)
+          object.visible = false;
+        if (message.visible != null && Object.hasOwnProperty.call(message, "visible"))
+          object.visible = message.visible;
+        return object;
+      };
+      RolePeerageDisplay.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RolePeerageDisplay.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RolePeerageDisplay";
+      };
+      return RolePeerageDisplay;
+    })();
+    game.RoleBorder = (function() {
+      function RoleBorder(properties) {
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RoleBorder.prototype.id = 0;
+      RoleBorder.prototype.expiresAtSeconds = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      RoleBorder.create = function create(properties) {
+        return new RoleBorder(properties);
+      };
+      RoleBorder.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        writer.uint32(
+          /* id 1, wireType 0 =*/
+          8
+        ).uint32(message.id);
+        writer.uint32(
+          /* id 2, wireType 0 =*/
+          16
+        ).int64(message.expiresAtSeconds);
+        return writer;
+      };
+      RoleBorder.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RoleBorder();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              message.id = reader.uint32();
+              break;
+            }
+            case 2: {
+              message.expiresAtSeconds = reader.int64();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "id"))
+          throw $util.ProtocolError("missing required 'id'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "expiresAtSeconds"))
+          throw $util.ProtocolError("missing required 'expiresAtSeconds'", { instance: message });
+        return message;
+      };
+      RoleBorder.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (!$util.isInteger(message.id))
+          return "id: integer expected";
+        if (!$util.isInteger(message.expiresAtSeconds) && !(message.expiresAtSeconds && $util.isInteger(message.expiresAtSeconds.low) && $util.isInteger(message.expiresAtSeconds.high)))
+          return "expiresAtSeconds: integer|Long expected";
+        return null;
+      };
+      RoleBorder.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RoleBorder)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RoleBorder: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RoleBorder();
+        if (object.id != null)
+          message.id = object.id >>> 0;
+        if (object.expiresAtSeconds != null) {
+          if ($util.Long)
+            message.expiresAtSeconds = $util.Long.fromValue(object.expiresAtSeconds, false);
+          else if (typeof object.expiresAtSeconds === "string")
+            message.expiresAtSeconds = parseInt(object.expiresAtSeconds, 10);
+          else if (typeof object.expiresAtSeconds === "number")
+            message.expiresAtSeconds = object.expiresAtSeconds;
+          else if (typeof object.expiresAtSeconds === "object")
+            message.expiresAtSeconds = new $util.LongBits(object.expiresAtSeconds.low >>> 0, object.expiresAtSeconds.high >>> 0).toNumber();
+        }
+        return message;
+      };
+      RoleBorder.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+          object.id = 0;
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.expiresAtSeconds = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.expiresAtSeconds = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+        }
+        if (message.id != null && Object.hasOwnProperty.call(message, "id"))
+          object.id = message.id;
+        if (message.expiresAtSeconds != null && Object.hasOwnProperty.call(message, "expiresAtSeconds"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.expiresAtSeconds = typeof message.expiresAtSeconds === "number" ? BigInt(message.expiresAtSeconds) : $util.Long.fromBits(message.expiresAtSeconds.low >>> 0, message.expiresAtSeconds.high >>> 0, false).toBigInt();
+          else if (typeof message.expiresAtSeconds === "number")
+            object.expiresAtSeconds = options.longs === String ? String(message.expiresAtSeconds) : message.expiresAtSeconds;
+          else
+            object.expiresAtSeconds = options.longs === String ? $util.Long.prototype.toString.call(message.expiresAtSeconds) : options.longs === Number ? new $util.LongBits(message.expiresAtSeconds.low >>> 0, message.expiresAtSeconds.high >>> 0).toNumber() : message.expiresAtSeconds;
+        return object;
+      };
+      RoleBorder.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RoleBorder.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RoleBorder";
+      };
+      return RoleBorder;
+    })();
+    game.RoleDecorations = (function() {
+      function RoleDecorations(properties) {
+        this.headIds = [];
+        this.borders = [];
+        if (properties) {
+          for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+            if (properties[keys[i]] != null && keys[i] !== "__proto__")
+              this[keys[i]] = properties[keys[i]];
+        }
+      }
+      RoleDecorations.prototype.headIds = $util.emptyArray;
+      RoleDecorations.prototype.borders = $util.emptyArray;
+      RoleDecorations.prototype.totalRecharge = $util.Long ? $util.Long.fromBits(0, 0, false) : 0;
+      RoleDecorations.prototype.showPeerage = false;
+      RoleDecorations.create = function create(properties) {
+        return new RoleDecorations(properties);
+      };
+      RoleDecorations.encode = function encode(message, writer, q) {
+        if (!writer)
+          writer = $Writer.create();
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        if (message.headIds != null && message.headIds.length)
+          for (let i = 0; i < message.headIds.length; ++i)
+            writer.uint32(
+              /* id 1, wireType 0 =*/
+              8
+            ).uint32(message.headIds[i]);
+        if (message.borders != null && message.borders.length)
+          for (let i = 0; i < message.borders.length; ++i)
+            $root.mxzg.game.RoleBorder.encode(message.borders[i], writer.uint32(
+              /* id 2, wireType 2 =*/
+              18
+            ).fork(), q + 1).ldelim();
+        writer.uint32(
+          /* id 3, wireType 0 =*/
+          24
+        ).int64(message.totalRecharge);
+        writer.uint32(
+          /* id 4, wireType 0 =*/
+          32
+        ).bool(message.showPeerage);
+        return writer;
+      };
+      RoleDecorations.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+          reader = $Reader.create(reader);
+        if (long === void 0)
+          long = 0;
+        if (long > $Reader.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let end, message;
+        if (length === void 0)
+          end = reader.len;
+        else {
+          end = reader.pos + length;
+          if (end > reader.len)
+            throw RangeError("index out of range");
+          length = reader.len;
+          reader.len = end;
+        }
+        message = new $root.mxzg.game.RoleDecorations();
+        while (reader.pos < end) {
+          let tag = reader.uint32();
+          if (tag === error)
+            break;
+          switch (tag >>> 3) {
+            case 1: {
+              if (!(message.headIds && message.headIds.length))
+                message.headIds = [];
+              if ((tag & 7) === 2) {
+                let end2 = reader.uint32() + reader.pos;
+                if (end2 > reader.len)
+                  throw RangeError("index out of range");
+                reader.len = end2;
+                while (reader.pos < end2)
+                  message.headIds.push(reader.uint32());
+                if (reader.pos !== end2)
+                  throw RangeError("index out of range");
+                reader.len = end;
+              } else
+                message.headIds.push(reader.uint32());
+              break;
+            }
+            case 2: {
+              if (!(message.borders && message.borders.length))
+                message.borders = [];
+              message.borders.push($root.mxzg.game.RoleBorder.decode(reader, reader.uint32(), void 0, long + 1));
+              break;
+            }
+            case 3: {
+              message.totalRecharge = reader.int64();
+              break;
+            }
+            case 4: {
+              message.showPeerage = reader.bool();
+              break;
+            }
+            default:
+              reader.skipType(tag & 7, long);
+              break;
+          }
+        }
+        if (length !== void 0) {
+          if (reader.pos !== end)
+            throw RangeError("index out of range");
+          reader.len = length;
+        }
+        if (!Object.hasOwnProperty.call(message, "totalRecharge"))
+          throw $util.ProtocolError("missing required 'totalRecharge'", { instance: message });
+        if (!Object.hasOwnProperty.call(message, "showPeerage"))
+          throw $util.ProtocolError("missing required 'showPeerage'", { instance: message });
+        return message;
+      };
+      RoleDecorations.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+          return "object expected";
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          return "maximum nesting depth exceeded";
+        if (message.headIds != null && Object.hasOwnProperty.call(message, "headIds")) {
+          if (!Array.isArray(message.headIds))
+            return "headIds: array expected";
+          for (let i = 0; i < message.headIds.length; ++i)
+            if (!$util.isInteger(message.headIds[i]))
+              return "headIds: integer[] expected";
+        }
+        if (message.borders != null && Object.hasOwnProperty.call(message, "borders")) {
+          if (!Array.isArray(message.borders))
+            return "borders: array expected";
+          for (let i = 0; i < message.borders.length; ++i) {
+            let error = $root.mxzg.game.RoleBorder.verify(message.borders[i], long + 1);
+            if (error)
+              return "borders." + error;
+          }
+        }
+        if (!$util.isInteger(message.totalRecharge) && !(message.totalRecharge && $util.isInteger(message.totalRecharge.low) && $util.isInteger(message.totalRecharge.high)))
+          return "totalRecharge: integer|Long expected";
+        if (typeof message.showPeerage !== "boolean")
+          return "showPeerage: boolean expected";
+        return null;
+      };
+      RoleDecorations.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.mxzg.game.RoleDecorations)
+          return object;
+        if (!$util.isObject(object))
+          throw TypeError(".mxzg.game.RoleDecorations: object expected");
+        if (long === void 0)
+          long = 0;
+        if (long > $util.recursionLimit)
+          throw Error("maximum nesting depth exceeded");
+        let message = new $root.mxzg.game.RoleDecorations();
+        if (object.headIds) {
+          if (!Array.isArray(object.headIds))
+            throw TypeError(".mxzg.game.RoleDecorations.headIds: array expected");
+          message.headIds = [];
+          for (let i = 0; i < object.headIds.length; ++i)
+            message.headIds[i] = object.headIds[i] >>> 0;
+        }
+        if (object.borders) {
+          if (!Array.isArray(object.borders))
+            throw TypeError(".mxzg.game.RoleDecorations.borders: array expected");
+          message.borders = [];
+          for (let i = 0; i < object.borders.length; ++i) {
+            if (!$util.isObject(object.borders[i]))
+              throw TypeError(".mxzg.game.RoleDecorations.borders: object expected");
+            message.borders[i] = $root.mxzg.game.RoleBorder.fromObject(object.borders[i], long + 1);
+          }
+        }
+        if (object.totalRecharge != null) {
+          if ($util.Long)
+            message.totalRecharge = $util.Long.fromValue(object.totalRecharge, false);
+          else if (typeof object.totalRecharge === "string")
+            message.totalRecharge = parseInt(object.totalRecharge, 10);
+          else if (typeof object.totalRecharge === "number")
+            message.totalRecharge = object.totalRecharge;
+          else if (typeof object.totalRecharge === "object")
+            message.totalRecharge = new $util.LongBits(object.totalRecharge.low >>> 0, object.totalRecharge.high >>> 0).toNumber();
+        }
+        if (object.showPeerage != null)
+          message.showPeerage = Boolean(object.showPeerage);
+        return message;
+      };
+      RoleDecorations.toObject = function toObject(message, options, q) {
+        if (!options)
+          options = {};
+        if (q === void 0)
+          q = 0;
+        if (q > $util.recursionLimit)
+          throw Error("max depth exceeded");
+        let object = {};
+        if (options.arrays || options.defaults) {
+          object.headIds = [];
+          object.borders = [];
+        }
+        if (options.defaults) {
+          if ($util.Long) {
+            let long = new $util.Long(0, 0, false);
+            object.totalRecharge = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+          } else
+            object.totalRecharge = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+          object.showPeerage = false;
+        }
+        if (message.headIds && message.headIds.length) {
+          object.headIds = [];
+          for (let j = 0; j < message.headIds.length; ++j)
+            object.headIds[j] = message.headIds[j];
+        }
+        if (message.borders && message.borders.length) {
+          object.borders = [];
+          for (let j = 0; j < message.borders.length; ++j)
+            object.borders[j] = $root.mxzg.game.RoleBorder.toObject(message.borders[j], options, q + 1);
+        }
+        if (message.totalRecharge != null && Object.hasOwnProperty.call(message, "totalRecharge"))
+          if (typeof BigInt !== "undefined" && options.longs === BigInt)
+            object.totalRecharge = typeof message.totalRecharge === "number" ? BigInt(message.totalRecharge) : $util.Long.fromBits(message.totalRecharge.low >>> 0, message.totalRecharge.high >>> 0, false).toBigInt();
+          else if (typeof message.totalRecharge === "number")
+            object.totalRecharge = options.longs === String ? String(message.totalRecharge) : message.totalRecharge;
+          else
+            object.totalRecharge = options.longs === String ? $util.Long.prototype.toString.call(message.totalRecharge) : options.longs === Number ? new $util.LongBits(message.totalRecharge.low >>> 0, message.totalRecharge.high >>> 0).toNumber() : message.totalRecharge;
+        if (message.showPeerage != null && Object.hasOwnProperty.call(message, "showPeerage"))
+          object.showPeerage = message.showPeerage;
+        return object;
+      };
+      RoleDecorations.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+      };
+      RoleDecorations.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === void 0) {
+          typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/mxzg.game.RoleDecorations";
+      };
+      return RoleDecorations;
     })();
     game.RoleBasics = (function() {
       function RoleBasics(properties) {

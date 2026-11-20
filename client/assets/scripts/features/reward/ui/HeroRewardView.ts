@@ -6,6 +6,7 @@
 import { _decorator, AudioSource, Button, Label, Node, Sprite, SpriteFrame, UIOpacity } from "cc";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
+import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
@@ -213,7 +214,7 @@ export class HeroRewardView extends BaseView<HeroRewardArgs> {
             this.lowIcon!.spriteFrame = portrait as SpriteFrame;
         }
         this.rewardAudio!.clip = clip;
-        this.rewardAudio!.play();
+        AudioPreferences.playEffect(this.rewardAudio!);
         this.presentationReady = true;
         this.panel!.active = true;
         this.update(0);

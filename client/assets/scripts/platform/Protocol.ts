@@ -83,6 +83,24 @@ export class Protocol {
     public static readonly ROLE_NAME_RANDOM = "role.name.random";
     /** 保存首次名称，结果通过角色快照同步。 */
     public static readonly ROLE_NAME_SET = "role.name.set";
+    /** 二次改名并支付玩家确认的费用，资料随统一快照刷新。 */
+    public static readonly ROLE_RENAME = "role.name.rename";
+    /** 更换角色形象，服务端按已有解锁条件验证。 */
+    public static readonly ROLE_IMAGE_CHANGE = "role.image.change";
+    /** 读取当前角色从持久图鉴解锁的形象。 */
+    public static readonly ROLE_IMAGES_LIST = "role.image.list";
+    /** 读取当前角色已获得的称号和到期时间。 */
+    public static readonly ROLE_TITLES_LIST = "role.titles.list";
+    /** 读取当前头像、头像框解锁资格及贵重标记设置。 */
+    public static readonly ROLE_DECORATIONS_LIST = "role.decorations.list";
+    /** 更换已解锁头像。 */
+    public static readonly ROLE_HEAD_CHANGE = "role.head.change";
+    /** 佩戴已激活头像框。 */
+    public static readonly ROLE_BORDER_CHANGE = "role.border.change";
+    /** 以原配置所需物品激活头像框。 */
+    public static readonly ROLE_BORDER_ACTIVATE = "role.border.activate";
+    /** 保存个人贵重标记的聊天展示开关。 */
+    public static readonly ROLE_PEERAGE_DISPLAY = "role.peerage.display";
     /** 领取当前角色的一次性新手赠礼，已领取时返回原发奖回执。 */
     public static readonly ROLE_WELCOME_CLAIM = "role.welcome.claim";
     /** 事务提交后同步角色与背包。 */
@@ -100,7 +118,9 @@ export class Protocol {
 export type ProtocolName = Extract<typeof Protocol[keyof typeof Protocol], string>;
 /** 当前只允许读取的业务请求；鉴权首帧由连接层单独处理。 */
 export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.GM_STATUS | typeof Protocol.GM_TIME_GET
-    | typeof Protocol.ROLE_NAME_RANDOM | typeof Protocol.MARKET_LIST | typeof Protocol.DAILY_DUNGEON_LIST;
+    | typeof Protocol.ROLE_NAME_RANDOM | typeof Protocol.ROLE_TITLES_LIST | typeof Protocol.ROLE_IMAGES_LIST
+    | typeof Protocol.ROLE_DECORATIONS_LIST
+    | typeof Protocol.MARKET_LIST | typeof Protocol.DAILY_DUNGEON_LIST;
 /** 具有角色归属回执的操作；查询与原命令经同一条认证连接。 */
 export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protocol.HERO_NORMAL_SUMMON
     | typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS
@@ -117,7 +137,9 @@ export type ChapterProtocol = Extract<ProtocolName, `chapter.${string}`>;
 export type AuthenticatedGameProtocol = ReadProtocol | RoleOperationProtocol | ChapterProtocol
     | typeof Protocol.BATTLE_PREVIEW | typeof Protocol.FORMATION_SAVE | typeof Protocol.GM_GRANT
     | typeof Protocol.GM_LEVEL_SET | typeof Protocol.GM_CHAPTER_SET | typeof Protocol.GM_TIME_SET
-    | typeof Protocol.ROLE_NAME_SET;
+    | typeof Protocol.ROLE_NAME_SET | typeof Protocol.ROLE_RENAME | typeof Protocol.ROLE_IMAGE_CHANGE
+    | typeof Protocol.ROLE_HEAD_CHANGE | typeof Protocol.ROLE_BORDER_CHANGE | typeof Protocol.ROLE_BORDER_ACTIVATE
+    | typeof Protocol.ROLE_PEERAGE_DISPLAY;
 
 /** 协议目录的可读说明，不存玩家数据。 */
 export interface ProtocolDefinition {
@@ -167,6 +189,15 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.SESSION_LOGIN, module: "登录", description: "统一初始化角色和背包" },
     { name: Protocol.ROLE_NAME_RANDOM, module: "角色", description: "首次命名候选" },
     { name: Protocol.ROLE_NAME_SET, module: "角色", description: "保存首次名称" },
+    { name: Protocol.ROLE_RENAME, module: "角色", description: "二次改名" },
+    { name: Protocol.ROLE_IMAGE_CHANGE, module: "角色", description: "更换角色形象" },
+    { name: Protocol.ROLE_IMAGES_LIST, module: "角色", description: "查看已解锁角色形象" },
+    { name: Protocol.ROLE_TITLES_LIST, module: "角色", description: "查看已获得称号" },
+    { name: Protocol.ROLE_DECORATIONS_LIST, module: "角色", description: "读取装饰资格" },
+    { name: Protocol.ROLE_HEAD_CHANGE, module: "角色", description: "更换头像" },
+    { name: Protocol.ROLE_BORDER_CHANGE, module: "角色", description: "佩戴头像框" },
+    { name: Protocol.ROLE_BORDER_ACTIVATE, module: "角色", description: "激活头像框" },
+    { name: Protocol.ROLE_PEERAGE_DISPLAY, module: "角色", description: "保存贵重标记展示状态" },
     { name: Protocol.ROLE_WELCOME_CLAIM, module: "角色", description: "领取新手赠礼" },
     { name: Protocol.STATE_CHANGED, module: "资产", description: "提交后的角色与背包同步" },
     { name: Protocol.REWARD_GRANTED, module: "奖励", description: "已提交奖励的通用反馈" },

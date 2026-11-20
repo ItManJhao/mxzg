@@ -527,6 +527,12 @@ export class Button extends Component {
   interactable = true;
 }
 
+/** 数量滑杆的测试替身，仅保存界面写入的选取比例。 */
+export class Slider extends Component {
+  /** 当前进度，取值为 0 到 1。 */
+  progress = 0;
+}
+
 export class BlockInputEvents extends Component {}
 
 export class EditBox extends Component {

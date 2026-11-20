@@ -259,16 +259,23 @@ class MySqlIT {
         }
     }
 
-    /** 真正并发创建相同账号/区服只能产生一个角色，不同账号及区服保持隔离。 */
+    /** 使用真实 MySQL 验证同服并发创角、V42 存量编号、重登稳定性和跨服编号隔离。 */
     @Test @Order(2) void concurrentRoleCreationAndWorldIsolation() throws Exception {
         String account = "race_" + UUID.randomUUID().toString().substring(0, 12);
         Callable<String> create = () -> login.login(account, "local-1").role().id();
         var ids = overlap("role-create", List.of(create, create));
         assertEquals(ids.getFirst(), ids.getLast());
         assertEquals(1, number("SELECT COUNT(*) FROM game_role WHERE login_account=? AND server_id='local-1'", account));
-        assertEquals(ids.getFirst(), login.login(account, "local-1").role().id());
+        var first = login.login(account, "local-1").role();
+        assertEquals(ids.getFirst(), first.id());
+        assertEquals("1001000001", jdbc.queryForObject(
+            "SELECT public_id FROM game_role_public_number WHERE role_id='00000000-0000-4000-8000-000000000001'",
+            String.class));
+        assertEquals("1001000002", first.publicId());
+        assertEquals(first.publicId(), login.login(account, "local-1").role().publicId());
         var second = login.login(account, "local-2");
         assertNotEquals(ids.getFirst(), second.role().id());
+        assertEquals("1002000001", second.role().publicId());
         assertNotEquals(ids.getFirst(), player().id());
         assertTrue(inventory("Bearer " + second.session().accessToken()).isEmpty());
         rejected(401, () -> roles.current(null));

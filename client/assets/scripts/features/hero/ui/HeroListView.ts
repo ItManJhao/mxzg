@@ -18,6 +18,7 @@ import { ResManager } from "../../../framework/assets/ResManager";
 import { ErrorUtils } from "../../../core/ErrorUtils";
 import { ItemDetailUtils } from "../../bag/utils/ItemDetailUtils";
 import { BattleSpineService } from "../../battle/ui/BattleSpineService";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroRosterUtils } from "../utils/HeroRosterUtils";
@@ -191,13 +192,15 @@ export class HeroListView extends BaseView {
         this.heroScroll.list.setData(model.cells);
     }
 
-    /** 列表创建或复用格子时只提交展示数据，不给格子注入页面导航。 */
+    /** 绘制名册格，仅主线已上阵英雄使用详情汇总红点。 */
     private onRender(node: Node, hero: HeroCellModel): void {
         const cell = node.getComponent(HeroIconCellView);
         if (!cell) {
             throw new Error("HeroIconCellView Prefab缺少格子组件");
         }
-        cell.show(hero);
+        const redDot = hero.kind === "owned" && hero.deployed && hero.instanceId
+            ? GameRedDotKey.heroDetail(hero.instanceId) : null;
+        cell.show(hero, redDot);
     }
 
     /** 选中实例后打开详情，同时保留当前筛选顺序供详情左右切换。 */

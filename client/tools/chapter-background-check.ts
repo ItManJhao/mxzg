@@ -40,7 +40,7 @@ async function flush(): Promise<void> {
     }
 }
 
-/** 全部关卡只认同源map字段；正式和挂机三套素材完整，pending不提前换到胜利后地图。 */
+/** 核对全关卡同源地图及正式和挂机素材，验证第 451 关等换图边界在结算后生效。 */
 function checkCatalog(): void {
     for (const row of table.rows) {
         const state = { maxCleared: row.idx, pendingBattleId: null };
@@ -59,12 +59,23 @@ function checkCatalog(): void {
     assert.equal(ChapterBackgroundUtils.resolve(table, { maxCleared: 51, pendingBattleId: null }, false).map, "map04");
     assert.equal(ChapterBackgroundUtils.resolve(table, { maxCleared: 76, pendingBattleId: "pending" }, false).map, "map04");
     assert.equal(ChapterBackgroundUtils.resolve(table, { maxCleared: 76, pendingBattleId: null }, false).map, "map05");
-    for (const [chapter, previous, next] of [[151, "map07", "map08"], [201, "map08", "map10"], [251, "map10", "map11"]] as const) {
+    for (const [chapter, previous, next] of [
+        [151, "map07", "map08"],
+        [201, "map08", "map10"],
+        [251, "map10", "map11"],
+        [301, "map11", "map17"],
+        [351, "map17", "map20"],
+        [401, "map20", "map23"],
+        [451, "map23", "map25"],
+    ] as const) {
         const pending = ChapterBackgroundUtils.resolve(table, { maxCleared: chapter, pendingBattleId: "pending" }, true);
-        const settled = ChapterBackgroundUtils.resolve(table, { maxCleared: chapter, pendingBattleId: null }, false);
+        const state = { maxCleared: chapter, pendingBattleId: null };
+        const settled = ChapterBackgroundUtils.resolve(table, state, false);
         assert.equal(pending.background, `chapter/ui/${previous}/spriteFrame`);
+        assert.equal(pending.floor, null);
         assert.equal(settled.background, `chapter/ui/hang/${next}_B/spriteFrame`);
         assert.equal(settled.floor, `chapter/ui/hang/${next}_F/spriteFrame`);
+        assert.equal(ChapterBackgroundUtils.resolve(table, state, true).background, `chapter/ui/${next}/spriteFrame`);
     }
     assert.throws(() => ChapterBackgroundUtils.resolve({ rows: [] }, { maxCleared: 21, pendingBattleId: null }, false), /缺失/);
     assert.throws(() => ChapterBackgroundUtils.resolve({ rows: [{ idx: 1, map: "../map01" }] }, null, false), /缺失/);

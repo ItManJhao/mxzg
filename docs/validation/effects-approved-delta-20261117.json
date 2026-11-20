@@ -145531,6 +145531,3036 @@
           }
         }
       ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_0.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_0.png"
+      },
+      "beforeSha256": "301c7af5873d93c378e16f29d8b62ee306ffcbf9ec6b7f8b5473569e8fc44f41",
+      "afterSha256": "14e9ad700a7ea72658217b8118b3c01a9c67e8b1b381738da40f0b5161110096",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"94fb1795-2be9-4b84-9f6d-1a0092e83942\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"94fb1795-2be9-4b84-9f6d-1a0092e83942@6c48a\",\r\n      \"displayName\": \"skill-102050113_0\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"94fb1795-2be9-4b84-9f6d-1a0092e83942\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"94fb1795-2be9-4b84-9f6d-1a0092e83942@f9941\",\r\n      \"displayName\": \"skill-102050113_0\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": 0.5,\r\n        \"offsetY\": 13,\r\n        \"trimX\": 18,\r\n        \"trimY\": 19,\r\n        \"width\": 65,\r\n        \"height\": 26,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -32.5,\r\n            -13,\r\n            0,\r\n            32.5,\r\n            -13,\r\n            0,\r\n            -32.5,\r\n            13,\r\n            0,\r\n            32.5,\r\n            13,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            18,\r\n            71,\r\n            83,\r\n            71,\r\n            18,\r\n            45,\r\n            83,\r\n            45\r\n          ],\r\n          \"nuv\": [\r\n            0.18,\r\n            0.5,\r\n            0.83,\r\n            0.5,\r\n            0.18,\r\n            0.7888888888888889,\r\n            0.83,\r\n            0.7888888888888889\r\n          ],\r\n          \"minPos\": [\r\n            -32.5,\r\n            -13,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            32.5,\r\n            13,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"94fb1795-2be9-4b84-9f6d-1a0092e83942@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"94fb1795-2be9-4b84-9f6d-1a0092e83942@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": 0.5,
+          "after": 1
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 13,
+          "after": -16
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 18,
+          "after": 12
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 19,
+          "after": 43
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 65,
+          "after": 78
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 26,
+          "after": 36
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -32.5,
+              -13,
+              0,
+              32.5,
+              -13,
+              0,
+              -32.5,
+              13,
+              0,
+              32.5,
+              13,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              18,
+              71,
+              83,
+              71,
+              18,
+              45,
+              83,
+              45
+            ],
+            "nuv": [
+              0.18,
+              0.5,
+              0.83,
+              0.5,
+              0.18,
+              0.7888888888888889,
+              0.83,
+              0.7888888888888889
+            ],
+            "minPos": [
+              -32.5,
+              -13,
+              0
+            ],
+            "maxPos": [
+              32.5,
+              13,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -39,
+              -18,
+              0,
+              39,
+              -18,
+              0,
+              -39,
+              18,
+              0,
+              39,
+              18,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              12,
+              47,
+              90,
+              47,
+              12,
+              11,
+              90,
+              11
+            ],
+            "nuv": [
+              0.12,
+              0.12222222222222222,
+              0.9,
+              0.12222222222222222,
+              0.12,
+              0.5222222222222223,
+              0.9,
+              0.5222222222222223
+            ],
+            "minPos": [
+              -39,
+              -18,
+              0
+            ],
+            "maxPos": [
+              39,
+              18,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_1.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_1.png"
+      },
+      "beforeSha256": "295921dc4cab5f2b92bd5ff87c3fcecfbefa42554253cd57d66450c8478a9fcd",
+      "afterSha256": "9449a0d7e28c7718ffaaf1b79f61b29da9420476a9c649ed02cb34e09b2d39e6",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"bd3da3b2-bbce-4b45-94f1-c483be9e1b01\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"bd3da3b2-bbce-4b45-94f1-c483be9e1b01@6c48a\",\r\n      \"displayName\": \"skill-102050113_1\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"bd3da3b2-bbce-4b45-94f1-c483be9e1b01\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"bd3da3b2-bbce-4b45-94f1-c483be9e1b01@f9941\",\r\n      \"displayName\": \"skill-102050113_1\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": 0,\r\n        \"offsetY\": 4,\r\n        \"trimX\": 9,\r\n        \"trimY\": 25,\r\n        \"width\": 82,\r\n        \"height\": 32,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -41,\r\n            -16,\r\n            0,\r\n            41,\r\n            -16,\r\n            0,\r\n            -41,\r\n            16,\r\n            0,\r\n            41,\r\n            16,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            9,\r\n            65,\r\n            91,\r\n            65,\r\n            9,\r\n            33,\r\n            91,\r\n            33\r\n          ],\r\n          \"nuv\": [\r\n            0.09,\r\n            0.36666666666666664,\r\n            0.91,\r\n            0.36666666666666664,\r\n            0.09,\r\n            0.7222222222222222,\r\n            0.91,\r\n            0.7222222222222222\r\n          ],\r\n          \"minPos\": [\r\n            -41,\r\n            -16,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            41,\r\n            16,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"bd3da3b2-bbce-4b45-94f1-c483be9e1b01@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"bd3da3b2-bbce-4b45-94f1-c483be9e1b01@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 4,
+          "after": -13.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 9,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 25,
+          "after": 34
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 82,
+          "after": 100
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 32,
+          "after": 49
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -41,
+              -16,
+              0,
+              41,
+              -16,
+              0,
+              -41,
+              16,
+              0,
+              41,
+              16,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              9,
+              65,
+              91,
+              65,
+              9,
+              33,
+              91,
+              33
+            ],
+            "nuv": [
+              0.09,
+              0.36666666666666664,
+              0.91,
+              0.36666666666666664,
+              0.09,
+              0.7222222222222222,
+              0.91,
+              0.7222222222222222
+            ],
+            "minPos": [
+              -41,
+              -16,
+              0
+            ],
+            "maxPos": [
+              41,
+              16,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -50,
+              -24.5,
+              0,
+              50,
+              -24.5,
+              0,
+              -50,
+              24.5,
+              0,
+              50,
+              24.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              0,
+              56,
+              100,
+              56,
+              0,
+              7,
+              100,
+              7
+            ],
+            "nuv": [
+              0,
+              0.07777777777777778,
+              1,
+              0.07777777777777778,
+              0,
+              0.6222222222222222,
+              1,
+              0.6222222222222222
+            ],
+            "minPos": [
+              -50,
+              -24.5,
+              0
+            ],
+            "maxPos": [
+              50,
+              24.5,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_2.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_2.png"
+      },
+      "beforeSha256": "e012608414da60ecb987339bb4857702d3d8916b5d7e16906ea563d4f9309d8e",
+      "afterSha256": "97e30b38fcfbadd8883a6f259ebbd7269afaed9128e0d850498317ac6a8f4de5",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"16d6918a-92ca-420b-97e7-20f75c036aba\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"16d6918a-92ca-420b-97e7-20f75c036aba@6c48a\",\r\n      \"displayName\": \"skill-102050113_2\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"16d6918a-92ca-420b-97e7-20f75c036aba\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"16d6918a-92ca-420b-97e7-20f75c036aba@f9941\",\r\n      \"displayName\": \"skill-102050113_2\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": 0,\r\n        \"offsetY\": 9.5,\r\n        \"trimX\": 7,\r\n        \"trimY\": 13,\r\n        \"width\": 86,\r\n        \"height\": 45,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -43,\r\n            -22.5,\r\n            0,\r\n            43,\r\n            -22.5,\r\n            0,\r\n            -43,\r\n            22.5,\r\n            0,\r\n            43,\r\n            22.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            7,\r\n            77,\r\n            93,\r\n            77,\r\n            7,\r\n            32,\r\n            93,\r\n            32\r\n          ],\r\n          \"nuv\": [\r\n            0.07,\r\n            0.35555555555555557,\r\n            0.93,\r\n            0.35555555555555557,\r\n            0.07,\r\n            0.8555555555555555,\r\n            0.93,\r\n            0.8555555555555555\r\n          ],\r\n          \"minPos\": [\r\n            -43,\r\n            -22.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            43,\r\n            22.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"16d6918a-92ca-420b-97e7-20f75c036aba@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"16d6918a-92ca-420b-97e7-20f75c036aba@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 9.5,
+          "after": -12.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 7,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 13,
+          "after": 32
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 86,
+          "after": 100
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 45,
+          "after": 51
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -43,
+              -22.5,
+              0,
+              43,
+              -22.5,
+              0,
+              -43,
+              22.5,
+              0,
+              43,
+              22.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              7,
+              77,
+              93,
+              77,
+              7,
+              32,
+              93,
+              32
+            ],
+            "nuv": [
+              0.07,
+              0.35555555555555557,
+              0.93,
+              0.35555555555555557,
+              0.07,
+              0.8555555555555555,
+              0.93,
+              0.8555555555555555
+            ],
+            "minPos": [
+              -43,
+              -22.5,
+              0
+            ],
+            "maxPos": [
+              43,
+              22.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -50,
+              -25.5,
+              0,
+              50,
+              -25.5,
+              0,
+              -50,
+              25.5,
+              0,
+              50,
+              25.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              0,
+              58,
+              100,
+              58,
+              0,
+              7,
+              100,
+              7
+            ],
+            "nuv": [
+              0,
+              0.07777777777777778,
+              1,
+              0.07777777777777778,
+              0,
+              0.6444444444444445,
+              1,
+              0.6444444444444445
+            ],
+            "minPos": [
+              -50,
+              -25.5,
+              0
+            ],
+            "maxPos": [
+              50,
+              25.5,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_3.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_3.png"
+      },
+      "beforeSha256": "2d84b49eec7eaf664445675c3fbcf8148b3cc27f0a84d597f04c13db2b61c3a2",
+      "afterSha256": "dc82605ca67637a361ab7761247da3fb6f3963b936abeb67b8396b4309855fe4",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"22b53e41-c9fc-4c96-ac32-d0ae36fae786\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"22b53e41-c9fc-4c96-ac32-d0ae36fae786@6c48a\",\r\n      \"displayName\": \"skill-102050113_3\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"22b53e41-c9fc-4c96-ac32-d0ae36fae786\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"22b53e41-c9fc-4c96-ac32-d0ae36fae786@f9941\",\r\n      \"displayName\": \"skill-102050113_3\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -0.5,\r\n        \"offsetY\": 2.5,\r\n        \"trimX\": 7,\r\n        \"trimY\": 12,\r\n        \"width\": 85,\r\n        \"height\": 61,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -42.5,\r\n            -30.5,\r\n            0,\r\n            42.5,\r\n            -30.5,\r\n            0,\r\n            -42.5,\r\n            30.5,\r\n            0,\r\n            42.5,\r\n            30.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            7,\r\n            78,\r\n            92,\r\n            78,\r\n            7,\r\n            17,\r\n            92,\r\n            17\r\n          ],\r\n          \"nuv\": [\r\n            0.07,\r\n            0.18888888888888888,\r\n            0.92,\r\n            0.18888888888888888,\r\n            0.07,\r\n            0.8666666666666667,\r\n            0.92,\r\n            0.8666666666666667\r\n          ],\r\n          \"minPos\": [\r\n            -42.5,\r\n            -30.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            42.5,\r\n            30.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"22b53e41-c9fc-4c96-ac32-d0ae36fae786@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"22b53e41-c9fc-4c96-ac32-d0ae36fae786@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -0.5,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 2.5,
+          "after": -5.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 7,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 12,
+          "after": 18
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 85,
+          "after": 100
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 61,
+          "after": 65
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -42.5,
+              -30.5,
+              0,
+              42.5,
+              -30.5,
+              0,
+              -42.5,
+              30.5,
+              0,
+              42.5,
+              30.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              7,
+              78,
+              92,
+              78,
+              7,
+              17,
+              92,
+              17
+            ],
+            "nuv": [
+              0.07,
+              0.18888888888888888,
+              0.92,
+              0.18888888888888888,
+              0.07,
+              0.8666666666666667,
+              0.92,
+              0.8666666666666667
+            ],
+            "minPos": [
+              -42.5,
+              -30.5,
+              0
+            ],
+            "maxPos": [
+              42.5,
+              30.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -50,
+              -32.5,
+              0,
+              50,
+              -32.5,
+              0,
+              -50,
+              32.5,
+              0,
+              50,
+              32.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              0,
+              72,
+              100,
+              72,
+              0,
+              7,
+              100,
+              7
+            ],
+            "nuv": [
+              0,
+              0.07777777777777778,
+              1,
+              0.07777777777777778,
+              0,
+              0.8,
+              1,
+              0.8
+            ],
+            "minPos": [
+              -50,
+              -32.5,
+              0
+            ],
+            "maxPos": [
+              50,
+              32.5,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_4.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_4.png"
+      },
+      "beforeSha256": "f1cfd33d7fe2a431fbf5e47c83e5a7d4b689d8fa0f3c70184418cfeae1b85367",
+      "afterSha256": "e233eb5cb3235d5bedfaecc405ababd6b1f48d4c632faa9f6d3b7e87e845035f",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"c0037d15-da63-4a15-be75-878837bef6d5\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"c0037d15-da63-4a15-be75-878837bef6d5@6c48a\",\r\n      \"displayName\": \"skill-102050113_4\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"c0037d15-da63-4a15-be75-878837bef6d5\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"c0037d15-da63-4a15-be75-878837bef6d5@f9941\",\r\n      \"displayName\": \"skill-102050113_4\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": 0,\r\n        \"offsetY\": 4.5,\r\n        \"trimX\": 9,\r\n        \"trimY\": 10,\r\n        \"width\": 82,\r\n        \"height\": 61,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -41,\r\n            -30.5,\r\n            0,\r\n            41,\r\n            -30.5,\r\n            0,\r\n            -41,\r\n            30.5,\r\n            0,\r\n            41,\r\n            30.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            9,\r\n            80,\r\n            91,\r\n            80,\r\n            9,\r\n            19,\r\n            91,\r\n            19\r\n          ],\r\n          \"nuv\": [\r\n            0.09,\r\n            0.2111111111111111,\r\n            0.91,\r\n            0.2111111111111111,\r\n            0.09,\r\n            0.8888888888888888,\r\n            0.91,\r\n            0.8888888888888888\r\n          ],\r\n          \"minPos\": [\r\n            -41,\r\n            -30.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            41,\r\n            30.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"c0037d15-da63-4a15-be75-878837bef6d5@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"c0037d15-da63-4a15-be75-878837bef6d5@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": 0,
+          "after": 1.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 4.5,
+          "after": -6
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 9,
+          "after": 3
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 10,
+          "after": 18
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 82,
+          "after": 97
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 61,
+          "after": 66
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -41,
+              -30.5,
+              0,
+              41,
+              -30.5,
+              0,
+              -41,
+              30.5,
+              0,
+              41,
+              30.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              9,
+              80,
+              91,
+              80,
+              9,
+              19,
+              91,
+              19
+            ],
+            "nuv": [
+              0.09,
+              0.2111111111111111,
+              0.91,
+              0.2111111111111111,
+              0.09,
+              0.8888888888888888,
+              0.91,
+              0.8888888888888888
+            ],
+            "minPos": [
+              -41,
+              -30.5,
+              0
+            ],
+            "maxPos": [
+              41,
+              30.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -48.5,
+              -33,
+              0,
+              48.5,
+              -33,
+              0,
+              -48.5,
+              33,
+              0,
+              48.5,
+              33,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              3,
+              72,
+              100,
+              72,
+              3,
+              6,
+              100,
+              6
+            ],
+            "nuv": [
+              0.03,
+              0.06666666666666667,
+              1,
+              0.06666666666666667,
+              0.03,
+              0.8,
+              1,
+              0.8
+            ],
+            "minPos": [
+              -48.5,
+              -33,
+              0
+            ],
+            "maxPos": [
+              48.5,
+              33,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_5.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_5.png"
+      },
+      "beforeSha256": "9ff4f5f9e2f49c8076b16efea2b616641f075443886445ad57c2e1050dc988d7",
+      "afterSha256": "3f4391832cd6ac65da773ffcd519902d6af7fede7aa84f921812944d45802ca9",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"7a609564-6662-42df-8267-01031b5e09bb\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"7a609564-6662-42df-8267-01031b5e09bb@6c48a\",\r\n      \"displayName\": \"skill-102050113_5\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"7a609564-6662-42df-8267-01031b5e09bb\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"7a609564-6662-42df-8267-01031b5e09bb@f9941\",\r\n      \"displayName\": \"skill-102050113_5\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -0.5,\r\n        \"offsetY\": 2.5,\r\n        \"trimX\": 7,\r\n        \"trimY\": 12,\r\n        \"width\": 85,\r\n        \"height\": 61,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -42.5,\r\n            -30.5,\r\n            0,\r\n            42.5,\r\n            -30.5,\r\n            0,\r\n            -42.5,\r\n            30.5,\r\n            0,\r\n            42.5,\r\n            30.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            7,\r\n            78,\r\n            92,\r\n            78,\r\n            7,\r\n            17,\r\n            92,\r\n            17\r\n          ],\r\n          \"nuv\": [\r\n            0.07,\r\n            0.18888888888888888,\r\n            0.92,\r\n            0.18888888888888888,\r\n            0.07,\r\n            0.8666666666666667,\r\n            0.92,\r\n            0.8666666666666667\r\n          ],\r\n          \"minPos\": [\r\n            -42.5,\r\n            -30.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            42.5,\r\n            30.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"7a609564-6662-42df-8267-01031b5e09bb@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"7a609564-6662-42df-8267-01031b5e09bb@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -0.5,
+          "after": 0.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 2.5,
+          "after": -5.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 7,
+          "after": 4
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 12,
+          "after": 18
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 85,
+          "after": 93
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 61,
+          "after": 65
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -42.5,
+              -30.5,
+              0,
+              42.5,
+              -30.5,
+              0,
+              -42.5,
+              30.5,
+              0,
+              42.5,
+              30.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              7,
+              78,
+              92,
+              78,
+              7,
+              17,
+              92,
+              17
+            ],
+            "nuv": [
+              0.07,
+              0.18888888888888888,
+              0.92,
+              0.18888888888888888,
+              0.07,
+              0.8666666666666667,
+              0.92,
+              0.8666666666666667
+            ],
+            "minPos": [
+              -42.5,
+              -30.5,
+              0
+            ],
+            "maxPos": [
+              42.5,
+              30.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -46.5,
+              -32.5,
+              0,
+              46.5,
+              -32.5,
+              0,
+              -46.5,
+              32.5,
+              0,
+              46.5,
+              32.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              4,
+              72,
+              97,
+              72,
+              4,
+              7,
+              97,
+              7
+            ],
+            "nuv": [
+              0.04,
+              0.07777777777777778,
+              0.97,
+              0.07777777777777778,
+              0.04,
+              0.8,
+              0.97,
+              0.8
+            ],
+            "minPos": [
+              -46.5,
+              -32.5,
+              0
+            ],
+            "maxPos": [
+              46.5,
+              32.5,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_6.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_6.png"
+      },
+      "beforeSha256": "07fb516626d9a4ee272b6b96e6e4e8d5518990120a549d25d611d85ef6b2f84d",
+      "afterSha256": "45b3f5da1546ef39428c38248ec73be25309020d050bacf3a2392e0a0f965e17",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"c85706b9-4da3-4376-81f9-2a82643596a9\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"c85706b9-4da3-4376-81f9-2a82643596a9@6c48a\",\r\n      \"displayName\": \"skill-102050113_6\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"c85706b9-4da3-4376-81f9-2a82643596a9\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"c85706b9-4da3-4376-81f9-2a82643596a9@f9941\",\r\n      \"displayName\": \"skill-102050113_6\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -1,\r\n        \"offsetY\": 2.5,\r\n        \"trimX\": 6,\r\n        \"trimY\": 12,\r\n        \"width\": 86,\r\n        \"height\": 61,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -43,\r\n            -30.5,\r\n            0,\r\n            43,\r\n            -30.5,\r\n            0,\r\n            -43,\r\n            30.5,\r\n            0,\r\n            43,\r\n            30.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            6,\r\n            78,\r\n            92,\r\n            78,\r\n            6,\r\n            17,\r\n            92,\r\n            17\r\n          ],\r\n          \"nuv\": [\r\n            0.06,\r\n            0.18888888888888888,\r\n            0.92,\r\n            0.18888888888888888,\r\n            0.06,\r\n            0.8666666666666667,\r\n            0.92,\r\n            0.8666666666666667\r\n          ],\r\n          \"minPos\": [\r\n            -43,\r\n            -30.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            43,\r\n            30.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"c85706b9-4da3-4376-81f9-2a82643596a9@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"c85706b9-4da3-4376-81f9-2a82643596a9@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -1,
+          "after": -0.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 2.5,
+          "after": -5.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 6,
+          "after": 5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 12,
+          "after": 18
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 86,
+          "after": 89
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 61,
+          "after": 65
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -43,
+              -30.5,
+              0,
+              43,
+              -30.5,
+              0,
+              -43,
+              30.5,
+              0,
+              43,
+              30.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              6,
+              78,
+              92,
+              78,
+              6,
+              17,
+              92,
+              17
+            ],
+            "nuv": [
+              0.06,
+              0.18888888888888888,
+              0.92,
+              0.18888888888888888,
+              0.06,
+              0.8666666666666667,
+              0.92,
+              0.8666666666666667
+            ],
+            "minPos": [
+              -43,
+              -30.5,
+              0
+            ],
+            "maxPos": [
+              43,
+              30.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -44.5,
+              -32.5,
+              0,
+              44.5,
+              -32.5,
+              0,
+              -44.5,
+              32.5,
+              0,
+              44.5,
+              32.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              5,
+              72,
+              94,
+              72,
+              5,
+              7,
+              94,
+              7
+            ],
+            "nuv": [
+              0.05,
+              0.07777777777777778,
+              0.94,
+              0.07777777777777778,
+              0.05,
+              0.8,
+              0.94,
+              0.8
+            ],
+            "minPos": [
+              -44.5,
+              -32.5,
+              0
+            ],
+            "maxPos": [
+              44.5,
+              32.5,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_7.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_7.png"
+      },
+      "beforeSha256": "a98112a47c9dd3f3b2dc6ebe9fd8f70adaf9cfc5106862b018c20ea6cf37232b",
+      "afterSha256": "b9d54a8ea72cdc8dfee431d89522f67f2a0e35a7fa4f4347718d2cca56f745a4",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"cb7c744a-0047-47c3-a0b4-bb29415d2af4\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"cb7c744a-0047-47c3-a0b4-bb29415d2af4@6c48a\",\r\n      \"displayName\": \"skill-102050113_7\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"cb7c744a-0047-47c3-a0b4-bb29415d2af4\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"cb7c744a-0047-47c3-a0b4-bb29415d2af4@f9941\",\r\n      \"displayName\": \"skill-102050113_7\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -1,\r\n        \"offsetY\": 5,\r\n        \"trimX\": 9,\r\n        \"trimY\": 9,\r\n        \"width\": 80,\r\n        \"height\": 62,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -40,\r\n            -31,\r\n            0,\r\n            40,\r\n            -31,\r\n            0,\r\n            -40,\r\n            31,\r\n            0,\r\n            40,\r\n            31,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            9,\r\n            81,\r\n            89,\r\n            81,\r\n            9,\r\n            19,\r\n            89,\r\n            19\r\n          ],\r\n          \"nuv\": [\r\n            0.09,\r\n            0.2111111111111111,\r\n            0.89,\r\n            0.2111111111111111,\r\n            0.09,\r\n            0.9,\r\n            0.89,\r\n            0.9\r\n          ],\r\n          \"minPos\": [\r\n            -40,\r\n            -31,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            40,\r\n            31,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"cb7c744a-0047-47c3-a0b4-bb29415d2af4@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"cb7c744a-0047-47c3-a0b4-bb29415d2af4@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 5,
+          "after": -6
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 9,
+          "after": 7
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 9,
+          "after": 18
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 80,
+          "after": 84
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 62,
+          "after": 66
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -40,
+              -31,
+              0,
+              40,
+              -31,
+              0,
+              -40,
+              31,
+              0,
+              40,
+              31,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              9,
+              81,
+              89,
+              81,
+              9,
+              19,
+              89,
+              19
+            ],
+            "nuv": [
+              0.09,
+              0.2111111111111111,
+              0.89,
+              0.2111111111111111,
+              0.09,
+              0.9,
+              0.89,
+              0.9
+            ],
+            "minPos": [
+              -40,
+              -31,
+              0
+            ],
+            "maxPos": [
+              40,
+              31,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -42,
+              -33,
+              0,
+              42,
+              -33,
+              0,
+              -42,
+              33,
+              0,
+              42,
+              33,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              7,
+              72,
+              91,
+              72,
+              7,
+              6,
+              91,
+              6
+            ],
+            "nuv": [
+              0.07,
+              0.06666666666666667,
+              0.91,
+              0.06666666666666667,
+              0.07,
+              0.8,
+              0.91,
+              0.8
+            ],
+            "minPos": [
+              -42,
+              -33,
+              0
+            ],
+            "maxPos": [
+              42,
+              33,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_8.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_8.png"
+      },
+      "beforeSha256": "d2ac83949e6f985ed9356fa791bbdee312819ce948fd2dceb76bc60e0284d042",
+      "afterSha256": "63ff09046753b2c001fc4229a803de802d6c2cc1d1cd78cb6b6ccda2637d0afb",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"3328ebdb-3810-4d69-b59e-3abf202d8776\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"3328ebdb-3810-4d69-b59e-3abf202d8776@6c48a\",\r\n      \"displayName\": \"skill-102050113_8\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"3328ebdb-3810-4d69-b59e-3abf202d8776\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"3328ebdb-3810-4d69-b59e-3abf202d8776@f9941\",\r\n      \"displayName\": \"skill-102050113_8\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -1,\r\n        \"offsetY\": 3,\r\n        \"trimX\": 8,\r\n        \"trimY\": 11,\r\n        \"width\": 82,\r\n        \"height\": 62,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -41,\r\n            -31,\r\n            0,\r\n            41,\r\n            -31,\r\n            0,\r\n            -41,\r\n            31,\r\n            0,\r\n            41,\r\n            31,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            8,\r\n            79,\r\n            90,\r\n            79,\r\n            8,\r\n            17,\r\n            90,\r\n            17\r\n          ],\r\n          \"nuv\": [\r\n            0.08,\r\n            0.18888888888888888,\r\n            0.9,\r\n            0.18888888888888888,\r\n            0.08,\r\n            0.8777777777777778,\r\n            0.9,\r\n            0.8777777777777778\r\n          ],\r\n          \"minPos\": [\r\n            -41,\r\n            -31,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            41,\r\n            31,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"3328ebdb-3810-4d69-b59e-3abf202d8776@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"3328ebdb-3810-4d69-b59e-3abf202d8776@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 3,
+          "after": -5.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 8,
+          "after": 6
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 11,
+          "after": 17
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 82,
+          "after": 86
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 62,
+          "after": 67
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -41,
+              -31,
+              0,
+              41,
+              -31,
+              0,
+              -41,
+              31,
+              0,
+              41,
+              31,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              8,
+              79,
+              90,
+              79,
+              8,
+              17,
+              90,
+              17
+            ],
+            "nuv": [
+              0.08,
+              0.18888888888888888,
+              0.9,
+              0.18888888888888888,
+              0.08,
+              0.8777777777777778,
+              0.9,
+              0.8777777777777778
+            ],
+            "minPos": [
+              -41,
+              -31,
+              0
+            ],
+            "maxPos": [
+              41,
+              31,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -43,
+              -33.5,
+              0,
+              43,
+              -33.5,
+              0,
+              -43,
+              33.5,
+              0,
+              43,
+              33.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              6,
+              73,
+              92,
+              73,
+              6,
+              6,
+              92,
+              6
+            ],
+            "nuv": [
+              0.06,
+              0.06666666666666667,
+              0.92,
+              0.06666666666666667,
+              0.06,
+              0.8111111111111111,
+              0.92,
+              0.8111111111111111
+            ],
+            "minPos": [
+              -43,
+              -33.5,
+              0
+            ],
+            "maxPos": [
+              43,
+              33.5,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_9.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_9.png"
+      },
+      "beforeSha256": "223f528b86cc6b199d5d299a749cdb75dd552e582f5f33c5224708d4c8beb69b",
+      "afterSha256": "c1af7f0c09756199bbeb68cb46d79e8840385c52e06de63452ecbddf38f484ba",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"0c58bd53-af58-4fa9-b020-653980849e1f\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"0c58bd53-af58-4fa9-b020-653980849e1f@6c48a\",\r\n      \"displayName\": \"skill-102050113_9\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"0c58bd53-af58-4fa9-b020-653980849e1f\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"0c58bd53-af58-4fa9-b020-653980849e1f@f9941\",\r\n      \"displayName\": \"skill-102050113_9\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -1.5,\r\n        \"offsetY\": 4,\r\n        \"trimX\": 6,\r\n        \"trimY\": 10,\r\n        \"width\": 85,\r\n        \"height\": 62,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -42.5,\r\n            -31,\r\n            0,\r\n            42.5,\r\n            -31,\r\n            0,\r\n            -42.5,\r\n            31,\r\n            0,\r\n            42.5,\r\n            31,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            6,\r\n            80,\r\n            91,\r\n            80,\r\n            6,\r\n            18,\r\n            91,\r\n            18\r\n          ],\r\n          \"nuv\": [\r\n            0.06,\r\n            0.2,\r\n            0.91,\r\n            0.2,\r\n            0.06,\r\n            0.8888888888888888,\r\n            0.91,\r\n            0.8888888888888888\r\n          ],\r\n          \"minPos\": [\r\n            -42.5,\r\n            -31,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            42.5,\r\n            31,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"0c58bd53-af58-4fa9-b020-653980849e1f@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"0c58bd53-af58-4fa9-b020-653980849e1f@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 4,
+          "after": -5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 6,
+          "after": 4
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 10,
+          "after": 17
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 85,
+          "after": 89
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 62,
+          "after": 66
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -42.5,
+              -31,
+              0,
+              42.5,
+              -31,
+              0,
+              -42.5,
+              31,
+              0,
+              42.5,
+              31,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              6,
+              80,
+              91,
+              80,
+              6,
+              18,
+              91,
+              18
+            ],
+            "nuv": [
+              0.06,
+              0.2,
+              0.91,
+              0.2,
+              0.06,
+              0.8888888888888888,
+              0.91,
+              0.8888888888888888
+            ],
+            "minPos": [
+              -42.5,
+              -31,
+              0
+            ],
+            "maxPos": [
+              42.5,
+              31,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -44.5,
+              -33,
+              0,
+              44.5,
+              -33,
+              0,
+              -44.5,
+              33,
+              0,
+              44.5,
+              33,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              4,
+              73,
+              93,
+              73,
+              4,
+              7,
+              93,
+              7
+            ],
+            "nuv": [
+              0.04,
+              0.07777777777777778,
+              0.93,
+              0.07777777777777778,
+              0.04,
+              0.8111111111111111,
+              0.93,
+              0.8111111111111111
+            ],
+            "minPos": [
+              -44.5,
+              -33,
+              0
+            ],
+            "maxPos": [
+              44.5,
+              33,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_10.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_10.png"
+      },
+      "beforeSha256": "754f7b31fb5146cc3742e026c9abe593c97915dd43d7b5b2dea8e3b1a6244d72",
+      "afterSha256": "1f6dfd18452f394a67d2510259324846bb3570960ee3f4d2c5b3b8aaab3fd6d6",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"34e133b9-66b2-49d6-a161-4cc546ff055f\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"34e133b9-66b2-49d6-a161-4cc546ff055f@6c48a\",\r\n      \"displayName\": \"skill-102050113_10\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"34e133b9-66b2-49d6-a161-4cc546ff055f\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"34e133b9-66b2-49d6-a161-4cc546ff055f@f9941\",\r\n      \"displayName\": \"skill-102050113_10\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -1.5,\r\n        \"offsetY\": 3.5,\r\n        \"trimX\": 7,\r\n        \"trimY\": 10,\r\n        \"width\": 83,\r\n        \"height\": 63,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -41.5,\r\n            -31.5,\r\n            0,\r\n            41.5,\r\n            -31.5,\r\n            0,\r\n            -41.5,\r\n            31.5,\r\n            0,\r\n            41.5,\r\n            31.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            7,\r\n            80,\r\n            90,\r\n            80,\r\n            7,\r\n            17,\r\n            90,\r\n            17\r\n          ],\r\n          \"nuv\": [\r\n            0.07,\r\n            0.18888888888888888,\r\n            0.9,\r\n            0.18888888888888888,\r\n            0.07,\r\n            0.8888888888888888,\r\n            0.9,\r\n            0.8888888888888888\r\n          ],\r\n          \"minPos\": [\r\n            -41.5,\r\n            -31.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            41.5,\r\n            31.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"34e133b9-66b2-49d6-a161-4cc546ff055f@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"34e133b9-66b2-49d6-a161-4cc546ff055f@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -1.5,
+          "after": -1
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 3.5,
+          "after": -5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 7,
+          "after": 5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 10,
+          "after": 17
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 83,
+          "after": 88
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 63,
+          "after": 66
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -41.5,
+              -31.5,
+              0,
+              41.5,
+              -31.5,
+              0,
+              -41.5,
+              31.5,
+              0,
+              41.5,
+              31.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              7,
+              80,
+              90,
+              80,
+              7,
+              17,
+              90,
+              17
+            ],
+            "nuv": [
+              0.07,
+              0.18888888888888888,
+              0.9,
+              0.18888888888888888,
+              0.07,
+              0.8888888888888888,
+              0.9,
+              0.8888888888888888
+            ],
+            "minPos": [
+              -41.5,
+              -31.5,
+              0
+            ],
+            "maxPos": [
+              41.5,
+              31.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -44,
+              -33,
+              0,
+              44,
+              -33,
+              0,
+              -44,
+              33,
+              0,
+              44,
+              33,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              5,
+              73,
+              93,
+              73,
+              5,
+              7,
+              93,
+              7
+            ],
+            "nuv": [
+              0.05,
+              0.07777777777777778,
+              0.93,
+              0.07777777777777778,
+              0.05,
+              0.8111111111111111,
+              0.93,
+              0.8111111111111111
+            ],
+            "minPos": [
+              -44,
+              -33,
+              0
+            ],
+            "maxPos": [
+              44,
+              33,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_11.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_11.png"
+      },
+      "beforeSha256": "6d1563f8e2b782048fe710b6f5633e40b16c2b2c6404e0c1653edc6b83411872",
+      "afterSha256": "af2582f909ff9889a5caa8818b0caf5c531c23e9ec12aa5e85dc7dc6e7556018",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"1b43f807-39ba-46f6-8972-2d78365a817a\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"1b43f807-39ba-46f6-8972-2d78365a817a@6c48a\",\r\n      \"displayName\": \"skill-102050113_11\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"1b43f807-39ba-46f6-8972-2d78365a817a\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"1b43f807-39ba-46f6-8972-2d78365a817a@f9941\",\r\n      \"displayName\": \"skill-102050113_11\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -0.5,\r\n        \"offsetY\": 3.5,\r\n        \"trimX\": 9,\r\n        \"trimY\": 10,\r\n        \"width\": 81,\r\n        \"height\": 63,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -40.5,\r\n            -31.5,\r\n            0,\r\n            40.5,\r\n            -31.5,\r\n            0,\r\n            -40.5,\r\n            31.5,\r\n            0,\r\n            40.5,\r\n            31.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            9,\r\n            80,\r\n            90,\r\n            80,\r\n            9,\r\n            17,\r\n            90,\r\n            17\r\n          ],\r\n          \"nuv\": [\r\n            0.09,\r\n            0.18888888888888888,\r\n            0.9,\r\n            0.18888888888888888,\r\n            0.09,\r\n            0.8888888888888888,\r\n            0.9,\r\n            0.8888888888888888\r\n          ],\r\n          \"minPos\": [\r\n            -40.5,\r\n            -31.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            40.5,\r\n            31.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"1b43f807-39ba-46f6-8972-2d78365a817a@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"1b43f807-39ba-46f6-8972-2d78365a817a@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 3.5,
+          "after": -5.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 9,
+          "after": 4
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 10,
+          "after": 17
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 81,
+          "after": 91
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 63,
+          "after": 67
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -40.5,
+              -31.5,
+              0,
+              40.5,
+              -31.5,
+              0,
+              -40.5,
+              31.5,
+              0,
+              40.5,
+              31.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              9,
+              80,
+              90,
+              80,
+              9,
+              17,
+              90,
+              17
+            ],
+            "nuv": [
+              0.09,
+              0.18888888888888888,
+              0.9,
+              0.18888888888888888,
+              0.09,
+              0.8888888888888888,
+              0.9,
+              0.8888888888888888
+            ],
+            "minPos": [
+              -40.5,
+              -31.5,
+              0
+            ],
+            "maxPos": [
+              40.5,
+              31.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -45.5,
+              -33.5,
+              0,
+              45.5,
+              -33.5,
+              0,
+              -45.5,
+              33.5,
+              0,
+              45.5,
+              33.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              4,
+              73,
+              95,
+              73,
+              4,
+              6,
+              95,
+              6
+            ],
+            "nuv": [
+              0.04,
+              0.06666666666666667,
+              0.95,
+              0.06666666666666667,
+              0.04,
+              0.8111111111111111,
+              0.95,
+              0.8111111111111111
+            ],
+            "minPos": [
+              -45.5,
+              -33.5,
+              0
+            ],
+            "maxPos": [
+              45.5,
+              33.5,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_12.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_12.png"
+      },
+      "beforeSha256": "834ba0e40379baf81f7affa89c550d32553d62e030173496f88392c5b419b6c4",
+      "afterSha256": "cd067630e76f9afd89fbe76fd07b6147ec65f1cb59190e422e1be77adbbafa4e",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"6d057f82-d5f7-42c5-9996-2557b90ec5d2\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"6d057f82-d5f7-42c5-9996-2557b90ec5d2@6c48a\",\r\n      \"displayName\": \"skill-102050113_12\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"6d057f82-d5f7-42c5-9996-2557b90ec5d2\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"6d057f82-d5f7-42c5-9996-2557b90ec5d2@f9941\",\r\n      \"displayName\": \"skill-102050113_12\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -0.5,\r\n        \"offsetY\": 3.5,\r\n        \"trimX\": 7,\r\n        \"trimY\": 10,\r\n        \"width\": 85,\r\n        \"height\": 63,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -42.5,\r\n            -31.5,\r\n            0,\r\n            42.5,\r\n            -31.5,\r\n            0,\r\n            -42.5,\r\n            31.5,\r\n            0,\r\n            42.5,\r\n            31.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            7,\r\n            80,\r\n            92,\r\n            80,\r\n            7,\r\n            17,\r\n            92,\r\n            17\r\n          ],\r\n          \"nuv\": [\r\n            0.07,\r\n            0.18888888888888888,\r\n            0.92,\r\n            0.18888888888888888,\r\n            0.07,\r\n            0.8888888888888888,\r\n            0.92,\r\n            0.8888888888888888\r\n          ],\r\n          \"minPos\": [\r\n            -42.5,\r\n            -31.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            42.5,\r\n            31.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"6d057f82-d5f7-42c5-9996-2557b90ec5d2@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"6d057f82-d5f7-42c5-9996-2557b90ec5d2@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -0.5,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 3.5,
+          "after": -5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 7,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 10,
+          "after": 17
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 85,
+          "after": 100
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 63,
+          "after": 66
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -42.5,
+              -31.5,
+              0,
+              42.5,
+              -31.5,
+              0,
+              -42.5,
+              31.5,
+              0,
+              42.5,
+              31.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              7,
+              80,
+              92,
+              80,
+              7,
+              17,
+              92,
+              17
+            ],
+            "nuv": [
+              0.07,
+              0.18888888888888888,
+              0.92,
+              0.18888888888888888,
+              0.07,
+              0.8888888888888888,
+              0.92,
+              0.8888888888888888
+            ],
+            "minPos": [
+              -42.5,
+              -31.5,
+              0
+            ],
+            "maxPos": [
+              42.5,
+              31.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -50,
+              -33,
+              0,
+              50,
+              -33,
+              0,
+              -50,
+              33,
+              0,
+              50,
+              33,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              0,
+              73,
+              100,
+              73,
+              0,
+              7,
+              100,
+              7
+            ],
+            "nuv": [
+              0,
+              0.07777777777777778,
+              1,
+              0.07777777777777778,
+              0,
+              0.8111111111111111,
+              1,
+              0.8111111111111111
+            ],
+            "minPos": [
+              -50,
+              -33,
+              0
+            ],
+            "maxPos": [
+              50,
+              33,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_13.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_13.png"
+      },
+      "beforeSha256": "5d122a32c0240f1cc0023307d477473e8b77c55b03e70394a157cee1a75a59f1",
+      "afterSha256": "aac65c78691a158fd8a147426026bd5c72ee183429f9ac124b53b6838b981608",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"e33a7cbf-f409-416e-b3dd-f937cc9943f9\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"e33a7cbf-f409-416e-b3dd-f937cc9943f9@6c48a\",\r\n      \"displayName\": \"skill-102050113_13\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"e33a7cbf-f409-416e-b3dd-f937cc9943f9\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"e33a7cbf-f409-416e-b3dd-f937cc9943f9@f9941\",\r\n      \"displayName\": \"skill-102050113_13\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -1,\r\n        \"offsetY\": 4,\r\n        \"trimX\": 5,\r\n        \"trimY\": 10,\r\n        \"width\": 88,\r\n        \"height\": 62,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -44,\r\n            -31,\r\n            0,\r\n            44,\r\n            -31,\r\n            0,\r\n            -44,\r\n            31,\r\n            0,\r\n            44,\r\n            31,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            5,\r\n            80,\r\n            93,\r\n            80,\r\n            5,\r\n            18,\r\n            93,\r\n            18\r\n          ],\r\n          \"nuv\": [\r\n            0.05,\r\n            0.2,\r\n            0.93,\r\n            0.2,\r\n            0.05,\r\n            0.8888888888888888,\r\n            0.93,\r\n            0.8888888888888888\r\n          ],\r\n          \"minPos\": [\r\n            -44,\r\n            -31,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            44,\r\n            31,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"e33a7cbf-f409-416e-b3dd-f937cc9943f9@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"e33a7cbf-f409-416e-b3dd-f937cc9943f9@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -1,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 4,
+          "after": -5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 5,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 10,
+          "after": 17
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 88,
+          "after": 100
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 62,
+          "after": 66
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -44,
+              -31,
+              0,
+              44,
+              -31,
+              0,
+              -44,
+              31,
+              0,
+              44,
+              31,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              5,
+              80,
+              93,
+              80,
+              5,
+              18,
+              93,
+              18
+            ],
+            "nuv": [
+              0.05,
+              0.2,
+              0.93,
+              0.2,
+              0.05,
+              0.8888888888888888,
+              0.93,
+              0.8888888888888888
+            ],
+            "minPos": [
+              -44,
+              -31,
+              0
+            ],
+            "maxPos": [
+              44,
+              31,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -50,
+              -33,
+              0,
+              50,
+              -33,
+              0,
+              -50,
+              33,
+              0,
+              50,
+              33,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              0,
+              73,
+              100,
+              73,
+              0,
+              7,
+              100,
+              7
+            ],
+            "nuv": [
+              0,
+              0.07777777777777778,
+              1,
+              0.07777777777777778,
+              0,
+              0.8111111111111111,
+              1,
+              0.8111111111111111
+            ],
+            "minPos": [
+              -50,
+              -33,
+              0
+            ],
+            "maxPos": [
+              50,
+              33,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_14.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_14.png"
+      },
+      "beforeSha256": "93611d63ba25f2f64c9308ab2396c3d240d0135078c97a2e3fa1aa515b0178f9",
+      "afterSha256": "bcc87be2616f0594aa06d46012a022b99a13052132cc0379e47cd1c9fc946d42",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"79d70024-a1dd-425e-a4eb-0d8a38441862\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"79d70024-a1dd-425e-a4eb-0d8a38441862@6c48a\",\r\n      \"displayName\": \"skill-102050113_14\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"79d70024-a1dd-425e-a4eb-0d8a38441862\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"79d70024-a1dd-425e-a4eb-0d8a38441862@f9941\",\r\n      \"displayName\": \"skill-102050113_14\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -1,\r\n        \"offsetY\": 3.5,\r\n        \"trimX\": 5,\r\n        \"trimY\": 10,\r\n        \"width\": 88,\r\n        \"height\": 63,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -44,\r\n            -31.5,\r\n            0,\r\n            44,\r\n            -31.5,\r\n            0,\r\n            -44,\r\n            31.5,\r\n            0,\r\n            44,\r\n            31.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            5,\r\n            80,\r\n            93,\r\n            80,\r\n            5,\r\n            17,\r\n            93,\r\n            17\r\n          ],\r\n          \"nuv\": [\r\n            0.05,\r\n            0.18888888888888888,\r\n            0.93,\r\n            0.18888888888888888,\r\n            0.05,\r\n            0.8888888888888888,\r\n            0.93,\r\n            0.8888888888888888\r\n          ],\r\n          \"minPos\": [\r\n            -44,\r\n            -31.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            44,\r\n            31.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"79d70024-a1dd-425e-a4eb-0d8a38441862@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"79d70024-a1dd-425e-a4eb-0d8a38441862@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -1,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 3.5,
+          "after": -5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 5,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 10,
+          "after": 17
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 88,
+          "after": 100
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 63,
+          "after": 66
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -44,
+              -31.5,
+              0,
+              44,
+              -31.5,
+              0,
+              -44,
+              31.5,
+              0,
+              44,
+              31.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              5,
+              80,
+              93,
+              80,
+              5,
+              17,
+              93,
+              17
+            ],
+            "nuv": [
+              0.05,
+              0.18888888888888888,
+              0.93,
+              0.18888888888888888,
+              0.05,
+              0.8888888888888888,
+              0.93,
+              0.8888888888888888
+            ],
+            "minPos": [
+              -44,
+              -31.5,
+              0
+            ],
+            "maxPos": [
+              44,
+              31.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -50,
+              -33,
+              0,
+              50,
+              -33,
+              0,
+              -50,
+              33,
+              0,
+              50,
+              33,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              0,
+              73,
+              100,
+              73,
+              0,
+              7,
+              100,
+              7
+            ],
+            "nuv": [
+              0,
+              0.07777777777777778,
+              1,
+              0.07777777777777778,
+              0,
+              0.8111111111111111,
+              1,
+              0.8111111111111111
+            ],
+            "minPos": [
+              -50,
+              -33,
+              0
+            ],
+            "maxPos": [
+              50,
+              33,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_15.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_15.png"
+      },
+      "beforeSha256": "e5d1498e3b6f0312cbdf848bda3cbcd4d4ade3c8d7ddb8728c02a5b387a5f061",
+      "afterSha256": "0bd82140d384575c9110531db2345e532814d982360c2eadaa5b0e7f2c1a255d",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"f452e653-e5b7-4d12-b827-34599232af8e\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"f452e653-e5b7-4d12-b827-34599232af8e@6c48a\",\r\n      \"displayName\": \"skill-102050113_15\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"f452e653-e5b7-4d12-b827-34599232af8e\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"f452e653-e5b7-4d12-b827-34599232af8e@f9941\",\r\n      \"displayName\": \"skill-102050113_15\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": 0.5,\r\n        \"offsetY\": 3.5,\r\n        \"trimX\": 6,\r\n        \"trimY\": 10,\r\n        \"width\": 89,\r\n        \"height\": 63,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -44.5,\r\n            -31.5,\r\n            0,\r\n            44.5,\r\n            -31.5,\r\n            0,\r\n            -44.5,\r\n            31.5,\r\n            0,\r\n            44.5,\r\n            31.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            6,\r\n            80,\r\n            95,\r\n            80,\r\n            6,\r\n            17,\r\n            95,\r\n            17\r\n          ],\r\n          \"nuv\": [\r\n            0.06,\r\n            0.18888888888888888,\r\n            0.95,\r\n            0.18888888888888888,\r\n            0.06,\r\n            0.8888888888888888,\r\n            0.95,\r\n            0.8888888888888888\r\n          ],\r\n          \"minPos\": [\r\n            -44.5,\r\n            -31.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            44.5,\r\n            31.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"f452e653-e5b7-4d12-b827-34599232af8e@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"f452e653-e5b7-4d12-b827-34599232af8e@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": 0.5,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 3.5,
+          "after": -5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 6,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 10,
+          "after": 17
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 89,
+          "after": 100
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 63,
+          "after": 66
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -44.5,
+              -31.5,
+              0,
+              44.5,
+              -31.5,
+              0,
+              -44.5,
+              31.5,
+              0,
+              44.5,
+              31.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              6,
+              80,
+              95,
+              80,
+              6,
+              17,
+              95,
+              17
+            ],
+            "nuv": [
+              0.06,
+              0.18888888888888888,
+              0.95,
+              0.18888888888888888,
+              0.06,
+              0.8888888888888888,
+              0.95,
+              0.8888888888888888
+            ],
+            "minPos": [
+              -44.5,
+              -31.5,
+              0
+            ],
+            "maxPos": [
+              44.5,
+              31.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -50,
+              -33,
+              0,
+              50,
+              -33,
+              0,
+              -50,
+              33,
+              0,
+              50,
+              33,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              0,
+              73,
+              100,
+              73,
+              0,
+              7,
+              100,
+              7
+            ],
+            "nuv": [
+              0,
+              0.07777777777777778,
+              1,
+              0.07777777777777778,
+              0,
+              0.8111111111111111,
+              1,
+              0.8111111111111111
+            ],
+            "minPos": [
+              -50,
+              -33,
+              0
+            ],
+            "maxPos": [
+              50,
+              33,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_16.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_16.png"
+      },
+      "beforeSha256": "8f55ba5f671d8d6c903128337455b8b61e220c60a0fbc565d76dba780f93f2de",
+      "afterSha256": "93e08e82acfa2230ed23c6d5623e5c82cc8aaa523afaf4b7e2f15f917ab5ba25",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"c2093f51-99fa-419c-b2bd-6f3c184b0733\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"c2093f51-99fa-419c-b2bd-6f3c184b0733@6c48a\",\r\n      \"displayName\": \"skill-102050113_16\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"c2093f51-99fa-419c-b2bd-6f3c184b0733\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"c2093f51-99fa-419c-b2bd-6f3c184b0733@f9941\",\r\n      \"displayName\": \"skill-102050113_16\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": 0.5,\r\n        \"offsetY\": 4,\r\n        \"trimX\": 6,\r\n        \"trimY\": 10,\r\n        \"width\": 89,\r\n        \"height\": 62,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -44.5,\r\n            -31,\r\n            0,\r\n            44.5,\r\n            -31,\r\n            0,\r\n            -44.5,\r\n            31,\r\n            0,\r\n            44.5,\r\n            31,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            6,\r\n            80,\r\n            95,\r\n            80,\r\n            6,\r\n            18,\r\n            95,\r\n            18\r\n          ],\r\n          \"nuv\": [\r\n            0.06,\r\n            0.2,\r\n            0.95,\r\n            0.2,\r\n            0.06,\r\n            0.8888888888888888,\r\n            0.95,\r\n            0.8888888888888888\r\n          ],\r\n          \"minPos\": [\r\n            -44.5,\r\n            -31,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            44.5,\r\n            31,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"c2093f51-99fa-419c-b2bd-6f3c184b0733@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"c2093f51-99fa-419c-b2bd-6f3c184b0733@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": 0.5,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 4,
+          "after": -5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 6,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 10,
+          "after": 17
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 89,
+          "after": 100
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 62,
+          "after": 66
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -44.5,
+              -31,
+              0,
+              44.5,
+              -31,
+              0,
+              -44.5,
+              31,
+              0,
+              44.5,
+              31,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              6,
+              80,
+              95,
+              80,
+              6,
+              18,
+              95,
+              18
+            ],
+            "nuv": [
+              0.06,
+              0.2,
+              0.95,
+              0.2,
+              0.06,
+              0.8888888888888888,
+              0.95,
+              0.8888888888888888
+            ],
+            "minPos": [
+              -44.5,
+              -31,
+              0
+            ],
+            "maxPos": [
+              44.5,
+              31,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -50,
+              -33,
+              0,
+              50,
+              -33,
+              0,
+              -50,
+              33,
+              0,
+              50,
+              33,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              0,
+              73,
+              100,
+              73,
+              0,
+              7,
+              100,
+              7
+            ],
+            "nuv": [
+              0,
+              0.07777777777777778,
+              1,
+              0.07777777777777778,
+              0,
+              0.8111111111111111,
+              1,
+              0.8111111111111111
+            ],
+            "minPos": [
+              -50,
+              -33,
+              0
+            ],
+            "maxPos": [
+              50,
+              33,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_17.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_17.png"
+      },
+      "beforeSha256": "559aacc6aa1ebc7da6cd06387c95104bef70703799ff2fa64692a00e84ed3ee7",
+      "afterSha256": "90ea79f05a34a00ae3d2dca0a590fc0b17b418becaa5e6287c92dc25256d6dea",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"ac3fdb8b-0c8c-40c8-bde3-b070dfa0774f\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"ac3fdb8b-0c8c-40c8-bde3-b070dfa0774f@6c48a\",\r\n      \"displayName\": \"skill-102050113_17\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"ac3fdb8b-0c8c-40c8-bde3-b070dfa0774f\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"ac3fdb8b-0c8c-40c8-bde3-b070dfa0774f@f9941\",\r\n      \"displayName\": \"skill-102050113_17\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -1,\r\n        \"offsetY\": 3.5,\r\n        \"trimX\": 6,\r\n        \"trimY\": 11,\r\n        \"width\": 86,\r\n        \"height\": 61,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -43,\r\n            -30.5,\r\n            0,\r\n            43,\r\n            -30.5,\r\n            0,\r\n            -43,\r\n            30.5,\r\n            0,\r\n            43,\r\n            30.5,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            6,\r\n            79,\r\n            92,\r\n            79,\r\n            6,\r\n            18,\r\n            92,\r\n            18\r\n          ],\r\n          \"nuv\": [\r\n            0.06,\r\n            0.2,\r\n            0.92,\r\n            0.2,\r\n            0.06,\r\n            0.8777777777777778,\r\n            0.92,\r\n            0.8777777777777778\r\n          ],\r\n          \"minPos\": [\r\n            -43,\r\n            -30.5,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            43,\r\n            30.5,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"ac3fdb8b-0c8c-40c8-bde3-b070dfa0774f@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"ac3fdb8b-0c8c-40c8-bde3-b070dfa0774f@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -1,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 3.5,
+          "after": -5.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 6,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 11,
+          "after": 18
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 86,
+          "after": 100
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 61,
+          "after": 65
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -43,
+              -30.5,
+              0,
+              43,
+              -30.5,
+              0,
+              -43,
+              30.5,
+              0,
+              43,
+              30.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              6,
+              79,
+              92,
+              79,
+              6,
+              18,
+              92,
+              18
+            ],
+            "nuv": [
+              0.06,
+              0.2,
+              0.92,
+              0.2,
+              0.06,
+              0.8777777777777778,
+              0.92,
+              0.8777777777777778
+            ],
+            "minPos": [
+              -43,
+              -30.5,
+              0
+            ],
+            "maxPos": [
+              43,
+              30.5,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -50,
+              -32.5,
+              0,
+              50,
+              -32.5,
+              0,
+              -50,
+              32.5,
+              0,
+              50,
+              32.5,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              0,
+              72,
+              100,
+              72,
+              0,
+              7,
+              100,
+              7
+            ],
+            "nuv": [
+              0,
+              0.07777777777777778,
+              1,
+              0.07777777777777778,
+              0,
+              0.8,
+              1,
+              0.8
+            ],
+            "minPos": [
+              -50,
+              -32.5,
+              0
+            ],
+            "maxPos": [
+              50,
+              32.5,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_18.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_18.png"
+      },
+      "beforeSha256": "40d8da9aa69c57703fa2f47d69832472db75142a200e01d82474e2c5f8d934e3",
+      "afterSha256": "b4467cb6ef63ca291834e7317a98df9deac9241a3e9ef6cdeab9bb650d6c04e0",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"00c5045b-f777-4bef-a7b2-bdcfda27d33f\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"00c5045b-f777-4bef-a7b2-bdcfda27d33f@6c48a\",\r\n      \"displayName\": \"skill-102050113_18\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"00c5045b-f777-4bef-a7b2-bdcfda27d33f\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"00c5045b-f777-4bef-a7b2-bdcfda27d33f@f9941\",\r\n      \"displayName\": \"skill-102050113_18\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -0.5,\r\n        \"offsetY\": 5,\r\n        \"trimX\": 9,\r\n        \"trimY\": 9,\r\n        \"width\": 81,\r\n        \"height\": 62,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -40.5,\r\n            -31,\r\n            0,\r\n            40.5,\r\n            -31,\r\n            0,\r\n            -40.5,\r\n            31,\r\n            0,\r\n            40.5,\r\n            31,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            9,\r\n            81,\r\n            90,\r\n            81,\r\n            9,\r\n            19,\r\n            90,\r\n            19\r\n          ],\r\n          \"nuv\": [\r\n            0.09,\r\n            0.2111111111111111,\r\n            0.9,\r\n            0.2111111111111111,\r\n            0.09,\r\n            0.9,\r\n            0.9,\r\n            0.9\r\n          ],\r\n          \"minPos\": [\r\n            -40.5,\r\n            -31,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            40.5,\r\n            31,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"00c5045b-f777-4bef-a7b2-bdcfda27d33f@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"00c5045b-f777-4bef-a7b2-bdcfda27d33f@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -0.5,
+          "after": 0.5
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 5,
+          "after": -6
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 9,
+          "after": 2
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 9,
+          "after": 19
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 81,
+          "after": 97
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 62,
+          "after": 64
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -40.5,
+              -31,
+              0,
+              40.5,
+              -31,
+              0,
+              -40.5,
+              31,
+              0,
+              40.5,
+              31,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              9,
+              81,
+              90,
+              81,
+              9,
+              19,
+              90,
+              19
+            ],
+            "nuv": [
+              0.09,
+              0.2111111111111111,
+              0.9,
+              0.2111111111111111,
+              0.09,
+              0.9,
+              0.9,
+              0.9
+            ],
+            "minPos": [
+              -40.5,
+              -31,
+              0
+            ],
+            "maxPos": [
+              40.5,
+              31,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -48.5,
+              -32,
+              0,
+              48.5,
+              -32,
+              0,
+              -48.5,
+              32,
+              0,
+              48.5,
+              32,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              2,
+              71,
+              99,
+              71,
+              2,
+              7,
+              99,
+              7
+            ],
+            "nuv": [
+              0.02,
+              0.07777777777777778,
+              0.99,
+              0.07777777777777778,
+              0.02,
+              0.7888888888888889,
+              0.99,
+              0.7888888888888889
+            ],
+            "minPos": [
+              -48.5,
+              -32,
+              0
+            ],
+            "maxPos": [
+              48.5,
+              32,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_19.png.meta",
+      "source": {
+        "evidencePath": "docs/validation/chapter-stage111-300-action-assets-20261120.json",
+        "assetPath": "client/assets/bundles/resources/effects/skill/skill-102050113/skill-102050113_19.png"
+      },
+      "beforeSha256": "d968566377cb626be161d3c07876eb7732bf364430833b96c0d88b178fd58d15",
+      "afterSha256": "ecb4b07d53149d0a22690c0f8db71a3f1a75a5e70c9bf55ed94ef2b3e8126697",
+      "beforeMetaText": "{\r\n  \"ver\": \"1.0.27\",\r\n  \"importer\": \"image\",\r\n  \"imported\": true,\r\n  \"uuid\": \"45151f00-61fd-4eaf-a47f-4d4264a35314\",\r\n  \"files\": [\r\n    \".json\",\r\n    \".png\"\r\n  ],\r\n  \"subMetas\": {\r\n    \"6c48a\": {\r\n      \"importer\": \"texture\",\r\n      \"uuid\": \"45151f00-61fd-4eaf-a47f-4d4264a35314@6c48a\",\r\n      \"displayName\": \"skill-102050113_19\",\r\n      \"id\": \"6c48a\",\r\n      \"name\": \"texture\",\r\n      \"userData\": {\r\n        \"wrapModeS\": \"clamp-to-edge\",\r\n        \"wrapModeT\": \"clamp-to-edge\",\r\n        \"imageUuidOrDatabaseUri\": \"45151f00-61fd-4eaf-a47f-4d4264a35314\",\r\n        \"isUuid\": true,\r\n        \"visible\": false,\r\n        \"minfilter\": \"linear\",\r\n        \"magfilter\": \"linear\",\r\n        \"mipfilter\": \"none\",\r\n        \"anisotropy\": 0\r\n      },\r\n      \"ver\": \"1.0.22\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    },\r\n    \"f9941\": {\r\n      \"importer\": \"sprite-frame\",\r\n      \"uuid\": \"45151f00-61fd-4eaf-a47f-4d4264a35314@f9941\",\r\n      \"displayName\": \"skill-102050113_19\",\r\n      \"id\": \"f9941\",\r\n      \"name\": \"spriteFrame\",\r\n      \"userData\": {\r\n        \"trimThreshold\": 1,\r\n        \"rotated\": false,\r\n        \"offsetX\": -0.5,\r\n        \"offsetY\": 6,\r\n        \"trimX\": 9,\r\n        \"trimY\": 11,\r\n        \"width\": 81,\r\n        \"height\": 56,\r\n        \"rawWidth\": 100,\r\n        \"rawHeight\": 90,\r\n        \"borderTop\": 0,\r\n        \"borderBottom\": 0,\r\n        \"borderLeft\": 0,\r\n        \"borderRight\": 0,\r\n        \"packable\": true,\r\n        \"pixelsToUnit\": 100,\r\n        \"pivotX\": 0.5,\r\n        \"pivotY\": 0.5,\r\n        \"meshType\": 0,\r\n        \"vertices\": {\r\n          \"rawPosition\": [\r\n            -40.5,\r\n            -28,\r\n            0,\r\n            40.5,\r\n            -28,\r\n            0,\r\n            -40.5,\r\n            28,\r\n            0,\r\n            40.5,\r\n            28,\r\n            0\r\n          ],\r\n          \"indexes\": [\r\n            0,\r\n            1,\r\n            2,\r\n            2,\r\n            1,\r\n            3\r\n          ],\r\n          \"uv\": [\r\n            9,\r\n            79,\r\n            90,\r\n            79,\r\n            9,\r\n            23,\r\n            90,\r\n            23\r\n          ],\r\n          \"nuv\": [\r\n            0.09,\r\n            0.25555555555555554,\r\n            0.9,\r\n            0.25555555555555554,\r\n            0.09,\r\n            0.8777777777777778,\r\n            0.9,\r\n            0.8777777777777778\r\n          ],\r\n          \"minPos\": [\r\n            -40.5,\r\n            -28,\r\n            0\r\n          ],\r\n          \"maxPos\": [\r\n            40.5,\r\n            28,\r\n            0\r\n          ]\r\n        },\r\n        \"isUuid\": true,\r\n        \"imageUuidOrDatabaseUri\": \"45151f00-61fd-4eaf-a47f-4d4264a35314@6c48a\",\r\n        \"atlasUuid\": \"\",\r\n        \"trimType\": \"auto\"\r\n      },\r\n      \"ver\": \"1.0.12\",\r\n      \"imported\": true,\r\n      \"files\": [\r\n        \".json\"\r\n      ],\r\n      \"subMetas\": {}\r\n    }\r\n  },\r\n  \"userData\": {\r\n    \"type\": \"sprite-frame\",\r\n    \"fixAlphaTransparencyArtifacts\": false,\r\n    \"hasAlpha\": true,\r\n    \"redirect\": \"45151f00-61fd-4eaf-a47f-4d4264a35314@6c48a\"\r\n  }\r\n}\r\n",
+      "differences": [
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetX",
+          "before": -0.5,
+          "after": 0
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.offsetY",
+          "before": 6,
+          "after": -8
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimX",
+          "before": 9,
+          "after": 6
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.trimY",
+          "before": 11,
+          "after": 23
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.width",
+          "before": 81,
+          "after": 88
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.height",
+          "before": 56,
+          "after": 60
+        },
+        {
+          "propertyPath": "subMetas.f9941.userData.vertices",
+          "before": {
+            "rawPosition": [
+              -40.5,
+              -28,
+              0,
+              40.5,
+              -28,
+              0,
+              -40.5,
+              28,
+              0,
+              40.5,
+              28,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              9,
+              79,
+              90,
+              79,
+              9,
+              23,
+              90,
+              23
+            ],
+            "nuv": [
+              0.09,
+              0.25555555555555554,
+              0.9,
+              0.25555555555555554,
+              0.09,
+              0.8777777777777778,
+              0.9,
+              0.8777777777777778
+            ],
+            "minPos": [
+              -40.5,
+              -28,
+              0
+            ],
+            "maxPos": [
+              40.5,
+              28,
+              0
+            ]
+          },
+          "after": {
+            "rawPosition": [
+              -44,
+              -30,
+              0,
+              44,
+              -30,
+              0,
+              -44,
+              30,
+              0,
+              44,
+              30,
+              0
+            ],
+            "indexes": [
+              0,
+              1,
+              2,
+              2,
+              1,
+              3
+            ],
+            "uv": [
+              6,
+              67,
+              94,
+              67,
+              6,
+              7,
+              94,
+              7
+            ],
+            "nuv": [
+              0.06,
+              0.07777777777777778,
+              0.94,
+              0.07777777777777778,
+              0.06,
+              0.7444444444444445,
+              0.94,
+              0.7444444444444445
+            ],
+            "minPos": [
+              -44,
+              -30,
+              0
+            ],
+            "maxPos": [
+              44,
+              30,
+              0
+            ]
+          }
+        }
+      ]
     }
   ],
   "changes": [
@@ -165396,6 +168426,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_0.png.meta",
+      "before": {
+        "bytes": 3028,
+        "sha256": "301c7af5873d93c378e16f29d8b62ee306ffcbf9ec6b7f8b5473569e8fc44f41"
+      },
+      "after": {
+        "bytes": 3045,
+        "sha256": "14e9ad700a7ea72658217b8118b3c01a9c67e8b1b381738da40f0b5161110096"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 998,
+          "beforeSha256": "301c7af5873d93c378e16f29d8b62ee306ffcbf9ec6b7f8b5473569e8fc44f41",
+          "afterSha256": "14e9ad700a7ea72658217b8118b3c01a9c67e8b1b381738da40f0b5161110096"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_1.png",
       "before": {
         "bytes": 5499,
@@ -165412,6 +168461,25 @@
           "metadata": false,
           "beforeSha256": "eaa0b846bf2b445d688bb742fa371a58f66333af80f79ea5150b34dd649fa366",
           "afterSha256": "b2d3e396259f17f2d8170db7d96dbeb2f342445f8dd9063bb025bdcb078554a7"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_1.png.meta",
+      "before": {
+        "bytes": 3042,
+        "sha256": "295921dc4cab5f2b92bd5ff87c3fcecfbefa42554253cd57d66450c8478a9fcd"
+      },
+      "after": {
+        "bytes": 3047,
+        "sha256": "9449a0d7e28c7718ffaaf1b79f61b29da9420476a9c649ed02cb34e09b2d39e6"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 999,
+          "beforeSha256": "295921dc4cab5f2b92bd5ff87c3fcecfbefa42554253cd57d66450c8478a9fcd",
+          "afterSha256": "9449a0d7e28c7718ffaaf1b79f61b29da9420476a9c649ed02cb34e09b2d39e6"
         }
       ]
     },
@@ -165436,6 +168504,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_10.png.meta",
+      "before": {
+        "bytes": 3071,
+        "sha256": "754f7b31fb5146cc3742e026c9abe593c97915dd43d7b5b2dea8e3b1a6244d72"
+      },
+      "after": {
+        "bytes": 3044,
+        "sha256": "1f6dfd18452f394a67d2510259324846bb3570960ee3f4d2c5b3b8aaab3fd6d6"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1008,
+          "beforeSha256": "754f7b31fb5146cc3742e026c9abe593c97915dd43d7b5b2dea8e3b1a6244d72",
+          "afterSha256": "1f6dfd18452f394a67d2510259324846bb3570960ee3f4d2c5b3b8aaab3fd6d6"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_11.png",
       "before": {
         "bytes": 11825,
@@ -165452,6 +168539,25 @@
           "metadata": false,
           "beforeSha256": "8947ddf51aac12c431fbc0d9f0a82e10f41f9a92c419cd6ddc7a5e1f41f90d3e",
           "afterSha256": "0e6666357ebfb68edfbcab8f80eda34789847348d491cd997d2a0e83caa627dc"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_11.png.meta",
+      "before": {
+        "bytes": 3071,
+        "sha256": "6d1563f8e2b782048fe710b6f5633e40b16c2b2c6404e0c1653edc6b83411872"
+      },
+      "after": {
+        "bytes": 3072,
+        "sha256": "af2582f909ff9889a5caa8818b0caf5c531c23e9ec12aa5e85dc7dc6e7556018"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1009,
+          "beforeSha256": "6d1563f8e2b782048fe710b6f5633e40b16c2b2c6404e0c1653edc6b83411872",
+          "afterSha256": "af2582f909ff9889a5caa8818b0caf5c531c23e9ec12aa5e85dc7dc6e7556018"
         }
       ]
     },
@@ -165476,6 +168582,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_12.png.meta",
+      "before": {
+        "bytes": 3073,
+        "sha256": "834ba0e40379baf81f7affa89c550d32553d62e030173496f88392c5b419b6c4"
+      },
+      "after": {
+        "bytes": 3034,
+        "sha256": "cd067630e76f9afd89fbe76fd07b6147ec65f1cb59190e422e1be77adbbafa4e"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1010,
+          "beforeSha256": "834ba0e40379baf81f7affa89c550d32553d62e030173496f88392c5b419b6c4",
+          "afterSha256": "cd067630e76f9afd89fbe76fd07b6147ec65f1cb59190e422e1be77adbbafa4e"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_13.png",
       "before": {
         "bytes": 11080,
@@ -165492,6 +168617,25 @@
           "metadata": false,
           "beforeSha256": "60e6419726f9af94c57e6acdc737808182d1caf1c11995db1c30a6aeabdc4873",
           "afterSha256": "01fba5ea5e59f08156f41ebedfa7cda73318d8fb6df8f2a9fa9f5a19edfb8aad"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_13.png.meta",
+      "before": {
+        "bytes": 3013,
+        "sha256": "5d122a32c0240f1cc0023307d477473e8b77c55b03e70394a157cee1a75a59f1"
+      },
+      "after": {
+        "bytes": 3034,
+        "sha256": "aac65c78691a158fd8a147426026bd5c72ee183429f9ac124b53b6838b981608"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1011,
+          "beforeSha256": "5d122a32c0240f1cc0023307d477473e8b77c55b03e70394a157cee1a75a59f1",
+          "afterSha256": "aac65c78691a158fd8a147426026bd5c72ee183429f9ac124b53b6838b981608"
         }
       ]
     },
@@ -165516,6 +168660,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_14.png.meta",
+      "before": {
+        "bytes": 3059,
+        "sha256": "93611d63ba25f2f64c9308ab2396c3d240d0135078c97a2e3fa1aa515b0178f9"
+      },
+      "after": {
+        "bytes": 3034,
+        "sha256": "bcc87be2616f0594aa06d46012a022b99a13052132cc0379e47cd1c9fc946d42"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1012,
+          "beforeSha256": "93611d63ba25f2f64c9308ab2396c3d240d0135078c97a2e3fa1aa515b0178f9",
+          "afterSha256": "bcc87be2616f0594aa06d46012a022b99a13052132cc0379e47cd1c9fc946d42"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_15.png",
       "before": {
         "bytes": 10098,
@@ -165532,6 +168695,25 @@
           "metadata": false,
           "beforeSha256": "b9a7673114ea098f2ec827b4ffd6eab357b4929103a53e00184d03dde95eae95",
           "afterSha256": "2231b368008492f4ae80fdcf9d3db5cb73a0a67dbb45622816eaf2892e612768"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_15.png.meta",
+      "before": {
+        "bytes": 3072,
+        "sha256": "e5d1498e3b6f0312cbdf848bda3cbcd4d4ade3c8d7ddb8728c02a5b387a5f061"
+      },
+      "after": {
+        "bytes": 3034,
+        "sha256": "0bd82140d384575c9110531db2345e532814d982360c2eadaa5b0e7f2c1a255d"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1013,
+          "beforeSha256": "e5d1498e3b6f0312cbdf848bda3cbcd4d4ade3c8d7ddb8728c02a5b387a5f061",
+          "afterSha256": "0bd82140d384575c9110531db2345e532814d982360c2eadaa5b0e7f2c1a255d"
         }
       ]
     },
@@ -165556,6 +168738,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_16.png.meta",
+      "before": {
+        "bytes": 3026,
+        "sha256": "8f55ba5f671d8d6c903128337455b8b61e220c60a0fbc565d76dba780f93f2de"
+      },
+      "after": {
+        "bytes": 3034,
+        "sha256": "93e08e82acfa2230ed23c6d5623e5c82cc8aaa523afaf4b7e2f15f917ab5ba25"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1014,
+          "beforeSha256": "8f55ba5f671d8d6c903128337455b8b61e220c60a0fbc565d76dba780f93f2de",
+          "afterSha256": "93e08e82acfa2230ed23c6d5623e5c82cc8aaa523afaf4b7e2f15f917ab5ba25"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_17.png",
       "before": {
         "bytes": 8232,
@@ -165572,6 +168773,25 @@
           "metadata": false,
           "beforeSha256": "78bc97da84288dddd9ee841569ede81a031517ec43a02b7f05a91e2049691bbb",
           "afterSha256": "b588b10e3125ef51d27944f2574f8c6a71ca36946cf5dd29e9bc9316d6bcc66a"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_17.png.meta",
+      "before": {
+        "bytes": 3027,
+        "sha256": "559aacc6aa1ebc7da6cd06387c95104bef70703799ff2fa64692a00e84ed3ee7"
+      },
+      "after": {
+        "bytes": 3018,
+        "sha256": "90ea79f05a34a00ae3d2dca0a590fc0b17b418becaa5e6287c92dc25256d6dea"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1015,
+          "beforeSha256": "559aacc6aa1ebc7da6cd06387c95104bef70703799ff2fa64692a00e84ed3ee7",
+          "afterSha256": "90ea79f05a34a00ae3d2dca0a590fc0b17b418becaa5e6287c92dc25256d6dea"
         }
       ]
     },
@@ -165596,6 +168816,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_18.png.meta",
+      "before": {
+        "bytes": 3024,
+        "sha256": "40d8da9aa69c57703fa2f47d69832472db75142a200e01d82474e2c5f8d934e3"
+      },
+      "after": {
+        "bytes": 3057,
+        "sha256": "b4467cb6ef63ca291834e7317a98df9deac9241a3e9ef6cdeab9bb650d6c04e0"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1016,
+          "beforeSha256": "40d8da9aa69c57703fa2f47d69832472db75142a200e01d82474e2c5f8d934e3",
+          "afterSha256": "b4467cb6ef63ca291834e7317a98df9deac9241a3e9ef6cdeab9bb650d6c04e0"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_19.png",
       "before": {
         "bytes": 4417,
@@ -165612,6 +168851,25 @@
           "metadata": false,
           "beforeSha256": "f688cf55284fe6df4f9b58980bab1073618e84a4bb65a1723b47c3807dfbd449",
           "afterSha256": "b97dc7220bcaae006ed635219b18d2b92c12dc07e784768acb47a2f280ef2953"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_19.png.meta",
+      "before": {
+        "bytes": 3057,
+        "sha256": "d968566377cb626be161d3c07876eb7732bf364430833b96c0d88b178fd58d15"
+      },
+      "after": {
+        "bytes": 3043,
+        "sha256": "ecb4b07d53149d0a22690c0f8db71a3f1a75a5e70c9bf55ed94ef2b3e8126697"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1017,
+          "beforeSha256": "d968566377cb626be161d3c07876eb7732bf364430833b96c0d88b178fd58d15",
+          "afterSha256": "ecb4b07d53149d0a22690c0f8db71a3f1a75a5e70c9bf55ed94ef2b3e8126697"
         }
       ]
     },
@@ -165636,6 +168894,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_2.png.meta",
+      "before": {
+        "bytes": 3056,
+        "sha256": "e012608414da60ecb987339bb4857702d3d8916b5d7e16906ea563d4f9309d8e"
+      },
+      "after": {
+        "bytes": 3047,
+        "sha256": "97e30b38fcfbadd8883a6f259ebbd7269afaed9128e0d850498317ac6a8f4de5"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1000,
+          "beforeSha256": "e012608414da60ecb987339bb4857702d3d8916b5d7e16906ea563d4f9309d8e",
+          "afterSha256": "97e30b38fcfbadd8883a6f259ebbd7269afaed9128e0d850498317ac6a8f4de5"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_3.png",
       "before": {
         "bytes": 10691,
@@ -165652,6 +168929,25 @@
           "metadata": false,
           "beforeSha256": "08bfe3c11d11d0219ae0823e103f3b5107a3780e27b5b020ab15dc658aa3c09f",
           "afterSha256": "b113573e229097db08df918aef2e68f996ac0ced419d84734d87a4394895ae31"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_3.png.meta",
+      "before": {
+        "bytes": 3071,
+        "sha256": "2d84b49eec7eaf664445675c3fbcf8148b3cc27f0a84d597f04c13db2b61c3a2"
+      },
+      "after": {
+        "bytes": 3016,
+        "sha256": "dc82605ca67637a361ab7761247da3fb6f3963b936abeb67b8396b4309855fe4"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1001,
+          "beforeSha256": "2d84b49eec7eaf664445675c3fbcf8148b3cc27f0a84d597f04c13db2b61c3a2",
+          "afterSha256": "dc82605ca67637a361ab7761247da3fb6f3963b936abeb67b8396b4309855fe4"
         }
       ]
     },
@@ -165676,6 +168972,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_4.png.meta",
+      "before": {
+        "bytes": 3054,
+        "sha256": "f1cfd33d7fe2a431fbf5e47c83e5a7d4b689d8fa0f3c70184418cfeae1b85367"
+      },
+      "after": {
+        "bytes": 3021,
+        "sha256": "e233eb5cb3235d5bedfaecc405ababd6b1f48d4c632faa9f6d3b7e87e845035f"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1002,
+          "beforeSha256": "f1cfd33d7fe2a431fbf5e47c83e5a7d4b689d8fa0f3c70184418cfeae1b85367",
+          "afterSha256": "e233eb5cb3235d5bedfaecc405ababd6b1f48d4c632faa9f6d3b7e87e845035f"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_5.png",
       "before": {
         "bytes": 11225,
@@ -165692,6 +169007,25 @@
           "metadata": false,
           "beforeSha256": "9ca6e2910cc2906d1aa417b0c301b1d4241a1a70a44df267bcfdfea6ce87f2cf",
           "afterSha256": "dc7ce28e384c03ff8674e08efe44bfd319f1c34a2711c62de346e032ecc8a74f"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_5.png.meta",
+      "before": {
+        "bytes": 3071,
+        "sha256": "9ff4f5f9e2f49c8076b16efea2b616641f075443886445ad57c2e1050dc988d7"
+      },
+      "after": {
+        "bytes": 3039,
+        "sha256": "3f4391832cd6ac65da773ffcd519902d6af7fede7aa84f921812944d45802ca9"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1003,
+          "beforeSha256": "9ff4f5f9e2f49c8076b16efea2b616641f075443886445ad57c2e1050dc988d7",
+          "afterSha256": "3f4391832cd6ac65da773ffcd519902d6af7fede7aa84f921812944d45802ca9"
         }
       ]
     },
@@ -165716,6 +169050,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_6.png.meta",
+      "before": {
+        "bytes": 3057,
+        "sha256": "07fb516626d9a4ee272b6b96e6e4e8d5518990120a549d25d611d85ef6b2f84d"
+      },
+      "after": {
+        "bytes": 3040,
+        "sha256": "45b3f5da1546ef39428c38248ec73be25309020d050bacf3a2392e0a0f965e17"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1004,
+          "beforeSha256": "07fb516626d9a4ee272b6b96e6e4e8d5518990120a549d25d611d85ef6b2f84d",
+          "afterSha256": "45b3f5da1546ef39428c38248ec73be25309020d050bacf3a2392e0a0f965e17"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_7.png",
       "before": {
         "bytes": 11513,
@@ -165732,6 +169085,25 @@
           "metadata": false,
           "beforeSha256": "aa43bb060bb13406c1864e5ad9b131c61921119cf127fc686243c6c3be2b3131",
           "afterSha256": "f34ec54a74c3b1ff62eecff207bbd8574d042307b16306493b04a92a2f668db6"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_7.png.meta",
+      "before": {
+        "bytes": 3010,
+        "sha256": "a98112a47c9dd3f3b2dc6ebe9fd8f70adaf9cfc5106862b018c20ea6cf37232b"
+      },
+      "after": {
+        "bytes": 3012,
+        "sha256": "b9d54a8ea72cdc8dfee431d89522f67f2a0e35a7fa4f4347718d2cca56f745a4"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1005,
+          "beforeSha256": "a98112a47c9dd3f3b2dc6ebe9fd8f70adaf9cfc5106862b018c20ea6cf37232b",
+          "afterSha256": "b9d54a8ea72cdc8dfee431d89522f67f2a0e35a7fa4f4347718d2cca56f745a4"
         }
       ]
     },
@@ -165756,6 +169128,25 @@
       ]
     },
     {
+      "relative": "skill/skill-102050113/skill-102050113_8.png.meta",
+      "before": {
+        "bytes": 3041,
+        "sha256": "d2ac83949e6f985ed9356fa791bbdee312819ce948fd2dceb76bc60e0284d042"
+      },
+      "after": {
+        "bytes": 3056,
+        "sha256": "63ff09046753b2c001fc4229a803de802d6c2cc1d1cd78cb6b6ccda2637d0afb"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1006,
+          "beforeSha256": "d2ac83949e6f985ed9356fa791bbdee312819ce948fd2dceb76bc60e0284d042",
+          "afterSha256": "63ff09046753b2c001fc4229a803de802d6c2cc1d1cd78cb6b6ccda2637d0afb"
+        }
+      ]
+    },
+    {
       "relative": "skill/skill-102050113/skill-102050113_9.png",
       "before": {
         "bytes": 11843,
@@ -165772,6 +169163,25 @@
           "metadata": false,
           "beforeSha256": "99b229d00b75b1919ff7757d6590cf932d94c152ae05456840171c4055f722e7",
           "afterSha256": "e6f9d544aa041dc39c40e670f66674ddc1a2c03db9379fb572f45d5b32970862"
+        }
+      ]
+    },
+    {
+      "relative": "skill/skill-102050113/skill-102050113_9.png.meta",
+      "before": {
+        "bytes": 3025,
+        "sha256": "223f528b86cc6b199d5d299a749cdb75dd552e582f5f33c5224708d4c8beb69b"
+      },
+      "after": {
+        "bytes": 3056,
+        "sha256": "c1af7f0c09756199bbeb68cb46d79e8840385c52e06de63452ecbddf38f484ba"
+      },
+      "sources": [
+        {
+          "kind": "creator-derived-meta",
+          "importIndex": 1007,
+          "beforeSha256": "223f528b86cc6b199d5d299a749cdb75dd552e582f5f33c5224708d4c8beb69b",
+          "afterSha256": "c1af7f0c09756199bbeb68cb46d79e8840385c52e06de63452ecbddf38f484ba"
         }
       ]
     },

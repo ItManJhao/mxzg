@@ -1,17 +1,16 @@
 /**
- * 战斗浮字和头顶信息的纯展示规则。
- * 由 battlePresentView 绘制服务端战报，不保存战斗或奖励状态。
+ * 战斗飘字和头顶信息的展示规则。战报提供数值，视图按旧版轨迹取样。
+ * 工具不保存播放进度，也不修改战斗或奖励状态。
  */
-export const BATTLE_CRIT_BUBBLE = "暴击";
-export const BATTLE_FLOAT_SLOT_COUNT = 4;
+/** 旧版三次弹跳和随后的渐隐总时长，单位为战斗秒。 */
+export const BATTLE_FLOAT_SECONDS = 1.6;
 export const BATTLE_BUFF_SLOT_COUNT = 3;
-export interface BattleFloatCue {
-    /** plan.slots 下标。对不上人时是 null。数字仍写在 FloatDmg 槽上，不按站位挪节点。 */
-    anchor: number | null;
-    hurt: number;
-    /** true 才画「暴击」。缺字段和明确的不暴击都是 false，不写 0。 */
-    crit: boolean;
-}
+/** 旧版每跳 0.3 秒的高度和横向起止偏移，单位为战场像素。 */
+const JUMPS = [
+    { height: 100, from: 0, to: 15 },
+    { height: 60, from: 15, to: 25 },
+    { height: 20, from: 25, to: 30 },
+];
 export interface BattleOverhead {
     /** plan.slots 下标。只含报告里真正带上的英雄，不含补位。 */
     slot: number;
@@ -20,7 +19,7 @@ export interface BattleOverhead {
     /** 没有 buffs 字段时是 null。空数组表示列表在，但没有图标。 */
     buffIds: number[] | null;
 }
-/** 战斗表现计算工具：把战报数值转换为飘字、暴击标记、等级及状态数量，不修改战斗结果。 */
+/** 战斗表现计算工具，统一飘字、等级与状态数量的展示规则。 */
 export class BattlePresentationUtils {
     /** 纯展示或数据转换入口，无需创建工具类实例。 */
     private constructor() { }
@@ -44,25 +43,39 @@ export class BattlePresentationUtils {
         return "+" + String(hurt);
     }
 
-    /** 保留最多四个浮字槽位，维持服务端事件的排列顺序。 */
-    public static visibleFloats(floats: BattleFloatCue[]): BattleFloatCue[] {
-        const shown: BattleFloatCue[] = [];
-        const n = floats.length < BATTLE_FLOAT_SLOT_COUNT ? floats.length : BATTLE_FLOAT_SLOT_COUNT;
-        for (let i = 0; i < n; i++) {
-            shown.push(floats[i]);
+    /**
+     * 返回相对起点的位移、大小和透明度。三次抛物线弹跳后沿水平方向滑出并淡隐。
+     * @param seconds 战斗时间，未除以播放倍率。
+     * @param direction 我方为 -1，敌方为 1。
+     * @param drift 最后一段离开时继续移动的像素数，旧版取 20～30。
+     */
+    public static bounceAt(seconds: number, direction: number, drift: number): {
+        x: number; y: number; scale: number; opacity: number;
+    } {
+        let scale = 0.5;
+        if (seconds < 0.3) {
+            scale = 0.6 + 0.65 * (1 - Math.cos(seconds / 0.3 * Math.PI / 2));
+        } else if (seconds < 0.6) {
+            scale = 1.25 - 0.75 * Math.sin((seconds - 0.3) / 0.3 * Math.PI / 2);
         }
-        return shown;
-    }
-
-    /** 判断本次可显示浮字中是否包含暴击，用于控制暴击标记。 */
-    public static beatShowsCrit(floats: BattleFloatCue[]): boolean {
-        const shown = BattlePresentationUtils.visibleFloats(floats);
-        for (let i = 0; i < shown.length; i++) {
-            if (shown[i].crit) {
-                return true;
-            }
+        if (seconds >= 0.9) {
+            const progress = Math.min(1, (seconds - 0.9) / 0.7);
+            return {
+                x: (30 + drift * progress) * direction,
+                y: 0,
+                scale,
+                opacity: Math.round(255 * Math.cos(progress * Math.PI / 2)),
+            };
         }
-        return false;
+        const index = Math.min(JUMPS.length - 1, Math.floor(seconds / 0.3));
+        const jump = JUMPS[index];
+        const progress = (seconds - index * 0.3) / 0.3;
+        return {
+            x: (jump.from + (jump.to - jump.from) * progress) * direction,
+            y: 4 * jump.height * progress * (1 - progress),
+            scale,
+            opacity: 255,
+        };
     }
 
     /** 限制显示的状态图标数量；缺失状态列表返回 null。 */

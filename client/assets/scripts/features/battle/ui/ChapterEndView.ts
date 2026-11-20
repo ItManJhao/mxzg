@@ -17,6 +17,7 @@ import { GConfig } from "../../../config/GConfig";
 import { SuperScroll } from "../../../framework/ui/SuperScroll";
 import { SuperContent } from "../../../framework/ui/SuperContent";
 import { UIManager } from "../../../framework/ui/UIManager";
+import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { BaseView } from "../../../framework/ui/BaseView";
@@ -288,7 +289,7 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
             .catch(() => { /* 加载失败或取消由UIManager统一处理。 */ });
     }
 
-    /** 预载胜负音频；真实主线胜利使用旧14帧光效与双音源，失败不播放胜利光效。 */
+    /** 预载胜负音频；真实主线胜利使用旧14帧光效与双音源，播放遵循本机音效开关。 */
     private async prepare(args: ChapterEndArgs): Promise<void> {
         const assets = ResourceAssetsUtils.forNode(this.node);
         const clipPromise = assets.loadPath("audio/battle-end-" + (args.won ? "1" : "0"), "AudioClip");
@@ -339,11 +340,11 @@ export class ChapterEndView extends BaseView<ChapterEndArgs> {
                 this.node.off(AudioSource.EventType.STARTED, onAudioStarted);
             }
         });
-        this.audio.play();
+        AudioPreferences.playEffect(this.audio);
         if (mainClip) {
             this.mainAudio = this.node.addComponent(AudioSource);
             this.mainAudio.clip = mainClip;
-            this.mainAudio.play();
+            AudioPreferences.playEffect(this.mainAudio);
         }
         if (!args.won || this.victoryCountdown) {
             this.schedule(this.tickClose, 1);

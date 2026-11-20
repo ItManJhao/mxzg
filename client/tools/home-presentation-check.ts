@@ -6,11 +6,13 @@ import { readFileSync } from "node:fs";
 import { Button, EditBox, Label, Node, Prefab, Sprite } from "cc";
 import { RemakeHomeView } from "../assets/scripts/features/home/ui/RemakeHomeView";
 import { RoleProfileView } from "../assets/scripts/features/account/ui/RoleProfileView";
+import { RoleSettingsView } from "../assets/scripts/features/account/ui/RoleSettingsView";
 import { CityHubView } from "../assets/scripts/features/city/ui/CityHubView";
 import { ServerPickerView } from "../assets/scripts/features/account/ui/ServerPickerView";
 import { ServerCellView } from "../assets/scripts/features/account/ui/ServerCellView";
 import { ServerSelectionController } from "../assets/scripts/features/account/ServerSelectionController";
 import { AccountModel } from "../assets/scripts/features/account/AccountModel";
+import { RoleController } from "../assets/scripts/features/account/RoleController";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
@@ -42,6 +44,7 @@ class ChromeFixture extends CityChromeView {
   onClose(): void { this.closedCount++; }
   dispose(): void { this.disposedCount++; }
 }
+/** 装配主城及当前个人空间与独立设置窗的序列化控件替身。 */
 function fixture() {
   const home = new Node("Home").addComponent(RemakeHomeView);
   const cityNode = new Node("CityHubView"); const city = cityNode.addComponent(CityFixture);
@@ -52,10 +55,32 @@ function fixture() {
   const profileNode=new Node("RoleProfileView"),profile=profileNode.addComponent(RoleProfileView);
   profile.nickname=new Node("Name").addComponent(Label);profile.roleId=new Node("Id").addComponent(Label);profile.level=new Node("Level").addComponent(Label);
   profile.closeButton=new Node("Close").addComponent(Button);profile.settingsButton=new Node("Settings").addComponent(Button);
-  profile.logoutButton=new Node("Logout").addComponent(Button);profile.settingsClose=new Node("Back").addComponent(Button);profile.settingsPanel=new Node("SettingsPanel");
+  profile.portraitButton = new Node("PortraitButton").addComponent(Button);
+  profile.renameButton = new Node("RenameButton").addComponent(Button);
+  profile.imageButton = new Node("ImageButton").addComponent(Button);
+  profile.titleButton = new Node("TitleButton").addComponent(Button);
+  profile.emptyShowcase = new Node("NoDeployedHeroes").addComponent(Label);
+  for (let index = 0; index < 8; index++) {
+    profile.showcaseButtons.push(new Node(`ShowcaseButton${index}`).addComponent(Button));
+    profile.showcaseFaces.push(new Node(`ShowcaseFace${index}`));
+    profile.showcaseFrames.push(new Node(`ShowcaseFrame${index}`));
+    profile.showcaseLevels.push(new Node(`ShowcaseLevel${index}`).addComponent(Label));
+    profile.showcaseHighStars.push(new Node(`ShowcaseHighStars${index}`).addComponent(Label));
+    for (let star = 0; star < 5; star++) {
+      profile.showcaseStars.push(new Node(`ShowcaseStar${index}-${star}`));
+    }
+  }
+  const settings = new Node("RoleSettingsView").addComponent(RoleSettingsView);
+  settings.serverName = new Node("ServerName").addComponent(Label);
+  settings.closeButton = new Node("SettingsCloseButton").addComponent(Button);
+  settings.musicButton = new Node("MusicButton").addComponent(Button);
+  settings.musicCheck = new Node("MusicCheck");
+  settings.effectsButton = new Node("EffectsButton").addComponent(Button);
+  settings.effectsCheck = new Node("EffectsCheck");
+  settings.logoutButton = new Node("LogoutButton").addComponent(Button);
   chrome.experienceFill = new Node("ExperienceFill").addComponent(Sprite);
   chrome.avatar=new Node("Avatar");chrome.avatar.addComponent(Button);
-  return { home, city, chrome, profile };
+  return { home, city, chrome, profile, settings };
 }
 
 /** 两种入口共用全局反馈；技能条目由真实配置和精确等级证据生成，迟到失败不能覆盖其他窗口。 */
@@ -165,7 +190,7 @@ async function main() {
   await checkCityConfigGate();
   await ConfigFixtureUtils.installReal();
   await checkGlobalFeedback();
-  const { home, city, chrome, profile } = fixture();
+  const { home, city, chrome, profile, settings } = fixture();
   // 验证正常经验、升级清零、满级及缺失数据，避免沿用上一角色比例。
   chrome.setExperience(66,120); assert.equal(chrome.experienceFill!.fillRange,0.55);
   chrome.setExperience(0,150); assert.equal(chrome.experienceFill!.fillRange,0);
@@ -200,20 +225,31 @@ async function main() {
   const ui = UIManager.instance;
   const releaseHost = ui.setResidentHost("test-role-modal",()=>new Node("ModalHost"));
   const unregister = UIRegistry.registerView(RoleProfileView,{id:"role-profile",prefab:"bundles/module/login/prefabs/RoleProfileView",layer:UILayer.Popup,cache:false,allowMultiple:false,hostId:"test-role-modal",load:async()=>Object.assign(new Prefab(), {_instantiate:()=>profile.node})});
+  const unregisterSettings = UIRegistry.registerView(RoleSettingsView, {
+    id: "role-settings", prefab: "bundles/module/login/prefabs/RoleSettingsView", layer: UILayer.Dialog,
+    cache: false, allowMultiple: false, hostId: "test-role-modal", load: async () => Object.assign(new Prefab(), {_instantiate: () => settings.node})
+  });
+  const controller = new RoleController(model);
+  const roleArgs = { model, controller, serverName: "测试一服", logout: () => { logouts++; } };
   let opening: Promise<unknown> | undefined;
-  const rebound=home.bind({openFeature:id=>{assert.equal(id,"role-profile");opening=ui.openById(id,{model,logout:()=>{logouts++;},notice:()=>{}});}});
+  const rebound=home.bind({openFeature:id=>{assert.equal(id,"role-profile");opening=ui.openById(id,roleArgs);}});
   chrome.avatar!.emit(Button.EventType.CLICK); await opening;
   assert.equal(profile.nickname!.string,"玩家甲");
-  const same=await ui.openById("role-profile",{model,logout:()=>{logouts++;},notice:()=>{}});
+  const same=await ui.openById("role-profile",roleArgs);
   assert.equal(same,profile,"重复点击只保留一个资料窗口");
   model.replace({busy:false,error:"",role:{id:"role-new",nickname:"玩家乙",level:9,gold:5,diamonds:8}});
   assert.equal(profile.nickname!.string,"玩家乙");
-  profile.settingsButton!.node.emit(Button.EventType.CLICK);assert.equal(profile.settingsPanel!.active,true);
-  profile.logoutButton!.node.emit(Button.EventType.CLICK);assert.equal(logouts,1);
+  profile.settingsButton!.node.emit(Button.EventType.CLICK);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert(ui.ownsChild(profile, settings) && settings.serverName!.string === roleArgs.serverName,
+    "个人空间的设置作为独立子窗展示区服");
+  settings.logoutButton!.node.emit(Button.EventType.CLICK);
+  assert.equal(logouts, 1);
+  assert(!ui.isOpen(RoleSettingsView));
   profile.closeButton!.node.emit(Button.EventType.CLICK);
   model.replace({busy:false,error:"",role:{id:"late",nickname:"迟到",level:1,gold:0,diamonds:0}});
   assert.equal(profile.nickname!.string,"玩家乙","关闭后已退订，不能继续刷新销毁的页面");
-  rebound();unbind();unregister();releaseHost();
+  rebound();unbind();unregisterSettings();unregister();releaseHost();
   home.runDispose(); home.onDestroy();
   assert.equal(city.closedCount, 1); assert.equal(city.disposedCount, 1);
   assert.equal(chrome.closedCount, 1); assert.equal(chrome.disposedCount, 1);
@@ -231,12 +267,13 @@ async function main() {
 
   // 引擎先销毁按钮组件时其 node 会被清空，资料页稍后释放也不应抛错。
   const teardown = fixture();
-  teardown.profile.runOpen({model, logout: () => {}, notice: () => {}});
+  teardown.profile.runOpen(roleArgs);
   const beforeDestroy = teardown.profile.nickname!.string;
   (teardown.profile.closeButton as any).node = null;
   assert.doesNotThrow(()=>teardown.profile.onDestroy());
   model.replace({busy:false,error:"",role:{id:"after-destroy",nickname:"已销毁",level:1,gold:0,diamonds:0}});
   assert.equal(teardown.profile.nickname!.string, beforeDestroy, "直接销毁时也必须退订角色更新");
+  controller.dispose();
   // 选服真实数据分组与选择由页面处理，列表排列留给 SuperContent。
   const servers=[{id:"a1",regionId:"a",regionName:"一区",name:"一服",enabled:true},{id:"b1",regionId:"b",regionName:"二区",name:"二服",enabled:true}];
   const selection = new ServerSelectionController({catalog:async()=>servers},()=>{});

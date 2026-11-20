@@ -6,20 +6,40 @@
 package com.funsgamex.mxzg.role;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class RoleRepository {
-    /** 角色资料同时投影新手赠礼资格，历史角色和已领角色均返回 false。 */
+    /** 一次读取持久资料、公开编号及由首次命名记录决定的赠礼资格。 */
     private static final String ROLE_SELECT = """
-        SELECT game_role.*, (first_named AND claimed_nickname IS NOT NULL
+        SELECT game_role.*, public_id, (first_named AND welcome_gift_eligible
             AND NOT EXISTS (SELECT 1 FROM game_role_welcome_gift WHERE role_id=game_role.id))
             AS welcome_gift_available
         FROM game_role
+        LEFT JOIN game_role_public_number ON game_role_public_number.role_id=game_role.id
         """;
+
+    /** 旧服角色编号至少为四位区服号及六位区内号。 */
+    private static final long FIRST_PUBLIC_NUMBER_FACTOR = 1_000_000L;
+
+    /** 预留四位区服号前缀，开发一、二服分别使用 1001、1002。 */
+    private static final int PUBLIC_SERVER_BASE = 1000;
+
+    /** 四位号段分配上限，防止与已有四位前缀重叠。 */
+    private static final int MAX_PUBLIC_SERVER_OFFSET = 8999;
+
+    /**
+     * 持有区服编号行锁时读取的号段与末次已持久化序号。
+     * @param offset 与公开区服号相差 1000 的稳定编号
+     * @param lastSequence 自该号段开始按事务分配的最大区内序号，0 表示还未分配
+     */
+    private record PublicNumberSequence(int offset, long lastSequence) {}
 
     /**
      * 一次钱包写入或整笔可信发奖的真实前后余额，不将升级赠钻混入直接奖励数量。
@@ -35,7 +55,7 @@ public class RoleRepository {
     private final RoleRules rules;
     /** 旧英雄容量配置，只在创建角色时提供持久初值。 */
     private final com.funsgamex.mxzg.hero.HeroCapacityService heroCapacity;
-    /** 行映射包含首次命名和赠礼资格，等级门槛按可信配置派生。 */
+    /** 行映射同时投影持久公开编号及赠礼资格，等级门槛按可信配置派生。 */
     private RoleProfile map(java.sql.ResultSet row,int index) throws java.sql.SQLException {
         int level = row.getInt("role_level");
         var basics = new RoleBasics(row.getLong("role_experience"), row.getInt("cup"),
@@ -43,7 +63,7 @@ public class RoleRepository {
             row.getLong("created_at_seconds"), row.getLong("last_login_at_seconds"), rules.threshold(level));
         return new RoleProfile(row.getString("id"), row.getString("nickname"), level, row.getLong("gold"),
             row.getLong("diamonds"), row.getString("server_id"), basics, row.getBoolean("first_named"),
-            row.getBoolean("welcome_gift_available"));
+            row.getBoolean("welcome_gift_available"), row.getString("public_id"));
     }
     /** 资产版本与事务提交同步，由所有钱包写入共同使用。 */
     private final com.funsgamex.mxzg.network.AssetSyncService sync;
@@ -149,11 +169,12 @@ public class RoleRepository {
             String.class, serverId, nickname).stream().anyMatch(nickname::equals);
     }
 
-    /** 在角色锁内保存首次命名，唯一键处理跨角色同时认领，资产快照在提交后广播。 */
+    /** 在角色锁内保存首次命名及新手赠礼资格，唯一键处理跨角色同时认领。 */
     public void setFirstName(String roleId, String nickname) {
         sync.requireTransaction();
         int changed = jdbc.update(
-            "UPDATE game_role SET nickname=?,first_named=TRUE,claimed_nickname=? WHERE id=? AND first_named=FALSE",
+            "UPDATE game_role SET nickname=?,first_named=TRUE,welcome_gift_eligible=TRUE,claimed_nickname=? "
+                + "WHERE id=? AND first_named=FALSE",
             nickname, nickname.getBytes(StandardCharsets.UTF_8), roleId);
         if (changed != 1) {
             throw new IllegalStateException("首次命名更新行数异常");
@@ -161,18 +182,94 @@ public class RoleRepository {
         sync.changed(roleId);
     }
 
-    /** 按旧初始化规则创建默认区服角色。 */
+    /** 在角色锁内替换已命名角色的昵称与唯一键，改名不改变首次命名和赠礼资格。 */
+    void rename(String roleId, String nickname) {
+        sync.requireTransaction();
+        if (jdbc.update("UPDATE game_role SET nickname=?,claimed_nickname=? WHERE id=? AND first_named=TRUE",
+                nickname, nickname.getBytes(StandardCharsets.UTF_8), roleId) != 1) {
+            throw new IllegalStateException("角色改名更新行数异常");
+        }
+        sync.changed(roleId);
+    }
+
+    /** 在角色锁内保存已校验的新形象，头像和头像框保持原资料字段。 */
+    void changeImage(String roleId, int imageId) {
+        sync.requireTransaction();
+        if (jdbc.update("UPDATE game_role SET image_id=? WHERE id=?", imageId, roleId) != 1) {
+            throw new IllegalStateException("角色形象更新行数异常");
+        }
+        sync.changed(roleId);
+    }
+
+    /** 返回本角色的真实称号取得记录，已到期记录也供个人空间区分未取得和失效。 */
+    List<RoleTitle> titles(String roleId) {
+        return jdbc.query("SELECT title_id,end_time_seconds FROM game_role_title WHERE role_id=? ORDER BY title_id",
+            (row, index) -> new RoleTitle(row.getInt("title_id"), row.getLong("end_time_seconds")), roleId);
+    }
+
+    /** 单独调用或加入上层事务，查找或创建默认区服角色。 */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public RoleProfile create(String account) {
         return create(account, "local-1");
     }
-    /** 按原表创建未命名角色，暂用开发账号作为昵称。 */
+
+    /** 在区服号段行锁内查找或创建角色，公开编号和内部 UUID 同事务持久化。 */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public RoleProfile create(String account, String serverId) {
+        PublicNumberSequence sequence = lockPublicNumberSequence(serverId);
+        var existing = findByAccount(account, serverId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
         String id = UUID.randomUUID().toString();
         String key = serverId.equals("local-1") ? account : account + "@" + serverId;
-        long now=java.time.Instant.now().getEpochSecond();
-        jdbc.update("INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id,role_experience,cup,image_id,created_at_seconds,last_login_at_seconds,hero_capacity,first_named) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,FALSE)",
-            id,key,account,rules.initial("level"),rules.initial("gold"),rules.initial("gem"),account,serverId,rules.initial("exp"),rules.initial("cup"),rules.imageId(),now,now,heroCapacity.initial());
+        long now = java.time.Instant.now().getEpochSecond();
+        jdbc.update("""
+            INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id,
+                role_experience,cup,image_id,created_at_seconds,last_login_at_seconds,hero_capacity,first_named)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,FALSE)
+            """, id, key, account, rules.initial("level"), rules.initial("gold"), rules.initial("gem"), account,
+            serverId, rules.initial("exp"), rules.initial("cup"), rules.imageId(), now, now, heroCapacity.initial());
+        long next = Math.incrementExact(sequence.lastSequence());
+        jdbc.update("INSERT INTO game_role_public_number(role_id,public_id) VALUES (?,?)",
+            id, publicNumber(sequence.offset(), next));
+        jdbc.update("UPDATE game_role_public_sequence SET last_sequence=? WHERE server_id=?", next, serverId);
         return findById(id).orElseThrow();
+    }
+
+    /** 读锁住现有号段。新录入的区服先锁目录行，故首次创角只登记一次号段。 */
+    private PublicNumberSequence lockPublicNumberSequence(String serverId) {
+        var numbers = readPublicNumberSequence(serverId);
+        if (!numbers.isEmpty()) {
+            return numbers.getFirst();
+        }
+        jdbc.queryForObject("SELECT id FROM game_server WHERE id=? FOR UPDATE", String.class, serverId);
+        numbers = readPublicNumberSequence(serverId);
+        if (numbers.isEmpty()) {
+            jdbc.update("INSERT INTO game_role_public_sequence(server_id) VALUES (?)", serverId);
+            numbers = readPublicNumberSequence(serverId);
+        }
+        return numbers.getFirst();
+    }
+
+    /** 获取受锁保护的号段及末次已发序号，空列表表示该区服尚未登记。 */
+    private List<PublicNumberSequence> readPublicNumberSequence(String serverId) {
+        return jdbc.query("SELECT server_code_offset,last_sequence FROM game_role_public_sequence WHERE server_id=? FOR UPDATE",
+            (row, index) -> new PublicNumberSequence(row.getInt("server_code_offset"), row.getLong("last_sequence")),
+            serverId);
+    }
+
+    /** 按旧服规则组合区服前缀和区内号，区内号增长到七位时保留相同前缀。 */
+    private static long publicNumber(int offset, long sequence) {
+        if (offset < 1 || offset > MAX_PUBLIC_SERVER_OFFSET) {
+            throw new IllegalStateException("公开角色编号的区服号段不在四位范围内");
+        }
+        long factor = FIRST_PUBLIC_NUMBER_FACTOR;
+        while (sequence >= factor) {
+            factor = Math.multiplyExact(factor, 10);
+        }
+        return Math.addExact(Math.multiplyExact(PUBLIC_SERVER_BASE + offset, factor), sequence);
     }
     /** 显式登录时记录服务器秒；须持有角色锁与事务，变更后统一通知，不把网络重连当作新登录。 */
     public void recordLogin(String roleId,long now) {

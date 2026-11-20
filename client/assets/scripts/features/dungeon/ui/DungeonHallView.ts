@@ -13,6 +13,7 @@ import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import type { AccountModel, AccountState } from "../../account/AccountModel";
 import { BagInfoView } from "../../bag/ui/BagInfoView";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { DungeonHallCardView, type DungeonHallCard } from "./DungeonHallCardView";
 
 /** 与旧 SlzmContentLayer 相同的四个入口顺序、条件和原提示语言键。 */
@@ -81,7 +82,7 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
         this.render(model.snapshot);
     }
 
-    /** 从配置包投影四个真实入口。奖励数量仅用于详情展示，开启条件随角色等级刷新。 */
+    /** 投影入口、等级与奖励预览，只有已开放的日常副本卡订阅金币关资格。 */
     private render(state: AccountState): void {
         const level = state.role?.level ?? 0;
         if (!level || level === this.shownLevel) {
@@ -109,6 +110,7 @@ export class DungeonHallView extends BaseView<DungeonHallArgs> {
                 title: gate.name,
                 description: config.requireConfig(GConfig.Language, entry.description).value ?? "",
                 lockText: open ? "" : lockTemplate.replace("%s", String(gate.level)),
+                reminderPath: open && entry.gate === "main_mission" ? GameRedDotKey.GOLD_DUNGEON : undefined,
                 rewards,
             };
         });

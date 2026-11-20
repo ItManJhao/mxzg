@@ -3,6 +3,7 @@ import { _decorator, Button, Label, Node, Sprite, UITransform } from "cc";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { RedDotManager } from "../../../framework/ui/RedDotManager";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
@@ -11,6 +12,7 @@ import { BattleSpineService } from "../../battle/ui/BattleSpineService";
 import { BagModel } from "../../bag/BagModel";
 import { BagEvent } from "../../bag/utils/BagEvent";
 import { ConfirmView } from "../../common/ui/ConfirmView";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { HeroRosterController } from "../HeroRosterController";
 import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
@@ -105,12 +107,18 @@ export class FirstSummonView extends BaseView<void> {
         }
     }
 
-    /** 监听统一状态、在途请求和背包，按服务器时钟刷新两个免费单抽。 */
+    /** 监听兑换红点和统一状态，按服务器时钟刷新两个免费单抽。 */
     public onOpen(): void {
         this.isSummonShown = true;
         this.ownListener(EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.render));
         this.ownListener(EventDispatcher.instance.on(HeroRosterEvent.SummonProgress, this, this.render));
         this.ownListener(EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.render));
+        const pointsReady = this.pointsReady;
+        if (pointsReady) {
+            this.ownListener(RedDotManager.instance.watch(GameRedDotKey.SUMMON_POINTS, visible => {
+                pointsReady.active = visible;
+            }));
+        }
         this.ownListener(EventDispatcher.instance.on("summon.repeat", this, selection => {
             if (this.isSummonShown) {
                 this.draw(selection);
@@ -181,9 +189,6 @@ export class FirstSummonView extends BaseView<void> {
         this.pointsLabel!.string = `${points}/${required}`;
         if (this.pointsFill) {
             this.pointsFill.fillRange = Math.min(1, points / required);
-        }
-        if (this.pointsReady) {
-            this.pointsReady.active = points >= required && !!details?.pointsExchangeAvailable;
         }
         if (this.seniorDiscount) {
             const discount = Number(FirstSummonData.system("adv_summon_discount_show"));

@@ -36,6 +36,8 @@ export interface TavernPointState {
 export interface RoleProfile {
     /** 所属角色字符串 ID，不能转为 number。 */
     readonly id: string;
+    /** 个人空间展示的十进制角色编号，未同步时缺失。 */
+    readonly publicId?: string;
     /** 服务器确认的昵称。 */
     readonly nickname: string;
     /** false 表示服务器要求首次命名，未提供该字段时沿用原角色入口。 */

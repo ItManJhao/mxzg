@@ -49,6 +49,8 @@ class GameSocketTest {
     @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
     @Autowired com.funsgamex.mxzg.inventory.InventoryService inventory;
     @Autowired com.funsgamex.mxzg.role.RoleRepository roles;
+    /** 用真实英雄发放事务准备个人空间的图鉴解锁。 */
+    @Autowired com.funsgamex.mxzg.hero.HeroGrantService heroGrants;
     /** 用正常保存接口准备独立副本测试阵容，供历史最高战力门槛读取。 */
     @Autowired com.funsgamex.mxzg.lineup.MainFormationCommandService formations;
     private final ObjectMapper json = new ObjectMapper();
@@ -195,6 +197,195 @@ class GameSocketTest {
     private long stackQuantity(JsonNode state, int itemId) {
         return state.path("inventory").valueStream().filter(item -> item.path("itemId").asInt() == itemId)
                 .mapToLong(item -> item.path("quantity").asLong()).sum();
+    }
+
+    /** 个人空间经真实 WS 校验鉴权、图鉴、称号期限、改名扣费、状态推送与重登恢复。 */
+    @Test
+    void personalSpaceCommandsPublishAndRecover() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        int unlockedImage = 110101001;
+        assertPersonalSpaceRequiresAuthentication(unlockedImage);
+
+        String accessToken;
+        JsonNode committed;
+        try (var peer = new Peer()) {
+            var entered = peer.request("session.login", Map.of("account", "profile_" + suffix,
+                "serverId", "local-2", "clientInstanceId", UUID.randomUUID().toString()));
+            assertTrue(entered.path("ok").asBoolean());
+            var loginBody = entered.path("body");
+            peer.connectionId = loginBody.path("connectionId").asString();
+            accessToken = loginBody.path("session").path("accessToken").asString();
+            var initial = loginBody.path("initial");
+            var role = initial.path("role");
+            String roleId = role.path("id").asString();
+            assertEquals("local-2", role.path("serverId").asString());
+            assertFalse(role.path("firstNamed").asBoolean());
+            assertTrue(role.path("basics").path("imageId").asInt() > 0);
+            assertTrue(initial.path("inventory").isArray());
+            assertEquals(0, personalResponse(peer, "role.image.list", Map.of()).path("imageIds").size());
+            assertEquals(0, personalResponse(peer, "role.titles.list", Map.of()).path("titles").size());
+
+            personalResponse(peer, "role.name.set", Map.of("nickname", "原名" + suffix));
+            var named = personalStateChanged(peer, initial.path("revision").asLong() + 1);
+            assertEquals("原名" + suffix, named.path("role").path("nickname").asString());
+
+            new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status -> {
+                roles.creditCurrency(roleId, 0, 1000);
+                inventory.credit(roleId, 902044, 1);
+                heroGrants.grant(roleId, 10101001, 1);
+                jdbc.update("""
+                    INSERT INTO game_role_title(role_id,title_id,end_time_seconds) VALUES (?,?,?),(?,?,?),(?,?,?)
+                    """, roleId, 1, -1, roleId, 2, 0, roleId, 3, 1_800_000_000L);
+            });
+            long preparedRevision = named.path("revision").asLong() + 1;
+            var prepared = personalStateChanged(peer, preparedRevision);
+            assertEquals(1, stackQuantity(prepared, 902044));
+            assertEquals(List.of(unlockedImage), personalResponse(peer, "role.image.list", Map.of()).path("imageIds")
+                .valueStream().map(JsonNode::asInt).toList());
+            var titles = personalResponse(peer, "role.titles.list", Map.of()).path("titles");
+            assertEquals(List.of(1, 2, 3), titles.valueStream().map(value -> value.path("idx").asInt()).toList());
+            assertEquals(List.of(-1L, 0L, 1_800_000_000L),
+                titles.valueStream().map(value -> value.path("endTimeSeconds").asLong()).toList());
+
+            var locked = peer.request("role.image.change", Map.of("imageId", 210101001));
+            assertEquals("ROLE_IMAGE_UNAVAILABLE", locked.path("error").path("code").asString());
+            personalResponse(peer, "role.image.change", Map.of("imageId", unlockedImage));
+            var selected = personalStateChanged(peer, preparedRevision + 1);
+            var basics = selected.path("role").path("basics");
+            assertEquals(unlockedImage, basics.path("imageId").asInt());
+            assertEquals(role.path("basics").path("headId"), basics.path("headId"));
+
+            var wrongPayment = peer.request("role.name.rename", Map.of("nickname", "改名" + suffix, "paymentType", 1));
+            assertEquals("ROLE_RENAME_PAYMENT_INVALID", wrongPayment.path("error").path("code").asString());
+            personalResponse(peer, "role.name.rename", Map.of("nickname", "改名" + suffix, "paymentType", 2));
+            var cardPaid = personalStateChanged(peer, preparedRevision + 2);
+            assertEquals("改名" + suffix, cardPaid.path("role").path("nickname").asString());
+            assertEquals(0, stackQuantity(cardPaid, 902044));
+            assertEquals(1000, cardPaid.path("role").path("diamonds").asLong());
+
+            personalResponse(peer, "role.name.rename", Map.of("nickname", "新名" + suffix, "paymentType", 1));
+            committed = personalStateChanged(peer, preparedRevision + 3);
+            assertEquals("新名" + suffix, committed.path("role").path("nickname").asString());
+            assertEquals(112, committed.path("role").path("diamonds").asLong());
+            assertTrue(committed.path("role").path("welcomeGiftAvailable").asBoolean());
+            var repeated = peer.request("role.name.rename", Map.of("nickname", "新名" + suffix, "paymentType", 1));
+            assertEquals("ROLE_NAME_SAME", repeated.path("error").path("code").asString());
+            assertNull(peer.events.poll());
+            assertNull(peer.messages.poll(100, TimeUnit.MILLISECONDS));
+        }
+
+        try (var restoredPeer = new Peer()) {
+            var restore = restoredPeer.authenticate(accessToken);
+            assertTrue(restore.path("ok").asBoolean());
+            var restored = restore.path("body").path("initial");
+            assertEquals(committed.path("role"), restored.path("role"));
+            assertEquals(committed.path("inventory"), restored.path("inventory"));
+            assertEquals(committed.path("revision"), restored.path("revision"));
+            assertEquals(1, personalResponse(restoredPeer, "role.image.list", Map.of()).path("imageIds").size());
+            assertEquals(3, personalResponse(restoredPeer, "role.titles.list", Map.of()).path("titles").size());
+        }
+    }
+
+    /** 真实装饰协议验证本人资格、头像与框快照、激活扣费和重登后的展示偏好。 */
+    @Test
+    void decorationsCommandsPublishAndRecover() throws Exception {
+        try (var anonymous = new Peer()) {
+            var denied = anonymous.request("role.decorations.list", Map.of());
+            assertEquals("UNAUTHENTICATED", denied.path("error").path("code").asString());
+        }
+        var player = login.login("decor_" + UUID.randomUUID().toString().substring(0, 12), "local-1");
+        String token = player.session().accessToken();
+        String roleId = player.role().id();
+        int avatarId = 10_101_001;
+        int borderId = 1;
+        int borderItem = 1_005_001;
+        new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status -> {
+            inventory.credit(roleId, borderItem, 2);
+            heroGrants.grant(roleId, avatarId, 1);
+        });
+
+        long finalRevision;
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(token).path("body").path("initial");
+            long revision = initial.path("revision").asLong();
+            var listed = personalResponse(peer, "role.decorations.list", Map.of());
+            assertEquals(List.of(1, avatarId), listed.path("headIds").valueStream().map(JsonNode::asInt).toList());
+            assertEquals(0, listed.path("borders").get(0).path("id").asInt());
+            assertEquals(-1, listed.path("borders").get(0).path("expiresAtSeconds").asLong());
+            assertTrue(listed.path("showPeerage").asBoolean());
+            assertEquals(0, listed.path("totalRecharge").asLong());
+            var lockedAvatar = peer.request("role.head.change", Map.of("id", 10102002));
+            assertEquals("ROLE_HEAD_UNAVAILABLE", lockedAvatar.path("error").path("code").asString());
+
+            personalResponse(peer, "role.head.change", Map.of("id", avatarId));
+            var avatarChanged = personalStateChanged(peer, ++revision);
+            assertEquals(avatarId, avatarChanged.path("role").path("basics").path("headId").asInt());
+            var lockedBorder = peer.request("role.border.change", Map.of("id", borderId));
+            assertEquals("ROLE_BORDER_UNAVAILABLE", lockedBorder.path("error").path("code").asString());
+
+            var activated = personalResponse(peer, "role.border.activate", Map.of("id", borderId));
+            var borderIds = activated.path("borders").valueStream().map(value -> value.path("id").asInt()).toList();
+            assertEquals(List.of(0, borderId), borderIds);
+            var activatedState = personalStateChanged(peer, ++revision);
+            assertEquals(1, stackQuantity(activatedState, borderItem));
+            assertEquals(0, activatedState.path("role").path("basics").path("borderId").asInt());
+            personalResponse(peer, "role.border.activate", Map.of("id", borderId));
+            assertEquals(revision, roles.revision(roleId));
+
+            personalResponse(peer, "role.border.change", Map.of("id", borderId));
+            var borderChanged = personalStateChanged(peer, ++revision);
+            assertEquals(borderId, borderChanged.path("role").path("basics").path("borderId").asInt());
+            var hidden = personalResponse(peer, "role.peerage.display", Map.of("visible", false));
+            assertFalse(hidden.path("showPeerage").asBoolean());
+            personalStateChanged(peer, ++revision);
+            finalRevision = revision;
+        }
+        try (var restored = new Peer()) {
+            var initial = restored.authenticate(token).path("body").path("initial");
+            var basics = initial.path("role").path("basics");
+            assertEquals(finalRevision, initial.path("revision").asLong());
+            assertEquals(avatarId, basics.path("headId").asInt());
+            assertEquals(borderId, basics.path("borderId").asInt());
+            assertEquals(1, stackQuantity(initial, borderItem));
+            var state = personalResponse(restored, "role.decorations.list", Map.of());
+            assertFalse(state.path("showPeerage").asBoolean());
+            assertEquals(List.of(0, borderId), state.path("borders").valueStream()
+                .map(value -> value.path("id").asInt()).toList());
+        }
+    }
+
+    /** 未归属会话不得查询或修改角色个人空间。 */
+    private void assertPersonalSpaceRequiresAuthentication(int imageId) throws Exception {
+        var requests = Map.of("role.image.list", Map.of(), "role.titles.list", Map.of(),
+            "role.image.change", Map.of("imageId", imageId),
+            "role.name.rename", Map.of("nickname", "匿名", "paymentType", 1));
+        for (var entry : requests.entrySet()) {
+            // 未鉴权业务请求被拒绝后连接即关闭，每个协议使用各自的未认证连接。
+            try (var peer = new Peer()) {
+                assertEquals("UNAUTHENTICATED", peer.request(entry.getKey(), entry.getValue()).path("error")
+                    .path("code").asString());
+            }
+        }
+    }
+
+    /** 校验个人空间成功回包，仅由事件读取权威资产后的结果。 */
+    private JsonNode personalResponse(Peer peer, String name, Object body) throws Exception {
+        var response = peer.request(name, body);
+        assertTrue(response.path("ok").asBoolean(), () -> name + " 失败：" + response.path("error").path("code").asString());
+        return response.path("body");
+    }
+
+    /** 检查响应前后均能到达一次指定版本的角色状态事件。 */
+    private JsonNode personalStateChanged(Peer peer, long revision) throws InterruptedException {
+        var event = peer.events.poll();
+        if (event == null) {
+            event = peer.messages.poll(5, TimeUnit.SECONDS);
+        }
+        assertNotNull(event);
+        assertEquals("state.changed", event.path("name").asString());
+        var body = event.path("body");
+        assertEquals(revision, body.path("revision").asLong());
+        return body;
     }
 
     /** 本测试显式关闭GM开发能力，试战也必须由服务端拒绝，不依赖本机local默认值。 */

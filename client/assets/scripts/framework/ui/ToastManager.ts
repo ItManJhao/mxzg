@@ -1,7 +1,7 @@
 /**
  * 全局飘字：复用场景已有的提示面板和Label，供UIManager.toast在登录前后统一显示结果。
- * 同一节点依次播放有界队列，以应用update推进上浮和淡入淡出，不创建页面、节点或计时器。
- * 文字保留完整原因并按场景宽度换行，应用销毁时清空队列并复原宿主状态。
+ * 同一节点依次在画面中央播放有界队列，以应用 update 推进日服的上浮和淡入淡出节奏。
+ * 长文字按场景宽度换行，底板随文字尺寸调整。应用销毁时清空队列并复原宿主状态。
  */
 import { Label, Node, Overflow, UIOpacity, UITransform } from "cc";
 import { GameLog } from "../../core/GameLog";
@@ -17,12 +17,18 @@ interface ToastEntry {
 export class ToastManager {
     /** 含当前提示在内最多保留八条；拥挤时淘汰最早待播项，保留当前和最新结果。 */
     private static readonly maxEntries = 8;
-    /** 入场淡入最长0.18秒，短提示按总时长等比例收缩。 */
-    private static readonly fadeInSeconds = 0.18;
-    /** 退场淡出最长0.28秒，短提示按总时长等比例收缩。 */
-    private static readonly fadeOutSeconds = 0.28;
-    /** 从场景原位置向上移动的总距离，单位为Canvas局部坐标。 */
-    private static readonly floatDistance = 48;
+    /** 淡入结束后持续上浮的秒数，最后半秒同时淡出。 */
+    private static readonly floatSeconds = 3;
+    /** 入场淡入最多 0.1 秒，短提示按总时长收缩。 */
+    private static readonly fadeInSeconds = 0.1;
+    /** 退场淡出最多 0.5 秒，短提示按总时长收缩。 */
+    private static readonly fadeOutSeconds = 0.5;
+    /** 画面中央向上移动的距离，单位为 Canvas 局部坐标。 */
+    private static readonly floatDistance = 30;
+    /** 日服底板左右的总留白，单位为 Canvas 局部坐标。 */
+    private static readonly horizontalPadding = 30;
+    /** 日服底板上下的总留白，单位为 Canvas 局部坐标。 */
+    private static readonly verticalPadding = 16;
     /** 待播提示按进入顺序保存；当前项单独持有，重复文字不入队。 */
     private readonly pending: ToastEntry[] = [];
     /** 当前播放项，结束或dispose时清空。 */
@@ -37,10 +43,10 @@ export class ToastManager {
     private readonly panelTransform: UITransform | null;
     /** 文字节点已有的场景尺寸组件，用于读取引擎计算的换行高度。 */
     private readonly textTransform: UITransform | null;
-    /** 场景原面板高度，是内容自适应的最小高度，dispose时恢复。 */
-    private readonly basePanelHeight: number;
-    /** 场景原文字高度，用于恢复尺寸并保留上下留白。 */
-    private readonly baseTextHeight: number;
+    /** 场景原面板尺寸，即内容自适应的最小尺寸，清理时恢复。 */
+    private readonly panelSize: { width: number; height: number } | null;
+    /** 场景原文字尺寸，宽度用于限制长句换行，清理时恢复。 */
+    private readonly textSize: { width: number; height: number } | null;
     /** 原有面板透明度组件；没有时只添加组件，不增加节点或改变层级。 */
     private readonly opacity: UIOpacity | null;
 
@@ -53,8 +59,8 @@ export class ToastManager {
         this.origin = panel ? { x: panel.position.x, y: panel.position.y, z: panel.position.z } : { x: 0, y: 0, z: 0 };
         this.panelTransform = panel?.isValid ? panel.getComponent(UITransform) : null;
         this.textTransform = label?.isValid ? label.node.getComponent(UITransform) : null;
-        this.basePanelHeight = this.panelTransform?.contentSize.height || 0;
-        this.baseTextHeight = this.textTransform?.contentSize.height || 0;
+        this.panelSize = this.panelTransform ? { ...this.panelTransform.contentSize } : null;
+        this.textSize = this.textTransform ? { ...this.textTransform.contentSize } : null;
         this.opacity = panel?.isValid ? panel.getComponent(UIOpacity) || panel.addComponent(UIOpacity) : null;
         if (panel?.isValid) {
             panel.active = false;
@@ -63,9 +69,9 @@ export class ToastManager {
 
     /**
      * 排队显示完整提示，当前或待播同文字去重；新提示可替换常驻提示，避免队列永久阻塞。
-     * @param durationMs 总播放毫秒，默认4000；非正数保留常驻语义，非有限数使用默认值
+     * @param durationMs 总播放毫秒，默认淡入 0.1 秒加上浮 3 秒。非正数表示常驻，非有限数使用默认值。
      */
-    public show(text: string, durationMs = 4000): void {
+    public show(text: string, durationMs?: number): void {
         if (this.disposed || !text?.trim()) {
             return;
         }
@@ -76,7 +82,9 @@ export class ToastManager {
         if (this.current?.text === text || this.pending.some(entry => entry.text === text)) {
             return;
         }
-        const duration = Number.isFinite(durationMs) ? Math.max(0, durationMs / 1000) : 4;
+        const duration = durationMs !== undefined && Number.isFinite(durationMs)
+            ? Math.max(0, durationMs / 1000)
+            : ToastManager.fadeInSeconds + ToastManager.floatSeconds;
         const entry = { text, duration };
         if (!this.current || this.current.duration === 0) {
             this.begin(entry);
@@ -139,11 +147,11 @@ export class ToastManager {
         if (this.label?.isValid) {
             this.label.string = "";
         }
-        if (this.textTransform?.isValid) {
-            this.textTransform.setContentSize(this.textTransform.contentSize.width, this.baseTextHeight);
+        if (this.textTransform?.isValid && this.textSize) {
+            this.textTransform.setContentSize(this.textSize.width, this.textSize.height);
         }
-        if (this.panelTransform?.isValid) {
-            this.panelTransform.setContentSize(this.panelTransform.contentSize.width, this.basePanelHeight);
+        if (this.panelTransform?.isValid && this.panelSize) {
+            this.panelTransform.setContentSize(this.panelSize.width, this.panelSize.height);
         }
     }
 
@@ -153,24 +161,32 @@ export class ToastManager {
         this.disposed = true;
     }
 
-    /** 开始一条提示，复用原Label并让引擎按场景宽度计算完整文字高度。 */
+    /** 从画面中心开始播放，使用引擎测量文字原宽和换行高度，再撑开九宫格底板。 */
     private begin(entry: ToastEntry): void {
         this.current = entry;
         this.elapsed = 0;
-        this.label!.string = entry.text;
-        this.label!.enableWrapText = true;
-        this.label!.overflow = Overflow.RESIZE_HEIGHT;
+        const label = this.label!;
+        label.string = entry.text;
+        label.enableWrapText = false;
+        label.overflow = Overflow.NONE;
         this.panel!.active = true;
-        this.label!.updateRenderData(true);
-        if (this.panelTransform && this.textTransform) {
-            const padding = Math.max(0, this.basePanelHeight - this.baseTextHeight);
-            this.panelTransform.setContentSize(this.panelTransform.contentSize.width,
-                Math.max(this.basePanelHeight, this.textTransform.contentSize.height + padding));
+        label.updateRenderData(true);
+        if (this.textTransform && this.textSize && this.textTransform.contentSize.width > this.textSize.width) {
+            label.enableWrapText = true;
+            label.overflow = Overflow.RESIZE_HEIGHT;
+            this.textTransform.setContentSize(this.textSize.width, this.textSize.height);
+            label.updateRenderData(true);
+        }
+        if (this.panelTransform && this.panelSize && this.textTransform) {
+            this.panelTransform.setContentSize(
+                Math.max(this.panelSize.width, this.textTransform.contentSize.width + ToastManager.horizontalPadding),
+                Math.max(this.panelSize.height, this.textTransform.contentSize.height + ToastManager.verticalPadding),
+            );
         }
         this.paint();
     }
 
-    /** 只改变唯一面板的透明度和局部Y，淡入后保持可读，退场时继续上浮。 */
+    /** 先在中央指数淡入，接着匀速上浮并于结束前淡出，常驻错误停在中央。 */
     private paint(): void {
         if (!this.current || !this.panel?.isValid || !this.opacity?.isValid) {
             return;
@@ -180,8 +196,9 @@ export class ToastManager {
         const fadeOut = duration > 0 ? Math.min(ToastManager.fadeOutSeconds, duration / 3) : 0;
         const entering = Math.min(1, this.elapsed / fadeIn);
         const leaving = duration > 0 ? Math.min(1, Math.max(0, (this.elapsed - duration + fadeOut) / fadeOut)) : 0;
-        this.opacity.opacity = Math.round(255 * entering * (1 - leaving));
-        const travel = 0.25 * entering + 0.75 * leaving;
+        const alpha = entering === 1 ? 1 : 1 - 2 ** (-10 * entering);
+        this.opacity.opacity = Math.round(255 * alpha * (1 - leaving));
+        const travel = duration > 0 ? Math.max(0, Math.min(1, (this.elapsed - fadeIn) / ToastManager.floatSeconds)) : 0;
         this.panel.setPosition(this.origin.x, this.origin.y + ToastManager.floatDistance * travel, this.origin.z);
     }
 

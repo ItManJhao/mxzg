@@ -29,6 +29,8 @@ public class HeroGrantService {
     private final RoleRepository roles;
     /** 同源初始成长校验，不从客户端接收星级或属性。 */
     private final HeroGrowthRules growth;
+    /** 新英雄在发放事务内登记历史最高图鉴星级。 */
+    private final HeroRepository heroes;
     /** 新实例提交前刷新原永久阵容资格，不建立另一份名册。 */
     private final MainFormationStateService formations;
     /** 原事务统一版本和提交后状态通知。 */
@@ -47,12 +49,13 @@ public class HeroGrantService {
         }
     }
 
-    /** 注入原领域依赖，并读取同源英雄模板的初始星级；坏配置在装配时拒绝。 */
+    /** 注入原发放与图鉴依赖，读取同源英雄模板初始星级；坏配置在装配时拒绝。 */
     public HeroGrantService(JdbcTemplate jdbc, RoleRepository roles, HeroGrowthRules growth,
-            MainFormationStateService formations, AssetSyncService sync, ObjectMapper mapper) {
+            HeroRepository heroes, MainFormationStateService formations, AssetSyncService sync, ObjectMapper mapper) {
         this.jdbc = jdbc;
         this.roles = roles;
         this.growth = growth;
+        this.heroes = heroes;
         this.formations = formations;
         this.sync = sync;
         var stars = new HashMap<Integer, Integer>();
@@ -89,7 +92,7 @@ public class HeroGrantService {
     }
 
     /**
-     * 在原角色锁事务创建独立英雄，成功返回原实例身份供同事务冻结回执。
+     * 在原角色锁事务创建独立英雄并登记图鉴，成功返回原实例身份供同事务冻结回执。
      * 奖励不做旧召唤入口的容量拦截；后续任一发奖失败由外层整体回滚。
      */
     @Transactional(propagation = Propagation.MANDATORY)
@@ -108,6 +111,7 @@ public class HeroGrantService {
                     hero.instanceId(), roleId, hero.templateId(), hero.level(), hero.star(), hero.stage());
             created.add(hero);
         }
+        heroes.recordIllustration(roleId, templateId, star);
         formations.refresh(roleId);
         sync.changed(roleId);
         return List.copyOf(created);

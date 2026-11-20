@@ -347,7 +347,8 @@ async function main() {
     assert.deepEqual(summonPages, ["first-summon"], "召唤法阵复用主城功能页导航");
     assert.equal(UIRegistry.viewSpecOf(FirstSummonView)?.layer, UILayer.Page);
     assert.equal(HomeFeatureNavigation.tabForPage("first-summon"), "summon");
-    assert.deepEqual(HomeFeatureNavigation.tabs, ["hero", "bag", "battle"], "召唤保留既有底栏入口");
+    assert.deepEqual(HomeFeatureNavigation.tabs, ["hero", "bag", "battle", "dungeon"],
+      "召唤走主城地图入口，底栏保留已开放的英雄、背包、战斗和副本入口");
     map.close();
     mapActions.openFeature("main_summon");
     assert.deepEqual(summonPages, ["first-summon"], "主城关闭后，旧点击不再打开页面");

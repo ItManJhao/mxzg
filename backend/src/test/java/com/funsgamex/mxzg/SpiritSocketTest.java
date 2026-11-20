@@ -43,7 +43,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "spring.datasource.url=jdbc:h2:mem:spirit_socket;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
-    "spring.datasource.username=sa", "spring.datasource.password=", "mxzg.gm.enabled=false"
+    "spring.datasource.username=sa", "spring.datasource.password=", "mxzg.gm.enabled=false",
+    "mxzg.main-chapter.idle-claim-enabled=false"
 })
 @ActiveProfiles("local")
 class SpiritSocketTest {
@@ -247,7 +248,7 @@ class SpiritSocketTest {
         assertEquals(before, roles.revision(role));
     }
 
-    /** 精灵写入无玩家入口，挂机新领取保持关闭，新增快照字段不能反向解释为玩法开放。 */
+    /** 精灵写入无玩家入口，测试环境关闭挂机领取，额外快照字段不能绕过该开关。 */
     @Test
     void snapshotExtensionDoesNotOpenNewPlayerCommands() throws Exception {
         var player = player();

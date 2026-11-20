@@ -39,7 +39,7 @@ node client/tools/serve-remote-bundles.cjs client/build/remake-h5 7460
 
 ## 当前本机主线与挂机配置（2026-11-20）
 
-新挑战默认连续开放第 1～300 关，范围来自服务端 mxzg.main-chapter.challenge-limit（MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT）。本机后端需在配置更新后重启，重新登录或连接可读取新的范围。后续用独立测试服回归连续挑战、结算和奖励，在 Creator 本机抽验新增动作、地图切换和关键领奖，通过后扩大上限。客户端只读最新快照challengeLimit，缺范围时禁新挑战；已有pending、结算及回执恢复仍走原链。
+新挑战默认连续开放第 1～550 关，范围来自服务端 mxzg.main-chapter.challenge-limit（MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT）。本机后端需在配置更新后重启，重新登录或连接可读取新的范围。后续用独立测试服回归连续挑战、结算和奖励，在 Creator 本机抽验新增动作、地图切换和关键领奖，通过后扩大上限。客户端只读最新快照challengeLimit，缺范围时禁新挑战；已有pending、结算及回执恢复仍走原链。
 
 挂机宝箱按钮经 MainChapterSession.claimIdle 调用 IdleClaimBinding.begin，传入当前页面显示期，复用原IDB journal、回执和快照双确认、通用奖励窗与飘字，不另造发奖入口。local配置的idle-claim-enabled默认true，全局默认false；显式MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED可覆盖。按钮仍需服务端ENABLED、累计65秒、真实冒险点及连接就绪；满冒险点先用原ConfirmView确认，取消不建journal。恢复既有请求不重开页、不补播collect，也不重发已提交奖励。
 

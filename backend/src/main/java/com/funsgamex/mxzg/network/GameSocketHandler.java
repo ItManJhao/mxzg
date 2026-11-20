@@ -13,6 +13,7 @@ import com.funsgamex.mxzg.hero.HeroSummonService;
 import com.funsgamex.mxzg.hero.HeroFragmentCombineService;
 import com.funsgamex.mxzg.hero.HeroLevelService;
 import com.funsgamex.mxzg.market.MarketService;
+import com.funsgamex.mxzg.role.RoleProfileService;
 import com.funsgamex.mxzg.role.RoleService;
 import com.funsgamex.mxzg.role.WelcomeGiftService;
 import com.funsgamex.mxzg.time.GameClock;
@@ -72,6 +73,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final DailyDungeonService dailyDungeon;
     /** 首次命名与随机名由角色服务处理。 */
     private final RoleService roles;
+    /** 当前鉴权角色的形象、称号和二次改名入口。 */
+    private final RoleProfileService profiles;
     /** 同一角色只发一次新手赠礼，回包复用通用奖励通知。 */
     private final WelcomeGiftService welcomeGifts;
     private final SessionService sessions;
@@ -111,7 +114,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             MainChapterFirstRewardService firstRewards, HeroFragmentCombineService fragments,
             HeroLevelService heroLevels, HeroEquipmentService heroEquipment, MarketService market,
             DailyDungeonService dailyDungeon,
-            RoleService roles, WelcomeGiftService welcomeGifts, GameClock clock) {
+            RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock) {
         this.firstRewards = firstRewards;
         this.fragments = fragments;
         this.heroLevels = heroLevels;
@@ -119,6 +122,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.market = market;
         this.dailyDungeon = dailyDungeon;
         this.roles = roles;
+        this.profiles = profiles;
         this.welcomeGifts = welcomeGifts;
         this.milestones = milestones;
         this.heroSummons = heroSummons;
@@ -241,7 +245,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         } finally { roleLock.unlock(); }
     }
 
-    /** 核对当前连接归属后分派业务协议，GM 与心跳沿用同一鉴权连接。 */
+    /** 核对当前连接归属后分派业务协议，个人空间、GM 与心跳使用当前鉴权角色。 */
     private void dispatch(Connection connection, JsonNode request, String name) throws IOException {
         if (online.get(connection.role) != connection) throw rejected("SESSION_REPLACED");
         if (!connection.role.equals(sessions.requireRole(connection.token))) throw rejected("UNAUTHENTICATED");
@@ -256,6 +260,16 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             fields(body, Set.of("nickname"));
             roles.setName(connection.token, body.path("nickname").asString());
             respond(connection, request, Map.of());
+            return;
+        }
+        if (name.equals("role.image.list") || name.equals("role.image.change")
+                || name.equals("role.titles.list") || name.equals("role.name.rename")) {
+            personalSpace(connection, request, name);
+            return;
+        }
+        if (name.equals("role.decorations.list") || name.equals("role.head.change") || name.equals("role.border.change")
+                || name.equals("role.border.activate") || name.equals("role.peerage.display")) {
+            decorations(connection, request, name);
             return;
         }
         if (name.equals("role.welcome.claim")) {
@@ -363,6 +377,69 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
 
             default -> throw rejected("UNKNOWN_MESSAGE");
         }
+    }
+
+    /** 解析个人空间的只读查询和变更请求，角色由已验证的会话决定。 */
+    private void personalSpace(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        switch (name) {
+            case "role.image.list" -> {
+                fields(body, Set.of());
+                respond(connection, request, Map.of("imageIds", profiles.images(connection.token)));
+            }
+            case "role.titles.list" -> {
+                fields(body, Set.of());
+                respond(connection, request, Map.of("titles", profiles.titles(connection.token)));
+            }
+            case "role.image.change" -> {
+                fields(body, Set.of("imageId"));
+                var image = body.path("imageId");
+                if (!image.isIntegralNumber() || !image.canConvertToInt() || image.asInt() <= 0) {
+                    throw rejected("ROLE_IMAGE_UNAVAILABLE");
+                }
+                profiles.changeImage(connection.token, image.asInt());
+                respond(connection, request, Map.of());
+            }
+            case "role.name.rename" -> {
+                fields(body, Set.of("nickname", "paymentType"));
+                var payment = body.path("paymentType");
+                if (!payment.isIntegralNumber() || !payment.canConvertToInt()) {
+                    throw rejected("ROLE_RENAME_PAYMENT_INVALID");
+                }
+                profiles.rename(connection.token, body.path("nickname").asString(), payment.asInt());
+                respond(connection, request, Map.of());
+            }
+            default -> throw rejected("UNKNOWN_MESSAGE");
+        }
+    }
+
+    /** 查询或更新当前角色的装饰，并返回该角色最新的装饰资格。 */
+    private void decorations(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        switch (name) {
+            case "role.decorations.list" -> fields(body, Set.of());
+            case "role.peerage.display" -> {
+                fields(body, Set.of("visible"));
+                if (!body.path("visible").isBoolean()) {
+                    throw rejected("INVALID_MESSAGE");
+                }
+                profiles.setPeerageVisibility(connection.token, body.path("visible").asBoolean());
+            }
+            case "role.head.change", "role.border.change", "role.border.activate" -> {
+                fields(body, Set.of("id"));
+                var id = body.path("id");
+                if (!id.isIntegralNumber() || !id.canConvertToInt() || id.asInt() < 0) {
+                    throw rejected("INVALID_MESSAGE");
+                }
+                switch (name) {
+                    case "role.head.change" -> profiles.changeHead(connection.token, id.asInt());
+                    case "role.border.change" -> profiles.changeBorder(connection.token, id.asInt());
+                    default -> profiles.activateBorder(connection.token, id.asInt());
+                }
+            }
+            default -> throw rejected("UNKNOWN_MESSAGE");
+        }
+        respond(connection, request, profiles.decorations(connection.token));
     }
 
     /** 设置角色状态或开发实例游戏时间。仅开关查询在 GM 关闭时可调用。 */

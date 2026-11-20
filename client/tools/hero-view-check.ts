@@ -13,6 +13,8 @@ import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { HeroRosterEvent } from "../assets/scripts/features/hero/utils/HeroRosterEvent";
+import { RedDotManager } from "../assets/scripts/framework/ui/RedDotManager";
+import { GameRedDotKey } from "../assets/scripts/features/common/utils/GameRedDotKey";
 /** 英雄模块回归：核对显式初始化、唯一状态、事件清理和异步会话隔离。 */
 import { HeroRosterController } from "../assets/scripts/features/hero/HeroRosterController";
 /** Display-only helpers retained for the Remake flow. */
@@ -198,6 +200,13 @@ function checkPrefab(): void {
   assertComp(cellData, cell.comp, "levelLabel", 71, "cc.Label");
   assertNode(cellData, cell.comp, "lock", 73, "spr_lock");
   assertNode(cellData, cell.comp, "battle", 79, "spr_battle");
+  assertNode(cellData, cell.comp, "reminderDot", 96, "ReminderDot");
+  const reminder = cellData[idOf(cell.comp.reminderDot)];
+  const reminderSprite = reminder._components.map((row: { __id__: number }) => cellData[row.__id__])
+    .find((row: PrefabObj) => row.__type__ === "cc.Sprite");
+  const redDotUuid = metaUuid("client/assets/bundles/module/common/ui/other_spr-reddot-1.png.meta");
+  assert(reminder._active === false && reminderSprite?._spriteFrame?.__uuid__ === `${redDotUuid}@f9941`,
+    "红点默认隐藏，复用旧红点原图");
   const stars = cell.comp.stars as { __id__?: number }[];
   assert(stars.map(row => cellData[row.__id__!]?._name).join(",") === "star0,star1,star2,star3,star4",
     "五颗星按业务节点star0到star4绑定，不依赖Creator序列化数组索引");
@@ -211,7 +220,8 @@ function checkPrefab(): void {
   assert(infoData.some(row => row._name === "Background"), "详情背景保存在完整Prefab");
   const infoText = JSON.stringify(infoData);
   assert(infoText.indexOf("图鉴") >= 0, "详情底栏有图鉴");
-  assert(infoText.indexOf("穿上") >= 0 && infoText.indexOf("卸下") >= 0 && infoText.indexOf("升级") >= 0, "详情有穿上卸下升级");
+  assert(infoText.indexOf("一键穿装") >= 0 && infoText.indexOf("一键卸下") >= 0 && infoText.indexOf("升级") >= 0,
+    "现在的详情保留一键穿装、一键卸下和普通升级");
   assert(infoText.indexOf("设置") >= 0 && infoText.indexOf("展开") >= 0, "详情有设置和展开");
 }
 
@@ -288,6 +298,9 @@ function makeCell(node: Node): void {
   cell.lock.parent = node;
   cell.battle = new Node("spr_battle");
   cell.battle.parent = node;
+  cell.reminderDot = new Node("ReminderDot");
+  cell.reminderDot.parent = node;
+  cell.reminderDot.active = false;
 }
 
 /** 构造真实静态层级的行为替身，业务控件直接注入HeroListView。 */
@@ -440,6 +453,23 @@ async function checkRemakeRoster(): Promise<void> {
     assert(cellsOf(view).length === 1, "切回全部显示英雄");
     assert(cells[0].lock!.active && cells[0].battle!.active,"自身锁定与上阵可同时显示");
     assert(!cells[0].face!.getComponent(Sprite)!.grayscale,"已拥有的锁定英雄不能灰显为未获得");
+    const deployed = { id: "f45747b7-f032-4d00-9546-3504b9a967e5", templateId: 10101001, level: 7, star: 4, locked: true, deployed: true };
+    const reserve = { ...deployed, id: "f45747b7-f032-4d00-9546-3504b9a967e6", deployed: false };
+    sync([deployed, reserve]);
+    pump(1);
+    const [deployedCell, reserveCell] = cellsOf(view);
+    const redDots = RedDotManager.instance;
+    redDots.set(GameRedDotKey.heroUpgrade(deployed.id), true);
+    redDots.set(GameRedDotKey.heroEquipment(reserve.id, 1), true);
+    assert(deployedCell.reminderDot!.active && !reserveCell.reminderDot!.active,
+      "仅已上阵英雄显示装备或升级汇总，独立红点事件也可更新已显示的格子");
+    redDots.set(GameRedDotKey.heroEquipment(deployed.id, 1), true);
+    redDots.set(GameRedDotKey.heroUpgrade(deployed.id), false);
+    assert(deployedCell.reminderDot!.active, "升级失效后仍有可穿装备时保持红点");
+    redDots.set(GameRedDotKey.heroEquipment(deployed.id, 1), false);
+    assert(!deployedCell.reminderDot!.active, "最后一项不可操作时立即熄灭");
+    sync([deployed]);
+    pump(1);
     view.runClose();
     const closedCount = selectedIds.length;
     view.heroScroll!.list.node.emit(SuperContent.SELECT_ITEM, {kind:"owned",instanceId:"closed"});
@@ -453,12 +483,51 @@ async function checkRemakeRoster(): Promise<void> {
     view.heroScroll!.list.node.emit(SuperContent.SELECT_ITEM, {kind:"owned",instanceId:"closed"});
     assert(selectedIds.length === closedCount + 1, "释放后列表选择不再导航");
   } finally {
+    RedDotManager.instance.reset();
     ui.open = originalOpen;
     ui.toast = originalToast;
     view.runDispose();
     assert(EventDispatcher.instance.listenerCount(HeroRosterEvent.Updated)===baseline,"关页只清理本页名册监听");
     service.dispose(); view.node.destroy();
 
+  }
+}
+
+/** 验证格子在停用、复用和展示共用时只显示当前来源。 */
+function checkHeroReminderReuse(): void {
+  const root = new Node("hero-reminder-reuse");
+  makeCell(root);
+  const cell = root.getComponent(HeroIconCellView)!;
+  const model = { kind: "owned" as const, name: "测试英雄", showName: false, face: null,
+    elem: null, stars: 1, level: 1, locked: false, deployed: true };
+  const dots = RedDotManager.instance;
+  const heroA = "first";
+  const heroB = "second";
+  try {
+    dots.set(GameRedDotKey.heroEquipment(heroA, 1), true);
+    cell.show(model, GameRedDotKey.heroDetail(heroA));
+    assert(cell.reminderDot!.active, "打开格子即读取已有红点");
+    root.active = false;
+    cell.onDisable();
+    dots.set(GameRedDotKey.heroEquipment(heroA, 1), false);
+    dots.set(GameRedDotKey.heroUpgrade(heroA), true);
+    assert(!cell.reminderDot!.active, "离屏时解除原格监听");
+
+    cell.show(model, GameRedDotKey.heroDetail(heroB));
+    root.active = true;
+    cell.onEnable();
+    assert(!cell.reminderDot!.active, "复用格不会沿用上一英雄的红点");
+    dots.set(GameRedDotKey.heroUpgrade(heroB), true);
+    assert(cell.reminderDot!.active, "复用后只显示当前英雄的红点");
+
+    cell.show(model);
+    assert(!cell.reminderDot!.active, "角色资料和战报等共用展示默认隐藏红点");
+    dots.set(GameRedDotKey.heroUpgrade(heroB), false);
+    dots.set(GameRedDotKey.heroUpgrade(heroB), true);
+    assert(!cell.reminderDot!.active, "共用展示已解绑，不响应名册提醒更新");
+  } finally {
+    root.destroy();
+    dots.reset();
   }
 }
 
@@ -560,11 +629,28 @@ async function checkReadonlyInfo(): Promise<void> {
         controller.dispose();
         root.destroy();
     }
- const data=loadPrefab("client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab");const buttons=data.filter((x:any)=>x.__type__==="cc.Button"&&x._interactable);
+ const data = loadPrefab("client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab");
+ const activeButtons = data.filter(row => row.__type__ === "cc.Button" && row._interactable)
+   .map(row => data[idOf(row.node)]._name);
   const detail=data.find((row:any)=>row.equipmentIcons);
  assert(detail?.equipmentIcons.length===4&&detail.equipmentFrames.length===4&&detail.equipmentLabels.length===4,"四槽图标、品质框和状态文字必须静态绑定");
- for(let i=1;i<=4;i++){const slot=data.find((row:any)=>row._name==="EquipmentSlot"+i);assert(slot&&slot._components.every((ref:any)=>data[ref.__id__].__type__!=="cc.Button"||!data[ref.__id__]._interactable),"四槽没有穿脱操作入口");}
- assert(buttons.length===6,"详情只有返回、普通升级和四个技能说明按钮可操作");
+ const equipmentNodes = detail?.equipmentButtons?.map((ref: { __id__: number }) => data[ref.__id__]);
+ assert(equipmentNodes?.length === 4 && equipmentNodes.every((button: PrefabObj, index: number) =>
+   button.__type__ === "cc.Button" && button._interactable === false
+     && data[idOf(button.node)]?._name === `EquipmentSlot${index + 1}`), "四个装备槽已绑定，未同步装备时默认禁用");
+ const waiting = {
+   equipAllButton: "EquipAllButton", unequipAllButton: "UnequipAllButton",
+   previousHeroButton: "PreviousHeroButton", nextHeroButton: "NextHeroButton",
+ };
+ for (const [field, name] of Object.entries(waiting)) {
+   const button = data[idOf(detail?.[field])];
+   assert(button?.__type__ === "cc.Button" && button._interactable === false && data[idOf(button.node)]?._name === name,
+     `${name} 等待当前名册或装备状态再启用`);
+ }
+ const initiallyAvailable = ["btn_back", "OrdinaryUpgradeButton", "AttributeDetailsButton",
+   "SkillIcon1", "SkillIcon2", "SkillIcon3", "SkillIcon4"];
+ assert(activeButtons.length === initiallyAvailable.length && initiallyAvailable.every(name => activeButtons.includes(name)),
+   "详情默认开放返回、普通升级、属性明细和四个技能说明入口");
  const upgradeBindings = {
      upgradeButton: ["cc.Button", "OrdinaryUpgradeButton"],
      upgradeLabel: ["cc.Label", "UpgradeActionLabel"],
@@ -633,7 +719,9 @@ async function checkLevelPresentation(): Promise<void> {
     (page as any).mountPortrait = () => {};
     const events = EventDispatcher.instance;
     const before = events.listenerCount(HeroLevelEvent.Updated);
+    const reminder = GameRedDotKey.heroUpgrade(heroId);
     try {
+        RedDotManager.instance.set(reminder, true);
         page.onOpen({ heroId });
         assert(page.summary.string.startsWith("等级：1/30"), "详情同时展示等级与当前阶上限");
         assert(page.upgradeLabel.string === "升5级" && page.upgradeCosts.active && page.upgradeDot.active,
@@ -641,6 +729,7 @@ async function checkLevelPresentation(): Promise<void> {
         assert(page.upgradeGold.string === "410" && page.upgradeExperience.string === "105", "显示两项累计消耗");
 
         quote = { ...quote, jumpLabel: false, goldEnough: false, levels: 0 };
+        RedDotManager.instance.set(reminder, false);
         events.emit(HeroLevelEvent.Updated, {});
         assert(page.upgradeGold.color.g < 255 && page.upgradeLabel.string === "升级" && !page.upgradeDot.active,
             "费用不足时标红，仍可按旧版点击查看缺项");
@@ -677,6 +766,7 @@ async function checkLevelPresentation(): Promise<void> {
         assert(loads === 30 && releases === 2 && !page.upgradeEffect.node.active,
             "关闭在途光效会撤回持有，晚到的帧不重新显示");
     } finally {
+        RedDotManager.instance.set(reminder, false);
         page.onClose();
         level.describe = originalDescribe;
         level.upgrade = originalUpgrade;
@@ -849,6 +939,7 @@ async function main() {
   await checkReadonlySkillLifecycle();
   await checkElementBundleRoutes();
   await checkHeroCellReuse();
+  checkHeroReminderReuse();
   checkHeroScrollBounds();
   checkPrefab();
   await checkRemakeRoster();

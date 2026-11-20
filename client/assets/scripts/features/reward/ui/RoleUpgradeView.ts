@@ -5,6 +5,7 @@
  * 历史等级和到账明细由调用方提供；本窗不联网、不发奖、不读取当前资产或开放预告功能。
  */
 import { _decorator, AudioSource, Label, Node, RichText, Sprite, SpriteFrame } from "cc";
+import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
@@ -146,7 +147,7 @@ export class RoleUpgradeView extends BaseView<RewardArgs> {
         this.featureCondition!.string = feature.condition ?? "开放条件缺失";
     }
 
-    /** 使用已有节点资源作用域准备旧获得音及功能图；关闭后的结果不恢复主体或播放音效。 */
+    /** 准备原获得音和功能图，音效遵循设备设置，关页后不恢复主体或播放。 */
     private async prepare(preparation: number, feature: RoleUpgradeFeature | null): Promise<void> {
         const [clip, icon] = await Promise.all([
             ResourceAssetsUtils.forNode(this.node).loadPath("audio/item-get", "AudioClip"),
@@ -159,7 +160,7 @@ export class RoleUpgradeView extends BaseView<RewardArgs> {
         this.featureIcon!.node.active = icon !== null;
         this.rewardAudio!.clip = clip;
         this.panel!.active = true;
-        this.rewardAudio!.play();
+        AudioPreferences.playEffect(this.rewardAudio!);
         this.finishOpen();
     }
 

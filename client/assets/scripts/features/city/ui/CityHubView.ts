@@ -1,5 +1,5 @@
 /**
- * 主城地图View：同步读取登录后已安装的GameConfig，装配地图、建筑和特效显示并转交入口点击。
+ * 主城地图View：同步读取登录后已安装的GameConfig，装配地图、建筑、入口红点和特效并转交点击。
  * 本页不准备或下载配置；页面只持有仓库中只读表的引用，美术资源仍由现有服务按需提供。
  */
 import { _decorator, Button, Color, EventTouch, Node, Sprite, UITransform, Vec3 } from "cc";
@@ -7,6 +7,8 @@ import { GameConfig } from "../../../config/GameConfig";
 import { ErrorUtils } from "../../../core/ErrorUtils";
 import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { CityMapQuery, CityMapService } from "./CityMapService";
 import { CityEffectHandle, CityEffectPlayUtils } from "./CityEffectPlayUtils";
 import { CITY_CFG_BTN, CITY_CFG_EFFECT, CITY_CFG_POS, CityMapLayout, MainCityBtnFile, MainCityEffectFile, MainCityPosFile, CityMapLayoutUtils } from "./CityMapLayoutUtils";
@@ -99,6 +101,8 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
     private started = false;
     /** 建筑按钮已开始绑定时为true，同一实例后续刷新不重复登记点击。 */
     private clicksBound = false;
+    /** 本次打开是否已订阅召唤法阵红点，关页解绑后复位。 */
+    private watchingSummonRedDot = false;
     /** 关闭或释放后为true，重复清理直接返回，动态显示由各自资源作用域结束迟到交付。 */
     private cleaned = false;
     /** 返回主城地图根节点，由RemakeHomeView统一持有其显示和生命周期。 */
@@ -110,12 +114,13 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
     get mainButton(): Node | null {
         return this.btnMainline;
     }
-    /** 接收主城入口操作并同步读取已安装配置；已开始的实例只刷新建筑锁态。 */
+    /** 接收主城入口操作及已安装配置；已开始的实例只恢复监听并刷新建筑锁态。 */
     onOpen(args?: CityHubOpenArgs): void {
         if (args) {
             this.args = args;
         }
         if (this.started) {
+            this.watchSummonRedDot();
             this.refreshLocks();
             return;
         }
@@ -132,7 +137,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
         this.cleanup();
     }
 
-    /** 等级或开服天变了再刷建筑锁。没有 query 就不改预制上的颜色。 */
+    /** 等级和开服天变化后刷新建筑锁定与红点可见性。 */
     refreshLocks(): void {
         const query = this.args ? this.args.query : null;
         if (!query) {
@@ -147,6 +152,28 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
             spot.sprite.grayscale = locked;
             spot.sprite.color = locked ? LOCKED_COLOR : OPEN_COLOR;
         });
+        this.paintSummonRedDot(RedDotManager.instance.isVisible(GameRedDotKey.SUMMON));
+    }
+
+    /** 监听召唤法阵汇总，随当前地图的使用周期释放。 */
+    private watchSummonRedDot(): void {
+        if (this.watchingSummonRedDot) {
+            return;
+        }
+        this.watchingSummonRedDot = true;
+        this.ownListener(() => { this.watchingSummonRedDot = false; });
+        this.ownListener(RedDotManager.instance.watch(GameRedDotKey.SUMMON, visible => this.paintSummonRedDot(visible)));
+    }
+
+    /** 在法阵已开放时显示预制体红点，移动时自然跟随原建筑按钮。 */
+    private paintSummonRedDot(visible: boolean): void {
+        const node = this.views.get("spot-main_summon");
+        const query = this.args?.query;
+        if (node && query) {
+            const dot = PrefabLoader.requireNode(node, "RedDot");
+            const locked = CityMapLayoutUtils.cityAtomLocked("main_summon", query.level(), query.openDay(), query.db());
+            dot.active = visible && !locked;
+        }
     }
 
     /** 同步读取三张已安装主城表并完成入口和特效装配；缺配置直接使开页等待失败，不补加载或退回空表。 */
@@ -167,6 +194,7 @@ export class CityHubView extends BaseView<CityHubOpenArgs> {
             if (this.spotViews.size < 1 || !this.views.has("spot-main_summon")) {
                 throw new Error("CityHub 没有建筑按钮");
             }
+            this.watchSummonRedDot();
             this.fxHandle = CityEffectPlayUtils.startCityEffects(this.views, this.layout.effects, (node, parent, x, y) => this.placeBottomLeft(node, parent, x, y));
             this.bindMainline();
             this.bindDrag();

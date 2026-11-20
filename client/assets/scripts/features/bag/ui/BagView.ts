@@ -18,6 +18,7 @@ import type { BagListItem } from "../data/BagItemDataUtils";
 import { BagEvent } from "../utils/BagEvent";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { BagItemCatalog } from "../utils/BagItemCatalog";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 
 import { PrefabLoader } from "../../../framework/assets/PrefabLoader";
 import { BattleSpineService } from "../../battle/ui/BattleSpineService";
@@ -26,6 +27,7 @@ import { SuperContent } from "../../../framework/ui/SuperContent";
 import { BagItemView } from "./BagItemView";
 import { BagTabView } from "./BagTabView";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { RedDotManager } from "../../../framework/ui/RedDotManager";
 import { BagInfoView } from "./BagInfoView";
 import { SpiritInfoView } from "./SpiritInfoView";
 import { EquipmentInfoView } from "./EquipmentInfoView";
@@ -96,6 +98,8 @@ export class BagView extends BaseView<BagOpenArgs> {
     private nextExpiry = Infinity;
     /** 本页创建的分类组件，刷新时同步选中态，随页面节点销毁。 */
     private tabs: BagTabView[] = [];
+    /** 碎片页签生成后保留引用，缓存重开时随当前角色红点刷新。 */
+    private pieceTab: BagTabView | null = null;
     /** 是否已创建页签，避免重复实例化。 */
     private tabsBuilt = false;
     /** 是否已执行首次打开；后续 onOpen 只刷新已有内容。 */
@@ -127,12 +131,15 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
     }
 
-    /** 每次打开重新登记监听并读取最新库存；无参数仍默认道具分类，不沿用旧实例的分类。 */
+    /** 每次打开重新登记库存与碎片红点监听，无参数仍默认道具分类。 */
     onOpen(args?: BagOpenArgs): void {
         this.closed = false;
         this.args = args;
         EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refreshFromModel);
         EventDispatcher.instance.on(BagEvent.BagSyncStateChanged, this, this.onSyncStateChanged);
+        this.ownListener(RedDotManager.instance.watch(GameRedDotKey.BAG_PIECES, visible => {
+            this.pieceTab?.setRedDot(visible);
+        }));
         this.bindClose();
         this.bindList();
         this.tab = args?.tab || "item";
@@ -285,7 +292,7 @@ export class BagView extends BaseView<BagOpenArgs> {
                 ? GameConfig.instance.getConfig(GConfig.Language, 5788)?.value || "欢迎光临～" : "背包为空";
     }
 
-    /** 根据现有分类生成页签，点击只切换显示分类，不查询库存。 */
+    /** 根据分类生成页签，碎片页签读取已同步红点，点击只切换展示。 */
     private buildTabs(): void {
         if (this.tabsBuilt || !this.tabContent || !this.tabPrefab) return;
         this.tabsBuilt = true;
@@ -305,6 +312,10 @@ export class BagView extends BaseView<BagOpenArgs> {
                 this.tab = spec.id;
                 this.refreshGrid();
             });
+            if (spec.id === "shard") {
+                this.pieceTab = tab;
+                tab.setRedDot(RedDotManager.instance.isVisible(GameRedDotKey.BAG_PIECES));
+            }
             this.tabs.push(tab);
         }
     }
@@ -333,7 +344,7 @@ export class BagView extends BaseView<BagOpenArgs> {
         }
     }
 
-    /** 绘制当前库存，只有背包显式启用精英碎片完成度；空分类保留20个可提示的空槽。 */
+    /** 每次复用按当前碎片配置绘制红点和完成度，空格会清除前一项的显示。 */
     private onRender(node: Node, item: BagListItem | null): void {
         if (this.closed) {
             return;
@@ -343,8 +354,10 @@ export class BagView extends BaseView<BagOpenArgs> {
             throw new Error("BagItemView预制体缺少物品格组件");
         }
         const selected = item !== null && item.key === this.pickedId;
+        const canCompose = this.tab === "shard" && item !== null
+            && RedDotManager.instance.isVisible(GameRedDotKey.bagPiece(item.itemId));
         cell.show(item, selected, item ? BagItemCatalog.face(item.itemId, item.quantity) : undefined,
-            item !== null || this.emptyTab, true);
+            item !== null || this.emptyTab, true, canCompose);
     }
 
     /** 选择当前条目后再次核对最新库存键；过期或已移除物品不打开详情。 */

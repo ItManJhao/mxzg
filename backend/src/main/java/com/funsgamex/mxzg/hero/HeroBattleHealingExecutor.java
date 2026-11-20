@@ -418,7 +418,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         target.actor().listen(new Listener(entry.instanceId(), sourceId, rules.battleTrigger(buffId)));
     }
 
-    /** 执行已预检的即时子动作，继承目标或改选施加者；伤害复用根技能的能量、类型和判定。 */
+    /** 执行已预检的即时子动作；伤害和伤害转治疗使用当前根出手的结算上下文。 */
     private void applyImmediateArts(int buffId, int sourceId, List<HeroBattleTargetUtils.Unit> context) {
         var source = require(sourceId);
         for (var art : rules.immediateArts(buffId)) {
@@ -428,8 +428,12 @@ public final class HeroBattleHealingExecutor implements Executor {
                 context, attackContext.queued, random::index);
             for (int childId : art.buffs()) {
                 var healing = rules.attackHealing(childId);
+                boolean inertEffect = rules.inertBattleEffect(childId);
+                int damageHealingRate = inertEffect ? 0 : rules.battleDamageHealingRate(childId);
                 if (healing != null) {
                     applyAttackHealing(childId, healing, source, targets);
+                } else if (damageHealingRate > 0) {
+                    applyDamageHealing(childId, damageHealingRate, source, targets);
                 } else if (rules.battleSimpleControl(childId)) {
                     for (var target : targets) {
                         applySimpleControl(childId, sourceId, target.id(), attackContext.decision);
@@ -459,7 +463,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                         installBuff(sourceId, target.id(), rules.battleBuff(childId), 0);
                         requireCombat(target.id()).attributes().addOnce(effect.attribute(), effect.amount());
                     }
-                } else if (!rules.inertBattleEffect(childId)) {
+                } else if (!inertEffect) {
                     var targetIds = targets.stream().map(HeroBattleTargetUtils.Unit::id).toList();
                     ordinaryDamage(childId, sourceId, targetIds, attackContext.damageType,
                         source.actor().activeSkill(), source.actor().skillEnergy(),
@@ -629,7 +633,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         });
     }
 
-    /** 分发已核对的属性、控制、伤害和治疗动作；治疗沿186、206、回血、311顺序，全部共用根事务。 */
+    /** 分发已核对的战斗动作。百花庇护三档沿用敌方未全灭限制，治疗事件共用根事务。 */
     private void executeArt(Invocation invocation) {
         var passiveEffects = rules.passiveTriggerEffects(invocation.artId());
         if (!passiveEffects.isEmpty()) {
@@ -690,7 +694,7 @@ public final class HeroBattleHealingExecutor implements Executor {
             return;
         }
         State source = require(invocation.sourceId());
-        if ((invocation.artId() == 3094201 || invocation.artId() == 3094202)
+        if (invocation.artId() >= 3094201 && invocation.artId() <= 3094203
                 && units.values().stream().noneMatch(unit -> unit.faction() != source.faction() && unit.hp() > 0)) {
             // 旧heroHurt在死亡监听前checkOver；最后一个敌人倒下时，伊芙的死亡治疗不再执行。
             return;

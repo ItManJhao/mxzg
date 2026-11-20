@@ -431,6 +431,14 @@ export class GameSocketClient {
       case "ROLE_NAME_EXISTS": return "这个名字已被使用，请换一个";
       case "ROLE_NAME_ALREADY_CONFIRMED": return "角色已经完成首次命名";
       case "ROLE_NAME_UNAVAILABLE": return "暂时无法获取随机名，请重试或手动输入";
+      case "ROLE_NAME_SAME": return "新名字与当前名字相同";
+      case "ROLE_NAME_NOT_CONFIRMED": return "请先完成首次命名";
+      case "ROLE_RENAME_COST_NOT_ENOUGH": return "改名所需材料不足";
+      case "ROLE_RENAME_PAYMENT_INVALID": return "改名消耗已变化，请重新确认";
+      case "ROLE_IMAGE_UNAVAILABLE": return "该形象尚未解锁";
+      case "ROLE_HEAD_UNAVAILABLE": return "该头像尚未解锁";
+      case "ROLE_BORDER_UNAVAILABLE": return "该头像框尚未激活或已过期";
+      case "ROLE_BORDER_COST_NOT_ENOUGH": return "激活头像框所需道具不足";
       case "WELCOME_GIFT_UNAVAILABLE": return "当前角色没有可领取的新手赠礼";
       case "FIRST_REWARD_INVALID": return "通关奖励的关卡编号无效";
       case "FIRST_REWARD_UNKNOWN": return "该关卡的通关奖励暂未开放";

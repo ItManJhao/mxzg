@@ -7,6 +7,8 @@ package com.funsgamex.mxzg;
 import java.util.*;
 import java.util.function.DoublePredicate;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import tools.jackson.databind.ObjectMapper;
 import com.funsgamex.mxzg.hero.*;
 import com.funsgamex.mxzg.hero.HeroBattleEventProcessor.Actor;
@@ -345,16 +347,20 @@ class HeroBattleProgressionControlsTest {
             List.of(source, unmarked), List.of(), false));
     }
 
-    /** 真实105固定100伤害击中严格半血边界，恢复后再次跨线仍只享受一次210增益。 */
-    @Test void healthThresholdChecksBothSidesAndAppliesLimitedEffectOnce() {
+    /** 烈焰之印二、三级均只在首次受伤跨过半血时触发，减伤数值沿对应等级。 */
+    @ParameterizedTest
+    @CsvSource({"2, 1094302, 2500", "3, 1094303, 3500"})
+    void healthThresholdChecksBothSidesAndAppliesLimitedEffectOnce(int level, int reductionBuff, long amount) {
         var engine = progressionEngine(10105009, 600, 1000, 1_000, 1000, 1000);
-        engine.initializePassive(2, 101050094, 2);
+        engine.initializePassive(2, 101050094, level);
+        assertEquals(amount, rules.controlAttribute(reductionBuff).amount());
         engine.realDamage(9011201, 1, 2);
         assertEquals(500, engine.state(2).hp());
-        assertTrue(engine.buffs(2).stream().noneMatch(entry -> entry.spec().id() == 1094302));
+        assertTrue(engine.buffs(2).stream().noneMatch(entry -> entry.spec().id() == reductionBuff));
         engine.realDamage(9011201, 1, 2);
         assertEquals(400, engine.state(2).hp());
-        assertTrue(engine.buffs(2).stream().anyMatch(entry -> entry.spec().id() == 1094302));
+        assertTrue(engine.buffs(2).stream().anyMatch(entry -> entry.spec().id() == reductionBuff
+            && entry.expiresAt() == 3));
         engine.expireAt(3);
         engine.art(new HeroBattleEventProcessor.Invocation(1, 1063201, 2, 2));
         assertTrue(engine.state(2).hp() > 500);
@@ -362,33 +368,62 @@ class HeroBattleProgressionControlsTest {
             engine.realDamage(9011201, 1, 2);
         }
         assertEquals(1, engine.trace().stream().filter(event -> event.kind().equals("buff.upsert")
-            && event.configId() == 1094302).count());
+            && event.configId() == reductionBuff).count());
     }
 
-    /** 攻击偷取重装先退还旧百分比再读攻击，期限到达后移除保存过的同一固定攻击。 */
-    @Test void attackStealReplacementAndExpiryKeepTheActualValue() {
-        var engine = progressionEngine(10205007, 100_000, 100_000, 2_000, 100_000, 100_000);
-        engine.initializePassive(2, 102050074, 2);
-        engine.attack(2, 1, elements, rate -> rate >= 1D);
-        engine.attack(2, 1, elements, rate -> rate >= 1D);
-        var retained = engine.buffs(1).stream().filter(entry -> entry.spec().id() == 2075302).toList();
-        assertEquals(1, retained.size());
-        assertEquals(100, retained.getFirst().value());
-        assertTrue(engine.removals().stream().anyMatch(removed -> removed.reason().equals("replace")
-            && removed.entry().spec().id() == 2075302 && removed.entry().value() == 100));
+    /** 决胜令牌在严格半血阈值后分两路选择阵营，三回合到期后移除对应增减益。 */
+    @Test void thirdLevelVictoryTokenAppliesAttackAndArmorToOppositeSides() {
+        var engine = progressionEngine(10205008, 600, 1000, 1_000, 1000, 1000);
+        engine.initializePassive(2, 102050084, 3);
+        engine.realDamage(9011201, 1, 2);
+        assertTrue(engine.buffs(1).isEmpty());
+        assertTrue(engine.buffs(3).isEmpty());
+
+        engine.realDamage(9011201, 1, 2);
+        assertEquals(2000L, rules.controlAttribute(2084303).amount());
+        assertEquals(-2000L, rules.controlAttribute(2084403).amount());
+        assertTrue(engine.buffs(2).stream().anyMatch(entry -> entry.spec().id() == 2084303
+            && entry.sourceId() == 2 && entry.expiresAt() == 3));
+        for (int enemy : List.of(1, 3)) {
+            assertEquals(List.of(2084403), engine.buffs(enemy).stream().map(entry -> entry.spec().id()).toList());
+        }
+
         engine.expireAt(3);
-        assertTrue(engine.buffs(1).stream().noneMatch(entry -> entry.spec().id() == 2075302));
+        assertTrue(engine.buffs(1).isEmpty());
+        assertTrue(engine.buffs(3).isEmpty());
+        assertEquals(List.of(2084103), engine.buffs(2).stream().map(entry -> entry.spec().id()).toList());
     }
 
-    /** 伊芙施加给敌人的死亡监听治疗施加者；最后一名敌人倒下之后不再执行。 */
-    @Test void enemyDeathHealsEveOnlyWhileBattleContinues() {
+    /** 夺萃打击替换同级普攻，重装先退还旧攻击再读取，期限到达后归还同一固定值。 */
+    @ParameterizedTest
+    @CsvSource({"2, 2075302, 100", "3, 2075303, 150"})
+    void attackStealReplacementAndExpiryKeepTheActualValue(int level, int attackStealBuff, long amount) {
+        var engine = progressionEngine(10205007, 100_000, 100_000, 2_000, 100_000, 100_000);
+        engine.initializePassive(2, 102050074, level);
+        assertEquals(102050075, engine.state(2).actor().generalAttack().skillId());
+        assertEquals(level, engine.state(2).actor().generalAttack().level());
+        engine.attack(2, 1, elements, rate -> rate >= 1D);
+        engine.attack(2, 1, elements, rate -> rate >= 1D);
+        var retained = engine.buffs(1).stream().filter(entry -> entry.spec().id() == attackStealBuff).toList();
+        assertEquals(1, retained.size());
+        assertEquals(amount, retained.getFirst().value());
+        assertTrue(engine.removals().stream().anyMatch(removed -> removed.reason().equals("replace")
+            && removed.entry().spec().id() == attackStealBuff && removed.entry().value() == amount));
+        engine.expireAt(3);
+        assertTrue(engine.buffs(1).stream().noneMatch(entry -> entry.spec().id() == attackStealBuff));
+    }
+
+    /** 百花庇护两级均治疗监听施加者，最后一名敌人死亡时不会在战斗结束后再次恢复。 */
+    @ParameterizedTest
+    @CsvSource({"2, 3094202, 700", "3, 3094203, 900"})
+    void enemyDeathHealsEveOnlyWhileBattleContinues(int level, int healBuff, long hpAfterFirstDeath) {
         var engine = progressionEngine(10305009, 400, 1000, 1000, 100, 100);
-        engine.initializePassive(2, 103050094, 2);
+        engine.initializePassive(2, 103050094, level);
         engine.realDamage(9011201, 2, 1);
-        assertEquals(700, engine.state(2).hp());
+        assertEquals(hpAfterFirstDeath, engine.state(2).hp());
         engine.realDamage(9011201, 2, 3);
-        assertEquals(700, engine.state(2).hp());
-        assertEquals(List.of(3094202), engine.recoveries().stream().map(Recovery::buffId).toList());
+        assertEquals(hpAfterFirstDeath, engine.state(2).hp());
+        assertEquals(List.of(healBuff), engine.recoveries().stream().map(Recovery::buffId).toList());
     }
 
     /** 单独设置阈值所需血量，所有技能、属性与固定伤害通过生产执行器计算。 */

@@ -1,5 +1,6 @@
 /** 主线及独立战报播放器：复用BattlePage及真实资源，开始骨骼到70%时并行出场、出场到60%时渐入模型；只展示战报，不请求奖励或修改资产。 */
 import { AudioClip,AudioSource,Button,Color,director,Director,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
+import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
@@ -11,7 +12,9 @@ import { BattleReplayPlayer } from "../BattleReplayPlayer";
 import { BattleAttackUtils } from "../utils/BattleAttackUtils";
 import { BattleReplayUtils } from "../utils/BattleReplayUtils";
 import { BattleInfoUtils } from "../utils/BattleInfoUtils";
+import { BattleNumberKind } from "../utils/BattleNumberUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
+import { BattleNumberPaintUtils } from "./BattleNumberPaintUtils";
 import { BattlePageUtils } from "./BattlePageUtils";
 import { ChapterEndView } from "./ChapterEndView";
 import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
@@ -359,6 +362,7 @@ export class BattleReplayPreview {
         };
         const assets = ResourceAssetsUtils.forNode(shell.root);
         try {
+            shell.present.numberFonts = await BattleNumberPaintUtils.preload(shell.root);
             for (const [type, path] of [[1004, "effects/legacy-frozen"], [1006, "effects/legacy-stone"]] as const) {
                 if (!Array.from(selected.values()).some(row => row.type === type)) continue;
                 const effect = await assets.loadPath(path, "EffectAsset");
@@ -654,15 +658,29 @@ export class BattleReplayPreview {
                 if (process.length > 3) process.shift();
                 UiKitUtils.setText(shell.logLabel, (audit ? audit.name + " Lv." + audit.level + " · " : "") + process.join(" → "));
             };
+            /** 按目标站位和伤害类型绘制数字，沿用旧角色挂点 120×0.65 的头顶高度。 */
+            const showHealthChange = (step: typeof steps[number], kind: BattleNumberKind) => {
+                const unit = units.find(candidate => candidate.unitId === step.targetId)!;
+                BattlePresentViewUtils.showHealthChange(shell.present, slots.get(step.targetId)!, 78,
+                    step.reportedHpChange!, kind, unit.faction === 1, playbackScale, effects);
+            };
             player = new BattleReplayPlayer({
                 stop,
                 restore,
+                /** 末次数字随倍速播完再进入结算，关场销毁节点会立即解除等待。 */
+                async finish() {
+                    const children = shell.present.floatRoot.children;
+                    if (children.length > 1) {
+                        const last = children[children.length - 1];
+                        await new Promise<void>(resolve => last.once(Node.EventType.NODE_DESTROYED, () => resolve()));
+                    }
+                },
                 // 旧格挡盾189在damage前耗尽；图像等这次命中完成才撤，不泛化其他trigger-limit。
                 waitForFollowingHit: step => step.removalReason === "trigger-limit"
                     && selected.get(step.configId)?.type === 234,
                 /**
                  * 播放真实步骤或旧覆盖子动作；type8按战场比例往返，空动作仅等待配置延迟。
-                 * 复活按服务端实际血量重新显示原骨骼和血条，报告值仍用于飘字。
+                 * 伤害、治疗和复活各自使用报告值生成独立数字，血条仍用实际血量。
                  * 独立帧及投射不延长角色动作，仍归本战场持有；关闭后丢弃迟到回调，活跃帧失败统一取消。
                  */
                 play: async function play(step, targets = [step]) {
@@ -721,7 +739,7 @@ export class BattleReplayPreview {
                         const plan = BattleAttackUtils.plan(selected.get(step.configId)!);
                         for (const sound of plan.sounds) {
                             audio.clip = sounds.get(sound)!;
-                            audio.play();
+                            AudioPreferences.playEffect(audio);
                             GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "sound " + sound + " playing=" + audio.playing);
                         }
                         const slot = slots.get(step.sourceId)!;
@@ -847,15 +865,14 @@ export class BattleReplayPreview {
                         if (row.type === 100) {
                             for (const name of BattleAttackUtils.damageSounds(row)) {
                                 audio.clip = sounds.get(name)!;
-                                audio.play();
+                                AudioPreferences.playEffect(audio);
                                 GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "damage.sound " + name);
                             }
                         }
                         record("单位" + step.targetId + " 伤害" + Math.abs(step.actualHpChange || 0));
                         hp(step.targetId, step.hpByUnit[step.targetId]);
                         const target = slots.get(step.targetId)!;
-                        const point = shell.root.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
-                        BattlePresentViewUtils.paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
+                        showHealthChange(step, step.activeSkillDamage ? "skill" : "dmg");
                         actors.get(step.targetId)!.play(step.dead ? "die" : "hit");
                         if (idleEncounter && step.dead && !cancelled()) {
                             onIdleDeath?.(target.worldPosition.clone());
@@ -876,9 +893,7 @@ export class BattleReplayPreview {
                         }
                         // 治疗与复活共用旧报告值飘字；实际血量单独驱动血条和胜负。
                         hp(step.targetId, step.hpByUnit[step.targetId]);
-                        const target = slots.get(step.targetId)!;
-                        const point = shell.root.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
-                        BattlePresentViewUtils.paintBattleFloats(shell.present, [{ anchor: 0, hurt: step.reportedHpChange!, crit: false }], [point]);
+                        showHealthChange(step, "heal");
                         await wait(0.35);
                     } else if (step.kind === "buff.upsert" || step.kind === "buff.remove") {
                         const active = activeBuffs.get(step.targetId)!;
@@ -924,7 +939,6 @@ export class BattleReplayPreview {
                 }
                 void player!.play(bytes, audit && !audit.passive ? { skillId: audit.skillId, level: audit.level } : undefined).then(async completed => {
                     if (!closed && completed) {
-                        BattlePresentViewUtils.paintBattleFloats(shell.present, []);
                         const last = steps[steps.length - 1];
                         const allyHp = units.filter(unit => unit.faction === 1)
                             .reduce((total, unit) => total + last.hpByUnit[unit.unitId], 0);

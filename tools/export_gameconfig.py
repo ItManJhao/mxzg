@@ -196,6 +196,9 @@ def export_current(src: Path, out: Path) -> int:
         """按实际源表读一次主sheet，缺少源表或有效内容时拒绝导出。"""
         if stem not in books:
             file = src / (stem + ".xlsx")
+            if stem == "peerageemblem" and src.resolve() == DEFAULT_SRC.resolve():
+                # 个人空间沿日服正式配置，保留仓库内原国内版 Excel 供其他历史核对。
+                file = ROOT / "config/legacy-client/peerageemblem-jp.xlsx"
             sheets = read_book(file)
             if not sheets:
                 raise ValueError("必需源表没有有效sheet：" + str(file))
@@ -249,6 +252,8 @@ def export_current(src: Path, out: Path) -> int:
         else:
             rows = primary(stem)["rows"]
             note = PRIMARY_NOTE % (stem + ".xlsx", primary(stem)["sheet"])
+            if stem == "peerageemblem" and src.resolve() == DEFAULT_SRC.resolve():
+                note = "exported from config/legacy-client/peerageemblem-jp.xlsx, verified against the JP overlay."
         if name == "attrshow":
             rows = project_attrshow(rows)
             note += " Identical duplicate attribute keys merged with legacy Lua key semantics."

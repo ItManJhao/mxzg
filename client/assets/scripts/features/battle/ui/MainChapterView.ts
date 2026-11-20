@@ -7,6 +7,7 @@ import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { UIManager } from "../../../framework/ui/UIManager";
+import { RedDotManager } from "../../../framework/ui/RedDotManager";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { MainChapterController } from "../MainChapterController";
 import { MainChapterSession } from "../MainChapterSession";
@@ -17,6 +18,8 @@ import { BattleReplayPreview } from "./BattleReplayPreview";
 import { MainChapterHeroTalk } from "./MainChapterHeroTalk";
 import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
+import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
 import { ServerClock } from "../../../core/ServerClock";
 import { IdleChestUtils } from "../utils/IdleChestUtils";
@@ -137,7 +140,7 @@ export class MainChapterView extends BaseView {
     /** 正在准备的候选图片作用域；被新地图替代或关页时立即释放，不另造资源池。 */
     private pendingBackgroundScope: AssetScope | null = null;
 
-    /** 绑定现有显示与事件，首次进入只转交首包待结算恢复，不查询库存或主线进度。 */
+    /** 绑定入口和统一红点，首次进入只转交首包待结算恢复，不查询库存或主线进度。 */
     public onOpen(): void {
         if (!this.battleHost || !this.panel || !this.challengeButton || !this.quickBattleButton || !this.powerButton
             || !this.stageLabel || !this.statusLabel || !this.challengeLabel || !this.idleTimeLabel
@@ -175,6 +178,10 @@ export class MainChapterView extends BaseView {
             });
         });
         this.listen(this.clearRewardButton, () => this.openClearRewards());
+        const clearRewardDot = this.clearRewardDot;
+        this.ownListener(RedDotManager.instance.watch(GameRedDotKey.CHAPTER_CLEAR, visible => {
+            clearRewardDot.active = visible;
+        }));
         if (!this.idleChestHost || !this.idleBubble || !this.idleBubbleLabel) {
             throw new Error("挂机宝箱静态绑定缺失");
         }
@@ -335,7 +342,7 @@ export class MainChapterView extends BaseView {
         }
     }
 
-    /** 事件驱动更新挑战范围、通关奖励提醒和背景；历史恢复仍优先于新挑战。 */
+    /** 事件驱动更新挑战范围、领奖入口和背景，历史恢复仍优先于新挑战。 */
     private render = (): void => {
         if (this.closed) return;
         if (this.milestoneCard?.isValid) {
@@ -344,9 +351,8 @@ export class MainChapterView extends BaseView {
         this.refreshChapterBackground();
         const model = MainChapterModel.instance;
         const state = model.state;
-        if (this.clearRewardButton?.isValid && this.clearRewardDot?.isValid) {
+        if (this.clearRewardButton?.isValid) {
             this.clearRewardButton.node.active = !this.playing;
-            this.clearRewardDot.active = !!state?.firstRewardProgress?.eligibleChapters.length;
         }
         const completed = this.isChapterRangeComplete();
         const scopePending = !!state && state.challengeLimit === undefined;
@@ -508,7 +514,7 @@ export class MainChapterView extends BaseView {
         return played;
     }
 
-    /** 复用节点资源作用域播放旧通用点击音；关页或显示期变化后的迟到加载不再播放或保留音源。 */
+    /** 按设备设置播放原通用点击音；关页或显示期变化后的迟到加载不再保留音源。 */
     private playChestClick(): void {
         const context = this.idleCollectionToken;
         ResourceAssetsUtils.loadForNode(this.node, "audio/sfx-button-click", "AudioClip", (error, asset) => {
@@ -521,7 +527,7 @@ export class MainChapterView extends BaseView {
             }
             this.chestAudio = this.node.getComponent(AudioSource) || this.node.addComponent(AudioSource);
             this.chestAudio.clip = asset as AudioClip;
-            this.chestAudio.play();
+            AudioPreferences.playEffect(this.chestAudio);
         });
     }
 

@@ -1,14 +1,17 @@
-/** Display-only helpers retained for the Remake flow. */
-import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 /**
- * 主城竖切的静态检查。不启动 Creator。
- * 核对开关、预制上的节点引用，以及框架没有写死主城。
+ * 主城入口回归。使用引擎替身核对预制体绑定、红点状态和开关生命周期。
  */
+import { Node } from "cc";
 import { readFileSync } from "fs";
 
 import { join } from "path";
 
 import { CityMapLayoutUtils, CITY_EDGE_BLEED } from "../assets/scripts/features/city/ui/CityMapLayoutUtils";
+import { CityChromeView } from "../assets/scripts/features/city/ui/CityChromeView";
+import { CityHubView } from "../assets/scripts/features/city/ui/CityHubView";
+import { GameRedDotKey } from "../assets/scripts/features/common/utils/GameRedDotKey";
+import { RedDotManager } from "../assets/scripts/framework/ui/RedDotManager";
+import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 
 import { TAB_SELECTED_SCALE, CityTabUtils } from "../assets/scripts/features/city/utils/CityTabUtils";
 
@@ -46,6 +49,8 @@ function metaUuid(path: string): string {
 interface PrefabObj {
   __type__?: string;
   _name?: string;
+  _active?: boolean;
+  _spriteFrame?: { __uuid__?: string };
   _children?: { __id__?: number }[];
   _components?: { __id__?: number }[];
   node?: { __id__?: number };
@@ -78,6 +83,16 @@ function parentName(data: PrefabObj[], ref: { __id__?: number } | null | undefin
   if (!node._parent || typeof node._parent.__id__ !== "number") return "";
   const parent = data[node._parent.__id__];
   return parent && parent._name ? parent._name : "";
+}
+
+/** 检查红点为对应按钮的隐藏子节点，并使用原红点 SpriteFrame。 */
+function checkRedDotNode(data: PrefabObj[], target: PrefabObj): void {
+  const children = target._children || [];
+  const dots = children.map(ref => nodeAt(data, ref)).filter(node => node._name === "RedDot");
+  assert(dots.length === 1 && dots[0]._active === false, `${target._name} 恰有一个默认隐藏的红点`);
+  const sprite = dots[0]._components?.map(ref => data[ref.__id__!]).find(comp => comp.__type__ === "cc.Sprite");
+  const source = metaUuid("client/assets/bundles/module/common/ui/other_spr-reddot-1.png.meta");
+  assert(sprite?._spriteFrame?.__uuid__ === `${source}@f9941`, `${target._name} 使用原红点资源`);
 }
 
 function checkFramework(): void {
@@ -178,6 +193,8 @@ function checkHubPrefab(): void {
   for (let i = 0; i < need.length; i++) assert(maps.indexOf(need[i]) >= 0, "map node bound " + need[i]);
   const spots = (comp.spots || []).map((ref) => nodeName(data, ref));
   assert(spots.indexOf("spot-main_summon") >= 0, "summon building is bound");
+  const summon = (comp.spots || []).find(ref => nodeName(data, ref) === "spot-main_summon");
+  checkRedDotNode(data, nodeAt(data, summon));
   assert(spots.indexOf("spot-main_smith_shop") >= 0, "smith building is bound");
   for (const ref of comp.spots || []) {
     assert(parentName(data, ref) === "BuildingEntries", "building is rendered in the entrance layer: " + nodeName(data, ref));
@@ -234,6 +251,11 @@ function checkChromePrefab(): void {
   one("bottomBg", "Bg");
   one("tabCity", "TabCity");
   one("tabFetter", "TabFetter");
+  for (const key of ["tabCity", "tabHero", "tabBag", "tabBattle", "tabDungeon"]) {
+    const ref = comp[key];
+    assert(ref && !Array.isArray(ref), `${key} 绑定红点入口`);
+    checkRedDotNode(data, nodeAt(data, ref as { __id__?: number }));
+  }
   one("btnMail", "BtnMail");
   const activity = comp.activityButtons;
   if (!Array.isArray(activity)) throw new Error("activity buttons missing");
@@ -257,4 +279,57 @@ function checkWideTabSize(): void {
   assert(CityTabUtils.cityTabLayout(360, 3, true).scale < base.scale, "窄屏仍按可用宽度缩小");
   assert(CityTabUtils.cityTabLayout(960, 6, false).x > CityTabUtils.cityTabLayout(640, 6, false).x, "宽屏按钮间距仍展开");
 }
-checkFramework(); checkHubPrefab(); checkEntryLayout(); checkChromePrefab(); checkSources(); checkTabSelection(); checkWideTabSize(); console.log("city-view passed: bindings, entrance layering, framework isolation, narrow viewport coverage, tab scaling and selection");
+
+/** 用真实顶底栏和地图订阅验证汇总、锁态切换、关闭解绑和复开同步。 */
+function checkRedDotLifecycle(): void {
+  const root = new Node("CityChromeFixture");
+  const chrome = root.addComponent(CityChromeView);
+  const city = new Node("TabCity");
+  const dungeon = new Node("TabDungeon");
+  const cityDot = new Node("RedDot");
+  const dungeonDot = new Node("RedDot");
+  const dungeonLock = new Node("Lock");
+  cityDot.parent = city;
+  dungeonDot.parent = dungeon;
+  dungeonLock.parent = dungeon;
+  Object.assign(chrome, { started: true, tabs: { city, dungeon } });
+
+  const hub = new Node("CityHubFixture").addComponent(CityHubView);
+  const summon = new Node("spot-main_summon");
+  const summonDot = new Node("RedDot");
+  summonDot.parent = summon;
+  Object.assign(hub, { started: true, views: new Map([[summon.name, summon]]) });
+  let open = false;
+  hub.runOpen({
+    onAtom: () => {},
+    onMainline: () => {},
+    query: { level: () => 1, openDay: () => 0, db: () => open ? { opencondition: [], systemGate: [] } : null },
+  });
+  const dots = RedDotManager.instance;
+  try {
+    chrome.runOpen();
+    dots.set(GameRedDotKey.SUMMON + ".test", true);
+    assert(cityDot.active && !summonDot.active, "主城汇总亮起，锁定中的法阵挂点保持隐藏");
+    open = true;
+    hub.refreshLocks();
+    assert(summonDot.active, "已亮条件在入口开放后立即显示");
+
+    dots.set(GameRedDotKey.DUNGEON + ".test", true);
+    assert(!dungeonDot.active, "锁标遮断聚合红点");
+    chrome.setTabs([{ id: "dungeon", text: "副本", state: "open" }]);
+    assert(dungeonDot.active && !dungeonLock.active, "入口开放后复用当前聚合值");
+
+    chrome.runClose();
+    hub.runClose();
+    dots.reset();
+    assert(cityDot.active && summonDot.active, "关闭后已退订，不再刷旧视图");
+    chrome.runOpen();
+    assert(!cityDot.active && !dungeonDot.active, "复开立即读取当前状态");
+  } finally {
+    chrome.runDispose();
+    hub.runDispose();
+    dots.reset();
+  }
+}
+
+checkFramework(); checkHubPrefab(); checkEntryLayout(); checkChromePrefab(); checkSources(); checkTabSelection(); checkWideTabSize(); checkRedDotLifecycle(); console.log("city-view passed: bindings, entrance layering, red dot lifecycle, framework isolation and tab layout");

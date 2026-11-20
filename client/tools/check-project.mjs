@@ -32,6 +32,8 @@ const suites = [
   ["prefab-review", "python", "tools/audit_prefabs.py"],
   ["prefab-fingerprints", "python", "tools/test_prefab_audit.py"],
   ["event-target", "ts", "client/tools/event-target-check.ts"],
+  ["red-dot", "ts", "client/tools/red-dot-check.ts"],
+  ["dungeon-reminder", "ts", "client/tools/dungeon-reminder-check.ts"],
   ["game-protocol", "ts", "client/tools/game-protocol-check.ts"],
   ["main-chapter-idle-protocol", "ts", "client/tools/main-chapter-idle-protocol-check.ts"],
   ["idle-claim-intent", "ts", "client/tools/idle-claim-intent-check.ts"],

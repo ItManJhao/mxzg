@@ -91,10 +91,10 @@ export class UIManager {
         };
     }
     static readonly instance = new UIManager();
-    /** 应用提示独立于正式导航，开发预览和登录前也可使用。 */
-    private notice: ((text: string, durationMs: number) => void) | null = null;
+    /** 应用提示独立于正式导航，播放时长缺省时由飘字组件决定。 */
+    private notice: ((text: string, durationMs?: number) => void) | null = null;
     /** 由场景应用绑定提示，返回只撤销本次绑定的句柄。 */
-    public bindNotice(show: (text: string, durationMs: number) => void): () => void {
+    public bindNotice(show: (text: string, durationMs?: number) => void): () => void {
         this.notice = show;
         return () => {
             if (this.notice === show) {
@@ -338,12 +338,12 @@ export class UIManager {
         }
         return false;
     }
+    /** 通过当前应用的全局飘字显示业务反馈，使用飘字组件的默认播放时长。 */
     toast(text: string): void {
         if (this.notice) {
-            this.notice(text, 1600);
-        }
-        else if (this.host) {
-            this.host.showToast(text, 1600);
+            this.notice(text);
+        } else if (this.host) {
+            this.host.showToast(text);
         }
     }
 

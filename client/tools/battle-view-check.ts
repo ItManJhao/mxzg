@@ -1,11 +1,12 @@
-/** 当前战斗表现行为回归：检查站位边界、真实骨架动作和资源释放；不恢复已退役Campaign界面。 */
+/** 战斗表现回归：检查站位边界、骨架资源释放、飘字轨迹和多目标战报的并行交付。 */
 import { strict as assert } from "node:assert";
-import { Node, resources, sp } from "cc";
-import { BattleSpineService } from "../assets/scripts/features/battle/ui/BattleSpineService";
-
-import { BattlePresentationUtils } from "../assets/scripts/features/battle/ui/BattlePresentationUtils";
 import { readFileSync } from "node:fs";
+import { Node, resources, sp } from "cc";
+import { BattleReplayPlayer } from "../assets/scripts/features/battle/BattleReplayPlayer";
+import { BattlePresentationUtils } from "../assets/scripts/features/battle/ui/BattlePresentationUtils";
+import { BattleSpineService } from "../assets/scripts/features/battle/ui/BattleSpineService";
 import { IdleHangSkirmishPlanUtils } from "../assets/scripts/features/battle/ui/IdleHangSkirmishPlanUtils";
+import { mxzg } from "../assets/scripts/platform/GameProtocol.generated";
 
 /** 八个站位两侧都必须给等级/血条留足边距，宽屏不放大；非法尺寸不能产生 NaN。 */
 function checkCombatBounds(): void {
@@ -54,13 +55,124 @@ async function checkSharedSkeleton(): Promise<void> {
  } finally { a.destroy(); b.destroy(); resources.load = original; }
 }
 
-/** 执行视图交互、关闭清理和资源迟到回归，失败时由调用方返回非零状态。 */
+/** 按战斗秒数采样飘字轨迹，核对高度、缩放、渐隐和双方位移方向。 */
+function checkFloatMotion(): void {
+    const samples = Array.from({ length: 17 }, (_, index) =>
+        BattlePresentationUtils.bounceAt(index / 10, 1, 20));
+    const first = samples[0];
+    const last = samples[samples.length - 1];
+    assert(samples.every(pose => Object.values(pose).every(Number.isFinite)));
+    for (const [seconds, height] of [[0.15, 100], [0.45, 60], [0.75, 20]]) {
+        assert(Math.abs(BattlePresentationUtils.bounceAt(seconds, 1, 20).y - height) < 0.001,
+            "飘字应产生三次逐渐降低的弹跳");
+    }
+    assert(samples.some(pose => pose.scale > first.scale), "受击数字需要放大");
+    assert.equal(samples[9].opacity, 255, "三次弹跳期间保留完整透明度");
+    assert(samples[13].opacity > 0 && samples[13].opacity < samples[9].opacity, "离场时逐渐淡隐");
+    assert.equal(last.opacity, 0, "轨迹结束后数字应完全透明");
+    const opposite = BattlePresentationUtils.bounceAt(0.8, -1, 20);
+    assert.notEqual(samples[8].x, opposite.x, "双方飘字应沿不同方向位移");
+    assert.equal(samples[8].y, opposite.y);
+    assert.equal(BattlePresentationUtils.floatHurtText(0), "");
+    assert.equal(BattlePresentationUtils.floatHurtText(-123), "-123");
+    assert.equal(BattlePresentationUtils.floatHurtText(25), "+25");
+}
+
+/** 用生成协议构造一次五目标命中，第一个目标多段受击，用于验证并行与同目标保序。 */
+function multiTargetReplay(): Uint8Array {
+    const skill = { sourceId: 1, targetId: 1, configId: 101050111, skillLevel: 1, skillType: 1 };
+    const attacker = { unitId: 1, faction: 1, templateId: 10105011, position: 1, level: 1,
+        initialHp: 100, maxHp: 100, finalHp: 100 };
+    const targets = Array.from({ length: 5 }, (_, index) => ({
+        unitId: index + 9, faction: 2, templateId: 10101001, position: index + 1, level: 1,
+        initialHp: 100, maxHp: 100, finalHp: 0,
+    }));
+    const damage = { kind: "damage", sourceId: 1, configId: 1011401 };
+    return mxzg.game.BattleReplay.encode(mxzg.game.BattleReplay.fromObject({
+        schemaVersion: 1,
+        scenario: "audit:lineup:1",
+        outcome: "ATTACKER_WIN",
+        rounds: 1,
+        units: [attacker, ...targets],
+        phases: [
+            { round: 1, sourceId: 0, events: [] },
+            { round: 1, sourceId: 1, events: [
+                { kind: "skill.begin", ...skill },
+                { ...damage, targetId: 9, actualHpChange: -40, reportedHpChange: -38, dead: false },
+                ...targets.map(({ unitId }, index) => ({
+                    ...damage, targetId: unitId, actualHpChange: index === 0 ? -60 : -100,
+                    reportedHpChange: index === 0 ? -61 : -100 - index, dead: true,
+                })),
+                { kind: "skill.end", ...skill },
+            ] },
+        ],
+    })).finish();
+}
+
+/** 在首个命中故意等待时观测其余目标已开始，每个目标保持来自战报的原显示量。 */
+async function checkMultiTargetPlayback(): Promise<void> {
+    const visible = new Map<number, number[]>();
+    let finishFirstHit: (() => void) | undefined;
+    const player = new BattleReplayPlayer({
+        play: async step => {
+            if (step.kind !== "damage") {
+                return;
+            }
+            const hits = visible.get(step.targetId) ?? [];
+            hits.push(step.reportedHpChange!);
+            visible.set(step.targetId, hits);
+            if (step.targetId === 9 && !step.dead) {
+                await new Promise<void>(resolve => { finishFirstHit = resolve; });
+            }
+        },
+        stop: () => {},
+    });
+    const completed = player.play(multiTargetReplay());
+    for (let index = 0; index < 12; index++) {
+        await Promise.resolve();
+    }
+    assert(finishFirstHit, "首个命中应已开始");
+    try {
+        assert.equal(visible.size, 5, "一个目标等待时，其余四个目标仍应独立提交飘字");
+        assert.deepEqual(visible.get(9), [-38], "同目标的第二段应等首段完成");
+        assert.deepEqual(visible.get(13), [-104], "每个受击者应收到自己的报告伤害");
+    } finally {
+        finishFirstHit();
+    }
+    assert.equal(await completed, true);
+    assert.deepEqual(visible.get(9), [-38, -61]);
+}
+
+/** 末次飘字等待期间关闭，播放器应报告取消，并且只清理一次。 */
+async function checkPlaybackFinishCancellation(): Promise<void> {
+    let release: (() => void) | undefined;
+    let stopped = 0;
+    const player = new BattleReplayPlayer({
+        play: async () => {},
+        finish: () => new Promise<void>(resolve => { release = resolve; }),
+        stop: () => { stopped++; release?.(); },
+    });
+    const playback = player.play(multiTargetReplay());
+    for (let index = 0; index < 20; index++) {
+        await Promise.resolve();
+    }
+    assert(release, "播放完成伤害事件后应继续等待画面收尾");
+    assert.equal(stopped, 0);
+    player.stop();
+    assert.equal(await playback, false);
+    assert.equal(stopped, 1, "主动关闭后不再重复执行自然结束清理");
+}
+
+/** 执行站位、资源、动画参数和战报交付回归，失败时以非零状态退出。 */
 async function main() {
- checkCombatBounds();
- await checkOptionalClips();
- await checkSharedSkeleton();
- assert.equal(BattlePresentationUtils.overheadLevelText(null),null);assert.equal(BattlePresentationUtils.overheadLevelText(7),"Lv.7");
- const cues=[{anchor:0,hurt:25,crit:true},{anchor:null,hurt:0,crit:false}];assert.equal(BattlePresentationUtils.visibleFloats(cues).length,2);assert.equal(BattlePresentationUtils.floatHurtText(0),"");assert.equal(BattlePresentationUtils.visibleFloats([...cues,...cues,...cues]).length,4);assert.equal(BattlePresentationUtils.beatShowsCrit(cues),true);assert(BattlePresentationUtils.floatHurtText(25).includes("25"));
- console.log("battle-view passed: authored bounds, skeleton actions/refcounts and display cues; retired Campaign UI is excluded");
+    checkCombatBounds();
+    await checkOptionalClips();
+    await checkSharedSkeleton();
+    checkFloatMotion();
+    await checkMultiTargetPlayback();
+    await checkPlaybackFinishCancellation();
+    assert.equal(BattlePresentationUtils.overheadLevelText(null), null);
+    assert.equal(BattlePresentationUtils.overheadLevelText(7), "Lv.7");
+    console.log("battle-view passed: authored bounds, skeleton actions/refcounts, number bounce and concurrent target playback");
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

@@ -3,8 +3,11 @@ package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.network.GameProtocolCodec;
+import com.funsgamex.mxzg.network.SessionSnapshotService;
 import com.funsgamex.mxzg.role.RoleService;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -29,12 +32,16 @@ class LoginIntegrationTest {
     @Autowired RoleService roles;
     @Autowired SessionService sessions;
     @Autowired JdbcTemplate jdbc;
+    @Autowired SessionSnapshotService snapshots;
 
+    /** 重登保留内部角色键及公开编号，其他账号各自分配编号。 */
     @Test void repeatLoginKeepsPersistedRoleAndIsolatesAccounts() {
         var first = login.login(" Player_1 ");
         jdbc.update("UPDATE game_role SET gold = 73 WHERE id = ?", first.role().id());
         var again = login.login("player_1");
         assertEquals(first.role().id(), again.role().id());
+        assertEquals(first.role().publicId(), again.role().publicId());
+        assertTrue(again.role().publicId().matches("1001[0-9]{6}"));
         assertEquals(73, again.role().gold());
         assertNotEquals(first.session().accessToken(), again.session().accessToken());
         assertEquals(first.role().id(), roles.current("Bearer " + again.session().accessToken()).id());
@@ -52,6 +59,7 @@ class LoginIntegrationTest {
         assertThrows(ResponseStatusException.class, () -> roles.current("Bearer " + issued.session().accessToken()));
     }
 
+    /** 同账号同服并发登录只创建一个角色，并且只使用一个公开编号。 */
     @Test void concurrentLoginCreatesOneRole() throws Exception {
         try (var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
             var tasks = java.util.stream.IntStream.range(0, 8)
@@ -61,6 +69,75 @@ class LoginIntegrationTest {
             for (var result : executor.invokeAll(tasks)) ids.add(result.get());
             assertEquals(1, ids.size());
             assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM game_role WHERE account_key = 'concurrent_player'", Integer.class));
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM game_role_public_number WHERE role_id=?",
+                Integer.class, ids.iterator().next()));
+        }
+    }
+
+    /** 区服独立号段通过现有角色快照按字符串传输，角色 UUID 继续用于会话和资产归属。 */
+    @Test void publicNumberIsDistinctAcrossServersAndRoundTripsOverProtobuf() throws Exception {
+        var first = login.login("public_role_one", "local-1").role();
+        var second = login.login("public_role_one", "local-2");
+        assertTrue(first.publicId().matches("1001[0-9]{6}"));
+        assertTrue(second.role().publicId().matches("1002[0-9]{6}"));
+        assertNotEquals(first.id(), second.role().id());
+        var snapshot = snapshots.snapshot("Bearer " + second.session().accessToken());
+        byte[] binary = GameProtocolCodec.encode(Map.of("version", 1, "kind", "event", "name", "state.changed",
+            "connectionId", UUID.randomUUID().toString(), "body", snapshot));
+        var projected = GameProtocolCodec.decode(binary).path("body").path("role");
+        assertTrue(projected.path("publicId").isString());
+        assertEquals(second.role().publicId(), projected.path("publicId").asString());
+        assertEquals(second.role().id(), projected.path("id").asString());
+    }
+
+    /** 并发首次启动新区服只登记一条号段；六位序号用完时扩位，保留同一四位前缀。 */
+    @Test void concurrentPublicNumberAllocationSupportsNewServerAndOverflow() throws Exception {
+        String serverId = "public-role-test";
+        jdbc.update("INSERT INTO game_server(id,region_id,region_name,server_name,enabled) VALUES (?,?,?,?,TRUE)",
+            serverId, "local", "本地开发区", "编号测试");
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<Callable<String>> tasks = java.util.stream.IntStream.range(0, 6)
+                .mapToObj(index -> (Callable<String>) () -> login.login("public_concurrent_" + index, serverId).role().publicId())
+                .toList();
+            var results = new java.util.HashSet<String>();
+            for (var result : executor.invokeAll(tasks)) {
+                results.add(result.get());
+            }
+            assertEquals(java.util.Set.of("1003000001", "1003000002", "1003000003", "1003000004", "1003000005",
+                "1003000006"), results);
+        }
+        jdbc.update("UPDATE game_role_public_sequence SET last_sequence=999999 WHERE server_id=?", serverId);
+        assertEquals("10031000000", login.login("public_overflow_test", serverId).role().publicId());
+    }
+
+    /** V42 按现有区服和创建时刻补发公开编号，保持角色 UUID 及会话所引用的内部角色不变。 */
+    @Test void publicNumberMigrationBackfillsPersistedRoles() {
+        var source = new DriverManagerDataSource("jdbc:h2:mem:public_role_upgrade_" + UUID.randomUUID()
+            + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1", "sa", "");
+        var database = new JdbcTemplate(source);
+        String first = "00000000-0000-4000-8000-000000000001";
+        String second = "00000000-0000-4000-8000-000000000002";
+        String otherServer = "00000000-0000-4000-8000-000000000003";
+        try {
+            Flyway.configure().dataSource(source).target("41").load().migrate();
+            database.update("""
+                INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,
+                    login_account,server_id,created_at_seconds,last_login_at_seconds)
+                VALUES (?, 'public_old_1', '旧角色一', 1, 0, 0, 'public_old_1', 'local-1', 200, 300),
+                    (?, 'public_old_2', '旧角色二', 1, 0, 0, 'public_old_2', 'local-1', 100, 300),
+                    (?, 'public_old_3', '旧角色三', 1, 0, 0, 'public_old_3', 'local-2', 200, 300)
+                """, first, second, otherServer);
+            Flyway.configure().dataSource(source).target("42").load().migrate();
+            assertEquals("1001000002", database.queryForObject("SELECT public_id FROM game_role_public_number WHERE role_id=?",
+                String.class, first));
+            assertEquals("1001000001", database.queryForObject("SELECT public_id FROM game_role_public_number WHERE role_id=?",
+                String.class, second));
+            assertEquals("1002000001", database.queryForObject("SELECT public_id FROM game_role_public_number WHERE role_id=?",
+                String.class, otherServer));
+            assertEquals(2L, database.queryForObject("SELECT last_sequence FROM game_role_public_sequence WHERE server_id='local-1'",
+                Long.class));
+        } finally {
+            database.execute("SHUTDOWN");
         }
     }
 

@@ -9,6 +9,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class HeroRepository {
+    /** 以角色曾经实际达到的最高星级解锁形象，英雄离开名册时保留进度。 */
+    public record Illustration(int templateId, int maxStar) {}
+
     /** 已核对的旧基础成长规则，仅计算基础属性，不冒充装备等完整加成。 */
     private final HeroGrowthRules rules;
     /** 一次查询映射自身锁定与主线阵容占用；不逐英雄补查。 */
@@ -43,5 +46,24 @@ public class HeroRepository {
         var equipped=equipment.equipped(roleId);
         return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? AND h.id = ?", this::map, roleId, heroId)
             .stream().map(hero->hero.withEquipment(equipped.getOrDefault(hero.id(),new HeroEquipmentRepository.State(List.of())),panelRules,skillRules,evolutionRules)).findFirst();
+    }
+
+    /** 读取本角色持久图鉴，供个人空间生成已解锁形象。 */
+    public List<Illustration> illustrations(String roleId) {
+        return jdbc.query("SELECT template_id,max_star FROM game_hero_illustration WHERE role_id=? ORDER BY template_id",
+            (row, index) -> new Illustration(row.getInt("template_id"), row.getInt("max_star")), roleId);
+    }
+
+    /** 调用者持有角色锁并已保存真实英雄实例，图鉴只提高该模板的历史最高星级。 */
+    public void recordIllustration(String roleId, int templateId, int star) {
+        Integer previous = jdbc.query("SELECT max_star FROM game_hero_illustration WHERE role_id=? AND template_id=?",
+            row -> row.next() ? row.getInt("max_star") : null, roleId, templateId);
+        if (previous == null) {
+            jdbc.update("INSERT INTO game_hero_illustration(role_id,template_id,max_star) VALUES (?,?,?)",
+                roleId, templateId, star);
+        } else if (star > previous) {
+            jdbc.update("UPDATE game_hero_illustration SET max_star=? WHERE role_id=? AND template_id=?",
+                star, roleId, templateId);
+        }
     }
 }

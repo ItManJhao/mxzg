@@ -8,7 +8,7 @@
 
 ## 客户端统一采用模块级 MVC
 
-Model 保存唯一状态。Controller 发出玩法请求、登记和接收协议、提交 Model 并通知界面。View 读取 Model，把玩家操作交给所属 Controller。背包是标准模块。当前维护登录、角色、背包、英雄详情、普通升级与装备穿脱、主线阵容、第 1～300 关挑战与结算、挂机、独立通关奖励及第 15、30、50、80、110、140 关里程碑领取。基础、友情、高级召唤和积分兑换可获得英雄，精英碎片也可合成英雄。挂机新领取只在 local 默认启用。强化进阶、祈愿购买和快速战斗待恢复。
+Model 保存唯一状态。Controller 发出玩法请求、登记和接收协议、提交 Model 并通知界面。View 读取 Model，把玩家操作交给所属 Controller。背包是标准模块。当前维护登录、角色、背包、英雄详情、普通升级与装备穿脱、主线阵容、第 1～550 关挑战与结算、挂机、独立通关奖励及第 15、30、50、80、110、140 关里程碑领取。基础、友情、高级召唤和积分兑换可获得英雄，精英碎片也可合成英雄。挂机新领取只在 local 默认启用。强化进阶、祈愿购买和快速战斗待恢复。
 
 - BagController 发送精英碎片合成请求，接收库存快照和本次合成回包。库存经 BagModel 提交后由 BagEvent 通知界面。
 - BagModel：唯一背包状态，分别保存普通堆叠、期限物品和精灵独立实例，整批校验/冻结后计算差异；不联网、不依赖View，不按itemId合并精灵。
@@ -39,7 +39,7 @@ FormationController 每次确认发送一次保存请求。FormationSaveModel �
 
 MainChapterRules读取全部850条同源chapterreward，按全局idx保存门槛、首通奖励和酒馆上限，并关联原mode/chapter/mission敌方定位。MainChapterService的新挑战、HeroLineupBattleService的只读试战、挂机遇敌及战报来源统一传全局idx；持久Details中历史字段mission也保存全局idx，不能在章节或模式切换后把小关号当进度。HeroBattleChapterScenario.enemies按配置构建真实NPC成长、原顺序属性修正及完整技能，正式savedFormation/idle入口不再借固定三关initial模板；initial及固定审计场景只保留独立测试用途。
 
-完整目录与开放权限分开。服务端可信`mxzg.main-chapter.challenge-limit`（环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`）默认 300，只限制全新挑战，开放连续第 1～300 关。MainChapterRewardService按开放段预检真实敌方、挂机投影及共享发奖支持，缺项拒绝装配。第 10～300 关已分批补齐实际守军所需的控制、目标选择与动作表现。后续关卡由独立测试服回归连续实战、结算及奖励，Creator 本机抽验新增动作、地图切换和关键领奖。IdleRules现按同源chapterreward导出850个全局idx的基础量与掉落组，完整配置不等于850关战斗已恢复。装备、符文、先手或未支持技能仍保留明确边界。
+完整目录与开放权限分开。服务端可信`mxzg.main-chapter.challenge-limit`（环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`）默认 550，只限制全新挑战，开放连续第 1～550 关。MainChapterRewardService按开放段预检真实敌方、挂机投影及共享发奖支持，缺项拒绝装配。第 10～550 关已分批补齐实际守军所需的控制、目标选择与动作表现。后续关卡由独立测试服回归连续实战、结算及奖励，Creator 本机抽验新增动作、地图切换和关键领奖。IdleRules现按同源chapterreward导出850个全局idx的基础量与掉落组，完整配置不等于850关战斗已恢复。装备、符文、先手或未支持技能仍保留明确边界。
 
 MainChapterState可选`challengeLimit`来自字段5，统一首包、提交事件及重新鉴权沿原快照交付，SessionSnapshotService对齐revision时同时保留它与里程碑集合。旧回执缺字段保持null/未记录，客户端缺当前范围时禁新挑战，不默认0或猜开放上限。新挑战读最新MainChapterModel.state的范围；已经存在的pending、原requestId回执、claim及replay优先恢复，不被缩小后的范围阻断。maxCleared可高于当前范围，不能因此拒绝合法旧进度或用历史回执回写当前范围；不新增Model、同步请求或恢复队列。
 
@@ -141,9 +141,21 @@ EquipmentDetailUtils是无状态配置投影，读取Item、Language、Equipment
 
 ## 全局反馈与开发入口
 
-RemakeApp持有唯一ToastManager，UIManager.toast是业务反馈出口；登录前和独立技能台也使用Remake.scene已有的ApplicationNotice面板。管理器不创建另一套节点，以应用update推进有界队列、文字去重和上浮淡入淡出，长中文按原宽度换行并撑高背景。页面正文只保留加载进度、玩法状态和固定操作说明；成功、拒绝和网络失败走全局飘字，框架开窗失败只报告一次。换号clear清空当前和排队项，应用销毁dispose终止所有迟到展示。HomeFeatureNavigation仅在同次有效开页真实等待满350毫秒且页面尚未显示时提示一次；缓存瞬开不提示。完成、取消、替换、返回、身份重置和销毁清理计时，旧Promise不能撤新计时，开页失败复用UIManager已报告标记去重。三段LoadingPlan、现有资源池及其余按需加载不变。
+RemakeApp 持有唯一 ToastManager。UIManager.toast 统一提交成功、拒绝和网络失败反馈，登录前和独立技能台也复用 Remake.scene 的 ApplicationNotice。旧版及日服 Web 的 MessageView 从画面中央淡入，使用 `win-bg/block-bg-messageview.png` 九宫格和带阴影的淡黄色文字。日服的文字逻辑字号为 21，最大宽度 350，底板最小 300×36，按实测文字宽高增加 30 和 16 的留白。新版原面板位于 Canvas 局部 Y=-435，固定蓝底宽 540，普通提示播放 1.6 秒。现已移到中央，复用原九宫格，普通提示 0.1 秒淡入后用 3 秒上浮 30，最后 0.5 秒同步淡出。底板归本地 bootstrap，原 UUID 保留。文字使用 21 号系统粗体替代日服字库，以保留登录前显示和本地包大小。
+
+日服最多同时显示三条，并在有新提示时上推旧项。新版按项目约定保留单个场景节点、有界队列和重复文案去重。换号清空当前和待播项，应用销毁后停止展示。Creator Web 预览已在 393×852 和 360×640 实测居中出场、上浮及淡出。两尺寸的「钻石不足」底板均为 300×47.5，长句换行后为 380×97.5，实际高度随 Creator 字框和行高变化。
+
+页面正文保留加载进度、玩法状态和固定操作说明，框架开窗失败只报告一次。HomeFeatureNavigation 仅在同次有效开页真实等待满 350 毫秒且页面尚未显示时提示一次，缓存瞬开直接显示。完成、取消、替换、返回、身份重置和销毁会清理对应计时，开页失败复用 UIManager 已报告标记去重。
 
 Creator预览F9松键开关GmView，不再由角色资料设置打开。总菜单只分流，GmGrantView按hero/item固定类别读取配置和发放，GmBattleView保留前三关快捷只读样本（不作为目录或接口上限），技能入口复用SkillAuditView。应用注入唯一GmController及异步测试动作，View不持有连接或修改Model；关闭子窗返回总菜单，F9/换号清理整条GM窗链。发布版不登记快捷键，production不装配GM服务。详见[开发GM](gm-development.md)。
+
+## 游戏红点
+
+`RedDotManager` 按点分路径维护逻辑树，同一父级下有任一可操作项时显示红点。`GameRedDotKey` 集中定义当前入口与叶子。预制体保存挂点和原贴图，页面按路径订阅并在关闭时解绑，列表格复用时重绑当前条目。[红点管理](../client/assets/scripts/framework/ui/RedDotManager.ts)
+
+`ApplicationRedDots` 在完整快照提交和界面事件交付之间投影英雄及背包状态，主线奖励跟随主线状态通知。英雄详情显示自身升级及各装备槽，底栏和名册格只提示主线已上阵的英雄。背包只提示已达合成数量的精英碎片。通关和里程碑在条件满足时点亮，领取成功后随进度清除。召唤法阵汇总普通免费、高级免费和可兑换积分，时间读取公共服务器时钟。金币副本复用已有列表协议，从服务器确认解锁、挑战资格和剩余免费次数。
+
+红点不承担发奖、扣费或已读记录。角色变更先清空树，再由新快照和配置重算。日常副本独立数据在开放后首次读、重连、资格变化或跨日复核。市场、未接支付的祈愿和未开放玩法未设置提醒。
 
 ## Prefab 与通用列表
 

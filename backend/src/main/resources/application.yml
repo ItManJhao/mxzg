@@ -17,7 +17,7 @@ server:
   port: ${MXZG_PORT:18080}
 mxzg:
   main-chapter:
-    # 完整目录按配置装载，默认开放连续第1至300关，启动时预检已开放范围的依赖。
-    challenge-limit: ${MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT:300}
+    # 完整目录按配置装载，默认开放连续第1至550关，启动时预检已开放范围的依赖。
+    challenge-limit: ${MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT:550}
     # 默认关闭新领取；local单独开启，历史成功回执不受开关影响。
     idle-claim-enabled: ${MXZG_MAIN_CHAPTER_IDLE_CLAIM_ENABLED:false}

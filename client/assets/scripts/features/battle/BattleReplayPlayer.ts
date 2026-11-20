@@ -12,6 +12,8 @@ export interface BattleReplayPresentation {
     restore?(step: BattleReplayStep): void;
     /** 已由显示配置确认需要等待后续同目标命中的状态耗尽；播放器不读取配置或猜Buff编号。 */
     waitForFollowingHit?(step: BattleReplayStep): boolean;
+    /** 正常结束前等待视图的末次表现，关闭仍通过 stop 立即取消。 */
+    finish?(): Promise<void>;
     /** 结束本次表现并释放等待；重复结束由页面自身保证安全。 */
     stop(): void;
 }
@@ -30,7 +32,7 @@ export class BattleReplayPlayer {
 
     /**
      * 先校验整包；定位时恢复前置状态，再按技能与实例依赖播放。
-     * 不同目标仍并行，确认的耗尽移除等待对应命中且无匹配时拒绝，死亡清理保持技能屏障；false表示取消。
+     * 不同目标仍并行，耗尽移除等待对应命中。正常播完等待末次表现收尾，false 表示取消。
      */
     public async play(bytes: Uint8Array, focus?: { skillId: number; level: number }): Promise<boolean> {
         const steps = BattleReplayUtils.decode(bytes);
@@ -96,6 +98,9 @@ export class BattleReplayPlayer {
                     return false;
                 }
                 await this.presentation.play(steps[index]);
+            }
+            if (generation === this.generation && this.presentation.finish) {
+                await this.presentation.finish();
             }
             return generation === this.generation;
         } finally {

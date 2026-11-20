@@ -73,6 +73,8 @@ export interface BattleReplayStep {
     /** 扣血、治疗或复活的实际变更用于血条，报告变更用于飘字。 */
     readonly actualHpChange: number | null;
     readonly reportedHpChange: number | null;
+    /** 伤害是否来自战报明确的主动技能段，供飘字选用技能字体。 */
+    readonly activeSkillDamage?: boolean;
     readonly dead: boolean | null;
     /** Buff身份为字符串，期限为绝对回合；非Buff事件为null。 */
     readonly buffInstanceId: string | null;
@@ -374,6 +376,7 @@ export class BattleReplayUtils {
                     skillType: isSkill ? event.skillType : null,
                     actualHpChange: isHealthChange ? this.integer(event.actualHpChange, true) : null,
                     reportedHpChange: isHealthChange ? this.integer(event.reportedHpChange, true) : null,
+                    activeSkillDamage: event.kind === "damage" && skill?.skillType === 1,
                     dead: isHealthChange ? event.dead : null,
                     buffInstanceId: isBuff ? this.instance(event.buffInstanceId) : null,
                     expiresAtRound: isBuff ? event.expiresAtRound : null,

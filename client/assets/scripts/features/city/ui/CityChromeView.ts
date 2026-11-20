@@ -1,5 +1,5 @@
 /**
- * 主城顶底栏 View：绑定导航与资产显示，由主城页面提供数据和操作，不读取网络或全局角色仓库。
+ * 主城顶底栏 View：绑定导航、资产显示和各功能聚合红点，不读取网络或全局角色仓库。
  */
 import { ResManager } from "../../../framework/assets/ResManager";
 import { _decorator, Color, Label, Node, Overflow, Sprite, UITransform } from "cc";
@@ -7,6 +7,8 @@ import { CITY_BAR } from "../../../config/CityNavigationUtils";
 import { ErrorUtils } from "../../../core/ErrorUtils";
 import { GameLog } from "../../../core/GameLog";
 import { BaseView } from "../../../framework/ui/BaseView";
+import { RedDotManager } from "../../../framework/ui/RedDotManager";
+import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { CityChrome, CityChromeActions, CityChromeUtils, TabState } from "./CityChromeUtils";
 import { CityTabUtils } from "../utils/CityTabUtils";
 import { PrefabLoader } from "../../../framework/assets/PrefabLoader";
@@ -47,6 +49,14 @@ const ACTIVITY_NAMES = [
     "ActLimitGift",
     "ActLimitTime",
 ];
+/** 已接入业务状态的底栏按钮及其红点汇总路径。 */
+const TAB_RED_DOT_PATHS: Readonly<Record<string, string | undefined>> = {
+    city: GameRedDotKey.CITY,
+    hero: GameRedDotKey.HERO,
+    bag: GameRedDotKey.BAG,
+    battle: GameRedDotKey.BATTLE,
+    dungeon: GameRedDotKey.DUNGEON,
+};
 export interface CityChromeOpenArgs {
     onTab: (id: string) => void;
     actions: CityChromeActions;
@@ -145,11 +155,13 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
     } = {};
     /** 本实例首次开始绑定后为true，后续打开只更新注入操作，不重复登记按钮。 */
     private started = false;
+    /** 是否正在监听底栏红点，关闭时由页面监听作用域复位。 */
+    private watchingRedDots = false;
     /** 返回当前顶底栏节点，供主城宿主持有和显示。 */
     get root(): Node {
         return this.node;
     }
-    /** 接收主城注入的导航操作；本实例只绑定一次节点和按钮，绑定失败使开页等待明确失败。 */
+    /** 接收导航操作并订阅底栏红点。按钮只绑定一次，红点监听随本次开关页释放。 */
     onOpen(args?: CityChromeOpenArgs): void {
         if (args) {
             this.args = args;
@@ -157,12 +169,14 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
             this.actions = args.actions;
         }
         if (this.started) {
+            this.watchTabRedDots();
             return;
         }
         this.started = true;
         this.beginOpen();
         try {
             this.bindAll();
+            this.watchTabRedDots();
             this.finishOpen();
         }
         catch (err) {
@@ -242,7 +256,7 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
     setAvatar(icon: string | null): void {
         this.paintAvatar(icon);
     }
-    /** 根据已计算的导航状态刷新七个按钮的选中样式和锁定等级，不在页面内决定开放条件。 */
+    /** 由导航状态更新选中样式、锁定等级和红点；锁定的入口暂时隐藏红点。 */
     setTabs(tabs: TabState[]): void {
         const paint = CityTabUtils.tabPaintState(tabs.map((tab) => tab.state));
         for (let i = 0; i < tabs.length; i++) {
@@ -262,7 +276,32 @@ export class CityChromeView extends BaseView<CityChromeOpenArgs> implements City
                     CityChromeView.paintLockLevel(lock, tab.lockLevel && tab.lockLevel > 1 ? tab.lockLevel : 0);
                 }
             }
+            const dotPath = TAB_RED_DOT_PATHS[tab.id];
+            if (dotPath) {
+                this.paintTabRedDot(button, RedDotManager.instance.isVisible(dotPath));
+            }
         }
+    }
+
+    /** 订阅已接业务的入口树节点，离开主城顶底栏时统一解绑。 */
+    private watchTabRedDots(): void {
+        if (this.watchingRedDots) {
+            return;
+        }
+        this.watchingRedDots = true;
+        this.ownListener(() => { this.watchingRedDots = false; });
+        for (const [id, path] of Object.entries(TAB_RED_DOT_PATHS)) {
+            const button = this.tabs[id];
+            if (path && button) {
+                this.ownListener(RedDotManager.instance.watch(path, visible => this.paintTabRedDot(button, visible)));
+            }
+        }
+    }
+
+    /** 用统一管理器的结果刷新已有红点挂点，优先显示同一位置的锁标。 */
+    private paintTabRedDot(button: Node, visible: boolean): void {
+        const dot = PrefabLoader.requireNode(button, "RedDot");
+        dot.active = visible && !button.getChildByName("Lock")?.active;
     }
     /** 切换主城专属活动组和工具行的显示；进入其他功能页时由宿主隐藏。 */
     setCityExtras(visible: boolean): void {

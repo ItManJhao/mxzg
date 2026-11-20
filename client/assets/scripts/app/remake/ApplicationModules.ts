@@ -13,10 +13,12 @@ import { HeroLevelController } from "../../features/hero/HeroLevelController";
 import { HeroRosterController } from "../../features/hero/HeroRosterController";
 import { MarketController } from "../../features/market/MarketController";
 import { RewardBinding } from "../../features/reward/RewardBinding";
+import { EventDispatcher } from "../../framework/EventDispatcher";
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { Protocol } from "../../platform/Protocol";
 import { AccountComposition, type ApplicationAccount } from "./AccountComposition";
 import { AssetStateBinding } from "./AssetStateBinding";
+import { ApplicationRedDots } from "./ApplicationRedDots";
 import type { DevelopmentPreview } from "./DevelopmentPreview";
 
 /** 含页面操作状态的模块随账号重置，并在场景结束时释放。 */
@@ -34,6 +36,8 @@ export class ApplicationModules {
     private readonly assets: AssetStateBinding;
     /** 本次应用唯一反馈队列，主城就绪后可以展示积压的通知。 */
     private readonly rewards: RewardBinding;
+    /** 角色状态到红点树的订阅，随会话重置、随应用回收。 */
+    private readonly redDots: ApplicationRedDots;
     /** 需要随账号重置和应用释放的操作模块。 */
     private readonly sessions: readonly SessionModule[];
     /** 模块卸载时先结束连接回调，再释放状态订阅。 */
@@ -53,6 +57,7 @@ export class ApplicationModules {
         const {model, controller, socket} = account;
         const operations = new AccountOperations(controller, socket);
         this.rewards = new RewardBinding(controller);
+        this.redDots = new ApplicationRedDots(model);
         this.role = new RoleController(model, operations, this.rewards);
         preview.configureRewards(notice => this.rewards.restore(notice));
         preview.configureGm(controller, operations, inHome);
@@ -84,32 +89,45 @@ export class ApplicationModules {
             heroes, formation, () => {
                 clearRolePages();
                 this.rewards.resetSession();
+                this.redDots.resetSession();
             }, chapter.controller, this.sessions);
         this.unbind = AccountComposition.bind(account, frame => this.acceptState(frame),
             frame => this.rewards.controller.receive(frame), showConnectionNotice);
     }
 
-    /** 统一快照提交后通知奖励队列；重连时让可见的市场和副本重新校准独立状态。 */
+    /** 整包提交后在同一通知批次更新红点，重连时重新校准独立状态。 */
     private acceptState(frame: GameFrame): void {
-        if (!this.assets.apply(frame)) {
+        const authenticated = frame.name === Protocol.SESSION_AUTHENTICATE;
+        const accepted = EventDispatcher.batchNotifications(() => {
+            if (!this.assets.apply(frame)) {
+                return false;
+            }
+            if (authenticated) {
+                DailyDungeonController.instance.refreshVisible();
+            }
+            this.redDots.refreshSnapshot(authenticated);
+            return true;
+        });
+        if (!accepted) {
             return;
         }
         this.rewards.controller.observeRevision(this.assets.acceptedRevision);
-        if (frame.name === Protocol.SESSION_AUTHENTICATE) {
+        if (authenticated) {
             MarketController.instance.reloadVisible();
-            DailyDungeonController.instance.refreshVisible();
         }
     }
 
-    /** 主城可见后开放跨页面反馈，登录或切换根页时暂存。 */
+    /** 主城及游戏配置就绪后开放跨页反馈和红点。 */
     public setHomeReady(ready: boolean): void {
         this.rewards.setReady(ready);
+        this.redDots.setReady(ready);
     }
 
     /** 撤销回调、停止操作，释放模块及其对协议和界面的订阅。 */
     public dispose(): void {
         this.unbind();
         this.assets.dispose();
+        this.redDots.dispose();
         for (const module of this.sessions) {
             module.dispose();
         }

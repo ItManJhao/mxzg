@@ -10,6 +10,7 @@ import com.funsgamex.mxzg.campaign.IdleActivityMaintenanceService;
 import com.funsgamex.mxzg.campaign.MainChapterMilestoneRules;
 import com.funsgamex.mxzg.campaign.MainChapterMilestoneService;
 import com.funsgamex.mxzg.campaign.MainChapterRules;
+import com.funsgamex.mxzg.hero.HeroGrowthRules;
 import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.lineup.MainFormationCommandService;
 import com.funsgamex.mxzg.network.SessionSnapshotService;
@@ -37,7 +38,7 @@ public final class MainChapterProgressionPreview {
     /** 只提供显式启动入口，所有游戏状态仍由应用领域服务持有。 */
     private MainChapterProgressionPreview() {}
 
-    /** 启动全新隔离库，无参数准备第20关夹具，也可指定第100、110或300关候选角色。 */
+    /** 启动全新隔离库，指定后段候选上限时准备其换图、奖励和战斗抽验角色。 */
     public static void main(String[] args) throws Exception {
         if (args.length > 1 || !Files.isRegularFile(Path.of("pom.xml"))) {
             throw new IllegalArgumentException("必须在backend目录启动，仅可指定一个预览夹具");
@@ -46,6 +47,10 @@ public final class MainChapterProgressionPreview {
             case "--stage100-fixture" -> 100;
             case "--stage110-fixture" -> 110;
             case "--stage300-fixture" -> 300;
+            case "--stage360-fixture" -> 360;
+            case "--stage400-fixture" -> 400;
+            case "--stage440-fixture" -> 440;
+            case "--stage550-fixture" -> 550;
             default -> throw new IllegalArgumentException("未知主线预览夹具：" + args[0]);
         };
         String fixture = "chapter-stage" + challengeLimit + "-preview";
@@ -64,12 +69,20 @@ public final class MainChapterProgressionPreview {
                 case 300 -> Map.of("chapter300_140", 139, "chapter300_159", 158, "chapter300_160", 159,
                     "chapter300_200", 199, "chapter300_201", 200, "chapter300_202", 201,
                     "chapter300_281", 280, "chapter300_282", 281, "chapter300_300", 299);
+                case 360 -> Map.of("chapter360_301", 300, "chapter360_321", 320, "chapter360_330", 329,
+                    "chapter360_351", 350, "chapter360_360", 359, "chapter360_run", 300);
+                case 400 -> Map.of("chapter400_361", 360, "chapter400_362", 361, "chapter400_363", 362,
+                    "chapter400_390", 389, "chapter400_400", 399, "chapter400_run", 360);
+                case 440 -> Map.of("chapter440_401", 400, "chapter440_402", 401, "chapter440_404", 403,
+                    "chapter440_425", 424, "chapter440_440", 439, "chapter440_run", 400);
+                case 550 -> Map.of("chapter550_441", 440, "chapter550_451", 450, "chapter550_500", 499,
+                    "chapter550_525", 524, "chapter550_550", 549, "chapter550_run", 440);
                 default -> Map.of("chapter20_review", 14, "chapter20_start", 0);
             };
             for (var player : prepared.entrySet()) {
                 preparePlayer(context, player.getKey(), player.getValue(), challengeLimit);
             }
-            if (challengeLimit == 300) {
+            if (challengeLimit >= 300) {
                 long now = Instant.now().getEpochSecond();
                 context.getBean(IdleActivityMaintenanceService.class).configure("local-1", now - 86_400,
                     Optional.empty(), now);
@@ -95,7 +108,7 @@ public final class MainChapterProgressionPreview {
 
     /**
      * 仅向本次内存库写历史进度和可挑战的原配置阵容。较早的里程碑经原服务领取并持久化回执，
-     * 目标关卡的战报、首通结算和里程碑资格留给 Creator 实战操作。高关夹具预设具备挑战资格的角色等级与成长。
+     * 目标关卡的战报、首通结算和里程碑资格留给实战操作。连续验证账号以 `_run` 结尾，角色等级取末关门槛。
      */
     private static void preparePlayer(ConfigurableApplicationContext context, String account, int cleared,
             int challengeLimit) {
@@ -106,26 +119,30 @@ public final class MainChapterProgressionPreview {
         String hero = UUID.randomUUID().toString();
         var chapterRules = context.getBean(MainChapterRules.class);
         if (challengeLimit > 20) {
-            int requiredLevel = chapterRules.stage(cleared + 1).requiredLevel();
+            int requiredLevel = chapterRules.stage(account.endsWith("_run") ? challengeLimit : cleared + 1)
+                .requiredLevel();
             jdbc.update("UPDATE game_role SET role_level=?,first_named=TRUE WHERE id=?", Math.max(31, requiredLevel), role);
         }
         int heroLevel = 100;
         int growthStage = 3;
-        if (challengeLimit == 300) {
+        int leaderStar = lateChapterLeaderStar(challengeLimit);
+        boolean fullLineup = leaderStar > 9;
+        if (challengeLimit >= 300) {
             int highestGuardLevel = chapterRules.enemies(cleared + 1).stream()
                 .mapToInt(MainChapterRules.Enemy::level).max().orElseThrow();
-            heroLevel = Math.max(100, highestGuardLevel + 20);
+            heroLevel = fullLineup ? 200 : Math.max(100, highestGuardLevel + 20);
             growthStage = 6;
         }
-        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,?,9,?)",
-            hero, role, heroLevel, growthStage);
+        int leaderLevel = fullLineup ? context.getBean(HeroGrowthRules.class).limit(200, 6, leaderStar) : heroLevel;
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,?,?,?)",
+            hero, role, leaderLevel, leaderStar, growthStage);
         if (cleared > 0) {
             jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,?)", role, cleared);
             jdbc.update("INSERT INTO game_main_chapter_idle(role_id,started_at) VALUES (?,?)", role,
                 Instant.now().getEpochSecond() - 70);
         }
         var state = context.getBean(SessionSnapshotService.class).snapshot(token);
-        var lineup = challengeLimit == 300 ? prepareStageThreeHundredLineup(jdbc, role, hero, heroLevel)
+        var lineup = challengeLimit >= 300 ? prepareLateChapterLineup(jdbc, role, hero, heroLevel, leaderStar, leaderLevel)
             : List.of(new Lineup.Slot(2, hero));
         context.getBean(MainFormationCommandService.class).save(token,
             new MainFormationCommandService.Save(UUID.randomUUID().toString(), state.mainFormation().version(), 1,
@@ -141,15 +158,39 @@ public final class MainChapterProgressionPreview {
         }
     }
 
-    /** 准备已接通技能的不同模板，复用原九星终阶得到属性及原阵型校验，不直接写战报或结果。 */
-    static List<Lineup.Slot> prepareStageThreeHundredLineup(JdbcTemplate jdbc, String role, String leader, int level) {
-        var lineup = new ArrayList<>(List.of(new Lineup.Slot(2, leader)));
-        var slots = Map.of(3, 10105010, 5, 10205011, 7, 10305010).entrySet().stream()
-            .sorted(Map.Entry.comparingByKey()).toList();
+    /** 按隔离测试的目标上限选队长星级，后段提高合法养成以避免随机败场打断连续验收。 */
+    static int lateChapterLeaderStar(int challengeLimit) {
+        if (challengeLimit >= 550) {
+            return 14;
+        }
+        if (challengeLimit >= 440) {
+            return 12;
+        }
+        if (challengeLimit >= 400) {
+            return 11;
+        }
+        return challengeLimit >= 360 ? 10 : 9;
+    }
+
+    /**
+     * 按原终阶和星级上限准备能力已接通的不同模板，不直接写战报或结果。
+     * @param level 九星成员等级，在原200级上限内随预览目标选择
+     * @param leaderStar 队长星级，十星起使用完整六人队，从十二星起六名成员均具备所需四技能
+     * @param leaderLevel 队长按原成长规则所得等级上限，可用对应技能的成员复用
+     */
+    static List<Lineup.Slot> prepareLateChapterLineup(JdbcTemplate jdbc, String role, String leader, int level,
+            int leaderStar, int leaderLevel) {
+        boolean fullLineup = leaderStar > 9;
+        var lineup = new ArrayList<>(List.of(new Lineup.Slot(fullLineup ? 6 : 2, leader)));
+        var templates = fullLineup ? Map.of(2, 10204013, 3, 10105010, 5, 10205011, 7, 10305010, 8, 10205023)
+            : Map.of(3, 10105010, 5, 10205011, 7, 10305010);
+        var slots = templates.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList();
         for (var member : slots) {
             String heroId = UUID.randomUUID().toString();
-            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,?,?,9,6)",
-                heroId, role, member.getValue(), level);
+            // 从十二星夹具起，六个模板的四技能已经接通，成员均按同一上限养成。
+            boolean advanced = leaderStar >= 12 || (fullLineup && member.getKey() != 5 && member.getKey() != 7);
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,?,?,?,6)",
+                heroId, role, member.getValue(), advanced ? leaderLevel : level, advanced ? leaderStar : 9);
             lineup.add(new Lineup.Slot(member.getKey(), heroId));
         }
         return List.copyOf(lineup);

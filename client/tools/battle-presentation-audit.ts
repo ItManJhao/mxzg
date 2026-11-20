@@ -15,10 +15,10 @@ function rows(name: string): any[] {
     return JSON.parse(readFileSync(`client/assets/bundles/resources/config/${name}.json`, "utf8")).rows;
 }
 
-/** 第103关的替换普攻保留原目标附身、14帧、原音效、暗屏及角色近身回程。 */
-function verifyRipperReplacement(buffs: ReadonlyMap<number, any>): void {
-    const buff = buffs.get(3115201);
-    assert.ok(buff, "开膛手·J一级替换普攻动作缺失");
+/** 开膛手·J的替换普攻各等级保留原目标附身、14帧、原音效、暗屏及角色近身回程。 */
+function verifyRipperReplacement(buffs: ReadonlyMap<number, any>, id: number): void {
+    const buff = buffs.get(id);
+    assert.ok(buff, `开膛手·J替换普攻动作缺失 ${id}`);
     const actions = BattleAttackUtils.legacyActions(buff);
     assert.deepEqual(actions.map(action => [action.type, action.delay, action.dimly]), [[7, 0, 1], [11, 0, 1]]);
     const effect = BattleAttackUtils.plan(actions[0]);
@@ -38,12 +38,12 @@ function verifyRipperReplacement(buffs: ReadonlyMap<number, any>): void {
     assert.deepEqual(attack.sounds, []);
 }
 
-/** 核对第111～300关额外使用的旧覆盖、技能等级时序、帧和原音效文件。 */
+/** 核对主线后段使用的旧覆盖、技能等级时序、帧和原音效文件。 */
 function verifyChapterProgressionOverrides(buffs: ReadonlyMap<number, any>): void {
-    for (const id of [2113101, 2113102, 2155201, 2155202, 3115202, 2081101, 2081102, 2081103, 3061103]) {
+    for (const id of [2113101, 2113102, 2155201, 2155202, 2155203, 2081101, 2081102, 2081103, 3061103]) {
         assert.ok(buffs.has(id), `主线旧动作缺失 ${id}`);
     }
-    for (const id of [2113101, 2113102, 2155201, 2155202]) {
+    for (const id of [2113101, 2113102, 2155201, 2155202, 2155203]) {
         const octopus = id < 2155201;
         const actions = BattleAttackUtils.legacyActions(buffs.get(id));
         assert.deepEqual(actions.map(action => [action.type, action.delay, action.dimly]),
@@ -70,10 +70,38 @@ function verifyChapterProgressionOverrides(buffs: ReadonlyMap<number, any>): voi
         assert.equal(second.delay, 50);
         assert.equal(BattleAttackUtils.plan(second).effect?.paths.length, 44);
     }
-    const ripper = BattleAttackUtils.legacyActions(buffs.get(3115202));
-    assert.deepEqual(ripper.map(action => [action.type, action.delay, action.dimly]), [[7, 0, 1], [11, 0, 1]]);
     const wind = BattleAttackUtils.legacyActions(buffs.get(3061103));
     assert.deepEqual(wind.map(action => [action.type, action.delay, action.dimly]), [[3, 0, 1], [9, 50, 0], [1, 0, 0]]);
+}
+
+/** 第361～400关的四项三级主动表现按旧表分开施法和目标特效，保留各自的延迟、锚点及资源。 */
+function verifyThirdLevelActions(buffs: ReadonlyMap<number, any>): void {
+    for (const [id, delay, castTime, frames, file, sound, anchorX, anchorY, scale] of [
+        [1103103, 70, 1.8, 11, "skill-104050051", "skill-101040041", 0.5, 0.55, 1],
+        [2113103, 60, 2, 20, "skill-102050113", "skill-102050113", 0.5, 0.3, 3],
+        [3083103, 75, 2, 8, "skill-103050083", "skill-103050083", 0.4, 0.3, 2],
+        [3103103, 70, 2, 14, "skill-103050103", "skill-103050103", 0.5, 0.25, 3],
+    ] as const) {
+        const buff = buffs.get(id);
+        assert.ok(buff, `主线三级动作缺失 ${id}`);
+        const actions = BattleAttackUtils.legacyActions(buff);
+        assert.deepEqual(actions.map(action => [action.type, action.delay, action.dimly]), [[3, 0, 0], [7, delay, 0]]);
+        const caster = BattleAttackUtils.plan(actions[0]);
+        assert.deepEqual([caster.action, caster.actionSeconds, caster.effect], ["attack3", castTime, null]);
+        const target = BattleAttackUtils.plan(actions[1]);
+        assert.ok(target.effectOnly && !target.onSource && target.effect);
+        // 附身帧经过通用锚点换算，原纵锚点先扣除既有的绘制偏移。
+        assert.deepEqual([target.effect.anchorX, target.effect.anchorY, target.effect.scaleX, target.effect.scaleY],
+            [anchorX, anchorY - 0.07, scale, scale]);
+        assert.equal(target.effect.interval, 0.05);
+        assert.deepEqual(target.sounds, [sound]);
+        assert.deepEqual(target.effect.paths, Array.from({ length: frames }, (_, index) =>
+            `effects/skill/${file}/${file}_${index}/spriteFrame`));
+        for (const frame of target.effect.paths) {
+            assert.ok(existsSync(resolveBundleFile(frame.replace("/spriteFrame", ".png"))), `缺少帧资源 ${frame}`);
+        }
+        assert.ok(existsSync(resolveBundleFile(`audio/${sound}.mp3`)), `缺少旧音效 ${sound}`);
+    }
 }
 
 /** 沿模板→技能→动作→表现检查并保存当前结果；历史可解析模板及反馈阵容不能倒退，不覆盖历史证据。 */
@@ -84,8 +112,11 @@ function main(): void {
     const upgrade = rows("heroupgrade").find(row => row.grade === 0);
     const arts = new Map(rows("buffart").map(row => [row.idx, row]));
     const buffs = new Map(rows("buff").map(row => [row.idx, row]));
-    verifyRipperReplacement(buffs);
+    for (const id of [3115201, 3115202, 3115203]) {
+        verifyRipperReplacement(buffs, id);
+    }
     verifyChapterProgressionOverrides(buffs);
+    verifyThirdLevelActions(buffs);
     const heroes = rows("herotype").map(hero => {
         const star = stars.find(row => row.star === hero.star);
         const checked = new Set<number>();

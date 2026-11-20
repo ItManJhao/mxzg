@@ -53,14 +53,6 @@ export class BattlePrefabLayoutUtils {
         return "LayerVfx/VfxScreen";
     }
 
-    /** 返回合法飘字格索引的节点路径，越界返回null。 */
-    public static battleFloatDmgPath(index: number): string | null {
-        if (!BattlePrefabLayoutUtils.slotIndex(index, BATTLE_FLOAT_SLOT_COUNT - 1)) {
-            return null;
-        }
-        return BATTLE_FLOAT_ROOT_PATH + "/FloatDmg_" + index;
-    }
-
     /** 八个站位均有独立头顶挂点，后排也能显示Buff。 */
     public static battleHeadPath(side: BattleSlotSide, index: number): string | null {
         if (!BattlePrefabLayoutUtils.slotIndex(index, 7)) {
@@ -126,17 +118,11 @@ export class BattlePrefabLayoutUtils {
             "LayerHud/BtnRetreat",
             BATTLE_FLOAT_LAYER_PATH,
             BATTLE_FLOAT_ROOT_PATH,
-            BATTLE_FLOAT_CRIT_PATH,
+            BATTLE_FLOAT_TEMPLATE_PATH,
             BATTLE_SKILL_NAME_BANNER_PATH,
             BATTLE_SKILL_NAME_BANNER_PATH + "/BannerBg",
             BATTLE_SKILL_NAME_LABEL_PATH,
         ];
-        for (let f = 0; f < BATTLE_FLOAT_SLOT_COUNT; f++) {
-            const dmg = BattlePrefabLayoutUtils.battleFloatDmgPath(f);
-            if (dmg) {
-                paths.push(dmg);
-            }
-        }
         for (let i = 0; i < 8; i++) {
             const enemy = BattlePrefabLayoutUtils.battleSlotPath("enemy", i);
             const ally = BattlePrefabLayoutUtils.battleSlotPath("ally", i);
@@ -225,8 +211,8 @@ export class BattlePrefabLayoutUtils {
 /** #163 场内挂点。缺了就整页退回代码 UI，不另建同名节点。 */
 export const BATTLE_FLOAT_LAYER_PATH = "LayerFloat";
 export const BATTLE_FLOAT_ROOT_PATH = "LayerFloat/FloatDamageRoot";
-export const BATTLE_FLOAT_CRIT_PATH = "LayerFloat/FloatCrit";
+/** 单个隐藏的数字模板，命中时按目标创建显示实例。 */
+export const BATTLE_FLOAT_TEMPLATE_PATH = BATTLE_FLOAT_ROOT_PATH + "/DamageNumberTemplate";
 export const BATTLE_SKILL_NAME_BANNER_PATH = "SkillNameBanner";
 export const BATTLE_SKILL_NAME_LABEL_PATH = "SkillNameBanner/SkillNameLabel";
-export const BATTLE_FLOAT_SLOT_COUNT = 4;
 export const BATTLE_BUFF_SLOT_COUNT = 3;

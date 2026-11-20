@@ -1,9 +1,11 @@
 /**
  * 主城组合页面：实例化已有地图和导航栏，使用新账号资料显示资产，并管理子 View 生命周期。
- * 操作反馈转交 UIManager 的全局飘字，不在主城内另存提示节点或提示计时器。
+ * 操作反馈转交 UIManager 的全局飘字；原主城背景音乐随本页面装配和释放。
  */
 import { GameLog } from "../../../core/GameLog";
-import { _decorator, Button, instantiate, Node, Prefab } from "cc";
+import { _decorator, AudioSource, Button, instantiate, Node, Prefab } from "cc";
+import { AudioPreferences } from "../../../core/AudioPreferences";
+import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
@@ -48,13 +50,16 @@ export class RemakeHomeView extends BaseView implements HomeView {
     private currentFeature: "city" | "hero" | "bag" | "battle" | "summon" | "market" | "dungeon" = "city";
     /** 英雄详情将顶栏右侧资源切到英雄经验，离开时立即复原为钻石。 */
     private showHeroExperience = false;
+    /** 主城加载后绑定的循环音源。进入战斗专属页面时停止，关主城时清理。 */
+    private musicSource: AudioSource | null = null;
 
     get featureHost(): Node | null { return this.cityHost; }
-    /** 切换功能页并同步顶栏资源，英雄详情沿旧版显示英雄经验。 */
+    /** 切换功能页并同步主城音乐和顶栏资源，英雄详情沿旧版显示英雄经验。 */
     showFeature(id: "city" | "hero" | "bag" | "battle" | "summon" | "market" | "dungeon", showHeroExperience = false): void {
         if (this.closed) return;
         this.currentFeature = id;
         this.showHeroExperience = showHeroExperience;
+        this.syncMusic();
         if (this.city?.node.isValid) this.city.node.active = id === "city";
         UIManager.instance.closeById("role-profile");
         this.showNotice("");
@@ -73,7 +78,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
         void this.openCity();
     }
 
-    /** 加载原主城及顶栏，绑定统一资料入口；关闭中断不再创建节点，失败交给应用加载层重试。 */
+    /** 加载原主城及顶栏、绑定资料入口。背景音乐异步加载，失败不拦截页面打开。 */
     private async openCity(): Promise<void> {
         try {
             if (!this.cityPrefab || !this.chromePrefab || !this.cityHost || !this.chromeHost) throw new Error("RemakeHome 未绑定主城 Prefab 或宿主");
@@ -118,6 +123,7 @@ export class RemakeHomeView extends BaseView implements HomeView {
             await Promise.all([this.city.whenReady(), this.chrome.whenReady()]);
             if (this.closed) return;
             this.finishOpen();
+            void this.loadMusic();
         } catch (error) {
             if (!this.closed) {
                 GameLog.shared.classified("MODULE", "error", "RemakeHomeView", "主城初始化失败：" + String(error));
@@ -125,6 +131,38 @@ export class RemakeHomeView extends BaseView implements HomeView {
                 // 不能把失败报告为就绪，否则第二段进度会显示成功并撤去加载层。
                 this.failOpen(error instanceof Error ? error : new Error(String(error)));
             }
+        }
+    }
+
+    /** 读取旧版主城原曲，由主城持有音频资源，页面已关闭时不再创建音源。 */
+    private async loadMusic(): Promise<void> {
+        try {
+            const clip = await ResourceAssetsUtils.forNode(this.node).loadPath("audio/bgm-main-city", "AudioClip");
+            if (this.closed || !this.node.isValid) {
+                return;
+            }
+            const source = this.node.addComponent(AudioSource);
+            source.clip = clip;
+            source.loop = true;
+            this.musicSource = source;
+            this.syncMusic();
+        } catch (error) {
+            if (!this.closed) {
+                GameLog.shared.warnOnce("MODULE", "RemakeHomeView", "CITY_MUSIC", String(error));
+            }
+        }
+    }
+
+    /** 主城音乐服务旧版共用场景，战斗和副本原有专属配乐，进入后停掉主城曲。 */
+    private syncMusic(): void {
+        const source = this.musicSource;
+        if (!source) {
+            return;
+        }
+        if (this.currentFeature === "battle" || this.currentFeature === "dungeon") {
+            AudioPreferences.stopMusic(source);
+        } else {
+            AudioPreferences.playMusic(source);
         }
     }
 
@@ -182,10 +220,14 @@ export class RemakeHomeView extends BaseView implements HomeView {
         }
     }
 
-    /** 主城退出时通过 UIManager 关闭资料弹窗并解除头像、货币按钮和子页面监听。 */
+    /** 主城退出时停止场景音乐、关闭资料弹窗并解除头像、货币按钮和子页面监听。 */
     onClose(): void {
         if (this.closed) return;
         this.closed = true;
+        if (this.musicSource) {
+            AudioPreferences.stopMusic(this.musicSource);
+            this.musicSource = null;
+        }
         this.failOpen(new Error("页面已关"));
         UIManager.instance.closeById("role-profile");
         this.disposeChildren();

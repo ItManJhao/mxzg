@@ -25,11 +25,13 @@ import { BagInfoView } from "../assets/scripts/features/bag/ui/BagInfoView";
 import { SpiritInfoView } from "../assets/scripts/features/bag/ui/SpiritInfoView";
 import { BagItemView } from "../assets/scripts/features/bag/ui/BagItemView";
 import { BagTabView } from "../assets/scripts/features/bag/ui/BagTabView";
+import { GameRedDotKey } from "../assets/scripts/features/common/utils/GameRedDotKey";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
 import { BagView } from "../assets/scripts/features/bag/ui/BagView";
 import { UILayer } from "../assets/scripts/framework/ui/UILayer";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
+import { RedDotManager } from "../assets/scripts/framework/ui/RedDotManager";
 import { UIRegistry } from "../assets/scripts/framework/ui/UIRegistry";
 
 /** 背包配置夹具的可写源容器，仅用于构造测试JSON；生产查询类型由GConfig生成。 */
@@ -246,6 +248,8 @@ function checkPrefabBindings(): void {
   assertNodeRef(cellData, cell.comp, "icon", 17, "spr_icon");
   assertCompRef(cellData, cell.comp, "count", 27, "cc.Label");
   assertNodeRef(cellData, cell.comp, "selectMark", 11, "spr_select");
+  const shardDot = cellData[idOf(cell.comp.shardRedDot)!];
+  assert(shardDot?._name === "PendingPieceComposeDot" && shardDot._active === false, "可合成格子红点由静态预制体绑定且初始隐藏");
   const slotPlate = "5e56f13c-937b-4e86-a0d7-b8abb2aa05fb@f9941";
   const selectMeta = JSON.parse(read("client/assets/bundles/module/common/item-atlas/backpack_spr-select.png.meta"));
   const selectFrame = selectMeta.subMetas.f9941.uuid;
@@ -275,6 +279,8 @@ function checkPrefabBindings(): void {
   assertRootOwns(tabData, tab.index);
   assertCompRef(tabData, tab.comp, "title", 13, "cc.Label");
   assertCompRef(tabData, tab.comp, "button", 7, "cc.Button");
+  const tabDot = tabData[idOf(tab.comp.redDot)!];
+  assert(tabDot?._name === "PendingPieceTabDot" && tabDot._active === false, "碎片分类红点由静态预制体绑定且初始隐藏");
 
   const infoData = prefabAt("client/assets/bundles/module/bag/prefabs/BagInfoView.prefab");
   const info = componentOn(infoData, INFO_TYPE);
@@ -435,6 +441,8 @@ function makeView(): BagView {
     cell.shardIcon.parent = node;
     cell.shardCorner = new Node("ShardCorner");
     cell.shardCorner.parent = node;
+    cell.shardRedDot = new Node("PendingPieceComposeDot");
+    cell.shardRedDot.parent = node;
     cell.shardStars = Array.from({ length: 5 }, (_, index) => {
       const star = new Node("ShardStar" + index);
       star.parent = node;
@@ -460,6 +468,9 @@ function makeView(): BagView {
     if (tab.title.node) tab.title.node.parent = node;
     tab.button = buttonOn("btn");
     if (tab.button.node) tab.button.node.parent = node;
+    tab.redDot = new Node("PendingPieceTabDot");
+    tab.redDot.parent = node;
+    tab.redDot.active = false;
   });
   const detailPrefab = fakePrefab((node) => {
     const cardUi = node.addComponent(UITransform);
@@ -1283,6 +1294,43 @@ function checkRealItemCategories(): void {
   assert(catalog.sortForTab(ties, "item")[0].itemId === 900508, "旧 Lua 未定义同权重次序，当前保持输入顺序");
 }
 
+/** 碎片分类和虚拟格显示同一来源，换分类、领取及缓存重开时不残留红点。 */
+async function checkShardRedDot(): Promise<void> {
+  installNav();
+  const manager = RedDotManager.instance;
+  const itemId = 20204004;
+  const path = GameRedDotKey.bagPiece(itemId);
+  noteBag([{ itemId, quantity: 30 }, { itemId: 900102, quantity: 1 }]);
+  manager.set(path, true);
+  const page = await openView();
+  try {
+    const [, items, pieces] = tabs(page);
+    assert(pieces.redDot!.active, "碎片分类首次打开读取已算好的红点");
+    pieces.node.emit(Button.EventType.CLICK);
+    assert(cells(page)[0].shardRedDot!.active, "真实精英碎片对应格亮点");
+    items.node.emit(Button.EventType.CLICK);
+    assert(!cells(page)[0].shardRedDot!.active, "虚拟格复用为普通物品必须熄灭");
+    manager.set(path, false);
+    noteBag([{ itemId, quantity: 29 }]);
+    assert(!pieces.redDot!.active, "来源清空后分类即时熄灭");
+    pieces.node.emit(Button.EventType.CLICK);
+    assert(!cells(page)[0].shardRedDot!.active, "数量不足时格子熄灭");
+    page.runClose();
+    manager.set(path, true);
+    assert(!pieces.redDot!.active, "关页取消碎片分类订阅");
+    noteBag([{ itemId, quantity: 30 }]);
+    page.runOpen();
+    await page.whenReady();
+    pump(1);
+    assert(pieces.redDot!.active, "缓存重开按最新状态恢复红点");
+  } finally {
+    page.runDispose();
+    page.node.destroy();
+    manager.reset();
+    noteBag(null);
+  }
+}
+
 /** 宽屏及父层缩放下，详情遮罩必须覆盖整个可见区域，不只覆盖纸张宽度。 */
 async function checkInfoMaskCoverage(): Promise<void> {
   const engineView = require("cc").view;
@@ -1480,6 +1528,7 @@ async function main(): Promise<void> {
   await checkDirectConfigProjection();
   checkRealItemCategories();
   checkAllSpiritDescriptions();
+  await checkShardRedDot();
   await checkBehavior();
   await checkIndependentDetails();
   await checkTimedItems();

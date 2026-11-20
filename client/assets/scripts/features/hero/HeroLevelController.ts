@@ -20,9 +20,6 @@ export class HeroLevelController extends BaseController {
     /** 应用的普通升级入口，详情页共用。 */
     public static readonly instance = new HeroLevelController(HeroRosterModel.instance, BagModel.instance);
 
-    /** 旧版普通升级消耗的英雄经验物品配置编号。 */
-    private static readonly EXPERIENCE_ITEM_ID = 900101;
-
     /** 应用提供的账号请求入口，在销毁时释放。 */
     private operations: Pick<AccountOperations, "send"> | null = null;
     /** 应用提供的角色快照，报价读取其中的金币。 */
@@ -56,7 +53,7 @@ export class HeroLevelController extends BaseController {
     public describe(heroId: string): HeroLevelQuote {
         const hero = this.roster.snapshot.heroes.find(row => row.id === heroId);
         const gold = this.account?.snapshot.role?.gold ?? -1;
-        const heroExp = this.bag.snapshot.synced ? this.bag.quantity(HeroLevelController.EXPERIENCE_ITEM_ID) : -1;
+        const heroExp = this.bag.snapshot.synced ? this.bag.quantity(HeroLevelQuoteUtils.EXPERIENCE_ITEM_ID) : -1;
         const quote = HeroLevelQuoteUtils.describe(hero, gold, heroExp);
         return hero && this.upgrading ? { ...quote, status: "pending" } : quote;
     }

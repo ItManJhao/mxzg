@@ -34,6 +34,10 @@ export class BagItemView extends Component {
     @property(Node)
     shardCorner: Node | null = null;
 
+    /** 库存碎片达到合成数量时显示；奖励预览及复用的空格保持隐藏。 */
+    @property(Node)
+    shardRedDot: Node | null = null;
+
     /** 旧精英碎片最多五颗黄星，位置和原图由Prefab保存。 */
     @property([Node])
     shardStars: Node[] = [];
@@ -87,11 +91,12 @@ export class BagItemView extends Component {
     }
 
     /**
-     * 绘制当前条目并保护异步贴图；选择交给列表，完成度只由背包显式启用。
+     * 绘制当前条目并保护异步贴图，背包显式传入碎片完成度及红点状态。
      * @param showShardProgress true使用库存持有数显示碎片完成度；奖励和候选产物保持false。
+     * @param canComposeShard true表示当前库存碎片已达到合成条件。
      */
     public show(item: Readonly<BagItemData | BagListItem> | null, selected: boolean, face?: BagFace,
-        selectable = item !== null, showShardProgress = false): void {
+        selectable = item !== null, showShardProgress = false, canComposeShard = false): void {
         this.validateBindings();
         if (item && !face) {
             throw new Error("BagItemView: 有物品时必须提供配置展示数据 face");
@@ -106,6 +111,9 @@ export class BagItemView extends Component {
             throw new Error("BagItemView碎片持有数或需求无效");
         }
         this.shardCorner!.active = !!shard;
+        if (this.shardRedDot) {
+            this.shardRedDot.active = !!progress && canComposeShard;
+        }
         this.shardStars.forEach((star, index) => { star.active = !!shard && index < shard.star; });
         this.shardProgress!.active = !!progress;
         this.shardProgressFill!.fillRange = progress?.ratio || 0;

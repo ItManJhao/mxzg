@@ -606,7 +606,7 @@ async function checkSynchronousCloseBeforeReadyWait(): Promise<void> {
     }
 }
 
-/** 只替代美术节点与战报输入，取得真实播放器的关闭函数；不启动动画或重写releaseSettlement逻辑。 */
+/** 用最小战场挂点和空战报取得真实播放器的关闭函数，测试结算叠窗归属和清理。 */
 async function mountReplayCleanup(parent: Node, completed?: (won: boolean) => Promise<void>): Promise<() => void> {
     const originalMount = BattlePageUtils.mountBattlePrefab;
     const originalParse = BattleReplayUtils.parse;
@@ -628,6 +628,7 @@ async function mountReplayCleanup(parent: Node, completed?: (won: boolean) => Pr
     child("LayerVfx/VfxScreen/DimOverlay").addComponent(UIOpacity);
     const shell = {
         root,
+        present: { numberFonts: new Map() },
         layerField: child("LayerField"),
         logLabel: child("LayerHud/Log"),
         slot: (side: string, index: number) => child("Slots/" + side + index),

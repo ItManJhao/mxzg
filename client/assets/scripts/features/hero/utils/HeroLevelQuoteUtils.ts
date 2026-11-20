@@ -22,6 +22,9 @@ export interface HeroLevelQuote {
 
 /** 无状态地计算旧升级面板的显示值。 */
 export class HeroLevelQuoteUtils {
+    /** 普通英雄升级消耗的英雄经验道具配置编号。 */
+    public static readonly EXPERIENCE_ITEM_ID = 900101;
+
     /** 所有输入由调用方提供，不持有名册或余额。 */
     private constructor() {}
 

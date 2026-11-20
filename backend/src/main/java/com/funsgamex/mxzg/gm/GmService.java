@@ -57,6 +57,8 @@ public class GmService {
  private final AssetSyncService sync;
  /** 英雄初始属性校验规则。 */
  private final HeroGrowthRules growth;
+ /** 真实 GM 英雄也在发放事务内登记图鉴最高星级。 */
+ private final HeroRepository heroRepository;
  /** 持久英雄容量查询。 */
  private final HeroCapacityService capacity;
  /** 英雄新增后在同事务内更新永久解锁。 */
@@ -74,11 +76,12 @@ public class GmService {
  /** 区分共享回执表中的操作类型；重放时类型也必须一致。 */
  private enum AdjustmentKind { ROLE_LEVEL, CHAPTER }
 
- /** 注入同库角色、主线和资产入口，读取原策划配置及游戏时钟。 */
+ /** 注入同库角色、主线、图鉴和资产入口，读取原策划配置及游戏时钟。 */
  public GmService(@Value("${mxzg.gm.enabled:false}") boolean enabled, SessionService sessions,
      RoleRepository roles, JdbcTemplate jdbc, InventoryService inventory, TimedInventoryService timed,
      SpiritInventoryService spirits, TavernPointService tavernPoints, AssetSyncService sync, HeroGrowthRules growth,
-     HeroCapacityService capacity, com.funsgamex.mxzg.lineup.MainFormationStateService formations,
+     HeroCapacityService capacity, HeroRepository heroRepository,
+     com.funsgamex.mxzg.lineup.MainFormationStateService formations,
      ObjectMapper mapper, MainChapterService chapters, GameClock clock) {
   this.enabled = enabled;
   this.sessions = sessions;
@@ -91,6 +94,7 @@ public class GmService {
   this.tavernPoints = tavernPoints;
   this.sync = sync;
   this.growth = growth;
+  this.heroRepository = heroRepository;
   this.capacity = capacity;
   this.formations = formations;
   this.clock = clock;
@@ -110,7 +114,7 @@ public class GmService {
  }
  /** 查询实际服务端开关，不能由客户端开启。 */
  public boolean enabled(){return enabled;}
- /** 当前角色锁内原子发放并存回执；金币钻石按正整数发放，其他类型保留原发放保护。 */
+ /** 当前角色锁内原子发放并存回执；真实英雄同步更新图鉴，其余保留原发放保护。 */
  @Transactional(isolation = Isolation.READ_COMMITTED)
  public Result grant(String token, String requestId, String kind, int configId, int quantity) {
   requireEnabledRequest(requestId);
@@ -146,6 +150,7 @@ public class GmService {
     jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star) VALUES (?,?,?,1,?)",
         UUID.randomUUID().toString(), role, configId, star);
    }
+   heroRepository.recordIllustration(role, configId, star);
    formations.refresh(role);
    sync.changed(role);
   } else {

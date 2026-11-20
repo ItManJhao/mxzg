@@ -8,7 +8,7 @@
 
 主线配置目录与挂机基础收益投影现均覆盖原表全局idx 1～850，不能再将`idle-rules.json`理解为仅20关的清单。[export_idle_rules.py](../tools/export_idle_rules.py)按原`chapterreward.reward_base/drop_group`逐行导出全部难度，拒绝重复、断档及非法奖励；[IdleRules](../backend/src/main/java/com/funsgamex/mxzg/campaign/IdleRules.java)仍只做纯计算，不持有玩家进度。第21关使用自己的基础收益（首项270，20关为260），不沿用第20关封顶量；这些数值是一次基础周期的配置量，不是每秒量或全部权益后的到账承诺。
 
-实际新挑战独立由`mxzg.main-chapter.challenge-limit`限制，当前默认连续第 1～300 关，通过`MainChapterState.challengeLimit`同步。850行可查询不等于开放850关，也不等于所有关卡战斗或发奖依赖已验收。[MainChapterRewardService](../backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterRewardService.java)只对真正开放范围启动预检战斗敌方、首通奖励及后续挂机投影；未知依赖明确拒绝。旧pending和成功回执仍可在缩小新挑战范围后恢复，旧快照缺challengeLimit表示未同步，不能默认0或猜成全开。551～850的原奖励/敌方三维映射歧义仍待确认，不能用note擅自修正；当前静态闭包范围见[开发进度](development-progress.md)。
+实际新挑战独立由`mxzg.main-chapter.challenge-limit`限制，当前默认连续第 1～550 关，通过`MainChapterState.challengeLimit`同步。850行可查询不等于开放850关，也不等于所有关卡战斗或发奖依赖已验收。[MainChapterRewardService](../backend/src/main/java/com/funsgamex/mxzg/campaign/MainChapterRewardService.java)只对真正开放范围启动预检战斗敌方、首通奖励及后续挂机投影；未知依赖明确拒绝。旧pending和成功回执仍可在缩小新挑战范围后恢复，旧快照缺challengeLimit表示未同步，不能默认0或猜成全开。551～850的原奖励/敌方三维映射歧义仍待确认，不能用note擅自修正；当前静态闭包范围见[开发进度](development-progress.md)。
 
 挂机实际领取仍按锁内最高已通关全局idx读取该关收益，未通关不旁路领取。全目录导出会改变普通规则及组合输入的内容版本；**已提交V25回执只校验原审计自身、摘要和列，不要求等于当前规则版本，也不重新抽样或发奖**。新领取才冻结当前规则。第15关里程碑使用独立稳定配置键和V28回执，不与挂机requestId、累计版本或首通结算混用，见[里程碑完整链](main-chapter-milestone.md)。
 

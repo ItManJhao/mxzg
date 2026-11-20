@@ -104,7 +104,7 @@ class HeroBattleBuffLifecycleTest {
         assertEquals(10, second.value());
     }
 
-    /** 到期同时移除真实被动监听；后续受击不再触发自疗。 */
+    /** 到期移除被动监听；嵌套动作缺失时撤回本次护盾、治疗和信号。 */
     @Test void listenerExpiresAndRollbackIncludesShield() {
         var one = unit(1);
         var engine = engine(one, unit(2));
@@ -118,8 +118,9 @@ class HeroBattleBuffLifecycleTest {
         var broken = engine(other, unit(2));
         broken.initializePassive(1, 300100001, 1);
         other.actor().listen(new Listener(100, 1, new Definition(1, 186, 0,
-            List.of(new Art(2114201, 0, true)))));
-        assertThrows(IllegalArgumentException.class, () -> broken.art(new Invocation(1, 2143502, 1, 2)));
+            List.of(new Art(Integer.MAX_VALUE, 0, true)))));
+        var error = assertThrows(IllegalStateException.class, () -> broken.art(new Invocation(1, 2143502, 1, 2)));
+        assertEquals("技能面板配置缺失：buffart:" + Integer.MAX_VALUE, error.getMessage());
         assertTrue(broken.buffs(2).isEmpty());
         assertTrue(broken.recoveries().isEmpty());
         assertTrue(broken.signals().isEmpty());

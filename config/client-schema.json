@@ -2,6 +2,71 @@
   "version": 1,
   "note": "当前有效客户端配置规范。字段类型显式声明；空单元格导出时省略，非必需字段可选。JSON 文本列保持字符串，不推断数组/对象结构。新增结构字段必须显式定义递归 schema。",
   "tables": {
+    "HeadUnlock": {
+      "path": "config/headunlock",
+      "container": "rows",
+      "key": "icon",
+      "fields": {
+        "icon": { "type": "number", "required": true, "note": "头像 ID" },
+        "unlock_type": { "type": "number", "required": true, "note": "解锁来源类型" },
+        "unlock_task": { "type": "string", "required": true, "note": "原解锁条件 JSON" },
+        "tips_lang": { "type": "number", "required": true, "note": "解锁提示语言 ID" }
+      }
+    },
+    "RoleBorder": {
+      "path": "config/border",
+      "container": "rows",
+      "key": "icon",
+      "fields": {
+        "icon": { "type": "number", "required": true, "note": "头像框 ID，0 为默认框" },
+        "active_type": { "type": "number", "required": true, "note": "原激活方式" },
+        "condition": { "type": "string", "required": true, "note": "原激活条件 JSON" },
+        "limit_time": { "type": "number", "required": true, "note": "原有效天数，-1 永久" },
+        "tips_lang": { "type": "number", "required": true, "note": "激活条件语言 ID" },
+        "name_lang": { "type": "number", "required": true, "note": "头像框名称语言 ID" }
+      }
+    },
+    "RolePeerage": {
+      "path": "config/peerageemblem",
+      "container": "rows",
+      "key": "level",
+      "fields": {
+        "level": { "type": "number", "required": true, "note": "贵重标记等级" },
+        "recharge": { "type": "number", "required": true, "note": "累计充值门槛，100 单位为 1 pt" },
+        "nick": { "type": "string", "required": true, "note": "原标记名称" },
+        "ability": { "type": "string", "required": true, "note": "标记属性配置 JSON" }
+      }
+    },
+    "RoleTitle": {
+      "path": "config/title",
+      "container": "rows",
+      "key": "idx",
+      "fields": {
+        "idx": { "type": "number", "required": true, "note": "称号配置 ID" },
+        "resources_id": { "type": "number", "required": true, "note": "称号预览图资源 ID" },
+        "name": { "type": "string", "required": true, "note": "称号显示名称" },
+        "type": { "type": "number", "required": true, "note": "原称号类别" },
+        "ability": { "type": "string", "required": true, "note": "原属性明细 JSON" },
+        "time": { "type": "number", "required": true, "note": "获得后的有效期秒数" },
+        "condition": { "type": "string", "required": true, "note": "获得条件原参数" },
+        "remark": { "type": "number", "required": true, "note": "取得说明语言 ID" },
+        "jump": { "type": "string", "required": true, "note": "取得来源及关闭提示的原 JSON" }
+      }
+    },
+    "HeroFashion": {
+      "path": "config/herofashion",
+      "container": "rows",
+      "key": "fashion_id",
+      "fields": {
+        "fashion_id": { "type": "number", "required": true, "note": "时装及形象 ID" },
+        "hero_type": { "type": "number", "required": true, "note": "对应英雄模板" },
+        "fashion_name": { "type": "number", "required": true, "note": "时装名称语言 ID" },
+        "fashion_desc": { "type": "number", "required": true, "note": "时装描述语言 ID" },
+        "skill": { "type": "number", "required": false, "note": "配置技能 ID" },
+        "skill_level": { "type": "number", "required": false, "note": "配置技能等级" },
+        "hero_name": { "type": "string", "required": false, "note": "原配置英雄及皮肤名称" }
+      }
+    },
     "Item": {
       "path": "config/item",
       "container": "rows",

@@ -107,8 +107,10 @@ export class ApplicationPages {
                             }
                             void ui.openById("role-profile", {
                                 model,
+                                controller: context.role,
+                                serverName: servers.servers.find(row => row.id === model.snapshot.role?.serverId)?.name
+                                    ?? model.snapshot.role.serverId ?? "区服未同步",
                                 logout: () => controller.logout(),
-                                notice: (text: string) => ui.toast(text),
                             }).catch(error => {
                                 if (!UIManager.isOpenCancelled(error)) {
                                     this.showNotice("角色详情打开失败，请重试");

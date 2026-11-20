@@ -1,19 +1,23 @@
 /**
  * 正式战斗出场时序专项：直接执行BattleReplayPreview.open，控制真实资源入口和cc动画时钟。
  * 验证加载隐藏、真实开始骨骼70%接双边出场、出场60%时渐入、等待两路完成后显示HP/战报，以及各阶段关闭迟到隔离。
- * 同时执行真实持续控制显示回调，核材质、共享循环帧、隐藏实例和关页清理；不能替代Creator渲染验收。
+ * 同时执行真实持续控制与飘字回调，核材质、共享循环帧、多目标数字以及关页清理；不能替代Creator渲染验收。
  */
 import { strict as assert } from "node:assert";
-import { Button, director, Director, Label, Node, sp, Sprite, SpriteFrame, tween, UIOpacity, UITransform, Vec3 } from "cc";
+import { BitmapFont, Button, director, Director, Label, Node, sp, Sprite, SpriteFrame, tween, UIOpacity, UITransform, Vec3 } from "cc";
 import { OpeningClockRuntime } from "./OpeningClockRuntime";
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
+import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GameLog } from "../assets/scripts/core/GameLog";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { ViewportLayoutUtils } from "../assets/scripts/framework/ui/ViewportLayoutUtils";
 import { BattleReplayPlayer, BattleReplayPresentation } from "../assets/scripts/features/battle/BattleReplayPlayer";
 import { BattlePageUtils } from "../assets/scripts/features/battle/ui/BattlePageUtils";
+import { BattlePresentViewUtils } from "../assets/scripts/features/battle/ui/BattlePresentViewUtils";
 import { BattleReplayPreview } from "../assets/scripts/features/battle/ui/BattleReplayPreview";
 import { BattleSpineService } from "../assets/scripts/features/battle/ui/BattleSpineService";
+import { BattleAttackUtils } from "../assets/scripts/features/battle/utils/BattleAttackUtils";
+import { BattleInfoUtils } from "../assets/scripts/features/battle/utils/BattleInfoUtils";
 import { BattleReplayUtils } from "../assets/scripts/features/battle/utils/BattleReplayUtils";
 
 /** 本专项只需控制资源完成，不保存另一份出场流程。 */
@@ -27,6 +31,7 @@ function deferred(): { promise: Promise<void>; resolve(): void } {
 function node(name: string, parent?: Node): Node {
     const value = new Node(name);
     (value as any).position = new Vec3();
+    Object.defineProperty(value, "worldPosition", { get: () => value.position });
     value.setPosition = ((x: number | Vec3, y = 0, z = 0) => {
         (value as any).position = typeof x === "number" ? new Vec3(x, y, z) : x.clone();
         value.emit(Node.EventType.TRANSFORM_CHANGED);
@@ -127,9 +132,19 @@ class OpeningFixture {
         child("LayerAppear");
         child("LayerHud/SkillBars");
         child("LayerVfx/VfxScreen/DimOverlay").addComponent(UIOpacity);
+        const numberTemplate = child("LayerFloat/FloatDamageRoot/DamageNumberTemplate");
+        numberTemplate.addComponent(Label);
+        // 基础替身只复制节点名，在模板替身上补齐显式标签绑定和坐标设置。
+        (numberTemplate as any)._instantiate = () => {
+            const copy = node(numberTemplate.name);
+            copy.addComponent(Label);
+            return copy;
+        };
+        child("SkillNameBanner/SkillNameLabel").addComponent(Label);
         const shell = {
             root: this.root,
             layerField: child("LayerField"),
+            present: BattlePresentViewUtils.bindBattlePresent(this.root),
             logLabel: child("LayerHud/Log"),
             roundLabel: child("LayerHud/RoundLabel"),
             slot: (side: string, index: number) => child("LayerField/" + side + "/Slot" + index),
@@ -145,12 +160,13 @@ class OpeningFixture {
             names: { attacker: "测试甲", defender: "测试乙" },
         });
         ResourceAssetsUtils.forNode = () => ({
-            loadPath: async (path: string) => {
+            loadPath: async (path: string, type: string) => {
                 this.loaded.push(path);
                 if (this.blocked && path === "battle/ui/battle-appear-right_14/spriteFrame") {
                     await this.resource.promise;
                 }
-                return Object.assign(new SpriteFrame(), { testPath: path });
+                const asset = type === "BitmapFont" ? new BitmapFont() : new SpriteFrame();
+                return Object.assign(asset, { testPath: path });
             },
             dispose: () => {},
         }) as any;
@@ -533,10 +549,12 @@ async function checkControlLifecycle(): Promise<void> {
         const row = slot.getChildByPath("HeadAnchor/BuffRow")!;
         const skeleton = fixture.models[0].getComponent(sp.Skeleton) as any;
         const original = skeleton.customMaterial;
-        /** 放行真实配置delay=0的异步边界后再检查节点状态。 */
+        const { rows } = GameConfig.instance.getFileByPath("config/buff") as { rows: { idx: number; delay: number }[] };
+        /** 推进到真实配置的触发时点，再检查对应节点；移除没有额外延迟。 */
         const apply = async (configId: number, instance: string, remove = false) => {
             const pending = fixture.presentation!.play(step(configId, instance, remove ? "buff.remove" : "buff.upsert"));
-            await OpeningClockRuntime.advance(0);
+            const delay = remove ? 0 : BattleAttackUtils.delaySeconds(rows.find(row => row.idx === configId)!);
+            await OpeningClockRuntime.advance(delay / BattleInfoUtils.defaultTimeScale());
             await pending;
         };
         await apply(1081301, "invisible");
@@ -594,7 +612,71 @@ async function checkControlLifecycle(): Promise<void> {
     }
 }
 
-/** 使用真实配置完成出场、持续控制及关闭回归；不运行玩家服务或实际战斗。 */
+/** 执行真实Preview伤害回调，验证群攻双节点、自然收尾及关闭取消的生命周期。 */
+async function checkBattleNumbers(): Promise<void> {
+    OpeningClockRuntime.reset();
+    const step = (targetId: number, reportedHpChange: number, activeSkillDamage: boolean): any => ({
+        kind: "damage", configId: 1011401, sourceId: 1, targetId, round: 1,
+        actualHpChange: -3, reportedHpChange, activeSkillDamage, dead: false,
+        hpByUnit: { 1: 10, 2: 10, 3: 7, 4: 7 },
+    });
+    const hits = [step(3, -8, true), step(4, -5, false)];
+    const fixture = new OpeningFixture(false, false, hits);
+    let close: (() => void) | undefined;
+    try {
+        const opening = fixture.open().then(value => { close = value; });
+        await OpeningClockRuntime.advance(4);
+        await opening;
+        const present = fixture.presentation!;
+        assert(present, "必须使用真实Preview表现入口");
+        fixture.models[2].parent!.setPosition(-150, 20, 0);
+        fixture.models[3].parent!.setPosition(130, 50, 0);
+        const root = fixture.child("LayerFloat/FloatDamageRoot");
+        const active = () => root.children.filter(child => child.name === "BattleHealthFloat");
+
+        const played = Promise.all(hits.map(hit => present.play(hit)));
+        await OpeningClockRuntime.advance(0);
+        const [first, second] = active();
+        assert.equal(active().length, 2, "同时命中两个目标，应生成两份数字节点");
+        assert.notEqual(first.position.x, second.position.x, "数字必须使用两个真实目标的站位");
+        assert.deepEqual(active().map(child => child.getComponent(Label)!.string), ["-8", "-5"]);
+        assert.deepEqual(active().map(child => (child.getComponent(Label)!.font as any).testPath),
+            ["font/blue-73", "font/yellow-73"]);
+        const startY = first.position.y;
+        await OpeningClockRuntime.advance(0.1);
+        assert(first.position.y > startY && second.position.y > startY, "两份数字都按生产轨迹弹起");
+        await OpeningClockRuntime.advance(0.2);
+        await played;
+        let finished = false;
+        const finishing = present.finish!().then(() => { finished = true; });
+        await OpeningClockRuntime.advance(0.5);
+        assert(!finished && active().length === 2, "受击动作完成后，末次数字仍应继续播完");
+        assert(first.getComponent(UIOpacity)!.opacity < 255, "末段数字渐隐");
+        await OpeningClockRuntime.advance(0.3);
+        assert(finished, "最后一份数字退出时应解除正常结算等待");
+        await finishing;
+        assert.equal(active().length, 0, "最后一份数字退出以后才完成播放");
+
+        const secondWave = Promise.all(hits.map(hit => present.play(hit)));
+        await OpeningClockRuntime.advance(0);
+        assert.equal(active().length, 2);
+        let cleared = false;
+        const cancelled = present.finish!().then(() => { cleared = true; });
+        close!();
+        await OpeningClockRuntime.flush();
+        assert(cleared, "关闭后应立即解除末次数字的等待");
+        await Promise.all([cancelled, secondWave]);
+        assert.equal(active().length, 0, "关场立即销毁两份未完成数字");
+        assert.equal(OpeningClockRuntime.pending(), 0, "被关闭的战场不能残留数字Tween");
+        assert.deepEqual(fixture.errors, []);
+    } finally {
+        close?.();
+        fixture.dispose();
+        OpeningClockRuntime.reset();
+    }
+}
+
+/** 使用真实配置完成出场、持续控制和飘字回归；不运行玩家服务或实际战斗。 */
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
     await checkOrdering();
@@ -603,11 +685,20 @@ async function main(): Promise<void> {
     await checkCancellation();
     await checkIdleUnchanged();
     await checkControlLifecycle();
+    await checkBattleNumbers();
     OpeningClockRuntime.reset();
-    console.log("PASS 正式出场：开始骨骼真实70%接双边出场、完整第9帧触发60%渐入、暂停轨道/两路屏障/九阶段取消；持续控制多实例/原材质/隐藏实例及关场清理");
+    console.log("PASS 正式出场与控制；群攻双飘字独立落点、正确字库、轨迹渐隐、正常收尾与关闭清理");
 }
 
-void main().catch(error => {
+/** 手动时钟卡住时 Promise 不会维持 Node 进程，必须把提前退出标成失败。 */
+function incomplete(): void {
+    if (!process.exitCode) {
+        console.error("战斗专项存在未完成的手动时钟等待");
+        process.exitCode = 1;
+    }
+}
+process.once("beforeExit", incomplete);
+void main().then(() => process.off("beforeExit", incomplete)).catch(error => {
     console.error(error);
     process.exitCode = 1;
 });

@@ -76,6 +76,13 @@ message Frame {
     GmSetChapter gm_set_chapter = 66;
     GmSetTime gm_set_time = 67;
     GmTime gm_time = 68;
+    RoleImageChange role_image_change = 69;
+    RoleRename role_rename = 70;
+    RoleTitles role_titles = 71;
+    RoleImages role_images = 72;
+    RoleDecorations role_decorations = 73;
+    RoleDecorationId role_decoration_id = 74;
+    RolePeerageDisplay role_peerage_display = 75;
   }
 }
 message Empty {}
@@ -236,9 +243,40 @@ message Role {
   optional bool first_named = 8;
   // 当前角色是否可以领取一次性新手赠礼，缺失表示快照未提供此能力。
   optional bool welcome_gift_available = 9;
+  // 对外显示的十进制角色编号。角色、会话及资产归属继续使用 id。
+  optional string public_id = 10;
 }
 // 候选昵称仅用于填入表单；成功保存后的昵称仍由统一角色快照交付。
 message RoleName { required string nickname = 1; }
+// 个人空间形象和头像为独立资料。客户端提交形象配置 ID，服务端检查解锁。
+message RoleImageChange { required uint32 image_id = 1; }
+// 二次改名确认的支付类型。1 为钻石，2 为改名卡。
+message RoleRename {
+  required string nickname = 1;
+  required uint32 payment_type = 2;
+}
+message RoleTitle {
+  required uint32 idx = 1;
+  // -1 为永久，0 为已回收，正数为到期 Unix 秒。
+  required int64 end_time_seconds = 2;
+}
+message RoleTitles { repeated RoleTitle titles = 1; }
+message RoleImages { repeated uint32 image_ids = 1; }
+// 头像与头像框按服务端验证。0 是可选择的默认头像框。
+message RoleDecorationId { required uint32 id = 1; }
+message RolePeerageDisplay { required bool visible = 1; }
+message RoleBorder {
+  required uint32 id = 1;
+  // -1 为永久，正数为到期 Unix 秒。
+  required int64 expires_at_seconds = 2;
+}
+// 已解锁的头像、已激活的头像框及贵重标记资格。
+message RoleDecorations {
+  repeated uint32 head_ids = 1;
+  repeated RoleBorder borders = 2;
+  required int64 total_recharge = 3;
+  required bool show_peerage = 4;
+}
 // 对照旧 2001；经验为本级经验，时间为 Unix 秒，0 时间表示历史未知。
 message RoleBasics {
   required int64 experience = 1;

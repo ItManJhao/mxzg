@@ -1,10 +1,10 @@
 /**
- * 战斗出场专项独享的确定性Tween时钟，只模拟生产Preview使用的延迟、数值渐变和取消。
+ * 战斗表现专项独享的确定性Tween时钟，模拟生产Preview使用的延迟、更新回调、数值渐变和取消。
  * 统一检查仅为battle-opening替换cc入口，其他专项继续拒绝动画替身，不能据此宣布Creator渲染通过。
  * 时钟不定义业务阶段或出场时长；所有动画指令来自被测BattleReplayPreview。
  */
 export * from "./cc-runtime";
-import { AudioSource, Sprite, Vec3 as BaseVec3 } from "./cc-runtime";
+import { AudioSource, Label, Sprite, Vec3 as BaseVec3 } from "./cc-runtime";
 
 /** 出场生产代码使用clone保存原位，基础替身不提供坐标计算，本专项仅补值复制。 */
 export class Vec3 extends BaseVec3 {
@@ -33,7 +33,12 @@ export class Material {
 }
 
 /** 一段由真实生产调用创建的延迟、数值渐变或即时回调。 */
-type ClockStep = { duration: number; values?: Record<string, number>; callback?: () => void };
+type ClockStep = {
+    duration: number;
+    values?: Record<string, number>;
+    callback?: () => void;
+    onUpdate?: (target: Record<string, any>, progress: number) => void;
+};
 
 /** 正在运行的Tween片段；起止值仅供确定性插值，不保存游戏状态。 */
 interface RunningStep {
@@ -114,6 +119,7 @@ export class OpeningClockRuntime {
                 for (const [key, value] of Object.entries(row.step.values || {})) {
                     row.tween.target[key] = row.before[key] + (value - row.before[key]) * progress;
                 }
+                row.step.onUpdate?.(row.tween.target, progress);
                 if (row.ends <= next + 1e-8) {
                     OpeningClockRuntime.running.delete(row);
                     row.tween.next();
@@ -159,12 +165,12 @@ export class Tween {
         return this;
     }
 
-    /** 登记数值渐变；只支持本专项实际需要的数字属性，其他值明确拒绝。 */
-    public to(seconds: number, values: Record<string, number>, _options?: object): this {
+    /** 登记数值渐变及进度回调，轨迹和显示规则由生产代码定义。 */
+    public to(seconds: number, values: Record<string, number>, options?: Pick<ClockStep, "onUpdate">): this {
         if (Object.values(values).some(value => typeof value !== "number")) {
             throw new Error("出场专项只模拟数值渐变，不能模拟坐标或渲染");
         }
-        this.steps.push({ duration: seconds, values });
+        this.steps.push({ duration: seconds, values, onUpdate: options?.onUpdate });
         return this;
     }
 
@@ -222,4 +228,6 @@ export function tween(target: Record<string, any>): Tween {
 
 // 既有cc-runtime未模拟的枚举只在此专项补齐，不能改变其他专项的能力范围。
 (AudioSource as any).EventType = { STARTED: "audio-started" };
+(Label as any).Overflow = { NONE: 0 };
+(Label as any).CacheMode = { NONE: 0 };
 (Sprite as any).SizeMode = { RAW: 0 };
