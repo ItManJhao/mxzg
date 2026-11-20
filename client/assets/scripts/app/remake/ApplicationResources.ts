@@ -8,7 +8,7 @@ import {GameConfig} from "../../config/GameConfig";
 import {ConfigName} from "../../config/GConfig";
 import { RemakeConfigUtils } from "../../config/RemakeConfigUtils";
 import { ConfigPackageCancelled } from "../../config/ConfigPackageUtils";
-import {LOADING_PLAN, LoadingTarget} from "./LoadingPlan";
+import {LOADING_PLAN, LoadingAssetGroup, LoadingTarget} from "./LoadingPlan";
 import { StartupCancelled } from "./StartupFlowUtils";
 import { GameLog } from "../../core/GameLog";
 import { UIRegistry } from "../../framework/ui/UIRegistry";
@@ -97,7 +97,29 @@ export class ApplicationResources {
         this.completed.add(key);
     }
 
-    /** 前两段只执行用户配置目标，按实际完成项报告进度；空阶段立即完成。 */
+    /** 同组资源经既有缓存并行加载，全部完成才交付，失败时等已发请求结束再提示重试。 */
+    private async prepareGroup(group: LoadingAssetGroup, update: (label: string, ratio: number) => void,
+        active: () => boolean): Promise<void> {
+        let completed = 0;
+        const results = await Promise.all(group.assets.map(async asset => {
+            try {
+                await this.prepare(asset);
+                completed++;
+                if (active()) {
+                    update(group.label, completed / group.assets.length);
+                }
+                return null;
+            } catch (error) {
+                return { error };
+            }
+        }));
+        const failure = results.find(result => result !== null);
+        if (failure) {
+            throw failure.error;
+        }
+    }
+
+    /** 前两段按实际完成项报告进度，成组的美术资源共用一个阶段进度区间。 */
     public async prepareStage(stage: "login" | "enterGame", update: (label: string, ratio: number) => void, active: () => boolean): Promise<void> {
         const targets = LOADING_PLAN[stage];
         update("准备资源", 0);
@@ -105,11 +127,17 @@ export class ApplicationResources {
             if (!active()) {
                 throw new StartupCancelled("阶段准备已取消");
             }
-            await this.prepare(targets[index], (label, ratio) => {
+            const target = targets[index];
+            const advance = (label: string, ratio: number) => {
                 if (active()) {
                     update(label, (index + ratio) / targets.length);
                 }
-            }, active);
+            };
+            if ("assets" in target) {
+                await this.prepareGroup(target, advance, active);
+            } else {
+                await this.prepare(target, advance, active);
+            }
             if (!active()) {
                 throw new StartupCancelled("阶段准备已取消");
             }

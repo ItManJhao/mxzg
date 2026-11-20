@@ -1,11 +1,12 @@
 /**
  * 主城地图特效：序列帧轮播 + spine（dx / chuanghu）。
  * 特效绘制在地图底板上方，建筑入口由地图外的预制体层单独绘制。
- * 帧按序号往下要，缺一张就停，不再一次等 64 张不存在的帧。
+ * 登录后准备的资源与播放共用帧范围。页面仅持有实际播放的资产和计时器。
  * dx 播不出来时改播 portrait 光球序列。失败打 GameLog。
  */
 import { TrackedTimers } from "../../../framework/TrackedTimers";
 import { ResourceAssetsUtils, AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
+import type { ResourceDescriptor } from "../../../framework/assets/ResourceTypes";
 import { Node, Sprite, SpriteFrame, UITransform, Vec3 } from "cc";
 import { GameLog } from "../../../core/GameLog";
 import { BattleSpineService } from "../../battle/ui/BattleSpineService";
@@ -15,7 +16,17 @@ import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 const FRAME_MS = 80;
 const FOLLOW_MS = 32;
 const FRAME_WAIT_MS = 1200;
-const FRAME_CAP = 32;
+/** 当前地图使用的连续帧范围，以及 dx 的降级序列。各组均从第 0 帧开始。 */
+const CITY_FRAME_COUNTS: Readonly<Record<string, number>> = {
+    "home/ui/main-city-effect_summon": 10,
+    "home/ui/main-city-effect_rivers1": 10,
+    "home/ui/main-city-effect_rivers2": 10,
+    "home/ui/main-city-effect_photosphere": 10,
+    "home/ui/main-city-effect_crack": 10,
+    [CITY_SPINE_FRAME_FALLBACK.dx]: 10,
+};
+/** 地图实际使用的两套骨骼，与主城特效配置一致。 */
+const CITY_SPINE_STEMS = ["dx", "chuanghu"] as const;
 export interface CityEffectHandle {
     stop(): void;
 }
@@ -24,6 +35,25 @@ type PlaceFn = (node: Node, parent: Node, x: number, y: number) => void;
 export class CityEffectPlayUtils {
     /** 纯展示或数据转换入口，无需创建工具类实例。 */
     private constructor() { }
+
+    /** 登录后需要准备的地图特效和降级帧。只描述资源，实际加载归应用。 */
+    public static preloadAssets(): readonly ResourceDescriptor[] {
+        const frames: ResourceDescriptor[] = [];
+        for (const stem of Object.keys(CITY_FRAME_COUNTS)) {
+            for (const path of CityEffectPlayUtils.framePaths(stem)) {
+                frames.push(ResourceAssetsUtils.sprite(path));
+            }
+        }
+        return [
+            ...frames,
+            ...CITY_SPINE_STEMS.map(stem => ResourceAssetsUtils.describe("spine", stem, "SkeletonData")),
+        ];
+    }
+
+    /** 返回一组特效的连续帧地址，加载和播放共用边界。 */
+    private static framePaths(stem: string): string[] {
+        return Array.from({ length: CITY_FRAME_COUNTS[stem] ?? 0 }, (_, index) => `${stem}-${index}`);
+    }
 
     /** 在已有 views（按节点名索引）上启动 layout.effects。 */
     public static startCityEffects(views: Map<string, Node>, effects: CityEffectSpot[], placeBottomLeft: PlaceFn): CityEffectHandle {
@@ -238,25 +268,11 @@ export class CityEffectPlayUtils {
         }
     }
 
-    /** 在给定资源作用域顺序探测帧组，遇到缺帧结束，保留有界等待。 */
-    private static loadFrameSequence(stem: string, scope: AssetScope): Promise<SpriteFrame[]> {
-        const probed: (SpriteFrame | null)[] = [];
-        const step = (index: number): Promise<SpriteFrame[]> => {
-            if (index >= FRAME_CAP) {
-                return Promise.resolve(CityMapLayoutUtils.takeFrameRun(probed));
-            }
-            return CityEffectPlayUtils.loadOne(stem + "-" + String(index), scope).then((frame) => {
-                probed.push(frame);
-                if (!frame && index > 0) {
-                    return CityMapLayoutUtils.takeFrameRun(probed);
-                }
-                if (!frame && index === 0) {
-                    return step(1);
-                }
-                return step(index + 1);
-            });
-        };
-        return step(0);
+    /** 取得计划中的完整帧组。资源仍由节点持有，单帧失败时保留可播放的连续部分。 */
+    private static async loadFrameSequence(stem: string, scope: AssetScope): Promise<SpriteFrame[]> {
+        const frames = await Promise.all(CityEffectPlayUtils.framePaths(stem)
+            .map(path => CityEffectPlayUtils.loadOne(path, scope)));
+        return CityMapLayoutUtils.takeFrameRun(frames);
     }
 
     /** 在给定资源作用域加载一帧，超时或缺失返回null，不取消其它资源。 */

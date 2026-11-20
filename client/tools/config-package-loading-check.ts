@@ -1,5 +1,5 @@
 /**
- * 配置压缩包与应用加载链专项：读取真实生成产物，核对ZIP目录、源CRC和两阶段安装。
+ * 配置压缩包与应用加载链专项：读取真实生成产物，核对ZIP目录、源CRC、两阶段安装和主城特效。
  * 引擎替身只提供实际源JSON/二进制包与引用计数，不伪造解码或配置安装结果。
  * 不启动服务、Creator或浏览器，不写配置源文件；纯解码反例不会修改应用唯一GameConfig。
  */
@@ -7,12 +7,14 @@ import { strict as assert } from "node:assert";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
-import { Asset, BufferAsset, JsonAsset, assetManager } from "cc";
+import { Asset, BufferAsset, JsonAsset, Node, Sprite, assetManager } from "cc";
 import { ApplicationResources } from "../assets/scripts/app/remake/ApplicationResources";
 import { LOADING_PLAN } from "../assets/scripts/app/remake/LoadingPlan";
 import { ConfigPackageUtils } from "../assets/scripts/config/ConfigPackageUtils";
 import { CONFIG_SCHEMA, GConfig } from "../assets/scripts/config/GConfig";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
+import { CityEffectPlayUtils } from "../assets/scripts/features/city/ui/CityEffectPlayUtils";
+import { CITY_SPINE_FRAME_FALLBACK, CityMapLayoutUtils, type MainCityEffectFile } from "../assets/scripts/features/city/ui/CityMapLayoutUtils";
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 
 /** 源文件及真实生成包按现有Bundle定位器读取，不新增配置文件清单。 */
@@ -132,16 +134,73 @@ function checkProgress(values: readonly { label: string; ratio: number }[]): voi
         && (index === 0 || value.ratio >= values[index - 1].ratio)), "实际阶段进度必须单调且位于0到1");
 }
 
+/** 对照实际使用的特效配置和源图，核对完整连续帧、骨骼与回退素材均已列入准备。 */
+function cityEffectPaths(): string[] {
+    const sourcePath = CONFIG_SCHEMA[GConfig.CityEffect].path;
+    const config = JSON.parse(readFileSync(resolveBundleFile(sourcePath + ".json"), "utf8")) as MainCityEffectFile;
+    const sourceFrames = readdirSync(join(bundleRoot("home"), "ui"));
+    const paths: string[] = [];
+    const appendFrames = (stem: string) => {
+        const prefix = stem.split("/").at(-1) + "-";
+        const indices = sourceFrames.filter(file => file.startsWith(prefix) && file.endsWith(".png"))
+            .map(file => Number(file.slice(prefix.length, -4))).sort((a, b) => a - b);
+        assert(indices.length > 0, "主城帧组缺失：" + stem);
+        assert.deepEqual(indices, indices.map((_, index) => index), "主城帧组必须连续：" + stem);
+        paths.push(...indices.map(index => `${stem}-${index}/spriteFrame`));
+    };
+    for (const spot of CityMapLayoutUtils.buildCityMapLayout(null, null, config).effects) {
+        if (spot.kind === "spine" && spot.spine) {
+            paths.push("spine/" + spot.spine);
+            resolveBundleFile(`spine/${spot.spine}.json`);
+            resolveBundleFile(`spine/${spot.spine}.atlas`);
+            const fallback = CITY_SPINE_FRAME_FALLBACK[spot.spine];
+            if (fallback) {
+                appendFrames(fallback);
+            }
+        } else {
+            const stem = CityMapLayoutUtils.effectFrameStem(spot.name);
+            assert(stem, "配置动画缺少帧组：" + spot.name);
+            appendFrames(stem);
+        }
+    }
+    assert(paths.length > 0, "主城特效测试不能以空计划通过");
+    assert.equal(new Set(paths).size, paths.length);
+    const planned = CityEffectPlayUtils.preloadAssets().map(asset => `${asset.bundle}/${asset.loadPath}`).sort();
+    assert.deepEqual(planned, paths.sort(), "登录后的特效准备须覆盖真实帧组和回退资源");
+    return paths;
+}
+
+/** 使用真实主城播放器挂载首帧，验证登录阶段的缓存能直接供显示复用。 */
+async function checkCityEffectPlayback(): Promise<void> {
+    const effects = CityMapLayoutUtils.buildCityMapLayout(null, null, GameConfig.instance.getFile(GConfig.CityEffect)).effects;
+    const parent = new Node("CityEffectCheck");
+    const views = new Map(effects.map(spot => [spot.parent, parent]));
+    const handle = CityEffectPlayUtils.startCityEffects(views, effects, () => {});
+    try {
+        await new Promise<void>(resolve => setImmediate(resolve));
+        for (const spot of effects.filter(spot => spot.kind === "anim")) {
+            const frame = views.get("fx-" + spot.name)?.getComponent(Sprite)?.spriteFrame;
+            assert(frame, "预载的主城动画应可从缓存开始播放：" + spot.name);
+        }
+    } finally {
+        handle.stop();
+        parent.destroy();
+    }
+}
+
 /**
  * 保持同一应用和GameConfig单例，依次取消、接收坏包、重试完整两阶段，再核对重登复用与引用释放。
  * 观察生产decode计数和真实首表完成点以触发取消，所有字节校验、解析和安装仍执行真实实现。
  */
 async function checkApplication(bytes: Uint8Array, badContent: Uint8Array, manifest: TestManifest): Promise<void> {
+    const plannedCityEffects = cityEffectPaths();
+    const cityEffectSet = new Set(plannedCityEffects);
     const originalBundle = assetManager.getBundle;
     const originalDecode = ConfigPackageUtils.decode;
     const requests: { bundle: string; path: string; type: unknown }[] = [];
     const binaryAssets: BufferAsset[] = [];
     const loadedAssets: { refCount: number }[] = [];
+    const cityRequests = () => requests.map(request => `${request.bundle}/${request.path}`).filter(path => cityEffectSet.has(path));
     let badPackage = false;
     let decodeCount = 0;
     let cancelAfterFirstParsed = false;
@@ -189,6 +248,7 @@ async function checkApplication(bytes: Uint8Array, badContent: Uint8Array, manif
         const loginProgress: { label: string; ratio: number }[] = [];
         await app.prepareStage("login", (label, ratio) => loginProgress.push({ label, ratio }), () => true);
         checkProgress(loginProgress);
+        assert.deepEqual(cityRequests(), [], "登录前不读取主城特效");
         assert.deepEqual(requests.filter(request => request.type === JsonAsset).map(request => "config/" + request.path),
             startupNames.map(name => CONFIG_SCHEMA[name].path));
         assert.equal(config.getPackageVersion(), null);
@@ -208,6 +268,7 @@ async function checkApplication(bytes: Uint8Array, badContent: Uint8Array, manif
         assert.equal(binaryAssets[1].refCount, 0, "坏包失败撤回短期二进制持有");
         assert.equal(config.getPackageVersion(), null);
         assert.equal(config.status(GConfig.Item).state, "unloaded");
+        assert.deepEqual(cityRequests(), [], "配置安装失败时不开始准备主城特效");
 
         badPackage = false;
         await app.prepareStage("login", () => {}, () => true);
@@ -220,10 +281,14 @@ async function checkApplication(bytes: Uint8Array, badContent: Uint8Array, manif
         assert(binaryAssets.every(asset => asset.refCount === 0), "安装后也不常驻压缩包资产");
         assert(enterProgress.some(value => value.label === "整理游戏数据"));
         assert(enterProgress.some(value => value.label === "准备游戏数据"));
+        assert(enterProgress.some(value => value.label === "准备主城特效"));
+        assert.deepEqual(cityRequests().sort(), plannedCityEffects, "登录后阶段结束前每项主城特效实际加载一次");
         assert(!enterProgress.some(value => value.label.includes("/" + manifest.files.length)),
             "玩家文案不将包内表数显示成资源下载数量，进度仍按真实任务推进");
 
         const beforeRead = requests.length;
+        await checkCityEffectPlayback();
+        assert.equal(requests.length, beforeRead, "主城播放复用已准备的帧和骨骼，无新增缺帧探测或资源加载");
         assert(config.getConfig(GConfig.HeroType).length > 0);
         assert(config.getConfig(GConfig.Item).length > 0);
         assert((config.getFileByPath("config/buff") as { rows: unknown[] }).rows.length > 0);
@@ -254,7 +319,7 @@ async function main(): Promise<void> {
     const manifest = manifestOf(bytes);
     const badContent = await checkDecode(bytes, manifest);
     await checkApplication(bytes, badContent, manifest);
-    console.log(`PASS config package loading: real ${manifest.files.length}-file archive, manifest/CRC failures, boot${manifest.startup.length}, cancellation, retry, shared queries, re-login reuse and released binary refs`);
+    console.log(`PASS config package loading: real ${manifest.files.length}-file archive, manifest/CRC failures, boot${manifest.startup.length}, cancellation, retry, city effect preload and playback reuse, shared queries, re-login reuse and released binary refs`);
 }
 
 void main().catch(error => {

@@ -8,6 +8,7 @@ import { ConfigName, GConfig } from "../../config/GConfig";
 import type { ViewClass } from "../../framework/ui/UIRegistry";
 import { ServerPickerView } from "../../features/account/ui/ServerPickerView";
 import { RemakeHomeView } from "../../features/home/ui/RemakeHomeView";
+import { CityEffectPlayUtils } from "../../features/city/ui/CityEffectPlayUtils";
 import { BagView } from "../../features/bag/ui/BagView";
 import { BagInfoView } from "../../features/bag/ui/BagInfoView";
 import { HeroListView } from "../../features/hero/ui/HeroListView";
@@ -18,12 +19,18 @@ import { MainChapterView } from "../../features/battle/ui/MainChapterView";
 export type LoadingTarget = ResourceDescriptor | { bundle: string; path: string; type: ResourceKind }
     | { config: ConfigName } | { configPackage: true } | { page: ViewClass<unknown> };
 
+/** 首屏同用途的一组美术资源使用同一进度项，并行准备。 */
+export interface LoadingAssetGroup {
+    readonly label: string;
+    readonly assets: readonly ResourceDescriptor[];
+}
+
 /** 三个数组分别决定加载时机；空数组表示该阶段不准备额外资源。 */
 export const LOADING_PLAN: {
     /** 登录页面出现前必须完成的目标。 */
     login: readonly LoadingTarget[];
     /** 登录成功后、主城出现前必须完成的目标。 */
-    enterGame: readonly LoadingTarget[];
+    enterGame: readonly (LoadingTarget | LoadingAssetGroup)[];
     /** 主城显示后逐项准备的常用目标，不阻塞进入主城。 */
     background: readonly LoadingTarget[];
 } = {
@@ -39,6 +46,7 @@ export const LOADING_PLAN: {
     enterGame: [
         // 工具自动打包login启动表以外的全部配置，不在此逐张或逐模块重复列出。
         { configPackage: true },
+        { label: "准备主城特效", assets: CityEffectPlayUtils.preloadAssets() },
         { page: RemakeHomeView },
         { page: BagView },
     ],

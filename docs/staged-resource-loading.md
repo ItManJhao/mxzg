@@ -44,6 +44,8 @@ common、bag、hero、battle的自动图集全部保留：目录分类负责人�
 
 ## 人工修改入口
 
+登录成功后，`LoadingPlan.enterGame` 先安装配置包，再并行准备主城特效组。该组包含召唤阵、两组河流、光球、裂缝的 50 帧、`dx` 和 `chuanghu` 两套骨骼，以及 `dx` 播放失败时使用的 10 帧后备动画。主城沿用同一资源池和帧序列，完成后才进入页面，播放时直接复用已就绪资源。未在主城实际播放的同目录效果继续按需。
+
 - 页面：assets/bundles/module/模块/prefabs。对应View的@UIRegistry.view保存唯一注册地址及缓存/模态配置；修改布局直接编辑Prefab，不到ApplicationPages重复登记地址。配置在进入主城前统一完成，页面不再登记配置prepare；必要的页面装配和美术资源prepare继续保留。
 - 动态图：assets/bundles/module/模块/ui，取图使用ResManager.ui(模块, 文件名)，例如common/ui/other_rare-4。ui只是模块内图片子目录，不是旧顶层目录。
 - 图集：模块atlas（共用物品选中图位于common/item-atlas），由Creator自动合图。
