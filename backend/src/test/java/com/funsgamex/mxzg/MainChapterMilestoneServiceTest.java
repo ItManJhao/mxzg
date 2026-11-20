@@ -143,6 +143,33 @@ class MainChapterMilestoneServiceTest {
         assertEquals(2, count("game_main_chapter_milestone_receipt", player));
     }
 
+    /** 第 80 关原装备奖励检查达成门槛、真实实例入库和重复回执。 */
+    @Test
+    void stageEightyGrantsOneOriginalEquipmentInstance() {
+        var early = player(79);
+        assertEquals("MILESTONE_NOT_REACHED", assertThrows(MainChapterMilestoneService.Rejected.class,
+            () -> milestones.claim(early.token(), 300)).code());
+        assertEquals(0, count("game_main_chapter_milestone_receipt", early));
+
+        var reached = player(80);
+        var receipt = milestones.claim(reached.token(), 300);
+        assertEquals(80, receipt.targetChapter());
+        assertEquals(1, receipt.actual().items().size());
+        var reward = receipt.actual().items().getFirst();
+        assertEquals(1001012, reward.itemId());
+        assertEquals(1, reward.credited());
+        var snapshot = snapshots.snapshot(reached.token());
+        var equipment = snapshot.inventory().stream().filter(item -> item.itemId() == 1001012).toList();
+        assertEquals(1, equipment.size());
+        assertEquals(1, equipment.getFirst().quantity());
+        assertNotNull(equipment.getFirst().instanceId());
+        assertEquals(List.of(300), snapshot.mainChapter().milestoneProgress().claimedIds());
+        assertEquals(receipt, milestones.claim(reached.token(), 300));
+        var repeated = snapshots.snapshot(reached.token());
+        assertEquals(snapshot.revision(), repeated.revision());
+        assertEquals(snapshot.inventory(), repeated.inventory());
+    }
+
     /** 名册后来成长与资产变化不重算历史新英雄，原成功回执先于当前资格读取。 */
     @Test
     void keepsFrozenHeroAndReceiptAfterLaterStateChanges() {

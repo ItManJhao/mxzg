@@ -132,6 +132,12 @@ function approvedEffectsChanges() {
         ...[4, 5, 9, '10-20'].map(stage => `docs/validation/chapter-stage${stage}-assets-20261117.json`),
         'docs/validation/chapter-first-summon-assets-20261118.json',
         'docs/validation/gold-dungeon-action-assets-20261119.json',
+        'docs/validation/chapter-stage26-action-assets-20261119.json',
+        'docs/validation/chapter-stage30-action-assets-20261119.json',
+        'docs/validation/chapter-stage31-36-action-assets-20261119.json',
+        'docs/validation/chapter-stage38-action-assets-20261119.json',
+        'docs/validation/chapter-stage41-100-action-assets-20261119.json',
+        'docs/validation/chapter-stage111-300-action-assets-20261120.json',
     ], '特效增量须逐批对应已核对的原图证据');
     assert.deepEqual([...delta.newAssets].sort(), ['legacy-stone.effect', 'legacy-stone.effect.meta',
         'legacy-spine-pma.effect', 'legacy-spine-pma.effect.meta'].sort(),

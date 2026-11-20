@@ -97,7 +97,7 @@ class MainChapterDependencyAudit {
         return path.join(root, 'docs/validation/main-chapter-dependencies-' + snapshot);
     }
 
-    /** 拒绝缺失、过期或不完整的Java能力证据，不能用小夹具替代850关真实目录。 */
+    /** 按实际后端配置来源核对Java能力证据，拒绝缺失、过期或不完整的850关目录。 */
     static validateEvidence(root, evidence, bundles) {
         assert.equal(evidence.schemaVersion, 1, 'Java能力证据版本不匹配');
         const actualSources = this.files(path.join(root, 'backend/src/main/java'))
@@ -113,13 +113,16 @@ class MainChapterDependencyAudit {
             'Java审计器本身变化，请重新取得能力证据');
         assert.equal(evidence.pomHash, this.hash(fs.readFileSync(path.join(root, 'backend/pom.xml'))),
             'Maven资源构建配置变化，请重新取得能力证据');
-        for (const file of this.files(path.join(root, 'backend/src/main/resources/gameplay')).filter(file => file.endsWith('.json'))) {
-            const name = this.relative(path.join(root, 'backend/src/main/resources/gameplay'), file).replace(/\.json$/, '');
+        const gameplay = path.join(root, 'backend/src/main/resources/gameplay');
+        const backendSources = new Map();
+        for (const file of this.files(gameplay).filter(file => file.endsWith('.json'))) {
+            const name = this.relative(gameplay, file).replace(/\.json$/, '');
             assert(evidence.classpathHashes[name], 'Java证据漏掉服务端规则投影：' + name);
+            backendSources.set(name, file);
         }
         for (const [name, digest] of Object.entries(evidence.classpathHashes)) {
-            const file = bundles.resolveBundleFile('config/' + name + '.json', { optional: true })
-                || path.join(root, 'backend/src/main/resources/gameplay', name + '.json');
+            // 召唤等功能可以保留同名的客户端展示表，Java证据以服务端实际打包的规则表为准。
+            const file = backendSources.get(name) || bundles.resolveBundleFile('config/' + name + '.json');
             assert.equal(this.hash(fs.readFileSync(file)), digest, 'Maven配置资源过期：' + name);
         }
         assert.equal(evidence.stages.length, 850, '真实850关目录不可被小夹具替代');
@@ -170,6 +173,19 @@ class MainChapterDependencyAudit {
             buffs.set(id, buff);
             for (const child of this.array(buff.art_list, 'buff:' + id)) visitArt(child, chain);
             for (const child of tables.buffReferences?.get(String(id)) || []) visitBuff(child, chain.concat('buff:' + id));
+            if (buff.type === 162) {
+                const key = Number(String(buff.value).split('|')[0]) + ':' + skill.level;
+                const replacement = tables.skills?.get(key);
+                if (!replacement || replacement.active_type !== 2) {
+                    gaps.push({ code: 'SKILL_MISSING', key, reason: '原入场普攻替换引用无效：' + id });
+                } else {
+                    for (const child of this.array(replacement.art_list, 'skill:' + key)) visitArt(child, chain.concat('skill:' + key));
+                }
+            }
+            if (buff.type === 154) {
+                const fallback = Number(String(buff.value).split('|')[1]);
+                if (fallback > 0) visitArt(fallback, chain.concat('buff:' + id));
+            }
             activeBuffs.delete(id);
         };
         const visitArt = (id, chain) => {
@@ -221,12 +237,13 @@ class MainChapterDependencyAudit {
         };
         const rewards = table('chapterreward');
         const enemyRows = table('chapter');
+        const skills = new Map(table('heroskill').map(row => [row.type + ':' + row.level, row]));
         const tables = {
             arts: new Map(table('buffart').map(row => [row.idx, row])),
             buffs: new Map(table('buff').map(row => [row.idx, row])),
             buffReferences: new Map(Object.entries(evidence.semanticBuffReferences || {})),
+            skills,
         };
-        const skills = new Map(table('heroskill').map(row => [row.type + ':' + row.level, row]));
         const items = new Map(table('item').map(row => [row.idx, row]));
         const heroes = new Map(table('herotype').map(row => [row.type, row]));
         const triggers = table('droptrigger');

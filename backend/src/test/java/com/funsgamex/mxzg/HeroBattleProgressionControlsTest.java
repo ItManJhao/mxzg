@@ -1,5 +1,5 @@
 /**
- * 第10至20关实际依赖的控制、职业条件、一次属性、格挡盾与选目标回归。
+ * 主线实际依赖的控制、职业条件、一次属性、格挡盾与选目标回归。
  * 使用同源配置和独立场内边界数据，不连接玩家库、不修改通关范围或发放资产。
  */
 package com.funsgamex.mxzg;
@@ -330,5 +330,79 @@ class HeroBattleProgressionControlsTest {
         assertThrows(IllegalArgumentException.class, () -> new HeroBattleTargetUtils.Plan(1, List.of(23), 1));
         assertThrows(IllegalArgumentException.class, () -> HeroBattleTargetUtils.select(rules.battleTargets(2141101),
             source, List.of(source, new HeroBattleTargetUtils.Unit(2, 2, 1, 1, 100, 100)), List.of(), false));
+    }
+
+    /** 22优先放在原敌方集合内按旧状态排列，缺少指定状态时保持战场顺序。 */
+    @Test void selectsByConfiguredBuffOrder() {
+        var source = new HeroBattleTargetUtils.Unit(1, 1, 1, 1, 100, 100);
+        var unmarked = new HeroBattleTargetUtils.Unit(2, 2, 1, 1, 100, 100, null, null, type -> false);
+        var fire = new HeroBattleTargetUtils.Unit(3, 2, 2, 1, 100, 100, null, null, type -> type == 1206);
+        var burn = new HeroBattleTargetUtils.Unit(4, 2, 3, 1, 100, 100, null, null, type -> type == 1201);
+        var plan = new HeroBattleTargetUtils.Plan(1, List.of(3, 22), 2, List.of(1201, 1206));
+        assertEquals(List.of(burn, fire), HeroBattleTargetUtils.select(plan, source,
+            List.of(source, unmarked, fire, burn), List.of(), false));
+        assertEquals(List.of(unmarked), HeroBattleTargetUtils.select(plan, source,
+            List.of(source, unmarked), List.of(), false));
+    }
+
+    /** 真实105固定100伤害击中严格半血边界，恢复后再次跨线仍只享受一次210增益。 */
+    @Test void healthThresholdChecksBothSidesAndAppliesLimitedEffectOnce() {
+        var engine = progressionEngine(10105009, 600, 1000, 1_000, 1000, 1000);
+        engine.initializePassive(2, 101050094, 2);
+        engine.realDamage(9011201, 1, 2);
+        assertEquals(500, engine.state(2).hp());
+        assertTrue(engine.buffs(2).stream().noneMatch(entry -> entry.spec().id() == 1094302));
+        engine.realDamage(9011201, 1, 2);
+        assertEquals(400, engine.state(2).hp());
+        assertTrue(engine.buffs(2).stream().anyMatch(entry -> entry.spec().id() == 1094302));
+        engine.expireAt(3);
+        engine.art(new HeroBattleEventProcessor.Invocation(1, 1063201, 2, 2));
+        assertTrue(engine.state(2).hp() > 500);
+        while (engine.state(2).hp() >= 500) {
+            engine.realDamage(9011201, 1, 2);
+        }
+        assertEquals(1, engine.trace().stream().filter(event -> event.kind().equals("buff.upsert")
+            && event.configId() == 1094302).count());
+    }
+
+    /** 攻击偷取重装先退还旧百分比再读攻击，期限到达后移除保存过的同一固定攻击。 */
+    @Test void attackStealReplacementAndExpiryKeepTheActualValue() {
+        var engine = progressionEngine(10205007, 100_000, 100_000, 2_000, 100_000, 100_000);
+        engine.initializePassive(2, 102050074, 2);
+        engine.attack(2, 1, elements, rate -> rate >= 1D);
+        engine.attack(2, 1, elements, rate -> rate >= 1D);
+        var retained = engine.buffs(1).stream().filter(entry -> entry.spec().id() == 2075302).toList();
+        assertEquals(1, retained.size());
+        assertEquals(100, retained.getFirst().value());
+        assertTrue(engine.removals().stream().anyMatch(removed -> removed.reason().equals("replace")
+            && removed.entry().spec().id() == 2075302 && removed.entry().value() == 100));
+        engine.expireAt(3);
+        assertTrue(engine.buffs(1).stream().noneMatch(entry -> entry.spec().id() == 2075302));
+    }
+
+    /** 伊芙施加给敌人的死亡监听治疗施加者；最后一名敌人倒下之后不再执行。 */
+    @Test void enemyDeathHealsEveOnlyWhileBattleContinues() {
+        var engine = progressionEngine(10305009, 400, 1000, 1000, 100, 100);
+        engine.initializePassive(2, 103050094, 2);
+        engine.realDamage(9011201, 2, 1);
+        assertEquals(700, engine.state(2).hp());
+        engine.realDamage(9011201, 2, 3);
+        assertEquals(700, engine.state(2).hp());
+        assertEquals(List.of(3094202), engine.recoveries().stream().map(Recovery::buffId).toList());
+    }
+
+    /** 单独设置阈值所需血量，所有技能、属性与固定伤害通过生产执行器计算。 */
+    private HeroBattleHealingExecutor progressionEngine(int template, long hp, long maxHp, long attack,
+                                                        long attackerHp, long allyHp) {
+        var ordinary = new HeroBattleSkillUtils.Skill(101010010, 0, 2, 0, 0, false, false);
+        var engine = new HeroBattleHealingExecutor(rules, List.of(
+            new State(new Actor(1, List.of(ordinary)), 1, 1, attackerHp, maxHp, 100, 0, 0, 0),
+            new State(new Actor(2, List.of(ordinary)), 2, 2, hp, maxHp, attack, 0, 0, 0),
+            new State(new Actor(3, List.of(ordinary)), 1, 5, allyHp, maxHp, 1000, 0, 0, 0)));
+        var shared = Map.of(220, 1000L, 150, 500L, 101, 50L, 226, 10000L, 211, 10000L);
+        engine.bindCombatData(1, 10101001, shared);
+        engine.bindCombatData(2, template, Map.of(220, attack, 150, 500L, 101, 50L, 226, 10000L, 211, 10000L));
+        engine.bindCombatData(3, 10101001, shared);
+        return engine;
     }
 }

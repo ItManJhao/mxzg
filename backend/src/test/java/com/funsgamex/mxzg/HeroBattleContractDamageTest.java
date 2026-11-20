@@ -43,7 +43,7 @@ class HeroBattleContractDamageTest {
         assertEquals(508, engine.state(3).hp());
     }
 
-    /** 5181303将40%伤害分配给关联敌人；额外伤害不再次触发189。 */
+    /** 5181303将40%伤害分配给关联敌人；两次扣血各有177，额外伤害不再次触发189。 */
     @Test void damageTransferAndExpiry() {
         var engine = engine(unit(1, 1, 500), unit(2, 1, 500), unit(3, 2, 500));
         engine.establishContract(5181303, 1, 2);
@@ -51,7 +51,7 @@ class HeroBattleContractDamageTest {
         assertEquals(460, engine.state(3).hp());
         assertEquals(440, engine.state(2).hp());
         assertEquals(List.of(40L, 60L), engine.damages().stream().map(Damage::incoming).toList());
-        assertEquals(List.of(187, 188, 189), engine.signals().stream().map(Signal::event).toList());
+        assertEquals(List.of(187, 188, 189, 177, 177), engine.signals().stream().map(Signal::event).toList());
         engine.expireAt(2);
         engine.realDamage(9011201, 3, 2);
         assertEquals(340, engine.state(2).hp());

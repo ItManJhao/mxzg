@@ -65,6 +65,28 @@ public class HeroSkillPanelRules {
         }).toList();
     }
 
+    /** 解析旧 CommonChange 的本场普攻替换，按触发它的被动等级读取新技能并完整预检。 */
+    public HeroBattleSkillUtils.Skill battleOrdinaryReplacement(int buffId, int passiveLevel) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 162) {
+            return null;
+        }
+        var values = buff.path("value").asString().split("\\|", -1);
+        if (buff.path("round").asInt() != 999 || buff.path("attach_percent").asInt() != 10000
+                || buff.path("effecttype").asInt() != 0 || buff.path("copy_target").asInt() != 0
+                || !mapper.readTree(buff.path("art_list").asString()).isEmpty()
+                || values.length != 4 || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")) {
+            throw new IllegalArgumentException("普通攻击替换包含未支持条件：" + buffId);
+        }
+        var replacement = battleSchedule(List.of(new HeroEvolutionRules.Skill(Integer.parseInt(values[0]), passiveLevel)))
+                .getFirst();
+        if (replacement.activeType() != 2 || replacement.first()) {
+            throw new IllegalArgumentException("普通攻击替换目标类型无效：" + buffId);
+        }
+        damageSkillArts(replacement);
+        return replacement;
+    }
+
     /** 沿旧HeroSkillSysCache.checkFirstSkill扫描动作内的260号Buff，不把先手当作排期字段。 */
     private boolean firstSkill(JsonNode skill) {
         for (var artId : mapper.readTree(skill.path("art_list").asString())) {
@@ -81,8 +103,11 @@ public class HeroSkillPanelRules {
     public HeroBattleEventProcessor.Definition battleTrigger(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (type == 180 && !isCharmDeathListener(buffId)) {
+        if (type == 180 && !isCharmDeathListener(buffId) && !isEveDeathListener(buffId)) {
             throw new IllegalArgumentException("死亡监听下游尚未核对：" + buffId);
+        }
+        if (type == 177) {
+            battleHpThreshold(buffId);
         }
         if (type == 171 && Integer.parseInt(buff.path("value").asString().split("\\|", -1)[0]) != 0) {
             throw new IllegalArgumentException("受击事件的前置Buff条件尚未支持：" + buffId);
@@ -244,14 +269,25 @@ public class HeroSkillPanelRules {
     public HeroBattleBuffState.Spec battleBuff(int buffId) {
         var buff = row("buff", buffId);
         int type = buff.path("type").asInt();
-        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 160, 167, 1205, 1001, 1006, 1014, 234).contains(type)
-            && !(type == 180 && isCharmDeathListener(buffId))) {
+        if (!Set.of(130, 1005, 1008, 171, 186, 206, 197, 172, 173, 170, 199, 200, 311, 1009, 1251,
+                174, 175, 177, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004,
+                160, 166, 167, 1203, 1205, 1001, 1006, 1014, 234).contains(type)
+                && !(type == 180 && (isCharmDeathListener(buffId) || isEveDeathListener(buffId))) && type != 163) {
             throw new IllegalArgumentException("Buff生命周期处理尚未支持：" + buffId);
         }
-        if (type == 160) controlAttribute(buffId);
+        if (type == 160) {
+            controlAttribute(buffId);
+        }
+        if (type == 163) {
+            openingHpPenalty(buffId);
+        }
+        if (type == 166) {
+            battleAttackStealRate(buffId);
+        }
         return new HeroBattleBuffState.Spec(buffId, type, buff.path("round").asInt(),
             buff.path("dispelled").asInt() == 1, buff.path("effecttype").asInt(),
-            buff.path("conflict_type").asInt(), buff.path("stacking_max").asInt(), type == 160 || type == 167);
+            buff.path("conflict_type").asInt(), buff.path("stacking_max").asInt(),
+            type == 160 || type == 166 || type == 167);
     }
 
     /** 当前模板真实职业和元素，用于装配战场，不从UI面板或调用方猜测。 */
@@ -273,14 +309,17 @@ public class HeroSkillPanelRules {
         return battleOrdinaryDamageRate(buffId, false);
     }
 
-    /** 完整后置入口可允许反击配置；旧单独扣血入口仍禁止，避免绕过动作生命周期。 */
+    /** 完整后置入口可允许反击和旧回合伤害概率；单独扣血入口仍禁止，避免绕过动作生命周期。 */
     public int battleOrdinaryDamageRate(int buffId, boolean allowCounterattack) {
         var buff = row("buff", buffId);
         var values = buff.path("value").asString().split("\\|", -1);
-        if (buff.path("type").asInt() != 100 || buff.path("attach_percent").asInt() != 10000
+        int chance = buff.path("attach_percent").asInt();
+        boolean supportedChance = chance == 10000
+            || (allowCounterattack && ((buffId == 2072301 && chance == 5000) || (buffId == 2072302 && chance == 7000)));
+        if (buff.path("type").asInt() != 100 || !supportedChance
             || values.length < 2 || (!values[1].equals("1") && !allowCounterattack)
             || (!mapper.readTree(buff.path("art_list").asString()).isEmpty() && !nanakoDamageChain(buffId)
-                && !nanakoCriticalChain(buffId) && !battleDamageControlFollowup(buffId))) {
+                && !nanakoCriticalChain(buffId) && !battleDamageFollowup(buffId))) {
             throw new IllegalArgumentException("普通伤害配置的反击或后续动作尚未支持：" + buffId);
         }
         return Integer.parseInt(values[0]);
@@ -347,7 +386,7 @@ public class HeroSkillPanelRules {
         return true;
     }
 
-    /** 已核对的直接属性动作，包括必中且无下游的固定201攻击、202护甲和207暴击增减。 */
+    /** 预检已接入的必中固定属性动作，包括技能伤害、攻击、护甲、穿甲、暴击、命中和速度。 */
     public boolean battleDirectAttribute(int buffId) {
         if (nanakoArmorDebuff(buffId)) {
             return true;
@@ -362,6 +401,25 @@ public class HeroSkillPanelRules {
             return true;
         }
         return false;
+    }
+
+    /** 按旧166读取普攻偷取攻击的万分比；0表示其他效果，具体转移与恢复交给执行器。 */
+    public int battleAttackStealRate(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 166) {
+            return 0;
+        }
+        var values = buff.path("value").asString().split("\\|", -1);
+        int rate = Integer.parseInt(values[0]);
+        if ((buffId != 2075301 && buffId != 2075302) || values.length != 4 || rate <= 0 || rate > 10000
+                || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")
+                || buff.path("round").asInt() != 3 || buff.path("attach_percent").asInt() != 10000
+                || buff.path("copy_target").asInt() != 0 || buff.path("effecttype").asInt() != 0
+                || buff.path("conflict_type").asInt() != 2075
+                || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("攻击偷取含未核对参数：" + buffId);
+        }
+        return rate;
     }
 
     /** 按旧111140x配置读取203破甲万分比；不泛化为任意160号增益或条件属性。 */
@@ -392,15 +450,90 @@ public class HeroSkillPanelRules {
         return !row("buff", buffId).path("value").asString().split("\\|", -1)[1].equals("1");
     }
 
+    /** 配置附加概率先于伤害命中；仅在当前伤害类型已预检后读取。 */
+    public double ordinaryDamageChance(int buffId) {
+        return row("buff", buffId).path("attach_percent").asInt() / 10000D;
+    }
+
     /** 本批只开放冰晶女巫已核对的直接治疗，其他英雄治疗链仍按原边界拒绝。 */
     public boolean battleDirectHealing(int buffId) {
         return buffId >= 2031301 && buffId <= 2031303;
     }
 
+    /** 按旧130号动作读取攻击比例治疗，概率和治疗量采用万分比。 */
+    public record AttackHealing(int rate, double chance) {}
+
+    /** 读取无附加子链的攻击比例治疗；非130号返回null，未核对的扩展形式拒绝。 */
+    public AttackHealing attackHealing(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 130) {
+            return null;
+        }
+        var value = buff.path("value").asString().split("\\|", -1);
+        var arts = mapper.readTree(buff.path("art_list").asString());
+        int chance = buff.path("attach_percent").asInt();
+        if (value.length != 4 || !value[1].equals("0") || !value[2].equals("0") || !value[3].equals("0")
+                || Integer.parseInt(value[0]) <= 0 || chance < 0 || chance > 10000
+                || buff.path("copy_target").asInt() != 0 || arts == null || !arts.isArray() || !arts.isEmpty()) {
+            throw new IllegalArgumentException("130号攻击比例治疗含未支持形式：" + buffId);
+        }
+        return new AttackHealing(Integer.parseInt(value[0]), chance / 10000D);
+    }
+
+    /** 读取132号即时治疗的初始伤害比例；其他类型返回0，带伤害类型筛选等未核对变体拒绝执行。 */
+    public int battleDamageHealingRate(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 132) {
+            return 0;
+        }
+        var values = buff.path("value").asString().split("\\|", -1);
+        if (buff.path("round").asInt() != 1 || buff.path("attach_percent").asInt() != 10000
+                || buff.path("effecttype").asInt() != 0 || buff.path("life").asInt() != 0
+                || buff.path("copy_target").asInt() != 0 || buff.path("conflict_type").asInt() != 0
+                || !mapper.readTree(buff.path("art_list").asString()).isEmpty()
+                || values.length != 4 || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")) {
+            throw new IllegalArgumentException("伤害转治疗包含未支持形式：" + buffId);
+        }
+        int rate = Integer.parseInt(values[0]);
+        if (rate <= 0) {
+            throw new IllegalArgumentException("伤害转治疗比例必须为正：" + buffId);
+        }
+        return rate;
+    }
+
     /** 一个已预检的伤害/控制/属性动作，保留选目标、参数和Buff顺序。 */
     public record DamageArt(HeroBattleTargetUtils.Plan targets, List<Integer> buffs) {}
 
-    /** 预检真实技能的伤害、控制、监听、属性/治疗、驱散及现有表现；未知效果拒绝。 */
+    /** 原 154 的复活攻击倍率与目标仍存活时触发的低血量队友治疗。 */
+    public record Resurrection(int attackRate, DamageArt onLiving) {}
+
+    /** 预检琪亚娜旧复活分支及其实际治疗子动作。其他类型返回 null。 */
+    public Resurrection battleResurrection(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 154) {
+            return null;
+        }
+        var values = buff.path("value").asString().split("\\|", -1);
+        if (buff.path("round").asInt() != 0 || buff.path("attach_percent").asInt() != 10000
+                || buff.path("effecttype").asInt() != 0 || buff.path("copy_target").asInt() != 0
+                || !mapper.readTree(buff.path("art_list").asString()).isEmpty()
+                || values.length != 4 || !values[2].equals("0") || !values[3].equals("0")) {
+            throw new IllegalArgumentException("复活配置含未接通效果：" + buffId);
+        }
+        int rate = Integer.parseInt(values[0]);
+        int artId = Integer.parseInt(values[1]);
+        var fallback = row("buffart", artId);
+        var plan = battleTargets(artId);
+        var child = mapper.readTree(fallback.path("buff_list").asString());
+        if (rate <= 0 || fallback.path("source_type").asInt() != 0 || !plan.selectors().equals(List.of(2, 4, 11))
+                || plan.count() != 1 || !child.isArray() || child.size() != 1
+                || attackHealing(child.get(0).asInt()) == null) {
+            throw new IllegalArgumentException("复活的存活治疗分支尚未核对：" + buffId);
+        }
+        return new Resurrection(rate, new DamageArt(plan, List.of(child.get(0).asInt())));
+    }
+
+    /** 预检真实技能的伤害、控制、监听、属性、攻击偷取、治疗、驱散及现有表现；未知效果拒绝。 */
     public List<DamageArt> damageSkillArts(HeroBattleSkillUtils.Skill skill) {
         var config = skills.get(skill.skillId() + ":" + skill.level());
         if (config == null || !Set.of(1, 2).contains(config.path("active_type").asInt())) {
@@ -419,9 +552,12 @@ public class HeroSkillPanelRules {
                         battleHealing(buff.asInt() - 100);
                     } else if (battleRoundListener(buff.asInt())) {
                         battleTrigger(buff.asInt());
-                    } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && !battleBleed(buff.asInt()) && !battleDirectAttribute(buff.asInt()) && !battleSimpleControl(buff.asInt())
-                            && !battleJobCondition(buff.asInt()) && !battleBlockShield(buff.asInt())
-                            && battleDebuffRemovalCount(buff.asInt()) < 0) {
+                    } else if (!battleDizzy(buff.asInt()) && !battleFrozen(buff.asInt()) && attackDamageOverTime(buff.asInt()) == null && !battleDirectAttribute(buff.asInt()) && !battleSimpleControl(buff.asInt())
+                            && !battleJobCondition(buff.asInt()) && !battleStatusCondition(buff.asInt())
+                            && !battleBlockShield(buff.asInt())
+                            && battleDebuffRemovalCount(buff.asInt()) < 0 && battleDamageHealingRate(buff.asInt()) == 0
+                            && attackHealing(buff.asInt()) == null && battleResurrection(buff.asInt()) == null
+                            && battleAttackStealRate(buff.asInt()) == 0) {
                         battleOrdinaryDamageRate(buff.asInt(), true);
                     }
                 }
@@ -441,13 +577,52 @@ public class HeroSkillPanelRules {
 
     /** 识别必须在开场实际安装的已接入被动。静态面板被动已计入初始属性。 */
     public static boolean usesOpeningBattlePassive(int skillId) {
-        return skillId == 102050234 || skillId == 101050113;
+        return skillId == 102050234 || skillId == 101050113 || skillId == 103050094 || usesPositionPassive(skillId)
+            || usesProgressionPassive(skillId);
+    }
+
+    /** 主线已核对的一、二级普通入场被动，发起监听或同级普攻替换，其他配置仍经原预检。 */
+    private static boolean usesProgressionPassive(int skillId) {
+        return switch (skillId) {
+            case 101050062, 101050063, 101050093, 101050094, 102040132,
+                102050063, 102050072, 102050074, 102050083, 102050084, 102050114, 102050153, 102050154,
+                103050063, 103050082, 103050084, 103050092, 103050104, 103050113, 105040032 -> true;
+            default -> false;
+        };
+    }
+
+    /** 已核对的站位被动共享同一种213条件，其他开场条件需要单独核对下游。 */
+    private static boolean usesPositionPassive(int skillId) {
+        return skillId == 103040052 || skillId == 103040162 || skillId == 103040172;
     }
 
     /** 解析并预检开场被动的完整动作；保持配置的动作和Buff顺序。 */
     public List<DamageArt> openingPassiveArts(int skillId, int level) {
         if (skillId == 101050113) {
             return charmDeathPassiveArts(level);
+        }
+        if (skillId == 103050094) {
+            return eveDeathPassiveArts(level);
+        }
+        if (usesProgressionPassive(skillId)) {
+            return openingProgressionPassiveArts(skillId, level);
+        }
+        if (usesPositionPassive(skillId)) {
+            var skill = skills.get(skillId + ":" + level);
+            if (skill == null || skill.path("active_type").asInt() != 0 || skill.path("count_stats").asInt() != 0) {
+                throw new IllegalArgumentException("站位入场被动配置变化：" + skillId);
+            }
+            var arts = mapper.readTree(skill.path("art_list").asString());
+            if (arts.size() != 1) {
+                throw new IllegalArgumentException("站位入场被动必须只有一个动作：" + skillId);
+            }
+            int artId = arts.get(0).asInt();
+            var plan = battleTargets(artId);
+            var ids = openingSelfBuffs(artId);
+            if (ids.size() != 1 || openingPositionPassive(ids.getFirst()) == null) {
+                throw new IllegalArgumentException("站位入场被动缺少213条件：" + skillId);
+            }
+            return List.of(new DamageArt(plan, ids));
         }
         if (skillId != 102050234 || level < 1 || level > 3) {
             throw new IllegalArgumentException("未核对的控制被动");
@@ -479,9 +654,245 @@ public class HeroSkillPanelRules {
         return List.copyOf(result);
     }
 
+    /** 预检固定面板属性、常驻战斗属性及开场监听；已计入面板的效果不会再次安装。 */
+    private List<DamageArt> openingProgressionPassiveArts(int skillId, int level) {
+        var skill = skills.get(skillId + ":" + level);
+        int maxLevel = skillId == 105040032 ? 1 : 2;
+        if (skill == null || level < 1 || level > maxLevel || skill.path("active_type").asInt() != 0) {
+            throw new IllegalArgumentException("未核对的入场被动等级：" + skillId + ":" + level);
+        }
+        var result = new ArrayList<DamageArt>();
+        for (var art : mapper.readTree(skill.path("art_list").asString())) {
+            int artId = art.asInt();
+            var listeners = new ArrayList<Integer>();
+            for (int buffId : openingSelfBuffs(artId)) {
+                var buff = row("buff", buffId);
+                int type = buff.path("type").asInt();
+                if ((type == 160 || type == 163) && skill.path("count_stats").asInt() == 1) {
+                    validatePanelAttribute(buffId);
+                    continue;
+                }
+                if (skillId == 103050104 && battleDirectAttribute(buffId)) {
+                    if (buff.path("round").asInt() != 999) {
+                        throw new IllegalArgumentException("战斗初始属性必须常驻：" + buffId);
+                    }
+                    listeners.add(buffId);
+                    continue;
+                }
+                if (battleOrdinaryReplacement(buffId, level) != null) {
+                    listeners.add(buffId);
+                    continue;
+                }
+                if (!Set.of(171, 172, 173, 175, 177, 178, 179, 181, 182).contains(type)
+                        || buff.path("round").asInt() != 999 || buff.path("attach_percent").asInt() != 10000
+                        || buff.path("conflict_type").asInt() != 0 || buff.path("effecttype").asInt() != 0
+                        || buff.path("life").asInt() != 0) {
+                    throw new IllegalArgumentException("入场嵌套监听配置尚未核对：" + buffId);
+                }
+                var trigger = battleTrigger(buffId);
+                if (trigger.arts().isEmpty()) {
+                    throw new IllegalArgumentException("入场监听缺少子动作：" + buffId);
+                }
+                for (var next : trigger.arts()) {
+                    if (next.id() == 1063201 || next.id() == 1063202) {
+                        battleHealing(next.id());
+                    } else if (!isGeneralCounterattackArt(next.id()) && passiveTriggerEffects(next.id()).isEmpty()) {
+                        throw new IllegalArgumentException("入场监听含未支持子动作：" + next.id());
+                    }
+                    battleTargets(next.id());
+                }
+                listeners.add(buffId);
+            }
+            result.add(new DamageArt(battleTargets(artId), List.copyOf(listeners)));
+        }
+        if (result.isEmpty() || result.stream().allMatch(art -> art.buffs().isEmpty())) {
+            throw new IllegalArgumentException("入场被动无战斗效果：" + skillId);
+        }
+        return List.copyOf(result);
+    }
+
+    /** 校验已核对的监听子动作及目标；未采用该路线的动作留给原执行入口。 */
+    public List<Integer> passiveTriggerEffects(int artId) {
+        if (!Set.of(1062201, 1062202, 1094201, 1094202, 1094301, 1094302,
+                2063201, 2063202, 2072201, 2072202,
+                2084201, 2084202, 2084301, 2084302, 2084401, 2084402, 2114201, 2114202,
+                2132301, 2132302, 2153201, 2153202, 3063201, 3063202,
+                3082501, 3082502, 3084301, 3084302, 3092201, 3092202, 3092301, 3092302, 5032301).contains(artId)) {
+            return List.of();
+        }
+        var art = row("buffart", artId);
+        var effects = new ArrayList<Integer>();
+        for (var id : mapper.readTree(art.path("buff_list").asString())) {
+            int buffId = id.asInt();
+            if (attackHealing(buffId) == null && attackDamageOverTime(buffId) == null
+                    && !battleDizzy(buffId) && !battleSimpleControl(buffId)
+                    && !battleDirectAttribute(buffId) && !battleRoundListener(buffId)
+                    && !battleOnceAttribute(buffId) && battleUseLimitFollowup(buffId).isEmpty()) {
+                throw new IllegalArgumentException("监听动作后续效果尚未核对：" + buffId);
+            }
+            effects.add(buffId);
+        }
+        battleTargets(artId);
+        if (effects.isEmpty() || art.path("source_type").asInt() != 0) {
+            throw new IllegalArgumentException("监听动作来源或效果无效：" + artId);
+        }
+        return List.copyOf(effects);
+    }
+
+    /** 读取177受击前后跨越的生命阈值，返回10000制整数。次数由子动作的210自身条件维护。 */
+    public int battleHpThreshold(int buffId) {
+        var buff = row("buff", buffId);
+        var values = buff.path("value").asString().split("\\|", -1);
+        int rate = Integer.parseInt(values[0]);
+        if (!Set.of(1094101, 1094102, 2084101, 2084102).contains(buffId)
+                || buff.path("type").asInt() != 177 || values.length != 4 || rate <= 0 || rate >= 10000
+                || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")) {
+            throw new IllegalArgumentException("受击生命阈值含未支持参数：" + buffId);
+        }
+        return rate;
+    }
+
+    /** 读取210自身计数限制，非210返回0。每个成功的子动作触发按本场携带者与配置区分。 */
+    public int battleUseLimit(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 210) {
+            return 0;
+        }
+        var values = buff.path("value").asString().split("\\|", -1);
+        int limit = Integer.parseInt(values[0]);
+        if (!Set.of(1094201, 1094202, 2084201, 2084202).contains(buffId) || values.length != 4 || limit != 1
+                || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")
+                || buff.path("round").asInt() != 0 || buff.path("attach_percent").asInt() != 10000) {
+            throw new IllegalArgumentException("自身次数条件含未核对参数：" + buffId);
+        }
+        return limit;
+    }
+
+    /** 校验210成功后按配置执行的属性动作；非210返回空，不让尚未接通的子链通过预检。 */
+    public List<Integer> battleUseLimitFollowup(int buffId) {
+        if (battleUseLimit(buffId) == 0) {
+            return List.of();
+        }
+        var result = new ArrayList<Integer>();
+        for (var child : mapper.readTree(row("buff", buffId).path("art_list").asString())) {
+            int artId = child.asInt();
+            boolean known = buffId < 2000000 ? artId == buffId + 100
+                : artId == buffId + 100 || artId == buffId + 200;
+            if (!known) {
+                throw new IllegalArgumentException("自身次数条件子动作尚未核对：" + artId);
+            }
+            var art = row("buffart", artId);
+            var effects = mapper.readTree(art.path("buff_list").asString());
+            if (art.path("source_type").asInt() != 0 || effects.size() != 1
+                    || !battleDirectAttribute(effects.get(0).asInt())) {
+                throw new IllegalArgumentException("自身次数条件只使用一项固定属性：" + artId);
+            }
+            battleTargets(artId);
+            result.add(artId);
+        }
+        if (result.size() != (buffId < 2000000 ? 1 : 2)) {
+            throw new IllegalArgumentException("自身次数条件子动作数量变化：" + buffId);
+        }
+        return List.copyOf(result);
+    }
+
+    /** 永久入场被动的局部自选动作。返回配置顺序，遇到空动作或改选目标明确拒绝。 */
+    private List<Integer> openingSelfBuffs(int artId) {
+        var art = row("buffart", artId);
+        var targets = battleTargets(artId);
+        var ids = mapper.readTree(art.path("buff_list").asString());
+        if (art.path("source_type").asInt() != 0 || !targets.selectors().equals(List.of(1))
+                || !targets.values().isEmpty() || !ids.isArray() || ids.isEmpty()) {
+            throw new IllegalArgumentException("入场被动的自身动作无效：" + artId);
+        }
+        var result = new ArrayList<Integer>();
+        ids.forEach(id -> result.add(id.asInt()));
+        return List.copyOf(result);
+    }
+
+    /** 原常驻站位条件的有效位置与子动作，位置使用框架原1～8格编号。 */
+    public record PositionPassive(List<Integer> positions, List<Integer> buffs) {}
+
+    /** 预检 213 只包含常驻暴击和负生命比例，返回条件与原序子Buff。 */
+    public PositionPassive openingPositionPassive(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 213) {
+            return null;
+        }
+        var arts = mapper.readTree(buff.path("art_list").asString());
+        if (buff.path("round").asInt() != 0 || buff.path("attach_percent").asInt() != 10000
+                || buff.path("copy_target").asInt() != 1 || arts.size() != 1) {
+            throw new IllegalArgumentException("入场站位条件配置无效：" + buffId);
+        }
+        var positions = new ArrayList<Integer>();
+        for (String entry : buff.path("value").asString().split("\\|", -1)) {
+            int position = Integer.parseInt(entry);
+            if (position < 1 || position > 8) {
+                throw new IllegalArgumentException("入场站位条件位置无效：" + buffId);
+            }
+            positions.add(position);
+        }
+        var children = openingSelfBuffs(arts.get(0).asInt());
+        for (int child : children) {
+            var row = row("buff", child);
+            if (row.path("round").asInt() != 999 || row.path("attach_percent").asInt() != 10000
+                    || !mapper.readTree(row.path("art_list").asString()).isEmpty()) {
+                throw new IllegalArgumentException("入场站位子效果必须永久且必中：" + child);
+            }
+            if (row.path("type").asInt() == 163) {
+                openingHpPenalty(child);
+            } else if (controlAttribute(child).attribute() != 207) {
+                throw new IllegalArgumentException("入场站位子效果只能调整暴击或生命比例：" + child);
+            }
+        }
+        return new PositionPassive(List.copyOf(positions), children);
+    }
+
+    /** 已初始化单位的163负比例只改变HP_PERCENT，旧最大生命和当前生命均保留。 */
+    public long openingHpPenalty(int buffId) {
+        var buff = row("buff", buffId);
+        var value = buff.path("value").asString().split("\\|", -1);
+        if (buff.path("type").asInt() != 163 || value.length != 4 || !value[0].matches("-[1-9][0-9]*")
+                || !value[1].equals("0") || !value[2].equals("0") || !value[3].equals("0")) {
+            throw new IllegalArgumentException("开场生命比例仅支持负向固定值：" + buffId);
+        }
+        return Long.parseLong(value[0]);
+    }
     /** 只放行已核对下游动作的恶魔魅影监听，保留其他死亡Buff的拒绝边界。 */
     private static boolean isCharmDeathListener(int buffId) {
         return buffId >= 1113101 && buffId <= 1113103;
+    }
+
+    /** 仅放行主线所需的两个死亡治疗监听，未核实后续的其他180仍明确拒绝。 */
+    private static boolean isEveDeathListener(int buffId) {
+        return buffId == 3094101 || buffId == 3094102;
+    }
+
+    /** 校验伊芙给敌方安装的死亡监听，触发时由原施法者治疗自身。 */
+    private List<DamageArt> eveDeathPassiveArts(int level) {
+        var skill = skills.get("103050094:" + level);
+        int listenerId = 3094100 + level;
+        int healId = 3094200 + level;
+        if (skill == null || !isEveDeathListener(listenerId) || skill.path("active_type").asInt() != 3
+                || skill.path("count_stats").asInt() != 0
+                || !mapper.readTree(skill.path("art_list").asString()).equals(mapper.createArrayNode().add(listenerId))) {
+            throw new IllegalArgumentException("伊芙死亡监听技能配置变化：" + level);
+        }
+        var targets = battleTargets(listenerId);
+        var fixedTargets = row("buffart", listenerId);
+        var spec = battleBuff(listenerId);
+        var listener = battleTrigger(listenerId);
+        var healing = battleHealing(healId);
+        if (!targets.selectors().equals(List.of(3, 4)) || targets.count() != 6 || !targets.values().isEmpty()
+                || fixedTargets.path("source_type").asInt() != 0
+                || !mapper.readTree(fixedTargets.path("buff_list").asString()).equals(mapper.createArrayNode().add(listenerId))
+                || spec.type() != 180 || spec.duration() != 999
+                || row("buff", listenerId).path("attach_percent").asInt() != 10000
+                || !listener.arts().equals(List.of(new HeroBattleEventProcessor.Art(healId, 0, true)))
+                || !healing.targets().selectors().equals(List.of(1)) || healing.effects().size() != 1) {
+            throw new IllegalArgumentException("伊芙死亡治疗链配置变化：" + listenerId);
+        }
+        return List.of(new DamageArt(targets, List.of(listenerId)));
     }
 
     /** 预检恶魔魅影的敌方监听及死亡后施加给来源自身的暴击动作。 */
@@ -577,15 +988,18 @@ public class HeroSkillPanelRules {
         throw new IllegalArgumentException("未核对的控制属性效果：" + buffId);
     }
 
-    /** 仅识别已接通的 type160 固定攻击、护甲、暴击参数；详细校验交给固定属性入口。 */
+    /** 识别已接通的160号固定战斗属性，包括最终减伤以及对烧灼和烈火目标的增伤。 */
     private static boolean isFixedBattleAttribute(JsonNode buff) {
         var value = buff.path("value").asString();
         return buff.path("type").asInt() == 160
-            && (value.startsWith("201|") || value.startsWith("202|") || value.startsWith("207|"));
+            && (value.startsWith("101|") || value.startsWith("200|") || value.startsWith("201|")
+                || value.startsWith("202|") || value.startsWith("203|") || value.startsWith("207|")
+                || value.startsWith("226|") || value.startsWith("291|")
+                || value.startsWith("301|") || value.startsWith("306|"));
     }
 
     /**
-     * 旧 AbilityAdd/AbstractAttributeBuffHandler 按原整数加减201攻击、202护甲或207暴击万分比。
+     * 旧 AbilityAdd/AbstractAttributeBuffHandler 按属性池规定的整数单位加减固定属性。
      * 仅接必中、无子动作且后两项为0的固定形式，其他属性、概率和条件效果继续拒绝。
      */
     private ControlAttributeDefinition fixedBattleAttribute(int buffId) {
@@ -598,13 +1012,13 @@ public class HeroSkillPanelRules {
                 || !children.isArray() || !children.isEmpty()
                 || !buff.path("round").isIntegralNumber() || !buff.path("round").canConvertToInt()
                 || buff.path("round").asInt() < 0) {
-            throw new IllegalArgumentException("固定201/207属性动作含未支持形式：" + buffId);
+            throw new IllegalArgumentException("固定属性动作含未支持形式：" + buffId);
         }
         int amount;
         try {
             amount = Integer.parseInt(values[1]);
         } catch (NumberFormatException error) {
-            throw new IllegalArgumentException("固定201/207属性量超出原整数范围：" + buffId, error);
+            throw new IllegalArgumentException("固定属性量超出原整数范围：" + buffId, error);
         }
         return new ControlAttributeDefinition(buffId, Integer.parseInt(values[0]), amount, buff.path("round").asInt());
     }
@@ -678,7 +1092,7 @@ public class HeroSkillPanelRules {
         return count;
     }
 
-    /** 预检职业条件的自选一次性属性，或沿旧 copy_target 传递条件命中的固定属性。 */
+    /** 预检职业条件的自选一次性属性，以及继承命中目标的固定属性或直接追击。 */
     public boolean battleJobCondition(int buffId) {
         var buff = row("buff", buffId);
         if (buff.path("type").asInt() != 212) {
@@ -695,11 +1109,116 @@ public class HeroSkillPanelRules {
                     onceDamageAttribute(id);
                 }
             } else if (!(buff.path("copy_target").asInt() == 1 && art.targets().selectors().isEmpty()
-                    && art.buffs().stream().allMatch(this::battleDirectAttribute))) {
-                throw new IllegalArgumentException("职业条件子动作超出已核对的属性形式：" + buffId);
+                    && art.buffs().stream().allMatch(id -> battleDirectAttribute(id) || battleJobConditionDamage(id)))) {
+                throw new IllegalArgumentException("职业条件子动作超出已核对的属性或追击形式：" + buffId);
             }
         }
         return true;
+    }
+
+    /** 接受职业条件子动作的即时无反击伤害；后续子链、概率和附加参数必须另行预检。 */
+    public boolean battleJobConditionDamage(int buffId) {
+        var buff = row("buff", buffId);
+        if (maximumHpDamage(buffId) != null) {
+            return true;
+        }
+        if (buff.path("type").asInt() != 100) {
+            return false;
+        }
+        var values = buff.path("value").asString().split("\\|", -1);
+        if (buff.path("round").asInt() < 0 || buff.path("effecttype").asInt() != 0
+                || buff.path("copy_target").asInt() != 0 || values.length != 4
+                || !values[2].equals("0") || !values[3].equals("0")
+                || !mapper.readTree(buff.path("art_list").asString()).isEmpty()
+                || battleOrdinaryDamageRate(buffId) <= 0) {
+            throw new IllegalArgumentException("职业条件伤害超出已核对的即时追击形式：" + buffId);
+        }
+        return true;
+    }
+
+    /** 102号伤害按目标最大生命比例计算，再由来源攻击比例封顶，均为万分比。 */
+    public record MaximumHpDamage(int hpRate, int attackLimit) {}
+
+    /** 读取已核对的102号即时固定命中追击；其他类型返回null。 */
+    public MaximumHpDamage maximumHpDamage(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 102) {
+            return null;
+        }
+        var values = buff.path("value").asString().split("\\|", -1);
+        if (values.length != 4 || !values[1].equals("1") || !values[3].equals("0")
+                || Integer.parseInt(values[0]) <= 0 || Integer.parseInt(values[2]) <= 0
+                || buff.path("copy_target").asInt() != 0 || buff.path("round").asInt() != 0
+                || buff.path("attach_percent").asInt() != 10000
+                || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("最大生命追击含未支持参数：" + buffId);
+        }
+        return new MaximumHpDamage(Integer.parseInt(values[0]), Integer.parseInt(values[2]));
+    }
+
+    /** 旧164 AngerAddBuffHandler 对空子链没有状态或战报效果，保留原配置挂接行为。 */
+    private boolean inertLegacyAngerAdd(int buffId) {
+        var buff = row("buff", buffId);
+        return buff.path("type").asInt() == 164 && buff.path("copy_target").asInt() == 0
+            && buff.path("attach_percent").asInt() == 10000 && buff.path("round").asInt() == 0
+            && mapper.readTree(buff.path("art_list").asString()).isEmpty();
+    }
+
+    /** 仅接受旧表明确为零概率且零恢复的攻击转治疗子动作。 */
+    private boolean dormantDamageHealing(int buffId) {
+        var buff = row("buff", buffId);
+        return buff.path("type").asInt() == 132 && buff.path("attach_percent").asInt() == 0
+            && buff.path("value").asString().equals("0|0|0|0")
+            && mapper.readTree(buff.path("art_list").asString()).isEmpty();
+    }
+
+    /** 判断实际没有状态变化的已核对旧效果，用于执行预检通过的子链。 */
+    public boolean inertBattleEffect(int buffId) {
+        return inertLegacyAngerAdd(buffId) || dormantDamageHealing(buffId);
+    }
+
+    /** 预检219状态条件继承原目标，后续仅使用已核对的自身加成。 */
+    public boolean battleStatusCondition(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 219) {
+            return false;
+        }
+        statusConditionValues(buffId);
+        var children = immediateArts(buffId);
+        if (children.isEmpty() || children.stream().anyMatch(art -> !art.targets().selectors().equals(List.of(1)))) {
+            throw new IllegalArgumentException("状态条件后续目前只接施法者自身：" + buffId);
+        }
+        for (var art : children) {
+            for (int childId : art.buffs()) {
+                if (!dormantDamageHealing(childId)) {
+                    onceDamageAttribute(childId);
+                }
+            }
+        }
+        return true;
+    }
+
+    /** 旧219状态条件匹配任一指定类型；零值是占位，当前已核对中毒及烈火。 */
+    public Set<Integer> statusConditionValues(int buffId) {
+        var buff = row("buff", buffId);
+        if (buff.path("type").asInt() != 219 || buff.path("attach_percent").asInt() != 10000
+                || buff.path("round").asInt() != 0) {
+            throw new IllegalArgumentException("状态条件含未支持参数：" + buffId);
+        }
+        var statuses = new LinkedHashSet<Integer>();
+        for (String raw : buff.path("value").asString().split("\\|", -1)) {
+            int type = Integer.parseInt(raw);
+            if (type != 0 && type != 1203 && type != 1206) {
+                throw new IllegalArgumentException("状态条件类型尚未核对：" + buffId);
+            }
+            if (type != 0) {
+                statuses.add(type);
+            }
+        }
+        if (statuses.isEmpty()) {
+            throw new IllegalArgumentException("状态条件没有有效类型：" + buffId);
+        }
+        return Set.copyOf(statuses);
     }
 
     /** 旧CBuff.getValues包含value各项；职业1至5参与判定，0为配置占位。 */
@@ -724,16 +1243,26 @@ public class HeroSkillPanelRules {
         return Set.copyOf(jobs);
     }
 
-    /** 读取167的270一次性伤害加成；只作用于下一次真实读取，不能变为永久或逐目标加成。 */
+    /** 读取167号伤害、暴击及暴伤的一次性属性，由下一次实际读取消费。 */
     public ControlAttributeDefinition onceDamageAttribute(int buffId) {
         var buff = row("buff", buffId);
         var values = buff.path("value").asString().split("\\|", -1);
         if (buff.path("type").asInt() != 167 || buff.path("attach_percent").asInt() != 10000
-                || values.length != 4 || !values[0].equals("270") || !values[2].equals("0")
+                || values.length != 4 || !Set.of("207", "222", "270").contains(values[0]) || !values[2].equals("0")
                 || !values[3].equals("0") || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
             throw new IllegalArgumentException("未核实的一次性属性动作：" + buffId);
         }
-        return new ControlAttributeDefinition(buffId, 270, Integer.parseInt(values[1]), buff.path("round").asInt());
+        return new ControlAttributeDefinition(buffId, Integer.parseInt(values[0]),
+            Integer.parseInt(values[1]), buff.path("round").asInt());
+    }
+
+    /** 判断已核对的一次性属性；具体属性值由同一校验入口读取。 */
+    public boolean battleOnceAttribute(int buffId) {
+        if (row("buff", buffId).path("type").asInt() != 167) {
+            return false;
+        }
+        onceDamageAttribute(buffId);
+        return true;
     }
 
     /** 解析立即子动作的原选目标与Buff顺序；只供完成具体类型预检的执行路径使用。 */
@@ -756,8 +1285,8 @@ public class HeroSkillPanelRules {
         return List.copyOf(result);
     }
 
-    /** 只接受继承上下文的直接控制子链；普通伤害miss仍按旧流程继续该控制。 */
-    public boolean battleDamageControlFollowup(int buffId) {
+    /** 校验100号伤害的即时子动作，伤害未命中仍按旧规则进入独立后续判定。 */
+    public boolean battleDamageFollowup(int buffId) {
         if (row("buff", buffId).path("type").asInt() != 100) {
             return false;
         }
@@ -766,11 +1295,13 @@ public class HeroSkillPanelRules {
             return false;
         }
         for (var child : children) {
-            if (!child.targets().selectors().isEmpty()) {
-                return false;
-            }
             for (int id : child.buffs()) {
-                if (!battleSimpleControl(id)) {
+                var selectors = child.targets().selectors();
+                if (selectors.equals(List.of(1)) && battleDirectAttribute(id)) {
+                    continue;
+                }
+                if (!selectors.isEmpty() || !(battleSimpleControl(id) || battleDizzy(id) || battleRoundListener(id)
+                        || inertLegacyAngerAdd(id) || battleStatusCondition(id))) {
                     return false;
                 }
             }
@@ -823,15 +1354,19 @@ public class HeroSkillPanelRules {
         return List.copyOf(result);
     }
 
-    /** 预检无子动作的眩晕；其他控制类型仍拒绝，概率保留旧万分比配置。 */
+    /** 预检已核对的眩晕；有下游时只允许继承成功控制目标的职业条件。 */
     public boolean battleDizzy(int buffId) {
         var buff = row("buff", buffId);
         if (buff.path("type").asInt() != 1005) {
             return false;
         }
-        if (buff.path("effecttype").asInt() != 3
-            || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+        if (buff.path("effecttype").asInt() != 3) {
             throw new IllegalArgumentException("扩展眩晕效果尚未支持：" + buffId);
+        }
+        for (var child : immediateArts(buffId)) {
+            if (!child.targets().selectors().isEmpty() || !child.buffs().stream().allMatch(this::battleJobCondition)) {
+                throw new IllegalArgumentException("眩晕后续只接原目标的职业条件：" + buffId);
+            }
         }
         battleBuff(buffId);
         return true;
@@ -845,21 +1380,33 @@ public class HeroSkillPanelRules {
         return row("buff", buffId).path("attach_percent").asInt() / 10000D;
     }
 
-    /** 预检攻击比例型流血；未接入的子动作或其他数值形式拒绝，避免半组技能执行。 */
-    public boolean battleBleed(int buffId) {
+    /** 攻击比例回合伤害，包含真实Buff类型、攻击万分比及对应抗性属性。 */
+    public record AttackDamageOverTime(int type, int rate, double chance, int resistance) {}
+
+    /** 解析旧中毒1203和流血1205；两者沿相同回合处理器，但各自读取抗性。 */
+    public AttackDamageOverTime attackDamageOverTime(int buffId) {
         var buff = row("buff", buffId);
-        if (buff.path("type").asInt() != 1205) {
-            return false;
+        int type = buff.path("type").asInt();
+        if (type != 1203 && type != 1205) {
+            return null;
         }
-        var values = buff.path("value").asString().split("\\|");
+        var values = buff.path("value").asString().split("\\|", -1);
+        int chance = buff.path("attach_percent").asInt();
         if (buff.path("effecttype").asInt() != 2 || values.length != 4
             || !values[1].equals("0") || !values[2].equals("0") || !values[3].equals("0")
-            || Integer.parseInt(values[0]) < 0
+            || Integer.parseInt(values[0]) < 0 || chance < 0 || chance > 10000
             || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
-            throw new IllegalArgumentException("扩展流血尚未支持：" + buffId);
+            throw new IllegalArgumentException("扩展攻击比例回合伤害尚未支持：" + buffId);
         }
         battleBuff(buffId);
-        return true;
+        return new AttackDamageOverTime(type, Integer.parseInt(values[0]), chance / 10000D,
+            type == 1203 ? 323 : 325);
+    }
+
+    /** 判断原流血技能；中毒使用独立类型并共用回合伤害执行。 */
+    public boolean battleBleed(int buffId) {
+        var definition = attackDamageOverTime(buffId);
+        return definition != null && definition.type() == 1205;
     }
 
     /** 返回流血附加万分率；执行器仍读取目标325抗性，包括零概率配置。 */
@@ -867,7 +1414,7 @@ public class HeroSkillPanelRules {
         if (!battleBleed(buffId)) {
             throw new IllegalArgumentException("不是流血配置：" + buffId);
         }
-        return row("buff", buffId).path("attach_percent").asInt() / 10000D;
+        return attackDamageOverTime(buffId).chance();
     }
 
     /** 每次回合伤害按施法者当时攻击乘此万分比，不在安装时快照攻击力。 */
@@ -875,7 +1422,7 @@ public class HeroSkillPanelRules {
         if (!battleBleed(buffId)) {
             throw new IllegalArgumentException("不是流血配置：" + buffId);
         }
-        return Integer.parseInt(row("buff", buffId).path("value").asString().split("\\|")[0]);
+        return attackDamageOverTime(buffId).rate();
     }
 
     /**
@@ -938,13 +1485,17 @@ public class HeroSkillPanelRules {
         return Integer.parseInt(counts[0]);
     }
 
-    /** 201回合开始监听预检；仅允许必中安装和其后续纯100号动作，避免隐藏未知效果。 */
+    /** 201回合开始监听保留施加者与携带者，只允许已核对的回合下游。 */
     public boolean battleRoundListener(int buffId) {
         var buff = row("buff", buffId);
         if (buff.path("type").asInt() != 201) return false;
         if (buff.path("attach_percent").asInt() != 10000) throw new IllegalArgumentException("回合监听概率尚未接入");
-        for (var art : mapper.readTree(buff.path("art_list").asString())) {
-            if (!isDamageArt(art.asInt())) throw new IllegalArgumentException("回合监听后续动作尚未支持");
+        for (var art : immediateArts(buffId)) {
+            for (int childId : art.buffs()) {
+                if (attackHealing(childId) == null && !battleJobCondition(childId)) {
+                    battleOrdinaryDamageRate(childId, true);
+                }
+            }
         }
         battleBuff(buffId);
         return true;
@@ -1098,19 +1649,25 @@ public class HeroSkillPanelRules {
                 throw new IllegalArgumentException("静态被动目标或动作尚未核对：" + artId.asInt());
             }
             for (var buffId : buffs) {
-                var buff = row("buff", buffId.asInt());
-                var values = buff.path("value").asString().split("\\|", -1);
-                if (values.length != 4 || !values[2].equals("0") || !values[3].equals("0")
-                    || (buff.path("type").asInt() == 163 && !values[1].equals("0"))) {
-                    throw new IllegalArgumentException("静态被动包含条件属性：" + buffId.asInt());
-                }
-                if (!Set.of(160, 163).contains(buff.path("type").asInt())
-                    || buff.path("round").asInt() != 999
-                    || buff.path("attach_percent").asInt() != 10000
-                    || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
-                    throw new IllegalArgumentException("静态被动包含未核对效果：" + buffId.asInt());
-                }
+                validatePanelAttribute(buffId.asInt());
             }
+        }
+    }
+
+    /** 旧BattleTemplate直接把163万分比计入初始属性，包括round=0的静态形式。 */
+    private void validatePanelAttribute(int buffId) {
+        var buff = row("buff", buffId);
+        var values = buff.path("value").asString().split("\\|", -1);
+        int type = buff.path("type").asInt();
+        int rounds = buff.path("round").asInt();
+        if (values.length != 4 || !values[2].equals("0") || !values[3].equals("0")
+                || (type == 163 && !values[1].equals("0"))) {
+            throw new IllegalArgumentException("静态被动包含条件属性：" + buffId);
+        }
+        if (!Set.of(160, 163).contains(type) || (rounds != 999 && !(type == 163 && rounds == 0))
+                || buff.path("attach_percent").asInt() != 10000
+                || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
+            throw new IllegalArgumentException("静态被动包含未核对效果：" + buffId);
         }
     }
 

@@ -70,7 +70,7 @@ export interface BattleReplayStep {
     /** 技能起止使用真实等级和类型，非技能事件为null。 */
     readonly skillLevel: number | null;
     readonly skillType: number | null;
-    /** 实际血量用于血条，旧战报血量用于飘字，两者不得合并。 */
+    /** 扣血、治疗或复活的实际变更用于血条，报告变更用于飘字。 */
     readonly actualHpChange: number | null;
     readonly reportedHpChange: number | null;
     readonly dead: boolean | null;
@@ -170,6 +170,8 @@ export class BattleReplayUtils {
 
     /**
      * 解码并完整校验关卡、副本战报及旧具名样本，一次返回步骤、名册及冻结名称。
+     * 死亡到可行动的血量变化只给有技能上下文的同阵营复活事件。
+     * 同阶段保留权威反击顺序，回合伤害先于过期时按死亡移除已登记实例。
      * 校验失败保留原错误，不交付部分结果。成功仅确认战报数据有效，技能表现资源另行核对。
      */
     public static parse(bytes: Uint8Array): ParsedBattleReplay {
@@ -200,6 +202,7 @@ export class BattleReplayUtils {
             this.validateGoldDungeonRoster(roster);
         }
         const hp = new Map<number, number>();
+        const faction = new Map(roster.map(unit => [unit.unitId, unit.faction]));
         const expected = report.scenario === "audit:charm-death"
             ? [[1, 1, 10105011, 2, 50], [2, 2, 10101001, 5, 25], [3, 2, 10101001, 6, 25], [4, 2, 10101001, 7, 25]]
             : report.scenario === "audit:charm"
@@ -242,14 +245,15 @@ export class BattleReplayUtils {
             } else if (!hp.has(phase.sourceId) || phase.round !== round || round === 0) {
                 throw new Error("战报出手阶段无效");
             }
-            let skill = 0;
+            let skill: WireEvent | null = null;
+            const hitByPhaseSource = new Set<number>();
+            const deathsInPhase = new Set<number>();
             for (const [eventIndex, event] of phase.events.entries()) {
                 if (!hp.has(event.sourceId) || !hp.has(event.targetId) || event.configId <= 0) {
                     throw new Error("战报事件单位或配置无效");
                 }
                 const isSkill = event.kind === "skill.begin" || event.kind === "skill.end";
-                const isDamage = event.kind === "damage";
-                const isRecovery = event.kind === "recovery";
+                const isHealthChange = event.kind === "damage" || event.kind === "recovery" || event.kind === "revival";
                 const isBuff = event.kind === "buff.upsert" || event.kind === "buff.remove";
                 if (idleMission && isSkill && event.skillType !== 2) throw new Error("挂机战报只能使用普攻");
                 if (isSkill) {
@@ -259,11 +263,13 @@ export class BattleReplayUtils {
                         throw new Error("战报技能等级或类型无效");
                     }
                 }
-                if (isDamage || isRecovery) this.required(event, ["actualHpChange", "reportedHpChange", "dead"]);
+                if (isHealthChange) this.required(event, ["actualHpChange", "reportedHpChange", "dead"]);
                 if (isBuff) {
                     this.required(event, ["buffInstanceId", "expiresAtRound", "buffValue"]);
-                    const previousRoundExpiry = event.kind === "buff.remove" && event.removalReason === "expire"
-                        && phase.sourceId === 0 && event.expiresAtRound === round - 1;
+                    const previousRoundExpiry = event.kind === "buff.remove" && phase.sourceId === 0
+                        && event.expiresAtRound === round - 1 && (event.removalReason === "expire"
+                            || (event.removalReason === "death" && deathsInPhase.has(event.targetId)
+                                && hp.get(event.targetId) === 0));
                     if (!Number.isInteger(event.expiresAtRound) || event.expiresAtRound <= 0
                         || (event.expiresAtRound < round && !previousRoundExpiry)) {
                         throw new Error("Buff期限无效");
@@ -282,13 +288,22 @@ export class BattleReplayUtils {
                     }
                 }
                 switch (event.kind) {
-                    case "skill.begin":
-                        if (!phase.sourceId || skill || event.sourceId !== phase.sourceId) throw new Error("技能开始顺序无效");
-                        skill = event.configId;
+                    case "skill.begin": {
+                        // 旧受击反击在原技能结束后出队，只能由刚受击的活敌方单位普攻击回阶段行动者。
+                        const counter = event.skillType === 2 && event.targetId === phase.sourceId
+                            && hitByPhaseSource.has(event.sourceId) && faction.get(event.sourceId) !== faction.get(phase.sourceId)
+                            && hp.get(event.sourceId)! > 0 && hp.get(event.targetId)! > 0;
+                        if (!phase.sourceId || skill || (event.sourceId !== phase.sourceId && !counter)) {
+                            throw new Error("技能开始顺序无效");
+                        }
+                        skill = event;
                         break;
+                    }
                     case "skill.end":
-                        if (!skill || event.configId !== skill) throw new Error("技能结束不匹配");
-                        skill = 0;
+                        if (!skill || event.configId !== skill.configId || event.sourceId !== skill.sourceId) {
+                            throw new Error("技能结束不匹配");
+                        }
+                        skill = null;
                         break;
                     case "presentation":
                         if (!skill) throw new Error("表现缺少技能上下文");
@@ -304,17 +319,32 @@ export class BattleReplayUtils {
                             throw new Error("战报扣血或死亡状态无效");
                         }
                         hp.set(event.targetId, next);
+                        if (skill?.sourceId === phase.sourceId && event.sourceId === phase.sourceId) {
+                            hitByPhaseSource.add(event.targetId);
+                        }
+                        if (event.dead) {
+                            deathsInPhase.add(event.targetId);
+                        }
                         break;
                     }
-                    case "recovery": {
+                    case "recovery":
+                    case "revival": {
                         const before = hp.get(event.targetId)!;
-                        const maximum = roster.find(unit => unit.unitId === event.targetId)!.maxHp;
+                        const target = roster.find(unit => unit.unitId === event.targetId)!;
+                        const maximum = target.maxHp;
                         const change = this.integer(event.actualHpChange, true);
                         const reported = this.integer(event.reportedHpChange, true);
                         const next = before + change;
-                        if (before <= 0 || next <= 0 || next > maximum || !Number.isSafeInteger(next)
+                        const reviving = event.kind === "revival";
+                        if (reviving) {
+                            const source = roster.find(unit => unit.unitId === event.sourceId)!;
+                            if (!skill || before !== 0 || change <= 0 || source.faction !== target.faction) {
+                                throw new Error("战报复活目标或技能上下文无效");
+                            }
+                        }
+                        if ((!reviving && before <= 0) || next <= 0 || next > maximum || !Number.isSafeInteger(next)
                             || event.dead || change !== Math.min(reported, maximum - before)) {
-                            throw new Error("战报治疗血量或溢出量无效");
+                            throw new Error(reviving ? "战报复活血量或溢出量无效" : "战报治疗血量或溢出量无效");
                         }
                         hp.set(event.targetId, next);
                         break;
@@ -329,7 +359,8 @@ export class BattleReplayUtils {
                         const previous = buffs.get(key);
                         if (!previous || previous.configId !== event.configId) throw new Error("移除了不存在的Buff");
                         if (previous.expiresAtRound !== event.expiresAtRound
-                            || (event.expiresAtRound < round && previous.appliedRound !== event.expiresAtRound)) {
+                            || (event.removalReason === "expire" && event.expiresAtRound < round
+                                && previous.appliedRound !== event.expiresAtRound)) {
                             throw new Error("Buff移除期限与原实例不一致");
                         }
                         buffs.delete(key);
@@ -341,9 +372,9 @@ export class BattleReplayUtils {
                     targetId: event.targetId, configId: event.configId,
                     skillLevel: isSkill ? event.skillLevel : null,
                     skillType: isSkill ? event.skillType : null,
-                    actualHpChange: (isDamage || isRecovery) ? this.integer(event.actualHpChange, true) : null,
-                    reportedHpChange: (isDamage || isRecovery) ? this.integer(event.reportedHpChange, true) : null,
-                    dead: (isDamage || isRecovery) ? event.dead : null,
+                    actualHpChange: isHealthChange ? this.integer(event.actualHpChange, true) : null,
+                    reportedHpChange: isHealthChange ? this.integer(event.reportedHpChange, true) : null,
+                    dead: isHealthChange ? event.dead : null,
                     buffInstanceId: isBuff ? this.instance(event.buffInstanceId) : null,
                     expiresAtRound: isBuff ? event.expiresAtRound : null,
                     buffValue: isBuff ? event.buffValue.toString() : null,

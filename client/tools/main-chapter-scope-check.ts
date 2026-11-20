@@ -459,7 +459,7 @@ async function encounterDelivery(): Promise<void> {
     }
 }
 
-/** 可选真实Java帧检查只读全局关卡与当前范围分权，默认专项不依赖旧target产物。 */
+/** 可选真实 Java 帧验证保留服务端下发的范围，支持不同开放配置的测试产物。 */
 async function interop(): Promise<void> {
     for (const argument of process.argv.filter(value => value.startsWith("--java="))) {
         const wire = GameProtocolCodecUtils.decodeGameFrame(readFileSync(argument.slice(7)));
@@ -491,7 +491,9 @@ async function interop(): Promise<void> {
         } else {
             assert([Protocol.SESSION_LOGIN, Protocol.SESSION_AUTHENTICATE, Protocol.STATE_CHANGED].includes(wire.name as any));
             const snapshot = wire.name === Protocol.STATE_CHANGED ? body : body.initial;
-            assert.equal(MainChapterModel.readState(snapshot.mainChapter, snapshot.revision)!.challengeLimit, 20);
+            const chapter = snapshot.mainChapter;
+            assert(Number.isSafeInteger(chapter.challengeLimit) && chapter.challengeLimit > 0);
+            assert.equal(MainChapterModel.readState(chapter, snapshot.revision)!.challengeLimit, chapter.challengeLimit);
         }
         console.log("Java全局主线/挑战范围PB互通通过：" + wire.name + " " + argument.slice(7));
     }

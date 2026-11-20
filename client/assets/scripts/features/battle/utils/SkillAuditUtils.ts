@@ -63,7 +63,7 @@ export class SkillAuditUtils {
 
     /**
      * 完整校验真实战报及本场动作，再提取实际出手的英雄/技能/等级。
-     * 战报步骤和单位身份取自同一次校验；整场存在不支持的动作时由开发目录记录失败并跳过。
+     * 战报步骤和单位身份取自同一次校验；包括复活的旧配置。存在不支持的动作时由开发目录记录失败。
      */
     public static inspectReplay(fixture: string, bytes: Uint8Array,
         config = GameConfig.instance): readonly SkillAuditEvidence[] {
@@ -73,12 +73,15 @@ export class SkillAuditUtils {
         const { steps, units } = BattleReplayUtils.parse(bytes);
         const rows = (config.getFileByPath("config/buff") as { rows: readonly AuditBuffRow[] }).rows;
         for (const step of steps) {
-            if (!["presentation", "buff.upsert", "damage", "recovery"].includes(step.kind)) {
+            if (!["presentation", "buff.upsert", "damage", "recovery", "revival"].includes(step.kind)) {
                 continue;
             }
             const row = rows.find(value => value.idx === step.configId);
             if (!row) {
                 throw new Error("演示缺少战斗配置：" + step.configId);
+            }
+            if (step.kind === "revival" && row.type !== 154) {
+                throw new Error("演示复活类型不符：" + step.configId);
             }
             if (step.kind === "presentation") {
                 for (const action of BattleAttackUtils.legacyActions(row)) {

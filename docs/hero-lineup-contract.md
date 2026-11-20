@@ -1,6 +1,6 @@
 # 英雄与主线阵容维护契约
 
-更新于 2026-11-18。当前事实以本节、[英雄数据契约](hero-data-contract.md)、[通信契约](network-contract.md)和[开发进度](development-progress.md)为准。下方按日期保留旧规则核查和实现过程。历史 HTTP 和初始化赠送记录仅供追溯。
+更新于 2026-11-20。当前事实以本节、[英雄数据契约](hero-data-contract.md)、[通信契约](network-contract.md)和[开发进度](development-progress.md)为准。下方按日期保留旧规则核查和实现过程。历史 HTTP 和初始化赠送记录仅供追溯。
 
 ## 当前代码与开放范围
 
@@ -8,7 +8,7 @@
 |---|---|---|
 | 名册与详情 | 登录、恢复、state.changed → AssetStateBinding → HeroRosterController → HeroRosterModel → HeroListView / HeroInfoView | 统一提供技能、普通四槽、已有属性和个人战力。详情箭头沿进入时的筛选顺序切换英雄 |
 | 主线布阵 | FormationView 草稿 → FormationController → formation.save → FormationSaveModel；权威阵容仍随统一快照写 HeroRosterModel | 持久幂等保存及版本等待已接入；页面关闭不销毁模块，草稿不提前写 Model |
-| 主线战斗 | MainChapterController → chapter.challenge/claim/replay/idle.encounter | 默认第1～20关挑战、幂等结算及挂机演出 |
+| 主线战斗 | MainChapterController → chapter.challenge/claim/replay/idle.encounter | 默认第 1～300 关挑战、幂等结算及挂机演出 |
 | 普通升级 | HeroInfoView → HeroLevelController → hero.level.upgrade → 统一快照 | 按旧级数、金币/经验消耗及阶星上限普通升级，持久回执确认后更新界面 |
 | 普通装备 | HeroInfoView、HeroEquipmentPickerView 或 EquipmentInfoView → HeroEquipmentController → hero.equipment.change | 单件穿戴、换装、卸下、一键穿装及卸下。库存和槽位由同一版快照刷新 |
 

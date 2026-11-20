@@ -61,6 +61,7 @@ const suites = [
   ["reward-view", "ts", "client/tools/reward-view-check.ts"],
   ["confirm-view", "ts", "client/tools/confirm-view-check.ts"],
   ["battle-presentation", "ts", "client/tools/battle-presentation-audit.ts"],
+  ["battle-revival", "ts", "client/tools/battle-revival-check.ts"],
   ["battle-hunter-noah-actions", "ts", "client/tools/battle-hunter-noah-actions-check.ts"],
   ["battle-frost-winter-actions", "ts", "client/tools/battle-frost-winter-actions-check.ts"],
   ["battle-thorn-actions", "ts", "client/tools/battle-thorn-actions-check.ts"],

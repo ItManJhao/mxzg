@@ -1,5 +1,5 @@
 /**
- * 静态核对英雄初始星级、强化0的技能动作与帧资源，供主线接入前发现缺口。
+ * 静态核对英雄初始星级、强化0的技能动作与帧资源，并锁定主线已核对的替换普攻和多等级动作。
  * 调用实际BattleAttackUtils覆盖与解析；只读配置，不连接服务器，不代表技能规则或画面验收。
  * 默认将本次结果写入client/temp，不与历史快照硬比较；完整关卡的保留证据由主线依赖审计生成。
  */
@@ -15,6 +15,67 @@ function rows(name: string): any[] {
     return JSON.parse(readFileSync(`client/assets/bundles/resources/config/${name}.json`, "utf8")).rows;
 }
 
+/** 第103关的替换普攻保留原目标附身、14帧、原音效、暗屏及角色近身回程。 */
+function verifyRipperReplacement(buffs: ReadonlyMap<number, any>): void {
+    const buff = buffs.get(3115201);
+    assert.ok(buff, "开膛手·J一级替换普攻动作缺失");
+    const actions = BattleAttackUtils.legacyActions(buff);
+    assert.deepEqual(actions.map(action => [action.type, action.delay, action.dimly]), [[7, 0, 1], [11, 0, 1]]);
+    const effect = BattleAttackUtils.plan(actions[0]);
+    assert.ok(effect.effectOnly && !effect.onSource && effect.effect);
+    assert.deepEqual(effect.effect.paths, Array.from({ length: 14 }, (_, index) =>
+        `effects/skill/skill-103050110/skill-103050110_${index}/spriteFrame`));
+    for (const frame of effect.effect.paths) {
+        assert.ok(existsSync(resolveBundleFile(frame.replace("/spriteFrame", ".png"))), `缺少帧资源 ${frame}`);
+    }
+    assert.equal(effect.effect.interval, 0.08);
+    assert.equal(effect.effect.scaleX, -1);
+    assert.deepEqual(effect.sounds, ["skill-103050110"]);
+    assert.ok(existsSync(resolveBundleFile("audio/skill-103050110.mp3")), "开膛手·J普攻音效缺失");
+    const attack = BattleAttackUtils.plan(actions[1]);
+    assert.ok(attack.melee && !attack.effect);
+    assert.deepEqual([attack.moveSeconds, attack.attackDelaySeconds, attack.beforeReturnSeconds], [0.1, 0.2, 2]);
+    assert.deepEqual(attack.sounds, []);
+}
+
+/** 核对第111～300关额外使用的旧覆盖、技能等级时序、帧和原音效文件。 */
+function verifyChapterProgressionOverrides(buffs: ReadonlyMap<number, any>): void {
+    for (const id of [2113101, 2113102, 2155201, 2155202, 3115202, 2081101, 2081102, 2081103, 3061103]) {
+        assert.ok(buffs.has(id), `主线旧动作缺失 ${id}`);
+    }
+    for (const id of [2113101, 2113102, 2155201, 2155202]) {
+        const octopus = id < 2155201;
+        const actions = BattleAttackUtils.legacyActions(buffs.get(id));
+        assert.deepEqual(actions.map(action => [action.type, action.delay, action.dimly]),
+            octopus ? [[3, 0, 0], [7, 60, 0]] : [[7, 10, 1], [3, 0, 1]]);
+        const caster = BattleAttackUtils.plan(actions[octopus ? 0 : 1]);
+        assert.deepEqual([caster.action, caster.attackSeconds, caster.actionSeconds],
+            octopus ? ["attack3", 0, 2] : ["attack", 0.6, 1.8]);
+        const effect = BattleAttackUtils.plan(actions[octopus ? 1 : 0]);
+        const file = octopus ? "skill-102050113" : "skill-102050150";
+        assert.ok(effect.effectOnly && !effect.onSource && effect.effect);
+        assert.equal(effect.effect.paths.length, octopus ? 20 : 14);
+        assert.equal(effect.effect.interval, octopus ? 0.05 : 0.08);
+        assert.deepEqual(effect.sounds, [file]);
+        for (const frame of effect.effect.paths) {
+            assert.ok(existsSync(resolveBundleFile(frame.replace("/spriteFrame", ".png"))), `缺少帧资源 ${frame}`);
+        }
+        assert.ok(existsSync(resolveBundleFile(`audio/${file}.mp3`)), `缺少旧音效 ${file}`);
+    }
+    for (const id of [2081101, 2081102, 2081103]) {
+        const [first, second] = BattleAttackUtils.legacyActions(buffs.get(id));
+        const plan = BattleAttackUtils.plan(first);
+        assert.equal(plan.attackSeconds, id === 2081101 ? 0.8 : 0.3);
+        assert.equal(plan.effect?.interval, id === 2081101 ? 0.048 : 0.1);
+        assert.equal(second.delay, 50);
+        assert.equal(BattleAttackUtils.plan(second).effect?.paths.length, 44);
+    }
+    const ripper = BattleAttackUtils.legacyActions(buffs.get(3115202));
+    assert.deepEqual(ripper.map(action => [action.type, action.delay, action.dimly]), [[7, 0, 1], [11, 0, 1]]);
+    const wind = BattleAttackUtils.legacyActions(buffs.get(3061103));
+    assert.deepEqual(wind.map(action => [action.type, action.delay, action.dimly]), [[3, 0, 1], [9, 50, 0], [1, 0, 0]]);
+}
+
 /** 沿模板→技能→动作→表现检查并保存当前结果；历史可解析模板及反馈阵容不能倒退，不覆盖历史证据。 */
 function main(): void {
     assert.deepEqual(process.argv.slice(2), [], "本工具不接受覆盖历史报告的参数；保留批次请使用主线依赖审计的snapshot参数");
@@ -23,6 +84,8 @@ function main(): void {
     const upgrade = rows("heroupgrade").find(row => row.grade === 0);
     const arts = new Map(rows("buffart").map(row => [row.idx, row]));
     const buffs = new Map(rows("buff").map(row => [row.idx, row]));
+    verifyRipperReplacement(buffs);
+    verifyChapterProgressionOverrides(buffs);
     const heroes = rows("herotype").map(hero => {
         const star = stars.find(row => row.star === hero.star);
         const checked = new Set<number>();

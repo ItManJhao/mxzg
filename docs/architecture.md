@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新于 2026-11-19。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
+更新于 2026-11-20。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -8,7 +8,7 @@
 
 ## 客户端统一采用模块级 MVC
 
-Model 保存唯一状态。Controller 发出玩法请求、登记和接收协议、提交 Model 并通知界面。View 读取 Model，把玩家操作交给所属 Controller。背包是标准模块。当前维护登录、角色、背包、英雄详情、普通升级与装备穿脱、主线阵容、第1～20关挑战与结算、挂机、独立通关奖励及第15关里程碑领取。基础、友情、高级召唤和积分兑换可获得英雄，精英碎片也可合成英雄。挂机新领取只在 local 默认启用。强化进阶、祈愿购买和快速战斗待恢复。
+Model 保存唯一状态。Controller 发出玩法请求、登记和接收协议、提交 Model 并通知界面。View 读取 Model，把玩家操作交给所属 Controller。背包是标准模块。当前维护登录、角色、背包、英雄详情、普通升级与装备穿脱、主线阵容、第 1～300 关挑战与结算、挂机、独立通关奖励及第 15、30、50、80、110、140 关里程碑领取。基础、友情、高级召唤和积分兑换可获得英雄，精英碎片也可合成英雄。挂机新领取只在 local 默认启用。强化进阶、祈愿购买和快速战斗待恢复。
 
 - BagController 发送精英碎片合成请求，接收库存快照和本次合成回包。库存经 BagModel 提交后由 BagEvent 通知界面。
 - BagModel：唯一背包状态，分别保存普通堆叠、期限物品和精灵独立实例，整批校验/冻结后计算差异；不联网、不依赖View，不按itemId合并精灵。
@@ -39,7 +39,7 @@ FormationController 每次确认发送一次保存请求。FormationSaveModel �
 
 MainChapterRules读取全部850条同源chapterreward，按全局idx保存门槛、首通奖励和酒馆上限，并关联原mode/chapter/mission敌方定位。MainChapterService的新挑战、HeroLineupBattleService的只读试战、挂机遇敌及战报来源统一传全局idx；持久Details中历史字段mission也保存全局idx，不能在章节或模式切换后把小关号当进度。HeroBattleChapterScenario.enemies按配置构建真实NPC成长、原顺序属性修正及完整技能，正式savedFormation/idle入口不再借固定三关initial模板；initial及固定审计场景只保留独立测试用途。
 
-完整目录与开放权限分开。服务端可信`mxzg.main-chapter.challenge-limit`（环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`）默认20，只限制全新挑战，开放连续第1～20关。MainChapterRewardService按开放段预检真实敌方、挂机投影及共享发奖支持，缺项拒绝装配。第10～20关已补对应通用控制、目标选择与旧动作/帧；其余关卡不会因为静态可解析而自动开放。IdleRules现按同源chapterreward导出850个全局idx的基础量与掉落组，完整配置不等于850关战斗已恢复。装备、符文、先手或未支持技能仍保留明确边界。
+完整目录与开放权限分开。服务端可信`mxzg.main-chapter.challenge-limit`（环境变量`MXZG_MAIN_CHAPTER_CHALLENGE_LIMIT`）默认 300，只限制全新挑战，开放连续第 1～300 关。MainChapterRewardService按开放段预检真实敌方、挂机投影及共享发奖支持，缺项拒绝装配。第 10～300 关已分批补齐实际守军所需的控制、目标选择与动作表现。后续关卡由独立测试服回归连续实战、结算及奖励，Creator 本机抽验新增动作、地图切换和关键领奖。IdleRules现按同源chapterreward导出850个全局idx的基础量与掉落组，完整配置不等于850关战斗已恢复。装备、符文、先手或未支持技能仍保留明确边界。
 
 MainChapterState可选`challengeLimit`来自字段5，统一首包、提交事件及重新鉴权沿原快照交付，SessionSnapshotService对齐revision时同时保留它与里程碑集合。旧回执缺字段保持null/未记录，客户端缺当前范围时禁新挑战，不默认0或猜开放上限。新挑战读最新MainChapterModel.state的范围；已经存在的pending、原requestId回执、claim及replay优先恢复，不被缩小后的范围阻断。maxCleared可高于当前范围，不能因此拒绝合法旧进度或用历史回执回写当前范围；不新增Model、同步请求或恢复队列。
 

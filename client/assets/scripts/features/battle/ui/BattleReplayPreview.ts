@@ -61,10 +61,14 @@ export class BattleReplayPreview {
         // 一个旧Buff可展开多个并行表现，索引仅供本页资源缓存使用，不修改权威事件。
         const expanded = new Map<number, readonly BuffRow[]>();
         for (const step of steps) {
-            if (step.kind === "presentation" || step.kind === "buff.upsert" || step.kind === "damage" || step.kind === "recovery") {
+            if (step.kind === "presentation" || step.kind === "buff.upsert" || step.kind === "damage"
+                || step.kind === "recovery" || step.kind === "revival") {
                 const row = rows.find(row => row.idx === step.configId);
                 if (!row) throw new Error("缺少战斗表现配置：" + step.configId);
                 if (step.kind === "damage" && row.type === 100) BattleAttackUtils.damageSounds(row);
+                if (step.kind === "revival" && row.type !== 154) {
+                    throw new Error("战报复活表现与旧技能类型不符：" + step.configId);
+                }
                 if (step.kind === "presentation") {
                     const actions = BattleAttackUtils.legacyActions(row);
                     for (const action of actions) {
@@ -658,6 +662,7 @@ export class BattleReplayPreview {
                     && selected.get(step.configId)?.type === 234,
                 /**
                  * 播放真实步骤或旧覆盖子动作；type8按战场比例往返，空动作仅等待配置延迟。
+                 * 复活按服务端实际血量重新显示原骨骼和血条，报告值仍用于飘字。
                  * 独立帧及投射不延长角色动作，仍归本战场持有；关闭后丢弃迟到回调，活跃帧失败统一取消。
                  */
                 play: async function play(step, targets = [step]) {
@@ -860,9 +865,16 @@ export class BattleReplayPreview {
                             if (step.dead) actors.get(step.targetId)!.node.active = false;
                             else actors.get(step.targetId)!.play("stand");
                         }
-                    } else if (step.kind === "recovery") {
-                        // 回血不会播放受击/死亡；飘字使用旧报告值，血条只使用实际值，包含满血溢出治疗。
-                        record("单位" + step.targetId + " 治疗" + step.reportedHpChange);
+                    } else if (step.kind === "recovery" || step.kind === "revival") {
+                        if (step.kind === "revival") {
+                            const actor = actors.get(step.targetId)!;
+                            actor.node.active = true;
+                            actor.play("stand");
+                            record("单位" + step.targetId + " 复活");
+                        } else {
+                            record("单位" + step.targetId + " 治疗" + step.reportedHpChange);
+                        }
+                        // 治疗与复活共用旧报告值飘字；实际血量单独驱动血条和胜负。
                         hp(step.targetId, step.hpByUnit[step.targetId]);
                         const target = slots.get(step.targetId)!;
                         const point = shell.root.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
@@ -874,7 +886,8 @@ export class BattleReplayPreview {
                         else active.delete(step.buffInstanceId!);
                         const type = selected.get(step.configId)?.type;
                         paintBuffs(step.targetId, { kind: step.kind === "buff.upsert" ? "upsert" : "remove", type: type! });
-                        const name = type === 1205 ? "流血" : type === 1004 ? "冰冻" : type === 1005 ? "眩晕"
+                        const name = type === 1203 ? "中毒" : type === 1205 ? "流血"
+                            : type === 1004 ? "冰冻" : type === 1005 ? "眩晕"
                             : type === 1006 ? "石化" : type === 1001 ? "沉默" : type === 1014 ? "深睡" : type === 234 ? "格挡盾"
                             : step.configId >= 2233301 && step.configId <= 2233303 ? "降攻"
                             : step.configId >= 2231201 && step.configId <= 2231203 ? "降护甲" : "状态";

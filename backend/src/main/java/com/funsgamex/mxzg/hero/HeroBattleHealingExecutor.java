@@ -1,6 +1,6 @@
 /**
  * 每场战斗独立的治疗/契约及普通与105伤害子集执行器：配置→目标→事件→生命/Buff变化。
- * 支持通用治疗、固定属性、职业条件、控制及格挡盾；不支持控制改选/临时目标数。
+ * 支持通用治疗、固定属性、承伤阈值、攻击偷取、职业条件、控制及格挡盾；不支持控制改选/临时目标数。
  * 不写资产、不生成奖励，配置预检以外的效果仍拒绝，不代表完整技能引擎。
  */
 package com.funsgamex.mxzg.hero;
@@ -51,11 +51,18 @@ public final class HeroBattleHealingExecutor implements Executor {
     /** 已支持场景的执行顺序记录；非对应类型的载荷为null，不作为网络协议。 */
     public record Trace(String kind, int round, int sourceId, int targetId, int configId,
                         HeroBattleSkillUtils.Skill skill, Damage damage,
-                        HeroBattleBuffState.Entry buff, String reason, Recovery recovery) {
+                        HeroBattleBuffState.Entry buff, String reason, Recovery recovery, long speedDelta) {
         /** 非治疗事件不携带治疗记录，保留既有事件构建入口。 */
         public Trace(String kind, int round, int sourceId, int targetId, int configId,
                      HeroBattleSkillUtils.Skill skill, Damage damage, HeroBattleBuffState.Entry buff, String reason) {
             this(kind, round, sourceId, targetId, configId, skill, damage, buff, reason, null);
+        }
+
+        /** 原有事件保持零速度增量，只有固定速度Buff的增减记录真实差值。 */
+        public Trace(String kind, int round, int sourceId, int targetId, int configId,
+                     HeroBattleSkillUtils.Skill skill, Damage damage, HeroBattleBuffState.Entry buff, String reason,
+                     Recovery recovery) {
+            this(kind, round, sourceId, targetId, configId, skill, damage, buff, reason, recovery, 0);
         }
     }
     /** 本场顺序记录，与根事务一起回滚；不把不同类型的独立列表事后拼接。 */
@@ -80,6 +87,10 @@ public final class HeroBattleHealingExecutor implements Executor {
         final int damageType;
         /** 待执行反击按产生顺序存放。 */
         final Deque<CounterAction> queue = new ArrayDeque<>();
+        /** 当前出手单位编号，每次出手或排队反击开始时替换；其他单位的即时伤害不写入此结果。 */
+        int damageSourceId;
+        /** 当前单位最近一次普通伤害判定，包含未命中及扣血前的原值；每次出手或反击开始时清空。 */
+        HeroBattleDamageAction.Result lastDamage;
         /** 当前技能目标上下文与是否为普攻反击。 */
         int target;
         boolean queued;
@@ -103,6 +114,8 @@ public final class HeroBattleHealingExecutor implements Executor {
 
     /** 当前伤害帧仅在187/188/189和伤害处理期间有效，额外伤害不重入189。 */
     private DamageFrame damageFrame;
+    /** 177触发期间使用当前命中的战报伤害；嵌套扣血结束后恢复外层记录。 */
+    private Damage healthThresholdDamage;
     /** 成功的伤害记录；根动作失败时与血量及Buff一起回滚。 */
     private final List<Damage> damages = new ArrayList<>();
     /** 配置计算伤害、护盾消耗、旧战报扣血与实际血量变化分别保留。 */
@@ -171,12 +184,14 @@ public final class HeroBattleHealingExecutor implements Executor {
 
 
     }
-    /** 目标附带本场速度读取函数，仅14排序比较消费旧属性池，不预读或使用UI速度。 */
+    /** 供按速度、攻击或状态选择的目标延后读取本场属性，普通定位只读快照。 */
     private HeroBattleTargetUtils.Unit target(State unit) {
-        var data = combat.get(unit.actor().id());
+        int unitId = unit.actor().id();
+        var data = combat.get(unitId);
         java.util.function.LongSupplier speed = data == null ? null : () -> data.attributes().get(101);
-        return new HeroBattleTargetUtils.Unit(unit.actor().id(), unit.faction(), unit.position(),
-            unit.attack(), unit.hp(), unit.maxHp(), speed);
+        java.util.function.LongSupplier attack = data == null ? null : () -> data.attributes().get(220);
+        return new HeroBattleTargetUtils.Unit(unitId, unit.faction(), unit.position(),
+            unit.attack(), unit.hp(), unit.maxHp(), speed, attack, type -> hasStatus(unitId, type));
     }
 
     /** 基础治疗、战报治疗值、实际生命变化；满血时后者可为0。 */
@@ -230,11 +245,30 @@ public final class HeroBattleHealingExecutor implements Executor {
             skill.skillId(), skill, null, null, ""));
         for (var art : rules.damageSkillArts(skill)) {
             var living = units.values().stream().filter(u -> u.hp() > 0 && !u.actor().isDead()).map(this::target).toList();
-            var targets = HeroBattleTargetUtils.select(art.targets(), target(source), living,
+            var fallen = art.targets().selectors().contains(5) ? units.values().stream()
+                .filter(u -> u.actor().isDead()).map(this::target).toList() : List.<HeroBattleTargetUtils.Unit>of();
+            var targets = HeroBattleTargetUtils.select(art.targets(), target(source), living, fallen,
                 List.of(target(require(attackContext.target))), attackContext.queued, random::index);
             for (int buffId : art.buffs()) {
                 if (rules.battleDirectHealing(buffId)) {
                     applyHealingEffects(rules.battleHealing(buffId - 100).effects(), source, targets);
+                    continue;
+                }
+                var attackHealing = rules.attackHealing(buffId);
+                if (attackHealing != null) {
+                    applyAttackHealing(buffId, attackHealing, source, targets);
+                    continue;
+                }
+                var resurrection = rules.battleResurrection(buffId);
+                if (resurrection != null) {
+                    for (var target : targets) {
+                        resurrect(buffId, resurrection, source, require(target.id()));
+                    }
+                    continue;
+                }
+                int healingRate = rules.battleDamageHealingRate(buffId);
+                if (healingRate > 0) {
+                    applyDamageHealing(buffId, healingRate, source, targets);
                     continue;
                 }
                 if (rules.battleProjectile(buffId)) {
@@ -247,9 +281,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                 }
                 if (rules.battleRoundListener(buffId)) {
                     for (var target : targets) {
-                        if (require(target.id()).hp() <= 0 || actor.interrupted(target.id())) continue;
-                        var entry = installBuff(actor.id(), target.id(), rules.battleBuff(buffId), 0);
-                        require(target.id()).actor().listen(new Listener(entry.instanceId(), actor.id(), rules.battleTrigger(buffId)));
+                        installRoundListener(buffId, actor.id(), target.id());
                     }
                     continue;
                 }
@@ -276,6 +308,11 @@ public final class HeroBattleHealingExecutor implements Executor {
                     actor.restore();
                     continue;
                 }
+                if (rules.battleStatusCondition(buffId)) {
+                    applyStatusCondition(buffId, actor.id(), targets);
+                    actor.restore();
+                    continue;
+                }
                 if (rules.battleBlockShield(buffId)) {
                     for (var target : targets) {
                         applyBlockShield(buffId, actor.id(), target.id());
@@ -285,6 +322,14 @@ public final class HeroBattleHealingExecutor implements Executor {
                 if (rules.battleDirectAttribute(buffId)) {
                     for (var target : targets) {
                         applyDirectAttribute(buffId, actor.id(), target.id());
+                    }
+                    continue;
+                }
+                if (rules.battleAttackStealRate(buffId) > 0) {
+                    for (var target : targets) {
+                        if (require(target.id()).hp() > 0 && !actor.interrupted(target.id())) {
+                            installBuff(actor.id(), target.id(), rules.battleBuff(buffId), 0);
+                        }
                     }
                     continue;
                 }
@@ -298,9 +343,9 @@ public final class HeroBattleHealingExecutor implements Executor {
                     }
                     continue;
                 }
-                if (rules.battleBleed(buffId)) {
+                if (rules.attackDamageOverTime(buffId) != null) {
                     for (var target : targets) {
-                        applyBleed(buffId, actor.id(), target.id(), attackContext.decision);
+                        applyAttackDamageOverTime(buffId, actor.id(), target.id(), attackContext.decision);
                     }
                     continue;
                 }
@@ -308,8 +353,8 @@ public final class HeroBattleHealingExecutor implements Executor {
                     attackContext.damageType, skill.activeType() == 1, actor.skillEnergy(), attackContext.elements, attackContext.decision);
                 if (rules.nanakoDamageChain(buffId)) {
                     nanakoFollowup(buffId - 2233200, actor.id(), targets.stream().map(HeroBattleTargetUtils.Unit::id).toList());
-                } else if (rules.battleDamageControlFollowup(buffId)) {
-                    // 旧普通伤害即使miss也已初始化builder，仍保留该目标给即时控制子链。
+                } else if (rules.battleDamageFollowup(buffId)) {
+                    // 旧普通伤害的未命中战报也初始化builder，该目标仍进入独立子动作。
                     applyImmediateArts(buffId, actor.id(), targets);
                 }
                 actor.restore();
@@ -337,7 +382,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         var actor = require(sourceId).actor();
         var selected = new ArrayList<HeroBattleTargetUtils.Unit>();
         for (var target : targets) {
-            if (target.hp() <= 0 || actor.interrupted(target.id())) {
+            if (require(target.id()).hp() <= 0 || actor.interrupted(target.id())) {
                 continue;
             }
             if (jobs.contains(requireCombat(target.id()).identity().jobBonus() - 280)) {
@@ -351,7 +396,29 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
-    /** 执行已预检的即时子动作，继承目标或改选施加者；按属性自身配置写入原持续规则。 */
+    /** 219只传入携带任一指定状态的存活目标，外层原始目标不随此条件改变。 */
+    private void applyStatusCondition(int buffId, int sourceId, List<HeroBattleTargetUtils.Unit> targets) {
+        var statuses = rules.statusConditionValues(buffId);
+        var source = require(sourceId).actor();
+        var selected = targets.stream().filter(target -> require(target.id()).hp() > 0
+            && !source.interrupted(target.id()) && statuses.stream().anyMatch(type -> hasStatus(target.id(), type)))
+            .toList();
+        if (!selected.isEmpty()) {
+            applyImmediateArts(buffId, sourceId, selected);
+        }
+    }
+
+    /** 201登记Buff携带者与原施加者，回合阶段使用原实例及其绝对期限。 */
+    private void installRoundListener(int buffId, int sourceId, int targetId) {
+        var target = require(targetId);
+        if (target.hp() <= 0 || target.actor().isDead() || require(sourceId).actor().interrupted(targetId)) {
+            return;
+        }
+        var entry = installBuff(sourceId, targetId, rules.battleBuff(buffId), 0);
+        target.actor().listen(new Listener(entry.instanceId(), sourceId, rules.battleTrigger(buffId)));
+    }
+
+    /** 执行已预检的即时子动作，继承目标或改选施加者；伤害复用根技能的能量、类型和判定。 */
     private void applyImmediateArts(int buffId, int sourceId, List<HeroBattleTargetUtils.Unit> context) {
         var source = require(sourceId);
         for (var art : rules.immediateArts(buffId)) {
@@ -360,15 +427,30 @@ public final class HeroBattleHealingExecutor implements Executor {
             var targets = HeroBattleTargetUtils.select(art.targets(), target(source), living,
                 context, attackContext.queued, random::index);
             for (int childId : art.buffs()) {
-                if (rules.battleSimpleControl(childId)) {
+                var healing = rules.attackHealing(childId);
+                if (healing != null) {
+                    applyAttackHealing(childId, healing, source, targets);
+                } else if (rules.battleSimpleControl(childId)) {
                     for (var target : targets) {
                         applySimpleControl(childId, sourceId, target.id(), attackContext.decision);
                     }
+                } else if (rules.battleDizzy(childId)) {
+                    for (var target : targets) {
+                        applyDizzy(childId, sourceId, target.id(), attackContext.decision);
+                    }
+                } else if (rules.battleRoundListener(childId)) {
+                    for (var target : targets) {
+                        installRoundListener(childId, sourceId, target.id());
+                    }
+                } else if (rules.battleJobCondition(childId)) {
+                    applyJobCondition(childId, sourceId, targets);
+                } else if (rules.battleStatusCondition(childId)) {
+                    applyStatusCondition(childId, sourceId, targets);
                 } else if (rules.battleDirectAttribute(childId)) {
                     for (var target : targets) {
                         applyDirectAttribute(childId, sourceId, target.id());
                     }
-                } else {
+                } else if (rules.battleOnceAttribute(childId)) {
                     var effect = rules.onceDamageAttribute(childId);
                     for (var target : targets) {
                         if (require(target.id()).hp() <= 0 || source.actor().interrupted(target.id())) {
@@ -377,9 +459,19 @@ public final class HeroBattleHealingExecutor implements Executor {
                         installBuff(sourceId, target.id(), rules.battleBuff(childId), 0);
                         requireCombat(target.id()).attributes().addOnce(effect.attribute(), effect.amount());
                     }
+                } else if (!rules.inertBattleEffect(childId)) {
+                    var targetIds = targets.stream().map(HeroBattleTargetUtils.Unit::id).toList();
+                    ordinaryDamage(childId, sourceId, targetIds, attackContext.damageType,
+                        source.actor().activeSkill(), source.actor().skillEnergy(),
+                        attackContext.elements, attackContext.decision);
+                    if (rules.nanakoDamageChain(childId)) {
+                        nanakoFollowup(childId - 2233200, sourceId, targetIds);
+                    } else if (rules.battleDamageFollowup(childId)) {
+                        applyImmediateArts(childId, sourceId, targets);
+                    }
                 }
+                source.actor().restore();
             }
-            source.actor().restore();
         }
     }
 
@@ -417,19 +509,26 @@ public final class HeroBattleHealingExecutor implements Executor {
         try {
             transaction(() -> {
                 started = true;
-                events.act(actor, round, null, energy, this);
+                executeActorAction(context, actor, null, energy);
                 int count = 0;
                 while (!context.queue.isEmpty()) {
                     if (++count > 128) throw new IllegalStateException("反击队列超过执行上限");
                     var action = context.queue.removeFirst();
                     context.target = action.target();
                     context.queued = true;
-                    events.act(require(action.source()).actor(), round, action.skill(), 0, this);
+                    executeActorAction(context, require(action.source()).actor(), action.skill(), 0);
                 }
             });
         } finally {
             attackContext = null;
         }
+    }
+
+    /** 进入一次出手或反击前清空旧伤害结果；行动前和技能内的伤害都归当前施法者。 */
+    private void executeActorAction(AttackContext context, Actor actor, HeroBattleSkillUtils.Skill skill, long energy) {
+        context.damageSourceId = actor.id();
+        context.lastDamage = null;
+        events.act(actor, round, skill, energy, this);
     }
 
     /** 入场安装已预检的完整被动链，不治疗、不触发主动技能使用事件。 */
@@ -456,7 +555,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         });
     }
 
-    /** 安装已整链预检的入场属性和监听，原施加者保存在每个实例中。 */
+    /** 初始化已预检的入场条件、属性和监听；触发条件本身不产生持久Buff。 */
     private void initializeOpeningPassive(int unitId, int skillId, int level) {
         var plans = rules.openingPassiveArts(skillId, level);
         String key = unitId + ":" + skillId;
@@ -469,19 +568,40 @@ public final class HeroBattleHealingExecutor implements Executor {
                     List.of(target(source)), false, random::index);
                 for (int buffId : plan.buffs()) {
                     for (var target : targets) {
-                        var spec = rules.battleBuff(buffId);
-                        var entry = installBuff(unitId, target.id(), spec, 0);
-                        if (spec.type() == 160) {
-                            var effect = rules.controlAttribute(buffId);
-                            requireCombat(target.id()).attributes().addBase(effect.attribute(), effect.amount());
-                        } else {
-                            require(target.id()).actor().listen(new Listener(entry.instanceId(), unitId, rules.battleTrigger(buffId)));
-                        }
+                        installOpeningPassiveBuff(unitId, target, buffId, level);
                     }
                 }
             }
             installed.add(key);
         });
+    }
+
+    /** 仅在原站位条件成立时施加子属性，常驻监听保留原施加者。 */
+    private void installOpeningPassiveBuff(int sourceId, HeroBattleTargetUtils.Unit target, int buffId, int level) {
+        var replacement = rules.battleOrdinaryReplacement(buffId, level);
+        if (replacement != null) {
+            require(target.id()).actor().replaceOrdinaryAttack(replacement);
+            return;
+        }
+        var position = rules.openingPositionPassive(buffId);
+        if (position != null) {
+            if (position.positions().contains(target.position())) {
+                for (int child : position.buffs()) {
+                    installOpeningPassiveBuff(sourceId, target, child, level);
+                }
+            }
+            return;
+        }
+        var spec = rules.battleBuff(buffId);
+        var entry = installBuff(sourceId, target.id(), spec, 0);
+        if (spec.type() == 160) {
+            var effect = rules.controlAttribute(buffId);
+            requireCombat(target.id()).attributes().addBase(effect.attribute(), effect.amount());
+        } else if (spec.type() == 163) {
+            requireCombat(target.id()).attributes().addBase(102, rules.openingHpPenalty(buffId));
+        } else {
+            require(target.id()).actor().listen(new Listener(entry.instanceId(), sourceId, rules.battleTrigger(buffId)));
+        }
     }
 
     /** 监听次数耗尽沿统一移除口清理实例与监听，根事务保存完整回滚点。 */
@@ -511,6 +631,11 @@ public final class HeroBattleHealingExecutor implements Executor {
 
     /** 分发已核对的属性、控制、伤害和治疗动作；治疗沿186、206、回血、311顺序，全部共用根事务。 */
     private void executeArt(Invocation invocation) {
+        var passiveEffects = rules.passiveTriggerEffects(invocation.artId());
+        if (!passiveEffects.isEmpty()) {
+            executePassiveTriggerEffects(invocation, passiveEffects);
+            return;
+        }
         if (invocation.artId() >= 1113201 && invocation.artId() <= 1113203) {
             // 旧heroHurt先checkOver；最后一名敌人死亡时通用死亡监听不再执行属性动作。
             var source = require(invocation.sourceId());
@@ -564,14 +689,77 @@ public final class HeroBattleHealingExecutor implements Executor {
             for (var target : selected) attackContext.queue.addLast(new CounterAction(source.actor().id(), target.id(), skill));
             return;
         }
-        Plan plan = rules.battleHealing(invocation.artId());
         State source = require(invocation.sourceId());
+        if ((invocation.artId() == 3094201 || invocation.artId() == 3094202)
+                && units.values().stream().noneMatch(unit -> unit.faction() != source.faction() && unit.hp() > 0)) {
+            // 旧heroHurt在死亡监听前checkOver；最后一个敌人倒下时，伊芙的死亡治疗不再执行。
+            return;
+        }
+        Plan plan = rules.battleHealing(invocation.artId());
         State context = require(invocation.targetContext());
         var living = units.values().stream()
             .filter(unit -> unit.hp() > 0 && !unit.actor().isDead()).map(this::target).toList();
         var targets = HeroBattleTargetUtils.select(plan.targets(), target(source), living,
             List.of(target(context)), false, random::index);
         applyHealingEffects(plan.effects(), source, targets);
+    }
+
+    /** 监听子动作继承原事件目标，复用属性、治疗、中毒和控制；210只在成功消费时执行子动作。 */
+    private void executePassiveTriggerEffects(Invocation invocation, List<Integer> buffs) {
+        var source = require(invocation.sourceId());
+        var inheritedTarget = require(invocation.targetContext());
+        var living = units.values().stream().filter(unit -> unit.hp() > 0 && !unit.actor().isDead())
+            .map(this::target).toList();
+        var targets = HeroBattleTargetUtils.select(rules.battleTargets(invocation.artId()), target(source), living,
+            List.of(target(inheritedTarget)), false, random::index);
+        for (int buffId : buffs) {
+            var healing = rules.attackHealing(buffId);
+            if (healing != null) {
+                applyAttackHealing(buffId, healing, source, targets);
+                continue;
+            }
+            int useLimit = rules.battleUseLimit(buffId);
+            if (useLimit > 0) {
+                for (var target : targets) {
+                    if (require(target.id()).hp() > 0 && !source.actor().interrupted(target.id())
+                            && source.actor().useLimitedEffect(buffId, useLimit)) {
+                        for (int child : rules.battleUseLimitFollowup(buffId)) {
+                            executeArt(new Invocation(buffId, child, invocation.sourceId(), target.id()));
+                        }
+                    }
+                }
+                source.actor().restore();
+                continue;
+            }
+            for (var target : targets) {
+                if (rules.attackDamageOverTime(buffId) != null) {
+                    applyAttackDamageOverTime(buffId, source.actor().id(), target.id(), actionDecision());
+                } else if (rules.battleDizzy(buffId)) {
+                    applyDizzy(buffId, source.actor().id(), target.id(), actionDecision());
+                } else if (rules.battleSimpleControl(buffId)) {
+                    applySimpleControl(buffId, source.actor().id(), target.id(), actionDecision());
+                } else if (rules.battleDirectAttribute(buffId)) {
+                    applyDirectAttribute(buffId, source.actor().id(), target.id());
+                } else if (rules.battleOnceAttribute(buffId)) {
+                    if (require(target.id()).hp() > 0 && !source.actor().interrupted(target.id())) {
+                        var effect = rules.onceDamageAttribute(buffId);
+                        installBuff(source.actor().id(), target.id(), rules.battleBuff(buffId), 0);
+                        requireCombat(target.id()).attributes().addOnce(effect.attribute(), effect.amount());
+                    }
+                } else {
+                    installRoundListener(buffId, source.actor().id(), target.id());
+                }
+            }
+            source.actor().restore();
+        }
+    }
+
+    /** 需要抽样的效果沿用根出手或回合的判定；固定属性及限次本身可随固定伤害触发。 */
+    private java.util.function.DoublePredicate actionDecision() {
+        if (attackContext == null) {
+            throw new IllegalStateException("概率效果缺少战斗判定上下文");
+        }
+        return attackContext.decision;
     }
 
     /** 按已选目标执行治疗/护盾，记录准确事件顺序；主动和监听共用同一取整、禁疗及回滚规则。 */
@@ -601,29 +789,76 @@ public final class HeroBattleHealingExecutor implements Executor {
                 if (hasStatus(target.id(), 1009)) {
                     continue;
                 }
-                long base = percent(source.attack(), effect.attackRate());
-                if (base <= 0) {
-                    continue;
-                }
-                source.actor().treatment(base);
-                emit(186, source.actor(), defender.actor());
-                emit(206, defender.actor(), source.actor());
-                // 嵌套事件可能治疗同一目标或覆盖施法者最近治疗值，必须重新读取。
-                defender = require(target.id());
-                long amount = Math.addExact(source.actor().lastTreatment(), source.treatment());
-                amount = Math.addExact(amount, percent(amount, source.treatmentRate()));
-                amount = Math.addExact(amount, percent(amount, defender.receivedRate()));
-                long actual = Math.min(amount, defender.maxHp() - defender.hp());
-                long nextHp = Math.addExact(defender.hp(), actual);
-                if (nextHp <= 0) {
-                    throw new UnsupportedOperationException("负治疗跨越死亡边界尚未支持");
-                }
-                units.put(target.id(), defender.withHp(nextHp));
-                recordRecovery(new Recovery(effect.buffId(), source.actor().id(), target.id(), base, amount, actual));
-                emit(311, source.actor(), defender.actor());
+                replenish(effect.buffId(), source, defender, percent(source.attack(), effect.attackRate()));
             }
             source.actor().restore();
         }
+    }
+
+    /** 130号按每个目标结算时的攻击属性治疗，复用已有禁疗、治疗事件及实际恢复记录。 */
+    private void applyAttackHealing(int buffId, HeroSkillPanelRules.AttackHealing effect,
+                                    State source, List<HeroBattleTargetUtils.Unit> targets) {
+        int sourceId = source.actor().id();
+        for (var target : targets) {
+            if (effect.chance() < 1D && !actionDecision().test(effect.chance())) {
+                continue;
+            }
+            var defender = require(target.id());
+            if (defender.hp() <= 0 || defender.actor().isDead() || source.actor().interrupted(target.id())
+                    || hasStatus(target.id(), 1009)) {
+                continue;
+            }
+            long attack = requireCombat(sourceId).attributes().get(220);
+            replenish(buffId, source, defender, percent(attack, effect.rate()));
+        }
+        source.actor().restore();
+    }
+
+    /** 以本次出手最新判定的初始伤害计算132号治疗；最后一次判定未命中时没有治疗。 */
+    private void applyDamageHealing(int buffId, int rate, State source, List<HeroBattleTargetUtils.Unit> targets) {
+        for (var target : targets) {
+            var damage = attackContext.lastDamage;
+            if (damage == null || damage.missed()) {
+                break;
+            }
+            var defender = require(target.id());
+            if (defender.hp() <= 0 || defender.actor().isDead() || source.actor().interrupted(target.id())
+                    || hasStatus(target.id(), 1009)) {
+                continue;
+            }
+            // 普通伤害在旧数值链中为负数；治疗使用同一次扣减前结果的绝对值。
+            replenish(buffId, source, defender, Math.absExact(percent(damage.damage(), rate)));
+        }
+        source.actor().restore();
+    }
+
+    /** 正基础治疗共用施疗、受疗和清心事件，按可恢复血量封顶并记录战报。 */
+    private void replenish(int buffId, State source, State defender, long base) {
+        if (base <= 0) {
+            return;
+        }
+        source.actor().treatment(base);
+        emit(186, source.actor(), defender.actor());
+        emit(206, defender.actor(), source.actor());
+        // 嵌套事件可能治疗同一目标或覆盖施法者最近治疗值，必须重新读取。
+        int targetId = defender.actor().id();
+        defender = require(targetId);
+        long amount = healingAmount(source, defender, source.actor().lastTreatment());
+        long actual = Math.min(amount, defender.maxHp() - defender.hp());
+        long nextHp = Math.addExact(defender.hp(), actual);
+        if (nextHp <= 0) {
+            throw new UnsupportedOperationException("负治疗跨越死亡边界尚未支持");
+        }
+        units.put(targetId, defender.withHp(nextHp));
+        recordRecovery(new Recovery(buffId, source.actor().id(), targetId, base, amount, actual));
+        emit(311, source.actor(), defender.actor());
+    }
+
+    /** 依旧 replenish 顺序叠加固定治疗、施疗倍率和受疗倍率，返回可含溢出的战报值。 */
+    private long healingAmount(State source, State defender, long base) {
+        long amount = Math.addExact(base, source.treatment());
+        amount = Math.addExact(amount, percent(amount, source.treatmentRate()));
+        return Math.addExact(amount, percent(amount, defender.receivedRate()));
     }
 
     /**
@@ -805,6 +1040,35 @@ public final class HeroBattleHealingExecutor implements Executor {
             null, null, null, "", recovery));
     }
 
+    /** 倒下对象按施法者攻击复活，存活时复用旧最低血量治疗分支；二者都触发原清心。 */
+    private void resurrect(int buffId, HeroSkillPanelRules.Resurrection config, State source, State defender) {
+        int attacker = source.actor().id();
+        int targetId = defender.actor().id();
+        if (defender.actor().isDead()) {
+            long base = percent(requireCombat(attacker).attributes().get(220), config.attackRate());
+            long reported = healingAmount(source, defender, base);
+            long actual = Math.min(reported, defender.maxHp());
+            if (actual <= 0) {
+                throw new IllegalStateException("复活实际回复量必须大于零");
+            }
+            defender.actor().setDead(false);
+            // 旧 BattlerDo 把活过来的单位放回存活列表末尾，死亡目标也按入列顺序选择。
+            units.remove(targetId);
+            units.put(targetId, defender.withHp(actual));
+            var recovery = new Recovery(buffId, attacker, targetId, base, reported, actual);
+            recoveries.add(recovery);
+            trace.add(new Trace("revival", round, attacker, targetId, buffId, null, null, null, "", recovery));
+            emit(191, defender.actor(), source.actor());
+        } else {
+            var living = units.values().stream().filter(u -> u.hp() > 0 && !u.actor().isDead()).map(this::target).toList();
+            var targets = HeroBattleTargetUtils.select(config.onLiving().targets(), target(source), living,
+                List.of(target(defender)), false, random::index);
+            int healingBuff = config.onLiving().buffs().getFirst();
+            applyAttackHealing(healingBuff, rules.attackHealing(healingBuff), source, targets);
+        }
+        emit(311, source.actor(), defender.actor());
+    }
+
     /** 已成功安装的契约对，仅用于核对动作选择，不代替Buff实例本身。 */
     public record ContractPair(int buffId, int carrierId, int enemyId) {}
 
@@ -901,13 +1165,34 @@ public final class HeroBattleHealingExecutor implements Executor {
      */
     public void applyDizzy(int buffId, int sourceId, int targetId,
                            java.util.function.DoublePredicate decision) {
-        applyControl(buffId, sourceId, targetId, decision, 1005, rules.battleDizzyRate(buffId), 217, 0);
+        double rate = rules.battleDizzyRate(buffId);
+        if (rules.immediateArts(buffId).isEmpty()) {
+            applyControl(buffId, sourceId, targetId, decision, 1005, rate, 217, 0);
+            return;
+        }
+        if (attackContext == null) {
+            throw new IllegalStateException("眩晕追击缺少根动作上下文");
+        }
+        transaction(() -> {
+            if (installControl(buffId, sourceId, targetId, decision, 1005, rate, 217, 0)) {
+                applyImmediateArts(buffId, sourceId, List.of(target(require(targetId))));
+            }
+        });
     }
 
-    /** 按旧负面免疫→325抗性判定安装流血；只记录实例，不在安装时扣血。 */
+    /** 原流血入口要求1205，其抗性和回合效果沿用公共攻击比例伤害。 */
     public void applyBleed(int buffId, int sourceId, int targetId,
                            java.util.function.DoublePredicate decision) {
-        double chance = rules.battleBleedChance(buffId);
+        if (!rules.battleBleed(buffId)) {
+            throw new IllegalArgumentException("不是流血配置：" + buffId);
+        }
+        applyAttackDamageOverTime(buffId, sourceId, targetId, decision);
+    }
+
+    /** 按旧负面免疫和独立抗性判定安装中毒或流血，不在安装时扣血。 */
+    private void applyAttackDamageOverTime(int buffId, int sourceId, int targetId,
+                                          java.util.function.DoublePredicate decision) {
+        var effect = Objects.requireNonNull(rules.attackDamageOverTime(buffId));
         transaction(() -> {
             started = true;
             var source = require(sourceId);
@@ -915,26 +1200,24 @@ public final class HeroBattleHealingExecutor implements Executor {
             if (target.hp() <= 0 || source.actor().interrupted(targetId) || hasStatus(targetId, 152)) {
                 return;
             }
-            double resistance = requireCombat(targetId).attributes().rate(325);
-            if (decision.test(chance * (1D - resistance))) {
-                if (chance == 0D) {
-                    throw new IllegalStateException("零概率流血判定不可命中");
+            double resistance = requireCombat(targetId).attributes().rate(effect.resistance());
+            if (decision.test(effect.chance() * (1D - resistance))) {
+                if (effect.chance() == 0D) {
+                    throw new IllegalStateException("零概率回合伤害判定不可命中");
                 }
                 installBuff(sourceId, targetId, rules.battleBuff(buffId), 0);
             }
         });
     }
 
-    /** 回合流血使用实时攻击和固定伤害；不走普攻暴击/反击，仍走护盾、生命条件和死亡清理。 */
-    private void tickBleed(int targetId, HeroBattleBuffState.Entry entry) {
+    /** 回合中毒与流血使用实时攻击和固定伤害，且经过护盾、生命条件和死亡清理。 */
+    private void tickAttackDamageOverTime(int targetId, HeroBattleBuffState.Entry entry) {
         int sourceId = entry.sourceId();
         long attack = requireCombat(sourceId).attributes().get(220);
-        long amount = (long) (attack * (rules.battleBleedDamageRate(entry.spec().id()) / 10000D));
+        var effect = Objects.requireNonNull(rules.attackDamageOverTime(entry.spec().id()));
+        long amount = (long) (attack * (effect.rate() / 10000D));
         emit(183, require(targetId).actor(), require(sourceId).actor());
         deductDamage(entry.spec().id(), sourceId, targetId, amount);
-        if (!require(targetId).actor().isDead()) {
-            emit(177, require(targetId).actor(), require(sourceId).actor());
-        }
     }
 
     /** 冰冻沿216抗性判定，安装受击计数监听；失败回滚控制及其被动增益。 */
@@ -955,31 +1238,37 @@ public final class HeroBattleHealingExecutor implements Executor {
     private void applyControl(int buffId, int sourceId, int targetId,
                               java.util.function.DoublePredicate decision, int controlType,
                               double base, int resistanceType, long value) {
+        transaction(() -> installControl(buffId, sourceId, targetId, decision, controlType, base, resistanceType, value));
+    }
+
+    /** 在根事务内判定控制，返回本次是否命中，避免嵌套事件改变最近控制后误判追击。 */
+    private boolean installControl(int buffId, int sourceId, int targetId,
+                                   java.util.function.DoublePredicate decision, int controlType,
+                                   double base, int resistanceType, long value) {
         var source = require(sourceId);
         var target = require(targetId);
-        transaction(() -> {
-            started = true;
-            if (source.hp() <= 0 || source.actor().isDead() || target.hp() <= 0
+        started = true;
+        if (source.hp() <= 0 || source.actor().isDead() || target.hp() <= 0
                 || target.actor().isDead() || source.actor().interrupted(targetId)
                 || hasStatus(targetId, 153)) {
-                return;
-            }
-            double freeControl = requireCombat(targetId).attributes().rate(212);
-            double control = requireCombat(sourceId).attributes().rate(219);
-            double resistance = resistanceType == 0 ? 0D : requireCombat(targetId).attributes().rate(resistanceType);
-            if (!decision.test(base * (1D - resistance) * (1D + control) * (1D - freeControl))) {
-                return;
-            }
-            var entry = installBuff(sourceId, targetId, rules.battleBuff(buffId), value);
-            if (controlType == 1004 || controlType == 1014) {
-                target.actor().listen(new Listener(entry.instanceId(), sourceId,
-                    new Definition(buffId, controlType, 0, List.of())));
-            }
-            lastControls.put(targetId, entry);
-            target.actor().control(controlType, true);
-            emit(185, target.actor(), source.actor());
-            emit(207, source.actor(), target.actor());
-        });
+            return false;
+        }
+        double freeControl = requireCombat(targetId).attributes().rate(212);
+        double control = requireCombat(sourceId).attributes().rate(219);
+        double resistance = resistanceType == 0 ? 0D : requireCombat(targetId).attributes().rate(resistanceType);
+        if (!decision.test(base * (1D - resistance) * (1D + control) * (1D - freeControl))) {
+            return false;
+        }
+        var entry = installBuff(sourceId, targetId, rules.battleBuff(buffId), value);
+        if (controlType == 1004 || controlType == 1014) {
+            target.actor().listen(new Listener(entry.instanceId(), sourceId,
+                new Definition(buffId, controlType, 0, List.of())));
+        }
+        lastControls.put(targetId, entry);
+        target.actor().control(controlType, true);
+        emit(185, target.actor(), source.actor());
+        emit(207, source.actor(), target.actor());
+        return true;
     }
 
     /** 返回最近成功安装的控制实例；null表示从未受控，不等于当前仍处于控制状态。 */
@@ -1003,7 +1292,9 @@ public final class HeroBattleHealingExecutor implements Executor {
     public void ordinaryDamage(int buffId, int sourceId, List<Integer> targetIds, int damageType,
                                boolean activeSkill, long energy, HeroBattleElementRules elements,
                                java.util.function.DoublePredicate decision) {
-        int rate = rules.battleOrdinaryDamageRate(buffId, attackContext != null);
+        var maximumHp = rules.maximumHpDamage(buffId);
+        int rate = maximumHp == null ? rules.battleOrdinaryDamageRate(buffId, attackContext != null) : 0;
+        double chance = rules.ordinaryDamageChance(buffId);
         var targets = List.copyOf(targetIds);
         requireCombat(sourceId);
         targets.forEach(this::requireCombat);
@@ -1013,6 +1304,9 @@ public final class HeroBattleHealingExecutor implements Executor {
             for (int targetId : targets) {
                 var source = require(sourceId);
                 var target = require(targetId);
+                if (chance < 1D && !decision.test(chance)) {
+                    continue;
+                }
                 if (source.hp() <= 0 || source.actor().isDead() || target.hp() <= 0
                     || target.actor().isDead() || source.actor().interrupted(targetId)) continue;
                 emit(187, source.actor(), target.actor());
@@ -1026,15 +1320,21 @@ public final class HeroBattleHealingExecutor implements Executor {
                 var request = new HeroBattleDamageAction.Request(a.attributes(), d.attributes(),
                     a.identity().element(), d.identity().element(), damageType, rate, activeSkill, energy,
                     false, hasStatus(sourceId, 1007), hasStatus(sourceId, 1251), d.identity().jobBonus(), activeBonuses);
-                var result = calculator.calculate(request, () -> {
+                var result = maximumHp == null ? calculator.calculate(request, () -> {
                     var entries = buffs.get(sourceId).removeFirst(1251);
                     if (entries.isEmpty()) throw new IllegalStateException("抗暴标记没有对应实例");
                     removed(sourceId, entries, "counter-crit");
-                });
+                }) : maximumHpResult(maximumHp, a, target);
+                if (attackContext != null && attackContext.damageSourceId == sourceId) {
+                    attackContext.lastDamage = result;
+                }
                 int resultIndex = ordinaryResults.size();
                 ordinaryResults.add(result);
                 if (result.missed()) {
                     emit(204, target.actor(), source.actor());
+                    continue;
+                }
+                if (result.damage() == 0) {
                     continue;
                 }
                 var previous = damageFrame;
@@ -1047,7 +1347,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                         result = new HeroBattleDamageAction.Result(0, false, result.rolledCritical(), false, result.blocked());
                         ordinaryResults.set(resultIndex, result);
                     }
-                    deductDamage(buffId, sourceId, targetId, damageFrame.remaining, false);
+                    var damage = deductDamage(buffId, sourceId, targetId, damageFrame.remaining, false);
                     boolean allows = rules.damageAllowsCounterattack(buffId);
                     if (source.actor().canTriggerDamage(false, allows, targetId)) {
                         if (result.critical()) emit(174, source.actor(), target.actor());
@@ -1058,7 +1358,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                     if (require(targetId).actor().isDead()) {
                         finishDeath(sourceId, targetId);
                     } else {
-                        emit(177, target.actor(), source.actor());
+                        emitHealthThreshold(damage);
                         if (source.actor().canTriggerDamage(false, allows, targetId)) {
                             if (result.critical()) emit(175, target.actor(), source.actor());
                             if (result.blocked()) {
@@ -1084,6 +1384,14 @@ public final class HeroBattleHealingExecutor implements Executor {
                 }
             }
         });
+    }
+
+    /** 102号命中不抽取暴击或格挡，按原目标生命比例和实时攻击上限产出扣血前结果。 */
+    private HeroBattleDamageAction.Result maximumHpResult(HeroSkillPanelRules.MaximumHpDamage config,
+                                                          CombatData attacker, State defender) {
+        long hpDamage = percent(defender.maxHp(), config.hpRate());
+        long attackLimit = percent(attacker.attributes().get(220), config.attackLimit());
+        return new HeroBattleDamageAction.Result(-Math.min(hpDamage, attackLimit), false, false, false, false);
     }
 
     /** 奈奈子主伤害后对存活目标独立判降攻；成功目标再按职业1执行额外伤害。 */
@@ -1175,11 +1483,14 @@ public final class HeroBattleHealingExecutor implements Executor {
      * 源码疑点：heroHurt再次减去shieldValue，因此实际扣血仍含抵消量；先忠实保留，待正式服复核。
      */
     private void deductDamage(int buffId, int sourceId, int targetId, long amount) {
-        deductDamage(buffId, sourceId, targetId, amount, true);
+        var damage = deductDamage(buffId, sourceId, targetId, amount, true);
+        if (!require(targetId).actor().isDead()) {
+            emitHealthThreshold(damage);
+        }
     }
 
     /** 普通伤害延后死亡事件直到攻方后置事件之后；105与契约额外伤害保持原时点。 */
-    private void deductDamage(int buffId, int sourceId, int targetId, long amount, boolean finishDeath) {
+    private Damage deductDamage(int buffId, int sourceId, int targetId, long amount, boolean finishDeath) {
         State target = require(targetId);
         var absorption = buffs.get(targetId).absorb(amount);
         removed(targetId, absorption.removed(), "shield-depleted");
@@ -1195,10 +1506,38 @@ public final class HeroBattleHealingExecutor implements Executor {
         if (dead && finishDeath) {
             finishDeath(sourceId, targetId);
         }
+        return damage;
+    }
+
+    /** 旧177在守方处理阶段读取本次扣盾后的战报量；嵌套伤害不串用同一命中。 */
+    private void emitHealthThreshold(Damage damage) {
+        var previous = healthThresholdDamage;
+        healthThresholdDamage = damage;
+        try {
+            emit(177, require(damage.targetId()).actor(), require(damage.sourceId()).actor());
+        } finally {
+            healthThresholdDamage = previous;
+        }
+    }
+
+    /** 非致死命中从门槛上方跨到严格下方才触发，按旧怪物状态和扣盾后伤害量计算。 */
+    @Override
+    public boolean crossedHealthThreshold(int buffId, Actor carrier) {
+        var damage = healthThresholdDamage;
+        var target = require(carrier.id());
+        if (damage == null || damage.targetId() != carrier.id() || target.hp() <= 0) {
+            return false;
+        }
+        double threshold = rules.battleHpThreshold(buffId) / 10000D;
+        double current = target.hp() * 1D / target.maxHp();
+        double before = Math.subtractExact(target.hp(), damage.reported()) * 1D / target.maxHp();
+        return before >= threshold && current < threshold;
     }
 
     /** 死亡事件后清理当前支持的实例，并中断本次攻击该目标的后续动作。 */
     private void finishDeath(int sourceId, int targetId) {
+        var fallen = units.remove(targetId);
+        units.put(targetId, fallen);
         emit(180, require(targetId).actor(), require(sourceId).actor());
         removed(targetId, buffs.get(targetId).clearOnDeath(), "death");
         require(sourceId).actor().interrupt(targetId);
@@ -1209,7 +1548,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         return List.copyOf(damages);
     }
 
-    /** 安装支持的逻辑Buff，先同步移除旧监听；护盾重用时保留原实例身份。 */
+    /** 先移除冲突实例再应用效果；攻击偷取从已经退还旧效果的属性中取值。 */
     private HeroBattleBuffState.Entry installBuff(int sourceId, int targetId,
                                                   HeroBattleBuffState.Spec spec, long value) {
         Actor actor = require(targetId).actor();
@@ -1218,13 +1557,29 @@ public final class HeroBattleHealingExecutor implements Executor {
         nextBuffInstance = Math.addExact(next, 1);
         var change = state.add(next, sourceId, round, spec, value);
         removed(targetId, change.removed(), "replace");
-        trace.add(new Trace("buff.upsert", round, sourceId, targetId, change.current().spec().id(),
-            null, null, change.current(), ""));
-        return change.current();
+        var current = change.current();
+        if (spec.type() == 166) {
+            int rate = rules.battleAttackStealRate(spec.id());
+            var targetAttributes = requireCombat(targetId).attributes();
+            long stolen = percent(targetAttributes.get(220), rate);
+            targetAttributes.addBase(201, -rate);
+            requireCombat(sourceId).attributes().addBase(220, stolen);
+            current = state.setValue(current.instanceId(), stolen);
+        }
+        long speed = 0;
+        if (spec.type() == 160) {
+            var attribute = rules.controlAttribute(spec.id());
+            if (attribute.attribute() == 101) {
+                speed = attribute.amount();
+            }
+        }
+        trace.add(new Trace("buff.upsert", round, sourceId, targetId, current.spec().id(),
+            null, null, current, "", null, speed));
+        return current;
     }
 
     /**
-     * 选定场景的201监听和1205流血回合开始阶段：按调用方提供的出手顺序执行，再做到期移除。
+     * 执行201监听、1203中毒及1205流血，按调用方提供的出手顺序处理，再做到期移除。
      * 本入口不是完整回合（尚无能量收支/女神/周期特殊效果）；必须覆盖全部场内单位且不重复。
      */
     public void beginRound(int currentRound, List<Integer> order, HeroBattleElementRules elements,
@@ -1245,18 +1600,16 @@ public final class HeroBattleHealingExecutor implements Executor {
                     if (actor.isHangUpSealed()) continue;
                     for (var entry : buffs.get(id).snapshot()) {
                         if (actor.isDead()) break;
-                        if (entry.spec().type() == 1205) {
-                            tickBleed(id, entry);
+                        if (entry.spec().type() == 1203 || entry.spec().type() == 1205) {
+                            tickAttackDamageOverTime(id, entry);
                             if (buffs.get(id).snapshot().contains(entry) && entry.expiresAt() <= round) {
                                 expireEntry(id, entry);
                             }
                             continue;
                         }
                         if (entry.spec().type() != 201) continue;
-                        for (var art : rules.battleTrigger(entry.spec().id()).arts()) {
-                            // 旧executeRoundArt固定使用Buff施加者和携带者上下文，不复用通用trigger目标改写。
-                            art(new Invocation(entry.spec().id(), art.id(), entry.sourceId(), id));
-                        }
+                        // 旧executeRoundArt固定使用原Buff施加者和当前携带者。
+                        applyImmediateArts(entry.spec().id(), entry.sourceId(), List.of(target(require(id))));
                         if (entry.expiresAt() <= round) expireEntry(id, entry);
                     }
                 }
@@ -1303,7 +1656,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         transaction(() -> removed(targetId, buffs.get(targetId).dispel(effect), "dispel"));
     }
 
-    /** 统一移除关联监听、刷新对应控制状态、减回直接属性并记录原因；不清除其他未移除控制。 */
+    /** 统一清除监听并退还直接属性和双方攻击偷取，其他未移除状态保持有效。 */
     private void removed(int unitId, List<HeroBattleBuffState.Entry> entries, String reason) {
         for (int controlType : Set.of(1001, 1004, 1005, 1006, 1014)) {
             if (entries.stream().anyMatch(entry -> entry.spec().type() == controlType)) {
@@ -1313,14 +1666,21 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
         for (var entry : entries) {
             lastExpired.put(unitId, entry);
+            long speed = 0;
             if (entry.spec().type() == 160) {
                 var effect = rules.controlAttribute(entry.spec().id());
                 requireCombat(unitId).attributes().addBase(effect.attribute(), -effect.amount());
+                if (effect.attribute() == 101) {
+                    speed = -effect.amount();
+                }
+            } else if (entry.spec().type() == 166) {
+                requireCombat(unitId).attributes().addBase(201, rules.battleAttackStealRate(entry.spec().id()));
+                requireCombat(entry.sourceId()).attributes().addBase(220, Math.negateExact(entry.value()));
             }
             require(unitId).actor().remove(entry.instanceId());
             removals.add(new Removal(unitId, entry, reason));
             trace.add(new Trace("buff.remove", round, entry.sourceId(), unitId, entry.spec().id(),
-                null, null, entry, reason));
+                null, null, entry, reason, null, speed));
         }
     }
 
@@ -1419,6 +1779,11 @@ public final class HeroBattleHealingExecutor implements Executor {
     /** 返回当前生命快照，供战场或测试读取，不暴露可写状态Map。 */
     public State state(int id) {
         return require(id);
+    }
+
+    /** 读取战场当前速度，包含未结束的速度Buff，供每回合及回合内排序。 */
+    long currentSpeed(int unitId) {
+        return requireCombat(unitId).attributes().get(101);
     }
 
     /** 返回不可变的治疗记录快照。 */

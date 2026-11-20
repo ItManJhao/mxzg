@@ -94,8 +94,8 @@ export class BattleAttackUtils {
                     file: JSON.stringify(["skill-101030030"]), sound: JSON.stringify(["skill-101030030"]) },
             ];
         }
-        // 寒冬旧覆盖同时保留空动作和原地普攻；独立2050300仍按原表执行，不能擅自去重旧双特效/音效。
-        if (row.idx === 2050100) {
+        // 寒冬、企鹅绅士和水元素史莱姆共用空段与原地普攻。独立的表现事件仍按原表执行，保留原双特效和音效。
+        if (row.idx === 2050100 || row.idx === 2160100 || row.idx === 2170100) {
             return [
                 { ...row, idx: row.idx * 10, type: 1, delay: 0, dimly: 0, shake: 0,
                     ani_base: "{}", file: "[]", sound: "[]" },
@@ -118,8 +118,8 @@ export class BattleAttackUtils {
                     file: JSON.stringify(["skill-103030030"]), sound: "[]" },
             ];
         }
-        // 诺亚普攻沿旧覆盖分成目标特效与type11近身；offset字段旧type11也未消费，不按战场比例移动。
-        if (row.idx === 3050300) {
+        // 木灵使者、诺亚、流浪稻草人和风暴之雏的普攻均将目标特效与 type11 近身并行播放。
+        if (row.idx === 3040300 || row.idx === 3050300 || row.idx === 3160300 || row.idx === 3170300) {
             return [
                 { ...row, idx: row.idx * 10, type: 7, delay: 30, dimly: 0,
                     ani_base: JSON.stringify({ format: "skill-103040050/%d.png", anchor_x: 0.25,
@@ -154,8 +154,8 @@ export class BattleAttackUtils {
                     file: JSON.stringify(["skill-103010011"]), sound: "[]" },
             ];
         }
-        // 布鲁、冰霜元素与冰晶女巫普攻沿旧覆盖在目标处播放4倍水花，不使用基础表的帧率/缩放差异。
-        if (row.idx === 2010100 || row.idx === 2020100 || row.idx === 2030100) {
+        // 布鲁、冰霜元素、冰晶女巫和缇芮的普攻沿旧覆盖在目标处播放四倍水花。
+        if (row.idx === 2010100 || row.idx === 2020100 || row.idx === 2030100 || row.idx === 2040100) {
             return [{
                 ...row,
                 type: 3,
@@ -240,7 +240,7 @@ export class BattleAttackUtils {
             sound: JSON.stringify(entry.sound ? [entry.sound] : []) }));
     }
 
-    /** 逐项保留已核实的旧G_BATTLE_ACTIONS；所有复用同一动作的关卡共用，不按关卡特许。 */
+    /** 按旧 G_BATTLE_ACTIONS 的声明顺序返回动作，保留不同等级的施法节奏及替换普攻暗屏。 */
     private static verifiedLegacyActions(id: number): readonly LegacyAttackAction[] | null {
         switch (id) {
             case 2041401:
@@ -284,6 +284,21 @@ export class BattleAttackUtils {
                     { type: 7, delay: 20, dimly: 0,
                         base: {"format": "skill-101020021/%d.png", "anchor_y": 0.25, "duration": 0.04, "scale_x": 1.8, "scale_y": 1.8},
                         files: ["skill-101020021"], sounds: ["skill-101020021"] },
+                ];
+            // 木灵使者在近身时播放音效，第 20 帧在命中目标上单独播放暗屏特效。
+            case 3041101:
+                return [
+                    {
+                        type: 2, delay: 0, dimly: 0,
+                        base: { move_time: 0.1, move_back: 1 },
+                        files: ["skill-103040041"], sounds: ["skill-103040041"],
+                    },
+                    {
+                        type: 7, delay: 20, dimly: 1,
+                        base: { format: "skill-103040041/%d.png", anchor_y: 0.45, duration: 0.04,
+                            scale_x: 1, scale_y: 1 },
+                        files: [], sounds: [],
+                    },
                 ];
             case 3030300:
                 return [
@@ -337,6 +352,56 @@ export class BattleAttackUtils {
                         base: {"format": "skill-104030011/%d.png", "anchor_x": 0.6, "anchor_y": 0.35, "duration": 0.1, "scale_x": 1.1, "scale_y": 1.1},
                         files: ["skill-104030011"], sounds: ["skill-104030011"] },
                 ];
+            case 4020100:
+                // 蒂芬妮与蕾雅复用普攻帧，旧动作的帧间隔不同。
+                return [
+                    {
+                        type: 5, delay: 0, dimly: 0,
+                        base: { attack_time: 0.3, delay_time: 0.3, action_time: 0.3,
+                            format: "skill-104040020/%d.png", scale_x: 2, scale_y: 2, duration: 0.05 },
+                        files: ["skill-104040020"], sounds: ["skill-104040020"],
+                    },
+                ];
+            case 4021101:
+                // 一级主动原地施法，目标侧播放带原锚点的暗屏特效。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { attack_time: 0.3, action_time: 1, format: "skill-104040021/%d.png",
+                            duration: 0.06, scale_x: 1.8, scale_y: 1.8, anchor_y: 0.16, anchor_x: 0.51 },
+                        files: ["skill-104040021"], sounds: ["skill-104040021"],
+                    },
+                ];
+            case 4030100:
+                // 赛拉近身普攻在第 40 帧挂随身镜像特效，旧两段均无音效。
+                return [
+                    {
+                        type: 2, delay: 0, dimly: 0,
+                        base: { move_time: 0.1, move_back: 1, attack_delay: 0.3 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 6, delay: 40, dimly: 0,
+                        base: { format: "skill-104050040/%d.png", anchor_x: 0.5, anchor_y: 0.4,
+                            duration: 0.1, scale_x: 2, scale_y: 2, flipped: 1 },
+                        files: ["skill-104050040"], sounds: [],
+                    },
+                ];
+            case 4031101:
+                // 一级主动把带音效的暗屏施法和目标侧镜像特效分开。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { attack_time: 0.6, action_time: 1 },
+                        files: [], sounds: ["skill-104040031"],
+                    },
+                    {
+                        type: 7, delay: 0, dimly: 0,
+                        base: { format: "skill-104040031/%d.png", anchor_y: 0.3, duration: 0.1,
+                            scale_x: 1.3, scale_y: 1.3, flipped: 1 },
+                        files: ["skill-104040031"], sounds: [],
+                    },
+                ];
             case 5010300:
                 return [
                     { type: 7, delay: 0, dimly: 0,
@@ -354,6 +419,55 @@ export class BattleAttackUtils {
                     { type: 6, delay: 15, dimly: 1,
                         base: {"format": "skill-105030011/%d.png", "anchor_x": 0.7, "anchor_y": 0.4, "duration": 0.1, "scale_x": 1.8, "scale_y": 1.8},
                         files: [], sounds: [] },
+                ];
+            case 5080100:
+                return [
+                    {
+                        type: 3,
+                        delay: 0,
+                        dimly: 0,
+                        base: {
+                            attack_time: 0.3,
+                            action_time: 1.7,
+                            format: "skill-105050080/%d.png",
+                            duration: 0.1,
+                            scale_x: 1.4,
+                            scale_y: 1.4,
+                            anchor_x: 0.5,
+                            anchor_y: 0.5,
+                        },
+                        files: ["skill-105050080"],
+                        sounds: ["skill-105050080"],
+                    },
+                ];
+            case 5081101:
+                // 亡灵之刃的原地施法只播骨骼和音效，预载的图集由第 30 帧的战场特效播放。
+                return [
+                    {
+                        type: 3,
+                        delay: 0,
+                        dimly: 0,
+                        base: { attack_time: 0.6, action_time: 1.8 },
+                        files: [],
+                        sounds: ["skill-105050081"],
+                    },
+                    {
+                        type: 9,
+                        delay: 30,
+                        dimly: 1,
+                        base: {
+                            format: "skill-105050081/%d.png",
+                            duration: 0.06,
+                            scale_x: 1.5,
+                            scale_y: 1.5,
+                            anchor_x: 0.5,
+                            anchor_y: 0.5,
+                            offset_x: 0.6,
+                            offset_y: 0.5,
+                        },
+                        files: [],
+                        sounds: [],
+                    },
                 ];
             case 1080100:
                 return [
@@ -389,6 +503,7 @@ export class BattleAttackUtils {
                         files: ["skill-102050141-1"], sounds: [] },
                 ];
             case 1161101:
+            case 1171101:
                 return [
                     { type: 8, delay: 0, dimly: 0,
                         base: {"move_time": 0.1, "move_back": 1.7, "attack_delay": 0.3, "offset_x": 0.55, "offset_y": 0.4},
@@ -396,6 +511,590 @@ export class BattleAttackUtils {
                     { type: 6, delay: 15, dimly: 1,
                         base: {"format": "skill-101040051/%d.png", "anchor_x": 0.7, "anchor_y": 0.4, "duration": 0.1, "scale_x": 1.3, "scale_y": 1.3},
                         files: ["skill-101040051"], sounds: [] },
+                ];
+            case 1061101: // 安妮雅一技能，三个等级共用旧动作。
+            case 1061102:
+            case 1061103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: {
+                            action_time: 1, anchor_x: 0.625, anchor_y: 0.325, attack_time: 0.3, duration: 0.06,
+                            format: "skill-101050061/%d.png", scale_x: 1.4, scale_y: 1.4,
+                        },
+                        files: ["skill-101050061"], sounds: ["skill-101050061"],
+                    },
+                    {
+                        type: 1, delay: 0, dimly: 0,
+                        base: {},
+                        files: [], sounds: [],
+                    },
+                ];
+            case 1091101: // 赤焰舞姬一技能。
+            case 1091102:
+            case 1091103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill", action_time: 1.2, attack_time: 0.6 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 9, delay: 70, dimly: 1,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.7, duration: 0.06, format: "skill-101050091/%d.png",
+                            offset_x: 0.6, offset_y: 0.5, scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-101050091"], sounds: ["skill-101050091"],
+                    },
+                    {
+                        type: 6, delay: 50, dimly: 0,
+                        base: {
+                            anchor_x: 0.45, anchor_y: 0.3, duration: 0.028, format: "skill-101050091-1/%d.png",
+                            scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-101050091-1"], sounds: [],
+                    },
+                ];
+            case 1101101: // 琪亚娜一技能。
+            case 1101102:
+            case 1101103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill", action_time: 1.8 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 7, delay: 90, dimly: 0,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.2, duration: 0.05, format: "skill-101050101/%d.png",
+                            scale_x: 3, scale_y: 3,
+                        },
+                        files: ["skill-101050101"], sounds: ["skill-101040041"],
+                    },
+                ];
+            case 1103101: // 琪亚娜三技能。
+            case 1103102:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill2", action_time: 1.8 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 7, delay: 70, dimly: 0,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.55, duration: 0.05, format: "skill-104050051/%d.png",
+                            scale_x: 1, scale_y: 1,
+                        },
+                        files: ["skill-104050051"], sounds: ["skill-101040041"],
+                    },
+                ];
+            case 2061101: // 海神祭司一技能。
+            case 2061102:
+            case 2061103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: {
+                            action: "skill", action_time: 1, anchor_y: 0.365, attack_time: 1, duration: 0.1,
+                            format: "skill-102050061/%d.png", scale_x: 1, scale_y: 1,
+                        },
+                        files: ["skill-102050061"], sounds: ["skill-102050061"],
+                    },
+                    {
+                        type: 1, delay: 0, dimly: 0,
+                        base: {},
+                        files: [], sounds: [],
+                    },
+                ];
+            case 2071101: // 寒冰战姬一技能。
+            case 2071102:
+            case 2071103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: {
+                            action: "skill", action_time: 2, anchor_y: 0.17, attack_time: 1, duration: 0.06,
+                            format: "skill-102050071/%d.png", scale_x: 1, scale_y: 1,
+                        },
+                        files: ["skill-102050071"], sounds: ["skill-102050071"],
+                    },
+                    {
+                        type: 1, delay: 0, dimly: 0,
+                        base: {},
+                        files: [], sounds: [],
+                    },
+                ];
+            case 2081101:
+            case 2081102:
+            case 2081103: { // 格伦男爵一技能，二、三级共享较早的出手与不同帧间隔。
+                const firstLevel = id === 2081101;
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: {
+                            action: "skill", action_time: 2, anchor_y: 0.3,
+                            attack_time: firstLevel ? 0.8 : 0.3, duration: firstLevel ? 0.048 : 0.1,
+                            format: "skill-102050081/%d.png", scale_x: 0.8, scale_y: 0.8,
+                        },
+                        files: ["skill-102050081"], sounds: ["skill-102050081"],
+                    },
+                    {
+                        type: 6, delay: 50, dimly: 0,
+                        base: {
+                            anchor_x: 0.35, anchor_y: 0.3, duration: 0.03, format: "skill-102050081-1/%d.png",
+                            scale_x: 1, scale_y: 1,
+                        },
+                        files: ["skill-102050081-1"], sounds: [],
+                    },
+                ];
+            }
+            case 2110100: // 章鱼公主·普攻
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: {
+                            action_time: 1.5, anchor_x: 0.5, anchor_y: 0.2, attack_time: 0.3, duration: 0.1,
+                            format: "skill-102050110/%d.png", scale_x: 3, scale_y: 3,
+                        },
+                        files: ["skill-102050110"], sounds: ["skill-102050110"],
+                    },
+                ];
+            case 2111101: // 章鱼公主一技能。
+            case 2111102:
+            case 2111103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill", action_time: 1.8, attack_time: 0.6 },
+                        files: [], sounds: ["skill-102050111"],
+                    },
+                    {
+                        type: 7, delay: 70, dimly: 1,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.3, duration: 0.05, format: "skill-102050111/%d.png",
+                            scale_x: 3, scale_y: 3,
+                        },
+                        files: ["skill-102050111"], sounds: ["skill-102050111"],
+                    },
+                    {
+                        type: 6, delay: 30, dimly: 0,
+                        base: {
+                            anchor_x: 0.55, anchor_y: -0.1, duration: 0.035,
+                            format: "skill-102050111-1/%d.png", scale_x: 1.2, scale_y: 1.2,
+                        },
+                        files: ["skill-102050111-1"], sounds: [],
+                    },
+                ];
+            case 2113101:
+            case 2113102: // 章鱼公主三技能，施法后第60帧对目标播放原特效。
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill2", action_time: 2 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 7, delay: 60, dimly: 0,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.3, duration: 0.05, format: "skill-102050113/%d.png",
+                            scale_x: 3, scale_y: 3,
+                        },
+                        files: ["skill-102050113"], sounds: ["skill-102050113"],
+                    },
+                ];
+            case 2130100: // 唤潮剑姬·普攻
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { move_back: 0.8, move_time: 0.1 },
+                        files: [], sounds: ["skill-102040130"],
+                    },
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: {
+                            action_time: 1, anchor_y: 0.5, attack_time: 0.3, duration: 0.04,
+                            format: "skill-102040130/%d.png", scale_x: 1.3, scale_y: 1.3,
+                        },
+                        files: ["skill-102040130"], sounds: [],
+                    },
+                ];
+            case 2131201: // 唤潮剑姬一技能。
+            case 2131202:
+            case 2131203:
+                return [
+                    {
+                        type: 9, delay: 70, dimly: 1,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.63, duration: 0.06, format: "skill-102040131/%d.png",
+                            offset_x: 0.75, offset_y: 0.5, scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-102040131"], sounds: ["skill-102040131"],
+                    },
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill", action_time: 1.8, attack_time: 0.6 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 1, delay: 0, dimly: 0,
+                        base: {},
+                        files: [], sounds: [],
+                    },
+                ];
+            case 2150200: // 凯萨丁·普攻
+                return [
+                    {
+                        type: 7, delay: 0, dimly: 0,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.3, duration: 0.08, format: "skill-102050150/%d.png",
+                            scale_x: 3, scale_y: 3,
+                        },
+                        files: ["skill-102050150"], sounds: ["skill-102050150"],
+                    },
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action_time: 1.8, attack_time: 0.6 },
+                        files: [], sounds: [],
+                    },
+                ];
+            case 2151201: // 凯萨丁一技能。
+            case 2151202:
+            case 2151203:
+                return [
+                    {
+                        type: 7, delay: 70, dimly: 1,
+                        base: {
+                            anchor_x: 0.27, anchor_y: 0.3, duration: 0.08, format: "skill-102050151/%d.png",
+                            scale_x: 4, scale_y: 4,
+                        },
+                        files: ["skill-102050151"], sounds: ["skill-102050150"],
+                    },
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { action: "skill", action_time: 1.8, attack_time: 0.6 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 6, delay: 60, dimly: 0,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0, duration: 0.02, format: "skill-102050151-1/%d.png",
+                            scale_x: 3, scale_y: 3,
+                        },
+                        files: ["skill-102050151-1"], sounds: [],
+                    },
+                ];
+            case 2155201:
+            case 2155202: // 凯萨丁替换普攻共享原帧，延后目标特效并保持暗屏。
+                return [
+                    {
+                        type: 7, delay: 10, dimly: 1,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.4, duration: 0.08, format: "skill-102050150/%d.png",
+                            scale_x: 1, scale_y: 1,
+                        },
+                        files: ["skill-102050150"], sounds: ["skill-102050150"],
+                    },
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { action_time: 1.8, attack_time: 0.6 },
+                        files: [], sounds: [],
+                    },
+                ];
+            case 3061101: // 风行之神一技能。
+            case 3061102:
+            case 3061103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { action: "skill", action_time: 1, attack_time: 0.6 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 9, delay: 50, dimly: 0,
+                        base: {
+                            anchor_x: 0.32, anchor_y: 0.35, duration: 0.1, format: "skill-103050061/%d.png",
+                            offset_x: 0.5, offset_y: 0.5, scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-103050061"], sounds: ["skill-103050061"],
+                    },
+                    {
+                        type: 1, delay: 0, dimly: 0,
+                        base: {},
+                        files: [], sounds: [],
+                    },
+                ];
+            case 3080100: // 森镜之灵·普攻
+                return [
+                    {
+                        type: 2, delay: 0, dimly: 0,
+                        base: { attack_delay: 0.4, move_back: 0.6, move_time: 0.1 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 7, delay: 30, dimly: 0,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.3, duration: 0.05, format: "skill-103050080/%d.png",
+                            scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-103050080"], sounds: ["skill-103050080"],
+                    },
+                ];
+            case 3081101: // 森镜之灵一技能。
+            case 3081102:
+            case 3081103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { action: "skill", action_time: 1, attack_time: 0.6 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 9, delay: 80, dimly: 0,
+                        base: {
+                            anchor_x: 0.51, anchor_y: 0.5, duration: 0.1, format: "skill-103050081/%d.png",
+                            offset_x: 0.75, offset_y: 0.4, scale_x: 3, scale_y: 3,
+                        },
+                        files: ["skill-103050081"], sounds: ["skill-103050081"],
+                    },
+                    {
+                        type: 6, delay: 80, dimly: 0,
+                        base: {
+                            anchor_x: 0.3, anchor_y: 0.45, duration: 0.05, format: "skill-103050081-1/%d.png",
+                            scale_x: 3, scale_y: 3,
+                        },
+                        files: ["skill-103050081-1"], sounds: [],
+                    },
+                ];
+            case 3083101: // 森镜之灵三技能。
+            case 3083102:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill2", action_time: 2 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 7, delay: 75, dimly: 0,
+                        base: {
+                            anchor_x: 0.4, anchor_y: 0.3, duration: 0.05, format: "skill-103050083/%d.png",
+                            scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-103050083"], sounds: ["skill-103050083"],
+                    },
+                ];
+            case 3091101: // 伊芙一技能。
+            case 3091102:
+            case 3091103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: {
+                            action_time: 1.7, anchor_x: 0.5, anchor_y: 0.4, attack_time: 0.3, duration: 0.1,
+                            format: "skill-103050091/%d.png", scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-103050091"], sounds: ["skill-103050091"],
+                    },
+                    {
+                        type: 6, delay: 20, dimly: 0,
+                        base: {
+                            anchor_x: 0.25, anchor_y: 0.4, duration: 0.02, format: "skill-103050091-1/%d.png",
+                            scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-103050091-1"], sounds: [],
+                    },
+                ];
+            case 3101101: // 安塔利亚一技能。
+            case 3101102:
+            case 3101103:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill", action_time: 1.8, attack_time: 0.6 },
+                        files: [], sounds: ["skill-103050101"],
+                    },
+                    {
+                        type: 9, delay: 70, dimly: 1,
+                        base: {
+                            anchor_x: 0.45, anchor_y: 0.2, duration: 0.1, format: "skill-103050101/%d.png",
+                            offset_x: 0.75, offset_y: 0.4, scale_x: 1.2, scale_y: 1,
+                        },
+                        files: ["skill-103050101"], sounds: [],
+                    },
+                    {
+                        type: 6, delay: 70, dimly: 0,
+                        base: {
+                            anchor_x: -0.15, anchor_y: -0.15, duration: 0.02,
+                            format: "skill-103050091-1/%d.png", scale_x: 1, scale_y: 1,
+                        },
+                        files: ["skill-103050091-1"], sounds: [],
+                    },
+                ];
+            case 3103101: // 安塔利亚三技能。
+            case 3103102:
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action: "skill2", action_time: 2 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 7, delay: 70, dimly: 0,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.25, duration: 0.05, format: "skill-103050103/%d.png",
+                            scale_x: 3, scale_y: 3,
+                        },
+                        files: ["skill-103050103"], sounds: ["skill-103050103"],
+                    },
+                ];
+            case 3110200: // 开膛手·J·普攻
+            case 3115201:
+            case 3115202: { // 被动替换后的普攻使用同一帧序列，并按旧表暗屏。
+                const dimly = id === 3110200 ? 0 : 1;
+                return [
+                    {
+                        type: 7, delay: 0, dimly,
+                        base: {
+                            anchor_x: 0.35, anchor_y: 0.5, duration: 0.08, flipped: 1,
+                            format: "skill-103050110/%d.png", scale_x: 1, scale_y: 1,
+                        },
+                        files: ["skill-103050110"], sounds: ["skill-103050110"],
+                    },
+                    {
+                        type: 11, delay: 0, dimly,
+                        base: {
+                            attack_delay: 0.2, move_back: 2, move_time: 0.1, offset_x: 0.6, offset_y: 0.3,
+                        },
+                        files: [], sounds: [],
+                    },
+                ];
+            }
+            case 3111201: // 开膛手·J 一技能。
+            case 3111202:
+            case 3111203:
+                return [
+                    {
+                        type: 7, delay: 10, dimly: 1,
+                        base: {
+                            anchor_x: 0.35, anchor_y: 0.5, duration: 0.08, flipped: 1,
+                            format: "skill-103050111/%d.png", scale_x: 1, scale_y: 1,
+                        },
+                        files: ["skill-103050111"], sounds: ["skill-103050111"],
+                    },
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { action_time: 1.8, attack_time: 0.6 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 1, delay: 0, dimly: 0,
+                        base: {},
+                        files: [], sounds: [],
+                    },
+                ];
+            case 4080200: // 艾妮利娅·普攻
+                return [
+                    {
+                        type: 7, delay: 0, dimly: 0,
+                        base: {
+                            anchor_x: 0.55, anchor_y: 0.3, duration: 0.08, flipped: 1,
+                            format: "skill-104050080/%d.png", scale_x: 1, scale_y: 1,
+                        },
+                        files: ["skill-104050080"], sounds: ["skill-104050080"],
+                    },
+                    {
+                        type: 11, delay: 0, dimly: 0,
+                        base: {
+                            attack_delay: 0.2, move_back: 2, move_time: 0.1, offset_x: 0.6, offset_y: 0.3,
+                        },
+                        files: [], sounds: [],
+                    },
+                ];
+            case 4081201: // 艾妮利娅1技能1级
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 1,
+                        base: { action: "skill", action_time: 1, attack_time: 0.6 },
+                        files: [], sounds: [],
+                    },
+                    {
+                        type: 7, delay: 90, dimly: 1,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.3, duration: 0.05, format: "skill-104050081/%d.png",
+                            scale_x: 1.5, scale_y: 1.5,
+                        },
+                        files: ["skill-104050081"], sounds: ["skill-104050081"],
+                    },
+                ];
+            case 5020300: // 深渊元首·普攻
+                return [
+                    {
+                        type: 7, delay: 0, dimly: 0,
+                        base: {
+                            anchor_x: 0.45, anchor_y: 0.4, duration: 0.08, format: "skill-105040030/%d.png",
+                            scale_x: 1.8, scale_y: 1.8,
+                        },
+                        files: ["skill-105040030"], sounds: ["skill-105040030"],
+                    },
+                    {
+                        type: 11, delay: 0, dimly: 0,
+                        base: {
+                            attack_delay: 0.2, move_back: 2, move_time: 0.1, offset_x: 0.6, offset_y: 0.3,
+                        },
+                        files: [], sounds: [],
+                    },
+                ];
+            case 5030300: // 暗黑女爵·普攻
+                return [
+                    {
+                        type: 7, delay: 0, dimly: 0,
+                        base: {
+                            anchor_x: 0.45, anchor_y: 0.4, duration: 0.08, flipped: 1,
+                            format: "skill-105040030/%d.png", scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-105040030"], sounds: ["skill-105040030"],
+                    },
+                    {
+                        type: 11, delay: 0, dimly: 0,
+                        base: {
+                            attack_delay: 0.2, move_back: 2, move_time: 0.1, offset_x: 0.6, offset_y: 0.3,
+                        },
+                        files: [], sounds: [],
+                    },
+                ];
+            case 5031101: // 暗黑女爵1技能1级
+                return [
+                    {
+                        type: 5, delay: 0, dimly: 1,
+                        base: {
+                            action: "skill", action_time: 0.3, attack_time: 1.2,
+                            format: "skill-105040031/%d.png", scale_x: 2, scale_y: 2,
+                        },
+                        files: ["skill-105040031"], sounds: ["skill-105040031"],
+                    },
+                    {
+                        type: 1, delay: 0, dimly: 0,
+                        base: {},
+                        files: [], sounds: [],
+                    },
+                ];
+            case 5121101: // 暗化幼龙1技能1级
+                return [
+                    {
+                        type: 3, delay: 0, dimly: 0,
+                        base: { action_time: 1.8, attack_time: 0.6 },
+                        files: [], sounds: ["skill-105050081"],
+                    },
+                    {
+                        type: 9, delay: 30, dimly: 1,
+                        base: {
+                            anchor_x: 0.5, anchor_y: 0.5, duration: 0.06, format: "skill-105050081/%d.png",
+                            offset_x: 0.6, offset_y: 0.5, scale_x: 1.5, scale_y: 1.5,
+                        },
+                        files: ["skill-105050081"], sounds: [],
+                    },
                 ];
             default:
                 return null;
@@ -407,7 +1106,7 @@ export class BattleAttackUtils {
         return [1, 2, 3, 5, 6, 7, 8, 9, 10, 11].includes(type);
     }
 
-    /** 读取同源buff行；type1只接空动作，type8/10要求完整战场比例，未知帧或动作明确拒绝。 */
+    /** 解析同源 Buff 动作和已核对的帧格式，拒绝未支持的动画资源或动作参数。 */
     public static plan(row: { type: number; ani_base: string; file: string; sound: string;
         shake?: number; dimly?: number }): BattleAttackPlan {
         if (!this.isActionType(row.type)) {
@@ -461,7 +1160,11 @@ export class BattleAttackUtils {
             }
         }
         let effect: BattleAttackPlan["effect"] = null;
-        if (files.length || row.type === 10) {
+        const frameSuffix = "/%d.png";
+        const format = typeof values.format === "string" ? values.format : "";
+        // 旧 type3 按 format 逐帧播放。唤潮剑姬的同技能前段已经声明预载，独立表现段可以省略 file。
+        const directFrames = row.type === 3 && files.length === 0 && format.endsWith(frameSuffix);
+        if (files.length || row.type === 10 || directFrames) {
             // 帧数以旧plist连续帧及本地逐像素复验为依据，不能遇到未知资源就跳过表现。
             const counts: Record<string, number> = {
                 "skill-101050110": 10, "skill-101050111": 10,
@@ -473,23 +1176,39 @@ export class BattleAttackUtils {
                 "skill-103010011": 7,
                 "skill-102030031": 8,
                 "skill-103020021": 15, "skill-103030030": 12,
-                "skill-103040050": 8, "skill-103040051": 10,
+                "skill-103040041": 11, "skill-103040050": 8, "skill-103040051": 10,
                 "skill-103040120": 11, "skill-103040121": 21,
                 "skill-102020021": 14, "skill-102040050": 11, "skill-102040051": 10,
                 "skill-101030030": 6,
-                "skill-103030031": 9, "skill-104040020": 9, "skill-104030011": 6,
+                "skill-103030031": 9, "skill-104040020": 9, "skill-104040021": 9, "skill-104030011": 6,
+                "skill-104040031": 9, "skill-104050040": 6,
                 "skill-104050050": 7, "skill-104050051": 11, "skill-104050051-1": 45,
                 "skill-105040030": 9, "skill-105030011": 6,
+                "skill-105050080": 10, "skill-105050081": 17,
                 "skill-101050080-1": 6, "skill-101050080-2": 12,
                 "skill-101050081": 25, "skill-101050081-1": 29,
                 "skill-102050140": 15, "skill-102050141": 22, "skill-102050141-1": 53,
+                "skill-101050060": 11, "skill-101050061": 23, "skill-101050090": 18,
+                "skill-101050091": 24, "skill-101050091-1": 22, "skill-101050100": 23,
+                "skill-101050101": 21, "skill-102040130": 9, "skill-102040131": 28,
+                "skill-102050060": 8, "skill-102050061": 11, "skill-102050071": 17,
+                "skill-102050080": 7,
+                // 格伦男爵原图集在 17 号首次断帧，旧逐号读取不会使用单独的 19 号。
+                "skill-102050081": 17, "skill-102050081-1": 44,
+                "skill-102050110": 18, "skill-102050111": 20, "skill-102050111-1": 41, "skill-102050113": 20,
+                "skill-102050150": 14, "skill-102050151": 15, "skill-102050151-1": 20,
+                "skill-103050060": 18, "skill-103050061": 10, "skill-103050080": 10,
+                "skill-103050081": 14, "skill-103050081-1": 9, "skill-103050083": 8,
+                "skill-103050090": 12, "skill-103050091": 9, "skill-103050091-1": 20,
+                "skill-103050100": 10, "skill-103050101": 13, "skill-103050103": 14,
+                "skill-103050110": 14, "skill-103050111": 11, "skill-104050080": 8,
+                "skill-104050081": 10, "skill-105040021": 18, "skill-105040031": 8,
             };
-            const format = typeof values.format === "string" ? values.format : "";
             const knownArrow = row.type === 10 && format === "skill-102040041/arrow-%d.png";
-            const file = knownArrow ? "skill-102040041" : files[0];
+            const file = knownArrow ? "skill-102040041" : directFrames ? format.slice(0, -frameSuffix.length) : files[0];
             const count = knownArrow ? 5 : typeof file === "string" ? counts[file] : 0;
             if (!count || (row.type === 10 && !knownArrow) || (knownArrow ? files.length !== 0
-                : files.length !== 1 || format !== file + "/%d.png" || row.type === 2)) {
+                : (!directFrames && files.length !== 1) || format !== file + frameSuffix || row.type === 2)) {
                 throw new Error("战斗帧资源尚未核对：type=" + row.type + "，file=" + JSON.stringify(files));
             }
             const interval = this.seconds(values, "duration", 0.05);

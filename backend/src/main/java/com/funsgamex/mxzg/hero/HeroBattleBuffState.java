@@ -59,6 +59,19 @@ public final class HeroBattleBuffState {
         return new Change(current, List.copyOf(removed));
     }
 
+    /** 更新已安装实例的效果值，供攻击偷取在移除旧冲突后保存可归还的固定攻击。 */
+    Entry setValue(long instanceId, long value) {
+        for (int index = 0; index < entries.size(); index++) {
+            var previous = entries.get(index);
+            if (previous.instanceId() == instanceId) {
+                var updated = new Entry(instanceId, previous.sourceId(), previous.expiresAt(), previous.spec(), value);
+                entries.set(index, updated);
+                return updated;
+            }
+        }
+        throw new IllegalStateException("待更新的效果实例已失效");
+    }
+
     /** 修改已有实例的计数，不刷新期限或重排监听；不存在时拒绝。 */
     public long decrement(long instanceId) {
         for (int i = 0; i < entries.size(); i++) {

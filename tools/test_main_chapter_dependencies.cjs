@@ -81,8 +81,9 @@ function realEvidenceChecks(snapshot) {
         assert.notEqual(stage.status, 'supported', '高关三维与note目标冲突不能误报完全可用');
     }
     assert(report.stages.some(stage => stage.status === 'blocked'), '当前未恢复全部850关，不能全部假支持');
-    assert(report.summary.unresolvedResourceDeclarations > 0, '未知动作的原file声明不能被空资源集合掩盖');
-    for (const resource of Object.values(report.resources).filter(value => value.exists === null)) {
+    const unresolved = Object.values(report.resources).filter(value => value.exists === null);
+    assert.equal(report.summary.unresolvedResourceDeclarations, unresolved.length, '未解析声明数须与明细一致');
+    for (const resource of unresolved) {
         assert.equal(resource.kind, 'unresolved-declaration');
         assert.deepEqual(resource.sources, [], '不能给尚未解析的声明编造源文件');
     }
@@ -101,6 +102,10 @@ function realEvidenceChecks(snapshot) {
         assert(report.dropCatalog[stage.rewards.dropGroup], '掉落组须引用同源实际触发器和权重');
         assert.equal(stage.status, Audit.status(stage.blockers, stage.unverified));
     }
+    assert.deepEqual(report.stages.slice(0, 100).filter(stage => stage.status !== 'supported')
+        .map(stage => [stage.index, stage.blockers, stage.unverified]), [], '已补齐的前100关依赖须持续闭合');
+    assert(report.skillCatalog['102050083:1'].arts.some(art => art.idx === 2085101), '普攻替换后须扫描实际动作');
+    assert(report.skillCatalog['101050103:1'].arts.some(art => art.idx === 1103301), '复活回退治疗须扫描实际动作');
     assert.equal(report.rewardCatalog['2000002'].grantRejection, '', '最小真实精灵发放能力应由实际领域验证');
     const stale = structuredClone(evidence);
     const firstSource = Object.keys(stale.sourceHashes)[0];

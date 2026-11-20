@@ -142,7 +142,7 @@ class MainChapterIdleTest {
     /** 使用真实阵容保存校验，不能由演出服务代选主阵容。 */
     @Autowired com.funsgamex.mxzg.lineup.MainFormationCommandService formations;
 
-    /** 三英雄真实配置、随机首行动、单怪1血、只有普攻；重复演出资产与通关不变。 */
+    /** 三英雄真实配置、随机指定者实际首动、单怪1血、只有普攻；重复演出资产与通关不变。 */
     @Test void encounterUsesThreeOwnedHeroesWithoutRewards() throws Exception {
         var session = login.login("idle_fight_" + UUID.randomUUID().toString().substring(0,8));
         String role = session.role().id(), token = "Bearer " + session.session().accessToken();
@@ -167,7 +167,9 @@ class MainChapterIdleTest {
             assertEquals(4, result.replay().initial().size());
             assertEquals(1, result.replay().initial().stream().filter(u -> u.faction() == 2).findFirst().orElseThrow().opening().hp());
             assertTrue(result.replay().initial().stream().allMatch(u -> u.skills().stream().allMatch(k -> k.activeType() == 2)));
-            assertTrue(result.replay().turns().getFirst().sourceId() < 9);
+            var first = result.replay().initial().stream().filter(u -> u.opening().speed() == 999999).findFirst().orElseThrow();
+            assertEquals(1, first.faction());
+            assertEquals(first.id(), result.replay().turns().getFirst().sourceId());
             assertEquals(com.funsgamex.mxzg.hero.HeroBattleRoundUtils.Outcome.ATTACKER_WIN, result.replay().outcome());
             var bytes = GameProtocolCodec.encode(Map.of("version",1,"kind","response","name","chapter.idle.encounter","ok",true,
                 "body",Map.of("stage",result.stage(),"assetRevision",result.assetRevision(),"lineupVersion",result.lineupVersion(),

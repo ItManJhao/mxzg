@@ -162,10 +162,10 @@ class MainChapterSocketTest {
         }
     }
 
-    /** 校验真实新挑战范围及里程碑集合；空数组与缺字段不同，ID顺序不暗示必须按序领取。 */
+    /** 校验协议下发默认 300 关及真实里程碑集合，保留空数组和缺字段的区别。 */
     private void assertMilestones(JsonNode state, List<Integer> expected) {
         assertTrue(state.has("challengeLimit"), "新快照必须交付当前服务端可信范围");
-        assertEquals(20, state.path("challengeLimit").asInt());
+        assertEquals(300, state.path("challengeLimit").asInt());
         assertTrue(state.has("milestoneProgress"), "新版统一状态必须明确交付里程碑集合");
         var progress = state.path("milestoneProgress");
         assertEquals(1, progress.path("schemaVersion").asInt());
@@ -256,7 +256,7 @@ class MainChapterSocketTest {
         }
     }
 
-    /** 真实协议跑通前三关结算并准入第四关；核对冻结伤害/经验、鉴权恢复与幂等，不访问日常库。 */
+    /** 独立库真实协议跑通前三关与第四关准入，核对冻结伤害、经验、重连和默认 300 关上限。 */
     @Test void challengeRestoreReplayAndClaimThroughBinarySocket() throws Exception {
         var player = login.login("test_" + UUID.randomUUID().toString().substring(0, 12));
         String role = player.role().id();
@@ -357,7 +357,7 @@ class MainChapterSocketTest {
             var init = peer.authenticate(token);
             assertEquals(3, init.path("body").path("initial").path("mainChapter").path("maxCleared").asInt());
             assertFalse(init.path("body").path("initial").path("mainChapter").has("pendingBattleId"));
-            assertEquals(20, init.path("body").path("initial").path("mainChapter").path("challengeLimit").asInt());
+            assertEquals(300, init.path("body").path("initial").path("mainChapter").path("challengeLimit").asInt());
             var fourth = peer.request("chapter.challenge", Map.of("requestId", UUID.randomUUID().toString()));
             assertTrue(fourth.path("ok").asBoolean(), fourth.toString());
             assertEquals(4, fourth.path("body").path("state").path("maxCleared").asInt());

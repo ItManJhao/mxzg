@@ -109,14 +109,21 @@ export class BattleReplayPlayer {
     /**
      * 启动单技能的表现依赖：相同实例按事件顺序，不同目标保留并行。
      * 护盾和显示能力明确声明的格挡耗尽在damage前记录，等待后续同目标命中；其他Buff等此前命中。
-     * 死亡清理仍在全技能表现完成后执行，不改已有多目标致死/增益表现；当前未开放复活链。
+     * 普通死亡清理在技能结束执行。同技能还有复活的目标先完成受击和该次死亡清理，再显示复活。
      * 依赖和Promise只活在本技能中，取消后不再启动迟到任务，也不另存一份战斗状态。
      */
     private async playSkill(effects: readonly BattleReplayStep[], generation: number): Promise<void> {
         const groups: BattleReplayStep[][] = [];
         const deathRemovals: BattleReplayStep[] = [];
-        for (const effect of effects) {
-            if (effect.kind === "buff.remove" && effect.removalReason === "death") {
+        const lastRevival = new Map<number, number>();
+        for (const [index, effect] of effects.entries()) {
+            if (effect.kind === "revival") {
+                lastRevival.set(effect.targetId, index);
+            }
+        }
+        for (const [index, effect] of effects.entries()) {
+            if (effect.kind === "buff.remove" && effect.removalReason === "death"
+                && (lastRevival.get(effect.targetId) ?? -1) <= index) {
                 deathRemovals.push(effect);
                 continue;
             }
@@ -131,16 +138,21 @@ export class BattleReplayPlayer {
         const dependencies = groups.map(() => new Set<number>());
         const lastBuff = new Map<string, number>();
         const lastHit = new Map<number, number>();
+        const lastDeathRemoval = new Map<number, number>();
         let lethalHit: number | undefined;
         let deathBonus: number | undefined;
         for (let index = 0; index < groups.length; index++) {
             const effect = groups[index][0];
             const previousHit = lastHit.get(effect.targetId);
-            if (effect.kind === "damage" || effect.kind === "recovery") {
+            if (effect.kind === "damage" || effect.kind === "recovery" || effect.kind === "revival") {
                 if (previousHit !== undefined) {
                     dependencies[index].add(previousHit);
                 }
                 lastHit.set(effect.targetId, index);
+            }
+            const previousDeathRemoval = lastDeathRemoval.get(effect.targetId);
+            if (effect.kind === "revival" && previousDeathRemoval !== undefined) {
+                dependencies[index].add(previousDeathRemoval);
             }
             if (effect.kind === "buff.upsert" || effect.kind === "buff.remove") {
                 const key = effect.targetId + ":" + effect.buffInstanceId;
@@ -160,6 +172,12 @@ export class BattleReplayPlayer {
                     dependencies[index].add(hit);
                 } else if (previousHit !== undefined) {
                     dependencies[index].add(previousHit);
+                }
+                if (effect.kind === "buff.remove" && effect.removalReason === "death") {
+                    if (previousDeathRemoval !== undefined) {
+                        dependencies[index].add(previousDeathRemoval);
+                    }
+                    lastDeathRemoval.set(effect.targetId, index);
                 }
                 // 保留恶魔魅影的致死增益顺序；该因果属于前一个致死目标，不一定是增益目标。
                 if (lethalHit !== undefined && effect.kind === "buff.upsert"

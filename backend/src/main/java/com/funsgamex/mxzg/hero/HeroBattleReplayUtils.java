@@ -41,10 +41,14 @@ public final class HeroBattleReplayUtils {
         }
         var hp = new LinkedHashMap<Integer, Long>();
         units.forEach(unit -> hp.put(unit.id(), unit.opening().hp()));
-        var order = HeroBattleRoundUtils.order(units.stream()
-            .map(unit -> new HeroBattleRoundUtils.Unit(unit.id(), unit.opening().speed())).toList());
+        var speeds = new HashMap<Integer, HeroBattleAttributeState>();
+        var initialSpeeds = new HashMap<Integer, Long>();
+        units.forEach(unit -> initialSpeeds.put(unit.id(), unit.opening().speed()));
+        var speedBuffs = new HashMap<Long, SpeedBuff>();
+        var remaining = new ArrayList<Integer>();
+        var order = Comparator.comparingLong((Integer id) -> speeds.containsKey(id)
+            ? speeds.get(id).get(101) : initialSpeeds.get(id)).reversed();
         int lastRound = 0;
-        int cursor = 0;
         var turns = new ArrayList<HeroBattleChapterScenario.Turn>();
         var all = new ArrayList<HeroBattleHealingExecutor.Damage>();
         var recoveries = new ArrayList<HeroBattleHealingExecutor.Recovery>();
@@ -56,17 +60,17 @@ public final class HeroBattleReplayUtils {
                 throw new IllegalArgumentException("战斗阶段或前置生命不连续");
             }
             if (frame.round() != lastRound) {
-                if (frame.sourceId() != 0 || (lastRound != 0 && nextAlive(order, hp, cursor) < order.size())) {
+                skipDead(remaining, hp);
+                if (frame.sourceId() != 0 || !remaining.isEmpty()) {
                     throw new IllegalArgumentException("战斗缺少回合开始或单位出手");
                 }
-                cursor = 0;
                 lastRound = frame.round();
+                units.forEach(unit -> remaining.add(unit.id()));
             } else {
-                cursor = nextAlive(order, hp, cursor);
-                if (cursor >= order.size() || frame.sourceId() != order.get(cursor)) {
+                skipDead(remaining, hp);
+                if (remaining.isEmpty() || frame.sourceId() != remaining.removeFirst()) {
                     throw new IllegalArgumentException("战斗出手乱序、重复或死亡单位出手");
                 }
-                cursor++;
             }
             var traced = frame.trace().stream().filter(trace -> trace.kind().equals("damage"))
                 .map(HeroBattleHealingExecutor.Trace::damage).toList();
@@ -78,6 +82,7 @@ public final class HeroBattleReplayUtils {
             }
             // 治疗与伤害必须按原执行顺序重放，分开遍历会丢失同一招的中间血量。
             for (var event : frame.trace()) {
+                updateSpeed(event, units, speeds, speedBuffs);
                 if (event.kind().equals("damage")) {
                     var hit = event.damage();
                     if (hit == null || hit.actual() > 0 || !hp.containsKey(hit.targetId())) {
@@ -89,7 +94,7 @@ public final class HeroBattleReplayUtils {
                     }
                     hp.put(hit.targetId(), value);
                     all.add(hit);
-                } else if (event.kind().equals("recovery")) {
+                } else if (event.kind().equals("recovery") || event.kind().equals("revival")) {
                     var heal = event.recovery();
                     if (heal == null || heal.sourceId() != event.sourceId() || heal.targetId() != event.targetId()
                         || heal.buffId() != event.configId()) {
@@ -98,7 +103,8 @@ public final class HeroBattleReplayUtils {
                     long before = hp.get(heal.targetId());
                     long maximum = units.stream().filter(unit -> unit.id() == heal.targetId()).findFirst().orElseThrow().opening().maxHp();
                     long value = Math.addExact(before, heal.actual());
-                    if (before <= 0 || value <= 0 || value > maximum
+                    boolean revival = event.kind().equals("revival");
+                    if ((revival ? before != 0 : before <= 0) || value <= 0 || value > maximum
                         || heal.actual() != Math.min(heal.reported(), maximum - before)) {
                         throw new IllegalArgumentException("战斗治疗血量或溢出量不一致");
                     }
@@ -112,9 +118,11 @@ public final class HeroBattleReplayUtils {
                 turns.add(new HeroBattleChapterScenario.Turn(frame.round(), frame.sourceId(),
                     HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, hp));
             }
+            remaining.sort(order);
         }
+        skipDead(remaining, hp);
         if (HeroBattleChapterScenario.outcome(units, hp, 0) == HeroBattleRoundUtils.Outcome.ONGOING
-            && nextAlive(order, hp, cursor) < order.size()) {
+            && !remaining.isEmpty()) {
             throw new IllegalArgumentException("最终回合仍缺存活单位出手");
         }
         if (!turns.equals(report.turns()) || !hp.equals(report.finalHp()) || lastRound != report.rounds()
@@ -123,6 +131,35 @@ public final class HeroBattleReplayUtils {
             || report.outcome() == HeroBattleRoundUtils.Outcome.ONGOING) {
             throw new IllegalArgumentException("战斗最终结果不一致");
         }
+    }
+
+    /** 回放内部速度实例的原目标和基础增量，移除必须精确撤回。 */
+    private record SpeedBuff(int targetId, long amount) {}
+
+    /** 从同一帧的真实Buff入场/移除记录重放速度；历史零增量战报沿冻结速度校验。 */
+    private static void updateSpeed(HeroBattleHealingExecutor.Trace event, List<HeroBattleChapterScenario.Unit> units,
+                                    Map<Integer, HeroBattleAttributeState> speeds, Map<Long, SpeedBuff> buffs) {
+        var entry = event.buff();
+        var applied = entry == null ? null : buffs.get(entry.instanceId());
+        long delta = event.speedDelta();
+        if (delta == 0 && applied == null) {
+            return;
+        }
+        if (entry == null || entry.spec().type() != 160 || entry.spec().id() != event.configId()
+                || entry.sourceId() != event.sourceId()) {
+            throw new IllegalArgumentException("速度增量缺少对应属性Buff");
+        }
+        if (event.kind().equals("buff.upsert") && delta != 0 && applied == null) {
+            buffs.put(entry.instanceId(), new SpeedBuff(event.targetId(), delta));
+        } else if (event.kind().equals("buff.remove") && applied != null
+                && applied.targetId() == event.targetId() && Math.negateExact(applied.amount()) == delta) {
+            buffs.remove(entry.instanceId());
+        } else {
+            throw new IllegalArgumentException("速度Buff实例重复或移除增量不符");
+        }
+        var state = speeds.computeIfAbsent(event.targetId(), id -> new HeroBattleAttributeState(units.stream()
+            .filter(unit -> unit.id() == id).findFirst().orElseThrow().attributes()));
+        state.addBase(101, delta);
     }
 
     /** 通用生产来源使用正十进制全局uint32索引；历史审计别名另保留原固定准入。 */
@@ -134,9 +171,10 @@ public final class HeroBattleReplayUtils {
         return index <= 4_294_967_295L;
     }
 
-    /** 从当前游标跳过死亡单位；存活单位不可遗漏，同速保持名册的攻方优先稳定顺序。 */
-    private static int nextAlive(List<Integer> order, Map<Integer, Long> hp, int cursor) {
-        while (cursor < order.size() && hp.get(order.get(cursor)) == 0) cursor++;
-        return cursor;
+    /** 跳过排在最前的死亡单位，与执行器只消费当前待出手位的规则一致。 */
+    private static void skipDead(List<Integer> remaining, Map<Integer, Long> hp) {
+        while (!remaining.isEmpty() && hp.get(remaining.getFirst()) == 0) {
+            remaining.removeFirst();
+        }
     }
 }

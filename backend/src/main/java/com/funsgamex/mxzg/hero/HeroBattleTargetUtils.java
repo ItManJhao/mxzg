@@ -5,20 +5,26 @@
 package com.funsgamex.mxzg.hero;
 
 import java.util.*;
+import java.util.function.IntPredicate;
+import java.util.function.LongSupplier;
 
 public final class HeroBattleTargetUtils {
     /** 已核对的选择器，未知类型不能降级为默认敌人。 */
-    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 23);
+    private static final Set<Integer> SUPPORTED = Set.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 14, 22, 23);
 
     /** 纯规则工具禁止实例化。 */
     private HeroBattleTargetUtils() {}
 
-    /** 本场身份、站位与生命；speed仅在14排序比较时读取真实属性池，避免其他选择消费一次性速度。 */
+    /** 本场身份、站位与生命；攻击、速度和状态读取入口只由相应选择器调用。 */
     public record Unit(int id, int faction, int position, double attack, long hp, long maxHp,
-                       java.util.function.LongSupplier speed) {
+                       LongSupplier speed, LongSupplier currentAttack, IntPredicate hasBuff) {
         /** 不使用速度选择器的已有调用无须伪造速度；14号选择器遇到缺失会明确拒绝。 */
         public Unit(int id, int faction, int position, double attack, long hp, long maxHp) {
             this(id, faction, position, attack, hp, maxHp, null);
+        }
+        /** 已有只提供速度的规则调用保留攻击入参，状态筛选需提供本场状态。 */
+        public Unit(int id, int faction, int position, double attack, long hp, long maxHp, LongSupplier speed) {
+            this(id, faction, position, attack, hp, maxHp, speed, null, null);
         }
         /** 拒绝无法用于定位或排序的单位。 */
         public Unit {
@@ -40,6 +46,11 @@ public final class HeroBattleTargetUtils {
         public int hashCode() {
             return Objects.hash(id, faction, position, attack, hp, maxHp);
         }
+
+        /** 12号排序读取施放时攻击力，独立定位测试仍可传入固定属性。 */
+        private double rankingAttack() {
+            return currentAttack == null ? attack : currentAttack.getAsLong();
+        }
     }
 
     /** 原动作编号、选择器、目标数量与target_value参数；数量0沿用旧版上限99。 */
@@ -58,6 +69,9 @@ public final class HeroBattleTargetUtils {
             if (selectors.contains(23) && (values.isEmpty() || values.stream().anyMatch(value -> value < 1 || value > 2))) {
                 throw new IllegalArgumentException("前后排选择参数尚未支持或缺失：" + artId);
             }
+            if (selectors.contains(22) && (values.isEmpty() || !Set.of(1201, 1206).containsAll(values))) {
+                throw new IllegalArgumentException("状态顺序选择参数尚未核对：" + artId);
+            }
         }
     }
 
@@ -75,6 +89,13 @@ public final class HeroBattleTargetUtils {
 
     /** 旧RandomSelector/RandomUtil.randomList：逐次从剩余列表移除随机下标；不足数量不抽样、不重排。 */
     public static List<Unit> select(Plan plan, Unit source, List<Unit> liveUnits,
+                                    List<Unit> context, boolean ordinaryCounterattack,
+                                    java.util.function.IntUnaryOperator randomIndex) {
+        return select(plan, source, liveUnits, List.of(), context, ordinaryCounterattack, randomIndex);
+    }
+
+    /** 倒下单位按阵营的死亡先后传入；旧5号选择器无倒下盟友时才回退到存活盟友。 */
+    public static List<Unit> select(Plan plan, Unit source, List<Unit> liveUnits, List<Unit> fallenUnits,
                                     List<Unit> context, boolean ordinaryCounterattack,
                                     java.util.function.IntUnaryOperator randomIndex) {
         var targets = new LinkedHashSet<Unit>(context);
@@ -96,6 +117,12 @@ public final class HeroBattleTargetUtils {
                     .filter(unit -> (unit.faction() == source.faction()) == (type == 2))
                     .forEach(targets::add);
                 case 4 -> replace(targets, targets.stream().limit(count).toList());
+                case 5 -> {
+                    var fallen = fallenUnits.stream().filter(unit -> unit.faction() == source.faction()).toList();
+                    var candidates = fallen.isEmpty()
+                        ? liveUnits.stream().filter(unit -> unit.faction() == source.faction()).toList() : fallen;
+                    replace(targets, candidates.stream().limit(count).toList());
+                }
                 case 6, 7 -> {
                     var preferred = targets.stream().filter(unit -> (unit.position() <= 4) == (type == 6)).toList();
                     // 旧规则：目标排为空则保持原集合，不自行截取数量。
@@ -133,12 +160,20 @@ public final class HeroBattleTargetUtils {
                     replace(targets, positions.values().stream().limit(count).toList());
                 }
                 case 12 -> replace(targets, targets.stream()
-                    .sorted(Comparator.comparingDouble(Unit::attack).reversed()).limit(count).toList());
+                    .sorted(Comparator.comparingDouble(Unit::rankingAttack).reversed()).limit(count).toList());
                 case 14 -> {
                     if (targets.stream().anyMatch(unit -> unit.speed() == null)) {
                         throw new IllegalArgumentException("速度选择缺少本场真实速度：" + plan.artId());
                     }
                     replace(targets, targets.stream().sorted(Comparator.comparingLong((Unit unit) -> unit.speed().getAsLong()).reversed())
+                        .limit(count).toList());
+                }
+                case 22 -> {
+                    if (targets.stream().anyMatch(unit -> unit.hasBuff() == null)) {
+                        throw new IllegalArgumentException("状态顺序选择缺少本场状态：" + plan.artId());
+                    }
+                    replace(targets, targets.stream()
+                        .sorted(Comparator.comparingInt(unit -> buffPriority(unit, plan.values())))
                         .limit(count).toList());
                 }
                 case 23 -> {
@@ -161,6 +196,16 @@ public final class HeroBattleTargetUtils {
             }
         }
         return List.copyOf(targets);
+    }
+
+    /** 旧BuffSelector按首个已有状态的配置顺序排名，无匹配权重100，同权重保持原敌方次序。 */
+    private static int buffPriority(Unit unit, List<Integer> values) {
+        for (int index = 0; index < values.size(); index++) {
+            if (unit.hasBuff().test(values.get(index))) {
+                return index;
+            }
+        }
+        return 100;
     }
 
     /** 用已计算的结果替换有序集合，保留选择器决定的顺序。 */

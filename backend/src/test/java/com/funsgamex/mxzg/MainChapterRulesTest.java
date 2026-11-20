@@ -27,14 +27,25 @@ class MainChapterRulesTest {
         assertThrows(UnsupportedOperationException.class, () -> first.firstRewards().clear());
     }
 
-    /** 未通关从第一关开始，战力和等级均由服务器在挑战前校验。 */
+    /** 按连续进度挑战，服务器校验战力、等级和第 300 关的默认上限。 */
     @Test void admissionChecksBothServerRequirements() {
         var initial = new Progress(0, false);
         assertEquals(new Decision(Action.CHALLENGE, rules.stage(1)), rules.decide(initial, 1, 1));
         assertThrows(IllegalArgumentException.class, () -> rules.decide(initial, 1, 0));
         assertThrows(IllegalArgumentException.class, () -> rules.decide(initial, 0, 1));
         assertEquals(4, rules.decide(new Progress(3, false), 300, 99999).stage().index());
-        assertThrows(IllegalArgumentException.class, () -> rules.decide(new Progress(20, false), 300, 99999));
+        assertEquals(21, rules.decide(new Progress(20, false), 300, 99999).stage().index());
+        assertEquals(30, rules.decide(new Progress(29, false), 300, 99999).stage().index());
+        assertEquals(40, rules.decide(new Progress(39, false), 300, 99999).stage().index());
+        assertEquals(41, rules.decide(new Progress(40, false), 300, 99999).stage().index());
+        assertThrows(IllegalArgumentException.class, () -> rules.decide(new Progress(99, false), 30, 99999));
+        assertEquals(100, rules.decide(new Progress(99, false), 31, 99999).stage().index());
+        assertEquals(101, rules.decide(new Progress(100, false), 31, 99999).stage().index());
+        assertThrows(IllegalArgumentException.class, () -> rules.decide(new Progress(109, false), 32, 99999));
+        assertEquals(110, rules.decide(new Progress(109, false), 33, 99999).stage().index());
+        assertThrows(IllegalArgumentException.class, () -> rules.decide(new Progress(299, false), 96, 99999));
+        assertEquals(300, rules.decide(new Progress(299, false), 97, 99999).stage().index());
+        assertThrows(IllegalArgumentException.class, () -> rules.decide(new Progress(300, false), 300, 99999));
     }
 
     /** 胜利立即记录已通关；再次挑战只补领奖，不检查下一关门槛也不越关。 */
@@ -50,9 +61,9 @@ class MainChapterRulesTest {
         assertEquals(settled, rules.settled(settled));
     }
 
-    /** 第二十关胜利仍可结算，不能因第二十一关未开放而卡住已赢奖励。 */
+    /** 第 300 关胜利后仍可结算，结清后拒绝挑战第 301 关。 */
     @Test void lastSupportedVictoryCanStillSettle() {
-        var won = rules.complete(new Progress(19, false), 20, true);
+        var won = rules.complete(new Progress(299, false), 300, true);
         assertEquals(Action.SETTLE_PENDING, rules.decide(won, 0, 0).action());
         assertFalse(rules.pendingRewards(won).isEmpty());
         assertThrows(IllegalArgumentException.class, () -> rules.decide(rules.settled(won), 300, 99999));
@@ -102,9 +113,9 @@ class MainChapterRulesTest {
         assertEquals(300, rules.catalog().stream().filter(stage -> rules.enemyMappingPending(stage.index())).count());
     }
 
-    /** 新挑战范围只读可信配置，不由850目录自动全开；降低范围不阻止已赢历史结算。 */
+    /** 检查默认和显式挑战范围，降低范围仍可结算之前已获胜的战斗。 */
     @Test void challengeLimitIsIndependentAndDoesNotBlockPendingHistory() {
-        assertEquals(20, rules.challengeLimit());
+        assertEquals(300, rules.challengeLimit());
         assertEquals(4, new MainChapterRules(new ObjectMapper(), 4).challengeLimit());
         var narrowed = new MainChapterRules(new ObjectMapper(), 3);
         assertThrows(IllegalArgumentException.class, () -> narrowed.decide(new Progress(3, false), 300, Long.MAX_VALUE));

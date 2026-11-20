@@ -55,6 +55,17 @@ function checkCatalog(): void {
     assert.equal(ChapterBackgroundUtils.resolve(table, null, false).stage, 1);
     assert.equal(ChapterBackgroundUtils.resolve(table, { maxCleared: 16, pendingBattleId: "pending" }, false).map, "map01");
     assert.equal(ChapterBackgroundUtils.resolve(table, { maxCleared: 16, pendingBattleId: null }, false).map, "map02");
+    assert.equal(ChapterBackgroundUtils.resolve(table, { maxCleared: 51, pendingBattleId: "pending" }, false).map, "map03");
+    assert.equal(ChapterBackgroundUtils.resolve(table, { maxCleared: 51, pendingBattleId: null }, false).map, "map04");
+    assert.equal(ChapterBackgroundUtils.resolve(table, { maxCleared: 76, pendingBattleId: "pending" }, false).map, "map04");
+    assert.equal(ChapterBackgroundUtils.resolve(table, { maxCleared: 76, pendingBattleId: null }, false).map, "map05");
+    for (const [chapter, previous, next] of [[151, "map07", "map08"], [201, "map08", "map10"], [251, "map10", "map11"]] as const) {
+        const pending = ChapterBackgroundUtils.resolve(table, { maxCleared: chapter, pendingBattleId: "pending" }, true);
+        const settled = ChapterBackgroundUtils.resolve(table, { maxCleared: chapter, pendingBattleId: null }, false);
+        assert.equal(pending.background, `chapter/ui/${previous}/spriteFrame`);
+        assert.equal(settled.background, `chapter/ui/hang/${next}_B/spriteFrame`);
+        assert.equal(settled.floor, `chapter/ui/hang/${next}_F/spriteFrame`);
+    }
     assert.throws(() => ChapterBackgroundUtils.resolve({ rows: [] }, { maxCleared: 21, pendingBattleId: null }, false), /缺失/);
     assert.throws(() => ChapterBackgroundUtils.resolve({ rows: [{ idx: 1, map: "../map01" }] }, null, false), /缺失/);
     assert.throws(() => ChapterBackgroundUtils.resolve({ rows: [table.rows[0], table.rows[0]] }, null, false), /重复/);

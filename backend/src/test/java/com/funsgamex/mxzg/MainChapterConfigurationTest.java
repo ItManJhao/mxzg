@@ -6,9 +6,13 @@ package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.auth.SessionService;
+import com.funsgamex.mxzg.campaign.IdleActivityMaintenanceService;
 import com.funsgamex.mxzg.campaign.IdleRules;
 import com.funsgamex.mxzg.campaign.MainChapterFirstRewardRules;
+import com.funsgamex.mxzg.campaign.MainChapterFirstRewardService;
+import com.funsgamex.mxzg.campaign.MainChapterIdleClaimService;
 import com.funsgamex.mxzg.campaign.MainChapterIdleStateRepository;
+import com.funsgamex.mxzg.campaign.MainChapterMilestoneService;
 import com.funsgamex.mxzg.campaign.MainChapterRewardService;
 import com.funsgamex.mxzg.campaign.MainChapterRules;
 import com.funsgamex.mxzg.campaign.MainChapterService;
@@ -23,13 +27,17 @@ import com.funsgamex.mxzg.network.AssetSyncService;
 import com.funsgamex.mxzg.network.GameProtocolCodec;
 import com.funsgamex.mxzg.network.SessionSnapshotService;
 import com.funsgamex.mxzg.reward.RewardGrantService;
+import com.funsgamex.mxzg.reward.RewardReceiptPayloads;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.time.GameClock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,12 +60,16 @@ class MainChapterConfigurationTest {
     @Autowired private DevelopmentLoginService login;
     /** 真实鉴权服务供不同只读范围的领域实例复用。 */
     @Autowired private SessionService sessions;
-    /** 当前默认开放连续二十关的真实主线服务。 */
+    /** 读取默认开放范围的真实主线服务。 */
     @Autowired private MainChapterService chapters;
     /** 真实共享发奖适配，历史结算仍消费持久冻结计划。 */
     @Autowired private MainChapterRewardService rewards;
     /** 独立通关奖励继续随受限主线进度装配。 */
     @Autowired private MainChapterFirstRewardRules firstRewards;
+    /** 冻结独立通关奖励回执，供候选服务重复领取和重登后的读取。 */
+    @Autowired private RewardReceiptPayloads rewardPayloads;
+    /** 共享游戏时钟，保持隔离领取与本机正常领取使用同一时间来源。 */
+    @Autowired private GameClock clock;
     /** 只读输入及计算不会修改角色资产。 */
     @Autowired private HeroLineupBattleService battles;
     /** 原队伍战力及持久输入版本。 */
@@ -66,6 +78,8 @@ class MainChapterConfigurationTest {
     @Autowired private RoleRepository roles;
     /** 原统一状态快照，验证新挑战范围随最终revision保留。 */
     @Autowired private SessionSnapshotService snapshots;
+    /** 当前里程碑服务以已持久化的真实通关事实发放原始奖励。 */
+    @Autowired private MainChapterMilestoneService milestones;
     /** 原阵容保存，避免测试绕过站位归属。 */
     @Autowired private MainFormationCommandService formations;
     /** 仅向本类隔离H2准备已有通关和时钟。 */
@@ -80,6 +94,10 @@ class MainChapterConfigurationTest {
     @Autowired private ObjectMapper mapper;
     /** 完整同源挂机目录；拥有收益配置不代表相应挑战已开放。 */
     @Autowired private IdleRules idle;
+    /** 真正发放第300关对应挂机收益，回执和起点使用既有领域。 */
+    @Autowired private MainChapterIdleClaimService idleClaims;
+    /** 初始化本类隔离库的区服开服时间，领取时仍校验生产活动配置。 */
+    @Autowired private IdleActivityMaintenanceService idleMaintenance;
     /** 共享类型支持检查只读使用，不在配置预检时发奖。 */
     @Autowired private RewardGrantService grants;
 
@@ -112,13 +130,13 @@ class MainChapterConfigurationTest {
             player.role(), Instant.now().getEpochSecond() - 60);
     }
 
-    /** 二十关之外不自动开放；第二十一关新挑战拒绝且事务不落战报或推进资产版本。 */
+    /** 第301关的新挑战被拒绝，且事务不写战报、请求回执或资产版本。 */
     @Test
-    void defaultScopeRejectsTwentyFirstNewChallengeWithoutChangingAssets() {
+    void defaultScopeRejectsChallengeAfterLimitWithoutChangingAssets() {
         var player = player();
-        cleared(player, 20);
+        cleared(player, 300);
         var before = snapshots.snapshot(player.token());
-        assertEquals(20, before.mainChapter().challengeLimit());
+        assertEquals(300, before.mainChapter().challengeLimit());
         var failure = assertThrows(IllegalArgumentException.class,
             () -> chapters.challenge(player.token(), UUID.randomUUID().toString()));
         assertTrue(failure.getMessage().contains("开放范围"));
@@ -130,16 +148,16 @@ class MainChapterConfigurationTest {
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_command WHERE role_id=?", Integer.class, player.role()));
     }
 
-    /** 默认二十关均经真实挑战和结算；重复回执不多发奖，最后一关结算后不跳到离散可用关。 */
+    /** 默认前300关均经真实挑战和结算，重复回执只读，末关结算后继续限制新挑战。 */
     @Test
-    void defaultScopeChallengesAndSettlesAllTwentyContinuousStages() throws Exception {
-        var player = player();
-        for (int index = 1; index <= 20; index++) {
+    void defaultScopeChallengesAndSettlesAllOpenStages() throws Exception {
+        var player = prepareStageThreeHundredPlayer();
+        for (int index = 1; index <= 300; index++) {
             String requestId = UUID.randomUUID().toString();
             var battle = chapters.challenge(player.token(), requestId);
             assertEquals(MainChapterService.Action.BATTLE, battle.action());
             assertEquals(index, battle.state().maxCleared());
-            assertEquals(20, battle.state().challengeLimit());
+            assertEquals(300, battle.state().challengeLimit());
             assertEquals("chapter:lineup:" + index, chapters.replay(player.token(), battle.battleId()).replay().getScenario());
             assertEquals(battle, chapters.challenge(player.token(), requestId));
             var settled = chapters.claim(player.token(), battle.battleId());
@@ -154,12 +172,398 @@ class MainChapterConfigurationTest {
         }
         var finalSnapshot = snapshots.snapshot(player.token());
         assertEquals("ENABLED", finalSnapshot.mainChapterIdle().claimState().requestMode());
-        Files.write(Path.of("target/chapter-open-scope-20.pb"), GameProtocolCodec.encode(Map.of(
+        Files.write(Path.of("target/chapter-open-scope-300.pb"), GameProtocolCodec.encode(Map.of(
             "version", 1, "kind", "event", "name", "state.changed", "body", finalSnapshot)));
         assertThrows(IllegalArgumentException.class,
             () -> chapters.challenge(player.token(), UUID.randomUUID().toString()));
         assertEquals(finalSnapshot.revision(), snapshots.snapshot(player.token()).revision());
-        assertEquals(20, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_battle WHERE role_id=?", Integer.class, player.role()));
+        assertEquals(300, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_battle WHERE role_id=?", Integer.class, player.role()));
+    }
+
+    /** 在真实角色锁内准备已达到后段挑战等级的隔离角色，保留全部关卡门槛。 */
+    private void prepareRoleLevel(Player player, int level) {
+        new TransactionTemplate(transactions).executeWithoutResult(status -> {
+            roles.lock(player.role());
+            roles.setDevelopmentLevel(player.role(), level);
+        });
+    }
+
+    /** 在单独设为25的范围内从原第20关进度连续挑战，保留真实首通、挂机快照和可复验战报。 */
+    @Test
+    void candidateScopeChallengesAndSettlesStagesTwentyOneThroughTwentyFive() throws Exception {
+        verifyCandidateRange(20, 25, 22);
+    }
+
+    /** 在补齐技能表现后连续挑战第 26～29 关，保留真实结算和 Creator 战报。 */
+    @Test
+    void candidateScopeChallengesAndSettlesStagesTwentySixThroughTwentyNine() throws Exception {
+        verifyCandidateRange(25, 29, 26);
+    }
+
+    /** 第 30 关真实通关及重登结算后，额外奖励按旧配置 ID 幂等发放 500 强化石。 */
+    @Test
+    void stageThirtyUnlocksOriginalMilestone() throws Exception {
+        String token = verifyCandidateRange(29, 30, 30);
+        var before = snapshots.snapshot(token);
+        assertFalse(before.mainChapter().milestoneProgress().claimedIds().contains(150));
+        var receipt = milestones.claim(token, 150);
+        assertEquals(30, receipt.targetChapter());
+        assertEquals(1, receipt.actual().items().size());
+        assertEquals(900102, receipt.actual().items().getFirst().itemId());
+        assertEquals(500, receipt.actual().items().getFirst().credited());
+        var after = snapshots.snapshot(token);
+        assertEquals(countInventoryItem(before, 900102) + 500, countInventoryItem(after, 900102));
+        assertTrue(after.mainChapter().milestoneProgress().claimedIds().contains(150));
+        assertEquals(receipt, milestones.claim(token, 150));
+        assertEquals(after.revision(), snapshots.snapshot(token).revision());
+    }
+
+    /** 从第 30 关的历史进度挑战下一章，验证真实守军、首通结算和挂机档位。 */
+    @Test
+    void candidateScopeChallengesAndSettlesStagesThirtyOneThroughThirtySeven() throws Exception {
+        verifyCandidateRange(30, 37, 36);
+    }
+
+    /** 验证第 38 关补齐后可连续到第 40 关，含末关重登结算及挂机掉落组进入下一档。 */
+    @Test
+    void candidateScopeChallengesAndSettlesStagesThirtyEightThroughForty() throws Exception {
+        verifyCandidateRange(37, 40, 40);
+        assertEquals(1001, idle.stage(39).group());
+        assertEquals(1002, idle.stage(40).group());
+    }
+
+    /** 同一隔离角色连续挑战第 41～100 关，复验重登结算、独立通关奖励和里程碑的真实发放。 */
+    @Test
+    void candidateScopeChallengesAndSettlesStagesFortyOneThroughOneHundred() throws Exception {
+        var player = player();
+        prepareRoleLevel(player, 31);
+        String token = verifyCandidateRange(player, 40, 100, List.of(50, 80, 100),
+            List.of(50, 60, 70, 75, 80, 90, 100),
+            Map.of(50, new MilestoneReward(200, 900102, 800), 80, new MilestoneReward(300, 1001012, 1)));
+        var snapshot = snapshots.snapshot(token);
+        assertEquals(100, snapshot.mainChapter().maxCleared());
+        assertEquals(1004, idle.stage(99).group());
+        assertEquals(1005, idle.stage(100).group());
+        assertEquals(List.of(200, 300), snapshot.mainChapter().milestoneProgress().claimedIds());
+    }
+
+    /** 同一隔离角色连续挑战第 101～110 关，核对新被动关、重登结算和第110关两个领取入口。 */
+    @Test
+    void candidateScopeChallengesAndSettlesStagesOneHundredOneThroughOneHundredTen() throws Exception {
+        var player = player();
+        new TransactionTemplate(transactions).executeWithoutResult(status -> {
+            roles.lock(player.role());
+            roles.setDevelopmentLevel(player.role(), 33);
+        });
+        String token = verifyCandidateRange(player, 100, 110, List.of(103, 110), List.of(110),
+            Map.of(110, new MilestoneReward(400, 10205011, 1)));
+        var snapshot = snapshots.snapshot(token);
+        assertEquals(110, snapshot.mainChapter().maxCleared());
+        assertEquals(List.of(400), snapshot.mainChapter().milestoneProgress().claimedIds());
+        assertEquals(List.of(110), snapshot.mainChapter().firstRewardProgress().claimedChapters());
+    }
+
+    /** 用达到原配置等级要求的隔离角色打通第111～300关，并核对通关、里程碑及末关挂机的真实到账。 */
+    @Test
+    void candidateScopeChallengesAndSettlesStagesOneHundredElevenThroughThreeHundred() throws Exception {
+        var player = prepareStageThreeHundredPlayer();
+        var independentRewards = List.of(120, 125, 130, 140, 150, 160, 170, 175, 180, 190, 200, 210,
+            220, 225, 230, 240, 250, 260, 270, 275, 280, 290, 300);
+        String token = verifyCandidateRange(player, 110, 300, List.of(140, 159, 200, 201, 250, 300),
+            independentRewards, Map.of(140, new MilestoneReward(500, 10105007, 1)));
+        var snapshot = snapshots.snapshot(token);
+        assertEquals(300, snapshot.mainChapter().maxCleared());
+        assertEquals(List.of(500), snapshot.mainChapter().milestoneProgress().claimedIds());
+        assertEquals(independentRewards, snapshot.mainChapter().firstRewardProgress().claimedChapters());
+        var milestone = milestones.status(token, 500);
+        assertTrue(milestone.found());
+        assertEquals(10105007, milestone.receipt().actual().heroes().getFirst().templateId());
+        assertEquals(1013, idle.stage(299).group());
+        assertEquals(1014, idle.stage(300).group());
+        verifyStageThreeHundredIdleClaim(token, snapshot);
+    }
+
+    /** 准备满足第300关门槛的孤立角色，并通过真实阵型命令保存九星阵容。 */
+    private Player prepareStageThreeHundredPlayer() {
+        var player = player(10105011, 9, 200, 6);
+        assertEquals(97, new MainChapterRules(mapper).stage(300).requiredLevel());
+        prepareRoleLevel(player, 97);
+        var lineup = MainChapterProgressionPreview.prepareStageThreeHundredLineup(jdbc, player.role(), player.hero(), 200);
+        var formation = snapshots.snapshot(player.token()).mainFormation();
+        formations.save(player.token(), new MainFormationCommandService.Save(UUID.randomUUID().toString(),
+            formation.version(), 1, lineup));
+        return player;
+    }
+
+    /** 核对范围中每档正常挂机触发均有可发放的正权重候选和真实基础资源。 */
+    @Test
+    void idleRewardCandidatesThroughStageThreeHundredStayGrantable() {
+        var data = idle.data();
+        var covered = data.stages().stream().filter(stage -> stage.id() >= 111 && stage.id() <= 300).toList();
+        assertEquals(190, covered.size());
+        var groups = covered.stream().map(IdleRules.Stage::group).distinct().sorted().toList();
+        assertEquals(List.of(1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014), groups);
+        for (var stage : covered) {
+            grants.requireSupported(stage.base().stream().map(reward -> reward.itemId()).toList());
+        }
+        for (int group : groups) {
+            var triggers = data.triggers().stream().filter(trigger -> trigger.group() == group).toList();
+            assertFalse(triggers.isEmpty(), "缺挂机触发组 " + group);
+            for (var trigger : triggers) {
+                var items = data.drops().stream().filter(drop -> drop.table() == trigger.table() && drop.weight() > 0)
+                    .map(IdleRules.Drop::itemId).toList();
+                assertFalse(items.isEmpty(), "缺挂机掉落表 " + trigger.table());
+                grants.requireSupported(items);
+            }
+        }
+    }
+
+    /** 核对第300关领取按原档位实际入账，验证成功回执、计时复位及请求重试。 */
+    private void verifyStageThreeHundredIdleClaim(String token, SessionSnapshotService.Snapshot before) {
+        long now = clock.epochSeconds();
+        idleMaintenance.configure(before.role().serverId(), now - 86_400, Optional.empty(), now);
+        String requestId = UUID.randomUUID().toString();
+        long operation = before.mainChapterIdle().claimState().operationVersion();
+        var receipt = idleClaims.claim(token, requestId, operation);
+        assertEquals(300, receipt.rewardStage());
+        assertEquals(operation + 1, receipt.afterOperationVersion());
+        assertEquals(receipt, idleClaims.status(token, requestId).receipt());
+        var after = snapshots.snapshot(token);
+        assertEquals(receipt.assetRevision(), after.revision());
+        assertEquals(receipt.committedAtSeconds(), after.mainChapterIdle().startedAt());
+        assertEquals(receipt.actual().wallet().goldAfter(), after.role().gold());
+        assertTrue(after.role().gold() > before.role().gold());
+        assertEquals(receipt, idleClaims.claim(token, requestId, operation));
+        assertEquals(after.revision(), snapshots.snapshot(token).revision());
+    }
+
+    /** 隔离验收使用的原里程碑配置ID、奖励资产配置ID和应到账数量。 */
+    private record MilestoneReward(int id, int itemId, long amount) {}
+
+    /** 从权威库存快照统计某种道具的到账数量。 */
+    private long countInventoryItem(SessionSnapshotService.Snapshot snapshot, int itemId) {
+        return snapshot.inventory().stream().filter(item -> item.itemId() == itemId)
+                .mapToLong(item -> item.quantity()).sum();
+    }
+
+    /** 以隔离候选上限复验连续挑战、指定关卡重登、持久结算及按原配置更新挂机；返回当前有效凭证。 */
+    private String verifyCandidateRange(int alreadyCleared, int limit, int reloginAt) throws Exception {
+        return verifyCandidateRange(player(), alreadyCleared, limit, List.of(reloginAt), List.of(), Map.of());
+    }
+
+    /** 按真实守军连续挑战，并在指定关卡重登或发放原配置中的独立通关奖励与里程碑。 */
+    private String verifyCandidateRange(Player player, int alreadyCleared, int limit, List<Integer> reloginAt,
+                                        List<Integer> independentRewardAt, Map<Integer, MilestoneReward> milestoneAt)
+            throws Exception {
+        cleared(player, alreadyCleared);
+        var candidate = serviceAtLimit(limit);
+        var configured = new MainChapterRules(mapper);
+        var tx = new TransactionTemplate(transactions);
+        var firstRewardService = new MainChapterFirstRewardService(sessions, roles, candidate, configured,
+            firstRewards, grants, sync, jdbc, rewardPayloads, clock);
+        var firstRewardPlans = independentRewardAt.isEmpty() ? Map.<Integer, List<RewardGrantService.Reward>>of()
+            : readIndependentRewardPlans(alreadyCleared, limit);
+        assertEquals(independentRewardAt, firstRewardPlans.keySet().stream().sorted().toList());
+        var firstRewardReceipts = new TreeMap<Integer, MainChapterFirstRewardService.Receipt>();
+        String token = player.token();
+        for (int index = alreadyCleared + 1; index <= limit; index++) {
+            int chapter = index;
+            String challengeToken = token;
+            String requestId = UUID.randomUUID().toString();
+            var before = snapshots.snapshot(challengeToken);
+            var independentReward = firstRewardPlans.get(chapter);
+            if (independentReward != null) {
+                var rejected = assertThrows(MainChapterFirstRewardService.Rejected.class,
+                    () -> tx.execute(status -> firstRewardService.claim(challengeToken, chapter)));
+                assertEquals("FIRST_REWARD_NOT_REACHED", rejected.code());
+                assertFalse(tx.execute(status -> firstRewardService.status(challengeToken, chapter)).found());
+                assertEquals(before.revision(), snapshots.snapshot(challengeToken).revision());
+            }
+            var battle = tx.execute(status -> candidate.challenge(challengeToken, requestId));
+            assertEquals(MainChapterService.Action.BATTLE, battle.action());
+            assertEquals(index, battle.state().maxCleared(), "须由实际胜利推进第" + index + "关");
+            assertEquals(limit, battle.state().challengeLimit());
+            assertEquals(battle.battleId(), battle.state().pendingBattleId());
+
+            if (reloginAt.contains(index)) {
+                token = relogin(player);
+                assertEquals(battle.battleId(), snapshots.snapshot(token).mainChapter().pendingBattleId());
+            }
+
+            String settlementToken = token;
+            assertEquals(battle, tx.execute(status -> candidate.challenge(settlementToken, requestId)));
+            var saved = tx.execute(status -> candidate.replay(settlementToken, battle.battleId()));
+            var replay = saved.replay();
+            assertEquals("chapter:lineup:" + index, replay.getScenario());
+            assertEquals("ATTACKER_WIN", replay.getOutcome());
+            assertEquals(configured.enemies(index).stream().map(MainChapterRules.Enemy::template).toList(),
+                replay.getUnitsList().stream().filter(unit -> unit.getFaction() == 2)
+                    .map(unit -> unit.getTemplateId()).toList());
+            var firstRewards = configured.stage(index).firstRewards();
+            assertEquals(firstRewards, saved.details().rewardPlan().rewards());
+
+            var settled = tx.execute(status -> candidate.claim(settlementToken, battle.battleId()));
+            assertEquals(MainChapterService.Action.SETTLED, settled.action());
+            assertNull(settled.state().pendingBattleId());
+            assertEquals(index, settled.state().maxCleared());
+            assertEquals(firstRewards, settled.actual().items().stream()
+                .map(item -> new MainChapterRules.Reward(item.itemId(), item.requested())).toList());
+            var after = snapshots.snapshot(settlementToken);
+            long gold = firstRewards.stream().filter(reward -> reward.itemId() == 900001)
+                .mapToLong(MainChapterRules.Reward::quantity).sum();
+            assertEquals(before.role().gold() + gold, after.role().gold());
+            assertEquals(settled.actual().wallet().diamondsAfter(), after.role().diamonds());
+            for (var stack : settled.actual().stacks()) {
+                assertEquals(stack.afterQuantity(), countInventoryItem(after, stack.itemId()));
+                assertEquals(stack.beforeQuantity(), countInventoryItem(before, stack.itemId()));
+            }
+            for (var experience : settled.actual().experience()) {
+                assertEquals(experience.level(), after.role().level());
+                assertEquals(experience.experience(), after.role().basics().experience());
+            }
+            for (var points : settled.actual().tavern()) {
+                assertEquals(points.afterQuantity(), after.tavernPoints().adventureCount());
+            }
+            assertEquals(index, after.mainChapterIdle().rewardStage());
+            assertEquals(idle.stage(index).base(), after.mainChapterIdle().rates());
+            assertEquals(before.mainChapterIdle().startedAt(), after.mainChapterIdle().startedAt());
+            assertEquals(settled, tx.execute(status -> candidate.claim(settlementToken, battle.battleId())));
+            assertEquals(after.revision(), snapshots.snapshot(settlementToken).revision());
+            String fixture = index <= 25 ? "chapter-config-stage-" : "chapter-victory-stage-";
+            Files.write(Path.of("target/" + fixture + index + ".pb"), replay.toByteArray());
+            if (!independentRewardAt.isEmpty()) {
+                exportReceipt("chapter-settle-stage-" + index, "chapter.claim", settled);
+            }
+            if (independentReward != null) {
+                firstRewardReceipts.put(chapter, verifyFirstReward(settlementToken, chapter, independentReward,
+                    candidate, firstRewardService, tx));
+            }
+            var milestone = milestoneAt.get(index);
+            if (milestone != null) {
+                verifyMilestone(settlementToken, index, milestone);
+            }
+        }
+
+        String finalToken = firstRewardReceipts.isEmpty() ? token : relogin(player);
+        if (!firstRewardReceipts.isEmpty()) {
+            var progress = tx.execute(status -> candidate.current(finalToken)).firstRewardProgress();
+            assertEquals(firstRewardPlans.keySet().stream().sorted().toList(), progress.claimedChapters());
+            for (var entry : firstRewardReceipts.entrySet()) {
+                var recovered = tx.execute(status -> firstRewardService.status(finalToken, entry.getKey()));
+                assertTrue(recovered.found());
+                assertEquals(entry.getValue(), recovered.receipt());
+            }
+        }
+        var beforeRejected = snapshots.snapshot(finalToken);
+        var failure = assertThrows(IllegalArgumentException.class,
+            () -> tx.execute(status -> candidate.challenge(finalToken, UUID.randomUUID().toString())));
+        assertTrue(failure.getMessage().contains("开放范围"));
+        assertEquals(beforeRejected.revision(), snapshots.snapshot(finalToken).revision());
+        assertEquals(limit - alreadyCleared, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_battle WHERE role_id=?",
+            Integer.class, player.role()));
+        assertEquals(limit - alreadyCleared, jdbc.queryForObject("SELECT COUNT(*) FROM game_main_chapter_command WHERE role_id=?",
+            Integer.class, player.role()));
+        return finalToken;
+    }
+
+    /** 重登隔离角色并核实真实角色身份，旧凭证不会写入验收产物。 */
+    private String relogin(Player player) {
+        String account = jdbc.queryForObject("SELECT login_account FROM game_role WHERE id=?",
+            String.class, player.role());
+        String token = "Bearer " + login.login(account).session().accessToken();
+        assertEquals(player.role(), snapshots.claim(token));
+        return token;
+    }
+
+    /** 直接读取构建打包的原通关奖励表，避免漏验发奖目录因类型不支持而过滤的旧项。 */
+    private Map<Integer, List<RewardGrantService.Reward>> readIndependentRewardPlans(int alreadyCleared, int limit)
+            throws Exception {
+        var plans = new TreeMap<Integer, List<RewardGrantService.Reward>>();
+        try (var source = getClass().getResourceAsStream("/gameplay/firstrewardchapter.json")) {
+            assertNotNull(source);
+            for (var row : mapper.readTree(source).path("rows")) {
+                int chapter = row.path("chapter").asInt();
+                if (chapter > alreadyCleared && chapter <= limit) {
+                    var plan = new ArrayList<RewardGrantService.Reward>();
+                    for (var reward : mapper.readTree(row.path("reward").asString())) {
+                        plan.add(new RewardGrantService.Reward(reward.path("item_type").asInt(),
+                            reward.path("item_num").asLong()));
+                    }
+                    assertFalse(plan.isEmpty());
+                    assertNull(plans.put(chapter, List.copyOf(plan)));
+                }
+            }
+        }
+        return plans;
+    }
+
+    /** 使用真实领取服务核对资格、钱包或库存到账、单条回执与重复幂等，并导出二进制反馈。 */
+    private MainChapterFirstRewardService.Receipt verifyFirstReward(String token, int chapter,
+            List<RewardGrantService.Reward> expected, MainChapterService candidate,
+            MainChapterFirstRewardService service, TransactionTemplate tx) throws Exception {
+        var before = snapshots.snapshot(token);
+        var eligible = tx.execute(status -> candidate.current(token)).firstRewardProgress().eligibleChapters();
+        assertTrue(eligible.contains(chapter));
+        var receipt = tx.execute(status -> service.claim(token, chapter));
+        assertEquals(chapter, receipt.chapter());
+        assertEquals(expected, receipt.actual().items().stream()
+            .map(item -> new RewardGrantService.Reward(item.itemId(), item.credited())).toList());
+        var after = snapshots.snapshot(token);
+        assertEquals(before.revision() + 1, receipt.assetRevision());
+        assertEquals(receipt.assetRevision(), after.revision());
+        for (var reward : expected) {
+            long change = reward.itemId() == 900002 ? after.role().diamonds() - before.role().diamonds()
+                : countInventoryItem(after, reward.itemId()) - countInventoryItem(before, reward.itemId());
+            assertEquals(reward.quantity(), change, "第" + chapter + "关奖励 " + reward.itemId());
+        }
+        var progress = tx.execute(status -> candidate.current(token)).firstRewardProgress();
+        assertTrue(progress.claimedChapters().contains(chapter));
+        assertFalse(progress.eligibleChapters().contains(chapter));
+        assertEquals(receipt, tx.execute(status -> service.claim(token, chapter)));
+        var repeated = snapshots.snapshot(token);
+        assertEquals(after.revision(), repeated.revision());
+        assertEquals(after.role(), repeated.role());
+        assertEquals(after.inventory(), repeated.inventory());
+        assertEquals(List.of(receipt.receiptId()), jdbc.queryForList("SELECT receipt_id "
+            + "FROM game_main_chapter_first_reward WHERE role_id=? AND chapter_id=?", String.class,
+            receipt.roleId(), chapter));
+        exportReceipt("chapter-first-reward-stage-" + chapter, "chapter.firstreward.claim", receipt);
+        return receipt;
+    }
+
+    /** 当关真正结算后领取原里程碑，验收背包或英雄名册到账、重试幂等和可回放协议回执。 */
+    private void verifyMilestone(String token, int chapter, MilestoneReward expected) throws Exception {
+        var before = snapshots.snapshot(token);
+        assertFalse(before.mainChapter().milestoneProgress().claimedIds().contains(expected.id()));
+        var receipt = milestones.claim(token, expected.id());
+        assertEquals(chapter, receipt.targetChapter());
+        assertEquals(1, receipt.actual().items().size());
+        var reward = receipt.actual().items().getFirst();
+        assertEquals(expected.itemId(), reward.itemId());
+        assertEquals(expected.amount(), reward.credited());
+        var after = snapshots.snapshot(token);
+        if (receipt.actual().heroes().isEmpty()) {
+            assertEquals(expected.amount(), countInventoryItem(after, expected.itemId())
+                - countInventoryItem(before, expected.itemId()));
+        } else {
+            assertEquals(expected.amount(), receipt.actual().heroes().size());
+            for (var hero : receipt.actual().heroes()) {
+                assertEquals(expected.itemId(), hero.templateId());
+                assertFalse(before.heroes().stream().anyMatch(profile -> profile.id().equals(hero.instanceId())));
+                assertTrue(after.heroes().stream().anyMatch(profile -> profile.id().equals(hero.instanceId())
+                    && profile.templateId() == expected.itemId()));
+            }
+        }
+        assertTrue(after.mainChapter().milestoneProgress().claimedIds().contains(expected.id()));
+        assertEquals(receipt, milestones.claim(token, expected.id()));
+        assertEquals(after.revision(), snapshots.snapshot(token).revision());
+        exportReceipt("chapter-milestone-stage-" + chapter, "chapter.milestone.claim", receipt);
+    }
+
+    /** 导出由生产服务发出的二进制回执，便于本机 Creator 复验结算和奖励展示。 */
+    private void exportReceipt(String fixture, String name, Object receipt) throws Exception {
+        Files.write(Path.of("target/" + fixture + "-frame.pb"), GameProtocolCodec.encode(Map.of(
+            "version", 1, "kind", "response", "name", name, "ok", true, "body", receipt)));
     }
 
     /** 只读预览使用真实全局目录；输出当前已接通关卡原PB，不改敌人、技能、资产或范围。 */
@@ -335,7 +739,7 @@ class MainChapterConfigurationTest {
             assertEquals(before.revision(), after.revision());
             assertEquals(before.inventory(), after.inventory());
             assertEquals(before.mainChapter(), after.mainChapter());
-            assertEquals(20, after.mainChapter().challengeLimit());
+            assertEquals(300, after.mainChapter().challengeLimit());
             if (installed > 0 && List.of(1020100, 1021101, 2020100, 2021101, 1050100, 1051101)
                     .stream().allMatch(counts::containsKey)) {
                 selected = preview;
@@ -372,37 +776,75 @@ class MainChapterConfigurationTest {
                 "report", report)));
     }
 
-    /**
-     * 每关使用真实持久英雄及阵型读取完整敌方普通/主动，再导出合法只读PB供客户端播放。
-     * 合法成长候选只延长战场，不改原敌方、技能、伤害或场景标签；失败样本同样验证完整出手。
-     */
+    /** 保留第 10～20 关全部原守军主动和普攻的可复验战报。 */
     @Test
     void tenthThroughTwentiethStagesExportEveryConfiguredEnemySkill() throws Exception {
+        exportConfiguredEnemySkillCoverage(10, 20);
+    }
+
+    /** 录制第 26～30 关原守军完整出手，补足强队首通可能提前击杀施法者的覆盖。 */
+    @Test
+    void twentySixthThroughThirtiethStagesExportEveryConfiguredEnemySkill() throws Exception {
+        exportConfiguredEnemySkillCoverage(26, 30);
+    }
+
+    /** 录制截至第 37 关的连续原守军普攻和主动，覆盖换章后的实际播放。 */
+    @Test
+    void thirtyFirstThroughThirtySeventhStagesExportEveryConfiguredEnemySkill() throws Exception {
+        exportConfiguredEnemySkillCoverage(31, 37);
+    }
+
+    /** 录制第 38～40 关完整出手，亡灵之刃战报必须包含对坦克的实际追击。 */
+    @Test
+    void thirtyEighthThroughFortiethStagesExportEveryConfiguredEnemySkill() throws Exception {
+        exportConfiguredEnemySkillCoverage(38, 40);
+    }
+
+    /** 第 42 关的深渊元首须实际释放新补的主动特效，强队首通可能在施法前击杀。 */
+    @Test
+    void stageFortyTwoExportsOriginalEnemyActions() throws Exception {
+        exportConfiguredEnemySkillCoverage(42, 42);
+    }
+
+    /** 用持久角色的合法成长候选取得原守军完整出手，输出可播放的只读战报和各动作出现次数。 */
+    private void exportConfiguredEnemySkillCoverage(int firstStage, int lastStage) throws Exception {
         var coverage = new ArrayList<Map<String, Object>>();
-        for (int index = 10; index <= 20; index++) {
+        for (int index = firstStage; index <= lastStage; index++) {
             HeroLineupBattleService.Preview selected = null;
             int selectedLevel = 0;
             var attempts = new ArrayList<Map<String, Object>>();
-            for (int level : List.of(1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50)) {
-                var player = player(10203003, 3, level, 0);
+            // 第 38 关用坦克布兰特承受追击；其余关保持之前的冰晶女巫样本。
+            int template = index == 38 ? 10304012 : 10203003;
+            int star = index == 38 ? 4 : 3;
+            // 后三关的重复同模板守军共享相同动作；保留完整站位，播放覆盖按唯一技能统计。
+            boolean includeSlotInCoverage = index < 38;
+            var levels = index >= 38 ? List.of(12, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100)
+                : List.of(1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50);
+            for (int level : levels) {
+                var player = player(template, star, level, 0);
                 var before = snapshots.snapshot(player.token());
                 var preview = battles.preview(player.token(), index, probability -> true);
                 var report = preview.battle();
                 var expected = report.initial().stream().filter(unit -> unit.faction() == 2)
-                    .flatMap(unit -> unit.skills().stream().map(skill -> unit.id() + ":" + skill.skillId()))
+                    .flatMap(unit -> unit.skills().stream().map(skill ->
+                        (includeSlotInCoverage ? unit.id() + ":" : "") + skill.skillId()))
                     .collect(java.util.stream.Collectors.toSet());
                 var occurred = report.frames().stream().flatMap(frame -> frame.trace().stream())
                     .filter(event -> event.kind().equals("skill.begin") && event.sourceId() >= 9)
-                    .map(event -> event.sourceId() + ":" + event.configId())
+                    .map(event -> (includeSlotInCoverage ? event.sourceId() + ":" : "") + event.configId())
                     .collect(java.util.stream.Collectors.toSet());
-                attempts.add(Map.of("heroLevel", level, "expected", expected, "occurred", occurred));
+                boolean tankFollowup = report.frames().stream().flatMap(frame -> frame.trace().stream())
+                    .anyMatch(event -> event.kind().equals("damage") && event.configId() == 5081501
+                        && event.sourceId() >= 9 && event.targetId() == 2);
+                attempts.add(Map.of("heroLevel", level, "expected", expected, "occurred", occurred,
+                    "tankFollowup", tankFollowup));
                 var after = snapshots.snapshot(player.token());
                 assertEquals(before.role(), after.role());
                 assertEquals(before.revision(), after.revision());
                 assertEquals(before.inventory(), after.inventory());
                 assertEquals(before.heroes(), after.heroes());
                 assertEquals(before.mainChapter(), after.mainChapter());
-                if (occurred.containsAll(expected)) {
+                if (occurred.containsAll(expected) && (index != 38 || tankFollowup)) {
                     selected = preview;
                     selectedLevel = level;
                     break;
@@ -426,7 +868,7 @@ class MainChapterConfigurationTest {
                 "enemyCount", enemies.size(), "attempts", attempts, "presentationCounts", presentationCounts(report),
                 "outcome", report.outcome().name(), "readOnly", true));
         }
-        Files.writeString(Path.of("target/chapter-config-stage10-20-coverage.json"),
+        Files.writeString(Path.of("target/chapter-config-stage" + firstStage + "-" + lastStage + "-coverage.json"),
             mapper.writerWithDefaultPrettyPrinter().writeValueAsString(coverage));
     }
 
@@ -460,7 +902,7 @@ class MainChapterConfigurationTest {
             () -> tx.execute(status -> lower.challenge(player.token(), UUID.randomUUID().toString())));
     }
 
-    /** 历史JSON缺范围保持null；新范围不从历史maxCleared推断，也不覆盖历史回执。 */
+    /** 历史 JSON 缺范围保持 null，并校验当前默认值与完整目录、旧映射边界各自独立。 */
     @Test
     void legacyStateKeepsMissingLimitAndCompleteCatalogDoesNotBypassDependencies() {
         var old = mapper.readValue("{\"maxCleared\":3,\"pendingBattleId\":null,\"assetRevision\":1}", MainChapterService.State.class);
@@ -468,11 +910,11 @@ class MainChapterConfigurationTest {
         assertNull(old.milestoneProgress());
         assertThrows(IllegalArgumentException.class, () -> new HeroBattleChapterScenario(mapper).enemies(551));
         assertEquals(270, idle.stage(21).base().getFirst().quantity());
-        assertEquals(20, new MainChapterRules(mapper).challengeLimit());
+        assertEquals(300, new MainChapterRules(mapper).challengeLimit());
 
     }
 
-    /** 构建同一依赖但采用较小可信范围的领域实例；测试调用仍由外层真实事务持锁。 */
+    /** 构建同一依赖但采用指定可信范围的领域实例；测试调用仍由外层真实事务持锁。 */
     private MainChapterService serviceAtLimit(int limit) {
         return new MainChapterService(sessions, roles, jdbc, new MainChapterRules(mapper, limit), powers,
             battles, rewards, sync, mapper, idleStates, firstRewards);

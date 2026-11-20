@@ -13,6 +13,8 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 public final class MainChapterRules {
+    /** 默认开放的连续主线末关，部署可通过同名配置覆盖。 */
+    private static final int DEFAULT_CHALLENGE_LIMIT = 300;
     /** 服务端可信的新挑战上限；仅限制新挑战，不能阻止历史待结算和回执恢复。 */
     private final int challengeLimit;
     /** 全局关卡索引对应门槛、敌方定位和首通奖励，不包含挂机收益。 */
@@ -69,15 +71,15 @@ public final class MainChapterRules {
     /** 决策携带本次处理的关卡，补领奖不能继续生成下一场战报。 */
     public record Decision(Action action, Stage stage) {}
 
-    /** 使用已接通的连续二十关默认范围；完整目录存在不表示其余关卡已开放。 */
+    /** 使用已验收的默认连续主线范围读取配置。 */
     public MainChapterRules(ObjectMapper mapper) {
-        this(mapper, 20);
+        this(mapper, DEFAULT_CHALLENGE_LIMIT);
     }
 
     /** 装配完整目录与独立新挑战范围；坏索引/内容明确失败，源表重复定位保留并标待确认。 */
     @Autowired
     public MainChapterRules(ObjectMapper mapper,
-            @Value("${mxzg.main-chapter.challenge-limit:20}") int challengeLimit) {
+            @Value("${mxzg.main-chapter.challenge-limit:" + DEFAULT_CHALLENGE_LIMIT + "}") int challengeLimit) {
         var result = new HashMap<Integer, Stage>();
         var byLocation = new HashMap<StageKey, List<Stage>>();
         var language = new HashMap<String, String>();

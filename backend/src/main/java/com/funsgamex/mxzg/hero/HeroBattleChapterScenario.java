@@ -443,11 +443,18 @@ public final class HeroBattleChapterScenario {
             enemy.position(), attributes, HeroBattleAttributeUtils.opening(attributes), ordinary(enemy.skills())));
         int firstId = input.units().get(first).position();
         var prepared = applyElementHalo(units).stream().map(unit -> {
+            if (unit.id() != firstId) {
+                return unit;
+            }
+            // 原挂机首动属于本场临时速度，战斗属性池和冻结战报必须采用同一数值。
+            var battleAttributes = new HashMap<>(unit.attributes());
+            battleAttributes.put(101, 999999L);
+            battleAttributes.remove(204);
             var opening = unit.opening();
-            if (unit.id() == firstId) opening = new HeroBattleAttributeUtils.Opening(opening.hp(), opening.maxHp(),
+            var firstOpening = new HeroBattleAttributeUtils.Opening(opening.hp(), opening.maxHp(),
                 opening.attack(), opening.defense(), 999999);
             return new Unit(unit.id(), unit.faction(), unit.template(), unit.level(), unit.star(), unit.stage(),
-                unit.position(), unit.attributes(), opening, unit.skills(), unit.portraitIconId());
+                unit.position(), battleAttributes, firstOpening, unit.skills(), unit.portraitIconId());
         }).toList();
         return runBattle("idle:chapter:" + stageIndex, prepared, decision);
     }
@@ -517,20 +524,21 @@ public final class HeroBattleChapterScenario {
         var outcome = HeroBattleRoundUtils.Outcome.ONGOING;
         int completed = 0;
         for (int round = 1; round <= HeroBattleRoundUtils.MAX_ROUNDS; round++) {
-            // 当前技能子集没有速度增减；每轮仍重建全体排序，不把上一轮存活名单当完整输入。
-            var order = HeroBattleRoundUtils.order(initial.stream()
-                .map(unit -> new HeroBattleRoundUtils.Unit(unit.id(), unit.opening().speed())).toList());
+            var roundOrder = currentOrder(engine, initial);
             var before = snapshot(engine, initial);
             int damageStart = engine.damages().size();
             int traceStart = round == 1 ? 0 : engine.trace().size();
-            engine.beginRound(round, order, elements, decision);
+            engine.beginRound(round, roundOrder, elements, decision);
             if (scenario.equals("audit:frozen") && round == 1) {
                 engine.applyFrozen(2234801, 1, 2, rate -> true);
             }
             frames.add(frame(engine, initial, round, 0, before, damageStart, traceStart));
             outcome = outcome(initial, snapshot(engine, initial), 0);
             if (outcome == HeroBattleRoundUtils.Outcome.ONGOING) {
-                for (int id : order) {
+                // 原回合Buff结算后按当前速度排序，之后只稳定重排本回合尚未行动的单位。
+                var remaining = new ArrayList<>(currentOrder(engine, initial));
+                while (!remaining.isEmpty()) {
+                    int id = remaining.removeFirst();
                     if (engine.state(id).hp() <= 0) continue;
                     int faction = engine.state(id).faction();
                     int target = initial.stream().filter(unit -> unit.faction() != faction && engine.state(unit.id()).hp() > 0)
@@ -545,6 +553,7 @@ public final class HeroBattleChapterScenario {
                     turns.add(new Turn(round, id, HeroBattleRoundUtils.NORMAL_SKILL_ENERGY, after));
                     outcome = outcome(initial, after, 0);
                     if (outcome != HeroBattleRoundUtils.Outcome.ONGOING) break;
+                    remaining.sort(Comparator.comparingLong(engine::currentSpeed).reversed());
                 }
             }
             completed = round;
@@ -553,6 +562,12 @@ public final class HeroBattleChapterScenario {
         }
         return new Result(scenario, outcome, completed, initial, turns, engine.damages(), frames,
             snapshot(engine, initial), engine.recoveries());
+    }
+
+    /** 保留名册的同速顺序，按该时点的战斗属性池计算完整候选。 */
+    private static List<Integer> currentOrder(HeroBattleHealingExecutor engine, List<Unit> initial) {
+        return HeroBattleRoundUtils.order(initial.stream()
+            .map(unit -> new HeroBattleRoundUtils.Unit(unit.id(), engine.currentSpeed(unit.id()))).toList());
     }
 
     /** 完整生命快照严格匹配名册；双方同时全灭仍由旧规则先判攻方失败。 */

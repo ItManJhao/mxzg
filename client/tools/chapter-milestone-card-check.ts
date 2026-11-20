@@ -125,11 +125,35 @@ async function main(): Promise<void> {
         assert.equal(value.rewardName!.string, previous, "停用后不能继续收页面刷新");
         (value as any).onEnable();
         assert.equal(value.progressLabel!.string, "通关 20/30");
+
+        state(49, [100, 150]);
+        assert.equal(value.progressLabel!.string, "通关 49/50");
+        assert(value.rewardName!.string.includes("×800"));
+        state(50, [100, 150]);
+        assert.equal(value.claimLabel!.string, "领取奖励");
+        MainChapterController.instance.claimMilestone = async rewardId => {
+            assert.equal(rewardId, 200);
+            state(50, [100, 150, 200]);
+        };
+        await (value as any).claim();
+        assert.equal(value.progressLabel!.string, "通关 50/80");
+        assert(value.rewardName!.string.endsWith("×1"));
+        assert.equal(value.rewardIcon!.node.active, true);
+        assert.equal(value.heroHost!.active, false);
+        state(80, [100, 150, 200]);
+        assert.equal(value.claimLabel!.string, "领取奖励");
+        MainChapterController.instance.claimMilestone = async rewardId => {
+            assert.equal(rewardId, 300);
+            state(80, [100, 150, 200, 300]);
+        };
+        await (value as any).claim();
+        assert.equal(value.progressLabel!.string, "通关 80/110");
+
         state(140, [100, 150, 200, 300, 400, 500]);
         assert.equal(value.completed, true);
         (value as any).onDisable();
         assert.equal(EventDispatcher.instance.listenerCount(MainChapterController.Updated), before);
-        console.log("PASS milestone card: original static frame/model, 15 gate/direct claim, next target and lifecycle");
+        console.log("PASS milestone card: original frame/model, 15/50/80 rewards, next target and lifecycle");
     } finally {
         (value as any).onDisable();
         value.node.destroy();

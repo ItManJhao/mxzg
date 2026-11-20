@@ -8,7 +8,8 @@ import java.util.*;
 
 public final class HeroBattleEventProcessor {
     /** 本批明确支持的旧事件编号；其他类型不得当作已执行。 */
-    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174, 175, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 1014, 234, 180);
+    private static final Set<Integer> SUPPORTED = Set.of(197, 172, 173, 170, 171, 186, 206, 199, 200, 311, 174,
+        175, 177, 178, 179, 181, 182, 184, 190, 194, 201, 185, 207, 208, 209, 1004, 1014, 234, 180);
     /** 战斗是否已结束，触发处理器在每个监听前读取。 */
     private boolean ended;
     /** 当前事件所属回合，行动调度或战场回合入口显式设置。 */
@@ -60,8 +61,8 @@ public final class HeroBattleEventProcessor {
     public static final class Actor {
         /** 本场单位编号，供来源/目标定位。 */
         private final int id;
-        /** 只读技能计划，包含配置推导的先手标志。 */
-        private final List<HeroBattleSkillUtils.Skill> skills;
+        /** 当前场内技能计划，开场普攻替换可整体换表，原角色技能快照不随之修改。 */
+        private List<HeroBattleSkillUtils.Skill> skills;
         /** 当前有效控制Buff类型；真实眩晕由执行器随安装、驱散、到期及死亡同步。 */
         private final Set<Integer> controls = new HashSet<>();
         /** 监听安装顺序；同优先级稳定保留，不按Buff ID排序。 */
@@ -74,6 +75,8 @@ public final class HeroBattleEventProcessor {
         private boolean counterattack;
         /** 175监听各实例累计触发次数；移除实例时删除，动作失败恢复。 */
         private final Map<Long, Long> triggerCounts = new HashMap<>();
+        /** 210按本单位与配置ID累计成功次数，失去监听也不重置，根动作失败恢复。 */
+        private final Map<Integer, Integer> effectUses = new HashMap<>();
         /** 死亡优先阻止行动，不能被能量9999绕过。 */
         private boolean dead;
         /** 挂机封印与1007状态共同控制事件触发，不代替行动禁止集合。 */
@@ -95,18 +98,21 @@ public final class HeroBattleEventProcessor {
         }
 
         /** 动作事务只修改的临时状态，用于失败回滚与被动初始化回滚。 */
-        record Checkpoint(Set<Integer> interrupts, List<Listener> listeners, long lastTreatment, boolean dead,
+        record Checkpoint(List<HeroBattleSkillUtils.Skill> skills, Set<Integer> interrupts, List<Listener> listeners, long lastTreatment, boolean dead,
                           Set<Integer> closedDamageTargets, boolean counterattack,
-                          Set<Integer> controls, boolean hangUpSeal, HeroBattleSkillUtils.Skill current, Map<Long, Long> triggerCounts, long currentEnergy) {}
+                          Set<Integer> controls, boolean hangUpSeal, HeroBattleSkillUtils.Skill current,
+                          Map<Long, Long> triggerCounts, Map<Integer, Integer> effectUses, long currentEnergy) {}
 
         /** 保存本场动作状态，不包含数据库或角色资产。 */
         Checkpoint checkpoint() {
-            return new Checkpoint(Set.copyOf(interrupts), List.copyOf(listeners), lastTreatment, dead,
-                Set.copyOf(closedDamageTargets), counterattack, Set.copyOf(controls), hangUpSeal, current, Map.copyOf(triggerCounts), currentEnergy);
+            return new Checkpoint(skills, Set.copyOf(interrupts), List.copyOf(listeners), lastTreatment, dead,
+                Set.copyOf(closedDamageTargets), counterattack, Set.copyOf(controls), hangUpSeal, current,
+                Map.copyOf(triggerCounts), Map.copyOf(effectUses), currentEnergy);
         }
 
         /** 失败时恢复动作前状态，不把失败的嵌套治疗残留到下一次动作。 */
         void rollback(Checkpoint state) {
+            skills = state.skills();
             interrupts.clear();
             interrupts.addAll(state.interrupts());
             listeners.clear();
@@ -123,6 +129,18 @@ public final class HeroBattleEventProcessor {
             currentEnergy = state.currentEnergy();
             triggerCounts.clear();
             triggerCounts.putAll(state.triggerCounts());
+            effectUses.clear();
+            effectUses.putAll(state.effectUses());
+        }
+
+        /** 按旧UseLimit消耗一次配置次数；达上限只阻止本次效果链。 */
+        boolean useLimitedEffect(int buffId, int limit) {
+            int used = effectUses.getOrDefault(buffId, 0);
+            if (used >= limit) {
+                return false;
+            }
+            effectUses.put(buffId, used + 1);
+            return true;
         }
 
         /** 当前已选技能的主动标志，尚未出手时不能假设为主动。 */
@@ -134,6 +152,16 @@ public final class HeroBattleEventProcessor {
         public HeroBattleSkillUtils.Skill generalAttack() {
             return skills.stream().filter(skill -> skill.activeType() == 2).reduce((a, b) -> b)
                 .orElseThrow(() -> new IllegalStateException("单位缺少普通攻击技能"));
+        }
+
+        /** 原 162 只替换本场有效普攻，主动技能的次序、回合和持久名册保持原值。 */
+        void replaceOrdinaryAttack(HeroBattleSkillUtils.Skill replacement) {
+            if (replacement.activeType() != 2) {
+                throw new IllegalArgumentException("普攻替换目标不是普通攻击");
+            }
+            var updated = new ArrayList<>(skills);
+            updated.set(updated.lastIndexOf(generalAttack()), replacement);
+            skills = List.copyOf(updated);
         }
 
         /** 旧isCounterattack条件：控制整组伤害后置事件，不是单纯是否追加反击动作。 */
@@ -235,6 +263,10 @@ public final class HeroBattleEventProcessor {
         default boolean controlMatches(Listener listener, Actor carrier, int target) {
             throw new UnsupportedOperationException("控制监听上下文未接入");
         }
+        /** 检查承伤后跨过门槛；缺少当前命中结果时不得触发生命阈值子动作。 */
+        default boolean crossedHealthThreshold(int buffId, Actor carrier) {
+            throw new UnsupportedOperationException("生命阈值伤害上下文未接入：" + buffId);
+        }
         /** 专用监听处理器；未实现时必须拒绝，不能用空回调冒充驱散/契约。 */
         default void special(Listener listener, Actor carrier, int target) {
             throw new UnsupportedOperationException("尚未支持的特殊Buff：" + listener.definition().event());
@@ -274,7 +306,7 @@ public final class HeroBattleEventProcessor {
 
     /** 按旧监听快照稳定排序：外来Buff先执行，自身其次；本批通用类型priority均为0。 */
     public void dispatch(int event, Actor carrier, int target, Executor executor) {
-        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 177, 176, 183, 204, 185, 207).contains(event)) {
+        if (!SUPPORTED.contains(event) && !Set.of(187, 188, 189, 191, 176, 183, 204, 185, 207).contains(event)) {
             throw new IllegalArgumentException("尚未支持的战斗事件：" + event);
         }
         Objects.requireNonNull(executor);
@@ -301,6 +333,10 @@ public final class HeroBattleEventProcessor {
                 continue;
             }
             if (definition.event() == 175 && definition.sourceOnly() && listener.sourceId() != target) {
+                carrier.restore();
+                continue;
+            }
+            if (event == 177 && !executor.crossedHealthThreshold(definition.buffId(), carrier)) {
                 carrier.restore();
                 continue;
             }

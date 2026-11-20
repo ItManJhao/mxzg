@@ -64,7 +64,7 @@ async function checkServerClock(client: ReturnType<typeof fixture>): Promise<voi
     const accepted = socket.latestState!.body as { serverTimeMs: number };
     assert(clock.nowSeconds()! >= Math.floor(accepted.serverTimeMs / 1000), "新鉴权首包应校准公共时钟");
 }
-/** 用普通单抽完成首次发放，核对实际快照、免费冷却、原回执与重新登录。 */
+/** 用普通单抽完成首次发放，核对免费冷却、原回执和显式重登后的持久快照版本。 */
 async function checkFirstSummon(client: ReturnType<typeof fixture>): Promise<void> {
     const account = "summon_" + randomUUID().slice(0, 12);
     const readState = () => {
@@ -102,16 +102,23 @@ async function checkFirstSummon(client: ReturnType<typeof fixture>): Promise<voi
     assert.deepEqual((await request(Protocol.HERO_FIRST_SUMMON, requestId)).body, receipt);
     await assert.rejects(request(Protocol.HERO_NORMAL_SUMMON, randomUUID()), { code: "SUMMON_TICKET_INSUFFICIENT" });
 
+    const lastLoginBefore = client.account.snapshot.role!.basics!.lastLoginAtSeconds;
     client.service.logout();
     assert(await client.service.login(account, "local-1"), client.account.snapshot.error);
-    assert.deepEqual(readState().heroes, committed.heroes);
-    assert.deepEqual(readState().heroSummon, committed.heroSummon);
+    const relogged = readState();
+    const lastLoginAfter = client.account.snapshot.role!.basics!.lastLoginAtSeconds;
+    assert(lastLoginAfter >= lastLoginBefore, "显式重登的最后登录时间不能倒退");
+    // 只有登录时间跨秒更新才额外提交一次角色版本，首抽回执仍保留原版本。
+    assert.equal(relogged.revision, committed.revision + Number(lastLoginAfter > lastLoginBefore));
+    assert.deepEqual(relogged.heroes, committed.heroes);
+    assert.deepEqual(relogged.heroSummon, committed.heroSummon);
+    assert.deepEqual(relogged.inventory, committed.inventory);
     assert.deepEqual((await request(Protocol.HERO_FIRST_SUMMON_STATUS, requestId)).body,
         { requestId, found: true, receipt });
     const unknownId = randomUUID();
     assert.deepEqual((await request(Protocol.HERO_FIRST_SUMMON_STATUS, unknownId)).body,
         { requestId: unknownId, found: false });
-    assert.equal(readState().revision, receipt.assetRevision);
+    assert.equal(readState().revision, relogged.revision, "查询原回执和不存在的回执都不写入角色状态");
     await checkAfterFirstBattle(client, readState, account);
 }
 
