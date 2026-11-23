@@ -1,6 +1,6 @@
 # 开发交接
 
-更新于 2026-11-19。先读 [AGENTS.md](../AGENTS.md)、[当前进度](development-progress.md) 与 [实施路线](restructuring-plan.md)，再从 [专题索引](README.md) 进入对应模块。开始修改前查看 Git 状态与分支，后续开发在 hao。
+更新于 2026-11-23。先读 [AGENTS.md](../AGENTS.md)、[当前进度](development-progress.md) 与 [实施路线](restructuring-plan.md)，再从 [专题索引](README.md) 进入对应模块。开始修改前查看 Git 状态与分支，后续开发在 hao。
 
 ## 从哪里改
 
@@ -14,12 +14,13 @@
 | 登录、换号、迟到响应 | [AccountController](../client/assets/scripts/features/account/AccountController.ts)、[AccountOperations](../client/assets/scripts/features/account/AccountOperations.ts) 和 [GameSocketClient](../client/assets/scripts/platform/GameSocketClient.ts) 管理认证与连接交付。Controller 通过现有账号通道发送当前角色的请求 |
 | 区服列表与选服 | [ServerSelectionController](../client/assets/scripts/features/account/ServerSelectionController.ts) 负责请求区服列表并保存当前选择 |
 | 统一资产快照 | [AssetStateBinding](../client/assets/scripts/app/remake/AssetStateBinding.ts) 核对区服、角色和版本，批量提交各模块，再通知视图。服务端入口为 SessionSnapshotService |
-| 普通单抽 | 主城召唤法阵的按钮调用 `HeroRosterController.summon()`。免费或券够就发包，回包从 `onNotify` 进入获得窗。首笔固定英雄与后续普通池抽选都由服务端决定。[召唤窗口](../client/assets/scripts/features/hero/ui/FirstSummonView.ts) · [英雄控制器](../client/assets/scripts/features/hero/HeroRosterController.ts) · [抽取规则](../backend/src/main/java/com/funsgamex/mxzg/hero/HeroSummonRules.java) |
+| 主城召唤法阵 | 基础、友情、高级召唤与积分兑换共用 `HeroRosterController.summon(pool, count, maxDiamonds)`。控制器收发请求，服务端核定消耗、抽取结果和保底，名册与余额随快照更新。现行召唤页的脚本名仍为 FirstSummonView。[召唤页](../client/assets/scripts/features/hero/ui/FirstSummonView.ts) · [控制器](../client/assets/scripts/features/hero/HeroRosterController.ts) · [抽取服务](../backend/src/main/java/com/funsgamex/mxzg/hero/HeroSummonService.java) |
 | 背包碎片合成 | 详情「使用」 → [BagController.composeHeroPieces](../client/assets/scripts/features/bag/BagController.ts)。服务端校验资格，背包和名册读取统一快照 |
 | 主城普通市场 | 地图 `main_shop` → [MarketView](../client/assets/scripts/features/market/ui/MarketView.ts) → [MarketController](../client/assets/scripts/features/market/MarketController.ts) → [MarketService](../backend/src/main/java/com/funsgamex/mxzg/market/MarketService.java)。货架单独查询，钱包和库存沿用统一快照，购入复用奖励窗 |
 | 副本大厅 | 底栏副本 → [DungeonHallView](../client/assets/scripts/features/dungeon/ui/DungeonHallView.ts)。`opencondition` 决定等级，`gamerewardshow` 提供四张卡的原奖励，点击图标复用只读物品说明 |
 | 金币副本首关 | 大厅日常副本 → [GoldDungeonView](../client/assets/scripts/features/dungeon/ui/GoldDungeonView.ts) → [DailyDungeonController](../client/assets/scripts/features/dungeon/DailyDungeonController.ts) → [DailyDungeonService](../backend/src/main/java/com/funsgamex/mxzg/dungeon/DailyDungeonService.java)。服务端一次结算，战报、结算和扫荡奖励使用现有公共展示 |
-| 英雄普通升级、布阵 | [HeroLevelController](../client/assets/scripts/features/hero/HeroLevelController.ts) 提交普通升级。[FormationController](../client/assets/scripts/features/hero/FormationController.ts) 提交草稿并等待权威阵容达到保存版本 |
+| 英雄详情、创造法阵与神装商店 | 从[英雄维护表](hero-lineup-contract.md#当前代码与开放范围)按操作找 View、Controller 和协议。创造法阵和详情共用升星事务，神装商店与探宝共用神装实例发放。四件套的被动从[战斗规则](hero-lineup-contract.md#神装四件套战斗效果)查 |
+| 主线布阵 | [FormationController](../client/assets/scripts/features/hero/FormationController.ts) 提交页面草稿并等待权威阵容达到保存版本。[阵型与草稿](formation-ui-authoring.md) |
 | 主线挑战、战报与结算 | [MainChapterController](../client/assets/scripts/features/battle/MainChapterController.ts) 处理挑战、原战斗编号、结算和战报。BattleReplayPreview 播放战报 |
 | 挂机、通关奖励和里程碑领取 | [MainChapterController](../client/assets/scripts/features/battle/MainChapterController.ts) 统一发收领取协议。[IdleClaimBinding](../client/assets/scripts/features/battle/IdleClaimBinding.ts) 负责宝箱点击和满额确认 |
 | 共享发奖和提示 | 服务端 RewardGrantService、RewardFeedbackService。客户端 [RewardController](../client/assets/scripts/features/reward/RewardController.ts) 接收推送，[RewardBinding](../client/assets/scripts/features/reward/RewardBinding.ts) 展示通用奖励窗和全局飘字 |
@@ -39,11 +40,12 @@
 
 | 检查 | 命令或条件 |
 |---|---|
-| 客户端专项 | node client/tools/check-project.mjs --suite <名称>，用 --help 查有效名称 |
-| 严格类型 | 用 Creator 3.8.8 自带 TypeScript 运行项目 tsconfig.json 的 strict、noEmit 检查 |
+| 客户端专项 | `node client/tools/check-project.mjs --suite <名称>`，用 `--help` 查有效名称 |
+| 客户端类型 | 使用 Creator 3.8.8 自带 TypeScript，分别运行 `tsc --noEmit -p client/tsconfig.json` 和 `tsc -p client/tools/tsconfig.remake.json`。前者使用编辑器配置，后者对业务脚本启用 strict |
+| 英雄养成配置漂移 | 在统一入口选择对应的生成专项。名称、覆盖产物和更新步骤见[配置维护](config-pipeline.md#英雄养成配置) |
 | 协议生成 | node tools/generate_game_protocol.cjs --check |
 | 后端专项 | 在 backend 使用 Java 21 和 Maven Wrapper，运行 mvnw.cmd -Dtest=相关类 test |
-| 关卡依赖 | node tools/audit_main_chapter_dependencies.cjs --write 重新取 Java 证据。归档新批次用独立 --snapshot 标签 |
+| 关卡依赖 | `node tools/audit_main_chapter_dependencies.cjs --write` 重新取 Java 证据。归档新批次用独立的 `--snapshot=<标签>` |
 | 文档 | node client/tools/check-project.mjs --suite docs |
 
 Python 专项需要可用解释器，可通过 MXZG_PYTHON 指定。单项报告写在 client/temp/project-checks，运行产物、截图和日志先留在忽略目录。值得保留的长期证据筛选后进入 [验收记录](validation/README.md)。

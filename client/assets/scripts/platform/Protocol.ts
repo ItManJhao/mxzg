@@ -65,6 +65,10 @@ export class Protocol {
     public static readonly HERO_GOD_EQUIPMENT_CHANGE = "hero.god-equipment.change";
     /** 神装探宝，资产由统一快照同步。 */
     public static readonly HERO_GOD_EQUIPMENT_DRAW = "hero.god-equipment.draw";
+    /** 圣器激活、穿卸、升星和转换。 */
+    public static readonly HERO_ARTIFACT_CHANGE = "hero.artifact.change";
+    /** 神装商店按商品和当前日周期购买。 */
+    public static readonly HERO_GOD_EQUIPMENT_SHOP_BUY = "hero.god-equipment.shop.buy";
     /** 普通装备逐件或批量穿脱；最终装备槽及库存由统一快照提供。 */
     public static readonly HERO_EQUIPMENT_CHANGE = "hero.equipment.change";
     /** 获取当前角色的普通市场货架、已购数量和刷新状态。 */
@@ -146,6 +150,8 @@ export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protoco
     | typeof Protocol.HERO_JEWEL_CHANGE
     | typeof Protocol.HERO_GOD_EQUIPMENT_CHANGE
     | typeof Protocol.HERO_GOD_EQUIPMENT_DRAW
+    | typeof Protocol.HERO_ARTIFACT_CHANGE
+    | typeof Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY
     | typeof Protocol.HERO_EQUIPMENT_CHANGE | typeof Protocol.MARKET_BUY | typeof Protocol.MARKET_REFRESH
     | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS
     | typeof Protocol.ROLE_WELCOME_CLAIM | typeof Protocol.DAILY_DUNGEON_CHALLENGE;
@@ -199,6 +205,8 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.HERO_JEWEL_CHANGE, module: "英雄", description: "镶嵌、卸下或合成宝石" },
     { name: Protocol.HERO_GOD_EQUIPMENT_CHANGE, module: "英雄", description: "穿戴或卸下神装" },
     { name: Protocol.HERO_GOD_EQUIPMENT_DRAW, module: "英雄", description: "神装探宝" },
+    { name: Protocol.HERO_ARTIFACT_CHANGE, module: "英雄", description: "圣器操作" },
+    { name: Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY, module: "英雄", description: "购买神装商店商品" },
     { name: Protocol.HERO_EQUIPMENT_CHANGE, module: "英雄", description: "普通装备穿脱与一键穿装回执" },
     { name: Protocol.MARKET_LIST, module: "商店", description: "普通市场当前货架及刷新次数" },
     { name: Protocol.MARKET_BUY, module: "商店", description: "购买当前货架商品" },

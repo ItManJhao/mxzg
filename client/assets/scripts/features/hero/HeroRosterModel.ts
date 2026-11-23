@@ -1,9 +1,10 @@
-/** 英雄模块的唯一名册快照，保存服务端同步的英雄、阵容及普通召唤资格。 */
+/** 英雄模块的唯一名册快照，保存服务端同步的英雄、阵容、召唤资格与独立装备。 */
 import { HeroSnapshotUtils, type OwnedHero, type HeroRosterInfo, type MainFormation } from "./data/HeroSnapshotUtils";
 import { FirstSummonData, type SummonDetails } from "./data/FirstSummonData";
 import { BaseModel } from "../../framework/BaseModel";
 import { ServerClock } from "../../core/ServerClock";
 import { HeroGodEquipmentUtils, type HeroGodEquipmentState } from "./utils/HeroGodEquipmentUtils";
+import { HeroArtifactUtils, type HeroArtifactState } from "./utils/HeroArtifactUtils";
 
 export interface HeroRosterState {
     readonly status: "idle" | "loading" | "ready" | "error";
@@ -19,6 +20,8 @@ export interface HeroRosterState {
     readonly summonDetails?: SummonDetails | null;
     /** 当前账号全部独立神装及解锁门槛，与钱包和名册同版本。 */
     readonly godEquipment?: HeroGodEquipmentState;
+    /** 圣器持有实例、佩戴关系和已激活格位，与名册同版本。 */
+    readonly artifacts?: HeroArtifactState;
 }
 
 export class HeroRosterModel extends BaseModel {
@@ -46,10 +49,10 @@ export class HeroRosterModel extends BaseModel {
         return now === null ? null : Math.max(0, freeAt - now);
     }
 
-    /** 从同一份资产快照读取英雄、阵容、召唤和神装；预检与模块提交使用相同规则。 */
+    /** 从同一份资产快照读取英雄、阵容、召唤、神装和圣器，提交前一次校验。 */
     public static readSnapshot(state: Record<string, unknown>): HeroRosterState {
         const heroes = HeroSnapshotUtils.readOwnedHeroes(state.heroes);
-        const godEquipment = HeroGodEquipmentUtils.read(state.godEquipment, new Set(heroes.map(hero => hero.id)));
+        const heroIds = new Set(heroes.map(hero => hero.id));
         return {
             status: "ready",
             heroes,
@@ -57,7 +60,8 @@ export class HeroRosterModel extends BaseModel {
             mainFormation: HeroSnapshotUtils.readMainFormation(state.mainFormation, heroes),
             normalFreeAtSeconds: FirstSummonData.readFreeAt(state.heroSummon),
             summonDetails: FirstSummonData.readDetails(state.heroSummon),
-            godEquipment,
+            godEquipment: HeroGodEquipmentUtils.read(state.godEquipment, heroIds),
+            artifacts: HeroArtifactUtils.read(state.artifacts, heroIds),
             error: "",
         };
     }

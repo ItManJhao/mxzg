@@ -25,7 +25,8 @@ public class SessionSnapshotService {
                            com.funsgamex.mxzg.campaign.MainChapterService.State mainChapter,
                            com.funsgamex.mxzg.campaign.MainChapterIdleService.State mainChapterIdle,
                            SpiritInventoryService.State spiritInventory, TavernPointService.State tavernPoints,
-                           HeroSummonService.State heroSummon, HeroGodEquipmentService.State godEquipment) {}
+                           HeroSummonService.State heroSummon, HeroGodEquipmentService.State godEquipment,
+                           HeroArtifactService.State artifacts) {}
     /** 持久会话鉴权，在角色锁内再次确认凭证。 */
     private final SessionService sessions;
     /** 唯一钱包与版本读取入口，同时提供角色行锁。 */
@@ -48,6 +49,8 @@ public class SessionSnapshotService {
 
     /** 同一角色锁内读取神装实例、区服门槛和探宝状态。 */
     private final HeroGodEquipmentService godEquipment;
+    /** 同一角色事务中的圣器独立库存和已激活格位。 */
+    private final HeroArtifactService artifacts;
 
     /** 与名册同事务的阵型永久解锁和站位投影。 */
     private final com.funsgamex.mxzg.lineup.MainFormationStateService formations;
@@ -76,7 +79,7 @@ public class SessionSnapshotService {
             com.funsgamex.mxzg.campaign.MainChapterService chapters,
             com.funsgamex.mxzg.campaign.MainChapterIdleService idle, SpiritInventoryService spirits,
             TavernPointService tavernPoints, com.funsgamex.mxzg.campaign.MainChapterRules chapterRules,
-            HeroSummonService heroSummons, HeroGodEquipmentService godEquipment, GameClock clock,
+            HeroSummonService heroSummons, HeroGodEquipmentService godEquipment, HeroArtifactService artifacts, GameClock clock,
             RoleProfileService roleProfiles) {
         this.idle = idle;
         this.chapters = chapters;
@@ -92,6 +95,7 @@ public class SessionSnapshotService {
         this.chapterRules = chapterRules;
         this.heroSummons = heroSummons;
         this.godEquipment = godEquipment;
+        this.artifacts = artifacts;
         this.clock = clock;
         this.roleProfiles = roleProfiles;
     }
@@ -126,6 +130,6 @@ public class SessionSnapshotService {
         idleState = idle.withLineup(role, idleState, formation);
         return new Snapshot(roles.findById(role).orElseThrow(), heroes.list(role), inventory.list(role),
                 roles.revision(role), timedState, capacity.current(role), formation, chapter, idleState, spiritState,
-                pointState, heroSummons.current(role), godEquipment.state(role));
+                pointState, heroSummons.current(role), godEquipment.state(role), artifacts.state(role));
     }
 }

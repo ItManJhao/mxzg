@@ -9,10 +9,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
 import com.funsgamex.mxzg.hero.GodEquipmentRepository;
 import com.funsgamex.mxzg.hero.GodEquipmentRules;
+import com.funsgamex.mxzg.hero.HeroBattleInputService;
 import com.funsgamex.mxzg.hero.HeroGodEquipmentService;
+import com.funsgamex.mxzg.hero.HeroGodEquipmentShopService;
 import com.funsgamex.mxzg.hero.HeroRepository;
 import com.funsgamex.mxzg.inventory.InventoryService;
+import com.funsgamex.mxzg.lineup.Lineup;
+import com.funsgamex.mxzg.lineup.MainFormationCommandService;
 import com.funsgamex.mxzg.role.RoleRepository;
+import com.funsgamex.mxzg.time.GameClock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -38,6 +43,10 @@ class HeroGodEquipmentServiceTest {
     @Autowired private DevelopmentLoginService login;
     /** 生产同一神装事务入口。 */
     @Autowired private HeroGodEquipmentService service;
+    /** 生产商城事务，与现有探宝共享实例规则。 */
+    @Autowired private HeroGodEquipmentShopService shop;
+    /** 独立用例控制上海日刷新边界。 */
+    @Autowired private GameClock clock;
     /** 仅用于构造前置神装或直接核对独立持久关系。 */
     @Autowired private GodEquipmentRepository equipment;
     /** 生产同表投影，测试最低星与多档叠加。 */
@@ -48,6 +57,10 @@ class HeroGodEquipmentServiceTest {
     @Autowired private RoleRepository roles;
     /** 读取真实名册面板，验证装备事务中的属性不只在规则层生效。 */
     @Autowired private HeroRepository heroes;
+    /** 通过正常阵容保存路径设置该用例的实际参战英雄。 */
+    @Autowired private MainFormationCommandService formations;
+    /** 核对正常战斗入口从持久佩戴读取套装技能。 */
+    @Autowired private HeroBattleInputService battleInputs;
     /** 限测试使用的初始状态写入口。 */
     @Autowired private JdbcTemplate jdbc;
     /** 构造明确拥有的神装与券时使用原事务管理器。 */
@@ -84,6 +97,69 @@ class HeroGodEquipmentServiceTest {
         assertEquals(0, paidByToken.diamondsPaid());
         assertEquals(1, service.state(player.roleId()).drawCount());
         assertTrue(inventory.list(player.roleId()).stream().noneMatch(row -> row.itemId() == 901815));
+    }
+
+    /** 随机商城商品发放该部位原奖池的独立实例，回执重发不能再次扣款或抽样。 */
+    @Test
+    void shopConvertsExchangeItemsToRolledInstancesOnce() {
+        var player = player(70, 5);
+        new TransactionTemplate(transactions).executeWithoutResult(status -> inventory.credit(player.roleId(), 901812, 100));
+        long before = roles.revision(player.roleId());
+        long resetAt = service.state(player.roleId()).shop().resetAt();
+        var request = new HeroGodEquipmentShopService.BuyRequest(id(), 3, 2, resetAt);
+        var receipt = shop.buy(player.token(), request);
+        assertEquals(before + 1, receipt.assetRevision());
+        assertEquals(2, receipt.purchased());
+        assertEquals(22, quantity(player, 901812));
+        assertEquals(0, quantity(player, 910201));
+        var actual = service.state(player.roleId());
+        assertEquals(2, actual.items().size());
+        assertTrue(actual.items().stream().allMatch(item -> List.of(1040101, 1041101, 1042101)
+                .contains(item.templateId()) && item.slot() == 1 && item.heroId() == null));
+        assertNotEquals(actual.items().getFirst().instanceId(), actual.items().getLast().instanceId());
+        assertEquals(receipt, shop.buy(player.token(), request));
+        assertEquals(actual, service.state(player.roleId()));
+        assertFailure("IDEMPOTENCY_CONFLICT", () -> shop.buy(player.token(),
+                new HeroGodEquipmentShopService.BuyRequest(request.requestId(), 3, 1, resetAt)));
+        assertFailure("GOD_EQUIPMENT_SHOP_INSUFFICIENT", () -> shop.buy(player.token(),
+                new HeroGodEquipmentShopService.BuyRequest(id(), 3, 1, resetAt)));
+        assertEquals(receipt.assetRevision(), roles.revision(player.roleId()));
+    }
+
+    /** 石头各自按实际限购，跨日清计数，同时拒绝旧周期确认并允许已完成回执重放。 */
+    @Test
+    void shopLimitsAndStockResetAtShanghaiMidnight() {
+        var player = player(70, 5);
+        new TransactionTemplate(transactions).executeWithoutResult(status -> inventory.credit(player.roleId(), 901812, 100));
+        long beforeMidnight = java.time.Instant.parse("2026-11-23T15:58:00Z").getEpochSecond();
+        clock.setEpochSeconds(beforeMidnight);
+        try {
+            long resetAt = shop.state(player.roleId()).resetAt();
+            assertEquals(beforeMidnight + 120, resetAt);
+            var request = new HeroGodEquipmentShopService.BuyRequest(id(), 1, 5, resetAt);
+            var receipt = shop.buy(player.token(), request);
+            assertEquals(5, quantity(player, 901814));
+            assertEquals(75, quantity(player, 901812));
+            assertFailure("GOD_EQUIPMENT_SHOP_LIMIT", () -> shop.buy(player.token(),
+                    new HeroGodEquipmentShopService.BuyRequest(id(), 1, 1, resetAt)));
+            clock.setEpochSeconds(resetAt);
+            assertTrue(shop.state(player.roleId()).purchases().isEmpty());
+            assertEquals(resetAt + 86400, shop.state(player.roleId()).resetAt());
+            assertEquals(receipt, shop.buy(player.token(), request));
+            assertFailure("GOD_EQUIPMENT_SHOP_RESET", () -> shop.buy(player.token(),
+                    new HeroGodEquipmentShopService.BuyRequest(id(), 1, 1, resetAt)));
+            var next = shop.buy(player.token(), new HeroGodEquipmentShopService.BuyRequest(id(), 1, 1, resetAt + 86400));
+            assertEquals(1, next.purchased());
+            assertEquals(6, quantity(player, 901814));
+        } finally {
+            clock.reset();
+        }
+    }
+
+    /** 查询本角色真实普通库存，用于核对扣除及发放数量。 */
+    private long quantity(Player player, int itemId) {
+        return inventory.list(player.roleId()).stream().filter(row -> row.itemId() == itemId)
+                .mapToLong(InventoryService.Item::quantity).sum();
     }
 
     /** 同部位替换归还原实例，旧选择和他人物品均不能改变资产。 */
@@ -148,13 +224,44 @@ class HeroGodEquipmentServiceTest {
     void setThresholdsUseMinimumStarAndAddBothStages() {
         var items = List.of(item(1040101), item(1040201), item(1040301), item(1040401));
         var attributes = new HashMap<Integer, Long>();
-        rules.contribute(items, (type, value) -> attributes.merge(type, value, Long::sum));
+        var skills = rules.contribute(items, (type, value) -> attributes.merge(type, value, Long::sum));
         assertEquals(774L, attributes.get(220));
         assertEquals(600L, attributes.get(202));
-        assertTrue(rules.setSkills(items).isEmpty());
+        assertTrue(skills.isEmpty());
         attributes.clear();
         rules.contribute(List.of(item(1050101), item(1040201)), (type, value) -> attributes.merge(type, value, Long::sum));
         assertEquals(300L, attributes.get(202));
+    }
+
+    /** 持久穿齐同套四件才进入战斗排期，并随卸下一件立即失效。 */
+    @Test
+    void equippedSetSkillReachesTheNextBattle() {
+        Player player = player(70, 6);
+        formations.save(player.token(), new MainFormationCommandService.Save(id(), 0L, 1,
+            List.of(new Lineup.Slot(2, player.heroId()))));
+        int[] templates = {1080113, 1080213, 1080313, 1040413};
+        for (int slot = 1; slot <= 3; slot++) {
+            service.change(player.token(), new HeroGodEquipmentService.Request(
+                id(), player.heroId(), slot, HeroGodEquipmentService.Action.EQUIP,
+                create(player, templates[slot - 1]), null));
+        }
+        assertTrue(battleInputs.current(player.token()).units().getFirst().skillSchedule().stream()
+            .noneMatch(skill -> skill.skillId() == 300100001));
+
+        String fourth = create(player, templates[3]);
+        service.change(player.token(), new HeroGodEquipmentService.Request(
+            id(), player.heroId(), 4, HeroGodEquipmentService.Action.EQUIP, fourth, null));
+        var skills = battleInputs.current(player.token()).units().getFirst().skillSchedule().stream()
+            .filter(skill -> skill.skillId() == 300100001).toList();
+        assertEquals(1, skills.size());
+        assertEquals(1, skills.getFirst().level());
+        assertEquals(skills, battleInputs.currentForIdle(player.token()).units().getFirst().skillSchedule().stream()
+            .filter(skill -> skill.skillId() == 300100001).toList());
+
+        service.change(player.token(), new HeroGodEquipmentService.Request(
+            id(), player.heroId(), 4, HeroGodEquipmentService.Action.UNEQUIP, fourth, null));
+        assertTrue(battleInputs.current(player.token()).units().getFirst().skillSchedule().stream()
+            .noneMatch(skill -> skill.skillId() == 300100001));
     }
 
     /** 只给隔离用例准备实际英雄与角色等级。 */

@@ -8,8 +8,10 @@ package com.funsgamex.mxzg.network;
 import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.campaign.MainChapterFirstRewardService;
 import com.funsgamex.mxzg.dungeon.DailyDungeonService;
+import com.funsgamex.mxzg.hero.HeroArtifactService;
 import com.funsgamex.mxzg.hero.HeroEquipmentService;
 import com.funsgamex.mxzg.hero.HeroGodEquipmentService;
+import com.funsgamex.mxzg.hero.HeroGodEquipmentShopService;
 import com.funsgamex.mxzg.hero.HeroJewelService;
 import com.funsgamex.mxzg.hero.HeroStarService;
 import com.funsgamex.mxzg.hero.HeroSummonService;
@@ -79,6 +81,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final HeroJewelService heroJewels;
     /** 神装穿戴和探宝的独立资产服务。 */
     private final HeroGodEquipmentService heroGodEquipment;
+    /** 圣器激活、穿卸、升星和转换均在同一个资产事务入口提交。 */
+    private final HeroArtifactService heroArtifacts;
+    /** 神装定价、每日限购与真实发放由神装商店事务负责。 */
+    private final HeroGodEquipmentShopService godEquipmentShop;
     /** 普通市场货架、购买与刷新均由当前角色的市场服务处理。 */
     private final MarketService market;
     /** 金币副本首关资格、真实挑战和清扫回执由原事务服务处理。 */
@@ -126,6 +132,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             MainChapterFirstRewardService firstRewards, HeroFragmentCombineService fragments,
             HeroLevelService heroLevels, HeroLockService heroLocks, HeroEquipmentService heroEquipment,
             HeroStarService heroStars, HeroJewelService heroJewels, HeroGodEquipmentService heroGodEquipment,
+            HeroArtifactService heroArtifacts, HeroGodEquipmentShopService godEquipmentShop,
             MarketService market,
             DailyDungeonService dailyDungeon,
             RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock) {
@@ -137,6 +144,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.heroStars = heroStars;
         this.heroJewels = heroJewels;
         this.heroGodEquipment = heroGodEquipment;
+        this.heroArtifacts = heroArtifacts;
+        this.godEquipmentShop = godEquipmentShop;
         this.market = market;
         this.dailyDungeon = dailyDungeon;
         this.roles = roles;
@@ -337,7 +346,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             return;
         }
         if (name.equals("hero.star.upgrade") || name.equals("hero.jewel.change")
-                || name.equals("hero.god-equipment.change") || name.equals("hero.god-equipment.draw")) {
+                || name.equals("hero.god-equipment.change") || name.equals("hero.god-equipment.draw")
+                || name.equals("hero.artifact.change") || name.equals("hero.god-equipment.shop.buy")) {
             heroGrowth(connection, request, name);
             return;
         }
@@ -739,6 +749,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 case "hero.star.upgrade" -> upgradeHeroStar(connection.token, body);
                 case "hero.jewel.change" -> changeHeroJewel(connection.token, body);
                 case "hero.god-equipment.change" -> changeHeroGodEquipment(connection.token, body);
+                case "hero.artifact.change" -> changeHeroArtifact(connection.token, body);
+                case "hero.god-equipment.shop.buy" -> buyGodEquipment(connection.token, body);
                 case "hero.god-equipment.draw" -> {
                     fields(body, Set.of("requestId", "count", "maxDiamonds"));
                     yield heroGodEquipment.draw(connection.token, new HeroGodEquipmentService.DrawRequest(
@@ -805,6 +817,59 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         return heroGodEquipment.change(token, new HeroGodEquipmentService.Request(body.path("requestId").asString(),
                 body.path("heroId").asString(), body.path("slot").asInt(), action,
                 body.path("instanceId").asString(null), body.path("expectedInstanceId").asString(null)));
+    }
+
+    /** 圣器操作只读取玩家选择的实例，槽位归属和所有消耗由服务端复核。 */
+    private HeroArtifactService.Receipt changeHeroArtifact(String token, JsonNode body) {
+        fields(body, Set.of("requestId", "heroId", "slot", "action", "instanceId", "expectedInstanceId",
+                "targetTemplateId", "materialInstanceIds", "materialHeroIds", "replacementItemIds"));
+        HeroArtifactService.Action action;
+        try {
+            action = HeroArtifactService.Action.valueOf(body.path("action").asString());
+        } catch (IllegalArgumentException error) {
+            throw rejected("INVALID_HERO_ARTIFACT_REQUEST");
+        }
+        var artifactIds = artifactMaterialIds(body.path("materialInstanceIds"));
+        var heroIds = artifactMaterialIds(body.path("materialHeroIds"));
+        var replacement = body.path("replacementItemIds");
+        if (!replacement.isArray() || replacement.size() > 12) {
+            throw rejected("INVALID_HERO_ARTIFACT_REQUEST");
+        }
+        var replacementIds = new ArrayList<Integer>();
+        for (var id : replacement) {
+            if (id.asInt() <= 0) {
+                throw rejected("INVALID_HERO_ARTIFACT_REQUEST");
+            }
+            replacementIds.add(id.asInt());
+        }
+        return heroArtifacts.change(token, new HeroArtifactService.Request(text(body, "requestId", UUID_PATTERN),
+                text(body, "heroId", UUID_PATTERN), body.path("slot").asInt(), action,
+                body.path("instanceId").asString(null), body.path("expectedInstanceId").asString(null),
+                body.path("targetTemplateId").asInt(), artifactIds, heroIds, replacementIds));
+    }
+
+    /** 拒绝形状不正确或过大的圣器素材选择，不接受配置号替代实例 ID。 */
+    private List<String> artifactMaterialIds(JsonNode values) {
+        if (!values.isArray() || values.size() > 12) {
+            throw rejected("INVALID_HERO_ARTIFACT_REQUEST");
+        }
+        var ids = new ArrayList<String>();
+        for (var value : values) {
+            var id = value.asString();
+            if (!id.matches(UUID_PATTERN)) {
+                throw rejected("INVALID_HERO_ARTIFACT_REQUEST");
+            }
+            ids.add(id);
+        }
+        return ids;
+    }
+
+    /** 购买只传商品、数量和已见日周期，价格和开服条件在交易内读取。 */
+    private HeroGodEquipmentShopService.Receipt buyGodEquipment(String token, JsonNode body) {
+        fields(body, Set.of("requestId", "productId", "count", "resetAt"));
+        return godEquipmentShop.buy(token, new HeroGodEquipmentShopService.BuyRequest(
+                text(body, "requestId", UUID_PATTERN), body.path("productId").asInt(),
+                body.path("count").asInt(), body.path("resetAt").asLong()));
     }
 
     /** 市场命令只接收玩家选择，价格、数量限制和角色归属由已鉴权的市场事务确定。 */

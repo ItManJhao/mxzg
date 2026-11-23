@@ -1,5 +1,5 @@
 /**
- * 英雄神装操作由共用认证通道发送。穿卸和探宝的实际结果只写服务端，
+ * 英雄神装操作由共用认证通道发送。穿卸、探宝和商城的实际结果只写服务端，
  * 回包结束按钮等待，持有实例与每日状态由统一快照刷新。
  */
 import { BaseController } from "../../framework/BaseController";
@@ -29,6 +29,13 @@ interface GodEquipmentDrawReceipt {
     readonly rewards: readonly { templateId: number; quantity: number }[];
 }
 
+/** 商城确认和成功回包共用的请求参数。 */
+interface GodEquipmentShopBuy {
+    readonly productId: number;
+    readonly count: number;
+    readonly resetAt: number;
+}
+
 declare module "../../framework/EventDispatcher" {
     interface EventPayloads {
         /** 神装操作等待状态变化，页面仍读同一名册快照。 */
@@ -45,7 +52,7 @@ export class HeroGodEquipmentController extends BaseController {
     private roster: HeroRosterModel | null = null;
     /** 唯一角色状态，用于展示真实解锁等级，销毁时解除。 */
     private account: AccountModel | null = null;
-    /** 穿卸或探宝在途为 true；回包、失败或账号重置后解除。 */
+    /** 穿卸、探宝或商城在途为 true；回包、失败或账号重置后解除。 */
     private waiting = false;
 
     /** 让按钮避免重复提交。 */
@@ -70,11 +77,12 @@ export class HeroGodEquipmentController extends BaseController {
         return HeroGodEquipmentUtils.gate(state, role.level, star);
     }
 
-    /** 登记当前实现的神装和探宝成功消息。 */
+    /** 登记神装、探宝及商店的成功消息。 */
     protected onInitialize(): void {
         this.ownListener(ProtocolRouter.instance.register(this, [
             Protocol.HERO_GOD_EQUIPMENT_CHANGE,
             Protocol.HERO_GOD_EQUIPMENT_DRAW,
+            Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY,
         ]));
     }
 
@@ -114,6 +122,22 @@ export class HeroGodEquipmentController extends BaseController {
             });
     }
 
+    /** 商城仅提交真实商品、份数及玩家所见的自然日周期。 */
+    public buy(productId: number, count: number, resetAt: number): void {
+        if (!this.operations || this.waiting) {
+            return;
+        }
+        this.setWaiting(true);
+        this.operations.send(this, Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY, { productId, count, resetAt },
+            error => this.onFailure(error), value => {
+                const receipt = value as GodEquipmentShopBuy & { purchased: number };
+                if (receipt.productId !== productId || receipt.count !== count || receipt.resetAt !== resetAt
+                        || !Number.isSafeInteger(receipt.purchased) || receipt.purchased < count) {
+                    throw new Error("神装商城回包与本次购买不符");
+                }
+            });
+    }
+
     /** 成功回包只处理操作反馈，库存和英雄属性由统一快照提交。 */
     public onNotify(name: ProtocolName, data: unknown): void {
         switch (name) {
@@ -122,6 +146,10 @@ export class HeroGodEquipmentController extends BaseController {
                 break;
             case Protocol.HERO_GOD_EQUIPMENT_DRAW:
                 this.onDrawn(data as GodEquipmentDrawReceipt);
+                break;
+            case Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY:
+                // 展示由通用发奖处理，商城购买次数随同一快照生效。
+                this.setWaiting(false);
                 break;
         }
     }
@@ -162,7 +190,7 @@ export class HeroGodEquipmentController extends BaseController {
     private onFailure(error: unknown): void {
         this.setWaiting(false);
         const message = error instanceof SocketFailure && error.interrupted
-            ? "神装操作结果待同步，重连后请查看神装与探宝状态"
+            ? "神装操作结果待同步，重连后请查看神装状态"
             : error instanceof Error ? error.message : "神装操作失败";
         UIManager.instance.toast(message);
     }

@@ -144,8 +144,24 @@ def current_client_tables() -> dict[str, list[str]]:
     return dict(sorted((name, sorted(set(reasons))) for name, reasons in tables.items()))
 
 
+def hero_config_projections():
+    """登记养成复合表的必需容器、同源投影入口与既有缩进，供导出和结构检查共用。
+
+    首个容器用于统计条目数。实际是否导出仍由客户端读取闭包决定。
+    """
+    from export_god_equipment_shop import project as shop
+    from export_hero_artifacts import project as artifacts
+    from export_hero_jewels import project as jewels
+
+    return {
+        "hero-artifacts": (("items", "slots", "sets"), artifacts, None),
+        "hero-god-equipment-catalog": (("equipment", "products", "sets"), lambda src: shop(src)[1], None),
+        "hero-jewels": (("jewels", "slotStars", "sets"), jewels, 2),
+    }
+
+
 def validate_current_scope(out: Path) -> dict[str, int]:
-    """检查所有必需表都存在且非空、无未实现旧表；缺失或非法JSON不能用空数组冒充通过。"""
+    """检查闭包内每张表的实际数据容器，返回主数据条数，缺表、多表或空容器均报告表名。"""
     expected = current_client_tables()
     actual = {file.relative_to(out).as_posix()[:-5] for file in out.rglob("*.json")}
     missing, extra = set(expected) - actual, actual - set(expected)
@@ -153,14 +169,16 @@ def validate_current_scope(out: Path) -> dict[str, int]:
         raise ValueError("客户端配置范围不符；缺失=" + repr(sorted(missing)) + "；多余=" + repr(sorted(extra)))
     schema = json.loads((ROOT / "config/client-schema.json").read_text(encoding="utf-8-sig"))
     containers = {spec["path"][len("config/"):]: spec["container"] for spec in schema["tables"].values()}
+    projections = hero_config_projections()
     counts = {}
     for name in expected:
         data = json.loads((out / (name + ".json")).read_text(encoding="utf-8-sig"))
-        container = containers.get(name, "rows")
-        rows = data[container]
-        if not isinstance(rows, (list, dict)) or not rows:
-            raise ValueError("必需配置内容为空或结构非法：" + name + ":" + container)
-        counts[name] = len(rows)
+        required = projections[name][0] if name in projections else (containers.get(name, "rows"),)
+        for container in required:
+            rows = data.get(container) if isinstance(data, dict) else None
+            if not isinstance(rows, (list, dict)) or not rows:
+                raise ValueError("必需配置内容为空或结构非法：" + name + ":" + container)
+        counts[name] = len(data[required[0]])
     return counts
 
 
@@ -186,8 +204,9 @@ def project_attrshow(rows: list[dict]) -> list[dict]:
 
 
 def export_current(src: Path, out: Path) -> int:
-    """导出当前读取闭包并在默认目录更新配置包；隔离导出不改项目包，主城保留已核对投影。"""
+    """从指定目录导出当前读取闭包，复合表复用专项投影；只有默认资源目录会重打配置包。"""
     targets = current_client_tables()
+    hero_projections = hero_config_projections()
     schema = json.loads((ROOT / "config/client-schema.json").read_text(encoding="utf-8-sig"))
     specs = {spec["path"][len("config/"):]: spec for spec in schema["tables"].values()}
     books: dict[str, dict] = {}
@@ -209,6 +228,12 @@ def export_current(src: Path, out: Path) -> int:
     gates = build_system_gate(loose_rows(src / "system.xlsx", system["sheet"]))
     for name in targets:
         stem = name.split("/")[-1]
+        if name in hero_projections:
+            _, project, indent = hero_projections[name]
+            target = out / (name + ".json")
+            write_json(target, project(src), indent=indent)
+            ensure_meta(Path(str(target) + ".meta"))
+            continue
         if name == "roleupgradefeature":
             # 负责人选定旧Lua只作升级预告；不能用同名XLSX或改变OpenCondition导航门槛。
             from export_role_upgrade_features import SOURCE_METADATA, build_projection
@@ -594,13 +619,18 @@ def write_table(out: Path, name: str, note: str, rows: list[dict]) -> None:
     ensure_meta(Path(str(path) + ".meta"))
 
 
-def write_json(path: Path, payload: dict) -> None:
-    """写入指定导出路径，创建必要容器目录；相同内容不重写，避免无意义Creator导入。"""
-    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    text += "\n"
+def json_content(payload: dict, *, indent: int | None = None) -> str:
+    """生成共享 JSON 正文；默认紧凑输出，宝石等原有缩进格式按指定宽度保留。"""
+    separators = (",", ":") if indent is None else (",", ": ")
+    return json.dumps(payload, ensure_ascii=False, indent=indent, separators=separators) + "\n"
+
+
+def write_json(path: Path, payload: dict, *, indent: int | None = None) -> None:
+    """创建必要目录并写入已有格式；缩进版沿用 LF，相同正文保留文件和 Creator 导入状态。"""
+    text = json_content(payload, indent=indent)
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists() or path.read_text(encoding="utf-8") != text:
-        path.write_text(text, encoding="utf-8")
+        path.write_text(text, encoding="utf-8", newline="\n" if indent is not None else None)
 
 
 def ensure_meta(path: Path) -> None:

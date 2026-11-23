@@ -18,6 +18,8 @@ export class GameRedDotKey {
     public static readonly CHAPTER_MILESTONE = "battle.milestone";
     /** 召唤法阵入口。 */
     public static readonly SUMMON = "city.summon";
+    /** 创造法阵至少有一项配方的本体、素材和费用准备齐全。 */
+    public static readonly HERO_CREATION = "city.heroCreation";
     /** 普通单抽免费。 */
     public static readonly SUMMON_NORMAL = "city.summon.normal";
     /** 高级单抽免费。 */

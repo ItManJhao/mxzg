@@ -146,7 +146,7 @@ const LABELS: {
     [atom: string]: string;
 } = {
     main_ancient: "远古遗迹",
-    main_hero_make: "英雄合成",
+    main_hero_make: "创造法阵",
     main_summon: "召唤",
     main_blessingpool: "祈福池",
     main_shop: "商店",

@@ -2,6 +2,7 @@
  * 主城功能入口协调：把底栏意图交给UIManager，处理真实慢开提示、加载取消、重试和返回主城。
  * 由当前场景的 ApplicationPages 持有，复用账号准入和页面宿主，不复制玩家数据。
  */
+import "../../features/hero/ui/HeroCreationView";
 import { UIManager } from "../../framework/ui/UIManager";
 import { GameLog } from "../../core/GameLog";
 import { CityNavigationUtils } from "../../config/CityNavigationUtils";
@@ -44,6 +45,7 @@ const routes: Readonly<Record<string, { page: string; title: string; tab: Featur
     bag: {page: "bag", title: "背包", tab: "bag"},
     battle: {page: "remake-campaign", title: "战斗", tab: "battle"},
     main_summon: {page: "first-summon", title: "召唤", tab: "summon"},
+    main_hero_make: {page: "hero-creation", title: "创造法阵", tab: "summon"},
     main_shop: {page: "market", title: "市场", tab: "market"},
     dungeon: {page: "dungeon-hall", title: "副本大厅", tab: "dungeon"},
     "gold-dungeon": {page: "gold-dungeon", title: "金币副本", tab: "dungeon"},

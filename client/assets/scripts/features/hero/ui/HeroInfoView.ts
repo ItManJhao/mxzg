@@ -16,6 +16,7 @@ import { HeroRosterModel } from "../HeroRosterModel";
 import { HeroRosterController } from "../HeroRosterController";
 import type { OwnedHero } from "../data/HeroSnapshotUtils";
 import { HeroEquipmentController } from "../HeroEquipmentController";
+import { HeroArtifactController } from "../HeroArtifactController";
 import { HeroLevelController } from "../HeroLevelController";
 import { HeroLevelEvent } from "../utils/HeroLevelEvent";
 import { HeroSkillView } from "./HeroSkillView";
@@ -24,6 +25,7 @@ import { HeroEquipmentPickerView } from "./HeroEquipmentPickerView";
 import { HeroSkillUtils } from "../utils/HeroSkillUtils";
 import { HeroEquipmentUtils } from "../utils/HeroEquipmentUtils";
 import { HeroGrowthDisplayUtils } from "../utils/HeroGrowthDisplayUtils";
+import { HeroArtifactUtils } from "../utils/HeroArtifactUtils";
 import { HeroPortraitUtils } from "../utils/HeroPortraitUtils";
 import { HeroLevelQuoteUtils } from "../utils/HeroLevelQuoteUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
@@ -41,6 +43,7 @@ import { BagEvent } from "../../bag/utils/BagEvent";
 import { EquipmentInfoView } from "../../bag/ui/EquipmentInfoView";
 import { ConfirmView } from "../../common/ui/ConfirmView";
 import { HeroGrowthPanel } from "./HeroGrowthPanel";
+import { HeroArtifactView } from "./HeroArtifactView";
 
 /** 名称与形态来自当前模板和权威名册，用于切换同一个立绘挂点。 */
 interface HeroPortraitData {
@@ -170,6 +173,18 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
     @property([Button]) lockedSlots: Button[] = [];
     /** 两个符文入口的等级或星级门槛。 */
     @property([Label]) lockLabels: Label[] = [];
+    /** 戒指和项链的圣器格位，达到配置星级后显示。 */
+    @property([Button]) artifactButtons: Button[] = [];
+    /** 圣器格位图标，激活前显示原版部位剪影。 */
+    @property([Node]) artifactIcons: Node[] = [];
+    /** 实际佩戴圣器的物品品质底框。 */
+    @property([Node]) artifactFrames: Node[] = [];
+    /** 圣器尚未达到激活等级时的锁图标。 */
+    @property([Node]) artifactLocks: Node[] = [];
+    /** 对应格位要求的英雄等级。 */
+    @property([Label]) artifactRequirements: Label[] = [];
+    /** 满足激活或变强条件时，提示当前圣器格位。 */
+    @property([Node]) artifactDots: Node[] = [];
     /** 提交当前英雄实例的普通升级或到阶上限后的强化。 */
     @property(Button) upgradeButton: Button | null = null;
     /** 当前可升的级数或请求等待提示。 */
@@ -233,6 +248,7 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.refresh);
         EventDispatcher.instance.on(HeroLevelEvent.Updated, this, this.onUpgradeChanged);
         EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refreshEquipmentActions);
+        EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.refreshArtifactSlots);
         EventDispatcher.instance.on("hero-equipment:updated", this, this.onEquipmentChanged);
         this.listenDetail(this.previousHeroButton, () => this.moveHero(-1));
         this.listenDetail(this.nextHeroButton, () => this.moveHero(1));
@@ -242,6 +258,9 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         this.listenDetail(this.settingsButton, () => this.openSettings());
         this.growthTabs.forEach((button, index) => this.listenDetail(button, () => this.selectGrowthTab(index)));
         this.lockedSlots.forEach((button, index) => this.listenDetail(button, () => this.showRuneHint(index)));
+        this.artifactButtons.forEach((button, index) => {
+            this.listenDetail(button, () => this.openArtifact(index + 1));
+        });
         this.equipmentButtons.forEach((button, index) => this.listenDetail(button, () => this.openEquipment(index + 1)));
         this.skillButtons.forEach((button, slot) => {
             const click = () => {
@@ -362,6 +381,57 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         this.growthDetails?.show(this, this.growthTab, hero);
     }
 
+    /** 按实际星级、激活记录和佩戴实例刷新旧版两个圣器格。 */
+    private refreshArtifactSlots(): void {
+        if (this.closed) {
+            return;
+        }
+        const hero = this.currentHero();
+        const roster = HeroRosterModel.instance.snapshot;
+        const state = roster.artifacts;
+        const controller = HeroArtifactController.instance;
+        if (!hero) {
+            return;
+        }
+        this.artifactButtons.forEach((button, index) => {
+            const slot = index + 1;
+            const rule = HeroArtifactUtils.slot(slot);
+            button.node.active = !!rule && hero.star >= rule.star;
+            button.interactable = !!state && button.node.active;
+            if (!rule || !button.node.active) {
+                return;
+            }
+            const item = HeroArtifactUtils.worn(state, hero.id, slot);
+            const locked = !HeroArtifactUtils.active(state, hero.id, slot) && hero.level < rule.level;
+            this.artifactLocks[index].active = locked;
+            this.artifactRequirements[index].node.active = locked;
+            this.artifactRequirements[index].string = `Lv.${rule.level} 解锁`;
+            this.artifactDots[index].active = HeroArtifactUtils.reminder(hero, slot, state,
+                itemId => controller.balance(itemId), roster.heroes);
+            this.artifactIcons[index].active = !locked;
+            const emptyIcon = ResManager.ui("common", index === 0 ? "artifacts_jiezhi" : "artifacts_xianglian");
+            ResManager.setSprite(this.artifactIcons[index], locked ? null : item ? ResManager.item(item.templateId) : emptyIcon);
+            const rarity = item && GameConfig.instance.getConfig(GConfig.Item, item.templateId)?.rare_mark;
+            this.artifactFrames[index].active = rarity !== undefined;
+            ResManager.setSprite(this.artifactFrames[index], rarity === undefined ? null : `bag/ui/backpack_rare-${rarity}`);
+        });
+    }
+
+    /** 点击圣器格打开对应部位，激活、换装和升星共用该部位的真实状态。 */
+    private openArtifact(slot: number): void {
+        const hero = this.currentHero();
+        const rule = HeroArtifactUtils.slot(slot);
+        if (this.closed || !hero || !rule || hero.star < rule.star) {
+            return;
+        }
+        if (hero.level < rule.level && !HeroArtifactUtils.active(HeroRosterModel.instance.snapshot.artifacts, hero.id, slot)) {
+            UIManager.instance.toast(`英雄达到 ${rule.level} 级可激活圣器`);
+            return;
+        }
+        void UIManager.instance.openChild(this, HeroArtifactView, { heroId: hero.id, slot })
+            .catch(() => { /* 框架统一处理开窗失败。 */ });
+    }
+
     /** 空槽直接选装，已穿槽沿旧版先显示换装或卸下的共享装备详情。 */
     private openEquipment(slot: number): void {
         const equipment = this.currentHero()?.equipment;
@@ -465,6 +535,7 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         const version = ++this.paintVersion;
         this.refreshEquipment(hero, version);
         this.refreshEquipmentActions();
+        this.refreshArtifactSlots();
         this.refreshSkills(hero, version);
     }
 

@@ -5,6 +5,7 @@
 ## 保留哪些材料
 
 - 保留正在被检查脚本读取的配置和资源基线。`battle-chapter10-20` 专项读取[第 9 关机器报告](main-chapter-dependencies-20261117-stage9.json)，用其原敌方及技能配置核对第 10～20 关的实现。
+- 早期英雄、阵容与战斗规则的源码核查、旧协议和实测截图集中在[英雄与主线阵容历史核查](hero-lineup-history.md)。现行的英雄培养与协议入口见[英雄维护契约](../hero-lineup-contract.md)。
 - 保留当前使用的[第 20 关机器报告](main-chapter-dependencies-20261117-stage20.json)和[可读汇总](main-chapter-dependencies-20261117-stage20.txt)，以及能证明特定结果的历史实测记录、截图、配置哈希和独立故障证据。
 - 新增验收记录时，优先留下结果、实际输入、复验方法和少量关键截图。重复内容只留一份。中间尝试和可以重跑的日志留在本机临时目录。
 

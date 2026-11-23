@@ -66,14 +66,10 @@ public class HeroStarService {
     private final HeroGrowthRules growth;
     /** 从本区权威世界等级服务读取实际门槛。 */
     private final WorldLevelService worldLevels;
-    /** 扣除共同消耗及返还材料英雄的成长资源和普通装备。 */
+    /** 扣除共同消耗及返还材料英雄的成长资源。 */
     private final InventoryService inventory;
-    /** 读取旧素材英雄的四个槽位，区分穿戴和历史空槽。 */
-    private final HeroEquipmentRepository equipment;
-    /** 归还被消耗素材的镶嵌宝石。 */
-    private final HeroJewelService jewels;
-    /** 解除被消耗素材的神装关系，保留原独立实例。 */
-    private final GodEquipmentRepository godEquipment;
+    /** 按已有穿戴关系卸装并删除实际素材英雄。 */
+    private final HeroMaterialService heroMaterials;
     /** 检查升星是否达到阵法或助战的永久解锁条件。 */
     private final MainFormationStateService formations;
     /** 更新上阵英雄升星后的主阵容最高战力。 */
@@ -88,7 +84,7 @@ public class HeroStarService {
     /** 注入角色、资产和成长规则入口，全部变更共用同一个持久事务。 */
     public HeroStarService(SessionService sessions, RoleRepository roles, HeroRepository heroes, HeroStarRules rules,
             HeroGrowthRules growth, WorldLevelService worldLevels, InventoryService inventory,
-            HeroEquipmentRepository equipment, HeroJewelService jewels, GodEquipmentRepository godEquipment,
+            HeroMaterialService heroMaterials,
             MainFormationStateService formations, HeroMainPowerService powers, JdbcTemplate jdbc,
             ObjectMapper mapper, AssetSyncService sync) {
         this.sessions = sessions;
@@ -98,9 +94,7 @@ public class HeroStarService {
         this.growth = growth;
         this.worldLevels = worldLevels;
         this.inventory = inventory;
-        this.equipment = equipment;
-        this.jewels = jewels;
-        this.godEquipment = godEquipment;
+        this.heroMaterials = heroMaterials;
         this.formations = formations;
         this.powers = powers;
         this.jdbc = jdbc;
@@ -263,16 +257,7 @@ public class HeroStarService {
             addRefund(refunds, GOLD_ITEM_ID, cost.gold());
             addRefund(refunds, STONE_ITEM_ID, cost.stone());
         }
-        for (var slot : equipment.slots(roleId, material.id())) {
-            if (slot.equipped()) {
-                inventory.credit(roleId, slot.templateId(), 1);
-            }
-        }
-        jdbc.update("DELETE FROM game_equipment WHERE role_id=? AND hero_id=?", roleId, material.id());
-        jewels.releaseForConsumedHero(roleId, material.id());
-        godEquipment.releaseHero(roleId, material.id());
-        if (jdbc.update("DELETE FROM game_hero WHERE role_id=? AND id=? AND is_locked=FALSE",
-                roleId, material.id()) != 1) {
+        if (!heroMaterials.remove(roleId, material)) {
             throw error(HttpStatus.CONFLICT, "HERO_STAR_MATERIAL_UNAVAILABLE");
         }
     }

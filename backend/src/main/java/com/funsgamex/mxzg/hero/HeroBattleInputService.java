@@ -95,7 +95,7 @@ public class HeroBattleInputService {
         return read(token, true);
     }
 
-    /** 共用鉴权、持久名册与属性构造；只在挂机读取时切换阵型属性来源。 */
+    /** 共用持久名册、属性和神装、圣器套装技能；只在挂机读取时切换阵型属性来源。 */
     private Input read(String token, boolean idle) {
         String role = sessions.requireRole(token);
         roles.lock(role);
@@ -127,17 +127,14 @@ public class HeroBattleInputService {
                 // 与旧FormationReceivers一致：按阵型/站位加入原始属性，百分比不提前折算。
                 position.attributes().forEach(add);
             });
-            var selected = evolution.applySkills(
-                skills.select(hero.templateId(), hero.star(), hero.stage()), evolved);
+            var selected = new ArrayList<>(evolution.applySkills(
+                skills.select(hero.templateId(), hero.star(), hero.stage()), evolved));
+            selected.addAll(hero.loadoutSkills());
             units.add(new Unit(slot.position(), hero, attributes, selected,
                 HeroBattleAttributeUtils.opening(attributes), skills.battleSchedule(selected), elements.element(hero.templateId())));
         }
-        var pending = new ArrayList<>(List.of("soul_talent_runes_awakening", "account_and_team_sources",
-                "battle_special_attributes_and_triggers"));
-        if (units.stream().anyMatch(unit -> unit.hero().panelStats().pendingSources()
-                .contains("god_equipment_set_skills"))) {
-            pending.add("god_equipment_set_skills");
-        }
+        var pending = List.of("soul_talent_runes_awakening", "account_and_team_sources",
+                "battle_special_attributes_and_triggers");
         return new Input(roles.revision(role), formation.version(), idle ? 1 : formation.formationId(), units, pending);
     }
 }

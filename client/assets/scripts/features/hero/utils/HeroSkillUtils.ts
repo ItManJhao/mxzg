@@ -33,8 +33,9 @@ export class HeroSkillUtils {
     /** 纯工具类不允许创建实例。 */
     private constructor() { }
 
-    /** 读取四个技能槽；基础配置非法仍拒绝，展示行缺失则返回不可打开的占位。 */
-    public static present(hero: OwnedHero, config: GameConfig = GameConfig.instance): readonly HeroSkillFace[] {
+    /** 读取实例或法阵预览的四个技能槽；展示配置缺失时返回不可打开的占位。 */
+    public static present<T extends Pick<OwnedHero, "templateId" | "star" | "stage" | "evolution">>(hero: T,
+        config: GameConfig = GameConfig.instance): readonly HeroSkillFace[] {
         const template = config.requireConfig(GConfig.HeroType, hero.templateId);
         const stage = hero.stage === undefined ? null : config.requireConfig(GConfig.HeroUpgrade, hero.stage);
         const star = hero.stage !== undefined && hero.stage < hero.star && hero.star <= 5 ? hero.stage + 1 : hero.star;

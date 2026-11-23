@@ -41,9 +41,10 @@ public class HeroGodEquipmentService {
     /** 本次真实扣钻金额、业务版本与结果，重复操作不会重抽。 */
     public record DrawReceipt(String requestId, String roleId, int count, long diamondsPaid, long assetRevision,
                               List<DrawReward> rewards) {}
-    /** 同一次快照的解锁门槛、独立库存及探宝状态。 */
+    /** 同一次快照的解锁门槛、独立库存、探宝和商店状态。 */
     public record State(int requiredRoleLevel, int requiredWorldLevel, int requiredHeroStar, int worldLevel,
-                        List<GodEquipmentRepository.Item> items, int drawCount, boolean freeDraw) {}
+                        List<GodEquipmentRepository.Item> items, int drawCount, boolean freeDraw,
+                        HeroGodEquipmentShopService.State shop) {}
     /** 持久保底计数与领取免费机会的上海自然日，null 表示尚未领取。 */
     private record Lottery(int drawCount, Long lastFreeDay) {}
     /** 探宝回执内部额外记录原最大扣钻陈述，用于区分重放和不同意图。 */
@@ -75,12 +76,14 @@ public class HeroGodEquipmentService {
     private final GameClock clock;
     /** 存储探宝计数与持久命令回执。 */
     private final JdbcTemplate jdbc;
+    /** 从同一事务观察商城周期与当前购买次数。 */
+    private final HeroGodEquipmentShopService shop;
 
     /** 注入角色、神装、钱包及快照依赖。服务自身不缓存角色状态。 */
     public HeroGodEquipmentService(GodEquipmentRepository equipment, GodEquipmentRules rules, SessionService sessions,
                                    RoleRepository roles, HeroRepository heroes, WorldLevelService worldLevels,
                                    InventoryService inventory, AssetSyncService sync, HeroMainPowerService powers,
-                                   GameClock clock, JdbcTemplate jdbc) {
+                                   GameClock clock, JdbcTemplate jdbc, HeroGodEquipmentShopService shop) {
         this.equipment = equipment;
         this.rules = rules;
         this.sessions = sessions;
@@ -92,15 +95,16 @@ public class HeroGodEquipmentService {
         this.powers = powers;
         this.clock = clock;
         this.jdbc = jdbc;
+        this.shop = shop;
     }
 
-    /** 统一快照装配读取当前神装和探宝状态，调用方已持有角色锁。 */
+    /** 统一快照读取当前神装、探宝和商城状态，调用方已持有角色锁。 */
     public State state(String roleId) {
         var role = roles.findById(roleId).orElseThrow();
         var lottery = lottery(roleId);
         return new State(rules.requiredRoleLevel(), rules.requiredWorldLevel(), rules.requiredHeroStar(),
                 worldLevels.current(role.serverId()).level(), equipment.list(roleId), lottery.drawCount(),
-                free(lottery, currentDay()));
+                free(lottery, currentDay()), shop.state(roleId));
     }
 
     /** 在同一事务校验资产和位置并提交穿卸。重复编号同参返回原回执，异参拒绝。 */

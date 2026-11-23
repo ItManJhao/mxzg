@@ -1,12 +1,13 @@
 /** 按角色读取持久英雄；列表和详情共用映射，不生成展示用资产。 */
 package com.funsgamex.mxzg.hero;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -16,9 +17,16 @@ public class HeroRepository {
 
     /** 已核对的旧基础成长规则，仅计算基础属性，不冒充装备等完整加成。 */
     private final HeroGrowthRules rules;
-    /** 一次查询映射自身锁定与主线阵容占用；不逐英雄补查。 */
-    private HeroProfile map(java.sql.ResultSet row,int index) throws java.sql.SQLException { return new HeroProfile(
-        row.getString("id"), row.getInt("template_id"), row.getInt("hero_level"), row.getInt("star"), row.getBoolean("is_locked"), row.getBoolean("deployed"), row.getInt("stage"), rules.stats(row.getInt("template_id"),row.getInt("star"),row.getInt("hero_level"),row.getInt("stage")),null,null,readEvolution(row),null,Map.of()); }
+    /** 映射持久英雄的基础属性、锁定和阵容占用，穿戴和套装技能在批量读取后装配。 */
+    private HeroProfile map(java.sql.ResultSet row, int index) throws java.sql.SQLException {
+        int templateId = row.getInt("template_id");
+        int level = row.getInt("hero_level");
+        int star = row.getInt("star");
+        int stage = row.getInt("stage");
+        return new HeroProfile(row.getString("id"), templateId, level, star, row.getBoolean("is_locked"),
+                row.getBoolean("deployed"), stage, rules.stats(templateId, star, level, stage),
+                null, null, readEvolution(row), null, Map.of(), List.of());
+    }
     /** 从持久字段解析精确进化配置；不推断、不默认吞掉非法状态。 */
     private HeroEvolutionRules.State readEvolution(java.sql.ResultSet row) throws java.sql.SQLException {
         int type=row.getInt("evolve_type"),level=row.getInt("evolve_level");
@@ -43,12 +51,17 @@ public class HeroRepository {
     private final GodEquipmentRepository godEquipment;
     /** 神装基础、随机属性和套装查询共用规则。 */
     private final GodEquipmentRules godEquipmentRules;
+    /** 同一角色持久圣器及穿戴关系。 */
+    private final HeroArtifactRepository artifacts;
+    /** 圣器基础、特殊和套装属性的真实配置。 */
+    private final HeroArtifactRules artifactRules;
 
     /** 注入持久名册和穿戴来源，列表与详情共用同一属性构造。 */
     public HeroRepository(JdbcTemplate jdbc, HeroGrowthRules rules, HeroEquipmentRepository equipment,
                           HeroPanelRules panelRules, HeroSkillPanelRules skillRules, HeroEvolutionRules evolutionRules,
                           HeroJewelRepository jewels, HeroJewelRules jewelRules,
-                          GodEquipmentRepository godEquipment, GodEquipmentRules godEquipmentRules) {
+                          GodEquipmentRepository godEquipment, GodEquipmentRules godEquipmentRules,
+                          HeroArtifactRepository artifacts, HeroArtifactRules artifactRules) {
         this.jdbc = jdbc;
         this.rules = rules;
         this.equipment = equipment;
@@ -59,6 +72,8 @@ public class HeroRepository {
         this.jewelRules = jewelRules;
         this.godEquipment = godEquipment;
         this.godEquipmentRules = godEquipmentRules;
+        this.artifacts = artifacts;
+        this.artifactRules = artifactRules;
     }
 
     /** 读取本角色全部实例及主线阵容占用，界面排序由旧版展示规则决定。 */
@@ -66,28 +81,33 @@ public class HeroRepository {
         var equipped = equipment.equipped(roleId);
         var gems = jewels.byRole(roleId);
         var divine = godEquipment.equipped(roleId);
+        var reiki = artifacts.equipped(roleId);
         return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? ORDER BY id", this::map, roleId)
             .stream().map(hero -> withLoadout(hero, equipped.get(hero.id()), gems.getOrDefault(hero.id(), List.of()),
-                    divine.getOrDefault(hero.id(), List.of()))).toList();
+                    divine.getOrDefault(hero.id(), List.of()), reiki.getOrDefault(hero.id(), List.of()))).toList();
     }
-    /** 以角色和实例双条件查询，禁止跨角色取得英雄。 */
+    /** 以角色和英雄实例限定详情查询，装配该英雄的宝石与穿戴关系。 */
     public Optional<HeroProfile> find(String roleId, String heroId) {
         return jdbc.query("SELECT h.*, EXISTS (SELECT 1 FROM game_lineup_slot s WHERE s.role_id=h.role_id AND s.hero_id=h.id) AS deployed FROM game_hero h WHERE h.role_id = ? AND h.id = ?", this::map, roleId, heroId)
             .stream().findFirst().map(hero -> withLoadout(hero, equipment.equipped(roleId).get(heroId),
-                    jewels.byRole(roleId).getOrDefault(heroId, List.of()),
-                    godEquipment.equipped(roleId).getOrDefault(heroId, List.of())));
+                    List.copyOf(jewels.forHero(roleId, heroId)),
+                    godEquipment.equipped(roleId).getOrDefault(heroId, List.of()),
+                    artifacts.equipped(roleId).getOrDefault(heroId, List.of())));
     }
 
-    /** 合并同编号培养属性，面板和主线复用结果，保留宝石槽在名册中同步。 */
+    /** 合并宝石、神装和圣器属性，将同次穿戴判定授予的套装技能交给战斗。 */
     private HeroProfile withLoadout(HeroProfile hero, HeroEquipmentRepository.State equipmentState,
                                    List<HeroJewelRepository.Item> gemSlots,
-                                   List<GodEquipmentRepository.Item> divineSlots) {
+                                   List<GodEquipmentRepository.Item> divineSlots,
+                                   List<HeroArtifactRepository.Item> artifactSlots) {
         var attributes = new HashMap<Integer, Long>();
-        jewelRules.addAttributes(gemSlots, (type, value) -> attributes.merge(type, value, Math::addExact));
-        godEquipmentRules.contribute(divineSlots, (type, value) -> attributes.merge(type, value, Math::addExact));
+        BiConsumer<Integer, Long> add = (type, value) -> attributes.merge(type, value, Math::addExact);
+        jewelRules.addAttributes(gemSlots, add);
+        var loadoutSkills = new ArrayList<>(godEquipmentRules.contribute(divineSlots, add));
+        loadoutSkills.addAll(artifactRules.contribute(artifactSlots, add));
         var ordinary = equipmentState == null ? new HeroEquipmentRepository.State(List.of()) : equipmentState;
         return hero.withLoadout(ordinary, new HeroProfile.Gems(gemSlots), attributes, panelRules, skillRules,
-                evolutionRules, !godEquipmentRules.setSkills(divineSlots).isEmpty());
+                evolutionRules, loadoutSkills);
     }
 
     /** 读取本角色持久图鉴，供个人空间生成已解锁形象。 */

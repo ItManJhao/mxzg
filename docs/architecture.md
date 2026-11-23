@@ -1,6 +1,6 @@
 # 项目架构与职责
 
-更新于 2026-11-20。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
+更新于 2026-11-23。开放范围见 [开发进度](development-progress.md)，字段与时序见 [通信契约](network-contract.md)。
 
 ## 不随技术重构改变的目标
 
@@ -8,13 +8,13 @@
 
 ## 客户端统一采用模块级 MVC
 
-Model 保存唯一状态。Controller 发出玩法请求、登记和接收协议、提交 Model 并通知界面。View 读取 Model，把玩家操作交给所属 Controller。背包是标准模块。英雄详情已接入普通升级、强化进阶、锁定、装备、升星、宝石及神装。当前主线开放第 1～550 关挑战与结算、挂机、独立通关奖励及第 15、30、50、80、110、140 关里程碑领取。基础、友情、高级召唤、积分兑换和精英碎片合成提供英雄。挂机新领取只在 local 默认启用。祈愿购买和快速战斗待恢复。
+Model 保存服务端快照。Controller 发出玩法请求，在回包或推送到达后更新 Model 并发出事件。View 读取 Model，把玩家操作交给所属 Controller。背包是标准模块，英雄装备展示了多个模块如何读取同一版资产。
 
 - BagController 发送精英碎片合成请求，接收库存快照和本次合成回包。库存经 BagModel 提交后由 BagEvent 通知界面。
 - BagModel：唯一背包状态，分别保存普通堆叠、期限物品和精灵独立实例，整批校验/冻结后计算差异；不联网、不依赖View，不按itemId合并精灵。
 - RoleController 收发首次命名和新手赠礼协议。昵称、命名状态与赠礼资格由 onRoleState 写入唯一账号 Model，领取回包交通用奖励队列展示。
 - HeroEquipmentController 收发装备指令和结果。已穿槽位、属性与个人战力由 HeroRosterModel 持有，待穿库存仍由 BagModel 持有。装备选择、详情和红点读取同一资产快照。
-- HeroStarController、HeroJewelController 和 HeroGodEquipmentController 收发各自的培养协议。升星素材选择保留在当前英雄详情，宝石堆叠由 BagModel 持有，宝石镶嵌与独立神装从同版 HeroRosterModel 读取。英雄面板和主线战斗共用服务端宝石与神装的属性输入。
+- HeroStarController、HeroJewelController、HeroGodEquipmentController 与 HeroArtifactController 分别收发升星、宝石、神装和圣器协议。创造法阵复用升星事务。材料选择归当前页面，宝石堆叠归 BagModel，镶嵌及佩戴实例归 HeroRosterModel。面板与战斗从服务端读取同一英雄的装备属性及套装。[英雄培养与套装](hero-lineup-contract.md#升星宝石与神装)
 - AccountController 负责登录、恢复和退出，决定是否交付当前会话的成功与失败。首包通过模块校验后才保存凭证。AccountOperations 为各模块提供单次请求与回包交付。ServerSelectionController 负责区服列表和选择。
 - GameSocketClient.requestFrame 是认证业务请求的发送入口。返回时按请求编号、协议和连接匹配，并核对协议中声明的角色与实际发奖明细。主线、布阵、GM 与英雄模块使用同一条连接。
 - AssetStateBinding：应用层身份/持久版本校验、完整角色与库存批量提交，不保存第二份库存。
@@ -44,7 +44,7 @@ MainChapterRules读取全部850条同源chapterreward，按全局idx保存门槛
 
 MainChapterState可选`challengeLimit`来自字段5，统一首包、提交事件及重新鉴权沿原快照交付，SessionSnapshotService对齐revision时同时保留它与里程碑集合。旧回执缺字段保持null/未记录，客户端缺当前范围时禁新挑战，不默认0或猜开放上限。新挑战读最新MainChapterModel.state的范围；已经存在的pending、原requestId回执、claim及replay优先恢复，不被缩小后的范围阻断。maxCleared可高于当前范围，不能因此拒绝合法旧进度或用历史回执回写当前范围；不新增Model、同步请求或恢复队列。
 
-同源后段551–850奖励记录重复mode5/chapter12/mission1–10，而敌表继续累加小关号。旧ChapterSysCache实际按三维筛选，note不是运行字段，因此目录保留旧三维关联并把这些重复奖励记录标为enemyMappingPending，敌方构建明确拒绝“奖励-敌方映射待确认”；不按note替换敌人、不自动改原表。三维反查不能唯一确定全局关卡时同样拒绝。完整依赖及源表/资源边界见[最新只读审计](validation/main-chapter-dependencies-20261117-stage20.json)；静态闭合和后端只读样本不作为浏览器画面、全部玩家阵容或后续关卡已验收的结论。
+第 551～850 关的奖励记录重复使用 mode 5、chapter 12、mission 1～10，敌方表的小关号却继续递增。旧 ChapterSysCache 按三个字段筛选。新版保留原关联，在目录标记 enemyMappingPending，构建敌方时提示映射待确认。三字段反查得到多个全局关卡时也会拒绝。依赖扫描方式及前 20 关当时的结果见[原始报告](validation/main-chapter-dependencies-20261117-stage20.json)，当前开放依据和后段待决事项见[主线剩余缺口](restructuring-plan.md#主线剩余缺口)。
 
 HeroSkillPanelRules按旧ClientBuffHandler统一识别type2/3/5/8/11纯表现，并通用接入严格空type1：服务端原动画、资源、声音为空且无震屏/遮罩，必中并无下游动作；非空type1及未知分支仍拒绝。不按英雄或关卡特许，也不让表现重复扣血。BattleAttackUtils恢复旧actions覆盖的近身/施法者/目标拆分，实际资源仍由原池按节点拥有，四套原帧的定向修正保留UUID和画布，Creator裁剪meta按正确像素重新导入。第4关只读动作、回合持续伤害与统计证据见[本批记录](validation/chapter-stage4-review-20261117.json)，不提高默认开放范围。
 
@@ -178,7 +178,7 @@ GameConfig是配置文件和类型化主键索引的唯一所有者。简单字�
 
 EquipmentDetailSource六表传参已删除；EquipmentDetailUtils.read(itemId)直接查询GameConfig并保留旧评分取整、属性顺序和套装显示口径。ItemDetailUtils.read(item, context)直接按语言主键取文字，仍负责mode、上下文、富文本及按钮条件。非主键ScoreCount.mapping、套装type/num组合和未类型化mainlevel.level直接在同一只读行中匹配，不误用主键或新建页面Map。UI筛选结果、库存差异、布阵草稿及战斗单位/血量/Buff、表现资源映射属于运行状态，不按“存在Map”机械删除。
 
-资源统一到assets/bundles，当前16包、36份Prefab、172份脚本；共享目录49份JSON，前批新增attrshow，类型规范20表，Maven共享32表。此前清理90个未实现资源包和64份旧Prefab，并从battle拆出effects；11-14新增精灵专用只读View、两份独立GM窗口和普通装备详情，当前21个独立View。本批只增加ItemDetailUtils、调整既有道具/碎片View与Prefab，37份Prefab/Scene共86处绑定，未新增Bundle或玩法写入口。配置闭包从源码、规则与检查入口求得；三份主城投影差异见[输入说明](../config/client-maincity/README.md)，旧迁移见[清理记录](validation/current-resource-scope-cleanup-20261111.json)与[effects增量](validation/battle-effects-move-20261113.json)。bootstrap本地、其余15包远程；这些数量不等于已验证的新App/CDN下载体积。
+启动资源在本地 bootstrap 包，游戏资源按各子目录的 Bundle 声明加载。核对当前资源归属、脚本绑定及配置包内容时，分别运行统一检查入口的 `current-resource-scope`、`bindings`、`config-package-generated`。主城三份配置的来源见[输入说明](../config/client-maincity/README.md)，旧目录迁移记录见[资源清理](validation/current-resource-scope-cleanup-20261111.json)与[战斗特效迁移](validation/battle-effects-move-20261113.json)。
 
 bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bundles/module收纳页面模块及common、bootstrap。两个父目录不是Bundle；既有包名、UUID、优先级和远程规则保持，effects原目录UUID保留并新增远程Bundle声明。物理源地址由View定义，运行时仍用“包名/包内路径”；特效地址现为effects/技能目录，旧battle/effects运行地址不保留别名。自动图集和原图继续保留，目录树与人工步骤见[资源维护](staged-resource-loading.md)。
 
@@ -190,7 +190,9 @@ bundles/resources收纳audio/chapter/config/effects/font/icons/maps/spine；bund
 |---|---|---|
 | features/account | AccountController 管理认证会话，AccountOperations 通过现有连接发送当前账号的请求，RoleController 提交唯一角色资料 | 正式渠道登录待接入 |
 | features/bag | BagController 处理库存协议和精英碎片合成。BagModel 持有库存。BagInfoView、EquipmentInfoView、SpiritInfoView 按类型显示详情 | 普通道具使用、分解、图鉴及精灵养成待恢复 |
-| features/hero | HeroRosterController 处理资产快照和普通召唤，HeroRosterModel 持有名册、阵容及免费资格。HeroLevelController 负责普通升级，FormationView 持有草稿，FormationController 确认保存 | 详情可普通升级，技能、四槽和进化状态可查看，穿脱和进阶待恢复 |
+| features/hero | HeroRosterController 收发召唤，HeroRosterModel 保存名册、阵容及佩戴状态。英雄详情按操作调用对应培养 Controller。FormationView 持有草稿，FormationController 收发保存 | 穿脱、升星、宝石、圣器与神装的具体入口见[英雄维护表](hero-lineup-contract.md#当前代码与开放范围) |
+| features/market | MarketController 查询货架、发送购买和刷新请求。MarketView 展示服务端价格、库存及刷新费用 | 主城普通市场与英雄模块的神装商店使用各自的货架和规则 |
+| features/dungeon | DungeonHallView 显示副本入口与产物。DailyDungeonController 查询资格，挑战和扫荡共用 `dungeon.gold.challenge`，由同一回包交付结算 | 当前可玩的关卡与解锁条件见[进度](development-progress.md) |
 | features/battle | MainChapterSession 装配主线，MainChapterController 处理挑战、结算、战报及各类领取。IdleClaimBinding 处理宝箱点击与确认。MainChapterModel 保存权威快照和本场结算进度 | 开发试战由 BattlePreviewController 发送和接收，只读播放 |
 | features/reward | RewardController 接收发奖推送并提交 RewardModel。RewardBinding 读取展示队列并打开通用弹窗或飘字 | 奖励回包供展示，角色资产由服务端快照提交 |
 | features/home、features/city | HomePageBinding 与 RemakeHomeView 绑定根页；city 提供地图、顶底栏与导航显示 | 地图中旧入口和资源不代表对应玩法已恢复 |
@@ -267,9 +269,9 @@ SessionSnapshotService 在数据库角色锁内读取完整钱包、背包和版
 
 ## 配置、资源与静态布局
 
-配置以生成GConfig与唯一GameConfig查询。49份源JSON供人工与导出工具维护，当前Language/LoadingTips按LoadingPlan.login独立准备，其余47份自动生成ZIP格式的game-config.bin。RemakeConfigUtils在登录后下载、校验启动同版、逐表解析，由GameConfig原子安装，类型索引和按路径读取共用文件引用。页面不再加载JSON或维护配置组；临时压缩资源持有归还现有资源池，配置对象应用期驻留，不随界面缓存到期删除。生成、版本和构建前检查见[配置管线](config-pipeline.md)。配置包接入批次的真实去重和解压运行已有[发布证据](validation/config-package-release-review-20261114.json)；本轮Catalog/查询整理是之后的源码，不将旧20:14包冒充当前版本，新增预览与发布结果依[开发进度](development-progress.md)分开记录。
+启动表由 LoadingPlan.login 指定，当前为 Language 和 LoadingTips。其余共享配置由工具打成一个 game-config.bin，登录后由 RemakeConfigUtils 下载、校验和解析，最后一次性安装到 GameConfig。所有页面共享索引和配置对象。配置包字节在安装后释放，配置对象由应用持有。生成与检查命令见[配置管线](config-pipeline.md)，最初接入时的下载与解压数据见[历史发布验收](validation/config-package-release-review-20261114.json)。
 
-包内各表只对应一个bin正文请求；解析、校验和索引初始化仍逐表计真实完成量。玩家文案不再显示9/47等容易被误认为文件下载的数字，而显示下载配置包、解析配置包、初始化配置；进度不按时间模拟。发布入口统一到scripts/build-remake-h5.bat及其PowerShell/JSON选项，隔离工程复制同一扩展和工具；config-package-artifact-v1 v1.8.1在before核验源，在after对全部Bundle检查两份启动JSON、唯一bin、散表排除及解码模块静态登记。该机制和自动检查不等于实际发布运行通过，真实结果由本批最终证据记录。
+进度条按包内实际解析、校验和索引工作量更新。H5 构建从 [build-remake-h5.bat](../scripts/build-remake-h5.bat) 启动。构建前核验配置源，构建后检查各 Bundle 中的启动 JSON、唯一的配置包、散表排除和解码器登记。
 
 资源通过统一目录与作用域管理；界面布局以Prefab和SuperScroll Inspector为准，不用字符串散落或运行时兜底掩盖缺资源。
 

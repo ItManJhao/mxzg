@@ -44,6 +44,8 @@
 | hero.jewel.change | 请求/响应 | 以操作枚举区分单槽、批量和合成，提交所见槽位与原项或目标配方；回执保留本次选择，统一快照携带英雄的已镶宝石 |
 | hero.god-equipment.change | 请求/响应 | 真实神装实例和英雄部位；替换时带当前槽内实例，卸下仅传当前占槽实例 |
 | hero.god-equipment.draw | 请求/响应 | 单次或十次与玩家确认的钻石上限。神装实例、宝箱进度和普通奖励由同版本快照交付 |
+| hero.god-equipment.shop.buy | 请求/响应 | 商品编号、份数和当前上海日周期的结束时间。服务端复核价格、限购和门槛，扣碎片并发放石头或真实神装实例。购买次数随 `godEquipment.shop` 同步 |
+| hero.artifact.change | 请求/响应 | 英雄部位、动作及必要的圣器实例或升星素材。激活槽位、持有与装备关系随 `artifacts` 同步。相同请求编号只返原结果 |
 | hero.equipment.change | 请求/响应 | `requestId`、`heroId` 和 `action`。单穿使用背包堆叠字符串 ID。单脱使用槽位、穿戴实例 ID 和操作时的原配置 ID。批量穿脱由服务端按当前状态执行 |
 | market.list | 请求/响应 | 空请求获取本角色的普通市场货架、刷新次数和成交价 |
 | market.buy | 请求/响应 | `requestId`、`shelfVersion`、`productId` 和 `count`；服务端按当前货架结算 |

@@ -130,7 +130,20 @@ export class MarketView extends BaseView<void> {
             UIManager.instance.toast(`${BagItemCatalog.face(offer.costItemId, 0).title}不足`);
             return;
         }
-        void UIManager.instance.openChild(this, MarketBuyView, { offer, shelfVersion }).catch(() => {
+        void UIManager.instance.openChild(this, MarketBuyView, {
+            offer,
+            refreshOn: ["market.updated"],
+            read: () => {
+                const state = MarketModel.instance.snapshot;
+                const current = state?.offers.find(row => row.productId === offer.productId);
+                return state?.shelfVersion === shelfVersion && current ? {
+                    offer: current,
+                    maximum: MarketController.instance.maximum(current),
+                    busy: MarketController.instance.busy,
+                } : null;
+            },
+            buy: quantity => MarketController.instance.buy(shelfVersion, offer.productId, quantity),
+        }).catch(() => {
             // 页面管理器统一报告打开失败，随父页取消时不弹提示。
         });
     }

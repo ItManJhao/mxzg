@@ -30,23 +30,35 @@ public class MainFormationStateService {
     private final AssetSyncService sync;
     /** 注入已有数据入口，不保存角色缓存。 */
     public MainFormationStateService(JdbcTemplate jdbc,RoleRepository roles,MainFormationRules rules,LineupRepository lineups,AssetSyncService sync){this.jdbc=jdbc;this.roles=roles;this.rules=rules;this.lineups=lineups;this.sync=sync;}
-    /** 必须在业务事务中调用；按角色锁更新新增解锁，历史true和已解锁ID不删除。 */
-    @Transactional(propagation=Propagation.MANDATORY)
-    public State refresh(String role){
-        sync.requireTransaction();roles.lock(role);
-        var previous=current(role);
-        var owned=jdbc.query("SELECT id,template_id,hero_level,star FROM game_hero WHERE role_id=?",(row,n)->new MainFormationRules.Hero(row.getString(1),row.getInt(2),row.getInt(3),row.getInt(4)),role);
-        var unlocked=rules.unlock(new MainFormationRules.Unlocks(new HashSet<>(previous.unlockedIds()),previous.assistanceUnlocked()),owned);
-        boolean changed=false;
-        for(int id:unlocked.formations())if(!previous.unlockedIds().contains(id)){
-            jdbc.update("INSERT INTO game_formation_unlock(role_id,formation_id) VALUES (?,?)",role,id);changed=true;
+    /** 在业务事务的角色锁内保存新解锁的阵型和助战，只有发生写入才递增版本并重读。 */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public State refresh(String role) {
+        sync.requireTransaction();
+        roles.lock(role);
+        var previous = current(role);
+        var owned = jdbc.query("SELECT id,template_id,hero_level,star FROM game_hero WHERE role_id=?",
+            (row, index) -> new MainFormationRules.Hero(row.getString(1), row.getInt(2),
+                row.getInt(3), row.getInt(4)), role);
+        var unlocked = rules.unlock(new MainFormationRules.Unlocks(
+            new HashSet<>(previous.unlockedIds()), previous.assistanceUnlocked()), owned);
+        boolean changed = false;
+        for (int id : unlocked.formations()) {
+            if (!previous.unlockedIds().contains(id)) {
+                jdbc.update("INSERT INTO game_formation_unlock(role_id,formation_id) VALUES (?,?)", role, id);
+                changed = true;
+            }
         }
-        if(unlocked.assistance()!=previous.assistanceUnlocked()){
-            jdbc.update("UPDATE game_role SET assistance_unlocked=TRUE WHERE id=?",role);changed=true;
+        if (unlocked.assistance() != previous.assistanceUnlocked()) {
+            jdbc.update("UPDATE game_role SET assistance_unlocked=TRUE WHERE id=?", role);
+            changed = true;
         }
-        if(changed)sync.changed(role);
+        if (!changed) {
+            return previous;
+        }
+        sync.changed(role);
         return current(role);
     }
+
     /** 读取持久状态；基础阵型1隐式永久解锁，异常选中阵型拒绝，不重置玩家选择。 */
     public State current(String role){
         var unlocked=new ArrayList<>(jdbc.query("SELECT formation_id FROM game_formation_unlock WHERE role_id=? ORDER BY formation_id",(row,n)->row.getInt(1),role));unlocked.add(0,1);

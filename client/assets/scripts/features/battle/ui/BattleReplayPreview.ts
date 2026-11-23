@@ -1,5 +1,5 @@
 /** 主线及独立战报播放器：复用BattlePage及真实资源，开始骨骼到70%时并行出场、出场到60%时渐入模型；只展示战报，不请求奖励或修改资产。 */
-import { AudioClip,AudioSource,Button,Color,director,Director,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
+import { AudioClip,AudioSource,Button,Color,director,Director,Label,Material,Node,sp,Sprite,SpriteFrame,Tween,tween,UIOpacity,UITransform,Vec3 } from "cc";
 import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
 import { GameConfig } from "../../../config/GameConfig";
@@ -18,11 +18,25 @@ import { BattleNumberPaintUtils } from "./BattleNumberPaintUtils";
 import { BattlePageUtils } from "./BattlePageUtils";
 import { ChapterEndView } from "./ChapterEndView";
 import { MainChapterIdleDisplay } from "./MainChapterIdleDisplay";
-import { BattlePresentViewUtils } from "./BattlePresentViewUtils";
+import { BattleBuffTipStyle, BattlePresentViewUtils } from "./BattlePresentViewUtils";
 import { BattleSpineService, SpineActor } from "./BattleSpineService";
 
-/** 同源配置行，只消费已核对动作、伤害音效及持续控制/图标字段。 */
-interface BuffRow { idx: number; type: number; ani_base: string; file: string; sound: string; buff_icon: number; delay: number; shake: number; dimly: number; }
+/** 同源配置行，只消费已核对的动作、音效、持续状态及飘字字段。 */
+interface BuffRow {
+    idx: number;
+    type: number;
+    ani_base: string;
+    file: string;
+    sound: string;
+    buff_icon: number;
+    /** 旧状态飘字文案键，0表示该状态没有名称飘字。 */
+    buff_name_lang: number;
+    /** 旧状态飘字颜色，RGB对象的JSON文本。 */
+    buff_name_color: string;
+    delay: number;
+    shake: number;
+    dimly: number;
+}
 
 /** 技能台展示上下文：主动按真实事件定位，被动保留完整触发过程。 */
 export interface SkillReplayFocus {
@@ -175,8 +189,8 @@ export class BattleReplayPreview {
         const effects = new Set<Node>();
         /** 单位ID:状态类型到共享持续帧节点；同类型最后一份实例解除才移除，关场清空。 */
         const roundEffects = new Map<string, Node>();
-        /** 本场实际需要的眩晕/沉默/格挡帧，类型作键，资源仍归原节点作用域。 */
-        const roundFrames = new Map<1001 | 1005 | 234, SpriteFrame[]>();
+        /** 本场实际需要的持续状态帧，类型作键，资源仍归原节点作用域。 */
+        const roundFrames = new Map<number, SpriteFrame[]>();
         /** 冰冻1004/石化1006材质只归本战场持有，退出时释放，不修改共享骨架。 */
         const controlMaterials = new Map<number, Material>();
         /** 受shader控制的单位到原材质与当前控制类型；解除最后控制恢复原材质和动画。 */
@@ -289,12 +303,18 @@ export class BattleReplayPreview {
             fill.active = value > 0;
             fill.getComponent(Sprite)!.fillRange = Math.max(0, Math.min(1, value / max));
         };
-        /** 按完整实例维护状态；图标过滤icon0，循环按类型共享，shader按旧新增/解除顺序选取。 */
+        /** 按完整实例维护状态；同配置共用一格并显示层数，循环装饰按类型共享，shader沿旧增减顺序选取。 */
         const paintBuffs = (id: number, change?: { kind: "upsert" | "remove"; type: number }) => {
             const row = slots.get(id)!.getChildByPath("HeadAnchor/BuffRow");
             if (!row) throw new Error("战斗Buff挂点缺失");
             const values = Array.from(activeBuffs.get(id)!.values());
-            const visible = values.filter(configId => !!selected.get(configId)?.buff_icon);
+            const counts = new Map<number, number>();
+            for (const configId of values) {
+                if (selected.get(configId)?.buff_icon) {
+                    counts.set(configId, (counts.get(configId) ?? 0) + 1);
+                }
+            }
+            const visible = Array.from(counts);
             row.active = visible.length > 0;
             const skeleton = actors.get(id)?.node.getComponent(sp.Skeleton);
             const shaderTypes = values.map(configId => selected.get(configId)?.type)
@@ -316,7 +336,9 @@ export class BattleReplayPreview {
                 controlledActors.delete(id);
                 actors.get(id)!.play("stand");
             }
-            for (const type of [1001, 1005, 234] as const) {
+            for (const type of BattleAttackUtils.roundEffectTypes) {
+                // 旧挂机省略回合盾罩，普通及独立战报保留真实护盾表现。
+                if (idleEncounter && type === 1008) continue;
                 const active = values.some(configId => selected.get(configId)?.type === type);
                 const key = id + ":" + type;
                 const previous = roundEffects.get(key);
@@ -328,7 +350,7 @@ export class BattleReplayPreview {
                 } else if (active && !previous) {
                     const definition = BattleAttackUtils.roundEffect(type);
                     const sequence = roundFrames.get(type)!;
-                    const node = new Node(type === 1005 ? "DizzyEffect" : type === 1001 ? "SilenceEffect" : "ParryEffect");
+                    const node = new Node(definition.nodeName);
                     node.layer = row.layer;
                     node.parent = slots.get(id)!;
                     // 旧NODE_SIZE.height=120，节点缩放0.65，顶部额外50*0.65。
@@ -353,16 +375,44 @@ export class BattleReplayPreview {
                 if (!chip) throw new Error("战斗Buff槽缺失");
                 chip.active = i < visible.length;
                 if (i < visible.length) {
+                    const [configId, count] = visible[i];
                     const sprite = chip.getComponent(Sprite);
                     if (!sprite) throw new Error("战斗Buff槽缺少Sprite");
                     sprite.color = Color.WHITE;
-                    sprite.spriteFrame = icons.get(visible[i])!;
+                    sprite.spriteFrame = icons.get(configId)!;
+                    let countLabel = chip.getChildByName("BuffLayerCount")?.getComponent(Label);
+                    if (!countLabel) {
+                        // 复用预制体的图标槽位，层数随实时实例变化，退出时随槽销毁。
+                        const countNode = new Node("BuffLayerCount");
+                        countNode.layer = chip.layer;
+                        countNode.parent = chip;
+                        countNode.setPosition(0, chip.getComponent(UITransform)!.height / 2, 0);
+                        countLabel = countNode.addComponent(Label);
+                        countLabel.horizontalAlign = 1;
+                        countLabel.verticalAlign = 1;
+                        countLabel.fontSize = 14;
+                        countLabel.lineHeight = 16;
+                        countLabel.enableOutline = true;
+                        countLabel.outlineWidth = 2;
+                    }
+                    countLabel.string = String(count);
                 }
             }
         };
         const assets = ResourceAssetsUtils.forNode(shell.root);
         try {
             shell.present.numberFonts = await BattleNumberPaintUtils.preload(shell.root);
+            /** 只为有真实具名状态的普通战报加载状态飘字资源。 */
+            let buffTipStyle: BattleBuffTipStyle | undefined;
+            if (!idleEncounter && steps.some(step => step.kind === "buff.upsert" && selected.get(step.configId)!.buff_name_lang > 0)) {
+                const system = GameConfig.instance.getFileByPath("config/system") as
+                    { rows: readonly { key: string; value: number }[] };
+                const [background, font] = await Promise.all([
+                    assets.loadPath("battle/ui/hero_spr-bg-1/spriteFrame", "SpriteFrame"),
+                    assets.loadPath("font/CloudYuanCuGBK", "TTFFont"),
+                ]);
+                buffTipStyle = { background, font, seconds: system.rows.find(row => row.key === "hero_buff_tip_last")?.value ?? 1 };
+            }
             for (const [type, path] of [[1004, "effects/legacy-frozen"], [1006, "effects/legacy-stone"]] as const) {
                 if (!Array.from(selected.values()).some(row => row.type === type)) continue;
                 const effect = await assets.loadPath(path, "EffectAsset");
@@ -374,7 +424,8 @@ export class BattleReplayPreview {
                     UiKitUtils.setText(shell.root.getChildByPath("LayerHud/MatchInfo/EnemyNameLabel")!, "独立冰冻验收");
                 }
             }
-            for (const type of [1001, 1005, 234] as const) {
+            for (const type of BattleAttackUtils.roundEffectTypes) {
+                if (idleEncounter && type === 1008) continue;
                 if (!Array.from(selected.values()).some(row => row.type === type)) continue;
                 roundFrames.set(type, await Promise.all(BattleAttackUtils.roundEffect(type).paths.map(path =>
                     assets.loadPath(path, "SpriteFrame"))));
@@ -667,20 +718,17 @@ export class BattleReplayPreview {
             player = new BattleReplayPlayer({
                 stop,
                 restore,
-                /** 末次数字随倍速播完再进入结算，关场销毁节点会立即解除等待。 */
+                /** 剩余伤害数字和状态飘字播完再进入结算，关场销毁节点会立即解除等待。 */
                 async finish() {
-                    const children = shell.present.floatRoot.children;
-                    if (children.length > 1) {
-                        const last = children[children.length - 1];
-                        await new Promise<void>(resolve => last.once(Node.EventType.NODE_DESTROYED, () => resolve()));
-                    }
+                    await Promise.all(shell.present.floatRoot.children.filter(child => effects.has(child))
+                        .map(child => new Promise<void>(resolve => child.once(Node.EventType.NODE_DESTROYED, () => resolve()))));
                 },
                 // 旧格挡盾189在damage前耗尽；图像等这次命中完成才撤，不泛化其他trigger-limit。
                 waitForFollowingHit: step => step.removalReason === "trigger-limit"
                     && selected.get(step.configId)?.type === 234,
                 /**
                  * 播放真实步骤或旧覆盖子动作；type8按战场比例往返，空动作仅等待配置延迟。
-                 * 伤害、治疗和复活各自使用报告值生成独立数字，血条仍用实际血量。
+                 * 伤害、治疗和复活各自使用报告值生成独立数字，血条仍用实际血量；具名状态采用旧版飘字。
                  * 独立帧及投射不延长角色动作，仍归本战场持有；关闭后丢弃迟到回调，活跃帧失败统一取消。
                  */
                 play: async function play(step, targets = [step]) {
@@ -899,13 +947,21 @@ export class BattleReplayPreview {
                         const active = activeBuffs.get(step.targetId)!;
                         if (step.kind === "buff.upsert") active.set(step.buffInstanceId!, step.configId);
                         else active.delete(step.buffInstanceId!);
-                        const type = selected.get(step.configId)?.type;
-                        paintBuffs(step.targetId, { kind: step.kind === "buff.upsert" ? "upsert" : "remove", type: type! });
-                        const name = type === 1203 ? "中毒" : type === 1205 ? "流血"
+                        const row = selected.get(step.configId)!;
+                        const type = row.type;
+                        paintBuffs(step.targetId, { kind: step.kind === "buff.upsert" ? "upsert" : "remove", type });
+                        const configuredName = row.buff_name_lang > 0
+                            ? GameConfig.instance.getConfig(GConfig.Language, row.buff_name_lang)?.value : undefined;
+                        if (buffTipStyle && configuredName && step.kind === "buff.upsert") {
+                            const { R = 255, G = 253, B = 178 } = JSON.parse(row.buff_name_color || "{}");
+                            BattlePresentViewUtils.showBuffTip(shell.present, slots.get(step.targetId)!, configuredName,
+                                new Color(R, G, B), buffTipStyle, playbackScale, effects);
+                        }
+                        const name = configuredName ?? (type === 1203 ? "中毒" : type === 1205 ? "流血"
                             : type === 1004 ? "冰冻" : type === 1005 ? "眩晕"
                             : type === 1006 ? "石化" : type === 1001 ? "沉默" : type === 1014 ? "深睡" : type === 234 ? "格挡盾"
                             : step.configId >= 2233301 && step.configId <= 2233303 ? "降攻"
-                            : step.configId >= 2231201 && step.configId <= 2231203 ? "降护甲" : "状态";
+                            : step.configId >= 2231201 && step.configId <= 2231203 ? "降护甲" : "状态");
                         record("单位" + step.targetId + " " + name + (step.kind === "buff.remove" ? "解除" : "生效"));
                         GameLog.shared.classified("MODULE", "info", "BattleReplayPreview", "buff " + step.kind + " config=" + step.configId + " round=" + step.round + " target=" + step.targetId + " instance=" + step.buffInstanceId + " visible=" + active.size);
                     }

@@ -70,8 +70,8 @@ export class HeroStarUtils {
         return typeof source === "string" && source ? JSON.parse(source) as RawStarMaterial[] : [];
     }
 
-    /** 获取目标下一星的真实材料行与共同花费，没有后续配方则返回 null。 */
-    public static recipe(hero: OwnedHero, config = GameConfig.instance): HeroStarRecipe | null {
+    /** 按当前实例或图鉴中的模板和星级读取真实配方，没有后续配方则返回 null。 */
+    public static recipe(hero: Pick<OwnedHero, "templateId" | "star">, config = GameConfig.instance): HeroStarRecipe | null {
         const template = config.getConfig(GConfig.HeroType, hero.templateId);
         const toStar = hero.star + 1;
         const materials = this.materialsAt(template, toStar);
@@ -114,8 +114,9 @@ export class HeroStarUtils {
         };
     }
 
-    /** 仅展示满足当前配方行且未锁定、未上阵或未被其他行使用的实际英雄。 */
-    public static candidates(target: OwnedHero, row: HeroStarMaterialRow, owned: readonly OwnedHero[],
+    /** 按模板和原配方筛选实际素材，主英雄未选时 id 可省略，已选时始终排除本体。 */
+    public static candidates(target: Pick<OwnedHero, "templateId"> & { readonly id?: string },
+        row: HeroStarMaterialRow, owned: readonly OwnedHero[],
         selectedHeroIds: Iterable<string>, config = GameConfig.instance): readonly OwnedHero[] {
         const selected = new Set(selectedHeroIds);
         const type = row.templateId === -1 ? target.templateId : row.templateId;

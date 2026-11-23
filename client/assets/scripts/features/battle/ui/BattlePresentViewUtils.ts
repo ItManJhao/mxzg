@@ -1,8 +1,8 @@
 /**
- * 绑定 BattlePage 的技能横幅和数字模板，在每次真实血量变化时播放独立的飘字。
- * 临时数字随动画结束移除，也由战场现有特效集合在停止播放时清理。
+ * 绑定 BattlePage 的技能横幅和飘字模板，显示真实血量变化与已生效的状态名称。
+ * 临时飘字随动画结束移除，也由战场现有特效集合在停止播放时清理。
  */
-import { BitmapFont, instantiate, Label, Node, tween, UIOpacity, UITransform } from "cc";
+import { BitmapFont, Color, instantiate, Label, Node, Sprite, SpriteFrame, TTFFont, tween, UIOpacity, UITransform } from "cc";
 import { PrefabLoader } from "../../../framework/assets/PrefabLoader";
 import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { BattleNumberKind } from "../utils/BattleNumberUtils";
@@ -26,7 +26,17 @@ export interface BattlePresentMount {
     skillLabel: Node;
 }
 
-/** 战斗显示工具，绑定预制体静态挂点并播放临时数字。 */
+/** 已预载的旧状态飘字资源；整场共用，离场由战场资源域释放。 */
+export interface BattleBuffTipStyle {
+    /** 旧战斗的状态名称底板。 */
+    readonly background: SpriteFrame;
+    /** 旧状态飘字的中文字体。 */
+    readonly font: TTFFont;
+    /** 从游戏配置取得的一次动效时长，单位为战斗秒。 */
+    readonly seconds: number;
+}
+
+/** 战斗显示工具，绑定预制体静态挂点并播放临时飘字。 */
 export class BattlePresentViewUtils {
     /** 只提供静态展示入口。 */
     private constructor() {}
@@ -86,6 +96,62 @@ export class BattlePresentViewUtils {
                 node.setPosition(x + frame.x, y + frame.y, 0);
                 node.setScale(frame.scale, frame.scale, 1);
                 opacity.opacity = frame.opacity;
+            },
+        }).call(() => {
+            effects.delete(node);
+            node.destroy();
+        }).start();
+    }
+
+    /**
+     * 从命中单位中部升起状态名称，沿旧版弹出、停留和淡出区间播放。
+     * @param style 战场预载的底板、字体和持续秒数。
+     * @param speed 当前战斗播放倍率，临时节点和伤害数字共同由战场清理。
+     */
+    public static showBuffTip(
+        mount: BattlePresentMount,
+        target: Node,
+        text: string,
+        color: Color,
+        style: BattleBuffTipStyle,
+        speed: number,
+        effects: Set<Node>,
+    ): void {
+        const start = mount.floatRoot.getComponent(UITransform)!.convertToNodeSpaceAR(target.worldPosition);
+        const node = new Node("BattleBuffTip");
+        node.layer = mount.floatRoot.layer;
+        node.parent = mount.floatRoot;
+        node.setPosition(start.x, start.y + 39, 0);
+        node.setScale(0.195, 0.195, 1);
+        node.addComponent(UITransform).setContentSize(300, 60);
+        const sprite = node.addComponent(Sprite);
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        sprite.spriteFrame = style.background;
+        const opacity = node.addComponent(UIOpacity);
+        opacity.opacity = 0;
+
+        const labelNode = new Node("BuffName");
+        labelNode.layer = node.layer;
+        labelNode.parent = node;
+        const label = labelNode.addComponent(Label);
+        label.horizontalAlign = 1;
+        label.verticalAlign = 1;
+        label.font = style.font;
+        label.fontSize = 48;
+        label.lineHeight = 60;
+        label.color = color;
+        label.string = text;
+        effects.add(node);
+
+        tween(node).to(style.seconds / speed, {}, {
+            onUpdate: (_target, ratio = 0) => {
+                const first = Math.min(1, ratio / 0.15);
+                const rest = Math.max(0, (ratio - 0.15) / 0.85);
+                // 旧状态标签和底板一起缩放、淡出，目标节点的0.65缩放计入画面位移。
+                const scale = (0.3 + 0.6 * first - 0.3 * rest) * 0.65;
+                node.setPosition(start.x, start.y + 39 + (60 * first + 120 * rest) * 0.65, 0);
+                node.setScale(scale, scale, 1);
+                opacity.opacity = Math.round(255 * Math.min(first, 1.5 - 1.5 * rest));
             },
         }).call(() => {
             effects.delete(node);

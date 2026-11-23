@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from export_gameconfig import DEFAULT_SRC, ROOT, loose_rows
+from export_gameconfig import DEFAULT_SRC, ROOT, json_content, loose_rows
 
 
 OUTPUTS = (
@@ -85,12 +85,12 @@ def project(source):
 
 
 def main():
-    """生成两端配置；默认核对现有文件，可指定正式服策划目录进行一致性检查。"""
+    """按宝石既有缩进格式核对两端配置；可指定策划目录或用 --write 重新生成。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--write", action="store_true")
     parser.add_argument("--src", type=Path, default=DEFAULT_SRC)
     args = parser.parse_args()
-    content = json.dumps(project(args.src), ensure_ascii=False, indent=2) + "\n"
+    content = json_content(project(args.src), indent=2)
     for output in OUTPUTS:
         if args.write:
             output.write_text(content, encoding="utf-8", newline="\n")

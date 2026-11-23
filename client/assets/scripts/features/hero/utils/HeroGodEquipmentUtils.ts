@@ -38,6 +38,13 @@ export interface HeroGodEquipmentState {
     readonly items: readonly GodEquipmentItem[];
     readonly drawCount: number;
     readonly freeDraw: boolean;
+    readonly shop?: GodEquipmentShopState;
+}
+
+/** 同一神装快照中的日周期和已购买数量。 */
+export interface GodEquipmentShopState {
+    readonly resetAt: number;
+    readonly purchases: readonly { readonly productId: number; readonly purchased: number }[];
 }
 
 /** 点击前展示的券或钻石用量，最终扣费由服务端确定。 */
@@ -88,7 +95,28 @@ export class HeroGodEquipmentUtils {
             drawCount: this.number(state.drawCount, 0),
             freeDraw: state.freeDraw,
             items: Object.freeze(items),
+            shop: state.shop === undefined ? undefined : this.readShop(state.shop),
         });
+    }
+
+    /** 商店周期和已购买次数须完整有效，重复商品不能覆盖。 */
+    private static readShop(value: unknown): GodEquipmentShopState {
+        const raw = this.object(value);
+        if (!Array.isArray(raw.purchases)) {
+            throw new Error("神装商店购买次数无效");
+        }
+        const seen = new Set<number>();
+        const purchases = raw.purchases.map(value => {
+            const row = this.object(value);
+            const productId = this.number(row.productId, 1);
+            const purchased = this.number(row.purchased, 1);
+            if (seen.has(productId)) {
+                throw new Error("神装商店快照商品重复：" + productId);
+            }
+            seen.add(productId);
+            return Object.freeze({ productId, purchased });
+        });
+        return Object.freeze({ resetAt: this.number(raw.resetAt, 1), purchases: Object.freeze(purchases) });
     }
 
     /** 读取本英雄在当前真实神装槽位中已穿的物品。 */
@@ -136,8 +164,8 @@ export class HeroGodEquipmentUtils {
             : { ticket: ticket.item_type, quantity: 0, diamonds: diamonds.item_num };
     }
 
-    /** 生成旧版语言属性行，来源为服务端实例而不是玩家可控数据。 */
-    public static attributeText(item: GodEquipmentItem, config = GameConfig.instance): string {
+    /** 生成旧版语言属性行，供真实实例、图鉴模板和套装展示。 */
+    public static attributeText(item: Pick<GodEquipmentItem, "attributes">, config = GameConfig.instance): string {
         return item.attributes.map(attribute => {
             const name = config.getConfig(GConfig.Language, 2150000 + attribute.type)?.value ?? String(attribute.type);
             const template = config.getConfig(GConfig.Language, 2160000 + attribute.type)?.value;

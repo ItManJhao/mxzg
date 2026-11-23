@@ -30,6 +30,44 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HeroBattleOpeningPassiveTest {
+    /** 两套圣器只在出手后按旧20%判定，命中自身并在原两回合期限结束移除。 */
+    @ParameterizedTest
+    @CsvSource({"500010001, 12001001, 12001101, 201", "500020001, 12002001, 12002101, 291"})
+    void artifactSetTriggersOnlyAfterOwnAttackAtConfiguredChance(int skill, int listener, int applied, int attribute) {
+        var mapper = new ObjectMapper();
+        var rules = new HeroSkillPanelRules(mapper);
+        var attacks = rules.battleSchedule(List.of(new HeroEvolutionRules.Skill(103040050, 0),
+                new HeroEvolutionRules.Skill(skill, 1)));
+        var engine = new HeroBattleHealingExecutor(rules, List.of(
+                new State(new Actor(1, attacks), 1, 2, 10000, 10000, 1000, 0, 0, 0),
+                new State(new Actor(2, List.of()), 2, 2, 10000, 10000, 0, 0, 0, 0)));
+        engine.bindCombatData(1, 10304005, Map.of(220, 1000L, 150, 500L));
+        engine.bindCombatData(2, 10304005, Map.of(150, 500L));
+        engine.initializePassive(1, skill, 1);
+        assertEquals(List.of(listener), engine.buffs(1).stream().map(entry -> entry.spec().id()).toList());
+        assertEquals(attribute, rules.controlAttribute(applied).attribute());
+        assertEquals(800, rules.controlAttribute(applied).amount());
+        assertEquals(2, rules.controlAttribute(applied).duration());
+
+        var elements = new HeroBattleElementRules(mapper);
+        var order = List.of(1, 2);
+        var chances = new ArrayList<Double>();
+        engine.beginRound(1, order, elements, chance -> true);
+        engine.act(1, 2, 100, elements, chance -> {
+            chances.add(chance);
+            return chance != 0.2D;
+        });
+        assertTrue(chances.contains(0.2D));
+        assertFalse(engine.buffs(1).stream().anyMatch(entry -> entry.spec().id() == applied));
+        engine.act(1, 2, 100, elements, chance -> true);
+        assertTrue(engine.buffs(1).stream().anyMatch(entry -> entry.spec().id() == applied));
+        assertTrue(engine.buffs(2).isEmpty());
+        engine.beginRound(2, order, elements, chance -> true);
+        assertTrue(engine.buffs(1).stream().anyMatch(entry -> entry.spec().id() == applied));
+        engine.beginRound(3, order, elements, chance -> true);
+        assertFalse(engine.buffs(1).stream().anyMatch(entry -> entry.spec().id() == applied));
+    }
+
     /** 相同单位分别站在第2格和第3格，第3格才获得暴击；负生命倍率不重算已初始化生命。 */
     @Test
     void openingPositionKeepsFrozenHpAndAddsCriticalOnlyToMatchingSeat() {

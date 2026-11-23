@@ -20,6 +20,7 @@ import { DailyDungeonController } from "../../features/dungeon/DailyDungeonContr
 import { DailyDungeonModel } from "../../features/dungeon/DailyDungeonModel";
 import { FirstSummonData } from "../../features/hero/data/FirstSummonData";
 import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
+import { HeroCreationUtils } from "../../features/hero/utils/HeroCreationUtils";
 import { HeroRedDotUtils } from "../../features/hero/utils/HeroRedDotUtils";
 
 export class ApplicationRedDots {
@@ -71,6 +72,9 @@ export class ApplicationRedDots {
         const roster = HeroRosterModel.instance.snapshot;
         const bag = BagModel.instance;
         const hero = HeroRedDotUtils.project(roster, bag, role.gold);
+        const creationGate = GameConfig.instance.getConfig(GConfig.OpenCondition, "main_hero_make");
+        const creationReady = !!creationGate && EntryGateUtils.isEntryOpen(creationGate, role.level, 0)
+            && bag.snapshot.synced && HeroCreationUtils.options(roster.heroes, id => bag.quantity(id)).some(option => option.ready);
         const pieces: Record<string, boolean> = {};
         if (bag.snapshot.synced) {
             for (const item of bag.items) {
@@ -83,6 +87,7 @@ export class ApplicationRedDots {
         EventDispatcher.batchNotifications(() => {
             manager.replaceBranch(GameRedDotKey.HERO_DETAIL, hero.details);
             manager.set(GameRedDotKey.HERO, hero.lineupReady);
+            manager.set(GameRedDotKey.HERO_CREATION, creationReady);
             manager.replaceBranch(GameRedDotKey.BAG_PIECES, pieces);
             this.refreshTimed();
         });

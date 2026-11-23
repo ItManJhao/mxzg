@@ -3334,6 +3334,52 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroArtifactView.prefab",
+    "classes": [
+      "ViewportScale",
+      "HeroArtifactView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "d994129d34a2a850d742d11ecb9cf79876fe1a74f6db03688977cc9f8d97edf9"
+  },
+  {
     "path": "client/assets/bundles/module/hero/prefabs/HeroAttributeRow.prefab",
     "classes": [],
     "root": {
@@ -3452,6 +3498,104 @@
       "scope": "Creator 竖屏实测打开并关闭，列表显示当前服务器的四项已同步数值，攻击与详情一致。",
       "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
     }
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroCreationCellView.prefab",
+    "classes": [
+      "HeroCreationCellView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 0.78,
+        "y": 0.78,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 124,
+        "height": 124
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 1,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "8c3d3559f3a8ef227659d79ab74396e8ae2f800a002ee8f9adb75e504eac237f"
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroCreationView.prefab",
+    "classes": [
+      "HeroCreationView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 1,
+      "Layout": 1,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "1301f52612273d15ba1c5b36e435e980b8a03f0d566a51278fd82b80a82c46a0"
   },
   {
     "path": "client/assets/bundles/module/hero/prefabs/HeroEquipmentPickerRow.prefab",
@@ -3574,6 +3718,314 @@
     }
   },
   {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentCatalogCell.prefab",
+    "classes": [
+      "HeroGodEquipmentCatalogCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 256,
+        "height": 128
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "d319f47377788e8072e229af0dc5b7d7a4b2d1c8efedabc33924d53df0d81e40"
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentCatalogView.prefab",
+    "classes": [
+      "HeroGodEquipmentCatalogView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "5770112d81642285dd9dadb512776808a7667414f34a7bed06771b1fa203d17f"
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentShopCell.prefab",
+    "classes": [
+      "MarketItemCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 176,
+        "height": 222
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "e7605ae25f1590dbf0663acb6d9ac27ec71087b6b3d5b5f38c78834046c45ffc"
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentShopView.prefab",
+    "classes": [
+      "HeroGodEquipmentShopView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 2,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      },
+      {
+        "node": "content",
+        "anchor": [
+          0,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "a165ee7f82b015dbffbdbef9751f5af7a48cef808c53ddb3902e4e4b27918fb7"
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroGodEquipmentTabCell.prefab",
+    "classes": [
+      "HeroGodEquipmentTabCell"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 138,
+        "height": 44
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 0,
+      "Layout": 0,
+      "Mask": 0,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "依赖所属页面检查的组合资源",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "beaf6ffc38f2aa5cda262aaf63dbff81c420692fecd04ca351d15768b84b1154"
+  },
+  {
+    "path": "client/assets/bundles/module/hero/prefabs/HeroGrowthPickerView.prefab",
+    "classes": [
+      "HeroGrowthPickerView"
+    ],
+    "root": {
+      "position": {
+        "__type__": "cc.Vec3",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "__type__": "cc.Vec3",
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "size": {
+        "__type__": "cc.Size",
+        "width": 640,
+        "height": 1280
+      },
+      "anchor": {
+        "__type__": "cc.Vec2",
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "components": {
+      "Widget": 2,
+      "Layout": 0,
+      "Mask": 1,
+      "ScrollView": 0,
+      "Animation": 0,
+      "PrefabInstance": 0
+    },
+    "specialAnchors": [
+      {
+        "node": "Content",
+        "anchor": [
+          0.5,
+          1
+        ]
+      }
+    ],
+    "scrolls": [],
+    "warnings": [],
+    "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "未完成三尺寸全项视觉验收；局部实测与修复复验范围见 prefab-layout.md",
+    "sha256": "1b9ada61b5a9d811b3929d4b321bf189f21af7e63cc3f664d2ea839216688d08"
+  },
+  {
     "path": "client/assets/bundles/module/hero/prefabs/HeroIconCellView.prefab",
     "classes": [
       "HeroIconCellView"
@@ -3649,8 +4101,8 @@
       }
     },
     "components": {
-      "Widget": 2,
-      "Layout": 1,
+      "Widget": 6,
+      "Layout": 3,
       "Mask": 2,
       "ScrollView": 2,
       "Animation": 0,
@@ -3665,7 +4117,7 @@
         ]
       },
       {
-        "node": "node_name",
+        "node": "HeroHeader",
         "anchor": [
           0,
           0
@@ -3716,7 +4168,7 @@
       {
         "node": "node_panel",
         "anchor": [
-          0,
+          0.5,
           0
         ]
       },
@@ -3784,6 +4236,13 @@
         ]
       },
       {
+        "node": "DetailBody",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
         "node": "DetailScroll",
         "anchor": [
           0.5,
@@ -3803,6 +4262,48 @@
           0.5,
           1
         ]
+      },
+      {
+        "node": "PortraitIllustration",
+        "anchor": [
+          0.5,
+          1
+        ]
+      },
+      {
+        "node": "FeaturePanel",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "GrowthTabRow",
+        "anchor": [
+          0,
+          0.5
+        ]
+      },
+      {
+        "node": "StarGrowthContent",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "JewelTabPanel",
+        "anchor": [
+          0.5,
+          0
+        ]
+      },
+      {
+        "node": "GodEquipmentPanel",
+        "anchor": [
+          0.5,
+          0
+        ]
       }
     ],
     "scrolls": [
@@ -3821,20 +4322,15 @@
     ],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 本机竖屏独立 H2。布兰特显示标题、金星、职业和服务器战力，四槽支持选择、更换、单件及一键穿脱。装备后战力 1068 到 1320，冷重登保留；一键卸下还原。属性窗、左右箭头及返回通过。",
-    "sha256": "ccd3cf627421975e244f5be138d6f10a1017dc0c3d4bd86cc4dd038668ff94c8",
-    "acceptanceFingerprintDifference": {
-      "difference": "仅CRLF/LF差异",
-      "recordedSha256": "110d5c9b3410b190b69c78cc6b168eea51124b01d885547875b27039263ad41b",
-      "normalizedLfSha256": "110d5c9b3410b190b69c78cc6b168eea51124b01d885547875b27039263ad41b"
-    },
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "已核对英雄详情的节点、组件及资源引用。此指纹的完整布局和入口交互待视觉复验。",
+    "sha256": "5579f7e2efc3ef71d45e054fbacceb4146c500fa75787a58f213b85bdc2d39c7",
     "acceptance": {
-      "sha256": "110d5c9b3410b190b69c78cc6b168eea51124b01d885547875b27039263ad41b",
-      "date": "2026-11-19",
-      "status": "实际预览通过",
-      "scope": "Creator 本机竖屏独立 H2。布兰特显示标题、金星、职业和服务器战力，四槽支持选择、更换、单件及一键穿脱。装备后战力 1068 到 1320，冷重登保留；一键卸下还原。属性窗、左右箭头及返回通过。",
-      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+      "sha256": "5579f7e2efc3ef71d45e054fbacceb4146c500fa75787a58f213b85bdc2d39c7",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "已核对英雄详情的节点、组件及资源引用。此指纹的完整布局和入口交互待视觉复验。",
+      "inspector": "本轮仅核对序列化资源与代码绑定。"
     }
   },
   {
@@ -4314,15 +4810,15 @@
     "scrolls": [],
     "warnings": [],
     "decision": "保留：组件/组合局部坐标与布局关系不机械转换",
-    "reviewStatus": "实际预览通过",
-    "visual": "Creator 393×852 独立测试服验证有免费召唤时法阵红点亮起。入口锁定和关闭解绑由城市专项验证。",
-    "sha256": "3ed8fb015a32393dc70db1d239ceaadf6251807a5594dc7d55311d60d6665477",
+    "reviewStatus": "结构检查通过但视觉待验收",
+    "visual": "已核对主城入口的红点挂点及绑定。此指纹的完整布局和红点表现待视觉复验。",
+    "sha256": "bc3ce55599cd78bdcda9fdbc347ef45176416233571948601a750d5103cff13a",
     "acceptance": {
-      "sha256": "3ed8fb015a32393dc70db1d239ceaadf6251807a5594dc7d55311d60d6665477",
-      "date": "2026-11-20",
-      "status": "实际预览通过",
-      "scope": "Creator 393×852 独立测试服验证有免费召唤时法阵红点亮起。入口锁定和关闭解绑由城市专项验证。",
-      "inspector": "本轮未操作 Creator Inspector。"
+      "sha256": "bc3ce55599cd78bdcda9fdbc347ef45176416233571948601a750d5103cff13a",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "已核对主城入口的红点挂点及绑定。此指纹的完整布局和红点表现待视觉复验。",
+      "inspector": "本轮仅核对序列化资源与代码绑定。"
     }
   },
   {

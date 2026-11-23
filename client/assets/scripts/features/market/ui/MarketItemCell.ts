@@ -1,4 +1,4 @@
-/** 普通市场货架格。绘制服务器报价，商品说明与购买按钮各自交回所属页面。 */
+/** 商店通用货架格。绘制服务器报价，商品说明与购买按钮各自交回所属页面。 */
 import { _decorator, Button, Component, Label, Node, Sprite } from "cc";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
@@ -27,6 +27,10 @@ export class MarketItemCell extends Component {
     @property(Button) private _itemButton: Button | null = null;
     /** 价台事件，仅打开当前商品的购买窗口。 */
     @property(Button) private _buyButton: Button | null = null;
+    /** 神装商店等需要标题的格子绑定商品名称，普通市场沿用仅图标样式。 */
+    @property(Label) private _nameLabel: Label | null = null;
+    /** 需要显示每日限购进度的货架绑定此标签，不限购商品留空。 */
+    @property(Label) private _limitLabel: Label | null = null;
     /** 当前复用格的说明操作，换绑时更新。 */
     private describe: (() => void) | null = null;
     /** 当前复用格的购买操作，换绑时更新。 */
@@ -48,6 +52,12 @@ export class MarketItemCell extends Component {
         ResManager.setSprite(this._currencyIcon!.node, ResManager.item(offer.costItemId));
         this._quantityLabel!.string = String(offer.quantity);
         this._priceLabel!.string = UiKitUtils.formatAmount(offer.costQuantity);
+        if (this._nameLabel) {
+            this._nameLabel.string = face.title;
+        }
+        if (this._limitLabel) {
+            this._limitLabel.string = offer.purchaseLimit > 0 ? `购买 ${offer.purchased}/${offer.purchaseLimit}` : "";
+        }
         this._discountLabel!.node.parent!.active = offer.discount > 0 && offer.discount < 100;
         this._discountLabel!.string = `${offer.discount / 10}折`;
         const soldOut = offer.purchaseLimit > 0 && offer.purchased >= offer.purchaseLimit;

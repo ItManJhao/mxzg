@@ -35,6 +35,8 @@ public final class GameProtocolCodec {
         "heroJewelChangeRequest", "heroJewelChangeReceipt",
         "heroGodEquipmentChangeRequest", "heroGodEquipmentChangeReceipt",
         "heroGodEquipmentDrawRequest", "heroGodEquipmentDrawReceipt",
+        "heroArtifactChangeRequest", "heroArtifactChangeReceipt",
+        "godEquipmentShopBuyRequest", "godEquipmentShopBuyReceipt",
         "roleName", "roleImageChange", "roleRename", "roleTitles", "roleImages", "heroSummonRequest", "heroSummonReceipt",
         "roleDecorations", "roleDecorationId", "rolePeerageDisplay",
         "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
@@ -111,6 +113,8 @@ public final class GameProtocolCodec {
                 case "hero.jewel.change" -> "heroJewelChangeRequest";
                 case "hero.god-equipment.change" -> "heroGodEquipmentChangeRequest";
                 case "hero.god-equipment.draw" -> "heroGodEquipmentDrawRequest";
+                case "hero.artifact.change" -> "heroArtifactChangeRequest";
+                case "hero.god-equipment.shop.buy" -> "godEquipmentShopBuyRequest";
                 case "hero.equipment.change" -> "heroEquipmentChangeRequest";
                 case "market.buy" -> "marketBuyRequest";
                 case "market.refresh" -> "marketRefreshRequest";
@@ -148,6 +152,8 @@ public final class GameProtocolCodec {
             case "hero.jewel.change" -> "heroJewelChangeReceipt";
             case "hero.god-equipment.change" -> "heroGodEquipmentChangeReceipt";
             case "hero.god-equipment.draw" -> "heroGodEquipmentDrawReceipt";
+            case "hero.artifact.change" -> "heroArtifactChangeReceipt";
+            case "hero.god-equipment.shop.buy" -> "godEquipmentShopBuyReceipt";
             case "hero.equipment.change" -> "heroEquipmentChangeReceipt";
             case "market.list" -> "marketState";
             case "market.buy", "market.refresh" -> "marketReceipt";

@@ -110,18 +110,39 @@ public class RewardFeedbackService {
      * @return 本次已登记的不可变反馈，只有原事务成功提交后才交付在线连接。
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    @SuppressWarnings("unchecked")
     public Notice publish(String receiptId, String roleId, long assetRevision, Mode mode,
             RewardGrantResult actual, String requestId) {
         requireTransaction();
-        Notice notice = project(receiptId, roleId, assetRevision, mode, actual, requestId);
+        return register(project(receiptId, roleId, assetRevision, mode, actual, requestId));
+    }
+
+    /**
+     * 提交独立实例领域本事务已完成的到账明细，例如神装商城新建的随机实例。
+     * 只接收写库后汇总的实际模板和正数量，与通用发奖共用提交后反馈。
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Notice publishItems(String receiptId, String roleId, long assetRevision, Mode mode,
+            List<Item> items, String requestId) {
+        requireTransaction();
+        validateIdentity(receiptId, roleId, assetRevision, mode, requestId);
+        Map<Integer, Long> merged = new LinkedHashMap<>();
+        for (var item : items) {
+            add(merged, item.itemId(), item.credited());
+        }
+        List<Item> actual = merged.entrySet().stream().map(row -> new Item(row.getKey(), row.getValue())).toList();
+        return register(new Notice(1, receiptId, roleId, assetRevision, mode, actual, requestId, null));
+    }
+
+    /** 登记不可变通知，事务内共享去重与提交钩子。 */
+    @SuppressWarnings("unchecked")
+    private Notice register(Notice notice) {
         Map<String, Notice> batch = (Map<String, Notice>) TransactionSynchronizationManager.getResource(this);
         if (batch == null) {
             batch = new LinkedHashMap<>();
             TransactionSynchronizationManager.bindResource(this, batch);
             registerBatch(batch);
         }
-        String key = roleId + ":" + receiptId;
+        String key = notice.roleId() + ":" + notice.receiptId();
         Notice previous = batch.putIfAbsent(key, notice);
         if (previous != null && !previous.equals(notice)) {
             throw new IllegalStateException("同一发奖回执的反馈内容不一致");
@@ -132,11 +153,9 @@ public class RewardFeedbackService {
     /** 验证归属、请求关联及连续历史经验，只投影正实际量与真实升级，不能取当前资产差分。 */
     private Notice project(String receiptId, String roleId, long revision, Mode mode,
             RewardGrantResult actual, String requestId) {
-        if (receiptId == null || !receiptId.matches(UUID_PATTERN) || roleId == null || roleId.isBlank()
-                || roleId.length() > 128 || revision < 1 || revision > MAX_SAFE_INTEGER
-                || mode == null || actual == null || !roleId.equals(actual.roleId())
-                || (requestId != null && !requestId.matches(UUID_PATTERN))) {
-            throw new IllegalArgumentException("通用发奖反馈身份、请求关联或版本无效");
+        validateIdentity(receiptId, roleId, revision, mode, requestId);
+        if (actual == null || !roleId.equals(actual.roleId())) {
+            throw new IllegalArgumentException("通用发奖反馈缺少当前角色的实际结果");
         }
         Map<Integer, Long> merged = new LinkedHashMap<>();
         for (var item : Objects.requireNonNull(actual.items(), "实际发放明细缺失")) {
@@ -147,6 +166,15 @@ public class RewardFeedbackService {
         }
         List<Item> items = merged.entrySet().stream().map(row -> new Item(row.getKey(), row.getValue())).toList();
         return new Notice(1, receiptId, roleId, revision, mode, items, requestId, roleUpgrade(actual), actual.heroes());
+    }
+
+    /** 反馈和独立资产到账使用同一协议身份约束。 */
+    private static void validateIdentity(String receiptId, String roleId, long revision, Mode mode, String requestId) {
+        if (receiptId == null || !receiptId.matches(UUID_PATTERN) || roleId == null || roleId.isBlank()
+                || roleId.length() > 128 || revision < 1 || revision > MAX_SAFE_INTEGER
+                || mode == null || (requestId != null && !requestId.matches(UUID_PATTERN))) {
+            throw new IllegalArgumentException("通用发奖反馈身份、请求关联或版本无效");
+        }
     }
 
     /**

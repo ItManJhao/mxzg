@@ -1,6 +1,6 @@
-/** 普通市场购买确认窗。显示原报价与所选次数，确认后只将购买意图交给 MarketController。 */
+/** 商店购买确认窗。显示原报价与所选次数，确认后只将购买意图交还来源页面的控制器。 */
 import { _decorator, Button, Label, Slider, Sprite, UITransform } from "cc";
-import { EventDispatcher } from "../../../framework/EventDispatcher";
+import { EventDispatcher, type EventPayloads } from "../../../framework/EventDispatcher";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { BaseView } from "../../../framework/ui/BaseView";
 import { UILayer } from "../../../framework/ui/UILayer";
@@ -9,13 +9,17 @@ import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import { BagEvent } from "../../bag/utils/BagEvent";
-import { MarketController } from "../MarketController";
-import { MarketModel, type MarketOffer } from "../MarketModel";
+import type { MarketOffer } from "../MarketModel";
 
-/** 玩家打开价格确认窗时看到的报价，确认必须使用同一货架版本。 */
+/** 玩家打开的报价与同一货架周期内的最新可购买情况。 */
 interface MarketBuyArgs {
     readonly offer: MarketOffer;
-    readonly shelfVersion: number;
+    /** 来源货架已换期时返回空，旧确认窗口随即关闭。 */
+    readonly read: () => { readonly offer: MarketOffer; readonly maximum: number; readonly busy: boolean } | null;
+    /** 来源货架的状态事件，例如普通市场更新或统一名册更新。 */
+    readonly refreshOn: readonly (keyof EventPayloads)[];
+    /** 确认次数后交给当前来源控制器，实际扣费只由服务器写入。 */
+    readonly buy: (quantity: number) => void;
 }
 
 const { ccclass, property } = _decorator;
@@ -101,7 +105,9 @@ export class MarketBuyView extends BaseView<MarketBuyArgs> {
             }
         });
         this.ownListener(EventDispatcher.instance.on(BagEvent.BagUpdate, this, this.render));
-        this.ownListener(EventDispatcher.instance.on("market.updated", this, this.render));
+        for (const event of args.refreshOn) {
+            this.ownListener(EventDispatcher.instance.on(event, this, this.render));
+        }
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitPanel()));
         this.render();
     }
@@ -138,14 +144,13 @@ export class MarketBuyView extends BaseView<MarketBuyArgs> {
 
     /** 使用最新货架及余额限制选择；刷新了货架则关闭失效的确认窗。 */
     private render(): void {
-        const { shelfVersion, offer } = this.args!;
-        const state = MarketModel.instance.snapshot;
-        const current = state?.offers.find(row => row.productId === offer.productId);
-        if (state?.shelfVersion !== shelfVersion || !current) {
+        const quote = this.args?.read();
+        if (!quote) {
             this.close();
             return;
         }
-        this.maximum = Math.max(0, MarketController.instance.maximum(current));
+        const current = quote.offer;
+        this.maximum = Math.max(0, quote.maximum);
         this.quantity = this.maximum ? Math.min(this.maximum, Math.max(1, this.quantity)) : 0;
         const fraction = this.maximum > 1 ? (this.quantity - 1) / (this.maximum - 1) : this.maximum;
         this._slider!.progress = fraction;
@@ -157,14 +162,17 @@ export class MarketBuyView extends BaseView<MarketBuyArgs> {
         this._minusButton!.interactable = this.quantity > 1;
         this._plusButton!.interactable = this.quantity < this.maximum;
         this._maxButton!.interactable = this.quantity < this.maximum;
-        this._confirmButton!.interactable = this.quantity > 0 && !MarketController.instance.busy;
+        this._confirmButton!.interactable = this.quantity > 0 && !quote.busy;
     }
 
     /** 关窗后提交一次当前报价，购买结果由统一服务器通知更新。 */
     private confirm(): void {
-        const { offer, shelfVersion } = this.args!;
+        const { read, buy } = this.args!;
+        const quote = read();
         const quantity = this.quantity;
         this.close();
-        MarketController.instance.buy(shelfVersion, offer.productId, quantity);
+        if (quote && !quote.busy && quantity > 0 && quantity <= quote.maximum) {
+            buy(quantity);
+        }
     }
 }

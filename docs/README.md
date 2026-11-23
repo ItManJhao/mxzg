@@ -1,6 +1,6 @@
 # 文档索引
 
-更新于 2026-11-18。第一次接手先看 [开发交接](handoff.md) 和 [仓库约定](../AGENTS.md)。
+更新于 2026-11-23。第一次接手先看 [开发交接](handoff.md) 和 [仓库约定](../AGENTS.md)。
 
 | 想了解什么 | 去哪里查 |
 |---|---|
@@ -15,8 +15,9 @@
 | 要改的地方 | 说明 |
 |---|---|
 | 通信、状态和恢复 | [网络契约](network-contract.md)、[断线恢复](reconnect-recovery.md)、[角色](role-data-contract.md) |
-| 背包和英雄 | [背包MVC](bag-mvc-maintenance.md)、[库存事件](bag-inventory-events.md)、[英雄](hero-data-contract.md)、[阵容](hero-lineup-contract.md) |
-| 界面、弹窗与列表 | [Prefab与弹窗](prefab-layout.md)、[虚拟列表](super-scroll-authoring.md)、[阵容编辑](formation-ui-authoring.md) |
+| 背包与资产 | [背包 MVC](bag-mvc-maintenance.md)、[库存事件](bag-inventory-events.md)、[英雄数据与实例](hero-data-contract.md) |
+| 英雄养成、装备和布阵 | [当前操作与协议](hero-lineup-contract.md#当前代码与开放范围)、[神装四件套战斗效果](hero-lineup-contract.md#神装四件套战斗效果)、[阵容编辑](formation-ui-authoring.md) |
+| 界面、弹窗与列表 | [Prefab 与弹窗](prefab-layout.md)、[虚拟列表](super-scroll-authoring.md) |
 | 主线和战斗 | [里程碑](main-chapter-milestone.md)、[战斗布局](battle-prefab-layout.md)、[统计](battle-statistics.md)、[待复验问题](battle-known-issues.md) |
 | 挂机与奖励 | [领取事务](main-chapter-idle-settlement.md)、[收益规则](idle-reward-rules.md)、[活动控制](idle-activity-maintenance.md)、[通用奖励与确认](reward-feedback.md) |
 | 配置、资源和构建 | [配置生成](config-pipeline.md)、[加载与缓存](staged-resource-loading.md)、[自动图集](bag-auto-atlas.md) |

@@ -10,7 +10,11 @@ import test_bundle_paths
 import test_idle_activity_export
 import test_spirit_export
 
-from export_gameconfig import DEFAULT_OUT, DEFAULT_SRC, ROOT, check_table_reads, current_client_tables, export_current, project_attrshow, refresh_config_package, require_output_mode, validate_current_scope
+from export_gameconfig import (
+    DEFAULT_OUT, DEFAULT_SRC, ROOT, check_table_reads, current_client_tables, export_current,
+    hero_config_projections, project_attrshow, refresh_config_package, require_output_mode,
+    validate_current_scope,
+)
 
 
 class ClientConfigScopeTests(unittest.TestCase):
@@ -42,7 +46,7 @@ class ClientConfigScopeTests(unittest.TestCase):
         self.assertEqual(counts["attrshow"], 50)
 
     def test_missing_and_empty_table_fail(self):
-        """缺少必需配置、额外旧表或空内容都必须失败，不能替换成空数组后报成功。"""
+        """缺表、额外旧表、空内容及养成复合表缺少次级容器时，应指出出错的配置。"""
         temporary = ROOT / "client/temp"
         temporary.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=temporary) as directory:
@@ -60,6 +64,13 @@ class ClientConfigScopeTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "内容为空.*" + name):
                     validate_current_scope(out)
                 shutil.copyfile(DEFAULT_OUT / (name + ".json"), required)
+            jewels = out / "hero-jewels.json"
+            payload = json.loads(jewels.read_text(encoding="utf-8"))
+            del payload["sets"]
+            jewels.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "hero-jewels:sets"):
+                validate_current_scope(out)
+            shutil.copyfile(DEFAULT_OUT / jewels.name, jewels)
             (out / "arena.json").write_text('{"rows":[{"idx":1}]}', encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "多余.*arena"):
                 validate_current_scope(out)
@@ -111,6 +122,15 @@ class ClientConfigScopeTests(unittest.TestCase):
                 self.assertEqual((out / (name + ".json")).read_bytes(),
                                  (DEFAULT_OUT / (name + ".json")).read_bytes(), name)
             self.assertFalse((out / "manifest.json").exists())
+
+    def test_hero_projections_require_selected_source(self):
+        """替换策划目录后，养成投影缺少工作簿必须报该目录，禁止悄悄读回仓库原表。"""
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            for name, (_, project, _) in hero_config_projections().items():
+                with self.subTest(table=name), self.assertRaises(FileNotFoundError) as missing:
+                    project(source)
+                self.assertEqual(Path(missing.exception.filename).parent, source)
 
     def test_default_export_updates_package_only_for_runtime_directory(self):
         """正常共享导出调用唯一包生成器；临时导出不改真实配置包，生成失败须传播给调用者。"""

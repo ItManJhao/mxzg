@@ -97,6 +97,10 @@ message Frame {
     HeroGodEquipmentChangeReceipt hero_god_equipment_change_receipt = 87;
     HeroGodEquipmentDrawRequest hero_god_equipment_draw_request = 88;
     HeroGodEquipmentDrawReceipt hero_god_equipment_draw_receipt = 89;
+    HeroArtifactChangeRequest hero_artifact_change_request = 90;
+    HeroArtifactChangeReceipt hero_artifact_change_receipt = 91;
+    GodEquipmentShopBuyRequest god_equipment_shop_buy_request = 92;
+    GodEquipmentShopBuyReceipt god_equipment_shop_buy_receipt = 93;
   }
 }
 message Empty {}
@@ -350,6 +354,8 @@ message Snapshot {
   optional HeroSummonState hero_summon = 12;
   // 独立神装库存含在库与已穿实例，虚拟列表复用统一快照。
   optional HeroGodEquipmentState god_equipment = 13;
+  // 圣器激活格位与独立实例随名册一起同步。
+  optional HeroArtifactState artifacts = 14;
 }
 
 message HeroSummonState {
@@ -791,6 +797,7 @@ message HeroGodEquipmentState {
   repeated GodEquipmentItem items = 5;
   required uint32 draw_count = 6;
   required bool free_draw = 7;
+  optional GodEquipmentShopState shop = 8;
 }
 message HeroGodEquipmentChangeRequest {
   required string request_id = 1;
@@ -826,6 +833,68 @@ message HeroGodEquipmentDrawReceipt {
   required int64 diamonds_paid = 4;
   required int64 asset_revision = 5;
   repeated GodEquipmentDrawReward rewards = 6;
+}
+
+message GodEquipmentShopPurchase {
+  required uint32 product_id = 1;
+  required uint32 purchased = 2;
+}
+message GodEquipmentShopState {
+  required int64 reset_at = 1;
+  repeated GodEquipmentShopPurchase purchases = 2;
+}
+message GodEquipmentShopBuyRequest {
+  required string request_id = 1;
+  required uint32 product_id = 2;
+  required uint32 count = 3;
+  required int64 reset_at = 4;
+}
+message GodEquipmentShopBuyReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required uint32 product_id = 3;
+  required uint32 count = 4;
+  required int64 reset_at = 5;
+  required uint32 purchased = 6;
+  required int64 asset_revision = 7;
+}
+
+message HeroArtifactItem {
+  required string instance_id = 1;
+  required uint32 template_id = 2;
+  required uint32 slot = 3;
+  optional string hero_id = 4;
+}
+message HeroArtifactSlot {
+  required string hero_id = 1;
+  required uint32 slot = 2;
+}
+message HeroArtifactState {
+  repeated HeroArtifactItem items = 1;
+  repeated HeroArtifactSlot slots = 2;
+}
+// 只提交实际选择；激活、消费、升级和转换均按服务端规则校验。
+message HeroArtifactChangeRequest {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required uint32 slot = 3;
+  required string action = 4;
+  optional string instance_id = 5;
+  optional string expected_instance_id = 6;
+  optional uint32 target_template_id = 7;
+  repeated string material_instance_ids = 8;
+  repeated string material_hero_ids = 9;
+  repeated uint32 replacement_item_ids = 10;
+}
+message HeroArtifactChangeReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required string hero_id = 3;
+  required uint32 slot = 4;
+  required string action = 5;
+  required string instance_id = 6;
+  required uint32 template_id = 7;
+  required int64 asset_revision = 8;
 }
 
 // EQUIP 使用背包堆叠实例，UNEQUIP 使用已穿戴实例、槽位及原配置；两个批量操作只选英雄。

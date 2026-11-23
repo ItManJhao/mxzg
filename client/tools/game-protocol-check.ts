@@ -70,9 +70,46 @@ function main(){
  checkFullSummonWire();
  checkEquipmentWire();
  checkHeroLockWire();
+ checkArtifactAndGodShopWire();
  checkMarketWire();
  checkDailyDungeonWire();
  checkGmToolsWire();
+}
+
+/** 圣器独立实例和神装商店日周期都保留在统一快照和各自的二进制回包中。 */
+function checkArtifactAndGodShopWire(): void {
+    const roleId = "701cd02e-38af-4093-a435-5216f8b2a421";
+    const heroId = "5e26f085-cc45-4aa0-8080-697c37e748f1";
+    const instanceId = "54589b2b-7357-4dce-a83d-17026925c149";
+    const requestId = "d6aec724-6097-4f52-9c47-8d78a49a30ba";
+    const resetAt = 2_500_000_000;
+    const artifact = { version: 1, id: "artifact", name: Protocol.HERO_ARTIFACT_CHANGE };
+    const activation = {
+        requestId, heroId, slot: 1, action: "ACTIVATE",
+        materialInstanceIds: [], materialHeroIds: [], replacementItemIds: [],
+    };
+    roundTrip({ ...artifact, kind: "request", body: activation });
+    roundTrip({ ...artifact, kind: "response", ok: true,
+        body: { requestId, roleId, heroId, slot: 1, action: "ACTIVATE", instanceId, templateId: 908101, assetRevision: 3 } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...artifact, kind: "request", body: { ...activation, slot: 3 },
+    }));
+
+    const shop = { version: 1, id: "god-shop", name: Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY };
+    const order = { requestId, productId: 1, count: 2, resetAt };
+    roundTrip({ ...shop, kind: "request", body: order });
+    roundTrip({ ...shop, kind: "response", ok: true, body: { ...order, roleId, purchased: 2, assetRevision: 4 } });
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({
+        ...shop, kind: "request", body: { ...order, resetAt: 2 ** 53 },
+    }));
+    roundTrip({ version: 1, kind: "event", name: Protocol.STATE_CHANGED, body: {
+        ...state,
+        artifacts: { items: [{ heroId, instanceId, templateId: 908101, slot: 1 }], slots: [{ heroId, slot: 1 }] },
+        godEquipment: {
+            requiredRoleLevel: 70, requiredWorldLevel: 1, requiredHeroStar: 6, worldLevel: 1,
+            items: [], drawCount: 0, freeDraw: true, shop: { resetAt, purchases: [{ productId: 1, purchased: 2 }] },
+        },
+    } });
 }
 
 /** 验证二进制锁定和解锁保留明确的布尔值，禁止缺失设值或越权字段。 */

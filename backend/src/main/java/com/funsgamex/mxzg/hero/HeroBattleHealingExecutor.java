@@ -364,12 +364,16 @@ public final class HeroBattleHealingExecutor implements Executor {
             skill.skillId(), skill, null, null, ""));
     }
 
-    /** 直接属性动作沿旧安装成功后累加；移除回调统一减回，死亡或中断目标不安装。 */
+    /** 命中后按旧规则安装固定属性，由统一移除回调到期减回。 */
     private void applyDirectAttribute(int buffId, int sourceId, int targetId) {
         var effect = rules.controlAttribute(buffId);
         var source = require(sourceId);
         var target = require(targetId);
         if (target.hp() <= 0 || target.actor().isDead() || source.actor().interrupted(targetId)) {
+            return;
+        }
+        double chance = rules.directAttributeChance(buffId);
+        if (chance < 1D && !actionDecision().test(chance)) {
             return;
         }
         installBuff(sourceId, targetId, rules.battleBuff(buffId), 0);
@@ -1290,7 +1294,7 @@ public final class HeroBattleHealingExecutor implements Executor {
     }
 
     /**
-     * 执行已选定目标的普通伤害子集；伤害类型、主动标志和能量由当前技能上下文显式提供。
+     * 执行已选定目标的普通伤害及固定命中的最大生命追加伤害。
      * 独立入口拒绝反击配置；技能根入口接后置事件/反击，每目标立即扣血，整组共享事务。
      */
     public void ordinaryDamage(int buffId, int sourceId, List<Integer> targetIds, int damageType,
@@ -1328,7 +1332,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                     var entries = buffs.get(sourceId).removeFirst(1251);
                     if (entries.isEmpty()) throw new IllegalStateException("抗暴标记没有对应实例");
                     removed(sourceId, entries, "counter-crit");
-                }) : maximumHpResult(maximumHp, a, target);
+                }) : maximumHpResult(maximumHp, a, source, target);
                 if (attackContext != null && attackContext.damageSourceId == sourceId) {
                     attackContext.lastDamage = result;
                 }
@@ -1390,12 +1394,14 @@ public final class HeroBattleHealingExecutor implements Executor {
         });
     }
 
-    /** 102号命中不抽取暴击或格挡，按原目标生命比例和实时攻击上限产出扣血前结果。 */
+    /** 反噬取施加者最大生命，其他最大生命伤害取目标生命并按施加者实时攻击封顶。 */
     private HeroBattleDamageAction.Result maximumHpResult(HeroSkillPanelRules.MaximumHpDamage config,
-                                                          CombatData attacker, State defender) {
-        long hpDamage = percent(defender.maxHp(), config.hpRate());
-        long attackLimit = percent(attacker.attributes().get(220), config.attackLimit());
-        return new HeroBattleDamageAction.Result(-Math.min(hpDamage, attackLimit), false, false, false, false);
+                                                          CombatData attacker, State source, State defender) {
+        long damage = percent(config.sourceHp() ? source.maxHp() : defender.maxHp(), config.hpRate());
+        if (!config.sourceHp()) {
+            damage = Math.min(damage, percent(attacker.attributes().get(220), config.attackLimit()));
+        }
+        return new HeroBattleDamageAction.Result(-damage, false, false, false, false);
     }
 
     /** 奈奈子主伤害后对存活目标独立判降攻；成功目标再按职业1执行额外伤害。 */
@@ -1583,7 +1589,7 @@ public final class HeroBattleHealingExecutor implements Executor {
     }
 
     /**
-     * 执行201监听、1203中毒及1205流血，按调用方提供的出手顺序处理，再做到期移除。
+     * 按出手顺序执行回合监听和持续伤害，再移除到期状态。强蓄力先加新层再移除到期层。
      * 本入口不是完整回合（尚无能量收支/女神/周期特殊效果）；必须覆盖全部场内单位且不重复。
      */
     public void beginRound(int currentRound, List<Integer> order, HeroBattleElementRules elements,

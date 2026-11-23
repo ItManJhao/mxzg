@@ -47,6 +47,9 @@ interface LegacyAttackAction {
 }
 
 export class BattleAttackUtils {
+    /** 旧BuffFactory有持续帧装饰、由当前播放器恢复的状态类型。 */
+    public static readonly roundEffectTypes = [1001, 1005, 1008, 234] as const;
+
     /** 纯配置工具不保存播放状态。 */
     private constructor() {}
 
@@ -1261,20 +1264,27 @@ export class BattleAttackUtils {
     }
 
     /** 旧BuffFactory按类型共享持续帧；只有最后一份同类型实例移除才应撤下，返回值不持有节点或资产。 */
-    public static roundEffect(type: 1001 | 1005 | 234): {
-        paths: readonly string[]; interval: number; scale: number; anchorY: number;
+    public static roundEffect(type: typeof BattleAttackUtils.roundEffectTypes[number]): {
+        paths: readonly string[]; interval: number; scale: number; anchorY: number; nodeName: string;
     } {
         if (type === 1005) {
-            return { paths: this.dizzyFrames(), interval: 0.05, scale: 1, anchorY: 0.43 };
+            return { paths: this.dizzyFrames(), interval: 0.05, scale: 1, anchorY: 0.43, nodeName: "DizzyEffect" };
         }
-        const stem = type === 1001 ? "skill-effect-slient" : "skill-effect-parry";
+        const names = {
+            1001: ["skill-effect-slient", "SilenceEffect"],
+            1008: ["skill-effect-shield", "ShieldEffect"],
+            234: ["skill-effect-parry", "ParryEffect"],
+        } as const;
+        const [stem, nodeName] = names[type];
         const count = type === 1001 ? 8 : 10;
         return {
             paths: Object.freeze(Array.from({ length: count }, (_, index) =>
                 "effects/skill-effect/" + stem + "/" + stem + "_" + index + "/spriteFrame")),
             interval: type === 1001 ? 0.05 : 0.15,
             scale: type === 1001 ? 1 : 2,
+            // 旧盾罩默认纵锚点0.8，BuffFactory统一扣0.07，与格挡盾相同。
             anchorY: type === 1001 ? 0.43 : 0.73,
+            nodeName,
         };
     }
 

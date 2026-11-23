@@ -26,10 +26,10 @@ const suites = [
   ["ui-atlas", "node", "client/tools/ui-atlas-check.cjs"],
   ["common-atlas", "node", "client/tools/common-atlas-check.cjs"],
   ["ui-static", "node", "client/tools/ui-static-migration-check.cjs"],
-  ["resource-generated", "node", "tools/generate_resources.cjs"],
-  ["config-generated", "python", "tools/generate_config.py"],
+  ["resource-generated", "node", "tools/generate_resources.cjs", "--check"],
+  ["config-generated", "python", "tools/generate_config.py", "--check"],
   ["client-config-scope", "python", "tools/test_client_config_scope.py"],
-  ["prefab-review", "python", "tools/audit_prefabs.py"],
+  ["prefab-review", "python", "tools/audit_prefabs.py", "--check"],
   ["prefab-fingerprints", "python", "tools/test_prefab_audit.py"],
   ["event-target", "ts", "client/tools/event-target-check.ts"],
   ["red-dot", "ts", "client/tools/red-dot-check.ts"],
@@ -38,7 +38,7 @@ const suites = [
   ["main-chapter-idle-protocol", "ts", "client/tools/main-chapter-idle-protocol-check.ts"],
   ["idle-claim-intent", "ts", "client/tools/idle-claim-intent-check.ts"],
   ["tavern-state", "ts", "client/tools/tavern-state-check.ts"],
-  ["game-protocol-generated", "node", "tools/generate_game_protocol.cjs"],
+  ["game-protocol-generated", "node", "tools/generate_game_protocol.cjs", "--check"],
   ["main-chapter", "ts", "client/tools/main-chapter-check.ts"],
   ["chapter-background", "ts", "client/tools/chapter-background-check.ts"],
   ["chapter-milestone", "ts", "client/tools/chapter-milestone-check.ts"],
@@ -56,8 +56,8 @@ const suites = [
   ["role-upgrade-view", "ts", "client/tools/role-upgrade-view-check.ts"],
   ["hero-reward-view", "ts", "client/tools/hero-reward-view-check.ts"],
   ["hero-reward-pma", "ts", "client/tools/hero-reward-pma-check.ts"],
-  ["role-upgrade-config", "py", "tools/export_role_upgrade_features.py"],
-  ["role-upgrade-config-rules", "py", "tools/test_role_upgrade_features.py"],
+  ["role-upgrade-config", "python", "tools/export_role_upgrade_features.py", "--check"],
+  ["role-upgrade-config-rules", "python", "tools/test_role_upgrade_features.py"],
   ["reward-controller", "ts", "client/tools/reward-controller-check.ts"],
   ["reward-binding", "ts", "client/tools/reward-binding-check.ts"],
   ["reward-view", "ts", "client/tools/reward-view-check.ts"],
@@ -78,14 +78,12 @@ const suites = [
   ["account-operations", "ts", "client/tools/account-operations-check.ts"],
   ["isolated-build", "node", "client/tools/isolated-build-check.cjs"],
   ["build-entry", "node", "client/tools/build-entry-check.cjs"],
-  ["hero-roster", "paused", null],
   ["hero-state", "ts", "client/tools/hero-state-check.ts"],
   ["first-summon", "ts", "client/tools/first-summon-check.ts"],
   ["normal-summon-pool", "python", "tools/export_normal_summon.py"],
   ["role-name-rules", "python", "tools/export_role_name_rules.py"],
   ["hero-level-quote", "ts", "client/tools/hero-level-quote-check.ts"],
   ["hero-level-recovery", "ts", "client/tools/hero-level-recovery-check.ts"],
-  ["formation", "paused", null],
   ["formation-state", "ts", "client/tools/formation-state-check.ts"],
   ["formation-recovery", "ts", "client/tools/formation-recovery-check.ts"],
   ["page-lifecycle-recovery", "ts", "client/tools/page-lifecycle-recovery-check.ts"],
@@ -93,11 +91,13 @@ const suites = [
   ["formation-view", "ts", "client/tools/formation-view-check.ts"],
   ["formation-matrix", "ts", "client/tools/formation-matrix-check.ts"],
   ["formation-element", "ts", "client/tools/formation-element-check.ts"],
-  ["remake-playable", "paused", null],
   ["hero-growth-generated", "python", "tools/export_hero_growth.py"],
+  ["hero-artifacts-generated", "python", "tools/export_hero_artifacts.py"],
+  ["hero-jewels-generated", "python", "tools/export_hero_jewels.py"],
+  ["god-equipment-rules-generated", "python", "tools/export_god_equipment_rules.py"],
+  ["god-equipment-shop-generated", "python", "tools/export_god_equipment_shop.py"],
   ["idle-generated", "python", "tools/export_idle_rules.py"],
   ["idle-catalog", "python", "tools/test_idle_catalog.py"],
-  ["idle", "paused", null],
   ["campaign-rules", "python", "tools/export_campaign_rules.py"],
   ["remake-navigation", "ts", "client/tools/remake-navigation-check.ts"],
   ["feature-navigation", "ts", "client/tools/feature-navigation-check.ts"],
@@ -131,17 +131,27 @@ const suites = [
   ["shield-depleted", "ts", "client/tools/shield-depleted-check.ts"],
   ["retirement", "python", "tools/check_retirement.py"],
 ];
-const pausedSuites=new Set(["hero-roster","formation","remake-playable","idle"]);
+// 历史命令仍可单独调用，执行现行的对应专项；全套检查只遍历上面的有效入口。
+const replacements = new Map([
+  ["hero-roster", "hero-state"],
+  ["formation", "formation-state"],
+  ["remake-playable", "remake-navigation"],
+  ["idle", "idle-chest"],
+]);
 const args = process.argv.slice(2);
 if (args.includes("--help")) {
   console.log("node client/tools/check-project.mjs [--suite " + suites.map(([id]) => id).join("|") + "]");
   process.exit(0);
 }
-if (args.length && (args.length !== 2 || args[0] !== "--suite" || !suites.some(([id]) => id === args[1]))) {
+const suiteId = replacements.get(args[1]) ?? args[1];
+if (args.length && (args.length !== 2 || args[0] !== "--suite" || !suites.some(([id]) => id === suiteId))) {
   console.error("Invalid arguments. Use --help.");
   process.exit(2);
 }
-const selected = args.length ? suites.filter(([id]) => id === args[1]) : suites;
+if (suiteId !== args[1]) {
+  console.log(`旧检查 ${args[1]} 已退役，执行当前专项 ${suiteId}。`);
+}
+const selected = args.length ? suites.filter(([id]) => id === suiteId) : suites;
 const require = createRequire(import.meta.url);
 let esbuild;
 if (selected.some(([, kind]) => kind === "ts")) {
@@ -155,8 +165,7 @@ if (selected.some(([, kind]) => kind === "ts")) {
 }
 await mkdir(output, { recursive: true });
 const results = [];
-for (const [id, kind, source] of selected) {
-  if(pausedSuites.has(id)){console.log("PAUSED "+id+"：模块等待重做，旧业务 HTTP 已删除；领域测试仍在后端执行");results.push({id,paused:true,passed:null});continue;}
+for (const [id, kind, source, ...scriptArgs] of selected) {
   const started = Date.now();
   let result;
   try {
@@ -179,8 +188,14 @@ for (const [id, kind, source] of selected) {
       command = process.env.MXZG_PYTHON || "python";
       commandArgs = [source];
     }
-    if (["resource-generated", "config-generated", "prefab-review", "game-protocol-generated", "role-upgrade-config"].includes(id)) commandArgs.push("--check");
-    const run = spawnSync(command, commandArgs, { cwd: root, encoding: "utf8", timeout: 120000, maxBuffer: 16 * 1024 * 1024 });
+    // 父进程以 UTF-8 记录日志，Windows 上 Python 的管道输出也须使用同一编码。
+    const run = spawnSync(command, [...commandArgs, ...scriptArgs], {
+      cwd: root,
+      env: kind === "python" ? { ...process.env, PYTHONIOENCODING: "utf-8" } : process.env,
+      encoding: "utf8",
+      timeout: 120000,
+      maxBuffer: 16 * 1024 * 1024,
+    });
     result = { id, passed: run.status === 0 && !run.error, output: (run.stdout || "") + (run.stderr || "") + (run.error ? String(run.error) : "") };
   } catch (error) {
     result = { id, passed: false, output: String(error.stack || error) };
@@ -194,5 +209,5 @@ for (const [id, kind, source] of selected) {
 // 全套汇总保留在results.json；单项检查有自己的报告，避免文档复查覆盖业务检查结果。
 const reportFile = args.length ? `results.${args[1]}.json` : "results.json";
 await writeFile(resolve(output, reportFile), JSON.stringify(results, null, 2) + "\n");
-console.log(`${results.filter(r => r.passed).length}/${results.filter(r=>!r.paused).length} active suites passed. Logs: client/temp/project-checks/`);
-process.exitCode = results.every(r => r.paused || r.passed) ? 0 : 1;
+console.log(`${results.filter(r => r.passed).length}/${results.length} active suites passed. Logs: client/temp/project-checks/`);
+process.exitCode = results.every(r => r.passed) ? 0 : 1;

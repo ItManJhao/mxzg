@@ -9,6 +9,7 @@ import { Protocol, type ProtocolName } from "../../platform/Protocol";
 import { ProtocolRouter } from "../../platform/ProtocolRouter";
 import type { AccountModel } from "../account/AccountModel";
 import type { AccountOperations } from "../account/AccountOperations";
+import type { RewardBinding } from "../reward/RewardBinding";
 import { HeroRosterModel } from "./HeroRosterModel";
 import type { HeroStarRecipe } from "./utils/HeroStarUtils";
 
@@ -20,10 +21,13 @@ export interface HeroStarMaterials {
 }
 
 /** 成功回执中的升星步骤，实际英雄数据需等统一快照。 */
-interface HeroStarReceipt {
+export interface HeroStarReceipt {
+    readonly requestId: string;
     readonly heroId: string;
     readonly fromStar: number;
     readonly toStar: number;
+    readonly refunded: readonly { itemId: number; quantity: number }[];
+    readonly assetRevision: number;
 }
 
 declare module "../../framework/EventDispatcher" {
@@ -41,13 +45,17 @@ export class HeroStarController extends BaseController {
     private operations: Pick<AccountOperations, "send"> | null = null;
     /** 只读角色等级用于提示条件，缺失时不猜测已解锁。 */
     private account: AccountModel | null = null;
+    /** 应用唯一的通用奖励入口，将实际升星返还随快照版本交付给玩家。 */
+    private rewards: Pick<RewardBinding, "restoreItems"> | null = null;
     /** 升星请求在途时禁用重复提交，回包、失败或会话变化后释放。 */
     private waiting = false;
 
-    /** 由应用装配公共账号通道，不保存额外的凭证与等级副本。 */
-    public configure(operations: Pick<AccountOperations, "send">, account: AccountModel): void {
+    /** 注入账号通道、已同步角色和通用返还展示入口。 */
+    public configure(operations: Pick<AccountOperations, "send">, account: AccountModel,
+        rewards?: Pick<RewardBinding, "restoreItems">): void {
         this.operations = operations;
         this.account = account;
+        this.rewards = rewards ?? null;
     }
 
     /** 订单仍在处理时，页面用当前值控制重复点击。 */
@@ -103,15 +111,17 @@ export class HeroStarController extends BaseController {
         this.emit(HeroStarController.Updated, undefined);
     }
 
-    /** 应用销毁后释放已注入的账号请求入口。 */
+    /** 应用销毁后释放网络、角色和返还展示依赖。 */
     protected onDispose(): void {
         this.operations = null;
         this.account = null;
+        this.rewards = null;
     }
 
-    /** 成功只发布此次操作反馈，统一快照仍是资产唯一入口。 */
+    /** 交付实际返还到通用奖励队列，再发布成功事件，仍由统一快照刷新资产。 */
     private onSuccess(receipt: HeroStarReceipt): void {
         this.waiting = false;
+        this.rewards?.restoreItems(receipt.requestId, receipt.assetRevision, receipt.refunded);
         this.emit(HeroStarController.Updated, receipt);
         UIManager.instance.toast(`英雄已升至 ${receipt.toStar} 星`);
     }

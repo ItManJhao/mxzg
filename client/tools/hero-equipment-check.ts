@@ -1,4 +1,4 @@
-/** 用真实旧装备配置验证实例/槽位边界；不启动服务器、不修改数据库。 */
+/** 用真实装备配置验证英雄快照、面板战力及穿戴关系，供本地客户端专项检查。 */
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 import { strict as assert } from "node:assert";
 
@@ -7,8 +7,9 @@ import { GameProtocolCodecUtils } from "../assets/scripts/platform/GameProtocolC
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import { GConfig } from "../assets/scripts/config/GConfig";
 import { HeroEquipmentUtils } from "../assets/scripts/features/hero/utils/HeroEquipmentUtils";
+import { HeroArtifactUtils } from "../assets/scripts/features/hero/utils/HeroArtifactUtils";
 
-/** 验证四槽配置、长整数字符串、错误装备与缺失同步不能被静默接受。 */
+/** 检查装备槽位、英雄面板和圣器归属，并复验通过协议往返后的实例身份。 */
 async function main(): Promise<void> {
     const config = await ConfigFixtureUtils.installReal(new GameConfig());
     assert.deepEqual([...new Set(config.getConfig(GConfig.EquipmentType).map(row => row.place))].sort(), [1, 2, 3, 4]);
@@ -25,7 +26,26 @@ async function main(): Promise<void> {
     const decoded=GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({version:1,kind:"event",name:"state.changed",body:{role:{id:hero.id,nickname:"装备测试",level:1,gold:0,diamonds:0,serverId:"local-1"},heroes:[hero],inventory:[],revision:1}}));
     assert.equal((decoded.body as any).heroes[0].equipment.items[0].instanceId,rows[0].instanceId);
     assert.equal(HeroSnapshotUtils.readOwnedHeroes([hero])[0].equipment!.items.length,4);
-        const panel={values:{hp:120,atk:99,def:20,spd:50},includedSources:["base","equipment","equipment_set"],pendingSources:["skill_panel"],complete:false};
+    const panel = {
+        values: { hp: 120, atk: 99, def: 20, spd: 50 },
+        includedSources: ["base", "equipment", "equipment_set"],
+        pendingSources: ["skill_panel"],
+        complete: false,
+    };
+    assert.equal("power" in HeroSnapshotUtils.readOwnedHero({ ...hero, panelStats: panel }).panelStats!, false);
+    assert.equal(HeroSnapshotUtils.readOwnedHero({ ...hero, panelStats: { ...panel, power: 0 } }).panelStats!.power, 0);
+    for (const power of [null, "0", -1, 1.5]) {
+        assert.throws(() => HeroSnapshotUtils.readOwnedHero({ ...hero, panelStats: { ...panel, power } }), /英雄个人战力无效/);
+    }
+    const owners = new Set([hero.id]);
+    const slots = [{ heroId: hero.id, slot: 1 }];
+    const artifact = { instanceId: "00000000-0000-4000-8000-000000000003", templateId: 1, slot: 1 };
+    assert.deepEqual(HeroArtifactUtils.read({ items: [artifact], slots }, owners)!.items, [artifact]);
+    const worn = { ...artifact, heroId: hero.id };
+    assert.deepEqual(HeroArtifactUtils.read({ items: [worn], slots }, owners)!.items, [worn]);
+    for (const heroId of [null, 1, "unknown", Object.create(null)]) {
+        assert.throws(() => HeroArtifactUtils.read({ items: [{ ...artifact, heroId }], slots }, owners), /圣器佩戴关系无效/);
+    }
     assert.equal(HeroSnapshotUtils.readOwnedHeroes([{...hero,panelStats:panel}])[0].panelStats!.values.atk,99);
     assert.throws(()=>HeroSnapshotUtils.readOwnedHeroes([{...hero,panelStats:{...panel,complete:true}}]));
     assert.throws(()=>HeroSnapshotUtils.readOwnedHeroes([{...hero,panelStats:{...panel,values:{...panel.values,atk:Number.MAX_SAFE_INTEGER+1}}}]));

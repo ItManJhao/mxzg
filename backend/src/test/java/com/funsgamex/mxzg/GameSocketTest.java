@@ -312,6 +312,49 @@ class GameSocketTest {
         }
     }
 
+    /** 圣器激活、神装商店购买以及重登均交付来自同一资产事务的真实状态。 */
+    @Test
+    void artifactAndGodShopSynchronizeThroughTheBinarySocket() throws Exception {
+        var player = player();
+        String role = player.role().id();
+        jdbc.update("UPDATE game_role SET role_level=70, diamonds=3000 WHERE id=?", role);
+        String hero = growthHero(role, 10105010, 9);
+        jdbc.update("UPDATE game_hero SET hero_level=200 WHERE id=?", hero);
+        new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status ->
+                inventory.credit(role, 901812, 60));
+        String artifactId;
+        long revision;
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(0, initial.path("artifacts").path("slots").size());
+            long resetAt = initial.path("godEquipment").path("shop").path("resetAt").asLong();
+            assertTrue(resetAt > 0);
+            var activation = peer.request("hero.artifact.change", Map.of("requestId", UUID.randomUUID().toString(),
+                    "heroId", hero, "slot", 1, "action", "ACTIVATE"));
+            var unlocked = committedGrowth(peer, activation);
+            artifactId = activation.path("body").path("instanceId").asString();
+            assertEquals(hero, unlocked.path("artifacts").path("slots").get(0).path("heroId").asString());
+            assertEquals(artifactId, unlocked.path("artifacts").path("items").get(0).path("instanceId").asString());
+            assertEquals(908101, unlocked.path("artifacts").path("items").get(0).path("templateId").asInt());
+            assertEquals(2000, unlocked.path("role").path("diamonds").asInt());
+
+            var order = Map.of("requestId", UUID.randomUUID().toString(), "productId", 1, "count", 2, "resetAt", resetAt);
+            var paid = peer.request("hero.god-equipment.shop.buy", order);
+            var purchased = committedGrowth(peer, paid);
+            assertEquals(50, stackQuantity(purchased, 901812));
+            assertEquals(2, stackQuantity(purchased, 901814));
+            assertEquals(2, purchased.path("godEquipment").path("shop").path("purchases").get(0).path("purchased").asInt());
+            assertEquals(paid.path("body"), peer.request("hero.god-equipment.shop.buy", order).path("body"));
+            revision = purchased.path("revision").asLong();
+        }
+        try (var peer = new Peer()) {
+            var restored = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(revision, restored.path("revision").asLong());
+            assertEquals(artifactId, restored.path("artifacts").path("items").get(0).path("instanceId").asString());
+            assertEquals(2, restored.path("godEquipment").path("shop").path("purchases").get(0).path("purchased").asInt());
+        }
+    }
+
     /** 准备此次角色的素材与高星对象，只写独立测试数据库。 */
     private String growthHero(String role, int templateId, int star) {
         String id = UUID.randomUUID().toString();
@@ -320,10 +363,13 @@ class GameSocketTest {
         return id;
     }
 
-    /** 取真实写操作对应的已提交快照，确保版本与回执一致。 */
+    /** 略过单独的奖励反馈，取真实写操作对应的已提交快照并核对回执版本。 */
     private JsonNode committedGrowth(Peer peer, JsonNode response) throws InterruptedException {
         assertTrue(response.path("ok").asBoolean(), response.path("error").toString());
         var event = peer.events.poll(5, TimeUnit.SECONDS);
+        while (event != null && event.path("name").asString().equals("reward.granted")) {
+            event = peer.events.poll(5, TimeUnit.SECONDS);
+        }
         assertNotNull(event);
         assertEquals("state.changed", event.path("name").asString());
         var state = event.path("body");

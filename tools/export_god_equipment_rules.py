@@ -11,9 +11,9 @@ SOURCE = ROOT / "config/gameconfig"
 OUTPUT = ROOT / "backend/src/main/resources/gameplay/god-equipment-rules.json"
 
 
-def rows(name):
-    """按首张配置 Sheet 的字段行读取参与导出的有效数据。"""
-    book = load_workbook(SOURCE / (name + ".xlsx"), read_only=True, data_only=True)
+def rows(name, source=SOURCE):
+    """从指定策划目录的首张工作表读取有效行，缺表时向导出调用方报告实际路径。"""
+    book = load_workbook(source / (name + ".xlsx"), read_only=True, data_only=True)
     try:
         content = list(book.worksheets[0].values)
         return [dict(zip(content[2], row)) for row in content[3:] if type(row[0]) is int]

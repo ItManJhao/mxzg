@@ -13,7 +13,7 @@
 
 召唤奖池的星级、英雄权重与保底组改变后，运行 `python tools/export_normal_summon.py --write` 生成服务端规则，再运行 `python tools/export_gameconfig.py` 刷新客户端公示和配置包。概率公示复用同一奖池投影，价格读取 `lotterypoint` 和高级召唤相关配置。省略 `--write` 可检查服务端产物漂移。[奖池导出工具](../tools/export_normal_summon.py)
 
-类型化表、客户端共享JSON和Maven共享表是不同范围；数量以本次生成器和配置包manifest输出为准，不再将历史数字当作当前清单。保留配置不表示对应玩法开放：普通升级、精灵养成和穿脱仍关，HeroLevel等投影继续供后续恢复。此前已恢复13张真实后端依赖及原UUID；导出器从POM读取既有include，不另维护表清单，检查拒绝旧target缓存掩盖缺源。新增类型先声明规范，再接实际查询；数组声明items，对象声明fields，空对象禁止额外字段。原JSON数组文本仍为string，注释来自表头，派生字段在规范维护，生成顺序稳定且不写本机绝对路径。
+客户端可查询的类型看 client-schema，共享配置看配置包 manifest，Maven 打包范围看 POM 的 include。导出器与检查直接读取这些输入。新增类型先声明主键、字段和数组元素，再接入实际查询。表头提供源字段注释，派生字段在规范内维护。玩法是否开放另查[当前进度](development-progress.md)。
 
 ### 角色升级的旧客户端预告投影
 
@@ -21,9 +21,9 @@
 
 此投影只供RoleUpgradeUtils/RoleUpgradeView读取历史afterLevel的下一提示。OpenCondition仍服务当前导航/实际门槛，本批没有改它；预告没有跳转或开放行为。相同等级的旧pairs/sort未定义次序，新版保持源定义顺序，不能解释成新增idx业务优先级。统一检查已接`role-upgrade-config`和`role-upgrade-config-rules`；包集合专项从真实目录与LoadingPlan推导，不再硬编码包内表数。
 
-### 主线里程碑只读配置
+### 主线里程碑配置
 
-`GConfig.ChapterExtraReward`直接来自现有chapterextrareward.xlsx，保留六项七字段；旧Lua逐字段一致，包含奖励JSON文本列但本批只读取目标/文案，不能据此发奖。原meta从历史恢复并保留UUID，正常导出、类型生成和原配置包统一承载，不加页面准备或第二份候选表。下一目标还必须有服务端milestoneProgress已领集合，不能仅靠配置/通关数算作未领；缺失/已达成未领/全领分别由ChapterMilestoneUtils处理，见[旧审计](validation/chapter-milestone-legacy-audit-20261116.json)。
+`GConfig.ChapterExtraReward` 来自 chapterextrareward.xlsx，随统一配置包提供目标、奖励预览与文案。ChapterMilestoneUtils 结合关卡进度和服务端 milestoneProgress 已领集合选择下一目标。领取由服务端核验资格、发奖并更新快照。[里程碑维护](main-chapter-milestone.md) · [原表与旧 Lua 核对](validation/chapter-milestone-legacy-audit-20261116.json)
 
 ### 客户端压缩包与源表保留
 
@@ -31,7 +31,7 @@ tools/generate_config_package.cjs从LoadingPlan.login现有`{config:GConfig.X}`�
 
 登录后配置正文只请求这一份bin，随后在内存中解压、解析包内表并建立索引。历史画面的“整理游戏数据9/47”“准备游戏数据20/47”指当时的包内任务数。现在玩家文案统一为“加载游戏数据”“整理游戏数据”“准备游戏数据”，进度条由实际任务完成量推进。Bundle元数据、启动脚本及BufferAsset元数据的请求与配置正文分开统计。
 
-ZIP含自动生成的manifest.json及其余表，保留maincity等相对路径。所有源表先JSON.parse再JSON.stringify规范化；清单记录源路径、包内文件名、UTF-8字节数和CRC32。`config-v1:<SHA256>`版本由全部49表、schema与启动归属生成，固定ZIP时间保证相同输入得到相同字节。启动表虽然在包外，其变化也使版本失效；运行时核对启动源CRC与包清单，并检查包内文件目录、大小、CRC和JSON结构。CRC用于发现损坏，不是安全签名；当前不提供可信远程版本发布、签名安装或回滚。
+ZIP 保留各表相对路径，自动生成的 manifest.json 记录源路径、包内文件名、UTF-8 字节数和 CRC32。版本 `config-v1:<SHA256>` 由规范化后的全部源表、schema 与启动归属生成，包外启动表变化也会更新版本。固定 ZIP 时间保证相同输入得到相同字节。运行时校验启动源、目录、大小、CRC 与 JSON 结构。
 
 直接修改共享JSON，或单独运行会改写共享JSON的定向生成器后，执行：
 
@@ -84,6 +84,19 @@ SpiritDisplay引入时是第17张类型化表，曾由inventory配置组准备�
 ## 普通英雄升级
 
 herolevel.xlsx → herolevel.json → client-schema 的 HeroLevel（level、exp_need、gold_need）→ generate_config.py。服务端由 `python tools/export_hero_growth.py --write` 从五张导出表生成 gameplay/hero-growth.json，包含消耗、阶/星上限和四属性。升级按钮读取同一配置包的 herolevel、heroupgrade、herostar、system 及统一快照，计算可升等级和累计费用。服务端根据实际原等级及级数重新校验并扣费。配置版本是内容哈希，回执及新战报记录实际版本，已保存战报保留生成时的数据。[英雄契约](hero-lineup-contract.md#普通英雄升级)
+
+## 英雄养成配置
+
+从仓库根目录运行 `node client/tools/check-project.mjs --suite <专项名>` 即可用策划源表复核对应的已生成文件。只有确需更新时才对相应 Python 工具使用 `--write`。涉及客户端投影的改动还要执行 `node tools/generate_config_package.cjs --write`，确保登录后读取的是同一份新配置。
+
+完整导出 `export_gameconfig.py` 也会调用同一份宝石、圣器和神装图鉴投影，按指定源目录中的多张 Excel 生成客户端 JSON。`client-config-scope` 在临时目录重跑全量导出，逐字节比对当前共享文件。修改服务端规则或商城兑换奖池时，另用下表对应专项核对服务端产物。
+
+| 专项名 | 导出工具 | 核对的产物 |
+|---|---|---|
+| hero-jewels-generated | [宝石导出](../tools/export_hero_jewels.py) | 两端的 hero-jewels.json，含槽位、合成配方和套装 |
+| hero-artifacts-generated | [圣器导出](../tools/export_hero_artifacts.py) | 两端的 hero-artifacts.json，含激活、培养与套装 |
+| god-equipment-rules-generated | [神装规则导出](../tools/export_god_equipment_rules.py) | 服务端 god-equipment-rules.json，含实例、套装、词条和探宝奖池 |
+| god-equipment-shop-generated | [神装商城导出](../tools/export_god_equipment_shop.py) | 服务端 god-equipment-shop.json 和客户端 hero-god-equipment-catalog.json，兑换奖池只在服务端使用 |
 
 ## 加载与查询
 

@@ -24,6 +24,9 @@ import { HeroStarUtils, type HeroStarMaterialRow } from "../utils/HeroStarUtils"
 import { HeroJewelUtils } from "../utils/HeroJewelUtils";
 import { HeroGodEquipmentUtils, type GodEquipmentDrawPrice, type GodEquipmentItem } from "../utils/HeroGodEquipmentUtils";
 import { HeroGrowthPickerView, type HeroGrowthChoice } from "./HeroGrowthPickerView";
+import { HeroCreationView } from "./HeroCreationView";
+import { HeroGodEquipmentCatalogView } from "./HeroGodEquipmentCatalogView";
+import { HeroGodEquipmentShopView } from "./HeroGodEquipmentShopView";
 
 /** 当前绘制的格位和对应入口，隐藏的格位不保留操作。 */
 interface GrowthSlot {
@@ -281,8 +284,16 @@ export class HeroGrowthPanel extends Component {
         });
         this.render(slots, [
             { label: "升星", click: () => this.submitStar(hero) },
-            { label: "前往创造法阵", click: () => UIManager.instance.toast("创造法阵暂未开放") },
+            { label: "前往创造法阵", click: () => this.openCreation(hero.templateId) },
         ], [costText, conditionText, "素材英雄升级、强化消耗的资源将返还"].filter(Boolean).join("\n"));
+    }
+
+    /** 从升星页进入创造法阵，预选当前英雄模板。 */
+    private openCreation(templateId: number): void {
+        if (this.owner) {
+            void UIManager.instance.openChild(this.owner, HeroCreationView, { templateId })
+                .catch(() => { /* 框架统一处理开窗失败。 */ });
+        }
     }
 
     /** 在升星前后和材料卡上应用与英雄标题相同的星级图案。 */
@@ -522,12 +533,24 @@ export class HeroGrowthPanel extends Component {
         });
         this.render(slots, [
             { label: "神装探宝", click: () => this.chooseDivineDraw() },
-            { label: "神装图鉴", click: () => UIManager.instance.toast("神装图鉴暂未开放") },
-            { label: "神装商店", click: () => UIManager.instance.toast("神装商店暂未开放") },
+            { label: "神装图鉴", click: () => this.openGodEquipmentView("catalog") },
+            { label: "神装商店", click: () => this.openGodEquipmentView("shop") },
             { label: "加成一览", click: () => this.showDivineAttributes(hero) },
             { label: "", click: () => this.notice("神装说明",
                 `角色达到 ${state.requiredRoleLevel} 级、世界等级达到 ${state.requiredWorldLevel} 可探宝。英雄达到 ${state.requiredHeroStar} 星可穿戴。点击格位可更换或卸下神装。`) },
         ], gate ?? "");
+    }
+
+    /** 图鉴和商店沿探宝的角色、世界等级门槛，打开后仍保留当前英雄。 */
+    private openGodEquipmentView(page: "catalog" | "shop"): void {
+        const gate = HeroGodEquipmentController.instance.gate();
+        if (gate) {
+            UIManager.instance.toast(gate);
+        } else if (this.owner) {
+            const target = page === "catalog" ? HeroGodEquipmentCatalogView : HeroGodEquipmentShopView;
+            void UIManager.instance.openChild(this.owner, target)
+                .catch(() => { /* 框架统一处理开窗失败。 */ });
+        }
     }
 
     /** 复用培养选择窗显示单次与十次的当前费用，点击后沿用原扣费确认。 */

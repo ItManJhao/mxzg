@@ -582,13 +582,14 @@ public class HeroSkillPanelRules {
             || progressionPassiveMaxLevel(skillId) > 0;
     }
 
-    /** 返回主线普通入场被动已核对的最高等级，0表示由专用路径处理或尚未接通。 */
+    /** 返回通过通用安装链的入场被动最高等级，包含已核对的圣器和神装套装。 */
     private static int progressionPassiveMaxLevel(int skillId) {
         return switch (skillId) {
             case 101050062, 101050063, 101050093, 101050094, 102040132,
                 102050063, 102050072, 102050074, 102050083, 102050084, 102050114, 102050153, 102050154,
                 103050063, 103050082, 103050084, 103050092, 103050104, 103050113 -> 3;
-            case 105040032 -> 1;
+            case 105040032, 500010001, 500020001 -> 1;
+            case 300100001, 300200001, 300300001, 300400001 -> 5;
             default -> 0;
         };
     }
@@ -657,7 +658,7 @@ public class HeroSkillPanelRules {
         return List.copyOf(result);
     }
 
-    /** 预检固定面板属性、常驻战斗属性及开场监听；最高等级由同一准入规则传入，面板效果只计一次。 */
+    /** 预检固定属性及入场监听，套装沿用原施疗、暴击、回合和出手后等触发条件。 */
     private List<DamageArt> openingProgressionPassiveArts(int skillId, int level, int maxLevel) {
         var skill = skills.get(skillId + ":" + level);
         if (skill == null || level < 1 || level > maxLevel || skill.path("active_type").asInt() != 0) {
@@ -685,8 +686,13 @@ public class HeroSkillPanelRules {
                     listeners.add(buffId);
                     continue;
                 }
-                if (!Set.of(171, 172, 173, 175, 177, 178, 179, 181, 182).contains(type)
-                        || buff.path("round").asInt() != 999 || buff.path("attach_percent").asInt() != 10000
+                boolean artifactAttack = type == 170 && (skillId == 500010001 || skillId == 500020001);
+                boolean godEquipmentTrigger = (skillId == 300100001 && type == 186)
+                        || (skillId == 300200001 && type == 174) || (skillId == 300300001 && type == 201);
+                int duration = skillId == 300300001 ? 99 : 999;
+                if ((!Set.of(171, 172, 173, 175, 177, 178, 179, 181, 182).contains(type)
+                        && !artifactAttack && !godEquipmentTrigger)
+                        || buff.path("round").asInt() != duration || buff.path("attach_percent").asInt() != 10000
                         || buff.path("conflict_type").asInt() != 0 || buff.path("effecttype").asInt() != 0
                         || buff.path("life").asInt() != 0) {
                     throw new IllegalArgumentException("入场嵌套监听配置尚未核对：" + buffId);
@@ -696,9 +702,10 @@ public class HeroSkillPanelRules {
                     throw new IllegalArgumentException("入场监听缺少子动作：" + buffId);
                 }
                 for (var next : trigger.arts()) {
-                    if (next.id() == 1063201 || next.id() == 1063202) {
+                    if (skillId == 300100001 || next.id() == 1063201 || next.id() == 1063202) {
                         battleHealing(next.id());
-                    } else if (!isGeneralCounterattackArt(next.id()) && passiveTriggerEffects(next.id()).isEmpty()) {
+                    } else if (!isGodEquipmentDamageArt(next.id()) && !isGeneralCounterattackArt(next.id())
+                            && passiveTriggerEffects(next.id()).isEmpty()) {
                         throw new IllegalArgumentException("入场监听含未支持子动作：" + next.id());
                     }
                     battleTargets(next.id());
@@ -715,13 +722,15 @@ public class HeroSkillPanelRules {
 
     /** 按原配置编号校验已核对的监听子动作及目标，其他动作留给各自的执行入口。 */
     public List<Integer> passiveTriggerEffects(int artId) {
-        if (!Set.of(1062201, 1062202, 1062203, 1063203, 1094201, 1094202, 1094203, 1094301, 1094302, 1094303,
+        if (!isGodEquipmentDamageBonus(artId)
+                && !Set.of(1062201, 1062202, 1062203, 1063203, 1094201, 1094202, 1094203, 1094301, 1094302, 1094303,
                 2063201, 2063202, 2063203, 2072201, 2072202, 2072203,
                 2084201, 2084202, 2084203, 2084301, 2084302, 2084303, 2084401, 2084402, 2084403,
                 2114201, 2114202, 2114203,
                 2132301, 2132302, 2132303, 2153201, 2153202, 2153203, 3063201, 3063202, 3063203,
                 3082501, 3082502, 3082503, 3084301, 3084302, 3084303,
-                3092201, 3092202, 3092203, 3092301, 3092302, 3092303, 5032301).contains(artId)) {
+                3092201, 3092202, 3092203, 3092301, 3092302, 3092303, 5032301,
+                12001101, 12002101).contains(artId)) {
             return List.of();
         }
         var art = row("buffart", artId);
@@ -801,7 +810,7 @@ public class HeroSkillPanelRules {
         return List.copyOf(result);
     }
 
-    /** 永久入场被动的局部自选动作。返回配置顺序，遇到空动作或改选目标明确拒绝。 */
+    /** 读取只选自己的入场动作。返回配置顺序，遇到空动作或改选目标明确拒绝。 */
     private List<Integer> openingSelfBuffs(int artId) {
         var art = row("buffart", artId);
         var targets = battleTargets(artId);
@@ -993,19 +1002,25 @@ public class HeroSkillPanelRules {
         throw new IllegalArgumentException("未核对的控制属性效果：" + buffId);
     }
 
-    /** 识别已接通的160号固定战斗属性，包括最终减伤以及对烧灼和烈火目标的增伤。 */
+    /** 识别已接通的160号固定战斗属性，包括强蓄力的最终伤害和其他常规加成。 */
     private static boolean isFixedBattleAttribute(JsonNode buff) {
         var value = buff.path("value").asString();
         return buff.path("type").asInt() == 160
             && (value.startsWith("101|") || value.startsWith("200|") || value.startsWith("201|")
                 || value.startsWith("202|") || value.startsWith("203|") || value.startsWith("207|")
                 || value.startsWith("226|") || value.startsWith("291|")
+                || (isGodEquipmentDamageBonus(buff.path("idx").asInt()) && value.startsWith("270|"))
                 || value.startsWith("301|") || value.startsWith("306|"));
+    }
+
+    /** 识别已核对的强蓄力五级动作及同编号的属性效果。 */
+    private static boolean isGodEquipmentDamageBonus(int id) {
+        return id >= 10031201 && id <= 10031205;
     }
 
     /**
      * 旧 AbilityAdd/AbstractAttributeBuffHandler 按属性池规定的整数单位加减固定属性。
-     * 仅接必中、无子动作且后两项为0的固定形式，其他属性、概率和条件效果继续拒绝。
+     * 固定属性默认必中，两个已核对的圣器效果沿旧表20%抽样；其他概率和条件效果继续拒绝。
      */
     private ControlAttributeDefinition fixedBattleAttribute(int buffId) {
         var buff = row("buff", buffId);
@@ -1013,7 +1028,7 @@ public class HeroSkillPanelRules {
         var children = mapper.readTree(buff.path("art_list").asString());
         if (!isFixedBattleAttribute(buff) || values.length != 4
                 || !values[1].matches("-?(0|[1-9][0-9]*)") || !values[2].equals("0") || !values[3].equals("0")
-                || buff.path("attach_percent").asInt() != 10000 || children == null
+                || buff.path("attach_percent").asInt() != (isArtifactAttribute(buffId) ? 2000 : 10000) || children == null
                 || !children.isArray() || !children.isEmpty()
                 || !buff.path("round").isIntegralNumber() || !buff.path("round").canConvertToInt()
                 || buff.path("round").asInt() < 0) {
@@ -1026,6 +1041,16 @@ public class HeroSkillPanelRules {
             throw new IllegalArgumentException("固定属性量超出原整数范围：" + buffId, error);
         }
         return new ControlAttributeDefinition(buffId, Integer.parseInt(values[0]), amount, buff.path("round").asInt());
+    }
+
+    /** 两种完整圣器套装的出手后属性，其他固定属性沿用原必中行为。 */
+    public double directAttributeChance(int buffId) {
+        return isArtifactAttribute(buffId) ? row("buff", buffId).path("attach_percent").asInt() / 10000D : 1D;
+    }
+
+    /** 概率例外只准入已对照原表的进攻、免伤两条子效果。 */
+    private static boolean isArtifactAttribute(int buffId) {
+        return buffId == 12001101 || buffId == 12002101;
     }
 
     /** 已核实控制的基础概率、专属抗性与深睡受击唤醒率；0抗性编号表示没有专属抗性。 */
@@ -1141,24 +1166,31 @@ public class HeroSkillPanelRules {
         return true;
     }
 
-    /** 102号伤害按目标最大生命比例计算，再由来源攻击比例封顶，均为万分比。 */
-    public record MaximumHpDamage(int hpRate, int attackLimit) {}
+    /** 102用目标最大生命并受攻击上限约束，103用来源最大生命；比例均为万分比。 */
+    public record MaximumHpDamage(int hpRate, int attackLimit, boolean sourceHp) {}
 
-    /** 读取已核对的102号即时固定命中追击；其他类型返回null。 */
+    /** 读取已核对的最大生命即时伤害。两个神装追击使用旧表概率，且不再引发反击。 */
     public MaximumHpDamage maximumHpDamage(int buffId) {
         var buff = row("buff", buffId);
-        if (buff.path("type").asInt() != 102) {
+        int type = buff.path("type").asInt();
+        boolean criticalFollowup = buffId >= 10021201 && buffId <= 10021205;
+        boolean retaliation = buffId >= 10041301 && buffId <= 10041305;
+        if (type != 102 && !retaliation) {
             return null;
         }
         var values = buff.path("value").asString().split("\\|", -1);
-        if (values.length != 4 || !values[1].equals("1") || !values[3].equals("0")
-                || Integer.parseInt(values[0]) <= 0 || Integer.parseInt(values[2]) <= 0
+        int chance = buff.path("attach_percent").asInt();
+        if (type != (retaliation ? 103 : 102) || values.length != (criticalFollowup ? 5 : 4)
+                || !values[1].equals("1") || !values[3].equals("0")
+                || Integer.parseInt(values[0]) <= 0
+                || (retaliation ? !values[2].equals("0") : Integer.parseInt(values[2]) <= 0)
+                || (criticalFollowup && !values[4].equals("0"))
                 || buff.path("copy_target").asInt() != 0 || buff.path("round").asInt() != 0
-                || buff.path("attach_percent").asInt() != 10000
+                || (criticalFollowup ? chance <= 0 || chance > 10000 : chance != 10000)
                 || !mapper.readTree(buff.path("art_list").asString()).isEmpty()) {
             throw new IllegalArgumentException("最大生命追击含未支持参数：" + buffId);
         }
-        return new MaximumHpDamage(Integer.parseInt(values[0]), Integer.parseInt(values[2]));
+        return new MaximumHpDamage(Integer.parseInt(values[0]), Integer.parseInt(values[2]), retaliation);
     }
 
     /** 旧164 AngerAddBuffHandler 对空子链没有状态或战报效果，保留原配置挂接行为。 */
@@ -1506,12 +1538,29 @@ public class HeroSkillPanelRules {
         return true;
     }
 
-    /** 判断纯普通伤害动作，并逐个校验配置；其他动作交已有治疗/反击入口处理。 */
+    /** 判断纯伤害动作，包含神装的必中追击；其他动作交已有治疗或反击入口处理。 */
     public boolean isDamageArt(int artId) {
+        if (isGodEquipmentDamageArt(artId)) {
+            return true;
+        }
         var buffs = mapper.readTree(row("buffart", artId).path("buff_list").asString());
         if (buffs.isEmpty()) return false;
         for (var buff : buffs) if (row("buff", buff.asInt()).path("type").asInt() != 100) return false;
         for (var buff : buffs) battleOrdinaryDamageRate(buff.asInt(), true);
+        return true;
+    }
+
+    /** 预检致命伤和反噬，沿原目标触发单次伤害，不能改选目标或混入其他效果。 */
+    private boolean isGodEquipmentDamageArt(int artId) {
+        if ((artId < 10021201 || artId > 10021205) && (artId < 10041301 || artId > 10041305)) {
+            return false;
+        }
+        var art = row("buffart", artId);
+        var buffs = mapper.readTree(art.path("buff_list").asString());
+        if (art.path("source_type").asInt() != 0 || !battleTargets(artId).selectors().isEmpty()
+                || buffs.size() != 1 || buffs.get(0).asInt() != artId || maximumHpDamage(artId) == null) {
+            throw new IllegalArgumentException("神装伤害动作配置变化：" + artId);
+        }
         return true;
     }
 

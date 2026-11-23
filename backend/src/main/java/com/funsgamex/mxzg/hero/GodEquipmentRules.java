@@ -25,8 +25,6 @@ public class GodEquipmentRules {
     public record Definition(int templateId, int slot, int star, int quality, int setType, List<Attribute> attributes) {}
     /** 精确套装规则，佩戴同套装的最低星必须等于规则星级。 */
     public record SetRule(int setType, int star, int count, List<Attribute> attributes, int skillId) {}
-    /** 套装激活附带的旧技能，等级为同套装备最低星。 */
-    public record SetSkill(int skillId, int level) {}
     /** 探宝内层权重条目，保底条目同时参与其原普通池。 */
     public record DrawEntry(int type, int templateId, int quantity, int weight, boolean guarantee) {}
     /** 探宝的券模板、单次和十次费用及保底步数。 */
@@ -142,20 +140,23 @@ public class GodEquipmentRules {
         return List.copyOf(result);
     }
 
-    /** 叠加四件神装各自的属性和所有已达成的套装阈值，供面板与战斗共用。 */
-    public void contribute(List<GodEquipmentRepository.Item> equipped, BiConsumer<Integer, Long> add) {
+    /** 累加单件和已激活套装的属性，同次返回战斗技能；技能等级取同套最低星。 */
+    public List<HeroEvolutionRules.Skill> contribute(List<GodEquipmentRepository.Item> equipped,
+                                                     BiConsumer<Integer, Long> add) {
+        if (equipped.isEmpty()) {
+            return List.of();
+        }
         for (var item : equipped) {
             item.attributes().forEach(value -> add.accept(value.type(), value.value()));
         }
+        var skills = new ArrayList<HeroEvolutionRules.Skill>();
         for (var set : activeSets(equipped)) {
             set.attributes().forEach(value -> add.accept(value.type(), value.value()));
+            if (set.skillId() != 0) {
+                skills.add(new HeroEvolutionRules.Skill(set.skillId(), set.star()));
+            }
         }
-    }
-
-    /** 按旧规则返回套装技能配置编号及等级，具体战斗能力由对应战斗入口决定。 */
-    public List<SetSkill> setSkills(List<GodEquipmentRepository.Item> equipped) {
-        return activeSets(equipped).stream().filter(set -> set.skillId() != 0)
-                .map(set -> new SetSkill(set.skillId(), set.star())).toList();
+        return List.copyOf(skills);
     }
 
     /** 统计同套不同部位的最低星，精确匹配套装星级并累加达成的件数档位。 */

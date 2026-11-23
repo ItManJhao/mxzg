@@ -1,6 +1,19 @@
-/** 英雄名册 DTO 校验：供统一 Protobuf 快照使用；供唯一Model提交使用，不提供网络查询或持有会话。 */
+/** 校验统一 Protobuf 快照中的英雄名册与阵容，生成冻结的数据供 HeroRosterModel 提交。 */
 import { HeroEquipmentUtils, HeroEquipment } from "../utils/HeroEquipmentUtils";
 import { HeroJewelUtils } from "../utils/HeroJewelUtils";
+
+/** 英雄快照的四维属性。基础成长和最终面板分别保存自己的值。 */
+interface HeroStats {
+    /** 当前来源的生命值。 */
+    readonly hp: number;
+    /** 当前来源的攻击力。 */
+    readonly atk: number;
+    /** 当前来源的防御力。 */
+    readonly def: number;
+    /** 当前来源的速度。 */
+    readonly spd: number;
+}
+
 /** 服务端英雄实例 ID 保持字符串 UUID，templateId 为独立的英雄类型配置键。 */
 export interface OwnedHero {
     /** 持久进化分支/等级及已核验技能；undefined未同步，0/0明确未进化。 */
@@ -18,12 +31,7 @@ export interface OwnedHero {
     readonly star: number;
     /** 服务端面板属性及来源覆盖；complete=false 时仍有旧版加成未恢复。 */
     readonly panelStats?: Readonly<{
-        values: Readonly<{
-            hp: number;
-            atk: number;
-            def: number;
-            spd: number;
-        }>;
+        values: HeroStats;
         includedSources: readonly string[];
         pendingSources: readonly string[];
         complete: boolean;
@@ -41,12 +49,7 @@ export interface OwnedHero {
     /** 服务端当前强化阶段；缺失表示未同步。 */
     readonly stage?: number;
     /** 服务端基础成长属性，不包含未恢复的装备和天赋加成。 */
-    readonly baseStats?: Readonly<{
-        hp: number;
-        atk: number;
-        def: number;
-        spd: number;
-    }>;
+    readonly baseStats?: HeroStats;
     /** 自身持久锁定；undefined 表示旧快照未同步，不能当作未锁定。 */
     readonly locked?: boolean;
     /** 主线阵容占用标记；缺失表示未同步，不等于未上阵。 */
@@ -57,7 +60,7 @@ export class HeroSnapshotUtils {
     /** 纯展示或数据转换入口，无需创建工具类实例。 */
     private constructor() { }
 
-    /** 校验单个持久英雄的基础字段并返回冻结副本，不接收客户端自建英雄。 */
+    /** 校验英雄身份和已同步的成长、穿戴及面板字段，返回冻结副本。 */
     public static readOwnedHero(value: unknown): OwnedHero {
         if (!value || typeof value !== "object" || Array.isArray(value)) {
             throw new Error("英雄资料无效");
@@ -73,17 +76,11 @@ export class HeroSnapshotUtils {
         if (row.deployed !== undefined && typeof row.deployed !== "boolean") {
             throw new Error("英雄上阵状态无效");
         }
-        let baseStats: OwnedHero["baseStats"];
         if (row.stage !== undefined && (!Number.isSafeInteger(row.stage) || Number(row.stage) < 0)) {
             throw new Error("英雄阶段无效");
         }
-        if (row.baseStats !== undefined) {
-            const b = row.baseStats as Record<string, unknown>;
-            if (!b || typeof b !== "object" || Array.isArray(b) || ![b.hp, b.atk, b.def, b.spd].every(HeroSnapshotUtils.positiveInteger)) {
-                throw new Error("英雄基础属性无效");
-            }
-            baseStats = Object.freeze({ hp: b.hp as number, atk: b.atk as number, def: b.def as number, spd: b.spd as number });
-        }
+        const baseStats = row.baseStats === undefined ? undefined
+            : HeroSnapshotUtils.readStats(row.baseStats, "英雄基础属性无效");
         let equipment: OwnedHero["equipment"];
         if (row.equipment !== undefined) {
             const state = row.equipment as Record<string, unknown>;
@@ -106,6 +103,19 @@ export class HeroSnapshotUtils {
     /** 基础等级、星级和配置 ID 必须是安全的正整数。 */
     private static positiveInteger(value: unknown): value is number {
         return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+    }
+
+    /** 基础属性和最终面板使用相同的四个正整数；按调用方提供的字段名称报告错误。 */
+    private static readStats(value: unknown, error: string): HeroStats {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            throw new Error(error);
+        }
+        const { hp, atk, def, spd } = value as Record<string, unknown>;
+        if (!HeroSnapshotUtils.positiveInteger(hp) || !HeroSnapshotUtils.positiveInteger(atk)
+            || !HeroSnapshotUtils.positiveInteger(def) || !HeroSnapshotUtils.positiveInteger(spd)) {
+            throw new Error(error);
+        }
+        return Object.freeze({ hp, atk, def, spd });
     }
 
     /** 整组校验并拒绝重复实例 ID；空名册是有效状态。 */
@@ -144,7 +154,7 @@ export class HeroSnapshotUtils {
         return Object.freeze({ capacity: row.capacity, buySpaceTimes: row.buySpaceTimes as number });
     }
 
-    /** 校验服务端面板与覆盖声明；缺失保留未同步，不能前端自行把基础值当最终属性。 */
+    /** 校验服务端面板、可选战力和来源覆盖声明；缺失字段保留未同步状态。 */
     private static readPanelStats(value: unknown): OwnedHero["panelStats"] {
         if (value === undefined) {
             return undefined;
@@ -152,10 +162,8 @@ export class HeroSnapshotUtils {
         if (!value || typeof value !== "object" || Array.isArray(value)) {
             throw new Error("英雄面板无效");
         }
-        const row = value as Record<string, unknown>, stats = row.values as Record<string, unknown>;
-        if (!stats || typeof stats !== "object" || Array.isArray(stats) || ![stats.hp, stats.atk, stats.def, stats.spd].every(HeroSnapshotUtils.positiveInteger)) {
-            throw new Error("英雄面板数值无效");
-        }
+        const row = value as Record<string, unknown>;
+        const values = HeroSnapshotUtils.readStats(row.values, "英雄面板数值无效");
         if (typeof row.complete !== "boolean" || !Array.isArray(row.includedSources) || !Array.isArray(row.pendingSources) || ![...row.includedSources, ...row.pendingSources].every(v => typeof v === "string" && !!v.trim())) {
             throw new Error("英雄面板来源无效");
         }
@@ -168,9 +176,9 @@ export class HeroSnapshotUtils {
             throw new Error("英雄个人战力无效");
         }
         return Object.freeze({
-            values: Object.freeze({ hp: stats.hp as number, atk: stats.atk as number, def: stats.def as number, spd: stats.spd as number }),
+            values,
             includedSources: Object.freeze([...included]), pendingSources: Object.freeze([...pending]), complete: row.complete,
-            ...(power !== undefined ? { power } : {}),
+            ...(typeof power === "number" ? { power } : {}),
         });
     }
 

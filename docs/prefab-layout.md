@@ -1,6 +1,8 @@
 # Prefab 编辑与审查
 
-更新：2026-11-17。当前40份Prefab的准入由tools/prefab-plan.json与独立授权增量核对，当前结构及限定人工验收状态见[prefab-review.json](prefab-review.json)。本批加入完整通用HeroRewardView、主线常显里程碑卡及原地图切换；保留原UUID和人工布局，历史基线不覆盖为新结果。第15关领取、最终英雄光效/技能子窗、第16关背景和2英雄名册的本机证据见[本批记录](validation/chapter-stage10-20-preview-20261117.json)；没有集中构建或真机/三尺寸整体签收。
+更新于 2026-11-23。[准入清单](../tools/prefab-plan.json)记录参与检查的预制体，[结构与验收报告](prefab-review.json)记录当前资源指纹、组件绑定及已验画面范围。从仓库根目录运行 `node client/tools/check-project.mjs --suite prefab-review` 可复查结构。英雄详情 HeroInfoView 和主城 CityHubView 的资源均已变化，旧画面记录保存在 supersededEntries，当前指纹只通过结构检查。
+
+创造法阵的配方格复用英雄头像格的绘制，在 HeroCreationCellView 显示备料数量与颜色。修改格位间距时应保留该预制体根节点的 0.78 倍缩放，SuperContent 使用这个尺寸计算虚拟列表的格位。[法阵头像格](../client/assets/scripts/features/hero/ui/HeroCreationCellView.ts) · [列表维护](super-scroll-authoring.md)
 
 修改静态布局直接编辑对应完整Prefab，保留仍用资产UUID与绑定；背包、英雄及详情的背景/纸面/列表容器保存为静态节点，HeroBoard只保留容器和Widget。英雄、背包、产物说明及胜利奖励已统一列表事件；此前已精简未实现按钮及旧资源，不能沿用[更早页面证据](validation/view-registration-list-review-20261111.json)的哈希或截图签收后续实现。
 
@@ -41,7 +43,7 @@ CampaignView 在已有时间背景节点增加静态 Button 并绑定 idleClaimB
 Inspector：待负责人明确认可。已给出底板 X 0→1 保存→0 保存重开步骤，目前收到的仅“已刷新”；不代签。最终文件已核对恢复值。HeroInfoUpgradeLayer 仍是突破展示，不因本次普通升级而开放。
 
 
-2026-11-02当时保留90份Prefab，含旧remake-home Bundle；后续目录迁移基线曾为100份，本批退役废弃资产后的数量及目录以页首为准。保留策略输入见[prefab-plan.json](../tools/prefab-plan.json)，逐项结构、特殊锚点、ScrollView和视觉状态见[prefab-review.json](prefab-review.json)。保留资源不等于开放相应玩法。
+2026-11-02 的基线包含 90 份 Prefab，后续目录迁移阶段曾为 100 份。当前准入与验收记录见页首。第 15 关领奖、英雄获得光效和第 16 关背景当时的预览见[阶段记录](validation/chapter-stage10-20-preview-20261117.json)。
 
 ## 本批收尾范围（2026-11-02）
 

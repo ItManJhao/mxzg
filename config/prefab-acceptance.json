@@ -38,11 +38,11 @@
       "inspector": "待负责人逐项确认"
     },
     "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab": {
-      "sha256": "110d5c9b3410b190b69c78cc6b168eea51124b01d885547875b27039263ad41b",
-      "date": "2026-11-19",
-      "status": "实际预览通过",
-      "scope": "Creator 本机竖屏独立 H2。布兰特显示标题、金星、职业和服务器战力，四槽支持选择、更换、单件及一键穿脱。装备后战力 1068 到 1320，冷重登保留；一键卸下还原。属性窗、左右箭头及返回通过。",
-      "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+      "sha256": "5579f7e2efc3ef71d45e054fbacceb4146c500fa75787a58f213b85bdc2d39c7",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "已核对英雄详情的节点、组件及资源引用。此指纹的完整布局和入口交互待视觉复验。",
+      "inspector": "本轮仅核对序列化资源与代码绑定。"
     },
     "client/assets/bundles/module/login/prefabs/RoleProfileView.prefab": {
       "sha256": "d5995445c71ad3d4a7c6b97f1844a6383a0dc7d59cd79629615c6585fdb3319d",
@@ -94,11 +94,11 @@
       "inspector": "限所属出阵页中的头像状态，未签收三尺寸、正式包或 Inspector。"
     },
     "client/assets/bundles/module/home/prefabs/CityHubView.prefab": {
-      "sha256": "3ed8fb015a32393dc70db1d239ceaadf6251807a5594dc7d55311d60d6665477",
-      "date": "2026-11-20",
-      "status": "实际预览通过",
-      "scope": "Creator 393×852 独立测试服验证有免费召唤时法阵红点亮起。入口锁定和关闭解绑由城市专项验证。",
-      "inspector": "本轮未操作 Creator Inspector。"
+      "sha256": "bc3ce55599cd78bdcda9fdbc347ef45176416233571948601a750d5103cff13a",
+      "date": "2026-11-23",
+      "status": "结构检查通过但视觉待验收",
+      "scope": "已核对主城入口的红点挂点及绑定。此指纹的完整布局和红点表现待视觉复验。",
+      "inspector": "本轮仅核对序列化资源与代码绑定。"
     },
     "client/assets/bundles/module/hero/prefabs/HeroListView.prefab": {
       "sha256": "6550d31d86d0689ef5b957ec0938bfb79c9d82faab6eb761e27d070525558064",
@@ -910,6 +910,30 @@
         "status": "依赖所属页面检查的组合资源",
         "scope": "本批只新增默认255 UIOpacity；Creator 393×852设备预览/浏览器1280×720实际检查通用奖励8格（金币1400、钻石3、经验70、月光175等），图标/品质/数量与金钱简介、叠窗关闭正常。原碎片及精灵专项见11-14记录，不冒称本批全部重跑。 证据见docs/validation/reward-preview-review-20261116.json。",
         "inspector": "负责人刷新，浏览器检查；未操作Creator原生窗口或Inspector。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/hero/prefabs/HeroInfoView.prefab",
+      "supersededOn": "2026-11-23",
+      "reason": "英雄详情增加圣器与创造法阵等养成入口，原签收对应较早的装备详情版本。",
+      "record": {
+        "sha256": "110d5c9b3410b190b69c78cc6b168eea51124b01d885547875b27039263ad41b",
+        "date": "2026-11-19",
+        "status": "实际预览通过",
+        "scope": "Creator 本机竖屏独立 H2。布兰特显示标题、金星、职业和服务器战力，四槽支持选择、更换、单件及一键穿脱。装备后战力 1068 到 1320，冷重登保留；一键卸下还原。属性窗、左右箭头及返回通过。",
+        "inspector": "Creator 浏览器和绑定检查，验收范围限本机独立测试服。"
+      }
+    },
+    {
+      "path": "client/assets/bundles/module/home/prefabs/CityHubView.prefab",
+      "supersededOn": "2026-11-23",
+      "reason": "主城创造法阵入口新增红点节点，原签收对应增加节点前的版本。",
+      "record": {
+        "sha256": "3ed8fb015a32393dc70db1d239ceaadf6251807a5594dc7d55311d60d6665477",
+        "date": "2026-11-20",
+        "status": "实际预览通过",
+        "scope": "Creator 393×852 独立测试服验证有免费召唤时法阵红点亮起。入口锁定和关闭解绑由城市专项验证。",
+        "inspector": "本轮未操作 Creator Inspector。"
       }
     }
   ]

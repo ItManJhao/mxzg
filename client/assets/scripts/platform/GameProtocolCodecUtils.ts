@@ -65,6 +65,7 @@ const payloads = [
     "heroJewelChangeRequest", "heroJewelChangeReceipt",
     "heroGodEquipmentChangeRequest", "heroGodEquipmentChangeReceipt",
     "heroGodEquipmentDrawRequest", "heroGodEquipmentDrawReceipt",
+    "heroArtifactChangeRequest", "heroArtifactChangeReceipt", "godEquipmentShopBuyRequest", "godEquipmentShopBuyReceipt",
     "roleName", "roleImageChange", "roleRename", "roleTitles", "roleImages", "heroSummonRequest", "heroSummonReceipt",
     "roleDecorations", "roleDecorationId", "rolePeerageDisplay",
     "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
@@ -137,6 +138,12 @@ export class GameProtocolCodecUtils {
         }
         if (frame.kind === "request" && frame.name === Protocol.HERO_GOD_EQUIPMENT_DRAW) {
             return "heroGodEquipmentDrawRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_ARTIFACT_CHANGE) {
+            return "heroArtifactChangeRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY) {
+            return "godEquipmentShopBuyRequest";
         }
         if (frame.kind === "request" && frame.name === Protocol.HERO_EQUIPMENT_CHANGE) {
             return "heroEquipmentChangeRequest";
@@ -225,6 +232,8 @@ export class GameProtocolCodecUtils {
                 case Protocol.HERO_JEWEL_CHANGE: return "heroJewelChangeReceipt";
                 case Protocol.HERO_GOD_EQUIPMENT_CHANGE: return "heroGodEquipmentChangeReceipt";
                 case Protocol.HERO_GOD_EQUIPMENT_DRAW: return "heroGodEquipmentDrawReceipt";
+                case Protocol.HERO_ARTIFACT_CHANGE: return "heroArtifactChangeReceipt";
+                case Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY: return "godEquipmentShopBuyReceipt";
                 case Protocol.HERO_EQUIPMENT_CHANGE: return "heroEquipmentChangeReceipt";
                 case Protocol.MARKET_LIST: return "marketState";
                 case Protocol.MARKET_BUY:
@@ -792,7 +801,8 @@ export class GameProtocolCodecUtils {
     private static validateHeroGrowth(frame: GameFrame): void {
         const name = frame.name;
         if (name !== Protocol.HERO_STAR_UPGRADE && name !== Protocol.HERO_JEWEL_CHANGE
-            && name !== Protocol.HERO_GOD_EQUIPMENT_CHANGE && name !== Protocol.HERO_GOD_EQUIPMENT_DRAW) {
+            && name !== Protocol.HERO_GOD_EQUIPMENT_CHANGE && name !== Protocol.HERO_GOD_EQUIPMENT_DRAW
+            && name !== Protocol.HERO_ARTIFACT_CHANGE && name !== Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY) {
             return;
         }
         const invalid = () => new Error("英雄培养协议内容无效");
@@ -866,6 +876,39 @@ export class GameProtocolCodecUtils {
                         : !integer(body.diamondsPaid) || !this.validGrowthAmounts(body.rewards, "templateId"))) {
                     throw invalid();
                 }
+                return;
+            case Protocol.HERO_GOD_EQUIPMENT_SHOP_BUY:
+                if (!integer(body.productId, 1, 0x7fffffff) || !integer(body.count, 1, 0x7fffffff)
+                    || !integer(body.resetAt, 1) || (!request && !integer(body.purchased, 0, 0x7fffffff))) {
+                    throw invalid();
+                }
+                return;
+            case Protocol.HERO_ARTIFACT_CHANGE:
+                if (!this.isUuid(body.heroId) || !integer(body.slot, 1, 2)
+                    || !["ACTIVATE", "EQUIP", "UNEQUIP", "UPGRADE", "TRANSFORM"].includes(String(body.action))
+                    || (body.expectedInstanceId !== undefined && !this.isUuid(body.expectedInstanceId))) {
+                    throw invalid();
+                }
+                if (!request) {
+                    if (!this.isUuid(body.instanceId) || !integer(body.templateId, 1, 0x7fffffff)) {
+                        throw invalid();
+                    }
+                    return;
+                }
+                if ((body.action !== "ACTIVATE" && !this.isUuid(body.instanceId))
+                    || (body.instanceId !== undefined && !this.isUuid(body.instanceId))
+                    || (body.targetTemplateId !== undefined && !integer(body.targetTemplateId, 1, 0x7fffffff))) {
+                    throw invalid();
+                }
+                for (const field of ["materialInstanceIds", "materialHeroIds", "replacementItemIds"]) {
+                    const values = body[field];
+                    if (values !== undefined && (!Array.isArray(values) || values.length > 12
+                        || !values.every(value => field === "replacementItemIds"
+                            ? integer(value, 1, 0x7fffffff) : this.isUuid(value)))) {
+                        throw invalid();
+                    }
+                }
+                return;
         }
     }
 
