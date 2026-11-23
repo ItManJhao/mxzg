@@ -8,6 +8,10 @@ import { HeroLevelEvent } from "../assets/scripts/features/hero/utils/HeroLevelE
 import { ResourceAssetsUtils } from "../assets/scripts/framework/assets/ResourceAssetsUtils";
 import { HeroSkillView } from "../assets/scripts/features/hero/ui/HeroSkillView";
 import { HeroRosterUtils } from "../assets/scripts/features/hero/utils/HeroRosterUtils";
+import { HeroGrowthDisplayUtils } from "../assets/scripts/features/hero/utils/HeroGrowthDisplayUtils";
+import { HeroStarUtils } from "../assets/scripts/features/hero/utils/HeroStarUtils";
+import { HeroJewelUtils } from "../assets/scripts/features/hero/utils/HeroJewelUtils";
+import { HeroPortraitUtils } from "../assets/scripts/features/hero/utils/HeroPortraitUtils";
 import { Protocol } from "../assets/scripts/platform/Protocol";
 import { SuperScroll } from "../assets/scripts/framework/ui/SuperScroll";
 import { SuperContent } from "../assets/scripts/framework/ui/SuperContent";
@@ -647,10 +651,24 @@ async function checkReadonlyInfo(): Promise<void> {
    assert(button?.__type__ === "cc.Button" && button._interactable === false && data[idOf(button.node)]?._name === name,
      `${name} 等待当前名册或装备状态再启用`);
  }
- const initiallyAvailable = ["btn_back", "OrdinaryUpgradeButton", "AttributeDetailsButton",
-   "SkillIcon1", "SkillIcon2", "SkillIcon3", "SkillIcon4"];
+ const initiallyAvailable = ["btn_back", "OrdinaryUpgradeButton", "AttributeDetailsButton", "HeroSettingsButton",
+   "SkillIcon1", "SkillIcon2", "SkillIcon3", "SkillIcon4", "CultivationTab", "AscensionTab", "GemTab",
+   "DivineEquipmentTab", "RuneLevelSlot", "RuneStarSlot"];
  assert(activeButtons.length === initiallyAvailable.length && initiallyAvailable.every(name => activeButtons.includes(name)),
-   "详情默认开放返回、普通升级、属性明细和四个技能说明入口");
+   "详情只绑定已经实现的操作按钮和只读页签/门槛入口");
+ const extraBindings = { growthTabs: 4, growthTabLabels: 4, growthTabSelected: 4, lockedSlots: 2,
+   lockLabels: 2, stageMarks: 6, skillBadges: 4, skillBadgeLabels: 4, portraitBackdrop: 2 };
+ for (const [field, length] of Object.entries(extraBindings)) {
+   assert(detail?.[field]?.length === length, `英雄详情 Prefab 绑定缺失：${field}`);
+ }
+ const tabNodes = detail?.growthTabs.map((ref: { __id__: number }) => data[idOf(data[ref.__id__].node)]);
+ const tabRow = data[idOf(tabNodes[0]._parent)];
+ assert(tabRow?._name === "GrowthTabRow" && tabNodes.every((node: PrefabObj) => data[idOf(node._parent)] === tabRow)
+   && tabRow._components.some((ref: { __id__: number }) => data[ref.__id__].__type__ === "cc.Layout"),
+   "隐藏不可达页签后由同一横向 Layout 自动收拢");
+ const portrait = data[idOf(detail?.portraitImage)];
+ assert(portrait?.__type__ === "cc.Sprite" && portrait._isTrimmedMode === false,
+   "正式服立绘保留透明边及比例，不使用自动裁剪坐标");
  const upgradeBindings = {
      upgradeButton: ["cc.Button", "OrdinaryUpgradeButton"],
      upgradeLabel: ["cc.Label", "UpgradeActionLabel"],
@@ -667,6 +685,23 @@ async function checkReadonlyInfo(): Promise<void> {
  }
  assert(data[idOf(detail?.upgradeCosts)]?._name === "UpgradeCosts"
      && data[idOf(detail?.upgradeDot)]?._name === "UpgradeAvailableDot", "消耗区域与旧红点由 Prefab 布置");
+}
+
+/** 从已安装的真实表核对升星配方、可达符文门槛和正式服例图的立绘。 */
+function checkGrowthReference(): void {
+    const hero = { id: "fixture", templateId: 10105008, level: 1, star: 5, stage: 0 };
+    const strong = HeroGrowthDisplayUtils.forHero(hero);
+    assert(strong.tabs.every(Boolean) && strong.runeLevels.join() === "100,7", "可升星英雄显示其可达培养页和符文槽");
+    const weak = HeroGrowthDisplayUtils.forHero({ ...hero, templateId: 10101001, star: 1 });
+    assert(weak.tabs.join() === "true,false,false,true" && weak.runeLevels.every(gate => gate === null),
+        "无升星配方的低星英雄不保留不可达符文或宝石入口");
+    assert(HeroStarUtils.recipe(hero)?.rows[0].label.includes("毁灭之烬 ×1"), "升星材料实际使用指定英雄配方");
+    assert([1, 2, 3].map(slot => HeroJewelUtils.requiredStar(slot)).join() === "8,8,9",
+        "展示正式服三档宝石槽门槛");
+    const portrait = HeroPortraitUtils.find(hero.templateId, hero.star);
+    assert(portrait?.path === "hero/portraits/10105008_01" && portrait.width > 0 && portrait.height > 0,
+        "已收录当前正式服外观和布局尺寸");
+    assert(HeroPortraitUtils.find(99999999, 1) === null, "没有立绘的角色可直接回退 Spine");
 }
 
 /** 用真实详情生命周期验证升级报价、在途按钮、成功光效和释放范围。 */
@@ -933,6 +968,7 @@ async function checkDirectTemplateLookup(): Promise<void> {
 async function main() {
   await ConfigFixtureUtils.installReal();
   await checkDirectTemplateLookup();
+  checkGrowthReference();
   await checkDefaultRoster();
   await checkReadonlyInfo();
   await checkLevelPresentation();

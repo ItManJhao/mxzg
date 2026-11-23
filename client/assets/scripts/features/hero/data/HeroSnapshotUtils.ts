@@ -1,5 +1,6 @@
 /** 英雄名册 DTO 校验：供统一 Protobuf 快照使用；供唯一Model提交使用，不提供网络查询或持有会话。 */
 import { HeroEquipmentUtils, HeroEquipment } from "../utils/HeroEquipmentUtils";
+import { HeroJewelUtils } from "../utils/HeroJewelUtils";
 /** 服务端英雄实例 ID 保持字符串 UUID，templateId 为独立的英雄类型配置键。 */
 export interface OwnedHero {
     /** 持久进化分支/等级及已核验技能；undefined未同步，0/0明确未进化。 */
@@ -32,6 +33,10 @@ export interface OwnedHero {
     /** 普通装备完整状态；undefined 未同步，items 空数组明确未穿戴。 */
     readonly equipment?: Readonly<{
         items: readonly HeroEquipment[];
+    }>;
+    /** 当前英雄镶嵌的宝石槽；旧快照缺失时保持未同步。 */
+    readonly gems?: Readonly<{
+        items: ReturnType<typeof HeroJewelUtils.read>;
     }>;
     /** 服务端当前强化阶段；缺失表示未同步。 */
     readonly stage?: number;
@@ -87,8 +92,15 @@ export class HeroSnapshotUtils {
             }
             equipment = Object.freeze({ items: HeroEquipmentUtils.readHeroEquipment(state.items) });
         }
+        const gemState = row.gems as { items?: unknown } | undefined;
+        const gems = gemState === undefined ? undefined : Object.freeze({ items: HeroJewelUtils.read(gemState?.items) });
         const panelStats = HeroSnapshotUtils.readPanelStats(row.panelStats);
-        return Object.freeze({ evolution: HeroSnapshotUtils.readEvolution(row.evolution), panelStats, equipment, stage: row.stage as number | undefined, baseStats, deployed: row.deployed as boolean | undefined, locked: row.locked as boolean | undefined, id: row.id, templateId: row.templateId, level: row.level, star: row.star });
+        return Object.freeze({
+            evolution: HeroSnapshotUtils.readEvolution(row.evolution),
+            panelStats, equipment, gems, baseStats, stage: row.stage as number | undefined,
+            deployed: row.deployed as boolean | undefined, locked: row.locked as boolean | undefined,
+            id: row.id, templateId: row.templateId, level: row.level, star: row.star,
+        });
     }
 
     /** 基础等级、星级和配置 ID 必须是安全的正整数。 */

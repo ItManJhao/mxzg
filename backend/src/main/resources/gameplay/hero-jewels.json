@@ -1,0 +1,704 @@
+{
+  "slotStars": [
+    {
+      "slot": 1,
+      "star": 8
+    },
+    {
+      "slot": 2,
+      "star": 8
+    },
+    {
+      "slot": 3,
+      "star": 9
+    }
+  ],
+  "jewels": [
+    {
+      "itemId": 1011001,
+      "slot": 1,
+      "star": 1,
+      "rarity": 1,
+      "recipe": [],
+      "attributes": [
+        {
+          "attr": 220,
+          "value": 66
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1011002,
+      "slot": 1,
+      "star": 2,
+      "rarity": 2,
+      "recipe": [
+        {
+          "itemId": 1011001,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 220,
+          "value": 166
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1011003,
+      "slot": 1,
+      "star": 3,
+      "rarity": 3,
+      "recipe": [
+        {
+          "itemId": 1011002,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 220,
+          "value": 416
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1011004,
+      "slot": 1,
+      "star": 4,
+      "rarity": 3,
+      "recipe": [
+        {
+          "itemId": 1011003,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 220,
+          "value": 1040
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1011005,
+      "slot": 1,
+      "star": 5,
+      "rarity": 3,
+      "recipe": [
+        {
+          "itemId": 1011004,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 220,
+          "value": 2080
+        },
+        {
+          "attr": 201,
+          "value": 200
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1011006,
+      "slot": 1,
+      "star": 6,
+      "rarity": 4,
+      "recipe": [
+        {
+          "itemId": 1011005,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 220,
+          "value": 4160
+        },
+        {
+          "attr": 201,
+          "value": 250
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1011007,
+      "slot": 1,
+      "star": 7,
+      "rarity": 4,
+      "recipe": [
+        {
+          "itemId": 1011006,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 220,
+          "value": 8320
+        },
+        {
+          "attr": 201,
+          "value": 300
+        },
+        {
+          "attr": 200,
+          "value": 1000
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1011008,
+      "slot": 1,
+      "star": 8,
+      "rarity": 4,
+      "recipe": [
+        {
+          "itemId": 1011007,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 220,
+          "value": 16640
+        },
+        {
+          "attr": 201,
+          "value": 350
+        },
+        {
+          "attr": 200,
+          "value": 1500
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1011009,
+      "slot": 1,
+      "star": 9,
+      "rarity": 5,
+      "recipe": [
+        {
+          "itemId": 1011008,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 220,
+          "value": 33280
+        },
+        {
+          "attr": 201,
+          "value": 400
+        },
+        {
+          "attr": 200,
+          "value": 2000
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1021001,
+      "slot": 2,
+      "star": 1,
+      "rarity": 1,
+      "recipe": [],
+      "attributes": [
+        {
+          "attr": 223,
+          "value": 400
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1021002,
+      "slot": 2,
+      "star": 2,
+      "rarity": 2,
+      "recipe": [
+        {
+          "itemId": 1021001,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 223,
+          "value": 1000
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1021003,
+      "slot": 2,
+      "star": 3,
+      "rarity": 3,
+      "recipe": [
+        {
+          "itemId": 1021002,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 223,
+          "value": 2500
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1021004,
+      "slot": 2,
+      "star": 4,
+      "rarity": 3,
+      "recipe": [
+        {
+          "itemId": 1021003,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 223,
+          "value": 6240
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1021005,
+      "slot": 2,
+      "star": 5,
+      "rarity": 3,
+      "recipe": [
+        {
+          "itemId": 1021004,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 223,
+          "value": 12480
+        },
+        {
+          "attr": 102,
+          "value": 200
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1021006,
+      "slot": 2,
+      "star": 6,
+      "rarity": 4,
+      "recipe": [
+        {
+          "itemId": 1021005,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 223,
+          "value": 24960
+        },
+        {
+          "attr": 102,
+          "value": 250
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1021007,
+      "slot": 2,
+      "star": 7,
+      "rarity": 4,
+      "recipe": [
+        {
+          "itemId": 1021006,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 223,
+          "value": 49920
+        },
+        {
+          "attr": 102,
+          "value": 300
+        },
+        {
+          "attr": 200,
+          "value": 1000
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1021008,
+      "slot": 2,
+      "star": 8,
+      "rarity": 4,
+      "recipe": [
+        {
+          "itemId": 1021007,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 223,
+          "value": 99840
+        },
+        {
+          "attr": 102,
+          "value": 350
+        },
+        {
+          "attr": 200,
+          "value": 1500
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1021009,
+      "slot": 2,
+      "star": 9,
+      "rarity": 5,
+      "recipe": [
+        {
+          "itemId": 1021008,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 223,
+          "value": 199680
+        },
+        {
+          "attr": 102,
+          "value": 400
+        },
+        {
+          "attr": 200,
+          "value": 2000
+        }
+      ],
+      "fighting": []
+    },
+    {
+      "itemId": 1031001,
+      "slot": 3,
+      "star": 1,
+      "rarity": 1,
+      "recipe": [],
+      "attributes": [
+        {
+          "attr": 101,
+          "value": 10
+        }
+      ],
+      "fighting": [
+        {
+          "attr": 130,
+          "value": 200
+        }
+      ]
+    },
+    {
+      "itemId": 1031002,
+      "slot": 3,
+      "star": 2,
+      "rarity": 2,
+      "recipe": [
+        {
+          "itemId": 1031001,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 101,
+          "value": 13
+        }
+      ],
+      "fighting": [
+        {
+          "attr": 130,
+          "value": 500
+        }
+      ]
+    },
+    {
+      "itemId": 1031003,
+      "slot": 3,
+      "star": 3,
+      "rarity": 3,
+      "recipe": [
+        {
+          "itemId": 1031002,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 101,
+          "value": 16
+        }
+      ],
+      "fighting": [
+        {
+          "attr": 130,
+          "value": 1250
+        }
+      ]
+    },
+    {
+      "itemId": 1031004,
+      "slot": 3,
+      "star": 4,
+      "rarity": 3,
+      "recipe": [
+        {
+          "itemId": 1031003,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 101,
+          "value": 20
+        }
+      ],
+      "fighting": [
+        {
+          "attr": 130,
+          "value": 3120
+        }
+      ]
+    },
+    {
+      "itemId": 1031005,
+      "slot": 3,
+      "star": 5,
+      "rarity": 3,
+      "recipe": [
+        {
+          "itemId": 1031004,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 101,
+          "value": 26
+        },
+        {
+          "attr": 204,
+          "value": 200
+        }
+      ],
+      "fighting": [
+        {
+          "attr": 130,
+          "value": 6240
+        }
+      ]
+    },
+    {
+      "itemId": 1031006,
+      "slot": 3,
+      "star": 6,
+      "rarity": 4,
+      "recipe": [
+        {
+          "itemId": 1031005,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 101,
+          "value": 33
+        },
+        {
+          "attr": 204,
+          "value": 250
+        }
+      ],
+      "fighting": [
+        {
+          "attr": 130,
+          "value": 12480
+        }
+      ]
+    },
+    {
+      "itemId": 1031007,
+      "slot": 3,
+      "star": 7,
+      "rarity": 4,
+      "recipe": [
+        {
+          "itemId": 1031006,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 101,
+          "value": 42
+        },
+        {
+          "attr": 204,
+          "value": 300
+        },
+        {
+          "attr": 200,
+          "value": 1000
+        }
+      ],
+      "fighting": [
+        {
+          "attr": 130,
+          "value": 24960
+        }
+      ]
+    },
+    {
+      "itemId": 1031008,
+      "slot": 3,
+      "star": 8,
+      "rarity": 4,
+      "recipe": [
+        {
+          "itemId": 1031007,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 101,
+          "value": 54
+        },
+        {
+          "attr": 204,
+          "value": 350
+        },
+        {
+          "attr": 200,
+          "value": 1500
+        }
+      ],
+      "fighting": [
+        {
+          "attr": 130,
+          "value": 49920
+        }
+      ]
+    },
+    {
+      "itemId": 1031009,
+      "slot": 3,
+      "star": 9,
+      "rarity": 5,
+      "recipe": [
+        {
+          "itemId": 1031008,
+          "quantity": 3
+        }
+      ],
+      "attributes": [
+        {
+          "attr": 101,
+          "value": 70
+        },
+        {
+          "attr": 204,
+          "value": 400
+        },
+        {
+          "attr": 200,
+          "value": 2000
+        }
+      ],
+      "fighting": [
+        {
+          "attr": 130,
+          "value": 99840
+        }
+      ]
+    }
+  ],
+  "sets": [
+    {
+      "star": 5,
+      "attributes": [
+        {
+          "attr": 120,
+          "value": 10
+        }
+      ]
+    },
+    {
+      "star": 6,
+      "attributes": [
+        {
+          "attr": 120,
+          "value": 20
+        }
+      ]
+    },
+    {
+      "star": 7,
+      "attributes": [
+        {
+          "attr": 120,
+          "value": 30
+        }
+      ]
+    },
+    {
+      "star": 8,
+      "attributes": [
+        {
+          "attr": 120,
+          "value": 40
+        }
+      ]
+    },
+    {
+      "star": 9,
+      "attributes": [
+        {
+          "attr": 120,
+          "value": 50
+        }
+      ]
+    }
+  ]
+}

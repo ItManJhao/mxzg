@@ -44,6 +44,7 @@ const paths = new Set<string>([
     "bundles/module/hero/prefabs/HeroAttributesView",
     "bundles/module/hero/prefabs/HeroEquipmentPickerRow",
     "bundles/module/hero/prefabs/HeroEquipmentPickerView",
+    "bundles/module/hero/prefabs/HeroGrowthPickerView",
     "bundles/module/hero/prefabs/HeroIconCellView",
     "bundles/module/hero/prefabs/HeroInfoView",
     "bundles/module/hero/prefabs/HeroListView",

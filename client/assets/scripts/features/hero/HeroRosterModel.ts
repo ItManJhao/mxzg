@@ -3,6 +3,7 @@ import { HeroSnapshotUtils, type OwnedHero, type HeroRosterInfo, type MainFormat
 import { FirstSummonData, type SummonDetails } from "./data/FirstSummonData";
 import { BaseModel } from "../../framework/BaseModel";
 import { ServerClock } from "../../core/ServerClock";
+import { HeroGodEquipmentUtils, type HeroGodEquipmentState } from "./utils/HeroGodEquipmentUtils";
 
 export interface HeroRosterState {
     readonly status: "idle" | "loading" | "ready" | "error";
@@ -16,6 +17,8 @@ export interface HeroRosterState {
     readonly normalFreeAtSeconds?: number | null;
     /** 服务器提供的高级冷却、积分与祈愿资格。 */
     readonly summonDetails?: SummonDetails | null;
+    /** 当前账号全部独立神装及解锁门槛，与钱包和名册同版本。 */
+    readonly godEquipment?: HeroGodEquipmentState;
 }
 
 export class HeroRosterModel extends BaseModel {
@@ -43,9 +46,10 @@ export class HeroRosterModel extends BaseModel {
         return now === null ? null : Math.max(0, freeAt - now);
     }
 
-    /** 从同一份资产快照读取英雄、容量、阵容及召唤资格；整包预检与模块提交使用相同规则。 */
+    /** 从同一份资产快照读取英雄、阵容、召唤和神装；预检与模块提交使用相同规则。 */
     public static readSnapshot(state: Record<string, unknown>): HeroRosterState {
         const heroes = HeroSnapshotUtils.readOwnedHeroes(state.heroes);
+        const godEquipment = HeroGodEquipmentUtils.read(state.godEquipment, new Set(heroes.map(hero => hero.id)));
         return {
             status: "ready",
             heroes,
@@ -53,6 +57,7 @@ export class HeroRosterModel extends BaseModel {
             mainFormation: HeroSnapshotUtils.readMainFormation(state.mainFormation, heroes),
             normalFreeAtSeconds: FirstSummonData.readFreeAt(state.heroSummon),
             summonDetails: FirstSummonData.readDetails(state.heroSummon),
+            godEquipment,
             error: "",
         };
     }

@@ -1,6 +1,6 @@
 /**
- * 英雄详情页读取名册与背包。选装、卸下和升级分别交给对应控制器，显示服务端属性。
- * Prefab 保存界面、普通装备槽和音画挂点，关闭释放监听、立绘和特效。
+ * 英雄详情页读取名册与背包，显示正式服立绘、培养条件和服务端属性。
+ * Prefab 保存培养页签、装备槽和音画挂点。穿脱和培养交给各控制器，关页释放立绘和特效。
  */
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import type { AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
@@ -13,6 +13,7 @@ import { UiKitUtils } from "../../../framework/ui/UiKitUtils";
 import { EventDispatcher } from "../../../framework/EventDispatcher";
 import { HeroRosterEvent } from "../utils/HeroRosterEvent";
 import { HeroRosterModel } from "../HeroRosterModel";
+import { HeroRosterController } from "../HeroRosterController";
 import type { OwnedHero } from "../data/HeroSnapshotUtils";
 import { HeroEquipmentController } from "../HeroEquipmentController";
 import { HeroLevelController } from "../HeroLevelController";
@@ -22,20 +23,33 @@ import { HeroAttributesView } from "./HeroAttributesView";
 import { HeroEquipmentPickerView } from "./HeroEquipmentPickerView";
 import { HeroSkillUtils } from "../utils/HeroSkillUtils";
 import { HeroEquipmentUtils } from "../utils/HeroEquipmentUtils";
+import { HeroGrowthDisplayUtils } from "../utils/HeroGrowthDisplayUtils";
+import { HeroPortraitUtils } from "../utils/HeroPortraitUtils";
+import { HeroLevelQuoteUtils } from "../utils/HeroLevelQuoteUtils";
 import { ResManager } from "../../../framework/assets/ResManager";
 import { HeroCatalog } from "../utils/HeroCatalog";
 import { GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
-import { _decorator, AudioSource, Button, Color, Label, Node, Sprite, SpriteFrame, UIOpacity } from "cc";
+import { _decorator, AudioSource, Button, Color, Label, Node, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec3 } from "cc";
 import { AudioPreferences } from "../../../core/AudioPreferences";
 import { GameLog } from "../../../core/GameLog";
-interface HeroPortraitData { templateId: number; name: string; level: number; }
 import { BattleSpineService } from "../../battle/ui/BattleSpineService";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
 import { BagModel } from "../../bag/BagModel";
 import { GameRedDotKey } from "../../common/utils/GameRedDotKey";
 import { BagEvent } from "../../bag/utils/BagEvent";
 import { EquipmentInfoView } from "../../bag/ui/EquipmentInfoView";
+import { ConfirmView } from "../../common/ui/ConfirmView";
+import { HeroGrowthPanel } from "./HeroGrowthPanel";
+
+/** 名称与形态来自当前模板和权威名册，用于切换同一个立绘挂点。 */
+interface HeroPortraitData {
+    readonly templateId: number;
+    readonly name: string;
+    readonly level: number;
+    readonly star?: number;
+    readonly evolution?: OwnedHero["evolution"];
+}
 
 /** 当前英雄及进入详情时的筛选顺序，持久数据仍由名册读取。 */
 interface HeroInfoArgs {
@@ -47,6 +61,8 @@ const { ccclass, property } = _decorator;
 /** 旧 effect.lua 7 号普通升级特效的帧间隔与淡入时长，单位为秒。 */
 const UPGRADE_FRAME_SECONDS = 0.06;
 const UPGRADE_FADE_SECONDS = 0.1;
+/** 正式服以普通装备内沿为立绘基准，人物允许向装备方向重叠 16 设计单位。 */
+const PORTRAIT_SUBJECT_WIDTH = 444;
 
 /**
  * 详情布局由 Prefab 绑定，使用同一英雄实例打开装备、技能与属性的子窗口。
@@ -63,6 +79,10 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
     /** 立绘挂载点，由预制体绑定。 */
     @property(Node)
     portrait: Node | null = null;
+    /** 模板有正式服全身图时显示，静态位置由预制体决定。 */
+    @property(Sprite) portraitImage: Sprite | null = null;
+    /** Q 版底座和光圈，在全身图就绪后隐藏。 */
+    @property([Node]) portraitBackdrop: Node[] = [];
 
     /** 英雄名称标题，按配置刷新。 */
     @property(Label)
@@ -82,6 +102,10 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
     @property([Label]) skillNames: Label[] = [];
     /** 四个技能等级或强化解锁条件。 */
     @property([Label]) skillLevels: Label[] = [];
+    /** 已解锁技能显示图标角标，锁定技能只显示强化条件。 */
+    @property([Node]) skillBadges: Node[] = [];
+    /** 按服务端阶星和旧技能配置得到的等级数字。 */
+    @property([Label]) skillBadgeLabels: Label[] = [];
     /** 四个只读说明入口，不执行养成。 */
     @property([Button]) skillButtons: Button[] = [];
     /** 图标异步绘制代次；每次刷新递增，关闭作废，防止旧图片覆盖新实例。 */
@@ -108,10 +132,14 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
     @property(Button) previousHeroButton: Button | null = null;
     /** 最后一名英雄不显示下一名按钮。 */
     @property(Button) nextHeroButton: Button | null = null;
-    /** 低阶英雄标题行的金色星标。 */
+    /** 十星之前标题行里的金色或紫色星标。 */
     @property([Node]) heroStars: Node[] = [];
-    /** 超出单行星标时显示实际星数。 */
-    @property(Label) heroStarCount: Label | null = null;
+    /** 十星起显示的翼徽，觉醒星级改用独立徽记。 */
+    @property(Node) heroRankBadge: Node | null = null;
+    /** 十星翼徽中代表新增星数的原版数字图。 */
+    @property([Node]) heroRankDigits: Node[] = [];
+    /** 十四星时替换普通翼徽的原版觉醒图。 */
+    @property(Node) heroAwakenedBadge: Node | null = null;
     /** 与模板职业对应的图标。 */
     @property(Node) professionIcon: Node | null = null;
     /** 用同源语言表显示英雄职业。 */
@@ -120,7 +148,29 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
     @property(Label) heroPowerLabel: Label | null = null;
     /** 展开服务器已同步的属性明细。 */
     @property(Button) attributeButton: Button | null = null;
-    /** 提交当前英雄实例的普通升级。 */
+    /** 培养、升星、宝石、神装按钮，绑定顺序与原页一致。 */
+    @property([Button]) growthTabs: Button[] = [];
+    /** 各培养页签的标题，使用项目简体中文文案。 */
+    @property([Label]) growthTabLabels: Label[] = [];
+    /** 当前页签的亮色贴图，与按钮一一对应。 */
+    @property([Node]) growthTabSelected: Node[] = [];
+    /** 日服默认培养页，包含等级、强化、费用、属性和技能。 */
+    @property(Node) growthPanel: Node | null = null;
+    /** 其他培养页签共用的内容区。 */
+    @property(Node) featurePanel: Node | null = null;
+    /** 子面板处理培养选择，详情只交付当前英雄与页签。 */
+    @property(HeroGrowthPanel) growthDetails: HeroGrowthPanel | null = null;
+    /** 阶段图标未同步时，此处显示同步状态。 */
+    @property(Label) stageLabel: Label | null = null;
+    /** 原版六个强化印记，只显示当前星级可见的槽位。 */
+    @property([Sprite]) stageMarks: Sprite[] = [];
+    /** 打开当前英雄的独立设置。 */
+    @property(Button) settingsButton: Button | null = null;
+    /** 普通装备下面的两个符文入口，按英雄可达等级和星级显示。 */
+    @property([Button]) lockedSlots: Button[] = [];
+    /** 两个符文入口的等级或星级门槛。 */
+    @property([Label]) lockLabels: Label[] = [];
+    /** 提交当前英雄实例的普通升级或到阶上限后的强化。 */
     @property(Button) upgradeButton: Button | null = null;
     /** 当前可升的级数或请求等待提示。 */
     @property(Label) upgradeLabel: Label | null = null;
@@ -130,8 +180,10 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
     @property(Node) upgradeCosts: Node | null = null;
     /** 当前升级金币消耗，余额不足时按旧规则标红。 */
     @property(Label) upgradeGold: Label | null = null;
-    /** 当前升级英雄经验消耗，余额不足时按旧规则标红。 */
+    /** 普通升级消耗英雄经验，强化时显示突破石数量。 */
     @property(Label) upgradeExperience: Label | null = null;
+    /** 随当前培养动作切换英雄经验和突破石的图标。 */
+    @property(Node) upgradeMaterialIcon: Node | null = null;
     /** 等级上限或配置未同步时取代升级栏。 */
     @property(Label) upgradeStatus: Label | null = null;
     /** 旧普通升级单次光效，静态挂在立绘上方。 */
@@ -142,12 +194,18 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
     private skillStops: Array<() => void> = [];
     /** 本次打开的实例 ID；关闭清空，不能误用模板 ID 查找。 */
     private selectedId = "";
+    /** 打开及翻页时回到培养，切到其他页签只影响详情自身。 */
+    private growthTab = 0;
     /** 页面关闭后为true，阻止迟到的展示刷新和导航；账号变化由应用统一关闭页面。 */
     private closed = true;
     /** 页面持有的动态立绘节点，切换或关闭时销毁。 */
     private spineNode: Node | null = null;
-    /** 已加载立绘的模板 ID，仅用于资源复用。 */
-    private heroId = 0;
+    /** 当前立绘或回退骨骼的形态键，避免资产快照刷掉正在展示的立绘。 */
+    private portraitKey = "";
+    /** 当前全身立绘的资源范围，翻页或关闭时释放并防止迟到图片覆盖。 */
+    private portraitScope: AssetScope | null = null;
+    /** 全身立绘的原版轻微呼吸，切换英雄时停止。 */
+    private portraitMotion: Tween<Node> | null = null;
     /** 此次动画的资源持有，关闭或下一轮动画开始时释放。 */
     private upgradeEffectScope: AssetScope | null = null;
     /** 已准备的有序升级帧；播放结束后清空。 */
@@ -169,6 +227,7 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         this.stopUpgradeEffect();
         this.closed = false;
         this.selectedId = args.heroId;
+        this.growthTab = 0;
         this.backButton?.node.on(Button.EventType.CLICK, this.goBack, this);
         this.upgradeButton?.node.on(Button.EventType.CLICK, this.upgrade, this);
         EventDispatcher.instance.on(HeroRosterEvent.Updated, this, this.refresh);
@@ -180,6 +239,9 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         this.listenDetail(this.equipAllButton, () => HeroEquipmentController.instance.changeAll(this.selectedId, true));
         this.listenDetail(this.unequipAllButton, () => HeroEquipmentController.instance.changeAll(this.selectedId, false));
         this.listenDetail(this.attributeButton, () => this.openAttributes());
+        this.listenDetail(this.settingsButton, () => this.openSettings());
+        this.growthTabs.forEach((button, index) => this.listenDetail(button, () => this.selectGrowthTab(index)));
+        this.lockedSlots.forEach((button, index) => this.listenDetail(button, () => this.showRuneHint(index)));
         this.equipmentButtons.forEach((button, index) => this.listenDetail(button, () => this.openEquipment(index + 1)));
         this.skillButtons.forEach((button, slot) => {
             const click = () => {
@@ -221,6 +283,7 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         if (!this.closed && heroId && HeroRosterModel.instance.snapshot.heroes.some(hero => hero.id === heroId)) {
             this.stopUpgradeEffect();
             this.selectedId = heroId;
+            this.growthTab = 0;
             this.refresh();
         }
     }
@@ -229,6 +292,74 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
     private openAttributes(): void {
         void UIManager.instance.openChild(this, HeroAttributesView, { heroId: this.selectedId })
             .catch(() => { /* UIManager 报告开窗失败。 */ });
+    }
+
+    /** 切换已对当前英雄显示的页签，不发请求或修改资产。 */
+    private selectGrowthTab(index: number): void {
+        const hero = this.currentHero();
+        if (hero && this.growthTabs[index].node.active) {
+            this.growthTab = index;
+            this.refreshGrowthTabs(hero);
+        }
+    }
+
+    /** 从当前快照读取锁定状态，将确认后的设值交给名册控制器。 */
+    private openSettings(): void {
+        const hero = this.currentHero();
+        if (hero) {
+            const locked = hero.locked;
+            void UIManager.instance.openChild(this, ConfirmView, {
+                title: "英雄设置",
+                message: locked === undefined ? "锁定状态待同步" : locked ? "当前英雄已锁定" : "锁定后可保护此英雄",
+                confirmText: locked === undefined ? "确定" : locked ? "解锁" : "锁定",
+                showCancel: locked !== undefined,
+                onConfirm: () => {
+                    if (locked !== undefined && !this.closed && this.selectedId === hero.id) {
+                        HeroRosterController.instance.setLocked(hero.id, !locked);
+                    }
+                },
+            }).catch(() => { /* UIManager 报告开窗失败。 */ });
+        }
+    }
+
+    /** 未达门槛时提示旧解锁条件，已达门槛明确当前符文开放状态。 */
+    private showRuneHint(index: number): void {
+        const hero = this.currentHero();
+        if (!hero) {
+            return;
+        }
+        const required = HeroGrowthDisplayUtils.forHero(hero).runeLevels[index];
+        if (required !== null) {
+            const current = index === 0 ? hero.level : hero.star;
+            UIManager.instance.toast(current >= required ? "符文佩戴暂未开放" : `英雄达到 ${required}${index === 0 ? " 级" : " 星"}解锁`);
+        }
+    }
+
+    /** 按当前英雄更新页签和符文槽，再填入当前页签的配置详情。 */
+    private refreshGrowthTabs(hero: OwnedHero): void {
+        if (!this.growthTabs.length) {
+            return;
+        }
+        const data = HeroGrowthDisplayUtils.forHero(hero);
+        if (!data.tabs[this.growthTab]) {
+            this.growthTab = 0;
+        }
+        this.growthTabs.forEach((button, index) => {
+            button.node.active = data.tabs[index];
+            this.growthTabLabels[index].string = HeroGrowthDisplayUtils.tabNames[index];
+            this.growthTabSelected[index].active = index === this.growthTab;
+        });
+        this.lockedSlots.forEach((button, index) => {
+            const requirement = data.runeLevels[index];
+            const reached = requirement !== null && (index === 0 ? hero.level : hero.star) >= requirement;
+            button.node.active = requirement !== null;
+            this.lockLabels[index].string = reached ? "符文" : `${requirement ?? ""}${index === 0 ? "级" : "星"}解锁`;
+        });
+        if (this.growthPanel && this.featurePanel) {
+            this.growthPanel.active = this.growthTab === 0;
+            this.featurePanel.active = this.growthTab !== 0;
+        }
+        this.growthDetails?.show(this, this.growthTab, hero);
     }
 
     /** 空槽直接选装，已穿槽沿旧版先显示换装或卸下的共享装备详情。 */
@@ -319,24 +450,67 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
                 ResManager.setSprite(this.elementIcon, icons[elem]);
             }
         }
-        this.show({ templateId: hero.templateId, name: template?.name || "未知英雄", level: hero.level });
+        this.show({ templateId: hero.templateId, name: template?.name || "未知英雄", level: hero.level,
+            star: hero.star, evolution: hero.evolution });
         const levelLimit = this.refreshUpgrade();
         if (this.summary) {
             const level = levelLimit === null ? String(hero.level) : `${hero.level}/${levelLimit}`;
-            this.summary.string = `等级：${level}    强化：${hero.stage ?? "—"}`;
+            this.summary.string = `等级：${level}`;
         }
+        this.refreshStageMarks(hero);
+        this.refreshGrowthTabs(hero);
         this.refreshHeader(hero);
         const stats = hero.panelStats?.values; const names = ["攻击", "生命", "防御", "速度"], values = stats ? [stats.atk, stats.hp, stats.def, stats.spd] : [];
         this.attributes.forEach((label, i) => { label.string = names[i] + "：" + (values[i] ?? "待同步"); });
         const version = ++this.paintVersion;
         this.refreshEquipment(hero, version);
         this.refreshEquipmentActions();
-        if (this.skillIcons.length) HeroSkillUtils.present(hero).forEach((skill, i) => {
-            const icon = this.skillIcons[i], sprite = icon?.getComponent(Sprite); if (sprite) { sprite.spriteFrame = null; sprite.grayscale = skill.id > 0 && skill.level === 0; }
-            if (icon) ResManager.setSprite(icon, [skill.icon || "hero/ui/hero-info_spr-new-9"], () => this.paintVersion === version && this.selectedId === hero.id);
-            if (this.skillNames[i]) this.skillNames[i].string = skill.name;
-            if (this.skillLevels[i]) this.skillLevels[i].string = skill.id ? HeroSkillUtils.status(skill) : "";
-            if (this.skillButtons[i]) this.skillButtons[i].interactable = skill.id > 0 && skill.available;
+        this.refreshSkills(hero, version);
+    }
+
+    /** 按旧版星级展示可见强化印记，已达到的阶级使用亮色。 */
+    private refreshStageMarks(hero: OwnedHero): void {
+        const stage = hero.stage;
+        if (this.stageLabel) {
+            this.stageLabel.string = stage === undefined ? "强化待同步" : "强化：";
+        }
+        this.stageMarks.forEach((mark, index) => {
+            mark.node.active = stage !== undefined && index < hero.star;
+            if (mark.node.active && stage !== undefined) {
+                const art = index < stage ? "hero-info_spr-quality-2" : "hero-info_spr-quality-1";
+                ResManager.setSprite(mark.node, ResManager.ui("hero", art));
+            }
+        });
+    }
+
+    /** 已学技能用原版数字角标，灰显技能显示解锁阶段且仍可查看说明。 */
+    private refreshSkills(hero: OwnedHero, version: number): void {
+        if (!this.skillIcons.length) {
+            return;
+        }
+        HeroSkillUtils.present(hero).forEach((skill, index) => {
+            const icon = this.skillIcons[index];
+            const sprite = icon?.getComponent(Sprite);
+            if (sprite) {
+                sprite.spriteFrame = null;
+                sprite.grayscale = skill.id > 0 && skill.level === 0;
+            }
+            const learned = skill.available && (skill.level ?? 0) > 0;
+            const current = () => this.paintVersion === version && this.selectedId === hero.id;
+            ResManager.setSprite(icon, skill.icon || "hero/ui/hero-info_spr-new-9", current);
+            if (this.skillNames[index]) {
+                this.skillNames[index].string = skill.name;
+            }
+            if (this.skillLevels[index]) {
+                this.skillLevels[index].string = skill.id && !learned ? HeroSkillUtils.status(skill) : "";
+            }
+            if (this.skillBadges[index]) {
+                this.skillBadges[index].active = learned;
+                this.skillBadgeLabels[index].string = learned ? String(skill.level) : "";
+            }
+            if (this.skillButtons[index]) {
+                this.skillButtons[index].interactable = skill.id > 0 && skill.available;
+            }
         });
     }
 
@@ -352,18 +526,7 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
             this.professionIcon.active = !!occupation;
             ResManager.setSprite(this.professionIcon, occupation ? ResManager.ui("hero", "hero-info_icon-occup-" + occupation) : null);
         }
-        const visibleStars = hero.star < 10 ? (hero.star > 5 ? hero.star - 5 : hero.star) : 0;
-        const starFrame = ResManager.ui("common", hero.star > 5 ? "other_star-1" : "other_star-0");
-        this.heroStars.forEach((star, index) => {
-            star.active = index < visibleStars;
-            if (star.active) {
-                ResManager.setSprite(star, starFrame);
-            }
-        });
-        if (this.heroStarCount) {
-            this.heroStarCount.node.active = hero.star >= 10;
-            this.heroStarCount.string = `${hero.star} 星`;
-        }
+        this.refreshStars(hero.star);
         if (this.heroPowerLabel) {
             const power = hero.panelStats?.power;
             this.heroPowerLabel.node.parent!.active = power !== undefined;
@@ -384,44 +547,97 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         }
     }
 
-    /** 刷新按钮、旧红点与金币/英雄经验消耗，返回标题可显示的当前上限。 */
+    /** 沿用日服星级分组，十星以上切换到对应的翼徽和数字。 */
+    private refreshStars(starLevel: number): void {
+        const appearance = HeroGrowthDisplayUtils.starAppearance(starLevel);
+        this.heroStars.forEach((star, index) => {
+            star.active = index < appearance.count;
+            if (star.active) {
+                ResManager.setSprite(star, appearance.frame);
+            }
+        });
+        if (this.heroRankBadge) {
+            this.heroRankBadge.active = appearance.badge !== null && !appearance.awakened;
+        }
+        if (this.heroAwakenedBadge) {
+            this.heroAwakenedBadge.active = appearance.awakened;
+        }
+        this.heroRankDigits.forEach((digit, index) => {
+            digit.active = appearance.badgeDigit === index + 1;
+        });
+    }
+
+    /** 普通升级和强化共用培养行，当前阶满级后展示强化费用或所缺门槛。 */
     private refreshUpgrade(): number | null {
         if (this.closed || !this.upgradeButton || !this.upgradeLabel || !this.upgradeDot || !this.upgradeCosts
             || !this.upgradeGold || !this.upgradeExperience || !this.upgradeStatus) {
             return null;
         }
-        const quote = HeroLevelController.instance.describe(this.selectedId);
-        const ready = quote.status === "ready";
+        const controller = HeroLevelController.instance;
+        const quote = controller.describe(this.selectedId);
+        const stage = quote.status === "max" ? controller.describeStage(this.selectedId) : null;
+        const advancing = stage?.status === "ready";
+        const ready = quote.status === "ready" || advancing;
         const pending = quote.status === "pending";
         this.upgradeButton.node.active = ready || pending;
         this.upgradeButton.interactable = ready;
-        this.upgradeLabel.string = pending ? "升级中…" : quote.jumpLabel ? `升${quote.levels}级` : "升级";
+        this.upgradeLabel.string = pending ? "升级中…" : advancing ? "强化" : quote.jumpLabel ? `升${quote.levels}级` : "升级";
         this.upgradeDot.active = ready && RedDotManager.instance.isVisible(GameRedDotKey.heroUpgrade(this.selectedId));
         this.upgradeCosts.active = ready;
-        this.upgradeGold.string = UiKitUtils.formatAmount(quote.gold);
-        this.upgradeGold.color = quote.goldEnough ? Color.WHITE : new Color(255, 0, 0);
-        this.upgradeExperience.string = UiKitUtils.formatAmount(quote.heroExp);
-        this.upgradeExperience.color = quote.heroExpEnough ? Color.WHITE : new Color(255, 0, 0);
+        this.upgradeGold.string = UiKitUtils.formatAmount(advancing ? stage.gold : quote.gold);
+        this.upgradeGold.color = (advancing ? stage.goldEnough : quote.goldEnough) ? Color.WHITE : new Color(255, 0, 0);
+        this.upgradeExperience.string = UiKitUtils.formatAmount(advancing ? stage.stone : quote.heroExp);
+        this.upgradeExperience.color = (advancing ? stage.stoneEnough : quote.heroExpEnough) ? Color.WHITE : new Color(255, 0, 0);
+        ResManager.setSprite(this.upgradeMaterialIcon, ResManager.item(advancing
+            ? HeroLevelQuoteUtils.STAGE_STONE_ITEM_ID : HeroLevelQuoteUtils.EXPERIENCE_ITEM_ID));
         this.upgradeStatus.node.active = !ready && !pending;
-        this.upgradeStatus.string = quote.status === "max" ? "已达当前等级上限" : "升级条件待同步";
+        this.upgradeStatus.string = stage?.status === "locked" && stage.requiredStar
+            ? `达到 ${stage.requiredStar} 星后可强化`
+            : quote.status === "max" ? "已达当前等级上限" : "培养条件待同步";
         return quote.levelLimit;
     }
 
-    /** 升级按钮把当前英雄交给控制器，界面从升级事件刷新显示。 */
+    /** 当前阶已满时先确认强化费用，其余直接交给普通升级。 */
     private upgrade(): void {
         if (!this.closed && this.upgradeButton?.interactable) {
-            HeroLevelController.instance.upgrade(this.selectedId);
+            const controller = HeroLevelController.instance;
+            const heroId = this.selectedId;
+            if (controller.describe(heroId).status !== "max") {
+                controller.upgrade(heroId);
+                return;
+            }
+            const quote = controller.describeStage(heroId);
+            if (!quote.goldEnough || !quote.stoneEnough) {
+                controller.advanceStage(heroId);
+                return;
+            }
+            void UIManager.instance.openChild(this, ConfirmView, {
+                title: "英雄强化",
+                message: `强化至 ${quote.nextStage} 阶\n消耗 ${UiKitUtils.formatAmount(quote.gold)} 金币及 ${quote.stone} 进阶石`,
+                confirmText: "强化",
+                onConfirm: () => {
+                    if (!this.closed && this.selectedId === heroId) {
+                        controller.advanceStage(heroId);
+                    }
+                },
+            }).catch(() => { /* UIManager 报告开窗失败。 */ });
         }
     }
 
-    /** 按请求忙态重绘升级栏，当前英雄的成功回包触发光效。 */
-    private onUpgradeChanged(event?: { heroId?: string; fromLevel?: number; toLevel?: number }): void {
+    /** 按请求忙态重绘培养栏，当前英雄实际升阶或升级后播放光效。 */
+    private onUpgradeChanged(event?: { heroId?: string; fromLevel?: number; toLevel?: number; fromStage?: number; toStage?: number }): void {
         if (this.closed) {
             return;
         }
         this.refreshUpgrade();
-        if (event?.heroId === this.selectedId && event.toLevel !== undefined && event.fromLevel !== undefined
-            && event.toLevel > event.fromLevel) {
+        if (event?.heroId !== this.selectedId) {
+            return;
+        }
+        const advanced = (event.toStage ?? 0) > (event.fromStage ?? 0);
+        if (advanced) {
+            UIManager.instance.toast(`强化至 ${event.toStage} 阶`);
+        }
+        if (advanced || (event.toLevel ?? 0) > (event.fromLevel ?? 0)) {
             void this.playUpgradeEffect();
         }
     }
@@ -536,11 +752,7 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         }
         this.paintVersion++;
         this.selectedId = "";
-        if (this.spineNode?.isValid) {
-            this.spineNode.destroy();
-        }
-        this.spineNode = null;
-        this.heroId = 0;
+        this.releasePortrait();
     }
 
     /** 清理本次打开绑定的事件和按钮，重复打开不叠加回调。 */
@@ -567,7 +779,7 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
         this.nameLabel.node.active = true;
     }
 
-    /** 挂载日服缺图时沿用的 Spine；实际加载失败由骨骼服务统一记录。 */
+    /** 优先加载正式服当前形态的全身立绘，缺图时使用已迁移的 Q 版。 */
     private mountPortrait(hero: HeroPortraitData): void {
         const host = this.portrait;
         if (!host) {
@@ -575,17 +787,80 @@ export class HeroInfoView extends BaseView<HeroInfoArgs> {
             return;
         }
         host.active = true;
-        const id = hero.templateId;
-        if (this.spineNode && this.spineNode.isValid && this.heroId === id) return;
-        if (this.spineNode && this.spineNode.isValid) this.spineNode.destroy();
-        this.spineNode = null;
-        this.heroId = id;
-        if (!id) return;
-        const actor = BattleSpineService.instance.mountBattleSpine(host, String(id), () => {
-            /* 切换英雄也会取消挂载，页面没有等待项需要结束。 */
-        }, { seatY: -160, scale: 2.13 });
-        this.spineNode = actor.node;
-        if (this.spineNode.parent === host) this.spineNode.setSiblingIndex(1);
+        const art = this.portraitImage && HeroPortraitUtils.find(hero.templateId, hero.star ?? 1, hero.evolution);
+        const key = `${hero.templateId}:${hero.star ?? 1}:${hero.evolution?.type ?? 0}:${hero.evolution?.level ?? 0}`;
+        if (this.portraitKey === key) {
+            return;
+        }
+        this.releasePortrait();
+        this.portraitKey = key;
+        const image = this.portraitImage;
+        if (!art || !image) {
+            this.mountSpine(host, hero.templateId);
+            return;
+        }
+        const scope = ResourceAssetsUtils.createAssetScope();
+        this.portraitScope = scope;
+        void scope.load(ResourceAssetsUtils.sprite(art.path)).then(frame => {
+            if (this.portraitScope !== scope || !image.isValid) {
+                return;
+            }
+            const transform = image.node.getComponent(UITransform)!;
+            const [left, , right] = art.box;
+            const width = Math.max(1, right - left);
+            const scale = PORTRAIT_SUBJECT_WIDTH * art.zoom / width;
+            // 与日服同样以透明画布顶部和人物像素中心定位，换形态仍保持立绘比例。
+            image.spriteFrame = frame;
+            transform.setContentSize(art.width, art.height);
+            transform.setAnchorPoint((left + right) / 2 / art.width, 1);
+            image.node.setPosition(art.offsetX, art.offsetY);
+            image.node.setScale(scale, scale, 1);
+            image.node.active = true;
+            this.portraitBackdrop.forEach(node => { node.active = false; });
+            this.portraitMotion = tween(image.node).repeatForever(tween<Node>()
+                .to(2.5, { position: new Vec3(art.offsetX, art.offsetY + 3, 0), scale: new Vec3(scale * 1.004, scale * 1.006, 1) }, { easing: "sineInOut" })
+                .to(2.5, { position: new Vec3(art.offsetX, art.offsetY, 0), scale: new Vec3(scale, scale, 1) }, { easing: "sineInOut" }));
+            this.portraitMotion.start();
+        }).catch(error => {
+            if (this.portraitScope === scope) {
+                scope.dispose();
+                this.portraitScope = null;
+                this.mountSpine(host, hero.templateId);
+                GameLog.shared.warnOnce("MODULE", "HeroInfoView", "PORTRAIT:" + art.path, "立绘加载失败：" + String(error));
+            }
+        });
     }
 
+    /** 回退骨骼保持在圆光前和装备按钮后，沿用已有动画和资源释放。 */
+    private mountSpine(host: Node, templateId: number): void {
+        const actor = BattleSpineService.instance.mountBattleSpine(host, String(templateId), () => {
+            /* 骨骼服务报告回退资源失败，页面仍保留姓名和装备。 */
+        }, { seatY: -160, scale: 2.13 });
+        this.spineNode = actor.node;
+        if (this.spineNode.parent === host) {
+            this.spineNode.setSiblingIndex(this.portraitImage ? 2 : 1);
+        }
+    }
+
+    /** 清除当前图及呼吸动画，旧英雄的未完成加载不会覆盖新形态。 */
+    private releasePortrait(): void {
+        this.portraitMotion?.stop();
+        this.portraitMotion = null;
+        if (this.portraitImage?.isValid) {
+            this.portraitImage.spriteFrame = null;
+            this.portraitImage.node.active = false;
+        }
+        this.portraitBackdrop.forEach(node => {
+            if (node.isValid) {
+                node.active = true;
+            }
+        });
+        this.portraitScope?.dispose();
+        this.portraitScope = null;
+        if (this.spineNode?.isValid) {
+            this.spineNode.destroy();
+        }
+        this.spineNode = null;
+        this.portraitKey = "";
+    }
 }

@@ -59,6 +59,12 @@ const payloads = [
     "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus",
     "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus",
     "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus",
+    "heroStageAdvanceRequest", "heroStageAdvanceStatusRequest", "heroStageAdvanceReceipt", "heroStageAdvanceStatus",
+    "heroLockSetRequest", "heroLockSetReceipt",
+    "heroStarUpgradeRequest", "heroStarUpgradeReceipt",
+    "heroJewelChangeRequest", "heroJewelChangeReceipt",
+    "heroGodEquipmentChangeRequest", "heroGodEquipmentChangeReceipt",
+    "heroGodEquipmentDrawRequest", "heroGodEquipmentDrawReceipt",
     "roleName", "roleImageChange", "roleRename", "roleTitles", "roleImages", "heroSummonRequest", "heroSummonReceipt",
     "roleDecorations", "roleDecorationId", "rolePeerageDisplay",
     "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
@@ -110,6 +116,27 @@ export class GameProtocolCodecUtils {
         }
         if (frame.kind === "request" && frame.name === Protocol.HERO_LEVEL_UPGRADE_STATUS) {
             return "heroLevelUpgradeStatusRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_STAGE_ADVANCE) {
+            return "heroStageAdvanceRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_STAGE_ADVANCE_STATUS) {
+            return "heroStageAdvanceStatusRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_LOCK_SET) {
+            return "heroLockSetRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_STAR_UPGRADE) {
+            return "heroStarUpgradeRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_JEWEL_CHANGE) {
+            return "heroJewelChangeRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_GOD_EQUIPMENT_CHANGE) {
+            return "heroGodEquipmentChangeRequest";
+        }
+        if (frame.kind === "request" && frame.name === Protocol.HERO_GOD_EQUIPMENT_DRAW) {
+            return "heroGodEquipmentDrawRequest";
         }
         if (frame.kind === "request" && frame.name === Protocol.HERO_EQUIPMENT_CHANGE) {
             return "heroEquipmentChangeRequest";
@@ -191,6 +218,13 @@ export class GameProtocolCodecUtils {
                 case Protocol.HERO_FRAGMENT_COMBINE_STATUS: return "heroFragmentCombineStatus";
                 case Protocol.HERO_LEVEL_UPGRADE: return "heroLevelUpgradeReceipt";
                 case Protocol.HERO_LEVEL_UPGRADE_STATUS: return "heroLevelUpgradeStatus";
+                case Protocol.HERO_STAGE_ADVANCE: return "heroStageAdvanceReceipt";
+                case Protocol.HERO_STAGE_ADVANCE_STATUS: return "heroStageAdvanceStatus";
+                case Protocol.HERO_LOCK_SET: return "heroLockSetReceipt";
+                case Protocol.HERO_STAR_UPGRADE: return "heroStarUpgradeReceipt";
+                case Protocol.HERO_JEWEL_CHANGE: return "heroJewelChangeReceipt";
+                case Protocol.HERO_GOD_EQUIPMENT_CHANGE: return "heroGodEquipmentChangeReceipt";
+                case Protocol.HERO_GOD_EQUIPMENT_DRAW: return "heroGodEquipmentDrawReceipt";
                 case Protocol.HERO_EQUIPMENT_CHANGE: return "heroEquipmentChangeReceipt";
                 case Protocol.MARKET_LIST: return "marketState";
                 case Protocol.MARKET_BUY:
@@ -724,6 +758,126 @@ export class GameProtocolCodecUtils {
         }
     }
 
+    /** 锁定指令只传本次设值和实例，回执附提交版本，禁止以缺失状态充当解锁。 */
+    private static validateHeroLock(frame: GameFrame): void {
+        if (frame.name !== Protocol.HERO_LOCK_SET) {
+            return;
+        }
+        if (typeof frame.id !== "string" || !frame.id) {
+            throw new Error("英雄锁定信封缺少请求关联");
+        }
+        if (frame.kind === "response" && frame.ok === false) {
+            if (frame.error === undefined || frame.body != null) {
+                throw new Error("英雄锁定失败回包无效");
+            }
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        const { requestId, heroId, locked, assetRevision } = body;
+        if (!this.isUuid(requestId) || !this.isUuid(heroId) || typeof locked !== "boolean") {
+            throw new Error("英雄锁定请求编号、实例或设值无效");
+        }
+        if (frame.kind === "request" && frame.ok === undefined && frame.error === undefined
+            && Object.keys(body).length === 3) {
+            return;
+        }
+        if (frame.kind !== "response" || frame.ok !== true || frame.error !== undefined
+            || Object.keys(body).length !== 4 || typeof assetRevision !== "number"
+            || !Number.isSafeInteger(assetRevision) || assetRevision < 0) {
+            throw new Error("英雄锁定回执状态或提交版本无效");
+        }
+    }
+
+    /** 校验新培养指令和归属回执，限制选择数组和数值范围，资产由统一快照更新。 */
+    private static validateHeroGrowth(frame: GameFrame): void {
+        const name = frame.name;
+        if (name !== Protocol.HERO_STAR_UPGRADE && name !== Protocol.HERO_JEWEL_CHANGE
+            && name !== Protocol.HERO_GOD_EQUIPMENT_CHANGE && name !== Protocol.HERO_GOD_EQUIPMENT_DRAW) {
+            return;
+        }
+        const invalid = () => new Error("英雄培养协议内容无效");
+        if (typeof frame.id !== "string" || !frame.id) {
+            throw invalid();
+        }
+        if (frame.kind === "response" && frame.ok === false) {
+            if (frame.body != null || !frame.error) {
+                throw invalid();
+            }
+            return;
+        }
+        const request = frame.kind === "request";
+        const body = this.messageObject(frame.body);
+        const integer = (value: unknown, min = 0, max = Number.MAX_SAFE_INTEGER) =>
+            typeof value === "number" && Number.isSafeInteger(value) && value >= min && value <= max;
+        if (!this.isUuid(body.requestId) || (request
+            ? frame.ok !== undefined || frame.error !== undefined
+            : frame.kind !== "response" || frame.ok !== true || frame.error !== undefined
+                || !this.isUuid(body.roleId) || !integer(body.assetRevision))) {
+            throw invalid();
+        }
+        switch (name) {
+            case Protocol.HERO_STAR_UPGRADE: {
+                if (!this.isUuid(body.heroId)) {
+                    throw invalid();
+                }
+                if (!request) {
+                    if (!integer(body.fromStar, 1, 13) || body.toStar !== Number(body.fromStar) + 1
+                        || !this.validGrowthAmounts(body.refunded)) {
+                        throw invalid();
+                    }
+                    return;
+                }
+                if (!integer(body.expectedStar, 1, 13) || !Array.isArray(body.materials) || body.materials.length > 12) {
+                    throw invalid();
+                }
+                for (const entry of body.materials) {
+                    const row = this.messageObject(entry);
+                    if (!integer(row.row, 0, 11) || typeof row.useReplacement !== "boolean"
+                        || !Array.isArray(row.heroIds) || row.heroIds.length > 30 || !row.heroIds.every(this.isUuid)) {
+                        throw invalid();
+                    }
+                }
+                return;
+            }
+            case Protocol.HERO_JEWEL_CHANGE: {
+                const action = body.action;
+                const values = [body.itemId, body.slot, body.expectedItemId, body.count];
+                const combines = action === "COMBINE" || action === "COMBINE_ALL";
+                if (!["EQUIP", "UNEQUIP", "EQUIP_ALL", "UNEQUIP_ALL", "COMBINE", "COMBINE_ALL"].includes(String(action))
+                    || values.some(value => value !== undefined && !integer(value, 0, 0x7fffffff))
+                    || (combines ? body.heroId !== undefined : !this.isUuid(body.heroId))
+                    || (!request && (typeof body.changed !== "boolean" || !this.validGrowthAmounts(body.rewards)))) {
+                    throw invalid();
+                }
+                return;
+            }
+            case Protocol.HERO_GOD_EQUIPMENT_CHANGE:
+                if (!this.isUuid(body.heroId) || !integer(body.slot, 1, 4)
+                    || !this.isEquipmentIdentity(body.instanceId)
+                    || (body.action !== "EQUIP" && body.action !== "UNEQUIP")
+                    || (body.expectedInstanceId !== undefined
+                        && (body.action === "UNEQUIP" || !this.isEquipmentIdentity(body.expectedInstanceId)))) {
+                    throw invalid();
+                }
+                return;
+            case Protocol.HERO_GOD_EQUIPMENT_DRAW:
+                if ((body.count !== 1 && body.count !== 10)
+                    || (request ? !integer(body.maxDiamonds)
+                        : !integer(body.diamondsPaid) || !this.validGrowthAmounts(body.rewards, "templateId"))) {
+                    throw invalid();
+                }
+        }
+    }
+
+    /** 合成、材料返还与探宝只返回已确认的配置号和数量。 */
+    private static validGrowthAmounts(value: unknown, idKey = "itemId"): boolean {
+        return Array.isArray(value) && value.every(entry => {
+            const row = this.messageObject(entry);
+            return Number.isSafeInteger(row[idKey]) && Number(row[idKey]) > 0
+                && Number.isSafeInteger(row.quantity) && Number(row.quantity) > 0;
+        });
+    }
+
     /** 普通装备请求仅传选择和原槽配置，成功回执保留这些参数且不携带资产写入数据。 */
     private static validateEquipmentChange(frame: GameFrame): void {
         if (frame.name !== Protocol.HERO_EQUIPMENT_CHANGE) {
@@ -914,9 +1068,12 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateProgressReward(frame);
         GameProtocolCodecUtils.validateSummon(frame);
         GameProtocolCodecUtils.validateEquipmentChange(frame);
+        GameProtocolCodecUtils.validateHeroLock(frame);
+        GameProtocolCodecUtils.validateHeroGrowth(frame);
         GameProtocolCodecUtils.validateMarket(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
         HeroLevelData.validateFrame(frame);
+        HeroLevelData.validateStageFrame(frame);
         const { body, ...envelope } = frame;
         const payload = GameProtocolCodecUtils.payloadName(frame);
         GameProtocolCodecUtils.validateRoleName(frame, payload);
@@ -971,9 +1128,12 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateProgressReward(frame);
         GameProtocolCodecUtils.validateSummon(frame);
         GameProtocolCodecUtils.validateEquipmentChange(frame);
+        GameProtocolCodecUtils.validateHeroLock(frame);
+        GameProtocolCodecUtils.validateHeroGrowth(frame);
         GameProtocolCodecUtils.validateMarket(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
         HeroLevelData.validateFrame(frame);
+        HeroLevelData.validateStageFrame(frame);
         GameProtocolCodecUtils.validateRoleName(frame, expected);
         GameProtocolCodecUtils.validateRoleProfile(frame, expected);
         return frame;

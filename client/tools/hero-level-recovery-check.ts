@@ -1,6 +1,6 @@
 /**
- * 普通升级专项，使用实际控制器和 Protobuf 编解码。
- * 覆盖报价、单次请求、即时光效，以及断线后只由统一快照更新等级和余额。
+ * 英雄普通升级与进阶专项，使用实际控制器和 Protobuf 编解码。
+ * 覆盖报价、单次请求、成功反馈和断线后由统一快照恢复。
  */
 import { strict as assert } from "node:assert";
 import { randomUUID } from "node:crypto";
@@ -8,7 +8,7 @@ import { AccountModel } from "../assets/scripts/features/account/AccountModel";
 import { BagModel } from "../assets/scripts/features/bag/BagModel";
 import { HeroLevelController } from "../assets/scripts/features/hero/HeroLevelController";
 import { HeroRosterModel } from "../assets/scripts/features/hero/HeroRosterModel";
-import type { HeroLevelRequest } from "../assets/scripts/features/hero/data/HeroLevelData";
+import type { HeroLevelRequest, HeroStageReceipt } from "../assets/scripts/features/hero/data/HeroLevelData";
 import { HeroLevelEvent } from "../assets/scripts/features/hero/utils/HeroLevelEvent";
 import { EventDispatcher } from "../assets/scripts/framework/EventDispatcher";
 import { UIManager } from "../assets/scripts/framework/ui/UIManager";
@@ -22,10 +22,14 @@ import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 const HERO = { id: "11111111-1111-4111-8111-111111111111", templateId: 10304012, level: 1, star: 4, stage: 0 };
 const ROLE = { id: "33333333-3333-4333-8333-333333333333", nickname: "测试", level: 1, gold: 4000, diamonds: 0 };
 
-/** 仅接受普通升级，校验本次请求和实际回包可以通过现有协议。 */
-function roundTrip(kind: "request" | "response", body: unknown): GameFrame {
+/** 校验真实请求和回包可在同名的独立 Protobuf 载荷中往返。 */
+function roundTrip(
+    kind: "request" | "response",
+    body: unknown,
+    name: GameFrame["name"] = Protocol.HERO_LEVEL_UPGRADE,
+): GameFrame {
     return GameProtocolCodecUtils.decodeGameFrame(GameProtocolCodecUtils.encodeGameFrame({
-        version: 1, kind, name: Protocol.HERO_LEVEL_UPGRADE, ...(kind === "response" ? { ok: true } : {}), body,
+        version: 1, kind, name, ...(kind === "response" ? { ok: true } : {}), body,
     }));
 }
 
@@ -47,8 +51,10 @@ class Fixture {
     public readonly bag = new BagModel();
     /** 每个用例单独装配的升级入口。 */
     public readonly controller = new HeroLevelController(this.roster, this.bag);
-    /** 经 Protobuf 投影的每次主动请求。 */
+    /** 经 Protobuf 投影的普通升级请求。 */
     public readonly sent: HeroLevelRequest[] = [];
+    /** 经 Protobuf 投影的进阶请求。 */
+    public readonly stageSent: { requestId: string; heroId: string; expectedStage: number }[] = [];
     /** 从真实成功回包交付给详情的光效事件。 */
     public readonly completed: unknown[] = [];
     /** 把测试回包交给本次请求的校验与协议路由。 */
@@ -62,10 +68,15 @@ class Fixture {
         this.apply(1, 500);
         this.controller.configure({
             send: (receiver, name, raw, failed, validate) => {
-                assert.equal(name, Protocol.HERO_LEVEL_UPGRADE);
-                assert.deepEqual(Object.keys(raw).sort(), ["expectedLevel", "heroId", "levels"]);
-                const body = roundTrip("request", { ...raw, requestId: randomUUID() }).body as HeroLevelRequest;
-                this.sent.push(body);
+                const body = roundTrip("request", { ...raw, requestId: randomUUID() }, name).body;
+                if (name === Protocol.HERO_STAGE_ADVANCE) {
+                    assert.deepEqual(Object.keys(raw).sort(), ["expectedStage", "heroId"]);
+                    this.stageSent.push(body as Fixture["stageSent"][number]);
+                } else {
+                    assert.equal(name, Protocol.HERO_LEVEL_UPGRADE);
+                    assert.deepEqual(Object.keys(raw).sort(), ["expectedLevel", "heroId", "levels"]);
+                    this.sent.push(body as HeroLevelRequest);
+                }
                 this.fail = failed;
                 this.reply = frame => {
                     try {
@@ -158,14 +169,45 @@ function rejectsOtherUpgrade(fixture: Fixture): void {
     assert.equal(fixture.sent.length, 3);
 }
 
-/** 隔离运行升级场景，核对失败提示和成功展示。 */
+/** 进阶只接受匹配回执且只提交一次，成功后等待权威快照更新阶级及库存。 */
+function stageUsesAuthoritativeSnapshot(fixture: Fixture): void {
+    fixture.account.replace({ busy: false, error: "", role: { ...ROLE, gold: 10000 } });
+    fixture.roster.replace({ status: "ready", heroes: [{ ...HERO, level: 30 }], error: "" });
+    fixture.bag.replaceAll([{ itemId: 900102, quantity: 49 }]);
+    fixture.controller.advanceStage(HERO.id);
+    assert.equal(fixture.stageSent.length, 0);
+    fixture.bag.replaceAll([{ itemId: 900102, quantity: 50 }]);
+    fixture.controller.advanceStage(HERO.id);
+    fixture.controller.advanceStage(HERO.id);
+    assert.equal(fixture.stageSent.length, 1);
+    assert.equal(fixture.controller.describeStage(HERO.id).status, "pending");
+    const { requestId } = fixture.stageSent[0];
+    const receipt: HeroStageReceipt = {
+        requestId, heroId: HERO.id, fromStage: 0, toStage: 1, roleId: ROLE.id,
+        configVersion: "hero-growth-test", assetRevision: 8,
+    };
+    assert.throws(() => roundTrip("response", { ...receipt, toStage: 2 }, Protocol.HERO_STAGE_ADVANCE));
+    const status = { requestId, found: true, receipt };
+    assert.deepEqual(roundTrip("response", status, Protocol.HERO_STAGE_ADVANCE_STATUS).body, status);
+    fixture.reply(roundTrip("response", receipt, Protocol.HERO_STAGE_ADVANCE));
+    assert.deepEqual(fixture.completed, [{ heroId: HERO.id, fromStage: 0, toStage: 1 }]);
+    assert.equal(fixture.roster.snapshot.heroes[0].stage, 0);
+    assert.equal(fixture.bag.quantity(900102), 50);
+    fixture.roster.replace({ status: "ready", heroes: [{ ...HERO, level: 30, stage: 1 }], error: "" });
+    fixture.bag.replaceAll([]);
+    assert.equal(fixture.controller.describeStage(HERO.id).status, "locked");
+    assert.equal(fixture.controller.describe(HERO.id).levelLimit, 40);
+}
+
+/** 隔离运行成长场景，核对失败提示和成功展示。 */
 async function main(): Promise<void> {
     await ConfigFixtureUtils.installReal();
     const toast = UIManager.instance.toast;
     const messages: string[] = [];
     UIManager.instance.toast = text => { messages.push(text); };
     try {
-        for (const check of [quotesAndSubmits, updatesOnlyFromSnapshot, acceptsReconnectSnapshot, rejectsOtherUpgrade]) {
+        for (const check of [quotesAndSubmits, updatesOnlyFromSnapshot, acceptsReconnectSnapshot,
+            rejectsOtherUpgrade, stageUsesAuthoritativeSnapshot]) {
             const fixture = new Fixture();
             try {
                 check(fixture);
@@ -174,11 +216,11 @@ async function main(): Promise<void> {
             }
         }
         assert.deepEqual(messages, ["英雄经验不足", "升级结果待同步，恢复连接后请查看英雄等级",
-            ...Array(3).fill("升级回执与本次请求不符")]);
+            ...Array(3).fill("升级回执与本次请求不符"), "英雄进阶石不足"]);
     } finally {
         UIManager.instance.toast = toast;
     }
-    console.log("PASS hero level: inventory quote, single request, immediate effect, server snapshot after reconnect");
+    console.log("PASS hero growth: request validation, single submission, receipt and authoritative snapshot");
 }
 
 void main().catch(error => {

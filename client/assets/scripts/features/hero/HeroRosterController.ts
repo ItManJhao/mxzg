@@ -1,6 +1,6 @@
 /**
  * 英雄名册控制器接收统一资产快照，提交英雄、阵容和召唤资格。
- * 普通召唤由此发送并接收协议，成功回包中的实际英雄用于通用获得窗。
+ * 发送和接收召唤、英雄锁定协议；获得反馈与名册快照各自使用服务端结果。
  */
 import { GameLog } from "../../core/GameLog";
 import { BaseController } from "../../framework/BaseController";
@@ -30,6 +30,8 @@ export class HeroRosterController extends BaseController {
     private account: AccountModel | null = null;
     /** 等待当前抽取回包时锁住按钮，成功、失败或模块重置后恢复。 */
     private waitingForSummon = false;
+    /** 当前英雄锁定指令在途时为 true，回包、失败或会话重置后释放。 */
+    private waitingForLock = false;
 
     /**
      * @param model 当前英雄名册，提供服务端免费时间。
@@ -52,17 +54,36 @@ export class HeroRosterController extends BaseController {
         return this.waitingForSummon;
     }
 
-    /** 登记统一资产状态及普通召唤回包，身份协调由应用层处理。 */
+    /** 登记统一资产状态及英雄操作回包，身份协调由应用层处理。 */
     protected onInitialize(): void {
-        this.ownListener(ProtocolRouter.instance.register(this, [...STATE_PROTOCOLS, Protocol.HERO_NORMAL_SUMMON, Protocol.HERO_SUMMON]));
+        this.ownListener(ProtocolRouter.instance.register(this, [
+            ...STATE_PROTOCOLS, Protocol.HERO_NORMAL_SUMMON, Protocol.HERO_SUMMON, Protocol.HERO_LOCK_SET,
+        ]));
         this.resetSession();
     }
 
-    /** 应用重置时清空名册、免费资格和召唤进度。 */
+    /** 应用重置时清空名册、免费资格和英雄操作的等待状态。 */
     protected onResetSession(): void {
         this.waitingForSummon = false;
+        this.waitingForLock = false;
         this.model.reset();
         this.notify();
+    }
+
+    /** 将希望设定的锁定值发给服务端；名册仅在收到新的统一快照后更新。 */
+    public setLocked(heroId: string, locked: boolean): void {
+        const operations = this.operations;
+        if (!operations || this.waitingForLock) {
+            return;
+        }
+        this.waitingForLock = true;
+        operations.send(this, Protocol.HERO_LOCK_SET, { heroId, locked },
+            error => this.onLockFailed(error), value => {
+                const receipt = value as { heroId: string; locked: boolean };
+                if (receipt?.heroId !== heroId || receipt.locked !== locked) {
+                    throw new Error("锁定回包与本次操作不符");
+                }
+            });
     }
 
     /** 根据当前名册冷却、账户和背包快照显示本次价格。 */
@@ -125,7 +146,7 @@ export class HeroRosterController extends BaseController {
         }
     }
 
-    /** 按协议交付统一快照或本次召唤结果。 */
+    /** 按协议交付统一快照、召唤结果或锁定结果。 */
     onNotify(protocol: ProtocolName, data: unknown): void {
         switch (protocol) {
             case Protocol.SESSION_LOGIN:
@@ -136,6 +157,9 @@ export class HeroRosterController extends BaseController {
             case Protocol.HERO_NORMAL_SUMMON:
             case Protocol.HERO_SUMMON:
                 this.onSummoned(data);
+                break;
+            case Protocol.HERO_LOCK_SET:
+                this.onLockSet(data as { locked: boolean });
                 break;
             default:
                 // 路由会拒绝非法回包；模块仅忽略不属于自身的通知，不触碰Model。
@@ -156,6 +180,21 @@ export class HeroRosterController extends BaseController {
     private onSummoned(data: unknown): void {
         this.rewards?.restore(FirstSummonData.reward(data));
         this.setSummoning(false);
+    }
+
+    /** 成功回包仅释放按钮并反馈结果，锁定标记由统一快照刷新。 */
+    private onLockSet(receipt: { locked: boolean }): void {
+        this.waitingForLock = false;
+        UIManager.instance.toast(receipt.locked ? "已锁定英雄" : "已解锁英雄");
+    }
+
+    /** 释放本次设值请求，恢复连接后由快照读取已提交状态。 */
+    private onLockFailed(error: unknown): void {
+        this.waitingForLock = false;
+        const message = error instanceof SocketFailure && error.interrupted
+            ? "英雄锁定结果待同步，恢复连接后请查看英雄信息"
+            : error instanceof Error ? error.message : "英雄锁定操作失败";
+        UIManager.instance.toast(message);
     }
 
     /** 释放按钮并飘字说明失败；断线后的资产由服务端快照同步。 */

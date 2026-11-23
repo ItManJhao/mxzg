@@ -106,6 +106,7 @@
         "HeroAttributesView",
         "HeroEquipmentPickerRow",
         "HeroEquipmentPickerView",
+        "HeroGrowthPickerView",
         "HeroIconCellView",
         "HeroInfoView",
         "HeroListView",

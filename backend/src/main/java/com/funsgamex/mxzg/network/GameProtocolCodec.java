@@ -29,6 +29,12 @@ public final class GameProtocolCodec {
         "chapterFirstRewardRequest", "chapterFirstRewardReceipt", "chapterFirstRewardStatus",
         "heroFragmentCombineRequest", "heroFragmentCombineStatusRequest", "heroFragmentCombineReceipt", "heroFragmentCombineStatus",
         "heroLevelUpgradeRequest", "heroLevelUpgradeStatusRequest", "heroLevelUpgradeReceipt", "heroLevelUpgradeStatus",
+        "heroStageAdvanceRequest", "heroStageAdvanceStatusRequest", "heroStageAdvanceReceipt", "heroStageAdvanceStatus",
+        "heroLockSetRequest", "heroLockSetReceipt",
+        "heroStarUpgradeRequest", "heroStarUpgradeReceipt",
+        "heroJewelChangeRequest", "heroJewelChangeReceipt",
+        "heroGodEquipmentChangeRequest", "heroGodEquipmentChangeReceipt",
+        "heroGodEquipmentDrawRequest", "heroGodEquipmentDrawReceipt",
         "roleName", "roleImageChange", "roleRename", "roleTitles", "roleImages", "heroSummonRequest", "heroSummonReceipt",
         "roleDecorations", "roleDecorationId", "rolePeerageDisplay",
         "heroEquipmentChangeRequest", "heroEquipmentChangeReceipt",
@@ -98,6 +104,13 @@ public final class GameProtocolCodec {
                 case "bag.fragment.combine.status" -> "heroFragmentCombineStatusRequest";
                 case "hero.level.upgrade" -> "heroLevelUpgradeRequest";
                 case "hero.level.upgrade.status" -> "heroLevelUpgradeStatusRequest";
+                case "hero.stage.advance" -> "heroStageAdvanceRequest";
+                case "hero.stage.advance.status" -> "heroStageAdvanceStatusRequest";
+                case "hero.lock.set" -> "heroLockSetRequest";
+                case "hero.star.upgrade" -> "heroStarUpgradeRequest";
+                case "hero.jewel.change" -> "heroJewelChangeRequest";
+                case "hero.god-equipment.change" -> "heroGodEquipmentChangeRequest";
+                case "hero.god-equipment.draw" -> "heroGodEquipmentDrawRequest";
                 case "hero.equipment.change" -> "heroEquipmentChangeRequest";
                 case "market.buy" -> "marketBuyRequest";
                 case "market.refresh" -> "marketRefreshRequest";
@@ -128,6 +141,13 @@ public final class GameProtocolCodec {
             case "bag.fragment.combine.status" -> "heroFragmentCombineStatus";
             case "hero.level.upgrade" -> "heroLevelUpgradeReceipt";
             case "hero.level.upgrade.status" -> "heroLevelUpgradeStatus";
+            case "hero.stage.advance" -> "heroStageAdvanceReceipt";
+            case "hero.stage.advance.status" -> "heroStageAdvanceStatus";
+            case "hero.lock.set" -> "heroLockSetReceipt";
+            case "hero.star.upgrade" -> "heroStarUpgradeReceipt";
+            case "hero.jewel.change" -> "heroJewelChangeReceipt";
+            case "hero.god-equipment.change" -> "heroGodEquipmentChangeReceipt";
+            case "hero.god-equipment.draw" -> "heroGodEquipmentDrawReceipt";
             case "hero.equipment.change" -> "heroEquipmentChangeReceipt";
             case "market.list" -> "marketState";
             case "market.buy", "market.refresh" -> "marketReceipt";

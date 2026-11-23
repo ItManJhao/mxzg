@@ -1,4 +1,4 @@
-/** 普通升级快速回归，只使用专用 H2 内存库与合成账号，覆盖真实业务事务和正常首胜奖励来源。 */
+/** 英雄成长回归，只使用专用 H2 内存库与合成账号，覆盖真实事务、奖励来源与回滚。 */
 package com.funsgamex.mxzg;
 
 import com.funsgamex.mxzg.auth.DevelopmentLoginService;
@@ -133,6 +133,35 @@ class HeroLevelTest {
         assertThrows(IllegalStateException.class,()->rules.cost(401));
         assertThrows(IllegalStateException.class,()->rules.stats(99999999,1,1,0));
         assertEquals(40,rules.limit(140,6,1));
+    }
+
+    /** 等级、星级、归属及费用均由服务端确认，拒绝时不保存收据或推进版本。 */
+    @Test void stageRejectionsKeepGoldAndRevision() {
+        var player = player(false);
+        var other = player(false);
+        var request = new HeroLevelService.StageRequest(UUID.randomUUID().toString(), player.hero(), 0);
+        var foreign = new HeroLevelService.StageRequest(request.requestId(), other.hero(), 0);
+        rejected("HERO_NOT_FOUND", () -> levels.advanceStage(player.token(), foreign));
+        rejected("HERO_STAGE_LEVEL", () -> levels.advanceStage(player.token(), request));
+        jdbc.update("UPDATE game_hero SET hero_level=30 WHERE id=?", player.hero());
+        rejected("INSUFFICIENT_GOLD", () -> levels.advanceStage(player.token(), request));
+        jdbc.update("UPDATE game_role SET gold=25000 WHERE id=?", player.role());
+        jdbc.update("DELETE FROM game_inventory WHERE role_id=? AND item_id=900102", player.role());
+        long revision = roles.revision(player.role());
+        rejected("INSUFFICIENT_HERO_STAGE_STONE", () -> levels.advanceStage(player.token(), request));
+        assertEquals(25000, roles.findById(player.role()).orElseThrow().gold());
+        assertEquals(0, heroes.find(player.role(), player.hero()).orElseThrow().stage());
+        assertEquals(revision, roles.revision(player.role()));
+        assertFalse(levels.stageStatus(player.token(), request.requestId()).found());
+
+        jdbc.update("UPDATE game_hero SET hero_level=40, stage=1 WHERE id=?", player.hero());
+        var locked = new HeroLevelService.StageRequest(UUID.randomUUID().toString(), player.hero(), 1);
+        rejected("HERO_STAGE_STAR", () -> levels.advanceStage(player.token(), locked));
+        rejected("HERO_STAGE_CHANGED", () -> levels.advanceStage(player.token(), request));
+        jdbc.update("UPDATE game_hero SET hero_level=140, stage=6, star=6 WHERE id=?", player.hero());
+        var limit = new HeroLevelService.StageRequest(UUID.randomUUID().toString(), player.hero(), 6);
+        rejected("HERO_STAGE_LIMIT", () -> levels.advanceStage(player.token(), limit));
+        assertEquals(revision, roles.revision(player.role()));
     }
 
     /** 归属、会话、过期、预期等级和同键不同参数均须拒绝。 */

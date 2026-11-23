@@ -8,12 +8,13 @@
 
 ## 客户端统一采用模块级 MVC
 
-Model 保存唯一状态。Controller 发出玩法请求、登记和接收协议、提交 Model 并通知界面。View 读取 Model，把玩家操作交给所属 Controller。背包是标准模块。当前维护登录、角色、背包、英雄详情、普通升级与装备穿脱、主线阵容、第 1～550 关挑战与结算、挂机、独立通关奖励及第 15、30、50、80、110、140 关里程碑领取。基础、友情、高级召唤和积分兑换可获得英雄，精英碎片也可合成英雄。挂机新领取只在 local 默认启用。强化进阶、祈愿购买和快速战斗待恢复。
+Model 保存唯一状态。Controller 发出玩法请求、登记和接收协议、提交 Model 并通知界面。View 读取 Model，把玩家操作交给所属 Controller。背包是标准模块。英雄详情已接入普通升级、强化进阶、锁定、装备、升星、宝石及神装。当前主线开放第 1～550 关挑战与结算、挂机、独立通关奖励及第 15、30、50、80、110、140 关里程碑领取。基础、友情、高级召唤、积分兑换和精英碎片合成提供英雄。挂机新领取只在 local 默认启用。祈愿购买和快速战斗待恢复。
 
 - BagController 发送精英碎片合成请求，接收库存快照和本次合成回包。库存经 BagModel 提交后由 BagEvent 通知界面。
 - BagModel：唯一背包状态，分别保存普通堆叠、期限物品和精灵独立实例，整批校验/冻结后计算差异；不联网、不依赖View，不按itemId合并精灵。
 - RoleController 收发首次命名和新手赠礼协议。昵称、命名状态与赠礼资格由 onRoleState 写入唯一账号 Model，领取回包交通用奖励队列展示。
 - HeroEquipmentController 收发装备指令和结果。已穿槽位、属性与个人战力由 HeroRosterModel 持有，待穿库存仍由 BagModel 持有。装备选择、详情和红点读取同一资产快照。
+- HeroStarController、HeroJewelController 和 HeroGodEquipmentController 收发各自的培养协议。升星素材选择保留在当前英雄详情，宝石堆叠由 BagModel 持有，宝石镶嵌与独立神装从同版 HeroRosterModel 读取。英雄面板和主线战斗共用服务端宝石与神装的属性输入。
 - AccountController 负责登录、恢复和退出，决定是否交付当前会话的成功与失败。首包通过模块校验后才保存凭证。AccountOperations 为各模块提供单次请求与回包交付。ServerSelectionController 负责区服列表和选择。
 - GameSocketClient.requestFrame 是认证业务请求的发送入口。返回时按请求编号、协议和连接匹配，并核对协议中声明的角色与实际发奖明细。主线、布阵、GM 与英雄模块使用同一条连接。
 - AssetStateBinding：应用层身份/持久版本校验、完整角色与库存批量提交，不保存第二份库存。

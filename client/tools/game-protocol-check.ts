@@ -69,9 +69,26 @@ function main(){
  checkWelcomeGiftWire();
  checkFullSummonWire();
  checkEquipmentWire();
+ checkHeroLockWire();
  checkMarketWire();
  checkDailyDungeonWire();
  checkGmToolsWire();
+}
+
+/** 验证二进制锁定和解锁保留明确的布尔值，禁止缺失设值或越权字段。 */
+function checkHeroLockWire(): void {
+    const request = { version: 1, id: "hero-lock", kind: "request", name: Protocol.HERO_LOCK_SET };
+    const response = { ...request, kind: "response", ok: true };
+    const requestId = "701cd02e-38af-4093-a435-5216f8b2a421";
+    const heroId = "5e26f085-cc45-4aa0-8080-697c37e748f1";
+    for (const locked of [true, false]) {
+        const body = { requestId, heroId, locked };
+        roundTrip({ ...request, body });
+        roundTrip({ ...response, body: { ...body, assetRevision: 5 } });
+        assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { ...body, roleId: "other" } }));
+    }
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request, body: { requestId, heroId } }));
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response, body: { requestId, heroId, locked: false } }));
 }
 
 /** 验证大额货币、大于32位的时间和专用 GM 载荷，修改请求不接受客户端指定角色。 */

@@ -170,6 +170,9 @@ public class GmService {
      throw rejected("GM_UNSUPPORTED_ITEM_TYPE");
     }
     tavernPoints.creditForDevelopment(role, quantity);
+   } else if (items.get(configId).path("type").asInt() == 12) {
+    // 单独保留探宝产生的神装实例，开发发放不能写成历史普通堆叠。
+    throw rejected("GM_UNSUPPORTED_ITEM_TYPE");
    } else if (timedIds.contains(configId)) {
     if (quantity > 100) {
      throw rejected("GM_TIMED_LIMIT");

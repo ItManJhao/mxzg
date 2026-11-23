@@ -49,6 +49,9 @@ public class InventoryService {
     /** 原item表中全部冒险点类型配置ID，独立领域迁移后连合法0的错误堆叠也拒绝。 */
     private final Set<Integer> tavernItemIds;
 
+    /** 神装按持久实例处理，新的普通库存写入不能冒充神装实例。 */
+    private final Set<Integer> godEquipmentIds;
+
     /** 在调用方事务内条件扣普通物品，余额不足返回false；精灵和冒险点不能从堆叠扣除。 */
     public boolean debit(String roleId, int itemId, long amount) {
         if (amount <= 0) throw new IllegalArgumentException("Nonpositive inventory debit");
@@ -67,6 +70,7 @@ public class InventoryService {
         this.roles = roles;
         var ids = new HashSet<Integer>();
         var points = new HashSet<Integer>();
+        var divine = new HashSet<Integer>();
         try (var input = getClass().getResourceAsStream("/gameplay/item.json")) {
             if (input == null) {
                 throw new IllegalStateException("普通库存缺少物品类型配置");
@@ -77,8 +81,8 @@ public class InventoryService {
             }
             for (var row : rows) {
                 int type = row.path("type").asInt();
-                if (type == 8 || type == 11) {
-                    var target = type == 8 ? ids : points;
+                if (type == 8 || type == 11 || type == 12) {
+                    var target = type == 8 ? ids : type == 11 ? points : divine;
                     if (!row.path("idx").isIntegralNumber() || !row.path("idx").canConvertToInt()
                             || row.path("idx").asInt() <= 0 || !target.add(row.path("idx").asInt())) {
                         throw new IllegalStateException("独立领域物品类型配置无效");
@@ -90,6 +94,7 @@ public class InventoryService {
         }
         spiritItemIds = Set.copyOf(ids);
         tavernItemIds = Set.copyOf(points);
+        godEquipmentIds = Set.copyOf(divine);
     }
 
     /** 读取普通堆叠并保留身份；先校验全部记录，独立领域错误堆叠即使数量为0也拒绝整包。 */
@@ -161,13 +166,16 @@ public class InventoryService {
         return new Item(row.getInt("item_id"), quantity, instanceId);
     }
 
-    /** 按可信配置拒绝全部精灵和冒险点类型，不能通过普通库存绕过独立领域规则。 */
+    /** 写入时使用可信类型拒绝精灵、冒险点和神装，避免从堆叠绕过独立领域规则。 */
     private void requireStackItem(int itemId) {
         if (spiritItemIds.contains(itemId)) {
             throw new IllegalArgumentException("精灵必须按独立实例处理：" + itemId);
         }
         if (tavernItemIds.contains(itemId)) {
             throw new IllegalArgumentException("冒险点必须由酒馆领域处理：" + itemId);
+        }
+        if (godEquipmentIds.contains(itemId)) {
+            throw new IllegalArgumentException("神装必须按独立实例处理：" + itemId);
         }
     }
 }

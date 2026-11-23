@@ -1,4 +1,4 @@
-/** 普通升级可信配置及基础属性计算；详情预览与真实战斗共用，不包含技能、装备或其他成长系统。 */
+/** 英雄升级、进阶和基础属性配置，由成长事务、详情预览与真实战斗共用。 */
 package com.funsgamex.mxzg.hero;
 
 import java.util.*;
@@ -10,10 +10,14 @@ import tools.jackson.databind.ObjectMapper;
 public class HeroGrowthRules {
     public record Stats(int hp, int atk, int def, int spd) {}
     public record Cost(long gold, long experience) {}
+    /** 从指定阶级向下一阶所需的等级、金币和 900102 进阶石。 */
+    public record StageRequirement(int level, long gold, long stone) {}
     private final String version;
     private final Map<String, Map<String, JsonNode>> tables = new HashMap<>();
     /** 旧 system.hero_level_jump_max，单笔升级允许提交的最高级数，启动时校验一次。 */
     private final int levelJumpMax;
+    /** 配置允许的最高强化阶级，达到后无进阶费用。 */
+    private final int maxStage;
 
     /** 启动时加载版本化成长投影及同源跳级上限，拒绝缺表和重复配置。 */
     public HeroGrowthRules(ObjectMapper mapper) {
@@ -37,6 +41,11 @@ public class HeroGrowthRules {
                 tables.put(name, Map.copyOf(rows));
             }
         } catch (java.io.IOException failure) { throw new IllegalStateException("HERO_CONFIG_MISSING", failure); }
+        maxStage = tables.get("heroupgrade").values().stream().mapToInt(row -> row.get("grade").asInt())
+                .max().orElseThrow();
+        for (int stage = 0; stage < maxStage; stage++) {
+            stageRequirement(stage);
+        }
     }
 
     /** 返回内容哈希版本，幂等收据记录实际执行时的规则版本。 */
@@ -45,6 +54,24 @@ public class HeroGrowthRules {
     /** 返回当前配置允许的单笔升级级数上限，目标等级仍需单独校验。 */
     public int levelJumpMax() {
         return levelJumpMax;
+    }
+
+    /** 返回当前配置的最高强化阶级。 */
+    public int maxStage() {
+        return maxStage;
+    }
+
+    /** 按旧规则取当前阶级的进阶要求，不能将终阶零费用当作可提交的进阶。 */
+    public StageRequirement stageRequirement(int stage) {
+        if (stage < 0 || stage >= maxStage) {
+            throw new IllegalArgumentException("HERO_STAGE_LIMIT");
+        }
+        var row = row("heroupgrade", Integer.toString(stage));
+        var result = new StageRequirement(row.get("level").asInt(), row.get("gold").asLong(), row.get("soul").asLong());
+        if (result.level() <= 0 || result.gold() <= 0 || result.stone() <= 0) {
+            throw new IllegalStateException("HERO_CONFIG_INVALID_STAGE_COST");
+        }
+        return result;
     }
 
     /** 从系统表中读取唯一正整数，缺失或重复时拒绝启动。 */

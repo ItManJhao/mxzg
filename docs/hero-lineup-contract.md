@@ -6,13 +6,26 @@
 
 | 功能 | 当前调用链 | 当前范围 |
 |---|---|---|
-| 名册与详情 | 登录、恢复、state.changed → AssetStateBinding → HeroRosterController → HeroRosterModel → HeroListView / HeroInfoView | 统一提供技能、普通四槽、已有属性和个人战力。详情箭头沿进入时的筛选顺序切换英雄 |
+| 名册与详情 | 登录、恢复、state.changed → AssetStateBinding → HeroRosterController → HeroRosterModel → HeroListView / HeroInfoView | 统一提供技能、普通四槽、已有属性和个人战力。详情按进入时的筛选顺序切换实际英雄与立绘 |
 | 主线布阵 | FormationView 草稿 → FormationController → formation.save → FormationSaveModel；权威阵容仍随统一快照写 HeroRosterModel | 持久幂等保存及版本等待已接入；页面关闭不销毁模块，草稿不提前写 Model |
 | 主线战斗 | MainChapterController → chapter.challenge/claim/replay/idle.encounter | 默认第 1～550 关挑战、幂等结算及挂机演出 |
 | 普通升级 | HeroInfoView → HeroLevelController → hero.level.upgrade → 统一快照 | 按旧级数、金币/经验消耗及阶星上限普通升级，持久回执确认后更新界面 |
+| 强化进阶 | HeroInfoView → HeroLevelController → hero.stage.advance → 统一快照 | 到达本阶等级及星级要求后消耗旧表对应金币和进阶石，提升阶段、更新等级上限和解锁技能 |
+| 英雄锁定 | HeroInfoView 设置 → HeroRosterController → hero.lock.set → 统一快照 | 锁定或解锁真实英雄实例，重登保持。相同请求编号重放只返回原结果 |
 | 普通装备 | HeroInfoView、HeroEquipmentPickerView 或 EquipmentInfoView → HeroEquipmentController → hero.equipment.change | 单件穿戴、换装、卸下、一键穿装及卸下。库存和槽位由同一版快照刷新 |
+| 升星 | HeroGrowthPanel → HeroStarController → hero.star.upgrade | 按原配方选择当前名册素材，服务端精确校验星级与归属，在同一事务扣料、返还培养投入和升星 |
+| 宝石 | HeroGrowthPanel → HeroJewelController → hero.jewel.change | 三槽按 8、8、9 星解锁，支持单镶、替换、单卸、一键镶卸及配方合成 |
+| 神装 | HeroGrowthPanel → HeroGodEquipmentController → hero.god-equipment.change / draw | 四槽按实例穿、换、卸，支持按旧配置探宝取得独立实例 |
 
-HeroInfoView 以实际英雄实例打开，支持普通升级及四槽穿脱。强化进阶、符文、神装和手动扩容待恢复。
+HeroInfoView 以实际英雄实例打开。培养页签与材料、宝石、神装共用一个虚拟列表选择窗，玩家选择只保留在当前页面。普通装备与常规培养沿用已有入口。符文穿戴、神装洗炼、评论、分享和手动扩容待恢复。
+
+## 升星、宝石与神装
+
+英雄详情的三个页签分别沿旧版 `HeroInfoUpStarLayer.ccb`、`HeroInfoUpStoneLayer.ccb`、`HeroInfoGodEquipLayer.ccb` 编排在同一预制体。升星显示星级、等级上限、技能成长与各行材料进度。宝石盘和右侧属性栏共用三槽快照，神装四槽依服务端部位顺序映射到左上、左下、右上、右下。素材、宝石、神装和探宝继续复用培养选择窗。创造法阵、神装图鉴和神装商店保留入口提示，相关玩法待接入。
+
+- 升星输入沿旧 `HeroHandler.heroUpStar` 和 `herotype.to_*_star`。服务器校验实际星级与角色归属，保护目标自身、锁定和已上阵英雄，同一材料实例仅使用一次。消耗时按旧 `herostar` 取固定费用和逐行替代道具。素材的普通培养费用、装备和宝石随同一事务返还，神装保留原独立实例及词条。最高星图鉴保留。
+- 宝石按 `jeweltype` 和 `jewelsettype` 计算。三槽全满时，以最小宝石星级选套装档位并在英雄面板和主线使用。库存里同类型宝石堆叠，已镶实例随名册。策划表的可用合成止于 9 星，旧端 10 星展示残行依赖尚不存在的权威配置。攻击和生命宝石的原黑市来源、速度宝石的原周礼包来源待接入。
+- 神装按角色 70 级、世界等级 1 和英雄 6 星判定穿戴。探宝用原每日免费单抽、足额券优先和 15 抽保底，实际价格、各次结果和词条由服务端决定。独立实例随统一快照交付，面板与主线应用静态属性。四类神装套装被动触发仍待接入，面板与战斗输入保留该来源缺口。
 
 ## 英雄名册看板
 
@@ -26,7 +39,7 @@ HeroInfoView 以实际英雄实例打开，支持普通升级及四槽穿脱。�
 
 服务端 `HeroEquipmentService` 持有当前角色资产锁。穿戴从已同步的库存记录扣除一件，替换或卸下的装备退回背包。`game_equipment` 保留槽位记录和附魂等级，V37 增加穿戴状态及幂等回执；数据、资产版本、快照推送在同一事务协调。相同请求重放原结果，单件卸下核对槽位及当时的装备模板。面板、个人战力和主线输入共用已恢复的装备及套装来源。[通信契约](network-contract.md) · [后端事务](../backend/src/main/java/com/funsgamex/mxzg/hero/HeroEquipmentService.java)
 
-日服英雄详情的外观依据 `jp-overlay/src/layer/heroinfo/HeroInfoLayer.lua` 和已有正式服截图。日服全身图的构建脚本注明原图仅在测试服资源目录，本地工程使用日服原有的 Spine 回退。属性窗展示当前服务器同步的数值，附魂技能等未接入的面板来源继续由快照标识。[正式服外观](images/official-hero-info-20261103.png)
+日服英雄详情依据 `jp-overlay/src/layer/heroinfo/HeroInfoLayer.lua`、`JpHeroPortrait.lua` 和正式服存档截图。当前把正式服映射实际引用的 115 张全身图收录在英雄 Bundle 内，由 `HeroPortraitUtils` 按星级和进化分支选择，缺图时沿用 Spine。培养栏复用旧页签、强化印记和技能角标。属性窗展示当前服务器同步的数值，附魂技能等未接入的面板来源继续由快照标识。[正式服外观](images/official-hero-info-20261103.png) · [立绘导入工具](../client/tools/import_hero_portraits.py)
 
 人工修改从对应 View 的 @UIRegistry.view 进入模块 Controller。英雄普通召唤由 HeroRosterController 收发，布阵由 FormationController 收发，普通升级由 HeroLevelController 收发。会话隔离由 GameSocketClient 与 AccountController 统一负责。
 

@@ -11,6 +11,10 @@ import { FormationController } from "../../features/hero/FormationController";
 import { HeroEquipmentController } from "../../features/hero/HeroEquipmentController";
 import { HeroLevelController } from "../../features/hero/HeroLevelController";
 import { HeroRosterController } from "../../features/hero/HeroRosterController";
+import { HeroRosterModel } from "../../features/hero/HeroRosterModel";
+import { HeroStarController } from "../../features/hero/HeroStarController";
+import { HeroJewelController } from "../../features/hero/HeroJewelController";
+import { HeroGodEquipmentController } from "../../features/hero/HeroGodEquipmentController";
 import { MarketController } from "../../features/market/MarketController";
 import { RewardBinding } from "../../features/reward/RewardBinding";
 import { EventDispatcher } from "../../framework/EventDispatcher";
@@ -78,13 +82,22 @@ export class ApplicationModules {
         heroLevel.initialize();
         heroEquipment.configure(operations);
         heroEquipment.initialize();
+        const heroStar = HeroStarController.instance;
+        heroStar.configure(operations, model);
+        heroStar.initialize();
+        const heroJewel = HeroJewelController.instance;
+        heroJewel.configure(operations);
+        heroJewel.initialize();
+        const godEquipment = HeroGodEquipmentController.instance;
+        godEquipment.configure(operations, HeroRosterModel.instance, model);
+        godEquipment.initialize();
         market.configure(operations, model);
         market.initialize();
         const dailyDungeon = DailyDungeonController.instance;
         dailyDungeon.configure(operations, this.rewards);
         dailyDungeon.initialize();
         const chapter = new MainChapterSession(controller, operations, this.rewards);
-        this.sessions = [chapter, heroLevel, heroEquipment, market, dailyDungeon];
+        this.sessions = [chapter, heroLevel, heroEquipment, heroStar, heroJewel, godEquipment, market, dailyDungeon];
         this.assets = new AssetStateBinding(model, bag, this.role,
             heroes, formation, () => {
                 clearRolePages();

@@ -199,6 +199,202 @@ class GameSocketTest {
                 .mapToLong(item -> item.path("quantity").asLong()).sum();
     }
 
+    /** 实际二进制进阶扣费、同步一次，重连后按原编号读取相同收据。 */
+    @Test
+    void heroStageAdvanceSynchronizesAndRecoversReceipt() throws Exception {
+        var player = player();
+        String role = player.role().id();
+        var hero = jdbc.queryForObject("SELECT id FROM game_hero WHERE role_id=? AND template_id=10101001",
+                String.class, role);
+        jdbc.update("UPDATE game_hero SET hero_level=30 WHERE id=?", hero);
+        jdbc.update("UPDATE game_role SET gold=25000 WHERE id=?", role);
+        new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status ->
+                inventory.credit(role, 900102, 50));
+        var key = UUID.randomUUID().toString();
+        var request = Map.of("requestId", key, "heroId", hero, "expectedStage", 0);
+        JsonNode receipt;
+
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            var unknown = peer.request("hero.stage.advance.status", Map.of("requestId", key)).path("body");
+            assertFalse(unknown.path("found").asBoolean());
+            assertFalse(unknown.has("receipt"));
+            var response = peer.request("hero.stage.advance", request);
+            assertTrue(response.path("ok").asBoolean(), response.path("error").toString());
+            receipt = response.path("body");
+            assertEquals(0, receipt.path("fromStage").asInt(-1));
+            assertEquals(1, receipt.path("toStage").asInt());
+            assertEquals(role, receipt.path("roleId").asString());
+            var change = peer.events.poll(5, TimeUnit.SECONDS);
+            assertNotNull(change);
+            assertEquals("state.changed", change.path("name").asString());
+            var state = change.path("body");
+            assertEquals(initial.path("revision").asLong() + 1, state.path("revision").asLong());
+            assertEquals(receipt.path("assetRevision").asLong(), state.path("revision").asLong());
+            assertEquals(15000, state.path("role").path("gold").asLong());
+            assertEquals(stackQuantity(initial, 900102) - 50, stackQuantity(state, 900102));
+            assertTrue(state.path("heroes").valueStream().anyMatch(row -> row.path("id").asString().equals(hero)
+                    && row.path("stage").asInt() == 1 && row.path("level").asInt() == 30));
+            assertEquals(receipt, peer.request("hero.stage.advance", request).path("body"));
+            assertEquals("IDEMPOTENCY_CONFLICT", peer.request("hero.stage.advance",
+                    Map.of("requestId", key, "heroId", hero, "expectedStage", 1)).path("error").path("code").asString());
+            assertNull(peer.events.poll(250, TimeUnit.MILLISECONDS));
+        }
+
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(receipt.path("assetRevision").asLong(), initial.path("revision").asLong());
+            assertTrue(initial.path("heroes").valueStream().anyMatch(row -> row.path("id").asString().equals(hero)
+                    && row.path("stage").asInt() == 1));
+            var restored = peer.request("hero.stage.advance.status", Map.of("requestId", key)).path("body");
+            assertTrue(restored.path("found").asBoolean());
+            assertEquals(receipt, restored.path("receipt"));
+        }
+    }
+
+    /** 三种培养走真实 WebSocket 指令、统一推送及重新鉴权，验证二进制快照字段。 */
+    @Test
+    void heroGrowthSynchronizesStarsGemsAndIndependentGodEquipment() throws Exception {
+        var player = player();
+        String role = player.role().id();
+        jdbc.update("UPDATE game_role SET role_level=70 WHERE id=?", role);
+        String target = growthHero(role, 10105010, 5);
+        String high = growthHero(role, 10105010, 9);
+        String first = growthHero(role, 10105010, 5);
+        String second = growthHero(role, 10104005, 5);
+        var third = List.of(growthHero(role, 10105008, 5), growthHero(role, 10105007, 5),
+                growthHero(role, 10105009, 5));
+        new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status ->
+                inventory.credit(role, 1011001, 4));
+        jdbc.update("INSERT INTO game_god_equipment_lottery(role_id,draw_count) VALUES (?,14)", role);
+        long revision;
+        String gemInstance;
+        String divineInstance;
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(1, initial.path("godEquipment").path("requiredWorldLevel").asInt());
+            var star = peer.request("hero.star.upgrade", Map.of("requestId", UUID.randomUUID().toString(),
+                    "heroId", target, "expectedStar", 5, "materials", List.of(
+                    Map.of("row", 0, "heroIds", List.of(first), "useReplacement", false),
+                    Map.of("row", 1, "heroIds", List.of(second), "useReplacement", false),
+                    Map.of("row", 2, "heroIds", third, "useReplacement", false))));
+            var promoted = committedGrowth(peer, star);
+            assertEquals(6, snapshotHero(promoted, target).path("star").asInt());
+            assertFalse(promoted.path("heroes").valueStream().anyMatch(hero -> first.equals(hero.path("id").asString())));
+
+            var jewel = peer.request("hero.jewel.change", Map.of("requestId", UUID.randomUUID().toString(),
+                    "heroId", high, "action", "EQUIP", "itemId", 1011001, "slot", 1));
+            var socketed = committedGrowth(peer, jewel);
+            gemInstance = snapshotHero(socketed, high).path("gems").path("items").get(0).path("instanceId").asString();
+            assertFalse(gemInstance.isBlank());
+            assertEquals(3, stackQuantity(socketed, 1011001));
+
+            var draw = peer.request("hero.god-equipment.draw", Map.of("requestId", UUID.randomUUID().toString(),
+                    "count", 1, "maxDiamonds", 0));
+            var drawn = committedGrowth(peer, draw);
+            var item = drawn.path("godEquipment").path("items").get(0);
+            divineInstance = item.path("instanceId").asString();
+            assertFalse(item.has("heroId"));
+            assertEquals(item.path("templateId").asInt(), draw.path("body").path("rewards").get(0).path("templateId").asInt());
+
+            var worn = peer.request("hero.god-equipment.change", Map.of("requestId", UUID.randomUUID().toString(),
+                    "heroId", target, "slot", item.path("slot").asInt(), "action", "EQUIP", "instanceId", divineInstance));
+            var ready = committedGrowth(peer, worn);
+            assertEquals(target, ready.path("godEquipment").path("items").get(0).path("heroId").asString());
+            revision = ready.path("revision").asLong();
+        }
+        try (var peer = new Peer()) {
+            var restored = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(revision, restored.path("revision").asLong());
+            assertEquals(6, snapshotHero(restored, target).path("star").asInt());
+            assertEquals(gemInstance, snapshotHero(restored, high).path("gems").path("items").get(0).path("instanceId").asString());
+            assertEquals(divineInstance, restored.path("godEquipment").path("items").get(0).path("instanceId").asString());
+        }
+    }
+
+    /** 准备此次角色的素材与高星对象，只写独立测试数据库。 */
+    private String growthHero(String role, int templateId, int star) {
+        String id = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO game_hero(id,role_id,template_id,star,hero_level) VALUES (?,?,?,?,1)",
+                id, role, templateId, star);
+        return id;
+    }
+
+    /** 取真实写操作对应的已提交快照，确保版本与回执一致。 */
+    private JsonNode committedGrowth(Peer peer, JsonNode response) throws InterruptedException {
+        assertTrue(response.path("ok").asBoolean(), response.path("error").toString());
+        var event = peer.events.poll(5, TimeUnit.SECONDS);
+        assertNotNull(event);
+        assertEquals("state.changed", event.path("name").asString());
+        var state = event.path("body");
+        assertEquals(response.path("body").path("assetRevision").asLong(), state.path("revision").asLong());
+        return state;
+    }
+
+    /** 从指定版本名册按实例取快照，不把模板号当作英雄身份。 */
+    private JsonNode snapshotHero(JsonNode state, String id) {
+        return state.path("heroes").valueStream().filter(hero -> id.equals(hero.path("id").asString()))
+                .findFirst().orElseThrow();
+    }
+
+    /** 真实二进制锁定与解锁同步名册，重复编号、异参和他人实例不会覆盖现状。 */
+    @Test
+    void heroLockPersistsAndReplaysWithoutChangingNewState() throws Exception {
+        var player = player();
+        String role = player.role().id();
+        String hero = jdbc.queryForObject("SELECT id FROM game_hero WHERE role_id=? AND template_id=10101001",
+                String.class, role);
+        String lockId = UUID.randomUUID().toString();
+        var lock = Map.of("requestId", lockId, "heroId", hero, "locked", true);
+        var unlock = Map.of("requestId", UUID.randomUUID().toString(), "heroId", hero, "locked", false);
+        JsonNode lockedReceipt;
+        long unlockedRevision;
+
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertFalse(initial.path("heroes").valueStream().filter(row -> hero.equals(row.path("id").asString()))
+                    .findFirst().orElseThrow().path("locked").asBoolean());
+            var locked = peer.request("hero.lock.set", lock);
+            assertTrue(locked.path("ok").asBoolean(), locked.path("error").toString());
+            lockedReceipt = locked.path("body");
+            assertEquals(hero, lockedReceipt.path("heroId").asString());
+            assertTrue(lockedReceipt.path("locked").asBoolean());
+            var committed = peer.events.poll(5, TimeUnit.SECONDS);
+            assertNotNull(committed);
+            assertEquals("state.changed", committed.path("name").asString());
+            var state = committed.path("body");
+            assertEquals(initial.path("revision").asLong() + 1, state.path("revision").asLong());
+            assertEquals(lockedReceipt.path("assetRevision").asLong(), state.path("revision").asLong());
+            assertTrue(state.path("heroes").valueStream().anyMatch(row -> hero.equals(row.path("id").asString())
+                    && row.path("locked").asBoolean()));
+
+            var unlocked = peer.request("hero.lock.set", unlock);
+            assertTrue(unlocked.path("ok").asBoolean(), unlocked.path("error").toString());
+            assertFalse(unlocked.path("body").path("locked").asBoolean(true));
+            unlockedRevision = unlocked.path("body").path("assetRevision").asLong();
+            assertEquals(state.path("revision").asLong() + 1, unlockedRevision);
+            var unlockedEvent = peer.events.poll(5, TimeUnit.SECONDS);
+            assertNotNull(unlockedEvent);
+            assertEquals(unlockedRevision, unlockedEvent.path("body").path("revision").asLong());
+            assertEquals(lockedReceipt, peer.request("hero.lock.set", lock).path("body"));
+            assertEquals("IDEMPOTENCY_CONFLICT", peer.request("hero.lock.set",
+                    Map.of("requestId", lockId, "heroId", hero, "locked", false)).path("error").path("code").asString());
+            assertNull(peer.events.poll(250, TimeUnit.MILLISECONDS));
+        }
+        try (var peer = new Peer()) {
+            var initial = peer.authenticate(player.session().accessToken()).path("body").path("initial");
+            assertEquals(unlockedRevision, initial.path("revision").asLong());
+            assertTrue(initial.path("heroes").valueStream().anyMatch(row -> hero.equals(row.path("id").asString())
+                    && !row.path("locked").asBoolean(true)));
+            assertEquals(lockedReceipt, peer.request("hero.lock.set", lock).path("body"));
+        }
+        try (var peer = new Peer()) {
+            var other = player();
+            peer.authenticate(other.session().accessToken());
+            assertEquals("HERO_NOT_FOUND", peer.request("hero.lock.set", lock).path("error").path("code").asString());
+        }
+    }
+
     /** 个人空间经真实 WS 校验鉴权、图鉴、称号期限、改名扣费、状态推送与重登恢复。 */
     @Test
     void personalSpaceCommandsPublishAndRecover() throws Exception {

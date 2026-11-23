@@ -83,6 +83,20 @@ message Frame {
     RoleDecorations role_decorations = 73;
     RoleDecorationId role_decoration_id = 74;
     RolePeerageDisplay role_peerage_display = 75;
+    HeroStageAdvanceRequest hero_stage_advance_request = 76;
+    HeroStageAdvanceReceipt hero_stage_advance_receipt = 77;
+    HeroStageAdvanceStatus hero_stage_advance_status = 78;
+    HeroStageAdvanceStatusRequest hero_stage_advance_status_request = 79;
+    HeroLockSetRequest hero_lock_set_request = 80;
+    HeroLockSetReceipt hero_lock_set_receipt = 81;
+    HeroStarUpgradeRequest hero_star_upgrade_request = 82;
+    HeroStarUpgradeReceipt hero_star_upgrade_receipt = 83;
+    HeroJewelChangeRequest hero_jewel_change_request = 84;
+    HeroJewelChangeReceipt hero_jewel_change_receipt = 85;
+    HeroGodEquipmentChangeRequest hero_god_equipment_change_request = 86;
+    HeroGodEquipmentChangeReceipt hero_god_equipment_change_receipt = 87;
+    HeroGodEquipmentDrawRequest hero_god_equipment_draw_request = 88;
+    HeroGodEquipmentDrawReceipt hero_god_equipment_draw_receipt = 89;
   }
 }
 message Empty {}
@@ -307,6 +321,8 @@ message Hero {
   // 服务端面板计算及覆盖范围；未完整恢复时 complete=false。
   optional HeroPanelStats panel_stats = 10;
   optional HeroEvolution evolution = 11;
+  // 已镶嵌宝石随英雄同步；普通背包只保存未镶嵌数量。
+  optional HeroJewelState gems = 12;
 }
 message HeroBaseStats { required uint32 hp = 1; required uint32 atk = 2; required uint32 def = 3; required uint32 spd = 4; }
 message Item {
@@ -332,6 +348,8 @@ message Snapshot {
   optional TavernPointState tavern_points = 11;
   // 召唤状态随登录、重连和资产推送同步；未使用免费次数时相应时间为 0。
   optional HeroSummonState hero_summon = 12;
+  // 独立神装库存含在库与已穿实例，虚拟列表复用统一快照。
+  optional HeroGodEquipmentState god_equipment = 13;
 }
 
 message HeroSummonState {
@@ -653,6 +671,161 @@ message HeroLevelUpgradeStatus {
   required string request_id = 1;
   required bool found = 2;
   optional HeroLevelUpgradeReceipt receipt = 3;
+}
+
+// 英雄进阶固定提升一阶，费用、等级和星级要求由服务端按当前阶级确认。
+message HeroStageAdvanceRequest {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required uint32 expected_stage = 3;
+}
+
+message HeroStageAdvanceReceipt {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required uint32 from_stage = 3;
+  required uint32 to_stage = 4;
+  required string config_version = 5;
+  required int64 asset_revision = 6;
+  required string role_id = 7;
+}
+
+message HeroStageAdvanceStatusRequest { required string request_id = 1; }
+
+message HeroStageAdvanceStatus {
+  required string request_id = 1;
+  required bool found = 2;
+  optional HeroStageAdvanceReceipt receipt = 3;
+}
+
+// 设定英雄锁定状态；角色由当前连接确定。
+message HeroLockSetRequest {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required bool locked = 3;
+}
+
+// 返回成功请求当时的设置和资产版本；当前名册仍从统一快照更新。
+message HeroLockSetReceipt {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required bool locked = 3;
+  required uint64 asset_revision = 4;
+}
+
+// 配方行从零开始。服务端重新核对实例和材料，不接受前端提供的价格。
+message HeroStarMaterials {
+  required uint32 row = 1;
+  repeated string hero_ids = 2;
+  required bool use_replacement = 3;
+}
+message HeroStarUpgradeRequest {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required uint32 expected_star = 3;
+  repeated HeroStarMaterials materials = 4;
+}
+message HeroStarUpgradeReceipt {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required uint32 from_star = 3;
+  required uint32 to_star = 4;
+  repeated Item refunded = 5;
+  required int64 asset_revision = 6;
+  required string role_id = 7;
+}
+
+// 宝石离身按配置堆叠，佩戴期间保留槽位实例。
+message HeroJewel {
+  required string instance_id = 1;
+  required uint32 template_id = 2;
+  required uint32 slot = 3;
+}
+message HeroJewelState { repeated HeroJewel items = 1; }
+message HeroJewelChangeRequest {
+  required string request_id = 1;
+  optional string hero_id = 2;
+  required string action = 3;
+  optional uint32 item_id = 4;
+  optional uint32 slot = 5;
+  optional uint32 expected_item_id = 6;
+  optional uint32 count = 7;
+}
+message HeroJewelChangeReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  optional string hero_id = 3;
+  required string action = 4;
+  optional uint32 item_id = 5;
+  optional uint32 slot = 6;
+  optional uint32 expected_item_id = 7;
+  optional uint32 count = 8;
+  required int64 asset_revision = 9;
+  required bool changed = 10;
+  repeated Item rewards = 11;
+}
+
+message GodEquipmentModifier {
+  required uint32 type = 1;
+  required uint32 level = 2;
+}
+message GodEquipmentAttribute {
+  required uint32 type = 1;
+  required sint64 value = 2;
+}
+message GodEquipmentItem {
+  required string instance_id = 1;
+  required uint32 template_id = 2;
+  required uint32 slot = 3;
+  optional string hero_id = 4;
+  repeated GodEquipmentModifier modifiers = 5;
+  repeated GodEquipmentAttribute attributes = 6;
+  required uint32 star = 7;
+  required uint32 quality = 8;
+}
+message HeroGodEquipmentState {
+  required uint32 required_role_level = 1;
+  required uint32 required_world_level = 2;
+  required uint32 required_hero_star = 3;
+  required uint32 world_level = 4;
+  repeated GodEquipmentItem items = 5;
+  required uint32 draw_count = 6;
+  required bool free_draw = 7;
+}
+message HeroGodEquipmentChangeRequest {
+  required string request_id = 1;
+  required string hero_id = 2;
+  required uint32 slot = 3;
+  required string action = 4;
+  optional string instance_id = 5;
+  optional string expected_instance_id = 6;
+}
+message HeroGodEquipmentChangeReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required string hero_id = 3;
+  required uint32 slot = 4;
+  required string action = 5;
+  optional string instance_id = 6;
+  optional string expected_instance_id = 7;
+  required int64 asset_revision = 8;
+}
+message HeroGodEquipmentDrawRequest {
+  required string request_id = 1;
+  required uint32 count = 2;
+  required int64 max_diamonds = 3;
+}
+message GodEquipmentDrawReward {
+  required uint32 template_id = 1;
+  required uint32 quantity = 2;
+}
+message HeroGodEquipmentDrawReceipt {
+  required string request_id = 1;
+  required string role_id = 2;
+  required uint32 count = 3;
+  required int64 diamonds_paid = 4;
+  required int64 asset_revision = 5;
+  repeated GodEquipmentDrawReward rewards = 6;
 }
 
 // EQUIP 使用背包堆叠实例，UNEQUIP 使用已穿戴实例、槽位及原配置；两个批量操作只选英雄。

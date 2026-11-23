@@ -123,6 +123,7 @@ public class HeroBattleInputService {
                 add.accept(150, defense.coefficient(hero.star()));
                 skills.contribute(hero.templateId(), hero.star(), hero.stage(), add);
                 evolved.attributes().forEach(add);
+                hero.growthAttributes().forEach(add);
                 // 与旧FormationReceivers一致：按阵型/站位加入原始属性，百分比不提前折算。
                 position.attributes().forEach(add);
             });
@@ -131,8 +132,12 @@ public class HeroBattleInputService {
             units.add(new Unit(slot.position(), hero, attributes, selected,
                 HeroBattleAttributeUtils.opening(attributes), skills.battleSchedule(selected), elements.element(hero.templateId())));
         }
-        return new Input(roles.revision(role), formation.version(), idle ? 1 : formation.formationId(), units,
-            List.of("soul_talent_runes_awakening", "account_and_team_sources",
+        var pending = new ArrayList<>(List.of("soul_talent_runes_awakening", "account_and_team_sources",
                 "battle_special_attributes_and_triggers"));
+        if (units.stream().anyMatch(unit -> unit.hero().panelStats().pendingSources()
+                .contains("god_equipment_set_skills"))) {
+            pending.add("god_equipment_set_skills");
+        }
+        return new Input(roles.revision(role), formation.version(), idle ? 1 : formation.formationId(), units, pending);
     }
 }

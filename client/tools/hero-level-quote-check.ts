@@ -1,11 +1,11 @@
-/** 使用当前真实配置验证英雄详情报价及旧版批升边界，不写入任何角色状态。 */
+/** 使用真实配置核对英雄普通升级和进阶报价，不写入角色状态。 */
 import { strict as assert } from "node:assert";
 import { GameConfig } from "../assets/scripts/config/GameConfig";
 import type { OwnedHero } from "../assets/scripts/features/hero/data/HeroSnapshotUtils";
 import { HeroLevelQuoteUtils } from "../assets/scripts/features/hero/utils/HeroLevelQuoteUtils";
 import { ConfigFixtureUtils } from "./ConfigFixtureUtils";
 
-/** 复验首战收入、两次升级、材料不足、上限，以及未就绪时禁用入口。 */
+/** 复验首战收入、成长费用、等级和星级条件以及未同步状态。 */
 async function main(): Promise<void> {
     const config = await ConfigFixtureUtils.installReal(new GameConfig());
     const hero: OwnedHero = {
@@ -41,7 +41,19 @@ async function main(): Promise<void> {
     assert.equal(HeroLevelQuoteUtils.describe(hero, 4000, 500, new GameConfig()).status, "unavailable");
     assert.equal(HeroLevelQuoteUtils.describe({ ...hero, stage: undefined }, 4000, 500, config).status, "unavailable");
     assert.equal(HeroLevelQuoteUtils.describe(hero, -1, 500, config).status, "unavailable");
-    console.log("PASS hero level quote: first battle, cumulative costs, resource shortage, stage limit, jump threshold and unavailable state");
+    assert.equal(HeroLevelQuoteUtils.describeStage({ ...hero, level: 29 }, 20000, 50, config).status, "locked");
+    assert.deepEqual(HeroLevelQuoteUtils.describeStage({ ...hero, level: 30 }, 9999, 50, config), {
+        status: "ready", stage: 0, nextStage: 1, requiredLevel: 30, requiredStar: 1,
+        gold: 10000, stone: 50, goldEnough: false, stoneEnough: true,
+    });
+    assert.equal(HeroLevelQuoteUtils.describeStage({ ...hero, level: 40, stage: 1, star: 1 },
+        20000, 100, config).status, "locked");
+    assert.equal(HeroLevelQuoteUtils.describeStage({ ...hero, level: 40, stage: 1, star: 2 },
+        20000, 99, config).stoneEnough, false);
+    assert.equal(HeroLevelQuoteUtils.describeStage({ ...hero, level: 140, stage: 6, star: 6 },
+        20000, 100, config).status, "max");
+    assert.equal(HeroLevelQuoteUtils.describeStage(hero, 20000, -1, config).status, "unavailable");
+    console.log("PASS hero growth quote: level jump, stage costs, balance, level and star requirements");
 }
 
 void main().catch(error => {

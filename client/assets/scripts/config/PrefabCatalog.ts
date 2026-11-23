@@ -52,6 +52,7 @@ export const PREFAB_UUID: Readonly<Record<string, string>> = {
   "bundles/module/hero/prefabs/HeroAttributesView": "def156ea-f43d-451c-a797-35da67d26d80",
   "bundles/module/hero/prefabs/HeroEquipmentPickerRow": "4464a112-bc49-4c1f-8255-27e67be385ff",
   "bundles/module/hero/prefabs/HeroEquipmentPickerView": "16742ebc-aefa-465c-b236-8d9023296004",
+  "bundles/module/hero/prefabs/HeroGrowthPickerView": "f69ad4d2-ef73-4c5a-b806-47125e2c4137",
   "bundles/module/hero/prefabs/HeroIconCellView": "e7c1a4b0-6d28-4f53-9c11-2a8b7e6d5c40",
   "bundles/module/hero/prefabs/HeroInfoView": "fa5d3f0c-1441-479b-a182-48d374c7dc6c",
   "bundles/module/hero/prefabs/HeroListView": "95a097b8-9964-4ac3-8b3d-b4f568b1eb53",

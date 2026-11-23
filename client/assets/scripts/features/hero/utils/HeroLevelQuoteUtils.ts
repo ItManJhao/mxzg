@@ -1,6 +1,6 @@
 /**
- * 普通英雄升级的前端报价，供详情和提交入口共用。
- * 按已安装的旧版配置及当前快照显示级数与消耗，最终资格、扣费和等级由服务端确认。
+ * 英雄升级和强化进阶的前端报价，供详情和提交入口共用。
+ * 配置和统一快照用于展示有效条件与消耗，最终资格、扣费和成长由服务端确认。
  */
 import { ConfigUnavailable, GameConfig } from "../../../config/GameConfig";
 import { GConfig } from "../../../config/GConfig";
@@ -20,10 +20,26 @@ export interface HeroLevelQuote {
     readonly jumpLabel: boolean;
 }
 
-/** 无状态地计算旧升级面板的显示值。 */
+/** 强化进阶的展示条件；ready 表示等级与星级达标，是否足额由余额标记独立描述。 */
+export interface HeroStageQuote {
+    readonly status: "ready" | "pending" | "locked" | "max" | "unavailable";
+    readonly stage: number | null;
+    readonly nextStage: number | null;
+    readonly requiredLevel: number | null;
+    readonly requiredStar: number | null;
+    readonly gold: number;
+    readonly stone: number;
+    readonly goldEnough: boolean;
+    readonly stoneEnough: boolean;
+}
+
+/** 无状态地计算旧成长面板的显示值。 */
 export class HeroLevelQuoteUtils {
     /** 普通英雄升级消耗的英雄经验道具配置编号。 */
     public static readonly EXPERIENCE_ITEM_ID = 900101;
+
+    /** 强化进阶消耗的英雄进阶石配置编号。 */
+    public static readonly STAGE_STONE_ITEM_ID = 900102;
 
     /** 所有输入由调用方提供，不持有名册或余额。 */
     private constructor() {}
@@ -115,6 +131,63 @@ export class HeroLevelQuoteUtils {
                 levels,
                 fromLevel: hero.level,
                 jumpLabel: hero.level < jumpLimit && levels > 0,
+            };
+        } catch (error) {
+            if (error instanceof ConfigUnavailable) {
+                return unavailable;
+            }
+            throw error;
+        }
+    }
+
+    /** 读取当前阶级对应的进阶要求和费用，以及是否拥有足额金币和进阶石。 */
+    public static describeStage(
+        hero: OwnedHero | undefined,
+        gold: number,
+        stone: number,
+        config: GameConfig = GameConfig.instance,
+    ): HeroStageQuote {
+        const unavailable: HeroStageQuote = {
+            status: "unavailable",
+            stage: hero?.stage ?? null,
+            nextStage: null,
+            requiredLevel: null,
+            requiredStar: null,
+            gold: 0,
+            stone: 0,
+            goldEnough: false,
+            stoneEnough: false,
+        };
+        if (!hero || hero.stage === undefined || !Number.isSafeInteger(gold) || gold < 0
+            || !Number.isSafeInteger(stone) || stone < 0) {
+            return unavailable;
+        }
+        try {
+            const stage = hero.stage;
+            const rows = config.getConfig(GConfig.HeroUpgrade);
+            const row = config.getConfig(GConfig.HeroUpgrade, stage);
+            if (!row || !this.positive(row.level)) {
+                return unavailable;
+            }
+            const maxStage = rows.reduce((highest, entry) => Math.max(highest, entry.grade), 0);
+            if (stage === maxStage) {
+                return { ...unavailable, status: "max" };
+            }
+            const nextStage = stage + 1;
+            if (!config.getConfig(GConfig.HeroUpgrade, nextStage) || !this.positive(row.gold)
+                || !this.positive(row.soul)) {
+                return unavailable;
+            }
+            return {
+                status: hero.level >= row.level && hero.star >= nextStage ? "ready" : "locked",
+                stage,
+                nextStage,
+                requiredLevel: row.level,
+                requiredStar: nextStage,
+                gold: row.gold,
+                stone: row.soul,
+                goldEnough: gold >= row.gold,
+                stoneEnough: stone >= row.soul,
             };
         } catch (error) {
             if (error instanceof ConfigUnavailable) {

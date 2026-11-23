@@ -9,9 +9,13 @@ import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.campaign.MainChapterFirstRewardService;
 import com.funsgamex.mxzg.dungeon.DailyDungeonService;
 import com.funsgamex.mxzg.hero.HeroEquipmentService;
+import com.funsgamex.mxzg.hero.HeroGodEquipmentService;
+import com.funsgamex.mxzg.hero.HeroJewelService;
+import com.funsgamex.mxzg.hero.HeroStarService;
 import com.funsgamex.mxzg.hero.HeroSummonService;
 import com.funsgamex.mxzg.hero.HeroFragmentCombineService;
 import com.funsgamex.mxzg.hero.HeroLevelService;
+import com.funsgamex.mxzg.hero.HeroLockService;
 import com.funsgamex.mxzg.market.MarketService;
 import com.funsgamex.mxzg.role.RoleProfileService;
 import com.funsgamex.mxzg.role.RoleService;
@@ -65,8 +69,16 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final HeroFragmentCombineService fragments;
     /** 普通升级按真实配置扣费和升级，提供同一角色的原收据。 */
     private final HeroLevelService heroLevels;
+    /** 英雄锁定和解锁持久操作，角色归属由当前认证连接决定。 */
+    private final HeroLockService heroLocks;
     /** 普通装备的真实扣还库存、槽位及原请求回执由英雄装备服务管理。 */
     private final HeroEquipmentService heroEquipment;
+    /** 升星校验和消费材料在英雄升星事务中处理。 */
+    private final HeroStarService heroStars;
+    /** 宝石镶嵌、卸下和合成由同一个事务入口处理。 */
+    private final HeroJewelService heroJewels;
+    /** 神装穿戴和探宝的独立资产服务。 */
+    private final HeroGodEquipmentService heroGodEquipment;
     /** 普通市场货架、购买与刷新均由当前角色的市场服务处理。 */
     private final MarketService market;
     /** 金币副本首关资格、真实挑战和清扫回执由原事务服务处理。 */
@@ -112,13 +124,19 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims,
             com.funsgamex.mxzg.campaign.MainChapterMilestoneService milestones, HeroSummonService heroSummons,
             MainChapterFirstRewardService firstRewards, HeroFragmentCombineService fragments,
-            HeroLevelService heroLevels, HeroEquipmentService heroEquipment, MarketService market,
+            HeroLevelService heroLevels, HeroLockService heroLocks, HeroEquipmentService heroEquipment,
+            HeroStarService heroStars, HeroJewelService heroJewels, HeroGodEquipmentService heroGodEquipment,
+            MarketService market,
             DailyDungeonService dailyDungeon,
             RoleService roles, RoleProfileService profiles, WelcomeGiftService welcomeGifts, GameClock clock) {
         this.firstRewards = firstRewards;
         this.fragments = fragments;
         this.heroLevels = heroLevels;
+        this.heroLocks = heroLocks;
         this.heroEquipment = heroEquipment;
+        this.heroStars = heroStars;
+        this.heroJewels = heroJewels;
+        this.heroGodEquipment = heroGodEquipment;
         this.market = market;
         this.dailyDungeon = dailyDungeon;
         this.roles = roles;
@@ -306,8 +324,21 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             heroLevel(connection, request, name.equals("hero.level.upgrade"));
             return;
         }
+        if (name.equals("hero.stage.advance") || name.equals("hero.stage.advance.status")) {
+            heroStage(connection, request, name.equals("hero.stage.advance"));
+            return;
+        }
+        if (name.equals("hero.lock.set")) {
+            setHeroLock(connection, request);
+            return;
+        }
         if (name.equals("hero.equipment.change")) {
             changeEquipment(connection, request);
+            return;
+        }
+        if (name.equals("hero.star.upgrade") || name.equals("hero.jewel.change")
+                || name.equals("hero.god-equipment.change") || name.equals("hero.god-equipment.draw")) {
+            heroGrowth(connection, request, name);
             return;
         }
         if (name.equals("market.list") || name.equals("market.buy") || name.equals("market.refresh")) {
@@ -635,6 +666,46 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
+    /** 进阶接收实例与预期阶级，恢复只按原 UUID 查询已提交收据。 */
+    private void heroStage(Connection connection, JsonNode request, boolean advance) throws IOException {
+        var body = request.path("body");
+        fields(body, advance ? Set.of("requestId", "heroId", "expectedStage") : Set.of("requestId"));
+        try {
+            String requestId = body.path("requestId").asString();
+            if (!advance) {
+                respond(connection, request, heroLevels.stageStatus(connection.token, requestId));
+                return;
+            }
+            var expected = body.path("expectedStage");
+            if (!expected.isIntegralNumber() || !expected.canConvertToInt()) {
+                throw rejected("INVALID_HERO_STAGE_REQUEST");
+            }
+            var parameters = new HeroLevelService.StageRequest(requestId, body.path("heroId").asString(),
+                    expected.asInt());
+            respond(connection, request, heroLevels.advanceStage(connection.token, parameters));
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "HERO_UPGRADE_BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 校验本次设值，成功回包确认原请求；当前英雄锁定状态随统一快照更新。 */
+    private void setHeroLock(Connection connection, JsonNode request) throws IOException {
+        var body = request.path("body");
+        fields(body, Set.of("requestId", "heroId", "locked"));
+        String requestId = text(body, "requestId", UUID_PATTERN);
+        String heroId = text(body, "heroId", UUID_PATTERN);
+        if (!body.path("locked").isBoolean()) {
+            throw rejected("INVALID_HERO_LOCK_REQUEST");
+        }
+        try {
+            respond(connection, request, heroLocks.set(connection.token, requestId, heroId, body.path("locked").asBoolean()));
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "HERO_LOCK_BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
     /** 装备命令只接收当前选择，回包返回原因或成功回执；最新槽位仍使用统一快照。 */
     private void changeEquipment(Connection connection, JsonNode request) throws IOException {
         var body = request.path("body");
@@ -658,6 +729,82 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 | org.springframework.dao.QueryTimeoutException error) {
             fail(connection, request, "HERO_EQUIPMENT_BUSY", "角色数据正忙，请稍后重试", true);
         }
+    }
+
+    /** 按养成协议交给对应事务；持久数据只通过原统一快照发布。 */
+    private void heroGrowth(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        try {
+            Object receipt = switch (name) {
+                case "hero.star.upgrade" -> upgradeHeroStar(connection.token, body);
+                case "hero.jewel.change" -> changeHeroJewel(connection.token, body);
+                case "hero.god-equipment.change" -> changeHeroGodEquipment(connection.token, body);
+                case "hero.god-equipment.draw" -> {
+                    fields(body, Set.of("requestId", "count", "maxDiamonds"));
+                    yield heroGodEquipment.draw(connection.token, new HeroGodEquipmentService.DrawRequest(
+                            body.path("requestId").asString(), body.path("count").asInt(),
+                            body.path("maxDiamonds").asLong()));
+                }
+                default -> throw rejected("INVALID_MESSAGE");
+            };
+            respond(connection, request, receipt);
+        } catch (org.springframework.dao.PessimisticLockingFailureException
+                | org.springframework.dao.QueryTimeoutException error) {
+            fail(connection, request, "HERO_GROWTH_BUSY", "角色数据正忙，请稍后重试", true);
+        }
+    }
+
+    /** 按配置行读取玩家选择的素材；资产归属、资格和替代价格统一由领域服务核查。 */
+    private HeroStarService.Receipt upgradeHeroStar(String token, JsonNode body) {
+        fields(body, Set.of("requestId", "heroId", "expectedStar", "materials"));
+        var rows = body.path("materials");
+        if (!rows.isArray() || rows.size() > 12) {
+            throw rejected("INVALID_HERO_STAR_REQUEST");
+        }
+        var materials = new ArrayList<HeroStarService.Materials>();
+        for (var row : rows) {
+            fields(row, Set.of("row", "heroIds", "useReplacement"));
+            var ids = row.path("heroIds");
+            if (!ids.isArray() || ids.size() > 30) {
+                throw rejected("INVALID_HERO_STAR_REQUEST");
+            }
+            var heroes = new ArrayList<String>();
+            for (var id : ids) {
+                heroes.add(id.asString());
+            }
+            materials.add(new HeroStarService.Materials(row.path("row").asInt(), heroes,
+                    row.path("useReplacement").asBoolean()));
+        }
+        return heroStars.upgrade(token, new HeroStarService.Request(body.path("requestId").asString(),
+                body.path("heroId").asString(), body.path("expectedStar").asInt(), materials));
+    }
+
+    /** 解析单槽和批量宝石操作，未提供的可选字段保留领域的空值。 */
+    private HeroJewelService.Receipt changeHeroJewel(String token, JsonNode body) {
+        fields(body, Set.of("requestId", "heroId", "action", "itemId", "slot", "expectedItemId", "count"));
+        HeroJewelService.Action action;
+        try {
+            action = HeroJewelService.Action.valueOf(body.path("action").asString());
+        } catch (IllegalArgumentException error) {
+            throw rejected("INVALID_HERO_JEWEL_REQUEST");
+        }
+        return heroJewels.change(token, new HeroJewelService.Request(body.path("requestId").asString(),
+                body.path("heroId").asString(null), action, body.path("itemId").asInt(), body.path("slot").asInt(),
+                body.path("expectedItemId").asInt(), body.path("count").asInt()));
+    }
+
+    /** 神装穿脱使用实例字符串和期望槽内实例，禁止以配置号替代实例。 */
+    private HeroGodEquipmentService.Receipt changeHeroGodEquipment(String token, JsonNode body) {
+        fields(body, Set.of("requestId", "heroId", "slot", "action", "instanceId", "expectedInstanceId"));
+        HeroGodEquipmentService.Action action;
+        try {
+            action = HeroGodEquipmentService.Action.valueOf(body.path("action").asString());
+        } catch (IllegalArgumentException error) {
+            throw rejected("INVALID_GOD_EQUIPMENT_REQUEST");
+        }
+        return heroGodEquipment.change(token, new HeroGodEquipmentService.Request(body.path("requestId").asString(),
+                body.path("heroId").asString(), body.path("slot").asInt(), action,
+                body.path("instanceId").asString(null), body.path("expectedInstanceId").asString(null)));
     }
 
     /** 市场命令只接收玩家选择，价格、数量限制和角色归属由已鉴权的市场事务确定。 */
@@ -804,13 +951,13 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         }
     }
 
-    /** 验证解码后的统一信封及关联标识；具体业务字段和阶段继续单独校验。 */
+    /** 验证统一信封及关联标识；协议段允许 god-equipment 等拼写，分派仍以登记的全名为准。 */
     private static void validateEnvelope(JsonNode request) {
         fields(request, Set.of("version", "kind", "name", "id", "body", "connectionId"));
         if (!request.path("version").isIntegralNumber() || !request.path("version").asString().equals("1")) throw rejected("UNSUPPORTED_VERSION");
         if (!request.path("kind").isString() || !request.path("kind").asString().equals("request")) throw rejected("INVALID_MESSAGE");
         text(request, "id", UUID_PATTERN);
-        text(request, "name", "[a-z]+(?:\\.[a-z]+){1,3}");
+        text(request, "name", "[a-z]+(?:\\.[a-z]+(?:-[a-z]+)?){1,3}");
         if (!request.path("body").isObject()) throw rejected("INVALID_MESSAGE");
     }
 

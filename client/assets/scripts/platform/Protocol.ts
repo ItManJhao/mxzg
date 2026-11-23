@@ -51,6 +51,20 @@ export class Protocol {
     public static readonly HERO_LEVEL_UPGRADE = "hero.level.upgrade";
     /** 按原请求编号恢复已提交的普通升级回执。 */
     public static readonly HERO_LEVEL_UPGRADE_STATUS = "hero.level.upgrade.status";
+    /** 进阶当前英雄一阶。 */
+    public static readonly HERO_STAGE_ADVANCE = "hero.stage.advance";
+    /** 查询原编号的进阶回执。 */
+    public static readonly HERO_STAGE_ADVANCE_STATUS = "hero.stage.advance.status";
+    /** 设定当前角色英雄的锁定状态，当前值由统一资产快照提供。 */
+    public static readonly HERO_LOCK_SET = "hero.lock.set";
+    /** 提交升星素材与配方，资产由统一快照同步。 */
+    public static readonly HERO_STAR_UPGRADE = "hero.star.upgrade";
+    /** 镶嵌、卸下或合成宝石，资产由统一快照同步。 */
+    public static readonly HERO_JEWEL_CHANGE = "hero.jewel.change";
+    /** 穿戴或卸下神装，资产由统一快照同步。 */
+    public static readonly HERO_GOD_EQUIPMENT_CHANGE = "hero.god-equipment.change";
+    /** 神装探宝，资产由统一快照同步。 */
+    public static readonly HERO_GOD_EQUIPMENT_DRAW = "hero.god-equipment.draw";
     /** 普通装备逐件或批量穿脱；最终装备槽及库存由统一快照提供。 */
     public static readonly HERO_EQUIPMENT_CHANGE = "hero.equipment.change";
     /** 获取当前角色的普通市场货架、已购数量和刷新状态。 */
@@ -126,6 +140,12 @@ export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protoco
     | typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS
     | typeof Protocol.HERO_FRAGMENT_COMBINE | typeof Protocol.HERO_FRAGMENT_COMBINE_STATUS
     | typeof Protocol.HERO_LEVEL_UPGRADE | typeof Protocol.HERO_LEVEL_UPGRADE_STATUS
+    | typeof Protocol.HERO_STAGE_ADVANCE | typeof Protocol.HERO_STAGE_ADVANCE_STATUS
+    | typeof Protocol.HERO_LOCK_SET
+    | typeof Protocol.HERO_STAR_UPGRADE
+    | typeof Protocol.HERO_JEWEL_CHANGE
+    | typeof Protocol.HERO_GOD_EQUIPMENT_CHANGE
+    | typeof Protocol.HERO_GOD_EQUIPMENT_DRAW
     | typeof Protocol.HERO_EQUIPMENT_CHANGE | typeof Protocol.MARKET_BUY | typeof Protocol.MARKET_REFRESH
     | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS
     | typeof Protocol.ROLE_WELCOME_CLAIM | typeof Protocol.DAILY_DUNGEON_CHALLENGE;
@@ -172,6 +192,13 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.HERO_FIRST_SUMMON_STATUS, module: "召唤", description: "恢复普通首抽回执" },
     { name: Protocol.HERO_LEVEL_UPGRADE, module: "英雄", description: "普通英雄升级" },
     { name: Protocol.HERO_LEVEL_UPGRADE_STATUS, module: "英雄", description: "恢复普通升级回执" },
+    { name: Protocol.HERO_STAGE_ADVANCE, module: "英雄", description: "强化英雄进阶" },
+    { name: Protocol.HERO_STAGE_ADVANCE_STATUS, module: "英雄", description: "恢复强化进阶回执" },
+    { name: Protocol.HERO_LOCK_SET, module: "英雄", description: "设置英雄锁定状态" },
+    { name: Protocol.HERO_STAR_UPGRADE, module: "英雄", description: "提交升星素材与配方" },
+    { name: Protocol.HERO_JEWEL_CHANGE, module: "英雄", description: "镶嵌、卸下或合成宝石" },
+    { name: Protocol.HERO_GOD_EQUIPMENT_CHANGE, module: "英雄", description: "穿戴或卸下神装" },
+    { name: Protocol.HERO_GOD_EQUIPMENT_DRAW, module: "英雄", description: "神装探宝" },
     { name: Protocol.HERO_EQUIPMENT_CHANGE, module: "英雄", description: "普通装备穿脱与一键穿装回执" },
     { name: Protocol.MARKET_LIST, module: "商店", description: "普通市场当前货架及刷新次数" },
     { name: Protocol.MARKET_BUY, module: "商店", description: "购买当前货架商品" },

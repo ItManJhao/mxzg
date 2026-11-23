@@ -32,7 +32,7 @@ export class GameRedDotKey {
     /** 键表通过静态字段读取。 */
     private constructor() {}
 
-    /** 返回指定英雄实例的普通升级红点。 */
+    /** 返回指定英雄实例的升级和强化进阶共用红点。 */
     public static heroUpgrade(heroId: string): string {
         return `${GameRedDotKey.heroDetail(heroId)}.upgrade`;
     }

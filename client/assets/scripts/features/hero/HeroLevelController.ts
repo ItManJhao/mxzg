@@ -1,6 +1,6 @@
 /**
- * 读取英雄和余额快照供详情显示升级消耗，每次点击只发送一次普通升级。
- * 成功回包用于本次光效，实际等级和余额由服务端统一快照更新。
+ * 读取英雄和余额快照供详情显示普通升级与强化进阶的条件，每次点击发送一次请求。
+ * 成功回包用于光效，实际成长和余额由服务端统一快照更新。
  */
 import { BaseController } from "../../framework/BaseController";
 import { UIManager } from "../../framework/ui/UIManager";
@@ -11,25 +11,25 @@ import type { AccountModel } from "../account/AccountModel";
 import type { AccountOperations } from "../account/AccountOperations";
 import { BagModel } from "../bag/BagModel";
 import { HeroLevelData } from "./data/HeroLevelData";
-import type { HeroLevelReceipt } from "./data/HeroLevelData";
+import type { HeroLevelReceipt, HeroStageReceipt } from "./data/HeroLevelData";
 import { HeroRosterModel } from "./HeroRosterModel";
 import { HeroLevelEvent } from "./utils/HeroLevelEvent";
-import { HeroLevelQuoteUtils, type HeroLevelQuote } from "./utils/HeroLevelQuoteUtils";
+import { HeroLevelQuoteUtils, type HeroLevelQuote, type HeroStageQuote } from "./utils/HeroLevelQuoteUtils";
 
 export class HeroLevelController extends BaseController {
-    /** 应用的普通升级入口，详情页共用。 */
+    /** 应用的普通升级和强化进阶入口，详情页共用。 */
     public static readonly instance = new HeroLevelController(HeroRosterModel.instance, BagModel.instance);
 
     /** 应用提供的账号请求入口，在销毁时释放。 */
     private operations: Pick<AccountOperations, "send"> | null = null;
     /** 应用提供的角色快照，报价读取其中的金币。 */
     private account: AccountModel | null = null;
-    /** 发出升级指令后禁用连续点击，成功、失败或模块重置时解除。 */
+    /** 发出一次成长请求后禁用连点，收到回包或模块重置时解除。 */
     private upgrading = false;
 
     /**
-     * @param roster 提供英雄当前等级。
-     * @param bag 提供英雄经验物品的当前数量。
+     * @param roster 提供英雄当前等级、阶级及星级。
+     * @param bag 提供英雄经验和进阶石的当前数量。
      */
     public constructor(
         private readonly roster: HeroRosterModel,
@@ -38,15 +38,18 @@ export class HeroLevelController extends BaseController {
         super();
     }
 
-    /** 注入发送升级指令的账号通道和报价使用的角色资料。 */
+    /** 注入发送成长指令的账号通道和报价使用的角色资料。 */
     public configure(operations: Pick<AccountOperations, "send">, account: AccountModel): void {
         this.operations = operations;
         this.account = account;
     }
 
-    /** 模块开启时登记普通升级的即时回包。 */
+    /** 模块开启时登记普通升级和强化进阶的即时回包。 */
     protected onInitialize(): void {
-        this.ownListener(ProtocolRouter.instance.register(this, [Protocol.HERO_LEVEL_UPGRADE]));
+        this.ownListener(ProtocolRouter.instance.register(this, [
+            Protocol.HERO_LEVEL_UPGRADE,
+            Protocol.HERO_STAGE_ADVANCE,
+        ]));
     }
 
     /** 用当前资产快照计算费用；等待升级回包时禁用按钮。 */
@@ -55,6 +58,15 @@ export class HeroLevelController extends BaseController {
         const gold = this.account?.snapshot.role?.gold ?? -1;
         const heroExp = this.bag.snapshot.synced ? this.bag.quantity(HeroLevelQuoteUtils.EXPERIENCE_ITEM_ID) : -1;
         const quote = HeroLevelQuoteUtils.describe(hero, gold, heroExp);
+        return hero && this.upgrading ? { ...quote, status: "pending" } : quote;
+    }
+
+    /** 用统一快照显示当前阶的进阶等级、星级和费用，成长请求期间禁用重复提交。 */
+    public describeStage(heroId: string): HeroStageQuote {
+        const hero = this.roster.snapshot.heroes.find(row => row.id === heroId);
+        const gold = this.account?.snapshot.role?.gold ?? -1;
+        const stone = this.bag.snapshot.synced ? this.bag.quantity(HeroLevelQuoteUtils.STAGE_STONE_ITEM_ID) : -1;
+        const quote = HeroLevelQuoteUtils.describeStage(hero, gold, stone);
         return hero && this.upgrading ? { ...quote, status: "pending" } : quote;
     }
 
@@ -83,26 +95,67 @@ export class HeroLevelController extends BaseController {
         });
     }
 
-    /** 收到匹配的成功回包后解除等待，通知英雄详情播放本次升级光效。 */
+    /** 先提示不满足的进阶条件，再把实例 ID 和原阶级交由服务端复核并提交。 */
+    public advanceStage(heroId: string): void {
+        if (this.upgrading) {
+            return;
+        }
+        const quote = this.describeStage(heroId);
+        const operations = this.operations;
+        if (!operations || quote.stage === null || quote.status === "unavailable") {
+            UIManager.instance.toast("进阶条件待同步");
+            return;
+        }
+        if (quote.status !== "ready") {
+            UIManager.instance.toast(quote.status === "max" ? "已达最高强化阶级" : "未达到进阶要求");
+            return;
+        }
+        if (!quote.goldEnough || !quote.stoneEnough) {
+            UIManager.instance.toast(!quote.goldEnough ? "金币不足" : "英雄进阶石不足");
+            return;
+        }
+        const request = { heroId, expectedStage: quote.stage };
+        this.upgrading = true;
+        this.emit(HeroLevelEvent.Updated, {});
+        operations.send(this, Protocol.HERO_STAGE_ADVANCE, request,
+            error => this.onUpgradeFailed(error, true), body => {
+                const receipt = body as HeroStageReceipt;
+                if (receipt.heroId !== heroId || receipt.fromStage !== request.expectedStage) {
+                    throw new Error("进阶回执与本次请求不符");
+                }
+            });
+    }
+
+    /** 成功回包解除等待并通知界面，实际等级和阶级仍交由统一快照更新。 */
     public onNotify(name: ProtocolName, body: unknown): void {
-        if (name === Protocol.HERO_LEVEL_UPGRADE) {
-            const { heroId, fromLevel, toLevel } = body as HeroLevelReceipt;
-            this.upgrading = false;
-            this.emit(HeroLevelEvent.Updated, { heroId, fromLevel, toLevel });
+        switch (name) {
+            case Protocol.HERO_LEVEL_UPGRADE: {
+                const { heroId, fromLevel, toLevel } = body as HeroLevelReceipt;
+                this.upgrading = false;
+                this.emit(HeroLevelEvent.Updated, { heroId, fromLevel, toLevel });
+                break;
+            }
+            case Protocol.HERO_STAGE_ADVANCE: {
+                const { heroId, fromStage, toStage } = body as HeroStageReceipt;
+                this.upgrading = false;
+                this.emit(HeroLevelEvent.Updated, { heroId, fromStage, toStage });
+                break;
+            }
         }
     }
 
-    /** 升级未收到有效结果时恢复按钮，提示服务端原因或等待重连同步。 */
-    private onUpgradeFailed(error: unknown): void {
+    /** 成长操作未收到有效结果时恢复按钮，提示服务端原因或等待重连快照同步。 */
+    private onUpgradeFailed(error: unknown, stage = false): void {
         this.upgrading = false;
         this.emit(HeroLevelEvent.Updated, {});
+        const action = stage ? "进阶" : "升级";
         const message = error instanceof SocketFailure && error.interrupted
-            ? "升级结果待同步，恢复连接后请查看英雄等级"
-            : error instanceof Error ? error.message : "英雄升级失败";
+            ? `${action}结果待同步，恢复连接后请查看英雄${stage ? "阶级" : "等级"}`
+            : error instanceof Error ? error.message : `英雄${action}失败`;
         UIManager.instance.toast(message);
     }
 
-    /** 角色数据重置时清除升级按钮的等待状态。 */
+    /** 角色数据重置时清除成长按钮的等待状态。 */
     protected onResetSession(): void {
         this.upgrading = false;
         this.emit(HeroLevelEvent.Updated, {});

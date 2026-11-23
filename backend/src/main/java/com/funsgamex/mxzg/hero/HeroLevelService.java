@@ -1,6 +1,6 @@
 /**
- * 普通英雄升级及原收据查询，由登录长连接调用。
- * 在同一角色锁事务内扣除金币和英雄经验、提升等级、落原收据及共享快照版本。升阶和升星归各自业务。
+ * 英雄普通升级、强化进阶及原收据查询，由登录长连接调用。
+ * 同一角色锁事务内结算消耗、更新成长状态与战力、保存收据并推进统一快照。
  */
 package com.funsgamex.mxzg.hero;
 
@@ -32,6 +32,16 @@ public class HeroLevelService {
     /** 只读查询结果；未提交的原编号明确返回 found=false。 */
     public record Status(String requestId, boolean found, Receipt receipt) {}
 
+    /** 进阶固定提升一阶；预期阶用于拒绝其他操作已经修改过的英雄。 */
+    public record StageRequest(String requestId, String heroId, int expectedStage) {}
+
+    /** 原进阶事务的阶级和版本；等级与资产仍从统一快照读取。 */
+    public record StageReceipt(String requestId, String heroId, int fromStage, int toStage, String configVersion,
+            long assetRevision, String roleId) {}
+
+    /** 按原编号查已提交进阶，与普通升级收据分开。 */
+    public record StageStatus(String requestId, boolean found, StageReceipt receipt) {}
+
     /** 领域预览给出准确单级成本和基础属性，用于规则检查。 */
     public record Preview(HeroProfile hero, int stage, int levelLimit, HeroGrowthRules.Stats current,
             HeroGrowthRules.Stats next, HeroGrowthRules.Cost cost, long gold, long experience, String status,
@@ -39,6 +49,8 @@ public class HeroLevelService {
 
     /** 旧物品配置中的英雄经验，属于可累积库存。 */
     private static final int EXPERIENCE_ITEM_ID = 900101;
+    /** 旧物品表中强化进阶消耗的归属道具。 */
+    private static final int STAGE_STONE_ITEM_ID = 900102;
     /** UUID 与协议、持久存储约束一致，数值形态的标识不接受。 */
     private static final String UUID_PATTERN = "[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}";
     /** 当前请求角色由凭证决定，在取得锁后再次检查。 */
@@ -51,11 +63,11 @@ public class HeroLevelService {
     private final InventoryService inventory;
     /** 等阶上限、跳级总量、逐级价格和基础数值使用策划配置。 */
     private final HeroGrowthRules rules;
-    /** 原收据持久化与等级条件更新入口。 */
+    /** 原收据持久化与等级、阶级的条件更新入口。 */
     private final JdbcTemplate jdbc;
     /** 同一事务复用唯一资产版本，提交后由统一快照分发。 */
     private final AssetSyncService sync;
-    /** 已上阵英雄的升级会刷新原主阵容战力峰值。 */
+    /** 已上阵英雄的升级、进阶会刷新主阵容战力峰值。 */
     private final HeroMainPowerService powers;
 
     /** 注入角色权威数据源与原事务版本出口。 */
@@ -158,6 +170,71 @@ public class HeroLevelService {
         return new Status(requestId, receipt != null, receipt);
     }
 
+    /** 按旧 4019 扣金币与进阶石并提升一阶；原请求重发仅返回对应收据。 */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public StageReceipt advanceStage(String token, StageRequest request) {
+        String role = authorizeLocked(token);
+        if (request == null || !validId(request.requestId()) || !validId(request.heroId())
+                || request.expectedStage() < 0) {
+            throw error(HttpStatus.BAD_REQUEST, "INVALID_HERO_STAGE_REQUEST");
+        }
+        var previous = loadStageReceipt(role, request.requestId());
+        if (previous != null) {
+            if (!previous.heroId().equals(request.heroId()) || previous.fromStage() != request.expectedStage()) {
+                throw error(HttpStatus.CONFLICT, "IDEMPOTENCY_CONFLICT");
+            }
+            return previous;
+        }
+
+        var hero = requireHero(role, request.heroId());
+        int from = hero.stage();
+        if (from != request.expectedStage()) {
+            throw error(HttpStatus.CONFLICT, "HERO_STAGE_CHANGED");
+        }
+        if (from >= rules.maxStage()) {
+            throw error(HttpStatus.CONFLICT, "HERO_STAGE_LIMIT");
+        }
+        int to = from + 1;
+        if (hero.star() < to) {
+            throw error(HttpStatus.CONFLICT, "HERO_STAGE_STAR");
+        }
+        var required = rules.stageRequirement(from);
+        if (hero.level() < required.level()) {
+            throw error(HttpStatus.CONFLICT, "HERO_STAGE_LEVEL");
+        }
+        if (!roles.debitGold(role, required.gold())) {
+            throw error(HttpStatus.CONFLICT, "INSUFFICIENT_GOLD");
+        }
+        if (!inventory.debit(role, STAGE_STONE_ITEM_ID, required.stone())) {
+            throw error(HttpStatus.CONFLICT, "INSUFFICIENT_HERO_STAGE_STONE");
+        }
+        if (jdbc.update("UPDATE game_hero SET stage=? WHERE role_id=? AND id=? AND stage=?",
+                to, role, request.heroId(), from) != 1) {
+            throw error(HttpStatus.CONFLICT, "HERO_STAGE_CHANGED");
+        }
+        if (hero.deployed()) {
+            powers.observe(role);
+        }
+        sync.changed(role);
+        var receipt = new StageReceipt(request.requestId(), request.heroId(), from, to, rules.version(),
+                roles.revision(role), role);
+        jdbc.update("INSERT INTO game_hero_stage_request(role_id,request_id,hero_id,from_stage,to_stage,"
+                + "config_version,asset_revision) VALUES (?,?,?,?,?,?,?)", role, receipt.requestId(),
+                receipt.heroId(), from, to, receipt.configVersion(), receipt.assetRevision());
+        return receipt;
+    }
+
+    /** 只查询认证角色的原进阶收据，未提交返回 found=false。 */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public StageStatus stageStatus(String token, String requestId) {
+        String role = authorizeLocked(token);
+        if (!validId(requestId)) {
+            throw error(HttpStatus.BAD_REQUEST, "INVALID_HERO_STAGE_REQUEST");
+        }
+        var receipt = loadStageReceipt(role, requestId);
+        return new StageStatus(requestId, receipt != null, receipt);
+    }
+
     /** 持有真实角色锁后重读凭证，防止等待期间已被撤销的会话提交修改。 */
     private String authorizeLocked(String token) {
         String role = sessions.requireRole(token);
@@ -182,6 +259,19 @@ public class HeroLevelService {
                     }
                     return new Receipt(requestId, rows.getString("hero_id"), rows.getInt("from_level"),
                             rows.getInt("to_level"), rows.getString("config_version"), rows.getLong("asset_revision"), role);
+                }, role, requestId);
+    }
+
+    /** 从独立进阶收据表读取原结果，不依英雄后来发生的变化重算。 */
+    private StageReceipt loadStageReceipt(String role, String requestId) {
+        return jdbc.query("SELECT hero_id,from_stage,to_stage,config_version,asset_revision "
+                + "FROM game_hero_stage_request WHERE role_id=? AND request_id=?", rows -> {
+                    if (!rows.next()) {
+                        return null;
+                    }
+                    return new StageReceipt(requestId, rows.getString("hero_id"), rows.getInt("from_stage"),
+                            rows.getInt("to_stage"), rows.getString("config_version"), rows.getLong("asset_revision"),
+                            role);
                 }, role, requestId);
     }
 

@@ -37,6 +37,13 @@
 | hero.summon.first.status | 请求/响应 | 按同一角色和原 `requestId` 查询成功回执，供断线与重登恢复 |
 | hero.level.upgrade | 请求/响应 | `requestId`、英雄实例 `heroId`、原等级 `expectedLevel` 与升级级数 `levels`；服务端计算成本，提交后返回原回执 |
 | hero.level.upgrade.status | 请求/响应 | 同一角色按原 `requestId` 查原升级回执 |
+| hero.stage.advance | 请求/响应 | `requestId`、英雄实例 `heroId` 和原阶 `expectedStage`。服务端按当前等级、星级和费用校验，返回原进阶回执，统一快照刷新阶级与库存 |
+| hero.stage.advance.status | 请求/响应 | 同一角色按原 `requestId` 查进阶回执。重连首包仍直接提供当前成长状态 |
+| hero.lock.set | 请求/响应 | `requestId`、实际英雄实例 `heroId` 和目标 `locked`。服务端按角色归属设值，重放返回原回执，新状态由统一快照交付 |
+| hero.star.upgrade | 请求/响应 | `requestId`、英雄、原星级、各配方行的素材实例和替代选择。按旧配方结算，回复实际星级和已返还道具，完整资产以统一快照为准 |
+| hero.jewel.change | 请求/响应 | 以操作枚举区分单槽、批量和合成，提交所见槽位与原项或目标配方；回执保留本次选择，统一快照携带英雄的已镶宝石 |
+| hero.god-equipment.change | 请求/响应 | 真实神装实例和英雄部位；替换时带当前槽内实例，卸下仅传当前占槽实例 |
+| hero.god-equipment.draw | 请求/响应 | 单次或十次与玩家确认的钻石上限。神装实例、宝箱进度和普通奖励由同版本快照交付 |
 | hero.equipment.change | 请求/响应 | `requestId`、`heroId` 和 `action`。单穿使用背包堆叠字符串 ID。单脱使用槽位、穿戴实例 ID 和操作时的原配置 ID。批量穿脱由服务端按当前状态执行 |
 | market.list | 请求/响应 | 空请求获取本角色的普通市场货架、刷新次数和成交价 |
 | market.buy | 请求/响应 | `requestId`、`shelfVersion`、`productId` 和 `count`；服务端按当前货架结算 |

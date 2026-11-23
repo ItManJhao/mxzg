@@ -1,6 +1,6 @@
 /**
- * 普通升级的协议结构和请求、回执校验。回执可通知界面播放成功反馈，
- * 英雄等级与余额始终来自统一资产快照。
+ * 英雄升级和进阶的协议结构及回执校验。回执通知界面播放反馈，
+ * 英雄成长状态与余额来自统一资产快照。
  */
 import { Protocol } from "../../../platform/Protocol";
 import type { GameFrame } from "../../../platform/GameProtocolCodecUtils";
@@ -24,7 +24,18 @@ export interface HeroLevelReceipt {
     readonly assetRevision: number;
 }
 
-/** 使用统一格式校验普通升级消息。 */
+/** 冻结的进阶成功回执，提交版本用于和统一快照对应。 */
+export interface HeroStageReceipt {
+    readonly requestId: string;
+    readonly heroId: string;
+    readonly roleId: string;
+    readonly fromStage: number;
+    readonly toStage: number;
+    readonly configVersion: string;
+    readonly assetRevision: number;
+}
+
+/** 使用统一格式校验英雄成长消息。 */
 export class HeroLevelData {
     /** 仅通过静态方法校验，不保存连接或角色状态。 */
     private constructor() {}
@@ -86,12 +97,55 @@ export class HeroLevelData {
         }
     }
 
-    /** 载荷必须是普通消息对象；空载荷不能代表 NOT_FOUND。 */
+    /** 校验进阶请求、成功回执和按原编号查询的结果。 */
+    public static validateStageFrame(frame: GameFrame): void {
+        const status = frame.name === Protocol.HERO_STAGE_ADVANCE_STATUS;
+        if ((!status && frame.name !== Protocol.HERO_STAGE_ADVANCE)
+            || (frame.kind === "response" && frame.ok === false)) {
+            return;
+        }
+        const body = HeroLevelData.readObject(frame.body);
+        if (!HeroLevelData.isId(body.requestId)) {
+            throw new Error("进阶请求编号无效");
+        }
+        if (frame.kind === "request") {
+            if (status && Object.keys(body).length !== 1) {
+                throw new Error("进阶查询只接受原请求编号");
+            }
+            if (!status && (Object.keys(body).length !== 3 || !HeroLevelData.isId(body.heroId)
+                || !HeroLevelData.isStage(body.expectedStage))) {
+                throw new Error("进阶请求字段无效");
+            }
+            return;
+        }
+        if (status && (typeof body.found !== "boolean" || body.found !== (body.receipt !== undefined))) {
+            throw new Error("进阶查询状态与回执不一致");
+        }
+        if (status && !body.found) {
+            return;
+        }
+        const receipt = status ? HeroLevelData.readObject(body.receipt) : body;
+        if (receipt.requestId !== body.requestId || !HeroLevelData.isId(receipt.heroId)
+            || !HeroLevelData.isId(receipt.roleId) || !HeroLevelData.isStage(receipt.fromStage)
+            || !HeroLevelData.isStage(receipt.toStage) || receipt.toStage !== receipt.fromStage + 1
+            || typeof receipt.configVersion !== "string" || receipt.configVersion.length === 0
+            || receipt.configVersion.length > 128 || !Number.isSafeInteger(receipt.assetRevision)
+            || (receipt.assetRevision as number) <= 0) {
+            throw new Error("进阶回执无效");
+        }
+    }
+
+    /** 载荷必须是普通消息对象；空载荷不能代表没有原收据。 */
     private static readObject(value: unknown): Record<string, unknown> {
         if (typeof value !== "object" || value === null || Array.isArray(value)) {
-            throw new Error("普通升级载荷无效");
+            throw new Error("英雄成长载荷无效");
         }
         return value as Record<string, unknown>;
+    }
+
+    /** 允许初始阶 0，服务端使用有符号整数存储阶级。 */
+    private static isStage(value: unknown): value is number {
+        return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 0x7fffffff;
     }
 
     /** 协议的正 uint32 字段，包括等级与本笔升级级数。 */

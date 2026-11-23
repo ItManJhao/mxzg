@@ -10,7 +10,7 @@ export class HeroRedDotUtils {
     private constructor() {}
 
     /**
-     * 所有英雄可显示自己的装备与升级红点，旧版底栏只汇总主线已上阵的英雄。
+     * 所有英雄可显示自己的装备、升级和进阶红点，底栏只汇总主线已上阵的英雄。
      * 未同步的装备或库存不触发可操作提示。
      */
     public static project(roster: HeroRosterState, bag: BagModel, gold: number): {
@@ -24,10 +24,14 @@ export class HeroRedDotUtils {
         }
         const mainHeroes = new Set(roster.mainFormation?.slots.map(slot => slot.heroId));
         const exp = bag.quantity(HeroLevelQuoteUtils.EXPERIENCE_ITEM_ID);
+        const stone = bag.quantity(HeroLevelQuoteUtils.STAGE_STONE_ITEM_ID);
         const availableScores = HeroEquipmentUtils.bestAvailableScores(bag.items);
         for (const hero of roster.heroes) {
             const quote = HeroLevelQuoteUtils.describe(hero, gold, exp);
-            const canUpgrade = quote.status === "ready" && quote.levels > 0;
+            const stage = quote.status === "max" ? HeroLevelQuoteUtils.describeStage(hero, gold, stone) : null;
+            const canUpgrade = (quote.status === "ready" && quote.levels > 0)
+                || (stage?.status === "ready" && hero.level === stage.requiredLevel
+                    && stage.goldEnough && stage.stoneEnough);
             const slots = hero.equipment ? HeroEquipmentUtils.improvableSlots(availableScores, hero.equipment.items) : [];
             if (canUpgrade) {
                 details[GameRedDotKey.heroUpgrade(hero.id)] = true;
