@@ -296,7 +296,13 @@ public final class HeroBattleHealingExecutor implements Executor {
                     }
                     continue;
                 }
-                if (rules.battleRoundListener(buffId) || rules.battleReactiveProtection(buffId) != null) {
+                var selection = rules.battleArtSelection(buffId);
+                if (selection != null) {
+                    applySelectedArts(selection, source, targets);
+                    continue;
+                }
+                if (rules.battleRoundListener(buffId) || rules.towerFixedRoundListener(buffId)
+                        || rules.battleReactiveProtection(buffId) != null) {
                     for (var target : targets) {
                         installBuffListener(buffId, actor.id(), target.id());
                     }
@@ -425,7 +431,7 @@ public final class HeroBattleHealingExecutor implements Executor {
             if (source.actor().interrupted(candidate.id())) {
                 continue;
             }
-            boolean matched = buffId == 1083501 ? defender.actor().isDead()
+            boolean matched = buffId == 1083501 || buffId == 5053701 ? defender.actor().isDead()
                 : defender.hp() > 0 && HeroBattleConditionUtils.apply(rules.battleHpCondition(buffId), source.actor(),
                     new HeroBattleConditionUtils.Health(sourceId, source.hp(), source.maxHp()),
                     new HeroBattleConditionUtils.Health(candidate.id(), defender.hp(), defender.maxHp()), List.of());
@@ -510,19 +516,41 @@ public final class HeroBattleHealingExecutor implements Executor {
         }
     }
 
-    /** 登记监听的携带者及原施加者，回合效果与受击守护共用绝对期限和移除回调。 */
+    /** 登记监听的携带者及原施加者；固定回合由回合推进处理，无需注册即时监听。 */
     private void installBuffListener(int buffId, int sourceId, int targetId) {
         var target = require(targetId);
         if (target.hp() <= 0 || target.actor().isDead() || require(sourceId).actor().interrupted(targetId)) {
             return;
         }
         var entry = installBuff(sourceId, targetId, rules.battleBuff(buffId), 0);
-        target.actor().listen(new Listener(entry.instanceId(), sourceId, rules.battleTrigger(buffId)));
+        if (entry.spec().type() != 203) {
+            target.actor().listen(new Listener(entry.instanceId(), sourceId, rules.battleTrigger(buffId)));
+        }
     }
 
     /** 执行已预检的即时子动作，持续伤害安装到条件筛选后的实际存活目标。 */
     private void applyImmediateArts(int buffId, int sourceId, List<HeroBattleTargetUtils.Unit> context) {
         applyImmediateArts(rules.immediateArts(buffId), sourceId, context);
+    }
+
+    /** 按旧 ArtSelector 对每个实际目标独立抽取不重复动作，再逐个执行。 */
+    private void applySelectedArts(HeroSkillPanelRules.ArtSelection selection, State source,
+                                   List<HeroBattleTargetUtils.Unit> targets) {
+        for (var target : targets) {
+            if (require(target.id()).hp() <= 0 || source.actor().interrupted(target.id())) {
+                continue;
+            }
+            var candidates = new ArrayList<>(selection.candidates());
+            var selected = new ArrayList<HeroSkillPanelRules.DamageArt>();
+            if (selection.count() == candidates.size()) {
+                selected.addAll(candidates);
+            } else {
+                for (int i = 0; i < selection.count(); i++) {
+                    selected.add(candidates.remove(random.index(candidates.size())));
+                }
+            }
+            applyImmediateArts(selected, source.actor().id(), List.of(target));
+        }
     }
 
     /** 执行原动作列表，普通子链与随机分支按同一选目标和效果顺序结算。 */
@@ -536,11 +564,22 @@ public final class HeroBattleHealingExecutor implements Executor {
                 context, attackContext.queued, random::index);
             for (int childId : art.buffs()) {
                 var healing = rules.attackHealing(childId);
+                var selection = rules.battleArtSelection(childId);
+                var assigned = rules.dailyAssignedSkill(childId);
                 int damageShieldRate = rules.battleDamageShieldRate(childId);
-                boolean inertEffect = rules.inertBattleEffect(childId);
+                boolean inertEffect = rules.inertBattleEffect(childId) || rules.zeroChanceBalancedNote(childId);
                 int damageHealingRate = inertEffect ? 0 : rules.battleDamageHealingRate(childId);
                 if (rules.battleProjectile(childId)) {
                     recordPresentation(childId, sourceId, targets);
+                } else if (selection != null) {
+                    applySelectedArts(selection, source, targets);
+                } else if (assigned != null) {
+                    for (var target : targets) {
+                        if (require(target.id()).hp() > 0 && !source.actor().interrupted(target.id())
+                                && actionDecision().test(rules.assignedSkillChance(childId))) {
+                            attackContext.queue.addLast(new CounterAction(sourceId, target.id(), assigned));
+                        }
+                    }
                 } else if (healing != null) {
                     applyAttackHealing(childId, healing, source, targets);
                 } else if (damageShieldRate > 0) {
@@ -558,6 +597,13 @@ public final class HeroBattleHealingExecutor implements Executor {
                 } else if (rules.attackDamageOverTime(childId) != null) {
                     for (var target : targets) {
                         applyAttackDamageOverTime(childId, sourceId, target.id(), attackContext.decision);
+                    }
+                } else if (rules.untickedPlague(childId)) {
+                    for (var target : targets) {
+                        if (require(target.id()).hp() > 0 && !source.actor().interrupted(target.id())
+                                && !hasStatus(target.id(), 152)) {
+                            installBuff(sourceId, target.id(), rules.battleBuff(childId), 0);
+                        }
                     }
                 } else if (rules.battleRoundListener(childId) || rules.battleReactiveProtection(childId) != null) {
                     for (var target : targets) {
@@ -1066,11 +1112,13 @@ public final class HeroBattleHealingExecutor implements Executor {
         emit(311, source.actor(), defender.actor());
     }
 
-    /** 依旧 replenish 顺序叠加固定治疗、施疗倍率和受疗倍率，返回可含溢出的战报值。 */
+    /** 依旧 replenish 顺序叠加治疗、施疗倍率及当前受疗倍率，返回可含溢出的战报值。 */
     private long healingAmount(State source, State defender, long base) {
         long amount = Math.addExact(base, source.treatment());
         amount = Math.addExact(amount, percent(amount, source.treatmentRate()));
-        return Math.addExact(amount, percent(amount, defender.receivedRate()));
+        var defenderCombat = combat.get(defender.actor().id());
+        long liveReceived = defenderCombat == null ? 0 : defenderCombat.attributes().get(206);
+        return Math.addExact(amount, percent(amount, Math.addExact(defender.receivedRate(), liveReceived)));
     }
 
     /**
@@ -1116,7 +1164,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         return entry != null && rules.matchesControlTrigger(listener.definition().buffId(), entry.spec().type());
     }
 
-    /** 执行专用监听，保持快照中原关联与当前攻击时点，统一纳入根事务。 */
+    /** 执行专用监听，保留当前伤害、单位关系和共享根事务。 */
     @Override
     public void special(Listener listener, Actor carrier, int targetId) {
         transaction(() -> {
@@ -1137,6 +1185,10 @@ public final class HeroBattleHealingExecutor implements Executor {
             }
             if (listener.definition().event() == 234) {
                 consumeBlockShield(listener, carrier);
+                return;
+            }
+            if (listener.definition().event() == 240) {
+                limitIncomingDamage(listener.definition().buffId(), carrier);
                 return;
             }
             if (listener.definition().event() == 231) {
@@ -1166,6 +1218,16 @@ public final class HeroBattleHealingExecutor implements Executor {
                 reverseContract(listener, targetId, config.rate());
             }
         });
+    }
+
+    /** 旧240用未改写的初始伤害封顶；105的初始伤害字段为 0。 */
+    private void limitIncomingDamage(int buffId, Actor carrier) {
+        if (damageFrame == null) {
+            throw new IllegalStateException("伤害上限缺少扣血前上下文");
+        }
+        int rate = rules.towerDamageLimitRate(buffId);
+        long maximum = percent(require(carrier.id()).maxHp(), rate);
+        damageFrame.remaining = damageFrame.fixedAttack ? 0 : Math.min(damageFrame.incoming, maximum);
     }
 
     /** 灵魂结界按存活持有者分摊当前伤害；独立固定伤害沿旧共享伤害结果逐次消耗护盾。 */
@@ -1326,9 +1388,7 @@ public final class HeroBattleHealingExecutor implements Executor {
         if (contractor.actor().isDead() || contractor.hp() <= 0) {
             return;
         }
-        long amount = Math.addExact(transfer, source.treatment());
-        amount = Math.addExact(amount, percent(amount, source.treatmentRate()));
-        amount = Math.addExact(amount, percent(amount, contractor.receivedRate()));
+        long amount = healingAmount(source, contractor, transfer);
         long actual = Math.min(amount, contractor.maxHp() - contractor.hp());
         long nextHp = Math.addExact(contractor.hp(), actual);
         if (nextHp <= 0) {
@@ -1916,7 +1976,7 @@ public final class HeroBattleHealingExecutor implements Executor {
     }
 
     /**
-     * 按出手顺序执行回合监听和持续伤害，再执行到期诅咒并移除到期状态。强蓄力先加后减。
+     * 按出手顺序执行回合监听和持续伤害，再执行固定回合效果并移除到期状态。强蓄力先加后减。
      * 本入口不是完整回合（尚无能量收支/女神/周期特殊效果）；必须覆盖全部场内单位且不重复。
      */
     public void beginRound(int currentRound, List<Integer> order, HeroBattleElementRules elements,
@@ -1950,7 +2010,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                         if (entry.expiresAt() <= round) expireEntry(id, entry);
                     }
                 }
-                // 旧固定回合阶段在回合开始监听之后运行，诅咒只在绝对到期回合扣血一次。
+                // 旧固定回合效果仅在绝对到期当轮执行，包括诅咒和203的配置动作。
                 for (int id : order) {
                     var actor = require(id).actor();
                     if (actor.isHangUpSealed()) {
@@ -1960,11 +2020,18 @@ public final class HeroBattleHealingExecutor implements Executor {
                         if (actor.isDead()) {
                             break;
                         }
-                        if (entry.spec().type() == 1207 && entry.expiresAt() == round) {
+                        if (entry.expiresAt() != round || !buffs.get(id).snapshot().contains(entry)) {
+                            continue;
+                        }
+                        if (entry.spec().type() == 1207) {
                             tickAttackDamageOverTime(id, entry);
-                            if (buffs.get(id).snapshot().contains(entry)) {
-                                expireEntry(id, entry);
-                            }
+                        } else if (entry.spec().type() == 203) {
+                            applyImmediateArts(entry.spec().id(), entry.sourceId(), List.of(target(require(id))));
+                        } else {
+                            continue;
+                        }
+                        if (buffs.get(id).snapshot().contains(entry)) {
+                            expireEntry(id, entry);
                         }
                     }
                 }
@@ -2045,7 +2112,7 @@ public final class HeroBattleHealingExecutor implements Executor {
 
     /** 统一清除监听并退还直接属性和双方攻击偷取，其他未移除状态保持有效。 */
     private void removed(int unitId, List<HeroBattleBuffState.Entry> entries, String reason) {
-        for (int controlType : Set.of(1001, 1004, 1005, 1006, 1007, 1010, 1014)) {
+        for (int controlType : Set.of(1001, 1004, 1005, 1006, 1007, 1010, 1012, 1014)) {
             if (entries.stream().anyMatch(entry -> entry.spec().type() == controlType)) {
                 require(unitId).actor().control(controlType, buffs.get(unitId).snapshot().stream()
                     .anyMatch(entry -> entry.spec().type() == controlType));
@@ -2057,7 +2124,7 @@ public final class HeroBattleHealingExecutor implements Executor {
                 periodicRecovery.clear(unitId);
             }
             long speed = 0;
-            if (entry.spec().type() == 160) {
+            if (entry.spec().type() == 160 || entry.spec().type() == 501) {
                 var effect = rules.controlAttribute(entry.spec().id());
                 requireCombat(unitId).attributes().addBase(effect.attribute(), -effect.amount());
                 if (effect.attribute() == 101) {

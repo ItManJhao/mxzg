@@ -1,6 +1,6 @@
 /**
  * 在隔离数据库中用真实角色阵容和原守军验证幻境之塔。
- * 覆盖前十层、首次失败后的精力恢复、扫荡、里程碑和冻结重试。
+ * 覆盖前三十层、首次失败后的精力恢复、扫荡、独立里程碑和冻结重试。
  */
 package com.funsgamex.mxzg;
 
@@ -11,6 +11,7 @@ import com.funsgamex.mxzg.lineup.Lineup;
 import com.funsgamex.mxzg.lineup.MainFormationCommandService;
 import com.funsgamex.mxzg.lineup.MainFormationStateService;
 import com.funsgamex.mxzg.reward.RewardGrantService.Reward;
+import com.funsgamex.mxzg.reward.RewardReceiptPayloads;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.time.GameClock;
 import com.funsgamex.mxzg.tower.TowerRepository;
@@ -23,12 +24,16 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(properties = {
@@ -57,13 +62,15 @@ class TowerServiceTest {
     @Autowired private JdbcTemplate jdbc;
     /** 在独立用例中推进服务器秒，测试实际精力恢复和零点。 */
     @Autowired private GameClock clock;
+    /** 检查历史回执使用的 JSON 映射兼容。 */
+    @Autowired private ObjectMapper mapper;
 
     /** 隔离账号、角色和本次授权。 */
     private record Player(String account, String role, String token) {}
 
-    /** 走真实十层、首次通关发奖、后续回放、扫荡扣费及独立里程碑。 */
+    /** 走真实三十层、首通发奖、重登战报、付费扫荡及三个独立里程碑。 */
     @Test
-    void clearTenFloorsAndClaimMilestoneWithFrozenRetries() throws Exception {
+    void clearThirtyFloorsAndClaimMilestonesWithFrozenRetries() throws Exception {
         var player = player(15);
         assertFailure("TOWER_LEVEL", () -> tower.current(player.token()));
         jdbc.update("UPDATE game_role SET role_level=16 WHERE id=?", player.role());
@@ -75,8 +82,10 @@ class TowerServiceTest {
         assertEquals(originalMain, firstState.slots());
         assertEquals(0, firstState.formationVersion());
         assertEquals(20, firstState.energy());
-        assertEquals(IntStream.rangeClosed(1, 10).boxed().toList(),
+        assertEquals(IntStream.rangeClosed(1, 30).boxed().toList(),
                 firstState.floors().stream().map(TowerService.FloorState::floor).toList());
+        assertEquals(List.of(10, 20, 30),
+                firstState.milestones().stream().map(TowerService.MilestoneState::floor).toList());
         assertFailure("TOWER_FORMATION_EMPTY", () -> tower.challenge(player.token(), id(), 1));
         assertFailure("TOWER_FLOOR", () -> tower.challenge(player.token(), id(), 2));
         assertFailure("TOWER_SWEEP_FLOOR", () -> tower.sweep(player.token(), id(), 1, 0));
@@ -94,8 +103,8 @@ class TowerServiceTest {
         String output = System.getProperty("mxzg.test.tower.replays");
         TowerService.Settlement last = null;
         long revision = roles.revision(player.role());
-        for (int floor = 1; floor <= 10; floor++) {
-            last = tower.challenge(player.token(), floor == 10 ? lastRequest : id(), floor);
+        for (int floor = 1; floor <= 30; floor++) {
+            last = tower.challenge(player.token(), floor == 30 ? lastRequest : id(), floor);
             assertTrue(last.won(), "第 " + floor + " 层");
             assertEquals("tower:" + floor, last.replay().getScenario());
             assertEquals(6, last.replay().getUnitsList().stream().filter(unit -> unit.getFaction() == 2).count());
@@ -103,45 +112,63 @@ class TowerServiceTest {
             assertEquals(20, last.state().energy());
             assertEquals(revision + floor, last.assetRevision());
             assertEquals(firstState.floors().get(floor - 1).firstRewards(), actual(last));
-            assertFalse(last.state().milestone().claimed());
+            assertTrue(last.state().milestones().stream().noneMatch(TowerService.MilestoneState::claimed));
+            if (floor == 19 || floor == 29) {
+                int nextMilestone = (floor + 1) / 10;
+                assertFailure("TOWER_MILESTONE_LOCKED",
+                        () -> tower.claimMilestone(player.token(), id(), nextMilestone));
+            }
             if (output != null) {
                 Files.write(Files.createDirectories(Path.of(output)).resolve("tower-" + floor + ".pb"),
                         last.replay().toByteArray());
             }
         }
-        assertEquals(10, progress.highestCleared(player.role()));
-        assertFailure("TOWER_FLOOR", () -> tower.challenge(player.token(), id(), 11));
+        assertEquals(30, progress.highestCleared(player.role()));
+        assertFailure("TOWER_FLOOR", () -> tower.challenge(player.token(), id(), 31));
 
         var token = relogin(player);
-        assertEquals(last, tower.challenge(token, lastRequest, 10));
+        assertEquals(last, tower.challenge(token, lastRequest, 30));
         assertEquals(strong, tower.current(token).slots());
-        assertFailure("TOWER_REQUEST_CONFLICT", () -> tower.sweep(token, lastRequest, 10, 0));
-        assertFailure("TOWER_SWEEP_FLOOR", () -> tower.sweep(token, id(), 9, 0));
-        var firstSweep = tower.sweep(token, id(), 10, 0);
+        assertFailure("TOWER_REQUEST_CONFLICT", () -> tower.sweep(token, lastRequest, 30, 0));
+        assertFailure("TOWER_SWEEP_FLOOR", () -> tower.sweep(token, id(), 29, 0));
+        var firstSweep = tower.sweep(token, id(), 30, 0);
         assertEquals(firstState.floors().getLast().sweepRewards(), actual(firstSweep));
         assertNull(firstSweep.replay());
         assertEquals(1, firstSweep.state().sweeps());
-        assertEquals(10, tower.sweep(token, id(), 10, 0).state().nextSweepCostDiamonds());
-        assertFailure("TOWER_COST_CHANGED", () -> tower.sweep(token, id(), 10, 0));
-        var paid = tower.sweep(token, id(), 10, 10);
-        assertEquals(paid, tower.sweep(token, paid.requestId(), 10, 10));
+        assertEquals(10, tower.sweep(token, id(), 30, 0).state().nextSweepCostDiamonds());
+        assertFailure("TOWER_COST_CHANGED", () -> tower.sweep(token, id(), 30, 0));
+        var paid = tower.sweep(token, id(), 30, 10);
+        assertEquals(paid, tower.sweep(token, paid.requestId(), 30, 10));
         assertEquals(90, roles.findById(player.role()).orElseThrow().diamonds());
 
-        var milestone = tower.claimMilestone(token, id(), 1);
-        assertEquals(List.of(new Reward(1001003, 1), new Reward(1002003, 1)), actual(milestone));
-        assertTrue(milestone.state().milestone().claimed());
+        // 按非层数顺序领取，证明服务端按各自编号而非最高已领奖台阶记账。
+        var tenth = tower.claimMilestone(token, id(), 1);
+        assertEquals(List.of(new Reward(1001003, 1), new Reward(1002003, 1)), actual(tenth));
+        assertTrue(tenth.state().milestone().claimed());
+        var thirtieth = tower.claimMilestone(token, id(), 3);
+        assertEquals(List.of(new Reward(20405004, 50)), actual(thirtieth));
+        assertFalse(thirtieth.state().milestones().get(1).claimed());
+        var twentieth = tower.claimMilestone(token, id(), 2);
+        assertEquals(List.of(new Reward(1003004, 1), new Reward(1004004, 1)), actual(twentieth));
         assertFailure("TOWER_MILESTONE_CLAIMED", () -> tower.claimMilestone(token, id(), 1));
-        assertEquals(10, progress.highestCleared(player.role()));
+        assertFailure("TOWER_MILESTONE_CLAIMED", () -> tower.claimMilestone(token, id(), 3));
+        assertEquals(30, progress.highestCleared(player.role()));
         String restored = relogin(player);
-        assertEquals(milestone, tower.claimMilestone(restored, milestone.requestId(), 1));
-        assertTrue(tower.current(restored).milestone().claimed());
-        assertEquals(1, inventory.list(player.role()).stream().filter(item -> item.itemId() == 1001003)
-                .mapToLong(InventoryService.Item::quantity).sum());
+        assertEquals(tenth, tower.claimMilestone(restored, tenth.requestId(), 1));
+        assertEquals(twentieth, tower.claimMilestone(restored, twentieth.requestId(), 2));
+        assertEquals(thirtieth, tower.claimMilestone(restored, thirtieth.requestId(), 3));
+        assertTrue(tower.current(restored).milestones().stream().allMatch(TowerService.MilestoneState::claimed));
+        var restoredItems = inventory.list(player.role());
+        for (var reward : List.of(new Reward(1001003, 1), new Reward(1002003, 1),
+                new Reward(1003004, 1), new Reward(1004004, 1), new Reward(20405004, 50))) {
+            assertEquals(reward.quantity(), restoredItems.stream().filter(item -> item.itemId() == reward.itemId())
+                    .mapToLong(InventoryService.Item::quantity).sum());
+        }
 
         clock.setEpochSeconds(paid.state().sweepResetAtSeconds());
         try {
             assertEquals(0, tower.current(restored).sweeps());
-            assertEquals(1, tower.sweep(restored, id(), 10, 0).state().sweeps());
+            assertEquals(1, tower.sweep(restored, id(), 30, 0).state().sweeps());
         } finally {
             clock.reset();
         }
@@ -179,6 +206,60 @@ class TowerServiceTest {
         } finally {
             clock.reset();
         }
+    }
+
+    /** 升级 V56 角色时仅保留既有第 10 层领取，冻结回执的内容与摘要保持原样。 */
+    @Test
+    void migrateTenthFloorClaimAndReadLegacyState() {
+        String database = "jdbc:h2:mem:tower_migration_" + id()
+                + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
+        // H2 的 IN 检查绑定到创建它的会话，测试迁移和夹具写入共用一条隔离连接。
+        try (var source = new SingleConnectionDataSource(database, "sa", "", true)) {
+            Flyway.configure().dataSource(source).target("56").load().migrate();
+            var historical = new JdbcTemplate(source);
+            String claimedRole = legacyProgress(historical, true);
+            String otherRole = legacyProgress(historical, false);
+            String request = id();
+            var payloads = new RewardReceiptPayloads(mapper);
+            var legacyMilestone = new TowerService.MilestoneState(1, 10, true, List.of(new Reward(1001003, 1)));
+            ObjectNode legacyState = mapper.valueToTree(new TowerService.State(16, 10, 10, 20, 20, 0, 1800,
+                    0, 5, 0, 1, 0, 1, List.of(), List.of(), legacyMilestone, List.of(legacyMilestone)));
+            legacyState.remove("milestones");
+            var frozen = payloads.freeze(legacyState);
+            historical.update("""
+                    INSERT INTO game_tower_request(role_id,request_id,action_kind,target_id,max_diamonds,
+                        report_bytes,receipt_json,receipt_hash) VALUES (?,?,?,?,?,?,?,?)
+                    """, claimedRole, request, "MILESTONE", 1, 0L, null, frozen.json(), frozen.hash());
+
+            Flyway.configure().dataSource(source).target("60").load().migrate();
+            assertEquals(List.of(1), historical.queryForList(
+                    "SELECT milestone_id FROM game_tower_milestone_claim WHERE role_id=?", Integer.class, claimedRole));
+            assertTrue(historical.queryForList(
+                    "SELECT milestone_id FROM game_tower_milestone_claim WHERE role_id=?", Integer.class, otherRole).isEmpty());
+            var stored = historical.queryForMap("""
+                    SELECT receipt_json,receipt_hash FROM game_tower_request WHERE role_id=? AND request_id=?
+                    """, claimedRole, request);
+            assertEquals(frozen.json(), stored.get("receipt_json"));
+            assertEquals(frozen.hash(), stored.get("receipt_hash"));
+            var state = payloads.read(frozen.json(), frozen.hash(), TowerService.State.class);
+            assertEquals(10, state.highestCleared());
+            assertEquals(List.of(legacyMilestone), state.milestones());
+        }
+    }
+
+    /** 构造旧版已过第 10 层但可以有不同领取状态的角色。 */
+    private static String legacyProgress(JdbcTemplate historical, boolean claimed) {
+        String role = id();
+        historical.update("""
+                INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id)
+                VALUES (?,?,?,16,0,0,?,'local-1')
+                """, role, role, role, role);
+        historical.update("""
+                INSERT INTO game_tower(role_id,highest_cleared,energy,energy_time_seconds,
+                    sweep_times,sweep_reset_at_seconds,milestone_claimed)
+                VALUES (?,10,20,0,0,1,?)
+                """, role, claimed);
+        return role;
     }
 
     /** 建立独立角色，不从开发工具注入已有幻境或 VIP 进度。 */

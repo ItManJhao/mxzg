@@ -217,10 +217,10 @@ async function checkTasks(): Promise<void> {
         assert(RedDotManager.instance.isVisible(GameRedDotKey.VIP), "其他任务依然可领取时底栏 VIP 保持亮起");
 
         const nextTier = [
-            { id: 101300, target: 100, claimed: false },
-            { id: 101400, target: 10, claimed: false },
-            { id: 101500, target: 5, claimed: false },
-            { id: 101600, target: 30, claimed: false },
+            { id: 101300, target: 100, progress: 99, claimed: false },
+            { id: 101400, target: 10, progress: 9, claimed: false },
+            { id: 101500, target: 5, progress: 4, claimed: false },
+            { id: 101600, target: 30, progress: 29, claimed: false },
         ];
         VipController.instance.onNotify(Protocol.SESSION_AUTHENTICATE, {
             initial: { revision: 6, vip: { level: 3, tasks: nextTier } },
@@ -228,10 +228,30 @@ async function checkTasks(): Promise<void> {
         applicationDots.refreshSnapshot(true);
         assert.equal(bindings.levelLabel.string, "VIP 3");
         assert.match(bindings.progressLabel.string, /VIP 4 .*0\/4/);
-        assert(list.data().every(card => !card.claimable && card.actionText === ""));
+        const vipThreeCards = list.data();
+        assert(vipThreeCards.every(card => !card.claimable && card.actionText === "前 往"));
+        assert.deepEqual(vipThreeCards.map(card => card.destination), ["battle", "main_summon", "battle", "tower"]);
+        assert.match(vipThreeCards[2].description, /快速作战.*4\/5/);
+        assert.match(vipThreeCards[3].description, /29\/30/);
         list.content.emit(SuperContent.RENDER_ITEM, cellNode, list.data()[0]);
         assert.equal(dot.active, false, "升档后复用的任务格不保留上一档红点");
         assert(!RedDotManager.instance.isVisible(GameRedDotKey.VIP), "恢复 VIP3 后底栏不保留上一档红点");
+
+        const vipFourReady = nextTier.map(task => ({ ...task, progress: task.target }));
+        VipController.instance.onNotify(Protocol.STATE_CHANGED, { revision: 7, vip: { level: 3, tasks: vipFourReady } });
+        applicationDots.refreshSnapshot();
+        assert(RedDotManager.instance.isVisible(GameRedDotKey.VIP));
+        assert(list.data().every(card => card.claimable && card.reward.itemId === 900002 && card.reward.quantity === 40));
+        list.content.emit(SuperContent.RENDER_ITEM, cellNode, list.data()[3]);
+        taskBindings.actionButton.node.emit(Button.EventType.CLICK);
+        assert.equal(claims.at(-1), 101600);
+
+        VipController.instance.onNotify(Protocol.STATE_CHANGED, {
+            revision: 8, vip: { level: 4, tasks: [{ id: 101700, target: 110, claimed: false }] },
+        });
+        applicationDots.refreshSnapshot();
+        assert.equal(bindings.levelLabel.string, "VIP 4");
+        assert(!RedDotManager.instance.isVisible(GameRedDotKey.VIP));
 
         VipModel.instance.update({ level: 13, tasks: [] });
         EventDispatcher.instance.emit(VipModel.Updated, undefined);
@@ -314,7 +334,7 @@ async function main(): Promise<void> {
     checkTaskRedDotAnchor();
     await checkTasks();
     checkBenefits();
-    console.log("VIP 界面通过任务领取、前往、VIP3 恢复与红点、权益翻页及关闭检查");
+    console.log("VIP 界面通过任务领取、前往、VIP4 恢复与红点、权益翻页及关闭检查");
 }
 
 void main().catch(error => {

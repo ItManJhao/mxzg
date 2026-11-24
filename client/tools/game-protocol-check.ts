@@ -69,12 +69,54 @@ function checkVipWire(): void {
         assert(snapshot.vip.tasks.some(task => task.id === body.taskId && task.claimed));
     }
 }
+
+/** 快速战斗报价与实际奖励通过同一二进制请求往返，拒绝不一致的回执。 */
+function checkQuickBattleWire(): void {
+    const info = { version: 1, kind: "request" as const, name: Protocol.CHAPTER_QUICK_BATTLE_INFO };
+    roundTrip({ ...info, body: {} });
+    const quote = { unlocked: true, usedCount: 3, maxCount: 4, costDiamonds: 200,
+        resetAt: 1795536000, tavernFull: false };
+    roundTrip({ ...info, kind: "response", ok: true, body: quote });
+    const roleId = "10000000-1111-4111-8111-111111111111";
+    const requestId = "20000000-1111-4111-8111-111111111111";
+    const receiptId = "30000000-1111-4111-8111-111111111111";
+    const command = { requestId, resetAt: quote.resetAt, usedCount: quote.usedCount };
+    const request = { ...info, name: Protocol.CHAPTER_QUICK_BATTLE_CLAIM, body: command };
+    roundTrip(request);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...request,
+        body: { ...command, resetAt: 0 } }), /报价凭据无效/);
+    const receipt = { requestId, receiptId, roleId, assetRevision: 8,
+        state: { ...quote, usedCount: 4, costDiamonds: 0 },
+        actual: { roleId, items: [{ itemId: 900001, requested: 100, credited: 100, ignored: 0, reason: "NONE" }],
+            wallet: { goldBefore: 0, goldAfter: 100, diamondsBefore: 200, diamondsAfter: 200 },
+            stacks: [], experience: [], tavern: [], bonuses: [], timedItems: [],
+            spirits: { schemaVersion: 1, items: [] }, heroes: [] },
+        notice: { schemaVersion: 1, roleId, receiptId, requestId, assetRevision: 8, mode: "POPUP",
+            items: [{ itemId: 900001, credited: 100 }], heroes: [] } };
+    const response = { ...request, kind: "response" as const, ok: true, body: receipt };
+    roundTrip(response);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response,
+        body: { ...receipt, state: { ...receipt.state, usedCount: 5 } } }), /报价无效/);
+    assert.throws(() => GameProtocolCodecUtils.encodeGameFrame({ ...response,
+        body: { ...receipt, notice: { ...receipt.notice, receiptId: requestId } } }), /与回执不一致/);
+
+    if (process.argv.includes("--quick-battle-java")) {
+        const frame = GameProtocolCodecUtils.decodeGameFrame(readFileSync("backend/target/chapter-quick-battle.pb"));
+        assert.equal(frame.name, Protocol.CHAPTER_QUICK_BATTLE_CLAIM);
+        const body = frame.body as typeof receipt;
+        assert.equal(body.state.usedCount, 1);
+        assert.equal(body.state.costDiamonds, 50);
+        assert(body.actual.items.length > 0);
+    }
+}
+
 /** 协议帧往返必须保持结构和整数，不截取 Buffer 池其他字节。 */
 function roundTrip(frame:any){const bytes=GameProtocolCodecUtils.encodeGameFrame(frame);assert(bytes instanceof ArrayBuffer);assert.deepEqual(GameProtocolCodecUtils.decodeGameFrame(bytes),frame);}
 /** 验证统一状态、玩法指令和原奖励往返。显式 wire 参数只读取独立 Java 测试输出。 */
 function main(){
  checkGuildWire();
  checkVipWire();
+ checkQuickBattleWire();
  for(const locked of [true,false]) roundTrip({version:1,kind:"event",name:Protocol.STATE_CHANGED,body:{...state,heroes:[{id:"hero",templateId:1,level:1,star:1,locked,deployed:true,stage:0,baseStats:{hp:120,atk:30,def:10,spd:100}}]}});
  const instance="9223372036854775807";
  roundTrip({version:1,kind:"event",name:Protocol.STATE_CHANGED,connectionId:"conn",body:{...state,

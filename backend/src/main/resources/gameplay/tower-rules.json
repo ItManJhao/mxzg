@@ -910,20 +910,1846 @@
           "runes": "[]"
         }
       ]
+    },
+    {
+      "floor": 11,
+      "recommendedPower": 17086,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 5000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 10
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 5000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2000
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 61,
+          "position": 1,
+          "template": 10305023,
+          "level": 20,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 62,
+          "position": 4,
+          "template": 10105010,
+          "level": 20,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 63,
+          "position": 5,
+          "template": 10204013,
+          "level": 20,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 64,
+          "position": 6,
+          "template": 10405004,
+          "level": 20,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 65,
+          "position": 7,
+          "template": 10505005,
+          "level": 20,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 66,
+          "position": 8,
+          "template": 10305019,
+          "level": 20,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 12,
+      "recommendedPower": 17924,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 5000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 10
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 5000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2000
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 67,
+          "position": 1,
+          "template": 10105014,
+          "level": 22,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 68,
+          "position": 4,
+          "template": 10105007,
+          "level": 22,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 69,
+          "position": 5,
+          "template": 10105010,
+          "level": 22,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 70,
+          "position": 6,
+          "template": 10105009,
+          "level": 22,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 71,
+          "position": 7,
+          "template": 10105013,
+          "level": 22,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 72,
+          "position": 8,
+          "template": 10505011,
+          "level": 22,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 13,
+      "recommendedPower": 18763,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 5500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2200
+        },
+        {
+          "itemId": 900102,
+          "quantity": 11
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 5500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2200
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 73,
+          "position": 1,
+          "template": 10405008,
+          "level": 23,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 74,
+          "position": 2,
+          "template": 10405004,
+          "level": 23,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 75,
+          "position": 3,
+          "template": 10405006,
+          "level": 23,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 76,
+          "position": 4,
+          "template": 10405010,
+          "level": 23,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 77,
+          "position": 5,
+          "template": 10405009,
+          "level": 23,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 78,
+          "position": 8,
+          "template": 10405009,
+          "level": 23,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 14,
+      "recommendedPower": 19660,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 5500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2200
+        },
+        {
+          "itemId": 900102,
+          "quantity": 11
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 5500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2200
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 79,
+          "position": 1,
+          "template": 10305023,
+          "level": 24,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 80,
+          "position": 2,
+          "template": 10305022,
+          "level": 24,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 81,
+          "position": 3,
+          "template": 10305021,
+          "level": 24,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 82,
+          "position": 4,
+          "template": 10305010,
+          "level": 24,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 83,
+          "position": 5,
+          "template": 10305014,
+          "level": 24,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 84,
+          "position": 8,
+          "template": 10305019,
+          "level": 24,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 15,
+      "recommendedPower": 20577,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 6000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2400
+        },
+        {
+          "itemId": 900102,
+          "quantity": 12
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 6000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2400
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 85,
+          "position": 1,
+          "template": 10505009,
+          "level": 25,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 86,
+          "position": 4,
+          "template": 10105010,
+          "level": 25,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 87,
+          "position": 5,
+          "template": 10305009,
+          "level": 25,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 88,
+          "position": 6,
+          "template": 10405005,
+          "level": 25,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 89,
+          "position": 7,
+          "template": 10205014,
+          "level": 25,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 90,
+          "position": 8,
+          "template": 10405008,
+          "level": 25,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 16,
+      "recommendedPower": 21504,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 6000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2400
+        },
+        {
+          "itemId": 900102,
+          "quantity": 12
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 6000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2400
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 91,
+          "position": 1,
+          "template": 10205009,
+          "level": 26,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 92,
+          "position": 4,
+          "template": 10205011,
+          "level": 26,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 93,
+          "position": 5,
+          "template": 10204013,
+          "level": 26,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 94,
+          "position": 6,
+          "template": 10205020,
+          "level": 26,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 95,
+          "position": 7,
+          "template": 10205014,
+          "level": 26,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 96,
+          "position": 8,
+          "template": 10505011,
+          "level": 26,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 17,
+      "recommendedPower": 22455,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 6500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2600
+        },
+        {
+          "itemId": 900102,
+          "quantity": 13
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 6500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2600
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 97,
+          "position": 1,
+          "template": 10405008,
+          "level": 27,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 98,
+          "position": 4,
+          "template": 10105020,
+          "level": 27,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 99,
+          "position": 5,
+          "template": 10305022,
+          "level": 27,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 100,
+          "position": 6,
+          "template": 10205014,
+          "level": 27,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 101,
+          "position": 7,
+          "template": 10505004,
+          "level": 27,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 102,
+          "position": 8,
+          "template": 10305019,
+          "level": 27,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 18,
+      "recommendedPower": 23395,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 6500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2600
+        },
+        {
+          "itemId": 900102,
+          "quantity": 13
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 6500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2600
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 103,
+          "position": 2,
+          "template": 10505009,
+          "level": 28,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 104,
+          "position": 3,
+          "template": 10305019,
+          "level": 28,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 105,
+          "position": 5,
+          "template": 10505005,
+          "level": 28,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 106,
+          "position": 6,
+          "template": 10505006,
+          "level": 28,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 107,
+          "position": 7,
+          "template": 10505004,
+          "level": 28,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 108,
+          "position": 8,
+          "template": 10504003,
+          "level": 28,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 19,
+      "recommendedPower": 24394,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 7000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2800
+        },
+        {
+          "itemId": 900102,
+          "quantity": 14
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 7000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2800
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 109,
+          "position": 1,
+          "template": 10405008,
+          "level": 29,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 110,
+          "position": 2,
+          "template": 10105020,
+          "level": 29,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 111,
+          "position": 3,
+          "template": 10305009,
+          "level": 29,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 112,
+          "position": 4,
+          "template": 10204013,
+          "level": 29,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 113,
+          "position": 5,
+          "template": 10504003,
+          "level": 29,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 114,
+          "position": 8,
+          "template": 10505007,
+          "level": 29,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 20,
+      "recommendedPower": 25442,
+      "firstRewards": [
+        {
+          "itemId": 900101,
+          "quantity": 2800
+        },
+        {
+          "itemId": 900102,
+          "quantity": 14
+        },
+        {
+          "itemId": 908001,
+          "quantity": 1
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 7000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 2800
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 115,
+          "position": 1,
+          "template": 10505009,
+          "level": 30,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 116,
+          "position": 2,
+          "template": 10505005,
+          "level": 30,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 117,
+          "position": 3,
+          "template": 10505006,
+          "level": 30,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 118,
+          "position": 4,
+          "template": 10505011,
+          "level": 30,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 119,
+          "position": 5,
+          "template": 10504003,
+          "level": 30,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 120,
+          "position": 8,
+          "template": 10305014,
+          "level": 30,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 21,
+      "recommendedPower": 30009,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 7500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 15
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 7500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3000
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 121,
+          "position": 1,
+          "template": 10105014,
+          "level": 32,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 122,
+          "position": 2,
+          "template": 10205011,
+          "level": 32,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 123,
+          "position": 3,
+          "template": 10305009,
+          "level": 32,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 124,
+          "position": 4,
+          "template": 10405005,
+          "level": 32,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 125,
+          "position": 5,
+          "template": 10505004,
+          "level": 32,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 126,
+          "position": 8,
+          "template": 10405015,
+          "level": 32,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 22,
+      "recommendedPower": 31135,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 7500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3000
+        },
+        {
+          "itemId": 900102,
+          "quantity": 15
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 7500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3000
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 127,
+          "position": 1,
+          "template": 10205009,
+          "level": 34,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 128,
+          "position": 4,
+          "template": 10205011,
+          "level": 34,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 129,
+          "position": 5,
+          "template": 10205022,
+          "level": 34,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 130,
+          "position": 6,
+          "template": 10204013,
+          "level": 34,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 131,
+          "position": 7,
+          "template": 10205007,
+          "level": 34,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 132,
+          "position": 8,
+          "template": 10505007,
+          "level": 34,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 23,
+      "recommendedPower": 32271,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 8000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3200
+        },
+        {
+          "itemId": 900102,
+          "quantity": 16
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 8000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3200
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 133,
+          "position": 1,
+          "template": 10505009,
+          "level": 36,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 134,
+          "position": 4,
+          "template": 10505005,
+          "level": 36,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 135,
+          "position": 5,
+          "template": 10505004,
+          "level": 36,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 136,
+          "position": 6,
+          "template": 10504003,
+          "level": 36,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 137,
+          "position": 7,
+          "template": 10505014,
+          "level": 36,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 138,
+          "position": 8,
+          "template": 10105010,
+          "level": 36,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 24,
+      "recommendedPower": 33403,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 8000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3200
+        },
+        {
+          "itemId": 900102,
+          "quantity": 16
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 8000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3200
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 139,
+          "position": 2,
+          "template": 10305023,
+          "level": 38,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 140,
+          "position": 3,
+          "template": 10405015,
+          "level": 38,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 141,
+          "position": 5,
+          "template": 10305009,
+          "level": 38,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 142,
+          "position": 6,
+          "template": 10305021,
+          "level": 38,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 143,
+          "position": 7,
+          "template": 10305010,
+          "level": 38,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 144,
+          "position": 8,
+          "template": 10305014,
+          "level": 38,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 25,
+      "recommendedPower": 35868,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 8500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3400
+        },
+        {
+          "itemId": 900102,
+          "quantity": 17
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 8500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3400
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 145,
+          "position": 2,
+          "template": 10505009,
+          "level": 40,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 146,
+          "position": 3,
+          "template": 10505006,
+          "level": 40,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 147,
+          "position": 5,
+          "template": 10105009,
+          "level": 40,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 148,
+          "position": 6,
+          "template": 10305009,
+          "level": 40,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 149,
+          "position": 7,
+          "template": 10405004,
+          "level": 40,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 150,
+          "position": 8,
+          "template": 10205010,
+          "level": 40,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 26,
+      "recommendedPower": 42846,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 8500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3400
+        },
+        {
+          "itemId": 900102,
+          "quantity": 17
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 8500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3400
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 151,
+          "position": 1,
+          "template": 10105014,
+          "level": 42,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 152,
+          "position": 4,
+          "template": 10105007,
+          "level": 42,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 153,
+          "position": 5,
+          "template": 10105010,
+          "level": 42,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 154,
+          "position": 6,
+          "template": 10105013,
+          "level": 42,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 155,
+          "position": 7,
+          "template": 10105015,
+          "level": 42,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 156,
+          "position": 8,
+          "template": 10405005,
+          "level": 42,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 27,
+      "recommendedPower": 44062,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 9000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3600
+        },
+        {
+          "itemId": 900102,
+          "quantity": 18
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 9000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3600
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 157,
+          "position": 2,
+          "template": 10205009,
+          "level": 44,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 158,
+          "position": 3,
+          "template": 10205018,
+          "level": 44,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 159,
+          "position": 5,
+          "template": 10105008,
+          "level": 44,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 160,
+          "position": 6,
+          "template": 10305021,
+          "level": 44,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 161,
+          "position": 7,
+          "template": 10405004,
+          "level": 44,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 162,
+          "position": 8,
+          "template": 10505014,
+          "level": 44,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 28,
+      "recommendedPower": 45283,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 9000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3600
+        },
+        {
+          "itemId": 900102,
+          "quantity": 18
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 9000
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3600
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 163,
+          "position": 1,
+          "template": 10405008,
+          "level": 46,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 164,
+          "position": 2,
+          "template": 10405004,
+          "level": 46,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 165,
+          "position": 3,
+          "template": 10405006,
+          "level": 46,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 166,
+          "position": 4,
+          "template": 10405010,
+          "level": 46,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 167,
+          "position": 5,
+          "template": 10405005,
+          "level": 46,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 168,
+          "position": 8,
+          "template": 10405009,
+          "level": 46,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":15000,\"kind\":2},{\"type\":220,\"value\":20000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 29,
+      "recommendedPower": 46497,
+      "firstRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 9500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3800
+        },
+        {
+          "itemId": 900102,
+          "quantity": 19
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 9500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3800
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 169,
+          "position": 1,
+          "template": 10505009,
+          "level": 48,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 170,
+          "position": 2,
+          "template": 10105009,
+          "level": 48,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 171,
+          "position": 3,
+          "template": 10305022,
+          "level": 48,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 172,
+          "position": 4,
+          "template": 10405005,
+          "level": 48,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 173,
+          "position": 5,
+          "template": 10205011,
+          "level": 48,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 174,
+          "position": 8,
+          "template": 10205010,
+          "level": 48,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
+    },
+    {
+      "floor": 30,
+      "recommendedPower": 47719,
+      "firstRewards": [
+        {
+          "itemId": 900101,
+          "quantity": 3800
+        },
+        {
+          "itemId": 900102,
+          "quantity": 19
+        },
+        {
+          "itemId": 908001,
+          "quantity": 1
+        }
+      ],
+      "sweepRewards": [
+        {
+          "itemId": 900001,
+          "quantity": 9500
+        },
+        {
+          "itemId": 900101,
+          "quantity": 3800
+        }
+      ],
+      "enemies": [
+        {
+          "configId": 175,
+          "position": 1,
+          "template": 10505009,
+          "level": 50,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 176,
+          "position": 4,
+          "template": 10505005,
+          "level": 50,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 177,
+          "position": 5,
+          "template": 10505004,
+          "level": 50,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 178,
+          "position": 6,
+          "template": 10505011,
+          "level": 50,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 179,
+          "position": 7,
+          "template": 10505014,
+          "level": 50,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        },
+        {
+          "configId": 180,
+          "position": 8,
+          "template": 10505006,
+          "level": 50,
+          "star": 1,
+          "modifiers": "[{\"type\":223,\"value\":12000,\"kind\":2},{\"type\":220,\"value\":16000,\"kind\":2}]",
+          "equipment": "[]",
+          "runes": "[]"
+        }
+      ]
     }
   ],
-  "milestone": {
-    "id": 1,
-    "floor": 10,
-    "rewards": [
-      {
-        "itemId": 1001003,
-        "quantity": 1
-      },
-      {
-        "itemId": 1002003,
-        "quantity": 1
-      }
-    ]
-  }
+  "milestones": [
+    {
+      "id": 1,
+      "floor": 10,
+      "rewards": [
+        {
+          "itemId": 1001003,
+          "quantity": 1
+        },
+        {
+          "itemId": 1002003,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "floor": 20,
+      "rewards": [
+        {
+          "itemId": 1003004,
+          "quantity": 1
+        },
+        {
+          "itemId": 1004004,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "floor": 30,
+      "rewards": [
+        {
+          "itemId": 20405004,
+          "quantity": 50
+        }
+      ]
+    }
+  ]
 }

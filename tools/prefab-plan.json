@@ -32,6 +32,7 @@
         "ChapterRewardInfoCell",
         "ChapterRewardInfoView",
         "MainChapterBattleView",
+        "MainChapterQuickBattleView",
         "MainChapterView",
         "SkillAuditCellView",
         "SkillAuditView"
@@ -208,9 +209,11 @@
       "phases": [
         "当前已实现"
       ],
-      "reason": "主城幻境之塔、守军层卡及正式战场挂点",
+      "reason": "主城幻境之塔、守军层卡、正式战场和独立层数奖励",
       "names": [
         "TowerFloorCell",
+        "TowerMilestoneCell",
+        "TowerMilestoneView",
         "TowerView"
       ]
     },

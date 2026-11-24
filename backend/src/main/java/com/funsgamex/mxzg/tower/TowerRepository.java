@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Repository;
 public class TowerRepository {
     /** 精力锚点及扫荡重置时间均为 Unix 秒，阵容版本 0 表示仍未保存幻境阵容。 */
     record Progress(int highestCleared, int energy, long energyTimeSeconds, int sweepTimes,
-                    long sweepResetAtSeconds, boolean milestoneClaimed, long formationVersion, int formationId) {}
+                    long sweepResetAtSeconds, long formationVersion, int formationId) {}
 
     /** 记住本次目标是楼层或里程碑 ID，重发时核对原目标及确认报价。 */
     record Recorded(int targetId, long maxDiamonds, TowerService.Settlement result) {}
@@ -52,10 +53,10 @@ public class TowerRepository {
     Progress progress(String role) {
         return jdbc.query("""
                 SELECT highest_cleared,energy,energy_time_seconds,sweep_times,sweep_reset_at_seconds,
-                       milestone_claimed,formation_version,formation_id
+                       formation_version,formation_id
                   FROM game_tower WHERE role_id=?
                 """, row -> row.next() ? new Progress(row.getInt(1), row.getInt(2), row.getLong(3), row.getInt(4),
-                    row.getLong(5), row.getBoolean(6), row.getLong(7), row.getInt(8)) : null, role);
+                    row.getLong(5), row.getLong(6), row.getInt(7)) : null, role);
     }
 
     /** 仅在角色锁内初始化或写入进度，轮转日期和恢复精力也沿用本入口。 */
@@ -63,17 +64,28 @@ public class TowerRepository {
         if (previous == null) {
             jdbc.update("""
                     INSERT INTO game_tower(role_id,highest_cleared,energy,energy_time_seconds,sweep_times,
-                        sweep_reset_at_seconds,milestone_claimed,formation_version,formation_id)
-                    VALUES (?,?,?,?,?,?,?,?,?)
+                        sweep_reset_at_seconds,formation_version,formation_id)
+                    VALUES (?,?,?,?,?,?,?,?)
                     """, role, next.highestCleared(), next.energy(), next.energyTimeSeconds(), next.sweepTimes(),
-                    next.sweepResetAtSeconds(), next.milestoneClaimed(), next.formationVersion(), next.formationId());
+                    next.sweepResetAtSeconds(), next.formationVersion(), next.formationId());
         } else if (!previous.equals(next)) {
             jdbc.update("""
                     UPDATE game_tower SET highest_cleared=?,energy=?,energy_time_seconds=?,sweep_times=?,
-                        sweep_reset_at_seconds=?,milestone_claimed=?,formation_version=?,formation_id=? WHERE role_id=?
+                        sweep_reset_at_seconds=?,formation_version=?,formation_id=? WHERE role_id=?
                     """, next.highestCleared(), next.energy(), next.energyTimeSeconds(), next.sweepTimes(),
-                    next.sweepResetAtSeconds(), next.milestoneClaimed(), next.formationVersion(), next.formationId(), role);
+                    next.sweepResetAtSeconds(), next.formationVersion(), next.formationId(), role);
         }
+    }
+
+    /** 读取角色已领取的配置编号，供状态查询与领奖事务共用。 */
+    Set<Integer> claimedMilestones(String role) {
+        return Set.copyOf(jdbc.queryForList(
+                "SELECT milestone_id FROM game_tower_milestone_claim WHERE role_id=?", Integer.class, role));
+    }
+
+    /** 在角色锁内登记本档已领，发奖或回执失败时随事务回滚。 */
+    void saveMilestoneClaim(String role, int milestoneId) {
+        jdbc.update("INSERT INTO game_tower_milestone_claim(role_id,milestone_id) VALUES (?,?)", role, milestoneId);
     }
 
     /** 按固定位次读取同角色已提交的幻境专用阵容。 */

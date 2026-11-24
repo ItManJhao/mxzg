@@ -30,6 +30,7 @@ import { MainChapterIdleChest, IdleChestAnimation } from "./MainChapterIdleChest
 import { MainChapterMilestoneCard } from "./MainChapterMilestoneCard";
 import { ChapterClearRewardView } from "./ChapterClearRewardView";
 import { ChapterRewardInfoView } from "./ChapterRewardInfoView";
+import { MainChapterQuickBattleView } from "./MainChapterQuickBattleView";
 import { PREVIEW } from "cc/env";
 import { ResourceAssetsUtils } from "../../../framework/assets/ResourceAssetsUtils";
 import type { AssetScope } from "../../../framework/assets/ResourceAssetsUtils";
@@ -62,7 +63,7 @@ export class MainChapterView extends BaseView {
     @property(Node) battleHost: Node | null = null;
     /** 挑战或领取按钮，文案由当前服务器状态决定。 */
     @property(Button) challengeButton: Button | null = null;
-    /** 快速战斗入口；规则与协议恢复前只提示，不发送请求。 */
+    /** 快速战斗入口，打开报价与产物窗口。 */
     @property(Button) quickBattleButton: Button | null = null;
     /** 战力提升入口；不将旧变强建议误用为布阵或开放养成。 */
     @property(Button) powerButton: Button | null = null;
@@ -166,7 +167,7 @@ export class MainChapterView extends BaseView {
             () => !this.closed && this.battleHost?.isValid ? this.battleHost : null));
         this.ownListener(ViewportLayoutUtils.bindVisibleRefresh(this.node, () => this.fitViewport()));
         this.listen(this.challengeButton, () => { void this.prepareChallenge(); });
-        this.listen(this.quickBattleButton, () => UIManager.instance.toast("快速战斗尚未恢复"));
+        this.listen(this.quickBattleButton, () => this.openQuickBattle());
         this.listen(this.powerButton, () => UIManager.instance.toast("战力提升建议尚未恢复"));
         this.listen(this.idleClaimButton, () => this.collectIdleRewards());
         if (!this.rewardInfoButton || !this.clearRewardButton) {
@@ -222,6 +223,14 @@ export class MainChapterView extends BaseView {
                 node.off(Button.EventType.CLICK, callback);
             }
         });
+    }
+
+    /** 从主线或契约任务的跳转打开快速战斗，切页时关闭随附的子窗。 */
+    public openQuickBattle(): void {
+        if (!this.closed && !this.playing) {
+            void UIManager.instance.openChild(this, MainChapterQuickBattleView)
+                .catch(() => { /* 由 UIManager 统一处理开窗失败。 */ });
+        }
     }
 
     /** 只读列表直接由父页打开，切页或账号失效时一并关闭。 */

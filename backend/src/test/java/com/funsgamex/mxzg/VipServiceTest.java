@@ -102,7 +102,7 @@ class VipServiceTest {
         assertEquals(last.assetRevision(), roles.revision(role));
     }
 
-    /** 已接通的 VIP1 和 VIP2 条件从真实状态计算，下一档条件未接通时拒绝领取。 */
+    /** 已接通档位从真实状态计算，VIP4 之后未接通的档位拒绝领取。 */
     @Test
     void supportedTiersReadActualProgressAndNextTierCannotAdvance() {
         var player = player();
@@ -129,8 +129,11 @@ class VipServiceTest {
         rejected("VIP_TASK_NOT_REACHED", player, id(), 101100);
         rejected("VIP_TASK_NOT_REACHED", player, id(), 101200);
         jdbc.update("UPDATE game_role SET goddess_vip=3 WHERE id=?", role);
-        assertNull(task(player, 101300).progress());
-        rejected("VIP_TASK_UNAVAILABLE", player, id(), 101300);
+        assertEquals(List.of(20, 0, 0, 0), vip.current(role).tasks().stream().map(VipService.Task::progress).toList());
+        rejected("VIP_TASK_NOT_REACHED", player, id(), 101300);
+        jdbc.update("UPDATE game_role SET goddess_vip=4 WHERE id=?", role);
+        assertNull(task(player, 101700).progress());
+        rejected("VIP_TASK_UNAVAILABLE", player, id(), 101700);
         jdbc.update("UPDATE game_role SET goddess_vip=13 WHERE id=?", role);
         assertEquals(new VipService.State(13, List.of()), vip.current(role));
     }

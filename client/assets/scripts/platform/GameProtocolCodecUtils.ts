@@ -75,6 +75,7 @@ const payloads = [
     "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
     "arenaTicketBuyRequest", "arenaTicketPurchase",
     "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt",
+    "chapterQuickBattleState", "chapterQuickBattleClaim", "chapterQuickBattleReceipt",
 ];
 /** 无状态协议转换工具；不会持有会话、角色或网络连接。 */
 export class GameProtocolCodecUtils {
@@ -89,6 +90,10 @@ export class GameProtocolCodecUtils {
         const request = frame.kind === "request";
         if (request || frame.kind === "response") {
             switch (frame.name) {
+                case Protocol.CHAPTER_QUICK_BATTLE_INFO:
+                    return request ? "empty" : "chapterQuickBattleState";
+                case Protocol.CHAPTER_QUICK_BATTLE_CLAIM:
+                    return request ? "chapterQuickBattleClaim" : "chapterQuickBattleReceipt";
                 case Protocol.TOWER_STATE:
                     return request ? "empty" : "towerState";
                 case Protocol.TOWER_FORMATION_SAVE:
@@ -523,6 +528,42 @@ export class GameProtocolCodecUtils {
             }
             return [reward.itemId, reward.quantity];
         });
+    }
+
+    /** 校验快速战斗的报价凭据、次日刷新时间和实际发奖归属。 */
+    private static validateQuickBattle(frame: GameFrame): void {
+        const claim = frame.name === Protocol.CHAPTER_QUICK_BATTLE_CLAIM;
+        if ((!claim && frame.name !== Protocol.CHAPTER_QUICK_BATTLE_INFO) || frame.ok === false) {
+            return;
+        }
+        const body = this.messageObject(frame.body);
+        if (frame.kind === "request") {
+            if (claim && (Object.keys(body).length !== 3 || !this.isUuid(body.requestId)
+                    || !this.isIntegerInRange(body.resetAt, 1) || !this.isIntegerInRange(body.usedCount, 0, 0x7fffffff))) {
+                throw new Error("快速战斗报价凭据无效");
+            }
+            return;
+        }
+        const state = claim ? this.messageObject(body.state) : body;
+        if (typeof state.unlocked !== "boolean" || typeof state.tavernFull !== "boolean"
+                || !this.isIntegerInRange(state.maxCount, 1) || !this.isIntegerInRange(state.usedCount, 0, state.maxCount)
+                || !this.isIntegerInRange(state.resetAt, 1) || !this.isIntegerInRange(state.costDiamonds, 0)) {
+            throw new Error("快速战斗报价无效");
+        }
+        if (claim) {
+            this.validateBattleSettlement(body);
+            if (!this.isUuid(body.receiptId) || body.actual === undefined) {
+                throw new Error("快速战斗发奖回执无效");
+            }
+            if (body.notice !== undefined) {
+                const notice = this.validateRewardNotice(body.notice);
+                if (notice.roleId !== body.roleId || notice.assetRevision !== body.assetRevision
+                        || notice.receiptId !== body.receiptId || notice.requestId !== body.requestId
+                        || notice.mode !== "POPUP") {
+                    throw new Error("快速战斗奖励通知与回执不一致");
+                }
+            }
+        }
     }
 
     /** 核对爬塔和竞技场的指令字段、战报来源及结算结果的角色归属。 */
@@ -1365,6 +1406,7 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateMarket(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
         GameProtocolCodecUtils.validateProgressionBattle(frame);
+        GameProtocolCodecUtils.validateQuickBattle(frame);
         GameProtocolCodecUtils.validateVip(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);
@@ -1427,6 +1469,7 @@ export class GameProtocolCodecUtils {
         GameProtocolCodecUtils.validateMarket(frame);
         GameProtocolCodecUtils.validateDailyDungeon(frame);
         GameProtocolCodecUtils.validateProgressionBattle(frame);
+        GameProtocolCodecUtils.validateQuickBattle(frame);
         GameProtocolCodecUtils.validateVip(frame);
         HeroLevelData.validateFrame(frame);
         HeroLevelData.validateStageFrame(frame);

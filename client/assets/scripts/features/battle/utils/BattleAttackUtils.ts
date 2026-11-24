@@ -246,6 +246,472 @@ export class BattleAttackUtils {
     /** 按旧 G_BATTLE_ACTIONS 的声明顺序返回动作，保留各等级及普攻的时序、暗屏、特效和音效。 */
     private static verifiedLegacyActions(id: number): readonly LegacyAttackAction[] | null {
         switch (id) {
+            // 幻境之塔第 11～30 层的旧覆盖段；保持声明顺序和叠加特效。
+            // 旧配置引用但原资源缺失的音效见逐帧核验记录，避免预载失败。
+            case 1131201:
+                return [
+                    { type: 7, delay: 100, dimly: 0, base: {
+                        format: "skill-101050131/%d.png", anchor_y: 0.35, anchor_x: 0.5, duration: 0.06,
+                        scale_x: 2, scale_y: 2 },
+                        files: ["skill-101050131"], sounds: ["skill-101050131"] },
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.6, action_time: 1.5 },
+                        files: [], sounds: [] },
+                    { type: 6, delay: 30, dimly: 0, base: {
+                        format: "skill-101050131-1/%d.png", anchor_x: 0.55, anchor_y: 0.05, duration: 0.02,
+                        scale_x: 3, scale_y: 3 },
+                        files: ["skill-101050131-1"], sounds: [] },
+                ];
+            case 1140200:
+                return [
+                    { type: 7, delay: 30, dimly: 0, base: {
+                        format: "skill-101050140/%d.png", anchor_y: 0.35, anchor_x: 0.5, duration: 0.08,
+                        scale_x: 0.9, scale_y: 0.9 },
+                        files: ["skill-101050140"], sounds: ["skill-101050140"] },
+                    { type: 11, delay: 0, dimly: 0, base: {
+                        move_time: 0.1, move_back: 0.5, attack_delay: 0.8, offset_x: 0.6, offset_y: 0.3 },
+                        files: [], sounds: [] },
+                ];
+            case 1141101:
+                return [
+                    { type: 8, delay: 0, dimly: 0, base: {
+                        action: "skill", move_time: 0.1, move_back: 2.5, attack_delay: 0.3, offset_x: 0.45,
+                        offset_y: 0.4 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 100, dimly: 1, base: {
+                        format: "skill-101050141/%d.png", anchor_y: 0.35, anchor_x: 0.5, duration: 0.06,
+                        scale_x: 3, scale_y: 3 },
+                        files: ["skill-101050141"], sounds: ["skill-101050141"] },
+                    { type: 6, delay: 30, dimly: 0, base: {
+                        format: "skill-101050141-1/%d.png", anchor_x: 0.5, anchor_y: 0.32, duration: 0.025,
+                        scale_x: 2, scale_y: 2 },
+                        files: ["skill-101050141-1"], sounds: [] },
+                ];
+            case 1151201:
+                return [
+                    { type: 7, delay: 50, dimly: 1, base: {
+                        format: "skill-101050151/%d.png", anchor_y: 0.5, anchor_x: 0.5, duration: 0.06,
+                        scale_x: 2, scale_y: 2 },
+                        files: ["skill-101050151"], sounds: ["skill-101050151"] },
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.6, action_time: 1.8 },
+                        files: [], sounds: [] },
+                    { type: 6, delay: 30, dimly: 0, base: {
+                        format: "skill-101050151-1/%d.png", anchor_x: 0.55, anchor_y: 0.18, duration: 0.025,
+                        scale_x: 2, scale_y: 2 },
+                        files: ["skill-101050151-1"], sounds: [] },
+                ];
+            case 1200100:
+                return [
+                    { type: 5, delay: 0, dimly: 0, base: {
+                        attack_time: 0.3, action_time: 0.8, format: "skill-101050200-1/%d.png",
+                        duration: 0.02 },
+                        files: ["skill-101050200-1"], sounds: [] },
+                    { type: 7, delay: 30, dimly: 0, base: {
+                        format: "skill-101050200-2/%d.png", anchor_y: 0.5, anchor_x: 0.5, duration: 0.08,
+                        scale_x: 1.3, scale_y: 1.3 },
+                        files: ["skill-101050200-2"], sounds: [] },
+                ];
+            case 1201101:
+                return [
+                    { type: 10, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 1.7, action_time: 1,
+                        format: "skill-101050201-1/%d.png", scale_x: 3, scale_y: 3, offset_x: 0.8,
+                        offset_y: 0.4, duration: 0.02 },
+                        files: ["skill-101050201-1"], sounds: ["skill-101050201-1"] },
+                    { type: 7, delay: 130, dimly: 0, base: {
+                        format: "skill-101050201-2/%d.png", anchor_y: 0.3, anchor_x: 0.5, duration: 0.07,
+                        scale_x: 3, scale_y: 3 },
+                        files: ["skill-101050201-2"], sounds: [] },
+                    { type: 6, delay: 100, dimly: 0, base: {
+                        format: "skill-101050201-3/%d.png", anchor_x: 0.25, anchor_y: 0.2, duration: 0.03,
+                        scale_x: 1.3, scale_y: 1.3 },
+                        files: ["skill-101050201-3"], sounds: [] },
+                ];
+            case 2090200:
+                return [
+                    { type: 7, delay: 0, dimly: 1, base: {
+                        format: "skill-102050090/%d.png", anchor_y: 0.35, anchor_x: 0.4, duration: 0.08,
+                        scale_x: 1, scale_y: 1 },
+                        files: ["skill-102050090"], sounds: ["skill-102050090"] },
+                    { type: 11, delay: 0, dimly: 1, base: {
+                        move_time: 0.1, move_back: 0.8, attack_delay: 0.2, offset_x: 0.6, offset_y: 0.3 },
+                        files: [], sounds: [] },
+                ];
+            case 2091201:
+                return [
+                    { type: 7, delay: 70, dimly: 1, base: {
+                        format: "skill-102050091/%d.png", anchor_y: 0.4, anchor_x: 0.35, duration: 0.08,
+                        scale_x: 3, scale_y: 3, flipped: 1 },
+                        files: ["skill-102050091"], sounds: ["skill-102050091"] },
+                    { type: 11, delay: 0, dimly: 1, base: {
+                        action: "skill", move_time: 0.1, move_back: 2, attack_delay: 0.2, offset_x: 0.6,
+                        offset_y: 0.3 },
+                        files: [], sounds: [] },
+                    { type: 6, delay: 50, dimly: 0, base: {
+                        format: "skill-102050091-1/%d.png", anchor_x: 0.2, anchor_y: 0.3, duration: 0.03,
+                        scale_x: 1.5, scale_y: 1.5 },
+                        files: ["skill-102050091-1"], sounds: [] },
+                ];
+            case 2180100:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        attack_time: 0.6, action_time: 1 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 20, dimly: 0, base: {
+                        attack_time: 0.3, action_time: 0.5, format: "skill-102040040/%d.png", duration: 0.05,
+                        scale_x: 4, scale_y: 4, anchor_y: 0.2, anchor_x: 0.4 },
+                        files: ["skill-102040040"], sounds: ["skill-102040040"] },
+                ];
+            case 2181101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.6, action_time: 1.2 },
+                        files: [], sounds: [] },
+                    { type: 9, delay: 70, dimly: 0, base: {
+                        format: "skill-102050181/%d.png", anchor_y: 0.4, anchor_x: 0.5, scale_x: 2,
+                        scale_y: 2, offset_x: 0.75, offset_y: 0.45 },
+                        files: ["skill-102050181"], sounds: ["skill-102050181"] },
+                    { type: 1, delay: 0, dimly: 0, base: {},
+                        files: [], sounds: [] },
+                ];
+            case 2200100:
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: {
+                        move_time: 0.1, move_back: 0.8, attack_delay: 0.2 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 20, dimly: 0, base: {
+                        format: "skill-102050200/%d.png", anchor_x: 0.5, anchor_y: 0.4, scale_x: 2,
+                        scale_y: 2 },
+                        files: ["skill-102050200"], sounds: ["skill-102050200"] },
+                ];
+            case 2220100:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        attack_time: 0.2, action_time: 1.2 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 20, dimly: 0, base: {
+                        format: "skill-102050220/%d.png", duration: 0.02, anchor_x: 0.45, anchor_y: 0.3,
+                        scale_x: 1.5, scale_y: 1.5, flipped: 1 },
+                        files: ["skill-102050220"], sounds: ["skill-102050220"] },
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        attack_time: 0.2, action_time: 1.2 },
+                        files: [], sounds: [] },
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        attack_time: 0.2, action_time: 1.2 },
+                        files: [], sounds: [] },
+                ];
+            case 2221101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.2, action_time: 1.3 },
+                        files: [], sounds: [] },
+                    { type: 9, delay: 80, dimly: 0, base: {
+                        format: "skill-102050221/%d.png", anchor_y: 0.5, anchor_x: 0.8, scale_x: 2,
+                        scale_y: 2, offset_x: 0.9, offset_y: 0.45 },
+                        files: ["skill-102050221"], sounds: ["skill-102050221"] },
+                    { type: 6, delay: 80, dimly: 0, base: {
+                        format: "skill-102050221-1/%d.png", anchor_x: 0.1, anchor_y: 0.2, duration: 0.025,
+                        scale_x: 1, scale_y: 1 },
+                        files: ["skill-102050221-1"], sounds: [] },
+                ];
+            case 3140200:
+                return [
+                    { type: 7, delay: 30, dimly: 0, base: {
+                        format: "skill-103050140/%d.png", anchor_y: 0.4, anchor_x: 0.4, duration: 0.08,
+                        scale_x: 1, scale_y: 1, flipped: 1 },
+                        files: ["skill-103050140"], sounds: ["skill-103050140"] },
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        attack_time: 0.6, action_time: 1.8 },
+                        files: [], sounds: [] },
+                ];
+            case 3141101:
+                return [
+                    { type: 8, delay: 0, dimly: 0, base: {
+                        action: "skill", move_time: 0.1, move_back: 1.7, attack_delay: 0.3, offset_x: 0.45,
+                        offset_y: 0.4 },
+                        files: [], sounds: ["skill-103050141"] },
+                    { type: 6, delay: 50, dimly: 1, base: {
+                        format: "skill-103050141/%d.png", anchor_x: 0.1, anchor_y: 0.4, duration: 0.06,
+                        scale_x: 1, scale_y: 1 },
+                        files: ["skill-103050141"], sounds: [] },
+                    { type: 6, delay: 50, dimly: 0, base: {
+                        format: "skill-103050141-1/%d.png", anchor_y: -0.6, anchor_x: -0.4, duration: 0.04,
+                        scale_x: 1, scale_y: 1 },
+                        files: ["skill-103050141-1"], sounds: [] },
+                ];
+            case 3190100:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        attack_time: 0.2, action_time: 1 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 10, dimly: 0, base: {
+                        format: "skill-103040051/%d.png", anchor_y: 0.13, anchor_x: 0.5, duration: 0.05,
+                        scale_x: 2, scale_y: 2 },
+                        files: ["skill-103040051"], sounds: ["skill-103040051"] },
+                ];
+            case 3191101:
+                return [
+                    { type: 10, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.6, action_time: 1,
+                        format: "skill-103050191-1/%d.png", duration: 0.05, scale_x: 1, scale_y: 1,
+                        offset_x: 0.7, offset_y: 0.4 },
+                        files: ["skill-103050191-1"], sounds: ["skill-103050191-1"] },
+                    { type: 9, delay: 60, dimly: 0, base: {
+                        format: "skill-103050191-2/%d.png", anchor_y: 0.5, anchor_x: 0.5, scale_x: 2,
+                        scale_y: 2, offset_x: 0.8, offset_y: 0.4 },
+                        files: ["skill-103050191-2"], sounds: [] },
+                    { type: 1, delay: 0, dimly: 0, base: {},
+                        files: [], sounds: [] },
+                ];
+            case 3220100:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        attack_time: 0.2, action_time: 1 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 20, dimly: 0, base: {
+                        format: "skill-103050220/%d.png", anchor_y: 0.5, duration: 0.1, scale_x: 2,
+                        scale_y: 2 },
+                        files: ["skill-103050220"], sounds: ["skill-103050220"] },
+                ];
+            case 3221101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.2, action_time: 1 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 80, dimly: 0, base: {
+                        format: "skill-103050221/%d.png", anchor_x: 0.5, anchor_y: 0.2, duration: 0.1,
+                        scale_x: 1.5, scale_y: 1.5 },
+                        files: ["skill-103050221"], sounds: ["skill-103050221"] },
+                    { type: 7, delay: 90, dimly: 0, base: {
+                        format: "skill-103050221/%d.png", anchor_x: 0, anchor_y: 0.23, duration: 0.08,
+                        scale_x: 1.2, scale_y: 1.2 },
+                        files: ["skill-103050221"], sounds: ["skill-103050221"] },
+                    { type: 7, delay: 100, dimly: 0, base: {
+                        format: "skill-103050221/%d.png", anchor_x: -0.4, anchor_y: 0.27, duration: 0.06,
+                        scale_x: 0.9, scale_y: 0.9 },
+                        files: ["skill-103050221"], sounds: ["skill-103050221"] },
+                    { type: 7, delay: 90, dimly: 0, base: {
+                        format: "skill-103050221/%d.png", anchor_x: 0.85, anchor_y: 0.23, duration: 0.08,
+                        scale_x: 1.2, scale_y: 1.2, flipped: 1 },
+                        files: ["skill-103050221"], sounds: ["skill-103050221"] },
+                    { type: 7, delay: 100, dimly: 0, base: {
+                        format: "skill-103050221/%d.png", anchor_x: 1.4, anchor_y: 0.27, duration: 0.06,
+                        scale_x: 0.9, scale_y: 0.9, flipped: 1 },
+                        files: ["skill-103050221"], sounds: ["skill-103050221"] },
+                    { type: 6, delay: 20, dimly: 0, base: {
+                        format: "skill-103050221-1/%d.png", anchor_x: 0.23, anchor_y: 0.13, duration: 0.025,
+                        scale_x: 1, scale_y: 1 },
+                        files: ["skill-103050221-1"], sounds: [] },
+                ];
+            case 3230100:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action_time: 2 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 30, dimly: 0, base: {
+                        format: "skill-103050230/%d.png", anchor_x: 0.5, anchor_y: 0.3, duration: 0.06,
+                        scale_x: 2, scale_y: 2 },
+                        files: ["skill-103050230"], sounds: [] },
+                ];
+            case 4090100:
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: {
+                        move_time: 0.1, move_back: 1, attack_delay: 0.3 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 20, dimly: 0, base: {
+                        format: "skill-104050090/%d.png", duration: 0.03, anchor_y: 0.4, anchor_x: 0.4,
+                        scale_x: 2, scale_y: 2, flipped: 1 },
+                        files: ["skill-104050090"], sounds: ["skill-104050090"] },
+                ];
+            case 4091101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.2, action_time: 1 },
+                        files: [], sounds: [] },
+                    { type: 9, delay: 70, dimly: 0, base: {
+                        format: "skill-104050091/%d.png", anchor_y: 0.4, anchor_x: 0.5, scale_x: 4,
+                        scale_y: 4, offset_x: 0.8, offset_y: 0.4 },
+                        files: ["skill-104050091"], sounds: ["skill-104050091"] },
+                    { type: 6, delay: 73, dimly: 0, base: {
+                        format: "skill-104050091-1/%d.png", anchor_x: 0.5, anchor_y: 0.3, duration: 0.02,
+                        scale_x: 1, scale_y: 1 },
+                        files: ["skill-104050091-1"], sounds: [] },
+                ];
+            case 4100100:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        attack_time: 0.2, action_time: 1 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 20, dimly: 0, base: {
+                        format: "skill-104050100/%d.png", anchor_y: 0.4, anchor_x: 0.5, duration: 0.08,
+                        scale_x: 2, scale_y: 2 },
+                        files: ["skill-104050100"], sounds: ["skill-104050100"] },
+                ];
+            case 4101101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.2, action_time: 1.2 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 50, dimly: 0, base: {
+                        format: "skill-104050101/%d.png", anchor_y: 0.4, anchor_x: 0.35, duration: 0.05,
+                        scale_x: 1, scale_y: 1, flipped: 1 },
+                        files: ["skill-104050101"], sounds: ["skill-104050101"] },
+                    { type: 6, delay: 70, dimly: 0, base: {
+                        format: "skill-104050101-1/%d.png", anchor_x: 0.3, anchor_y: 0.3, duration: 0.02,
+                        scale_x: 1, scale_y: 1 },
+                        files: ["skill-104050101-1"], sounds: [] },
+                ];
+            case 4150100:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        attack_time: 0.2, action_time: 1.2 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 20, dimly: 0, base: {
+                        format: "skill-104050150-1/%d.png", anchor_y: 0.5, anchor_x: 0.5, scale_x: 2,
+                        scale_y: 2 },
+                        files: ["skill-104050150-1"], sounds: [] },
+                ];
+            case 4151101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 1.6, action_time: 1.7,
+                        format: "skill-104050151-1/%d.png", duration: 0.1, scale_x: 2, scale_y: 2,
+                        anchor_y: 0.35, anchor_x: 0.5 },
+                        files: ["skill-104050151-1"], sounds: [] },
+                    { type: 6, delay: 95, dimly: 0, base: {
+                        format: "skill-104050151-2/%d.png", anchor_y: 0.35, anchor_x: 0.2, duration: 0.03,
+                        scale_x: 2, scale_y: 2 },
+                        files: ["skill-104050151-2"], sounds: [] },
+                ];
+            case 5053201:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill2", action_time: 3.5 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 140, dimly: 0, base: {
+                        format: "skill-105050053/%d.png", anchor_x: 0.5, anchor_y: 0.4, duration: 0.05,
+                        scale_x: 2, scale_y: 2, flipped: 1 },
+                        files: ["skill-105050053"], sounds: ["skill-105050053"] },
+                ];
+            case 5070200:
+                return [
+                    { type: 6, delay: 15, dimly: 0, base: {
+                        format: "skill-105050070/%d.png", anchor_x: 0.5, anchor_y: 0.4, duration: 0.1,
+                        scale_x: 1.8, scale_y: 1.8 },
+                        files: ["skill-105050070"], sounds: ["skill-105050070"] },
+                    { type: 2, delay: 0, dimly: 0, base: {
+                        move_time: 0.1, move_back: 1 },
+                        files: [], sounds: [] },
+                ];
+            case 5071801:
+                return [
+                    { type: 9, delay: 110, dimly: 1, base: {
+                        format: "skill-105050071/%d.png", anchor_y: 0.5, anchor_x: 0.7, duration: 0.1,
+                        scale_x: 3, scale_y: 3, offset_x: 0.8, offset_y: 0.5 },
+                        files: ["skill-105050071"], sounds: ["skill-105050071"] },
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.6, action_time: 1.8 },
+                        files: [], sounds: [] },
+                    { type: 1, delay: 0, dimly: 0, base: {},
+                        files: [], sounds: [] },
+                ];
+            case 5091101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill2", action_time: 2 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 60, dimly: 0, base: {
+                        format: "skill-105050093/%d.png", anchor_x: 0.5, anchor_y: 0.3, scale_x: 4,
+                        scale_y: 4 },
+                        files: ["skill-105050093"], sounds: ["skill-105050093"] },
+                ];
+            case 5093101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.2, action_time: 1 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 70, dimly: 0, base: {
+                        format: "skill-105050091-2/%d.png", anchor_x: 0.5, anchor_y: 0.3, duration: 0.1,
+                        scale_x: 2, scale_y: 2 },
+                        files: ["skill-105050091-2"], sounds: [] },
+                    { type: 6, delay: 20, dimly: 0, base: {
+                        format: "skill-105050091-1/%d.png", anchor_x: 0.5, anchor_y: 0, duration: 0.03,
+                        scale_x: 1.5, scale_y: 1.5 },
+                        files: ["skill-105050091-1"], sounds: [] },
+                ];
+            case 5110100:
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: {
+                        move_time: 0.1, move_back: 1, attack_delay: 0.3 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 10, dimly: 0, base: {
+                        format: "skill-105050110/%d.png", anchor_x: 0.55, anchor_y: 0.5, scale_x: 3,
+                        scale_y: 3 },
+                        files: ["skill-105050110"], sounds: ["skill-105050110"] },
+                ];
+            case 5111101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.2, action_time: 1.5 },
+                        files: [], sounds: [] },
+                    { type: 9, delay: 40, dimly: 0, base: {
+                        format: "skill-105050111/%d.png", anchor_y: 0.5, anchor_x: 0.5, scale_x: 2,
+                        scale_y: 2, offset_x: 0.8, offset_y: 0.5 },
+                        files: ["skill-105050111"], sounds: ["skill-105050111"] },
+                    { type: 9, delay: 60, dimly: 0, base: {
+                        format: "skill-105050111/%d.png", anchor_y: 0.5, anchor_x: 0.5, scale_x: 2,
+                        scale_y: 2, offset_x: 0.7, offset_y: 0.4 },
+                        files: ["skill-105050111"], sounds: ["skill-105050111"] },
+                    { type: 9, delay: 80, dimly: 0, base: {
+                        format: "skill-105050111/%d.png", anchor_y: 0.5, anchor_x: 0.5, scale_x: 2,
+                        scale_y: 2, offset_x: 0.9, offset_y: 0.4 },
+                        files: ["skill-105050111"], sounds: ["skill-105050111"] },
+                    { type: 9, delay: 100, dimly: 0, base: {
+                        format: "skill-105050111/%d.png", anchor_y: 0.5, anchor_x: 0.5, scale_x: 2,
+                        scale_y: 2, offset_x: 0.8, offset_y: 0.3 },
+                        files: ["skill-105050111"], sounds: ["skill-105050111"] },
+                    { type: 6, delay: 40, dimly: 0, base: {
+                        format: "skill-105050111-1/%d.png", anchor_x: 0.5, anchor_y: 0, duration: 0.025,
+                        scale_x: 1, scale_y: 1 },
+                        files: ["skill-105050111-1"], sounds: [] },
+                ];
+            case 5113101:
+            case 5113701: {
+                // 零子的旧双分支使用同一骨骼动作；分支由真实战报决定，并在目标上分别播放原帧。
+                const file = id === 5113101 ? "skill-105050113-1" : "skill-105050113-2";
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: { action: "skill2", action_time: 1.5 },
+                        files: [], sounds: [] },
+                    { type: 7, delay: 45, dimly: 0, base: { format: file + "/%d.png", anchor_x: 0.5,
+                        anchor_y: 0.5, duration: 0.05, scale_x: 2, scale_y: 2 },
+                        files: [file], sounds: [] },
+                ];
+            }
+            case 5140100:
+                return [
+                    { type: 2, delay: 0, dimly: 0, base: {
+                        move_time: 0.1, move_back: 1, attack_delay: 0.3 },
+                        files: [], sounds: [] },
+                    { type: 6, delay: 20, dimly: 0, base: {
+                        format: "skill-105050140/%d.png", anchor_x: 0.2, anchor_y: 0.3, duration: 0.1,
+                        scale_x: 2.2, scale_y: 2.2 },
+                        files: ["skill-105050140"], sounds: ["skill-105050140"] },
+                ];
+            case 5141101:
+                return [
+                    { type: 3, delay: 0, dimly: 0, base: {
+                        action: "skill", attack_time: 0.2, action_time: 1.2 },
+                        files: [], sounds: [] },
+                    { type: 9, delay: 60, dimly: 0, base: {
+                        format: "skill-105050141/%d.png", anchor_y: 0.5, anchor_x: 0.5, scale_x: 2.2,
+                        scale_y: 2.2, offset_x: 0.8, offset_y: 0.3 },
+                        files: ["skill-105050141"], sounds: ["skill-105050141"] },
+                    { type: 6, delay: 30, dimly: 0, base: {
+                        format: "skill-105100141-1/%d.png", anchor_x: 0.37, anchor_y: 0.4, duration: 0.025,
+                        scale_x: 1, scale_y: 1 },
+                        files: ["skill-105100141-1"], sounds: [] },
+                ];
             case 1130100:
                 return [
                     { type: 5, delay: 0, dimly: 0, base: { attack_time: 0.4, action_time: 0.4,
@@ -1575,6 +2041,25 @@ export class BattleAttackUtils {
                 "skill-103050211": 17, "skill-103050211-1": 52, "skill-104050071": 6, "skill-104050071-1": 20,
                 "skill-103050231-1": 9, "skill-103050231-2": 9, "skill-103050231-3": 13,
                 "skill-105050090-1": 3, "skill-105050090-2": 4,
+                // 幻境之塔第 11～30 层原图集中从 0 编号的连续帧。
+                "skill-105050113-1": 12, "skill-105050113-2": 11,
+                "skill-101050131": 22, "skill-101050131-1": 66, "skill-101050140": 11,
+                "skill-101050141": 12, "skill-101050141-1": 48, "skill-101050151": 28,
+                "skill-101050151-1": 48, "skill-101050200-1": 8, "skill-101050200-2": 8,
+                "skill-101050201-1": 10, "skill-101050201-2": 23, "skill-101050201-3": 11,
+                "skill-102050090": 11, "skill-102050091": 15, "skill-102050091-1": 33,
+                "skill-102050181": 12, "skill-102050200": 7, "skill-102050220": 11,
+                "skill-102050221": 23, "skill-102050221-1": 19, "skill-103050140": 10,
+                "skill-103050141": 17, "skill-103050141-1": 23, "skill-103050191-1": 7,
+                "skill-103050191-2": 10, "skill-103050220": 9, "skill-103050221": 18,
+                "skill-103050221-1": 55, "skill-103050230": 11, "skill-104050090": 6,
+                "skill-104050091": 25, "skill-104050091-1": 16, "skill-104050100": 15,
+                "skill-104050101": 26, "skill-104050101-1": 26, "skill-104050150-1": 8,
+                "skill-104050151-1": 24, "skill-104050151-2": 9, "skill-105050053": 20,
+                "skill-105050070": 7, "skill-105050071": 11, "skill-105050091-1": 34,
+                "skill-105050091-2": 3, "skill-105050093": 10, "skill-105050110": 9,
+                "skill-105050111": 27, "skill-105050111-1": 47, "skill-105050140": 9,
+                "skill-105050141": 18, "skill-105100141-1": 26,
             };
             const knownArrow = row.type === 10 && format === "skill-102040041/arrow-%d.png";
             const file = knownArrow ? "skill-102040041" : directFrames ? format.slice(0, -frameSuffix.length) : files[0];

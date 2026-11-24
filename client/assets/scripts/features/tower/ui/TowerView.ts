@@ -9,7 +9,6 @@ import { UILayer } from "../../../framework/ui/UILayer";
 import { UIManager } from "../../../framework/ui/UIManager";
 import { UIRegistry } from "../../../framework/ui/UIRegistry";
 import { ViewportLayoutUtils } from "../../../framework/ui/ViewportLayoutUtils";
-import { BagItemCatalog } from "../../bag/utils/BagItemCatalog";
 import { SettledBattlePlayback } from "../../battle/ui/SettledBattlePlayback";
 import { ConfirmView } from "../../common/ui/ConfirmView";
 import { HeroRosterModel } from "../../hero/HeroRosterModel";
@@ -19,6 +18,7 @@ import { HeroCatalog } from "../../hero/utils/HeroCatalog";
 import { TowerController } from "../TowerController";
 import { TowerModel, type TowerFloor, type TowerState } from "../TowerModel";
 import { TowerFloorCell, type TowerFloorStatus } from "./TowerFloorCell";
+import { TowerMilestoneView } from "./TowerMilestoneView";
 
 const { ccclass, property } = _decorator;
 
@@ -49,7 +49,7 @@ export class TowerView extends BaseView {
     @property(Label) private energyLabel: Label | null = null;
     /** 显示最高已通关层与当前扫荡次数。 */
     @property(Label) private progressLabel: Label | null = null;
-    /** 通关十层奖励入口。 */
+    /** 进入独立层数领奖列表。 */
     @property(Button) private milestoneButton: Button | null = null;
     /** 里程碑实时状态。 */
     @property(Label) private milestoneLabel: Label | null = null;
@@ -118,7 +118,7 @@ export class TowerView extends BaseView {
         });
     }
 
-    /** 冻结播放期间保留原战报，其他时间绘制最新层数和次数。 */
+    /** 冻结播放期间保留原战报，其他时间绘制层数、次数和可领档数。 */
     private render = (): void => {
         if (this.playback?.active) {
             return;
@@ -138,7 +138,9 @@ export class TowerView extends BaseView {
         this.refreshButton!.interactable = !controller.busy;
         this.formationButton!.interactable = !!state && !controller.busy;
         this.milestoneButton!.interactable = !!state && !controller.busy;
-        this.milestoneLabel!.string = state?.milestone.claimed ? "层数奖励已领" : "层数奖励";
+        const claimableCount = (state?.milestones ?? [])
+            .filter(row => !row.claimed && row.floor <= (state?.highestCleared ?? 0)).length;
+        this.milestoneLabel!.string = claimableCount ? `层数奖励 (${claimableCount})` : "层数奖励";
         this.progressLabel!.string = state
             ? `已通关 ${state.highestCleared}/${state.maxFloor} 层　扫荡 ${state.sweeps}/${state.sweepLimit}`
             : controller.busy ? "正在读取幻境进度" : "请刷新幻境进度";
@@ -256,20 +258,10 @@ export class TowerView extends BaseView {
         }).catch(() => { /* 由页面管理器反馈加载异常。 */ });
     }
 
-    /** 展示本期固定层数奖励，满足真实资格后才能确认领取。 */
+    /** 打开塔页所属的层数奖励列表，关闭塔时一起回收。 */
     private showMilestone(): void {
-        const state = TowerModel.instance.state;
-        if (!state) {
-            return;
-        }
-        const milestone = state.milestone;
-        const qualified = state.highestCleared >= milestone.floor && !milestone.claimed;
-        const preview = milestone.rewards.map(item => `${BagItemCatalog.face(item.itemId, item.quantity).title} ×${item.quantity}`).join("\n");
-        void UIManager.instance.openChild(this, ConfirmView, {
-            title: "层数奖励", message: `通关第 ${milestone.floor} 层${milestone.claimed ? "（已领取）" : ""}\n${preview}`,
-            showCancel: qualified, confirmText: qualified ? "领取" : "确定",
-            onConfirm: () => { if (qualified) { TowerController.instance.claimMilestone(milestone.id); } },
-        }).catch(() => { /* 由页面管理器反馈加载异常。 */ });
+        void UIManager.instance.openChild(this, TowerMilestoneView)
+            .catch(() => { /* 由页面管理器反馈加载异常。 */ });
     }
 
     /** 已结算战报结束后恢复原塔页面，无需再次发奖。 */

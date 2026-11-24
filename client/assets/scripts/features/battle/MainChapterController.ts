@@ -10,7 +10,10 @@ import { STATE_PROTOCOLS, ProtocolStateUtils } from "../../platform/ProtocolStat
 import type { GameFrame } from "../../platform/GameProtocolCodecUtils";
 import { GameLog } from "../../core/GameLog";
 import type { RewardBinding } from "../reward/RewardBinding";
-import { MainChapterModel, type MainChapterReplay, type MainChapterExperience, type MainChapterReceipt } from "./MainChapterModel";
+import {
+    MainChapterModel, type MainChapterReplay, type MainChapterExperience, type MainChapterReceipt,
+    type MainChapterQuickBattleState,
+} from "./MainChapterModel";
 import type { IdleClaimConfirmation, IdleClaimReceipt } from "./data/MainChapterIdleClaimData";
 import { BattleReplayUtils } from "./utils/BattleReplayUtils";
 import { ChapterSettlementUtils } from "./utils/ChapterSettlementUtils";
@@ -26,6 +29,8 @@ declare module "../../framework/EventDispatcher" {
 export type ChapterCommand = typeof Protocol.CHAPTER_CHALLENGE | typeof Protocol.CHAPTER_CLAIM | typeof Protocol.CHAPTER_REPLAY | typeof Protocol.CHAPTER_IDLE_ENCOUNTER;
 /** 独立首通与里程碑按各自配置编号领取。 */
 type ChapterRewardCommand = typeof Protocol.CHAPTER_MILESTONE_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM;
+/** 快速战斗的服务器报价和实际发奖命令。 */
+type QuickBattleCommand = typeof Protocol.CHAPTER_QUICK_BATTLE_INFO | typeof Protocol.CHAPTER_QUICK_BATTLE_CLAIM;
 /** 通关奖励即时回包，库存和已领资格仍由快照提交。 */
 interface ChapterRewardReceipt {
     readonly rewardId?: number;
@@ -37,7 +42,8 @@ interface ChapterRewardReceipt {
 /** 主线使用账号通道交付请求，不自行建立连接。 */
 interface ChapterOperations {
     /** 向发起操作的会话交付主线请求结果。 */
-    deliver(name: ChapterCommand | ChapterRewardCommand | typeof Protocol.CHAPTER_IDLE_CLAIM, body: object, received: (frame: GameFrame) => void,
+    deliver(name: ChapterCommand | ChapterRewardCommand | QuickBattleCommand | typeof Protocol.CHAPTER_IDLE_CLAIM,
+        body: object, received: (frame: GameFrame) => void,
         failed: (error: unknown) => void): Promise<void>;
 }
 
@@ -82,7 +88,7 @@ export class MainChapterController extends BaseController {
         this.retryFeedback = retry;
     }
 
-    /** 登记明确协议清单，页面打开不再查询主线状态。 */
+    /** 登记主线快照、挑战和各个具体操作的请求回包。 */
     protected onInitialize(): void {
         this.ownListener(ProtocolRouter.instance.register(this, [
             ...STATE_PROTOCOLS,
@@ -93,6 +99,8 @@ export class MainChapterController extends BaseController {
             Protocol.CHAPTER_IDLE_CLAIM,
             Protocol.CHAPTER_FIRST_REWARD_CLAIM,
             Protocol.CHAPTER_MILESTONE_CLAIM,
+            Protocol.CHAPTER_QUICK_BATTLE_INFO,
+            Protocol.CHAPTER_QUICK_BATTLE_CLAIM,
         ]));
     }
 
@@ -119,6 +127,14 @@ export class MainChapterController extends BaseController {
             case Protocol.CHAPTER_MILESTONE_CLAIM:
                 this.showActualReward(value as ChapterRewardReceipt);
                 return;
+            case Protocol.CHAPTER_QUICK_BATTLE_INFO:
+                this.onQuickBattleState(value as MainChapterQuickBattleState);
+                break;
+            case Protocol.CHAPTER_QUICK_BATTLE_CLAIM:
+                this.onQuickBattleClaim(value as ChapterRewardReceipt & {
+                    requestId: string; roleId: string; state: MainChapterQuickBattleState;
+                });
+                break;
             default:
                 throw new Error("非主线协议");
         }
@@ -130,6 +146,90 @@ export class MainChapterController extends BaseController {
         const state = ProtocolStateUtils.statePayload(protocol, value);
         this.model.applySnapshot(state, protocol !== Protocol.STATE_CHANGED);
         this.observeSettlement();
+    }
+
+    /** 请求当前上海游戏日的快速战斗报价。 */
+    public refreshQuickBattle(): void {
+        if (!this.operations || this.model.quickBattleBusy) {
+            return;
+        }
+        this.model.quickBattleBusy = true;
+        this.notify();
+        void this.operations.deliver(Protocol.CHAPTER_QUICK_BATTLE_INFO, {}, frame => {
+            this.model.quickBattleBusy = false;
+            ProtocolRouter.instance.dispatch(this, frame);
+        }, error => {
+            this.model.quickBattleBusy = false;
+            this.model.quickBattle = null;
+            this.notify();
+            UIManager.instance.toast(error instanceof Error ? error.message : "暂时无法读取快速战斗次数");
+        });
+    }
+
+    /** 发送确认过的报价；结果不明时重发同一请求以收回原回执。 */
+    public claimQuickBattle(quote: MainChapterQuickBattleState | null): void {
+        if (!this.operations || this.model.quickBattleBusy) {
+            return;
+        }
+        const request = this.model.quickBattleRequest ?? (quote && {
+            requestId: RequestIdUtils.create(), resetAt: quote.resetAt, usedCount: quote.usedCount,
+        });
+        if (!request) {
+            return;
+        }
+        this.model.quickBattleRequest = request;
+        this.model.quickBattleBusy = true;
+        this.notify();
+        void this.operations.deliver(Protocol.CHAPTER_QUICK_BATTLE_CLAIM, request, frame => {
+            this.model.quickBattleBusy = false;
+            ProtocolRouter.instance.dispatch(this, frame);
+        }, error => this.onQuickBattleFailure(error));
+    }
+
+    /** 回包提交的次数和报价要一致，不能用缺字段的数据启用按钮。 */
+    private onQuickBattleState(state: MainChapterQuickBattleState): void {
+        if (!state || typeof state.unlocked !== "boolean" || typeof state.tavernFull !== "boolean"
+            || !Number.isSafeInteger(state.resetAt) || state.resetAt <= 0
+            || !Number.isInteger(state.maxCount) || state.maxCount < 1
+            || !Number.isInteger(state.usedCount) || state.usedCount < 0 || state.usedCount > state.maxCount
+            || !Number.isSafeInteger(state.costDiamonds)
+            || state.costDiamonds < 0 || (state.usedCount === state.maxCount && state.costDiamonds !== 0)) {
+            throw new Error("快速战斗报价无效");
+        }
+        this.model.quickBattle = state;
+    }
+
+    /** 校验回执归属、展示原实际奖励，并保留玩家最近收到的更新报价。 */
+    private onQuickBattleClaim(receipt: ChapterRewardReceipt & {
+        requestId: string; roleId: string; state: MainChapterQuickBattleState;
+    }): void {
+        const request = this.model.quickBattleRequest;
+        if (!request || receipt.requestId !== request.requestId || receipt.state?.resetAt !== request.resetAt
+            || receipt.state.usedCount !== request.usedCount + 1
+            || (receipt.actual as { roleId?: unknown } | null)?.roleId !== receipt.roleId) {
+            throw new Error("快速战斗回执与请求不符");
+        }
+        this.showActualReward(receipt);
+        this.model.quickBattleRequest = null;
+        const previous = this.model.quickBattle;
+        if (!previous || (previous.resetAt === receipt.state.resetAt && previous.usedCount <= receipt.state.usedCount)) {
+            this.onQuickBattleState(receipt.state);
+        }
+    }
+
+    /** 网络中断保留原意图；明确拒绝后才清除，并按报价变化重新查询。 */
+    private onQuickBattleFailure(error: unknown): void {
+        this.model.quickBattleBusy = false;
+        if (error instanceof SocketFailure && error.interrupted) {
+            UIManager.instance.toast("快速战斗结果待确认，重连后可重试原操作");
+        } else {
+            this.model.quickBattleRequest = null;
+            UIManager.instance.toast(error instanceof Error ? error.message : "快速战斗失败");
+            if (error instanceof SocketFailure && error.code === "QUICK_BATTLE_QUOTE_CHANGED") {
+                this.refreshQuickBattle();
+            }
+        }
+        this.notify();
     }
 
     /** 提交一次独立通关领奖，结果交由通用反馈展示。 */

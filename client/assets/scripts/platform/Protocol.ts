@@ -34,6 +34,10 @@ export class Protocol {
     public static readonly CHAPTER_IDLE_CLAIM = "chapter.idle.claim";
     /** 只查询指定挂机请求的已提交回执，不查询库存或重算奖励。 */
     public static readonly CHAPTER_IDLE_CLAIM_STATUS = "chapter.idle.claim.status";
+    /** 读取快速战斗当天的使用次数、钻石价格和冒险点提示。 */
+    public static readonly CHAPTER_QUICK_BATTLE_INFO = "chapter.quick-battle.info";
+    /** 按服务端报价结算一次快速战斗；相同请求编号恢复原回执。 */
+    public static readonly CHAPTER_QUICK_BATTLE_CLAIM = "chapter.quick-battle.claim";
     /** 恢复当前角色的持久战报，不重新计算。 */
     public static readonly CHAPTER_REPLAY = "chapter.replay";
     /** 原配置ID是每角色稳定业务键，重复领取读取冻结回执。 */
@@ -209,7 +213,7 @@ export type ReadProtocol = typeof Protocol.SESSION_HEARTBEAT | typeof Protocol.G
     | typeof Protocol.ROLE_DECORATIONS_LIST
     | typeof Protocol.MARKET_LIST | DailyDungeonRoutes["list"]
     | typeof Protocol.TOWER_STATE | typeof Protocol.ARENA_STATE | typeof Protocol.ARENA_REPLAY
-    | typeof Protocol.GUILD_LIST;
+    | typeof Protocol.GUILD_LIST | typeof Protocol.CHAPTER_QUICK_BATTLE_INFO;
 /** 具有角色归属回执的操作；查询与原命令经同一条认证连接。 */
 export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protocol.HERO_NORMAL_SUMMON
     | typeof Protocol.HERO_FIRST_SUMMON | typeof Protocol.HERO_FIRST_SUMMON_STATUS
@@ -226,7 +230,8 @@ export type RoleOperationProtocol = typeof Protocol.HERO_SUMMON | typeof Protoco
     | typeof Protocol.HERO_EQUIPMENT_CHANGE | typeof Protocol.MARKET_BUY | typeof Protocol.MARKET_REFRESH
     | typeof Protocol.CHAPTER_FIRST_REWARD_CLAIM | typeof Protocol.CHAPTER_FIRST_REWARD_STATUS
     | typeof Protocol.ROLE_WELCOME_CLAIM | DailyDungeonRoutes["challenge"] | typeof Protocol.GUILD_CHANGE
-    | typeof Protocol.VIP_CLAIM | typeof Protocol.TOWER_CHALLENGE | typeof Protocol.TOWER_SWEEP
+    | typeof Protocol.VIP_CLAIM | typeof Protocol.CHAPTER_QUICK_BATTLE_CLAIM
+    | typeof Protocol.TOWER_CHALLENGE | typeof Protocol.TOWER_SWEEP
     | typeof Protocol.TOWER_MILESTONE_CLAIM | typeof Protocol.ARENA_CHALLENGE | typeof Protocol.ARENA_TICKET_BUY;
 
 /** 现行主线请求，包括历史回执和只读战报。 */
@@ -289,6 +294,8 @@ export const ProtocolDefinitions: readonly ProtocolDefinition[] = Object.freeze(
     { name: Protocol.GUILD_CHANGE, module: "公会", description: "创建、申请、审批或退出公会" },
     { name: Protocol.GUILD_UPDATED, module: "公会", description: "公会状态已提交更新" },
     { name: Protocol.VIP_CLAIM, module: "VIP", description: "领取当前档位的契约任务奖励" },
+    { name: Protocol.CHAPTER_QUICK_BATTLE_INFO, module: "主线", description: "读取今日快速战斗次数与报价" },
+    { name: Protocol.CHAPTER_QUICK_BATTLE_CLAIM, module: "主线", description: "确认报价并结算快速战斗" },
     { name: Protocol.DAILY_DUNGEON_LIST, module: "副本", description: "读取金币副本关卡资格和共享每日次数" },
     { name: Protocol.DAILY_DUNGEON_CHALLENGE, module: "副本", description: "金币副本挑战或清扫与结算回执" },
     { name: Protocol.EXPERIENCE_DUNGEON_LIST, module: "副本", description: "读取经验副本关卡资格和独立每日次数" },

@@ -117,6 +117,9 @@ message Frame {
     ArenaSettlement arena_settlement = 107;
     ArenaTicketBuyRequest arena_ticket_buy_request = 108;
     ArenaTicketPurchase arena_ticket_purchase = 109;
+    ChapterQuickBattleState chapter_quick_battle_state = 110;
+    ChapterQuickBattleClaim chapter_quick_battle_claim = 111;
+    ChapterQuickBattleReceipt chapter_quick_battle_receipt = 112;
   }
 }
 message Empty {}
@@ -289,6 +292,8 @@ message TowerState {
   repeated FormationSlot slots = 14;
   repeated TowerFloor floors = 15;
   required TowerMilestone milestone = 16;
+  // 新状态包含所有已开放的里程碑；保留旧回执中单个里程碑字段。
+  repeated TowerMilestone milestones = 17;
 }
 message TowerFloor {
   required uint32 floor = 1;
@@ -539,6 +544,30 @@ message Item {
   optional string instance_id = 3;
 }
 message Inventory { repeated Item items = 1; }
+// 快速战斗当前报出的使用次数与钻石价格，按上海自然日更新。
+message ChapterQuickBattleState {
+  required bool unlocked = 1;
+  required uint32 used_count = 2;
+  required uint32 max_count = 3;
+  required int64 cost_diamonds = 4;
+  required int64 reset_at = 5;
+  required bool tavern_full = 6;
+}
+// 携带已展示的日期和档位，服务端拒绝过时报价，避免锁定后按下一档扣费。
+message ChapterQuickBattleClaim {
+  required string request_id = 1;
+  required int64 reset_at = 2;
+  required uint32 used_count = 3;
+}
+message ChapterQuickBattleReceipt {
+  required string request_id = 1;
+  required string receipt_id = 2;
+  required int64 asset_revision = 3;
+  required ChapterQuickBattleState state = 4;
+  required RewardGrantResult actual = 5;
+  required string role_id = 6;
+  optional RewardNotice notice = 7;
+}
 message Snapshot {
   required Role role = 1;
   repeated Hero heroes = 2;

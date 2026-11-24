@@ -22,6 +22,14 @@ export interface TowerFloor {
     readonly sweepRewards: readonly TowerReward[];
 }
 
+/** 每个通关档位独立标记是否领取，奖励仍以真实结算为准。 */
+export interface TowerMilestone {
+    readonly id: number;
+    readonly floor: number;
+    readonly claimed: boolean;
+    readonly rewards: readonly TowerReward[];
+}
+
 /** 单次塔状态回包，时间字段以服务器 Unix 秒为准。 */
 export interface TowerState {
     readonly minimumLevel: number;
@@ -39,12 +47,8 @@ export interface TowerState {
     readonly formationId: number;
     readonly slots: MainFormation["slots"];
     readonly floors: readonly TowerFloor[];
-    readonly milestone: {
-        readonly id: number;
-        readonly floor: number;
-        readonly claimed: boolean;
-        readonly rewards: readonly TowerReward[];
-    };
+    /** 本期已开放的里程碑，由服务端按楼层顺序返回。 */
+    readonly milestones: readonly TowerMilestone[];
 }
 
 export class TowerModel {

@@ -50,6 +50,8 @@ class MySqlIT {
     private static final long LEGACY_GOLD_RESET_AT = 1_795_449_600;
     /** 迁移前发过五星英雄、当前名册为空的独立角色。 */
     private static final String LEGACY_HERO_ROLE = "00000000-0000-4000-8000-000000000058";
+    /** 已在 V56 领取第 10 层奖励的角色，校验独立档位迁移。 */
+    private static final String LEGACY_TOWER_ROLE = "00000000-0000-4000-8000-000000000056";
 
     private OwnedMysql mysql;
     private ConfigurableApplicationContext app;
@@ -86,10 +88,28 @@ class MySqlIT {
                 statement.executeUpdate("INSERT INTO game_inventory(role_id,item_id,quantity) VALUES ('00000000-0000-4000-8000-000000000001',900101,100)");
             }
             seedLegacyGoldBeforeMigration();
+            seedLegacyTowerBeforeMigration();
             seedLegacyHeroBeforeMigration();
             boot();
         }
         catch (Exception | AssertionError failure) { close(); throw failure; }
+    }
+
+    /** 在独占 MySQL 上创建真正的 V56 单里程碑记录，让应用启动时执行迁移。 */
+    private void seedLegacyTowerBeforeMigration() throws Exception {
+        org.flywaydb.core.Flyway.configure().dataSource(mysql.url(), mysql.user, mysql.password)
+                .cleanDisabled(true).target("56").load().migrate();
+        try (var connection = mysql.connect(); var statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO game_role(id,account_key,nickname,role_level,gold,diamonds,login_account,server_id)
+                    VALUES ('%s','it_v56_tower','it_v56_tower',16,0,0,'it_v56_tower','local-1')
+                    """.formatted(LEGACY_TOWER_ROLE));
+            statement.executeUpdate("""
+                    INSERT INTO game_tower(role_id,highest_cleared,energy,energy_time_seconds,
+                        sweep_times,sweep_reset_at_seconds,milestone_claimed)
+                    VALUES ('%s',10,20,0,0,1,TRUE)
+                    """.formatted(LEGACY_TOWER_ROLE));
+        }
     }
 
     /** 保留 V58 之前真实存在的开发发放回执格式，模拟英雄后来被消耗。 */
@@ -749,11 +769,15 @@ class MySqlIT {
         assertEquals(beforeExp + 120_000, afterExp);
     }
 
-    /** 在独立 MySQL 上验证 V56/V57、两种战报的原回执及重启后的 VIP 进度。 */
+    /** 验证旧塔领奖迁移、竞技场和塔战报原回执及重启后的 VIP 进度。 */
     @Test @Order(25)
     void towerAndArenaKeepReceiptsAndVipProgressAfterRestart() throws Exception {
         assertEquals(1, number("SELECT COUNT(*) FROM flyway_schema_history WHERE version='56' AND success=1"));
         assertEquals(1, number("SELECT COUNT(*) FROM flyway_schema_history WHERE version='57' AND success=1"));
+        assertEquals(1, number("SELECT COUNT(*) FROM flyway_schema_history WHERE version='60' AND success=1"));
+        assertEquals(List.of(1), jdbc.queryForList("SELECT milestone_id FROM game_tower_milestone_claim WHERE role_id=?",
+                Integer.class, LEGACY_TOWER_ROLE));
+        assertEquals(10, app.getBean(com.funsgamex.mxzg.tower.TowerRepository.class).highestCleared(LEGACY_TOWER_ROLE));
         var player = player();
         jdbc.update("UPDATE game_role SET role_level=16,goddess_vip=1 WHERE id=?", player.id());
         var slots = new java.util.ArrayList<Lineup.Slot>();
@@ -770,6 +794,7 @@ class MySqlIT {
                 UUID.randomUUID().toString(), version, 1, slots));
         var tower = app.getBean(com.funsgamex.mxzg.tower.TowerService.class);
         var arena = app.getBean(com.funsgamex.mxzg.arena.ArenaService.class);
+        assertEquals(30, tower.current(player.token()).maxFloor());
         tower.saveFormation(player.token(), tower.current(player.token()).formationVersion(), 1, slots);
         String climbId = UUID.randomUUID().toString();
         var climb = tower.challenge(player.token(), climbId, 1);

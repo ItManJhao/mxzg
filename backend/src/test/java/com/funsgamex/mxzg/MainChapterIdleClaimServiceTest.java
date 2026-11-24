@@ -17,6 +17,8 @@ import com.funsgamex.mxzg.campaign.IdleRewardUtils;
 import com.funsgamex.mxzg.campaign.IdleRules;
 import com.funsgamex.mxzg.campaign.MainChapterIdleClaimService;
 import com.funsgamex.mxzg.campaign.MainChapterIdleStateRepository;
+import com.funsgamex.mxzg.campaign.MainChapterQuickBattleRepository;
+import com.funsgamex.mxzg.campaign.MainChapterQuickBattleService;
 import com.funsgamex.mxzg.campaign.MainChapterRules;
 import com.funsgamex.mxzg.hero.HeroCapacityService;
 import com.funsgamex.mxzg.inventory.InventoryService;
@@ -28,6 +30,7 @@ import com.funsgamex.mxzg.privilege.PrivilegeGiftService;
 import com.funsgamex.mxzg.reward.RewardGrantService;
 import com.funsgamex.mxzg.reward.RewardFeedbackService;
 import com.funsgamex.mxzg.reward.RewardGrantResult;
+import com.funsgamex.mxzg.reward.RewardReceiptPayloads;
 import com.funsgamex.mxzg.role.RoleExperienceService;
 import com.funsgamex.mxzg.role.RoleRepository;
 import com.funsgamex.mxzg.role.RoleRules;
@@ -92,6 +95,8 @@ class MainChapterIdleClaimServiceTest {
     private RoleRepository roles;
     /** 当前生产角色经验配置，用于构造升级前后的准确边界。 */
     private RoleRules roleRules;
+    /** 与两个挂机入口共用的酒馆真实余额和奖励封顶。 */
+    private TavernPointService tavernPoints;
     /** 普通库存的真实读写入口，供回滚和后续资产变化核对。 */
     private InventoryService inventory;
     /** 精灵真实生成及读取入口，所有调用保留生产事务门槛。 */
@@ -213,7 +218,7 @@ class MainChapterIdleClaimServiceTest {
         roles = new RoleRepository(jdbc, sync, roleRules, mock(HeroCapacityService.class));
         sessions = new SessionService(jdbc);
         inventory = new InventoryService(jdbc, sync, json, roles);
-        var tavernPoints = transactional(new TavernPointService(jdbc, roles, new TavernPointRules(json), sync),
+        tavernPoints = transactional(new TavernPointService(jdbc, roles, new TavernPointRules(json), sync),
                 TavernPointService.class);
         var experience = transactional(new RoleExperienceService(roleRules, roles, jdbc, sync), RoleExperienceService.class);
         var timedRules = new TimedItemRules(json);
@@ -263,6 +268,102 @@ class MainChapterIdleClaimServiceTest {
         return transactional(new MainChapterIdleClaimService(sessions, roles, jdbc, idleRules, chapterRules,
                 inputs, rewards, states, roleRules, sync, feedback, json, clock, random, enabled),
                 MainChapterIdleClaimService.class);
+    }
+
+    /** 快速战斗沿本库真实奖励、累计及回执实现，使用独立可控的游戏时钟。 */
+    private MainChapterQuickBattleService quickBattleService(MainChapterQuickBattleRepository repository, GameClock time) {
+        return transactional(new MainChapterQuickBattleService(roles, jdbc, repository, idleRules, chapterRules,
+                inputs, states, tavernPoints, rewards, sync, feedback, time), MainChapterQuickBattleService.class);
+    }
+
+    /** 验证真实扣付、每日/历史次数、共享掉落进度、拒绝与跨日重放均不消费宝箱时间。 */
+    @Test
+    void quickBattleAwardsTwoHoursWithoutResettingChestAndRestoresTheOriginalReceiptAcrossDays() {
+        var gameClock = mock(GameClock.class);
+        var beforeReset = Instant.parse("2026-11-14T15:59:30Z");
+        var afterReset = Instant.parse("2026-11-14T16:00:30Z");
+        when(gameClock.instant()).thenReturn(beforeReset);
+        var repository = new MainChapterQuickBattleRepository(jdbc, new RewardReceiptPayloads(json));
+        var quick = quickBattleService(repository, gameClock);
+        var locked = player(19, 0, 300, 1);
+        var lockedQuote = quick.info(locked.role());
+        assertFalse(lockedQuote.unlocked());
+        assertEquals("QUICK_BATTLE_LOCKED", assertThrows(MainChapterQuickBattleService.Rejected.class,
+                () -> quick.claim(locked.role(), requestId(), lockedQuote.resetAt(), 0)).code());
+
+        var player = player(20, 0, 360, 1);
+        var oldChest = accumulation(player);
+        var free = quick.info(player.role());
+        assertEquals(0, free.costDiamonds());
+        assertEquals(Instant.parse("2026-11-14T16:00:00Z").getEpochSecond(), free.resetAt());
+        var paidRequest = requestId();
+        var first = quick.claim(player.role(), requestId(), free.resetAt(), 0);
+        assertEquals(1, first.state().usedCount());
+        assertEquals(50, first.state().costDiamonds());
+        long base120 = idleRules.stage(1).base().stream().filter(item -> item.itemId() == 900001)
+                .findFirst().orElseThrow().quantity() * 120;
+        assertEquals(base120, first.actual().wallet().goldAfter() - first.actual().wallet().goldBefore());
+        var afterQuick = accumulation(player);
+        assertEquals(oldChest.startedAt(), afterQuick.startedAt());
+        assertEquals(oldChest.operationVersion(), afterQuick.operationVersion());
+        assertEquals(7200 % oldChest.resetSeconds(), afterQuick.dropSeconds());
+        assertEquals("QUICK_BATTLE_DIAMONDS", assertThrows(MainChapterQuickBattleService.Rejected.class,
+                () -> quick.claim(player.role(), paidRequest, free.resetAt(), 1)).code());
+        assertEquals(1, repository.totalSuccessful(player.role()));
+        assertEquals(afterQuick, accumulation(player));
+
+        jdbc.update("UPDATE game_role SET diamonds=400 WHERE id=?", player.role());
+        var second = quick.claim(player.role(), paidRequest, free.resetAt(), 1);
+        assertEquals(100, second.state().costDiamonds());
+        assertEquals(350, second.actual().wallet().diamondsBefore());
+        var third = quick.claim(player.role(), requestId(), free.resetAt(), 2);
+        assertEquals(200, third.state().costDiamonds());
+        assertEquals(second.actual().wallet().diamondsAfter() - 100, third.actual().wallet().diamondsBefore());
+        var last = quick.claim(player.role(), requestId(), free.resetAt(), 3);
+        assertEquals(4, last.state().usedCount());
+        assertEquals(0, last.state().costDiamonds());
+        assertEquals(third.actual().wallet().diamondsAfter() - 200, last.actual().wallet().diamondsBefore());
+        assertEquals("QUICK_BATTLE_LIMIT", assertThrows(MainChapterQuickBattleService.Rejected.class,
+                () -> quick.claim(player.role(), requestId(), free.resetAt(), 4)).code());
+        assertEquals(4, repository.totalSuccessful(player.role()));
+        when(gameClock.instant()).thenReturn(afterReset);
+        var restart = quickBattleService(repository, gameClock);
+        var newDay = restart.info(player.role());
+        assertEquals(0, newDay.usedCount());
+        assertEquals(0, newDay.costDiamonds());
+        assertEquals(last, restart.claim(player.role(), last.requestId(), free.resetAt(), 3));
+        assertEquals("QUICK_BATTLE_QUOTE_CHANGED", assertThrows(MainChapterQuickBattleService.Rejected.class,
+                () -> restart.claim(player.role(), requestId(), free.resetAt(), 0)).code());
+        restart.claim(player.role(), requestId(), newDay.resetAt(), 0);
+        assertEquals(5, repository.totalSuccessful(player.role()));
+        assertEquals(1, restart.info(player.role()).usedCount());
+        assertEquals(oldChest.startedAt(), accumulation(player).startedAt());
+        assertEquals(5, rewardNotifications.size());
+    }
+
+    /** 报价应保持只读，已确认付费后若权威收益输入缺失，也保留扣钻前的全部状态。 */
+    @Test
+    void quickBattleQuoteIsReadOnlyAndMissingIncomeInputsRejectPaidClaimWithoutMutation() {
+        var gameClock = mock(GameClock.class);
+        when(gameClock.instant()).thenReturn(Instant.ofEpochSecond(NOW));
+        var repository = new MainChapterQuickBattleRepository(jdbc, new RewardReceiptPayloads(json));
+        var quick = quickBattleService(repository, gameClock);
+        var player = player(20, 0, 240, 1);
+        var beforeQuote = stored(player);
+        var initial = quick.info(player.role());
+        assertEquals(beforeQuote, stored(player), "报价不得补建酒馆点数记录或修改资产");
+        quick.claim(player.role(), requestId(), initial.resetAt(), 0);
+        jdbc.update("UPDATE game_role SET diamonds=100 WHERE id=?", player.role());
+        jdbc.update("DELETE FROM game_idle_activity_control WHERE server_id=?", player.server());
+        var beforeRejected = stored(player);
+        var paidQuote = quick.info(player.role());
+        assertEquals(50, paidQuote.costDiamonds());
+        var rejected = assertThrows(MainChapterQuickBattleService.Rejected.class, () ->
+                quick.claim(player.role(), requestId(), paidQuote.resetAt(), paidQuote.usedCount()));
+        assertEquals("QUICK_BATTLE_INPUT_UNAVAILABLE", rejected.code());
+        assertEquals(beforeRejected, stored(player), "付费失败不得消费钻石、宝箱累计或道具");
+        assertEquals(1, repository.totalSuccessful(player.role()));
+        assertEquals(1, rewardNotifications.size());
     }
 
     /** 创建独立区服、真实控制、角色与旧计时行，既有起点由迁移默认累计字段接续。 */

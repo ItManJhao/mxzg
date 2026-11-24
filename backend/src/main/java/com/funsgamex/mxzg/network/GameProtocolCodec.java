@@ -45,7 +45,8 @@ public final class GameProtocolCodec {
         "towerState", "towerFormationSave", "towerRequest", "towerSettlement",
         "arenaState", "arenaChallengeRequest", "arenaReplayRequest", "arenaReplay", "arenaSettlement",
         "arenaTicketBuyRequest", "arenaTicketPurchase",
-        "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt");
+        "guildListRequest", "guildChangeRequest", "guildState", "vipClaimRequest", "vipClaimReceipt",
+        "chapterQuickBattleState", "chapterQuickBattleClaim", "chapterQuickBattleReceipt");
     /** 工具类不持有实例状态。 */
     private GameProtocolCodec() {}
 
@@ -102,6 +103,7 @@ public final class GameProtocolCodec {
                 case "chapter.claim", "chapter.replay" -> "chapterBattleId";
                 case "chapter.idle.claim" -> "chapterIdleClaim";
                 case "chapter.idle.claim.status" -> "chapterIdleClaimStatusRequest";
+                case "chapter.quick-battle.claim" -> "chapterQuickBattleClaim";
                 case "chapter.milestone.claim", "chapter.milestone.claim.status" -> "chapterMilestoneClaim";
                 case "hero.summon" -> "heroSummonRequest";
                 case "hero.summon.normal", "hero.summon.first", "hero.summon.first.status" -> "heroFirstSummonRequest";
@@ -148,6 +150,8 @@ public final class GameProtocolCodec {
             case "session.login", "session.authenticate" -> "accepted"; case "servers.list" -> "servers";
             case "chapter.idle.claim" -> "chapterIdleClaimReceipt";
             case "chapter.idle.claim.status" -> "chapterIdleClaimStatus";
+            case "chapter.quick-battle.info" -> "chapterQuickBattleState";
+            case "chapter.quick-battle.claim" -> "chapterQuickBattleReceipt";
             case "chapter.milestone.claim" -> "chapterMilestoneReceipt";
             case "chapter.milestone.claim.status" -> "chapterMilestoneStatus";
             case "hero.summon" -> "heroSummonReceipt";

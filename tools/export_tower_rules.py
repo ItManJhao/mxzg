@@ -7,7 +7,7 @@ from pathlib import Path
 from export_gameconfig import DEFAULT_SRC, ROOT, loose_rows
 
 
-FLOOR_LIMIT = 10
+FLOOR_LIMIT = 30
 RULES_OUTPUT = ROOT / "backend/src/main/resources/gameplay/tower-rules.json"
 REPLAY_OUTPUT = ROOT / "client/assets/scripts/config/TowerReplayRoster.generated.ts"
 
@@ -55,13 +55,19 @@ def project(source):
     sweeps = sorted(rows("towersweep"), key=lambda row: row["times"])
     if [row["times"] for row in sweeps] != list(range(1, len(sweeps) + 1)):
         raise ValueError("幻境之塔缺少某次扫荡价格")
-    [milestone] = [row for row in rows("firstrewardtower") if row["chapter"] <= FLOOR_LIMIT]
+    milestones = sorted(
+        ({"id": row["idx"], "floor": row["chapter"], "rewards": rewards(row["reward"])}
+         for row in rows("firstrewardtower") if row["chapter"] <= FLOOR_LIMIT),
+        key=lambda row: row["floor"],
+    )
+    if [row["floor"] for row in milestones] != list(range(10, FLOOR_LIMIT + 1, 10)) or \
+            len({row["id"] for row in milestones}) != len(milestones):
+        raise ValueError("幻境之塔里程碑缺层或配置编号重复")
     system = {row["key"]: row["value"] for row in rows("system")}
     return {"minimumLevel": gate["condition_value"], "maxEnergy": system["tower_tickets_limit"],
             "rechargeSeconds": system["tower_tickets_regenerate_time"], "opponentName": opponent_name,
             "sweepCosts": [row["cost_gem"] for row in sweeps], "floors": floors,
-            "milestone": {"id": milestone["idx"], "floor": milestone["chapter"],
-                          "rewards": rewards(milestone["reward"])}}
+            "milestones": milestones}
 
 
 def replay_catalog(config):

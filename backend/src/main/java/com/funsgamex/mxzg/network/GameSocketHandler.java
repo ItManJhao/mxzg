@@ -9,6 +9,7 @@ package com.funsgamex.mxzg.network;
 import com.funsgamex.mxzg.arena.ArenaService;
 import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.campaign.MainChapterFirstRewardService;
+import com.funsgamex.mxzg.campaign.MainChapterQuickBattleService;
 import com.funsgamex.mxzg.dungeon.DailyDungeonService;
 import com.funsgamex.mxzg.dungeon.DailyDungeonType;
 import com.funsgamex.mxzg.guild.GuildChanged;
@@ -69,6 +70,8 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
     private final com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles;
     /** 挂机消费及持久回执入口；数据库锁、幂等和实际发放均归该事务服务。 */
     private final com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims;
+    /** 快速战斗报价、次数、扣费和业务回执使用同一角色的持久事务。 */
+    private final MainChapterQuickBattleService quickBattles;
     /** 里程碑稳定业务键的真实领取与只读回执，不接受客户端奖励计划。 */
     private final com.funsgamex.mxzg.campaign.MainChapterMilestoneService milestones;
     /** 普通单抽及旧首抽读写入口，角色来自连接凭证。 */
@@ -149,6 +152,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             com.funsgamex.mxzg.campaign.MainChapterService chapters,
             com.funsgamex.mxzg.campaign.MainChapterIdleBattleService idleBattles,
             com.funsgamex.mxzg.campaign.MainChapterIdleClaimService idleClaims,
+            MainChapterQuickBattleService quickBattles,
             com.funsgamex.mxzg.campaign.MainChapterMilestoneService milestones, HeroSummonService heroSummons,
             MainChapterFirstRewardService firstRewards, HeroFragmentCombineService fragments,
             HeroLevelService heroLevels, HeroLockService heroLocks, HeroEquipmentService heroEquipment,
@@ -179,6 +183,7 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
         this.milestones = milestones;
         this.heroSummons = heroSummons;
         this.idleClaims = idleClaims;
+        this.quickBattles = quickBattles;
         this.idleBattles = idleBattles;
         this.chapters = chapters;
         this.battles = battles;
@@ -409,6 +414,10 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
                 arenaRequest(connection, request, name);
                 return;
             }
+            case "chapter.quick-battle.info", "chapter.quick-battle.claim" -> {
+                quickBattle(connection, request, name);
+                return;
+            }
         }
         var dungeonType = switch (name) {
             case "dungeon.gold.list", "dungeon.gold.challenge" -> DailyDungeonType.GOLD;
@@ -480,6 +489,28 @@ public class GameSocketHandler extends BinaryWebSocketHandler implements SubProt
             case "session.heartbeat" -> respond(connection, request, Map.of("serverTimeMs", clock.millis()));
 
             default -> throw rejected("UNKNOWN_MESSAGE");
+        }
+    }
+
+    /** 查询当前角色报价，或提交一次报价凭据并回送冻结的实际发奖结果。 */
+    private void quickBattle(Connection connection, JsonNode request, String name) throws IOException {
+        var body = request.path("body");
+        try {
+            if (name.equals("chapter.quick-battle.info")) {
+                fields(body, Set.of());
+                respond(connection, request, quickBattles.info(connection.role));
+                return;
+            }
+            fields(body, Set.of("requestId", "resetAt", "usedCount"));
+            String requestId = text(body, "requestId", UUID_PATTERN);
+            long resetAt = operationAmount(body, "resetAt", "QUICK_BATTLE_REQUEST_INVALID");
+            var used = body.path("usedCount");
+            if (!used.isIntegralNumber() || !used.canConvertToInt() || used.asInt() < 0) {
+                throw rejected("QUICK_BATTLE_REQUEST_INVALID");
+            }
+            respond(connection, request, quickBattles.claim(connection.role, requestId, resetAt, used.asInt()));
+        } catch (MainChapterQuickBattleService.Rejected error) {
+            fail(connection, request, error.code(), error.getMessage(), false);
         }
     }
 

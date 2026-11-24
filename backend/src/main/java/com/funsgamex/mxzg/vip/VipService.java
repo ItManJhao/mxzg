@@ -7,6 +7,7 @@ package com.funsgamex.mxzg.vip;
 import com.funsgamex.mxzg.arena.ArenaRepository;
 import com.funsgamex.mxzg.auth.SessionService;
 import com.funsgamex.mxzg.campaign.MainChapterRules;
+import com.funsgamex.mxzg.campaign.MainChapterQuickBattleRepository;
 import com.funsgamex.mxzg.dungeon.DailyDungeonRepository;
 import com.funsgamex.mxzg.hero.HeroRepository;
 import com.funsgamex.mxzg.reward.RewardFeedbackService;
@@ -55,6 +56,8 @@ public class VipService {
     private final DailyDungeonRepository dungeon;
     /** 读取角色累计获得的五星英雄记录，英雄被消耗后仍有效。 */
     private final HeroRepository heroes;
+    /** 读取历次成功快速战斗的持久总数，跨日不重置。 */
+    private final MainChapterQuickBattleRepository quickBattles;
 
     /** 当前档的任务。进度为空表示该条件的玩法数据尚未接入。 */
     public record Task(int id, int target, Integer progress, boolean claimed) {}
@@ -73,7 +76,7 @@ public class VipService {
     public VipService(SessionService sessions, RoleRepository roles, VipRules rules, JdbcTemplate jdbc,
             MainChapterRules chapters, RewardGrantService grants, RewardFeedbackService feedback,
             RewardReceiptPayloads payloads, GameClock clock, ArenaRepository arena, TowerRepository tower,
-            DailyDungeonRepository dungeon, HeroRepository heroes) {
+            DailyDungeonRepository dungeon, HeroRepository heroes, MainChapterQuickBattleRepository quickBattles) {
         this.sessions = sessions;
         this.roles = roles;
         this.rules = rules;
@@ -87,6 +90,7 @@ public class VipService {
         this.tower = tower;
         this.dungeon = dungeon;
         this.heroes = heroes;
+        this.quickBattles = quickBattles;
     }
 
     /** 调用方在角色锁内读取登录、重连或资产通知需要的当前契约状态。 */
@@ -173,7 +177,7 @@ public class VipService {
 
     /** 按原任务定义读取各玩法的实际进度，尚未接通的档位返回空进度。 */
     private Integer taskProgress(String roleId, Progress progress, VipRules.Entry entry) {
-        if (progress.vipLevel() > 2) {
+        if (progress.vipLevel() > VipRules.LAST_ACTIVE_LEVEL) {
             return null;
         }
         return switch (entry.type()) {
@@ -181,6 +185,7 @@ public class VipService {
             case "ADVENTURE_LEVEL" -> progress.level();
             case "ARENA_CHALLENGE" -> arena.settledChallenges(roleId);
             case "TOWER_LEVEL" -> tower.highestCleared(roleId);
+            case "QUICK_BATTLE" -> quickBattles.totalSuccessful(roleId);
             case "DAILY_DUNGEON_CHALLENGE" -> dungeon.participationCount(roleId);
             case "GET_HERO" -> entry.condition() == 5 ? heroes.countFiveStarAcquisitions(roleId) : null;
             case "HAD_HIGH_LEVEL_HERO" -> boundedCount(jdbc.queryForObject(

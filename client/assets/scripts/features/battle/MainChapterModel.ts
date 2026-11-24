@@ -123,6 +123,28 @@ export interface MainChapterIdleState {
     /** 已验证的可选消费状态；缺失或未知格式时为undefined，不据此开放当前按钮。 */
     readonly claimState?: MainChapterIdleClaimState;
 }
+/** 快速战斗的当前日报价及酒馆状态，由服务器提供。 */
+export interface MainChapterQuickBattleState {
+    /** 角色是否达到快速战斗等级。 */
+    readonly unlocked: boolean;
+    /** 今日已成功次数及每日普通上限。 */
+    readonly usedCount: number;
+    readonly maxCount: number;
+    /** 下次费用，次数用完时为 0。 */
+    readonly costDiamonds: number;
+    /** 本报价有效至上海零点，单位为 Unix 秒。 */
+    readonly resetAt: number;
+    /** true 时确认提示包含冒险点满额。 */
+    readonly tavernFull: boolean;
+}
+
+/** 玩家已确认的原次报价，重试时保持请求键和报价不变。 */
+export interface MainChapterQuickBattleRequest {
+    readonly requestId: string;
+    readonly resetAt: number;
+    readonly usedCount: number;
+}
+
 export class MainChapterModel extends BaseModel {
     /** 同应用生命周期的唯一主线数据入口。 */
     public static readonly instance = new MainChapterModel();
@@ -130,6 +152,12 @@ export class MainChapterModel extends BaseModel {
     public state: MainChapterState | null = null;
     /** 缺少可信起点或服务端未提供挂机快照时为空，首胜前的快照只包含创角计时。 */
     public idle: MainChapterIdleState | null = null;
+    /** 最近收到的快速战斗报价，打开窗口时向服务器刷新。 */
+    public quickBattle: MainChapterQuickBattleState | null = null;
+    /** 查询或领取尚未返回时禁用快速战斗按钮，角色切换时复位。 */
+    public quickBattleBusy = false;
+    /** 结果不明时保留原授权操作，显式重试复用它，确认结果后清除。 */
+    public quickBattleRequest: MainChapterQuickBattleRequest | null = null;
     /** 最近一次已校验的挂机演出，仅页面消费，不作为挑战或领奖凭证。 */
     public idleReplay: { stage: number; assetRevision: number; lineupVersion: number; bytes: Uint8Array } | null = null;
     /** 当前挂机战报请求；不占用挑战按钮的业务忙状态。 */
@@ -271,9 +299,13 @@ export class MainChapterModel extends BaseModel {
     }
 
     /** 应用切换身份清空业务状态；不承担网络连接代次判断。 */
+    /** 清除原角色的主线、挂机和快速战斗界面状态。 */
     protected onReset(): void {
         this.state = null;
         this.idle = null;
+        this.quickBattle = null;
+        this.quickBattleBusy = false;
+        this.quickBattleRequest = null;
         this.idleReplay = null;
         this.idleLoading = false;
         this.busy = false;

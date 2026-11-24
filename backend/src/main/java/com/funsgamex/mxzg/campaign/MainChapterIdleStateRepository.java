@@ -98,7 +98,7 @@ public class MainChapterIdleStateRepository {
     }
 
     /**
-     * 在首次受理挑战的角色锁事务中仅创建一次累计，已有起点与计数原样保留。
+     * 在首次受理挑战或快速战斗的角色锁事务中仅创建一次累计，已有起点与计数原样保留。
      * @param createdAtSeconds 角色创建时的服务器秒；旧记录为 0 时使用本次游戏时间
      * @return true表示插入新行，调用方须同事务登记统一状态变化；false表示已存在且校验通过
      */
@@ -178,6 +178,31 @@ public class MainChapterIdleStateRepository {
                 after.startedAt(), after.operationVersion(), after.dropSeconds(), role, before.operationVersion()) != 1) {
             throw new IllegalStateException("新主线挂机累计操作版本已变化");
         }
+        writeCounters(role, after);
+        return after;
+    }
+
+    /**
+     * 快速战斗推进旧版共享掉落分窗。普通宝箱累计起点与可领版本继续沿原时间消费。
+     * 调用方持角色锁，在同一事务提交发奖与快速战斗回执。
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void advanceDropWindow(String role, Accumulation before, int dropSeconds,
+                                  Map<Integer, IdleRules.Counter> counters) {
+        requireTransaction();
+        var after = new Accumulation(before.schemaVersion(), before.semanticsVersion(),
+                before.frequencySeconds(), before.resetSeconds(), before.startedAt(), before.operationVersion(),
+                dropSeconds, counters);
+        validate(after);
+        if (jdbc.update("UPDATE game_main_chapter_idle SET drop_seconds=? WHERE role_id=? AND operation_version=?",
+                dropSeconds, role, before.operationVersion()) != 1) {
+            throw new IllegalStateException("快速战斗共享掉落分窗已变化");
+        }
+        writeCounters(role, after);
+    }
+
+    /** 整组保存类别计数，保留满窗重置后的空集合。 */
+    private void writeCounters(String role, Accumulation after) {
         jdbc.update("DELETE FROM game_main_chapter_idle_counter WHERE role_id=?", role);
         for (var entry : new TreeMap<>(after.counters()).entrySet()) {
             var counter = entry.getValue();
@@ -186,7 +211,6 @@ public class MainChapterIdleStateRepository {
                 throw new IllegalStateException("新主线挂机累计类别写入行数异常");
             }
         }
-        return after;
     }
 
     /** 校验当前纯规则仍沿用已核实周期；不兼容变更必须显式迁移，不能自动取模或清计数。 */

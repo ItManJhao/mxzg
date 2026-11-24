@@ -95,15 +95,17 @@ public class TowerService {
         }
     }
 
-    /** 最高通关从 0 开始；精力满时下次恢复时间为 0；次数与费用按当前上海自然日。 */
+    /** 最高通关从 0 开始；精力满时下次恢复为 0；扫荡次数与费用按上海自然日。 */
     public record State(int minimumLevel, int highestCleared, int maxFloor, int energy, int maxEnergy,
                         long nextEnergyAtSeconds, int rechargeSeconds, int sweeps, int sweepLimit,
                         long nextSweepCostDiamonds, long sweepResetAtSeconds, long formationVersion, int formationId,
-                        List<Lineup.Slot> slots, List<FloorState> floors, MilestoneState milestone) {
-        /** 冻结视图状态，阵容版本 0 允许初次编辑继承主阵容。 */
+                        List<Lineup.Slot> slots, List<FloorState> floors, MilestoneState milestone,
+                        List<MilestoneState> milestones) {
+        /** 冻结塔状态；初版回执只有第 10 层里程碑，恢复时保留原结算内容。 */
         public State {
             slots = List.copyOf(slots);
             floors = List.copyOf(floors);
+            milestones = milestones == null ? List.of(milestone) : List.copyOf(milestones);
         }
     }
 
@@ -145,7 +147,8 @@ public class TowerService {
                     enemy.position(), enemy.template(), enemy.level(), enemy.star())).toList())).toList();
         var floorRewards = config.floors().stream().flatMap(row -> Stream.concat(
                 row.firstRewards().stream(), row.sweepRewards().stream()));
-        grants.requireSupported(Stream.concat(floorRewards, config.milestone().rewards().stream())
+        var milestoneRewards = config.milestones().stream().flatMap(row -> row.rewards().stream());
+        grants.requireSupported(Stream.concat(floorRewards, milestoneRewards)
                 .map(Reward::itemId).distinct().toList());
     }
 
@@ -174,7 +177,7 @@ public class TowerService {
             return state(role, before);
         }
         var after = new Progress(before.highestCleared(), before.energy(), before.energyTimeSeconds(),
-                before.sweepTimes(), before.sweepResetAtSeconds(), before.milestoneClaimed(),
+                before.sweepTimes(), before.sweepResetAtSeconds(),
                 before.formationVersion() + 1, formationId);
         tower.saveProgress(role, stored, after);
         tower.replaceSlots(role, normalized);
@@ -193,7 +196,7 @@ public class TowerService {
         return settle(token, requestId, Action.SWEEP, floor, maxDiamonds);
     }
 
-    /** 单独领取已达成的第 10 层里程碑，成功后不增加通关层数。 */
+    /** 单独领取已达成的配置里程碑，成功后通关层数保持不变。 */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Settlement claimMilestone(String token, String requestId, int milestoneId) {
         return settle(token, requestId, Action.MILESTONE, milestoneId, 0);
@@ -221,7 +224,7 @@ public class TowerService {
         var outcome = switch (action) {
             case CHALLENGE -> fight(profile, before, targetId, now, random);
             case SWEEP -> sweep(role, before, targetId, maxDiamonds);
-            case MILESTONE -> milestone(before, targetId);
+            case MILESTONE -> milestone(role, before, targetId);
         };
         tower.saveProgress(role, stored, outcome.progress());
         var actual = outcome.rewards().isEmpty() ? null : grants.grant(role, outcome.rewards(),
@@ -263,7 +266,7 @@ public class TowerService {
         boolean won = HeroBattleRoundUtils.Outcome.ATTACKER_WIN.name().equals(report.getOutcome());
         long energyTime = !won && before.energy() == config.maxEnergy() ? now.getEpochSecond() : before.energyTimeSeconds();
         var after = new Progress(won ? floor : before.highestCleared(), before.energy() - (won ? 0 : 1), energyTime,
-                before.sweepTimes(), before.sweepResetAtSeconds(), before.milestoneClaimed(),
+                before.sweepTimes(), before.sweepResetAtSeconds(),
                 before.formationVersion(), before.formationId());
         return new Outcome(floor, after, report, won ? rule.firstRewards() : List.of());
     }
@@ -284,23 +287,21 @@ public class TowerService {
             throw rejected("TOWER_DIAMONDS");
         }
         var after = new Progress(before.highestCleared(), before.energy(), before.energyTimeSeconds(),
-                before.sweepTimes() + 1, before.sweepResetAtSeconds(), before.milestoneClaimed(),
+                before.sweepTimes() + 1, before.sweepResetAtSeconds(),
                 before.formationVersion(), before.formationId());
         return new Outcome(floor, after, null, config.floors().get(floor - 1).sweepRewards());
     }
 
-    /** 验证独立领奖资格，在最高通关不变的情况下标记已领。 */
-    private Outcome milestone(Progress before, int milestoneId) {
-        var milestone = config.milestone();
-        if (milestone.id() != milestoneId || before.highestCleared() < milestone.floor()) {
-            throw rejected("TOWER_MILESTONE_LOCKED");
-        }
-        if (before.milestoneClaimed()) {
+    /** 验证指定档位资格并写入独立领取记录，由外层事务一起发奖。 */
+    private Outcome milestone(String role, Progress before, int milestoneId) {
+        var milestone = config.milestones().stream()
+                .filter(row -> row.id() == milestoneId && row.floor() <= before.highestCleared())
+                .findFirst().orElseThrow(() -> rejected("TOWER_MILESTONE_LOCKED"));
+        if (tower.claimedMilestones(role).contains(milestoneId)) {
             throw rejected("TOWER_MILESTONE_CLAIMED");
         }
-        var after = new Progress(before.highestCleared(), before.energy(), before.energyTimeSeconds(),
-                before.sweepTimes(), before.sweepResetAtSeconds(), true, before.formationVersion(), before.formationId());
-        return new Outcome(milestone.floor(), after, null, milestone.rewards());
+        tower.saveMilestoneClaim(role, milestoneId);
+        return new Outcome(milestone.floor(), before, null, milestone.rewards());
     }
 
     /** 进入角色锁后重新判断会话和旧开门等级，避免旧连接在等待期间继续操作。 */
@@ -340,11 +341,11 @@ public class TowerService {
         return valid.stream().sorted(Comparator.comparingInt(Lineup.Slot::position)).toList();
     }
 
-    /** 按完整经过的恢复间隔计算精力，同时在上海零点重置每日扫荡。 */
+    /** 以完整恢复间隔计算精力，在上海零点重置每日扫荡，尚未入塔时返回初始进度。 */
     private Progress normalize(Progress stored, Instant now) {
         long tomorrow = now.atZone(SERVER_ZONE).toLocalDate().plusDays(1).atStartOfDay(SERVER_ZONE).toEpochSecond();
         if (stored == null) {
-            return new Progress(0, config.maxEnergy(), 0, 0, tomorrow, false, 0, 1);
+            return new Progress(0, config.maxEnergy(), 0, 0, tomorrow, 0, 1);
         }
         long seconds = now.getEpochSecond();
         long energyTime = stored.energyTimeSeconds();
@@ -356,11 +357,11 @@ public class TowerService {
         }
         boolean reset = seconds >= stored.sweepResetAtSeconds();
         return new Progress(stored.highestCleared(), energy, energyTime, reset ? 0 : stored.sweepTimes(),
-                reset ? tomorrow : stored.sweepResetAtSeconds(), stored.milestoneClaimed(),
+                reset ? tomorrow : stored.sweepResetAtSeconds(),
                 stored.formationVersion(), stored.formationId());
     }
 
-    /** 构建权威视图；初次入塔显示主阵容作为草稿，只有保存才改变幻境专用站位。 */
+    /** 构建权威视图，包含每档已领取状态；未保存专用阵容时用主阵容作为草稿。 */
     private State state(String role, Progress progress) {
         int formationId = progress.formationId();
         List<Lineup.Slot> slots;
@@ -373,11 +374,13 @@ public class TowerService {
         }
         long nextEnergy = progress.energy() == config.maxEnergy() ? 0 : progress.energyTimeSeconds() + config.rechargeSeconds();
         long cost = progress.sweepTimes() < config.sweepCosts().size() ? config.sweepCosts().get(progress.sweepTimes()) : 0;
-        var milestone = config.milestone();
+        var claimed = tower.claimedMilestones(role);
+        var milestones = config.milestones().stream().map(row ->
+                new MilestoneState(row.id(), row.floor(), claimed.contains(row.id()), row.rewards())).toList();
         return new State(config.minimumLevel(), progress.highestCleared(), floors.size(), progress.energy(),
                 config.maxEnergy(), nextEnergy, config.rechargeSeconds(), progress.sweepTimes(), config.sweepCosts().size(),
                 cost, progress.sweepResetAtSeconds(), progress.formationVersion(), formationId, slots, floors,
-                new MilestoneState(milestone.id(), milestone.floor(), progress.milestoneClaimed(), milestone.rewards()));
+                milestones.getFirst(), milestones);
     }
 
     /** 统一产生业务拒绝码，外层协议处理用户反馈。 */

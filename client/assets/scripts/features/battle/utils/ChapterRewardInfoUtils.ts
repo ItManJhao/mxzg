@@ -17,25 +17,44 @@ export class ChapterRewardInfoUtils {
 
     /** 校验并投影完整同源配置；任一行损坏时拒绝整页，不用空列表掩盖缺失。 */
     public static rows(table: unknown): readonly ChapterRewardInfoRow[] {
-        if (!table || typeof table !== "object" || !Array.isArray((table as { rows?: unknown }).rows)) {
-            throw new Error("主线产物说明配置缺少rows");
-        }
         const seen = new Set<number>();
-        return (table as { rows: Record<string, unknown>[] }).rows.map(row => {
+        return this.sourceRows(table).map(row => {
             const stage = this.id(row?.idx, "关卡");
             if (seen.has(stage)) {
                 throw new Error("主线产物说明关卡重复：" + stage);
             }
             seen.add(stage);
             const firstItems = this.items(row.first_reward, "item_type", stage);
-            const base = this.items(row.reward_base, "item_type", stage);
-            const random = this.items(row.reward_unique, "type", stage);
             return Object.freeze({
                 stage,
                 firstItems: Object.freeze(firstItems),
-                idleItems: Object.freeze(Array.from(new Set([...base, ...random]))),
+                idleItems: this.idleItems(row, stage),
             });
         });
+    }
+
+    /** 只解析当前关卡的挂机产物说明，供快速战斗窗口使用。 */
+    public static idleItemsForStage(table: unknown, stage: number): readonly number[] {
+        const row = this.sourceRows(table).find(entry => entry?.idx === stage);
+        if (!row) {
+            throw new Error("缺少主线挂机产物说明：" + stage);
+        }
+        return this.idleItems(row, stage);
+    }
+
+    /** 读取唯一已安装的关卡配置，不保存额外副本。 */
+    private static sourceRows(table: unknown): readonly Record<string, unknown>[] {
+        if (!table || typeof table !== "object" || !Array.isArray((table as { rows?: unknown }).rows)) {
+            throw new Error("主线产物说明配置缺少rows");
+        }
+        return (table as { rows: Record<string, unknown>[] }).rows;
+    }
+
+    /** 按旧说明顺序保留基础和随机产物配置 ID，每类物品只展示一格。 */
+    private static idleItems(row: Record<string, unknown>, stage: number): readonly number[] {
+        const base = this.items(row.reward_base, "item_type", stage);
+        const random = this.items(row.reward_unique, "type", stage);
+        return Object.freeze(Array.from(new Set([...base, ...random])));
     }
 
     /** 解码导出表内的JSON列表；只取物品类型，数量和概率不作为必得承诺显示。 */

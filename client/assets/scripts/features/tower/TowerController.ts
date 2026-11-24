@@ -157,7 +157,7 @@ export class TowerController extends BaseController {
         this.send(protocol, body);
     }
 
-    /** 认证交付前先检查对应用途及原请求号。 */
+    /** 认证交付前核对原请求号、动作及目标楼层或领奖档位。 */
     private send(protocol: AuthenticatedGameProtocol, body: object): void {
         const operations = this.operations;
         if (!operations || this.busy) {
@@ -172,6 +172,12 @@ export class TowerController extends BaseController {
                 if (receipt.requestId !== command.body.requestId || receipt.action !== command.action
                     || (command.body.floor !== undefined && receipt.floor !== command.body.floor)) {
                     throw new Error("幻境之塔回包与本次操作不符");
+                }
+                if (command.body.milestoneId !== undefined) {
+                    const milestone = receipt.state.milestones.find(row => row.id === command.body.milestoneId);
+                    if (milestone?.floor !== receipt.floor || !milestone.claimed) {
+                        throw new Error("幻境之塔领取回包与原档位不符");
+                    }
                 }
             }
             ProtocolRouter.instance.dispatch(this, frame);

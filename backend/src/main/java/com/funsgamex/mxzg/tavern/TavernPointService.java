@@ -70,6 +70,14 @@ public class TavernPointService {
         return new State(SCHEMA_VERSION, count, limit);
     }
 
+    /** 查询冒险点是否已达上限。缺记录采用同源初值判断，查看报价不会创建记录或更新资产版本。 */
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    public boolean isFull(String roleId, long limit) {
+        requireLimit(limit);
+        lockRole(roleId);
+        return findStored(roleId).orElseGet(rules::initialAdventureCount) >= limit;
+    }
+
     /**
      * 接纳可信业务奖励并按本次冻结上限截顶；既有超额不倒扣，零到账不产生额外资产变更。
      * 缺行初始化与本次实际奖励同事务提交，但初值不冒充本次奖励；失败由外层整体回滚。

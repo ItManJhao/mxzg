@@ -14,16 +14,17 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class TowerRules {
-    /** 已校验的精力、开放楼层、扫荡报价及首个里程碑。 */
+    /** 已校验的精力、开放楼层、扫荡报价及各档里程碑。 */
     private final Config config;
 
     /** 旧策划表投影，精力恢复以秒为单位，扫荡报价从当日第一次开始。 */
     record Config(int minimumLevel, int maxEnergy, int rechargeSeconds, String opponentName,
-                  List<Long> sweepCosts, List<Floor> floors, Milestone milestone) {
+                  List<Long> sweepCosts, List<Floor> floors, List<Milestone> milestones) {
         /** 冻结静态配置，禁止战斗和预览修改原表。 */
         Config {
             sweepCosts = List.copyOf(sweepCosts);
             floors = List.copyOf(floors);
+            milestones = List.copyOf(milestones);
         }
     }
 
@@ -38,7 +39,7 @@ public class TowerRules {
         }
     }
 
-    /** 已开放楼层内单独领取的首个里程碑。 */
+    /** 已开放楼层内按原配置编号独立领取的里程碑。 */
     record Milestone(int id, int floor, List<Reward> rewards) {
         /** 冻结领取配置，防止共享预览对象改变发奖条件。 */
         Milestone {
@@ -46,7 +47,7 @@ public class TowerRules {
         }
     }
 
-    /** 启动时读取楼层配置，缺层、缺奖励或重复守军站位会阻止装配。 */
+    /** 启动时读取楼层和里程碑配置，缺层、缺奖励或重复配置编号会阻止装配。 */
     public TowerRules(ObjectMapper mapper) {
         try (var input = TowerRules.class.getResourceAsStream("/gameplay/tower-rules.json")) {
             if (input == null) {
@@ -59,9 +60,22 @@ public class TowerRules {
         if (config.minimumLevel() <= 0 || config.maxEnergy() <= 0 || config.rechargeSeconds() <= 0
                 || config.opponentName() == null || !config.opponentName().contains("%s")
                 || config.sweepCosts().isEmpty() || config.sweepCosts().stream().anyMatch(cost -> cost < 0)
-                || config.milestone().id() <= 0 || config.milestone().floor() < 1
-                || config.milestone().floor() > config.floors().size() || config.milestone().rewards().isEmpty()) {
+                || config.milestones().isEmpty()) {
             throw new IllegalStateException("幻境之塔规则无效");
+        }
+        // V56 只保存了第 10 层的已领状态，迁移后仍对应策划编号 1。
+        var first = config.milestones().getFirst();
+        if (first.id() != 1 || first.floor() != 10) {
+            throw new IllegalStateException("幻境之塔原第 10 层里程碑编号不一致");
+        }
+        int previousMilestoneFloor = 0;
+        var milestoneIds = new HashSet<Integer>();
+        for (var milestone : config.milestones()) {
+            if (milestone.id() <= 0 || !milestoneIds.add(milestone.id()) || milestone.floor() <= previousMilestoneFloor
+                    || milestone.floor() > config.floors().size() || milestone.rewards().isEmpty()) {
+                throw new IllegalStateException("幻境之塔里程碑配置无效：" + milestone.id());
+            }
+            previousMilestoneFloor = milestone.floor();
         }
         int expected = 1;
         for (var floor : config.floors()) {

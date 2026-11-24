@@ -17,6 +17,9 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 class VipRules {
+    /** 已接通实际进度的最后一个档位，完成该档可升到 VIP4。 */
+    static final int LAST_ACTIVE_LEVEL = 3;
+
     /** 以 VIP 档位为键，每档按原配置顺序保存任务。 */
     private final Map<Integer, List<Entry>> byLevel;
 
@@ -59,8 +62,10 @@ class VipRules {
         } catch (IOException error) {
             throw new IllegalStateException("VIP 契约任务配置读取失败", error);
         }
-        if (grouped.getOrDefault(0, List.of()).size() != 4 || grouped.getOrDefault(1, List.of()).size() != 4) {
-            throw new IllegalStateException("前两档 VIP 契约任务配置不完整");
+        for (int level = 0; level <= LAST_ACTIVE_LEVEL; level++) {
+            if (grouped.getOrDefault(level, List.of()).size() != 4) {
+                throw new IllegalStateException("VIP 契约任务配置不完整：" + level);
+            }
         }
         grouped.replaceAll((level, entries) -> List.copyOf(entries));
         byLevel = Map.copyOf(grouped);

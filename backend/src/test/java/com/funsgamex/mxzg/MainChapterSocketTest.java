@@ -4,6 +4,7 @@
  */
 package com.funsgamex.mxzg;
 import com.funsgamex.mxzg.auth.*;
+import com.funsgamex.mxzg.campaign.IdleActivityMaintenanceService;
 import com.funsgamex.mxzg.hero.HeroGrowthRules;
 import com.funsgamex.mxzg.network.GameProtocolCodec;
 import com.funsgamex.mxzg.network.AssetSyncService;
@@ -53,6 +54,8 @@ class MainChapterSocketTest {
     @Autowired RewardGrantService grants;
     /** 构造奖励事务时使用与游戏一致的时间。 */
     @Autowired GameClock clock;
+    /** 为快速战斗样本准备独立区服的可信挂机活动控制。 */
+    @Autowired IdleActivityMaintenanceService idleActivity;
     private final class Peer implements WebSocket.Listener, AutoCloseable {
         final HttpClient client = HttpClient.newHttpClient();
         final BlockingQueue<JsonNode> messages = new LinkedBlockingQueue<>();
@@ -492,7 +495,8 @@ class MainChapterSocketTest {
             }
             var state = success(peer, "tower.state", Map.of());
             assertEquals(0, state.path("highestCleared").asInt());
-            assertEquals(10, state.path("floors").size());
+            assertEquals(30, state.path("floors").size());
+            assertEquals(3, state.path("milestones").size());
             long towerVersion = state.path("formationVersion").asLong();
             var independent = new ArrayList<>(team);
             Collections.swap(independent, 0, 1);
@@ -658,6 +662,136 @@ class MainChapterSocketTest {
             assertEquals(finalReceipt, success(peer, "vip.claim", command));
             assertEquals(expectedBalance, roles.findById(role).orElseThrow().diamonds());
         }
+    }
+
+    /** 一个角色用真实主线、召唤、快速战斗和幻境协议达标后，领取四份 VIP4 契约奖励。 */
+    @Test void advancesVipAfterQuickBattleAcrossMidnightAndTowerThirty() throws Exception {
+        String account = "contract_four_" + UUID.randomUUID().toString().substring(0, 10);
+        long now = java.time.Instant.parse("2026-11-24T04:00:00Z").getEpochSecond();
+        String server = "vip-four-test";
+        jdbc.update("INSERT INTO game_server(id,region_id,region_name,server_name,enabled) VALUES (?,?,?,?,TRUE)",
+            server, "vip", "测试区", "契约验收");
+        idleActivity.configure(server, now - 86400, Optional.empty(), now);
+        clock.setEpochSeconds(now);
+        try {
+            var player = login.login(account, server);
+            String role = player.role().id();
+            String token = player.session().accessToken();
+            jdbc.update("UPDATE game_server SET opened_at_seconds=? WHERE id='local-1'", now - 86400);
+            jdbc.update("UPDATE game_role SET role_level=31,diamonds=4000,goddess_vip=3 WHERE id=?", role);
+            jdbc.update("INSERT INTO game_main_chapter(role_id,max_cleared) VALUES (?,99)", role);
+            jdbc.update("INSERT INTO game_main_chapter_idle(role_id,started_at) VALUES (?,?)", role, now);
+            String leader = UUID.randomUUID().toString();
+            int star = MainChapterProgressionPreview.lateChapterLeaderStar(550);
+            int level = growth.limit(200, 6, star);
+            jdbc.update("INSERT INTO game_hero(id,role_id,template_id,hero_level,star,stage) VALUES (?,?,10105011,?,?,6)",
+                leader, role, level, star);
+            var team = MainChapterProgressionPreview.prepareLateChapterLineup(jdbc, role, leader, 200, star, level).stream()
+                .map(slot -> Map.of("position", slot.position(), "heroId", slot.heroId())).toList();
+
+            try (var peer = new Peer()) {
+                var authenticated = peer.authenticate(token);
+                assertTrue(authenticated.path("ok").asBoolean(), authenticated.path("error").toString());
+                var initial = authenticated.path("body").path("initial");
+                assertEquals(99, vipProgress(initial, 101300));
+                assertEquals(0, vipProgress(initial, 101400));
+                assertEquals(0, vipProgress(initial, 101500));
+                assertEquals(0, vipProgress(initial, 101600));
+                long version = jdbc.queryForObject("SELECT lineup_version FROM game_role WHERE id=?", Long.class, role);
+                success(peer, "formation.save", Map.of("requestId", UUID.randomUUID().toString(),
+                    "expectedVersion", version, "formationId", 1, "slots", team));
+                advanceChapter(peer, 100);
+                success(peer, "hero.summon", Map.of("requestId", UUID.randomUUID().toString(),
+                    "pool", "ADVANCED", "count", 10, "maxDiamonds", 1980));
+                assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 101400) == 10));
+
+                var quote = success(peer, "chapter.quick-battle.info", Map.of());
+                int used = 0;
+                for (int price : List.of(0, 50, 100, 200)) {
+                    assertEquals(used++, quote.path("usedCount").asInt());
+                    assertEquals(price, quote.path("costDiamonds").asInt());
+                    var command = quickCommand(quote);
+                    var response = peer.request("chapter.quick-battle.claim", command);
+                    assertTrue(response.path("ok").asBoolean(), response.path("error").toString());
+                    if (price == 0) {
+                        write("quick-battle", response);
+                    }
+                    var result = response.path("body");
+                    assertTrue(result.path("actual").path("items").size() > 0);
+                    assertEquals(result, success(peer, "chapter.quick-battle.claim", command));
+                    quote = result.path("state");
+                }
+                assertEquals(4, quote.path("usedCount").asInt());
+                assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 101500) == 4));
+                clock.setEpochSeconds(quote.path("resetAt").asLong() + 2);
+                quote = success(peer, "chapter.quick-battle.info", Map.of());
+                assertEquals(0, quote.path("usedCount").asInt());
+                assertEquals(0, quote.path("costDiamonds").asInt());
+                success(peer, "chapter.quick-battle.claim", quickCommand(quote));
+                assertTrue(peer.events.stream().anyMatch(event -> vipProgress(event.path("body"), 101500) == 5));
+
+                var tower = success(peer, "tower.state", Map.of());
+                assertEquals(30, tower.path("maxFloor").asInt());
+                success(peer, "tower.formation.save", Map.of("expectedVersion", tower.path("formationVersion").asLong(),
+                    "formationId", 1, "slots", team));
+            }
+
+            // 每次连接最多走十五层，保持与生产连接限速相同。
+            for (int start : List.of(1, 16)) {
+                try (var peer = new Peer()) {
+                    assertTrue(peer.authenticate(token).path("ok").asBoolean());
+                    for (int floor = start; floor < start + 15; floor++) {
+                        var result = success(peer, "tower.challenge",
+                            Map.of("requestId", UUID.randomUUID().toString(), "floor", floor));
+                        assertTrue(result.path("won").asBoolean(), "幻境第 " + floor + " 层");
+                        assertEquals(floor, result.path("state").path("highestCleared").asInt());
+                    }
+                }
+            }
+
+            long balance = roles.findById(role).orElseThrow().diamonds();
+            var lastCommand = Map.of("taskId", 101600, "requestId", UUID.randomUUID().toString());
+            JsonNode last;
+            try (var peer = new Peer()) {
+                var authenticated = peer.authenticate(token);
+                assertTrue(authenticated.path("ok").asBoolean(), authenticated.path("error").toString());
+                var initial = authenticated.path("body").path("initial");
+                var progress = initial.path("vip").path("tasks").valueStream()
+                    .map(task -> task.path("progress").asInt(-1)).toList();
+                assertEquals(List.of(100, 10, 5, 30), progress);
+                for (int taskId : List.of(101300, 101400, 101500)) {
+                    assertVipFourReward(success(peer, "vip.claim",
+                        Map.of("taskId", taskId, "requestId", UUID.randomUUID().toString())));
+                }
+                last = success(peer, "vip.claim", lastCommand);
+                assertVipFourReward(last);
+                assertTrue(peer.events.stream().anyMatch(event -> event.path("body").path("vip").path("level").asInt() == 4));
+            }
+            try (var peer = new Peer()) {
+                var restored = success(peer, "session.login", Map.of("account", account, "serverId", server,
+                    "clientInstanceId", UUID.randomUUID().toString()));
+                peer.connectionId = restored.path("connectionId").asString();
+                assertEquals(4, restored.path("initial").path("vip").path("level").asInt());
+                assertEquals(balance + 160, restored.path("initial").path("role").path("diamonds").asLong());
+                assertEquals(last, success(peer, "vip.claim", lastCommand));
+                assertEquals(balance + 160, roles.findById(role).orElseThrow().diamonds());
+            }
+        } finally {
+            clock.reset();
+        }
+    }
+
+    /** 用刚读到的当前报价生成快速战斗请求。 */
+    private static Map<String, Object> quickCommand(JsonNode quote) {
+        return Map.of("requestId", UUID.randomUUID().toString(), "resetAt", quote.path("resetAt").asLong(),
+            "usedCount", quote.path("usedCount").asInt());
+    }
+
+    /** VIP3 档的四个任务各自发放四十钻。 */
+    private static void assertVipFourReward(JsonNode receipt) {
+        var item = receipt.path("notice").path("items").get(0);
+        assertEquals(900002, item.path("itemId").asInt());
+        assertEquals(40, item.path("credited").asInt());
     }
 
     /** VIP2 档单项发奖的通用反馈匹配真实到账的 30 钻。 */
